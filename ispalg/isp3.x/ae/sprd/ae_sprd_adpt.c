@@ -2288,7 +2288,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	}
 
 	/* notify APP if need autofocus or not, just in flash auto mode */
-	if (cxt->camera_id == 0){
+	if (cxt->camera_id == 0 || cxt->camera_id == 2 || cxt->camera_id == 3){
 		ISP_LOGV("flash open thr=%d, flash close thr=%d, bv=%d, flash_fired=%d, delay_cnt=%d",
 				 cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up, cxt->sync_cur_result.cur_bv, cxt->flash_fired, cxt->delay_cnt);
 
@@ -3586,7 +3586,7 @@ static cmr_s32 ae_get_flash_enable(struct ae_ctrl_cxt *cxt, void *result)
 		else
 			*flash_eb = 0;
 
-		ISP_LOGD("AE_GET_FLASH_EB: flash_eb=%d, bv=%d, on_thr=%d, off_thr=%d", *flash_eb, bv, cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up);
+		ISP_LOGD("AE_GET_FLASH_EB: cameraId=%d, flash_eb=%d, bv=%d, on_thr=%d, off_thr=%d",cxt->camera_id, *flash_eb, bv, cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up);
 	}
 	return rtn;
 }
@@ -5267,7 +5267,7 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 		cxt->ae_video_fps.thd_down = cxt->ae_video_fps.thd_down ? cxt->ae_video_fps.thd_down : 250;
 		cxt->ae_video_fps.thd_up = cxt->ae_video_fps.thd_up ? cxt->ae_video_fps.thd_up : 500;
 	}
-	if (0 == cxt->camera_id) {
+	if (0 == cxt->camera_id || 2 == cxt->camera_id || 3 == cxt->camera_id) {
 		cxt->flash_thrd.thd_down = cxt->flash_thrd.thd_down ? cxt->flash_thrd.thd_down : 380;
 		cxt->flash_thrd.thd_up = cxt->flash_thrd.thd_up ? cxt->flash_thrd.thd_up : 480;
 		cxt->threednr_thrd.thd_down = cxt->threednr_thrd.thd_down ? cxt->threednr_thrd.thd_down : 380;
