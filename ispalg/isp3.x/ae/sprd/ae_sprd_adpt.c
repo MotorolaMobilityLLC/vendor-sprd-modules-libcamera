@@ -2058,14 +2058,10 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	if(cxt->cur_flicker == 0) {
 		if(in.maxExposure > 600000) {
 			in.maxExposure = 600000;
-		} else {
-			in.maxExposure = in.maxExposure;
 		}
 	} else if(cxt->cur_flicker == 1) {
 		if(in.maxExposure > 500000) {
 			in.maxExposure = 500000;
-		} else {
-			in.maxExposure = in.maxExposure;
 		}
 	}
 	ISP_LOGV("flash_cur_flicker %d, max_exp %f", cxt->cur_flicker, in.maxExposure);
