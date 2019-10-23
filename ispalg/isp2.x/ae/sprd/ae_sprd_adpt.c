@@ -4365,7 +4365,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				cxt->manual_level = s_ae_manual[cxt->camera_id].manual_level;
 			}
 			else if(0 != cxt->mode_switch[last_app_mode].gain){
-				if ((cxt->mode_switch[last_app_mode].ev_index > 0) && (CAMERA_MODE_MANUAL == last_app_mode) && (0 != cxt->mode_switch[cxt->app_mode].gain)) {
+				if (((cxt->mode_switch[last_app_mode].ev_index > 0) && (CAMERA_MODE_MANUAL == last_app_mode) && (0 != cxt->mode_switch[cxt->app_mode].gain))
+					||((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) && (0 != cxt->mode_switch[cxt->app_mode].gain))){
 					ISP_LOGD("0.ev_index:%d\n", cxt->mode_switch[last_app_mode].ev_index);
 					src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
 					src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
