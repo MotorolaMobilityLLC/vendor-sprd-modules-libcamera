@@ -320,7 +320,7 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
         return false;
 
     if (SPRD_REFOCUS_ID == cameraId || (SPRD_3D_CALIBRATION_ID == cameraId) ||
-        (SPRD_ULTRA_WIDE_ID == cameraId)) {
+        (SPRD_ULTRA_WIDE_ID == cameraId) || (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId)) {
         return false;
     }
 

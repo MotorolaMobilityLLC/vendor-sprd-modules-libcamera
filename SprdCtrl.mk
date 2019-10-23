@@ -429,6 +429,10 @@ ifeq ($(strip $(TARGET_BOARD_MULTICAMERA_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_MULTICAMERA_SUPPORT
 endif
 
+ifeq ($(strip $(TARGET_BOARD_BACK_HIGH_RESOLUTION_SUPPORT)),true)
+LOCAL_CFLAGS += -DCONFIG_BACK_HIGH_RESOLUTION_SUPPORT
+endif
+
 ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SUPPORT)),true)
 #max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
 LOCAL_CFLAGS += -DCONFIG_PORTRAIT_SUPPORT

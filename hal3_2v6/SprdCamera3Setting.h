@@ -444,6 +444,12 @@ enum vcm_result {
     VCM_RESULT_FAIL = 0x3
 };
 
+typedef struct cam_stream_info {
+    cam_dimension_t stream_sizes_tbl;
+    int64_t stream_min_duration;
+    int64_t stream_stall_duration;
+} cam_stream_info_t;
+
 typedef struct {
     cam_dimension_t preview_size;
     cam_dimension_t picture_size;
@@ -529,7 +535,8 @@ class SprdCamera3Setting {
                                         uint32_t tag);
     static const char *get_tag_name(const vendor_tag_ops_t *ops, uint32_t tag);
     static int get_tag_type(const vendor_tag_ops_t *ops, uint32_t tag);
-
+    static int32_t stream_limit(const cam_stream_info_t *p, int32_t total,
+            int32_t w_limit, int32_t h_limit);
     int constructDefaultMetadata(int type, camera_metadata_t **metadata);
     int UpdateWorkParameters(const CameraMetadata &frame_settings);
     int initialize(const camera3_callback_ops_t *callback_ops);

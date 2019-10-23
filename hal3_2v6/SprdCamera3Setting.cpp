@@ -337,12 +337,6 @@ const uint8_t availableIso[] = {CAMERA_ISO_AUTO, CAMERA_ISO_100,
                                 CAMERA_ISO_200,  CAMERA_ISO_400,
                                 CAMERA_ISO_800,  CAMERA_ISO_1600};
 
-typedef struct cam_stream_info {
-    cam_dimension_t stream_sizes_tbl;
-    int64_t stream_min_duration;
-    int64_t stream_stall_duration;
-} cam_stream_info_t;
-
 const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #if defined(CONFIG_CAMERA_SUPPORT_32M)
     {6528, 4896},
@@ -1419,6 +1413,28 @@ bool SprdCamera3Setting::getLcdSize(uint32_t *width, uint32_t *height) {
     return true;
 }
 
+int32_t SprdCamera3Setting::stream_limit(const cam_stream_info_t *p,
+        int32_t total, int32_t w_limit, int32_t h_limit)
+{
+    int i = 0;
+
+    if (w_limit <= 0 || h_limit <= 0 || total <= 1)
+        return i;
+    for (i = 0; i < total; i++) {
+        if (p[i].stream_sizes_tbl.width <= w_limit &&
+            p[i].stream_sizes_tbl.height <= h_limit)
+            break;
+    }
+    /* check i */
+    if (i >= total)
+        i = 0;
+
+    HAL_LOGI("stream start pos %d [%d %d]", i, p[i].stream_sizes_tbl.width,
+             p[i].stream_sizes_tbl.height);
+
+    return i;
+}
+
 int SprdCamera3Setting::initDefaultParameters(int32_t cameraId) {
     uint32_t lcd_w = 0, lcd_h = 0;
     int ret = NO_ERROR;
@@ -1462,7 +1478,8 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
            sizeof(camera3_default_info.common.sensor_physical_size));
     // Dimensions of the full pixel array, possibly including black calibration
     // pixels.
-    ptr_sns_inf_tag->pixer_array_size[0] = largest_picture_size[cameraId].width;
+    ptr_sns_inf_tag->pixer_array_size[0] =
+        largest_picture_size[cameraId].width;
     ptr_sns_inf_tag->pixer_array_size[1] =
         largest_picture_size[cameraId].height;
     // exposureTimeRange.
@@ -1588,6 +1605,16 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         p_stream_info = stream_info;
         stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
     }
+
+#ifdef CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
+    if (cameraId == 0) {
+        int i = 0;
+        /* 3264 x 2448 >= 8M */
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, 3264, 2448);
+        p_stream_info = p_stream_info + i;
+        stream_sizes_tbl_cnt -= i;
+    }
+#endif
 
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
@@ -2165,8 +2192,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
-    // 14 camera high resolution definition mode
-    property_get("persist.vendor.cam.high.definition.mode", prop, "0");
+    // 14 camera back high resolution definition mode
+    property_get("persist.vendor.cam.back.high.resolution.mode", prop, "0");
     available_cam_features.add(atoi(prop));
 
     // 15 camera hdr_zsl

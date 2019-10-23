@@ -149,10 +149,21 @@ int SprdCamera3MultiCamera::get_camera_info(int id, struct camera_info *info) {
             metadata.update(ANDROID_FLASH_INFO_AVAILABLE, &available, 1);
 
             float zoom_ratio_section[6] = {0.6, 1.0, 2.0, 8.0, 0, 0};
-            metadata.update(ANDROID_SPRD_ZOOM_RATIO_SECTION, zoom_ratio_section,
-                            6);
+            metadata.update(ANDROID_SPRD_ZOOM_RATIO_SECTION,
+                zoom_ratio_section, 6);
 
             addAvailableStreamSize(metadata, "RES_MULTI");
+
+            cmr_u16 cropW, cropH;
+            int32_t active_array_size[4];
+            SprdCamera3Setting::getLargestSensorSize(0, &cropW, &cropH);
+            active_array_size[0] = 0;
+            active_array_size[1] = 0;
+            active_array_size[2] = cropW;
+            active_array_size[3] = cropH;
+            metadata.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
+                active_array_size, ARRAY_SIZE(active_array_size));
+
             mStaticCameraCharacteristics = metadata.release();
         }
         info->static_camera_characteristics = mStaticCameraCharacteristics;
@@ -2340,7 +2351,7 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
                     camMetadata->find(ANDROID_STATISTICS_FACE_RECTANGLES)
                         .data.i32[i * 4 + 3] +
                     top_offest;
-                HAL_LOGV("the %d st face, main_FaceRect = %d, %d, %d, %d ", i,
+                HAL_LOGD("the wide face %d, main_FaceRect = %d, %d, %d, %d ", i,
                          main_FaceRect[i * 4], main_FaceRect[i * 4 + 1],
                          main_FaceRect[i * 4 + 2], main_FaceRect[i * 4 + 3]);
             }
@@ -2443,91 +2454,6 @@ void SprdCamera3MultiCamera::setZoomCropRegion(CameraMetadata *WideSettings,
                  crop_Region[2], crop_Region[3]);
         mRefCameraId = 0;
     }
-}
-
-/*===========================================================================
- * FUNCTION     : coordinateTra
- *
- * DESCRIPTION : convert coordinate for af / ae crop
- *
-  * PARAMETERS :
- *
- * RETURN     : zoom ratio
- *==========================================================================*/
-void SprdCamera3MultiCamera::coordinateTra(int inputWidth, int inputHeight,
-                                           int outputWidth, int outputHeight,
-                                           float inputRatio, float outputRatio,
-                                           int *area) {
-    int i;
-    float inputHalfWidth = (float)inputWidth / 2;
-    float inputHalfHeight = (float)inputHeight / 2;
-    float outputHalfWidth = (float)outputWidth / 2;
-    float outputHalfHeight = (float)outputHeight / 2;
-    float WidthRatio = (float)outputWidth / inputWidth;
-    float HeightRatio = (float)outputHeight / inputHeight;
-    HAL_LOGD(
-        " input_W= %d,input_H=%d,Oput_W=%d,Oput_H=%d,W_Ratio=%f,H_Ratio=%f",
-        inputWidth, inputHeight, outputWidth, outputHeight, WidthRatio,
-        HeightRatio);
-    HAL_LOGV(" area =%ld,%ld,%ld,%ld", area[0], area[1], area[2], area[3]);
-    if ((area[0] + area[1] + area[2] + area[3]) != 0) {
-        for (i = 0; i < 4; i++) {
-            if (i % 2 == 0) {
-                if (area[i] <= inputHalfWidth) {
-                    area[i] = inputHalfWidth -
-                              (inputHalfWidth - area[i]) * inputRatio;
-                } else {
-                    area[i] = inputHalfWidth +
-                              (area[i] - inputHalfWidth) * inputRatio;
-                }
-            }
-            if (i % 2 != 0) {
-                if (area[i] <= inputHalfHeight) {
-                    area[i] = inputHalfHeight -
-                              (inputHalfHeight - area[i]) * inputRatio;
-                } else {
-                    area[i] = inputHalfHeight +
-                              (area[i] - inputHalfHeight) * inputRatio;
-                }
-            }
-        }
-        HAL_LOGV(" Zoom 1x area =%ld,%ld,%ld,%ld", area[0], area[1], area[2],
-                 area[3]);
-        if (mZoomValue >= mSwitch_W_T_Threshold) {
-            for (i = 0; i < 4; i++) {
-                if (i % 2 == 0) {
-                    area[i] = area[i] * WidthRatio;
-                }
-                if (i % 2 != 0) {
-                    area[i] = area[i] * HeightRatio;
-                }
-            }
-            HAL_LOGV("Magnifying size area =%ld,%ld,%ld,%ld", area[0], area[1],
-                     area[2], area[3]);
-            for (i = 0; i < 4; i++) {
-                if (i % 2 == 0) {
-                    if (area[i] <= outputHalfWidth) {
-                        area[i] = outputHalfWidth -
-                                  (outputHalfWidth - area[i]) / outputRatio;
-                    } else {
-                        area[i] = outputHalfWidth +
-                                  (area[i] - outputHalfWidth) / outputRatio;
-                    }
-                }
-                if (i % 2 != 0) {
-                    if (area[i] <= outputHalfHeight) {
-                        area[i] = outputHalfHeight -
-                                  (outputHalfHeight - area[i]) / outputRatio;
-                    } else {
-                        area[i] = outputHalfHeight +
-                                  (area[i] - outputHalfHeight) / outputRatio;
-                    }
-                }
-            }
-        }
-    }
-    HAL_LOGV(" all area equal zero  =%ld,%ld,%ld,%ld", area[0], area[1],
-             area[2], area[3]);
 }
 
 /*===========================================================================

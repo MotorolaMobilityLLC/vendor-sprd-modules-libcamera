@@ -122,9 +122,6 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     void reConfigInit();
     void reConfigStream();
     camera_metadata_t *reConfigResultMeta(camera_metadata_t *meta);
-    void coordinateTra(int inputWidth, int inputHeight, int outputWidth,
-                       int outputHeight, float inputRatio, float outputRatio,
-                       int *area);
     void processCaptureResultAux3(const camera3_capture_result_t *result);
     void processCaptureResultAux2(const camera3_capture_result_t *result);
     void processCaptureResultAux1(const camera3_capture_result_t *result);

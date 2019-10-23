@@ -138,11 +138,20 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
     if (camera_id == SPRD_MULTI_CAMERA_ID)
         return SprdCamera3MultiCamera::get_camera_info(camera_id, info);
 #endif
+
+#ifdef CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
+    if (camera_id == SPRD_BACK_HIGH_RESOLUTION_ID)
+        return gSprdCamera3Factory.getHighResolutionSize(
+            multiCameraModeIdToPhyId(camera_id), info);
+#endif
+
     if (isSingleIdExposeOnMultiCameraMode(camera_id))
         return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);
     else
         return gSprdCamera3Factory.getCameraInfo(
             multiCameraModeIdToPhyId(camera_id), info);
+
+
 }
 
 /*===========================================================================
@@ -199,6 +208,93 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     HAL_LOGV("X");
     return rc;
 }
+
+#define RES_SIZE_NUM 6
+/*===========================================================================
+ * FUNCTION   : getHighResolutionSize
+ *
+ * DESCRIPTION: query camera information with its ID
+ *
+ * PARAMETERS :
+ *   @camera_id : camera ID
+ *   @info      : ptr to camera info struct
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int SprdCamera3Factory::getHighResolutionSize(int camera_id, struct camera_info *info) {
+    int rc;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    Mutex::Autolock l(mLock);
+
+    HAL_LOGI("E, camera_id = %d", camera_id);
+
+    if (!mNumOfCameras || camera_id >= mNumOfCameras || !info ||
+        (camera_id < 0)) {
+        return -ENODEV;
+    }
+
+    SprdCamera3Setting::getSensorStaticInfo(camera_id);
+
+    SprdCamera3Setting::initDefaultParameters(camera_id);
+
+    rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
+    if (rc < 0) {
+        return rc;
+    }
+
+    CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
+
+    static avaliable_res_size aval_res_size[RES_SIZE_NUM] = {{6528, 4896}, {1440, 1080}};
+    avaliable_res_size *stream_info = aval_res_size;
+    size_t stream_cnt = RES_SIZE_NUM;
+    int32_t scaler_formats[] = {
+        HAL_PIXEL_FORMAT_YCbCr_420_888, HAL_PIXEL_FORMAT_BLOB,
+        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, HAL_PIXEL_FORMAT_RAW16};
+    size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
+    int array_size = 0;
+    Vector<int32_t> available_stream_configs;
+    int32_t
+        available_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4];
+    memset(available_stream_configurations, 0,
+           CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
+    for (size_t j = 0; j < scaler_formats_count; j++) {
+        for (size_t i = 0; i < stream_cnt; i++) {
+            if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
+                break;
+            available_stream_configs.add(scaler_formats[j]);
+            available_stream_configs.add(stream_info[i].width);
+            available_stream_configs.add(stream_info[i].height);
+            available_stream_configs.add(
+                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+        }
+    }
+    memcpy(available_stream_configurations, &(available_stream_configs[0]),
+        available_stream_configs.size() * sizeof(int32_t));
+    for (array_size = 0; array_size < CAMERA_SETTINGS_CONFIG_ARRAYSIZE;
+        array_size++) {
+        if (available_stream_configurations[array_size * 4] == 0) {
+            break;
+        }
+    }
+    metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+        available_stream_configurations, array_size * 4);
+
+    mStaticMetadata = metadata.release();
+    SprdCamera3Setting::getCameraInfo(camera_id, info);
+
+    info->device_version =
+        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
+    info->static_camera_characteristics = mStaticMetadata;
+    info->conflicting_devices_length = 0;
+
+    HAL_LOGV("X");
+    return rc;
+}
+
 /*====================================================================
 *FUNCTION     :setTorchMode
 *DESCRIPTION  :Attempt to turn on or off the torch of the flash unint.
@@ -378,8 +474,8 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
         return false;
     }
 
-    if (SPRD_REFOCUS_ID == cameraId || (SPRD_3D_CALIBRATION_ID == cameraId) ||
-        (SPRD_ULTRA_WIDE_ID == cameraId)) {
+    if ((SPRD_REFOCUS_ID == cameraId) || (SPRD_3D_CALIBRATION_ID == cameraId) ||
+        (SPRD_ULTRA_WIDE_ID == cameraId) || (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId)) {
         return false;
     }
 
@@ -391,7 +487,8 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
 
     if (MIN_MULTI_CAMERA_FAKE_ID > cameraId) {
         return cameraId;
-    } else if (SPRD_REFOCUS_ID == cameraId) {
+    } else if (SPRD_REFOCUS_ID == cameraId ||
+            SPRD_BACK_HIGH_RESOLUTION_ID == cameraId) {
         return 0;
     } else if (SPRD_3D_CALIBRATION_ID == cameraId) {
         property_get("persist.vendor.cam.ba.blur.version", prop, "0");

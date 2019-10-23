@@ -312,7 +312,7 @@ enum available_cam_features {
     MONTIONENABLE,
     DEFAULTQUARTERSIZE,
     MULTICAMERAMODE,
-    HIGHDEFINITIONMODE,
+    BACKHIGHRESOLUTION,
     HDR_ZSL,
 
     FEATURELISTMAX
@@ -1077,9 +1077,9 @@ int SprdCamera3Setting::setFeatureList(int32_t cameraId) {
     property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
     available_cam_features[MULTICAMERAMODE] = atoi(prop);
 
-    // 14 camera high resolution definition mode
-    property_get("persist.vendor.cam.high.definition.mode", prop, "0");
-    available_cam_features[HIGHDEFINITIONMODE] = atoi(prop);
+    // 14 camera back high resolution definition mode
+    property_get("persist.vendor.cam.back.high.resolution.mode", prop, "0");
+    available_cam_features[BACKHIGHRESOLUTION] = atoi(prop);
 
     // 15 camera hdr_zsl
     property_get("persist.vendor.cam.hdr.zsl", prop, "0");

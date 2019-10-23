@@ -308,7 +308,8 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
         (SPRD_PORTRAIT_ID == cameraId)) {
         return true;
     } else if (SPRD_REFOCUS_ID == cameraId ||
-               (SPRD_3D_CALIBRATION_ID == cameraId)) {
+               (SPRD_3D_CALIBRATION_ID == cameraId) ||
+               (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId)) {
         return false;
     }
 

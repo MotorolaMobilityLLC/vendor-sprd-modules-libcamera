@@ -1795,8 +1795,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
-    // 14 camera high resolution definition mode
-    property_get("persist.vendor.cam.high.definition.mode", prop, "0");
+    // 14 camera back high resolution definition mode
+    property_get("persist.vendor.cam.back.high.resolution.mode", prop, "0");
     available_cam_features.add(atoi(prop));
 
     // 15 camera hdr_zsl
