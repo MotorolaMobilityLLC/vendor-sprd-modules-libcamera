@@ -13,3 +13,11 @@ on factorytest
     insmod ${ro.vendor.ko.mount.point}/socko/sprd_cpp.ko
     insmod ${ro.vendor.ko.mount.point}/socko/mmdvfs.ko
     trigger sprd-flash-ko
+
+on cali-fs
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_sensor.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_flash_drv.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_camera.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_cpp.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/mmdvfs.ko
+    trigger sprd-flash-ko
