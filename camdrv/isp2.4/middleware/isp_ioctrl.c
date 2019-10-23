@@ -2603,6 +2603,10 @@ static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr
 
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
+		if (ret) {
+			ISP_LOGE("get ct failed, %ld", ret);
+			return ret;
+		}
 	}
 	ISP_LOGD("ct = %d", ct);
 
