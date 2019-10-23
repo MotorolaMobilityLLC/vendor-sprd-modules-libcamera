@@ -5692,6 +5692,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     mSetting->getCONTROLTag(&controlInfo);
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
+    static bool skipFirstAeStabNotification = false;
 
     HAL_LOGV("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getPreviewState()));
@@ -5703,15 +5704,22 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             ae_stab = ae_info & (0x00000001);
             HAL_LOGD("ae_info = 0x%x", ae_info);
         }
-        if (ae_stab == 0 && controlInfo.ae_lock && mManualExposureEnabled) {
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+        if (ae_stab == 1 && mManualExposureEnabled && controlInfo.ae_lock) {
+            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
+            mManualExposureEnabled = false;
+            if (skipFirstAeStabNotification == false) {
+                controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+                skipFirstAeStabNotification = true;
+                mManualExposureEnabled = true;
+                goto exit;
+            }
             mSetting->setAeCONTROLTag(&controlInfo);
             goto exit;
-        } else if (ae_stab == 1 && mManualExposureEnabled &&
-                   controlInfo.ae_lock) {
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
+        } else if (ae_stab == 0 && controlInfo.ae_lock &&
+                   mManualExposureEnabled) {
+            skipFirstAeStabNotification = false;
+            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
             mSetting->setAeCONTROLTag(&controlInfo);
-            mManualExposureEnabled = false;
             goto exit;
         }
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
