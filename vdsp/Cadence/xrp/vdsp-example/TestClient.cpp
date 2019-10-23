@@ -19,9 +19,13 @@ struct test_control
 {
 	char * libname;
 	int loadflag;
+	int loadtime;
 	int unloadflag;
+	int unloadtime;
 	int openflag;
+	int opentime;
 	int closeflag;
+	int closetime;
 };
 
 void* test_load_unload_lib(void* test)
@@ -30,6 +34,7 @@ void* test_load_unload_lib(void* test)
 	uint32_t size = 8192;
 	struct vdsp_handle handle;
 	int ret;
+	int i;
 	int openflag, closeflag, loadflag, unloadflag;
 	FILE *fp;
 	char filename[256];
@@ -82,18 +87,22 @@ void* test_load_unload_lib(void* test)
 		}
 		usleep(1000000);
 		if(loadflag) {
+			for(i = 0; i< control->loadtime; i ++) {
 			ret = sprd_cavdsp_loadlibrary(&handle , control->libname , &in);
-			ALOGD("function:%s , sprd_cavdsp_loadlibrary libname:%s ret:%d\n" , __func__ ,control->libname , ret);
-			printf("----------after sprd_cavdsp_loadlibrary libname:%s-------------\n" , control->libname);
+			ALOGD("function:%s , sprd_cavdsp_loadlibrary libname:%s  time:%d , ret:%d\n" , __func__ ,control->libname , i , ret);
+			printf("----------after sprd_cavdsp_loadlibrary time:%d , libname:%s-------------\n" , i , control->libname);
+			}
 		}
 		
 		ret = sprd_cavdsp_send_cmd(&handle , "testlib" , &in , NULL , NULL , 0 , 1);
 		ALOGD("function:%s , sprd_cavdsp_send_cmd libname:%s ret:%d\n" , __func__ , control->libname  , ret);
 		printf("----------after sprd_cavdsp_send_cmd libname:%s-------------\n" , control->libname);
 		if(unloadflag) {
+			for(i = 0; i< control->unloadtime; i ++) {
 			ret = sprd_cavdsp_unloadlibrary(&handle , control->libname);
-			ALOGD("function:%s , sprd_cavdsp_unloadlibrary libname:%s ret:%d\n" , __func__ ,control->libname  , ret);
-			printf("----------after sprd_cavdsp_unloadlibrary libname:%s-------------\n" , control->libname);
+			ALOGD("function:%s , sprd_cavdsp_unloadlibrary libname:%s time:%d , ret:%d\n" , __func__ ,control->libname  , i , ret);
+			printf("----------after sprd_cavdsp_unloadlibrary time:%d , libname:%s-------------\n" , i , control->libname);
+			}
 		}
 		if(closeflag) {
 			ret = sprd_cavdsp_close_device(&handle);
@@ -304,9 +313,13 @@ int main(__unused int argc , char *argv[]) {
 	out.fd = 0;
 	out.size = 10;
 	control.openflag = 1;
+	control.opentime = 1;
 	control.closeflag = 1;
+	control.closetime = 1;
 	control.loadflag = 1;
+	control.loadtime = 1;
 	control.unloadflag = 1;
+	control.unloadtime = 1;
 	control.libname = libname;
 	control1 = control;
 	printf("test caseid :%d\n" , caseid);
@@ -340,6 +353,15 @@ int main(__unused int argc , char *argv[]) {
 		control.loadflag = 0;
 		control.unloadflag = 0;
 		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		break;
+	case 7:
+		control.loadtime = 2;
+		control.unloadtime = 2;
+		pthread_create(&a , NULL , test_load_unload_lib , &control);
+		control1.loadtime = 2;
+		control1.unloadtime = 2;
+		control1.libname = libname1;
+		pthread_create(&b , NULL , test_load_unload_lib , &control1);
 		break;
 	case 10:
 		thread_faceid(NULL);

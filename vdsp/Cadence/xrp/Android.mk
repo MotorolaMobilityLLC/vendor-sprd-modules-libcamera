@@ -164,7 +164,7 @@ LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/xrp-host/inc \
         $(LOCAL_PATH)/xrp-common/inc \
         $(LOCAL_PATH)/xrp-example/inc \
-        $(LOCAL_PATH)/vdsp-service/interface \
+        $(LOCAL_PATH)/vdsp-service \
         $(TOP)/vendor/sprd/modules/libmemion \
         $(TOP)/vendor/sprd/external/kernel-headers \
         $(TOP)/system/core/base/include \
@@ -176,7 +176,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 LOCAL_LDLIBS    := -lm -llog
 
 LOCAL_SRC_FILES := \
-                        vdsp-service/TestClient.cpp
+                        vdsp-example/TestClient.cpp
 
 LOCAL_SHARED_LIBRARIES := libutils libcutils libbinder libvdspservice libion
 
@@ -204,7 +204,7 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 LOCAL_LDLIBS    := -lm -llog
 
 LOCAL_SRC_FILES := \
-                        vdsp-service/TestClient2.cpp
+                        vdsp-example/TestClient2.cpp
 
 LOCAL_SHARED_LIBRARIES := libutils libcutils libbinder libvdspservice libion
 

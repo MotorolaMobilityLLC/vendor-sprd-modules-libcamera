@@ -1,10 +1,12 @@
-#include "Test.h"
+#include <binder/IPCThreadState.h>
+#include <binder/IServiceManager.h>
 #include "IVdspService.h"
-//#include "IcuUtils.h"
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
 #define LOG_TAG "VdspServer"
+
+using namespace android;
 
 int main() {
 	printf("service run \n");
