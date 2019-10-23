@@ -705,10 +705,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x09,
+			0x0A,
 			/*eurodist*/
 			{
-				0x0F,0x06,0x06/*0-2*/
+				0x0F,0x0C,0x0C/*0-2*/
 			},
 			/*reserved*/
 			{
