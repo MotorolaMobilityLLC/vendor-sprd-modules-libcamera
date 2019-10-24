@@ -1922,7 +1922,6 @@ void SprdCamera3MultiCamera::CallBackResult(uint32_t frame_number,
             return;
         }
     } else {
-        HAL_LOGD("stream_type", stream_type);
         result_buffers.stream = mSavedSnapRequest.snap_stream;
         result_buffers.buffer = mSavedSnapRequest.buffer;
     }
