@@ -1858,16 +1858,28 @@ void SprdCamera3MultiCamera::CallBackResult(uint32_t frame_number,
                                             int buffer_status, int stream_type,
                                             int camera_index) {
     int rc = 0;
+    bool callbackflag = false;
+    bool previewflag = false;
     void *input_buf1_addr = NULL;
     void *output_buf1_addr = NULL;
+    void *input_callback_addr = NULL;
+    void *output_callback_addr = NULL;
     camera3_capture_result_t result;
     List<multi_request_saved_t>::iterator itor;
     camera3_stream_buffer_t result_buffers;
+    camera3_capture_result_t result_callback;
+    List<multi_request_saved_t>::iterator itor_callback;
+    camera3_stream_buffer_t result_callback_buffers;
+
+    bzero(&result_callback, sizeof(camera3_capture_result_t));
+    bzero(&result_callback_buffers, sizeof(camera3_stream_buffer_t));
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
     List<multi_request_saved_t> *mSavedRequestList = NULL;
+    List<multi_request_saved_t> *mSavedCallRequestList = NULL;
     if (stream_type == CALLBACK_STREAM) {
         mSavedRequestList = &mSavedPrevRequestList;
+        mSavedCallRequestList = &mSavedCallbackRequestList;
     } else if (stream_type == DEFAULT_STREAM) {
         mSavedRequestList = &mSavedCallbackRequestList;
     } else if (stream_type == VIDEO_STREAM) {
@@ -1876,6 +1888,21 @@ void SprdCamera3MultiCamera::CallBackResult(uint32_t frame_number,
 
     if (stream_type != SNAPSHOT_STREAM) {
         Mutex::Autolock l(mRequestLock);
+        itor_callback = mSavedCallRequestList->begin();
+        while (itor_callback != mSavedCallRequestList->end()) {
+            if (itor_callback->frame_number == frame_number) {
+                if (camera_index != itor_callback->metaNotifyIndex) {
+                    return;
+                }
+                result_callback_buffers.stream = itor_callback->stream;
+                result_callback_buffers.buffer = itor_callback->buffer;
+                mSavedCallRequestList->erase(itor_callback);
+                callbackflag = true;
+                break;
+            }
+            itor_callback++;
+        }
+
         itor = mSavedRequestList->begin();
         while (itor != mSavedRequestList->end()) {
             if (itor->frame_number == frame_number) {
@@ -1885,6 +1912,7 @@ void SprdCamera3MultiCamera::CallBackResult(uint32_t frame_number,
                 result_buffers.stream = itor->stream;
                 result_buffers.buffer = itor->buffer;
                 mSavedRequestList->erase(itor);
+                previewflag = true;
                 break;
             }
             itor++;
@@ -1898,11 +1926,32 @@ void SprdCamera3MultiCamera::CallBackResult(uint32_t frame_number,
         result_buffers.stream = mSavedSnapRequest.snap_stream;
         result_buffers.buffer = mSavedSnapRequest.buffer;
     }
+
     HAL_LOGD("send frame %u, status.%d, result_buffers.buffer %p,"
-             "camera_index %d, stream_type %d",
+             "camera_index %d, stream_type %d callbackflag %d",
              frame_number, buffer_status, &result_buffers.buffer, camera_index,
-             stream_type);
+             stream_type, callbackflag);
     CallBackMetadata();
+    if (callbackflag && previewflag) {
+        rc = gMultiCam->map(result_callback_buffers.buffer,
+                            &output_callback_addr);
+        rc = gMultiCam->map(result_buffers.buffer, &output_buf1_addr);
+        memcpy(output_callback_addr, output_buf1_addr,
+               ADP_BUFSIZE(*result_callback_buffers.buffer));
+        gMultiCam->unmap(result_buffers.buffer);
+        gMultiCam->unmap(result_callback_buffers.buffer);
+
+        result_callback_buffers.status = buffer_status;
+        result_callback_buffers.acquire_fence = -1;
+        result_callback_buffers.release_fence = -1;
+        result_callback.result = NULL;
+        result_callback.frame_number = frame_number;
+        result_callback.num_output_buffers = 1;
+        result_callback.output_buffers = &result_callback_buffers;
+        result_callback.input_buffer = NULL;
+        result_callback.partial_result = 0;
+        mCallbackOps->process_capture_result(mCallbackOps, &result_callback);
+    }
 
     result_buffers.status = buffer_status;
     result_buffers.acquire_fence = -1;
@@ -2645,124 +2694,125 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                      touch_area[4]);
         }
 
-    int32_t af_area[5] = {0};
-    if (meta->exists(ANDROID_CONTROL_AF_REGIONS)) {
-        af_area[0] =
-            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[0];
-        af_area[1] =
-            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[1];
-        af_area[2] =
-            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[2];
-        af_area[3] =
-            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[3];
-        af_area[4] =
-            meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[4];
-        HAL_LOGD("app af_area = %d, %d, %d, %d, %d", af_area[0],
-            af_area[1], af_area[2], af_area[3], af_area[4]);
-    }
+        int32_t af_area[5] = {0};
+        if (meta->exists(ANDROID_CONTROL_AF_REGIONS)) {
+            af_area[0] = meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[0];
+            af_area[1] = meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[1];
+            af_area[2] = meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[2];
+            af_area[3] = meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[3];
+            af_area[4] = meta->find(ANDROID_CONTROL_AF_REGIONS).data.i32[4];
+            HAL_LOGD("app af_area = %d, %d, %d, %d, %d", af_area[0], af_area[1],
+                     af_area[2], af_area[3], af_area[4]);
+        }
 
-    if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
-        float left_offest = 0, top_offest = 0;
-        float left_dst = 0, top_dst = 0;
-        left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
-        top_offest = ((float)mWideMaxHeight - (float)mSwMaxHeight) / 2;
-        left_dst = af_area[2]- af_area[0];
-        top_dst = af_area[3]- af_area[1];
-        //af_area[0] = af_area[0] * mZoomValue - left_offest;
-        //af_area[1] = af_area[1] * mZoomValue - top_offest;
-        af_area[0] = af_area[0] * ((float)mSwMaxWidth / (float)mWideMaxWidth) * 0.6;
-        af_area[1] = af_area[1] * ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
-        af_area[2] = af_area[0] + left_dst;
-        af_area[3] = af_area[1] + top_dst;
-        metaSettingsSw->update(ANDROID_CONTROL_AF_REGIONS,
-                           af_area, ARRAY_SIZE(af_area));
-        HAL_LOGD("sw af_area = %d, %d, %d, %d, %d", af_area[0],
-            af_area[1], af_area[2], af_area[3], af_area[4]);
-    } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
-        float left_offest = 0, top_offest = 0;
-        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
-        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
-        af_area[0] = af_area[0] - left_offest;
-        af_area[1] = af_area[1] - top_offest + 1;
-        af_area[2] = af_area[2] - left_offest;
-        af_area[3] = af_area[3] - top_offest + 1;
-        metaSettingsTele->update(ANDROID_CONTROL_AF_REGIONS,
-                             af_area, ARRAY_SIZE(af_area));
-        HAL_LOGD("tele af_area = %d, %d, %d, %d, %d", af_area[0],
-            af_area[1], af_area[2], af_area[3], af_area[4]);
-    } else { // wide
-        float left_offest = 0, top_offest = 0;
-        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
-        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
-        af_area[0] = af_area[0] - left_offest;
-        af_area[1] = af_area[1] - top_offest + 1;
-        af_area[2] = af_area[2] - left_offest;
-        af_area[3] = af_area[3] - top_offest + 1;
-        metaSettingsWide->update(ANDROID_CONTROL_AF_REGIONS,
-                             af_area, ARRAY_SIZE(af_area));
-        HAL_LOGD("wide af_area = %d, %d, %d, %d, %d", af_area[0],
-            af_area[1], af_area[2], af_area[3], af_area[4]);
-    }
+        if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
+            float left_offest = 0, top_offest = 0;
+            float left_dst = 0, top_dst = 0;
+            left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
+            top_offest = ((float)mWideMaxHeight - (float)mSwMaxHeight) / 2;
+            left_dst = af_area[2] - af_area[0];
+            top_dst = af_area[3] - af_area[1];
+            // af_area[0] = af_area[0] * mZoomValue - left_offest;
+            // af_area[1] = af_area[1] * mZoomValue - top_offest;
+            af_area[0] =
+                af_area[0] * ((float)mSwMaxWidth / (float)mWideMaxWidth) * 0.6;
+            af_area[1] = af_area[1] *
+                         ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
+            af_area[2] = af_area[0] + left_dst;
+            af_area[3] = af_area[1] + top_dst;
+            metaSettingsSw->update(ANDROID_CONTROL_AF_REGIONS, af_area,
+                                   ARRAY_SIZE(af_area));
+            HAL_LOGD("sw af_area = %d, %d, %d, %d, %d", af_area[0], af_area[1],
+                     af_area[2], af_area[3], af_area[4]);
+        } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
+            float left_offest = 0, top_offest = 0;
+            left_offest =
+                ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
+            top_offest =
+                ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
+            af_area[0] = af_area[0] - left_offest;
+            af_area[1] = af_area[1] - top_offest + 1;
+            af_area[2] = af_area[2] - left_offest;
+            af_area[3] = af_area[3] - top_offest + 1;
+            metaSettingsTele->update(ANDROID_CONTROL_AF_REGIONS, af_area,
+                                     ARRAY_SIZE(af_area));
+            HAL_LOGD("tele af_area = %d, %d, %d, %d, %d", af_area[0],
+                     af_area[1], af_area[2], af_area[3], af_area[4]);
+        } else { // wide
+            float left_offest = 0, top_offest = 0;
+            left_offest =
+                ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
+            top_offest =
+                ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
+            af_area[0] = af_area[0] - left_offest;
+            af_area[1] = af_area[1] - top_offest + 1;
+            af_area[2] = af_area[2] - left_offest;
+            af_area[3] = af_area[3] - top_offest + 1;
+            metaSettingsWide->update(ANDROID_CONTROL_AF_REGIONS, af_area,
+                                     ARRAY_SIZE(af_area));
+            HAL_LOGD("wide af_area = %d, %d, %d, %d, %d", af_area[0],
+                     af_area[1], af_area[2], af_area[3], af_area[4]);
+        }
 
-    int32_t ae_area[5] = {0};
-    if (meta->exists(ANDROID_CONTROL_AE_REGIONS)) {
-        ae_area[0] =
-            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[0];
-        ae_area[1] =
-            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[1];
-        ae_area[2] =
-            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[2];
-        ae_area[3] =
-            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[3];
-        ae_area[4] =
-            meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[4];
-        HAL_LOGD("app ae_area = %d, %d, %d, %d, %d", ae_area[0],
-            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
-    }
+        int32_t ae_area[5] = {0};
+        if (meta->exists(ANDROID_CONTROL_AE_REGIONS)) {
+            ae_area[0] = meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[0];
+            ae_area[1] = meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[1];
+            ae_area[2] = meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[2];
+            ae_area[3] = meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[3];
+            ae_area[4] = meta->find(ANDROID_CONTROL_AE_REGIONS).data.i32[4];
+            HAL_LOGD("app ae_area = %d, %d, %d, %d, %d", ae_area[0], ae_area[1],
+                     ae_area[2], ae_area[3], ae_area[4]);
+        }
 
-    if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
-        float left_offest = 0, top_offest = 0;
-        float left_dst = 0, top_dst = 0;
-        left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
-        top_offest = ((float)mWideMaxHeight - (float)mSwMaxHeight) / 2;
-        left_dst = ae_area[2]- ae_area[0];
-        top_dst = ae_area[3]- ae_area[1];
-        //ae_area[0] = ae_area[0] * mZoomValue - left_offest;
-        //ae_area[1] = ae_area[1] * mZoomValue - top_offest;
-        ae_area[0] = ae_area[0] * ((float)mSwMaxWidth / (float)mWideMaxWidth) * 0.6;
-        ae_area[1] = ae_area[1] * ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
-        ae_area[2] = ae_area[0] + left_dst;
-        ae_area[3] = ae_area[1] + top_dst;
-        metaSettingsSw->update(ANDROID_CONTROL_AE_REGIONS,
-                           ae_area, ARRAY_SIZE(ae_area));
-        HAL_LOGD("sw ae_area = %d, %d, %d, %d, %d", ae_area[0],
-            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
-    } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
-        float left_offest = 0, top_offest = 0;
-        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
-        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
-        ae_area[0] = ae_area[0] - left_offest;
-        ae_area[1] = ae_area[1] - top_offest + 1;
-        ae_area[2] = ae_area[2] - left_offest;
-        ae_area[3] = ae_area[3] - top_offest + 1;
-        metaSettingsTele->update(ANDROID_CONTROL_AE_REGIONS,
-                             ae_area, ARRAY_SIZE(ae_area));
-        HAL_LOGD("tele ae_area = %d, %d, %d, %d, %d", ae_area[0],
-            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
-    } else { // wide
-        float left_offest = 0, top_offest = 0;
-        left_offest = ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
-        top_offest  = ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
-        ae_area[0] = ae_area[0] - left_offest;
-        ae_area[1] = ae_area[1] - top_offest + 1;
-        ae_area[2] = ae_area[2] - left_offest;
-        ae_area[3] = ae_area[3] - top_offest + 1;
-        metaSettingsWide->update(ANDROID_CONTROL_AE_REGIONS,
-                             ae_area, ARRAY_SIZE(ae_area));
-        HAL_LOGD("wide ae_area = %d, %d, %d, %d, %d", ae_area[0],
-            ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
-    }
-
+        if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
+            float left_offest = 0, top_offest = 0;
+            float left_dst = 0, top_dst = 0;
+            left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
+            top_offest = ((float)mWideMaxHeight - (float)mSwMaxHeight) / 2;
+            left_dst = ae_area[2] - ae_area[0];
+            top_dst = ae_area[3] - ae_area[1];
+            // ae_area[0] = ae_area[0] * mZoomValue - left_offest;
+            // ae_area[1] = ae_area[1] * mZoomValue - top_offest;
+            ae_area[0] =
+                ae_area[0] * ((float)mSwMaxWidth / (float)mWideMaxWidth) * 0.6;
+            ae_area[1] = ae_area[1] *
+                         ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
+            ae_area[2] = ae_area[0] + left_dst;
+            ae_area[3] = ae_area[1] + top_dst;
+            metaSettingsSw->update(ANDROID_CONTROL_AE_REGIONS, ae_area,
+                                   ARRAY_SIZE(ae_area));
+            HAL_LOGD("sw ae_area = %d, %d, %d, %d, %d", ae_area[0], ae_area[1],
+                     ae_area[2], ae_area[3], ae_area[4]);
+        } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
+            float left_offest = 0, top_offest = 0;
+            left_offest =
+                ((float)mWideMaxWidth / 0.6 - (float)mTeleMaxWidth) / 2;
+            top_offest =
+                ((float)mWideMaxHeight / 0.6 - (float)mTeleMaxHeight) / 2;
+            ae_area[0] = ae_area[0] - left_offest;
+            ae_area[1] = ae_area[1] - top_offest + 1;
+            ae_area[2] = ae_area[2] - left_offest;
+            ae_area[3] = ae_area[3] - top_offest + 1;
+            metaSettingsTele->update(ANDROID_CONTROL_AE_REGIONS, ae_area,
+                                     ARRAY_SIZE(ae_area));
+            HAL_LOGD("tele ae_area = %d, %d, %d, %d, %d", ae_area[0],
+                     ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
+        } else { // wide
+            float left_offest = 0, top_offest = 0;
+            left_offest =
+                ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
+            top_offest =
+                ((float)mWideMaxHeight / 0.6 - (float)mWideMaxHeight) / 2;
+            ae_area[0] = ae_area[0] - left_offest;
+            ae_area[1] = ae_area[1] - top_offest + 1;
+            ae_area[2] = ae_area[2] - left_offest;
+            ae_area[3] = ae_area[3] - top_offest + 1;
+            metaSettingsWide->update(ANDROID_CONTROL_AE_REGIONS, ae_area,
+                                     ARRAY_SIZE(ae_area));
+            HAL_LOGD("wide ae_area = %d, %d, %d, %d, %d", ae_area[0],
+                     ae_area[1], ae_area[2], ae_area[3], ae_area[4]);
+        }
     }
 
     if (mZoomValue < mSwitch_W_T_Threshold &&
@@ -2947,17 +2997,13 @@ SprdCamera3MultiCamera::TWPreviewMuxerThread::~TWPreviewMuxerThread() {
 bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
 #if 1
     buffer_handle_t *output_buffer = NULL;
-    buffer_handle_t *output_buffer2 = NULL;
 
     void *output_buf_addr = NULL;
-    void *output_buf_addr2 = NULL;
     void *input_buf1_addr = NULL;
     void *input_buf2_addr = NULL;
     void *input_buf3_addr = NULL;
     muxer_queue_msg_t muxer_msg;
     uint32_t frame_number = 0;
-    uint32_t frame_number2 = 0;
-    bool callbackflag = false;
     int rc;
     while (!mPreviewMuxerMsgList.empty()) {
         List<muxer_queue_msg_t>::iterator it;
@@ -2983,14 +3029,11 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
         } break;
         case MUXER_MSG_DATA_PROC: {
             int IsNeedreProcess;
-            bool callbackflag = false;
             camera3_stream_t *preview_stream = NULL;
             {
                 Mutex::Autolock l(gMultiCam->mRequestLock);
                 List<multi_request_saved_t>::iterator itor =
                     gMultiCam->mSavedPrevRequestList.begin();
-                List<multi_request_saved_t>::iterator itor2 =
-                    gMultiCam->mSavedCallbackRequestList.begin();
                 while (itor != gMultiCam->mSavedPrevRequestList.end()) {
                     if (itor->frame_number ==
                         muxer_msg.combo_frame.frame_number) {
@@ -3001,20 +3044,7 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                     }
                     itor++;
                 }
-                while (itor2 != gMultiCam->mSavedCallbackRequestList.end()) {
-                    if (itor2->frame_number ==
-                        muxer_msg.combo_frame.frame_number) {
-                        output_buffer2 = itor2->buffer;
-                        // preview_stream = itor2->preview_stream;
-                        frame_number2 = muxer_msg.combo_frame.frame_number;
-                        callbackflag = true;
-                        break;
-                    }
-                    itor2++;
-                }
             }
-            HAL_LOGD("threadloop1 frame_number %dframe_number2 %d",
-                     frame_number, frame_number2);
 
             if (output_buffer != NULL) {
                 HAL_LOGD("threadloop2 gMultiCam->mZoomValue %f",
@@ -3030,74 +3060,30 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                         gMultiCam->mZoomValue <
                             gMultiCam->mSwitch_W_T_Threshold) { // wide
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
-                        // rc = gMultiCam->map(output_buffer2,
-                        // &output_buf_addr2);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
                                             &input_buf1_addr);
-                        rc = gMultiCam->map(muxer_msg.combo_frame.buffer2,
-                                            &input_buf2_addr);
-                        rc = gMultiCam->map(muxer_msg.combo_frame.buffer3,
-                                            &input_buf3_addr);
-                        HAL_LOGD("threadloop2 buffer1");
                         memcpy(output_buf_addr, input_buf1_addr,
                                ADP_BUFSIZE(*output_buffer));
-                        if (callbackflag) {
-                            rc = gMultiCam->map(output_buffer2,
-                                                &output_buf_addr2);
-                            memcpy(output_buf_addr2, input_buf1_addr,
-                                   ADP_BUFSIZE(*output_buffer2));
-                            gMultiCam->unmap(output_buffer2);
-                        }
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer1);
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
                         gMultiCam->unmap(output_buffer);
                     } else if (gMultiCam->mZoomValue <
                                gMultiCam
                                    ->mSwitch_W_Sw_Threshold) { // super wide
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
-                        rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
-                                            &input_buf1_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer2,
                                             &input_buf2_addr);
-                        rc = gMultiCam->map(muxer_msg.combo_frame.buffer3,
-                                            &input_buf3_addr);
-                        HAL_LOGD("threadloop2 buffer2");
                         memcpy(output_buf_addr, input_buf2_addr,
                                ADP_BUFSIZE(*output_buffer));
-                        if (callbackflag) {
-                            rc = gMultiCam->map(output_buffer2,
-                                                &output_buf_addr2);
-                            memcpy(output_buf_addr2, input_buf2_addr,
-                                   ADP_BUFSIZE(*output_buffer2));
-                            gMultiCam->unmap(output_buffer2);
-                        }
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer1);
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
                         gMultiCam->unmap(output_buffer);
                     } else if (gMultiCam->mZoomValue >=
                                    gMultiCam->mSwitch_W_T_Threshold &&
                                gMultiCam->mZoomValue <= 8.0) { // tele
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
-                        rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
-                                            &input_buf1_addr);
-                        rc = gMultiCam->map(muxer_msg.combo_frame.buffer2,
-                                            &input_buf2_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer3,
                                             &input_buf3_addr);
-                        HAL_LOGD("threadloop2 buffer3");
                         memcpy(output_buf_addr, input_buf3_addr,
                                ADP_BUFSIZE(*output_buffer));
-                        if (callbackflag) {
-                            rc = gMultiCam->map(output_buffer2,
-                                                &output_buf_addr2);
-                            memcpy(output_buf_addr2, input_buf3_addr,
-                                   ADP_BUFSIZE(*output_buffer2));
-                            gMultiCam->unmap(output_buffer2);
-                        }
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer1);
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
                         gMultiCam->unmap(output_buffer);
                     }
@@ -3163,12 +3149,6 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                         muxer_msg.combo_frame.frame_number,
                         CAMERA3_BUFFER_STATUS_OK, CALLBACK_STREAM,
                         CAM_TYPE_MAIN);
-                    if (callbackflag) {
-                        gMultiCam->CallBackResult(
-                            muxer_msg.combo_frame.frame_number,
-                            CAMERA3_BUFFER_STATUS_OK, DEFAULT_STREAM,
-                            CAM_TYPE_MAIN);
-                    }
                 }
             }
         } break;
@@ -3467,8 +3447,6 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
     int rc = 0;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
 
-    HAL_LOGD("cur_frame_number:  %d", cur_frame_number);
-
     if (result_buffer == NULL) {
         // meta process
         metadata = result->result;
@@ -3552,7 +3530,6 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
             }
         }
     } else if (currStreamType == SNAPSHOT_STREAM) {
-        HAL_LOGD("currStreamType is SNAPSHOT_STREAM");
         if (mCapInputbuffer) {
             gMultiCam->pushBufferList(gMultiCam->mLocalBuffer, mCapInputbuffer,
                                       gMultiCam->mLocalBufferNumber,
@@ -3563,7 +3540,6 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
                        currStreamType, CAM_TYPE_MAIN);
     } else if (currStreamType == CALLBACK_STREAM) {
         {
-            HAL_LOGD("currStreamType is CALLBACK_STREAM");
             Mutex::Autolock l(mNotifyLockMain);
             for (List<camera3_notify_msg_t>::iterator i =
                      mNotifyListMain.begin();
@@ -3672,7 +3648,6 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
     camera_metadata_entry_t entry;
     float zoomWidth, zoomHeight;
 
-    HAL_LOGD("aux1 frame_number %d", cur_frame_number);
     if (result_buffer == NULL) {
         // meta process
         if (metadata.exists(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT)) {
@@ -3687,8 +3662,6 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
             gMultiCam->aux1_face_number = 0;
         }
 
-        HAL_LOGD("Aux1_face_number=%d,metadata=%p", gMultiCam->aux1_face_number,
-                 &metadata);
         if (gMultiCam->aux1_face_number) {
             for (int i = 0; i < gMultiCam->aux1_face_number; i++) {
                 // zoomWidth = (float)mWideMaxWidth / ((float)mSwMaxWidth);
@@ -3939,7 +3912,6 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
     camera_metadata_entry_t entry;
     float zoomWidth, zoomHeight;
 
-    HAL_LOGD("aux2 frame_number %d", cur_frame_number);
     if (result_buffer == NULL) {
         // meta process
 
@@ -3955,8 +3927,6 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
         } else {
             gMultiCam->aux2_face_number = 0;
         }
-        HAL_LOGD("Aux2_face_number=%d,metadata=%p", gMultiCam->aux2_face_number,
-                 &metadata);
         if (gMultiCam->aux2_face_number) {
             for (int i = 0; i < gMultiCam->aux2_face_number; i++) {
                 // zoomWidth = ((float)mWideMaxWidth) /
@@ -4079,7 +4049,6 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
             }
         }
     } else if (currStreamType == SNAPSHOT_STREAM) {
-        HAL_LOGD("xiaokun SNAPSHOT_STREAM");
 
         if (mCapInputbuffer) {
             gMultiCam->pushBufferList(gMultiCam->mLocalBuffer, mCapInputbuffer,
