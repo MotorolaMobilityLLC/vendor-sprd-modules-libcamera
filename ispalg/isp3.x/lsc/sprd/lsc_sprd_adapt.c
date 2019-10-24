@@ -2045,6 +2045,43 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			}
 			lsc_std_free(pm_lsc_full);
 			lsc_std_free(pm_lsc_crop);
+		} else if (fwstart_info->img_width_new == 1920 && fwstart_info->img_height_new == 1080) {
+			cxt->grid = 48;
+			cxt->gain_width = 23;
+			cxt->gain_height = 15;
+			fwstart_info->grid_new = cxt->grid;
+			fwstart_info->gain_width_new = cxt->gain_width;
+			fwstart_info->gain_height_new = cxt->gain_height;
+			pm_lsc_full = (struct pm_lsc_full *)malloc(sizeof(struct pm_lsc_full));
+			pm_lsc_full->img_width = cxt->init_img_width;
+			pm_lsc_full->img_height = cxt->init_img_height;
+			pm_lsc_full->grid = cxt->init_grid;
+			pm_lsc_full->gain_width = cxt->init_gain_width;
+			pm_lsc_full->gain_height = cxt->init_gain_height;
+			// Notice, if the crop action from binning size raw, do following action
+			binning_crop = 1;
+			if (binning_crop) {
+				pm_lsc_full->img_width /= 2;
+				pm_lsc_full->img_height /= 2;
+				pm_lsc_full->grid /= 2;
+			}
+
+			pm_lsc_crop = (struct pm_lsc_crop *)malloc(sizeof(struct pm_lsc_crop));
+			pm_lsc_crop->img_width = fwstart_info->img_width_new;
+			pm_lsc_crop->img_height = fwstart_info->img_height_new;
+			pm_lsc_crop->start_x = (pm_lsc_full->img_width - pm_lsc_crop->img_width) / 2;	// for crop center case
+			pm_lsc_crop->start_y = (pm_lsc_full->img_height - pm_lsc_crop->img_height) / 2;	// for crop center case
+			pm_lsc_crop->grid = 48;
+			pm_lsc_crop->gain_width = 23;
+			pm_lsc_crop->gain_height = 15;
+			for (i = 0; i < 8; i++) {
+				pm_lsc_full->input_table_buffer = cxt->std_init_lsc_table_param_buffer[i];
+				pm_lsc_crop->output_table_buffer = cxt->std_lsc_table_param_buffer[i];
+				rtn = lsc_pm_table_crop(pm_lsc_full, pm_lsc_crop, cxt->is_planar);
+				fwstart_info->lsc_tab_address_new[i] = cxt->std_lsc_table_param_buffer[i];
+			}
+			lsc_std_free(pm_lsc_full);
+			lsc_std_free(pm_lsc_crop);
 		} else {
 			ISP_LOGI("FW_START, lsc do not support img_size=[%d,%d], please check", fwstart_info->img_width_new, fwstart_info->img_height_new);
 		}
@@ -2511,7 +2548,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		return rtn;
 	}
 	// cmd set table index
-	if (cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0) {
+	if (cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0) {
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			memcpy(cxt->lsc_buffer, cxt->std_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width * gain_height * 4 * sizeof(cmr_u16));
 		} else {
@@ -2592,8 +2629,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			chnl_gain_num = fwstart_info->gain_width_new * fwstart_info->gain_height_new;
 
-			if (fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && fwstart_info->grid_new == 32) {
-				ISP_LOGV("FW_START, 720p Mode, Send TL84 table");
+			if (fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && (fwstart_info->grid_new == 32 || fwstart_info->grid_new == 48)) {
+				ISP_LOGV("FW_START, 720p or 1080p Mode, Send TL84 table");
 				memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[DEFAULT_TAB_INDEX], chnl_gain_num * 4 * sizeof(cmr_u16));
 				lsc_table_interlace2planar(fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new, fwstart_info->gain_height_new, cxt->gain_pattern, cxt->output_gain_pattern);
 				will_do_post_gain = 1;
@@ -2639,13 +2676,19 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				cxt->cur_lsc_pm_mode = 0;	// common table size
 			} else if (fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720) {
 				cxt->cur_lsc_pm_mode = 1;	// 720p table size
+			} else if (fwstart_info->img_width_new == 1920 && fwstart_info->img_height_new == 1080) {
+				cxt->cur_lsc_pm_mode = 1;	// 1080p table size
 			}
+
 			ISP_LOGI("FW_START, new table size=[%d,%d] grid=%d", cxt->gain_width, cxt->gain_height, cxt->grid);
 			ISP_LOGI("FW_START, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d", cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode);
 
 			// change to 720p mode
 			if (fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720) {
 				ISP_LOGV("FW_START, 720p Mode");
+				memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[2], chnl_gain_num * 4 * sizeof(cmr_u16));
+			}else if (fwstart_info->img_width_new == 1920 && fwstart_info->img_height_new == 1080) {
+				ISP_LOGV("FW_START, 1080p Mode");
 				memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[2], chnl_gain_num * 4 * sizeof(cmr_u16));
 			} else if (cxt->frame_count == 0) {
 				if (cxt->lsc_id == 1 && cxt->gain_width == lsc_last_info->gain_width && cxt->gain_height == lsc_last_info->gain_height) {
@@ -2743,7 +2786,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 		//copy the output to last_info
 		chnl_gain_num = cxt->gain_width * cxt->gain_height;
-		if (!(cxt->gain_width == 23 && cxt->gain_height == 15 && cxt->grid == 32) && cxt->lsc_id == 1) {
+		if (!(cxt->gain_width == 23 && cxt->gain_height == 15 && (cxt->grid == 32 || cxt->grid == 48))&& cxt->lsc_id == 1) {
 			memcpy(lsc_last_info->table, cxt->output_lsc_table, chnl_gain_num * 4 * sizeof(cmr_u16));
 			lsc_last_info->gain_width = cxt->gain_width;
 			lsc_last_info->gain_height = cxt->gain_height;

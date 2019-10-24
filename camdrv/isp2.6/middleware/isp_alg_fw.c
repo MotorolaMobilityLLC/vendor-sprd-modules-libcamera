@@ -4530,7 +4530,18 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 				ISP_BLK_2D_LSC,
 				&adaptive_size_info[0], 0);
 			ret = isp_pm_ioctl(cxt->handle_pm, cmd, &input2, NULL);
-		} else {
+		} else  if ((pic_size.w == 1920) && (pic_size.h == 1080)) {
+			ISP_LOGI("[ALSC] lsc_pm_normalization case3. image size %d %d\n", pic_size.w, pic_size.h);
+			adaptive_size_info[0] = cxt->commn_cxt.src.w;
+			adaptive_size_info[1] = cxt->commn_cxt.src.h;
+			adaptive_size_info[2] = 48;
+			memset(&param_data_grid, 0, sizeof(param_data_grid));
+			BLOCK_PARAM_CFG(input2, param_data_grid,
+				ISP_PM_BLK_LSC_UPDATE_GRID,
+				ISP_BLK_2D_LSC,
+				&adaptive_size_info[0], 0);
+			ret = isp_pm_ioctl(cxt->handle_pm, cmd, &input2, NULL);
+		} else{
 			ISP_LOGE("[ALSC] lsc_pm_normalization error");
 		}
 	}
