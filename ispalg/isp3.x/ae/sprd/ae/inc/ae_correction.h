@@ -151,7 +151,8 @@ struct ae_lib_calc_out  {
 	cmr_u32 frame_id;
 	cmr_u32 stable;
 	cmr_u32 face_stable;
-	cmr_u32 near_stable;		
+	cmr_u32 face_enable;
+	cmr_u32 near_stable;
 	cmr_s32 cur_bv;
 	cmr_s32 cur_bv_nonmatch;
 	cmr_u16 cur_lum;			/*the lum of image:0 ~255 */
