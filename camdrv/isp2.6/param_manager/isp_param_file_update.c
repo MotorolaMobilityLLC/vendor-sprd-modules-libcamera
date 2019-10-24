@@ -104,7 +104,7 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"bwu_bwd",
 	"raw_gtm",
 	"rgb_ltm",
-	"yuv_ltm"
+	"yuv_ltm",
 	"ynrs",
 };
 #endif
@@ -423,15 +423,7 @@ cmr_s32 read_ae_reserve(FILE * fp, struct ae_reserve * ae_reserve)
 			break;
 		}
 
-		if (strstr(line_buff, "{") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "/*") != NULL) {
-			continue;
-		}
-
-		if (strstr(line_buff, "},") != NULL) {
+		if (strstr(line_buff, "};") != NULL) {
 			break;
 		}
 
@@ -456,7 +448,6 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 	cmr_s32 i, j;
 	char *ae_tab_info[3] = { NULL };
 	char *ae_scene_info[6] = { NULL };
-	char ae_auto_iso_info[64];
 	char ae_weight_info[64];
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
@@ -475,7 +466,7 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 		}
 	}
 
-	for (i = 0; i < 6; i++) {
+	for (i = 0; i < 4; i++) {
 		ae_scene_info[i] = (char *)malloc(64 * sizeof(char));
 		if (NULL == ae_scene_info[i]) {
 			ISP_LOGE("fail to malloc mem!");
@@ -621,20 +612,13 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 					break;
 			}
 		}
-		if (strstr(line_buf, "_ae_reserve_") != NULL) {
-			for (i = 0; i < AE_FLICKER_NUM; i++) {
-				sprintf(ae_auto_iso_info, "_ae_auto_iso_%d", i);
-				if (strstr(line_buf, ae_auto_iso_info) != NULL) {
-
+		if (strstr(line_buf, "ae_tab_reserved") != NULL) {
 					rtn = read_ae_reserve(fp, &ae_ptr->ae_reserve);
 					if (0x00 != rtn) {
 						goto exit;
 					}
-					if (1 == i)
 						flag_end = 1;
 					break;
-				}
-			}
 		}
 		if (0 != flag_end)
 			break;
@@ -649,7 +633,7 @@ exit:
 			free(ae_tab_info[i]);
 		}
 	}
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 4; i++) {
 		if (NULL != ae_scene_info[i]) {
 			free(ae_scene_info[i]);
 		}
