@@ -413,6 +413,10 @@ typedef struct {
     uint8_t gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
     int32_t ultrawide_id;
+    uint8_t sprd_is_logo_watermark;
+    uint8_t sprd_is_time_watermark;
+    uint8_t available_logo_watermark;
+    uint8_t available_time_watermark;
 } SPRD_DEF_Tag;
 
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL

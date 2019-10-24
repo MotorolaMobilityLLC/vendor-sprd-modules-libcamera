@@ -98,6 +98,8 @@ typedef struct {
     uint8_t availableAutoHdr;
     uint8_t availableAiScene;
     uint8_t availableAuto3Dnr;
+    uint8_t availLogoWatermark;
+    uint8_t availTimeWatermark;
 } camera3_common_t;
 
 typedef struct {
@@ -347,6 +349,10 @@ const uint8_t availableAuto3DNR = 1;
 #else
 const uint8_t availableAuto3DNR = 0;
 #endif
+/* LOGO watermark not support */
+const uint8_t availLogoWatermark = 0;
+/* Time watermark not support */
+const uint8_t availTimeWatermark = 0;
 
 const uint8_t availableSlowMotion[] = {0, 1, 4};
 
@@ -1510,6 +1516,9 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            availableFaceDetectModes, sizeof(availableFaceDetectModes));
     camera3_default_info.common.availableAutoHdr = availableAutoHDR;
     camera3_default_info.common.availableAuto3Dnr = availableAuto3DNR;
+    camera3_default_info.common.availLogoWatermark = availLogoWatermark;
+    camera3_default_info.common.availTimeWatermark = availTimeWatermark;
+
     camera3_default_info.common.availableAiScene =
         property_get_bool("persist.vendor.cam.ai.scence.enable", 0);
 
@@ -2163,6 +2172,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_OFF;
 #else
+    s_setting[cameraId].sprddefInfo.available_logo_watermark =
+        camera3_default_info.common.availLogoWatermark;
+    s_setting[cameraId].sprddefInfo.available_time_watermark =
+        camera3_default_info.common.availTimeWatermark;
+
     s_setting[cameraId].sprddefInfo.rec_snap_support =
         ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT_ON;
 #endif
@@ -2615,7 +2629,13 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AI_SCENE,
                       &(s_setting[cameraId].sprddefInfo.availabe_ai_scene), 1);
-    //    FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+ 
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_LOGOWATERMARK,
+                      &(s_setting[cameraId].sprddefInfo.available_logo_watermark), 1);
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_TIMEWATERMARK,
+                      &(s_setting[cameraId].sprddefInfo.available_time_watermark), 1);
+
+   //    FILL_CAM_INFO_ARRAY(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
     //                        0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE,
     //                        ANDROID_SPRD_CAM_FEATURE_LIST)
     staticInfo.update(
@@ -3895,6 +3915,9 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     requestInfo.update(ANDROID_SPRD_IS_3DNR_SCENE, &sprdIs3DnrScene, 1);
     uint8_t sprdAiSceneType = HAL_AI_SCENE_DEFAULT;
     requestInfo.update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT, &sprdAiSceneType, 1);
+    uint8_t sprdWaterMarkEnabled = 0;
+    requestInfo.update(ANDROID_SPRD_LOGOWATERMARK_ENABLED, &sprdWaterMarkEnabled, 1);
+    requestInfo.update(ANDROID_SPRD_TIMEWATERMARK_ENABLED, &sprdWaterMarkEnabled, 1);
 
     if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd")) {
         uint8_t sprdFlashLcdMode = FLASH_LCD_MODE_OFF;
@@ -5143,6 +5166,18 @@ int SprdCamera3Setting::updateWorkParameters(
             HAL_LOGV("flash lcd mode %d",
                      s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode);
         }
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_LOGOWATERMARK_ENABLED)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_LOGOWATERMARK_ENABLED).data.u8[0];
+	GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_is_logo_watermark,
+	                 valueU8, ANDROID_SPRD_LOGOWATERMARK_ENABLED);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_TIMEWATERMARK_ENABLED)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_TIMEWATERMARK_ENABLED).data.u8[0];
+	GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_is_time_watermark,
+	                 valueU8, ANDROID_SPRD_TIMEWATERMARK_ENABLED);
     }
 
     HAL_LOGD(

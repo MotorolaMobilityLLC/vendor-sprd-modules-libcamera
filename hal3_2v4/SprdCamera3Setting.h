@@ -373,6 +373,10 @@ typedef struct {
     uint8_t availabe_gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
     uint8_t availabe_auto_3dnr;
+    uint8_t sprd_is_logo_watermark;
+    uint8_t sprd_is_time_watermark;
+    uint8_t available_logo_watermark;
+    uint8_t available_time_watermark;
 } SPRD_DEF_Tag;
 
 typedef struct {
