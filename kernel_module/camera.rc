@@ -4,6 +4,7 @@ on post-fs
     insmod ${ro.vendor.ko.mount.point}/socko/sprd_camera.ko
     insmod ${ro.vendor.ko.mount.point}/socko/sprd_cpp.ko
     insmod ${ro.vendor.ko.mount.point}/socko/mmdvfs.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_fd.ko
     trigger sprd-flash-ko
 
 on factorytest
@@ -12,6 +13,7 @@ on factorytest
     insmod ${ro.vendor.ko.mount.point}/socko/sprd_camera.ko
     insmod ${ro.vendor.ko.mount.point}/socko/sprd_cpp.ko
     insmod ${ro.vendor.ko.mount.point}/socko/mmdvfs.ko
+    insmod ${ro.vendor.ko.mount.point}/socko/sprd_fd.ko
     trigger sprd-flash-ko
 
 on cali-fs
