@@ -1974,6 +1974,7 @@ typedef enum {
     CAMERA_IOCTRL_ULTRA_WIDE_MODE,
     CAMERA_IOCTRL_GET_REBOKE_DATA,
     CAMERA_TOCTRL_GET_BOKEH_SN_TRIM,
+    CAMERA_TOCTRL_GET_AF_SUPPORT,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

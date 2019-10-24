@@ -6690,6 +6690,42 @@ cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video) {
     return ret;
 }
 
+cmr_int camera_get_af_support(cmr_handle oem_handle, cmr_u16 *af_support) {
+
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_context *sn_cxt = NULL;
+    struct sensor_exp_info *sensor_info_ptr;
+
+    sn_cxt = &(cxt->sn_cxt);
+    CHECK_HANDLE_VALID(sn_cxt);
+
+    ret = cmr_sensor_get_info(sn_cxt->sensor_handle, cxt->camera_id,
+                              &(sn_cxt->sensor_info));
+    if (ret) {
+        CMR_LOGE("fail to get sensor info ret %ld", ret);
+        goto exit;
+    }
+    sensor_info_ptr = &(sn_cxt->sensor_info);
+    CHECK_HANDLE_VALID(sensor_info_ptr);
+
+    if (sensor_info_ptr->raw_info_ptr &&
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr &&
+        sensor_info_ptr->raw_info_ptr->ioctrl_ptr->set_pos) {
+        *af_support = 1;
+    } else {
+        *af_support = 0;
+    }
+
+    CMR_LOGI("af_support %ld", *af_support);
+    return ret;
+exit:
+    ATRACE_END();
+    return ret;
+
+}
+
+
 cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
                                    cmr_uint is_ultra_wide) {
     cmr_int ret = CMR_CAMERA_SUCCESS;

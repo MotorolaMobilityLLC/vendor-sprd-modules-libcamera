@@ -599,6 +599,8 @@ cmr_int camera_local_set_gpu_mem_ops(cmr_handle oem_handle, void *cb_of_malloc,
                                      void *cb_of_free);
 cmr_int camera_get_grab_capability(cmr_handle oem_handle,
                                    struct cmr_path_capability *capability);
+cmr_int camera_get_af_support(cmr_handle oem_handle, cmr_u16 *af_support);
+
 cmr_int camera_local_image_sw_algorithm_processing(
     cmr_handle oem_handle, struct image_sw_algorithm_buf *src_sw_algorithm_buf,
     struct image_sw_algorithm_buf *dst_sw_algorithm_buf,

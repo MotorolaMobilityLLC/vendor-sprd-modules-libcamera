@@ -1173,6 +1173,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = cmr_get_bokeh_sn_trim(handle, (struct sprd_img_path_rect *)param);
         break;
     }
+    case CAMERA_TOCTRL_GET_AF_SUPPORT: {
+        ret = camera_get_af_support(handle, (cmr_u16 *)param);
+        break;
+    }
     default:
         break;
     }

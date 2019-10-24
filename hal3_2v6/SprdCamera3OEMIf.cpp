@@ -3042,6 +3042,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     ATRACE_CALL();
 
     cmr_int ret = 0;
+    cmr_u16 af_support = 0;
     bool is_volte = false;
     char value[PROPERTY_VALUE_MAX];
     char multicameramode[PROPERTY_VALUE_MAX];
@@ -3083,6 +3084,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     mVideoProcessedWithPreview = false;
     mVideo3dnrFlag = VIDEO_OFF;
     camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &mVideo3dnrFlag, NULL);
+    camera_ioctrl(CAMERA_TOCTRL_GET_AF_SUPPORT, &af_support, NULL);
+    sprddefInfo.af_support = af_support;
+    mSetting->setSPRDDEFTag(sprddefInfo);
 
     if (mRecordingMode == false && sprddefInfo.sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
@@ -10257,7 +10261,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     } else {
         mZslMaxFrameNum = 1;
     }
-    if(sprddefInfo.is_smile_capture == 1) {
+    if(sprddefInfo.is_smile_capture == 1 && sprddefInfo.af_support == 1) {
        int count=0;
        while (1) {
            usleep(1000);

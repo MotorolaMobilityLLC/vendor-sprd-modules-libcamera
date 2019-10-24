@@ -397,6 +397,7 @@ typedef struct {
     uint8_t sprd_is_time_watermark;
     uint8_t available_logo_watermark;
     uint8_t available_time_watermark;
+    uint8_t af_support;
 } SPRD_DEF_Tag;
 
 typedef struct {
