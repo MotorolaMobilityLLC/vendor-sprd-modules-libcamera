@@ -415,7 +415,11 @@ static struct sensor_module_info s_imx363_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = 4,
                              .pixel_width = 10,
-                             .is_loose = 0,
+                             #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+                                 .is_loose = 2,
+                             #else
+                                 .is_loose = 0,
+                             #endif
                          },
 
                      .change_setting_skip_num = 1,

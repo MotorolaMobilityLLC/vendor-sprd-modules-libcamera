@@ -872,7 +872,11 @@ static struct sensor_module_info s_imx258_module_info_tab[VENDOR_NUM] = {
             .bus_width = 4,
             .pixel_width = 10,
             /*0:mipi_raw,1:normal_raw*/
-            .is_loose = 0,
+            #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+                .is_loose = 2,
+            #else
+                .is_loose = 0,
+            #endif
         },
 
         .change_setting_skip_num = 1,
@@ -903,7 +907,11 @@ static struct sensor_module_info s_imx258_module_info_tab[VENDOR_NUM] = {
             .type = SENSOR_INTERFACE_TYPE_CSI2,
             .bus_width = 4,
             .pixel_width = 10,
-            .is_loose = 0,
+            #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+                .is_loose = 2,
+            #else
+                .is_loose = 0,
+            #endif
         },
 
         .change_setting_skip_num = 1,
@@ -935,7 +943,11 @@ static struct sensor_module_info s_imx258_module_info_tab[VENDOR_NUM] = {
             .type = SENSOR_INTERFACE_TYPE_CSI2,
             .bus_width = 4,
             .pixel_width = 10,
-            .is_loose = 0,
+            #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+                .is_loose = 2,
+            #else
+                .is_loose = 0,
+            #endif
         },
         .change_setting_skip_num = 1,
         .horizontal_view_angle = 35,
