@@ -1909,6 +1909,19 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
                 cxt->sn_cxt.exif_info.ExposureTime.denominator;
         }
     }
+
+    if (CAMERA_EVT_CB_SNAPSHOT_DONE == oem_cb_type) {
+        struct setting_cmd_parameter setting_param;
+        struct exif_spec_pic_taking_cond_tag exif_pic_info;
+        EXIF_RATIONAL_T exposure_time;
+        exposure_time.numerator = frame_ptr->sensor_info.exposure_time_numerator;
+        exposure_time.denominator = frame_ptr->sensor_info.exposure_time_denominator ;
+        setting_param.camera_id = cxt->camera_id;
+        setting_param.cmd_type_value = (cmr_uint)&exposure_time;
+        cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                          SETTING_SET_EXIF_EXPOSURE_TIME, &setting_param);
+    }
+
     message.msg_type = oem_func;
     message.sub_msg_type = oem_cb_type;
     if (CAMERA_EVT_CB_CAPTURE_FRAME_DONE == oem_cb_type) {
