@@ -149,6 +149,7 @@ struct frm_info {
     cmr_uint zsl_private;
     cmr_int fd;
     cmr_s64 monoboottime;
+    cmr_u32 zoom_ratio;
 };
 
 struct beauty_info {

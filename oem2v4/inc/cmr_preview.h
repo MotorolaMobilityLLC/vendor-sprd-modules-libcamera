@@ -142,7 +142,7 @@ struct preview_md_ops {
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
     cmr_int (*set_3dnr_ev)(cmr_handle oem_handle, cmr_u32 enable);
-    cmr_int (* start_scale)(cmr_handle oem_handle, cmr_handle caller_handle,
+    cmr_int (*start_scale)(cmr_handle oem_handle, cmr_handle caller_handle,
                            struct img_frm *src, struct img_frm *dst,
                            struct cmr_op_mean *mean);
     cmr_int (*sw_3dnr_info_cfg)(cmr_handle oem_handle,
@@ -262,7 +262,7 @@ cmr_int cmr_preview_ctrl_facedetect(cmr_handle preview_handle,
                                     cmr_u32 camera_id, cmr_uint on_off);
 
 cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
-                                           cmr_u32 camera_id, cmr_u32 ae_stab);
+                                           cmr_u32 camera_id, cmr_u32 *ae_stab);
 
 cmr_int cmr_preview_facedetect_set_hist(cmr_handle preview_handle,
                                         cmr_u32 camera_id, const cmr_u32 *ae_stab);

@@ -1428,6 +1428,16 @@ enum {
     CAMERA_AE_MODE_MAX
 };
 
+enum ae_stab_cb_value_index {
+    AE_CB_STABLE_INDEX = 0,
+    AE_CB_BLS_INDEX,
+    AE_CB_BLS_ENABLE_INDEX,
+    AE_CB_BV_INDEX,
+    AE_CB_FACE_INDEX,
+    AE_CB_RESERVED_INDEX,
+    AE_CB_MAX_INDEX
+};
+
 enum camera_format_type {
     CAMERA_YCBCR_4_2_0,
     CAMERA_YCBCR_4_2_2,

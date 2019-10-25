@@ -383,7 +383,7 @@ typedef struct {
     uint8_t sprd_ai_scene_type_current;
     uint8_t availabe_sensor_type;
     int32_t device_orietation;
-    int32_t ae_info;
+    int32_t ae_info[AE_CB_MAX_INDEX];
     uint8_t availabe_gender_race_age_enable;
     uint8_t gender_race_age_enable;
     int32_t ultrawide_id;
@@ -399,6 +399,8 @@ typedef struct {
     uint8_t available_time_watermark;
     uint8_t af_support;
     uint8_t af_type;
+    uint8_t face_num;
+    int32_t face_angle_info[20];
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -479,6 +481,7 @@ typedef struct {
     TONEMAP_Tag toneInfo;
     LED_Tag ledInfo;
     FACE_Tag faceInfo;
+    FACE_Tag orifaceInfo;
     SYNC_Tag syncInfo;
     meta_info_t metaInfo;
     uint8_t info_supported_hardware_level;
@@ -649,6 +652,7 @@ class SprdCamera3Setting {
     int getLEDTag(LED_Tag *ledInfo);
 
     int setFACETag(FACE_Tag *faceInfo);
+    int setORIFACETag(FACE_Tag *faceInfo);
     int getFACETag(FACE_Tag *faceInfo);
 
     int setEISCROPTag(EIS_CROP_Tag eiscrop_Info);

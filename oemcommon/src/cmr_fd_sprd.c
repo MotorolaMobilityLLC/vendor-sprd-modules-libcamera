@@ -208,6 +208,16 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         CMR_LOGE("mem alloc failed");
         goto free_fd_handle;
     }
+    CMR_LOGI("multi_mode %d", in->multi_mode);
+
+    if (in->multi_mode == MODE_SINGLE_FACEID_REGISTER ||
+        in->multi_mode == MODE_DUAL_FACEID_REGISTER)
+        fd_handle->work_mode = FD_WORKMODE_FACEENROLL;
+    else if (in->multi_mode == MODE_SINGLE_FACEID_UNLOCK ||
+             in->multi_mode == MODE_DUAL_FACEID_UNLOCK)
+        fd_handle->work_mode = FD_WORKMODE_FACEAUTH;
+    else
+        fd_handle->work_mode = FD_WORKMODE_MOVIE;
 
     ret = fd_thread_create(fd_handle);
     if (ret) {
@@ -339,12 +349,12 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     fd_handle->frame_in.touch_y = in->touch_y;
     fd_handle->frame_in.face_attribute_on = in->face_attribute_on;
 
-    {
+    /*{
         const static cmr_uint DROP_RATE = 2;
         if ((fd_handle->curr_frame_idx % DROP_RATE) != 0) {
             return ret;
         }
-    }
+    }*/
 
     is_busy = fd_is_busy(fd_handle);
     // CMR_LOGI("fd is_busy =%d", is_busy);
@@ -422,7 +432,8 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
         if (fd_handle->frame_cb) {
             if (auxiliary) {
                 /* callback needs this */
-                fd_handle->frame_out.private_data = (void *)((unsigned long)auxiliary->camera_id);
+                fd_handle->frame_out.private_data = 
+                    (void *)((unsigned long)auxiliary->camera_id);
             } else {
                 fd_handle->frame_out.private_data = NULL;
             }

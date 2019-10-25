@@ -357,8 +357,7 @@ struct prev_context {
     cmr_uint threednr_cap_smallwidth;
     cmr_uint threednr_cap_smallheight;
 
-    /* face detect */
-    cmr_u32 ae_stab;/* [31:16]bv, [10:1]probability, [0]stable */
+    cmr_u32 ae_stab[AE_CB_MAX_INDEX];
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
 
     cmr_u32 channel_start_sec;
@@ -1246,7 +1245,7 @@ exit:
 }
 
 cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
-                                           cmr_u32 camera_id, cmr_u32 ae_stab) {
+                                           cmr_u32 camera_id, cmr_u32 *ae_stab) {
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1255,7 +1254,13 @@ cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    prev_cxt->ae_stab = ae_stab;
+    if (!ae_stab) {
+        CMR_LOGE("ae_stab is NULL");
+        return CMR_CAMERA_FAIL;
+    }
+    for (int i = 0; i < AE_CB_MAX_INDEX; i++) {
+        prev_cxt->ae_stab[i] = ae_stab[i];
+    }
 
     return ret;
 }
@@ -11991,11 +11996,11 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
     private_data.orientation = (cmr_u32)setting_param.cmd_type_value;
-    private_data.bright_value = (prev_cxt->ae_stab >> 16) & 0xffff;
-    private_data.ae_stable = prev_cxt->ae_stab & 0x1;
-    private_data.backlight_pro = (prev_cxt->ae_stab >> 1) & 0x3ff;
+    private_data.bright_value = prev_cxt->ae_stab[AE_CB_BV_INDEX];
+    private_data.ae_stable = prev_cxt->ae_stab[AE_CB_STABLE_INDEX];
+    private_data.backlight_pro = prev_cxt->ae_stab[AE_CB_BLS_INDEX];
     info = frm->reserved;
-    private_data.zoom_ratio = (cmr_u32)prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
+    private_data.zoom_ratio = info ? info->zoom_ratio : (cmr_u32)(-1);
     memcpy(&private_data.hist, prev_cxt->hist, sizeof(private_data.hist));
 
     ipm_in_param.src_frame = *frm;

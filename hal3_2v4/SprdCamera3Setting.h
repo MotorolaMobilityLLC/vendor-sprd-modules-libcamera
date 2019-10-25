@@ -370,7 +370,7 @@ typedef struct {
     uint8_t sprd_cam_feature_list[CAMERA_SETTINGS_CONFIG_ARRAYSIZE];
     uint8_t sprd_cam_feature_list_size;
     int32_t device_orietation;
-    int32_t ae_info;
+    int32_t ae_info[AE_CB_MAX_INDEX];
     uint8_t availabe_gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
     uint8_t availabe_auto_3dnr;
@@ -426,6 +426,7 @@ typedef struct {
     TONEMAP_Tag toneInfo;
     LED_Tag ledInfo;
     FACE_Tag faceInfo;
+    FACE_Tag orifaceInfo;
     SYNC_Tag syncInfo;
     meta_info_t metaInfo;
     uint8_t info_supported_hardware_level;
@@ -587,6 +588,7 @@ class SprdCamera3Setting {
 
     int setFACETag(FACE_Tag *faceInfo);
     int getFACETag(FACE_Tag *faceInfo);
+    int setORIFACETag(FACE_Tag *faceInfo);
 
     int setEISCROPTag(EIS_CROP_Tag eiscrop_Info);
     int getEISCROPTag(EIS_CROP_Tag *eiscrop_Info);

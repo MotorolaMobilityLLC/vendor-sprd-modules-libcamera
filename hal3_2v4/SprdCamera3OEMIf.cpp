@@ -3728,6 +3728,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     }
     Mutex::Autolock l(&mPreviewCbLock);
     FACE_Tag faceInfo;
+    FACE_Tag orifaceInfo;
 
     ssize_t offset = frame->buf_id;
     // camera_frame_metadata_t metadata;
@@ -3740,10 +3741,12 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     struct img_rect rect = {0, 0, 0, 0};
     mSetting->getFACETag(&faceInfo);
     memset(&faceInfo, 0, sizeof(FACE_Tag));
+    memset(&orifaceInfo, 0, sizeof(FACE_Tag));
     HAL_LOGV("receive face_num %d.mid=%d", frame->face_num, mCameraId);
     int32_t number_of_faces =
         frame->face_num <= FACE_DETECT_NUM ? frame->face_num : FACE_DETECT_NUM;
     faceInfo.face_num = number_of_faces;
+    orifaceInfo.face_num = number_of_faces;
 
     if (0 != number_of_faces) {
         for (k = 0; k < number_of_faces; k++) {
@@ -3767,6 +3770,9 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
             faceInfo.face[k].rect[3] = ey;
             faceInfo.angle[k] = frame->face_info[k].angle;
             faceInfo.pose[k] = frame->face_info[k].pose;
+            memcpy(&orifaceInfo.face[k], &faceInfo.face[k], sizeof(camera_face_t));
+            orifaceInfo.angle[k] = frame->face_info[k].angle;
+            orifaceInfo.pose[k] = frame->face_info[k].pose;
             HAL_LOGD("smile level %d. face:%d  %d  %d  %d ,angle %d\n",
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
@@ -3783,7 +3789,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
                 faceInfo.face[k].score = 0;
         }
     }
-
+    mSetting->setORIFACETag(&orifaceInfo);
     mSetting->setFACETag(&faceInfo);
 }
 
@@ -4539,15 +4545,18 @@ int SprdCamera3OEMIf::getRedisplayMem(uint32_t width, uint32_t height) {
             freeCameraMem(mReDisplayHeap);
             mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
             if (mReDisplayHeap) {
-                iommu_buf_map(&mReDisplayHeap->fd, mRedisplayMallocIommuMapList);
-                HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, mReDisplayHeap->fd);
+                iommu_buf_map(&mReDisplayHeap->fd, 
+                               mRedisplayMallocIommuMapList);
+                HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, 
+                        mReDisplayHeap->fd);
             }
         }
     } else {
         mReDisplayHeap = allocCameraMem(buffer_size, 1, false);
         if (mReDisplayHeap) {
             iommu_buf_map(&mReDisplayHeap->fd, mRedisplayMallocIommuMapList);
-            HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, mReDisplayHeap->fd);
+            HAL_LOGD("addr=%p, fd 0x%x", mReDisplayHeap->data, 
+                        mReDisplayHeap->fd);
         }
     }
 
@@ -5708,7 +5717,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    cmr_u32 ae_info = 0;
+    cmr_u32 *ae_info = NULL;
     cmr_u32 ae_stab = 0;
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
@@ -5722,8 +5731,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
         if (parm4 != NULL) {
-            ae_info = *((cmr_u32 *)parm4);
-            ae_stab = ae_info & (0x00000001);
+            ae_info = (cmr_u32 *)parm4;
+            //ae_stab = ae_info & (0x00000001);
             HAL_LOGD("ae_info = 0x%x", ae_info);
         }
         if (ae_stab == 1 && mManualExposureEnabled && controlInfo.ae_lock) {
@@ -5746,8 +5755,10 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
-            // callback ae info [31-16bit:bv, 10-1bit:probability, 0bit:stable]
-            sprddefInfo.ae_info = ae_info;
+            // callback ae info
+            for (int i = 0; i < AE_CB_MAX_INDEX; i++) {
+                sprddefInfo.ae_info[i] = ae_info[i];
+            }
             mSetting->setSPRDDEFTag(sprddefInfo);
             mSetting->setAeCONTROLTag(&controlInfo);
         }
@@ -5789,7 +5800,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         break;
     case CAMERA_EVT_CB_HIST_REPORT: {
         int32_t hist_report[CAMERA_ISP_HIST_ITEMS] = {0};
-        memcpy(hist_report, (int32_t *)parm4, sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
+        memcpy(hist_report, (int32_t *)parm4, 
+                sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
         mSetting->setHISTOGRAMTag(hist_report);
 
         // control log print
@@ -9662,8 +9674,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             zsl_frame.fd);
         break;
     }
-    ((struct camera_context *)(obj->mCameraHandle))
-         ->snp_high_flash_time = 0;
+    ((struct camera_context *)(obj->mCameraHandle))->snp_high_flash_time = 0;
 
 exit:
     obj->mZslShotPushFlag = 0;

@@ -187,6 +187,7 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     cmr_bzero(&mean, sizeof(struct cmr_op_mean));
     cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
+    cmr_bzero(&setting_param, sizeof(setting_param));
 
     CHECK_HANDLE_VALID(ai_scene_handle);
     ipm_in = &ai_scene_handle->common.ipm_cxt->init_in;

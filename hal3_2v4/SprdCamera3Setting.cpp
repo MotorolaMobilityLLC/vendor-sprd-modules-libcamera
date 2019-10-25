@@ -4457,7 +4457,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].controlInfo.ae_precapture_id), 1);
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
-                       &(s_setting[mCameraId].sprddefInfo.ae_info), 1);
+                       s_setting[mCameraId].sprddefInfo.ae_info, AE_CB_MAX_INDEX);
     HAL_LOGV("sprddefInfo.ae_info = 0x%x",
              s_setting[mCameraId].sprddefInfo.ae_info);
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
@@ -4588,6 +4588,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                            dataSize);
         camMetadata.update(ANDROID_STATISTICS_FACE_RECTANGLES, faceRectangles,
                            dataSize * 4);
+        camMetadata.update(ANDROID_SPRD_FACE_INFO,
+                           (uint8_t *)&(s_setting[mCameraId].orifaceInfo),
+                           sizeof(FACE_Tag));
 
         if (camMetadata.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
 
@@ -5384,6 +5387,11 @@ int SprdCamera3Setting::getLEDTag(LED_Tag *ledInfo) {
 }
 int SprdCamera3Setting::setFACETag(FACE_Tag *faceInfo) {
     s_setting[mCameraId].faceInfo = *faceInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::setORIFACETag(FACE_Tag *faceInfo) {
+    s_setting[mCameraId].orifaceInfo = *faceInfo;
     return 0;
 }
 

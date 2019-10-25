@@ -424,12 +424,12 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
 
     // reduce the frame rate, because the current face detection (tracking mode)
     // is too fast!!
-    {
+    /*{
         const static cmr_uint DROP_RATE = 2;
         if ((fd_handle->curr_frame_idx % DROP_RATE) != 0) {
             return ret;
         }
-    }
+    }*/
 
     is_busy = fd_is_busy(fd_handle);
     // CMR_LOGI("fd is_busy =%d", is_busy);

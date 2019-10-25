@@ -3572,6 +3572,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     }
     Mutex::Autolock l(&mPreviewCbLock);
     FACE_Tag faceInfo;
+    FACE_Tag orifaceInfo;
 
     ssize_t offset = frame->buf_id;
     // camera_frame_metadata_t metadata;
@@ -3584,10 +3585,12 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     struct img_rect rect = {0, 0, 0, 0};
     mSetting->getFACETag(&faceInfo);
     memset(&faceInfo, 0, sizeof(FACE_Tag));
+    memset(&orifaceInfo, 0, sizeof(FACE_Tag));
     HAL_LOGV("receive face_num %d.mid=%d", frame->face_num, mCameraId);
     int32_t number_of_faces =
         frame->face_num <= FACE_DETECT_NUM ? frame->face_num : FACE_DETECT_NUM;
     faceInfo.face_num = number_of_faces;
+    orifaceInfo.face_num = number_of_faces;
 
     if (0 != number_of_faces) {
         for (k = 0; k < number_of_faces; k++) {
@@ -3611,6 +3614,9 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
             faceInfo.face[k].rect[3] = ey;
             faceInfo.angle[k] = frame->face_info[k].angle;
             faceInfo.pose[k] = frame->face_info[k].pose;
+            memcpy(&orifaceInfo.face[k], &faceInfo.face[k], sizeof(camera_face_t));
+            orifaceInfo.angle[k] = frame->face_info[k].angle;
+            orifaceInfo.pose[k] = frame->face_info[k].pose;
             HAL_LOGD("smile level %d. face:%d  %d  %d  %d ,angle %d\n",
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
@@ -3627,7 +3633,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
             faceInfo.gender_age_race[k] = frame->face_info[k].gender_age_race;
         }
     }
-
+    mSetting->setORIFACETag(&orifaceInfo);
     mSetting->setFACETag(&faceInfo);
 }
 
@@ -5497,7 +5503,8 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
     cmr_u32 ae_stab = 0;
-    cmr_u32 ae_info = 0;
+    cmr_u32 *ae_info = NULL;
+
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
     SPRD_DEF_Tag sprddefInfo;
@@ -5509,8 +5516,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     switch (cb) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
         if (NULL != parm4) {
-            ae_info = *((cmr_u32 *)parm4);
-            ae_stab = ae_info & (0x00000001);
+            ae_info = (cmr_u32 *)parm4;
+            ae_stab = ae_info[AE_CB_STABLE_INDEX];
             HAL_LOGV("ae_info = %d, ae_stab = %d", ae_info, ae_stab);
         }
 
@@ -5532,9 +5539,10 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
 
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
-            // callback ae info [31-16bit:bv, 10-1bit:probability,
-            // 0bit:stable]
-            sprddefInfo.ae_info = ae_info;
+            // callback ae info 
+            for (int i = 0; i < AE_CB_MAX_INDEX; i++) {
+                sprddefInfo.ae_info[i] = ae_info[i];
+            }
             mSetting->setSPRDDEFTag(sprddefInfo);
         }
     exit:

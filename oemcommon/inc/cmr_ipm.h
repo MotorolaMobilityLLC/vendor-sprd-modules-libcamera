@@ -41,6 +41,7 @@ struct ipm_frame_in {
     cmr_u32 adgain;
     float ev[HDR_CAP_NUM];
     struct auto_tracking_info input;
+    multiCameraMode multi_mode;
 };
 
 struct ipm_frame_out {
