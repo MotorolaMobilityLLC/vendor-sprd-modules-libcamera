@@ -326,16 +326,13 @@ const uint8_t availTimeWatermark = 0;
 
 enum {
     CAMERA_ISO_AUTO = 0,
-    CAMERA_ISO_1600,
-    CAMERA_ISO_800,
-    CAMERA_ISO_400,
-    CAMERA_ISO_200,
-    CAMERA_ISO_100,
+    CAMERA_ISO_100 = 100,
+    CAMERA_ISO_200 = 200,
+    CAMERA_ISO_400 = 400,
+    CAMERA_ISO_800 = 800,
+    CAMERA_ISO_1600 = 1600,
     CAMERA_ISO_MAX
 };
-const uint8_t availableIso[] = {CAMERA_ISO_AUTO, CAMERA_ISO_100,
-                                CAMERA_ISO_200,  CAMERA_ISO_400,
-                                CAMERA_ISO_800,  CAMERA_ISO_1600};
 
 const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #if defined(CONFIG_CAMERA_SUPPORT_32M)
@@ -1392,8 +1389,6 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            sizeof(max_output_streams));
     memcpy(camera3_default_info.common.availableBrightNess, availableBrightNess,
            sizeof(availableBrightNess));
-    memcpy(camera3_default_info.common.availableIso, availableIso,
-           sizeof(availableIso));
     memcpy(camera3_default_info.common.availableFaceDetectModes,
            availableFaceDetectModes, sizeof(availableFaceDetectModes));
 
@@ -2223,9 +2218,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            sizeof(availableContrast));
     memcpy(s_setting[cameraId].sprddefInfo.availabe_saturation,
            availableSaturation, sizeof(availableSaturation));
-    memcpy(s_setting[cameraId].sprddefInfo.availabe_iso,
-           camera3_default_info.common.availableIso,
-           sizeof(camera3_default_info.common.availableIso));
 
     memcpy(s_setting[cameraId].statis_InfoInfo.available_face_detect_modes,
            camera3_default_info.common.availableFaceDetectModes,
@@ -4034,8 +4026,11 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t slowMotion = 1;
     requestInfo.update(ANDROID_SPRD_SLOW_MOTION, &slowMotion, 1);
 
-    uint8_t iso = 0;
-    requestInfo.update(ANDROID_SPRD_ISO, &iso, 1);
+    /*uint8_t iso = 0;
+    requestInfo.update(ANDROID_SPRD_ISO, &iso, 1); */
+
+    uint8_t iso_sensitivity = 0;
+    requestInfo.update(ANDROID_SENSOR_SENSITIVITY, &iso_sensitivity, 1); 
 
     requestInfo.update(ANDROID_SPRD_METERING_MODE,
                        &(s_setting[mCameraId].sprddefInfo.am_mode), 1);
@@ -4349,11 +4344,12 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("saturation is %d",
                  s_setting[mCameraId].sprddefInfo.saturation);
     }
-    if (frame_settings.exists(ANDROID_SPRD_ISO)) {
+	
+    /*if (frame_settings.exists(ANDROID_SPRD_ISO)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.iso, valueU8,
                          ANDROID_SPRD_ISO, 1)
-    }
+    }*/
 
     if (frame_settings.exists(ANDROID_SPRD_SLOW_MOTION)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_SLOW_MOTION).data.u8[0];
@@ -4677,9 +4673,10 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
         valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
+
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.sensitivity, valueI32,
                          ANDROID_SENSOR_SENSITIVITY, 1)
-        HAL_LOGV("sensitivity is %d", valueI32);
+        HAL_LOGD("sensitivity is %d", valueI32);
     }
 
     // JPEG
@@ -6274,7 +6271,7 @@ int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode,
     return ret;
 }
 
-int SprdCamera3Setting::androidIsoToDrvMode(uint8_t androidIso,
+int SprdCamera3Setting::androidIsoToDrvMode(int32_t androidIso,
                                             int8_t *convertDrvMode) {
     int ret = 0;
 

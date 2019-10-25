@@ -7009,6 +7009,17 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
         break;
 
+    case ANDROID_SENSOR_SENSITIVITY:
+        int8_t drv_iso_level;
+        SENSOR_Tag sensorInfo;
+        mSetting->getSENSORTag(&sensorInfo);
+        mSetting->androidIsoToDrvMode(sensorInfo.sensitivity,
+                                            &drv_iso_level);
+        HAL_LOGD("drv_iso_level %d", drv_iso_level);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
+                 drv_iso_level);
+        break;
+
     case ANDROID_CONTROL_AE_LOCK: {
         uint8_t ae_lock;
         ae_lock = controlInfo.ae_lock;
@@ -7141,12 +7152,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (cmr_uint)&ae_param);
     } break;
 
-    case ANDROID_SPRD_ISO: {
+    /*case ANDROID_SPRD_ISO: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
                  (cmr_uint)sprddefInfo.iso);
-    } break;
+    } break;*/
 
     case ANDROID_CONTROL_AE_TARGET_FPS_RANGE:
         setPreviewFps(mRecordingMode);
