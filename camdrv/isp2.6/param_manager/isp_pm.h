@@ -98,6 +98,7 @@ struct pm_workmode_input {
 	enum tuning_custom define[PARAM_SET_MAX];
 	cmr_u32 img_w[PARAM_SET_MAX];
 	cmr_u32 img_h[PARAM_SET_MAX];
+	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 };
 
 struct pm_workmode_output {

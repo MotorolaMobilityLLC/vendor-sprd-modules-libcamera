@@ -428,10 +428,6 @@ struct isp_pm_context {
 	cmr_u32 magic_flag;
 	cmr_u32 param_source;
 	pthread_mutex_t pm_mutex;
-	cmr_u32 is_4in1_sensor;
-	cmr_u32 cam_4in1_mode;
-	cmr_u32 noramosaic_4in1;
-	cmr_u32 lowlight_flag;
 	cmr_u32 mode_id;
 	cmr_u32 prv_mode_id;
 	cmr_u32 cap_mode_id;
@@ -442,6 +438,17 @@ struct isp_pm_context {
 	struct isp_pm_param_data *getting_data_ptr[PARAM_SET_MAX];
 	struct isp_pm_param_data single_block_data[ISP_TUNE_BLOCK_MAX];
 	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];
+#if     defined(CONFIG_CAMERA_4IN1_SOLUTION2)
+	/* new 4in1 plan, 20191028 */
+	cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */
+	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
+	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
+#else
+	cmr_u32 is_4in1_sensor;
+    cmr_u32 cam_4in1_mode;
+    cmr_u32 noramosaic_4in1;
+    cmr_u32 lowlight_flag;
+#endif
 };
 
 static cmr_s32 isp_pm_check_handle(cmr_handle handle)
@@ -681,8 +688,13 @@ static cmr_s32 check_block_skip(struct isp_pm_context *pm_cxt_ptr,
 
 	isp_cxt_prv = &pm_cxt_ptr->cxt_array[set_id];
 	if (isp_cxt_prv->is_validate) {
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 		if (pm_cxt_ptr->cam_4in1_mode || pm_cxt_ptr->noramosaic_4in1)
 			return 0;
+#else
+		if (pm_cxt_ptr->remosaic_type)
+			return 0;
+#endif
 		if (IS_DCAM_BLOCK(blk_id))
 			return 1;
 	}
@@ -914,13 +926,23 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 	output->mode = mode;
 	output->scene = scene;
 	output->cus_define = define;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 	if (pm_cxt_ptr->cam_4in1_mode && pm_cxt_ptr->lowlight_flag &&
                 mode == WORKMODE_CAPTURE) {
                 img_w /= 2;
                 img_h /= 2;
                 output->resolution.w = img_w;
                 output->resolution.h = img_h;
-        }
+	}
+#else
+	if (pm_cxt_ptr->remosaic_type && output->mode == WORKMODE_PREVIEW) {
+		img_w /= 2;
+		img_h /= 2;
+		output->resolution.w = img_w;
+		output->resolution.h = img_h;
+	}
+#endif
+
 
 	tail_idx = output->block_num;
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
@@ -1038,6 +1060,7 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 	output->scene = scene;
 	output->cus_define = define;
 	output->compatible_mode_id = mode_id;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 	if (pm_cxt_ptr->cam_4in1_mode && pm_cxt_ptr->lowlight_flag &&
 		mode == WORKMODE_CAPTURE) {
 		img_w /= 2;
@@ -1045,6 +1068,15 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 		output->resolution.w = img_w;
 		output->resolution.h = img_h;
 	}
+#else
+	if (pm_cxt_ptr->remosaic_type && output->mode == WORKMODE_PREVIEW) {
+		img_w /= 2;
+		img_h /= 2;
+		output->resolution.w = img_w;
+		output->resolution.h = img_h;
+	}
+#endif
+
 
 	tail_idx = output->block_num;
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
@@ -1174,13 +1206,17 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 			update_always[i] = (isp_cxt_ptr->is_validate == 0) ? 1 : 0;
 			isp_cxt_ptr->is_validate = 0;
 		}
-
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 		pm_cxt_ptr->cam_4in1_mode = input->cam_4in1_mode;
 		pm_cxt_ptr->noramosaic_4in1 = input->noramosaic_4in1;
+#else
+		pm_cxt_ptr->remosaic_type = input->remosaic_type;
+#endif
 		for (i  = 0; i < input->pm_sets_num && i < PARAM_SET_MAX; i++) {
 			if (input->mode[i] >= WORKMODE_MAX)
 				continue;
 
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 			if (pm_cxt_ptr->is_4in1_sensor) {
 				if (input->mode[i] == WORKMODE_PREVIEW) {
 					if (pm_cxt_ptr->cam_4in1_mode)
@@ -1207,6 +1243,29 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 					goto get_blocks;
 				}
 			}
+#else
+			if (pm_cxt_ptr->is_4in1_sensor) {
+				ISP_LOGD("mode %d, remosaic %d", input->mode[i], pm_cxt_ptr->remosaic_type);
+				if (input->mode[i] == WORKMODE_PREVIEW) {
+					if (pm_cxt_ptr->remosaic_type == 1) /* sensor out full size */
+						output->mode_id[i] = ISP_MODE_ID_PRV_0;
+					else
+						output->mode_id[i] = ISP_MODE_ID_PRV_1;
+					goto get_blocks;
+				} else if (input->mode[i] == WORKMODE_VIDEO) {
+					search = &search_modes[2][0];
+					search++;
+					goto search;
+				} else if (input->mode[i] == WORKMODE_CAPTURE) {
+					if (pm_cxt_ptr->remosaic_type == 1) /* sensor out full size */
+						output->mode_id[i] = ISP_MODE_ID_CAP_0;
+					else
+						output->mode_id[i] = ISP_MODE_ID_CAP_2;
+//					update_always[i] = 1;
+					goto get_blocks;
+				}
+			}
+#endif
 
 			if (input->mode[i] == WORKMODE_PREVIEW)
 				search = &search_modes[0][0];
@@ -1231,19 +1290,30 @@ search:
 					pm_cxt_ptr->tune_mode_array[mode_id]->resolution.h,
 					input->img_w[i], input->img_h[i]);
 
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 				if (pm_cxt_ptr->is_4in1_sensor && input->mode[i] == WORKMODE_PREVIEW) {
 					/* todo:  workaround for 4in1 preview  */
 					ISP_LOGD("i %d, k %d, is_4in1_sensor & preview. 4in1 %d %d. size %d in %d\n", i, k,
-					pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1,
-					input->cam_4in1_mode,
-					pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w,
-					input->img_w[i]);
+						pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1,
+						input->cam_4in1_mode,
+						pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w,
+						input->img_w[i]);
+
 					if ((pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) &&
 						(pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1 == input->cam_4in1_mode)) {
 						output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
 						ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
 						break;
 					}
+#else
+				if (pm_cxt_ptr->remosaic_type == 1 && input->mode[i] == WORKMODE_PREVIEW) {
+					if ((pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) &&
+                        (pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1 == input->cam_4in1_mode)) {
+                        output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
+                        ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
+                        break;
+                    }
+#endif
 				} else  if (pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) {
 					output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
 					ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
@@ -1267,15 +1337,27 @@ get_blocks:
 			rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, set_id);
 			if (rtn)
 				return ISP_PARAM_ERROR;
+#if     defined(CONFIG_CAMERA_4IN1_SOLUTION2)
+			ISP_LOGD("pm context %p for set %d, mode_id %d remosaic mode %d, size %d %d\n", isp_cxt_ptr,
+				set_id, isp_cxt_ptr->mode_id, pm_cxt_ptr->remosaic_type, input->img_w[i], input->img_h[i]);
+#else
 			ISP_LOGD("pm context %p for set %d, mode_id %d 4in1 mode %d, size %d %d\n", isp_cxt_ptr,
 				set_id, isp_cxt_ptr->mode_id, pm_cxt_ptr->cam_4in1_mode, input->img_w[i], input->img_h[i]);
+#endif
 		}
 		break;
 	}
 	case ISP_PM_CMD_SET_LOWLIGHT_FLAG:
 	{
+#if     defined(CONFIG_CAMERA_4IN1_SOLUTION2)
+		pm_cxt_ptr->ambient_highlight = *(cmr_u32 *)param_ptr;
+		ISP_LOGV("ambient_highlight = %d\n", pm_cxt_ptr->ambient_highlight);
+#else
 		pm_cxt_ptr->lowlight_flag = *(cmr_u32 *)param_ptr;
 		ISP_LOGV("lowlight_flag = %d\n", pm_cxt_ptr->lowlight_flag);
+#endif
+
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 		if (pm_cxt_ptr->cam_4in1_mode) {
 			cmr_u32 i, j, k;
 			cmr_u32 *cap_mode;
@@ -1378,6 +1460,7 @@ get_blocks:
 			}
 			isp_pm_context_init(pm_cxt_ptr, PARAM_SET1);
 		}
+#endif
 		break;
 	}
 	case ISP_PM_CMD_SET_AWB:

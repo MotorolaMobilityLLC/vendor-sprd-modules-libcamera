@@ -1563,6 +1563,27 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     return 0;
 }
 
+static int32_t stream_limit(const cam_stream_info_t *p, int32_t total, int32_t w_limit, int32_t h_limit)
+{
+    int i = 0;
+
+    if (w_limit <= 0 || h_limit <= 0 || total <= 1)
+        return i;
+    for (i = 0; i < total; i++) {
+        if (p[i].stream_sizes_tbl.width <= w_limit &&
+            p[i].stream_sizes_tbl.height <= h_limit)
+            break;
+    }
+    /* check i */
+    if (i >= total)
+        i = 0;
+
+    HAL_LOGI("stream start pos %d [%d %d]", i, p[i].stream_sizes_tbl.width,
+             p[i].stream_sizes_tbl.height);
+
+    return i;
+}
+
 int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
 
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
@@ -1605,12 +1626,20 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         p_stream_info = stream_info;
         stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
     }
-
 #ifdef CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
     if (cameraId == 0) {
         int i = 0;
         /* 3264 x 2448 >= 8M */
         i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, 3264, 2448);
+        p_stream_info = p_stream_info + i;
+        stream_sizes_tbl_cnt -= i;
+     }
+#endif
+#ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
+    if (cameraId == 1) {
+        int i = 0;
+       /* 2320x1740> 4M > 2272x1080 */
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, 2304, 1728);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
@@ -4182,7 +4211,8 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
         if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1 &&
-            is_raw_capture == 0 && is_isptool_mode == 0) {
+            is_raw_capture == 0 && is_isptool_mode == 0 &&
+            s_setting[mCameraId].sprddefInfo.high_resolution_mode == 1) {
             valueU8 = 1;
             GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
                              valueU8, ANDROID_SPRD_ZSL_ENABLED, 1)

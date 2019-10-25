@@ -1151,7 +1151,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     mSetting->getSPRDDEFTag(&sprddefInfo);
     mSetting->getCONTROLTag(&controlInfo);
     mSetting->getFLASHTag(&flashInfo);
-
     captureIntent = controlInfo.capture_intent;
 
     if (meta.exists(ANDROID_REQUEST_ID)) {
@@ -1213,7 +1212,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
     }
-
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
         if (mStreamConfiguration.num_streams == 3 &&
@@ -1370,7 +1368,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
         // raw capture need non-zsl for now
-        if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode()) {
+        if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode() ||
+            (sprddefInfo.high_resolution_mode && sprddefInfo.fin1_highlight_mode)) {
             mPictureRequest = 1;
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                    mFrameNum);
@@ -1449,7 +1448,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
         mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
     } else {
-        mOldCapIntent = captureIntent;
+        if((sprddefInfo.high_resolution_mode && sprddefInfo.fin1_highlight_mode)&&
+            captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)
+            mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE ;
+        else
+            mOldCapIntent = captureIntent;
     }
 
     if (captureRequestId == 0)

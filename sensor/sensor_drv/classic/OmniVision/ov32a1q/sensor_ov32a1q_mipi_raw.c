@@ -415,7 +415,7 @@ static cmr_int ov32a1q_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-#if 0
+#if 1
 static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
 static cmr_int ov32a1q_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -425,14 +425,15 @@ static cmr_int ov32a1q_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_LOGI("E\n");
 
     sn_4in1_info = (struct sensor_4in1_info *)param;
-    sn_4in1_info->is_4in1_supported = 1;
-    sn_4in1_info->limited_4in1_width = 2336;
-    sn_4in1_info->limited_4in1_height = 1752;
+    sn_4in1_info->is_4in1_supported = 0;
+    sn_4in1_info->limited_4in1_width = 3264;
+    sn_4in1_info->limited_4in1_height = 2448;
     sn_4in1_info->sns_mode = sns_4in1_mode;
 
     return rtn;
 }
-
+#endif 
+#if 0
 #include "sprd_fcell.h"
 #include "dlfcn.h"
 #include <fcntl.h>
@@ -741,20 +742,18 @@ static cmr_int ov32a1q_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         ret = ov32a1q_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
-#if 0
     case SENSOR_VAL_TYPE_GET_4IN1_INFO:
         ret = ov32a1q_drv_get_4in1_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_OTP_DATA:
-        ret = ov32a1q_drv_ov4c_init(handle, param_ptr->pval);
+        ret = 0;//ov32a1q_drv_ov4c_init(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_4IN1_PROC:
-        ret = ov32a1q_drv_ov4c_process(handle, param_ptr->pval);
+        ret = 0;//ov32a1q_drv_ov4c_process(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_4IN1_DEINIT:
-        ret = ov32a1q_drv_ov4c_deinit(handle, param_ptr->pval);
+        ret = 0;//ov32a1q_drv_ov4c_deinit(handle, param_ptr->pval);
         break;
-#endif
 
     default:
         break;

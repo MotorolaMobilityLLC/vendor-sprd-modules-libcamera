@@ -437,6 +437,10 @@ LOCAL_CFLAGS += -DCONFIG_OPTICSZOOM_SUPPORT
 #max_logical_sensor_num := $(shell expr $(max_logical_sensor_num) + 1)
 endif
 
+ifeq ($(strip $(TARGET_BOARD_FRONT_HIGH_RESOLUTION_SUPPORT)),true)
+LOCAL_CFLAGS += -DCONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
+endif
+
 ifeq ($(strip $(TARGET_BOARD_MULTICAMERA_SUPPORT)),true)
 LOCAL_CFLAGS += -DCONFIG_MULTICAMERA_SUPPORT
 endif
@@ -535,6 +539,10 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_4IN1)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_4IN1
+endif
+
+ifeq ($(strip $(TARGET_BOARD_4IN1_SOLUTION2)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_4IN1_SOLUTION2
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_AI)),true)

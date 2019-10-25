@@ -407,6 +407,11 @@ struct camera_context {
     bool is_capture_face;
 
     void *handle_interface;
+    /* new 4in1 plan, 20191028 */
+	cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */
+	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
+	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
+    cmr_uint is_high_res_mode;
 };
 
 struct prev_ai_scene_info {
@@ -631,6 +636,13 @@ cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
                                       struct tuning_param_info *tuning_info);
 cmr_int cmr_get_bokeh_sn_trim(cmr_handle handle,
                               struct sprd_img_path_rect *trim_param);
+
+cmr_int camera_get_remosaic_type(struct sensor_4in1_info *p,
+							  cmr_u32 sensor_w, cmr_u32 sensor_h);
+cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p);
+cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param);
+cmr_int camera_set_high_res_mode(cmr_handle oem_handle,cmr_uint is_high_res_mode);
+
 #ifdef __cplusplus
 }
 #endif

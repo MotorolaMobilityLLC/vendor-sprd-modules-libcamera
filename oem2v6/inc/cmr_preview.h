@@ -254,7 +254,8 @@ struct preview_param {
     cmr_u32 isp_to_dram;
     cmr_u32 video_snapshot_type;
     cmr_u32 sprd_3dcalibration_enabled;
-    cmr_u32 mode_4in1;
+    cmr_u32 mode_4in1; /* !CONFIG_CAMERA_4IN1_SOLUTION2 */
+    cmr_u32 remosaic_type; /* 1:software, 2:hardware, 0:not */
     cmr_u32 limited_4in1_width;
     cmr_u32 limited_4in1_height;
     struct cmr_zoom_param zoom_setting;

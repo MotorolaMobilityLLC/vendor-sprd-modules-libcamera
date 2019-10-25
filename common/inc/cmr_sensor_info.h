@@ -512,8 +512,8 @@ struct sensor_embedded_info {
 };
 
 struct sensor_4in1_info {
-    cmr_u32 is_4in1_supported;
-    cmr_u32 limited_4in1_width;
+    cmr_u32 is_4in1_supported; /* 191105: 1: software remosaic; 0:other */
+    cmr_u32 limited_4in1_width; /* >0: 4in1 sensor, 0: other */
     cmr_u32 limited_4in1_height;
     cmr_u32 *sns_mode; // sensor mode for 4in1
 };

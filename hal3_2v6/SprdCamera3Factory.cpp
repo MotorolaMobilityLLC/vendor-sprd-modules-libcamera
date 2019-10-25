@@ -139,8 +139,15 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
         return SprdCamera3MultiCamera::get_camera_info(camera_id, info);
 #endif
 
+
 #ifdef CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
     if (camera_id == SPRD_BACK_HIGH_RESOLUTION_ID)
+        return gSprdCamera3Factory.getHighResolutionSize(
+            multiCameraModeIdToPhyId(camera_id), info);
+#endif
+
+#ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
+    if (camera_id == SPRD_FRONT_HIGH_RES)
         return gSprdCamera3Factory.getHighResolutionSize(
             multiCameraModeIdToPhyId(camera_id), info);
 #endif
@@ -225,9 +232,7 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
  *==========================================================================*/
 int SprdCamera3Factory::getHighResolutionSize(int camera_id, struct camera_info *info) {
     int rc;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
+    char prop[PROPERTY_VALUE_MAX] = {0};
     Mutex::Autolock l(mLock);
 
     HAL_LOGI("E, camera_id = %d", camera_id);
@@ -248,8 +253,11 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id, struct camera_info 
 
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
 
-    static avaliable_res_size aval_res_size[RES_SIZE_NUM] = {{6528, 4896}, {1440, 1080}};
-    avaliable_res_size *stream_info = aval_res_size;
+    static avaliable_res_size aval_res_size[2][RES_SIZE_NUM] = {
+                    {{6528, 4896}, {1440, 1080},{0, 0}},
+                    {{4608, 3456}, {1440, 1080},{0, 0}},
+    };
+    avaliable_res_size *stream_info;;
     size_t stream_cnt = RES_SIZE_NUM;
     int32_t scaler_formats[] = {
         HAL_PIXEL_FORMAT_YCbCr_420_888, HAL_PIXEL_FORMAT_BLOB,
@@ -259,8 +267,14 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id, struct camera_info 
     Vector<int32_t> available_stream_configs;
     int32_t
         available_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4];
+
     memset(available_stream_configurations, 0,
            CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
+    if (camera_id == 0)
+        stream_info = aval_res_size[0];
+    else if (camera_id)
+        stream_info = aval_res_size[1];
+
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_cnt; i++) {
             if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
@@ -351,6 +365,7 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
                                          struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
     int phyId = 0;
+    int is_high_res_mode = 0;
     struct phySensorInfo *phyPtr = NULL;
     char prop[PROPERTY_VALUE_MAX];
 
@@ -375,6 +390,9 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     // Only 3d calibration use this
     // TBD: move 3d calibration to multi camera
     HAL_LOGD("SPRD Camera Hal, camera_id=%d", camera_id);
+    if (SPRD_FRONT_HIGH_RES == camera_id || SPRD_BACK_HIGH_RESOLUTION_ID == camera_id){
+        is_high_res_mode = 1;
+    }
     if (SPRD_3D_CALIBRATION_ID == camera_id) {
         hw->setMultiCameraMode(MODE_3D_CALIBRATION);
     }
@@ -385,8 +403,11 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     if (rc != 0) {
         delete hw;
     } else {
+         if (SPRD_FRONT_HIGH_RES == camera_id || SPRD_BACK_HIGH_RESOLUTION_ID == camera_id){
+             hw->camera_ioctrl(CAMERA_TOCTRL_SET_HIGH_RES_MODE, &is_high_res_mode, NULL);
+         }
         unsigned int on_off = 0;
-	property_get("persist.vendor.cam.ultrawide.enable", prop, "1");
+        property_get("persist.vendor.cam.ultrawide.enable", prop, "1");
         if (SPRD_ULTRA_WIDE_ID == camera_id)
             on_off = atoi(prop);
         hw->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
@@ -478,7 +499,8 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     }
 
     if ((SPRD_REFOCUS_ID == cameraId) || (SPRD_3D_CALIBRATION_ID == cameraId) ||
-        (SPRD_ULTRA_WIDE_ID == cameraId) || (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId)) {
+        (SPRD_ULTRA_WIDE_ID == cameraId) || (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId) ||
+		(SPRD_FRONT_HIGH_RES == cameraId)) {
         return false;
     }
 
@@ -501,7 +523,8 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
         return 1;
     } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
         return SprdCamera3Setting::findUltraWideSensor();
-    }
+    } else if (SPRD_FRONT_HIGH_RES == cameraId)
+        return 1;
 
     return 0xff;
 }

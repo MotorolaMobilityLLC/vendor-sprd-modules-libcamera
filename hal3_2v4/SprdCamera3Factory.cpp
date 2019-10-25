@@ -312,6 +312,10 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
                (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId)) {
         return false;
     }
+    /* This camera id should return false
+     * if (cameraId == SPRD_FRONT_HIGH_RES)
+     *     return false;
+     */
 
     return false;
 }

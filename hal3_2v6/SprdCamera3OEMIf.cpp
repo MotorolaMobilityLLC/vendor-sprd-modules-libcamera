@@ -1619,7 +1619,7 @@ void SprdCamera3OEMIf::getIspDebugInfo(void **addr, int *size) {
 
 int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
     int ret = 0;
-
+    SPRD_DEF_Tag sprddefInfo;
     switch (cmd) {
     case CAMERA_IOCTRL_SET_MULTI_CAMERAMODE: {
         mMultiCameraMode = *(multiCameraMode *)param1;
@@ -1658,6 +1658,16 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
             mIsUltraWideMode = true;
         } else {
             mIsUltraWideMode = false;
+        }
+        break;
+    }
+    case CAMERA_TOCTRL_SET_HIGH_RES_MODE: {
+        if (*(unsigned int *)param1 == 1) {
+            sprddefInfo.high_resolution_mode = 1;
+            mSetting->setSPRDDEFTag(sprddefInfo);
+        } else {
+            sprddefInfo.high_resolution_mode = 0;
+            mSetting->setSPRDDEFTag(sprddefInfo);
         }
         break;
     }
@@ -3124,6 +3134,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     mVideo3dnrFlag = VIDEO_OFF;
     camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &mVideo3dnrFlag, NULL);
     camera_ioctrl(CAMERA_TOCTRL_GET_AF_SUPPORT, &af_support, NULL);
+
     sprddefInfo.af_support = af_support;
     mSetting->setSPRDDEFTag(sprddefInfo);
 
@@ -3267,7 +3278,8 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
-
+    SPRD_DEF_Tag sprddefInfo;
+    mSetting->getSPRDDEFTag(&sprddefInfo);
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
         goto exit;
@@ -3314,6 +3326,12 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         setCameraState(SPRD_ERROR, STATE_PREVIEW);
         HAL_LOGE("camera_stop_preview failed");
     }
+    if(sprddefInfo.high_resolution_mode && sprddefInfo.fin1_highlight_mode){
+      mSprdZslEnabled =0;
+       HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
+       SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
+                (cmr_uint)mSprdZslEnabled);
+        }
 
     deinitPreview();
     end_timestamp = systemTime();
@@ -3741,6 +3759,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     Mutex::Autolock cbLock(&mPreviewCbLock);
     int ret = NO_ERROR;
     SPRD_DEF_Tag sprddefInfo;
+    struct fin1_info fin1_info;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
     HAL_LOGV("E");
@@ -4060,7 +4079,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             goto bypass_pre;
         }
         ATRACE_BEGIN("preview_frame");
-
+        camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
+        sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
+        mSetting->setSPRDDEFTag(sprddefInfo);
+        HAL_LOGD("highlight=%d",fin1_info.ambient_highlight);
         HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, height=%d, time=%" PRId64, mCameraId, frame->fd,
                  buff_vir, frame_num, frame->width, frame->height, buffer_timestamp);
 
@@ -5941,9 +5963,14 @@ int SprdCamera3OEMIf::openCamera() {
                 int read_byte = 0;
                 cmr_u8 *otp_data = (cmr_u8 *)otpInfo.otp_data;
                 while (!feof(fid)) {
-                    fscanf(fid, "%d\n", otp_data);
-                    otp_data += 4;
-                    read_byte += 4;
+                    /* coverity:check_return: Calling "fscanf(fid, "%d\n", otp_data)"
+                     * without checking return value. This library function
+                     * may fail and return an error code.
+                     */
+                    if (fscanf(fid, "%d\n", otp_data) != EOF) {
+                        otp_data += 4;
+                        read_byte += 4;
+                    }
                 }
                 fclose(fid);
                 HAL_LOGD("dual_flag %d, calibration otp txt read_bytes = %d",
@@ -7024,10 +7051,9 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
     char value[PROPERTY_VALUE_MAX];
     char value2[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    HAL_LOGD("cap_mode = %d", cap_mode);
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
-
+    HAL_LOGD("cap_mode = %d,sprd_zsl_enabled=%d,mStreamOnWithZsl=%d", cap_mode,sprddefInfo.sprd_zsl_enabled,mStreamOnWithZsl);
     switch (cap_mode) {
     case CAMERA_CAPTURE_MODE_PREVIEW:
         if (sprddefInfo.sprd_zsl_enabled == 1 || mStreamOnWithZsl == 1) {
@@ -7044,6 +7070,11 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
         break;
 
     case CAMERA_CAPTURE_MODE_STILL_CAPTURE:
+        if(sprddefInfo.high_resolution_mode && sprddefInfo.fin1_highlight_mode){
+            sprddefInfo.sprd_zsl_enabled =0;
+            mStreamOnWithZsl =0;
+            mSetting->setSPRDDEFTag(sprddefInfo);
+        }
         if (sprddefInfo.sprd_zsl_enabled == 1 || mStreamOnWithZsl == 1) {
             mTakePictureMode = SNAPSHOT_ZSL_MODE;
             mCaptureMode = CAMERA_ZSL_MODE;

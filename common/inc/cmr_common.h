@@ -698,6 +698,7 @@ struct video_start_param {
     struct img_size video_size;
     cmr_uint mode_4in1;
     cmr_u32 is_restart;
+    cmr_u32 remosaic_type;
 };
 
 struct memory_param {
@@ -1922,6 +1923,7 @@ typedef enum {
     SPRD_MULTI_CAMERA_ID = 36,
     SPRD_BACK_HIGH_RESOLUTION_ID = 37,
     SPRD_PORTRAIT_ID = 38,
+    SPRD_FRONT_HIGH_RES = 39,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 
@@ -1959,6 +1961,11 @@ struct tuning_param_info {
 struct isp_af_otp_info {
     cmr_u16 infinite_cali;
     cmr_u16 macro_cali;
+};
+
+struct fin1_info {
+	cmr_u32 remosaic_type;   /* 0:normal,1:software,2:hardware */
+	cmr_u32 ambient_highlight; /* 1:highlight,0:low */
 };
 
 typedef enum {
@@ -2002,6 +2009,8 @@ typedef enum {
     CAMERA_TOCTRL_GET_BOKEH_SN_TRIM,
     CAMERA_TOCTRL_GET_AF_SUPPORT,
     CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO,
+    CAMERA_TOCTRL_SET_HIGH_RES_MODE,
+    CAMERA_TOCTRL_GET_4IN1_INFO,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

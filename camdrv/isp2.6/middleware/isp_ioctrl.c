@@ -648,7 +648,7 @@ static cmr_int ispctl_ae_exp_compensation(cmr_handle isp_alg_handle, void *param
 	exp_comp.comp_range.max = exp_compensation->comp_range.max;
 	exp_comp.comp_val = exp_compensation->comp_val;
 	exp_comp.step_numerator = exp_compensation->step_numerator;
-	exp_comp.step_denominator = exp_compensation->step_denominator;	
+	exp_comp.step_denominator = exp_compensation->step_denominator;
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXPOSURE_COMPENSATION, &exp_comp, NULL);
 	}
@@ -1753,25 +1753,42 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	cmr_s32 gain = 0;
 	cmr_u32 exp_time = 0;
 	cmr_s32 bv = 0;
-
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
+		ret |= cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
+		ret |= cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
 		if (cxt->cam_4in1_mode)
 			cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&cxt->lowlight_flag);
+	}
 
+	if (!ret) {
+                info_ptr->adgain = (cmr_u32) gain;
+                info_ptr->exp_time = exp_time;
+                info_ptr->bv = bv;
+		info_ptr->lowlight_flag = cxt->lowlight_flag;
+        }
+	ISP_LOGV("adgain = %d, exp = %d, bv = %d, lowlight_flag = %d",
+		info_ptr->adgain, info_ptr->exp_time, info_ptr->bv,
+		info_ptr->lowlight_flag);
+#else
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
+		ret |= cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
+		ret |= cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, (void *)&bv);
 	}
 
 	if (!ret) {
 		info_ptr->adgain = (cmr_u32) gain;
 		info_ptr->exp_time = exp_time;
 		info_ptr->bv = bv;
-		info_ptr->lowlight_flag = cxt->lowlight_flag;
+		info_ptr->ambient_highlight = cxt->ambient_highlight;
 	}
-	ISP_LOGV("adgain = %d, exp = %d, bv = %d, lowlight_flag = %d",
+	ISP_LOGV("adgain = %d, exp = %d, bv = %d, highlight_flag = %d",
 		info_ptr->adgain, info_ptr->exp_time, info_ptr->bv,
-		info_ptr->lowlight_flag);
+		info_ptr->ambient_highlight);
+#endif
+
 	return ret;
 }
 
@@ -2200,10 +2217,12 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 
 		ae_fd_param.width = face_area->frame_width;
 		ae_fd_param.height = face_area->frame_height;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 		if (cxt->cam_4in1_mode) {
 			ae_fd_param.width = face_area->frame_width / 2;
 			ae_fd_param.height = face_area->frame_height / 2;
 		}
+#endif
 		ae_fd_param.face_num = face_area->face_num;
 		for (i = 0; i < ae_fd_param.face_num; ++i) {
 			ae_fd_param.face_area[i].rect.start_x = face_area->face_info[i].sx;

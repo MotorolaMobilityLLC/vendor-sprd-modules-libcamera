@@ -359,17 +359,24 @@ struct isp_alg_fw_context {
 	cmr_u32 sensor_role;
 	cmr_u32 work_mode;
 	cmr_u32 zsl_flag;
-
 	cmr_u32 sn_mode;
-	/* 4in1 */
-	cmr_u32 is_4in1_sensor;
-	cmr_u32 cam_4in1_mode; /* 1: 4c mode for capture */
-	cmr_u32 lowlight_flag; /* low lux for capture */
 	/* for 4x zoom focus */
 	cmr_u32 last_ratio;
 	cmr_u32 cur_ratio;
 	cmr_s32 curr_bv;
-	cmr_s32 noramosaic_4in1;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
+	/* 4in1 */
+    cmr_u32 is_4in1_sensor;
+    cmr_u32 cam_4in1_mode; /* 1: 4c mode for capture */
+    cmr_u32 lowlight_flag; /* low lux for capture */
+    cmr_s32 noramosaic_4in1;
+#else
+	/* new 4in1 solution2, 20191028 */
+	cmr_u32 is_4in1_sensor; /* bind with sensor,not refer to sensor's output size */
+	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
+	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
+	cmr_u32 is_high_res_mode; /* 1: high resolution mode */
+#endif
 };
 
 #define FEATRUE_ISP_FW_IOCTRL
@@ -464,14 +471,17 @@ static cmr_int ispalg_set_rgb_gain(cmr_handle isp_fw_handle, void *param)
 	ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
 		gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 	/* also set capture gain if 4in1 */
 	if (cxt->noramosaic_4in1 || cxt->cam_4in1_mode) {
-		/* this value for capture, need * 4
-		 * not active while pm * 4
-		 */
 		block_info.scene_id = PM_SCENE_CAP;
 		if (cxt->cam_4in1_mode)
 			gain_info.global_gain *= 4;
+#else
+	if (cxt->remosaic_type) {
+		block_info.scene_id = PM_SCENE_CAP;
+#endif
+
 		ISP_LOGV("global_gain : %d, r %d g %d b %d\n", gain_info.global_gain,
 			gain_info.r_gain, gain_info.g_gain, gain_info.b_gain);
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &block_info, NULL);
@@ -950,7 +960,11 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		gain.gb = awb_gain->g;
 		gain.b = awb_gain->b;
 		/* todo: also set capture gain if 4in1 */
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 		if (cxt->noramosaic_4in1 || cxt->cam_4in1_mode) {
+#else
+		if (cxt->remosaic_type) {
+#endif
 			cfg.scene_id = PM_SCENE_CAP;
 			cfg.block_info = &gain;
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
@@ -1390,7 +1404,7 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 				ISP_BLK_RGB_GAMC,
 				gamma_cur,
 				sizeof(struct sensor_rgbgamma_curve));
-			
+
 			if (isp_video_get_simulation_flag()) {
 				property_get("persist.vendor.cam.debug.simulation", value, "false");
 				if (!strcmp(value, "true")) {
@@ -1608,7 +1622,11 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 		for (i = 0; i < output.cap_param_num; i++) {
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_CAP;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 			if ((!IS_DCAM_BLOCK(param_data->id)) || (cxt->cam_4in1_mode || cxt->noramosaic_4in1)) {
+#else
+			if ((!IS_DCAM_BLOCK(param_data->id)) || cxt->remosaic_type) {
+#endif
 				/* todo: refine for 4in1 sensor */
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
@@ -1651,7 +1669,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	cmr_u32 usec = 0;
 	struct isp_af_ts af_ts;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_u32 lowlight_tmp = 0;
+	cmr_u32 tmp = 0;
 
 	if (cxt->ops.af_ops.ioctrl) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_SYSTEM_TIME, &sec, &usec);
@@ -1662,16 +1680,34 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to set AF_CMD_SET_DCAM_TIMESTAMP"));
 	}
 
+	/* set ambient_highlight here, if need please get from cxt */
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 	if (cxt->zsl_flag && cxt->cam_4in1_mode) {
-		if (cxt->ops.ae_ops.ioctrl)
-			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&lowlight_tmp);
-
-		if (lowlight_tmp != cxt->lowlight_flag) {
-			cxt->lowlight_flag = lowlight_tmp;
-			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG,
-					&cxt->lowlight_flag, &cxt->commn_cxt.isp_pm_mode[1]);
-		}
+        if (cxt->ops.ae_ops.ioctrl)
+            ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&tmp);
+        if (ret)
+            tmp = cxt->lowlight_flag;
+        if (tmp != cxt->lowlight_flag) {/* change */
+            ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG,
+                              &tmp, &cxt->commn_cxt.isp_pm_mode[1]);
+        }
+        cxt->lowlight_flag = tmp;
 	}
+#else
+    if (cxt->is_high_res_mode) { /* 4in1:need check ambient brightness */
+        if (cxt->ops.ae_ops.ioctrl)
+            ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&tmp);
+        tmp = !tmp; /* need be 1 when high light */
+        if (ret)
+            tmp = cxt->ambient_highlight;
+        if (tmp != cxt->ambient_highlight) { /* value change */
+            ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG,
+                              &tmp, &cxt->commn_cxt.isp_pm_mode[1]);
+            ISP_LOGI("ambient_highlight = %d", tmp);
+        }
+        cxt->ambient_highlight = tmp;
+    }
+#endif
 
 	return ret;
 }
@@ -1831,7 +1867,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		if (ae_stat_ptr->r_info[i] > (blk_size * 1023) ||
 			ae_stat_ptr->g_info[i] > (blk_size * 1023) ||
 			ae_stat_ptr->b_info[i] > (blk_size * 1023) )
-			ISP_LOGE("data overflow. i %d, blk size %d %d,  r 0x%x, g 0x%x, b 0x%x\n",
+			ISP_LOGV("data overflow. i %d, blk size %d %d,  r 0x%x, g 0x%x, b 0x%x\n",
 				i, cxt->ae_cxt.win_size.w, cxt->ae_cxt.win_size.h,
 				ae_stat_ptr->r_info[i], ae_stat_ptr->g_info[i], ae_stat_ptr->b_info[i]);
 	}
@@ -2502,7 +2538,11 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
 			smart_proc_in.cal_para.ct = awb_output->ct;
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 			if (cxt->cam_4in1_mode)
+#else
+			if (cxt->remosaic_type == 1)
+#endif
 				smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[1];
 			smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
 			smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
@@ -3450,24 +3490,27 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 			++param_data;
 		}
 	}
-
+#if 0
 	/* 4in1 bv_thd */
 	if (cxt->is_4in1_sensor) {
-		memset(&output, 0, sizeof(output));
-	        ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_4IN1_PARAM, NULL, &output);
-	        if (ISP_SUCCESS == ret && 0 == output.param_num) {
-		        param_data = output.param_data;
-		        for (i = 0; i < output.param_num; ++i) {
-		                if (NULL != param_data->data_ptr) {
-		                        ae_input.bv_thd = *(cmr_s16 *)param_data->data_ptr;
-		                }
-		                ++param_data;
-		        }
-	        } else {
-		        ISP_LOGW("warn: no 4in1 param for 4in1 sensor!");
-			ae_input.bv_thd = 0;
+        memset(&output, 0, sizeof(output));
+        ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_4IN1_PARAM, NULL, &output);
+        if (ISP_SUCCESS == ret && 0 != output.param_num) {
+	        param_data = output.param_data;
+	        for (i = 0; i < output.param_num; ++i) {
+	                if (NULL != param_data->data_ptr) {
+	                        ae_input.bv_thd = *(cmr_s16 *)param_data->data_ptr;
+							cxt->bv_thd = ae_input.bv_thd;
+	                }
+	                ++param_data;
 	        }
+        } else {
+	        ISP_LOGW("warn: no 4in1 param for 4in1 sensor!");
+			ae_input.bv_thd = 0;
+			cxt->bv_thd = 0;
+        }
 	}
+#endif
 
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_AE_SYNC, NULL, &output);
@@ -4455,7 +4498,9 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.highflash_measure.capture_skip_num = param_ptr->capture_skip_num;
 	ae_param.capture_skip_num = param_ptr->capture_skip_num;
 	/* ae_param.zsl_flag = param_ptr->capture_mode; */
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 	ae_param.noramosaic_4in1 = cxt->noramosaic_4in1;
+#endif
 	ae_param.resolution_info.frame_size.w = cxt->commn_cxt.prv_size.w;
 	ae_param.resolution_info.frame_size.h = cxt->commn_cxt.prv_size.h;
 	ae_param.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[cxt->commn_cxt.param_index].frame_line;
@@ -4840,20 +4885,33 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->sensor_fps.min_fps = in_ptr->sensor_fps.min_fps;
 	cxt->sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	cxt->sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
-	cxt->cam_4in1_mode = in_ptr->mode_4in1;
-	cxt->noramosaic_4in1= in_ptr->noramosaic_4in1;
 	cxt->commn_cxt.src.w = in_ptr->size.w;
 	cxt->commn_cxt.src.h = in_ptr->size.h;
 	cxt->commn_cxt.prv_size = cxt->commn_cxt.src;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
+	cxt->cam_4in1_mode = in_ptr->mode_4in1;
+	cxt->noramosaic_4in1= in_ptr->noramosaic_4in1;
 	if (cxt->cam_4in1_mode || cxt->noramosaic_4in1) {
 		cxt->commn_cxt.prv_size.w >>= 1;
 		cxt->commn_cxt.prv_size.h >>= 1;
 	}
-
 	ISP_LOGD("work_mode %d, is_dv %d, zsl %d,  size %d %d, prv_size %d %d,  4in1_prev %d %d\n",
 		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
-		in_ptr->size.w, in_ptr->size.h, cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
+                in_ptr->size.w, in_ptr->size.h, cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
 		(cmr_u32)in_ptr->mode_4in1, cxt->noramosaic_4in1);
+#else
+	cxt->remosaic_type = in_ptr->remosaic_type;
+	cxt->is_high_res_mode = in_ptr->is_high_res_mode;
+	cxt->ambient_highlight = 0;	/* default lowlight, zsl */
+    if (cxt->remosaic_type && in_ptr->work_mode == 0) {
+	    cxt->commn_cxt.prv_size.w >>= 1;
+		cxt->commn_cxt.prv_size.h >>= 1;
+	}
+	ISP_LOGD("work_mode %d,is_dv %d,zsl %d,size %d %d,prv_size %d %d,remosaic %d %d\n",
+		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
+		in_ptr->size.w, in_ptr->size.h, cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
+		cxt->remosaic_type, cxt->is_high_res_mode);
+#endif
 
 	cxt->mem_info.alloc_cb = in_ptr->alloc_cb;
 	cxt->mem_info.free_cb = in_ptr->free_cb;
@@ -4873,7 +4931,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	memset(&pm_input, 0, sizeof(struct pm_workmode_input));
 	memset(&pm_output, 0, sizeof(struct pm_workmode_output));
 	pm_input.pm_sets_num = 1;
-	switch (in_ptr->work_mode) {
+#ifdef  CONFIG_CAMERA_4IN1_SOLUTION2
+	pm_input.remosaic_type = cxt->remosaic_type;
+#endif
+
+    switch (in_ptr->work_mode) {
 	case 0:		/*preview / video */
 	{
 		if (in_ptr->dv_mode)
@@ -4882,6 +4944,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			pm_input.mode[0] = WORKMODE_PREVIEW;
 		pm_input.img_w[0] = cxt->commn_cxt.src.w;
 		pm_input.img_h[0] = cxt->commn_cxt.src.h;
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 		if (cxt->cam_4in1_mode) {
 			pm_input.cam_4in1_mode = 1;
 			pm_input.define[0] = 1; /* todo: workaround for 4in1 binning prev*/
@@ -4894,6 +4957,13 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			pm_input.img_w[0] >>= 1;
 			pm_input.img_h[0] >>= 1;
 		}
+#else
+		if (cxt->remosaic_type && pm_input.mode[0] == WORKMODE_PREVIEW) {
+			pm_input.define[0] = 1;
+			pm_input.img_w[0] >>= 1;
+			pm_input.img_h[0] >>= 1;
+        }
+#endif
 		if (cxt->zsl_flag)  {
 			pm_input.pm_sets_num++;
 			pm_input.mode[1] = WORKMODE_CAPTURE;
@@ -5313,7 +5383,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	cxt->mem_info.free_cb = in_ptr->free_cb;
 	cxt->mem_info.oem_handle = in_ptr->oem_handle;
 
-	ISP_LOGI("takepicture_mode[%d] camera_id[%d] cxt[%p]\n", 
+	ISP_LOGI("takepicture_mode[%d] camera_id[%d] cxt[%p]\n",
 			cxt->takepicture_mode,
 			(unsigned int)cxt->camera_id,
 			cxt);
@@ -5363,7 +5433,8 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	pm_input.img_w[0] = cxt->commn_cxt.src.w;
 	pm_input.img_h[0] = cxt->commn_cxt.src.h;
 
-#if 0
+#if	0
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 	ISP_LOGV("flag %d %d\n", cxt->is_4in1_sensor, cxt->cam_4in1_mode);
 	if (cxt->cam_4in1_mode) {
 		cmr_u32 lowlight_tmp = 0;
@@ -5373,8 +5444,23 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG, &lowlight_tmp,
 			&cxt->commn_cxt.isp_pm_mode[1]);
 	}
-#endif
+#else
+	ISP_LOGV("flag %d %d\n", cxt->is_4in1_sensor, cxt->ambient_highlight);
+	if (cxt->remosaic_type) {
+		cmr_u32 tmp = 0;
 
+		pm_input.remosaic_type = cxt->remosaic_type;
+		/* 4in1 postprocess full size, ignore lowlight_flag */
+		cxt->ambient_stable = 0;
+		cxt->ambient_highlight = 0;
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG, &tmp,
+			&cxt->commn_cxt.isp_pm_mode[1]);
+	}
+#endif
+#endif
+#ifdef   CONFIG_CAMERA_4IN1_SOLUTION2
+	pm_input.remosaic_type = cxt->remosaic_type;
+#endif
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, &pm_output);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
 

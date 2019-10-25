@@ -401,6 +401,8 @@ typedef struct {
     uint8_t af_type;
     uint8_t face_num;
     int32_t face_angle_info[20];
+    uint8_t high_resolution_mode;
+    uint8_t fin1_highlight_mode;
 } SPRD_DEF_Tag;
 
 typedef struct {
