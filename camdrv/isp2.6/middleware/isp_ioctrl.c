@@ -2453,10 +2453,14 @@ static cmr_int ispctl_set_ae_lock_unlock(cmr_handle isp_alg_handle, void *param_
 		ISP_LOGV("AE Lock\n");
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_PAUSE, NULL, (void *)&ae_result);
+		if (cxt->ops.lsc_ops.ioctrl)
+			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
 	} else if (ISP_AE_UNLOCK == ae_mode) {
 		ISP_LOGV("AE Un-Lock\n");
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_RESTORE, NULL, (void *)&ae_result);
+		if (cxt->ops.lsc_ops.ioctrl)
+			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
 	} else {
 		ISP_LOGV("Unsupported AE  mode (%d)\n", ae_mode);
 	}

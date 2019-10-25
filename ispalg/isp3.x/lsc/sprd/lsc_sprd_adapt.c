@@ -2506,7 +2506,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 			memcpy(cxt->lsc_buffer, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(unsigned short));
 			ISP_LOGV("bv=%d, fw_start_bv=%d , use fwstart_new_scaled_table", param->bv, cxt->fw_start_bv);
 		} else {
-			if (cxt->can_update_dest == 1) {
+			if (cxt->can_update_dest == 1 && alg_in) {
 				post_gain_param.org_gain = cxt->last_lsc_table;
 				post_gain_param.gain_width = gain_width;
 				post_gain_param.gain_height = gain_height;
@@ -2994,10 +2994,12 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case SMART_LSC_ALG_LOCK:
 		cxt->alg_locked = 1;
+		ISP_LOGD("SMART_LSC_ALG_LOCK, alsc alg lock!");
 		break;
 
 	case SMART_LSC_ALG_UNLOCK:
 		cxt->alg_locked = 0;
+		ISP_LOGD("SMART_LSC_ALG_UNLOCK, alsc alg un-lock!");
 		break;
 
 	case ALSC_FW_PROC_START:	//for sbs feature now
