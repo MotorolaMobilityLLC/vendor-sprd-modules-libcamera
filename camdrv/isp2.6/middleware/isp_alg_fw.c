@@ -1497,6 +1497,9 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
 	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
 
+	/* lock pm to avoid parameter is updated by algo while driver reading */
+	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_LOCK, NULL, NULL);
+
 	/* work_mode: 1 - capture only, 0 - auto/preview */
 	scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
 	param_data = output.prv_param_data;
@@ -1521,6 +1524,8 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			param_data++;
 		}
 	}
+
+	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_UNLOCK, NULL, NULL);
 
 	/* Enable hist statis (Y-256). Only one will take effect. Driver MUST decide it */
 	if (start) {

@@ -2576,6 +2576,15 @@ cmr_s32 isp_pm_ioctl(cmr_handle handle, enum isp_pm_cmd cmd, void *input, void *
 		return rtn;
 	}
 
+	/* Be careful to use LOCK/UNLOCK. They should be called in pair */
+	if (cmd == ISP_PM_CMD_LOCK) {
+		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);
+		return rtn;
+	} else if (cmd == ISP_PM_CMD_UNLOCK) {
+		pthread_mutex_unlock(&pm_cxt_ptr->pm_mutex);
+		return rtn;
+	}
+
 	switch ((cmd & isp_pm_cmd_mask)) {
 	case ISP_PM_CMD_SET_BASE:
 		pthread_mutex_lock(&pm_cxt_ptr->pm_mutex);

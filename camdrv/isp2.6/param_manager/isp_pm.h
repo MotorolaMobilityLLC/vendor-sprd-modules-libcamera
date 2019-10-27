@@ -42,6 +42,8 @@
 	(id == ISP_BLK_RGB_AEM) || (id == DCAM_BLK_PPE))
 
 enum isp_pm_cmd {
+	ISP_PM_CMD_LOCK,
+	ISP_PM_CMD_UNLOCK,
 	ISP_PM_CMD_SET_BASE = 0x1000,
 	ISP_PM_CMD_SET_MODE,
 	ISP_PM_CMD_SET_AWB,
