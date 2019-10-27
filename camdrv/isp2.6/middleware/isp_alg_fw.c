@@ -2565,6 +2565,17 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		goto exit;
 	}
 
+
+	if (cxt->afl_cxt.afl_mode <= AE_FLICKER_60HZ) {
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
+		if (ret) {
+			ISP_LOGE("fail to set statis buf");
+		}
+		ISP_LOGE("new afl_mode %d,  bypass %d\n", cxt->afl_cxt.afl_mode, cxt->afl_cxt.hw_bypass);
+		goto exit;
+	}
+
+
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLICKER_MODE, NULL, &cur_flicker);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_FLICKER_MODE"));

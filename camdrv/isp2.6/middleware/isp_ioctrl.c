@@ -684,9 +684,14 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 	set_flicker.mode = *(cmr_u32 *) param_ptr;
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLICKER, &set_flicker, NULL);
-	ISP_LOGD("afl_mode=%d, ret=%ld", set_flicker.mode, ret);
 
-	ispctl_flicker_bypass(isp_alg_handle, bypass);
+	if (cxt->afl_cxt.afl_mode > AE_FLICKER_60HZ && !cxt->sensor_fps.is_high_fps) {
+		bypass = 0;
+		ispctl_flicker_bypass(isp_alg_handle, bypass);
+	}
+
+	ISP_LOGD("afl_mode=%d, ret=%ld, high fps %d,  bypass %d\n",
+		set_flicker.mode, ret, cxt->sensor_fps.is_high_fps, bypass);
 
 	return ret;
 }
