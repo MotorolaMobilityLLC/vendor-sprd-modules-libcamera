@@ -277,6 +277,7 @@ struct camera_context {
     cmr_uint share_path_sm_flag;
     cmr_handle init_thread;
     cmr_int face_type;
+    cmr_int facing;
 
     /*callback thread to hal*/
     cmr_handle prev_cb_thr_handle;
