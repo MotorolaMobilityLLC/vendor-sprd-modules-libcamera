@@ -1676,8 +1676,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         camera3_notify_msg_t notify_msg;
 
         if (i->frame_number < frame_number) {
-            HAL_LOGD("i->frame_num=%d, frame_num=%d, i->req_id=%d",
-                     i->frame_number, frame_number, i->request_id);
+            HAL_LOGD("mCameraId=%d, i->frame_num=%d, frame_num=%d, i->req_id=%d, i->bNotified=%d",
+                     mCameraId, i->frame_number, frame_number, i->request_id, i->bNotified);
 
             /**add for 3d capture reprocessing begin   */
             HAL_LOGV("result stream format =%d", result_info->stream->format);
@@ -1743,8 +1743,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
             i++;
         } else if (i->frame_number == frame_number) {
-            HAL_LOGD("i->frame_num=%d, frame_num=%d, i->req_id=%d",
-                     i->frame_number, frame_number, i->request_id);
+            HAL_LOGD("mCameraId=%d, i->frame_num=%d, frame_num=%d, i->req_id=%d,i->bNotified=%d",
+                     mCameraId, i->frame_number, frame_number, i->request_id,i->bNotified);
 
             if (!i->bNotified) {
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
@@ -1752,8 +1752,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 notify_msg.message.shutter.timestamp = capture_time;
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->bNotified = true;
-                HAL_LOGV("notified frame_num = %d, timestamp = %" PRId64,
-                         i->frame_number, notify_msg.message.shutter.timestamp);
+                HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = %" PRId64,
+                         mCameraId, i->frame_number, notify_msg.message.shutter.timestamp);
 
                 SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;

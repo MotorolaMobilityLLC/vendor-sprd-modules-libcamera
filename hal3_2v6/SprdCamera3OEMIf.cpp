@@ -1160,7 +1160,7 @@ int SprdCamera3OEMIf::VideoTakePicture() {
 
     JPEG_Tag jpgInfo;
 
-    HAL_LOGD("E");
+    HAL_LOGD("E mCameraId = %d", mCameraId);
     GET_START_TIME;
     print_time();
 
@@ -3855,8 +3855,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
     channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
     channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
-    HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p", pre_stream,
-             rec_stream, callback_stream);
+    HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p",
+        pre_stream, rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
     int sx, sy, ex, ey, angle, pose;
@@ -4034,10 +4034,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         ATRACE_BEGIN("video_frame");
-        HAL_LOGD("record:fd=%d, vir=0x%lx, num=%d, time=%" PRId64
-                 ", rec=%" PRId64,
-                 frame->fd, buff_vir, frame_num, buffer_timestamp,
-                 mSlowPara.rec_timestamp);
+        HAL_LOGD("record:mCameraId = %d, fd = 0x%x, vir = 0x%lx, num = %d"
+                 ", time = %" PRId64
+                 ", rec = %" PRId64,
+                 mCameraId, frame->fd, buff_vir, frame_num,
+                 buffer_timestamp, mSlowPara.rec_timestamp);
         if (frame->type == PREVIEW_VIDEO_FRAME) {
             if (mVideoWidth <= mCaptureWidth &&
                 mVideoHeight <= mCaptureHeight) {
@@ -4086,17 +4087,17 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             pre_stream = NULL;
             goto bypass_pre;
         }
+
         ATRACE_BEGIN("preview_frame");
         mSetting->getSPRDDEFTag(&sprddefInfo);
         camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
         sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
         mSetting->setSPRDDEFTag(sprddefInfo);
         HAL_LOGD("highlight=%d", fin1_info.ambient_highlight);
-        HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, "
-                 "height=%d, time=%" PRId64,
-                 mCameraId, frame->fd, buff_vir, frame_num, frame->width,
-                 frame->height, buffer_timestamp);
-
+        HAL_LOGD("preview:mCameraId = %d, prev:fd = 0x%x, vir = 0x%lx, num = %d"
+                 ", width = %d, height = %d, time = %" PRId64,
+                 mCameraId, frame->fd, buff_vir, frame_num,
+                 frame->width, frame->height, buffer_timestamp);
         if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
             if ((frame_num > mStartFrameNum) &&
                 (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
@@ -4212,7 +4213,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         ATRACE_BEGIN("callback_frame");
 
-        HAL_LOGD("callback fd=%d, vir=0x%lx, frame_num %d, time %" PRId64
+        HAL_LOGD("callback fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
                  ", frame type = %ld",
                  frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
 
@@ -4235,7 +4236,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             goto bypass_yuv2;
         }
 
-        HAL_LOGD("yuv2 fd=%d, vir=0x%lx, frame_num %d, time %" PRId64
+        HAL_LOGD("yuv2 fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
                  ", frame type = %ld",
                  frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
         channel->channelCbRoutine(frame_num, buffer_timestamp,
@@ -4804,9 +4805,9 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     int ispInfoSize = 0;
     int64_t exposureTime = 0;
 
-    HAL_LOGD("E encInfo->size = %d, enc->buffer = %p, encInfo->need_free = %d "
-             "time=%" PRId64,
-             encInfo->size, encInfo->outPtr, encInfo->need_free,
+    HAL_LOGD("E mCameraId = %d, encInfo->size = %d, enc->buffer = %p,"
+             " encInfo->need_free = %d, time=%" PRId64,
+             mCameraId, encInfo->size, encInfo->outPtr, encInfo->need_free,
              frame->timestamp);
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -4863,7 +4864,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
-    maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
+    maxJpegSize = ADP_BUFSIZE(*jpeg_buff_handle);
     if ((uint32_t)maxJpegSize > heap_size) {
         maxJpegSize = heap_size;
     }
@@ -9627,9 +9628,9 @@ int SprdCamera3OEMIf::PushVideoSnapShotbuff(int32_t frame_number,
         if (stream) {
             ret = stream->getQBufAddrForNum(frame_number, &addr_vir, &addr_phy,
                                             &fd);
-            HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx, fd = 0x%x, "
-                     "frame_number = %d",
-                     addr_phy, addr_vir, fd, frame_number);
+            HAL_LOGD("mCameraId = %d, addr_phy = 0x%lx, addr_vir = 0x%lx, "
+                     "fd = 0x%x, frame_number = %d",
+                     mCameraId, addr_phy, addr_vir, fd, frame_number);
             if (mCameraHandle != NULL && mHalOem != NULL &&
                 mHalOem->ops != NULL && ret == NO_ERROR &&
                 addr_vir != (cmr_uint)NULL)
@@ -10400,7 +10401,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     bool isFrontFlash =
         (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
 
-    HAL_LOGD("E");
+    HAL_LOGD("E mCameraId = %d", mCameraId);
     if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||
         NULL == obj->mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");

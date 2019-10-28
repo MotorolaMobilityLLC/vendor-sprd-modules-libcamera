@@ -122,8 +122,8 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber,
         mBufferList.add(buff_hal);
         ret = NO_ERROR;
     } else {
-        HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %d, mStreamType = %d",
-                 buf_mem_info->addr_phy, buf_mem_info->addr_vir,
+        HAL_LOGV("addr_phy = %p, addr_vir = %p, fd=0x%x, size = %d, mStreamType = %d",
+                 buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->fd,
                  buf_mem_info->size, mStreamType);
         mBuffNum++;
         buff_hal->buffer_handle = buffer;
@@ -171,9 +171,11 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber,
         mBufferList.add(buff_hal);
         ret = NO_ERROR;
     } else {
-        HAL_LOGV("addr_phy = %p, addr_vir = %p, size = %d, mStreamType = %d",
-                 buf_mem_info->addr_phy, buf_mem_info->addr_vir,
-                 buf_mem_info->size, mStreamType);
+        HAL_LOGV("addr_phy = %p, addr_vir = %p, fd=0x%x, size = 0x%x"
+                 ", mStreamType = %d, fmt=%d,width=%d, height=%d",
+                 buf_mem_info->addr_phy, buf_mem_info->addr_vir,buf_mem_info->fd,
+                 buf_mem_info->size, mStreamType, buf_mem_info->format,
+                 buf_mem_info->width,buf_mem_info->height);
         mBuffNum++;
         buff_hal->buffer_handle = buffer;
         buff_hal->frame_number = frameNumber;
@@ -255,7 +257,7 @@ int SprdCamera3Stream::getHeapSize(uint32_t *mm_heap_size) {
         return BAD_VALUE;
     }
 
-    *mm_heap_size = ADP_WIDTH(*((*iter)->buffer_handle));
+    *mm_heap_size = ADP_BUFSIZE(*((*iter)->buffer_handle));
 
     return NO_ERROR;
 }

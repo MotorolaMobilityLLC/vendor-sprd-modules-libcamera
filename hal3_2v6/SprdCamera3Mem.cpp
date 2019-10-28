@@ -248,10 +248,13 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
     // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
     mem_info->size = ADP_BUFSIZE(*buffer_handle);
-    HAL_LOGV("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
-             "%d,height =%d",
+    mem_info->width = ADP_WIDTH(*buffer_handle);
+    mem_info->height = ADP_HEIGHT(*buffer_handle);
+    mem_info->format= ADP_FORMAT(*buffer_handle);
+    HAL_LOGV("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
+             " buf size = 0x%x, width = %d, height = %d, fmt = %d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
-             mem_info->size, width, height);
+             mem_info->size, mem_info->width, mem_info->height, mem_info->format);
 
 err_out:
     return ret;
@@ -320,10 +323,13 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
     // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
     mem_info->size = ADP_BUFSIZE(*buffer_handle);
-    HAL_LOGV("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
-             "%d,height =%d",
+    mem_info->width = ADP_WIDTH(*buffer_handle);
+    mem_info->height = ADP_HEIGHT(*buffer_handle);
+    mem_info->format= ADP_FORMAT(*buffer_handle);
+    HAL_LOGV("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
+             " buf size = %zu, width = %d, height = %d, fmt = %d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
-             mem_info->size, width, height);
+             mem_info->size, mem_info->width, mem_info->height, mem_info->format);
 
 err_out:
     return ret;
@@ -428,10 +434,13 @@ int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
     // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
     mem_info->size = ADP_BUFSIZE(*buffer_handle);
-    HAL_LOGV("fd=0x%x, addr_phy offset =%p, addr_vir = %p,buf size=%zu,width = "
-             "%d,height =%d",
+    mem_info->width = ADP_WIDTH(*buffer_handle);
+    mem_info->height = ADP_HEIGHT(*buffer_handle);
+    mem_info->format = ADP_FORMAT(*buffer_handle);
+    HAL_LOGV("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
+             " buf size = %zu, width = %d, height = %d, format = %d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
-             mem_info->size, width, height);
+             mem_info->size, mem_info->width, mem_info->height, mem_info->format);
 
 err_out:
     return ret;

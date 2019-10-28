@@ -107,7 +107,7 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     virtual int allocateBuff();
 
     virtual void parse_configure_info(config_multi_camera *config_info);
-
+    virtual void video_parse_configure_info(config_multi_camera *config_info);
     // provide interface for inherited class
 
     void reConfigOpen();
@@ -185,6 +185,9 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     Mutex mNotifyLockMain;
     Mutex mNotifyLockAux1;
     Mutex mNotifyLockAux2;
+    Mutex mNotifyLockVideoMain;
+    Mutex mNotifyLockVideoAux1;
+    Mutex mNotifyLockVideoAux2;
     int64_t mWaitFrameNum;
     int64_t mSendFrameNum;
     Condition mWaitFrameSignal;
@@ -196,6 +199,10 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     List<camera3_notify_msg_t> mNotifyListAux1;
     List<camera3_notify_msg_t> mNotifyListAux2;
     List<camera3_notify_msg_t> mNotifyListAux3;
+    List<camera3_notify_msg_t> mNotifyListVideoMain;
+    List<camera3_notify_msg_t> mNotifyListVideoAux1;
+    List<camera3_notify_msg_t> mNotifyListVideoAux2;
+    List<camera3_notify_msg_t> mNotifyListVideoAux3;
     List<meta_save_t> mMetadataList;
     multi_request_saved_t mSavedSnapRequest;
     const camera3_callback_ops_t *mCallbackOps;
@@ -205,15 +212,15 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     sprd_virtual_camera_t m_VirtualCamera;
     sprdcamera_physical_descriptor_t m_pPhyCamera[MAX_MULTI_NUM_CAMERA];
     hal_buffer_info mBufferInfo[MAX_MULTI_NUM_BUFFER];
-    new_mem_t mLocalBuffer[MAX_MULTI_NUM_BUFFER * (MAX_MULTI_NUM_BUFFER + 4)];
+    new_mem_t mLocalBuffer[MAX_MULTI_NUM_BUFFER * (MAX_MULTI_NUM_BUFFER + 11)];
     hal_req_stream_config_total mHalReqConfigStreamInfo[MAX_MULTI_NUM_STREAMS];
     request_state mRequstState;
-
     // select request config number; inherited class configure
     int mReqConfigNum;
     // select metadata and notify owner
     int mMetaNotifyIndex;
     bool mIsCapturing;
+    bool mIsVideoMode;
 
   private:
     buffer_handle_t *mCapInputbuffer;
@@ -251,6 +258,9 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux1;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux2;
+    List<hwi_frame_buffer_info_t> mUnmatchedFrameListVideoMain;
+    List<hwi_frame_buffer_info_t> mUnmatchedFrameListVideoAux1;
+    List<hwi_frame_buffer_info_t> mUnmatchedFrameListVideoAux2;
 
     class TWPreviewMuxerThread : public Thread {
       public:
@@ -287,6 +297,23 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
         void waitMsgAvailable();
     };
     sp<TWCaptureThread> mTWCaptureThread;
+
+    class VideoThread : public Thread {
+      public:
+        VideoThread();
+        virtual ~VideoThread();
+        virtual bool threadLoop();
+        virtual void requestExit();
+        // This queue stores matched buffer as frame_matched_info_t
+        Mutex mMergequeueMutex;
+        Condition mMergequeueSignal;
+        List<muxer_queue_msg_t> mVideoMuxerMsgList;
+
+      private:
+        void waitMsgAvailable();
+    };
+    sp<VideoThread> mVideoThread;
+
 };
 };
 

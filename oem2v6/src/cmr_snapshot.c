@@ -3287,10 +3287,12 @@ cmr_int snp_update_postproc_src_size(cmr_handle snp_handle,
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct snp_proc_param *proc_param_ptr = &cxt->req_param.post_proc_setting;
 
-    cmr_u32 width = cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
+    cmr_u32 width =
+        cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
     cmr_u32 height =
         cxt->req_param.post_proc_setting.chn_out_frm[0].size.height;
-    cmr_u32 act_width = cxt->req_param.post_proc_setting.actual_snp_size.width;
+    cmr_u32 act_width =
+        cxt->req_param.post_proc_setting.actual_snp_size.width;
     cmr_u32 act_height =
         cxt->req_param.post_proc_setting.actual_snp_size.height;
 
@@ -3924,8 +3926,9 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
         frame_type->format = info->fmt;
         break;
     default: {
-        cmr_u32 size = cxt->req_param.post_proc_setting.actual_snp_size.width *
-                       cxt->req_param.post_proc_setting.actual_snp_size.height;
+        cmr_u32 size =
+            cxt->req_param.post_proc_setting.actual_snp_size.width *
+                cxt->req_param.post_proc_setting.actual_snp_size.height;
 
         struct camera_context *oem_cxt =
             (struct camera_context *)cxt->oem_handle;
@@ -4693,8 +4696,8 @@ cmr_int snp_post_proc(cmr_handle snp_handle, void *data) {
         }
         goto exit;
     }
-    CMR_LOGD("path data index 0x%x 0x%x", chn_data_ptr->frame_id,
-             chn_data_ptr->base);
+    CMR_LOGD("path data index 0x%x 0x%x",
+             chn_data_ptr->frame_id, chn_data_ptr->base);
     cxt->index = chn_data_ptr->frame_id - chn_data_ptr->base;
     fmt = chn_data_ptr->fmt;
     CMR_LOGD("index %d fmt %d", cxt->index, fmt);
@@ -5095,10 +5098,12 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
         if (1 == cxt->req_param.is_video_snapshot ||
             1 == cxt->req_param.is_zsl_snapshot) {
             flag = 1;
-            width = cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
+            width =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
             height =
                 cxt->req_param.post_proc_setting.chn_out_frm[0].size.height;
-            act_width = cxt->req_param.post_proc_setting.actual_snp_size.width;
+            act_width =
+                cxt->req_param.post_proc_setting.actual_snp_size.width;
             act_height =
                 cxt->req_param.post_proc_setting.actual_snp_size.height;
 
@@ -5116,9 +5121,11 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
                 cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
             chn_data.uaddr =
                 cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
-            chn_data.fd = cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
+            chn_data.fd =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
 
-            src_vir = (unsigned long)chn_data.yaddr_vir;
+            src_vir =
+                (unsigned long)chn_data.yaddr_vir;
             dst_vir =
                 (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
                     .addr_vir.addr_y;
@@ -5128,8 +5135,8 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
                      proc_param_ptr->channel_zoom_mode);
             cmr_copy((void *)dst_vir, (void *)src_vir, width * height);
 
-            src_vir = (unsigned long)chn_data.yaddr_vir + width * height;
-
+            src_vir =
+                (unsigned long)chn_data.yaddr_vir + width * height;
             dst_vir =
                 (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
                     .addr_vir.addr_u;
@@ -5152,9 +5159,11 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
                 cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_y;
             chn_data.uaddr =
                 cxt->req_param.post_proc_setting.chn_out_frm[0].addr_phy.addr_u;
-            chn_data.fd = cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
+            chn_data.fd =
+                cxt->req_param.post_proc_setting.chn_out_frm[0].fd;
 
-            src_vir = (unsigned long)chn_data.yaddr_vir;
+            src_vir =
+                (unsigned long)chn_data.yaddr_vir;
             dst_vir =
                 (unsigned long)cxt->req_param.post_proc_setting.chn_out_frm[0]
                     .addr_vir.addr_y;

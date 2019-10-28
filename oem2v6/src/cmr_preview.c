@@ -2200,7 +2200,6 @@ cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data) {
         inter_param = (struct internal_param *)message->data;
         camera_id = (cmr_u32)((cmr_uint)inter_param->param1);
         buffer = (cam_buffer_info_t *)inter_param->param2;
-
         ret = prev_set_video_buffer(handle, camera_id, buffer);
         break;
 
@@ -13155,9 +13154,13 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%lx, valid_num=%ld",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=0x%lx, valid_num=%ld"
+             ", phy_y=0x%x,vir_y=0x%x,fmt=%d,buffer_size=0x%x",
              prev_cxt->camera_id, prev_cxt->prev_frm[valid_num].fd,
-             prev_cxt->prev_channel_id, prev_cxt->prev_mem_valid_num);
+             prev_cxt->prev_channel_id, prev_cxt->prev_mem_valid_num,
+             prev_cxt->prev_frm[valid_num].addr_phy.addr_y,
+             prev_cxt->prev_frm[valid_num].addr_vir.addr_y,
+             prev_cxt->prev_frm[valid_num].fmt,prev_cxt->prev_frm[valid_num].buf_size);
     ATRACE_END();
     return ret;
 }
@@ -13212,6 +13215,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->prev_fd_array[valid_num - 1] = 0;
         cmr_bzero(&prev_cxt->prev_frm[valid_num - 1], sizeof(struct img_frm));
         prev_cxt->prev_mem_valid_num--;
+
         if (is_to_hal) {
             frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
             frame_type.monoboottime = data->monoboottime;
@@ -13535,9 +13539,14 @@ cmr_int prev_set_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
-    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=%ld, valid_num=%ld",
+    CMR_LOGD("cam_id=%ld, fd=0x%x, chn_id=%ld, valid_num=%ld"
+             ", phy_y=0x%x,vir_y=0x%x,fmt=%d,buffer_size=0x%x",
              prev_cxt->camera_id, prev_cxt->video_frm[valid_num].fd,
-             prev_cxt->video_channel_id, prev_cxt->video_mem_valid_num);
+             prev_cxt->video_channel_id, prev_cxt->video_mem_valid_num,
+             prev_cxt->video_frm[valid_num].addr_phy.addr_y,
+             prev_cxt->video_frm[valid_num].addr_vir.addr_y,
+             prev_cxt->video_frm[valid_num].fmt,prev_cxt->video_frm[valid_num].buf_size);
+
     ATRACE_END();
     return ret;
 }
@@ -13807,7 +13816,6 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.y_vir_addr = prev_cxt->cap_zsl_virt_addr_array[0];
         frame_type.fd = prev_cxt->cap_zsl_fd_array[0];
         frame_type.type = PREVIEW_ZSL_CANCELED_FRAME;
-
         for (i = 0; i < (cmr_u32)valid_num - 1; i++) {
             prev_cxt->cap_zsl_phys_addr_array[i] =
                 prev_cxt->cap_zsl_phys_addr_array[i + 1];
@@ -13823,6 +13831,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(&prev_cxt->cap_zsl_frm[valid_num - 1],
                   sizeof(struct img_frm));
         prev_cxt->cap_zsl_mem_valid_num--;
+
         if (is_to_hal) {
             frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
             frame_type.monoboottime = data->monoboottime;
@@ -13976,8 +13985,8 @@ cmr_uint prev_set_ultra_wide_buffer_flag(struct prev_context *prev_cxt,
         ret = CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGV("[prev_ultra_wide] %s done ret %ld flag %ld", debug_str, ret,
-             flag);
+    CMR_LOGV("[prev_ultra_wide] %s done ret %ld flag %ld",
+             debug_str, ret, flag);
     return ret;
 }
 
@@ -14107,6 +14116,7 @@ cmr_uint prev_search_ultra_wide_buffer(struct prev_context *prev_cxt,
             ret = CMR_CAMERA_INVALID_STATE;
         }
     }
+
     if (!ret && (NULL != frm_is_lock)) {
         for (count = 0; count < alloc_cnt; count++) {
             search_index += count;
@@ -14123,8 +14133,8 @@ cmr_uint prev_search_ultra_wide_buffer(struct prev_context *prev_cxt,
             }
         }
     }
-    CMR_LOGV("[prev_ultra_wide] %s done ret %ld search_index %ld", debug_str,
-             ret, search_index);
+    CMR_LOGV("[prev_ultra_wide] %s done ret %ld search_index %ld",
+             debug_str, ret, search_index);
     return ret;
 }
 
@@ -14539,7 +14549,8 @@ cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
             }
             cap_rot = prev_get_rot_enum(tmp_req_rot);
         } else {
-            prev_cxt->actual_pic_size.width = prev_cxt->aligned_pic_size.width;
+            prev_cxt->actual_pic_size.width =
+                prev_cxt->aligned_pic_size.width;
             prev_cxt->actual_pic_size.height =
                 prev_cxt->aligned_pic_size.height;
             prev_cxt->dealign_actual_pic_size.width = org_pic_size->width;
@@ -14573,7 +14584,8 @@ cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
                 prev_cxt->dealign_actual_pic_size.height);
 
         } else {
-            prev_cxt->actual_pic_size.width = prev_cxt->aligned_pic_size.width;
+            prev_cxt->actual_pic_size.width =
+                prev_cxt->aligned_pic_size.width;
             prev_cxt->actual_pic_size.height =
                 prev_cxt->aligned_pic_size.height;
             prev_cxt->dealign_actual_pic_size.width = org_pic_size->width;

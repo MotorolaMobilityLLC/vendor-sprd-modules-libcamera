@@ -205,9 +205,12 @@ typedef struct {
     int virtual_camera_id;
     int total_config_camera;
     hal_buffer_info buffer_info[MAX_MULTI_NUM_BUFFER];
+    hal_buffer_info video_buffer_info[MAX_MULTI_NUM_BUFFER];
     config_physical_descriptor multi_phy_info[MAX_MULTI_NUM_CAMERA];
+    config_physical_descriptor video_multi_phy_info[MAX_MULTI_NUM_CAMERA];
     int total_config_number;
     hal_req_stream_config_total hal_req_config_stream[MAX_MULTI_NUM_STREAMS];
+    hal_req_stream_config_total video_hal_req_config_stream[MAX_MULTI_NUM_STREAMS];
 } config_multi_camera;
 /*configure mulit camera*/
 
