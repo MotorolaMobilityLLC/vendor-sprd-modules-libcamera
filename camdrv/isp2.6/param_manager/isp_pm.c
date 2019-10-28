@@ -265,7 +265,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ DCAM_BLK_RGB_AFM_V1,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
 	{ DCAM_BLK_BPC_V1,			ISP_BLK_BPC_T, sizeof(struct sensor_bpc_level) },
 	{ DCAM_BLK_RGB_DITHER,		ISP_BLK_RGB_DITHER_T,  sizeof(struct sensor_rgb_dither_level) },
-	{ DCAM_BLK_PPE,				ISP_BLK_GRGB_T,  sizeof(struct sensor_ppe_level) },
+	{ DCAM_BLK_PPE,				ISP_BLK_PPE_T,  sizeof(struct sensor_ppe_level) },
 	{ ISP_BLK_GRGB_V1,			ISP_BLK_GRGB_T, sizeof(struct sensor_grgb_level) },
 	{ ISP_BLK_3DNR,				ISP_BLK_3DNR_T, sizeof(struct sensor_3dnr_level) },
 	{ ISP_BLK_UVDIV_V1,			ISP_BLK_UVDIV_T, sizeof(struct sensor_cce_uvdiv_level) },
@@ -284,6 +284,10 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_NLM_V2,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
 	{ ISP_BLK_NLM_V2,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
 	{ ISP_BLK_YNRS,				ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
+	{ ISP_BLK_BWU_BWD,			ISP_BLK_BWU_BWD_T, sizeof(struct sensor_bwu_bwd_level) },
+	{ ISP_BLK_RAW_GTM,			ISP_BLK_RAW_GTM_T, sizeof(struct sensor_raw_gtm_level) },
+	{ ISP_BLK_RGB_LTM,			ISP_BLK_RGB_LTM_T, sizeof(struct sensor_rgb_ltm_level) },
+	{ ISP_BLK_YUV_LTM,			ISP_BLK_YUV_LTM_T, sizeof(struct sensor_yuv_ltm_level) },
 };
 #endif
 /************************ Project adapt data END *******************************************/
