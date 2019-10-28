@@ -577,6 +577,7 @@ extern "C" {
 		cmr_u32 usec;
 		cmr_s64 monoboottime;
 		struct ae_ctrl_alc_log log_ae;
+		cmr_u32 face_enable;
 		cmr_u32 fps;
 		cmr_u32 reserved;
 	};

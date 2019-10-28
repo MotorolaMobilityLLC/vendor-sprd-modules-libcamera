@@ -1628,6 +1628,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ae_info->ae_rlt_info.target_lum_ori = ae_in->ae_output.target_lum_ori;
 		ae_info->ae_rlt_info.flag4idx = ae_in->ae_output.flag4idx;
 		ae_info->ae_rlt_info.face_stable= ae_in->ae_output.face_stable;
+		ae_info->ae_rlt_info.face_ae_enable = ae_in->ae_output.face_enable;
 		ae_info->ae_rlt_info.cur_ev = ae_in->ae_output.cur_ev;
 		ae_info->ae_rlt_info.cur_index = ae_in->ae_output.cur_index;
 		ae_info->ae_rlt_info.cur_iso = ae_in->ae_output.cur_iso;
