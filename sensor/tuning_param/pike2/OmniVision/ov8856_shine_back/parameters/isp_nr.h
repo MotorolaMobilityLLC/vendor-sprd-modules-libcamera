@@ -87,12 +87,6 @@ static struct sensor_nr_scene_map_param s_ov8856_nr_scene_map_param = {{
 #include "NR/common/normal/rgb_afm_param.h"
 #endif
 
-#ifdef _NR_CNR_PARAM_
-#include "NR/common/normal/cnr_param.h"
-#endif
 
-#ifdef _NR_YNRS_PARAM_
-#include "NR/common/normal/ynrs_param.h"
-#endif
 
 
