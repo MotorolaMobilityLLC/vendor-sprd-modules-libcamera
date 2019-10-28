@@ -903,6 +903,7 @@ struct isp_init_param {
 	cmr_handle oem_handle;
 	struct isp_data_info calibration_param;
 	cmr_u32 camera_id;
+	cmr_int facing;
 	void *sensor_lsc_golden_data;
 	struct isp_ops ops;
 	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
