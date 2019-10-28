@@ -359,8 +359,15 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		   win[9].end_x = win[9].end_x + tmp_w;
 		   af->win_offset = 0;
 		   } */
-		win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
-		win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
+		if (win[9].start_x > PIXEL_OFFSET) {
+			win[9].start_x = win[9].start_x - PIXEL_OFFSET;
+			win[9].end_x = win[9].end_x > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x;
+		} else {
+			win[9].start_x = 10;
+			win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
+		}
+		//win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
+		//win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
 		win[9].start_x = (win[9].start_x >> 1) << 1;
 		win[9].start_y = (win[9].start_y >> 1) << 1;
 		win[9].end_x = (win[9].end_x >> 1) << 1;
@@ -386,7 +393,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		// the first roi in crop size
 		winparam.win_rect.x = PIXEL_OFFSET;
 		winparam.win_rect.y = 4;
-		winparam.win_rect.w = (win[9].end_x - win[9].start_x - 2 * PIXEL_OFFSET) / win_num.x;
+		winparam.win_rect.w = (win[9].end_x - win[9].start_x - PIXEL_OFFSET) / win_num.x;
 		winparam.win_rect.h = (win[9].end_y - win[9].start_y - 8) / win_num.y;
 		winparam.win_rect.w = (winparam.win_rect.w >> 1) << 1;
 		winparam.win_rect.h = (winparam.win_rect.h >> 1) << 1;
