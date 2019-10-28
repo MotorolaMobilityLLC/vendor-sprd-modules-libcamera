@@ -2899,6 +2899,36 @@ static cmr_int ispctl_get_fps(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_ae_fps_range(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_ae_fps_range *out;
+	struct ae_fps_range data;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param !");
+		return ISP_PARAM_NULL;
+	}
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_DC_DV_FPS_RANGE, NULL, (void *)&data);
+		if (ret) {
+			ISP_LOGE("fail to AE_GET_DC_DV_FPS_RANGE\n");
+			return ISP_PARAM_ERROR;
+		}
+	}
+	out = (struct isp_ae_fps_range *)param_ptr;
+	out->dc_fps_min = data.dc_fps_min;
+	out->dc_fps_max = data.dc_fps_max;
+	out->dv_fps_min = data.dv_fps_min;
+	out->dv_fps_max = data.dv_fps_max;
+
+	ISP_LOGD("dc fps (%d ~ %d), dv fps (%d ~ %d)\n",
+		out->dc_fps_min, out->dc_fps_max, out->dv_fps_min, out->dv_fps_max);
+
+	return ret;
+}
+
 static cmr_int ispctl_get_leds_ctrl(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3273,6 +3303,7 @@ static cmr_int ispctl_get_flash_skip_num(cmr_handle isp_alg_handle, void *param_
     return ret;
 }
 
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -3342,6 +3373,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, ispctl_set_dcam_timestamp},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, ispctl_set_aux_sensor_info},
 	{ISP_CTRL_GET_FPS, ispctl_get_fps},
+	{ISP_CTRL_GET_AE_FPS_RANGE, ispctl_get_ae_fps_range},
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
 	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},

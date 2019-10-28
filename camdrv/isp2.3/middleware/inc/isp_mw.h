@@ -336,6 +336,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_PREV_PDAF_RAW,
 	ISP_CTRL_GET_VCM_INFO,
 	ISP_CTRL_GET_FPS,
+	ISP_CTRL_GET_AE_FPS_RANGE,
 	ISP_CTRL_GET_LEDS_CTRL,
 	ISP_CTRL_GET_GLB_GAIN,
 	ISP_CTRL_AE_EXP_COMPENSATION,
@@ -708,6 +709,13 @@ struct isp_range_fps {
 struct isp_ae_fps {
 	cmr_u32 min_fps;
 	cmr_u32 max_fps;
+};
+
+struct isp_ae_fps_range {
+	cmr_u32 dc_fps_min;
+	cmr_u32 dc_fps_max;
+	cmr_u32 dv_fps_min;
+	cmr_u32 dv_fps_max;
 };
 
 struct isp_hdr_param {

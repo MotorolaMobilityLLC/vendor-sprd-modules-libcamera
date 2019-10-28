@@ -388,16 +388,17 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AI_GET_STATUS,
 	ISP_CTRL_GET_SW3DNR_PARAM = 125,
 	ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM,
+	ISP_CTRL_GET_AE_FPS_RANGE,
 	/*camera mode which appearby right slip*/
-	ISP_CTRL_SET_APP_MODE,
+	ISP_CTRL_SET_APP_MODE = 128,
 	ISP_CTRL_AI_SET_FD_STATUS,
 	ISP_CTRL_SET_VCM_DIST,
 	ISP_CTRL_GET_REBOKEH_DATA,
-	ISP_CTRL_SET_3DNR_MODE,
+	ISP_CTRL_SET_3DNR_MODE = 132,
 	ISP_CTRL_SET_AF_OT_SWITH,
 	ISP_CTRL_SET_AF_OT_INFO,
 	ISP_CTRL_GET_YNRS_PARAM,
-	ISP_CTRL_AE_SET_TARGET_REGION,
+	ISP_CTRL_AE_SET_TARGET_REGION = 136,
 	ISP_CTRL_AE_SET_REF_CAMERA_ID,
 	ISP_CTRL_MAX
 };
@@ -726,6 +727,13 @@ struct isp_range_fps {
 struct isp_ae_fps {
 	cmr_u32 min_fps;
 	cmr_u32 max_fps;
+};
+
+struct isp_ae_fps_range {
+	cmr_u32 dc_fps_min;
+	cmr_u32 dc_fps_max;
+	cmr_u32 dv_fps_min;
+	cmr_u32 dv_fps_max;
 };
 
 struct isp_hdr_param {
