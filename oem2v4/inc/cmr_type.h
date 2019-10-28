@@ -44,6 +44,8 @@ extern "C" {
 #define FOCUS_ZONE_CNT_MAX 6
 #define WIN_AREA_COUNT_MAX 1
 
+#define SPRD_DUAL_OTP_SIZE 228
+
 enum camera_af_aux_sensor_type {
     CAMERA_AF_ACCELEROMETER,
     CAMERA_AF_MAGNETIC_FIELD,

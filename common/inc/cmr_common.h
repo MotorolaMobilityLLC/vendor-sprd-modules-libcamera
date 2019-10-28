@@ -1397,7 +1397,8 @@ void camera_snapshot_step_statisic(struct img_size *img_size);
 
 void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step);
 
-int raw14bit_process(struct img_addr *src, struct img_addr *dst, uint32_t input_width, uint32_t input_height);
+int raw14bit_process(struct img_addr *src, struct img_addr *dst,
+                     uint32_t input_width, uint32_t input_height);
 
 /* White balancing type, used for CAMERA_PARM_WHITE_BALANCING */
 enum {
@@ -1683,6 +1684,7 @@ enum camera_param_type {
     CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
     CAMERA_PARAM_SPRD_LOGO_WATERMARK_ENABLED,
     CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED,
+    CAMERA_PARAM_WRITE_CALIBRATION_OTP_DATA,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1711,6 +1713,13 @@ enum camera_3dnr {
     CAMERA_3DNR_OFF,
     CAMERA_3DNR_AUTO,
     CAMERA_3DNR_MAX,
+};
+
+enum camera_calibration_otp_result {
+    CAMERA_CALIC_OTP_NONE,
+    CAMERA_CALIC_OTP_SUCCESS,
+    CAMERA_CALIC_OTP_FAIL,
+    CAMERA_CALIC_OTP_MAX,
 };
 
 enum camera_3dnr_switch { CAMERA_3DNR_ENABLE_OFF = 0, CAMERA_3DNR_ENABLE_ON };
@@ -2082,7 +2091,8 @@ typedef struct oem_ops {
                                      cmr_u32 video_width, cmr_u32 video_height,
                                      cmr_uint *is_change);
     int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
-                                               cmr_u32 *mem_size, struct sensor_exp_info *sn_if);
+                                               cmr_u32 *mem_size,
+                                               struct sensor_exp_info *sn_if);
     cmr_int (*camera_get_preview_rect)(cmr_handle camera_handle,
                                        cmr_uint *rect_x, cmr_uint *rect_y,
                                        cmr_uint *rect_width,

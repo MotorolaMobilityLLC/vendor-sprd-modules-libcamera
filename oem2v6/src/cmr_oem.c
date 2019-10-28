@@ -3160,38 +3160,17 @@ cmr_int camera_get_otpinfo(cmr_handle oem_handle, cmr_u8 dual_flag,
         goto exit;
     }
 
-    ret = sensor_read_otp_from_socket(dual_flag, otp_data);
+    ret = sensor_read_calibration_otp(dual_flag, otp_data);
     if (CMR_CAMERA_SUCCESS == ret) {
         CMR_LOGD("dual_otp data from socket");
-    } else if (3 == dualflag) {
-
-#ifdef L5PRO_CLOSE_SPW_OTP
-        ret = CMR_CAMERA_FAIL;
-        CMR_LOGI("L5pro close spw otp");
-        goto exit;
-#else
-        val.type = SENSOR_VAL_TYPE_READ_DUAL_OTP;
-        val.pval = &dualflag;
-        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                               SENSOR_ACCESS_VAL, (cmr_uint)&val);
-        if ((val.pval != &dualflag) && (val.pval != NULL)) {
-            otp_ptr = (struct sensor_otp_cust_info *)val.pval;
-            if (otp_ptr->dual_otp.data_3d.size > 0) {
-                memcpy(otp_data, val.pval, sizeof(struct sensor_otp_cust_info));
-                CMR_LOGD("dual_otp data in eeprom");
-            } else {
-                ret = CMR_CAMERA_FAIL;
-                CMR_LOGI("no dual_otp data from socket or eeprom");
-                goto exit;
-            }
-        } else {
-            ret = CMR_CAMERA_FAIL;
-            CMR_LOGI("no dual_otp data from socket or eeprom");
-            goto exit;
-        }
-#endif
-
     } else {
+        if (3 == dualflag) {
+#ifdef L5PRO_CLOSE_SPW_OTP
+            ret = CMR_CAMERA_FAIL;
+            CMR_LOGI("L5pro close spw otp");
+            goto exit;
+#endif
+        }
         val.type = SENSOR_VAL_TYPE_READ_DUAL_OTP;
         val.pval = &dualflag;
         ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
@@ -11746,6 +11725,18 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                                              cxt->camera_id,
                                              (struct fd_touch_info *)param);
         break;
+
+    case CAMERA_PARAM_WRITE_CALIBRATION_OTP_DATA: {
+        struct cal_otp_info *temp_info = (struct cal_otp_info *)param;
+        ret = sensor_write_calibration_otp(
+            temp_info->otp_data, temp_info->dual_otp_flag, temp_info->otp_size);
+        if (0 == ret) {
+            temp_info->cal_otp_result = CAMERA_CALIC_OTP_SUCCESS;
+        } else {
+            temp_info->cal_otp_result = CAMERA_CALIC_OTP_FAIL;
+        }
+        break;
+    }
 
     default:
         ret = camera_set_setting(oem_handle, id, param);

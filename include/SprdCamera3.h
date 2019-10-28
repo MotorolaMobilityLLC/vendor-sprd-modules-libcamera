@@ -243,6 +243,8 @@ static tags_info_t
         {"sprdAvailableTimeWatermark", TYPE_BYTE},
         {"sprdTimeWatermarkEnabled", TYPE_BYTE},
         {"sprdFaceInfo", TYPE_BYTE},
+        {"otpData", TYPE_BYTE},
+        {"otpDataSendResult", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

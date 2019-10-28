@@ -101,7 +101,6 @@ typedef int64_t nsecs_t;
 #else
 #define SPRD_MAX_AVAILABLE_FACE_DETECT_MODES 1
 #endif
-#define SPRD_DUAL_OTP_SIZE 10240
 
 #define THIRD_OTP_SIZE 8192
 
@@ -433,6 +432,13 @@ typedef struct {
 } OTP_Tag;
 
 typedef struct {
+    uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
+    uint8_t dual_otp_flag;
+    uint8_t cal_otp_result;
+    int otp_size;
+} CAL_OTP_Tag;
+
+typedef struct {
     int32_t vcm_step;
     int32_t vcm_step_for_bokeh;
 } VCM_Tag;
@@ -501,6 +507,7 @@ typedef struct {
     int32_t vcm_result;
     int32_t verification_enable;
     VCM_DIST_TAG vcmDist;
+    CAL_OTP_Tag calOtpInfo;
     int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
     AUTO_TRACKING_Tag autotrackingInfo;
 } sprd_setting_info_t;
@@ -673,6 +680,8 @@ class SprdCamera3Setting {
     int getVCMTag(VCM_Tag *vcmInfo);
     int setVCMDACTag(uint16_t *vcmInfo, uint8_t num);
     int getVCMDISTTag(VCM_DIST_TAG *vcmDist);
+    int getCALOTPTag(CAL_OTP_Tag *calOTP);
+    int setCALOTPRETag(uint8_t calOtpResult);
     int setVCMDISTTag(VCM_DIST_TAG *vcmDist);
     int setVCMRETag(int32_t result);
     int getVCMRETag(int32_t *result);

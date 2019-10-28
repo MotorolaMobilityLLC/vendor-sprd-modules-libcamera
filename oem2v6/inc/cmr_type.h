@@ -43,6 +43,8 @@ extern "C" {
 #define FOCUS_ZONE_CNT_MAX 6
 #define WIN_AREA_COUNT_MAX 1
 
+#define SPRD_DUAL_OTP_SIZE 10240
+
 enum camera_af_aux_sensor_type {
     CAMERA_AF_ACCELEROMETER,
     CAMERA_AF_MAGNETIC_FIELD,
@@ -168,6 +170,13 @@ struct beauty_info {
     cmr_u32 lipLevel;
     cmr_u32 slimLevel;
     cmr_u32 largeLevel;
+};
+
+struct cal_otp_info {
+    cmr_u8 otp_data[SPRD_DUAL_OTP_SIZE];
+    cmr_u8 dual_otp_flag;
+    cmr_u8 cal_otp_result;
+    int otp_size;
 };
 
 struct cmr_af_gyro_info {

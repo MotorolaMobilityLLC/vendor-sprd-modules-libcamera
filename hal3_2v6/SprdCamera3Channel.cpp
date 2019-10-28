@@ -348,9 +348,9 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream,
 
                 if (i == 0) {
 #ifdef CONFIG_ISP_2_3
-                    if(!mOEMIf->getJpegWithBigSizePreviewFlag())
+                    if (!mOEMIf->getJpegWithBigSizePreviewFlag())
 #endif
-                    mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_PREVIEW);
+                        mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_PREVIEW);
                 } else if (i == (CAMERA_STREAM_TYPE_VIDEO -
                                  REGULAR_STREAM_TYPE_BASE)) {
                     if (mOEMIf->isVideoCopyFromPreview()) {
@@ -1031,6 +1031,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_CALIBRATION_DIST");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_CALIBRATION_DIST);
             break;
+        case ANDROID_SPRD_CALIBRATION_OTP_DATA:
+            HAL_LOGV("ANDROID_SPRD_CALIBRATION_OTP_DATA");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_CALIBRATION_OTP_DATA);
+            break;
         case ANDROID_SPRD_SET_VERIFICATION_FLAG:
             HAL_LOGV("ANDROID_SPRD_SET_VERIFICATION_FLAG");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_SET_VERIFICATION_FLAG);
@@ -1062,12 +1066,12 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_SPRD_AUTOCHASING_REGION_ENABLE:
             HAL_LOGV("ANDROID_SPRD_AUTOCHASING_REGION_ENABLE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_AUTOCHASING_REGION_ENABLE);
-	    break;
+            break;
         case ANDROID_SPRD_LOGOWATERMARK_ENABLED:
             HAL_LOGV("ANDROID_SPRD_LOGOWATERMARK_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_LOGOWATERMARK_ENABLED);
             break;
-	case ANDROID_SPRD_TIMEWATERMARK_ENABLED:
+        case ANDROID_SPRD_TIMEWATERMARK_ENABLED:
             HAL_LOGV("ANDROID_SPRD_TIMEWATERMARK_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_TIMEWATERMARK_ENABLED);
             break;

@@ -83,6 +83,9 @@ LOCAL_SRC_FILES+= \
     ois/OIS_main.c
 endif
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/otp_cali/otp_cali.h
+LOCAL_SRC_FILES += otp_cali/otp_cali.c
+
 ifeq ($(strip $(TARGET_CAMERA_SENSOR_CCT)),"ams_tcs3430")
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/ams/tcs3430/tcs_3430_drv.h
 LOCAL_SRC_FILES+= ams/tcs3430/tcs_3430_drv.c

@@ -105,6 +105,8 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_AVAILABLE_TIMEWATERMARK,
     ANDROID_SPRD_TIMEWATERMARK_ENABLED,
     ANDROID_SPRD_FACE_INFO,
+    ANDROID_SPRD_CALIBRATION_OTP_DATA,
+    ANDROID_SPRD_CALIBRATION_OTP_RESULT,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

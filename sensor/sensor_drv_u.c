@@ -27,11 +27,14 @@
 #include "sensor_cfg.h"
 #include "sensor_drv_u.h"
 #include "../otp_drv/otp_info.h"
+#include "../otp_cali/otp_cali.h"
 #include "dlfcn.h"
 #include <fcntl.h>
 
 #define SENSOR_CTRL_MSG_QUEUE_SIZE 10
-#define SPRD_DUAL_OTP_SIZE 230
+#define WRITE_DUAL_OTP_SIZE 230
+
+static pthread_mutex_t cali_otp_mutex;
 
 #define SENSOR_CTRL_EVT_BASE (CMR_EVT_SENSOR_BASE + 0x800)
 #define SENSOR_CTRL_EVT_INIT (SENSOR_CTRL_EVT_BASE + 0x0)
@@ -926,7 +929,7 @@ LOCAL cmr_int sensor_write_dualcam_otpdata(
     struct sensor_drv_context *sensor_cxt, cmr_u32 sensor_id) {
 
     cmr_u32 ret_val = SENSOR_FAIL;
-    cmr_u16 num_byte = SPRD_DUAL_OTP_SIZE;
+    cmr_u16 num_byte = WRITE_DUAL_OTP_SIZE;
     char value[PROPERTY_VALUE_MAX];
 
     property_get("debug.dualcamera.write.otp", value, "false");
@@ -3590,85 +3593,42 @@ sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId) {
     return NULL;
 };
 
-#define OTP_CONTROL_SIZE 32
-#define OTP_DATA_SIZE 10240
-#define OTP_WRITE_BUFFER_SIZE OTP_CONTROL_SIZE
-#define OTP_READ_BUFFER_SIZE OTP_CONTROL_SIZE + OTP_DATA_SIZE
-
-#define SOCKET_NAME_OTPD "otpd"
-#define OTPD_WRITE_DATA "Otp Write Data"
-#define OTPD_READ_DATA "Otp Read Data"
-#define OTPD_READ_RSP "Otp Read Rsp"
-#define OTPD_MSG_OK "Otp Data Ok"
-#define OTPD_MSG_FAILED "Otp Data Failed"
-cmr_int sensor_read_otp_from_socket(cmr_u8 dual_flag,
+cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_data) {
-    cmr_int ret = -1;
-    cmr_int s_otpd_fd = -1;
-    cmr_u32 read_num = 0;
-    cmr_u8 write_buf[OTP_WRITE_BUFFER_SIZE] = {0};
-    static cmr_u8 read_buf[OTP_READ_BUFFER_SIZE] = {0};
+    cmr_u8 otpdata[SPRD_DUAL_OTP_SIZE] = {0};
+    cmr_u16 otpsize = 0;
+    SENSOR_LOGI("E");
 
-    SENSOR_LOGV("E");
-
-    s_otpd_fd = socket_local_client(
-        SOCKET_NAME_OTPD, ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
-    if (s_otpd_fd < 0) {
-        SENSOR_LOGD("otpd:connect %s failed", SOCKET_NAME_OTPD);
+    pthread_mutex_lock(&cali_otp_mutex);
+    otpsize = read_calibration_otp_from_file(otpdata, dual_flag);
+    pthread_mutex_unlock(&cali_otp_mutex);
+    if (otpsize > 0) {
+        otp_data->total_otp.data_ptr = otpdata;
+        otp_data->total_otp.size = otpsize;
+        otp_data->dual_otp.dual_flag = dual_flag;
+        otp_data->dual_otp.data_3d.data_ptr = otpdata;
+        otp_data->dual_otp.data_3d.size = otpsize;
+        SENSOR_LOGI("read calibration otp data success, size :%d", otpsize);
+        return SENSOR_SUCCESS;
+    } else {
+        SENSOR_LOGE("read calibration otp data failed, size:%d", otpsize);
         return SENSOR_FAIL;
     }
-    SENSOR_LOGD("otpd:connect %s success", SOCKET_NAME_OTPD);
-
-    memcpy(write_buf, OTPD_READ_DATA, sizeof(OTPD_READ_DATA));
-    write_buf[20] = dual_flag; // 1:bokeh, 2:w+t, 3:superwide
-    write_buf[30] = OTP_DATA_SIZE & 0xff;
-    write_buf[31] = (OTP_DATA_SIZE >> 8) & 0xff;
-    /*
-    for (int i = 0; i < OTP_WRITE_BUFFER_SIZE; i = i + 8) {
-        SENSOR_LOGD("otpd:write_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
-                    "0x%x 0x%x 0x%x 0x%x 0x%x",
-                    i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
-                    write_buf[i], write_buf[i + 1], write_buf[i + 2],
-                    write_buf[i + 3], write_buf[i + 4], write_buf[i + 5],
-                    write_buf[i + 6], write_buf[i + 7]);
-    }
-    */
-    ret = write(s_otpd_fd, write_buf, OTP_WRITE_BUFFER_SIZE);
-    SENSOR_LOGD("otpd:fd %d, cmd %s, dual_flag %d", s_otpd_fd, write_buf,
-                write_buf[20]);
-    if (ret < 0) {
-        SENSOR_LOGD("otpd:write to fd %d failed", s_otpd_fd);
-        close(s_otpd_fd);
-        return SENSOR_FAIL;
-    }
-
-    read_num = read(s_otpd_fd, read_buf, OTP_READ_BUFFER_SIZE);
-    SENSOR_LOGD("otpd:read number is %d bytes", read_num);
-    if (!strcmp(read_buf, OTPD_MSG_FAILED)) {
-        SENSOR_LOGD("otpd:read otpd data failed, %s", read_buf);
-        close(s_otpd_fd);
-        return SENSOR_FAIL;
-    }
-
-    otp_data->total_otp.data_ptr = read_buf;
-    otp_data->total_otp.size = OTP_READ_BUFFER_SIZE;
-    otp_data->dual_otp.dual_flag = dual_flag;
-    otp_data->dual_otp.data_3d.data_ptr = read_buf + OTP_CONTROL_SIZE;
-    otp_data->dual_otp.data_3d.size =
-        read_buf[OTP_CONTROL_SIZE - 1] << 8 | read_buf[OTP_CONTROL_SIZE - 2];
-    /*
-    for (cmr_u32 i = 0; i < OTP_CONTROL_SIZE + otp_data->dual_otp.data_3d.size;
-         i = i + 8) {
-        SENSOR_LOGD("otpd:read_buf[%d %d %d %d %d %d %d %d]:0x%x 0x%x 0x%x "
-                    "0x%x 0x%x 0x%x 0x%x 0x%x",
-                    i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
-                    read_buf[i], read_buf[i + 1], read_buf[i + 2],
-                    read_buf[i + 3], read_buf[i + 4], read_buf[i + 5],
-                    read_buf[i + 6], read_buf[i + 7]);
-    }
-    */
-    close(s_otpd_fd);
-
-    SENSOR_LOGV("X");
-    return SENSOR_SUCCESS;
 };
+
+cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
+                                     cmr_u16 otp_size) {
+    int ret = 0;
+    SENSOR_LOGI("E");
+
+    pthread_mutex_lock(&cali_otp_mutex);
+    ret = write_calibration_otp_to_file(buf, dual_flag, otp_size);
+    pthread_mutex_unlock(&cali_otp_mutex);
+    if (1 == ret) {
+        SENSOR_LOGI("write calibration otp data success");
+        return SENSOR_SUCCESS;
+    } else {
+        SENSOR_LOGE("write calibration otp data failed!");
+        return SENSOR_FAIL;
+    }
+}

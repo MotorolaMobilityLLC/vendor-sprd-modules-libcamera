@@ -395,6 +395,7 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     }
     if (SPRD_3D_CALIBRATION_ID == camera_id) {
         hw->setMultiCameraMode(MODE_3D_CALIBRATION);
+	 property_set("vendor.cam.dualmode", "high_mode");
     }
     if (SPRD_ULTRA_WIDE_ID == camera_id) {
         hw->setMultiCameraMode(MODE_ULTRA_WIDE);

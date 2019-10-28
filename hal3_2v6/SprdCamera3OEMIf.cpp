@@ -6800,6 +6800,22 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mCameraHandle, CAMERA_IOCTRL_SET_VCM_DISC, &vcm_disc);
     } break;
 
+    case ANDROID_SPRD_CALIBRATION_OTP_DATA: {
+        CAL_OTP_Tag cal_info;
+        struct cal_otp_info otp_info;
+        mSetting->getCALOTPTag(&cal_info);
+        otp_info.dual_otp_flag = cal_info.dual_otp_flag;
+        otp_info.cal_otp_result = cal_info.cal_otp_result;
+        otp_info.otp_size = cal_info.otp_size;
+        memcpy(otp_info.otp_data, cal_info.otp_data, cal_info.otp_size);
+        SET_PARM(mHalOem, mCameraHandle,
+                 CAMERA_PARAM_WRITE_CALIBRATION_OTP_DATA,
+                 (cmr_uint) & (otp_info));
+        HAL_LOGI("write calibration otp result: %d (1:success, 2:fail)",
+                 otp_info.cal_otp_result);
+        mSetting->setCALOTPRETag(otp_info.cal_otp_result);
+    } break;
+
     case ANDROID_SPRD_SLOW_MOTION: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
