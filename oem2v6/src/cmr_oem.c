@@ -1829,13 +1829,21 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 (struct camera_frame_type *)param;
 
             if (prev_frame->type == PREVIEW_FRAME) {
+                CMR_LOGD("monoboottime %llu hdr_capture_timestamp %llu",
+                         prev_frame->monoboottime,
+                         cxt->hdr_capture_timestamp);
+
                 if (prev_frame->monoboottime > cxt->hdr_capture_timestamp) {
                     prev_frame->type = PREVIEW_CANCELED_FRAME;
                     cxt->hdr_skip_frame_cnt++;
+                    CMR_LOGD("hdr_skip_frame_cnt %d",
+                             cxt->hdr_skip_frame_cnt);
+
                 }
             }
             if (cxt->hdr_skip_frame_cnt == HDR_SKIP_FRAME_NUM) {
                 cxt->hdr_skip_frame_enable = 0;
+                CMR_LOGD("hdr_skip_frame_cnt done");
             }
         }
 
@@ -1844,7 +1852,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             struct camera_frame_type *prev_frame =
                 (struct camera_frame_type *)param;
             if (prev_frame->type == PREVIEW_FRAME) {
-                CMR_LOGD("monoboottime %ld flash_shutdown_timestamp %ld",
+                CMR_LOGD("monoboottime %llu flash_shutdown_timestamp %llu",
                          prev_frame->monoboottime,
                          cxt->flash_shutdown_timestamp);
                 if (prev_frame->monoboottime > cxt->flash_shutdown_timestamp) {
