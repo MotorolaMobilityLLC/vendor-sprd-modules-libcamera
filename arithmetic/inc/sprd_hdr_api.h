@@ -34,7 +34,7 @@ typedef struct _tag_hdr_stat_t
 typedef struct _tag_hdr_detect_t
 {
 	uint8_t     thres_dark;         //[0, 40]    
-	uint8_t     thres_bright;       //[180, 255]            
+	uint8_t     thres_bright;       //[180, 255]          
 } hdr_detect_t;
 
 /*! LDR image data structure */
@@ -73,7 +73,7 @@ typedef struct
 	uint16_t    mv_num_thres;       //[0, 300]
 	uint8_t     mv_border;          //[0, 50]
 	uint8_t     mv_dilate_thres;    //[0,255]
-	uint8_t     fusion_thres;       //[0, 16]
+	uint8_t     thres_oe2;			//[0, 255]
 	uint8_t     w_yoe_m;            //[0,255]
 	float       w_yoe_s;            //[0.0, 1.0]
 	uint8_t     w_uv_m;             //[0,255]
@@ -112,6 +112,23 @@ typedef struct _tag_hdr_config_t
 	hdr_ltm_t		hdr_ltm_param;
 } hdr_config_t;
 
+typedef struct {
+	void *dl_handle;
+	int (*sprd_caa_vdsp_open)(void **h_vdsp);
+	int (*sprd_caa_vdsp_close)(void *h_vdsp);
+	int (*sprd_caa_vdsp_send)(void *h_vdsp, const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
+	int (*sprd_caa_cadence_vdsp_load_library)(void *h_vdsp, const char *nsid);
+	int (*sprd_caa_vdsp_Send)(const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
+	void *(*sprd_caa_ionmem_alloc)(uint32_t size, bool iscache);
+	int (*sprd_caa_ionmem_free)(void *h_ionmem);
+	void *(*sprd_caa_ionmem_get_vaddr)(void *h_ionmem);
+	int (*sprd_caa_ionmem_get_fd)(void *h_ionmem);
+	void (*ProcessState_initWithDriver)(const char *driver);
+	void (*ProcessState_startThreadPool)();
+	void (*IPCThreadState_joinThreadPool)(bool isMain);
+	void (*IPCThreadState_stopProcess)(bool immediate);
+} camalg_assist_lib_api_t;
+
 typedef void * hdr_inst_t;
 
 #ifdef _USRDLL
@@ -135,9 +152,12 @@ SPRD_ISP_API int sprd_hdr_fast_stop(hdr_inst_t inst);
 SPRD_ISP_API void sprd_set_buffer_base(hdr_inst_t inst, uint8_t *base);
 
 // vdsp
+#if defined (__linux__) || defined (WIN32)
 SPRD_ISP_API int sprd_hdr_vdsp_open(hdr_inst_t* inst, hdr_config_t* cfg);
 SPRD_ISP_API int sprd_hdr_vdsp_process(hdr_inst_t inst, ldr_image_vdsp_t* vdsp_input, ldr_image_vdsp_t* vdsp_output);
 SPRD_ISP_API int sprd_hdr_vdsp_close(hdr_inst_t inst);
+SPRD_ISP_API int sprd_hdr_load_api(camalg_assist_lib_api_t *libapi);
+#endif
 
 #ifdef __cplusplus
 }
