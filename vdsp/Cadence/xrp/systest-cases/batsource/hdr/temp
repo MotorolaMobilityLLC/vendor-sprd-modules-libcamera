@@ -1,0 +1,5 @@
+cd data 
+rm /data/vendor/cameraserver/*.bin 
+rm /data/vendor/cameraserver/*.yuv 
+rm hdr_output.bin 
+test_vdsp 1 -p "32x32"  -d  "/data/hdr_scndet_in_hist_0x0_20120101105801.yuv"  -s "3264x2448"  -i "/data/IMG_3264x2448_YVU420S_20150115_150526_0_ev=-1.yuv|/data/IMG_3264x2448_YVU420S_20150115_150526_2_ev=1.yuv" -o  "hdr_out9" 
