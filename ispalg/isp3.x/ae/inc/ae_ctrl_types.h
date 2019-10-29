@@ -611,6 +611,7 @@ extern "C" {
 		float exposure_time;
 		cmr_u32 sec;
 		cmr_u32 usec;
+		cmr_u16 abl_weight;
 		cmr_s64 monoboottime;
 		struct ae_ctrl_alc_log log_ae;
 		cmr_u32 fps;

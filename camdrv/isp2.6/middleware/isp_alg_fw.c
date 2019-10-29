@@ -2525,20 +2525,22 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 
 	time_start = ispalg_get_sys_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
-		ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f",
+		ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f abl_weight %d",
 			ae_in->ae_output.cur_bv,
 			ae_in->ae_output.cur_exp_line,
 			ae_in->ae_output.cur_again,
 			ae_in->ae_output.cur_lum,
 			ae_in->ae_output.target_lum,
 			ae_in->flash_param.captureFlashEnvRatio,
-			ae_in->flash_param.captureFlash1ofALLRatio);
+			ae_in->flash_param.captureFlash1ofALLRatio,
+			ae_in->ae_output.abl_weight);
 		if (!cxt->smart_cxt.sw_bypass) {
 			smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
 			smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
 			smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
 			smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
 			smart_proc_in.cal_para.ct = awb_output->ct;
+			smart_proc_in.cal_para.abl_weight = ae_in->ae_output.abl_weight;
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 #ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
 			if (cxt->cam_4in1_mode)

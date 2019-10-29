@@ -3552,6 +3552,7 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_r
 	result->ae_output.face_enable = alg_rt->face_enable;
 	result->ae_output.exposure_time = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 	result->ae_output.fps = alg_rt->wts.cur_fps;
+	result->ae_output.abl_weight = alg_rt->abl_weighting;
 	result->ae_output.reserved = alg_rt->privated_data;
 
 	result->is_skip_cur_frame = 0;
@@ -3589,6 +3590,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_re
 	result->ae_output.face_enable = alg_rt->face_enable;
 	result->ae_output.exposure_time = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 	result->ae_output.fps = alg_rt->wts.cur_fps;
+	result->ae_output.abl_weight = alg_rt->abl_weighting;
 	result->ae_output.reserved = alg_rt->privated_data;
 
 	result->is_skip_cur_frame = 0;

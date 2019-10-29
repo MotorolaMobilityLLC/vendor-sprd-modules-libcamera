@@ -134,6 +134,7 @@ extern "C" {
 		cmr_handle handle_pm;
 		cmr_s32 flash_ratio;
 		cmr_s32 flash_ratio1;
+		cmr_u16 abl_weight;
 		void *gamma_tab;
 	};
 

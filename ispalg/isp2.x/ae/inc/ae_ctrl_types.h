@@ -588,6 +588,7 @@ extern "C" {
 		struct ae_ctrl_alc_log log_ae;
 		cmr_u32 face_enable;
 		cmr_u32 fps;
+		cmr_u32 abl_weight;
 		cmr_u32 reserved;
 	};
 
