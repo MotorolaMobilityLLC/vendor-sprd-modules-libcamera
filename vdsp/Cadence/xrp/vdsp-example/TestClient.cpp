@@ -215,6 +215,8 @@ void* thread_faceid(__unused void* test)
 	faceid_in = (FACEID_IN*)in.viraddr;
 	faceid_in->height = h;
 	faceid_in->width = w;
+	faceid_in->workstage = 0;/*enroll*/
+	faceid_in->framecount = 0;
 	faceid_in->liveness = liveness;
 	faceid_in->phyaddr = image.phy_addr;
 	faceid_in->help_info[0] = 0xFF;
