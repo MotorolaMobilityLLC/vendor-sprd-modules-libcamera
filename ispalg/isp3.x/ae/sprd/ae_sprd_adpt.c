@@ -1183,9 +1183,7 @@ static cmr_s32 ae_get_iso(struct ae_ctrl_cxt *cxt, cmr_u32 * real_iso)
 	if (AE_ISO_AUTO == iso) {
 		tmp_iso = real_gain * 5000 / 128;
 		calc_iso = 0;
-		if (tmp_iso < 890) {
-			calc_iso = 0;
-		} else if (tmp_iso < 1122) {
+		if (tmp_iso < 1122) {
 			calc_iso = 10;
 		} else if (tmp_iso < 1414) {
 			calc_iso = 12;
