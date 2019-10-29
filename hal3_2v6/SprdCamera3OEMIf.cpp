@@ -6050,15 +6050,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     mZoomInfo.mode = ZOOM_INFO;
     HAL_LOGD("mCameraId=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,
              zoomRatio, mIsUltraWideMode);
-    if (mIsUltraWideMode &&
-        mCameraId == SprdCamera3Setting::findUltraWideSensor()) {
-        mReprocessZoomRatio = zoomRatio;
-        mZoomInfo.zoom_info.zoom_ratio = 1.0f;
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
-                 (cmr_uint)&mReprocessZoomRatio);
-    } else {
-        mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
-    }
+    mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
+    mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
+    mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&mZoomInfo);
 
     return ret;

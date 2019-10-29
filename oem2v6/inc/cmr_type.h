@@ -80,6 +80,12 @@ struct cmr_zoom_param {
     };
 };
 
+struct cmr_zoom {
+    struct cmr_zoom_param zoom_setting;
+    bool prev_zoom;
+    bool cap_zoom;
+};
+
 struct cmr_win_area {
     cmr_uint count;
     struct img_rect rect[WIN_AREA_COUNT_MAX];

@@ -527,6 +527,8 @@ struct prev_context {
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
     cmr_uint threednr_cap_smallwidth;
     cmr_uint threednr_cap_smallheight;
+    bool prev_zoom;
+    bool cap_zoom;
 };
 
 struct prev_thread_cxt {
@@ -7086,6 +7088,9 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->prev_skip_num = sensor_info->preview_skip_num;
     prev_cxt->skip_mode = IMG_SKIP_SW_KER;
 
+    prev_cxt->prev_zoom = true;
+    prev_cxt->cap_zoom = true;
+
     chn_param.is_lightly = 0;
     chn_param.frm_num = -1;
     chn_param.skip_num = sensor_info->mipi_cap_skip_num;
@@ -7430,7 +7435,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
         ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.zoom_ratio,
+                                    zoom_param->zoom_info.prev_aspect_ratio,
                                     aspect_ratio,
                                     sensor_mode_info->scaler_trim.width,
                                     sensor_mode_info->scaler_trim.height,
@@ -12148,8 +12153,8 @@ cmr_int prev_set_zsl_param_lightly(struct prev_handle *handle,
 
     cmr_bzero(prev_cxt->cap_zsl_rot_frm_is_lock,
               PREV_ROT_FRM_CNT * sizeof(cmr_uint));
-    cmr_bzero(prev_cxt->cap_zsl_ultra_wide_frm_is_lock,
-              ZSL_ULTRA_WIDE_ALLOC_CNT * sizeof(cmr_uint));
+    /*cmr_bzero(prev_cxt->cap_zsl_ultra_wide_frm_is_lock,
+              ZSL_ULTRA_WIDE_ALLOC_CNT * sizeof(cmr_uint));*/
     prev_cxt->prev_rot_index = 0;
     prev_cxt->prev_ultra_wide_index = 0;
     prev_cxt->skip_mode = IMG_SKIP_SW_KER;
@@ -12511,7 +12516,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     } else {
         float aspect_ratio = 1.0 * cap_size->width / cap_size->height;
         ret = camera_get_trim_rect2(
-            &img_cap->src_img_rect, zoom_param->zoom_info.zoom_ratio,
+            &img_cap->src_img_rect, zoom_param->zoom_info.capture_aspect_ratio,
             aspect_ratio, sn_mode_info->scaler_trim.width,
             sn_mode_info->scaler_trim.height, prev_cxt->prev_param.cap_rot);
     }
@@ -12556,7 +12561,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
             } else {
                 float aspect_ratio = 1.0 * cap_size->width / cap_size->height;
                 ret = camera_get_trim_rect2(
-                    sn_trim_rect, zoom_param->zoom_info.zoom_ratio,
+                    sn_trim_rect, zoom_param->zoom_info.capture_aspect_ratio,
                     aspect_ratio, sn_trim_rect->width, sn_trim_rect->height,
                     prev_cxt->prev_param.cap_rot);
             }
@@ -15310,8 +15315,10 @@ cmr_int prev_ultra_wide_open(struct prev_handle *handle, cmr_u32 camera_id) {
                 .binning_factor;
         in_param.frame_size.width = prev_cxt->actual_prev_size.width;
         in_param.frame_size.height = prev_cxt->actual_prev_size.height;
+        in_param.is_cap = false;
         ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_ULTRA_WIDE, &in_param,
                            &out_param, &prev_cxt->ultra_wide_handle);
+        prev_cxt->prev_zoom = out_param.isp_zoom;
         if (ret) {
             CMR_LOGE("cmr_ipm_open failed");
             ret = CMR_CAMERA_FAIL;
@@ -15326,8 +15333,10 @@ cmr_int prev_ultra_wide_open(struct prev_handle *handle, cmr_u32 camera_id) {
                 .binning_factor;
         in_param.frame_size.width = prev_cxt->actual_pic_size.width;
         in_param.frame_size.height = prev_cxt->actual_pic_size.height;
+        in_param.is_cap = true;
         ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_ULTRA_WIDE, &in_param,
                            &out_param, &prev_cxt->zsl_ultra_wide_handle);
+        prev_cxt->cap_zoom = out_param.isp_zoom;
         if (ret) {
             CMR_LOGE("cmr_ipm_open failed");
             ret = CMR_CAMERA_FAIL;
@@ -15352,12 +15361,14 @@ cmr_int prev_ultra_wide_close(struct prev_handle *handle, cmr_u32 camera_id) {
         ret = cmr_ipm_close(prev_cxt->ultra_wide_handle);
         prev_cxt->ultra_wide_handle = 0;
     }
+    prev_cxt->prev_zoom = true;
 
     CMR_LOGI("zsl_ultra_wide_handle 0x%p", prev_cxt->zsl_ultra_wide_handle);
     if (prev_cxt->zsl_ultra_wide_handle) {
         ret = cmr_ipm_close(prev_cxt->zsl_ultra_wide_handle);
         prev_cxt->zsl_ultra_wide_handle = 0;
     }
+    prev_cxt->cap_zoom = true;
     CMR_LOGD("ret %ld", ret);
     return ret;
 }
@@ -15377,6 +15388,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     void *src_buffer_handle = NULL;
     void *dst_buffer_handle = NULL;
     cmr_handle *ultra_wide_handle = NULL;
+    void *zoom;
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = camera_id;
 
@@ -15398,6 +15410,9 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             ret = CMR_CAMERA_FAIL;
             goto exit;
         }
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_REPROCESS_ZOOM_RATIO,
+                                    &setting_param);
 
         if (IS_PREVIEW_FRM(data->frame_id)) {
             src_img = &prev_cxt->prev_ultra_wide_frm[ultra_wide_frm_id];
@@ -15406,6 +15421,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             frm_id = data->frame_id - CMR_PREV_ID_BASE;
             dst_img = &prev_cxt->prev_frm[frm_id];
             ultra_wide_handle = prev_cxt->ultra_wide_handle;
+            zoom = (void *)&(setting_param.zoom_param.zoom_info.prev_aspect_ratio);
         } else if (IS_ZSL_FRM(data->frame_id)) {
             cmr_s32 dst_fd;
             frame_type = PREVIEW_ZSL_FRAME;
@@ -15422,6 +15438,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                 }
             }
             ultra_wide_handle = prev_cxt->zsl_ultra_wide_handle;
+            zoom = (void *)&(setting_param.zoom_param.zoom_info.capture_aspect_ratio);
         } else {
             CMR_LOGW("ignored  prev_status %ld, frame_id 0x%x",
                      prev_cxt->prev_status, data->frame_id);
@@ -15444,9 +15461,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                                             &buf_info);
                 dst_buffer_handle = buf_info.graphic_buffer;
             }
-            ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                                    SETTING_GET_REPROCESS_ZOOM_RATIO,
-                                    &setting_param);
+
             if (ret) {
                 CMR_LOGE("failed to get zoom ratio %ld", ret);
                 ret = CMR_CAMERA_FAIL;
@@ -15462,7 +15477,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             ipm_in_param.src_frame.reserved = src_buffer_handle;
             ipm_in_param.dst_frame = *dst_img;
             ipm_in_param.dst_frame.reserved = dst_buffer_handle;
-            ipm_in_param.private_data = (void *)setting_param.cmd_type_value;
+            ipm_in_param.private_data = zoom;
             if (src_buffer_handle != NULL && dst_buffer_handle != NULL) {
                 ret =
                     ipm_transfer_frame(ultra_wide_handle, &ipm_in_param, NULL);
@@ -15761,7 +15776,7 @@ cmr_int prev_set_preview_touch_info(cmr_handle preview_handle,
 }
 
 cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
-                                    cmr_u32 camera_id, float *zoom_factor) {
+                                    cmr_u32 camera_id, struct cmr_zoom *zoom_factor) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
@@ -15770,8 +15785,10 @@ cmr_int cmr_preview_get_zoom_factor(cmr_handle preview_handle,
     CHECK_HANDLE_VALID(zoom_factor);
     CHECK_CAMERA_ID(camera_id);
     prev_cxt = &handle->prev_cxt[camera_id];
-    *zoom_factor = prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
-    CMR_LOGD("zoom_factor is %f ", *zoom_factor);
+    zoom_factor->zoom_setting = prev_cxt->prev_param.zoom_setting;
+    zoom_factor->prev_zoom = prev_cxt->prev_zoom;
+    zoom_factor->cap_zoom = prev_cxt->cap_zoom;
+    CMR_LOGD("zoom_factor is %f ", zoom_factor->zoom_setting.zoom_info.zoom_ratio);
     return ret;
 }
 cmr_int prev_set_vcm_step(cmr_handle preview_handle, cmr_u32 camera_id,

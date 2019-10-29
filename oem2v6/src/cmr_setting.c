@@ -146,6 +146,7 @@ struct setting_zoom_unit {
 struct setting_hal_param {
     struct setting_hal_common hal_common;
     struct cmr_zoom_param zoom_value;
+    struct cmr_zoom_param zoom_reprocess;
     cmr_uint ratio_value;
     cmr_uint sensor_orientation; /*screen orientation: landscape and portrait */
     cmr_uint capture_angle;
@@ -1206,9 +1207,8 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
             is_changed = 1;
     } else if (zoom_param.mode == ZOOM_INFO) {
         const float EPSINON = 0.01f;
-        float zoom_dif =
-            zoom_param.zoom_info.zoom_ratio - org_zoom.zoom_info.zoom_ratio;
-        if (zoom_dif >= EPSINON || zoom_dif <= -EPSINON)
+        if (fabs(zoom_param.zoom_info.prev_aspect_ratio - org_zoom.zoom_info.prev_aspect_ratio) >= EPSINON
+            || fabs(zoom_param.zoom_info.capture_aspect_ratio - org_zoom.zoom_info.capture_aspect_ratio) >= EPSINON)
             is_changed = 1;
     }
 
@@ -1288,7 +1288,7 @@ setting_set_reprocess_zoom_ratio(struct setting_component *cpt,
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
     pthread_mutex_lock(&cpt->status_lock);
-    hal_param->ratio_value = parm->cmd_type_value;
+    hal_param->zoom_reprocess= parm->zoom_param;
     pthread_mutex_unlock(&cpt->status_lock);
     return ret;
 }
@@ -1299,8 +1299,7 @@ setting_get_reprocess_zoom_ratio(struct setting_component *cpt,
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
     pthread_mutex_lock(&cpt->status_lock);
-    parm->cmd_type_value = hal_param->ratio_value;
-    CMR_LOGD("get zoom ratio %f", *((float *)parm->cmd_type_value));
+    parm->zoom_param = hal_param->zoom_reprocess;
     pthread_mutex_unlock(&cpt->status_lock);
 
     return ret;

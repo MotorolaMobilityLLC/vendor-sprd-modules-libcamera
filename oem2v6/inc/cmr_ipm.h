@@ -93,6 +93,7 @@ struct ipm_open_in {
     struct img_size frame_scale_size;
     cmr_u32 binning_factor;
     multiCameraMode multi_mode;
+    bool is_cap;
 };
 
 struct ipm_version {
@@ -106,6 +107,7 @@ struct ipm_open_out {
     enum img_fmt format;
     cmr_uint total_frame_number;
     struct ipm_version version;
+    bool isp_zoom;
 };
 
 struct ipm_capability {

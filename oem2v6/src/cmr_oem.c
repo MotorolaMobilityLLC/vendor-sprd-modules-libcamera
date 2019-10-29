@@ -10002,7 +10002,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_REPROCESS_ZOOM_RATIO:
         if (param) {
-            setting_param.cmd_type_value = param;
+            setting_param.zoom_param = *((struct cmr_zoom_param *)param);
             ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                     &setting_param);
         } else {
@@ -11595,34 +11595,57 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                                   id, (void *)param);
         break;
     case CAMERA_PARAM_ZOOM: {
-        float zoom_factor = 1.0;
+        struct cmr_zoom zoom_factor;
         const float EPSINON = 0.0001f;
-        struct cmr_zoom_param *zoom_param = NULL;
+        struct cmr_zoom_param *zoom_param = (struct cmr_zoom_param *)malloc(sizeof(struct cmr_zoom_param));
+        struct cmr_zoom_param *zoom_reprocess = (struct cmr_zoom_param *)malloc(sizeof(struct cmr_zoom_param));
         cmr_uint zoom_factor_changed = 0;
         if (param) {
-            zoom_param = (struct cmr_zoom_param *)param;
+            cmr_bzero(zoom_param, sizeof(struct cmr_zoom_param));
+            cmr_bzero(zoom_reprocess, sizeof(struct cmr_zoom_param));
+            memcpy(zoom_param, (struct cmr_zoom_param *)param,sizeof(struct cmr_zoom_param));
+            memcpy(zoom_reprocess, (struct cmr_zoom_param *)param,sizeof(struct cmr_zoom_param));
+
             if (zoom_param->mode == ZOOM_INFO) {
                 ret = cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,
                                                   cxt->camera_id, &zoom_factor);
                 if (ret) {
                     CMR_LOGE("fail to get zoom factor  %ld", ret);
                 } else {
-                    if (fabs(zoom_param->zoom_info.zoom_ratio - zoom_factor) >
-                        EPSINON) {
+                    if(!zoom_factor.prev_zoom){
+                        zoom_param->zoom_info.prev_aspect_ratio = 1.0f;
+                        zoom_reprocess->zoom_info.prev_aspect_ratio = zoom_reprocess->zoom_info.zoom_ratio;
+                    }else{
+                        zoom_param->zoom_info.prev_aspect_ratio = zoom_param->zoom_info.zoom_ratio;
+                        zoom_reprocess->zoom_info.prev_aspect_ratio = 1.0f;
+                    }
+                    if(!zoom_factor.cap_zoom){
+                        zoom_param->zoom_info.capture_aspect_ratio = 1.0f;
+                        zoom_reprocess->zoom_info.capture_aspect_ratio = zoom_reprocess->zoom_info.zoom_ratio;
+                    }else{
+                        zoom_param->zoom_info.capture_aspect_ratio = zoom_param->zoom_info.zoom_ratio;
+                        zoom_reprocess->zoom_info.capture_aspect_ratio = 1.0f;
+                    }
+                    if (fabs(zoom_param->zoom_info.prev_aspect_ratio - zoom_factor.zoom_setting.zoom_info.prev_aspect_ratio) > EPSINON
+                            || fabs(zoom_param->zoom_info.capture_aspect_ratio - zoom_factor.zoom_setting.zoom_info.capture_aspect_ratio) > EPSINON){
                         zoom_factor_changed = 1;
                     }
+                    CMR_LOGD("zoom_factor_changed=%d",zoom_factor_changed);
                 }
             }
         }
         ret = cmr_preview_update_zoom(cxt->prev_cxt.preview_handle,
-                                      cxt->camera_id,
-                                      (struct cmr_zoom_param *)param);
+                cxt->camera_id, zoom_param);
         if (ret) {
             CMR_LOGE("failed to update zoom %ld", ret);
         }
-        ret = camera_set_setting(oem_handle, id, param);
+        ret = camera_set_setting(oem_handle, id, (cmr_uint)zoom_param);
         if (ret) {
             CMR_LOGE("failed to set camera setting of zoom %ld", ret);
+        }
+        ret = camera_set_setting(oem_handle, CAMERA_PARAM_REPROCESS_ZOOM_RATIO, (cmr_uint)zoom_reprocess);
+        if (ret) {
+            CMR_LOGE("failed to set camera setting of reprocess zoom %ld", ret);
         }
         if (zoom_factor_changed) {
             ret = cmr_set_zoom_factor_to_isp(oem_handle,
@@ -11631,6 +11654,8 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 CMR_LOGE("failed to set zoom factor to isp  %ld", ret);
             }
         }
+	free(zoom_param);
+	free(zoom_reprocess);
         break;
     case CAMERA_PARAM_REPROCESS_ZOOM_RATIO:
         ret = camera_set_setting(oem_handle, id, param);

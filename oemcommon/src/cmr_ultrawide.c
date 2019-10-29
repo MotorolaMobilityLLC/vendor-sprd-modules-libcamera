@@ -31,6 +31,8 @@ struct class_ultrawide {
     struct ipm_common common;
     img_warp_param_t warp_param;
     img_warp_inst_t warp_inst;
+    INST_TAG tag;
+    bool is_isp_zoom;
 };
 
 #define CHECK_HANDLE_VALID(handle)                                             \
@@ -106,6 +108,8 @@ static cmr_int ultrawide_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
     ultrawide_handle->warp_param.dst_width = in->frame_size.width;
     ultrawide_handle->warp_param.dst_height = in->frame_size.height;
+    if(in->is_cap)  ultrawide_handle->tag = WARP_CAPTURE;
+    else ultrawide_handle->tag = WARP_PREVIEW;
 
     CMR_LOGD("ultra wide open:param:%p,fullsize=%d,%d, size:%dx%d cx:%d, "
              "cy:%d,cw:%d,ch:%d,binning:%d",
@@ -114,9 +118,9 @@ static cmr_int ultrawide_open(cmr_handle ipm_handle, struct ipm_open_in *in,
              ultrawide_handle->warp_param.dst_height, in->frame_rect.start_x,
              in->frame_rect.start_y, in->frame_rect.width,
              in->frame_rect.height, in->binning_factor);
-    img_warp_grid_open(&ultrawide_handle->warp_inst,
-                       &ultrawide_handle->warp_param);
-
+    sprd_warp_adapter_open(&ultrawide_handle->warp_inst, &ultrawide_handle->is_isp_zoom,
+                       &ultrawide_handle->warp_param, ultrawide_handle->tag);
+    out->isp_zoom = ultrawide_handle->is_isp_zoom;
     *class_handle = (cmr_handle)ultrawide_handle;
 
     return ret;
@@ -134,7 +138,7 @@ static cmr_int ultrawide_close(cmr_handle class_handle) {
                  &ultrawide_handle->warp_param,
                  ultrawide_handle->warp_param.dst_width,
                  ultrawide_handle->warp_param.dst_height);
-        img_warp_grid_close(&ultrawide_handle->warp_inst);
+        sprd_warp_adapter_close(&ultrawide_handle->warp_inst, ultrawide_handle->tag);
     }
 
     if (NULL != ultrawide_handle)
@@ -181,16 +185,18 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
         input.height = src_img->size.height;
         input.stride = src_img->size.width;
         input.graphic_handle = src_img->reserved;
+        input.ion_fd = src_img->fd;
         input.addr[0] = (void *)src_img->addr_vir.addr_y;
 
         output.width = dst_img->size.width;
         output.height = dst_img->size.height;
         output.stride = dst_img->size.width;
         output.graphic_handle = dst_img->reserved;
+        output.ion_fd = dst_img->fd;
         output.addr[0] = (void *)dst_img->addr_vir.addr_y;
 
-        img_warp_grid_run(ultrawide_handle->warp_inst, &input, &output,
-                          (void *)&param);
+        sprd_warp_adapter_run(ultrawide_handle->warp_inst, &input, &output,
+                          (void *)&param, ultrawide_handle->tag);
         if (!strcmp(value, "true")) {
             camera_save_yuv_to_file(1, IMG_DATA_TYPE_YUV420,
                                     src_img->size.width, src_img->size.height,

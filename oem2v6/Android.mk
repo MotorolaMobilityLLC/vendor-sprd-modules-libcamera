@@ -170,6 +170,7 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
 LOCAL_SHARED_LIBRARIES += libsprdwarp
+LOCAL_SHARED_LIBRARIES += libsprdwarpadapter
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FACE_DETECT)),true)
