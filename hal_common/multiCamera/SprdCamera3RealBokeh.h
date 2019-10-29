@@ -180,12 +180,17 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     Mutex mRequestLock;
     List<new_mem_t *> mLocalBufferList;
     List<camera3_notify_msg_t> mNotifyListMain;
+    List<camera3_notify_msg_t> mPrevFrameNotifyList;
     Mutex mNotifyLockMain;
+    Mutex mPrevFrameNotifyLock;
+    uint64_t capture_result_timestamp;
     List<camera3_notify_msg_t> mNotifyListAux;
+    List<faceaf_frame_buffer_info_t> mFaceafList;
     Mutex mNotifyLockAux;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
     bool mIsCapturing;
+    bool mSnapshotResultReturn;
     bool mIsCapDepthFinish;
     bool mHdrSkipBlur;
     int mjpegSize;
@@ -397,7 +402,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void dumpCaptureBokeh(unsigned char *result_buffer_addr,
                           uint32_t jpeg_size);
     void bokehFaceMakeup(buffer_handle_t *buffer_handle, void *input_buf1_addr);
-    void updateApiParams(CameraMetadata metaSettings, int type);
+    void updateApiParams(CameraMetadata metaSettings, int type, uint32_t cur_frame_number);
     int bokehHandle(buffer_handle_t *output_buf, buffer_handle_t *inputbuff1,
                     buffer_handle_t *inputbuff2, CameraMode camera_mode);
     void _dump(const struct camera3_device *device, int fd);

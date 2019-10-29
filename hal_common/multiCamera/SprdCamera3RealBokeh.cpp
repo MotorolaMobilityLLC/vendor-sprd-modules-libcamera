@@ -62,6 +62,8 @@ namespace sprdcamera {
 #define DEPTH_SNAP_OUTPUT_WIDTH (800)  //(324)
 #define DEPTH_SNAP_OUTPUT_HEIGHT (600) //(243)
 
+#define BOKEH_PREVIEW_PARAM_LIST (10)
+
 /* refocus api error code */
 #define ALRNB_ERR_SUCCESS 0x00
 
@@ -90,6 +92,10 @@ const uint8_t kavailable_physical_ids[] = {'0', '\0', '2', '\0'};
         HAL_LOGE("Error !! HWI not found!!");                                  \
         return -ENODEV;                                                        \
     }
+
+#ifndef ABS
+#define ABS(x) (((x) > 0) ? (x) : -(x))
+#endif
 
 camera3_device_ops_t SprdCamera3RealBokeh::mCameraCaptureOps = {
     .initialize = SprdCamera3RealBokeh::initialize,
@@ -137,7 +143,9 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mPrevBlurFrameNumber = 0;
     mPrevFrameNumber = 0;
     mIsCapturing = false;
+    mSnapshotResultReturn = false;
     mjpegSize = 0;
+    capture_result_timestamp = 0;
     mCameraId = 0;
     mFlushing = false;
     mVcmSteps = 0;
@@ -201,6 +209,7 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
     mNotifyListAux.clear();
+    mPrevFrameNotifyList.clear();
 
     HAL_LOGI("X");
 }
@@ -394,6 +403,7 @@ int SprdCamera3RealBokeh::closeCameraDevice() {
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
     mNotifyListAux.clear();
+    mPrevFrameNotifyList.clear();
 
     if (mBokehAlgo) {
         rc = mBokehAlgo->deinitAlgo();
@@ -701,6 +711,7 @@ int SprdCamera3RealBokeh::allocateBuff() {
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
     mNotifyListAux.clear();
+    mPrevFrameNotifyList.clear();
     freeLocalBuffer();
 
     for (size_t j = 0; j < preview_num; j++) {
@@ -2719,7 +2730,7 @@ fail_map_output:
  * RETURN     : none
  *==========================================================================*/
 void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
-                                           int type) {
+                                           int type, uint32_t cur_frame_number) {
     // always get f_num in request
     int32_t origW =
         SprdCamera3Setting::s_setting[0].sensor_InfoInfo.pixer_array_size[0];
@@ -2740,6 +2751,9 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
     int j = 0;
     int max = 0;
     int max_index = 0;
+
+    faceaf_frame_buffer_info_t mtempParm;
+    memset(&mtempParm, 0, sizeof(faceaf_frame_buffer_info_t));
 
     for (int i = 0; i < numFaces; i++) {
         convertToRegions(faceDetectionInfo->face[i].rect, faceRectangles + j,
@@ -2879,19 +2893,47 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             trim_H = sn_trim.trim_valid_rect.h;
             sn_trim_flag = false;
         }
-
         if (left != 0 && top != 0 && right != 0 && bottom != 0) {
             x = left + (right - left) / 2;
             y = top + (bottom - top) / 2;
             x = x * mBokehSize.preview_w / trim_W;
             y = y * mBokehSize.preview_h / trim_H;
-            if (x != mbokehParm.sel_x || y != mbokehParm.sel_y) {
-                mbokehParm.sel_x = x;
-                mbokehParm.sel_y = y;
-                isUpdate = true;
-                HAL_LOGD("sel_x %d ,sel_y %d", x, y);
-            }
+            mtempParm.x=x;
+            mtempParm.y=y;
+            mtempParm.frame_number=cur_frame_number;
+            mFaceafList.push_back(mtempParm);
         }
+        if (mSnapshotResultReturn) {
+            if (!mFaceafList.empty()) {
+                Mutex::Autolock m(mPrevFrameNotifyLock);
+                int64_t timestampMIN = capture_result_timestamp;
+                uint32_t prev_frame_number = 0;
+                for (List<camera3_notify_msg_t>::iterator i = mPrevFrameNotifyList.begin(); i != mPrevFrameNotifyList.end(); i++) {
+                      int64_t timestampTEMP =ABS((int64_t)((uint64_t)i->message.shutter.timestamp - (uint64_t)capture_result_timestamp));
+                      if (timestampTEMP < timestampMIN) {
+                          timestampMIN = timestampTEMP;
+                          prev_frame_number = i->message.shutter.frame_number;
+                      }
+                      if (timestampMIN == 0) {
+                          break;
+                      }
+                }
+                for (List<faceaf_frame_buffer_info_t>::iterator j = mFaceafList.begin();j != mFaceafList.end();j++) {
+                       if (j->frame_number == prev_frame_number){
+                           if (j->x != mbokehParm.sel_x || j->y != mbokehParm.sel_y) {
+                               mbokehParm.sel_x = j->x;
+                               mbokehParm.sel_y = j->y;
+                               isUpdate = true;
+                           }
+                           break;
+                       }
+                }
+             }
+         mSnapshotResultReturn = false;
+         }
+         if (mFaceafList.size() > BOKEH_PREVIEW_PARAM_LIST) {
+             mFaceafList.erase(mFaceafList.begin());
+         }
     }
 #ifdef CONFIG_FACE_BEAUTY
     if (metaSettings.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
@@ -2910,7 +2952,6 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                 (face_rect[max_index].right - face_rect[max_index].left) / 2;
         int y = face_rect[max_index].top +
                 (face_rect[max_index].bottom - face_rect[max_index].top) / 2;
-
         mbokehParm.sel_x = x * mBokehSize.preview_w / origW;
         mbokehParm.sel_y = y * mBokehSize.preview_h / origH;
         HAL_LOGD("update sel_x %d ,sel_y %d", mbokehParm.sel_x,
@@ -3022,6 +3063,7 @@ int SprdCamera3RealBokeh::initialize(
     mCaptureStreamsNum = 1;
     mCaptureThread->mReprocessing = false;
     mIsCapturing = false;
+    mSnapshotResultReturn = false;
     mCapFrameNumber = 0;
     mPrevBlurFrameNumber = 0;
     mjpegSize = 0;
@@ -3033,6 +3075,7 @@ int SprdCamera3RealBokeh::initialize(
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
     mNotifyListAux.clear();
+    mPrevFrameNotifyList.clear();
     mOtpData.otp_exist = false;
     mVcmSteps = 0;
     mOtpData.otp_size = 0;
@@ -3523,7 +3566,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             HAL_LOGD("mJpegOrientation=%d", mJpegOrientation);
         } else if (requestStreamType == CALLBACK_STREAM) {
             preview_stream = (request->output_buffers[i]).stream;
-            updateApiParams(metaSettingsMain, 0);
+            updateApiParams(metaSettingsMain, 0, request->frame_number);
         }
     }
     if (metaSettingsMain.exists(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)) {
@@ -3790,10 +3833,17 @@ req_fail:
 void SprdCamera3RealBokeh::notifyMain(const camera3_notify_msg_t *msg) {
     uint32_t cur_frame_number = msg->message.shutter.frame_number;
 
+     if (msg->type == CAMERA3_MSG_SHUTTER &&
+         cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number && cur_frame_number != 0) {
+         if (msg->message.shutter.timestamp != 0) {
+             capture_result_timestamp = msg->message.shutter.timestamp;
+         }
+     }
+
     if (msg->type == CAMERA3_MSG_SHUTTER &&
         cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number &&
         mCaptureThread->mReprocessing) {
-        HAL_LOGD(" hold cap notify");
+        HAL_LOGD("hold cap notify");
         return;
     }
 
@@ -3801,6 +3851,11 @@ void SprdCamera3RealBokeh::notifyMain(const camera3_notify_msg_t *msg) {
         mIsSupportPBokeh) {
         Mutex::Autolock l(mNotifyLockMain);
         mNotifyListMain.push_back(*msg);
+        Mutex::Autolock m(mPrevFrameNotifyLock);
+        mPrevFrameNotifyList.push_back(*msg);
+        if (mPrevFrameNotifyList.size() > BOKEH_PREVIEW_PARAM_LIST) {
+            mPrevFrameNotifyList.erase(mPrevFrameNotifyList.begin());
+        }
     }
 
     mCallbackOps->notify(mCallbackOps, msg);
@@ -4012,7 +4067,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     if (result_buffer == NULL) {
         // meta process
         metadata = result->result;
-        updateApiParams(metadata, 1);
+        updateApiParams(metadata, 1, cur_frame_number);
         if (metadata.exists(ANDROID_SPRD_VCM_STEP) && cur_frame_number) {
             vcmSteps = metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0];
             setDepthTrigger(vcmSteps);
@@ -4083,6 +4138,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
     }
 
     if (mIsCapturing && (currStreamType == DEFAULT_STREAM)) {
+        mSnapshotResultReturn = true;
         if (mFlushing ||
             result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
             if (mhasCallbackStream &&

@@ -304,6 +304,12 @@ typedef struct {
     int vcmSteps;
 } frame_matched_info_t;
 
+ typedef struct {
+    uint32_t frame_number;
+    int x;
+    int y;
+} faceaf_frame_buffer_info_t;
+
 typedef enum {
     MUXER_MSG_DATA_PROC = 1,
     MUXER_MSG_EXIT,
