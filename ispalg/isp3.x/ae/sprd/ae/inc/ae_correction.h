@@ -163,6 +163,7 @@ struct ae_lib_calc_out  {
 	struct ae_range target_range;
 	cmr_u32 flash_status;
 	float cur_fps;				/*current fps:1~120 */
+	cmr_u16 abl_confidence;
 	struct ae_ev_setting_param ev_setting;
 	struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
 	struct ae_ygamma_curve ygamma_curve;/*will be used in future*/

@@ -86,7 +86,7 @@ extern "C" {
 		char alg_version[32];
 		char flash_version[32];
 		cmr_u16 major_id;
-		cmr_u16 minor_id;		
+		cmr_u16 minor_id;
 		cmr_handle packet_buf;
 		cmr_u32 packet_len;
 		cmr_handle unpacket_buf;
@@ -106,14 +106,15 @@ extern "C" {
 		cmr_u32 cmd;
 		struct ae_debug_draw_fun_tab draw_func;
 	};
-	
+
 	struct ae_debug_info_draw_out {
 		cmr_u32 reserved;
 	};
-	
-AE_PUBLIC cmr_s32 ae_debug_info_packet(cmr_handle input, cmr_handle output);/*according to the debug structure, save the debug infomation*/	
+
+
+AE_PUBLIC cmr_s32 ae_debug_info_packet(cmr_handle input, cmr_handle output);/*according to the debug structure, save the debug infomation*/
 AE_PUBLIC cmr_s32 ae_debug_info_unpacket(cmr_handle input, cmr_handle output);/*parser the debug information to debug structure*/
-AE_PUBLIC cmr_s32 ae_debug_info_print(cmr_handle input, cmr_handle output);	
+AE_PUBLIC cmr_s32 ae_debug_info_print(cmr_handle input, cmr_handle output);
 AE_PUBLIC cmr_s32 ae_debug_info_draw(cmr_handle input, cmr_handle output);
 AE_PUBLIC cmr_handle ae_debug_info_get_lib_version(void);
 AE_PUBLIC cmr_s32 ae_debug_info_get_alg_version(cmr_handle debug_info, cmr_handle major_id, cmr_handle minor_id);
