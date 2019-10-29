@@ -1203,7 +1203,7 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 						output->mode_id[i] = ISP_MODE_ID_CAP_1;
 					else
 						output->mode_id[i] = ISP_MODE_ID_CAP_0;
-					update_always[i] = 1;
+					//update_always[i] = 1;
 					goto get_blocks;
 				}
 			}

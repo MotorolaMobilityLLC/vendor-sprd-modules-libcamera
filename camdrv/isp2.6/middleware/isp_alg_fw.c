@@ -1570,7 +1570,7 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to set AF_CMD_SET_DCAM_TIMESTAMP"));
 	}
 
-	if (cxt->cam_4in1_mode) {
+	if (cxt->zsl_flag && cxt->cam_4in1_mode) {
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_LOWLIGHT_FLAG_BY_BV, NULL, (void *)&lowlight_tmp);
 
@@ -5174,6 +5174,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	pm_input.img_w[0] = cxt->commn_cxt.src.w;
 	pm_input.img_h[0] = cxt->commn_cxt.src.h;
 
+#if 0
 	ISP_LOGV("flag %d %d\n", cxt->is_4in1_sensor, cxt->cam_4in1_mode);
 	if (cxt->cam_4in1_mode) {
 		cmr_u32 lowlight_tmp = 0;
@@ -5183,6 +5184,8 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG, &lowlight_tmp,
 			&cxt->commn_cxt.isp_pm_mode[1]);
 	}
+#endif
+
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, &pm_output);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
 

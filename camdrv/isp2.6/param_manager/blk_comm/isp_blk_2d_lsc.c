@@ -125,8 +125,9 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	dst_ptr->cur.update_all = 1;
 	header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 
-	ISP_LOGD("image size %d %d, grid %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
-		dst_ptr->resolution.w, dst_ptr->resolution.h, dst_ptr->cur.grid_width,
+	ISP_LOGD("image size %d %d, grid %d, %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
+		dst_ptr->resolution.w, dst_ptr->resolution.h,
+		dst_ptr->cur.grid_width, dst_ptr->cur.gridtab_len,
 		dst_ptr->lsc_info.gain_w, dst_ptr->lsc_info.gain_h,
 		dst_ptr->cur.grid_x_num, dst_ptr->cur.grid_y_num, dst_ptr);
 
@@ -166,7 +167,9 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 			ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_grid=%d, orig=%d, hdr %p\n",
 						lsc_grid, dst_lnc_ptr->cur.grid_width, dst_ptr);
 
-			if (lsc_grid != dst_lnc_ptr->cur.grid_width) {
+			if (lsc_grid != dst_lnc_ptr->cur.grid_width ||
+				dst_ptr->resolution.w != cur_resolution_w ||
+				dst_ptr->resolution.h != cur_resolution_h) {
 				ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_resolution[%d,%d], orig[%d,%d]",
 						cur_resolution_w, cur_resolution_h,
 						dst_ptr->resolution.w, dst_ptr->resolution.h);
@@ -185,14 +188,17 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 				dst_ptr->cur.grid_x_num = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.w, ISP_ZERO)+2;
 				dst_ptr->cur.grid_y_num = _pm_get_lens_grid_pitch(lsc_grid, dst_ptr->resolution.h, ISP_ZERO)+2;
 				dst_ptr->cur.grid_num_t = dst_ptr->cur.grid_x_num * dst_ptr->cur.grid_y_num ;
-				dst_ptr->cur.weight_num = (lsc_grid / 2 + 1)* 3 * sizeof(cmr_s16);
+				dst_ptr->cur.gridtab_len = dst_ptr->lsc_info.gain_w * dst_ptr->lsc_info.gain_h * 4 * sizeof(cmr_u16);
+				dst_ptr->cur.weight_num = (lsc_grid / 2 + 1) * 3 * sizeof(cmr_s16);
 
 			}
 
 			dst_ptr->cur.update_all = 1;
 			lnc_header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
-			ISP_LOGD("image size %d %d, grid %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
-				dst_ptr->resolution.w, dst_ptr->resolution.h, dst_ptr->cur.grid_width,
+
+			ISP_LOGD("image size %d %d, grid %d %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
+				dst_ptr->resolution.w, dst_ptr->resolution.h,
+				dst_ptr->cur.grid_width, dst_ptr->cur.gridtab_len,
 				dst_ptr->lsc_info.gain_w, dst_ptr->lsc_info.gain_h,
 				dst_ptr->cur.grid_x_num, dst_ptr->cur.grid_y_num, dst_ptr);
 		}
