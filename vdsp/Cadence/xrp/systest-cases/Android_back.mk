@@ -54,6 +54,7 @@ include $(CLEAR_VARS)
 LOCAL_32_BIT_ONLY:=true
 
 LOCAL_SRC_FILES := main.cpp \
+		   assist.cpp \
 		   depth_bokeh/ImageFormat_Conversion.cpp \
 		   depth_bokeh/bmp_io.cpp \
 		   hdr/bmp.cpp \

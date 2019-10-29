@@ -95,7 +95,7 @@ static int32_t Free_Fd(int32_t fd)
                 return -1;
         /*check whether fd is valid*/
         if((g_fdtable & (1<<fd)) == 0) {
-                printf("func:%s , free fd:%d , is not valid, g_fdtable:%x\n" , __func__ , fd , g_fdtable);
+                ALOGE("func:%s , free fd:%d , is not valid, g_fdtable:%x\n" , __func__ , fd , g_fdtable);
                 return -1;
         }
         g_fdtable &= ~(1<<fd);
@@ -105,7 +105,7 @@ static int32_t Check_FdValid(int32_t fd) {
         if(fd < 0)
                 return -1;
         if((g_fdtable & (1<<fd)) == 0) {
-                printf("func:%s , fd:%d , is not valid, g_fdtable:%x\n" , __func__ , fd , g_fdtable);
+                ALOGE("func:%s , fd:%d , is not valid, g_fdtable:%x\n" , __func__ , fd , g_fdtable);
                 return -1;
         }
         return 0;
@@ -159,7 +159,6 @@ __attribute__ ((visibility("default"))) enum sprd_vdsp_result sprd_cavdsp_open_d
 		 ALOGE("func:%s get resource failed cs:%p , handle:%p\n" , __func__ ,cs.get() , handle);
 		return SPRD_VDSP_RESULT_FAIL;
 	}
-	printf("func:%s enter cs:%p\n" , __func__ , cs.get());
 	ALOGD("func:%s enter cs:%p\n" , __func__ ,cs.get());
 	{
 		AutoMutex _l(gLock);

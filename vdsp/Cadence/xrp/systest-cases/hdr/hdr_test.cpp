@@ -7,6 +7,7 @@
 #include "sprd_hdr_api.h"
 #include "util.h"
 #include "common.h"
+#include "assist.h"
 #ifdef CEVA_TIME
 	#include <ceva-time.h>
 #endif
@@ -108,7 +109,7 @@ void *vdsp_main(void *arg)
 	fclose(fp);
 	printf("func:%s hdr test end\n" , __func__);
 //	CAA_API_hdr.IPCThreadState_stopProcess(true);
-
+	set_testend_flag(1);
 	return NULL;
 }
 #endif

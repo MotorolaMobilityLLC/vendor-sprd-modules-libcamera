@@ -6,7 +6,7 @@
 #include "common.h"
 #include <binder/IPCThreadState.h>
 #include <binder/ProcessState.h>
-
+#include "assist.h"
 #ifdef BOKEH_TEST
 #include "iBokeh.h"
 #endif
@@ -41,24 +41,12 @@ typedef struct {
 	int loopNum;
 	int sleepNum;
 } vdsp_thread_t;
-#if 0
-typedef struct {
-	void *dl_handle;
-	int (*sprd_caa_vdsp_Send)(const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
-	void *(*sprd_caa_ionmem_alloc)(uint32_t size, bool iscache);
-	int (*sprd_caa_ionmem_free)(void *h_ionmem);
-	void *(*sprd_caa_ionmem_get_vaddr)(void *h_ionmem);
-	int (*sprd_caa_ionmem_get_fd)(void *h_ionmem);
-	void (*ProcessState_initWithDriver)(const char *driver);
-	void (*ProcessState_startThreadPool)();
-	void (*IPCThreadState_joinThreadPool)(bool isMain);
-	void (*IPCThreadState_stopProcess)(bool immediate);
-} camalg_assist_lib_api_t;
-#endif
 camalg_assist_lib_api_t CAA_API;
 
 #define CAMALG_ASSIST_LIB	"libsprdcamalgassist.so"
 
+static int bokeh_end = 0;
+static int depth_end = 0;
 extern int test_hdr(int argc, char **argv);
 
 int sprd_depth_load_api(camalg_assist_lib_api_t *libapi)
@@ -173,7 +161,7 @@ void *vdsp_main_depth(void *arg)
 		printf("sprd_depth_vdsp_Init error\n");
 	}
 	sprd_depth_vdsp_Close(handle_preview);
-
+	depth_end = 1;
 	printf("--------------vdsp_depth main end----------------\n");
 	return NULL;
 }
@@ -226,7 +214,7 @@ void *vdsp_main_bokeh(void *arg)
 	}
 
 	iBokehDeinit_vdsp(handle);
-
+	bokeh_end = 1;
 	printf("-----------vdsp_main_bokeh end--------------\n");
 	return NULL;
 }
@@ -507,12 +495,19 @@ int test_bokeh_depth(int argc, char **argv)
 	arg.outHeight=outHeight;
 	arg.loopNum=loopNum_depth;
 	arg.sleepNum=sleepNum1*1000;
-
+	bokeh_end = 1;
+	depth_end = 1;
 	printf("pthread_create start.\n");
-	pthread_create(&t_depth, NULL, vdsp_main_depth, &arg);
+	if(loopNum_depth != 0) {
+		depth_end = 0;
+		pthread_create(&t_depth, NULL, vdsp_main_depth, &arg);
+	}
 	usleep(sleepNum0*1000);
 #ifdef BOKEH_TEST
-	pthread_create(&t_bokeh, NULL, vdsp_main_bokeh, &arg_bokeh);
+	if(loopNum_bokeh != 0) {
+		bokeh_end = 0;
+		pthread_create(&t_bokeh, NULL, vdsp_main_bokeh, &arg_bokeh);
+	}
 #endif
 	printf("test_bokeh_depth end.\n");
 
@@ -526,6 +521,7 @@ int main(int argc, char **argv)
 {
         int caseid = atoi(argv[1]);
 	int exitflag = 0;
+	set_testend_flag(0);
         switch(caseid) {
         case 0:
                 test_bokeh_depth(argc , argv);
@@ -537,7 +533,27 @@ int main(int argc, char **argv)
                 break;
         }
 	ProcessState::self()->startThreadPool();
-	IPCThreadState::self()->joinThreadPool();
+
+	switch(caseid) {
+	case 0:
+		while(1) {
+			if(depth_end && bokeh_end) {
+				set_testend_flag(1);
+				break;
+			}
+			usleep(100000);
+		}
+		break;
+	default:
+		break;
+	}
+	while(1) {
+		if(get_testend_flag())
+			break;
+		usleep(100000);
+	}
+	printf("----------------------test_vdsp process done---------------------\n");
+//	IPCThreadState::self()->joinThreadPool();
 	//CAA_API.ProcessState_startThreadPool();
 	//CAA_API.IPCThreadState_joinThreadPool(true);
 }
