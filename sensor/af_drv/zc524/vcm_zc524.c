@@ -235,3 +235,8 @@ static int _vcm_zc524_set_mode(cmr_handle sns_af_drv_handle) {
     }
     return ret;
 }
+
+void *vcm_driver_open_lib(void)
+{
+     return &vcm_zc524_drv_entry;
+}

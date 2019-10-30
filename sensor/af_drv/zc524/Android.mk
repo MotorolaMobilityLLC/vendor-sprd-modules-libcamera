@@ -13,25 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-include $(LOCAL_PATH)/../../../../../SprdCtrl.mk
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../../inc \
-                    $(LOCAL_PATH)/../../../../../$(OEM_DIR)/inc \
-                    $(LOCAL_PATH)/../../../../../common/inc \
-                    $(LOCAL_PATH)/../../../../../$(ISPDRV_DIR)/isp_tune \
-                    $(LOCAL_PATH)/../../../../../$(ISPALG_DIR)/common/inc \
-                    $(LOCAL_PATH)/../../../../../$(ISPDRV_DIR)/middleware/inc \
-                    $(LOCAL_PATH)/../../../../../$(ISPDRV_DIR)/driver/inc \
-                    $(LOCAL_PATH)/../../../../../kernel_module/interface \
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../inc \
+                    $(LOCAL_PATH)/../../../$(OEM_DIR)/inc \
+                    $(LOCAL_PATH)/../../../common/inc \
+                    $(LOCAL_PATH)/../../../$(ISPDRV_DIR)/isp_tune \
+                    $(LOCAL_PATH)/../../../$(ISPALG_DIR)/common/inc \
+                    $(LOCAL_PATH)/../../../$(ISPDRV_DIR)/middleware/inc \
+                    $(LOCAL_PATH)/../../../$(ISPDRV_DIR)/driver/inc \
+                    $(LOCAL_PATH)/../../../kernel_module/interface \
                     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
-                    sensor_ov13855_mipi_raw.h
+                    $(LOCAL_PATH)/../../af_drv \
+                    vcm_zc524.h
 
 
-LOCAL_SRC_FILES := sensor_ov13855_mipi_raw.c
+LOCAL_SRC_FILES := vcm_zc524.c
 
 LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libutils libcamsensor liblog libxml2
 
@@ -39,9 +38,10 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-LOCAL_MODULE := libsensor_ov13855
+LOCAL_MODULE := libvcm_zc524
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
 
 #include $(call first-makefiles-under,$(LOCAL_PATH))
+
