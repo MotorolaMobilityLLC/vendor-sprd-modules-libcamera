@@ -55,4 +55,5 @@ PRODUCT_PACKAGES += libparam_gc2375_front_main
 PRODUCT_PACKAGES += libparam_ov13855_back_main
 PRODUCT_PACKAGES += libparam_ov8856_shine_back
 PRODUCT_PACKAGES += libparam_ov5675_front_main
+PRODUCT_PACKAGES += libparam_ov5675_dual
 #endif
