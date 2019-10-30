@@ -24,6 +24,20 @@
 #define ISP_AEM_BLK_NUM_TO_SIZE(num) (3 * (num) * sizeof(cmr_u32))
 #define ISP_AEM_STAT_SIZE_MAX ISP_AEM_BLK_NUM_TO_SIZE(ISP_AEM_STAT_BLK_NUM_MAX)
 
+struct ae_data {
+	struct isp_size block_size;
+	struct isp_rect block_rect;
+};
+
+struct sensor_data {
+	struct isp_size sensor_size;
+};
+
+struct match_data {
+	struct ae_data ae;
+	struct sensor_data sensor;
+};
+
 struct match_data_param {
 	struct module_info module_info;
 
@@ -43,11 +57,13 @@ struct match_data_param {
 	struct af_manual_info af_manual[CAM_SENSOR_MAX];
 
 	cmr_u32 sensor_mode[CAM_SENSOR_MAX];
+
+	struct match_data data[CAM_SENSOR_MAX];
 };
 
 struct ispbr_context {
 	cmr_u32 start_user_cnt;
-	cmr_handle ispalg_fw_handles[CAMERA_ID_MAX];
+	cmr_handle ispalg_fw_handles[CAM_SENSOR_MAX];
 
 	sem_t module_sm;
 	sem_t ae_sm;
@@ -55,7 +71,6 @@ struct ispbr_context {
 	sem_t af_sm;
 	struct match_data_param match_param;
 
-	sem_t ae_sync_data_sm;
 	cmr_u32 ae_ref_camera_id;
 	struct ae_rect ae_region[CAM_SENSOR_MAX];
 
@@ -68,6 +83,20 @@ static struct ispbr_context br_cxt;
 
 static cmr_u32 g_br_user_cnt = 0;
 static pthread_mutex_t g_br_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static inline const char *get_role_name(cmr_u32 sensor_role) {
+	/* keep align with roles in isp_com.h */
+	static const char *role_names[CAM_SENSOR_MAX] = {
+		[CAM_SENSOR_MASTER] = "m",
+		[CAM_SENSOR_SLAVE0] = "s0",
+		[CAM_SENSOR_SLAVE1] = "s1",
+	};
+
+	if (sensor_role >= CAM_SENSOR_MAX)
+		return "(null)";
+
+	return role_names[sensor_role];
+}
 
 static inline cmr_u32 user_cnt_inc() {
 	cmr_u32 cnt = 0;
@@ -135,7 +164,7 @@ static cmr_u32 role_add(struct ispbr_context *cxt,
 			cxt->role2id[CAM_SENSOR_MASTER] = camera_id;
 			cxt->id2role[camera_id] = CAM_SENSOR_MASTER;
 			sensor_role = CAM_SENSOR_MASTER;
-			ISP_LOGI("set %u as MASTER", camera_id);
+			ISP_LOGI("set %u as %s", camera_id, get_role_name(sensor_role));
 		}
 	} else {
 		for (i = CAM_SENSOR_SLAVE0; i < CAM_SENSOR_MAX; i++) {
@@ -148,7 +177,7 @@ static cmr_u32 role_add(struct ispbr_context *cxt,
 			cxt->role2id[i] = camera_id;
 			cxt->id2role[camera_id] = i;
 			sensor_role = i;
-			ISP_LOGI("set %u as SLAVE%d", camera_id, i - CAM_SENSOR_SLAVE0);
+			ISP_LOGI("set %u as %s", camera_id, get_role_name(sensor_role));
 		}
 	}
 	sem_post(&cxt->br_role_sm);
@@ -176,9 +205,7 @@ static void role_delete(struct ispbr_context *cxt, cmr_u32 camera_id) {
 		role = cxt->id2role[camera_id];
 		cxt->role2id[role] = CAMERA_ID_MAX;
 		cxt->id2role[camera_id] = CAM_SENSOR_MAX;
-		ISP_LOGI("delete %s %u",
-				 role == CAM_SENSOR_MASTER ? "master" : "slave",
-				camera_id);
+		ISP_LOGI("delete %s %u", get_role_name(role), camera_id);
 	}
 	sem_post(&cxt->br_role_sm);
 }
@@ -208,7 +235,6 @@ static inline void semaphore_init(struct ispbr_context *cxt) {
 	sem_init(&cxt->awb_sm, 0, 1);
 	sem_init(&cxt->af_sm, 0, 1);
 	sem_init(&cxt->module_sm, 0, 1);
-	sem_init(&cxt->ae_sync_data_sm, 0, 1);
 	sem_init(&cxt->br_role_sm, 0, 1);
 }
 
@@ -217,7 +243,6 @@ static inline void semaphore_deinit(struct ispbr_context *cxt) {
 	sem_destroy(&cxt->awb_sm);
 	sem_destroy(&cxt->af_sm);
 	sem_destroy(&cxt->module_sm);
-	sem_destroy(&cxt->ae_sync_data_sm);
 	sem_destroy(&cxt->br_role_sm);
 }
 
@@ -261,9 +286,14 @@ static void stats_data_free(struct ispbr_context *cxt, cmr_u32 sensor_role) {
 cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 {
 	struct ispbr_context *cxt = &br_cxt;
+	struct match_data *data = NULL;
 
-	if (sensor_role >= CAM_SENSOR_MAX)
-		ISP_LOGW("invalid sensor role %u, cmd %ld", sensor_role, cmd);
+	if (cmd != GET_SENSOR_ROLE && sensor_role >= CAM_SENSOR_MAX) {
+		ISP_LOGE("invalid sensor role %u, cmd %ld", sensor_role, cmd);
+		return ISP_ERROR;
+	}
+
+	data = &cxt->match_param.data[sensor_role];
 
 	ISP_LOGV("cmd=%lu", cmd);
 	switch (cmd) {
@@ -378,6 +408,26 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		memcpy(out, &cxt->match_param.bv[sensor_role],
 			sizeof(cxt->match_param.bv[sensor_role]));
 		sem_post(&cxt->ae_sm);
+		break;
+
+	case SET_AE_BLOCK_SIZE:
+		{
+			struct isp_size *size = (struct isp_size *)in;
+
+			sem_wait(&cxt->ae_sm);
+			data->ae.block_size = *size;
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
+	case SET_AE_WINDOW_RECT:
+		{
+			struct isp_rect *rect = (struct isp_rect *)in;
+
+			sem_wait(&cxt->ae_sm);
+			data->ae.block_rect = *rect;
+			sem_post(&cxt->ae_sm);
+		}
 		break;
 
 	// AWB
@@ -507,21 +557,26 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sem_post(&cxt->module_sm);
 		}
 		break;
+
 	case GET_SENSOR_ROLE:
 		{
 			cmr_u32 *id = (cmr_u32 *)in;
 			cmr_u32 *role = (cmr_u32 *)out;
 
-			*role = get_role_by_id(cxt, *id);
+			if (*id < CAMERA_ID_MAX) {
+				*role = get_role_by_id(cxt, *id);
+			} else {
+				ISP_LOGE("invalid camera id %u", *id);
+				*role = CAM_SENSOR_MAX;
+			}
 		}
 		break;
-	case GET_ISPALG_FW_BY_ID:
+
+	case GET_ISPALG_FW:
 		{
-			cmr_u32 *id = (cmr_u32 *)in;
 			cmr_handle *handle = (cmr_handle *)out;
 
-			if (*id < CAMERA_ID_MAX)
-				*handle = cxt->ispalg_fw_handles[*id];
+			*handle = cxt->ispalg_fw_handles[sensor_role];
 		}
 		break;
 
@@ -543,6 +598,18 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 						&cxt->match_param.sensor_mode[sensor_role],
 						sizeof(cmr_u32));
 			sem_post(&cxt->module_sm);
+		}
+		break;
+
+	case SET_SENSOR_SIZE:
+		{
+			struct isp_size *size = (struct isp_size *)in;
+
+			sem_wait(&cxt->ae_sm);
+			data->sensor.sensor_size = *size;
+			sem_post(&cxt->ae_sm);
+			ISP_LOGD("set %s sensor size %ux%u",
+					get_role_name(sensor_role), size->w, size->h);
 		}
 		break;
 
@@ -579,31 +646,34 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		{
 			struct ae_target_region *info = (struct ae_target_region *)in;
 
-			sem_wait(&cxt->ae_sync_data_sm);
+			sem_wait(&cxt->ae_sm);
 			cxt->ae_region[sensor_role].start_x = info->start_x;
 			cxt->ae_region[sensor_role].start_y = info->start_y;
 			cxt->ae_region[sensor_role].end_x = info->start_x + info->width;
 			cxt->ae_region[sensor_role].end_y = info->start_x + info->height;
-			sem_post(&cxt->ae_sync_data_sm);
+			sem_post(&cxt->ae_sm);
 		}
 		break;
 	case SET_AE_REF_CAMERA_ID:
 		{
-			sem_wait(&cxt->ae_sync_data_sm);
+			sem_wait(&cxt->ae_sm);
 			cmr_u32 *id = (cmr_u32 *)in;
 			cxt->ae_ref_camera_id = *id;
-			sem_post(&cxt->ae_sync_data_sm);
+			sem_post(&cxt->ae_sm);
 		}
 		break;
 	case GET_AE_SYNC_DATA:
 		{
 			struct ae_sync_data *info = (struct ae_sync_data *)out;
 
-			sem_wait(&cxt->ae_sync_data_sm);
+			sem_wait(&cxt->ae_sm);
 			info->num = user_cnt_get();
 			info->ref_camera_id = cxt->ae_ref_camera_id;
 			info->target_rect = cxt->ae_region[sensor_role];
-			sem_post(&cxt->ae_sync_data_sm);
+			info->block_size = data->ae.block_size;
+			info->block_rect = data->ae.block_rect;
+			info->sensor_size = data->sensor.sensor_size;
+			sem_post(&cxt->ae_sm);
 		}
 		break;
 	default:
@@ -639,7 +709,7 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 	if (ret)
 		goto alloc_fail;
 
-	cxt->ispalg_fw_handles[camera_id] = isp_3a_handle;
+	cxt->ispalg_fw_handles[sensor_role] = isp_3a_handle;
 
 	return ret;
 
@@ -666,7 +736,7 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 
 	sensor_role = get_role_by_id(cxt, camera_id);
 
-	cxt->ispalg_fw_handles[camera_id] = NULL;
+	cxt->ispalg_fw_handles[sensor_role] = NULL;
 
 	if (sensor_role < CAM_SENSOR_MAX)
 		stats_data_free(cxt, sensor_role);

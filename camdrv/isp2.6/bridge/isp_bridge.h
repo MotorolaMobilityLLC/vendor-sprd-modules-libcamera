@@ -38,6 +38,8 @@ enum isp_br_ioctl_cmd {
 	SET_AE_TARGET_REGION,
 	SET_AE_REF_CAMERA_ID,
 	GET_AE_SYNC_DATA,
+	SET_AE_BLOCK_SIZE,
+	SET_AE_WINDOW_RECT,
 
 	// AWB
 	SET_MATCH_AWB_DATA,
@@ -55,19 +57,23 @@ enum isp_br_ioctl_cmd {
 	SET_OTP_AWB,
 	GET_OTP_AWB,
 
-	SET_MODULE_INFO,
-	GET_MODULE_INFO,
-
-	GET_CAMERA_ID,
-	GET_SENSOR_ROLE,/* dont care first argument */
-	GET_ISPALG_FW_BY_ID,/* dont care first argument */
-	SET_SLAVE_SENSOR_MODE,
-	GET_SLAVE_SENSOR_MODE,
-
 	SET_ALL_MODULE_AND_OTP,
 	GET_ALL_MODULE_AND_OTP,
 
-	//control
+	/* sensor */
+	SET_SENSOR_SIZE,
+
+	SET_SLAVE_SENSOR_MODE,
+	GET_SLAVE_SENSOR_MODE,
+
+	SET_MODULE_INFO,
+	GET_MODULE_INFO,
+
+	/* common */
+	GET_CAMERA_ID,
+	GET_SENSOR_ROLE,/* dont care first argument */
+	GET_ISPALG_FW,
+
 	SET_USER_COUNT,
 	GET_USER_COUNT,
 };
@@ -154,6 +160,9 @@ struct ae_sync_data {
 	cmr_u32 num;
 	cmr_u32 ref_camera_id;
 	struct ae_rect target_rect;
+	struct isp_size block_size;
+	struct isp_rect block_rect;
+	struct isp_size sensor_size;
 };
 
 cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_master);

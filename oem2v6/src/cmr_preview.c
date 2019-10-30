@@ -7156,6 +7156,19 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->video_size.width = sensor_mode_info->scaler_trim.width;
     prev_cxt->video_size.height = sensor_mode_info->scaler_trim.height;
 
+    if (handle->ops.isp_ioctl) {
+        struct common_isp_cmd_param param;
+
+        param.camera_id = camera_id;
+        param.size_param.width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
+        param.size_param.height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
+        ret = handle->ops.isp_ioctl(handle->oem_handle,
+                COM_ISP_SET_SENSOR_SIZE, &param);
+        if (ret < 0) {
+            CMR_LOGW("fail to set sensor size");
+        }
+    }
+
     /*caculate trim rect*/
     if (ZOOM_INFO != zoom_param->mode) {
         CMR_LOGD("zoom level %ld, dst_img_size %d %d", zoom_param->zoom_level,

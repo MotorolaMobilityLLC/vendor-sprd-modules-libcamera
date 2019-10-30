@@ -718,7 +718,6 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 	struct sensor_multi_ae_info *ae_info = NULL;
 	struct isp_alg_fw_context *context = NULL;
 	cmr_handle handle = NULL;
-	cmr_u32 camera_id = 0;
 
 	if (!cxt) {
 		ISP_LOGE("fail to get valid cxt ptr\n");
@@ -737,8 +736,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 				 * ae_info ordered by master, slave0, slave1, ...
 				 * this is same as role definition
 				 */
-				isp_br_ioctrl(index2role(index), GET_CAMERA_ID, NULL, &camera_id);
-				isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+				isp_br_ioctrl(index2role(index), GET_ISPALG_FW, NULL, &handle);
 				context = (struct isp_alg_fw_context *)handle;
 				if (!context) {
 					ISP_LOGE("slave context not ready");
@@ -761,8 +759,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 	case ISP_AE_HDR_BOKEH:
 		ISP_LOGV("ISP_AE_HDR_BOKEH");
 
-		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_CAMERA_ID, NULL, &camera_id);
-		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_ISPALG_FW, NULL, &handle);
 		context = (struct isp_alg_fw_context *)handle;
 		if (context != NULL) {
 			ret = ispalg_ae_callback(context, AE_CB_HDR_START, (void *)param0);
@@ -774,8 +771,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 	case ISP_AE_SET_RGB_GAIN_SLAVE0:
 		ISP_LOGV("ISP_AE_SET_RGB_GAIN_SLAVE0");
 
-		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_CAMERA_ID, NULL, &camera_id);
-		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+		isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_ISPALG_FW, NULL, &handle);
 		context = (struct isp_alg_fw_context *)handle;
 		if (context != NULL) {
 			ret = ispalg_set_rgb_gain(context, param0);
@@ -787,8 +783,7 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 	case ISP_AE_SET_RGB_GAIN_SLAVE1:
 		ISP_LOGV("ISP_AE_SET_RGB_GAIN_SLAVE1");
 
-		isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_CAMERA_ID, NULL, &camera_id);
-		isp_br_ioctrl(CAM_SENSOR_MASTER, GET_ISPALG_FW_BY_ID, &camera_id, &handle);
+		isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_ISPALG_FW, NULL, &handle);
 		context = (struct isp_alg_fw_context *)handle;
 		if (context != NULL) {
 			ret = ispalg_set_rgb_gain(context, param0);

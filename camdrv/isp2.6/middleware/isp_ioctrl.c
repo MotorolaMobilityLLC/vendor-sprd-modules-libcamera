@@ -2971,17 +2971,13 @@ static cmr_int ispctl_ae_set_target_region(cmr_handle isp_alg_handle, void *para
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct img_rect *region = (struct img_rect *)param_ptr;
-	cmr_u32 camera_id = cxt->camera_id;
-	cmr_u32 sensor_role;
 	struct ae_target_region info;
-
-	isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_ROLE, &camera_id, &sensor_role);
 
 	info.start_x = region->start_x;
 	info.start_y = region->start_y;
 	info.width = region->width;
 	info.height = region->height;
-	isp_br_ioctrl(sensor_role, SET_AE_TARGET_REGION, &info, NULL);
+	isp_br_ioctrl(cxt->sensor_role, SET_AE_TARGET_REGION, &info, NULL);
 
 	return ret;
 }
@@ -2993,6 +2989,20 @@ static cmr_int ispctl_ae_set_ref_camera_id(cmr_handle isp_alg_handle, void *para
 	UNUSED(isp_alg_handle);
 
 	isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_REF_CAMERA_ID, param_ptr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_set_sensor_size(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct img_size *sensor_size = (struct img_size *)param_ptr;
+	struct isp_size size;
+
+	size.w = sensor_size->width;
+	size.h = sensor_size->height;
+	isp_br_ioctrl(cxt->sensor_role, SET_SENSOR_SIZE, &size, NULL);
 
 	return ret;
 }
@@ -3394,6 +3404,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_AE_SET_TARGET_REGION, ispctl_ae_set_target_region},
 	{ISP_CTRL_AE_SET_REF_CAMERA_ID, ispctl_ae_set_ref_camera_id},
+	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},
 	{ISP_CTRL_MAX, NULL}
 };
 
