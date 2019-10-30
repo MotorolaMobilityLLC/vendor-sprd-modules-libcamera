@@ -45,6 +45,7 @@ extern "C" {
 		AF_ALG_DUAL_W_T,
 		AF_ALG_DUAL_C_M,
 		AF_ALG_BLUR_PORTRAIT,
+		AF_ALG_TRIBLE_W_T_UW,
 		AF_ALG_CAMERA_MAX
 	};
 
@@ -235,8 +236,9 @@ extern "C" {
 	};
 
 	enum af_role {
-		AF_ROLE_WIDE,
-		AF_ROLE_TELE,
+		AF_ROLE_MASTER,
+		AF_ROLE_SLAVE0,
+		AF_ROLE_SLAVE1,
 		AF_ROLE_MAX
 	};
 
