@@ -3612,6 +3612,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
+	af_input.is_master = cxt->is_master;
+	af_input.sensor_role = cxt->sensor_role;
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:
 		af_input.is_multi_mode = AF_ALG_SINGLE;
@@ -3628,20 +3630,23 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	case ISP_WIDETELE:
 		af_input.is_multi_mode = AF_ALG_DUAL_W_T;
 		break;
-	case ISP_BLUR_PORTRAIT: {
+	case ISP_BLUR_PORTRAIT:
 		af_input.is_multi_mode = AF_ALG_BLUR_PORTRAIT;
 		break;
-	}
+	case ISP_WIDETELEULTRAWIDE:
+		af_input.is_multi_mode = AF_ALG_TRIBLE_W_T_UW;
+		break;
 	default:
 		af_input.is_multi_mode = AF_ALG_SINGLE;
 		break;
 	}
 
-	ISP_LOGI("sensor_role=%d, is_multi_mode=%d, pdaf_type%d",
-		cxt->is_master, cxt->is_multi_mode, af_input.pdaf_type);
+	ISP_LOGI("camera_id %u, is_master %u, is_multi_mode %u, sensor_role %u, pdaf_type %d",
+			af_input.camera_id, af_input.is_master, af_input.is_multi_mode,
+			af_input.sensor_role, af_input.pdaf_type);
 
 	af_input.otp_info_ptr = cxt->otp_data;
-	af_input.is_master = cxt->is_master;
+	af_input.br_ctrl = isp_br_ioctrl;
 
 	if (cxt->ops.af_ops.init) {
 		ret = cxt->ops.af_ops.init(&af_input, &cxt->af_cxt.handle);
