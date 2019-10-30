@@ -1,0 +1,3 @@
+正在比较文件 hdr_output.bin 和 HDR_OUTPUT_GOLDEN.BIN
+FC: 找不到差异
+

@@ -44,21 +44,21 @@ public:
 		callback = NULL;
 	}
 	virtual int32_t openXrpDevice(__unused sp<IBinder> &client , enum sprd_vdsp_worktype type) {
-		ALOGD("call proxy  function openXrpDevice\n");
+		ALOGD("call proxy  function:%s enter\n" , __func__);
 		Parcel data, reply;
 		status_t status;
 		int32_t result;
 		data.writeInterfaceToken(IVdspService::getInterfaceDescriptor());
-		ALOGD("call proxy function openXrpDevice callback:%p\n" , callback.get());
+		ALOGD("call proxy function:%s callback:%p\n" , __func__ , callback.get());
 		data.writeStrongBinder(sp<IBinder> (callback));
 		data.writeInt32((int32_t) type);
 		status = remote()->transact(BnVdspService::ACTION_OPEN, data, &reply);
 		result = reply.readInt32();
 		if(status != OK) {
-			ALOGE("call proxy function openXrpDevice err result = %d \n",result);
+			ALOGE("call proxy function:%s err result = %d \n",__func__ , result);
 			return status;
 		}
-		ALOGD("call proxy function openXrpDevice result = %d \n",result);
+		ALOGD("call proxy function:%s exit result = %d \n", __func__ , result);
 		return result;
 	}
 
@@ -67,11 +67,12 @@ public:
 		Parcel data, reply;
 		status_t status;
 		int32_t result;
-		 ALOGD("call proxy function %s\n",__func__);
+		ALOGD("call proxy function %s enter\n",__func__);
 		data.writeInterfaceToken(IVdspService::getInterfaceDescriptor());
 		data.writeStrongBinder(sp<IBinder> (callback));
 		status = remote()->transact(BnVdspService::ACTION_CLOSE, data, &reply);
 		result = reply.readInt32();
+		ALOGD("call proxy function %s exit status:%d\n",__func__ , status);
 		if(status != OK) {
 			return status;
 		}
@@ -125,16 +126,16 @@ public:
 		status = remote()->transact(BnVdspService::ACTION_SEND_CMD, data, &reply);
 		result = reply.readInt32();
 		if(status != OK) {
-			ALOGE("call proxy function %s err status:%d , result = %d after transact\n",__func__ , status , result);
+			ALOGE("call proxy function %s after transace err status:%d , result = %d after transact\n",__func__ , status , result);
 			return status;
 		}
-		ALOGD("call proxy function %s status:%d , result = %d after transact\n",__func__ , status , result);
+		ALOGD("call proxy function %s after transactstatus:%d , result = %d after transact\n",__func__ , status , result);
 		return result;
 	}
 
 	virtual int32_t loadXrpLibrary(__unused sp<IBinder> &client , const char* name ,  struct VdspInputOutput *input){
 
-		ALOGD("call proxy function %s nsid = %s\n",__func__ , name);
+		ALOGD("call proxy function %s enter nsid = %s\n",__func__ , name);
 		Parcel data, reply;
 		status_t status;
 		int32_t result;
@@ -149,17 +150,17 @@ public:
 		status = remote()->transact(BnVdspService::ACTION_LOAD_LIBRARY, data, &reply);
 		result = reply.readInt32();
 		if(status != OK) {
-			ALOGE("call proxy function %s err status:%d result = %d \n",__func__ , status , result);
+			ALOGE("call proxy function %s exit err status:%d result = %d \n",__func__ , status , result);
 			return status;
 		}
-		ALOGD("call proxy function %s status:%d result = %d \n",__func__ , status , result);
+		ALOGD("call proxy function %s exit status:%d result = %d \n", __func__ , status , result);
 		return result;
 	}
 	virtual int32_t unloadXrpLibrary(__unused sp<IBinder> &client , const char* name){
 		Parcel data , reply;
 		status_t status;
 		int32_t result;
-		ALOGD("call proxy    function %s , name:%s\n" , __func__ , name);
+		ALOGD("call proxy    function %s , enter name:%s\n" , __func__ , name);
 		data.writeInterfaceToken(IVdspService::getInterfaceDescriptor());
 		/*write client binder*/
 		data.writeStrongBinder(sp<IBinder> (callback));
@@ -168,17 +169,17 @@ public:
 		status = remote()->transact(BnVdspService::ACTION_UNLOAD_LIBRARY, data, &reply);
 		result = reply.readInt32();
 		if(status != OK) {
-			ALOGE("call proxy function %s err status:%d , result = %d\n",__func__ ,status , result);
+			ALOGE("call proxy function %s exit err status:%d , result = %d\n",__func__ ,status , result);
 			return status;
 		}
-		ALOGD("call proxy function %s status:%d , result = %d\n",__func__ ,status , result);
+		ALOGD("call proxy function %s exit status:%d , result = %d\n",__func__ ,status , result);
 		return result;
 	}
 	virtual int32_t powerHint(__unused sp<IBinder> &client , enum sprd_vdsp_power_level level , uint32_t permanent) {
 		Parcel data , reply;
 		status_t status;
 		int32_t result;
-		ALOGD("call proxy    function %s , level:%d\n" , __func__ , level);
+		ALOGD("call proxy    function %s , enter level:%d\n" , __func__ , level);
 		data.writeInterfaceToken(IVdspService::getInterfaceDescriptor());
 		data.writeStrongBinder(sp<IBinder> (callback));
 		data.writeInt32(level);
@@ -186,10 +187,10 @@ public:
 		status = remote()->transact(BnVdspService::ACTION_POWER_HINT , data, &reply);
 		result = reply.readInt32();
 		if(status != OK) {
-			ALOGE("call proxy function %s err status:%d , result = %d\n",__func__ ,status , result);
+			ALOGE("call proxy function %s exit err status:%d , result = %d\n",__func__ ,status , result);
 			return status;
 		}
-		ALOGD("call proxy function %s status:%d , result = %d\n",__func__ ,status , result);
+		ALOGD("call proxy function %s exit status:%d , result = %d\n",__func__ ,status , result);
 		return result;
 	}
 private:
@@ -213,7 +214,6 @@ status_t BnVdspService::onTransact(
 		CHECK_INTERFACE(IVdspService, data, reply);
 		client = data.readStrongBinder();
 		type = (enum sprd_vdsp_worktype) data.readInt32();
-		ALOGD("server ACTION_OPEN enter client:%p\n", client.get());
 		uint32_t r = openXrpDevice(client , type);
 		reply->writeInt32(r);
 		ALOGD("server ACTION_OPEN reply write r:%d\n" , r);
@@ -343,7 +343,10 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 	int32_t newclient;
 	char value[128];
 	int32_t ret;
+	IPCThreadState* ipc = IPCThreadState::self();
+	int32_t callingpid = ipc->getCallingPid();
 	AutoMutex _l(mLock);
+
 	ret = AddClientOpenNumber(client , &newclient);
 	if(ret != NO_ERROR) {
 		return ret;
@@ -376,7 +379,7 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 			mDevice = NULL;
 			mIonDevFd = -1;
 			mType = SPRD_VDSP_WORK_MAXTYPE;
-			ALOGE("func:%s , error mDevice:%p ,mIonDevFd:%d" , __func__ , mDevice , mIonDevFd);
+			ALOGE("func:%s , error mDevice:%p ,mIonDevFd:%d , callingpid:%d" , __func__ , mDevice , mIonDevFd , callingpid);
 			DecClientOpenNumber(client);
 			return -1;
 		}
@@ -386,23 +389,26 @@ int32_t BnVdspService::openXrpDevice(sp<IBinder> &client , enum sprd_vdsp_workty
 			mopen_count++;
 		}
 		else {
-			ALOGE("func:%s , open failed client:%p , mType:%d, type:%d\n" , __func__ , client.get() ,
-						mType , type);
+			ALOGE("func:%s , open failed client:%p , mType:%d, type:%d ,callingpid:%d\n" , __func__ , client.get() ,
+						mType , type , callingpid);
 			DecClientOpenNumber(client);
 			return -2;
 		}
 	}
-	ALOGD("func:%s , client:%p, mopen_count:%d\n" , __func__ , client.get() , mopen_count);
+	ALOGD("func:%s , client:%p, mopen_count:%d , callingpid:%d\n" , __func__ , client.get() , mopen_count , callingpid);
 	return 0;
 }
 int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 	int32_t ret = 0;
 	int32_t count;
 	char value[128];
+	IPCThreadState* ipc = IPCThreadState::self();
+	int32_t callingpid = ipc->getCallingPid();
 	AutoMutex _l(mLock);
+	ALOGD("func:%s enter callingpid:%d" , __func__ , callingpid);
 	count = GetClientOpenNum(client);
 	if(count <= 0) {
-		ALOGE("func:%s , client:%p open count is 0, return invalid client\n" , __func__ , client.get());
+		ALOGE("func:%s , client:%p open count is 0, return invalid client callingpid:%d\n" , __func__ , client.get() , callingpid);
 		return -3;
 	}
 	mopen_count --;
@@ -410,7 +416,7 @@ int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 		if(mworking != 0) {
 			/*busying*/
 			mopen_count ++;
-			ALOGE("func:%s , mworking:%d\n" , __func__ , mworking);
+			ALOGE("func:%s , mworking:%d callingpid:%d\n" , __func__ , mworking , callingpid);
 			return -2;
 		}
 		#ifdef DVFS_OPEN
@@ -427,14 +433,14 @@ int32_t BnVdspService::closeXrpDevice(sp<IBinder> &client) {
 		mIonDevFd = -1;
 		mDevice = NULL;
 		mType = SPRD_VDSP_WORK_MAXTYPE;
-		ALOGD("func:%s , really release device:%p\n" , __func__ , mDevice);
+		ALOGD("func:%s , really release device:%p , callingpid:%d\n" , __func__ , mDevice , callingpid);
 	}
 	DecClientOpenNumber(client);
 	if(0 == mopen_count) {
 		int32_t opencount ,libcount;
 		GetTotalOpenNumAndLibCount(&opencount ,&libcount);
-		ALOGD("Check result func:%s , really release device , opencount:%d, libcount:%d\n" , __func__ ,
-				opencount , libcount);
+		ALOGD("Check result func:%s , really release device , opencount:%d, libcount:%d , callingpid:%d\n" , __func__ ,
+				opencount , libcount , callingpid);
 	}
 	return ret;
 }
@@ -482,17 +488,20 @@ int32_t BnVdspService::sendXrpCommand(sp<IBinder> &client , const char *nsid , s
 	int32_t client_opencount = 0;
 	void * pinput , *poutput;
 	int32_t ret;
+	IPCThreadState* ipc = IPCThreadState::self();
+	int32_t callingpid = ipc->getCallingPid();
 	mLock.lock();
 	if((mopen_count == 0) || (0 == (client_opencount = GetClientOpenNum(client)))) {
 		mLock.unlock();
 		/*error not opened*/
-		ALOGE("sendXrpCommand mopen_count:%d, client:%p opencount:%d\n" , mopen_count , client.get() , client_opencount);
+		ALOGE("func:%s mopen_count:%d, client:%p opencount:%d callingpid:%d\n" , __func__  , mopen_count , client.get() , client_opencount , callingpid);
 		return -1;
 	}
 	mworking ++;
 	mLock.unlock();
 	/*do send */
-	ALOGD("func:%s , sprd_vdsp_send_command mDevice:%p , nsid:%s , input:%p,output:%p, buffer:%p\n" , __func__ , mDevice , nsid , input , output , buffer);
+	ALOGD("func:%s , sprd_vdsp_send_command mDevice:%p , nsid:%s , input:%p,output:%p, buffer:%p callingpid:%d\n" , __func__ , mDevice , nsid , input , output , buffer,
+		callingpid);
 #if 1
 	if((input!= NULL) && (-1 != input->fd)) {
 		pinput = MapIonFd(input->fd , input->size);
@@ -546,13 +555,15 @@ int32_t BnVdspService::sendXrpCommand(sp<IBinder> &client , const char *nsid , s
 int32_t BnVdspService::loadXrpLibrary(sp<IBinder> &client , const char *name , struct VdspInputOutput *input) {
 	int32_t ret = 0;
 	int32_t client_opencount;
+	IPCThreadState* ipc = IPCThreadState::self();
+	int32_t callingpid = ipc->getCallingPid();
 	AutoMutex _l(mLoadLock);
 	mLock.lock();
 	client_opencount = GetClientOpenNum(client);
 	if((mopen_count == 0) || (0 == client_opencount)) {
 		/*error not opened*/
 		mLock.unlock();
-		ALOGE("func:%s , mopen_count is:%d , client:%p , opencount:%d , return error\n" , __func__ , mopen_count , client.get(),client_opencount);
+		ALOGE("func:%s , mopen_count is:%d , client:%p , opencount:%d , callingpid:%d , return error\n" , __func__ , mopen_count , client.get(),client_opencount,callingpid);
 		return -1;
 	}
 	mworking ++;
@@ -572,7 +583,9 @@ int32_t BnVdspService::loadXrpLibrary(sp<IBinder> &client , const char *name , s
 	}
 	if(0 == ret) {
 		AddClientLoadNumByName(name , client);
-		ALOGD("func:%s , current libname:%s , total count:%d\n" , __func__ , name , GetLoadNumTotalByName(name));
+		ALOGD("func:%s , current libname:%s , total count:%d , callingpid:%d\n" , __func__ , name , GetLoadNumTotalByName(name) , callingpid);
+	} else {
+		ALOGD("func:%s , failed callingpid:%d ret:%d" , __func__ , callingpid , ret);
 	}
 	mworking --;
 	mLock.unlock();
@@ -581,24 +594,26 @@ int32_t BnVdspService::loadXrpLibrary(sp<IBinder> &client , const char *name , s
 int32_t BnVdspService::unloadXrpLibrary(sp<IBinder> &client , const char *name) {
 	int32_t ret = 0;
 	int32_t client_opencount;
+	IPCThreadState* ipc = IPCThreadState::self();
+	int32_t callingpid = ipc->getCallingPid();
 	AutoMutex _l(mLoadLock);
 	mLock.lock();
 	client_opencount = GetClientOpenNum(client);
 	if((mopen_count == 0) || (0 ==client_opencount)) {
 		mLock.unlock();
-		ALOGE("func:%s , mopen_count is:%d , client:%p , opencount:%d , return error\n" , __func__ , mopen_count , client.get(),client_opencount);
+		ALOGE("func:%s , mopen_count is:%d , client:%p , opencount:%d , callingpid:%d , return error\n" , __func__ , mopen_count , client.get(),client_opencount,callingpid);
 		/*error not opened*/
 		return -1;
 	}
 	mworking ++;
 	ret = DecClientLoadNumByName(name , client);
 	if(ret != 0) {
-		ALOGE("func:%s , DecClientLoadNumByName name:%s , client:%p , return error\n" , __func__ ,name , client.get());
+		ALOGE("func:%s , DecClientLoadNumByName name:%s , client:%p , callingpid:%d return error\n" , __func__ ,name , client.get() , callingpid);
 		mworking --;
 		mLock.unlock();
 		return -1;
 	}
-	ALOGD("func:%s , current libname:%s , total count:%d\n" , __func__ , name , GetLoadNumTotalByName(name));
+	ALOGD("func:%s , current libname:%s , total count:%d , callingpid:%d\n" , __func__ , name , GetLoadNumTotalByName(name) , callingpid);
 	if(0 == GetLoadNumTotalByName(name)) {
 		#ifdef DVFS_OPEN
                 preprocess_work_piece();
@@ -698,7 +713,7 @@ int32_t BnVdspService::AddClientLoadNumByName(const char *libname , sp<IBinder> 
 				if(0 == strcmp(libname , (*iter1)->libname)) {
 					namefind = 1;
 					(*iter1)->loadcount ++;
-					ALOGD("AddClientLoadNumByName client is:%p , load count is:%d\n" , client.get() , (*iter1)->loadcount);
+					ALOGD("func:%s client is:%p , load count is:%d\n" , __func__ , client.get() , (*iter1)->loadcount);
 					return 0;
 				}
 			}
@@ -707,11 +722,11 @@ int32_t BnVdspService::AddClientLoadNumByName(const char *libname , sp<IBinder> 
 			strcpy(newloadlibinfo->libname , libname);
 			newloadlibinfo->loadcount = 1;
 			(*iter)->mloadinfo.push_back(newloadlibinfo);
-			ALOGD("AddClientLoadNumByName new libname:%s added\n" , libname);
+			ALOGD("func:%s new libname:%s added\n" , __func__ , libname);
 			return 0;
 		}
 	}
-	ALOGE("AddClientLoadNumByName error ------------- not find client find:%d, name find:%d\n" , clientfind , namefind);
+	ALOGE("func:%s error ------------- not find client find:%d, name find:%d\n" , __func__ , clientfind , namefind);
 	return -1;
 }
 int32_t BnVdspService::DecClientLoadNumByName(const char *libname , sp<IBinder> &client) {
@@ -731,7 +746,7 @@ int32_t BnVdspService::DecClientLoadNumByName(const char *libname , sp<IBinder> 
 						ALOGD("func:%s , libname:%s is zero count ,client:%p relase it\n" , __func__ , libname , client.get());
 					}
 					else {
-						ALOGD("AddClientLoadNumByName client is:%p , load count is:%d\n" , client.get() , (*iter1)->loadcount);
+						ALOGD("func:%s client is:%p , load count is:%d\n" , __func__ , client.get() , (*iter1)->loadcount);
 					}
 					return 0;
 				}
@@ -741,7 +756,7 @@ int32_t BnVdspService::DecClientLoadNumByName(const char *libname , sp<IBinder> 
 			}
 		}
 	}
-	ALOGE("DecClientLoadNumByName error ------------- not find client find:%d, name find:%d\n" , clientfind , namefind);
+	ALOGE("func:%s error ------------- not find client find:%d, name find:%d\n" , __func__ , clientfind , namefind);
 	return -1;
 }
 int32_t BnVdspService::GetClientLoadNumByName(const char *libname , sp<IBinder> &client) {
@@ -753,7 +768,7 @@ int32_t BnVdspService::GetClientLoadNumByName(const char *libname , sp<IBinder> 
 			for(iter1 = (*iter)->mloadinfo.begin(); iter1 != (*iter)->mloadinfo.end(); iter1++) {
 				if(0 == strcmp(libname , (*iter1)->libname)) {
 					loadcount += (*iter1)->loadcount;
-					ALOGD("AddClientLoadNumByName client is:%p , load count is:%d\n" , client.get() , (*iter1)->loadcount);
+					ALOGD("func:%s client is:%p , load count is:%d\n" , __func__ , client.get() , (*iter1)->loadcount);
 					break;
 				}
 			}
@@ -769,13 +784,13 @@ int32_t BnVdspService::GetLoadNumTotalByName(const char *libname) {
 	for(iter = mClientInfo.begin(); iter != mClientInfo.end(); iter++) {
 		for(iter1 = (*iter)->mloadinfo.begin(); iter1 != (*iter)->mloadinfo.end(); iter1++) {
 			if(0 == strcmp((*iter1)->libname , libname)) {
-				ALOGD("GetLoadNumTotalByName one client count:%d\n" , (*iter1)->loadcount);
+				ALOGD("func:%s one client count:%d\n" , __func__ , (*iter1)->loadcount);
 				load_count += (*iter1)->loadcount;
 				break;
 			}
 		}
 	}
-	ALOGD("GetLoadNumTotalByName total count:%d\n" ,load_count);
+	ALOGD("func:%s total count:%d\n" ,__func__  , load_count);
 	return load_count;
 }
 int32_t BnVdspService::AddClientOpenNumber(sp<IBinder> &client , int32_t *newclient) {
@@ -788,11 +803,11 @@ int32_t BnVdspService::AddClientOpenNumber(sp<IBinder> &client , int32_t *newcli
 		if(client == (*iter)->mclientbinder) {
 			(*iter)->mopencount ++;
 			find = 1;
-			ALOGD("AddClientOpenNumber opencount is:%d\n" , (*iter)->mopencount);
+			ALOGD("func:%s opencount is:%d\n" , __func__ , (*iter)->mopencount);
 			break;
 		}
 	}
-	ALOGD("func:AddClientOpenNumber find:%d\n" , find);
+	ALOGD("func:%s find:%d\n" , __func__ , find);
 	if(0 == find) {
 		sp<ClientInfo> newclientinfo = new ClientInfo;
 		newclientinfo->mclientbinder = client;
@@ -803,7 +818,7 @@ int32_t BnVdspService::AddClientOpenNumber(sp<IBinder> &client , int32_t *newcli
 			mClientInfo.push_back(newclientinfo);
 			*newclient = 1;
 		}
-		ALOGD("AddClientOpenNumber new client ret:%d , newclient:%d\n" , ret , *newclient);
+		ALOGD("func:%s new client ret:%d , newclient:%d\n" , __func__ , ret , *newclient);
 	}
 	return ret;
 }
@@ -824,7 +839,7 @@ int32_t BnVdspService::DecClientOpenNumber(sp<IBinder> &client) {
 				ALOGD("func:%s , erase client:%p\n" , __func__ , client.get());
 			}
 			else {
-				ALOGD("DecClientOpenNumber opencount is:%d\n" , (*iter)->mopencount);
+				ALOGD("func:%s opencount is:%d\n" , __func__  , (*iter)->mopencount);
 			}
 			break;
 		} else {
@@ -832,7 +847,7 @@ int32_t BnVdspService::DecClientOpenNumber(sp<IBinder> &client) {
 		}
 	}
 	if(0 == find) {
-		ALOGE("DecClientOpenNumber not find client, error------------------\n");
+		ALOGE("func:%s not find client, error------------------\n" ,  __func__);
 		return -1;
 	}
 	return 0;
@@ -856,13 +871,13 @@ int32_t BnVdspService::ClearClientInfo(sp<IBinder> &client) {
 			}
 			(*iter)->mclientbinder->unlinkToDeath((*iter)->mDepthRecipient);
 			iter = mClientInfo.erase(iter);
-			ALOGD("ClearClientInfo client:%p\n" , client.get());
+			ALOGD("func:%s client:%p\n" , __func__ , client.get());
 			return 0;
 		} else {
 			iter++;
 		}
 	}
-	ALOGE("GetLoadNumTotalByName total count:%d\n" ,load_count);
+	ALOGE("func:%s total count:%d\n" , __func__  , load_count);
 	return -1;
 }
 int32_t BnVdspService::GetClientOpenNum(sp<IBinder> &client)
@@ -870,7 +885,7 @@ int32_t BnVdspService::GetClientOpenNum(sp<IBinder> &client)
 	Vector<sp<ClientInfo>>::iterator iter;
 	for(iter = mClientInfo.begin(); iter != mClientInfo.end(); iter++) {
 		if((*iter)->mclientbinder == client) {
-			ALOGD("GetClientOpenNum client:%p , open count:%d\n" , client.get() , (*iter)->mopencount);
+			ALOGD("func:%s client:%p , open count:%d\n" , __func__ , client.get() , (*iter)->mopencount);
 			return (*iter)->mopencount;
 		}
 	}
@@ -929,10 +944,10 @@ void* BnVdspService::MapIonFd(int32_t infd , uint32_t size) {
 	map_buf = (unsigned char *)mmap(NULL, size , PROT_READ|PROT_WRITE,
 			MAP_SHARED, infd , 0);
 	if (map_buf == MAP_FAILED) {
-		ALOGE("call Service  function MapIonFd Failed - mmap: %s\n",strerror(errno));
+		ALOGE("func:%s MapIonFd Failed - mmap: %s\n", __func__ , strerror(errno));
 		return NULL;
 	}
-	ALOGD("call Service  function size:%x ,MapIonFd data:%x,%x,%x,%x\n" , size , map_buf[0], map_buf[1] , map_buf[size-2] , map_buf[size-1]);
+	ALOGD("func:%s size:%x ,MapIonFd data:%x,%x,%x,%x\n" , __func__ , size , map_buf[0], map_buf[1] , map_buf[size-2] , map_buf[size-1]);
 	return map_buf;
 }
 int32_t BnVdspService::unMapIon(void *ptr , size_t size) {
