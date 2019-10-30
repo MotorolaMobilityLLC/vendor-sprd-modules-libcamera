@@ -6,7 +6,7 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x16BC,
+		0x094E,
 		/*radius*/
 		0x06D4,
 		/*imgcetx*/
@@ -14,7 +14,7 @@
 		/*imgcety*/
 		0x06D4,
 		/*dist_interval*/
-		0x000003FA,
+		0x0000009E,
 
 	},
 	/*ynr_txt_calc*/
@@ -413,10 +413,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x05,
+			0x08,
 			/*eurodist*/
 			{
-				0x0F,0x04,0x01/*0-2*/
+				0x0F,0x06,0x06/*0-2*/
 			},
 			/*reserved*/
 			{
