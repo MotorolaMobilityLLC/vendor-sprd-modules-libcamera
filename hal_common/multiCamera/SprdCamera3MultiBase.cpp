@@ -1617,7 +1617,7 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
     {RES_12M, {{4000, 3000}, {960, 720}, {320, 240}}},
     {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}, {320, 240}}},
-    {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2048, 1152},{1440, 1080}}},
+    {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2048, 1152},{1920, 1080},{1440, 1080}}},
 };
 
 int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
