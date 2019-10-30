@@ -6,15 +6,15 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x16BC,
+		0x0578,
 		/*radius*/
-		0x06D4,
+		0x044C,
 		/*imgcetx*/
-		0x094E,
+		0x0660,
 		/*imgcety*/
-		0x06D4,
+		0x04C8,
 		/*dist_interval*/
-		0x000003FA,
+		0x0000004B,
 
 	},
 	/*ynr_txt_calc*/
@@ -143,7 +143,7 @@
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00/*16-23*/
 	},
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param1.&BasePoint=1&*/
