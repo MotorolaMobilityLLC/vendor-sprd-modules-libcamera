@@ -251,7 +251,6 @@ AE_PUBLIC cmr_s32 ae_lib_ioctrl(cmr_handle handle, cmr_u32 cmd, cmr_handle in_pa
 //cmr_s32 ae_get_param(cmr_handle handle, cmr_u32 cmd, cmr_handle in_param, cmr_handle out_param);
 AE_PUBLIC cmr_s32 ae_lib_frame_sync_calculation(cmr_handle handle, void *in_param, void *out_param);
 AE_PUBLIC cmr_s32 ae_lib_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_param);
-
 #ifdef __cplusplus
 }
 #endif
