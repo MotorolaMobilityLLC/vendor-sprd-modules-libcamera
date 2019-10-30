@@ -180,7 +180,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_RGB_AEM, array_offset(struct isp_context, aem), sizeof(struct isp_rgb_aem_param), &s_rgb_aem_ops},
 	{ISP_BLK_AWB_NEW, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awb_new_ops},
 	{DCAM_BLK_BPC_V1, array_offset(struct isp_context, bpc), sizeof(struct isp_bpc_param), &s_bpc_ops},
-	{DCAM_BLK_PPE, array_offset(struct isp_context, ppe), sizeof(struct isp_ppe_param), &s_ppe_ops},
+	{ISP_BLK_PPE_V1, array_offset(struct isp_context, ppe), sizeof(struct isp_ppe_param), &s_ppe_ops},
 	{DCAM_BLK_RGB_AFM_V1, array_offset(struct isp_context, afm), sizeof(struct isp_rgb_afm_param), &s_rgb_afm_ops},
 	{DCAM_BLK_RGB_DITHER, array_offset(struct isp_context, rgb_dither), sizeof(struct isp_rgb_dither_param), &s_rgb_dither_ops},
 

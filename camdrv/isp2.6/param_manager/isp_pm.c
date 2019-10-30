@@ -216,7 +216,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_AWB_NEW, 0 },
 	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
 	{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
-	{ DCAM_BLK_PPE, 0 }, /* NR block */
+	{ ISP_BLK_PPE_V1, 0 }, /* NR block */
 	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
 
 	/*  ISP blocks */
@@ -265,7 +265,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ DCAM_BLK_RGB_AFM_V1,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
 	{ DCAM_BLK_BPC_V1,			ISP_BLK_BPC_T, sizeof(struct sensor_bpc_level) },
 	{ DCAM_BLK_RGB_DITHER,		ISP_BLK_RGB_DITHER_T,  sizeof(struct sensor_rgb_dither_level) },
-	{ DCAM_BLK_PPE,				ISP_BLK_PPE_T,  sizeof(struct sensor_ppe_level) },
+	{ ISP_BLK_PPE_V1,			ISP_BLK_PPE_T,  sizeof(struct sensor_ppe_level) },
 	{ ISP_BLK_GRGB_V1,			ISP_BLK_GRGB_T, sizeof(struct sensor_grgb_level) },
 	{ ISP_BLK_3DNR,				ISP_BLK_3DNR_T, sizeof(struct sensor_3dnr_level) },
 	{ ISP_BLK_UVDIV_V1,			ISP_BLK_UVDIV_T, sizeof(struct sensor_cce_uvdiv_level) },
