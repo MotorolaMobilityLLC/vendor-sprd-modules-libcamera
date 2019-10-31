@@ -1965,14 +1965,14 @@ int SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
         for (i = 0; i < BOKEH_REFOCUS_COMMON_PARAM_NUM; i++) {
             memcpy(buffer_base + i * 4, p[i], 4);
         }
-    }
 #ifdef CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV
-    buffer_base -= depth_yuv_normalize_size;
-    memcpy(buffer_base, depth_yuv_normalize, depth_yuv_normalize_size);
+        buffer_base -= depth_yuv_normalize_size;
+        memcpy(buffer_base, depth_yuv_normalize, depth_yuv_normalize_size);
 #endif
-    // cpoy depth yuv
-    buffer_base -= depth_size;
-    memcpy(buffer_base, depth_yuv, depth_size);
+        // cpoy depth yuv
+        buffer_base -= depth_size;
+        memcpy(buffer_base, depth_yuv, depth_size);
+    }
 
 #ifdef YUV_CONVERT_TO_JPEG
     // cpoy original jpeg
@@ -2258,7 +2258,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                         mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
                         mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
                         SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
-                                .jpgInfo.orientation);
+                            .jpgInfo.orientation);
                 mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #else
                 mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;

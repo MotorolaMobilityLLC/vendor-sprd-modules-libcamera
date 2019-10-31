@@ -1932,14 +1932,14 @@ int SprdCamera3Portrait::BokehCaptureThread::saveCaptureBokehParams(
         for (i = 0; i < BOKEH_REFOCUS_COMMON_PARAM_NUM; i++) {
             memcpy(buffer_base + i * 4, p[i], 4);
         }
-    }
 #ifdef CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV
-    buffer_base -= depth_yuv_normalize_size;
-    memcpy(buffer_base, depth_yuv_normalize, depth_yuv_normalize_size);
+        buffer_base -= depth_yuv_normalize_size;
+        memcpy(buffer_base, depth_yuv_normalize, depth_yuv_normalize_size);
 #endif
-    // cpoy depth yuv
-    buffer_base -= depth_size;
-    memcpy(buffer_base, depth_yuv, depth_size);
+        // cpoy depth yuv
+        buffer_base -= depth_size;
+        memcpy(buffer_base, depth_yuv, depth_size);
+    }
 
 #ifdef YUV_CONVERT_TO_JPEG
     // cpoy original jpeg
@@ -2258,12 +2258,14 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
                     if (rc != NO_ERROR) {
                         HAL_LOGE("fail to map jpeg buffer");
                     }
-                    mPortrait
-                        ->mOrigJpegSize = mPortrait->jpeg_encode_exif_simplify(
-                        capture_msg.combo_buff.buffer1, input_buf1_addr,
-                        mPortrait->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
-                        mPortrait->m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi,
-			SprdCamera3Setting::s_setting[mPortrait->mCameraId].jpgInfo.orientation);
+                    mPortrait->mOrigJpegSize =
+                        mPortrait->jpeg_encode_exif_simplify(
+                            capture_msg.combo_buff.buffer1, input_buf1_addr,
+                            mPortrait->m_pDstJpegBuffer, pic_vir_addr, NULL,
+                            NULL,
+                            mPortrait->m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi,
+                            SprdCamera3Setting::s_setting[mPortrait->mCameraId]
+                                .jpgInfo.orientation);
                     mPortrait->unmap(mPortrait->m_pDstJpegBuffer);
                 }
 #else
