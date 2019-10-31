@@ -148,6 +148,10 @@ extern SENSOR_INFO_T g_hi556_mipi_raw_info;
 #ifdef HI846
 extern SENSOR_INFO_T g_hi846_mipi_raw_info;
 #endif
+#ifdef HI846_WIDE
+extern SENSOR_INFO_T g_hi846_wide_mipi_raw_info;
+#endif
+
 
 // cista area
 #ifdef C2390
@@ -211,6 +215,9 @@ extern SENSOR_INFO_T g_gc2375_mipi_raw_info;
 #ifdef GC2375A
 extern SENSOR_INFO_T g_gc2375a_mipi_raw_info;
 #endif
+#ifdef GC2375H
+extern SENSOR_INFO_T g_gc2375h_mipi_raw_info;
+#endif
 #ifdef GC2385
 extern SENSOR_INFO_T g_gc2385_mipi_raw_info;
 #endif
@@ -252,6 +259,8 @@ extern otp_drv_entry_t sp8407_cmk_otp_entry;
 extern otp_drv_entry_t ov8856_shine_otp_entry;
 extern otp_drv_entry_t s5k5e8yx_jd_otp_entry;
 extern otp_drv_entry_t hi846_drv_entry;
+extern otp_drv_entry_t hi846_wide_drv_entry;
+
 
 extern struct sns_af_drv_entry dw9800_drv_entry;
 extern struct sns_af_drv_entry dw9714_drv_entry;
@@ -512,7 +521,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
     {MODULE_SUNNY, "hi556", &g_hi556_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef HI846
-    {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
+    {MODULE_SUNNY, "hi846", &g_hi846_mipi_raw_info, {NULL, 0}, {&hi846_drv_entry, 0, 0, 0}},
 #endif
 
 // sp area
@@ -559,7 +568,7 @@ const SENSOR_MATCH_T front_sensor_infor_tab[] = {
 const SENSOR_MATCH_T back_sensor2_infor_tab[] = {
 // ov area
 #ifdef OV2680
-    {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xB0, DUAL_CAM_ONE_EEPROM, 8192}},
+    {MODULE_SUNNY, "ov2680", &g_ov2680_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif
 #ifdef OV5675_DUAL
 #ifdef OV5675_VCM_OTP_DUAL_CAM_ONE_EEPROM
@@ -636,6 +645,11 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
 #endif
 #endif
 
+//hynix area
+#ifdef HI846_WIDE
+		{MODULE_SUNNY, "hi846_wide", &g_hi846_wide_mipi_raw_info, {NULL, 0}, {&general_otp_entry, 0xA8, SINGLE_CAM_ONE_EEPROM, 8192}},
+#endif
+
 // cista area
 #ifdef C2580
     {MODULE_SUNNY, "c2580", &g_c2580_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
@@ -644,6 +658,11 @@ const SENSOR_MATCH_T front_sensor2_infor_tab[] = {
     {0, "0", NULL, {NULL, 0}, {NULL, 0, 0, 0}}};
 
 const SENSOR_MATCH_T back_sensor3_infor_tab[] = {
+// gc area
+#ifdef GC2375H
+		{MODULE_SUNNY, "gc2375h", &g_gc2375h_mipi_raw_info, {NULL, 0}, {NULL, 0, 0 ,0}},
+#endif
+
 #ifdef OV7251
     {MODULE_SUNNY, "ov7251", &g_ov7251_mipi_raw_info, {NULL, 0}, {NULL, 0, 0, 0}},
 #endif

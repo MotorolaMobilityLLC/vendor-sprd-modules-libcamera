@@ -75,7 +75,7 @@
 
 /*line time unit: 1ns*/
 #define VIDEO_LINE_TIME 10212
-#define PREVIEW_LINE_TIME 10225
+#define PREVIEW_LINE_TIME 10200
 #define SNAPSHOT_LINE_TIME 10200
 
 /* frame length*/
@@ -301,7 +301,7 @@ static struct sensor_aec_i2c_tag s5k3l6_aec_info = {
 
 static SENSOR_STATIC_INFO_T s_s5k3l6_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .static_info = {.f_num = 200,
+     .static_info = {.f_num = 180,
                      .focal_length = 354,
                      .max_fps = 30,
                      .max_adgain = 8,
@@ -314,7 +314,7 @@ static SENSOR_STATIC_INFO_T s_s5k3l6_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.614f, 3.444f}, 4.222f}}}
+                     .fov_info = {{4.614f, 3.444f}, 3.61f}}}
     /*If there are multiple modules,please add here*/
 };
 
@@ -344,7 +344,7 @@ static struct sensor_module_info s_s5k3l6_module_info_tab[VENDOR_NUM] = {
 
                      .avdd_val = SENSOR_AVDD_2800MV,
                      .iovdd_val = SENSOR_AVDD_1800MV,
-                     .dvdd_val = SENSOR_AVDD_1200MV,
+                     .dvdd_val = SENSOR_AVDD_1000MV,
 
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GR,
 

@@ -13,6 +13,16 @@ PRODUCT_PACKAGES += libparam_s5ks3p92_front_main
 PRODUCT_PACKAGES += libparam_ov8856_shine
 #endif
 
+#ifeq ($(strip $(CHIP_NAME)),sharkl5Pro)
+#ums512_20c10
+PRODUCT_PACKAGES += libparam_s5k3l6
+PRODUCT_PACKAGES += libparam_ov2680
+PRODUCT_PACKAGES += libparam_gc2375h
+PRODUCT_PACKAGES += libparam_hi846
+PRODUCT_PACKAGES += libparam_hi846_wide
+
+#endif
+
 #ifeq ($(strip $(CHIP_NAME)),sharkl3)
 #s9863a1h10
 PRODUCT_PACKAGES += libparam_imx351

@@ -24,7 +24,7 @@
 #include "sensor_raw.h"
 
 #define SENSOR_NAME "ov2680_mipi_raw"
-#define I2C_SLAVE_ADDR 0x20 /* 16bit slave address*/
+#define I2C_SLAVE_ADDR 0x6c /* 16bit slave address*/
 
 #define VENDOR_NUM 1
 #define BINNING_FACTOR 1

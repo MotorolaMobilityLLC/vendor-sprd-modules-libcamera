@@ -25,7 +25,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/sensor_gc2375h_raw_param_main.c"
+//#include "parameters/sensor_gc2375h_raw_param_main.c"
 
 #define VENDOR_NUM 1
 
@@ -98,10 +98,10 @@
 /* please don't change it */
 #define EX_MCLK 24
 
-//#define GC2375H_MIRROR_NORMAL
+#define GC2375H_MIRROR_NORMAL
 //#define GC2375H_MIRROR_H
 //#define GC2375H_MIRROR_V
-#define GC2375H_MIRROR_HV
+//#define GC2375H_MIRROR_HV
 
 #if defined(GC2375H_MIRROR_NORMAL)
 #define MIRROR 0xd4
@@ -155,7 +155,7 @@
  * global variable
  *===========================================================================*/
 static struct sensor_ic_ops s_gc2375h_ops_tab;
-static struct sensor_raw_info *s_gc2375h_mipi_raw_info_ptr = &s_gc2375h_mipi_raw_info;
+static struct sensor_raw_info *s_gc2375h_mipi_raw_info_ptr = PNULL;
 static const SENSOR_REG_T gc2375h_init_setting[] = {
     /*System*/
     {0xfe, 0x00},
@@ -448,7 +448,7 @@ static struct sensor_module_info s_gc2375h_module_info_tab[VENDOR_NUM] = {
                      .iovdd_val = SENSOR_AVDD_1800MV,
                      .dvdd_val = SENSOR_AVDD_1200MV,
 
-                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_B,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 
                      .preview_skip_num = 1,
                      .capture_skip_num = 1,
@@ -462,7 +462,11 @@ static struct sensor_module_info s_gc2375h_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
-                             .is_loose = 0,
+                             #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+                                 .is_loose = 2,
+                             #else
+                                 .is_loose = 0,
+                             #endif
                          },
 
                      .change_setting_skip_num = 1,

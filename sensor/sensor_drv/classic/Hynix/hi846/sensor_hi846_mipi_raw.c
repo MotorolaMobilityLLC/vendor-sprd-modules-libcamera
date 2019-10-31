@@ -228,10 +228,12 @@ static cmr_int hi846_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
+		hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
         usleep(1 * 1000);
 
     } else {
         usleep(500);
+		hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
@@ -658,7 +660,10 @@ hi846_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
-    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
+    //s_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
+    hi846_drv_write_frame_length(sns_drv_cxt,&hi846_aec_info,sns_drv_cxt->sensor_ev_info.preview_framelength);
+    hi846_drv_write_gain(sns_drv_cxt,&hi846_aec_info,sns_drv_cxt->sensor_ev_info.preview_gain);
+    hi846_drv_write_shutter(sns_drv_cxt ,&hi846_aec_info,sns_drv_cxt->sensor_ev_info.preview_shutter);
 
     hi846_drv_write_frame_length(
         sns_drv_cxt, &hi846_aec_info,
