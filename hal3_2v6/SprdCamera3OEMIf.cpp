@@ -779,11 +779,11 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     HAL_LOGD("channel_type = %d, frame_number = %d", channel_type,
              frame_number);
     mStartFrameNum = frame_number;
-    mIsPowerhintWait = 1;
     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
 
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR: {
+        mIsPowerhintWait = 1;
         if (mParaDCDVMode == CAMERA_PREVIEW_FORMAT_DV)
             mRecordingFirstFrameTime = 0;
 
@@ -4008,7 +4008,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, height=%d, time=%" PRId64, mCameraId, frame->fd,
                  buff_vir, frame_num, frame->width, frame->height, buffer_timestamp);
 
-        if (!isCapturing() && mIsPowerhintWait) {
+        if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
             if ((frame_num > mStartFrameNum) &&
                 (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
                 if (getMultiCameraMode() == MODE_BLUR ||
