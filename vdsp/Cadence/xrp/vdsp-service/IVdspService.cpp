@@ -468,6 +468,12 @@ int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
 			if(mopen_count != 0)
 				goto __exitprocess;
 		}
+		#ifdef DVFS_OPEN
+		if(0 != mDvfs) {
+			deinit_dvfs(mDevice);
+			mDvfs = 0;
+		}
+		#endif
 		property_get(VENDOR_PROPERTY_SET_DEFAULT_DVFS , value , "0");
 		if(atoi(value) == 1)
 			set_dvfs_maxminfreq(mDevice , 0);
@@ -475,6 +481,7 @@ int32_t BnVdspService::closeXrpDevice_NoLock(sp<IBinder> &client) {
                 close(mIonDevFd);
                 mIonDevFd = -1;
 		mDevice = NULL;
+		mType = SPRD_VDSP_WORK_MAXTYPE;
                 ALOGD("func:%s , really release device:%p\n" , __func__ , mDevice);
         }
 __exitprocess:
