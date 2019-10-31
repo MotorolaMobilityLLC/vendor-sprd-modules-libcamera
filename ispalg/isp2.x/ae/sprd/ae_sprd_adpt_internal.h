@@ -415,5 +415,7 @@ extern "C" {
 		cmr_u8 flash_main_before_flag;
 		cmr_u8 mainFlashEn;
 	};
-
+#ifdef __cplusplus
+}
+#endif
 #endif

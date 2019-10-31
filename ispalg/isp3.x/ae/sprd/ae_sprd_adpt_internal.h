@@ -398,5 +398,7 @@ extern "C" {
 		cmr_u32 end_id;
 
 	};
-
+#ifdef __cplusplus
+}
+#endif
 #endif
