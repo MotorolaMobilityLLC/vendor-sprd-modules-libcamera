@@ -4035,6 +4035,7 @@ static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 			ae_set_force_pause(cxt, 0, 13);
 			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 			cxt->cur_status.adv_param.prof_mode = 0;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 		}
 		ISP_LOGD("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d",
 			cxt->hdr_enable,
