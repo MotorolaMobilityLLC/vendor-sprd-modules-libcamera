@@ -353,6 +353,7 @@ extern "C" {
 		cmr_u32 cam_4in1_mode;
 		cmr_u32 cam_cap_flag;
 		cmr_u32 cam_large_pix_num;
+		cmr_u32 is_fourcell;
 
 		/*for ev and AE/AE lock*/
 		cmr_u32 app_mode;
@@ -389,6 +390,7 @@ extern "C" {
 		struct ae_ev_param_table ev_param_table;
 		struct ae_thd_param ae_video_fps;
 		struct ae_thd_param threednr_thrd;
+		struct ae_thd_param cam_4in1_switch_thrd;
 		cmr_u32 threednr_mode;
 		cmr_u8 led_state;
 

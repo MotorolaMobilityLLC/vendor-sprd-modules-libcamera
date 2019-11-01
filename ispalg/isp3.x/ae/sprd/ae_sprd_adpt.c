@@ -693,7 +693,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 	struct ae_exposure_param *write_param = &tmp_param;
 	struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
 
-	if ((cxt->zsl_flag == 0) && (cxt->binning_factor_cap != cxt->binning_factor_prev)) {
+	if ((cxt->zsl_flag == 0) && (cxt->is_snapshot) && (cxt->binning_factor_cap != cxt->binning_factor_prev)) {
 		if(!cxt->binning_factor_prev)
 			cxt->binning_factor_prev = 128;
 
@@ -843,17 +843,11 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	exp_data->actual_data.frm_len = actual_item.frm_len;
 	//exp_data->actual_data.frm_len_def = actual_item.frm_len_def;
 
-	if(cxt->cam_cap_flag){
-		if (cxt->cam_large_pix_num || (write_item.isp_gain && cxt->cam_4in1_mode)) {
-			double rgb_coeff = 0;
-			if (cxt->cam_large_pix_num)
-				rgb_coeff = write_item.isp_gain * 1.0 / 4096;
-			else
-				rgb_coeff = write_item.isp_gain * 1.0 / 4096 * 4;
-
-			if (cxt->isp_ops.set_rgb_gain_4in1) {
-				cxt->isp_ops.set_rgb_gain_4in1(cxt->isp_ops.isp_handler, rgb_coeff);
-			}
+	if(cxt->cam_cap_flag && cxt->cam_large_pix_num){
+		double rgb_coeff = 0;
+		rgb_coeff = write_item.isp_gain * 1.0 / 4096;
+		if (cxt->isp_ops.set_rgb_gain_4in1) {
+			cxt->isp_ops.set_rgb_gain_4in1(cxt->isp_ops.isp_handler, rgb_coeff);
 		}
 	}
 	return ret;
@@ -2341,6 +2335,21 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 		current_status->adv_param.fps_range.min = cxt->fps_range.min;
 	}
 
+	if (cxt->cam_4in1_mode) {
+		if (cxt->sync_cur_result.cur_bv < cxt->cam_4in1_switch_thrd.thd_down) {
+			cxt->is_fourcell = 1;
+		} else if (cxt->sync_cur_result.cur_bv > cxt->cam_4in1_switch_thrd.thd_up) {
+			cxt->is_fourcell = 0;
+		}
+
+		ISP_LOGV("bv[%d, %d]:%d, 4cell:mode:%d %d\n",
+				cxt->cam_4in1_switch_thrd.thd_down,
+				cxt->cam_4in1_switch_thrd.thd_up,
+				cxt->sync_cur_result.cur_bv,
+				cxt->cam_4in1_mode,
+				cxt->is_fourcell);
+	}
+
 	if (0 < cxt->cur_status.adv_param.flash) {
 		ISP_LOGV("ae_flash: flicker lock to %d in flash: %d\n", cxt->cur_flicker, current_status->adv_param.flash);
 		current_status->adv_param.flicker = cxt->cur_flicker;
@@ -3294,14 +3303,9 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		//set_sched_policy(0, SP_FOREGROUND);
 	}
 
-	if(work_info->is_snapshot && ((cxt->prv_status.img_size.w != work_info->resolution_info.frame_size.w) ||
-		(cxt->prv_status.img_size.h !=work_info->resolution_info.frame_size.h)))
-		cxt->zsl_flag = 0;
-	else
-		cxt->zsl_flag = 1;
-
 	cxt->capture_skip_num = work_info->capture_skip_num;
 	cxt->cam_large_pix_num = work_info->noramosaic_4in1;
+	cxt->zsl_flag = work_info->zsl_flag;
 
 	if((work_info->blk_num.w != work_info->blk_num.h) || (work_info->blk_num.w < 32) || (work_info->blk_num.w % 32)){
 		work_info->blk_num.w = 32;
@@ -3341,17 +3345,15 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->monitor_cfg.blk_num.w = work_info->blk_num.w;
 	cxt->monitor_cfg.blk_num.h = work_info->blk_num.h;
 
-	if (work_info->is_snapshot)
-		cxt->binning_factor_cap = 128;
-	else
-		cxt->binning_factor_prev = 128;
-
-	if (0 != work_info->binning_factor)
-	{
+	if (0 != work_info->binning_factor){
 		if (work_info->is_snapshot)
 			cxt->binning_factor_cap = work_info->binning_factor;
 		else
 			cxt->binning_factor_prev = work_info->binning_factor;
+	}
+	else{
+		cxt->binning_factor_cap = 128;
+		cxt->binning_factor_prev = 128;
 	}
 	cxt->cur_status.img_size = work_info->resolution_info.frame_size;//ok
 	cxt->cur_status.adv_param.cur_ev_setting.line_time = work_info->resolution_info.line_time;
@@ -4038,6 +4040,19 @@ static cmr_s32 ae_get_dc_dv_fps_range(struct ae_ctrl_cxt *cxt, void *result)
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_get_lowlight_flag_by_bv(struct ae_ctrl_cxt *cxt, cmr_u32 * is_lowlight)
+{
+        cmr_s32 rtn = AE_SUCCESS;
+
+        if (NULL == cxt || NULL == is_lowlight) {
+                ISP_LOGE("fail to get is_lowlight by bv, cxt %p is_lowlight %p", cxt, is_lowlight);
+                return AE_ERROR;
+        }
+
+        *is_lowlight = cxt->is_fourcell;
+        ISP_LOGV("get is_lowlight %d", *is_lowlight);
+        return rtn;
+}
 
 static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 {
@@ -5317,6 +5332,9 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 			*(cmr_u32 *) result = cxt->glb_gain;
 		}
 		break;
+	case AE_GET_LOWLIGHT_FLAG_BY_BV:
+		rtn = ae_get_lowlight_flag_by_bv(cxt, (cmr_u32 *) result);
+		break;
 	case AE_GET_FLASH_SKIP_FRAME_NUM:
 		break;
 	case AE_GET_APP_MODE:
@@ -5692,6 +5710,7 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 	cxt->flash_thrd = misc_init_out->thrd_param[0];
 	cxt->threednr_thrd = misc_init_out->thrd_param[1];
 	cxt->ae_video_fps = misc_init_out->thrd_param[2];
+	cxt->cam_4in1_switch_thrd = misc_init_out->thrd_param[3];
 
 	if (1 == cxt->camera_id) {
 		cxt->flash_thrd.thd_down = cxt->flash_thrd.thd_down ? cxt->flash_thrd.thd_down : 250;
@@ -5700,6 +5719,8 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 		cxt->threednr_thrd.thd_up = cxt->threednr_thrd.thd_up ? cxt->threednr_thrd.thd_up : 500;
 		cxt->ae_video_fps.thd_down = cxt->ae_video_fps.thd_down ? cxt->ae_video_fps.thd_down : 250;
 		cxt->ae_video_fps.thd_up = cxt->ae_video_fps.thd_up ? cxt->ae_video_fps.thd_up : 500;
+		cxt->cam_4in1_switch_thrd.thd_down = cxt->cam_4in1_switch_thrd.thd_down ? cxt->cam_4in1_switch_thrd.thd_down : 500;
+		cxt->cam_4in1_switch_thrd.thd_up = cxt->cam_4in1_switch_thrd.thd_up ? cxt->cam_4in1_switch_thrd.thd_up : 800;
 	}
 	if (0 == cxt->camera_id || 2 == cxt->camera_id || 3 == cxt->camera_id) {
 		cxt->flash_thrd.thd_down = cxt->flash_thrd.thd_down ? cxt->flash_thrd.thd_down : 380;
@@ -5708,6 +5729,8 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 		cxt->threednr_thrd.thd_up = cxt->threednr_thrd.thd_up ? cxt->threednr_thrd.thd_up : 480;
 		cxt->ae_video_fps.thd_down = cxt->ae_video_fps.thd_down ? cxt->ae_video_fps.thd_down : 380;
 		cxt->ae_video_fps.thd_up = cxt->ae_video_fps.thd_up ? cxt->ae_video_fps.thd_up : 480;
+		cxt->cam_4in1_switch_thrd.thd_down = cxt->cam_4in1_switch_thrd.thd_down ? cxt->cam_4in1_switch_thrd.thd_down : 500;
+		cxt->cam_4in1_switch_thrd.thd_up = cxt->cam_4in1_switch_thrd.thd_up ? cxt->cam_4in1_switch_thrd.thd_up : 800;
 	}
 }
 
