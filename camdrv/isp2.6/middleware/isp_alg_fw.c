@@ -3482,6 +3482,7 @@ static cmr_int ispalg_afl_init(struct isp_alg_fw_context *cxt, struct isp_alg_sw
 	/*0:afl_old mode, 1:afl_new mode*/
 	cxt->afl_cxt.version = 1;
 	afl_input.dev_handle = cxt->dev_access_handle;
+	afl_input.camera_id = cxt->camera_id;
 	afl_input.size.w = input_ptr->size.w;
 	afl_input.size.h = input_ptr->size.h;
 	afl_input.vir_addr = &cxt->afl_cxt.vir_addr;

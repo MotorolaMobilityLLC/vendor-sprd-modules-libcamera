@@ -21,6 +21,7 @@
 struct afl_ctrl_init_in {
 	cmr_handle dev_handle;
 	cmr_handle vir_addr;
+	cmr_u32 camera_id;
 	struct isp_size size;
 	isp_afl_cb afl_set_cb;
 	cmr_handle caller_handle;
