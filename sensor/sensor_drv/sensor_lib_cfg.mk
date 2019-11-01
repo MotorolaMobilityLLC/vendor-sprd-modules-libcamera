@@ -2,6 +2,7 @@ PRODUCT_PACKAGES += libsensor_imx351 \
     libsensor_ov5675_dual \
     libsensor_ov7251 \
     libsensor_ov8856_shine \
+    libsensor_ov8856_shine_front \
     libsensor_imx362 \
     libsensor_ov5675 \
     libsensor_ov7251 \

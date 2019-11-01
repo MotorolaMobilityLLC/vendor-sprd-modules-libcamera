@@ -11,6 +11,8 @@ PRODUCT_PACKAGES += libparam_imx258_back_main
 PRODUCT_PACKAGES += libparam_ov13855_back_main
 PRODUCT_PACKAGES += libparam_s5ks3p92_front_main
 PRODUCT_PACKAGES += libparam_ov8856_shine
+PRODUCT_PACKAGES += libparam_ov7251
+PRODUCT_PACKAGES += libparam_ov7251_dual
 #endif
 
 #ifeq ($(strip $(CHIP_NAME)),sharkl5Pro)
