@@ -3649,8 +3649,10 @@ void SprdCamera3OEMIf::receivePreviewATFrame(struct camera_frame_type *frame) {
         autotrackingInfo.at_cb_info[2] = 0;
         HAL_LOGE("invalid zoom ratio");
     }
-
     autotrackingInfo.at_cb_info[0] = frame->at_cb_info.status;
+    if(autotrackingInfo.at_cb_info[0] == 2 && autotrackingInfo.at_cb_info[1] == 0
+        && autotrackingInfo.at_cb_info[2] == 0)
+        autotrackingInfo.at_cb_info[0] = 0;
 
     HAL_LOGD("cb coordinate status=%d x=%d y=%d,",
              autotrackingInfo.at_cb_info[0], autotrackingInfo.at_cb_info[1],
