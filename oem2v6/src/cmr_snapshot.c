@@ -1279,11 +1279,13 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     struct img_frm cap_raw_small;
     struct img_frm cap_raw_big;
     struct img_addr raw_buff;
+    struct img_addr isp_raw_buff;
     cmr_u32 small_w, small_h;
     cmr_u32 index = frm_ptr->frame_id - frm_ptr->base;
     char value[PROPERTY_VALUE_MAX];
     cmr_u32 loose_flag = snp_cxt->sensor_info.sn_interface.is_loose;
     void *buff_for14bit = NULL;
+    void *buff_forisp14bit = NULL;
 
     if (snp_cxt->ops.raw_proc == NULL) {
         CMR_LOGE("raw_proc is null");
@@ -1369,72 +1371,112 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         raw_pixel_width = snp_cxt->sensor_info.sn_interface.pixel_width;
         if (raw_pixel_width < SENSOR_DEFAULT_PIX_WIDTH)
             raw_pixel_width = SENSOR_DEFAULT_PIX_WIDTH;
-        if (snp_cxt->sensor_info.sn_interface.type) {
-            isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
-            raw_format = 0x08;
-        } else {
+        if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
             isp_in_param.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
             raw_format = 0x04;
+        } else {
+            isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
+            raw_format = 0x08;
         }
         CMR_LOGI("fetch_pitch raw buf size, %d\n", mem_ptr->cap_raw.buf_size);
-        send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
+        if (frm_ptr->is_4in1_frame) {
+            if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
+                buff_forisp14bit =
+                    malloc(mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2);
+                isp_raw_buff.addr_y = (cmr_uint)buff_forisp14bit;
+                if (isp_raw_buff.addr_y != 0) {
+                    raw14bit_process(&mem_ptr->cap_raw.addr_vir, &isp_raw_buff,
+                        mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height);
+                }
+                send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
+                          mem_ptr->cap_raw.size.height,
+                          (char *)isp_raw_buff.addr_y,
+                          mem_ptr->cap_raw.buf_size, 0, 0, 0, 0);
+                free(buff_forisp14bit);
+            } else {
+                send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
                           mem_ptr->cap_raw.size.height,
                           (char *)mem_ptr->cap_raw.addr_vir.addr_y,
                           mem_ptr->cap_raw.buf_size, 0, 0, 0, 0);
+            }
+        } else {
+            send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
+                          mem_ptr->cap_raw.size.height,
+                          (char *)mem_ptr->cap_raw.addr_vir.addr_y,
+                          mem_ptr->cap_raw.buf_size, 0, 0, 0, 0);
+        }
     }
 
     if (isp_video_get_raw_images_info()) {
         if (CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) {
             if (frm_ptr->is_4in1_frame) {
-                /*
-                dump mipi raw remosaic before
-                snp_cxt->ops.dump_image_with_3a_info(
-                    snp_cxt->oem_handle, REMOSAIC_CAM_IMG_FMT_BAYER_MIPI_RAW,
-                    mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                    mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
-                    &mem_ptr->cap_raw.addr_vir);
-                */
-                cmr_bzero(&sn_param, sizeof(struct common_sn_cmd_param));
-                sn_param.postproc_info.src = cap_raw_big;
-                sn_param.postproc_info.dst = cap_raw_big;
-                ret = snp_cxt->ops.sensor_ioctl(
-                    snp_cxt->oem_handle, COM_SN_GET_4IN1_FORMAT_CONVERT, &sn_param);
-                if (ret) {
-                    CMR_LOGE("failed to sensor ioctl");
-                }
-                CMR_LOGD("dump 4in1 raw14bit after remosaic");
-                buff_for14bit =
-                    malloc(mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2);
-                raw_buff.addr_y = (cmr_uint)buff_for14bit;
-                if (raw_buff.addr_y != 0) {
-                    raw14bit_process(&mem_ptr->cap_raw.addr_vir, &raw_buff,
-                        mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height);
-                    CMR_LOGI("raw_process after");
+                if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
+                    /*
+                    dump mipi raw remosaic before
                     snp_cxt->ops.dump_image_with_3a_info(
-                        snp_cxt->oem_handle, REMOSAIC_CAM_IMG_FMT_RAW14BIT,
+                        snp_cxt->oem_handle, REMOSAIC_CAM_IMG_FMT_BAYER_MIPI_RAW,
                         mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                        mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2,
-                        &raw_buff);
-                }
-                free(buff_for14bit);
-            }else {
-                if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10){
-                    CMR_LOGD("dump raw14bit tuning mode");
-                    snp_cxt->ops.dump_image_with_3a_info(
-                        snp_cxt->oem_handle, CAM_IMG_FMT_RAW14BIT,
-                        mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                        mem_ptr->cap_raw.buf_size,
+                        mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
                         &mem_ptr->cap_raw.addr_vir);
+                    */
+                    cmr_bzero(&sn_param, sizeof(struct common_sn_cmd_param));
+                    sn_param.postproc_info.src = cap_raw_big;
+                    sn_param.postproc_info.dst = cap_raw_big;
+                    ret = snp_cxt->ops.sensor_ioctl(
+                        snp_cxt->oem_handle, COM_SN_GET_4IN1_FORMAT_CONVERT, &sn_param);
+                    if (ret) {
+                        CMR_LOGE("failed to sensor ioctl");
+                    }
+                    CMR_LOGD("dump 4in1 raw14bit after remosaic");
+                    buff_for14bit =
+                        malloc(mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2);
+                    raw_buff.addr_y = (cmr_uint)buff_for14bit;
+                    if (raw_buff.addr_y != 0) {
+                        raw14bit_process(&mem_ptr->cap_raw.addr_vir, &raw_buff,
+                            mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height);
+                        CMR_LOGI("raw_process after");
+                        snp_cxt->ops.dump_image_with_3a_info(
+                            snp_cxt->oem_handle, REMOSAIC_CAM_IMG_FMT_RAW14BIT,
+                            mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2,
+                            &raw_buff);
+                    }
+                    free(buff_for14bit);
+
                 } else {
-                    CMR_LOGD("dump mipi raw tuning mode");
+                    CMR_LOGD("dump mipi raw");
                     snp_cxt->ops.dump_image_with_3a_info(
                         snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
                         mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
                         mem_ptr->cap_raw.buf_size,
                         &mem_ptr->cap_raw.addr_vir);
                 }
+
+            } else {
+                if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10){
+                    CMR_LOGD("dump raw14bit tuning mode");
+                    snp_cxt->ops.dump_image_with_3a_info(
+                        snp_cxt->oem_handle, CAM_IMG_FMT_RAW14BIT,
+                        mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                        mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2,
+                        &mem_ptr->cap_raw.addr_vir);
+                } else {
+                    CMR_LOGD("dump mipi raw tuning mode");
+                    snp_cxt->ops.dump_image_with_3a_info(
+                        snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
+                        mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+                        mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
+                        &mem_ptr->cap_raw.addr_vir);
+                }
             }
         }
+    } else {
+        CMR_LOGD("dump mipi raw");
+        snp_cxt->ops.dump_image_with_3a_info(
+            snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
+            mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
+            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4,
+            &mem_ptr->cap_raw.addr_vir);
     }
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
     if (ret) {
@@ -4490,12 +4532,12 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data) {
             CMR_LOGD("dump raw14bit dcam raw");
             snp_cxt->ops.dump_image_with_3a_info(
             snp_cxt->oem_handle, CAM_IMG_FMT_DCAM_RAW14BIT, width, height,
-            width * height * 2, &mem_ptr->cap_raw2.addr_vir);
+            mem_ptr->cap_raw2.buf_size, &mem_ptr->cap_raw2.addr_vir);
         } else {
             CMR_LOGD("dump dcam raw");
             snp_cxt->ops.dump_image_with_3a_info(
             snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW, width, height,
-            width * height * 5 / 4, &mem_ptr->cap_raw2.addr_vir);
+            mem_ptr->cap_raw2.buf_size, &mem_ptr->cap_raw2.addr_vir);
         }
 
         CMR_LOGD("dump yuv");
