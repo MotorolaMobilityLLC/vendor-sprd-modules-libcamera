@@ -134,6 +134,10 @@ struct isp_rgb_aem_param {
 	struct isp_size win_num;
 };
 
+struct isp_ae_adapt_param {
+	cmr_u16 binning_factor; // 1x = 128
+};
+
 struct isp_awb_param {
 	cmr_u32 ct_value;
 	struct dcam_dev_awbc_info cur;
@@ -535,6 +539,7 @@ struct isp_context {
 	struct isp_rgb_afm_param afm;
 	struct isp_awb_param awb;
 	struct isp_bayerhist_param bayerhist;
+	struct isp_ae_adapt_param ae_adapt;
 
 	/* dcam related tuning blocks */
 	struct isp_blc_param blc;
@@ -624,6 +629,10 @@ cmr_s32 _pm_2d_lsc_deinit(void *lnc_param);
 cmr_s32 _pm_rgb_aem_init(void *dst_rgb_aem, void *src_rgb_aem, void *param1, void *param2);
 cmr_s32 _pm_rgb_aem_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_rgb_aem_get_param(void *rgb_aem_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_ae_adapt_init(void *dst_ae_adapt, void *src_ae_adapt, void *param1, void *param2);
+cmr_s32 _pm_ae_adapt_set_param(void *ae_adapt_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_ae_adapt_get_param(void *ae_adapt_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_awb_new_init(void *dst_awb_new_param, void *src_awb_new_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_awb_new_set_param(void *awb_new_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

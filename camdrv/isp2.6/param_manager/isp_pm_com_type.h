@@ -195,6 +195,9 @@ enum isp_pm_blk_cmd {
 
 	ISP_PM_BLK_CNR2_BASE = (ISP_PM_BLK_YUV_NOISEFILTER_BASE + 0x100),
 	ISP_PM_BLK_CNR2_LEVEL_INFO,
+
+	ISP_PM_BLK_AE_ADAPT_BASE = (ISP_PM_BLK_CNR2_BASE + 0x100),
+	ISP_PM_BLK_AE_ADAPT,
 };
 
 struct isp_pm_nrblk_info {

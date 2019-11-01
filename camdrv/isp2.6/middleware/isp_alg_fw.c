@@ -4415,7 +4415,9 @@ static cmr_int ispalg_ae_set_work_mode(
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_work_param ae_param;
 	enum ae_work_mode ae_mode = 0;
-	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_pm_ioctl_output ioctl_output = { PNULL, 0 };
+	struct isp_pm_ioctl_input ioctl_input;
+	struct isp_pm_param_data ioctl_data;
 	struct isp_rgb_aem_info aem_info;
 	cmr_u32 max_fps = 0;
 
@@ -4476,17 +4478,23 @@ static cmr_int ispalg_ae_set_work_mode(
 	ae_param.win_num.h = cxt->ae_cxt.win_num.h;
 	ae_param.win_num.w = cxt->ae_cxt.win_num.w;
 	ae_param.blk_num = ae_param.win_num;
+	ae_param.cam_4in1_mode = cxt->is_4in1_sensor;
+	ae_param.zsl_flag = cxt->zsl_flag;
 
 	ae_param.win_size.w = ((ae_param.resolution_info.frame_size.w / ae_param.win_num.w) / 2) * 2;
 	ae_param.win_size.h = ((ae_param.resolution_info.frame_size.h / ae_param.win_num.h) / 2) * 2;
 	ae_param.shift = 0; /* no shift in AEM block of sharkl5/roc1*/
 	cxt->ae_cxt.shift = ae_param.shift;
-
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_AE_ADAPT_PARAM, NULL, &output);
-	if(ISP_SUCCESS == ret && 1 == output.param_num && NULL != output.param_data) {
+	memset(&ioctl_data, 0, sizeof(ioctl_data));
+	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
+			ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_AE_ADAPT_PARAM, PNULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+			ISP_PM_CMD_GET_SINGLE_SETTING,
+			(void *)&ioctl_input, (void *)&ioctl_output);
+	if (ioctl_output.param_num == 1 && ioctl_output.param_data && ioctl_output.param_data->data_ptr){
 		struct isp_ae_adapt_info *data;
-
-		data = output.param_data[0].data_ptr;
+		data  = ioctl_output.param_data->data_ptr;
 		ae_param.binning_factor = data->binning_factor;
 		ISP_LOGD("binning_factor = %d\n", ae_param.binning_factor);
 	}

@@ -33,6 +33,7 @@ struct isp_block_operations s_rgb_gain_ops = { _pm_rgb_gain_init, _pm_rgb_gain_s
 struct isp_block_operations s_rgb_dither_ops = { _pm_rgb_dither_init, _pm_rgb_dither_set_param, _pm_rgb_dither_get_param, PNULL, PNULL };
 struct isp_block_operations s_2d_lsc_ops = { _pm_2d_lsc_init, _pm_2d_lsc_set_param, _pm_2d_lsc_get_param, _pm_common_rest, _pm_2d_lsc_deinit };
 struct isp_block_operations s_rgb_aem_ops = { _pm_rgb_aem_init, _pm_rgb_aem_set_param, _pm_rgb_aem_get_param, PNULL, PNULL };
+struct isp_block_operations s_ae_adapt_ops = { _pm_ae_adapt_init, _pm_ae_adapt_set_param, _pm_ae_adapt_get_param, PNULL, PNULL };
 struct isp_block_operations s_awb_new_ops = { _pm_awb_new_init, _pm_awb_new_set_param, _pm_awb_new_get_param, PNULL, PNULL };
 struct isp_block_operations s_bpc_ops = { _pm_bpc_init, _pm_bpc_set_param, _pm_bpc_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_afm_ops = { _pm_rgb_afm_init, _pm_rgb_afm_set_param, _pm_rgb_afm_get_param, PNULL, PNULL };
@@ -129,6 +130,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	/* ======== soft algo blocks list starts ======= */
 	{ISP_BLK_CNR2, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
 	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
+	{ISP_BLK_AE_ADAPT_PARAM, array_offset(struct isp_context, ae_adapt), sizeof(struct isp_ae_adapt_param), &s_ae_adapt_ops},
 };
 #elif defined CONFIG_ISP_2_6
 struct isp_block_cfg s_blk_cfgs[] = {
@@ -211,6 +213,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_CNR2_V1, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
 	{ISP_BLK_SW3DNR, array_offset(struct isp_context, sw3dnr), sizeof(struct isp_sw3dnr_param), &s_sw3dnr_ops},
 	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
+	{ISP_BLK_AE_ADAPT_PARAM, array_offset(struct isp_context, ae_adapt), sizeof(struct isp_ae_adapt_param), &s_ae_adapt_ops},
 };
 #endif
 

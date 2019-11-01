@@ -1611,9 +1611,6 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		case ISP_PM_CMD_GET_AE_SYNC:
 			block_id = ISP_BLK_AE_SYNC;
 			break;
-		case ISP_PM_CMD_GET_AE_ADAPT_PARAM:
-			block_id = ISP_BLK_AE_ADAPT_PARAM;
-			break;
 		case ISP_PM_CMD_GET_4IN1_PARAM:
 			block_id = ISP_BLK_4IN1_PARAM;
 			break;
