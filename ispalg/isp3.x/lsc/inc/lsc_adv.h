@@ -100,6 +100,44 @@ enum lsc_return_value {
 	LSC_RTN_MAX
 };
 
+struct lsc2_tune_param {	// if modified, please contact to TOOL team
+	// system setting
+	unsigned int LSC_SPD_VERSION;	// LSC version of Spreadtrum
+	unsigned int number_table;	    // no used
+
+	// control_param
+	unsigned int alg_mode;
+	unsigned int table_base_index;   // no used
+	unsigned int user_mode;
+	unsigned int freq;
+	unsigned int IIR_weight;
+
+	// slsc2_param
+	unsigned int num_seg_queue;      // no used
+	unsigned int num_seg_vote_th;    // no used
+	unsigned int IIR_smart2;         // no used
+
+	// alsc1_param
+	int strength;           // no used
+
+	// alsc2_param
+	unsigned int lambda_r;
+	unsigned int lambda_b;
+	unsigned int weight_r;
+	unsigned int weight_b;
+
+	// post_gain
+	unsigned int bv2gainw_en;
+	unsigned int bv2gainw_p_bv[6];
+	unsigned int bv2gainw_b_gainw[6];
+	unsigned int bv2gainw_adjust_threshold;    // no used
+
+	// flash_gain
+	unsigned int flash_enhance_en;
+	unsigned int flash_enhance_max_strength;
+	unsigned int flash_enahnce_gain;
+};
+
 // change mode (fw_start, fw_stop)
 struct alsc_fwstart_info {
 	cmr_u16 *lsc_result_address_new;

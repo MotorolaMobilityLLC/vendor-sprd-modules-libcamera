@@ -144,8 +144,8 @@ struct lsc_sprd_ctrl_context {
 	void *lsc_last_info;
 	struct lsc_lib_ops lib_ops;
 	struct third_lib_info *lib_info;
-	cmr_u16 *std_init_lsc_table_param_buffer[8];	// without table no.8, golden OTP table
-	cmr_u16 *std_lsc_table_param_buffer[8];	// without table no.8, golden OTP table
+	cmr_u16 *std_init_lsc_table_param_buffer[9];
+	cmr_u16 *std_lsc_table_param_buffer[9];
 	cmr_u16 *lsc_pm0;
 	cmr_u16 *dst_gain;
 	cmr_u16 *lsc_buffer;

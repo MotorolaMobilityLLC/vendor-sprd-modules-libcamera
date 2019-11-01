@@ -1356,7 +1356,7 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	for (i = 0; i < 9; i++) {
 		sprd_init_param->lsc_tab_address[i] = init_param->lsc_tab_address[i];	// the address of table parameter
 	}
-	memcpy(&sprd_init_param->tune_param,  init_param->tune_param_ptr, sizeof(struct lsc2_tune_param));
+	sprd_init_param->tune_param_ptr =  init_param->tune_param_ptr;
 	sprd_init_param->lsc_otp_table_en =  init_param->lsc_otp_table_en;
 	sprd_init_param->lsc_otp_table_width =  init_param->lsc_otp_table_width;
 	sprd_init_param->lsc_otp_table_height =  init_param->lsc_otp_table_height;
@@ -2095,7 +2095,7 @@ static int lsc_malloc_buffer(struct lsc_sprd_ctrl_context *cxt)
 	cmr_s32 rtn = LSC_SUCCESS;
 	int i = 0;
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 9; i++) {
 		cxt->std_init_lsc_table_param_buffer[i] = (cmr_u16 *) malloc(MAX_WIDTH * MAX_HEIGHT * 4 * sizeof(cmr_u16));
 		if (NULL == cxt->std_init_lsc_table_param_buffer[i]) {
 			ISP_LOGE("fail to alloc std_init_lsc_table_param_buffer!");
@@ -2288,6 +2288,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	struct lsc_sprd_calc_out calc_out;
 	struct lsc_last_info *lsc_last_info = NULL;
 	struct lsc_post_shading_param post_gain_param;
+	struct lsc_otp_convert_param otp_convert_param;
 	int debug_index[4];
 
 	if (!handle || !in || !out) {
@@ -2330,32 +2331,39 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 				ISP_LOGV("change mode: pre img[%d,%d], table[%d,%d,%d]", cxt->img_width, cxt->img_height, cxt->gain_width, cxt->gain_height, cxt->grid);
 				ISP_LOGV("change mode: new img[%d,%d], table[%d,%d,%d]", img_width, img_height, gain_width, gain_height, grid);
 
-				if (gain_width != cxt->gain_width || gain_height != cxt->gain_height || cxt->flash_mode == 1 || cxt->pre_flash_mode == 1 || cxt->frame_count == 0) {
-					cxt->img_width = img_width;
-					cxt->img_height = img_height;
-					cxt->gain_width = gain_width;
-					cxt->gain_height = gain_height;
-					cxt->grid = grid;
-					cxt->lsc_pm0 = param->lsc_tab_address[0];
-					memcpy(cxt->last_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
-					memcpy(cxt->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
-					memcpy(cxt->lsc_buffer, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
-					// do lsc param preprocess without otp
-					if (cxt->is_planar == 1) {
-						for (i = 0; i < 8; i++) {
-							memcpy(cxt->std_lsc_table_param_buffer[i], param->lsc_tab_address[i], gain_width * gain_height * 4 * sizeof(cmr_u16));
-							lsc_table_interlace2planar(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern,
-										   cxt->output_gain_pattern);
-						}
-					} else {
-						for (i = 0; i < 8; i++) {
-							memcpy(cxt->std_lsc_table_param_buffer[i], param->lsc_tab_address[i], gain_width * gain_height * 4 * sizeof(cmr_u16));
-							lsc_interlace_change_pattern(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern,
-										     cxt->output_gain_pattern);
-						}
+				cxt->img_width = img_width;
+				cxt->img_height = img_height;
+				cxt->gain_width = gain_width;
+				cxt->gain_height = gain_height;
+				cxt->grid = grid;
+				cxt->lsc_pm0 = param->lsc_tab_address[0];
+				memcpy(cxt->last_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
+				memcpy(cxt->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
+				memcpy(cxt->lsc_buffer, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
+				// do lsc param preprocess
+				if (cxt->is_planar == 1) {
+					for (i = 0; i < 9; i++) {
+						memcpy(cxt->std_lsc_table_param_buffer[i], param->lsc_tab_address[i], gain_width * gain_height * 4 * sizeof(cmr_u16));
+						lsc_table_interlace2planar(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern,
+									   cxt->output_gain_pattern);
 					}
-					//sync_g_channel(cxt->std_lsc_table_param_buffer, gain_width, gain_height, cxt->output_gain_pattern);
+				} else {
+					for (i = 0; i < 9; i++) {
+						memcpy(cxt->std_lsc_table_param_buffer[i], param->lsc_tab_address[i], gain_width * gain_height * 4 * sizeof(cmr_u16));
+						lsc_interlace_change_pattern(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern,
+									     cxt->output_gain_pattern);
+					}
 				}
+
+				// regular tuning param tables by otp
+				otp_convert_param.gain_width = gain_width;
+				otp_convert_param.gain_height = gain_height;
+				otp_convert_param.grid = grid;
+				for (i = 0; i < 9; i++) {
+					otp_convert_param.lsc_table[i] = cxt->std_lsc_table_param_buffer[i];
+				}
+				cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, LSC_CMD_OTP_CONVERT_TABLE, &otp_convert_param, NULL);
+				ISP_LOGV("change mode: otp convert table done");
 
 				cxt->fw_start_end = 0;
 				cxt->can_update_dest = 1;
@@ -2426,12 +2434,12 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	// alsc calculation process
 	if (alg_in && cxt->alg_bypass == 0) {
 		// select std lsc param
-		if (cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
+		if (cxt->LSC_SPD_VERSION == 6 && cxt->init_gain_width == gain_width && cxt->init_gain_height == gain_height) {
 			for (i = 0; i < 8; i++)
 				param->std_tab_param[i] = cxt->std_init_lsc_table_param_buffer[i];	// use init lsc table with otp
 		} else {
 			for (i = 0; i < 8; i++)
-				param->std_tab_param[i] = cxt->std_lsc_table_param_buffer[i];	// use calculation in lsc table without otp
+				param->std_tab_param[i] = cxt->std_lsc_table_param_buffer[i];	 // use calculation lsc table with otp
 		}
 
 		// scale AEM size to 32x32
@@ -2818,7 +2826,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		//copy the output to last_info
 		chnl_gain_num = cxt->gain_width * cxt->gain_height;
 		if (!(cxt->gain_width == 23 && cxt->gain_height == 15 && (cxt->grid == 32 || cxt->grid == 48))&& cxt->lsc_id == 1) {
-			memcpy(lsc_last_info->table, cxt->output_lsc_table, chnl_gain_num * 4 * sizeof(cmr_u16));
+			memcpy(lsc_last_info->table, cxt->lsc_buffer, chnl_gain_num * 4 * sizeof(cmr_u16));
 			lsc_last_info->gain_width = cxt->gain_width;
 			lsc_last_info->gain_height = cxt->gain_height;
 		}
@@ -2837,7 +2845,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			memcpy(cxt->fwstop_output_table, flash_param->preflash_guessing_mainflash_output_table, chnl_gain_num * 4 * sizeof(cmr_u16));
 			// normal mode
 		} else {
-			memcpy(cxt->fwstop_output_table, cxt->output_lsc_table, chnl_gain_num * 4 * sizeof(unsigned short));
+			memcpy(cxt->fwstop_output_table, cxt->lsc_buffer, chnl_gain_num * 4 * sizeof(unsigned short));
 		}
 
 		flash_param->is_touch_preflash = -99;
@@ -3285,7 +3293,7 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 
 	pthread_mutex_destroy(&cxt->status_lock);
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 9; i++) {
 		lsc_std_free(cxt->std_init_lsc_table_param_buffer[i]);
 		lsc_std_free(cxt->std_lsc_table_param_buffer[i]);
 	}
