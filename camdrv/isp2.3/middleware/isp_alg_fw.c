@@ -1596,8 +1596,8 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		sum += ae_stat_ptr->r_info[j] + ae_stat_ptr->g_info[j] + ae_stat_ptr->b_info[j];
 		j++;
 	}
-	ae_stat_ptr->sec = ae_stat_ptr->sec;
-	ae_stat_ptr->usec = ae_stat_ptr->usec;
+	ae_stat_ptr->sec = statis_info->sec;
+	ae_stat_ptr->usec = statis_info->usec;
 
 	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_AEM_BLOCK);
 	if (ret) {
@@ -2152,8 +2152,10 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 								&smart_proc_in.mode_flag, NULL);
 				ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
 			}
-			if (cxt->ops.smart_ops.calc)
+			if (cxt->ops.smart_ops.calc) {
 				ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+				ISP_TRACE_IF_FAIL(ret, ("fail to smart_ops calc"));
+			}
 		}
 
 		if (cxt->ops.smart_ops.ioctrl) {
@@ -5150,8 +5152,10 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ISP_RETURN_IF_FAIL(ret, ("fail to video isp start"));
 
 	if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
-		if (cxt->ops.lsc_ops.ioctrl)
+		if (cxt->ops.lsc_ops.ioctrl) {
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwprocstart_info, NULL);
+			ISP_RETURN_IF_FAIL(ret, ("fail to ALSC_FW_START_END"));
+		}
 	}
 
 	ISP_LOGV("isp start raw proc");
