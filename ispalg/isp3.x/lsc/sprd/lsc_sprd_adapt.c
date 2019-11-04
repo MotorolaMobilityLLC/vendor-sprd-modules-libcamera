@@ -3158,6 +3158,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		tmp_buffer = (cmr_u16 *) malloc(32 * 32 * 4 * sizeof(cmr_u16));
 		lsc_calc_in->stat_img.r = tmp_buffer_r;
 		lsc_calc_in->stat_img.gr = tmp_buffer_g;
+		lsc_calc_in->stat_img.gb = tmp_buffer_g;
 		lsc_calc_in->stat_img.b = tmp_buffer_b;
 		lsc_calc_in->stat_img.w = MAX_STAT_WIDTH;
 		lsc_calc_in->stat_img.h = MAX_STAT_HEIGHT;
