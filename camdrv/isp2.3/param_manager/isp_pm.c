@@ -693,9 +693,12 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	} else {
 		ISP_LOGE("fail to get  sensor name from Tune file!");
 	}
-	nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
-	nr_level_number_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_level_number_ptr);
-	nr_default_level_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_default_level_ptr);
+
+	if (PNULL != nr_fix_ptr){
+		nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
+		nr_level_number_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_level_number_ptr);
+		nr_default_level_ptr = (struct sensor_nr_level_map_param *)(nr_fix_ptr->nr_default_level_ptr);
+	}
 
 	if (nr_scene_map_ptr == PNULL || nr_level_number_ptr == PNULL
 		|| nr_default_level_ptr == PNULL) {
