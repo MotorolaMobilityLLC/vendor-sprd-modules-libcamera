@@ -4435,7 +4435,8 @@ static int read_otp_from_file(struct sensor_otp_data_info *otp_info)
 		goto exit;
 	} else {
 		while (!feof(fp)) {
-			fscanf(fp, "%d\n", &otp_value);
+			if (-1 == fscanf(fp, "%d\n", &otp_value))
+				break;
 			otp_num++;
 		}
 		otp_info->data_size = otp_num * sizeof(int);
@@ -4449,7 +4450,8 @@ static int read_otp_from_file(struct sensor_otp_data_info *otp_info)
 		otp_num = 0;
 		fseek(fp, 0, SEEK_SET);
 		while (!feof(fp)) {
-			fscanf(fp, "%d\n", &otp_value);
+			if (-1 == fscanf(fp, "%d\n", &otp_value))
+				break;
 			ISP_LOGI("otp_value: %d", otp_value);
 			((int *)otp_info->data_addr)[otp_num++] = otp_value;
 		}
