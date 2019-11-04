@@ -5653,7 +5653,7 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     cmr_u8 *pnum = NULL, *ptext = NULL, *ptextout = NULL;
     time_t timep;
     struct tm *p;
-    char time_text[20];
+    char time_text[20]; /* total = 19,string:"2019-11-04 13:30:50" */
     cmr_u32 i, j;
     cmr_u8 *pdst, *psrc, *puvs;
     int dst_width, dst_height;
@@ -5690,12 +5690,15 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     /* get time */
     time(&timep);
     p = localtime(&timep);
+    /* sizeof time_text should large than the string lenght */
     sprintf(time_text, "%04d-%02d-%02d %02d:%02d:%02d", (1900 + p->tm_year),
             (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
     CMR_LOGV("Time watermark: %s", time_text);
     /* copy y */
     pdst = ptext;
-    for (i = 0; time_text[i] != '\0' && i < sizeof(time_text); i++) {
+    for (i = 0; i < sizeof(time_text); i++) {
+        if (time_text[i] == '\0')
+             break;
         if (time_text[i] == '-')
             j = 10;
         else if (time_text[i] == ':')
@@ -5710,7 +5713,9 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     }
     /* copy uv:420 */
     puvs = pnum + subnum_len * subnum_total;
-    for (i = 0; time_text[i] != '\0' && i < sizeof(time_text); i++) {
+    for (i = 0; i < sizeof(time_text); i++) {
+        if (time_text[i] == '\0')
+            break;
         if (time_text[i] == '-')
             j = 10;
         else if (time_text[i] == ':')
