@@ -2548,7 +2548,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		return rtn;
 	}
 	// cmd set table index
-	if (cxt->cmd_alsc_table_index <= 8 && cxt->cmd_alsc_table_index >= 0) {
+	if (cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0) {
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			memcpy(cxt->lsc_buffer, cxt->std_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width * gain_height * 4 * sizeof(cmr_u16));
 		} else {
