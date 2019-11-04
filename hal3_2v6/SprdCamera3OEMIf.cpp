@@ -6486,7 +6486,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_CONTROL_AE_MODE:
-        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 || mCameraId == 1) {
+        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 || mCameraId == 1 || getMultiCameraMode() == MODE_ULTRA_WIDE) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 

@@ -1745,13 +1745,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     // android.scaler.cropRegion.
     int ultrawide_id = findUltraWideSensor();
     s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
-    if (ultrawide_id == cameraId) {
-        s_setting[cameraId].scalerInfo.max_digital_zoom =
-            MAX_DIGITAL_ULTRAWIDE_ZOOM_RATIO;
-    } else {
-        s_setting[cameraId].scalerInfo.max_digital_zoom =
-            MAX_DIGITAL_ZOOM_RATIO;
-    }
+    s_setting[cameraId].scalerInfo.max_digital_zoom =
+        MAX_DIGITAL_ZOOM_RATIO;
     HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
         cameraId,ultrawide_id, s_setting[cameraId].scalerInfo.max_digital_zoom);
     // The minimum frame duration that is supported for each resolution in
