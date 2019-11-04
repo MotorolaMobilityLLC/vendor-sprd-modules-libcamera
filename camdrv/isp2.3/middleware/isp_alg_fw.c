@@ -5087,11 +5087,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		interface_ptr->data.input = ISP_EMC_MODE;
 
 	interface_ptr->data.input_format = in_ptr->src_frame.img_fmt;
-
-	if (INVALID_FORMAT_PATTERN == in_ptr->src_frame.format_pattern)
-		interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
-	else
-		interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
+	interface_ptr->data.format_pattern = cxt->commn_cxt.image_pattern;
 
 	interface_ptr->data.input_size.w = in_ptr->src_frame.img_size.w;
 	interface_ptr->data.input_size.h = in_ptr->src_frame.img_size.h;
