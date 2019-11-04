@@ -4132,6 +4132,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 		pm_param.data_ptr = (void *)&cxt->commn_cxt.src.w;
 		io_pm_input.param_data_ptr = &pm_param;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+		ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));
 	}
 
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->src_frame.img_size);
@@ -4167,6 +4168,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	} else {
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START, (void *)&fwprocstart_info, NULL);
+			ISP_RETURN_IF_FAIL(ret, ("fail to do lsc ops"));
 	}
 
 	ret = ispalg_cfg(cxt);
@@ -4182,6 +4184,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	param.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	param.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
 	ret = ispalg_ae_set_work_mode(cxt, mode, 0, &param);
+	ISP_RETURN_IF_FAIL(ret, ("fail to set ae work mode"));
 
 
 	if (cxt->ops.ae_ops.ioctrl) {
@@ -4194,6 +4197,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_PROC_START_END, (void *)&fwprocstart_info, NULL);
+		ISP_RETURN_IF_FAIL(ret, ("fail to do lsc ops"));
 
 	ISP_LOGV("isp start raw proc\n");
 	ret = ispalg_slice_raw_proc(cxt, in_ptr);
