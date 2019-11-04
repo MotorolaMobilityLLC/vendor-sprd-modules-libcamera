@@ -1,2 +1,0 @@
-lookat -l 262144 0xf3fae000 > /data/logreg2.txt
-/vendor/bin/parse /data/logreg2.txt /data/log2.txt
