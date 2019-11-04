@@ -2360,9 +2360,10 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
-	cxt->pm_flash_info = (struct isp_flash_param *)output.param_data->data_ptr;
+		cxt->pm_flash_info = (struct isp_flash_param *)output.param_data->data_ptr;
 	} else {
-	ret = ISP_ERROR;
+		ret = ISP_ERROR;
+		return ret;
 	}
 
 	ISP_LOGV("flash param rgb ratio = (%d,%d,%d), lum_ratio = %d",
