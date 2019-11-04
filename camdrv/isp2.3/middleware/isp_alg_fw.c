@@ -1664,6 +1664,31 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, void *data)
 	return ret;
 }
 
+static cmr_int ispalg_raw_rt_save(cmr_handle isp_alg_handle, void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+	cmr_u32 width = 0;
+	cmr_u32 height = 0;
+
+	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
+
+	width = cxt->commn_cxt.src.w;
+	height = cxt->commn_cxt.src.h;
+	ret = isp_file_raw_save(cxt->handle_file_debug, statis_info, width, height);
+	if (ret) {
+		ISP_LOGE("fail to save realtime raw");
+	}
+
+	ret = ispalg_set_stats_buffer(cxt, statis_info, DCAM_RAW_BLOCK);
+	if (ret) {
+		ISP_LOGE("fail to set statis buf");
+	}
+
+	return ret;
+}
+
 static cmr_int ispalg_hist_stats_parser(cmr_handle isp_alg_handle, void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2827,6 +2852,9 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	case ISP_PROC_HIST_DONE:
 		ret = ispalg_hist_process((cmr_handle) cxt, message->data);
+		break;
+	case ISP_CTRL_EVT_RAW:
+		ret = ispalg_raw_rt_save((cmr_handle) cxt, message->data);
 		break;
 	default:
 		ISP_LOGV("don't support msg");
@@ -4847,6 +4875,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		ISP_STATIS_VALID_HIST |
 		ISP_STATIS_VALID_HIST2;
 #endif
+	if (isp_file_is_raw_rt(cxt->handle_file_debug)){
+		statis_mem_input.statis_valid |= ISP_STATIS_VALID_RAW;
+		statis_mem_input.width = cxt->commn_cxt.src.w;
+		statis_mem_input.height = cxt->commn_cxt.src.h;
+	}
 	if (binning_support)
 		statis_mem_input.statis_valid |= ISP_STATIS_VALID_BINNING;
 	if (cxt->pdaf_cxt.pdaf_support)

@@ -57,6 +57,8 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 	statis_mem_info->isp_lsc_physaddr = in_ptr->isp_lsc_physaddr;
 	statis_mem_info->isp_lsc_virtaddr = in_ptr->isp_lsc_virtaddr;
 	statis_mem_info->lsc_mfd = in_ptr->lsc_mfd;
+	statis_mem_info->width = in_ptr->width;
+	statis_mem_info->height = in_ptr->height;
 
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_AEM)
 		stats_buffer_size += ISP_AEM_STATIS_BUF_SIZE;
@@ -74,6 +76,9 @@ cmr_int isp_dev_statis_buf_malloc(cmr_handle isp_dev_handle, struct isp_statis_m
 		stats_buffer_size += ISP_PDAF_STATIS_BUF_SIZE;
 	if (in_ptr->statis_valid & ISP_STATIS_VALID_EBD)
 		stats_buffer_size += ISP_EBD_STATIS_BUF_SIZE;
+	if (in_ptr->statis_valid & ISP_STATIS_VALID_RAW)
+		stats_buffer_size += ISP_RAW_STATIS_BUF_SIZE(statis_mem_info->width,
+			statis_mem_info->height);
 
 	if (statis_mem_info->isp_statis_alloc_flag == 0) {
 		statis_mem_info->buffer_client_data = in_ptr->buffer_client_data;
@@ -147,6 +152,8 @@ cmr_int isp_dev_trans_addr(cmr_handle isp_dev_handle)
 	isp_statis_buf.statis_valid = statis_mem_info->statis_valid;
 	isp_statis_buf.mfd = statis_mem_info->statis_mfd;
 	isp_statis_buf.dev_fd = statis_mem_info->statis_buf_dev_fd;
+	isp_statis_buf.width = statis_mem_info->width;
+	isp_statis_buf.height = statis_mem_info->height;
 
 	/*lsc addr transfer */
 	dcam_u_2d_lsc_transaddr(cxt->isp_driver_handle, &lsc_2d_buf);
@@ -324,6 +331,8 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		(*cxt->isp_event_cb) (ISP_CTRL_EVT_EBD, statis_info, (void *)cxt->evt_alg_handle);
 	} else if (irq_info->irq_property == IRQ_HIST_STATIS) {
 		(*cxt->isp_event_cb) (ISP_PROC_HIST_DONE, statis_info, (void *)cxt->evt_alg_handle);
+	} else if (irq_info->irq_property == IRQ_RAW_STATIS) {
+		(*cxt->isp_event_cb) (ISP_CTRL_EVT_RAW, statis_info, (void *)cxt->evt_alg_handle);
 	} else {
 		free((void *)statis_info);
 		statis_info = NULL;

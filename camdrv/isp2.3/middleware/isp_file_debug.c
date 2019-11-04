@@ -40,9 +40,15 @@ struct ebd_debug_info_t {
 	FILE *stats_fp;
 };
 
+struct raw_dump_debug_info_t {
+	cmr_u32 is_raw_rt;
+	cmr_u32 skip_num;
+};
+
 struct isp_file_context {
 	struct ae_debug_info_t ae_debug_info;
 	struct ebd_debug_info_t ebd_debug_info;
+	struct raw_dump_debug_info_t raw_dump_debug_info;
 };
 
 static cmr_s32 g_isp_open_cnt;
@@ -68,11 +74,75 @@ static cmr_int ispfile_close_file(FILE *fp)
 	return 0;
 }
 
-static cmr_int ispfile_ae_init(cmr_handle handle)
+static cmr_int ispfile_raw_init(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+	char skip_num[PROPERTY_VALUE_MAX] = { 0x00 };
 
+	if (!cxt) {
+		ret = ISP_PARAM_NULL;
+		return ret;
+	}
+
+	property_get("persist.vendor.camera.ispfp.debug.raw_rt", value, "0");
+	if (1 != atoi(value))
+		return ret;
+	cxt->raw_dump_debug_info.is_raw_rt = atoi(value);
+	property_get("persist.vendor.camera.ispfp.debug.skip_num", skip_num, "10");
+	cxt->raw_dump_debug_info.skip_num = atoi(skip_num);
+
+	return ret;
+}
+
+cmr_int isp_file_is_raw_rt(cmr_handle handle)
+{
+	cmr_u32 value = 0;
+	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+
+	if (!cxt) {
+		return value;
+	}
+	value = cxt->raw_dump_debug_info.is_raw_rt;
+
+	return value;
+}
+
+cmr_int isp_file_raw_save(cmr_handle handle, void *info,
+	cmr_u32 width, cmr_u32 height)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+	struct isp_statis_info *statis_info = (struct isp_statis_info *)info;
+	cmr_s32 skip_num = cxt->raw_dump_debug_info.skip_num;
+	char filename[120] = { 0x00 };
+	FILE *fp = NULL;
+
+	if (statis_info->frame_id % skip_num == 0){
+		sprintf(filename, CAMERA_DATA_FILE"/%d_%d_%d.mipi_raw", width,
+			height, statis_info->frame_id);
+		fp = fopen(filename, "wb");
+		if (NULL == fp) {
+			ISP_LOGE("fail to open file: %s", filename);
+			return -1;
+		}
+		fwrite((void *)statis_info->vir_addr, 1, (cmr_u32)width * height * 5/4, fp);
+		fclose(fp);
+	}
+
+	return ret;
+}
+
+static cmr_int ispfile_ae_init(cmr_handle handle)
+{
+	cmr_int ret = ISP_SUCCESS;
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+
+	property_get("persist.vendor.camera.ispfp.debug.ae", value, "0");
+	if (1 != atoi(value))
+		return ret;
 	cxt->ae_debug_info.stats_fp = ispfile_open_file("aem_stats", g_isp_open_cnt);
 
 	return ret;
@@ -94,7 +164,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp_file_ae_save_stats(cmr_handle *handle,
+cmr_int isp_file_ae_save_stats(cmr_handle handle,
 			       cmr_u32 *r_info, cmr_u32 *g_info, cmr_u32 *b_info,
 			       cmr_u32 size)
 {
@@ -137,6 +207,11 @@ static cmr_int ispfile_ebd_init(cmr_handle handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_file_context *cxt = (struct isp_file_context *)handle;
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+
+	property_get("persist.vendor.camera.ispfp.debug.ae", value, "0");
+	if (1 != atoi(value))
+		return ret;
 
 	cxt->ebd_debug_info.stats_fp =
 		ispfile_open_file("embed_line_stats", g_isp_open_cnt);
@@ -160,7 +235,7 @@ exit:
 	return ret;
 }
 
-cmr_int isp_file_ebd_save_info(cmr_handle *handle, void *info)
+cmr_int isp_file_ebd_save_info(cmr_handle handle, void *info)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_file_context *cxt = (struct isp_file_context *)handle;
@@ -196,6 +271,7 @@ cmr_int isp_file_init(cmr_handle *handle)
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 
 	*handle = NULL;
+
 	property_get(PROP_ISP_FILE_DEBUG, value, "0");
 	if (1 != atoi(value)) {
 		goto exit;
@@ -211,6 +287,7 @@ cmr_int isp_file_init(cmr_handle *handle)
 
 	ispfile_ae_init(cxt);
 	ispfile_ebd_init(cxt);
+	ispfile_raw_init(cxt);
 	ISP_LOGI("g_isp_open_cnt %d", g_isp_open_cnt);
 
 	g_isp_open_cnt++;

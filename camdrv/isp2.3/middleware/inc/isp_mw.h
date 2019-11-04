@@ -35,6 +35,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_CTRL_EVT_PDAF		     (1 << 17)
 #define ISP_CTRL_EVT_BINNING                 (1 << 18)
 #define ISP_CTRL_EVT_EBD                     (1 << 19)
+#define ISP_CTRL_EVT_RAW                     (1 << 20)
 
 #define ISP_THREAD_QUEUE_NUM                 (100)
 

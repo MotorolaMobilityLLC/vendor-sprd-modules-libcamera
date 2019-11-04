@@ -101,6 +101,9 @@ struct isp_statis_mem_info {
 	cmr_uint isp_lsc_virtaddr;
 	cmr_s32 lsc_mfd;
 
+	cmr_s32 width;
+	cmr_s32 height;
+
 	cmr_u32 statis_valid;
 	void *buffer_client_data;
 	void *cb_of_malloc;
