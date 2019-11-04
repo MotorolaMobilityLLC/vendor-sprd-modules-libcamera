@@ -171,7 +171,6 @@ struct aft_ae_info {
 	cmr_u32 y_sum;
 	cmr_u32 cur_scene;
 	cmr_u32 registor_pos;
-	cmr_u32 face_ae_enable;
 };
 
 struct aft_sensor_info {

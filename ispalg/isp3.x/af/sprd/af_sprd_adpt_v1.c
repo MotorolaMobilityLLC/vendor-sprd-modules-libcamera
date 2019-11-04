@@ -2632,7 +2632,6 @@ static void caf_monitor_ae(af_ctrl_t * af, const struct af_ae_calc_out *ae, isp_
 	prm->ae_info.is_stable = ae->is_stab;
 	prm->ae_info.flag4idx = ae->flag4idx;
 	prm->ae_info.face_stable = ae->face_stable;
-	prm->ae_info.face_ae_enable = ae->face_ae_enable;
 	prm->ae_info.bv = ae->bv;
 	prm->ae_info.y_sum = af->Y_sum_trigger;
 	prm->ae_info.cur_scene = OUT_SCENE;
@@ -4202,7 +4201,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	if (AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode) {
 		if (0 == init_param->sensor_role) {
-			af->sensor_role = AF_ROLE_MASTER;
+		       af->sensor_role = AF_ROLE_MASTER;
 		} else if (1 == init_param->sensor_role) {
 			af->sensor_role = AF_ROLE_SLAVE0;
 		} else if (2 == init_param->sensor_role) {

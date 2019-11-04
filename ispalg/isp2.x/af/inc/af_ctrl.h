@@ -302,7 +302,6 @@ extern "C" {
 		cmr_u32 target_lum_ori;
 		cmr_u32 flag4idx;
 		cmr_u32 face_stable;
-		cmr_u32 face_ae_enable;
 		cmr_u32 cur_ev;
 		cmr_u32 cur_index;
 		cmr_u32 cur_iso;

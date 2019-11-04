@@ -2653,7 +2653,6 @@ static void caf_monitor_ae(af_ctrl_t * af, const struct af_ae_calc_out *ae, isp_
 	prm->ae_info.is_stable = ae->is_stab;
 	prm->ae_info.flag4idx = ae->flag4idx;
 	prm->ae_info.face_stable = ae->face_stable;
-	prm->ae_info.face_ae_enable = ae->face_ae_enable;
 	prm->ae_info.bv = ae->bv;
 	prm->ae_info.y_sum = af->Y_sum_trigger;
 	prm->ae_info.cur_scene = OUT_SCENE;
