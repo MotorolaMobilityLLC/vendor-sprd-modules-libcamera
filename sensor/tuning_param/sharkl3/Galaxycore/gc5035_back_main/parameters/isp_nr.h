@@ -95,3 +95,4 @@ static struct sensor_nr_scene_map_param s_gc5035_nr_scene_map_param = {{
 #include "NR/common/normal/ynrs_param.h"
 #endif
 
+
