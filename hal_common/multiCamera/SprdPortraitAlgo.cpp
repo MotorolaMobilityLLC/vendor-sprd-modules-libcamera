@@ -731,11 +731,17 @@ int sprdcamera::SprdPortraitAlgo::initPortraitParams(BokehSize *size,
     initParams.config_param = NULL;
     initParams.imageFormat_main = ImageFormat(YUV420_NV12);
     initParams.imageFormat_sub = ImageFormat(YUV420_NV12);
-    sprd_portrait_capture_init(&mPortraitHandle, &initParams);
-    unsigned int maskW = mSize.depth_snap_out_w, maskH = mSize.depth_snap_out_h;
-    unsigned int maskSize = maskW * maskH * 2;
-    rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
-                                             &maskSize);
+    rc = sprd_portrait_capture_init(&mPortraitHandle, &initParams);
+    if (rc) {
+        HAL_LOGE("sprd_portrait_capture_init failed");
+        goto exit;
+    }
+    if (mPortraitHandle) {
+        unsigned int maskW = mSize.depth_snap_out_w, maskH = mSize.depth_snap_out_h;
+        unsigned int maskSize = maskW * maskH * 2;
+        rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
+                                                &maskSize);
+    }
 
 exit:
     return rc;

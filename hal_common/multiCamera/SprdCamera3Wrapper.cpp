@@ -55,7 +55,11 @@ const multiCameraMode available_mutiCamera_mode[MODE_CAMERA_MAX] = {
 #endif
 
 #ifdef CONFIG_3DFACE_SUPPORT
-    MODE_3D_FACE
+    MODE_3D_FACE,
+#endif
+
+#ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
+    MODE_PORTRAIT_SINGLE
 #endif
 
 };
@@ -75,7 +79,8 @@ const muti_camera_mode_map_t cameraid_map_mode[MODE_CAMERA_MAX] = {
     {SPRD_SOFY_OPTICAL_ZOOM_ID, MODE_SOFY_OPTICAL_ZOOM},
     {SPRD_3D_FACE_ID, MODE_3D_FACE},
     {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA},
-    {SPRD_PORTRAIT_ID, MODE_PORTRAIT}};
+    {SPRD_PORTRAIT_ID, MODE_PORTRAIT},
+    {SPRD_PORTRAIT_SINGLE_ID, MODE_PORTRAIT_SINGLE}};
 
 
 int SprdCamera3Wrapper::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
@@ -118,6 +123,9 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
 #ifdef CONFIG_PORTRAIT_SUPPORT
     SprdCamera3Portrait::getCameraPortrait(&mPortrait);
 #endif
+#ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
+    SprdCamera3SinglePortrait::getCameraBlur(&mSinglePortrait);
+#endif
 }
 
 SprdCamera3Wrapper::~SprdCamera3Wrapper() {}
@@ -135,7 +143,7 @@ multiCameraMode SprdCamera3Wrapper::getMultiCameraMode(int camera_id) {
         0,
     };
     int i = 0;
-
+    HAL_LOGI("cameraId:%d", camera_id);
     if (camera_id > SPRD_MULTI_CAMERA_BASE_ID) {
 
         for (i = 0; i < MODE_CAMERA_MAX; i++) {
@@ -178,7 +186,7 @@ multiCameraMode SprdCamera3Wrapper::getMultiCameraMode(int camera_id) {
             }
         }
     }
-
+    HAL_LOGI("mode:%d", mode);
     return mode;
 }
 int SprdCamera3Wrapper::cameraDeviceOpen(
@@ -217,7 +225,7 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         break;
     case MODE_BLUR:
 #ifdef CONFIG_BLUR_SUPPORT
-        rc = mBlur->camera_device_open(module, id, hw_device);
+        rc = mSinglePortrait->camera_device_open(module, id, hw_device);
 #endif
         break;
 #ifdef CONFIG_COVERED_SENSOR
@@ -259,6 +267,13 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
         rc = mPortrait->camera_device_open(module, id, hw_device);
         break;
 #endif
+/*  
+#ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
+    case MODE_PORTRAIT_SINGLE:
+        rc = mSinglePortrait->camera_device_open(module, id, hw_device);
+        break;
+#endif
+*/
     default:
         HAL_LOGE("cameraId:%d not supported yet!", atoi(id));
         return -EINVAL;
@@ -303,7 +318,7 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 
 #ifdef CONFIG_BLUR_SUPPORT
     case MODE_BLUR:
-        rc = mBlur->get_camera_info(camera_id, info);
+        rc = mSinglePortrait->get_camera_info(camera_id, info);
         break;
 #endif
 
@@ -346,6 +361,13 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
         rc = mPortrait->get_camera_info(camera_id, info);
         break;
 #endif
+/*  
+#ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
+    case MODE_PORTRAIT_SINGLE:
+        rc = mSinglePortrait->get_camera_info(camera_id, info);
+        break;
+#endif
+*/
     default:
         HAL_LOGE("cameraId:%d not supported yet!", camera_id);
         return -EINVAL;

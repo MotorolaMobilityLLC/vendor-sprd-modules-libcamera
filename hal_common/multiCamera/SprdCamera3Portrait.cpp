@@ -1275,7 +1275,7 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                         return false;
                     }
                     if (mPortrait->mDepthTrigger != TRIGGER_FALSE_PORTRAIT &&
-                        mPortrait->mOtpData.otp_exist) {
+                        mPortrait->mPortraitFlag) {
                         isDoDepth = sprdDepthHandle(&muxer_msg);
                     }
                 } else {
@@ -2211,9 +2211,9 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
             HAL_LOGD("start process normal frame to get "
                      "depth data!");
             if (mPortrait->mApiVersion == SPRD_API_PORTRAIT_MODE) {
-                HAL_LOGD("mPortrait->mOtpData.otp_exist %d",
-                         mPortrait->mOtpData.otp_exist);
-                if ((mPortrait->mOtpData.otp_exist &&
+                HAL_LOGD("mPortrait->mPortraitFlag %d",
+                         mPortrait->mPortraitFlag);
+                if ((mPortrait->mPortraitFlag &&
                      mPortrait->mBokehMode == CAM_DUAL_PORTRAIT_MODE) ||
                     (mPortrait->mDoPortrait &&
                      mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)) {
@@ -2822,6 +2822,7 @@ int SprdCamera3Portrait::initialize(
     mNotifyListMain.clear();
     mNotifyListAux.clear();
     mOtpData.otp_exist = false;
+    mPortraitFlag = false;
     mVcmSteps = 0;
     mOtpData.otp_size = 0;
     mOtpData.otp_type = 0;
@@ -3111,11 +3112,13 @@ int SprdCamera3Portrait::configureStreams(
     rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
                                         mCaptureThread->mAbokehGallery);
     if (rc != NO_ERROR) {
-        HAL_LOGE("fail to initParam");
+        HAL_LOGE("fail to initPortraitParams");
+        mPortraitFlag = false;
+        rc = NO_ERROR;
         // return rc;
     }
 
-    if (mOtpData.otp_exist) {
+    if (mPortraitFlag) {
         property_get("persist.vendor.cam.pbokeh.enable", prop, "1");
         mIsSupportPBokeh = atoi(prop);
         HAL_LOGD("mIsSupportPBokeh prop %d", mIsSupportPBokeh);
@@ -3186,6 +3189,7 @@ const camera_metadata_t *SprdCamera3Portrait::constructDefaultRequestSettings(
                       .otpInfo.otp_size;
         HAL_LOGI("otpType %d, otpSize %d", otpType, otpSize);
         mOtpData.otp_exist = true;
+        mPortraitFlag = true;
         mOtpData.otp_type = otpType;
         mOtpData.otp_size = otpSize;
         memcpy(mOtpData.otp_data, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,

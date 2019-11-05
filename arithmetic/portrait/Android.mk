@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SUPPORT)),true)
+ifneq ($(TARGET_BOARD_PORTRAIT_SINGLE_SUPPORT)_$(TARGET_BOARD_PORTRAIT_SUPPORT), false_false)
 ifneq ($(PLATFORM_VERSION),4.4.4)
 LOCAL_PATH := $(call my-dir)
 
@@ -32,6 +32,29 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprd_portrait_cap.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprd_portrait_cap.so
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_PREBUILT)
+
+
+ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
+LIB_PATH := lib
+else ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), x86 x86_64))
+LIB_PATH := x86_lib
+endif
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libSegLiteMNN
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_TAGS := optional
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libSegLiteMNN.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libSegLiteMNN.so
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
