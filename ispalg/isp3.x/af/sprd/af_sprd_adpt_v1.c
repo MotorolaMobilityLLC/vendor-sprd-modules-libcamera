@@ -287,6 +287,26 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 
 		win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
 		win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
+		if (win[9].end_x - win[9].start_x > 2336) {
+			cmr_u32 center_x = (win[9].start_x + win[9].end_x) >> 1;
+			switch (af->f_orientation) {
+			case FACE_UP:
+			case FACE_DOWN:
+				win[9].start_x = center_x - (2336 >> 1);
+				win[9].end_x = center_x + (2336 >> 1);
+				break;
+			case FACE_LEFT:
+				win[9].end_x = win[9].start_x + 2336;
+				break;
+			case FACE_RIGHT:
+				win[9].start_x = win[9].end_x - 2336;
+				break;
+			default:
+				break;
+			}
+		}
+#endif
 		win[9].start_x = (win[9].start_x >> 1) << 1;
 		win[9].start_y = (win[9].start_y >> 1) << 1;
 		win[9].end_x = (win[9].end_x >> 1) << 1;
@@ -1059,7 +1079,7 @@ static cmr_u8 if_sys_sleep_time(cmr_u16 sleep_time, void *cookie)
 	// ISP_LOGV("vcm_timestamp %lld ms", (cmr_s64) af->vcm_timestamp);
 	sleep_rtn = usleep(sleep_time * 1000);
 	if (sleep_rtn)
-		ISP_LOGE("error:no pause!");
+		ISP_LOGE("error: no pause!");
 	return 0;
 }
 
@@ -1830,6 +1850,7 @@ static void set_manual(af_ctrl_t * af, char *test_param)
 }
 
 static void af_stop_search(af_ctrl_t * af);
+static cmr_s32 otaf_update_af_state(cmr_handle handle, cmr_u32 otaf_on);
 static void trigger_caf(af_ctrl_t * af, char *test_param)
 {
 	AF_Trigger_Data aft_in;
@@ -2425,6 +2446,7 @@ static void otaf_start(af_ctrl_t * af)
 	aft_in.AF_Trigger_Type = (1 == af->defocus) ? (DEFOCUS) : (RF_NORMAL);
 	af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_TRIGGER, &aft_in);
 	af->focus_state = AF_SEARCHING;
+	af->af_ops.calc(af->af_alg_cxt);	// fix trigger invalid issue, ot coord was set between set af mode and trigger.
 }
 
 static void af_process_frame(af_ctrl_t * af)
@@ -2917,6 +2939,10 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 			ISP_LOGI("last af was not done, af state %s, pre_state %s", STATE_STRING(af->state), STATE_STRING(af->pre_state));
 			af_stop_search(af);
 		}
+		saf_start(af, win);
+	} else if (STATE_OTAF == af->state) {
+		af_stop_search(af);
+		otaf_update_af_state(af, AFV1_FALSE);
 		saf_start(af, win);
 	}
 	af->focus_state = AF_SEARCHING;
@@ -3666,10 +3692,20 @@ static cmr_s32 af_sprd_set_ot_switch(cmr_handle handle, void *param0)
 		af_stop_search(af);
 	}
 
-	if (AFV1_TRUE == af->ot_switch) {
+	ISP_LOGW("af->ot_switch %d, af state %s", af->ot_switch, STATE_STRING(af->state));
+	return rtn;
+}
+
+static cmr_s32 otaf_update_af_state(cmr_handle handle, cmr_u32 otaf_on)
+{
+	UNUSED(handle);
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	cmr_s32 rtn = AFV1_SUCCESS;
+
+	if (AFV1_TRUE == otaf_on) {
 		af->state = STATE_OTAF;
 		trigger_stop(af);
-	} else if (AFV1_FALSE == af->ot_switch) {
+	} else if (AFV1_FALSE == otaf_on) {
 		switch (af->request_mode) {
 		case AF_MODE_NORMAL:
 			af->state = STATE_NORMAL_AF;
@@ -3693,9 +3729,9 @@ static cmr_s32 af_sprd_set_ot_switch(cmr_handle handle, void *param0)
 			break;
 		}
 	} else {
-		ISP_LOGE("af->ot_switch %d error", af->ot_switch);
+		ISP_LOGE("af->otaf_on %d error", otaf_on);
 	}
-	ISP_LOGW("af->ot_switch %d, af state %s", af->ot_switch, STATE_STRING(af->state));
+	ISP_LOGW("otaf_on %d, af state %s", otaf_on, STATE_STRING(af->state));
 	return rtn;
 }
 
@@ -3705,6 +3741,7 @@ static cmr_s32 af_sprd_set_ot_info(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_ot_info *ot_info = (struct afctrl_ot_info *)param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
+	char prop[256];
 
 	if (NULL == param0) {
 		ISP_LOGE("param null error");
@@ -3723,26 +3760,39 @@ static cmr_s32 af_sprd_set_ot_info(cmr_handle handle, void *param0)
 		rtn = AFV1_ERROR;
 		return rtn;
 	}
-	ISP_LOGI("ot switch = %d, status = %d, focus state %d", af->ot_switch, ot_info->otstatus, af->focus_state);
-	ISP_LOGI("ot cx,cy (%d,%d), image w,h (%d,%d)", ot_info->centorX, ot_info->centorY, ot_info->imageW, ot_info->imageH);
+
+	property_get("debug.isp.af.logenable", prop, "0");
+	if (atoi(prop) != 0) {
+		ISP_LOGI("ot switch = %d, status = %d, focus state %d", af->ot_switch, ot_info->otstatus, af->focus_state);
+		ISP_LOGI("ot cx,cy (%d,%d), image w,h (%d,%d)", ot_info->centorX, ot_info->centorY, ot_info->imageW, ot_info->imageH);
+	}
+
 	switch (ot_info->otstatus) {
 	case AF_OT_LOCKED:
 		if (AF_SEARCHING != af->focus_state) {
 			if (0 != ot_info->centorX && 0 != ot_info->centorY) {
+				otaf_update_af_state(af, AFV1_TRUE);
 				otaf_start(af);
 			}
-		} else {
+		} else if (STATE_OTAF == af->state) {
 			if (0 == ot_info->centorX || 0 == ot_info->centorY) {
 				af_stop_search(af);
+				otaf_update_af_state(af, AFV1_FALSE);
 			}
 		}
 		break;
 	case AF_OT_MISSING:
 		break;
 	case AF_OT_UNLOCKED:
+		if (AF_SEARCHING == af->focus_state && STATE_OTAF == af->state) {
+			af_stop_search(af);
+			otaf_update_af_state(af, AFV1_FALSE);
+		}
+		break;
 	case AF_OT_STOPPED:
 		if (AF_SEARCHING == af->focus_state) {
 			af_stop_search(af);
+			otaf_update_af_state(af, AFV1_FALSE);
 		}
 		break;
 	default:
