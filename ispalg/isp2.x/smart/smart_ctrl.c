@@ -33,6 +33,8 @@ typedef int bool;
 #include "isp_com_alg.h"
 #include <stdio.h>
 #include <cutils/properties.h>
+#include "isp_com.h"
+
 
 #define ISP_SMART_MAGIC_FLAG 0xf7758521
 #define array_size(array) (sizeof(array) / sizeof(array[0]))
@@ -136,7 +138,7 @@ struct smart_context {
 	smart_debuginfo smt_dbginfo;
 	struct atm_tune_param atm_tuning_param;
 	enum smart_ctrl_atm_switch_state atm_switch_state;
-
+	cmr_u32 app_mode;
 };
 
 static cmr_s32 is_print_log(void)
@@ -285,6 +287,24 @@ static cmr_s32 check_handle_validate(smart_handle_t handle)
 	}
 
 	return ret;
+}
+
+static cmr_s32 smart_ctl_set_app_mode(struct smart_context *cxt, void *in_param)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	enum smart_ctrl_app_mode app_mode = SMART_CTRL_APP_MODE_AUTO_PHOTO;
+
+	if (NULL == in_param) {
+		ISP_LOGI("fail to get valid in param");
+		return ISP_ERROR;
+	}
+	app_mode = *(enum smart_ctrl_app_mode *)in_param;
+	if (app_mode >= SMART_CTRL_APP_MODE_MAX) {
+		ISP_LOGI("fail to get valid app mode");
+		return ISP_ERROR;
+	}
+	cxt->app_mode = app_mode;
+	return rtn;
 }
 
 static cmr_s32 smart_ctl_set_workmode(struct smart_context *cxt, void *in_param)
@@ -529,6 +549,53 @@ static cmr_s32 smart_ctl_get_update_param(struct smart_context *cxt, void *in_pa
 
 ERROR_EXIT:
 
+	return rtn;
+}
+
+static cmr_s32 smart_ctl_piecewise_func_v2(struct isp_piecewise_func *func, cmr_s32 x, cmr_u32 weight_unit, struct isp_weight_value *result, cmr_u32 offset)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 num = func->num;
+	struct isp_sample *samples = func->samples;
+	cmr_s16 y = 0;
+	cmr_u32 i = 0;
+
+	if (0 == num)
+		return ISP_ERROR;
+
+	if (x <= samples[offset].x) {
+		y = samples[offset].y;
+		result->value[0] = y;
+		result->value[1] = y;
+		result->weight[0] = weight_unit;
+		result->weight[1] = 0;
+	} else if (x >= samples[offset + num - 1].x) {
+		y = samples[offset + num - 1].y;
+		result->value[0] = y;
+		result->value[1] = y;
+		result->weight[0] = weight_unit;
+		result->weight[1] = 0;
+	} else {
+		rtn = ISP_ERROR;
+		for (i = offset; i < offset + num - 1; i++) {
+			if (x >= samples[i].x && x < samples[i + 1].x) {
+				if ((0 != samples[i + 1].x - samples[i].x) && (0 != samples[i + 1].y - samples[i].y)) {
+					result->value[0] = samples[i].y;
+					result->value[1] = samples[i + 1].y;
+
+					result->weight[0] = (samples[i + 1].x - x) * weight_unit / (samples[i + 1].x - samples[i].x);
+					result->weight[1] = weight_unit - result->weight[0];
+				} else {
+					result->value[0] = samples[i].y;
+					result->value[1] = samples[i].y;
+					result->weight[0] = weight_unit;
+					result->weight[1] = 0;
+				}
+				rtn = ISP_SUCCESS;
+				break;
+			}
+		}
+	}
 	return rtn;
 }
 
@@ -932,8 +999,37 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cf
 	return rtn;
 }
 
+static cmr_s32 smart_ctl_calc_component_ai_scence(struct isp_smart_component_cfg *cfg, struct smart_calc_param *param, struct smart_component_result *result, enum smart_ctrl_app_mode app_mode)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+
+	struct isp_weight_value func_result = { {0}, {0} };
+	struct isp_weight_value *fix_data = (struct isp_weight_value *)result->fix_data;
+	cmr_u32 offset = 0;
+
+	if (SMART_CTRL_APP_MODE_3DNR_PHOTO == app_mode) {
+		offset = 12;
+		ISP_LOGV("APP_MODE_3DNR_PHOTO\n");
+		rtn = smart_ctl_piecewise_func_v2(&cfg->func[0], param->bv, SMART_WEIGHT_UNIT, &func_result, offset);
+
+		if(ISP_SUCCESS == rtn){
+			result->size = sizeof(func_result);
+			fix_data->weight[0] = func_result.weight[0];
+			fix_data->weight[1] = func_result.weight[1];
+			fix_data->value[0] = func_result.value[0];
+			fix_data->value[1] = func_result.value[1];
+			result->y_type = cfg->y_type;
+			result->x_type = cfg->x_type;
+			ISP_LOGV("value=(%d, %d), weight=(%d, %d)", fix_data->value[0], fix_data->value[1], fix_data->weight[0], fix_data->weight[1]);
+		}
+	} else {
+		rtn = ISP_ERROR;
+	}
+	return rtn;
+}
+
 static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, struct smart_calc_param *param,
-				    struct smart_block_result *result, enum smart_ctrl_flash_mode flash_mode)
+				    struct smart_block_result *result, enum smart_ctrl_flash_mode flash_mode, enum smart_ctrl_app_mode app_mode)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
@@ -963,6 +1059,13 @@ static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, struct smar
 
 		if (SMART_CTRL_FLASH_MAIN == flash_mode && 1 == cfg->component[i].use_flash_val) {
 			rtn = smart_ctl_calc_component_flash(&cfg->component[i], param, &component_result, cfg->smart_id);
+		}
+
+		if ((ISP_SMART_CONTRAST == cfg->smart_id) || (ISP_SMART_SATURATION == cfg->smart_id)){
+			rtn = smart_ctl_calc_component_ai_scence(&cfg->component[i], param, &component_result, app_mode);
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGE("fail to calc ai_scence:smart_id = %d\n",cfg->smart_id);
+			}
 		}
 
 		if (ISP_SUCCESS == rtn) {
@@ -1683,6 +1786,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 	cmr_u32 update_block_num = 0;
 	enum smart_ctrl_flash_mode flash_mode = SMART_CTRL_FLASH_CLOSE;
 	struct smart_block_result *block_result = NULL;
+	enum smart_ctrl_app_mode app_mode = SMART_CTRL_APP_MODE_AUTO_PHOTO;
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
@@ -1715,6 +1819,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	cur_param = cxt->cur_param;
 	flash_mode = cxt->flash_mode;
+	app_mode = cxt->app_mode;
 
 	if (1 == cur_param->bypass) {
 		rtn = ISP_SUCCESS;
@@ -1726,7 +1831,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	for (i = 0; i < smart_param->block_num; i++) {
 		cxt->block_result.update = 0;
-		rtn = smart_ctl_calc_block(&smart_param->block[i], param, &cxt->block_result, flash_mode);
+		rtn = smart_ctl_calc_block(&smart_param->block[i], param, &cxt->block_result, flash_mode, app_mode);
 
 		if (1 == cxt->block_result.update) {
 			cxt->calc_result[update_block_num] = cxt->block_result;
@@ -1751,7 +1856,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 			} else
 				continue;
 	}
-	ISP_LOGV("bv=%d, ct=%d, flash=%d", param->bv, param->ct, flash_mode);
+	ISP_LOGV("bv=%d, ct=%d, flash=%d, app_mode=%d", param->bv, param->ct, flash_mode, app_mode);
 	smart_ctl_print_smart_result(cxt->flash_mode, result);
 	smart_ctl_print_debug_file(cxt->debug_file, param, result, (char *)cxt->debug_buf,&(cxt->smt_dbginfo.smt_gma));
 	for (i = 0; i < result->counts; i++) {
@@ -1930,6 +2035,10 @@ cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *r
 
 	case ISP_SMART_IOCTL_SET_ATM_SWITCH_STATE:
 		rtn = smart_ctl_set_atm_switch_state(cxt_ptr, param);
+		break;
+
+	case ISP_SMART_IOCTL_SET_APP_MODE:
+		rtn = smart_ctl_set_app_mode(cxt_ptr, param);
 		break;
 
 	default:
