@@ -203,7 +203,7 @@ struct isp_contrast_cfg {
 struct isp_contrast_param {
 	cmr_u32 cur_index;
 	struct isp_dev_contrast_info cur;
-	cmr_u8 tab[16];
+	cmr_u8 tab[SENSOR_CONTRAST_NUM];
 	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
 };
 
@@ -566,7 +566,7 @@ struct isp_chrom_saturation_param {
 	struct isp_dev_csa_info cur;
 	cmr_u32 cur_u_idx;
 	cmr_u32 cur_v_idx;
-	cmr_u8 tab[2][SENSOR_LEVEL_NUM];
+	cmr_u8 tab[2][SENSOR_SATURATION_NUM];
 	cmr_u8 scene_mode_tab[2][MAX_SCENEMODE_NUM];
 };
 

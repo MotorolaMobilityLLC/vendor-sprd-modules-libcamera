@@ -21,7 +21,7 @@ cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *para
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0;
 	struct isp_chrom_saturation_param *dst_csa_ptr = (struct isp_chrom_saturation_param *)dst_csa_param;
-	struct sensor_saturation_param *src_csa_ptr = (struct sensor_saturation_param *)src_csa_param;
+	struct sensor_saturation_ai_param *src_csa_ptr = (struct sensor_saturation_ai_param *)src_csa_param;
 	struct isp_pm_block_header *csa_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
@@ -30,7 +30,7 @@ cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *para
 	dst_csa_ptr->cur.factor_v = src_csa_ptr->csa_factor_v[src_csa_ptr->index_v];
 	dst_csa_ptr->cur_u_idx = src_csa_ptr->index_u;
 	dst_csa_ptr->cur_v_idx = src_csa_ptr->index_v;
-	for (i = 0; i < SENSOR_LEVEL_NUM; i++) {
+	for (i = 0; i < SENSOR_SATURATION_NUM; i++) {
 		dst_csa_ptr->tab[0][i] = src_csa_ptr->csa_factor_u[i];
 		dst_csa_ptr->tab[1][i] = src_csa_ptr->csa_factor_v[i];
 	}
@@ -40,6 +40,12 @@ cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *para
 	}
 
 	csa_header_ptr->is_update = ISP_ONE;
+
+	ISP_LOGV("init saturation, index u,v:%d,%d cur_factor u,v:%d,%d",
+		 dst_csa_ptr->cur_u_idx,
+		 dst_csa_ptr->cur_v_idx,
+		 dst_csa_ptr->cur.factor_u,
+		 dst_csa_ptr->cur.factor_v);
 
 	return rtn;
 }
@@ -83,32 +89,95 @@ cmr_s32 _pm_saturation_set_param(void *csa_param, cmr_u32 cmd, void *param_ptr0,
 
 	case ISP_PM_BLK_SMART_SETTING:
 		{
-			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
+			struct smart_block_result *block_result =
+				(struct smart_block_result *)param_ptr0;
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 reduce_percent = 0;
 			cmr_u32 factor_u = 0;
 			cmr_u32 factor_v = 0;
+			cmr_u32 smart_id = 0;
+
+			struct isp_weight_value *weight_value = NULL;
+			struct isp_weight_value *bv_value = NULL;
+			void *dst = NULL;
+			void *dst1 = NULL;
+			void *src_mapu[2] = {NULL, NULL};
+			void *src_mapv[2] = {NULL, NULL};
+			cmr_u16 weight[2] = {0, 0};
+			cmr_u32 data_num = 0;
 
 			val_range.min = 0;
 			val_range.max = 255;
-			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
-			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to check pm smart param !");
-				return rtn;
+
+			if (0 == block_result->update) {
+				ISP_LOGV("do not need update\n");
+				return ISP_SUCCESS;
 			}
 
-			reduce_percent = (cmr_u32) block_result->component[0].fix_data[0];
-			factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
-			factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
-			csa_ptr->cur.factor_u = (factor_u * reduce_percent) / 255;
-			csa_ptr->cur.factor_v = (factor_v * reduce_percent) / 255;
-			csa_header_ptr->is_update = ISP_ONE;
+			smart_id = block_result->smart_id;
+			ISP_LOGD("check smart_id:%d", smart_id);
+
+			switch(smart_id){
+			case ISP_SMART_SATURATION_DEPRESS:
+				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
+				if (ISP_SUCCESS != rtn) {
+					ISP_LOGE("fail to check pm smart param !");
+					return rtn;
+				}
+
+				reduce_percent = (cmr_u32) block_result->component[0].fix_data[0];
+				factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
+				factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
+				csa_ptr->cur.factor_u = (factor_u * reduce_percent) / 255;
+				csa_ptr->cur.factor_v = (factor_v * reduce_percent) / 255;
+				csa_header_ptr->is_update = ISP_ONE;
+
+				break;
+			case ISP_SMART_SATURATION:
+				rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
+				if (ISP_SUCCESS != rtn) {
+					ISP_LOGE("fail to check pm smart param !");
+					return rtn;
+				}
+
+				dst = &csa_ptr->cur.factor_u;
+				dst1 = &csa_ptr->cur.factor_v;
+				data_num = sizeof(cmr_u8);
+				weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
+				bv_value = &weight_value[0];
+
+				src_mapu[0] = (void *)&csa_ptr->tab[0][bv_value->value[0]];
+				src_mapu[1] = (void *)&csa_ptr->tab[0][bv_value->value[1]];
+				src_mapv[0] = (void *)&csa_ptr->tab[1][bv_value->value[0]];
+				src_mapv[1] = (void *)&csa_ptr->tab[1][bv_value->value[1]];
+				weight[0] = bv_value->weight[0];
+				weight[1] = bv_value->weight[1];
+				weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) *
+							(SMART_WEIGHT_UNIT / 16);
+				weight[1] = SMART_WEIGHT_UNIT - weight[0];
+				isp_interp_data(dst, src_mapu, weight, data_num,
+						ISP_INTERP_UINT8);
+				isp_interp_data(dst1, src_mapv, weight,
+						data_num, ISP_INTERP_UINT8);
+				csa_header_ptr->is_update = ISP_ONE;
+				break;
+			default:
+				ISP_LOGI("invalid smart id: %d", smart_id);
+				break;
+			}
 		}
 		break;
 
 	default:
 		break;
 	}
+
+	ISP_LOGV("set saturation param: index u,v:%d,%d cur_factor u,v:%d,%d",
+		 csa_ptr->cur_u_idx,
+		 csa_ptr->cur_v_idx,
+		 csa_ptr->cur.factor_u,
+		 csa_ptr->cur.factor_v);
+
 
 	return rtn;
 }
