@@ -360,6 +360,9 @@ struct prev_context {
     /* face detect */
     cmr_u32 ae_stab;/* [31:16]bv, [10:1]probability, [0]stable */
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
+
+    cmr_u32 channel_start_sec;
+    cmr_u32 channel_start_usec;
 };
 
 struct prev_thread_cxt {
@@ -2442,6 +2445,10 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     video_enable = prev_cxt->prev_param.video_eb;
     refocus_eb = prev_cxt->prev_param.refocus_eb;
     pdaf_eb = prev_cxt->prev_param.pdaf_eb;
+    if (prev_cxt->channel_start_sec > data->sec || (prev_cxt->channel_start_sec == data->sec && prev_cxt->channel_start_usec >= data->usec)) {
+        CMR_LOGE("invalid frm!");
+        return CMR_CAMERA_SUCCESS;
+    }
 
     CMR_LOGV("preview_enable %d, snapshot_enable %d, channel_id %d, "
              "prev_channel_id %ld, cap_channel_id %ld",
@@ -3991,6 +3998,19 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
+    if (handle->ops.channel_get_cap_time) {
+        ret = handle->ops.channel_get_cap_time(handle->oem_handle, &prev_cxt->channel_start_sec, &prev_cxt->channel_start_usec);
+        if (ret) {
+            CMR_LOGE("get cap time failed!");
+            prev_cxt->channel_start_sec = 0;
+            prev_cxt->channel_start_usec = 0;
+        }
+    } else {
+        CMR_LOGE("ops is null");
+        prev_cxt->channel_start_sec = 0;
+        prev_cxt->channel_start_usec = 0;
+    }
+    CMR_LOGD("start time:%d.%d", prev_cxt->channel_start_sec, prev_cxt->channel_start_usec);
 
     /*update preview status*/
     if (preview_enable) {
