@@ -2,8 +2,8 @@
 
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                      \
     defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5)
-#include "hal3_2v1/SprdCamera3OEMIf.h"
-#include "hal3_2v1/SprdCamera3Setting.h"
+#include "hal3_2v6/SprdCamera3OEMIf.h"
+#include "hal3_2v6/SprdCamera3Setting.h"
 #endif
 #if defined(CONFIG_ISP_2_4)
 #include "hal3_2v4/SprdCamera3OEMIf.h"

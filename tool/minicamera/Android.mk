@@ -2,8 +2,8 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
-HAL_DIR := hal3_2v1
-OEM_DIR := oem2v1
+HAL_DIR := hal3_2v6
+OEM_DIR := oem2v6
 ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.3
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)

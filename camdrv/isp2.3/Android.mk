@@ -28,7 +28,7 @@ LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
 LOCAL_C_INCLUDES := \
 	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
-	$(LOCAL_PATH)/../../oem2v1/inc \
+	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \

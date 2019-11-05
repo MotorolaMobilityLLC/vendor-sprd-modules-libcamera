@@ -7,8 +7,8 @@
 #include "hal3_2v1a/SprdCamera3OEMIf.h"
 #include "hal3_2v1a/SprdCamera3Setting.h"
 #else
-#include "hal3_2v1/SprdCamera3OEMIf.h"
-#include "hal3_2v1/SprdCamera3Setting.h"
+#include "hal3_2v6/SprdCamera3OEMIf.h"
+#include "hal3_2v6/SprdCamera3Setting.h"
 #endif
 #endif
 #if defined(CONFIG_ISP_2_4)
