@@ -2161,13 +2161,13 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			&io_pm_input, &io_pm_output);
-#if 0
+#if 1
 	if (io_pm_output.param_data != NULL && ISP_SUCCESS == ret) {
 		struct isp_dev_gamma_info *gamma_info = io_pm_output.param_data->data_ptr;
 
 		if (gamma_info != NULL) {
 			for (i = 0; i < 256; i++) {
-				out_ptr->gamma[i] = (gamma_info->gamc_nodes.nodes_r[i] + gamma_info->gamc_nodes.nodes_r[i + 1]) / 2;
+				out_ptr->gamma[i] = (gamma_info->gain_r[i] + gamma_info->gain_r[i + 1]) / 2;
 			}
 		}
 	}
