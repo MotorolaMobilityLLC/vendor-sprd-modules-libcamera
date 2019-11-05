@@ -433,12 +433,14 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 			ae_info[1].exp.dummy = slave_ae_sync_info_ptr->dmy_line;
 			ae_info[1].exp.size_index = 2;
 			if(cxt->is_master == 0){
-				ae_info[0].count = 1;
+				ae_info[0].count = 2;
 				ae_info[0].exp.exposure = ae_info[1].exp.exposure;
 				ae_info[0].exp.dummy = ae_info[1].exp.dummy;
 				ae_info[0].exp.size_index = ae_info[1].exp.size_index;
 				ae_info[0].gain = ae_info[1].gain;
+				ae_info[0].ignore = 1;
 			}
+
 			if (cxt->isp_ops.write_multi_ae) {
 				(*cxt->isp_ops.write_multi_ae) (cxt->isp_ops.isp_handler, ae_info);
 			} else {

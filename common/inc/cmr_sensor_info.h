@@ -571,6 +571,7 @@ struct sensor_multi_ae_info {
     cmr_int camera_id;
     cmr_handle handle;
     cmr_u32 count;
+	cmr_u32 ignore;
     cmr_u32 gain;
     struct sensor_ex_exposure exp;
 };

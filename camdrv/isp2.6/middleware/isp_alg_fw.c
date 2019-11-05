@@ -727,7 +727,8 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 	switch (type) {
 	case ISP_AE_MULTI_WRITE:
 		{
-			cmr_u32 index = 0;
+			struct sensor_multi_ae_info info[CAM_SENSOR_MAX];
+			cmr_u32 index = 0, count = 0;
 
 #define index2role(index) (index)
 			ae_info = (struct sensor_multi_ae_info *)param0;
@@ -749,10 +750,17 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 
 				index++;
 			}
+			index = 0;
+			while (index < ae_info->count) {
+				if (!ae_info[index].ignore)
+					info[count++] = ae_info[index];
+				index++;
+			}
+			info->count = count;
 
 			if (cxt->ioctrl_ptr->sns_ioctl)
 				ret = cxt->ioctrl_ptr->sns_ioctl(cxt->ioctrl_ptr->caller_handler,
-						CMD_SNS_IC_WRITE_MULTI_AE, ae_info);
+						CMD_SNS_IC_WRITE_MULTI_AE, info);
 #undef index2role
 		}
 		break;
