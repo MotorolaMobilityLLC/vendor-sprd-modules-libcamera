@@ -2247,8 +2247,8 @@ static void *sensor_ic_get_data(struct sensor_drv_context *sensor_cxt,
                           &data);
         break;
     case SENSOR_CMD_GET_STATIC_INFO:
-        sns_ops->get_data(sensor_cxt->sns_ic_drv_handle, SENSOR_CMD_GET_STATIC_INFO,
-                          &data);
+        sns_ops->get_data(sensor_cxt->sns_ic_drv_handle,
+                          SENSOR_CMD_GET_STATIC_INFO, &data);
         break;
     default:
         SENSOR_LOGW("not support cmd:0x%lx", cmd);
@@ -2374,6 +2374,7 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
     struct sensor_aec_i2c_tag *aec_info;
     cmr_u32 i, k, size = 0;
     cmr_u32 count = 0;
+    cmr_u32 cnt = 0;
     struct sensor_reg_tag msettings[AEC_I2C_SETTINGS_MAX];
     struct sensor_reg_tag ssettings[AEC_I2C_SETTINGS_MAX];
     // TODO optimize this later
@@ -2412,17 +2413,18 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
     muti_aec_info.addr_bits_type = addr_bits_type;
     muti_aec_info.data_bits_type = data_bits_type;
 
-    for (k = 0; k < count; k++) {
+    cnt = count > AEC_I2C_SENSOR_MAX ? AEC_I2C_SENSOR_MAX : count;
+    for (k = 0; k < cnt; k++) {
         size = 0;
         aec_info = aec_reg_info[k].aec_i2c_info_out;
         sensor_id[k] = (phyPtr + ae_info[k].camera_id)->slotId;
-        muti_aec_info.id_size = count;
+        muti_aec_info.id_size = cnt;
         i2c_slave_addr[k] = aec_info->slave_addr;
-        muti_aec_info.i2c_slave_len = count;
+        muti_aec_info.i2c_slave_len = cnt;
         addr_bits_type[k] = (cmr_u16)aec_info->addr_bits_type;
-        muti_aec_info.addr_bits_type_len = count;
+        muti_aec_info.addr_bits_type_len = cnt;
         data_bits_type[k] = (cmr_u16)aec_info->data_bits_type;
-        muti_aec_info.data_bits_type_len = count;
+        muti_aec_info.data_bits_type_len = cnt;
         if (k == 0) {
             muti_aec_info.master_i2c_tab = msettings;
             settings = msettings;
@@ -2871,7 +2873,8 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
     sensor_cxt->sensor_type = sensor_drv_get_sensor_type(sensor_cxt);
     sensor_drv_get_fov_info(sensor_cxt);
     sensor_drv_get_module_otp_data(sensor_cxt);
-    sensor_cxt->static_info = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_STATIC_INFO);
+    sensor_cxt->static_info =
+        sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_STATIC_INFO);
     sensor_drv_get_tuning_param(sensor_cxt);
 
     return 0;
@@ -2882,7 +2885,8 @@ sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_MATCH_T *sns_module = NULL;
     struct xml_camera_cfg_info *camera_cfg;
-    struct tuning_param_lib *libTuningPtr = &tuning_lib_mngr[sensor_cxt->slot_id];
+    struct tuning_param_lib *libTuningPtr =
+        &tuning_lib_mngr[sensor_cxt->slot_id];
     sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
 
     camera_cfg = sensor_cxt->xml_info;
@@ -2996,7 +3000,8 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
         sensor_cxt->sensor_info_ptr->sensor_version_info != NULL &&
         strlen((const char *)sensor_cxt->sensor_info_ptr->sensor_version_info) >
             1) {
-        sensor_size = (cmr_u64)((cmr_uint)sensor_cxt->sensor_info_ptr->source_width_max *
+        sensor_size =
+            (cmr_u64)((cmr_uint)sensor_cxt->sensor_info_ptr->source_width_max *
                       (cmr_uint)sensor_cxt->sensor_info_ptr->source_height_max);
         if (sensor_size >= 1000000) {
             sprintf(buffer, "%s %ldM \n",
