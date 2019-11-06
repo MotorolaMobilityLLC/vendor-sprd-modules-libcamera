@@ -2959,7 +2959,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 				exp_time = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 		}
 
-		if(!exp_line){
+		if(!exp_line && exp_time){
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 			if(cxt->is_multi_mode)
 				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
@@ -2991,7 +2991,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 				exp_time = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 		}
 
-		if(!exp_line){
+		if(!exp_line && exp_time){
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 			if(cxt->is_multi_mode)
 				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);

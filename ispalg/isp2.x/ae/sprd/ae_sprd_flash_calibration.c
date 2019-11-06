@@ -527,8 +527,11 @@ void readDebugBin2(const char *f, struct FCData *d)
 {
 	FILE *fp;
 	fp = fopen(f, "rb");
+	int sz = 0;
 	if(fp){
-        fread(d, 1, sizeof(struct FCData), fp);
+        sz = fread(d, 1, sizeof(struct FCData), fp);
+        if(sz <= 0)
+            ISP_LOGD("fread faild");
         fclose(fp);
 	}
 }
@@ -538,7 +541,7 @@ void readFCConfig(char *f, struct FCData *d, char *fout)
 	int i;
 	FILE *fp;
 	fp = fopen(f, "rt");
-	if (fp) {
+	if (fp && d) {
 		fscanf(fp, "%d", &d->numP1_hw);
 		fscanf(fp, "%d", &d->numP2_hw);
 		fscanf(fp, "%d", &d->numM1_hw);
