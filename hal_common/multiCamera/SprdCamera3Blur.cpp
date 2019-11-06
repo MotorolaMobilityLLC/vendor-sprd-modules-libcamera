@@ -3990,7 +3990,9 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                     0 != mCaptureThread->mIspInfo.distance_reminder) &&
                   !((!mCaptureThread->mIsBlurAlways) &&
                     mCaptureThread->mCaptureWeightParams.total_roi == 0)) ||
-                 mCaptureThread->mGaussEnable)) {
+                    mCaptureThread->mGaussEnable) &&
+                    !(mBlur->mBlurMode == CAM_BLUR_PORTRAIT_MODE &&
+                      mBlur->mCaptureThread->mLastFaceNum <= 0)) {
                 if (mCaptureThread->mVersion == 3) {
                     af_bypass = 1;
                     hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_3A_BYPASS,
@@ -4005,13 +4007,13 @@ int SprdCamera3Blur::processCaptureRequest(const struct camera3_device *device,
                 hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
                                        &fb_on, NULL);
             } else {
-
                 snap_stream_num = 1;
                 fb_on = 1;
                 out_streams_main[i].buffer = (req->output_buffers[i]).buffer;
                 hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
                                        &fb_on, NULL);
             }
+
             out_streams_main[i].stream =
                 &mCaptureThread->mMainStreams[snap_stream_num];
 
@@ -4257,7 +4259,9 @@ void SprdCamera3Blur::processCaptureResultMain(
                              (mCaptureThread->mLastFaceNum > 0) ||
                              (mCaptureThread->mLastFaceNum <= 0 &&
                               mCaptureThread->mSkipFaceNum < 10)) &&
-                            cur_frame_number > 0) {
+                            cur_frame_number > 0 &&
+                            !(mBlur->mBlurMode == CAM_BLUR_PORTRAIT_MODE
+                            && mCaptureThread->mLastFaceNum <= 0)) {
                             void *buffer_addr = NULL;
                             if (map(result->output_buffers->buffer,
                                     &buffer_addr) != NO_ERROR) {
