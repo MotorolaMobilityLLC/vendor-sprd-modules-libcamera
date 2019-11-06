@@ -1403,7 +1403,7 @@ bool SprdCamera3Setting::getLcdSize(uint32_t *width, uint32_t *height) {
         i++;
     }
 
-    LOGI("getLcdSize dev is %s", name);
+    HAL_LOGI("getLcdSize dev is %s", name);
 
     if (fd < 0) {
         LOGE("getLcdSize fail to open fb");
@@ -2680,7 +2680,7 @@ SprdCamera3Setting::~SprdCamera3Setting() {
         mStaticMetadata[mCameraId] = NULL;
         HAL_LOGI("%s id=%d", __FUNCTION__, mCameraId);
     }
-    HAL_LOGI("%s X", __FUNCTION__);
+    HAL_LOGV("%s X", __FUNCTION__);
 }
 
 int SprdCamera3Setting::constructDefaultMetadata(int type,

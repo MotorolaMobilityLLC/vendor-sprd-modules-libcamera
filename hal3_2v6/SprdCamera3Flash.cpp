@@ -39,6 +39,7 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
 #include <utils/Log.h>
 
 #include "SprdCamera3Flash.h"
+#include "SprdCamera3HALHeader.h"
 
 #include "cmr_common.h"
 #define LOGE CMR_LOGE
@@ -73,7 +74,7 @@ SprdCamera3Flash *SprdCamera3Flash::getInstance() {
 * RETURN      : None
 *==========================================================================*/
 SprdCamera3Flash::SprdCamera3Flash() : m_callbacks(NULL) {
-    LOGV("%s : In", __func__);
+    HAL_LOGV("%s : In", __func__);
     memset(&m_flashOn, 0, sizeof(m_flashOn));
     memset(&m_cameraOpen, 0, sizeof(m_cameraOpen));
 }
@@ -95,7 +96,7 @@ SprdCamera3Flash::~SprdCamera3Flash() {
 *==========================================================================*/
 int32_t SprdCamera3Flash::registerCallbacks(
     const camera_module_callbacks_t *callbacks) {
-    LOGV("%s : In", __func__);
+    HAL_LOGV("%s : In", __func__);
     int32_t retVal = 0;
     if (!_instance)
         _instance = new SprdCamera3Flash();
@@ -119,7 +120,7 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     const char *const flashInterface =
         "/sys/devices/virtual/misc/sprd_flash/test";
     ssize_t wr_ret;
-    LOGV("open flash driver interface");
+    HAL_LOGV("open flash driver interface");
     int fd = open(flashInterface, O_WRONLY);
     /* open sysfs file parition */
     if (-1 == fd) {
@@ -149,7 +150,7 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     }
 
     close(fd);
-    LOGV("Close file");
+    HAL_LOGV("Close file");
     return retVal;
 }
 /*===========================================================================
@@ -162,7 +163,7 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
 *             none-zero failure code
 *==========================================================================*/
 int32_t SprdCamera3Flash::set_torch_mode(const char *cameraIdStr, bool on) {
-    LOGV("%s : cameraId:%s", __func__, cameraIdStr);
+    HAL_LOGV("%s : cameraId:%s", __func__, cameraIdStr);
     int retVal = 0;
     char *cmd_str;
     if (on) {
@@ -189,21 +190,21 @@ int32_t SprdCamera3Flash::set_torch_mode(const char *cameraIdStr, bool on) {
 *==========================================================================*/
 int32_t SprdCamera3Flash::reserveFlashForCamera(const int cameraId) {
     int retVal = 0;
-    LOGV("%s : cameraId = %d", __func__, cameraId);
+    HAL_LOGV("%s : cameraId = %d", __func__, cameraId);
     if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
-        LOGE("%s: Invalid camera id: %d", __func__, cameraId);
+        HAL_LOGE("%s: Invalid camera id: %d", __func__, cameraId);
         retVal = -EINVAL;
         goto exit;
     }
     if (m_callbacks == NULL || m_callbacks->torch_mode_status_change == NULL) {
-        LOGE("%s: Callback is not defined!", __func__);
+        HAL_LOGE("%s: Callback is not defined!", __func__);
         retVal = -EINVAL;
         goto exit;
     }
     char cameraIdStr[STRING_LENGTH];
     snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
     if (m_cameraOpen[cameraId]) {
-        LOGV("FLash already reserved for camera ");
+        HAL_LOGV("FLash already reserved for camera ");
     } else {
         if (!cameraId && m_flashOn[0]) {
             set_torch_mode(cameraIdStr, SPRD_FLASH_STATUS_OFF);
@@ -227,22 +228,22 @@ exit:
 *==========================================================================*/
 int32_t SprdCamera3Flash::releaseFlashFromCamera(const int cameraId) {
     int retVal = 0;
-    LOGV("%s : cameraId = %d", __func__, cameraId);
+    HAL_LOGV("%s : cameraId = %d", __func__, cameraId);
 
     if (cameraId < 0 || cameraId >= SPRD_CAMERA_MAX_NUM_SENSORS) {
-        LOGE("%s: Invalid camera id: %d", __func__, cameraId);
+        HAL_LOGE("%s: Invalid camera id: %d", __func__, cameraId);
         retVal = -EINVAL;
         goto exit;
     }
     if (m_callbacks == NULL) {
-        LOGE("%s: Callback is not defined!", __func__);
+        HAL_LOGE("%s: Callback is not defined!", __func__);
         retVal = -EINVAL;
         goto exit;
     }
     char cameraIdStr[STRING_LENGTH];
     snprintf(cameraIdStr, STRING_LENGTH, "%d", cameraId);
     if (!m_cameraOpen[cameraId]) {
-        LOGV(" Flash unit is already released");
+        HAL_LOGV(" Flash unit is already released");
     } else {
         m_cameraOpen[cameraId] = false;
         m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,

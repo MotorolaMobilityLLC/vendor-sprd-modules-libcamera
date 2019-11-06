@@ -875,7 +875,7 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
         break;
     }
 
-    HAL_LOGI("X");
+    HAL_LOGD("X");
     return ret;
 }
 
@@ -883,7 +883,7 @@ int SprdCamera3OEMIf::takePicture() {
     ATRACE_CALL();
 
     int ret = 0;
-    HAL_LOGI("E");
+    HAL_LOGD("E");
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -933,7 +933,7 @@ int SprdCamera3OEMIf::takePicture() {
             }
             stopPreviewInternal();
         }
-        HAL_LOGI("stopPreviewInternal done, preview state = %d",
+        HAL_LOGV("stopPreviewInternal done, preview state = %d",
                  getPreviewState());
 
         if (isPreviewing()) {
@@ -958,7 +958,7 @@ int SprdCamera3OEMIf::takePicture() {
     }
 
 exit:
-    HAL_LOGI("X");
+    HAL_LOGD("X");
     /*must return NO_ERROR, otherwise can't flush camera normal*/
     return NO_ERROR;
 }
@@ -1005,7 +1005,7 @@ int SprdCamera3OEMIf::reprocessInputBuffer() {
         channel->releaseInputBuff();
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return ret;
 }
 
@@ -1152,7 +1152,7 @@ int SprdCamera3OEMIf::VideoTakePicture() {
 
     JPEG_Tag jpgInfo;
 
-    HAL_LOGI("E");
+    HAL_LOGD("E");
     GET_START_TIME;
     print_time();
 
@@ -1208,7 +1208,7 @@ int SprdCamera3OEMIf::VideoTakePicture() {
     print_time();
 
 exit:
-    HAL_LOGI("X");
+    HAL_LOGD("X");
     return NO_ERROR;
 }
 
@@ -1472,7 +1472,7 @@ void SprdCamera3OEMIf::setMultiCallBackYuvMode(bool mode) {
 }
 
 void SprdCamera3OEMIf::GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y) {
-    HAL_LOGD("E");
+    HAL_LOGV("E");
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -1486,15 +1486,15 @@ void SprdCamera3OEMIf::GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y) {
         }
     */
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 }
 
 cmr_s32 SprdCamera3OEMIf::ispSwCheckBuf(cmr_uint *param_ptr) {
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     /*
         return mHalOem->ops->camera_isp_sw_check_buf(mCameraHandle, param_ptr);
     */
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return 0;
 }
 
@@ -1524,7 +1524,7 @@ void SprdCamera3OEMIf::setCaptureReprocessMode(bool mode, uint32_t width,
 int SprdCamera3OEMIf::setSensorStream(uint32_t on_off) {
     int ret;
 
-    HAL_LOGD("E");
+    //HAL_LOGD("E");
     ret = mHalOem->ops->camera_ioctrl(
         mCameraHandle, CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL, &on_off);
 
@@ -1536,7 +1536,7 @@ int SprdCamera3OEMIf::setCameraClearQBuff() {
 
     HAL_LOGD("E");
     mIsCameraClearQBuf = 1;
-    HAL_LOGD("mIsCameraClearQBuf %d", mIsCameraClearQBuf);
+    //HAL_LOGD("mIsCameraClearQBuf %d", mIsCameraClearQBuf);
     return ret;
 }
 
@@ -1590,7 +1590,7 @@ void SprdCamera3OEMIf::getOnlineBuffer(void *cali_info) {
     /*
         mHalOem->ops->camera_get_online_buffer(mCameraHandle, cali_info);
     */
-    HAL_LOGD("online buffer addr %p", cali_info);
+    //HAL_LOGD("online buffer addr %p", cali_info);
     return;
 }
 
@@ -1886,7 +1886,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
     }
 
     if (mVideoCopyFromPreviewFlag) {
-        HAL_LOGD("video stream copy from preview stream");
+        //HAL_LOGD("video stream copy from preview stream");
         videoSize.width = 0;
         videoSize.height = 0;
     } else {
@@ -2304,7 +2304,7 @@ void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state,
     Sprd_camera_state org_state = SPRD_IDLE;
     volatile Sprd_camera_state *state_owner = NULL;
     Mutex::Autolock stateLock(&mStateLock);
-    HAL_LOGD("E:state: %s, owner: %d camera id %d", getCameraStateStr(state),
+    HAL_LOGV("E:state: %s, owner: %d camera id %d", getCameraStateStr(state),
              owner, mCameraId);
 
     if (owner == STATE_CAPTURE) {
@@ -2452,17 +2452,17 @@ SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getCaptureState() {
 }
 
 SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getFocusState() {
-    HAL_LOGD("%s", getCameraStateStr(mCameraState.focus_state));
+    HAL_LOGV("%s", getCameraStateStr(mCameraState.focus_state));
     return mCameraState.focus_state;
 }
 
 SprdCamera3OEMIf::Sprd_camera_state SprdCamera3OEMIf::getSetParamsState() {
-    HAL_LOGD("%s", getCameraStateStr(mCameraState.setParam_state));
+    HAL_LOGV("%s", getCameraStateStr(mCameraState.setParam_state));
     return mCameraState.setParam_state;
 }
 
 bool SprdCamera3OEMIf::isCameraInit() {
-    HAL_LOGD("%s", getCameraStateStr(mCameraState.camera_state));
+    HAL_LOGV("%s", getCameraStateStr(mCameraState.camera_state));
     return (SPRD_IDLE == mCameraState.camera_state);
 }
 
@@ -2539,7 +2539,7 @@ bool SprdCamera3OEMIf::checkPreviewStateForCapture() {
 bool SprdCamera3OEMIf::WaitForCameraStop() {
     ATRACE_CALL();
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     Mutex::Autolock stateLock(&mStateLock);
 
     if (SPRD_INTERNAL_STOPPING == mCameraState.camera_state) {
@@ -2551,7 +2551,7 @@ bool SprdCamera3OEMIf::WaitForCameraStop() {
         }
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 
     return SPRD_INIT == mCameraState.camera_state;
 }
@@ -2560,13 +2560,13 @@ int SprdCamera3OEMIf::waitForPipelineStart() {
     ATRACE_CALL();
     int ret = 0;
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     Mutex::Autolock l(mPipelineStartLock);
 
     while (mCameraState.preview_state != SPRD_PREVIEW_IN_PROGRESS &&
            mCameraState.preview_state != SPRD_INTERNAL_PREVIEW_REQUESTED &&
            mCameraState.preview_state != SPRD_ERROR) {
-        HAL_LOGD("waiting for pipeline start");
+        //HAL_LOGD("waiting for pipeline start");
         if (mPipelineStartSignal.waitRelative(mPipelineStartLock,
                                               PIPELINE_START_TIMEOUT)) {
             HAL_LOGE("timeout");
@@ -2575,19 +2575,19 @@ int SprdCamera3OEMIf::waitForPipelineStart() {
         }
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return ret;
 }
 
 bool SprdCamera3OEMIf::WaitForPreviewStart() {
     ATRACE_CALL();
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     Mutex::Autolock stateLock(&mStateLock);
 
     while (SPRD_PREVIEW_IN_PROGRESS != mCameraState.preview_state &&
            SPRD_ERROR != mCameraState.preview_state) {
-        HAL_LOGD("waiting for SPRD_PREVIEW_IN_PROGRESS");
+        //HAL_LOGD("waiting for SPRD_PREVIEW_IN_PROGRESS");
         if (mStateWait.waitRelative(mStateLock, PREV_TIMEOUT)) {
             HAL_LOGE("timeout");
             break;
@@ -2595,7 +2595,7 @@ bool SprdCamera3OEMIf::WaitForPreviewStart() {
         HAL_LOGD("woke up");
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 
     return SPRD_PREVIEW_IN_PROGRESS == mCameraState.preview_state;
 }
@@ -2606,7 +2606,7 @@ bool SprdCamera3OEMIf::WaitForCaptureDone() {
     Mutex::Autolock stateLock(&mStateLock);
     while (SPRD_IDLE != mCameraState.capture_state &&
            SPRD_ERROR != mCameraState.capture_state) {
-        HAL_LOGD("waiting for SPRD_IDLE");
+        //HAL_LOGD("waiting for SPRD_IDLE");
         if (mStateWait.waitRelative(mStateLock, CAP_TIMEOUT)) {
             HAL_LOGE("timeout");
             break;
@@ -2626,7 +2626,7 @@ bool SprdCamera3OEMIf::WaitForCaptureJpegState() {
            SPRD_IDLE != mCameraState.capture_state &&
            SPRD_ERROR != mCameraState.capture_state &&
            SPRD_INTERNAL_CAPTURE_STOPPING != mCameraState.capture_state) {
-        HAL_LOGD("waiting for SPRD_WAITING_JPEG");
+        //HAL_LOGD("waiting for SPRD_WAITING_JPEG");
         mStateWait.wait(mStateLock);
         HAL_LOGD("woke up, state is %s",
                  getCameraStateStr(mCameraState.capture_state));
@@ -2978,11 +2978,11 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
 }
 
 bool SprdCamera3OEMIf::initPreview() {
-    HAL_LOGD("E");
+    HAL_LOGV("E");
 
     setPreviewParams();
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return true;
 }
 
@@ -3005,7 +3005,7 @@ void SprdCamera3OEMIf::deinitPreview() {
 }
 
 void SprdCamera3OEMIf::deinitCapture(bool isPreAllocCapMem) {
-    HAL_LOGD("E %d", isPreAllocCapMem);
+    HAL_LOGV("E %d", isPreAllocCapMem);
 
     if (0 == isPreAllocCapMem) {
         Callback_CaptureFree(0, 0, 0, 0);
@@ -3101,7 +3101,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     if (isPreviewing()) {
-        HAL_LOGD("Preview already in progress, mRestartFlag=%d", mRestartFlag);
+        HAL_LOGV("Preview already in progress, mRestartFlag=%d", mRestartFlag);
         if (mRestartFlag == false) {
             return NO_ERROR;
         } else {
@@ -3399,7 +3399,7 @@ int SprdCamera3OEMIf::cancelPictureInternal() {
         break;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return result ? NO_ERROR : UNKNOWN_ERROR;
 }
 
@@ -4393,7 +4393,7 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
                                       CAMERA_STREAM_TYPE_PREVIEW);
 
 exit:
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return true;
 }
 
@@ -4506,7 +4506,7 @@ bool SprdCamera3OEMIf::returnYuvCallbackFrame(struct camera_frame_type *frame) {
                                       CAMERA_STREAM_TYPE_CALLBACK);
 
 exit:
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return true;
 }
 
@@ -4726,7 +4726,7 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     }
 
 exit:
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 }
 
 void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
@@ -4904,7 +4904,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 #endif
 exit:
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 }
 
 void SprdCamera3OEMIf::receiveJpegPictureError(void) {
@@ -5286,7 +5286,7 @@ void SprdCamera3OEMIf::HandleCancelPicture(enum camera_cb_type cb,
                                            void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    HAL_LOGD("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
+    HAL_LOGV("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCaptureState()));
 
     if (SPRD_INTERNAL_CAPTURE_STOPPING != getCaptureState()) {
@@ -5569,7 +5569,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         mSetting->getSPRDDEFTag(&sprdInfo);
         sprdInfo.sprd_is_hdr_scene = *(uint8_t *)parm4;
         mSetting->setSPRDDEFTag(sprdInfo);
-        HAL_LOGD("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
+        HAL_LOGV("sprd_is_hdr_scene = %d", sprdInfo.sprd_is_hdr_scene);
         break;
     case CAMERA_EVT_CB_3DNR_SCENE:
         SPRD_DEF_Tag sprd3dnrInfo;
@@ -5621,7 +5621,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
 }
 
 void SprdCamera3OEMIf::HandleStartCamera(enum camera_cb_type cb, void *parm4) {
-    HAL_LOGD("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
+    HAL_LOGV("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCameraState()));
 
     transitionState(SPRD_INIT, SPRD_IDLE, STATE_CAMERA);
@@ -5630,7 +5630,7 @@ void SprdCamera3OEMIf::HandleStartCamera(enum camera_cb_type cb, void *parm4) {
 }
 
 void SprdCamera3OEMIf::HandleStopCamera(enum camera_cb_type cb, void *parm4) {
-    HAL_LOGD("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
+    HAL_LOGV("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCameraState()));
 
     transitionState(SPRD_INTERNAL_STOPPING, SPRD_INIT, STATE_CAMERA);
@@ -5641,7 +5641,7 @@ void SprdCamera3OEMIf::HandleStopCamera(enum camera_cb_type cb, void *parm4) {
 void SprdCamera3OEMIf::HandleGetBufHandle(enum camera_cb_type cb, void *parm4) {
     int ret = 0;
 
-    HAL_LOGD("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
+    HAL_LOGV("in: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCameraState()));
     SprdCamera3Stream *stream = NULL;
     // private_handle_t *buffer = NULL;
@@ -5752,7 +5752,7 @@ int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
                                      size_t size) {
     ATRACE_CALL();
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
 
     int ret = 0;
     ret = MemIon::Sync_ion_buffer(buffer_fd);
@@ -5761,7 +5761,7 @@ int SprdCamera3OEMIf::flushIonBuffer(int buffer_fd, void *v_addr, void *p_addr,
         goto exit;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 
 exit:
     return ret;
@@ -5771,7 +5771,7 @@ int SprdCamera3OEMIf::invalidateCache(int buffer_fd, void *v_addr, void *p_addr,
                                       size_t size) {
     ATRACE_CALL();
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
 
     int ret = 0;
     ret = MemIon::Invalid_ion_buffer(buffer_fd);
@@ -5780,7 +5780,7 @@ int SprdCamera3OEMIf::invalidateCache(int buffer_fd, void *v_addr, void *p_addr,
         goto exit;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 
 exit:
     return ret;
@@ -7799,7 +7799,7 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
                             GraphicBuffer::USAGE_SW_READ_OFTEN |
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
 
-    LOGI("Callback_Sw3DNRCapturePathMalloc: size %d sum %d mPathRawHeapNum %d"
+    HAL_LOGI("Callback_Sw3DNRCapturePathMalloc: size %d sum %d mPathRawHeapNum %d"
          "mPathRawHeapSize %d",
          size, sum, mPathRawHeapNum, mPathRawHeapSize);
 
@@ -8024,7 +8024,7 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
             struct private_handle_t *pHandle =
                 (private_handle_t *)m3DNRGraphicPathArray[i].private_handle;
             if (pHandle->attr_base != MAP_FAILED) {
-                LOGI("Warning shared attribute region mapped at free. "
+                HAL_LOGI("Warning shared attribute region mapped at free. "
                      "Unmapping");
                 munmap(pHandle->attr_base, PAGE_SIZE);
                 pHandle->attr_base = MAP_FAILED;
@@ -8048,7 +8048,7 @@ int SprdCamera3OEMIf::Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum,
     sprd_camera_memory_t *memory = NULL;
     cmr_int i = 0;
 
-    LOGI("Callback_CapturePathMalloc: size %d sum %d mPathRawHeapNum %d"
+    HAL_LOGI("Callback_CapturePathMalloc: size %d sum %d mPathRawHeapNum %d"
          "mPathRawHeapSize %d",
          size, sum, mPathRawHeapNum, mPathRawHeapSize);
 
@@ -8085,7 +8085,7 @@ int SprdCamera3OEMIf::Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum,
         }
     } else {
         if ((mPathRawHeapNum >= sum) && (mPathRawHeapSize >= size)) {
-            LOGI("Callback_CapturePathMalloc :test");
+            HAL_LOGI("Callback_CapturePathMalloc :test");
             for (i = 0; i < (cmr_int)sum; i++) {
                 *phy_addr++ = (cmr_uint)mPathRawHeapArray[i]->phys_addr;
                 *vir_addr++ = (cmr_uint)mPathRawHeapArray[i]->data;
@@ -8245,7 +8245,7 @@ int SprdCamera3OEMIf::Callback_CapturePathFree(cmr_uint *phy_addr,
                                                cmr_u32 sum) {
     cmr_u32 i;
 
-    LOGI("Callback_CapturePathFree: mPathRawHeapNum %d sum %d", mPathRawHeapNum,
+    HAL_LOGI("Callback_CapturePathFree: mPathRawHeapNum %d sum %d", mPathRawHeapNum,
          sum);
 
     for (i = 0; i < mPathRawHeapNum; i++) {
@@ -11094,7 +11094,7 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     ASensorEvent buffer[8];
     ssize_t n;
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     if (!obj) {
         HAL_LOGE("obj null  error");
         return NULL;
@@ -11159,7 +11159,7 @@ exit:
     ASensorManager_destroyEventQueue(mSensorManager, sensorEventQueue);
     sem_post(&obj->mGyro_sem);
     obj->mGyroExit = 1;
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return NULL;
 }
 
@@ -11177,7 +11177,7 @@ void *SprdCamera3OEMIf::gyro_SensorManager_process(void *p_data) {
     ASensorEvent buffer[8];
     ssize_t n;
 
-    HAL_LOGE("E");
+    HAL_LOGV("E");
     if (!obj) {
         HAL_LOGE("obj null  error");
         return NULL;
@@ -11273,14 +11273,14 @@ void *SprdCamera3OEMIf::gyro_SensorManager_process(void *p_data) {
 exit:
     sem_post(&obj->mGyro_sem);
     obj->mGyroExit = 1;
-    HAL_LOGE("X");
+    HAL_LOGV("X");
     return NULL;
 }
 #endif
 void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     if (!obj) {
         HAL_LOGE("obj null  error");
         return NULL;
@@ -11304,7 +11304,7 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
 #else
     gyro_SensorManager_process(p_data);
 #endif
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return NULL;
 }
 

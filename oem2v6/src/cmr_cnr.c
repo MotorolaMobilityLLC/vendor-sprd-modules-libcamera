@@ -62,7 +62,7 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     cnr_handle = (struct class_cnr *)malloc(sizeof(struct class_cnr));
     if (!cnr_handle) {
@@ -94,7 +94,7 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 
     *class_handle = (cmr_handle)cnr_handle;
 
-    CMR_LOGI(" x ");
+    CMR_LOGD("X");
 
     return ret;
 
@@ -113,7 +113,7 @@ static cmr_int cnr_close(cmr_handle class_handle) {
         CMR_LOGE("cnr_handle is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (cnr_handle->is_inited) {
         sem_wait(&cnr_handle->sem);
@@ -131,7 +131,7 @@ static cmr_int cnr_close(cmr_handle class_handle) {
     free(cnr_handle);
     class_handle = NULL;
 
-    CMR_LOGI("X ");
+    CMR_LOGD("X");
 
     return ret;
 }
@@ -159,7 +159,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGD("E ");
+    CMR_LOGV("E ");
     if (!cnr_handle->is_inited) {
         return ret;
     }
@@ -234,7 +234,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     }
 
 exit:
-    CMR_LOGI("X");
+    CMR_LOGV("X");
 
     sem_post(&cnr_handle->sem);
     return ret;

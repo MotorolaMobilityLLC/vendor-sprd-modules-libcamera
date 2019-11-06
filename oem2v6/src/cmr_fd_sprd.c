@@ -1317,7 +1317,7 @@ cmr_int fd_start_scale(cmr_handle oem_handle, struct img_frm *src,
         CMR_LOGE("failed to start scaler, ret %ld", ret);
     }
 exit:
-    CMR_LOGV("done %ld", ret);
+    CMR_LOGV("X, ret=%ld", ret);
 
     return ret;
 }

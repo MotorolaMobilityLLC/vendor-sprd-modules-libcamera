@@ -122,7 +122,7 @@ cmr_int cmr_rot(struct cmr_rot_param *rot_param) {
     ret = cpp_rot_start(&cpp_rot_params);
 
 rot_exit:
-    CMR_LOGI("X ret=%ld", ret);
+    CMR_LOGV("X ret=%ld", ret);
     return ret;
 }
 

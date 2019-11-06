@@ -90,7 +90,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     struct cmr_grab *p_grab = NULL;
     struct sprd_img_res res;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     cmr_bzero(&res, sizeof(res));
     p_grab = (struct cmr_grab *)malloc(sizeof(struct cmr_grab));
@@ -196,7 +196,7 @@ cmr_int cmr_grab_init(struct grab_init_param *init_param_ptr,
     *grab_handle = (cmr_handle)p_grab;
 
 exit:
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     ATRACE_END();
     return ret;
 }
@@ -213,7 +213,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
     p_grab = (struct cmr_grab *)grab_handle;
 
     CMR_CHECK_HANDLE;
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     /* thread should be killed before fd deinited */
     ret = cmr_grab_kill_thread(grab_handle);
@@ -264,7 +264,7 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
     grab_handle = NULL;
 
 exit:
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     ATRACE_END();
     return 0;
 }
@@ -484,7 +484,7 @@ cmr_int cmr_grab_sw_3dnr_cfg(cmr_handle grab_handle,
     CMR_RTN_IF_ERR(ret);
     CMR_LOGI("SPRD_IMG_IO_SET_3DNR = %ld ", ret);
 exit:
-    CMR_LOGI("ret = %ld", ret);
+    CMR_LOGV("ret = %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -708,14 +708,14 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
 
-    CMR_LOGI("frm_num %d dst width %d dst height %d,slowmotion %d, "
-             "is_high_fps:%d, high_fps_skip_num:%d",
+    CMR_LOGI("frm_num %d, dst width %d, dst height %d,slowmotion %d,"
+             "is_high_fps:%d, high_fps_skip_num:%d, src_img_fmt %d,"
+             "dst_img_fmt %d, 4in1 %d.",
              config->frm_num, config->cfg.dst_img_size.width,
              config->cfg.dst_img_size.height, config->cfg.slowmotion,
-             config->cfg.is_high_fps, config->cfg.high_fps_skip_num);
-
-    CMR_LOGI("src_img_fmt %d dst_img_fmt %d 4in1 %d.", config->cfg.src_img_fmt,
-             config->cfg.dst_img_fmt, config->cfg.need_4in1);
+             config->cfg.is_high_fps, config->cfg.high_fps_skip_num,
+             config->cfg.src_img_fmt, config->cfg.dst_img_fmt,
+             config->cfg.need_4in1);
 
     parm.dst_size.w = config->cfg.dst_img_size.width;
     parm.dst_size.h = config->cfg.dst_img_size.height;
@@ -766,7 +766,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     ret = cmr_grab_cap_cfg_common(grab_handle, config, *channel_id, endian);
 
 exit:
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -786,7 +786,7 @@ cmr_int cmr_grab_3dnr_cfg(cmr_handle grab_handle, cmr_u32 channel_id,
              sprd_3dnr_mode.need_3dnr);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR_MODE, &sprd_3dnr_mode);
 
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGV("ret %ld", ret);
     return ret;
 }
 
@@ -803,7 +803,7 @@ cmr_int cmr_grab_auto_3dnr_cfg(cmr_handle grab_handle,
     CMR_LOGV("auto_3dnr_enable: %d", auto_3dnr_mode.auto_3dnr_enable);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_AUTO_3DNR_MODE, &auto_3dnr_enable);
 
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGV("ret %ld", ret);
     return ret;
 }
 
@@ -1004,7 +1004,7 @@ cmr_int cmr_grab_dcam_size(cmr_handle grab_handle,
     }
 
 exit:
-    CMR_LOGI("ret = %ld", ret);
+    CMR_LOGV("ret = %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -1045,7 +1045,7 @@ cmr_int cmr_grab_cap_start(cmr_handle grab_handle, cmr_u32 skip_num) {
     ATRACE_END();
 
 exit:
-    CMR_LOGI("ret=%ld", ret);
+    CMR_LOGV("ret=%ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -1085,7 +1085,7 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle) {
         pthread_mutex_unlock(&p_grab->path_mutex[i]);
     }
 
-    CMR_LOGI("ret = %ld", ret);
+    CMR_LOGD("ret = %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -1124,7 +1124,7 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle) {
     if (ret) {
         CMR_LOGE("failed to stop offline path");
     }
-    CMR_LOGD("ret = %ld", ret);
+    CMR_LOGV("ret = %ld", ret);
 
     return ret;
 }
@@ -1390,7 +1390,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle) {
     CMR_CHECK_FD;
     memset(&op, 0, sizeof(struct sprd_img_write_op));
 
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     op.cmd = SPRD_IMG_STOP_DCAM;
     op.sensor_id = p_grab->init_param.sensor_id;
@@ -1406,7 +1406,7 @@ static cmr_int cmr_grab_kill_thread(cmr_handle grab_handle) {
         ret = cnt;
     }
 
-    CMR_LOGI("X");
+    CMR_LOGV("X");
     ATRACE_END();
     return ret;
 }
@@ -1435,7 +1435,7 @@ static void *cmr_grab_thread_proc(void *data) {
     if (-1 == p_grab->fd)
         return NULL;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     // change this thread priority
     setpriority(PRIO_PROCESS, 0, -10);
@@ -1574,7 +1574,7 @@ static void *cmr_grab_thread_proc(void *data) {
     }
 
     sem_post(&p_grab->close_sem);
-    CMR_LOGI("X");
+    CMR_LOGD("X");
     return NULL;
 }
 

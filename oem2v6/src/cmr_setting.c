@@ -3495,7 +3495,7 @@ static cmr_int setting_thread_proc(struct cmr_msg *message, void *data) {
     }
 
 setting_proc_out:
-    CMR_LOGV("ret %ld", ret);
+    CMR_LOGV("X, ret %ld", ret);
     return ret;
 }
 

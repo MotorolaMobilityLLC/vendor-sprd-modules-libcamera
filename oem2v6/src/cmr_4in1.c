@@ -317,12 +317,12 @@ static cmr_int thread_destroy_4in1(struct class_4in1 *class_handle) {
 
     CHECK_HANDLE_VALID(class_handle);
 
-    CMR_LOGD("E");
+    CMR_LOGV("E");
 
     ret = cmr_thread_destroy(class_handle->thread_4in1);
     class_handle->thread_4in1 = 0;
 
-    CMR_LOGD("X");
+    CMR_LOGV("X");
     return ret;
 }
 #endif

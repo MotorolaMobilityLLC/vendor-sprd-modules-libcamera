@@ -140,7 +140,7 @@ SprdCamera3HWI::~SprdCamera3HWI() {
 
     HAL_LOGI(":hal3: Destructor E camId=%d", mCameraId);
 
-    HAL_LOGI(":hal3: Destructor X");
+    //HAL_LOGI(":hal3: Destructor X");
 }
 
 SprdCamera3RegularChannel *SprdCamera3HWI::getRegularChan() {
@@ -476,7 +476,7 @@ camera_metadata_t *SprdCamera3HWI::constructDefaultMetadata(int type) {
     }
     mSetting->constructDefaultMetadata(type, &metadata);
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return metadata;
 }
 
@@ -557,7 +557,7 @@ int SprdCamera3HWI::configureStreams(
     camera3_stream_configuration_t *streamList) {
     ATRACE_CALL();
 
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     Mutex::Autolock l(mLock);
     char value[PROPERTY_VALUE_MAX];
     char value2[PROPERTY_VALUE_MAX];
@@ -2055,7 +2055,7 @@ int SprdCamera3HWI::initialize(const struct camera3_device *device,
                                const camera3_callback_ops_t *callback_ops) {
     ATRACE_CALL();
 
-    HAL_LOGD("camera3_device_ops E");
+    HAL_LOGD("E");
     SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(device->priv);
     if (!hw) {
         HAL_LOGE("NULL camera device");
@@ -2063,7 +2063,7 @@ int SprdCamera3HWI::initialize(const struct camera3_device *device,
     }
 
     int ret = hw->initialize(callback_ops);
-    HAL_LOGD("camera3_device_ops X");
+    HAL_LOGD("X");
     return ret;
 }
 
@@ -2072,34 +2072,34 @@ int SprdCamera3HWI::configure_streams(
     camera3_stream_configuration_t *stream_list) {
     ATRACE_CALL();
 
-    HAL_LOGD("camera3_device_ops E");
+    HAL_LOGD("E");
     SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(device->priv);
     if (!hw) {
         HAL_LOGE("NULL camera device");
         return -ENODEV;
     }
     int ret = hw->configureStreams(stream_list);
-    HAL_LOGD("camera3_device_ops X");
+    HAL_LOGD("X");
     return ret;
 }
 
 int SprdCamera3HWI::register_stream_buffers(
     const struct camera3_device *device,
     const camera3_stream_buffer_set_t *buffer_set) {
-    HAL_LOGD("camera3_device_ops E");
+    HAL_LOGD("E");
     SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(device->priv);
     if (!hw) {
         HAL_LOGE("NULL camera device");
         return -ENODEV;
     }
     int ret = hw->registerStreamBuffers(buffer_set);
-    HAL_LOGD("camera3_device_ops X");
+    HAL_LOGD("X");
     return ret;
 }
 
 const camera_metadata_t *SprdCamera3HWI::construct_default_request_settings(
     const struct camera3_device *device, int type) {
-    HAL_LOGD("camera3_device_ops E");
+    HAL_LOGD("E");
     camera_metadata_t *fwk_metadata = NULL;
     SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(device->priv);
     if (!hw) {
@@ -2108,7 +2108,7 @@ const camera_metadata_t *SprdCamera3HWI::construct_default_request_settings(
     }
 
     fwk_metadata = hw->constructDefaultMetadata(type);
-    HAL_LOGD("camera3_device_ops X");
+    HAL_LOGD("X");
     return fwk_metadata;
 }
 
@@ -2116,7 +2116,7 @@ int SprdCamera3HWI::process_capture_request(
     const struct camera3_device *device, camera3_capture_request_t *request) {
     ATRACE_CALL();
 
-    HAL_LOGV("camera3_device_ops E");
+    HAL_LOGV("E");
     SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(device->priv);
     if (!hw) {
         HAL_LOGE("NULL camera device");
@@ -2124,13 +2124,13 @@ int SprdCamera3HWI::process_capture_request(
     }
 
     int ret = hw->processCaptureRequest(request);
-    HAL_LOGV("camera3_device_ops X");
+    HAL_LOGV("X");
     return ret;
 }
 
 void SprdCamera3HWI::get_metadata_vendor_tag_ops(
     const struct camera3_device *device, vendor_tag_query_ops_t *ops) {
-    HAL_LOGD("camera3_device_ops E");
+    HAL_LOGD("E");
     SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(device->priv);
     if (!hw) {
         HAL_LOGE("NULL camera device");
@@ -2138,7 +2138,7 @@ void SprdCamera3HWI::get_metadata_vendor_tag_ops(
     }
 
     hw->getMetadataVendorTagOps(ops);
-    HAL_LOGD("camera3_device_ops X");
+    HAL_LOGD("X");
     return;
 }
 
@@ -2160,7 +2160,7 @@ int SprdCamera3HWI::flush(const struct camera3_device *device) {
 
     int ret;
 
-    HAL_LOGD("camera3_device_ops E");
+    HAL_LOGD("E");
     SprdCamera3HWI *hw = reinterpret_cast<SprdCamera3HWI *>(device->priv);
     if (!hw) {
         HAL_LOGE("NULL camera device");
@@ -2168,7 +2168,7 @@ int SprdCamera3HWI::flush(const struct camera3_device *device) {
     }
 
     ret = hw->flush();
-    HAL_LOGD("camera3_device_ops X");
+    HAL_LOGD("X");
     return ret;
 }
 

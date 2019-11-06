@@ -181,7 +181,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_size;
     cmr_u32 small_buf_num;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     if (!out || !in || !ipm_handle || !class_handle) {
         CMR_LOGE("Invalid Param!");
@@ -289,7 +289,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
 
     *class_handle = (cmr_handle)threednr_handle;
-    CMR_LOGI("X");
+    CMR_LOGD("X");
 
     return ret;
 
@@ -308,7 +308,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     CHECK_HANDLE_VALID(threednr_handle);
 
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
@@ -364,7 +364,7 @@ exit:
         threednr_handle = NULL;
     }
 
-    CMR_LOGI("X");
+    CMR_LOGD("X");
 
     return ret;
 }
@@ -385,7 +385,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_size;
     cmr_u32 small_buf_num;
 
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     if (!out || !in || !ipm_handle || !class_handle) {
         CMR_LOGE("Invalid Param!");
@@ -467,7 +467,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
     *class_handle = (cmr_handle)threednr_prev_handle;
 
-    CMR_LOGI("X");
+    CMR_LOGV("X");
 
     return ret;
 }
@@ -480,7 +480,7 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
 
-    CMR_LOGI("E");
+    CMR_LOGV("E");
     CHECK_HANDLE_VALID(threednr_prev_handle);
 
     threednr_prev_handle->is_stop = 1;
@@ -514,7 +514,7 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
         threednr_prev_handle = NULL;
     }
 
-    CMR_LOGI("X");
+    CMR_LOGV("X");
 
     return ret;
 }
@@ -587,7 +587,7 @@ static cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         CMR_LOGE("failed to start scaler, ret %ld", ret);
     }
 exit:
-    CMR_LOGI("done %ld", ret);
+    CMR_LOGV("X, ret=%ld", ret);
 
     ATRACE_END();
     return ret;
@@ -778,7 +778,7 @@ void *thread_3dnr(void *p_data) {
         ret = req_3dnr_do(threednr_handle, addr, size);
     }
 
-    CMR_LOGI("post sem");
+    CMR_LOGV("post sem");
     sem_post(&threednr_handle->sem_3dnr);
 
     return NULL;
@@ -799,7 +799,7 @@ cmr_int create_3dnr_thread(struct thread_3dnr_info *info) {
 
     pthread_attr_destroy(&attr);
 
-    CMR_LOGD("done %ld", rtn);
+    CMR_LOGV("X, ret=%ld", rtn);
 
     return rtn;
 }

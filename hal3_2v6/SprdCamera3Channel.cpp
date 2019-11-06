@@ -78,7 +78,7 @@ SprdCamera3RegularChannel::SprdCamera3RegularChannel(
     SprdCamera3Setting *setting, SprdCamera3Channel *metadata_channel,
     camera_channel_type_t channel_type, void *userData)
     : SprdCamera3Channel(oem_if, cb_routine, setting, userData) {
-    HAL_LOGD("E");
+    HAL_LOGV("E");
 
     mChannelType = channel_type;
 
@@ -93,7 +93,7 @@ SprdCamera3RegularChannel::SprdCamera3RegularChannel(
     memset(&mInputBufInfo, 0, sizeof(hal_mem_info_t));
 
     mMetadataChannel = metadata_channel;
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 }
 
 SprdCamera3RegularChannel::~SprdCamera3RegularChannel() {
@@ -500,7 +500,7 @@ SprdCamera3PicChannel::SprdCamera3PicChannel(
     SprdCamera3Setting *setting, SprdCamera3Channel *metadata_channel,
     camera_channel_type_t channel_type, void *userData)
     : SprdCamera3Channel(oem_if, cb_routine, setting, userData) {
-    HAL_LOGD("E");
+    HAL_LOGV("E");
     mChannelType = channel_type;
 
     for (size_t i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
@@ -509,7 +509,7 @@ SprdCamera3PicChannel::SprdCamera3PicChannel(
     buff_index = 0;
 
     mMetadataChannel = metadata_channel;
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 }
 
 SprdCamera3PicChannel::~SprdCamera3PicChannel() {
@@ -743,7 +743,7 @@ int SprdCamera3PicChannel::addStream(camera_stream_type_t stream_type,
         return INVALID_OPERATION;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
     return NO_ERROR;
 }
 

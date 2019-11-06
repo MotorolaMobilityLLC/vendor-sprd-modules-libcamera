@@ -127,7 +127,7 @@ cmr_int cmr_sensor_init(struct sensor_init_param *init_param_ptr,
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle = NULL;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     if (!init_param_ptr) {
         CMR_LOGE("Invalid param!");
@@ -180,7 +180,7 @@ init_end:
 cmr_int cmr_sensor_deinit(cmr_handle sensor_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    CMR_LOGI("E");
+    CMR_LOGV("E");
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
@@ -205,7 +205,7 @@ cmr_int cmr_sensor_deinit(cmr_handle sensor_handle) {
     }
 
 deinit_end:
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -218,7 +218,7 @@ cmr_int cmr_sensor_open(cmr_handle sensor_handle, cmr_u32 sensor_id_bits) {
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
     cmr_u32 cameraId = 0;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -244,7 +244,7 @@ cmr_int cmr_sensor_open(cmr_handle sensor_handle, cmr_u32 sensor_id_bits) {
         }
     }
 
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -256,7 +256,7 @@ cmr_int cmr_sensor_close(cmr_handle sensor_handle, cmr_u32 sensor_id_bits) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -269,7 +269,7 @@ cmr_int cmr_sensor_close(cmr_handle sensor_handle, cmr_u32 sensor_id_bits) {
         CMR_LOGE("X send msg failed!");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -292,7 +292,7 @@ cmr_int cmr_sensor_stream_ctrl(cmr_handle sensor_handle, cmr_uint sensor_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -306,7 +306,7 @@ cmr_int cmr_sensor_stream_ctrl(cmr_handle sensor_handle, cmr_uint sensor_id,
         CMR_LOGE("X send msg failed!");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     return ret;
 }
 
@@ -317,7 +317,7 @@ cmr_int cmr_sensor_set_bypass_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
     cmr_u32 cameraId = 0;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -474,7 +474,7 @@ cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -488,7 +488,7 @@ cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
         CMR_LOGE("X send msg failed!");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -501,7 +501,7 @@ cmr_int cmr_sensor_set_mode_done(cmr_handle sensor_handle, cmr_uint sensor_id) {
     CMR_MSG_INIT(message);
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -513,7 +513,7 @@ cmr_int cmr_sensor_set_mode_done(cmr_handle sensor_handle, cmr_uint sensor_id) {
         CMR_LOGE("X send msg failed!");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     ATRACE_END();
     return ret;
 }
@@ -536,7 +536,7 @@ cmr_int cmr_sensor_update_isparm_from_file(cmr_handle sensor_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGI("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -553,7 +553,7 @@ cmr_int cmr_sensor_update_isparm_from_file(cmr_handle sensor_handle,
 		return CMR_CAMERA_FAIL;
 	}
 #endif
-    CMR_LOGI("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
 
     return ret;
 }
@@ -691,7 +691,7 @@ cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id,
     struct cmr_sns_ioctl_param ioctl_param;
     struct cmr_sensor_handle *handle =
         (struct cmr_sensor_handle *)sensor_handle;
-    CMR_LOGD("E");
+    CMR_LOGV("E");
 
     CHECK_HANDLE_VALID(handle);
 
@@ -718,7 +718,7 @@ cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id,
         return CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGD("X ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     return ret;
 }
 
@@ -783,7 +783,7 @@ cmr_int cmr_sensor_get_flash_info(cmr_handle sensor_handle, cmr_u32 sensor_id,
     }
 
 exit:
-    CMR_LOGI("ret= %ld", ret);
+    CMR_LOGV("ret= %ld", ret);
     return ret;
 }
 
@@ -816,7 +816,7 @@ end:
         handle->thread_cxt.is_inited = 1;
     }
 
-    CMR_LOGI("ret %ld", ret);
+    CMR_LOGV("ret %ld", ret);
     return ret;
 }
 
@@ -1287,7 +1287,7 @@ static cmr_int cmr_sns_af_init(struct sensor_drv_context *sensor_cxt) {
     SENSOR_EXT_FUN_PARAM_T af_param;
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CMR_LOGI("Enter");
+    CMR_LOGV("E");
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 

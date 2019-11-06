@@ -110,7 +110,7 @@ static cmr_int filter_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     sem_init(&filter_handle->sem, 0, 1);
 
     *class_handle = (cmr_handle)filter_handle;
-    CMR_LOGD("x");
+    CMR_LOGV("x");
 
     return ret;
 
@@ -129,7 +129,7 @@ static cmr_int filter_close(cmr_handle class_handle) {
         CMR_LOGE("filter_handle is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGD("E");
+    CMR_LOGV("E");
 
     if (filter_handle->is_inited) {
         sem_wait(&filter_handle->sem);
@@ -144,7 +144,7 @@ static cmr_int filter_close(cmr_handle class_handle) {
     filter_handle->is_inited = 0;
     free(filter_handle);
     filter_handle = NULL;
-    CMR_LOGD("X");
+    CMR_LOGV("X");
 
     return ret;
 }
@@ -159,7 +159,7 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     cmr_uint height = 0;
     struct camera_context *cxt = (struct camera_context *)in->private_data;
 
-    CMR_LOGD("E");
+    CMR_LOGV("E");
 
     if (!out || !in || !class_handle || !cxt) {
         CMR_LOGE("Invalid Param!");
@@ -203,7 +203,7 @@ static cmr_int filter_arithmetic_init(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
     struct class_filter *filter_handle = (struct class_filter *)class_handle;
-    CMR_LOGD("E");
+    CMR_LOGV("E");
 
     cmr_uint type = filter_handle->filter_type;
     cmr_uint width = filter_handle->width;
@@ -220,7 +220,7 @@ static cmr_int filter_arithmetic_init(cmr_handle class_handle) {
         ret = CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGD("x");
+    CMR_LOGV("X");
 
     return ret;
 }
@@ -228,7 +228,7 @@ static cmr_int filter_arithmetic_init(cmr_handle class_handle) {
 static cmr_int filter_arithmetic_deinit(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_filter *filter_handle = (struct class_filter *)class_handle;
-    CMR_LOGD("E");
+    CMR_LOGV("E");
 
     cmr_handle handle = filter_handle->handle;
 
@@ -247,7 +247,7 @@ static cmr_int filter_arithmetic_deinit(cmr_handle class_handle) {
         ret = CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGD("x");
+    CMR_LOGV("X");
 exit:
     return ret;
 }
@@ -259,7 +259,7 @@ static cmr_int filter_arithmetic_do(cmr_handle class_handle,
     struct timespec start_time, end_time;
     cmr_uint duration = 0;
 
-    CMR_LOGD("E");
+    CMR_LOGV("E");
     struct filter_pic_data pic_data;
     struct class_filter *filter_handle = (struct class_filter *)class_handle;
     cmr_bzero(&start_time, sizeof(struct timespec));

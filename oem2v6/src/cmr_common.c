@@ -208,7 +208,7 @@ cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst) {
             *dst_uv_buf++ = src_uv_buf[cur_byte + 1]; // v
         }
     }
-    CMR_LOGD("done");
+    CMR_LOGV("X");
     return 0;
 }
 

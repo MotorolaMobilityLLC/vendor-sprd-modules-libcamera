@@ -143,7 +143,7 @@ cmr_int cmr_exif_init(JINF_EXIF_INFO_T *jinf_exif_info_ptr,
 
     set_exif_pri_desc(jinf_exif_info_ptr, &exif_pri_desc_info);
 
-    CMR_LOGD(" X");
+    CMR_LOGV(" X");
 
     return ret;
 }

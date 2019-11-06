@@ -763,7 +763,7 @@ static cmr_int hdr_thread_destroy(struct class_hdr *class_handle) {
 
     CHECK_HANDLE_VALID(class_handle);
 
-    CMR_LOGD("E");
+    CMR_LOGV("E");
 
     if (class_handle->is_inited) {
         ret = cmr_thread_destroy(class_handle->hdr_thread);
@@ -772,7 +772,7 @@ static cmr_int hdr_thread_destroy(struct class_hdr *class_handle) {
         class_handle->is_inited = 0;
     }
 
-    CMR_LOGD("X");
+    CMR_LOGV("X");
     return ret;
 }
 
@@ -900,7 +900,7 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle) {
     } else {
         CMR_LOGE("failed to get verion!");
     }
-    CMR_LOGD("done %ld", ret);
+    CMR_LOGV("X, done %ld", ret);
     return ret;
 }
 
@@ -959,7 +959,7 @@ static cmr_int hdr_sprd_adapter_process(struct class_hdr *hdr_handle,
     }
 
 process_exit:
-    CMR_LOGD("done %ld", ret);
+    CMR_LOGV("X, ret=%ld", ret);
     return ret;
 }
 #endif

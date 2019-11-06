@@ -128,7 +128,7 @@ int32_t cmr_scaling_down(struct img_frm *src, struct img_frm *dst) {
             *dst_uv_buf++ = src_uv_buf[cur_byte + 1]; // v
         }
     }
-    CMR_LOGI("done");
+    CMR_LOGV("X");
     return 0;
 }
 static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
@@ -182,7 +182,7 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
                                 cfg_params->cb_handle);
     }
 exit:
-    CMR_LOGI("done ret %ld", ret);
+    CMR_LOGV("X ret %ld", ret);
     return ret;
 }
 static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
@@ -587,7 +587,7 @@ cmr_int cmr_scale_close(cmr_handle scale_handle) {
     file = NULL;
 
 exit:
-    CMR_LOGI("scale close device exit");
+    CMR_LOGV("X");
 
     return ret;
 }

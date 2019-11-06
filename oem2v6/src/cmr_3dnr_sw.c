@@ -833,7 +833,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     }
 
 exit:
-    CMR_LOGD("X");
+    CMR_LOGV("X");
     return ret;
 }
 
@@ -1277,7 +1277,7 @@ cmr_int threednr_start_scale(cmr_handle oem_handle, struct img_frm *src,
         CMR_LOGE("failed to start scaler, ret %ld", ret);
     }
 exit:
-    CMR_LOGV("done %ld", ret);
+    CMR_LOGV("X, ret=%ld", ret);
 
     return ret;
 }
@@ -1318,7 +1318,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     struct threednr_tuning_param *prev_3dnr_param;
     char flag[PROPERTY_VALUE_MAX];
 
-    CMR_LOGI("E");
+    CMR_LOGV("E");
     if (!out || !in || !ipm_handle || !class_handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
@@ -1468,7 +1468,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
     *class_handle = (cmr_handle)threednr_prev_handle;
 
-    CMR_LOGI("X");
+    CMR_LOGV("X");
     return ret;
 }
 
@@ -1533,7 +1533,7 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
     CHECK_HANDLE_VALID(threednr_prev_handle);
 
     threednr_prev_handle->is_stop = 1;
@@ -1583,7 +1583,7 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
     deinit_queue_preview_smallbufer(&(threednr_prev_handle->small_buf_queue));
     if (NULL != threednr_prev_handle)
         free(threednr_prev_handle);
-    CMR_LOGI("X");
+    CMR_LOGD("X");
 
     return ret;
 }
