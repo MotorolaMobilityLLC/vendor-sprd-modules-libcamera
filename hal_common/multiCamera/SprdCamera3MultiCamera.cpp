@@ -3654,16 +3654,11 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
     if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
-        if (currStreamType == DEFAULT_STREAM) {
-            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
+        pushBufferList(mLocalBuffer, result->output_buffers->buffer,
                            mCurFrameNum, mLocalBufferList);
+        if (currStreamType == DEFAULT_STREAM) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            SNAPSHOT_STREAM, CAM_TYPE_AUX1);
-        } else {
-            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                           mCurFrameNum, mLocalBufferList);
-            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
-                           currStreamType, CAM_TYPE_MAIN);
         }
         return;
     }
@@ -3921,16 +3916,11 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
     if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
-        if (currStreamType == DEFAULT_STREAM) {
-            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
+        pushBufferList(mLocalBuffer, result->output_buffers->buffer,
                            mCurFrameNum, mLocalBufferList);
+        if (currStreamType == DEFAULT_STREAM) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            SNAPSHOT_STREAM, CAM_TYPE_AUX2);
-        } else {
-            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                           mCurFrameNum, mLocalBufferList);
-            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
-                           currStreamType, CAM_TYPE_MAIN);
         }
         return;
     }
