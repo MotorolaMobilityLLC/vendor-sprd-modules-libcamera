@@ -2915,6 +2915,7 @@ static cmr_int ispctl_get_ae_fps_range(cmr_handle isp_alg_handle, void *param_pt
 		ISP_LOGE("fail to get valid param !");
 		return ISP_PARAM_NULL;
 	}
+	memset((void *)&data, 0, sizeof(data));
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_DC_DV_FPS_RANGE, NULL, (void *)&data);
 		if (ret) {
