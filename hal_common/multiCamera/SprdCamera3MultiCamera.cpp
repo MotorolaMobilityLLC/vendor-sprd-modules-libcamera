@@ -149,8 +149,8 @@ int SprdCamera3MultiCamera::get_camera_info(int id, struct camera_info *info) {
             metadata.update(ANDROID_FLASH_INFO_AVAILABLE, &available, 1);
 
             float zoom_ratio_section[6] = {0.6, 1.0, 2.0, 8.0, 0, 0};
-            metadata.update(ANDROID_SPRD_ZOOM_RATIO_SECTION,
-                zoom_ratio_section, 6);
+            metadata.update(ANDROID_SPRD_ZOOM_RATIO_SECTION, zoom_ratio_section,
+                            6);
 
             addAvailableStreamSize(metadata, "RES_MULTI");
 
@@ -162,7 +162,7 @@ int SprdCamera3MultiCamera::get_camera_info(int id, struct camera_info *info) {
             active_array_size[2] = cropW;
             active_array_size[3] = cropH;
             metadata.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE,
-                active_array_size, ARRAY_SIZE(active_array_size));
+                            active_array_size, ARRAY_SIZE(active_array_size));
 
             mStaticCameraCharacteristics = metadata.release();
         }
@@ -3026,40 +3026,55 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                     char prop[PROPERTY_VALUE_MAX] = {
                         0,
                     };
-                    property_get("persist.vendor.cam.twv1.dump", prop, "0");
-                    if (!strcmp(prop, "preyuv") || !strcmp(prop, "all")) {
+                    property_get("persist.vendor.cam.multi.dump", prop, "0");
+                    if (!strcmp(prop, "pre_in") || !strcmp(prop, "all")) {
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
                                             &input_buf1_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer2,
                                             &input_buf2_addr);
+                        rc = gMultiCam->map(muxer_msg.combo_frame.buffer3,
+                                            &input_buf3_addr);
                         char tmp_str[64] = {0};
                         sprintf(tmp_str, "_zoom=%f", gMultiCam->mZoomValue);
                         char MainPrev[80] = "MainPrev";
-                        char SubPrev[80] = "SubPrev";
-                        char TWPrev[80] = "TWPrev";
+                        char Sub1Prev[80] = "Sub1Prev";
+                        char Sub2Prev[80] = "Sub2Prev";
                         strcat(MainPrev, tmp_str);
-                        strcat(SubPrev, tmp_str);
-                        strcat(TWPrev, tmp_str);
+                        strcat(Sub1Prev, tmp_str);
+                        strcat(Sub2Prev, tmp_str);
                         // input_buf1 or left image
                         gMultiCam->dumpData((unsigned char *)input_buf1_addr, 1,
                                             ADP_BUFSIZE(*output_buffer),
-                                            gMultiCam->mWideMaxWidth,
-                                            gMultiCam->mWideMaxHeight,
+                                            gMultiCam->mMainSize.preview_w,
+                                            gMultiCam->mMainSize.preview_h,
                                             frame_number, MainPrev);
                         // input_buf2 or right image
-                        gMultiCam->dumpData((unsigned char *)input_buf2_addr, 1,
+                        gMultiCam->dumpData(
+                            (unsigned char *)input_buf2_addr, 1,
+                            ADP_BUFSIZE(*output_buffer), gMultiCam->mMainSize.preview_w,
+                            gMultiCam->mMainSize.preview_h, frame_number, Sub1Prev);
+                        gMultiCam->dumpData((unsigned char *)input_buf3_addr, 1,
                                             ADP_BUFSIZE(*output_buffer),
-                                            gMultiCam->mTeleMaxWidth,
-                                            gMultiCam->mTeleMaxHeight,
-                                            frame_number, SubPrev);
+                                            gMultiCam->mMainSize.preview_w,
+                                            gMultiCam->mMainSize.preview_h,
+                                            frame_number, Sub2Prev);
+                        gMultiCam->unmap(muxer_msg.combo_frame.buffer1);
+                        gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
+                        gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
+                        gMultiCam->unmap(output_buffer);
+                    }
+                    if (!strcmp(prop, "pre_out") || !strcmp(prop, "all")) {
+                        rc = gMultiCam->map(output_buffer, &output_buf_addr);
+                        char tmp_str[64] = {0};
+                        sprintf(tmp_str, "_zoom=%f", gMultiCam->mZoomValue);
+                        char MultiPrev[80] = "MultiPrev";
+                        strcat(MultiPrev, tmp_str);
                         // output_buffer
                         gMultiCam->dumpData(
                             (unsigned char *)output_buf_addr, 1,
                             ADP_BUFSIZE(*output_buffer), preview_stream->width,
-                            preview_stream->height, frame_number, TWPrev);
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer1);
-                        gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
+                            preview_stream->height, frame_number, MultiPrev);
                         gMultiCam->unmap(output_buffer);
                     }
                 }
@@ -3200,7 +3215,7 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
         return false;
     }
     case MUXER_MSG_DATA_PROC: {
-        HAL_LOGD("capture MUXER_MSG_DATA_PROC");
+        HAL_LOGD("capture thread mZoomValue %f", gMultiCam->mZoomValue);
 
         if (mSavedOneResultBuff) {
             memset(&mSavedOneResultBuff, 0, sizeof(camera3_stream_buffer_t));
@@ -3209,13 +3224,11 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
             gMultiCam->mLocalBufferList,
             gMultiCam->mSavedSnapRequest.snap_stream->width,
             gMultiCam->mSavedSnapRequest.snap_stream->height));
-        HAL_LOGD("capture MUXER_MSG_DATA_PROC1");
         if (gMultiCam->mZoomValue >= gMultiCam->mSwitch_W_Sw_Threshold &&
             gMultiCam->mZoomValue < gMultiCam->mSwitch_W_T_Threshold) { // wide
             rc = gMultiCam->map(capture_msg.combo_frame.buffer1,
                                 &input_buf1_addr);
             rc = gMultiCam->map(output_buffer, &output_buf_addr);
-            HAL_LOGD("capture MUXER_MSG_DATA_PROC2");
             memcpy(output_buf_addr, input_buf1_addr,
                    ADP_BUFSIZE(*output_buffer));
             gMultiCam->unmap(capture_msg.combo_frame.buffer1);
@@ -3228,7 +3241,6 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
             rc = gMultiCam->map(capture_msg.combo_frame.buffer2,
                                 &input_buf2_addr);
             rc = gMultiCam->map(output_buffer, &output_buf_addr);
-            HAL_LOGD("capture MUXER_MSG_DATA_PROC3");
             memcpy(output_buf_addr, input_buf2_addr,
                    ADP_BUFSIZE(*output_buffer));
             gMultiCam->unmap(capture_msg.combo_frame.buffer2);
@@ -3241,7 +3253,6 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
             rc = gMultiCam->map(capture_msg.combo_frame.buffer3,
                                 &input_buf3_addr);
             rc = gMultiCam->map(output_buffer, &output_buf_addr);
-            HAL_LOGD("capture MUXER_MSG_DATA_PROC4");
             memcpy(output_buf_addr, input_buf3_addr,
                    ADP_BUFSIZE(*output_buffer));
             gMultiCam->unmap(capture_msg.combo_frame.buffer3);
@@ -3256,40 +3267,21 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
                 0,
             };
 
-            property_get("persist.vendor.cam.twv1.dump", prop, "0");
+            property_get("persist.vendor.cam.multi.dump", prop, "0");
             if (!strcmp(prop, "capyuv") || !strcmp(prop, "all")) {
-                rc = gMultiCam->map(capture_msg.combo_frame.buffer1,
-                                    &input_buf1_addr);
-                rc = gMultiCam->map(capture_msg.combo_frame.buffer2,
-                                    &input_buf2_addr);
                 rc = gMultiCam->map(output_buffer, &output_buf_addr);
                 // input_buf1 or left image
                 char tmp_str[64] = {0};
                 sprintf(tmp_str, "_zoom=%f", gMultiCam->mZoomValue);
-                char MainCap[80] = "MainCap";
-                char SubCap[80] = "SubCap";
-                char TWCapture[80] = "TWCapture";
-                strcat(MainCap, tmp_str);
-                strcat(SubCap, tmp_str);
-                strcat(TWCapture, tmp_str);
-                gMultiCam->dumpData(
-                    (unsigned char *)input_buf1_addr, 1,
-                    ADP_BUFSIZE(*output_buffer), gMultiCam->mWideMaxWidth,
-                    gMultiCam->mWideMaxHeight, frame_number, MainCap);
-                // input_buf2 or right image
-                gMultiCam->dumpData(
-                    (unsigned char *)input_buf2_addr, 1,
-                    ADP_BUFSIZE(*output_buffer), gMultiCam->mTeleMaxWidth,
-                    gMultiCam->mTeleMaxHeight, frame_number, SubCap);
+                char Capture[80] = "MultiCapture";
+                strcat(Capture, tmp_str);
                 // output_buffer
                 gMultiCam->dumpData(
                     (unsigned char *)output_buf_addr, 1,
                     ADP_BUFSIZE(*output_buffer),
                     gMultiCam->mSavedSnapRequest.snap_stream->width,
                     gMultiCam->mSavedSnapRequest.snap_stream->height,
-                    frame_number, TWCapture);
-                gMultiCam->unmap(capture_msg.combo_frame.buffer1);
-                gMultiCam->unmap(capture_msg.combo_frame.buffer2);
+                    frame_number, Capture);
                 gMultiCam->unmap(output_buffer);
             }
         }
@@ -3697,7 +3689,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
         // process preview buffer
         {
 
-            Mutex::Autolock l(mNotifyLockAux);
+            Mutex::Autolock l(mNotifyLockAux1);
             for (List<camera3_notify_msg_t>::iterator i =
                      gMultiCam->mNotifyListAux1.begin();
                  i != gMultiCam->mNotifyListAux1.end(); i++) {
@@ -3961,7 +3953,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
     } else if (currStreamType == CALLBACK_STREAM) {
         // process preview buffer
         {
-            Mutex::Autolock l(mNotifyLockAux);
+            Mutex::Autolock l(mNotifyLockAux2);
             for (List<camera3_notify_msg_t>::iterator i =
                      gMultiCam->mNotifyListAux2.begin();
                  i != gMultiCam->mNotifyListAux2.end(); i++) {

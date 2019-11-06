@@ -183,7 +183,8 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     Mutex mWaitFrameLock;
     Mutex mDefaultStreamLock;
     Mutex mNotifyLockMain;
-    Mutex mNotifyLockAux;
+    Mutex mNotifyLockAux1;
+    Mutex mNotifyLockAux2;
     int64_t mWaitFrameNum;
     int64_t mSendFrameNum;
     Condition mWaitFrameSignal;
