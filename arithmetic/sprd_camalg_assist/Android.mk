@@ -9,8 +9,7 @@ LOCAL_SRC_FILES := sprd_camalg_assist_ionmem.cpp \
 				   sprd_camalg_assist_binder.cpp
 
 LOCAL_C_INCLUDES := vendor/sprd/modules/libmemion \
-                    vendor/sprd/external/kernel-headers \
-                    vendor/sprd/modules/vdsp/Cadence/xrp/vdsp-interface
+                    vendor/sprd/external/kernel-headers
 
 LOCAL_SHARED_LIBRARIES := liblog libmemion libutils libbinder
 LOCAL_CFLAGS := -fvisibility=hidden
