@@ -156,6 +156,7 @@ static cmr_s32 is_print_log(void)
 static cmr_s32 smart_ctl_save_stash(struct smart_context *cxt, void *in_param)
 {
 	UNUSED(in_param);
+	int count = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
 	cmr_u32 smart_camera_id = 0;
@@ -180,7 +181,9 @@ static cmr_s32 smart_ctl_save_stash(struct smart_context *cxt, void *in_param)
 	fp = fopen(SMART_STASH_FILE, "rb");
 	if (fp) {
 		ISP_LOGD("read smart  file");
-		fread((cmr_s32*)smart_stash_s,1,sizeof(smart_stash_s), fp);
+		count = fread((cmr_s32*)smart_stash_s,1,sizeof(smart_stash_s), fp);
+		if(count < sizeof(smart_stash_s))
+			ISP_LOGV("smart_ctl_save_stash:fread count error!");
 		fclose(fp);
 		fp = NULL;
 
@@ -217,6 +220,7 @@ ERROR_EXIT:
 static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 {
 	UNUSED(in_param);
+	int count = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
 
 	cmr_u32 smart_camera_id = 0;
@@ -239,7 +243,9 @@ static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 	fp = fopen(SMART_STASH_FILE, "rb");
 	if (fp) {
 		memset((void*)smart_stash_r, 0, sizeof(smart_stash_r));
-		fread((cmr_s32*)smart_stash_r,1,sizeof(smart_stash_r), fp);
+		count = fread((cmr_s32*)smart_stash_r,1,sizeof(smart_stash_r), fp);
+		if(count < sizeof(smart_stash_r))
+			ISP_LOGV("smart_ctl_apply_stash:fread count error!");
 		fclose(fp);
 		fp = NULL;
 
@@ -981,15 +987,15 @@ static const char *smart_ctl_find_block_name(cmr_u32 smart_id)
 {
 	cmr_u32 smart_id_tmp = 0;
 	smart_id_tmp = smart_id;
-	if (smart_id_tmp >= ISP_SMART_MAX)
-		smart_id_tmp = ISP_SMART_MAX;
+
 	if (smart_id_tmp >= (sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0])))
-		smart_id_tmp = sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0]);
+		smart_id_tmp = sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0]) - 1;
+	//ISP_LOGV("smard_id_tmp max is %d",(int)(sizeof(s_smart_block_name)/sizeof(s_smart_block_name[0])));
 
 	return s_smart_block_name[smart_id_tmp];
 }
 
-static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_calc_param *calc_param, struct smart_calc_result *result, char *debug_buf,smart_gamma_debuginfo smt_dbg )
+static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_calc_param *calc_param, struct smart_calc_result *result, char *debug_buf,smart_gamma_debuginfo *smt_dbg )
 {
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
@@ -1054,7 +1060,7 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 		}
 	}
 
-	sprintf(debug_buf, "atm low_pt (%d->%d) hight_pt (%d->%d)",smt_dbg.uFinalLowBin,smt_dbg.uLowPT,smt_dbg.uFinalHighBin,smt_dbg.uHighPT);
+	sprintf(debug_buf, "atm low_pt (%d->%d) hight_pt (%d->%d)",smt_dbg->uFinalLowBin,smt_dbg->uLowPT,smt_dbg->uFinalHighBin,smt_dbg->uHighPT);
 	smart_debug_file_print(debug_file, debug_buf);
 	smart_debug_file_close(debug_file);
 }
@@ -1302,7 +1308,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	struct smart_proc_input *smart_proc_in,
 	int i4BV, void *in_gamma, void *out_gamma,
 	smart_gamma_debuginfo *dbginfo,
-	struct atm_tune_param atm_param) {
+	struct atm_tune_param *atm_param) {
 	char value[PROPERTY_VALUE_MAX];
 	property_get("debug.camera.atm.update", value, "1");
 	bool bATMUpdate = strtol(value, NULL, 10);
@@ -1387,17 +1393,17 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	ISP_LOGV("atm Out Gamma %p \n", out_gamma);
 	{
 		ATMInput.stAlgoParams.i4BV = i4BV;
-		ATMInput.stAlgoParams.i4LowPT = atm_param.i4LowPT;
-		ATMInput.stAlgoParams.i4LowPcentThd = atm_param.i4LowPcentThd;
-		ATMInput.stAlgoParams.i4LowRightThd   = atm_param.i4LowRightThd;
-		ATMInput.stAlgoParams.i4LowLeftThd     = atm_param.i4LowLeftThd;
-		ATMInput.stAlgoParams.i4HighPT = atm_param.i4HighPT;
-		ATMInput.stAlgoParams.i4HighPcentThd = atm_param.i4HighPcentThd;
-		ATMInput.stAlgoParams.i4HighLeftThd  = atm_param.i4HighLeftThd;
-		ATMInput.stAlgoParams.i4HighRightThd = atm_param.i4HighRightThd;
-		ATMInput.stAlgoParams.strBVLut.i4Len = atm_param.strBVLut.i4Len;
-		memcpy(&ATMInput.stAlgoParams.strBVLut.i4X, atm_param.strBVLut.i4X, sizeof(cmr_s32)*8);
-		memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, atm_param.strBVLut.i4Y, sizeof(cmr_s32)*8);
+		ATMInput.stAlgoParams.i4LowPT = atm_param->i4LowPT;
+		ATMInput.stAlgoParams.i4LowPcentThd = atm_param->i4LowPcentThd;
+		ATMInput.stAlgoParams.i4LowRightThd   = atm_param->i4LowRightThd;
+		ATMInput.stAlgoParams.i4LowLeftThd     = atm_param->i4LowLeftThd;
+		ATMInput.stAlgoParams.i4HighPT = atm_param->i4HighPT;
+		ATMInput.stAlgoParams.i4HighPcentThd = atm_param->i4HighPcentThd;
+		ATMInput.stAlgoParams.i4HighLeftThd  = atm_param->i4HighLeftThd;
+		ATMInput.stAlgoParams.i4HighRightThd = atm_param->i4HighRightThd;
+		ATMInput.stAlgoParams.strBVLut.i4Len = atm_param->strBVLut.i4Len;
+		memcpy(&ATMInput.stAlgoParams.strBVLut.i4X, atm_param->strBVLut.i4X, sizeof(cmr_s32)*8);
+		memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, atm_param->strBVLut.i4Y, sizeof(cmr_s32)*8);
 
 		ATMInput.pHist = hist;
 		ATMInput.u4Bins = 256;
@@ -1627,7 +1633,7 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 		if (ISP_SUCCESS == ret) {
 			ret = _get_atm_curve((cmr_handle *)cxt->handle_atm,
 					in_ptr, param->bv,&sm_gamma_out,&atm_gamma_out,
-					&cxt->smt_dbginfo.smt_gma,cxt->atm_tuning_param);
+					&cxt->smt_dbginfo.smt_gma,&(cxt->atm_tuning_param));
 		}
 
 		if (bATMTest){
@@ -1747,7 +1753,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 	}
 	ISP_LOGV("bv=%d, ct=%d, flash=%d", param->bv, param->ct, flash_mode);
 	smart_ctl_print_smart_result(cxt->flash_mode, result);
-	smart_ctl_print_debug_file(cxt->debug_file, param, result, (char *)cxt->debug_buf,cxt->smt_dbginfo.smt_gma);
+	smart_ctl_print_debug_file(cxt->debug_file, param, result, (char *)cxt->debug_buf,&(cxt->smt_dbginfo.smt_gma));
 	for (i = 0; i < result->counts; i++) {
 		blk = &result->block_result[i];
 		if (blk->smart_id > 8) {

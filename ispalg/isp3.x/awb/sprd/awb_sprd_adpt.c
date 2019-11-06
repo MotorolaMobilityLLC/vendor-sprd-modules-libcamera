@@ -481,6 +481,7 @@ static int _awb_save_gain_tofile(struct awb_ctrl_cxt *cxt)
 static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
 {
 	cmr_u32 i = 0;
+	int count = 0;
 	FILE *fp = NULL;
 	char version[1024];
 	property_get("ro.build.version.release", version, "");
@@ -489,7 +490,9 @@ static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
 		if (fp) {
 			memset((void *)cxt, 0, sizeof(struct awb_save_gain) * num);
-			fread((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			count = fread((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			if(count < (num * sizeof(struct awb_save_gain)))
+				ISP_LOGV("_awb_read_gain:fread count error!");
 			fclose(fp);
 			fp = NULL;
 
@@ -501,7 +504,9 @@ static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_MEDIA, "rb");
 		if (fp) {
 			memset((void *)cxt, 0, sizeof(struct awb_save_gain) * num);
-			fread((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			count = fread((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
+			if(count < (num * sizeof(struct awb_save_gain)))
+				ISP_LOGV("_awb_read_gain:fread count error!");
 			fclose(fp);
 			fp = NULL;
 

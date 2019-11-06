@@ -135,8 +135,10 @@ static void afl_scl_for_ae_stat(cmr_u32 *dst, struct afl_proc_in *afl_in)
 	cmr_u32 *g_stat = (cmr_u32*)afl_in->ae_stat_ptr->g_info;
 	cmr_u32 *b_stat = (cmr_u32*)afl_in->ae_stat_ptr->b_info;
   
-	blk_num_w = (blk_num_w < 32) ? 32:blk_num_w;
-	blk_num_h = (blk_num_w < 32) ? 32:blk_num_h;
+	if(blk_num_w <= 32)
+		blk_num_w = 32;
+	if(blk_num_h <= 32)
+		blk_num_h = 32;
 
 	cmr_u32 ratio_h = blk_num_h/32;
 	cmr_u32 ratio_w = blk_num_w/32;
