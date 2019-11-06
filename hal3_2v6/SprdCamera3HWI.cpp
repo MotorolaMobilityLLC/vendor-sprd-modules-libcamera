@@ -1640,8 +1640,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
     }
 
-    if (ret == -ENODEV)
+    if (ret == -ENODEV) {
+        mOEMIf->setTimeoutParams();
         flushRequest(request->frame_number);
+    }
 
 exit:
     return ret;

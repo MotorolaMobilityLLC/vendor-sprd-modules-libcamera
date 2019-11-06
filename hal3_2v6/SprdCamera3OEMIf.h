@@ -337,6 +337,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mVideoCopyFromPreviewFlag;
     bool mVideoProcessedWithPreview;
     cmr_uint mVideo3dnrFlag;
+    void setTimeoutParams();
 
   private:
     inline void print_time();
@@ -433,6 +434,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     inline bool isCameraIdle();
     inline bool isPreviewing();
     inline bool isPreviewStart();
+    inline bool isPreviewIdle();
     inline bool isCapturing();
     bool WaitForPreviewStart();
     int waitForPipelineStart();

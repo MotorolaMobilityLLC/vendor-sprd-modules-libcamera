@@ -2295,6 +2295,10 @@ exit:
     mSetting->setAwbCONTROLTag(&controlInfo);
 }
 
+void SprdCamera3OEMIf::setTimeoutParams() {
+    setCameraState(SPRD_ERROR, STATE_PREVIEW);
+}
+
 void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state,
                                       state_owner owner) {
     Sprd_camera_state org_state = SPRD_IDLE;
@@ -2470,6 +2474,11 @@ bool SprdCamera3OEMIf::isCameraIdle() {
 bool SprdCamera3OEMIf::isPreviewing() {
     HAL_LOGV("%s", getCameraStateStr(mCameraState.preview_state));
     return (SPRD_PREVIEW_IN_PROGRESS == mCameraState.preview_state);
+}
+
+bool SprdCamera3OEMIf::isPreviewIdle() {
+    HAL_LOGI("%s", getCameraStateStr(mCameraState.preview_state));
+    return (SPRD_IDLE == mCameraState.preview_state);
 }
 
 bool SprdCamera3OEMIf::isPreviewStart() {
@@ -3273,8 +3282,8 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         WaitForPreviewStart();
     }
 
-    if (!isPreviewing()) {
-        HAL_LOGD("Preview not in progress! stopPreviewInternal X");
+    if (isPreviewIdle()) {
+        HAL_LOGD("Preview is idle! stopPreviewInternal X");
         goto exit;
     }
 
