@@ -1885,45 +1885,6 @@ cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_BWU_BWD_T] = 1;
 			break;
 		}
-	case SHARKL5_PRO_RAW_GTM:
-		{
-			static cmr_u32 gtm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_raw_gtm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RAW_GTM_T];
-			memcpy(((cmr_u8 *) (nr_update_param.raw_gtm_level_ptr)) + nr_offset_addr + gtm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				gtm_ptr_offset += data_actual_len;
-			else
-				gtm_ptr_offset = 0;
-			nr_tool_flag[ISP_BLK_RAW_GTM_T] = 1;
-			break;
-		}
-	case SHARKL5_PRO_RGB_LTM:
-		{
-			static cmr_u32 rgb_ltm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_LTM_T];
-			memcpy(((cmr_u8 *) (nr_update_param.rgb_ltm_level_ptr)) + nr_offset_addr + rgb_ltm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				rgb_ltm_ptr_offset += data_actual_len;
-			else
-				rgb_ltm_ptr_offset = 0;
-			nr_tool_flag[ISP_BLK_RGB_LTM_T] = 1;
-			break;
-		}
-	case SHARKL5_PRO_YUV_LTM:
-		{
-			static cmr_u32 yuv_ltm_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_rgb_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_LTM_T];
-			memcpy(((cmr_u8 *) (nr_update_param.yuv_ltm_level_ptr)) + nr_offset_addr + yuv_ltm_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			if (0x01 != data_head->packet_status)
-				yuv_ltm_ptr_offset += data_actual_len;
-			else
-				yuv_ltm_ptr_offset = 0;
-			nr_tool_flag[ISP_BLK_YUV_LTM_T] = 1;
-			break;
-		}
 	case SHARKL5_PRO_VST:
 		{
 			static cmr_u32 vst_ptr_offset;
@@ -2231,30 +2192,6 @@ cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			src_size = sizeof(struct sensor_bwu_bwd_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BWU_BWD_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.bwu_bwd_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_PRO_RAW_GTM:
-		{
-			data_head_ptr->sub_type = SHARKL5_PRO_RAW_GTM;
-			src_size = sizeof(struct sensor_raw_gtm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RAW_GTM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.raw_gtm_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_PRO_RGB_LTM:
-		{
-			data_head_ptr->sub_type = SHARKL5_PRO_RGB_LTM;
-			src_size = sizeof(struct sensor_rgb_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_RGB_LTM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.rgb_ltm_level_ptr + offset_units * src_size;
-			break;
-		}
-	case SHARKL5_PRO_YUV_LTM:
-		{
-			data_head_ptr->sub_type = SHARKL5_PRO_YUV_LTM;
-			src_size = sizeof(struct sensor_rgb_ltm_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YUV_LTM_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.yuv_ltm_level_ptr + offset_units * src_size;
 			break;
 		}
 	case SHARKL5_PRO_VST:

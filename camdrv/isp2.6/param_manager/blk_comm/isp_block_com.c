@@ -301,3 +301,24 @@ cmr_u32 _ispLog2n(cmr_u32 index)
 
 	return i;
 }
+
+#define TM_BIN_NUM_BIT         7
+#define LTM_NUM                2
+
+void ltm_rgb_text_thres_init(uint32_t thres_init, float factor, uint32_t *table)
+{
+	int m;
+	float n;
+	int luma_level;
+
+	luma_level = 1 << TM_BIN_NUM_BIT;
+
+	for (m = 0; m<luma_level; m++) {
+		n = factor * sqrt(m) + thres_init + 0.5f;
+		if (n > 255){
+			n = 0;
+			ISP_LOGE("%s param error!\n", __func__);
+		}
+		table[m] = (uint32_t)n;
+	}
+}

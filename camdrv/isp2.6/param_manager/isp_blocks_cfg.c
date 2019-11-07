@@ -85,6 +85,9 @@ struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _p
 struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
 struct isp_block_operations s_imblance_ops = { _pm_imblance_init, _pm_imblance_set_param, _pm_imblance_get_param, PNULL, PNULL};
 struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
+struct isp_block_operations s_rgb_ltm_ops = { _pm_rgb_ltm_init, _pm_rgb_ltm_set_param, _pm_rgb_ltm_get_param, PNULL, PNULL };
+struct isp_block_operations s_yuv_ltm_ops = { _pm_yuv_ltm_init, _pm_yuv_ltm_set_param, _pm_yuv_ltm_get_param, PNULL, PNULL };
+struct isp_block_operations s_gtm_ops = { _pm_gtm_init, _pm_gtm_set_param, _pm_gtm_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_5
@@ -214,6 +217,9 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_SW3DNR, array_offset(struct isp_context, sw3dnr), sizeof(struct isp_sw3dnr_param), &s_sw3dnr_ops},
 	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
 	{ISP_BLK_AE_ADAPT_PARAM, array_offset(struct isp_context, ae_adapt), sizeof(struct isp_ae_adapt_param), &s_ae_adapt_ops},
+	{ISP_BLK_RGB_LTM, array_offset(struct isp_context, rgb_ltm), sizeof(struct isp_rgb_ltm_param), &s_rgb_ltm_ops},
+	{ISP_BLK_YUV_LTM, array_offset(struct isp_context, yuv_ltm), sizeof(struct isp_rgb_ltm_param), &s_yuv_ltm_ops},
+	{ISP_BLK_RAW_GTM, array_offset(struct isp_context, gtm), sizeof(struct isp_raw_gtm_param), &s_gtm_ops},
 };
 #endif
 

@@ -143,6 +143,11 @@ cmr_s32 dcam_u_pdaf_type3_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_dual_pdaf_block(cmr_handle handle, void *block_info);
 
 cmr_s32 dcam_u_grgb_block(cmr_handle handle, void *block_info);
+cmr_s32 dcam_u_raw_gtm_block(cmr_handle handle, void *block_info);
+
+cmr_s32 isp_u_rgb_ltm_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_yuv_ltm_block(cmr_handle handle, void *block_info);
+
 
 cmr_s32 isp_u_bchs_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_brightness_block(cmr_handle handle, void *block_info);

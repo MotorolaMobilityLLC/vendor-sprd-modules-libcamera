@@ -102,9 +102,6 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"imbalance",
 	"sw3dnr",
 	"bwu_bwd",
-	"raw_gtm",
-	"rgb_ltm",
-	"yuv_ltm",
 	"ynrs",
 };
 #endif

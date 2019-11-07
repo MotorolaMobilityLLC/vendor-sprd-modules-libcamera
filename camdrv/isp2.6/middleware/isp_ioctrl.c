@@ -390,15 +390,6 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_BWU_BWD:
 			update_param->bwu_bwd_level_ptr = (struct sensor_bwu_bwd_level *)fix_data_ptr->nr.nr_set_group.bwu_bwd;
 			break;
-		case ISP_BLK_RAW_GTM:
-			update_param->raw_gtm_level_ptr = (struct sensor_raw_gtm_level *)fix_data_ptr->nr.nr_set_group.raw_gtm;
-			break;
-		case ISP_BLK_RGB_LTM:
-			update_param->rgb_ltm_level_ptr = (struct sensor_rgb_ltm_level *)fix_data_ptr->nr.nr_set_group.rgb_ltm;
-			break;
-		case ISP_BLK_YUV_LTM:
-			update_param->yuv_ltm_level_ptr = (struct sensor_yuv_ltm_level *)fix_data_ptr->nr.nr_set_group.yuv_ltm;
-			break;
 		case ISP_BLK_YNRS:
 			update_param->ynrs_level_ptr = (struct sensor_ynrs_level *)fix_data_ptr->nr.nr_set_group.ynrs;
 			break;
@@ -3246,25 +3237,23 @@ static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr
 	ISP_LOGV("ct = %d", ct);
 
 	blk_id = get_cnr_blkid();
-	if (blk_id == 0) {
-		ISP_LOGE("fail to get valid cnr2 blk id");
-		return ret;
-	}
-
-	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR2_LEVEL_INFO, blk_id, NULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
-	if (ISP_SUCCESS == ret && 1 == output.param_num) {
-		level_info = (struct isp_cnr2_level_info *)output.param_data->data_ptr;
-		level_enable = (cmr_u32)level_info->level_enable;
-		low_ct_thrd = (cmr_u32)level_info->low_ct_thrd;
-		ISP_LOGV("level_enable = %d, low_ct_thrd = %d", level_enable, low_ct_thrd);
+	if (blk_id != 0) {
+		memset(&param_data, 0, sizeof(param_data));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR2_LEVEL_INFO, blk_id, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+		if (ISP_SUCCESS == ret && 1 == output.param_num) {
+			level_info = (struct isp_cnr2_level_info *)output.param_data->data_ptr;
+			level_enable = (cmr_u32)level_info->level_enable;
+			low_ct_thrd = (cmr_u32)level_info->low_ct_thrd;
+			ISP_LOGV("level_enable = %d, low_ct_thrd = %d", level_enable, low_ct_thrd);
+			if (level_enable || (ct < low_ct_thrd))
+				cnr2_en = 1;
+		} else {
+			ISP_LOGE("fail to get valid cnr2 level info");
+		}
 	} else {
-		ISP_LOGE("fail to get valid cnr2 level info");
+		ISP_LOGE("fail to get valid cnr2 blk id");
 	}
-
-	if (level_enable || (ct < low_ct_thrd))
-		cnr2_en = 1;
 
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_YNRS, NULL, 0);
@@ -3279,6 +3268,8 @@ static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr
 	}
 	cnr2_ynr_en = (cnr2_en << 1) | ynrs_en;
 
+	if (cnr2_ynr_en != 0)
+		ret = ISP_SUCCESS;
 	ISP_LOGV("cnr_ynr_en = %d", cnr2_ynr_en);
 	*(cmr_u32 *)param_ptr = cnr2_ynr_en;
 

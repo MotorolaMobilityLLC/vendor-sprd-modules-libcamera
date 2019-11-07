@@ -218,6 +218,7 @@ static struct blk_info blocks_array[] = {
 	{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
 	{ ISP_BLK_PPE_V1, 0 }, /* NR block */
 	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
+	{ ISP_BLK_RAW_GTM, 0 },
 
 	/*  ISP blocks */
 	{ ISP_BLK_HSV_NEW2, 0 }, /* parsed in hsv block init() */
@@ -242,6 +243,8 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_UV_CDN_V1, 0 }, /* NR block */
 	{ ISP_BLK_UV_POSTCDN_V1, 0 }, /* NR block */
 	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
+	{ ISP_BLK_RGB_LTM, 0 },
+	{ ISP_BLK_YUV_LTM, 0 },
 
 	/* software algo blocks */
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
@@ -285,9 +288,6 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_NLM_V2,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
 	{ ISP_BLK_YNRS,				ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
 	{ ISP_BLK_BWU_BWD,			ISP_BLK_BWU_BWD_T, sizeof(struct sensor_bwu_bwd_level) },
-	{ ISP_BLK_RAW_GTM,			ISP_BLK_RAW_GTM_T, sizeof(struct sensor_raw_gtm_level) },
-	{ ISP_BLK_RGB_LTM,			ISP_BLK_RGB_LTM_T, sizeof(struct sensor_rgb_ltm_level) },
-	{ ISP_BLK_YUV_LTM,			ISP_BLK_YUV_LTM_T, sizeof(struct sensor_yuv_ltm_level) },
 };
 #endif
 /************************ Project adapt data END *******************************************/
@@ -537,9 +537,6 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_IMBALANCE_V1:
 	case ISP_BLK_NLM_V2:
 	case ISP_BLK_PPE_V1:
-	case ISP_BLK_YUV_LTM:
-	case ISP_BLK_RGB_LTM:
-	case ISP_BLK_RAW_GTM:
 		return 1;
 	default:
 		break;

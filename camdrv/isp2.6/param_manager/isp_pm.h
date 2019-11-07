@@ -39,7 +39,7 @@
 	(id == DCAM_BLK_BPC_V1) || (id == DCAM_BLK_RGB_AFM_V1) ||\
 	(id == DCAM_BLK_BPC) || (id == DCAM_BLK_RGB_AFM) ||\
 	(id == ISP_BLK_GRGB) || (id == ISP_BLK_RGB_DITHER) ||\
-	(id == ISP_BLK_RGB_AEM) || (id == DCAM_BLK_PPE))
+	(id == ISP_BLK_RGB_AEM) || (id == DCAM_BLK_PPE)|| (id == ISP_BLK_RAW_GTM))
 
 enum isp_pm_cmd {
 	ISP_PM_CMD_LOCK,
