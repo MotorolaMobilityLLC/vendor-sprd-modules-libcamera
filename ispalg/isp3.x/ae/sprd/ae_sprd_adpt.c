@@ -761,7 +761,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 dual_sensor_status = 0;
-	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item write_item = { 0, 0, 0, 0, 0, 0, 0};
 	struct q_item actual_item;
 
@@ -1481,7 +1481,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 	mode = flash_notice->mode;
 	switch (mode) {
 	case AE_FLASH_PRE_BEFORE:
-		ISP_LOGD("ae_flash_status FLASH_PRE_BEFORE");
+		ISP_LOGD("ae_flash_status FLASH_PRE_BEFORE, cameraId:%d", cxt->camera_id);
 		cxt->cur_flicker = cxt->sync_cur_status.adv_param.flicker;
 		cxt->flash_backup.exp_line = cxt->sync_cur_result.ev_setting.exp_line;
 		cxt->flash_backup.exp_time = cxt->sync_cur_result.ev_setting.exp_time;
@@ -1496,12 +1496,19 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			cxt->flash_backup.table_idx = cxt->cur_status.adv_param.mode_param.value.ae_idx;
 			ISP_LOGV("AE_FLASH_PRE_BEFORE force ae's table_idx : %d", cxt->flash_backup.table_idx);
 		}
+
+		if ((cxt->cur_status.adv_param.mode_param.mode == AE_MODE_AUTO_ISO_PRI) && (CAMERA_MODE_MANUAL == cxt->app_mode)) {
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->flash_backup.mode = AE_MODE_AUTO_ISO_PRI;
+			ISP_LOGD("AE_FLASH_PRE_BEFORE back mode: %d, manual_mode:%d", cxt->flash_backup.mode, cxt->cur_status.adv_param.mode_param.mode);
+		}
+
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
 		cxt->cur_status.adv_param.flash = FLASH_PRE_BEFORE;
 		break;
 
 	case AE_FLASH_PRE_LIGHTING:
-		ISP_LOGD("ae_flash_status FLASH_PRE_LIGHTING");
+		ISP_LOGD("ae_flash_status FLASH_PRE_LIGHTING, cameraId:%d", cxt->camera_id);
 		if(cxt->cur_status.adv_param.flash != FLASH_PRE_BEFORE){
 			ISP_LOGE("previous cxt->cur_status.adv_param.flash:%d, SHOULD BE FLASH_PRE_BEFORE",cxt->cur_status.adv_param.flash);
 			rtn = AE_ERROR;
@@ -1516,12 +1523,17 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_PRE_AFTER:
-		ISP_LOGD("ae_flash_status FLASH_PRE_AFTER");
+		ISP_LOGD("ae_flash_status FLASH_PRE_AFTER, cameraId:%d", cxt->camera_id);
 		if(cxt->cur_status.adv_param.flash != FLASH_PRE){
 			ISP_LOGE("previous cxt->cur_status.adv_param.flash:%d, SHOULD BE FLASH_PRE",cxt->cur_status.adv_param.flash);
 			rtn = AE_ERROR;
 			break;
 		}
+
+		if ((CAMERA_MODE_MANUAL == cxt->app_mode) && (cxt->flash_backup.mode == AE_MODE_AUTO_ISO_PRI)) {
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
+		}
+
 		cxt->cur_result.ev_setting.exp_time = cxt->flash_backup.exp_time;
 		cxt->cur_result.ev_setting.exp_line = cxt->flash_backup.exp_line;
 		cxt->cur_result.ev_setting.ae_gain = cxt->flash_backup.gain;
@@ -1565,12 +1577,17 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_BEFORE:
-		ISP_LOGD("ae_flash_status FLASH_MAIN_BEFORE");
+		ISP_LOGD("ae_flash_status FLASH_MAIN_BEFORE, cameraId:%d", cxt->camera_id);
 		if((cxt->cur_status.adv_param.flash != FLASH_PRE_AFTER)&&(cxt->cur_status.adv_param.flash != FLASH_NONE)){
 			ISP_LOGE("previous cxt->cur_status.adv_param.flash:%d, SHOULD BE FLASH_PRE_AFTER",cxt->cur_status.adv_param.flash);
 			rtn = AE_ERROR;
 			break;
 		}
+
+		if ((cxt->cur_status.adv_param.mode_param.mode == AE_MODE_AUTO_ISO_PRI) && (CAMERA_MODE_MANUAL == cxt->app_mode)) {
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+		}
+
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 1, 1);
 
@@ -1579,7 +1596,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_AFTER:
-		ISP_LOGD("ae_flash_status FLASH_MAIN_AFTER");
+		ISP_LOGD("ae_flash_status FLASH_MAIN_AFTER, cameraId:%d", cxt->camera_id);
 		if(cxt->cur_status.adv_param.flash != FLASH_MAIN){
 			ISP_LOGE("previous cxt->cur_status.adv_param.flash:%d, SHOULD BE FLASH_MAIN",cxt->cur_status.adv_param.flash);
 			rtn = AE_ERROR;
@@ -1595,6 +1612,10 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag))
 			rtn = ae_set_force_pause(cxt, 0, 2);
 
+		if ((CAMERA_MODE_MANUAL == cxt->app_mode) && (cxt->flash_backup.mode == AE_MODE_AUTO_ISO_PRI)) {
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
+		}
+
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
 		cxt->cur_status.adv_param.flash = FLASH_MAIN_AFTER;
 		break;
@@ -1604,7 +1625,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		break;
 
 	case AE_FLASH_MAIN_LIGHTING:
-		ISP_LOGD("ae_flash_status FLASH_MAIN_LIGHTING");
+		ISP_LOGD("ae_flash_status FLASH_MAIN_LIGHTING, cameraId:%d", cxt->camera_id);
 		if(cxt->cur_status.adv_param.flash != FLASH_MAIN_BEFORE){
 			ISP_LOGE("previous cxt->cur_status.adv_param.flash:%d, SHOULD BE FLASH_MAIN_BEFORE",cxt->cur_status.adv_param.flash);
 			rtn = AE_ERROR;
@@ -1909,7 +1930,7 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 		}
 	}
 	cxt->force_lock_ae = enable;
-	ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d", cxt->pause_cnt, cxt->cur_status.adv_param.lock, cxt->force_lock_ae,cxt->cur_status.adv_param.mode_param.mode);
+	ISP_LOGD("cameraId:%d, PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d", cxt->camera_id, cxt->pause_cnt, cxt->cur_status.adv_param.lock, cxt->force_lock_ae,cxt->cur_status.adv_param.mode_param.mode);
 	return ret;
 }
 
@@ -1939,7 +1960,7 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable, int c
 		cxt->cur_status.adv_param.app_force_lock = AE_STATE_NORMAL;
 	}
 	cxt->force_lock_ae = enable;
-	ISP_LOGD("PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d, call = %d", cxt->pause_cnt, cxt->cur_status.adv_param.lock, cxt->force_lock_ae,cxt->cur_status.adv_param.mode_param.mode, call);
+	ISP_LOGD("cameraId:%d, PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d, call = %d", cxt->camera_id,cxt->pause_cnt, cxt->cur_status.adv_param.lock, cxt->force_lock_ae,cxt->cur_status.adv_param.mode_param.mode, call);
 	return ret;
 }
 
@@ -3097,7 +3118,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 }
 
 
-static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
+static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
 static struct ae_exposure_param_switch_m s_ae_manual[4] = {{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0}};
 
 static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
@@ -3250,7 +3271,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	struct ae_rect bayer_hist_trim = { 0, 0, 0, 0 };
 	cmr_u32 max_expl = 0;
 	
-	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
