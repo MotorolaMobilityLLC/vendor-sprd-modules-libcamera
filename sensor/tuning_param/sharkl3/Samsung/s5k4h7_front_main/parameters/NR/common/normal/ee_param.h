@@ -108,9 +108,9 @@
 			/*ee_r1_cfg*/
 			0x0C,
 			/*ee_r2_cfg*/
-			0x20,
+			0x14,
 			/*ee_r3_cfg*/
-			0x08,
+			0x14,
 			/*reserved*/
 			0x00,
 
@@ -148,7 +148,7 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
-			0x05,
+			0x00,
 			/*ee_c2_cfg*/
 			0x23,
 			/*ee_c3_cfg*/
@@ -187,7 +187,7 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
-			0xFB,
+			0x00,
 			/*ee_c2_cfg*/
 			0xDD,
 			/*ee_c3_cfg*/

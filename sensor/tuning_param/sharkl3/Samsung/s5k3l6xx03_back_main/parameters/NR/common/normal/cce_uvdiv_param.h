@@ -408,31 +408,31 @@
 		/*lum_th_h_len*/
 		0x03,
 		/*lum_th_h*/
-		0xF5,
+		0xF7,
 		/*lum_th_l_len*/
 		0x04,
 		/*lum_th_l*/
-		0x00,
+		0x2D,
 
 	},
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x7F,
+		0x0A,
 		/*chroma_min_l*/
-		0x7F,
+		0x0C,
 		/*chroma_max_h*/
-		0x7F,
+		0x1B,
 		/*chroma_max_l*/
-		0x7F,
+		0x1B,
 
 	},
 	/*u_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0xF4,
+		0xEC,
 		/*uvdiv_th_h*/
-		0x0C,
+		0x00,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -441,9 +441,9 @@
 	/*u_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xFB,
+		0x00,
 		/*uvdiv_th_h*/
-		0x05,
+		0x1B,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -452,9 +452,9 @@
 	/*v_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0xFB,
+		0xE5,
 		/*uvdiv_th_h*/
-		0x05,
+		0x0C,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -463,9 +463,9 @@
 	/*v_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xF4,
+		0xE5,
 		/*uvdiv_th_h*/
-		0x0C,
+		0x1B,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -474,15 +474,15 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x3F,
+		0x40,
 		/*ratio_1*/
-		0x3F,
+		0x40,
 		/*ratio*/
-		0x3F,
+		0x3E,
 		/*ratio_uv_min*/
-		0x40,
+		0x3E,
 		/*ratio_y_min0*/
-		0x40,
+		0x3E,
 		/*ratio_y_min1*/
 		0x40,
 		/*reserved*/
@@ -508,31 +508,31 @@
 		/*lum_th_h_len*/
 		0x03,
 		/*lum_th_h*/
-		0xF5,
+		0xF7,
 		/*lum_th_l_len*/
 		0x04,
 		/*lum_th_l*/
-		0x00,
+		0x2D,
 
 	},
 	/*uvdiv_chroma*/
 	{
 		/*chroma_min_h*/
-		0x7F,
+		0x0A,
 		/*chroma_min_l*/
-		0x7F,
+		0x0C,
 		/*chroma_max_h*/
-		0x7F,
+		0x1B,
 		/*chroma_max_l*/
-		0x7F,
+		0x1B,
 
 	},
 	/*u_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0xF4,
+		0xEC,
 		/*uvdiv_th_h*/
-		0x0C,
+		0x00,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -541,9 +541,9 @@
 	/*u_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xFB,
+		0x00,
 		/*uvdiv_th_h*/
-		0x05,
+		0x1B,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -552,9 +552,9 @@
 	/*v_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0xFB,
+		0xE5,
 		/*uvdiv_th_h*/
-		0x05,
+		0x0C,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -563,9 +563,9 @@
 	/*v_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0xF4,
+		0xE5,
 		/*uvdiv_th_h*/
-		0x0C,
+		0x1B,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -574,9 +574,9 @@
 	/*uvdiv_ratio*/
 	{
 		/*ratio_0*/
-		0x3F,
+		0x40,
 		/*ratio_1*/
-		0x3E,
+		0x40,
 		/*ratio*/
 		0x3E,
 		/*ratio_uv_min*/
