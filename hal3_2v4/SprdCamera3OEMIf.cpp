@@ -9451,7 +9451,7 @@ uint32_t SprdCamera3OEMIf::getZslBufferIDForFd(cmr_s32 fd) {
     uint32_t id = 0xFFFFFFFF;
     uint32_t i;
     for (i = 0; i < mZslHeapNum; i++) {
-        if (0 != mZslHeapArray[i]->fd && mZslHeapArray[i]->fd == fd) {
+        if (mZslHeapArray[i] && 0 != mZslHeapArray[i]->fd && mZslHeapArray[i]->fd == fd) {
             id = i;
             break;
         }
