@@ -31,6 +31,7 @@ extern "C" {
 		struct aictrl_ops ai_ops;
 		isp_ai_cb ai_set_cb;
 		struct third_lib_info lib_param;
+		cmr_u32 cameraId;
 	};
 
 	struct ai_init_out {

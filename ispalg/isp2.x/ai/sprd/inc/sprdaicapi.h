@@ -100,6 +100,7 @@ typedef struct
     int thread_num;
     bool sync_with_worker;
     int scene_task_thr[SC_LABEL_MAX];
+	int camera_id;
 } aic_option_t;
 
 typedef struct

@@ -4004,6 +4004,8 @@ static cmr_int ispalg_ai_init(struct isp_alg_fw_context *cxt)
 
 	ai_input.caller_handle = (cmr_handle)cxt;
 	ai_input.ai_set_cb = ispalg_ai_set_cb;
+	ai_input.cameraId = cxt->camera_id;
+	ISP_LOGD("cameraId: %d", ai_input.cameraId);
 
 	if (cxt->ops.ai_ops.init)
 		ret = cxt->ops.ai_ops.init(&ai_input, &cxt->ai_cxt.handle, (cmr_handle)&result);

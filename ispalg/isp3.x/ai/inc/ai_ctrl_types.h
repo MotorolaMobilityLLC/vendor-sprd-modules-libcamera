@@ -75,6 +75,7 @@ extern "C" {
 		struct aictrl_work_lib work_lib;
 		struct aictrl_ops ai_ops;
 		struct ai_scene_detect_info scene_info;
+		cmr_u32 cameraId;
 	};
 
 

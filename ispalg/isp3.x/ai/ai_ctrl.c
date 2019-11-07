@@ -282,6 +282,7 @@ cmr_s32 ai_ctrl_init(struct ai_init_in *input_ptr, cmr_handle *handle_ai, cmr_ha
 	cxt_ptr->caller_handle = input_ptr->caller_handle;
 	cxt_ptr->ai_set_cb = input_ptr->ai_set_cb;
 	cxt_ptr->ai_ops.callback = ai_callback;
+	cxt_ptr->cameraId = input_ptr->cameraId;
 
 	rtn = aictrl_create_thread(cxt_ptr);
 	if (rtn) {
