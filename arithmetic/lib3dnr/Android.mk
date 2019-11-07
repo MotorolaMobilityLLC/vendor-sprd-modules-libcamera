@@ -33,6 +33,25 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_PREBUILT)
 
+### adapter ###
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := blacksesame/src/threednr_adapt_interface.cpp
+LOCAL_MODULE := libSprd3dnrAdapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
+LOCAL_SHARED_LIBRARIES := libcutils liblog libtdnsTest
+
+LOCAL_C_INCLUDES := \
+         $(TOP)/vendor/sprd/modules/libcamera/arithmetic/lib3dnr/blacksesame/inc \
+         $(TOP)/vendor/sprd/modules/libcamera/arithmetic/inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+include $(BUILD_SHARED_LIBRARY)
+
 else
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))

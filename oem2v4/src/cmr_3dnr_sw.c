@@ -24,7 +24,7 @@
 #include "cmr_common.h"
 #include "cmr_sensor.h"
 #include "cmr_oem.h"
-#include "3dnr_interface.h"
+#include "threednr_adapt_interface.h"
 #include <cutils/properties.h>
 #include "isp_mw.h"
 #include "sw_3dnr_param.h"
@@ -94,6 +94,7 @@ struct class_3dnr_pre { // 3dnr pre
     cmr_uint is_stop;
     c3dnr_buffer_t *out_image;
     sem_t sem_3dnr;
+    void *proc_handle;
 };
 
 struct class_3dnr {
@@ -121,6 +122,7 @@ struct class_3dnr {
     cmr_u32 g_num;
     cmr_u32 g_totalnum;
     cmr_uint is_stop;
+    void *proc_handle;
 };
 typedef struct process_pre_3dnr_info {
     struct ipm_frame_in in;
@@ -519,8 +521,8 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         sensor_id, param_3dnr_index, param.SearchWindow_x, param.SearchWindow_y,
         param.threthold[3][2]);
 
-
-    ret = threednr_init(&param);
+    param.productInfo = 0;
+    ret = threednr_init((void*)&threednr_handle->proc_handle, &param);
     if (ret < 0) {
         CMR_LOGE("Fail to call threednr_init");
     } else {
@@ -550,7 +552,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     // threednr_cancel();
     CMR_LOGI("OK to threednr_cancel");
 
-    ret = threednr_deinit();
+    ret = threednr_deinit((void*)&threednr_handle->proc_handle);
     if (ret) {
         CMR_LOGE("3dnr failed to threednr_deinit");
     }
@@ -708,7 +710,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
         goto exit;
     }
     LAUNCHLOGS(CMR_THREEDNR_DO_T);
-    ret = threednr_function(&small_image, &big_buf);
+    ret = threednr_function(threednr_handle->proc_handle, &small_image, &big_buf);
     if (ret < 0) {
         CMR_LOGE("Fail to call the threednr_function");
     }
@@ -1134,7 +1136,8 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     /*CMR_LOGI("add small width:%d ,height:%d , big width:%d ,height:%d",
              param.small_width, param.small_height, param.orig_width,
              param.orig_height);*/
-    ret = threednr_init(&param);
+    param.productInfo = 0;
+    ret = threednr_init((void *)&threednr_prev_handle->proc_handle, &param);
     if (ret < 0) {
         CMR_LOGE("Fail to call preview threednr_init");
     } else {
@@ -1164,7 +1167,7 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
     }
 
     CMR_LOGI("OK to threednr_cancel for preview");
-    ret = threednr_deinit();
+    ret = threednr_deinit((void *)&threednr_prev_handle->proc_handle);
     if (ret) {
         CMR_LOGE("3dnr preview failed to threednr_deinit");
     }
@@ -1434,7 +1437,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 
             if ((small_buf.cpu_buffer.bufferY != NULL) &&
                 (big_buf.cpu_buffer.bufferY != NULL))
-                ret = threednr_function_pre(&small_buf, &big_buf, &video_buf,
+                ret = threednr_function_pre(threednr_prev_handle->proc_handle, &small_buf, &big_buf, &video_buf,
                                             &preview_param);
             else {
                 CMR_LOGE(
@@ -1482,9 +1485,8 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 
             if ((small_buf.cpu_buffer.bufferY != NULL) &&
                 (big_buf.cpu_buffer.bufferY != NULL))
-                ret = threednr_function_pre(&small_buf, &big_buf, NULL,
+                ret = threednr_function_pre(threednr_prev_handle->proc_handle, &small_buf, &big_buf, NULL,
                                             &preview_param);
-
             if (!strcmp(value, "1")) {
                 sprintf(tmp_name,"%ldx%ld_preview_result_index%d.yuv",
                           threednr_prev_handle->width,

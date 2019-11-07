@@ -122,6 +122,7 @@ ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums312 ud710 ums512 ums518 ums
 LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
 LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2
+LOCAL_SHARED_LIBRARIES += libSprd3dnrAdapter
 else
 LOCAL_SRC_FILES += src/cmr_3dnr.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc

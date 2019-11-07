@@ -119,6 +119,7 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp7731e)
     LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
     LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
     LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2
+    LOCAL_SHARED_LIBRARIES += libSprd3dnrAdapter
 else
     LOCAL_SRC_FILES += src/cmr_3dnr.c
     LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
