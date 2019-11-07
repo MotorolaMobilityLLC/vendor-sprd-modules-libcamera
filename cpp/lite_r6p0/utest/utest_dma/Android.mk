@@ -14,6 +14,7 @@ LOCAL_C_INCLUDES:= \
 	$(TOP)/vendor/sprd/modules/libcamera/$(ISPDRV_DIR)/driver/inc \
 	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(TOP)/vendor/sprd/modules/libcamera/common/inc \
+	$(LOCAL_PATH)/../../../../kernel_module/interface \
 
 #LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 

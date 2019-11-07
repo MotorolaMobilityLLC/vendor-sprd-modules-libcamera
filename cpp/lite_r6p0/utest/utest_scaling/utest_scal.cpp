@@ -26,7 +26,7 @@
 #include <cutils/log.h>
 //#include "cmr_common.h"
 #include <semaphore.h>
-#include <linux/ion.h>
+#include <ion.h>
 #include "sprd_ion.h"
 #include <linux/types.h>
 #include <asm/ioctl.h>
@@ -63,24 +63,24 @@ struct utest_scal_cxt {
 	cpp_memory_t *output_sc_uv_mem;
 	cpp_memory_t *output_bp_y_mem;
 	cpp_memory_t *output_bp_uv_mem;
-	
+
 	sprd_cpp_scale_cfg_parm scal_cfg;
 };
 
-static char u_test_cfg_file[] = "/root/data/like/cfg_file.txt";
-static char utest_scal_src_y_422_file[] = "/root/data/like/pic/src_y_422.raw";
-static char utest_scal_src_uv_422_file[] = "/root/data/like/pic/src_uv_422.raw";
-static char utest_scal_src_y_420_file[] = "/root/data/like/pic/src_y_420.raw";
-static char utest_scal_src_uv_420_file[] = "/root/data/like/pic/src_uv_420.raw";
+static char u_test_cfg_file[] = "/data/vendor/cameraserver/data/like/cfg_file.txt";
+static char utest_scal_src_y_422_file[] = "/data/vendor/cameraserver/data/like/pic/src_y_422.raw";
+static char utest_scal_src_uv_422_file[] = "/data/vendor/cameraserver/data/like/pic/src_uv_422.raw";
+static char utest_scal_src_y_420_file[] = "/data/vendor/cameraserver/data/like/pic/src_y_420.raw";
+static char utest_scal_src_uv_420_file[] = "/data/vendor/cameraserver/data/like/pic/src_uv_420.raw";
 
 static char utest_scal_sc_dst_y_file[] =
-    "/root/data/like/pic/utest_scal_sc_dst_y_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_sc_dst_y_%dx%d_format_%d_%d_%d.raw";
 static char utest_scal_sc_dst_uv_file[] =
-    "/root/data/like/pic/utest_scal_sc_dst_uv_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_sc_dst_uv_%dx%d_format_%d_%d_%d.raw";
 static char utest_scal_bp_dst_y_file[] =
-    "/root/data/like/pic/utest_scal_bp_dst_y_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_bp_dst_y_%dx%d_format_%d_%d_%d.raw";
 static char utest_scal_bp_dst_uv_file[] =
-    "/root/data/like/pic/utest_scal_bp_dst_uv_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_bp_dst_uv_%dx%d_format_%d_%d_%d.raw";
 
 const char *cfg_string[] = {
 	"input_size_w",
@@ -200,8 +200,9 @@ static int utest_scal_param_set(struct utest_scal_cxt *scal_cxt_ptr,
 	char param[20];
 	int value = 0;
 	int i;
+
 	memset(scal_cxt_ptr, 0, sizeof(struct utest_scal_cxt));
-	if ((fp = fopen(u_test_cfg_file, "r")) != NULL){
+	if (fp = fopen(u_test_cfg_file, "r")){
 		//Read Parameter from File.
 		fscanf(fp, "%s%d", param, &scal_cxt_ptr->scal_cfg.input_size.w);
 		ERR("param get from txt is param:%s, value:%d .\n",
@@ -276,7 +277,7 @@ static int utest_scal_param_set(struct utest_scal_cxt *scal_cxt_ptr,
 		ERR("param get from txt is param:%s, value:%d .\n",
 			param, scal_cxt_ptr->scal_cfg.bp_trim.w);
 		fscanf(fp, "%s%d", param, &scal_cxt_ptr->scal_cfg.bp_trim.h);
-		ERR("param get from txt is param:%s, value:%d .\n",
+		ERR("param get from txt is param:%s, bp_trim.h value:%d .\n",
 			param, scal_cxt_ptr->scal_cfg.bp_trim.h);
 		scal_cxt_ptr->scal_cfg.output_pitch = scal_cxt_ptr->scal_cfg.output_size.w;
 		scal_cxt_ptr->scal_cfg.bpout_pitch = scal_cxt_ptr->scal_cfg.bp_trim.w;
