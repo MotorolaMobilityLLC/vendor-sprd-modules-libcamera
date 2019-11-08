@@ -1166,10 +1166,16 @@ static cmr_u32 awb_get_debug_info(struct awb_ctrl_cxt *cxt, void *result)
 static cmr_u32 _awb_get_flash_ct_table(struct awb_ctrl_cxt *cxt, void *result)
 {
 	cmr_u32 rtn = AWB_SUCCESS;
-	struct awb_ct_table *param = (struct awb_ct_table *)result;
+	int i = 0;
+	struct awb_ct_table_3_0 param_3_0;
+	struct awb_ct_table param;
 	//awblib 2.x
-	rtn = cxt->lib_ops.awb_ioctrl_v1(cxt->alg_handle, AWB_IOCTRL_GET_CTTABLE20, param);
-
+	rtn = cxt->lib_ops.awb_ioctrl_v1(cxt->alg_handle, AWB_IOCTRL_GET_CTTABLE20, &param);
+	for(i = 0;i<20;i++) {
+		param_3_0.ct[i] = param.ct[i];
+		param_3_0.rg[i] = param.rg[i];
+	}
+	memcpy((struct awb_ct_table_3_0 *)result,&param_3_0,sizeof(struct awb_ct_table_3_0));
 
 	return rtn;
 }

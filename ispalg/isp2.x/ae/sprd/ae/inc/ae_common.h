@@ -203,7 +203,7 @@ enum ae_binning_mode {
 };
 
 struct ae_ct_table {
-	float ct[20];
+	cmr_s32 ct[20];
 	float rg[20];
 };
 
