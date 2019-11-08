@@ -11691,7 +11691,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_ANTIBANDING:
     // case CAMERA_PARAM_ISO:
     case CAMERA_PARAM_AE_REGION:
-    case CAMERA_PARAM_EXPOSURE_COMPENSATION:
+    //case CAMERA_PARAM_EXPOSURE_COMPENSATION:
     case CAMERA_PARAM_EFFECT:
     case CAMERA_PARAM_BRIGHTNESS:
     case CAMERA_PARAM_CONTRAST:
