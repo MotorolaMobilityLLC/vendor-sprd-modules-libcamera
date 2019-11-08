@@ -6049,7 +6049,11 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
              cropRegion.start_x, cropRegion.start_y, cropRegion.width,
              cropRegion.height);
 
-    mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
+    if (getMultiCameraMode() == MODE_MULTI_CAMERA) {
+        mSetting->getLargestSensorSize(mCameraId, &sensorOrgW, &sensorOrgH);
+    } else {
+        mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
+    }
 
     if (cropRegion.width > 0 && cropRegion.height > 0) {
         zoomRatio = static_cast<float>(sensorOrgW) / cropRegion.width;
@@ -6088,18 +6092,25 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
         return UNKNOWN_ERROR;
     }
 
-    HAL_LOGD("crop %d %d %d %d sens w/h %d %d.", cropRegion->start_x,
-             cropRegion->start_y, cropRegion->width, cropRegion->height,
+    HAL_LOGD("mCameraId %d crop %d %d %d %d sens w/h %d %d.",
+             mCameraId, cropRegion->start_x,cropRegion->start_y,
+             cropRegion->width, cropRegion->height,
              sensorWidth, sensorHeight);
 
-    mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
+    if (getMultiCameraMode() == MODE_MULTI_CAMERA) {
+        mSetting->getLargestSensorSize(mCameraId, &sensorOrgW, &sensorOrgH);
+    } else {
+        mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
+    }
 
     SensorRotate = mHalOem->ops->camera_get_preview_rot_angle(mCameraHandle);
+
     if (sensorWidth == sensorOrgW && sensorHeight == sensorOrgH &&
         SensorRotate == IMG_ANGLE_0) {
-        HAL_LOGD("dont' need to convert.");
+        HAL_LOGD("mCameraId %d dont' need to convert.", mCameraId);
         return 0;
     }
+
     /*
     zoomWidth = (float)cropRegion->width;
     zoomHeight = (float)cropRegion->height;
@@ -6163,9 +6174,9 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
         cropRegion->height = (sensorHeight - startXbak) - cropRegion->start_y;
         break;
     }
-    HAL_LOGD("Crop calculated (x=%d,y=%d,w=%d,h=%d rot=0x%lx)",
-             cropRegion->start_x, cropRegion->start_y, cropRegion->width,
-             cropRegion->height, SensorRotate);
+    HAL_LOGD("mCameraId = %d, Crop calculated (x=%d,y=%d,w=%d,h=%d rot=0x%lx)",
+             mCameraId, cropRegion->start_x, cropRegion->start_y,
+             cropRegion->width, cropRegion->height, SensorRotate);
     return ret;
 }
 
