@@ -652,6 +652,58 @@ struct dcam_rgb_aem_param {
 	struct dcam_ae_statistic_info stat;
 };
 
+struct isp_cnr2_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+};
+
+struct isp_filter_weights{
+	cmr_u8 distWeight[9];
+	cmr_u8 rangWeight[128];
+};
+
+struct isp_cnr2_info {
+	cmr_u8 filter_en[CNR_LEVEL];
+	cmr_u8 rangTh[CNR_LEVEL][2];
+	struct isp_filter_weights weight[CNR_LEVEL][2];
+};
+
+struct isp_cnr2_param {
+	struct isp_cnr2_info cur;
+	struct isp_cnr2_level_info level_info;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
+struct isp_ynrs_level{
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
+};
+
+struct isp_ynrs_param {
+	struct isp_ynrs_level cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
@@ -725,6 +777,10 @@ struct isp_context {
 	struct dcam_blc_param dcam_blc;
 	struct isp_2d_lsc_param dcam_2d_lsc;
 	struct dcam_rgb_aem_param dcam_aem;
+
+	struct isp_cnr2_param cnr2;
+	struct isp_ynrs_param ynrs;
+
 };
 
 /*******************************isp_block_com******************************/
@@ -1016,6 +1072,17 @@ cmr_s32 _pm_dcam_lsc_deinit(void *lnc_param);
 cmr_s32 _pm_pdaf_tune_init(void *dst_pdaf_tune_param, void *src_pdaf_tune_param, void *param1, void *param2);
 cmr_s32 _pm_pdaf_tune_set_param(void *pdaf_tune_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_pdaf_tune_get_param(void *pdaf_tune_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_u32 _pm_cnr2_convert_param(void *dst_cnr2_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
+cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, void *param2);
+cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_cnr2_get_param(void *cnr2_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
+cmr_s32 _pm_ynrs_init(void *dst_ynrs_param, void *src_ynrs_param, void *param1, void *param2);
+cmr_s32 _pm_ynrs_set_param(void *ynrs_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_ynrs_get_param(void *ynrs_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
 
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);

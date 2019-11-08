@@ -358,6 +358,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_POST_3DNR, //for post 3dnr
 	ISP_CTRL_3DNR,
 	ISP_CTRL_SENSITIVITY,
+	ISP_CTRL_GET_CNR2_PARAM,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_3DNR_MODE,
 	ISP_CTRL_GET_CNR2_YNR_EN,
@@ -960,6 +961,23 @@ struct isp_ynrs_info{
 	cmr_u16 gf_rnr_offset[5];
 	cmr_u16 bypass;
 	cmr_u8 reserved[2];
+};
+
+struct isp_sw_cnr2_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+};
+
+struct isp_sw_filter_weights
+{
+	cmr_u8 distWeight[9];
+	cmr_u8 rangWeight[128];
+};
+
+struct isp_sw_cnr2_info {
+	cmr_u8 filter_en[4];
+	cmr_u8 rangTh[4][2];
+	struct isp_sw_filter_weights weight[4][2];
 };
 
 struct isp_ai_rect {
