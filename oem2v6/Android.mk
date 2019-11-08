@@ -134,6 +134,7 @@ LOCAL_CFLAGS += -DCONFIG_CAMERA_CNR
 LOCAL_SRC_FILES+= src/cmr_cnr.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libcnr/inc
 LOCAL_SHARED_LIBRARIES += libsprdcnr
+LOCAL_SHARED_LIBRARIES += libsprdcnradapter
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)

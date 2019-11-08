@@ -48,6 +48,7 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                         struct ipm_open_out *out, cmr_handle *class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_cnr *cnr_handle = NULL;
+    int width = 0, height =0, runversion = 0;
 
     ThreadSet threadSet;
     char value[PROPERTY_VALUE_MAX] = {
@@ -78,7 +79,7 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     property_get("vendor.cam.cnr.corebundle", value, "0");
     threadSet.coreBundle = atoi(value);
 
-    cnr_handle->handle = sprd_cnr_init(threadSet);
+    cnr_handle->handle = sprd_cnr_init(width, height, runversion);
     if (NULL == cnr_handle->handle) {
         CMR_LOGE("failed to create");
         goto exit;
@@ -142,12 +143,12 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     denoise_buffer imgBuffer;
     Denoise_Param denoiseParam;
     YNR_Param ynrParam;
-    CNR_Param cnrParam;
+    CNR_Parameter cnrParam;
     denoise_mode mode = cxt->nr_flag - 1;
     cmr_bzero(&imgBuffer, sizeof(denoise_buffer));
     cmr_bzero(&denoiseParam, sizeof(Denoise_Param));
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
-    cmr_bzero(&cnrParam, sizeof(CNR_Param));
+    cmr_bzero(&cnrParam, sizeof(CNR_Parameter));
 
     if (!in || !class_handle || !cxt || !cnr_handle->handle) {
         CMR_LOGE("Invalid Param!");
@@ -192,10 +193,10 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
                 CMR_LOGE("failed to get isp CNR param  %ld", ret);
                 goto exit;
             }
-            memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Param));
-            denoiseParam.cnrParam = &cnrParam;
+            memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
+            denoiseParam.cnr2Param = &cnrParam;
         } else {
-            denoiseParam.cnrParam = NULL;
+            denoiseParam.cnr2Param = NULL;
         }
 
     } else {
@@ -205,8 +206,8 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
             CMR_LOGE("failed to get isp YNR param  %ld", ret);
             goto exit;
         }
-        memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Param));
-        denoiseParam.cnrParam = &cnrParam;
+        memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
+        denoiseParam.cnr2Param = &cnrParam;
         denoiseParam.ynrParam = NULL;
     }
     char prop[PROPERTY_VALUE_MAX];

@@ -38,4 +38,30 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+
+### adapter ###
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_yuv_denoise_adapter.cpp
+LOCAL_MODULE := libsprdcnradapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
+LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdcnr
+
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+         $(LOCAL_PATH)/../inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+#ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512), )
+#LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_VDSP
+#else
+LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_CPU
+#endif
+
+include $(BUILD_SHARED_LIBRARY)
 endif

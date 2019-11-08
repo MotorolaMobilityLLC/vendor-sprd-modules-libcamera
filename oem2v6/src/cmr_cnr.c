@@ -21,7 +21,7 @@
 #include "cmr_common.h"
 #include "cmr_oem.h"
 #include "isp_mw.h"
-#include "Denoise_SPRD.h"
+#include "sprd_yuv_denoise_adapter.h"
 #include <math.h>
 
 
@@ -52,8 +52,8 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                         struct ipm_open_out *out, cmr_handle *class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_cnr *cnr_handle = NULL;
+    sprd_yuv_denoise_init_t param;
 
-    ThreadSet threadSet;
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -77,13 +77,7 @@ static cmr_int cnr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 
     cnr_handle->common.ops = &cnr_ops_tab_info;
 
-
-    property_get("vendor.cam.cnr.threadnum", value, "4");
-    threadSet.threadNum = atoi(value);
-    property_get("vendor.cam.cnr.corebundle", value, "0");
-    threadSet.coreBundle = atoi(value);
-
-    cnr_handle->handle = sprd_cnr_init(threadSet);
+    cnr_handle->handle = sprd_yuv_denoise_adpt_init((void *)&param);
     if (NULL == cnr_handle->handle) {
         CMR_LOGE("failed to create");
         goto exit;
@@ -118,7 +112,7 @@ static cmr_int cnr_close(cmr_handle class_handle) {
     if (cnr_handle->is_inited) {
         sem_wait(&cnr_handle->sem);
 
-        ret = sprd_cnr_deinit(cnr_handle->handle);
+        ret = sprd_yuv_denoise_adpt_deinit(cnr_handle->handle);
         if (ret) {
             CMR_LOGE("failed to deinit");
         }
@@ -142,18 +136,16 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_cnr *cnr_handle = (struct class_cnr *)class_handle;
     struct img_addr *addr;
-    cmr_uint width = 0;
-    cmr_uint height = 0;
     struct camera_context *cxt = (struct camera_context *)in->private_data;
-    denoise_buffer imgBuffer;
-    Denoise_Param denoiseParam;
     YNR_Param ynrParam;
-    CNR_Param cnrParam;
-    denoise_mode mode = cxt->nr_flag - 1;
-    cmr_bzero(&imgBuffer, sizeof(denoise_buffer));
-    cmr_bzero(&denoiseParam, sizeof(Denoise_Param));
+    CNR_Parameter cnr2Param;
+    cnr_param_t cnr3Param;
+    sprd_yuv_denoise_cmd_t mode = cxt->nr_flag - 1;
+    sprd_yuv_denoise_param_t denoise_param;
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
-    cmr_bzero(&cnrParam, sizeof(CNR_Param));
+    cmr_bzero(&cnr2Param, sizeof(CNR_Parameter));
+    cmr_bzero(&cnr3Param, sizeof(cnr_param_t));
+    cmr_bzero(&denoise_param, sizeof(sprd_yuv_denoise_param_t));
 
     if (!in || !class_handle || !cxt || !cnr_handle->handle) {
         CMR_LOGE("Invalid Param!");
@@ -164,17 +156,19 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
         return ret;
     }
     sem_wait(&cnr_handle->sem);
-    imgBuffer.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
-    imgBuffer.bufferUV = (unsigned char *)in->src_frame.addr_vir.addr_u;
-    width = in->src_frame.size.width;
-    height = in->src_frame.size.height;
+    denoise_param.bufferY.addr[0] = (void *)in->src_frame.addr_vir.addr_y;
+    denoise_param.bufferUV.addr[0] = (void *)in->src_frame.addr_vir.addr_u;
+    denoise_param.bufferY.ion_fd = (int32_t)in->src_frame.fd;
+    denoise_param.bufferUV.ion_fd = (int32_t)in->src_frame.fd;
+    denoise_param.width = in->src_frame.size.width;
+    denoise_param.height = in->src_frame.size.height;
 
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.dump.before.docnr", value, "null");
     if (!strcmp(value, "true")) {
         addr = &in->src_frame.addr_vir;
-        dump_image("cnr_transfer_frame_before_cnr", CAM_IMG_FMT_YUV420_NV21, width,
-                   height, 0, addr, width * height * 3 / 2);
+        dump_image("cnr_transfer_frame_before_cnr", CAM_IMG_FMT_YUV420_NV21, denoise_param.width,
+                   denoise_param.height, 0, addr, (denoise_param.width) * (denoise_param.height) * 3 / 2);
     }
 
     cmr_handle oem_handle = NULL;
@@ -183,7 +177,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
 
     struct ipm_init_in *ipm_in = &cnr_handle->common.ipm_cxt->init_in;
     CMR_LOGI("cxt->nr_flag %d", cxt->nr_flag);
-    if (cxt->nr_flag & NR_ENABLE) {
+    if (cxt->nr_flag & NR_ENABLE) {  /*YNR or YNR_CNR*/
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_YNRS_PARAM,
                                     &isp_cmd_parm);
         if (CMR_CAMERA_SUCCESS != ret) {
@@ -191,37 +185,43 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
             goto exit;
         }
         memcpy(&ynrParam, &isp_cmd_parm.ynr_param, sizeof(YNR_Param));
-        denoiseParam.ynrParam = &ynrParam;
-        if (cxt->nr_flag == CNR_YNR_ENABLE) {
+        denoise_param.ynrParam = &ynrParam;
+        if (cxt->nr_flag == CNR_YNR_ENABLE) {    /*YNR_CNR*/
             ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
                                         &isp_cmd_parm);
-            if (CMR_CAMERA_SUCCESS != ret) {
+            if (CMR_CAMERA_SUCCESS != ret) {   
                 CMR_LOGE("failed to get isp CNR param  %ld", ret);
                 goto exit;
             }
-            memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Param));
-            denoiseParam.cnrParam = &cnrParam;
+            memcpy(&cnr2Param, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
+            denoise_param.cnr2Param = &cnr2Param;
+            denoise_param.cnr3Param = &cnr3Param;
         } else {
-            denoiseParam.cnrParam = NULL;
+            denoise_param.cnr2Param = NULL;
         }
-    } else {
+    } else {   /*CNR*/
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
                                     &isp_cmd_parm);
         if (CMR_CAMERA_SUCCESS != ret) {
             CMR_LOGE("failed to get isp YNR param  %ld", ret);
             goto exit;
         }
-        memcpy(&cnrParam, &isp_cmd_parm.cnr2_param, sizeof(CNR_Param));
-        denoiseParam.cnrParam = &cnrParam;
-        denoiseParam.ynrParam = NULL;
+        memcpy(&cnr2Param, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
+        denoise_param.cnr2Param = &cnr2Param;
+        denoise_param.cnr3Param = &cnr3Param;
+        denoise_param.ynrParam = NULL;
     }
     char prop[PROPERTY_VALUE_MAX];
     property_get("debug.dump.nr.mode", prop, "0");
     if (atoi(prop) != 0) {
         mode = atoi(prop) - 1;
     }
-    ret = sprd_cnr_process(cnr_handle->handle, &imgBuffer, &denoiseParam, mode,
-                           width, height);
+
+    if(mode >= SPRD_YUV_DENOISE_MAX_CMD){
+      CMR_LOGE("cmd %d is invalid.",mode);
+      goto exit;
+    }
+    ret = sprd_yuv_denoise_adpt_ctrl(cnr_handle->handle, mode, (void *)&denoise_param);
     if (CMR_CAMERA_SUCCESS != ret) {
         CMR_LOGE("failed to docnr %ld", ret);
         goto exit;
@@ -229,8 +229,8 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     property_get("debug.dump.after.docnr", value, "null");
     if (!strcmp(value, "true")) {
         addr = &in->src_frame.addr_vir;
-        dump_image("cnr_transfer_frame_after_cnr", CAM_IMG_FMT_YUV420_NV21, width,
-                   height, 1, addr, width * height * 3 / 2);
+        dump_image("cnr_transfer_frame_after_cnr", CAM_IMG_FMT_YUV420_NV21, denoise_param.width,
+                   denoise_param.height, 1, addr, (denoise_param.width) * (denoise_param.height) * 3 / 2);
     }
 
 exit:
