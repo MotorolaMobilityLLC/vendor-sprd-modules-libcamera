@@ -1823,18 +1823,19 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 16 MMI opticszoom calibration mode: 1-SW+W, 2-W+T, 3-SW+W+T
     property_get("persist.vendor.cam.opticszoom.cali.mode", prop, "0");
+    available_cam_features.add(atoi(prop));
 
     // 17 camera infrared
-    // property_get("persist.vendor.cam.infrared.enable", prop, "0");
-    // available_cam_features.add(atoi(prop));
+    property_get("persist.vendor.cam.infrared.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
 
-    // // 18 camera macrophoto
-    // property_get("persist.vendor.cam.macrophoto.enable", prop, "0");
-    // available_cam_features.add(atoi(prop));
+    // 18 camera macrophoto
+    property_get("persist.vendor.cam.macrophoto.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
 
-    // // 19 camera macrovideo
-    // property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
-    // available_cam_features.add(atoi(prop));
+    // 19 camera macrovideo
+    property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
