@@ -1024,9 +1024,15 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 
     phyPtr = sensorGetPhysicalSnsInfo(cameraId);
 
-    cameraInfo->facing = phyPtr->face_type;
-    cameraInfo->orientation = phyPtr->angle;
-    cameraInfo->resource_cost = phyPtr->resource_cost;
+    if (phyPtr->phyId == 0xff) {
+        cameraInfo->facing = -1;
+        cameraInfo->orientation = -1;
+        cameraInfo->resource_cost = -1;
+    } else {
+        cameraInfo->facing = phyPtr->face_type;
+        cameraInfo->orientation = phyPtr->angle;
+        cameraInfo->resource_cost = phyPtr->resource_cost;
+    }
     // TBD: may be will add other variable in struct camera_info
 
     return 0;
@@ -1542,12 +1548,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].quirksInfo.use_parital_result = 1;
 
     // lens
-    if (cameraId == 0)
+    if (cameraInfo.facing == CAMERA_FACING_BACK) {
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_BACK;
-    else if (cameraId == 1 || cameraId == 3)
+    } else if (cameraInfo.facing == CAMERA_FACING_FRONT) {
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_FRONT;
-    else
-        s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_BACK;
+    } else if (cameraInfo.facing == CAMERA_FACING_EXTERNAL) {
+        s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_EXTERNAL;
+    } else {
+        s_setting[cameraId].lensInfo.facing = 0xff;
+    }
 
     // lens shading
     s_setting[cameraId].shadingInfo.factor_count = SPRD_SHADING_FACTOR_NUM;

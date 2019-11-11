@@ -579,7 +579,8 @@ const cam_stream_info_t subSensor_stream_info[] = {
     {{640, 480}, 33331760L, 33331760L},
     {{320, 240}, 33331760L, 33331760L}};
 
-const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0};
+const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.4,
+                                               2.6, 2.8, 3.0};
 
 const int64_t kavailable_min_durations[1] = {
     33331760L,
@@ -1255,10 +1256,15 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
 
     phyPtr = sensorGetPhysicalSnsInfo(cameraId);
 
-    cameraInfo->facing = phyPtr->face_type;
-    cameraInfo->orientation = phyPtr->angle;
-    cameraInfo->resource_cost = phyPtr->resource_cost;
-
+    if (phyPtr->phyId == 0xff) {
+        cameraInfo->facing = -1;
+        cameraInfo->orientation = -1;
+        cameraInfo->resource_cost = -1;
+    } else {
+        cameraInfo->facing = phyPtr->face_type;
+        cameraInfo->orientation = phyPtr->angle;
+        cameraInfo->resource_cost = phyPtr->resource_cost;
+    }
     // TBD: may be will add other variable in struct camera_info
 
     return 0;
@@ -1608,6 +1614,8 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_FRONT;
     } else if (cameraInfo.facing == CAMERA_FACING_EXTERNAL) {
         s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_EXTERNAL;
+    } else {
+        s_setting[cameraId].lensInfo.facing = 0xff;
     }
 
     memcpy(s_setting[cameraId].lensInfo.distortion_correction_modes,
@@ -1688,8 +1696,8 @@ int SprdCamera3Setting::getHighResCapSize(int32_t cameraId,
  * output: capture size for "AUTO" mode
  */
 int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId,
-                    struct img_size *pRet, struct img_size sensor_max)
-{
+                                             struct img_size *pRet,
+                                             struct img_size sensor_max) {
     struct BinCapSizeTag {
         const char *pch;
         struct img_size size;
@@ -1705,7 +1713,7 @@ int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId,
     };
     int i;
     char prop[PROPERTY_VALUE_MAX] = {0};
-   if (cameraId == 0)
+    if (cameraId == 0)
         property_get("persist.vendor.cam.back.bin.cap", prop, "");
     else if (cameraId == 1)
         property_get("persist.vendor.cam.front.bin.cap", prop, "");
@@ -1726,9 +1734,8 @@ int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId,
     pRet->height = pRet->height <= 0 ? 1944 : (pRet->height);
 
 _EXIT:
-    HAL_LOGD("prop:%s param[%d %d], cap size[%d %d]", prop,
-             sensor_max.width, sensor_max.height,
-             pRet->width, pRet->height);
+    HAL_LOGD("prop:%s param[%d %d], cap size[%d %d]", prop, sensor_max.width,
+             sensor_max.height, pRet->width, pRet->height);
 
     return 0;
 }
@@ -1788,10 +1795,12 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     sensor_max.width = phyPtr->source_width_max;
     sensor_max.height = phyPtr->source_height_max;
     /* 4in1, and cameraId 0 or 1 support high resolution */
-    if ((phyPtr->sensor_type == FOURINONE_SW || phyPtr->sensor_type == FOURINONE_HW) &&
+    if ((phyPtr->sensor_type == FOURINONE_SW ||
+         phyPtr->sensor_type == FOURINONE_HW) &&
         (cameraId == 0 || cameraId == 1)) {
         getHighResBinCapSize(cameraId, &s_limit, sensor_max);
-        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width, s_limit.height);
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width,
+                         s_limit.height);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
@@ -2096,9 +2105,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         getMaxCapSize(cameraId, &w, &h);
         jpeg_stream_size = getJpegStreamSize(cameraId, w, h);
     } else {
-        jpeg_stream_size = getJpegStreamSize(cameraId,
-                          largest_picture_size[cameraId].stream_sizes_tbl.width,
-                          largest_picture_size[cameraId].stream_sizes_tbl.height);
+        jpeg_stream_size = getJpegStreamSize(
+            cameraId, largest_picture_size[cameraId].stream_sizes_tbl.width,
+            largest_picture_size[cameraId].stream_sizes_tbl.height);
     }
     memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes,
            camera3_default_info.common.jpegThumbnailSizes,
@@ -2351,8 +2360,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 7 back ultra wide enable
     if (findSensorRole(MODULE_SPW_NONE_BACK) >= 0) {
-        available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.warp",
-        "persist.vendor.cam.ultra.wide.enable"));
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.warp",
+                               "persist.vendor.cam.ultra.wide.enable"));
     } else {
         available_cam_features.add(0);
     }
@@ -2366,17 +2376,20 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
 // 9 back portrait mode
 #ifdef CONFIG_PORTRAIT_SUPPORT
-    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.daul.portrait",
-        "persist.vendor.cam.ba.portrait.enable"));
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.daul.portrait",
+                           "persist.vendor.cam.ba.portrait.enable"));
 #else
-    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
-        "persist.vendor.cam.ba.portrait.enable"));
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+                           "persist.vendor.cam.ba.portrait.enable"));
 #endif
 
     // 10 front portrait mode
-    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
-        "persist.vendor.cam.fr.portrait.enable"));
-    
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+                           "persist.vendor.cam.fr.portrait.enable"));
+
     // 11 montion photo enable
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
@@ -2397,12 +2410,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     // 13 multi camera superwide & wide & tele
-    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
-        "persist.vendor.cam.multi.camera.enable"));
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
+                           "persist.vendor.cam.multi.camera.enable"));
 
     // 14 camera back high resolution definition mode
     property_get("persist.vendor.cam.back.high.resolution.mode", prop, "NULL");
-    if (strcmp(prop, "NULL") == 0) { /* auto, if not set */
+    if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
         phyPtr = sensorGetPhysicalSnsInfo(0); // camera id == 0
         i = 0;
         if (phyPtr->sensor_type == FOURINONE_SW ||
@@ -2436,7 +2450,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 20 camera front high resolution definition mode
     property_get("persist.vendor.cam.front.high.resolution.mode", prop, "NULL");
-    if (strcmp(prop, "NULL") == 0) { /* auto, if not set */
+    if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
         phyPtr = sensorGetPhysicalSnsInfo(1); // front camera id == 1
         i = 0;
         if (phyPtr->sensor_type == FOURINONE_SW ||
@@ -4823,7 +4837,8 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
                 .data.i32[0]) {
             s_setting[mCameraId].controlInfo.ae_manual_trigger = 1;
-	    s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt = EV_EFFECT_FRAME_NUM;
+            s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt =
+                EV_EFFECT_FRAME_NUM;
         }
 
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
@@ -5357,11 +5372,13 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             s_setting[mCameraId].controlInfo.ae_state;
     }
 
-    if (s_setting[mCameraId].controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED &&
+    if (s_setting[mCameraId].controlInfo.ae_state ==
+            ANDROID_CONTROL_AE_STATE_LOCKED &&
         s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt != 0 &&
         s_setting[mCameraId].controlInfo.ae_lock) {
-             s_setting[mCameraId].resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
-             s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt--;
+        s_setting[mCameraId].resultInfo.ae_state =
+            ANDROID_CONTROL_AE_STATE_SEARCHING;
+        s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt--;
     }
 
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
@@ -6647,7 +6664,8 @@ int SprdCamera3Setting::getSensorFov(float *w_fov, float *sw_fov) {
     return 0;
 }
 
-int SprdCamera3Setting::resetFeatureStatus(const char* fea_ip,const char* fea_eb) {
+int SprdCamera3Setting::resetFeatureStatus(const char *fea_ip,
+                                           const char *fea_eb) {
     char ip_feature[PROPERTY_VALUE_MAX];
     char feature_switch[PROPERTY_VALUE_MAX];
     char prop[PROPERTY_VALUE_MAX];
@@ -6655,27 +6673,27 @@ int SprdCamera3Setting::resetFeatureStatus(const char* fea_ip,const char* fea_eb
     property_get("persist.vendor.cam.ip.switch.on", feature_switch, "0");
 
     property_get(fea_ip, ip_feature, "2");
-    if(atoi(ip_feature) == 0){
+    if (atoi(ip_feature) == 0) {
         property_set(fea_eb, "0");
     } else if (atoi(ip_feature) == 1) {
         property_set(fea_eb, "1");
     }
 
     property_get(fea_eb, prop, "2");
-    if((atoi(feature_switch) == 1) && (atoi(prop)==0)){
+    if ((atoi(feature_switch) == 1) && (atoi(prop) == 0)) {
         rc = 1;
-        if(atoi(prop) != 2)
+        if (atoi(prop) != 2)
             property_set(fea_ip, "1");
-    } else if(atoi(prop)==1){
+    } else if (atoi(prop) == 1) {
         rc = 1;
-        if(atoi(prop) == 0){
+        if (atoi(prop) == 0) {
             property_set(fea_ip, "0");
         } else if (atoi(prop) == 1) {
             property_set(fea_ip, "1");
         }
     } else {
         rc = 0;
-        if(atoi(prop) == 0){
+        if (atoi(prop) == 0) {
             property_set(fea_ip, "0");
         } else if (atoi(prop) == 1) {
             property_set(fea_ip, "1");
