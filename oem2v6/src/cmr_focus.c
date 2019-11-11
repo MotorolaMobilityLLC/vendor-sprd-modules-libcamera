@@ -1528,7 +1528,7 @@ cmr_int wait_isp_focus_result(cmr_handle af_handle, cmr_u32 camera_id,
                 0,
             };
             property_get("ro.vendor.camera.dualcamera_cali_time", prop, "0");
-            if ((cam_cxt->is_multi_mode == MODE_MULTI_CAMERA || camera_id == 0) &&
+            if ((cam_cxt->is_multi_mode == MODE_MULTI_CAMERA || camera_id == 0 || camera_id == 4) &&
                     atoi(prop) == 3) {
                 ts.tv_sec += ISP_CALIBRATED_SEC_TIMEOUT;
             }

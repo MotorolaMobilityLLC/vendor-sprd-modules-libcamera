@@ -728,6 +728,9 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
 #endif
 #ifdef CONFIG_MULTICAMERA_SUPPORT
     {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA, 3, {"ov32a1q", "0", "ov16885_normal", "ov8856_shine", "0", "0"}, SNS_FACE_BACK, 90},
+    #ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+    {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA, 2, {"s5k3l6", "0", "0", "hi846_wide", "0", "0"}, SNS_FACE_BACK, 90},
+    #endif
 #endif
 };
 

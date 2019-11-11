@@ -935,8 +935,8 @@ int SprdCamera3OEMIf::takePicture() {
             // whether FRONT_CAMERA_FLASH_TYPE is flash
             bool isFrontFlash =
                 (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
-            if (mMultiCameraMode == MODE_MULTI_CAMERA || mCameraId == 0 ||
-                isFrontLcd || isFrontFlash) {
+            if (mMultiCameraMode == MODE_MULTI_CAMERA ||
+                    mCameraId == 0 || isFrontLcd || isFrontFlash || mCameraId == 4) {
                 mHalOem->ops->camera_start_preflash(mCameraHandle);
             }
             stopPreviewInternal();
@@ -1371,10 +1371,8 @@ status_t SprdCamera3OEMIf::autoFocus() {
             }
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
                      CAMERA_FOCUS_MODE_FULLSCAN);
-        } else if (mSprdRefocusEnabled && 3 == atoi(prop) &&
-                   (1 != verification_enable) &&
-                   (getMultiCameraMode() == MODE_MULTI_CAMERA ||
-                    mCameraId == 0)) {
+        } else if (mSprdRefocusEnabled && 3 == atoi(prop) && (1 != verification_enable) &&
+            (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 || mCameraId == 4)) {
             HAL_LOGD("mm-test set full scan mode");
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE,
                      CAMERA_FOCUS_MODE_FULLSCAN);
@@ -3799,8 +3797,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
     VCM_Tag sprdvcmInfo;
     if ((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH ||
-         getMultiCameraMode() == MODE_MULTI_CAMERA) &&
-        mCameraId == 0) {
+        getMultiCameraMode() == MODE_MULTI_CAMERA) && (mCameraId == 0 || mCameraId == 4)) {
         mSetting->getVCMTag(&sprdvcmInfo);
         uint32_t vcm_step = 0;
         mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
@@ -3811,7 +3808,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     }
 
     if (mSprdRefocusEnabled == true && mSprdFullscanEnabled &&
-        (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0)) {
+        (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 || mCameraId == 4)) {
         struct vcm_range_info range;
         ret = mHalOem->ops->camera_ioctrl(
             mCameraHandle, CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
@@ -5506,7 +5503,7 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
                  focus_status->af_mode, mSprdRefocusEnabled, mCameraId,
                  mSprdFullscanEnabled);
         if (mSprdRefocusEnabled == true &&
-            (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0) &&
+            (getMultiCameraMode() == MODE_MULTI_CAMERA ||mCameraId == 0 || mCameraId == 4) &&
             CAMERA_FOCUS_MODE_FULLSCAN == focus_status->af_mode) {
             mSprdFullscanEnabled = 1;
         }
@@ -6618,8 +6615,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_CONTROL_AE_MODE:
-        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-            mCameraId == 1 || getMultiCameraMode() == MODE_ULTRA_WIDE) {
+        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 || mCameraId == 1 || getMultiCameraMode() == MODE_ULTRA_WIDE || mCameraId == 4) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
@@ -6724,8 +6720,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_FLASH_MODE:
-        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-            mCameraId == 1) {
+        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 || mCameraId == 1 || mCameraId == 4) {
             int8_t flashMode;
             FLASH_Tag flashInfo;
             mSetting->getFLASHTag(&flashInfo);
@@ -10406,8 +10401,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         WaitForCaptureDone();
     }
 
-    if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-        isFrontLcd || isFrontFlash) {
+    if (getMultiCameraMode() == MODE_MULTI_CAMERA ||
+        mCameraId == 0 || isFrontLcd || isFrontFlash || mCameraId == 4) {
         obj->mHalOem->ops->camera_start_preflash(obj->mCameraHandle);
     }
     obj->mHalOem->ops->camera_snapshot_is_need_flash(

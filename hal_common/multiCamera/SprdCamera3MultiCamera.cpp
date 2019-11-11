@@ -147,12 +147,14 @@ int SprdCamera3MultiCamera::get_camera_info(int id, struct camera_info *info) {
 
             uint8_t available = 0;
             metadata.update(ANDROID_FLASH_INFO_AVAILABLE, &available, 1);
-
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+            float zoom_ratio_section[6] = {0.6, 1.0, 8.0, 0, 0, 0};
+#else
             float zoom_ratio_section[6] = {0.6, 1.0, 2.0, 8.0, 0, 0};
+#endif
+            addAvailableStreamSize(metadata, "RES_MULTI");
             metadata.update(ANDROID_SPRD_ZOOM_RATIO_SECTION, zoom_ratio_section,
                             6);
-
-            addAvailableStreamSize(metadata, "RES_MULTI");
 
             cmr_u16 cropW, cropH;
             int32_t active_array_size[4];
@@ -294,6 +296,10 @@ void SprdCamera3MultiCamera::getCameraMultiCamera(SprdCamera3MultiCamera
 
 static config_multi_camera multi_camera_config = {
 #include "multi_camera_config_.h"
+};
+
+static config_multi_camera wide_ultra_config = {
+#include "wide_ultrawide_config.h"
 };
 
 /*===========================================================================
@@ -1113,7 +1119,7 @@ int SprdCamera3MultiCamera::reprocessReq(buffer_handle_t *input_buffers) {
         ret = UNKNOWN_ERROR;
         goto exit;
     }
-    HAL_LOGD("find snap_stream");
+    HAL_LOGD("find snap_stream mRefIdex %d", mRefIdex);
     snap_stream =
         findStream(SNAPSHOT_STREAM,
                    (sprdcamera_physical_descriptor_t *)&m_pPhyCamera[mRefIdex]);
@@ -1333,6 +1339,14 @@ int SprdCamera3MultiCamera::processCaptureRequest(
     }
 
     {
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+        if (mZoomValue < 1.0) {
+            mRefIdex = 1;
+        } else {
+            mRefIdex = 0;
+        }
+
+#else
         if (mZoomValue < 1.0) {
             mRefIdex = 1;
         } else if (mZoomValue >= 2.0) {
@@ -1340,6 +1354,8 @@ int SprdCamera3MultiCamera::processCaptureRequest(
         } else {
             mRefIdex = 0;
         }
+
+#endif
     }
 
     // 3.  save request;
@@ -1385,7 +1401,7 @@ int SprdCamera3MultiCamera::processCaptureRequest(
     for (int i = 0; i < m_nPhyCameras; i++) {
         SprdCamera3HWI *hwi = m_pPhyCamera[i].hwi;
         int streamConfig = req_stream_mak[i];
-        HAL_LOGV("streamConfig:%d i %d index %d", streamConfig, i, index);
+        HAL_LOGD("streamConfig:%d i %d index %d", streamConfig, i, index);
         if (streamConfig == 64 && (i != mRefIdex)) {
             continue;
         }
@@ -2233,7 +2249,11 @@ bool SprdCamera3MultiCamera::isFWBuffer(buffer_handle_t *MatchBuffer) {
 config_multi_camera *SprdCamera3MultiCamera::load_config_file(void) {
 
     HAL_LOGD("load_config_file ");
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+    return &wide_ultra_config;
+#else
     return &multi_camera_config;
+#endif
 }
 
 /*===========================================================================
@@ -2511,6 +2531,19 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                                    1);
     }
 
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+    SprdCamera3Setting::getLargestSensorSize(0, &snsW, &snsH);
+    mWideMaxWidth = snsW;
+    mWideMaxHeight = snsH;
+
+    SprdCamera3Setting::getLargestSensorSize(3, &snsW, &snsH);
+    mSwMaxWidth = snsW;
+    mSwMaxHeight = snsH;
+
+    SprdCamera3Setting::getLargestSensorSize(2, &snsW, &snsH);
+    mTeleMaxWidth = snsW;
+    mTeleMaxHeight = snsH;
+#else
     SprdCamera3Setting::getLargestSensorSize(0, &snsW, &snsH);
     mWideMaxWidth = snsW;
     mWideMaxHeight = snsH;
@@ -2522,6 +2555,7 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
     SprdCamera3Setting::getLargestSensorSize(3, &snsW, &snsH);
     mTeleMaxWidth = snsW;
     mTeleMaxHeight = snsH;
+#endif
 
     HAL_LOGV("mWideMaxWidth=%d, mWideMaxHeight=%d, mTeleMaxWidth=%d, "
              "mTeleMaxHeight=%d, mSwMaxWidth=%d, mSwMaxHeight=%d",
@@ -2990,6 +3024,27 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                     0,
                 };
                 property_get("persist.vendor.cam.twv1.zoomratio", prop2, "0");
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+                if (gMultiCam->mZoomValue >=
+                    gMultiCam->mSwitch_W_Sw_Threshold) { // wide
+                    rc = gMultiCam->map(output_buffer, &output_buf_addr);
+                    rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
+                                        &input_buf1_addr);
+                    memcpy(output_buf_addr, input_buf1_addr,
+                           ADP_BUFSIZE(*output_buffer));
+                    gMultiCam->unmap(muxer_msg.combo_frame.buffer1);
+                    gMultiCam->unmap(output_buffer);
+                } else { // super wide
+                    rc = gMultiCam->map(output_buffer, &output_buf_addr);
+                    rc = gMultiCam->map(muxer_msg.combo_frame.buffer2,
+                                        &input_buf2_addr);
+                    memcpy(output_buf_addr, input_buf2_addr,
+                           ADP_BUFSIZE(*output_buffer));
+                    gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
+                    gMultiCam->unmap(output_buffer);
+                }
+
+#else
                 if (gMultiCam->mZoomValue >=
                         gMultiCam->mSwitch_W_Sw_Threshold &&
                     gMultiCam->mZoomValue <
@@ -3021,6 +3076,7 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                     gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
                     gMultiCam->unmap(output_buffer);
                 }
+#endif
                 // dump prev data
                 {
                     char prop[PROPERTY_VALUE_MAX] = {
@@ -3085,9 +3141,11 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                 gMultiCam->pushBufferList(
                     gMultiCam->mLocalBuffer, muxer_msg.combo_frame.buffer2,
                     gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
+#ifndef CONFIG_WIDE_ULTRAWIDE_SUPPORT
                 gMultiCam->pushBufferList(
                     gMultiCam->mLocalBuffer, muxer_msg.combo_frame.buffer3,
                     gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
+#endif
                 gMultiCam->CallBackResult(muxer_msg.combo_frame.frame_number,
                                           CAMERA3_BUFFER_STATUS_OK,
                                           CALLBACK_STREAM, CAM_TYPE_MAIN);
@@ -3225,6 +3283,32 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
             gMultiCam->mLocalBufferList,
             gMultiCam->mSavedSnapRequest.snap_stream->width,
             gMultiCam->mSavedSnapRequest.snap_stream->height));
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+        if (gMultiCam->mZoomValue >=
+            gMultiCam->mSwitch_W_Sw_Threshold) { // wide
+            rc = gMultiCam->map(capture_msg.combo_frame.buffer1,
+                                &input_buf1_addr);
+            rc = gMultiCam->map(output_buffer, &output_buf_addr);
+            memcpy(output_buf_addr, input_buf1_addr,
+                   ADP_BUFSIZE(*output_buffer));
+            gMultiCam->unmap(capture_msg.combo_frame.buffer1);
+            gMultiCam->unmap(output_buffer);
+            gMultiCam->pushBufferList(
+                gMultiCam->mLocalBuffer, capture_msg.combo_frame.buffer1,
+                gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
+        } else { // super wide
+            rc = gMultiCam->map(capture_msg.combo_frame.buffer2,
+                                &input_buf2_addr);
+            rc = gMultiCam->map(output_buffer, &output_buf_addr);
+            memcpy(output_buf_addr, input_buf2_addr,
+                   ADP_BUFSIZE(*output_buffer));
+            gMultiCam->unmap(capture_msg.combo_frame.buffer2);
+            gMultiCam->unmap(output_buffer);
+            gMultiCam->pushBufferList(
+                gMultiCam->mLocalBuffer, capture_msg.combo_frame.buffer2,
+                gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
+        }
+#else
         if (gMultiCam->mZoomValue >= gMultiCam->mSwitch_W_Sw_Threshold &&
             gMultiCam->mZoomValue < gMultiCam->mSwitch_W_T_Threshold) { // wide
             rc = gMultiCam->map(capture_msg.combo_frame.buffer1,
@@ -3262,6 +3346,7 @@ bool SprdCamera3MultiCamera::TWCaptureThread::threadLoop() {
                 gMultiCam->mLocalBuffer, capture_msg.combo_frame.buffer3,
                 gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
         }
+#endif
         // dump capture data
         {
             char prop[PROPERTY_VALUE_MAX] = {
@@ -3489,6 +3574,32 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
         cur_frame.buffer = (result->output_buffers)->buffer;
         {
             Mutex::Autolock l(mUnmatchedQueueLock);
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+            if (MATCH_SUCCESS == matchTwoFrame(cur_frame,
+                                               mUnmatchedFrameListAux1,
+                                               &matched_frame1)) {
+                muxer_queue_msg_t muxer_msg;
+                muxer_msg.msg_type = MUXER_MSG_DATA_PROC;
+                muxer_msg.combo_frame.frame_number = cur_frame.frame_number;
+                muxer_msg.combo_frame.buffer1 = cur_frame.buffer;
+
+                muxer_msg.combo_frame.buffer2 = matched_frame1.buffer;
+
+                muxer_msg.combo_frame.input_buffer = result->input_buffer;
+                {
+                    Mutex::Autolock l(mPreviewMuxerThread->mMergequeueMutex);
+                    HAL_LOGV("Enqueue combo frame:%d for frame merge!",
+                             muxer_msg.combo_frame.frame_number);
+                    if (cur_frame.frame_number > 5)
+                        clearFrameNeverMatched(cur_frame.frame_number,
+                                               matched_frame1.frame_number, 0);
+
+                    mPreviewMuxerThread->mPreviewMuxerMsgList.push_back(
+                        muxer_msg);
+                    mPreviewMuxerThread->mMergequeueSignal.signal();
+                }
+            }
+#else
             if (MATCH_SUCCESS ==
                 matchThreeFrame(cur_frame, mUnmatchedFrameListAux1,
                                 mUnmatchedFrameListAux2, &matched_frame1,
@@ -3510,7 +3621,9 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
                 }
                 mPreviewMuxerThread->mPreviewMuxerMsgList.push_back(muxer_msg);
                 mPreviewMuxerThread->mMergequeueSignal.signal();
-            } else {
+            }
+#endif
+            else {
                 HAL_LOGV("Enqueue newest unmatched frame:%d for Main camera",
                          cur_frame.frame_number);
                 hwi_frame_buffer_info_t *discard_frame =
@@ -3738,6 +3851,38 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
         cur_frame.buffer = (result->output_buffers)->buffer;
         {
             Mutex::Autolock l(mUnmatchedQueueLock);
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+            if (MATCH_SUCCESS == matchTwoFrame(cur_frame,
+                                               mUnmatchedFrameListMain,
+                                               &matched_frame1)) {
+                muxer_queue_msg_t muxer_msg;
+                muxer_msg.msg_type = MUXER_MSG_DATA_PROC;
+                muxer_msg.combo_frame.frame_number =
+                    matched_frame1.frame_number;
+                muxer_msg.combo_frame.buffer1 = matched_frame1.buffer;
+                muxer_msg.combo_frame.buffer2 = cur_frame.buffer;
+                muxer_msg.combo_frame.input_buffer = result->input_buffer;
+                {
+                    Mutex::Autolock l(mPreviewMuxerThread->mMergequeueMutex);
+                    HAL_LOGV("Enqueue combo frame:%d for frame merge!",
+                             muxer_msg.combo_frame.frame_number);
+                    // we don't call clearFrameNeverMatched before five
+                    // frame.
+                    // for first frame meta and ok status buffer update at
+                    // the
+                    // same time.
+                    // app need the point that the first meta updated to
+                    // hide
+                    // image cover
+                    if (cur_frame.frame_number > 5)
+                        clearFrameNeverMatched(matched_frame1.frame_number,
+                                               cur_frame.frame_number, 0);
+                    mPreviewMuxerThread->mPreviewMuxerMsgList.push_back(
+                        muxer_msg);
+                    mPreviewMuxerThread->mMergequeueSignal.signal();
+                }
+            }
+#else
             if (MATCH_SUCCESS ==
                 matchThreeFrame(cur_frame, mUnmatchedFrameListMain,
                                 mUnmatchedFrameListAux2, &matched_frame1,
@@ -3772,7 +3917,9 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
                         muxer_msg);
                     mPreviewMuxerThread->mMergequeueSignal.signal();
                 }
-            } else {
+            }
+#endif
+            else {
                 HAL_LOGV("Enqueue newest unmatched frame:%d for Aux1 camera",
                          cur_frame.frame_number);
                 hwi_frame_buffer_info_t *discard_frame =

@@ -1302,7 +1302,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            ksupported_preview_formats, sizeof(ksupported_preview_formats));
     camera3_default_info.common.processed_min_durations[0] =
         camera3_default_info.common.frame_duration_range[0];
-    if (cameraId == 0 || cameraId == 2 || cameraId == 3)
+    if (cameraId == 0 || cameraId == 2 || cameraId == 3 || cameraId == 4)
         memcpy(camera3_default_info.common.available_fps_ranges,
                kavailable_fps_ranges_back, sizeof(kavailable_fps_ranges_back));
     else
@@ -1834,7 +1834,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     initStaticParametersforSensorInfo(cameraId);
 
     // control
-    if (cameraId == 0 || cameraId == 2 || cameraId == 3)
+    if (cameraId == 0 || cameraId == 2 || cameraId == 3 || cameraId == 4)
         memcpy(s_setting[cameraId].controlInfo.ae_available_fps_ranges,
                kavailable_fps_ranges_back, sizeof(kavailable_fps_ranges_back));
     else
@@ -2217,7 +2217,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 16 MMI opticszoom calibration mode: 1-SW+W, 2-W+T, 3-SW+W+T
     property_get("persist.vendor.cam.opticszoom.cali.mode", prop, "0");
-    available_cam_features.add(atoi(prop));
+
+    // // 17 camera infrared
+    // property_get("persist.vendor.cam.infrared.enable", prop, "0");
+    // available_cam_features.add(atoi(prop));
+
+    // // 18 camera macrophoto
+    // property_get("persist.vendor.cam.macrophoto.enable", prop, "0");
+    // available_cam_features.add(atoi(prop));
+
+    // // 19 camera macrovideo
+    // property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
+    // available_cam_features.add(atoi(prop));
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
@@ -3839,7 +3850,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         requestInfo.update(ANDROID_SPRD_FLASH_LCD_MODE, &sprdFlashLcdMode, 1);
     }
 
-    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3) {
+    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 || mCameraId == 4) {
         requestInfo.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
         requestInfo.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,
@@ -5190,7 +5201,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     else {
         // s_setting[mCameraId].flashInfo.state = mCameraId == 0 ?
         // ANDROID_FLASH_STATE_READY : ANDROID_FLASH_STATE_UNAVAILABLE;
-        if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3) {
+        if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 || mCameraId == 4) {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
             if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "led") ||
@@ -5420,7 +5431,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        s_setting[mCameraId].toneInfo.curve_red,
                        SPRD_MAX_TONE_CURVE_POINT);
 
-    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 ||
+
+    if (mCameraId == 0 ||mCameraId == 2 || mCameraId == 3 || mCameraId == 4 || 
         mModuleId[mCameraId] == MODULE_SPW_NONE_BACK) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             camMetadata.update(ANDROID_SPRD_OTP_DATA,
@@ -5441,7 +5453,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         s_setting[mCameraId].calOtpInfo.cal_otp_result = 0;
     }
 
-    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3) {
+    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 || mCameraId == 4) {
         camMetadata.update(ANDROID_SPRD_VCM_STEP,
                            &(s_setting[mCameraId].vcmInfo.vcm_step), 1);
         camMetadata.update(ANDROID_SPRD_VCM_STEP_FOR_BOKEH,
