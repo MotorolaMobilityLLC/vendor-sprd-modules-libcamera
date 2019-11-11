@@ -452,6 +452,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_HDR_STATUS:
 		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
 		break;
+	case AE_CB_3DNR_NOTIFY:
+		cmd = ISP_3DNR_CALLBACK;
+		break;
 	default:
 		ISP_LOGI("fail to get known cb_type=%ld", cb_type);
 		return ret;
