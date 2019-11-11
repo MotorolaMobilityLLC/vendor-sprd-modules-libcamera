@@ -328,18 +328,18 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 	cmr_u32 rtn;
 	//struct ae_exposure_param *prv_param = &cxt->exp_data.write_data;
 	struct sensor_multi_ae_info ae_info[3];
-	struct sensor_info info_master;
-	struct sensor_info info_slave[2];
-	struct ae_sync_data sync_info_master;
-	struct ae_sync_data sync_info_slave[2];
-	struct ae_match_data ae_data_slave[2];
-	struct ae_match_data ae_match_data_master;
-	struct ae_match_data ae_match_data_slave[2];
-	struct sensor_otp_ae_info ae_otp_master;
-	struct sensor_otp_ae_info ae_otp_slave[2];
-	struct ae_lib_frm_sync_out out_param_parse;
-	struct ae_lib_frm_sync_out out_param_lib;
-	struct ae_lib_frm_sync_in in_param;
+	struct sensor_info info_master = {0};
+	struct sensor_info info_slave[2] = {{0}, {0}};
+	struct ae_sync_data sync_info_master = {0};
+	struct ae_sync_data sync_info_slave[2] = {{0},{0}};
+	struct ae_match_data ae_data_slave[2] = {{0}, {0}};
+	struct ae_match_data ae_match_data_master = {0};
+	struct ae_match_data ae_match_data_slave[2] = {{0},{0}};
+	struct sensor_otp_ae_info ae_otp_master = {0};
+	struct sensor_otp_ae_info ae_otp_slave[2] = {{0},{0}};
+	struct ae_lib_frm_sync_out out_param_parse = {0};
+	struct ae_lib_frm_sync_out out_param_lib = {0};
+	struct ae_lib_frm_sync_in in_param = {0};
 	in_param.sync_param[0] = &cxt->sync_param[0];
 	in_param.sync_param[1] = &cxt->sync_param[1];
 	in_param.sync_param[2] = &cxt->sync_param[2];
@@ -351,7 +351,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 	struct ae_match_stats_data stats_data_master = {0};
 	struct ae_match_stats_data stats_data_slave[2] = {{0},{0}};
 	struct aem_info slave_aem_info[2] = {{0},{0}};
-	cmr_u32 dcam_gain[3];
+	cmr_u32 dcam_gain[3] = {0, 0, 0};
 
 	if (0 != write_param->exp_line && 0 != write_param->sensor_gain) {
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
@@ -4148,7 +4148,7 @@ static cmr_s32 ae_set_isp_gain(struct ae_ctrl_cxt *cxt)
 		}
 	}
 	else if((cxt->is_multi_mode == ISP_ALG_DUAL_C_C||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M || cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW)&& (CAM_SENSOR_MASTER != cxt->sensor_role)) {
-		struct ae_match_data ae_match_data_slave;
+		struct ae_match_data ae_match_data_slave = {0};
 		if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
 		} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
@@ -5040,7 +5040,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		||cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW)
 		&& (CAM_SENSOR_MASTER != cxt->sensor_role)) {
 		cmr_s16 bv;
-		struct ae_match_data ae_match_data_slave;
+		struct ae_match_data ae_match_data_slave = {0};
 		if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MATCH_BV_DATA, NULL, &bv);
 			cxt->cur_result.cur_bv = bv;
