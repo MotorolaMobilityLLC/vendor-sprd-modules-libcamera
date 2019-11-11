@@ -47,6 +47,8 @@ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
 
 #define STRING_LENGTH 15
 
+#define SPRD_FLASH_REAR 0
+#define SPRD_FLASH_FRONT 1
 #define TORCH_CURRENT_LEVEL_SET(LEVEL) ((LEVEL << 8) | 0x0017)
 #define TORCH_DIR_SET(DIRECTION) ((DIRECTION & 0x0001) << 15)
 #define TORCH_OPEN_SET(OPEN) (3 - OPEN)
@@ -120,14 +122,20 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     const char *const flashInterface =
         "/sys/devices/virtual/misc/sprd_flash/test";
     ssize_t wr_ret;
-    HAL_LOGV("open flash driver interface");
+    int32_t flash_index;
+
+    LOGV("open flash driver interface");
     int fd = open(flashInterface, O_WRONLY);
     /* open sysfs file parition */
     if (-1 == fd) {
         LOGE("Failed to open: flash_light_interface, %s", flashInterface);
         return -EINVAL;
     }
-
+    if (camera_id !=1) {
+        flash_index = SPRD_FLASH_REAR;
+    } else {
+        flash_index = SPRD_FLASH_FRONT;
+    }
     m_flashOn[0] = mode ? SPRD_FLASH_STATUS_ON : SPRD_FLASH_STATUS_OFF;
 #ifdef CAMERA_TORCH_LIGHT_LEVEL
     default_light_level = CAMERA_TORCH_LIGHT_LEVEL;
@@ -135,12 +143,16 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     if (mode) {
         bytes = snprintf(buffer, sizeof(buffer), "0x%x",
                          TORCH_CURRENT_LEVEL_SET(default_light_level) |
-                             TORCH_DIR_SET(camera_id));
+                             TORCH_DIR_SET(flash_index));
         wr_ret = write(fd, buffer, bytes);
+        if (-1 == wr_ret) {
+            LOGE("WRITE FAILED \n");
+            retVal = -EINVAL;
+        }
     }
 
     bytes = snprintf(buffer, sizeof(buffer), "0x%x",
-                     TORCH_OPEN_SET(mode) | TORCH_DIR_SET(camera_id));
+                     TORCH_OPEN_SET(mode) | TORCH_DIR_SET(flash_index));
 
     wr_ret = write(fd, buffer, bytes);
 
