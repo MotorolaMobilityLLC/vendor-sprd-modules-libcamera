@@ -3151,7 +3151,6 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                         setting_set_flashdevice(cpt, parm,
                                                 FLASH_CLOSE_AFTER_OPEN);
                         CMR_LOGD("flash close");
-                        hal_param->flash_param.has_preflashed = 0;
                     }
 
                     if (setting_flash_status == SETTING_AF_FLASH_PRE_AFTER ||

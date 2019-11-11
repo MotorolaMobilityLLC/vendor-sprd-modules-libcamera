@@ -10303,6 +10303,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     int64_t tmp1, tmp2;
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
+    CONTROL_Tag controlInfo;
+    mSetting->getCONTROLTag(&controlInfo);
 
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
     bool isFrontLcd =
@@ -10321,6 +10323,30 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         goto exit;
+    }
+
+    /*bug1180023:telegram start capture do not wait focus done*/
+    if (sprddefInfo.sprd_appmode_id == -1) {
+        HAL_LOGD("af mode:%d", controlInfo.af_mode);
+        if ((mIsAutoFocus == true) &&
+            (controlInfo.af_mode == ANDROID_CONTROL_AF_MODE_AUTO)) {
+            int count = 0;
+            while (1) {
+                usleep(2000);
+                if (count > 1000) {
+                    HAL_LOGI("wait for af done timeout 2s");
+                    count = 0;
+                    break;
+                }
+                if (mIsAutoFocus == false) {
+                    HAL_LOGD("wait focus done");
+                    break;
+                } else {
+                    count++;
+                    continue;
+                }
+            }
+        }
     }
 
     mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
@@ -10346,8 +10372,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
                  (int32_t)(lensInfo.focal_length * 1000));
     }
 
-    CONTROL_Tag controlInfo;
-    mSetting->getCONTROLTag(&controlInfo);
     char value[PROPERTY_VALUE_MAX];
     if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
         (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
