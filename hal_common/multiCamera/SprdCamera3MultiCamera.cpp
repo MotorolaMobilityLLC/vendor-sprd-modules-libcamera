@@ -167,6 +167,7 @@ int SprdCamera3MultiCamera::get_camera_info(int id, struct camera_info *info) {
             mStaticCameraCharacteristics = metadata.release();
         }
         info->static_camera_characteristics = mStaticCameraCharacteristics;
+        info->resource_cost = 50;
     }
 
     return 0;
