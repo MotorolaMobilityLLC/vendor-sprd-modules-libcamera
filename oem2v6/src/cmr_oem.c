@@ -567,7 +567,7 @@ cmr_int camera_front_lcd_enhance_module_init(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     const hw_module_t *module;
 
-    if (!camera_front_lcd_flash_activie(cxt->face_type)) {
+    if (!camera_front_lcd_flash_activie(cxt->facing)) {
         CMR_LOGI("flash is not lcd type");
         return -1;
     }
@@ -592,7 +592,7 @@ cmr_int camera_front_lcd_enhance_module_deinit(cmr_handle oem_handle) {
     const char *refresh = "/sys/class/display/dispc0/refresh";
     const char *disable_flip = "/sys/class/display/dispc0/disable_flip";
 
-    if (!camera_front_lcd_flash_activie(cxt->face_type)) {
+    if (!camera_front_lcd_flash_activie(cxt->facing)) {
         CMR_LOGI("flash is not lcd type");
         return -1;
     }

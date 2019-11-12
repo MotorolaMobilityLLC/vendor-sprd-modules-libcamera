@@ -270,7 +270,6 @@ struct camera_context {
     sem_t snapshot_sm;
     cmr_uint share_path_sm_flag;
     cmr_handle init_thread;
-    cmr_int face_type;
     cmr_int facing;
 
     /*callback thread to hal*/
