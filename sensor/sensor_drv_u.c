@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <cutils/sockets.h>
+#include "ams/tcs3430/tcs_3430_drv.h"
 #include "hw_sensor_drv.h"
 #include "sensor_cfg.h"
 #include "sensor_drv_u.h"
@@ -2498,18 +2499,10 @@ static cmr_int sensor_ic_parse_ebd_data(cmr_handle handle, void *param) {
 static cmr_int sensor_ic_get_cct_data(cmr_handle handle, void *param) {
     cmr_int ret = SENSOR_SUCCESS;
     cmr_handle sensor_handle;
-    struct sensor_ic_ops *sns_ops = PNULL;
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
-    SENSOR_VAL_T val;
-    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
-    val.type = SENSOR_VAL_TYPE_GET_CCT_DATA;
-    val.pval = param;
 
-    SENSOR_LOGV("cct ptr %p\n", param);
-    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
-    if (sns_ops)
-        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
-                                            (cmr_uint)&val);
+    tcs3430_read_data(param);
+
     return ret;
 }
 

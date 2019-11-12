@@ -12241,8 +12241,18 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
         in_sn_ex_info->sensor_version_info;
     out_isp_sn_ex_info->pos_dis.up2hori = in_sn_ex_info->pos_dis.up2hori;
     out_isp_sn_ex_info->pos_dis.hori2down = in_sn_ex_info->pos_dis.hori2down;
-    out_isp_sn_ex_info->color_support = in_sn_ex_info->cct_supported;
-    out_isp_sn_ex_info->tof_support = in_sn_ex_info->tof_supported;
+
+#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
+    out_isp_sn_ex_info->color_support = 1;
+#else
+    out_isp_sn_ex_info->color_support = 0;
+#endif
+#ifdef TARGET_CAMERA_SENSOR_TOF_VL53L0
+    out_isp_sn_ex_info->tof_support = 1;
+#else
+    out_isp_sn_ex_info->tof_support = 0;
+#endif
+
     out_isp_sn_ex_info->fov_info.physical_size[0] =
         in_sn_ex_info->fov_info.physical_size[0];
     out_isp_sn_ex_info->fov_info.physical_size[1] =

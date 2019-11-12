@@ -86,7 +86,6 @@ endif
 ifeq ($(strip $(TARGET_CAMERA_SENSOR_CCT)),"ams_tcs3430")
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/ams/tcs3430/tcs_3430_drv.h
 LOCAL_SRC_FILES+= ams/tcs3430/tcs_3430_drv.c
-LOCAL_CFLAGS += -DTARGET_CAMERA_SENSOR_CCT_TCS3430
 endif
 
 ifeq ($(strip $(TARGET_CAMERA_SENSOR_TOF)),"tof_vl53l0")

@@ -346,8 +346,6 @@ static cmr_int ov32a1q_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
-    ex_info->cct_supported = static_info->cct_supported;
-    ex_info->tof_supported = static_info->tof_supported;
     return rtn;
 }
 
@@ -715,20 +713,6 @@ static cmr_int ov32a1q_drv_set_xtalk_data(cmr_handle handle, cmr_uint param){
 
 }
 
-#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
-#include "../../../../ams/tcs3430/tcs_3430_drv.h"
-static cmr_int ov32a1q_drv_get_cct_data(cmr_handle handle, cmr_u8 *param) {
-    cmr_int rtn = SENSOR_SUCCESS;
-    cmr_u8 *cct_data = (cmr_u8 *)param;
-    SENSOR_LOGV("*param 0x%x 0x%x", *param, *cct_data);
-
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    tcs3430_read_data(cct_data);
-
-    return rtn;
-}
-#endif
-
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -771,11 +755,6 @@ static cmr_int ov32a1q_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = ov32a1q_drv_ov4c_deinit(handle, param_ptr->pval);
         break;
 #endif
-	#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
-	case SENSOR_VAL_TYPE_GET_CCT_DATA:
-		ret = ov32a1q_drv_get_cct_data(handle, param_ptr->pval);
-		break;
-	#endif
 
     default:
         break;

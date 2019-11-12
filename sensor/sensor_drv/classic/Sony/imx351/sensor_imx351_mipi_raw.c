@@ -869,8 +869,6 @@ static cmr_int imx351_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
     ex_info->embedded_line_enable = static_info->embedded_line_enable;
-    ex_info->cct_supported = static_info->cct_supported;
-    ex_info->tof_supported = static_info->tof_supported;
     memcpy(&ex_info->fov_info, &static_info->fov_info,
            sizeof(static_info->fov_info));
 
@@ -1070,19 +1068,6 @@ static cmr_int imx351_drv_parse_ebd_data(cmr_handle handle,
 
 }
 
-#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
-static cmr_int imx351_drv_get_cct_data(cmr_handle handle, cmr_u8 *param) {
-    cmr_int rtn = SENSOR_SUCCESS;
-    cmr_u8 *cct_data = (cmr_u8 *)param;
-    SENSOR_LOGV("*param 0x%x 0x%x", *param, *cct_data);
-
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    tcs3430_read_data(cct_data);
-
-    return rtn;
-}
-#endif
-
 static cmr_int imx351_drv_get_3dnr_threshold(cmr_handle handle, cmr_u8 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct threshold_3dnr *tdnr_thr = (struct threshold_3dnr *)param;
@@ -1130,11 +1115,6 @@ static cmr_int imx351_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_PARSE_EBD_DATA:
         rtn = imx351_drv_parse_ebd_data(handle, param_ptr->pval);
         break;
-#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
-    case SENSOR_VAL_TYPE_GET_CCT_DATA:
-        rtn = imx351_drv_get_cct_data(handle, param_ptr->pval);
-        break;
-#endif
     default:
         break;
     }
