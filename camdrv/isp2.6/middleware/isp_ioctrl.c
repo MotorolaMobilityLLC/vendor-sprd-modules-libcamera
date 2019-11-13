@@ -59,6 +59,8 @@ static const char *LSC_START = "ISP_LSC_";
 static const char *LSC_END = "ISP_LSC_";
 static const char *SMART_START = "ISP_SMART_";
 static const char *SMART_END = "ISP_SMART_";
+static const char *AI_START = "ISP_AI__";
+static const char *AI_END = "ISP_AI__";
 static const char *OTP_START = "ISP_OTP_";
 static const char *OTP_END = "ISP_OTP_";
 static cmr_u8 awb_log_buff[256 * 1024] = {0};
@@ -1227,6 +1229,29 @@ static cmr_s32 ispctl_get_ae_debug_info(cmr_handle isp_alg_handle)
 	return ret;
 }
 
+static cmr_s32 ispctl_get_ai_debug_info(cmr_handle isp_alg_handle)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct tg_ai_ctrl_alc_log ai_log = { NULL, 0 };
+
+	if (NULL == cxt) {
+		ISP_LOGE("fail to get AI debug info !");
+		ret = ISP_ERROR;
+		return ret;
+	}
+	if (cxt->ops.ai_ops.ioctrl) {
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_DEBUG_INFO, NULL, (void *)&ai_log);
+		if (ISP_SUCCESS != ret) {
+			ISP_LOGE("fail to get AI debug info!");
+		}
+	}
+	cxt->ai_cxt.log_ai = ai_log.log;
+	cxt->ai_cxt.log_ai_size = ai_log.size;
+
+	return ret;
+}
+
 static cmr_s32 ispctl_get_alsc_debug_info(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -1336,6 +1361,10 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 			ISP_LOGE("fail to get alsc debug info");
 		}
 
+		if (ISP_SUCCESS != ispctl_get_ai_debug_info(cxt)) {
+			ISP_LOGE("fail to get ai debug info");
+		}
+
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
 		    + calc_log_size(cxt->ae_cxt.log_ae, cxt->ae_cxt.log_ae_size, AE_START, AE_END)
 		    + calc_log_size(cxt->af_cxt.log_af, cxt->af_cxt.log_af_size, AF_START, AF_END)
@@ -1343,6 +1372,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		    + calc_log_size(cxt->awb_cxt.log_awb, cxt->awb_cxt.log_awb_size, AWB_START, AWB_END)
 		    + calc_log_size(cxt->lsc_cxt.log_lsc, cxt->lsc_cxt.log_lsc_size, LSC_START, LSC_END)
 		    + calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
+		    + calc_log_size(cxt->ai_cxt.log_ai, cxt->ai_cxt.log_ai_size, AI_START, AI_END)
 		    + sizeof(cmr_u32);
 
 		if (cxt->otp_data != NULL) {
@@ -1385,6 +1415,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
+		COPY_LOG(ai, AI);
 
 		if (cxt->otp_data != NULL) {
 			size_t len = copy_log(cxt->commn_cxt.log_isp + off,

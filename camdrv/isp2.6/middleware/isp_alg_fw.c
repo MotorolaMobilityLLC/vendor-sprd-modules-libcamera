@@ -210,6 +210,8 @@ struct lsc_info {
 
 struct ai_info {
 	cmr_handle handle;
+	cmr_u8 *log_ai;
+	cmr_u32 log_ai_size;
 	struct ai_ae_param ae_param;
 };
 
