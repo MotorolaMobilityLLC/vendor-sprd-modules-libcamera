@@ -9,6 +9,11 @@ struct tg_ae_ctrl_alc_log {
 	cmr_u32 size;
 };
 
+struct tg_ai_ctrl_alc_log {
+	cmr_u8 *log;
+	cmr_u32 size;
+};
+
 struct awb_ctrl_gain {
 	cmr_u32 r;
 	cmr_u32 g;

@@ -260,6 +260,7 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 	}
 
 	scene_info->cur_scene_id = scene_id;
+	memcpy(&(cxt->scene_info), scene_info, sizeof(struct ai_scene_detect_info));
 
 	ISP_LOGV("done. cur_scene_id: %d.", scene_info->cur_scene_id);
 	return rtn;
@@ -474,6 +475,7 @@ static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct ai_ctrl_cxt *cxt = NULL;
 	struct ai_img_status *ai_img_status_ptr = NULL;
+	struct tg_ai_ctrl_alc_log *debug_info_result = NULL;
 
 	//UNUSED(param);
 	UNUSED(result);
@@ -485,6 +487,7 @@ static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 	}
 
 	cxt = (struct ai_ctrl_cxt *)handle;
+	debug_info_result = (struct tg_ai_ctrl_alc_log *)result;
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	switch (cmd) {
 	case AI_GET_STATUS:
@@ -526,6 +529,11 @@ static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		}
 		ISP_LOGV("img_flag is: %d", ai_img_status_ptr->img_flag);
 		break;
+	case AI_GET_DEBUG_INFO:
+		ISP_LOGD("AI_GET_DEBUG_INFO, scence id:%d", cxt->scene_info.cur_scene_id);
+		debug_info_result->log =(cmr_u8 *)(&(cxt->scene_info));
+		debug_info_result->size = sizeof(struct ai_scene_detect_info);
+
 	default:
 		rtn = ISP_ERROR;
 		break;
