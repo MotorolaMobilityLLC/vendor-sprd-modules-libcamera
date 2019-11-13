@@ -2501,7 +2501,9 @@ static cmr_int sensor_ic_get_cct_data(cmr_handle handle, void *param) {
     cmr_handle sensor_handle;
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)handle;
 
+#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
     tcs3430_read_data(param);
+#endif
 
     return ret;
 }
