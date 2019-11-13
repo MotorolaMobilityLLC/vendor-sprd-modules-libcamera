@@ -138,6 +138,7 @@ struct lsc_sprd_ctrl_context {
 	void *alsc_handle;	// alsc handler
 	void *lib_handle;
 	cmr_handle ctrl_handle;
+	struct lsc_monitor_info* lscm_info;
 	void *lsc_debug_info_ptr;
 	void *post_shading_gain_param;
 	void *lsc_flash_proc_param;

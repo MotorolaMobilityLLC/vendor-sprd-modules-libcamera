@@ -2174,6 +2174,11 @@ static int lsc_malloc_buffer(struct lsc_sprd_ctrl_context *cxt)
 		goto exit;
 	}
 
+	cxt->lscm_info = (struct lsc_monitor_info*)malloc(sizeof(struct lsc_monitor_info));
+	if(cxt->lscm_info == NULL){
+		ISP_LOGE("malloc lscm_info error!");
+		goto exit;
+	}
 	return rtn;
 
 exit:
@@ -2640,7 +2645,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	cmr_u32 full_flag = 0;
 	cmr_u32 chnl_gain_num = 0;
 	cmr_u32 will_do_post_gain = 0;
-	struct lsc_monitor_info* in_param = (struct lsc_monitor_info*)malloc(sizeof(struct lsc_monitor_info));
+	struct lsc_monitor_info* in_param = cxt->lscm_info;
 
 	lsc_get_channel_index(cxt->output_gain_pattern, &is_gr, &is_r, &is_b, &is_gb);
 
@@ -3308,6 +3313,7 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 	lsc_std_free(cxt->last_lsc_table);
 	lsc_std_free(cxt->output_lsc_table);
 	lsc_std_free(cxt->lsc_buffer_interlace);
+	lsc_std_free(cxt->lscm_info);
 	if (cxt->lsc_id == 1) {
 		id1_addr = NULL;
 	} else {
