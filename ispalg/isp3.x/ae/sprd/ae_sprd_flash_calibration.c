@@ -1615,11 +1615,12 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 		if (caliState < FlashCali_end) {
 			ISP_LOGD("qqfc exp=%d %d", (int)caliData->expTime, (int)caliData->gain);
-			int lineTime = cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			//int lineTime = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			cur_status->adv_param.mode_param.mode = 3;
-			cxt->cur_status.adv_param.cur_ev_setting.ae_idx = 0;
-			cxt->cur_status.adv_param.cur_ev_setting.exp_line = caliData->expTime / lineTime;
-			cxt->cur_status.adv_param.cur_ev_setting.ae_gain = caliData->gain;
+			cxt->cur_status.adv_param.mode_param.value.ae_idx = 0;
+			//cxt->cur_status.adv_param.mode_param.exp_line = caliData->expTime / lineTime;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = caliData->expTime;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = caliData->gain;
 		}
 	}
 	frameCount++;
