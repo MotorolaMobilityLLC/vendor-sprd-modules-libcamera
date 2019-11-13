@@ -2525,7 +2525,7 @@ static cmr_int ispctl_get_ae_fps_range(cmr_handle isp_alg_handle, void *param_pt
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_ae_fps_range *out;
-	struct ae_fps_range data;
+	struct ae_fps_range data = {0};
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param !");
