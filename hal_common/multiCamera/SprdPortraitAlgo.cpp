@@ -26,7 +26,7 @@ SprdPortraitAlgo::~SprdPortraitAlgo() {
 }
 
 int SprdPortraitAlgo::initParam(BokehSize *size, OtpData *data,
-                             bool galleryBokeh) {
+                                bool galleryBokeh) {
     int rc = NO_ERROR;
 
     if (!size || !data) {
@@ -38,7 +38,7 @@ int SprdPortraitAlgo::initParam(BokehSize *size, OtpData *data,
     memcpy(&mSize, size, sizeof(BokehSize));
     memcpy(&mCalData, data, sizeof(OtpData));
     if (mFirstSprdBokeh) {
-        //sprd_bokeh_Close(mBokehCapHandle);
+        // sprd_bokeh_Close(mBokehCapHandle);
     }
     // preview bokeh params
     mPreviewbokehParam.init_params.width = mSize.preview_w;
@@ -145,7 +145,7 @@ void SprdPortraitAlgo::setBokenParam(void *param) {
 }
 
 int SprdPortraitAlgo::prevDepthRun(void *para1, void *para2, void *para3,
-                                void *para4) {
+                                   void *para4) {
     int rc = NO_ERROR;
     int64_t depthRun = 0;
     distanceRet distance;
@@ -281,7 +281,7 @@ int SprdPortraitAlgo::deinitAlgo() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
         if (mBokehCapHandle) {
-            //sprd_bokeh_Close(mBokehCapHandle);
+            // sprd_bokeh_Close(mBokehCapHandle);
         }
     }
     mBokehCapHandle = NULL;
@@ -348,7 +348,7 @@ int SprdPortraitAlgo::deinitPrevDepth() {
 }
 
 int SprdPortraitAlgo::prevBluImage(sp<GraphicBuffer> &srcBuffer,
-                                sp<GraphicBuffer> &dstBuffer, void *param) {
+                                   sp<GraphicBuffer> &dstBuffer, void *param) {
     int rc = NO_ERROR;
     int64_t bokehBlurImage = 0;
     int64_t bokehCreateWeightMap = systemTime();
@@ -411,7 +411,7 @@ int SprdPortraitAlgo::deinitCapDepth() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
         if (mDepthCapHandle) {
-            //rc = sprd_depth_Close(mDepthCapHandle);
+            // rc = sprd_depth_Close(mDepthCapHandle);
         }
         if (rc != NO_ERROR) {
             HAL_LOGE("cap sprd_depth_Close failed! %d", rc);
@@ -424,8 +424,8 @@ int SprdPortraitAlgo::deinitCapDepth() {
 }
 
 int SprdPortraitAlgo::capDepthRun(void *para1, void *para2, void *para3,
-                               void *para4, int vcmCurValue, int vcmUp,
-                               int vcmDown) {
+                                  void *para4, int vcmCurValue, int vcmUp,
+                                  int vcmDown) {
     int rc = NO_ERROR;
     int f_number = 0;
     weightmap_param weightParams;
@@ -471,7 +471,7 @@ exit:
 }
 
 int SprdPortraitAlgo::capBlurImage(void *para1, void *para2, void *para3,
-                                int depthW, int depthH, int mode) {
+                                   int depthW, int depthH, int mode) {
     int rc = NO_ERROR;
     int64_t bokehReFocusTime = 0;
     char acVersion[256] = {
@@ -520,7 +520,8 @@ exit:
     return rc;
 }
 
-int SprdPortraitAlgo::onLine(void *para1, void *para2, void *para3, void *para4) {
+int SprdPortraitAlgo::onLine(void *para1, void *para2, void *para3,
+                             void *para4) {
     int rc = NO_ERROR;
     int64_t onlineRun = 0;
     int64_t onlineScale = 0;
@@ -677,9 +678,14 @@ void SprdPortraitAlgo::loadDebugOtp() {
 }
 
 int sprdcamera::SprdPortraitAlgo::initPortraitParams(BokehSize *size,
-                                                  OtpData *data,
-                                                  bool galleryBokeh) {
+                                                     OtpData *data,
+                                                     bool galleryBokeh) {
     int rc = NO_ERROR;
+    if (mPortraitHandle) {
+        rc = sprd_portrait_capture_deinit(mPortraitHandle);
+        HAL_LOGE(" mPortraitHandle is not null");
+    }
+
     PortraitCap_Init_Params initParams;
     BokehSize m_Size;
     OtpData m_CalData;

@@ -4432,6 +4432,11 @@ int SprdCamera3Portrait::_flush(const struct camera3_device *device) {
     rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].dev);
 
     preClose();
+    if (mBokehAlgo) {
+        rc = mBokehAlgo->deinitPortrait();
+        if (rc != NO_ERROR)
+            HAL_LOGD("fail to deinitPortrait");
+    }
 
     HAL_LOGI("X");
     return rc;
