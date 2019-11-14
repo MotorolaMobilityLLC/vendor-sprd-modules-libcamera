@@ -5912,15 +5912,27 @@ int SprdCamera3OEMIf::openCamera() {
           mMultiCameraMode == MODE_3D_CALIBRATION ||
           mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
          mCameraId < 2) ||
-        (mCameraId == SprdCamera3Setting::findUltraWideSensor())) {
+        (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) ||
+        ((mMultiCameraMode == MODE_MULTI_CAMERA ||
+          mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
+         (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) ||
+          mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK)))) {
         cmr_u8 dual_flag = 0;
         if ((mMultiCameraMode == MODE_BOKEH ||
              mMultiCameraMode == MODE_3D_CALIBRATION ||
              mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
             mCameraId < 2)
             dual_flag = 1;
-        else if (mCameraId == SprdCamera3Setting::findUltraWideSensor())
+        else if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK))
             dual_flag = 3;
+        else if ((mMultiCameraMode == MODE_MULTI_CAMERA ||
+                  mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
+                 mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK))
+            dual_flag = 5;
+        else if ((mMultiCameraMode == MODE_MULTI_CAMERA ||
+                  mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
+                 mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK))
+            dual_flag = 6;
         else
             dual_flag = 0;
 
@@ -5954,15 +5966,17 @@ int SprdCamera3OEMIf::openCamera() {
             bzero(file_name, sizeof(file_name));
             strcpy(file_name, CAMERA_DUMP_PATH);
             if (dual_flag == 1)
-                strcat(file_name, "calibration_bokeh_otp.txt");
-            else if (dual_flag == 2)
-                strcat(file_name, "calibration_w_t_otp.txt");
+                strcat(file_name, "otp_manual_bokeh.txt");
             else if (dual_flag == 3)
-                strcat(file_name, "calibration_spw_otp.txt");
+                strcat(file_name, "otp_manual_spw.txt");
+            else if (dual_flag == 5)
+                strcat(file_name, "otp_manual_oz1.txt");
+            else if (dual_flag == 6)
+                strcat(file_name, "otp_manual_oz2.txt");
 
             FILE *fid = fopen(file_name, "rb");
             if (NULL == fid) {
-                HAL_LOGD("dual_flag %d, calibration otp txt not exist",
+                HAL_LOGD("dual_flag %d, manual calibration otp txt not exist",
                          dual_flag);
             } else {
                 int read_byte = 0;
@@ -5979,8 +5993,9 @@ int SprdCamera3OEMIf::openCamera() {
                     }
                 }
                 fclose(fid);
-                HAL_LOGD("dual_flag %d, calibration otp txt read_bytes = %d",
-                         dual_flag, read_byte);
+                HAL_LOGD(
+                    "dual_flag %d, manual calibration otp txt read_bytes = %d",
+                    dual_flag, read_byte);
                 if (read_byte) {
                     otp_info.dual_otp.data_3d.size = read_byte;
                     otpInfo.otp_type = 0; // OTP_CALI_SPRD;
@@ -5993,13 +6008,16 @@ int SprdCamera3OEMIf::openCamera() {
                  otp_info.dual_otp.data_3d.size);
         if (otp_info.dual_otp.data_3d.size > 0) {
             if (dual_flag == 1)
-                save_file("bokeh_otp_dump.bin", otpInfo.otp_data,
-                          otp_info.dual_otp.data_3d.size);
-            else if (dual_flag == 2)
-                save_file("w_t_otp_dump.bin", otpInfo.otp_data,
+                save_file("otp_dump_bokeh.bin", otpInfo.otp_data,
                           otp_info.dual_otp.data_3d.size);
             else if (dual_flag == 3)
-                save_file("spw_otp_dump.bin", otpInfo.otp_data,
+                save_file("otp_dump_spw.bin", otpInfo.otp_data,
+                          otp_info.dual_otp.data_3d.size);
+            else if (dual_flag == 5)
+                save_file("otp_dump_oz1.bin", otpInfo.otp_data,
+                          otp_info.dual_otp.data_3d.size);
+            else if (dual_flag == 6)
+                save_file("otp_dump_oz2.bin", otpInfo.otp_data,
                           otp_info.dual_otp.data_3d.size);
 
             mSetting->setOTPTag(&otpInfo, otp_info.dual_otp.data_3d.size,

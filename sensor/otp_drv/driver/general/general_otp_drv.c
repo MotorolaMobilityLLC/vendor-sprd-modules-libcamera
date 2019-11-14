@@ -2558,11 +2558,12 @@ static cmr_int _general_otp_compatible_convert_single(cmr_handle otp_drv_handle,
     convert_data->single_otp.spw_info =
         (struct sensor_otp_section_info *)&format_data->spw_cali_dat;
 
-    OTP_LOGD(
-        "sensor_id:%d, otp_version:%s, single(addr, size):module_info(%p, %d)",
-        otp_cxt->sensor_id, otp_ver[otp_cxt->otp_module_info.otp_version],
-        convert_data->single_otp.module_info->rdm_info.data_addr,
-        convert_data->single_otp.module_info->rdm_info.data_size);
+    OTP_LOGD("sensor_id:%d, otp_version:%s, single(addr, size):total(%p, %d), "
+             "module_info(%p, %d)",
+             otp_cxt->sensor_id, otp_ver[otp_cxt->otp_module_info.otp_version],
+             convert_data->total_otp.data_ptr, convert_data->total_otp.size,
+             convert_data->single_otp.module_info->rdm_info.data_addr,
+             convert_data->single_otp.module_info->rdm_info.data_size);
     OTP_LOGD("single(addr, size):af(%p, %d), awb(%p, %d), oc(%p, %d), lsc(%p, "
              "%d), pdaf1(%p, %d)",
              convert_data->single_otp.af_info->rdm_info.data_addr,
@@ -2664,7 +2665,8 @@ static cmr_int _general_otp_compatible_convert_master(cmr_handle otp_drv_handle,
             format_data->spw_cali_dat.rdm_info.buffer;
         convert_data->dual_otp.data_3d.size =
             format_data->spw_cali_dat.rdm_info.size;
-    } else if (convert_data->dual_otp.dual_flag == 2) {
+    } else if (convert_data->dual_otp.dual_flag == 5 ||
+               convert_data->dual_otp.dual_flag == 6) {
         convert_data->dual_otp.data_3d.data_ptr =
             format_data->wt_cali_dat.rdm_info.buffer;
         convert_data->dual_otp.data_3d.size =
@@ -2678,11 +2680,12 @@ static cmr_int _general_otp_compatible_convert_master(cmr_handle otp_drv_handle,
              convert_data->dual_otp.data_3d.data_ptr,
              convert_data->dual_otp.data_3d.size);
 
-    OTP_LOGD(
-        "sensor_id:%d, otp_version:%s, master(addr, size):module_info(%p, %d)",
-        otp_cxt->sensor_id, otp_ver[otp_cxt->otp_module_info.otp_version],
-        convert_data->dual_otp.master_module_info->rdm_info.data_addr,
-        convert_data->dual_otp.master_module_info->rdm_info.data_size);
+    OTP_LOGD("sensor_id:%d, otp_version:%s, master(addr, size):total(%p, %d), "
+             "module_info(%p, %d)",
+             otp_cxt->sensor_id, otp_ver[otp_cxt->otp_module_info.otp_version],
+             convert_data->total_otp.data_ptr, convert_data->total_otp.size,
+             convert_data->dual_otp.master_module_info->rdm_info.data_addr,
+             convert_data->dual_otp.master_module_info->rdm_info.data_size);
     OTP_LOGD(
         "master(addr, size):af(%p, %d), awb(%p, %d), oc(%p, %d), lsc(%p, %d), "
         "pdaf1(%p, %d), ae(%p, %d)",
@@ -2788,7 +2791,8 @@ static cmr_int _general_otp_compatible_convert_slave(cmr_handle otp_drv_handle,
             format_data->spw_cali_dat.rdm_info.buffer;
         convert_data->dual_otp.data_3d.size =
             format_data->spw_cali_dat.rdm_info.size;
-    } else if (convert_data->dual_otp.dual_flag == 2 &&
+    } else if ((convert_data->dual_otp.dual_flag == 5 ||
+                convert_data->dual_otp.dual_flag == 6) &&
                format_data->wt_cali_dat.rdm_info.size > 0) {
         convert_data->dual_otp.data_3d.data_ptr =
             format_data->wt_cali_dat.rdm_info.buffer;
@@ -2801,11 +2805,12 @@ static cmr_int _general_otp_compatible_convert_slave(cmr_handle otp_drv_handle,
              convert_data->dual_otp.data_3d.data_ptr,
              convert_data->dual_otp.data_3d.size);
 
-    OTP_LOGD(
-        "sensor_id:%d, otp_version:%s, slave(addr, size):module_info(%p, %d)",
-        otp_cxt->sensor_id, otp_ver[otp_cxt->otp_module_info.otp_version],
-        convert_data->dual_otp.slave_module_info->rdm_info.data_addr,
-        convert_data->dual_otp.slave_module_info->rdm_info.data_size);
+    OTP_LOGD("sensor_id:%d, otp_version:%s, slave(addr, size):total(%p, %d), "
+             "module_info(%p, %d)",
+             otp_cxt->sensor_id, otp_ver[otp_cxt->otp_module_info.otp_version],
+             convert_data->total_otp.data_ptr, convert_data->total_otp.size,
+             convert_data->dual_otp.slave_module_info->rdm_info.data_addr,
+             convert_data->dual_otp.slave_module_info->rdm_info.data_size);
     OTP_LOGD(
         "slave(addr, size):af(%p, %d), awb(%p, %d), oc(%p, %d), lsc(%p, %d), "
         "pdaf1(%p, %d), ae(%p, %d)",
@@ -3216,7 +3221,4 @@ static cmr_int general_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
     return ret;
 }
 
-void *otp_driver_open_lib(void)
-{
-     return &general_otp_entry;
-}
+void *otp_driver_open_lib(void) { return &general_otp_entry; }

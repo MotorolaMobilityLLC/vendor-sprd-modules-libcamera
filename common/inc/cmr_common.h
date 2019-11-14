@@ -1904,6 +1904,7 @@ typedef enum {
     MODE_ULTRA_WIDE,
     MODE_MULTI_CAMERA,
     MODE_PORTRAIT,
+    MODE_OPTICSZOOM_CALIBRATION,
     MODE_CAMERA_MAX
 } multiCameraMode;
 
@@ -1933,6 +1934,8 @@ typedef enum {
     SPRD_BACK_HIGH_RESOLUTION_ID = 37,
     SPRD_PORTRAIT_ID = 38,
     SPRD_FRONT_HIGH_RES = 39,
+    SPRD_OPTICSZOOM_W_ID = 40,
+    SPRD_OPTICSZOOM_T_ID = 41,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 
@@ -1973,8 +1976,8 @@ struct isp_af_otp_info {
 };
 
 struct fin1_info {
-	cmr_u32 remosaic_type;   /* 0:normal,1:software,2:hardware */
-	cmr_u32 ambient_highlight; /* 1:highlight,0:low */
+    cmr_u32 remosaic_type;     /* 0:normal,1:software,2:hardware */
+    cmr_u32 ambient_highlight; /* 1:highlight,0:low */
 };
 
 typedef enum {

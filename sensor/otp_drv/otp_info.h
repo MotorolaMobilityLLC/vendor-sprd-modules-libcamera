@@ -268,9 +268,9 @@ typedef struct {
 
     otp_section_info_t xtalk_4in1_cali_dat;
     otp_section_info_t dpc_4in1_cali_dat;
-    otp_section_info_t spw_cali_dat; /*superwide*/
+    otp_section_info_t spw_cali_dat;      /*superwide*/
     otp_section_info_t dual_cam_cali_dat; /*bokeh*/
-    otp_section_info_t wt_cali_dat; /*w+t:optics_zoom*/
+    otp_section_info_t wt_cali_dat;       /*w+t:optics_zoom*/
     extended_data_t extend_dat;
     otp_section_info_t lsc_cali_dat;
     otp_section_info_t third_cali_dat;

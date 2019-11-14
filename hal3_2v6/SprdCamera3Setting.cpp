@@ -1083,23 +1083,6 @@ exit:
     return 0;
 }
 
-int SprdCamera3Setting::findUltraWideSensor() {
-    int cameraId = -1;
-    struct phySensorInfo *phyPtr = NULL;
-
-    for (cameraId = 0; cameraId < CAMERA_ID_COUNT; cameraId++) {
-        phyPtr = sensorGetPhysicalSnsInfo(cameraId);
-        mModuleId[cameraId] = phyPtr->module_id;
-        HAL_LOGV("mModuleId[%d] = 0x%x", cameraId, mModuleId[cameraId]);
-        if (mModuleId[cameraId] == MODULE_SPW_NONE_BACK) {
-            HAL_LOGD("UltraWideSensor ID is %d", cameraId);
-            return cameraId;
-        }
-    }
-    HAL_LOGD("No UltraWideSensor");
-    return -1;
-}
-
 void SprdCamera3Setting::coordinate_struct_convert(int *rect_arr,
                                                    int arr_size) {
     int i = 0;
@@ -1775,7 +1758,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     // The maximum ratio between both active area width and crop region width
     // and active area height and crop region height, for
     // android.scaler.cropRegion.
-    int ultrawide_id = findUltraWideSensor();
+    int ultrawide_id = findSensorRole(MODULE_SPW_NONE_BACK);
     s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
     s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
     HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
@@ -2180,7 +2163,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
 // 7 back ultra wide enable
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
-    if (findUltraWideSensor() >= 0)
+    if (findSensorRole(MODULE_SPW_NONE_BACK) >= 0)
         available_cam_features.add(1);
     else
 #endif
@@ -2230,6 +2213,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 15 camera hdr_zsl
     property_get("persist.vendor.cam.hdr.zsl", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 16 MMI opticszoom calibration mode: 1-SW+W, 2-W+T, 3-SW+W+T
+    property_get("persist.vendor.cam.opticszoom.cali.mode", prop, "0");
     available_cam_features.add(atoi(prop));
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
@@ -2679,7 +2666,7 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_IS_3DNR_SCENE,
                       &(s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene), 1);
-    int ultrawide_id = findUltraWideSensor();
+    int ultrawide_id = findSensorRole(MODULE_SPW_NONE_BACK);
     if (ultrawide_id >= 0) {
         staticInfo.update(ANDROID_SPRD_ULTRAWIDE_ID,
                           &(s_setting[cameraId].sprddefInfo.ultrawide_id), 1);
@@ -3876,7 +3863,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
                            &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
 
-    if (mCameraId == findUltraWideSensor()) {
+    if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             requestInfo.update(ANDROID_SPRD_OTP_DATA,
                                s_setting[mCameraId].otpInfo.otp_data,
@@ -5231,7 +5218,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
-                       s_setting[mCameraId].sprddefInfo.ae_info, AE_CB_MAX_INDEX);
+                       s_setting[mCameraId].sprddefInfo.ae_info,
+                       AE_CB_MAX_INDEX);
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,
     //			s_setting[mCameraId].controlInfo.ae_precapture_id);
@@ -5432,8 +5420,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        s_setting[mCameraId].toneInfo.curve_red,
                        SPRD_MAX_TONE_CURVE_POINT);
 
-    if (mCameraId == 0 || mCameraId == findUltraWideSensor() ||
-        mCameraId == 2 || mCameraId == 3) {
+    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 ||
+        mModuleId[mCameraId] == MODULE_SPW_NONE_BACK) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             camMetadata.update(ANDROID_SPRD_OTP_DATA,
                                s_setting[mCameraId].otpInfo.otp_data,

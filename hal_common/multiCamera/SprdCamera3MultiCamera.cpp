@@ -356,7 +356,7 @@ int SprdCamera3MultiCamera::camera_device_open(
             return rc;
         }
 
-        if (phyId == SprdCamera3Setting::findUltraWideSensor()) {
+        if (phyId == findSensorRole(MODULE_SPW_NONE_BACK)) {
             hw->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
         }
 
@@ -3050,10 +3050,11 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                                             gMultiCam->mMainSize.preview_h,
                                             frame_number, MainPrev);
                         // input_buf2 or right image
-                        gMultiCam->dumpData(
-                            (unsigned char *)input_buf2_addr, 1,
-                            ADP_BUFSIZE(*output_buffer), gMultiCam->mMainSize.preview_w,
-                            gMultiCam->mMainSize.preview_h, frame_number, Sub1Prev);
+                        gMultiCam->dumpData((unsigned char *)input_buf2_addr, 1,
+                                            ADP_BUFSIZE(*output_buffer),
+                                            gMultiCam->mMainSize.preview_w,
+                                            gMultiCam->mMainSize.preview_h,
+                                            frame_number, Sub1Prev);
                         gMultiCam->dumpData((unsigned char *)input_buf3_addr, 1,
                                             ADP_BUFSIZE(*output_buffer),
                                             gMultiCam->mMainSize.preview_w,
@@ -3647,7 +3648,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
         pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                           mCurFrameNum, mLocalBufferList);
+                       mCurFrameNum, mLocalBufferList);
         if (currStreamType == DEFAULT_STREAM) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            SNAPSHOT_STREAM, CAM_TYPE_AUX1);
@@ -3909,7 +3910,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
         pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                           mCurFrameNum, mLocalBufferList);
+                       mCurFrameNum, mLocalBufferList);
         if (currStreamType == DEFAULT_STREAM) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            SNAPSHOT_STREAM, CAM_TYPE_AUX2);

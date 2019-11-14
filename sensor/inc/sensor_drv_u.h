@@ -783,6 +783,7 @@ int sensorGetLogicalSnsNum(void);
 PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId);
+int findSensorRole(enum camera_module_id ModuleId);
 
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_data);

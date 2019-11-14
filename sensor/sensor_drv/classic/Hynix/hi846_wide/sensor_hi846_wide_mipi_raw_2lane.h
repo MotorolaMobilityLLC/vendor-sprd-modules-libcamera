@@ -430,30 +430,33 @@ static const SENSOR_REG_T hi846_wide_snapshot_setting[] = {
     {0x004C, 0x0100},
 };
 
-static struct sensor_res_tab_info s_hi846_wide_resolution_tab_raw[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
-     .reg_tab =
-         {{ADDR_AND_LEN_OF_ARRAY(hi846_wide_init_setting), PNULL, 0, .width = 0,
-           .height = 0, .xclk_to_sensor = EX_MCLK,
-           .image_format = SENSOR_IMAGE_FORMAT_RAW},
+static struct sensor_res_tab_info s_hi846_wide_resolution_tab_raw[VENDOR_NUM] =
+    {
+        {.module_id = MODULE_SPW_NONE_BACK,
+         .reg_tab = {{ADDR_AND_LEN_OF_ARRAY(hi846_wide_init_setting), PNULL, 0,
+                      .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(hi846_wide_video_setting), PNULL, 0,
-           .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                     {ADDR_AND_LEN_OF_ARRAY(hi846_wide_video_setting), PNULL, 0,
+                      .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
+                      .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(hi846_wide_preview_setting), PNULL, 0,
-           .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+                     {ADDR_AND_LEN_OF_ARRAY(hi846_wide_preview_setting), PNULL,
+                      0, .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
+                      .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(hi846_wide_snapshot_setting), PNULL, 0,
-           .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
+                     {ADDR_AND_LEN_OF_ARRAY(hi846_wide_snapshot_setting), PNULL,
+                      0, .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
+                      .xclk_to_sensor = EX_MCLK,
+                      .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
 
-    /*If there are multiple modules,please add here*/
+        /*If there are multiple modules,please add here*/
 };
 
 static SENSOR_TRIM_T s_hi846_wide_resolution_trim_tab[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
+    {.module_id = MODULE_SPW_NONE_BACK,
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -504,7 +507,8 @@ static SENSOR_REG_T hi846_wide_shutter_reg[] = {
 };
 
 static struct sensor_i2c_reg_tab hi846_wide_shutter_tab = {
-    .settings = hi846_wide_shutter_reg, .size = ARRAY_SIZE(hi846_wide_shutter_reg),
+    .settings = hi846_wide_shutter_reg,
+    .size = ARRAY_SIZE(hi846_wide_shutter_reg),
 };
 
 static SENSOR_REG_T hi846_wide_again_reg[] = {
@@ -543,7 +547,7 @@ static struct sensor_aec_i2c_tag hi846_wide_aec_info = {
 };
 
 static SENSOR_STATIC_INFO_T s_hi846_wide_static_info[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
+    {.module_id = MODULE_SPW_NONE_BACK,
      .static_info = {.f_num = 200,
                      .focal_length = 354,
                      .max_fps = 30,
@@ -558,7 +562,7 @@ static SENSOR_STATIC_INFO_T s_hi846_wide_static_info[VENDOR_NUM] = {
 };
 
 static SENSOR_MODE_FPS_INFO_T s_hi846_wide_mode_fps_info[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
+    {.module_id = MODULE_SPW_NONE_BACK,
      {.is_init = 0,
       {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
        {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
@@ -573,7 +577,7 @@ static SENSOR_MODE_FPS_INFO_T s_hi846_wide_mode_fps_info[VENDOR_NUM] = {
 };
 
 static struct sensor_module_info s_hi846_wide_module_info_tab[VENDOR_NUM] = {
-    {.module_id = MODULE_SUNNY,
+    {.module_id = MODULE_SPW_NONE_BACK,
      .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
                      .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 

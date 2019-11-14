@@ -197,14 +197,14 @@ enum camera_module_id {
     /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
      * MODULE: feature|sensor role|module face
      * feature:
-     *     NONE-0, BOKEH-1, WT(Wide + Tele)-2, SPW(Superwide)-3,
+     *     NONE-0, BOKEH-1, OPTICSZOOM-2, SPW(Superwide)-3,
      *     STL3D(Structure Light 3D)-4
      * sensor role:
      *     NONE-0,
      *     BOKEH:
      *         MASTER-1, SLAVE-2
-     *     WT:
-     *         WIDE-1, TELE-2
+     *     OPTICSZOOM:
+     *         WIDE-1, TELE-2, SUPERWIDE-3
      *     STL3D:
      *         RGB-1, IRL(IR Left)-2, IRR(IR Right)-3
      * module facing:
@@ -214,10 +214,12 @@ enum camera_module_id {
     MODULE_BOKEH_SLAVE_BACK = 0x120,
     MODULE_BOKEH_MASTER_FRONT = 0x111,
     MODULE_BOKEH_SLAVE_FRONT = 0x121,
-    MODULE_WT_WIDE_BACK = 0x210,
-    MODULE_WT_TELE_BACK = 0x220,
-    MODULE_WT_WIDE_FRONT = 0x211,
-    MODULE_WT_TELE_FRONT = 0x221,
+    MODULE_OPTICSZOOM_WIDE_BACK = 0x210,
+    MODULE_OPTICSZOOM_TELE_BACK = 0x220,
+    MODULE_OPTICSZOOM_SUPERWIDE_BACK = 0x230,
+    MODULE_OPTICSZOOM_WIDE_FRONT = 0x211,
+    MODULE_OPTICSZOOM_TELE_FRONT = 0x221,
+    MODULE_OPTICSZOOM_SUPERWIDE_FRONT = 0x231,
     MODULE_SPW_NONE_BACK = 0x300,
     MODULE_SPW_NONE_FRONT = 0x301,
     MODULE_STL3D_RGB_FRONT = 0x411,

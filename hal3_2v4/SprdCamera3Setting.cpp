@@ -1821,6 +1821,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.hdr.zsl", prop, "0");
     available_cam_features.add(atoi(prop));
 
+    // 16 MMI opticszoom calibration mode: 1-SW+W, 2-W+T, 3-SW+W+T
+    property_get("persist.vendor.cam.opticszoom.cali.mode", prop, "0");
+    available_cam_features.add(atoi(prop));
+
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,

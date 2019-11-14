@@ -3593,6 +3593,30 @@ sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId) {
     return NULL;
 };
 
+int findSensorRole(enum camera_module_id ModuleId) {
+    int sensor_id = -1;
+    struct phySensorInfo *phyPtr = NULL;
+
+    for (sensor_id = 0; sensor_id < SENSOR_ID_MAX; sensor_id++) {
+        phyPtr = sensorGetPhysicalSnsInfo(sensor_id);
+        if (ModuleId == phyPtr->module_id) {
+            if (ModuleId == MODULE_SPW_NONE_BACK) {
+                SENSOR_LOGD("find ultraWide sensor, id %d", sensor_id);
+            } else if (ModuleId == MODULE_OPTICSZOOM_WIDE_BACK) {
+                SENSOR_LOGD("find opticszoom wide sensor, id %d", sensor_id);
+            } else if (ModuleId == MODULE_OPTICSZOOM_TELE_BACK) {
+                SENSOR_LOGD("find opticszoom tele sensor, id %d", sensor_id);
+            } else {
+                SENSOR_LOGD("find sensor role 0x%x, id %d", ModuleId,
+                            sensor_id);
+            }
+            return sensor_id;
+        }
+    }
+    SENSOR_LOGD("can't find sensor role 0x%x", ModuleId);
+    return -1;
+}
+
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_data) {
     cmr_u8 otpdata[SPRD_DUAL_OTP_SIZE] = {0};

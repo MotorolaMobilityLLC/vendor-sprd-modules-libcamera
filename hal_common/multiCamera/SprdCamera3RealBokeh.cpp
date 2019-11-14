@@ -2375,8 +2375,8 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #ifdef CONFIG_SUPPORT_GDEPTH
                     mRealBokeh->m_pDstGDepthOriJpegBuffer =
-                    (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
-                                               SNAPSHOT_MAIN_BUFFER));
+                        (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
+                                                   SNAPSHOT_MAIN_BUFFER));
                     rc = mRealBokeh->map(mRealBokeh->m_pDstGDepthOriJpegBuffer,
                                          &pic_vir_addr);
                     if (rc != NO_ERROR) {
@@ -3568,7 +3568,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     }
 #endif
 
-    if (CAM_DEPTH_ID == SprdCamera3Setting::findUltraWideSensor()) {
+    if (CAM_DEPTH_ID == findSensorRole(MODULE_SPW_NONE_BACK)) {
         if (metaSettingsAux.exists(ANDROID_SCALER_CROP_REGION)) {
             SprdCamera3Setting::getLargestSensorSize(CAM_DEPTH_ID, &snsW,
                                                      &snsH);

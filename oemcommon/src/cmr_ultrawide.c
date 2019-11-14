@@ -108,8 +108,10 @@ static cmr_int ultrawide_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
     ultrawide_handle->warp_param.dst_width = in->frame_size.width;
     ultrawide_handle->warp_param.dst_height = in->frame_size.height;
-    if(in->is_cap)  ultrawide_handle->tag = WARP_CAPTURE;
-    else ultrawide_handle->tag = WARP_PREVIEW;
+    if (in->is_cap)
+        ultrawide_handle->tag = WARP_CAPTURE;
+    else
+        ultrawide_handle->tag = WARP_PREVIEW;
 
     CMR_LOGD("ultra wide open:param:%p,fullsize=%d,%d, size:%dx%d cx:%d, "
              "cy:%d,cw:%d,ch:%d,binning:%d",
@@ -118,8 +120,9 @@ static cmr_int ultrawide_open(cmr_handle ipm_handle, struct ipm_open_in *in,
              ultrawide_handle->warp_param.dst_height, in->frame_rect.start_x,
              in->frame_rect.start_y, in->frame_rect.width,
              in->frame_rect.height, in->binning_factor);
-    sprd_warp_adapter_open(&ultrawide_handle->warp_inst, &ultrawide_handle->is_isp_zoom,
-                       &ultrawide_handle->warp_param, ultrawide_handle->tag);
+    sprd_warp_adapter_open(
+        &ultrawide_handle->warp_inst, &ultrawide_handle->is_isp_zoom,
+        &ultrawide_handle->warp_param, ultrawide_handle->tag);
     out->isp_zoom = ultrawide_handle->is_isp_zoom;
     *class_handle = (cmr_handle)ultrawide_handle;
 
@@ -138,7 +141,8 @@ static cmr_int ultrawide_close(cmr_handle class_handle) {
                  &ultrawide_handle->warp_param,
                  ultrawide_handle->warp_param.dst_width,
                  ultrawide_handle->warp_param.dst_height);
-        sprd_warp_adapter_close(&ultrawide_handle->warp_inst, ultrawide_handle->tag);
+        sprd_warp_adapter_close(&ultrawide_handle->warp_inst,
+                                ultrawide_handle->tag);
     }
 
     if (NULL != ultrawide_handle)
@@ -196,7 +200,7 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
         output.addr[0] = (void *)dst_img->addr_vir.addr_y;
 
         sprd_warp_adapter_run(ultrawide_handle->warp_inst, &input, &output,
-                          (void *)&param, ultrawide_handle->tag);
+                              (void *)&param, ultrawide_handle->tag);
         if (!strcmp(value, "true")) {
             camera_save_yuv_to_file(1, IMG_DATA_TYPE_YUV420,
                                     src_img->size.width, src_img->size.height,
@@ -223,11 +227,10 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
     struct class_ultrawide *handle = ultrawide_handle;
     cmr_handle oem_handle = handle->common.ipm_cxt->init_in.oem_handle;
 
-    FILE *fid =
-        fopen("/data/vendor/cameraserver/calibration_spw_otp.txt", "rb");
+    FILE *fid = fopen("/data/vendor/cameraserver/otp_manual_spw.txt", "rb");
 
     if (NULL == fid) {
-        CMR_LOGD("calibration_spw_otp.txt not exist");
+        CMR_LOGD("otp_manual_spw.txt not exist");
     } else {
         cmr_u8 *otp_data = otp_info;
         while (!feof(fid)) {
@@ -236,7 +239,7 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
             read_byte += 4;
         }
         fclose(fid);
-        CMR_LOGD("calibration_spw_otp.txt read_bytes = %d", read_byte);
+        CMR_LOGD("otp_manual_spw.txt read_bytes = %d", read_byte);
         otp_size = read_byte;
     }
 
