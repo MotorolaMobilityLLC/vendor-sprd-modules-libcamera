@@ -2398,7 +2398,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 			cxt->img_height = img_height;
 			memcpy(cxt->last_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
 			memcpy(cxt->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
-
+			memcpy(cxt->lsc_buffer, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
 			cxt->fw_start_end = 0;
 			cxt->can_update_dest = 1;
 			if (cxt->frame_count == 0) {	//lunch camera with binning size or 720p both will run the fw_start
