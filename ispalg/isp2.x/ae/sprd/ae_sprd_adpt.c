@@ -346,7 +346,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 	struct ae_match_stats_data stats_data_slave = {0};
 	cmr_u32 ae_dynamic_flag;
 
-	ISP_LOGV(" AE_sync mode:0x%x.\n",cxt->ae_sync_param.mode);
+	ISP_LOGV(" AE_sync mode:0x%x.,cameraId:%d\n",cxt->ae_sync_param.mode, cxt->camera_id);
 
 	if (cxt->ae_sync_param.mode) {
 		ae_dynamic_flag = 1;
@@ -426,13 +426,24 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 			slave_param.slave_ae_info = slave_ae_sync_info_ptr;
 			in_param.ae_sync_param = ae_sync_param_ptr;
 
+			ISP_LOGV("to_lib_in_param, cameraId:%d, magic_first_num:%d, version:%d, mode:%d, magic_end_num:%d", cxt->camera_id,cxt->ae_sync_param.magic_first_num,cxt->ae_sync_param.version, cxt->ae_sync_param.mode, cxt->ae_sync_param.magic_end_num);
+			ISP_LOGV("to_lib_in_param, cameraId:%d, y_ratio_chg_thr:%d, y_ratio_chg_cnt:%d, y_ratio_stb_thr:%d, y_ratio_stb_cnt:%d", cxt->camera_id, cxt->ae_sync_param.y_ratio_chg_thr,cxt->ae_sync_param.y_ratio_chg_cnt, cxt->ae_sync_param.y_ratio_stb_thr, cxt->ae_sync_param.y_ratio_stb_cnt);
+			ISP_LOGV("to_lib_in_param, cameraId:%d, adpt_speed:%d, soft_frm_sync:%d, adj_ratio:%d, adj_thrd:%d", cxt->camera_id, cxt->ae_sync_param.adpt_speed, cxt->ae_sync_param.soft_frm_sync, cxt->ae_sync_param.adj_ratio, cxt->ae_sync_param.adj_thrd);
+			ISP_LOGV("to_lib_master_param, cameraId:%d, line_time:%d, max_again:%d, min_again:%d, min_exp_line:%d",cxt->camera_id,  master_ae_sync_info_ptr->line_time,master_ae_sync_info_ptr->max_again, master_ae_sync_info_ptr->min_again, master_ae_sync_info_ptr->min_exp_line);
+			ISP_LOGV("to_lib_master_param, cameraId:%d, sensor_gain_precision:%d, exposure:%d, gain:%d, dmy_line:%d", cxt->camera_id, master_ae_sync_info_ptr->sensor_gain_precision,master_ae_sync_info_ptr->exposure, master_ae_sync_info_ptr->gain, master_ae_sync_info_ptr->dmy_line);
+			ISP_LOGV("to_lib_master_param, cameraId:%d, frm_len:%d, frm_len_def:%d", cxt->camera_id, master_ae_sync_info_ptr->frm_len, master_ae_sync_info_ptr->frm_len_def);
+			ISP_LOGV("to_lib_slave_param, cameraId:%d, line_time:%d, max_again:%d, min_again:%d, min_exp_line:%d",cxt->camera_id,  slave_ae_sync_info_ptr->line_time,slave_ae_sync_info_ptr->max_again, slave_ae_sync_info_ptr->min_again, slave_ae_sync_info_ptr->min_exp_line);
+			ISP_LOGV("to_lib_slave_param, cameraId:%d, sensor_gain_precision:%d, frm_len_def:%d", cxt->camera_id, slave_ae_sync_info_ptr->sensor_gain_precision, slave_ae_sync_info_ptr->frm_len_def);
+
 			ae_misc_sync_calculation(cxt->misc_handle,&in_param, &master_param, &slave_param);
+
+			ISP_LOGV("ae_misc_sync_calculation done");
 
 			ae_info[1].exp.exposure = slave_ae_sync_info_ptr->exposure;
 			ae_info[1].gain = slave_ae_sync_info_ptr->gain;
 			ae_info[1].exp.dummy = slave_ae_sync_info_ptr->dmy_line;
 			ae_info[1].exp.size_index = 2;
-			if(cxt->is_master == 0){
+			if(cxt->is_master == 0) {
 				ae_info[0].count = 2;
 				ae_info[0].exp.exposure = ae_info[1].exp.exposure;
 				ae_info[0].exp.dummy = ae_info[1].exp.dummy;
@@ -589,8 +600,8 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M)) {
 		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_USER_COUNT, NULL, &dual_sensor_status);
-		if (cxt->is_master  || is_force) {
-			ISP_LOGV("dual_sensor_status = %d",dual_sensor_status);
+		if (cxt->is_master || is_force) {
+			ISP_LOGV("dual_sensor_status = %d, is_force:%d, cameraId:%d",dual_sensor_status, is_force, cxt->camera_id);
 			if(dual_sensor_status > 1) {
 				ae_sync_write_to_sensor_normal(cxt, &write_param);
 			} else {
@@ -4532,7 +4543,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->exp_data.lib_data.frm_len = cxt->sync_cur_result.wts.frm_len;
 	cxt->exp_data.lib_data.frm_len_def = cxt->sync_cur_result.wts.frm_len_def;
 
-	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
+	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 
 	cxt->is_snapshot = work_info->is_snapshot;
 	/*it is normal capture, not in flash mode */
