@@ -1,12 +1,12 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000B0009*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*low_ct_thrd*/
-	0x0FA0,
+	0x0000,
 	/*reserved*/
 	0x00,
 	/*filter_en*/
@@ -275,9 +275,9 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*low_ct_thrd*/
-	0x0FA0,
+	0x0000,
 	/*reserved*/
 	0x00,
 	/*filter_en*/
@@ -546,9 +546,9 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*low_ct_thrd*/
-	0x0FA0,
+	0x0000,
 	/*reserved*/
 	0x00,
 	/*filter_en*/
