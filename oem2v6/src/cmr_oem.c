@@ -374,7 +374,7 @@ camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *out_isp_fps,
                                    SENSOR_MODE_FPS_T *in_fps);
 static cmr_uint
 camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
-                                  struct sensor_ex_info *in_sn_ex_info);
+                                  struct sensor_ex_info *in_sn_ex_info, cmr_u32 sensor_id);
 static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color,
                                                  cmr_u32 sensor_color);
 static cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle,
@@ -3638,7 +3638,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
             goto exit;
         }
     } else {
-        camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info, sns_ex_info_ptr);
+        camera_copy_sensor_ex_info_to_isp(&isp_param.ex_info, sns_ex_info_ptr, cxt->camera_id);
     }
 
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == sn_cxt->sensor_info.image_format) {
@@ -12216,7 +12216,7 @@ camera_copy_sensor_fps_info_to_isp(struct isp_sensor_fps_info *out_isp_fps,
 
 static cmr_uint
 camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
-                                  struct sensor_ex_info *in_sn_ex_info) {
+                                  struct sensor_ex_info *in_sn_ex_info, cmr_u32 sensor_id) {
     if (NULL == in_sn_ex_info || NULL == out_isp_sn_ex_info) {
         CMR_LOGE("input param or out param is null!");
         return CMR_CAMERA_FAIL;
@@ -12240,17 +12240,21 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
         in_sn_ex_info->sensor_version_info;
     out_isp_sn_ex_info->pos_dis.up2hori = in_sn_ex_info->pos_dis.up2hori;
     out_isp_sn_ex_info->pos_dis.hori2down = in_sn_ex_info->pos_dis.hori2down;
-
 #ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
     out_isp_sn_ex_info->color_support = 1;
 #else
     out_isp_sn_ex_info->color_support = 0;
 #endif
+
+    if (0 == sensor_id) {
 #ifdef TARGET_CAMERA_SENSOR_TOF_VL53L0
-    out_isp_sn_ex_info->tof_support = 1;
+       out_isp_sn_ex_info->tof_support = 1;
 #else
-    out_isp_sn_ex_info->tof_support = 0;
+       out_isp_sn_ex_info->tof_support = 0;
 #endif
+    } else {
+       out_isp_sn_ex_info->tof_support = 0;
+    }
 
     out_isp_sn_ex_info->fov_info.physical_size[0] =
         in_sn_ex_info->fov_info.physical_size[0];
