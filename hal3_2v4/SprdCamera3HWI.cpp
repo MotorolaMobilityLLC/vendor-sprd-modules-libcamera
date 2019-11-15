@@ -2346,8 +2346,9 @@ void SprdCamera3HWI::setSprdCameraLowpower(int flag) {
 int SprdCamera3HWI::camera_ioctrl(int cmd, void *param1, void *param2) {
 
     int ret = 0;
-
-    ret = mOEMIf->camera_ioctrl(cmd, param1, param2);
+    if (mOEMIf != NULL) {
+       ret = mOEMIf->camera_ioctrl(cmd, param1, param2);
+    }
     return ret;
 }
 

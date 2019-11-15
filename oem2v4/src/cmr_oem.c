@@ -1909,7 +1909,7 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
         }
     }
 
-    if (CAMERA_EVT_CB_SNAPSHOT_DONE == oem_cb_type) {
+    if (CAMERA_EVT_CB_SNAPSHOT_DONE == oem_cb_type && frame_ptr != NULL) {
         struct setting_cmd_parameter setting_param;
         struct exif_spec_pic_taking_cond_tag exif_pic_info;
         EXIF_RATIONAL_T exposure_time;

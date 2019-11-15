@@ -10747,7 +10747,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->prev_param.snapshot_eb &&
             !prev_cxt->prev_param.sprd_zsl_enabled) && (width * height <
             prev_cxt->actual_pic_size.width *
-            prev_cxt->actual_pic_size.width)) {
+            prev_cxt->actual_pic_size.height)) {
             /* 5M interpolation 8M, callback zsl path need do scale up,
                 for cts testAllOutputYUVResolutions */
             cmr_int yframe_size = prev_cxt->actual_pic_size.width *
@@ -10842,7 +10842,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             !prev_cxt->prev_param.sprd_zsl_enabled) &&
             (prev_cxt->cap_sn_size.width * prev_cxt->cap_sn_size.height <
             prev_cxt->actual_pic_size.width *
-            prev_cxt->actual_pic_size.width)) {
+            prev_cxt->actual_pic_size.height)) {
             /* 5M interpolation 8M, callback zsl path need do scale up,
                 for cts testAllOutputYUVResolutions */
             struct img_frm zsl_src, zsl_dst;
