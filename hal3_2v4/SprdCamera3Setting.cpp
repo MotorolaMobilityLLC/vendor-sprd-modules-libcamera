@@ -1837,6 +1837,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
+    // 20 camera front high resolution definition mode
+    property_get("persist.vendor.cam.front.high.resolution.mode", prop, "0");
+    available_cam_features.add(!!atoi(prop));
+
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
