@@ -1461,7 +1461,7 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 
 
 cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
-		  cmr_u32 * ae_stat_r, cmr_u32 * ae_stat_g, cmr_u32 * ae_stat_b,
+		  cmr_u32 * stat_r, cmr_u32 * stat_g, cmr_u32 * stat_b,
 		  struct awb_size * stat_img_size,
 		  struct awb_size * win_size,
 		  cmr_u32 image_width, cmr_u32 image_height,
@@ -1504,10 +1504,10 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 
 		memset(&calc_param, 0, sizeof(calc_param));
 		calc_result.dst_gain = (cmr_u16 *) lsc_info->data_ptr;
-		calc_param.stat_img.r = ae_stat_r;
-		calc_param.stat_img.gr = ae_stat_g;
-		calc_param.stat_img.gb = ae_stat_g;
-		calc_param.stat_img.b = ae_stat_b;
+		calc_param.stat_img.r = stat_r;
+		calc_param.stat_img.gr = stat_g;
+		calc_param.stat_img.gb = stat_g;
+		calc_param.stat_img.b = stat_b;
 		calc_param.stat_size.w = stat_img_size->w;
 		calc_param.stat_size.h = stat_img_size->h;
 		calc_param.gain_width = lsc_info->gain_w;
@@ -1904,7 +1904,7 @@ static cmr_int ispalg_lscm_stats_parser(cmr_handle isp_alg_handle, void *data)
 		lscm_stat_ptr->g_info[i] = (sum_g1 << 16) + sum_g;
 	}
 
-	ISP_LOGI("sum[0]: r 0x%x, g 0x%x, b 0x%x cam[%d]\n",
+	ISP_LOGV("sum[0]: r %d, g %d, b %d cam[%d]\n",
 		lscm_stat_ptr->r_info[0], lscm_stat_ptr->g_info[0], lscm_stat_ptr->b_info[0], (cmr_u32)cxt->camera_id);
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
@@ -2543,7 +2543,20 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			stat_img_size.h = ae_in->monitor_info.win_num.h;
 			win_size.w = ae_in->monitor_info.win_num.w;
 			win_size.h = ae_in->monitor_info.win_num.h;
-
+#ifdef CONFIG_ISP_2_7
+			stat_img_size.w = cxt->lscm_cxt.win_num.w;
+			stat_img_size.h = cxt->lscm_cxt.win_num.h;
+			win_size.w = cxt->lscm_cxt.win_num.w;
+			win_size.h = cxt->lscm_cxt.win_num.h;
+			ret = ispalg_alsc_calc(isp_alg_handle,
+					       cxt->lscm_stats_data.r_info,
+					       cxt->lscm_stats_data.g_info,
+					       cxt->lscm_stats_data.b_info,
+					       &stat_img_size, &win_size,
+					       cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
+					       awb_output->ct, awb_output->gain.r, awb_output->gain.b,
+					       ae_in->ae_output.is_stab, ae_in);
+#else
 			ret = ispalg_alsc_calc(isp_alg_handle,
 					       cxt->aem_stats_data.r_info,
 					       cxt->aem_stats_data.g_info,
@@ -2552,6 +2565,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					       cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
 					       awb_output->ct, awb_output->gain.r, awb_output->gain.b,
 					       ae_in->ae_output.is_stab, ae_in);
+#endif
 			ISP_TRACE_IF_FAIL(ret, ("fail to do alsc_calc"));
 		}
 	}
@@ -3915,6 +3929,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
 #ifdef CONFIG_ISP_2_7
+	lsc_param.caller_handle = (cmr_handle) cxt;
 	lsc_param.lsc_set_cb = ispalg_lsc_set_cb;
 #endif
 	/*  alsc tuning param should be private and parsed in alsc lib */
