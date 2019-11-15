@@ -696,6 +696,14 @@ void SprdCamera3OEMIf::closeCamera() {
              getCameraStateStr(getPreviewState()),
              getCameraStateStr(getCaptureState()));
 
+    if (mSprdReprocessing) {
+        SprdCamera3RegularChannel *channel =
+            reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+        HAL_LOGD("reprocess jpeg encode failed,unmap InputBuff");
+        setCaptureReprocessMode(false, mCallbackWidth, mCallbackHeight);
+        channel->releaseInputBuff();
+    }
+
     if (isCapturing()) {
         cancelPictureInternal();
     }
