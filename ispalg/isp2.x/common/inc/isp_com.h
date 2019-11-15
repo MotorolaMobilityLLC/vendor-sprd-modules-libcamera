@@ -189,6 +189,19 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_u32 multi_nr_flag;
 		cmr_s8 *sensor_name;
 	} isp_ctrl_context;
+	
+	typedef void* afl_handle_tt;
+
+	struct afl_version_t
+	{
+		uint8_t major;
+		uint8_t minor;
+		uint8_t micro;
+		uint8_t nano;
+		char built_date[0x20];
+		char built_time[0x20];
+		char built_rev[0x100];
+	};
 
 	struct afl_ctrl_proc_out {
 		cmr_int flag;
@@ -198,6 +211,8 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 
 	struct isp_anti_flicker_cfg {
 		cmr_u32 bypass;
+		afl_handle_tt afl_handle;
+		struct afl_version_t afl_version;
 		pthread_mutex_t status_lock;
 		cmr_u32 mode;
 		cmr_u32 skip_frame_num;
@@ -222,6 +237,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_s8 version;
 		cmr_u32 cam_4in1_mode;
 		cmr_u32 max_fps;
+		cmr_u32 camera_id;
 	};
 
 	struct isp_antiflicker_param {

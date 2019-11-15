@@ -37,8 +37,8 @@ enum afl_io_ctrl_cmd {
 };
 
 struct afl_ae_stat_win_num {
-       cmr_u32 w;
-       cmr_u32 h;
+	cmr_u32 w;
+	cmr_u32 h;
 };
 
 struct afl_proc_in {
@@ -50,15 +50,9 @@ struct afl_proc_in {
 	struct isp_awb_statistic_info *ae_stat_ptr;
 	struct isp_antiflicker_param *afl_param_ptr;
 	cmr_u32 afl_mode;
-#ifdef CONFIG_ISP_2_2
-	cmr_handle handle_pm;
-#endif
 	void *private_data;
 	cmr_u32 private_len;
 	struct afl_ae_stat_win_num ae_win_num;
-#ifdef CONFIG_ISP_2_2
-	cmr_u16 thr[9];
-#endif
 	cmr_u32 max_fps;
 	cmr_u32 app_mode;
 };
