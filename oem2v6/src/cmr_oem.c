@@ -7074,6 +7074,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     struct sensor_mode_info *sensor_mode_info = NULL;
     cmr_u32 sn_mode = 0;
     struct sensor_exp_info exp_info;
+    struct sensor_exp_info *sensor_info_ptr;
 
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.dual.preview", prop, "0");
@@ -7232,7 +7233,14 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
             goto exit;
         }
     }
-
+    sensor_info_ptr = &cxt->sn_cxt.sensor_info;
+    if (NULL != sns_ex_info_ptr->sns_binning_factor &&
+        sns_ex_info_ptr->sns_binning_factor[sn_mode] != 0)
+        sensor_info_ptr->mode_info[sn_mode].binning_factor =
+            sns_ex_info_ptr->sns_binning_factor[sn_mode];
+    else
+        sensor_info_ptr->mode_info[sn_mode].binning_factor =
+            1;
     isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
 
     ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
