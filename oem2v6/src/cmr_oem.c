@@ -2583,9 +2583,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle) {
     cmr_int need_close_flash = 1;
     struct common_isp_cmd_param isp_param;
     cmr_uint video_snapshot_type;
-    cmr_uint has_preflashed = 0;
-    cmr_u32 flash_capture_skip_num = 0;
-    struct sensor_exp_info exp_info_ptr;
 
     CMR_LOGV("E");
 
@@ -2593,7 +2590,6 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle) {
         goto exit;
 
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
-    cmr_bzero(&exp_info_ptr, sizeof(struct sensor_exp_info));
 
     /*close flash*/
 
@@ -2608,28 +2604,7 @@ cmr_int camera_focus_post_proc(cmr_handle oem_handle) {
             need_close_flash = 0;
     }
 
-    ret = camera_get_sensor_info(oem_handle, cxt->camera_id, &exp_info_ptr);
-    if (ret) {
-        CMR_LOGE("camera_get_sensor_info failed");
-    }
-    flash_capture_skip_num = exp_info_ptr.flash_capture_skip_num;
-    CMR_LOGD("flash_capture_skip_num = %d", flash_capture_skip_num);
-
-    cmr_bzero(&setting_param, sizeof(setting_param));
-    setting_param.camera_id = cxt->camera_id;
-    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_PRE_LOWFLASH_VALUE, &setting_param);
-    if (ret) {
-        CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-        // goto exit;
-    }
-    has_preflashed = setting_param.cmd_type_value;
-    CMR_LOGD("has_preflashed=%ld", has_preflashed);
-
     if (need_close_flash) {
-        /* prev_set_preview_skip_frame_num(cxt->prev_cxt.preview_handle,
-                                        cxt->camera_id, flash_capture_skip_num,
-                                        has_preflashed); */
         setting_param.setting_flash_status = SETTING_AF_FLASH_PRE_AFTER;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_CTRL_FLASH, &setting_param);
