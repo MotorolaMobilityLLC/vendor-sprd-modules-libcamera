@@ -875,13 +875,14 @@ static cmr_s32 ispctl_get_alsc_debug_info(cmr_handle isp_alg_handle)
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct tg_alsc_debug_info lsc_log = { NULL, 0 };
-	cmr_u32 lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
+	cmr_u32 lsc_sprd_version = 0;
 
 	if (NULL == cxt) {
 		ISP_LOGE("fail to get ALSC debug info error!");
 		ret = ISP_ERROR;
 		return ret;
 	}
+	lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
 
 	if (lsc_sprd_version >= 3) {
 		if (cxt->ops.lsc_ops.ioctrl)
