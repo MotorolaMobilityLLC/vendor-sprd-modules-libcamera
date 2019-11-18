@@ -31,9 +31,7 @@
 /* Begin Include */
 #include "sensor_gc2375h_raw_param_common.c"
 #include "sensor_gc2375h_raw_param_prv_0.c"
-#include "sensor_gc2375h_raw_param_prv_1.c"
 #include "sensor_gc2375h_raw_param_cap_0.c"
-#include "sensor_gc2375h_raw_param_cap_1.c"
 #include "sensor_gc2375h_raw_param_video_0.c"
 #include "sensor_gc2375h_raw_param_video_1.c"
 
@@ -49,7 +47,7 @@
 
 
 /* Capture Sizes:
-	1600x1200,800x600
+	1600x1200,1280x720
 */
 
 
@@ -156,11 +154,11 @@ static struct sensor_raw_info s_gc2375h_mipi_raw_info=
 	{
 		{s_gc2375h_tune_info_common, sizeof(s_gc2375h_tune_info_common)},
 		{s_gc2375h_tune_info_prv_0, sizeof(s_gc2375h_tune_info_prv_0)},
-		{s_gc2375h_tune_info_prv_1, sizeof(s_gc2375h_tune_info_prv_1)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc2375h_tune_info_cap_0, sizeof(s_gc2375h_tune_info_cap_0)},
-		{s_gc2375h_tune_info_cap_1, sizeof(s_gc2375h_tune_info_cap_1)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc2375h_tune_info_video_0, sizeof(s_gc2375h_tune_info_video_0)},
@@ -174,11 +172,11 @@ static struct sensor_raw_info s_gc2375h_mipi_raw_info=
 	{
 		&s_gc2375h_fix_info_common,
 		&s_gc2375h_fix_info_prv_0,
-		&s_gc2375h_fix_info_prv_1,
+		NULL,
 		NULL,
 		NULL,
 		&s_gc2375h_fix_info_cap_0,
-		&s_gc2375h_fix_info_cap_1,
+		NULL,
 		NULL,
 		NULL,
 		&s_gc2375h_fix_info_video_0,
@@ -189,11 +187,11 @@ static struct sensor_raw_info s_gc2375h_mipi_raw_info=
 	{
 		{s_gc2375h_common_tool_ui_input, sizeof(s_gc2375h_common_tool_ui_input)},
 		{s_gc2375h_prv_0_tool_ui_input, sizeof(s_gc2375h_prv_0_tool_ui_input)},
-		{s_gc2375h_prv_1_tool_ui_input, sizeof(s_gc2375h_prv_1_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc2375h_cap_0_tool_ui_input, sizeof(s_gc2375h_cap_0_tool_ui_input)},
-		{s_gc2375h_cap_1_tool_ui_input, sizeof(s_gc2375h_cap_1_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc2375h_video_0_tool_ui_input, sizeof(s_gc2375h_video_0_tool_ui_input)},
