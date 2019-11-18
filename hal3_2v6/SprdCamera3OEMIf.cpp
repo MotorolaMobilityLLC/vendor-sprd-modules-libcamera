@@ -6538,7 +6538,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             AfMode == CAMERA_FOCUS_MODE_MANUAL) {
             AfMode = CAMERA_FOCUS_MODE_INFINITY;
         }
-
+        if ((mMultiCameraMode == MODE_BOKEH || mMultiCameraMode == MODE_3D_CALIBRATION) && mCameraId == 2) {
+            AfMode = CAMERA_FOCUS_MODE_INFINITY;
+        }
         if (!mIsAutoFocus) {
             if (mRecordingMode &&
                 CAMERA_FOCUS_MODE_CAF ==

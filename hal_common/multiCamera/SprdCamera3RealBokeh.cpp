@@ -2735,7 +2735,8 @@ fail_map_output:
  * RETURN     : none
  *==========================================================================*/
 void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
-                                           int type, uint32_t cur_frame_number) {
+                                           int type,
+                                           uint32_t cur_frame_number) {
     // always get f_num in request
     int32_t origW =
         SprdCamera3Setting::s_setting[0].sensor_InfoInfo.pixer_array_size[0];
@@ -2903,9 +2904,9 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             y = top + (bottom - top) / 2;
             x = x * mBokehSize.preview_w / trim_W;
             y = y * mBokehSize.preview_h / trim_H;
-            mtempParm.x=x;
-            mtempParm.y=y;
-            mtempParm.frame_number=cur_frame_number;
+            mtempParm.x = x;
+            mtempParm.y = y;
+            mtempParm.frame_number = cur_frame_number;
             mFaceafList.push_back(mtempParm);
         }
         if (mSnapshotResultReturn) {
@@ -2913,32 +2914,39 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                 Mutex::Autolock m(mPrevFrameNotifyLock);
                 int64_t timestampMIN = capture_result_timestamp;
                 uint32_t prev_frame_number = 0;
-                for (List<camera3_notify_msg_t>::iterator i = mPrevFrameNotifyList.begin(); i != mPrevFrameNotifyList.end(); i++) {
-                      int64_t timestampTEMP =ABS((int64_t)((uint64_t)i->message.shutter.timestamp - (uint64_t)capture_result_timestamp));
-                      if (timestampTEMP < timestampMIN) {
-                          timestampMIN = timestampTEMP;
-                          prev_frame_number = i->message.shutter.frame_number;
-                      }
-                      if (timestampMIN == 0) {
-                          break;
-                      }
+                for (List<camera3_notify_msg_t>::iterator i =
+                         mPrevFrameNotifyList.begin();
+                     i != mPrevFrameNotifyList.end(); i++) {
+                    int64_t timestampTEMP =
+                        ABS((int64_t)((uint64_t)i->message.shutter.timestamp -
+                                      (uint64_t)capture_result_timestamp));
+                    if (timestampTEMP < timestampMIN) {
+                        timestampMIN = timestampTEMP;
+                        prev_frame_number = i->message.shutter.frame_number;
+                    }
+                    if (timestampMIN == 0) {
+                        break;
+                    }
                 }
-                for (List<faceaf_frame_buffer_info_t>::iterator j = mFaceafList.begin();j != mFaceafList.end();j++) {
-                       if (j->frame_number == prev_frame_number){
-                           if (j->x != mbokehParm.sel_x || j->y != mbokehParm.sel_y) {
-                               mbokehParm.sel_x = j->x;
-                               mbokehParm.sel_y = j->y;
-                               isUpdate = true;
-                           }
-                           break;
-                       }
+                for (List<faceaf_frame_buffer_info_t>::iterator j =
+                         mFaceafList.begin();
+                     j != mFaceafList.end(); j++) {
+                    if (j->frame_number == prev_frame_number) {
+                        if (j->x != mbokehParm.sel_x ||
+                            j->y != mbokehParm.sel_y) {
+                            mbokehParm.sel_x = j->x;
+                            mbokehParm.sel_y = j->y;
+                            isUpdate = true;
+                        }
+                        break;
+                    }
                 }
-             }
-         mSnapshotResultReturn = false;
-         }
-         if (mFaceafList.size() > BOKEH_PREVIEW_PARAM_LIST) {
-             mFaceafList.erase(mFaceafList.begin());
-         }
+            }
+            mSnapshotResultReturn = false;
+        }
+        if (mFaceafList.size() > BOKEH_PREVIEW_PARAM_LIST) {
+            mFaceafList.erase(mFaceafList.begin());
+        }
     }
 #ifdef CONFIG_FACE_BEAUTY
     if (metaSettings.exists(ANDROID_STATISTICS_FACE_RECTANGLES)) {
@@ -3521,6 +3529,9 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
+    int32_t crop_Region[4] = {0, 0, 0, 0};
+    cmr_u16 snsW, snsH;
+    float mZoomValue = 0.0f;
     bzero(out_streams_main,
           sizeof(camera3_stream_buffer_t) * REAL_BOKEH_MAX_NUM_STREAMS);
     bzero(out_streams_aux,
@@ -3556,6 +3567,22 @@ int SprdCamera3RealBokeh::processCaptureRequest(
         metaSettingsAux.update(ANDROID_CONTROL_SCENE_MODE, &value, 1);
     }
 #endif
+
+    if (CAM_DEPTH_ID == SprdCamera3Setting::findUltraWideSensor()) {
+        if (metaSettingsAux.exists(ANDROID_SCALER_CROP_REGION)) {
+            SprdCamera3Setting::getLargestSensorSize(CAM_DEPTH_ID, &snsW,
+                                                     &snsH);
+            mZoomValue = 16.0 / 9.0;
+            crop_Region[2] =
+                static_cast<int32_t>(static_cast<float>(snsW) / (mZoomValue));
+            crop_Region[3] =
+                static_cast<int32_t>(static_cast<float>(snsH) / (mZoomValue));
+            crop_Region[0] = (snsW - crop_Region[2]) >> 1;
+            crop_Region[1] = (snsH - crop_Region[3]) >> 1;
+            metaSettingsAux.update(ANDROID_SCALER_CROP_REGION, crop_Region,
+                                   ARRAY_SIZE(crop_Region));
+        }
+    }
 
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         int requestStreamType =
@@ -3838,12 +3865,13 @@ req_fail:
 void SprdCamera3RealBokeh::notifyMain(const camera3_notify_msg_t *msg) {
     uint32_t cur_frame_number = msg->message.shutter.frame_number;
 
-     if (msg->type == CAMERA3_MSG_SHUTTER &&
-         cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number && cur_frame_number != 0) {
-         if (msg->message.shutter.timestamp != 0) {
-             capture_result_timestamp = msg->message.shutter.timestamp;
-         }
-     }
+    if (msg->type == CAMERA3_MSG_SHUTTER &&
+        cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number &&
+        cur_frame_number != 0) {
+        if (msg->message.shutter.timestamp != 0) {
+            capture_result_timestamp = msg->message.shutter.timestamp;
+        }
+    }
 
     if (msg->type == CAMERA3_MSG_SHUTTER &&
         cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number &&
