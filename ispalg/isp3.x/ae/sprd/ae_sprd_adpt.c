@@ -353,6 +353,8 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 	struct aem_info slave_aem_info[2] = {{0},{0}};
 	cmr_u32 dcam_gain[3] = {0, 0, 0};
 
+	memset(&ae_info, 0, sizeof(ae_info));
+
 	if (0 != write_param->exp_line && 0 != write_param->sensor_gain) {
 		cmr_s32 size_index = cxt->snr_info.sensor_size_index;
 
