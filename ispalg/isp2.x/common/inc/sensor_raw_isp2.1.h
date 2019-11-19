@@ -1884,6 +1884,42 @@ struct sensor_version_info {
 	cmr_u32 reserve6;
 };
 
+//DRE feature
+struct sensor_predre_param
+{
+	cmr_u8 enable;
+	cmr_u8 imgKey_setting_mode;
+	cmr_u8 tarNorm_setting_mode;
+	cmr_u8 target_norm;
+	cmr_u16 imagekey;
+	cmr_u16 min_per;
+	cmr_u16 max_per;
+	cmr_u16 stat_step ;
+	cmr_u16 low_thresh;
+	cmr_u16 high_thresh;
+	cmr_u8 tarCoeff;
+	cmr_u8 reserved[3];//for 4-byte alignment
+};
+
+struct sensor_postdre_param
+{
+	cmr_u8 enable;
+	cmr_u8 strength;
+	cmr_u8 texture_counter_en;
+	cmr_u8 text_point_thres;
+	cmr_u8 text_prop_thres;
+	cmr_u8 tile_num_auto;
+	cmr_u8 tile_num_x;
+	cmr_u8 tile_num_y;
+};
+
+//DRE
+struct sensor_dre_level {
+	struct sensor_predre_param predre_param[16];
+	struct sensor_postdre_param postdre_param[16];
+	cmr_u8 reserved[280];
+ };
+
 struct sensor_ae_tab_param {
 	cmr_u8 *ae;
 	cmr_u32 ae_len;
