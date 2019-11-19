@@ -2802,6 +2802,56 @@ static cmr_int ispctl_get_flash_skip_num(cmr_handle isp_alg_handle, void *param_
 	return ret;
 }
 
+static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_DRE, cxt->mode_id[ISP_MODE_CAP], NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_dre_level));
+	} else {
+		ISP_LOGE("fail to get valid dre param, rtn %ld, num %d",  ret, output.param_num);
+	}
+
+	return ret;
+}
+
+static cmr_int ispctl_dre(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+
+	struct isp_alg_fw_context *cxt =
+		(struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_dre_param *isp_dre = (struct isp_dre_param *)param_ptr;
+	struct ae_dre_param ae_dre = {0};
+
+	if (isp_alg_handle == NULL || param_ptr == NULL) {
+		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p",
+			 isp_alg_handle, param_ptr);
+		return ISP_PARAM_NULL;
+	}
+
+	ae_dre.dre_enable = isp_dre->dre_enable;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle,
+					     AE_DRE_CAP_START, &ae_dre, NULL);
+
+	ISP_LOGI("DRE cap start, ret %ld", ret);
+
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, ispctl_snapshot_notice},
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
@@ -2891,6 +2941,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_CNR2_YNR_EN, ispctl_get_cnr2_ynr_en},
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
+	{ISP_CTRL_GET_DRE_PARAM, ispctl_get_dre_param},
+	{ISP_CTRL_DRE, ispctl_dre},
 	{ISP_CTRL_MAX, NULL}
 };
 

@@ -90,6 +90,7 @@ struct isp_block_operations s_dcam_aem_ops = { _pm_dcam_aem_init, _pm_dcam_aem_s
 
 struct isp_block_operations s_cnr2_ops = { _pm_cnr2_init, _pm_cnr2_set_param, _pm_cnr2_get_param, PNULL, PNULL };
 struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
+struct isp_block_operations s_dre_ops = {_pm_dre_init, _pm_dre_set_param, _pm_dre_get_param, PNULL, PNULL };
 
 struct isp_block_cfg s_blk_cfgs[] = {
 	{DCAM_BLK_2D_LSC, array_offset(struct isp_context, dcam_2d_lsc), sizeof(struct isp_2d_lsc_param), &s_dcam_lsc_ops},
@@ -136,6 +137,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_YUV_PRECDN, array_offset(struct isp_context, yuv_pre_cdn), sizeof(struct isp_yuv_pre_cdn_param), &s_yuv_precdn_ops},
 	{ISP_BLK_CNR2, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
 	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
+	{ISP_BLK_DRE, array_offset(struct isp_context, dre), sizeof(struct isp_dres_param), &s_dre_ops},
 };
 
 struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id)
