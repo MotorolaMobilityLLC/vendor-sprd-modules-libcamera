@@ -526,14 +526,11 @@ void reduceFlashIndexTab(int n, int *indTab, float *maTab, float maMax, int nMax
 void readDebugBin2(const char *f, struct FCData *d)
 {
 	FILE *fp;
-	int count = 0;
 	fp = fopen(f, "rb");
-	if(fp){
-        count = fread(d, 1, sizeof(struct FCData), fp);
-		if(count < sizeof(struct FCData))
-			ISP_LOGV("readDebugBin2:fread count error!");
-        fclose(fp);
-	}
+	int sz = fread(d, 1, sizeof(struct FCData), fp);
+	if(sz != sizeof(struct FCData))
+	        ISP_LOGE("readDebugBin2 fread faild!");
+	fclose(fp);
 }
 
 void readFCConfig(char *f, struct FCData *d, char *fout)

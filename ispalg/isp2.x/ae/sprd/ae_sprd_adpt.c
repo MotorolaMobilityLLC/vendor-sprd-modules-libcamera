@@ -3808,7 +3808,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 				exp_time = min_frame_line * cxt->cur_status.line_time;
 		}
 
-		if(!exp_line && exp_time){
+		if(!exp_line && exp_time != 0){
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
 			if(cxt->is_multi_mode)
 				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
@@ -3840,7 +3840,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 				exp_time = (cmr_u32) (min_frame_line * cxt->cur_status.line_time);
 		}
 
-		if(!exp_line && exp_time){
+		if(!exp_line && exp_time != 0){
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
 			if(cxt->is_multi_mode)
 				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
@@ -5300,11 +5300,11 @@ static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
 		}
 
 		if (NULL != rdm_otp_data && 0 != rdm_otp_len) {
-			info.ae_target_lum = (rdm_otp_data[1] << 8) | rdm_otp_data[0];
-			info.gain_1x_exp = (cmr_u32)((rdm_otp_data[5] << 24) | (rdm_otp_data[4] << 16) | (rdm_otp_data[3] << 8) | rdm_otp_data[2]);
-			info.gain_2x_exp = (cmr_u32)((rdm_otp_data[9] << 24) | (rdm_otp_data[8] << 16) | (rdm_otp_data[7] << 8) | rdm_otp_data[6]);
-			info.gain_4x_exp = (cmr_u32)((rdm_otp_data[13] << 24) | (rdm_otp_data[12] << 16) | (rdm_otp_data[11] << 8) | rdm_otp_data[10]);
-			info.gain_8x_exp = (cmr_u32)((rdm_otp_data[17] << 24) | (rdm_otp_data[16] << 16) | (rdm_otp_data[15] << 8) | rdm_otp_data[14]);
+			info.ae_target_lum = (cmr_u64)((rdm_otp_data[1] << 8) | rdm_otp_data[0]);
+			info.gain_1x_exp = (cmr_u64)((rdm_otp_data[5] << 24) | (rdm_otp_data[4] << 16) | (rdm_otp_data[3] << 8) | rdm_otp_data[2]);
+			info.gain_2x_exp = (cmr_u64)((rdm_otp_data[9] << 24) | (rdm_otp_data[8] << 16) | (rdm_otp_data[7] << 8) | rdm_otp_data[6]);
+			info.gain_4x_exp = (cmr_u64)((rdm_otp_data[13] << 24) | (rdm_otp_data[12] << 16) | (rdm_otp_data[11] << 8) | rdm_otp_data[10]);
+			info.gain_8x_exp = (cmr_u64)((rdm_otp_data[17] << 24) | (rdm_otp_data[16] << 16) | (rdm_otp_data[15] << 8) | rdm_otp_data[14]);
 			ISP_LOGV("ae otp map:(gain_1x_exp:%d),(gain_2x_exp:%d),(gain_4x_exp:%d),(gain_8x_exp:%d).\n",
 					    (int)info.gain_1x_exp,(int)info.gain_2x_exp,(int)info.gain_4x_exp,(int)info.gain_8x_exp);
 
@@ -5856,17 +5856,15 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
 		if(-1 == auto_hdr_enable)
 			auto_hdr_enable = 0;
-		if( cxt->isp_ops.callback )
-		    (*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+		if(cxt->isp_ops.callback)
+		        (*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
 		else
-		    ISP_LOGV("isp_ops.callback is NULL");
+		        ISP_LOGE("isp_ops.callback is NULL");
 	}
 #endif
 
-	if (cxt->hdr_enable) {
+	if (cxt->hdr_enable)
 		ae_set_hdr_ctrl(cxt, param);
-	}
-
 	{
 		char prop[PROPERTY_VALUE_MAX];
 		int val_max = 0;

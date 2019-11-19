@@ -176,11 +176,16 @@ static void ae_parse_isp_gain(struct ae_ctrl_cxt *cxt, cmr_u32 is_master, cmr_u3
 		}
 	}
 
-	if(snr_gain)
+	if(snr_gain){
 		*snr_gain = sensor_gain;
-	if(dcam_gain)
-		*dcam_gain = (isp_gain * 4096.0 + 0.5);
-	ISP_LOGV("sync:sensor_role:%d, ae_parse_isp_gain_end,snr_gain:%d,dcam_gain:%d", cxt->sensor_role, *snr_gain, *dcam_gain);
+		ISP_LOGV("snr_gain:%d", *snr_gain);
+	}
+	if(dcam_gain){
+                *dcam_gain = (isp_gain * 4096.0 + 0.5);
+                ISP_LOGV("dcam_gain:%d", *dcam_gain);
+	}
+        ISP_LOGV("sync:sensor_role:%d", cxt->sensor_role);
+
 }
 
 static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, struct q_item *write_item, struct q_item *actual_item, cmr_u32 is_force)
@@ -530,29 +535,25 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 				ISP_LOGV("sync:all sensor work");
 				ae_lib_frame_sync_calculation(cxt->misc_handle, &in_param, &out_param_lib);
 
-				ISP_LOGV("sync:0 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",\
-				out_param_lib.ev_setting[0].ae_gain, out_param_lib.ev_setting[0].exp_time,\
-				out_param_lib.ev_setting[0].exp_line,out_param_lib.ev_setting[0].line_time );
-				ISP_LOGV("sync:1 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",\
-				out_param_lib.ev_setting[1].ae_gain, out_param_lib.ev_setting[1].exp_time,\
-				out_param_lib.ev_setting[1].exp_line,out_param_lib.ev_setting[1].line_time );
-				ISP_LOGV("sync:2 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",\
-				out_param_lib.ev_setting[2].ae_gain, out_param_lib.ev_setting[2].exp_time,\
-				out_param_lib.ev_setting[2].exp_line,out_param_lib.ev_setting[2].line_time );
+				ISP_LOGV("sync:0 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",
+				        out_param_lib.ev_setting[0].ae_gain, out_param_lib.ev_setting[0].exp_time,
+				        out_param_lib.ev_setting[0].exp_line,out_param_lib.ev_setting[0].line_time );
+				ISP_LOGV("sync:1 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",
+				        out_param_lib.ev_setting[1].ae_gain, out_param_lib.ev_setting[1].exp_time,
+				        out_param_lib.ev_setting[1].exp_line,out_param_lib.ev_setting[1].line_time );
+				ISP_LOGV("sync:2 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",
+				        out_param_lib.ev_setting[2].ae_gain, out_param_lib.ev_setting[2].exp_time,
+				        out_param_lib.ev_setting[2].exp_line,out_param_lib.ev_setting[2].line_time );
 
 				if (0 == sync_info_master.ref_camera_id) {
 					memcpy(&out_param_parse.ev_setting[0], &out_param_lib.ev_setting[0], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[1], &out_param_lib.ev_setting[1], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[2], &out_param_lib.ev_setting[2], sizeof(struct ae_ev_setting_param));
-				}
-
-				if (2 == sync_info_master.ref_camera_id) {
+				}else if (2 == sync_info_master.ref_camera_id) {
 					memcpy(&out_param_parse.ev_setting[0], &out_param_lib.ev_setting[1], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[1], &out_param_lib.ev_setting[0], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[2], &out_param_lib.ev_setting[2], sizeof(struct ae_ev_setting_param));
-				}
-
-				if (3 == sync_info_master.ref_camera_id) {
+				}else {         //(3 == sync_info_master.ref_camera_id)
 					memcpy(&out_param_parse.ev_setting[0], &out_param_lib.ev_setting[2], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[1], &out_param_lib.ev_setting[1], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[2], &out_param_lib.ev_setting[0], sizeof(struct ae_ev_setting_param));
@@ -573,12 +574,12 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 			ae_sync_in_ae_lib_data_dump(in_param.sync_param[1]);
 			ae_lib_frame_sync_calculation(cxt->misc_handle, &in_param, &out_param_lib);
 
-			ISP_LOGV("sync:0 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",\
-			out_param_lib.ev_setting[0].ae_gain, out_param_lib.ev_setting[0].exp_time,\
-			out_param_lib.ev_setting[0].exp_line,out_param_lib.ev_setting[0].line_time );
-			ISP_LOGV("sync:1 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",\
-			out_param_lib.ev_setting[1].ae_gain, out_param_lib.ev_setting[1].exp_time,\
-			out_param_lib.ev_setting[1].exp_line,out_param_lib.ev_setting[1].line_time );
+			ISP_LOGV("sync:0 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",
+			        out_param_lib.ev_setting[0].ae_gain, out_param_lib.ev_setting[0].exp_time,
+			        out_param_lib.ev_setting[0].exp_line,out_param_lib.ev_setting[0].line_time );
+			ISP_LOGV("sync:1 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",
+			        out_param_lib.ev_setting[1].ae_gain, out_param_lib.ev_setting[1].exp_time,
+			        out_param_lib.ev_setting[1].exp_line,out_param_lib.ev_setting[1].line_time );
 
 			for(int i = 0; i < 2; i++) {
 				ae_info[i].exp.exposure = out_param_lib.ev_setting[i].exp_line;
@@ -1895,8 +1896,8 @@ static cmr_s32 ae_set_manual_iso(struct ae_ctrl_cxt *cxt, cmr_handle param)
 static cmr_s32 ae_set_gain(struct ae_ctrl_cxt *cxt, cmr_handle param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u32 sensitivity = *(cmr_u32 *) param;
 	if (param) {
+                cmr_u32 sensitivity = *(cmr_u32 *)param;
 		if (AE_STATE_LOCKED == cxt->cur_status.adv_param.lock) {
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = sensitivity * 128 / 50;
 		}
@@ -2122,8 +2123,8 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.otp_gldn_g = cxt->awb_otp_info.gldn_stat_info.g;
 	in.otp_gldn_b = cxt->awb_otp_info.gldn_stat_info.b;
 	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.r;
-	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.g;
-	in.otp_rdm_r = cxt->awb_otp_info.rdm_stat_info.b;
+	in.otp_rdm_g = cxt->awb_otp_info.rdm_stat_info.g;
+	in.otp_rdm_b = cxt->awb_otp_info.rdm_stat_info.b;
 
 	ISP_LOGV("gldn-(%d, %d, %d), rdm-(%d, %d, %d)\n",
 			cxt->awb_otp_info.gldn_stat_info.r, cxt->awb_otp_info.gldn_stat_info.g, cxt->awb_otp_info.gldn_stat_info.b,
@@ -2686,22 +2687,22 @@ static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 		debug_info_in.major_id = cxt->major_id;
 		debug_info_in.minor_id = cxt->minor_id;
 		debug_info_in.packet_buf = &cxt->debug_info_buf[0];
-		buf_size_max = sizeof(cxt->debug_info_buf)/sizeof(cxt->debug_info_buf[0]);
+		buf_size_max = sizeof(cxt->debug_info_buf) / sizeof(cxt->debug_info_buf[0]);
 		debug_info_in.packet_size_max = buf_size_max;
-		rtn = ae_debug_info_packet((cmr_handle) & debug_info_in, (cmr_handle) & debug_info_out);
+		rtn = ae_debug_info_packet((cmr_handle) &debug_info_in, (cmr_handle) &debug_info_out);
 		/*add flash debug information */
-		if (buf_size_max < (debug_info_out.size + cxt->flash_buf_len)) {
+		if (buf_size_max < (debug_info_out.size + cxt->flash_buf_len))
 			debug_info_len = buf_size_max - debug_info_out.size;
-		} else {
+                else
 			debug_info_len = cxt->flash_buf_len;
-		}
-		memcpy((cmr_handle) & cxt->debug_info_buf[debug_info_out.size], (cmr_handle) & cxt->flash_debug_buf[0], debug_info_len);
-		debug_info_result->log = (cmr_u8 *) debug_info_in.packet_buf;
+                if(debug_info_len < sizeof(cxt->flash_debug_buf))
+		        memcpy((cmr_handle) &cxt->debug_info_buf[debug_info_out.size], (cmr_handle) &cxt->flash_debug_buf[0], debug_info_len);
+                else
+                        memcpy((cmr_handle) &cxt->debug_info_buf[debug_info_out.size], (cmr_handle) &cxt->flash_debug_buf[0], sizeof(cxt->flash_debug_buf));
+		debug_info_result->log = (cmr_u8 *)debug_info_in.packet_buf;
 		debug_info_result->size = debug_info_out.size + cxt->flash_buf_len;
 
-		ISP_LOGD("bug info buf max: %d, ae: %d, flash:%d\n",
-				buf_size_max, debug_info_out.size, cxt->flash_buf_len);
-
+		ISP_LOGD("bug info buf max: %d, ae: %d, flash:%d\n", buf_size_max, debug_info_out.size, cxt->flash_buf_len);
 	} else {
 		ISP_LOGE("result pointer is NULL\n");
 		rtn = AE_ERROR;
@@ -2991,7 +2992,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 				exp_time = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 		}
 
-		if(!exp_line && exp_time){
+		if(!exp_line && exp_time != 0){
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 			if(cxt->is_multi_mode)
 				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
@@ -3023,7 +3024,7 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 				exp_time = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 		}
 
-		if(!exp_line && exp_time){
+		if(!exp_line && exp_time != 0){
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 			if(cxt->is_multi_mode)
 				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
@@ -3171,13 +3172,18 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 	cmr_u32 i = 0;
 	FILE *pf = NULL;
 	char version[1024];
+	int sz = 0;
 	property_get("ro.build.version.release", version, "");
 	if (atoi(version) > 6) {
 		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
-			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+			sz = fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			if(sz != (num *sizeof(struct ae_exposure_param)))
+			        ISP_LOGE("fread param faild");
+			sz = fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+                        if(sz != (num * sizeof(struct ae_exposure_param_switch_m)))
+                                ISP_LOGE("fread ae_manual_param faild");
 			fclose(pf);
 			pf = NULL;
 
@@ -3189,8 +3195,12 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, "rb");
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
-			fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
-			fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+			sz = fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
+			if(sz != (num * sizeof(struct ae_exposure_param)))
+                                ISP_LOGE("fread param faild");
+			sz = fread((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
+			if(sz != (num * sizeof(struct ae_exposure_param_switch_m)))
+                                ISP_LOGE("fread ae_manual_param faild");
 			fclose(pf);
 			pf = NULL;
 
@@ -3507,7 +3517,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}
 		src_exp.cur_index = cxt->last_index;
 		src_exp.target_offset = cxt->last_exp_param.target_offset;
-		if((cxt->app_mode < 64) && (cxt->app_mode >= 0) && !work_info->is_snapshot){
+		if((cxt->app_mode < 64) && (!work_info->is_snapshot)){
 			if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
 				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
 				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
@@ -4147,30 +4157,27 @@ static cmr_s32 ae_get_led_ctrl(struct ae_ctrl_cxt *cxt, cmr_handle result)
 
 static cmr_s32 ae_set_isp_gain(struct ae_ctrl_cxt *cxt)
 {
+        struct ae_match_data ae_match_data_slave;
 	if (cxt->is_multi_mode == ISP_ALG_DUAL_SBS && (CAM_SENSOR_MASTER != cxt->sensor_role)) {
-		struct ae_match_data ae_match_data_slave;
 		cxt->ptr_isp_br_ioctrl((CAM_SENSOR_MASTER == cxt->sensor_role) ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
 		cmr_u32 isp_gain = ae_match_data_slave.isp_gain;
 		if (0 != isp_gain) {
 			double rgb_coeff = isp_gain * 1.0 / 4096;
-			if (cxt->isp_ops.set_rgb_gain) {
+			if (cxt->isp_ops.set_rgb_gain)
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
-			}
 		}
 	}
-	else if((cxt->is_multi_mode == ISP_ALG_DUAL_C_C||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M || cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW)&& (CAM_SENSOR_MASTER != cxt->sensor_role)) {
-		struct ae_match_data ae_match_data_slave = {0};
-		if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
+	else if((cxt->is_multi_mode == ISP_ALG_DUAL_C_C || cxt->is_multi_mode ==ISP_ALG_DUAL_W_T || cxt->is_multi_mode ==ISP_ALG_DUAL_C_M   \
+	        || cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW)&& (CAM_SENSOR_MASTER != cxt->sensor_role)) {
+		if (CAM_SENSOR_SLAVE0 == cxt->sensor_role)
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
-		} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
+		else                    //(CAM_SENSOR_SLAVE1 == cxt->sensor_role)
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
-		}
 		cmr_u32 isp_gain = ae_match_data_slave.isp_gain;
 		if (0 != isp_gain) {
 			double rgb_coeff = isp_gain * 1.0 / 4096;
-			if (cxt->isp_ops.set_rgb_gain) {
+			if(cxt->isp_ops.set_rgb_gain)
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
-			}
 		}
 	}
 	else {
@@ -4180,7 +4187,6 @@ static cmr_s32 ae_set_isp_gain(struct ae_ctrl_cxt *cxt)
 				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
 		}
 	}
-
 	return AE_SUCCESS;
 }
 
@@ -4249,11 +4255,11 @@ static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
 		}
 
 		if (NULL != rdm_otp_data && 0 != rdm_otp_len) {
-			info.ae_target_lum = (rdm_otp_data[1] << 8) | rdm_otp_data[0];
-			info.gain_1x_exp = (rdm_otp_data[5] << 24) | (rdm_otp_data[4] << 16) | (rdm_otp_data[3] << 8) | rdm_otp_data[2];
-			info.gain_2x_exp = (rdm_otp_data[9] << 24) | (rdm_otp_data[8] << 16) | (rdm_otp_data[7] << 8) | rdm_otp_data[6];
-			info.gain_4x_exp = (rdm_otp_data[13] << 24) | (rdm_otp_data[12] << 16) | (rdm_otp_data[11] << 8) | rdm_otp_data[10];
-			info.gain_8x_exp = (rdm_otp_data[17] << 24) | (rdm_otp_data[16] << 16) | (rdm_otp_data[15] << 8) | rdm_otp_data[14];
+			info.ae_target_lum = (cmr_u64)((rdm_otp_data[1] << 8) | rdm_otp_data[0]);
+			info.gain_1x_exp = (cmr_u64)((rdm_otp_data[5] << 24) | (rdm_otp_data[4] << 16) | (rdm_otp_data[3] << 8) | rdm_otp_data[2]);
+			info.gain_2x_exp = (cmr_u64)((rdm_otp_data[9] << 24) | (rdm_otp_data[8] << 16) | (rdm_otp_data[7] << 8) | rdm_otp_data[6]);
+			info.gain_4x_exp = (cmr_u64)((rdm_otp_data[13] << 24) | (rdm_otp_data[12] << 16) | (rdm_otp_data[11] << 8) | rdm_otp_data[10]);
+			info.gain_8x_exp = (cmr_u64)((rdm_otp_data[17] << 24) | (rdm_otp_data[16] << 16) | (rdm_otp_data[15] << 8) | rdm_otp_data[14]);
 			ISP_LOGV("ae otp map:(gain_1x_exp:%d),(gain_2x_exp:%d),(gain_4x_exp:%d),(gain_8x_exp:%d).\n",
 					    (int)info.gain_1x_exp,(int)info.gain_2x_exp,(int)info.gain_4x_exp,(int)info.gain_8x_exp);
 
@@ -4972,7 +4978,10 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
 		if(-1 == auto_hdr_enable)
 			auto_hdr_enable = 0;
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+		if(cxt->isp_ops.callback)
+		        (*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+		else
+		        ISP_LOGE("isp_ops.callback is NULL");
 	}
 
 	if (cxt->hdr_enable) {
@@ -5054,12 +5063,12 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		||cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW)
 		&& (CAM_SENSOR_MASTER != cxt->sensor_role)) {
 		cmr_s16 bv;
-		struct ae_match_data ae_match_data_slave = {0};
+		struct ae_match_data ae_match_data_slave;
 		if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MATCH_BV_DATA, NULL, &bv);
 			cxt->cur_result.cur_bv = bv;
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
-		} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
+		} else {                //(CAM_SENSOR_SLAVE1 == cxt->sensor_role)
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_MATCH_BV_DATA, NULL, &bv);
 			cxt->cur_result.cur_bv = bv;
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_MATCH_AE_DATA, NULL, &ae_match_data_slave);
@@ -5094,7 +5103,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			cxt->has_mf = cxt->has_mf_cnt = 0;
 			cb_type = AE_CB_CONVERGED;
 			stop_skip_en = 1;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stop_skip_en);
+			if(cxt->isp_ops.callback)
+			        (*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stop_skip_en);
 			ISP_LOGD("skip_num stop \r\n");
 		} else {
 			ISP_LOGD("skip_num prepare\r\n");
@@ -5568,23 +5578,25 @@ cmr_s32 ae_sprd_deinit(cmr_handle handle, cmr_handle in_param, cmr_handle out_pa
 	cxt = (struct ae_ctrl_cxt *)handle;
 
 	rtn = flash_deinit(cxt->flash_alg_handle);
-	if (0 != rtn) {
+	if (0 != rtn)
 		ISP_LOGE("fail to deinit flash, rtn: %d\n", rtn);
-		rtn = AE_ERROR;
-	} else {
+	else
 		cxt->flash_alg_handle = NULL;
-	}
 
 	rtn = ae_lib_deinit(cxt->misc_handle, NULL, NULL);
 
-	if (AE_SUCCESS != rtn) {
-		ISP_LOGE("fail to deinit ae misc ");
-		rtn = AE_ERROR;
-	}
+	if (AE_SUCCESS != rtn)
+		ISP_LOGE("fail to deinit ae misc， rtn: %d\n", rtn);
 	//ae_seq_reset(cxt->seq_handle);
 	rtn = s_q_close(cxt->seq_handle);
+        if (AE_SUCCESS != rtn)
+                ISP_LOGE("fail to deinit ae misc， rtn: %d\n", rtn);
 	rtn = s_q_close(cxt->seq_handle_s0);
+        if (AE_SUCCESS != rtn)
+                ISP_LOGE("fail to deinit ae misc， rtn: %d\n", rtn);
 	rtn = s_q_close(cxt->seq_handle_s1);
+        if (AE_SUCCESS != rtn)
+                ISP_LOGE("fail to deinit ae misc， rtn: %d\n", rtn);
 
 	if (cxt->debug_enable) {
 		if (cxt->debug_info_handle) {
@@ -5866,7 +5878,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	misc_init_in.tuning_param = init_param->param[0].param;
 	{
 		char prop_str[PROPERTY_VALUE_MAX] = {0};
-		property_get("persist.vendor.cam.isp.ae.read_tune_bin", prop_str, "1");
+		property_get("persist.vendor.cam.isp.ae.read_tune_bin", prop_str, "0");
 		if (1 == atoi(prop_str)) {
 			FILE* pf  = NULL;
 			char file_name[128] = {0};
@@ -5884,15 +5896,20 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 			if (pf) {
 				cmr_u32 len = 0;
 				fseek(pf, 0L, SEEK_END);
-				len=ftell(pf);/*to get the size of bin file */
+				len = ftell(pf);/*to get the size of bin file */
 				fseek(pf, 0L, SEEK_SET);/*move the index flag to the start position*/
-				cxt->tune_buf = malloc(len);
-				fread(cxt->tune_buf, 1, len, pf);
-				fclose(pf);
+				if(len != -1){
+                                        cxt->tune_buf = malloc(len);
+                                        int sz = 0;
+                                        sz = fread(cxt->tune_buf, 1, len, pf);
+                                        if(sz != len)
+                                                ISP_LOGE("ae_sprd_init fread faild");
+                                        fclose(pf);
+				}else
+                                        ISP_LOGE("ae_sprd_init fseek faild");
 				misc_init_in.tuning_param = (void*)&cxt->tune_buf[0];
-			} else {
+			} else
 				ISP_LOGW("read tune bin failed: %s\n", file_name);
-			}
 		}
 	}
 	cxt->misc_handle = ae_lib_init(&misc_init_in, &misc_init_out);
