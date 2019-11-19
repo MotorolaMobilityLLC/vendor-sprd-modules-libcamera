@@ -741,8 +741,13 @@ int SprdCamera3RealBokeh::allocateBuff() {
         capture_num = LOCAL_CAPBUFF_NUM - 1;
 #endif
     } else {
+#ifdef CONFIG_BOKEH_HDR_SUPPORT
         capture_num = LOCAL_CAPBUFF_NUM;
+#else
+        capture_num = LOCAL_CAPBUFF_NUM - 1;
+#endif
     }
+    HAL_LOGD("capture_num = %d", capture_num);
 
     for (j = 0; j < capture_num; j++) {
         if (0 > allocateOne(mBokehSize.callback_w, mBokehSize.callback_h,
@@ -2352,9 +2357,6 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
 #ifdef YUV_CONVERT_TO_JPEG
                 mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
                     mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
-                mRealBokeh->m_pDstGDepthOriJpegBuffer =
-                    (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
-                                               SNAPSHOT_MAIN_BUFFER));
                 if (mBokehResult) {
                     rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
                                          &pic_vir_addr);
@@ -2372,6 +2374,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                                 .jpgInfo.orientation);
                     mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #ifdef CONFIG_SUPPORT_GDEPTH
+                    mRealBokeh->m_pDstGDepthOriJpegBuffer =
+                    (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
+                                               SNAPSHOT_MAIN_BUFFER));
                     rc = mRealBokeh->map(mRealBokeh->m_pDstGDepthOriJpegBuffer,
                                          &pic_vir_addr);
                     if (rc != NO_ERROR) {
@@ -5251,9 +5256,10 @@ void *SprdCamera3RealBokeh::jpeg_callback_thread_proc(void *p_data) {
 #ifdef YUV_CONVERT_TO_JPEG
     obj->pushBufferList(obj->mLocalBuffer, obj->m_pDstJpegBuffer,
                         obj->mLocalBufferNumber, obj->mLocalBufferList);
+#ifdef CONFIG_SUPPORT_GDEPTH
     obj->pushBufferList(obj->mLocalBuffer, obj->m_pDstGDepthOriJpegBuffer,
                         obj->mLocalBufferNumber, obj->mLocalBufferList);
-
+#endif
 #endif
     obj->CallBackResult(obj->mCapFrameNumber, CAMERA3_BUFFER_STATUS_OK);
     obj->mCaptureThread->mReprocessing = false;

@@ -7496,7 +7496,12 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
 
     if (mSprdZslEnabled == true) {
         releaseZSLQueue();
-
+        if (mMultiCameraMode == MODE_BOKEH){
+#ifndef CONFIG_BOKEH_HDR_SUPPORT
+            mZslNum = 1;
+#endif
+        }
+        HAL_LOGD("mZslNum %d", mZslNum);
         for (i = 0; i < (cmr_int)mZslNum; i++) {
             if (mZslHeapArray[i] == NULL) {
                 memory = allocCameraMem(size, 1, true);
