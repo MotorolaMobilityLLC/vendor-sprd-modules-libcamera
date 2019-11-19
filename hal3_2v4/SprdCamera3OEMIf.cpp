@@ -5732,7 +5732,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_AE_STAB_NOTIFY:
         if (parm4 != NULL) {
             ae_info = (cmr_u32 *)parm4;
-            //ae_stab = ae_info & (0x00000001);
+            ae_stab = ae_info[AE_CB_STABLE_INDEX];
             HAL_LOGD("ae_info = 0x%x", ae_info);
         }
         if (ae_stab == 1 && mManualExposureEnabled && controlInfo.ae_lock) {
