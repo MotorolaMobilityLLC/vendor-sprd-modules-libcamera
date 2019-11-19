@@ -121,7 +121,7 @@ struct ae_adv_param {
 	cmr_u8 is_faceID;
 	struct ae_compensation_param comp_param;
 
-	cmr_u8 af_info;			/*AF trigger info */
+	cmr_u8 af_status;			/*AF trigger info */
 	cmr_u8 log_level;
 	cmr_u8 is_snapshot;
 	cmr_u8 prof_mode;		/*in professional mode*/
