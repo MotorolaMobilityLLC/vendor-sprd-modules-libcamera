@@ -43,11 +43,34 @@ typedef struct
 
 void NV21toRGB(unsigned char *yuv420,  unsigned char *rgb888, int image_width, int image_height);
 
+#if defined __GNUC__
+__attribute__ ((visibility ("default")))
+#endif 
 int OT_Init(OT_GlobalSetting *a_OTSetting);
+
+#if defined __GNUC__
+__attribute__ ((visibility ("default")))
+#endif 
 int OT_Do(void *a_pScalingBuf, int x_point, int y_point);
+
+#if defined __GNUC__
+__attribute__ ((visibility ("default")))
+#endif 
 int OT_GetResult(int *a_MovingX, int *a_MovingY, int *aOTStatus,int *a_OTFrameID);
+
+#if defined __GNUC__
+__attribute__ ((visibility ("default")))
+#endif 
 int OT_GetResultN1(OT_Result *a_OTResult);
+
+#if defined __GNUC__
+__attribute__ ((visibility ("default")))
+#endif 
 int OT_Deinit();
+
+#if defined __GNUC__
+__attribute__ ((visibility ("default")))
+#endif 
 int OT_Stop();
 
 #ifdef __cplusplus
