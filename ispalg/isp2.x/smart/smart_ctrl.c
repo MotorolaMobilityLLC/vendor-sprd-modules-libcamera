@@ -776,6 +776,8 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 	cmr_s32 bv = param->bv;
 	cmr_s32 bv_gain = param->bv_gain;
 	cmr_u32 ct = param->ct;
+	cmr_u32 abl_weight = param->abl_weight;
+
 	struct isp_weight_value func_result = { {0}, {0} };
 	struct isp_weight_value *fix_data = (struct isp_weight_value *)result->fix_data;
 	struct isp_weight_value bv_result = { {0}, {0} };
@@ -808,6 +810,10 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 				cmr_u32 bv_weight = bv_result.weight[i];
 
 				if (bv_weight > 0 && bv_idx < cfg->section_num) {
+					if(smart_id == ISP_SMART_DRE) {
+						ct = abl_weight;
+						ISP_LOGV("ISP_SMART_DRE abl-weight:%d",abl_weight);
+					}
 					rtn = smart_crl_calc_func(&cfg->func[bv_idx], cfg->y_type, ct, &tmp_result[i]);
 					if (ISP_SUCCESS != rtn)
 						return rtn;
@@ -1608,10 +1614,13 @@ cmr_int _smart_gamma(struct smart_proc_input *inptr,
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_weight_value gamc_value = { {0}, {0} };
 	struct isp_range val_range = { 0, 0 };
-	struct sensor_rgbgamma_curve gamma_curve[2];
+	struct sensor_rgbgamma_curve gamma_curve[3];
 	struct sensor_rgbgamma_curve *gamma_info = output;
+	struct sensor_rgbgamma_curve tmp_dst;
 	val_range.min = 0;
 	val_range.max = SENSOR_GAMMA_NUM - 1;
+	cmr_u32 abl_weighting = inptr->cal_para.abl_weight;
+	ISP_LOGV("abl_weighting=%d\n", abl_weighting);
 	struct isp_weight_value *weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
 	if ((cmr_s32) weight_value->value[0] < val_range.min || (cmr_s32) weight_value->value[0] > val_range.max) {
 		ISP_LOGE("fail to value range: %d ([%d, %d])\n", weight_value->value[0], val_range.min, val_range.max);
@@ -1650,7 +1659,12 @@ cmr_int _smart_gamma(struct smart_proc_input *inptr,
 	if (ISP_SUCCESS != rtn) {
 		return ISP_ERROR;
         }
-
+	if (abl_weighting > 0) {
+		rtn = _smart_read_gamma(inptr, 7, &gamma_curve[2]);//fix index 7 gamma for ABL
+		if (ISP_SUCCESS != rtn) {
+			return ISP_ERROR;
+		}
+	}
 	{
 		void *src_r[2] = { NULL };
 		void *src_g[2] = { NULL };
@@ -1662,22 +1676,44 @@ cmr_int _smart_gamma(struct smart_proc_input *inptr,
 
 		src_r[0] = &gamma_curve[0].points_r[0].x;
 		src_r[1] = &gamma_curve[1].points_r[0].x;
-		dst_r = &gamma_info->points_r;
+		dst_r = &tmp_dst.points_r;
 
 		src_g[0] = &gamma_curve[0].points_g[0].x;
 		src_g[1] = &gamma_curve[1].points_g[0].x;
-		dst_g = &gamma_info->points_g;
+		dst_g = &tmp_dst.points_g;
 
 		src_b[0] = &gamma_curve[0].points_b[0].x;
 		src_b[1] = &gamma_curve[1].points_b[0].x;
-		dst_b = &gamma_info->points_b;
+		dst_b = &tmp_dst.points_b;
 
 		rtn = isp_interp_data(dst_r, src_r, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 
 		rtn = isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 
 		rtn = isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+		if (abl_weighting > 0) {
+			gamc_value.weight[0] = (((abl_weighting) * SMART_WEIGHT_UNIT/100)/(SMART_WEIGHT_UNIT / 16)) * (SMART_WEIGHT_UNIT / 16);
+			gamc_value.weight[1] = SMART_WEIGHT_UNIT - gamc_value.weight[0];
 
+			src_r[0] = &gamma_curve[2].points_r[0].x;
+			src_r[1] = &tmp_dst.points_r[0].x;
+			dst_r = &gamma_info->points_r;
+			rtn = isp_interp_data(dst_r, src_r, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+
+			src_g[0] = &gamma_curve[2].points_g[0].x;
+			src_g[1] = &tmp_dst.points_g[0].x;
+			dst_g = &gamma_info->points_g;
+			rtn = isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+
+			src_b[0] = &gamma_curve[2].points_b[0].x;
+			src_b[1] = &tmp_dst.points_b[0].x;
+			dst_b = &gamma_info->points_b;
+			rtn = isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+
+			ISP_LOGV("ABL gamma %d %d\n",gamc_value.weight[0],gamc_value.weight[1]);
+		} else {
+			memcpy(gamma_info, &tmp_dst, sizeof(struct sensor_rgbgamma_curve));
+		}
 		ISP_LOGV("atm orig gamma, value %d/%d, x/y %d/%d\n",
 			gamc_value.value[0],
 			gamc_value.value[1],
