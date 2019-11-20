@@ -223,7 +223,6 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     return rc;
 }
 
-#define RES_SIZE_NUM 6
 /*===========================================================================
  * FUNCTION   : getHighResolutionSize
  *
@@ -240,7 +239,6 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
 int SprdCamera3Factory::getHighResolutionSize(int camera_id,
                                               struct camera_info *info) {
     int rc;
-    char prop[PROPERTY_VALUE_MAX] = {0};
     Mutex::Autolock l(mLock);
 
     HAL_LOGI("E, camera_id = %d", camera_id);
@@ -261,40 +259,31 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
 
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
 
-    static avaliable_res_size aval_res_size[2][RES_SIZE_NUM] = {
-        {{6528, 4896}, {1440, 1080}, {0, 0}},
-        {{4608, 3456}, {1440, 1080}, {0, 0}},
-    };
-    avaliable_res_size *stream_info;
-
-    size_t stream_cnt = RES_SIZE_NUM;
+    const struct img_size *stream_info;
     int32_t scaler_formats[] = {
         HAL_PIXEL_FORMAT_YCbCr_420_888, HAL_PIXEL_FORMAT_BLOB,
         HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, HAL_PIXEL_FORMAT_RAW16};
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     int array_size = 0;
-    Vector<int32_t> available_stream_configs;
-    int32_t
-        available_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4];
+    int32_t avail_stream_config[CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4];
 
-    memset(available_stream_configurations, 0,
-           CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
-    if (camera_id == 0)
-        stream_info = aval_res_size[0];
-    else if (camera_id)
-        stream_info = aval_res_size[1];
+    memset(avail_stream_config, 0, CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
+
+    SprdCamera3Setting::getHighResCapSize(camera_id, &stream_info);
 
     for (size_t j = 0; j < scaler_formats_count; j++) {
-        for (size_t i = 0; i < stream_cnt; i++) {
+        for (size_t i = 0; stream_info; i++) {
+            /* last img_size must be {0, 0} */
             if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
                 break;
-            available_stream_configs.add(scaler_formats[j]);
-            available_stream_configs.add(stream_info[i].width);
-            available_stream_configs.add(stream_info[i].height);
-            available_stream_configs.add(
-                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+            avail_stream_config[array_size++] = scaler_formats[j];
+            avail_stream_config[array_size++] = stream_info[i].width;
+            avail_stream_config[array_size++] = stream_info[i].height;
+            avail_stream_config[array_size++] =
+                ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
         }
     }
+/*
     memcpy(available_stream_configurations, &(available_stream_configs[0]),
            available_stream_configs.size() * sizeof(int32_t));
     for (array_size = 0; array_size < CAMERA_SETTINGS_CONFIG_ARRAYSIZE;
@@ -303,8 +292,9 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
             break;
         }
     }
+*/
     metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
-                    available_stream_configurations, array_size * 4);
+                    avail_stream_config, array_size);
 
     mStaticMetadata = metadata.release();
     SprdCamera3Setting::getCameraInfo(camera_id, info);

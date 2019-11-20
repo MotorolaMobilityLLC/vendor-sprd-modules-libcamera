@@ -64,12 +64,6 @@ class SprdCamera3Factory {
   private:
     int mNumOfCameras;
     Mutex mLock;
-
-typedef struct {
-    int32_t width;
-    int32_t height;
-} avaliable_res_size;
-
 };
 
 }; /*namespace sprdcamera*/

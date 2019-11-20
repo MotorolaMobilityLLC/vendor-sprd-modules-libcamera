@@ -216,15 +216,15 @@ const int32_t kexposureCompensationRange[2] = {-32, 32};
 const camera_metadata_rational kae_compensation_step = {1, 16};
 // const int32_t kavailable_processed_sizes[16] = {/*must order from bigger to
 // smaller*/
-//	2592, 1944,
-//	2048, 1536,
-//	1920, HEIGHT_2M,
-//	1600, 1200,
-//	1280, 960,
-//	1280, 720,
-//	720, 480,
-//	640, 480,
-//};
+// 2592, 1944,
+// 2048, 1536,
+// 1920, HEIGHT_2M,
+// 1600, 1200,
+// 1280, 960,
+// 1280, 720,
+// 720, 480,
+// 640, 480,
+// };
 
 const int32_t kjpegThumbnailSizes[CAMERA_SETTINGS_THUMBNAILSIZE_ARRAYSIZE] = {
     0, 0, 256, 144, 288, 144, 304, 144, 240, 240, 320, 240, 432, 288};
@@ -1595,25 +1595,125 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     return 0;
 }
 
-static int32_t stream_limit(const cam_stream_info_t *p, int32_t total,
-                            int32_t w_limit, int32_t h_limit) {
-    int i = 0;
+/* getHighResCapSize
+ * set capture size for high resolution mode
+ * input: string for selecttion set by propterty
+ * output: struct img_size *p
+ */
+int SprdCamera3Setting::getHighResCapSize(int32_t cameraId, const struct img_size **pRet)
+{
+#define RES_SIZE_NUM 6
+   char prop[PROPERTY_VALUE_MAX] = {0};
+    struct phySensorInfo *phyPtr = NULL;
+    const struct img_size *pt = NULL;
+    int i;
+    struct HighResCapSizeTag {
+        const char *pch;
+        struct img_size res[RES_SIZE_NUM];
+    };
+    const static struct HighResCapSizeTag tb_res_cap[] = {
+        /* sort: large --> little
+         * property string, capture size, preview size, 0,0
+         * last img_size must be{0, 0}
+         */
+        {"48M", {{8000, 6000}, {1440, 1080}, {0, 0}}}, /* 48M */
+        {"32M", {{6528, 4896}, {1440, 1080}, {0, 0}}}, /* 32M */
+        {"24M", {{5664, 4248}, {1440, 1080}, {0, 0}}}, /* 24M */
+        {"16M", {{4608, 3456}, {1440, 1080}, {0, 0}}}, /* 16M */
+    };
+    /* get sensor full size,limit to binning size,default 5M */
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
 
-    if (w_limit <= 0 || h_limit <= 0 || total <= 1)
-        return i;
-    for (i = 0; i < total; i++) {
-        if (p[i].stream_sizes_tbl.width <= w_limit &&
-            p[i].stream_sizes_tbl.height <= h_limit)
-            break;
+    if (cameraId == 0) /* back sensor high resolution capture size */
+        property_get("persist.vendor.cam.back.high.cap", prop, "");
+    else if (cameraId == 1) /* front sensor high resolution capture size */
+        property_get("persist.vendor.cam.front.high.cap", prop, "");
+
+    if (strlen(prop) > 0) {
+        for (i = 0;
+             i < (sizeof(tb_res_cap) / sizeof(tb_res_cap[0]));
+             i++) {
+            if (strcmp(prop, tb_res_cap[i].pch) == 0) {
+                pt = tb_res_cap[i].res;
+                break;
+            }
+        }
+    } else {
+        for (i = 0;
+             i < (sizeof(tb_res_cap) / sizeof(tb_res_cap[0]));
+             i++) {
+            if (phyPtr->source_width_max >= tb_res_cap[i].res[0].width &&
+                phyPtr->source_height_max >= tb_res_cap[i].res[0].height) {
+                pt = tb_res_cap[i].res;
+                break;
+            }
+        }
     }
-    /* check i */
-    if (i >= total)
-        i = 0;
 
-    HAL_LOGI("stream start pos %d [%d %d]", i, p[i].stream_sizes_tbl.width,
-             p[i].stream_sizes_tbl.height);
+    if (pt) {
+        HAL_LOGD("high res cap [%d %d]", pt->width, pt->height);
+    } else {
+        pt = tb_res_cap[3].res; /* default 16M */
+        HAL_LOGW("prop:%s,size[%d %d], high res cap default[%d %d]", prop,
+                 phyPtr->source_width_max, phyPtr->source_height_max, pt->width,
+                 pt->height);
+    }
+    *pRet = pt;
 
-    return i;
+    return 0;
+}
+
+/* getHighResBinCapSize
+ * input: prop,
+ *       if not set prop, use 4in1 sensor bin size
+ * output: capture size for "AUTO" mode
+ */
+int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId, struct img_size *pRet)
+{
+    struct BinCapSizeTag {
+        const char *pch;
+        struct img_size size;
+    };
+    const struct BinCapSizeTag tb_cap_max[] = {
+        /* attention: sort,large --> little */
+        {"16M", {4608, 3456}}, /* 16M */
+        {"13M", {4160, 3120}}, /* 13M */
+        {"12M", {4000, 3000}}, /* 12M */
+        {"8M", {3264, 2448}},  /* 8M */
+        {"5M", {2592, 1944}},  /* 5M */
+        {"4M", {2320, 1740}},  /* 4M */
+    };
+    int i;
+    char prop[PROPERTY_VALUE_MAX] = {0};
+    struct phySensorInfo *phyPtr = NULL;
+
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+    if (cameraId == 0)
+        property_get("persist.vendor.cam.back.bin.cap", prop, "");
+    else if (cameraId == 1)
+        property_get("persist.vendor.cam.front.bin.cap", prop, "");
+    if (strlen(prop) > 0) {
+        for (i = 0; i < (sizeof(tb_cap_max) / sizeof(tb_cap_max[0])); i++) {
+            if (strcmp(prop, tb_cap_max[i].pch) == 0) {
+                *pRet = tb_cap_max[i].size;
+                goto _EXIT;
+            }
+        }
+    }
+
+    /* limit to binning size */
+    pRet->width = phyPtr->source_width_max / 2;
+    pRet->height = phyPtr->source_height_max / 2;
+    /* check and set default */
+    pRet->width = pRet->width <= 0 ? 2592 : (pRet->width);
+    pRet->height = pRet->height <= 0 ? 1944 : (pRet->height);
+
+_EXIT:
+    HAL_LOGD("prop:%s param[%d %d], cap size[%d %d]", prop,
+             phyPtr->source_width_max, phyPtr->source_height_max,
+             pRet->width, pRet->height);
+
+    return 0;
 }
 
 int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
@@ -1643,6 +1743,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     size_t stream_sizes_tbl_cnt;
     const cam_stream_info_t *p_stream_info = NULL;
+    struct phySensorInfo *phyPtr = NULL;
+    int i = 0;
 
     /* Add input/output stream configurations for each scaler formats*/
     Vector<int32_t> available_stream_configs;
@@ -1660,20 +1762,24 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         p_stream_info = stream_info;
         stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
     }
-#ifdef CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
+
+/* get sensor full size,limit to binning size,default 5M */
+#if CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
     if (cameraId == 0) {
-        int i = 0;
-        /* 3264 x 2448 >= 8M */
-        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, 3264, 2448);
+        struct img_size s_limit;
+
+        getHighResBinCapSize(cameraId, &s_limit);
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width, s_limit.height);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
 #endif
 #ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
     if (cameraId == 1) {
-        int i = 0;
-        /* 2320x1740> 4M > 2272x1080 */
-        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, 2304, 1728);
+        struct img_size s_limit;
+
+        getHighResBinCapSize(cameraId, &s_limit);
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width, s_limit.height);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
@@ -4473,7 +4579,7 @@ int SprdCamera3Setting::updateWorkParameters(
                frame_settings.find(ANDROID_TONEMAP_CURVE_RED).data.f,
                frame_settings.find(ANDROID_TONEMAP_CURVE_RED).count *
                    sizeof(float));
-        /*		HAL_LOGD("android tone cure point, count = %d");*/
+        /* HAL_LOGD("android tone cure point, count = %d");*/
     }
 
     if (frame_settings.exists(ANDROID_TONEMAP_MODE)) {
@@ -5158,7 +5264,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // HAL_LOGD("timestamp = %" PRId64 ", request_id = %d, frame_count = %d,
     // mCameraId
     // = %d",s_setting[mCameraId].sensorInfo.timestamp,
-    //			s_setting[mCameraId].requestInfo.id,
+    // s_setting[mCameraId].requestInfo.id,
     // s_setting[mCameraId].requestInfo.frame_count, mCameraId);
     camMetadata.update(ANDROID_CONTROL_ENABLE_ZSL,
                        &(s_setting[mCameraId].controlInfo.enable_zsl), 1);
@@ -5198,7 +5304,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
-    //			s_setting[mCameraId].controlInfo.af_mode,
+    // s_setting[mCameraId].controlInfo.af_mode,
     // s_setting[mCameraId].controlInfo.af_trigger_Id, mCameraId);
     camMetadata.update(ANDROID_CONTROL_AF_STATE,
                        &(s_setting[mCameraId].resultInfo.af_state), 1);
@@ -5241,7 +5347,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        ARRAY_SIZE(s_setting[mCameraId].scalerInfo.crop_region));
     // HAL_LOGD(" CROP_REGIONS :%d %d %d
     // %d",s_setting[mCameraId].scalerInfo.crop_region[0],s_setting[mCameraId].scalerInfo.crop_region[1],
-    //			s_setting[mCameraId].scalerInfo.crop_region[2],s_setting[mCameraId].scalerInfo.crop_region[3]);
+    // s_setting[mCameraId].scalerInfo.crop_region[2],s_setting[mCameraId].scalerInfo.crop_region[3]);
 
     {
         if (mSensorFocusEnable[mCameraId]) {
@@ -5340,7 +5446,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        AE_CB_MAX_INDEX);
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,
-    //			s_setting[mCameraId].controlInfo.ae_precapture_id);
+    // s_setting[mCameraId].controlInfo.ae_precapture_id);
     camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_ID,
                        &(s_setting[mCameraId].controlInfo.ae_precapture_id), 1);
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,

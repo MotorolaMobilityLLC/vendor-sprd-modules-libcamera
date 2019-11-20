@@ -550,7 +550,13 @@ class SprdCamera3Setting {
     static int get_tag_type(const vendor_tag_ops_t *ops, uint32_t tag);
     static int32_t stream_limit(const cam_stream_info_t *p, int32_t total,
                                 int32_t w_limit, int32_t h_limit);
+    /* get max capture size by sensor max size */
     static int getMaxCapSize(int32_t cameraId, int32_t *w, int32_t *h);
+    /* for high resolution, return point */
+    static int getHighResCapSize(int32_t cameraId, const struct img_size **pRet);
+    /* for 4in1 sensor auto mode, return size */
+    static int getHighResBinCapSize(int32_t cameraId, struct img_size *pRet);
+
     int constructDefaultMetadata(int type, camera_metadata_t **metadata);
     int UpdateWorkParameters(const CameraMetadata &frame_settings);
     int initialize(const camera3_callback_ops_t *callback_ops);
@@ -694,7 +700,7 @@ class SprdCamera3Setting {
     int setHISTOGRAMTag(int32_t *hist_report);
     int setAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
     int getAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
-    int getSensorFov(float	*w_fov,float  *sw_fov);
+    int getSensorFov(float *w_fov,float  *sw_fov);
 
 
     static uint8_t mMaxCameraCount;
