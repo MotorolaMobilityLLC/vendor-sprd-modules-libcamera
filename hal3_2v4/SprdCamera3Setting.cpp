@@ -1321,13 +1321,21 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                  stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
                 (stream_info[i].stream_sizes_tbl.width == 480 &&
                  stream_info[i].stream_sizes_tbl.height == 640)) {
+
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
                     stream_info[i].stream_sizes_tbl.width);
-                available_stream_configs.add(
-                    stream_info[i].stream_sizes_tbl.height);
+                available_stream_configs.add(stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+                if(scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && stream_info[i].stream_sizes_tbl.height == 1088) {
+                    available_stream_configs.add(scaler_formats[j]);
+                    available_stream_configs.add(
+                        stream_info[i].stream_sizes_tbl.width);
+                    available_stream_configs.add(1080);
+                    available_stream_configs.add(
+                        ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+                }
                 /* keep largest */
                 if (stream_info[i].stream_sizes_tbl.width >=
                         largest_picture_size[cameraId].width &&
@@ -1355,6 +1363,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     stream_info[i].stream_sizes_tbl.width);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.height);
+
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
                     if (stream_info[i].stream_sizes_tbl.width ==
                             largest_picture_size[cameraId].width &&
@@ -1384,6 +1393,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 } else
                     available_min_durations.add(
                         stream_info[i].stream_min_duration);
+
+            if(scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && stream_info[i].stream_sizes_tbl.height == 1088) {
+                available_min_durations.add(scaler_formats[j]);
+                available_min_durations.add(
+                    stream_info[i].stream_sizes_tbl.width);
+                available_min_durations.add(1080);
+                available_min_durations.add(
+                        stream_info[i].stream_min_duration);
+                }
             }
         }
     }
