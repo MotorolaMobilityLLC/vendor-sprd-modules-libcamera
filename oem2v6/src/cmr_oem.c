@@ -107,6 +107,7 @@ static pthread_mutex_t mm_dvfs_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
 static uint32_t closing = 0;
+static uint32_t active_camera_num = 0;
 static multiCameraMode is_multi_camera_mode_oem;
 static uint8_t master_id_oem = 0;
 
@@ -5115,9 +5116,14 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     camera_sensor_deinit(oem_handle);
     camera_grab_deinit(oem_handle);
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
-    pthread_mutex_lock(&mm_dvfs_mutex);
-    camera_mm_dvfs_deinit(oem_handle);
-    pthread_mutex_unlock(&mm_dvfs_mutex);
+    if (active_camera_num > 0)
+	active_camera_num--;
+
+    if (active_camera_num == 0) {
+        pthread_mutex_lock(&mm_dvfs_mutex);
+        camera_mm_dvfs_deinit(oem_handle);
+        pthread_mutex_unlock(&mm_dvfs_mutex);
+    }
 #endif
     pthread_mutex_lock(&close_mutex);
     closing--;
@@ -5126,6 +5132,7 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     }
     pthread_mutex_unlock(&close_mutex);
 
+    CMR_LOGD("active_camera_num =%d", active_camera_num);
 exit:
 
     ATRACE_END();
@@ -10545,6 +10552,8 @@ exit:
     if (CMR_CAMERA_SUCCESS == ret) {
         cxt->inited = 1;
         *oem_handle = (cmr_handle)cxt;
+	active_camera_num++;
+	CMR_LOGD("active_camera_num = %d", active_camera_num);
     } else {
         if (cxt) {
             free((void *)cxt);

@@ -45,6 +45,13 @@ const uint PIC_SIZE_5M = 5;
 const char *str_module[] = {"cpp",     "fd",       "jpg", "isp",
                             "dcam-if", "dcam-axi", "mtx"};
 
+#define CHECK_HANDLE_VALID(handle)  \
+   do {  \
+      if (!handle) {  \
+         return CMR_CAMERA_INVALID_PARAM;  \
+      }  \
+   } while (0)
+
 struct class_mm_dvfs *getInstance() {
     if (mm_dvfs_instance != NULL)
         return mm_dvfs_instance;
@@ -403,8 +410,12 @@ cmr_int cmr_set_mm_dvfs_param(cmr_handle oem_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct class_mm_dvfs *p_dvfs = NULL;
+
+    CHECK_HANDLE_VALID(oem_handle);
     p_dvfs = (struct class_mm_dvfs *)(cxt->mm_dvfs_cxt.mm_dvfs_handle);
-    if (!p_dvfs && (mm_dvfs_instance != p_dvfs)) {
+    CHECK_HANDLE_VALID(p_dvfs);
+
+    if ((!p_dvfs && (mm_dvfs_instance != p_dvfs))||(mm_dvfs_instance == NULL)) {
         CMR_LOGE("invalid mm_dvfs_handle");
         return -1;
     }
