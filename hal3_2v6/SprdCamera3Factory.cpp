@@ -39,7 +39,9 @@
 #include "SprdCamera3Flash.h"
 #include "hal_common/multiCamera/SprdCamera3Wrapper.h"
 
-#include "hal_common/multiCamera/SprdCamera3MultiCamera.h"
+#ifdef CONFIG_MULTICAMERA_SUPPORT
+#include "SprdCamera3MultiCamera.h"
+#endif
 
 using namespace android;
 
