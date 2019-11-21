@@ -600,7 +600,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M)) {
 		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_USER_COUNT, NULL, &dual_sensor_status);
-		if (cxt->is_master || is_force) {
+		if (cxt->is_master) {
 			ISP_LOGV("dual_sensor_status = %d, is_force:%d, cameraId:%d",dual_sensor_status, is_force, cxt->camera_id);
 			if(dual_sensor_status > 1) {
 				ae_sync_write_to_sensor_normal(cxt, &write_param);
@@ -4314,7 +4314,9 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		}
 	}
 
-	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][AE_ISO_AUTO];
+	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][cxt->cur_status.settings.iso];
+	ISP_LOGD("current ae table fliker mode %d iso mode:%d",cxt->cur_status.settings.flicker, cxt->cur_status.settings.iso);
+
 	if ((AE_SCENE_NORMAL != cxt->sync_cur_status.settings.scene_mode) || (CAMERA_MODE_3DNR_PHOTO == cxt->app_mode)) {
 		cmr_u32 i = 0;
 		struct ae_scene_info *scene_info = &cxt->cur_param->scene_info[0];
@@ -4543,7 +4545,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->exp_data.lib_data.frm_len = cxt->sync_cur_result.wts.frm_len;
 	cxt->exp_data.lib_data.frm_len_def = cxt->sync_cur_result.wts.frm_len_def;
 
-	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
+	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
 
 	cxt->is_snapshot = work_info->is_snapshot;
 	/*it is normal capture, not in flash mode */
