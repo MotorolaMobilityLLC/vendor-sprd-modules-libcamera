@@ -703,10 +703,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             ret = setting_after_set_ctrl(cpt, &after_cb_param);
         }
         *item->cmd_type_value = type_val;
-        if (type == SETTING_GENERAL_EXPOSURE_COMPENSATION) {
-            hal_param->hal_common.ae_compensation_param =
-                parm->ae_compensation_param;
-        }
+    }
+    if (type == SETTING_GENERAL_EXPOSURE_COMPENSATION) {
+        hal_param->hal_common.ae_compensation_param =
+            parm->ae_compensation_param;
     }
 
 setting_out:
