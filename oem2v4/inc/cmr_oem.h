@@ -268,6 +268,7 @@ struct camera_context {
     sem_t access_sm;
     sem_t sbs_sync_sm;
     sem_t snapshot_sm;
+    sem_t isp_sm;
     cmr_uint share_path_sm_flag;
     cmr_handle init_thread;
     cmr_int facing;

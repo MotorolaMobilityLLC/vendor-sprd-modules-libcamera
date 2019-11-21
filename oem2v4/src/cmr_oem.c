@@ -40,6 +40,7 @@
 #define CMR_EVT_EXIT (CMR_EVT_OEM_BASE + 2)
 #define CMR_EVT_ISP_PM_MEM_INIT (CMR_EVT_OEM_BASE + 3)
 #define CMR_EVT_ISP_PM_MEM_DEINIT (CMR_EVT_OEM_BASE + 4)
+#define CMR_EVT_ISP_INIT (CMR_EVT_OEM_BASE + 5)
 
 #define CAMERA_OEM_MSG_QUEUE_SIZE 10
 #define CAMERA_RECOVER_CNT 3
@@ -138,6 +139,7 @@ static cmr_int camera_scaler_init(cmr_handle oem_handle);
 static cmr_int camera_scaler_deinit(cmr_handle oem_handle);
 static cmr_int camera_rotation_init(cmr_handle oem_handle);
 static cmr_int camera_rotation_deinit(cmr_handle oem_handle);
+static cmr_int camera_isp_init_nosync(cmr_handle oem_handle);
 static cmr_int camera_isp_init(cmr_handle oem_handle);
 static cmr_int camera_isp_deinit_notice(cmr_handle oem_handle);
 static cmr_int camera_isp_deinit(cmr_handle oem_handle);
@@ -3497,7 +3499,7 @@ exit:
         free(cali_result.data_ptr);
         cali_result.data_ptr = NULL;
     }
-
+    sem_post(&cxt->isp_sm);
     ATRACE_END();
     return ret;
 }
@@ -3579,6 +3581,7 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
             }
         }
     }
+    sem_destroy(&cxt->isp_sm);
     CMR_LOGI("X");
 
 exit:
@@ -4520,6 +4523,11 @@ static cmr_int camera_init_thread_proc(struct cmr_msg *message, void *p_data) {
         ISP_LOGI("pm_context_addr: 0x%x, ret: %d", cxt->isp_pm_context_addr, cxt->err_code);
         break;
 
+    case CMR_EVT_ISP_INIT:
+        cxt->err_code = camera_isp_init((cmr_handle)cxt);
+        ISP_LOGI("CMR_EVT_ISP_INIT: 0x%x, ret: %d", cxt->isp_pm_context_addr, cxt->err_code);
+        break;
+
     case CMR_EVT_ISP_PM_MEM_DEINIT:
         isp_mw_pm_mem_deinit((void *)cxt->isp_pm_context_addr);
         cxt->isp_pm_context_addr = 0;
@@ -4726,6 +4734,27 @@ cmr_int camera_isp_pm_mem_deinit(cmr_handle oem_handle) {
     return ret;
 }
 
+cmr_int camera_isp_init_nosync(cmr_handle oem_handle) {
+    ATRACE_BEGIN(__FUNCTION__);
+    CMR_LOGI("E");
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_MSG_INIT(message);
+    sem_init(&cxt->isp_sm, 0, 1);
+    cxt->err_code = CMR_CAMERA_SUCCESS;
+
+    message.msg_type = CMR_EVT_ISP_INIT;
+    message.sync_flag = CMR_MSG_SYNC_NONE;
+    ret = cmr_thread_msg_send(cxt->init_thread, &message);
+    if (ret) {
+        CMR_LOGE("send msg failed!");
+        ret = CMR_CAMERA_FAIL;
+    }
+    ATRACE_END();
+    CMR_LOGI("X");
+    return ret;
+}
+
 cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -4786,7 +4815,7 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto grab_deinit;
     }
 
-    ret = camera_isp_init(oem_handle);
+    ret = camera_isp_init_nosync(oem_handle);
     if (ret) {
         CMR_LOGE("failed to init isp %ld", ret);
         goto res_deinit;
@@ -6627,7 +6656,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     cmr_uint is_zsl_enable = 0;
     cmr_uint video_snapshot_type = VIDEO_SNAPSHOT_NONE;
     struct sprd_img_capture_param capture_param;
-
+    struct timespec ts;
     if (!oem_handle) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
@@ -6635,6 +6664,21 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     }
     CMR_LOGI("skip num %ld %d", skip_number, channel_bits);
     camera_take_snapshot_step(CMR_STEP_CAP_S);
+
+    if (clock_gettime(CLOCK_REALTIME, &ts)) {
+        CMR_LOGE("get time failed");
+        goto exit;
+    }
+    ts.tv_nsec += ms2ns(600);
+    if (ts.tv_nsec > 1000000000) {
+        ts.tv_sec += 1;
+        ts.tv_nsec -= 1000000000;
+    }
+    if (cxt->isp_cxt.inited != 1) {
+        CMR_LOGI(" wait for isp inited");
+        ret = sem_timedwait(&cxt->isp_sm, &ts);
+        CMR_LOGI("ret %ld", ret);
+    }
 
     ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
     if (ret) {
