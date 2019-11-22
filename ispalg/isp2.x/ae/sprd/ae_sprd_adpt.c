@@ -3341,10 +3341,10 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
 					ISP_LOGD("ae_flash1_callback do-capture!\r\n");
 				}
-			} else if (main_flash_capture_counts + 1 == cxt->send_once[4]) {
+			} else if (((main_flash_capture_counts + 1 == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((3 == cxt->send_once[4]) && (cxt->mainFlashEn == 0))) {
 				sensor_param_updating_interface(cxt);
 				ISP_LOGD("ae_flash1_callback update next prev-param!\r\n");
-			} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
+			//} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
 
 				struct ae_flash_cfg cfg;
 				cfg.led_idx = 0;
@@ -3352,6 +3352,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cfg.led0_enable = 0;
 				cfg.led1_enable = 0;
 				cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
+				ISP_LOGD("ae_flash1_callback close main flash!\r\n");
 			} else {
 				if (1 > cxt->send_once[4]) {
 					ISP_LOGD("ae_flash1 wait-main-flash!\r\n");
