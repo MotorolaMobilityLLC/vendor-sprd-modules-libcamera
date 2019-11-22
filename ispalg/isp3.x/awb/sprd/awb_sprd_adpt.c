@@ -176,6 +176,11 @@ struct awb_ctrl_cxt {
 	struct awb_aiscene_info_3_0 ai_scene_info_v3;
 	struct awb_face_info_3_0 awb_face_info_v3;
 
+	/*for save gain/ct to file*/
+	struct awb_save_gain s_save_awb_param[8];
+	struct awb_ctrl_gain gain_to_save;
+	cmr_u32 ct_to_save;
+
 };
 
 struct isp_size g_src_size[4] = {{0,0},{0,0},{0,0},{0,0}};
@@ -434,10 +439,7 @@ static cmr_u32 _awb_set_gain_manualwb_v3(struct awb_ctrl_cxt *cxt)
 	return rtn;
 }
 
-
-struct awb_save_gain s_save_awb_param[4] = { {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0} };
-
-static void _awb_save_gain(struct awb_save_gain *cxt, cmr_u32 num)
+static void _awb_save_gain(struct awb_save_gain *cxt, cmr_u32 num, struct awb_ctrl_cxt *cxt_tmp)
 {
 	cmr_u32 i = 0;
 	FILE *fp = NULL;
@@ -448,7 +450,7 @@ static void _awb_save_gain(struct awb_save_gain *cxt, cmr_u32 num)
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, "wb");
 		if (fp) {
 			for (i = 0; i < num; ++i) {
-				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+				ISP_LOGV("camer_id(%d)[%d]: %d, %d, %d, %d\n", cxt_tmp->camera_id, i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
 			}
 			fwrite((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
 			fclose(fp);
@@ -458,7 +460,7 @@ static void _awb_save_gain(struct awb_save_gain *cxt, cmr_u32 num)
 		fp = fopen(AWB_GAIN_PARAM_FILE_NAME_MEDIA, "wb");
 		if (fp) {
 			for (i = 0; i < num; ++i) {
-				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+				ISP_LOGV("camera_id(%d)[%d]: %d, %d, %d, %d\n", cxt_tmp->camera_id, i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
 			}
 			fwrite((char *)cxt, 1, num * sizeof(struct awb_save_gain), fp);
 			fclose(fp);
@@ -470,15 +472,21 @@ static int _awb_save_gain_tofile(struct awb_ctrl_cxt *cxt)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	if (cxt->flash_info.flash_enable == 0) {
-		s_save_awb_param[cxt->camera_id].r = cxt->recover_gain.r;
-		s_save_awb_param[cxt->camera_id].g = cxt->recover_gain.g;
-		s_save_awb_param[cxt->camera_id].b = cxt->recover_gain.b;
-		s_save_awb_param[cxt->camera_id].ct = cxt->recover_ct;
-		_awb_save_gain(&s_save_awb_param[0], sizeof(s_save_awb_param) / sizeof(struct awb_save_gain));
+		cxt->recover_gain.r = cxt->gain_to_save.r;
+		cxt->recover_gain.g = cxt->gain_to_save.g;
+		cxt->recover_gain.b = cxt->gain_to_save.b;
+		cxt->recover_ct		= cxt->ct_to_save;
+		cxt->s_save_awb_param[cxt->camera_id].r = cxt->recover_gain.r;
+		cxt->s_save_awb_param[cxt->camera_id].g = cxt->recover_gain.g;
+		cxt->s_save_awb_param[cxt->camera_id].b = cxt->recover_gain.b;
+		cxt->s_save_awb_param[cxt->camera_id].ct = cxt->recover_ct;
+		_awb_save_gain(&(cxt->s_save_awb_param[0]), sizeof(cxt->s_save_awb_param) / sizeof(struct awb_save_gain), cxt);
+		ISP_LOGV(" _awb_save_gain_tofile:camera_id[%d].gain = (%d,%d,%d),camera_id[%d].ct = %d",cxt->camera_id,\
+		cxt->recover_gain.r,cxt->recover_gain.g,cxt->recover_gain.b,cxt->camera_id,cxt->recover_ct);
 	}
 	return rtn;
 }
-static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
+static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num, struct awb_ctrl_cxt *cxt_tmp)
 {
 	cmr_u32 i = 0;
 	int count = 0;
@@ -497,7 +505,7 @@ static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
 			fp = NULL;
 
 			for (i = 0; i < num; ++i) {
-				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+				ISP_LOGV("camera_id(%d)[%d]: %d, %d, %d, %d\n", i, cxt_tmp->camera_id, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
 			}
 		}
 	} else {
@@ -511,7 +519,7 @@ static void _awb_read_gain(struct awb_save_gain *cxt, cmr_u32 num)
 			fp = NULL;
 
 			for (i = 0; i < num; ++i) {
-				ISP_LOGV("[%d]: %d, %d, %d, %d\n", i, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
+				ISP_LOGV("camera_id(%d)[%d]: %d, %d, %d, %d\n", i, cxt_tmp->camera_id, cxt[i].r, cxt[i].g, cxt[i].b, cxt[i].ct);
 			}
 		}
 	}
@@ -1504,13 +1512,13 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, SET_OTP_AWB, &otp_info, NULL);
 	}
 #endif
-	_awb_read_gain(&s_save_awb_param[0], sizeof(s_save_awb_param) / sizeof(struct awb_save_gain));
+	_awb_read_gain(&(cxt->s_save_awb_param[0]), sizeof(cxt->s_save_awb_param) / sizeof(struct awb_save_gain), cxt);
 
-	if (0 != s_save_awb_param[cxt->camera_id].r && 0 != s_save_awb_param[cxt->camera_id].g && 0 != s_save_awb_param[cxt->camera_id].b) {
-		cxt->output_gain.r = s_save_awb_param[cxt->camera_id].r;
-		cxt->output_gain.g = s_save_awb_param[cxt->camera_id].g;
-		cxt->output_gain.b = s_save_awb_param[cxt->camera_id].b;
-		cxt->output_ct = s_save_awb_param[cxt->camera_id].ct;
+	if (0 != cxt->s_save_awb_param[cxt->camera_id].r && 0 != cxt->s_save_awb_param[cxt->camera_id].g && 0 != cxt->s_save_awb_param[cxt->camera_id].b) {
+		cxt->output_gain.r = cxt->s_save_awb_param[cxt->camera_id].r;
+		cxt->output_gain.g = cxt->s_save_awb_param[cxt->camera_id].g;
+		cxt->output_gain.b = cxt->s_save_awb_param[cxt->camera_id].b;
+		cxt->output_ct = cxt->s_save_awb_param[cxt->camera_id].ct;
 	}
 	//init recover_gain & awb result gain
 	cxt->recover_gain.r = cxt->output_gain.r;
@@ -1674,13 +1682,13 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	}
 	ISP_LOGI("end the isp_br_ioctrl()");
 #endif
-	_awb_read_gain(&s_save_awb_param[0], sizeof(s_save_awb_param) / sizeof(struct awb_save_gain));
+	_awb_read_gain(&(cxt->s_save_awb_param[0]), sizeof(cxt->s_save_awb_param) / sizeof(struct awb_save_gain), cxt);
 
-	if (0 != s_save_awb_param[cxt->camera_id].r && 0 != s_save_awb_param[cxt->camera_id].g && 0 != s_save_awb_param[cxt->camera_id].b) {
-		cxt->output_gain.r = s_save_awb_param[cxt->camera_id].r;
-		cxt->output_gain.g = s_save_awb_param[cxt->camera_id].g;
-		cxt->output_gain.b = s_save_awb_param[cxt->camera_id].b;
-		cxt->output_ct = s_save_awb_param[cxt->camera_id].ct;
+	if (0 != cxt->s_save_awb_param[cxt->camera_id].r && 0 != cxt->s_save_awb_param[cxt->camera_id].g && 0 != cxt->s_save_awb_param[cxt->camera_id].b) {
+		cxt->output_gain.r = cxt->s_save_awb_param[cxt->camera_id].r;
+		cxt->output_gain.g = cxt->s_save_awb_param[cxt->camera_id].g;
+		cxt->output_gain.b = cxt->s_save_awb_param[cxt->camera_id].b;
+		cxt->output_ct = cxt->s_save_awb_param[cxt->camera_id].ct;
 	}
 	//init recover_gain & awb result gain
 	cxt->recover_gain.r = cxt->output_gain.r;
@@ -2159,8 +2167,13 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-	ISP_LOGV("AWB result : (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
-
+	ISP_LOGV("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id);
+	//set gain/ct to save file
+	cxt->gain_to_save.r = cxt->output_gain.r;
+	cxt->gain_to_save.g = cxt->output_gain.g;
+	cxt->gain_to_save.b = cxt->output_gain.b;
+	cxt->ct_to_save	   	= cxt->output_ct;
+	//set gain/ct to update to sensor
 	result.gain.r = cxt->output_gain.r;
 	result.gain.g = cxt->output_gain.g;
 	result.gain.b = cxt->output_gain.b;
@@ -2406,8 +2419,15 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 	}
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-	ISP_LOGV("AWB result : (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
+	ISP_LOGV("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id);
 
+	//set the gain/ct to_save_file
+	cxt->frame_count 	= cxt->frame_count + 1;
+	cxt->gain_to_save.r = cxt->output_gain.r;
+	cxt->gain_to_save.g = cxt->output_gain.g;
+	cxt->gain_to_save.b = cxt->output_gain.b;
+	cxt->ct_to_save	   	= cxt->output_ct;
+	//set the gain/ct to update sensor
 	result.gain.r = cxt->output_gain.r;
 	result.gain.g = cxt->output_gain.g;
 	result.gain.b = cxt->output_gain.b;
