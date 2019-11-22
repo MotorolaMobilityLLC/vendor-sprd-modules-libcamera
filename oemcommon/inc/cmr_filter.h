@@ -44,6 +44,9 @@ struct filter_pic_data {
     cmr_uint last_width;
     cmr_uint last_height;
     struct img_addr *dst_addr;
+    int orientation;
+    int flip_on;
+    int is_front;
 };
 
 struct filter_ops {

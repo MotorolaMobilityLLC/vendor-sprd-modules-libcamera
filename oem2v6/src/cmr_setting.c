@@ -756,7 +756,7 @@ static cmr_int setting_set_encode_angle(struct setting_component *cpt,
     hal_param->encode_rotation = encode_rotation;
     hal_param->encode_angle = encode_angle;
 
-    CMR_LOGD("encode_angle %ld", hal_param->encode_angle);
+    CMR_LOGD("encode_angle %ld, encode_rotation=%d", hal_param->encode_angle,hal_param->encode_rotation);
     return ret;
 }
 
@@ -764,7 +764,6 @@ static cmr_int setting_get_encode_angle(struct setting_component *cpt,
                                         struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-    ;
 
     parm->cmd_type_value = hal_param->encode_angle;
     return ret;
@@ -776,6 +775,7 @@ static cmr_int setting_get_encode_rotation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->encode_rotation;
+    CMR_LOGV("encode_rotation=%d", hal_param->encode_rotation);
     return ret;
 }
 

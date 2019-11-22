@@ -40,6 +40,9 @@ struct ipm_frame_in {
     cmr_u32 adgain;
     float ev[HDR_CAP_NUM];
     struct auto_tracking_info input;
+    cmr_uint orientation;
+    cmr_uint flip_on;
+    cmr_uint is_front;
 };
 
 struct ipm_frame_out {
