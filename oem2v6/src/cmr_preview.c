@@ -7108,10 +7108,15 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
         is_raw_capture = 1;
     }
 
+#if defined(CONFIG_ISP_2_3)
+    if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
+        if (handle->prev_cxt[camera_id].prev_param.tool_eb) {
+#else
     if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
         if ((handle->prev_cxt[camera_id].prev_param.tool_eb &&
              is_raw_capture == 1) ||
             isp_video_get_simulation_flag()) {
+#endif
             ret = prev_set_cap_param_raw(handle, camera_id, is_restart,
                                          out_param_ptr);
         } else {

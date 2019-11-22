@@ -229,7 +229,7 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cm
     redundance_size = 1 * 1024 * 1024;
 
     *pp_cap_size = 3 * max_w * max_h + 3 * thumb_w * thumb_h + redundance_size;
-
+#ifndef CONFIG_ISP_2_3
     // for raw capture
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if ((!strcmp(value, "raw"))||isp_video_get_simulation_flag()) {
@@ -239,7 +239,7 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cm
             *pp_cap_size += 3 * max_w * max_h / 2;
         }
     }
-
+#endif
     // the above is default configuration, for some special case, you can change
     // it like this:
     // if (max_w * max_h <= xyyz && max_w * max_h > abcd) {
@@ -585,6 +585,10 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw.size.height = sn_size->height;
     cap_mem->cap_raw.fmt = CAM_IMG_FMT_BAYER_MIPI_RAW;
 
+/* sharkLE no need use raw2 image */
+#if defined(CONFIG_ISP_2_3)
+        raw2_size = 0;
+#else
     cap_mem->cap_raw2.addr_phy.addr_y =
         cap_2_frm->mem_frm.addr_phy.addr_y + max_size + raw_size;
     cap_mem->cap_raw2.addr_vir.addr_y =
@@ -594,7 +598,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     cap_mem->cap_raw2.size.width = sn_size->width;
     cap_mem->cap_raw2.size.height = sn_size->height;
     cap_mem->cap_raw2.fmt = CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW;
-
+#endif
     cap_mem->target_jpeg.addr_phy.addr_y = cap_mem->cap_yuv.addr_phy.addr_y;
     cap_mem->target_jpeg.addr_vir.addr_y = cap_mem->cap_yuv.addr_vir.addr_y;
     cap_mem->target_jpeg.fd = cap_mem->cap_yuv.fd;
