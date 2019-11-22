@@ -3084,7 +3084,6 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                     };
                     property_get("persist.vendor.cam.multi.dump", prop, "0");
                     if (!strcmp(prop, "pre_in") || !strcmp(prop, "all")) {
-                        rc = gMultiCam->map(output_buffer, &output_buf_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer1,
                                             &input_buf1_addr);
                         rc = gMultiCam->map(muxer_msg.combo_frame.buffer2,
@@ -3119,7 +3118,6 @@ bool SprdCamera3MultiCamera::TWPreviewMuxerThread::threadLoop() {
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer1);
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer2);
                         gMultiCam->unmap(muxer_msg.combo_frame.buffer3);
-                        gMultiCam->unmap(output_buffer);
                     }
                     if (!strcmp(prop, "pre_out") || !strcmp(prop, "all")) {
                         rc = gMultiCam->map(output_buffer, &output_buf_addr);
@@ -3483,14 +3481,12 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
     if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
+        pushBufferList(mLocalBuffer, result->output_buffers->buffer,
+                          mLocalBufferNumber, mLocalBufferList);
         if (currStreamType == DEFAULT_STREAM) {
-            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                           mCurFrameNum, mLocalBufferList);
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            SNAPSHOT_STREAM, CAM_TYPE_MAIN);
         } else {
-            pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                           mCurFrameNum, mLocalBufferList);
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            currStreamType, CAM_TYPE_MAIN);
         }
@@ -3761,7 +3757,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
         pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                       mCurFrameNum, mLocalBufferList);
+                           mLocalBufferNumber, mLocalBufferList);
         if (currStreamType == DEFAULT_STREAM) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            SNAPSHOT_STREAM, CAM_TYPE_AUX1);
@@ -4057,7 +4053,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
         pushBufferList(mLocalBuffer, result->output_buffers->buffer,
-                       mCurFrameNum, mLocalBufferList);
+                           mLocalBufferNumber, mLocalBufferList);
         if (currStreamType == DEFAULT_STREAM) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
                            SNAPSHOT_STREAM, CAM_TYPE_AUX2);

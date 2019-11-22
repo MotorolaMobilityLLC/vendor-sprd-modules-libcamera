@@ -205,7 +205,7 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     sprd_virtual_camera_t m_VirtualCamera;
     sprdcamera_physical_descriptor_t m_pPhyCamera[MAX_MULTI_NUM_CAMERA];
     hal_buffer_info mBufferInfo[MAX_MULTI_NUM_BUFFER];
-    new_mem_t mLocalBuffer[MAX_MULTI_NUM_BUFFER * (MAX_MULTI_NUM_BUFFER + 2)];
+    new_mem_t mLocalBuffer[MAX_MULTI_NUM_BUFFER * (MAX_MULTI_NUM_BUFFER + 4)];
     hal_req_stream_config_total mHalReqConfigStreamInfo[MAX_MULTI_NUM_STREAMS];
     request_state mRequstState;
 

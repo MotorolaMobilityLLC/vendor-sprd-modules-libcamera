@@ -511,7 +511,7 @@ buffer_handle_t *SprdCamera3MultiBase::popBufferList(List<new_mem_t *> &list,
         }
     }
     if (ret == NULL || j == list.end()) {
-        HAL_LOGV("popBufferList failed!");
+        HAL_LOGE("popBufferList failed!");
         return ret;
     }
     list.erase(j);
@@ -539,7 +539,7 @@ void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
         }
     }
     if (i >= localbuffer_num) {
-        HAL_LOGV("find backbuf failed");
+        HAL_LOGE("find backbuf failed");
     }
     return;
 }

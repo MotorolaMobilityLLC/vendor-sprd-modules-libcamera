@@ -41,7 +41,7 @@
         // which index camera stream width and heigh to set.
         // The value is valid when follow_type not equal to 0
         /*********************************************************************/
-        {20, 0, 0, PREVIEW_STREAM, 0},
+        {27, 0, 0, PREVIEW_STREAM, 0},
         {3, 0, 0, SNAPSHOT_STREAM, 0},
         {0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0},
