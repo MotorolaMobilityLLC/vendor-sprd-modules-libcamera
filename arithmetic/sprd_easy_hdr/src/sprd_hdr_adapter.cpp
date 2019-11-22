@@ -30,6 +30,11 @@ void *sprd_hdr_adpt_init(int max_width, int max_height, void *param)
 	cfg.img_stride = max_width;
 
     char strRunType[256];
+
+    property_get("ro.boot.lwfq.type", strRunType , "-1");
+    if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP && strcmp("0", strRunType))
+        g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
+
     property_get("persist.vendor.cam.hdr2.run_type", strRunType , "");
     if (!(strcmp("cpu", strRunType)))
         g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
