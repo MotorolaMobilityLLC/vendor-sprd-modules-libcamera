@@ -36,6 +36,10 @@ typedef struct {
     int endY;
     int angle;
     int pose;
+    int score;
+    unsigned char faceAttriRace;    /* Skin color of race: yellow, white, black, or indian        */
+    unsigned char faceAttriGender;  /* Gender from face attribute detection demo */
+    unsigned char faceAttriAge;     /* Age from face attribute detection demo    */
 } fb_beauty_face_t;
 
 typedef struct {
@@ -65,6 +69,10 @@ typedef struct faceBeautyLevels {
     unsigned char lipLevel; /* Red lips level. Value range [0, 10] */
     unsigned char slimLevel;  /* Slim face level. Value range [0, 10] */
     unsigned char largeLevel; /* Enlarge eye level. Value range [0, 10] */
+    int cameraWork; /* The work camera; front or rear*/
+    int cameraBV; /* The value of bv for judjing ambient brightness */
+    int cameraISO; /* The value of iso for judjing light sensitivity */
+    int cameraCT; /* The value of ct for judjing color temperature */
 } faceBeautyLevelsT;
 
 JNIEXPORT void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum);

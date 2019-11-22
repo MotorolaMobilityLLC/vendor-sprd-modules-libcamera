@@ -38,6 +38,7 @@ void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum
         if (faceBeauty->hSprdFB == 0) {
             faceBeauty->firstFrm = 1;
             if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_CPU) {
+                ALOGD("FB_CreateBeautyHandle");
                 if (FB_OK != FB_CreateBeautyHandle(&(faceBeauty->hSprdFB), workMode,
                                                    threadNum)) {
                     ALOGE("FB_CreateBeautyHandle() Error");
@@ -66,15 +67,15 @@ void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum
 
 void face_beauty_deinit(fb_beauty_param_t *faceBeauty)
 {
+    ALOGD("face_beauty_deinit");
     if (!faceBeauty) {
         ALOGE("deinit_fb_handle faceBeauty is null");
         return;
     }
-
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm, "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         if (faceBeauty->hSprdFB != 0) {
-			ALOGD("face_beauty_deinit begin!");
+            ALOGD("face_beauty_deinit begin!");
             if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_CPU) {
                 FB_DeleteBeautyHandle(&(faceBeauty->hSprdFB));
                 faceBeauty->hSprdFB = NULL;
@@ -84,7 +85,7 @@ void face_beauty_deinit(fb_beauty_param_t *faceBeauty)
             }
         }
         faceBeauty->noFaceFrmCnt = 0;
-		ALOGD("face_beauty_deinit end!");
+        ALOGD("face_beauty_deinit end!");
     }
 }
 
@@ -104,6 +105,10 @@ void construct_fb_face(fb_beauty_param_t *faceBeauty, int j, int sx, int sy,
         faceBeauty->fb_face[j].height = ey - sy;
         faceBeauty->fb_face[j].rollAngle = angle;
         faceBeauty->fb_face[j].yawAngle = pose;
+        faceBeauty->fb_face[j].score = 0;
+        faceBeauty->fb_face[j].faceAttriRace = 0;
+        faceBeauty->fb_face[j].faceAttriGender= 0;
+        faceBeauty->fb_face[j].faceAttriAge= 0;
         ALOGD("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
               j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
               faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
@@ -170,10 +175,8 @@ void construct_fb_level(fb_beauty_param_t *faceBeauty,
             0, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
         unsigned char map_pictureSkinTextureLoFreqLevel[NUM_LEVELS] = {
             4, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0};
-        unsigned char map_lipColorLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
-                                                       6, 7, 8, 9, 10};
-        unsigned char map_skinColorLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
-                                                        6, 7, 8, 9, 10};
+        unsigned char map_lipColorLevel[NUM_LEVELS] = {0, 2, 3, 5, 6, 8, 9, 10, 11, 12, 12};
+        unsigned char map_skinColorLevel[NUM_LEVELS] = {0, 2, 3, 5, 6, 8, 9, 10, 11, 12, 12};
 
         faceBeauty->fb_option.skinBrightLevel =
             map_skinBrightLevel[beautyLevels.brightLevel];
@@ -192,6 +195,11 @@ void construct_fb_level(fb_beauty_param_t *faceBeauty,
         faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
         faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
         faceBeauty->fb_option.blemishSizeThrCoeff = 14;
+
+        faceBeauty->fb_option.cameraWork = FB_CAMERA_REAR;
+        faceBeauty->fb_option.cameraBV = 0;
+        faceBeauty->fb_option.cameraISO = 0;
+        faceBeauty->fb_option.cameraCT = 0;
 
         if (faceBeauty->fb_mode == 1) {
             faceBeauty->fb_option.skinSmoothRadiusCoeff =

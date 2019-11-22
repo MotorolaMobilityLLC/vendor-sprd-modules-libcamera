@@ -34,6 +34,10 @@ struct face_beauty_levels {
     unsigned char lipLevel; /* Red lips level. Value range [0, 10] */
     unsigned char slimLevel;  /* Slim face level. Value range [0, 10] */
     unsigned char largeLevel; /* Enlarge eye level. Value range [0, 10] */
+    int cameraWork; /* The work camera; front or rear*/
+    int cameraBV; /* The value of bv for judjing ambient brightness */
+    int cameraISO; /* The value of iso for judjing light sensitivity */
+    int cameraCT; /* The value of ct for judjing color temperature */
 };
 
 void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum);

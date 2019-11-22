@@ -34,25 +34,36 @@
 #define FB_SKINCOLOR_ROSY       1     /* Rosy color                               */
 #define FB_SKINCOLOR_WHEAT      2     /* The healthy wheat color                  */
 
+/* The work camera */
+#define FB_CAMERA_FRONT       0x00    /* Front: use front camera                  */
+#define FB_CAMERA_REAR        0x01    /* Rear: use rear camera                    */
+
 #define FB_LIPCOLOR_CRIMSON     0     /* Crimson color                            */
 #define FB_LIPCOLOR_PINK        1     /* Pink color                               */
 #define FB_LIPCOLOR_FUCHSIA     2     /* Fuchsia colr                             */
 
 /* Face beautify options */
 typedef struct {
-    unsigned char removeBlemishFlag;       /* Flag for removing blemish; 0 --> OFF; 1 --> ON    */
-    unsigned char blemishSizeThrCoeff;     /* Blemish diameter coeff. Value range [13, 20]      */
     unsigned char skinSmoothLevel;         /* Smooth skin level. Value range [0, 20]            */
     unsigned char skinTextureHiFreqLevel;  /* Skin Texture high freq level. Value range [0, 10] */
     unsigned char skinTextureLoFreqLevel;  /* Skin Texture low freq level. Value range [0, 10]  */
     unsigned char skinSmoothRadiusCoeff;   /* Smooth skin radius coeff. Value range [1, 255]    */
-    unsigned char skinColorType;           /* The target skin color: white, rosy, or wheat      */
-    unsigned char skinColorLevel;          /* The level to tune skin color. Value range [0, 20] */
     unsigned char skinBrightLevel;         /* Skin brightness level. Value range [0, 20]        */
-    unsigned char lipColorType;            /* The target lip color: crimson, pink or fuchsia    */
-    unsigned char lipColorLevel;           /* Red lips level. Value range [0, 20]               */
-    unsigned char slimFaceLevel;           /* Slim face level. Value range [0, 20]              */
     unsigned char largeEyeLevel;           /* Enlarge eye level. Value range [0, 20]            */
+    unsigned char slimFaceLevel;           /* Slim face level. Value range [0, 20]              */
+    unsigned char lipColorLevel;           /* Red lips level. Value range [0, 20]               */
+    unsigned char skinColorLevel;          /* The level to tune skin color. Value range [0, 20] */
+
+    unsigned char removeBlemishFlag;       /* Flag for removing blemish; 0 --> OFF; 1 --> ON    */
+    unsigned char blemishSizeThrCoeff;     /* Blemish diameter coeff. Value range [13, 20]      */
+    unsigned char skinColorType;           /* The target skin color: white, rosy, or wheat      */
+    unsigned char lipColorType;            /* The target lip color: crimson, pink or fuchsia    */
+
+    int cameraWork;                        /* The work camera; front or rear                    */
+    int cameraBV;                          /* The value of bv for judjing ambient brightness    */
+    int cameraISO;                         /* The value of iso for judjing light sensitivity    */
+    int cameraCT;                          /* The value of ct for judjing color temperature     */
+
     unsigned char debugMode;               /* Debug mode. 0 --> OFF; 1 --> ON                   */
     unsigned char fbVersion;               /* facebeauty version control. 0 --> old; 1 --> new  */
 } FB_BEAUTY_OPTION_VDSP;
@@ -79,6 +90,10 @@ typedef struct
     int x, y, width, height;        /* Face rectangle                            */
     int yawAngle;                   /* Out-of-plane rotation angle (Yaw);In [-90, +90] degrees;   */
     int rollAngle;                  /* In-plane rotation angle (Roll);   In (-180, +180] degrees; */
+    int score;                      /* FD score                                                   */
+    unsigned char faceAttriRace;    /* Skin color of race: yellow, white, black, or indian        */
+    unsigned char faceAttriGender;  /* Gender from face attribute detection demo */
+    unsigned char faceAttriAge;     /* Age from face attribute detection demo    */
 } FB_FACEINFO_VDSP;
 
 
