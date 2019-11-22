@@ -275,9 +275,9 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*low_ct_thrd*/
-	0x0000,
+	0x0FA0,
 	/*reserved*/
 	0x00,
 	/*filter_en*/
@@ -546,9 +546,9 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*low_ct_thrd*/
-	0x0000,
+	0x0FA0,
 	/*reserved*/
 	0x00,
 	/*filter_en*/

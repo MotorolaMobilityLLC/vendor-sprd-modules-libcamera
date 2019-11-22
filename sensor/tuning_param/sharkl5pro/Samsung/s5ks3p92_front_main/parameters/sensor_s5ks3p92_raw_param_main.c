@@ -34,7 +34,6 @@
 #include "sensor_s5ks3p92_raw_param_prv_1.c"
 #include "sensor_s5ks3p92_raw_param_cap_0.c"
 #include "sensor_s5ks3p92_raw_param_cap_1.c"
-#include "sensor_s5ks3p92_raw_param_cap_2.c"
 #include "sensor_s5ks3p92_raw_param_video_0.c"
 #include "sensor_s5ks3p92_raw_param_video_1.c"
 
@@ -50,7 +49,7 @@
 
 
 /* Capture Sizes:
-	4608x3488,2304x1744
+	4608x3488,2304x1744,1280x720
 */
 
 
@@ -162,7 +161,7 @@ static struct sensor_raw_info s_s5ks3p92_mipi_raw_info=
 		{NULL, 0},
 		{s_s5ks3p92_tune_info_cap_0, sizeof(s_s5ks3p92_tune_info_cap_0)},
 		{s_s5ks3p92_tune_info_cap_1, sizeof(s_s5ks3p92_tune_info_cap_1)},
-		{s_s5ks3p92_tune_info_cap_2, sizeof(s_s5ks3p92_tune_info_cap_2)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_s5ks3p92_tune_info_video_0, sizeof(s_s5ks3p92_tune_info_video_0)},
 		{s_s5ks3p92_tune_info_video_1, sizeof(s_s5ks3p92_tune_info_video_1)},
@@ -180,7 +179,7 @@ static struct sensor_raw_info s_s5ks3p92_mipi_raw_info=
 		NULL,
 		&s_s5ks3p92_fix_info_cap_0,
 		&s_s5ks3p92_fix_info_cap_1,
-		&s_s5ks3p92_fix_info_cap_2,
+		NULL,
 		NULL,
 		&s_s5ks3p92_fix_info_video_0,
 		&s_s5ks3p92_fix_info_video_1,
@@ -195,7 +194,7 @@ static struct sensor_raw_info s_s5ks3p92_mipi_raw_info=
 		{NULL, 0},
 		{s_s5ks3p92_cap_0_tool_ui_input, sizeof(s_s5ks3p92_cap_0_tool_ui_input)},
 		{s_s5ks3p92_cap_1_tool_ui_input, sizeof(s_s5ks3p92_cap_1_tool_ui_input)},
-		{s_s5ks3p92_cap_2_tool_ui_input, sizeof(s_s5ks3p92_cap_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{s_s5ks3p92_video_0_tool_ui_input, sizeof(s_s5ks3p92_video_0_tool_ui_input)},
 		{s_s5ks3p92_video_1_tool_ui_input, sizeof(s_s5ks3p92_video_1_tool_ui_input)},

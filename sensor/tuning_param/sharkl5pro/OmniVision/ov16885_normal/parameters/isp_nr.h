@@ -103,18 +103,6 @@ static struct sensor_nr_scene_map_param s_ov16885_nr_scene_map_param = {{
 #include "NR/common/normal/bwud_param.h"
 #endif
 
-#ifdef _NR_RAW_GTM_PARAM_
-#include "NR/common/normal/raw_gtm_param.h"
-#endif
-
-#ifdef _NR_RGB_LTM_PARAM_
-#include "NR/common/normal/rgb_ltm_param.h"
-#endif
-
-#ifdef _NR_YUV_LTM_PARAM_
-#include "NR/common/normal/yuv_ltm_param.h"
-#endif
-
 #ifdef _NR_YNRS_PARAM_
 #include "NR/common/normal/ynrs_param.h"
 #endif
