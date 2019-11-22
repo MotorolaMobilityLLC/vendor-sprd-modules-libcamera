@@ -6707,8 +6707,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
                      ae_lock);
             setAeState(AE_LOCK_ON);
-        } else if (!ae_lock &&
-                   controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED) {
+        } else if (!ae_lock ) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
                      ae_lock);
             setAeState(AE_LOCK_OFF);
