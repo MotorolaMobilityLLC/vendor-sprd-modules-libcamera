@@ -251,6 +251,10 @@ SYMLINK := $(TARGET_OUT_VENDOR)/lib/npidevice/camera.$(TARGET_BOARD_PLATFORM).so
 LOCAL_POST_INSTALL_CMD := $(hide) \
 	mkdir -p $(TARGET_OUT_VENDOR)/lib/npidevice; \
 	rm -rf $(SYMLINK) ;\
+    	cp -rf vendor/sprd/modules/libcamera/arithmetic/info/watermark $(TARGET_OUT_VENDOR)/lib/; \
+	cp -rf vendor/sprd/modules/libcamera/arithmetic/info/lib/libinfo.so $(TARGET_OUT_VENDOR)/lib/; \
+	cp -rf vendor/sprd/modules/libcamera/arithmetic/interface/lib/libinterface.so $(TARGET_OUT_VENDOR)/lib/; \
+	cp -rf vendor/sprd/modules/libcamera/arithmetic/verify/lib/libverify.so $(TARGET_OUT_VENDOR)/lib/; \
 	ln -sf $(CAMERA_NPI_FILE) $(SYMLINK);
 
 include $(BUILD_SHARED_LIBRARY)

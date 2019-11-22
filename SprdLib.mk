@@ -2,7 +2,6 @@ LOCAL_SHARED_LIBRARIES := libutils libmemion libcutils libhardware
 LOCAL_SHARED_LIBRARIES += libcamera_metadata
 #LOCAL_SHARED_LIBRARIES += libpowermanager
 LOCAL_SHARED_LIBRARIES += libui libbinder libdl libcamsensor libcamoem libxml2
-LOCAL_SHARED_LIBRARIES += libinterface libinfo libverify
 LOCAL_STATIC_LIBRARIES += android.hardware.camera.common@1.0-helper
 
 LOCAL_SHARED_LIBRARIES += libcamcommon libcamdrv
@@ -97,4 +96,3 @@ endif
 LOCAL_SHARED_LIBRARIES += libyuv
 LOCAL_SHARED_LIBRARIES += libyuv420_scaler
 LOCAL_SHARED_LIBRARIES += libsprdcamalgassist
-
