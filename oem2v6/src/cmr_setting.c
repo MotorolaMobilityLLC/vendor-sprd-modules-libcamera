@@ -617,7 +617,13 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         }
         break;
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
-        type_val = parm->ae_compensation_param.ae_exposure_compensation;
+        if (setting_is_active(cpt)) {
+            if (setting_is_rawrgb_format(cpt, parm)) {
+                ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+            }
+        }
+        hal_param->hal_common.ae_compensation_param =
+            parm->ae_compensation_param;
         break;
     case SETTING_GENERAL_EXPOSURE_TIME:
         *item->cmd_type_value = 0;
@@ -648,7 +654,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
     }
 
     if (SETTING_GENERAL_AE_LOCK_UNLOCK == type ||
-        SETTING_GENERAL_AWB_LOCK_UNLOCK == type) {
+        SETTING_GENERAL_AWB_LOCK_UNLOCK == type ||
+        SETTING_GENERAL_EXPOSURE_COMPENSATION == type) {
         goto setting_out;
     }
 
@@ -703,10 +710,6 @@ static cmr_int setting_set_general(struct setting_component *cpt,
             ret = setting_after_set_ctrl(cpt, &after_cb_param);
         }
         *item->cmd_type_value = type_val;
-    }
-    if (type == SETTING_GENERAL_EXPOSURE_COMPENSATION) {
-        hal_param->hal_common.ae_compensation_param =
-            parm->ae_compensation_param;
     }
 
 setting_out:
