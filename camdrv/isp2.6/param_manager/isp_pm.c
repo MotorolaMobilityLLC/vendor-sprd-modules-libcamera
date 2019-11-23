@@ -250,6 +250,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
 	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */
+	{ ISP_BLK_CNR3, 0 }, /* NR block */
 	{ ISP_BLK_AE_NEW, 0 },
 	{ ISP_BLK_ALSC, 0 },
 	{ ISP_BLK_AF_NEW, 0 },
@@ -289,6 +290,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_NLM_V2,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
 	{ ISP_BLK_YNRS,				ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
 	{ ISP_BLK_BWU_BWD,			ISP_BLK_BWU_BWD_T, sizeof(struct sensor_bwu_bwd_level) },
+	{ ISP_BLK_CNR3,				ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
 };
 #endif
 /************************ Project adapt data END *******************************************/
@@ -539,6 +541,7 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_IMBALANCE_V1:
 	case ISP_BLK_NLM_V2:
 	case ISP_BLK_PPE_V1:
+	case ISP_BLK_CNR3:
 		return 1;
 	default:
 		break;

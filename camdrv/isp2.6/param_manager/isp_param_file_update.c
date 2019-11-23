@@ -103,6 +103,7 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"sw3dnr",
 	"bwu_bwd",
 	"ynrs",
+	"cnr3"
 };
 #endif
 

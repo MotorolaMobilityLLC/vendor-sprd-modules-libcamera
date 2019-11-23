@@ -451,9 +451,12 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AF_POS,
     COM_ISP_GET_CNR2_PARAM,
     COM_ISP_GET_YNRS_PARAM,
+    COM_ISP_GET_DRE_PARAM,
+#ifdef CAMERA_CNR3_ENABLE
+    COM_ISP_GET_CNR2CNR3_YNR_EN,
+#endif
     COM_ISP_GET_CNR2_YNR_EN,
     COM_ISP_GET_CNR2_EN,
-    COM_ISP_GET_DRE_PARAM,
     COM_ISP_SET_AUTO_HDR,
     COM_ISP_SET_SPRD_APP_MODE,
     COM_ISP_SET_AI_SCENE_START,
@@ -478,6 +481,9 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AE_TARGET_REGION,
     COM_ISP_GET_AE_FPS_RANGE,
     COM_ISP_SET_SENSOR_SIZE,
+#ifdef CAMERA_CNR3_ENABLE
+    COM_ISP_GET_CNR3_PARAM,
+#endif
     COM_ISP_TYPE_MAX
 };
 
@@ -1135,9 +1141,15 @@ struct common_isp_cmd_param {
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
         cmr_u32 cnr2_ynr_en;
+#ifdef CAMERA_CNR3_ENABLE
+        cmr_u32 cnr2cnr3_ynr_en;
+#endif
 #ifdef CONFIG_CAMERA_CNR
         struct isp_sw_cnr2_info cnr2_param;
         struct isp_ynrs_info ynr_param;
+#ifdef CAMERA_CNR3_ENABLE
+        struct isp_sw_cnr3_info cnr3_param;
+#endif
 #endif
         struct isp_sw3dnr_info threednr_param;
 #ifdef CONFIG_CAMERA_DRE

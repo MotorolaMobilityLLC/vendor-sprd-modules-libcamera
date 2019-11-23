@@ -2197,6 +2197,19 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
     cmr_u32 cnr_ynr_flag = 0;
 
     cnr_ynr_flag = camera_get_cnr_flag(oem_handle);
+
+#ifdef CAMERA_CNR3_ENABLE
+    if (cnr_ynr_flag) {
+        cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CNR2CNR3_YNR_EN, &isp_param);
+        if (ret) {
+            CMR_LOGE("isp get COM_ISP_GET_CNR2CNR3_YNR_EN  failed");
+            return false;
+        }
+        CMR_LOGD("isp cnr enable %d", isp_param.cnr2cnr3_ynr_en);
+        return isp_param.cnr2cnr3_ynr_en;
+    }
+#else
     if (cnr_ynr_flag) {
         cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
         ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_YNR_EN, &isp_param);
@@ -2207,6 +2220,7 @@ cmr_u32 camera_get_cnr_realtime_flag(cmr_handle oem_handle) {
         CMR_LOGD("isp cnr enable %d", isp_param.cnr2_ynr_en);
         return isp_param.cnr2_ynr_en;
     }
+#endif
 
     return false;
 }
@@ -9085,6 +9099,18 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("set app mode id = %d", param_ptr->cmd_value);
         break;
 
+#ifdef CAMERA_CNR3_ENABLE
+    case COM_ISP_GET_CNR3_PARAM:
+#ifdef CONFIG_CAMERA_CNR
+        isp_cmd = ISP_CTRL_GET_CNR3_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cnr3_param;
+#else
+        isp_cmd = ISP_CTRL_MAX;
+#endif
+        break;
+#endif
+
     case COM_ISP_GET_CNR2_PARAM:
 #ifdef CONFIG_CAMERA_CNR
         isp_cmd = ISP_CTRL_GET_CNR2_PARAM;
@@ -9115,11 +9141,19 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 #endif
         break;
 
+#ifdef CAMERA_CNR3_ENABLE
+    case COM_ISP_GET_CNR2CNR3_YNR_EN:
+        isp_cmd = ISP_CTRL_GET_CNR2CNR3_YNR_EN;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cnr2cnr3_ynr_en;
+        break;
+#else
     case COM_ISP_GET_CNR2_YNR_EN:
         isp_cmd = ISP_CTRL_GET_CNR2_YNR_EN;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cnr2_ynr_en;
         break;
+#endif
 
     case COM_ISP_SET_AUTO_HDR:
         isp_cmd = ISP_CTRL_AUTO_HDR_MODE;

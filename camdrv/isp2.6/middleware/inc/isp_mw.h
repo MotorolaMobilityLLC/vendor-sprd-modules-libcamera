@@ -36,7 +36,9 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_AI_FD_NUM (20)
 //#define ISP_AI_AE_STAT_SIZE (16384) /*128*128*/
 #define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
-
+#ifdef CAMERA_CNR3_ENABLE
+#define CNR3_LAYER_NUM 5
+#endif
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
 	ISP_AE_SET_MONITOR,
@@ -380,7 +382,11 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_MICRODEPTH_PARAM = 113,
 	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
 	ISP_CTRL_SENSITIVITY,
+#ifdef CAMERA_CNR3_ENABLE
+	ISP_CTRL_GET_CNR2CNR3_YNR_EN,
+#else
 	ISP_CTRL_GET_CNR2_YNR_EN,
+#endif
 	ISP_CTRL_GET_CNR2_PARAM = 117,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_CAP_FLAG,
@@ -406,6 +412,9 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_SENSOR_SIZE,
 	ISP_CTRL_GET_DRE_PARAM,
 	ISP_CTRL_DRE,
+#ifdef CAMERA_CNR3_ENABLE
+	ISP_CTRL_GET_CNR3_PARAM,
+#endif
 	ISP_CTRL_MAX
 };
 
@@ -986,6 +995,12 @@ struct isp_sw_cnr2_info {
 	struct isp_sw_filter_weights weight[4][2];
 };
 
+#ifdef CAMERA_CNR3_ENABLE
+struct isp_sw_cnr3_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+};
+#endif
 struct isp_ynrs_info{
 	cmr_u8 lumi_thresh[2];
 	cmr_u8 gf_rnr_ratio[5];
@@ -1007,6 +1022,28 @@ struct img_offset {
 	uint32_t x;
 	uint32_t y;
 };
+
+#ifdef CAMERA_CNR3_ENABLE
+//cnr3.0
+struct isp_sw_multilayer_param {
+	cmr_u8 lowpass_filter_en;
+	cmr_u8 denoise_radial_en;
+	cmr_u8 order[3];
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 slope;
+	cmr_u16 baseRadius;
+	cmr_u16 minRatio;
+	cmr_u16 luma_th[2];
+	float sigma[3];
+};
+
+struct isp_sw_cnr3_info {
+	cmr_u8 bypass;
+	cmr_u16 baseRadius;
+	struct isp_sw_multilayer_param param_layer[CNR3_LAYER_NUM];
+};
+#endif
 
 struct isp_ai_rect {
 	cmr_u16 start_x;

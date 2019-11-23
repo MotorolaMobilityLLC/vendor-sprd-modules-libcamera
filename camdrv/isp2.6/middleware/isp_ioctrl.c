@@ -399,6 +399,9 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_YNRS:
 			update_param->ynrs_level_ptr = (struct sensor_ynrs_level *)fix_data_ptr->nr.nr_set_group.ynrs;
 			break;
+		case ISP_BLK_CNR3:
+			update_param->cnr3_level_ptr = (struct sensor_cnr3_level *)fix_data_ptr->nr.nr_set_group.cnr3;
+			break;
 		default:
 			break;
 		}
@@ -3153,6 +3156,28 @@ static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 
 }
+#ifdef CAMERA_CNR3_ENABLE
+static cmr_int ispctl_get_cnr3_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_CNR3, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_sw_cnr3_info));
+	} else {
+		ISP_LOGE("fail to get valid cnr3 param");
+	}
+
+	return ret;
+}
+#endif
 
 static cmr_int ispctl_ae_set_target_region(cmr_handle isp_alg_handle, void *param_ptr)
 {
@@ -3382,6 +3407,103 @@ static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+#ifdef CAMERA_CNR3_ENABLE
+static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	struct isp_cnr2_level_info *level_info = NULL;
+	struct isp_sw_cnr3_level_info *level_info1 = NULL;
+	struct isp_ynrs_info *ynr_info = NULL;
+	struct isp_sw_cnr3_info *cnr3_info = NULL;
+	cmr_u32 ct = 0;
+	cmr_u32 level_enable1 = 0;
+	cmr_u32 low_ct_thrd1 = 0;
+	cmr_u32 level_enable = 0;
+	cmr_u32 low_ct_thrd = 0;
+	cmr_u32 cnr3_en = 0;
+	cmr_u32 cnr2_en = 0;
+	cmr_u32 blk_id;
+	cmr_u32 ynrs_en = 0;
+	cmr_u32 cnr2cnr3_ynr_en = 0;
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
+	}
+	ISP_LOGV("ct = %d", ct);
+
+	blk_id = get_cnr_blkid();
+	if (blk_id != 0) {
+		memset(&param_data, 0, sizeof(param_data));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR2_LEVEL_INFO, blk_id, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+		if (ISP_SUCCESS == ret && 1 == output.param_num) {
+			level_info = (struct isp_cnr2_level_info *)output.param_data->data_ptr;
+			level_enable = (cmr_u32)level_info->level_enable;
+			low_ct_thrd = (cmr_u32)level_info->low_ct_thrd;
+			ISP_LOGV("level_enable = %d, low_ct_thrd = %d", level_enable, low_ct_thrd);
+			if (level_enable || (ct < low_ct_thrd))
+				cnr2_en = 1;
+		} else {
+			ISP_LOGE("fail to get valid cnr2 level info");
+		}
+	} else {
+		ISP_LOGE("fail to get valid cnr2 blk id");
+	}
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_CNR3_LEVEL_INFO, ISP_BLK_CNR3, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		level_info1 = (struct isp_sw_cnr3_level_info *)output.param_data->data_ptr;
+		level_enable1 = (cmr_u32)level_info1->level_enable;
+		low_ct_thrd1 = (cmr_u32)level_info1->low_ct_thrd;
+		ISP_LOGI("level_enable1 = %d, low_ct_thrd1 = %d", level_enable1, low_ct_thrd1);
+	} else {
+		ISP_LOGE("fail to get valid cnr3 level info");
+	}
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_CNR3, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		cnr3_info = (struct isp_sw_cnr3_info *)output.param_data->data_ptr;
+		if (!cnr3_info->bypass){
+			ISP_LOGI("cnr3_info->bypass = %d \n", cnr3_info->bypass);
+			if (level_enable1 || (ct < low_ct_thrd1))
+				cnr3_en = 1;
+		}else{
+			cnr3_en = 0;
+		}
+	}else {
+		ISP_LOGE("fail to get valid cnr3 param");
+	}
+	ISP_LOGI("cnr3_en value = %d \n", cnr3_en);
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_YNRS, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		ynr_info = (struct isp_ynrs_info *)output.param_data->data_ptr;
+		if((cmr_u32)ynr_info->bypass == 0)
+			ynrs_en = 1;
+		ISP_LOGV("ynrs_en value = %d \n", ynrs_en);
+	}else {
+		ISP_LOGE("fail to get valid ynrs level info");
+	}
+
+	cnr2cnr3_ynr_en = (cnr3_en<<2) | (cnr2_en << 1) | ynrs_en;
+	if (cnr2cnr3_ynr_en != 0)
+		ret = ISP_SUCCESS;
+	ISP_LOGV("cnr2cnr3_ynr_en = %d", cnr2cnr3_ynr_en);
+	*(cmr_u32 *)param_ptr = cnr2cnr3_ynr_en;
+
+	return ret;
+}
+#else
 static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3443,6 +3565,7 @@ static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr
 
 	return ret;
 }
+#endif
 
 static cmr_int ispctl_set_cap_flag(cmr_handle isp_alg_handle, void *param_ptr)
 {
@@ -3643,7 +3766,11 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AI_GET_IMG_FLAG, ispctl_ai_get_img_flag},
 	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
+#ifdef CAMERA_CNR3_ENABLE
+	{ISP_CTRL_GET_CNR2CNR3_YNR_EN, ispctl_get_cnr2cnr3_ynr_en},
+#else
 	{ISP_CTRL_GET_CNR2_YNR_EN, ispctl_get_cnr2_ynr_en},
+#endif
 	{ISP_CTRL_SET_CAP_FLAG, ispctl_set_cap_flag},
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
 	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
@@ -3654,6 +3781,9 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_SET_REF_CAMERA_ID, ispctl_ae_set_ref_camera_id},
 	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},
 	{ISP_CTRL_DRE, ispctl_dre},
+#ifdef CAMERA_CNR3_ENABLE
+	{ISP_CTRL_GET_CNR3_PARAM, ispctl_get_cnr3_param},
+#endif
 	{ISP_CTRL_MAX, NULL}
 };
 

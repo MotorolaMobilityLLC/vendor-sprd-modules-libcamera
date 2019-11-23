@@ -160,6 +160,7 @@ typedef enum {
 	YNRS = 0x4F,
 	SHARKL5_PRO_VST = 0x50,
 	SHARKL5_PRO_IVST = 0x51,
+	CNR30 = 0x52,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -1924,6 +1925,19 @@ cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_YNRS_T] = 1;
 			break;
 		}
+	case CNR30:
+		{
+			static cmr_u32 cnr3_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_cnr3_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR3_T];
+			memcpy(((cmr_u8 *) (nr_update_param.cnr3_level_ptr)) + nr_offset_addr + cnr3_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				cnr3_ptr_offset += data_actual_len;
+			else
+				cnr3_ptr_offset = 0;
+			nr_tool_flag[ISP_BLK_CNR3_T] = 1;
+			break;
+		}
 	default:
 		break;
 	}
@@ -2216,6 +2230,14 @@ cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			src_size = sizeof(struct sensor_ynrs_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_YNRS_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.ynrs_level_ptr + offset_units * src_size;
+			break;
+		}
+	case CNR30:
+		{
+			data_head_ptr->sub_type = CNR30;
+			src_size = sizeof(struct sensor_cnr3_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_CNR3_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr3_level_ptr + offset_units * src_size;
 			break;
 		}
 	default:
