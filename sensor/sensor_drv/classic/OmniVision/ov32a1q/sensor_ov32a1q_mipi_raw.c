@@ -20,7 +20,7 @@
 */
 
 #define LOG_TAG "ov32a1q"
-//#define OV32A1Q_USE_CPHY
+#define OV32A1Q_USE_CPHY
 #ifdef OV32A1Q_USE_CPHY
 #include "sensor_ov32a1q_cphy_mipi_raw.h"
 #else
