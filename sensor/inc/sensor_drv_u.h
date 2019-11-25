@@ -705,6 +705,7 @@ struct sensor_drv_context {
     EXIF_SPEC_PIC_TAKING_COND_T default_exif;
     struct sns_thread_cxt ctrl_thread_cxt;
     cmr_u32 bypass_mode;
+    float fov_angle;
     struct drv_fov_info fov_info;
     struct sensor_static_info *static_info;
     cmr_int sensor_type;

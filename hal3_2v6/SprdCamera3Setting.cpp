@@ -145,6 +145,8 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
     {{3.50f, 2.625f}, 3.75f}, {{3.50f, 2.625f}, 3.75f},
 };
 
+static float sensor_angle_fov[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
+
 static cmr_u32 alreadyGetSensorStaticInfo[CAMERA_ID_COUNT] = {0, 0, 0, 0, 0, 0};
 
 static front_flash_type front_flash[] = {
@@ -1057,6 +1059,10 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         memcpy(&sensor_fov[cameraId], &phyPtr->fov_info,
                sizeof(phyPtr->fov_info));
     }
+    if(cameraId == findSensorRole(MODULE_SPW_NONE_BACK))
+        sensor_angle_fov[1] = phyPtr->fov_angle;//117.0;
+    if(cameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK))
+        sensor_angle_fov[0] = phyPtr->fov_angle;//79.4;
 
     if (phyPtr->source_width_max == 1920 && phyPtr->source_height_max == 1080) {
         setLargestSensorSize(cameraId, 1920, 1088);
@@ -6356,4 +6362,10 @@ int SprdCamera3Setting::getAUTOTRACKINGTag(
     *autotrackingInfo = s_setting[mCameraId].autotrackingInfo;
     return 0;
 }
+int SprdCamera3Setting::getSensorFov(float  *w_fov,float  *sw_fov) {
+       *w_fov = sensor_angle_fov[0];
+       *sw_fov = sensor_angle_fov[1];
+       return 0;
+}
+
 } // namespace sprdcamera

@@ -689,6 +689,8 @@ class SprdCamera3Setting {
     int setHISTOGRAMTag(int32_t *hist_report);
     int setAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
     int getAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
+    int getSensorFov(float	*w_fov,float  *sw_fov);
+
 
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];

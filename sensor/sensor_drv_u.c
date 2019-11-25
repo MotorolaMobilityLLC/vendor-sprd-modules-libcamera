@@ -2736,6 +2736,10 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
                sizeof(sensor_cxt->fov_info));
     }
 
+    if (sensor_cxt->fov_angle > 0) {
+        phyPtr->fov_angle = sensor_cxt->fov_angle;
+    }
+
     phyPtr->source_width_max = sensor_cxt->sensor_info_ptr->source_width_max;
     phyPtr->source_height_max = sensor_cxt->sensor_info_ptr->source_height_max;
 
@@ -2975,6 +2979,7 @@ static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
         if (!ret) {
             memcpy(&sensor_cxt->fov_info, &sn_ex_info_slv.fov_info,
                    sizeof(sn_ex_info_slv.fov_info));
+            sensor_cxt->fov_angle = sn_ex_info_slv.fov_angle;
         } else {
             SENSOR_LOGE("get sensor ex info failed");
             return -1;

@@ -363,6 +363,7 @@ static cmr_int ov16885_normal_drv_get_static_info(cmr_handle handle, cmr_u32 *pa
     ex_info->capture_skip_num = module_info->capture_skip_num;
     ex_info->name = (cmr_s8 *)g_ov16885_normal_mipi_raw_info.name;
     ex_info->sensor_version_info = (cmr_s8 *)g_ov16885_normal_mipi_raw_info.sensor_version_info;
+    ex_info->fov_angle = static_info->fov_angle;
     memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;

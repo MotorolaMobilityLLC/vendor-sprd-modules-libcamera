@@ -2651,6 +2651,7 @@ static SENSOR_STATIC_INFO_T s_ov32a1q_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
+                     .fov_angle= 79.4,
                      .fov_info = {{5.223, 3.917}, 3.985f}}}
     /*If there are multiple modules,please add here*/
 };

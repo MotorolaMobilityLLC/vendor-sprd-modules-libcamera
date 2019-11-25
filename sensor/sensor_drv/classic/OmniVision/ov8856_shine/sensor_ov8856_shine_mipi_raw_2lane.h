@@ -451,6 +451,7 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 0,
+                     .fov_angle= 45.0,
 #ifdef SENSOR_OV8856_TELE
                      .fov_info = {{3.656f, 2.742f}, 4.457f}}
 #elif defined SHARKL5_SENSOR_OV8856

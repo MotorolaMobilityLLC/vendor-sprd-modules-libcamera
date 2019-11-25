@@ -300,6 +300,7 @@ struct sensor_static_info {
     cmr_u32 adgain_valid_frame_num;
 
     /*module fov information*/
+    float fov_angle;
     struct module_fov_info fov_info;
 };
 
@@ -729,6 +730,7 @@ typedef struct phySensorInfo {
     SENSOR_IMAGE_FORMAT image_format;
     int data_type;
     cmr_u8 focus_eb;
+    float fov_angle;
     struct module_fov_info fov_info;
     cmr_u16 source_width_max;
     cmr_u16 source_height_max;

@@ -244,6 +244,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int setCameraConvertCropRegion(void);
     int CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sensorHeight,
                                 struct img_rect *cropRegion);
+    bool cal_spw_size(int sw_width, int sw_height, cmr_u32* out_width, cmr_u32* out_height);
     inline bool isCameraInit();
     int SetCameraParaTag(cmr_int cameraParaTag);
     int setJpegOrientation(int jpegOrientation);

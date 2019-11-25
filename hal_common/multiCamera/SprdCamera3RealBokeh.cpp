@@ -3568,22 +3568,6 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     }
 #endif
 
-    if (CAM_DEPTH_ID == findSensorRole(MODULE_SPW_NONE_BACK)) {
-        if (metaSettingsAux.exists(ANDROID_SCALER_CROP_REGION)) {
-            SprdCamera3Setting::getLargestSensorSize(CAM_DEPTH_ID, &snsW,
-                                                     &snsH);
-            mZoomValue = 16.0 / 9.0;
-            crop_Region[2] =
-                static_cast<int32_t>(static_cast<float>(snsW) / (mZoomValue));
-            crop_Region[3] =
-                static_cast<int32_t>(static_cast<float>(snsH) / (mZoomValue));
-            crop_Region[0] = (snsW - crop_Region[2]) >> 1;
-            crop_Region[1] = (snsH - crop_Region[3]) >> 1;
-            metaSettingsAux.update(ANDROID_SCALER_CROP_REGION, crop_Region,
-                                   ARRAY_SIZE(crop_Region));
-        }
-    }
-
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         int requestStreamType =
             getStreamType(request->output_buffers[i].stream);
