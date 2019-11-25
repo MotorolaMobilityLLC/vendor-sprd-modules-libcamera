@@ -434,6 +434,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mflagfb = false;
 #endif
 
+    mFrontFlash = (char *)malloc(10 * sizeof(char));
+    memset(mFrontFlash, 0, 10 * sizeof(char));
+#ifdef FRONT_CAMERA_FLASH_TYPE
+    strcpy(mFrontFlash, FRONT_CAMERA_FLASH_TYPE);
+#endif
+
     memset(&grab_capability, 0, sizeof(grab_capability));
 
     SprdCameraSystemPerformance::getSysPerformance(&mSysPerformace);
@@ -672,6 +678,11 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
             dlclose(mHalOem->dso);
         free((void *)mHalOem);
         mHalOem = NULL;
+    }
+
+    if (mFrontFlash) {
+        free((void *)mFrontFlash);
+        mFrontFlash = NULL;
     }
 
     HAL_LOGI(":hal3: X");
@@ -936,10 +947,10 @@ int SprdCamera3OEMIf::takePicture() {
             HAL_LOGD("call stopPreviewInternal in takePicture().");
             // whether FRONT_CAMERA_FLASH_TYPE is lcd
             bool isFrontLcd =
-                (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
+                (strcmp(mFrontFlash, "lcd") == 0) ? true : false;
             // whether FRONT_CAMERA_FLASH_TYPE is flash
             bool isFrontFlash =
-                (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
+                (strcmp(mFrontFlash, "flash") == 0) ? true : false;
             if (mMultiCameraMode == MODE_MULTI_CAMERA || mCameraId == 0 ||
                 isFrontLcd || isFrontFlash || mCameraId == 4) {
                 mHalOem->ops->camera_start_preflash(mCameraHandle);
@@ -8159,13 +8170,15 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
             goto mem_fail;
         }
     }
-#else
-#endif
     return 0;
 
 mem_fail:
     Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
     return -1;
+#else
+    return 0;
+#endif
+
 }
 
 int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathFree(cmr_uint *phy_addr,
@@ -10419,10 +10432,10 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
     bool isFrontLcd =
-        (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
+        (strcmp(mFrontFlash, "lcd") == 0) ? true : false;
     // whether FRONT_CAMERA_FLASH_TYPE is flash
     bool isFrontFlash =
-        (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
+        (strcmp(mFrontFlash, "flash") == 0) ? true : false;
 
     HAL_LOGD("E mCameraId = %d", mCameraId);
     if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||

@@ -431,6 +431,12 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mZslHeapReserved = NULL;
 #endif
 
+    mFrontFlash = (char *)malloc(10 * sizeof(char));
+    memset(mFrontFlash, 0, 10 * sizeof(char));
+#ifdef FRONT_CAMERA_FLASH_TYPE
+    strcpy(mFrontFlash, FRONT_CAMERA_FLASH_TYPE);
+#endif
+
     mDepthHeapReserved = NULL;
     mIspLscHeapReserved = NULL;
     mIspStatisHeapReserved = NULL;
@@ -513,6 +519,11 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
             dlclose(mHalOem->dso);
         free((void *)mHalOem);
         mHalOem = NULL;
+    }
+
+    if (mFrontFlash) {
+        free((void *)mFrontFlash);
+        mFrontFlash = NULL;
     }
 
     HAL_LOGI(":hal3: X");
@@ -760,8 +771,8 @@ int SprdCamera3OEMIf::takePicture() {
             HAL_LOGD("call stopPreviewInternal in takePicture().");
             if ((CAMERA_ZSL_MODE != mCaptureMode &&
                  (mCameraId == 0 ||
-                  !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
-                    strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))))) {
+                  !(strcmp(mFrontFlash, "lcd") &
+                    strcmp(mFrontFlash, "flash"))))) {
                 mHalOem->ops->camera_start_preflash(mCameraHandle);
             }
             stopPreviewInternal();
@@ -879,8 +890,8 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (isPreviewing()) {
         if (mCameraId == 0 ||
-            !(strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &
-              strcmp(FRONT_CAMERA_FLASH_TYPE, "flash"))) {
+            !(strcmp(mFrontFlash, "lcd") &
+              strcmp(mFrontFlash, "flash"))) {
             mHalOem->ops->camera_start_preflash(mCameraHandle);
         }
         mHalOem->ops->camera_snapshot_is_need_flash(mCameraHandle, mCameraId,
@@ -8069,13 +8080,15 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
             goto mem_fail;
         }
     }
-#else
-#endif
     return 0;
 
 mem_fail:
     Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
     return -1;
+#else
+    return 0;
+#endif
+
 }
 
 int SprdCamera3OEMIf::Callback_CapturePathMalloc(cmr_u32 size, cmr_u32 sum,
