@@ -45,8 +45,6 @@
 /* sensor parameters begin */
 
 /* effective sensor output image size */
-#define VIDEO_WIDTH 1280 // 1920
-#define VIDEO_HEIGHT 720 // 1080
 #define PREVIEW_WIDTH 3264
 #define PREVIEW_HEIGHT 2448
 #define SNAPSHOT_WIDTH 6528
@@ -55,8 +53,6 @@
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
 #define VIDEO_TRIM_Y 0
-#define VIDEO_TRIM_W 1280 // 1920
-#define VIDEO_TRIM_H 720  // 1080
 #define PREVIEW_TRIM_X 0
 #define PREVIEW_TRIM_Y 0
 #define PREVIEW_TRIM_W 3264
@@ -70,20 +66,62 @@
 #define LANE_NUM 4
 #define RAW_BITS 10
 
-#define VIDEO_MIPI_PER_LANE_BPS 1512    // 1800 /* 2*Mipi clk */
-#define PREVIEW_MIPI_PER_LANE_BPS 1200  // 2400 /* 2*Mipi clk */
-#define SNAPSHOT_MIPI_PER_LANE_BPS 1512 // 2400 /* 2*Mipi clk */
+#if 1
+#define VIDEO_WIDTH 1280 //1920
+#define VIDEO_HEIGHT 720 //1080
+#define VIDEO_TRIM_W 1280 //1920
+#define VIDEO_TRIM_H 720 //1080
+#if 1
+#define VIDEO_MIPI_PER_LANE_BPS 1512//1800    /* 2*Mipi clk */
+#define PREVIEW_MIPI_PER_LANE_BPS 2400//1200  // 2400   /* 2*Mipi clk */
+#define SNAPSHOT_MIPI_PER_LANE_BPS 1512 //2400//1512 /* 2*Mipi clk */
 
 /*line time unit: 1ns*/
-#define VIDEO_LINE_TIME 4331     // 3670 //1834
-#define PREVIEW_LINE_TIME 11671  // 9337
-#define SNAPSHOT_LINE_TIME 13333 // 8333 // 13330
+#define VIDEO_LINE_TIME 4331 //3670//1834//3670
+#define PREVIEW_LINE_TIME 11671//9337//11671//9337
+#define SNAPSHOT_LINE_TIME 13333 //8333 // 13330
 
 /* frame length*/
-#define VIDEO_FRAME_LENGTH 0x784   // 0x8e0 //0x470
-#define PREVIEW_FRAME_LENGTH 0xb28 // 0xdf2 //0xb28 // 0x1388 //0xdf2
+#define VIDEO_FRAME_LENGTH 0x784//0x8e0 //0x470
+#define PREVIEW_FRAME_LENGTH 0xb28//0xdf2 //0xb28//0xdf2 //0xb28 // 0x1388 //0xdf2
 #define SNAPSHOT_FRAME_LENGTH 0x1388
 
+#else
+#define VIDEO_MIPI_PER_LANE_BPS 1512//1800    /* 2*Mipi clk */
+#define PREVIEW_MIPI_PER_LANE_BPS 2400//1200  // 2400   /* 2*Mipi clk */
+#define SNAPSHOT_MIPI_PER_LANE_BPS 1512 //2400//1512 /* 2*Mipi clk */
+
+/*line time unit: 1ns*/
+#define VIDEO_LINE_TIME 4331 //3670//1834//3670
+#define PREVIEW_LINE_TIME 4668//11671//9337
+#define SNAPSHOT_LINE_TIME 13333 //8333 // 13330
+
+/* frame length*/
+#define VIDEO_FRAME_LENGTH 0x784//0x8e0 //0x470
+#define PREVIEW_FRAME_LENGTH 0x1be4//0xdf2//0xb28//0xdf2 //0xb28 // 0x1388 //0xdf2
+#define SNAPSHOT_FRAME_LENGTH 0x1388
+#endif
+#else
+#define VIDEO_WIDTH 1920
+#define VIDEO_HEIGHT 1080
+#define VIDEO_TRIM_W 1920
+#define VIDEO_TRIM_H 1080
+
+#define VIDEO_MIPI_PER_LANE_BPS 1800    /* 2*Mipi clk */
+#define PREVIEW_MIPI_PER_LANE_BPS 2400//1200  // 2400   /* 2*Mipi clk */
+#define SNAPSHOT_MIPI_PER_LANE_BPS 1512 //2400//1512 /* 2*Mipi clk */
+
+/*line time unit: 1ns*/
+#define VIDEO_LINE_TIME 3670//1834//3670
+#define PREVIEW_LINE_TIME 9337
+#define SNAPSHOT_LINE_TIME 13333 //8333 // 13330
+
+/* frame length*/
+#define VIDEO_FRAME_LENGTH 0x8e0 //0x470
+#define PREVIEW_FRAME_LENGTH 0xdf2//0xb28//0xdf2 //0xb28 // 0x1388 //0xdf2
+#define SNAPSHOT_FRAME_LENGTH 0x1388
+
+#endif
 /* please ref your spec */
 #define FRAME_OFFSET 14
 #define SENSOR_MAX_GAIN 0x0F00
@@ -1406,7 +1444,7 @@ static const SENSOR_REG_T ov32a1q_init_setting_new[] = {
     {0x585d, 0x67}, //
     {0x585e, 0x7e}, //
     {0x585f, 0x8a}, //
-    {0x4503, 0x0e}, // change to binning sum
+//	{0x4503, 0x0e}, //change to binning sum
 
 };
 
@@ -2140,6 +2178,219 @@ static const SENSOR_REG_T ov32a1q_preview_setting1[] = {
     {0x58cb, 0x1},  {0x58cc, 0xfd},
 
 };
+static const SENSOR_REG_T ov32a1q_preview_setting_new1_0[] = {
+/*
+	3264x2448 (4C2)
+	30fps,line time 11.6us, 2400Mbps/lane
+	register	value*/
+	{0x0305, 0x64},
+	{0x0307, 0x00},
+	{0x0344, 0x01},
+	{0x0345, 0xe0},
+	{0x034a, 0x05},
+	{0x034b, 0x00},
+	{0x3501, 0x0b},
+	{0x3502, 0x04},
+	{0x3603, 0x0b},
+	{0x3608, 0x4a},
+	{0x360d, 0x4a},
+	{0x3622, 0x66},
+	{0x3633, 0x06},
+	{0x3635, 0x2c},
+	{0x3636, 0x2c},
+	{0x3639, 0x44},
+	{0x363a, 0x33},
+	{0x366b, 0x02},
+	{0x370b, 0xb0},
+	{0x3712, 0x50},
+	{0x3714, 0x61},
+	{0x3800, 0x00},
+	{0x3801, 0x00},
+	{0x3802, 0x00},
+	{0x3803, 0x00},
+	{0x3804, 0x19},
+	{0x3805, 0x9f},
+	{0x3806, 0x13},
+	{0x3807, 0x3f},
+	{0x3808, 0x0c},
+	{0x3809, 0xc0},
+	{0x380a, 0x09},
+	{0x380b, 0x90},
+	{0x380c, 0x04},
+	{0x380d, 0x1a},
+	{0x380e, 0x0b},
+	{0x380f, 0x28},
+	{0x3811, 0x09},
+	{0x3813, 0x08},
+	{0x3814, 0x11},
+	{0x3815, 0x22},
+	{0x3820, 0x01},
+	{0x3821, 0x04},
+	{0x3822, 0x01},
+	{0x4012, 0x7d},
+	{0x4015, 0x02},
+	{0x4016, 0x0d},
+	{0x4018, 0x03},
+	{0x401e, 0x01},
+	{0x401f, 0x0c},
+	{0x4837, 0x06},
+	{0x5000, 0xa9},
+	{0x5001, 0x02},
+	{0x5002, 0x31},
+	{0x5003, 0xfa},
+	{0x5005, 0x00},
+	{0x5014, 0x00},
+	{0x5015, 0x06},
+	{0x5035, 0x10},
+	{0x5037, 0x08},
+	{0x5038, 0x19},
+	{0x5039, 0x80},
+	{0x503a, 0x09},
+	{0x503b, 0x90},
+	{0x5185, 0x2b},
+	{0x518c, 0x02},
+	{0x518d, 0x02},
+	{0x518e, 0x02},
+	{0x518f, 0x02},
+	{0x5207, 0xff},
+	{0x5208, 0xc1},
+	{0x5380, 0x0c},
+	{0x5381, 0x06},
+	{0x5386, 0x14},
+	{0x5387, 0x60},
+	{0x5388, 0x0f},
+	{0x5389, 0xc8},
+	{0x5880, 0xc1},
+	{0x5884, 0x18},
+	{0x5885, 0x08},
+	{0x5886, 0x08},
+	{0x5887, 0x18},
+	{0x5889, 0x05},
+	{0x588a, 0x01},
+	{0x58c0, 0x10},
+	{0x58c2, 0x0e},
+	{0x58c3, 0x0c},
+	{0x58c4, 0x04},
+	{0x58c5, 0x01},
+	{0x58c6, 0xf7},
+	{0x58c8, 0x6f},
+	{0x58ca, 0x1d},
+	{0x58cb, 0x01},
+	{0x58cc, 0xfd},
+/*	Lowest MIPI speed to keep Max. fps
+	30fps,line time 11.6us, 792Mbps/lane
+	register	value*/
+	{0x0305, 0x21},
+	{0x4837, 0x14},
+
+};
+
+
+static const SENSOR_REG_T ov32a1q_preview_setting_new1[] = {
+/*	3264x2448
+	60fps,line time 4.6us, 2400Mbps/lane
+	register	value*/
+	{0x0305, 0x64},
+	{0x0307, 0x00},
+	{0x0344, 0x01},
+	{0x0345, 0xe0},
+	{0x034a, 0x06},
+	{0x034b, 0x00},
+	{0x3501, 0x0d},
+	{0x3502, 0xce},
+	{0x3603, 0x0b},
+	{0x3608, 0x4a},
+	{0x360d, 0x4a},
+	{0x3622, 0x66},
+	{0x3633, 0x06},
+	{0x3635, 0x2c},
+	{0x3636, 0x2c},
+	{0x3639, 0x44},
+	{0x363a, 0x33},
+	{0x366b, 0x00},
+	{0x370b, 0xb0},
+	{0x3712, 0x00},
+	{0x3714, 0x61},
+	{0x3800, 0x00},
+	{0x3801, 0x00},
+	{0x3802, 0x00},
+	{0x3803, 0x00},
+	{0x3804, 0x19},
+	{0x3805, 0x9f},
+	{0x3806, 0x13},
+	{0x3807, 0x3f},
+	{0x3808, 0x0c},
+	{0x3809, 0xc0},
+	{0x380a, 0x09},
+	{0x380b, 0x90},
+	{0x380c, 0x01},
+	{0x380d, 0xa4},
+	{0x380e, 0x1b},//0d},
+	{0x380f, 0xe4},//f2},
+	{0x3811, 0x09},
+	{0x3813, 0x08},
+	{0x3814, 0x22},
+	{0x3815, 0x22},
+	{0x3820, 0x01},
+	{0x3821, 0x0d},
+	{0x3822, 0x00},
+	{0x4012, 0x0d},
+	{0x4015, 0x02},
+	{0x4016, 0x0d},
+	{0x4018, 0x03},
+	{0x401e, 0x01},
+	{0x401f, 0x0c},
+	{0x4837, 0x06},
+	{0x5000, 0x89},
+	{0x5001, 0x02},
+	{0x5002, 0x01},
+	{0x5003, 0x7a},
+	{0x5005, 0x08},
+	{0x5014, 0x30},
+	{0x5015, 0x06},
+	{0x5035, 0x08},
+	{0x5037, 0x08},
+	{0x5038, 0x0c},
+	{0x5039, 0xc0},
+	{0x503a, 0x09},
+	{0x503b, 0x90},
+	{0x5185, 0x0b},
+	{0x518c, 0x01},
+	{0x518d, 0x01},
+	{0x518e, 0x01},
+	{0x518f, 0x01},
+	{0x5207, 0xff},
+	{0x5208, 0xc1},
+	{0x5380, 0x0c},
+	{0x5381, 0x06},
+	{0x5386, 0x14},
+	{0x5387, 0x60},
+	{0x5388, 0x0f},
+	{0x5389, 0xc8},
+	{0x5880, 0xc5},
+	{0x5884, 0x18},
+	{0x5885, 0x08},
+	{0x5886, 0x08},
+	{0x5887, 0x18},
+	{0x5889, 0x05},
+	{0x588a, 0x00},
+	{0x58c0, 0x10},
+	{0x58c2, 0x0e},
+	{0x58c3, 0x0c},
+	{0x58c4, 0x04},
+	{0x58c5, 0x01},
+	{0x58c6, 0xf7},
+	{0x58c8, 0x6f},
+	{0x58ca, 0x1d},
+	{0x58cb, 0x01},
+	{0x58cc, 0xfd},
+/*	Lowest MIPI speed to keep Max. fps
+	60fps,line time 4.6us, 1968Mbps/lane
+	register	value*/
+	{0x0305, 0x52},
+	{0x4837, 0x08},
+
+};
 
 static const SENSOR_REG_T ov32a1q_preview_setting_new[] = {
     // 3264x2448
@@ -2513,22 +2764,40 @@ static const SENSOR_REG_T ov32a1q_video_setting[] = {
 static struct sensor_res_tab_info s_ov32a1q_resolution_tab_raw[VENDOR_NUM] = {
     {.module_id = MODULE_OPTICSZOOM_WIDE_BACK,
      .reg_tab =
-         {{ADDR_AND_LEN_OF_ARRAY(ov32a1q_init_setting_new), PNULL, 0,
-           .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
-           .image_format = SENSOR_IMAGE_FORMAT_RAW},
+#if 1
+		{{ADDR_AND_LEN_OF_ARRAY(ov32a1q_init_setting_new), PNULL, 0,
+		  .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
+		  .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
           {ADDR_AND_LEN_OF_ARRAY(ov32a1q_video_setting_new1), PNULL, 0,
            .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_preview_setting_new), PNULL, 0,
+		 {ADDR_AND_LEN_OF_ARRAY(ov32a1q_preview_setting_new1_0), PNULL, 0,
+		  .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
+		  .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+
+		 {ADDR_AND_LEN_OF_ARRAY(ov32a1q_snapshot_setting_new1), PNULL, 0,
+		  .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
+		  .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
+
+#else
+         {{ADDR_AND_LEN_OF_ARRAY(ov32a1q_init_setting), PNULL, 0,
+           .width = 0, .height = 0, .xclk_to_sensor = EX_MCLK,
+           .image_format = SENSOR_IMAGE_FORMAT_RAW},
+
+          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_video_setting), PNULL, 0,
+           .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
+           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+
+          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_preview_setting), PNULL, 0,
            .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_snapshot_setting_new1), PNULL, 0,
+          {ADDR_AND_LEN_OF_ARRAY(ov32a1q_snapshot_setting), PNULL, 0,
            .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
-
+#endif
     /*If there are multiple modules,please add here*/
 };
 

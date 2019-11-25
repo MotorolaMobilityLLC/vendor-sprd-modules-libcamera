@@ -88,7 +88,7 @@
 
 /* frame length*/
 #define VIDEO_FRAME_LENGTH 917
-#define PREVIEW_FRAME_LENGTH 3668
+#define PREVIEW_FRAME_LENGTH 1834 //3668
 #define SNAPSHOT_FRAME_LENGTH 3668
 
 /* please ref your spec */
@@ -1752,7 +1752,7 @@ static const SENSOR_REG_T s5ks3p92_preview_setting[] = {
   {0x030E, 0x0004},
   {0x0310, 0x0074},
   {0x0312, 0x0001},
-  {0x0340, 0x0E54},
+  {0x0340, 0x072a},//E54},
   {0x0342, 0x13E0},
   {0x0202, 0x0100},
   {0x0200, 0x0100},

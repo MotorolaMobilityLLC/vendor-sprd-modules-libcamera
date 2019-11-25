@@ -437,6 +437,24 @@ static cmr_int imx586_drv_set_raw_info(cmr_handle handle, cmr_u8 *param) {
     return rtn;
 }
 */
+#if 1
+static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
+static cmr_int imx586_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
+	cmr_int rtn = SENSOR_SUCCESS;
+	struct sensor_4in1_info *sn_4in1_info = NULL;
+	SENSOR_IC_CHECK_PTR(param);
+
+	SENSOR_LOGI("E\n");
+
+	sn_4in1_info = (struct sensor_4in1_info *)param;
+	sn_4in1_info->is_4in1_supported = 0;
+	sn_4in1_info->limited_4in1_width = 4000;
+	sn_4in1_info->limited_4in1_height = 3000;
+	sn_4in1_info->sns_mode = sns_4in1_mode;
+
+	return rtn;
+}
+#endif 
 
 /*==============================================================================
  * Description:
@@ -463,6 +481,18 @@ static cmr_int imx586_drv_access_val(cmr_handle handle, cmr_uint param) {
     case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
+    case SENSOR_VAL_TYPE_GET_4IN1_INFO:
+        ret = imx586_drv_get_4in1_info(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_SET_OTP_DATA:
+        ret = 0;//imx586_drv_ov4c_init(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_4IN1_PROC:
+        ret = 0;//imx586_drv_ov4c_process(handle, param_ptr->pval);
+        break;
+    case SENSOR_VAL_TYPE_4IN1_DEINIT:
+        ret = 0;//imx586_drv_ov4c_deinit(handle, param_ptr->pval);
+        break;		
 //    case SENSOR_VAL_TYPE_SET_RAW_INFOR:
 //        ret = imx586_drv_set_raw_info(handle, param_ptr->pval);
 //        break;

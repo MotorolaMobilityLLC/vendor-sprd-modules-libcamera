@@ -37,7 +37,7 @@ enum {
 	Create REMOSAIC Daemon & Init Daemon
 	return none
 */
-void remosaic_init(int32_t img_w, int32_t img_h, 
+void remosaic_init(int32_t img_w, int32_t img_h,
 			e_remosaic_bayer_order bayer_order, int32_t pedestal);
 
 /*
@@ -50,16 +50,16 @@ int32_t remosaic_gainmap_gen(void* eep_buf_addr, size_t eep_buf_size);
 /*
 	int32_t remosaic_process_param_set :
 	Set parameter for 4pixel remosaic algorithm
-	return none	
+	return none
 */
 void remosaic_process_param_set(struct st_remosaic_param* p_param);
-			
+
 /*
 	int32_t remosaic_process :
 	run 4pixel remosaic algorithm
 	return result OK, NG
 */
-int32_t remosaic_process(uint8_t* src_buf_addr, size_t src_buf_size, 
+int32_t remosaic_process(uint8_t* src_buf_addr, size_t src_buf_size,
 					uint8_t* dst_buf_addr, size_t dst_buf_size);
 
 /*

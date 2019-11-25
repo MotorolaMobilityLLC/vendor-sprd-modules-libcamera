@@ -274,7 +274,7 @@ static cmr_int s5ks3p92_drv_init_fps_info(cmr_handle handle) {
         if (tempfps > modn * 30)
           modn++;
         fps_info->sensor_mode_fps[i].max_fps = modn * 30;
-        if (fps_info->sensor_mode_fps[i].max_fps > 30) {
+        if (fps_info->sensor_mode_fps[i].max_fps > 60) {
           fps_info->sensor_mode_fps[i].is_high_fps = 1;
           fps_info->sensor_mode_fps[i].high_fps_skip_num =
               fps_info->sensor_mode_fps[i].max_fps / 30;
@@ -691,7 +691,7 @@ static cmr_int s5ks3p92_drv_access_val(cmr_handle handle, cmr_uint param) {
 
   return ret;
 }
-
+static int s5k3p9_4in1_init = 0;
 /*==============================================================================
  * Description:
  * identify sensor id
@@ -716,6 +716,8 @@ static cmr_int s5ks3p92_drv_identify(cmr_handle handle, cmr_uint param) {
                 ver_value);
     if (s5ks3p92_VER_VALUE == ver_value) {
       SENSOR_LOGI("this is s5ks3p92 sensor");
+	  s5k3p9sp04_drv_4in1_init(sns_drv_cxt, 0);
+	  s5k3p9_4in1_init ++;
       ret_value = SENSOR_SUCCESS;
     } else {
       SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x",
@@ -977,7 +979,6 @@ s5ks3p92_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
   /*init exif info,this will be deleted in the future*/
   s5ks3p92_drv_init_fps_info(sns_drv_cxt);
-  s5k3p9sp04_drv_4in1_init(sns_drv_cxt, 0);
 
   /*add private here*/
   return ret;
@@ -989,7 +990,10 @@ static cmr_int s5ks3p92_drv_handle_delete(cmr_handle handle, void *param) {
   SENSOR_IC_CHECK_HANDLE(handle);
   struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 #if 1
+  if(s5k3p9_4in1_init){
     s5k3p9sp04_drv_4in1_deinit(handle, param);
+	s5k3p9_4in1_init--;
+  }
 #endif
   ret = sensor_ic_drv_delete(handle, param);
   return ret;
