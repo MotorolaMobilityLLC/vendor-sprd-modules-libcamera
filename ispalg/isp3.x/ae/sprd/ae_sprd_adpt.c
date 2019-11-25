@@ -268,7 +268,7 @@ static void _aem_stat_preprocess_dulpslave(struct aem_info *slave_aem_info, cmr_
 	cmr_u32 *g_stat = (cmr_u32*)src_aem_stat + 16384;
 	cmr_u32 *b_stat = (cmr_u32*)src_aem_stat + 2 * 16384;
 
-	ISP_LOGD("win_num=[%d x %d], bayer_pixels %d",blk_num_w,blk_num_h,bayer_pixels);
+	ISP_LOGV("win_num=[%d x %d], bayer_pixels %d",blk_num_w,blk_num_h,bayer_pixels);
 
 	blk_num_w = (blk_num_w < 32) ? 32:blk_num_w;
 	blk_num_h = (blk_num_h < 32) ? 32:blk_num_h;
@@ -701,7 +701,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 		tmp_param.exp_time = (cmr_u32) (1.0 * tmp_param.exp_time * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5);
 		tmp_param.exp_line = (cmr_u32) (1.0 * tmp_param.exp_line * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5);
 	}
-	ISP_LOGD("exp_line %d, binning_factor %d / %d, zsl_flag %d", tmp_param.exp_line, cxt->binning_factor_cap, cxt->binning_factor_prev,cxt->zsl_flag);
+	ISP_LOGV("exp_line %d, binning_factor %d / %d, zsl_flag %d", tmp_param.exp_line, cxt->binning_factor_cap, cxt->binning_factor_prev,cxt->zsl_flag);
 
 	if (0 != write_param->exp_line) {
 		struct ae_exposure exp;
@@ -2650,7 +2650,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (is_update) {
 			cb_type = AE_CB_3DNR_NOTIFY;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &is_en);
-			ISP_LOGD("auto-3dnr: bv: %d,[%d, %d], 3dnr: %d",
+			ISP_LOGV("auto-3dnr: bv: %d,[%d, %d], 3dnr: %d",
 				cxt->sync_cur_result.cur_bv,cxt->threednr_thrd.thd_down,cxt->threednr_thrd.thd_up, is_en);
 		}
 	}
@@ -3318,6 +3318,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->capture_skip_num = work_info->capture_skip_num;
 	cxt->cam_large_pix_num = work_info->noramosaic_4in1;
 	cxt->zsl_flag = work_info->zsl_flag;
+	cxt->is_snapshot = work_info->is_snapshot;
 
 	if((work_info->blk_num.w != work_info->blk_num.h) || (work_info->blk_num.w < 32) || (work_info->blk_num.w % 32)){
 		work_info->blk_num.w = 32;
@@ -3660,7 +3661,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	ISP_LOGD("ae_set_video_start, ae_update_result_to_sensor,sensor_role:%d",cxt->sensor_role);
 	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
 
-	cxt->is_snapshot = work_info->is_snapshot;
 	/*it is normal capture, not in flash mode */
 	if ((1 == cxt->last_enable)
 		&& ((FLASH_NONE == cxt->cur_status.adv_param.flash)
@@ -4795,17 +4795,17 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	if (cxt->bypass) {
 		ae_set_pause(cxt,2);
 	}
-	
+
 	calc_in = (struct ae_calc_in *)param;
 
 	aem_type = cxt->monitor_cfg.data_type;
-	ISP_LOGD("aem type is %d\n",aem_type);
+	ISP_LOGV("aem type is %d\n",aem_type);
 	// acc_info_print(cxt);
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
 	cxt->cur_status.adv_param.awb_mode = calc_in->awb_mode;
-	
+
 	if(0 == aem_type){
 		ae_binning_for_aem_stats(cxt, calc_in->stat_img);
 		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
@@ -4902,18 +4902,18 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	backup_expline = cxt->cur_status.adv_param.cur_ev_setting.exp_line;
 	backup_gain = cxt->cur_status.adv_param.cur_ev_setting.ae_gain;
 	backup_expgain = backup_expline*backup_gain;
-	ISP_LOGD("ebd: ae_lib effect_expline %d, effect_gain %d(%d, %d)",
-			cxt->cur_status.adv_param.cur_ev_setting.exp_line, 
+	ISP_LOGV("ebd: ae_lib effect_expline %d, effect_gain %d(%d, %d)",
+			cxt->cur_status.adv_param.cur_ev_setting.exp_line,
 			cxt->cur_status.adv_param.cur_ev_setting.ae_gain,
 			cxt->exp_data.actual_data.isp_gain,
 			cxt->exp_data.actual_data.sensor_gain);
-	
+
 	if(cxt->ebd_support){
 		cxt->cur_status.adv_param.cur_ev_setting.exp_line =  calc_in->ebd_info.exposure_valid ?calc_in->ebd_info.exposure : cxt->exp_data.actual_data.exp_line;
 		cxt->cur_status.adv_param.cur_ev_setting.ae_gain = (cmr_u32)(1.0 *calc_in->ebd_info.gain * calc_in->isp_dgain.global_gain/(4096.0 *cxt->ob_rgb_gain)+ 0.5);
 
 		effect_ebd_expgain = cxt->cur_status.adv_param.cur_ev_setting.exp_line * cxt->cur_status.adv_param.cur_ev_setting.ae_gain;
-		ISP_LOGD("ebd: sensor effect_expline %d, effect_gain %d", cxt->cur_status.adv_param.cur_ev_setting.exp_line, cxt->cur_status.adv_param.cur_ev_setting.ae_gain);
+		ISP_LOGV("ebd: sensor effect_expline %d, effect_gain %d", cxt->cur_status.adv_param.cur_ev_setting.exp_line, cxt->cur_status.adv_param.cur_ev_setting.ae_gain);
 	}
 
 	cxt->sync_aem[3 * 1024] = cxt->cur_status.frm_id;
