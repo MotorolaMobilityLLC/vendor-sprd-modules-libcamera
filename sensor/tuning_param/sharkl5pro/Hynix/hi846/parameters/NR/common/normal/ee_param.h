@@ -1,4 +1,4 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000B0009*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_ee_level*/
@@ -135,11 +135,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x00,
+				0x05,
 				/*ee_r2_cfg*/
-				0x0F,
-				/*ee_r3_cfg*/
 				0x19,
+				/*ee_r3_cfg*/
+				0x23,
 				/*reserved*/
 				0x00,
 
@@ -174,11 +174,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x00,
+				0x03,
 				/*ee_r2_cfg*/
-				0x0F,
+				0x14,
 				/*ee_r3_cfg*/
-				0x19,
+				0x1E,
 				/*reserved*/
 				0x00,
 
@@ -691,11 +691,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x00,
+				0x05,
 				/*ee_r2_cfg*/
-				0x0F,
-				/*ee_r3_cfg*/
 				0x19,
+				/*ee_r3_cfg*/
+				0x23,
 				/*reserved*/
 				0x00,
 
@@ -730,11 +730,11 @@
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
-				0x00,
+				0x03,
 				/*ee_r2_cfg*/
-				0x0F,
+				0x14,
 				/*ee_r3_cfg*/
-				0x19,
+				0x1E,
 				/*reserved*/
 				0x00,
 
@@ -1249,9 +1249,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0F,
-				/*ee_r3_cfg*/
 				0x19,
+				/*ee_r3_cfg*/
+				0x23,
 				/*reserved*/
 				0x00,
 
@@ -1288,9 +1288,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x0F,
+				0x14,
 				/*ee_r3_cfg*/
-				0x19,
+				0x1E,
 				/*reserved*/
 				0x00,
 
