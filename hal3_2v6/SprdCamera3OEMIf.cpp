@@ -4078,6 +4078,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             goto bypass_pre;
         }
         ATRACE_BEGIN("preview_frame");
+        mSetting->getSPRDDEFTag(&sprddefInfo);
         camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
         sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
         mSetting->setSPRDDEFTag(sprddefInfo);
