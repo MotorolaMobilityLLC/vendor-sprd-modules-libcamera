@@ -3251,6 +3251,21 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
+		if((cxt->app_mode < 64)){
+			cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
+			cxt->mode_switch[cxt->app_mode].dummy = cxt->last_exp_param.dummy;
+			cxt->mode_switch[cxt->app_mode].gain = cxt->last_exp_param.gain;
+			cxt->mode_switch[cxt->app_mode].exp_time = cxt->last_exp_param.exp_time;
+			cxt->mode_switch[cxt->app_mode].target_offset = cxt->last_exp_param.target_offset;
+			cxt->mode_switch[cxt->app_mode].table_idx = cxt->last_exp_param.cur_index;
+			cxt->mode_switch[cxt->app_mode].lum = cxt->sync_cur_result.cur_lum;
+			cxt->mode_switch[cxt->app_mode].tarlum = cxt->sync_cur_result.target_lum;
+			if(cxt->mode_switch[cxt->app_mode].lum){
+				cxt->mode_switch[cxt->app_mode].sensitivity = (cxt->last_exp_param.exp_time) / 1000000 * (cxt->last_exp_param.gain) / (cxt->mode_switch[cxt->app_mode].lum);
+				ISP_LOGV("sensitivity %d exp_time %d gain %d luma %d ",cxt->mode_switch[cxt->app_mode].sensitivity,cxt->last_exp_param.exp_time,cxt->last_exp_param.gain,cxt->mode_switch[cxt->app_mode].lum);
+			}
+		}
+
 		if(CAMERA_MODE_MANUAL == cxt->app_mode){
 			s_ae_manual[cxt->camera_id].exp_line = cxt->last_exp_param.exp_line;
 			s_ae_manual[cxt->camera_id].dummy = cxt->last_exp_param.dummy;
@@ -3521,6 +3536,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		src_exp.cur_index = cxt->last_index;
 		src_exp.target_offset = cxt->last_exp_param.target_offset;
 		if((cxt->app_mode < 64) && (!work_info->is_snapshot)){
+			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
+			cmr_u32 last_sensitivity = cxt->mode_switch[last_app_mode].sensitivity;
+			cmr_u32 cur_sensitivity = cxt->mode_switch[cxt->app_mode].sensitivity;
+			if(0 == cur_sensitivity)
+				cur_sensitivity = last_sensitivity;
+
 			if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
 				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
 				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
@@ -3532,6 +3553,16 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				src_exp.cur_index = s_ae_manual[cxt->camera_id].table_idx;
 				cxt->manual_level = s_ae_manual[cxt->camera_id].manual_level;
 			}
+			else if((cxt->sync_cur_result.cur_bv < cxt->flash_thrd.thd_down) && (0 != cxt->mode_switch[cxt->app_mode].gain)){
+				src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
+				src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
+				src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
+				src_exp.exp_time = cxt->mode_switch[cxt->app_mode].exp_time;
+				src_exp.dummy = cxt->mode_switch[cxt->app_mode].dummy;
+				src_exp.cur_index = cxt->mode_switch[cxt->app_mode].table_idx;
+				src_exp.frm_len = cxt->mode_switch[cxt->app_mode].frm_len;
+				src_exp.frm_len_def = cxt->mode_switch[cxt->app_mode].frm_len_def;
+			}
 			else {
 				if(cxt->app_mode_tarlum[cxt->app_mode])
 					ae_target_lum = cxt->app_mode_tarlum[cxt->app_mode];
@@ -3540,8 +3571,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 					ISP_LOGD("1. exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
 					cmr_u32 tmp_gain = 0;
 					cxt->last_cur_lum = cxt->last_cur_lum ? cxt->last_cur_lum : 1;
-					tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum/cxt->last_cur_lum + 0.5);
-
+					tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum * cur_sensitivity / cxt->last_cur_lum / last_sensitivity + 0.5);
 					if(tmp_gain > cxt->ae_tbl_param.max_gain){
 						tmp_gain = cxt->ae_tbl_param.max_gain;
 						src_exp.exp_line = src_exp.exp_line * ae_target_lum * src_exp.gain / (tmp_gain * cxt->last_cur_lum);
@@ -3551,7 +3581,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 						src_exp.exp_time = src_exp.exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 					}
 					src_exp.gain = tmp_gain;
-					ISP_LOGD("2. exp_line=%d  gain=%d tar_lum=(%d %d)",src_exp.exp_line, src_exp.gain, cxt->last_cur_lum, ae_target_lum);
+					ISP_LOGD("2. exp_line=%d  gain=%d tar_lum=(%d %d) sensitivity(%d %d)",src_exp.exp_line, src_exp.gain, cxt->last_cur_lum, ae_target_lum,last_sensitivity,cur_sensitivity);
 				}
 			}
 
