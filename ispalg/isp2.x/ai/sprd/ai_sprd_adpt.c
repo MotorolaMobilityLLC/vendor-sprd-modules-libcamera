@@ -532,7 +532,7 @@ static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		ISP_LOGD("AI_GET_DEBUG_INFO, scence id:%d", cxt->scene_info.cur_scene_id);
 		debug_info_result->log =(cmr_u8 *)(&(cxt->scene_info));
 		debug_info_result->size = sizeof(struct ai_scene_detect_info);
-
+		break;
 	default:
 		rtn = ISP_ERROR;
 		break;
