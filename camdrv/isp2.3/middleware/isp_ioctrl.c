@@ -1628,7 +1628,10 @@ static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr
 
 	if (cxt->ops.awb_ops.ioctrl)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
-	ISP_LOGV("ct = %d", ct);
+	if (ret)
+		ISP_LOGE("fail to get ct\n");
+	else
+		ISP_LOGV("ct = %d", ct);
 
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_CNR2_LEVEL_INFO,

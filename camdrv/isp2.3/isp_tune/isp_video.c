@@ -1019,7 +1019,7 @@ cmr_s32 isp_denoise_write(cmr_u8 * data_buf, cmr_u32 * data_size)
 				ynrs_ptr_offset += data_actual_len;
 			else
 				ynrs_ptr_offset = 0;
-				nr_tool_flag[18] = 1;
+			nr_tool_flag[18] = 1;
 			break;
 		}
 	default:
