@@ -4,7 +4,7 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*low_ct_thrd*/
 	0x0FA0,
 	/*reserved*/
@@ -17,19 +17,19 @@
 	{
 		/*rangTh0*/
 		{
-			0x0F,0x32/*0-1*/
+			0x0F,0x28/*0-1*/
 		},
 		/*rangTh1*/
 		{
-			0x0F,0x2D/*0-1*/
+			0x0F,0x23/*0-1*/
 		},
 		/*rangTh2*/
 		{
-			0x0F,0x28/*0-1*/
+			0x0F,0x19/*0-1*/
 		},
 		/*rangTh3*/
 		{
-			0x0A,0x1E/*0-1*/
+			0x0A,0x19/*0-1*/
 		}
 	},
 	/*wTable*/
@@ -275,9 +275,9 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*low_ct_thrd*/
-	0x0FA0,
+	0x0000,
 	/*reserved*/
 	0x00,
 	/*filter_en*/
@@ -546,7 +546,7 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*low_ct_thrd*/
 	0x0FA0,
 	/*reserved*/
@@ -817,7 +817,7 @@
 /*sharkl5_sensor_cnr20_level*/
 {
 	/*level_enable*/
-	0x00,
+	0x01,
 	/*low_ct_thrd*/
 	0x0FA0,
 	/*reserved*/
