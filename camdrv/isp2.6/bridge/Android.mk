@@ -32,12 +32,12 @@ LOCAL_C_INCLUDES := \
 # internal header file
 # ************************************************
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/smart \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/awb/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/ae/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/af/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/ae/sprd/ae/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/common/inc/ \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/smart \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/awb/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/af/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/common/inc/ \
 	$(LOCAL_PATH)/../middleware/inc \
 	$(LOCAL_PATH)/../param_manager \
 	$(LOCAL_PATH)/../driver/inc
