@@ -18,8 +18,6 @@
 
 #define INVALID_EE_COEFF ((cmr_u32)(-1))
 
-/* todo: delete it later. just for tuning debug */
-static cmr_u32 prev_ai_scene;
 
 static cmr_u32 _pm_edge_convert_param(
 	void *dst_edge_param, cmr_u32 strength_level,
@@ -290,13 +288,7 @@ static cmr_u32 _pm_edge_convert_param(
 					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
 			}
 		}
-
-		/* todo: delete it later. just for tuning debug */
-		if (prev_ai_scene != ai_scene_id) {
-			ISP_LOGD("ai_scene_id %d, ee coeff %d\n", ai_scene_id, sel_coeff);
-		}
 	}
-	prev_ai_scene = ai_scene_id;
 
 	return rtn;
 }

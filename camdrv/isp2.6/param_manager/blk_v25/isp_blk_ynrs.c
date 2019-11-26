@@ -16,7 +16,8 @@
 #define LOG_TAG "isp_blk_ynrs"
 #include "isp_blocks_cfg.h"
 
-cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
+cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param,
+		cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
@@ -30,7 +31,8 @@ cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param, cmr_u32 strength_level, cmr
 		cmr_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		ynrs_param = (struct sensor_ynrs_level *)((cmr_u8 *) dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_ynrs_level));
+		ynrs_param = (struct sensor_ynrs_level *)((cmr_u8 *) dst_ptr->param_ptr + \
+				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_ynrs_level));
 
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -54,8 +56,9 @@ cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param, cmr_u32 strength_level, cmr
 		dst_ptr->cur.imgCenterX = ynrs_param[strength_level].imgCenterX;
 		dst_ptr->cur.imgCenterY = ynrs_param[strength_level].imgCenterY;
 		dst_ptr->cur.bypass = ynrs_param[strength_level].bypass;
-		ISP_LOGD("Radius = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x \n",
-			dst_ptr->cur.Radius, dst_ptr->cur.imgCenterX, dst_ptr->cur.imgCenterY, dst_ptr->cur.bypass, dst_ptr->cur.lumi_thresh[0], dst_ptr->cur.gf_rnr_ratio[0]);
+		ISP_LOGV("Radius = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x \n",
+			dst_ptr->cur.Radius, dst_ptr->cur.imgCenterX, dst_ptr->cur.imgCenterY,
+			dst_ptr->cur.bypass, dst_ptr->cur.lumi_thresh[0], dst_ptr->cur.gf_rnr_ratio[0]);
 	}
 
 	return rtn;

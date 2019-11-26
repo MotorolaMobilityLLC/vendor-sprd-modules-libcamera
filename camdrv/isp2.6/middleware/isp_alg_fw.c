@@ -2785,7 +2785,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP, NULL, &ae_exp);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_EXP"));
 
-		if (fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) {
+		if ((fabs(ae_exp - 0.04) < 0.000001 || ae_exp > 0.04) && (cxt->curr_bv <= 360)) {
 			ae_exp_flag = 1;
 		}
 		ISP_LOGV("ae_exp %f; ae_exp_flag %d", ae_exp, ae_exp_flag);
