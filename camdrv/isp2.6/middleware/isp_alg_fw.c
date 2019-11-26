@@ -996,6 +996,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	cmr_u16 val = 0;
 	cmr_u32 pos = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 af_get_aelock = 0;
 
 	if (!cxt) {
 		ISP_LOGE("fail to get valid cxt ptr\n");
@@ -1069,12 +1070,20 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 		break;
 	case AF_CB_CMD_SET_AE_LOCK:
+		af_get_aelock = 1;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, param1);
+
+		if (cxt->ops.ae_ops.ioctrl)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_STATUS, (void *)&af_get_aelock, NULL);
 		break;
 	case AF_CB_CMD_SET_AE_UNLOCK:
+		af_get_aelock = 0;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, param1);
+
+		if (cxt->ops.ae_ops.ioctrl)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_STATUS, (void *)&af_get_aelock,NULL);
 		break;
 	case AF_CB_CMD_SET_AE_CAF_LOCK:
 		if (cxt->ops.ae_ops.ioctrl)
