@@ -74,6 +74,10 @@ static cmr_u32 tof_FrameID = 0;
 #define ABS_AB(a, b)    ((a)>(b)? (a)-(b): (b)-(a))
 #endif
 
+#ifndef ABS
+#define ABS(a)    ((a)>(0)? (a):(-a))
+#endif
+
 static const char *state_string[] = {
 	"manual",
 	"normal_af",
@@ -4366,6 +4370,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	struct af_status_info status_slave;
 	struct aft_proc_result sync_result;
 	cmr_u32 pd_workable = 0;
+	cmr_u16 i = 0, max_index = 0;
+	cmr_u32 max_area = 0, area = 0;
 
 	memset(&status_info, 0, sizeof(struct af_status_info));
 	memset(&status_master, 0, sizeof(struct af_status_info));
@@ -4433,7 +4439,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				break;
 			case STATE_CAF:
 			case STATE_RECORD_CAF:
-			case STATE_FAF:
 				af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
 				if (AFV1_TRUE == pd_workable) {
 					sync_result.is_caf_trig = AFT_TRIG_PD;
@@ -4444,6 +4449,59 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				sync_result.is_need_rough_search = 0;
 				caf_start(af, &sync_result);
 				af->focus_state = AF_SEARCHING;
+				break;
+			case STATE_FAF:
+				if (0 == af->face_info.face_num) {
+					af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
+					if (AFV1_TRUE == pd_workable) {
+						sync_result.is_caf_trig = AFT_TRIG_PD;
+					} else {
+						sync_result.is_caf_trig = AFT_TRIG_CB;
+					}
+					sync_result.is_cancel_caf = AFT_CANC_NONE;
+					sync_result.is_need_rough_search = 0;
+					caf_start(af, &sync_result);
+					af->focus_state = AF_SEARCHING;
+				} else if (af->face_info.face_num != 0) {
+					for (i = 0; i < af->face_info.face_num; i++) {
+						if (af->face_info.face_info[i].sx <= af->face_info.frame_width && af->face_info.face_info[i].ex <= af->face_info.frame_width &&
+						    af->face_info.face_info[i].sy <= af->face_info.frame_height && af->face_info.face_info[i].ey <= af->face_info.frame_height) {
+							area =
+							    ABS(af->face_info.face_info[i].ex - af->face_info.face_info[i].sx) * ABS(af->face_info.face_info[i].ey -
+																     af->face_info.face_info[i].sy);
+							if (max_area < area) {
+								max_index = i;
+								max_area = area;
+							}
+						}
+					}
+					if (max_index == af->face_info.face_num || 0 == max_area)
+						return rtn;
+
+					af->win.win_num = 1;
+					af->win.face[0].sx = af->face_info.face_info[max_index].sx;
+					af->win.face[0].ex = af->face_info.face_info[max_index].ex;
+					af->win.face[0].sy = af->face_info.face_info[max_index].sy;
+					af->win.face[0].ey = af->face_info.face_info[max_index].ey;
+					af->win.face[0].roll_angle = af->face_info.face_info[max_index].angle;
+
+					af->roll_angle = af->win.face[0].roll_angle;
+					if (af->roll_angle >= -180 && af->roll_angle <= 180) {
+						if (af->roll_angle >= -45 && af->roll_angle <= 45) {
+							af->f_orientation = FACE_UP;
+						} else if ((af->roll_angle >= -180 && af->roll_angle <= -135) || (af->roll_angle >= 135 && af->roll_angle <= 180)) {
+							af->f_orientation = FACE_DOWN;
+						} else if (af->roll_angle > -135 && af->roll_angle < -45) {
+							af->f_orientation = FACE_LEFT;
+						} else if (af->roll_angle > 45 && af->roll_angle < 135) {
+							af->f_orientation = FACE_RIGHT;
+						}
+					} else {
+						af->f_orientation = FACE_NONE;
+					}
+					faf_start(af, &af->win);
+					af->focus_state = AF_SEARCHING;
+				}
 				break;
 			default:
 				break;
