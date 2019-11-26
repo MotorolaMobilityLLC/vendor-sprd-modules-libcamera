@@ -4087,17 +4087,20 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             pre_stream = NULL;
             goto bypass_pre;
         }
-
         ATRACE_BEGIN("preview_frame");
-        mSetting->getSPRDDEFTag(&sprddefInfo);
         camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
-        sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
-        mSetting->setSPRDDEFTag(sprddefInfo);
-        HAL_LOGD("highlight=%d", fin1_info.ambient_highlight);
-        HAL_LOGD("preview:mCameraId = %d, prev:fd = 0x%x, vir = 0x%lx, num = %d"
-                 ", width = %d, height = %d, time = %" PRId64,
-                 mCameraId, frame->fd, buff_vir, frame_num,
-                 frame->width, frame->height, buffer_timestamp);
+        if (sprddefInfo.fin1_highlight_mode != fin1_info.ambient_highlight &&
+            sprddefInfo.high_resolution_mode == 1) {
+            mSetting->getSPRDDEFTag(&sprddefInfo);
+            sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
+            mSetting->setSPRDDEFTag(sprddefInfo);
+            HAL_LOGV("highlight=%d", fin1_info.ambient_highlight);
+        }
+        HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, "
+                 "height=%d, time=%" PRId64,
+                 mCameraId, frame->fd, buff_vir, frame_num, frame->width,
+                 frame->height, buffer_timestamp);
+
         if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
             if ((frame_num > mStartFrameNum) &&
                 (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {

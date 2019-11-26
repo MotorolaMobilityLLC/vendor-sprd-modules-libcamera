@@ -2022,6 +2022,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // default metering mode is 1 (center weighting)
     s_setting[cameraId].sprddefInfo.am_mode = 1;
 
+    //default 4IN1 high resolution mode to binnng size
+    s_setting[cameraId].sprddefInfo.fin1_highlight_mode = 0;
+
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
            camera3_default_info.common.availableBrightNess,
            sizeof(camera3_default_info.common.availableBrightNess));

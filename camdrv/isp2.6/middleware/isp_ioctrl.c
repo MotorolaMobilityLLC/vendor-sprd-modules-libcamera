@@ -1775,7 +1775,7 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	cmr_s32 gain = 0;
 	cmr_u32 exp_time = 0;
 	cmr_s32 bv = 0;
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
+#ifndef CONFIG_CAMERA_4IN1_SOLUTION2
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_GAIN, NULL, (void *)&gain);
 		ret |= cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_EXP_TIME, NULL, (void *)&exp_time);
@@ -1785,11 +1785,12 @@ static cmr_int ispctl_get_ad_gain_exp_info(cmr_handle isp_alg_handle, void *para
 	}
 
 	if (!ret) {
-                info_ptr->adgain = (cmr_u32) gain;
-                info_ptr->exp_time = exp_time;
-                info_ptr->bv = bv;
+		info_ptr->adgain = (cmr_u32) gain;
+		info_ptr->exp_time = exp_time;
+		info_ptr->bv = bv;
 		info_ptr->lowlight_flag = cxt->lowlight_flag;
-        }
+		info_ptr->ambient_highlight = !cxt->lowlight_flag;
+	}
 	ISP_LOGV("adgain = %d, exp = %d, bv = %d, lowlight_flag = %d",
 		info_ptr->adgain, info_ptr->exp_time, info_ptr->bv,
 		info_ptr->lowlight_flag);
