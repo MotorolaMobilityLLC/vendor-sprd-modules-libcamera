@@ -1257,7 +1257,7 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 					if (pm_cxt_ptr->remosaic_type != 0) /* sensor out full size */
 						output->mode_id[i] = ISP_MODE_ID_CAP_0;
 					else
-						output->mode_id[i] = ISP_MODE_ID_CAP_2;
+						output->mode_id[i] = ISP_MODE_ID_CAP_1;
 //					update_always[i] = 1;
 					goto get_blocks;
 				}
