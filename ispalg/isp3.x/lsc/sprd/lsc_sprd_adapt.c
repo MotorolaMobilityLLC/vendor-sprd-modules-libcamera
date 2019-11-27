@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <math.h>
 
-#define MAX_CAMERA_ID  8
+#define MAX_CAMERA_ID  6
 
 #define DEFAULT_TAB_INDEX 2
 
@@ -349,7 +349,7 @@ static void lsc_dump(unsigned short *gain, int width, int height, const char *fi
 	}
 }
 
-static void lsc_dump_gain(cmr_u16 * table, cmr_u32 width, cmr_u32 height, cmr_u32 pattern, cmr_u32 is_planar, cmr_u32 frame_count)
+static void lsc_dump_gain(cmr_u16 * table, cmr_u32 width, cmr_u32 height, cmr_u32 pattern, cmr_u32 is_planar, cmr_u32 frame_count, cmr_u32 camera_id)
 {
 	cmr_u8 off_gr = 0, off_r = 1, off_b = 2, off_gb = 3;
 	cmr_u32 chnl_off_gr, chnl_off_r, chnl_off_b, chnl_off_gb;
@@ -377,16 +377,16 @@ static void lsc_dump_gain(cmr_u16 * table, cmr_u32 width, cmr_u32 height, cmr_u3
 
 	if (mkdir(CAMERA_DATA_FILE "/lsc/", 0755) != 0) {
 		char filename[256];
-		sprintf(filename, CAMERA_DATA_FILE "/lsc/%05d_gr.txt", frame_count);
+		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_gr.txt", camera_id, frame_count);
 		lsc_dump(tmp + width * height * off_gr, width, height, filename);
 
-		sprintf(filename, CAMERA_DATA_FILE "/lsc/%05d_r.txt", frame_count);
+		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_r.txt", camera_id, frame_count);
 		lsc_dump(tmp + width * height * off_r, width, height, filename);
 
-		sprintf(filename, CAMERA_DATA_FILE "/lsc/%05d_b.txt", frame_count);
+		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_b.txt", camera_id, frame_count);
 		lsc_dump(tmp + width * height * off_b, width, height, filename);
 
-		sprintf(filename, CAMERA_DATA_FILE "/lsc/%05d_gb.txt", frame_count);
+		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_gb.txt", camera_id, frame_count);
 		lsc_dump(tmp + width * height * off_gb, width, height, filename);
 	}
 }
@@ -1030,7 +1030,6 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 	}
 
 	ISP_LOGV("full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
-	ISP_LOGV("before, lsc_otp_chn_gain_num=%d", lsc_otp_chn_gain_num);
 
 	if (lsc_otp_chn_gain_num < 100 || lsc_otp_grid < 32 || lsc_otp_grid > 256 || full_img_width < 800 || full_img_height < 600) {
 		ISP_LOGE("sensor setting error, lsc_otp_len=%d, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d",
@@ -1075,10 +1074,7 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 3, lsc_otp_width, lsc_otp_height, filename);
 		}
 
-		ISP_LOGV("lsc_otp_width=%d, lsc_otp_height=%d, gain_w=%d, gain_h=%d, lsc_otp_grid=%d", lsc_otp_width, lsc_otp_height, gain_w, gain_h, lsc_otp_grid);
-		ISP_LOGV("lsc_table0_RGGB=[%d,%d,%d,%d]", lsc_16_bits[0], lsc_16_bits[gain_w * gain_h], lsc_16_bits[gain_w * gain_h * 2], lsc_16_bits[gain_w * gain_h * 3]);
-		ISP_LOGV("lsc_table1_RGGB=[%d,%d,%d,%d]", lsc_16_bits[gain_w + 1], lsc_16_bits[gain_w * gain_h + gain_w + 1],
-			 lsc_16_bits[gain_w * gain_h * 2 + gain_w + 1], lsc_16_bits[gain_w * gain_h * 3 + gain_w + 1]);
+		ISP_LOGV("lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_width, lsc_otp_height, lsc_otp_grid);
 	} else {
 		ISP_LOGE("lsc_otp_addr = %p, lsc_otp_len = %d. Parser lsc otp fail", lsc_otp_addr, lsc_otp_len);
 		ISP_LOGE("sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d",
@@ -1198,7 +1194,6 @@ static cmr_s32 lsc_load_lib(struct lsc_sprd_ctrl_context *cxt)
 		ISP_LOGE("fail to dlsym alsc_deinit");
 		goto error_dlsym;
 	}
-	ISP_LOGI("load lsc lib success");
 
 	return LSC_SUCCESS;
 
@@ -1918,71 +1913,59 @@ static int lsc_pm_table_crop(struct pm_lsc_full *src, struct pm_lsc_crop *dst, c
 	return rtn;
 }
 
-static void lsc_save_last_info(struct lsc_last_info *cxt, unsigned int camera_id, unsigned int full_flag)
+static void lsc_save_last_info(struct lsc_last_info *cxt, unsigned int camera_id, unsigned int table_flag)
 {
 	FILE *fp = NULL;
-	struct lsc_last_info full_cxt[MAX_CAMERA_ID];
+	struct lsc_last_info full_cxt[MAX_CAMERA_ID * 3]; // each camera maximum have 3 kinds of lsc table size
 	char *ptr = (char *)full_cxt;
 
-	if (full_flag == 1) {
-		fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
-	} else {
-		fp = fopen(CAMERA_DATA_FILE "/lsc_video.file", "rb");
-	}
+	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
 
 	//read all last info in lsc.file first
 	if (fp == NULL) {
-		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * MAX_CAMERA_ID);
+		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3);
 	} else {
-		fread(ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID, fp);
+		fread(ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3, fp);
 		fclose(fp);
 		fp = NULL;
 	}
 
 	// save cxt of camera_id to lsc.file
-	ptr = ptr + camera_id * sizeof(struct lsc_last_info);
+	ptr = ptr + sizeof(struct lsc_last_info) * 3 * camera_id + sizeof(struct lsc_last_info) * table_flag; // table_flag: 0, 1, 2
 	memcpy(ptr, (char *)cxt, sizeof(struct lsc_last_info));
 
-	if (full_flag == 1) {
-		fp = fopen(CAMERA_DATA_FILE "/lsc.file", "wb");
-	} else {
-		fp = fopen(CAMERA_DATA_FILE "/lsc_video.file", "wb");
-	}
+	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "wb");
 
 	if (fp) {
-		ISP_LOGV("bv:%d, bv_gain:%d, table_rgb[%d,%d,%d,%d], table_size[%d,%d]", cxt->bv, cxt->bv_gain,
+		ISP_LOGD("bv:%d, bv_gain:%d, table_rgb[%d,%d,%d,%d], table_size[%d,%d]", cxt->bv, cxt->bv_gain,
 			 cxt->table[0], cxt->table[1], cxt->table[2], cxt->table[3], cxt->gain_width, cxt->gain_height);
 
-		fwrite((char *)full_cxt, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID, fp);
+		fwrite((char *)full_cxt, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3, fp);
 		fclose(fp);
 		fp = NULL;
 	}
 }
 
-static void lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id, unsigned int full_flag)
+static void lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id, unsigned int table_flag)
 {
 	FILE *fp = NULL;
-	struct lsc_last_info full_cxt[MAX_CAMERA_ID];
+	struct lsc_last_info full_cxt[MAX_CAMERA_ID * 3];
 	char *ptr = (char *)full_cxt;
 	int num_read;
 
-	if (full_flag == 1) {
-		fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
-	} else {
-		fp = fopen(CAMERA_DATA_FILE "/lsc_video.file", "rb");
-	}
+	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
 
 	if (fp) {
-		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * MAX_CAMERA_ID);
-		num_read = fread((char *)ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID, fp);
+		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * 3 * MAX_CAMERA_ID); // each camera maximum have 3 kinds of lsc table size
+		num_read = fread((char *)ptr, 1, sizeof(struct lsc_last_info) * 3 * MAX_CAMERA_ID, fp);
 
-		ptr = ptr + sizeof(struct lsc_last_info) * camera_id;
+		ptr = ptr + sizeof(struct lsc_last_info) * 3 * camera_id + sizeof(struct lsc_last_info) * table_flag; // table_flag: 0, 1, 2
 		memcpy((char *)cxt, (char *)ptr, sizeof(struct lsc_last_info));
 
 		fclose(fp);
 		fp = NULL;
 
-		ISP_LOGV("bv:%d, bv_gain:%d, table_rgb[%d,%d,%d,%d], table_size[%d,%d]", cxt->bv, cxt->bv_gain, cxt->table[0], cxt->table[1],
+		ISP_LOGD("bv:%d, bv_gain:%d, table_rgb[%d,%d,%d,%d], table_size[%d,%d]", cxt->bv, cxt->bv_gain, cxt->table[0], cxt->table[1],
 			cxt->table[2], cxt->table[3], cxt->gain_width, cxt->gain_height);
 	}
 }
@@ -2088,6 +2071,33 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 	}
 
 	return rtn;
+}
+
+static cmr_s32 lsc_sprd_set_monitor(struct alsc_fwstart_info* in, struct lsc_monitor_info* out)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+	struct lsc_monitor_info* info = out;
+	struct lsc_trim trim;
+	info->skip_num = 0;
+	info->work_mode = 1;
+
+	info->win_num.w = 32;  //default value
+	info->win_num.h = 32;
+	trim.x = 0;
+	trim.y = 0;
+	trim.w = in->img_width_new;
+	trim.h = in->img_height_new;
+	info->win_size.w = ((trim.w / info->win_num.w) / 2) * 2;
+	info->win_size.h = ((trim.h / info->win_num.h) / 2) * 2;
+	info->trim.w = info->win_size.w * info->win_num.w;
+	info->trim.h =  info->win_size.h * info->win_num.h;
+	info->trim.x = trim.x + (trim.w - info->trim.w) / 2;
+	info->trim.x = (info->trim.x / 2) * 2;
+	info->trim.y = trim.y + (trim.h - info->trim.h) / 2;
+	info->trim.y = (info->trim.y / 2) * 2;
+
+	return rtn;
+
 }
 
 static int lsc_malloc_buffer(struct lsc_sprd_ctrl_context *cxt)
@@ -2223,12 +2233,11 @@ static void *lsc_sprd_init(void *in, void *out)
 	lsc_flash_proc_init(cxt);
 
 	// get lsc_id
-	if (id1_addr == NULL) {
-		id1_addr = cxt->lsc_buffer;
-		cxt->lsc_id = 1;
-	} else {
+	id1_addr = cxt->lsc_buffer;
+	cxt->lsc_id = 1;
+	if (id1_addr != NULL && cxt->is_multi_mode == 2 /*ISP_DUAL_SBS */  && cxt->is_master == 0 /*slave */) {
 		id2_addr = cxt->lsc_buffer;
-		cxt->lsc_id = 2;
+		cxt->lsc_id = 2; // when lsc_id=2, lsc calculation will not work for slave camera
 	}
 	init_param->lsc_buffer_addr = cxt->lsc_buffer;
 
@@ -2241,6 +2250,7 @@ static void *lsc_sprd_init(void *in, void *out)
 	}
 	// alsc_init
 	cxt->is_planar = 1;	// 1 -- use planar lsc table in alsc algorithm;  0 -- use interlace lsc table in alsc algorithm
+	cxt->stats_inverse = 0; // set 0 if use LSCM statistic data; set 1 if use AEM statistic data
 	rtn = lsc_set_init_param(init_param, cxt, &sprd_init_param);
 
 	alsc_handle = cxt->lib_ops.alsc_init(&sprd_init_param);
@@ -2302,7 +2312,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	}
 
 	if (cxt->lsc_id == 2 /*slave */  && cxt->is_multi_mode == 2 /*ISP_DUAL_SBS */  && cxt->is_master == 0 /*slave */ ) {
-		ISP_LOGV("return due to ISP_DUAL_SBS, slave, lsc_id=%d, frame_count=%d", cxt->lsc_id, cxt->frame_count);
+		ISP_LOGV("return due to ISP_DUAL_SBS, slave, lsc_id=%d, camera_id=%d, frame_count=%d", cxt->lsc_id, cxt->camera_id, cxt->frame_count);
 		return rtn;
 	}
 
@@ -2332,7 +2342,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	if (cxt->fw_start_end) {
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			if (cxt->lsc_pm0 != param->lsc_tab_address[0]) {
-				ISP_LOGV("change mode: start frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+				ISP_LOGV("change mode: start frame_count=%d, lsc_id=%d, camera_id=%d", cxt->frame_count, cxt->lsc_id, cxt->camera_id);
 				ISP_LOGV("change mode: pre img[%d,%d], table[%d,%d,%d]", cxt->img_width, cxt->img_height, cxt->gain_width, cxt->gain_height, cxt->grid);
 				ISP_LOGV("change mode: new img[%d,%d], table[%d,%d,%d]", img_width, img_height, gain_width, gain_height, grid);
 
@@ -2349,14 +2359,12 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 				if (cxt->is_planar == 1) {
 					for (i = 0; i < 9; i++) {
 						memcpy(cxt->std_lsc_table_param_buffer[i], param->lsc_tab_address[i], gain_width * gain_height * 4 * sizeof(cmr_u16));
-						lsc_table_interlace2planar(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern,
-									   cxt->output_gain_pattern);
+						lsc_table_interlace2planar(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern, cxt->output_gain_pattern);
 					}
 				} else {
 					for (i = 0; i < 9; i++) {
 						memcpy(cxt->std_lsc_table_param_buffer[i], param->lsc_tab_address[i], gain_width * gain_height * 4 * sizeof(cmr_u16));
-						lsc_interlace_change_pattern(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern,
-									     cxt->output_gain_pattern);
+						lsc_interlace_change_pattern(cxt->std_lsc_table_param_buffer[i], gain_width, gain_height, cxt->gain_pattern, cxt->output_gain_pattern);
 					}
 				}
 
@@ -2404,7 +2412,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 			if (cxt->frame_count == 0) {	//lunch camera with binning size or 720p both will run the fw_start
 				cxt->frame_count = 1;
 				cxt->alg_count = 0;	// set zero to skip iir
-				ISP_LOGV("change mode END (return 0): set frame_count=1, set alg_count=1 to do quick in");
+				ISP_LOGV("change mode END (return 0): set frame_count=1, set alg_count=0 to do quick in");
 				return rtn;
 			} else {
 				cxt->frame_count = cxt->calc_freq * 3 - 2;	// do not quick in and skip 3 frame for AEM stable
@@ -2429,7 +2437,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		alg_in = 0;
 	}
 
-	ISP_LOGD("frame_count=%d, alg_in=%d, lsc_id=%d, alg_count = %d, can_update_dest=%d", cxt->frame_count, alg_in, cxt->lsc_id, cxt->alg_count, cxt->can_update_dest);
+	ISP_LOGD("frame_count=%d, alg_in=%d, camera_id=%d, alg_count=%d, can_update_dest=%d", cxt->frame_count, alg_in, cxt->camera_id, cxt->alg_count, cxt->can_update_dest);
 
 	debug_index[0] = 0 * gain_width * gain_height;
 	debug_index[1] = 1 * gain_width * gain_height;
@@ -2452,7 +2460,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 
 		// cmd dump AEM0
 		if (cxt->cmd_alsc_dump_aem) {
-			lsc_dump_stat(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->lsc_id, cxt->frame_count, 0);
+			lsc_dump_stat(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->camera_id, cxt->frame_count, 0);
 		}
 		// stat_g = 0 return
 		stat_g = param->stat_img.gr;
@@ -2463,13 +2471,15 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 			}
 		}
 
-		// inverse the LSC on AEM
-		//lsc_inverse_ae_stat(cxt, cxt->output_lsc_table);
+		// inverse the LSC on AEM, skip it when use LSCM
+		if (cxt->stats_inverse == 1) {
+			lsc_inverse_ae_stat(cxt, cxt->output_lsc_table);
 
-		// cmd dump AEM1
-		if (cxt->cmd_alsc_dump_aem) {
-			lsc_dump_stat(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->lsc_id, cxt->frame_count, 1);
+			if (cxt->cmd_alsc_dump_aem) {
+				lsc_dump_stat(img_width, img_height, param->stat_img.r, param->stat_img.gr, param->stat_img.b, cxt->camera_id, cxt->frame_count, 1);
+			}
 		}
+
 		// call liblsc.so
 		calc_in.stat_img.r = param->stat_img.r;
 		calc_in.stat_img.gr = param->stat_img.gr;
@@ -2575,40 +2585,13 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	ISP_LOGV("final output [%d,%d,%d,%d]", cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
 
 	if (cxt->cmd_alsc_dump_table) {
-		lsc_dump_gain(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern, cxt->is_planar, cxt->frame_count);
+		lsc_dump_gain(cxt->lsc_buffer, gain_width, gain_height, cxt->output_gain_pattern, cxt->is_planar, cxt->frame_count, cxt->camera_id);
 	}
 
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
 	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
 	return rtn;
-}
-
-static cmr_s32 lsc_sprd_set_monitor(struct alsc_fwstart_info* in, struct lsc_monitor_info* out)
-{
-	cmr_s32 rtn = AE_SUCCESS;
-	struct lsc_monitor_info* info = out;
-	struct lsc_trim trim;
-	info->skip_num = 0;
-	info->work_mode = 1;
-
-	info->win_num.w = 32;  //default value
-	info->win_num.h = 32;
-	trim.x = 0;
-	trim.y = 0;
-	trim.w = in->img_width_new;
-	trim.h = in->img_height_new;
-	info->win_size.w = ((trim.w / info->win_num.w) / 2) * 2;
-	info->win_size.h = ((trim.h / info->win_num.h) / 2) * 2;
-	info->trim.w = info->win_size.w * info->win_num.w;
-	info->trim.h =  info->win_size.h * info->win_num.h;
-	info->trim.x = trim.x + (trim.w - info->trim.w) / 2;
-	info->trim.x = (info->trim.x / 2) * 2;
-	info->trim.y = trim.y + (trim.h - info->trim.h) / 2;
-	info->trim.y = (info->trim.y / 2) * 2;
-
-	return rtn;
-
 }
 
 static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
@@ -2642,7 +2625,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	cmr_u16 *tmp_buffer = NULL;
 	//cmr_u16 *pm0_new = NULL;
 	cmr_u8 is_gr, is_gb, is_r, is_b;
-	cmr_u32 full_flag = 0;
+	cmr_u32 table_flag = 0;
 	cmr_u32 chnl_gain_num = 0;
 	cmr_u32 will_do_post_gain = 0;
 	struct lsc_monitor_info* in_param = cxt->lscm_info;
@@ -2652,19 +2635,23 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	switch (cmd) {
 	case ALSC_FW_START:	// You have to update two table in FW_START: 1.fwstart_info->lsc_result_address_new, 2.cxt->fwstart_new_scaled_table
 		fwstart_info = (struct alsc_fwstart_info *)in;
-		ISP_LOGV("FW_START +++++, frame_count=%d, camera_id=%d, lsc_id=%d, LSC_SPD_VERSION=%d", cxt->frame_count, fwstart_info->camera_id, cxt->lsc_id, cxt->LSC_SPD_VERSION);
-		ISP_LOGV("FW_START, old tab0 address = %p, (%d,%d), grid %d", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->grid);
-		ISP_LOGV("FW_START, new tab0 address = %p, (%d,%d), grid %d", fwstart_info->lsc_tab_address_new[0],
-			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new);
+		ISP_LOGD("FW_START, frame_count=%d, camera_id=%d, lsc_id=%d, LSC_SPD_VERSION=%d", cxt->frame_count, fwstart_info->camera_id, cxt->lsc_id, cxt->LSC_SPD_VERSION);
+		ISP_LOGD("FW_START, old tab0 address = %p, lsc table[%d,%d,%d]", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->grid);
+		ISP_LOGD("FW_START, new tab0 address = %p, lsc table[%d,%d,%d], image_size[%d,%d]", fwstart_info->lsc_tab_address_new[0],
+			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new, fwstart_info->img_width_new, fwstart_info->img_height_new);
 
 		lsc_sprd_set_monitor(fwstart_info, in_param);
 		lsc_set_monitor(cxt->ctrl_handle, in_param);
 
 		// read last info
-		if (cxt->init_img_width == fwstart_info->img_width_new && cxt->init_img_height == fwstart_info->img_height_new)
-			full_flag = 1;
 		if (cxt->lsc_id == 1) {
-			lsc_read_last_info(lsc_last_info, fwstart_info->camera_id, full_flag);
+			if (cxt->init_gain_width == fwstart_info->gain_width_new && cxt->init_gain_height == fwstart_info->gain_height_new && cxt->init_grid == fwstart_info->grid_new)
+				table_flag = 0; //full image size
+			else if (fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && (fwstart_info->grid_new == 32 || fwstart_info->grid_new == 48))
+				table_flag = 2; // 1090p or 720p size
+			else
+				table_flag = 1;	// binning size
+			lsc_read_last_info(lsc_last_info, fwstart_info->camera_id, table_flag);
 			cxt->fw_start_bv = lsc_last_info->bv;
 			cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
 		}
@@ -2724,8 +2711,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				cxt->cur_lsc_pm_mode = 1;	// 1080p table size
 			}
 
-			ISP_LOGI("FW_START, new table size=[%d,%d] grid=%d", cxt->gain_width, cxt->gain_height, cxt->grid);
-			ISP_LOGI("FW_START, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d", cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode);
+			ISP_LOGV("FW_START, new table size=[%d,%d] grid=%d, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d", cxt->gain_width, cxt->gain_height, cxt->grid,
+				cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode);
 
 			// change to 720p mode
 			if (fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720) {
@@ -2800,8 +2787,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case ALSC_FW_START_END:
 		fwstart_info = (struct alsc_fwstart_info *)in;
-		ISP_LOGV("FW_START_END +++++, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
-		ISP_LOGV("FW_START_END, old tab address = %p, new tab address = %p", cxt->lsc_pm0, fwstart_info->lsc_tab_address_new[0]);
 
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			//case for old parameter file the same with new parameter file, then we just copy the output_lsc_table, and calc do nothing.
@@ -2822,28 +2807,30 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			}
 		}
 
-		ISP_LOGV("FW_START_END -----, fw_start_end=%d, can_update_dest=%d", cxt->fw_start_end, cxt->can_update_dest);
+		ISP_LOGV("FW_START_END, frame_count=%d, camera_id=%d, fw_start_end=%d, can_update_dest=%d", cxt->frame_count, cxt->camera_id,
+			cxt->fw_start_end, cxt->can_update_dest);
 		break;
 
 	case ALSC_FW_STOP:
-		ISP_LOGV("FW_STOP +++++, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
-
 		//copy the output to last_info
 		chnl_gain_num = cxt->gain_width * cxt->gain_height;
-		if (!(cxt->gain_width == 23 && cxt->gain_height == 15 && (cxt->grid == 32 || cxt->grid == 48))&& cxt->lsc_id == 1) {
+
+		if (cxt->lsc_id == 1) {
+			if (cxt->init_gain_width == cxt->gain_width && cxt->init_gain_height == cxt->gain_height && cxt->init_grid == cxt->grid)
+				table_flag = 0; // full size
+			else if (cxt->gain_width == 23 && cxt->gain_height == 15 && (cxt->grid == 32 || cxt->grid == 48))
+				table_flag = 2; // 1080p or 720p
+			else
+				table_flag = 1; // binning size
 			memcpy(lsc_last_info->table, cxt->lsc_buffer, chnl_gain_num * 4 * sizeof(cmr_u16));
 			lsc_last_info->gain_width = cxt->gain_width;
 			lsc_last_info->gain_height = cxt->gain_height;
-		}
-		if (cxt->gain_width == cxt->init_gain_width && cxt->gain_height == cxt->init_gain_height && cxt->grid == cxt->init_grid)
-			full_flag = 1;
-		if (cxt->lsc_id == 1) {
-			lsc_save_last_info(lsc_last_info, cxt->camera_id, full_flag);
+			lsc_save_last_info(lsc_last_info, cxt->camera_id, table_flag);
 		}
 		// let calc not to update the result->dst_gain
 		cxt->can_update_dest = 0;
 		cxt->alsc_update_flag = 0;
-		ISP_LOGV("FW_STOP can_update_dest=%d, alsc_update_flag=%d, is_touch_preflash=%d", cxt->can_update_dest, cxt->alsc_update_flag, flash_param->is_touch_preflash);
+		ISP_LOGV("FW_STOP, can_update_dest=%d, alsc_update_flag=%d, is_touch_preflash=%d", cxt->can_update_dest, cxt->alsc_update_flag, flash_param->is_touch_preflash);
 
 		// flash mode
 		if (flash_param->is_touch_preflash == 0 || flash_param->is_touch_preflash == 1) {
@@ -2863,7 +2850,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			flash_param->main_flash_from_other_parameter = 0;
 		}
 
-		ISP_LOGV("FW_STOP -----, main_flash_from_other_parameter=%d", flash_param->main_flash_from_other_parameter);
+		ISP_LOGV("FW_STOP, frame_count=%d, camera_id=%d, main_flash_from_other_parameter=%d", cxt->frame_count, cxt->camera_id,
+			flash_param->main_flash_from_other_parameter);
 		break;
 
 	case ALSC_CMD_GET_DEBUG_INFO:
@@ -2930,7 +2918,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 		//overwrite the dest buffer with one table without post-gain. not really helpful, but give a try.
 		memcpy(cxt->lsc_buffer, cxt->last_lsc_table, cxt->gain_width * cxt->gain_height * 4 * sizeof(cmr_u16));
-		ISP_LOGV("FLASH_PRE_BEFORE END");
 		break;
 
 	case ALSC_FLASH_PRE_AFTER:
@@ -2978,7 +2965,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			memcpy(cxt->lsc_buffer, flash_param->preflash_guessing_mainflash_output_table, cxt->gain_width * cxt->gain_height * 4 * sizeof(cmr_u16));
 		} else {
 			// apply the guessing table and flash_y_gain
-			ISP_LOGV("flash lsc apply flash_y_gain");
+			ISP_LOGV("FLASH_MAIN_BEFORE, apply flash_y_gain");
 			if (cxt->is_planar) {
 				chnl_gain_num = cxt->gain_width * cxt->gain_height;
 				for (i = 0; i < cxt->gain_width * cxt->gain_height; i++) {
@@ -3028,7 +3015,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		// reset parameter
 		flash_param->captureFlashEnvRatio = 0.0;
 		flash_param->captureFlash1ofALLRatio = 0.0;
-		ISP_LOGV("FLASH_MAIN_AFTER, setup quick in, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+		flash_param->is_touch_preflash = -99;
+		ISP_LOGV("FLASH_MAIN_AFTER, setup quick in, frame_count=%d, camera_id=%d", cxt->frame_count, cxt->camera_id);
 		break;
 
 	case ALSC_GET_TOUCH:
@@ -3052,22 +3040,25 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 		fwprocstart_info = (struct alsc_fwprocstart_info *)in;
 
-		if (cxt->LSC_SPD_VERSION <= 5) {
-			//pm0_new = fwprocstart_info->lsc_tab_address_new[0];
-			if (fwprocstart_info->gain_width_new == cxt->init_gain_width
-			    && fwprocstart_info->gain_height_new == cxt->init_gain_height && fwprocstart_info->grid_new == cxt->init_grid) {
-				full_flag = 1;
-			}
-
-			lsc_read_last_info(lsc_last_info, fwprocstart_info->camera_id, full_flag);
+		if (cxt->lsc_id == 1) {
+			if (cxt->init_gain_width == fwprocstart_info->gain_width_new && cxt->init_gain_height == fwprocstart_info->gain_height_new && cxt->init_grid == fwprocstart_info->grid_new)
+				table_flag = 0; // full size
+			else if (fwprocstart_info->gain_width_new == 23 && fwprocstart_info->gain_height_new == 15 && (fwprocstart_info->grid_new == 32 || fwprocstart_info->grid_new == 48))
+				table_flag = 2; //1080p or 720p
+			else
+				table_flag = 1;	// binning size
+			lsc_read_last_info(lsc_last_info, fwprocstart_info->camera_id, table_flag);
 			cxt->fw_start_bv = lsc_last_info->bv;
 			cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
+		}
+
+		if (cxt->LSC_SPD_VERSION <= 5) {
+			//pm0_new = fwprocstart_info->lsc_tab_address_new[0];
 
 			if (cxt->is_multi_mode == 2) {
 				ISP_LOGV("FW_PROC_START, ISP_DUAL_SBS MODE, camera_id=%d", fwprocstart_info->camera_id);
-				ISP_LOGV("FW_PROC_START, old tab address=%p, (%d,%d) grid %d", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->grid);
-				ISP_LOGV("FW_PROC_START, new tab address=%p, (%d,%d) grid %d", fwprocstart_info->lsc_tab_address_new[0],
-					 fwprocstart_info->gain_width_new, fwprocstart_info->gain_height_new, fwprocstart_info->grid_new);
+				ISP_LOGV("FW_PROC_START, old lsc table[%d,%d,%d]", cxt->gain_width, cxt->gain_height, cxt->grid);
+				ISP_LOGV("FW_PROC_START, new lsc table[%d,%d,%d]", fwprocstart_info->gain_width_new,fwprocstart_info->gain_height_new, fwprocstart_info->grid_new);
 
 				if (cxt->lsc_id == 1) {
 					// get the master capture parameter info
@@ -3127,10 +3118,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		} else {
 			// when cxt->LSC_SPD_VERSION >= 6
 			ISP_LOGV("FW_PROC_START, NOT ISP_DUAL_SBS MODE, Do nothing.");
-			full_flag = 1;
-			lsc_read_last_info(lsc_last_info, fwprocstart_info->camera_id, full_flag);
-			cxt->fw_start_bv = lsc_last_info->bv;
-			cxt->fw_start_bv_gain = lsc_last_info->bv_gain;
 			chnl_gain_num = fwprocstart_info->gain_width_new * fwprocstart_info->gain_height_new;
 
 			for (i = 0; i < 8; i++) {

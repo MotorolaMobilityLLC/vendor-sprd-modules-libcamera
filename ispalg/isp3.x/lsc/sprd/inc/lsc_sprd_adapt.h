@@ -213,6 +213,7 @@ struct lsc_sprd_ctrl_context {
 	cmr_u32 flash_enhance_ratio;
 	cmr_u32 flash_center_shiftx;
 	cmr_u32 flash_center_shifty;
+	cmr_u32 stats_inverse;
 };
 
 struct lsc_param {
