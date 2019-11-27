@@ -79,7 +79,7 @@
         /*********************************************************************/
         {21, 0, 0, PREVIEW_STREAM, 0},
         {3, 0, 0, SNAPSHOT_STREAM, 0},
-        {0, 0, 0, 0, 0},
+        {21, 0, 0, VIDEO_STREAM, 0},
         {0, 0, 0, 0, 0},
     },
 
@@ -130,8 +130,8 @@
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
         /*camera device 1 physical info*/
         {
             3, // camera real id
@@ -144,8 +144,8 @@
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
         /*camera device 2 physical info*/
         {
             0, // camera id
@@ -158,8 +158,8 @@
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
         /*camera device 3 physical info*/
         {
             0, // camera id
@@ -172,8 +172,8 @@
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
     },
 
     // 7 config_physical_descriptor    video_multi_phy_info
@@ -219,12 +219,12 @@
             {
                 {PREVIEW_STREAM, 0, 0, 0, 0, 0},
                 {SNAPSHOT_STREAM, 0, 0, 0, 0, 0},
-                {CALLBACK_STREAM, 0, 0, 0, SNAPSHOT_STREAM, 0},
+                {VIDEO_STREAM, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
         /*camera device 1 physical info*/
         {
             3, // camera real id
@@ -233,12 +233,12 @@
             {
                 {PREVIEW_STREAM, 0, 0, 0, 0, 0},
                 {SNAPSHOT_STREAM, 0, 0, 0, 0, 0},
-                {CALLBACK_STREAM, 0, 0, 0, SNAPSHOT_STREAM, 0},
+                {VIDEO_STREAM, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
         /*camera device 2 physical info*/
         {
             0, // camera id
@@ -251,8 +251,8 @@
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
         /*camera device 3 physical info*/
         {
             0, // camera id
@@ -265,8 +265,8 @@
                 {0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0},
             },
-
         },
+
     },
 
     // 8 configure function processCaptureRequest
@@ -325,8 +325,8 @@
                     {0, 1, 0, 0},
                     {PREVIEW_STREAM_HAL_BUFFER, PREVIEW_STREAM_HAL_BUFFER, 0,
                      0},
-
                 },
+
                 // stream 1
                 {
                     SNAPSHOT_STREAM,
@@ -336,15 +336,17 @@
                     {CALLBACK_STREAM_HAL_BUFFER, CALLBACK_STREAM_HAL_BUFFER, 0,
                      0},
                 },
+
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -352,6 +354,7 @@
 
             },
         },
+
         // configure 2
         {
             // How many stream to configure. support max value is 5
@@ -395,8 +398,8 @@
                     {0, 1, 0, 0},
                     {PREVIEW_STREAM_HAL_BUFFER, PREVIEW_STREAM_HAL_BUFFER, 0,
                      0},
-
                 },
+
                 // stream 1
                 {
                     SNAPSHOT_STREAM,
@@ -410,12 +413,13 @@
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -423,6 +427,7 @@
 
             },
         },
+
         // configure 3
         {
             // How many stream to configure. support max value is 5
@@ -460,24 +465,24 @@
 
                 // stream 0
                 {
-
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 1
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -485,6 +490,7 @@
 
             },
         },
+
         // configure 4
         {
             // How many stream to configure. support max value is 5
@@ -523,22 +529,23 @@
                 // stream 0
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 1
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -546,6 +553,7 @@
 
             },
         },
+
         // configure 5
         {
             // How many stream to configure. support max value is 5
@@ -584,22 +592,23 @@
                 // stream 0
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 1
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -615,7 +624,7 @@
         {
             // How many stream to configure. support max value is 5
             // stream configure info.struct hal_req_stream_config*
-            2,
+            3,
             {
                 /*********************************************************************/
                 // struct hal_req_stream_config.refer to process_capture_request
@@ -654,26 +663,33 @@
                     {0, 1, 0, 0},
                     {PREVIEW_STREAM_HAL_BUFFER, PREVIEW_STREAM_HAL_BUFFER, 0,
                      0},
-
                 },
+
                 // stream 1
                 {
                     SNAPSHOT_STREAM,
                     2,
                     0,
                     {0, 1, 0, 0},
-                    {CALLBACK_STREAM_HAL_BUFFER, CALLBACK_STREAM_HAL_BUFFER, 0,
+                    {SNAPSHOT_STREAM_FW_BUFFER, SNAPSHOT_STREAM_FW_BUFFER, 0,
                      0},
                 },
+
                 // stream 2
                 {
-                    0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
+                    VIDEO_STREAM,
+                    2,
+                    0,
+                    {0, 1, 0, 0},
+                    {VIDEO_STREAM_HAL_BUFFER, VIDEO_STREAM_HAL_BUFFER, 0,
+                    0},
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -681,11 +697,12 @@
 
             },
         },
+
         // configure 2
         {
             // How many stream to configure. support max value is 5
             // stream configure info.struct hal_req_stream_config*
-            2,
+            3,
             {
                 /*********************************************************************/
                 // struct hal_req_stream_config.refer to process_capture_request
@@ -724,27 +741,33 @@
                     {0, 1, 0, 0},
                     {PREVIEW_STREAM_HAL_BUFFER, PREVIEW_STREAM_HAL_BUFFER, 0,
                      0},
-
                 },
+
                 // stream 1
                 {
                     SNAPSHOT_STREAM,
                     2,
                     0,
                     {0, 1, 0, 0},
-                    {CALLBACK_STREAM_HAL_BUFFER, CALLBACK_STREAM_HAL_BUFFER, 0,
+                    {SNAPSHOT_STREAM_FW_BUFFER, SNAPSHOT_STREAM_FW_BUFFER, 0,
                      0},
                 },
 
                 // stream 2
                 {
-                    0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
+                    VIDEO_STREAM,
+                    2,
+                    0,
+                    {0, 1, 0, 0},
+                    {VIDEO_STREAM_HAL_BUFFER, VIDEO_STREAM_HAL_BUFFER, 0,
+                    0},
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -752,6 +775,7 @@
 
             },
         },
+
         // configure 3
         {
             // How many stream to configure. support max value is 5
@@ -789,24 +813,24 @@
 
                 // stream 0
                 {
-
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 1
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -814,6 +838,7 @@
 
             },
         },
+
         // configure 4
         {
             // How many stream to configure. support max value is 5
@@ -852,22 +877,23 @@
                 // stream 0
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 1
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -875,6 +901,7 @@
 
             },
         },
+
         // configure 5
         {
             // How many stream to configure. support max value is 5
@@ -913,22 +940,23 @@
                 // stream 0
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 1
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 2
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
-
                 },
+
                 // stream 3
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
                 },
+
                 // stream 4
                 {
                     0, 0, 0, {0, 0, 0, 0}, {0, 0, 0, 0},
@@ -936,4 +964,5 @@
 
             },
         },
+
     },

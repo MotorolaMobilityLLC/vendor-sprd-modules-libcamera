@@ -6216,8 +6216,27 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
 
     if (zoomRatio < MIN_DIGITAL_ZOOM_RATIO)
         zoomRatio = MIN_DIGITAL_ZOOM_RATIO;
-    if (zoomRatio > MAX_DIGITAL_ZOOM_RATIO)
+    HAL_LOGD("mCameraId1=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,
+             zoomRatio, mIsUltraWideMode);
+    if (getMultiCameraMode() == MODE_MULTI_CAMERA) {
+        if (zoomRatio > MULTI_MAX_DIGITAL_ZOOM_RATIO) {
+            zoomRatio = MULTI_MAX_DIGITAL_ZOOM_RATIO;
+        }
+    } else if (zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
+    }
+
+    if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK) &&
+        zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
+        zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
+    }
+
+#ifndef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+    if (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) &&
+        zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
+        zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
+    }
+#endif
 
     mZoomInfo.mode = ZOOM_INFO;
     HAL_LOGD("mCameraId=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,

@@ -508,6 +508,8 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config) {
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_MODE, &mode);
     CMR_RTN_IF_ERR(ret);
 
+    CMR_LOGD("sn_size.width %d, height %d",
+             config->sn_size.width, config->sn_size.height);
     size.w = config->sn_size.width;
     size.h = config->sn_size.height;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_SENSOR_SIZE, &size);

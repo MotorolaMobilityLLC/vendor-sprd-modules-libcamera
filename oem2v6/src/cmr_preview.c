@@ -68,6 +68,14 @@
 #define SIDEBYSIDE_MAIN_WIDTH 1600
 #define SIDEBYSIDE_HEIGH 1200
 
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+#define PROJECT_SUPPORT_MAX_ZOOM_RATIO 8
+#else
+#define PROJECT_SUPPORT_MAX_ZOOM_RATIO 5
+#endif
+
+#define ISP_HW_SUPPORT_MAX_ZOOM_RATIO 4
+
 #define PREV_EVT_BASE (CMR_EVT_PREVIEW_BASE + 0x100)
 #define PREV_EVT_INIT (PREV_EVT_BASE + 0x0)
 #define PREV_EVT_EXIT (PREV_EVT_BASE + 0x1)
@@ -5679,31 +5687,48 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
 
     CHECK_HANDLE_VALID(handle);
 
-    prev_size = &handle->prev_cxt[camera_id].prev_param.preview_size;
-    act_prev_size = &handle->prev_cxt[camera_id].actual_prev_size;
-    video_size = &handle->prev_cxt[camera_id].prev_param.video_size;
-    act_video_size = &handle->prev_cxt[camera_id].actual_video_size;
-    channel0_size = &handle->prev_cxt[camera_id].prev_param.channel0_size;
-    channel1_size = &handle->prev_cxt[camera_id].prev_param.channel1_size;
+    prev_size =
+        &handle->prev_cxt[camera_id].prev_param.preview_size;
+    act_prev_size =
+        &handle->prev_cxt[camera_id].actual_prev_size;
+    video_size =
+        &handle->prev_cxt[camera_id].prev_param.video_size;
+    act_video_size =
+        &handle->prev_cxt[camera_id].actual_video_size;
+    channel0_size =
+        &handle->prev_cxt[camera_id].prev_param.channel0_size;
+    channel1_size =
+        &handle->prev_cxt[camera_id].prev_param.channel1_size;
     channel1_act_pic_size =
         &handle->prev_cxt[camera_id].channel1_actual_pic_size;
-    channel2_size = &handle->prev_cxt[camera_id].prev_param.channel2_size;
+    channel2_size =
+        &handle->prev_cxt[camera_id].prev_param.channel2_size;
     channel2_act_pic_size =
         &handle->prev_cxt[camera_id].channel2_actual_pic_size;
-    channel3_size = &handle->prev_cxt[camera_id].prev_param.channel3_size;
+    channel3_size =
+        &handle->prev_cxt[camera_id].prev_param.channel3_size;
     channel3_act_pic_size =
         &handle->prev_cxt[camera_id].channel3_actual_pic_size;
-    channel4_size = &handle->prev_cxt[camera_id].prev_param.channel4_size;
+    channel4_size =
+        &handle->prev_cxt[camera_id].prev_param.channel4_size;
     channel4_act_pic_size =
         &handle->prev_cxt[camera_id].channel4_actual_pic_size;
-    org_pic_size = &handle->prev_cxt[camera_id].prev_param.picture_size;
-    alg_pic_size = &handle->prev_cxt[camera_id].aligned_pic_size;
-    act_pic_size = &handle->prev_cxt[camera_id].actual_pic_size;
-    prev_rot = handle->prev_cxt[camera_id].prev_param.prev_rot;
-    cap_rot = handle->prev_cxt[camera_id].prev_param.cap_rot;
-    cfg_cap_rot = handle->prev_cxt[camera_id].prev_param.encode_angle;
-    is_cfg_rot_cap = handle->prev_cxt[camera_id].prev_param.is_cfg_rot_cap;
-    sensor_info = &handle->prev_cxt[camera_id].sensor_info;
+    org_pic_size =
+        &handle->prev_cxt[camera_id].prev_param.picture_size;
+    alg_pic_size =
+        &handle->prev_cxt[camera_id].aligned_pic_size;
+    act_pic_size =
+        &handle->prev_cxt[camera_id].actual_pic_size;
+    prev_rot =
+        handle->prev_cxt[camera_id].prev_param.prev_rot;
+    cap_rot =
+        handle->prev_cxt[camera_id].prev_param.cap_rot;
+    cfg_cap_rot =
+        handle->prev_cxt[camera_id].prev_param.encode_angle;
+    is_cfg_rot_cap =
+        handle->prev_cxt[camera_id].prev_param.is_cfg_rot_cap;
+    sensor_info =
+        &handle->prev_cxt[camera_id].sensor_info;
 
     CMR_LOGD("preview_eb %d, video_eb %d, snapshot_eb %d, sprd_zsl_enabled %d",
              handle->prev_cxt[camera_id].prev_param.preview_eb,
@@ -5711,12 +5736,12 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
              handle->prev_cxt[camera_id].prev_param.snapshot_eb,
              handle->prev_cxt[camera_id].prev_param.sprd_zsl_enabled);
 
-    CMR_LOGD("camera_id %d, prev size %d %d, cap size %d %d", camera_id,
-             prev_size->width, prev_size->height, org_pic_size->width,
-             org_pic_size->height);
+    CMR_LOGD("camera_id %d, prev size %d %d, cap size %d %d",
+        camera_id, prev_size->width, prev_size->height,
+        org_pic_size->width, org_pic_size->height);
 
     CMR_LOGD("prev_rot %d, cap_rot %d, is_cfg_rot_cap %d, cfg_cap_rot %d",
-             prev_rot, cap_rot, is_cfg_rot_cap, cfg_cap_rot);
+        prev_rot, cap_rot, is_cfg_rot_cap, cfg_cap_rot);
 
     aligned_type = CAMERA_MEM_NO_ALIGNED;
 
@@ -5786,20 +5811,20 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     handle->prev_cxt[camera_id].channel2_work_mode = 0;
     handle->prev_cxt[camera_id].channel3_work_mode = 0;
     handle->prev_cxt[camera_id].channel4_work_mode = 0;
-    /* set is_4in1_sensor: after get_sensor_info
-	 * 1: is_4in1_support || limit_w > 0
-	 */
-	do {
-		struct camera_context *cxt = handle->oem_handle;
 
-		cxt->is_4in1_sensor = camera_get_is_4in1_sensor(&(cxt->sn_cxt.info_4in1));
-	} while(0);
+    /* set is_4in1_sensor: after get_sensor_info
+    * 1: is_4in1_support || limit_w > 0
+    */
+    do {
+        struct camera_context *cxt = handle->oem_handle;
+        cxt->is_4in1_sensor = camera_get_is_4in1_sensor(&(cxt->sn_cxt.info_4in1));
+    } while(0);
 
     /*get sensor preview work mode*/
     if (handle->prev_cxt[camera_id].prev_param.preview_eb) {
-        ret = prev_get_sn_preview_mode(handle, camera_id, sensor_info,
-                                       act_prev_size,
-                                       &handle->prev_cxt[camera_id].prev_mode);
+        ret = prev_get_sn_preview_mode(
+            handle, camera_id, sensor_info, act_prev_size,
+            &handle->prev_cxt[camera_id].prev_mode);
         if (ret) {
             CMR_LOGE("get preview mode failed!");
             ret = CMR_CAMERA_FAIL;
@@ -5809,9 +5834,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
 
     /*get sensor video work mode*/
     if (handle->prev_cxt[camera_id].prev_param.video_eb) {
-        ret = prev_get_sn_preview_mode(handle, camera_id, sensor_info,
-                                       act_video_size,
-                                       &handle->prev_cxt[camera_id].video_mode);
+        ret = prev_get_sn_preview_mode(
+            handle, camera_id, sensor_info, act_video_size,
+            &handle->prev_cxt[camera_id].video_mode);
         if (ret) {
             CMR_LOGE("get video mode failed!");
             ret = CMR_CAMERA_FAIL;
@@ -5819,6 +5844,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    /*get sensor channel0 work mode*/
     if (handle->prev_cxt[camera_id].prev_param.channel0_eb) {
         ret = prev_get_sn_preview_mode(
             handle, camera_id, sensor_info, channel0_size,
@@ -5830,6 +5856,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    /*get sensor channel1 work mode*/
     if (handle->prev_cxt[camera_id].prev_param.channel1_eb) {
         ret = prev_get_sn_preview_mode(
             handle, camera_id, sensor_info, channel1_size,
@@ -5841,6 +5868,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    /*get sensor channel2 work mode*/
     if (handle->prev_cxt[camera_id].prev_param.channel2_eb) {
         ret = prev_get_sn_preview_mode(
             handle, camera_id, sensor_info, channel2_size,
@@ -5852,6 +5880,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    /*get sensor channel3 work mode*/
     if (handle->prev_cxt[camera_id].prev_param.channel3_eb) {
         ret = prev_get_sn_preview_mode(
             handle, camera_id, sensor_info, channel3_size,
@@ -5863,6 +5892,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    /*get sensor channel4 work mode*/
     if (handle->prev_cxt[camera_id].prev_param.channel4_eb) {
         ret = prev_get_sn_preview_mode(
             handle, camera_id, sensor_info, channel4_size,
@@ -5874,10 +5904,11 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    /*get sensor snapshot work mode*/
     if (handle->prev_cxt[camera_id].prev_param.snapshot_eb) {
-        ret = prev_get_sn_capture_mode(handle, camera_id, sensor_info,
-                                       act_pic_size,
-                                       &handle->prev_cxt[camera_id].cap_mode);
+        ret = prev_get_sn_capture_mode(
+            handle, camera_id, sensor_info, act_pic_size,
+            &handle->prev_cxt[camera_id].cap_mode);
         if (ret) {
             CMR_LOGE("get capture mode failed!");
             ret = CMR_CAMERA_FAIL;
@@ -5885,11 +5916,13 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    /*get sensor video_slowmotion work mode*/
     if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb) {
         for (sn_mode = SENSOR_MODE_PREVIEW_ONE; sn_mode < SENSOR_MODE_MAX;
              sn_mode++) {
-            ret = handle->ops.get_sensor_fps_info(handle->oem_handle, camera_id,
-                                                  sn_mode, &fps_info);
+            ret = handle->ops.get_sensor_fps_info(
+                handle->oem_handle, camera_id,
+                sn_mode, &fps_info);
             if (ret) {
                 CMR_LOGE("get_sensor info failed!");
                 ret = CMR_CAMERA_FAIL;
@@ -5928,8 +5961,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
-    valid_max_sn_mode = MAX(handle->prev_cxt[camera_id].prev_mode,
-                            handle->prev_cxt[camera_id].video_mode);
+    valid_max_sn_mode =
+        MAX(handle->prev_cxt[camera_id].prev_mode,
+        handle->prev_cxt[camera_id].video_mode);
     valid_max_sn_mode =
         MAX(valid_max_sn_mode, handle->prev_cxt[camera_id].channel0_work_mode);
     valid_max_sn_mode =
@@ -5994,6 +6028,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
              handle->prev_cxt[camera_id].channel3_work_mode,
              handle->prev_cxt[camera_id].channel4_work_mode,
              handle->prev_cxt[camera_id].cap_mode);
+
 // for mm dvfs
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     if (handle->prev_cxt[camera_id].prev_param.channel0_eb ||
@@ -6025,8 +6060,11 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_DCAM_IF, IS_PREVIEW_BEGIN);
     cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
 #endif
-    handle->prev_cxt[camera_id].sensor_out_width = sensor_info->mode_info[valid_max_sn_mode].width;
-    handle->prev_cxt[camera_id].sensor_out_height = sensor_info->mode_info[valid_max_sn_mode].height;
+
+    handle->prev_cxt[camera_id].sensor_out_width =
+        sensor_info->mode_info[valid_max_sn_mode].width;
+    handle->prev_cxt[camera_id].sensor_out_height =
+        sensor_info->mode_info[valid_max_sn_mode].height;
 
 exit:
     CMR_LOGD("X");
@@ -6040,6 +6078,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                                  cmr_uint *work_mode) {
     cmr_int ret = CMR_CAMERA_FAIL;
     cmr_u32 width = 0, height = 0, i = 0, last_one = 0;
+    cmr_u32 prv_width = 0, prv_height = 0;
     cmr_u32 search_height;
     cmr_u32 search_width;
     cmr_u32 target_mode = SENSOR_MODE_MAX;
@@ -6074,8 +6113,8 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_height = sensor_info->source_height_max / 2;
     } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0) {
         /* 4in1 sensor: not high resolution mode, sensor output
-         * max size is binning size, but output can digital zoom
-         */
+        * max size is binning size, but output can digital zoom
+        */
         if (target_size->width <= sensor_info->source_width_max / 2 &&
             target_size->height <= sensor_info->source_height_max / 2) {
             search_width = target_size->width;
@@ -6088,6 +6127,11 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_width = target_size->width;
         search_height = target_size->height;
     }
+
+    prv_width =
+        handle->prev_cxt[camera_id].prev_param.preview_size.width;
+    prv_height =
+        handle->prev_cxt[camera_id].prev_param.preview_size.height;
 
     if (is_raw_capture == 1) {
         search_height =
@@ -6119,20 +6163,36 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 if (CAM_IMG_FMT_JPEG !=
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
-                        /* dont choose high fps setting for no-slowmotion */
-                        ret = handle->ops.get_sensor_fps_info(
-                            handle->oem_handle, camera_id, i, &fps_info);
-                        CMR_LOGV("mode=%d, is_high_fps=%d", i,
-                                 fps_info.is_high_fps);
-                        if (fps_info.is_high_fps) {
-                            CMR_LOGD("dont choose high fps setting");
-                            continue;
+                        if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
+                            if (width / PROJECT_SUPPORT_MAX_ZOOM_RATIO >=
+                                prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
+                                /* dont choose high fps setting for no-slowmotion */
+                                ret = handle->ops.get_sensor_fps_info(
+                                    handle->oem_handle, camera_id, i, &fps_info);
+                                CMR_LOGD("mode=%d, is_high_fps=%d", i,
+                                    fps_info.is_high_fps);
+                                if (fps_info.is_high_fps) {
+                                    CMR_LOGD("dont choose high fps setting");
+                                    continue;
+                                }
+                                target_mode = i;
+                                ret = CMR_CAMERA_SUCCESS;
+                                break;
+                            }
+                        } else {
+                            /* dont choose high fps setting for no-slowmotion */
+                            ret = handle->ops.get_sensor_fps_info(
+                                handle->oem_handle, camera_id, i, &fps_info);
+                            CMR_LOGD("mode=%d, is_high_fps=%d", i,
+                                fps_info.is_high_fps);
+                            if (fps_info.is_high_fps) {
+                                CMR_LOGD("dont choose high fps setting");
+                                continue;
+                            }
+                            target_mode = i;
+                            ret = CMR_CAMERA_SUCCESS;
+                            break;
                         }
-
-                        target_mode = i;
-                        ret = CMR_CAMERA_SUCCESS;
-                        break;
-
                     } else {
                         last_one = i;
                     }
@@ -6159,6 +6219,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                                  cmr_uint *work_mode) {
     cmr_int ret = CMR_CAMERA_FAIL;
     cmr_u32 width = 0, height = 0, i = 0;
+    cmr_u32 prv_width = 0, prv_height = 0;
     cmr_u32 search_width;
     cmr_u32 search_height;
     cmr_u32 target_mode = SENSOR_MODE_MAX;
@@ -6184,14 +6245,15 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
     if (cxt->is_multi_mode == MODE_3D_VIDEO) {
         is_3D_video = 1;
     }
-	CMR_LOGD("mode %d,id %d,4in1: %d", cxt->is_multi_mode, camera_id, cxt->is_4in1_sensor);
+    CMR_LOGD("camera_id = %d, mode = %d, 4in1 = %d",
+        camera_id, cxt->is_multi_mode, cxt->is_4in1_sensor);
     if (1 == is_3D_video) {
         search_width = sensor_info->source_width_max / 2;
         search_height = sensor_info->source_height_max / 2;
-     } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0) {
+    } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0) {
         /* 4in1 sensor: not high resolution mode, sensor output
-         * max size is binning size, but output can digital zoom
-         */
+        * max size is binning size, but output can digital zoom
+        */
         if (target_size->width <= sensor_info->source_width_max / 2 &&
             target_size->height <= sensor_info->source_height_max / 2) {
             search_width = target_size->width;
@@ -6204,6 +6266,11 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         search_width = target_size->width;
         search_height = target_size->height;
     }
+
+    prv_width =
+        handle->prev_cxt[camera_id].prev_param.preview_size.width;
+    prv_height =
+        handle->prev_cxt[camera_id].prev_param.preview_size.height;
 
     if (is_raw_capture == 1 || handle->prev_cxt[camera_id].prev_param.tool_eb) {
         CMR_LOGD("search_height = %d", search_height);
@@ -6225,66 +6292,84 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
             }
         }
     } else {
-        CMR_LOGD("search_height = %d,is_high_res_mode = %d,ambient_highlight = %d", search_height,
-                 cxt->is_high_res_mode,cxt->ambient_highlight);
+        CMR_LOGD("search_height = %d, is_high_res_mode = %d, ambient_highlight = %d",
+            search_height, cxt->is_high_res_mode, cxt->ambient_highlight);
         if (cxt->is_high_res_mode == 1 && cxt->ambient_highlight == 0){
             search_height = search_height>> 1;
             search_width = search_width >> 1;
             CMR_LOGD("search_height = %d, search_width = %d", search_height, search_width);
-           for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-               if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
-                   height = sensor_info->mode_info[i].trim_height;
-                   width = sensor_info->mode_info[i].trim_width;
-                   CMR_LOGD("height = %d, width = %d", height, width);
-                   if (CAM_IMG_FMT_JPEG !=
-                       sensor_info->mode_info[i].image_format) {
-                       if (search_height <= height && search_width <= width) {
-                           /* dont choose high fps setting for no-slowmotion */
-                           ret = handle->ops.get_sensor_fps_info(
-                               handle->oem_handle, camera_id, i, &fps_info);
-                           CMR_LOGV("mode=%d, is_high_fps=%d", i,
-                                    fps_info.is_high_fps);
-                           if (fps_info.is_high_fps) {
-                               CMR_LOGD("dont choose high fps setting");
-                               continue;
-                           }
-                           target_mode = i;
-                           ret = CMR_CAMERA_SUCCESS;
-                           break;
-                       } else {
-                           last_mode = i;
-                       }
-                   }
+            for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+                if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+                    height = sensor_info->mode_info[i].trim_height;
+                    width = sensor_info->mode_info[i].trim_width;
+                    CMR_LOGD("height = %d, width = %d", height, width);
+                    if (CAM_IMG_FMT_JPEG !=
+                        sensor_info->mode_info[i].image_format) {
+                        if (search_height <= height && search_width <= width) {
+                            /* dont choose high fps setting for no-slowmotion */
+                            ret = handle->ops.get_sensor_fps_info(
+                                handle->oem_handle, camera_id, i, &fps_info);
+                            CMR_LOGV("mode=%d, is_high_fps=%d", i,
+                                fps_info.is_high_fps);
+                            if (fps_info.is_high_fps) {
+                                CMR_LOGD("dont choose high fps setting");
+                                continue;
+                            }
+                            target_mode = i;
+                            ret = CMR_CAMERA_SUCCESS;
+                            break;
+                        } else {
+                            last_mode = i;
+                        }
+                    }
                }
            }
-       }else {
-           for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
-               if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
-                   height = sensor_info->mode_info[i].trim_height;
-                   width = sensor_info->mode_info[i].trim_width;
-                   CMR_LOGD("height = %d, width = %d", height, width);
-                   if (CAM_IMG_FMT_JPEG !=
-                       sensor_info->mode_info[i].image_format) {
-                       if (search_height <= height && search_width <= width) {
-                           /* dont choose high fps setting for no-slowmotion */
-                           ret = handle->ops.get_sensor_fps_info(
-                               handle->oem_handle, camera_id, i, &fps_info);
-                           CMR_LOGV("mode=%d, is_high_fps=%d", i,
+        }else {
+            for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+                if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+                    height = sensor_info->mode_info[i].trim_height;
+                    width = sensor_info->mode_info[i].trim_width;
+                    CMR_LOGD("height = %d, width = %d", height, width);
+                    if (CAM_IMG_FMT_JPEG !=
+                        sensor_info->mode_info[i].image_format) {
+                        if (search_height <= height && search_width <= width) {
+                            if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
+                                if (width / PROJECT_SUPPORT_MAX_ZOOM_RATIO >=
+                                    prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
+                                    /* dont choose high fps setting for no-slowmotion */
+                                    ret = handle->ops.get_sensor_fps_info(
+                                        handle->oem_handle, camera_id, i, &fps_info);
+                                    CMR_LOGD("mode=%d, is_high_fps=%d", i,
+                                         fps_info.is_high_fps);
+                                    if (fps_info.is_high_fps) {
+                                    CMR_LOGD("dont choose high fps setting");
+                                    continue;
+                                    }
+                                    target_mode = i;
+                                    ret = CMR_CAMERA_SUCCESS;
+                                    break;
+                                }
+                            } else {
+                                /* dont choose high fps setting for no-slowmotion */
+                                ret = handle->ops.get_sensor_fps_info(
+                                    handle->oem_handle, camera_id, i, &fps_info);
+                                CMR_LOGV("mode=%d, is_high_fps=%d", i,
                                     fps_info.is_high_fps);
-                           if (fps_info.is_high_fps) {
-                               CMR_LOGD("dont choose high fps setting");
-                               continue;
-                           }
-                           target_mode = i;
-                           ret = CMR_CAMERA_SUCCESS;
-                           break;
-                       } else {
-                           last_mode = i;
-                       }
-                   }
-               }
-           }
-       }
+                                if (fps_info.is_high_fps) {
+                                    CMR_LOGD("dont choose high fps setting");
+                                    continue;
+                                }
+                                target_mode = i;
+                                ret = CMR_CAMERA_SUCCESS;
+                                break;
+                            }
+                        } else {
+                            last_mode = i;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (i == SENSOR_MODE_MAX) {
@@ -7035,17 +7120,16 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-	do { /* check 4in1 type */
-		struct prev_context *prev_cxt = &(handle->prev_cxt[camera_id]);
-
-		prev_cxt->prev_param.remosaic_type = camera_get_remosaic_type(
-		        &(cxt->sn_cxt.info_4in1),
-				prev_cxt->sensor_out_width, prev_cxt->sensor_out_height);
-		cxt->remosaic_type = prev_cxt->prev_param.remosaic_type;
-	} while (0);
+    do { /* check 4in1 type */
+        struct prev_context *prev_cxt = &(handle->prev_cxt[camera_id]);
+        prev_cxt->prev_param.remosaic_type =
+            camera_get_remosaic_type(&(cxt->sn_cxt.info_4in1),
+            prev_cxt->sensor_out_width, prev_cxt->sensor_out_height);
+        cxt->remosaic_type = prev_cxt->prev_param.remosaic_type;
+    } while (0);
 
     if (handle->prev_cxt[camera_id].prev_param.preview_eb) {
-        ret = prev_set_prev_param(handle, camera_id, is_restart, out_param_ptr);
+        ret =prev_set_prev_param(handle, camera_id, is_restart, out_param_ptr);
         if (ret) {
             CMR_LOGE("set prev param failed");
             goto exit;
@@ -7053,8 +7137,7 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     if (handle->prev_cxt[camera_id].prev_param.video_eb) {
-        ret =
-            prev_set_video_param(handle, camera_id, is_restart, out_param_ptr);
+        ret = prev_set_video_param(handle, camera_id, is_restart, out_param_ptr);
         if (ret) {
             CMR_LOGE("set video param failed");
             goto exit;
@@ -7577,8 +7660,10 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
         chn_param.cap_inf_cfg.cfg.src_img_rect.start_x;
     prev_cxt->prev_rect.start_y =
         chn_param.cap_inf_cfg.cfg.src_img_rect.start_y;
-    prev_cxt->prev_rect.width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
-    prev_cxt->prev_rect.height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
+    prev_cxt->prev_rect.width =
+        chn_param.cap_inf_cfg.cfg.src_img_rect.width;
+    prev_cxt->prev_rect.height =
+        chn_param.cap_inf_cfg.cfg.src_img_rect.height;
 
     /*config channel*/
     if (!handle->ops.channel_cfg) {
@@ -11947,7 +12032,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_cxt->capture_scene_mode = chn_param.cap_inf_cfg.cfg.sence_mode;
     // config 4in1 flag
-	if (check_software_remosaic(prev_cxt))
+    if (check_software_remosaic(prev_cxt))
         chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
     /*config capture ability*/
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
@@ -12125,7 +12210,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
-	if (check_software_remosaic(prev_cxt)) {
+    if (check_software_remosaic(prev_cxt)) {
         CMR_LOGD("4in1 buffer cfg, channel id = %d", prev_cxt->cap_channel_id);
         cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
         buf_cfg.channel_id = prev_cxt->cap_channel_id;
@@ -12596,8 +12681,8 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         break;
     }
 
-    CMR_LOGD("sn_image_format %d, dst_img_fmt %d, cap_org_fmt %ld, "
-             "cap_zoom_mode %ld",
+    CMR_LOGD("sn_image_format %d, dst_img_fmt %d"
+             ", cap_org_fmt %ld, cap_zoom_mode %ld",
              sn_mode_info->image_format, img_cap->dst_img_fmt,
              prev_cxt->cap_org_fmt, prev_cxt->cap_zoom_mode);
 
@@ -12609,9 +12694,9 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     img_cap->src_img_rect.width = sn_mode_info->scaler_trim.width;
     img_cap->src_img_rect.height = sn_mode_info->scaler_trim.height;
 
-    CMR_LOGD("src_img_rect %d %d %d %d", img_cap->src_img_rect.start_x,
-             img_cap->src_img_rect.start_y, img_cap->src_img_rect.width,
-             img_cap->src_img_rect.height);
+    CMR_LOGD("src_img_rect %d %d %d %d",
+             img_cap->src_img_rect.start_x, img_cap->src_img_rect.start_y,
+             img_cap->src_img_rect.width, img_cap->src_img_rect.height);
 
     trim_sz.width = sn_mode_info->scaler_trim.width;
     trim_sz.height = sn_mode_info->scaler_trim.height;

@@ -790,7 +790,7 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
     List<hwi_frame_buffer_info_t>::iterator itor2;
 
     if (list.empty()) {
-        HAL_LOGV("match failed for idx:%d, unmatched queue is empty",
+        HAL_LOGE("match failed for idx:%d, unmatched queue is empty",
                  result1.frame_number);
         return MATCH_FAILED;
     } else {
@@ -1664,7 +1664,7 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
         HAL_LOGE("Error,can't find the right resolution");
         return;
     }
-    custom_res *stream_info = custom_stream[i].res;
+  custom_res *stream_info = custom_stream[i].res;
     size_t stream_cnt = CUSTOM_RES_NUM;
     int32_t scaler_formats[] = {
         HAL_PIXEL_FORMAT_YCbCr_420_888, HAL_PIXEL_FORMAT_BLOB,
