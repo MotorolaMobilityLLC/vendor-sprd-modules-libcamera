@@ -580,6 +580,7 @@ static cmr_int ispctl_ae_awb_bypass(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 type = 0;
 	cmr_u32 bypass = 0;
+	cmr_u32 scene_id = 0;
 
 	if (NULL == param_ptr) {
 		return ISP_PARAM_NULL;
@@ -593,7 +594,9 @@ static cmr_int ispctl_ae_awb_bypass(cmr_handle isp_alg_handle, void *param_ptr)
 		cxt->awb_cxt.sw_bypass = 0;
 		if (cxt->ops.ae_ops.ioctrl)
 			cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_BYPASS, &bypass, NULL);
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_BYPASS, &bypass, NULL);
+		for (scene_id = 0; scene_id < 2; scene_id++) {
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_BYPASS, &bypass, &scene_id);
+		}
 		break;
 	case 1:
 		break;
@@ -606,7 +609,9 @@ static cmr_int ispctl_ae_awb_bypass(cmr_handle isp_alg_handle, void *param_ptr)
 	case 3:		/*awb bypass */
 		bypass = 1;
 		cxt->awb_cxt.sw_bypass = 1;
-		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_BYPASS, &bypass, NULL);
+		for (scene_id = 0; scene_id < 2; scene_id++) {
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_BYPASS, &bypass, &scene_id);
+		}
 		break;
 	default:
 		break;
