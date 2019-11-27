@@ -32,6 +32,8 @@ typedef struct {
 typedef struct {
     int sel_x;    /* The point which be touched */
     int sel_y;    /* The point which be touched */
+    int capture_x;
+    int capture_y;
     int f_number; // The strength of bokeh region 0~255
     int vcm;
     bool isFocus;

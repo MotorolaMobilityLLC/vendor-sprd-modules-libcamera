@@ -2904,6 +2904,12 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
             y = top + (bottom - top) / 2;
             x = x * mBokehSize.preview_w / trim_W;
             y = y * mBokehSize.preview_h / trim_H;
+            if (x != mbokehParm.sel_x || y != mbokehParm.sel_y) {
+                mbokehParm.sel_x = x;
+                mbokehParm.sel_y = y;
+                isUpdate = true;
+                HAL_LOGD("sel_x %d ,sel_y %d", x, y);
+            }
             mtempParm.x = x;
             mtempParm.y = y;
             mtempParm.frame_number = cur_frame_number;
@@ -2932,10 +2938,10 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
                          mFaceafList.begin();
                      j != mFaceafList.end(); j++) {
                     if (j->frame_number == prev_frame_number) {
-                        if (j->x != mbokehParm.sel_x ||
-                            j->y != mbokehParm.sel_y) {
-                            mbokehParm.sel_x = j->x;
-                            mbokehParm.sel_y = j->y;
+                        if (j->x != mbokehParm.capture_x ||
+                            j->y != mbokehParm.capture_y) {
+                            mbokehParm.capture_x = j->x;
+                            mbokehParm.capture_y = j->y;
                             isUpdate = true;
                         }
                         break;
@@ -3370,6 +3376,8 @@ int SprdCamera3RealBokeh::configureStreams(
 
     mbokehParm.sel_x = mBokehSize.preview_w / 2;
     mbokehParm.sel_y = mBokehSize.preview_h / 2;
+    mbokehParm.capture_x = mBokehSize.preview_w / 2;
+    mbokehParm.capture_y = mBokehSize.preview_h / 2;
     hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_REBOKE_DATA, &af_relbokeh_info,
                            NULL);
     memcpy(&mbokehParm.relbokeh_oem_data, &af_relbokeh_info,

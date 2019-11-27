@@ -119,6 +119,8 @@ void SprdBokehAlgo::setBokenParam(void *param) {
     memcpy(&mPortraitCapParam, (bokeh_params *)param, sizeof(bokeh_params));
     mPreviewbokehParam.weight_params.sel_x = bokeh_param.sel_x;
     mPreviewbokehParam.weight_params.sel_y = bokeh_param.sel_y;
+    mCapbokehParam.sel_x = bokeh_param.capture_x *mSize.capture_w / mSize.preview_w;
+    mCapbokehParam.sel_y = bokeh_param.capture_y *mSize.capture_h / mSize.preview_h;
     fnum = bokeh_param.f_number * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
     mPreviewbokehParam.weight_params.F_number = fnum;
     mPreviewbokehParam.depth_param.sel_x = bokeh_param.sel_x;
@@ -440,10 +442,6 @@ int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
     }
     f_number = mPreviewbokehParam.weight_params.F_number * MAX_F_FUMBER /
                MAX_BLUR_F_FUMBER;
-    mCapbokehParam.sel_x = mPreviewbokehParam.weight_params.sel_x *
-                           mSize.capture_w / mSize.preview_w;
-    mCapbokehParam.sel_y = mPreviewbokehParam.weight_params.sel_y *
-                           mSize.capture_h / mSize.preview_h;
     mCapbokehParam.bokeh_level =
         (MAX_F_FUMBER + 1 - f_number) * 255 / MAX_F_FUMBER;
 
