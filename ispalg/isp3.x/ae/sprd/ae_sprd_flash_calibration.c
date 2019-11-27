@@ -537,47 +537,48 @@ void readFCConfig(char *f, struct FCData *d, char *fout)
 {
 	int i;
 	FILE *fp = NULL;
-	fp = fopen(f, "rt");
-	if (fp && d) {
-		fscanf(fp, "%d", &d->numP1_hw);
-		fscanf(fp, "%d", &d->numP2_hw);
-		fscanf(fp, "%d", &d->numM1_hw);
-		fscanf(fp, "%d", &d->numM2_hw);
+	if(f && d){
+                fp = fopen(f, "rt");
+                if (fp) {
+                        fscanf(fp, "%d", &d->numP1_hw);
+                        fscanf(fp, "%d", &d->numP2_hw);
+                        fscanf(fp, "%d", &d->numM1_hw);
+                        fscanf(fp, "%d", &d->numM2_hw);
 
-		fscanf(fp, "%d", &d->numP1_hwSample);
-		for (i = 0; i < d->numP1_hwSample; i++)
-			fscanf(fp, "%d", &d->indP1_hwSample[i]);
-		for (i = 0; i < d->numP1_hwSample; i++)
-			fscanf(fp, "%f", &d->maP1_hwSample[i]);
+                        fscanf(fp, "%d", &d->numP1_hwSample);
+                        for (i = 0; i < d->numP1_hwSample; i++)
+                                fscanf(fp, "%d", &d->indP1_hwSample[i]);
+                        for (i = 0; i < d->numP1_hwSample; i++)
+                                fscanf(fp, "%f", &d->maP1_hwSample[i]);
 
-		fscanf(fp, "%d", &d->numP2_hwSample);
-		for (i = 0; i < d->numP2_hwSample; i++)
-			fscanf(fp, "%d", &d->indP2_hwSample[i]);
-		for (i = 0; i < d->numP2_hwSample; i++)
-			fscanf(fp, "%f", &d->maP2_hwSample[i]);
+                        fscanf(fp, "%d", &d->numP2_hwSample);
+                        for (i = 0; i < d->numP2_hwSample; i++)
+                                fscanf(fp, "%d", &d->indP2_hwSample[i]);
+                        for (i = 0; i < d->numP2_hwSample; i++)
+                                fscanf(fp, "%f", &d->maP2_hwSample[i]);
 
-		fscanf(fp, "%d", &d->numM1_hwSample);
-		for (i = 0; i < d->numM1_hwSample; i++)
-			fscanf(fp, "%d", &d->indM1_hwSample[i]);
-		for (i = 0; i < d->numM1_hwSample; i++)
-			fscanf(fp, "%f", &d->maM1_hwSample[i]);
+                        fscanf(fp, "%d", &d->numM1_hwSample);
+                        for (i = 0; i < d->numM1_hwSample; i++)
+                                fscanf(fp, "%d", &d->indM1_hwSample[i]);
+                        for (i = 0; i < d->numM1_hwSample; i++)
+                                fscanf(fp, "%f", &d->maM1_hwSample[i]);
 
-		fscanf(fp, "%d", &d->numM2_hwSample);
-		for (i = 0; i < d->numM2_hwSample; i++)
-			fscanf(fp, "%d", &d->indM2_hwSample[i]);
-		for (i = 0; i < d->numM2_hwSample; i++)
-			fscanf(fp, "%f", &d->maM2_hwSample[i]);
+                        fscanf(fp, "%d", &d->numM2_hwSample);
+                        for (i = 0; i < d->numM2_hwSample; i++)
+                                fscanf(fp, "%d", &d->indM2_hwSample[i]);
+                        for (i = 0; i < d->numM2_hwSample; i++)
+                                fscanf(fp, "%f", &d->maM2_hwSample[i]);
 
-		fscanf(fp, "%f", &d->mAMaxP1);
-		fscanf(fp, "%f", &d->mAMaxP2);
-		fscanf(fp, "%f", &d->mAMaxP12);
-		fscanf(fp, "%f", &d->mAMaxM1);
-		fscanf(fp, "%f", &d->mAMaxM2);
-		fscanf(fp, "%f", &d->mAMaxM12);
-		fclose(fp);
-		fp = NULL;
-	}
-
+                        fscanf(fp, "%f", &d->mAMaxP1);
+                        fscanf(fp, "%f", &d->mAMaxP2);
+                        fscanf(fp, "%f", &d->mAMaxP12);
+                        fscanf(fp, "%f", &d->mAMaxM1);
+                        fscanf(fp, "%f", &d->mAMaxM2);
+                        fscanf(fp, "%f", &d->mAMaxM12);
+                        fclose(fp);
+                        fp = NULL;
+                }
+        }
 	if (fout != 0 && d) {
 	        fp = fopen(fout, "wt");
 	        if (NULL != fp) {
