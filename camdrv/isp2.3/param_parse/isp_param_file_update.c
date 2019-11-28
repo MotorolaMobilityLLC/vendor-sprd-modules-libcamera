@@ -1306,13 +1306,13 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 	sprintf(filename1, "%ssensor_%s_raw_param_common.c", CAMERA_DUMP_PATH, sensor_name);
 
 	if (-1 != access(filename0, 0)) {
-		ISP_LOGE("fail to access %s!\n", filename0);
+		ISP_LOGI("success to access %s!\n", filename0);
 		filename = filename0;
 		version = 1;
 	}
 	if (NULL == filename) {
 		if (-1 != access(filename1, 0)) {
-			ISP_LOGE("fail to access %s!\n", filename1);
+			ISP_LOGI("success to access %s!\n", filename1);
 			filename = filename1;
 			version = 2;
 		}
