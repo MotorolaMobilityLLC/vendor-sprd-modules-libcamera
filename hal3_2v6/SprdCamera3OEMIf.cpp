@@ -4867,7 +4867,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
-    maxJpegSize = ADP_BUFSIZE(*jpeg_buff_handle);
+        maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
+
     if ((uint32_t)maxJpegSize > heap_size) {
         maxJpegSize = heap_size;
     }

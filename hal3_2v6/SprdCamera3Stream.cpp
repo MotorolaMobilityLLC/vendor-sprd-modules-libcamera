@@ -257,7 +257,7 @@ int SprdCamera3Stream::getHeapSize(uint32_t *mm_heap_size) {
         return BAD_VALUE;
     }
 
-    *mm_heap_size = ADP_BUFSIZE(*((*iter)->buffer_handle));
+    *mm_heap_size = ADP_WIDTH(*((*iter)->buffer_handle));
 
     return NO_ERROR;
 }
