@@ -841,6 +841,12 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list + physical_id;
 
+    char boot_mode[PROPERTY_VALUE_MAX] = {'\0'};
+    property_get("ro.bootmode", boot_mode, "0");
+    if (!strcmp(boot_mode, "autotest") || !strcmp(boot_mode, "cali")) {
+        sensor_drv_scan_hw();
+    }
+
     if (phyPtr->slotId == 0xff) {
         SENSOR_LOGE("slotId is 255.please check and connect the sensor,restart "
                     "the phone");

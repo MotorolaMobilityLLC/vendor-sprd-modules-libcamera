@@ -58,7 +58,12 @@ SprdCamera3Wrapper *gSprdCamera3Wrapper = NULL;
  *==========================================================================*/
 SprdCamera3Factory::SprdCamera3Factory() {
     camera_info info;
-    mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
+    char boot_mode[PROPERTY_VALUE_MAX] = {'\0'};
+    property_get("ro.bootmode", boot_mode, "0");
+    LOGI("%s boot_mode = %s", __FUNCTION__, boot_mode);
+    if (strcmp(boot_mode, "autotest") && strcmp(boot_mode, "cali")) {
+        mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
+    }
     if (!gSprdCamera3Wrapper) {
         SprdCamera3Wrapper::getCameraWrapper(&gSprdCamera3Wrapper);
         if (!gSprdCamera3Wrapper) {
@@ -167,7 +172,12 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
  *
  * RETURN     : number of cameras detected
  *==========================================================================*/
-int SprdCamera3Factory::getNumberOfCameras() { return mNumOfCameras; }
+int SprdCamera3Factory::getNumberOfCameras() {
+    if(mNumOfCameras == 0) {
+        mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
+    }
+    return mNumOfCameras;
+}
 
 /*===========================================================================
  * FUNCTION   : getCameraInfo
