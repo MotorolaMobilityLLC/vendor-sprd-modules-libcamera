@@ -6090,11 +6090,21 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
     } else if (cxt->is_multi_mode == MODE_3D_PREVIEW) {
         is_3D_preview = 1;
     }
-    if (1 == is_3D_video || 1 == is_3D_caputre || 1 == is_3D_preview ||
-	    (cxt->is_high_res_mode == 0 && camera_id == 1 &&
-		cxt->is_4in1_sensor == 1)) {
+    if (1 == is_3D_video || 1 == is_3D_caputre || 1 == is_3D_preview) {
         search_width = sensor_info->source_width_max / 2;
         search_height = sensor_info->source_height_max / 2;
+    } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0) {
+        /* 4in1 sensor: not high resolution mode, sensor output
+         * max size is binning size, but output can digital zoom
+         */
+        if (target_size->width <= sensor_info->source_width_max / 2 &&
+            target_size->height <= sensor_info->source_height_max / 2) {
+            search_width = target_size->width;
+            search_height = target_size->height;
+        } else { /* less than binning size */
+            search_width = sensor_info->source_width_max / 2;
+            search_height = sensor_info->source_height_max / 2;
+        }
     } else {
         search_width = target_size->width;
         search_height = target_size->height;
@@ -6196,10 +6206,21 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         is_3D_video = 1;
     }
 	CMR_LOGD("mode %d,id %d,4in1: %d", cxt->is_multi_mode, camera_id, cxt->is_4in1_sensor);
-    if (1 == is_3D_video || (cxt->is_high_res_mode == 0 &&
-	    camera_id == 1 && cxt->is_4in1_sensor == 1)) {
+    if (1 == is_3D_video) {
         search_width = sensor_info->source_width_max / 2;
         search_height = sensor_info->source_height_max / 2;
+     } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0) {
+        /* 4in1 sensor: not high resolution mode, sensor output
+         * max size is binning size, but output can digital zoom
+         */
+        if (target_size->width <= sensor_info->source_width_max / 2 &&
+            target_size->height <= sensor_info->source_height_max / 2) {
+            search_width = target_size->width;
+            search_height = target_size->height;
+        } else { /* less than binning size */
+            search_width = sensor_info->source_width_max / 2;
+            search_height = sensor_info->source_height_max / 2;
+        }
     } else {
         search_width = target_size->width;
         search_height = target_size->height;
