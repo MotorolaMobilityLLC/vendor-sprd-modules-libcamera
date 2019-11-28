@@ -4752,7 +4752,7 @@ int SprdCamera3Setting::updateWorkParameters(
                       .data.u8[0];
         s_setting[mCameraId].controlInfo.ae_precap_trigger = valueU8;
         pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
-        HAL_LOGV("ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER %d", valueU8);
+        HAL_LOGV("mCameraId=%d,ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER %d", mCameraId,valueU8);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
         s_setting[mCameraId].controlInfo.ae_precapture_id =

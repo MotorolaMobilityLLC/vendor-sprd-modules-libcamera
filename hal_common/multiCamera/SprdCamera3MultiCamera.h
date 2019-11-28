@@ -236,6 +236,8 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     int aux2_face_number;
     uint8_t aux1_ai_scene_type;
     uint8_t aux2_ai_scene_type;
+    uint8_t aux1_af_state;
+    uint8_t aux2_af_state;
     int mVcmSteps;
     int mAlgoStatus;
     Mutex mUnmatchedQueueLock;

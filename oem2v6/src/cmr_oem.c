@@ -2560,7 +2560,6 @@ cmr_int camera_focus_pre_proc(cmr_handle oem_handle) {
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
 
     CMR_LOGV("E");
-
     if (cxt->camera_id == 1)
         goto exit;
 
@@ -7468,8 +7467,8 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     sensor_cfg.sn_trim.start_y = sensor_mode_info->trim_start_y;
     sensor_cfg.sn_trim.width = sensor_mode_info->trim_width;
     sensor_cfg.sn_trim.height = sensor_mode_info->trim_height;
-    CMR_LOGD("sn_size: width=%d, height=%d", sensor_cfg.sn_size.width,
-             sensor_cfg.sn_size.height);
+    CMR_LOGD("sn_size: width=%d, height=%d, camera_id=%d", sensor_cfg.sn_size.width,
+             sensor_cfg.sn_size.height, cxt->camera_id);
     CMR_LOGD("sn_trim: width=%d, height=%d", sensor_cfg.sn_trim.width,
              sensor_cfg.sn_trim.height);
     CMR_LOGD("scaler_trim: width=%d, height=%d",

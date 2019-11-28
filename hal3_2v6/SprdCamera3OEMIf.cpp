@@ -2117,8 +2117,8 @@ void SprdCamera3OEMIf::setAfState(enum afTransitionCause cause) {
     }
 
 exit:
-    HAL_LOGD("Af mode=%d, transition cause=%d, cur state=%d, new state=%d",
-             controlInfo.af_mode, cause, state, newState);
+    HAL_LOGD("mCameraId=%d, Af mode=%d, transition cause=%d, cur state=%d, new state=%d",
+             mCameraId, controlInfo.af_mode, cause, state, newState);
 
     controlInfo.af_state = newState;
     mSetting->setAfCONTROLTag(&controlInfo);
@@ -2267,8 +2267,8 @@ void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
         if ((aeStateMachine[i].transitionCause == cause) &&
             (aeStateMachine[i].state == state)) {
             newState = aeStateMachine[i].newState;
-            HAL_LOGD("Ae transition cause=%d, cur state=%d, new state=%d",
-                     cause, state, newState);
+            HAL_LOGD("mCameraId=%d, Ae transition cause=%d, cur state=%d, new state=%d",
+                     mCameraId, cause, state, newState);
             break;
         }
     }
@@ -6457,7 +6457,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (cmr_uint)&ae_compensation_param);
         break;
     case ANDROID_CONTROL_AF_TRIGGER:
-        HAL_LOGD("AF_TRIGGER %d", controlInfo.af_trigger);
+        HAL_LOGD("mCameraId=%d, AF_TRIGGER %d", mCameraId, controlInfo.af_trigger);
         if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
             struct img_rect zoom1 = {0, 0, 0, 0};
             struct img_rect zoom = {0, 0, 0, 0};
@@ -6726,8 +6726,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER: {
-        HAL_LOGV("ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER: %d",
-                 controlInfo.ae_precap_trigger);
+        HAL_LOGV("mCameraId=%d, ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER: %d",
+                 mCameraId, controlInfo.ae_precap_trigger);
         if (controlInfo.ae_precap_trigger ==
             ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_START) {
             setAeState(AE_PRECAPTURE_START);

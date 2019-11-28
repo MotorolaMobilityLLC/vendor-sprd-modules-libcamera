@@ -257,6 +257,8 @@ SprdCamera3MultiCamera::SprdCamera3MultiCamera() {
     aux1_ai_scene_type = 0;
     aux2_ai_scene_type = 0;
 
+    aux1_af_state= 0;
+    aux2_af_state= 0;
     mRefCameraId = 0;
     mLastRefCameraId = 0xff;
 
@@ -2419,9 +2421,11 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
                             ARRAY_SIZE(crop_Region));
         camMetadata->update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
                             &(gMultiCam->aux1_ai_scene_type), 1);
-        HAL_LOGD("sw crop=%d,%d,%d,%d ai_scene_type %d",
+        camMetadata->update(ANDROID_CONTROL_AF_STATE,
+                            &(gMultiCam->aux1_af_state), 1);
+        HAL_LOGD("sw crop=%d,%d,%d,%d ai_scene_type %d,aux1_af_state %d",
             crop_Region[0], crop_Region[1], crop_Region[2],
-            crop_Region[3], gMultiCam->aux1_ai_scene_type);
+            crop_Region[3], gMultiCam->aux1_ai_scene_type, gMultiCam->aux1_af_state);
     } else if (mZoomValue >= mSwitch_W_T_Threshold) { // tele
         float inputRatio = mZoomValue / mSwitch_W_T_Threshold;
         HAL_LOGD("tele inputRatio = %f", inputRatio);
@@ -2439,9 +2443,11 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
                             ARRAY_SIZE(crop_Region));
         camMetadata->update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
                             &(gMultiCam->aux2_ai_scene_type), 1);
-        HAL_LOGD("tele crop=%d,%d,%d,%d ai_scene_type %d",
+        camMetadata->update(ANDROID_CONTROL_AF_STATE,
+                            &(gMultiCam->aux2_af_state), 1);
+        HAL_LOGD("tele crop=%d,%d,%d,%d ai_scene_type %d,aux2_af_state %d",
             crop_Region[0], crop_Region[1], crop_Region[2],
-            crop_Region[3], gMultiCam->aux2_ai_scene_type);
+            crop_Region[3], gMultiCam->aux2_ai_scene_type, gMultiCam->aux2_af_state);
     } else { // wide
         float left_offest = 0, top_offest = 0;
         left_offest = ((float)mWideMaxWidth / 0.6 - (float)mWideMaxWidth) / 2;
@@ -2502,10 +2508,6 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
                                 gMultiCam->aux2_FaceGenderRaceAge, face_num);
         }
     }
-    camMetadata->update(ANDROID_CONTROL_AF_STATE,
-                        &(SprdCamera3Setting::s_setting[m_VirtualCamera.id]
-                              .controlInfo.af_state),
-                        1);
     camMetadata->update(ANDROID_CONTROL_AF_MODE,
                         &(SprdCamera3Setting::s_setting[m_VirtualCamera.id]
                               .controlInfo.af_mode),
@@ -2609,6 +2611,7 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
     int32_t touch_area[5] = {0};
     int32_t af_area[5] = {0};
     int32_t ae_area[5] = {0};
+    uint8_t afTrigger = ANDROID_CONTROL_AF_TRIGGER_IDLE;
 
     // meta config
     if (!meta) {
@@ -2743,6 +2746,12 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
             touch_area[3] = touch_area[1] + top_dst;
             metaSettingsSw->update(ANDROID_SPRD_TOUCH_INFO, touch_area,
                                    ARRAY_SIZE(touch_area));
+            if (metaSettingsTele->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                metaSettingsTele->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
+            }
+            if (metaSettingsWide->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                metaSettingsWide->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
+            }
             HAL_LOGD("sw touch_area = %d, %d, %d, %d, %d",
                 touch_area[0], touch_area[1], touch_area[2],
                 touch_area[3], touch_area[4]);
@@ -2758,6 +2767,12 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
             touch_area[3] = touch_area[3] - top_offest;
             metaSettingsTele->update(ANDROID_SPRD_TOUCH_INFO, touch_area,
                                      ARRAY_SIZE(touch_area));
+            if (metaSettingsSw->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                metaSettingsSw->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
+            }
+            if (metaSettingsWide->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                metaSettingsWide->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
+            }
             HAL_LOGD("tele touch_area = %d, %d, %d, %d, %d",
                 touch_area[0], touch_area[1], touch_area[2],
                 touch_area[3], touch_area[4]);
@@ -2773,6 +2788,12 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
             touch_area[3] = touch_area[3] - top_offest;
             metaSettingsWide->update(ANDROID_SPRD_TOUCH_INFO, touch_area,
                                      ARRAY_SIZE(touch_area));
+            if (metaSettingsTele->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                metaSettingsTele->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
+            }
+            if (metaSettingsSw->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                metaSettingsSw->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
+            }
             HAL_LOGD("wide touch_area = %d, %d, %d, %d, %d",
                 touch_area[0], touch_area[1], touch_area[2],
                 touch_area[3], touch_area[4]);
@@ -4148,6 +4169,10 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
             gMultiCam->aux1_ai_scene_type =
                 metadata.find(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT).data.u8[0];
         }
+        if (metadata.exists(ANDROID_CONTROL_AF_STATE)) {
+            gMultiCam->aux1_af_state=
+                metadata.find(ANDROID_CONTROL_AF_STATE).data.u8[0];
+        }
         entry = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES);
         if (entry.count != 0) {
             gMultiCam->aux1_face_number = entry.count / 4;
@@ -4594,6 +4619,10 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
         if (metadata.exists(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT)) {
             gMultiCam->aux2_ai_scene_type =
                 metadata.find(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT).data.u8[0];
+        }
+        if (metadata.exists(ANDROID_CONTROL_AF_STATE)) {
+            gMultiCam->aux2_af_state=
+                metadata.find(ANDROID_CONTROL_AF_STATE).data.u8[0];
         }
 
         entry = metadata.find(ANDROID_STATISTICS_FACE_RECTANGLES);
