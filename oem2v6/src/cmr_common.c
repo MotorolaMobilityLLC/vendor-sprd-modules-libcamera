@@ -641,8 +641,17 @@ cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt,
         ret = fread((void *)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4),
                     fp);
         fclose(fp);
-    }
+    } else if (CAM_IMG_FMT_RAW14BIT == img_fmt){
+       fp = fopen(file_name, "rb");
+       if (NULL == fp) {
+            CMR_LOGD("can not open file: %s \n", file_name);
+           return 0;
+       }
 
+       ret = fread((void *)addr->addr_y, 1, (uint32_t)(width * height * 2),
+                   fp);
+       fclose(fp);
+    }
     return ret;
 }
 

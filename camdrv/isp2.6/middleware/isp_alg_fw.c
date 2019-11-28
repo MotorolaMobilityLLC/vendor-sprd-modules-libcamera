@@ -3617,6 +3617,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 {
 	cmr_int ret = ISP_SUCCESS;
+	char awb_ver[PROPERTY_VALUE_MAX];
 	struct isp_pm_ioctl_input input;
 	struct isp_pm_ioctl_output output;
 	struct awb_ctrl_init_param param;
@@ -3663,6 +3664,20 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.is_master = cxt->is_master;
 	param.sensor_role = cxt->sensor_role;
 	param.color_support = cxt->awb_cxt.color_support;
+
+
+	/* here can select awb3.x using tuning_param */
+	ISP_LOGI("AWB VERSION = %x", *((int *)output.param_data->data_ptr +1));
+
+	/* get awb version for HWSIM */
+	if (*((int *)output.param_data->data_ptr +1) == 0x000c0007)
+            sprintf(awb_ver, "%s\n", "awb2.x");
+	else
+            sprintf(awb_ver, "%s\n", "awb3.x");
+
+	/* ispctl_calc_awb wil use it to load diffrent lib */
+	property_set("persist.vendor.cam.isp.awb", awb_ver);
+
 
 	switch (cxt->is_multi_mode) {
 	case ISP_SINGLE:

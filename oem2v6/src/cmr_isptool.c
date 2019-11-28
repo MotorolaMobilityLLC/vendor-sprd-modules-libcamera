@@ -15,6 +15,7 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
     cmr_u32 sec = 0;
     cmr_u32 usec = 0;
     cmr_u32 image_index = 0;
+    cmr_u32 is_loose = 0;
     struct isp_raw_image *image_info = NULL;
     char value[PROPERTY_VALUE_MAX];
     struct isptool_scene_param scene_param;
@@ -23,6 +24,7 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
 
     cmr_sensor_update_isparm_from_file(cxt->sn_cxt.sensor_handle,
                                        cxt->camera_id);
+    is_loose = cxt->sn_cxt.sensor_info.sn_interface.is_loose;
 
     image_index = isp_video_get_image_processed_index();
     image_info = isp_video_get_raw_images_info();
@@ -71,9 +73,16 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
             CMR_LOGE("get scene param error");
             goto exit;
         }
-        read_size = camera_get_data_from_file(
-            file_name, CAM_IMG_FMT_BAYER_MIPI_RAW, scene_param.width, scene_param.height,
-            &isp_cap_raw.addr_vir);
+        CMR_LOGD("is_loose =%d",is_loose);
+        if (is_loose == ISP_RAW_HALF14) {
+            read_size = camera_get_data_from_file(
+                file_name, CAM_IMG_FMT_RAW14BIT, scene_param.width, scene_param.height,
+                &isp_cap_raw.addr_vir);
+        } else {
+            read_size = camera_get_data_from_file(
+                file_name, CAM_IMG_FMT_BAYER_MIPI_RAW, scene_param.width, scene_param.height,
+                &isp_cap_raw.addr_vir);
+        }
         CMR_LOGI("raw data read_size = %ld", read_size);
     } else {
         if (raw_filename[0]) {
