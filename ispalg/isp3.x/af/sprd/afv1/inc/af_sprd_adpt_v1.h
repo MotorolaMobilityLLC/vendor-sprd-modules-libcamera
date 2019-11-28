@@ -365,6 +365,7 @@ typedef struct _af_ctrl {
 	struct af_adpt_roi_info win;
 	cmr_u32 ot_switch;	// objecttracking switch
 	cmr_u32 pdaf_type;
+	cmr_u32 slave_focus_cnt;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

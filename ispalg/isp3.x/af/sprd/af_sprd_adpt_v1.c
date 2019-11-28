@@ -4202,6 +4202,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 
 	af->camera_id = init_param->camera_id;
 	af->bridge_ctrl = init_param->br_ctrl;
+	af->slave_focus_cnt = 0;
 
 	if (AF_ALG_DUAL_W_T == af->is_multi_mode) {
 		if (1 == init_param->is_master) {
@@ -4419,7 +4420,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		ISP_LOGV("cameraid %d, mode%d, state%d, status%d, pos%d", af->camera_id, status_master.af_mode, status_master.af_state, status_master.af_status,
 			 status_master.af_position);
 
-		if (AF_SEARCHING == status_master.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)) {
+		if (AF_SEARCHING == status_master.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state) && af->slave_focus_cnt == 0) {
 			switch (status_master.af_state) {
 			case STATE_NORMAL_AF:
 				break;
@@ -4494,11 +4495,17 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			}
 			return rtn;
 		} else if (AF_SEARCHING == status_master.af_status && AF_SEARCHING == af->focus_state) {
-		} else if (AF_STOPPED == status_master.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)) {
-		} else if (AF_STOPPED == status_master.af_status && AF_SEARCHING == af->focus_state) {
+			af->slave_focus_cnt = 1;
+		} else if ((AF_STOPPED == status_master.af_status || AF_STOPPED_INNER == status_master.af_status || AF_IDLE == status_master.af_status)
+			   && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)) {
+			af->slave_focus_cnt = 0;
+		} else if ((AF_STOPPED == status_master.af_status || AF_STOPPED_INNER == status_master.af_status)
+			   && AF_SEARCHING == af->focus_state) {
+			af->slave_focus_cnt = 0;
 			af_stop_search(af);
 			return rtn;
 		}
+
 	}
 	ISP_LOGV("cameraid %d, state = %s, focus_state = %s, data_type %d", af->camera_id, STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 
