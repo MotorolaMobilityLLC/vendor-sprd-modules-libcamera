@@ -1921,9 +1921,19 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // jpeg
     int32_t jpeg_stream_size;
+#ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
+    jpeg_stream_size =
+        getJpegStreamSize(cameraId, sensor_max_width[cameraId],
+                          sensor_max_height[cameraId]);
+#elif CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
+    jpeg_stream_size =
+        getJpegStreamSize(cameraId, sensor_max_width[cameraId],
+                          sensor_max_height[cameraId]);
+#else
     jpeg_stream_size =
         getJpegStreamSize(cameraId, largest_picture_size[cameraId].width,
                           largest_picture_size[cameraId].height);
+#endif
     memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes,
            camera3_default_info.common.jpegThumbnailSizes,
            sizeof(camera3_default_info.common.jpegThumbnailSizes));
