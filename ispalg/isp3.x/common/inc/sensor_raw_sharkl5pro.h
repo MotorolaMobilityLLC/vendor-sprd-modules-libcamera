@@ -60,6 +60,7 @@
 #define VST_IVST_NUM 1025
 
 #define CNR_LEVEL 4
+#define CNR3_LAYER_NUM 5
 
 #define AE_VERSION    0x00000000
 #define AWB_VERSION   0x00000000
@@ -1743,6 +1744,32 @@ struct sensor_cnr_level {
 	float rang_sigma[CNR_LEVEL][2];
 };
 
+//cnr3.0
+struct sensor_multilayer_param {
+	cmr_u8 lowpass_filter_en;
+	cmr_u8 denoise_radial_en;
+	cmr_u8 reserved0[3];
+	cmr_u8 order[3];
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 slope;
+	cmr_u16 baseRadius;
+	cmr_u16 baseRadius_factor;
+	cmr_u16 minRatio;
+	cmr_u16 luma_th[2];
+	float sigma[3];
+	cmr_u16 reserved1[10];
+};
+
+struct sensor_cnr3_level {
+	cmr_u8 level_enable;
+	cmr_u8 reserved0[3];
+	cmr_u16 low_ct_thrd;
+	cmr_u16 radius_base;
+	struct sensor_multilayer_param param_layer[CNR3_LAYER_NUM];
+	cmr_u16 reserved1[10];
+};
+
 struct sensor_ae_adapt_param {
 	cmr_u16 binning_factor; // 1x = 128
 	cmr_u16 reserved[19];
@@ -1851,7 +1878,7 @@ struct isp_alsc_param {
 
 //smart param begin
 #define ISP_SMART_MAX_BV_SECTION 8
-#define ISP_SMART_MAX_BLOCK_NUM 32	//28
+#define ISP_SMART_MAX_BLOCK_NUM 64	//28
 #define ISP_SMART_MAX_VALUE_NUM 4
 
 enum isp_smart_x_type {
@@ -2083,6 +2110,7 @@ enum {
 	ISP_BLK_SW3DNR_T,
 	ISP_BLK_BWU_BWD_T,
 	ISP_BLK_YNRS_T,
+	ISP_BLK_CNR3_T,
 	ISP_BLK_NR_MAX
 };
 
@@ -2149,6 +2177,41 @@ struct sensor_lnc_tab_param {
 	cmr_u8 *lnc;
 	cmr_u32 lnc_len;
 };
+
+//DRE feature
+struct sensor_predre_param {
+	cmr_u8 enable;
+	cmr_u8 imgKey_setting_mode;
+	cmr_u8 tarNorm_setting_mode;
+	cmr_u8 target_norm;
+	cmr_u16 imagekey;
+	cmr_u16 min_per;
+	cmr_u16 max_per;
+	cmr_u16 stat_step ;
+	cmr_u16 low_thresh;
+	cmr_u16 high_thresh;
+	cmr_u8 tarCoeff;
+	cmr_u8 reserved[3];//for 4-byte alignment
+};
+
+struct sensor_postdre_param {
+	cmr_u8 enable;
+	cmr_u8 strength;
+	cmr_u8 texture_counter_en;
+	cmr_u8 text_point_thres;
+	cmr_u8 text_prop_thres;
+	cmr_u8 tile_num_auto;
+	cmr_u8 tile_num_x;
+	cmr_u8 tile_num_y;
+};
+
+//DRE
+struct sensor_dre_level {
+	struct sensor_predre_param predre_param[16];
+	struct sensor_postdre_param postdre_param[16];
+	cmr_u8 reserved[280];
+};
+
 
 struct sensor_ae_tab_param {
 	cmr_u8 *ae;
@@ -2284,6 +2347,8 @@ struct sensor_nr_set_group_param {
 	cmr_u32 bwu_bwd_len;
 	cmr_u8 *ynrs;
 	cmr_u32 ynrs_len;
+	cmr_u8 *cnr3;
+	cmr_u32 cnr3_len;
 };
 
 struct sensor_nr_param {
@@ -2371,6 +2436,7 @@ struct denoise_param_update {
 	struct sensor_sw3dnr_level *sw3dnr_level_ptr;
 	struct sensor_bwu_bwd_level *bwu_bwd_level_ptr;
 	struct sensor_ynrs_level *ynrs_level_ptr;
+	struct sensor_cnr3_level *cnr3_level_ptr;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
