@@ -943,18 +943,19 @@ static cmr_int ov32a1q_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     return ret_value;
 }
 
-static cmr_int ov32a1q_drv_set_master_FrameSync(cmr_handle handle,
+static cmr_int ov32a1q_drv_set_slave_FrameSync(cmr_handle handle,
                                                 cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E");
 
-    /*TODO*/
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);//80);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x08);//80);
-
-    /*END*/
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x02);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x0d);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x11);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x7d);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x381f, 0xd0);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3009, 0x00);
 
     return SENSOR_SUCCESS;
 }
@@ -983,10 +984,16 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (sensor_mode > 2)
 		ov32a1q_drv_set_xtalk_data(handle, param);
 
-#if defined(CONFIG_DUAL_MODULE)
-	ov32a1q_drv_set_master_FrameSync(handle, param);
-	//ov32a1q_drv_set_slave_FrameSync(handle, param);
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.framesync", value2, "on");
+    if (!strcmp(value2, "on")) {
+#if defined(CONFIG_DUAL_MODULE) && defined(OV32A1Q_USE_CPHY)
+        if (sns_drv_cxt->is_multi_mode == MODE_BOKEH) {
+            ov32a1q_drv_set_slave_FrameSync(handle, param);
+        }
 #endif
+    }
+
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);

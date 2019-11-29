@@ -695,26 +695,18 @@ static cmr_int ov16885_normal_drv_read_aec_info(cmr_handle handle, cmr_uint para
     return ret_value;
 }
 
-static cmr_int ov16885_normal_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) 
+static cmr_int ov16885_normal_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-   // SENSOR_LOGI("E");
+    SENSOR_LOGI("E");
 
-    /*TODO*/
-
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x00);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3008, 0x00);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3009, 0x02);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3823, 0x30);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x08);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x0e);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0xc0);
-   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4902, 0x01);
-
-    /*END*/
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x80);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3008, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x382F, 0x84);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3830, 0x17);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3831, 0x4b);
 
     return SENSOR_SUCCESS;
 }
@@ -739,11 +731,18 @@ static cmr_int ov16885_normal_drv_stream_on(cmr_handle handle, cmr_uint param)
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x01);
     }
-#if 0//defined(CONFIG_DUAL_MODULE)
-    //ov16885_normal_drv_set_master_FrameSync(handle, param);
-    ov16885_normal_drv_set_slave_FrameSync(handle, param);
+
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.framesync", value2, "on");
+    if (!strcmp(value2, "on")) {
+#if defined(CONFIG_DUAL_MODULE)
+        if (sns_drv_cxt->is_multi_mode == MODE_BOKEH) {
+            ov16885_normal_drv_set_master_FrameSync(handle, param);
+        }
 #endif
-    /*TODO*/    
+    }
+
+    /*TODO*/
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
     /*END*/
