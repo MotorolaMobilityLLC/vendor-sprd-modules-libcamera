@@ -438,8 +438,8 @@ static struct sensor_aec_i2c_tag ov8856_aec_info = {
 
 static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_OPTICSZOOM_TELE_BACK,
-     .static_info = {.f_num = 220,
-                     .focal_length = 242,
+     .static_info = {.f_num = 240,
+                     .focal_length = 555,
                      .max_fps = 30,
 #if defined(OV8856_NO_VCM_SENSOR_OTP)
                      .max_adgain = 16,
