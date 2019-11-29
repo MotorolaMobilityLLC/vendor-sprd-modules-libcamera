@@ -816,9 +816,9 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
 #endif
         char value[PROPERTY_VALUE_MAX];
         property_get("debug.camera.dcam.raw.mode", value, "null");
-        if(!strcmp(value,"dcamraw")){
-           usleep(500*1000);
-           HAL_LOGD("dcam_raw_mode_delay= %d ms",500);
+        if (!strcmp(value, "dcamraw")) {
+            usleep(500 * 1000);
+            HAL_LOGD("dcam_raw_mode_delay= %d ms", 500);
         }
         ret = startPreviewInternal();
         break;
@@ -2117,7 +2117,8 @@ void SprdCamera3OEMIf::setAfState(enum afTransitionCause cause) {
     }
 
 exit:
-    HAL_LOGD("mCameraId=%d, Af mode=%d, transition cause=%d, cur state=%d, new state=%d",
+    HAL_LOGD("mCameraId=%d, Af mode=%d, transition cause=%d, cur state=%d, new "
+             "state=%d",
              mCameraId, controlInfo.af_mode, cause, state, newState);
 
     controlInfo.af_state = newState;
@@ -2267,7 +2268,8 @@ void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
         if ((aeStateMachine[i].transitionCause == cause) &&
             (aeStateMachine[i].state == state)) {
             newState = aeStateMachine[i].newState;
-            HAL_LOGD("mCameraId=%d, Ae transition cause=%d, cur state=%d, new state=%d",
+            HAL_LOGD("mCameraId=%d, Ae transition cause=%d, cur state=%d, new "
+                     "state=%d",
                      mCameraId, cause, state, newState);
             break;
         }
@@ -3259,9 +3261,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
         setCameraConvertCropRegion();
         property_get("persist.vendor.cam.focus.distance", prop, "0");
-        if(atoi(prop))
+        if (atoi(prop))
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_LENS_FOCUS_DISTANCE,
-                  (cmr_uint)(atoi(prop)));
+                     (cmr_uint)(atoi(prop)));
     }
 
     setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
@@ -3814,14 +3816,16 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGE("buffer_timestamp shouldn't be 0,please check your code");
 
     VCM_Tag sprdvcmInfo;
-    if ((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH ||
-         getMultiCameraMode() == MODE_MULTI_CAMERA) &&
-        (mCameraId == 0 || mCameraId == 4)) {
+    if (((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH ||
+          getMultiCameraMode() == MODE_MULTI_CAMERA) &&
+         (mCameraId == 0 || mCameraId == 4)) ||
+        getMultiCameraMode() == MODE_OPTICSZOOM_CALIBRATION) {
         mSetting->getVCMTag(&sprdvcmInfo);
         uint32_t vcm_step = 0;
         mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
                                                  &vcm_step);
-        HAL_LOGD("vcm step is 0x%x", vcm_step);
+        HAL_LOGD("mCameraId %d, mMultiCameraMode %d, vcm_step %d 0x%x",
+                 mCameraId, mMultiCameraMode, vcm_step, vcm_step);
         sprdvcmInfo.vcm_step = vcm_step;
         mSetting->setVCMTag(sprdvcmInfo);
     }
@@ -6462,7 +6466,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (cmr_uint)&ae_compensation_param);
         break;
     case ANDROID_CONTROL_AF_TRIGGER:
-        HAL_LOGD("mCameraId=%d, AF_TRIGGER %d", mCameraId, controlInfo.af_trigger);
+        HAL_LOGD("mCameraId=%d, AF_TRIGGER %d", mCameraId,
+                 controlInfo.af_trigger);
         if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
             struct img_rect zoom1 = {0, 0, 0, 0};
             struct img_rect zoom = {0, 0, 0, 0};
@@ -6670,8 +6675,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_CONTROL_AE_MODE:
         if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-            mCameraId == 1 || getMultiCameraMode() == MODE_ULTRA_WIDE ||
-            mCameraId == 4) {
+            mCameraId == 1 || mCameraId == 4 ||
+            (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK) &&
+             getMultiCameraMode() != MODE_BOKEH &&
+             getMultiCameraMode() != MODE_3D_CALIBRATION &&
+             getMultiCameraMode() != MODE_PORTRAIT)) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
 
