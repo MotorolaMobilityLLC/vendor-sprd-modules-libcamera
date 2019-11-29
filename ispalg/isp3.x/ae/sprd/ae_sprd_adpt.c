@@ -3291,7 +3291,6 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			cxt->last_exp_param.cur_index = cxt->ae_tbl_param.def_index;
 			cxt->last_cur_lum = cxt->cur_result.cur_lum;
-			cxt->last_exp_param.is_lock = cxt->cur_status.adv_param.lock;
 			cxt->last_index = cxt->ae_tbl_param.def_index;
 			if (0 != cxt->cur_result.cur_bv)
 				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
@@ -3305,7 +3304,6 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			cxt->last_exp_param.cur_index = cxt->sync_cur_result.ev_setting.ae_idx;
 			cxt->last_cur_lum = cxt->sync_cur_result.cur_lum;
-			cxt->last_exp_param.is_lock = cxt->sync_cur_status.adv_param.lock;
 			cxt->last_index = cxt->sync_cur_result.ev_setting.ae_idx;
 			if (0 != cxt->cur_result.cur_bv)
 				cxt->last_exp_param.bv = cxt->cur_result.cur_bv;
@@ -3314,6 +3312,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		}
 
 		cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
+		cxt->last_exp_param.is_ev_setting = cxt->is_ev_setting;
 
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
@@ -3329,6 +3328,8 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->app_mode_tarlum[cxt->app_mode] = cxt->sync_cur_result.target_lum;
 			if(cxt->mode_switch[cxt->app_mode].lum){
 				cxt->mode_switch[cxt->app_mode].sensitivity = (cxt->last_exp_param.exp_time) / 1000000 * (cxt->last_exp_param.gain) / (cxt->mode_switch[cxt->app_mode].lum);
+				if(0 == cxt->mode_switch[cxt->app_mode].sensitivity)
+					cxt->mode_switch[cxt->app_mode].sensitivity = 1;
 				ISP_LOGV("sensitivity %d exp_time %d gain %d luma %d ",cxt->mode_switch[cxt->app_mode].sensitivity,cxt->last_exp_param.exp_time,cxt->last_exp_param.gain,cxt->mode_switch[cxt->app_mode].lum);
 			}
 		}
@@ -3663,6 +3664,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		ae_read_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param),&s_ae_manual[0]);
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)
+			&& (0 == s_bakup_exp_param[cxt->camera_id].is_ev_setting)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].bv)) {
 			src_exp.exp_line = s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time;
@@ -3968,6 +3970,10 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_exp_compensation *exp_comp)
 {
 	if (exp_comp) {
+		if(exp_comp->comp_val)
+			cxt->is_ev_setting = 1;
+		else
+			cxt->is_ev_setting = 0;
 		if ((1 == cxt->app_mode) && (cxt->cur_status.adv_param.flash == FLASH_NONE)) {
 			struct ae_set_ev ev;
 			ev.level = exp_comp->comp_val + exp_comp->comp_range.max;

@@ -39,7 +39,7 @@ extern "C" {
 		cmr_s32 target_offset;
 		cmr_s32 bv;
 		cmr_u32 table_idx;
-		cmr_u32 is_lock;
+		cmr_u32 is_ev_setting;
 		cmr_u32 mode;
 	};
 	struct ae_ev_param {
@@ -163,6 +163,7 @@ extern "C" {
 		cmr_s8 camera_id;
 		cmr_s8 is_snapshot;
 		cmr_u8 is_first;
+		cmr_u8 is_ev_setting;
 		/*
 		 * ae control operation infaces
 		 */
