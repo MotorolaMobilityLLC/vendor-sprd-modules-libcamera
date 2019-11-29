@@ -9127,6 +9127,30 @@ int SprdCamera3OEMIf::PushFirstVideobuff() {
     return NO_ERROR;
 }
 
+int SprdCamera3OEMIf::PushReservedZslbuff() {
+    cmr_uint addr_vir = (cmr_uint)NULL, addr_phy = (cmr_uint)NULL;
+    cmr_s32 fd = 0;
+    HAL_LOGV("E:");
+
+    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        return UNKNOWN_ERROR;
+    }
+
+    if (mCommonHeapReserved == NULL) {
+        HAL_LOGE("memory is null");
+        return UNKNOWN_ERROR;
+    }
+
+    addr_phy = (cmr_uint)mCommonHeapReserved->phys_addr;
+    addr_vir = (cmr_uint)mCommonHeapReserved->data;
+    fd = mCommonHeapReserved->fd;
+    mHalOem->ops->camera_set_zsl_buffer(mCameraHandle, addr_phy, addr_vir, fd);
+
+    HAL_LOGV("X:");
+    return NO_ERROR;
+}
+
 int SprdCamera3OEMIf::PushFirstZslbuff() {
     SprdCamera3RegularChannel *channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);

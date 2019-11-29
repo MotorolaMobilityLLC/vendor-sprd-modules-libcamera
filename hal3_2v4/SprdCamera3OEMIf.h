@@ -216,6 +216,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int PushFirstPreviewbuff();
     int PushFirstVideobuff();
     int PushFirstZslbuff();
+    int PushReservedZslbuff();
     int PushVideoSnapShotbuff(int32_t frame_number, camera_stream_type_t type);
     int PushZslSnapShotbuff();
     snapshot_mode_type_t GetTakePictureMode();

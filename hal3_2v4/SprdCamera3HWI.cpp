@@ -1109,6 +1109,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     Mutex::Autolock l(mLock);
     bool mRegRequest;
     bool need_apply_settings = 1;
+    bool has_callback = false;
 
     ret = validateCaptureRequest(request);
     if (ret) {
@@ -1289,40 +1290,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
     }
 
-    {
-        // This check will help to run below code only in case of
-        // testYuvBurst
-        cam_dimension_t picture_size = {0, 0};
-        mSetting->getPictureSize(&picture_size);
-        if (request->num_output_buffers == 2 && mPendingRequest > 0 &&
-            picture_size.width == 0 && need_apply_settings == 0) {
-            // Flag to check if pending list only contains request with 1
-            // buffers
-            bool need_wait = true;
-            size_t pendingCount = 0;
-            static const uint64_t timeout_prev = 1000000000;
-            List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
-            // check if buffers of pending requests should be 1
-            while (i != mPendingRequestsList.end()) {
-                if (i->num_buffers > 1)
-                    need_wait = false;
-                i++;
-            }
-            if (need_wait == true) {
-                HAL_LOGD("wait for previous frames to clear");
-                while (mPendingRequestsList.size() > 0 && mFlush == false) {
-                    // sleep for 1ms
-                    usleep(1000);
-                    if (pendingCount > timeout_prev / kPendingTime) {
-                        HAL_LOGE("TimeOut pendingCount=%d", pendingCount);
-                        break;
-                    }
-                    pendingCount++;
-                }
-            }
-        }
-    }
-
 #ifndef MINICAMERA
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t &output = request->output_buffers[i];
@@ -1339,7 +1306,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 #endif
 
     {
-        Mutex::Autolock lr(mRequestLock);
         /* Update pending request list and pending buffers map */
         uint32_t frameNumber = request->frame_number;
         FLASH_Tag flashInfo;
@@ -1430,6 +1396,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     }
                 }
             } else {
+                has_callback = true;
                 if (capturePara.cap_intent ==
                         ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW ||
                     capturePara.cap_intent ==
@@ -1570,8 +1537,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
         pendingRequest.receive_req_max = receive_req_max;
 
-        mPendingRequestsList.push_back(pendingRequest);
-        mPendingRequest++;
+        {
+            Mutex::Autolock lr(mRequestLock);
+            mPendingRequestsList.push_back(pendingRequest);
+            mPendingRequest++;
+        }
 
         if (request->input_buffer != NULL) {
             const camera3_stream_buffer_t *input = request->input_buffer;
@@ -1604,21 +1574,22 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         mPictureRequest = false;
         timestamp = systemTime();
 
-        if (mRegularChan) {
-            mRegularChan->channelClearAllQBuff(timestamp,
+        if(!mPendingRequestsList.empty()) {
+           if (mRegularChan) {
+               mRegularChan->channelClearAllQBuff(timestamp,
                                                CAMERA_STREAM_TYPE_PREVIEW);
-            mRegularChan->channelClearAllQBuff(timestamp,
+               mRegularChan->channelClearAllQBuff(timestamp,
                                                CAMERA_STREAM_TYPE_VIDEO);
-            mRegularChan->channelClearAllQBuff(timestamp,
+               mRegularChan->channelClearAllQBuff(timestamp,
                                                CAMERA_STREAM_TYPE_CALLBACK);
-        }
-        if (mPicChan) {
-            mPicChan->channelClearAllQBuff(timestamp,
+           }
+           if (mPicChan) {
+               mPicChan->channelClearAllQBuff(timestamp,
                                            CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
-            mPicChan->channelClearAllQBuff(timestamp,
+               mPicChan->channelClearAllQBuff(timestamp,
                                            CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+           }
         }
-
         HAL_LOGE("invalid request");
         goto exit;
     }
@@ -1671,6 +1642,14 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
     }
 
+    if (has_callback == false) {
+        SprdCamera3Stream *stream = NULL;
+        mRegularChan->getStream(CAMERA_STREAM_TYPE_CALLBACK, &stream);
+        if(stream) {
+           mOEMIf->PushReservedZslbuff();
+        }
+    }
+
     {
         Mutex::Autolock lr(mRequestLock);
         size_t pendingCount = 0;
@@ -1701,7 +1680,7 @@ exit:
 void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     ATRACE_CALL();
 
-    Mutex::Autolock l(mRequestLock);
+    Mutex::Autolock l(mResultLock);
 
     uint32_t frame_number = result_info->frame_number;
     buffer_handle_t *buffer = result_info->buffer;
@@ -1876,6 +1855,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                      mPendingRequest);
 
             if (0 == i->num_buffers) {
+                Mutex::Autolock l(mRequestLock);
                 receive_req_max = i->receive_req_max;
                 i = mPendingRequestsList.erase(i);
                 mPendingRequest--;

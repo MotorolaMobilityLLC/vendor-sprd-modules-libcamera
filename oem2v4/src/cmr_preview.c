@@ -10647,151 +10647,181 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_context *prev_cxt = NULL;
     cmr_int valid_num = 0;
     cmr_u32 width, height, buffer_size, frame_size;
-    struct buffer_cfg buf_cfg;
+    struct buffer_cfg buf_cfg, res_cfg;
     cmr_uint rot_index = 0;
     cmr_int zoom_post_proc = 0;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    prev_cxt = &handle->prev_cxt[camera_id];
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    if (!src_vir_addr) {
-        CMR_LOGE("in parm error");
-        ret = CMR_CAMERA_INVALID_PARAM;
-        return ret;
-    }
+    if (fd != prev_cxt->cap_zsl_reserved_frm.fd) {
+        if (!src_vir_addr) {
+            CMR_LOGE("in parm error");
+            ret = CMR_CAMERA_INVALID_PARAM;
+            return ret;
+        }
 
-    prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
-    cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
-    prev_cxt = &handle->prev_cxt[camera_id];
-    if (IDLE == prev_cxt->prev_status) {
-        CMR_LOGD("don't need to set buffer");
-        return ret;
-    }
-    if (PREV_CHN_IDLE == prev_cxt->cap_channel_status) {
-        CMR_LOGD("cap_channel_status idle");
-        return ret;
-    }
-    valid_num = prev_cxt->cap_zsl_mem_valid_num;
-    if (ZOOM_POST_PROCESS == zoom_post_proc) {
-        width = prev_cxt->cap_sn_size.width;
-        height = prev_cxt->cap_sn_size.height;
-    } else if (ZOOM_POST_PROCESS_WITH_TRIM == zoom_post_proc) {
-        width = prev_cxt->max_size.width;
-        height = prev_cxt->max_size.height;
-    } else {
-        width = prev_cxt->actual_pic_size.width;
-        height = prev_cxt->actual_pic_size.height;
-    }
-    if (prev_cxt->is_reprocessing && cxt->is_multi_mode == MODE_3D_CAPTURE) {
-        width = prev_cxt->cap_sn_size.width;
-        height = prev_cxt->cap_sn_size.height;
-    }
-    buffer_size = width * height;
-    frame_size = prev_cxt->cap_zsl_mem_size;
-    CMR_LOGV("zsl frame size %dx%d src_phy 0x%x src_vir 0x%x",
-        width, height, src_phy_addr, src_vir_addr);
-    prev_cxt->cap_zsl_fd_array[valid_num] = fd;
-    prev_cxt->cap_zsl_phys_addr_array[valid_num] = src_phy_addr;
-    prev_cxt->cap_zsl_virt_addr_array[valid_num] = src_vir_addr;
-    prev_cxt->cap_zsl_frm[valid_num].buf_size = frame_size;
-    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y =
-        prev_cxt->cap_zsl_virt_addr_array[valid_num];
-    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_u =
-        prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y + buffer_size;
-    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y =
-        prev_cxt->cap_zsl_phys_addr_array[valid_num];
-    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_u =
-        prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + buffer_size;
-    prev_cxt->cap_zsl_frm[valid_num].fd = prev_cxt->cap_zsl_fd_array[valid_num];
-    prev_cxt->cap_zsl_frm[valid_num].fmt = prev_cxt->cap_org_fmt;
-    prev_cxt->cap_zsl_frm[valid_num].size.width = width;
-    prev_cxt->cap_zsl_frm[valid_num].size.height = height;
-    prev_cxt->cap_zsl_mem_valid_num++;
+        prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
+        cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+        prev_cxt = &handle->prev_cxt[camera_id];
+        if (IDLE == prev_cxt->prev_status) {
+            CMR_LOGD("don't need to set buffer");
+            return ret;
+        }
+        if (PREV_CHN_IDLE == prev_cxt->cap_channel_status) {
+            CMR_LOGD("cap_channel_status idle");
+            return ret;
+        }
+        valid_num = prev_cxt->cap_zsl_mem_valid_num;
+        if (ZOOM_POST_PROCESS == zoom_post_proc) {
+            width = prev_cxt->cap_sn_size.width;
+            height = prev_cxt->cap_sn_size.height;
+        } else if (ZOOM_POST_PROCESS_WITH_TRIM == zoom_post_proc) {
+            width = prev_cxt->max_size.width;
+            height = prev_cxt->max_size.height;
+        } else {
+            width = prev_cxt->actual_pic_size.width;
+            height = prev_cxt->actual_pic_size.height;
+        }
+        if (prev_cxt->is_reprocessing &&
+            cxt->is_multi_mode == MODE_3D_CAPTURE) {
+            width = prev_cxt->cap_sn_size.width;
+            height = prev_cxt->cap_sn_size.height;
+        }
+        buffer_size = width * height;
+        frame_size = prev_cxt->cap_zsl_mem_size;
+        CMR_LOGV("zsl frame size %dx%d src_phy 0x%x src_vir 0x%x", width,
+                 height, src_phy_addr, src_vir_addr);
+        prev_cxt->cap_zsl_fd_array[valid_num] = fd;
+        prev_cxt->cap_zsl_phys_addr_array[valid_num] = src_phy_addr;
+        prev_cxt->cap_zsl_virt_addr_array[valid_num] = src_vir_addr;
+        prev_cxt->cap_zsl_frm[valid_num].buf_size = frame_size;
+        prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y =
+            prev_cxt->cap_zsl_virt_addr_array[valid_num];
+        prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_u =
+            prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y + buffer_size;
+        prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y =
+            prev_cxt->cap_zsl_phys_addr_array[valid_num];
+        prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_u =
+            prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + buffer_size;
+        prev_cxt->cap_zsl_frm[valid_num].fd =
+            prev_cxt->cap_zsl_fd_array[valid_num];
+        prev_cxt->cap_zsl_frm[valid_num].fmt = prev_cxt->cap_org_fmt;
+        prev_cxt->cap_zsl_frm[valid_num].size.width = width;
+        prev_cxt->cap_zsl_frm[valid_num].size.height = height;
+        prev_cxt->cap_zsl_mem_valid_num++;
 
-    buf_cfg.channel_id = prev_cxt->cap_channel_id;
-    buf_cfg.base_id = CMR_CAP1_ID_BASE;
-    buf_cfg.count = 1;
-    buf_cfg.length = frame_size;
-    buf_cfg.flag = BUF_FLAG_RUNNING;
+        buf_cfg.channel_id = prev_cxt->cap_channel_id;
+        buf_cfg.base_id = CMR_CAP1_ID_BASE;
+        buf_cfg.count = 1;
+        buf_cfg.length = frame_size;
+        buf_cfg.flag = BUF_FLAG_RUNNING;
 
-    if (prev_cxt->prev_param.prev_rot) {
-        if (CMR_CAMERA_SUCCESS ==
-            prev_search_rot_buffer(prev_cxt, CAMERA_SNAPSHOT_ZSL)) {
-            rot_index = prev_cxt->cap_zsl_rot_index % PREV_ROT_FRM_CNT;
-            buf_cfg.addr[0].addr_y =
-                prev_cxt->video_rot_frm[rot_index].addr_phy.addr_y;
-            buf_cfg.addr[0].addr_u =
-                prev_cxt->cap_zsl_rot_frm[rot_index].addr_phy.addr_u;
-            buf_cfg.addr_vir[0].addr_y =
-                prev_cxt->cap_zsl_rot_frm[rot_index].addr_vir.addr_y;
-            buf_cfg.addr_vir[0].addr_u =
-                prev_cxt->cap_zsl_rot_frm[rot_index].addr_vir.addr_u;
-            buf_cfg.fd[0] = prev_cxt->cap_zsl_rot_frm[rot_index].fd;
-            ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
-                                           rot_index, 1);
-            if (ret) {
-                CMR_LOGE("prev_set_rot_buffer_flag failed");
+        if (prev_cxt->prev_param.prev_rot) {
+            if (CMR_CAMERA_SUCCESS ==
+                prev_search_rot_buffer(prev_cxt, CAMERA_SNAPSHOT_ZSL)) {
+                rot_index = prev_cxt->cap_zsl_rot_index % PREV_ROT_FRM_CNT;
+                buf_cfg.addr[0].addr_y =
+                    prev_cxt->video_rot_frm[rot_index].addr_phy.addr_y;
+                buf_cfg.addr[0].addr_u =
+                    prev_cxt->cap_zsl_rot_frm[rot_index].addr_phy.addr_u;
+                buf_cfg.addr_vir[0].addr_y =
+                    prev_cxt->cap_zsl_rot_frm[rot_index].addr_vir.addr_y;
+                buf_cfg.addr_vir[0].addr_u =
+                    prev_cxt->cap_zsl_rot_frm[rot_index].addr_vir.addr_u;
+                buf_cfg.fd[0] = prev_cxt->cap_zsl_rot_frm[rot_index].fd;
+                ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
+                                               rot_index, 1);
+                if (ret) {
+                    CMR_LOGE("prev_set_rot_buffer_flag failed");
+                    goto exit;
+                }
+                CMR_LOGD("rot_index %ld prev_rot_frm_is_lock %ld", rot_index,
+                         prev_cxt->video_rot_frm_is_lock[rot_index]);
+            } else {
+                CMR_LOGE("error no rot buffer");
                 goto exit;
             }
-            CMR_LOGD("rot_index %ld prev_rot_frm_is_lock %ld", rot_index,
-                     prev_cxt->video_rot_frm_is_lock[rot_index]);
         } else {
-            CMR_LOGE("error no rot buffer");
+
+            if (ZOOM_POST_PROCESS == zoom_post_proc &&
+                (prev_cxt->prev_param.preview_eb &&
+                 prev_cxt->prev_param.snapshot_eb &&
+                 !prev_cxt->prev_param.sprd_zsl_enabled) &&
+                (width * height < prev_cxt->actual_pic_size.width *
+                                      prev_cxt->actual_pic_size.height)) {
+                /* 5M interpolation 8M, callback zsl path need do scale up,
+                    for cts testAllOutputYUVResolutions */
+                cmr_int yframe_size = prev_cxt->actual_pic_size.width *
+                                      prev_cxt->actual_pic_size.height;
+                cmr_int offset_y = (prev_cxt->actual_pic_size.width *
+                                    prev_cxt->actual_pic_size.height) -
+                                   (prev_cxt->cap_sn_size.width *
+                                    prev_cxt->cap_sn_size.height);
+                cmr_int offset_uv = offset_y / 2;
+
+                offset_y = (offset_y + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+                offset_y -= PAGE_SIZE;
+                offset_uv = (offset_uv + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+                offset_uv -= PAGE_SIZE;
+
+                CMR_LOGV("cb sn_size %dx%d, actual_pic_size %dx%d,"
+                         "need scale, offset_y 0x%x offset_uv 0x%x",
+                         width, height, prev_cxt->actual_pic_size.width,
+                         prev_cxt->actual_pic_size.height, offset_y, offset_uv);
+                buf_cfg.addr[0].addr_y =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + offset_y;
+                buf_cfg.addr[0].addr_u =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y +
+                    yframe_size + offset_uv;
+                buf_cfg.addr_vir[0].addr_y =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y + offset_y;
+                buf_cfg.addr_vir[0].addr_u =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y +
+                    yframe_size + offset_uv;
+                buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
+            } else {
+                buf_cfg.addr[0].addr_y =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y;
+                buf_cfg.addr[0].addr_u =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_u;
+                buf_cfg.addr_vir[0].addr_y =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y;
+                buf_cfg.addr_vir[0].addr_u =
+                    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_u;
+                buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
+            }
+        }
+
+        ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+        if (ret) {
+            CMR_LOGE("channel_buff_cfg failed");
             goto exit;
         }
     } else {
+        cmr_bzero(&res_cfg, sizeof(struct buffer_cfg));
 
-        if (ZOOM_POST_PROCESS == zoom_post_proc &&
-            (prev_cxt->prev_param.preview_eb &&
-            prev_cxt->prev_param.snapshot_eb &&
-            !prev_cxt->prev_param.sprd_zsl_enabled) && (width * height <
-            prev_cxt->actual_pic_size.width *
-            prev_cxt->actual_pic_size.height)) {
-            /* 5M interpolation 8M, callback zsl path need do scale up,
-                for cts testAllOutputYUVResolutions */
-            cmr_int yframe_size = prev_cxt->actual_pic_size.width *
-                prev_cxt->actual_pic_size.height;
-            cmr_int offset_y = (prev_cxt->actual_pic_size.width *
-                prev_cxt->actual_pic_size.height) - (prev_cxt->cap_sn_size.width *
-                prev_cxt->cap_sn_size.height);
-            cmr_int offset_uv = offset_y / 2;
-
-            offset_y = (offset_y + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-            offset_y -= PAGE_SIZE;
-            offset_uv = (offset_uv + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-            offset_uv -= PAGE_SIZE;
-
-            CMR_LOGV("cb sn_size %dx%d, actual_pic_size %dx%d,"
-                "need scale, offset_y 0x%x offset_uv 0x%x",
-                width, height, prev_cxt->actual_pic_size.width,
-                prev_cxt->actual_pic_size.height, offset_y, offset_uv);
-                        buf_cfg.addr[0].addr_y =
-            prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + offset_y;
-            buf_cfg.addr[0].addr_u =
-                prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + yframe_size + offset_uv;
-            buf_cfg.addr_vir[0].addr_y =
-                prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y + offset_y;
-            buf_cfg.addr_vir[0].addr_u =
-                prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y + yframe_size + offset_uv;
-            buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
-        } else {
-            buf_cfg.addr[0].addr_y =
-                prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y;
-            buf_cfg.addr[0].addr_u =
-                prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_u;
-            buf_cfg.addr_vir[0].addr_y =
-                prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y;
-            buf_cfg.addr_vir[0].addr_u =
-                prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_u;
-            buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
+        res_cfg.channel_id = prev_cxt->cap_channel_id;
+        res_cfg.base_id = CMR_CAP1_ID_BASE;
+        res_cfg.count = 1;
+        res_cfg.length = prev_cxt->cap_zsl_mem_size;
+        res_cfg.is_reserved_buf = 0;
+        res_cfg.flag = BUF_FLAG_RUNNING;
+        res_cfg.addr[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+        res_cfg.addr[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+        res_cfg.addr_vir[0].addr_y =
+            prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+        res_cfg.addr_vir[0].addr_u =
+            prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+        res_cfg.fd[0] = prev_cxt->cap_zsl_reserved_frm.fd;
+        ret = handle->ops.channel_buff_cfg(handle->oem_handle, &res_cfg);
+        if (ret) {
+            CMR_LOGE("channel buff config failed");
+            ret = CMR_CAMERA_FAIL;
+            goto exit;
         }
-    }
-
-    ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
-    if (ret) {
-        CMR_LOGE("channel_buff_cfg failed");
-        goto exit;
     }
 
 exit:
