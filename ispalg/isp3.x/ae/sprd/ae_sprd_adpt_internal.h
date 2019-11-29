@@ -318,6 +318,14 @@ extern "C" {
 		cmr_u8 hdr_menu_ctrl; /* auto: 1*/
 		struct hdr_calc_result hdr_calc_result;
 		/*
+		 * DRE control
+		 */
+		cmr_s8 dre_enable;
+		cmr_u16 dre_exp_line;
+		cmr_s16 dre_gain;
+		cmr_s8 dre_frame_cnt;
+		cmr_s8 threednr_mode_flag;
+		/*
 		 *dual flash simulation
 		 */
 		cmr_s8 led_record[2];

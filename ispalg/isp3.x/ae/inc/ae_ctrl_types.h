@@ -79,6 +79,7 @@ extern "C" {
 		AE_VIDEO_STOP,
 		AE_VIDEO_START,
 		AE_HDR_START,
+		AE_DRE_CAP_START,
 		AE_CAF_LOCKAE_START,
 		AE_CAF_LOCKAE_STOP,
 		AE_SET_BYPASS,
@@ -173,6 +174,7 @@ extern "C" {
 		AE_CB_CLOSE_MAIN_FLASH,
 		AE_CB_HDR_START,
 		AE_CB_HDR_STATUS,
+		AE_CB_DRE_START,
 		AE_CB_LED_NOTIFY,
 		AE_CB_FLASH_FIRED,
 		AE_CB_PROCESS_OUT,
@@ -558,6 +560,10 @@ extern "C" {
 	struct ae_hdr_param {
 		cmr_u32 hdr_enable;
 		cmr_u32 ev_effect_valid_num;
+	};
+
+	struct ae_dre_param {
+		cmr_u32 dre_enable;
 	};
 
 	struct ae_flash_power {
