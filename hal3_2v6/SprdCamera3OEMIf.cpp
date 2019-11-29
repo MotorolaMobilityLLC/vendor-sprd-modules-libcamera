@@ -814,7 +814,12 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             mEisVideoInit = true;
         }
 #endif
-
+        char value[PROPERTY_VALUE_MAX];
+        property_get("debug.camera.dcam.raw.mode", value, "null");
+        if(!strcmp(value,"dcamraw")){
+           usleep(500*1000);
+           HAL_LOGD("dcam_raw_mode_delay= %d ms",500);
+        }
         ret = startPreviewInternal();
         break;
     }
