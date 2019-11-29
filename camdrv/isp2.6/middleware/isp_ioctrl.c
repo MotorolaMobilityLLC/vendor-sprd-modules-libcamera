@@ -3269,6 +3269,33 @@ static cmr_int ispctl_ai_set_fd_status(cmr_handle isp_alg_handle, void *param_pt
        return ret;
 }
 
+static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt =
+		(struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data,
+			ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_DRE, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+			   ISP_PM_CMD_GET_SINGLE_SETTING,
+			   &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num)
+		memcpy(param_ptr, output.param_data->data_ptr,
+		       sizeof(struct isp_dre_level));
+	else
+		ISP_LOGE("fail to get valid dre param, %ld  num %d",
+			 ret, output.param_num);
+
+	return ret;
+}
+
 static cmr_int ispctl_ai_process_start(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3432,6 +3459,38 @@ static cmr_int ispctl_set_cap_flag(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_dre(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+
+#ifdef CONFIG_ISP_2_7
+	struct isp_alg_fw_context *cxt =
+		(struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_dre_param *isp_dre = (struct isp_dre_param *)param_ptr;
+	struct ae_dre_param ae_dre = {0};
+
+	if (isp_alg_handle == NULL || param_ptr == NULL) {
+		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p",
+			 isp_alg_handle, param_ptr);
+		return ISP_PARAM_NULL;
+	}
+
+	ae_dre.dre_enable = isp_dre->dre_enable;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle,
+					     AE_DRE_CAP_START, &ae_dre, NULL);
+
+	ISP_LOGI("DRE cap start, ret %ld", ret);
+
+#else
+    UNUSED(isp_alg_handle);
+    UNUSED(param_ptr);
+#endif
+
+	return ret;
+}
+
 static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3577,6 +3636,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
 	{ISP_CTRL_SET_3DNR_MODE, ispctl_set_3dnr_mode},
+	{ISP_CTRL_GET_DRE_PARAM, ispctl_get_dre_param},
 	{ISP_CTRL_AI_PROCESS_START, ispctl_ai_process_start},
 	{ISP_CTRL_AI_PROCESS_STOP, ispctl_ai_process_stop},
 	{ISP_CTRL_AI_SET_IMG_PARAM, ispctl_ai_set_img_param},
@@ -3593,6 +3653,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_SET_TARGET_REGION, ispctl_ae_set_target_region},
 	{ISP_CTRL_AE_SET_REF_CAMERA_ID, ispctl_ae_set_ref_camera_id},
 	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},
+	{ISP_CTRL_DRE, ispctl_dre},
 	{ISP_CTRL_MAX, NULL}
 };
 

@@ -262,6 +262,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_4IN1_PARAM, 0 },
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
+	{ ISP_BLK_DRE, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -483,6 +484,7 @@ static cmr_u32 check_blk_id_valid(cmr_u32 blk_id, cmr_u32 data_size)
 			ISP_LOGE("blk 0x%04x, data size %d != %d\n", blk_id, data_size, blocks_array[i].data_size);
 			return 0;
 		}
+
 		return 1;
 	}
 	return 0;
@@ -1614,7 +1616,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				param_data_ptr, &param_counts,
 				all_setting_flag, PARAM_SET0);
 		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to do isp_pm_get_setting_param");
+			ISP_LOGE("fail to do isp_pm_get_setting_param %d", rtn);
 			rtn = ISP_ERROR;
 			return rtn;
 		}
@@ -1651,7 +1653,8 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				(struct isp_pm_ioctl_input *)in_ptr, param_data_ptr,
 				&param_counts, &blk_idx, set_id);
 		if (ISP_SUCCESS != rtn || blk_idx == ISP_TUNE_BLOCK_MAX) {
-			ISP_LOGV("fail to do isp_pm_get_single_block_param");
+			ISP_LOGE("fail to do isp_pm_get_single_block_param, %d %d",
+				 rtn, blk_idx);
 			rtn = ISP_ERROR;
 			return rtn;
 		}

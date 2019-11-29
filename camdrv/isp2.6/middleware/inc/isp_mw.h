@@ -143,6 +143,7 @@ enum isp_callback_cmd {
 	ISP_AF_VCM_NOTICE_CALLBACK = 0x00008000,
 	ISP_HIST_REPORT_CALLBACK = 0x00009000,
 	ISP_3DNR_CALLBACK = 0x0000A000,
+	ISP_DRE_EV_EFFECT_CALLBACK = 0x0000B000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -403,6 +404,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AE_SET_TARGET_REGION = 136,
 	ISP_CTRL_AE_SET_REF_CAMERA_ID,
 	ISP_CTRL_SET_SENSOR_SIZE,
+	ISP_CTRL_GET_DRE_PARAM,
+	ISP_CTRL_DRE,
 	ISP_CTRL_MAX
 };
 
@@ -472,6 +475,38 @@ enum isp_ai_rotation {
 	ISP_AI_SD_ORNT_180,
 	ISP_AI_SD_ORNT_270,
 	ISP_AI_SD_ORNT_MAX
+};
+
+//DRE feature
+struct isp_predre_param {
+	cmr_s32 enable;
+	cmr_s32 imgKey_setting_mode;
+	cmr_s32 tarNorm_setting_mode;
+	cmr_s32 target_norm;
+	cmr_s32 imagekey;
+	cmr_s32 min_per;
+	cmr_s32 max_per;
+	cmr_s32 stat_step;
+	cmr_s32 low_thresh;
+	cmr_s32 high_thresh;
+	cmr_s32 tarCoeff;
+};
+
+struct isp_postdre_param {
+	cmr_s32 enable;
+	cmr_s32 strength;
+	cmr_s32 texture_counter_en;
+	cmr_s32 text_point_thres;
+	cmr_s32 text_prop_thres;
+	cmr_s32 tile_num_auto;
+	cmr_s32 tile_num_x;
+	cmr_s32 tile_num_y;
+};
+
+//DRE level
+struct isp_dre_level {
+	struct isp_predre_param predre_param;
+	struct isp_postdre_param postdre_param;
 };
 
 struct isp_flash_cfg {
@@ -743,6 +778,10 @@ struct isp_ae_fps_range {
 struct isp_hdr_param {
 	cmr_u32 hdr_enable;
 	cmr_u32 ev_effect_valid_num;
+};
+
+struct isp_dre_param {   // param OEM sent to ISP
+       cmr_u32 dre_enable;
 };
 
 struct isp_info {

@@ -30,6 +30,7 @@
 #include "isp_video.h"
 #include "cmr_types.h"
 #include "sprd_isp_k.h"
+#include "isp_mw.h"
 
 #ifdef	 __cplusplus
 extern "C" {
@@ -601,6 +602,11 @@ struct isp_ynrs_param {
 	cmr_u32 nr_mode_setting;
 };
 
+struct isp_dres_param {
+	struct isp_dre_level cur;
+	struct isp_dre_level levels[16];
+};
+
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
@@ -659,6 +665,8 @@ struct isp_context {
 	/* soft algo block */
 	struct isp_cnr2_param cnr2;
 	struct isp_ynrs_param ynrs;
+
+	struct isp_dres_param dre;
 };
 
 /*******************************isp_block_com******************************/
@@ -879,6 +887,9 @@ cmr_s32 _pm_sw3dnr_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *para
 cmr_s32 _pm_sw3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_sw3dnr_get_param(void *nr_3d_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
+cmr_s32 _pm_dre_init(void *dst_dre_param, void *src_dre_param, void *param1, void *param2);
+cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_dre_get_param(void *dre_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);
