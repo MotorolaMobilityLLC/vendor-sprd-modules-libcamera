@@ -3101,7 +3101,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     char multicameramode[PROPERTY_VALUE_MAX];
     struct img_size jpeg_thumb_size;
     FLASH_INFO_Tag flashInfo;
-
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     HAL_LOGI("E camera id %d", mCameraId);
 
     SPRD_DEF_Tag sprddefInfo;
@@ -3256,6 +3258,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
          getMultiCameraMode() == MODE_3D_CALIBRATION) &&
         mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
         setCameraConvertCropRegion();
+        property_get("persist.vendor.cam.focus.distance", prop, "0");
+        if(atoi(prop))
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_LENS_FOCUS_DISTANCE,
+                  (cmr_uint)(atoi(prop)));
     }
 
     setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
@@ -3860,8 +3866,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
     channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
     channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
-    HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p",
-        pre_stream, rec_stream, callback_stream);
+    HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p", pre_stream,
+             rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
     int sx, sy, ex, ey, angle, pose;
@@ -4040,10 +4046,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         ATRACE_BEGIN("video_frame");
         HAL_LOGD("record:mCameraId = %d, fd = 0x%x, vir = 0x%lx, num = %d"
-                 ", time = %" PRId64
-                 ", rec = %" PRId64,
-                 mCameraId, frame->fd, buff_vir, frame_num,
-                 buffer_timestamp, mSlowPara.rec_timestamp);
+                 ", time = %" PRId64 ", rec = %" PRId64,
+                 mCameraId, frame->fd, buff_vir, frame_num, buffer_timestamp,
+                 mSlowPara.rec_timestamp);
         if (frame->type == PREVIEW_VIDEO_FRAME) {
             if (mVideoWidth <= mCaptureWidth &&
                 mVideoHeight <= mCaptureHeight) {
@@ -4872,7 +4877,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
-        maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
+    maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
 
     if ((uint32_t)maxJpegSize > heap_size) {
         maxJpegSize = heap_size;
