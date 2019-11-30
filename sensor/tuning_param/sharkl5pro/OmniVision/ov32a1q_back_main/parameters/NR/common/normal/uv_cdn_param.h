@@ -4,9 +4,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	8.00,
+	10.00,
 	/*sigma_v*/
-	8.00,
+	10.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
@@ -34,7 +34,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0050,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
@@ -43,9 +43,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	8.00,
+	10.00,
 	/*sigma_v*/
-	8.00,
+	10.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
@@ -73,7 +73,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0050,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
@@ -112,7 +112,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0050,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
@@ -151,7 +151,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0050,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
@@ -238,9 +238,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	23.00,
+	25.00,
 	/*sigma_v*/
-	23.00,
+	25.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
@@ -268,7 +268,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0050,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }
@@ -277,9 +277,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	30.00,
+	25.00,
 	/*sigma_v*/
-	30.00,
+	25.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
@@ -307,7 +307,7 @@
 	/*filter_bypass*/
 	0x00,
 	/*median_thr*/
-	0x0050,
+	0x0028,
 	/*bypass*/
 	0x00000000,
 }

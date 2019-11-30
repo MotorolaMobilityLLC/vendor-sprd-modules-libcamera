@@ -200,7 +200,7 @@
 		0x00,0x00,0x00/*0-2*/
 	},
 	/*imblance_bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -301,7 +301,7 @@
 		/*[0x0]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x0010,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
@@ -313,7 +313,7 @@
 		/*[0x1]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x0010,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
@@ -325,7 +325,7 @@
 		/*[0x2]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x0010,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
@@ -403,7 +403,7 @@
 		0x00,0x00,0x00/*0-2*/
 	},
 	/*imblance_bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param2.&BasePoint=1&*/
@@ -504,7 +504,7 @@
 		/*[0x0]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x0010,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
@@ -516,7 +516,7 @@
 		/*[0x1]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x0010,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
@@ -528,7 +528,7 @@
 		/*[0x2]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x0010,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
@@ -606,7 +606,7 @@
 		0x00,0x00,0x00/*0-2*/
 	},
 	/*imblance_bypass*/
-	0x0000,
+	0x0001,
 }
 ,
 /*param3.&BasePoint=1&*/
@@ -646,15 +646,15 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0000,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0000,
+			0x0384,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x0000,
+			0x0190,
 			/*nlm_imblance_lum_flag_2_r*/
-			0x0000,
+			0x012C,
 			/*nlm_imblance_lum_flag_3_r*/
 			0x0000,
 			/*nlm_imblance_lum_flag_4_r*/
-			0x0000,
+			0x0190,
 
 		},
 		/*[0x1]*/
@@ -662,15 +662,15 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0000,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0000,
+			0x03E8,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x0000,
+			0x00C8,
 			/*nlm_imblance_lum_flag_2_r*/
 			0x0000,
 			/*nlm_imblance_lum_flag_3_r*/
 			0x0000,
 			/*nlm_imblance_lum_flag_4_r*/
-			0x0000,
+			0x0190,
 
 		},
 		/*[0x2]*/
@@ -678,15 +678,15 @@
 			/*nlm_imblance_lum_flag_0_rs*/
 			0x0000,
 			/*nlm_imblance_lum_flag_0_r*/
-			0x0000,
+			0x0320,
 			/*nlm_imblance_lum_flag_1_r*/
-			0x0000,
+			0x00C8,
 			/*nlm_imblance_lum_flag_2_r*/
 			0x0000,
 			/*nlm_imblance_lum_flag_3_r*/
 			0x0000,
 			/*nlm_imblance_lum_flag_4_r*/
-			0x0000,
+			0x0190,
 
 		}
 	},
@@ -697,9 +697,9 @@
 		/*flag3_lum*/
 		0x0000,
 		/*flag3_frez*/
-		0x0000,
+		0x03E8,
 		/*flag12_frezthr*/
-		0x0000,
+		0x03E8,
 
 	},
 	/*imblance_hv*/
@@ -707,11 +707,11 @@
 		/*[0x0]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x001A,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
-			0x0000,
+			0x000A,
 			/*imblance_slash_flat_thr*/
 			0x0000,
 
@@ -719,11 +719,11 @@
 		/*[0x1]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x001A,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
-			0x0000,
+			0x000F,
 			/*imblance_slash_flat_thr*/
 			0x0000,
 
@@ -731,11 +731,11 @@
 		/*[0x2]*/
 		{
 			/*imblance_hv_edge_thr*/
-			0x0000,
+			0x001A,
 			/*imblance_hv_slash_edge_thr*/
 			0x0000,
 			/*imblance_hv_flat_thr*/
-			0x0000,
+			0x0014,
 			/*imblance_slash_flat_thr*/
 			0x0000,
 
@@ -744,25 +744,25 @@
 	/*imblance_1D*/
 	{
 		/*imblance_radial_1D_en*/
-		0x0000,
+		0x0001,
 		/*imblance_radial_1D_center_x*/
 		0x0000,
 		/*imblance_radial_1D_center_y*/
 		0x0000,
 		/*imblance_radial_1D_radius_thr*/
-		0x0000,
+		0x05DC,
 		/*imblance_radial_1D_protect_ratio_max*/
 		0x0000,
 		/*imblance_radial_1D_coef_r0*/
-		0x0000,
+		0x0064,
 		/*imblance_radial_1D_coef_r1*/
-		0x0000,
+		0x0050,
 		/*imblance_radial_1D_coef_r2*/
-		0x0000,
+		0x0050,
 		/*imblance_radial_1D_coef_r3*/
 		0x0000,
 		/*imblance_radial_1D_coef_r4*/
-		0x0000,
+		0x0032,
 
 	},
 	/*imblance_curve*/
@@ -792,7 +792,7 @@
 	},
 	/*imblance_lumth*/
 	{
-		0x0000,0x0000/*0-1*/
+		0x00C8,0x0190/*0-1*/
 	},
 	/*imblance_S_baohedu*/
 	{
@@ -800,7 +800,7 @@
 	},
 	/*imblance_diff*/
 	{
-		0x0000,0x0000,0x0000/*0-2*/
+		0x0028,0x003C,0x0050/*0-2*/
 	},
 	/*imblance_sat_lumth*/
 	0x00,
