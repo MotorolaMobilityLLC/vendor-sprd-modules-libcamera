@@ -320,9 +320,9 @@
 	/*cnr_uv_pg_th*/
 	0x03C0,
 	/*ymd_u*/
-	0x00078000,
+	0x00035555,
 	/*ymd_v*/
-	0x00078000,
+	0x00035555,
 	/*ymd_min_u*/
 	0x00000000,
 	/*ymd_min_v*/
@@ -383,9 +383,9 @@
 			0x0014,0x0022,0x0022,0x0022,0x0022,0x0022,0x0022,0x0022/*0-7*/
 		},
 		/*iircnr_alpha_hl_diff_u*/
-		0x0708,
+		0x0320,
 		/*iircnr_alpha_hl_diff_v*/
-		0x0708,
+		0x0320,
 		/*iircnr_alpha_low_u*/
 		0x000037B8,
 		/*iircnr_alpha_low_v*/
