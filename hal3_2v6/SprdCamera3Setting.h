@@ -465,6 +465,7 @@ typedef struct {
     cam_dimension_t preview_size;
     cam_dimension_t picture_size;
     cam_dimension_t video_size;
+    cam_dimension_t callback_size;
 
     COLOR_Tag colorInfo;
     CONTROL_Tag controlInfo;
@@ -564,6 +565,9 @@ class SprdCamera3Setting {
 
     int setPictureSize(cam_dimension_t size);
     int getPictureSize(cam_dimension_t *size);
+
+    int setCallbackSize(cam_dimension_t size);
+    int getCallbackSize(cam_dimension_t *size);
 
     int setVideoSize(cam_dimension_t size);
     int getVideoSize(cam_dimension_t *size);

@@ -130,7 +130,7 @@ typedef struct _front_flash_type {
 
 static SprdCamera3DefaultInfo camera3_default_info;
 
-static cam_dimension_t largest_picture_size[CAMERA_ID_COUNT];
+static cam_stream_info_t largest_picture_size[CAMERA_ID_COUNT];
 static cmr_u16 sensor_max_width[CAMERA_ID_COUNT] = {2592, 2592, 2592,
                                                     2592, 2592, 2592};
 static cmr_u16 sensor_max_height[CAMERA_ID_COUNT] = {1944, 1944, 1944,
@@ -1012,8 +1012,8 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
 
 int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
                                               cmr_u16 *height) {
-    *width = largest_picture_size[cameraId].width;
-    *height = largest_picture_size[cameraId].height;
+    *width = largest_picture_size[cameraId].stream_sizes_tbl.width;
+    *height = largest_picture_size[cameraId].stream_sizes_tbl.height;
     HAL_LOGD("camId=%d, max_width=%d, max_height=%d", cameraId, *width,
              *height);
     return 0;
@@ -1062,10 +1062,10 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         memcpy(&sensor_fov[cameraId], &phyPtr->fov_info,
                sizeof(phyPtr->fov_info));
     }
-    if(cameraId == findSensorRole(MODULE_SPW_NONE_BACK))
-        sensor_angle_fov[1] = phyPtr->fov_angle;//117.0;
-    if(cameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK))
-        sensor_angle_fov[0] = phyPtr->fov_angle;//79.4;
+    if (cameraId == findSensorRole(MODULE_SPW_NONE_BACK))
+        sensor_angle_fov[1] = phyPtr->fov_angle; // 117.0;
+    if (cameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK))
+        sensor_angle_fov[0] = phyPtr->fov_angle; // 79.4;
 
     if (phyPtr->source_width_max == 1920 && phyPtr->source_height_max == 1080) {
         setLargestSensorSize(cameraId, 1920, 1088);
@@ -1501,18 +1501,19 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
     ptr_sns_inf_tag->active_array_size[0] = 0;
     ptr_sns_inf_tag->active_array_size[1] = 0;
     ptr_sns_inf_tag->active_array_size[2] =
-        largest_picture_size[cameraId].width;
+        largest_picture_size[cameraId].stream_sizes_tbl.width;
     ptr_sns_inf_tag->active_array_size[3] =
-        largest_picture_size[cameraId].height;
+        largest_picture_size[cameraId].stream_sizes_tbl.height;
     // android.sensor.info.physicalSize,
     memcpy(ptr_sns_inf_tag->physical_size,
            camera3_default_info.common.sensor_physical_size,
            sizeof(camera3_default_info.common.sensor_physical_size));
     // Dimensions of the full pixel array, possibly including black calibration
     // pixels.
-    ptr_sns_inf_tag->pixer_array_size[0] = largest_picture_size[cameraId].width;
+    ptr_sns_inf_tag->pixer_array_size[0] =
+        largest_picture_size[cameraId].stream_sizes_tbl.width;
     ptr_sns_inf_tag->pixer_array_size[1] =
-        largest_picture_size[cameraId].height;
+        largest_picture_size[cameraId].stream_sizes_tbl.height;
     // exposureTimeRange.
     memcpy(ptr_sns_inf_tag->exposupre_time_range,
            camera3_default_info.common.exposure_time_range,
@@ -1594,8 +1595,8 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
     return 0;
 }
 
-static int32_t stream_limit(const cam_stream_info_t *p, int32_t total, int32_t w_limit, int32_t h_limit)
-{
+static int32_t stream_limit(const cam_stream_info_t *p, int32_t total,
+                            int32_t w_limit, int32_t h_limit) {
     int i = 0;
 
     if (w_limit <= 0 || h_limit <= 0 || total <= 1)
@@ -1649,6 +1650,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     Vector<int64_t> available_min_durations;
     /*available stall durations*/
     Vector<int64_t> available_stall_durations;
+    int64_t stream_min_duration = 0;
+
     if (cameraId > 1) {
         p_stream_info = subSensor_stream_info;
         stream_sizes_tbl_cnt =
@@ -1664,12 +1667,12 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, 3264, 2448);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
-     }
+    }
 #endif
 #ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
     if (cameraId == 1) {
         int i = 0;
-       /* 2320x1740> 4M > 2272x1080 */
+        /* 2320x1740> 4M > 2272x1080 */
         i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, 2304, 1728);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
@@ -1705,7 +1708,6 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     p_stream_info[i].stream_sizes_tbl.height);
 
 #if defined(CONFIG_ISP_2_3)
-                int64_t stream_min_duration;
                 int32_t stream_size = stream_info[i].stream_sizes_tbl.width *
                                       stream_info[i].stream_sizes_tbl.height;
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
@@ -1725,10 +1727,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                         stream_min_duration =
                             stream_info[i].stream_min_duration;
                     }
-                    available_min_durations.add(stream_min_duration);
                 } else {
-                    available_min_durations.add(
-                        p_stream_info[i].stream_min_duration);
+                    stream_min_duration = stream_info[i].stream_min_duration;
                 }
 #else
                 if (!strcmp(mSensorName[cameraId], "ov32a1q") &&
@@ -1736,18 +1736,18 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     (p_stream_info[i].stream_sizes_tbl.width *
                          p_stream_info[i].stream_sizes_tbl.height >
                      8000000)) {
-                    available_min_durations.add(66666666L);
+                    stream_min_duration = 66666666L;
                 } else if (scaler_formats[j] ==
                                HAL_PIXEL_FORMAT_YCbCr_420_888 &&
                            (p_stream_info[i].stream_sizes_tbl.width *
                                 p_stream_info[i].stream_sizes_tbl.height >
                             12000000)) {
-                    available_min_durations.add(50000000L);
+                    stream_min_duration = 50000000L;
                 } else {
-                    available_min_durations.add(
-                        p_stream_info[i].stream_min_duration);
+                    stream_min_duration = stream_info[i].stream_min_duration;
                 }
 #endif
+                available_min_durations.add(stream_min_duration);
                 // availableStallDurations
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB) {
                     available_stall_durations.add(scaler_formats[j]);
@@ -1769,10 +1769,13 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                 /* keep largest */
                 if (p_stream_info[i].stream_sizes_tbl.width *
                         p_stream_info[i].stream_sizes_tbl.height >
-                    largest_picture_size[cameraId].width *
-                        largest_picture_size[cameraId].height) {
-                    largest_picture_size[cameraId] =
+                    largest_picture_size[cameraId].stream_sizes_tbl.width *
+                        largest_picture_size[cameraId]
+                            .stream_sizes_tbl.height) {
+                    largest_picture_size[cameraId].stream_sizes_tbl =
                         p_stream_info[i].stream_sizes_tbl;
+                    largest_picture_size[cameraId].stream_min_duration =
+                        stream_min_duration;
                 }
             }
         }
@@ -1968,8 +1971,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     jpeg_stream_size = getJpegStreamSize(cameraId, w, h);
 #else
     jpeg_stream_size = getJpegStreamSize(cameraId,
-                          largest_picture_size[cameraId].width,
-                          largest_picture_size[cameraId].height);
+                          largest_picture_size[cameraId].stream_sizes_tbl.width,
+                          largest_picture_size[cameraId].stream_sizes_tbl.height);
 #endif
     memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes,
            camera3_default_info.common.jpegThumbnailSizes,
@@ -4799,14 +4802,48 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].controlInfo.ae_precapture_id);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-        int32_t fps_range[2];
+        int32_t fps_range[2], max_fps_range[2];
         HAL_LOGV("AE target fps min %d, max %d",
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
+
         fps_range[0] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
                            .data.i32[0];
         fps_range[1] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
                            .data.i32[1];
+
+        if (s_setting[mCameraId].callback_size.width ==
+            largest_picture_size[mCameraId].stream_sizes_tbl.width) {
+            switch (largest_picture_size[mCameraId].stream_min_duration) {
+            case 33331760:
+                max_fps_range[0] = 30;
+                max_fps_range[1] = 30;
+                break;
+            case 41666666:
+                max_fps_range[0] = 24;
+                max_fps_range[1] = 24;
+                break;
+            case 50000000:
+                max_fps_range[0] = 20;
+                max_fps_range[1] = 20;
+                break;
+            case 66666670:
+                max_fps_range[0] = 15;
+                max_fps_range[1] = 15;
+                break;
+            case 100000000:
+                max_fps_range[0] = 10;
+                max_fps_range[1] = 10;
+                break;
+            deafult:
+                break;
+            }
+            if (fps_range[0] > max_fps_range[0]) {
+                fps_range[0] = max_fps_range[0];
+                fps_range[1] = max_fps_range[1];
+            }
+        }
+
         GET_VALUE_IF_DIF(
             s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
             fps_range[0], ANDROID_CONTROL_AE_TARGET_FPS_RANGE, 2)
@@ -5270,7 +5307,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     else {
         // s_setting[mCameraId].flashInfo.state = mCameraId == 0 ?
         // ANDROID_FLASH_STATE_READY : ANDROID_FLASH_STATE_UNAVAILABLE;
-        if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 || mCameraId == 4) {
+        if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 ||
+            mCameraId == 4) {
             s_setting[mCameraId].flashInfo.state = ANDROID_FLASH_STATE_READY;
         } else if (mCameraId == 1) {
             if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "led") ||
@@ -5500,8 +5538,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        s_setting[mCameraId].toneInfo.curve_red,
                        SPRD_MAX_TONE_CURVE_POINT);
 
-
-    if (mCameraId == 0 ||mCameraId == 2 || mCameraId == 3 || mCameraId == 4 || 
+    if (mCameraId == 0 || mCameraId == 2 || mCameraId == 3 || mCameraId == 4 ||
         mModuleId[mCameraId] == MODULE_SPW_NONE_BACK) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             camMetadata.update(ANDROID_SPRD_OTP_DATA,
@@ -5597,6 +5634,18 @@ int SprdCamera3Setting::setPictureSize(cam_dimension_t size) {
 int SprdCamera3Setting::getPictureSize(cam_dimension_t *size) {
     if (size) {
         *size = s_setting[mCameraId].picture_size;
+    }
+    return 0;
+}
+
+int SprdCamera3Setting::setCallbackSize(cam_dimension_t size) {
+    s_setting[mCameraId].callback_size = size;
+    return 0;
+}
+
+int SprdCamera3Setting::getCallbackSize(cam_dimension_t *size) {
+    if (size) {
+        *size = s_setting[mCameraId].callback_size;
     }
     return 0;
 }
@@ -6424,10 +6473,10 @@ int SprdCamera3Setting::getAUTOTRACKINGTag(
     *autotrackingInfo = s_setting[mCameraId].autotrackingInfo;
     return 0;
 }
-int SprdCamera3Setting::getSensorFov(float  *w_fov,float  *sw_fov) {
-       *w_fov = sensor_angle_fov[0];
-       *sw_fov = sensor_angle_fov[1];
-       return 0;
+int SprdCamera3Setting::getSensorFov(float *w_fov, float *sw_fov) {
+    *w_fov = sensor_angle_fov[0];
+    *sw_fov = sensor_angle_fov[1];
+    return 0;
 }
 
 } // namespace sprdcamera

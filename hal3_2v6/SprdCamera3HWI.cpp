@@ -921,6 +921,7 @@ int SprdCamera3HWI::configureStreams(
     mSetting->setPreviewSize(preview_size);
     mSetting->setVideoSize(video_size);
     mSetting->setPictureSize(capture_size);
+    mSetting->setCallbackSize(callback_size);
 
     mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
     mFirstRequestGet = false;
