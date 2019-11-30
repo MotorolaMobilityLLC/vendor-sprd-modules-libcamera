@@ -7012,6 +7012,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
                 cxt->sn_cxt.info_4in1.limited_4in1_width;
 #endif
         usleep(500 * 1000);
+        in_param.remosaic_type = cxt->remosaic_type;
         ret = isp_proc_start(isp_cxt->isp_handle, &in_param, &out_param);
         if (ret) {
             CMR_LOGE("failed to start proc %ld", ret);

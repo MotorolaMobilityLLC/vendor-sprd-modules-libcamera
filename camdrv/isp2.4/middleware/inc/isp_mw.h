@@ -763,6 +763,9 @@ struct ips_in_param {
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
 	cmr_u32 sensor_id;
+    /* new 4in1 solution, for raw capture */
+    cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
+
 };
 
 struct ips_out_param {

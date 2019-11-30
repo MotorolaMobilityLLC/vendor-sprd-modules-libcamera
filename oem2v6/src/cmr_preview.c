@@ -6079,7 +6079,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
+    if ((!strcmp(value, "raw")) && (!cxt->is_4in1_sensor)) {
         is_raw_capture = 1;
     }
 

@@ -5478,7 +5478,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 #endif
 #endif
 #ifdef   CONFIG_CAMERA_4IN1_SOLUTION2
-	pm_input.remosaic_type = cxt->remosaic_type;
+	pm_input.remosaic_type = in_ptr->remosaic_type;;
 #endif
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_MODE, &pm_input, &pm_output);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp_pm_ioctl"));

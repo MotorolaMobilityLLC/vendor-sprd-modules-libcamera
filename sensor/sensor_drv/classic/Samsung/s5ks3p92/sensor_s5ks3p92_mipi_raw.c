@@ -129,6 +129,17 @@ static void s5ks3p92_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
   SENSOR_IC_CHECK_HANDLE_VOID(handle);
   struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+  do {
+      char value[PROPERTY_VALUE_MAX];
+
+      property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+      if ((!strcmp(value, "raw")) && mode == 3) {
+          property_get("persist.vendor.cam.raw.bin.factor", value, "400");
+          shutter *= (atoi(value));
+          shutter /= 100;
+      }
+  } while (0);
+
   sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
   sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
   cur_fr_len = sns_drv_cxt->sensor_ev_info.preview_framelength;

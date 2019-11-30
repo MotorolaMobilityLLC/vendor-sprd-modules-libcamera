@@ -782,6 +782,8 @@ struct ips_in_param {
 	cmr_free free_cb;
 	cmr_u32 sensor_id;
 	cmr_u32 hwsim_4in1_width;
+    /* new 4in1 solution, for raw capture */
+    cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 };
 
 struct ips_out_param {
