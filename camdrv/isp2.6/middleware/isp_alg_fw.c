@@ -3180,9 +3180,24 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ae_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start ae process");
+
+#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
+
 		ret = ispalg_awb_process((cmr_handle) cxt);
 		if (ret)
 			ISP_LOGE("fail to start awb process");
+#else
+		ISP_LOGV("is_high_res_mode[%d],work_mode[%d],ambient_highlight[%d]",cxt->is_high_res_mode,
+		cxt->work_mode, cxt->ambient_highlight);
+		if ((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->ambient_highlight == 1)) {
+			ISP_LOGI("high res high light capture.\n");
+		} else {
+			ret = ispalg_awb_process((cmr_handle) cxt);
+			if (ret)
+				ISP_LOGE("fail to start awb process");
+		}
+
+#endif
 		cxt->aem_is_update = 0;
 
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
