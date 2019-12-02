@@ -549,6 +549,7 @@ class SprdCamera3Setting {
     static int get_tag_type(const vendor_tag_ops_t *ops, uint32_t tag);
     static int32_t stream_limit(const cam_stream_info_t *p, int32_t total,
                                 int32_t w_limit, int32_t h_limit);
+    static int getMaxCapSize(int32_t cameraId, int32_t *w, int32_t *h);
     int constructDefaultMetadata(int type, camera_metadata_t **metadata);
     int UpdateWorkParameters(const CameraMetadata &frame_settings);
     int initialize(const camera3_callback_ops_t *callback_ops);

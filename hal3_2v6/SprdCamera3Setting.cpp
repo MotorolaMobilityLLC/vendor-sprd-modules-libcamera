@@ -1429,6 +1429,43 @@ int32_t SprdCamera3Setting::stream_limit(const cam_stream_info_t *p,
 
     return i;
 }
+/* getMaxCapSize
+ * get max capture size by sensor max size
+ * input: sensor max size
+ * output: max capture size
+ * return: 0: success, other: fail
+ */
+int SprdCamera3Setting::getMaxCapSize(int32_t cameraId, int32_t *w, int32_t *h)
+{
+    const cam_stream_info_t *p_stream_info = NULL;
+    int tbl_cnt;
+    int i;
+
+    if ((!w) || (!h))
+        return -1;
+    if (*w == 0 || *h == 0)
+        return -1;
+
+    if (cameraId > 1) {
+        p_stream_info = subSensor_stream_info;
+        tbl_cnt = sizeof(subSensor_stream_info) / sizeof(cam_stream_info);
+    } else {
+        p_stream_info = stream_info;
+        tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
+    }
+    for (i = 0; i < tbl_cnt; i++) {
+        if (*w >= p_stream_info[i].stream_sizes_tbl.width &&
+            *h >= p_stream_info[i].stream_sizes_tbl.height) {
+            /* got */
+            *w = p_stream_info[i].stream_sizes_tbl.width;
+            *h = p_stream_info[i].stream_sizes_tbl.height;
+            HAL_LOGD("max cap size[%d %d]", *w, *h);
+
+            return 0;
+        }
+    }
+    return -1;
+}
 
 int SprdCamera3Setting::initDefaultParameters(int32_t cameraId) {
     uint32_t lcd_w = 0, lcd_h = 0;
@@ -1921,17 +1958,17 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // jpeg
     int32_t jpeg_stream_size;
-#ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
-    jpeg_stream_size =
-        getJpegStreamSize(cameraId, sensor_max_width[cameraId],
-                          sensor_max_height[cameraId]);
-#elif CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
-    jpeg_stream_size =
-        getJpegStreamSize(cameraId, sensor_max_width[cameraId],
-                          sensor_max_height[cameraId]);
+#if defined(CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT) || \
+    defined(CONFIG_BACK_HIGH_RESOLUTION_SUPPORT)
+    int32_t w, h;
+
+    w = sensor_max_width[cameraId];
+    h = sensor_max_height[cameraId];
+    getMaxCapSize(cameraId, &w, &h);
+    jpeg_stream_size = getJpegStreamSize(cameraId, w, h);
 #else
-    jpeg_stream_size =
-        getJpegStreamSize(cameraId, largest_picture_size[cameraId].width,
+    jpeg_stream_size = getJpegStreamSize(cameraId,
+                          largest_picture_size[cameraId].width,
                           largest_picture_size[cameraId].height);
 #endif
     memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes,

@@ -7905,9 +7905,9 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     camera_take_snapshot_step(CMR_STEP_CAP_S);
 
 #ifdef CONFIG_CAMERA_4IN1_SOLUTION2
-    if (cxt->remosaic_type) {
-        skip_number = 3;
-        CMR_LOGI("skip_num %ld", skip_number);
+    if(cxt->is_4in1_sensor) {
+       skip_number = 3;
+       CMR_LOGI("skip_num %ld", skip_number);
     }
 #endif
 
