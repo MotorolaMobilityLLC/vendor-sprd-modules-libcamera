@@ -1038,7 +1038,7 @@
 				},
 				/*ratio_layer_cv_pos*/
 				{
-					0x0000,0x0000,0x0000/*0-2*/
+					0x000C,0x000A,0x000A/*0-2*/
 				},
 				/*clip_layer_cv_pos*/
 				{
@@ -1050,7 +1050,7 @@
 				},
 				/*ratio_layer_cv_neg*/
 				{
-					0x0000,0x0000,0x0000/*0-2*/
+					0x000C,0x000A,0x000A/*0-2*/
 				},
 				/*clip_layer_cv_neg*/
 				{
