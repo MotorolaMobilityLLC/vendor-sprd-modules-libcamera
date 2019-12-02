@@ -161,6 +161,7 @@ typedef struct {
     uint8_t awb_mode;
     uint8_t awb_state;
     int32_t awb_regions[5];
+    int64_t timestamp;
 } CONTROL_Tag;
 
 typedef struct {

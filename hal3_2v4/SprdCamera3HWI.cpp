@@ -1749,6 +1749,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 threeAControlInfo.ae_state = i->threeA_info.ae_state;
                 threeAControlInfo.ae_manual_trigger =
                     i->threeA_info.ae_manual_trigger;
+                threeAControlInfo.timestamp = capture_time;
                 mSetting->setResultTag(&threeAControlInfo);
 
                 result.result = mSetting->translateLocalToFwMetadata();
@@ -1802,6 +1803,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 threeAControlInfo.ae_state = i->threeA_info.ae_state;
                 threeAControlInfo.ae_manual_trigger =
                     i->threeA_info.ae_manual_trigger;
+                threeAControlInfo.timestamp = capture_time;
                 mSetting->setResultTag(&threeAControlInfo);
 
                 result.result = mSetting->translateLocalToFwMetadata();

@@ -4321,8 +4321,9 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     // = %d",s_setting[mCameraId].sensorInfo.timestamp,
     //			s_setting[mCameraId].requestInfo.id,
     // s_setting[mCameraId].requestInfo.frame_count, mCameraId);
+
     camMetadata.update(ANDROID_SENSOR_TIMESTAMP,
-                       &(s_setting[mCameraId].sensorInfo.timestamp), 1);
+                       &(s_setting[mCameraId].resultInfo.timestamp), 1);
     camMetadata.update(ANDROID_SENSOR_TEST_PATTERN_MODE,
                        &(s_setting[mCameraId].sensorInfo.test_pattern_mode), 1);
     camMetadata.update(ANDROID_SENSOR_ROLLING_SHUTTER_SKEW,
