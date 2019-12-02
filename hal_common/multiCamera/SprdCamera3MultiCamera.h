@@ -244,6 +244,10 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     uint32_t mRefIdex;
     uint32_t mRefCameraId;
     uint32_t mLastRefCameraId;
+    uint32_t mCameraIdWide;
+    uint32_t mCameraIdSw;
+    uint32_t mCameraIdTele;
+    uint32_t MultiConfigId[5];
 
     Mutex mClearBufferLock;
     cmr_u16 mTeleMaxWidth;

@@ -39,8 +39,7 @@ using namespace android;
 namespace sprdcamera {
 
 SprdCamera3MultiCamera *gMultiCam = NULL;
-//#define PROC_3Zoom_TIMEOUT 3
-//#define SWITCH_WIDE_TELE_REQUEST (1.7)
+
 #define MAX_DIGITAL_ZOOM_RATIO_OPTICS 8
 #define SWITCH_WIDE_SW_REQUEST_RATIO (1.0)
 #define SWITCH_WIDE_TELE_REQUEST_RATIO (2.0)
@@ -235,7 +234,6 @@ SprdCamera3MultiCamera::SprdCamera3MultiCamera() {
     mAlgoStatus = 0;
     mPrevAlgoHandle = NULL;
     mCapAlgoHandle = NULL;
-    memset(&mOtpData, 0, sizeof(OtpData));
     mPreviewMuxerThread = new TWPreviewMuxerThread();
     mTWCaptureThread = new TWCaptureThread();
     mVideoThread = new VideoThread();
@@ -246,21 +244,25 @@ SprdCamera3MultiCamera::SprdCamera3MultiCamera() {
     mUnmatchedFrameListVideoAux1.clear();
     mUnmatchedFrameListVideoAux2.clear();
     mRefIdex = 0;
+    mRefCameraId = 0;
+    mLastRefCameraId = 0xff;
+    mCameraIdWide = 0;
+    mCameraIdSw = 0;
+    mCameraIdTele = 0;
+    aux1_af_state= 0;
+    aux2_af_state= 0;
     aux1_face_number = 0;
     aux2_face_number = 0;
+    aux1_ai_scene_type = 0;
+    aux2_ai_scene_type = 0;
+    memset(&mOtpData, 0, sizeof(OtpData));
     memset(main_FaceRect, 0, sizeof(int32_t) * 10 * 4);
     memset(main_FaceRect, 0, sizeof(int32_t) * 10 * 4);
     memset(aux1_FaceRect, 0, sizeof(int32_t) * 10 * 4);
     memset(aux2_FaceRect, 0, sizeof(int32_t) * 10 * 4);
     memset(aux1_FaceGenderRaceAge, 0, sizeof(int32_t) * 10);
     memset(aux2_FaceGenderRaceAge, 0, sizeof(int32_t) * 10);
-    aux1_ai_scene_type = 0;
-    aux2_ai_scene_type = 0;
-
-    aux1_af_state= 0;
-    aux2_af_state= 0;
-    mRefCameraId = 0;
-    mLastRefCameraId = 0xff;
+    memset(MultiConfigId, 0, sizeof(uint32_t) * 5);
 
     HAL_LOGI("X");
 }
@@ -506,8 +508,6 @@ int SprdCamera3MultiCamera::initialize(
     const camera3_callback_ops_t *callback_ops) {
     int rc = 0;
     mCallbackOps = callback_ops;
-    mMetadataList.clear();
-    mMetaNotifyIndex = -1;
     SprdCamera3HWI *hwi = NULL;
     SprdCamera3MultiBase::initialize(mMultiMode, m_pPhyCamera[0].hwi);
 
@@ -529,10 +529,6 @@ int SprdCamera3MultiCamera::initialize(
     mCurFrameNum = -1;
     aux1_face_number = 0;
     aux2_face_number = 0;
-    memset(aux1_FaceRect, 0, sizeof(int32_t) * 10 * 4);
-    memset(aux2_FaceRect, 0, sizeof(int32_t) * 10 * 4);
-    memset(aux1_FaceGenderRaceAge, 0, sizeof(int32_t) * 10);
-    memset(aux2_FaceGenderRaceAge, 0, sizeof(int32_t) * 10);
     aux1_ai_scene_type = 0;
     aux2_ai_scene_type = 0;
     mRequstState = PREVIEW_REQUEST_STATE;
@@ -551,6 +547,11 @@ int SprdCamera3MultiCamera::initialize(
     mSavedPrevRequestList.clear();
     mSavedCallbackRequestList.clear();
     mSavedVideoRequestList.clear();
+    memset(MultiConfigId, 0, sizeof(uint32_t) * 5);
+    memset(aux1_FaceRect, 0, sizeof(int32_t) * 10 * 4);
+    memset(aux2_FaceRect, 0, sizeof(int32_t) * 10 * 4);
+    memset(aux1_FaceGenderRaceAge, 0, sizeof(int32_t) * 10);
+    memset(aux2_FaceGenderRaceAge, 0, sizeof(int32_t) * 10);
     bzero(&mLocalBuffer,
           sizeof(new_mem_t) * MAX_MULTI_NUM_BUFFER * MAX_MULTI_NUM_BUFFER);
     reConfigInit();
@@ -747,7 +748,7 @@ int SprdCamera3MultiCamera::configureStreams(
     memset(configstreamList, 0,
            sizeof(camera3_stream_t *) * MAX_MULTI_NUM_STREAMS);
 
-    // first.get stream form fw.
+    // first.get stream from fw.
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         camera3_stream_t *newStream = stream_list->streams[i];
 
@@ -759,7 +760,15 @@ int SprdCamera3MultiCamera::configureStreams(
             }
             gMultiCam->video_parse_configure_info(config_info);
             mIsVideoMode = true;
+        } else {
+            config_multi_camera *config_info = gMultiCam->load_config_file();
+            if (!config_info) {
+                HAL_LOGE("failed to get common config file ");
+                return BAD_VALUE;
+            }
+            gMultiCam->parse_configure_info(config_info);
         }
+        HAL_LOGV("mIsVideoMode=%d", mIsVideoMode);
 
         int requestStreamType = getStreamType(stream_list->streams[i]);
         HAL_LOGI("stream num %d, requestStreamType %d",
@@ -835,9 +844,9 @@ int SprdCamera3MultiCamera::configureStreams(
         int stream_type = main_camera->hal_stream[i].type;
         if (stream_type == PREVIEW_STREAM && (previewStream != NULL)) {
             memcpy(previewStream, newStream, sizeof(camera3_stream_t));
+            previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
             HAL_LOGV("previewStream  max buffers %d",
                 previewStream->max_buffers);
-            previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
         } else if (stream_type == SNAPSHOT_STREAM && (snapStream != NULL)) {
             memcpy(snapStream, newStream, sizeof(camera3_stream_t));
         } else if (stream_type == CALLBACK_STREAM && (callbackStream != NULL)) {
@@ -1044,7 +1053,8 @@ int SprdCamera3MultiCamera::createOutputBufferStream(
                 fw_buffer[PREVIEW_STREAM].acquire_fence;
             break;
         case VIDEO_STREAM_HAL_BUFFER:
-            curOutputBuffer->stream = findStream(VIDEO_STREAM, camera_phy_info);
+            curOutputBuffer->stream =
+                findStream(VIDEO_STREAM, camera_phy_info);
             CHECK_STREAM_ERROR(curOutputBuffer->stream);
             curOutputBuffer->buffer =
                 popBufferList(mLocalBufferList, curOutputBuffer->stream->width,
@@ -1052,7 +1062,8 @@ int SprdCamera3MultiCamera::createOutputBufferStream(
             curOutputBuffer->acquire_fence = -1;
             break;
         case VIDEO_STREAM_FW_BUFFER:
-            curOutputBuffer->stream = findStream(VIDEO_STREAM, camera_phy_info);
+            curOutputBuffer->stream =
+                findStream(VIDEO_STREAM, camera_phy_info);
             CHECK_STREAM_ERROR(curOutputBuffer->stream);
             curOutputBuffer->buffer = fw_buffer[VIDEO_STREAM].buffer;
             curOutputBuffer->acquire_fence =
@@ -1132,13 +1143,13 @@ int SprdCamera3MultiCamera::reprocessReq(buffer_handle_t *input_buffers) {
     void *transform_buffer_addr = NULL;
     void *output_handle_addr = NULL;
 #endif
-    camera3_capture_request_t request;
 
     if (!input_buffers) {
         HAL_LOGE("reprocess para is null");
         return UNKNOWN_ERROR;
     }
 
+    camera3_capture_request_t request;
     camera3_stream_buffer_t output_buffer;
     camera3_stream_buffer_t input_buffer;
 
@@ -1300,32 +1311,35 @@ int SprdCamera3MultiCamera::processCaptureRequest(
     const struct camera3_device *device, camera3_capture_request_t *request) {
 
     int rc = 0;
-    int index = 0;
     int cameraMNIndex = 0;
     Mutex::Autolock l(mMultiLock);
     rc = validateCaptureRequest(request);
     if (rc != NO_ERROR) {
         return rc;
     }
-    CameraMetadata metaSettings[MAX_MULTI_NUM_CAMERA];
+
     mCurFrameNum = request->frame_number;
+    int total_stream_mask = 0;
     int req_stream_mak[MAX_MULTI_NUM_CAMERA];
-    camera3_capture_request_t newReq[MAX_MULTI_NUM_CAMERA];
+    CameraMetadata
+        metaSettings[MAX_MULTI_NUM_CAMERA];
+    camera3_stream_buffer_t
+        fw_buffer[MAX_MULTI_NUM_STREAMS + 1];
     camera3_stream_buffer_t
         out_buffer[MAX_MULTI_NUM_CAMERA][MAX_MULTI_NUM_STREAMS];
+    camera3_capture_request_t
+        newReq[MAX_MULTI_NUM_CAMERA];
 
-    camera3_stream_buffer_t fw_buffer[MAX_MULTI_NUM_STREAMS + 1];
-    int total_stream_mask = 0;
-
-    bzero(&newReq, sizeof(camera3_capture_request_t) * MAX_MULTI_NUM_CAMERA);
     bzero(&req_stream_mak, sizeof(int) * MAX_MULTI_NUM_CAMERA);
-    bzero(&out_buffer, sizeof(camera3_stream_buffer_t) * MAX_MULTI_NUM_CAMERA *
-                           MAX_MULTI_NUM_STREAMS);
     bzero(&fw_buffer,
-          sizeof(camera3_stream_buffer_t) * (MAX_MULTI_NUM_STREAMS + 1));
+        sizeof(camera3_stream_buffer_t) * (MAX_MULTI_NUM_STREAMS + 1));
+    bzero(&out_buffer,
+        sizeof(camera3_stream_buffer_t) * MAX_MULTI_NUM_CAMERA *
+        MAX_MULTI_NUM_STREAMS);
+    bzero(&newReq,
+        sizeof(camera3_capture_request_t) * MAX_MULTI_NUM_CAMERA);
 
     // 1. config metadata for all camera
-
     for (int i = 0; i < MAX_MULTI_NUM_CAMERA; i++) {
         metaSettings[i] = request->settings;
     }
@@ -1355,15 +1369,17 @@ int SprdCamera3MultiCamera::processCaptureRequest(
         // get stream_mask for everyone
         for (int j = 0; j < req_stream_config->total_camera; j++) {
             int camera_index = req_stream_config->camera_index[j];
-            HAL_LOGV("camera_index=%d, req_stream_mak=%d",
-                camera_index, req_stream_mak[camera_index]);
+            HAL_LOGV("req_stream_mak=%d",
+                req_stream_mak[camera_index]);
             req_stream_mak[camera_index] |=
                 req_stream_config->stream_type_mask[j];
-            total_stream_mask |= req_stream_config->stream_type_mask[j];
-            HAL_LOGV("camera %d ,req_stream_config->stream_type_mask:%d"
-                ", req_stream_mak=%d, camera_index=%d",
-                j, req_stream_config->stream_type_mask[j],
-                req_stream_mak[camera_index], camera_index);
+            total_stream_mask |=
+                req_stream_config->stream_type_mask[j];
+            HAL_LOGV("camera=%d, camera_index=%d"
+                ", req_stream_config->stream_type_mask=%d"
+                ", req_stream_mak=%d, total_stream_mask=%d",
+                j, camera_index, req_stream_config->stream_type_mask[j],
+                req_stream_mak[camera_index], total_stream_mask);
         }
         if (stream_type == SNAPSHOT_STREAM &&
             !(total_stream_mask &
@@ -1398,8 +1414,10 @@ int SprdCamera3MultiCamera::processCaptureRequest(
 
     // 3.  save request;
     saveRequest(request, fw_buffer, mRefIdex);
-    HAL_LOGV("frame:id=%lld,capture id=%lld,cameraMNIndex=%d,sendF=%lld",
-        mCurFrameNum, mCapFrameNum, cameraMNIndex, mSendFrameNum);
+    HAL_LOGV("frame id=%lld, capture id=%lld, sendF=%lld"
+        ", cameraMNIndex=%d, mMetaNotifyIndex=%d",
+        mCurFrameNum, mCapFrameNum, mSendFrameNum,
+        cameraMNIndex, mMetaNotifyIndex);
 
     // 5. wait untill switch finish
     if (cameraMNIndex != mMetaNotifyIndex && mMetaNotifyIndex != -1 &&
@@ -1438,8 +1456,9 @@ int SprdCamera3MultiCamera::processCaptureRequest(
     // 4. DO request.
     for (int i = 0; i < m_nPhyCameras; i++) {
         SprdCamera3HWI *hwi = m_pPhyCamera[i].hwi;
+        int buffer_num = 0;
         int streamConfig = req_stream_mak[i];
-        HAL_LOGD("streamConfig = %d, i = %d, index = %d", streamConfig, i, index);
+        HAL_LOGD("streamConfig = %d, i = %d", streamConfig, i);
         if ((mIsVideoMode == true) && (i != 0 && i != mRefIdex) &&
             (streamConfig == SNAPSHOT_STREAM_HAL_BUFFER)) {
             HAL_LOGV("skip_video_capture");
@@ -1450,12 +1469,6 @@ int SprdCamera3MultiCamera::processCaptureRequest(
             continue;
         }
 
-        // if(streamConfig == 64 && (i == 1)){
-        // continue;
-        //}
-        ////if(i>0&& (streamConfig == 64))
-        // break;
-        int buffer_num = 0;
         if (!streamConfig) {
             HAL_LOGD("no need to config camera:%d", i);
             continue;
@@ -1492,8 +1505,6 @@ int SprdCamera3MultiCamera::processCaptureRequest(
             i, buffer_num, tempReq->frame_number);
         if (getStreamType(tempOutBuffer->stream) ==
             DEFAULT_STREAM /*&& i == 0*/) {
-            // HAL_LOGD("save main camera meta setting mSavedCapReqsettings
-            // %p",mSavedCapReqsettings);
             mSavedCapReqsettings = clone_camera_metadata(tempReq->settings);
             HAL_LOGD("save main camera meta setting mSavedCapReqsettings %p",
                 mSavedCapReqsettings);
@@ -2089,6 +2100,17 @@ void SprdCamera3MultiCamera::parse_configure_info(
     mMultiMode = config_info->mode;
     m_nPhyCameras = config_info->total_config_camera;
     m_VirtualCamera.id = config_info->virtual_camera_id;
+
+    mCameraIdWide =
+        findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK);
+    mCameraIdSw =
+        findSensorRole(MODULE_SPW_NONE_BACK);
+    mCameraIdTele =
+        findSensorRole(MODULE_OPTICSZOOM_TELE_BACK);
+    MultiConfigId[0] = mCameraIdWide;
+    MultiConfigId[1] = mCameraIdSw;
+    MultiConfigId[2] = mCameraIdTele;
+
     // mBufferInfo
     memcpy(&mBufferInfo, config_info->buffer_info,
            sizeof(hal_buffer_info) * MAX_MULTI_NUM_BUFFER);
@@ -2097,7 +2119,7 @@ void SprdCamera3MultiCamera::parse_configure_info(
     for (int i = 0; i < m_nPhyCameras; i++) {
         config_physical_descriptor *phy_cam_info =
             (config_physical_descriptor *)&config_info->multi_phy_info[i];
-        m_pPhyCamera[i].id = phy_cam_info->id;
+        m_pPhyCamera[i].id = MultiConfigId[i];
         m_pPhyCamera[i].stream_num = phy_cam_info->config_stream_num;
         memcpy(&m_pPhyCamera[i].hal_stream, &(phy_cam_info->hal_stream),
                sizeof(hal_stream_info) * MAX_MULTI_NUM_STREAMS);
@@ -2146,6 +2168,7 @@ void SprdCamera3MultiCamera::video_parse_configure_info(
     mMultiMode = config_info->mode;
     m_nPhyCameras = config_info->total_config_camera;
     m_VirtualCamera.id = config_info->virtual_camera_id;
+
     // video mBufferInfo
     memcpy(&mBufferInfo, config_info->video_buffer_info,
            sizeof(hal_buffer_info) * MAX_MULTI_NUM_BUFFER);
@@ -2154,7 +2177,7 @@ void SprdCamera3MultiCamera::video_parse_configure_info(
     for (int i = 0; i < m_nPhyCameras; i++) {
         config_physical_descriptor *phy_cam_info =
             (config_physical_descriptor *)&config_info->video_multi_phy_info[i];
-        m_pPhyCamera[i].id = phy_cam_info->id;
+        m_pPhyCamera[i].id = MultiConfigId[i];
         m_pPhyCamera[i].stream_num = phy_cam_info->config_stream_num;
         memcpy(&m_pPhyCamera[i].hal_stream, &(phy_cam_info->hal_stream),
                sizeof(hal_stream_info) * MAX_MULTI_NUM_STREAMS);
@@ -2231,9 +2254,8 @@ int SprdCamera3MultiCamera::allocateBuff() {
 camera3_stream_t *SprdCamera3MultiCamera::findStream(
     int type, const sprdcamera_physical_descriptor_t *phy_cam_info) {
     camera3_stream_t *ret_stream = NULL;
-    HAL_LOGV(" phy_cam_info->stream_num %d", phy_cam_info->stream_num);
     for (int i = 0; i < phy_cam_info->stream_num; i++) {
-        HAL_LOGV("phy_cam_info->hal_stream[i].type %d, type %d, stream_num %d",
+        HAL_LOGV("hal_stream[i : %d].type %d, type %d, stream_num %d", i,
             phy_cam_info->hal_stream[i].type, type, phy_cam_info->stream_num);
         if (phy_cam_info->hal_stream[i].type == type) {
             ret_stream = (camera3_stream_t *)&(phy_cam_info->streams[i]);
@@ -2508,14 +2530,7 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
                                 gMultiCam->aux2_FaceGenderRaceAge, face_num);
         }
     }
-    camMetadata->update(ANDROID_CONTROL_AF_MODE,
-                        &(SprdCamera3Setting::s_setting[m_VirtualCamera.id]
-                              .controlInfo.af_mode),
-                        1);
-    camMetadata->update(ANDROID_CONTROL_AF_TRIGGER_ID,
-                        &(SprdCamera3Setting::s_setting[m_VirtualCamera.id]
-                              .controlInfo.af_trigger_Id),
-                        1);
+
     meta = camMetadata->release();
     delete camMetadata;
     return meta;
@@ -2535,6 +2550,7 @@ void SprdCamera3MultiCamera::setZoomCropRegion(CameraMetadata *WideSettings,
                                                CameraMetadata *SwSettings,
                                                float multi_zoom_ratio) {
     int ret = 0;
+    mIsSyncFirstFrame = true;
     int32_t crop_Region[4] = {0};
     int32_t crop_Region_sw[4] = {0};
 
@@ -2649,31 +2665,18 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                                    1);
     }
 
-#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
-    SprdCamera3Setting::getLargestSensorSize(0, &snsW, &snsH);
+    SprdCamera3Setting::getLargestSensorSize(mCameraIdWide, &snsW, &snsH);
     mWideMaxWidth = snsW;
     mWideMaxHeight = snsH;
 
-    SprdCamera3Setting::getLargestSensorSize(3, &snsW, &snsH);
+    SprdCamera3Setting::getLargestSensorSize(mCameraIdSw, &snsW, &snsH);
     mSwMaxWidth = snsW;
     mSwMaxHeight = snsH;
 
-    SprdCamera3Setting::getLargestSensorSize(2, &snsW, &snsH);
+    SprdCamera3Setting::getLargestSensorSize(mCameraIdTele, &snsW, &snsH);
     mTeleMaxWidth = snsW;
     mTeleMaxHeight = snsH;
-#else
-    SprdCamera3Setting::getLargestSensorSize(0, &snsW, &snsH);
-    mWideMaxWidth = snsW;
-    mWideMaxHeight = snsH;
 
-    SprdCamera3Setting::getLargestSensorSize(2, &snsW, &snsH);
-    mSwMaxWidth = snsW;
-    mSwMaxHeight = snsH;
-
-    SprdCamera3Setting::getLargestSensorSize(3, &snsW, &snsH);
-    mTeleMaxWidth = snsW;
-    mTeleMaxHeight = snsH;
-#endif
 
     HAL_LOGV("mWideMaxWidth=%d, mWideMaxHeight=%d, mTeleMaxWidth=%d, "
         "mTeleMaxHeight=%d, mSwMaxWidth=%d, mSwMaxHeight=%d",
@@ -2703,19 +2706,18 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
             mReqConfigNum = 1;
         }
         /*
-                 if
-           (metaSettingsWide->exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-                     int32_t aeTargetFpsRange[2] = {20, 20};
-                     metaSettingsWide->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                                              aeTargetFpsRange,
-                                              ARRAY_SIZE(aeTargetFpsRange));
-                     metaSettingsSw->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                                            aeTargetFpsRange,
-                                            ARRAY_SIZE(aeTargetFpsRange));
-                     metaSettingsTele->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
-                                              aeTargetFpsRange,
-                                              ARRAY_SIZE(aeTargetFpsRange));
-                 }
+        if (metaSettingsWide->exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
+            int32_t aeTargetFpsRange[2] = {20, 20};
+            metaSettingsWide->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                aeTargetFpsRange,
+                ARRAY_SIZE(aeTargetFpsRange));
+            metaSettingsSw->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                aeTargetFpsRange,
+                ARRAY_SIZE(aeTargetFpsRange));
+            metaSettingsTele->update(ANDROID_CONTROL_AE_TARGET_FPS_RANGE,
+                aeTargetFpsRange,
+                ARRAY_SIZE(aeTargetFpsRange));
+        }
         */
 
         if (meta->exists(ANDROID_SPRD_TOUCH_INFO)) {
@@ -2962,7 +2964,7 @@ void SprdCamera3MultiCamera::reConfigFlush() {
     HAL_LOGD("E");
 
     TWThreadExit();
-
+    mIsVideoMode = false;
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux1.clear();
     mUnmatchedFrameListAux2.clear();
