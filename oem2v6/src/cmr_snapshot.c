@@ -4288,7 +4288,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     }
 
     snp_set_status(snp_handle, POST_PROCESSING);
-    if (cxt->req_param.filter_type || cxt->req_param.nr_flag || (cxt->req_param.dre_flag&& !cxt->req_param.is_yuv_callback_mode)) {
+    if ((cxt->req_param.filter_type || cxt->req_param.nr_flag || cxt->req_param.dre_flag) && !cxt->req_param.is_yuv_callback_mode) {
         CMR_LOGI("before snp_ipm_process cameraid = %d ",cxt->camera_id);
         snp_ipm_process(snp_handle, data);
     }

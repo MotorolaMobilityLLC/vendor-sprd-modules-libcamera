@@ -175,7 +175,7 @@ static cmr_int dre_transfer_frame(cmr_handle class_handle,
         CMR_LOGI("no parameters ,bypass dre");
         goto exit;
     } else {
-        CMR_LOGE("success to get isp param  %ld", ret);
+        CMR_LOGI("success to get isp param  %ld", ret);
     }
     image_in.addr[0] = (void *)addr->addr_y;
     image_in.height = height;

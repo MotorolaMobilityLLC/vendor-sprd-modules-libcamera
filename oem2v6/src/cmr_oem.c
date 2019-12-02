@@ -10099,6 +10099,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
     cmr_int i;
     cmr_uint cnr_typ;
+    struct common_isp_cmd_param isp_cmd_parm;
 
     out_ptr->total_num = 0;
     out_ptr->rot_angle = 0;
@@ -10227,9 +10228,15 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         CMR_LOGE("failed to get app mode %ld", ret);
     }
     CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
-        cxt->camera_id == 0) {
-        // auto 3dnr available
+
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_DRE_PARAM, &isp_cmd_parm);
+    if (ret) {
+        CMR_LOGE("there is no dre parameters for camera id =%d", cxt->camera_id);
+    }
+
+    if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO || setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE ||
+              setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) && ret == CMR_CAMERA_SUCCESS) {
+        // dre available
         out_ptr->dre_flag = 1;
         cxt->dre_flag = 1;
     } else {
@@ -11162,10 +11169,10 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                                         &flash_status);
     if (1 == cxt->dre_flag && (camera_get_hdr_flag(cxt) != 1) &&
         !flash_status && (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL)) {
-            ret = camera_dre_set_ev(oem_handle, 1);
-            if (ret) {
-                CMR_LOGE("fail to set dre ev");
-            }
+        ret = camera_dre_set_ev(oem_handle, 1);
+        if (ret) {
+            CMR_LOGE("fail to set dre ev");
+        }
         cxt->dre_capture_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
         if (cxt->dre_skipframe)
             cxt->dre_skip_frame_enable = 1;
