@@ -651,6 +651,12 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			cxt->ae_region[sensor_role].start_y = info->start_y;
 			cxt->ae_region[sensor_role].end_x = info->start_x + info->width;
 			cxt->ae_region[sensor_role].end_y = info->start_x + info->height;
+			ISP_LOGD("set %s AE region %u %u %u %u",
+					get_role_name(sensor_role),
+					cxt->ae_region[sensor_role].start_x,
+					cxt->ae_region[sensor_role].start_y,
+					cxt->ae_region[sensor_role].end_x,
+					cxt->ae_region[sensor_role].end_y);
 			sem_post(&cxt->ae_sm);
 		}
 		break;

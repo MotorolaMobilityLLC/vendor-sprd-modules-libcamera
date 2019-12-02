@@ -7307,11 +7307,23 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    CMR_LOGD("after src_img_rect %d %d %d %d",
+    CMR_LOGD("camera %u after src_img_rect %d %d %d %d", camera_id,
              chn_param.cap_inf_cfg.cfg.src_img_rect.start_x,
              chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
              chn_param.cap_inf_cfg.cfg.src_img_rect.width,
              chn_param.cap_inf_cfg.cfg.src_img_rect.height);
+
+    if (handle->ops.isp_ioctl) {
+        struct common_isp_cmd_param param;
+
+        param.camera_id = camera_id;
+        param.ae_target_region = chn_param.cap_inf_cfg.cfg.src_img_rect;
+        ret = handle->ops.isp_ioctl(handle->oem_handle,
+                COM_ISP_SET_AE_TARGET_REGION, &param);
+        if (ret < 0) {
+            CMR_LOGW("fail to set AE roi");
+        }
+    }
 
     /*save the rect*/
     prev_cxt->prev_rect.start_x =
@@ -7563,7 +7575,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
         goto exit;
     }
 
-    CMR_LOGD("after src_img_rect %d %d %d %d",
+    CMR_LOGD("camera %u after src_img_rect %d %d %d %d", camera_id,
              chn_param.cap_inf_cfg.cfg.src_img_rect.start_x,
              chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
              chn_param.cap_inf_cfg.cfg.src_img_rect.width,
@@ -15520,7 +15532,14 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     void *dst_buffer_handle = NULL;
     cmr_handle *ultra_wide_handle = NULL;
     void *zoom;
+    struct channel_start_param chn_param;
+    struct sensor_exp_info *sensor_info = NULL;
+    struct sensor_mode_info *sensor_mode_info = NULL;
+    static float org_zoom = 1.0f;
+    int zoom_changed = 1;
+    const float EPSINON = 0.0001f;
     cmr_bzero(&setting_param, sizeof(setting_param));
+    cmr_bzero(&chn_param, sizeof(struct channel_start_param));
     setting_param.camera_id = camera_id;
 
     prev_cxt = &handle->prev_cxt[camera_id];
@@ -15553,6 +15572,78 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             dst_img = &prev_cxt->prev_frm[frm_id];
             ultra_wide_handle = prev_cxt->ultra_wide_handle;
             zoom = (void *)&(setting_param.zoom_param.zoom_info.prev_aspect_ratio);
+
+            float new_zoom = setting_param.zoom_param.zoom_info.prev_aspect_ratio;
+            if(fabs(org_zoom - new_zoom) >= EPSINON)
+                  zoom_changed = 1;
+            else   zoom_changed = 0;
+            org_zoom = new_zoom;
+            if(zoom_changed) {      /*set AE ROI*/
+                  chn_param.sensor_mode = prev_cxt->prev_mode;
+                  sensor_info = &prev_cxt->sensor_info;
+                  sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
+
+                  chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
+                  chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
+                  chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
+                  chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
+
+                  chn_param.cap_inf_cfg.cfg.dst_img_size.width =
+                           prev_cxt->actual_prev_size.width;
+                  chn_param.cap_inf_cfg.cfg.dst_img_size.height =
+                           prev_cxt->actual_prev_size.height;
+                  chn_param.cap_inf_cfg.cfg.notice_slice_height =
+                           chn_param.cap_inf_cfg.cfg.dst_img_size.height;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.start_x =
+                           sensor_mode_info->scaler_trim.start_x;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.start_y =
+                           sensor_mode_info->scaler_trim.start_y;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.width =
+                           sensor_mode_info->scaler_trim.width;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.height =
+                           sensor_mode_info->scaler_trim.height;
+
+                  CMR_LOGV("src_img_rect %d %d %d %d",
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_x,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.width,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.height);
+
+                  /*caculate trim rect*/
+                  if (ZOOM_INFO != setting_param.zoom_param.mode) {
+                           ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                                   setting_param.zoom_param.zoom_level,
+                                   &chn_param.cap_inf_cfg.cfg.dst_img_size);
+                  } else {
+                           float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
+                                    prev_cxt->actual_prev_size.height;
+                           ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                                    setting_param.zoom_param.zoom_info.prev_aspect_ratio,
+                                    aspect_ratio,
+                                    sensor_mode_info->scaler_trim.width,
+                                    sensor_mode_info->scaler_trim.height,
+                                    prev_cxt->prev_param.prev_rot);
+                  }
+                  if (ret) {
+                           CMR_LOGE("prev get trim failed, %d",ret);
+                  }
+
+                  CMR_LOGV("camera %u after src_img_rect %d %d %d %d", camera_id,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_x,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.width,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.height);
+                  if (handle->ops.isp_ioctl) {
+                           struct common_isp_cmd_param param;
+                           param.camera_id = camera_id;
+                           param.ae_target_region = chn_param.cap_inf_cfg.cfg.src_img_rect;
+                           ret = handle->ops.isp_ioctl(handle->oem_handle,
+                                   COM_ISP_SET_AE_TARGET_REGION, &param);
+                      if (ret < 0) {
+                            CMR_LOGW("fail to set AE roi");
+                      }
+                 }
+            }
         } else if (IS_ZSL_FRM(data->frame_id)) {
             cmr_s32 dst_fd;
             frame_type = PREVIEW_ZSL_FRAME;
