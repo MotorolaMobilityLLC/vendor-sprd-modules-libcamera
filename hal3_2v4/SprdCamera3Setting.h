@@ -154,6 +154,7 @@ typedef struct {
     uint8_t ae_manual_trigger;
     uint8_t ae_state;
     int32_t ae_precapture_id;
+    uint8_t ae_comp_change;
 
     uint8_t awb_available_modes[9];
     uint8_t awb_lock;
