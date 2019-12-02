@@ -648,6 +648,7 @@ class SprdCamera3Setting {
                            struct img_rect *preview_rect);
     static int GetFovParam(int32_t cameraId);
     bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+    static int resetFeatureStatus(const char* fea_ip,const char* fea_eb);
 };
 
 }; // namespace sprdcamera

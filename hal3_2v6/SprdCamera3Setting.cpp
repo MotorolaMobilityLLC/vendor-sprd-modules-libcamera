@@ -533,7 +533,7 @@ const cam_stream_info_t stream_info[] = {
     {{2448, 2448}, 33331760L, 33331760L},
     {{2320, 1740}, 33331760L, 33331760L},
 #ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
-    {{2304, 1728}, 33331760L, 33331760L}, //L5Pro,4in1 binning size
+    {{2304, 1728}, 33331760L, 33331760L}, // L5Pro,4in1 binning size
 #endif
     {{2272, 1080}, 33331760L, 33331760L},
     {{2160, 1080}, 33331760L, 33331760L},
@@ -1435,8 +1435,8 @@ int32_t SprdCamera3Setting::stream_limit(const cam_stream_info_t *p,
  * output: max capture size
  * return: 0: success, other: fail
  */
-int SprdCamera3Setting::getMaxCapSize(int32_t cameraId, int32_t *w, int32_t *h)
-{
+int SprdCamera3Setting::getMaxCapSize(int32_t cameraId, int32_t *w,
+                                      int32_t *h) {
     const cam_stream_info_t *p_stream_info = NULL;
     int tbl_cnt;
     int i;
@@ -1600,10 +1600,10 @@ int SprdCamera3Setting::initStaticParametersforLensInfo(int32_t cameraId) {
  * input: string for selecttion set by propterty
  * output: struct img_size *p
  */
-int SprdCamera3Setting::getHighResCapSize(int32_t cameraId, const struct img_size **pRet)
-{
+int SprdCamera3Setting::getHighResCapSize(int32_t cameraId,
+                                          const struct img_size **pRet) {
 #define RES_SIZE_NUM 6
-   char prop[PROPERTY_VALUE_MAX] = {0};
+    char prop[PROPERTY_VALUE_MAX] = {0};
     struct phySensorInfo *phyPtr = NULL;
     const struct img_size *pt = NULL;
     int i;
@@ -1630,18 +1630,14 @@ int SprdCamera3Setting::getHighResCapSize(int32_t cameraId, const struct img_siz
         property_get("persist.vendor.cam.front.high.cap", prop, "");
 
     if (strlen(prop) > 0) {
-        for (i = 0;
-             i < (sizeof(tb_res_cap) / sizeof(tb_res_cap[0]));
-             i++) {
+        for (i = 0; i < (sizeof(tb_res_cap) / sizeof(tb_res_cap[0])); i++) {
             if (strcmp(prop, tb_res_cap[i].pch) == 0) {
                 pt = tb_res_cap[i].res;
                 break;
             }
         }
     } else {
-        for (i = 0;
-             i < (sizeof(tb_res_cap) / sizeof(tb_res_cap[0]));
-             i++) {
+        for (i = 0; i < (sizeof(tb_res_cap) / sizeof(tb_res_cap[0])); i++) {
             if (phyPtr->source_width_max >= tb_res_cap[i].res[0].width &&
                 phyPtr->source_height_max >= tb_res_cap[i].res[0].height) {
                 pt = tb_res_cap[i].res;
@@ -1668,8 +1664,8 @@ int SprdCamera3Setting::getHighResCapSize(int32_t cameraId, const struct img_siz
  *       if not set prop, use 4in1 sensor bin size
  * output: capture size for "AUTO" mode
  */
-int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId, struct img_size *pRet)
-{
+int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId,
+                                             struct img_size *pRet) {
     struct BinCapSizeTag {
         const char *pch;
         struct img_size size;
@@ -1710,8 +1706,8 @@ int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId, struct img_size *
 
 _EXIT:
     HAL_LOGD("prop:%s param[%d %d], cap size[%d %d]", prop,
-             phyPtr->source_width_max, phyPtr->source_height_max,
-             pRet->width, pRet->height);
+             phyPtr->source_width_max, phyPtr->source_height_max, pRet->width,
+             pRet->height);
 
     return 0;
 }
@@ -1769,7 +1765,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         struct img_size s_limit;
 
         getHighResBinCapSize(cameraId, &s_limit);
-        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width, s_limit.height);
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width,
+                         s_limit.height);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
@@ -1779,7 +1776,8 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         struct img_size s_limit;
 
         getHighResBinCapSize(cameraId, &s_limit);
-        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width, s_limit.height);
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width,
+                         s_limit.height);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
@@ -2067,7 +2065,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // jpeg
     int32_t jpeg_stream_size;
-#if defined(CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT) || \
+#if defined(CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT) ||                           \
     defined(CONFIG_BACK_HIGH_RESOLUTION_SUPPORT)
     int32_t w, h;
 
@@ -2076,9 +2074,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     getMaxCapSize(cameraId, &w, &h);
     jpeg_stream_size = getJpegStreamSize(cameraId, w, h);
 #else
-    jpeg_stream_size = getJpegStreamSize(cameraId,
-                          largest_picture_size[cameraId].stream_sizes_tbl.width,
-                          largest_picture_size[cameraId].stream_sizes_tbl.height);
+    jpeg_stream_size = getJpegStreamSize(
+        cameraId, largest_picture_size[cameraId].stream_sizes_tbl.width,
+        largest_picture_size[cameraId].stream_sizes_tbl.height);
 #endif
     memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes,
            camera3_default_info.common.jpegThumbnailSizes,
@@ -2181,7 +2179,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // default metering mode is 1 (center weighting)
     s_setting[cameraId].sprddefInfo.am_mode = 1;
 
-    //default 4IN1 high resolution mode to binnng size
+    // default 4IN1 high resolution mode to binnng size
     s_setting[cameraId].sprddefInfo.fin1_highlight_mode = 0;
 
     memcpy(s_setting[cameraId].sprddefInfo.availabe_brightness,
@@ -2329,13 +2327,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
     }
 
-// 7 back ultra wide enable
-#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
-    if (findSensorRole(MODULE_SPW_NONE_BACK) >= 0)
-        available_cam_features.add(1);
-    else
-#endif
+    // 7 back ultra wide enable
+    if (findSensorRole(MODULE_SPW_NONE_BACK) >= 0) {
+        available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.warp",
+        "persist.vendor.cam.ultra.wide.enable"));
+    } else {
         available_cam_features.add(0);
+    }
 
 // 8 bokeh gdepth enable
 #ifdef CONFIG_SUPPORT_GDEPTH
@@ -2344,14 +2342,19 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(0);
 #endif
 
-    // 9 back portrait mode
-    property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+// 9 back portrait mode
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.daul.portrait",
+        "persist.vendor.cam.ba.portrait.enable"));
+#else
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+        "persist.vendor.cam.ba.portrait.enable"));
+#endif
 
     // 10 front portrait mode
-    property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
-
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+        "persist.vendor.cam.fr.portrait.enable"));
+    
     // 11 montion photo enable
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
@@ -2372,8 +2375,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     // 13 multi camera superwide & wide & tele
-    property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
+        "persist.vendor.cam.multi.camera.enable"));
 
     // 14 camera back high resolution definition mode
     property_get("persist.vendor.cam.back.high.resolution.mode", prop, "0");
@@ -2411,6 +2414,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
         available_cam_features.size();
 
+    property_set("persist.vendor.cam.ip.switch.on", "0");
     HAL_LOGI("available_cam_features=%d",
              s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
@@ -4684,11 +4688,11 @@ int SprdCamera3Setting::updateWorkParameters(
         }
         pushAndroidParaTag(ANDROID_JPEG_GPS_COORDINATES);
     } else if (s_setting[mCameraId].controlInfo.capture_intent ==
-          CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
-          size_t num_elements = 3;
-          for (size_t i = 0; i < num_elements; i++) {
-              s_setting[mCameraId].jpgInfo.gps_coordinates[i] = 0;
-          }
+               CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+        size_t num_elements = 3;
+        for (size_t i = 0; i < num_elements; i++) {
+            s_setting[mCameraId].jpgInfo.gps_coordinates[i] = 0;
+        }
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD)) {
@@ -4899,7 +4903,8 @@ int SprdCamera3Setting::updateWorkParameters(
                       .data.u8[0];
         s_setting[mCameraId].controlInfo.ae_precap_trigger = valueU8;
         pushAndroidParaTag(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER);
-        HAL_LOGV("mCameraId=%d,ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER %d", mCameraId,valueU8);
+        HAL_LOGV("mCameraId=%d,ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER %d",
+                 mCameraId, valueU8);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_PRECAPTURE_ID)) {
         s_setting[mCameraId].controlInfo.ae_precapture_id =
@@ -6584,6 +6589,44 @@ int SprdCamera3Setting::getSensorFov(float *w_fov, float *sw_fov) {
     *w_fov = sensor_angle_fov[0];
     *sw_fov = sensor_angle_fov[1];
     return 0;
+}
+
+int SprdCamera3Setting::resetFeatureStatus(const char* fea_ip,const char* fea_eb) {
+    char ip_feature[PROPERTY_VALUE_MAX];
+    char feature_switch[PROPERTY_VALUE_MAX];
+    char prop[PROPERTY_VALUE_MAX];
+    int rc = 0;
+    property_get("persist.vendor.cam.ip.switch.on", feature_switch, "0");
+
+    property_get(fea_ip, ip_feature, "2");
+    if(atoi(ip_feature) == 0){
+        property_set(fea_eb, "0");
+    } else if (atoi(ip_feature) == 1) {
+        property_set(fea_eb, "1");
+    }
+
+    property_get(fea_eb, prop, "2");
+    if((atoi(feature_switch) == 1) && (atoi(prop)==0)){
+        rc = 1;
+        if(atoi(prop) != 2)
+            property_set(fea_ip, "1");
+    } else if(atoi(prop)==1){
+        rc = 1;
+        if(atoi(prop) == 0){
+            property_set(fea_ip, "0");
+        } else if (atoi(prop) == 1) {
+            property_set(fea_ip, "1");
+        }
+    } else {
+        rc = 0;
+        if(atoi(prop) == 0){
+            property_set(fea_ip, "0");
+        } else if (atoi(prop) == 1) {
+            property_set(fea_ip, "1");
+        }
+    }
+
+    return rc;
 }
 
 } // namespace sprdcamera

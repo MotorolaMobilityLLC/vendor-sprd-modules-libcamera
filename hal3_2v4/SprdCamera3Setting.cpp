@@ -138,10 +138,7 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
 };
 
 static front_flash_type front_flash[] = {
-    {"2", "lcd"},
-    {"1", "led"},
-    {"2", "flash"},
-    {"1", "none"},
+    {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
 };
 
 #if 0
@@ -198,10 +195,10 @@ const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
     HAL_PIXEL_FORMAT_YCrCb_420_SP};
 
-const int32_t kavailable_fps_ranges_back[] = {5,  15, 15, 15, 5,  20, 5,
-                                              24, 24, 24, 5,  30, 20, 30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,
-                                               30, 15, 30, 20, 30, 30, 30};
+const int32_t kavailable_fps_ranges_back[] = {5,  15, 15, 15, 5,  20, 5,  24,
+                                              24, 24, 5,  30, 20, 30, 30, 30};
+const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,  30,
+                                               15, 30, 20, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-16, 16};
 const camera_metadata_rational kae_compensation_step = {1, 8};
@@ -457,15 +454,11 @@ const int64_t kavailable_min_durations[1] = {
 };
 
 const int32_t kmax_regions[3] = {
-    1,
-    0,
-    1,
+    1, 0, 1,
 };
 
 const int32_t kmax_front_regions[3] = {
-    1,
-    0,
-    0,
+    1, 0, 0,
 };
 
 const int32_t kavailable_test_pattern_modes[] = {
@@ -481,24 +474,17 @@ const uint8_t kavailable_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
                                          ANDROID_EDGE_MODE_HIGH_QUALITY};
 
 const int32_t ksensitivity_range[2] = {
-    100,
-    1600,
+    100, 1600,
 };
 
 const uint8_t kavailable_tone_map_modes[] = {ANDROID_TONEMAP_MODE_FAST,
                                              ANDROID_TONEMAP_MODE_HIGH_QUALITY};
 
 const float kcolor_gains[] = {
-    1.69f,
-    1.00f,
-    1.00f,
-    2.41f,
+    1.69f, 1.00f, 1.00f, 2.41f,
 };
 const float kfocus_range[] = {
-    0.0f,
-    0.0f,
-    0.0f,
-    0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
 };
 
 camera_metadata_rational_t kcolor_transform[] = {
@@ -1169,8 +1155,8 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
 
     camera3_default_info.common.availableAuto3Dnr = availableAuto3DNR;
     memcpy(camera3_default_info.common.availDistortionCorrectionModes,
-        availDistortionCorrectionModes,
-        sizeof(availDistortionCorrectionModes));
+           availDistortionCorrectionModes,
+           sizeof(availDistortionCorrectionModes));
 
     return 0;
 }
@@ -1325,11 +1311,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 available_stream_configs.add(scaler_formats[j]);
                 available_stream_configs.add(
                     stream_info[i].stream_sizes_tbl.width);
-                available_stream_configs.add(stream_info[i].stream_sizes_tbl.height);
+                available_stream_configs.add(
+                    stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
-                if((scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
-                    scaler_formats[j] == HAL_PIXEL_FORMAT_YCBCR_420_888) &&
+                if ((scaler_formats[j] ==
+                         HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                     scaler_formats[j] == HAL_PIXEL_FORMAT_YCBCR_420_888) &&
                     stream_info[i].stream_sizes_tbl.height == 1088) {
                     available_stream_configs.add(scaler_formats[j]);
                     available_stream_configs.add(
@@ -1396,14 +1384,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     available_min_durations.add(
                         stream_info[i].stream_min_duration);
 
-            if((scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
-                scaler_formats[j] == HAL_PIXEL_FORMAT_YCBCR_420_888) &&
-                stream_info[i].stream_sizes_tbl.height == 1088) {
-                available_min_durations.add(scaler_formats[j]);
-                available_min_durations.add(
-                    stream_info[i].stream_sizes_tbl.width);
-                available_min_durations.add(1080);
-                available_min_durations.add(
+                if ((scaler_formats[j] ==
+                         HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                     scaler_formats[j] == HAL_PIXEL_FORMAT_YCBCR_420_888) &&
+                    stream_info[i].stream_sizes_tbl.height == 1088) {
+                    available_min_durations.add(scaler_formats[j]);
+                    available_min_durations.add(
+                        stream_info[i].stream_sizes_tbl.width);
+                    available_min_durations.add(1080);
+                    available_min_durations.add(
                         stream_info[i].stream_min_duration);
                 }
             }
@@ -1778,35 +1767,41 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     // 7 back ultra wide enable
-#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
-    available_cam_features.add(1);
-#else
-    available_cam_features.add(0);
-#endif
+    if (findSensorRole(MODULE_SPW_NONE_BACK) >= 0) {
+        available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.warp",
+        "persist.vendor.cam.ultra.wide.enable"));
+    } else {
+        available_cam_features.add(0);
+    }
 
-    // 8 bokeh gdepth enable
+// 8 bokeh gdepth enable
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
 
-    // 9 back portrait mode
-    property_get("persist.vendor.cam.ba.portrait.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+// 9 back portrait mode
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.daul.portrait",
+        "persist.vendor.cam.ba.portrait.enable"));
+#else
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+        "persist.vendor.cam.ba.portrait.enable"));
+#endif
 
     // 10 front portrait mode
-    property_get("persist.vendor.cam.fr.portrait.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+        "persist.vendor.cam.fr.portrait.enable"));
 
-    // 11 montion photo enable
+// 11 montion photo enable
 #ifdef CONFIG_CAMERA_MOTION_PHONE
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
 
-    // 12 default quarter size
+// 12 default quarter size
 #ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
     available_cam_features.add(1);
 #else
@@ -1814,8 +1809,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     // 13 multi camera superwide & wide & tele
-    property_get("persist.vendor.cam.multi.camera.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
+        "persist.vendor.cam.multi.camera.enable"));
 
     // 14 camera back high resolution definition mode
     property_get("persist.vendor.cam.back.high.resolution.mode", prop, "0");
@@ -1853,9 +1848,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
         available_cam_features.size();
     memcpy(s_setting[cameraId].lensInfo.distortion_correction_modes,
-        camera3_default_info.common.availDistortionCorrectionModes,
-        sizeof(camera3_default_info.common.availDistortionCorrectionModes));
+           camera3_default_info.common.availDistortionCorrectionModes,
+           sizeof(camera3_default_info.common.availDistortionCorrectionModes));
 
+    property_set("persist.vendor.cam.ip.switch.on", "0");
     HAL_LOGI("available_cam_features = %d",
              s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
@@ -2040,7 +2036,8 @@ int SprdCamera3Setting::initStaticMetadata(
                     ARRAY_SIZE(s_setting[cameraId].controlInfo.ae_available_fps_ranges)
        );*/
     FILL_CAM_INFO(s_setting[cameraId].controlInfo.ae_available_fps_ranges, 2,
-                  FPS_RANGE_COUNT, ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
+                  FPS_RANGE_COUNT,
+                  ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
     staticInfo.update(ANDROID_CONTROL_AE_COMPENSATION_STEP,
                       &(s_setting[cameraId].controlInfo.ae_compensation_step),
                       1);
@@ -2208,10 +2205,12 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AUTO_HDR,
                       &(s_setting[cameraId].sprddefInfo.availabe_auto_hdr), 1);
 
-    staticInfo.update(ANDROID_SPRD_AVAILABLE_LOGOWATERMARK,
-                      &(s_setting[cameraId].sprddefInfo.available_logo_watermark), 1);
-    staticInfo.update(ANDROID_SPRD_AVAILABLE_TIMEWATERMARK,
-                      &(s_setting[cameraId].sprddefInfo.available_time_watermark), 1);
+    staticInfo.update(
+        ANDROID_SPRD_AVAILABLE_LOGOWATERMARK,
+        &(s_setting[cameraId].sprddefInfo.available_logo_watermark), 1);
+    staticInfo.update(
+        ANDROID_SPRD_AVAILABLE_TIMEWATERMARK,
+        &(s_setting[cameraId].sprddefInfo.available_time_watermark), 1);
 
     staticInfo.update(
         ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
@@ -2319,8 +2318,8 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
         if (characteristicsInfo.exists(
                 ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)) {
             float lensFocusDistance =
-                characteristicsInfo
-                    .find(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
+                characteristicsInfo.find(
+                                       ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     .data.f[0];
             if (lensFocusDistance > 0)
                 hasFocuser = true;
@@ -3372,8 +3371,10 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t sprdIsHdrScene = 0;
     requestInfo.update(ANDROID_SPRD_IS_HDR_SCENE, &sprdIsHdrScene, 1);
     uint8_t sprdWaterMarkEnabled = 0;
-    requestInfo.update(ANDROID_SPRD_LOGOWATERMARK_ENABLED, &sprdWaterMarkEnabled, 1);
-    requestInfo.update(ANDROID_SPRD_TIMEWATERMARK_ENABLED, &sprdWaterMarkEnabled, 1);
+    requestInfo.update(ANDROID_SPRD_LOGOWATERMARK_ENABLED,
+                       &sprdWaterMarkEnabled, 1);
+    requestInfo.update(ANDROID_SPRD_TIMEWATERMARK_ENABLED,
+                       &sprdWaterMarkEnabled, 1);
 
     if (!strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd")) {
         uint8_t sprdFlashLcdMode = FLASH_LCD_MODE_OFF;
@@ -3832,7 +3833,7 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)) {
         if (s_setting[mCameraId].controlInfo.ae_exposure_compensation !=
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
-            .data.i32[0]) {
+                .data.i32[0]) {
             s_setting[mCameraId].controlInfo.ae_manual_trigger = 1;
             s_setting[mCameraId].controlInfo.ae_comp_change = true;
         }
@@ -4210,15 +4211,19 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     if (frame_settings.exists(ANDROID_SPRD_LOGOWATERMARK_ENABLED)) {
-        valueU8 = frame_settings.find(ANDROID_SPRD_LOGOWATERMARK_ENABLED).data.u8[0];
-	GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_is_logo_watermark,
-	                 valueU8, ANDROID_SPRD_LOGOWATERMARK_ENABLED);
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_LOGOWATERMARK_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].sprddefInfo.sprd_is_logo_watermark, valueU8,
+            ANDROID_SPRD_LOGOWATERMARK_ENABLED);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_TIMEWATERMARK_ENABLED)) {
-        valueU8 = frame_settings.find(ANDROID_SPRD_TIMEWATERMARK_ENABLED).data.u8[0];
-	GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_is_time_watermark,
-	                 valueU8, ANDROID_SPRD_TIMEWATERMARK_ENABLED);
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_TIMEWATERMARK_ENABLED).data.u8[0];
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].sprddefInfo.sprd_is_time_watermark, valueU8,
+            ANDROID_SPRD_TIMEWATERMARK_ENABLED);
     }
 
     HAL_LOGD(
@@ -4358,13 +4363,15 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             s_setting[mCameraId].controlInfo.ae_state;
     }
 
-    if (s_setting[mCameraId].controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED &&
+    if (s_setting[mCameraId].controlInfo.ae_state ==
+            ANDROID_CONTROL_AE_STATE_LOCKED &&
         s_setting[mCameraId].controlInfo.ae_comp_change == true &&
         s_setting[mCameraId].controlInfo.ae_lock) {
-             s_setting[mCameraId].resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
-             s_setting[mCameraId].controlInfo.ae_comp_change = false;
+        s_setting[mCameraId].resultInfo.ae_state =
+            ANDROID_CONTROL_AE_STATE_SEARCHING;
+        s_setting[mCameraId].controlInfo.ae_comp_change = false;
     }
-     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
+    // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
     //			s_setting[mCameraId].controlInfo.af_mode,
     // s_setting[mCameraId].controlInfo.af_trigger_Id, mCameraId);
@@ -4391,8 +4398,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         s_setting[mCameraId].controlInfo.ae_target_fps_range,
         ARRAY_SIZE(s_setting[mCameraId].controlInfo.ae_target_fps_range));
     camMetadata.update(ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER,
-                       &(s_setting[mCameraId].resultInfo.ae_precap_trigger),
-                       1);
+                       &(s_setting[mCameraId].resultInfo.ae_precap_trigger), 1);
     /*for (int i = 0; i < 5; i++)
             area[i] = s_setting[mCameraId].controlInfo.af_regions[i];
     area[2] += area[0];
@@ -4499,8 +4505,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].resultInfo.ae_state), 1);
 
-    HAL_LOGV("result ae_state=%d",
-             s_setting[mCameraId].resultInfo.ae_state);
+    HAL_LOGV("result ae_state=%d", s_setting[mCameraId].resultInfo.ae_state);
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,
     //			s_setting[mCameraId].controlInfo.ae_precapture_id);
@@ -4508,7 +4513,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].controlInfo.ae_precapture_id), 1);
     // Update ANDROID_SPRD_AE_INFO
     camMetadata.update(ANDROID_SPRD_AE_INFO,
-                       s_setting[mCameraId].sprddefInfo.ae_info, AE_CB_MAX_INDEX);
+                       s_setting[mCameraId].sprddefInfo.ae_info,
+                       AE_CB_MAX_INDEX);
     HAL_LOGV("sprddefInfo.ae_info = 0x%x",
              s_setting[mCameraId].sprddefInfo.ae_info);
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
@@ -5474,5 +5480,43 @@ int SprdCamera3Setting::setHISTOGRAMTag(int32_t *hist_report) {
     memcpy(s_setting[mCameraId].hist_report, hist_report,
            sizeof(cmr_u32) * CAMERA_ISP_HIST_ITEMS);
     return 0;
+}
+
+int SprdCamera3Setting::resetFeatureStatus(const char* fea_ip,const char* fea_eb) {
+    char ip_feature[PROPERTY_VALUE_MAX];
+    char feature_switch[PROPERTY_VALUE_MAX];
+    char prop[PROPERTY_VALUE_MAX];
+    int rc = 0;
+    property_get("persist.vendor.cam.ip.switch.on", feature_switch, "0");
+
+    property_get(fea_ip, ip_feature, "2");
+    if(atoi(ip_feature) == 0){
+        property_set(fea_eb, "0");
+    } else if (atoi(ip_feature) == 1) {
+        property_set(fea_eb, "1");
+    }
+
+    property_get(fea_eb, prop, "2");
+    if((atoi(feature_switch) == 1) && (atoi(prop)==0)){
+        rc = 1;
+        if(atoi(prop) != 2)
+            property_set(fea_ip, "1");
+    } else if(atoi(prop)==1){
+        rc = 1;
+        if(atoi(prop) == 0){
+            property_set(fea_ip, "0");
+        } else if (atoi(prop) == 1) {
+            property_set(fea_ip, "1");
+        }
+    } else {
+        rc = 0;
+        if(atoi(prop) == 0){
+            property_set(fea_ip, "0");
+        } else if (atoi(prop) == 1) {
+            property_set(fea_ip, "1");
+        }
+    }
+
+    return rc;
 }
 } // namespace sprdcamera
