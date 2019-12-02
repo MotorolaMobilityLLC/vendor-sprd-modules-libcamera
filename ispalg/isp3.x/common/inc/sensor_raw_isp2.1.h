@@ -1284,6 +1284,56 @@ struct isp_haf_tune_param {
 	struct isp_pdaf_tune_param isp_pdaf_tune_data[3];
 };
 
+//facebeauty param
+enum
+{
+	FB_SKINTONE_DEFAULT,
+	FB_SKINTONE_YELLOW,
+	FB_SKINTONE_WHITE,
+	FB_SKINTONE_BLACK,
+	FB_SKINTONE_INDIAN,
+	FB_SKINTONE_NUM
+};
+
+struct facebeauty_level
+{
+    cmr_u8 skinSmoothLevel[11];
+    cmr_u8 skinSmoothDefaultLevel;
+    cmr_u8 skinTextureHiFreqLevel[11];
+    cmr_u8 skinTextureHiFreqDefaultLevel;
+    cmr_u8 skinTextureLoFreqLevel[11];
+    cmr_u8 skinTextureLoFreqDefaultLevel;
+    cmr_u8 skinSmoothRadiusCoeff[11];
+    cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
+    cmr_u8 skinBrightLevel[11];
+    cmr_u8 skinBrightDefaultLevel;
+    cmr_u8 largeEyeLevel[11];
+    cmr_u8 largeEyeDefaultLevel;
+    cmr_u8 slimFaceLevel[11];
+    cmr_u8 slimFaceDefaultLevel;
+    cmr_u8 skinColorLevel[11];
+    cmr_u8 skinColorDefaultLevel;
+    cmr_u8 lipColorLevel[11];
+    cmr_u8 lipColorDefaultLevel;
+    cmr_u8 reserved[4];
+};
+struct facebeauty_param
+{
+    cmr_u8 removeBlemishFlag;
+    cmr_u8 blemishSizeThrCoeff;
+    cmr_u8 skinColorType;
+    cmr_u8 lipColorType;
+    struct facebeauty_level fb_layer;
+    cmr_u8 reserved[20];
+};
+
+struct sensor_facebeauty_param
+{
+    struct facebeauty_param fb_param[FB_SKINTONE_NUM];
+    cmr_u8 reserved1[20];
+};
+
+
 #if 0
 struct ae_new_tuning_param {	//total bytes must be 263480
 	cmr_u32 version;
