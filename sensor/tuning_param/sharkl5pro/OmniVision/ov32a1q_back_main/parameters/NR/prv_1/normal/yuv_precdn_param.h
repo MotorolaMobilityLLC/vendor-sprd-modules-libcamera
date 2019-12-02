@@ -422,7 +422,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -507,7 +507,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param6.&BasePoint=1&*/
@@ -592,7 +592,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param7.&BasePoint=1&*/
@@ -677,7 +677,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param8.&BasePoint=1&*/

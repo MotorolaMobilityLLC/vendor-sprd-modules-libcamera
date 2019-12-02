@@ -949,9 +949,9 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x50,
+	0x78,
 	/*hv_edge_thr*/
-	0x1A,
+	0x28,
 	/*hv_flat_thr*/
 	0x0019,
 	/*slash_edge_thr*/
@@ -1027,23 +1027,23 @@
 		/*t_cfg*/
 		{
 			/*grgb_t1_cfg*/
-			0x0140,
+			0x0000,
 			/*grgb_t2_cfg*/
-			0x0240,
+			0x0200,
 			/*grgb_t3_cfg*/
-			0x0320,
+			0x02FF,
 			/*grgb_t4_cfg*/
-			0x03A0,
+			0x03FF,
 
 		},
 		/*r_cfg*/
 		{
 			/*grgb_r1_cfg*/
-			0x10,
+			0x08,
 			/*grgb_r2_cfg*/
-			0x10,
+			0x04,
 			/*grgb_r3_cfg*/
-			0x10,
+			0x04,
 			/*reserved*/
 			0x00,
 
