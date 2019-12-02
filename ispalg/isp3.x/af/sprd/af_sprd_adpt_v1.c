@@ -1793,8 +1793,7 @@ static cmr_s32 trigger_notice_force(af_ctrl_t * af)
 
 static cmr_s32 trigger_start(af_ctrl_t * af)
 {
-	if (!((AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode || AF_ALG_DUAL_W_T == af->is_multi_mode) && AF_ROLE_MASTER != af->sensor_role))
-		af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_SET_CAF_RESET, NULL, NULL);
+	af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_SET_CAF_RESET, NULL, NULL);
 	return 0;
 }
 
@@ -2558,11 +2557,19 @@ static void caf_monitor_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm)
 {
 	struct aft_proc_result res;
 	memset(&res, 0, sizeof(res));
+	if (AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode || AF_ALG_DUAL_W_T == af->is_multi_mode) {
+		if (af->sensor_role != AF_ROLE_MASTER && AFT_DATA_PD == prm->active_data_type) {
+			trigger_calc(af, prm, &res);
+		} else if (AF_ROLE_MASTER == af->sensor_role) {
+			trigger_calc(af, prm, &res);
+		}
+	} else {
+		trigger_calc(af, prm, &res);
+	}
 
-	trigger_calc(af, prm, &res);
 	ISP_LOGV("is_caf_trig = %d, is_cancel_caf = %d, is_need_rough_search = %d", res.is_caf_trig, res.is_cancel_caf, res.is_need_rough_search);
 
-	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state)) {
+	if ((0 == af->flash_on) && (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state) && AF_ROLE_MASTER == af->sensor_role) {
 		caf_monitor_trigger(af, prm, &res);
 	}
 }
@@ -3046,9 +3053,6 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	}
 
 	ISP_LOGV("af->is_multi_mode = %d, af->sensor_role %d", af->is_multi_mode, af->sensor_role);
-	if ((AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode || AF_ALG_DUAL_W_T == af->is_multi_mode) && af->sensor_role != AF_ROLE_MASTER) {
-		trigger_stop(af);
-	}
 #if 0
 	// debug only
 	bokeh_distance_info bdi;
@@ -4427,14 +4431,15 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			case STATE_CAF:
 			case STATE_RECORD_CAF:
 				af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
-				if (AFV1_TRUE == pd_workable) {
-					sync_result.is_caf_trig = AFT_TRIG_PD;
-				} else {
-					sync_result.is_caf_trig = AFT_TRIG_CB;
-				}
 				sync_result.is_cancel_caf = AFT_CANC_NONE;
 				sync_result.is_need_rough_search = 0;
-				caf_start(af, &sync_result);
+				if (AFV1_TRUE == pd_workable) {
+					sync_result.is_caf_trig = AFT_TRIG_PD;
+					pd_start(af, AF_TRIGGER, &sync_result);
+				} else {
+					sync_result.is_caf_trig = AFT_TRIG_CB;
+					caf_start(af, &sync_result);
+				}
 				af->focus_state = AF_SEARCHING;
 				break;
 			case STATE_FAF:
