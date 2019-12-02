@@ -5596,7 +5596,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             }
             setAwbState(AWB_STABLE);
         } else {
-            setAeState(AE_START);
+            //setAeState(AE_START);
             setAwbState(AWB_START);
         }
 
