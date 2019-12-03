@@ -8818,6 +8818,11 @@ int SprdCamera3OEMIf::SetChannelHandle(void *regular_chan, void *picture_chan) {
     return NO_ERROR;
 }
 
+void SprdCamera3OEMIf::ReleaseChannelHandle() {
+    mRegularChan = NULL;
+    mPictureChan = NULL;
+}
+
 int SprdCamera3OEMIf::SetDimensionPreview(cam_dimension_t preview_size) {
     if ((mPreviewWidth != preview_size.width) ||
         (mPreviewHeight != preview_size.height)) {

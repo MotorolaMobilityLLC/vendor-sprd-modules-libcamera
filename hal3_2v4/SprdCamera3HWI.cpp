@@ -232,6 +232,9 @@ SprdCamera3HWI::~SprdCamera3HWI() {
         mCallbackChan = NULL;
     }
 
+    if (mOEMIf)
+        mOEMIf->ReleaseChannelHandle();
+
     if (mCameraOpened)
         closeCamera();
 
