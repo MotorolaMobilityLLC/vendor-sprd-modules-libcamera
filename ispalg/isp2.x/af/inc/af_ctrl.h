@@ -596,6 +596,7 @@ extern "C" {
 		af_ctrl_br_ioctrl br_ctrl;
 		cmr_u32 sensor_role;
 		cmr_u32 is_mono_sensor;
+		cmr_u32 pdaf_support;
 		cmr_u32 pdaf_type;
 	};
 

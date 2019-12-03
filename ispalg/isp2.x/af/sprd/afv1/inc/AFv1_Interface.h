@@ -2,7 +2,7 @@
  *******************************************************************************
  * $Header$
  *
- *  Copyright (c) 2016-2025 Spreadtrum Inc. All rights reserved.
+ *  Copyright (c) 2016-2025 Unisoc Communications Inc. All rights reserved.
  *
  *  +-----------------------------------------------------------------+
  *  | THIS SOFTWARE IS FURNISHED UNDER A LICENSE AND MAY ONLY BE USED |
@@ -18,26 +18,6 @@
  *  +-----------------------------------------------------------------+
  *
  * $History$
- *
- *******************************************************************************
- */
-
-/*!
- *******************************************************************************
- * Copyright 2016-2025 Spreadtrum, Inc. All rights reserved.
- *
- * \file
- * AF_Interface.h
- *
- * \brief
- * Interface for AF
- *
- * \date
- * 2016/01/03
- *
- * \author
- * Galen Tsai
- *
  *
  *******************************************************************************
  */
@@ -119,7 +99,6 @@ typedef enum _eAF_Triger_Type {
 	F_FAST,			//Fast Fine search for AFT
 	DEFOCUS,
 	BOKEH,
-	//RE_TRIGGER,   //no use
 } eAF_Triger_Type;
 
 enum {
@@ -134,29 +113,42 @@ typedef enum _e_RESULT {
 	HAVE_PEAK,
 } e_RESULT;
 
-// Interface Commands
-typedef enum _AF_IOCTRL_CMD {
-	AF_IOCTRL_TRIGGER = 0,
-	AF_IOCTRL_STOP,
-	AF_IOCTRL_Get_Result,
+typedef enum _af_io_cmd {
+	AF_IOCTRL_SET_BASE = 0x100,
 	AF_IOCTRL_SET_ROI,
-	AF_IOCTRL_RECORD_HW_WINS,
-	AF_IOCTRL_Record_Vcm_Pos,
-	AF_IOCTRL_Get_Alg_Mode,
-	AF_IOCTRL_Get_Bokeh_Result,
-	AF_IOCTRL_Set_Time_Stamp,
-	AF_IOCTRL_Set_Pre_Trigger_Data,
-	AF_IOCTRL_Record_FV,
-	AF_IOCTRL_Set_Dac_info,
-	AF_IOCTRL_GET_OTP,
+	AF_IOCTRL_SET_HW_WINS,
+	AF_IOCTRL_SET_TRIGGER,
+	AF_IOCTRL_SET_CANCEL,
+	AF_IOCTRL_SET_TIMESTAMP,
+	AF_IOCTRL_SET_REG_POS,
+	AF_IOCTRL_SET_FV,
+	AF_IOCTRL_SET_DAC_INFO,
+	AF_IOCTRL_SET_PRE_TRIGGER_DATA,
 	AF_IOCTRL_SET_BOKEH_DISTANCE,
-	AF_IOCTRL_GET_BOKEH_GOLDEN_DATA,
+	AF_IOCTRL_SET_MAX,
+
+	AF_IOCTRL_GET_BASE = 0x200,
+	AF_IOCTRL_GET_OTP,
 	AF_IOCTRL_GET_LENS_RANGE,
-	AF_IOCTRL_MAX,
-} AF_IOCTRL_CMD;
+	AF_IOCTRL_GET_ALG_MODE,
+	AF_IOCTRL_GET_RESULT,
+	AF_IOCTRL_GET_BOKEH_GOLDEN_DATA,
+	AF_IOCTRL_GET_BOKEH_RESULT,	// out of use
+	AF_IOCTRL_GET_MAX,
+} af_io_cmd;
+
+typedef enum pdaf_support {
+	PDAF_UNSUPPORTED = 0,
+	PDAF_SHIELD_TYPE1,
+	PDAF_SHIELD_TYPE2,
+	PDAF_SHIELD_TYPE3,
+	PDAF_DUAL_MODE1,
+	PDAF_DUAL_MODE3,
+	PDAF_DUAL_MODE4,
+	PDAF_MAX
+} pdaf_support;
 
 #pragma pack(push,4)
-// Interface Param Structure
 typedef struct _AF_Result {
 	cmr_u32 AF_Result;
 	cmr_u32 af_mode;
@@ -376,27 +368,19 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*set_clear_next_vcm_pos) (void *cookie);
 	//SharkLE Only --
 
-	//[TOF_+++]
 	 cmr_u8(*get_tof_data) (tof_measure_data_t * tof_result, void *cookie);
-	//[TOF_---]
-
-	//[MZ_+++] // Multi zone af to PD info
 	 cmr_u8(*set_Gridinfo_to_PD) (eAF_MODE AF_mode, ROIinfo * PD_ROI, void *cookie);
-	//[MZ_---]
 	 cmr_u8(*get_saf_extra_data) (saf_extra_data_t * saf_extra, void *cookie);
 } AF_Ctrl_Ops;
 
 typedef struct _af_tuning_block_param {
 	cmr_u8 *data;
 	cmr_u32 data_len;
-} af_tuning_block_param;
-
-typedef struct _haf_tuning_param_s {
 	cmr_u8 *pd_data;
 	cmr_u32 pd_data_len;
 	cmr_u8 *tof_data;
 	cmr_u32 tof_data_len;
-} haf_tuning_param_t;
+} af_tuning_block_param;
 
 typedef struct defocus_param_s {
 	cmr_u32 scan_from;
@@ -428,11 +412,26 @@ typedef struct _Bokeh_Result {
 	cmr_u32 distance_reminder;
 	cmr_u32 reserved[16];
 } Bokeh_Result;
+
+typedef struct _af_init_in {
+	AF_Ctrl_Ops AF_Ops;
+	af_tuning_block_param tuning;
+	char *sys_version;
+	cmr_u32 camera_id;
+	cmr_u32 pdaf_support;
+	cmr_u32 reserved[10];
+} af_init_in;
+
+typedef struct _af_init_out {
+	void *af_dump_ptr;
+	cmr_u32 af_dump_len;
+	cmr_u32 reserved[10];
+} af_init_out;
 #pragma pack(pop)
 
-void *AF_init(AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, haf_tuning_param_t * haf_tune_data, cmr_u32 * dump_info_len, char *sys_version);
-cmr_u8 AF_deinit(void *handle);
-cmr_u8 AF_Process_Frame(void *handle);
-cmr_u8 AF_IOCtrl_process(void *handle, AF_IOCTRL_CMD cmd, void *param);
+void *af_init(af_init_in * af_in, af_init_out * af_out);
+cmr_u8 af_deinit(void *handle);
+cmr_u8 af_process(void *handle);
+cmr_u8 af_ioctrl(void *handle, cmr_u32 cmd, void *param);
 
 #endif

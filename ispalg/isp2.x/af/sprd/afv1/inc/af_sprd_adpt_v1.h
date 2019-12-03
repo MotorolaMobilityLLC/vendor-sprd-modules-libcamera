@@ -22,7 +22,7 @@
 #include "aft_interface.h"
 #include "AFv1_Interface.h"
 
-#define AF_SYS_VERSION "-20190422-00"
+#define AF_SYS_VERSION "2019120300"
 #define AF_SAVE_MLOG_STR "persist.vendor.cam.isp.af.mlog"	/*save/no */
 #define AF_WAIT_CAF_SEC 3	//1s == (1000 * 1000 * 1000)ns
 #define AF_WAIT_CAF_NSEC 0	//this macro should be less than 1000 * 1000 * 1000
@@ -179,10 +179,9 @@ enum filter_type {
 
 // af lib
 typedef struct _af_lib_ops {
-	void *(*init) (AF_Ctrl_Ops * AF_Ops, af_tuning_block_param * af_tuning_data, haf_tuning_param_t * haf_tune_data, cmr_u32 * dump_info_len, char *sys_version);
+	void *(*init) (af_init_in * af_in, af_init_out * af_out);
 	 cmr_u8(*deinit) (void *handle);
 	 cmr_u8(*calc) (void *handle);
-
 	 cmr_u8(*ioctrl) (void *handle, cmr_u32 cmd, void *param);
 } af_lib_ops_t;
 
@@ -366,6 +365,7 @@ typedef struct _af_ctrl {
 	cmr_u32 ot_switch;	// objecttracking switch
 	cmr_u32 pdaf_type;
 	cmr_u32 slave_focus_cnt;
+	cmr_u32 pdaf_support;
 } af_ctrl_t;
 
 typedef struct _test_mode_command {
