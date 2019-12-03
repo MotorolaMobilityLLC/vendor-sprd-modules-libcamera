@@ -851,7 +851,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x54,
+					0x56,
 					/*addback30*/
 					0x3C,
 					/*addback31*/
@@ -872,7 +872,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x30,
+						0x34,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -927,7 +927,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x54,
+					0x5C,
 					/*addback30*/
 					0x40,
 					/*addback31*/
