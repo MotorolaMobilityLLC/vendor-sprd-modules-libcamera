@@ -353,7 +353,6 @@ struct camera_context {
     nsecs_t snp_high_flash_time;
     struct img_rect trim_reset_info;
     cmr_u8 nr_flag;
-    void *handle_interface;
 };
 
 struct prev_threednr_info {

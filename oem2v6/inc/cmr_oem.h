@@ -414,7 +414,6 @@ struct camera_context {
     struct isp_face_area fd_face_area_capture;
     bool is_capture_face;
 
-    void *handle_interface;
     /* new 4in1 plan, 20191028 */
 	cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
