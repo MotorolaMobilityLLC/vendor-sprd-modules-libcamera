@@ -1,3 +1,5 @@
+/*versionid=0x000B0009*/
+/*maxGain=0.00*/
 /*param0.*/
 /*v21_sensor_yuv_noisefilter_level*/
 {
