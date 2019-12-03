@@ -1328,7 +1328,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                 available_stream_configs.add(stream_info[i].stream_sizes_tbl.height);
                 available_stream_configs.add(
                     ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
-                if(scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && stream_info[i].stream_sizes_tbl.height == 1088) {
+                if((scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                    scaler_formats[j] == HAL_PIXEL_FORMAT_YCBCR_420_888) &&
+                    stream_info[i].stream_sizes_tbl.height == 1088) {
                     available_stream_configs.add(scaler_formats[j]);
                     available_stream_configs.add(
                         stream_info[i].stream_sizes_tbl.width);
@@ -1394,7 +1396,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                     available_min_durations.add(
                         stream_info[i].stream_min_duration);
 
-            if(scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED && stream_info[i].stream_sizes_tbl.height == 1088) {
+            if((scaler_formats[j] == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
+                scaler_formats[j] == HAL_PIXEL_FORMAT_YCBCR_420_888) &&
+                stream_info[i].stream_sizes_tbl.height == 1088) {
                 available_min_durations.add(scaler_formats[j]);
                 available_min_durations.add(
                     stream_info[i].stream_sizes_tbl.width);
