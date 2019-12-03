@@ -6446,6 +6446,9 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
                             SETTING_GET_EXIF_INFO, &setting_param);
     enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
     enc_exif_param.exif_isp_info = NULL;
+    enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.numerator =
+		cxt->sn_cxt.cur_sns_ex_info.f_num;
+    enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.denominator = 100;
 
     ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
     if (ret) {
@@ -6518,6 +6521,9 @@ cmr_int camera_start_exif_encode_simplify(cmr_handle oem_handle,
                             SETTING_GET_EXIF_INFO, &setting_param);
     enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
     enc_exif_param.exif_isp_info = NULL;
+    enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.numerator =
+		cxt->sn_cxt.cur_sns_ex_info.f_num;
+    enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.denominator = 100;
 
     ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
     if (ret) {
@@ -11583,8 +11589,7 @@ cmr_uint camera_get_exif_info(cmr_handle oem_handle,
         goto exit;
     }
     exif_spec = setting_param.exif_all_info_ptr->spec_ptr->pic_taking_cond_ptr;
-    exif_info->aperture = (float)exif_spec->ApertureValue.numerator /
-                          (float)exif_spec->ApertureValue.denominator;
+    exif_info->aperture = (float)cxt->sn_cxt.cur_sns_ex_info.f_num / 100.0;
     exif_info->focus_distance = (float)exif_spec->FocalLength.numerator /
                                 (float)exif_spec->FocalLength.denominator;
 
@@ -11617,6 +11622,9 @@ cmr_uint camera_get_result_exif_info(
     }
     memcpy(exif_pic_info, &setting_param.exif_pic_cond_info,
            sizeof(struct exif_spec_pic_taking_cond_tag));
+   exif_pic_info->ApertureValue.numerator = cxt->sn_cxt.cur_sns_ex_info.f_num;
+   exif_pic_info->ApertureValue.denominator = 100;
+   CMR_LOGI("apet:%d,%d.\n",exif_pic_info->ApertureValue.numerator,exif_pic_info->ApertureValue.denominator);
 exit:
     return ret;
 }
