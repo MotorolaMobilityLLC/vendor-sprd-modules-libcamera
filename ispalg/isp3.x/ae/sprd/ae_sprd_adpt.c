@@ -3310,6 +3310,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->mode_switch[cxt->app_mode].table_idx = cxt->last_exp_param.cur_index;
 			cxt->mode_switch[cxt->app_mode].lum = cxt->sync_cur_result.cur_lum;
 			cxt->mode_switch[cxt->app_mode].tarlum = cxt->sync_cur_result.target_lum;
+			cxt->app_mode_tarlum[cxt->app_mode] = cxt->sync_cur_result.target_lum;
 			if(cxt->mode_switch[cxt->app_mode].lum){
 				cxt->mode_switch[cxt->app_mode].sensitivity = (cxt->last_exp_param.exp_time) / 1000000 * (cxt->last_exp_param.gain) / (cxt->mode_switch[cxt->app_mode].lum);
 				ISP_LOGV("sensitivity %d exp_time %d gain %d luma %d ",cxt->mode_switch[cxt->app_mode].sensitivity,cxt->last_exp_param.exp_time,cxt->last_exp_param.gain,cxt->mode_switch[cxt->app_mode].lum);
@@ -3327,7 +3328,6 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		}
 
 		cxt->last_cam_mode = (cxt->app_mode | (cxt->camera_id << 16) | (1U << 31));
-		cxt->app_mode_tarlum[cxt->app_mode] = cxt->sync_cur_result.target_lum;
 
 		if (cxt->is_multi_mode){
 			cmr_u32 in = 0;
