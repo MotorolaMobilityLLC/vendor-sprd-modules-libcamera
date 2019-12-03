@@ -230,6 +230,7 @@ struct ae_frm_sync_param {
 	struct ae_size img_size;/*the resolution of AEM*/
 	struct ae_size blks_num;
 	struct ae_size blk_size;
+	struct ae_trim block_rect;
 	cmr_u64 monoboottime;
 	/*the EV setting, that come from the ae lib*/
 	struct ae_ev_setting_param ev_setting;

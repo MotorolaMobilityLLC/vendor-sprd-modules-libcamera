@@ -518,6 +518,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 			slave1_ae_sync_info_ptr->ev_setting.dmy_line = ae_data_slave[1].exp.dummy;
 			slave1_ae_sync_info_ptr->ev_setting.exp_time = ae_data_slave[1].exp.exposure*info_slave[1].line_time;
 
+			#if 0
 			if (3 == sync_info_master.ref_camera_id) {
 				in_param.sync_param[0] = slave1_ae_sync_info_ptr;
 				in_param.sync_param[2] = master_ae_sync_info_ptr;
@@ -525,6 +526,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 				in_param.sync_param[0] = slave0_ae_sync_info_ptr;
 				in_param.sync_param[1] = master_ae_sync_info_ptr;
 			}
+			#endif
 
 			in_param.num = sync_info_master.num;
 			ae_sync_in_ae_lib_data_dump(in_param.sync_param[0]);
@@ -544,7 +546,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 				ISP_LOGV("sync:2 lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",
 				        out_param_lib.ev_setting[2].ae_gain, out_param_lib.ev_setting[2].exp_time,
 				        out_param_lib.ev_setting[2].exp_line,out_param_lib.ev_setting[2].line_time );
-
+				#if 0
 				if (0 == sync_info_master.ref_camera_id) {
 					memcpy(&out_param_parse.ev_setting[0], &out_param_lib.ev_setting[0], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[1], &out_param_lib.ev_setting[1], sizeof(struct ae_ev_setting_param));
@@ -558,6 +560,11 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 					memcpy(&out_param_parse.ev_setting[1], &out_param_lib.ev_setting[1], sizeof(struct ae_ev_setting_param));
 					memcpy(&out_param_parse.ev_setting[2], &out_param_lib.ev_setting[0], sizeof(struct ae_ev_setting_param));
 				}
+				#endif
+
+				memcpy(&out_param_parse.ev_setting[0], &out_param_lib.ev_setting[0], sizeof(struct ae_ev_setting_param));
+				memcpy(&out_param_parse.ev_setting[1], &out_param_lib.ev_setting[1], sizeof(struct ae_ev_setting_param));
+				memcpy(&out_param_parse.ev_setting[2], &out_param_lib.ev_setting[2], sizeof(struct ae_ev_setting_param));
 
 				for(int i = 0; i < 3; i++) {
 					ae_info[i].exp.exposure = out_param_parse.ev_setting[i].exp_line;
@@ -5216,7 +5223,9 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	//cxt->exp_data.lib_data.frm_len_def = cxt->cur_result.ev_setting.frm_len_def;
 	ISP_LOGV("ae_calculation, CALL ae_update_result_to_sensor BEFORE, sensor_role:%d, exp_line:%d, line_time:%d, exp_time:%d",\
 	cxt->sensor_role, cxt->exp_data.lib_data.exp_line, cxt->exp_data.lib_data.line_time, cxt->exp_data.lib_data.exp_time);
-	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
+	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
+		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
+	}
 
 	if (cxt->has_mf) {
 		if (cxt->has_mf_cnt==3) {
