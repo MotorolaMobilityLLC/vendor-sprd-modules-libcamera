@@ -255,6 +255,9 @@ SprdCamera3MultiCamera::SprdCamera3MultiCamera() {
     aux2_face_number = 0;
     aux1_ai_scene_type = 0;
     aux2_ai_scene_type = 0;
+    mAfTriggerSw = 0;
+    mAfTriggerTele = 0;
+    mAfTriggerWide = 0;
     memset(&mOtpData, 0, sizeof(OtpData));
     memset(main_FaceRect, 0, sizeof(int32_t) * 10 * 4);
     memset(main_FaceRect, 0, sizeof(int32_t) * 10 * 4);
@@ -743,6 +746,9 @@ int SprdCamera3MultiCamera::configureStreams(
     mCapFrameNum = -1;
     mWaitFrameNum = -1;
     mSendFrameNum = -1;
+    mAfTriggerSw = 0;
+    mAfTriggerTele = 0;
+    mAfTriggerWide = 0;
     bzero(&mMainSize, sizeof(stream_size_t));
 
     memset(configstreamList, 0,
@@ -2443,8 +2449,6 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
                             ARRAY_SIZE(crop_Region));
         camMetadata->update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
                             &(gMultiCam->aux1_ai_scene_type), 1);
-        camMetadata->update(ANDROID_CONTROL_AF_STATE,
-                            &(gMultiCam->aux1_af_state), 1);
         HAL_LOGD("sw crop=%d,%d,%d,%d ai_scene_type %d,aux1_af_state %d",
             crop_Region[0], crop_Region[1], crop_Region[2],
             crop_Region[3], gMultiCam->aux1_ai_scene_type, gMultiCam->aux1_af_state);
@@ -2465,8 +2469,6 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
                             ARRAY_SIZE(crop_Region));
         camMetadata->update(ANDROID_SPRD_AI_SCENE_TYPE_CURRENT,
                             &(gMultiCam->aux2_ai_scene_type), 1);
-        camMetadata->update(ANDROID_CONTROL_AF_STATE,
-                            &(gMultiCam->aux2_af_state), 1);
         HAL_LOGD("tele crop=%d,%d,%d,%d ai_scene_type %d,aux2_af_state %d",
             crop_Region[0], crop_Region[1], crop_Region[2],
             crop_Region[3], gMultiCam->aux2_ai_scene_type, gMultiCam->aux2_af_state);
@@ -2485,7 +2487,12 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
         HAL_LOGV("wide crop=%d,%d,%d,%d",
             crop_Region[0], crop_Region[1], crop_Region[2], crop_Region[3]);
     }
-
+	if (mAfTriggerSw)
+        camMetadata->update(ANDROID_CONTROL_AF_STATE,
+                            &(gMultiCam->aux1_af_state), 1);
+	if (mAfTriggerTele)
+        camMetadata->update(ANDROID_CONTROL_AF_STATE,
+                            &(gMultiCam->aux2_af_state), 1);
     HAL_LOGV("face_num=%d,camMetadata=%p", face_num, camMetadata);
     if (face_num) {
         if (mZoomValue >= mSwitch_W_Sw_Threshold &&
@@ -2628,6 +2635,7 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
     int32_t af_area[5] = {0};
     int32_t ae_area[5] = {0};
     uint8_t afTrigger = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+    uint8_t refAfTrigger = ANDROID_CONTROL_AF_TRIGGER_IDLE;
 
     // meta config
     if (!meta) {
@@ -2754,6 +2762,15 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
             if (metaSettingsWide->exists(ANDROID_CONTROL_AF_TRIGGER)) {
                 metaSettingsWide->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
             }
+            if (metaSettingsSw->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                refAfTrigger =
+                    metaSettingsSw->find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
+                if (refAfTrigger) {
+                    mAfTriggerSw = refAfTrigger;
+                    mAfTriggerTele = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+                    mAfTriggerWide = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+                }
+            }
             HAL_LOGD("sw touch_area = %d, %d, %d, %d, %d",
                 touch_area[0], touch_area[1], touch_area[2],
                 touch_area[3], touch_area[4]);
@@ -2775,6 +2792,16 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
             if (metaSettingsWide->exists(ANDROID_CONTROL_AF_TRIGGER)) {
                 metaSettingsWide->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
             }
+            if (metaSettingsTele->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                refAfTrigger =
+                    metaSettingsTele->find(ANDROID_CONTROL_AF_TRIGGER)
+                        .data.u8[0];
+                if (refAfTrigger) {
+                    mAfTriggerTele = refAfTrigger;
+                    mAfTriggerSw = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+                    mAfTriggerWide = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+                }
+            }
             HAL_LOGD("tele touch_area = %d, %d, %d, %d, %d",
                 touch_area[0], touch_area[1], touch_area[2],
                 touch_area[3], touch_area[4]);
@@ -2795,6 +2822,16 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
             }
             if (metaSettingsSw->exists(ANDROID_CONTROL_AF_TRIGGER)) {
                 metaSettingsSw->update(ANDROID_CONTROL_AF_TRIGGER, &afTrigger, 1);
+            }
+            if (metaSettingsWide->exists(ANDROID_CONTROL_AF_TRIGGER)) {
+                refAfTrigger =
+                    metaSettingsWide->find(ANDROID_CONTROL_AF_TRIGGER)
+                        .data.u8[0];
+                if (refAfTrigger) {
+                    mAfTriggerWide = refAfTrigger;
+                    mAfTriggerTele = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+                    mAfTriggerSw = ANDROID_CONTROL_AF_TRIGGER_IDLE;
+                }
             }
             HAL_LOGD("wide touch_area = %d, %d, %d, %d, %d",
                 touch_area[0], touch_area[1], touch_area[2],
