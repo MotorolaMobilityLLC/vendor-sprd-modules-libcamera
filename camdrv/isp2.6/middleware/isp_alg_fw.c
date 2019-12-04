@@ -1384,7 +1384,10 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 			block_result = &smart_result->block_result[i];
 			if (block_result->update == 0)
 				continue;
-
+			if (cxt->first_frm && (block_result->block_id == ISP_BLK_RGB_GAMC)) {
+				ISP_LOGV("skip gamma\n");
+				continue;
+			}
 			memset(&pm_param, 0, sizeof(pm_param));
 			BLOCK_PARAM_CFG(io_pm_input, pm_param,
 					ISP_PM_BLK_SMART_SETTING,
@@ -1403,6 +1406,11 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 	{
 		/* param0 should be (struct sensor_rgbgamma_curve *)  */
 		void *gamma_cur = param0;
+
+		if (cxt->first_frm) {
+			ISP_LOGV("skip gamma\n");
+			break;
+		}
 
 		if (cxt->smart_cxt.atm_is_set == 0) {
 			memset(&pm_param, 0, sizeof(pm_param));
@@ -5413,6 +5421,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_dev_reset"));
 
 	cxt->zsl_flag = 0;
+	cxt->first_frm = 1;
 	cxt->work_mode = PM_SCENE_CAP; /* 0 - preview, 1 - capture  */
 	cxt->commn_cxt.src.w = in_ptr->src_frame.img_size.w;
 	cxt->commn_cxt.src.h = in_ptr->src_frame.img_size.h;
