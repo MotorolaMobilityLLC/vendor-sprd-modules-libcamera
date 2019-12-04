@@ -142,6 +142,7 @@ LOCAL_CFLAGS += -DCONFIG_CAMERA_DRE
 LOCAL_SRC_FILES+= src/cmr_dre.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libdre/inc
 LOCAL_SHARED_LIBRARIES += libsprddre
+LOCAL_SHARED_LIBRARIES += libsprddreadapter
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)

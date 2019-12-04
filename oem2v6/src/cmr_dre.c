@@ -17,7 +17,7 @@
 #define LOG_TAG "cmr_sprd_dre"
 #include "cmr_common.h"
 #include "cmr_oem.h"
-#include "DRE_SPRD.h"
+#include "sprd_dre_adapter.h"
 #include "isp_mw.h"
 
 struct class_dre {
@@ -75,10 +75,10 @@ static cmr_int dre_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     CMR_LOGI("sprd_dre_init height=%d,width = %d", dre_handle->height,
              dre_handle->width);
 
-    ret = sprd_dre_init(&dre_handle->handle, dre_handle->width,
+    ret = sprd_dre_adpt_init(&dre_handle->handle, dre_handle->width,
                         dre_handle->height, NULL);
 
-    if (NULL == dre_handle->handle) {
+    if (ret != CMR_CAMERA_SUCCESS) {
         CMR_LOGE("failed to create");
         goto exit;
     }
@@ -108,11 +108,10 @@ static cmr_int dre_close(cmr_handle class_handle) {
         return CMR_CAMERA_INVALID_PARAM;
     }
     CMR_LOGI("E");
-
     if (dre_handle->is_inited) {
         sem_wait(&dre_handle->sem);
-        sprd_dre_fast_stop(dre_handle->handle);
-        ret = sprd_dre_deinit(&dre_handle->handle);
+        sprd_dre_adpt_ctrl(dre_handle->handle, SPRD_DRE_FAST_STOP_CMD, NULL, NULL);
+        ret = sprd_dre_adpt_deinit(dre_handle->handle);
         if (ret) {
             CMR_LOGE("failed to deinit");
         }
@@ -216,7 +215,7 @@ static cmr_int dre_transfer_frame(cmr_handle class_handle,
              isp_cmd_parm.dre_param.postdre_param.tile_num_x);
     CMR_LOGV("post tile_num_y=%d ",
              isp_cmd_parm.dre_param.postdre_param.tile_num_y);
-    ret = sprd_dre_run(dre_handle->handle, &image_in, &isp_cmd_parm.dre_param);
+    ret = sprd_dre_adpt_ctrl(dre_handle->handle, SPRD_DRE_PROCESS_CMD, &image_in, &isp_cmd_parm.dre_param);
     if (CMR_CAMERA_SUCCESS != ret) {
         CMR_LOGE("failed to do dre %ld", ret);
         goto exit;

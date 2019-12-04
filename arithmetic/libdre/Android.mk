@@ -34,4 +34,24 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+
+### adapter ###
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_dre_adapter.cpp
+LOCAL_MODULE := libsprddreadapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
+LOCAL_SHARED_LIBRARIES := libcutils liblog libsprddre
+
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+         $(LOCAL_PATH)/../inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+include $(BUILD_SHARED_LIBRARY)
+
 endif
