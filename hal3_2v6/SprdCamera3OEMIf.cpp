@@ -6675,7 +6675,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_CONTROL_AE_MODE:
         if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-            mCameraId == 1 || mCameraId == 4 ||
+            mCameraId == 1 || mCameraId == 4 || mCameraId == 3 ||
             (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK) &&
              getMultiCameraMode() != MODE_BOKEH &&
              getMultiCameraMode() != MODE_3D_CALIBRATION &&
@@ -6785,7 +6785,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_FLASH_MODE:
         if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-            mCameraId == 1 || mCameraId == 4) {
+            mCameraId == 1 || mCameraId == 4 || mCameraId == 3) {
             int8_t flashMode;
             FLASH_Tag flashInfo;
             mSetting->getFLASHTag(&flashInfo);
