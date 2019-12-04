@@ -164,7 +164,11 @@ enum recovery_status {
     PREV_RECOVERY_DONE
 };
 
-enum recovery_mode { RECOVERY_LIGHTLY = 0, RECOVERY_MIDDLE, RECOVERY_HEAVY };
+enum recovery_mode {
+    RECOVERY_LIGHTLY = 0,
+    RECOVERY_MIDDLE,
+    RECOVERY_HEAVY
+};
 
 struct rot_param {
     cmr_uint angle;
@@ -1043,7 +1047,7 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
     for (i = 0; i < CAMERA_ID_MAX; i++) {
         CMR_LOGV("id %d, prev_status %ld,4in1_mem_num=%d",
                  i, handle->prev_cxt[i].prev_status,handle->prev_cxt[i].cap_4in1_mem_num);
-        if(handle->prev_cxt[i].cap_4in1_mem_num != 0) {
+        if (handle->prev_cxt[i].cap_4in1_mem_num != 0) {
            prev_free_4in1_buf(handle,i,0);
         }
         if (PREVIEWING == handle->prev_cxt[i].prev_status) {
@@ -2820,7 +2824,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
 
-        if(prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW )
+        if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW )
         {
             prev_cxt->prev_buf_id = frame_type.buf_id;
             ret = prev_pop_preview_buffer(handle, camera_id, data, 0);
@@ -2836,7 +2840,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
          }
 
     } else {
-        if(prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW )
+        if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW )
         {
             /*need rotation*/
             if (prev_cxt->prev_mem_valid_num > 0) {
@@ -3646,7 +3650,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->isp_status = PREV_ISP_COWORK;
     }
 
-        if(prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
          {
               struct sprd_img_3dnr_param stream_info;
               stream_info.w = prev_cxt->threednr_cap_smallwidth;
@@ -4657,7 +4661,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("capture format: %d", prev_cxt->cap_org_fmt);
     if (check_software_remosaic(prev_cxt) &&
         CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
-
         ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size, prev_cxt->sensor_info.sn_interface.is_loose);
     } else {
         ret = camera_get_postproc_capture_size(camera_id, &total_mem_size, prev_cxt->sensor_info.sn_interface.is_loose);
@@ -5268,7 +5271,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 &real_height);
         } else {
 
-        if(prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW )
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW )
         {
                 prev_cal_3dnr_smallsize (handle,camera_id);
                 prev_cxt->cap_zsl_mem_size += (prev_cxt->threednr_cap_smallwidth *
@@ -5482,7 +5485,7 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                       (ultra_wide_mem_num) * sizeof(void *));
         } else {
 
-        if(prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ){
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ){
              CMR_LOGI("free 3dnr memory");
               mem_ops->free_mem(CAMERA_SNAPSHOT_SW3DNR, handle->oem_handle,
                               prev_cxt->cap_zsl_phys_addr_array,
@@ -7344,14 +7347,25 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
                                    zoom_param->zoom_level,
                                    &chn_param.cap_inf_cfg.cfg.dst_img_size);
     } else {
+        float real_ratio = zoom_param->zoom_info.prev_aspect_ratio;
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
-        ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.prev_aspect_ratio,
-                                    aspect_ratio,
-                                    sensor_mode_info->scaler_trim.width,
-                                    sensor_mode_info->scaler_trim.height,
-                                    prev_cxt->prev_param.prev_rot);
+
+        // TODO WORKAROUND
+        if (camera_id == findSensorRole(MODULE_SPW_NONE_BACK))
+            real_ratio = 1.0f;
+
+        if (zoom_param->zoom_info.crop_region.width > 0) {
+            chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                    zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
+                    chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+        } else {
+            ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                    real_ratio, aspect_ratio,
+                    sensor_mode_info->scaler_trim.width,
+                    sensor_mode_info->scaler_trim.height,
+                    prev_cxt->prev_param.prev_rot);
+        }
     }
     if (ret) {
         CMR_LOGE("prev get trim failed");
@@ -7601,12 +7615,18 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     } else {
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
-        ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.prev_aspect_ratio,
-                                    aspect_ratio,
-                                    sensor_mode_info->scaler_trim.width,
-                                    sensor_mode_info->scaler_trim.height,
-                                    prev_cxt->prev_param.prev_rot);
+        if (zoom_param->zoom_info.crop_region.width > 0) {
+            chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                    zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
+                    chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+        } else {
+            ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                    zoom_param->zoom_info.prev_aspect_ratio,
+                    aspect_ratio,
+                    sensor_mode_info->scaler_trim.width,
+                    sensor_mode_info->scaler_trim.height,
+                    prev_cxt->prev_param.prev_rot);
+        }
     }
     if (ret) {
         CMR_LOGE("prev get trim failed");
@@ -7771,14 +7791,25 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
         ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
                                    zoom_param->zoom_level, &trim_sz);
     } else {
+        float real_ratio = zoom_param->zoom_info.prev_aspect_ratio;
         float aspect_ratio = 1.0 * prev_cxt->actual_video_size.width /
                              prev_cxt->actual_video_size.height;
-        ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.prev_aspect_ratio,
-                                    aspect_ratio,
-                                    sensor_mode_info->scaler_trim.width,
-                                    sensor_mode_info->scaler_trim.height,
-                                    prev_cxt->prev_param.prev_rot);
+
+        // TODO WORKAROUND
+        if (camera_id == findSensorRole(MODULE_SPW_NONE_BACK))
+            real_ratio = 1.0f;
+
+        if (zoom_param->zoom_info.crop_region.width > 0) {
+            chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                    zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
+                    chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+        } else {
+            ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                    real_ratio, aspect_ratio,
+                    sensor_mode_info->scaler_trim.width,
+                    sensor_mode_info->scaler_trim.height,
+                    prev_cxt->prev_param.prev_rot);
+        }
     }
     if (ret) {
         CMR_LOGE("video get trim failed");
@@ -8007,12 +8038,18 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle,
     } else {
         float aspect_ratio = 1.0 * prev_cxt->actual_video_size.width /
                              prev_cxt->actual_video_size.height;
-        ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.prev_aspect_ratio,
-                                    aspect_ratio,
-                                    sensor_mode_info->scaler_trim.width,
-                                    sensor_mode_info->scaler_trim.height,
-                                    prev_cxt->prev_param.prev_rot);
+        if (zoom_param->zoom_info.crop_region.width > 0) {
+            chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                    zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
+                    chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+        } else {
+            ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                    zoom_param->zoom_info.prev_aspect_ratio,
+                    aspect_ratio,
+                    sensor_mode_info->scaler_trim.width,
+                    sensor_mode_info->scaler_trim.height,
+                    prev_cxt->prev_param.prev_rot);
+        }
     }
     if (ret) {
         CMR_LOGE("prev get trim failed");
@@ -13216,7 +13253,7 @@ cmr_int prev_set_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
 
 #if defined(CONFIG_ISP_2_3)   //just for sharkle
     pthread_mutex_lock(&handle->thread_cxt.prev_stop_mutex);
-    if(prev_cxt->prev_status !=IDLE){
+    if (prev_cxt->prev_status !=IDLE){
         ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
     }
     pthread_mutex_unlock(&handle->thread_cxt.prev_stop_mutex);
@@ -15615,11 +15652,12 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             zoom = (void *)&(setting_param.zoom_param.zoom_info.prev_aspect_ratio);
 
             float new_zoom = setting_param.zoom_param.zoom_info.prev_aspect_ratio;
-            if(fabs(org_zoom - new_zoom) >= EPSINON)
+            if (fabs(org_zoom - new_zoom) >= EPSINON)
                   zoom_changed = 1;
-            else   zoom_changed = 0;
+            else
+                  zoom_changed = 0;
             org_zoom = new_zoom;
-            if(zoom_changed) {      /*set AE ROI*/
+            if (zoom_changed) {      /*set AE ROI*/
                   chn_param.sensor_mode = prev_cxt->prev_mode;
                   sensor_info = &prev_cxt->sensor_info;
                   sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
@@ -15740,7 +15778,8 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             ipm_in_param.src_frame.reserved = src_buffer_handle;
             ipm_in_param.dst_frame = *dst_img;
             ipm_in_param.dst_frame.reserved = dst_buffer_handle;
-            ipm_in_param.private_data = zoom;
+            //ipm_in_param.private_data = zoom;
+            ipm_in_param.private_data = &setting_param.zoom_param.zoom_info;
             if (src_buffer_handle != NULL && dst_buffer_handle != NULL) {
                 ret =
                     ipm_transfer_frame(ultra_wide_handle, &ipm_in_param, NULL);

@@ -163,6 +163,7 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
     struct img_frm *dst_img = NULL;
     struct img_frm *src_img = NULL;
     char value[PROPERTY_VALUE_MAX];
+    struct zoom_info zoomInfo;
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     if (!in || !class_handle) {
@@ -181,9 +182,22 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
     }
 
     if ((cmr_uint)in->private_data) {
-        param.zoomRatio = *((float *)(in->private_data));
+        int x, y;
+        //param.zoomRatio = *((float *)(in->private_data));
+        zoomInfo = *((struct zoom_info *)in->private_data);
+
+        x = zoomInfo.crop_region.start_x + zoomInfo.crop_region.width / 2;
+        y = zoomInfo.crop_region.start_y + zoomInfo.crop_region.height / 2;
+        x -= zoomInfo.pixel_size.width / 2;
+        y -= zoomInfo.pixel_size.height / 2;
+
+        param.zoomRatio = (float)zoomInfo.pixel_size.width / (float)zoomInfo.crop_region.width;
+        param.zoomCenterOffsetX = (float)x / (float)zoomInfo.pixel_size.width;
+        param.zoomCenterOffsetY = (float)y / (float)zoomInfo.pixel_size.height;
+        //
     }
-    CMR_LOGD("ultrawid set ratio %f", param.zoomRatio);
+    CMR_LOGD("ultrawid set ratio %f, offset (%f, %f)", param.zoomRatio,
+            param.zoomCenterOffsetX, param.zoomCenterOffsetY);
     if (ultrawide_handle->warp_inst != NULL) {
         input.width = src_img->size.width;
         input.height = src_img->size.height;

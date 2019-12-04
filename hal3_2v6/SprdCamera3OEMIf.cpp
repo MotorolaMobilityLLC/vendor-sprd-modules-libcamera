@@ -6191,9 +6191,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     cropRegion.start_y = scaleInfo.crop_region[1];
     cropRegion.width = scaleInfo.crop_region[2];
     cropRegion.height = scaleInfo.crop_region[3];
-    HAL_LOGD("crop start_x=%d start_y=%d width=%d height=%d",
-             cropRegion.start_x, cropRegion.start_y, cropRegion.width,
-             cropRegion.height);
+    HAL_LOGD("camera %u, crop start_x=%d start_y=%d width=%d height=%d", mCameraId,
+            cropRegion.start_x, cropRegion.start_y,
+            cropRegion.width, cropRegion.height);
     if ((getMultiCameraMode() == MODE_BOKEH ||
          getMultiCameraMode() == MODE_3D_CALIBRATION) &&
         mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
@@ -6243,6 +6243,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
+    mZoomInfo.zoom_info.pixel_size.width = sensorOrgW;
+    mZoomInfo.zoom_info.pixel_size.height = sensorOrgH;
+    mZoomInfo.zoom_info.crop_region = cropRegion;
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&mZoomInfo);
 
     return ret;
@@ -6313,7 +6316,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
     } else {
         zoomRatio = (float)sensorOrgH / zoomHeight;
     }
-    if(IsRotate) {
+    if (IsRotate) {
         minOutputRatio = 1 / minOutputRatio;
     }
     if (minOutputRatio > ((float)sensorWidth / (float)sensorHeight)) {
@@ -8499,7 +8502,7 @@ int SprdCamera3OEMIf::Callback_OtherFree(enum camera_mem_cb_type type,
 //    }
 
 // Performance optimization:move Callback_CaptureFree to closeCamera function
-//     if(type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
+//     if (type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
 //             if (NULL != mZslHeapReserved) {
 //                     freeCameraMem(mZslHeapReserved);
 //                     mZslHeapReserved = NULL;

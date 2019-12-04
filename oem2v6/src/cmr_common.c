@@ -157,6 +157,49 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
     return ret;
 }
 
+struct img_rect camera_apply_rect_and_ratio(struct img_size ref_size,
+        struct img_rect ref_rect, struct img_rect cur_rect, float ratio)
+{
+    struct img_rect out;
+    float wr, hr, r;
+    float x, y, w, h;
+
+    /* apply size */
+    wr = (float)cur_rect.width / (float)ref_size.width;
+    hr = (float)cur_rect.height / (float)ref_size.height;
+
+    r = wr < hr ? wr : hr;
+
+    w = (float)ref_size.width * r;
+    h = (float)ref_size.height * r;
+    x = (float)cur_rect.start_x + ((float)cur_rect.width - w) / 2.0f;
+    y = (float)cur_rect.start_y + ((float)cur_rect.height - h) / 2.0f;
+
+    /* apply rect */
+    x += (float)ref_rect.start_x * r;
+    y += (float)ref_rect.start_y * r;
+    w = (float)ref_rect.width * r;
+    h = (float)ref_rect.height * r;
+
+    /* apply ratio */
+    if (w / h < ratio) {
+        float nh = w / ratio;
+        y += (h - nh) / 2.0f;
+        h = nh;
+    } else {
+        float nw = h * ratio;
+        x += (w - nw) / 2.0f;
+        w = nw;
+    }
+
+    out.start_x = (uint32_t)(x + 0.5f);
+    out.start_y = (uint32_t)(y + 0.5f);
+    out.width = (uint32_t)(w + 0.5f);
+    out.height = (uint32_t)(h + 0.5f);
+
+    return out;
+}
+
 cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst) {
     cmr_u8 *dst_y_buf;
     cmr_u8 *dst_uv_buf;

@@ -1379,6 +1379,11 @@ cmr_int camera_get_trim_rect2(struct img_rect *src_trim_rect, float zoom_ratio,
                               float dst_aspect_ratio, cmr_u32 sensor_w,
                               cmr_u32 sensor_h, cmr_u8 rot);
 
+struct img_rect camera_apply_rect_and_ratio(struct img_size ref_size,
+                                            struct img_rect ref_rect,
+                                            struct img_rect cur_rect,
+                                            float ratio);
+
 cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst);
 
 cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
