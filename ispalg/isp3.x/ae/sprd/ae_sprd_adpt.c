@@ -1841,7 +1841,12 @@ static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	cmr_s32 rtn = AE_SUCCESS;
 
 	if (param) {
-		if (0 == *(cmr_u32 *) param) {
+		if(*(cmr_u32 *) param == cxt->manual_ae_mode){
+			ISP_LOGD("ae mode no change,no need to set");
+			return AE_SUCCESS;
+			}
+		cxt->manual_ae_mode = *(cmr_u32 *) param;
+		if (!cxt->manual_ae_mode) {
 			if(cxt->manual_iso_value){
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
 				ae_set_force_pause(cxt, 1, 3);
@@ -1873,6 +1878,10 @@ static cmr_s32 ae_set_exp_time(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	if (param) {
 		exp_time = *(cmr_u32 *) param;
 		if (exp_time > 0) {
+			if(cxt->manual_exp_time == exp_time){
+				ISP_LOGD("shutter no change,no need to set");
+				return AE_SUCCESS;
+			}
 			cxt->manual_exp_time = exp_time;
 		}
 		if(cxt->manual_iso_value){
@@ -3814,6 +3823,10 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 	if (param) {
 		struct ae_set_iso *iso = param;
 		if (iso->mode < AE_ISO_MAX) {
+			if(cxt->cur_status.adv_param.iso == iso->mode){
+				ISP_LOGD("iso mode no change,no need to set");
+				return AE_SUCCESS;
+			}
 			cxt->cur_status.adv_param.iso = iso->mode;
 		}
 		switch (iso->mode) {
@@ -5965,6 +5978,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->env_cum_changedCalc_delay_cnt = 0;
 	cxt->env_cum_changed = 0;
 	cxt->previous_lum = 0;
+	cxt->manual_ae_mode = 1;
 	cxt->bypass = init_param->has_force_bypass;
 	cxt->manual_level = AE_MANUAL_EV_INIT;
 	cxt->debug_enable = ae_is_mlog(cxt);
