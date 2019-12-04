@@ -7372,7 +7372,10 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->prev_data_endian = endian;
     prev_cxt->need_isp = chn_param.cap_inf_cfg.cfg.need_isp;
     prev_cxt->need_binning = chn_param.cap_inf_cfg.cfg.need_binning;
-
+#ifdef   CONFIG_CAMERA_4IN1_SOLUTION2
+    if (cxt->is_4in1_sensor)
+       prev_cxt->prev_skip_num += 2;
+#endif
     if (prev_cxt->skip_mode == IMG_SKIP_SW_KER) {
         /*config skip num buffer*/
         for (i = 0; i < prev_cxt->prev_skip_num; i++) {
