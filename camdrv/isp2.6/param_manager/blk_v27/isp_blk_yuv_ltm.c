@@ -24,7 +24,6 @@ cmr_s32 _pm_yuv_ltm_init(void *dst_yuv_ltm_param, void *src_yuv_ltm_param, void 
 	struct isp_yuv_ltm_param *dst_ptr = (struct isp_yuv_ltm_param *)dst_yuv_ltm_param;
 	struct isp_pm_block_header *ltm_header_ptr = (struct isp_pm_block_header *)param1;
 	struct sensor_yuv_ltm_param *src_ptr = (struct sensor_yuv_ltm_param*)src_yuv_ltm_param;
-	float text_point_alpha[SENSOR_YUV_LTM_NUM] = {0};
 	UNUSED(param2);
 
 	dst_ptr->cur.ltm_map.bypass = ltm_header_ptr->bypass;
@@ -48,7 +47,6 @@ cmr_s32 _pm_yuv_ltm_init(void *dst_yuv_ltm_param, void *src_yuv_ltm_param, void 
 			dst_ptr->ltm_param[i].tile_num_x = src_ptr->yuv_ltm_param[i].yuv_ltm_stat.tile_num.tile_num_x;
 			dst_ptr->ltm_param[i].tile_num_y = src_ptr->yuv_ltm_param[i].yuv_ltm_stat.tile_num.tile_num_y;
 
-			text_point_alpha[i] = src_ptr->yuv_ltm_param[i].yuv_ltm_stat.ltm_text.text_point_alpha;
 			dst_ptr->ltm_param[i].text_point_thres = src_ptr->yuv_ltm_param[i].yuv_ltm_stat.ltm_text.text_point_thres;
 			dst_ptr->ltm_param[i].textture_proporion = src_ptr->yuv_ltm_param[i].yuv_ltm_stat.ltm_text.textture_proporion;
 			dst_ptr->ltm_param[i].text_point_alpha = src_ptr->yuv_ltm_param[i].yuv_ltm_stat.ltm_text.text_point_alpha;
@@ -63,6 +61,8 @@ cmr_s32 _pm_yuv_ltm_init(void *dst_yuv_ltm_param, void *src_yuv_ltm_param, void 
 		dst_ptr->cur.ltm_stat.tile_num.tile_num_y = dst_ptr->ltm_param[index].tile_num_y;
 		dst_ptr->cur.ltm_stat.text_point_thres = dst_ptr->ltm_param[index].text_point_thres;
 		dst_ptr->cur.ltm_stat.ltm_text.textture_proporion = dst_ptr->ltm_param[index].textture_proporion;
+		ltm_rgb_text_thres_init(dst_ptr->cur.ltm_stat.text_point_thres,
+			dst_ptr->ltm_param[index].text_point_alpha, dst_ptr->cur.ltm_stat.ltm_hist_table);
 	}
 
 	ltm_header_ptr->is_update = ISP_ONE;
@@ -85,11 +85,9 @@ cmr_s32 _pm_yuv_ltm_set_param(void *yuv_ltm_param, cmr_u32 cmd, void *param_ptr0
 			void *src1[2] = { NULL, NULL };
 			void *src2[2] = {NULL, NULL};
 			void *src3[2] = { NULL, NULL };
-			void *src4[2] = {NULL, NULL};
 			void *dst1 = NULL;
 			void *dst2 = NULL;
 			void *dst3 = NULL;
-			void *dst4 = NULL;
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 			struct isp_weight_value *weight_value = NULL;
 			struct isp_range val_range = { 0, 0 };
@@ -129,9 +127,6 @@ cmr_s32 _pm_yuv_ltm_set_param(void *yuv_ltm_param, cmr_u32 cmd, void *param_ptr0
 			dst_ptr->cur.ltm_stat.text_point_thres = dst_ptr->ltm_param[index].text_point_thres;
 			dst_ptr->cur.ltm_stat.ltm_text.textture_proporion = dst_ptr->ltm_param[index].textture_proporion;
 
-			ltm_rgb_text_thres_init(dst_ptr->cur.ltm_stat.text_point_thres,
-				dst_ptr->ltm_param[index].text_point_alpha, dst_ptr->cur.ltm_stat.ltm_hist_table);
-
 			data_num = 1;
 			if (dst_ptr->cur.ltm_stat.region_est_en) {
 				dst1 = &dst_ptr->cur.ltm_stat.text_point_thres;
@@ -140,17 +135,17 @@ cmr_s32 _pm_yuv_ltm_set_param(void *yuv_ltm_param, cmr_u32 cmd, void *param_ptr0
 				src1[1] = (void *)&dst_ptr->ltm_param[bv_value->value[1]].text_point_thres;
 				src2[0] = (void *)&dst_ptr->ltm_param[bv_value->value[0]].textture_proporion;
 				src2[1] = (void *)&dst_ptr->ltm_param[bv_value->value[1]].textture_proporion;
-				src3[0] = (void *)&dst_ptr->ltm_param[bv_value->value[0]].text_point_alpha;
-				src3[1] = (void *)&dst_ptr->ltm_param[bv_value->value[1]].text_point_alpha;
 				isp_interp_data((void *)dst1, src1 , weight , data_num , ISP_INTERP_UINT16);
 				isp_interp_data((void *)dst2, src2 , weight , data_num , ISP_INTERP_UINT16);
-				isp_interp_data((void *)dst3, src3 , weight , data_num , ISP_INTERP_UINT16);
 			}
 
-			dst4 = &dst_ptr->cur.ltm_stat.strength;
-			src4[0] = (void *)&dst_ptr->ltm_param[bv_value->value[0]].ltm_stat_strength;
-			src4[1] = (void *)&dst_ptr->ltm_param[bv_value->value[1]].ltm_stat_strength;
-			isp_interp_data((void *)dst4, src4 , weight , data_num , ISP_INTERP_UINT16);
+			ltm_rgb_text_thres_init(dst_ptr->cur.ltm_stat.text_point_thres,
+				dst_ptr->ltm_param[index].text_point_alpha, dst_ptr->cur.ltm_stat.ltm_hist_table);
+
+			dst3 = &dst_ptr->cur.ltm_stat.strength;
+			src3[0] = (void *)&dst_ptr->ltm_param[bv_value->value[0]].ltm_stat_strength;
+			src3[1] = (void *)&dst_ptr->ltm_param[bv_value->value[1]].ltm_stat_strength;
+			isp_interp_data((void *)dst3, src3 , weight , data_num , ISP_INTERP_UINT16);
 
 			header_ptr->is_update = ISP_ONE;
 		}

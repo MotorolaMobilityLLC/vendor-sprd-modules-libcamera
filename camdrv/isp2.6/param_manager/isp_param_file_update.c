@@ -1458,8 +1458,10 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 
 	for (i = 0; i < ISP_BLK_NR_MAX; i++) {
 		cmr_u32 nr_type;
+		cmr_u32 blk_id;
 		nr_type = nr_blocks_info[i].nr_type;
-		if (nr_type < ISP_BLK_NR_MAX)
+		blk_id = nr_blocks_info[i].blk_id;
+		if (nr_type < ISP_BLK_NR_MAX && blk_id)
 			nr_set_size[nr_type] = nr_blocks_info[i].unit_size;
 	}
 
