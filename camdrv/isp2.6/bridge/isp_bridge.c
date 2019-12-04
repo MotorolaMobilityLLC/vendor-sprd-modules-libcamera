@@ -43,9 +43,11 @@ struct match_data_param {
 
 	struct aem_info aem_stat_info[CAM_SENSOR_MAX];
 	struct ae_match_data ae_info[CAM_SENSOR_MAX];
+	struct ae_sync_slave_data ae_sync_slave_info[CAM_SENSOR_MAX];
 	struct ae_match_stats_data ae_stats_data[CAM_SENSOR_MAX];
 	cmr_u32 aem_stat_blk_num[CAM_SENSOR_MAX];
 	cmr_u16 bv[CAM_SENSOR_MAX];
+	cmr_u8 flash_state[CAM_SENSOR_MAX];
 
 	struct awb_match_data awb_info[CAM_SENSOR_MAX];
 	struct awb_match_stats_data awb_stats_data[CAM_SENSOR_MAX];
@@ -309,6 +311,20 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		sem_wait(&cxt->ae_sm);
 		memcpy(out, &cxt->match_param.ae_info[sensor_role],
 			sizeof(cxt->match_param.ae_info[sensor_role]));
+		sem_post(&cxt->ae_sm);
+		break;
+
+	case SET_FLASH_STATE:
+		sem_wait(&cxt->ae_sm);
+		memcpy(&cxt->match_param.flash_state[sensor_role], in,
+			sizeof(cxt->match_param.flash_state[sensor_role]));
+		sem_post(&cxt->ae_sm);
+		break;
+	
+	case GET_FLASH_STATE:
+		sem_wait(&cxt->ae_sm);
+		memcpy(out, &cxt->match_param.flash_state[sensor_role],
+			sizeof(cxt->match_param.flash_state[sensor_role]));
 		sem_post(&cxt->ae_sm);
 		break;
 
@@ -681,6 +697,19 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			info->sensor_size = data->sensor.sensor_size;
 			sem_post(&cxt->ae_sm);
 		}
+		break;
+		case SET_SYNC_SLAVE_AE_DATA:
+			sem_wait(&cxt->ae_sm);
+			memcpy(&cxt->match_param.ae_sync_slave_info[sensor_role], in,
+				sizeof(cxt->match_param.ae_sync_slave_info[sensor_role]));
+			sem_post(&cxt->ae_sm);
+		break;
+
+		case GET_SYNC_SLAVE_AE_DATA:
+			sem_wait(&cxt->ae_sm);
+			memcpy(out, &cxt->match_param.ae_sync_slave_info[sensor_role],
+				sizeof(cxt->match_param.ae_sync_slave_info[sensor_role]));
+			sem_post(&cxt->ae_sm);
 		break;
 	default:
 		break;

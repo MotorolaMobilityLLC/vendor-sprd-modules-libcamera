@@ -443,6 +443,11 @@ struct ae_ev_setting_param {
 	cmr_u32 calc_y;
 };
 
+struct ae_sync_gain_param {
+	cmr_u32 sensor_gain;
+	cmr_u32 isp_gain;
+};
+
 struct ae_face_param {
 	cmr_u32 face_num;
 	struct ae_face_data_type face_data[20];

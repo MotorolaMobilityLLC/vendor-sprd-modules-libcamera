@@ -76,6 +76,12 @@ enum isp_br_ioctl_cmd {
 
 	SET_USER_COUNT,
 	GET_USER_COUNT,
+
+	SET_SYNC_SLAVE_AE_DATA,
+	GET_SYNC_SLAVE_AE_DATA,
+
+	SET_FLASH_STATE,
+	GET_FLASH_STATE,
 };
 
 struct awb_gain_data {
@@ -131,6 +137,14 @@ struct ae_match_data {
 	cmr_u32 gain;
 	cmr_u32 isp_gain;
 	struct sensor_ex_exposure exp;
+};
+
+struct ae_sync_slave_data {
+	cmr_u32 exp_time;
+	cmr_u32 exp_line;
+	cmr_u32 ae_gain;
+	cmr_u32 dmy_line;
+	cmr_u32 frm_len;
 };
 
 struct ae_match_stats_data {
