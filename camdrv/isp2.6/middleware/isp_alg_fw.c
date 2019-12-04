@@ -5250,9 +5250,8 @@ static cmr_int ispalg_dump_alsc_info(struct alsc_do_simulation *alsc_param, cmr_
 	fprintf(fp, "bv_gain:%d\n", alsc_param->bv_gain);
 
 	fprintf(fp, "2.output alsc table:\n");
-	for (i=0; i < gain_w*gain_h; i++) {
-		fprintf(fp, "[%d]:%d \n",
-			i, alsc_param->sim_output_table[i]);
+	for (i=0; i < gain_w*gain_h*4; i++) {
+		fprintf(fp, "%d \n", alsc_param->sim_output_table[i]);
 	}
 	fflush(fp);
 	fclose(fp);
@@ -5372,7 +5371,7 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 		do_sim.stat_b = awb_stat.b_info;
 		do_sim.ct = scene_param.smart_ct;
 		do_sim.bv = scene_param.smart_bv;
-		do_sim.bv_gain = scene_param.global_gain;
+		do_sim.bv_gain = scene_param.gain;
 		do_sim.sim_output_table = sim_output_table;
 		if (cxt->ops.lsc_ops.ioctrl) {
 			ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_DO_SIMULATION, (void *)&do_sim, NULL);
