@@ -737,7 +737,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -885,7 +885,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param6.&BasePoint=1&*/
@@ -1033,7 +1033,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param7.&BasePoint=1&*/
@@ -1181,7 +1181,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param8.&BasePoint=1&*/
