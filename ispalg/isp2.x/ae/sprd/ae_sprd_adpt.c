@@ -4104,6 +4104,12 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->mode_switch[cxt->app_mode].lum = cxt->sync_cur_result.cur_lum;
 			cxt->mode_switch[cxt->app_mode].tarlum = cxt->sync_cur_result.target_lum;
 			cxt->mode_switch[cxt->app_mode].ev_index = cxt->cur_status.settings.ev_index;
+			if(cxt->mode_switch[cxt->app_mode].lum){
+				cxt->mode_switch[cxt->app_mode].sensitivity = (cxt->last_exp_param.exp_time) / 100000 * (cxt->last_exp_param.gain) / (cxt->mode_switch[cxt->app_mode].lum);
+				if(0 == cxt->mode_switch[cxt->app_mode].sensitivity)
+					cxt->mode_switch[cxt->app_mode].sensitivity = 1;
+				ISP_LOGV("sensitivity %d exp_time %d gain %d luma %d ",cxt->mode_switch[cxt->app_mode].sensitivity,cxt->last_exp_param.exp_time,cxt->last_exp_param.gain,cxt->mode_switch[cxt->app_mode].lum);
+			}
 		}
 		if(CAMERA_MODE_MANUAL == cxt->app_mode){
 			s_ae_manual[cxt->camera_id].exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
@@ -4374,6 +4380,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		src_exp.cur_index = cxt->last_index;
 		if((cxt->app_mode < 32) && !work_info->is_snapshot){
 			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
+			cmr_u32 last_sensitivity = cxt->mode_switch[last_app_mode].sensitivity;
+			cmr_u32 cur_sensitivity = cxt->mode_switch[cxt->app_mode].sensitivity;
+			if(0 == cur_sensitivity)
+				cur_sensitivity = last_sensitivity;
 			if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
 				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
 				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
@@ -4386,8 +4396,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				cxt->manual_level = s_ae_manual[cxt->camera_id].manual_level;
 			}
 			else if(0 != cxt->mode_switch[last_app_mode].gain){
-				if (((CAMERA_MODE_MANUAL == last_app_mode) && (0 != cxt->mode_switch[cxt->app_mode].gain))
-					||((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) && (0 != cxt->mode_switch[cxt->app_mode].gain))){
+				if ((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) && (0 != cxt->mode_switch[cxt->app_mode].gain)){
 					src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
 					src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
 					src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
@@ -4412,7 +4421,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 						ISP_LOGD("1. exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
 						cmr_u32 tmp_gain = 0;
 						cxt->mode_switch[last_app_mode].lum = cxt->mode_switch[last_app_mode].lum ? cxt->mode_switch[last_app_mode].lum : 1;
-						tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum/cxt->mode_switch[last_app_mode].lum + 0.5);
+
+						if(CAMERA_MODE_MANUAL == last_app_mode)
+							tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum * cur_sensitivity / cxt->mode_switch[last_app_mode].lum / last_sensitivity + 0.5);
+						else
+							tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum/cxt->mode_switch[last_app_mode].lum + 0.5);
+
 						if(tmp_gain > cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index]){
 							tmp_gain = cxt->cur_status.ae_table->again[cxt->cur_status.ae_table->max_index];
 							src_exp.exp_line = src_exp.exp_line * ae_target_lum * src_exp.gain / (tmp_gain *cxt->mode_switch[last_app_mode].lum);

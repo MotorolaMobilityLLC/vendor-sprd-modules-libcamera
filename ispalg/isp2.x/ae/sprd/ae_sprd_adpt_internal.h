@@ -62,6 +62,7 @@ extern "C" {
 		cmr_u32 gain;
 		cmr_u32 table_idx;
 		cmr_u32 lum;
+		cmr_u32 sensitivity;
 		cmr_u32 tarlum;
 		cmr_s8 ev_index;
 	};
