@@ -4424,7 +4424,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		ISP_LOGV("cameraid %d, mode%d, state%d, status%d, pos%d", af->camera_id, status_master.af_mode, status_master.af_state, status_master.af_status,
 			 status_master.af_position);
 
-		if (AF_SEARCHING == status_master.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state) && af->slave_focus_cnt == 0) {
+		if (AF_SEARCHING == status_master.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)
+		    && af->slave_focus_cnt == 0 && STATE_NORMAL_AF != af->state) {
 			switch (status_master.af_state) {
 			case STATE_NORMAL_AF:
 				break;
@@ -4507,6 +4508,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		} else if ((AF_STOPPED == status_master.af_status || AF_STOPPED_INNER == status_master.af_status)
 			   && AF_SEARCHING == af->focus_state) {
 			af->slave_focus_cnt = 0;
+			ISP_LOGI("sync stop af state %s", STATE_STRING(af->state));
 			af_stop_search(af);
 			return rtn;
 		}
