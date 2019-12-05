@@ -10239,6 +10239,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         // dre available
         out_ptr->dre_flag = 1;
         cxt->dre_flag = 1;
+        cxt->predre_flag = isp_cmd_parm.dre_param.predre_param.enable;
     } else {
         out_ptr->dre_flag = 0;
         cxt->dre_flag = 0;
@@ -11168,7 +11169,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
                                         &flash_status);
     if (1 == cxt->dre_flag && (camera_get_hdr_flag(cxt) != 1) &&
-        !flash_status && (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL)) {
+        !flash_status && (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL) && cxt->predre_flag) {
         ret = camera_dre_set_ev(oem_handle, 1);
         if (ret) {
             CMR_LOGE("fail to set dre ev");

@@ -404,6 +404,7 @@ struct camera_context {
     struct img_rect trim_reset_info;
     cmr_u8 nr_flag;
     cmr_u8 dre_flag;
+    cmr_u8 predre_flag;
     cmr_u8 dre_skipframe;
 
     /*for flash skip preview frame*/
