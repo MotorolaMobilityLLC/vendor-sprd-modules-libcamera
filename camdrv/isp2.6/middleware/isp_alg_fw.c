@@ -3617,10 +3617,9 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		break;
 	}
 
-	// TODO joseph run AE separately until lib ready
 	if (ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
 		char value[PROPERTY_VALUE_MAX] = { 0x00 };
-		property_get("persist.vendor.cam.debug.ae_sync", value, "0");
+		property_get("persist.vendor.cam.debug.ae_sync", value, "1");
 
 		if (atoi(value) == 0) {
 			ae_input.is_multi_mode = ISP_ALG_SINGLE;
