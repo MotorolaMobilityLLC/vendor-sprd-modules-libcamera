@@ -4908,7 +4908,7 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].controlInfo.ae_precapture_id);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-        int32_t fps_range[2], max_fps_range[2];
+        int32_t fps_range[2] = {0}, max_fps_range[2] = {0};
         HAL_LOGV("AE target fps min %d, max %d",
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
