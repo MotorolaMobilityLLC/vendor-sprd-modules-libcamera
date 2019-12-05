@@ -1032,8 +1032,11 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
 
     /*check every device, if previewing, stop it*/
     for (i = 0; i < CAMERA_ID_MAX; i++) {
-        CMR_LOGV("id %d, prev_status %ld", i, handle->prev_cxt[i].prev_status);
-
+        CMR_LOGV("id %d, prev_status %ld,4in1_mem_num=%d",
+                 i, handle->prev_cxt[i].prev_status,handle->prev_cxt[i].cap_4in1_mem_num);
+        if(handle->prev_cxt[i].cap_4in1_mem_num != 0) {
+           prev_free_4in1_buf(handle,i,0);
+        }
         if (PREVIEWING == handle->prev_cxt[i].prev_status) {
             /*prev_stop(handle, i, 0);*/
             cmr_preview_stop(preview_handle, i);
@@ -3920,7 +3923,6 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_free_cap_reserve_buf(handle, camera_id, is_restart);
     prev_free_zsl_buf(handle, camera_id, is_restart);
-    prev_free_4in1_buf(handle, camera_id, 0);
 
     prev_cxt->prev_frm_cnt = 0;
     prev_cxt->video_frm_cnt = 0;
@@ -5527,10 +5529,6 @@ cmr_int prev_free_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-	if (check_software_remosaic(prev_cxt)) {
-        return ret;
-    }
-
     if (!is_restart) {
         mem_ops->free_mem(CAMERA_4IN1_PROC, handle->oem_handle,
                           prev_cxt->cap_4in1_phys_addr_array,
@@ -5545,8 +5543,8 @@ cmr_int prev_free_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(prev_cxt->cap_4in1_fd_array,
                   (CAP_4IN1_NUM) * sizeof(cmr_s32));
     }
-
-    CMR_LOGV("X");
+    prev_cxt->cap_4in1_mem_num = 0;
+    CMR_LOGD("X");
     return ret;
 }
 
@@ -5581,9 +5579,6 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
               (CAP_4IN1_NUM) * sizeof(cmr_uint));
     cmr_bzero(prev_cxt->cap_4in1_fd_array, (CAP_4IN1_NUM) * sizeof(cmr_s32));
 
-    prev_cxt->cap_4in1_mem_valid_num = 0;
-    prev_cxt->cap_4in1_mem_num = 0;
-
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
     mem_ops = &prev_cxt->prev_param.memory_setting;
 
@@ -5592,8 +5587,6 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("4in1 width %d height %d", width, height);
 
     /*init  memory info*/
-    prev_cxt->cap_4in1_mem_num = CAP_4IN1_NUM;
-
     prev_cxt->cap_4in1_mem_size = (width * height * 5) / 4;
     /*alloc  buffer*/
     if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
@@ -5602,7 +5595,7 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
     if (!is_restart) {
-
+        prev_cxt->cap_4in1_mem_num = CAP_4IN1_NUM;
         prev_cxt->cap_4in1_mem_valid_num = 0;
         ret = mem_ops->alloc_mem(CAMERA_4IN1_PROC, handle->oem_handle,
                                  (cmr_u32 *)&prev_cxt->cap_4in1_mem_size,
@@ -5612,6 +5605,7 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
                                  prev_cxt->cap_4in1_fd_array);
         if (ret) {
             CMR_LOGE("alloc 4in1 memory failed");
+            prev_cxt->cap_4in1_mem_num = 0;
             ret = CMR_CAMERA_FAIL;
             goto exit;
         }
@@ -5619,21 +5613,6 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
         /*check memory valid*/
         CMR_LOGD("4in1 prev_mem_size 0x%lx, mem_num %ld",
                  prev_cxt->cap_4in1_mem_size, prev_cxt->cap_4in1_mem_num);
-        for (i = 0; i < prev_cxt->cap_4in1_mem_num; i++) {
-            CMR_LOGD("%d, virt_addr 0x%lx, fd 0x%x", i,
-                     prev_cxt->cap_4in1_virt_addr_array[i],
-                     prev_cxt->cap_4in1_fd_array[i]);
-
-            if ((0 == prev_cxt->cap_4in1_virt_addr_array[i]) ||
-                0 == prev_cxt->cap_4in1_fd_array[i]) {
-                CMR_LOGE("memory is invalid");
-                return CMR_CAMERA_NO_MEM;
-            } else {
-                if (i < CAP_4IN1_NUM) {
-                    prev_cxt->cap_4in1_mem_valid_num++;
-                }
-            }
-        }
     }
 exit:
 
@@ -12011,7 +11990,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
     }
-	if (check_software_remosaic(prev_cxt)) {
+	if (check_software_remosaic(prev_cxt) && prev_cxt->cap_4in1_mem_num == 0) {
         ret = prev_alloc_4in1_buf(handle, camera_id, is_restart);
         if (ret) {
             CMR_LOGE("alloc 4in1 buf failed");
