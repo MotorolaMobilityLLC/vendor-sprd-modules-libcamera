@@ -46,10 +46,10 @@ struct fd_hw_handle {
 	fd_s32 ip_err_code;
 	sprd_camera_fd_memory_t* dim;
 	sprd_camera_fd_memory_t* out;
-	sprd_camera_fd_memory_t* fd_model;
 };
 
 int g_iommu_status = SPRD_FD_IOMMU_ENABLED;/*Default is enable*/
+sprd_camera_fd_memory_t* g_fd_model = NULL;
 
 sprd_camera_fd_memory_t *AllocFDMem(int buf_size,int num_bufs,uint32_t is_cache)
 {
@@ -202,6 +202,12 @@ int hwfd_set_model(HWFD_DETECTOR_HANDLE hDT,HWFD_MODEL *model)
 	fd_s32 fd = -1;
 	struct fd_hw_handle *file = NULL;
 
+	if(NULL != g_fd_model)
+	{
+		FD_LOGI("fd model already set");
+		return HWFD_OK;
+	}
+
 	FD_LOGI("hwfd model addr %p,size %d",model->fd_model_addr,model->fd_model_size);
 
 
@@ -263,16 +269,16 @@ int hwfd_set_model(HWFD_DETECTOR_HANDLE hDT,HWFD_MODEL *model)
 		FD_LOGE("SPRD_FD_REG_PARAM_MODEL_67_FINE ret %d",ret);
 		return HWFD_ERROR;
 	}
-	
+
 	/*Set model addr*/
 	cmd_para.reg_param = SPRD_FD_REG_PARAM_CFG_BADDR;
-	file->fd_model = CopyToIon(model->fd_model_addr,model->fd_model_size);
-	if(NULL == file->fd_model)
+	g_fd_model = CopyToIon(model->fd_model_addr,model->fd_model_size);
+	if(NULL == g_fd_model)
 	{
 		FD_LOGE("Copy model fail");
 		return HWFD_ERROR;
 	}
-	cmd_para.reg_val = file->fd_model->fd;
+	cmd_para.reg_val = g_fd_model->fd;
 	ret = ioctl(fd,SPRD_FD_IO_WRITE,&cmd_para);
 	if(ret < 0)
 	{
@@ -284,7 +290,7 @@ int hwfd_set_model(HWFD_DETECTOR_HANDLE hDT,HWFD_MODEL *model)
 }
 int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 {
-	int ret = HWFD_OK;
+	//int ret = HWFD_OK;
 	struct fd_hw_handle *file = NULL;
 	fd_s32 fd = -1;
 	char dev[32] ={0};
@@ -293,10 +299,10 @@ int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 	FD_LOGI("HW Face Detect API2 V0.92");
 
 	file = (fd_hw_handle*)malloc(sizeof(struct fd_hw_handle));
-	memset(file,0,sizeof(struct fd_hw_handle));
 	if (!file) {
-	  ret = HWFD_ERROR;
+	  goto open_fail;
 	}
+	memset(file,0,sizeof(struct fd_hw_handle));
 	/*set dvfs*/
 #if 0
 	fd_int work_clock = SPRD_FD_DVFS_INDEX2;
@@ -315,7 +321,7 @@ int  hwfd_open(HWFD_DETECTOR_HANDLE *hDT)
 	sprintf(dev , "/dev/%s" ,SPRD_FD_DEVICE_NAME);
 
 	fd = open(dev, O_RDWR, 0);
-	if (fd > 0)
+	if ((fd > 0) && (NULL != file))
 	{
 		file->fd = fd;
 		*hDT = (HWFD_DETECTOR_HANDLE)file;
@@ -377,11 +383,13 @@ void hwfd_close(HWFD_DETECTOR_HANDLE *hDT)
 		else
 			FreeFDMem(file->dim);
 
-		if (NULL == file->fd_model)
+		if (NULL == g_fd_model)
 			FD_LOGE("model buff is null");
 		else
-			FreeFDMem(file->fd_model);
-		
+		{
+			FreeFDMem(g_fd_model);
+			g_fd_model = NULL;
+		}
 		free(file);
 		*hDT = NULL;
 	}
@@ -444,14 +452,14 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 	if((NULL == hDT) || (NULL == i_request) || (NULL == o_response))
 	{
 		FD_LOGE("Invalid Input Param !");
-		ret = HWFD_ERROR;
+		return HWFD_ERROR;
 	}
 
 	HWFD_REQUEST* request = (HWFD_REQUEST*)i_request;
 	HWFD_RESPONSE* response = (HWFD_RESPONSE*)o_response;
 
 	file = (struct fd_hw_handle *)hDT;
-    if (!file)
+    if ((!file) || (NULL == request) || (NULL == response))
 	{
  	   FD_LOGE("Invalid Param fd_hw_handle !");
  	   ret = HWFD_ERROR;
@@ -596,7 +604,9 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 		FD_LOGI("Get face num %02X",cmd_para.reg_val);
 #endif
 		response->face_count = cmd_para.reg_val >> 16;
-		response->data = file->out->data;
+		if(NULL != file)
+			response->data = file->out->data;
+
 		FreeFDMem(cmd_queue);
 	}
 	return ret;
