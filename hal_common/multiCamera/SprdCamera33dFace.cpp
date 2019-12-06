@@ -777,8 +777,9 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         HAL_LOGD("buf2 width %d, height %d,buf size %d, fd %d", width, height,
                  buf_size, src_fd);
         if (src_size <= size_left) {
-            uint8_t *temp_addr = (uint8_t *)malloc(width * height * 3 / 2);
-            memset(temp_addr, 0, sizeof(width * height * 3 / 2));
+            int temp_size = width * height;
+            uint8_t *temp_addr = (uint8_t *)malloc(width * height);
+            memset(temp_addr, 0, sizeof(sizeof(uint8_t) * temp_size));
             raw10ToRaw8((void *)temp_addr, (void *)src_addr, src_size);
             m_3dface->Raw8Rotate((uint8_t *)dst_addr, (uint8_t *)temp_addr,
                                  width, height, angle);
@@ -819,8 +820,9 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         HAL_LOGD("buf3 width %d, height %d, buf size %d, fd %d", width, height,
                  buf_size, src_fd);
         if (src_size <= size_left) {
-            uint8_t *temp_addr = (uint8_t *)malloc(width * height * 3 / 2);
-            memset(temp_addr, 0, sizeof(width * height * 3 / 2));
+            int temp_size = width * height;
+            uint8_t *temp_addr = (uint8_t *)malloc(width * height);
+            memset(temp_addr, 0, sizeof(sizeof(uint8_t) * temp_size));
             raw10ToRaw8((void *)temp_addr, (void *)src_addr, src_size);
             m_3dface->Raw8Rotate((uint8_t *)dst_addr, (uint8_t *)temp_addr,
                                  width, height, angle);
@@ -875,8 +877,9 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
                  buf_size, src_fd);
 
         if (src_size <= size_left) {
-            uint8_t *temp_addr = (uint8_t *)malloc(width * height * 3 / 2);
-            memset(temp_addr, 0, sizeof(width * height * 3 / 2));
+            int temp_size = width * height;
+            uint8_t *temp_addr = (uint8_t *)malloc(width * height);
+            memset(temp_addr, 0, sizeof(sizeof(uint8_t) * temp_size));
             raw10ToRaw8((void *)temp_addr, (void *)src_addr, src_size);
             m_3dface->Raw8Rotate((uint8_t *)dst_addr, (uint8_t *)temp_addr,
                                  width, height, angle);
