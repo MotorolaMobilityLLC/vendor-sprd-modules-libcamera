@@ -4459,6 +4459,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 				af->focus_state = AF_SEARCHING;
 				break;
 			case STATE_FAF:
+				ISP_LOGI("face->face_num =%d", af->face_info.face_num);
 				if (0 == af->face_info.face_num) {
 					af->trig_ops.ioctrl(af->trig_ops.handle, AFT_CMD_GET_PD_WORKABLE, &pd_workable, NULL);
 					if (AFV1_TRUE == pd_workable) {
@@ -4507,6 +4508,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 					} else {
 						af->f_orientation = FACE_NONE;
 					}
+					af->pre_state = af->state;
+					af->state = STATE_FAF;
 					faf_start(af, &af->win);
 					af->focus_state = AF_SEARCHING;
 				}
