@@ -368,7 +368,11 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
     int32_t mPerfectskinlevel;
     int mCoverValue;
     uint8_t mBlurMode;
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+    faceBeautyLevels fbLevels;
+#else
     face_beauty_levels fbLevels;
+#endif
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(int blur_camera_id, struct camera_info *info);
