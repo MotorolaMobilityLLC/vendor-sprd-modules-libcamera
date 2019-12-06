@@ -2491,10 +2491,14 @@ SprdCamera3MultiCamera::reConfigResultMeta(camera_metadata_t *meta) {
         HAL_LOGV("wide crop=%d,%d,%d,%d",
             crop_Region[0], crop_Region[1], crop_Region[2], crop_Region[3]);
     }
-	if (mAfTriggerSw)
+    if (mAfTriggerSw){
+        if(!SprdCamera3Setting::mSensorFocusEnable[mCameraIdSw]){
+            gMultiCam->aux1_af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
+        }
         camMetadata->update(ANDROID_CONTROL_AF_STATE,
                             &(gMultiCam->aux1_af_state), 1);
-	if (mAfTriggerTele)
+    }
+    if (mAfTriggerTele)
         camMetadata->update(ANDROID_CONTROL_AF_STATE,
                             &(gMultiCam->aux2_af_state), 1);
     HAL_LOGV("face_num=%d,camMetadata=%p", face_num, camMetadata);
