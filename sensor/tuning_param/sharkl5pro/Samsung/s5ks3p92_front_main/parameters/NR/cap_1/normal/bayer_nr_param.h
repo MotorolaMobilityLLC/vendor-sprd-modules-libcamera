@@ -8627,7 +8627,7 @@
 				/*flat_thresh_max0*/
 				0x05DC,
 				/*flat_thresh_coef0*/
-				0x0000,
+				0x0032,
 				/*flat_thresh_max1*/
 				0x04B0,
 				/*flat_thresh_coef1*/
@@ -8643,7 +8643,7 @@
 				/*flat_thresh_max0*/
 				0x05DC,
 				/*flat_thresh_coef0*/
-				0x0000,
+				0x003C,
 				/*flat_thresh_max1*/
 				0x04B0,
 				/*flat_thresh_coef1*/
@@ -8659,7 +8659,7 @@
 				/*flat_thresh_max0*/
 				0x05DC,
 				/*flat_thresh_coef0*/
-				0x0000,
+				0x003C,
 				/*flat_thresh_max1*/
 				0x04B0,
 				/*flat_thresh_coef1*/
