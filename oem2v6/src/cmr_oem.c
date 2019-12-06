@@ -11179,6 +11179,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             cxt->dre_skip_frame_enable = 1;
         else {
             cxt->dre_skip_frame_enable = 0;
+            camera_dre_set_ev(oem_handle, 0);
         }
         CMR_LOGI("dre_skip_frame_enable =%d", cxt->dre_skip_frame_enable);
         cxt->dre_skip_frame_cnt = 0;
