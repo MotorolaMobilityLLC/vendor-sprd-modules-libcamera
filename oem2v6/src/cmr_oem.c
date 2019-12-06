@@ -5746,9 +5746,9 @@ static int fusion_yuv420_yuv420(cmr_u8 *img, cmr_u8 *logo, sizeParam_t *param) {
 }
 
 cmr_int camera_get_logo_data(cmr_u8 *logo, int Width, int Height) {
-    cmr_s32 rtn = 0;
     char tmp_name[128];
     char file_name[40];
+    cmr_u32 len = 0;
 
     strcpy(tmp_name, CAMERA_LOGO_PATH);
     sprintf(file_name, "logo_%d", Width);
@@ -5758,16 +5758,15 @@ cmr_int camera_get_logo_data(cmr_u8 *logo, int Width, int Height) {
     strcat(tmp_name, file_name);
     strcat(tmp_name, ".rgba");
     FILE *fp = fopen(tmp_name, "rb");
-    if (fp == NULL) {
-        CMR_LOGW("open logo watermark src file failed");
-        rtn = -ENOENT;
-        goto exit;
+    if (fp) {
+        len = fread(logo, 1, Width * Height * 4, fp);
+        fclose(fp);
+        if (len == Width * Height * 4)
+            return 0;
     }
-    fread(logo, 1, Width * Height * 4, fp);
+    CMR_LOGW("open logo watermark src file failed");
 
-exit:
-    fclose(fp);
-    return rtn;
+    return -ENOENT;
 }
 
 /* for time watermark
@@ -5815,8 +5814,13 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
         rtn = -ENOENT;
         goto exit;
     }
-    fread(pnum, 1, src_filelen, fp);
+    j = fread(pnum, 1, src_filelen, fp);
     fclose(fp);
+    if (j < src_filelen) {
+        CMR_LOGW("read time watermark file fail, len %d", j);
+        rtn = -ENOENT;
+        goto exit;
+    }
     /* for text of time */
     ptext = (cmr_u8 *)malloc(subnum_len * (sizeof(time_text)) * 3 / 2);
     if (!ptext) {
@@ -5890,8 +5894,9 @@ exit:
         free(pnum);
     if (ptext)
         free(ptext);
-    if (ptextout)
-        free(ptextout);
+/*    if (ptextout) // 逻辑死代码 (DEADCODE)
+ *       free(ptextout);
+ */
     CMR_LOGE("fail,rtn = %d", rtn);
 
     return rtn;
