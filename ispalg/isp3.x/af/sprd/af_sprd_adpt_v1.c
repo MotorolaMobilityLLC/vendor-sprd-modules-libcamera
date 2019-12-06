@@ -252,6 +252,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		win[i].end_x = 2;
 		win[i].end_y = 2;
 	}
+	ISP_LOGI("camera_id %d", af->camera_id);
 
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 #define PIXEL_OFFSET 100
