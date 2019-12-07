@@ -13219,7 +13219,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     } else if (cxt->dre_flag == 1 && cxt->dre_skipframe == 1) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
-        capture_param.cap_cnt = 3;
+        capture_param.cap_cnt = 10;
         CMR_LOGI("dre flag");
     } else if (flash_status > 0) {
         // need get 1 frame start from next sof interrupt
