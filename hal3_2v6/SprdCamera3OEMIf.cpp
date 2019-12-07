@@ -7196,11 +7196,21 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
     char value2[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     SPRD_DEF_Tag sprddefInfo;
+
     mSetting->getSPRDDEFTag(&sprddefInfo);
+    mTopAppId = sprddefInfo.top_app_id;
     HAL_LOGD("cap_mode = %d,sprd_zsl_enabled=%d,mStreamOnWithZsl=%d", cap_mode,
              sprddefInfo.sprd_zsl_enabled, mStreamOnWithZsl);
     switch (cap_mode) {
     case CAMERA_CAPTURE_MODE_PREVIEW:
+        /* non-zsl when weichat video for power save */
+        if (mTopAppId == TOP_APP_WECHAT) {
+            if (mPreviewWidth == 640 && mPreviewHeight == 480 &&
+                mCallbackWidth == 640 && mCallbackHeight == 480) {
+                mStreamOnWithZsl = 0;
+            }
+        }
+
         if (sprddefInfo.sprd_zsl_enabled == 1 || mStreamOnWithZsl == 1) {
             mTakePictureMode = SNAPSHOT_ZSL_MODE;
             mCaptureMode = CAMERA_ZSL_MODE;
