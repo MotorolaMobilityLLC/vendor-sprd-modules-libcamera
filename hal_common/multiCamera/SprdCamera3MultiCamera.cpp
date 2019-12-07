@@ -1475,6 +1475,10 @@ int SprdCamera3MultiCamera::processCaptureRequest(
             continue;
         }
 
+        if ((mIsVideoMode == true) && (i == 0 && mRefIdex)) {
+            streamConfig == SNAPSHOT_STREAM_HAL_BUFFER;
+        }
+
         if (!streamConfig) {
             HAL_LOGD("no need to config camera:%d", i);
             continue;
@@ -3928,7 +3932,7 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
                 void *output_buf_addr = NULL;
                 void *input_buf_addr = NULL;
                 int rc = 0;
-
+/*
                 rc = gMultiCam->map((result->output_buffers)->buffer,
                     &input_buf_addr);
                 rc = gMultiCam->map(mSavedSnapRequest.buffer,
@@ -3940,7 +3944,7 @@ void SprdCamera3MultiCamera::processCaptureResultMain(
                 gMultiCam->pushBufferList(
                     gMultiCam->mLocalBuffer, (result->output_buffers)->buffer,
                     gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
-
+*/
                 CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK,
                     currStreamType, CAM_TYPE_MAIN);
                 // dump capture data
@@ -4337,7 +4341,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
                 void *output_buf_addr1 = NULL;
                 void *input_buf_addr1 = NULL;
                 int rc = 0;
-
+/*
                 rc = gMultiCam->map((result->output_buffers)->buffer,
                     &input_buf_addr1);
                 rc = gMultiCam->map(mSavedSnapRequest.buffer,
@@ -4349,7 +4353,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux1(
                 gMultiCam->pushBufferList(
                     gMultiCam->mLocalBuffer, (result->output_buffers)->buffer,
                     gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
-
+*/
                 CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK,
                     currStreamType, CAM_TYPE_MAIN);
 
@@ -4791,7 +4795,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
                 void *output_buf_addr2 = NULL;
                 void *input_buf_addr2 = NULL;
                 int rc = 0;
-
+/*
                 rc = gMultiCam->map((result->output_buffers)->buffer,
                     &input_buf_addr2);
                 rc = gMultiCam->map(mSavedSnapRequest.buffer,
@@ -4803,7 +4807,7 @@ void SprdCamera3MultiCamera::processCaptureResultAux2(
                 gMultiCam->pushBufferList(
                     gMultiCam->mLocalBuffer, (result->output_buffers)->buffer,
                     gMultiCam->mLocalBufferNumber, gMultiCam->mLocalBufferList);
-
+*/
                 CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK,
                     currStreamType, CAM_TYPE_MAIN);
 

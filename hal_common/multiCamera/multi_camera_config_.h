@@ -676,7 +676,7 @@
                     3,
                     0,
                     {0, 1, 2, 0},
-                    {SNAPSHOT_STREAM_HAL_BUFFER, SNAPSHOT_STREAM_HAL_BUFFER, SNAPSHOT_STREAM_HAL_BUFFER,
+                    {SNAPSHOT_STREAM_FW_BUFFER, SNAPSHOT_STREAM_FW_BUFFER, SNAPSHOT_STREAM_FW_BUFFER,
                      0},
                 },
 
@@ -755,7 +755,7 @@
                     3,
                     0,
                     {0, 1, 2, 0},
-                    {SNAPSHOT_STREAM_HAL_BUFFER, SNAPSHOT_STREAM_HAL_BUFFER, SNAPSHOT_STREAM_HAL_BUFFER,
+                    {SNAPSHOT_STREAM_FW_BUFFER, SNAPSHOT_STREAM_FW_BUFFER, SNAPSHOT_STREAM_FW_BUFFER,
                      0},
                 },
 
