@@ -4210,12 +4210,12 @@ static cmr_s32 ae_set_dre_start(struct ae_ctrl_cxt *cxt, void *param)
 		if (cxt->dre_enable) {
 			cxt->dre_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
 			cxt->dre_gain = cxt->sync_cur_result.ev_setting.ae_gain;
-			ae_set_force_pause(cxt, 1, 12);
+			ae_set_pause(cxt, 4);
 		} else {
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->dre_exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->dre_gain;
 			ISP_LOGD("_isp_dre_normal: exp_line %d, gain %d\n", cxt->dre_exp_line, cxt->dre_gain);
-			ae_set_force_pause(cxt, 0, 13);
+			ae_set_restore_cnt(cxt, 6);
 			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 			cxt->cur_status.adv_param.prof_mode = 0;
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
