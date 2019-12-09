@@ -4420,14 +4420,15 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time0 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
-	if (af->bridge_ctrl != NULL && (AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode || AF_ALG_DUAL_W_T == af->is_multi_mode) && af->sensor_role != AF_ROLE_MASTER) {
+	if (af->bridge_ctrl != NULL && (AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode || AF_ALG_DUAL_W_T == af->is_multi_mode)
+	    && af->sensor_role != AF_ROLE_MASTER && STATE_NORMAL_AF != af->state) {
 		af->bridge_ctrl(AF_ROLE_MASTER, GET_AF_STATUS_INFO, NULL, &status_master);
 		af->bridge_ctrl(af->sensor_role, GET_AF_STATUS_INFO, NULL, &status_slave);
 		ISP_LOGV("cameraid %d, mode%d, state%d, status%d, pos%d", af->camera_id, status_master.af_mode, status_master.af_state, status_master.af_status,
 			 status_master.af_position);
 
 		if (AF_SEARCHING == status_master.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)
-		    && af->slave_focus_cnt == 0 && STATE_NORMAL_AF != af->state) {
+		    && af->slave_focus_cnt == 0) {
 			switch (status_master.af_state) {
 			case STATE_NORMAL_AF:
 				break;
