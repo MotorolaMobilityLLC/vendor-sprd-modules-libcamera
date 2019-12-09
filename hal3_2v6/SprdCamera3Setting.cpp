@@ -1834,7 +1834,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                             stream_info[i].stream_min_duration;
                     }
                 } else {
-                    stream_min_duration = stream_info[i].stream_min_duration;
+                    stream_min_duration = p_stream_info[i].stream_min_duration;
                 }
 #else
                 if (!strcmp(mSensorName[cameraId], "ov32a1q") &&
@@ -1850,7 +1850,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                             12000000)) {
                     stream_min_duration = 50000000L;
                 } else {
-                    stream_min_duration = stream_info[i].stream_min_duration;
+                    stream_min_duration = p_stream_info[i].stream_min_duration;
                 }
 #endif
                 available_min_durations.add(stream_min_duration);
