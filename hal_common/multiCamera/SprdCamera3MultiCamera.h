@@ -119,6 +119,7 @@ class SprdCamera3MultiCamera : public SprdCamera3MultiBase {
     void setZoomCropRegion(CameraMetadata *WideSettings,
                            CameraMetadata *TeleSettings,
                            CameraMetadata *SwSettings, float multi_zoom_ratio);
+    void app2sw(int32_t *px, int32_t *py);
     void reConfigInit();
     void reConfigStream();
     camera_metadata_t *reConfigResultMeta(camera_metadata_t *meta);

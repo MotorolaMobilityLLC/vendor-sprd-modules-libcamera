@@ -2618,6 +2618,16 @@ void SprdCamera3MultiCamera::setZoomCropRegion(CameraMetadata *WideSettings,
     }
 }
 
+void SprdCamera3MultiCamera::app2sw(int32_t *px, int32_t *py) {
+    float x = *px, y = *py;
+    float w0h = (float)mWideMaxWidth / 0.6f / 2.0f;
+    float h0h = (float)mWideMaxHeight / 0.6f / 2.0f;
+    float wr = (x - w0h) / w0h;
+    float hr = (y - h0h) / h0h;
+    *px = (int32_t)((wr + 1.0f) * (float)mSwMaxWidth / 2.0f);
+    *py = (int32_t)((hr + 1.0f) * (float)mSwMaxHeight / 2.0f);
+}
+
 /*===========================================================================
  * FUNCTION     : reReqConfig
  *
@@ -2853,6 +2863,7 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
         }
 
         if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
+#if 0
             float left_offest = 0, top_offest = 0;
             float left_dst = 0, top_dst = 0;
             left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
@@ -2867,6 +2878,9 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                          ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
             af_area[2] = af_area[0] + left_dst;
             af_area[3] = af_area[1] + top_dst;
+#endif
+            app2sw(&af_area[0], &af_area[1]);
+            app2sw(&af_area[2], &af_area[3]);
             metaSettingsSw->update(ANDROID_CONTROL_AF_REGIONS, af_area,
                                    ARRAY_SIZE(af_area));
             HAL_LOGD("sw af_area = %d, %d, %d, %d, %d",
@@ -2912,6 +2926,7 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
         }
 
         if (mZoomValue < mSwitch_W_Sw_Threshold) { // super wide
+#if 0
             float left_offest = 0, top_offest = 0;
             float left_dst = 0, top_dst = 0;
             left_offest = ((float)mWideMaxWidth - (float)mSwMaxWidth) / 2;
@@ -2926,6 +2941,9 @@ void SprdCamera3MultiCamera::reReqConfig(camera3_capture_request_t *request,
                          ((float)mSwMaxHeight / (float)mWideMaxHeight) * 0.6;
             ae_area[2] = ae_area[0] + left_dst;
             ae_area[3] = ae_area[1] + top_dst;
+#endif
+            app2sw(&ae_area[0], &ae_area[1]);
+            app2sw(&ae_area[2], &ae_area[3]);
             metaSettingsSw->update(ANDROID_CONTROL_AE_REGIONS, ae_area,
                                    ARRAY_SIZE(ae_area));
             HAL_LOGD("sw ae_area = %d, %d, %d, %d, %d",

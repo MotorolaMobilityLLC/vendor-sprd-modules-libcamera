@@ -11835,8 +11835,9 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
             trim.end_y = ae_param.win_area.rect[0].start_y +
                          ae_param.win_area.rect[0].height - 1;
 
-        CMR_LOGD("AE ROI (%d,%d,%d,%d)", trim.start_x, trim.start_y, trim.end_x,
-                 trim.end_y);
+        CMR_LOGD("AE ROI camera_id %d, x, y , w, h, (%d,%d,%d,%d)",
+            cxt->camera_id, trim.start_x,
+            trim.start_y, trim.end_x, trim.end_y);
         ptr_flag = 1;
         isp_param_ptr = (void *)&trim;
         break;

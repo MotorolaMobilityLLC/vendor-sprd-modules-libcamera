@@ -609,10 +609,12 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id,
             struct cmr_focus_param temp = *(struct cmr_focus_param *)param;
 
             for (loop = 0; loop < temp.zone_cnt; loop++)
-                CMR_LOGD("temp.zone_cnt=%d x=%d ,y=%d, w=%d ,h=%d ",
-                         temp.zone_cnt, temp.zone[loop].start_x,
-                         temp.zone[loop].start_y, temp.zone[loop].width,
-                         temp.zone[loop].height);
+                CMR_LOGD("temp came_id %d, zone_cnt %d, x %d, y %d, w %d, h %d",
+                    came_id, temp.zone_cnt,
+                    temp.zone[loop].start_x,
+                    temp.zone[loop].start_y,
+                    temp.zone[loop].width,
+                    temp.zone[loop].height);
 
             cmr_copy((void *)&af_cxt->focus_zone_param[0], param,
                      CAMERA_FOCUS_RECT_PARAM_LEN);
@@ -916,8 +918,8 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     ptr = (cmr_u32 *)&af_cxt->focus_zone_param[0];
     zone_cnt = *ptr++;
 
-    CMR_LOGD("zone_cnt %d, x y w h, %d %d %d %d", zone_cnt, ptr[0], ptr[1],
-             ptr[2], ptr[3]);
+    CMR_LOGD("camera_id %d, zone_cnt %d, x y w h, %d %d %d %d",
+        camera_id, zone_cnt, ptr[0], ptr[1], ptr[2], ptr[3]);
 
     if (af_need_exit(af_handle, &af_cancel_is_ext)) {
         ret = CMR_CAMERA_INVALID_STATE;
@@ -933,9 +935,10 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     }
     /*focuse preprocess for af zone parameter*/
     focus_rect_parse(af_handle, &af_param);
-    CMR_LOGD("zone cnt %d x %d ,y %d ,w %d, h %d", af_param.zone_cnt,
-             af_param.zone[0].x, af_param.zone[0].y, af_param.zone[0].w,
-             af_param.zone[0].h);
+    CMR_LOGD("camera_id %d, zone_cnt %d, x %d, y %d, w %d, h %d",
+        camera_id, af_param.zone_cnt,
+        af_param.zone[0].x, af_param.zone[0].y,
+        af_param.zone[0].w, af_param.zone[0].h);
 
     pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
     af_cxt->af_busy = 1;
@@ -951,10 +954,13 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         cxt->focus_rect.y =
             (isp_af_param.win[i].start_y + isp_af_param.win[i].end_y) / 2;
         CMR_LOGV("TYPE_RAW");
-        CMR_LOGD("af_win num %d, x:%d y:%d e_x:%d e_y:%d",
-                 isp_af_param.valid_win, isp_af_param.win[i].start_x,
-                 isp_af_param.win[i].start_y, isp_af_param.win[i].end_x,
-                 isp_af_param.win[i].end_y);
+        CMR_LOGD("af_win camera_id = %d, valid_win = %d"
+            ", x = %d, y = %d, e_x = %d, e_y = %d",
+            camera_id, isp_af_param.valid_win,
+            isp_af_param.win[i].start_x,
+            isp_af_param.win[i].start_y,
+            isp_af_param.win[i].end_x,
+            isp_af_param.win[i].end_y);
 
         pthread_mutex_lock(&af_cxt->af_isp_caf_mutex);
         af_cxt->isp_af_timeout = 0;
@@ -1287,8 +1293,8 @@ cmr_int focus_rect_parse(cmr_handle af_handle,
     zone_cnt = *ptr++;
     cmr_bzero(&af_param, sizeof(af_param));
 
-    CMR_LOGD("af_mode %d zone_cnt %d, x y w h, %d %d %d %d", af_cxt->af_mode,
-             zone_cnt, ptr[0], ptr[1], ptr[2], ptr[3]);
+    CMR_LOGD("af_mode %d, zone_cnt %d, x y w h, %d %d %d %d",
+        af_cxt->af_mode, zone_cnt, ptr[0], ptr[1], ptr[2], ptr[3]);
 
     switch (af_cxt->af_mode) {
     case CAMERA_FOCUS_MODE_AUTO:
