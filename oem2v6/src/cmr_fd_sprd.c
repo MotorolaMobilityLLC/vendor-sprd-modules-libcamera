@@ -1414,8 +1414,8 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
                  fd_img.context.zoomRatio, fd_img.context.frameID);
 
 #ifdef CONFIG_SPRD_FD_HW_SUPPORT
-        class_handle->frame_in.src_frame.data_end.y_endian = 1;
-        class_handle->frame_in.src_frame.data_end.uv_endian = 2;
+        class_handle->frame_in.src_frame.data_end.y_endian = 0;
+        class_handle->frame_in.src_frame.data_end.uv_endian = 0;
         class_handle->frame_in.src_frame.rect.start_x = 0;
         class_handle->frame_in.src_frame.rect.start_y = 0;
         class_handle->frame_in.src_frame.rect.width =
@@ -1438,8 +1438,8 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.src_frame.addr_vir.addr_u;
 
         class_handle->fd_small.fmt = CAM_IMG_FMT_YUV420_NV21;
-        class_handle->fd_small.data_end.y_endian = 1;
-        class_handle->fd_small.data_end.uv_endian = 2;
+        class_handle->fd_small.data_end.y_endian = 0;
+        class_handle->fd_small.data_end.uv_endian = 0;
         class_handle->fd_small.rect.start_x = 0;
         class_handle->fd_small.rect.start_y = 0;
         class_handle->fd_small.rect.width = class_handle->fd_small.size.width;
