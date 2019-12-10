@@ -6080,6 +6080,16 @@ int SprdCamera3Setting::getVCMTag(VCM_Tag *vcmInfo) {
     return 0;
 }
 
+int SprdCamera3Setting::clearMLOGTag() {
+    memset(&s_setting[mCameraId].mlogInfo, 0x00, sizeof(MLOG_Tag));
+    return 0;
+}
+
+int SprdCamera3Setting::getMLOGTag(MLOG_Tag **mlogInfo) {
+    *mlogInfo = &s_setting[mCameraId].mlogInfo;
+    return 0;
+}
+
 int SprdCamera3Setting::setVCMDACTag(uint16_t *vcmInfo, uint8_t num) {
     for (uint8_t i = 0; i < num; i++) {
         s_setting[mCameraId].vcm_dac[i] = vcmInfo[i];

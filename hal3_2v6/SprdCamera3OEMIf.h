@@ -122,6 +122,29 @@ typedef struct sprd_wide_memory {
 } sprd_wide_memory_t;
 
 typedef sprd_wide_memory_t sprd_graphic_memory_t;
+struct mlog_infotag {
+    int32_t camera_id;
+    cmr_s64 prev_timestamp;
+    cmr_s64 cap_timestamp;
+    cmr_s32 otp_size;
+    int32_t fps;
+    cmr_s32 cropping_type;
+    int32_t vcm_dac;
+    int32_t vcm_num;
+    int32_t vcm_step;
+    int32_t vcm_version;
+    int face_type;
+    int cap_DT;
+    cmr_s16 cur_index;
+    cmr_s16 cur_lum;
+    cmr_s16 target_lum;
+    cmr_s16 cur_bv;
+    cmr_s16 cur_bv_nonmatch;
+    cmr_u16 cur_exp_line;
+    cmr_s32 total_exp_time;
+    cmr_s16 cur_again;
+    cmr_u16 cur_dummy;
+};
 
 struct ZslBufferQueue {
     camera_frame_type frame;
@@ -380,6 +403,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void doFaceMakeup(struct camera_frame_type *frame);
     int getCameraTemp();
     void adjustFpsByTemp();
+    int gatherInfoForMlog();
+    int getInfoForMlog(const char *file_name, struct mlog_infotag *mlog_info);
+    int getCalibrationInfo(struct mlog_infotag *mlog_info);
+    int getAeInfo(struct mlog_infotag *mlog_info);
+    int saveMlogInfo();
 
     enum Sprd_camera_state {
         SPRD_INIT,
@@ -898,6 +926,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int64_t mZslSnapshotTime;
     bool mIsIspToolMode;
     bool mIsUltraWideMode;
+    bool mIsMlogMode;
+    int64_t mtimestamplast;
     bool mIsRawCapture;
 #ifdef CONFIG_FACE_BEAUTY
     struct fb_beauty_param face_beauty;

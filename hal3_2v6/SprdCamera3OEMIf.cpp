@@ -90,6 +90,7 @@ namespace sprdcamera {
     do {                                                                       \
         s_use_time = (s_end_timestamp - s_start_timestamp) / 1000000;          \
     } while (0)
+
 #define ZSL_FRAME_TIMEOUT 1000000000      /*1000ms*/
 #define SET_PARAM_TIMEOUT 2000000000      /*2000ms*/
 #define CAP_TIMEOUT 5000000000            /*5000ms*/
@@ -141,6 +142,12 @@ namespace sprdcamera {
 // add for default zsl buffer
 #define DEFAULT_ZSL_BUFFER_NUM 3
 
+// for mlog
+#define MLOG_DUMP_PATH "/data/mlog/"
+#define MLOG_AE_PATH "/data/mlog/ae.txt"
+#define MLOG_FOR_READ_PATH "/data/mlog/mlog.txt"
+#define MLOG_CALIBRIATION_PATH "/system/etc/otpdata/input_parameters_values.txt"
+
 // 3dnr Video mode
 enum VIDEO_3DNR {
     VIDEO_OFF = 0,
@@ -179,6 +186,7 @@ static int s_use_time = 0;
 static nsecs_t cam_init_begin_time = 0;
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
+struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
 
 sprd_camera_memory_t *SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
 uint32_t SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
@@ -638,6 +646,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mStreamOnWithZsl = 0;
     mIsNeedFlashFired = 0;
     mIsPowerhintWait = 0;
+    mtimestamplast = 0ll;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -3932,6 +3941,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     int ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
+    MLOG_Tag *mlogInfo;
+    mSetting->getMLOGTag(&mlogInfo);
 
     HAL_LOGV("E");
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
@@ -3979,16 +3990,25 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                  mCameraId, mMultiCameraMode, vcm_step, vcm_step);
         sprdvcmInfo.vcm_step = vcm_step;
         mSetting->setVCMTag(sprdvcmInfo);
-    }
+        sprdvcmInfo.vcm_step = vcm_step;
+        mlogInfo->vcm_step = vcm_step;
+   }
 
     if (mSprdRefocusEnabled == true && mSprdFullscanEnabled &&
         (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
          mCameraId == 4)) {
         struct vcm_range_info range;
-        ret = mHalOem->ops->camera_ioctrl(
-            mCameraHandle, CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
+
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
+                CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
         mSetting->setVCMDACTag(range.vcm_dac, range.total_seg);
         mSprdFullscanEnabled = 0;
+        if (mIsMlogMode && (getMultiCameraMode() == MODE_BOKEH ||
+           getMultiCameraMode() == MODE_3D_CALIBRATION) && range.total_seg) {
+            mlogInfo->vcm_dac = range.vcm_dac[range.total_seg - 1];
+            mlogInfo->vcm_num = range.total_seg;
+            HAL_LOGV("vcm dac %d num %d",mlogInfo->vcm_dac, mlogInfo->vcm_num);
+        }
     }
 
     SprdCamera3RegularChannel *channel =
@@ -4011,6 +4031,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_uint prebuf_vir = 0;
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
+    int64_t tmp64;
+
     if (channel == NULL) {
         HAL_LOGE("channel=%p", channel);
         goto exit;
@@ -4367,6 +4389,17 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                  mCameraId, frame->fd, buff_vir, frame_num, frame->width,
                  frame->height, buffer_timestamp);
 
+        if (mIsMlogMode) {
+            if (mtimestamplast == 0) {
+                mtimestamplast = frame->monoboottime / 1000000;
+            } else {
+                mlogInfo->prev_timestamp = frame->monoboottime / 1000000;
+                tmp64 = mlogInfo->prev_timestamp - mtimestamplast;
+                mtimestamplast = mlogInfo->prev_timestamp;
+                if (tmp64)
+                    mlogInfo->fps = 1000 / tmp64;
+            }
+        }
         if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
             if ((frame_num > mStartFrameNum) &&
                 (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
@@ -4543,6 +4576,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     frame->fd);
             }
         }
+    }
+    /* mlog */
+    if (mIsMlogMode) {
+        ret = gatherInfoForMlog();
+        if (!ret)
+            saveMlogInfo();
     }
 
 exit:
@@ -6210,6 +6249,19 @@ int SprdCamera3OEMIf::openCamera() {
         return UNKNOWN_ERROR;
     }
 
+    mIsMlogMode = 0; //default disable
+    property_get("persist.vendor.cam.mlog.mode.enable", value, "false");
+    if (!strcmp(value, "true")) {
+        mIsMlogMode = 1;
+        mSetting->clearMLOGTag();
+              /* clear global variable for mlog */
+       if (mCameraId < CAMERA_ID_COUNT)
+            memset(&mlog_info[mCameraId], 0x00, sizeof(struct mlog_infotag));
+       getCalibrationInfo(&mlog_info[mCameraId]);
+
+       HAL_LOGI("mlog enable");
+    }
+
     GET_START_TIME;
     memset(mode_info, 0, sizeof(struct sensor_mode_info) * SENSOR_MODE_MAX);
 
@@ -6248,6 +6300,16 @@ int SprdCamera3OEMIf::openCamera() {
 #endif
     }
     setCameraState(SPRD_IDLE);
+
+    if (mIsMlogMode) {
+        struct phySensorInfo *phyPtr = NULL;
+        MLOG_Tag *mlogInfo;
+
+        mSetting->getMLOGTag(&mlogInfo);
+        phyPtr = sensorGetPhysicalSnsInfo(mCameraId);
+        if (mCameraId == 0 || mCameraId == 1 || mCameraId == 2)
+            mlogInfo->face_type = phyPtr->face_type;
+    }
 
     mHalOem->ops->camera_ioctrl(
         mCameraHandle, CAMERA_IOCTRL_GET_GRAB_CAPABILITY, &grab_capability);
@@ -6393,6 +6455,16 @@ int SprdCamera3OEMIf::openCamera() {
             mSetting->setOTPTag(&otpInfo, otp_info.dual_otp.data_3d.size,
                                 otpInfo.otp_type);
         }
+        if (mIsMlogMode) {
+            MLOG_Tag *mlogInfo;
+
+            mSetting->getMLOGTag(&mlogInfo);
+            if (mCameraId == 0) {
+                mlogInfo->otp_size = otp_info.dual_otp.data_3d.size;
+            } else {
+                mlogInfo->otp_size = otp_info.dual_otp.data_3d.size;
+            }
+        }
     }
 
     // Add for 3d calibration get max sensor size begin
@@ -6451,6 +6523,233 @@ int SprdCamera3OEMIf::openCamera() {
 exit:
     HAL_LOGI(":hal3: X");
     return ret;
+}
+
+/* collect info for camera_id 0/1/2  */
+int SprdCamera3OEMIf::gatherInfoForMlog()
+{
+    cmr_s32 rtn = 0;
+    struct mlog_infotag mlog_ae_info;
+    MLOG_Tag *mlogInfo;
+
+    memset(&mlog_ae_info, 0, sizeof(struct mlog_infotag));
+
+    mSetting->getMLOGTag(&mlogInfo);
+    if (mCameraId >= 0 && mCameraId < 3) {
+        rtn = getAeInfo(&mlog_ae_info);
+        if (!rtn) {
+            mlog_info[mCameraId].cur_index = mlog_ae_info.cur_index;
+            mlog_info[mCameraId].cur_lum = mlog_ae_info.cur_lum;
+            mlog_info[mCameraId].target_lum = mlog_ae_info.target_lum;
+            mlog_info[mCameraId].cur_bv = mlog_ae_info.cur_bv;
+            mlog_info[mCameraId].cur_bv_nonmatch = mlog_ae_info.cur_bv_nonmatch;
+            mlog_info[mCameraId].cur_exp_line = mlog_ae_info.cur_exp_line;
+            mlog_info[mCameraId].total_exp_time = mlog_ae_info.total_exp_time;
+            mlog_info[mCameraId].cur_again = mlog_ae_info.cur_again;
+            mlog_info[mCameraId].cur_dummy = mlog_ae_info.cur_dummy;
+
+        }
+        mlog_info[mCameraId].otp_size = mlogInfo->otp_size;
+        mlog_info[mCameraId].prev_timestamp = mlogInfo->prev_timestamp;
+        mlog_info[mCameraId].cap_timestamp = mlogInfo->cap_timestamp;
+        mlog_info[mCameraId].fps = mlogInfo->fps;
+        mlog_info[mCameraId].cropping_type = mlogInfo->cropping_type;
+        mlog_info[mCameraId].vcm_dac = mlogInfo->vcm_dac;
+        mlog_info[mCameraId].vcm_num = mlogInfo->vcm_num;
+        mlog_info[mCameraId].vcm_step = mlogInfo->vcm_step;
+        mlog_info[mCameraId].face_type = mlogInfo->face_type;
+        rtn = 0;
+    }
+
+exit:
+    return rtn;
+}
+
+int SprdCamera3OEMIf::saveMlogInfo()
+{
+    int rtn = 0;
+    int num = 0;
+    char tmp_buf[1024];
+    int prev_DT = 0;
+    int cap_DT = 0;
+
+    bzero(tmp_buf, sizeof(tmp_buf));
+    if ((getMultiCameraMode() == MODE_BOKEH ||
+         getMultiCameraMode() == MODE_3D_CALIBRATION)) {
+        prev_DT = abs(mlog_info[0].prev_timestamp - mlog_info[2].prev_timestamp);
+        cap_DT = abs(mlog_info[0].cap_timestamp - mlog_info[2].cap_timestamp);
+    }
+
+    rtn = sprintf(tmp_buf, "\nCam0:d_otp: %d cap_t: %lld fps: %d crop: %d "
+                 "facing: %d idx: %d cur-l: %d tar-l: %d bv(lv): %d "
+                 "cali_bv: %d expl: %d expt: %d gain: %d dmy: "
+                 "%d\n\nCam1:d_otp: %d cap_t: %lld fps: %d crop: %d "
+                 "facing: %d idx: %d cur-l: %d tar-l: %d bv(lv): %d "
+                 "cali_bv: %d expl: %d expt: %d gain: %d dmy: "
+                 "%d\n\nCam2:d_otp: %d cap_t: %lld fps: %d "
+                 "crop: %d facing: %d idx: %d cur-l: %d tar-l: %d "
+                 "bv(lv): %d cali_bv: %d expl: %d expt: %d gain: %d "
+                 "dmy: %d\nprev_DT: %d cap_DT: %d "
+                 "vcm_dac: %d vcm_num: %d vcm_step: %d v1/v2: %d\n\n",
+        mlog_info[0].otp_size, mlog_info[0].cap_timestamp, mlog_info[0].fps,
+        mlog_info[0].cropping_type, mlog_info[0].face_type, mlog_info[0].cur_index,
+        mlog_info[0].cur_lum, mlog_info[0].target_lum, mlog_info[0].cur_bv,
+        mlog_info[0].cur_bv_nonmatch, mlog_info[0].cur_exp_line,
+        mlog_info[0].total_exp_time, mlog_info[0].cur_again,
+        mlog_info[0].cur_dummy, mlog_info[1].otp_size, mlog_info[1].cap_timestamp,
+        mlog_info[1].fps, mlog_info[1].cropping_type, mlog_info[1].face_type,
+        mlog_info[1].cur_index, mlog_info[1].cur_lum, mlog_info[1].target_lum,
+        mlog_info[1].cur_bv, mlog_info[1].cur_bv_nonmatch,
+        mlog_info[1].cur_exp_line, mlog_info[1].total_exp_time,
+        mlog_info[1].cur_again, mlog_info[1].cur_dummy, mlog_info[2].otp_size,
+        mlog_info[2].cap_timestamp, mlog_info[2].fps, mlog_info[2].cropping_type,
+        mlog_info[2].face_type, mlog_info[2].cur_index, mlog_info[2].cur_lum,
+        mlog_info[2].target_lum, mlog_info[2].cur_bv, mlog_info[2].cur_bv_nonmatch,
+        mlog_info[2].cur_exp_line, mlog_info[2].total_exp_time,
+        mlog_info[2].cur_again, mlog_info[2].cur_dummy, prev_DT, cap_DT,
+        mlog_info[0].vcm_dac, mlog_info[0].vcm_num, mlog_info[0].vcm_step,
+        mlog_info[0].vcm_version);
+
+    HAL_LOGD("cameraId %d", mCameraId);
+    FILE *fid = fopen(MLOG_FOR_READ_PATH, "wb");
+    if (fid == NULL) {
+        CMR_LOGE("open file failed");
+        return -1;
+    }
+
+    rtn = fwrite(tmp_buf, 1, strlen(tmp_buf), fid);
+    fclose(fid);
+
+    return 0;
+}
+/* function: get name and value from buf, set \0 to buf
+ * name:start[a-zA-Z], end[space,\n,:]
+ * value:[0-9.]
+ */
+static int GetNameAndValue(char *p, int &i, char **pn, char **pv)
+{
+    // get name start [a-zA-Z]
+    while (p[i] != '\0') {
+        if ((p[i] >= 'A' && p[i] <= 'Z') ||
+            (p[i] >= 'a' && p[i] <= 'z')) {
+            *pn = &p[i];
+            break;
+        }
+        i++;
+    }
+
+    // to name end
+    while (p[i] != '\0') {
+        if (p[i] == ' ' || p[i] == ':' || p[i] == '\n') {
+            p[i++] = '\0';
+            break;
+        }
+        i++;
+    }
+
+    // to value start
+    while (p[i] != '\0') {
+        if (p[i] >= '0' && p[i] <= '9') {
+            *pv = &p[i];
+            break;
+        }
+        i++;
+    }
+    while (p[i] != '\0') {
+        if (!((p[i] >= '0' && p[i] <= '9') || p[i] == '.')) {
+           p[i++] = '\0';
+           // got
+           return 0;
+        }
+        i++;
+    }
+
+    return -1;
+}
+
+int SprdCamera3OEMIf::getAeInfo(struct mlog_infotag *pinfo)
+{
+    cmr_s32 rtn = 0;
+    char tmp_buf[400];
+    int i = 0;
+    FILE *fp;
+    int len;
+    char *pname;
+    char *pvalue;
+
+    fp = fopen(MLOG_AE_PATH, "rb");
+    if (fp == NULL) {
+        CMR_LOGW("open mlog file failed");
+        return -1;
+    }
+
+    rtn = fgetc(fp);
+    if (rtn == -1) {
+        CMR_LOGD("file is NULL");
+        goto exit;
+    }
+    memset(tmp_buf, 0x00, sizeof(tmp_buf));
+    len = fread(tmp_buf, 1, sizeof(tmp_buf) - 1, fp);
+    if (len > 0)
+        tmp_buf[len] = '\0';
+    i = 0;
+    while (len && (0 == GetNameAndValue(tmp_buf, i, &pname, &pvalue))) {
+        if (strcmp(pname, "am-id") == 0)
+            pinfo->camera_id = atoi(pvalue);
+        else if (strcmp(pname, "frm-id") == 0)
+            pinfo->cur_index = atoi(pvalue);
+        else if (strcmp(pname, "cur-l") == 0)
+            pinfo->cur_lum = atoi(pvalue);
+        else if (strcmp(pname, "tar-l") == 0)
+            pinfo->target_lum = atoi(pvalue);
+        else if (strcmp(pname, "bv(lv)") == 0)
+            pinfo->cur_bv = atoi(pvalue);
+        else if (strcmp(pname, "cali_bv") == 0)
+            pinfo->cur_bv_nonmatch = atoi(pvalue);
+        else if (strncmp(pname, "expl", 4) == 0)
+            pinfo->cur_exp_line = atoi(pvalue);
+        else if (strcmp(pname, "expt") == 0)
+            pinfo->total_exp_time = atoi(pvalue);
+        else if (strcmp(pname, "gain") == 0)
+            pinfo->cur_again = atoi(pvalue);
+        else if (strcmp(pname, "dmy") == 0)
+            pinfo->cur_dummy = atoi(pvalue);
+    }
+    rtn = 0;
+
+exit:
+    fclose(fp);
+
+    return rtn;
+}
+
+int SprdCamera3OEMIf::getCalibrationInfo(struct mlog_infotag *mlog_info)
+{
+    cmr_s32 rtn = 0;
+    char tmp_buf[32];
+    int len;
+    int i;
+    char *pn, *pv;
+
+    FILE *fp = fopen(MLOG_CALIBRIATION_PATH, "rb");
+    if (fp == NULL) {
+        CMR_LOGW("open mlog file failed");
+        return -1;
+    }
+    len = fread(tmp_buf, 1, sizeof(tmp_buf) - 1, fp);
+    if (len > 0)
+        tmp_buf[len] = '\0';
+
+    while (len && GetNameAndValue(tmp_buf, i, &pn, &pv) == 0) {
+        // fscanf(fp, "%s %d", &tmp_buf[0], &mlog_info->vcm_version);
+        mlog_info->vcm_version = atoi(pv);
+        break;
+    }
+
+exit:
+    fclose(fp);
+
+    return rtn;
 }
 
 int SprdCamera3OEMIf::setCamSecurity(multiCameraMode multiCamMode) {
@@ -6529,8 +6828,8 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     cropRegion.start_y = scaleInfo.crop_region[1];
     cropRegion.width = scaleInfo.crop_region[2];
     cropRegion.height = scaleInfo.crop_region[3];
-    HAL_LOGD("camera %u, crop start_x=%d start_y=%d width=%d height=%d", mCameraId,
-            cropRegion.start_x, cropRegion.start_y,
+    HAL_LOGD("camera %u, crop start_x=%d start_y=%d width=%d height=%d",
+            mCameraId, cropRegion.start_x, cropRegion.start_y,
             cropRegion.width, cropRegion.height);
     if ((getMultiCameraMode() == MODE_BOKEH ||
          getMultiCameraMode() == MODE_3D_CALIBRATION) &&
@@ -6545,6 +6844,13 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         mSetting->getLargestSensorSize(mCameraId, &sensorOrgW, &sensorOrgH);
     } else {
         mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
+    }
+
+    if (mIsMlogMode) {
+       MLOG_Tag *mlogInfo;
+       mSetting->getMLOGTag(&mlogInfo);
+        if (mCameraId == 0 || mCameraId == 1 || mCameraId == 2)
+            mlogInfo->cropping_type = scaleInfo.cropping_type;
     }
 
     if (cropRegion.width > 0 && cropRegion.height > 0) {
@@ -11136,6 +11442,16 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
         if (mMultiCameraMode == MODE_BOKEH ||
             mMultiCameraMode == MODE_3D_CALIBRATION) {
+            if (mIsMlogMode) {
+                MLOG_Tag *mlogInfo;
+
+                mSetting->getMLOGTag(&mlogInfo);
+                if (mCameraId == 0) {
+                    mlogInfo->cap_timestamp = zsl_frame.monoboottime / 1000000;
+                } else if (mCameraId == 2) {
+                    mlogInfo->cap_timestamp = zsl_frame.monoboottime / 1000000;
+                }
+            }
             HAL_LOGD("bokeh/calibration fd=0x%x", zsl_frame.fd);
             // for calibration/verification debug
             if (SprdCamera3Setting::mSensorFocusEnable[mCameraId])

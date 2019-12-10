@@ -455,6 +455,18 @@ typedef struct {
 } VCM_Tag;
 
 typedef struct {
+    cmr_s64 prev_timestamp;
+    cmr_s64 cap_timestamp;
+    cmr_s32 otp_size;
+    int32_t fps;
+    cmr_s32 cropping_type;
+    int32_t vcm_dac;
+    int32_t vcm_num;
+    int32_t vcm_step;
+    int face_type;
+} MLOG_Tag;
+
+typedef struct {
     uint16_t vcm_dist_count;
     uint16_t vcm_dist[VCM_DISTANCE_COUNT];
 } VCM_DIST_TAG;
@@ -522,6 +534,7 @@ typedef struct {
     CAL_OTP_Tag calOtpInfo;
     int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
     AUTO_TRACKING_Tag autotrackingInfo;
+    MLOG_Tag mlogInfo;
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -703,6 +716,8 @@ class SprdCamera3Setting {
 
     int setVCMTag(VCM_Tag vcmInfo);
     int getVCMTag(VCM_Tag *vcmInfo);
+    int clearMLOGTag();
+    int getMLOGTag(MLOG_Tag **mlogInfo);
     int setVCMDACTag(uint16_t *vcmInfo, uint8_t num);
     int getVCMDISTTag(VCM_DIST_TAG *vcmDist);
     int getCALOTPTag(CAL_OTP_Tag *calOTP);
