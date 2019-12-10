@@ -286,10 +286,70 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+include $(BUILD_SHARED_LIBRARY)
+
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES = tool/baseband_autotester_camera/test_camera.cpp
+LOCAL_C_INCLUDES := \
+    $(TOP)/system/core/libutils/include/ \
+    $(TOP)/vendor/sprd/proprietories-source/engpc/sprd_fts_inc \
+    $(TOP)/vendor/sprd/proprietories-source/autotest/interface/include \
+    $(TOP)/frameworks/native/headers/media_plugin \
+    $(TOP)/vendor/sprd/modules/libcamera/common/inc/ \
+    $(LOCAL_PATH)/vsp/inc \
+    $(LOCAL_PATH)/vsp/src \
+    $(LOCAL_PATH)/sensor/inc \
+    $(LOCAL_PATH)/sensor \
+    $(LOCAL_PATH)/jpeg \
+    $(LOCAL_PATH)/common/inc \
+    $(LOCAL_PATH)/hal1.0/inc \
+    $(LOCAL_PATH)/$(HAL_DIR)/inc \
+    $(LOCAL_PATH)/$(HAL_DIR)/ \
+    $(LOCAL_PATH)/tool/mtrace \
+    $(TOP)/external/skia/include/images \
+    $(TOP)/external/skia/include/core\
+    $(TOP)/external/jhead \
+    $(TOP)/external/sqlite/dist \
+    $(TOP)/external/libyuv/files/include \
+    $(TOP)/external/libyuv/files/include/libyuv \
+    $(TOP)/system/media/camera/include \
+    $(TOP)/vendor/sprd/external/kernel-headers \
+    $(TOP)/vendor/sprd/external/drivers/gpu \
+    $(TOP)/vendor/sprd/modules/libmemion \
+    $(TOP)/frameworks/native/libs/sensor/include \
+    $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
+    $(TOP)/system/core/libion/kernel-headers \
+    $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
+    $(LOCAL_PATH)/kernel_module/interface
+
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/$(OEM_DIR)/inc \
+    $(LOCAL_PATH)/oemcommon/inc
+
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
+    $(LOCAL_PATH)/$(ISPALG_DIR)/common/inc \
+    $(LOCAL_PATH)/$(ISPDRV_DIR)/middleware/inc \
+    $(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
+
+#$(error ${LOCAL_C_INCLUDES})
+
+LOCAL_MODULE := libcamcalitest
+LOCAL_MODULE_TAGS := optional
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+LOCAL_SHARED_LIBRARIES:= \
+    liblog \
+    libcutils  \
+    libhardware \
+    libutils libmemion libcamcommon
 
 # for bbat test
-CAMERA_NPI_FILE := /vendor/lib/hw/camera.$(TARGET_BOARD_PLATFORM).so
-SYMLINK := $(TARGET_OUT_VENDOR)/lib/npidevice/camera.$(TARGET_BOARD_PLATFORM).so
+CAMERA_NPI_FILE := /vendor/lib/libcamcalitest.so
+SYMLINK := $(TARGET_OUT_VENDOR)/lib/npidevice/libcamcalitest.so
 LOCAL_POST_INSTALL_CMD := $(hide) \
 	mkdir -p $(TARGET_OUT_VENDOR)/lib/npidevice; \
 	rm -rf $(SYMLINK) ;\

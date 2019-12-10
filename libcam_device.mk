@@ -12,6 +12,7 @@ SPRD_LIB += libsprd_fcell_ss
 #ifeq ($(strip $(TARGET_BOARD_SENSOR_OV4C)),true)
 SPRD_LIB += libfcell
 SPRD_LIB += libsprd_fcell
+SPRD_LIB += libcamcalitest
 #endif
 PRODUCT_PACKAGES += $(SPRD_LIB)
 
