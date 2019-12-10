@@ -2333,9 +2333,9 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 				smart_calc_result.block_result[i].update = 0;
 			}
 			break;
-		case ISP_SMART_SATURATION_DEPRESS:
-			smart_calc_result.block_result[i].block_id = ISP_BLK_SATURATION;
-			break;
+//		case ISP_SMART_SATURATION_DEPRESS:
+//			smart_calc_result.block_result[i].block_id = ISP_BLK_SATURATION;
+//			break;
 //		case ISP_SMART_GAMMA:
 //		    smart_calc_result.block_result[i].update = 0;
 //		    break;
