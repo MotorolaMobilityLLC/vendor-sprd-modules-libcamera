@@ -581,7 +581,7 @@ const cam_stream_info_t subSensor_stream_info[] = {
     {{640, 480}, 33331760L, 33331760L},
     {{320, 240}, 33331760L, 33331760L}};
 
-const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.6, 2.8, 3.0};
+const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0};
 
 const int64_t kavailable_min_durations[1] = {
     33331760L,
