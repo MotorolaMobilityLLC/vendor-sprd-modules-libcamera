@@ -2705,11 +2705,11 @@ static struct sensor_module_info s_ov32a1q_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
-#ifdef _SENSOR_RAW_SHARKL5PRO_H_,
-                             .is_loose = 2,
-#else
-                             .is_loose = 0,
-#endif
+                             #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+                                 .is_loose = 2,
+                             #else
+                                 .is_loose = 0,
+                             #endif
                              // .is_cphy = 1,
                              .lane_switch_eb = 1,
                              .lane_seq = 0xfffff, // mipi pn swap all, others:

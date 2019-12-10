@@ -17,6 +17,7 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/../../../../../SprdCtrl.mk
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../../inc \
                     $(LOCAL_PATH)/../../../../../$(OEM_DIR)/inc \
