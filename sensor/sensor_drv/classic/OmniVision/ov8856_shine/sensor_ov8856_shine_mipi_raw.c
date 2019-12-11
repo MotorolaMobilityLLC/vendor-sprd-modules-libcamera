@@ -235,7 +235,7 @@ static cmr_int ov8856_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+        //hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
 
         usleep(1 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);

@@ -225,20 +225,17 @@ static cmr_int ov32a1q_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+        //hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
 
-        usleep(10 * 1000);
+        usleep(1 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
-
-        usleep(10 * 1000);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(5 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         usleep(1 * 1000);
-        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_ON;
         // hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 0);
     } else {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
@@ -248,7 +245,6 @@ static cmr_int ov32a1q_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
-        sns_drv_cxt->current_state_machine = SENSOR_STATE_POWER_OFF;
     }
 
     SENSOR_LOGI("(1:on, 0:off): %lu", power_on);
@@ -969,10 +965,6 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
-        return 0;
-    }
-
     SENSOR_LOGI("E");
     char value1[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.colorbar", value1, "0");
@@ -994,16 +986,7 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #endif
     }
 
-    /*TODO*/
-
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
-
-    /*END*/
-
-    /*delay*/
-     usleep(10 * 1000);
-
-    sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_ON;
 
     return SENSOR_SUCCESS;
 }
@@ -1016,30 +999,27 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
 static cmr_int ov32a1q_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
 
+    unsigned char value = 0;
+    cmr_u16 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    cmr_u16 delay_ms = (sns_drv_cxt->sensor_ev_info.preview_shutter *
-                        sns_drv_cxt->line_time_def / 1000000);
-
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-
-    if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
-        SENSOR_LOGI("stream_off delay_ms %d", delay_ms);
-        usleep((delay_ms + 10) * 1000);
-        sns_drv_cxt->current_state_machine = SENSOR_STATE_STREAM_OFF;
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
+    if (value != 0x00) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+        if (!sns_drv_cxt->is_sensor_close) {
+            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                        sns_drv_cxt->line_time_def / 1000000) + 10;
+            usleep(sleep_time * 1000);
+            SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+        }
+    } else {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     }
 
-    if (!sns_drv_cxt->is_sensor_close) {
-        usleep(100 * 1000);
-    }
-    /*TODO*/
-
-    /*END*/
-    /*delay*/
     sns_drv_cxt->is_sensor_close = 0;
-    SENSOR_LOGI("X");
 
+    SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
 }
 
@@ -1059,8 +1039,7 @@ ov32a1q_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
-
-    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
 
     ov32a1q_drv_write_frame_length(
         sns_drv_cxt, &ov32a1q_aec_info,
@@ -1097,8 +1076,6 @@ static cmr_int ov32a1q_drv_handle_delete(cmr_handle handle, void *param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
-    sns_drv_cxt->current_state_machine = SENSOR_STATE_IDLE;
 
     //ov32a1q_drv_ov4c_deinit(sns_drv_cxt, &ret);
     ret = sensor_ic_drv_delete(handle, param);
