@@ -344,6 +344,11 @@ extern "C" {
 		struct hdr_calc_result hdr_calc_result;
 		cmr_s32 smooth_flag;
 		cmr_s32 frameid;
+		cmr_s8 dre_enable;
+		cmr_u16 dre_exp_line;
+		cmr_s16 dre_gain;
+		cmr_s8 dre_frame_cnt;
+
 		/*
 		 *dual flash simulation
 		 */
