@@ -440,6 +440,7 @@ struct ae_ev_setting_param {
 	cmr_u32 dmy_line;
 	cmr_u32 frm_len;
 	cmr_u32 ae_gain;
+	cmr_u32 calc_y;
 };
 
 struct ae_face_param {

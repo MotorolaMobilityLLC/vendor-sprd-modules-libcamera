@@ -1045,12 +1045,19 @@ static void ae_print_debug_info(char *log_str, struct ae_ctrl_cxt *cxt_ptr)
 	}
 
 	pos =
-		sprintf(log_str, "cam-id:%d frm-id:%d,flicker: %d\nidx(%d-%d):%d,cur-l:%d, tar-l:%d, bv(lv):%d, cali_bv: %d,expl(%d):%d, expt: %d, gain:%d, dmy:%d, FR(%d-%d):%.2f\n",
+		sprintf(log_str, "cam-id:%d frm-id:%d,flicker: %d\nidx(%d-%d):%d,cur-l:%d, tar-l:%d, bv(lv):%d, cali_bv: %d,expl(%d):%d, expt: %d, gain:%d, dmy:%d, FR(%d-%d):%.2f,\
+		ae sync M: img[%d, %d] roi[%d, %d, %d, %d] rst[exp %d, gain %d, lum %d] S0: img[%d, %d] roi[%d, %d, %d, %d] rst[exp %d, gain %d, lum %d] S1: img[%d, %d] roi[%d, %d, %d, %d] rst[exp %d, gain %d, lum %d]\n",
 				cxt_ptr->camera_id, sync_cur_status_ptr->frm_id, sync_cur_status_ptr->adv_param.flicker, cxt_ptr->ae_tbl_param.min_index,
 				cxt_ptr->ae_tbl_param.max_index, result_ptr->ev_setting.ae_idx, cxt_ptr->sync_cur_result.cur_lum, cxt_ptr->sync_cur_result.target_lum,
 				cxt_ptr->cur_result.cur_bv, cxt_ptr->cur_result.cur_bv_nonmatch, cxt_ptr->snr_info.line_time, result_ptr->ev_setting.exp_line,
 				result_ptr->ev_setting.exp_line * cxt_ptr->snr_info.line_time, result_ptr->ev_setting.ae_gain, result_ptr->ev_setting.dmy_line,
-				cxt_ptr->sync_cur_status.adv_param.fps_range.min, cxt_ptr->sync_cur_status.adv_param.fps_range.max, fps);
+				cxt_ptr->sync_cur_status.adv_param.fps_range.min, cxt_ptr->sync_cur_status.adv_param.fps_range.max, fps,
+				cxt_ptr->sync_param[0].img_size.w, cxt_ptr->sync_param[0].img_size.h, cxt_ptr->sync_param[0].roi_rect.start_x, cxt_ptr->sync_param[0].roi_rect.start_y, cxt_ptr->sync_param[0].roi_rect.end_x, cxt_ptr->sync_param[0].roi_rect.end_y,
+				cxt_ptr->sync_param[0].ev_setting.exp_time, cxt_ptr->sync_param[0].ev_setting.ae_gain, cxt_ptr->sync_param[0].ev_setting.calc_y,
+				cxt_ptr->sync_param[1].img_size.w, cxt_ptr->sync_param[1].img_size.h, cxt_ptr->sync_param[1].roi_rect.start_x, cxt_ptr->sync_param[1].roi_rect.start_y, cxt_ptr->sync_param[1].roi_rect.end_x, cxt_ptr->sync_param[1].roi_rect.end_y,
+				cxt_ptr->sync_param[1].ev_setting.exp_time, cxt_ptr->sync_param[1].ev_setting.ae_gain, cxt_ptr->sync_param[1].ev_setting.calc_y,
+				cxt_ptr->sync_param[2].img_size.w, cxt_ptr->sync_param[2].img_size.h, cxt_ptr->sync_param[2].roi_rect.start_x, cxt_ptr->sync_param[2].roi_rect.start_y, cxt_ptr->sync_param[2].roi_rect.end_x, cxt_ptr->sync_param[2].roi_rect.end_y,
+				cxt_ptr->sync_param[2].ev_setting.exp_time, cxt_ptr->sync_param[2].ev_setting.ae_gain, cxt_ptr->sync_param[2].ev_setting.calc_y);
 
 	if (result_ptr->log_buf) {
 		pos += sprintf((char *)((char *)log_str + pos), "adv info:\n%s\n", (char *)result_ptr->log_buf);
