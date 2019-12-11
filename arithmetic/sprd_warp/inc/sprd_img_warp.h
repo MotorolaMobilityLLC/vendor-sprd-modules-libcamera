@@ -48,6 +48,7 @@ typedef struct {
     int dst_height;
     int mblk_order;
     int grid_order;
+    float corr_level;
     img_warp_mode_t warp_mode;
     warp_fmt_e img_fmt;
     void *otp_buf;
@@ -69,7 +70,9 @@ typedef struct {
 typedef struct { float warp_projective[3][3]; } img_warp_projective_param_t;
 
 typedef struct {
-    float zoomRatio; //  [1.0f ~ 1.6f]
+    float zoomRatio;         // [ 1.0f, 4.0f]
+	float zoomCenterOffsetX; // [-1.0f, 1.0f]
+	float zoomCenterOffsetY; // [-1.0f, 1.0f]
 } img_warp_undistort_param_t;
 
 typedef struct {
