@@ -427,6 +427,20 @@ int SprdCamera3RegularChannel::deleteStream(void) {
     return NO_ERROR;
 }
 
+int SprdCamera3RegularChannel::clearAllStreams() {
+    size_t i;
+
+    for (i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
+        if (mCamera3Stream[i]) {
+            delete mCamera3Stream[i];
+            mCamera3Stream[i] = NULL;
+        }
+    }
+
+    return NO_ERROR;
+}
+
+
 int SprdCamera3RegularChannel::getStream(camera_stream_type_t stream_type,
                                          SprdCamera3Stream **stream) {
     int8_t index = stream_type - REGULAR_STREAM_TYPE_BASE;
@@ -697,6 +711,19 @@ int SprdCamera3PicChannel::deleteStream(void) {
         mCamera3Stream[index++] = NULL;
         stream_num--;
     }
+    return NO_ERROR;
+}
+
+int SprdCamera3PicChannel::clearAllStreams() {
+    size_t i;
+
+    for (i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
+        if (mCamera3Stream[i]) {
+            delete mCamera3Stream[i];
+            mCamera3Stream[i] = NULL;
+        }
+    }
+
     return NO_ERROR;
 }
 

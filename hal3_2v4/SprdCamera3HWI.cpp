@@ -710,6 +710,9 @@ int SprdCamera3HWI::configureStreams(
         }
     }
 
+    mRegularChan->clearAllStreams();
+    mPicChan->clearAllStreams();
+
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
