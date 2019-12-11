@@ -1571,12 +1571,12 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 		if((0==cxt->cur_status.adv_param.cur_ev_setting.ae_idx)&&(0 == cxt->app_mode)){
-			ae_reset_base_index(cxt);
+			//ae_reset_base_index(cxt);
 			cxt->flash_backup.table_idx = cxt->cur_status.adv_param.cur_ev_setting.ae_idx;//注意此处
 		}
 
 		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
-			ae_reset_base_index(cxt);
+			//ae_reset_base_index(cxt);
 			rtn = ae_set_force_pause_flash(cxt, 0);
 			ISP_LOGD("flash unlock AE_SET_FORCE_RESTORE");
 		}
@@ -3981,7 +3981,7 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			cxt->is_ev_setting = 1;
 		else
 			cxt->is_ev_setting = 0;
-		if ((1 == cxt->app_mode) && (cxt->cur_status.adv_param.flash == FLASH_NONE)) {
+		if (1 == cxt->app_mode) {
 			struct ae_set_ev ev;
 			ev.level = exp_comp->comp_val + exp_comp->comp_range.max;
 			if (ev.level < AE_LEVEL_MAX) {
