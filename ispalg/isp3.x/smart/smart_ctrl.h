@@ -200,7 +200,7 @@ extern "C" {
 		cmr_u32 ltm[3];
 		cmr_u32 imbalance[3];
 		cmr_u32 threednr[3];
-		cmr_u32 sw3dnr[3];
+		cmr_u32 mfnr[3];
 		cmr_u32 reserved[144];
 	};
 

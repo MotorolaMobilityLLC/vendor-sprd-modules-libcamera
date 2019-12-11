@@ -100,7 +100,7 @@ static const char *s_smart_block_name[] = {
 	"imbalance",
 	"ltm",
 	"3dnr",
-	"sw3dnr",
+	"mfnr",
 	"hsvnew",
 
 	"unkown"
@@ -730,6 +730,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 		break;
 
 	case ISP_SMART_X_TYPE_BV_CT:
+	case ISP_SMART_X_TYPE_BV_ABLWEIGHT:
 		{
 
 			rtn = smart_ctl_calc_bv_section(cfg->bv_range, cfg->section_num, bv, &bv_result);
@@ -743,11 +744,10 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 				cmr_u32 bv_weight = bv_result.weight[i];
 
 				if (bv_weight > 0 && bv_idx < cfg->section_num) {
-					if(smart_id == ISP_SMART_DRE) {
-						ct = abl_weight;
-						ISP_LOGV("ISP_SMART_DRE abl-weight:%d",abl_weight);
-					}
-					rtn = smart_crl_calc_func(&cfg->func[bv_idx], cfg->y_type, ct, &tmp_result[i]);
+					if(ISP_SMART_X_TYPE_BV_CT == cfg->x_type)
+						rtn = smart_crl_calc_func(&cfg->func[bv_idx], cfg->y_type, ct, &tmp_result[i]);
+					else if(ISP_SMART_X_TYPE_BV_ABLWEIGHT == cfg->x_type)
+						rtn = smart_crl_calc_func(&cfg->func[bv_idx], cfg->y_type, abl_weight, &tmp_result[i]);
 					if (ISP_SUCCESS != rtn)
 						return rtn;
 				}
@@ -1253,9 +1253,9 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->smt_dbginfo.nr_param.threednr[0] = 0;
 	cxt->smt_dbginfo.nr_param.threednr[1] = 33;
 	cxt->smt_dbginfo.nr_param.threednr[2] = 0;
-	cxt->smt_dbginfo.nr_param.sw3dnr[0] = 0;
-	cxt->smt_dbginfo.nr_param.sw3dnr[1] = 34;
-	cxt->smt_dbginfo.nr_param.sw3dnr[2] = 0;
+	cxt->smt_dbginfo.nr_param.mfnr[0] = 0;
+	cxt->smt_dbginfo.nr_param.mfnr[1] = 34;
+	cxt->smt_dbginfo.nr_param.mfnr[2] = 0;
 
 	cxt->magic_flag = ISP_SMART_MAGIC_FLAG;
 	cxt->work_mode = 0;
@@ -1878,9 +1878,9 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 			    cxt->smt_dbginfo.nr_param.threednr[0] = 1;
 			    cxt->smt_dbginfo.nr_param.threednr[2] = blk->component[0].fix_data[0];
 			    break;
-			case ISP_SMART_SW3DNR:
-			    cxt->smt_dbginfo.nr_param.sw3dnr[0] = 1;
-			    cxt->smt_dbginfo.nr_param.sw3dnr[2] = blk->component[0].fix_data[0];
+			case ISP_SMART_MFNR:
+			    cxt->smt_dbginfo.nr_param.mfnr[0] = 1;
+			    cxt->smt_dbginfo.nr_param.mfnr[2] = blk->component[0].fix_data[0];
 			    break;
 			default:
 			    break;
@@ -2146,7 +2146,7 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 				ISP_SMART_LTM == smart_param->block[i].smart_id ||
 				ISP_SMART_IMBALANCE == smart_param->block[i].smart_id||
 				ISP_SMART_3DNR == smart_param->block[i].smart_id ||
-				ISP_SMART_SW3DNR == smart_param->block[i].smart_id) {
+				ISP_SMART_MFNR == smart_param->block[i].smart_id) {
 				if (is_diseb){
 					smart_param->block[i].enable = 0;
 					} else {
