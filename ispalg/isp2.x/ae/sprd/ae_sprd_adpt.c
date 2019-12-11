@@ -4086,6 +4086,14 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 				cxt->last_exp_param.bv = 1;
 		}
 
+		if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C) && (cxt->camera_id == 2)) {
+			struct ae_match_data ae_data_slave = {0};
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MATCH_AE_DATA, NULL, &ae_data_slave);
+			cxt->last_exp_param.exp_line = ae_data_slave.exp.exposure;
+			cxt->last_exp_param.dummy = ae_data_slave.exp.dummy;
+			cxt->last_exp_param.gain = ae_data_slave.gain * ae_data_slave.isp_gain /4096;
+		}
+
 		if(cxt->cur_status.settings.manual_mode==1){
 			cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
 		}else{
