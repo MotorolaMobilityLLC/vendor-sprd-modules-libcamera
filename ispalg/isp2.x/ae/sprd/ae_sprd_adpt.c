@@ -6030,7 +6030,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			cxt->has_mf_cnt++;
 		}
 	}
-
+#if 0
 	if(cxt->cur_status.settings.lock_ae == AE_STATE_LOCKED){
 		float ev_compare = 0.0;
 		ev_compare = 1.0 * backup_expgain / (cxt->cur_result.wts.cur_exp_line*cxt->cur_result.wts.cur_again);
@@ -6046,7 +6046,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		ISP_LOGV("cur_exp_line %d effect_expline %d ",cxt->cur_result.wts.cur_exp_line,cxt->cur_status.effect_expline);
 		ISP_LOGV("cur_again %d effect_gain %d ",cxt->cur_result.wts.cur_again,cxt->cur_status.effect_gain);
 	}
-
+#endif
 /* send STAB notify to HAL */
 	if (cxt->isp_ops.callback) {
 		cb_type = AE_CB_STAB_NOTIFY;
