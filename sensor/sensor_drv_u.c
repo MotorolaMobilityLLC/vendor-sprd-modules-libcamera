@@ -1781,7 +1781,10 @@ sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
                 sn_4in1_info.is_4in1_supported, sensor_format);
 
     if (sn_4in1_info.is_4in1_supported) {
-        sensor_type = FOURINONESENSOR; // 4in1 sensor
+        sensor_type = FOURINONE_SW; // 4in1 sensor, need software remosaic
+    } else if (sn_4in1_info.limited_4in1_width > 0 &&
+        sn_4in1_info.limited_4in1_height > 0) {
+        sensor_type = FOURINONE_HW; // 4in1 sensor, hardware remosaic
     } else {
         switch (sensor_format) {
         case SENSOR_IMAGE_FORMAT_YUV422:

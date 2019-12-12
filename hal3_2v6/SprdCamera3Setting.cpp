@@ -1665,7 +1665,8 @@ int SprdCamera3Setting::getHighResCapSize(int32_t cameraId,
  * output: capture size for "AUTO" mode
  */
 int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId,
-                                             struct img_size *pRet) {
+                    struct img_size *pRet, struct img_size sensor_max)
+{
     struct BinCapSizeTag {
         const char *pch;
         struct img_size size;
@@ -1681,10 +1682,7 @@ int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId,
     };
     int i;
     char prop[PROPERTY_VALUE_MAX] = {0};
-    struct phySensorInfo *phyPtr = NULL;
-
-    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
-    if (cameraId == 0)
+   if (cameraId == 0)
         property_get("persist.vendor.cam.back.bin.cap", prop, "");
     else if (cameraId == 1)
         property_get("persist.vendor.cam.front.bin.cap", prop, "");
@@ -1698,16 +1696,16 @@ int SprdCamera3Setting::getHighResBinCapSize(int32_t cameraId,
     }
 
     /* limit to binning size */
-    pRet->width = phyPtr->source_width_max / 2;
-    pRet->height = phyPtr->source_height_max / 2;
+    pRet->width = sensor_max.width / 2;
+    pRet->height = sensor_max.height / 2;
     /* check and set default */
     pRet->width = pRet->width <= 0 ? 2592 : (pRet->width);
     pRet->height = pRet->height <= 0 ? 1944 : (pRet->height);
 
 _EXIT:
     HAL_LOGD("prop:%s param[%d %d], cap size[%d %d]", prop,
-             phyPtr->source_width_max, phyPtr->source_height_max, pRet->width,
-             pRet->height);
+             sensor_max.width, sensor_max.height,
+             pRet->width, pRet->height);
 
     return 0;
 }
@@ -1739,7 +1737,6 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
     size_t stream_sizes_tbl_cnt;
     const cam_stream_info_t *p_stream_info = NULL;
-    struct phySensorInfo *phyPtr = NULL;
     int i = 0;
 
     /* Add input/output stream configurations for each scaler formats*/
@@ -1759,29 +1756,22 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
     }
 
-/* get sensor full size,limit to binning size,default 5M */
-#if CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
-    if (cameraId == 0) {
-        struct img_size s_limit;
+    /* get sensor full size,limit to binning size,default 5M */
+    struct img_size s_limit;
+    struct phySensorInfo *phyPtr = NULL;
+    struct img_size sensor_max; // sensor max size
 
-        getHighResBinCapSize(cameraId, &s_limit);
-        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width,
-                         s_limit.height);
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+    sensor_max.width = phyPtr->source_width_max;
+    sensor_max.height = phyPtr->source_height_max;
+    /* 4in1, and cameraId 0 or 1 support high resolution */
+    if ((phyPtr->sensor_type == FOURINONE_SW || phyPtr->sensor_type == FOURINONE_HW) &&
+        (cameraId == 0 || cameraId == 1)) {
+        getHighResBinCapSize(cameraId, &s_limit, sensor_max);
+        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width, s_limit.height);
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
-#endif
-#ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
-    if (cameraId == 1) {
-        struct img_size s_limit;
-
-        getHighResBinCapSize(cameraId, &s_limit);
-        i = stream_limit(p_stream_info, stream_sizes_tbl_cnt, s_limit.width,
-                         s_limit.height);
-        p_stream_info = p_stream_info + i;
-        stream_sizes_tbl_cnt -= i;
-    }
-#endif
 
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
@@ -2030,7 +2020,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
         uint32_t sizeSceneModes =
             sizeof(avail_scene_modes) / avail_scene_modes[0];
-        if (mSensorType[cameraId] != FOURINONESENSOR &&
+        if (/* mSensorType[cameraId] != FOURINONESENSOR && */
             mSensorType[cameraId] != YUVSENSOR) {
             s_setting[cameraId]
                 .controlInfo.available_scene_modes[sizeSceneModes] =
@@ -2065,19 +2055,22 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // jpeg
     int32_t jpeg_stream_size;
-#if defined(CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT) ||                           \
-    defined(CONFIG_BACK_HIGH_RESOLUTION_SUPPORT)
-    int32_t w, h;
+    struct phySensorInfo *phyPtr = NULL;
 
-    w = sensor_max_width[cameraId];
-    h = sensor_max_height[cameraId];
-    getMaxCapSize(cameraId, &w, &h);
-    jpeg_stream_size = getJpegStreamSize(cameraId, w, h);
-#else
-    jpeg_stream_size = getJpegStreamSize(
-        cameraId, largest_picture_size[cameraId].stream_sizes_tbl.width,
-        largest_picture_size[cameraId].stream_sizes_tbl.height);
-#endif
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+    if (phyPtr->sensor_type == FOURINONE_SW ||
+        phyPtr->sensor_type == FOURINONE_HW) {
+        int32_t w, h;
+
+        w = sensor_max_width[cameraId];
+        h = sensor_max_height[cameraId];
+        getMaxCapSize(cameraId, &w, &h);
+        jpeg_stream_size = getJpegStreamSize(cameraId, w, h);
+    } else {
+        jpeg_stream_size = getJpegStreamSize(cameraId,
+                          largest_picture_size[cameraId].stream_sizes_tbl.width,
+                          largest_picture_size[cameraId].stream_sizes_tbl.height);
+    }
     memcpy(s_setting[cameraId].jpgInfo.available_thumbnail_sizes,
            camera3_default_info.common.jpegThumbnailSizes,
            sizeof(camera3_default_info.common.jpegThumbnailSizes));
@@ -2264,7 +2257,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
 
     uint32_t dualPropSupport = 0;
-    if (mSensorType[cameraId] != FOURINONESENSOR &&
+    if (/* mSensorType[cameraId] != FOURINONESENSOR && */
         mSensorType[cameraId] != YUVSENSOR && physicalNumberOfCameras != 1) {
         dualPropSupport = 1;
     }

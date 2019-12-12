@@ -145,18 +145,11 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
     if (camera_id == SPRD_MULTI_CAMERA_ID)
         return SprdCamera3MultiCamera::get_camera_info(camera_id, info);
 #endif
-
-#ifdef CONFIG_BACK_HIGH_RESOLUTION_SUPPORT
-    if (camera_id == SPRD_BACK_HIGH_RESOLUTION_ID)
+    /* high resolution id */
+    if (camera_id == SPRD_BACK_HIGH_RESOLUTION_ID ||
+        camera_id == SPRD_FRONT_HIGH_RES)
         return gSprdCamera3Factory.getHighResolutionSize(
             multiCameraModeIdToPhyId(camera_id), info);
-#endif
-
-#ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
-    if (camera_id == SPRD_FRONT_HIGH_RES)
-        return gSprdCamera3Factory.getHighResolutionSize(
-            multiCameraModeIdToPhyId(camera_id), info);
-#endif
 
     if (isSingleIdExposeOnMultiCameraMode(camera_id))
         return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);

@@ -559,7 +559,8 @@ class SprdCamera3Setting {
     /* for high resolution, return point */
     static int getHighResCapSize(int32_t cameraId, const struct img_size **pRet);
     /* for 4in1 sensor auto mode, return size */
-    static int getHighResBinCapSize(int32_t cameraId, struct img_size *pRet);
+    static int getHighResBinCapSize(int32_t cameraId, struct img_size *pRet,
+                                    struct img_size sensor_max);
 
     int constructDefaultMetadata(int type, camera_metadata_t **metadata);
     int UpdateWorkParameters(const CameraMetadata &frame_settings);

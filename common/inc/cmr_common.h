@@ -1022,7 +1022,7 @@ enum sensor_mode {
     SENSOR_MODE_MAX
 };
 
-enum sensor_type { RAWSENSOR = 0, FOURINONESENSOR, YUVSENSOR };
+enum sensor_type { RAWSENSOR = 0, YUVSENSOR, FOURINONE_SW, FOURINONE_HW};
 
 #define SENSOR_VIDEO_MODE_MAX 4
 #define SENSOR_IC_NAME_LEN 36
