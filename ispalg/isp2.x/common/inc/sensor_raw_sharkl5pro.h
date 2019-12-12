@@ -1054,12 +1054,14 @@ struct sensor_imblance_1D{
 	cmr_u16 imblance_radial_1D_center_x;
 	cmr_u16 imblance_radial_1D_center_y;
 	cmr_u16 imblance_radial_1D_radius_thr;
+	cmr_u16 imblance_radial_1D_radius_thr_factor;
 	cmr_u16 imblance_radial_1D_protect_ratio_max;
 	cmr_s16 imblance_radial_1D_coef_r0;
 	cmr_s16 imblance_radial_1D_coef_r1;
 	cmr_s16 imblance_radial_1D_coef_r2;
 	cmr_s16 imblance_radial_1D_coef_r3;
 	cmr_s16 imblance_radial_1D_coef_r4;
+	cmr_u16 resvered;
 };
 
 struct sensor_nlm_imbalance_level {
@@ -1072,9 +1074,9 @@ struct sensor_nlm_imbalance_level {
 	cmr_u16 imblance_lumth[2];
 	cmr_u16 imblance_S_baohedu[3][2];
 	cmr_u16 imblance_diff[3];
-	cmr_u8 imblance_sat_lumth;
-	cmr_u8 reversed[3];//for 4-byte alignment
+	cmr_u16 imblance_sat_lumth;
 	cmr_u16 imblance_bypass;
+	cmr_u16 radius_base;
 };
 
 // CFAI, css color saturation suppression
@@ -1976,6 +1978,8 @@ struct sensor_ynrs_level {
 	cmr_u8 gf_addback_ratio[5];
 	cmr_u8 gf_addback_clip[5];
 	cmr_u16 Radius;
+	cmr_u16 Radius_factor;
+	cmr_u16 radius_base;
 	cmr_u16 imgCenterX;
 	cmr_u16 imgCenterY;
 	cmr_u16 gf_epsilon[5][3];
