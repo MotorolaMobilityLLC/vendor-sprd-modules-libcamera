@@ -11935,21 +11935,9 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 } else {
                     if (!zoom_factor.prev_zoom) {
                         zoom_param->zoom_info.prev_aspect_ratio = 1.0f;
-                        zoom_reprocess->zoom_info.prev_aspect_ratio =
-                            zoom_reprocess->zoom_info.zoom_ratio;
-                    } else {
-                        zoom_param->zoom_info.prev_aspect_ratio =
-                            zoom_param->zoom_info.zoom_ratio;
-                        zoom_reprocess->zoom_info.prev_aspect_ratio = 1.0f;
                     }
                     if (!zoom_factor.cap_zoom) {
                         zoom_param->zoom_info.capture_aspect_ratio = 1.0f;
-                        zoom_reprocess->zoom_info.capture_aspect_ratio =
-                            zoom_reprocess->zoom_info.zoom_ratio;
-                    } else {
-                        zoom_param->zoom_info.capture_aspect_ratio =
-                            zoom_param->zoom_info.zoom_ratio;
-                        zoom_reprocess->zoom_info.capture_aspect_ratio = 1.0f;
                     }
                     if (fabs(zoom_param->zoom_info.prev_aspect_ratio -
                              zoom_factor.zoom_setting.zoom_info

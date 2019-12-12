@@ -15616,12 +15616,13 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     void *src_buffer_handle = NULL;
     void *dst_buffer_handle = NULL;
     cmr_handle *ultra_wide_handle = NULL;
-    void *zoom;
+    ipm_param_t param_info;
     struct channel_start_param chn_param;
     struct sensor_exp_info *sensor_info = NULL;
     struct sensor_mode_info *sensor_mode_info = NULL;
-    static float org_zoom = 1.0f;
-    int zoom_changed = 1;
+    float org_zoom = 1.0f;
+    float cap_org_zoom =1.0f;
+    int zoom_changed = 1, cap_zoom_changed = 1;
     const float EPSINON = 0.0001f;
     cmr_bzero(&setting_param, sizeof(setting_param));
     cmr_bzero(&chn_param, sizeof(struct channel_start_param));
@@ -15648,6 +15649,11 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                     SETTING_GET_REPROCESS_ZOOM_RATIO,
                                     &setting_param);
+        if(ret) {
+            CMR_LOGE("fail to get reprocess zoom ratio.");
+            goto exit;
+        }
+        memcpy(&param_info.zoom,&setting_param.zoom_param.zoom_info,sizeof(struct zoom_info));
 
         if (IS_PREVIEW_FRM(data->frame_id)) {
             src_img = &prev_cxt->prev_ultra_wide_frm[ultra_wide_frm_id];
@@ -15656,15 +15662,15 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             frm_id = data->frame_id - CMR_PREV_ID_BASE;
             dst_img = &prev_cxt->prev_frm[frm_id];
             ultra_wide_handle = prev_cxt->ultra_wide_handle;
-            zoom = (void *)&(setting_param.zoom_param.zoom_info.prev_aspect_ratio);
+            param_info.zoomRatio = setting_param.zoom_param.zoom_info.prev_aspect_ratio;
 
-            float new_zoom = setting_param.zoom_param.zoom_info.prev_aspect_ratio;
-            if (fabs(org_zoom - new_zoom) >= EPSINON)
+            /*float new_zoom = setting_param.zoom_param.zoom_info.prev_aspect_ratio;
+            if(fabs(org_zoom - new_zoom) >= EPSINON)
                   zoom_changed = 1;
             else
                   zoom_changed = 0;
             org_zoom = new_zoom;
-            if (zoom_changed) {      /*set AE ROI*/
+            if(zoom_changed) {*/      /*set AE ROI*/
                   chn_param.sensor_mode = prev_cxt->prev_mode;
                   sensor_info = &prev_cxt->sensor_info;
                   sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
@@ -15695,12 +15701,27 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                            chn_param.cap_inf_cfg.cfg.src_img_rect.width,
                            chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
+                  param_info.fullsize_height = sensor_info->source_height_max;
+                  param_info.fullsize_width = sensor_info->source_width_max;
+                  param_info.input_height = src_img->size.height;
+                  param_info.input_width = src_img->size.width;
+
                   /*caculate trim rect*/
                   if (ZOOM_INFO != setting_param.zoom_param.mode) {
                            ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
                                    setting_param.zoom_param.zoom_level,
                                    &chn_param.cap_inf_cfg.cfg.dst_img_size);
                   } else {
+                           float real_ratio = setting_param.zoom_param.zoom_info.prev_aspect_ratio;
+                           float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
+                                  prev_cxt->actual_prev_size.height;
+
+                           if (setting_param.zoom_param.zoom_info.crop_region.width > 0) {
+                                 chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                                         setting_param.zoom_param.zoom_info.pixel_size, 
+                                         setting_param.zoom_param.zoom_info.crop_region,
+                                         chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+                           } else {
                            float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                                     prev_cxt->actual_prev_size.height;
                            ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
@@ -15708,7 +15729,8 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                                     aspect_ratio,
                                     sensor_mode_info->scaler_trim.width,
                                     sensor_mode_info->scaler_trim.height,
-                                    prev_cxt->prev_param.prev_rot);
+                                    prev_cxt->prev_param.cap_rot);
+                           }
                   }
                   if (ret) {
                            CMR_LOGE("prev get trim failed, %d",ret);
@@ -15719,6 +15741,17 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                            chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
                            chn_param.cap_inf_cfg.cfg.src_img_rect.width,
                            chn_param.cap_inf_cfg.cfg.src_img_rect.height);
+
+                  param_info.crop_x= chn_param.cap_inf_cfg.cfg.src_img_rect.start_x;
+                  param_info.crop_y = chn_param.cap_inf_cfg.cfg.src_img_rect.start_y;
+                  param_info.crop_height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
+                  param_info.crop_width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
+
+                  CMR_LOGD("prev ultrawid set ratio %f", param_info.zoomRatio);
+                  CMR_LOGD("prev fullsize_height=%d,fullsize_width=%d",param_info.fullsize_height, param_info.fullsize_width);
+                  CMR_LOGD("prev input_height=%d,input_width=%d", param_info.input_height, param_info.input_width);
+                  CMR_LOGD("prev crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
+                           param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
                   if (handle->ops.isp_ioctl) {
                            struct common_isp_cmd_param param;
                            param.camera_id = camera_id;
@@ -15729,7 +15762,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                             CMR_LOGW("fail to set AE roi");
                       }
                  }
-            }
+            //}
         } else if (IS_ZSL_FRM(data->frame_id)) {
             cmr_s32 dst_fd;
             frame_type = PREVIEW_ZSL_FRAME;
@@ -15746,7 +15779,85 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                 }
             }
             ultra_wide_handle = prev_cxt->zsl_ultra_wide_handle;
-            zoom = (void *)&(setting_param.zoom_param.zoom_info.capture_aspect_ratio);
+            param_info.zoomRatio = setting_param.zoom_param.zoom_info.capture_aspect_ratio;
+
+            /*float cap_new_zoom = setting_param.zoom_param.zoom_info.capture_aspect_ratio;
+            if(fabs(cap_org_zoom - cap_new_zoom) >= EPSINON)
+                  cap_zoom_changed = 1;
+            else   cap_zoom_changed = 0;
+            cap_org_zoom = cap_new_zoom;
+            if(zoom_changed) {   */   /*set AE ROI*/
+                  chn_param.sensor_mode = prev_cxt->cap_mode;
+                  sensor_info = &prev_cxt->sensor_info;
+                  sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
+
+                  chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
+                  chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
+                  chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
+                  chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
+
+                  chn_param.cap_inf_cfg.cfg.dst_img_size.width =
+                           prev_cxt->actual_prev_size.width;
+                  chn_param.cap_inf_cfg.cfg.dst_img_size.height =
+                           prev_cxt->actual_prev_size.height;
+                  chn_param.cap_inf_cfg.cfg.notice_slice_height =
+                           chn_param.cap_inf_cfg.cfg.dst_img_size.height;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.start_x =
+                           sensor_mode_info->scaler_trim.start_x;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.start_y =
+                           sensor_mode_info->scaler_trim.start_y;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.width =
+                           sensor_mode_info->scaler_trim.width;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.height =
+                           sensor_mode_info->scaler_trim.height;
+
+                  CMR_LOGV("src_img_rect %d %d %d %d",
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_x,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.width,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.height);
+
+                  param_info.fullsize_height = sensor_info->source_height_max;
+                  param_info.fullsize_width = sensor_info->source_width_max;
+                  param_info.input_height = src_img->size.height;
+                  param_info.input_width = src_img->size.width;
+
+                  /*caculate trim rect*/
+                  if (ZOOM_INFO != setting_param.zoom_param.mode) {
+                           ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                                   setting_param.zoom_param.zoom_level,
+                                   &chn_param.cap_inf_cfg.cfg.dst_img_size);
+                  } else {
+                           float aspect_ratio = 1.0 * prev_cxt->actual_pic_size.width /
+                                  prev_cxt->actual_pic_size.height;
+                           if (setting_param.zoom_param.zoom_info.crop_region.width > 0) {
+                                 chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                                         setting_param.zoom_param.zoom_info.pixel_size, 
+                                         setting_param.zoom_param.zoom_info.crop_region,
+                                         chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+                           } else {
+                                 ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                                         setting_param.zoom_param.zoom_info.capture_aspect_ratio,
+                                         aspect_ratio,
+                                         sensor_mode_info->scaler_trim.width,
+                                         sensor_mode_info->scaler_trim.height,
+                                         prev_cxt->prev_param.prev_rot);
+                           }
+                  }
+                  if (ret) {
+                           CMR_LOGE("prev get trim failed, %d",ret);
+                  }
+                  param_info.crop_x= chn_param.cap_inf_cfg.cfg.src_img_rect.start_x;
+                  param_info.crop_y = chn_param.cap_inf_cfg.cfg.src_img_rect.start_y;
+                  param_info.crop_height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
+                  param_info.crop_width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
+
+                  CMR_LOGD("cap ultrawid set ratio %f", param_info.zoomRatio);
+                  CMR_LOGD("cap fullsize_height=%d,fullsize_width=%d",param_info.fullsize_height, param_info.fullsize_width);
+                  CMR_LOGD("cap input_height=%d,input_width=%d", param_info.input_height, param_info.input_width);
+                  CMR_LOGD("cap crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
+                           param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
+            //}
         } else {
             CMR_LOGW("ignored  prev_status %ld, frame_id 0x%x",
                      prev_cxt->prev_status, data->frame_id);
@@ -15785,8 +15896,8 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             ipm_in_param.src_frame.reserved = src_buffer_handle;
             ipm_in_param.dst_frame = *dst_img;
             ipm_in_param.dst_frame.reserved = dst_buffer_handle;
-            //ipm_in_param.private_data = zoom;
-            ipm_in_param.private_data = &setting_param.zoom_param.zoom_info;
+            //ipm_in_param.private_data = &setting_param.zoom_param.zoom_info;
+            ipm_in_param.private_data = (void *)&param_info;
             if (src_buffer_handle != NULL && dst_buffer_handle != NULL) {
                 ret =
                     ipm_transfer_frame(ultra_wide_handle, &ipm_in_param, NULL);

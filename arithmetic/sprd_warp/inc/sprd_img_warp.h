@@ -71,32 +71,33 @@ typedef struct { float warp_projective[3][3]; } img_warp_projective_param_t;
 
 typedef struct {
     float zoomRatio;         // [ 1.0f, 4.0f]
-	float zoomCenterOffsetX; // [-1.0f, 1.0f]
-	float zoomCenterOffsetY; // [-1.0f, 1.0f]
+    float zoomCenterOffsetX; // [-1.0f, 1.0f]
+    float zoomCenterOffsetY; // [-1.0f, 1.0f]
+    img_warp_input_info_t input_info;
 } img_warp_undistort_param_t;
 
 typedef struct {
-	void *dl_handle;
-	int (*sprd_caa_vdsp_open)(void **h_vdsp);
-	int (*sprd_caa_vdsp_close)(void *h_vdsp);
-	int (*sprd_caa_vdsp_send)(void *h_vdsp, const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
-	int (*sprd_caa_cadence_vdsp_load_library)(void *h_vdsp, const char *nsid);
-	int (*sprd_caa_vdsp_Send)(const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
-	void *(*sprd_caa_ionmem_alloc)(uint32_t size, bool iscache);
-	int (*sprd_caa_ionmem_free)(void *h_ionmem);
-	int (*sprd_caa_ionmem_flush)(void *h_ionmem, uint32_t size);
-	int (*sprd_caa_ionmem_invalid)(void *h_ionmem);
-	void *(*sprd_caa_ionmem_get_vaddr)(void *h_ionmem);
-	int (*sprd_caa_ionmem_get_fd)(void *h_ionmem);
-	void (*ProcessState_initWithDriver)(const char *driver);
-	void (*ProcessState_startThreadPool)();
-	void (*IPCThreadState_joinThreadPool)(bool isMain);
-	void (*IPCThreadState_stopProcess)(bool immediate);
+    void *dl_handle;
+    int (*sprd_caa_vdsp_open)(void **h_vdsp);
+    int (*sprd_caa_vdsp_close)(void *h_vdsp);
+    int (*sprd_caa_vdsp_send)(void *h_vdsp, const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
+    int (*sprd_caa_cadence_vdsp_load_library)(void *h_vdsp, const char *nsid);
+    int (*sprd_caa_vdsp_Send)(const char *nsid, int priority, void **h_ionmem_list, uint32_t h_ionmem_num);
+    void *(*sprd_caa_ionmem_alloc)(uint32_t size, bool iscache);
+    int (*sprd_caa_ionmem_free)(void *h_ionmem);
+    int (*sprd_caa_ionmem_flush)(void *h_ionmem, uint32_t size);
+    int (*sprd_caa_ionmem_invalid)(void *h_ionmem);
+    void *(*sprd_caa_ionmem_get_vaddr)(void *h_ionmem);
+    int (*sprd_caa_ionmem_get_fd)(void *h_ionmem);
+    void (*ProcessState_initWithDriver)(const char *driver);
+    void (*ProcessState_startThreadPool)();
+    void (*IPCThreadState_joinThreadPool)(bool isMain);
+    void (*IPCThreadState_stopProcess)(bool immediate);
 } camalg_assist_lib_api_t;
 
 typedef enum {
-	WARP_CAPTURE,
-	WARP_PREVIEW,
+    WARP_CAPTURE,
+    WARP_PREVIEW,
 } INST_TAG;
 
 #ifdef _MSC_VER

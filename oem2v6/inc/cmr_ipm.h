@@ -96,6 +96,19 @@ struct ipm_open_in {
     bool is_cap;
 };
 
+typedef struct {
+    float zoomRatio;
+    int fullsize_width;  
+    int fullsize_height;
+    int input_width;
+    int input_height;
+    int crop_x;
+    int crop_y;
+    int crop_width;
+    int crop_height;
+    struct zoom_info zoom;
+} ipm_param_t;
+
 struct ipm_version {
     cmr_u8 major;
     cmr_u8 minor;

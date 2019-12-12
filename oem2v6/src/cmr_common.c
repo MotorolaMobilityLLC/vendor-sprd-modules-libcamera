@@ -197,6 +197,14 @@ struct img_rect camera_apply_rect_and_ratio(struct img_size ref_size,
     out.width = (uint32_t)(w + 0.5f);
     out.height = (uint32_t)(h + 0.5f);
 
+#ifdef CONFIG_ISP_2_3
+    //do 2 aligment for sharkle only
+    out.start_x = CAMERA_START(out.start_x);
+    out.start_y = CAMERA_START(out.start_y);
+    out.width = CAMERA_START(out.width);
+    out.height = CAMERA_START(out.height);
+#endif
+
     return out;
 }
 
