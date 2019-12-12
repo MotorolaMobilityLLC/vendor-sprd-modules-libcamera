@@ -3631,16 +3631,11 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             isp_param.dcam_size.height = prev_cxt->dcam_output_size.height;
         }
 #endif
-		prev_cxt->prev_param.remosaic_type = camera_get_remosaic_type(
-				&(cxt->sn_cxt.info_4in1),
-				sensor_mode_info->trim_width, sensor_mode_info->trim_height);
+        prev_cxt->prev_param.remosaic_type = camera_get_remosaic_type(
+                &(cxt->sn_cxt.info_4in1),
+                sensor_mode_info->trim_width, sensor_mode_info->trim_height);
 
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-        isp_param.mode_4in1 =
-            (prev_cxt->prev_param.mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
-#else
-		isp_param.remosaic_type = prev_cxt->prev_param.remosaic_type;
-#endif
+        isp_param.remosaic_type = prev_cxt->prev_param.remosaic_type;
         ret = handle->ops.isp_start_video(handle->oem_handle, &isp_param);
         if (ret) {
             CMR_LOGE("isp start video failed");
@@ -4707,7 +4702,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
     /*arrange the buffer*/
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
-		int buf_4in1_flag = 0;
+        int buf_4in1_flag = 0;
 
         cmr_bzero(&cap_2_mems, sizeof(struct cmr_cap_2_frm));
         cap_2_mems.mem_frm.buf_size = total_mem_size;
@@ -4717,8 +4712,8 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         cap_2_mems.type = CAMERA_MEM_NO_ALIGNED;
         cap_2_mems.zoom_post_proc = zoom_post_proc;
 
-		if (check_software_remosaic(prev_cxt))
-			buf_4in1_flag = 1;
+        if (check_software_remosaic(prev_cxt))
+            buf_4in1_flag = 1;
         if (is_normal_cap) {
             ret = ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) ||
                  prev_cxt->prev_param.is_cfg_rot_cap);
@@ -5049,14 +5044,14 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
         prev_cxt->cap_org_fmt = CAM_IMG_FMT_YUV420_NV21;
     } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
         prev_cxt->cap_zsl_mem_size = (width * height * 2);
-	    if (check_software_remosaic(prev_cxt))
+        if (check_software_remosaic(prev_cxt))
             prev_cxt->cap_zsl_mem_size += (small_w * small_h * 2);
 
-	    CMR_LOGI("cap_zsl_mem_size = %d", prev_cxt->cap_zsl_mem_size);
-	} else {
-	    CMR_LOGE("unsupprot fmt %ld", prev_cxt->cap_org_fmt);
-	    return CMR_CAMERA_INVALID_PARAM;
-	}
+        CMR_LOGI("cap_zsl_mem_size = %d", prev_cxt->cap_zsl_mem_size);
+    } else {
+        CMR_LOGE("unsupprot fmt %ld", prev_cxt->cap_org_fmt);
+        return CMR_CAMERA_INVALID_PARAM;
+    }
     prev_cxt->cap_zsl_mem_num = ZSL_FRM_ALLOC_CNT;
 
     /*alloc preview buffer*/
@@ -5633,15 +5628,9 @@ exit:
  */
 cmr_int check_software_remosaic(struct prev_context *prev_cxt)
 {
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-    if (PREVIEW_4IN1_FULL == prev_cxt->prev_param.mode_4in1)
-		return 1;
-    return 0;
-#else
     if (1 == prev_cxt->prev_param.remosaic_type)
-		return 1;
+        return 1;
     return 0;
-#endif
 }
 
 cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
@@ -7416,20 +7405,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     chn_param.cap_inf_cfg.cfg.flip_on = 0;
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-    if (prev_cxt->prev_param.limited_4in1_width > 0 &&
-        prev_cxt->prev_param.limited_4in1_height > 0 &&
-        (prev_cxt->prev_param.limited_4in1_width <
-             sensor_mode_info->trim_width &&
-         prev_cxt->prev_param.limited_4in1_height <
-             sensor_mode_info->trim_height)) {
-        prev_cxt->prev_param.mode_4in1 = PREVIEW_4IN1_FULL;
-        cxt->mode_4in1 = prev_cxt->prev_param.mode_4in1;
-        CMR_LOGD("prev config 4in1");
-	}
-#endif
 
-	if (check_software_remosaic(prev_cxt))
+    if (check_software_remosaic(prev_cxt))
         chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
 
     /*config channel*/
@@ -7446,10 +7423,9 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->prev_data_endian = endian;
     prev_cxt->need_isp = chn_param.cap_inf_cfg.cfg.need_isp;
     prev_cxt->need_binning = chn_param.cap_inf_cfg.cfg.need_binning;
-#ifdef   CONFIG_CAMERA_4IN1_SOLUTION2
+    /* 4in1 full size, bin size ae affect each other  */
     if (cxt->is_4in1_sensor)
        prev_cxt->prev_skip_num += 2;
-#endif
     if (prev_cxt->skip_mode == IMG_SKIP_SW_KER) {
         /*config skip num buffer*/
         for (i = 0; i < prev_cxt->prev_skip_num; i++) {
@@ -7853,7 +7829,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("channel config flip:%d", chn_param.cap_inf_cfg.cfg.flip_on);
 
     // config 4in1 flag
-	if (check_software_remosaic(prev_cxt)) {
+    if (check_software_remosaic(prev_cxt)) {
         CMR_LOGD("set 4in1 mode to 1");
         chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
     }
@@ -9756,8 +9732,8 @@ cmr_int channel2_configure(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     // config 4in1 flag
-	if (check_software_remosaic(prev_cxt)) {
-	    CMR_LOGD("set 4in1 mode to 1");
+    if (check_software_remosaic(prev_cxt)) {
+        CMR_LOGD("set 4in1 mode to 1");
         chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
     }
 
@@ -12075,7 +12051,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
     }
-	if (check_software_remosaic(prev_cxt) && prev_cxt->cap_4in1_mem_num == 0) {
+    if (check_software_remosaic(prev_cxt) && prev_cxt->cap_4in1_mem_num == 0) {
         ret = prev_alloc_4in1_buf(handle, camera_id, is_restart);
         if (ret) {
             CMR_LOGE("alloc 4in1 buf failed");
@@ -12511,7 +12487,7 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-	if (check_software_remosaic(prev_cxt))
+    if (check_software_remosaic(prev_cxt))
         chn_param.cap_inf_cfg.cfg.need_4in1 = 1;
 
     ret = handle->ops.channel_cfg(handle->oem_handle, handle, camera_id,

@@ -6479,9 +6479,10 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     enc_exif_param.exif_isp_info = NULL;
     if (cxt->is_multi_mode != MODE_BOKEH) {
         enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.numerator =
-		    cxt->sn_cxt.cur_sns_ex_info.f_num;
+            cxt->sn_cxt.cur_sns_ex_info.f_num;
         enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.denominator = 100;
     }
+
     ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
     if (ret) {
         CMR_LOGW("isp get exif debug info failed");
@@ -6554,7 +6555,7 @@ cmr_int camera_start_exif_encode_simplify(cmr_handle oem_handle,
     enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
     enc_exif_param.exif_isp_info = NULL;
     enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.numerator =
-		cxt->sn_cxt.cur_sns_ex_info.f_num;
+        cxt->sn_cxt.cur_sns_ex_info.f_num;
     enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.denominator = 100;
 
     ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
@@ -7538,38 +7539,17 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.lsc_phys_addr, isp_param.lsc_virt_addr, isp_param.work_mode,
         isp_param.dv_mode, isp_param.capture_mode, isp_param.is_snapshot);
 
-#ifndef CONFIG_CAMERA_4IN1_SOLUTION2
-#ifdef CONFIG_CAMERA_4IN1
-    if (isp_video_get_simulation_flag()) {
-        isp_param.is_4in1_sensor = 0;
-        isp_param.mode_4in1 = 0;
-    } else {
-        isp_param.is_4in1_sensor = cxt->sn_cxt.info_4in1.is_4in1_supported;
-        isp_param.mode_4in1 = (cxt->mode_4in1 == PREVIEW_4IN1_FULL) ? 1 : 0;
-    }
-#endif
-
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) ||                      \
-    defined(CONFIG_ISP_2_7)
-    if (isp_param.resolution_info.sensor_output_size.w > PICTURE_W)
-        isp_param.noramosaic_4in1 = 1;
-    else
-        isp_param.noramosaic_4in1 = 0;
-#endif
-#else
     /* set remosaic_type */
-    isp_param.remosaic_type = camera_get_remosaic_type(
-        &(cxt->sn_cxt.info_4in1),
-        isp_param.resolution_info.sensor_output_size.w,
-        isp_param.resolution_info.sensor_output_size.h);
-    isp_param.is_4in1_sensor =
-        camera_get_is_4in1_sensor(&(cxt->sn_cxt.info_4in1));
+    isp_param.remosaic_type = camera_get_remosaic_type(&(cxt->sn_cxt.info_4in1),
+            isp_param.resolution_info.sensor_output_size.w,
+            isp_param.resolution_info.sensor_output_size.h);
+    isp_param.is_4in1_sensor = camera_get_is_4in1_sensor(&(cxt->sn_cxt.info_4in1));
     if (isp_video_get_simulation_flag()) {
         isp_param.is_4in1_sensor = 0;
         isp_param.remosaic_type = 0;
     }
     isp_param.is_high_res_mode = cxt->is_high_res_mode;
-#endif
+
     ret = isp_video_start(isp_cxt->isp_handle, &isp_param);
     if (ret) {
         isp_cxt->is_work = 0;
@@ -7959,12 +7939,11 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
         CMR_LOGI("ret %ld", ret);
     }
 
-#ifdef CONFIG_CAMERA_4IN1_SOLUTION2
     if(cxt->remosaic_type) {
-       skip_number = 3;
-       CMR_LOGI("skip_num %ld", skip_number);
+        /* 4in1 capture need 3 frame previous skip */
+        skip_number = 3;
+        CMR_LOGI("skip_num %ld", skip_number);
     }
-#endif
 
     ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
     if (ret) {
@@ -9592,36 +9571,6 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     cxt->sn_cxt.info_4in1.limited_4in1_height =
         sn_4in1_info.limited_4in1_height;
 
-#ifndef CONFIG_CAMERA_4IN1_SOLUTION2
-    if (1 == cxt->sn_cxt.info_4in1.is_4in1_supported) {
-        struct cmr_path_capability capability;
-        CMR_LOGD(" 4in1 path capability");
-        camera_channel_path_capability(oem_handle, &capability);
-        if (1 != capability.support_4in1) {
-            CMR_LOGE("isp hw not support_4in1");
-            ret = CMR_CAMERA_FAIL;
-            goto exit;
-        }
-
-        if (1 == capability.support_4in1) {
-            if (is_raw_capture == 1 &&
-                out_param_ptr->raw_capture_size.height >
-                    cxt->sn_cxt.info_4in1.limited_4in1_height &&
-                out_param_ptr->raw_capture_size.width >
-                    cxt->sn_cxt.info_4in1.limited_4in1_width) {
-                out_param_ptr->mode_4in1 = PREVIEW_4IN1_FULL;
-            } else {
-                out_param_ptr->mode_4in1 = PREVIEW_4IN1_BINNING;
-            }
-            out_param_ptr->limited_4in1_width =
-                cxt->sn_cxt.info_4in1.limited_4in1_width;
-            out_param_ptr->limited_4in1_height =
-                cxt->sn_cxt.info_4in1.limited_4in1_height;
-            camera_open_4in1((cmr_handle)cxt);
-        }
-        cxt->mode_4in1 = out_param_ptr->mode_4in1;
-    }
-#else
     if (1 == cxt->sn_cxt.info_4in1.is_4in1_supported) {
         struct cmr_path_capability capability;
         CMR_LOGD(" 4in1 path capability");
@@ -9645,12 +9594,10 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
          * camera_get_remosaic_type */
         out_param_ptr->remosaic_type = 0;
     }
-    cxt->mode_4in1 = out_param_ptr->remosaic_type;
     if (cxt->remosaic_type == 1) {
         camera_open_4in1((cmr_handle)cxt);
         CMR_LOGD("prepare software remosaic");
     }
-#endif
 #endif
 
     out_param_ptr->zoom_setting = setting_param.zoom_param;
@@ -11142,10 +11089,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             CMR_LOGE("failed to set preview param %ld", ret);
             goto exit;
         }
-#if defined(CONFIG_CAMERA_4IN1_SOLUTION2)
         if (cxt->remosaic_type == 1)
             camera_open_4in1(oem_handle);
-#endif
     } else {
         camera_get_iso_value(oem_handle);
     }
@@ -11323,10 +11268,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
 
-#if defined(CONFIG_CAMERA_4IN1_SOLUTION2)
     if (cxt->remosaic_type == 1)
         camera_close_4in1(oem_handle);
-#endif
     if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
 #ifdef OEM_HANDLE_3DNR
@@ -13212,8 +13155,6 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct snapshot_context *snp_cxt = &cxt->snp_cxt;
-    cmr_u32 lowlight_flag = 0; /* !CONFIG_CAMERA_4IN1_SOLUTION2 */
-    cmr_u32 ambient_highlight = 0;
     cmr_u32 flash_status = 0;
     struct sprd_img_capture_param capture_param;
     struct common_isp_cmd_param isp_param;
@@ -13238,24 +13179,6 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // start hardware 3dnr capture
         CMR_LOGI("set cap_param type to DCAM_CAPTURE_START_3DNR");
         capture_param.type = DCAM_CAPTURE_START_3DNR;
-#ifndef CONFIG_CAMERA_4IN1_SOLUTION2
-    } else if (cxt->mode_4in1 == PREVIEW_4IN1_FULL) {
-#ifdef CONFIG_CAMERA_4IN1
-        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
-                               &isp_param);
-        lowlight_flag = isp_param.isp_adgain.lowlight_flag;
-        CMR_LOGD("lowlight_flag=%d", lowlight_flag);
-        if (1 == lowlight_flag) {
-            capture_param.type = DCAM_CAPTURE_START_4IN1_LOWLUX;
-        }
-#endif
-#else
-    } else if (cxt->remosaic_type != 0) {
-        ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP,
-                               &isp_param);
-        ambient_highlight = isp_param.isp_adgain.ambient_highlight;
-        CMR_LOGD("ambient_highlight = %d", ambient_highlight);
-#endif
     } else if (cxt->is_multi_mode == MODE_BOKEH ||
                cxt->is_multi_mode == MODE_3D_CALIBRATION) {
         if (cxt->is_yuv_callback_mode || cxt->is_3dcalibration_mode) {
@@ -13861,11 +13784,7 @@ exit:
 cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p) {
     cmr_int ret = 0;
 
-#ifdef CONFIG_CAMERA_4IN1_SOLUTION2
     ret = (p->is_4in1_supported == 1) || (p->limited_4in1_width > 0);
-#else
-    ret = (p->is_4in1_supported == 1);
-#endif
 
     return ret;
 }

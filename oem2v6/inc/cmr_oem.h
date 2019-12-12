@@ -376,7 +376,6 @@ struct camera_context {
     cmr_u32 is_real_bokeh;
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
-    cmr_u8 mode_4in1;
     cmr_int lcd_flash_highlight;
     cmr_u8 backlight_brightness;
     cmr_u8 backup_brightness;

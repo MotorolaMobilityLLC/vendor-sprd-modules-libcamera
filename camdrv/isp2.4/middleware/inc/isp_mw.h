@@ -451,7 +451,7 @@ struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
 	cmr_s32 bv;
-	cmr_u32 lowlight_flag;
+    cmr_u32 ambient_highlight; /* 4IN1 */
 };
 
 struct isp_yimg_info {
@@ -834,7 +834,8 @@ struct isp_video_start {
 	struct isp_img_frm s_yuv_sw_out;
 	cmr_u32 is_restart;
 	cmr_u32 is_4in1_sensor;
-	cmr_uint mode_4in1;
+    cmr_u32 remosaic_type;
+    cmr_u32 is_high_res_mode;
 };
 
 struct isp_img_param {

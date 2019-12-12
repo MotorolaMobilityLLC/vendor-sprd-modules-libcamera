@@ -84,13 +84,6 @@ enum preview_frame_type {
     PREVIEW_FRAME_TYPE_MAX
 };
 
-enum preview_4in1_mode {
-    PREVIEW_4IN1_OFF,
-    PREVIEW_4IN1_BINNING,
-    PREVIEW_4IN1_FULL,
-    PREVIEW_4IN1_MAX
-};
-
 typedef cmr_int (*preview_cb_func)(cmr_handle oem_handle,
                                    enum preview_cb_type cb_type,
                                    enum preview_func_type func_type,
@@ -254,7 +247,6 @@ struct preview_param {
     cmr_u32 isp_to_dram;
     cmr_u32 video_snapshot_type;
     cmr_u32 sprd_3dcalibration_enabled;
-    cmr_u32 mode_4in1; /* !CONFIG_CAMERA_4IN1_SOLUTION2 */
     cmr_u32 remosaic_type; /* 1:software, 2:hardware, 0:not */
     cmr_u32 limited_4in1_width;
     cmr_u32 limited_4in1_height;

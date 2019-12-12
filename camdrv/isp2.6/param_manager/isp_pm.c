@@ -441,17 +441,9 @@ struct isp_pm_context {
 	struct isp_pm_param_data *getting_data_ptr[PARAM_SET_MAX];
 	struct isp_pm_param_data single_block_data[ISP_TUNE_BLOCK_MAX];
 	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];
-#if     defined(CONFIG_CAMERA_4IN1_SOLUTION2)
 	/* new 4in1 plan, 20191028 */
 	cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
-	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
-#else
-	cmr_u32 is_4in1_sensor;
-    cmr_u32 cam_4in1_mode;
-    cmr_u32 noramosaic_4in1;
-    cmr_u32 lowlight_flag;
-#endif
 };
 
 static cmr_s32 isp_pm_check_handle(cmr_handle handle)
@@ -690,13 +682,8 @@ static cmr_s32 check_block_skip(struct isp_pm_context *pm_cxt_ptr,
 
 	isp_cxt_prv = &pm_cxt_ptr->cxt_array[set_id];
 	if (isp_cxt_prv->is_validate) {
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-		if (pm_cxt_ptr->cam_4in1_mode || pm_cxt_ptr->noramosaic_4in1)
-			return 0;
-#else
 		if (pm_cxt_ptr->remosaic_type)
 			return 0;
-#endif
 		if (IS_DCAM_BLOCK(blk_id))
 			return 1;
 	}
@@ -928,22 +915,12 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 	output->mode = mode;
 	output->scene = scene;
 	output->cus_define = define;
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-	if (pm_cxt_ptr->cam_4in1_mode && pm_cxt_ptr->lowlight_flag &&
-                mode == WORKMODE_CAPTURE) {
-                img_w /= 2;
-                img_h /= 2;
-                output->resolution.w = img_w;
-                output->resolution.h = img_h;
-	}
-#else
 	if (pm_cxt_ptr->remosaic_type && output->mode == WORKMODE_PREVIEW) {
 		img_w /= 2;
 		img_h /= 2;
 		output->resolution.w = img_w;
 		output->resolution.h = img_h;
 	}
-#endif
 
 
 	tail_idx = output->block_num;
@@ -1062,23 +1039,12 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 	output->scene = scene;
 	output->cus_define = define;
 	output->compatible_mode_id = mode_id;
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-	if (pm_cxt_ptr->cam_4in1_mode && pm_cxt_ptr->lowlight_flag &&
-		mode == WORKMODE_CAPTURE) {
-		img_w /= 2;
-		img_h /= 2;
-		output->resolution.w = img_w;
-		output->resolution.h = img_h;
-	}
-#else
 	if (pm_cxt_ptr->remosaic_type && output->mode == WORKMODE_PREVIEW) {
 		img_w /= 2;
 		img_h /= 2;
 		output->resolution.w = img_w;
 		output->resolution.h = img_h;
 	}
-#endif
-
 
 	tail_idx = output->block_num;
 	blk_num = sizeof(blocks_array) / sizeof(blocks_array[0]);
@@ -1208,44 +1174,11 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 			update_always[i] = (isp_cxt_ptr->is_validate == 0) ? 1 : 0;
 			isp_cxt_ptr->is_validate = 0;
 		}
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-		pm_cxt_ptr->cam_4in1_mode = input->cam_4in1_mode;
-		pm_cxt_ptr->noramosaic_4in1 = input->noramosaic_4in1;
-#else
 		pm_cxt_ptr->remosaic_type = input->remosaic_type;
-#endif
 		for (i  = 0; i < input->pm_sets_num && i < PARAM_SET_MAX; i++) {
 			if (input->mode[i] >= WORKMODE_MAX)
 				continue;
 
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-			if (pm_cxt_ptr->is_4in1_sensor) {
-				if (input->mode[i] == WORKMODE_PREVIEW) {
-					if (pm_cxt_ptr->cam_4in1_mode)
-						output->mode_id[i] = ISP_MODE_ID_PRV_0;
-					else
-						output->mode_id[i] = ISP_MODE_ID_PRV_1;
-					goto get_blocks;
-				} else if (input->mode[i] == WORKMODE_VIDEO) {
-					if (pm_cxt_ptr->cam_4in1_mode) {
-						output->mode_id[i] = ISP_MODE_ID_VIDEO_0;
-						goto get_blocks;
-					}
-					search = &search_modes[2][0];
-					search++;
-					goto search;
-				} else if (input->mode[i] == WORKMODE_CAPTURE) {
-					if (!pm_cxt_ptr->cam_4in1_mode)
-						output->mode_id[i] = ISP_MODE_ID_CAP_2;
-					else if (pm_cxt_ptr->lowlight_flag)
-						output->mode_id[i] = ISP_MODE_ID_CAP_1;
-					else
-						output->mode_id[i] = ISP_MODE_ID_CAP_0;
-					//update_always[i] = 1;
-					goto get_blocks;
-				}
-			}
-#else
 			if (pm_cxt_ptr->is_4in1_sensor) {
 				ISP_LOGD("mode %d, remosaic %d", input->mode[i], pm_cxt_ptr->remosaic_type);
 				if (input->mode[i] == WORKMODE_PREVIEW) {
@@ -1267,7 +1200,6 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 					goto get_blocks;
 				}
 			}
-#endif
 
 			if (input->mode[i] == WORKMODE_PREVIEW)
 				search = &search_modes[0][0];
@@ -1292,22 +1224,6 @@ search:
 					pm_cxt_ptr->tune_mode_array[mode_id]->resolution.h,
 					input->img_w[i], input->img_h[i]);
 
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-				if (pm_cxt_ptr->is_4in1_sensor && input->mode[i] == WORKMODE_PREVIEW) {
-					/* todo:  workaround for 4in1 preview  */
-					ISP_LOGD("i %d, k %d, is_4in1_sensor & preview. 4in1 %d %d. size %d in %d\n", i, k,
-						pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1,
-						input->cam_4in1_mode,
-						pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w,
-						input->img_w[i]);
-
-					if ((pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) &&
-						(pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1 == input->cam_4in1_mode)) {
-						output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
-						ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
-						break;
-					}
-#else
 				if (pm_cxt_ptr->remosaic_type == 1 && input->mode[i] == WORKMODE_PREVIEW) {
 					if ((pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) &&
                         (pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1 == input->cam_4in1_mode)) {
@@ -1315,7 +1231,6 @@ search:
                         ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
                         break;
                     }
-#endif
 				} else  if (pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) {
 					output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
 					ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
@@ -1339,132 +1254,14 @@ get_blocks:
 			rtn = isp_pm_context_init((cmr_handle)pm_cxt_ptr, set_id);
 			if (rtn)
 				return ISP_PARAM_ERROR;
-#if     defined(CONFIG_CAMERA_4IN1_SOLUTION2)
 			ISP_LOGD("pm context %p for set %d, mode_id %d remosaic mode %d, size %d %d\n", isp_cxt_ptr,
 				set_id, isp_cxt_ptr->mode_id, pm_cxt_ptr->remosaic_type, input->img_w[i], input->img_h[i]);
-#else
-			ISP_LOGD("pm context %p for set %d, mode_id %d 4in1 mode %d, size %d %d\n", isp_cxt_ptr,
-				set_id, isp_cxt_ptr->mode_id, pm_cxt_ptr->cam_4in1_mode, input->img_w[i], input->img_h[i]);
-#endif
 		}
 		break;
 	}
 	case ISP_PM_CMD_SET_LOWLIGHT_FLAG:
-	{
-#if     defined(CONFIG_CAMERA_4IN1_SOLUTION2)
-		pm_cxt_ptr->ambient_highlight = *(cmr_u32 *)param_ptr;
-		ISP_LOGV("ambient_highlight = %d\n", pm_cxt_ptr->ambient_highlight);
-#else
-		pm_cxt_ptr->lowlight_flag = *(cmr_u32 *)param_ptr;
-		ISP_LOGV("lowlight_flag = %d\n", pm_cxt_ptr->lowlight_flag);
-#endif
-
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-		if (pm_cxt_ptr->cam_4in1_mode) {
-			cmr_u32 i, j, k;
-			cmr_u32 *cap_mode;
-			struct isp_pm_blocks_param *blk_param_ptr;
-			struct isp_context *isp_cxt_ptr = PNULL;
-			struct isp_pm_mode_param *cap, *comm;
-			struct isp_pm_block_header *src_h, *dst_h;
-#ifdef CONFIG_ISP_2_7
-			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V2,
-				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
-				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
-				ISP_BLK_UV_CDN_V1, ISP_BLK_CFA_V1, ISP_BLK_CNR2_V1,
-				ISP_BLK_EE_V1, ISP_BLK_GRGB_V1, ISP_BLK_IMBALANCE_V1,
-				ISP_BLK_YUV_NOISEFILTER_V1, ISP_BLK_UV_POSTCDN_V1,
-				ISP_BLK_YUV_PRECDN_V1, ISP_BLK_SW3DNR, ISP_BLK_YNR_V1
-			}; /* blocks from cap1 */
-#elif CONFIG_ISP_2_6
-			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V1,
-				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
-				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
-				ISP_BLK_UV_CDN_V1, ISP_BLK_CFA_V1, ISP_BLK_CNR2_V1,
-				ISP_BLK_EE_V1, ISP_BLK_GRGB_V1, ISP_BLK_IMBALANCE,
-				ISP_BLK_LTM, ISP_BLK_YUV_NOISEFILTER_V1,
-				ISP_BLK_UV_POSTCDN_V1, ISP_BLK_YUV_PRECDN_V1,
-				ISP_BLK_SW3DNR, ISP_BLK_YNR_V1
-			}; /* blocks from cap1 */
-#elif CONFIG_ISP_2_5
-			const cmr_u32 tb_blk[] = {ISP_BLK_BLC, /* ISP_BLK_2D_LSC,*/ ISP_BLK_NLM_V1,
-				/*ISP_BLK_SMART,*/ ISP_BLK_3DNR, DCAM_BLK_BPC_V1,
-				ISP_BLK_UVDIV_V1, ISP_BLK_IIRCNR_IIR_V1,
-				ISP_BLK_UV_CDN_V1, ISP_BLK_CFA_V1, ISP_BLK_CNR2_V1,
-				ISP_BLK_EE_V1, ISP_BLK_GRGB_V1, ISP_BLK_IMBALANCE,
-				ISP_BLK_YUV_NOISEFILTER_V1,ISP_BLK_UV_POSTCDN_V1,
-				ISP_BLK_YUV_PRECDN_V1,ISP_BLK_SW3DNR, ISP_BLK_YNR_V1
-			}; /* blocks from cap1 */
-#endif
-			for (i = 0; i < PARAM_SET_MAX; i++) {
-				blk_param_ptr = &pm_cxt_ptr->blocks_param[i];
-				isp_cxt_ptr = &pm_cxt_ptr->cxt_array[i];
-				if (!isp_cxt_ptr->is_validate || blk_param_ptr->mode != WORKMODE_CAPTURE)
-					continue;
-				if (pm_cxt_ptr->lowlight_flag)
-					isp_cxt_ptr->mode_id = ISP_MODE_ID_CAP_1;
-				else
-					isp_cxt_ptr->mode_id = ISP_MODE_ID_CAP_0;
-				pm_cxt_ptr->cap_mode_id = isp_cxt_ptr->mode_id;
-
-				if (out_ptr) {
-					cap_mode = (cmr_u32 *)out_ptr;
-					*cap_mode = isp_cxt_ptr->mode_id;
-				}
-				ISP_LOGD("lowlight %d, NR mode %d\n", pm_cxt_ptr->lowlight_flag, isp_cxt_ptr->mode_id);
-				for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
-					cap = pm_cxt_ptr->tune_mode_array[j];
-					if (cap && cap->mode_id == isp_cxt_ptr->mode_id)
-						break;
-					cap = NULL;
-				}
-				for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
-                                        comm = pm_cxt_ptr->tune_mode_array[j];
-                                        if (comm && comm->mode_id == ISP_MODE_ID_COMMON)
-                                                break;
-                                        comm = NULL;
-                                }
-				if (comm == NULL || cap == NULL) {
-					ISP_LOGE("NULL point %p %p\n", cap, comm);
-					continue;
-				}
-				for (k = 0; k < sizeof(tb_blk) / sizeof(tb_blk[0]); k++) {
-					for (j = 0; j < ISP_TUNE_BLOCK_MAX; j++) {
-						dst_h = &blk_param_ptr->header[j];
-						if (dst_h->block_id == tb_blk[k])
-							break;
-					}
-					if (j >= ISP_TUNE_BLOCK_MAX)
-						continue;
-					for (j = 0; j < ISP_TUNE_BLOCK_MAX && cap; j++) {
-						src_h = &cap->header[j];
-						if (src_h && src_h->block_id == tb_blk[k])
-							break;
-					}
-					if (src_h && j < ISP_TUNE_BLOCK_MAX) {
-						memcpy(dst_h, src_h, sizeof(struct isp_pm_block_header));
-						dst_h->is_update = 1;
-						dst_h->source_flag |= ISP_PM_BLK_UPDATE;
-						continue;
-					}
-					for (j = 0; j < ISP_TUNE_BLOCK_MAX && comm; j++) {
-                                                src_h = &comm->header[j];
-                                                if (src_h && src_h->block_id == tb_blk[k])
-                                                        break;
-                                        }
-					if (src_h && i < ISP_TUNE_BLOCK_MAX) {
-                                                memcpy(dst_h, src_h, sizeof(struct isp_pm_block_header));
-                                                dst_h->is_update = 1;
-						dst_h->source_flag |= ISP_PM_BLK_UPDATE;
-                                                continue;
-                                        }
-				}
-			}
-			isp_pm_context_init(pm_cxt_ptr, PARAM_SET1);
-		}
-#endif
+        ISP_LOGV("ambient_highlight = %d(no use)\n", *(cmr_u32 *)param_ptr);
 		break;
-	}
 	case ISP_PM_CMD_SET_AWB:
 	case ISP_PM_CMD_SET_AE:
 	case ISP_PM_CMD_SET_AF:

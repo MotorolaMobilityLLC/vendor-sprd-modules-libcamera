@@ -532,9 +532,7 @@ const cam_stream_info_t stream_info[] = {
     {{2560, 1440}, 33331760L, 33331760L},
     {{2448, 2448}, 33331760L, 33331760L},
     {{2320, 1740}, 33331760L, 33331760L},
-#ifdef CONFIG_FRONT_HIGH_RESOLUTION_SUPPORT
     {{2304, 1728}, 33331760L, 33331760L}, // L5Pro,4in1 binning size
-#endif
     {{2272, 1080}, 33331760L, 33331760L},
     {{2160, 1080}, 33331760L, 33331760L},
     {{2048, 1536}, 33331760L, 33331760L},
@@ -1927,6 +1925,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int pdaf_type = 0;
     char value[PROPERTY_VALUE_MAX];
     struct camera_info cameraInfo;
+
     memset(&cameraInfo, 0, sizeof(cameraInfo));
     getCameraInfo(cameraId, &cameraInfo);
 
@@ -2372,8 +2371,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         "persist.vendor.cam.multi.camera.enable"));
 
     // 14 camera back high resolution definition mode
-    property_get("persist.vendor.cam.back.high.resolution.mode", prop, "0");
-    available_cam_features.add(atoi(prop));
+    property_get("persist.vendor.cam.back.high.resolution.mode", prop, "NULL");
+    if (strcmp(prop, "NULL") == 0) { /* auto, if not set */
+        phyPtr = sensorGetPhysicalSnsInfo(0); // camera id == 0
+        i = 0;
+        if (phyPtr->sensor_type == FOURINONE_SW ||
+            phyPtr->sensor_type == FOURINONE_HW)
+            i = 1;
+        HAL_LOGI("Auto set rear camera high resolution %d", i);
+    } else {
+        i = atoi(prop);
+    }
+    available_cam_features.add(!!i);
 
     // 15 camera hdr_zsl
     property_get("persist.vendor.cam.hdr.zsl", prop, "0");
@@ -2396,8 +2405,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
 
     // 20 camera front high resolution definition mode
-    property_get("persist.vendor.cam.front.high.resolution.mode", prop, "0");
-    available_cam_features.add(!!atoi(prop));
+    property_get("persist.vendor.cam.front.high.resolution.mode", prop, "NULL");
+    if (strcmp(prop, "NULL") == 0) { /* auto, if not set */
+        phyPtr = sensorGetPhysicalSnsInfo(1); // front camera id == 1
+        i = 0;
+        if (phyPtr->sensor_type == FOURINONE_SW ||
+            phyPtr->sensor_type == FOURINONE_HW)
+            i = 1;
+        HAL_LOGI("Auto set front camera high resolution %d", i);
+    } else {
+        i = atoi(prop);
+    }
+    available_cam_features.add(!!i);
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 

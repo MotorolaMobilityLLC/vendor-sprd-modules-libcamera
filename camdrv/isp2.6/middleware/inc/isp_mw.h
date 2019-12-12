@@ -534,8 +534,7 @@ struct isp_adgain_exp_info {
 	cmr_u32 adgain;
 	cmr_u32 exp_time;
 	cmr_s32 bv;
-	cmr_u32 lowlight_flag;
-	cmr_u32 ambient_highlight; /* CONFIG_CAMERA_4IN1_SOLUTION2 */
+	cmr_u32 ambient_highlight; /* 4IN1 */
 };
 
 struct isp_yimg_info {
@@ -875,15 +874,10 @@ struct isp_video_start {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
-        cmr_u32 is_4in1_sensor;
-#ifndef   CONFIG_CAMERA_4IN1_SOLUTION2
-	cmr_uint mode_4in1;
-	cmr_uint noramosaic_4in1;
-#else
+    cmr_u32 is_4in1_sensor; /* bind 4in1 sensor,not care sensor out size */
 	/* new 4in1 solution, 20191028 */
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 	cmr_u32 is_high_res_mode; /* 1: high resolution mode */
-#endif
 };
 
 struct isp_img_param {
