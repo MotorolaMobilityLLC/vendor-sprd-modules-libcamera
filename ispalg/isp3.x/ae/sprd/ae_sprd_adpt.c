@@ -1353,10 +1353,29 @@ static void ae_print_debug_info(char *log_str, struct ae_ctrl_cxt *cxt_ptr)
 static cmr_s32 ae_save_to_mlog_file(struct ae_ctrl_cxt *cxt, struct ae_lib_calc_out *result)
 {
 	cmr_s32 rtn = 0;
+	cmr_s32 mlog_switch = 0;
 	char *tmp_str = (char *)cxt->debug_str;
+	char mlog_ptr[PROPERTY_VALUE_MAX] = {0};
 	UNUSED(result);
-
 	memset(tmp_str, 0, sizeof(cxt->debug_str));
+
+	property_get("persist.vendor.cam.isp.ae.mlog.switch", mlog_ptr, "");
+	if (!strcmp(mlog_ptr, "on"))
+		mlog_switch = 1;
+
+	if((1 == mlog_switch)&&(1 != cxt->camera_id)){
+		cmr_s32 sensor_type = 0;
+		char prop_str[PROPERTY_VALUE_MAX] = {0};
+		property_get("persist.vendor.cam.isp.ae.sensor.type", prop_str, "");
+		if (!strcmp(prop_str, "w"))
+			sensor_type = 0;
+		else if (!strcmp(prop_str, "uw"))
+			sensor_type = 2;
+		else if (!strcmp(prop_str, "t"))
+			sensor_type = 3;
+		if(sensor_type != cxt->camera_id)
+			return rtn;
+	}
 	rtn = debug_file_open((debug_handle_t) cxt->debug_info_handle, 1, 0);
 	if (0 == rtn) {
 		ae_print_debug_info(tmp_str, cxt);
