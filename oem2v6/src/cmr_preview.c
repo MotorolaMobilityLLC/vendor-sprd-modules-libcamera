@@ -1056,7 +1056,6 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
     }
 
     CMR_LOGD("E");
-
     /*check every device, if previewing, stop it*/
     for (i = 0; i < CAMERA_ID_MAX; i++) {
         CMR_LOGV("id %d, prev_status %ld,4in1_mem_num=%d",

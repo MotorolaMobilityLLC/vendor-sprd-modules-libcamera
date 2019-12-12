@@ -4158,6 +4158,11 @@ cmr_s32 ispvideo_RegCameraFunc(cmr_u32 cmd, cmr_s32(*func) (cmr_u32, cmr_u32))
 			fun_ptr->set_capture_size = func;
 			break;
 		}
+	case REG_SET_JPEG_QUALITY:
+		{
+//			fun_ptr->set_jpeg_quality = func;
+			break;
+		}
 	default:
 		{
 			break;

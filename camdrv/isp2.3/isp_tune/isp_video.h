@@ -16,6 +16,10 @@
 #ifndef _ISP_VIDEO_H
 #define _ISP_VIDEO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 #define TOOL_HW_VER 0x101
@@ -37,6 +41,7 @@ enum {
 	REG_TAKE_PICTURE,
 	REG_SET_PARAM,
 	REG_CTRL_FLASH,
+	REG_SET_JPEG_QUALITY,
 	REG_MAX,
 };
 
@@ -79,5 +84,9 @@ cmr_u32 isp_video_get_image_processed_index(void);
 cmr_u32 isp_video_get_simulation_loop_count(void);
 struct isp_raw_image *isp_video_get_raw_images_info(void);
 cmr_u32 isp_video_get_simulation_flag(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,0 +1,26 @@
+
+What's this:
+    A bin file instead of camera app when using ISP-Tool(tuning tool)
+
+How to use:
+    Enable(makefile): PRODUCT_PACKAGES_DEBUG += cam_tuning
+
+    1:After adb shell:
+    ./vendor/bin/cam_tuning -cameraid id -w preview_width -h preview_height
+    ./vendor/bin/cam_tuning -cameraid id -w preview_width -h preview_height -cw capture_width -ch capture_height
+    eg:
+    ./vendor/bin/cam_tuning -cameraid 0 -w 1280 -h 720
+    2:start isptool pc software
+    use as before
+    3: exit(now:20191227)
+    input char 'x' to exit
+
+Function:
+    * start preview
+    * init socket wait ISP-Tool connect.
+    * parameter manage as before.
+    * input char 'x' to exit.
+
+
+    2019-12-27
+
