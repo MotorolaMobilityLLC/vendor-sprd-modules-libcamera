@@ -1012,6 +1012,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			exp.exposure = write_param->exp_line;
 			exp.dummy = write_param->dummy;
 			exp.size_index = size_index;
+			exp.exp_time = write_param->exp_time;
 			if ((write_param->exp_line != prv_param->exp_line)
 				|| (write_param->dummy != prv_param->dummy)) {
 				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
@@ -3602,7 +3603,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 				cxt->last_exp_param.bv = 1;
 		} else {
 			cxt->last_exp_param.exp_line = cxt->sync_cur_result.ev_setting.exp_line;
-			cxt->last_exp_param.exp_time = cxt->sync_cur_result.ev_setting.exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->last_exp_param.exp_time = cxt->sync_cur_result.ev_setting.exp_time;
 			cxt->last_exp_param.dummy = cxt->sync_cur_result.ev_setting.dmy_line;
 			cxt->last_exp_param.gain = cxt->sync_cur_result.ev_setting.ae_gain;
 			cxt->last_exp_param.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;

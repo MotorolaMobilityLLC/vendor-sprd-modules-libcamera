@@ -363,6 +363,7 @@ extern "C" {
 		cmr_u32 exposure;
 		cmr_u32 dummy;
 		cmr_u32 size_index;
+		cmr_u32 exp_time;
 	};
 
 	struct ae_gain {
