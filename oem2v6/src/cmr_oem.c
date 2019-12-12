@@ -9408,6 +9408,31 @@ exit:
     return ret;
 }
 
+bool prev_get_appmode(cmr_handle oem_handle,cmr_u32 camera_id)
+{
+    struct camera_context *cxt = (struct camera_context *)(oem_handle);
+    struct setting_cmd_parameter setting_param;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    bool  is_autophoto = false;
+    bool ret;
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
+                            &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+    }
+    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
+        // auto 3dnr available
+        is_autophoto = true;
+        if (ret) {
+            CMR_LOGE("failed to cap cfg %ld", ret);
+        }
+    }
+    return is_autophoto;
+}
+
 cmr_int camera_get_preview_param(cmr_handle oem_handle,
                                  enum takepicture_mode mode,
                                  cmr_uint is_snapshot,
@@ -9554,6 +9579,23 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
         goto exit;
     }
     cxt->is_refocus_mode = setting_param.cmd_type_value;
+
+    /*for sharkle get auto 3dnr flag*/
+#ifdef CONFIG_ISP_2_3
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_AUTO_3DNR,
+                            &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get 3dnr type %ld", ret);
+        goto exit;
+    }
+    camera_set_3dnr_flag(cxt, setting_param.cmd_type_value);
+    out_param_ptr->is_auto_3dnr = setting_param.cmd_type_value;
+    if (prev_get_appmode(oem_handle,cxt->camera_id)) {
+        out_param_ptr->is_auto_3dnr = CAMERA_3DNR_AUTO;
+    }
+#endif
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -13139,9 +13181,7 @@ cmr_int camera_sw_3dnr_info_cfg(cmr_handle oem_handle,
     CMR_LOGD("call camera_sw_3dnr_info_cfg, %d, %d", camera_get_3dnr_flag(cxt),
              camera_get_3dnr_flag(cxt));
 
-    if (5 == camera_get_3dnr_flag(cxt))
-        ret = cmr_grab_sw_3dnr_cfg(cxt->grab_cxt.grab_handle, threednr_info);
-
+    ret = cmr_grab_sw_3dnr_cfg(cxt->grab_cxt.grab_handle, threednr_info);
     return ret;
 }
 

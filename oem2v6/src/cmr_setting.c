@@ -630,9 +630,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         type_val = parm->cmd_type_value;
         break;
     case SETTING_GENERAL_AUTO_3DNR:
-
         item->isp_cmd = COM_ISP_SET_AUTO_3DNR;
         ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+        type_val = parm->cmd_type_value;
         break;
     case SETTING_GENERAL_AI_SCENE_ENABLED:
         if (parm->cmd_type_value) {
@@ -2832,6 +2832,17 @@ static cmr_int setting_get_3dnr(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_get_auto_3dnr(struct setting_component *cpt,
+                                     struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->hal_common.is_auto_3dnr;
+    CMR_LOGD("get cmd_type_value %ld", parm->cmd_type_value);
+
+    return ret;
+}
+
 static cmr_int setting_get_3dnr_type(struct setting_component *cpt,
                                      struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -3982,6 +3993,7 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(SETTING_GET_RAW_FORMAT, setting_get_raw_format);
     cmr_add_cmd_fun_to_table(SETTING_GET_HDR, setting_get_hdr);
     cmr_add_cmd_fun_to_table(SETTING_GET_3DNR, setting_get_3dnr);
+    cmr_add_cmd_fun_to_table(SETTING_GET_AUTO_3DNR, setting_get_auto_3dnr);
     cmr_add_cmd_fun_to_table(SETTING_GET_3DNR_TYPE, setting_get_3dnr_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_ANDROID_ZSL_FLAG,
                              setting_get_android_zsl);

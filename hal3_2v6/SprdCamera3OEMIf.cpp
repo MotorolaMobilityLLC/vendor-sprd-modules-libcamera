@@ -3332,6 +3332,14 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = 5;
     }
 
+/* for sharkle auto3dnr */
+#ifdef CONFIG_ISP_2_3
+    if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO) {
+        mZslNum = 5;
+        mZslMaxFrameNum = 5;
+    }
+#endif
+
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
         mVideoProcessedWithPreview = true;
     }
@@ -7142,7 +7150,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (sprd_3dnr_enabled == 1) {
             if (sprddefInfo.sprd_auto_3dnr_enable == CAMERA_3DNR_AUTO) {
                 // auto 3dnr mode, detected 3dnr scene
+#ifdef CONFIG_NIGHT_3DNR_PREV_SW_CAP_SW
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_CAP_SW;
+#else
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
+#endif
             } else {
 #ifdef CONFIG_NIGHT_3DNR_PREV_HW_CAP_HW
                 // night shot
@@ -10563,9 +10575,25 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             goto exit;
         }
 
+/*for sharkle auto3dnr skip frame*/
+        if (mZslSnapshotTime > zsl_frame.monoboottime &&
+            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+            diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
+            HAL_LOGI("diff_ms=%lld", diff_ms);
+            // make single capture frame time > mZslSnapshotTime
+            if (diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
+                HAL_LOGI("3dnr not the right frame, skip it");
+               mHalOem->ops->camera_set_zsl_buffer(
+                    obj->mCameraHandle, zsl_frame.y_phy_addr,
+                    zsl_frame.y_vir_addr, zsl_frame.fd);
+                continue;
+            }
+        }
+
         // for 3dnr sw 2.0
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
             mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+
             buf_id = getZslBufferIDForFd(zsl_frame.fd);
             if (buf_id == 0xFFFFFFFF) {
                 goto exit;
