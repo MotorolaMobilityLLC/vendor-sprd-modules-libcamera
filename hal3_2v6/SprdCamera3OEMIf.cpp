@@ -205,8 +205,6 @@ struct stateMachine aeStateMachine[] = {
      ANDROID_CONTROL_AE_STATE_LOCKED},
     {ANDROID_CONTROL_AE_STATE_LOCKED, AE_LOCK_OFF,
      ANDROID_CONTROL_AE_STATE_SEARCHING},
-    {ANDROID_CONTROL_AE_STATE_LOCKED, AE_START,
-     ANDROID_CONTROL_AE_STATE_SEARCHING},
     {ANDROID_CONTROL_AE_STATE_PRECAPTURE, AE_STABLE,
      ANDROID_CONTROL_AE_STATE_CONVERGED},
     {ANDROID_CONTROL_AE_STATE_PRECAPTURE, AE_LOCK_ON,
@@ -5595,8 +5593,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
 
         if (ae_stab) {
-            if (mManualExposureEnabled && controlInfo.ae_lock) {
-                mManualExposureEnabled = false;
+            if (controlInfo.ae_comp_effect_frames_cnt != 0 && controlInfo.ae_lock) {
                 setAeState(AE_LOCK_ON);
                 goto exit;
             }
@@ -5607,7 +5604,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             }
             setAwbState(AWB_STABLE);
         } else {
-            //setAeState(AE_START);
+            setAeState(AE_START);
             setAwbState(AWB_START);
         }
 

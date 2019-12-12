@@ -4768,6 +4768,7 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
                 .data.i32[0]) {
             s_setting[mCameraId].controlInfo.ae_manual_trigger = 1;
+	    s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt = EV_EFFECT_FRAME_NUM;
         }
 
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
@@ -5299,6 +5300,13 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                 ANDROID_CONTROL_AE_PRECAPTURE_TRIGGER_IDLE)) {
         s_setting[mCameraId].resultInfo.ae_state =
             s_setting[mCameraId].controlInfo.ae_state;
+    }
+
+    if (s_setting[mCameraId].controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_LOCKED &&
+        s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt != 0 &&
+        s_setting[mCameraId].controlInfo.ae_lock) {
+             s_setting[mCameraId].resultInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
+             s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt--;
     }
 
     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
