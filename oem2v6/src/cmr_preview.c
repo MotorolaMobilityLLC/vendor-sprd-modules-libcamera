@@ -3644,7 +3644,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->isp_status = PREV_ISP_COWORK;
     }
 
-        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+            prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO)
          {
               struct sprd_img_3dnr_param stream_info;
               stream_info.w = prev_cxt->threednr_cap_smallwidth;
@@ -5279,7 +5280,8 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 &real_height);
         } else {
 
-        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW )
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+            prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO)
         {
                 prev_cal_3dnr_smallsize (handle,camera_id);
                 prev_cxt->cap_zsl_mem_size += (prev_cxt->threednr_cap_smallwidth *
@@ -5493,14 +5495,15 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                       (ultra_wide_mem_num) * sizeof(void *));
         } else {
 
-        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ){
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+            prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO) {
              CMR_LOGI("free 3dnr memory");
               mem_ops->free_mem(CAMERA_SNAPSHOT_SW3DNR, handle->oem_handle,
                               prev_cxt->cap_zsl_phys_addr_array,
                               prev_cxt->cap_zsl_virt_addr_array,
                               prev_cxt->cap_zsl_fd_array,
                               prev_cxt->cap_zsl_mem_num);
-        }else{
+        } else {
                mem_ops->free_mem(CAMERA_SNAPSHOT_ZSL, handle->oem_handle,
                               prev_cxt->cap_zsl_phys_addr_array,
                               prev_cxt->cap_zsl_virt_addr_array,
