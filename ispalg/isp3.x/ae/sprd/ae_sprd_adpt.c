@@ -140,16 +140,12 @@ static void ae_parse_isp_gain(struct ae_ctrl_cxt *cxt, cmr_u32 is_master, cmr_u3
 		max_gain = info_master.max_again;
 		min_gain = info_master.min_again;
 		ISP_LOGV("sync:master,max_gain:%d,min_gain:%d", max_gain, min_gain);
-	}
-
-	if ((CAM_SENSOR_SLAVE0 == cxt->sensor_role)  && cxt->is_multi_mode){
+	}else if ((CAM_SENSOR_SLAVE0 == cxt->sensor_role)  && cxt->is_multi_mode){
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MODULE_INFO, NULL, &info_slave0);
 		max_gain = info_slave0.max_again;
 		min_gain = info_slave0.min_again;
 		ISP_LOGV("sync:slave0,max_gain:%d,min_gain:%d", max_gain, min_gain);
-	}
-
-	if ((CAM_SENSOR_SLAVE1 == cxt->sensor_role)  && cxt->is_multi_mode){
+	}else if ((CAM_SENSOR_SLAVE1 == cxt->sensor_role)  && cxt->is_multi_mode){
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_MODULE_INFO, NULL, &info_slave1);
 		max_gain = info_slave1.max_again;
 		min_gain = info_slave1.min_again;
@@ -3431,75 +3427,45 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 	cmr_u32 exp_line = 0;
 	cmr_u32 exp_time = 0;
 	cmr_u32 gain = in_gain;
-	cmr_u32 base_gain = in_gain;
 	cmr_u32 exposure = in_exposure;
 	cmr_u32 max_frame_line = in_max_frame_line;
 	cmr_u32 min_frame_line = in_min_frame_line;
+	cmr_u32 fliker_unit_time = 10000000;
+	UNUSED(base_exposure);
 
-	if (cxt->cur_flicker == 0) {
-		if (exposure > (max_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time))
-			exposure = max_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-		else if (exposure < (min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time))
-			exposure = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+	if (exposure > (max_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time))
+		exposure = max_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+	else if (exposure < (min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time))
+		exposure = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 
-		exp_time = (cmr_u32) (1.0 * exposure / 10000000 + 0.5) * 10000000;
+	if (cxt->cur_flicker == 0)
+		fliker_unit_time = 10000000;
+	else if(cxt->cur_flicker == 1)
+		fliker_unit_time = 8333333;
 
-		if(base_gain * base_exposure * cxt->cur_status.adv_param.cur_ev_setting.line_time > 10000000 * 128){//flicker0
-			if(exp_time < 10000000)
-				exp_time = 10000000;
-		}else if(!exp_time){
-			if(in_exposure > min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time){
+	if(exposure > fliker_unit_time){
+		if(2 == cxt->hdr_flag)
+			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time + 0.5) * fliker_unit_time;
+		else
+			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time ) * fliker_unit_time;
+
+		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+
+	}else{
+		exp_time = fliker_unit_time;
+		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+		if(gain < 128){
+			if(2 == cxt->hdr_flag){
 				gain = 128;
-				exp_line = (cmr_u32) (1.0 * in_exposure * in_gain/ (128 * cxt->cur_status.adv_param.cur_ev_setting.line_time) + 0.5);
-			}else
-				exp_time = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-		}
-
-		if(!exp_line && exp_time != 0){
-			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-			if(cxt->is_multi_mode)
-				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
-			else
-				gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
-			if(gain < 128){
-				ISP_LOGD("flicker0:clip gain (%d) to 128",gain);
-				gain = 128;
+				ISP_LOGD("flicker:clip gain (%d) to 128",gain);
+			}else{
+				gain = in_gain;
+				exp_line = (cmr_u32) (1.0 * in_exposure / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 			}
 		}
 	}
-
-	if (cxt->cur_flicker == 1) {
-		if (exposure > (max_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time))
-			exposure = max_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-		else if (exposure < (min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time))
-			exposure = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-
-		exp_time = (cmr_u32) (1.0 * exposure / 8333333 + 0.5) * 8333333;
-
-		if(base_gain * base_exposure * cxt->cur_status.adv_param.cur_ev_setting.line_time > 8333333 * 128){//flicker0
-			if(exp_time < 8333333)
-				exp_time = 8333333;
-		}else if(!exp_time){
-			if(in_exposure > min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time){
-				gain = 128;
-				exp_line = (cmr_u32) (1.0 * in_exposure * in_gain/ (128 * cxt->cur_status.adv_param.cur_ev_setting.line_time) + 0.5);
-			}else
-				exp_time = min_frame_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-		}
-
-		if(!exp_line && exp_time != 0){
-			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-			if(cxt->is_multi_mode)
-				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
-			else
-				gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
-			if(gain < 128){
-				ISP_LOGD("flicker1:clip gain (%d) to 128",gain);
-				gain = 128;
-			}
-		}
-	}
-
 	*out_exp_l = exp_line;
 	*out_gain = gain;
 
@@ -4601,8 +4567,8 @@ static cmr_s32 ae_get_lowlight_flag_by_bv(struct ae_ctrl_cxt *cxt, cmr_u32 * is_
 
 static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 {
-	if((cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
-		ISP_LOGD("is_multi_mode=%d",cxt->is_multi_mode);
+	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
+		ISP_LOGD("[HDR]is_multi_mode=%d",cxt->is_multi_mode);
 	}
 	else if (param) {
 		struct ae_hdr_param *hdr_param = (struct ae_hdr_param *)param;
@@ -4633,8 +4599,8 @@ static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 
 static cmr_s32 ae_set_dre_start(struct ae_ctrl_cxt *cxt, void *param)
 {
-	if((cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
-		ISP_LOGD("is_multi_mode=%d",cxt->is_multi_mode);
+	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
+		ISP_LOGD("[DRE]is_multi_mode=%d",cxt->is_multi_mode);
 	}
 	else if (param) {
 		struct ae_dre_param *dre_param = (struct ae_dre_param *)param;
