@@ -2052,6 +2052,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO,
     CAMERA_TOCTRL_SET_HIGH_RES_MODE,
     CAMERA_TOCTRL_GET_4IN1_INFO,
+    CAMERA_IOCTRL_SET_CAP_STATE,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

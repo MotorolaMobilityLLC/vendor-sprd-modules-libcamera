@@ -1126,6 +1126,9 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     case CAMERA_IOCTRL_SET_REF_CAMERA_ID:
         camera_local_set_ref_camera_id(handle, (cmr_u32 *)param);
         break;
+    case CAMERA_IOCTRL_SET_CAP_STATE:
+        camera_local_cap_state(handle, (bool *)param);
+        break;
     case CAMERA_IOCTRL_THUMB_YUV_PROC: {
         ret = camera_set_thumb_yuv_proc(handle,
                                         (struct snp_thumb_yuv_param *)param);

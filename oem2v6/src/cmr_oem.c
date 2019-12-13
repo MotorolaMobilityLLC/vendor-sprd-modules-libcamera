@@ -13324,6 +13324,27 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
                      ref_camera_id);
 }
 
+cmr_int camera_local_cap_state(cmr_handle oem_handle, bool *flag) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_LOGD("*flag %d cxt->camera_id %d", *flag, cxt->camera_id);
+    cmr_u32 channel_id = 0;
+    cmr_u32 skip_number = 0;
+    cmr_u32 deci_factor = 0;
+    cmr_s32 frm_num = 0;
+    cmr_u32 reconfig_flag = 0;
+    if (*flag)
+        ret = cmr_grab_cap_resume(cxt->grab_cxt.grab_handle, channel_id,
+                                  skip_number, deci_factor, frm_num);
+    else
+        ret = cmr_grab_cap_pause(cxt->grab_cxt.grab_handle, channel_id,
+                                 reconfig_flag);
+    if (ret) {
+        CMR_LOGE("failed to resume or pause ,ret %ld", ret);
+    }
+    return ret;
+}
+
 cmr_int camera_local_get_cover(cmr_handle oem_handle,
                                struct dual_sensor_luma_info *luma_info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
