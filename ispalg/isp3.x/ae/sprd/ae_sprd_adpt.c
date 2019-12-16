@@ -3732,7 +3732,8 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
 		cxt->last_exp_param.is_ev_setting = cxt->is_ev_setting;
 
-		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
+		if(CAMERA_MODE_MANUAL != cxt->app_mode)
+			s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
 		if((cxt->app_mode < 64)){
 			cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
