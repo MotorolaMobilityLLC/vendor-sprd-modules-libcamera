@@ -599,7 +599,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	} else if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M)) {
-		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_USER_COUNT, NULL, &dual_sensor_status);
+		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_SENSOR_COUNT, NULL, &dual_sensor_status);
 		if (cxt->is_master) {
 			ISP_LOGV("dual_sensor_status = %d, is_force:%d, cameraId:%d",dual_sensor_status, is_force, cxt->camera_id);
 			if(dual_sensor_status > 1) {

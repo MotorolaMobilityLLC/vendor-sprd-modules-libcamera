@@ -73,9 +73,10 @@ enum isp_br_ioctl_cmd {
 	GET_CAMERA_ID,
 	GET_SENSOR_ROLE,/* dont care first argument */
 	GET_ISPALG_FW,
+	GET_SENSOR_COUNT,/* number of initialized bridge instances */
 
-	SET_USER_COUNT,
-	GET_USER_COUNT,
+	SET_USER_COUNT,/* number of AE active instances, set by AE */
+	GET_USER_COUNT,/* number of AE active instances, set by AE */
 
 	SET_SYNC_SLAVE_AE_DATA,
 	GET_SYNC_SLAVE_AE_DATA,

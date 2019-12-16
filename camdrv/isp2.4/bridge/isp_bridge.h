@@ -50,7 +50,7 @@ enum isp_br_ioctl_cmd {
 	SET_AEM_SYNC_STAT,
 	GET_AEM_SYNC_STAT,
 	SET_AEM_STAT_BLK_NUM,
-	GET_USER_COUNT,
+	GET_SENSOR_COUNT,/* number of initialized bridge instances */
 };
 
 struct awb_stat_data {

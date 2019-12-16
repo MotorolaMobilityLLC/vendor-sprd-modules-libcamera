@@ -631,7 +631,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case SET_USER_COUNT:
 		sem_wait(&cxt->module_sm);
-		if(g_br_user_cnt > 1){
+		if (user_cnt_get() > 1) {
 			if(*(cmr_u32 *)in)
 				cxt->start_user_cnt++;
 			else
@@ -642,11 +642,16 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case GET_USER_COUNT:
 		sem_wait(&cxt->module_sm);
-#ifdef CONFIG_ISP_2_7
 		memcpy(out, &cxt->start_user_cnt,sizeof(cxt->start_user_cnt));
-#else
-		memcpy(out, &g_br_user_cnt, sizeof(g_br_user_cnt));
-#endif
+		sem_post(&cxt->module_sm);
+		break;
+
+	case GET_SENSOR_COUNT:
+		sem_wait(&cxt->module_sm);
+		if (out) {
+			cmr_u32 *cnt = (cmr_u32 *)out;
+			*cnt = user_cnt_get();
+		}
 		sem_post(&cxt->module_sm);
 		break;
 

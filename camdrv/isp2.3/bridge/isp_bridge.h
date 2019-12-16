@@ -69,7 +69,7 @@ enum isp_br_ioctl_cmd {
 	AF_POST_SEM,
 
 	//control flow
-	GET_USER_COUNT,
+	GET_SENSOR_COUNT,/* number of initialized bridge instances */
 };
 
 struct awb_gain_data {
