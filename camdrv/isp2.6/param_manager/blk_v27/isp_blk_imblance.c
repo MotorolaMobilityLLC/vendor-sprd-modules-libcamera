@@ -125,6 +125,8 @@ static cmr_u32 _pm_imblance_convert_param(
 		dst_ptr->cur_v1.imblance_radial_1D_center_x = imblance_param[strength_level].imblance_1D.imblance_radial_1D_center_x;
 		dst_ptr->cur_v1.imblance_radial_1D_center_y = imblance_param[strength_level].imblance_1D.imblance_radial_1D_center_y;
 		dst_ptr->cur_v1.imblance_radial_1D_radius_thr = imblance_param[strength_level].imblance_1D.imblance_radial_1D_radius_thr;
+		dst_ptr->cur_v1.imblance_radial_1D_radius_thr_factor = imblance_param[strength_level].imblance_1D.imblance_radial_1D_radius_thr_factor;
+		dst_ptr->cur_v1.radius_base = imblance_param[strength_level].radius_base;
 	}
 
 	return rtn;

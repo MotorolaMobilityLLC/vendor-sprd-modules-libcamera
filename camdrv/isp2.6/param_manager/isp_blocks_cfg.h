@@ -630,6 +630,31 @@ struct isp_cnr2_param {
 };
 #endif
 
+#ifdef CAMERA_RADIUS_ENABLE
+struct isp_ynrs_params {
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius_factor;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
+};
+
+struct isp_ynrs_level{
+	cmr_u16 radius_base;
+	struct isp_ynrs_params ynrs_param;
+};
+
+#else
+
 struct isp_ynrs_level{
 	cmr_u8 lumi_thresh[2];
 	cmr_u8 gf_rnr_ratio[5];
@@ -646,6 +671,7 @@ struct isp_ynrs_level{
 	cmr_u16 bypass;
 	cmr_u8 reserved[2];
 };
+#endif
 
 struct isp_ynrs_param {
  	struct isp_ynrs_level cur;

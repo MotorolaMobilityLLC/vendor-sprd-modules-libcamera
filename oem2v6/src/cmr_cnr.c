@@ -197,7 +197,17 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
             CMR_LOGE("failed to get isp YNR param  %ld", ret);
             goto exit;
         }
+#ifdef CAMERA_RADIUS_ENABLE
+        isp_cmd_parm.ynr_param.ynrs_param.imgCenterX = denoise_param.width / 2;
+        isp_cmd_parm.ynr_param.ynrs_param.imgCenterY = denoise_param.height / 2;
+        isp_cmd_parm.ynr_param.ynrs_param.Radius_factor =
+                                    (isp_cmd_parm.ynr_param.ynrs_param.Radius_factor / isp_cmd_parm.ynr_param.Radius) * denoise_param.width;
+        ISP_LOGI("isp_cmd_parm.ynr_param.ynrs_param.imgCenterX = 0x%x isp_cmd_parm.ynr_param.ynrs_param.imgCenterY = 0x%x isp_cmd_parm.ynr_param.ynrs_param.Radius_factor = 0x%x\n",
+                    isp_cmd_parm.ynr_param.ynrs_param.imgCenterX,isp_cmd_parm.ynr_param.ynrs_param.imgCenterY, isp_cmd_parm.ynr_param.ynrs_param.Radius_factor);
+        memcpy(&ynrParam, &isp_cmd_parm.ynr_param.ynrs_param, sizeof(YNR_Param));
+#else
         memcpy(&ynrParam, &isp_cmd_parm.ynr_param, sizeof(YNR_Param));
+#endif
         denoise_param.ynrParam = &ynrParam;
         if (cxt->nr_flag == CNR2_YNR_ENABLE) {    /*YNR_CNR2*/
             ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
@@ -208,7 +218,6 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
             }
             memcpy(&cnr2Param, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
             denoise_param.cnr2Param = &cnr2Param;
-            denoise_param.cnr3Param = &cnr3Param;
         } else {
             denoise_param.cnr2Param = NULL;
         }
@@ -220,12 +229,15 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
                 CMR_LOGE("failed to get isp CNR param  %ld", ret);
                 goto exit;
             }
+#ifdef CAMERA_RADIUS_ENABLE
             for (i = 0 ;i < LAYER_NUM; i++){
                 isp_cmd_parm.cnr3_param.param_layer[i].imgCenterX = denoise_param.width/pow(2, (i+1));
                 isp_cmd_parm.cnr3_param.param_layer[i].imgCenterY = denoise_param.height/pow(2, (i+1));
                 max_radius = (denoise_param.width + denoise_param.height)/pow(2, (i+1));
-                isp_cmd_parm.cnr3_param.param_layer[i].baseRadius = (isp_cmd_parm.cnr3_param.param_layer[i].baseRadius/1024)*max_radius;
+                isp_cmd_parm.cnr3_param.param_layer[i].baseRadius =
+                                         (isp_cmd_parm.cnr3_param.param_layer[i].baseRadius/isp_cmd_parm.cnr3_param.baseRadius)*max_radius;
             }
+#endif
             cnr3Param.bypass = isp_cmd_parm.cnr3_param.bypass;
             memcpy(&cnr3Param.paramLayer, &isp_cmd_parm.cnr3_param.param_layer, LAYER_NUM*sizeof(multiParam));
             denoise_param.cnr3Param = &cnr3Param;
@@ -252,12 +264,15 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
                 CMR_LOGE("failed to get isp YNR param  %ld", ret);
                 goto exit;
             }
+#ifdef CAMERA_RADIUS_ENABLE
             for (i = 0 ;i < LAYER_NUM; i++){
                 isp_cmd_parm.cnr3_param.param_layer[i].imgCenterX = denoise_param.width/pow(2, (i+1));
                 isp_cmd_parm.cnr3_param.param_layer[i].imgCenterY = denoise_param.height/pow(2, (i+1));
                 max_radius = (denoise_param.width + denoise_param.height)/pow(2, (i+1));
-                isp_cmd_parm.cnr3_param.param_layer[i].baseRadius = (isp_cmd_parm.cnr3_param.param_layer[i].baseRadius/1024)*max_radius;
+                isp_cmd_parm.cnr3_param.param_layer[i].baseRadius =
+                                        (isp_cmd_parm.cnr3_param.param_layer[i].baseRadius/isp_cmd_parm.cnr3_param.baseRadius)*max_radius;
             }
+#endif
             cnr3Param.bypass = isp_cmd_parm.cnr3_param.bypass;
             memcpy(&cnr3Param.paramLayer, &isp_cmd_parm.cnr3_param.param_layer, LAYER_NUM*sizeof(multiParam));
             denoise_param.cnr3Param = &cnr3Param;

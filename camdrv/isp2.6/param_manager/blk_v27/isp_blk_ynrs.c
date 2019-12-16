@@ -39,26 +39,27 @@ cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param,
 
 	if(ynrs_param != PNULL){
 		for(i = 0; i < 5; i++){
-			dst_ptr->cur.gf_rnr_ratio[i] = ynrs_param[strength_level].gf_rnr_ratio[i];
-			dst_ptr->cur.gf_addback_enable[i] = ynrs_param[strength_level].gf_addback_enable[i];
-			dst_ptr->cur.gf_addback_ratio[i] = ynrs_param[strength_level].gf_addback_ratio[i];
-			dst_ptr->cur.gf_addback_clip[i] = ynrs_param[strength_level].gf_addback_clip[i];
-			dst_ptr->cur.gf_enable[i] = ynrs_param[strength_level].gf_enable[i];
-			dst_ptr->cur.gf_radius[i] = ynrs_param[strength_level].gf_radius[i];
-			dst_ptr->cur.gf_rnr_offset[i] = ynrs_param[strength_level].gf_rnr_offset[i];
-			dst_ptr->cur.gf_epsilon[i][0] = ynrs_param[strength_level].gf_epsilon[i][0];
-			dst_ptr->cur.gf_epsilon[i][1] = ynrs_param[strength_level].gf_epsilon[i][1];
-			dst_ptr->cur.gf_epsilon[i][2] = ynrs_param[strength_level].gf_epsilon[i][2];
+			dst_ptr->cur.ynrs_param.gf_rnr_ratio[i] = ynrs_param[strength_level].gf_rnr_ratio[i];
+			dst_ptr->cur.ynrs_param.gf_addback_enable[i] = ynrs_param[strength_level].gf_addback_enable[i];
+			dst_ptr->cur.ynrs_param.gf_addback_ratio[i] = ynrs_param[strength_level].gf_addback_ratio[i];
+			dst_ptr->cur.ynrs_param.gf_addback_clip[i] = ynrs_param[strength_level].gf_addback_clip[i];
+			dst_ptr->cur.ynrs_param.gf_enable[i] = ynrs_param[strength_level].gf_enable[i];
+			dst_ptr->cur.ynrs_param.gf_radius[i] = ynrs_param[strength_level].gf_radius[i];
+			dst_ptr->cur.ynrs_param.gf_rnr_offset[i] = ynrs_param[strength_level].gf_rnr_offset[i];
+			dst_ptr->cur.ynrs_param.gf_epsilon[i][0] = ynrs_param[strength_level].gf_epsilon[i][0];
+			dst_ptr->cur.ynrs_param.gf_epsilon[i][1] = ynrs_param[strength_level].gf_epsilon[i][1];
+			dst_ptr->cur.ynrs_param.gf_epsilon[i][2] = ynrs_param[strength_level].gf_epsilon[i][2];
 		}
-		dst_ptr->cur.lumi_thresh[0] = ynrs_param[strength_level].lumi_thresh[0];
-		dst_ptr->cur.lumi_thresh[1] = ynrs_param[strength_level].lumi_thresh[1];
-		dst_ptr->cur.Radius = ynrs_param[strength_level].Radius;
-		dst_ptr->cur.imgCenterX = ynrs_param[strength_level].imgCenterX;
-		dst_ptr->cur.imgCenterY = ynrs_param[strength_level].imgCenterY;
-		dst_ptr->cur.bypass = ynrs_param[strength_level].bypass;
-		ISP_LOGV("Radius = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x \n",
-			dst_ptr->cur.Radius, dst_ptr->cur.imgCenterX, dst_ptr->cur.imgCenterY,
-			dst_ptr->cur.bypass, dst_ptr->cur.lumi_thresh[0], dst_ptr->cur.gf_rnr_ratio[0]);
+		dst_ptr->cur.ynrs_param.lumi_thresh[0] = ynrs_param[strength_level].lumi_thresh[0];
+		dst_ptr->cur.ynrs_param.lumi_thresh[1] = ynrs_param[strength_level].lumi_thresh[1];
+		dst_ptr->cur.ynrs_param.imgCenterX = ynrs_param[strength_level].imgCenterX;
+		dst_ptr->cur.ynrs_param.imgCenterY = ynrs_param[strength_level].imgCenterY;
+		dst_ptr->cur.ynrs_param.bypass = ynrs_param[strength_level].bypass;
+		dst_ptr->cur.ynrs_param.Radius_factor = ynrs_param[strength_level].Radius_factor;
+		dst_ptr->cur.radius_base = ynrs_param[strength_level].radius_base;
+		ISP_LOGI("dst_ptr->cur.radius_base = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x dst_ptr->cur.Radius_factor = 0x%x\n",
+			dst_ptr->cur.radius_base, dst_ptr->cur.ynrs_param.imgCenterX, dst_ptr->cur.ynrs_param.imgCenterY,
+			dst_ptr->cur.ynrs_param.bypass, dst_ptr->cur.ynrs_param.lumi_thresh[0], dst_ptr->cur.ynrs_param.gf_rnr_ratio[0],dst_ptr->cur.ynrs_param.Radius_factor);
 	}
 
 	return rtn;

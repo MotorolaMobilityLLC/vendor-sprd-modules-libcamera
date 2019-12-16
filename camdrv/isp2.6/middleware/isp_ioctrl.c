@@ -3558,7 +3558,11 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		ynr_info = (struct isp_ynrs_info *)output.param_data->data_ptr;
+#ifdef CAMERA_RADIUS_ENABLE
+		if((cmr_u32)ynr_info->ynrs_param.bypass == 0)
+#else
 		if((cmr_u32)ynr_info->bypass == 0)
+#endif
 			ynrs_en = 1;
 		ISP_LOGV("ynrs_en value = %d \n", ynrs_en);
 	}else {
