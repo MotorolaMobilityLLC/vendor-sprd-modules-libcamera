@@ -399,7 +399,7 @@ cmr_int get_deci_param(int input_value, int output_value) {
         deci_value = 0;
     } else {
         double ratio = (double)input_value / (double)output_value;
-        CMR_LOGD("ratio value:%f", ratio);
+        CMR_LOGV("ratio value:%f", ratio);
         if (ratio <= 4) {
             deci_value = 0; // driver value:1
         } else if (ratio <= 8) {
@@ -410,7 +410,7 @@ cmr_int get_deci_param(int input_value, int output_value) {
             deci_value = 3; // driver value: 1/8
         }
     }
-    CMR_LOGD("input_value:%d, output_value: %d, deci_value: %d", input_value,
+    CMR_LOGV("input_value:%d, output_value: %d, deci_value: %d", input_value,
              output_value, deci_value);
     return deci_value;
 }
@@ -482,7 +482,7 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->output_addr_vir.y = (uint32_t)dst_img->addr_vir.addr_y;
     frame_params->output_addr_vir.u = (uint32_t)dst_img->addr_vir.addr_u;
 
-    CMR_LOGD("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
+    CMR_LOGV("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
              frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
              frame_params->output_addr_vir.y, frame_params->output_addr_vir.u);
 
@@ -491,7 +491,7 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->scale_deci.ver =
         get_deci_param(frame_params->input_size.h, frame_params->output_size.h);
 
-    CMR_LOGD(
+    CMR_LOGV(
         "input size: %d x %d, input rect:x=%d, y=%d, w=%d, h=%d, input "
         "format: %d, input_addr: y=%d, u=%d, v=%d, input_addr_vir:"
         " y=%d, u=%d, v =%d, input_endian: y_endian=%d, uv_endian=%d, "

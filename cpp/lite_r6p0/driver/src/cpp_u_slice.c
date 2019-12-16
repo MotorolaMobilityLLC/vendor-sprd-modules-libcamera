@@ -38,30 +38,30 @@ int cpp_u_input_param_check(struct sprd_cpp_scale_cfg_parm *cfg_parm)
 		return ret;
 	}
 
-	CMR_LOGD("input_addr 0x%x, 0x%x, 0x%x input_addr_vir 0x%x, 0x%x,0x%x\n",
+	CMR_LOGV("input_addr 0x%x, 0x%x, 0x%x input_addr_vir 0x%x, 0x%x,0x%x\n",
 			cfg_parm->input_addr.y, cfg_parm->input_addr.u,
 			cfg_parm->input_addr.v, cfg_parm->input_addr_vir.y,
 			cfg_parm->input_addr_vir.u, cfg_parm->input_addr_vir.v);
-	CMR_LOGD("output_addr 0x%x, 0x%x, 0x%x output_addr_vir 0x%x, 0x%x,0x%x\n",
+	CMR_LOGV("output_addr 0x%x, 0x%x, 0x%x output_addr_vir 0x%x, 0x%x,0x%x\n",
 			cfg_parm->output_addr.y, cfg_parm->output_addr.u,
 			cfg_parm->output_addr.v, cfg_parm->output_addr_vir.y,
 			cfg_parm->output_addr_vir.u, cfg_parm->output_addr_vir.v);
  
-	CMR_LOGD("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
+	CMR_LOGV("in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 			cfg_parm->input_rect.w, cfg_parm->input_rect.h,
 			cfg_parm->output_size.w, cfg_parm->output_size.h);
-	CMR_LOGD("schor %d  scver %d,input fmt %d,inputyendian %d\n",
+	CMR_LOGV("schor %d  scver %d,input fmt %d,inputyendian %d\n",
 			cfg_parm->scale_deci.hor, cfg_parm->scale_deci.ver,
 			cfg_parm->input_format,
 			cfg_parm->input_endian.y_endian);
-	CMR_LOGD("scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
+	CMR_LOGV("scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
 			cfg_parm->output_format,
 			cfg_parm->output_endian.y_endian,
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
-	CMR_LOGD("bptrim x%d y%d w%d h%d\n",
+	CMR_LOGV("bptrim x%d y%d w%d h%d\n",
 			cfg_parm->bp_trim.x, cfg_parm->bp_trim.y,
 			cfg_parm->bp_trim.w, cfg_parm->bp_trim.h);
 
@@ -76,7 +76,7 @@ int cpp_u_input_param_check(struct sprd_cpp_scale_cfg_parm *cfg_parm)
 		cfg_parm->sc_trim.h = ALIGN_DOWN(cfg_parm->sc_trim.h, 2);
 		cfg_parm->sc_trim.x = 0;
 		cfg_parm->sc_trim.y = 0;
-	CMR_LOGD("sctrim x%d y%d w%d h%d\n",
+	CMR_LOGV("sctrim x%d y%d w%d h%d\n",
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
 	}
@@ -227,21 +227,21 @@ int cpp_u_input_param_check(struct sprd_cpp_scale_cfg_parm *cfg_parm)
 		return ret;
 		}
 	}
-	CMR_LOGD("2in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
+	CMR_LOGV("2in_size %d %d in_rect %d %d %d %d out_size %d %d\n",
 			cfg_parm->input_size.w, cfg_parm->input_size.h,
 			cfg_parm->input_rect.x, cfg_parm->input_rect.y,
 			cfg_parm->input_rect.w, cfg_parm->input_rect.h,
 			cfg_parm->output_size.w, cfg_parm->output_size.h);
-	CMR_LOGD("2schor %d  scver %d,input fmt %d,inputyendian %d\n",
+	CMR_LOGV("2schor %d  scver %d,input fmt %d,inputyendian %d\n",
 			cfg_parm->scale_deci.hor, cfg_parm->scale_deci.ver,
 			cfg_parm->input_format,
 			cfg_parm->input_endian.y_endian);
-	CMR_LOGD("2scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
+	CMR_LOGV("2scoutfmt %d, yendian %d, sctrim x%d y%d w%d h%d\n",
 			cfg_parm->output_format,
 			cfg_parm->output_endian.y_endian,
 			cfg_parm->sc_trim.x, cfg_parm->sc_trim.y,
 			cfg_parm->sc_trim.w, cfg_parm->sc_trim.h);
-	CMR_LOGD("2check finished bptrim x%d y%d w%d h%d\n",
+	CMR_LOGV("2check finished bptrim x%d y%d w%d h%d\n",
 			cfg_parm->bp_trim.x, cfg_parm->bp_trim.y,
 			cfg_parm->bp_trim.w, cfg_parm->bp_trim.h);
 	return CMR_CAMERA_SUCCESS;
