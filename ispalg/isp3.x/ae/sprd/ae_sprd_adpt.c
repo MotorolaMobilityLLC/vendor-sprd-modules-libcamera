@@ -702,12 +702,15 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 
 static cmr_s32 ae_sync_lib_out_data_process(struct ae_ctrl_cxt *cxt, struct ae_lib_frm_sync_out *out_param_lib, struct ae_sensor_exp_data *exp_data_sync)
 {
+	cmr_u32 sensor_has_num = 0;//has sensor num
 	struct q_item write_item[3] = {{0}, {0}, {0}};
 	struct q_item actual_item[3] = {{0}, {0}, {0}};
 	struct ae_sync_slave_data ae_sync_slave[2] = {{0}, {0}};
 	struct q_item input_item[3] = {{0}, {0}, {0}};
 	struct ae_sync_gain_param ae_sync_gain[3] = {{0}, {0}, {0}};
 	struct sensor_multi_ae_info ae_info[3] = {{0}, {0}, {0}};
+
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_COUNT, NULL, &sensor_has_num);
 
 	for(int i = 0; i < out_param_lib->num; i++)
 	{
@@ -732,7 +735,7 @@ static cmr_s32 ae_sync_lib_out_data_process(struct ae_ctrl_cxt *cxt, struct ae_l
 	ae_sync_slave[0].frm_len = actual_item[1].frm_len;
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SYNC_SLAVE_AE_DATA, &ae_sync_slave[0], NULL);
 
-	if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+	if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) && (sensor_has_num != 2)) {
 		s_q_put(cxt->seq_handle_s1, &input_item[2], &write_item[2], &actual_item[2]);
 		ae_sync_slave[1].ae_gain = actual_item[2].isp_gain * actual_item[2].sensor_gain /4096;
 		ae_sync_slave[1].exp_time = actual_item[2].exp_time;
@@ -774,7 +777,7 @@ static cmr_s32 ae_sync_lib_out_data_process(struct ae_ctrl_cxt *cxt, struct ae_l
 		}
 	}
 
-	if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+	if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) && (sensor_has_num != 2)) {
 		if (0 != ae_sync_gain[2].isp_gain) {
 			double rgb_coeff = ae_sync_gain[2].isp_gain * 1.0 / 4096;
 			if (cxt->isp_ops.set_rgb_gain_slave1) {
@@ -805,6 +808,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 {
 	ISP_LOGV("sync:-----ae_sync_process------start----");
 	ISP_LOGV("sync:ae_sync_process, write_param, exp_line:%d, ae_gain:%d, dmy_line:%d, exp_time:%d", exp_data_sync->lib_data.exp_line, exp_data_sync->lib_data.gain, exp_data_sync->lib_data.dummy, exp_data_sync->lib_data.exp_time);
+	cmr_u32 sensor_has_num = 0;//has sensor num
 	struct sensor_info info_master = {0};
 	struct sensor_info info_slave[2] = {{0}, {0}};
 	struct ae_sync_data sync_info_master = {0};
@@ -850,7 +854,9 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_STAT_AWB_DATA_AE, NULL, &cxt->slave0_aem_stat);
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_STAT_AWB_DATA_AE, NULL, &cxt->slave1_aem_stat);
 
-		ISP_LOGV("sync:work sensor num:%d, refcameraID:%d", sync_info_master.num, sync_info_master.ref_camera_id);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_COUNT, NULL, &sensor_has_num);
+
+		ISP_LOGV("sync:work sensor num:%d, refcameraID:%d, has sensor num:%d", sync_info_master.num, sync_info_master.ref_camera_id, sensor_has_num);
 
 		stats_data_master.len = sizeof(master_ae_sync_info_ptr->aem);
 		stats_data_master.stats_data = &master_ae_sync_info_ptr->aem[0];
@@ -917,7 +923,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		slave0_ae_sync_info_ptr->ev_setting.exp_time = ae_sync_slave[0].exp_time;
 		slave0_ae_sync_info_ptr->ev_setting.frm_len =  ae_sync_slave[0].frm_len;
 
-		if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+		if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) && (sensor_has_num != 2)) {
 
 			if(slave_aem_info[1].aem_stat_blk_pixels)
 				_aem_stat_preprocess_dulpslave(&slave_aem_info[1], cxt->slave1_aem_stat, stats_data_slave[1].stats_data);
@@ -969,7 +975,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
 
-	if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+	if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) && (sensor_has_num != 2)) {
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
 	}
 
@@ -5348,7 +5354,8 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	UNUSED(result);
 	cmr_s32 aem_type = 0;
 	cmr_s16 bv = 0;
-	cmr_u32 sensor_num = 0;
+	cmr_u32 sensor_num = 0;//aem static data ready sensor num
+	cmr_u32 sensor_has_num = 0;//has sensor num
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	struct _tag_hdr_detect_t hdr_param;
 	struct _tag_hdr_stat_t hdr_stat;
@@ -5666,10 +5673,14 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 		}
 
-	} else if ((cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW) && (CAM_SENSOR_MASTER == cxt->sensor_role) && (FLASH_NONE == flash_state[0]) && (FLASH_NONE == flash_state[1]) && (FLASH_NONE == flash_state[2])) {
+	} else if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) && (CAM_SENSOR_MASTER == cxt->sensor_role) && (FLASH_NONE == flash_state[0]) && (FLASH_NONE == flash_state[1]) && (FLASH_NONE == flash_state[2])) {
 	
+		/*haisense is_multi_mode is ISP_ALG_TRIBLE_W_T_UW, but it has two sensor*/
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_USER_COUNT, NULL, &sensor_num);
-		if (sensor_num > 2) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_COUNT, NULL, &sensor_has_num);
+		ISP_LOGV("has_sensor_num:%d", sensor_has_num);
+
+		if (((3 == sensor_num) && (3 == sensor_has_num)) || ((2 == sensor_num) && (2 == sensor_has_num))) {
 			ae_sync_process(cxt, &cxt->exp_data);
 		} else {
 			rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
