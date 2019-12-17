@@ -5778,6 +5778,7 @@ cmr_int camera_get_logo_data(cmr_u8 *logo, int Width, int Height) {
  */
 cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     cmr_s32 rtn = -1;
+    cmr_u8 TEST_SIZE=20;
     char tmp_name[128];
     /* info of source file for number */
     const char file_name[] =
@@ -5795,7 +5796,7 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     cmr_u8 *pnum = NULL, *ptext = NULL, *ptextout = NULL;
     time_t timep;
     struct tm *p;
-    char time_text[20]; /* total = 19,string:"2019-11-04 13:30:50" */
+    char time_text[TEST_SIZE]; /* total = 19,string:"2019-11-04 13:30:50" */
     cmr_u32 i, j;
     cmr_u8 *pdst, *psrc, *puvs;
     int dst_width, dst_height;
@@ -5844,7 +5845,7 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     /* copy y */
     pdst = ptext;
     for (i = 0; i < sizeof(time_text); i++) {
-        if (time_text[i] == '\0')
+        if ((time_text[i] == '\0')||(i >= TEST_SIZE))
             break;
         if (time_text[i] == '-')
             j = 10;
@@ -5861,7 +5862,7 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     /* copy uv:420 */
     puvs = pnum + subnum_len * subnum_total;
     for (i = 0; i < sizeof(time_text); i++) {
-        if (time_text[i] == '\0')
+        if ((time_text[i] == '\0')||(i >= TEST_SIZE))
             break;
         if (time_text[i] == '-')
             j = 10;
