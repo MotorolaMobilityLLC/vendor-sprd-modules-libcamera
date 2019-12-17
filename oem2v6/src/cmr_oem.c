@@ -1370,7 +1370,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_START_FOCUS,
                            (void *)&focus_status);
         } else {
-            CMR_LOGD("cxt->camera_cb null error");
+            CMR_LOGD("cxt->camera_cb warning");
         }
         break;
     /*	case ISP_FLASH_AE_CALLBACK:
