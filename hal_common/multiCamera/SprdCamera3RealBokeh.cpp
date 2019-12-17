@@ -2211,7 +2211,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             if (mRealBokeh->mIsCapDepthFinish == false &&
                 capture_msg.combo_buff.buffer1 != NULL &&
                 capture_msg.combo_buff.buffer2 == NULL &&
-                mRealBokeh->mIsHdrMode) {
+                mRealBokeh->mIsHdrMode && mRealBokeh->mOtpData.otp_exist) {
                 mRealBokeh->mHdrSkipBlur = true;
                 HAL_LOGI("frame is hdr, and depth hasn't do");
                 break;
