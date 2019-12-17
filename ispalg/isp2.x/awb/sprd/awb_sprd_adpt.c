@@ -1516,6 +1516,9 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->recover_gain.r = cxt->output_gain.r;
 	cxt->recover_gain.g = cxt->output_gain.g;
 	cxt->recover_gain.b = cxt->output_gain.b;
+	cxt->gain_to_save.r = cxt->output_gain.r;
+	cxt->gain_to_save.g = cxt->output_gain.g;
+	cxt->gain_to_save.b = cxt->output_gain.b;
 	cxt->recover_ct = cxt->output_ct;
 	cxt->recover_mode = cxt->wb_mode;
 	cxt->awb_result.gain.r = cxt->recover_gain.r;
@@ -1686,6 +1689,9 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	cxt->recover_gain.r = cxt->output_gain.r;
 	cxt->recover_gain.g = cxt->output_gain.g;
 	cxt->recover_gain.b = cxt->output_gain.b;
+	cxt->gain_to_save.r = cxt->output_gain.r;
+	cxt->gain_to_save.g = cxt->output_gain.g;
+	cxt->gain_to_save.b = cxt->output_gain.b;
 	cxt->recover_ct = cxt->output_ct;
 	cxt->recover_mode = cxt->wb_mode;
 	cxt->awb_result.gain.r = cxt->recover_gain.r;
