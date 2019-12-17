@@ -1617,7 +1617,9 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
     {RES_12M, {{4000, 3000}, {960, 720}, {320, 240}}},
     {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}, {320, 240}}},
-    {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2048, 1152},{1920, 1080},{1440, 1080}}},
+    {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2304, 1728},
+         {2048, 1152}, {1600, 1200}, {1600, 900}, {1920, 1080},
+         {1440, 1080}, {1280, 720}, {720, 480}}},
 };
 
 int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
@@ -1664,18 +1666,22 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
         HAL_LOGE("Error,can't find the right resolution");
         return;
     }
-  custom_res *stream_info = custom_stream[i].res;
+    custom_res *stream_info = custom_stream[i].res;
     size_t stream_cnt = CUSTOM_RES_NUM;
     int32_t scaler_formats[] = {
-        HAL_PIXEL_FORMAT_YCbCr_420_888, HAL_PIXEL_FORMAT_BLOB,
-        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, HAL_PIXEL_FORMAT_RAW16};
-    size_t scaler_formats_count = sizeof(scaler_formats) / sizeof(int32_t);
+        HAL_PIXEL_FORMAT_YCbCr_420_888,
+        HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED,
+        HAL_PIXEL_FORMAT_RAW16,
+        HAL_PIXEL_FORMAT_BLOB,};
+    size_t scaler_formats_count =
+        sizeof(scaler_formats) / sizeof(int32_t);
     int array_size = 0;
     Vector<int32_t> available_stream_configs;
     int32_t
         available_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4];
     memset(available_stream_configurations, 0,
            CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
+
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_cnt; i++) {
             if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
@@ -1687,6 +1693,7 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
         }
     }
+
     memcpy(available_stream_configurations, &(available_stream_configs[0]),
            available_stream_configs.size() * sizeof(int32_t));
     for (array_size = 0; array_size < CAMERA_SETTINGS_CONFIG_ARRAYSIZE;

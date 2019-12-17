@@ -7357,7 +7357,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
         ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.zoom_ratio,
+                                    zoom_param->zoom_info.prev_aspect_ratio,
                                     aspect_ratio,
                                     sensor_mode_info->scaler_trim.width,
                                     sensor_mode_info->scaler_trim.height,
@@ -7797,7 +7797,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
         float aspect_ratio = 1.0 * prev_cxt->actual_video_size.width /
                              prev_cxt->actual_video_size.height;
         ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.zoom_ratio,
+                                    zoom_param->zoom_info.prev_aspect_ratio,
                                     aspect_ratio,
                                     sensor_mode_info->scaler_trim.width,
                                     sensor_mode_info->scaler_trim.height,
@@ -8031,7 +8031,7 @@ cmr_int prev_set_video_param_lightly(struct prev_handle *handle,
         float aspect_ratio = 1.0 * prev_cxt->actual_video_size.width /
                              prev_cxt->actual_video_size.height;
         ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                    zoom_param->zoom_info.zoom_ratio,
+                                    zoom_param->zoom_info.prev_aspect_ratio,
                                     aspect_ratio,
                                     sensor_mode_info->scaler_trim.width,
                                     sensor_mode_info->scaler_trim.height,

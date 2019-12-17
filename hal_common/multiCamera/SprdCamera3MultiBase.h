@@ -78,7 +78,7 @@ typedef enum {
     RES_END
 } custom_size;
 
-#define CUSTOM_RES_NUM 6
+#define CUSTOM_RES_NUM 10
 typedef struct custom_stream_info {
     custom_size size;
     custom_res res[CUSTOM_RES_NUM];
