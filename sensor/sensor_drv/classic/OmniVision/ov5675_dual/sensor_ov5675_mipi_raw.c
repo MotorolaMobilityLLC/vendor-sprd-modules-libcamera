@@ -923,7 +923,7 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode &&
         sns_drv_cxt->is_multi_mode != MODE_TUNING) {
 #ifndef CONFIG_DISABLE_DUAL_CAMERA_FRAMESYNC
-        ov5675_drv_set_frame_sync(handle, 0);
+        //ov5675_drv_set_frame_sync(handle, 0);
 #endif
         SENSOR_LOGI("set frame sync");
     }
