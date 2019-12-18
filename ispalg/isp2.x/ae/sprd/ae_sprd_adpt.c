@@ -599,7 +599,7 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 	} else if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_W_T
 		||cxt->is_multi_mode ==ISP_ALG_DUAL_C_M)) {
-		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_SENSOR_COUNT, NULL, &dual_sensor_status);
+		cxt->ptr_isp_br_ioctrl(cxt->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, GET_USER_COUNT, NULL, &dual_sensor_status);
 		if (cxt->is_master) {
 			ISP_LOGV("dual_sensor_status = %d, is_force:%d, cameraId:%d",dual_sensor_status, is_force, cxt->camera_id);
 			if(dual_sensor_status > 1) {
@@ -4134,6 +4134,15 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		if(cxt->sync_cur_result.tcAE_status == 2)
 			ae_set_restore_cnt(cxt, 0);
 
+		if (cxt->is_multi_mode) {
+			cmr_u32 in = 0;
+			if (1 == cxt->is_master) {
+				cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_USER_COUNT, &in, NULL);
+			} else if (0 == cxt->is_master) {
+				cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_USER_COUNT, &in, NULL);
+			}
+		}
+
 		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param), &s_ae_manual[0]);
 		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
@@ -4142,6 +4151,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		}
 		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d, enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	}
+	cxt->calcFirstFlag = 0;
 }
 
 #include <cutils/sched_policy.h>
@@ -6088,9 +6098,19 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 	struct ae_ctrl_cxt *cxt = (struct ae_ctrl_cxt *)handle;
 	struct ae_calc_in *calc_in = (struct ae_calc_in *)param;
 
-	ISP_LOGV("is_update %d", calc_in->is_update);
+	ISP_LOGV("is_update %d, cameraId:%d", calc_in->is_update, cxt->camera_id);
 	if (cxt->high_fps_info.is_high_fps) {
 		if ((calc_in->is_update) && (cxt->slw_prev_skip_num >= cxt->cur_param->enter_skip_num)) {
+			if ((cxt->is_multi_mode) && (0 == cxt->calcFirstFlag)) {
+				ISP_LOGV("sync:SET_USER_COUNT, cameraId:%d", cxt->camera_id);
+				cmr_u32 in = 1;
+				if (1 == cxt->is_master) {
+					rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_USER_COUNT, &in, NULL);
+				} else if (0 == cxt->is_master) {
+					rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_USER_COUNT, &in, NULL);
+				}
+				cxt->calcFirstFlag = 1;
+			}
 			rtn = ae_calculation_slow_motion(handle, param, result);
 		} else {
 			cxt->exp_data.lib_data.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
@@ -6109,6 +6129,17 @@ cmr_s32 ae_sprd_calculation(cmr_handle handle, cmr_handle param, cmr_handle resu
 		}
 	} else {
 		if (calc_in->is_update) {
+			if ((cxt->is_multi_mode) && (0 == cxt->calcFirstFlag)) {
+				cmr_u32 in = 1;
+				if (1 == cxt->is_master) {
+					ISP_LOGV("sync:master, SET_USER_COUNT");
+					rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_USER_COUNT, &in, NULL);
+				} else if (0 == cxt->is_master) {
+					ISP_LOGV("sync:slave, SET_USER_COUNT");
+					rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_USER_COUNT, &in, NULL);
+				}
+				cxt->calcFirstFlag = 1;
+			}
 			rtn = ae_calculation(handle, param, result);
 		}
 	}
@@ -6566,6 +6597,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	cxt->is_master = init_param->is_master;
 	cxt->is_multi_mode = init_param->is_multi_mode;
+	cxt->calcFirstFlag = 0;
 	cxt->ebd_support = init_param->ebd_support;
 	cxt->bv_thd = init_param->bv_thd;
 	cxt->cur_status.base_img = (cmr_u32 *)malloc(3*16384*sizeof(cmr_u32));

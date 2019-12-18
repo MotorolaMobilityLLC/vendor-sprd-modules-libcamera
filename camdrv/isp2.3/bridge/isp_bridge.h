@@ -70,6 +70,10 @@ enum isp_br_ioctl_cmd {
 
 	//control flow
 	GET_SENSOR_COUNT,/* number of initialized bridge instances */
+
+	SET_USER_COUNT,/* number of AE active instances, set by AE */
+	GET_USER_COUNT,/* number of AE active instances, set by AE */
+
 };
 
 struct awb_gain_data {

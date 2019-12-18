@@ -413,12 +413,12 @@ extern "C" {
 		/*for callback to HAL*/
 		cmr_u32 ae_cb_result[10];
 		float capcompvalue_norm;
-		cmr_u32 end_id;
-
 		cmr_u32 pri_set;
 		cmr_u8 pre_flash_after_delay_cnt;
 		cmr_u8 flash_main_before_flag;
 		cmr_u8 mainFlashEn;
+		cmr_u8 calcFirstFlag;
+		cmr_u32 end_id;
 	};
 #ifdef __cplusplus
 }

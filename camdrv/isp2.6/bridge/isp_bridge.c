@@ -631,12 +631,14 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case SET_USER_COUNT:
 		sem_wait(&cxt->module_sm);
-		if (user_cnt_get() > 1) {
-			if(*(cmr_u32 *)in)
+		//if (user_cnt_get() > 1) {
+			if(*(cmr_u32 *)in) {
 				cxt->start_user_cnt++;
-			else
+			}
+			else {
 				cxt->start_user_cnt--;
-		}
+			}
+		//}
 		sem_post(&cxt->module_sm);
 		break;
 

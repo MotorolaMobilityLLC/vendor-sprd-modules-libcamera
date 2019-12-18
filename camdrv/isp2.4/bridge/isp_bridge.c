@@ -18,6 +18,7 @@
 #include "isp_bridge.h"
 
 struct ispbr_context {
+	cmr_u32 start_user_cnt;
 	cmr_u32 user_cnt;
 	cmr_handle isp_3afw_handles[SENSOR_NUM_MAX];
 	sem_t ae_sm;
@@ -158,6 +159,24 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		memcpy(out, &cxt->match_param.module_info, sizeof(cxt->match_param.module_info));
 		sem_post(&cxt->ae_sm);
 		break;
+	case SET_USER_COUNT:
+		sem_wait(&cxt->module_sm);
+		//if (user_cnt_get() > 1) {
+			if(*(cmr_u32 *)in) {
+				cxt->start_user_cnt++;
+			}
+			else {
+				cxt->start_user_cnt--;
+			}
+		//}
+		sem_post(&cxt->module_sm);
+		break;
+	case GET_USER_COUNT:
+		sem_wait(&cxt->module_sm);
+		memcpy(out, &cxt->start_user_cnt,sizeof(cxt->start_user_cnt));
+		sem_post(&cxt->module_sm);
+		break;
+
 	case AE_WAIT_SEM:
 		sem_wait(&cxt->ae_wait_sm);
 		break;
