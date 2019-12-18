@@ -698,6 +698,7 @@ struct ae_alg_calc_result {
 	cmr_u32 target_offset;
 	cmr_u32 privated_data;
 	cmr_u32 abl_weighting;
+	cmr_s32 evd_value;
 };
 
 #endif
