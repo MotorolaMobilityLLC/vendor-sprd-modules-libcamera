@@ -11245,6 +11245,16 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         }
     }
 
+#ifdef CONFIG_CAMERA_DRE
+    if (cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
+        ret = camera_close_dre(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close dre");
+        }
+        cxt->ipm_cxt.dre_inited = 0;
+    }
+#endif
+
     ret = cmr_snapshot_stop(cxt->snp_cxt.snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to stop snp %ld", ret);
