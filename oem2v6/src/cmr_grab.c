@@ -229,8 +229,10 @@ cmr_int cmr_grab_deinit(cmr_handle grab_handle) {
         if (0 != p_grab->mode_enable) {
             res.sensor_id = p_grab->init_param.sensor_id;
             res.flag = p_grab->res;
+            CMR_LOGI("SPRD_IMG_IO_PUT_DCAM_RES");
             ret = ioctl(p_grab->fd, SPRD_IMG_IO_PUT_DCAM_RES, &res);
             if (ret) {
+                CMR_LOGE("ioctl failed on calling SPRD_IMG_IO_PUT_DCAM_RES");
                 pthread_mutex_unlock(&p_grab->dcam_mutex);
                 goto exit;
             }
