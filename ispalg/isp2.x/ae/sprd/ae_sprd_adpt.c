@@ -3324,7 +3324,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cb_type = AE_CB_CONVERGED;
 				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
 				ISP_LOGD("ae_flash1_callback do-main-flash!\r\n");
-			} else if (((main_flash_capture_counts == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((2 == cxt->send_once[4]) && (cxt->mainFlashEn == 0))) {
+			} else if (((main_flash_capture_counts == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((3 == cxt->send_once[4]) && (cxt->mainFlashEn == 0))) {
 				if(cxt->ebd_support) {
 					if((cxt->ebd_stable_flag) || (2 < cxt->send_once[5])) {
 						cb_type = AE_CB_CONVERGED;
@@ -3341,7 +3341,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					cxt->cur_result.flash_status = FLASH_NONE;	/*flash status reset */
 					ISP_LOGD("ae_flash1_callback do-capture!\r\n");
 				}
-			} else if (((main_flash_capture_counts + 1 == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((3 == cxt->send_once[4]) && (cxt->mainFlashEn == 0))) {
+			} else if (((main_flash_capture_counts + 1 == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((4 == cxt->send_once[4]) && (cxt->mainFlashEn == 0))) {
 				sensor_param_updating_interface(cxt);
 				ISP_LOGD("ae_flash1_callback update next prev-param!\r\n");
 			//} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
