@@ -807,6 +807,8 @@ struct auto_tracking_info {
     cmr_s32 frame_id;
     cmr_s32 imageW;
     cmr_u32 imageH;
+    cmr_u32 first_frame;
+    cmr_u32 ot_af_status;
     cmr_u32 reserved[20];
 };
 
@@ -1710,6 +1712,7 @@ enum camera_param_type {
     CAMERA_PARAM_GET_DEVICE_ORIENTATION,
     CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
     CAMERA_PARAM_AUTO_TRACKING_INFO,
+    CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING,
     CAMERA_PARAM_APERTURE,
     CAMERA_PARAM_F_NUMBER,
     CAMERA_PARAM_REPROCESS_ZOOM_RATIO,

@@ -10803,6 +10803,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
             cxt->prev_cxt.preview_handle, cxt->camera_id,
             (struct auto_tracking_info *)param);
         break;
+    case CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING:
+        ret = cmr_preview_af_status_set_to_autotracking(
+            cxt->prev_cxt.preview_handle, cxt->camera_id,
+            param);
+        break;
     case CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,

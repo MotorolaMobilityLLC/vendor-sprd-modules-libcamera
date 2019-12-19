@@ -131,6 +131,7 @@ class SprdCamera3HWI {
   public:
     SprdCamera3Setting *mSetting;
     uint32_t mFrameNum;
+    uint32_t pre_frame_num;
 
   private:
     typedef struct {

@@ -5633,9 +5633,12 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         mSetting->setSPRDDEFTag(sprddefInfo);
         break;
 
-    case CAMERA_EVT_CB_FOCUS_END:
+    case CAMERA_EVT_CB_FOCUS_END: {
         focus_status = (cmr_focus_status *)parm4;
+        cmr_u32 af_status = 1;
         VCM_Tag sprdvcmInfo;
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
         if (getMultiCameraMode() == MODE_BOKEH && mCameraId == 0) {
             mSetting->getVCMTag(&sprdvcmInfo);
             HAL_LOGD("VCM_INFO:vcm step is %d", focus_status->af_motor_pos);
@@ -5652,6 +5655,10 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
             CAMERA_FOCUS_MODE_FULLSCAN == focus_status->af_mode) {
             mSprdFullscanEnabled = 1;
         }
+        if (sprddefInfo.sprd_ot_switch == 1) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING, af_status);
+        }
+    }
         break;
 
     default:
@@ -6452,6 +6459,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
         mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
     }
 
+
     SensorRotate = mHalOem->ops->camera_get_preview_rot_angle(mCameraHandle);
 
     if (sensorWidth == sensorOrgW && sensorHeight == sensorOrgH &&
@@ -6651,12 +6659,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
                  (cmr_uint)&ae_compensation_param);
         break;
-    case ANDROID_CONTROL_AF_TRIGGER:
+    case ANDROID_CONTROL_AF_TRIGGER: {
         HAL_LOGD("mCameraId=%d, AF_TRIGGER %d", mCameraId,
                  controlInfo.af_trigger);
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        struct auto_tracking_info info;
+        cmr_u32 af_status = 0;
         if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
             struct img_rect zoom1 = {0, 0, 0, 0};
             struct img_rect zoom = {0, 0, 0, 0};
+            cmr_u16 picW, picH, snsW, snsH;
+            float w_ratio = 0.000f, h_ratio = 0.000f;
             struct cmr_focus_param focus_para;
             if (mCameraState.preview_state == SPRD_PREVIEW_IN_PROGRESS) {
                 zoom.start_x = controlInfo.af_regions[0];
@@ -6669,6 +6683,25 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 // for sharkle only
                 mHalOem->ops->camera_get_sensor_trim2(mCameraHandle, &zoom1);
 #endif
+                mSetting->getLargestSensorSize(mCameraId, &snsW, &snsH);
+                mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
+                w_ratio = (float)snsW / (float)picW;
+                h_ratio = (float)snsH / (float)picH;
+                HAL_LOGV("w_ratio = %f, h_ratio = %f", w_ratio, h_ratio);
+                if (sprddefInfo.sprd_ot_switch == 1) {
+                   SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING, af_status);
+                   info.objectX = w_ratio * (controlInfo.af_regions[0] + controlInfo.af_regions[2]/2);
+                   info.objectY = h_ratio * (controlInfo.af_regions[1] + controlInfo.af_regions[3]/2);
+                   info.frame_id = controlInfo.ot_frame_id;
+                   if (info.objectX != 0 && info.objectY != 0)
+                       info.status = 1;
+                   else
+                       info.status = 0;
+                   HAL_LOGV("AF_TRIGGER =%d, %d, %d", info.objectX, info.objectY, info.status);
+                   HAL_LOGV("ot_frame_id=%d",info.frame_id);
+                   SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
+                           (cmr_uint)&info);
+                }
                 if ((0 == zoom.start_x && 0 == zoom.start_y &&
                      0 == zoom.width && 0 == zoom.height) ||
                     !CameraConvertCropRegion(zoom1.width, zoom1.height,
@@ -6702,6 +6735,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                    ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
             cancelAutoFocus();
         }
+    }
         break;
     case ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6800,7 +6834,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_CONTROL_AF_MODE: {
         int8_t AfMode = 0;
+        cmr_u32 af_status = 0;
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
+        HAL_LOGD("ANDROID_CONTROL_AF_MODE");
 
         if (mMultiCameraMode == MODE_3D_CALIBRATION &&
             AfMode == CAMERA_FOCUS_MODE_MANUAL) {
@@ -6812,6 +6850,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             AfMode = CAMERA_FOCUS_MODE_INFINITY;
         }
         if (!mIsAutoFocus) {
+            if (sprddefInfo.sprd_ot_switch == 1 && AfMode == CAMERA_FOCUS_MODE_AUTO) {
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING, af_status);
+                HAL_LOGV("clean_af_status = %d", af_status);
+            }
             if (mRecordingMode &&
                 CAMERA_FOCUS_MODE_CAF ==
                     AfMode) { /*dv mode but recording not start*/
@@ -7282,10 +7324,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         info.objectY = autotrackingInfo.at_start_info[1];
         info.status = autotrackingInfo.at_start_info[2];
         info.frame_id = autotrackingInfo.frame_id;
-        HAL_LOGD("%d, %d, %d, %d", info.objectX, info.objectY, info.status,
+        HAL_LOGD("ANDROID_SPRD_AUTOCHASING_REGION=%d, %d, %d, %d", info.objectX, info.objectY, info.status,
                  info.frame_id);
+        /*if(info.objectX == 0 && info.objectY ==0 )
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
-                 (cmr_uint)&info);
+                 (cmr_uint)&info);*/
     } break;
     case ANDROID_SPRD_BLUR_F_NUMBER: {
         LENS_Tag lensInfo;

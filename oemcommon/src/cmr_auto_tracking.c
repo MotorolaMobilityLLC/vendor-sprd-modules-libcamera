@@ -304,6 +304,7 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
     cmr_uint scaling_addr;
     cmr_s32 x_point = 0;
     cmr_s32 y_point = 0;
+    cmr_s32 af_status = 0;
     OT_Result a_OTResult;
 
     CHECK_HANDLE_VALID(auto_tracking_handle);
@@ -332,7 +333,7 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
     }
 
     //check status
-    if (0 == auto_tracking_handle->pre_status) {
+    if (0 == auto_tracking_handle->pre_status || in->input.first_frame) {
         auto_tracking_handle->save_frame_id = in->input.frame_id;
         ret = OT_Stop();
         CMR_LOGD("OT_Stop first");
@@ -341,7 +342,7 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
     }
 
     CMR_LOGD("check if miss data:param_frame_id=%d, data_frame_id=%d frm_cnt %d",
-        auto_tracking_handle->save_frame_id, 
+        auto_tracking_handle->save_frame_id,
         info->data.frame_num,info->frm_cnt);
 
     // param frame should be equal to data frame
@@ -350,6 +351,7 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
     } else {
         auto_tracking_handle->do_with_coordinate = 0;
     }
+    CMR_LOGV("input param x_point=%d, y_point=%d,status=%d", in->input.objectX, in->input.objectY,in->input.ot_af_status);
 
     // get frame id
     ret = OT_GetResultN1(&a_OTResult);
@@ -375,9 +377,10 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
             CMR_LOGD("OT_Do_With COORDINATE");
             x_point = in->input.objectX;
             y_point = in->input.objectY;
+            af_status = in->input.ot_af_status;
             // Alg do with coordinate[x, y]
-            CMR_LOGD("input param x_point=%d, y_point=%d", x_point, y_point);
-            ret = OT_Do(a_pScalingBuf, x_point, y_point);
+            CMR_LOGD("input param x_point=%d, y_point=%d,af_status=%d", x_point, y_point, af_status);
+            ret = OT_Do(a_pScalingBuf, x_point, y_point, af_status);
             auto_tracking_handle->alg_num++;
 
             // Alg getresult
@@ -395,10 +398,12 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
         }else {
             x_point = 0;
             y_point = 0;
+            af_status = in->input.ot_af_status;
             if (info->frm_cnt> auto_tracking_handle->save_frame_id) {
                 CMR_LOGD("OT_Do_Without coordinate");
                 // Alg do with [0, 0]
-                ret = OT_Do(a_pScalingBuf, x_point, y_point);
+                CMR_LOGV("input param x_point=%d, y_point=%d,af_status=%d", x_point, y_point, af_status);
+                ret = OT_Do(a_pScalingBuf, x_point, y_point, af_status);
                 auto_tracking_handle->alg_num++;
 
                 // Alg getresult
@@ -435,7 +440,12 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
         out->output.objectAxis1 = a_OTResult.dAxis1;
         out->output.objectAxis2 = a_OTResult.dAxis2;
     }
-
+    CMR_LOGD("auto tracking Callback param:%d,%d,%d,%d SIZEX SIZEY axis1 axis2 "
+             "%d %d %d %d",
+             out->output.objectX, out->output.objectY, out->output.status,
+             out->output.frame_id, out->output.objectSize_X,
+             out->output.objectSize_Y, out->output.objectAxis1,
+             out->output.objectAxis2);
     out->private_data = (void *)info->camera_id;
     out->caller_handle = in->caller_handle;
     out->output.imageW = in->input.imageW;

@@ -1786,6 +1786,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
     }
 
+
     /* get sensor full size,limit to binning size,default 5M */
     struct img_size s_limit;
     struct phySensorInfo *phyPtr = NULL;
@@ -5077,6 +5078,7 @@ int SprdCamera3Setting::updateWorkParameters(
                         if (af_triger == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
                             HAL_LOGD("cancel auto focus dont set af region");
                         } else {
+                            s_setting[mCameraId].controlInfo.ot_frame_id = s_setting[mCameraId].requestInfo.ot_frame_num;
                             for (i = 0; i < 5; i++)
                                 s_setting[mCameraId].controlInfo.af_regions[i] =
                                     af_area[i];
