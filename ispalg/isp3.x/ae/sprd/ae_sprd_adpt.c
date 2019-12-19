@@ -3602,18 +3602,8 @@ static void ae_set_dre_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	cmr_u32 min_frame_line = 0;
 	cmr_u32 exp_line = 0;
 	cmr_u32 gain = 0;
-	float down_EV_offset = 0.0;
+	float down_EV_offset =-(cxt->sync_cur_result.evd_value / 100.0);
 	cmr_s8 dre_callback_flag = 0;
-
-	down_EV_offset = -(cxt->sync_cur_result.evd_value / 100.0);
-	ISP_LOGD("dre (cap) ev value %d ", cxt->sync_cur_result.evd_value);
-
-	if((0 == down_EV_offset)||(((CAMERA_MODE_3DNR_PHOTO == cxt->app_mode)||(1 == cxt->threednr_mode_flag))&&((cmr_u32)(cxt->sync_cur_result.cur_fps+0.5) < 15))){
-		dre_callback_flag = 0 ;
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_DRE_START, &dre_callback_flag);
-		ISP_LOGD("no need to dre process");
-		return;
-	}
 
 	cxt->dre_frame_cnt++;
 	if (2 == cxt->dre_frame_cnt) {
@@ -4654,6 +4644,12 @@ static cmr_s32 ae_set_dre_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->dre_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
 			cxt->dre_gain = cxt->sync_cur_result.ev_setting.ae_gain;
 			ae_set_pause(cxt, 4);
+
+			if(0 == cxt->sync_cur_result.evd_value){
+				cmr_s8 callback_flag = 0;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_DRE_START, &callback_flag);
+				ISP_LOGD("evd_value:0 no need to dre process");
+			}
 		} else {
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->dre_exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->dre_gain;
