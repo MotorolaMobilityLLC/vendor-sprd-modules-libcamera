@@ -1209,7 +1209,7 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 				search = &search_modes[2][0];
 search:
 			output->mode_id[i] = ISP_MODE_ID_COMMON;
-			for (k = 0; k < ISP_TUNE_MODE_MAX; k++) {
+			for (k = 0; k < (ISP_TUNE_MODE_MAX - 1); k++) {
 				mode_id = search[k];
 				if (mode_id == ISP_MODE_ID_MAX)
 					break;
