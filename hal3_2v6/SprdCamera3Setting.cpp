@@ -4749,8 +4749,10 @@ int SprdCamera3Setting::updateWorkParameters(
                      s_setting[mCameraId].jpgInfo.gps_coordinates[i]);
         }
         pushAndroidParaTag(ANDROID_JPEG_GPS_COORDINATES);
-    } else if (s_setting[mCameraId].controlInfo.capture_intent ==
-               CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+    } else if ((s_setting[mCameraId].controlInfo.capture_intent ==
+                      ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)||
+                (s_setting[mCameraId].controlInfo.capture_intent ==
+                      ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT)) {
         size_t num_elements = 3;
         for (size_t i = 0; i < num_elements; i++) {
             s_setting[mCameraId].jpgInfo.gps_coordinates[i] = 0;
