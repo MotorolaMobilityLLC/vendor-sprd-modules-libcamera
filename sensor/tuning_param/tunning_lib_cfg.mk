@@ -53,6 +53,17 @@ PRODUCT_PACKAGES += libparam_s5k3p9sx04
 PRODUCT_PACKAGES += libparam_ov8856
 PRODUCT_PACKAGES += libparam_ov8856_shine_front
 PRODUCT_PACKAGES += libparam_ov5675
+#s9863a1c10
+PRODUCT_PACKAGES += libparam_gc2375_js_2_param
+PRODUCT_PACKAGES += libparam_gc2385_wj_1_param
+PRODUCT_PACKAGES += libparam_hi846_gj_1_param
+PRODUCT_PACKAGES += libparam_hi1336_m0_param
+PRODUCT_PACKAGES += libparam_hi1336_s0_param
+PRODUCT_PACKAGES += libparam_gc2375_wj_2_param
+PRODUCT_PACKAGES += libparam_gc02m1b_js_1_param
+PRODUCT_PACKAGES += libparam_ov13853_m1_param
+PRODUCT_PACKAGES += libparam_ov13853_s1_param
+PRODUCT_PACKAGES += libparam_gc8034_gj_2_param
 #endif
 
 #ifeq ($(strip $(CHIP_NAME)),pike2)

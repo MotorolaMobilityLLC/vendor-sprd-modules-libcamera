@@ -31,4 +31,14 @@ PRODUCT_PACKAGES += libsensor_imx351 \
 	libsensor_gc2375h \
 	libsensor_hi846_wide \
 	libsensor_hi846 \
-	libsensor_ov2680
+	libsensor_ov2680 \
+    libsensor_gc2375_js_2 \
+    libsensor_gc2385_wj_1 \
+    libsensor_hi846_gj_1 \
+    libsensor_hi1336_m0 \
+    libsensor_hi1336_s0 \
+    libsensor_gc02m1b_js_1 \
+    libsensor_ov13853_m1 \
+    libsensor_ov13853_s1 \
+    libsensor_gc8034_gj_2 \
+    libsensor_gc2375_wj_2

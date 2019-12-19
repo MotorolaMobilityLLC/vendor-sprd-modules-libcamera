@@ -731,6 +731,7 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov13855", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkle sp9832e_1h10
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov12a10", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl5 ums312_1h10
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx363", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for roc1 ud710_3h10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"hi1336_m0", "0", "gc2375_js_2", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 9863a_1c10
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     {SPRD_BLUR_FRONT_ID, MODE_BLUR, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},
@@ -755,6 +756,7 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
     {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA, 3, {"ov32a1q", "0", "ov16885_normal", "ov8856_shine", "0", "0"}, SNS_FACE_BACK, 90},
     #ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
     {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA, 2, {"s5k3l6", "0", "0", "hi846_wide", "0", "0"}, SNS_FACE_BACK, 90},
+    {SPRD_MULTI_CAMERA_ID, MODE_MULTI_CAMERA, 2, {"hi1336_m0", "0", "0", "hi846_gj_1", "0", "0"}, SNS_FACE_BACK, 90},
     #endif
 #endif
 };

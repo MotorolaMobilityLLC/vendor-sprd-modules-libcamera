@@ -253,7 +253,7 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
 }
 
 static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
-    static cmr_u8 otp_info[1024] = {0};
+    static cmr_u32 otp_info[256] = {0};
     cmr_u32 otp_size = 0;
     cmr_u32 read_byte = 0;
     char prop[PROPERTY_VALUE_MAX] = "0";
@@ -265,7 +265,7 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
     if (NULL == fid) {
         CMR_LOGD("otp_manual_spw.txt not exist");
     } else {
-        cmr_u8 *otp_data = otp_info;
+        cmr_u8 *otp_data = (cmr_u8 *)otp_info;
         while (!feof(fid)) {
             fscanf(fid, "%d\n", otp_data);
             otp_data += 4;
