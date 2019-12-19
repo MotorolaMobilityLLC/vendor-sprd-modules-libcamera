@@ -51,7 +51,7 @@ int OT_Init(OT_GlobalSetting *a_OTSetting);
 #if defined __GNUC__
 __attribute__ ((visibility ("default")))
 #endif 
-int OT_Do(void *a_pScalingBuf, int x_point, int y_point);
+int OT_Do(void *a_pScalingBuf, int x_point, int y_point, int af_status);
 
 #if defined __GNUC__
 __attribute__ ((visibility ("default")))
