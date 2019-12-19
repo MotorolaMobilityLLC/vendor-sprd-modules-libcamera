@@ -141,6 +141,7 @@ typedef void * hdr_inst_t;
 	#define SPRD_ISP_API
 #endif
 
+SPRD_ISP_API int sprd_hdr_scndet_multi_inst(hdr_detect_t* scndet, hdr_stat_t* stat, float* ev, int *p_smooth_flag, int *p_frameID);
 SPRD_ISP_API int sprd_hdr_scndet(hdr_detect_t* param, hdr_stat_t* stat, float ev[2]);
 SPRD_ISP_API int sprd_hdr_version(hdr_version_t* version);
 SPRD_ISP_API int sprd_hdr_config_default(hdr_config_t* cfg);

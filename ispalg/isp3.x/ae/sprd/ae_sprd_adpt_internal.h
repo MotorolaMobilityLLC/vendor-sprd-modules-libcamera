@@ -319,6 +319,8 @@ extern "C" {
 		cmr_u8 hdr_version;
 		cmr_u8 hdr_menu_ctrl; /* auto: 1*/
 		struct hdr_calc_result hdr_calc_result;
+		cmr_s32 smooth_flag;
+		cmr_s32 frameid;
 		/*
 		 * DRE control
 		 */

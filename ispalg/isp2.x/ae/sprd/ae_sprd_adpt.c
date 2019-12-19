@@ -5872,7 +5872,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		}
 		hdr_param.thres_bright = 250;
 		hdr_param.thres_dark = 20;
-		auto_hdr_enable = (cmr_s8)sprd_hdr_scndet(&hdr_param, &hdr_stat, ev_result);
+		auto_hdr_enable = (cmr_s8)sprd_hdr_scndet_multi_inst(&hdr_param, &hdr_stat, ev_result,&cxt->smooth_flag,&cxt->frameid);
 		cxt->hdr_calc_result.ev[0] = fabs(ev_result[0]);
 		cxt->hdr_calc_result.ev[1] = ev_result[1];
 		ISP_LOGV("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, ev_result[0], ev_result[1]);
