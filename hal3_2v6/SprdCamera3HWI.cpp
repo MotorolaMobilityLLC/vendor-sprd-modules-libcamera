@@ -1140,6 +1140,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     CONTROL_Tag controlInfo;
     SPRD_DEF_Tag sprddefInfo;
     REQUEST_Tag requestInfo;
+    struct fin1_info fin1_info;
 
     Mutex::Autolock l(mLock);
 
@@ -1377,6 +1378,15 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         break;
 
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
+        if (sprddefInfo.high_resolution_mode == 1) {
+            camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
+            if (sprddefInfo.fin1_highlight_mode != fin1_info.ambient_highlight) {
+                mSetting->getSPRDDEFTag(&sprddefInfo);
+                sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
+                mSetting->setSPRDDEFTag(sprddefInfo);
+                HAL_LOGD("highlight=%d", sprddefInfo.fin1_highlight_mode);
+            }
+        }
         // raw capture need non-zsl for now
         if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode() ||
             (sprddefInfo.high_resolution_mode && sprddefInfo.fin1_highlight_mode)) {

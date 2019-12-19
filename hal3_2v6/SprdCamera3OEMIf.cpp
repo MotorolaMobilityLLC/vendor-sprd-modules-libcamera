@@ -3788,7 +3788,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     Mutex::Autolock cbLock(&mPreviewCbLock);
     int ret = NO_ERROR;
     SPRD_DEF_Tag sprddefInfo;
-    struct fin1_info fin1_info;
     mSetting->getSPRDDEFTag(&sprddefInfo);
 
     HAL_LOGV("E");
@@ -4111,14 +4110,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             goto bypass_pre;
         }
         ATRACE_BEGIN("preview_frame");
-        camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
-        if (sprddefInfo.fin1_highlight_mode != fin1_info.ambient_highlight &&
-            sprddefInfo.high_resolution_mode == 1) {
-            mSetting->getSPRDDEFTag(&sprddefInfo);
-            sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
-            mSetting->setSPRDDEFTag(sprddefInfo);
-            HAL_LOGV("highlight=%d", fin1_info.ambient_highlight);
-        }
         HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, "
                  "height=%d, time=%" PRId64,
                  mCameraId, frame->fd, buff_vir, frame_num, frame->width,
