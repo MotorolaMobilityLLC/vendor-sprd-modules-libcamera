@@ -9,7 +9,7 @@
 #include <time.h>
 #define NUM_LEVELS 11
 #define NUM_TYPES 3
-#define CLIP(x, lo, hi) (((x) < (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
+#define CLIP(x, lo, hi) (((x) == (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
 int dumpFrameCount = 0;
 
 void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum)
