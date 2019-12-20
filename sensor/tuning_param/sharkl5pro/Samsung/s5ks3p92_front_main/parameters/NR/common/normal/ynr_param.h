@@ -981,17 +981,17 @@
 
 		},
 		/*max_Radius*/
-		0x1B9E,
+		0x1F31,
 		/*max_Radius_factor*/
 		0x03F2,
 		/*Radius*/
-		0x0474,
+		0x050E,
 		/*Radius_factor*/
 		0x017C,
 		/*imgCenterX*/
-		0x0800,
+		0x0900,
 		/*imgCenterY*/
-		0x0600,
+		0x06D0,
 		/*range_index*/
 		0x04,
 		/*range_s*/
