@@ -370,9 +370,9 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     sprintf(tmp_str, "%d", height);
     strcat(file_name, tmp_str);
     strcat(file_name, "_");
-    sprintf(tmp_str, "%s", datetime);
+    sprintf(tmp_str, "_frame_num_%d", index);
     strcat(file_name, tmp_str);
-    sprintf(tmp_str, "_%08x", index);
+    sprintf(tmp_str, "_%s", datetime);
     strcat(file_name, tmp_str);
 
     if (CAM_IMG_FMT_YUV420_NV21 == img_fmt) {
