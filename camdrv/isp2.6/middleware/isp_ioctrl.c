@@ -2933,20 +2933,6 @@ label_set_awb:
 	cxt->rgb_gain.global_gain = scene_parm->global_gain;
 	ISP_LOGI("global_gain = %d", cxt->rgb_gain.global_gain);
 
-	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
-	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
-	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
-	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-	smart_proc_in.handle_pm = cxt->handle_pm;
-//	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
-	if (cxt->ops.smart_ops.calc)
-		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("fail to set smart gain");
-		return ret;
-	}
-	cxt->smart_cxt.log_smart = smart_proc_in.log;
-	cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 	return ret;
 }
 
