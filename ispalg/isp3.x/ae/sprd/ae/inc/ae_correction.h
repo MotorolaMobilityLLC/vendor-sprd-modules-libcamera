@@ -98,6 +98,7 @@ struct ae_adv_param {
 	struct ae_monitor_data_type stats_data_adv;
 	/*Histogram Data*/
 	struct ae_hist_data_type hist_data;/*yuv histogram data in yuv domain*/
+	struct ae_rect hist_roi;
 	struct ae_hist_data_type bhist_data[3];/*raw rgb histogram data in raw bayer domain*/
 	/*ASD: advanced Scene Detection: based on AI*/
 	struct ai_scene_detect detect_scene;
@@ -137,10 +138,15 @@ struct ae_adv_param {
 struct ae_lib_calc_in {
 	cmr_u32 frm_id;
 	/*basic information*/
+	cmr_u32 ref_camera_id;
+	cmr_u32 is_multi_mode;
 	struct ae_size img_size;/*image resolution*/
 	struct ae_rect bhist_size;
 	/*AE Stats Data*/
 	float fno;/*F-Number*/
+	struct ae_rect aem_roi;
+	struct ae_rect zoom_roi;
+	float zoom_ratio;
 	struct ae_stats_data_type stats_data_basic;/*the normal aem stats data*/
 	/*will switch to struct ae_monitor_data_type soon,now low resolution still used the old struct*/
 	//struct ae_stats_data_type stats_data_basicv2;//under-exposure,normal-exposure,over-exposure
@@ -165,7 +171,6 @@ struct ae_lib_calc_out  {
 	cmr_u16 target_lum;
 	cmr_u16 stab_zone_in;
 	cmr_u16 stab_zone_out;
-	struct ae_range target_range;
 	cmr_u32 flash_status;
 	cmr_s8 touch_status;
 	float cur_fps;				/*current fps:1~120 */
@@ -174,14 +179,21 @@ struct ae_lib_calc_out  {
 	struct ae_ev_setting_param ev_setting;
 	struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
 	struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
+	/*AEM ROI setting*/
+	struct ae_point_type aem_roi_st;
+	struct ae_size aem_blk_size;
 	/*APEX parameters*/
 	float bv;
 	float av;
 	float tv;
 	float sv;
-	/*debug information*/
+	/*mlog information(LCD display)*/
 	void *log_buf;
 	cmr_u32 log_len;
+	/*debug information(JPG Exif)*/
+	void *debug_info;
+	cmr_u32 debug_len;
+	/*privated information*/
 	cmr_u32 privated_data;
 };
 
@@ -230,9 +242,12 @@ struct ae_frm_sync_param {
 	cmr_u32 frm_len_def;
 	/*the OTP information*/
 	struct ae_otp_info otp_info;
+	/*for Hybrid Zoom*/
+	struct ae_rect zoom_roi;
+	cmr_u32 zoom_ratio;
 	/*the AEM statistic data, and other information*/
 	cmr_u32 aem[3 * 1024];/*aem statistics data*/
-	struct ae_rect roi_rect;
+	struct ae_rect aem_roi_rect;/*AEM Statistic data ROI*/
 	struct ae_size img_size;/*the resolution of AEM*/
 	struct ae_size blks_num;
 	struct ae_size blk_size;

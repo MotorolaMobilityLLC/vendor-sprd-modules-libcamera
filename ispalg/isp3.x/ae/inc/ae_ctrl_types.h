@@ -500,8 +500,9 @@ extern "C" {
 		 cmr_s32(*set_rgb_gain_4in1) (cmr_handle handler, double rgb_gain_coeff);
 		 cmr_s32(*set_rgb_gain_slave) (cmr_handle handler, double rgb_gain_coeff);
 		 cmr_s32(*set_rgb_gain_slave0) (cmr_handle handler, double rgb_gain_coeff);
-		cmr_s32(*set_rgb_gain_slave1) (cmr_handle handler, double rgb_gain_coeff);
+		 cmr_s32(*set_rgb_gain_slave1) (cmr_handle handler, double rgb_gain_coeff);
  		 cmr_s32(*set_bayer_hist) (cmr_handle handler, struct ae_bayer_hist_cfg * in_param);
+		 cmr_s32(*set_aem_zoom_win) (cmr_handle handler, struct ae_monitor_info * in_param);
 	};
 
 	struct ae_stat_img_info {

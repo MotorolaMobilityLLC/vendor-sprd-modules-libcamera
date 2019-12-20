@@ -41,7 +41,17 @@
 #define AE_BASE_GAIN 128
 #define AE_FIX_PCT100 100
 #define AE_FIX_PCT1024 1024
+/*for the fixed data of ae data types*/
+#define AE_FIXED_10BITS (1<<10)
+#define AE_FIXED_8BITS (1<<8)
+#define AE_FIXED_100 100
+#define AE_REAL_2_FIXED(_val, _fixed_p) ((cmr_u32)((float)(_val) * (float)(_fixed_p) + 0.5))
+#define AE_FIXED_2_REAL(_val, _fixed_p) ((float)(_val) / (float)(_fixed_p))
+
 typedef cmr_handle ae_handle_t;
+typedef cmr_s32 ae_sfixed_10bits;/*fix data accuracy: 1/1024*/
+typedef cmr_s32 ae_sfixed_8bits;/*fix data accuracy: 1/256*/
+typedef cmr_s32 ae_sfixed_100;/*fix data accuracy: 1/100*/
 
 enum {
 	AE_ROLE_ID_NORMAL = 0,
@@ -198,6 +208,14 @@ struct ae_weight_value {
 	cmr_s16 value[2];
 	cmr_s16 weight[2];
 };
+
+#ifndef _AE_POINT_TYPE_DEF_
+#define _AE_POINT_TYPE_DEF_
+struct ae_point_type {
+	cmr_s16 x;
+	cmr_s16 y;
+};
+#endif
 
 #ifndef _AE_SAMPLE_DEF_
 #define _AE_SAMPLE_DEF_
@@ -401,6 +419,7 @@ struct ae_stats_data_type {
 	cmr_u32 counts_per_pixel;/*the size of ae monitor block: blk_size.w * blk_size.h*/
 	cmr_u32 shift;
 	struct ae_size size;/*stats data resolution*/
+	struct ae_point_type blk_st_pt;/*aem roi start offset*/
 	struct ae_size blk_size;
 };
 
@@ -408,6 +427,7 @@ struct ae_monitor_data_type {
 	struct ae_monitor_item_data_type stats_data[3][AEC_MONITOR_DATA_SIZE_MAX];
 	cmr_u32 shift;
 	struct ae_size size;/*stats data resolution*/
+	struct ae_point_type blk_st_pt;/*aem roi start offset*/
 	struct ae_size blk_size;
 };
 

@@ -89,6 +89,24 @@ extern "C" {
 		cmr_u32 b_gain;
 	};
 
+	struct ae_ctrl_win_info {
+		cmr_s16 offset_x;
+		cmr_s16 offset_y;
+		cmr_u32 blk_num_x;
+		cmr_u32 blk_num_y;
+		cmr_u32 blk_size_x;
+		cmr_u32 blk_size_y;
+	};
+
+	struct ae_ctrl_zoom_info {
+		cmr_u32 start_x;
+		cmr_u32 start_y;
+		cmr_u32 size_x;
+		cmr_u32 size_y;
+		cmr_u32 zoom_ratio;
+	};
+
+
 	struct ae_calc_in {
 		cmr_u32 stat_fmt;
 		union {
@@ -131,6 +149,8 @@ extern "C" {
 		cmr_u32 is_update;
 		struct ae_ctrl_ebd_info ebd_info;
 		struct ae_ctrl_isp_dgain_info isp_dgain;
+		struct ae_ctrl_zoom_info zoom_info;
+		struct ae_ctrl_win_info win_info;
 	};
 
 	struct ae_ctrl_param_out {

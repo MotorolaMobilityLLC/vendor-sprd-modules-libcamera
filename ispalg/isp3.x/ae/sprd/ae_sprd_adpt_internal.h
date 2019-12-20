@@ -409,8 +409,10 @@ extern "C" {
 		cmr_u32 threednr_mode;
 		cmr_u8 led_state;
 
+		cmr_u32 *master_aem_stat;
 		cmr_u32 *slave0_aem_stat;
 		cmr_u32 *slave1_aem_stat;
+		
 		cmr_u32 *tune_buf;
 		struct ae_frm_sync_param sync_param[4];
 		struct ae_exposure_param_switch mode_switch[64];
