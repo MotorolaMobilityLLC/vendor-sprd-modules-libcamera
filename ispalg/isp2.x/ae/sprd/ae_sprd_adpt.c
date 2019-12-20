@@ -607,6 +607,9 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 			} else {
 				ae_write_to_sensor(cxt, &write_param);
 			}
+		} else if(is_force){
+			ISP_LOGD("Slave sensor stream on");
+			ae_write_to_sensor(cxt, &write_param);
 		}
 	} else {
 		ae_write_to_sensor(cxt, &write_param);
