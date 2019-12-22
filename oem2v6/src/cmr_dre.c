@@ -139,7 +139,7 @@ static cmr_int dre_transfer_frame(cmr_handle class_handle,
     cmr_uint height = 0;
     struct camera_context *cxt = (struct camera_context *)in->private_data;
     struct sprd_camalg_image image_in;
-    if (!in || !class_handle || !cxt || !dre_handle->handle) {
+    if ( !dre_handle->handle || !cxt) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }

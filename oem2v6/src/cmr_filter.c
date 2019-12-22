@@ -161,7 +161,7 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
 
     CMR_LOGV("E");
 
-    if (!out || !in || !class_handle || !cxt) {
+    if (!out || !cxt) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }

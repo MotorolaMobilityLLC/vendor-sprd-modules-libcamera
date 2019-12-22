@@ -151,21 +151,23 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     YNR_Param ynrParam;
     CNR_Parameter cnr2Param;
     cnr_param_t cnr3Param;
-    sprd_yuv_denoise_cmd_t mode = cxt->nr_flag - 1;
     sprd_yuv_denoise_param_t denoise_param;
+    sprd_yuv_denoise_cmd_t mode;
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
     cmr_bzero(&cnr2Param, sizeof(CNR_Parameter));
     cmr_bzero(&cnr3Param, sizeof(cnr_param_t));
     cmr_bzero(&denoise_param, sizeof(sprd_yuv_denoise_param_t));
 
-    if (!in || !class_handle || !cxt || !cnr_handle->handle) {
+    if (!cxt || !cnr_handle->handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
+
     CMR_LOGV("E ");
     if (!cnr_handle->is_inited) {
         return ret;
     }
+    mode = cxt->nr_flag - 1;
     sem_wait(&cnr_handle->sem);
     denoise_param.bufferY.addr[0] = (void *)in->src_frame.addr_vir.addr_y;
     denoise_param.bufferUV.addr[0] = (void *)in->src_frame.addr_vir.addr_u;
@@ -302,21 +304,23 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     YNR_Param ynrParam;
     CNR_Parameter cnr2Param;
     cnr_param_t cnr3Param;
-    sprd_yuv_denoise_cmd_t mode = cxt->nr_flag - 1;
     sprd_yuv_denoise_param_t denoise_param;
+    sprd_yuv_denoise_cmd_t mode;
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
     cmr_bzero(&cnr2Param, sizeof(CNR_Parameter));
     cmr_bzero(&cnr3Param, sizeof(cnr_param_t));
     cmr_bzero(&denoise_param, sizeof(sprd_yuv_denoise_param_t));
 
-    if (!in || !class_handle || !cxt || !cnr_handle->handle) {
+    if (!cxt || !cnr_handle->handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
+
     CMR_LOGV("E ");
     if (!cnr_handle->is_inited) {
         return ret;
     }
+    mode = cxt->nr_flag - 1;
     sem_wait(&cnr_handle->sem);
     denoise_param.bufferY.addr[0] = (void *)in->src_frame.addr_vir.addr_y;
     denoise_param.bufferUV.addr[0] = (void *)in->src_frame.addr_vir.addr_u;

@@ -149,7 +149,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
     cmr_bzero(&cnrParam, sizeof(CNR_Parameter));
 
-    if (!in || !class_handle || !in->private_data || !cnr_handle->handle) {
+    if (!in->private_data || !cnr_handle->handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }

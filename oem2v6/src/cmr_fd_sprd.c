@@ -402,11 +402,6 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     cmr_u32 is_busy = 0;
     struct fd_start_parameter param;
 
-    if (!in || !class_handle) {
-        CMR_LOGE("Invalid Param!");
-        return CMR_CAMERA_INVALID_PARAM;
-    }
-
     frame_cnt = ++fd_handle->frame_cnt;
     auxiliary = (struct fd_auxiliary_data *)in->private_data;
 

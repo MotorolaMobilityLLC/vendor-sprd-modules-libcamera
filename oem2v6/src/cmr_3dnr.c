@@ -808,10 +808,6 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
                                        struct ipm_frame_in *in,
                                        struct ipm_frame_out *out) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    if (!out || !in || !class_handle) {
-        CMR_LOGE("Invalid Param!");
-        return CMR_CAMERA_INVALID_PARAM;
-    }
     struct class_3dnr *threednr_handle = (struct class_3dnr *)class_handle;
     cmr_u32 frame_in_cnt;
     struct img_addr *addr;
@@ -821,6 +817,11 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
     cmr_u32 dnr_enable = 0;
     struct c3dnr_buffer big_buf, small_buf;
     cmr_u32 cur_num = threednr_handle->g_num;
+
+    if (!out) {
+        CMR_LOGE("Invalid Param!");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
 
     if (threednr_handle->is_stop) {
         return 0;

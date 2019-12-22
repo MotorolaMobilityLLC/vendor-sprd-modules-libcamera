@@ -1588,7 +1588,7 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
     union c3dnr_buffer big_buf, small_buf;
     cmr_u32 cur_num = threednr_handle->g_num;
 
-    if (!out || !in || !class_handle) {
+    if (!out) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
