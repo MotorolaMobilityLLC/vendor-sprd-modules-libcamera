@@ -889,7 +889,6 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 	cmr_s32 lsc_otp_width, lsc_otp_height;
 	cmr_s32 lsc_otp_len_chn;
 	cmr_s32 lsc_otp_chn_gain_num;
-	cmr_s32 gain_w, gain_h;
 	cmr_u8 *oc_otp_data;
 	cmr_u16 oc_otp_len;
 	cmr_u8 *otp_data_ptr;
@@ -989,8 +988,6 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 
 				lsc_get_otp_size_info(otp_raw_img_width, otp_raw_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
 
-				gain_w = lsc_otp_width;
-				gain_h = lsc_otp_height;
 				full_img_width = otp_raw_img_width;
 				full_img_height = otp_raw_img_height;
 
@@ -1238,7 +1235,6 @@ static void lsc_gen_flash_y_gain(cmr_u16 * flash_y_gain, cmr_u32 gain_width, cmr
 			flash_y_gain[i] = 0;
 		}
 	} else {
-		percent = percent < 0 ? 0 : percent;
 		percent = percent > 1000 ? 1000 : percent;
 		shift_x = shift_x < 50 ? 50 : shift_x;
 		shift_x = shift_x > 150 ? 150 : shift_x;
@@ -1326,6 +1322,9 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	} else {
 		cxt->alg_bypass = 1;
 		ISP_LOGE("load alsc tuning parameters error, by pass alsc_calc");
+		cxt->flash_enhance_ratio = 0;
+		cxt->flash_center_shiftx = 0;
+		cxt->flash_center_shifty = 0;
 		memset(cxt->flash_y_gain, 0, 32 * 32 * sizeof(cmr_u16));
 	}
 
@@ -1795,7 +1794,7 @@ static int lsc_pm_table_crop(struct pm_lsc_full *src, struct pm_lsc_crop *dst, c
 	    || dst->start_y > src->img_height
 	    || dst->start_x + dst->img_width > src->img_width
 	    || dst->start_y + dst->img_height > src->img_height
-	    || dst->start_x < 0 || dst->start_y < 0 || dst->start_x + (dst->gain_width - 2) * (dst->grid * 2) > (src->gain_width - 2) * (src->grid * 2)
+	    || dst->start_x + (dst->gain_width - 2) * (dst->grid * 2) > (src->gain_width - 2) * (src->grid * 2)
 	    || dst->start_y + (dst->gain_height - 2) * (dst->grid * 2) > (src->gain_height - 2) * (src->grid * 2)) {
 
 		for (i = 0; i < dst->gain_width * dst->gain_height * 4; i++) {
@@ -1918,6 +1917,7 @@ static void lsc_save_last_info(struct lsc_last_info *cxt, unsigned int camera_id
 	FILE *fp = NULL;
 	struct lsc_last_info full_cxt[MAX_CAMERA_ID * 3]; // each camera maximum have 3 kinds of lsc table size
 	char *ptr = (char *)full_cxt;
+	int num_read;
 
 	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
 
@@ -1925,7 +1925,7 @@ static void lsc_save_last_info(struct lsc_last_info *cxt, unsigned int camera_id
 	if (fp == NULL) {
 		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3);
 	} else {
-		fread(ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3, fp);
+		num_read = fread(ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3, fp);
 		fclose(fp);
 		fp = NULL;
 	}
@@ -2571,7 +2571,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		return rtn;
 	}
 	// cmd set table index
-	if (cxt->cmd_alsc_table_index < 8 && cxt->cmd_alsc_table_index >= 0) {
+	if (cxt->cmd_alsc_table_index < 8) {
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			memcpy(cxt->lsc_buffer, cxt->std_lsc_table_param_buffer[cxt->cmd_alsc_table_index], gain_width * gain_height * 4 * sizeof(cmr_u16));
 		} else {
