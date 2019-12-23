@@ -280,6 +280,8 @@ extern "C" {
 		struct ae_exposure_param last_exp_param;
 		cmr_s32 last_index;
 		cmr_s32 last_enable;
+
+		struct ae_exposure_param backup_touch; /* for backup current param when touch ae*/
 		/*
 		 * just for debug information
 		 */

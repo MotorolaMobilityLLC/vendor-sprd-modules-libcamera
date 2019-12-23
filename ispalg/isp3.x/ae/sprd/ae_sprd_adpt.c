@@ -3721,6 +3721,14 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
 		cxt->last_exp_param.is_ev_setting = cxt->is_ev_setting;
 
+		if(0 != cxt->sync_cur_result.touch_status){
+			cxt->last_exp_param.exp_line = cxt->backup_touch.exp_line;
+			cxt->last_exp_param.exp_time = cxt->backup_touch.exp_time;
+			cxt->last_exp_param.dummy = cxt->backup_touch.dummy;
+			cxt->last_exp_param.gain = cxt->backup_touch.gain;
+			cxt->last_exp_param.line_time = cxt->backup_touch.line_time;
+			ISP_LOGD("use param befor touch.exp line: %d gain: %d",cxt->last_exp_param.exp_line,cxt->last_exp_param.gain);
+		}
 		if(CAMERA_MODE_MANUAL != cxt->app_mode)
 			s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
@@ -4321,7 +4329,14 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 		if ((touch_zone->touch_zone.w > 1) && (touch_zone->touch_zone.h > 1)) {
 			cxt->cur_result.stable = 0;
 			cxt->cur_status.adv_param.touch_roi_flag = 1;
-			cxt->cur_status.adv_param.touch_roi = touch_zone->touch_zone;//ok
+			cxt->cur_status.adv_param.touch_roi = touch_zone->touch_zone;
+
+			cxt->backup_touch.exp_line = cxt->sync_cur_result.ev_setting.exp_line;
+			cxt->backup_touch.exp_time = cxt->sync_cur_result.ev_setting.exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->backup_touch.dummy = cxt->sync_cur_result.ev_setting.dmy_line;
+			cxt->backup_touch.gain = cxt->sync_cur_result.ev_setting.ae_gain;
+			cxt->backup_touch.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
+
 			ISP_LOGD("AE_SET_TOUCH_ZONE ae triger");
 		} else {
 			ISP_LOGV("AE_SET_TOUCH_ZONE touch ignore\n");
