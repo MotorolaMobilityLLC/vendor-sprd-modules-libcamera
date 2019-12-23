@@ -2328,6 +2328,7 @@ void SprdCamera3SinglePortrait::CaptureThread::initBlurWeightParams() {
                 mPreviewWeightParams.roi_type = 1;
             }
         }
+        /*
         if (mSinglePortrait->mCameraId == 0 &&
             mSinglePortrait->mBlurMode != CAM_SINGLE_PORTRAIT_MODE) {
             mPreviewWeightParams.roi_type = 0;
@@ -2335,6 +2336,7 @@ void SprdCamera3SinglePortrait::CaptureThread::initBlurWeightParams() {
             mIsBlurAlways = false;
             mGaussEnable = 1;
         }
+        */
     }
 
     HAL_LOGD("Camera:%d,lib1v:%d,lib2v:%d", mSinglePortrait->mCameraId,
