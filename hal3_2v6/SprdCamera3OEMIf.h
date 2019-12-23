@@ -365,6 +365,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void receiveJpegPictureError(void);
     void HandleGetBufHandle(enum camera_cb_type cb, void *parm4);
     void HandleReleaseBufHandle(enum camera_cb_type cb, void *parm4);
+    void HandleCachedBuf(enum camera_cb_type cb, void *parm4);
     bool returnYuvCallbackFrame(struct camera_frame_type *frame);
     void HandleStopCamera(enum camera_cb_type cb, void *parm4);
     void HandleStartCamera(enum camera_cb_type cb, void *parm4);
@@ -796,6 +797,16 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *m4in1HeapArray[CAP_4IN1_NUM];
     sprd_camera_memory_t *mAISceneScaleHeapReserverd;
     sprd_camera_memory_t *mAutoTrackingScaleHeapReserverd;
+
+    sprd_camera_memory_t *mIspStatsAemHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStatsAfmHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStatsAflHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStatsBayerHistHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStatsYuvHistHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStats3DNRHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStatsEbdHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStatsPdafHeap[ISP_STATS_MAX];
+    sprd_camera_memory_t *mIspStatsLscmHeap[ISP_STATS_MAX];
 
     sprd_camera_memory_t *mPrevDepthHeapReserved;
     sprd_camera_memory_t *mPrevSwOutHeapReserved;

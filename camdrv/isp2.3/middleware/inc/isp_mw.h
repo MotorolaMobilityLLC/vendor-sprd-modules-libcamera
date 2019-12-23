@@ -777,6 +777,8 @@ struct ips_in_param {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
+	cmr_invalidate_buf invalidate_cb;
+	cmr_flush_buf flush_cb;
 	cmr_u32 sensor_id;
     /* new 4in1 solution, for raw capture */
     cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
@@ -844,6 +846,8 @@ struct isp_video_start {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
+	cmr_invalidate_buf invalidate_cb;
+	cmr_flush_buf flush_cb;
 	cmr_u32 is_4in1_sensor;
 	cmr_u32 remosaic_type;
     cmr_u32 is_high_res_mode;

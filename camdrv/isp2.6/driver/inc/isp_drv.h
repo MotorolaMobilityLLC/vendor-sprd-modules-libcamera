@@ -28,6 +28,96 @@
 #error "Hi, This is only for camdrv."
 #endif
 
+
+
+
+/* AFM max windows: 20 x 15, 16 Bytes for each window */
+#define STATIS_AFM_BUF_SIZE  (20 * 15 * 16)
+
+
+/* SharkL5/ROC1/SharkL5Pro */
+/* AFL: global 80 x 16 bytes for one frame, region 482 x 16 bytes one frame */
+//#define STATIS_AFL_GBUF_SIZE   (80 * 16 * 3 + 64)
+#define STATIS_AFL_RBUF_SIZE   (482 * 16 * 3 + 64)
+
+/* SharkL3 */
+/* AFL: global 240 * 8 bytes for one frame, region 964 x 8 bytes one frame */
+//#define STATIS_AFL_GBUF_SIZE3   (240 * 8 * 3 + 64)
+
+
+/* bayerhist:  154 x 16 bytes */
+#define STATIS_HIST_BUF_SIZE   (154 * 16)
+
+
+/* isp yuv hist (only Y) */
+#define STATIS_ISP_HIST2_BUF_SIZE   (256 * 4)
+
+
+#ifdef CONFIG_ISP_2_7
+
+#define STATIS_AEM_BUF_NUM 4
+#define STATIS_AFM_BUF_NUM 4
+#define STATIS_AFL_BUF_NUM 3
+#define STATIS_3DNR_BUF_NUM 6
+#define STATIS_PDAF_BUF_NUM 6
+#define STATIS_EBD_BUF_NUM 4
+#define STATIS_HIST_BUF_NUM   4
+#define STATIS_LSCM_BUF_NUM   4
+#define STATIS_ISP_HIST2_BUF_NUM 4
+
+#define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE)
+
+#else
+
+#ifdef CONFIG_ISP_2_5
+
+#define STATIS_AEM_BUF_NUM 4
+#define STATIS_AFM_BUF_NUM 4
+#define STATIS_AFL_BUF_NUM 3
+#define STATIS_3DNR_BUF_NUM 6
+#define STATIS_PDAF_BUF_NUM 6
+#define STATIS_EBD_BUF_NUM 4
+#define STATIS_HIST_BUF_NUM   0
+#define STATIS_LSCM_BUF_NUM   0
+#define STATIS_ISP_HIST2_BUF_NUM 4
+#define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE3)
+
+#else
+
+#define STATIS_AEM_BUF_NUM 4
+#define STATIS_AFM_BUF_NUM 4
+#define STATIS_AFL_BUF_NUM 3
+#define STATIS_3DNR_BUF_NUM 6
+#define STATIS_PDAF_BUF_NUM 6
+#define STATIS_EBD_BUF_NUM 4
+#define STATIS_HIST_BUF_NUM   4
+#define STATIS_LSCM_BUF_NUM   0
+#define STATIS_ISP_HIST2_BUF_NUM 4
+#define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE)
+
+#endif
+
+/* temp solution for sharkl3 compiling */
+struct lsc_monitor_info {
+	cmr_u32 shift;
+	cmr_u32 work_mode;
+	cmr_u32 skip_num;
+	struct isp_size win_size;
+	struct isp_size win_num;
+	struct isp_trim_size trim;
+};
+struct isp_lsc_statistic_info{
+	cmr_u32 r_info[2];
+	cmr_u32 g_info[2];
+	cmr_u32 b_info[2];
+	cmr_u32 sec;
+	cmr_u32 usec;
+};
+#endif
+
+
+
+
 struct isp_file {
 	cmr_s32 fd;
 	cmr_u32 chip_id;
@@ -43,6 +133,8 @@ struct isp_u_blocks_info {
 struct isp_statis_info {
 	cmr_u32 buf_type;
 	cmr_u32 buf_size;
+	cmr_s32 mfd;
+	cmr_u32 offset;
 	cmr_u32 hw_addr;
 	cmr_uint uaddr;
 	cmr_u64 kaddr;
@@ -54,26 +146,33 @@ struct isp_statis_info {
 	cmr_u32 height;
 };
 
-struct isp_mem_info {
-	cmr_u32 statis_alloc_flag;
-	cmr_u32 statis_mem_size;
-	cmr_u32 statis_mem_num;
-	cmr_s32 statis_mfd;
-	cmr_u64 statis_k_addr;
-	cmr_uint statis_u_addr;
+struct isp_stats_alloc_info {
+	cmr_u32 alloc_num;
+	cmr_u32 alloc_size;
+	cmr_u32 align_alloc_size;
+	cmr_s32 alloc_mfd[STATIS_BUF_NUM_MAX];
+	cmr_uint alloc_uaddr[STATIS_BUF_NUM_MAX];
 
-	/* temp solution for isp hist statis buffer */
-	cmr_u32 isp_alloc_flag;
-	cmr_u32 isp_mem_size;
-	cmr_u32 isp_mem_num;
-	cmr_s32 isp_mfd;
-	cmr_uint isp_u_addr;
+	cmr_u32 size;
+	cmr_u32 align_size;
+	cmr_u32 num;
+	cmr_s32 mfd[STATIS_BUF_NUM_MAX];
+	cmr_u32 offset[STATIS_BUF_NUM_MAX];
+	cmr_uint uaddr[STATIS_BUF_NUM_MAX];
+};
+
+
+struct isp_mem_info {
+	struct isp_stats_alloc_info buf_info[STATIS_TYPE_MAX];
 
 	void *buffer_client_data;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
+	cmr_invalidate_buf invalidate_cb;
+	cmr_flush_buf flush_cb;
 	cmr_handle oem_handle;
 };
+
 
 cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle * handle);
 cmr_s32 isp_dev_close(cmr_handle handle);
@@ -112,6 +211,7 @@ cmr_s32 dcam_u_afl_new_bypass(cmr_handle handle, cmr_u32 bypass);
 cmr_s32 dcam_u_afl_new_block(cmr_handle handle, void *block_info);
 
 cmr_s32 dcam_u_bayerhist_block(cmr_handle handle, void *bayerhist);
+cmr_s32 dcam_u_bayerhist_bypass(cmr_handle handle, cmr_u32 bypass);
 
 cmr_s32 dcam_u_awbc_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_awbc_bypass(cmr_handle handle, cmr_u32 bypass, cmr_u32 scene_id);

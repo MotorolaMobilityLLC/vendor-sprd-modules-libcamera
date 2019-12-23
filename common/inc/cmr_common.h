@@ -97,6 +97,7 @@ extern "C" {
 #define FLASH_CAPTURE_SKIP_FRAME_NUM 0
 #define FOCUS_FAIL 2048
 #define DUAL_PD 4
+#define ISP_STATS_MAX 8
 
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080
@@ -1579,6 +1580,8 @@ enum camera_cb_type {
     CAMERA_EVT_CB_VCM_RESULT,
     CAMERA_EVT_CB_3DNR_SCENE,
     CAMERA_EVT_CB_HIST_REPORT,
+    CAMERA_EVT_CB_INVALIDATE_BUF,
+    CAMERA_EVT_CB_FLUSH_BUF,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1598,6 +1601,7 @@ enum camera_func_type {
 #endif
     CAMERA_FUNC_GET_BUF_HANDLE,
     CAMERA_FUNC_RELEASE_BUF_HANDLE,
+    CAMERA_FUNC_BUFCACHE,
     CAMERA_FUNC_TYPE_MAX
 };
 

@@ -4992,7 +4992,8 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
     cmr_u32 cap_rot = 0;
     cmr_uint reserved_count = 1;
     cmr_u32 aligned_type = 0;
-    cmr_u32 small_w, small_h;
+    cmr_u32 small_w, small_h, reserved_buf_size;
+    cmr_u32 mipi_raw;
     struct prev_context *prev_cxt = NULL;
     struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
     struct memory_param *mem_ops = NULL;
@@ -5058,13 +5059,26 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
                  mem_ops->free_mem);
         return CMR_CAMERA_INVALID_PARAM;
     }
+
     if (!is_restart) {
+        mipi_raw = prev_cxt->sensor_info.sn_interface.is_loose ? 0 : 1;
+        if (mipi_raw)
+            reserved_buf_size = ((width + 15) & ~15) * height * 10 / 8;
+        else
+            reserved_buf_size = ((width + 15) & ~15) * height * 2;
+
+        if (reserved_buf_size < prev_cxt->cap_zsl_mem_size)
+            reserved_buf_size = prev_cxt->cap_zsl_mem_size;
+
         mem_ops->alloc_mem(CAMERA_SNAPSHOT_ZSL_RESERVED, handle->oem_handle,
-                           (cmr_u32 *)&prev_cxt->cap_zsl_mem_size,
+                           (cmr_u32 *)&reserved_buf_size,
                            (cmr_u32 *)&reserved_count,
                            &prev_cxt->cap_zsl_reserved_phys_addr,
                            &prev_cxt->cap_zsl_reserved_virt_addr,
                            &prev_cxt->cap_zsl_reserved_fd);
+        CMR_LOGD("reserved_fd %d, mipi_raw %d, w %d h %d, size 0x%x  zsl_size 0x%x\n",
+                          prev_cxt->cap_zsl_reserved_fd,  mipi_raw, width, height,
+                          reserved_buf_size, (cmr_u32)prev_cxt->cap_zsl_mem_size);
     }
 
     frame_size = prev_cxt->cap_zsl_mem_size;

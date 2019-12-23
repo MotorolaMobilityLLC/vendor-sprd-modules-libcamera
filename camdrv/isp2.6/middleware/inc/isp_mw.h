@@ -21,6 +21,11 @@
 #include "sprd_isp_k.h"
 #include "cmr_sensor_info.h"
 
+
+/* TODO - delete it. PDAF buffer size should be adapt to specific sensor type  */
+#define ISP_PDAF_STATIS_BUF_SIZE  (0x12000)
+
+
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
 #define ISP_EVT_MASK	 0x0000FF00
@@ -827,6 +832,8 @@ struct ips_in_param {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
+	cmr_invalidate_buf invalidate_cb;
+	cmr_flush_buf flush_cb;
 	cmr_u32 sensor_id;
 	cmr_u32 hwsim_4in1_width;
     /* new 4in1 solution, for raw capture */
@@ -852,6 +859,9 @@ struct isp_video_start {
 	void *cb_of_malloc;
 	void *cb_of_free;
 	void *buffer_client_data;
+
+	cmr_invalidate_buf invalidate_cb;
+	cmr_flush_buf flush_cb;
 
 	struct isp_size size;
 	struct isp_size dcam_size;

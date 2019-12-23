@@ -492,6 +492,64 @@ cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
     return ret;
 }
 
+cmr_int camera_invalidate_buf(cmr_handle oem_handle,
+	cmr_s32 buf_fd, cmr_u32 size,
+	cmr_uint phy_addr, cmr_uint vir_addr)
+{
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cam_ion_buffer_t ion_buf;
+
+    if (!oem_handle || buf_fd < 0) {
+        CMR_LOGE("error param oem_handle %p fd %d", oem_handle, buf_fd);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    if (cxt->camera_cb == NULL) {
+        CMR_LOGE("cxt->camera_cb is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ion_buf.fd = (int)buf_fd;
+    ion_buf.size = (size_t)size;
+    ion_buf.addr_phy = (void *)&phy_addr;
+    ion_buf.addr_vir = (void *)&vir_addr;
+    cxt->camera_cb(CAMERA_EVT_CB_INVALIDATE_BUF,
+                          cxt->client_data, CAMERA_FUNC_BUFCACHE,
+                          (void *)&ion_buf);
+exit:
+    return ret;
+}
+
+cmr_int camera_flush_buf(cmr_handle oem_handle,
+	cmr_s32 buf_fd, cmr_u32 size,
+	cmr_uint phy_addr, cmr_uint vir_addr)
+{
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cam_ion_buffer_t ion_buf;
+
+    if (!oem_handle || buf_fd < 0) {
+        CMR_LOGE("error param oem_handle %p fd %d", oem_handle, buf_fd);
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    if (cxt->camera_cb == NULL) {
+        CMR_LOGE("cxt->camera_cb is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ion_buf.fd = (int)buf_fd;
+    ion_buf.size = (size_t)size;
+    ion_buf.addr_phy = (void *)&phy_addr;
+    ion_buf.addr_vir = (void *)&vir_addr;
+    cxt->camera_cb(CAMERA_EVT_CB_FLUSH_BUF,
+                          cxt->client_data, CAMERA_FUNC_BUFCACHE,
+                          (void *)&ion_buf);
+exit:
+    return ret;
+}
+
 cmr_int camera_write_sysfs_file(const char *filename, cmr_u32 value) {
     int32_t bytes = 0;
     char buffer[16];
@@ -3907,6 +3965,7 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
     }
     cmr_bzero(isp_cxt, sizeof(*isp_cxt));
 
+#if defined(CONFIG_ISP_2_3)
     if (cxt->lsc_malloc_flag == 1) {
         if (cxt->hal_free) {
             cxt->hal_free(CAMERA_ISP_LSC, &cxt->isp_lsc_phys_addr,
@@ -3915,6 +3974,7 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
         }
         cxt->lsc_malloc_flag = 0;
     }
+#endif
 
     if (cxt->is_real_bokeh) {
         // DEPTH
@@ -7079,6 +7139,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         in_param.oem_handle = oem_handle;
         in_param.alloc_cb = camera_malloc;
         in_param.free_cb = camera_free;
+        in_param.invalidate_cb = camera_invalidate_buf;
+        in_param.flush_cb = camera_flush_buf;
 
         in_param.src_frame.img_fmt = param_ptr->src_frame.fmt;
         in_param.src_frame.img_size.w = param_ptr->src_frame.size.width;
@@ -7309,6 +7371,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     isp_param.format = ISP_DATA_NORMAL_RAW10;
     isp_param.mode = ISP_VIDEO_MODE_CONTINUE;
 
+#if defined(CONFIG_ISP_2_3)
     if (cxt->lsc_malloc_flag == 0) {
         cmr_u32 lsc_buf_size = 0;
         cmr_u32 lsc_buf_num = 0;
@@ -7328,6 +7391,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
                         &cxt->lsc_mfd, cxt->client_data);
         cxt->lsc_malloc_flag = 1;
     }
+#endif
 
     isp_param.lsc_phys_addr = cxt->isp_lsc_phys_addr;
     isp_param.lsc_virt_addr = cxt->isp_lsc_virt_addr;
@@ -7338,6 +7402,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     isp_param.oem_handle = oem_handle;
     isp_param.alloc_cb = camera_malloc;
     isp_param.free_cb = camera_free;
+    isp_param.invalidate_cb = camera_invalidate_buf;
+    isp_param.flush_cb = camera_flush_buf;
 
     if (0 == param_ptr->work_mode) {
         work_mode = param_ptr->work_mode;
