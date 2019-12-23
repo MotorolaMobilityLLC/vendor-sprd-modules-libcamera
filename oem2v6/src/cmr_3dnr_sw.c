@@ -548,19 +548,21 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else {
         CMR_LOGD("ok to call threednr_init");
     }
+    if(cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+        ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
+                                    &isp_cmd_parm);
+        if (ret) {
+            CMR_LOGE("failed to get isp param  %ld", ret);
+        }
 
-    ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
-                                &isp_cmd_parm);
-    if (ret) {
-        CMR_LOGE("failed to get isp param  %ld", ret);
+        memcpy(process_param.proc_param.setpara_param.thr, isp_cmd_parm.threednr_param.threshold, (4*sizeof(int)));
+        memcpy(process_param.proc_param.setpara_param.slp, isp_cmd_parm.threednr_param.slope, (4 * sizeof(int)));
+        ret = sprd_3dnr_adpt_ctrl((void *)(threednr_handle->proc_handle), SPRD_3DNR_PROC_SET_PARAMS_CMD, (void *)&process_param);
+        if(ret != 0){
+            CMR_LOGE("failed to set 3dnr init params. ret = %d",ret);
+        }
     }
 
-    memcpy(process_param.proc_param.setpara_param.thr, isp_cmd_parm.threednr_param.threshold, (4*sizeof(int)));
-    memcpy(process_param.proc_param.setpara_param.slp, isp_cmd_parm.threednr_param.slope, (4 * sizeof(int)));
-    ret = sprd_3dnr_adpt_ctrl((void *)(threednr_handle->proc_handle), SPRD_3DNR_PROC_SET_PARAMS_CMD, (void *)&process_param);
-    if(ret != 0){
-        CMR_LOGE("failed to set 3dnr init params. ret = %d",ret);
-    }
     *class_handle = threednr_handle;
     CMR_LOGD("X");
     return ret;
