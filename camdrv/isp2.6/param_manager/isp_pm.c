@@ -1353,13 +1353,15 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 	struct isp_pm_param_data *param_data_ptr = PNULL;
 	struct isp_video_start *param_ptr = PNULL;
 	struct isp_pm_ioctl_output *result_ptr = PNULL;
-	struct isp_pm_context *pm_cxt_ptr = (struct isp_pm_context *)handle;
+	struct isp_pm_context *pm_cxt_ptr = PNULL;
 
-	if ((PNULL == pm_cxt_ptr) || (PNULL == out_ptr)) {
-		ISP_LOGE("fail to get valid param : pm_cxt_ptr = %p, out_ptr = %p", pm_cxt_ptr, out_ptr);
+	if ((PNULL == out_ptr) || (PNULL == in_ptr) || PNULL == handle){
+		ISP_LOGE("out_ptr = %p, in_ptr = %p, handle = %p",
+                    out_ptr, in_ptr, handle);
 		rtn = ISP_ERROR;
 		return rtn;
 	}
+	pm_cxt_ptr = (struct isp_pm_context *)handle;
 
 	if (cmd == ISP_PM_CMD_GET_DV_MODEID_BY_FPS ||
 		cmd == ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION ||

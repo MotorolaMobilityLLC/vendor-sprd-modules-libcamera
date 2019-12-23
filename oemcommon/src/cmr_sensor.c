@@ -1191,10 +1191,17 @@ cmr_int cmr_get_otp_from_kernel(struct sensor_drv_context *sensor_cxt,
     struct _sensor_otp_param_tag param_ptr;
     struct sensor_data_info sensor_otp;
     uint32_t otp_data_len = 0;
-    SENSOR_VAL_T *val = (SENSOR_VAL_T *)arg;
-    cmr_int fd_sensor = sensor_cxt->fd_sensor;
+    SENSOR_VAL_T *val = NULL;
+    cmr_int fd_sensor = 0;
 
+    if (NULL == sensor_cxt || NULL == read_flag) {
+        CMR_LOGE("null: 0x%p 0x%p", sensor_cxt, read_flag);
+        return -CMR_CAMERA_INVALID_PARAM;
+    }
     *read_flag = 0;
+    val = (SENSOR_VAL_T *)arg;
+    fd_sensor = sensor_cxt->fd_sensor;
+
     if ((SENSOR_ACCESS_VAL == cmd) && SENSOR_VAL_TYPE_READ_OTP == val->type) {
         cmr_bzero(&param_ptr, sizeof(param_ptr));
         cmr_bzero(&sensor_otp, sizeof(sensor_otp));
@@ -1254,19 +1261,27 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
     cmr_u32 ret = CMR_CAMERA_SUCCESS;
     cmr_u32 sns_cmd = SENSOR_IOCTL_GET_STATUS;
     cmr_u8 read_flag = 0;
-    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+    SENSOR_MATCH_T *module = NULL;
+
+    if (sensor_cxt == NULL) {
+        CMR_LOGE("sensor_cxt is null");
+        return -CMR_CAMERA_INVALID_PARAM;
+    }
+    module = sensor_cxt->current_module;
+    if (NULL == module) {
+        CMR_LOGE("module is null");
+        return -CMR_CAMERA_INVALID_PARAM;
+    }
 
     ret = cmr_sns_get_ioctl_cmd(&sns_cmd, cmd);
     if (ret) {
         CMR_LOGE("can't get correct command !\n");
-        return CMR_CAMERA_INVALID_PARAM;
+        return -CMR_CAMERA_INVALID_PARAM;
     }
 
     if (SENSOR_IOCTL_GET_STATUS != sns_cmd) {
         CMR_LOGI("cmd = %d, arg = 0x%lx.\n", sns_cmd, arg);
     }
-
-    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
     if (!sensor_is_init_common(sensor_cxt)) {
         CMR_LOGE("sensor has not init.\n");

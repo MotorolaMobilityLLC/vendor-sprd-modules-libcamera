@@ -3927,18 +3927,39 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	static cmr_u32 buf_len = 0;
 	cmr_u32 data_len = 0;
 
-	cmr_u8 mode_id = write_cmd->isp_mode;
+	cmr_u8 mode_id = 0;
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
 	struct isp_mode_param_info mode_param_info;
 	struct sensor_raw_note_info sensor_note_param;
 	struct msg_head_tag *msg_ret = (struct msg_head_tag *)(eng_rsp_diag + 1);
-	memset(&mode_param_info, 0, sizeof(struct isp_mode_param_info));
-	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
+
 	cmr_u32 len_msg = sizeof(struct msg_head_tag);
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = NULL;
+	struct sensor_raw_info *sensor_raw_info_ptr = NULL;
+
+	if (!isp_handler || !write_cmd || !msg || !isp_data_ptr) {
+		ISP_LOGE("NULL ptr: 0x%p 0x%p 0x%p 0x%p", isp_handler, write_cmd,
+			msg, isp_data_ptr);
+		return ISP_ERROR;
+	}
+
+	sensor_info_ptr = Sensor_GetInfo();
+	if (NULL == sensor_info_ptr) {
+		ISP_LOGE("NULL ptr sensor_info_ptr");
+		return ISP_ERROR;
+	}
+	sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	if (NULL == sensor_raw_info_ptr) {
+		ISP_LOGE("NULL ptr sensor_raw_info_ptr");
+		return ISP_ERROR;
+	}
+
+	mode_id = write_cmd->isp_mode;
+	memset(&mode_param_info, 0, sizeof(struct isp_mode_param_info));
+	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
+
 	if (MAX_MODE_NUM > mode_id) {
 		if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
 			sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
@@ -3956,10 +3977,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			return ISP_ERROR;
 		}
 	}
-	if (!isp_data_ptr) {
-		ISP_LOGE("fail to check param");
-		return ISP_ERROR;
-	}
+
 	ISP_LOGD("down_isp_param write_cmd->main_type %d, mode %d\n", write_cmd->main_type, mode_id);
 
 	switch (write_cmd->main_type) {

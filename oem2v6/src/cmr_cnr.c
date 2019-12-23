@@ -145,24 +145,34 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_uint i = 0;
     cmr_uint max_radius = 0;
-    struct class_cnr *cnr_handle = (struct class_cnr *)class_handle;
+    struct class_cnr *cnr_handle = NULL;
     struct img_addr *addr;
-    struct camera_context *cxt = (struct camera_context *)in->private_data;
+    struct camera_context *cxt = NULL;
     YNR_Param ynrParam;
     CNR_Parameter cnr2Param;
     cnr_param_t cnr3Param;
-    sprd_yuv_denoise_cmd_t mode = cxt->nr_flag - 1;
+    sprd_yuv_denoise_cmd_t mode = 0;
     sprd_yuv_denoise_param_t denoise_param;
+
+    CMR_LOGV("E ");
+
+    if (!in || !class_handle || !out) {
+        CMR_LOGE("Invalid Param!");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
     cmr_bzero(&cnr2Param, sizeof(CNR_Parameter));
     cmr_bzero(&cnr3Param, sizeof(cnr_param_t));
     cmr_bzero(&denoise_param, sizeof(sprd_yuv_denoise_param_t));
 
-    if (!in || !class_handle || !cxt || !cnr_handle->handle) {
-        CMR_LOGE("Invalid Param!");
+    cnr_handle = (struct class_cnr *)class_handle;
+    cxt = (struct camera_context *)in->private_data;
+    if (!cxt || !cnr_handle->handle) {
+        CMR_LOGE("null ptr: 0x%p 0x%p", cxt, cnr_handle->handle);
         return CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGV("E ");
+    mode = cxt->nr_flag - 1;
+
     if (!cnr_handle->is_inited) {
         return ret;
     }
@@ -296,24 +306,34 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
                                   struct ipm_frame_in *in,
                                   struct ipm_frame_out *out) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct class_cnr *cnr_handle = (struct class_cnr *)class_handle;
+    struct class_cnr *cnr_handle = NULL;
     struct img_addr *addr;
-    struct camera_context *cxt = (struct camera_context *)in->private_data;
+    struct camera_context *cxt = NULL;
     YNR_Param ynrParam;
     CNR_Parameter cnr2Param;
     cnr_param_t cnr3Param;
-    sprd_yuv_denoise_cmd_t mode = cxt->nr_flag - 1;
+    sprd_yuv_denoise_cmd_t mode = 0;
     sprd_yuv_denoise_param_t denoise_param;
+
+    CMR_LOGV("E ");
+
+    if (!in || !class_handle || !out) {
+        CMR_LOGE("null ptr: 0x%p 0x%p 0x%p", in, class_handle, out);
+        return CMR_CAMERA_INVALID_PARAM;
+    }
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
     cmr_bzero(&cnr2Param, sizeof(CNR_Parameter));
     cmr_bzero(&cnr3Param, sizeof(cnr_param_t));
     cmr_bzero(&denoise_param, sizeof(sprd_yuv_denoise_param_t));
 
-    if (!in || !class_handle || !cxt || !cnr_handle->handle) {
-        CMR_LOGE("Invalid Param!");
+    cnr_handle = (struct class_cnr *)class_handle;
+    cxt = (struct camera_context *)in->private_data;
+    if (!cnr_handle->handle || !cxt) {
+        CMR_LOGE("null ptr: 0x%p 0x%p", cnr_handle->handle, cxt);
         return CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGV("E ");
+    mode = cxt->nr_flag - 1;
+
     if (!cnr_handle->is_inited) {
         return ret;
     }
