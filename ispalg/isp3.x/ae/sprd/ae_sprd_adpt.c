@@ -2014,6 +2014,8 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 		if ((CAMERA_MODE_MANUAL == cxt->app_mode) && (cxt->flash_backup.mode == AE_MODE_AUTO_ISO_PRI)) {
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
+			cxt->flash_backup.mode = AE_MODE_AUTO;
+			ISP_LOGD("flash_backup mode reset");
 		}
 
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
