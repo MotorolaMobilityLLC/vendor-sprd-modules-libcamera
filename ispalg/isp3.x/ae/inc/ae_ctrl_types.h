@@ -108,6 +108,7 @@ extern "C" {
 		AE_SET_TOUCH_ZONE,
 		AE_SET_3DNR_MODE,
 		AE_SET_3DNR_THR,
+		AE_SET_AF_STATUS,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
