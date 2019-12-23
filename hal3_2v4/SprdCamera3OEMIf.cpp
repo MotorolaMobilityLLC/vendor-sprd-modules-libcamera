@@ -4315,6 +4315,14 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
         if (mRedisplayFum && mRedisplayFum == frame_num) {
             HAL_LOGD("redisplay frame,skip");
+            if (callback_stream) {
+                ret = callback_stream->getQBufAddrForNum(frame_num, &callbuf_vir,
+                                                         &callbuf_phy, &callbuf_fd);
+            }
+            if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE &&
+                (ret || callbuf_vir == 0)) {
+                timer_set(this, 1, timer_hand_take);
+            }
             channel->channelClearAllQBuff(buffer_timestamp,
                                           CAMERA_STREAM_TYPE_PREVIEW);
             goto bypass_pre;
