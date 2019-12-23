@@ -641,7 +641,7 @@ int SprdCamera3HWI::configureStreams(
     cam_dimension_t raw_size = {0, 0};
     cam_dimension_t capture_size = {0, 0};
     SPRD_DEF_Tag sprddefInfo;
-
+    bool regular_channel_configed = false;
     ret = checkStreamList(streamList);
     if (ret) {
         HAL_LOGE("check failed ret=%d", ret);
@@ -710,9 +710,6 @@ int SprdCamera3HWI::configureStreams(
         }
     }
 
-    mRegularChan->clearAllStreams();
-    mPicChan->clearAllStreams();
-
     /* Allocate channel objects for the requested streams */
     for (size_t i = 0; i < streamList->num_streams; i++) {
         camera3_stream_t *newStream = streamList->streams[i];
@@ -769,6 +766,10 @@ int SprdCamera3HWI::configureStreams(
         switch (channel_type) {
         case CAMERA_CHANNEL_TYPE_REGULAR: {
             mRegularChan->stop(mFrameNum);
+            if (!regular_channel_configed) {
+                mRegularChan->clearAllStreams();
+                regular_channel_configed = true;
+            }
             ret = mRegularChan->addStream(stream_type, newStream);
             if (ret) {
                 HAL_LOGE("addStream failed");
@@ -822,6 +823,10 @@ int SprdCamera3HWI::configureStreams(
         case CAMERA_CHANNEL_TYPE_RAW_CALLBACK: {
             mRegularChan->stop(mFrameNum);
             mPicChan->stop(mFrameNum);
+            if (!regular_channel_configed) {
+                mRegularChan->clearAllStreams();
+                regular_channel_configed = true;
+            }
             ret =
                 mRegularChan->addStream(CAMERA_STREAM_TYPE_CALLBACK, newStream);
             if (ret) {
