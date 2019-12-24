@@ -2213,10 +2213,14 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
             if (mPortrait->mApiVersion == SPRD_API_PORTRAIT_MODE) {
                 HAL_LOGD("mPortrait->mPortraitFlag %d",
                          mPortrait->mPortraitFlag);
+                /*
                 if ((mPortrait->mPortraitFlag &&
                      mPortrait->mBokehMode == CAM_DUAL_PORTRAIT_MODE) ||
                     (mPortrait->mDoPortrait &&
                      mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)) {
+                */
+                if (mPortrait->mDoPortrait && mPortrait->mPortraitFlag &&
+                     (mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)) {
                     rc = sprdDepthCaptureHandle(
                         capture_msg.combo_buff.buffer1, input_buf1_addr,
                         capture_msg.combo_buff.buffer2, output_buffer);
@@ -3109,13 +3113,15 @@ int SprdCamera3Portrait::configureStreams(
 
     rc = mBokehAlgo->initParam(&mBokehSize, &mOtpData,
                                mCaptureThread->mAbokehGallery);
-    rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
+    if(mPortraitFlag){
+        rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
                                         mCaptureThread->mAbokehGallery);
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to initPortraitParams");
-        mPortraitFlag = false;
-        rc = NO_ERROR;
-        // return rc;
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to initPortraitParams");
+            mPortraitFlag = false;
+            rc = NO_ERROR;
+            // return rc;
+        }
     }
 
     if (mPortraitFlag) {
@@ -3195,7 +3201,7 @@ const camera_metadata_t *SprdCamera3Portrait::constructDefaultRequestSettings(
         memcpy(mOtpData.otp_data, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,
                otpSize);
     }
-
+    HAL_LOGD("mOtpData.otp_exist %d, mPortraitFlag %d", mOtpData.otp_exist, mPortraitFlag);
     HAL_LOGD("X");
 
     return fwk_metadata;
@@ -4950,11 +4956,14 @@ void *SprdCamera3Portrait::jpeg_callback_thread_proc(void *p_data) {
         save_param = true;
     }
 #endif
+    /*
     if (save_param && mPortrait->mBokehMode == CAM_DUAL_PORTRAIT_MODE) {
         obj->mCaptureThread->saveCaptureBokehParams(result_buffer_addr,
                                                     obj->mjpegSize, jpeg_size);
         obj->dumpCaptureBokeh(result_buffer_addr, jpeg_size);
-    } else {
+    } else
+    */
+    {
         obj->setJpegSize((char *)result_buffer_addr, obj->mjpegSize, jpeg_size);
     }
     obj->unmap(output_buffers->buffer);
