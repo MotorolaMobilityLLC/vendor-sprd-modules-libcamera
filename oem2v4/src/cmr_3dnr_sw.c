@@ -552,6 +552,16 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     // threednr_cancel();
     CMR_LOGI("OK to threednr_cancel");
 
+    ret = threednr_setstop_flag(threednr_handle->proc_handle);
+    if (ret) {
+        CMR_LOGE("3dnr failed to stop cmd");
+    }
+
+    ret = threednr_thread_destroy(threednr_handle);
+    if (ret) {
+        CMR_LOGE("3dnr failed to destroy 3dnr thread");
+    }
+
     ret = threednr_deinit((void*)&threednr_handle->proc_handle);
     if (ret) {
         CMR_LOGE("3dnr failed to threednr_deinit");
@@ -560,10 +570,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
 
-    ret = threednr_thread_destroy(threednr_handle);
-    if (ret) {
-        CMR_LOGE("3dnr failed to destroy 3dnr thread");
-    }
+
 
     if (NULL != threednr_handle)
         free(threednr_handle);
