@@ -6230,12 +6230,19 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
 
-#ifndef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+    uint8_t Section = 0;
+    char prop[PROPERTY_VALUE_MAX] = {0};
+    property_get("persist.vendor.cam.multi.section", prop, "3");
+    if (atoi(prop) == 2) {
+        Section = 2;
+    } else if (atoi(prop) == 3){
+        Section = 3;
+    }
+
     if (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) &&
-        zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
+        zoomRatio > MAX_DIGITAL_ZOOM_RATIO && Section == 3) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
-#endif
 
     mZoomInfo.mode = ZOOM_INFO;
     HAL_LOGD("mCameraId=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,

@@ -68,12 +68,6 @@
 #define SIDEBYSIDE_MAIN_WIDTH 1600
 #define SIDEBYSIDE_HEIGH 1200
 
-#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
-#define PROJECT_SUPPORT_MAX_ZOOM_RATIO 8
-#else
-#define PROJECT_SUPPORT_MAX_ZOOM_RATIO 5
-#endif
-
 #define ISP_HW_SUPPORT_MAX_ZOOM_RATIO 4
 
 #define PREV_EVT_BASE (CMR_EVT_PREVIEW_BASE + 0x100)
@@ -6094,6 +6088,15 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         is_raw_capture = 1;
     }
 
+    float max_zoom_ratio = 0;
+    char prop[PROPERTY_VALUE_MAX] = {0};
+    property_get("persist.vendor.cam.multi.section", prop, "3");
+    if (atoi(prop) == 2) {
+        max_zoom_ratio = 8.0;
+    } else if (atoi(prop) == 3){
+        max_zoom_ratio = 5.0;
+    }
+
     if (cxt->is_multi_mode == MODE_3D_VIDEO) {
         is_3D_video = 1;
     } else if (cxt->is_multi_mode == MODE_3D_CAPTURE) {
@@ -6157,7 +6160,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
                         if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                            if (width / PROJECT_SUPPORT_MAX_ZOOM_RATIO >=
+                            if (width / max_zoom_ratio >=
                                 prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                 /* dont choose high fps setting for no-slowmotion */
                                 ret = handle->ops.get_sensor_fps_info(
@@ -6233,6 +6236,15 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
+    }
+
+    float max_zoom_ratio = 0;
+    char prop[PROPERTY_VALUE_MAX] = {0};
+    property_get("persist.vendor.cam.multi.section", prop, "3");
+    if (atoi(prop) == 2) {
+        max_zoom_ratio = 8.0;
+    } else if (atoi(prop) == 3){
+        max_zoom_ratio = 5.0;
     }
 
     if (cxt->is_multi_mode == MODE_3D_VIDEO) {
@@ -6337,7 +6349,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                         sensor_info->mode_info[i].image_format) {
                         if (search_height <= height && search_width <= width) {
                             if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                                if (width / PROJECT_SUPPORT_MAX_ZOOM_RATIO >=
+                                if (width / max_zoom_ratio >=
                                     prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                     /* dont choose high fps setting for no-slowmotion */
                                     ret = handle->ops.get_sensor_fps_info(
