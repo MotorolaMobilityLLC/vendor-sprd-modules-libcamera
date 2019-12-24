@@ -1694,8 +1694,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			}
 			data_len = isp_mode_num;
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
+				memset((cmr_u8 *) data_addr, 0x00, data_len);
 				memcpy((cmr_u8 *) data_addr, data_mode_id, isp_mode_num);
 				rtn = send_isp_mode_id_param(read_cmd, msg, data_addr, data_len);
 			}

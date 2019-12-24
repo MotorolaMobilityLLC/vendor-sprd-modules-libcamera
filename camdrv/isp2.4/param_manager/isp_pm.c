@@ -675,6 +675,8 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 		multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
 	} else {
 		multi_nr_flag = SENSOR_DEFAULT_MODE_FLAG;
+		ISP_LOGE("nr_fix_ptr NULL error!");
+		return ISP_ERROR;
 	}
 
 	if (output)
