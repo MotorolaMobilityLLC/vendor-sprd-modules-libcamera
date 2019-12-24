@@ -529,6 +529,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 			}
 			#endif
 
+			in_param.mode = AE_SYNC_1;
 			in_param.num = sync_info_master.num;
 			ae_sync_in_ae_lib_data_dump(in_param.sync_param[0]);
 			ae_sync_in_ae_lib_data_dump(in_param.sync_param[1]);
@@ -577,6 +578,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 				ISP_LOGV("sync:not all sensor work");
 			}
 		}else {
+			in_param.mode = AE_SYNC_0;
 			in_param.num = sync_info_master.num;
 			ae_sync_in_ae_lib_data_dump(in_param.sync_param[0]);
 			ae_sync_in_ae_lib_data_dump(in_param.sync_param[1]);
@@ -918,7 +920,11 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		slave0_ae_sync_info_ptr->ev_setting.dmy_line = ae_sync_slave[0].dmy_line;
 		slave0_ae_sync_info_ptr->ev_setting.exp_time = ae_sync_slave[0].exp_time;
 		slave0_ae_sync_info_ptr->ev_setting.frm_len =  ae_sync_slave[0].frm_len;
-
+		if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+			in_param.mode = AE_SYNC_1;
+		} else {
+			in_param.mode = AE_SYNC_0;
+		}
 		if ((cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) && (sensor_has_num != 2)) {
 
 			if(slave_aem_info[1].aem_stat_blk_pixels)

@@ -36,6 +36,11 @@ enum ae_cmd_type {
 	AE_LIB_CMD_MAX
 };
 
+enum ae_sync_type {
+	AE_SYNC_0,/*fps & brightness sync: for bokeh*/
+	AE_SYNC_1,/*for brigness sync: for zoom*/
+};
+
 struct tar_lum_range{//added by feifan.wang
 	cmr_u32 target_lum_range_in_bak;
 	cmr_u32 target_lum_range_out_bak;
@@ -162,6 +167,7 @@ struct ae_lib_calc_out  {
 	cmr_u16 stab_zone_out;
 	struct ae_range target_range;
 	cmr_u32 flash_status;
+	cmr_s8 touch_status;
 	float cur_fps;				/*current fps:1~120 */
 	cmr_u16 abl_confidence;
 	cmr_s32 evd_value;
@@ -237,6 +243,7 @@ struct ae_frm_sync_param {
 };
 
 struct ae_lib_frm_sync_in{//ae_dynamic_sync struct
+	cmr_u32 mode;/**/
 	cmr_u32 num;
 	struct ae_frm_sync_param* sync_param[4];/*benchmark sensor is must the first one*/
 };
