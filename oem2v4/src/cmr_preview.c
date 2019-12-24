@@ -2436,7 +2436,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 refocus_eb;
     cmr_u32 pdaf_eb = 0;
     struct prev_context *prev_cxt = NULL;
-    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct camera_context *cxt = NULL;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -2445,6 +2445,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
     preview_enable = prev_cxt->prev_param.preview_eb;
     snapshot_enable = prev_cxt->prev_param.snapshot_eb;
@@ -3378,6 +3379,7 @@ exit:
 
 cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
                                   struct frm_info *data) {
+
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
     cmr_u32 channel_bits = 0;
@@ -3385,7 +3387,7 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint i;
     cmr_uint hdr_num = HDR_CAP_NUM;
     cmr_uint threednr_num = CAP_3DNR_NUM;
-    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    struct camera_context *cxt = NULL;
     struct timespec ts;
 
     CHECK_HANDLE_VALID(handle);
@@ -3401,6 +3403,7 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
+    cxt = (struct camera_context *)(handle->oem_handle);
     prev_cxt = &handle->prev_cxt[camera_id];
     channel_bits = 1 << prev_cxt->cap_channel_id;
 
@@ -5476,13 +5479,14 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
     cmr_uint reserved_count = 1;
     cmr_u32 aligned_type = 0;
     struct prev_context *prev_cxt = NULL;
-    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct camera_context *cxt = NULL;
     struct memory_param *mem_ops = NULL;
     cmr_int zoom_post_proc = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
+    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
     CMR_LOGD("is_restart %d", is_restart);
 
@@ -5618,7 +5622,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint reserved_count = 1;
     cmr_u32 aligned_type = 0;
     struct prev_context *prev_cxt = NULL;
-    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct camera_context *cxt = NULL;
     struct memory_param *mem_ops = NULL;
     cmr_int zoom_post_proc = 0;
 
@@ -5629,6 +5633,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
     CMR_LOGD("is_restart %d", is_restart);
 
@@ -7167,13 +7172,15 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_context *prev_cxt = NULL;
     struct img_frm *frm_ptr = NULL;
     cmr_int zoom_post_proc = 0;
-    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    struct camera_context *cxt = NULL;
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
         ret = CMR_CAMERA_FAIL;
         return ret;
     }
+
+    cxt = (struct camera_context *)(handle->oem_handle);
 
     prev_chn_id = handle->prev_cxt[camera_id].prev_channel_id;
     cap_chn_id = handle->prev_cxt[camera_id].cap_channel_id;
@@ -7241,13 +7248,15 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct camera_context *cxt = NULL;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     if (!out_param_ptr) {
         CMR_LOGD("out_param_ptr is null");
     }
+
+    cxt = (struct camera_context *)handle->oem_handle;
 
     /*cmr_bzero(out_param_ptr, sizeof(struct preview_out_param));*/
 
@@ -7490,7 +7499,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     struct video_start_param video_param;
     struct img_data_end endian;
     struct buffer_cfg buf_cfg;
-    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct camera_context *cxt = NULL;
     cmr_u32 i;
 
     CHECK_HANDLE_VALID(handle);
@@ -7499,6 +7508,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(&chn_param, sizeof(struct channel_start_param));
     cmr_bzero(&video_param, sizeof(struct video_start_param));
     CMR_LOGD("camera_id %d", camera_id);
+    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
 
     chn_param.sensor_mode = prev_cxt->prev_mode;
@@ -10651,11 +10661,13 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     struct buffer_cfg buf_cfg, res_cfg;
     cmr_uint rot_index = 0;
     cmr_int zoom_post_proc = 0;
-    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
-    prev_cxt = &handle->prev_cxt[camera_id];
+    struct camera_context *cxt = NULL;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
+
+    cxt = (struct camera_context *)(handle->oem_handle);
+    prev_cxt = &handle->prev_cxt[camera_id];
 
     if (fd != prev_cxt->cap_zsl_reserved_frm.fd) {
         if (!src_vir_addr) {

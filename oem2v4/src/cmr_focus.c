@@ -901,12 +901,12 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
     cmr_u32 af_cancel_is_ext = 0;
     cmr_u32 focus_stop_prew = 0;
     SENSOR_EXT_FUN_PARAM_T af_param;
+    struct camera_context *cxt = NULL;
     struct isp_af_win isp_af_param;
     struct common_isp_cmd_param com_isp_af;
     struct sensor_exp_info sensor_info;
     struct af_context *af_cxt = (struct af_context *)af_handle;
     struct common_sn_cmd_param yuv_sn_param;
-    struct camera_context *cxt = (struct camera_context *)af_cxt->oem_handle;
 
     cmr_bzero(&af_param, sizeof(af_param));
     cmr_bzero(&isp_af_param, sizeof(isp_af_param));
@@ -919,6 +919,8 @@ cmr_int af_start(cmr_handle af_handle, cmr_u32 camera_id) {
         CMR_LOGE("handle param invalid");
         return CMR_CAMERA_INVALID_PARAM;
     }
+
+    cxt = (struct camera_context *)af_cxt->oem_handle;
 
     if (!af_cxt->ops.get_sensor_info) {
         CMR_LOGE("ops is null");

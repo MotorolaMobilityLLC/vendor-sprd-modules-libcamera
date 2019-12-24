@@ -137,26 +137,29 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_cnr *cnr_handle = (struct class_cnr *)class_handle;
     struct img_addr *addr;
+    struct camera_context *cxt = NULL;
     cmr_uint width = 0;
     cmr_uint height = 0;
-    struct camera_context *cxt = (struct camera_context *)in->private_data;
     denoise_buffer imgBuffer;
     Denoise_Param denoiseParam;
     YNR_Param ynrParam;
     CNR_Parameter cnrParam;
-    denoise_mode mode = cxt->nr_flag - 1;
     cmr_bzero(&imgBuffer, sizeof(denoise_buffer));
     cmr_bzero(&denoiseParam, sizeof(Denoise_Param));
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
     cmr_bzero(&cnrParam, sizeof(CNR_Parameter));
 
-    if (!in || !class_handle || !cxt || !cnr_handle->handle) {
+    if (!in || !class_handle || !in->private_data || !cnr_handle->handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
     if (!cnr_handle->is_inited) {
         return ret;
     }
+
+    cxt = (struct camera_context *)in->private_data;
+    denoise_mode mode = cxt->nr_flag - 1;
+
     sem_wait(&cnr_handle->sem);
     imgBuffer.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
     imgBuffer.bufferUV = (unsigned char *)in->src_frame.addr_vir.addr_u;

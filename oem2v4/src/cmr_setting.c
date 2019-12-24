@@ -1608,6 +1608,9 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                 exif_unit->picture_size.width;
         }
         p_exif_info->spec_ptr->basic.MimeType = exif_mime_type;
+        CMR_LOGD("SPECEXIF width:%d, height:%d \n",
+             p_exif_info->spec_ptr->basic.PixelXDimension,
+             p_exif_info->spec_ptr->basic.PixelYDimension);
     }
     rotation_angle = setting_get_exif_orientation(hal_param->encode_rotation);
     if (rotation_angle == ORIENTATION_ROTATE_90 ||
@@ -1622,11 +1625,9 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         p_exif_info->primary.basic.ImageLength =
             exif_unit->actual_picture_size.height;
     }
-    CMR_LOGD("EXIF width=%d, height=%d, SPECEXIF width:%d, height:%d \n",
+    CMR_LOGD("EXIF width=%d, height=%d \n",
              p_exif_info->primary.basic.ImageWidth,
-             p_exif_info->primary.basic.ImageLength,
-             p_exif_info->spec_ptr->basic.PixelXDimension,
-             p_exif_info->spec_ptr->basic.PixelYDimension);
+             p_exif_info->primary.basic.ImageLength);
 
     if (NULL != p_exif_info->primary.data_struct_ptr) {
 #ifdef MIRROR_FLIP_ROTATION_BY_JPEG
