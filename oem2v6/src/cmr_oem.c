@@ -5905,7 +5905,11 @@ exit:
     return rtn;
 }
 
-static void watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
+/* return: 0: not add logo or time, for flush memory
+ *         WATERMARK_LOGO: add logo
+ *         WATERMARK_TIME: add time
+ */
+static int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
                               sizeParam_t *sizeparam) {
     cmr_int ret;
     cmr_int flag;
@@ -5913,8 +5917,9 @@ static void watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
     flag = camera_get_watermark_flag(oem_handle);
     CMR_LOGI("watermark flag %x,[%d %d]", flag, sizeparam->imgW,
              sizeparam->imgH);
-    if ((flag & (WATERMARK_LOGO | WATERMARK_TIME)) == 0x00)
-        return;
+    flag = flag & (WATERMARK_LOGO | WATERMARK_TIME);
+    if (flag == 0x00)
+        return flag;
     if (flag & WATERMARK_LOGO) {
         ret = camera_select_logo(sizeparam);
         if (ret == 0) {
@@ -5952,6 +5957,8 @@ static void watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
             free(ptime);
         }
     }
+
+    return flag;
 }
 
 cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
@@ -5973,7 +5980,6 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     cmr_u32 FINE = 80;
     cmr_u32 NORMAL = 70;
     sizeParam_t sizeparam;
-    cmr_u32 do_watermark = 0;
     cmr_bzero(&sizeparam, sizeof(sizeparam));
 
     if (!oem_handle || !src.addr_vir.addr_y || !pic_enc.addr_vir.addr_y) {
@@ -5993,14 +5999,14 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     src.data_end.y_endian = 0;
     src.data_end.uv_endian = 2;
 
-    // for cache coherency
-    cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, &src);
     /* add watermark: logo, or time */
     sizeparam.imgW = src.size.width;
     sizeparam.imgH = src.size.height;
     sizeparam.angle = param->rotation;
     sizeparam.isMirror = 0;
     watermark_add_yuv(oem_handle, (cmr_u8 *)src.addr_vir.addr_y, &sizeparam);
+    // for cache coherency
+    cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, &src);
 
     // 2.call jpeg interface
     ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &src, &pic_enc,
@@ -6059,7 +6065,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     unsigned int duration;
     cmr_s32 filter_type = 0;
     struct jpeg_context *jpeg_cxt = NULL;
-    cmr_u32 do_watermark = 0;
+    cmr_u32 watermark_flush = 0;
     sizeParam_t sizeparam;
     cmr_bzero(&sizeparam, sizeof(sizeparam));
 
@@ -6307,8 +6313,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                     face_beauty_ctrl(&(cxt->face_beauty), FB_BEAUTY_PROCESS_CMD,
                                      (void *)&facecount);
                 face_beauty_deinit(&(cxt->face_beauty));
-                // for cache coherency
-                cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
+                watermark_flush = 1; // need flush
             }
 #endif
         }
@@ -6317,8 +6322,11 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         sizeparam.imgH = enc_src.size.height;
         sizeparam.angle = rotation;
         sizeparam.isMirror = flip_on;
-        watermark_add_yuv(oem_handle, (cmr_u8 *)enc_src.addr_vir.addr_y,
+        ret = watermark_add_yuv(oem_handle, (cmr_u8 *)enc_src.addr_vir.addr_y,
                           &sizeparam);
+        watermark_flush |= ret;
+        if (watermark_flush)  // for cache coherency
+            cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
 
         ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
                               (struct jpg_op_mean *)&enc_mean, enc_cb_param);
