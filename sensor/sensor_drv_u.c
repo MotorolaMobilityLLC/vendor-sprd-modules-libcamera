@@ -1416,6 +1416,46 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
     }
 
     switch (cmd) {
+    case SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME: {
+        cmr_u32 exposure_time = param / 1000;
+        cmr_int orig_exposure_time = param;
+        cmr_int regen_exposure_time = 0x00;
+        sensor_exif_info_ptr->valid.ExposureTime = 1;
+
+        if (0x00 == exposure_time) {
+            sensor_exif_info_ptr->valid.ExposureTime = 0;
+        } else if (1000000 >= exposure_time) {
+            sensor_exif_info_ptr->ExposureTime.numerator = 0x01;
+            sensor_exif_info_ptr->ExposureTime.denominator =
+                (1000000.00 / exposure_time + 0.5);
+        } else {
+            cmr_u32 second = 0x00;
+            do {
+                second++;
+                exposure_time -= 1000000;
+                if (1000000 >= exposure_time) {
+                    break;
+                }
+            } while (1);
+            sensor_exif_info_ptr->ExposureTime.denominator =
+                1000000 / exposure_time;
+            sensor_exif_info_ptr->ExposureTime.numerator =
+                sensor_exif_info_ptr->ExposureTime.denominator * second;
+        }
+        if (0 != sensor_exif_info_ptr->ExposureTime.denominator)
+            regen_exposure_time =
+                1000000000ll * sensor_exif_info_ptr->ExposureTime.numerator /
+                sensor_exif_info_ptr->ExposureTime.denominator;
+        // To check within range of CTS
+        if ((0x00 != exposure_time) &&
+            (((orig_exposure_time - regen_exposure_time) > 100000) ||
+             ((regen_exposure_time - orig_exposure_time) > 100000))) {
+            sensor_exif_info_ptr->ExposureTime.denominator =
+                (1000000.00 / exposure_time) * 1000 + 0.5;
+            sensor_exif_info_ptr->ExposureTime.numerator = 1000;
+        }
+        break;
+    }
     case SENSOR_EXIF_CTRL_EXPOSURETIME: {
         enum sensor_mode img_sensor_mode = sensor_cxt->sensor_mode;
         if (img_sensor_mode == 0)
@@ -2415,6 +2455,7 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
         aec_reg_info[i].exp.dummy = ae_info[i].exp.dummy;
         aec_reg_info[i].exp.size_index = ae_info[i].exp.size_index;
         aec_reg_info[i].gain = ae_info[i].gain;
+        aec_reg_info[i].exp.exp_time = ae_info[i].exp.exp_time;
         SENSOR_LOGV("read aec i %u count %d handle %p", i, count,
                     sensor_handle);
         ret = sensor_ic_read_aec_info(sensor_handle, (&aec_reg_info[i]));
