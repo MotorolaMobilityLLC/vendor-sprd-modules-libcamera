@@ -40,9 +40,6 @@
 #define SENSOR_PIECEWISE_SAMPLE_NUM 0x10
 #define SENSOR_ENVI_NUM 6
 
-#define SENSOR_SATURATION_NUM 48
-#define SENSOR_CONTRAST_NUM 48
-
 #define RAW_INFO_END_ID 0x71717567
 
 #define SENSOR_MULTI_MODE_FLAG  0x55AA5A5A
@@ -1133,13 +1130,6 @@ struct sensor_contrast_param {
 	cmr_u8 scenemode[MAX_SCENEMODE_NUM];
 };
 
-//Contrast for sharkle
-struct sensor_contrast_ai_param {
-	cmr_u8 factor[SENSOR_CONTRAST_NUM];
-	cmr_u32 cur_index;
-	cmr_u8 scenemode[MAX_SCENEMODE_NUM];
-};
-
 //Hist in YUV domain
 struct sensor_yuv_hists_param {
 	cmr_u16 hist_skip_num;
@@ -1624,15 +1614,6 @@ struct isp_smart_param {
 struct sensor_saturation_param {
 	cmr_u8 csa_factor_u[16];
 	cmr_u8 csa_factor_v[16];
-	cmr_u32 index_u;
-	cmr_u32 index_v;
-	cmr_u8 scenemode[2][MAX_SCENEMODE_NUM];
-};
-
-//Color Saturation Adjustment for sharkle
-struct sensor_saturation_ai_param {
-	cmr_u8 csa_factor_u[SENSOR_SATURATION_NUM];
-	cmr_u8 csa_factor_v[SENSOR_SATURATION_NUM];
 	cmr_u32 index_u;
 	cmr_u32 index_v;
 	cmr_u8 scenemode[2][MAX_SCENEMODE_NUM];
