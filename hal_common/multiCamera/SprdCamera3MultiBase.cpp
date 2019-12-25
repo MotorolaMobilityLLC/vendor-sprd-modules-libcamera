@@ -1625,6 +1625,8 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2304, 1728},
          {2048, 1152}, {1600, 1200}, {1600, 900}, {1920, 1080},
          {1440, 1080}, {1280, 720}, {720, 480}}},
+    {RES_MULTI_FULLSIZE, {{4160,3120}, {4160,2340}, {2448,2448},
+         {1920,1080}, {1440,1080}, {1280,720}, {720, 480}, {480,480}}},
 };
 
 int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
@@ -1649,6 +1651,8 @@ int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
         size = RES_13M;
     else if (!strncmp(resolution, "RES_MULTI", 12))
         size = RES_MULTI;
+    else if (!strncmp(resolution, "RES_MULTI_FULLSIZE", 12))
+        size = RES_MULTI_FULLSIZE;
     else
         HAL_LOGE("Error,not support resolution %s", resolution);
 
