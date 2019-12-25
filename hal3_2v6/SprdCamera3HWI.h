@@ -111,6 +111,7 @@ class SprdCamera3HWI {
     void getDualOtpData(void **addr, int *size, int *read);
     void getOnlineBuffer(void *cali_info);
     void getIspDebugInfo(void **addr, int *size);
+    void setUltraWideMode(unsigned int on_off);
 
   private:
     int openCamera();
