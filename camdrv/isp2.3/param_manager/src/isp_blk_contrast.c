@@ -19,7 +19,7 @@
 cmr_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct sensor_contrast_ai_param *src_ptr = (struct sensor_contrast_ai_param *)src_contrast;
+	struct sensor_contrast_param *src_ptr = (struct sensor_contrast_param *)src_contrast;
 	struct isp_contrast_param *dst_ptr = (struct isp_contrast_param *)dst_contrast;
 	struct isp_pm_block_header *contrast_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
@@ -30,10 +30,6 @@ cmr_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void *param1, 
 	memcpy((void *)dst_ptr->tab, (void *)src_ptr->factor, sizeof(dst_ptr->tab));
 	memcpy((void *)dst_ptr->scene_mode_tab, (void *)src_ptr->scenemode, sizeof(dst_ptr->scene_mode_tab));
 	contrast_header_ptr->is_update = ISP_ONE;
-
-	ISP_LOGD("init contrast, index:%d cur_factor:%d",
-		 dst_ptr->cur_index,
-		 dst_ptr->cur.factor);
 
 	return rtn;
 }
@@ -47,50 +43,6 @@ cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void *param_pt
 	contrast_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
-	case ISP_PM_BLK_SMART_SETTING:
-		{
-			struct smart_block_result *block_result =
-				(struct smart_block_result *)param_ptr0;
-			struct isp_weight_value *weight_value = NULL;
-			struct isp_weight_value *bv_value = NULL;
-			void *dst = NULL;
-			void *src_map[2] = {NULL, NULL};
-			cmr_u16 weight[2] = {0, 0};
-			cmr_u32 data_num = 0;
-			struct isp_range val_range = {0, 0};
-
-			if (0 == block_result->update) {
-				ISP_LOGV("do not need update\n");
-				return ISP_SUCCESS;
-			}
-
-			val_range.min = 0;
-			val_range.max = 255;
-			rtn = _pm_check_smart_param(block_result, &val_range, 1,
-						ISP_SMART_Y_TYPE_WEIGHT_VALUE);
-			if (ISP_SUCCESS != rtn) {
-				ISP_LOGE("fail to check pm smart param !");
-				return rtn;
-			}
-
-			dst = &contrast_ptr->cur.factor;
-			data_num = sizeof(cmr_u8);
-			weight_value = (struct isp_weight_value *)
-				block_result->component[0].fix_data;
-			bv_value = &weight_value[0];
-
-			src_map[0] = (void *)&contrast_ptr->tab[bv_value->value[0]];
-			src_map[1] = (void *)&contrast_ptr->tab[bv_value->value[1]];
-			weight[0] = bv_value->weight[0];
-			weight[1] = bv_value->weight[1];
-			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) *
-						(SMART_WEIGHT_UNIT / 16);
-			weight[1] = SMART_WEIGHT_UNIT - weight[0];
-			isp_interp_data(dst, src_map, weight, data_num,
-					ISP_INTERP_UINT8);
-		}
-		break;
-
 	case ISP_PM_BLK_CONTRAST_BYPASS:
 		contrast_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
 		break;
@@ -115,10 +67,6 @@ cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void *param_pt
 		contrast_header_ptr->is_update = ISP_ZERO;
 		break;
 	}
-
-	ISP_LOGD("set contrast param, factor:%d index:%d",
-		contrast_ptr->cur.factor,
-		contrast_ptr->cur_index);
 
 	return rtn;
 }
