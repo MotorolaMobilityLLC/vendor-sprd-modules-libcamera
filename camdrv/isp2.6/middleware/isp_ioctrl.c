@@ -2817,12 +2817,38 @@ load_error:
 exit:
 	return ret;
 }
+
+static cmr_int ispctl_prepare_atm_param(cmr_handle isp_alg_handle,
+	struct smart_proc_input *smart_proc_in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	smart_proc_in->r_info = cxt->aem_stats_data.r_info;
+	smart_proc_in->g_info = cxt->aem_stats_data.g_info;
+	smart_proc_in->b_info = cxt->aem_stats_data.b_info;
+	smart_proc_in->win_num_w = cxt->ae_cxt.win_num.w;
+	smart_proc_in->win_num_h = cxt->ae_cxt.win_num.h;
+	smart_proc_in->aem_shift = cxt->ae_cxt.shift;
+	smart_proc_in->win_size_w = cxt->ae_cxt.win_size.w;
+	smart_proc_in->win_size_h = cxt->ae_cxt.win_size.h;
+
+	if (smart_proc_in->r_info == NULL)
+		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p\n",
+			smart_proc_in->r_info,
+			smart_proc_in->g_info,
+			smart_proc_in->b_info);
+
+	return ret;
+}
+
 static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_u32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isptool_scene_param *scene_parm = NULL;
 	struct isp_pm_ioctl_input ioctl_input;
+	struct isp_pm_ioctl_input ioctl_output = { PNULL, 0 };
 	struct isp_pm_param_data ioctl_data;
 	struct isp_awbc_cfg awbc_cfg;
 	struct smart_proc_input smart_proc_in;
@@ -2932,6 +2958,39 @@ label_set_awb:
 
 	cxt->rgb_gain.global_gain = scene_parm->global_gain;
 	ISP_LOGI("global_gain = %d", cxt->rgb_gain.global_gain);
+
+
+	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
+			ISP_PM_BLK_GAMMA_TAB,
+			ISP_BLK_RGB_GAMC, PNULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+			ISP_PM_CMD_GET_SINGLE_SETTING,
+			(void *)&ioctl_input, (void *)&ioctl_output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to get GAMMA TAB"));
+	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
+		cxt->smart_cxt.tunning_gamma_cur = ioctl_output.param_data_ptr->data_ptr;
+
+	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
+	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
+	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
+	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
+	smart_proc_in.handle_pm = cxt->handle_pm;
+//	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+	smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
+
+	ispctl_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+	cxt->smart_cxt.atm_is_set = 0;
+
+	if (cxt->ops.smart_ops.calc)
+		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to set smart gain");
+		return ret;
+	}
+
+	cxt->smart_cxt.log_smart = smart_proc_in.log;
+	cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 
 	return ret;
 }
