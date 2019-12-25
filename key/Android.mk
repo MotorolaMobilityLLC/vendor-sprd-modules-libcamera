@@ -22,9 +22,15 @@ LOCAL_LDFLAGS += -ldl
 LOCAL_HEADER_LIBRARIES += liblog_headers
 LOCAL_HEADER_LIBRARIES += jni_headers
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(CHIP_NAME)/
-LOCAL_SRC_FILES := src/get_key.c
-
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc/
+BOARD_FILE_EXISTANCE := $(shell test -f $(LOCAL_PATH)/$(CHIP_NAME)/$(TARGET_BOARD)/key.c && echo EXIST)
+ifeq ($(BOARD_FILE_EXISTANCE),EXIST)
+$(warning 'Board Configure')
+LOCAL_SRC_FILES += $(CHIP_NAME)/$(TARGET_BOARD)/key.c
+else
+$(warning 'Chip Configure')
+LOCAL_SRC_FILES += $(CHIP_NAME)/key_common.c
+endif
 LOCAL_MODULE := libkey
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
@@ -35,3 +41,4 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+
