@@ -70,8 +70,12 @@ struct class_mm_dvfs *getInstance() {
 
 cmr_int cmr_mm_dvfs_init(cmr_handle *mm_dvfs_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    if (NULL == mm_dvfs_handle) {
+        CMR_LOGE("Invalid handle");
+        return -1;
+    }
     *mm_dvfs_handle = (cmr_handle)getInstance();
-    if (!mm_dvfs_handle)
+    if (NULL == (*mm_dvfs_handle))
         ret = -1;
     return ret;
 }
