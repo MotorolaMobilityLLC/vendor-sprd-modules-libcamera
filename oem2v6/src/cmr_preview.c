@@ -7365,7 +7365,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         if (camera_id == findSensorRole(MODULE_SPW_NONE_BACK))
             real_ratio = 1.0f;
 
-        if (zoom_param->zoom_info.crop_region.width > 0) {
+        if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401 ) {
             chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
                     zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
                     chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
@@ -7622,7 +7622,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     } else {
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
-        if (zoom_param->zoom_info.crop_region.width > 0) {
+        if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401) {
             chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
                     zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
                     chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
