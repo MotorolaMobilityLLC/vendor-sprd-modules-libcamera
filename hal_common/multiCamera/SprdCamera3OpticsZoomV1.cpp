@@ -683,8 +683,10 @@ void SprdCamera3OpticsZoomV1::TWThreadExit() {
         }
     }
     // wait threads quit to relese object
-    mTWCaptureThread->join();
-    mPreviewMuxerThread->join();
+    if (mTWCaptureThread != NULL)
+        mTWCaptureThread->join();
+    if (mPreviewMuxerThread != NULL)
+        mPreviewMuxerThread->join();
 
     HAL_LOGI("X");
 }

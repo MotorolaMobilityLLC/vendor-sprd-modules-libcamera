@@ -222,11 +222,11 @@ int SprdCamera3Capture::camera_device_open(
 
     int rc = NO_ERROR;
 
-    HAL_LOGV("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
+    HAL_LOGV("id= %d", atoi(id));
 
     rc = mCapture->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGV("id= %d, rc: %d", atoi(id), rc);
@@ -2552,9 +2552,6 @@ int SprdCamera3Capture::_flush(const struct camera3_device *device) {
     int rc = 0;
     HAL_LOGI("E");
 
-    HAL_LOGD("flush, mCaptureMsgList.size=%d, mSavedRequestList.size:%d",
-             mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
-
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
 
@@ -2562,6 +2559,8 @@ int SprdCamera3Capture::_flush(const struct camera3_device *device) {
     rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_AUX].dev);
 
     if (mCaptureThread != NULL) {
+        HAL_LOGD("flush, mCaptureMsgList.size=%d, mSavedRequestList.size:%d",
+             mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
         if (mCaptureThread->isRunning()) {
             mCaptureThread->requestExit();
         }

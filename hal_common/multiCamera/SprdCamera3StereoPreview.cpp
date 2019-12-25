@@ -263,11 +263,11 @@ int SprdCamera3StereoPreview::camera_device_open(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
-    HAL_LOGI("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
+    HAL_LOGI("id= %d", atoi(id));
     rc = mPreviewMuxer->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGI("id= %d, rc: %d", atoi(id), rc);
     return rc;
@@ -2529,13 +2529,11 @@ int SprdCamera3StereoPreview::_flush(const struct camera3_device *device) {
         if (mPreviewMuxerThread->isRunning()) {
             mPreviewMuxerThread->requestExit();
         }
-    }
-
-    {
         // in case the other threads need to complete process data
         mPreviewMuxerThread->join();
         mPreviewMuxerThread->mReProcessThread->join();
     }
+
     clearFrameNeverMatched(CAM_TYPE_AUX);
     HAL_LOGI("X");
     return rc;
