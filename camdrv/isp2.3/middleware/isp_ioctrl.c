@@ -2738,10 +2738,6 @@ static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_APP_MODE, (void *)&app_mode, NULL);
-	if (cxt->ops.smart_ops.ioctrl)
-		ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
-										ISP_SMART_IOCTL_SET_APP_MODE,
-										(void *)&app_mode, NULL);
 	return ret;
 }
 
