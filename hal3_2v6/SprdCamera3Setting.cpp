@@ -2058,7 +2058,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
         uint32_t sizeSceneModes =
             sizeof(avail_scene_modes) / avail_scene_modes[0];
-        if (/* mSensorType[cameraId] != FOURINONESENSOR && */
+        if (mSensorType[cameraId] != FOURINONE_SW &&
             mSensorType[cameraId] != YUVSENSOR) {
             s_setting[cameraId]
                 .controlInfo.available_scene_modes[sizeSceneModes] =
