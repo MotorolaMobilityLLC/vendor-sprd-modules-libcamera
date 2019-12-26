@@ -5911,6 +5911,10 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 		rtn = ae_get_lowlight_flag_by_bv(cxt, (cmr_u32 *) result);
 		break;
 	case AE_GET_FLASH_SKIP_FRAME_NUM:
+		if (result){
+			*(cmr_u32 *) result = cxt->flash_timing_param.main_skip_num;
+			ISP_LOGD("main_skip_num %d ",cxt->flash_timing_param.main_skip_num);
+		}
 		break;
 	case AE_GET_APP_MODE:
 		rtn = ae_get_app_mode(cxt, result);
