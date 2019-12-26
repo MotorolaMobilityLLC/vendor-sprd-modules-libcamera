@@ -13137,10 +13137,12 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // 3 continuous frames start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 3;
+        capture_param.cap_scene = CAPTURE_HDR;
     } else if (CAMERA_3DNR_TYPE_PREV_HW_CAP_SW == camera_get_3dnr_flag(cxt)) {
         // 5 continuous frames start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 5;
+        capture_param.cap_scene = CAPTURE_SW3DNR;
     } else if ((CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW ==
                 camera_get_3dnr_flag(cxt)) ||
                (CAMERA_3DNR_TYPE_PREV_HW_CAP_HW == camera_get_3dnr_flag(cxt)) ||
@@ -13148,6 +13150,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // start hardware 3dnr capture
         CMR_LOGI("set cap_param type to DCAM_CAPTURE_START_3DNR");
         capture_param.type = DCAM_CAPTURE_START_3DNR;
+        capture_param.cap_scene = CAPTURE_HW3DNR;
     } else if (cxt->is_multi_mode == MODE_BOKEH ||
                cxt->is_multi_mode == MODE_3D_CALIBRATION) {
         if (cxt->is_yuv_callback_mode || cxt->is_3dcalibration_mode) {
@@ -13165,7 +13168,12 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 1;
+        capture_param.cap_scene = CAPTURE_FLASH;
     }
+
+    CMR_LOGD("type %d, cnt %d, scene %d,  dre_flag %d dre_skipframe %d, flash %d\n",
+        capture_param.type,  capture_param.cap_cnt,  capture_param.cap_scene,
+        cxt->dre_flag, cxt->dre_skipframe, flash_status);
 
     isp_param.cmd_value = 1;
     ret =
