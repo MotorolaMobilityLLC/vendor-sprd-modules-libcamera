@@ -4400,22 +4400,23 @@ void SprdCamera3Portrait::preClose(void) {
         if (mCaptureThread->isRunning()) {
             mCaptureThread->requestExit();
         }
+        // wait threads quit to relese object
+        mCaptureThread->join();
     }
     if (mPreviewMuxerThread != NULL) {
         if (mPreviewMuxerThread->isRunning()) {
             mPreviewMuxerThread->requestExit();
         }
+        // wait threads quit to relese object
+        mPreviewMuxerThread->join();
     }
     if (mDepthMuxerThread != NULL) {
         if (mDepthMuxerThread->isRunning()) {
             mDepthMuxerThread->requestExit();
         }
+        // wait threads quit to relese object
+        mDepthMuxerThread->join();
     }
-
-    // wait threads quit to relese object
-    mCaptureThread->join();
-    mPreviewMuxerThread->join();
-    mDepthMuxerThread->join();
 
     HAL_LOGI("X");
 }
