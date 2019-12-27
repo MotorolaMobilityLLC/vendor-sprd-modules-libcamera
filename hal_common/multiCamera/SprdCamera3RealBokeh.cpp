@@ -310,11 +310,11 @@ int SprdCamera3RealBokeh::camera_device_open(
     struct logicalSensorInfo *logicalPtr = NULL;
     int i = 0;
 
-    HAL_LOGD("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
+    HAL_LOGD("id= %d", atoi(id));
 
     logicalPtr = sensorGetLogicaInfo4MulitCameraId(atoi(id));
     if (logicalPtr) {
