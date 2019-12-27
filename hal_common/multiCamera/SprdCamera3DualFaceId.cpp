@@ -204,13 +204,12 @@ int SprdCamera3DualFaceId::camera_device_open(
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
 
-    HAL_LOGI("id=%d", atoi(id));
-
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
+    HAL_LOGI("id=%d", atoi(id));
     rc = mFaceId->cameraDeviceOpen(atoi(id), hw_device);
 
     HAL_LOGI("id=%d, rc: %d", atoi(id), rc);
