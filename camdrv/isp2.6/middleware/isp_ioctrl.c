@@ -454,6 +454,34 @@ static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 	return ret;
 }
 
+static cmr_s32 ispctl_set_lsc_gain(cmr_handle isp_alg_handle)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
+	cmr_handle pm_handle = cxt->handle_pm;
+	struct alsc_update_info update_info = { 0, 0, NULL };
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
+	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)cxt->lsc_cxt.lsc_info;
+
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
+	if (ISP_SUCCESS != ret)
+		ISP_LOGE("fail to get ALSC update flag!");
+
+	if (update_info.alsc_update_flag == 1){
+		memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
+		BLOCK_PARAM_CFG(io_pm_input, pm_param,
+			ISP_PM_BLK_LSC_MEM_ADDR,
+			ISP_BLK_2D_LSC, update_info.lsc_buffer_addr,
+			lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
+		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+	}
+
+	return ret;
+}
+
 static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -807,6 +835,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		flash_info.io_captureFlash1Ratio = captureFlash1ofALLRatio;
 		if (cxt->ops.lsc_ops.ioctrl)
 			cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, (void*)&flash_info, NULL);
+		ispctl_set_lsc_gain((cmr_handle) cxt);
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
@@ -872,6 +901,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		ispctl_flicker_bypass(isp_alg_handle, 0);
 		if (cxt->ops.lsc_ops.ioctrl)
 			cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_MAIN_AFTER, NULL, NULL);
+		ispctl_set_lsc_gain((cmr_handle) cxt);
 		cxt->lsc_flash_onoff = 0;
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		if (cxt->ops.ae_ops.ioctrl)
