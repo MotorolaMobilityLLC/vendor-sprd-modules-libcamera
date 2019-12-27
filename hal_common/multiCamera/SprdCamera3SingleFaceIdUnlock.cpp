@@ -193,13 +193,12 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::camera_device_open(
     struct hw_device_t **hw_device) {
     cmr_s32 rc = NO_ERROR;
 
-    HAL_LOGV("id=%d", atoi(id));
-
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
+    HAL_LOGV("id=%d", atoi(id));
     rc = mFaceIdUnlock->cameraDeviceOpen(atoi(id), hw_device);
 
     HAL_LOGV("id=%d, rc: %d", atoi(id), rc);
