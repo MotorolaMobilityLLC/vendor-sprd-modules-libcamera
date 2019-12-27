@@ -600,6 +600,18 @@ static cmr_int cmr_grab_cap_cfg_common(cmr_handle grab_handle,
         }
     }
 
+#if defined(CONFIG_ISP_2_3) && defined(CONFIG_CAMERA_DCAM_PDAF)
+    parm.channel_id = channel_id;
+    parm.pdaf_ctrl.mode = config->cfg.pdaf_ctrl.mode;
+    parm.pdaf_ctrl.phase_data_type = config->cfg.pdaf_ctrl.phase_data_type;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_PDAF_CONTROL, &parm);
+    CMR_LOGI("SPRD_IMG_IO_PDAF_CONTROL for sharkle only");
+    if (ret) {
+        CMR_LOGE("SPRD_IMG_IO_PDAF_CONTROL failed, ret=%ld", ret);
+        return ret;
+    }
+#endif
+
     parm.channel_id = channel_id;
     parm.deci = config->chn_deci_factor;
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_PATH_FRM_DECI, &parm);
