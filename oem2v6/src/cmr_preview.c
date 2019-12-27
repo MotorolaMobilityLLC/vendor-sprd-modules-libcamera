@@ -6287,6 +6287,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 if (CAM_IMG_FMT_JPEG !=
                     sensor_info->mode_info[i].image_format) {
                     if (search_height == height && search_width == width) {
+#if defined(CONFIG_ISP_2_7)
                         if(handle->prev_cxt[camera_id].prev_param.tool_eb) {
                             ret = handle->ops.get_sensor_fps_info(
                                 handle->oem_handle, camera_id, i, &fps_info);
@@ -6297,6 +6298,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                                 continue;
                             }
                         }
+#endif
                         target_mode = i;
                         ret = CMR_CAMERA_SUCCESS;
                         break;
