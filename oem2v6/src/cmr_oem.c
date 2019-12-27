@@ -6215,6 +6215,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             fb_beauty_face_t beauty_face;
             fb_beauty_image_t beauty_image;
             struct faceBeautyLevels beautyLevels;
+            struct common_isp_cmd_param isp_param;
             memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                     SETTING_GET_PERFECT_SKINLEVEL,
@@ -6223,6 +6224,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 CMR_LOGE("failed to get perfect skinlevel %ld", ret);
                 goto exit;
             }
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+            beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
             beautyLevels.blemishLevel =
                 (unsigned char)setting_param.fb_param.blemishLevel;
             beautyLevels.smoothLevel =
@@ -6256,9 +6259,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                              beautyLevels.lipColor || beautyLevels.lipLevel ||
                              beautyLevels.slimLevel || beautyLevels.largeLevel;
             if (face_beauty_on) {
-                CMR_LOGD("face_beauty smooth %d,bright %d,slim %d,large %d",
+                CMR_LOGD("face_beauty smooth %d,bright %d,slim %d,large %d,cameraBV %d",
                          beautyLevels.smoothLevel, beautyLevels.brightLevel,
-                         beautyLevels.slimLevel, beautyLevels.largeLevel);
+                         beautyLevels.slimLevel, beautyLevels.largeLevel,beautyLevels.cameraBV);
                 if (cxt->is_multi_mode == MODE_BOKEH) {
                     cmr_copy(&cxt->fd_face_area, &cxt->fd_face_area_capture,
                              sizeof(struct isp_face_area));
@@ -14001,6 +14004,18 @@ cmr_int camera_local_image_sw_algorithm_processing(
     }
 
 exit:
+    return ret;
+}
+
+cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_param;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+    if (ret) {
+          CMR_LOGE("failed to get isp param %d",ret);
+          return ret;
+    }
+    *bv_info = isp_param.isp_adgain.bv;
     return ret;
 }
 

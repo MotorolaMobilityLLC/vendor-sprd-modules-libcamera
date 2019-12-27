@@ -3889,6 +3889,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         FACE_Tag faceInfo;
         fb_beauty_face_t beauty_face;
         fb_beauty_image_t beauty_image;
+	cmr_u32 bv;
+	ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
             for (int i = 0; i < faceInfo.face_num; i++) {
@@ -3922,6 +3924,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             (unsigned char)sprddefInfo.perfect_skin_level[7];
         beautyLevels.largeLevel =
             (unsigned char)sprddefInfo.perfect_skin_level[8];
+	beautyLevels.cameraBV = (int)bv;
+	CMR_LOGD("cameraBV %d",bv);
         if (!mflagfb) {
 #ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
@@ -3959,6 +3963,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         FACE_Tag faceInfo;
         fb_beauty_face_t beauty_face;
         fb_beauty_image_t beauty_image;
+	cmr_u32 bv;
+	ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
             for (int i = 0; i < faceInfo.face_num; i++) {
@@ -3985,6 +3991,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.lipLevel = 0;
         beautyLevels.slimLevel = 2;
         beautyLevels.largeLevel = 2;
+	beautyLevels.cameraBV = (int)bv;
         if (!mflagfb) {
 #ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);

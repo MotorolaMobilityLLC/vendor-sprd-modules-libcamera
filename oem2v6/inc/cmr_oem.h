@@ -652,6 +652,8 @@ cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p);
 cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param);
 cmr_int camera_set_high_res_mode(cmr_handle oem_handle,cmr_uint is_high_res_mode);
 
+cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
+
 #ifdef __cplusplus
 }
 #endif
