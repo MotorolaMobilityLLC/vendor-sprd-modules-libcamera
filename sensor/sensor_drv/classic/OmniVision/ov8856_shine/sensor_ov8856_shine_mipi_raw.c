@@ -751,8 +751,9 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5004, 0x00);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x36);
         }
-        if (sns_drv_cxt->sensor_id == 2)
+        if ((2 == sns_drv_cxt->sensor_id) && (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
             ov8856_drv_SetSlave_FrameSync(handle, param);
+        }
     } else {
         /* ov8856 sharkl5 front camera module, sharkl3 back_slave and front new
          * camera module, or SENSOR_OV8856_TELE, 2 lane, IMAGE_NORMAL_MIRROR */

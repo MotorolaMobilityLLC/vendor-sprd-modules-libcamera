@@ -920,12 +920,10 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E:module_id=%d is_mulit_mode = %d", sns_drv_cxt->module_id,
                 sns_drv_cxt->is_multi_mode);
-    if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode &&
-        sns_drv_cxt->is_multi_mode != MODE_TUNING) {
+    if ((2 == sns_drv_cxt->sensor_id) && (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
 #ifndef CONFIG_DISABLE_DUAL_CAMERA_FRAMESYNC
-        //ov5675_drv_set_frame_sync(handle, 0);
+        ov5675_drv_set_frame_sync(handle, 0);
 #endif
-        SENSOR_LOGI("set frame sync");
     }
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
