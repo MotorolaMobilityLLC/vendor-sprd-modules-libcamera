@@ -396,10 +396,9 @@ void SprdCamera33dFace::faceThreadExit(void) {
         if (mPreviewMuxerThread->isRunning()) {
             mPreviewMuxerThread->requestExit();
         }
+        // wait threads quit to relese object
+        mPreviewMuxerThread->join();
     }
-    // wait threads quit to relese object
-    mPreviewMuxerThread->join();
-
     HAL_LOGI("X");
 }
 
