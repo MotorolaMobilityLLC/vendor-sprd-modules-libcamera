@@ -1222,7 +1222,10 @@ void SprdCamera3DualFaceId::processCaptureResultMain(
         }
         return;
     }
-
+    if (result_buffer == NULL) {
+        HAL_LOGE("result_buffer = result->output_buffers is NULL");
+        return;
+    }
     int currStreamType = getStreamType(result_buffer->stream);
     int result_buf_fd = ADP_BUFFD(*result_buffer->buffer);
     if ((DEFAULT_STREAM == currStreamType) ||
