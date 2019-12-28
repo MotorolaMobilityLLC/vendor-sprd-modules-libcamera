@@ -3502,15 +3502,11 @@ int32_t camera_isp_flash_set_time(void *handler, struct isp_flash_cfg *cfg_ptr,
 cmr_s32 camera_get_pos_info(cmr_handle oem_handle,
                             struct sensor_vcm_info *info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct sensor_context *sn_cxt = NULL;
     struct sensor_exp_info *sensor_info_ptr;
     struct sensor_raw_ioctrl *ioctrl_ptr;
 
-    CHECK_HANDLE_VALID(info);
-    CHECK_HANDLE_VALID(oem_handle);
-
-    cxt = (struct camera_context *)oem_handle;
     sn_cxt = &(cxt->sn_cxt);
 
     ret = cmr_sensor_get_info(sn_cxt->sensor_handle, cxt->camera_id,

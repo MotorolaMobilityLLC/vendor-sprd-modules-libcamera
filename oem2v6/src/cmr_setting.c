@@ -1557,14 +1557,15 @@ static cmr_int setting_update_gps_info(struct setting_component *cpt,
 static cmr_int setting_get_exif_info(struct setting_component *cpt,
                                      struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
-    struct setting_init_in *init_in = NULL;
-    struct setting_hal_param *hal_param = NULL;
-    struct setting_local_param *local_param = NULL;
-    struct setting_exif_unit *exif_unit = NULL;
+    struct setting_init_in *init_in = &cpt->init_in;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    struct setting_local_param *local_param =
+        get_local_param(cpt, parm->camera_id);
+    struct setting_exif_unit *exif_unit = &local_param->exif_unit;
     struct setting_io_parameter cmd_param;
-    JINF_EXIF_INFO_T *p_exif_info = NULL;
+    JINF_EXIF_INFO_T *p_exif_info = &local_param->exif_all_info;
     struct setting_exif_cb_param cb_param;
-    struct setting_flash_param *flash_param = NULL;
+    struct setting_flash_param *flash_param = &hal_param->flash_param;
 
     char datetime_buf[20] = {0};
     time_t timep;
@@ -1577,17 +1578,6 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
     char property[PROPERTY_VALUE_MAX];
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
-
-    if (NULL == cpt || NULL == parm) {
-        CMR_LOGE("INPUT INVALID PARAM");
-        return CMR_CAMERA_INVALID_PARAM;
-    }
-    init_in = &cpt->init_in;
-    hal_param = get_hal_param(cpt, parm->camera_id);
-    local_param = get_local_param(cpt, parm->camera_id);
-    exif_unit = &local_param->exif_unit;
-    p_exif_info = &local_param->exif_all_info;
-    flash_param = &hal_param->flash_param;
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
@@ -1699,11 +1689,11 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         p_exif_info->primary.basic.ImageLength =
             exif_unit->actual_picture_size.height;
     }
-    CMR_LOGD("EXIF width=%d, height=%d\n",
-             p_exif_info->primary.basic.ImageWidth, p_exif_info->primary.basic.ImageLength);
-    if (NULL != p_exif_info->spec_ptr)
-        CMR_LOGD("SPECEXIF width:%d, height:%d", p_exif_info->spec_ptr->basic.PixelXDimension,
-        p_exif_info->spec_ptr->basic.PixelYDimension);
+    CMR_LOGD("EXIF width=%d, height=%d, SPECEXIF width:%d, height:%d \n",
+             p_exif_info->primary.basic.ImageWidth,
+             p_exif_info->primary.basic.ImageLength,
+             p_exif_info->spec_ptr->basic.PixelXDimension,
+             p_exif_info->spec_ptr->basic.PixelYDimension);
 
     if (NULL != p_exif_info->primary.data_struct_ptr) {
 #ifdef MIRROR_FLIP_ROTATION_BY_JPEG

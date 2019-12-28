@@ -1165,17 +1165,17 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     property_get("vendor.cam.3dnrclose", value, "0");
     if (!strcmp(value, "0")) {
         if (video_buf.cpu_buffer.bufferY != NULL) {
-            CMR_LOGV("add threednr_function_pre previewbuffer with video :%p",
+            CMR_LOGV("add threednr_function_pre previewbuffer with video :%p , "
+                     "small:%p , video buffer:%p",
+                     big_buf.cpu_buffer.bufferY, small_buf.cpu_buffer.bufferY,
                      video_buf.cpu_buffer.bufferY);
 
             if ((small_buf.cpu_buffer.bufferY != NULL) &&
                 (big_buf.cpu_buffer.bufferY != NULL)){
-                CMR_LOGV("big buf:%p , small:%p", big_buf.cpu_buffer.bufferY,
-                    small_buf.cpu_buffer.bufferY);
                 ret = sprd_3dnr_adpt_ctrl(threednr_prev_handle->proc_handle,SPRD_3DNR_PROC_PREVIEW_CMD,(void *)&process_param);
-                if(ret != 0){
+		if(ret != 0){
                      CMR_LOGE("failed to call 3dnr process func, ret = %d",ret);
-                }
+		}
             }
             else {
                 CMR_LOGE(

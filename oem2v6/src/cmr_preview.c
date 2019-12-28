@@ -1028,7 +1028,7 @@ init_end:
 cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 i = 0;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
 
     if (!preview_handle) {
         CMR_LOGE("Invalid param!");
@@ -1036,7 +1036,6 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
     }
 
     CMR_LOGD("E");
-    handle = (struct prev_handle *)preview_handle;
 
     /*check every device, if previewing, stop it*/
     for (i = 0; i < CAMERA_ID_MAX; i++) {
@@ -1085,7 +1084,7 @@ cmr_int cmr_preview_set_param(cmr_handle preview_handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_int call_ret = CMR_CAMERA_SUCCESS;
     struct internal_param *inter_param = NULL;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
 
     if (!preview_handle || !param_ptr || !out_param_ptr) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", preview_handle, param_ptr,
@@ -1094,7 +1093,6 @@ cmr_int cmr_preview_set_param(cmr_handle preview_handle, cmr_u32 camera_id,
     }
 
     CHECK_CAMERA_ID(camera_id);
-    handle = (struct prev_handle *)preview_handle;
     CMR_LOGD("camera_id %d frame count %d", camera_id, param_ptr->frame_count);
 
     /*save the preview param via internal msg*/
@@ -1141,13 +1139,12 @@ cmr_int cmr_preview_start(cmr_handle preview_handle, cmr_u32 camera_id) {
 
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     CMR_LOGD("E");
 
-    handle = (struct prev_handle *)preview_handle;
     message.msg_type = PREV_EVT_ASSIST_START;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     ret =
@@ -1174,12 +1171,11 @@ cmr_int cmr_preview_start(cmr_handle preview_handle, cmr_u32 camera_id) {
 cmr_int cmr_preview_stop(cmr_handle preview_handle, cmr_u32 camera_id) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     CMR_LOGD("E");
-    handle = (struct prev_handle *)preview_handle;
 
     message.msg_type = PREV_EVT_ASSIST_STOP;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -1207,12 +1203,11 @@ cmr_int cmr_preview_cancel_snapshot(cmr_handle preview_handle,
                                     cmr_u32 camera_id) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     CMR_LOGD("E");
-    handle = (struct prev_handle *)preview_handle;
 
     message.msg_type = PREV_EVT_CANCEL_SNP;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -1228,15 +1223,14 @@ cmr_int cmr_preview_cancel_snapshot(cmr_handle preview_handle,
 }
 
 cmr_int cmr_preview_get_status(cmr_handle preview_handle, cmr_u32 camera_id) {
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
 
-    if (!preview_handle || (camera_id >= CAMERA_ID_MAX)) {
+    if (!handle || (camera_id >= CAMERA_ID_MAX)) {
         CMR_LOGE("invalid param, handle %p, camera_id %d", handle, camera_id);
         return ERROR;
     }
 
-    handle = (struct prev_handle *)preview_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
 
     /*CMR_LOGD("prev_status %ld", prev_cxt->prev_status); */
@@ -1246,17 +1240,16 @@ cmr_int cmr_preview_get_status(cmr_handle preview_handle, cmr_u32 camera_id) {
 cmr_int cmr_preview_get_prev_rect(cmr_handle preview_handle, cmr_u32 camera_id,
                                   struct img_rect *rect) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     if (!rect) {
         CMR_LOGE("rect is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    handle = (struct prev_handle *)preview_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
 
     cmr_copy(rect, &prev_cxt->prev_rect, sizeof(struct img_rect));
@@ -1267,11 +1260,10 @@ cmr_int cmr_preview_get_prev_rect(cmr_handle preview_handle, cmr_u32 camera_id,
 cmr_int cmr_camera_isp_stop_video(cmr_handle preview_handle,
                                   cmr_u32 camera_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
+    CHECK_HANDLE_VALID(handle);
 
-    CHECK_HANDLE_VALID(preview_handle);
-    handle = (struct prev_handle *)preview_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
 
     if (!handle->ops.isp_stop_video) {
@@ -1296,17 +1288,16 @@ cmr_int cmr_preview_receive_data(cmr_handle preview_handle, cmr_u32 camera_id,
                                  cmr_uint evt, void *data) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct frm_info *frm_data = NULL;
     struct internal_param *inter_param = NULL;
 
     CMR_LOGV("handle 0x%p camera id %d evt 0x%lx", preview_handle, camera_id,
              evt);
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    handle = (struct prev_handle *)preview_handle;
     /*copy the frame info*/
 
     if (data) {
@@ -1364,17 +1355,16 @@ cmr_int cmr_preview_update_zoom(cmr_handle preview_handle, cmr_u32 camera_id,
                                 struct cmr_zoom_param *param) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     if (!param) {
         CMR_LOGE("zoom param is null");
         ret = CMR_CAMERA_INVALID_PARAM;
         return ret;
     }
-    handle = (struct prev_handle *)preview_handle;
 
     /*deliver the zoom param via internal msg*/
     inter_param =
@@ -1437,12 +1427,11 @@ cmr_int cmr_preview_ctrl_facedetect(cmr_handle preview_handle,
                                     cmr_u32 camera_id, cmr_uint on_off) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    handle = (struct prev_handle *)preview_handle;
 
     inter_param =
         (struct internal_param *)malloc(sizeof(struct internal_param));
@@ -1481,13 +1470,12 @@ exit:
 
 cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
                                            cmr_u32 camera_id, cmr_u32 *ae_stab) {
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    handle = (struct prev_handle *)preview_handle;
 
     prev_cxt = &handle->prev_cxt[camera_id];
     if (!ae_stab) {
@@ -1503,13 +1491,12 @@ cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
 
 cmr_int cmr_preview_facedetect_set_hist(cmr_handle preview_handle,
                                         cmr_u32 camera_id, const cmr_u32 *data) {
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    handle = (struct prev_handle *)preview_handle;
 
     prev_cxt = &handle->prev_cxt[camera_id];
     memcpy(&prev_cxt->hist, data, sizeof(prev_cxt->hist));
@@ -1520,17 +1507,16 @@ cmr_int cmr_preview_facedetect_set_hist(cmr_handle preview_handle,
 cmr_int cmr_preview_is_support_zsl(cmr_handle preview_handle, cmr_u32 camera_id,
                                    cmr_uint *is_support) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct sensor_exp_info *sensor_info = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     if (!is_support) {
         CMR_LOGE("invalid param");
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    handle = (struct prev_handle *)preview_handle;
     sensor_info =
         (struct sensor_exp_info *)malloc(sizeof(struct sensor_exp_info));
     if (!sensor_info) {
@@ -1571,16 +1557,15 @@ cmr_int cmr_preview_get_max_cap_size(cmr_handle preview_handle,
                                      cmr_u32 camera_id, cmr_uint *max_w,
                                      cmr_uint *max_h) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     if (!max_w || !max_h) {
         CMR_LOGE("invalid param, 0x%p, 0x%p", max_w, max_h);
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    handle = (struct prev_handle *)preview_handle;
     *max_w = handle->prev_cxt[camera_id].max_size.width;
     *max_h = handle->prev_cxt[camera_id].max_size.height;
 
@@ -1591,11 +1576,7 @@ cmr_int cmr_preview_get_max_cap_size(cmr_handle preview_handle,
 cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle,
                                  cmr_u32 is_reprocessing, cmr_u32 camera_id,
                                  cmr_u32 width, cmr_u32 height) {
-    struct prev_handle *handle = NULL;
-
-    CHECK_HANDLE_VALID(preview_handle);
-    handle = (struct prev_handle *)preview_handle;
-
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     CMR_LOGD("before set cap_org_size:%d %d",
              handle->prev_cxt[camera_id].cap_org_size.width,
              handle->prev_cxt[camera_id].cap_org_size.height);
@@ -1611,7 +1592,6 @@ cmr_int cmr_preview_set_cap_size(cmr_handle preview_handle,
     CMR_LOGD("before set picture_size:%d %d",
              handle->prev_cxt[camera_id].prev_param.picture_size.width,
              handle->prev_cxt[camera_id].prev_param.picture_size.height);
-
     handle->prev_cxt[camera_id].actual_pic_size.width = width;
     handle->prev_cxt[camera_id].actual_pic_size.height = height;
     handle->prev_cxt[camera_id].aligned_pic_size.width = width;
@@ -1635,13 +1615,12 @@ cmr_int cmr_preview_get_post_proc_param(cmr_handle preview_handle,
                                         struct snp_proc_param *out_param_ptr) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     CMR_LOGD("in");
-    handle = (struct prev_handle *)preview_handle;
 
     inter_param =
         (struct internal_param *)malloc(sizeof(struct internal_param));
@@ -1682,14 +1661,13 @@ cmr_int cmr_preview_before_set_param(cmr_handle preview_handle,
                                      enum preview_param_mode mode) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     CMR_LOGV("in");
-    handle = (struct prev_handle *)preview_handle;
 
     /*deliver the zoom param via internal msg*/
     inter_param =
@@ -1734,14 +1712,13 @@ cmr_int cmr_preview_after_set_param(cmr_handle preview_handle,
                                     cmr_u32 skip_number) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     CMR_LOGV("in");
-    handle = (struct prev_handle *)preview_handle;
 
     /*deliver the zoom param via internal msg*/
     inter_param =
@@ -1786,14 +1763,13 @@ cmr_int cmr_preview_set_preview_buffer(cmr_handle preview_handle,
                                        cam_buffer_info_t buffer) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     CMR_LOGV("in");
-    handle = (struct prev_handle *)preview_handle;
 
     /*deliver the zoom param via internal msg*/
     inter_param =
@@ -1837,14 +1813,13 @@ cmr_int cmr_preview_set_video_buffer(cmr_handle preview_handle,
                                      cam_buffer_info_t buffer) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     CMR_LOGV("E");
-    handle = (struct prev_handle *)preview_handle;
 
     /*deliver the zoom param via internal msg*/
     inter_param =
@@ -1888,14 +1863,13 @@ cmr_int cmr_preview_set_zsl_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
                                    cmr_s32 fd) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct internal_param *inter_param = NULL;
 
-    CHECK_HANDLE_VALID(preview_handle);
+    CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     CMR_LOGV("E");
-    handle = (struct prev_handle *)preview_handle;
 
     /*deliver the zoom param via internal msg*/
     inter_param =
@@ -1941,16 +1915,14 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     int i = 0;
     CHECK_HANDLE_VALID(handle);
-    struct prev_handle *pre_handle = NULL;
-    struct prev_context *prev_cxt = NULL;
+    struct prev_handle *pre_handle = (struct prev_handle *)handle;
+    struct prev_context *prev_cxt = &pre_handle->prev_cxt[camera_id];
 
-    if (!in || !addr_vir_y || !handle) {
+    if (!in) {
         CMR_LOGE("input parameters is null");
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-    pre_handle = (struct prev_handle *)handle;
-    prev_cxt = &pre_handle->prev_cxt[camera_id];
     for (i = 0; i < HDR_CAP_NUM; i++) {
         if (in->fd == prev_cxt->cap_hdr_fd_path_array[i])
             break;
@@ -2114,11 +2086,6 @@ cmr_int threednr_sw_prev_callback_process(struct ipm_frame_out *cb_param) {
     int ret;
     int camera_id;
     struct prev_cb_info cb_data_info;
-
-    if (NULL == cb_param) {
-        CMR_LOGE("cb_param is NULL");
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
     threednr_info = cb_param->private_data;
     prev_handle = cb_param->caller_handle;
     prev_cxt = &prev_handle->prev_cxt[threednr_info->camera_id];
@@ -2191,13 +2158,13 @@ cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_u32 camera_id = CAMERA_ID_MAX;
     struct internal_param *inter_param = NULL;
     struct frm_info *frm_data = NULL;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)p_data;
     cam_buffer_info_t *buffer = NULL;
 
     if (!message || !p_data) {
         return CMR_CAMERA_INVALID_PARAM;
     }
-    handle = (struct prev_handle *)p_data;
+
     msg_type = (cmr_u32)message->msg_type;
     CMR_LOGV("msg_type 0x%x", msg_type);
     switch (msg_type) {
@@ -2312,13 +2279,13 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data) {
     struct internal_param *inter_param = NULL;
     struct frm_info *frm_data = NULL;
     struct cmr_zoom_param *zoom_param = NULL;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)p_data;
     struct prev_cb_info cb_data_info;
 
     if (!message || !p_data) {
         return CMR_CAMERA_INVALID_PARAM;
     }
-    handle = (struct prev_handle *)p_data;
+
     msg_type = (cmr_u32)message->msg_type;
     // CMR_LOGD("msg_type 0x%x", msg_type);
 
@@ -2441,12 +2408,12 @@ static cmr_int prev_cb_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_uint evt = 0;
     cmr_u32 camera_id = CAMERA_ID_MAX;
     struct prev_cb_info *cb_data_info = NULL;
-    struct prev_handle *handle = NULL;
+    struct prev_handle *handle = (struct prev_handle *)p_data;
 
     if (!message || !p_data) {
         return CMR_CAMERA_INVALID_PARAM;
     }
-    handle = (struct prev_handle *)p_data;
+
     msg_type = (cmr_u32)message->msg_type;
     /*CMR_LOGD("msg_type 0x%x", msg_type); */
 
@@ -2552,8 +2519,6 @@ cmr_int prev_receive_data(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 video_enable = 0;
     struct prev_context *prev_cxt = NULL;
 
-    CHECK_HANDLE_VALID(handle);
-
     switch (evt) {
     case CMR_GRAB_TX_DONE:
         /*got one frame*/
@@ -2613,11 +2578,10 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 channel4_eb = 0, channel3_eb = 0, channel2_eb = 0, channel1_eb = 0,
             channel0_eb = 0;
     struct prev_context *prev_cxt = NULL;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    cxt = (struct camera_context *)(handle->oem_handle);
     if (!data) {
         CMR_LOGE("frm data is null");
         return CMR_CAMERA_INVALID_PARAM;
@@ -2697,11 +2661,9 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_cb_info cb_data_info;
     cmr_uint rot_index = 0;
     cmr_uint ultra_wide_index = 0;
-    struct camera_context *cxt = NULL;
-
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    cxt = (struct camera_context *)(handle->oem_handle);
     if (!data) {
         CMR_LOGE("frm data is null");
         return CMR_CAMERA_INVALID_PARAM;
@@ -3235,12 +3197,11 @@ cmr_int prev_capture_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint i;
     cmr_uint hdr_num = HDR_CAP_NUM;
     cmr_uint threednr_num = CAP_3DNR_NUM;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
     struct timespec ts;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    cxt = (struct camera_context *)(handle->oem_handle);
     if (!data) {
         CMR_LOGE("frm data is null");
         return CMR_CAMERA_INVALID_PARAM;
@@ -3397,8 +3358,6 @@ cmr_int prev_recovery_pre_proc(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
 
-    CHECK_HANDLE_VALID(handle);
-
     if (!handle->ops.sensor_close) {
         CMR_LOGE("ops is null");
         return CMR_CAMERA_INVALID_PARAM;
@@ -3429,8 +3388,6 @@ cmr_int prev_recovery_pre_proc(struct prev_handle *handle, cmr_u32 camera_id,
 cmr_int prev_recovery_post_proc(struct prev_handle *handle, cmr_u32 camera_id,
                                 enum recovery_mode mode) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    CHECK_HANDLE_VALID(handle);
 
     if (!handle->ops.sensor_open) {
         CMR_LOGE("ops is null");
@@ -3470,7 +3427,6 @@ cmr_int prev_recovery_reset(struct prev_handle *handle, cmr_u32 camera_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
 
-    CHECK_HANDLE_VALID(handle);
     prev_cxt = &handle->prev_cxt[camera_id];
 
     /*reset recovery status*/
@@ -3573,20 +3529,15 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     struct video_start_param isp_param;
     struct sensor_mode_info *sensor_mode_info = NULL;
     struct sensor_context *sn_cxt = NULL;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
+    sn_cxt = &(cxt->sn_cxt);
 
+    CHECK_HANDLE_VALID(sn_cxt);
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     cmr_bzero(&isp_param, sizeof(struct video_start_param));
 
-    cxt = (struct camera_context *)(handle->oem_handle);
     prev_cxt = &handle->prev_cxt[camera_id];
-    sn_cxt = &(cxt->sn_cxt);
-    if (NULL == sn_cxt) {
-        CMR_LOGE("sn_cxt NULL");
-        ret = CMR_CAMERA_INVALID_PARAM;
-        return ret;
-    }
 
     work_mode = MAX(prev_cxt->prev_mode, prev_cxt->video_mode);
     work_mode = MAX(work_mode, prev_cxt->cap_mode);
@@ -3805,13 +3756,12 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 channel_bits = 0;
     cmr_u32 valid_num;
     struct prev_cb_info cb_data_info;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    cxt = (struct camera_context *)(handle->oem_handle);
 
     if (!handle->ops.channel_stop || !handle->ops.isp_stop_video) {
         CMR_LOGE("ops is null");
@@ -5044,7 +4994,7 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
     cmr_u32 aligned_type = 0;
     cmr_u32 small_w, small_h;
     struct prev_context *prev_cxt = NULL;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
     struct memory_param *mem_ops = NULL;
     cmr_int zoom_post_proc = 0;
 
@@ -5052,7 +5002,6 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    cxt = (struct camera_context *)handle->oem_handle;
 
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
     mem_ops = &prev_cxt->prev_param.memory_setting;
@@ -5176,14 +5125,8 @@ cmr_int prev_free_cap_reserve_buf(struct prev_handle *handle, cmr_u32 camera_id,
 void prev_cal_3dnr_smallsize(struct prev_handle *handle,cmr_u32 camera_id)
 {
    struct prev_context *prev_cxt = NULL;
-   struct camera_context *cxt = NULL;
-   if (NULL == handle) {
-       CMR_LOGE("handle is NULL");
-       return;
-   }
-
-   cxt = (struct camera_context *)handle->oem_handle;
-   prev_cxt = &handle->prev_cxt[camera_id];
+   struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+       prev_cxt = &handle->prev_cxt[camera_id];
    if ((cxt->snp_cxt.request_size.width * 10) / cxt->snp_cxt.request_size.height <= 10) {
        prev_cxt->threednr_cap_smallheight= CMR_3DNR_1_1_SMALL_HEIGHT;
         prev_cxt->threednr_cap_smallwidth = CMR_3DNR_1_1_SMALL_WIDTH;
@@ -5223,7 +5166,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_uint reserved_count = 1;
     cmr_u32 aligned_type = 0;
     struct prev_context *prev_cxt = NULL;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
     struct memory_param *mem_ops = NULL;
     cmr_int zoom_post_proc = 0;
 
@@ -5234,7 +5177,6 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
     CMR_LOGD("is_restart %d", is_restart);
 
@@ -5624,12 +5566,11 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_context *prev_cxt = NULL;
     struct memory_param *mem_ops = NULL;
     cmr_int zoom_post_proc = 0;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
     CMR_LOGD("is_restart %d", is_restart);
 
@@ -5685,10 +5626,6 @@ exit:
  */
 cmr_int check_software_remosaic(struct prev_context *prev_cxt)
 {
-    if (NULL == prev_cxt) {
-        CMR_LOGE("prev_cxt NULL");
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
     if (1 == prev_cxt->prev_param.remosaic_type)
         return 1;
     return 0;
@@ -5724,16 +5661,18 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     cmr_int sn_mode = 0;
     cmr_uint valid_max_sn_mode = 0;
     struct sensor_mode_fps_tag fps_info;
-    struct camera_context *cxt = NULL;
+
+    cmr_bzero(&fps_info, sizeof(struct sensor_mode_fps_tag));
+
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     struct prev_sn_param_dvfs_type dvfs_param;
     struct sensor_mode_info *sensor_mode_info = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
 #endif
+
     CMR_LOGD("E");
 
     CHECK_HANDLE_VALID(handle);
-    cmr_bzero(&fps_info, sizeof(struct sensor_mode_fps_tag));
-    cxt = (struct camera_context *)handle->oem_handle;
 
     prev_size =
         &handle->prev_cxt[camera_id].prev_param.preview_size;
@@ -5777,10 +5716,6 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         handle->prev_cxt[camera_id].prev_param.is_cfg_rot_cap;
     sensor_info =
         &handle->prev_cxt[camera_id].sensor_info;
-   if (NULL == sensor_info) {
-       CMR_LOGE("sensor_info NULL");
-       return -CMR_CAMERA_INVALID_PARAM;
-   }
 
     CMR_LOGD("preview_eb %d, video_eb %d, snapshot_eb %d, sprd_zsl_enabled %d",
              handle->prev_cxt[camera_id].prev_param.preview_eb,
@@ -5868,6 +5803,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     * 1: is_4in1_support || limit_w > 0
     */
     do {
+        struct camera_context *cxt = handle->oem_handle;
         cxt->is_4in1_sensor = camera_get_is_4in1_sensor(&(cxt->sn_cxt.info_4in1));
     } while(0);
 
@@ -6140,14 +6076,12 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 is_3D_video = 0;
     cmr_u32 is_3D_caputre = 0;
     cmr_u32 is_3D_preview = 0;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
-    if (!sensor_info || !handle || !target_size || !work_mode) {
-        CMR_LOGE("null ptr: 0x%p 0x%p 0x%p 0x%p", sensor_info, handle,
-            target_size, work_mode);
+    if (!sensor_info) {
+        CMR_LOGE("sn info is null!");
         return CMR_CAMERA_FAIL;
     }
-    cxt = (struct camera_context *)(handle->oem_handle);
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if ((!strcmp(value, "raw")) && (!cxt->is_4in1_sensor)) {
@@ -6292,14 +6226,12 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 is_3D_video = 0;
     cmr_u32 is_3D_caputre = 0;
     cmr_u32 is_3D_preview = 0;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
 
-     if (!sensor_info || !handle || !target_size || !work_mode) {
-        CMR_LOGE("null ptr: 0x%p 0x%p 0x%p 0x%p", sensor_info, handle,
-            target_size, work_mode);
+    if (!sensor_info) {
+        CMR_LOGE("sn info is null!");
         return CMR_CAMERA_FAIL;
     }
-    cxt = (struct camera_context *)handle->oem_handle;
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
@@ -6480,10 +6412,6 @@ cmr_int prev_get_sn_inf(struct prev_handle *handle, cmr_u32 camera_id,
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    if (!sn_if) {
-        CMR_LOGE("sn_if is NULL");
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
     sensor_info = &handle->prev_cxt[camera_id].sensor_info;
 
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info->image_format) {
@@ -6535,15 +6463,9 @@ cmr_int prev_get_cap_max_size(struct prev_handle *handle, cmr_u32 camera_id,
     struct img_size *cap_size = NULL;
     cmr_int zoom_post_proc = 0;
 
-    CMR_LOGD("camera_id %d", camera_id);
-
-    if (!handle || !sn_mode || !max_size) {
-        CMR_LOGE("null ptr: 0x%p 0x%p 0x%p", handle, sn_mode, max_size);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
-
     img_sz.width = max_size->width;
     img_sz.height = max_size->height;
+    CMR_LOGD("camera_id %d", camera_id);
     isp_width_limit = handle->prev_cxt[camera_id].prev_param.isp_width_limit;
     zoom_param = &handle->prev_cxt[camera_id].prev_param.zoom_setting;
     cap_size = &handle->prev_cxt[camera_id].actual_pic_size;
@@ -6670,10 +6592,6 @@ exit:
 cmr_int prev_get_frm_index(struct img_frm *frame, struct frm_info *data) {
     cmr_int i;
 
-    if (!frame || !data) {
-        CMR_LOGE("null ptr: 0x%p 0x%p", frame, data);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
     for (i = 0; i < PREV_FRM_CNT; i++) {
         if (data->fd == (frame + i)->fd) {
             break;
@@ -6689,11 +6607,6 @@ int get_frame_index(struct img_frm *frame, int total_num, struct frm_info *data,
     int ret = -1;
     int i;
 
-    if (!frame || !data) {
-        CMR_LOGE("null ptr: 0x%p 0x%p", frame, data);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
-
     for (i = 0; i < total_num; i++) {
         if (data->fd == (frame + i)->fd) {
             ret = 0;
@@ -6708,11 +6621,6 @@ int get_frame_index(struct img_frm *frame, int total_num, struct frm_info *data,
 
 cmr_int prev_zsl_get_frm_index(struct img_frm *frame, struct frm_info *data) {
     cmr_int i;
-
-    if (!frame || !data) {
-        CMR_LOGE("null ptr: 0x%p 0x%p", frame, data);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
 
     for (i = 0; i < ZSL_FRM_CNT; i++) {
         if (data->fd == (frame + i)->fd) {
@@ -6734,10 +6642,6 @@ cmr_int prev_y_info_copy_to_isp(struct prev_handle *handle, cmr_uint camera_id,
     struct yimg_info y_info = {0};
     struct isp_yimg_info isp_yimg = {0};
 
-    if (!handle || !info) {
-        CMR_LOGE("null ptr: 0x%p 0x%p", handle, info);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
     prev_cxt = &handle->prev_cxt[camera_id];
 
     if (!handle->ops.get_isp_yimg || !handle->ops.set_preview_yimg) {
@@ -6796,11 +6700,6 @@ static cmr_int prev_yuv_info_copy_to_isp(struct prev_handle *handle,
     cmr_u8 *uv_addr = NULL;
     cmr_uint uv_size = 0;
 
-    if (!handle || !info) {
-        CMR_LOGE("null ptr: 0x%p 0x%p", handle, info);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
-
     prev_cxt = &handle->prev_cxt[camera_id];
 
     if (0 != prev_cxt->prev_frm_cnt % 30)
@@ -6845,7 +6744,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
     struct img_frm *frm_ptr = NULL;
     struct img_frm *video_frm_ptr = NULL;
     cmr_s64 ae_time = 0;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -6853,7 +6752,6 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         return ret;
     }
 
-    cxt = (struct camera_context *)(handle->oem_handle);
     prev_chn_id = handle->prev_cxt[camera_id].prev_channel_id;
     cap_chn_id = handle->prev_cxt[camera_id].cap_channel_id;
     prev_rot = handle->prev_cxt[camera_id].prev_param.prev_rot;
@@ -7194,18 +7092,17 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 is_raw_capture = 0;
-    char value[PROPERTY_VALUE_MAX] = {0};
-    struct camera_context *cxt = NULL;
+    char value[PROPERTY_VALUE_MAX];
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    if (NULL == out_param_ptr) {
-        CMR_LOGD("error: out_param_ptr is null");
-        return -CMR_CAMERA_INVALID_PARAM;
+    if (!out_param_ptr) {
+        CMR_LOGD("out_param_ptr is null");
     }
 
     /*cmr_bzero(out_param_ptr, sizeof(struct preview_out_param));*/
-    cxt = (struct camera_context *)handle->oem_handle;
+
     handle->prev_cxt[camera_id].camera_id = camera_id;
     handle->prev_cxt[camera_id].out_ret_val = CMR_CAMERA_SUCCESS;
 
@@ -7350,25 +7247,16 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     struct video_start_param video_param;
     struct img_data_end endian;
     struct buffer_cfg buf_cfg;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
     cmr_u32 i;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
-    if (NULL == out_param_ptr) {
-        CMR_LOGE("error: out_param_ptr NULL");
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
 
     cmr_bzero(&chn_param, sizeof(struct channel_start_param));
     cmr_bzero(&video_param, sizeof(struct video_start_param));
     CMR_LOGD("camera_id %d", camera_id);
-    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
-    if (NULL == cxt || NULL == prev_cxt) {
-        CMR_LOGE("error: cxt %p, prev_cxt %p", cxt, prev_cxt);
-        return -CMR_CAMERA_INVALID_PARAM;
-    }
 
     chn_param.sensor_mode = prev_cxt->prev_mode;
     sensor_info = &prev_cxt->sensor_info;

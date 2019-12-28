@@ -2018,8 +2018,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			}
 			data_len = isp_mode_num;
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				memcpy((cmr_u8 *) data_addr, data_mode_id, isp_mode_num);
 				rtn = send_isp_mode_id_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -2030,8 +2030,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
 			data_len = mode_param_info.len;
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				data_addr[0] = mode_param->version_id;
 				data_addr[1] = mode_id;
 				data_addr[2] = mode_param->width;
@@ -2052,8 +2052,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			data_len = 0;
 			rtn = get_ae_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				rtn = get_ae_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -2067,8 +2067,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			data_len = 0;
 			rtn = get_ae_weight_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				rtn = get_ae_weight_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -2082,8 +2082,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			data_len = 0;
 			rtn = get_ae_scene_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				rtn = get_ae_scene_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -2097,8 +2097,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			data_len = 0;
 			rtn = get_ae_auto_iso_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				rtn = get_ae_auto_iso_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -2112,8 +2112,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 			data_len = 0;
 			rtn = get_lnc_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				rtn = get_lnc_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -2140,8 +2140,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 		{
 			data_len = sensor_note_param.node_len;
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				memcpy((cmr_u8 *) data_addr, sensor_note_param.note, data_len);
 				rtn = send_note_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -2151,8 +2151,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 		{
 			data_len = sizeof(struct sensor_libuse_info);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
 				memcpy((cmr_u8 *) data_addr, sensor_raw_info_ptr->libuse_info, data_len);
 				rtn = send_libuse_info_param(read_cmd, msg, data_addr, data_len);
 			} else {

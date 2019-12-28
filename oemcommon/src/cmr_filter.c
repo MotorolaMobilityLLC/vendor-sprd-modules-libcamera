@@ -150,21 +150,18 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
                                      struct ipm_frame_in *in,
                                      struct ipm_frame_out *out) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct class_filter *filter_handle = NULL;
+    struct class_filter *filter_handle = (struct class_filter *)class_handle;
     struct img_addr *addr;
     cmr_uint width = 0;
     cmr_uint height = 0;
-    struct camera_context *cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)in->private_data;
 
     CMR_LOGI("E");
 
-    if (!out || !in || !class_handle) {
+    if (!out || !in || !class_handle || !cxt) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
-    cxt = (struct camera_context *)in->private_data;
-    filter_handle = (struct class_filter *)class_handle;
     if (!filter_handle->is_inited) {
         return ret;
     }

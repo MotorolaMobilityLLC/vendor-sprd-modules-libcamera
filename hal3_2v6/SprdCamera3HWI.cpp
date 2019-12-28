@@ -1968,11 +1968,6 @@ int SprdCamera3HWI::flush() {
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
     mBufferStatusError = true;
-    if (NULL == mOEMIf) {
-        HAL_LOGE("mOEMIF is NULL");
-        return -1;
-    }
-
     if (mOEMIf) {
         mOEMIf->setFlushFlag(1);
         mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
