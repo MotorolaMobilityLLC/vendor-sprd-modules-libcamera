@@ -255,7 +255,12 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_init(struct soft_
 	phandle->process_flag = 0;
 	phandle->depth_weight_valid_index = 0;
 	phandle->start_flag = 0;
+	if (param == NULL) {
+		SWISP_LOGE("input param is NULL");
+		return -1;
+	}
 	SWISP_LOGI("------->otp size in init is:%d, mainnum:%d, subnum:%d\n" , param->otp_size , param->swisp_mainthreadnum , param->swisp_subthreadnum);
+
 	phandle->otp_data = (uint8_t*)malloc(param->otp_size);
 	phandle->otp_size = param->otp_size;
 	if(phandle->otp_data == NULL)
@@ -291,14 +296,8 @@ __attribute__ ((visibility("default"))) int sprd_realtimebokeh_init(struct soft_
 		return -1;
 	}
 	phandle->swisp_handle = sw_isp_handle;
-	if(param != NULL)
-	{
-		memcpy(&phandle->param , param , sizeof(struct soft_isp_init_param));
-	}
-	else
-	{
-		SWISP_LOGW("input param is NULL");
-	}
+	memcpy(&phandle->param , param , sizeof(struct soft_isp_init_param));
+
 	//init swisp/ynr/depth thread
 	ret = sprd_pool_init(&phandle->threadpool , 1);
 	if(ret != 0)
