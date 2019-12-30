@@ -201,24 +201,26 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
         param.zoomRatio = (float)zoomInfo.pixel_size.width / (float)zoomInfo.crop_region.width;
         param.zoomCenterOffsetX = (float)x / ((float)zoomInfo.pixel_size.width / 2);
         param.zoomCenterOffsetY = (float)y / ((float)zoomInfo.pixel_size.height / 2);
+
+        param.input_info.fullsize_height = param_t.fullsize_height;
+        param.input_info.fullsize_width = param_t.fullsize_width;
+        param.input_info.input_height = param_t.input_height;
+        param.input_info.input_width = param_t.input_width;
+        param.input_info.crop_x = CAMERA_START(param_t.crop_x);
+        param.input_info.crop_y = CAMERA_START(param_t.crop_y);
+        param.input_info.crop_width = CAMERA_START(param_t.crop_width);
+        param.input_info.crop_height = CAMERA_START(param_t.crop_height);
+        CMR_LOGV("ultrawid set ratio %f", param.zoomRatio);
+        CMR_LOGV("fullsize_height=%d,fullsize_width=%d",param.input_info.fullsize_height, param.input_info.fullsize_width);
+        CMR_LOGV("input_height=%d,input_width=%d", param.input_info.input_height, param.input_info.input_width);
+        CMR_LOGV("crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
+            param.input_info.crop_x,param.input_info.crop_y,param.input_info.crop_width,param.input_info.crop_height);
+    }else {
+        CMR_LOGE("wrong ultra wide param.");
+        return CMR_CAMERA_INVALID_PARAM;
     }
     CMR_LOGD("ultrawid set ratio %f, offset (%f, %f)", param.zoomRatio,
             param.zoomCenterOffsetX, param.zoomCenterOffsetY);
-
-    param.input_info.fullsize_height = param_t.fullsize_height;
-    param.input_info.fullsize_width = param_t.fullsize_width;
-    param.input_info.input_height = param_t.input_height;
-    param.input_info.input_width = param_t.input_width;
-    param.input_info.crop_x = CAMERA_START(param_t.crop_x);
-    param.input_info.crop_y = CAMERA_START(param_t.crop_y);
-    param.input_info.crop_width = CAMERA_START(param_t.crop_width);
-    param.input_info.crop_height = CAMERA_START(param_t.crop_height);
-
-    CMR_LOGD("ultrawid set ratio %f", param.zoomRatio);
-    CMR_LOGD("fullsize_height=%d,fullsize_width=%d",param.input_info.fullsize_height, param.input_info.fullsize_width);
-    CMR_LOGD("input_height=%d,input_width=%d", param.input_info.input_height, param.input_info.input_width);
-    CMR_LOGD("crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
-        param.input_info.crop_x,param.input_info.crop_y,param.input_info.crop_width,param.input_info.crop_height);
 
     if (ultrawide_handle->warp_inst != NULL) {
         input.width = src_img->size.width;
