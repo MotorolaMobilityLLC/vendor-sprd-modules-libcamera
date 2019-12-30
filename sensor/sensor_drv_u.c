@@ -1860,9 +1860,10 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
 
     cmr_int ret = 0;
     struct _sensor_val_tag param;
-    SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+
     if (module && module->otp_drv_info.otp_drv_entry &&
         sensor_cxt->otp_drv_handle) {
         switch (cmd) {
@@ -2919,7 +2920,10 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     struct xml_camera_cfg_info *camera_cfg;
     struct otp_drv_lib *libOtpPtr = &otp_lib_mngr[sensor_cxt->slot_id];
     struct vcm_drv_lib *libVcmPtr = &vcm_lib_mngr[sensor_cxt->slot_id];
+
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
+    SENSOR_DRV_CHECK_ZERO(sns_module);
 
     camera_cfg = sensor_cxt->xml_info;
     sensor_drv_xml_parse_vcm_info(camera_cfg);
@@ -2953,9 +2957,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
 #endif
     sensor_af_init(sensor_cxt);
     sensor_otp_module_init(sensor_cxt);
-    if ((SENSOR_IMAGE_FORMAT_RAW ==
-         sensor_cxt->sensor_info_ptr->image_format) &&
-        sns_module) {
+    if (SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) {
         if (sns_module->otp_drv_info.otp_drv_entry) {
             sensor_otp_process(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
         } else {

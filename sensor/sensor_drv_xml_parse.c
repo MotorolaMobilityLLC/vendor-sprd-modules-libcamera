@@ -104,9 +104,12 @@ int sensor_drv_xml_get_node_num(xmlNodePtr pNodePtr, const char *nodeName) {
     int node_num = 0;
     xmlNodePtr curPtr = NULL;
 
-    if (!pNodePtr || !nodeName) {
-        SENSOR_LOGE("node %s not found or  node %s is null", nodeName,
-                    pNodePtr->name);
+    if (!pNodePtr) {
+        SENSOR_LOGE("pNodePtr not found");
+        goto exit;
+    }
+    if (!nodeName) {
+        SENSOR_LOGE("nodeName is null");
         goto exit;
     }
 
@@ -130,9 +133,12 @@ int sensor_drv_xml_get_node_num_recursive(xmlNodePtr pNodePtr,
     int node_num = 0;
     xmlNodePtr curPtr = NULL;
 
-    if (!pNodePtr || !nodeName) {
-        SENSOR_LOGE("node %s not found or  node %s is null", nodeName,
-                    pNodePtr->name);
+    if (!pNodePtr) {
+        SENSOR_LOGE("pNodePtr not found");
+        goto exit;
+    }
+    if (!nodeName) {
+        SENSOR_LOGE("nodeName is null");
         goto exit;
     }
 
@@ -156,9 +162,13 @@ int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
     xmlNodePtr curPtr = NULL;
     char *xml_str = NULL;
     int ret = -1;
-    if (!pNodePtr || !nodeName) {
-        SENSOR_LOGE("node %s not found or  node %s is null", nodeName,
-                    pNodePtr->name);
+
+    if (!pNodePtr) {
+        SENSOR_LOGE("pNodePtr not found");
+        goto exit;
+    }
+    if (!nodeName) {
+        SENSOR_LOGE("nodeName is null");
         goto exit;
     }
 
@@ -448,7 +458,8 @@ int sensor_drv_xml_parse_otp_info(struct xml_camera_cfg_info *camera_cfg) {
     return ret;
 }
 
-int sensor_drv_xml_parse_tuning_param_info(struct xml_camera_cfg_info *camera_cfg) {
+int sensor_drv_xml_parse_tuning_param_info(
+    struct xml_camera_cfg_info *camera_cfg) {
     int ret = 0;
     uint32_t elem_num = 0;
     xmlDocPtr docPtr = camera_cfg->docPtr;
@@ -470,16 +481,17 @@ int sensor_drv_xml_parse_tuning_param_info(struct xml_camera_cfg_info *camera_cf
     elem_num++;
 
 #ifndef RECURSIVE_TRAVERSAL_ENABLE
-    nodeParamPtr = sensor_drv_xml_get_node(camera_cfg->nodePtr, "TuningParameter", 0);
+    nodeParamPtr =
+        sensor_drv_xml_get_node(camera_cfg->nodePtr, "TuningParameter", 0);
     if (nodeParamPtr) {
-        SENSOR_LOGD("parse tuningParameter info node name %s", nodeParamPtr->name);
-        ret = sensor_drv_xml_parse_node_data(nodeParamPtr, "TuningParameter", xml_hash_map,
-                                             elem_num, 0);
+        SENSOR_LOGD("parse tuningParameter info node name %s",
+                    nodeParamPtr->name);
+        ret = sensor_drv_xml_parse_node_data(nodeParamPtr, "TuningParameter",
+                                             xml_hash_map, elem_num, 0);
     }
 #else
-    ret = sensor_drv_xml_parse_node_data(nodePtr, "TuningParameter", xml_hash_map, elem_num,
-                                         0);
+    ret = sensor_drv_xml_parse_node_data(nodePtr, "TuningParameter",
+                                         xml_hash_map, elem_num, 0);
 #endif
     return ret;
 }
-
