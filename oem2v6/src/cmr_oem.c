@@ -8386,20 +8386,16 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                     CMR_LOGE("failed to get preflash skip number %ld", ret);
                 }
                 CMR_LOGD("preflash_skip_num = %d", flash_capture_skip_num);
-                if (cxt->is_multi_mode == MODE_MULTI_CAMERA ||
-                    0 == cxt->camera_id || isFrontFlash ||
-                    4 == cxt->camera_id) {
-                    cxt->flash_skip_frame_num = (flash_capture_skip_num == 0)
-                                                    ? 1
-                                                    : flash_capture_skip_num;
-                    cxt->flash_skip_frame_enable = 1;
-                    cxt->flash_skip_frame_cnt = 0;
-                    cxt->flash_shutdown_timestamp =
-                        systemTime(SYSTEM_TIME_BOOTTIME);
-                    CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
-                             cxt->flash_skip_frame_num,
-                             cxt->flash_skip_frame_cnt);
-                }
+                cxt->flash_skip_frame_num = (flash_capture_skip_num == 0)
+                                                ? 1
+                                                : flash_capture_skip_num;
+                cxt->flash_skip_frame_enable = 1;
+                cxt->flash_skip_frame_cnt = 0;
+                cxt->flash_shutdown_timestamp =
+                    systemTime(SYSTEM_TIME_BOOTTIME);
+                CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
+                         cxt->flash_skip_frame_num,
+                         cxt->flash_skip_frame_cnt);
             }
 #endif
             cmr_grab_flash_cb(grab_handle, &flash_opt);
