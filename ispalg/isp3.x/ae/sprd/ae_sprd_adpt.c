@@ -4520,7 +4520,6 @@ static cmr_s32 ae_set_dre_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->dre_gain;
 			ISP_LOGD("_isp_dre_normal: exp_line %d, gain %d\n", cxt->dre_exp_line, cxt->dre_gain);
 			ae_set_restore_cnt(cxt, 6);
-			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 			cxt->cur_status.adv_param.prof_mode = 0;
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 		}
