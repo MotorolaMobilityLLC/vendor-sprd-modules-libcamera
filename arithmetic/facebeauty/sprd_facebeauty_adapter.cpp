@@ -26,6 +26,10 @@ void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum
     }
 
     char strRunType[256];
+    property_get("ro.boot.lwfq.type", strRunType , "-1");
+    if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_VDSP && strcmp("0", strRunType))
+        faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
+
     property_get("persist.vendor.cam.fb.run_type", strRunType , "");
     if (!(strcmp("cpu", strRunType)))
         faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
