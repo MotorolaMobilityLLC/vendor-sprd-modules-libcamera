@@ -543,6 +543,7 @@ struct sensor_ex_exposure {
     cmr_u32 exposure;
     cmr_u32 dummy;
     cmr_u32 size_index;
+	cmr_u32 exp_time;
 };
 
 struct sensor_i2c_reg_tab {

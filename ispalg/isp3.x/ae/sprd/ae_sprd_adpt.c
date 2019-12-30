@@ -748,6 +748,7 @@ static cmr_s32 ae_sync_lib_out_data_process(struct ae_ctrl_cxt *cxt, struct ae_l
 		ae_info[i].exp.exposure = write_item[i].exp_line;
 		ae_info[i].exp.dummy = write_item[i].dumy_line;
 		ae_info[i].gain = ae_sync_gain[i].sensor_gain;
+		ae_info[i].exp.exp_time = write_item[i].exp_time;
 		ISP_LOGV("sync:ae_sync_lib_out_data_process, write_item, i:%d, exp_line:%d, exp_time:%d, dumy_line:%d, sensor_gain:%d", i, ae_info[i].exp.exposure, write_item[i].exp_time, ae_info[i].exp.dummy, ae_info[i].gain);
 		ISP_LOGV("sync:ae_sync_lib_out_data_process, actual_item, i:%d, exp_time:%d, dumy_line:%d, isp_gain:%d, sensor_gain:%d", i, actual_item[i].exp_time, actual_item[i].dumy_line, actual_item[i].isp_gain, actual_item[i].sensor_gain);
 	}
