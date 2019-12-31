@@ -9056,7 +9056,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         }
     } else if (type == CAMERA_ISPSTATS_AEM) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -9067,7 +9067,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         }
     } else if (type == CAMERA_ISPSTATS_AFM) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -9078,7 +9078,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         }
     } else if (type == CAMERA_ISPSTATS_AFL) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -9089,7 +9089,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         }
     } else if (type == CAMERA_ISPSTATS_BAYERHIST) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -9111,7 +9111,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         }
     } else if (type == CAMERA_ISPSTATS_LSCM) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -9122,7 +9122,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         }
     } else if (type == CAMERA_ISPSTATS_3DNR) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -9134,7 +9134,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
 
     } else if (type == CAMERA_ISPSTATS_EBD) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;
@@ -9145,7 +9145,7 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         }
     } else if (type == CAMERA_ISPSTATS_PDAF) {
         for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, true);
+            memory = allocCameraMem(size, 1, false);
             if (NULL == memory) {
                 HAL_LOGE("error memory is null,malloced type %d", type);
                 goto mem_fail;

@@ -4889,29 +4889,34 @@ cmr_int ispalg_calc_stats_size(cmr_handle isp_alg_handle)
 	/* Alloc 128 more bytes(header) for pararmeters (aem win, zoom roi....) */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_AEM];
 	buf_info->size = cxt->ae_cxt.win_num.w * cxt->ae_cxt.win_num.h * 16 * 3 + STATIS_AEM_HEADER_SIZE;
+	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 	buf_info->num = STATIS_AEM_BUF_NUM;
 
 	/* for afm */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_AFM];
 	buf_info->size = STATIS_AFM_BUF_SIZE;
+	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 	buf_info->num = STATIS_AFM_BUF_NUM;
 
 	/* for lscm, size should be 0 if lscm_win is not set */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_LSCM];
 	buf_info->size = cxt->lsc_cxt.lscm_win_num.w * cxt->lsc_cxt.lscm_win_num.h * 16;
+	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 	buf_info->num = STATIS_LSCM_BUF_NUM;
 
 	/* for afl */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_AFL];
 	buf_info->num = STATIS_AFL_BUF_NUM;
 	buf_info->size = STATIS_AFL_SIZE;
+	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 
 	/* for bayer hist (sharkl3 and previous version have no bayer hist) */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_HIST];
 	buf_info->size = STATIS_HIST_BUF_SIZE;
+	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 	buf_info->num = STATIS_HIST_BUF_NUM;
 
-	/* for isp yuv hist */
+	/* for isp yuv hist (only for SW write/read) */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_HIST2];
 	buf_info->size = STATIS_ISP_HIST2_BUF_SIZE;
 	buf_info->num = STATIS_ISP_HIST2_BUF_NUM;
@@ -4921,6 +4926,7 @@ cmr_int ispalg_calc_stats_size(cmr_handle isp_alg_handle)
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_3DNR];
 	buf_info->size = (cxt->commn_cxt.prv_size.w + 7) / 8 * 16;
 	buf_info->size += (cxt->commn_cxt.prv_size.h + 7) / 8 * 16;
+	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 	buf_info->num = STATIS_3DNR_BUF_NUM;
 
 	/* for embedline */

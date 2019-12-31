@@ -29,7 +29,8 @@
 #endif
 
 
-
+/* alloc more bytes for protecting memory from HW accessing out of range */
+#define STATIS_TAIL_RESERVED_SIZE  1024
 
 /* AFM max windows: 20 x 15, 16 Bytes for each window */
 #define STATIS_AFM_BUF_SIZE  (20 * 15 * 16)
