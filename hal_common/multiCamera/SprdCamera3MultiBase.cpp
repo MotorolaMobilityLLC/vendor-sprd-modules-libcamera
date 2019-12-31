@@ -1746,4 +1746,45 @@ void SprdCamera3MultiBase::setLogicIdTag(CameraMetadata &metadata,
              "ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA, "
              "and ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS");
 }
+
+int SprdCamera3MultiBase::getMultiTagToSprdTag(uint8_t multi_tag) {
+    int sprd_tag = 0;
+
+    switch (multi_tag) {
+    case MULTI_ZOOM_RATIO_SECTION:
+        sprd_tag = ANDROID_SPRD_ZOOM_RATIO_SECTION;
+        break;
+    case MULTI_ZOOM_RATIO:
+        sprd_tag = ANDROID_SPRD_ZOOM_RATIO;
+        break;
+    case MULTI_BURSTMODE_ENABLED:
+        sprd_tag = ANDROID_SPRD_BURSTMODE_ENABLED;
+        break;
+    case MULTI_ZSL_ENABLED:
+        sprd_tag = ANDROID_SPRD_ZSL_ENABLED;
+        break;
+    case MULTI_TOUCH_INFO:
+        sprd_tag = ANDROID_SPRD_TOUCH_INFO;
+        break;
+    case MULTI_VCM_STEP:
+        sprd_tag = ANDROID_SPRD_VCM_STEP;
+        break;
+    case MULTI_AI_SCENE_TYPE_CURRENT:
+        sprd_tag = ANDROID_SPRD_AI_SCENE_TYPE_CURRENT;
+        break;
+    case MULTI_FACE_ATTRIBUTES:
+        sprd_tag = ANDROID_SPRD_FACE_ATTRIBUTES;
+        break;
+    case MULTI_OTP_DATA:
+        sprd_tag = ANDROID_SPRD_OTP_DATA;
+        break;
+    default:
+        break;
+    }
+    return sprd_tag;
+}
+
+int SprdCamera3MultiBase::getBufferSize(buffer_handle_t h) {
+    return ADP_BUFSIZE(h);
+}
 };

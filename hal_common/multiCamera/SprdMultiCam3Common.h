@@ -88,9 +88,16 @@ typedef struct __tag_rect {
     MInt32 bottom;
 } MRECT, *PMRECT;
 
-typedef enum { MATCH_FAILED = 0, MATCH_SUCCESS } matchResult;
+typedef enum {
+    MATCH_FAILED = 0,
+    MATCH_SUCCESS = 1,
+} matchResult;
 
-typedef enum { NOTIFY_SUCCESS = 0, NOTIFY_ERROR, NOTIFY_NOT_FOUND } notifytype;
+typedef enum {
+    NOTIFY_SUCCESS = 0,
+    NOTIFY_ERROR = 1,
+    NOTIFY_NOT_FOUND = 2,
+} notifytype;
 
 typedef enum {
     PREVIEW_MAIN_BUFFER = 0,
@@ -108,10 +115,10 @@ typedef enum {
 
 typedef enum {
     DEFAULT_STREAM = 1,
-    PREVIEW_STREAM,
-    VIDEO_STREAM,
-    CALLBACK_STREAM,
-    SNAPSHOT_STREAM,
+    PREVIEW_STREAM = 2,
+    VIDEO_STREAM = 3,
+    CALLBACK_STREAM = 4,
+    SNAPSHOT_STREAM = 5,
 } streamType_t;
 
 typedef enum {
@@ -315,8 +322,8 @@ typedef struct {
 
 typedef enum {
     MUXER_MSG_DATA_PROC = 1,
-    MUXER_MSG_EXIT,
-    MUXER_MSG_INIT
+    MUXER_MSG_EXIT = 2,
+    MUXER_MSG_INIT = 3,
 } muxerMsgType;
 
 typedef struct {
@@ -443,6 +450,18 @@ typedef struct {
     camera_metadata_t *metadata;
     uint32_t frame_number;
 } meta_save_t;
-};
 
+typedef enum {
+    MULTI_ZOOM_RATIO_SECTION,
+    MULTI_ZOOM_RATIO,
+    MULTI_BURSTMODE_ENABLED,
+    MULTI_ZSL_ENABLED,
+    MULTI_TOUCH_INFO,
+    MULTI_VCM_STEP,
+    MULTI_AI_SCENE_TYPE_CURRENT,
+    MULTI_FACE_ATTRIBUTES,
+    MULTI_OTP_DATA,
+}multi_tag;
+
+};
 #endif

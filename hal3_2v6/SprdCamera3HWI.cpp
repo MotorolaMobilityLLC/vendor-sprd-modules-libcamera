@@ -2255,6 +2255,10 @@ void SprdCamera3HWI::setUltraWideMode(unsigned int on_off){
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
 }
 
+void SprdCamera3HWI::setMultiCaptureTimeStamp(uint64_t time_stamp){
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP, &time_stamp, NULL);
+}
+
 void SprdCamera3HWI::setVisibleRegion(uint32_t serial, int32_t region[4]) {
     struct visible_region_info info;
 

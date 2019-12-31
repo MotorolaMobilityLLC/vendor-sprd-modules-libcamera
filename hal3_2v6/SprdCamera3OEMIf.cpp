@@ -170,6 +170,8 @@ enum cmr_flash_lcd_mode {
 
 #define UPDATE_RANGE_FPS_COUNT 0x04
 #define CAM_POWERHINT_WAIT_COUNT 35
+
+#define MULTI_THREE_SECTION 3
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -3364,7 +3366,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
     if ((getMultiCameraMode() == MODE_BOKEH ||
          getMultiCameraMode() == MODE_3D_CALIBRATION) &&
-        mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
+        mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) {
         setCameraConvertCropRegion();
         property_get("persist.vendor.cam.focus.distance", prop, "0");
         if (atoi(prop))
@@ -6075,11 +6077,11 @@ int SprdCamera3OEMIf::openCamera() {
           mMultiCameraMode == MODE_3D_CALIBRATION ||
           mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
          mCameraId < 2) ||
-        (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) ||
+        (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) ||
         ((mMultiCameraMode == MODE_MULTI_CAMERA ||
           mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
-        (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) ||
-          mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK))) ||
+        (mCameraId == sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK) ||
+          mCameraId == sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK))) ||
         (mMultiCameraMode == MODE_3D_FACEID_REGISTER ||
          mMultiCameraMode == MODE_3D_FACEID_UNLOCK) ||
          mMultiCameraMode == MODE_3D_FACE) {
@@ -6089,15 +6091,15 @@ int SprdCamera3OEMIf::openCamera() {
              mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
             mCameraId < 2)
             dual_flag = 1;
-        else if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK))
+        else if (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK))
             dual_flag = 3;
         else if ((mMultiCameraMode == MODE_MULTI_CAMERA ||
                   mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
-                 mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK))
+                 mCameraId == sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK))
             dual_flag = 5;
         else if ((mMultiCameraMode == MODE_MULTI_CAMERA ||
                   mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
-                 mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK))
+                 mCameraId == sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK))
             dual_flag = 6;
         else if (mMultiCameraMode == MODE_3D_FACEID_REGISTER ||
                  mMultiCameraMode == MODE_3D_FACEID_UNLOCK ||
@@ -6317,6 +6319,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     SCALER_Tag scaleInfo;
     struct img_rect cropRegion;
     int ret = 0;
+    uint8_t PhyCam = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -6333,7 +6336,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
             cropRegion.width, cropRegion.height);
     if ((getMultiCameraMode() == MODE_BOKEH ||
          getMultiCameraMode() == MODE_3D_CALIBRATION) &&
-        mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
+        mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) {
         mSetting->getLargestSensorSize(mCameraId, &sensorOrgW, &sensorOrgH);
         cal_spw_size(sensorOrgW, sensorOrgH, &(cropRegion.width),
                      &(cropRegion.height));
@@ -6348,12 +6351,12 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
 
     if (cropRegion.width > 0 && cropRegion.height > 0) {
         zoomRatio = static_cast<float>(sensorOrgW) / cropRegion.width;
+        HAL_LOGV("mCameraId=%d, zoomRatio=%f", mCameraId, zoomRatio);
     }
 
     if (zoomRatio < MIN_DIGITAL_ZOOM_RATIO)
         zoomRatio = MIN_DIGITAL_ZOOM_RATIO;
-    HAL_LOGD("mCameraId1=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,
-             zoomRatio, mIsUltraWideMode);
+
     if (getMultiCameraMode() == MODE_MULTI_CAMERA) {
         if (zoomRatio > MULTI_MAX_DIGITAL_ZOOM_RATIO) {
             zoomRatio = MULTI_MAX_DIGITAL_ZOOM_RATIO;
@@ -6362,22 +6365,20 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
 
-    if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK) &&
+    if (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK) &&
+        getMultiCameraMode() == MODE_MULTI_CAMERA &&
         zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
 
-    uint8_t Section = 0;
-    char prop[PROPERTY_VALUE_MAX] = {0};
-    property_get("persist.vendor.cam.multi.section", prop, "3");
-    if (atoi(prop) == 2) {
-        Section = 2;
-    } else if (atoi(prop) == 3){
-        Section = 3;
-    }
+    struct sensor_zoom_param_input ZoomInputParam;
+    ret = sensorGetZoomParam(&ZoomInputParam);
+    PhyCam = ZoomInputParam.PhyCameras;
 
-    if (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) &&
-        zoomRatio > MAX_DIGITAL_ZOOM_RATIO && Section == 3) {
+    if (mCameraId == sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK) &&
+        getMultiCameraMode() == MODE_MULTI_CAMERA &&
+        zoomRatio > MAX_DIGITAL_ZOOM_RATIO &&
+        PhyCam == MULTI_THREE_SECTION) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
 
@@ -6855,7 +6856,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AE_MODE:
         if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
             mCameraId == 1 || mCameraId == 4 || mCameraId == 3 ||
-            (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK) &&
+            (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK) &&
              getMultiCameraMode() != MODE_BOKEH &&
              getMultiCameraMode() != MODE_3D_CALIBRATION &&
              getMultiCameraMode() != MODE_PORTRAIT)) {

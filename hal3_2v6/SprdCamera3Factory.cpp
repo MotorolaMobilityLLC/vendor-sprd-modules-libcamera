@@ -527,13 +527,13 @@ int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
         }
         return 1;
     } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
-        return findSensorRole(MODULE_SPW_NONE_BACK);
+        return sensorGetRole(MODULE_SPW_NONE_BACK);
     } else if (SPRD_FRONT_HIGH_RES == cameraId) {
         return 1;
     } else if (SPRD_OPTICSZOOM_W_ID == cameraId) {
-        return findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK);
+        return sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK);
     } else if (SPRD_OPTICSZOOM_T_ID == cameraId) {
-        return findSensorRole(MODULE_OPTICSZOOM_TELE_BACK);
+        return sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK);
     }
 
     return 0xff;

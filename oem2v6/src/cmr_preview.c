@@ -6102,14 +6102,11 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         is_raw_capture = 1;
     }
 
-    float max_zoom_ratio = 0;
-    char prop[PROPERTY_VALUE_MAX] = {0};
-    property_get("persist.vendor.cam.multi.section", prop, "3");
-    if (atoi(prop) == 2) {
-        max_zoom_ratio = 8.0;
-    } else if (atoi(prop) == 3){
-        max_zoom_ratio = 5.0;
-    }
+    float max_binning_ratio = 0;
+    struct sensor_zoom_param_input ZoomInputParam;
+    ret = sensorGetZoomParam(&ZoomInputParam);
+    ret = CMR_CAMERA_SUCCESS;
+    max_binning_ratio = ZoomInputParam.BinningRatio;
 
     if (cxt->is_multi_mode == MODE_3D_VIDEO) {
         is_3D_video = 1;
@@ -6174,7 +6171,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
                         if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                            if (width / max_zoom_ratio >=
+                            if (width / max_binning_ratio >=
                                 prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                 /* dont choose high fps setting for no-slowmotion */
                                 ret = handle->ops.get_sensor_fps_info(
@@ -6252,14 +6249,11 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         is_raw_capture = 1;
     }
 
-    float max_zoom_ratio = 0;
-    char prop[PROPERTY_VALUE_MAX] = {0};
-    property_get("persist.vendor.cam.multi.section", prop, "3");
-    if (atoi(prop) == 2) {
-        max_zoom_ratio = 8.0;
-    } else if (atoi(prop) == 3){
-        max_zoom_ratio = 5.0;
-    }
+    float max_binning_ratio = 0;
+    struct sensor_zoom_param_input ZoomInputParam;
+    ret = sensorGetZoomParam(&ZoomInputParam);
+    ret = CMR_CAMERA_SUCCESS;
+    max_binning_ratio = ZoomInputParam.BinningRatio;
 
     if (cxt->is_multi_mode == MODE_3D_VIDEO) {
         is_3D_video = 1;
@@ -6365,7 +6359,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                         sensor_info->mode_info[i].image_format) {
                         if (search_height <= height && search_width <= width) {
                             if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                                if (width / max_zoom_ratio >=
+                                if (width / max_binning_ratio >=
                                     prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                     /* dont choose high fps setting for no-slowmotion */
                                     ret = handle->ops.get_sensor_fps_info(
@@ -7391,7 +7385,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
                              prev_cxt->actual_prev_size.height;
 
         // TODO WORKAROUND
-        if (camera_id == findSensorRole(MODULE_SPW_NONE_BACK))
+        if (camera_id == sensorGetRole(MODULE_SPW_NONE_BACK))
             real_ratio = 1.0f;
 
         if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401 ) {
@@ -7832,7 +7826,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
                              prev_cxt->actual_video_size.height;
 
         // TODO WORKAROUND
-        if (camera_id == findSensorRole(MODULE_SPW_NONE_BACK))
+        if (camera_id == sensorGetRole(MODULE_SPW_NONE_BACK))
             real_ratio = 1.0f;
 
         if (zoom_param->zoom_info.crop_region.width > 0) {

@@ -53,11 +53,11 @@ namespace sprdcamera {
 
 typedef enum {
     PREVIEW_REQUEST_STATE = 0,
-    WAIT_FIRST_YUV_STATE,  // wait first yuv frame
-    WAIT_SECOND_YUV_STATE, // wait second yuv frame
-    WAIT_THIRD_YUV_STATE,  // wait third yuv frame
-    REPROCESS_STATE,       // encode yuv to jpeg
-    WAIT_JPEG_STATE,
+    WAIT_FIRST_YUV_STATE = 1,  // wait first yuv frame
+    WAIT_SECOND_YUV_STATE = 2, // wait second yuv frame
+    WAIT_THIRD_YUV_STATE = 3,  // wait third yuv frame
+    REPROCESS_STATE = 4,       // encode yuv to jpeg
+    WAIT_JPEG_STATE = 5,
 } request_state;
 
 typedef struct {
@@ -205,6 +205,8 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     void setLogicIdTag(CameraMetadata &metadata, uint8_t *physical_ids,
                        uint8_t physical_ids_size);
     static int get_support_res_size(const char *resolution);
+    static int getMultiTagToSprdTag(uint8_t multi_tag);
+    static int getBufferSize(buffer_handle_t h);
 
   private:
     Mutex mBufferListLock;
