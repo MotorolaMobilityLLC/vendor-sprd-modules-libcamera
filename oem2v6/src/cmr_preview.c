@@ -6840,7 +6840,8 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
             ret = prev_3dnr_send_data(handle, camera_id, info, frame_type,
                                       frm_ptr, video_frm_ptr);
         }
-        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1) {
+
+        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1 && cxt->ref_camera_id == camera_id) {
             prev_ai_scene_send_data(handle, camera_id, frm_ptr, info);
         }
 

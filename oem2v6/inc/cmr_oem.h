@@ -328,6 +328,7 @@ struct camera_context {
     cmr_handle snp_send_raw_image_handle;
 
     /*for setting*/
+    cmr_u32 ref_camera_id;
     cmr_uint ai_scene_enable;
     struct camera_settings cmr_set;
     cmr_u32 is_support_fd;

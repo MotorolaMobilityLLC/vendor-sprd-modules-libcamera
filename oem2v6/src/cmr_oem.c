@@ -13290,6 +13290,8 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
                                        cmr_u32 *ref_camera_id) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
+    CMR_LOGV("ref_camera_id id %d", *ref_camera_id);
+    cxt->ref_camera_id = *ref_camera_id;
     return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_REF_CAMERA_ID,
                      ref_camera_id);
 }
