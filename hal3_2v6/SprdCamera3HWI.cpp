@@ -2255,6 +2255,21 @@ void SprdCamera3HWI::setUltraWideMode(unsigned int on_off){
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
 }
 
+void SprdCamera3HWI::setVisibleRegion(uint32_t serial, int32_t region[4]) {
+    struct visible_region_info info;
+
+    info.serial_no = serial;
+    info.region.start_x = region[0];
+    info.region.start_y = region[1];
+    info.region.width = region[2];
+    info.region.height = region[3];
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_VISIBLE_REGION, &info, NULL);
+}
+
+void SprdCamera3HWI::setGlobalZoomRatio(float ratio) {
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO, &ratio, NULL);
+}
+
 void SprdCamera3HWI::setCapState(bool flag) {
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_CAP_STATE, &flag, NULL);
 }

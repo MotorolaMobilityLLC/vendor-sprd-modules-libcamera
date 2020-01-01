@@ -37,9 +37,13 @@ enum isp_br_ioctl_cmd {
 	GET_STAT_AWB_DATA_AE,
 	SET_AE_TARGET_REGION,
 	SET_AE_REF_CAMERA_ID,
+	SET_AE_VISIBLE_REGION,
+	GET_AE_VISIBLE_REGION,
 	GET_AE_SYNC_DATA,
 	SET_AE_BLOCK_SIZE,
 	SET_AE_WINDOW_RECT,
+	SET_AE_WIN,
+	GET_AE_WIN,
 
 	// AWB
 	SET_MATCH_AWB_DATA,
@@ -50,6 +54,12 @@ enum isp_br_ioctl_cmd {
 	GET_GAIN_AWB_DATA,
 	SET_FOV_DATA,
 	GET_FOV_DATA,
+
+	// HIST
+	SET_HIST_WIN,
+	GET_HIST_WIN,
+	SET_HIST_STATS,
+	GET_HIST_STATS,
 
 	// OTP
 	SET_OTP_AE,
@@ -74,6 +84,8 @@ enum isp_br_ioctl_cmd {
 	GET_SENSOR_ROLE,/* dont care first argument */
 	GET_ISPALG_FW,
 	GET_SENSOR_COUNT,/* number of initialized bridge instances */
+	SET_GLOBAL_ZOOM_RATIO,/* zoom bar value on UI */
+	GET_GLOBAL_ZOOM_RATIO,/* zoom bar value on UI */
 
 	SET_USER_COUNT,/* number of AE active instances, set by AE */
 	GET_USER_COUNT,/* number of AE active instances, set by AE */
@@ -118,6 +130,15 @@ struct aem_info {
 	cmr_u32 aem_stat_win_h;
 };
 
+struct aem_win_info {
+	cmr_s16 offset_x;
+	cmr_s16 offset_y;
+	cmr_u32 blk_num_x;
+	cmr_u32 blk_num_y;
+	cmr_u32 blk_size_x;
+	cmr_u32 blk_size_y;
+};
+
 struct module_sensor_info {
 	struct sensor_info sensor_info[CAM_SENSOR_MAX];
 };
@@ -157,6 +178,11 @@ struct ae_match_stats_data {
 
 struct awb_match_stats_data {
 	cmr_u32 *stats_data;
+};
+
+struct hist_match_stats_data {
+	cmr_u32 *stats_data;
+	cmr_u32 stats_data_size;
 };
 
 struct fov_data {

@@ -3232,6 +3232,20 @@ static cmr_int ispctl_ae_set_ref_camera_id(cmr_handle isp_alg_handle, void *para
 	return ret;
 }
 
+static cmr_int ispctl_ae_set_visible_region(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	return isp_br_ioctrl(cxt->sensor_role, SET_AE_VISIBLE_REGION, param_ptr, NULL);
+}
+
+static cmr_int ispctl_ae_set_global_zoom_ratio(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	return isp_br_ioctrl(cxt->sensor_role, SET_GLOBAL_ZOOM_RATIO, param_ptr, NULL);
+}
+
 static cmr_int ispctl_set_sensor_size(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3809,6 +3823,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_AE_SET_TARGET_REGION, ispctl_ae_set_target_region},
 	{ISP_CTRL_AE_SET_REF_CAMERA_ID, ispctl_ae_set_ref_camera_id},
+	{ISP_CTRL_AE_SET_VISIBLE_REGION, ispctl_ae_set_visible_region},
+	{ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO, ispctl_ae_set_global_zoom_ratio},
 	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},
 	{ISP_CTRL_DRE, ispctl_dre},
 #ifdef CAMERA_CNR3_ENABLE

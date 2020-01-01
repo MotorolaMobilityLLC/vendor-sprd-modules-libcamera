@@ -16,17 +16,32 @@
 #define LOG_TAG "ispbr"
 
 #include "isp_bridge.h"
+#include "cmr_common.h"
 
-// TODO keep same with cmr_common.h
-#define CAMERA_ID_MAX 16
-
+#define ISP_BLK_NUM_TO_SIZE(num) (3 * (num) * sizeof(cmr_u32))
 #define ISP_AEM_STAT_BLK_NUM_MAX (128 * 128)
-#define ISP_AEM_BLK_NUM_TO_SIZE(num) (3 * (num) * sizeof(cmr_u32))
-#define ISP_AEM_STAT_SIZE_MAX ISP_AEM_BLK_NUM_TO_SIZE(ISP_AEM_STAT_BLK_NUM_MAX)
+#define ISP_HIST_STAT_BLK_NUM_MAX (256)
+#define ISP_AEM_STAT_SIZE_MAX ISP_BLK_NUM_TO_SIZE(ISP_AEM_STAT_BLK_NUM_MAX)
+#define ISP_HIST_STAT_SIZE_MAX ISP_BLK_NUM_TO_SIZE(ISP_HIST_STAT_BLK_NUM_MAX)
 
 struct ae_data {
 	struct isp_size block_size;
 	struct isp_rect block_rect;
+	struct visible_region_info visible_region;
+	struct ae_match_stats_data stats_data;
+	cmr_u32 stat_blk_num;
+	/* MW to ISP */
+	struct aem_win_info win;
+};
+
+struct awb_data {
+	struct awb_match_stats_data stats_data;
+};
+
+struct hist_data {
+	/* MW to ISP */
+	struct isp_rect win;
+	struct isp_hist_statistic_info stats_info[3];
 };
 
 struct sensor_data {
@@ -35,22 +50,22 @@ struct sensor_data {
 
 struct match_data {
 	struct ae_data ae;
+	struct awb_data awb;
+	struct hist_data hist;
 	struct sensor_data sensor;
 };
 
 struct match_data_param {
 	struct module_info module_info;
+	float zoom_ratio;
 
 	struct aem_info aem_stat_info[CAM_SENSOR_MAX];
 	struct ae_match_data ae_info[CAM_SENSOR_MAX];
 	struct ae_sync_slave_data ae_sync_slave_info[CAM_SENSOR_MAX];
-	struct ae_match_stats_data ae_stats_data[CAM_SENSOR_MAX];
-	cmr_u32 aem_stat_blk_num[CAM_SENSOR_MAX];
 	cmr_u16 bv[CAM_SENSOR_MAX];
 	cmr_u8 flash_state[CAM_SENSOR_MAX];
 
 	struct awb_match_data awb_info[CAM_SENSOR_MAX];
-	struct awb_match_stats_data awb_stats_data[CAM_SENSOR_MAX];
 	struct awb_gain_data awb_gain[CAM_SENSOR_MAX];
 
 	struct fov_data fov_info[CAM_SENSOR_MAX];
@@ -250,18 +265,17 @@ static inline void semaphore_deinit(struct ispbr_context *cxt) {
 
 static cmr_int stats_data_alloc(struct ispbr_context *cxt, cmr_u32 sensor_role) {
 	cmr_int ret = ISP_SUCCESS;
+	struct match_data *data = &cxt->match_param.data[sensor_role];
 
-	memset(&cxt->match_param.ae_stats_data[sensor_role], 0, sizeof(struct ae_match_stats_data));
-	cxt->match_param.ae_stats_data[sensor_role].stats_data = malloc(ISP_AEM_STAT_SIZE_MAX);
-	if (!cxt->match_param.ae_stats_data[sensor_role].stats_data) {
+	data->ae.stats_data.stats_data = malloc(ISP_AEM_STAT_SIZE_MAX);
+	if (!data->ae.stats_data.stats_data) {
 		ISP_LOGE("fail to alloc AE stats data");
 		ret = ISP_ALLOC_ERROR;
 		goto ae_alloc_fail;
 	}
 
-	memset(&cxt->match_param.awb_stats_data[sensor_role], 0, sizeof(struct awb_match_stats_data));
-	cxt->match_param.awb_stats_data[sensor_role].stats_data = malloc(ISP_AEM_STAT_SIZE_MAX);
-	if (!cxt->match_param.awb_stats_data[sensor_role].stats_data) {
+	data->awb.stats_data.stats_data = malloc(ISP_AEM_STAT_SIZE_MAX);
+	if (!data->awb.stats_data.stats_data) {
 		ISP_LOGE("fail to alloc AWB stats data");
 		ret = ISP_ALLOC_ERROR;
 		goto awb_alloc_fail;
@@ -270,8 +284,8 @@ static cmr_int stats_data_alloc(struct ispbr_context *cxt, cmr_u32 sensor_role) 
 	return ret;
 
 awb_alloc_fail:
-	free(cxt->match_param.ae_stats_data[sensor_role].stats_data);
-	cxt->match_param.ae_stats_data[sensor_role].stats_data = NULL;
+	free(data->ae.stats_data.stats_data);
+	data->ae.stats_data.stats_data = NULL;
 
 ae_alloc_fail:
 
@@ -279,10 +293,12 @@ ae_alloc_fail:
 }
 
 static void stats_data_free(struct ispbr_context *cxt, cmr_u32 sensor_role) {
-	free(cxt->match_param.awb_stats_data[sensor_role].stats_data);
-	cxt->match_param.awb_stats_data[sensor_role].stats_data = NULL;
-	free(cxt->match_param.ae_stats_data[sensor_role].stats_data);
-	cxt->match_param.ae_stats_data[sensor_role].stats_data = NULL;
+	struct match_data *data = &cxt->match_param.data[sensor_role];
+
+	free(data->awb.stats_data.stats_data);
+	data->awb.stats_data.stats_data = NULL;
+	free(data->ae.stats_data.stats_data);
+	data->ae.stats_data.stats_data = NULL;
 }
 
 cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
@@ -320,7 +336,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sizeof(cxt->match_param.flash_state[sensor_role]));
 		sem_post(&cxt->ae_sm);
 		break;
-	
+
 	case GET_FLASH_STATE:
 		sem_wait(&cxt->ae_sm);
 		memcpy(out, &cxt->match_param.flash_state[sensor_role],
@@ -347,7 +363,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 						sizeof(struct aem_info));
 			sem_post(&cxt->module_sm);
 		}
-		break;	
+		break;
 
 	case GET_STAT_AWB_DATA_AE:
 		{
@@ -356,7 +372,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			//*(cmr_u32 *)out = (cmr_u32)cxt->awb_stat_data[sensor_role];//tmp code !! tianhui.wang
 			cmr_u32 **awb_data = (cmr_u32 **)out;
 			// TODO dangerous action!
-			*awb_data = cxt->match_param.awb_stats_data[sensor_role].stats_data;
+			*awb_data = data->awb.stats_data.stats_data;
 			sem_post(&cxt->module_sm);
 		}
 		break;
@@ -366,17 +382,12 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			struct ae_match_stats_data *stats_data = (struct ae_match_stats_data *)in;
 
 			sem_wait(&cxt->module_sm);
-			if (cxt->match_param.ae_stats_data[sensor_role].stats_data
-					&& stats_data && stats_data->stats_data) {
-				cxt->match_param.ae_stats_data[sensor_role].monoboottime
-					= stats_data->monoboottime;
-				cxt->match_param.ae_stats_data[sensor_role].is_last_frm
-					= stats_data->is_last_frm;
-				cxt->match_param.ae_stats_data[sensor_role].len
-					= ISP_AEM_BLK_NUM_TO_SIZE(cxt->match_param.aem_stat_blk_num[sensor_role]);
-				memcpy(cxt->match_param.ae_stats_data[sensor_role].stats_data,
-						stats_data->stats_data,
-						cxt->match_param.ae_stats_data[sensor_role].len);
+			if (stats_data && stats_data->stats_data && data->ae.stats_data.stats_data) {
+				data->ae.stats_data.monoboottime = stats_data->monoboottime;
+				data->ae.stats_data.is_last_frm = stats_data->is_last_frm;
+				data->ae.stats_data.len = stats_data->len;
+				memcpy(data->ae.stats_data.stats_data,
+						stats_data->stats_data, data->ae.stats_data.len);
 			}
 			sem_post(&cxt->module_sm);
  		}
@@ -387,18 +398,13 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			struct ae_match_stats_data *stats_data = (struct ae_match_stats_data *)out;
 
 			sem_wait(&cxt->module_sm);
-			if (cxt->match_param.ae_stats_data[sensor_role].stats_data
-					&& stats_data && stats_data->stats_data) {
-				stats_data->monoboottime
-					= cxt->match_param.ae_stats_data[sensor_role].monoboottime;
-				stats_data->is_last_frm
-					= cxt->match_param.ae_stats_data[sensor_role].is_last_frm;
+			if (stats_data && stats_data->stats_data && data->ae.stats_data.stats_data) {
+				stats_data->monoboottime = data->ae.stats_data.monoboottime;
+				stats_data->is_last_frm = data->ae.stats_data.is_last_frm;
 				// TODO joseph stats_data->len is not used in SET_AEM_SYNC_STAT
-				stats_data->len
-					= ISP_AEM_BLK_NUM_TO_SIZE(cxt->match_param.aem_stat_blk_num[sensor_role]);
+				stats_data->len = ISP_BLK_NUM_TO_SIZE(data->ae.stat_blk_num);
 				memcpy(stats_data->stats_data,
-						cxt->match_param.ae_stats_data[sensor_role].stats_data,
-						cxt->match_param.ae_stats_data[sensor_role].len);
+						data->ae.stats_data.stats_data, data->ae.stats_data.len);
 			}
 			sem_post(&cxt->module_sm);
  		}
@@ -406,9 +412,12 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case SET_AEM_STAT_BLK_NUM:
 		sem_wait(&cxt->module_sm);
-		cxt->match_param.aem_stat_blk_num[sensor_role] = *(cmr_u32 *)in;
-		ISP_LOGV("sensor_role %d, aem_stat_blk_num %d",
-			sensor_role, cxt->match_param.aem_stat_blk_num[sensor_role]);
+		if (in) {
+			cmr_u32 *blk_num = (cmr_u32 *)in;
+			data->ae.stat_blk_num = *blk_num;
+			ISP_LOGV("set %s AEM stat_blk_num %u",
+					get_role_name(sensor_role), data->ae.stat_blk_num);
+		}
 		sem_post(&cxt->module_sm);
 		break;
 
@@ -446,6 +455,34 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		}
 		break;
 
+	case SET_AE_WIN:
+		{
+			if (in) {
+				struct aem_win_info *win = (struct aem_win_info *)in;
+
+				sem_wait(&cxt->ae_sm);
+				data->ae.win = *win;
+
+				ISP_LOGD("set %s AE offset %d %d, blk_num %u %u, blk_size %u %u",
+						get_role_name(sensor_role), win->offset_x, win->offset_y,
+						win->blk_num_x, win->blk_num_y, win->blk_size_x, win->blk_size_y);
+				sem_post(&cxt->ae_sm);
+			}
+		}
+		break;
+
+	case GET_AE_WIN:
+		{
+			if (out) {
+				struct aem_win_info *win = (struct aem_win_info *)out;
+
+				sem_wait(&cxt->ae_sm);
+				*win = data->ae.win;
+				sem_post(&cxt->ae_sm);
+			}
+		}
+		break;
+
 	// AWB
 	case SET_MATCH_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
@@ -463,18 +500,15 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 	case SET_STAT_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		if (cxt->match_param.awb_stats_data[sensor_role].stats_data && in)
-			memcpy(cxt->match_param.awb_stats_data[sensor_role].stats_data,
-					in, ISP_AEM_STAT_SIZE_MAX);
+		if (in && data->awb.stats_data.stats_data)
+			memcpy(data->awb.stats_data.stats_data, in, ISP_AEM_STAT_SIZE_MAX);
 		sem_post(&cxt->awb_sm);
 		break;
 
 	case GET_STAT_AWB_DATA:
 		sem_wait(&cxt->awb_sm);
-		if (cxt->match_param.awb_stats_data[sensor_role].stats_data && out)
-			memcpy(out,
-					cxt->match_param.awb_stats_data[sensor_role].stats_data,
-					ISP_AEM_STAT_SIZE_MAX);
+		if (out && data->awb.stats_data.stats_data)
+			memcpy(out, data->awb.stats_data.stats_data, ISP_AEM_STAT_SIZE_MAX);
 		sem_post(&cxt->awb_sm);
 		break;
 
@@ -504,6 +538,55 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		memcpy(out, &cxt->match_param.fov_info[sensor_role],
 			sizeof(cxt->match_param.fov_info[sensor_role]));
 		sem_post(&cxt->awb_sm);
+		break;
+
+	case SET_HIST_WIN:
+		{
+			if (in) {
+				struct img_rect *win = (struct img_rect *)in;
+
+				sem_wait(&cxt->ae_sm);
+				data->hist.win.st_x = win->start_x;
+				data->hist.win.st_y = win->start_y;
+				data->hist.win.width = win->width;
+				data->hist.win.height = win->height;
+				ISP_LOGD("set %s HIST win %u %u %u %u", get_role_name(sensor_role),
+						win->start_x, win->start_y, win->width, win->height);
+				sem_post(&cxt->ae_sm);
+			}
+		}
+		break;
+
+	case GET_HIST_WIN:
+		{
+			if (out) {
+				struct isp_rect *win = (struct isp_rect *)out;
+
+				sem_wait(&cxt->ae_sm);
+				*win = data->hist.win;
+				sem_post(&cxt->ae_sm);
+			}
+		}
+		break;
+
+	case SET_HIST_STATS:
+		{
+			if (in) {
+				sem_wait(&cxt->ae_sm);
+				memcpy(data->hist.stats_info, in, sizeof(data->hist.stats_info));
+				sem_post(&cxt->ae_sm);
+			}
+		}
+		break;
+
+	case GET_HIST_STATS:
+		{
+			if (out) {
+				sem_wait(&cxt->ae_sm);
+				memcpy(out, data->hist.stats_info, sizeof(data->hist.stats_info));
+				sem_post(&cxt->ae_sm);
+			}
+		}
 		break;
 
 	// AF
@@ -624,7 +707,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sem_wait(&cxt->ae_sm);
 			data->sensor.sensor_size = *size;
 			sem_post(&cxt->ae_sm);
-			ISP_LOGD("set %s sensor size %ux%u",
+			ISP_LOGV("set %s sensor size %ux%u",
 					get_role_name(sensor_role), size->w, size->h);
 		}
 		break;
@@ -657,6 +740,31 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		sem_post(&cxt->module_sm);
 		break;
 
+	case SET_GLOBAL_ZOOM_RATIO:
+		{
+			if (in) {
+				float *ratio = (float *)in;
+
+				sem_wait(&cxt->module_sm);
+				cxt->match_param.zoom_ratio = *ratio;
+				ISP_LOGD("set %s ratio %f", get_role_name(sensor_role), *ratio);
+				sem_post(&cxt->module_sm);
+			}
+		}
+		break;
+
+	case GET_GLOBAL_ZOOM_RATIO:
+		{
+			if (out) {
+				float *ratio = (float *)out;
+
+				sem_wait(&cxt->module_sm);
+				*ratio = cxt->match_param.zoom_ratio;;
+				sem_post(&cxt->module_sm);
+			}
+		}
+		break;
+
 	case SET_ALL_MODULE_AND_OTP:
 		ISP_LOGW("not implemented");
 		break;
@@ -674,7 +782,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			cxt->ae_region[sensor_role].start_y = info->start_y;
 			cxt->ae_region[sensor_role].end_x = info->start_x + info->width;
 			cxt->ae_region[sensor_role].end_y = info->start_x + info->height;
-			ISP_LOGD("set %s AE region %u %u %u %u",
+			ISP_LOGV("set %s AE region %u %u %u %u",
 					get_role_name(sensor_role),
 					cxt->ae_region[sensor_role].start_x,
 					cxt->ae_region[sensor_role].start_y,
@@ -688,6 +796,33 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sem_wait(&cxt->ae_sm);
 			cmr_u32 *id = (cmr_u32 *)in;
 			cxt->ae_ref_camera_id = *id;
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+	case SET_AE_VISIBLE_REGION:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (in) {
+				struct visible_region_info *info = (struct visible_region_info *)in;
+				ISP_LOGD("set %s AE visible %u %u %u %u, serial %u",
+						get_role_name(sensor_role),
+						info->region.start_x,
+						info->region.start_y,
+						info->region.width,
+						info->region.height,
+						info->serial_no);
+				data->ae.visible_region = *info;
+			}
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+	case GET_AE_VISIBLE_REGION:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (out) {
+				struct visible_region_info *info = (struct visible_region_info *)out;
+				*info = data->ae.visible_region;
+			}
 			sem_post(&cxt->ae_sm);
 		}
 		break;

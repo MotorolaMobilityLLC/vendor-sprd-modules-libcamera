@@ -408,6 +408,11 @@ cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
                                        cmr_u32 camera_id,
                                        struct fd_touch_info *input_param);
 
+cmr_int cmr_preview_get_prev_aspect_ratio(cmr_handle preview_handle,
+                                          cmr_u32 camera_id,
+                                          float *ratio);
+
+
 #ifdef __cplusplus
 }
 #endif

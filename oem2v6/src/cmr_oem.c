@@ -13294,6 +13294,49 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
                      ref_camera_id);
 }
 
+cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
+                                        struct visible_region_info *info) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_mode_info *mode_info = NULL;
+    struct img_rect cur_rect;
+    struct img_size cur_size;
+    struct img_rect dst_rect;
+    float ratio;
+    cmr_u32 sn_mode = 0;
+
+    cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
+    mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
+    cur_size.width = mode_info->scaler_trim.width;
+    cur_size.height = mode_info->scaler_trim.height;
+    cur_rect.start_x = 0;
+    cur_rect.start_y = 0;
+    cur_rect.width = cur_size.width;
+    cur_rect.height = cur_size.height;
+
+    cmr_preview_get_prev_aspect_ratio(cxt->prev_cxt.preview_handle, cxt->camera_id, &ratio);
+    dst_rect = camera_apply_rect_and_ratio(info->max_size, info->region, cur_rect, ratio);
+
+    CMR_LOGV("src: size %u %u rect %u %u %u %u, dst: size %u %u rect %u %u %u %u, ratio: %f",
+            info->max_size.width, info->max_size.height,
+            info->region.start_x, info->region.start_y,
+            info->region.width, info->region.height,
+            cur_size.width, cur_size.height,
+            dst_rect.start_x, dst_rect.start_y,
+            dst_rect.width, dst_rect.height, ratio);
+
+    info->max_size = cur_size;
+    info->region = dst_rect;
+
+    return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_VISIBLE_REGION,
+                     info);
+}
+
+cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle, float *ratio) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO, ratio);
+}
+
 cmr_int camera_local_cap_state(cmr_handle oem_handle, bool *flag) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;

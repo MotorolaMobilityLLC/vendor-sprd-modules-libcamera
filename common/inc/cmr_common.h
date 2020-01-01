@@ -2021,6 +2021,12 @@ struct fin1_info {
     cmr_u32 ambient_highlight; /* 1:highlight,0:low */
 };
 
+struct visible_region_info {
+    cmr_u32 serial_no;
+    struct img_size max_size;
+    struct img_rect region;
+};
+
 typedef enum {
     CAMERA_IOCTRL_SET_MULTI_CAMERAMODE = 0,
     CAMERA_IOCTRL_GET_SENSOR_LUMA,
@@ -2051,6 +2057,8 @@ typedef enum {
     CAMERA_IOCTRL_ROTATE,
     CAMERA_IOCTRL_SET_MASTER_ID,
     CAMERA_IOCTRL_SET_REF_CAMERA_ID,
+    CAMERA_IOCTRL_SET_VISIBLE_REGION,
+    CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO,
     CAMERA_IOCTRL_SET_BOKEH_SCALE_INFO,
     CAMERA_IOCTRL_SET_TRIM_INFO,
     CAMERA_IOCTRL_SET_CAM_SECURITY,

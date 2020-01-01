@@ -37,7 +37,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/inc \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/af/inc \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/sprd/ae/inc \
-	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/common/inc/ \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/common/inc \
+	$(LOCAL_PATH)/../../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../middleware/inc \
 	$(LOCAL_PATH)/../param_manager \
 	$(LOCAL_PATH)/../driver/inc

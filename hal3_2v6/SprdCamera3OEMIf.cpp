@@ -1695,6 +1695,19 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         mSetting->setSPRDDEFTag(sprddefInfo);
         break;
     }
+    case CAMERA_IOCTRL_SET_VISIBLE_REGION:
+        {
+            struct visible_region_info *info = (struct visible_region_info *)param1;
+
+            if (info) {
+                uint16_t w, h;
+
+                mSetting->getLargestSensorSize(mCameraId, &w, &h);
+                info->max_size.width = w;
+                info->max_size.height = h;
+            }
+        }
+        break;
     } /* switch */
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 

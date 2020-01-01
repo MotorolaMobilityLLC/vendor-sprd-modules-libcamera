@@ -16376,3 +16376,19 @@ cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
     prev_cxt->touch_info.touchY = input_param->fd_touchY;
     return ret;
 }
+
+cmr_int cmr_preview_get_prev_aspect_ratio(cmr_handle preview_handle,
+                                          cmr_u32 camera_id,
+                                          float *ratio) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+
+    CHECK_HANDLE_VALID(handle);
+    if (ratio) {
+        struct img_size *size = &handle->prev_cxt[camera_id].actual_prev_size;
+
+        *ratio = (float)size->width / (float)size->height;
+    }
+
+    return ret;
+}
