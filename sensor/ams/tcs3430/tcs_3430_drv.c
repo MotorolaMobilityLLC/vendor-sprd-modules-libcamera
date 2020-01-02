@@ -1,5 +1,5 @@
 #include "tcs_3430_drv.h"
-
+static int input_num = 0;
 static struct tcs_calib_data tcs3430_calib_data = {
     .x_raw_golden = 0,
     .y_raw_golden = 0,
@@ -134,20 +134,40 @@ error:
     return;
 }
 
+char *handle_name(int number, char *file)
+{
+    static char output_path[512];
+    memset(output_path, 0, sizeof(output_path));
+    sprintf(output_path, "/sys/devices/virtual/input/input%d/", number);
+    strcat(output_path, file);
+    return output_path;
+}
+
 int tcs3430_read_data(void *param) {
     struct tcs_data *tcs3430_data = (struct tcs_data *)param;
+    for(int num = 1; num <=100; num++) {
+	int test_x = read_tcs3430(handle_name(num, "tcs3430_als_x"));
+	if (test_x > 0) {
+	    input_num = num;
+            break;
+	} else
+	    input_num = -1;
+    }
+
+    SENSOR_LOGV("tcs3430 with number %d", input_num);
+
     tcs3430_data->x_raw =
-        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_x");
+        read_tcs3430(handle_name(input_num, "tcs3430_als_x"));
     tcs3430_data->y_raw =
-        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_y");
+        read_tcs3430(handle_name(input_num, "tcs3430_als_y"));
     tcs3430_data->z_raw =
-        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_z");
+        read_tcs3430(handle_name(input_num, "tcs3430_als_z"));
     tcs3430_data->ir_raw =
-        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_ir1");
+        read_tcs3430(handle_name(input_num, "tcs3430_als_ir1"));
     tcs3430_data->gain_data =
-        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_gain");
+        read_tcs3430(handle_name(input_num, "tcs3430_als_gain"));
     tcs3430_data->atime_data =
-        read_tcs3430("/sys/devices/virtual/input/input3/tcs3430_als_atime");
+        read_tcs3430(handle_name(input_num, "tcs3430_als_atime"));
 
     if (-1 == tcs3430_data->x_raw || -1 == tcs3430_data->y_raw ||
         -1 == tcs3430_data->z_raw || -1 == tcs3430_data->ir_raw ||
