@@ -220,7 +220,8 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cm
 
     char prop[PROPERTY_VALUE_MAX] = {0};
     property_get("persist.vendor.cam.res.multi.camera.fullsize", prop, "0");
-    if (atoi(prop) == 1 && camera_id == findSensorRole(MODULE_SPW_NONE_BACK)) {
+    if (atoi(prop) == 1 && camera_id == findSensorRole(MODULE_SPW_NONE_BACK) &&
+        findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) != -1) {
         largest_picture_width[camera_id] =
             largest_picture_width[findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK)];
         largest_picture_height[camera_id] =
