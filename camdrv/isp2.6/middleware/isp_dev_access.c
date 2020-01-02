@@ -101,6 +101,9 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 				&buf_info->alloc_uaddr[0],
 				&buf_info->alloc_mfd[0]);
 
+		if (ret)
+			return ret;
+
 		ISP_LOGV("typs %d %d,  size 0x%x num %d,  total 0x%x\n",
 			i, alloc_type,
 			buf_info->size, buf_info->num,
