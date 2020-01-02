@@ -70,6 +70,15 @@ enum camera_mem_cb_type {
     CAMERA_SNAPSHOT_SW3DNR_PATH,
     CAMERA_4IN1_PROC,
     CAMERA_SNAPSHOT_SLAVE_RESERVED,
+    CAMERA_ISPSTATS_AEM,
+    CAMERA_ISPSTATS_AFM,
+    CAMERA_ISPSTATS_AFL,
+    CAMERA_ISPSTATS_PDAF,
+    CAMERA_ISPSTATS_BAYERHIST,
+    CAMERA_ISPSTATS_YUVHIST,
+    CAMERA_ISPSTATS_LSCM,
+    CAMERA_ISPSTATS_3DNR,
+    CAMERA_ISPSTATS_EBD,
     CAMERA_CHANNEL_0_RESERVED,
     CAMERA_CHANNEL_1,
     CAMERA_CHANNEL_1_RESERVED,
@@ -116,4 +125,11 @@ typedef cmr_int (*cmr_gpu_malloc)(cmr_u32 mem_type, cmr_handle oem_handle,
                                   cmr_uint *phy_addr, cmr_uint *vir_addr,
                                   cmr_s32 *fd, void **handle, cmr_uint *width,
                                   cmr_uint *height);
+
+typedef cmr_int (*cmr_invalidate_buf)(cmr_handle oem_handle,
+                              cmr_s32 buf_fd, cmr_u32 size,
+                              cmr_uint phy_addr, cmr_uint vir_addr);
+typedef cmr_int (*cmr_flush_buf)(cmr_handle oem_handle,
+                              cmr_s32 buf_fd, cmr_u32 size,
+                              cmr_uint phy_addr, cmr_uint vir_addr);
 #endif

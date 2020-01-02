@@ -40,3 +40,26 @@ cmr_s32 dcam_u_bayerhist_block(cmr_handle handle, void *bayerhist)
 
 	return ret;
 }
+
+cmr_s32 dcam_u_bayerhist_bypass(cmr_handle handle, cmr_u32 bypass)
+{
+	cmr_s32 ret = 0;
+	struct isp_file *file = NULL;
+	struct isp_io_param param;
+
+	if (!handle) {
+		ISP_LOGE("fail to get handle (null).");
+		return -1;
+	}
+
+	file = (struct isp_file *)(handle);
+	param.scene_id = 0;
+	param.sub_block = DCAM_BLOCK_BAYERHIST;
+	param.property = DCAM_PRO_BAYERHIST_BYPASS;
+	param.property_param = &bypass;
+
+	ISP_LOGV("bypass %d", bypass);
+	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
+
+	return ret;
+}

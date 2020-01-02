@@ -1427,35 +1427,6 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		return rtn;
 	}
 
-#if 0
-	nr_set_size[ISP_BLK_NLM_T] = sizeof(struct sensor_nlm_level);
-	nr_set_size[ISP_BLK_VST_T] = sizeof(struct sensor_vst_level);
-	nr_set_size[ISP_BLK_IVST_T] = sizeof(struct sensor_ivst_level);
-	nr_set_size[ISP_BLK_RGB_DITHER_T] = sizeof(struct sensor_rgb_dither_level);
-	nr_set_size[ISP_BLK_BPC_T] = sizeof(struct sensor_bpc_level);
-	nr_set_size[ISP_BLK_GRGB_T] = sizeof(struct sensor_grgb_level);
-	nr_set_size[ISP_BLK_CFA_T] = sizeof(struct sensor_cfa_param_level);
-	nr_set_size[ISP_BLK_RGB_AFM_T] = sizeof(struct sensor_rgb_afm_level);
-	nr_set_size[ISP_BLK_UVDIV_T] = sizeof(struct sensor_cce_uvdiv_level);
-	nr_set_size[ISP_BLK_3DNR_T] = sizeof(struct sensor_3dnr_level);
-	nr_set_size[ISP_BLK_PPE_T] = sizeof(struct sensor_ppe_level);
-	nr_set_size[ISP_BLK_YUV_PRECDN_T] = sizeof(struct sensor_yuv_precdn_level);
-	nr_set_size[ISP_BLK_CDN_T] = sizeof(struct sensor_uv_cdn_level);
-	nr_set_size[ISP_BLK_POSTCDN_T] = sizeof(struct sensor_uv_postcdn_level);
-	nr_set_size[ISP_BLK_YNR_T] = sizeof(struct sensor_ynr_level);
-	nr_set_size[ISP_BLK_EDGE_T] = sizeof(struct sensor_ee_level);
-	nr_set_size[ISP_BLK_IIRCNR_T] = sizeof(struct sensor_iircnr_level);
-	nr_set_size[ISP_BLK_YUV_NOISEFILTER_T] = sizeof(struct sensor_yuv_noisefilter_level);
-	nr_set_size[ISP_BLK_CNR2_T] = sizeof(struct sensor_cnr_level);
-	nr_set_size[ISP_BLK_LTM_T] = sizeof(struct sensor_ltm_level);
-	nr_set_size[ISP_BLK_IMBALANCEE_T] = sizeof(struct sensor_nlm_imbalance_level);
-	nr_set_size[ISP_BLK_SW3DNR_T] = sizeof(struct sensor_sw3dnr_level);
-	nr_set_size[ISP_BLK_BWU_BWD_T] = sizeof(struct sensor_bwu_bwd_level);
-	nr_set_size[ISP_BLK_RAW_GTM_T] = sizeof(struct sensor_raw_gtm_level);
-	nr_set_size[ISP_BLK_RGB_LTM_T] = sizeof(struct sensor_rgb_ltm_level);
-	nr_set_size[ISP_BLK_YUV_LTM_T] = sizeof(struct sensor_yuv_ltm_level);
-#endif
-
 	for (i = 0; i < ISP_BLK_NR_MAX; i++) {
 		cmr_u32 nr_type;
 		cmr_u32 blk_id;
