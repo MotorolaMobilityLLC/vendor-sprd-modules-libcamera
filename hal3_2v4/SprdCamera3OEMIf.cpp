@@ -5444,19 +5444,17 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
 
         struct camera_frame_type *frame = NULL;
         frame = (struct camera_frame_type *)parm4;
-        if (frame) {
-            frame->sensor_info.exposure_time_denominator =
-                exif_pic_info.ExposureTime.denominator;
-            frame->sensor_info.exposure_time_numerator =
-                exif_pic_info.ExposureTime.numerator;
-        }
-
         SENSOR_Tag sensorInfo;
         mSetting->getSENSORTag(&sensorInfo);
         if (0 != frame->sensor_info.exposure_time_denominator) {
             sensorInfo.exposure_time =
                 1000000000ll * frame->sensor_info.exposure_time_numerator /
                 frame->sensor_info.exposure_time_denominator;
+        } else {
+            frame->sensor_info.exposure_time_denominator =
+                exif_pic_info.ExposureTime.denominator;
+            frame->sensor_info.exposure_time_numerator =
+                exif_pic_info.ExposureTime.numerator;
         }
         sensorInfo.timestamp = frame->timestamp;
         mSetting->setSENSORTag(sensorInfo);
