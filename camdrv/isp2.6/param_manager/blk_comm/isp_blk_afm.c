@@ -111,7 +111,6 @@ cmr_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
 			struct isp_range val_range = { 0, 0 };
 			cmr_u32 cur_level = 0;
-			cmr_u32 is_need_update = 0;
 
 			if (!block_result->update || header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
@@ -128,7 +127,7 @@ cmr_s32 _pm_rgb_afm_set_param(void *rgb_aem_param, cmr_u32 cmd, void *param_ptr0
 
 			cur_level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (is_need_update && (cur_level != dst_ptr->cur_level || nr_tool_flag[ISP_BLK_RGB_AFM_T] || block_result->mode_flag_changed)) {
+			if ((cur_level != dst_ptr->cur_level || nr_tool_flag[ISP_BLK_RGB_AFM_T] || block_result->mode_flag_changed)) {
 				dst_ptr->cur_level = cur_level;
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[ISP_BLK_RGB_AFM_T] = 0;

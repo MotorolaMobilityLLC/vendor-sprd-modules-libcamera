@@ -100,6 +100,11 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 				kaddr,
 				&buf_info->alloc_uaddr[0],
 				&buf_info->alloc_mfd[0]);
+		if (ret) {
+			memset(&buf_info->alloc_mfd[0], 0, sizeof(buf_info->alloc_mfd));
+			ISP_LOGE("fail to alloc memory type %d, size %x\n", alloc_type, buf_info->alloc_size);
+			continue;
+		}
 
 		if (ret)
 			return ret;
@@ -147,7 +152,7 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 
 	/* Initialize statis buffer setting for driver. */
 	statis_buf.type = STATIS_INIT;
-	ret = isp_dev_set_statis_buf(cxt->isp_driver_handle, &statis_buf);
+	isp_dev_set_statis_buf(cxt->isp_driver_handle, &statis_buf);
 
 	cxt->mem_handle = (cmr_handle)in_ptr;
 	ISP_LOGD("statis buf size %d, handle %lx\n", total, (cmr_uint)cxt->mem_handle);
@@ -270,6 +275,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 
 	statis_info = malloc(sizeof(struct isp_statis_info));
+	if (statis_info == NULL) {
+		ISP_LOGE("fail to malloc\n");
+		return;
+	}
 
 	statis_info->buf_type = irq_info->irq_property;
 	statis_info->frame_id = irq_info->frame_id;
@@ -288,7 +297,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 				irq_info->mfd,
 				irq_info->addr_offset);
 
-	if (statis_info->uaddr == 0) {
+	if (statis_info->uaddr == 0UL) {
 		ISP_LOGE("fail to get buf %d  %d\n", irq_info->irq_property, irq_info->mfd);
 		free((void *)statis_info);
 		statis_info = NULL;
@@ -343,6 +352,7 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 		free((void *)statis_info);
 		statis_info = NULL;
 		ISP_LOGW("there is no irq_property %d", irq_info->irq_property);
+		return;
 	}
 
 	if (!cxt->isp_event_cb) {
