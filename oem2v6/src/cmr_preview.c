@@ -15919,6 +15919,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                      src_buffer_handle, dst_buffer_handle);
             cmr_bzero(&ipm_in_param, sizeof(struct ipm_frame_in));
             ipm_in_param.src_frame = *src_img;
+            ipm_in_param.src_frame.frame_number = prev_cxt->prev_frm_cnt;
             ipm_in_param.src_frame.reserved = src_buffer_handle;
             ipm_in_param.dst_frame = *dst_img;
             ipm_in_param.dst_frame.reserved = dst_buffer_handle;

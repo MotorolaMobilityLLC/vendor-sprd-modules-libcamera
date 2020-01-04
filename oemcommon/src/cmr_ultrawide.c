@@ -178,10 +178,13 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
     dst_img = &in->dst_frame;
     property_get("debug.dump.ultrawide.frame", value, "null");
     if (!strcmp(value, "true")) {
-        camera_save_yuv_to_file(0, IMG_DATA_TYPE_YUV420, src_img->size.width,
-                                src_img->size.height, &src_img->addr_vir);
+        dump_image("before", CAM_IMG_FMT_YUV420_NV21,
+                           src_img->size.width, src_img->size.height,
+                           src_img->frame_number,
+                           &src_img->addr_vir,
+                           src_img->size.width * src_img->size.height * 3 / 2);
     }
-    
+
     if ((cmr_uint)in->private_data) {
         int x, y;
         param_t = *(ipm_param_t *)(in->private_data);
@@ -235,9 +238,11 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
         sprd_warp_adapter_run(ultrawide_handle->warp_inst, &input, &output,
                               (void *)&param, ultrawide_handle->tag);
         if (!strcmp(value, "true")) {
-            camera_save_yuv_to_file(1, IMG_DATA_TYPE_YUV420,
-                                    src_img->size.width, src_img->size.height,
-                                    &dst_img->addr_vir);
+            dump_image("after", CAM_IMG_FMT_YUV420_NV21,
+                               src_img->size.width, src_img->size.height,
+                               src_img->frame_number,
+                               &dst_img->addr_vir,
+                               src_img->size.width * src_img->size.height * 3 / 2);
         }
 
         CMR_LOGD("ultra wide algo done:param:%p, size:%dx%d",
