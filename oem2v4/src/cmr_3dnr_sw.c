@@ -522,7 +522,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         param.threthold[3][2]);
 
     param.productInfo = 0;
-    ret = threednr_init((void*)&threednr_handle->proc_handle, &param);
+    ret = threednr_init((void**)&threednr_handle->proc_handle, &param);
     if (ret < 0) {
         CMR_LOGE("Fail to call threednr_init");
     } else {
@@ -552,17 +552,12 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     // threednr_cancel();
     CMR_LOGI("OK to threednr_cancel");
 
-    ret = threednr_setstop_flag(threednr_handle->proc_handle);
-    if (ret) {
-        CMR_LOGE("3dnr failed to stop cmd");
-    }
-
     ret = threednr_thread_destroy(threednr_handle);
     if (ret) {
         CMR_LOGE("3dnr failed to destroy 3dnr thread");
     }
 
-    ret = threednr_deinit((void*)&threednr_handle->proc_handle);
+    ret = threednr_deinit((void**)&threednr_handle->proc_handle);
     if (ret) {
         CMR_LOGE("3dnr failed to threednr_deinit");
     }
@@ -1144,7 +1139,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
              param.small_width, param.small_height, param.orig_width,
              param.orig_height);*/
     param.productInfo = 0;
-    ret = threednr_init((void *)&threednr_prev_handle->proc_handle, &param);
+    ret = threednr_init((void **)&threednr_prev_handle->proc_handle, &param);
     if (ret < 0) {
         CMR_LOGE("Fail to call preview threednr_init");
     } else {
@@ -1174,7 +1169,7 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
     }
 
     CMR_LOGI("OK to threednr_cancel for preview");
-    ret = threednr_deinit((void *)&threednr_prev_handle->proc_handle);
+    ret = threednr_deinit((void **)&threednr_prev_handle->proc_handle);
     if (ret) {
         CMR_LOGE("3dnr preview failed to threednr_deinit");
     }

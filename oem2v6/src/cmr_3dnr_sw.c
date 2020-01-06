@@ -589,12 +589,6 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     // threednr_cancel();
     CMR_LOGD("OK to threednr_cancel");
 
-    ret = sprd_3dnr_adpt_ctrl(threednr_handle->proc_handle, SPRD_3DNR_PROC_STOP_CMD, NULL);
-
-    if (ret != 0) {
-        CMR_LOGE("3dnr failed to stop cmd, ret = %d", ret);
-    }
-
     ret = threednr_thread_destroy(threednr_handle);
     if (ret) {
         CMR_LOGE("3dnr failed to destroy 3dnr thread");
