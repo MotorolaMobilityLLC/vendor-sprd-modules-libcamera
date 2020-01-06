@@ -265,8 +265,6 @@ extern "C" {
 		 * AE write/effective E&G queue
 		 */
 		cmr_handle seq_handle;
-		cmr_handle seq_handle_s0;
-		cmr_handle seq_handle_s1;
 		cmr_s8 exp_skip_num;
 		cmr_s8 gain_skip_num;
 		cmr_s16 sensor_gain_precision;

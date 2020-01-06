@@ -90,11 +90,14 @@ enum isp_br_ioctl_cmd {
 	SET_USER_COUNT,/* number of AE active instances, set by AE */
 	GET_USER_COUNT,/* number of AE active instances, set by AE */
 
-	SET_SYNC_SLAVE_AE_DATA,
-	GET_SYNC_SLAVE_AE_DATA,
+	SET_SYNC_SLAVE_ACTUAL_DATA,
+	GET_SYNC_SLAVE_ACTUAL_DATA,
 
-	SET_FLASH_STATE,
-	GET_FLASH_STATE,
+	SET_SYNC_SLAVE_LIB_OUTPUT,
+	GET_SYNC_SLAVE_LIB_OUTPUT,
+
+	SET_SYNC_SLAVE_SYNC_OUTPUT,
+	GET_SYNC_SLAVE_SYNC_OUTPUT,
 };
 
 struct awb_gain_data {
@@ -161,12 +164,37 @@ struct ae_match_data {
 	struct sensor_ex_exposure exp;
 };
 
-struct ae_sync_slave_data {
+struct ae_sync_actual_data {
 	cmr_u32 exp_time;
 	cmr_u32 exp_line;
 	cmr_u32 ae_gain;
 	cmr_u32 dmy_line;
 	cmr_u32 frm_len;
+	cmr_u32 frame_len_def;
+	cmr_u32 sensor_gain;
+	cmr_u32 isp_gain;
+};
+
+struct ae_lib_output_data {
+	cmr_u32 line_time;
+	cmr_u32 exp_line;
+	cmr_u32 exp_time;
+	cmr_s32 dummy;
+	cmr_s32 frm_len;
+	cmr_u32 gain;			/*gain = sensor_gain * isp_gain */
+	cmr_u32 sensor_gain;
+	cmr_u32 isp_gain;
+};
+
+struct ae_sync_lib_outout_data {
+	cmr_u32 ae_idx;
+	cmr_u32 exp_time;
+	cmr_u32 line_time;
+	cmr_u32 exp_line;
+	cmr_u32 dmy_line;
+	cmr_u32 frm_len;
+	cmr_u32 ae_gain;
+	cmr_u32 calc_y;
 };
 
 struct ae_match_stats_data {

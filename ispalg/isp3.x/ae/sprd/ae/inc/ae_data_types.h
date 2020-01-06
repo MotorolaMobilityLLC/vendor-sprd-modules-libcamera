@@ -505,13 +505,15 @@ struct ae_control_timing_param{
 };
 
 struct ae_flash_timing_param {
-	cmr_u8 pre_param_update_delay;
-	cmr_u8 pre_open_delay;
-	cmr_u8 estimate_delay;
+	cmr_u8 pre_param_update_delay;/*the timming of ev setting of 1st pre-flash, that is from flash algorithm,
+	                                                          default vaule is 0, it be updated immediately in pre-flash before mode*/
+	cmr_u8 pre_open_delay;/*the timming of open pre-flash, the default value is 0, it be opened immediately after pre-flash before mode*/
+	cmr_u8 estimate_delay;/*the interval frame of flash calculation*/
 	
-	cmr_u8 main_param_update_delay;
-	cmr_u8 main_open_delay;
-	cmr_u8 main_capture_delay;
+	cmr_u8 main_param_update_delay;/*the timming of ev setting of 1st main-flash, that is for main-flash,
+	                                                          default vaule is 0, it be updated immediately in pre-flash before mode*/
+	cmr_u8 main_open_delay;/*the timming of open main-flash, the default value is 0, it be opened immediately after main-flash before mode*/
+	cmr_u8 main_capture_delay;/*the frame delay of capturing, PS: it is from main-flash-before*/
 	cmr_u8 pre_skip_num;/*the skip frame number of pre-flash*/
 	cmr_u8 main_skip_num;/*the skip frame number of main-flash*/
 };
