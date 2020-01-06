@@ -756,16 +756,24 @@ static cmr_int s5k3l6xx03_drv_stream_on(cmr_handle handle, cmr_uint param)
 static cmr_int s5k3l6xx03_drv_stream_off(cmr_handle handle, cmr_uint param)
 {
 	SENSOR_LOGI("E");
-	
+	cmr_u16 value = 0;
+    cmr_u16 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    if (!sns_drv_cxt->is_sensor_close) {
-        usleep(5 * 1000);
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
+    if (value != 0x0000) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
+        if (!sns_drv_cxt->is_sensor_close) {
+            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                          sns_drv_cxt->line_time_def / 1000000) +
+                         10;
+            usleep(sleep_time * 1000);
+            SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+        }
+    } else {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
     }
-   	/*TODO*/
-   
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
 
 	/*END*/
 	/*delay*/
