@@ -5780,6 +5780,12 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         sprd3dnrInfo->sprd_is_3dnr_scene = *(uint8_t *)parm4;
         HAL_LOGV("sprd_is_3dnr_scene = %d", sprd3dnrInfo->sprd_is_3dnr_scene);
         break;
+    case CAMERA_EVT_CB_EV_ADJUST_SCENE:
+        SPRD_DEF_Tag *sprddreInfo;
+        sprddreInfo = mSetting->getSPRDDEFTagPTR();
+        sprddreInfo->sprd_is_lowev_scene = *(uint8_t *)parm4;
+        HAL_LOGD(" sprd_is_lowev_scene = %d", sprddreInfo->sprd_is_lowev_scene);
+        break;
     case CAMERA_EVT_CB_AI_SCENE:
         SPRD_DEF_Tag *sprdAIInfo;
         sprdAIInfo = mSetting->getSPRDDEFTagPTR();
@@ -11008,7 +11014,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         // single capture wait the caf focused frame
         if (sprddefInfo->capture_mode == 1 && obj->mLatestFocusDoneTime > 0 &&
             zsl_frame.monoboottime < obj->mLatestFocusDoneTime &&
-            mFlashCaptureFlag == 0) {
+            mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,

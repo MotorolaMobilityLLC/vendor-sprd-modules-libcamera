@@ -396,16 +396,18 @@ struct camera_context {
     cmr_s32 swisp_out_mfd;
 
     cmr_s64 hdr_capture_timestamp;
-    cmr_s64 dre_capture_timestamp;
+    cmr_s64 capture_timestamp;
     cmr_u32 hdr_skip_frame_enable;
     cmr_u32 hdr_skip_frame_cnt;
-    cmr_u32 dre_skip_frame_enable;
-    cmr_u32 dre_skip_frame_cnt;
+    cmr_u32 skip_frame_enable;
+    cmr_u32 skip_frame_cnt;
+    enum camera_snapshot_tpye snapshot_type;
     struct img_rect trim_reset_info;
     cmr_u8 nr_flag;
     cmr_u8 dre_flag;
+    cmr_u8 gtm_flag;
     cmr_u8 predre_flag;
-    cmr_u8 dre_skipframe;
+    cmr_u8 skipframe;
 
     /*for flash skip preview frame*/
     cmr_s64 flash_handle_timestamp;

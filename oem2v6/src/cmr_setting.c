@@ -2915,29 +2915,21 @@ static cmr_int setting_clear_hdr(struct setting_component *cpt,
     return 0;
 }
 
-static cmr_int setting_ctrl_dre(struct setting_component *cpt,
+static cmr_int setting_ctrl_ae_adjust(struct setting_component *cpt,
                                 struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
 
-    cmr_setting_clear_sem(cpt);
-    CMR_LOGD("start wait for dre ev effect");
+    CMR_LOGD("start wait for isp ev effect");
     setting_isp_wait_notice(cpt);
-    CMR_LOGD("end wait for dre ev effect");
+    CMR_LOGD("end wait for isp ev effect");
 
     return ret;
 }
 
-static cmr_int setting_clear_dre(struct setting_component *cpt,
+static cmr_int setting_clear_ae_adjust(struct setting_component *cpt,
                                  struct setting_cmd_parameter *parm) {
-    if (!cpt) {
-        CMR_LOGE("camera_context is null.");
-        return -1;
-    }
 
-    pthread_mutex_lock(&cpt->isp_mutex);
-    cmr_sem_post(&cpt->isp_sem);
-    pthread_mutex_unlock(&cpt->isp_mutex);
-
+    cmr_setting_clear_sem(cpt);
     CMR_LOGD("Done");
     return 0;
 }
@@ -4096,10 +4088,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_logo_watermark);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_TIME_WATERMARK,
                              setting_get_time_watermark);
-    cmr_add_cmd_fun_to_table(SETTING_CTRL_DRE,
-                             setting_ctrl_dre);
-    cmr_add_cmd_fun_to_table(SETTING_CLEAR_DRE,
-                             setting_clear_dre);
+    cmr_add_cmd_fun_to_table(SETTING_CTRL_AE_NOTIFY,
+                             setting_ctrl_ae_adjust);
+    cmr_add_cmd_fun_to_table(SETTING_CLEAR_AE_NOTIFY,
+                             setting_clear_ae_adjust);
     setting_parms_inited = 1;
     return 0;
 }

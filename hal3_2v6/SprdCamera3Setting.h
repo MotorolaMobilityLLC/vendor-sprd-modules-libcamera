@@ -399,6 +399,7 @@ typedef struct {
     int32_t top_app_id;
     uint8_t availabe_auto_3dnr;
     uint8_t sprd_is_3dnr_scene;
+    uint8_t sprd_is_lowev_scene;
     uint8_t sprd_ot_switch;
     uint8_t is_smile_capture;
     uint8_t sprd_is_logo_watermark;

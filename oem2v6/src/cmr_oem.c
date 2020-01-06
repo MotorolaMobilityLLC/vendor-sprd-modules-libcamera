@@ -63,7 +63,7 @@
 #define OFFLINE_CHANNEL 3
 
 #define HDR_SKIP_FRAME_NUM 2
-#define DRE_SKIP_FRAME_NUM 5
+
 enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 
 #define Clamp(x, a, b) (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
@@ -276,7 +276,7 @@ static cmr_int camera_channel_dcam_size(cmr_handle oem_handle,
 
 static cmr_int camera_isp_buff_cfg(cmr_handle oem_handle,
                                    struct buffer_cfg *buf_cfg);
-static cmr_int camera_dre_set_ev(cmr_handle oem_handle, cmr_u32 value);
+static cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value ,enum camera_snapshot_tpye type);
 static cmr_int camera_hdr_set_ev(cmr_handle oem_handle);
 static cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable);
 static cmr_int camera_channel_scale_capability(cmr_handle oem_handle,
@@ -1484,13 +1484,19 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         prev_set_vcm_step(cxt->prev_cxt.preview_handle, cxt->camera_id,
    data);
         break;*/
-#ifdef CONFIG_CAMERA_DRE
-    case ISP_DRE_EV_EFFECT_CALLBACK:
-        CMR_LOGD("DRE scene=%d", *(cmr_u8 *)data);
-        cxt->dre_skipframe = *(cmr_u8 *)data;
+    case ISP_EV_EFFECT_CALLBACK:
+        CMR_LOGD("under exposure scene=%d", *(cmr_u8 *)data);
+        cxt->skipframe = *(cmr_u8 *)data;
+        if(cxt->gtm_flag) {
+            *(cmr_u8 *)data = 1;
+            cxt->skipframe = 1;
+        }
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
+        oem_cb = CAMERA_EVT_CB_EV_ADJUST_SCENE;
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                       data);
         break;
-#endif
+
     case ISP_HDR_EV_EFFECT_CALLBACK:
         camera_set_hdr_ev(oem_handle, data);
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
@@ -1762,7 +1768,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     cmr_uint oem_cb_type;
     struct setting_cmd_parameter setting_param;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
-    bool is_3dnrphoto = false;
+
     CMR_MSG_INIT(message);
 
     if (!oem_handle) {
@@ -1970,63 +1976,21 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             }
         }
 
-        if (cxt->dre_flag == 1 && cxt->dre_skip_frame_enable == 1 &&
-            cb_type == PREVIEW_EVT_CB_FRAME) {
+        if (cxt->skip_frame_enable == 1 && cb_type == PREVIEW_EVT_CB_FRAME) {
             struct camera_frame_type *prev_frame =
                 (struct camera_frame_type *)param;
             if (prev_frame->type == PREVIEW_FRAME) {
                 CMR_LOGD("monoboottime %llu dre_capture_timestamp %llu",
-                         prev_frame->monoboottime, cxt->dre_capture_timestamp);
+                         prev_frame->monoboottime, cxt->capture_timestamp);
 
-                if (prev_frame->monoboottime > cxt->dre_capture_timestamp) {
+                if (prev_frame->monoboottime > cxt->capture_timestamp) {
                     prev_frame->type = PREVIEW_CANCELED_FRAME;
-                    cxt->dre_skip_frame_cnt++;
-                    CMR_LOGD("dre_skip_frame_cnt %d", cxt->dre_skip_frame_cnt);
+                    cxt->skip_frame_cnt --;
+                    CMR_LOGD("current skip_frame_cnt %d", cxt->skip_frame_cnt);
                 }
             }
-            cmr_bzero(&setting_param, sizeof(setting_param));
-            setting_param.camera_id = cxt->camera_id;
-            ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                                    SETTING_GET_APPMODE, &setting_param);
-            if (ret) {
-                CMR_LOGE("failed to get app mode %ld", ret);
-            }
-            CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-            if (setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) {
-                // 3dnr photo available
-                is_3dnrphoto = true;
-                if (ret) {
-                    CMR_LOGE("failed to cap cfg %ld", ret);
-                }
-            }
-
-            char value[PROPERTY_VALUE_MAX];
-            int skipnum = 0;
-            property_get("debug.skipframe.dre", value, "null");
-            if (!strcmp(value, "10")) {
-                skipnum = 10;
-            } else if (!strcmp(value, "9")) {
-                skipnum = 9;
-            } else if (!strcmp(value, "8")) {
-                skipnum = 8;
-            } else if (!strcmp(value, "7")) {
-                skipnum = 7;
-            } else if (!strcmp(value, "6")) {
-                skipnum = 6;
-            } else {
-                skipnum = 10;
-            }
-            if (is_3dnrphoto) {
-                if (cxt->dre_skip_frame_cnt == 10) {
-                    cxt->dre_skip_frame_enable = 0;
-                    CMR_LOGD("dre_skip_frame_cnt 3dnr ");
-                }
-            } else {
-                if (cxt->dre_skip_frame_cnt == skipnum) {
-                    cxt->dre_skip_frame_enable = 0;
-                    CMR_LOGD("dre_skip_frame_cnt non 3dnr ,skipnum =%d",
-                             skipnum);
-                }
+            if (cxt->skip_frame_cnt == 0) {
+                cxt->skip_frame_enable = 0;
             }
         }
 
@@ -4544,6 +4508,12 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
 
     is_filter = cxt->snp_cxt.filter_type;
 
+    if (cxt->skipframe) {
+        camera_snapshot_set_ev(oem_handle, 0 , SNAPSHOT_NULL);
+        cxt->skipframe = 0;
+        CMR_LOGD("set ev to 0 and reset skipframe");
+    }
+
     if (cxt->nr_flag || is_filter || cxt->dre_flag) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
         cmr_bzero(&imp_out_param, sizeof(imp_out_param));
@@ -4566,20 +4536,11 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
                  imp_out_param.dst_frame.size.height);
 
         // do dre
-        if (cxt->dre_flag && (camera_get_hdr_flag(cxt) != 1)) {
+        if (cxt->dre_flag) {
             // do dre except burst mode
             struct setting_cmd_parameter setting_param;
             struct setting_context *setting_cxt = &cxt->setting_cxt;
             cmr_uint app_mode;
-
-            cmr_bzero(&setting_param, sizeof(setting_param));
-            ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                    SETTING_CLEAR_DRE, &setting_param);
-            if (ret) {
-                CMR_LOGE("failed to clear dre sem");
-            }
-            if (cxt->dre_skipframe)
-                camera_dre_set_ev(oem_handle, 0);
 
             cmr_bzero(&setting_param, sizeof(setting_param));
             setting_param.camera_id = cxt->camera_id;
@@ -8894,11 +8855,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_range_fps isp_fps;
     struct isp_ae_fps ae_fps;
     struct isp_hdr_param hdr_param;
-#ifdef CONFIG_CAMERA_DRE
-    struct isp_dre_param dre_param;
-#endif
+    struct isp_snp_ae_param snp_ae_param;
+
     struct isp_3dnr_ctrl_param param_3dnr;
     struct isp_exp_compensation ae_compensation;
+#ifdef CONFIG_ISP_2_7
+    struct isp_gtm_switch_param gtm_switch;
+#endif
 
     if (!oem_handle || !param_ptr) {
         CMR_LOGE("in parm error");
@@ -9133,13 +9096,32 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&hdr_param;
         break;
 
-#ifdef CONFIG_CAMERA_DRE
-    case COM_ISP_SET_DRE:
-        isp_cmd = ISP_CTRL_DRE;
-        dre_param.dre_enable = param_ptr->cmd_value;
+    case COM_ISP_SET_AE_ADJUST:
+        isp_cmd = ISP_CTRL_SET_AE_ADJUST;
+        snp_ae_param.enable = param_ptr->ev_setting.cmd_value;
+        if(param_ptr->ev_setting.snapshot_type == SNAPSHOT_GTM) {
+            snp_ae_param.ev_effect_valid_num =
+                cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
+            snp_ae_param.ev_adjust_count = 2;
+            snp_ae_param.type = SNAPSHOT_GTM;
+        } else if (param_ptr->ev_setting.snapshot_type == SNAPSHOT_DRE) {
+            snp_ae_param.ev_effect_valid_num =
+                cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
+            snp_ae_param.ev_adjust_count = 1;
+            snp_ae_param.type = SNAPSHOT_DRE;
+        }
         ptr_flag = 1;
-        CMR_LOGD("set dre enable %d", dre_param.dre_enable);
-        isp_param_ptr = (void *)&dre_param;
+        CMR_LOGD("set ae enable %d", snp_ae_param.enable);
+        isp_param_ptr = (void *)&snp_ae_param;
+        break;
+
+#ifdef CONFIG_ISP_2_7
+    case COM_ISP_SET_GTM_ONFF:
+        isp_cmd = ISP_CTRL_SET_GTM_ONFF;
+        gtm_switch.enable= param_ptr->cmd_value;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&gtm_switch;
+        CMR_LOGD("set gtm on off value =%d",gtm_switch.enable);
         break;
 #endif
 
@@ -10268,6 +10250,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     cmr_int i;
     cmr_uint cnr_typ;
     struct common_isp_cmd_param isp_cmd_parm;
+    cmr_u32 gtm_on = 0;
 
     out_ptr->total_num = 0;
     out_ptr->rot_angle = 0;
@@ -10388,6 +10371,22 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     out_ptr->nr_flag = cnr_typ;
     cxt->nr_flag = cnr_typ;
 
+#ifdef CONFIG_ISP_2_7
+    ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_GTM_STATUS, &gtm_on);
+    if (ret) {
+        CMR_LOGE("failed isp ioctl %ld", ret);
+    }
+    CMR_LOGD("gtm on %d\n", gtm_on);
+
+    if(gtm_on) {
+        cxt->gtm_flag = 1;
+    } else {
+        cxt->gtm_flag = 0;
+    }
+#else
+    cxt->gtm_flag = 0;
+#endif
+
 #ifdef CONFIG_CAMERA_DRE
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
@@ -10403,7 +10402,8 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     }
 
     if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO || setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE ||
-              setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) && ret == CMR_CAMERA_SUCCESS) {
+              setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) && ret == CMR_CAMERA_SUCCESS &&
+              camera_get_hdr_flag(cxt) != 1) {
         // dre available
         out_ptr->dre_flag = 1;
         cxt->dre_flag = 1;
@@ -11055,6 +11055,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct preview_context *prev_cxt = &cxt->prev_cxt;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
+    struct common_isp_cmd_param isp_param;
 
     cxt->ambient_highlight = 0; /* default 0 when start preview */
     ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
@@ -11097,6 +11098,22 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     if (ret) {
         CMR_LOGE("failed to start prev %ld", ret);
     }
+#ifdef CONFIG_ISP_2_7
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                SETTING_GET_APPMODE, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get app mode %ld", ret);
+            goto exit;
+        }
+    if(setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
+        isp_param.cmd_value = 1;
+    } else {
+        isp_param.cmd_value = 0;
+    }
+   ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_GTM_ONFF, (void *)&isp_param);
+#endif
 
     cxt->camera_mode = mode;
     cxt->snp_cxt.start_capture_flag = 0;
@@ -11236,6 +11253,28 @@ cmr_int camera_local_set_cap_size(cmr_handle oem_handle,
 }
 /**add for 3d capture to reset reprocessing capture size end*/
 
+void camera_adjust_ev_before_snapshot(cmr_handle oem_handle ,enum camera_snapshot_tpye type)
+{
+        cmr_int ret ;
+        struct camera_context *cxt = (struct camera_context *)oem_handle;
+        ret = camera_snapshot_set_ev(oem_handle, 1 ,type);
+        if (ret) {
+            CMR_LOGE("fail to set dre ev");
+        }
+        cxt->capture_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+        if (cxt->skipframe) {
+            cxt->skip_frame_enable = 1;
+            if (type == SNAPSHOT_GTM)
+                cxt->skip_frame_cnt = 2;
+            else if (type == SNAPSHOT_DRE)
+                cxt->skip_frame_cnt = 1;
+        } else {
+            cxt->skip_frame_enable = 0;
+            camera_snapshot_set_ev(oem_handle, 0 ,type);
+        }
+        CMR_LOGI("skip_frame_enable =%d,type =%d", cxt->skip_frame_enable,type);
+}
+
 cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                                     enum takepicture_mode mode,
                                     cmr_uint is_snapshot) {
@@ -11341,21 +11380,22 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
                                         &flash_status);
-    if (1 == cxt->dre_flag && (camera_get_hdr_flag(cxt) != 1) &&
-        !flash_status && (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL) && cxt->predre_flag) {
-        ret = camera_dre_set_ev(oem_handle, 1);
-        if (ret) {
-            CMR_LOGE("fail to set dre ev");
-        }
-        cxt->dre_capture_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
-        if (cxt->dre_skipframe)
-            cxt->dre_skip_frame_enable = 1;
-        else {
-            cxt->dre_skip_frame_enable = 0;
-            camera_dre_set_ev(oem_handle, 0);
-        }
-        CMR_LOGI("dre_skip_frame_enable =%d", cxt->dre_skip_frame_enable);
-        cxt->dre_skip_frame_cnt = 0;
+
+
+//GTM set ev
+    if(camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL && cxt->gtm_flag &&
+        1 != camera_get_hdr_flag(cxt) && !flash_status)
+    {
+        camera_adjust_ev_before_snapshot(oem_handle,SNAPSHOT_GTM);
+    } else {
+        CMR_LOGD("GTM No need to lower exposure ,3dnr flag =%d GTM =%d",camera_get_3dnr_flag(cxt),cxt->gtm_flag);
+    }
+
+    if (1 == cxt->dre_flag &&!flash_status && cxt->predre_flag && !cxt->gtm_flag &&
+          camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL) {
+        camera_adjust_ev_before_snapshot(oem_handle,SNAPSHOT_DRE);
+    } else {
+        CMR_LOGD("DRE No need to lower exposure,dre_flag=%d,predre=%d,flash =%d,gtm =%d",cxt->dre_flag ,cxt->predre_flag,flash_status,cxt->gtm_flag);
     }
 
     if (1 == camera_get_hdr_flag(cxt)) {
@@ -13199,18 +13239,22 @@ cmr_int camera_local_set_sensor_close_flag(cmr_handle oem_handle) {
     return ret;
 }
 
-cmr_int camera_dre_set_ev(cmr_handle oem_handle, cmr_u32 value) {
+cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value ,enum camera_snapshot_tpye type) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
     struct common_isp_cmd_param isp_param;
-    isp_param.cmd_value = value;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_DRE, (void *)&isp_param);
+    isp_param.ev_setting.cmd_value = value;
+    isp_param.ev_setting.snapshot_type = type ;
+    if(value != 0)
+        cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                                SETTING_CLEAR_AE_NOTIFY, &setting_param);
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_AE_ADJUST, (void *)&isp_param);
     if (value != 0)
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                SETTING_CTRL_DRE, &setting_param);
+                                SETTING_CTRL_AE_NOTIFY, &setting_param);
     if (ret) {
-        CMR_LOGE("failed to wait hdr ev effect");
+        CMR_LOGE("failed to wait ev effect");
         goto exit;
     }
 exit:
@@ -13378,11 +13422,11 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         } else {
             return ret;
         }
-    } else if (cxt->dre_flag == 1 && cxt->dre_skipframe == 1) {
+    } else if (cxt->skipframe == 1) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
-        capture_param.cap_cnt = 10;
-        CMR_LOGI("dre flag");
+        capture_param.cap_cnt = 1;
+        CMR_LOGD("DRE or GTM case");
     } else if (flash_status > 0) {
         // need get 1 frame start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
@@ -13392,7 +13436,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
 
     CMR_LOGD("type %d, cnt %d, scene %d,  dre_flag %d dre_skipframe %d, flash %d\n",
         capture_param.type,  capture_param.cap_cnt,  capture_param.cap_scene,
-        cxt->dre_flag, cxt->dre_skipframe, flash_status);
+        cxt->dre_flag, cxt->skipframe, flash_status);
 
     isp_param.cmd_value = 1;
     ret =
