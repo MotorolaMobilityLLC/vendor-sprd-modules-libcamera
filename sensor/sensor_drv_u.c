@@ -3677,9 +3677,7 @@ int sensorGetRole(enum camera_module_id ModuleId) {
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input* zoom_param) {
     int ret = CMR_CAMERA_SUCCESS;
     char value[PROPERTY_VALUE_MAX] = {0};
-    char value2[PROPERTY_VALUE_MAX] = {0};
     property_get("persist.vendor.cam.multi.section", value, "3");
-    property_get("persist.vendor.cam.multi.zoom_4x", value2, "false");
     if (atoi(value) == 3) {
         zoom_param->PhyCameras = 3;
         zoom_param->MaxDigitalZoom = 10.0;
@@ -3691,17 +3689,6 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input* zoom_param) {
         zoom_param->ZoomRatioSection[5] = 0;
         zoom_param->BinningRatio = 5.0;
     } else if (atoi(value) == 2) {
-        if(!strcmp(value2, "true")) {
-            zoom_param->PhyCameras = 2;
-            zoom_param->MaxDigitalZoom = 4.0;
-            zoom_param->ZoomRatioSection[0] = 0.6;
-            zoom_param->ZoomRatioSection[1] = 1.0;
-            zoom_param->ZoomRatioSection[2] = 4.0;
-            zoom_param->ZoomRatioSection[3] = 0;
-            zoom_param->ZoomRatioSection[4] = 0;
-            zoom_param->ZoomRatioSection[5] = 0;
-            zoom_param->BinningRatio = 8.0;
-        } else {
             zoom_param->PhyCameras = 2;
             zoom_param->MaxDigitalZoom = 8.0;
             zoom_param->ZoomRatioSection[0] = 0.6;
@@ -3711,7 +3698,6 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input* zoom_param) {
             zoom_param->ZoomRatioSection[4] = 0;
             zoom_param->ZoomRatioSection[5] = 0;
             zoom_param->BinningRatio = 8.0;
-        }
     }
     return ret;
 }
