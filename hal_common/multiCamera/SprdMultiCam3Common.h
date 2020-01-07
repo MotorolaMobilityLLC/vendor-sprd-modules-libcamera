@@ -461,6 +461,7 @@ typedef enum {
     MULTI_AI_SCENE_TYPE_CURRENT,
     MULTI_FACE_ATTRIBUTES,
     MULTI_OTP_DATA,
+    MULTI_APP_MODE_ID,
 }multi_tag;
 
 };

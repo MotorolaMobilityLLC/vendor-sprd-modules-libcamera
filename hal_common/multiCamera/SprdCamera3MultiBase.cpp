@@ -1778,6 +1778,9 @@ int SprdCamera3MultiBase::getMultiTagToSprdTag(uint8_t multi_tag) {
     case MULTI_OTP_DATA:
         sprd_tag = ANDROID_SPRD_OTP_DATA;
         break;
+    case MULTI_APP_MODE_ID:
+        sprd_tag = ANDROID_SPRD_APP_MODE_ID;
+        break;
     default:
         break;
     }
