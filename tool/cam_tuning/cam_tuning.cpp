@@ -16,6 +16,7 @@
 
 #define LOG_TAG "camtuning"
 
+#include <cutils/properties.h>
 #include <dlfcn.h>
 #include "cmr_log.h"
 #include "cmr_types.h"
@@ -32,7 +33,6 @@ using namespace android;
 #define CAPTURE_BUFF_NUM 4
 #define ISPB4AWB_BUFF_NUM 16
 
-
 #define CAMTUNING_PARAM_NUM 4
 #define CAMTUNING_MIN_FPS 10
 #define CAMTUNING_MAX_FPS 30
@@ -44,8 +44,7 @@ using namespace android;
             h->ops->camera_set_param(x, y, z);                                 \
     } while (0)
 
-
-#define CAPTURE_MODE   CAMERA_ISP_TUNING_MODE
+#define CAPTURE_MODE CAMERA_ISP_TUNING_MODE
 
 /*
  * fd:ion fd
@@ -80,7 +79,6 @@ static sprd_camera_memory_t *captureHeapArray[CAPTURE_BUFF_NUM];
 sprd_camera_memory_t *mIspB4awbHeapReserved[ISPB4AWB_BUFF_NUM];
 sprd_camera_memory_t *mIspRawAemHeapReserved[ISPB4AWB_BUFF_NUM];
 
-
 enum camtuning_camera_id {
     camtuning_CAMERA_BACK = 0,
     camtuning_CAMERA_FRONT,
@@ -108,14 +106,12 @@ struct camtuning_context {
 
 static struct camtuning_context *cxt;
 
-static void stdout_show(char *p)
-{
+static void stdout_show(char *p) {
     assert(p != NULL);
     fprintf(stdout, "%s", p);
 }
 
-static int stdin_getint(char *prompt)
-{
+static int stdin_getint(char *prompt) {
     int t;
 
     if (prompt)
@@ -127,8 +123,7 @@ static int stdin_getint(char *prompt)
     return t;
 }
 
-static char stdin_getchar(char *prompt)
-{
+static char stdin_getchar(char *prompt) {
     char t;
 
     if (prompt)
@@ -140,8 +135,7 @@ static char stdin_getchar(char *prompt)
     return t;
 }
 
-static void tolow(char *p)
-{
+static void tolow(char *p) {
     assert(p != NULL);
 
     while (*p != '\0') {
@@ -151,8 +145,7 @@ static void tolow(char *p)
     }
 }
 
-static int camtuning_parse_param(int argc, char **argv)
-{
+static int camtuning_parse_param(int argc, char **argv) {
     int i = 0;
     char str[10];
 
@@ -176,30 +169,35 @@ static int camtuning_parse_param(int argc, char **argv)
         } else if (strcmp(argv[i], "-w") == 0) {
             cxt->pre_size.width = atoi(argv[++i]);
             if (cxt->pre_size.width <= 0 || (cxt->pre_size.width % 2)) {
-                CMR_LOGE("get preview width failed(align 2), %d", cxt->pre_size.width);
+                CMR_LOGE("get preview width failed(align 2), %d",
+                         cxt->pre_size.width);
                 goto exit;
             }
         } else if (strcmp(argv[i], "-h") == 0) {
             cxt->pre_size.height = atoi(argv[++i]);
             if (cxt->pre_size.height <= 0 || (cxt->pre_size.height % 2)) {
-                CMR_LOGE("get preview height failed(align 2), %d", cxt->pre_size.height);
+                CMR_LOGE("get preview height failed(align 2), %d",
+                         cxt->pre_size.height);
                 goto exit;
             }
         } else if (strcmp(argv[i], "-cw") == 0) {
             cxt->cap_size.width = atoi(argv[++i]);
             if (cxt->cap_size.width <= 0 || cxt->cap_size.width % 2) {
-                CMR_LOGE("get capture width failed(align 2), %d", cxt->cap_size.width);
+                CMR_LOGE("get capture width failed(align 2), %d",
+                         cxt->cap_size.width);
                 goto exit;
             }
         } else if (strcmp(argv[i], "-ch") == 0) {
             cxt->cap_size.height = atoi(argv[++i]);
             if (cxt->cap_size.height <= 0 || cxt->cap_size.height % 2) {
-                CMR_LOGE("get capture width failed(align 2), %d", cxt->cap_size.width);
+                CMR_LOGE("get capture width failed(align 2), %d",
+                         cxt->cap_size.width);
                 goto exit;
             }
         } else if (strcmp(argv[i], "-mode") == 0) {
             cxt->captureMode = (enum takepicture_mode)atoi(argv[++i]);
-            if (cxt->captureMode < 0 || cxt->captureMode >= TAKEPICTURE_MODE_MAX) {
+            if (cxt->captureMode < 0 ||
+                cxt->captureMode >= TAKEPICTURE_MODE_MAX) {
                 cxt->captureMode = CAMERA_NORMAL_MODE;
             }
 
@@ -213,7 +211,8 @@ static int camtuning_parse_param(int argc, char **argv)
 show_help:
     stdout_show("usage:\n");
     stdout_show("cam_tuning -cameraid id -w preview_w -h preview_h");
-    stdout_show("cam_tuning -cameraid id -w preview_w -h preview_h -cw capture_w -ch capture_h");
+    stdout_show("cam_tuning -cameraid id -w preview_w -h preview_h -cw "
+                "capture_w -ch capture_h");
     stdout_show("for example:\n");
     stdout_show("cam_tuning -cameraid 0 -w 1280 -h 720\n");
     stdout_show("cam_tuning -cameraid 1 -w 1280 -h 720\n");
@@ -223,16 +222,15 @@ exit:
     return -1;
 }
 
-static int check_cameraid(void)
-{
+static int check_cameraid(void) {
     int num;
 
     num = sensorGetPhysicalSnsNum();
 #ifndef CAMERA_CONFIG_SENSOR_NUM
-    CMR_LOGI("num: %d",num);
+    CMR_LOGI("num: %d", num);
     if (num && cxt->camera_id && cxt->camera_id >= (unsigned int)num) {
         cxt->camera_id = num - 1;
-        CMR_LOGI("camera_id: %d",cxt->camera_id);
+        CMR_LOGI("camera_id: %d", cxt->camera_id);
     }
 #endif
     // check capture size
@@ -306,8 +304,7 @@ static int get_preview_buffer_id_for_fd(cmr_s32 fd) {
 }
 
 static void camtuning_cb(enum camera_cb_type cb, const void *client_data,
-                          enum camera_func_type func, void *parm4)
-{
+                         enum camera_func_type func, void *parm4) {
     struct camera_frame_type *frame = (struct camera_frame_type *)parm4;
     struct img_addr addr_vir;
 
@@ -342,11 +339,12 @@ static void camtuning_cb(enum camera_cb_type cb, const void *client_data,
         addr_vir.addr_u = frame->y_vir_addr + frame->width * frame->height;
         // preview
         send_img_data(ISP_TOOL_YVU420_2FRAME, frame->width, frame->height,
-                (char *)frame->y_vir_addr, frame->width * frame->height * 3 / 2);
+                      (char *)frame->y_vir_addr,
+                      frame->width * frame->height * 3 / 2);
 
         if (camtuning_dump_cnt < dump_total_count) {
             camera_save_yuv_to_file(camtuning_dump_cnt, IMG_DATA_TYPE_YUV420,
-                    frame->width, frame->height, &addr_vir);
+                                    frame->width, frame->height, &addr_vir);
             camtuning_dump_cnt++;
         }
 
@@ -357,14 +355,15 @@ static void camtuning_cb(enum camera_cb_type cb, const void *client_data,
         frame->buf_id = get_preview_buffer_id_for_fd(frame->fd);
         if (frame->buf_id != 0xFFFFFFFF) {
             cxt->ops->camera_set_preview_buffer(
-                    cxt->oem_handle, (cmr_uint)previewHeapArray[frame->buf_id]->phys_addr,
-                    (cmr_uint)previewHeapArray[frame->buf_id]->data,
-                    (cmr_s32)previewHeapArray[frame->buf_id]->fd);
+                cxt->oem_handle,
+                (cmr_uint)previewHeapArray[frame->buf_id]->phys_addr,
+                (cmr_uint)previewHeapArray[frame->buf_id]->data,
+                (cmr_s32)previewHeapArray[frame->buf_id]->fd);
         }
         pthread_mutex_unlock(&previewlock);
         break;
-    case CAMERA_FUNC_AE_STATE_CALLBACK: //ae
-    case CAMERA_FUNC_ENCODE_PICTURE:    //encode to jpeg
+    case CAMERA_FUNC_AE_STATE_CALLBACK: // ae
+    case CAMERA_FUNC_ENCODE_PICTURE: // encode to jpeg
         break;
     default:
         CMR_LOGI("camera func type error: %d %d", func, cb);
@@ -432,7 +431,6 @@ static int callback_capturefree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     return 0;
 }
 
-
 static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
                                               uint32_t is_cache) {
 
@@ -492,8 +490,8 @@ static sprd_camera_memory_t *alloc_camera_mem(int buf_size, int num_bufs,
     memory->data = pHeapIon->getBase();
 
     CMR_LOGD("fd=0x%x,phys_addr=0x%lx,virt_addr=%p,size=0x%lx,heap=%p",
-             memory->fd, memory->phys_addr, memory->data,
-             memory->phys_size, pHeapIon);
+             memory->fd, memory->phys_addr, memory->data, memory->phys_size,
+             pHeapIon);
 
     return memory;
 
@@ -569,7 +567,6 @@ mem_fail:
     callback_capturefree(0, 0, 0, 0);
     return -1;
 }
-
 
 static int callback_other_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                                cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum) {
@@ -647,8 +644,7 @@ static int callback_other_free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
 
 static int callback_other_malloc(enum camera_mem_cb_type type, cmr_u32 size,
                                  cmr_u32 sum, cmr_uint *phy_addr,
-                                 cmr_uint *vir_addr, cmr_s32 *fd)
-{
+                                 cmr_uint *vir_addr, cmr_s32 *fd) {
     sprd_camera_memory_t *memory = NULL;
     cmr_u32 i;
 
@@ -893,8 +889,7 @@ static int iommu_is_enabled(struct camtuning_context *cxt) {
         return 0;
     }
 
-    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL ||
-        cxt->ops == NULL) {
+    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL || cxt->ops == NULL) {
         CMR_LOGE("failed: input param is null");
         return 0;
     }
@@ -909,8 +904,7 @@ static int iommu_is_enabled(struct camtuning_context *cxt) {
     return iommuIsEnabled;
 }
 
-static int camtuning_init(void)
-{
+static int camtuning_init(void) {
     int ret = 0;
     unsigned int cameraId = 0;
     struct client_t client_data;
@@ -937,8 +931,6 @@ static int camtuning_init(void)
     for (i = 0; i < CAPTURE_BUFF_NUM; i++)
         captureHeapArray[i] = NULL;
 
-
-
     cameraId = cxt->camera_id;
     client_data = cxt->client_data;
 
@@ -948,30 +940,27 @@ static int camtuning_init(void)
         maxh = phyPtr->source_height_max;
     } else {
         maxw = 8000;
-        maxh= 6000;
+        maxh = 6000;
     }
     cxt->ops->camera_set_largest_picture_size(cameraId, maxw, maxh);
 
-    ret = cxt->ops->camera_init(
-        cameraId, camtuning_cb, &client_data, 0, &cxt->oem_handle,
-        (void *)callback_malloc, (void *)callback_free);
+    ret = cxt->ops->camera_init(cameraId, camtuning_cb, &client_data, 0,
+                                &cxt->oem_handle, (void *)callback_malloc,
+                                (void *)callback_free);
 
     is_iommu_enabled = iommu_is_enabled(cxt);
-    CMR_LOGI("iommu_enabled=%d, sensor max[%d %d]",
-            is_iommu_enabled);
+    CMR_LOGI("iommu_enabled=%d, sensor max[%d %d]", is_iommu_enabled);
 
     return ret;
 }
 
-static int camtuning_deinit(void)
-{
+static int camtuning_deinit(void) {
     cxt->ops->camera_deinit(cxt->oem_handle);
 
     return 0;
 }
 
-static int camtuning_startpreview(uint32_t param1, uint32_t param2)
-{
+static int camtuning_startpreview(uint32_t param1, uint32_t param2) {
     int ret = 0;
     struct cmr_zoom_param zoom_param;
     struct cmr_range_fps_param fps_param;
@@ -992,8 +981,7 @@ static int camtuning_startpreview(uint32_t param1, uint32_t param2)
         goto exit;
     }
 
-    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL ||
-        cxt->ops == NULL) {
+    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL || cxt->ops == NULL) {
         CMR_LOGE("failed: input param is null");
         goto exit;
     }
@@ -1016,25 +1004,24 @@ static int camtuning_startpreview(uint32_t param1, uint32_t param2)
 
     cxt->ops->camera_fast_ctrl(cxt->oem_handle, CAMERA_FAST_MODE_FD, 0);
 
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_AF_MODE, CAMERA_FOCUS_MODE_CAF);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_PREVIEW_SIZE, (cmr_uint)&cxt->pre_size);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_CAPTURE_SIZE, (cmr_uint)&cap_size);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_PREVIEW_FORMAT, CAM_IMG_FMT_YUV420_NV21);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-             CAMERA_PARAM_CAPTURE_FORMAT, CAM_IMG_FMT_YUV420_NV21);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_SENSOR_ROTATION, 0);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_ZOOM, (cmr_uint)&zoom_param);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_RANGE_FPS, (cmr_uint)&fps_param);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_AF_MODE,
+             CAMERA_FOCUS_MODE_CAF);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_PREVIEW_SIZE,
+             (cmr_uint)&cxt->pre_size);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_CAPTURE_SIZE,
+             (cmr_uint)&cap_size);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_PREVIEW_FORMAT,
+             CAM_IMG_FMT_YUV420_NV21);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_CAPTURE_FORMAT,
+             CAM_IMG_FMT_YUV420_NV21);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_SENSOR_ROTATION, 0);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_ZOOM,
+             (cmr_uint)&zoom_param);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_RANGE_FPS,
+             (cmr_uint)&fps_param);
 
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_SPRD_ZSL_ENABLED, zsl_enable);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
+             zsl_enable);
 
     ret = cxt->ops->camera_set_mem_func(
         cxt->oem_handle, (void *)callback_malloc, (void *)callback_free, NULL);
@@ -1056,21 +1043,18 @@ exit:
     return -1;
 }
 
-static int camtuning_stoppreview(uint32_t param1, uint32_t param2)
-{
+static int camtuning_stoppreview(uint32_t param1, uint32_t param2) {
     UNUSED(param1);
     UNUSED(param2);
 
     CMR_LOGI("E");
-
 
     if (cxt == NULL) {
         CMR_LOGE("failed: input cxt is null");
         goto exit;
     }
 
-    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL ||
-        cxt->ops == NULL) {
+    if (cxt->oem_handle == NULL || cxt->oem_dev == NULL || cxt->ops == NULL) {
         CMR_LOGE("failed: input param is null");
         goto exit;
     }
@@ -1090,8 +1074,7 @@ exit:
 }
 
 /* input: 0, capture_format */
-static int camtuning_takepicture(uint32_t param1, uint32_t param2)
-{
+static int camtuning_takepicture(uint32_t param1, uint32_t param2) {
     int ret;
     int quality;
     enum takepicture_mode captureMode = CAPTURE_MODE;
@@ -1103,46 +1086,43 @@ static int camtuning_takepicture(uint32_t param1, uint32_t param2)
 
     CMR_LOGI("E, format 0x%x", capture_format);
 
-    //not clear cxt->flag_prev, stoppreview after takepicture
+    // not clear cxt->flag_prev, stoppreview after takepicture
     cxt->ops->camera_stop_preview(cxt->oem_handle);
 
     captureMode = cxt->captureMode;
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_PREVIEW_SIZE, (cmr_uint)&cxt->pre_size);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_SHOT_NUM, 1);
-//    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-//            CAMERA_PARAM_CAPTURE_FORMAT, capture_format);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_CAPTURE_FORMAT, CAM_IMG_FMT_YUV420_NV21);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_PREVIEW_SIZE,
+             (cmr_uint)&cxt->pre_size);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_SHOT_NUM, 1);
+    // SET_PARM(cxt->oem_dev, cxt->oem_handle,
+    //          CAMERA_PARAM_CAPTURE_FORMAT, capture_format);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_CAPTURE_FORMAT,
+             CAM_IMG_FMT_YUV420_NV21);
 
     quality = cxt->jpeg_quality;
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_JPEG_QUALITY, (cmr_uint)quality);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_THUMB_QUALITY, (cmr_uint)quality);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_JPEG_QUALITY,
+             (cmr_uint)quality);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_THUMB_QUALITY,
+             (cmr_uint)quality);
     jpeg_thumb_size.width = 320;
     jpeg_thumb_size.height = 240;
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_THUMB_SIZE, (cmr_uint)&jpeg_thumb_size);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_CAPTURE_SIZE, (cmr_uint)&cxt->cap_size);
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_EXIF_MIME_TYPE, MODE_SINGLE_CAMERA);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_THUMB_SIZE,
+             (cmr_uint)&jpeg_thumb_size);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_CAPTURE_SIZE,
+             (cmr_uint)&cxt->cap_size);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_EXIF_MIME_TYPE,
+             MODE_SINGLE_CAMERA);
     if (captureMode == CAMERA_ZSL_MODE)
         zsl_enable = 1;
-    SET_PARM(cxt->oem_dev, cxt->oem_handle,
-            CAMERA_PARAM_SPRD_ZSL_ENABLED, (cmr_uint)zsl_enable);
+    SET_PARM(cxt->oem_dev, cxt->oem_handle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
+             (cmr_uint)zsl_enable);
 
     ret = cxt->ops->camera_take_picture(cxt->oem_handle, captureMode);
     CMR_LOGI("take picture.\n");
 
-
     return 0;
 }
 
-static int camtuning_setparam(uint32_t param1, uint32_t param2)
-{
+static int camtuning_setparam(uint32_t param1, uint32_t param2) {
     cxt->cap_size.width = param1;
     cxt->cap_size.height = param2;
     CMR_LOGI("cap size[%d %d]", cxt->cap_size.width, cxt->cap_size.height);
@@ -1150,8 +1130,7 @@ static int camtuning_setparam(uint32_t param1, uint32_t param2)
     return 0;
 }
 
-static int camtuning_setjpegquality(uint32_t param1, uint32_t param2)
-{
+static int camtuning_setjpegquality(uint32_t param1, uint32_t param2) {
     UNUSED(param2);
 
     if (param1)
@@ -1161,8 +1140,7 @@ static int camtuning_setjpegquality(uint32_t param1, uint32_t param2)
     return 0;
 }
 
-static int isptool_init()
-{
+static int isptool_init() {
     cxt->ops->camera_get_isp_handle(cxt->oem_handle, &cxt->isp_handle);
     setispserver(cxt->isp_handle);
 
@@ -1175,16 +1153,16 @@ static int isptool_init()
     return 0;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     int ret = 0;
     struct camtuning_context cxt_main;
+    char value[PROPERTY_VALUE_MAX];
+    char value2[PROPERTY_VALUE_MAX];
 
     cxt = &cxt_main;
     memset((void *)cxt, 0, sizeof(cxt));
 
     pthread_mutex_init(&previewlock, NULL);
-
 
     ret = camtuning_parse_param(argc, argv);
     if (!ret)
@@ -1201,8 +1179,9 @@ INPUT_PARAM:
 
 RESTART:
     check_cameraid();
-    CMR_LOGD("id %d preview[%d %d], caputre[%d %d]", cxt->camera_id, cxt->pre_size.width,
-            cxt->pre_size.height, cxt->cap_size.width, cxt->cap_size.height);
+    CMR_LOGD("id %d preview[%d %d], caputre[%d %d]", cxt->camera_id,
+             cxt->pre_size.width, cxt->pre_size.height, cxt->cap_size.width,
+             cxt->cap_size.height);
 
     ret = camtuning_load_lib();
     if (ret) {
@@ -1223,12 +1202,17 @@ RESTART:
     camtuning_startpreview(NULL, NULL); // start preview
 
     startispserver(cxt->camera_id);
+    property_get("debug.vendor.cam.tuning.exit", value2, "false");
     while (1) {
         sleep(1);
-        ret = (int)stdin_getchar("\nInput x to exit: ");
-        CMR_LOGI("ret = %d", ret);
-        if (ret == (int)'x' || ret == (int)'X')
+        // ret = (int)stdin_getchar("\nInput x to exit: ");
+        // CMR_LOGI("ret = %d", ret);
+        // if (ret == (int)'x' || ret == (int)'X')
+        // break;
+        property_get("debug.vendor.cam.tuning.exit", value, "false");
+        if (strcmp(value, value2)) {
             break;
+        }
     }
     stopispserver();
     camtuning_stoppreview(NULL, NULL);

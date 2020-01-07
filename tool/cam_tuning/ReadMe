@@ -12,14 +12,13 @@ How to use:
     ./vendor/bin/cam_tuning -cameraid 0 -w 1280 -h 720
     2:start isptool pc software
     use as before
-    3: exit(now:20191227)
-    input char 'x' to exit
+    3: exit(now:20200107)
+    setprop debug.vendor.cam.tuning.exit to another value(as "false" -->"true", or "true"-->"false")
 
 Function:
     * start preview
     * init socket wait ISP-Tool connect.
     * parameter manage as before.
-    * input char 'x' to exit.
 
 
     2019-12-27
