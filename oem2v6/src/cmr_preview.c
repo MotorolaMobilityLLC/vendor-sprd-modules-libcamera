@@ -27,6 +27,9 @@
 #include "cmr_sensor.h"
 #include "isp_simulation.h"
 #include "isp_video.h"
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+#include "sprd_img_warp.h"
+#endif
 #include <cutils/properties.h>
 #include <cutils/trace.h>
 #include <math.h>
@@ -7292,7 +7295,20 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_cxt->prev_zoom = true;
     prev_cxt->cap_zoom = true;
-
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+    if(camera_id == sensorGetRole(MODULE_SPW_NONE_BACK)) {
+        prev_cxt->prev_zoom =
+            sprd_warp_adapter_get_isISPZoom(WARP_PREVIEW);
+        if(!(prev_cxt->prev_zoom))
+            zoom_param->zoom_info.prev_aspect_ratio = 1.0f;
+        prev_cxt->cap_zoom =
+            sprd_warp_adapter_get_isISPZoom(WARP_CAPTURE);
+        if(!(prev_cxt->cap_zoom))
+            zoom_param->zoom_info.capture_aspect_ratio = 1.0f;
+        CMR_LOGV("ID=%d,pre %d,cap %d",camera_id,
+            prev_cxt->prev_zoom,prev_cxt->cap_zoom);
+    }
+#endif
     chn_param.is_lightly = 0;
     chn_param.frm_num = -1;
     chn_param.skip_num = sensor_info->mipi_cap_skip_num;
@@ -7388,10 +7404,6 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         float real_ratio = zoom_param->zoom_info.prev_aspect_ratio;
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
-
-        // TODO WORKAROUND
-        if (camera_id == sensorGetRole(MODULE_SPW_NONE_BACK))
-            real_ratio = 1.0f;
 
         if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401 ) {
             chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
@@ -15617,14 +15629,12 @@ cmr_int prev_ultra_wide_close(struct prev_handle *handle, cmr_u32 camera_id) {
         ret = cmr_ipm_close(prev_cxt->ultra_wide_handle);
         prev_cxt->ultra_wide_handle = 0;
     }
-    prev_cxt->prev_zoom = true;
 
     CMR_LOGI("zsl_ultra_wide_handle 0x%p", prev_cxt->zsl_ultra_wide_handle);
     if (prev_cxt->zsl_ultra_wide_handle) {
         ret = cmr_ipm_close(prev_cxt->zsl_ultra_wide_handle);
         prev_cxt->zsl_ultra_wide_handle = 0;
     }
-    prev_cxt->cap_zoom = true;
     CMR_LOGV("ret %ld", ret);
     return ret;
 }

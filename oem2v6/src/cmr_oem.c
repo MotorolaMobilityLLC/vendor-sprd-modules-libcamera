@@ -12068,7 +12068,10 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                                  .capture_aspect_ratio) > EPSINON) {
                         zoom_factor_changed = 1;
                     }
-                    CMR_LOGD("zoom_factor_changed=%d", zoom_factor_changed);
+                    CMR_LOGD("id=%d,zoom_factor_changed=%d,zoom=%f,orgZoom=%f,prev %d,cap %d",
+                        cxt->camera_id, zoom_factor_changed, zoom_param->zoom_info.prev_aspect_ratio,
+                        zoom_factor.zoom_setting.zoom_info.prev_aspect_ratio,
+                        zoom_factor.prev_zoom,zoom_factor.cap_zoom);
                 }
             }
         }

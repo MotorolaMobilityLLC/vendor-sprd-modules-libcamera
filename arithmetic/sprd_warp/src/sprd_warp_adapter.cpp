@@ -71,4 +71,25 @@ void sprd_warp_adapter_close(img_warp_inst_t *inst, INST_TAG tag)
         img_warp_grid_cpu_close(inst);
 }
 
+bool sprd_warp_adapter_get_isISPZoom(INST_TAG tag)
+{
+    char strRunType[256];
+    if (tag == WARP_CAPTURE)
+        property_get("persist.vendor.cam.warp.capture.run_type", strRunType , "");
+    else if (tag == WARP_PREVIEW)
+        property_get("persist.vendor.cam.warp.preview.run_type", strRunType , "");
 
+    if (!(strcmp("gpu", strRunType))) {
+        g_run_type[tag] = SPRD_CAMALG_RUN_TYPE_GPU;
+    } else if (!(strcmp("vdsp", strRunType))) {
+        g_run_type[tag] = SPRD_CAMALG_RUN_TYPE_VDSP;
+    } else if (!(strcmp("cpu", strRunType))) {
+        g_run_type[tag] = SPRD_CAMALG_RUN_TYPE_CPU;
+    }
+
+    bool isISPZoom = false;
+    if (g_run_type[tag] == SPRD_CAMALG_RUN_TYPE_VDSP)
+        isISPZoom = true;
+
+    return isISPZoom;
+}

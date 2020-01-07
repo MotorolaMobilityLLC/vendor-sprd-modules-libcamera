@@ -180,6 +180,7 @@ SPRD_ISP_API void sprd_warp_adapter_run(img_warp_inst_t inst,
                                         img_warp_buffer_t *output,
                                         void *param, INST_TAG tag);
 SPRD_ISP_API void sprd_warp_adapter_close(img_warp_inst_t *inst, INST_TAG tag);
+SPRD_ISP_API bool sprd_warp_adapter_get_isISPZoom(INST_TAG tag);
 
 #ifdef __cplusplus
 }
