@@ -8931,7 +8931,17 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
 #else
             /* from sharkl5pro, raw16 should be supported */
+            char prop[PROPERTY_VALUE_MAX] = {0};
+            property_get("persist.vendor.cam.res.multi.camera.fullsize", prop, "0");
+            if (atoi(prop) == 1 && mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) {
+                cmr_u16 picW = 0;
+                cmr_u16 picH = 0;
+                mSetting->getLargestPictureSize(sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK), &picW, &picH);
+                mLargestPictureWidth = picW;
+                mLargestPictureHeight = picH;
+            }
             mem_size = mLargestPictureWidth * mLargestPictureHeight * 2;
+            HAL_LOGV("mLargestPictureWidth=%d, mLargestPictureHeight=%d", mLargestPictureWidth, mLargestPictureHeight);
 #endif
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
