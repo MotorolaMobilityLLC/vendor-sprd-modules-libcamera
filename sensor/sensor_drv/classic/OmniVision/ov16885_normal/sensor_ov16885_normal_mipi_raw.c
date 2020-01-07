@@ -702,7 +702,7 @@ static cmr_int ov16885_normal_drv_set_master_FrameSync(cmr_handle handle, cmr_ui
 
     SENSOR_LOGI("E");
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x80);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x88);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3008, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x382F, 0x84);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3830, 0x17);
