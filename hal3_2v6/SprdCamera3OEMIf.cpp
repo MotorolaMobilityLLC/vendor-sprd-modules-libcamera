@@ -486,7 +486,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mIspStatsEbdHeap, 0, sizeof(mIspStatsEbdHeap));
     memset(mIspStatsPdafHeap, 0, sizeof(mIspStatsPdafHeap));
     memset(mIspStatsLscmHeap, 0, sizeof(mIspStatsLscmHeap));
-
+    memset(m3DNRPrevHeapReserverd, 0, sizeof(m3DNRPrevHeapReserverd));
+    memset(m3DNRPrevScaleHeapReserverd, 0, sizeof(m3DNRPrevScaleHeapReserverd));
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
     if (!mHalOem) {
