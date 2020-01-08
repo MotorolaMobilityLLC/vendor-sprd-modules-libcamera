@@ -207,6 +207,7 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     static int get_support_res_size(const char *resolution);
     static int getMultiTagToSprdTag(uint8_t multi_tag);
     static int getBufferSize(buffer_handle_t h);
+    static int getJpegStreamSize(const char *resolution);
 
   private:
     Mutex mBufferListLock;

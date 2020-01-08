@@ -1075,6 +1075,7 @@ int SprdCamera3RealBokeh::getCameraInfo(int id, struct camera_info *info) {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
+    int32_t jpeg_stream_size = 0;
 
     HAL_LOGI("E, camera_id = %d", camera_id);
     if (mStaticMetadata)
@@ -1089,23 +1090,23 @@ int SprdCamera3RealBokeh::getCameraInfo(int id, struct camera_info *info) {
     }
 
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
-    property_get("persist.vendor.cam.api.version", prop, "0");
-    version = atoi(prop);
-    if (version == SPRD_API_MODE) {
-        img_size =
-            SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
-            (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT * 2) +
-            (BOKEH_REFOCUS_COMMON_PARAM_NUM * 4) +
-            BOKEH_REFOCUS_COMMON_XMP_SIZE + sizeof(camera3_jpeg_blob_t) + 1024;
-    }
-    SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size = img_size;
-    metadata.update(
-        ANDROID_JPEG_MAX_SIZE,
-        &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
 
     property_get("persist.vendor.cam.res.bokeh", prop, "RES_5M");
     HAL_LOGI("bokeh support cap resolution %s", prop);
     addAvailableStreamSize(metadata, prop);
+    jpeg_stream_size = getJpegStreamSize(prop);
+
+    property_get("persist.vendor.cam.api.version", prop, "0");
+    version = atoi(prop);
+
+    if (version == SPRD_API_MODE) {
+        img_size = jpeg_stream_size * 2 +
+                   (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT * 2) +
+                   (BOKEH_REFOCUS_COMMON_PARAM_NUM * 4) +
+                   BOKEH_REFOCUS_COMMON_XMP_SIZE + sizeof(camera3_jpeg_blob_t) +
+                   1024;
+    }
+    metadata.update(ANDROID_JPEG_MAX_SIZE, &img_size, 1);
 
     if (SPRD_MULTI_CAMERA_BASE_ID > id) {
         HAL_LOGI(" logical id %d", id);

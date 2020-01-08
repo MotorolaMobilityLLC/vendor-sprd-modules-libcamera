@@ -627,6 +627,10 @@ int SprdCamera3SinglePortrait::getCameraInfo(int blur_camera_id,
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
+    char mPropSize[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    int32_t jpeg_stream_size = 0;
     if (mStaticMetadata)
         free_camera_metadata(mStaticMetadata);
 
@@ -657,18 +661,26 @@ int SprdCamera3SinglePortrait::getCameraInfo(int blur_camera_id,
         return rc;
     }
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
+    if (blur_camera_id == SPRD_BLUR_FRONT_ID) {
+        property_get("persist.vendor.cam.res.blur.fr", mPropSize, "RES_5M");
+        HAL_LOGI("blur front support cap resolution %s", mPropSize);
+    } else {
+        property_get("persist.vendor.cam.res.blur.ba", mPropSize, "RES_5M");
+        HAL_LOGI("blur back support cap resolution %s", mPropSize);
+    }
+    jpeg_stream_size = getJpegStreamSize(mPropSize);
     if (atoi(prop) == 3) {
         property_get("persist.vendor.cam.gallery.blur", prop, "1");
         if (atoi(prop) == 1) {
             mCaptureThread->mIsGalleryBlur = true;
             img_size =
-                SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 3 +
+                jpeg_stream_size * 3 +
                 (BLUR_REFOCUS_PARAM2_NUM * 4) + 1024;
         } else {
             mCaptureThread->mIsGalleryBlur = false;
             img_size =
-                SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
-                SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size / 6 +
+                jpeg_stream_size * 2 +
+                jpeg_stream_size / 6 +
                 (BLUR_REFOCUS_PARAM2_NUM * 4) + 1024;
         }
 
@@ -676,29 +688,22 @@ int SprdCamera3SinglePortrait::getCameraInfo(int blur_camera_id,
         property_get("persist.vendor.cam.fr.blur.type", prop, "2");
         if (atoi(prop) == 2) {
             img_size =
-                SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
-                SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size / 48 +
+                jpeg_stream_size * 2 +
+                jpeg_stream_size / 48 +
                 (BLUR_REFOCUS_PARAM_NUM * 4) + 1024;
 
         } else {
             img_size =
-                SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
+                jpeg_stream_size * 2 +
                 (BLUR_REFOCUS_PARAM_NUM * 4) + 1024;
         }
     }
     SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size = img_size;
     metadata.update(
         ANDROID_JPEG_MAX_SIZE,
-        &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
+        &img_size, 1);
 
-    if (blur_camera_id == SPRD_BLUR_FRONT_ID) {
-        property_get("persist.vendor.cam.res.blur.fr", prop, "RES_5M");
-        HAL_LOGI("blur front support cap resolution %s", prop);
-    } else {
-        property_get("persist.vendor.cam.res.blur.ba", prop, "RES_5M");
-        HAL_LOGI("blur back support cap resolution %s", prop);
-    }
-    addAvailableStreamSize(metadata, prop);
+    addAvailableStreamSize(metadata, mPropSize);
 
     mStaticMetadata = metadata.release();
 

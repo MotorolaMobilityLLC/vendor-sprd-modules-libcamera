@@ -1715,6 +1715,42 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
                     available_stream_configurations, array_size * 4);
 }
 
+int SprdCamera3MultiBase::getJpegStreamSize(const char *resolution) {
+    char value[PROPERTY_VALUE_MAX];
+    int32_t jpeg_stream_size = 0;
+
+    if (!strncmp(resolution, "RES_0_3M", 12))
+        jpeg_stream_size = (640 * 480 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_2M", 12))
+        jpeg_stream_size = (1600 * 1200 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_1080P", 12))
+        jpeg_stream_size = (1920 * 1080 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_5M", 12))
+        jpeg_stream_size = (2592 * 1944 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_8M", 12))
+        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_12M", 12))
+        jpeg_stream_size = (4000 * 3000 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_13M", 12))
+        jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_MULTI", 12))
+        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_MULTI_FULLSIZE", 12))
+        jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else{
+        HAL_LOGE("Error,not support resolution %s update 32M", resolution);
+		jpeg_stream_size = (6528 * 4896 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    }
+    // enlarge buffer size for isp debug info for userdebug version
+    property_get("ro.debuggable", value, "0");
+    if (!strcmp(value, "1")) {
+        jpeg_stream_size += 1024 * 1024;
+    }
+    CMR_LOGI("jpeg_stream_size = %d", jpeg_stream_size);
+
+    return jpeg_stream_size;
+}
+
 void SprdCamera3MultiBase::setLogicIdTag(CameraMetadata &metadata,
                                          uint8_t *physical_ids,
                                          uint8_t physical_ids_size) {
