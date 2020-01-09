@@ -788,7 +788,7 @@ static int minicamera_startpreview(struct minicamera_context *cxt) {
     struct img_size preview_size;
     struct cmr_zoom_param zoom_param;
     struct cmr_range_fps_param fps_param;
-
+    memset(&zoom_param, 0, sizeof(struct cmr_zoom_param));
     if (cxt == NULL) {
         CMR_LOGE("failed: input cxt is null");
         goto exit;

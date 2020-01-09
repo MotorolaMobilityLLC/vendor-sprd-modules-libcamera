@@ -1133,7 +1133,7 @@ static void eng_tst_camera_startpreview(void) {
     struct cmr_zoom_param zoom_param;
     struct img_size capture_size;
     struct cmr_range_fps_param fps_param;
-
+    memset(&zoom_param, 0, sizeof(struct cmr_zoom_param));
     if (!oem_handle || NULL == mHalOem || NULL == mHalOem->ops)
         return;
 
