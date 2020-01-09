@@ -1127,10 +1127,7 @@ void SprdCamera3SingleFaceIdUnlock::processCaptureResultMain(
         }
         return;
     }
-    if (result_buffer == NULL) {
-        HAL_LOGE("result_buffer = result->output_buffers is NULL");
-        return;
-    }
+
     cmr_s32 currStreamType = getStreamType(result_buffer->stream);
     // callback process
     if (DEFAULT_STREAM == currStreamType) {
