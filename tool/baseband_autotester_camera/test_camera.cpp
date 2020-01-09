@@ -635,7 +635,7 @@ void autotest_camera_startpreview(void) {
     struct img_size preview_size;
     struct cmr_zoom_param zoom_param;
     struct cmr_range_fps_param fps_param;
-
+    memset(&zoom_param, 0, sizeof(struct cmr_zoom_param));
     if (!oem_handle || NULL == m_hal_oem || NULL == m_hal_oem->ops)
         return;
 

@@ -274,7 +274,6 @@ LOCAL_SRC_FILES += \
 
 ifeq ($(strip $(TARGET_BOARD_DEL_CPP)),)
 LOCAL_SRC_FILES += \
-    tool/baseband_autotester_camera/bbat_camera.cpp \
     test.cpp
 endif
 
