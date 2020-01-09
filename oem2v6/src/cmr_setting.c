@@ -3748,13 +3748,17 @@ static cmr_int setting_set_pre_lowflash(struct setting_component *cpt,
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_BEFORE);
                 setting_isp_wait_notice_withtime(cpt, ISP_PREFLASH_ALG_TIMEOUT);
-
+                /*before flash open,if camera close,go exit*/
                 if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
                     goto exit;
                 }
                 setting_set_flashdevice(cpt, parm, (uint32_t)FLASH_OPEN);
                 hal_param->flash_param.flash_status =
                     SETTING_FLASH_PRE_LIGHTING;
+                /*after flash open,if camera close,go exit*/
+                if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
+                    goto exit;
+                }
                 cmr_setting_clear_sem(cpt);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
                 setting_isp_wait_notice_withtime(cpt, ISP_PREFLASH_ALG_TIMEOUT);
