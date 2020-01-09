@@ -880,6 +880,17 @@ static cmr_u8 if_get_win_info(cmr_u32 * hw_num, cmr_u32 * isp_w, cmr_u32 * isp_h
 	return 0;
 }
 
+static cmr_u8 if_get_sub_wins_ysum(Y_Sum * c_y_sum, void *cookie)
+{
+	af_ctrl_t *af = cookie;
+	cmr_u32 index = 0;
+	while (index < 10) {
+		c_y_sum->y_sum[index] = af->roi_RGBY.Y_sum[index];
+		index += 1;
+	}
+	return 0;
+}
+
 static cmr_u8 if_statistics_wait_cal_done(void *cookie)
 {
 	UNUSED(cookie);
@@ -1717,6 +1728,7 @@ static void *af_lib_init(af_ctrl_t * af)
 	// SharkLE Only --
 	af_in.AF_Ops.get_tof_data = if_get_tof_data;
 	af_in.AF_Ops.get_saf_extra_data = if_get_saf_extra_data;
+	af_in.AF_Ops.get_sub_wins_ysum = if_get_sub_wins_ysum;
 
 	af_in.tuning.data = af->aftuning_data;
 	af_in.tuning.data_len = af->aftuning_data_len;
@@ -3265,8 +3277,8 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_info *rgb)
 		r_sum = 0;
 		g_sum = 0;
 		b_sum = 0;
-		for (blockw = Y_sx; blockw < Y_ex; blockw++) {
-			for (blockh = Y_sy; blockh < Y_ey; blockh++) {
+		for (blockw = Y_sx; blockw <= Y_ex; blockw++) {
+			for (blockh = Y_sy; blockh <= Y_ey; blockh++) {
 				index = blockh * AE_BLOCK_W + blockw;
 				r_sum = r_sum + af->rgb_stat.r_info[index];
 				g_sum = g_sum + af->rgb_stat.g_info[index];
@@ -3274,7 +3286,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_info *rgb)
 			}
 		}
 
-		ae_area = 1.0 * (Y_ex - Y_sx) * (Y_ey - Y_sy);
+		ae_area = 1.0 * (Y_ex - Y_sx + 1) * (Y_ey - Y_sy + 1);
 		y_sum = (((0.299 * r_sum) + (0.587 * g_sum) + (0.114 * b_sum)) / ae_area);
 		af->roi_RGBY.R_sum[i] = r_sum;
 		af->roi_RGBY.G_sum[i] = g_sum;

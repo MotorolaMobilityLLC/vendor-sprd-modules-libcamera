@@ -251,6 +251,10 @@ typedef struct _AE_Report {
 	cmr_u8 reserved[38];
 } AE_Report;
 
+typedef struct _Y_Sum {
+	cmr_u32 y_sum[10];
+} Y_Sum;
+
 typedef struct _AF_OTP_Data {
 	cmr_u8 bIsExist;
 	cmr_u16 INF;
@@ -371,6 +375,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*get_tof_data) (tof_measure_data_t * tof_result, void *cookie);
 	 cmr_u8(*set_Gridinfo_to_PD) (eAF_MODE AF_mode, ROIinfo * PD_ROI, void *cookie);
 	 cmr_u8(*get_saf_extra_data) (saf_extra_data_t * saf_extra, void *cookie);
+	 cmr_u8(*get_sub_wins_ysum) (Y_Sum * c_y_sum, void *cookie);
 } AF_Ctrl_Ops;
 
 typedef struct _af_tuning_block_param {
