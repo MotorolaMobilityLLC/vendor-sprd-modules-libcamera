@@ -3351,17 +3351,17 @@ static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 
 static cmr_int ispctl_ai_set_fd_status(cmr_handle isp_alg_handle, void *param_ptr)
 {
-       cmr_int ret = ISP_SUCCESS;
-       struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-       if (NULL == param_ptr) {
-               return ISP_PARAM_NULL;
-       }
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
 
-       if (cxt->ops.ai_ops.ioctrl)
-               ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_ON_OFF, (void *)param_ptr, NULL);
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_ON_OFF, (void *)param_ptr, NULL);
 
-       return ret;
+	return ret;
 }
 
 static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
@@ -3379,11 +3379,11 @@ static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
 			ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_DRE, NULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm,
-			   ISP_PM_CMD_GET_SINGLE_SETTING,
-			   &input, &output);
+			ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
+			&input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num)
 		memcpy(param_ptr, output.param_data->data_ptr,
-		       sizeof(struct isp_dre_level));
+			sizeof(struct isp_dre_level));
 	else
 		ISP_LOGE("fail to get valid dre param, %ld  num %d",
 			 ret, output.param_num);
