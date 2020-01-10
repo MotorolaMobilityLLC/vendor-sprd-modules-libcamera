@@ -4112,10 +4112,10 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			else
 				cxt->last_exp_param.bv = 1;
 		} else {
-			cxt->last_exp_param.exp_line = cxt->sync_cur_result.wts.cur_exp_line;
-			cxt->last_exp_param.exp_time = cxt->sync_cur_result.wts.cur_exp_line * cxt->cur_status.line_time;
-			cxt->last_exp_param.dummy = cxt->sync_cur_result.wts.cur_dummy;
-			cxt->last_exp_param.gain = cxt->sync_cur_result.wts.cur_again;
+			cxt->last_exp_param.exp_line = cxt->cur_status.effect_expline;
+			cxt->last_exp_param.exp_time = cxt->cur_status.effect_expline * cxt->cur_status.line_time;
+			cxt->last_exp_param.dummy = cxt->cur_status.effect_dummy;
+			cxt->last_exp_param.gain = cxt->cur_status.effect_gain;
 			cxt->last_exp_param.line_time = cxt->cur_status.line_time;
 			cxt->last_exp_param.cur_index = cxt->sync_cur_result.wts.cur_index;
 			if(CAMERA_MODE_MANUAL != cxt->app_mode)
