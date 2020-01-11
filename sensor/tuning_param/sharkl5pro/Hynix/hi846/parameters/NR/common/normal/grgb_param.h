@@ -10,7 +10,7 @@
 	/*hv_flat_thr*/
 	0x0019,
 	/*slash_edge_thr*/
-	0x0028,
+	0x001A,
 	/*slash_flat_thr*/
 	0x0019,
 	/*grgb_ratio*/
@@ -193,13 +193,13 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x50,
+	0xC8,
 	/*hv_edge_thr*/
 	0x1A,
 	/*hv_flat_thr*/
 	0x0019,
 	/*slash_edge_thr*/
-	0x0028,
+	0x001A,
 	/*slash_flat_thr*/
 	0x0019,
 	/*grgb_ratio*/
@@ -382,13 +382,13 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x50,
+	0xE1,
 	/*hv_edge_thr*/
 	0x1A,
 	/*hv_flat_thr*/
 	0x0019,
 	/*slash_edge_thr*/
-	0x0028,
+	0x001A,
 	/*slash_flat_thr*/
 	0x0019,
 	/*grgb_ratio*/
@@ -571,13 +571,13 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x50,
+	0xFF,
 	/*hv_edge_thr*/
 	0x1A,
 	/*hv_flat_thr*/
 	0x0019,
 	/*slash_edge_thr*/
-	0x0028,
+	0x001A,
 	/*slash_flat_thr*/
 	0x0019,
 	/*grgb_ratio*/
