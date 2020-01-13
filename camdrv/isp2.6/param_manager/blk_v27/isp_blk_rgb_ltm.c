@@ -50,7 +50,7 @@ cmr_s32 _pm_rgb_ltm_init(void *dst_rgb_ltm_param, void *src_rgb_ltm_param, void 
 
 			dst_ptr->ltm_param[i].text_point_thres = src_ptr->rgb_ltm_param[i].rgb_ltm_stat.ltm_text.text_point_thres;
 			dst_ptr->ltm_param[i].textture_proporion = src_ptr->rgb_ltm_param[i].rgb_ltm_stat.ltm_text.textture_proporion;
-			dst_ptr->ltm_param[i].text_point_alpha = src_ptr->rgb_ltm_param[i].rgb_ltm_stat.ltm_text.text_point_alpha;
+			dst_ptr->ltm_param[i].text_point_alpha = (cmr_u32)src_ptr->rgb_ltm_param[i].rgb_ltm_stat.ltm_text.text_point_alpha;
 		}
 		dst_ptr->cur.ltm_map.bypass = dst_ptr->ltm_param[index].ltm_map_bypass;
 		dst_ptr->cur.ltm_map.ltm_map_video_mode = dst_ptr->ltm_param[index].ltm_map_video_mode;
@@ -63,6 +63,9 @@ cmr_s32 _pm_rgb_ltm_init(void *dst_rgb_ltm_param, void *src_rgb_ltm_param, void 
 		dst_ptr->cur.ltm_stat.tile_num.tile_num_y = dst_ptr->ltm_param[index].tile_num_y;
 		dst_ptr->cur.ltm_stat.ltm_text.text_point_thres = dst_ptr->ltm_param[index].text_point_thres;
 		dst_ptr->cur.ltm_stat.ltm_text.textture_proporion = dst_ptr->ltm_param[index].textture_proporion;
+		dst_ptr->cur.ltm_stat.ltm_text.text_point_alpha = dst_ptr->ltm_param[index].text_point_alpha;
+		ISP_LOGV("ltm_map.bypass[%d] ltm_stat.bypass[%d] strength[%d]",dst_ptr->cur.ltm_map.bypass,
+			dst_ptr->cur.ltm_stat.bypass, dst_ptr->cur.ltm_stat.strength);
 		ltm_rgb_text_thres_init(dst_ptr->cur.ltm_stat.text_point_thres,
 			dst_ptr->ltm_param[index].text_point_alpha, dst_ptr->cur.ltm_stat.ltm_hist_table);
 	}
@@ -103,14 +106,14 @@ cmr_s32 _pm_rgb_ltm_set_param(void *rgb_ltm_param, cmr_u32 cmd, void *param_ptr0
 			header_ptr->is_update = ISP_ZERO;
 			val_range.min = 0;
 			val_range.max = 255;
-			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
+			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
 			}
 			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
 			bv_value = &weight_value[0];
-;
+
 			weight[0] = bv_value->weight[0];
 			weight[1] = bv_value->weight[1];
 			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
@@ -122,6 +125,7 @@ cmr_s32 _pm_rgb_ltm_set_param(void *rgb_ltm_param, cmr_u32 cmd, void *param_ptr0
 			dst_ptr->cur.ltm_map.bypass = dst_ptr->ltm_param[index].ltm_map_bypass;
 			dst_ptr->cur.ltm_map.ltm_map_video_mode = dst_ptr->ltm_param[index].ltm_map_video_mode;
 			dst_ptr->cur.ltm_stat.bypass = dst_ptr->ltm_param[index].ltm_stat_bypass;
+			dst_ptr->cur.ltm_stat.strength = dst_ptr->ltm_param[index].ltm_stat_strength;
 			dst_ptr->cur.ltm_stat.tile_num_auto = dst_ptr->ltm_param[index].tile_num_auto;
 			dst_ptr->cur.ltm_stat.region_est_en = dst_ptr->ltm_param[index].region_est_en;
 			dst_ptr->cur.ltm_stat.channel_sel = dst_ptr->ltm_param[index].channel_sel;
@@ -129,7 +133,9 @@ cmr_s32 _pm_rgb_ltm_set_param(void *rgb_ltm_param, cmr_u32 cmd, void *param_ptr0
 			dst_ptr->cur.ltm_stat.tile_num.tile_num_y = dst_ptr->ltm_param[index].tile_num_y;
 			dst_ptr->cur.ltm_stat.text_point_thres = dst_ptr->ltm_param[index].text_point_thres;
 			dst_ptr->cur.ltm_stat.ltm_text.textture_proporion = dst_ptr->ltm_param[index].textture_proporion;
-
+			dst_ptr->cur.ltm_stat.ltm_text.text_point_alpha = dst_ptr->ltm_param[index].text_point_alpha;
+			ISP_LOGV("ltm_map.bypass[%d] ltm_stat.bypass[%d] strength[%d]",dst_ptr->cur.ltm_map.bypass,
+					dst_ptr->cur.ltm_stat.bypass, dst_ptr->cur.ltm_stat.strength);
 			data_num = 1;
 			if (dst_ptr->cur.ltm_stat.region_est_en) {
 				dst1 = &dst_ptr->cur.ltm_stat.text_point_thres;
