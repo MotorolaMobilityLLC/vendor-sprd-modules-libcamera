@@ -61,14 +61,14 @@ static void cal_gtm_hist(cmr_s32 in_bit_depth, struct dcam_dev_raw_gtm_block_inf
 	{
 		bin_f[i] = bin_f[i-1] + d2;
 	}
-	q = (float)pow(2, (float)gtm_log2((1024*(expo_ratio/16.0f)-1)/bin_f[length1+length2-1])/length3);
-	for(i=(length1+length2); i<GTM_HIST_BIN_NUM; i++)
+	q = (float)pow(2, (float)gtm_log2((1024*(expo_ratio/16.0f)-1)/bin_f[length1 + length2-1])/length3);
+	for(i = (length1 + length2); i < GTM_HIST_BIN_NUM; i++)
 	{
 		bin_f[i] = bin_f[i-1]*q;
 	}
-	for(i=0; i<GTM_HIST_BIN_NUM; i++)
+	for(i = 0; i < GTM_HIST_BIN_NUM; i++)
 	{
-		gtm->tm_hist_xpts[i] = (cmr_s32)(bin_f[i]+0.5);
+		gtm->tm_hist_xpts[i] = (cmr_s32)(bin_f[i] + 0.5);
 	}
 }
 
