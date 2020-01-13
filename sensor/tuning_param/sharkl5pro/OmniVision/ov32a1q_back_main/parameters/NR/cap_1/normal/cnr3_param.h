@@ -249,22 +249,22 @@
 			/*imgCenterX*/
 			0x0330,
 			/*imgCenterY*/
-			0x0268,
+			0x0264,
 			/*slope*/
 			0x012C,
 			/*baseRadius*/
 			0x0000,
 			/*baseRadius_factor*/
-			0x01F4,
+			0x02BC,
 			/*minRatio*/
-			0x0320,
+			0x0100,
 			/*luma_th*/
 			{
 				0x0064,0x00C8/*0-1*/
 			},
 			/*sigma*/
 			{
-				6.00,8.00,10.00/*0-2*/
+				8.00,10.00,12.00/*0-2*/
 			},
 			/*reserved1*/
 			{
