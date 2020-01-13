@@ -222,10 +222,12 @@ int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cm
     property_get("persist.vendor.cam.res.multi.camera.fullsize", prop, "0");
     if (atoi(prop) == 1 && camera_id == sensorGetRole(MODULE_SPW_NONE_BACK) &&
         sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK) != -1) {
-        largest_picture_width[camera_id] =
-            largest_picture_width[sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK)];
-        largest_picture_height[camera_id] =
-            largest_picture_height[sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK)];
+	if (largest_picture_width[sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK)] != 0) {
+		largest_picture_width[camera_id] =
+			largest_picture_width[sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK)];
+		largest_picture_height[camera_id] =
+			largest_picture_height[sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK)];
+	}
     }
 
     max_w = largest_picture_width[camera_id];
