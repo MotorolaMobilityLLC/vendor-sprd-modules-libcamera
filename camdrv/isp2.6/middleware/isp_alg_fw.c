@@ -3173,18 +3173,17 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 			ret = ispalg_start_ae_process((cmr_handle) cxt);
 			break;
 		}
-
-		ret = ispalg_ae_process((cmr_handle) cxt);
-		if (ret)
-			ISP_LOGE("fail to start ae process");
-		/* 4in1 full size capture(non-zsl), awb don't need work */
 		if ((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->ambient_highlight == 1)) {
-			ISP_LOGI("high res high light capture.\n");
+			cxt->aem_is_update = 1;
+			ret = ispalg_ae_process((cmr_handle) cxt);
+			/* 4in1 full size capture(non-zsl), awb don't need work */
+			ISP_LOGD("high res high light capture.\n");
 		} else {
-			ret = ispalg_awb_process((cmr_handle) cxt);
-			if (ret)
-				ISP_LOGE("fail to start awb process");
+			ret = ispalg_ae_process((cmr_handle) cxt);
+			ret |= ispalg_awb_process((cmr_handle) cxt);
 		}
+		if (ret)
+			ISP_LOGE("fail to start ae or awb process");
 
 		cxt->aem_is_update = 0;
 
