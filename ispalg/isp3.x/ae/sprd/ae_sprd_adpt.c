@@ -3664,8 +3664,6 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 
 		cxt->last_cam_mode = (cxt->app_mode | (cxt->camera_id << 16) | (1U << 31));
 
-		cxt->app_mode_tarlum[cxt->app_mode] = cxt->sync_cur_result.target_lum;
-
 		if (cxt->is_multi_mode){
 			cmr_u32 in = 0;
 			if (CAM_SENSOR_MASTER == cxt->sensor_role) {
