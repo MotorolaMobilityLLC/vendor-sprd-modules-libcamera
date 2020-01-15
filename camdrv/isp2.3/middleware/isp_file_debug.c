@@ -127,7 +127,7 @@ cmr_int isp_file_raw_save(cmr_handle handle, void *info,
 			ISP_LOGE("fail to open file: %s", filename);
 			return -1;
 		}
-		fwrite((void *)statis_info->vir_addr, 1, (cmr_u32)width * height * 5/4, fp);
+		fwrite((void *)(&statis_info->vir_addr), 1, (cmr_u32)width * height * 5/4, fp);
 		fclose(fp);
 	}
 
