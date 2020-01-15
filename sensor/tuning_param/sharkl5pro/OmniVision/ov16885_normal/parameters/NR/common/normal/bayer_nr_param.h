@@ -5322,9 +5322,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x045D,
+		0x031E,
 		/*radius_threshold_factor*/
-		0x008C,
+		0x0064,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
