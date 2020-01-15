@@ -206,6 +206,80 @@ void *sensor_get_dev_cxt_Ex(cmr_u32 slot_id) {
     return (void *)sensor_cxt;
 }
 
+static cmr_int sensor_write_pdaf_info(struct sensor_pdaf_info phasePixelMap, char *name) {
+    FILE *fp = NULL;
+    char pd_file_path[128];
+    PhasePixel_MAP pixel_info_saved;
+    memset(&pd_file_path, 0, sizeof(pd_file_path));
+    memset(&pixel_info_saved, 0, sizeof(PhasePixel_MAP));
+    pixel_info_saved.count = 2 * phasePixelMap.pd_pos_size;
+    pixel_info_saved.block_start_col = phasePixelMap.pd_offset_x;
+    pixel_info_saved.block_start_row = phasePixelMap.pd_offset_y;
+    pixel_info_saved.block_end_col = phasePixelMap.pd_end_x;
+    pixel_info_saved.block_end_row = phasePixelMap.pd_end_y;
+    pixel_info_saved.block_width = phasePixelMap.pd_block_w;
+    pixel_info_saved.block_height = phasePixelMap.pd_block_h;
+    SENSOR_LOGV("number is %u", pixel_info_saved.count);
+    SENSOR_LOGV("block_start_col is %u -->%u", pixel_info_saved.block_start_col,
+                pixel_info_saved.block_start_row);
+    SENSOR_LOGV("block_width is %u -->%u", pixel_info_saved.block_width,
+                pixel_info_saved.block_height);
+    for(int i = 0; i < pixel_info_saved.count; i++) {
+        pixel_info_saved.pixel[i].rx = phasePixelMap.pd_pos_col[i];
+        pixel_info_saved.pixel[i].ry = phasePixelMap.pd_pos_row[i];
+        pixel_info_saved.pixel[i].phase_pos = phasePixelMap.pd_is_right[i];
+        SENSOR_LOGV("pixel coordinate is [%u, %u, %u]", pixel_info_saved.pixel[i].rx,
+            pixel_info_saved.pixel[i].ry, pixel_info_saved.pixel[i].phase_pos);
+    }
+    SENSOR_LOGV("finish prepare pd file with nam %s", name);
+    sprintf(pd_file_path, "%s%s.bin", "/data/vendor/cameraserver/pd_", name);
+    fp = fopen(pd_file_path, "wb+");
+    if(!fp) {
+        SENSOR_LOGE("Cannot open file");
+        goto exit;
+    } else {
+        fwrite(&pixel_info_saved, sizeof(PhasePixel_MAP), 1, fp);
+        fclose(fp);
+    }
+    SENSOR_LOGV("finish saving file");
+    return SENSOR_SUCCESS;
+exit:
+    return SENSOR_FAIL;
+}
+
+static cmr_int sensor_save_pdaf_info(struct sensor_drv_context *sensor_cxt) {
+    SENSOR_VAL_T val;
+    char *name_of_sensor = NULL;
+    struct sensor_pdaf_info phasePixelMap;
+    char property_value[PROPERTY_VALUE_MAX];
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    cmr_int ret = SENSOR_SUCCESS;
+    memset(&property_value, 0, sizeof(property_value));
+    property_get("persist.vendor.cam.sensor.store.pdaf.file", property_value, "0");
+    SENSOR_LOGV("property_value is %s", property_value);
+    if(atoi(property_value) && sensor_cxt && sensor_cxt->static_info
+        && sensor_cxt->static_info->pdaf_supported) {
+        SENSOR_LOGV("support pdaf info is %u", sensor_cxt->static_info->pdaf_supported);
+        val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
+        val.pval = &phasePixelMap;
+        sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+        if(sns_ops && !sns_ops->ext_ops[sns_cmd].ops
+            (sensor_cxt->sns_ic_drv_handle, (cmr_u32)&val)) {
+            name_of_sensor = sensor_cxt->xml_info->cfgPtr->sensor_name;
+            if(sensor_write_pdaf_info(phasePixelMap, name_of_sensor)) {
+                goto exit;
+            }
+        } else
+            SENSOR_LOGE("unvalid param");
+    } else
+        goto exit;
+    return ret;
+exit:
+    SENSOR_LOGE("cannot save file");
+    return SENSOR_FAIL;
+}
+
 cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                struct sensor_flash_level *level) {
     int ret = SENSOR_SUCCESS;
@@ -865,6 +939,7 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     }
 
     ret = sensor_drv_open(sensor_cxt, slot_id);
+
     if (ret) {
         SENSOR_LOGE("first open sensor failed, restart identify and open");
         if (SENSOR_SUCCESS == sensor_drv_identify(sensor_cxt, slot_id)) {
@@ -887,13 +962,13 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     }
 
 exit:
+
     if (ret) {
         sensor_destroy_ctrl_thread(sensor_cxt);
         hw_sensor_drv_delete(sensor_cxt->hw_drv_handle);
         sensor_cxt->hw_drv_handle = NULL;
         sensor_cxt->sensor_hw_handler = NULL;
     }
-
     return ret;
 }
 
@@ -2929,7 +3004,7 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
     sensor_cxt->static_info =
         sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_STATIC_INFO);
     sensor_drv_get_tuning_param(sensor_cxt);
-
+    sensor_save_pdaf_info(sensor_cxt);
     return 0;
 }
 
