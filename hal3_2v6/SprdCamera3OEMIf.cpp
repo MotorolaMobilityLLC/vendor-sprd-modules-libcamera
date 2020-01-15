@@ -662,9 +662,8 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
-
-        face_beauty_deinit(&face_beauty);
         mflagfb = false;
+        face_beauty_deinit(&face_beauty);
     }
 #endif
 
@@ -3472,8 +3471,8 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
-        face_beauty_deinit(&face_beauty);
         mflagfb = false;
+        face_beauty_deinit(&face_beauty);
     }
 #endif
 
@@ -4138,8 +4137,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (frame->type != PREVIEW_ZSL_FRAME &&
             frame->type != PREVIEW_CANCELED_FRAME &&
             frame->type != CHANNEL2_FRAME && mflagfb) {
-            face_beauty_deinit(&face_beauty);
             mflagfb = false;
+            face_beauty_deinit(&face_beauty);
         }
     }
 #endif
