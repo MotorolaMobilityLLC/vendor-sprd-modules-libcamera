@@ -182,6 +182,8 @@ struct ae_lib_calc_out  {
 	/*AEM ROI setting*/
 	struct ae_point_type aem_roi_st;
 	struct ae_size aem_blk_size;
+	/*Bayer Hist ROI setting*/
+	//struct ae_rect adjust_hist_roi;
 	/*APEX parameters*/
 	float bv;
 	float av;
