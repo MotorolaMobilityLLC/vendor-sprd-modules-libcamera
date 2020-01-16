@@ -2499,11 +2499,10 @@ exit : { // dump yuv data
 }
     HAL_LOGI(":X");
 
-fail_map_gdepth:
+    mPortrait->unmap(output_buf);
+fail_map_output:
     mPortrait->unmap(input_buf2);
 fail_map_input2:
-fail_map_output:
-    mPortrait->unmap(output_buf);
 
     return rc;
 }
