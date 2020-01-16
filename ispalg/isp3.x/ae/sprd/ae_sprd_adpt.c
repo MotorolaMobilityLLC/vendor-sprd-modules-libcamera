@@ -5443,7 +5443,7 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 			memcpy(&cxt->cur_status.adv_param.bhist_data[1].hist_data, &get_bayerhist_stats[1].value, 256 * sizeof(cmr_u32));
 			memcpy(&cxt->cur_status.adv_param.bhist_data[2].hist_data, &get_bayerhist_stats[2].value, 256 * sizeof(cmr_u32));
 			/*if slave bayerhist value is zero, stop the calc*/
-			if (0 == memcmp(bayer_hist_data_temp, cxt->cur_status.adv_param.bhist_data[0].hist_data, 256)) {
+			if (0 == memcmp(bayer_hist_data_temp, cxt->cur_status.adv_param.bhist_data[0].hist_data, 256 * sizeof(cmr_u32))) {
 				ISP_LOGV("hist_data, salve bayerhist value is 0");
 				rtn = AE_ERROR;
 				goto ae_calculation_error_exit;
