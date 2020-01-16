@@ -3115,6 +3115,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 is_raw_capture = 0;
+	cmr_u8 tool_eb = 0;
 	char value[PROPERTY_VALUE_MAX];
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
 	CMR_MSG_INIT(message1);
@@ -3173,10 +3174,16 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 			ret = ispalg_start_ae_process((cmr_handle) cxt);
 			break;
 		}
-		if ((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->ambient_highlight == 1)) {
+
+		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+		if (!strcmp(value, "true"))
+			tool_eb = 1;
+
+		/* 4in1 full size capture(non-zsl), awb don't need work */
+		if (((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->ambient_highlight == 1))
+			|| ((tool_eb == 1) && (cxt->work_mode == 1))) {
 			cxt->aem_is_update = 1;
 			ret = ispalg_ae_process((cmr_handle) cxt);
-			/* 4in1 full size capture(non-zsl), awb don't need work */
 			ISP_LOGD("high res high light capture.\n");
 		} else {
 			ret = ispalg_ae_process((cmr_handle) cxt);

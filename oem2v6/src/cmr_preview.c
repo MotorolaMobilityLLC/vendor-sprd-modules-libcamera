@@ -3603,7 +3603,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             isp_param.size.width = isp_param.size.width >> 1;
         }
         isp_param.size.height = sensor_mode_info->trim_height;
-        if (snapshot_enable && !preview_enable && !tool_eb) {
+        if (snapshot_enable && !preview_enable) {
             isp_param.is_snapshot = 1;
             isp_param.work_mode = 1;
         } else {
@@ -6271,7 +6271,8 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
     if (1 == is_3D_video) {
         search_width = sensor_info->source_width_max / 2;
         search_height = sensor_info->source_height_max / 2;
-    } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0) {
+    } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0
+               && !handle->prev_cxt[camera_id].prev_param.tool_eb) {
         /* 4in1 sensor: not high resolution mode, sensor output
         * max size is binning size, but output can digital zoom
         */
