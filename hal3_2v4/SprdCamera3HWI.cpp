@@ -793,7 +793,7 @@ int SprdCamera3HWI::configureStreams(
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
             } else
-                SprdCamera3RegularChannel::kMaxBuffers = 4;
+                SprdCamera3RegularChannel::kMaxBuffers = 6;
             HAL_LOGD("slowmotion=%d, kMaxBuffers=%d", sprddefInfo.slowmotion,
                      SprdCamera3RegularChannel::kMaxBuffers);
 
@@ -1404,6 +1404,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                             CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT,
                             frameNumber);
                         mPictureRequest = true;
+			mOEMIf->mBurstCapture = true;
                     }
                 }
             } else {
