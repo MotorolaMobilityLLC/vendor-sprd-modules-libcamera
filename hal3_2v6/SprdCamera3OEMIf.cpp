@@ -5864,6 +5864,34 @@ void SprdCamera3OEMIf::HandleGetBufHandle(enum camera_cb_type cb, void *parm4) {
 
         break;
     }
+    case CAMERA_EVT_VIDEO_BUF_HANDLE: {
+        buffer_handle_t *buff_handle = NULL;
+        SprdCamera3RegularChannel *channel =
+            reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+        if (channel != NULL)
+            channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &stream);
+        ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
+                                    buf_info->fd, &buff_handle,
+                                    &(buf_info->graphic_buffer));
+        if (buff_handle != NULL)
+            native_handle = (native_handle_t *)(*buff_handle);
+
+        break;
+    }
+    case CAMERA_EVT_CAPTURE_BUF_HANDLE: {
+        buffer_handle_t *buff_handle = NULL;
+        SprdCamera3PicChannel *channel =
+            reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+        if (channel != NULL)
+            channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &stream);
+        ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
+                                    buf_info->fd, &buff_handle,
+                                    &(buf_info->graphic_buffer));
+        if (buff_handle != NULL)
+            native_handle = (native_handle_t *)(*buff_handle);
+
+        break;
+    }
     default:
         HAL_LOGD("[PFC] case not handled");
         break;
@@ -6330,6 +6358,11 @@ void SprdCamera3OEMIf::setUltraWideMode() {
         if (stream != NULL) {
             stream->setUltraWideMode(mIsUltraWideMode);
         }
+        SprdCamera3Stream *video_stream = NULL;
+        channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &video_stream);
+        if (video_stream != NULL) {
+            video_stream->setUltraWideMode(mIsUltraWideMode);
+        }
     }
 }
 int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
@@ -6409,6 +6442,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
+    mZoomInfo.zoom_info.video_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.pixel_size.width = sensorOrgW;
     mZoomInfo.zoom_info.pixel_size.height = sensorOrgH;
     mZoomInfo.zoom_info.crop_region = cropRegion;
@@ -9563,7 +9597,9 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_FD_SMALL == type ||
                CAMERA_PREVIEW_SCALE_AUTO_TRACKING == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_PREVIEW_ULTRA_WIDE == type) {
+    } else if (CAMERA_PREVIEW_ULTRA_WIDE == type ||
+                  CAMERA_VIDEO_ULTRA_WIDE == type ||
+                  CAMERA_SNAPSHOT_ULTRA_WIDE == type) {
         ret = camera->Callback_GraphicBufferFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_SNAPSHOT_SW3DNR == type) {
         ret =
@@ -9699,6 +9735,11 @@ int SprdCamera3OEMIf::Callback_GPUMalloc(enum camera_mem_cb_type type,
 
     switch (type) {
     case CAMERA_PREVIEW_ULTRA_WIDE: {
+        ret = camera->Callback_GraphicBufferMalloc(
+            size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
+        break;
+    }
+    case CAMERA_VIDEO_ULTRA_WIDE: {
         ret = camera->Callback_GraphicBufferMalloc(
             size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
         break;

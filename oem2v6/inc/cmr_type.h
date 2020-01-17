@@ -88,6 +88,7 @@ struct cmr_zoom {
     struct cmr_zoom_param zoom_setting;
     bool prev_zoom;
     bool cap_zoom;
+    bool video_zoom;
 };
 
 struct cmr_win_area {

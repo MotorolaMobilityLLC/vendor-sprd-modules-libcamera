@@ -3439,9 +3439,13 @@ cmr_int camera_get_buff_handle(cmr_handle oem_handle, int frame_type,
 
     if (cxt->camera_cb) {
         enum camera_cb_type cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
-        if (frame_type == PREVIEW_ZSL_FRAME)
+        if (frame_type == PREVIEW_FRAME) {
+            cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
+        } else if (frame_type == PREVIEW_ZSL_FRAME) {
             cb = CAMERA_EVT_CAPTURE_BUF_HANDLE;
-
+        } else if(frame_type == PREVIEW_VIDEO_FRAME){
+            cb = CAMERA_EVT_VIDEO_BUF_HANDLE;
+        }
         cxt->camera_cb(cb, cxt->client_data, CAMERA_FUNC_GET_BUF_HANDLE,
                        buf_cfg);
     }
@@ -3455,9 +3459,13 @@ cmr_int camera_release_buff_handle(cmr_handle oem_handle, int frame_type,
 
     if (cxt->camera_cb) {
         enum camera_cb_type cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
-        if (frame_type == PREVIEW_ZSL_FRAME)
+        if (frame_type == PREVIEW_FRAME) {
+            cb = CAMERA_EVT_PREVIEW_BUF_HANDLE;
+        } else if (frame_type == PREVIEW_ZSL_FRAME) {
             cb = CAMERA_EVT_CAPTURE_BUF_HANDLE;
-
+        } else if(frame_type == PREVIEW_VIDEO_FRAME){
+            cb = CAMERA_EVT_VIDEO_BUF_HANDLE;
+        }
         cxt->camera_cb(cb, cxt->client_data, CAMERA_FUNC_RELEASE_BUF_HANDLE,
                        buf_cfg);
     }
@@ -12090,18 +12098,24 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                     if (!zoom_factor.cap_zoom) {
                         zoom_param->zoom_info.capture_aspect_ratio = 1.0f;
                     }
+                    if (!zoom_factor.video_zoom) {
+                        zoom_param->zoom_info.video_aspect_ratio = 1.0f;
+                    }
                     if (fabs(zoom_param->zoom_info.prev_aspect_ratio -
                              zoom_factor.zoom_setting.zoom_info
                                  .prev_aspect_ratio) > EPSINON ||
                         fabs(zoom_param->zoom_info.capture_aspect_ratio -
                              zoom_factor.zoom_setting.zoom_info
-                                 .capture_aspect_ratio) > EPSINON) {
+                                 .capture_aspect_ratio) > EPSINON ||
+                        fabs(zoom_param->zoom_info.video_aspect_ratio -
+                             zoom_factor.zoom_setting.zoom_info
+                                 .video_aspect_ratio) > EPSINON) {
                         zoom_factor_changed = 1;
                     }
-                    CMR_LOGD("id=%d,zoom_factor_changed=%d,zoom=%f,orgZoom=%f,prev %d,cap %d",
+                    CMR_LOGD("id=%d,zoom_factor_changed=%d,zoom=%f,orgZoom=%f,prev %d,cap %d, video %d",
                         cxt->camera_id, zoom_factor_changed, zoom_param->zoom_info.prev_aspect_ratio,
                         zoom_factor.zoom_setting.zoom_info.prev_aspect_ratio,
-                        zoom_factor.prev_zoom,zoom_factor.cap_zoom);
+                        zoom_factor.prev_zoom, zoom_factor.cap_zoom, zoom_factor.video_zoom);
                 }
             }
         }
