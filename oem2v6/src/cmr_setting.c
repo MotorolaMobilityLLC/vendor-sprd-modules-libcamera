@@ -1211,7 +1211,8 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
     } else if (zoom_param.mode == ZOOM_INFO) {
         const float EPSINON = 0.01f;
         if (fabs(zoom_param.zoom_info.prev_aspect_ratio - org_zoom.zoom_info.prev_aspect_ratio) >= EPSINON
-            || fabs(zoom_param.zoom_info.capture_aspect_ratio - org_zoom.zoom_info.capture_aspect_ratio) >= EPSINON)
+            || fabs(zoom_param.zoom_info.capture_aspect_ratio - org_zoom.zoom_info.capture_aspect_ratio) >= EPSINON
+            || fabs(zoom_param.zoom_info.video_aspect_ratio - org_zoom.zoom_info.video_aspect_ratio) >= EPSINON)
             is_changed = 1;
     }
 

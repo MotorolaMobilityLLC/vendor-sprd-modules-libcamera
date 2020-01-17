@@ -411,7 +411,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mReleaseFLag(false), mTimeCoeff(1), mIsPerformanceTestable(false),
       mIsAndroidZSL(false), mSetting(setting), BurstCapCnt(0), mCapIntent(0),
       mPrvTimerID(NULL), mFlashMode(-1), mIsAutoFocus(false),
-      mIspToolStart(false), mSubRawHeapNum(0), mGraphicBufNum(0),
+      mIspToolStart(false), mSubRawHeapNum(0), mGraphicBufNum(0), mEisGraphicBufNum(0),
       mSubRawHeapSize(0), mPathRawHeapNum(0), mPathRawHeapSize(0),
       mPreviewDcamAllocBufferCnt(0), mIsRecording(false),
       mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mCNRMode(0),
@@ -472,6 +472,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mRefocusHeapArray, 0, sizeof(mRefocusHeapArray));
     memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
     memset(mGraphicBufArray, 0, sizeof(mGraphicBufArray));
+    memset(mEisGraphicBufArray, 0, sizeof(mEisGraphicBufArray));
     memset(mChannel2Heap, 0, sizeof(mChannel2Heap));
     memset(mChannel3Heap, 0, sizeof(mChannel3Heap));
     memset(mRawHeapArray, 0, sizeof(mRawHeapArray));
@@ -5879,6 +5880,34 @@ void SprdCamera3OEMIf::HandleGetBufHandle(enum camera_cb_type cb, void *parm4) {
 
         break;
     }
+    case CAMERA_EVT_VIDEO_BUF_HANDLE: {
+        buffer_handle_t *buff_handle = NULL;
+        SprdCamera3RegularChannel *channel =
+            reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+        if (channel != NULL)
+            channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &stream);
+        ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
+                                    buf_info->fd, &buff_handle,
+                                    &(buf_info->graphic_buffer));
+        if (buff_handle != NULL)
+            native_handle = (native_handle_t *)(*buff_handle);
+
+        break;
+    }
+    case CAMERA_EVT_CAPTURE_BUF_HANDLE: {
+        buffer_handle_t *buff_handle = NULL;
+        SprdCamera3PicChannel *channel =
+            reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+        if (channel != NULL)
+            channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &stream);
+        ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
+                                    buf_info->fd, &buff_handle,
+                                    &(buf_info->graphic_buffer));
+        if (buff_handle != NULL)
+            native_handle = (native_handle_t *)(*buff_handle);
+
+        break;
+    }
     default:
         HAL_LOGD("[PFC] case not handled");
         break;
@@ -6345,6 +6374,11 @@ void SprdCamera3OEMIf::setUltraWideMode() {
         if (stream != NULL) {
             stream->setUltraWideMode(mIsUltraWideMode);
         }
+        SprdCamera3Stream *video_stream = NULL;
+        channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &video_stream);
+        if (video_stream != NULL) {
+            video_stream->setUltraWideMode(mIsUltraWideMode);
+        }
     }
 }
 int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
@@ -6424,6 +6458,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
+    mZoomInfo.zoom_info.video_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.pixel_size.width = sensorOrgW;
     mZoomInfo.zoom_info.pixel_size.height = sensorOrgH;
     mZoomInfo.zoom_info.crop_region = cropRegion;
@@ -8537,6 +8572,86 @@ mem_fail:
     return -1;
 }
 
+int SprdCamera3OEMIf::Callback_EisGraphicBufferMalloc(
+    cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,
+    cmr_s32 *fd, void **handle, cmr_uint width, cmr_uint height) {
+    int ret = NO_ERROR;
+
+    hal_mem_info_t buf_mem_info;
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+    SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
+
+    HAL_LOGD("ultra wide malloc %d, shape: %d x %d, size: %d!", sum, width,
+             height, size);
+    for (cmr_u32 i = 0; i < sum; i++) {
+        if (mEisGraphicBufNum >= MAX_GRAPHIC_BUF_NUM)
+            goto malloc_failed;
+
+        sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+            width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage,
+            std::string("Camera3OEMIf GraphicBuffer"));
+        ret = pbuffer->initCheck();
+        if (ret)
+            goto malloc_failed;
+
+        if (!pbuffer->handle)
+            goto malloc_failed;
+        if (mIsUltraWideMode) {
+            int usage =
+                GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+            Rect bounds(width, height);
+            void *vaddr = NULL;
+            android_ycbcr ycbcr;
+            bzero((void *)&ycbcr, sizeof(ycbcr));
+
+            ret = pbuffer->lockYCbCr(usage, bounds, &ycbcr);
+            if (ret != NO_ERROR) {
+                ret = pbuffer->lock(usage, bounds, &vaddr);
+                if (ret != NO_ERROR) {
+                    HAL_LOGE("GraphicBuffer lock  fail, ret %d", ret);
+                } else {
+                    buf_mem_info.addr_vir = vaddr;
+                }
+            } else {
+                buf_mem_info.addr_vir = ycbcr.y;
+            }
+            buf_mem_info.fd = ADP_BUFFD(pbuffer->handle);
+            buf_mem_info.addr_phy = (void *)0;
+        } else {
+            ret = memory->map(&(pbuffer->handle), &buf_mem_info);
+        }
+        if (ret == NO_ERROR) {
+            phy_addr[i] = (cmr_uint)buf_mem_info.addr_phy;
+            vir_addr[i] = (cmr_uint)buf_mem_info.addr_vir;
+            fd[i] = buf_mem_info.fd;
+        } else {
+            phy_addr[i] = 0;
+            vir_addr[i] = 0;
+            fd[i] = 0;
+            goto malloc_failed;
+        }
+
+        *handle = pbuffer.get();
+        handle++;
+        mEisGraphicBufArray[mEisGraphicBufNum].bufferhandle = pbuffer;
+        mEisGraphicBufArray[mEisGraphicBufNum].private_handle = (void *)fd;
+        mEisGraphicBufNum++;
+    }
+    delete memory;
+    return NO_ERROR;
+
+malloc_failed:
+    LOGE("Failed to alloc graphic buffer, malloced num %d,request num "
+         "%d, request size 0x%x!",
+         mEisGraphicBufNum, sum, size);
+    delete memory;
+    Callback_EisGraphicBufferFree(0, 0, 0, 0);
+    return ret;
+}
+
 int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
     cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr, cmr_uint *vir_addr,
     cmr_s32 *fd, void **handle, cmr_uint width, cmr_uint height) {
@@ -8643,6 +8758,31 @@ int SprdCamera3OEMIf::Callback_ZslGraphicBufferMalloc(
     }
 
     return ret;
+}
+
+int SprdCamera3OEMIf::Callback_EisGraphicBufferFree(cmr_uint *phy_addr,
+                                                 cmr_uint *vir_addr,
+                                                 cmr_s32 *fd, cmr_u32 sum) {
+    cmr_u32 i = 0;
+    SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
+
+    for (i = 0; i < mEisGraphicBufNum; i++) {
+        if (mEisGraphicBufArray[i].bufferhandle != NULL && mEisGraphicBufArray[i].private_handle == (void *)fd) {
+            if (mIsUltraWideMode) {
+                mEisGraphicBufArray[i].bufferhandle->unlock();
+            } else {
+                memory->unmap(&(mEisGraphicBufArray[i].bufferhandle->handle),
+                              NULL);
+            }
+            mEisGraphicBufArray[i].bufferhandle.clear();
+            mEisGraphicBufArray[i].bufferhandle = NULL;
+            mEisGraphicBufNum--;
+        }
+    }
+
+    delete memory;
+
+    return 0;
 }
 
 int SprdCamera3OEMIf::Callback_GraphicBufferFree(cmr_uint *phy_addr,
@@ -9578,9 +9718,13 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                CAMERA_FD_SMALL == type ||
                CAMERA_PREVIEW_SCALE_AUTO_TRACKING == type) {
         ret = camera->Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_PREVIEW_ULTRA_WIDE == type) {
+    } else if (CAMERA_PREVIEW_ULTRA_WIDE == type ||
+                  CAMERA_VIDEO_ULTRA_WIDE == type ||
+                  CAMERA_SNAPSHOT_ULTRA_WIDE == type) {
         ret = camera->Callback_GraphicBufferFree(phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_SNAPSHOT_SW3DNR == type) {
+    } else if (CAMERA_VIDEO_EIS_ULTRA_WIDE == type) {
+        ret = camera->Callback_EisGraphicBufferFree(phy_addr, vir_addr, fd, sum);
+    }else if (CAMERA_SNAPSHOT_SW3DNR == type) {
         ret =
             camera->Callback_Sw3DNRCapturePathFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_CHANNEL_1 == type) {
@@ -9715,6 +9859,16 @@ int SprdCamera3OEMIf::Callback_GPUMalloc(enum camera_mem_cb_type type,
     switch (type) {
     case CAMERA_PREVIEW_ULTRA_WIDE: {
         ret = camera->Callback_GraphicBufferMalloc(
+            size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
+        break;
+    }
+    case CAMERA_VIDEO_ULTRA_WIDE: {
+        ret = camera->Callback_GraphicBufferMalloc(
+            size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
+        break;
+    }
+    case CAMERA_VIDEO_EIS_ULTRA_WIDE: {
+        ret = camera->Callback_EisGraphicBufferMalloc(
             size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
         break;
     }
