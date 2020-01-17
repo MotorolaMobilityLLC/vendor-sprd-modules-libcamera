@@ -1176,9 +1176,6 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             if ((small_buf.cpu_buffer.bufferY != NULL) &&
                 (big_buf.cpu_buffer.bufferY != NULL)){
                 ret = sprd_3dnr_adpt_ctrl(threednr_prev_handle->proc_handle,SPRD_3DNR_PROC_PREVIEW_CMD,(void *)&process_param);
-		if(ret != 0){
-                     CMR_LOGE("failed to call 3dnr process func, ret = %d",ret);
-		}
             }
             else {
                 CMR_LOGE(
@@ -1228,9 +1225,6 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
                 (big_buf.cpu_buffer.bufferY != NULL)){
                 process_param.proc_param.pre_param.out_image = NULL;
                 ret = sprd_3dnr_adpt_ctrl(threednr_prev_handle->proc_handle,SPRD_3DNR_PROC_PREVIEW_CMD,(void *)&process_param);
-		if(ret != 0){
-                     CMR_LOGE("failed to call 3dnr process func, ret = %d",ret);
-		}
             }
             if (!strcmp(value, "1")) {
                 sprintf(tmp_name, "%ldx%ld_preview_result_index%d.yuv",
@@ -1259,8 +1253,8 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
                        3 / 2);
     }
 
-    if (ret < 0) {
-        CMR_LOGE("Fail to call the threednr_function");
+    if (ret != 0) {
+        CMR_LOGE("Fail to call the threednr_function, %d",ret);
     }
     sem_post(&threednr_prev_handle->sem_3dnr);
 exit:
