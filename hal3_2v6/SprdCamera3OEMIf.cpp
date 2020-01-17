@@ -659,10 +659,11 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
     ATRACE_CALL();
 
     HAL_LOGI(":hal3: Destructor E camId=%d", mCameraId);
-
+    int ret = NO_ERROR;
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
         mflagfb = false;
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
         face_beauty_deinit(&face_beauty);
     }
 #endif
@@ -3411,6 +3412,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
+    int ret = NO_ERROR;
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -3469,17 +3471,18 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     deinitPreview();
     end_timestamp = systemTime();
 
+    setCameraState(SPRD_IDLE, STATE_PREVIEW);
+
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
         mflagfb = false;
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
         face_beauty_deinit(&face_beauty);
     }
 #endif
 
     // used for single camera need raw stream
     // freeRawBuffers();
-
-    setCameraState(SPRD_IDLE, STATE_PREVIEW);
 
 exit:
     mIsStoppingPreview = 0;
@@ -4138,6 +4141,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             frame->type != PREVIEW_CANCELED_FRAME &&
             frame->type != CHANNEL2_FRAME && mflagfb) {
             mflagfb = false;
+            ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
             face_beauty_deinit(&face_beauty);
         }
     }
