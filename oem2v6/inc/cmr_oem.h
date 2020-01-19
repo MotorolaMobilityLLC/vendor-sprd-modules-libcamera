@@ -408,7 +408,7 @@ struct camera_context {
     cmr_u8 dre_skipframe;
 
     /*for flash skip preview frame*/
-    cmr_s64 flash_shutdown_timestamp;
+    cmr_s64 flash_handle_timestamp;
     cmr_u32 flash_skip_frame_enable;
     cmr_u32 flash_skip_frame_cnt;
     cmr_u32 flash_skip_frame_num;
