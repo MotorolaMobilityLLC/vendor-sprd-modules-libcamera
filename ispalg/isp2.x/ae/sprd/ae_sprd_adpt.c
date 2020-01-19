@@ -518,6 +518,15 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			if ((write_param->exp_line != prv_param->exp_line)
 				|| (write_param->dummy != prv_param->dummy)) {
 				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
+				cmr_u64 exp_time = 0;
+				cmr_int cb_type;
+				exp_time = (cmr_u64) write_param->exp_time;
+				cb_type = AE_CB_EXPTIME_NOTIFY;
+				if(NULL != cxt->isp_ops.callback){
+					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &exp_time);
+				}else{
+					ISP_LOGE("isp_ops.callback is null");
+				}
 			} else {
 				ISP_LOGV("no_need_write exp");
 				;

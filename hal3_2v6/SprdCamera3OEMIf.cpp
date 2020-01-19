@@ -4204,7 +4204,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     frame_out = EisVideoFrameStab(frame, frame_num);
                 }
                 channel->channelCbRoutine(frame_num, frame->monoboottime,
-                                          CAMERA_STREAM_TYPE_VIDEO);
+                                                    CAMERA_STREAM_TYPE_VIDEO);
+                HAL_LOGV("video callback frame vir address=0x%lx,frame_num=%d",
+						    frame_out.frame_data, frame_out.frame_num);
                 goto bypass_rec;
             }
 #endif
@@ -11589,6 +11591,8 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
         frame_in.ae_time = (double)ae_time / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
         frame_in.frame_num = frame_num;
+        HAL_LOGV("video frame in vir address=0x%lx,frame_num=%d",frame_in.frame_data,
+                 frame_in.frame_num);
         frame_out = processVideoEIS(frame_in);
         if (frame_out.frame_data)
             HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
