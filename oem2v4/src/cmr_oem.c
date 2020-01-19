@@ -4382,10 +4382,10 @@ cmr_int camera_interface_init()
         int init = interface_init(&error);
         if (init) {
             ret = CMR_CAMERA_FAIL;
-            CMR_LOGE("interface init func failed with %s and ret is %d", error, init);
+            CMR_LOGV("interface init func running with %s and ret is %d", error, init);
         }
     } else
-        CMR_LOGD("libinterface is inited");
+        CMR_LOGV("libinterface is inited");
     return ret;
 }
 
@@ -4400,7 +4400,7 @@ cmr_int camera_interface_deinit()
             ret = interface_close(&error);
         dlclose(handle_interface);
         handle_interface = NULL;
-        CMR_LOGD("interface closing succeed");
+        CMR_LOGV("interface closing succeed");
     }
     return ret;
 }
@@ -4471,9 +4471,6 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
     }
 
     ret = camera_interface_init();
-    if(ret) {
-        CMR_LOGD("decrypt interface init failed");
-    }
 
     ret = camera_snapshot_init(oem_handle);
     if (ret) {
