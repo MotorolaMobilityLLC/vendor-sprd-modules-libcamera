@@ -2942,9 +2942,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->send_once[2]++;
 
 			/*write flash awb gain*/
-			if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0)
-				&& (FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status
-				&& FLASH_MAIN_BEFORE == current_status->adv_param.flash)) {
+			if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0)) {
 				if (cxt->isp_ops.set_wbc_gain) {
 					struct ae_alg_rgb_gain awb_m_b_flash_gain;
 					awb_m_b_flash_gain.r = cxt->flash_esti_result.captureRGain;
@@ -2954,7 +2952,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					ISP_LOGV("flash_cap awb_m r %d, g %d, b %d", awb_m_b_flash_gain.r, awb_m_b_flash_gain.g, awb_m_b_flash_gain.b);
 				}
 			}
-#if 0
+
 			if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts) && (cxt->mainFlashEn == 1)) {
 				if (cxt->isp_ops.set_wbc_gain) {
 					struct ae_alg_rgb_gain awb_gain;
@@ -2965,7 +2963,6 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					ISP_LOGV("flash_cap awb r %d, g %d, b %d", awb_gain.r, awb_gain.g, awb_gain.b);
 				}
 			}
-#endif
 		}
 
 		if (FLASH_MAIN_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_AFTER == current_status->adv_param.flash) {

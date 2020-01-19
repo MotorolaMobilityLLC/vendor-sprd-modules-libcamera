@@ -906,7 +906,7 @@ static cmr_u32 _awb_set_flash_status(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->flash_info.flash_status = *flash_status;
 
-	if (AWB_FLASH_MAIN_BEFORE == cxt->flash_info.flash_status) {
+	if (cxt->flash_info.flash_status == 4 || cxt->flash_info.flash_status == 3) {
 		cxt->flash_update_awb = 0;
 	} else {
 		cxt->flash_update_awb = 1;
