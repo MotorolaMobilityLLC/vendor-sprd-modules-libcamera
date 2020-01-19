@@ -1986,10 +1986,10 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             struct camera_frame_type *prev_frame =
                 (struct camera_frame_type *)param;
             if (prev_frame->type == PREVIEW_FRAME) {
-                CMR_LOGD("monoboottime %llu flash_shutdown_timestamp %llu",
+                CMR_LOGD("monoboottime %llu flash_handle_timestamp %llu",
                          prev_frame->monoboottime,
-                         cxt->flash_shutdown_timestamp);
-                if (prev_frame->monoboottime > cxt->flash_shutdown_timestamp) {
+                         cxt->flash_handle_timestamp);
+                if (prev_frame->monoboottime > cxt->flash_handle_timestamp) {
                     prev_frame->type = PREVIEW_CANCELED_FRAME;
                     cxt->flash_skip_frame_cnt++;
                     CMR_LOGD("flash_skip_frame_cnt %d",
@@ -8374,7 +8374,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
 #if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
     defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_5) ||                      \
     defined(CONFIG_ISP_2_7)
-            if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN) {
+            if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN || param_ptr->cmd_value == FLASH_OPEN ) {
                 cmr_u32 flash_capture_skip_num = 0;
                 bool isFrontFlash =
                     (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true
@@ -8391,7 +8391,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                                                 : flash_capture_skip_num;
                 cxt->flash_skip_frame_enable = 1;
                 cxt->flash_skip_frame_cnt = 0;
-                cxt->flash_shutdown_timestamp =
+                cxt->flash_handle_timestamp =
                     systemTime(SYSTEM_TIME_BOOTTIME);
                 CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
                          cxt->flash_skip_frame_num,
