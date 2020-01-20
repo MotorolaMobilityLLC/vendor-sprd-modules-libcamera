@@ -5764,7 +5764,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             ae_stab = ae_info[AE_CB_STABLE_INDEX];
             HAL_LOGD("ae_info = 0x%x, ae_stab = %d", ae_info, ae_stab);
         }
-        if (ae_stab == 1 && controlInfo.ae_comp_change && controlInfo.ae_lock) {
+        if (ae_stab == 1 && controlInfo.ae_comp_change && controlInfo.ae_lock &&
+			controlInfo.ae_comp_effect_frames_cnt != 0) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
             mSetting->setAeCONTROLTag(&controlInfo);
             goto exit;
