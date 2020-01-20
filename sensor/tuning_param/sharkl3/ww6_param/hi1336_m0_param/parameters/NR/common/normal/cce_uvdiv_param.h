@@ -97,7 +97,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x01,
+	0x00,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -397,7 +397,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param4.&BasePoint=1&*/

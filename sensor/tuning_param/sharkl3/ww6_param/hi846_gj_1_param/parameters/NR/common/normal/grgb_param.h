@@ -10,7 +10,7 @@
 	/*hv_flat_thr*/
 	0x0019,
 	/*slash_edge_thr*/
-	0x0028,
+	0x001A,
 	/*slash_flat_thr*/
 	0x0019,
 	/*grgb_ratio*/
