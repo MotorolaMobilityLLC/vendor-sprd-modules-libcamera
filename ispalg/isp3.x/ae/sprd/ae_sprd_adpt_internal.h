@@ -41,6 +41,7 @@ extern "C" {
 		cmr_u32 table_idx;
 		cmr_u32 is_ev_setting;
 		cmr_u32 mode;
+		cmr_u32 target_luma;
 	};
 	struct ae_ev_param {
 		cmr_s16 target_lum;
@@ -77,6 +78,7 @@ extern "C" {
 		cmr_u32 gain;
 		cmr_u32 table_idx;
 		cmr_u32 manual_level;
+		cmr_u32 target_luma;
 	};
 
 	struct ae_sensor_exp_data {
