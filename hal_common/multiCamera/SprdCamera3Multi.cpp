@@ -522,11 +522,12 @@ int SprdCamera3Multi::camera_device_open(
     struct hw_device_t **hw_device, SprdCamera3Multi *pMulti) {
     int rc = NO_ERROR;
 
-    HAL_LOGI("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
+    HAL_LOGI("id= %d", atoi(id));
+
     if (pMulti) {
         mMultiBase = pMulti;
     }
@@ -1992,6 +1993,7 @@ void SprdCamera3Multi::parse_configure_info(config_multi_camera *config_info) {
 
     if (!config_info) {
         HAL_LOGE("failed to get configure info");
+        return;
     }
 
     mMultiMode = config_info->mode;
@@ -2104,8 +2106,9 @@ camera3_stream_t *SprdCamera3Multi::findStream(
     }
     if (!ret_stream) {
         HAL_LOGE("failed.find stream");
+    } else {
+        HAL_LOGV("width %d height %d", ret_stream->width, ret_stream->height);
     }
-    HAL_LOGV("width %d height %d", ret_stream->width, ret_stream->height);
     return ret_stream;
 }
 /*===========================================================================

@@ -209,11 +209,11 @@ int SprdDualCamera3Tuning::camera_device_open(
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
 
-    HAL_LOGD("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
+    HAL_LOGD("id= %d", atoi(id));
 
     rc = gTuning->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGD("id= %d, rc: %d", atoi(id), rc);

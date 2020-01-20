@@ -1,0 +1,1227 @@
+/*versionid=0x000B0009*/
+/*maxGain=0.00*/
+/*param0.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x02,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x08,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x08,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param1.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param2.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param3.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param4.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param5.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param6.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param7.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param8.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param9.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param10.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param11.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param12.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param13.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param14.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param15.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param16.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param17.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param18.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param19.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param20.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param21.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param22.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param23.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,
+/*param24.&BasePoint=1&*/
+/*sharkl5pro_sensor_bwu_bwd_level*/
+{
+	/*bwu1*/
+	{
+		/*bwu1_bypass*/
+		0x00,
+		/*bwu1_bitshift*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwu2*/
+	{
+		/*bwu2_bypass*/
+		0x00,
+		/*bwu2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd1*/
+	{
+		/*bwd1_bypass*/
+		0x00,
+		/*bwd1_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	},
+	/*bwd2*/
+	{
+		/*bwd2_bypass*/
+		0x00,
+		/*bwd2_outbits*/
+		0x00,
+		/*reserved*/
+		{
+			0x00,0x00/*0-1*/
+		}
+	}
+}
+,

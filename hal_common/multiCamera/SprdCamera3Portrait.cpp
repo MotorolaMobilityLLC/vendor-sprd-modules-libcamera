@@ -1032,6 +1032,7 @@ int SprdCamera3Portrait::getCameraInfo(int id, struct camera_info *info) {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
+    int32_t jpeg_stream_size = 0;
 
     HAL_LOGI("E, camera_id = %d", camera_id);
     if (mStaticMetadata)
@@ -1046,23 +1047,20 @@ int SprdCamera3Portrait::getCameraInfo(int id, struct camera_info *info) {
     }
 
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
-    property_get("persist.vendor.cam.api.version", prop, "0");
-    version = atoi(prop);
-    if (version == SPRD_API_PORTRAIT_MODE) {
-        img_size =
-            SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size * 2 +
-            (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT * 2) +
-            (BOKEH_REFOCUS_COMMON_PARAM_NUM * 4) +
-            BOKEH_REFOCUS_COMMON_XMP_SIZE + sizeof(camera3_jpeg_blob_t) + 1024;
-    }
-    SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size = img_size;
-    metadata.update(
-        ANDROID_JPEG_MAX_SIZE,
-        &(SprdCamera3Setting::s_setting[camera_id].jpgInfo.max_size), 1);
-
     property_get("persist.vendor.cam.res.bokeh", prop, "RES_5M");
     HAL_LOGI("bokeh support cap resolution %s", prop);
     addAvailableStreamSize(metadata, prop);
+    jpeg_stream_size = getJpegStreamSize(prop);
+    property_get("persist.vendor.cam.api.version", prop, "0");
+    version = atoi(prop);
+    if (version == SPRD_API_PORTRAIT_MODE) {
+        img_size = jpeg_stream_size +
+                   (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT * 2) +
+                   (BOKEH_REFOCUS_COMMON_PARAM_NUM * 4) +
+                   BOKEH_REFOCUS_COMMON_XMP_SIZE + sizeof(camera3_jpeg_blob_t) +
+                   1024;
+    }
+    metadata.update(ANDROID_JPEG_MAX_SIZE, &img_size, 1);
 
     if (SPRD_MULTI_CAMERA_BASE_ID > id) {
         HAL_LOGI(" logical id %d", id);
@@ -2220,7 +2218,7 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
                      mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)) {
                 */
                 if (mPortrait->mDoPortrait && mPortrait->mPortraitFlag &&
-                     (mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)) {
+                    (mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)) {
                     rc = sprdDepthCaptureHandle(
                         capture_msg.combo_buff.buffer1, input_buf1_addr,
                         capture_msg.combo_buff.buffer2, output_buffer);
@@ -2501,11 +2499,10 @@ exit : { // dump yuv data
 }
     HAL_LOGI(":X");
 
-fail_map_gdepth:
+    mPortrait->unmap(output_buf);
+fail_map_output:
     mPortrait->unmap(input_buf2);
 fail_map_input2:
-fail_map_output:
-    mPortrait->unmap(output_buf);
 
     return rc;
 }
@@ -3113,9 +3110,9 @@ int SprdCamera3Portrait::configureStreams(
 
     rc = mBokehAlgo->initParam(&mBokehSize, &mOtpData,
                                mCaptureThread->mAbokehGallery);
-    if(mPortraitFlag){
+    if (mPortraitFlag) {
         rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
-                                        mCaptureThread->mAbokehGallery);
+                                            mCaptureThread->mAbokehGallery);
         if (rc != NO_ERROR) {
             HAL_LOGE("fail to initPortraitParams");
             mPortraitFlag = false;
@@ -3201,7 +3198,8 @@ const camera_metadata_t *SprdCamera3Portrait::constructDefaultRequestSettings(
         memcpy(mOtpData.otp_data, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,
                otpSize);
     }
-    HAL_LOGD("mOtpData.otp_exist %d, mPortraitFlag %d", mOtpData.otp_exist, mPortraitFlag);
+    HAL_LOGD("mOtpData.otp_exist %d, mPortraitFlag %d", mOtpData.otp_exist,
+             mPortraitFlag);
     HAL_LOGD("X");
 
     return fwk_metadata;
@@ -4400,22 +4398,23 @@ void SprdCamera3Portrait::preClose(void) {
         if (mCaptureThread->isRunning()) {
             mCaptureThread->requestExit();
         }
+        // wait threads quit to relese object
+        mCaptureThread->join();
     }
     if (mPreviewMuxerThread != NULL) {
         if (mPreviewMuxerThread->isRunning()) {
             mPreviewMuxerThread->requestExit();
         }
+        // wait threads quit to relese object
+        mPreviewMuxerThread->join();
     }
     if (mDepthMuxerThread != NULL) {
         if (mDepthMuxerThread->isRunning()) {
             mDepthMuxerThread->requestExit();
         }
+        // wait threads quit to relese object
+        mDepthMuxerThread->join();
     }
-
-    // wait threads quit to relese object
-    mCaptureThread->join();
-    mPreviewMuxerThread->join();
-    mDepthMuxerThread->join();
 
     HAL_LOGI("X");
 }
@@ -4963,9 +4962,7 @@ void *SprdCamera3Portrait::jpeg_callback_thread_proc(void *p_data) {
         obj->dumpCaptureBokeh(result_buffer_addr, jpeg_size);
     } else
     */
-    {
-        obj->setJpegSize((char *)result_buffer_addr, obj->mjpegSize, jpeg_size);
-    }
+    { obj->setJpegSize((char *)result_buffer_addr, obj->mjpegSize, jpeg_size); }
     obj->unmap(output_buffers->buffer);
 #ifdef YUV_CONVERT_TO_JPEG
     obj->pushBufferList(obj->mLocalBuffer, obj->m_pDstJpegBuffer,

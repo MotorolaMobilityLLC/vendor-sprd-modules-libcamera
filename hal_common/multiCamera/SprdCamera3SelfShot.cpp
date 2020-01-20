@@ -203,11 +203,11 @@ int SprdCamera3SelfShot::camera_device_open(
 
     int rc = NO_ERROR;
 
-    HAL_LOGI("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
+    HAL_LOGI("id= %d", atoi(id));
 
     rc = mSelfShot->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGI("id= %d, rc: %d", atoi(id), rc);

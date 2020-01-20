@@ -2545,8 +2545,6 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 				cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, LSC_CMD_DO_POSTPROCESS, &post_gain_param, cxt->output_lsc_table);
 
 				memcpy(cxt->lsc_buffer, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
-			} else {
-				ISP_LOGV("post_gain SKIP, Not Update dst_gain due to just fw_start");
 			}
 		}
 	} else {
@@ -2876,7 +2874,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		cxt->pre_flash_mode = 1;
 		cxt->alg_quick_in = 1;
 		cxt->quik_in_start_frame = -99;
-		ISP_LOGV("FLASH_PRE_BEFORE, flash_done_frame_count=%d, frame_count=%d", cxt->flash_done_frame_count, cxt->frame_count);
 
 		// log bv_before_flash
 		if (cxt->flash_done_frame_count > 50) {
@@ -2898,8 +2895,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			// the preflash is caused by normal flash capture
 			flash_param->is_touch_preflash = 0;
 
-		ISP_LOGV("FLASH_PRE_BEFORE, pre_flash_before_ae_touch_framecount=%d, pre_flash_before_framecount=%d, is_touch_preflash=%d",
-			 flash_param->pre_flash_before_ae_touch_framecount, flash_param->pre_flash_before_framecount, flash_param->is_touch_preflash);
+		ISP_LOGD("FLASH_PRE_BEFORE, flash_done_frame_count=%d, pre_flash_before_ae_touch_framecount=%d, pre_flash_before_framecount=%d, is_touch_preflash=%d",
+			 cxt->flash_done_frame_count, flash_param->pre_flash_before_ae_touch_framecount, flash_param->pre_flash_before_framecount, flash_param->is_touch_preflash);
 
 		//for change mode flash (capture flashing -> preview ) (with post gain)
 		//copy the previous table, to restore back when flash off (with post gain)
@@ -2930,8 +2927,6 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		flash_info = (struct alsc_flash_info *)in;
 		flash_param->captureFlashEnvRatio = flash_info->io_captureFlashEnvRatio;
 		flash_param->captureFlash1ofALLRatio = flash_info->io_captureFlash1Ratio;
-		ISP_LOGV("FLASH_PRE_AFTER, captureFlashEnvRatio=%f, captureFlash1ofALLRatio=%f, frame_count=%d",
-			 flash_param->captureFlashEnvRatio, flash_param->captureFlash1ofALLRatio, cxt->frame_count);
 
 		// obtain the mainflash guessing table, use the output from preflash (without post gain)
 		memcpy(flash_param->preflash_guessing_mainflash_output_table, cxt->output_lsc_table, cxt->gain_width * cxt->gain_height * 4 * sizeof(cmr_u16));
@@ -2940,14 +2935,25 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		flash_param->ae_touch_framecount = -99;
 		flash_param->pre_flash_before_ae_touch_framecount = -99;
 		flash_param->pre_flash_before_framecount = -99;
+
+		cxt->bv_skip_frame = 5;  // use bv_before_flash and bv_gain_before_flash some frames after pre-flash
+
+		// force lsc_buffer to take effect in next ALSC_GET_UPDATE_INFO io-ctrl
+		cxt->can_update_dest = 1;
+		cxt->alsc_update_flag = 1;
+
+		//recover the lsc table which is saved before pre_flash (with post gain)
+		memcpy(cxt->lsc_buffer, flash_param->preflash_current_output_table,cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+
+		ISP_LOGD("FLASH_PRE_AFTER, camera_id=%d, use preflash_current_output_table=[%d,%d,%d,%d]", cxt->camera_id, cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3]);
 		break;
 
 	case ALSC_FLASH_MAIN_LIGHTING:
-		ISP_LOGV("FLASH_MAIN_LIGHTING, Do nothing, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+		ISP_LOGV("FLASH_MAIN_LIGHTING, Do nothing, frame_count=%d, camera_id=%d", cxt->frame_count, cxt->camera_id);
 		break;
 
 	case ALSC_FLASH_PRE_LIGHTING:
-		ISP_LOGV("FLASH_PRE_LIGHTING, Do nothing, frame_count=%d, lsc_id=%d", cxt->frame_count, cxt->lsc_id);
+		ISP_LOGV("FLASH_PRE_LIGHTING, Do nothing, frame_count=%d, camera_id=%d", cxt->frame_count, cxt->camera_id);
 		break;
 
 	case ALSC_FLASH_MAIN_BEFORE:
@@ -2987,7 +2993,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				}
 			}
 		}
-		ISP_LOGV("FLASH_MAIN_BEFORE, frame_count=%d, use preflash_guessing_mainflash_output_table=[%d,%d,%d,%d]", cxt->frame_count,
+		ISP_LOGD("FLASH_MAIN_BEFORE, camera_id=%d, use preflash_guessing_mainflash_output_table=[%d,%d,%d,%d]", cxt->camera_id,
 			 flash_param->preflash_guessing_mainflash_output_table[0], flash_param->preflash_guessing_mainflash_output_table[1],
 			 flash_param->preflash_guessing_mainflash_output_table[2], flash_param->preflash_guessing_mainflash_output_table[3]);
 
@@ -3006,17 +3012,23 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		// quick in and set bv_skip_frame
 		cxt->alg_quick_in = 1;
 		cxt->quik_in_start_frame = -99;
-		cxt->bv_skip_frame = 15;
+		cxt->bv_skip_frame = 10;     // use bv_before_flash and bv_gain_before_flash some frames after main-flash
 		cxt->flash_done_frame_count = 0;
 
-		// allow calc update the dest buffer
+		// force lsc_buffer to take effect in next ALSC_GET_UPDATE_INFO io-ctrl
 		cxt->can_update_dest = 1;
+		cxt->alsc_update_flag = 1;
 
 		// reset parameter
 		flash_param->captureFlashEnvRatio = 0.0;
 		flash_param->captureFlash1ofALLRatio = 0.0;
 		flash_param->is_touch_preflash = -99;
-		ISP_LOGV("FLASH_MAIN_AFTER, setup quick in, frame_count=%d, camera_id=%d", cxt->frame_count, cxt->camera_id);
+
+		//recover the lsc table which is saved before pre_flash (with post gain)
+		memcpy(cxt->lsc_buffer, flash_param->preflash_current_output_table,cxt->gain_width*cxt->gain_height*4*sizeof(cmr_u16));
+
+		ISP_LOGD("FLASH_MAIN_AFTER, camera_id=%d, use preflash_current_output_table=[%d,%d,%d,%d]", cxt->camera_id, cxt->lsc_buffer[0], cxt->lsc_buffer[1], cxt->lsc_buffer[2], cxt->lsc_buffer[3]);
+
 		break;
 
 	case ALSC_GET_TOUCH:

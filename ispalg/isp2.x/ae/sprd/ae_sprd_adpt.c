@@ -6563,6 +6563,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		rtn = ae_set_touch_zone(cxt, param);
 		break;
 
+	case AE_SET_AF_STATUS:
+		cxt->cur_status.settings.af_status = *(cmr_u32 *) param;
+		break;
+
 	default:
 		rtn = AE_ERROR;
 		break;

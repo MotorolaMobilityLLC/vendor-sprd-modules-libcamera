@@ -178,10 +178,13 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
     dst_img = &in->dst_frame;
     property_get("debug.dump.ultrawide.frame", value, "null");
     if (!strcmp(value, "true")) {
-        camera_save_yuv_to_file(0, IMG_DATA_TYPE_YUV420, src_img->size.width,
-                                src_img->size.height, &src_img->addr_vir);
+        dump_image("before", CAM_IMG_FMT_YUV420_NV21,
+                           src_img->size.width, src_img->size.height,
+                           src_img->frame_number,
+                           &src_img->addr_vir,
+                           src_img->size.width * src_img->size.height * 3 / 2);
     }
-    
+
     if ((cmr_uint)in->private_data) {
         int x, y;
         param_t = *(ipm_param_t *)(in->private_data);
@@ -192,27 +195,32 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
         x -= zoomInfo.pixel_size.width / 2;
         y -= zoomInfo.pixel_size.height / 2;
 
+        if (zoomInfo.crop_region.width == 0) {
+            zoomInfo.crop_region.width = zoomInfo.pixel_size.width;
+        }
         param.zoomRatio = (float)zoomInfo.pixel_size.width / (float)zoomInfo.crop_region.width;
         param.zoomCenterOffsetX = (float)x / ((float)zoomInfo.pixel_size.width / 2);
         param.zoomCenterOffsetY = (float)y / ((float)zoomInfo.pixel_size.height / 2);
+
+        param.input_info.fullsize_height = param_t.fullsize_height;
+        param.input_info.fullsize_width = param_t.fullsize_width;
+        param.input_info.input_height = param_t.input_height;
+        param.input_info.input_width = param_t.input_width;
+        param.input_info.crop_x = CAMERA_START(param_t.crop_x);
+        param.input_info.crop_y = CAMERA_START(param_t.crop_y);
+        param.input_info.crop_width = CAMERA_START(param_t.crop_width);
+        param.input_info.crop_height = CAMERA_START(param_t.crop_height);
+        CMR_LOGV("ultrawid set ratio %f", param.zoomRatio);
+        CMR_LOGV("fullsize_height=%d,fullsize_width=%d",param.input_info.fullsize_height, param.input_info.fullsize_width);
+        CMR_LOGV("input_height=%d,input_width=%d", param.input_info.input_height, param.input_info.input_width);
+        CMR_LOGV("crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
+            param.input_info.crop_x,param.input_info.crop_y,param.input_info.crop_width,param.input_info.crop_height);
+    }else {
+        CMR_LOGE("wrong ultra wide param.");
+        return CMR_CAMERA_INVALID_PARAM;
     }
     CMR_LOGD("ultrawid set ratio %f, offset (%f, %f)", param.zoomRatio,
             param.zoomCenterOffsetX, param.zoomCenterOffsetY);
-    
-    param.input_info.fullsize_height = param_t.fullsize_height;
-    param.input_info.fullsize_width = param_t.fullsize_width;
-    param.input_info.input_height = param_t.input_height;
-    param.input_info.input_width = param_t.input_width;
-    param.input_info.crop_x = CAMERA_START(param_t.crop_x);
-    param.input_info.crop_y = CAMERA_START(param_t.crop_y);
-    param.input_info.crop_width = CAMERA_START(param_t.crop_width);
-    param.input_info.crop_height = CAMERA_START(param_t.crop_height);
-    
-    CMR_LOGD("ultrawid set ratio %f", param.zoomRatio);
-    CMR_LOGD("fullsize_height=%d,fullsize_width=%d",param.input_info.fullsize_height, param.input_info.fullsize_width);
-    CMR_LOGD("input_height=%d,input_width=%d", param.input_info.input_height, param.input_info.input_width);
-    CMR_LOGD("crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
-        param.input_info.crop_x,param.input_info.crop_y,param.input_info.crop_width,param.input_info.crop_height);
 
     if (ultrawide_handle->warp_inst != NULL) {
         input.width = src_img->size.width;
@@ -232,9 +240,11 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
         sprd_warp_adapter_run(ultrawide_handle->warp_inst, &input, &output,
                               (void *)&param, ultrawide_handle->tag);
         if (!strcmp(value, "true")) {
-            camera_save_yuv_to_file(1, IMG_DATA_TYPE_YUV420,
-                                    src_img->size.width, src_img->size.height,
-                                    &dst_img->addr_vir);
+            dump_image("after", CAM_IMG_FMT_YUV420_NV21,
+                               src_img->size.width, src_img->size.height,
+                               src_img->frame_number,
+                               &dst_img->addr_vir,
+                               src_img->size.width * src_img->size.height * 3 / 2);
         }
 
         CMR_LOGD("ultra wide algo done:param:%p, size:%dx%d",
@@ -250,7 +260,7 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
 }
 
 static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
-    static cmr_u8 otp_info[1024] = {0};
+    static cmr_u32 otp_info[256] = {0};
     cmr_u32 otp_size = 0;
     cmr_u32 read_byte = 0;
     char prop[PROPERTY_VALUE_MAX] = "0";
@@ -262,7 +272,7 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
     if (NULL == fid) {
         CMR_LOGD("otp_manual_spw.txt not exist");
     } else {
-        cmr_u8 *otp_data = otp_info;
+        cmr_u8 *otp_data = (cmr_u8 *)otp_info;
         while (!feof(fid)) {
             fscanf(fid, "%d\n", otp_data);
             otp_data += 4;

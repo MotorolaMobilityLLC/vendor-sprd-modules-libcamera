@@ -120,6 +120,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mOldCapIntent = 0;
     mOldRequesId = 0;
     mFrameNum = 0;
+    pre_frame_num = 0;
     mSetting = NULL;
     mSprdCameraLowpower = 0;
     mReciveQeqMax = 0;
@@ -450,6 +451,7 @@ int SprdCamera3HWI::initialize(
     mCallbackOps = callback_ops;
     mCameraInitialized = true;
     mFrameNum = 0;
+    pre_frame_num = 0;
     mCurFrameTimeStamp = 0;
     mBufferStatusError = false;
 
@@ -464,6 +466,7 @@ int SprdCamera3HWI::resetVariablesToDefault() {
     memset(&mStreamConfiguration, 0, sizeof(cam3_stream_configuration_t));
 
     mFrameNum = 0;
+    pre_frame_num = 0;
     mFirstRegularRequest = 0;
     mPictureRequest = 0;
 
@@ -1153,8 +1156,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     // For auto tracking to save frame num
     mSetting->getREQUESTTag(&requestInfo);
     requestInfo.frame_id = mFrameNum;
+    requestInfo.ot_frame_num = pre_frame_num;
     mSetting->setREQUESTTag(&requestInfo);
-    HAL_LOGV("frame_id = %d", requestInfo.frame_id);
+    pre_frame_num ++;
+    HAL_LOGV("frame_id = %d,ot_frame_num =%d", requestInfo.frame_id, requestInfo.ot_frame_num);
 
     meta = request->settings;
     mMetadataChannel->request(meta);
@@ -1933,7 +1938,10 @@ void SprdCamera3HWI::getRawFrame(int64_t timestamp, cmr_u8 **y_addr) {
     return;
 }
 
-void SprdCamera3HWI::stopPreview() { mOEMIf->stopPreview(); }
+void SprdCamera3HWI::stopPreview() {
+     pre_frame_num = 0;
+     mOEMIf->stopPreview();
+}
 
 void SprdCamera3HWI::startPreview() { mOEMIf->startPreview(); }
 
@@ -2249,6 +2257,29 @@ void SprdCamera3HWI::setMasterId(uint8_t masterId) {
 void SprdCamera3HWI::setRefCameraId(uint32_t camera_id) {
     HAL_LOGD("set reference camera id %u", camera_id);
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_REF_CAMERA_ID, &camera_id, NULL);
+}
+
+void SprdCamera3HWI::setUltraWideMode(unsigned int on_off){
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_ULTRA_WIDE_MODE, &on_off, NULL);
+}
+
+void SprdCamera3HWI::setMultiCaptureTimeStamp(uint64_t time_stamp){
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP, &time_stamp, NULL);
+}
+
+void SprdCamera3HWI::setVisibleRegion(uint32_t serial, int32_t region[4]) {
+    struct visible_region_info info;
+
+    info.serial_no = serial;
+    info.region.start_x = region[0];
+    info.region.start_y = region[1];
+    info.region.width = region[2];
+    info.region.height = region[3];
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_VISIBLE_REGION, &info, NULL);
+}
+
+void SprdCamera3HWI::setGlobalZoomRatio(float ratio) {
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO, &ratio, NULL);
 }
 
 void SprdCamera3HWI::setCapState(bool flag) {

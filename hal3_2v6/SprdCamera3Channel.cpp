@@ -901,6 +901,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             break;
         case ANDROID_CONTROL_AF_MODE:
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
+            HAL_LOGV("ANDROID_CONTROL_AF_MODE");
             break;
         case ANDROID_STATISTICS_FACE_DETECT_MODE:
             HAL_LOGV("FACE DECTION");

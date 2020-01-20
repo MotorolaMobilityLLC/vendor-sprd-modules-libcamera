@@ -225,6 +225,9 @@ static cmr_u32 _pm_edge_convert_param(
 		break;
 	}
 
+	if (sel_coeff == 0)
+		sel_coeff = INVALID_EE_COEFF;
+
 	if (sel_coeff != INVALID_EE_COEFF) {
 		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / sel_coeff;
 		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / sel_coeff;

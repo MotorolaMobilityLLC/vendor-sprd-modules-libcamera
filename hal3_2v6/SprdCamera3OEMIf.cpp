@@ -170,6 +170,8 @@ enum cmr_flash_lcd_mode {
 
 #define UPDATE_RANGE_FPS_COUNT 0x04
 #define CAM_POWERHINT_WAIT_COUNT 35
+
+#define MULTI_THREE_SECTION 3
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -657,12 +659,12 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
     ATRACE_CALL();
 
     HAL_LOGI(":hal3: Destructor E camId=%d", mCameraId);
-
+    int ret = NO_ERROR;
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
-
-        face_beauty_deinit(&face_beauty);
         mflagfb = false;
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+        face_beauty_deinit(&face_beauty);
     }
 #endif
 
@@ -1696,6 +1698,19 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         mSetting->setSPRDDEFTag(sprddefInfo);
         break;
     }
+    case CAMERA_IOCTRL_SET_VISIBLE_REGION:
+        {
+            struct visible_region_info *info = (struct visible_region_info *)param1;
+
+            if (info) {
+                uint16_t w, h;
+
+                mSetting->getLargestSensorSize(mCameraId, &w, &h);
+                info->max_size.width = w;
+                info->max_size.height = h;
+            }
+        }
+        break;
     } /* switch */
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
@@ -2203,7 +2218,7 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         fps_param.video_mode = 0;
 
         char fps_prop[PROPERTY_VALUE_MAX];
-        property_get("ro.vendor.camera.dualcamera_fps", fps_prop, "20");
+        property_get("ro.vendor.camera.dualcamera_fps", fps_prop, "19");
 
         // TBD: check why 20fps, not 30fps
         if (mMultiCameraMode == MODE_BOKEH ||
@@ -3360,7 +3375,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
     if ((getMultiCameraMode() == MODE_BOKEH ||
          getMultiCameraMode() == MODE_3D_CALIBRATION) &&
-        mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
+        mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) {
         setCameraConvertCropRegion();
         property_get("persist.vendor.cam.focus.distance", prop, "0");
         if (atoi(prop))
@@ -3397,6 +3412,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
+    int ret = NO_ERROR;
     SPRD_DEF_Tag sprddefInfo;
     mSetting->getSPRDDEFTag(&sprddefInfo);
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -3455,17 +3471,18 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     deinitPreview();
     end_timestamp = systemTime();
 
+    setCameraState(SPRD_IDLE, STATE_PREVIEW);
+
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
-        face_beauty_deinit(&face_beauty);
         mflagfb = false;
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+        face_beauty_deinit(&face_beauty);
     }
 #endif
 
     // used for single camera need raw stream
     // freeRawBuffers();
-
-    setCameraState(SPRD_IDLE, STATE_PREVIEW);
 
 exit:
     mIsStoppingPreview = 0;
@@ -3982,6 +3999,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         FACE_Tag faceInfo;
         fb_beauty_face_t beauty_face;
         fb_beauty_image_t beauty_image;
+	cmr_u32 bv;
+	ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
             for (int i = 0; i < faceInfo.face_num; i++) {
@@ -4015,6 +4034,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             (unsigned char)sprddefInfo.perfect_skin_level[7];
         beautyLevels.largeLevel =
             (unsigned char)sprddefInfo.perfect_skin_level[8];
+	beautyLevels.cameraBV = (int)bv;
+	CMR_LOGD("cameraBV %d",bv);
         if (!mflagfb) {
 #ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
@@ -4052,6 +4073,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         FACE_Tag faceInfo;
         fb_beauty_face_t beauty_face;
         fb_beauty_image_t beauty_image;
+	cmr_u32 bv;
+	ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
             for (int i = 0; i < faceInfo.face_num; i++) {
@@ -4078,6 +4101,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.lipLevel = 0;
         beautyLevels.slimLevel = 2;
         beautyLevels.largeLevel = 2;
+	beautyLevels.cameraBV = (int)bv;
         if (!mflagfb) {
 #ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
@@ -4116,8 +4140,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (frame->type != PREVIEW_ZSL_FRAME &&
             frame->type != PREVIEW_CANCELED_FRAME &&
             frame->type != CHANNEL2_FRAME && mflagfb) {
-            face_beauty_deinit(&face_beauty);
             mflagfb = false;
+            ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+            face_beauty_deinit(&face_beauty);
         }
     }
 #endif
@@ -5611,9 +5636,12 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
         mSetting->setSPRDDEFTag(sprddefInfo);
         break;
 
-    case CAMERA_EVT_CB_FOCUS_END:
+    case CAMERA_EVT_CB_FOCUS_END: {
         focus_status = (cmr_focus_status *)parm4;
+        cmr_u32 af_status = 1;
         VCM_Tag sprdvcmInfo;
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
         if (getMultiCameraMode() == MODE_BOKEH && mCameraId == 0) {
             mSetting->getVCMTag(&sprdvcmInfo);
             HAL_LOGD("VCM_INFO:vcm step is %d", focus_status->af_motor_pos);
@@ -5630,6 +5658,10 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
             CAMERA_FOCUS_MODE_FULLSCAN == focus_status->af_mode) {
             mSprdFullscanEnabled = 1;
         }
+        if (sprddefInfo.sprd_ot_switch == 1) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING, af_status);
+        }
+    }
         break;
 
     default:
@@ -6064,11 +6096,11 @@ int SprdCamera3OEMIf::openCamera() {
           mMultiCameraMode == MODE_3D_CALIBRATION ||
           mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
          mCameraId < 2) ||
-        (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) ||
+        (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) ||
         ((mMultiCameraMode == MODE_MULTI_CAMERA ||
           mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
-        (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) ||
-          mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK))) ||
+        (mCameraId == sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK) ||
+          mCameraId == sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK))) ||
         (mMultiCameraMode == MODE_3D_FACEID_REGISTER ||
          mMultiCameraMode == MODE_3D_FACEID_UNLOCK) ||
          mMultiCameraMode == MODE_3D_FACE) {
@@ -6078,15 +6110,15 @@ int SprdCamera3OEMIf::openCamera() {
              mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) &&
             mCameraId < 2)
             dual_flag = 1;
-        else if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK))
+        else if (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK))
             dual_flag = 3;
         else if ((mMultiCameraMode == MODE_MULTI_CAMERA ||
                   mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
-                 mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK))
+                 mCameraId == sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK))
             dual_flag = 5;
         else if ((mMultiCameraMode == MODE_MULTI_CAMERA ||
                   mMultiCameraMode == MODE_OPTICSZOOM_CALIBRATION) &&
-                 mCameraId == findSensorRole(MODULE_OPTICSZOOM_TELE_BACK))
+                 mCameraId == sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK))
             dual_flag = 6;
         else if (mMultiCameraMode == MODE_3D_FACEID_REGISTER ||
                  mMultiCameraMode == MODE_3D_FACEID_UNLOCK ||
@@ -6306,6 +6338,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     SCALER_Tag scaleInfo;
     struct img_rect cropRegion;
     int ret = 0;
+    uint8_t PhyCam = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -6322,7 +6355,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
             cropRegion.width, cropRegion.height);
     if ((getMultiCameraMode() == MODE_BOKEH ||
          getMultiCameraMode() == MODE_3D_CALIBRATION) &&
-        mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
+        mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) {
         mSetting->getLargestSensorSize(mCameraId, &sensorOrgW, &sensorOrgH);
         cal_spw_size(sensorOrgW, sensorOrgH, &(cropRegion.width),
                      &(cropRegion.height));
@@ -6337,12 +6370,12 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
 
     if (cropRegion.width > 0 && cropRegion.height > 0) {
         zoomRatio = static_cast<float>(sensorOrgW) / cropRegion.width;
+        HAL_LOGV("mCameraId=%d, zoomRatio=%f", mCameraId, zoomRatio);
     }
 
     if (zoomRatio < MIN_DIGITAL_ZOOM_RATIO)
         zoomRatio = MIN_DIGITAL_ZOOM_RATIO;
-    HAL_LOGD("mCameraId1=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,
-             zoomRatio, mIsUltraWideMode);
+
     if (getMultiCameraMode() == MODE_MULTI_CAMERA) {
         if (zoomRatio > MULTI_MAX_DIGITAL_ZOOM_RATIO) {
             zoomRatio = MULTI_MAX_DIGITAL_ZOOM_RATIO;
@@ -6351,17 +6384,22 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
 
-    if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK) &&
+    if (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK) &&
+        getMultiCameraMode() == MODE_MULTI_CAMERA &&
         zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
 
-#ifndef CONFIG_WIDE_ULTRAWIDE_SUPPORT
-    if (mCameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK) &&
-        zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
+    struct sensor_zoom_param_input ZoomInputParam;
+    ret = sensorGetZoomParam(&ZoomInputParam);
+    PhyCam = ZoomInputParam.PhyCameras;
+
+    if (mCameraId == sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK) &&
+        getMultiCameraMode() == MODE_MULTI_CAMERA &&
+        zoomRatio > MAX_DIGITAL_ZOOM_RATIO &&
+        PhyCam == MULTI_THREE_SECTION) {
         zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
     }
-#endif
 
     mZoomInfo.mode = ZOOM_INFO;
     HAL_LOGD("mCameraId=%d, zoomRatio=%f, mIsUltraWideMode=%d", mCameraId,
@@ -6423,6 +6461,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
     } else {
         mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
     }
+
 
     SensorRotate = mHalOem->ops->camera_get_preview_rot_angle(mCameraHandle);
 
@@ -6623,12 +6662,18 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
                  (cmr_uint)&ae_compensation_param);
         break;
-    case ANDROID_CONTROL_AF_TRIGGER:
+    case ANDROID_CONTROL_AF_TRIGGER: {
         HAL_LOGD("mCameraId=%d, AF_TRIGGER %d", mCameraId,
                  controlInfo.af_trigger);
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
+        struct auto_tracking_info info;
+        cmr_u32 af_status = 0;
         if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
             struct img_rect zoom1 = {0, 0, 0, 0};
             struct img_rect zoom = {0, 0, 0, 0};
+            cmr_u16 picW, picH, snsW, snsH;
+            float w_ratio = 0.000f, h_ratio = 0.000f;
             struct cmr_focus_param focus_para;
             if (mCameraState.preview_state == SPRD_PREVIEW_IN_PROGRESS) {
                 zoom.start_x = controlInfo.af_regions[0];
@@ -6641,6 +6686,25 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 // for sharkle only
                 mHalOem->ops->camera_get_sensor_trim2(mCameraHandle, &zoom1);
 #endif
+                mSetting->getLargestSensorSize(mCameraId, &snsW, &snsH);
+                mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
+                w_ratio = (float)snsW / (float)picW;
+                h_ratio = (float)snsH / (float)picH;
+                HAL_LOGV("w_ratio = %f, h_ratio = %f", w_ratio, h_ratio);
+                if (sprddefInfo.sprd_ot_switch == 1) {
+                   SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING, af_status);
+                   info.objectX = w_ratio * (controlInfo.af_regions[0] + controlInfo.af_regions[2]/2);
+                   info.objectY = h_ratio * (controlInfo.af_regions[1] + controlInfo.af_regions[3]/2);
+                   info.frame_id = controlInfo.ot_frame_id;
+                   if (info.objectX != 0 && info.objectY != 0)
+                       info.status = 1;
+                   else
+                       info.status = 0;
+                   HAL_LOGV("AF_TRIGGER =%d, %d, %d", info.objectX, info.objectY, info.status);
+                   HAL_LOGV("ot_frame_id=%d",info.frame_id);
+                   SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
+                           (cmr_uint)&info);
+                }
                 if ((0 == zoom.start_x && 0 == zoom.start_y &&
                      0 == zoom.width && 0 == zoom.height) ||
                     !CameraConvertCropRegion(zoom1.width, zoom1.height,
@@ -6674,6 +6738,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                    ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
             cancelAutoFocus();
         }
+    }
         break;
     case ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE: {
         SPRD_DEF_Tag sprddefInfo;
@@ -6772,7 +6837,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_CONTROL_AF_MODE: {
         int8_t AfMode = 0;
+        cmr_u32 af_status = 0;
+        SPRD_DEF_Tag sprddefInfo;
+        mSetting->getSPRDDEFTag(&sprddefInfo);
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
+        HAL_LOGD("ANDROID_CONTROL_AF_MODE");
 
         if (mMultiCameraMode == MODE_3D_CALIBRATION &&
             AfMode == CAMERA_FOCUS_MODE_MANUAL) {
@@ -6784,6 +6853,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             AfMode = CAMERA_FOCUS_MODE_INFINITY;
         }
         if (!mIsAutoFocus) {
+            if (sprddefInfo.sprd_ot_switch == 1 && AfMode == CAMERA_FOCUS_MODE_AUTO) {
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING, af_status);
+                HAL_LOGV("clean_af_status = %d", af_status);
+            }
             if (mRecordingMode &&
                 CAMERA_FOCUS_MODE_CAF ==
                     AfMode) { /*dv mode but recording not start*/
@@ -6837,7 +6910,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AE_MODE:
         if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
             mCameraId == 1 || mCameraId == 4 || mCameraId == 3 ||
-            (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK) &&
+            (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK) &&
              getMultiCameraMode() != MODE_BOKEH &&
              getMultiCameraMode() != MODE_3D_CALIBRATION &&
              getMultiCameraMode() != MODE_PORTRAIT)) {
@@ -7254,10 +7327,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         info.objectY = autotrackingInfo.at_start_info[1];
         info.status = autotrackingInfo.at_start_info[2];
         info.frame_id = autotrackingInfo.frame_id;
-        HAL_LOGD("%d, %d, %d, %d", info.objectX, info.objectY, info.status,
+        HAL_LOGD("ANDROID_SPRD_AUTOCHASING_REGION=%d, %d, %d, %d", info.objectX, info.objectY, info.status,
                  info.frame_id);
+        /*if(info.objectX == 0 && info.objectY ==0 )
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_TRACKING_INFO,
-                 (cmr_uint)&info);
+                 (cmr_uint)&info);*/
     } break;
     case ANDROID_SPRD_BLUR_F_NUMBER: {
         LENS_Tag lensInfo;
@@ -8916,7 +8990,17 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
             mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
 #else
             /* from sharkl5pro, raw16 should be supported */
+            char prop[PROPERTY_VALUE_MAX] = {0};
+            property_get("persist.vendor.cam.res.multi.camera.fullsize", prop, "0");
+            if (atoi(prop) == 1 && mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) {
+                cmr_u16 picW = 0;
+                cmr_u16 picH = 0;
+                mSetting->getLargestPictureSize(sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK), &picW, &picH);
+                mLargestPictureWidth = picW;
+                mLargestPictureHeight = picH;
+            }
             mem_size = mLargestPictureWidth * mLargestPictureHeight * 2;
+            HAL_LOGV("mLargestPictureWidth=%d, mLargestPictureHeight=%d", mLargestPictureWidth, mLargestPictureHeight);
 #endif
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {

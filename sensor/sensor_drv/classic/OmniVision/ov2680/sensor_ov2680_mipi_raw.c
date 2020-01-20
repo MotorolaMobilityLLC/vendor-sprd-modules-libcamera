@@ -692,7 +692,7 @@ cmr_int ov2680_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3824, 0x00);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3825, 0x20);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3826, 0x07);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0x8f);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3827, 0xf5);
     return 0;
 }
 
@@ -713,13 +713,9 @@ static cmr_int ov2680_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
     }
 #endif
-    if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode &&
-        sns_drv_cxt->is_multi_mode != MODE_TUNING) {
+    if (2 == sns_drv_cxt->sensor_id && MODE_BOKEH == sns_drv_cxt->is_multi_mode) {
         ov2680_drv_set_slave_FrameSync(handle, 0);
-        SENSOR_LOGI("set frame sync");
     }
-    // SENSOR_LOGI("X");
-    // ov2680_drv_set_master_FrameSync(handle,param);
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     /*delay*/

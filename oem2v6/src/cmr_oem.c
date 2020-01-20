@@ -6275,6 +6275,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             fb_beauty_face_t beauty_face;
             fb_beauty_image_t beauty_image;
             struct faceBeautyLevels beautyLevels;
+            struct common_isp_cmd_param isp_param;
             memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                     SETTING_GET_PERFECT_SKINLEVEL,
@@ -6283,6 +6284,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 CMR_LOGE("failed to get perfect skinlevel %ld", ret);
                 goto exit;
             }
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+            beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
             beautyLevels.blemishLevel =
                 (unsigned char)setting_param.fb_param.blemishLevel;
             beautyLevels.smoothLevel =
@@ -6316,9 +6319,9 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                              beautyLevels.lipColor || beautyLevels.lipLevel ||
                              beautyLevels.slimLevel || beautyLevels.largeLevel;
             if (face_beauty_on) {
-                CMR_LOGD("face_beauty smooth %d,bright %d,slim %d,large %d",
+                CMR_LOGD("face_beauty smooth %d,bright %d,slim %d,large %d,cameraBV %d",
                          beautyLevels.smoothLevel, beautyLevels.brightLevel,
-                         beautyLevels.slimLevel, beautyLevels.largeLevel);
+                         beautyLevels.slimLevel, beautyLevels.largeLevel,beautyLevels.cameraBV);
                 if (cxt->is_multi_mode == MODE_BOKEH) {
                     cmr_copy(&cxt->fd_face_area, &cxt->fd_face_area_capture,
                              sizeof(struct isp_face_area));
@@ -8383,20 +8386,16 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                     CMR_LOGE("failed to get preflash skip number %ld", ret);
                 }
                 CMR_LOGD("preflash_skip_num = %d", flash_capture_skip_num);
-                if (cxt->is_multi_mode == MODE_MULTI_CAMERA ||
-                    0 == cxt->camera_id || isFrontFlash ||
-                    4 == cxt->camera_id) {
-                    cxt->flash_skip_frame_num = (flash_capture_skip_num == 0)
-                                                    ? 1
-                                                    : flash_capture_skip_num;
-                    cxt->flash_skip_frame_enable = 1;
-                    cxt->flash_skip_frame_cnt = 0;
-                    cxt->flash_shutdown_timestamp =
-                        systemTime(SYSTEM_TIME_BOOTTIME);
-                    CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
-                             cxt->flash_skip_frame_num,
-                             cxt->flash_skip_frame_cnt);
-                }
+                cxt->flash_skip_frame_num = (flash_capture_skip_num == 0)
+                                                ? 1
+                                                : flash_capture_skip_num;
+                cxt->flash_skip_frame_enable = 1;
+                cxt->flash_skip_frame_cnt = 0;
+                cxt->flash_shutdown_timestamp =
+                    systemTime(SYSTEM_TIME_BOOTTIME);
+                CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
+                         cxt->flash_skip_frame_num,
+                         cxt->flash_skip_frame_cnt);
             }
 #endif
             cmr_grab_flash_cb(grab_handle, &flash_opt);
@@ -10804,6 +10803,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
             cxt->prev_cxt.preview_handle, cxt->camera_id,
             (struct auto_tracking_info *)param);
         break;
+    case CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING:
+        ret = cmr_preview_af_status_set_to_autotracking(
+            cxt->prev_cxt.preview_handle, cxt->camera_id,
+            param);
+        break;
     case CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
@@ -12064,7 +12068,10 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                                  .capture_aspect_ratio) > EPSINON) {
                         zoom_factor_changed = 1;
                     }
-                    CMR_LOGD("zoom_factor_changed=%d", zoom_factor_changed);
+                    CMR_LOGD("id=%d,zoom_factor_changed=%d,zoom=%f,orgZoom=%f,prev %d,cap %d",
+                        cxt->camera_id, zoom_factor_changed, zoom_param->zoom_info.prev_aspect_ratio,
+                        zoom_factor.zoom_setting.zoom_info.prev_aspect_ratio,
+                        zoom_factor.prev_zoom,zoom_factor.cap_zoom);
                 }
             }
         }
@@ -13327,8 +13334,53 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
                                        cmr_u32 *ref_camera_id) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
+    CMR_LOGV("ref_camera_id id %d", *ref_camera_id);
+    cxt->ref_camera_id = *ref_camera_id;
     return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_REF_CAMERA_ID,
                      ref_camera_id);
+}
+
+cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
+                                        struct visible_region_info *info) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct sensor_mode_info *mode_info = NULL;
+    struct img_rect cur_rect;
+    struct img_size cur_size;
+    struct img_rect dst_rect;
+    float ratio;
+    cmr_u32 sn_mode = 0;
+
+    cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
+    mode_info = &cxt->sn_cxt.sensor_info.mode_info[sn_mode];
+    cur_size.width = mode_info->scaler_trim.width;
+    cur_size.height = mode_info->scaler_trim.height;
+    cur_rect.start_x = 0;
+    cur_rect.start_y = 0;
+    cur_rect.width = cur_size.width;
+    cur_rect.height = cur_size.height;
+
+    cmr_preview_get_prev_aspect_ratio(cxt->prev_cxt.preview_handle, cxt->camera_id, &ratio);
+    dst_rect = camera_apply_rect_and_ratio(info->max_size, info->region, cur_rect, ratio);
+
+    CMR_LOGV("src: size %u %u rect %u %u %u %u, dst: size %u %u rect %u %u %u %u, ratio: %f",
+            info->max_size.width, info->max_size.height,
+            info->region.start_x, info->region.start_y,
+            info->region.width, info->region.height,
+            cur_size.width, cur_size.height,
+            dst_rect.start_x, dst_rect.start_y,
+            dst_rect.width, dst_rect.height, ratio);
+
+    info->max_size = cur_size;
+    info->region = dst_rect;
+
+    return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_VISIBLE_REGION,
+                     info);
+}
+
+cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle, float *ratio) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO, ratio);
 }
 
 cmr_int camera_local_cap_state(cmr_handle oem_handle, bool *flag) {
@@ -14107,6 +14159,18 @@ cmr_int camera_local_image_sw_algorithm_processing(
     }
 
 exit:
+    return ret;
+}
+
+cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_param;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+    if (ret) {
+          CMR_LOGE("failed to get isp param %d",ret);
+          return ret;
+    }
+    *bv_info = isp_param.isp_adgain.bv;
     return ret;
 }
 

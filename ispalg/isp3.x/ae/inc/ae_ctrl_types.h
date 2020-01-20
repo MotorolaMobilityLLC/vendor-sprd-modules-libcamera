@@ -108,6 +108,7 @@ extern "C" {
 		AE_SET_TOUCH_ZONE,
 		AE_SET_3DNR_MODE,
 		AE_SET_3DNR_THR,
+		AE_SET_AF_STATUS,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -363,6 +364,7 @@ extern "C" {
 		cmr_u32 exposure;
 		cmr_u32 dummy;
 		cmr_u32 size_index;
+		cmr_u32 exp_time;
 	};
 
 	struct ae_gain {
@@ -500,8 +502,9 @@ extern "C" {
 		 cmr_s32(*set_rgb_gain_4in1) (cmr_handle handler, double rgb_gain_coeff);
 		 cmr_s32(*set_rgb_gain_slave) (cmr_handle handler, double rgb_gain_coeff);
 		 cmr_s32(*set_rgb_gain_slave0) (cmr_handle handler, double rgb_gain_coeff);
-		cmr_s32(*set_rgb_gain_slave1) (cmr_handle handler, double rgb_gain_coeff);
+		 cmr_s32(*set_rgb_gain_slave1) (cmr_handle handler, double rgb_gain_coeff);
  		 cmr_s32(*set_bayer_hist) (cmr_handle handler, struct ae_bayer_hist_cfg * in_param);
+		 cmr_s32(*set_aem_zoom_win) (cmr_handle handler, struct ae_monitor_info * in_param);
 	};
 
 	struct ae_stat_img_info {

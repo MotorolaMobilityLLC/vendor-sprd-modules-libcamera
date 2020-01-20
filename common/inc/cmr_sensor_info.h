@@ -287,6 +287,23 @@ struct point {
     uint16_t y;
 };
 
+typedef struct sensor_pdaf_coordinate_info {
+    cmr_u8 rx;
+    cmr_u8 ry;
+    cmr_u8 phase_pos;
+} PhasePixel_info;
+
+typedef struct sensor_pdaf_map_info {
+    cmr_u16 count;
+    cmr_u16 block_start_col;
+    cmr_u16 block_start_row;
+    cmr_u16 block_end_col;
+    cmr_u16 block_end_row;
+    cmr_u8 block_width;
+    cmr_u8 block_height;
+    PhasePixel_info pixel[64];
+} PhasePixel_MAP;
+
 struct sensor_otp_optCenter_info {
     struct point R;
     struct point GR;
@@ -543,6 +560,7 @@ struct sensor_ex_exposure {
     cmr_u32 exposure;
     cmr_u32 dummy;
     cmr_u32 size_index;
+	cmr_u32 exp_time;
 };
 
 struct sensor_i2c_reg_tab {

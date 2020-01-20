@@ -171,6 +171,15 @@ static cmr_s32 ae_set_bayer_hist(cmr_handle handler, struct ae_bayer_hist_cfg *i
 	return 0;
 }
 
+static cmr_s32 ae_set_aem_zoom_win(cmr_handle handler, struct ae_monitor_info *in_param)
+{
+	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
+	if (cxt_ptr->ae_set_cb) {
+		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_MONITOR_WIN, in_param, NULL);
+	}
+	return 0;
+}
+
 static cmr_s32 ae_set_statistics_mode(cmr_handle handler, enum ae_statistics_mode mode, cmr_u32 skip_number)
 {
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
@@ -729,6 +738,7 @@ cmr_s32 ae_ctrl_init(struct ae_init_in * input_ptr, cmr_handle * handle_ae, cmr_
 	input_ptr->isp_ops.set_rgb_gain_slave0 = ae_set_rgb_gain_slave0;
 	input_ptr->isp_ops.set_rgb_gain_slave1 = ae_set_rgb_gain_slave1;
 	input_ptr->isp_ops.set_bayer_hist = ae_set_bayer_hist;
+	input_ptr->isp_ops.set_aem_zoom_win = ae_set_aem_zoom_win;
 
 	cxt_ptr = (struct aectrl_cxt *)calloc(1,sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {

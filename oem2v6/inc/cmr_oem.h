@@ -328,6 +328,7 @@ struct camera_context {
     cmr_handle snp_send_raw_image_handle;
 
     /*for setting*/
+    cmr_u32 ref_camera_id;
     cmr_uint ai_scene_enable;
     struct camera_settings cmr_set;
     cmr_u32 is_support_fd;
@@ -585,7 +586,10 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle);
 void camera_set_oem_multimode(multiCameraMode camera_mode);
 void camera_set_oem_masterid(uint8_t master_id);
 cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
-        cmr_u32 *ref_camera_id);
+                                       cmr_u32 *ref_camera_id);
+cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
+                                        struct visible_region_info *info);
+cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle, float *ratio);
 cmr_int camera_local_cap_state(cmr_handle oem_handle,
                                        bool *flag);
 
@@ -651,6 +655,8 @@ cmr_int camera_get_remosaic_type(struct sensor_4in1_info *p,
 cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p);
 cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param);
 cmr_int camera_set_high_res_mode(cmr_handle oem_handle,cmr_uint is_high_res_mode);
+
+cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 
 #ifdef __cplusplus
 }

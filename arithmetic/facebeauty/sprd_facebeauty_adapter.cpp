@@ -26,6 +26,10 @@ void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum
     }
 
     char strRunType[256];
+    property_get("ro.boot.lwfq.type", strRunType , "-1");
+    if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_VDSP && strcmp("0", strRunType))
+        faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
+
     property_get("persist.vendor.cam.fb.run_type", strRunType , "");
     if (!(strcmp("cpu", strRunType)))
         faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
@@ -197,9 +201,10 @@ void construct_fb_level(fb_beauty_param_t *faceBeauty,
         faceBeauty->fb_option.blemishSizeThrCoeff = 14;
 
         faceBeauty->fb_option.cameraWork = FB_CAMERA_REAR;
-        faceBeauty->fb_option.cameraBV = 0;
+        faceBeauty->fb_option.cameraBV = beautyLevels.cameraBV;
         faceBeauty->fb_option.cameraISO = 0;
         faceBeauty->fb_option.cameraCT = 0;
+        ALOGD("faceBeauty->fb_option.cameraBV %d", beautyLevels.cameraBV);
 
         if (faceBeauty->fb_mode == 1) {
             faceBeauty->fb_option.skinSmoothRadiusCoeff =
@@ -405,6 +410,7 @@ int face_beauty_ctrl(fb_beauty_param_t *faceBeauty, fb_beauty_cmd_t cmd, void *p
         beautyLevels.lipLevel = pLevels->lipLevel;
         beautyLevels.slimLevel = pLevels->slimLevel;
         beautyLevels.largeLevel = pLevels->largeLevel;
+        beautyLevels.cameraBV = pLevels->cameraBV;
         construct_fb_level(faceBeauty, beautyLevels);
         break;
     }

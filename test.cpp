@@ -1142,7 +1142,7 @@ static void eng_tst_camera_startpreview(void) {
     /*  */
     preview_size.width = g_preview_width;
     preview_size.height = g_preview_height;
-
+    memset(&zoom_param, 0, sizeof(struct cmr_zoom_param));
     zoom_param.mode = 1;
     zoom_param.zoom_level = 1;
     zoom_param.zoom_info.zoom_ratio = 1.00000;

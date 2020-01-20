@@ -265,8 +265,6 @@ extern "C" {
 		 * AE write/effective E&G queue
 		 */
 		cmr_handle seq_handle;
-		cmr_handle seq_handle_s0;
-		cmr_handle seq_handle_s1;
 		cmr_s8 exp_skip_num;
 		cmr_s8 gain_skip_num;
 		cmr_s16 sensor_gain_precision;
@@ -280,6 +278,8 @@ extern "C" {
 		struct ae_exposure_param last_exp_param;
 		cmr_s32 last_index;
 		cmr_s32 last_enable;
+
+		struct ae_exposure_param backup_touch; /* for backup current param when touch ae*/
 		/*
 		 * just for debug information
 		 */
@@ -407,8 +407,10 @@ extern "C" {
 		cmr_u32 threednr_mode;
 		cmr_u8 led_state;
 
+		cmr_u32 *master_aem_stat;
 		cmr_u32 *slave0_aem_stat;
 		cmr_u32 *slave1_aem_stat;
+		
 		cmr_u32 *tune_buf;
 		struct ae_frm_sync_param sync_param[4];
 		struct ae_exposure_param_switch mode_switch[64];

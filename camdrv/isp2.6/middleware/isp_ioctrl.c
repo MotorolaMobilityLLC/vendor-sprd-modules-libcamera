@@ -454,6 +454,34 @@ static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 	return ret;
 }
 
+static cmr_s32 ispctl_set_lsc_gain(cmr_handle isp_alg_handle)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
+	cmr_handle pm_handle = cxt->handle_pm;
+	struct alsc_update_info update_info = { 0, 0, NULL };
+	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
+	struct isp_pm_param_data pm_param;
+	struct isp_lsc_info *lsc_info = (struct isp_lsc_info *)cxt->lsc_cxt.lsc_info;
+
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
+	if (ISP_SUCCESS != ret)
+		ISP_LOGE("fail to get ALSC update flag!");
+
+	if (update_info.alsc_update_flag == 1){
+		memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
+		BLOCK_PARAM_CFG(io_pm_input, pm_param,
+			ISP_PM_BLK_LSC_MEM_ADDR,
+			ISP_BLK_2D_LSC, update_info.lsc_buffer_addr,
+			lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
+		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+	}
+
+	return ret;
+}
+
 static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -807,6 +835,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		flash_info.io_captureFlash1Ratio = captureFlash1ofALLRatio;
 		if (cxt->ops.lsc_ops.ioctrl)
 			cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_PRE_AFTER, (void*)&flash_info, NULL);
+		ispctl_set_lsc_gain((cmr_handle) cxt);
 		break;
 
 	case ISP_FLASH_MAIN_BEFORE:
@@ -872,6 +901,7 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		ispctl_flicker_bypass(isp_alg_handle, 0);
 		if (cxt->ops.lsc_ops.ioctrl)
 			cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FLASH_MAIN_AFTER, NULL, NULL);
+		ispctl_set_lsc_gain((cmr_handle) cxt);
 		cxt->lsc_flash_onoff = 0;
 		ae_notice.mode = AE_FLASH_MAIN_AFTER;
 		if (cxt->ops.ae_ops.ioctrl)
@@ -2817,12 +2847,38 @@ load_error:
 exit:
 	return ret;
 }
+
+static cmr_int ispctl_prepare_atm_param(cmr_handle isp_alg_handle,
+	struct smart_proc_input *smart_proc_in)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	smart_proc_in->r_info = cxt->aem_stats_data.r_info;
+	smart_proc_in->g_info = cxt->aem_stats_data.g_info;
+	smart_proc_in->b_info = cxt->aem_stats_data.b_info;
+	smart_proc_in->win_num_w = cxt->ae_cxt.win_num.w;
+	smart_proc_in->win_num_h = cxt->ae_cxt.win_num.h;
+	smart_proc_in->aem_shift = cxt->ae_cxt.shift;
+	smart_proc_in->win_size_w = cxt->ae_cxt.win_size.w;
+	smart_proc_in->win_size_h = cxt->ae_cxt.win_size.h;
+
+	if (smart_proc_in->r_info == NULL)
+		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p\n",
+			smart_proc_in->r_info,
+			smart_proc_in->g_info,
+			smart_proc_in->b_info);
+
+	return ret;
+}
+
 static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_u32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isptool_scene_param *scene_parm = NULL;
 	struct isp_pm_ioctl_input ioctl_input;
+	struct isp_pm_ioctl_input ioctl_output = { PNULL, 0 };
 	struct isp_pm_param_data ioctl_data;
 	struct isp_awbc_cfg awbc_cfg;
 	struct smart_proc_input smart_proc_in;
@@ -2932,6 +2988,39 @@ label_set_awb:
 
 	cxt->rgb_gain.global_gain = scene_parm->global_gain;
 	ISP_LOGI("global_gain = %d", cxt->rgb_gain.global_gain);
+
+
+	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
+			ISP_PM_BLK_GAMMA_TAB,
+			ISP_BLK_RGB_GAMC, PNULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+			ISP_PM_CMD_GET_SINGLE_SETTING,
+			(void *)&ioctl_input, (void *)&ioctl_output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to get GAMMA TAB"));
+	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
+		cxt->smart_cxt.tunning_gamma_cur = ioctl_output.param_data_ptr->data_ptr;
+
+	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
+	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
+	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
+	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
+	smart_proc_in.handle_pm = cxt->handle_pm;
+//	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+	smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
+
+	ispctl_prepare_atm_param(isp_alg_handle, &smart_proc_in);
+	cxt->smart_cxt.atm_is_set = 0;
+
+	if (cxt->ops.smart_ops.calc)
+		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to set smart gain");
+		return ret;
+	}
+
+	cxt->smart_cxt.log_smart = smart_proc_in.log;
+	cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 
 	return ret;
 }
@@ -3061,7 +3150,7 @@ static cmr_int ispctl_get_ae_fps_range(cmr_handle isp_alg_handle, void *param_pt
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_ae_fps_range *out;
-	struct ae_fps_range data;
+	struct ae_fps_range data = { 5, 30, 20, 30 };
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param !");
@@ -3173,6 +3262,20 @@ static cmr_int ispctl_ae_set_ref_camera_id(cmr_handle isp_alg_handle, void *para
 	return ret;
 }
 
+static cmr_int ispctl_ae_set_visible_region(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	return isp_br_ioctrl(cxt->sensor_role, SET_AE_VISIBLE_REGION, param_ptr, NULL);
+}
+
+static cmr_int ispctl_ae_set_global_zoom_ratio(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	return isp_br_ioctrl(cxt->sensor_role, SET_GLOBAL_ZOOM_RATIO, param_ptr, NULL);
+}
+
 static cmr_int ispctl_set_sensor_size(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3248,17 +3351,17 @@ static cmr_int ispctl_get_glb_gain(cmr_handle isp_alg_handle, void *param_ptr)
 
 static cmr_int ispctl_ai_set_fd_status(cmr_handle isp_alg_handle, void *param_ptr)
 {
-       cmr_int ret = ISP_SUCCESS;
-       struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-       if (NULL == param_ptr) {
-               return ISP_PARAM_NULL;
-       }
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
 
-       if (cxt->ops.ai_ops.ioctrl)
-               ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_ON_OFF, (void *)param_ptr, NULL);
+	if (cxt->ops.ai_ops.ioctrl)
+		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FD_ON_OFF, (void *)param_ptr, NULL);
 
-       return ret;
+	return ret;
 }
 
 static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
@@ -3276,11 +3379,11 @@ static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
 			ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_DRE, NULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm,
-			   ISP_PM_CMD_GET_SINGLE_SETTING,
-			   &input, &output);
+			ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
+			&input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num)
 		memcpy(param_ptr, output.param_data->data_ptr,
-		       sizeof(struct isp_dre_level));
+			sizeof(struct isp_dre_level));
 	else
 		ISP_LOGE("fail to get valid dre param, %ld  num %d",
 			 ret, output.param_num);
@@ -3455,7 +3558,11 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		ynr_info = (struct isp_ynrs_info *)output.param_data->data_ptr;
+#ifdef CAMERA_RADIUS_ENABLE
+		if((cmr_u32)ynr_info->ynrs_param.bypass == 0)
+#else
 		if((cmr_u32)ynr_info->bypass == 0)
+#endif
 			ynrs_en = 1;
 		ISP_LOGV("ynrs_en value = %d \n", ynrs_en);
 	}else {
@@ -3750,6 +3857,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_AE_SET_TARGET_REGION, ispctl_ae_set_target_region},
 	{ISP_CTRL_AE_SET_REF_CAMERA_ID, ispctl_ae_set_ref_camera_id},
+	{ISP_CTRL_AE_SET_VISIBLE_REGION, ispctl_ae_set_visible_region},
+	{ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO, ispctl_ae_set_global_zoom_ratio},
 	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},
 	{ISP_CTRL_DRE, ispctl_dre},
 #ifdef CAMERA_CNR3_ENABLE

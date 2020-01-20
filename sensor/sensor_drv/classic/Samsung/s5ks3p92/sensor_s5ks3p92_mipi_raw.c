@@ -635,8 +635,16 @@ static cmr_int s5k3p9sp04_drv_4in1_deinit(cmr_handle handle, cmr_u32 *param) {
         SENSOR_LOGI("link symbol success");
     }
     release_ss4c();
-    dlclose(handlelib);
-    free(pOutImage);
+    if (handlelib) {
+        dlclose(handlelib);
+        handlelib = NULL;
+    }
+
+    if (pOutImage) {
+        free(pOutImage);
+        pOutImage = NULL;
+    }
+
     return rtn;
 }
 

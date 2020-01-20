@@ -807,6 +807,8 @@ struct auto_tracking_info {
     cmr_s32 frame_id;
     cmr_s32 imageW;
     cmr_u32 imageH;
+    cmr_u32 first_frame;
+    cmr_u32 ot_af_status;
     cmr_u32 reserved[20];
 };
 
@@ -1710,6 +1712,7 @@ enum camera_param_type {
     CAMERA_PARAM_GET_DEVICE_ORIENTATION,
     CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
     CAMERA_PARAM_AUTO_TRACKING_INFO,
+    CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING,
     CAMERA_PARAM_APERTURE,
     CAMERA_PARAM_F_NUMBER,
     CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
@@ -2021,6 +2024,12 @@ struct fin1_info {
     cmr_u32 ambient_highlight; /* 1:highlight,0:low */
 };
 
+struct visible_region_info {
+    cmr_u32 serial_no;
+    struct img_size max_size;
+    struct img_rect region;
+};
+
 typedef enum {
     CAMERA_IOCTRL_SET_MULTI_CAMERAMODE = 0,
     CAMERA_IOCTRL_GET_SENSOR_LUMA,
@@ -2051,6 +2060,8 @@ typedef enum {
     CAMERA_IOCTRL_ROTATE,
     CAMERA_IOCTRL_SET_MASTER_ID,
     CAMERA_IOCTRL_SET_REF_CAMERA_ID,
+    CAMERA_IOCTRL_SET_VISIBLE_REGION,
+    CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO,
     CAMERA_IOCTRL_SET_BOKEH_SCALE_INFO,
     CAMERA_IOCTRL_SET_TRIM_INFO,
     CAMERA_IOCTRL_SET_CAM_SECURITY,
@@ -2065,6 +2076,7 @@ typedef enum {
     CAMERA_TOCTRL_SET_HIGH_RES_MODE,
     CAMERA_TOCTRL_GET_4IN1_INFO,
     CAMERA_IOCTRL_SET_CAP_STATE,
+    CAMERA_IOCTRL_GET_BV,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

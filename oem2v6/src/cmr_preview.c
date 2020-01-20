@@ -27,6 +27,9 @@
 #include "cmr_sensor.h"
 #include "isp_simulation.h"
 #include "isp_video.h"
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+#include "sprd_img_warp.h"
+#endif
 #include <cutils/properties.h>
 #include <cutils/trace.h>
 #include <math.h>
@@ -67,12 +70,6 @@
 #define SIDEBYSIDE_WIDTH 3200
 #define SIDEBYSIDE_MAIN_WIDTH 1600
 #define SIDEBYSIDE_HEIGH 1200
-
-#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
-#define PROJECT_SUPPORT_MAX_ZOOM_RATIO 8
-#else
-#define PROJECT_SUPPORT_MAX_ZOOM_RATIO 5
-#endif
 
 #define ISP_HW_SUPPORT_MAX_ZOOM_RATIO 4
 
@@ -536,8 +533,10 @@ struct prev_context {
     cmr_s32 auto_tracking_status;
     cmr_s32 auto_tracking_frame_id;
     /* face detect */
+    cmr_s32 auto_tracking_last_frame;
     cmr_u32 ae_stab[AE_CB_MAX_INDEX];
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
+    cmr_u32 af_status;
     cmr_uint threednr_cap_smallwidth;
     cmr_uint threednr_cap_smallheight;
     bool prev_zoom;
@@ -2185,10 +2184,10 @@ cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data) {
         frm_data = (struct frm_info *)inter_param->param3;
         if (handle->frame_active == 1) {
             ret = prev_receive_data(handle, camera_id, evt, frm_data);
-            if (frm_data) {
-                free(frm_data);
-                frm_data = NULL;
-            }
+        }
+        if (frm_data) {
+            free(frm_data);
+            frm_data = NULL;
         }
         break;
 
@@ -3604,7 +3603,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             isp_param.size.width = isp_param.size.width >> 1;
         }
         isp_param.size.height = sensor_mode_info->trim_height;
-        if (snapshot_enable && !preview_enable && !tool_eb) {
+        if (snapshot_enable && !preview_enable) {
             isp_param.is_snapshot = 1;
             isp_param.work_mode = 1;
         } else {
@@ -6111,6 +6110,12 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
         is_raw_capture = 1;
     }
 
+    float max_binning_ratio = 0;
+    struct sensor_zoom_param_input ZoomInputParam;
+    ret = sensorGetZoomParam(&ZoomInputParam);
+    ret = CMR_CAMERA_SUCCESS;
+    max_binning_ratio = ZoomInputParam.BinningRatio;
+
     if (cxt->is_multi_mode == MODE_3D_VIDEO) {
         is_3D_video = 1;
     } else if (cxt->is_multi_mode == MODE_3D_CAPTURE) {
@@ -6174,7 +6179,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
                         if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                            if (width / PROJECT_SUPPORT_MAX_ZOOM_RATIO >=
+                            if (width / max_binning_ratio >=
                                 prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                 /* dont choose high fps setting for no-slowmotion */
                                 ret = handle->ops.get_sensor_fps_info(
@@ -6252,6 +6257,12 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
         is_raw_capture = 1;
     }
 
+    float max_binning_ratio = 0;
+    struct sensor_zoom_param_input ZoomInputParam;
+    ret = sensorGetZoomParam(&ZoomInputParam);
+    ret = CMR_CAMERA_SUCCESS;
+    max_binning_ratio = ZoomInputParam.BinningRatio;
+
     if (cxt->is_multi_mode == MODE_3D_VIDEO) {
         is_3D_video = 1;
     }
@@ -6260,7 +6271,8 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
     if (1 == is_3D_video) {
         search_width = sensor_info->source_width_max / 2;
         search_height = sensor_info->source_height_max / 2;
-    } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0) {
+    } else if (cxt->is_4in1_sensor == 1 && cxt->is_high_res_mode == 0
+               && !handle->prev_cxt[camera_id].prev_param.tool_eb) {
         /* 4in1 sensor: not high resolution mode, sensor output
         * max size is binning size, but output can digital zoom
         */
@@ -6356,7 +6368,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                         sensor_info->mode_info[i].image_format) {
                         if (search_height <= height && search_width <= width) {
                             if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                                if (width / PROJECT_SUPPORT_MAX_ZOOM_RATIO >=
+                                if (width / max_binning_ratio >=
                                     prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                     /* dont choose high fps setting for no-slowmotion */
                                     ret = handle->ops.get_sensor_fps_info(
@@ -6831,7 +6843,8 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
             ret = prev_3dnr_send_data(handle, camera_id, info, frame_type,
                                       frm_ptr, video_frm_ptr);
         }
-        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1) {
+
+        if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1 && cxt->ref_camera_id == camera_id) {
             prev_ai_scene_send_data(handle, camera_id, frm_ptr, info);
         }
 
@@ -7283,7 +7296,20 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_cxt->prev_zoom = true;
     prev_cxt->cap_zoom = true;
-
+#ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
+    if(camera_id == sensorGetRole(MODULE_SPW_NONE_BACK) && cxt->is_ultra_wide) {
+        prev_cxt->prev_zoom =
+            sprd_warp_adapter_get_isISPZoom(WARP_PREVIEW);
+        if(!(prev_cxt->prev_zoom))
+            zoom_param->zoom_info.prev_aspect_ratio = 1.0f;
+        prev_cxt->cap_zoom =
+            sprd_warp_adapter_get_isISPZoom(WARP_CAPTURE);
+        if(!(prev_cxt->cap_zoom))
+            zoom_param->zoom_info.capture_aspect_ratio = 1.0f;
+        CMR_LOGV("ID=%d,pre %d,cap %d",camera_id,
+            prev_cxt->prev_zoom,prev_cxt->cap_zoom);
+    }
+#endif
     chn_param.is_lightly = 0;
     chn_param.frm_num = -1;
     chn_param.skip_num = sensor_info->mipi_cap_skip_num;
@@ -7380,11 +7406,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
 
-        // TODO WORKAROUND
-        if (camera_id == findSensorRole(MODULE_SPW_NONE_BACK))
-            real_ratio = 1.0f;
-
-        if (zoom_param->zoom_info.crop_region.width > 0) {
+        if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401 ) {
             chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
                     zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
                     chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
@@ -7641,7 +7663,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     } else {
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
                              prev_cxt->actual_prev_size.height;
-        if (zoom_param->zoom_info.crop_region.width > 0) {
+        if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401) {
             chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
                     zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
                     chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
@@ -7822,7 +7844,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
                              prev_cxt->actual_video_size.height;
 
         // TODO WORKAROUND
-        if (camera_id == findSensorRole(MODULE_SPW_NONE_BACK))
+        if (camera_id == sensorGetRole(MODULE_SPW_NONE_BACK))
             real_ratio = 1.0f;
 
         if (zoom_param->zoom_info.crop_region.width > 0) {
@@ -15608,14 +15630,12 @@ cmr_int prev_ultra_wide_close(struct prev_handle *handle, cmr_u32 camera_id) {
         ret = cmr_ipm_close(prev_cxt->ultra_wide_handle);
         prev_cxt->ultra_wide_handle = 0;
     }
-    prev_cxt->prev_zoom = true;
 
     CMR_LOGI("zsl_ultra_wide_handle 0x%p", prev_cxt->zsl_ultra_wide_handle);
     if (prev_cxt->zsl_ultra_wide_handle) {
         ret = cmr_ipm_close(prev_cxt->zsl_ultra_wide_handle);
         prev_cxt->zsl_ultra_wide_handle = 0;
     }
-    prev_cxt->cap_zoom = true;
     CMR_LOGV("ret %ld", ret);
     return ret;
 }
@@ -15912,6 +15932,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                      src_buffer_handle, dst_buffer_handle);
             cmr_bzero(&ipm_in_param, sizeof(struct ipm_frame_in));
             ipm_in_param.src_frame = *src_img;
+            ipm_in_param.src_frame.frame_number = prev_cxt->prev_frm_cnt;
             ipm_in_param.src_frame.reserved = src_buffer_handle;
             ipm_in_param.dst_frame = *dst_img;
             ipm_in_param.dst_frame.reserved = dst_buffer_handle;
@@ -16021,6 +16042,7 @@ cmr_int prev_auto_tracking_close(struct prev_handle *handle,
 
     prev_cxt = &handle->prev_cxt[camera_id];
     prev_cxt->auto_tracking_cnt = 0;
+    prev_cxt->auto_tracking_inited = 0;
     if (prev_cxt->auto_tracking_handle) {
         ret = cmr_ipm_close(prev_cxt->auto_tracking_handle);
         prev_cxt->auto_tracking_handle = 0;
@@ -16065,6 +16087,7 @@ cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
     ipm_in_param.src_frame = *frm;
     ipm_in_param.dst_frame = *frm;
     ipm_in_param.caller_handle = (void *)handle;
+    ipm_in_param.input.ot_af_status = prev_cxt->af_status;
 
     CMR_LOGV("in param: x=%d, y=%d", prev_cxt->auto_tracking_start_x,
              prev_cxt->auto_tracking_start_y);
@@ -16076,6 +16099,12 @@ cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
     ipm_in_param.input.frame_id = prev_cxt->auto_tracking_frame_id;
     ipm_in_param.input.imageW = cxt->sn_cxt.sensor_info.source_width_max;
     ipm_in_param.input.imageH = cxt->sn_cxt.sensor_info.source_height_max;
+    if (ipm_in_param.input.frame_id != prev_cxt->auto_tracking_last_frame
+        && prev_cxt->auto_tracking_frame_id != 0)
+        ipm_in_param.input.first_frame = 1;
+    else
+        ipm_in_param.input.first_frame = 0;
+    CMR_LOGV("is_first_frame =%d",ipm_in_param.input.first_frame);
 
     ret = ipm_transfer_frame(prev_cxt->auto_tracking_handle, &ipm_in_param,
                              &ipm_out_param);
@@ -16086,6 +16115,14 @@ cmr_int prev_auto_tracking_send_data(struct prev_handle *handle,
     CMR_LOGD("out param:x=%d, y=%d, status=%d, f_id=%d,",
              ipm_out_param.output.objectX, ipm_out_param.output.objectY,
              ipm_out_param.output.status, ipm_out_param.output.frame_id);
+    prev_cxt->auto_tracking_last_frame = ipm_in_param.input.frame_id;
+    if(prev_cxt->af_status == 0) {
+       ipm_out_param.output.objectX = 0;
+       ipm_out_param.output.objectY = 0;
+       ipm_out_param.output.status = 0;
+       ipm_out_param.output.frame_id = 0;
+       CMR_LOGV("ot_af_statu_clearn");
+    }
 
 exit:
     CMR_LOGV("ret %ld", ret);
@@ -16355,6 +16392,17 @@ cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
 
     return ret;
 }
+cmr_int cmr_preview_af_status_set_to_autotracking(cmr_handle preview_handle, cmr_u32 camera_id,
+                                  cmr_uint af_status) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = &handle->prev_cxt[camera_id];
+
+    prev_cxt->af_status = af_status;
+    CMR_LOGD("af_status=%d", prev_cxt->af_status);
+
+    return ret;
+}
 
 cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
                                        cmr_u32 camera_id,
@@ -16365,5 +16413,21 @@ cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
 
     prev_cxt->touch_info.touchX = input_param->fd_touchX;
     prev_cxt->touch_info.touchY = input_param->fd_touchY;
+    return ret;
+}
+
+cmr_int cmr_preview_get_prev_aspect_ratio(cmr_handle preview_handle,
+                                          cmr_u32 camera_id,
+                                          float *ratio) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+
+    CHECK_HANDLE_VALID(handle);
+    if (ratio) {
+        struct img_size *size = &handle->prev_cxt[camera_id].actual_prev_size;
+
+        *ratio = (float)size->width / (float)size->height;
+    }
+
     return ret;
 }

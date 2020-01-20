@@ -404,10 +404,18 @@ cmr_int cmr_preview_get_hdr_buf(cmr_handle handle, cmr_u32 camera_id,
 cmr_int
 cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
                                    struct auto_tracking_info *input_param);
+cmr_int
+cmr_preview_af_status_set_to_autotracking(cmr_handle preview_handle, cmr_u32 camera_id,
+                                  cmr_uint af_status);
 
 cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
                                        cmr_u32 camera_id,
                                        struct fd_touch_info *input_param);
+
+cmr_int cmr_preview_get_prev_aspect_ratio(cmr_handle preview_handle,
+                                          cmr_u32 camera_id,
+                                          float *ratio);
+
 
 #ifdef __cplusplus
 }

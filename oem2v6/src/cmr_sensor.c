@@ -1227,6 +1227,8 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
     cmr_u32 ret = CMR_CAMERA_SUCCESS;
     cmr_u32 sns_cmd = SENSOR_IOCTL_GET_STATUS;
     cmr_u8 read_flag = 0;
+
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
     ret = cmr_sns_get_ioctl_cmd(&sns_cmd, cmd);
@@ -1238,8 +1240,6 @@ cmr_int cmr_sns_ioctl(struct sensor_drv_context *sensor_cxt, cmr_uint cmd,
     if (SENSOR_IOCTL_GET_STATUS != sns_cmd) {
         CMR_LOGI("cmd = %d, arg = 0x%lx.\n", sns_cmd, arg);
     }
-
-    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
 
     if (!sensor_is_init_common(sensor_cxt)) {
         CMR_LOGE("sensor has not init.\n");

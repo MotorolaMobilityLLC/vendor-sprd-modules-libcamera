@@ -880,7 +880,7 @@ static cmr_int imx230_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
 
-    if (!static_info && !module_info) {
+    if (!static_info || !module_info) {
         SENSOR_LOGI("error:static_info:0x%x,module_info:0x%x", static_info,
                     module_info);
         return SENSOR_FAIL;

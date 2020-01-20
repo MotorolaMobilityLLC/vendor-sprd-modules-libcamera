@@ -273,11 +273,11 @@ int SprdCamera3StereoVideo::camera_device_open(
 
     int rc = NO_ERROR;
 
-    HAL_LOGI("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
+    HAL_LOGI("id= %d", atoi(id));
 
     rc = mMuxer->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGI("id= %d, rc: %d", atoi(id), rc);
@@ -2762,13 +2762,11 @@ int SprdCamera3StereoVideo::_flush(const struct camera3_device *device) {
         if (mMuxerThread->isRunning()) {
             mMuxerThread->requestExit();
         }
-    }
-
-    {
         // in case the other threads need to complete process data
         mMuxerThread->join();
         mMuxerThread->mReProcessThread->join();
     }
+
     HAL_LOGI("X");
     return rc;
 }

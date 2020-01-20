@@ -312,7 +312,7 @@ static cmr_int hdr_transfer_frame(cmr_handle class_handle,
     ipm_get_sensor_info get_sensor_info;
     cmr_u32 hdr_enable = 0;
 
-    if (!out || !in || !class_handle) {
+    if (!out) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }

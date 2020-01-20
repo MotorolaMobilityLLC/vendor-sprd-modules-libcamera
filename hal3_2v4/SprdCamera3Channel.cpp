@@ -494,7 +494,7 @@ int SprdCamera3RegularChannel::releaseZSLInputBuff() {
     return NO_ERROR;
 }
 
-int SprdCamera3RegularChannel::kMaxBuffers = 4;
+int SprdCamera3RegularChannel::kMaxBuffers = 6;
 /**************************SprdCamera3PicChannel
  * start**********************************/
 SprdCamera3PicChannel::SprdCamera3PicChannel(

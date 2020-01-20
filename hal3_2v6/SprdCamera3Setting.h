@@ -143,6 +143,7 @@ typedef struct {
     uint8_t af_state;
     uint8_t af_mode;
     int32_t af_regions[5];
+    int32_t ot_frame_id;
     uint8_t af_available_modes[6];
     int32_t af_roi[5];
 
@@ -331,6 +332,7 @@ typedef struct {
     uint8_t pipeline_depth;
     /*Frame number to save request frame for auto tracking*/
     int32_t frame_id;
+    uint32_t ot_frame_num;
 } REQUEST_Tag;
 
 typedef struct {

@@ -481,6 +481,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
         if (handle == NULL) {
             char const *err_str = dlerror();
             LOGE("dlopen error%s", err_str ? err_str : "unknown");
+            return;
         }
 
         /* Get the address of the struct hal_module_info. */
@@ -488,6 +489,7 @@ SprdCameraHardware::SprdCameraHardware(int cameraId)
         omi = (oem_module_t *)dlsym(handle, sym);
         if (omi == NULL) {
             LOGE("load: couldn't find symbol %s", sym);
+            return;
         }
 
         mHalOem->dso = handle;

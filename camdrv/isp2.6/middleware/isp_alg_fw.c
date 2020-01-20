@@ -42,8 +42,6 @@
 #include "tof_ctrl.h"
 #include "isp_simulation.h"
 
-//#define  CFG_AEM_WIN  1
-
 #define LIBCAM_ALG_FILE "libispalg.so"
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 #define MIN_FRAME_INTERVAL_MS  (10)
@@ -294,10 +292,6 @@ struct isp_alg_fw_context {
 	cmr_u8 first_frm;
 	cmr_u8 aethd_pri_set;
 	nsecs_t last_sof_time;
-#ifdef CFG_AEM_WIN
-	struct ae_ctrl_zoom_info zoom_info;
-	struct ae_ctrl_win_info aem_win;
-#endif
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_awb_statistic_info aem_ue;
 	struct isp_awb_statistic_info aem_ae;
@@ -1002,6 +996,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 	cmr_u16 val = 0;
 	cmr_u32 pos = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 af_get_aelock = 0;
 
 	if (!cxt) {
 		ISP_LOGE("fail to get valid cxt ptr\n");
@@ -1075,12 +1070,20 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 		break;
 	case AF_CB_CMD_SET_AE_LOCK:
+		af_get_aelock = 1;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, param1);
+
+		if (cxt->ops.ae_ops.ioctrl)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_STATUS, (void *)&af_get_aelock, NULL);
 		break;
 	case AF_CB_CMD_SET_AE_UNLOCK:
+		af_get_aelock = 0;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RESTORE, NULL, param1);
+
+		if (cxt->ops.ae_ops.ioctrl)
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_STATUS, (void *)&af_get_aelock,NULL);
 		break;
 	case AF_CB_CMD_SET_AE_CAF_LOCK:
 		if (cxt->ops.ae_ops.ioctrl)
@@ -1689,7 +1692,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	struct isp_awb_statistic_info *ae_stat_ptr = NULL;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	struct dcam_dev_aem_win *ae_win;
-	struct sprd_img_rect *zoom_rect;
+	struct aem_win_info win;
 
 	cmr_u64 *uaddr;
 	cmr_u64 stats_val0 = { 0 };
@@ -1717,29 +1720,21 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	ae_win = (struct dcam_dev_aem_win *)statis_info->uaddr;
 	blk_num = ae_win->blk_num_x * ae_win->blk_num_y;
 	blk_size = ae_win->blk_width * ae_win->blk_height / 4;
-	zoom_rect = (struct sprd_img_rect *)(statis_info->uaddr + sizeof(struct dcam_dev_aem_win));
 
-#ifdef CFG_AEM_WIN
-	cxt->zoom_info.start_x = zoom_rect->x;
-	cxt->zoom_info.start_y = zoom_rect->y;
-	cxt->zoom_info.size_x = zoom_rect->w;
-	cxt->zoom_info.size_y = zoom_rect->h;
-	cxt->zoom_info.zoom_ratio = statis_info->zoom_ratio;
-	cxt->aem_win.offset_x = (cmr_s16)(ae_win->offset_x & 0xFFFF);
-	cxt->aem_win.offset_y = (cmr_s16)(ae_win->offset_y & 0xFFFF);
-	cxt->aem_win.blk_num_x = ae_win->blk_num_x;
-	cxt->aem_win.blk_num_y = ae_win->blk_num_y;
-	cxt->aem_win.blk_size_x = ae_win->blk_width;
-	cxt->aem_win.blk_size_y = ae_win->blk_height;
-
-	ISP_LOGD("frame_id %d, time %d.%06d, roi (%d %d %d %d), ratio 0x%08x, aem win(%d %d %d %d %d %d)\n",
+	ISP_LOGV("frame_id %d, time %d.%06d, ratio 0x%08x, aem win(%d %d %d %d %d %d)\n",
 		statis_info->frame_id, statis_info->sec, statis_info->usec,
-		zoom_rect->x, zoom_rect->y, zoom_rect->w, zoom_rect->h,
 		statis_info->zoom_ratio,
 		ae_win->offset_x, ae_win->offset_y,
 		ae_win->blk_num_x, ae_win->blk_num_y,
 		ae_win->blk_width, ae_win->blk_height);
-#endif
+
+	win.offset_x = (cmr_s16)(ae_win->offset_x & 0xFFFF);
+	win.offset_y = (cmr_s16)(ae_win->offset_y & 0xFFFF);
+	win.blk_num_x = ae_win->blk_num_x;
+	win.blk_num_y = ae_win->blk_num_y;
+	win.blk_size_x = ae_win->blk_width;
+	win.blk_size_y = ae_win->blk_height;
+	isp_br_ioctrl(cxt->sensor_role, SET_AE_WIN, &win, NULL);
 
 	uaddr = (cmr_u64 *)(statis_info->uaddr + STATIS_AEM_HEADER_SIZE);
 	for (i = 0; i < blk_num; i++) {
@@ -1956,9 +1951,19 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 	struct isp_hist_statistic_info *hist_stats;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
+	struct dcam_dev_hist_info *hist_info;
+	struct img_rect win;
 
 	cxt->bayerhist_update = 1;
-	ptr = (cmr_u64 *)statis_info->uaddr;
+
+	hist_info = (struct dcam_dev_hist_info *)statis_info->uaddr;
+	win.start_x = hist_info->bayer_hist_stx;
+	win.start_y = hist_info->bayer_hist_sty;
+	win.width = hist_info->bayer_hist_endx - hist_info->bayer_hist_stx;
+	win.height = hist_info->bayer_hist_endy - hist_info->bayer_hist_sty;
+	isp_br_ioctrl(cxt->sensor_role, SET_HIST_WIN, &win, NULL);
+
+	ptr = (cmr_u64 *)(statis_info->uaddr + STATIS_HIST_HEADER_SIZE);
 
 	/* G */
 	hist_stats = &cxt->bayer_hist_stats[0];
@@ -2198,17 +2203,6 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.stat_img = cxt->aem_stats_data.r_info;
 	in_param.sec = cxt->aem_stats_data.sec;
 	in_param.usec = cxt->aem_stats_data.usec;
-#ifdef CFG_AEM_WIN
-	in_param.zoom_info = cxt->zoom_info;
-	in_param.win_info = cxt->aem_win;
-	ISP_LOGD("zoom roi (%d %d %d %d), ratio %d, aem win (%d %d %d %d %d %d)\n",
-		in_param.zoom_info.start_x, in_param.zoom_info.start_y,
-		in_param.zoom_info.size_x, in_param.zoom_info.size_y,
-		in_param.zoom_info.zoom_ratio,
-		in_param.win_info.offset_x, in_param.win_info.offset_y,
-		in_param.win_info.blk_num_x, in_param.win_info.blk_num_y,
-		in_param.win_info.blk_size_x, in_param.win_info.blk_size_y);
-#endif
 	in_param.sum_ue_r = cxt->aem_ue.r_info;
 	in_param.sum_ue_g = cxt->aem_ue.g_info;
 	in_param.sum_ue_b = cxt->aem_ue.b_info;
@@ -3121,6 +3115,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 is_raw_capture = 0;
+	cmr_u8 tool_eb = 0;
 	char value[PROPERTY_VALUE_MAX];
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
 	CMR_MSG_INIT(message1);
@@ -3180,17 +3175,22 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 			break;
 		}
 
-		ret = ispalg_ae_process((cmr_handle) cxt);
-		if (ret)
-			ISP_LOGE("fail to start ae process");
+		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+		if (!strcmp(value, "true"))
+			tool_eb = 1;
+
 		/* 4in1 full size capture(non-zsl), awb don't need work */
-		if ((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->ambient_highlight == 1)) {
-			ISP_LOGI("high res high light capture.\n");
+		if (((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->ambient_highlight == 1))
+			|| ((tool_eb == 1) && (cxt->work_mode == 1))) {
+			cxt->aem_is_update = 1;
+			ret = ispalg_ae_process((cmr_handle) cxt);
+			ISP_LOGD("high res high light capture.\n");
 		} else {
-			ret = ispalg_awb_process((cmr_handle) cxt);
-			if (ret)
-				ISP_LOGE("fail to start awb process");
+			ret = ispalg_ae_process((cmr_handle) cxt);
+			ret |= ispalg_awb_process((cmr_handle) cxt);
 		}
+		if (ret)
+			ISP_LOGE("fail to start ae or awb process");
 
 		cxt->aem_is_update = 0;
 
@@ -4906,13 +4906,13 @@ cmr_int ispalg_calc_stats_size(cmr_handle isp_alg_handle)
 
 	/* for afl */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_AFL];
-	buf_info->num = STATIS_AFL_BUF_NUM;
 	buf_info->size = STATIS_AFL_SIZE;
 	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
+	buf_info->num = STATIS_AFL_BUF_NUM;
 
 	/* for bayer hist (sharkl3 and previous version have no bayer hist) */
 	buf_info = &cxt->stats_mem_info.buf_info[STATIS_HIST];
-	buf_info->size = STATIS_HIST_BUF_SIZE;
+	buf_info->size = STATIS_HIST_BUF_SIZE + STATIS_HIST_HEADER_SIZE;
 	buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 	buf_info->num = STATIS_HIST_BUF_NUM;
 

@@ -37,9 +37,13 @@ enum isp_br_ioctl_cmd {
 	GET_STAT_AWB_DATA_AE,
 	SET_AE_TARGET_REGION,
 	SET_AE_REF_CAMERA_ID,
+	SET_AE_VISIBLE_REGION,
+	GET_AE_VISIBLE_REGION,
 	GET_AE_SYNC_DATA,
 	SET_AE_BLOCK_SIZE,
 	SET_AE_WINDOW_RECT,
+	SET_AE_WIN,
+	GET_AE_WIN,
 
 	// AWB
 	SET_MATCH_AWB_DATA,
@@ -50,6 +54,12 @@ enum isp_br_ioctl_cmd {
 	GET_GAIN_AWB_DATA,
 	SET_FOV_DATA,
 	GET_FOV_DATA,
+
+	// HIST
+	SET_HIST_WIN,
+	GET_HIST_WIN,
+	SET_HIST_STATS,
+	GET_HIST_STATS,
 
 	// OTP
 	SET_OTP_AE,
@@ -74,15 +84,20 @@ enum isp_br_ioctl_cmd {
 	GET_SENSOR_ROLE,/* dont care first argument */
 	GET_ISPALG_FW,
 	GET_SENSOR_COUNT,/* number of initialized bridge instances */
+	SET_GLOBAL_ZOOM_RATIO,/* zoom bar value on UI */
+	GET_GLOBAL_ZOOM_RATIO,/* zoom bar value on UI */
 
 	SET_USER_COUNT,/* number of AE active instances, set by AE */
 	GET_USER_COUNT,/* number of AE active instances, set by AE */
 
-	SET_SYNC_SLAVE_AE_DATA,
-	GET_SYNC_SLAVE_AE_DATA,
+	SET_SYNC_SLAVE_ACTUAL_DATA,
+	GET_SYNC_SLAVE_ACTUAL_DATA,
 
-	SET_FLASH_STATE,
-	GET_FLASH_STATE,
+	SET_SYNC_SLAVE_LIB_OUTPUT,
+	GET_SYNC_SLAVE_LIB_OUTPUT,
+
+	SET_SYNC_SLAVE_SYNC_OUTPUT,
+	GET_SYNC_SLAVE_SYNC_OUTPUT,
 };
 
 struct awb_gain_data {
@@ -118,6 +133,15 @@ struct aem_info {
 	cmr_u32 aem_stat_win_h;
 };
 
+struct aem_win_info {
+	cmr_s16 offset_x;
+	cmr_s16 offset_y;
+	cmr_u32 blk_num_x;
+	cmr_u32 blk_num_y;
+	cmr_u32 blk_size_x;
+	cmr_u32 blk_size_y;
+};
+
 struct module_sensor_info {
 	struct sensor_info sensor_info[CAM_SENSOR_MAX];
 };
@@ -140,12 +164,37 @@ struct ae_match_data {
 	struct sensor_ex_exposure exp;
 };
 
-struct ae_sync_slave_data {
+struct ae_sync_actual_data {
 	cmr_u32 exp_time;
 	cmr_u32 exp_line;
 	cmr_u32 ae_gain;
 	cmr_u32 dmy_line;
 	cmr_u32 frm_len;
+	cmr_u32 frame_len_def;
+	cmr_u32 sensor_gain;
+	cmr_u32 isp_gain;
+};
+
+struct ae_lib_output_data {
+	cmr_u32 line_time;
+	cmr_u32 exp_line;
+	cmr_u32 exp_time;
+	cmr_s32 dummy;
+	cmr_s32 frm_len;
+	cmr_u32 gain;			/*gain = sensor_gain * isp_gain */
+	cmr_u32 sensor_gain;
+	cmr_u32 isp_gain;
+};
+
+struct ae_sync_lib_outout_data {
+	cmr_u32 ae_idx;
+	cmr_u32 exp_time;
+	cmr_u32 line_time;
+	cmr_u32 exp_line;
+	cmr_u32 dmy_line;
+	cmr_u32 frm_len;
+	cmr_u32 ae_gain;
+	cmr_u32 calc_y;
 };
 
 struct ae_match_stats_data {
@@ -157,6 +206,11 @@ struct ae_match_stats_data {
 
 struct awb_match_stats_data {
 	cmr_u32 *stats_data;
+};
+
+struct hist_match_stats_data {
+	cmr_u32 *stats_data;
+	cmr_u32 stats_data_size;
 };
 
 struct fov_data {

@@ -1119,12 +1119,18 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_SET_MASTER_ID: {
         int8_t *master_id = (int8_t *)param;
-        CMR_LOGD("master id %d", *master_id);
+        CMR_LOGV("master id %d", *master_id);
         camera_set_oem_masterid(*master_id);
         break;
     }
     case CAMERA_IOCTRL_SET_REF_CAMERA_ID:
         camera_local_set_ref_camera_id(handle, (cmr_u32 *)param);
+        break;
+    case CAMERA_IOCTRL_SET_VISIBLE_REGION:
+        camera_local_set_visible_region(handle, (struct visible_region_info *)param);
+        break;
+    case CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO:
+        camera_local_set_global_zoom_ratio(handle, (float *)param);
         break;
     case CAMERA_IOCTRL_SET_CAP_STATE:
         camera_local_cap_state(handle, (bool *)param);
@@ -1194,8 +1200,11 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
 	break;
     }
     case CAMERA_TOCTRL_SET_HIGH_RES_MODE: {
-    ret = camera_set_high_res_mode(handle, *(cmr_uint *)param);
-    break;
+        ret = camera_set_high_res_mode(handle, *(cmr_uint *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_GET_BV: {
+        ret = camera_get_bv_info(handle,(cmr_u32 *)param);
     }
     default:
         break;

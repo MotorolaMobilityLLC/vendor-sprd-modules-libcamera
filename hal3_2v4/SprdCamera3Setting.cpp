@@ -1776,7 +1776,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     // 7 back ultra wide enable
-    if (findSensorRole(MODULE_SPW_NONE_BACK) >= 0) {
+    if (sensorGetRole(MODULE_SPW_NONE_BACK) >= 0) {
         available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.warp",
         "persist.vendor.cam.ultra.wide.enable"));
     } else {

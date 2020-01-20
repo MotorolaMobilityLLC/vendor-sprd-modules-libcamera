@@ -153,7 +153,7 @@
 	/*median_thr*/
 	0x0050,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param4.&BasePoint=1&*/
@@ -192,7 +192,7 @@
 	/*median_thr*/
 	0x0050,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -231,7 +231,7 @@
 	/*median_thr*/
 	0x0050,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param6.&BasePoint=1&*/
@@ -270,7 +270,7 @@
 	/*median_thr*/
 	0x0050,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param7.&BasePoint=1&*/
@@ -309,7 +309,7 @@
 	/*median_thr*/
 	0x0050,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param8.&BasePoint=1&*/

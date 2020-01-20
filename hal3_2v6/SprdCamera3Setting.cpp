@@ -577,7 +577,8 @@ const cam_stream_info_t subSensor_stream_info[] = {
     {{960, 720}, 33331760L, 33331760L},
     {{800, 600}, 33331760L, 33331760L},
     {{640, 480}, 33331760L, 33331760L},
-    {{320, 240}, 33331760L, 33331760L}};
+    {{320, 240}, 33331760L, 33331760L},
+    {{720, 480}, 33331760L, 33331760L}};
 
 const float kavailable_lens_info_aperture[] = {1.8, 2.0, 2.2, 2.4,
                                                2.6, 2.8, 3.0};
@@ -1061,9 +1062,9 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         memcpy(&sensor_fov[cameraId], &phyPtr->fov_info,
                sizeof(phyPtr->fov_info));
     }
-    if (cameraId == findSensorRole(MODULE_SPW_NONE_BACK))
+    if (cameraId == sensorGetRole(MODULE_SPW_NONE_BACK))
         sensor_angle_fov[1] = phyPtr->fov_angle; // 117.0;
-    if (cameraId == findSensorRole(MODULE_OPTICSZOOM_WIDE_BACK))
+    if (cameraId == sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK))
         sensor_angle_fov[0] = phyPtr->fov_angle; // 79.4;
 
     if (phyPtr->source_width_max == 1920 && phyPtr->source_height_max == 1080) {
@@ -1786,6 +1787,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         stream_sizes_tbl_cnt = sizeof(stream_info) / sizeof(cam_stream_info);
     }
 
+
     /* get sensor full size,limit to binning size,default 5M */
     struct img_size s_limit;
     struct phySensorInfo *phyPtr = NULL;
@@ -1933,7 +1935,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     // The maximum ratio between both active area width and crop region width
     // and active area height and crop region height, for
     // android.scaler.cropRegion.
-    int ultrawide_id = findSensorRole(MODULE_SPW_NONE_BACK);
+    int ultrawide_id = sensorGetRole(MODULE_SPW_NONE_BACK);
     s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
     s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
     HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
@@ -2359,7 +2361,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     // 7 back ultra wide enable
-    if (findSensorRole(MODULE_SPW_NONE_BACK) >= 0) {
+    if (sensorGetRole(MODULE_SPW_NONE_BACK) >= 0) {
         available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.warp",
                                "persist.vendor.cam.ultra.wide.enable"));
@@ -2916,7 +2918,7 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_IS_3DNR_SCENE,
                       &(s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene), 1);
-    int ultrawide_id = findSensorRole(MODULE_SPW_NONE_BACK);
+    int ultrawide_id = sensorGetRole(MODULE_SPW_NONE_BACK);
     if (ultrawide_id >= 0) {
         staticInfo.update(ANDROID_SPRD_ULTRAWIDE_ID,
                           &(s_setting[cameraId].sprddefInfo.ultrawide_id), 1);
@@ -4113,7 +4115,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
                            &(s_setting[mCameraId].otpInfo.dual_otp_flag), 1);
     }
 
-    if (mCameraId == findSensorRole(MODULE_SPW_NONE_BACK)) {
+    if (mCameraId == sensorGetRole(MODULE_SPW_NONE_BACK)) {
         if (s_setting[mCameraId].otpInfo.otp_size != 0)
             requestInfo.update(ANDROID_SPRD_OTP_DATA,
                                s_setting[mCameraId].otpInfo.otp_data,
@@ -5077,6 +5079,7 @@ int SprdCamera3Setting::updateWorkParameters(
                         if (af_triger == ANDROID_CONTROL_AF_TRIGGER_CANCEL) {
                             HAL_LOGD("cancel auto focus dont set af region");
                         } else {
+                            s_setting[mCameraId].controlInfo.ot_frame_id = s_setting[mCameraId].requestInfo.ot_frame_num;
                             for (i = 0; i < 5; i++)
                                 s_setting[mCameraId].controlInfo.af_regions[i] =
                                     af_area[i];

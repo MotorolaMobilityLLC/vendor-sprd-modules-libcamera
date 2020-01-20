@@ -198,6 +198,11 @@ cmr_int ipm_transfer_frame(cmr_handle ipm_class_handle, struct ipm_frame_in *in,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    if (!in) {
+        CMR_LOGE("invalid parameters");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
     ret = common_handle->ops->transfer_frame(ipm_class_handle, in, out);
 
     return ret;

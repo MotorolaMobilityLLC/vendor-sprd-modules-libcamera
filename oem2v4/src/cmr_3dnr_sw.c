@@ -1432,16 +1432,13 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     property_get("vendor.cam.3dnrclose", value, "0");
     if (!strcmp(value, "0")) {
         if (video_buf.cpu_buffer.bufferY != NULL) {
-            CMR_LOGV("add threednr_function_pre previewbuffer with video :%p , "
+            if ((small_buf.cpu_buffer.bufferY != NULL) && (big_buf.cpu_buffer.bufferY != NULL)) {
+                CMR_LOGV("add threednr_function_pre previewbuffer with video :%p , "
                      "small:%p , video buffer:%p",
                      big_buf.cpu_buffer.bufferY, small_buf.cpu_buffer.bufferY,
                      video_buf.cpu_buffer.bufferY);
-
-            if ((small_buf.cpu_buffer.bufferY != NULL) &&
-                (big_buf.cpu_buffer.bufferY != NULL))
-                ret = threednr_function_pre(threednr_prev_handle->proc_handle, &small_buf, &big_buf, &video_buf,
-                                            &preview_param);
-            else {
+                ret = threednr_function_pre(threednr_prev_handle->proc_handle, &small_buf, &big_buf, &video_buf, &preview_param);
+            } else {
                 CMR_LOGE(
                     "preview or scale image is null, direct copy video buffer");
                 memcpy(video_buf.cpu_buffer.bufferY, big_buf.cpu_buffer.bufferY,
@@ -1591,7 +1588,7 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
     union c3dnr_buffer big_buf, small_buf;
     cmr_u32 cur_num = threednr_handle->g_num;
 
-    if (!out || !in || !class_handle) {
+    if (!out) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }

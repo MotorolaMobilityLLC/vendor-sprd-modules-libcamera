@@ -252,7 +252,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIspToolStart(false), mSubRawHeapNum(0), m3dnrGraphicHeapNum(0),
       m3dnrGraphicPathHeapNum(0), mSubRawHeapSize(0), mPathRawHeapNum(0),
       mPathRawHeapSize(0), mPreviewDcamAllocBufferCnt(0), mPreviewFrameNum(0),
-      mRecordFrameNum(0), mIsRecording(false), mPreAllocCapMemInited(0),
+      mRecordFrameNum(0), mIsRecording(false), mNonZslSnapshot(false), mPreAllocCapMemInited(0),
       mIsPreAllocCapMemDone(0), mZSLModeMonitorMsgQueHandle(0),
       mZSLModeMonitorInited(0), mCNRMode(0), mGyroInit(0), mGyroExit(0),
       mEisPreviewInit(false), mEisVideoInit(false), mGyroNum(0),
@@ -489,6 +489,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     isCallbackCapture = false;
     mMasterId = 0;
     clearPrevStream = false;
+    mBurstCapture = false;
 
     HAL_LOGI(":hal3: X");
 }
@@ -661,8 +662,10 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     case CAMERA_CHANNEL_TYPE_PICTURE: {
         setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
         if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
-            mTakePictureMode == SNAPSHOT_ONLY_MODE)
+            mTakePictureMode == SNAPSHOT_ONLY_MODE){
+            mTakePicNum = frame_number;
             ret = takePicture();
+        }
         else if (mTakePictureMode == SNAPSHOT_ZSL_MODE) {
             mVideoSnapshotFrameNum = frame_number;
             if (mSprdReprocessing) {
@@ -3483,8 +3486,18 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         setCameraState(SPRD_ERROR, STATE_PREVIEW);
         HAL_LOGE("fail to camera_stop_preview()");
     }
-
     WaitForPreviewStop();
+
+    if (mNonZslSnapshot == true && mBurstCapture == true) {
+        int32_t frame_num;
+        SprdCamera3RegularChannel *channel =
+            reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+        mNonZslSnapshot = false;
+        mBurstCapture == false;
+        frame_num = mTakePicNum - 1;
+        channel->channelClearInvalidQBuff(frame_num, start_timestamp,
+                                          CAMERA_STREAM_TYPE_PREVIEW);
+    }
     mIsStoppingPreview = 0;
 
     deinitPreview();
@@ -6860,6 +6873,7 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
             mPicCaptureCnt = 1;
             mZslPreviewMode = false;
         } else {
+            mNonZslSnapshot = true;
             mTakePictureMode = SNAPSHOT_NO_ZSL_MODE;
             mCaptureMode = CAMERA_NORMAL_MODE;
             mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;

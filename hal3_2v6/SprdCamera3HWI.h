@@ -102,6 +102,8 @@ class SprdCamera3HWI {
     void setMultiCameraMode(multiCameraMode Mode);
     void setMasterId(uint8_t masterId);
     void setRefCameraId(uint32_t camera_id);
+    void setVisibleRegion(uint32_t serial, int32_t region[4]);
+    void setGlobalZoomRatio(float ratio);
     void setCapState(bool flag);
     static bool isMultiCameraMode(int Mode);
     void setSprdCameraLowpower(int flag);
@@ -111,6 +113,8 @@ class SprdCamera3HWI {
     void getDualOtpData(void **addr, int *size, int *read);
     void getOnlineBuffer(void *cali_info);
     void getIspDebugInfo(void **addr, int *size);
+    void setUltraWideMode(unsigned int on_off);
+    void setMultiCaptureTimeStamp(uint64_t time_stamp);
 
   private:
     int openCamera();
@@ -127,6 +131,7 @@ class SprdCamera3HWI {
   public:
     SprdCamera3Setting *mSetting;
     uint32_t mFrameNum;
+    uint32_t pre_frame_num;
 
   private:
     typedef struct {

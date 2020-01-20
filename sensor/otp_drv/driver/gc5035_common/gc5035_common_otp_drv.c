@@ -260,6 +260,7 @@ static cmr_int gc5035_common_parse_module_data(cmr_handle otp_drv_handle)
 
 	if (OTP_CAMERA_SUCCESS != ret) {
 		OTP_LOGE("module data parse error, parse failed");
+		free(module_info);
 		return ret;
 	} else {
 		*(module_info) = 0x00;

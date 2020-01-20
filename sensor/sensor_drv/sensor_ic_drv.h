@@ -247,6 +247,7 @@ struct sensor_ev_info_t {
     cmr_u16 preview_shutter;
     float preview_gain;
     cmr_u16 preview_framelength;
+    cmr_u32 preview_exptime;
 };
 
 typedef struct sensor_extend_info_tag {

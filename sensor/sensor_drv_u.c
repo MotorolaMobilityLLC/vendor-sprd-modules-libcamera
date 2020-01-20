@@ -206,6 +206,80 @@ void *sensor_get_dev_cxt_Ex(cmr_u32 slot_id) {
     return (void *)sensor_cxt;
 }
 
+static cmr_int sensor_write_pdaf_info(struct sensor_pdaf_info phasePixelMap, char *name) {
+    FILE *fp = NULL;
+    char pd_file_path[128];
+    PhasePixel_MAP pixel_info_saved;
+    memset(&pd_file_path, 0, sizeof(pd_file_path));
+    memset(&pixel_info_saved, 0, sizeof(PhasePixel_MAP));
+    pixel_info_saved.count = 2 * phasePixelMap.pd_pos_size;
+    pixel_info_saved.block_start_col = phasePixelMap.pd_offset_x;
+    pixel_info_saved.block_start_row = phasePixelMap.pd_offset_y;
+    pixel_info_saved.block_end_col = phasePixelMap.pd_end_x;
+    pixel_info_saved.block_end_row = phasePixelMap.pd_end_y;
+    pixel_info_saved.block_width = phasePixelMap.pd_block_w;
+    pixel_info_saved.block_height = phasePixelMap.pd_block_h;
+    SENSOR_LOGV("number is %u", pixel_info_saved.count);
+    SENSOR_LOGV("block_start_col is %u -->%u", pixel_info_saved.block_start_col,
+                pixel_info_saved.block_start_row);
+    SENSOR_LOGV("block_width is %u -->%u", pixel_info_saved.block_width,
+                pixel_info_saved.block_height);
+    for(int i = 0; i < pixel_info_saved.count; i++) {
+        pixel_info_saved.pixel[i].rx = phasePixelMap.pd_pos_col[i];
+        pixel_info_saved.pixel[i].ry = phasePixelMap.pd_pos_row[i];
+        pixel_info_saved.pixel[i].phase_pos = phasePixelMap.pd_is_right[i];
+        SENSOR_LOGV("pixel coordinate is [%u, %u, %u]", pixel_info_saved.pixel[i].rx,
+            pixel_info_saved.pixel[i].ry, pixel_info_saved.pixel[i].phase_pos);
+    }
+    SENSOR_LOGV("finish prepare pd file with nam %s", name);
+    sprintf(pd_file_path, "%s%s.bin", "/data/vendor/cameraserver/pd_", name);
+    fp = fopen(pd_file_path, "wb+");
+    if(!fp) {
+        SENSOR_LOGE("Cannot open file");
+        goto exit;
+    } else {
+        fwrite(&pixel_info_saved, sizeof(PhasePixel_MAP), 1, fp);
+        fclose(fp);
+    }
+    SENSOR_LOGV("finish saving file");
+    return SENSOR_SUCCESS;
+exit:
+    return SENSOR_FAIL;
+}
+
+static cmr_int sensor_save_pdaf_info(struct sensor_drv_context *sensor_cxt) {
+    SENSOR_VAL_T val;
+    char *name_of_sensor = NULL;
+    struct sensor_pdaf_info phasePixelMap;
+    char property_value[PROPERTY_VALUE_MAX];
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    cmr_int ret = SENSOR_SUCCESS;
+    memset(&property_value, 0, sizeof(property_value));
+    property_get("persist.vendor.cam.sensor.store.pdaf.file", property_value, "0");
+    SENSOR_LOGV("property_value is %s", property_value);
+    if(atoi(property_value) && sensor_cxt && sensor_cxt->static_info
+        && sensor_cxt->static_info->pdaf_supported) {
+        SENSOR_LOGV("support pdaf info is %u", sensor_cxt->static_info->pdaf_supported);
+        val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
+        val.pval = &phasePixelMap;
+        sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+        if(sns_ops && !sns_ops->ext_ops[sns_cmd].ops
+            (sensor_cxt->sns_ic_drv_handle, (cmr_u32)&val)) {
+            name_of_sensor = sensor_cxt->xml_info->cfgPtr->sensor_name;
+            if(sensor_write_pdaf_info(phasePixelMap, name_of_sensor)) {
+                goto exit;
+            }
+        } else
+            SENSOR_LOGE("unvalid param");
+    } else
+        goto exit;
+    return ret;
+exit:
+    SENSOR_LOGE("cannot save file");
+    return SENSOR_FAIL;
+}
+
 cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
                                struct sensor_flash_level *level) {
     int ret = SENSOR_SUCCESS;
@@ -865,6 +939,7 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     }
 
     ret = sensor_drv_open(sensor_cxt, slot_id);
+
     if (ret) {
         SENSOR_LOGE("first open sensor failed, restart identify and open");
         if (SENSOR_SUCCESS == sensor_drv_identify(sensor_cxt, slot_id)) {
@@ -887,13 +962,13 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
     }
 
 exit:
+
     if (ret) {
         sensor_destroy_ctrl_thread(sensor_cxt);
         hw_sensor_drv_delete(sensor_cxt->hw_drv_handle);
         sensor_cxt->hw_drv_handle = NULL;
         sensor_cxt->sensor_hw_handler = NULL;
     }
-
     return ret;
 }
 
@@ -1416,6 +1491,46 @@ cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
     }
 
     switch (cmd) {
+    case SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME: {
+        cmr_u32 exposure_time = param / 1000;
+        cmr_int orig_exposure_time = param;
+        cmr_int regen_exposure_time = 0x00;
+        sensor_exif_info_ptr->valid.ExposureTime = 1;
+
+        if (0x00 == exposure_time) {
+            sensor_exif_info_ptr->valid.ExposureTime = 0;
+        } else if (1000000 >= exposure_time) {
+            sensor_exif_info_ptr->ExposureTime.numerator = 0x01;
+            sensor_exif_info_ptr->ExposureTime.denominator =
+                (1000000.00 / exposure_time + 0.5);
+        } else {
+            cmr_u32 second = 0x00;
+            do {
+                second++;
+                exposure_time -= 1000000;
+                if (1000000 >= exposure_time) {
+                    break;
+                }
+            } while (1);
+            sensor_exif_info_ptr->ExposureTime.denominator =
+                1000000 / exposure_time;
+            sensor_exif_info_ptr->ExposureTime.numerator =
+                sensor_exif_info_ptr->ExposureTime.denominator * second;
+        }
+        if (0 != sensor_exif_info_ptr->ExposureTime.denominator)
+            regen_exposure_time =
+                1000000000ll * sensor_exif_info_ptr->ExposureTime.numerator /
+                sensor_exif_info_ptr->ExposureTime.denominator;
+        // To check within range of CTS
+        if ((0x00 != exposure_time) &&
+            (((orig_exposure_time - regen_exposure_time) > 100000) ||
+             ((regen_exposure_time - orig_exposure_time) > 100000))) {
+            sensor_exif_info_ptr->ExposureTime.denominator =
+                (1000000.00 / exposure_time) * 1000 + 0.5;
+            sensor_exif_info_ptr->ExposureTime.numerator = 1000;
+        }
+        break;
+    }
     case SENSOR_EXIF_CTRL_EXPOSURETIME: {
         enum sensor_mode img_sensor_mode = sensor_cxt->sensor_mode;
         if (img_sensor_mode == 0)
@@ -1860,9 +1975,10 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
 
     cmr_int ret = 0;
     struct _sensor_val_tag param;
-    SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+
     if (module && module->otp_drv_info.otp_drv_entry &&
         sensor_cxt->otp_drv_handle) {
         switch (cmd) {
@@ -2414,6 +2530,7 @@ static cmr_int sensor_ic_write_multi_ae_info(cmr_handle handle, void *param) {
         aec_reg_info[i].exp.dummy = ae_info[i].exp.dummy;
         aec_reg_info[i].exp.size_index = ae_info[i].exp.size_index;
         aec_reg_info[i].gain = ae_info[i].gain;
+        aec_reg_info[i].exp.exp_time = ae_info[i].exp.exp_time;
         SENSOR_LOGV("read aec i %u count %d handle %p", i, count,
                     sensor_handle);
         ret = sensor_ic_read_aec_info(sensor_handle, (&aec_reg_info[i]));
@@ -2887,7 +3004,7 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
     sensor_cxt->static_info =
         sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_STATIC_INFO);
     sensor_drv_get_tuning_param(sensor_cxt);
-
+    sensor_save_pdaf_info(sensor_cxt);
     return 0;
 }
 
@@ -2919,7 +3036,10 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     struct xml_camera_cfg_info *camera_cfg;
     struct otp_drv_lib *libOtpPtr = &otp_lib_mngr[sensor_cxt->slot_id];
     struct vcm_drv_lib *libVcmPtr = &vcm_lib_mngr[sensor_cxt->slot_id];
+
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
+    SENSOR_DRV_CHECK_ZERO(sns_module);
 
     camera_cfg = sensor_cxt->xml_info;
     sensor_drv_xml_parse_vcm_info(camera_cfg);
@@ -2953,9 +3073,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
 #endif
     sensor_af_init(sensor_cxt);
     sensor_otp_module_init(sensor_cxt);
-    if ((SENSOR_IMAGE_FORMAT_RAW ==
-         sensor_cxt->sensor_info_ptr->image_format) &&
-        sns_module) {
+    if (SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) {
         if (sns_module->otp_drv_info.otp_drv_entry) {
             sensor_otp_process(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
         } else {
@@ -3607,7 +3725,7 @@ sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId) {
     return NULL;
 };
 
-int findSensorRole(enum camera_module_id ModuleId) {
+int sensorGetRole(enum camera_module_id ModuleId) {
     int sensor_id = -1;
     struct phySensorInfo *phyPtr = NULL;
 
@@ -3631,6 +3749,33 @@ int findSensorRole(enum camera_module_id ModuleId) {
     return -1;
 }
 
+cmr_int sensorGetZoomParam(struct sensor_zoom_param_input* zoom_param) {
+    int ret = CMR_CAMERA_SUCCESS;
+    char value[PROPERTY_VALUE_MAX] = {0};
+    property_get("persist.vendor.cam.multi.section", value, "3");
+    if (atoi(value) == 3) {
+        zoom_param->PhyCameras = 3;
+        zoom_param->MaxDigitalZoom = 10.0;
+        zoom_param->ZoomRatioSection[0] = 0.6;
+        zoom_param->ZoomRatioSection[1] = 1.0;
+        zoom_param->ZoomRatioSection[2] = 2.0;
+        zoom_param->ZoomRatioSection[3] = 10.0;
+        zoom_param->ZoomRatioSection[4] = 0;
+        zoom_param->ZoomRatioSection[5] = 0;
+        zoom_param->BinningRatio = 5.0;
+    } else if (atoi(value) == 2) {
+            zoom_param->PhyCameras = 2;
+            zoom_param->MaxDigitalZoom = 8.0;
+            zoom_param->ZoomRatioSection[0] = 0.6;
+            zoom_param->ZoomRatioSection[1] = 1.0;
+            zoom_param->ZoomRatioSection[2] = 8.0;
+            zoom_param->ZoomRatioSection[3] = 0;
+            zoom_param->ZoomRatioSection[4] = 0;
+            zoom_param->ZoomRatioSection[5] = 0;
+            zoom_param->BinningRatio = 8.0;
+    }
+    return ret;
+}
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_data) {
     cmr_u8 otpdata[SPRD_DUAL_OTP_SIZE] = {0};

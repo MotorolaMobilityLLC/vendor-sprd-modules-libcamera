@@ -192,12 +192,6 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     CHECK_HANDLE_VALID(ai_scene_handle);
     ipm_in = &ai_scene_handle->common.ipm_cxt->init_in;
 
-    if (!in) {
-        CMR_LOGE("invalid parameters");
-        ret = CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-
     info = (struct prev_ai_scene_info *)(in->private_data);
     if (!info) {
         CMR_LOGE("get prev_ai_scene_info error");

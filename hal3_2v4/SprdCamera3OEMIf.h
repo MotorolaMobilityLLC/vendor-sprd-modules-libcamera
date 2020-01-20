@@ -270,6 +270,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void matchZSLQueue(ZslBufferQueue *frame);
     void setMultiCameraMode(multiCameraMode mode);
     void setMasterId(uint8_t masterId);
+
 #ifdef CONFIG_CAMERA_EIS
     virtual void EisPreview_init();
     virtual void EisVideo_init();
@@ -302,6 +303,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_uint mVideo3dnrFlag;
     uint32_t mRedisplayFum;
     bool clearPrevStream;
+    bool mBurstCapture;
+    uint32_t mTakePicNum;
 
   private:
     inline void print_time();
@@ -778,6 +781,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     slow_motion_para mSlowPara;
     bool mRestartFlag;
     bool mIsRecording;
+    bool mNonZslSnapshot;
+
     int32_t mVideoShotNum;
     int32_t mVideoShotFlag;
     int32_t mVideoShotPushFlag;
@@ -851,6 +856,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
     bool mIsIspToolMode;
+
 #ifdef CONFIG_FACE_BEAUTY
     struct class_fb face_beauty;
 #endif

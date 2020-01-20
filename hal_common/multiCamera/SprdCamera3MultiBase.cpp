@@ -1625,6 +1625,8 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2304, 1728},
          {2048, 1152}, {1600, 1200}, {1600, 900}, {1920, 1080},
          {1440, 1080}, {1280, 720}, {720, 480}}},
+    {RES_MULTI_FULLSIZE, {{4160,3120}, {4160,2340}, {2448,2448},
+         {1920,1080}, {1440,1080}, {1280,720}, {720, 480}, {480,480}}},
 };
 
 int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
@@ -1649,6 +1651,8 @@ int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
         size = RES_13M;
     else if (!strncmp(resolution, "RES_MULTI", 12))
         size = RES_MULTI;
+    else if (!strncmp(resolution, "RES_MULTI_FULLSIZE", 12))
+        size = RES_MULTI_FULLSIZE;
     else
         HAL_LOGE("Error,not support resolution %s", resolution);
 
@@ -1711,6 +1715,42 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
                     available_stream_configurations, array_size * 4);
 }
 
+int SprdCamera3MultiBase::getJpegStreamSize(const char *resolution) {
+    char value[PROPERTY_VALUE_MAX];
+    int32_t jpeg_stream_size = 0;
+
+    if (!strncmp(resolution, "RES_0_3M", 12))
+        jpeg_stream_size = (640 * 480 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_2M", 12))
+        jpeg_stream_size = (1600 * 1200 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_1080P", 12))
+        jpeg_stream_size = (1920 * 1080 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_5M", 12))
+        jpeg_stream_size = (2592 * 1944 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_8M", 12))
+        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_12M", 12))
+        jpeg_stream_size = (4000 * 3000 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_13M", 12))
+        jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_MULTI", 12))
+        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_MULTI_FULLSIZE", 12))
+        jpeg_stream_size = (4160 * 3120 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else{
+        HAL_LOGE("Error,not support resolution %s update 32M", resolution);
+		jpeg_stream_size = (6528 * 4896 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    }
+    // enlarge buffer size for isp debug info for userdebug version
+    property_get("ro.debuggable", value, "0");
+    if (!strcmp(value, "1")) {
+        jpeg_stream_size += 1024 * 1024;
+    }
+    CMR_LOGI("jpeg_stream_size = %d", jpeg_stream_size);
+
+    return jpeg_stream_size;
+}
+
 void SprdCamera3MultiBase::setLogicIdTag(CameraMetadata &metadata,
                                          uint8_t *physical_ids,
                                          uint8_t physical_ids_size) {
@@ -1741,5 +1781,49 @@ void SprdCamera3MultiBase::setLogicIdTag(CameraMetadata &metadata,
     HAL_LOGI("multicam case, fill "
              "ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA, "
              "and ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS");
+}
+
+int SprdCamera3MultiBase::getMultiTagToSprdTag(uint8_t multi_tag) {
+    int sprd_tag = 0;
+
+    switch (multi_tag) {
+    case MULTI_ZOOM_RATIO_SECTION:
+        sprd_tag = ANDROID_SPRD_ZOOM_RATIO_SECTION;
+        break;
+    case MULTI_ZOOM_RATIO:
+        sprd_tag = ANDROID_SPRD_ZOOM_RATIO;
+        break;
+    case MULTI_BURSTMODE_ENABLED:
+        sprd_tag = ANDROID_SPRD_BURSTMODE_ENABLED;
+        break;
+    case MULTI_ZSL_ENABLED:
+        sprd_tag = ANDROID_SPRD_ZSL_ENABLED;
+        break;
+    case MULTI_TOUCH_INFO:
+        sprd_tag = ANDROID_SPRD_TOUCH_INFO;
+        break;
+    case MULTI_VCM_STEP:
+        sprd_tag = ANDROID_SPRD_VCM_STEP;
+        break;
+    case MULTI_AI_SCENE_TYPE_CURRENT:
+        sprd_tag = ANDROID_SPRD_AI_SCENE_TYPE_CURRENT;
+        break;
+    case MULTI_FACE_ATTRIBUTES:
+        sprd_tag = ANDROID_SPRD_FACE_ATTRIBUTES;
+        break;
+    case MULTI_OTP_DATA:
+        sprd_tag = ANDROID_SPRD_OTP_DATA;
+        break;
+    case MULTI_APP_MODE_ID:
+        sprd_tag = ANDROID_SPRD_APP_MODE_ID;
+        break;
+    default:
+        break;
+    }
+    return sprd_tag;
+}
+
+int SprdCamera3MultiBase::getBufferSize(buffer_handle_t h) {
+    return ADP_BUFSIZE(h);
 }
 };

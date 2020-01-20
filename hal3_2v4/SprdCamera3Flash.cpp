@@ -304,7 +304,7 @@ int32_t SprdCamera3Flash::releaseFlash(const int cameraId) {
     int retVal = 0;
     if (_instance) {
         retVal = _instance->releaseFlashFromCamera(cameraId);
-        _instance->releaseDisplayFlipFile(cameraId);
+       // _instance->releaseDisplayFlipFile(cameraId);
     }
 
     return retVal;

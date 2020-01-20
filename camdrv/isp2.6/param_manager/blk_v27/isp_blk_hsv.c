@@ -100,6 +100,7 @@ cmr_s32 _pm_hsv_new2_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
 			bv_value = &weight_value[0];
 
+			ISP_LOGV("ai_scene_id %d", block_result->ai_scene_id);
 			switch (block_result->ai_scene_id) {
 			case ISP_PM_AI_SCENE_FOOD:
 				hsv_level = 10;
