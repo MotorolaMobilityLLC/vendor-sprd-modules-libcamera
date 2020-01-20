@@ -3845,6 +3845,8 @@ int SprdCamera3Setting::updateWorkParameters(
                 .data.i32[0]) {
             s_setting[mCameraId].controlInfo.ae_manual_trigger = 1;
             s_setting[mCameraId].controlInfo.ae_comp_change = true;
+            s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt =
+                EV_EFFECT_FRAME_NUM;
         }
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
@@ -4372,15 +4374,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             s_setting[mCameraId].controlInfo.ae_state;
     }
 
-    if (s_setting[mCameraId].controlInfo.ae_state ==
-            ANDROID_CONTROL_AE_STATE_LOCKED &&
-        s_setting[mCameraId].controlInfo.ae_comp_change == true &&
-        s_setting[mCameraId].controlInfo.ae_lock) {
-        s_setting[mCameraId].resultInfo.ae_state =
-            ANDROID_CONTROL_AE_STATE_SEARCHING;
-        s_setting[mCameraId].controlInfo.ae_comp_change = false;
-    }
-    // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
+     // HAL_LOGD("af_state = %d, af_mode = %d, af_trigger_Id = %d, mCameraId =
     // %d",s_setting[mCameraId].controlInfo.af_state,
     //			s_setting[mCameraId].controlInfo.af_mode,
     // s_setting[mCameraId].controlInfo.af_trigger_Id, mCameraId);
@@ -4511,9 +4505,16 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        1);
     camMetadata.update(ANDROID_REQUEST_PIPELINE_DEPTH,
                        &(s_setting[mCameraId].requestInfo.pipeline_depth), 1);
-    camMetadata.update(ANDROID_CONTROL_AE_STATE,
+	if (s_setting[mCameraId].controlInfo.ae_state ==
+            ANDROID_CONTROL_AE_STATE_LOCKED &&
+        s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt != 0 &&
+        s_setting[mCameraId].controlInfo.ae_lock) {
+        s_setting[mCameraId].resultInfo.ae_state =
+            ANDROID_CONTROL_AE_STATE_SEARCHING;
+        s_setting[mCameraId].controlInfo.ae_comp_effect_frames_cnt--;
+    }
+	camMetadata.update(ANDROID_CONTROL_AE_STATE,
                        &(s_setting[mCameraId].resultInfo.ae_state), 1);
-
     HAL_LOGV("result ae_state=%d", s_setting[mCameraId].resultInfo.ae_state);
     // HAL_LOGD("ae sta=%d precap id=%d",
     // s_setting[mCameraId].controlInfo.ae_state,

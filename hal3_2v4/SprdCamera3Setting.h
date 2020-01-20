@@ -109,6 +109,7 @@ typedef int64_t nsecs_t;
 
 #define MAX_PREVIEW_SIZE_WIDTH 1280
 #define MAX_PREVIEW_SIZE_HEIGHT 720
+#define EV_EFFECT_FRAME_NUM 3
 
 typedef struct {
     uint8_t correction_mode;
@@ -154,6 +155,7 @@ typedef struct {
     uint8_t ae_manual_trigger;
     uint8_t ae_state;
     int32_t ae_precapture_id;
+    uint8_t ae_comp_effect_frames_cnt;
     uint8_t ae_comp_change;
 
     uint8_t awb_available_modes[9];
