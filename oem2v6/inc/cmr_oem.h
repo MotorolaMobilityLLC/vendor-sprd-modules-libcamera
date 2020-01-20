@@ -326,6 +326,14 @@ struct camera_context {
     cmr_handle snp_cb_thr_handle;
     cmr_handle snp_secondary_thr_handle;
     cmr_handle snp_send_raw_image_handle;
+    /*video face beauty*/
+    cmr_handle video_cb_thr_handle;
+    struct fb_beauty_param video_face_beauty;
+    bool mvideofb;
+    struct fb_beauty_param prev_face_beauty;
+    bool mflagfb;
+    cmr_u32 start_video_face_beauty;
+    cmr_int video_face_beauty_en;
 
     /*for setting*/
     cmr_u32 ref_camera_id;

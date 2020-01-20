@@ -3470,7 +3470,6 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         face_beauty_deinit(&face_beauty);
     }
 #endif
-
     // used for single camera need raw stream
     // freeRawBuffers();
 
@@ -4004,7 +4003,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_uint prebuf_vir = 0;
     cmr_s32 fd0 = 0;
     cmr_s32 fd1 = 0;
-
     if (channel == NULL) {
         HAL_LOGE("channel=%p", channel);
         goto exit;
@@ -4021,7 +4019,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     int sx, sy, ex, ey, angle, pose;
     struct faceBeautyLevels beautyLevels;
     if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
-        isPreviewing()) {
+        isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)) {
         FACE_Tag faceInfo;
         fb_beauty_face_t beauty_face;
         fb_beauty_image_t beauty_image;
@@ -4095,7 +4093,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                                &(faceInfo.face_num));
         flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
                        frame->width * frame->height * 3 / 2);
-    } else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME) {
+    }  else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME){
         FACE_Tag faceInfo;
         fb_beauty_face_t beauty_face;
         fb_beauty_image_t beauty_image;
@@ -4165,7 +4163,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     } else {
         if (frame->type != PREVIEW_ZSL_FRAME &&
             frame->type != PREVIEW_CANCELED_FRAME &&
-            frame->type != CHANNEL2_FRAME && mflagfb) {
+            frame->type != CHANNEL2_FRAME &&
+            frame->type != PREVIEW_VIDEO_FRAME &&
+            frame->type != PREVIEW_FRAME && mflagfb) {
             mflagfb = false;
             ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
             face_beauty_deinit(&face_beauty);
@@ -4333,13 +4333,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                              frame_num, videobuf_phy, videobuf_vir, fd0);
                     HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
                              frame_num, prebuf_phy, prebuf_vir);
-                    if (mVideoCopyFromPreviewFlag) {
-                        memcpy((void *)videobuf_vir, (void *)prebuf_vir,
+			if (mVideoCopyFromPreviewFlag) {
+                            memcpy((void *)videobuf_vir, (void *)prebuf_vir,
                                mPreviewWidth * mPreviewHeight * 3 / 2);
                     }
                     flushIonBuffer(fd0, (void *)videobuf_vir, 0,
                                    mPreviewWidth * mPreviewHeight * 3 / 2);
-
                     channel->channelCbRoutine(frame_num,
                                               mSlowPara.rec_timestamp,
                                               CAMERA_STREAM_TYPE_VIDEO);

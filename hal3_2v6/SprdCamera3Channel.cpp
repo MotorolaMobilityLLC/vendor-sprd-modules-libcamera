@@ -353,11 +353,11 @@ int SprdCamera3RegularChannel::request(camera3_stream_t *stream,
                         mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_PREVIEW);
                 } else if (i == (CAMERA_STREAM_TYPE_VIDEO -
                                  REGULAR_STREAM_TYPE_BASE)) {
-                    if (mOEMIf->isVideoCopyFromPreview()) {
-                        HAL_LOGD("video stream copy preview stream");
-                    } else {
-                        mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_VIDEO);
-                    }
+                   if (mOEMIf->isVideoCopyFromPreview()) {
+                       HAL_LOGD("video stream copy preview stream");
+                   } else {
+                      mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_VIDEO);
+                   }
                 } else if (i == (CAMERA_STREAM_TYPE_CALLBACK -
                                  REGULAR_STREAM_TYPE_BASE))
                     mOEMIf->queueBuffer(buffer, CAMERA_STREAM_TYPE_CALLBACK);

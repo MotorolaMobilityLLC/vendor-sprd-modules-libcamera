@@ -185,6 +185,10 @@ static cmr_int camera_snapshot_send_raw_thread_proc(struct cmr_msg *message,
                                                     void *data);
 static cmr_int camera_create_prev_thread(cmr_handle oem_handle);
 static cmr_int camera_destroy_prev_thread(cmr_handle oem_handle);
+static cmr_int camera_create_video_thread(cmr_handle oem_handle);
+static cmr_int camera_destroy_video_thread(cmr_handle oem_handle);
+static cmr_int camera_video_cb_thread_proc(struct cmr_msg *message,
+                                             void *data);
 static cmr_int camera_create_snp_thread(cmr_handle oem_handle);
 static cmr_int camera_destroy_snp_thread(cmr_handle oem_handle);
 static cmr_int camera_init_thread(cmr_handle oem_handle);
@@ -207,6 +211,12 @@ static cmr_int camera_start_encode(cmr_handle oem_handle,
                                    struct img_frm *src, struct img_frm *dst,
                                    struct cmr_op_mean *mean,
                                    struct jpeg_enc_cb_param *enc_cb_param);
+static cmr_int camera_preview_face_beauty_handle(void *data,
+	                            struct camera_frame_type *preview_frame);
+
+static cmr_int camera_video_face_beauty_handle(void *data,
+	                            struct camera_frame_type *video_frame);
+static cmr_int is_video_face_beauty_on(void *data);
 static cmr_int camera_get_logo_data(unsigned char *logo, int Width, int Height);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
                                    cmr_handle caller_handle,
@@ -1768,7 +1778,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     cmr_uint oem_cb_type;
     struct setting_cmd_parameter setting_param;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
-
+    cmr_handle send_thr_handle = cxt->prev_cb_thr_handle;
     CMR_MSG_INIT(message);
 
     if (!oem_handle) {
@@ -2020,7 +2030,28 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     message.msg_type = oem_func;
     message.sub_msg_type = oem_cb_type;
     message.sync_flag = CMR_MSG_SYNC_NONE;
-    ret = cmr_thread_msg_send(cxt->prev_cb_thr_handle, &message);
+
+    if (param && cxt->video_face_beauty_en) {
+        struct camera_frame_type *video_frame =
+                  (struct camera_frame_type *)param;
+        if(video_frame->type == PREVIEW_VIDEO_FRAME) {
+           if (!is_video_face_beauty_on((void *)oem_handle)) {
+              send_thr_handle = cxt->video_cb_thr_handle;
+              CMR_LOGV("send msg to video thread type=%d ",
+                         video_frame->type);
+           } else {
+              send_thr_handle = cxt->prev_cb_thr_handle;
+		CMR_LOGV("send msg to preview thread face off type=%d ",
+                         video_frame->type);
+	    }
+        } else {
+           send_thr_handle = cxt->prev_cb_thr_handle;
+           CMR_LOGV("send msg to preview thread type=%d ",
+                         video_frame->type);
+	 }
+   }
+
+    ret = cmr_thread_msg_send(send_thr_handle, &message);
     if (ret) {
         CMR_LOGE("failed to send msg, ret %ld", ret);
         free(message.data);
@@ -4708,16 +4739,40 @@ cmr_int camera_preview_cb_thread_proc(struct cmr_msg *message, void *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)data;
     camera_cb_of_type callback;
+    struct setting_cmd_parameter setting_param;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
 
     if (!message || !data) {
         CMR_LOGE("param error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-
     CMR_LOGV("msg_type 0x%x, sub msg type 0x%x client_data 0x%lx",
              message->msg_type, message->sub_msg_type,
              (cmr_uint)cxt->client_data);
+
+    if (cxt->video_face_beauty_en) {
+      struct camera_frame_type *preview_frame = (struct camera_frame_type *)message->data;
+      cmr_bzero(&setting_param, sizeof(setting_param));
+      setting_param.camera_id = cxt->camera_id;
+      ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                SETTING_GET_APPMODE, &setting_param);
+      if (ret) {
+         CMR_LOGE("failed to get app mode %ld", ret);
+         goto exit;
+      }
+
+      if ((cxt->ref_camera_id == cxt->camera_id ||
+          cxt->is_multi_mode == MODE_SINGLE_CAMERA) &&
+          (preview_frame) && (preview_frame->y_vir_addr) &&
+          (setting_param.cmd_type_value == CAMERA_MODE_AUTO_VIDEO)) {
+          ret = camera_preview_face_beauty_handle(data, preview_frame);
+      }
+      if (ret) {
+        CMR_LOGE("failed to preview face beauty %ld", ret);
+        goto exit;
+      }
+    }
     callback = cxt->camera_cb;
     /*CMR_PRINT_TIME;*/
     if (callback) {
@@ -4728,6 +4783,346 @@ cmr_int camera_preview_cb_thread_proc(struct cmr_msg *message, void *data) {
         ret = -CMR_CAMERA_INVALID_PARAM;
     }
 /*CMR_PRINT_TIME;*/
+exit:
+    CMR_LOGV("X,ret=%ld", ret);
+    return ret;
+}
+
+cmr_int is_video_face_beauty_on(void *data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    int face_beauty_on = 0;
+    int SPRD_FACE_BEAUTY_PARAM_NUM = 9;
+    cmr_s32 perfect_skin_level[SPRD_FACE_BEAUTY_PARAM_NUM];
+    struct camera_context *cxt = (struct camera_context *)data;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    struct faceBeautyLevels beautyLevels;
+    cmr_bzero((void *)&setting_param, sizeof(setting_param));
+    memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
+    setting_param.camera_id = cxt->camera_id;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_PERFECT_SKINLEVEL,
+                                    &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get perfect skinlevel %ld", ret);
+        goto exit;
+    }
+
+    perfect_skin_level[0] = setting_param.fb_param.blemishLevel;
+    perfect_skin_level[1] = setting_param.fb_param.smoothLevel;
+    perfect_skin_level[2] = setting_param.fb_param.skinColor;
+    perfect_skin_level[3] = setting_param.fb_param.skinLevel;
+    perfect_skin_level[4] = setting_param.fb_param.brightLevel;
+    perfect_skin_level[5] = setting_param.fb_param.lipColor;
+    perfect_skin_level[6] = setting_param.fb_param.lipLevel;
+    perfect_skin_level[7] = setting_param.fb_param.slimLevel;
+    perfect_skin_level[8] = setting_param.fb_param.largeLevel;
+
+    for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
+        if (perfect_skin_level[i] != 0)
+            return ret;
+    }
+    return CMR_CAMERA_FAIL;
+exit:
+    CMR_LOGV("X,ret=%ld", ret);
+    return ret;
+}
+
+cmr_int camera_preview_face_beauty_handle(void *data,
+            struct camera_frame_type *preview_frame) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)data;
+
+    int sx, sy, ex, ey, angle, pose;
+    int face_beauty_on = 0;
+    int facecount = cxt->fd_face_area.face_num;
+    fb_beauty_face_t beauty_face;
+    fb_beauty_image_t beauty_image;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    struct faceBeautyLevels beautyLevels;
+    struct common_isp_cmd_param isp_param;
+    memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
+    cmr_bzero((void *)&setting_param, sizeof(setting_param));
+
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_PERFECT_SKINLEVEL,
+                                    &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get perfect skinlevel %ld", ret);
+        goto exit;
+    }
+
+    ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+    if (ret) {
+        CMR_LOGE("failed to get camera BV %ld", ret);
+        goto exit;
+    }
+
+    beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
+    beautyLevels.blemishLevel =
+                (unsigned char)setting_param.fb_param.blemishLevel;
+    beautyLevels.smoothLevel =
+                (unsigned char)setting_param.fb_param.smoothLevel;
+    beautyLevels.skinColor =
+                (unsigned char)setting_param.fb_param.skinColor;
+    beautyLevels.skinLevel =
+                (unsigned char)setting_param.fb_param.skinLevel;
+    beautyLevels.brightLevel =
+                (unsigned char)setting_param.fb_param.brightLevel;
+    beautyLevels.lipColor =
+                (unsigned char)setting_param.fb_param.lipColor;
+    beautyLevels.lipLevel =
+                (unsigned char)setting_param.fb_param.lipLevel;
+    beautyLevels.slimLevel =
+                (unsigned char)setting_param.fb_param.slimLevel;
+    beautyLevels.largeLevel =
+                (unsigned char)setting_param.fb_param.largeLevel;
+
+    face_beauty_on = beautyLevels.blemishLevel ||
+                              beautyLevels.smoothLevel ||
+                              beautyLevels.skinColor ||
+                              beautyLevels.skinLevel ||
+                              beautyLevels.brightLevel ||
+                              beautyLevels.lipColor ||
+                              beautyLevels.lipLevel ||
+                              beautyLevels.slimLevel ||
+                              beautyLevels.largeLevel;
+    CMR_LOGV(" face_beauty_on %d facecount %d",face_beauty_on,facecount);
+
+    if (face_beauty_on && (PREVIEWING ==
+        cmr_preview_get_status(cxt->prev_cxt.preview_handle, cxt->camera_id))) {
+       if (preview_frame->type == PREVIEW_FRAME) {
+          if (facecount > 0) {
+             for (int i = 0; i < facecount; i++) {
+	          beauty_face.idx = i;
+                beauty_face.startX =
+                     (cxt->fd_face_area.face_info[i].sx * preview_frame->width) /
+                     (cxt->fd_face_area.frame_width);
+                beauty_face.startY =
+                     (cxt->fd_face_area.face_info[i].sy * preview_frame->height) /
+                     (cxt->fd_face_area.frame_height);
+                beauty_face.endX =
+                     (cxt->fd_face_area.face_info[i].ex * preview_frame->width) /
+                     (cxt->fd_face_area.frame_width);
+                beauty_face.endY =
+                     (cxt->fd_face_area.face_info[i].ey * preview_frame->height) /
+                     (cxt->fd_face_area.frame_height);
+                beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
+                beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+                ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
+                        FB_BEAUTY_CONSTRUCT_FACE_CMD, (void *)&beauty_face);
+             }
+          }
+
+          if (!(cxt->mflagfb)) {
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+             face_beauty_set_devicetype(&(cxt->prev_face_beauty),
+                                                     SPRD_CAMALG_RUN_TYPE_CPU);
+#else
+             face_beauty_set_devicetype(&(cxt->prev_face_beauty),
+                                                     SPRD_CAMALG_RUN_TYPE_CPU);
+#endif
+             face_beauty_init(&(cxt->prev_face_beauty), 1, 2);
+             if (cxt->prev_face_beauty.hSprdFB != NULL)
+                 cxt->mflagfb = true;
+         }
+
+         camera_invalidate_buf(data, preview_frame->fd, preview_frame->width *
+		 	preview_frame->height * 3 / 2, 0, preview_frame->y_vir_addr);
+         beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+         beauty_image.inputImage.addr[0] = (void *)preview_frame->y_vir_addr;
+         beauty_image.inputImage.addr[1] = (void *)preview_frame->uv_vir_addr;
+         beauty_image.inputImage.addr[2] = (void *)preview_frame->uv_vir_addr;
+         beauty_image.inputImage.ion_fd = preview_frame->fd;
+         beauty_image.inputImage.offset[0] = 0;
+         beauty_image.inputImage.offset[1] =
+			preview_frame->width * preview_frame->height;
+         beauty_image.inputImage.width = preview_frame->width;
+         beauty_image.inputImage.height = preview_frame->height;
+         beauty_image.inputImage.stride = preview_frame->width;
+         beauty_image.inputImage.size =
+			preview_frame->width * preview_frame->height * 3 / 2;
+
+         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                               (void *)&beauty_image);
+         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                               (void *)&beautyLevels);
+         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_PROCESS_CMD,
+                               (void *)&facecount);
+	  camera_flush_buf(data, preview_frame->fd, preview_frame->width *
+                  preview_frame->height * 3 / 2, 0, preview_frame->y_vir_addr);
+         }
+	}
+exit:
+    CMR_LOGV("X,ret=%ld", ret);
+    return ret;
+}
+
+cmr_int camera_video_face_beauty_handle(void *data,
+            struct camera_frame_type *video_frame) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)data;
+
+    int sx, sy, ex, ey, angle, pose;
+    int face_beauty_on = 0;
+    int facecount = cxt->fd_face_area.face_num;
+    fb_beauty_face_t beauty_face;
+    fb_beauty_image_t beauty_image;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    struct faceBeautyLevels beautyLevels;
+    struct common_isp_cmd_param isp_param;
+    memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
+    cmr_bzero((void *)&setting_param, sizeof(setting_param));
+
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_PERFECT_SKINLEVEL,
+                                    &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get perfect skinlevel %ld", ret);
+        goto exit;
+    }
+
+    ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+    if (ret) {
+        CMR_LOGE("failed to get camera BV %ld", ret);
+        goto exit;
+    }
+
+    beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
+    beautyLevels.blemishLevel =
+                (unsigned char)setting_param.fb_param.blemishLevel;
+    beautyLevels.smoothLevel =
+                (unsigned char)setting_param.fb_param.smoothLevel;
+    beautyLevels.skinColor =
+                (unsigned char)setting_param.fb_param.skinColor;
+    beautyLevels.skinLevel =
+                (unsigned char)setting_param.fb_param.skinLevel;
+    beautyLevels.brightLevel =
+                (unsigned char)setting_param.fb_param.brightLevel;
+    beautyLevels.lipColor =
+                (unsigned char)setting_param.fb_param.lipColor;
+    beautyLevels.lipLevel =
+                (unsigned char)setting_param.fb_param.lipLevel;
+    beautyLevels.slimLevel =
+                (unsigned char)setting_param.fb_param.slimLevel;
+    beautyLevels.largeLevel =
+                (unsigned char)setting_param.fb_param.largeLevel;
+
+    face_beauty_on = beautyLevels.blemishLevel ||
+                              beautyLevels.smoothLevel ||
+                              beautyLevels.skinColor ||
+                              beautyLevels.skinLevel ||
+                              beautyLevels.brightLevel ||
+                              beautyLevels.lipColor ||
+                              beautyLevels.lipLevel ||
+                              beautyLevels.slimLevel ||
+                              beautyLevels.largeLevel;
+    CMR_LOGV(" face_beauty_on %d",face_beauty_on);
+
+    if (face_beauty_on && (cxt->start_video_face_beauty)) {
+       if (facecount > 0) {
+          for (int i = 0; i < facecount; i++) {
+		  beauty_face.idx = i;
+                beauty_face.startX =
+                     (cxt->fd_face_area.face_info[i].sx * video_frame->width) /
+                     (cxt->fd_face_area.frame_width);
+                beauty_face.startY =
+                     (cxt->fd_face_area.face_info[i].sy * video_frame->height) /
+                     (cxt->fd_face_area.frame_height);
+                beauty_face.endX =
+                     (cxt->fd_face_area.face_info[i].ex * video_frame->width) /
+                     (cxt->fd_face_area.frame_width);
+                beauty_face.endY =
+                     (cxt->fd_face_area.face_info[i].ey * video_frame->height) /
+                     (cxt->fd_face_area.frame_height);
+                beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
+                beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+                ret = face_beauty_ctrl(&(cxt->video_face_beauty),
+					FB_BEAUTY_CONSTRUCT_FACE_CMD, (void *)&beauty_face);
+         }
+       }
+
+      if (!(cxt->mvideofb)) {
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+            face_beauty_set_devicetype(&(cxt->video_face_beauty), SPRD_CAMALG_RUN_TYPE_VDSP);
+#else
+            face_beauty_set_devicetype(&(cxt->video_face_beauty), SPRD_CAMALG_RUN_TYPE_CPU);
+#endif
+            face_beauty_init(&(cxt->video_face_beauty), 1, 2);
+            if (cxt->video_face_beauty.hSprdFB != NULL) {
+               cxt->mvideofb = true;
+            }
+      }
+
+	camera_invalidate_buf(data, video_frame->fd, video_frame->width * video_frame->height * 3 / 2,
+	         0, video_frame->y_vir_addr);
+       beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+       beauty_image.inputImage.addr[0] = (void *)video_frame->y_vir_addr;
+       beauty_image.inputImage.addr[1] = (void *)video_frame->uv_vir_addr;
+       beauty_image.inputImage.addr[2] = (void *)video_frame->uv_vir_addr;
+       beauty_image.inputImage.ion_fd = video_frame->fd;
+       beauty_image.inputImage.offset[0] = 0;
+       beauty_image.inputImage.offset[1] =
+			video_frame->width * video_frame->height;
+       beauty_image.inputImage.width = video_frame->width;
+       beauty_image.inputImage.height = video_frame->height;
+       beauty_image.inputImage.stride = video_frame->width;
+       beauty_image.inputImage.size =
+			video_frame->width * video_frame->height * 3 / 2;
+
+       ret = face_beauty_ctrl(&(cxt->video_face_beauty), FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                               (void *)&beauty_image);
+       ret = face_beauty_ctrl(&(cxt->video_face_beauty), FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                               (void *)&beautyLevels);
+       ret = face_beauty_ctrl(&(cxt->video_face_beauty), FB_BEAUTY_PROCESS_CMD,
+                               (void *)&facecount);
+	camera_flush_buf(data, video_frame->fd, video_frame->width * video_frame->height * 3 / 2,
+	         0, video_frame->y_vir_addr);
+     }
+
+exit:
+    CMR_LOGV("X,ret=%ld", ret);
+    return ret;
+}
+
+cmr_int camera_video_cb_thread_proc(struct cmr_msg *message, void *data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)data;
+    camera_cb_of_type callback;
+
+    if (!message || !data) {
+        CMR_LOGE("param error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+   CMR_LOGV("msg_type 0x%x, sub msg type 0x%x client_data 0x%lx",
+             message->msg_type, message->sub_msg_type,
+             (cmr_uint)cxt->client_data);
+   struct camera_frame_type *video_frame = (struct camera_frame_type *)message->data;
+   if ((cxt->ref_camera_id == cxt->camera_id ||
+        cxt->is_multi_mode == MODE_SINGLE_CAMERA) &&
+        (video_frame) && (video_frame->y_vir_addr)) {
+        ret = camera_video_face_beauty_handle(data, video_frame);
+   }
+   if (ret) {
+       CMR_LOGE("failed to video face beauty%ld", ret);
+       goto exit;
+   }
+   callback = cxt->camera_cb;
+   /*CMR_PRINT_TIME;*/
+   if (callback) {
+        callback(message->sub_msg_type, cxt->client_data, message->msg_type,
+                    message->data);
+   } else {
+        CMR_LOGE("err, camera cb is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+   }
+    /*CMR_PRINT_TIME;*/
 exit:
     CMR_LOGV("X,ret=%ld", ret);
     return ret;
@@ -4822,7 +5217,39 @@ cmr_int camera_create_prev_thread(cmr_handle oem_handle) {
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto exit;
     }
+
+    if (cxt->video_face_beauty_en) {
+       memset(&cxt->face_beauty, 0, sizeof(cxt->prev_face_beauty));
+       cxt->mflagfb= false;
+    }
     ret = cmr_thread_set_name(cxt->prev_cb_thr_handle, "preview_cb");
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("fail to set thr name");
+        ret = -CMR_MSG_SUCCESS;
+        goto exit;
+    }
+exit:
+    CMR_LOGD("X,ret=%ld", ret);
+    return ret;
+}
+
+cmr_int camera_create_video_thread(cmr_handle oem_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    ret = cmr_thread_create(&cxt->video_cb_thr_handle, PREVIEW_MSG_QUEUE_SIZE,
+                            camera_video_cb_thread_proc, (void *)oem_handle);
+
+    if (CMR_MSG_SUCCESS != ret) {
+        CMR_LOGE("create video thread fail");
+        ret = -CMR_CAMERA_NO_SUPPORT;
+        goto exit;
+    }
+
+    memset(&cxt->video_face_beauty, 0, sizeof(cxt->video_face_beauty));
+    cxt->mvideofb = false;
+
+    ret = cmr_thread_set_name(cxt->video_cb_thr_handle, "video_cb");
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("fail to set thr name");
         ret = -CMR_MSG_SUCCESS;
@@ -4843,12 +5270,50 @@ cmr_int camera_destroy_prev_thread(cmr_handle oem_handle) {
         goto exit;
     }
 
+    if (cxt->video_face_beauty_en) {
+       if (cxt->mflagfb) {
+          cxt->mflagfb = false;
+          ret = face_beauty_ctrl(&cxt->prev_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+          face_beauty_deinit(&cxt->prev_face_beauty);
+      }
+   }
+
     if (cxt->prev_cb_thr_handle) {
         ret = cmr_thread_destroy(cxt->prev_cb_thr_handle);
         if (!ret) {
             cxt->prev_cb_thr_handle = (cmr_handle)0;
         } else {
             CMR_LOGE("failed to destroy prev thr");
+        }
+    }
+exit:
+    CMR_LOGD("X,ret=%ld", ret);
+    return ret;
+}
+
+cmr_int camera_destroy_video_thread(cmr_handle oem_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    if (!oem_handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    if (cxt->mvideofb) {
+        cxt->mvideofb = false;
+        cxt->start_video_face_beauty = false;
+        ret = face_beauty_ctrl(&cxt->video_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+        face_beauty_deinit(&cxt->video_face_beauty);
+    }
+
+    if (cxt->video_cb_thr_handle) {
+        ret = cmr_thread_destroy(cxt->video_cb_thr_handle);
+        if (!ret) {
+            cxt->video_cb_thr_handle = (cmr_handle)0;
+        } else {
+            CMR_LOGE("failed to destroy video thr");
         }
     }
 exit:
@@ -4959,7 +5424,12 @@ exit:
 cmr_int camera_init_thread(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    char video_face_en[PROPERTY_VALUE_MAX];
 
+    property_get("persist.vendor.cam.video.face.beauty.enable", video_face_en, "0");
+    if (atoi(video_face_en) == 1) {
+        cxt->video_face_beauty_en = 1;
+    }
     /*create preview thread*/
     ret = camera_create_prev_thread(oem_handle);
     if (ret) {
@@ -4967,24 +5437,42 @@ cmr_int camera_init_thread(cmr_handle oem_handle) {
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto exit;
     }
+
     /*create snapshot thread*/
     ret = camera_create_snp_thread(oem_handle);
     if (ret) {
         CMR_LOGE("failed to create snapshot thread");
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto prev_thr_destroy;
-    } else {
+    }  else {
+    /*create video thread*/
+     if (cxt->video_face_beauty_en) {
+        ret = camera_create_video_thread(oem_handle);
+        if (ret) {
+           CMR_LOGE("failed to create video thread");
+           ret = -CMR_CAMERA_NO_SUPPORT;
+           goto  prev_thr_destroy;
+        }else {
+           goto exit;
+        }
+     }
         goto exit;
     }
+
 prev_thr_destroy:
     camera_destroy_prev_thread(oem_handle);
+
 exit:
     return ret;
 }
 
 cmr_int camera_deinit_thread(cmr_handle oem_handle) {
     CMR_LOGD("E");
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
     camera_destroy_prev_thread(oem_handle);
+    if (cxt->video_face_beauty_en) {
+       camera_destroy_video_thread(oem_handle);
+    }
     camera_destroy_snp_thread(oem_handle);
     CMR_LOGD("X");
 
@@ -6326,7 +6814,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
              cxt->is_multi_mode == MODE_BOKEH ||
              (cxt->is_multi_mode == MODE_BLUR &&
               cxt->blur_facebeauty_flag == 1)) &&
-            (filter_type == 0)) {
+            (filter_type == 0) && (!cxt->prev_cxt.video_eb)) {
 #ifdef CONFIG_FACE_BEAUTY
             int face_beauty_on = 0;
             int facecount = cxt->fd_face_area.face_num;
@@ -11123,6 +11611,10 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     ret = cmr_sensor_focus_init(cxt->sn_cxt.sensor_handle, cxt->camera_id);
 #endif
 
+    if (cxt->video_face_beauty_en) {
+        cxt->start_video_face_beauty = true;
+    }
+
 exit:
     ATRACE_END();
     return ret;
@@ -11137,7 +11629,7 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct common_isp_cmd_param param;
     struct setting_cmd_parameter setting_param;
-
+ 
     CMR_LOGD("E");
 
     if (PREVIEWING !=
@@ -11188,6 +11680,16 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     cxt->snp_cxt.start_capture_flag = 0;
 
     cxt->is_start_snapshot = 0;
+
+    if (cxt->video_face_beauty_en) {
+       if (cxt->mvideofb) {
+          cxt->mvideofb = false;
+	   cxt->start_video_face_beauty = false;
+          ret = face_beauty_ctrl(&cxt->video_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+          face_beauty_deinit(&cxt->video_face_beauty);
+      }
+    }
+
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_PREVIEW_SIZE, &setting_param);
