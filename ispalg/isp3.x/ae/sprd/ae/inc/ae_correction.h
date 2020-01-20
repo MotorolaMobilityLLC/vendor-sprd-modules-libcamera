@@ -133,6 +133,7 @@ struct ae_adv_param {
 	cmr_u8 prof_mode;		/*in professional mode*/
 	cmr_u8 reserve_case;		/*will be removed, 0: normal mode, 1: just for debug mode, and manual control the exp/gain by APP*/
 	cmr_u8 app_force_lock;
+	cmr_s16 last_target;
 };
 
 struct ae_lib_calc_in {
