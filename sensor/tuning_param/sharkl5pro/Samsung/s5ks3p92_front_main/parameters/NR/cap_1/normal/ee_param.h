@@ -3415,9 +3415,9 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x08,
+			0x18,
 			/*ee_r2_cfg*/
-			0x0C,
+			0x18,
 			/*ee_r3_cfg*/
 			0x18,
 			/*reserved*/
@@ -4029,7 +4029,7 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x19,
+				0x0F,
 				/*ee_r3_cfg*/
 				0x19,
 				/*reserved*/
@@ -4068,7 +4068,7 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x19,
+				0x0F,
 				/*ee_r3_cfg*/
 				0x19,
 				/*reserved*/
