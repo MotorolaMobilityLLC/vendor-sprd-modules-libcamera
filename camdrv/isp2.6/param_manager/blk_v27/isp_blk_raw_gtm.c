@@ -24,18 +24,18 @@
 
 enum PIX_BITS
 {
-    PIX_BITS_8  = 8,
-    PIX_BITS_10 = 10,
-    PIX_BITS_12 = 12,
-    PIX_BITS_14 = 14,
-    PIX_BITS_UNKNOWN,
+	PIX_BITS_8  = 8,
+	PIX_BITS_10 = 10,
+	PIX_BITS_12 = 12,
+	PIX_BITS_14 = 14,
+	PIX_BITS_UNKNOWN,
 } ;
 
-double gtm_log2(cmr_s32 x)
+double gtm_log2(double x)
 {
-    cmr_s32 out;
-    out = (cmr_s32)(log(x)/log((cmr_s32)(2.0)));
-    return out;
+	double out;
+	out = (double)(log(x)/log((double)(2.0)));
+	return out;
 }
 
 static void cal_gtm_hist(cmr_s32 in_bit_depth, struct dcam_dev_raw_gtm_block_info *gtm)
@@ -110,8 +110,8 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 			dst_ptr->gtm_param[i].gtm_imgkey_setting_mode = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_image.image_key_set_mode;
 
 			dst_ptr->gtm_param[i].gtm_cur_ymin_weight = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.cur_Ymin_weight;
-			dst_ptr->gtm_param[i].gtm_ymax_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Yavg_diff_thr;
-			dst_ptr->gtm_param[i].gtm_yavg_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Ymax_diff_thr;
+			dst_ptr->gtm_param[i].gtm_ymax_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Ymax_diff_thr;
+			dst_ptr->gtm_param[i].gtm_yavg_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Yavg_diff_thr;
 			dst_ptr->gtm_param[i].gtm_pre_ymin_weight = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.pre_Ymin_weight;
 		}
 
@@ -133,6 +133,7 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 		dst_ptr->cur.gtm_ymax_diff_thr = dst_ptr->gtm_param[index].gtm_ymax_diff_thr;
 		dst_ptr->cur.gtm_yavg_diff_thr = dst_ptr->gtm_param[index].gtm_yavg_diff_thr;
 		dst_ptr->cur.gtm_pre_ymin_weight = dst_ptr->gtm_param[index].gtm_pre_ymin_weight;
+		ISP_LOGV("gtm_target_norm_coeff %d",dst_ptr->cur.gtm_target_norm_coeff);
 		cal_gtm_hist(PIX_BITS_14, &(dst_ptr->cur));
 	} else {
 		dst_ptr->cur.gtm_map_bypass = 1;
@@ -186,7 +187,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			header_ptr->is_update = ISP_ZERO;
 			val_range.min = 0;
 			val_range.max = 255;
-			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_WEIGHT_VALUE);
+			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
@@ -202,7 +203,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 				index = bv_value->value[0];
 			else
 				index = bv_value->value[1];
-
+			ISP_LOGV("index %d",index);
 			dst_ptr->cur.gtm_map_bypass = dst_ptr->gtm_param[index].gtm_map_bypass;
 			dst_ptr->cur.gtm_map_video_mode = dst_ptr->gtm_param[index].gtm_map_video_mode;
 			dst_ptr->cur.gtm_hist_stat_bypass = dst_ptr->gtm_param[index].gtm_hist_stat_bypass;
@@ -225,6 +226,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			dst_ptr->cur.gtm_ymax_diff_thr = dst_ptr->gtm_param[index].gtm_ymax_diff_thr;
 			dst_ptr->cur.gtm_yavg_diff_thr = dst_ptr->gtm_param[index].gtm_yavg_diff_thr;
 			dst_ptr->cur.gtm_pre_ymin_weight = dst_ptr->gtm_param[index].gtm_pre_ymin_weight;
+			ISP_LOGV("gtm_target_norm_coeff %d",dst_ptr->cur.gtm_target_norm_coeff);
 			cal_gtm_hist(PIX_BITS_14, &(dst_ptr->cur));
 			data_num = 1;
 			if (!dst_ptr->cur.gtm_target_norm_setting_mode) {
@@ -250,6 +252,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			else
 				dst_ptr->cur.gtm_mod_en = 1;
 
+			ISP_LOGV("dst3 %d",*(cmr_u16 *) dst3);
 			header_ptr->is_update = ISP_ONE;
 		}
 		break;
@@ -271,6 +274,7 @@ cmr_s32 _pm_gtm_get_param(void *gtm_param, cmr_u32 cmd, void *rtn_param0, void *
 
 	param_data_ptr->id = ISP_BLK_RAW_GTM;
 	param_data_ptr->cmd = cmd;
+	ISP_LOGV("gtm_target_norm_coeff %d", gtm_ptr->cur.gtm_target_norm_coeff);
 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
