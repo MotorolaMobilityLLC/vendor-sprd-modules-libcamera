@@ -770,6 +770,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_uint mRefocusHeapArray_vir[kRefocusBufferCount + 1];
     uint32_t mRefocusHeapArray_size[kRefocusBufferCount + 1];
     uint32_t mRefocusHeapArray_mfd[kRefocusBufferCount + 1];
+    cmr_u32 hdr_fd[3];
 
 #ifdef USE_ONE_RESERVED_BUF
     sprd_camera_memory_t *mCommonHeapReserved;
