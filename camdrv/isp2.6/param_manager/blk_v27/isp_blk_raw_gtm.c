@@ -134,7 +134,13 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 		dst_ptr->cur.gtm_yavg_diff_thr = dst_ptr->gtm_param[index].gtm_yavg_diff_thr;
 		dst_ptr->cur.gtm_pre_ymin_weight = dst_ptr->gtm_param[index].gtm_pre_ymin_weight;
 		cal_gtm_hist(PIX_BITS_14, &(dst_ptr->cur));
+	} else {
+		dst_ptr->cur.gtm_map_bypass = 1;
+		dst_ptr->cur.gtm_hist_stat_bypass = 1;
 	}
+
+	if (dst_ptr->cur.gtm_map_bypass && dst_ptr->cur.gtm_hist_stat_bypass)
+		dst_ptr->cur.gtm_mod_en = 0;
 
 	gtm_header_ptr->is_update = ISP_ONE;
 
@@ -150,7 +156,6 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 	switch (cmd) {
 	case ISP_PM_BLK_SMART_SETTING:
 		{
-			ISP_LOGI("ISP_PM_BLK_SMART_SETTING\n");
 			cmr_u32 data_num;
 			cmr_u16 weight[2] = { 0, 0 };
 			void * src1[2] = { NULL, NULL };
@@ -165,8 +170,16 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			struct isp_range val_range = { 0, 0 };
 			struct isp_weight_value *bv_value;
 
-			if (0 == block_result->update || header_ptr->bypass) {
+			if (0 == block_result->update) {
 				ISP_LOGI("do not need update\n");
+				return ISP_SUCCESS;
+			}
+
+			if (header_ptr->bypass) {
+				dst_ptr->cur.gtm_mod_en = 0;
+				dst_ptr->cur.gtm_map_bypass = 1;
+				dst_ptr->cur.gtm_hist_stat_bypass = 1;
+				header_ptr->is_update = ISP_ONE;
 				return ISP_SUCCESS;
 			}
 
@@ -231,6 +244,11 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			src3[0] = (void *)&dst_ptr->gtm_param[bv_value->value[0]].gtm_target_norm_coeff;
 			src3[1] = (void *)&dst_ptr->gtm_param[bv_value->value[1]].gtm_target_norm_coeff;
 			isp_interp_data((void *)dst3, src3 , weight , data_num , ISP_INTERP_UINT16);
+
+			if (dst_ptr->cur.gtm_map_bypass && dst_ptr->cur.gtm_hist_stat_bypass)
+				dst_ptr->cur.gtm_mod_en = 0;
+			else
+				dst_ptr->cur.gtm_mod_en = 1;
 
 			header_ptr->is_update = ISP_ONE;
 		}

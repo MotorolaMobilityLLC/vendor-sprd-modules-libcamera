@@ -5327,15 +5327,27 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         goto res_deinit;
     }
     ret = camera_res_init_done(oem_handle);
+    if (ret) {
+        CMR_LOGE("failed to init res %ld", ret);
+        goto isp_deinit;
+    }
+
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     pthread_mutex_lock(&mm_dvfs_mutex);
     ret = camera_mm_dvfs_init(oem_handle);
     pthread_mutex_unlock(&mm_dvfs_mutex);
     if (ret)
         CMR_LOGE("failed to init mm dvfs %ld", ret);
+    ret = CMR_CAMERA_SUCCESS;
 #endif
     camera_front_lcd_enhance_module_init(oem_handle);
     goto exit;
+
+isp_deinit:
+    ret_deinit = camera_isp_deinit(oem_handle);
+    if (ret_deinit) {
+        CMR_LOGE("failed to camera_isp_deinit %ld", ret_deinit);
+    }
 
 res_deinit:
     ret_deinit = camera_res_deinit(oem_handle);
