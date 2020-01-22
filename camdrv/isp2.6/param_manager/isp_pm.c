@@ -83,6 +83,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_YUV_NOISEFILTER, 0 }, /* NR block */
 
 	/* software algo blocks */
+	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
 	{ ISP_BLK_CNR2, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */
 	{ ISP_BLK_AE_NEW, 0 },
@@ -248,6 +249,7 @@ static struct blk_info blocks_array[] = {
 
 	/* software algo blocks */
 	{ ISP_BLK_DRE, sizeof(struct sensor_dre_level) },
+	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
 	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */

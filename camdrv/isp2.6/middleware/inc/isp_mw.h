@@ -49,6 +49,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #ifdef CAMERA_CNR3_ENABLE
 #define CNR3_LAYER_NUM 5
 #endif
+
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
 	ISP_AE_SET_MONITOR,
@@ -430,6 +431,8 @@ enum isp_ctrl_cmd {
 #ifdef CAMERA_CNR3_ENABLE
 	ISP_CTRL_GET_CNR3_PARAM,
 #endif
+	ISP_CTRL_GET_FB_PREV_PARAM,
+	ISP_CTRL_GET_FB_CAP_PARAM,
 	ISP_CTRL_MAX
 };
 
@@ -499,6 +502,16 @@ enum isp_ai_rotation {
 	ISP_AI_SD_ORNT_180,
 	ISP_AI_SD_ORNT_270,
 	ISP_AI_SD_ORNT_MAX
+};
+
+enum
+{
+	ISP_FB_SKINTONE_DEFAULT,
+	ISP_FB_SKINTONE_YELLOW,
+	ISP_FB_SKINTONE_WHITE,
+	ISP_FB_SKINTONE_BLACK,
+	ISP_FB_SKINTONE_INDIAN,
+	ISP_FB_SKINTONE_NUM
 };
 
 //DRE feature
@@ -1099,6 +1112,42 @@ struct isp_sw_cnr3_info {
 	struct isp_sw_multilayer_param param_layer[CNR3_LAYER_NUM];
 };
 #endif
+
+struct isp_fb_level
+{
+	cmr_u8 skinSmoothLevel[11];
+	cmr_u8 skinSmoothDefaultLevel;
+	cmr_u8 skinTextureHiFreqLevel[11];
+	cmr_u8 skinTextureHiFreqDefaultLevel;
+	cmr_u8 skinTextureLoFreqLevel[11];
+	cmr_u8 skinTextureLoFreqDefaultLevel;
+	cmr_u8 skinSmoothRadiusCoeff[11];
+	cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
+	cmr_u8 skinBrightLevel[11];
+	cmr_u8 skinBrightDefaultLevel;
+	cmr_u8 largeEyeLevel[11];
+	cmr_u8 largeEyeDefaultLevel;
+	cmr_u8 slimFaceLevel[11];
+	cmr_u8 slimFaceDefaultLevel;
+	cmr_u8 skinColorLevel[11];
+	cmr_u8 skinColorDefaultLevel;
+	cmr_u8 lipColorLevel[11];
+	cmr_u8 lipColorDefaultLevel;
+};
+
+struct isp_fb_param
+{
+	cmr_u8 removeBlemishFlag;
+	cmr_u8 blemishSizeThrCoeff;
+	cmr_u8 skinColorType;
+	cmr_u8 lipColorType;
+	struct isp_fb_level fb_layer;
+};
+
+struct isp_fb_param_info
+{
+	struct isp_fb_param fb_param[ISP_FB_SKINTONE_NUM];
+};
 
 struct isp_ai_rect {
 	cmr_u16 start_x;

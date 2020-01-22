@@ -385,6 +385,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_SENSOR_SIZE,
 	ISP_CTRL_GET_DRE_PARAM,
 	ISP_CTRL_SET_AE_ADJUST,
+	ISP_CTRL_GET_FB_PREV_PARAM,
+	ISP_CTRL_GET_FB_CAP_PARAM,
 	ISP_CTRL_MAX
 };
 
@@ -446,6 +448,16 @@ enum isp_ai_rotation {
 	ISP_AI_SD_ORNT_180,
 	ISP_AI_SD_ORNT_270,
 	ISP_AI_SD_ORNT_MAX
+};
+
+enum
+{
+	ISP_FB_SKINTONE_DEFAULT,
+	ISP_FB_SKINTONE_YELLOW,
+	ISP_FB_SKINTONE_WHITE,
+	ISP_FB_SKINTONE_BLACK,
+	ISP_FB_SKINTONE_INDIAN,
+	ISP_FB_SKINTONE_NUM
 };
 
 struct isp_flash_cfg {
@@ -916,6 +928,42 @@ struct isp_sw3dnr_info {
         cmr_s32 luma_ratio_high;
         cmr_s32 luma_ratio_low;
         cmr_s32 reserverd[16];
+};
+
+struct isp_fb_level
+{
+	cmr_u8 skinSmoothLevel[11];
+	cmr_u8 skinSmoothDefaultLevel;
+	cmr_u8 skinTextureHiFreqLevel[11];
+	cmr_u8 skinTextureHiFreqDefaultLevel;
+	cmr_u8 skinTextureLoFreqLevel[11];
+	cmr_u8 skinTextureLoFreqDefaultLevel;
+	cmr_u8 skinSmoothRadiusCoeff[11];
+	cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
+	cmr_u8 skinBrightLevel[11];
+	cmr_u8 skinBrightDefaultLevel;
+	cmr_u8 largeEyeLevel[11];
+	cmr_u8 largeEyeDefaultLevel;
+	cmr_u8 slimFaceLevel[11];
+	cmr_u8 slimFaceDefaultLevel;
+	cmr_u8 skinColorLevel[11];
+	cmr_u8 skinColorDefaultLevel;
+	cmr_u8 lipColorLevel[11];
+	cmr_u8 lipColorDefaultLevel;
+};
+
+struct isp_fb_param
+{
+	cmr_u8 removeBlemishFlag;
+	cmr_u8 blemishSizeThrCoeff;
+	cmr_u8 skinColorType;
+	cmr_u8 lipColorType;
+	struct isp_fb_level fb_layer;
+};
+
+struct isp_fb_param_info
+{
+	struct isp_fb_param fb_param[ISP_FB_SKINTONE_NUM];
 };
 
 struct isp_exp_comprnsation {
