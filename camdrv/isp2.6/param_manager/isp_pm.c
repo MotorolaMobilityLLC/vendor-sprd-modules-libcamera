@@ -212,13 +212,13 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
 	{ ISP_BLK_RGB_GAIN, sizeof(struct sensor_rgb_gain_param) },
 	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
+	{ ISP_BLK_RAW_GTM, sizeof(struct sensor_raw_gtm_param) },
 	{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
 	{ ISP_BLK_AWB_NEW, 0 },
 	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
 	{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
 	{ ISP_BLK_PPE_V1, 0 }, /* NR block */
 	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
-	{ ISP_BLK_RAW_GTM, 0 },
 
 	/*  ISP blocks */
 	{ ISP_BLK_HSV_NEW2, 0 }, /* parsed in hsv block init() */
@@ -230,6 +230,8 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
 	{ ISP_BLK_POSTERIZE, sizeof(struct sensor_posterize_param) },
 	{ ISP_BLK_Y_GAMMC_V1, sizeof(struct sensor_y_gamma_param) },
+	{ ISP_BLK_RGB_LTM, sizeof(struct sensor_rgb_ltm_param) },
+	{ ISP_BLK_YUV_LTM, sizeof(struct sensor_yuv_ltm_param) },
 	{ ISP_BLK_3DNR, 0 }, /* NR block */
 	{ ISP_BLK_CFA_V1, 0 }, /* NR block */
 	{ ISP_BLK_EE_V1, 0 }, /* NR block */
@@ -243,10 +245,9 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_UV_CDN_V1, 0 }, /* NR block */
 	{ ISP_BLK_UV_POSTCDN_V1, 0 }, /* NR block */
 	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
-	{ ISP_BLK_RGB_LTM, 0 },
-	{ ISP_BLK_YUV_LTM, 0 },
 
 	/* software algo blocks */
+	{ ISP_BLK_DRE, sizeof(struct sensor_dre_level) },
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
 	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */
@@ -263,7 +264,6 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_4IN1_PARAM, 0 },
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
-	{ ISP_BLK_DRE, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -1226,11 +1226,11 @@ search:
 
 				if (pm_cxt_ptr->remosaic_type == 1 && input->mode[i] == WORKMODE_PREVIEW) {
 					if ((pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) &&
-                        (pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1 == input->cam_4in1_mode)) {
-                        output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
-                        ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
-                        break;
-                    }
+						(pm_cxt_ptr->tune_mode_array[mode_id]->for_4in1 == input->cam_4in1_mode)) {
+						output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
+						ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
+						break;
+					}
 				} else  if (pm_cxt_ptr->tune_mode_array[mode_id]->resolution.w == input->img_w[i]) {
 					output->mode_id[i] = pm_cxt_ptr->tune_mode_array[mode_id]->mode_id;
 					ISP_LOGD("i %d k %d, get mode %d\n", i, k, output->mode_id[i]);
@@ -1449,6 +1449,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 
 		param_data_ptr = pm_cxt_ptr->single_block_data;
 		set_id = (cmd == ISP_PM_CMD_GET_SINGLE_SETTING) ? PARAM_SET0 : PARAM_SET1;
+		if (pm_cxt_ptr->cxt_array[PARAM_SET1].is_validate == 0)
+			set_id = PARAM_SET0;
+
 		rtn = isp_pm_get_single_block_param(pm_cxt_ptr,
 				(struct isp_pm_ioctl_input *)in_ptr, param_data_ptr,
 				&param_counts, &blk_idx, set_id);
