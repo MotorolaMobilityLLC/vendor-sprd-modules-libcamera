@@ -5446,10 +5446,27 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
             HAL_LOGD("mFlush=%d", mFlush);
             goto exit;
         }
-        for (i = 0; i < (cmr_int)mZslNum; i++) {
-            mHalOem->ops->camera_set_zsl_buffer(
-                mCameraHandle, mZslHeapArray[i]->phys_addr,
-                (cmr_uint)mZslHeapArray[i]->data, mZslHeapArray[i]->fd);
+
+        CONTROL_Tag controlInfo;
+        mSetting->getCONTROLTag(&controlInfo);
+
+        if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+            for (i = 0; i < (cmr_int)mZslNum; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (mZslHeapArray[i]->fd == hdr_fd[j]) {
+                        mHalOem->ops->camera_set_zsl_buffer(
+                            mCameraHandle, mZslHeapArray[i]->phys_addr,
+                            (cmr_uint)mZslHeapArray[i]->data, mZslHeapArray[i]->fd);
+                    }
+                }
+            }
+        } else if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+                        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+            for (i = 0; i < (cmr_int)mZslNum; i++) {
+                mHalOem->ops->camera_set_zsl_buffer(
+                    mCameraHandle, mZslHeapArray[i]->phys_addr,
+                    (cmr_uint)mZslHeapArray[i]->data, mZslHeapArray[i]->fd);
+            }
         }
         break;
     }
@@ -10748,7 +10765,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
                 dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
             }
-
+            hdr_fd[sw_algorithm_buf_cnt] = zsl_frame.fd;
             sw_algorithm_buf_cnt++;
             if (mMultiCameraMode == MODE_BOKEH) {
                 char prop[PROPERTY_VALUE_MAX] = {
