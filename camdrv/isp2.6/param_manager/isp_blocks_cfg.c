@@ -67,6 +67,7 @@ struct isp_block_operations s_contrast_ops = { _pm_contrast_init, _pm_contrast_s
 struct isp_block_operations s_saturation_ops = { _pm_saturation_init, _pm_saturation_set_param, _pm_saturation_get_param, PNULL, PNULL };
 struct isp_block_operations s_hue_ops = { _pm_hue_init, _pm_hue_set_param, _pm_hue_get_param, PNULL, PNULL };
 struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
+struct isp_block_operations s_fb_ops = { _pm_fb_init, _pm_fb_set_param, _pm_fb_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_6
@@ -90,6 +91,7 @@ struct isp_block_operations s_cnr3_ops = { _pm_cnr3_init, _pm_cnr3_set_param, _p
 struct isp_block_operations s_rgb_ltm_ops = { _pm_rgb_ltm_init, _pm_rgb_ltm_set_param, _pm_rgb_ltm_get_param, PNULL, PNULL };
 struct isp_block_operations s_yuv_ltm_ops = { _pm_yuv_ltm_init, _pm_yuv_ltm_set_param, _pm_yuv_ltm_get_param, PNULL, PNULL };
 struct isp_block_operations s_gtm_ops = { _pm_gtm_init, _pm_gtm_set_param, _pm_gtm_get_param, PNULL, PNULL };
+struct isp_block_operations s_fb_ops = { _pm_fb_init, _pm_fb_set_param, _pm_fb_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_5
@@ -136,6 +138,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_CNR2, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
 	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
 	{ISP_BLK_AE_ADAPT_PARAM, array_offset(struct isp_context, ae_adapt), sizeof(struct isp_ae_adapt_param), &s_ae_adapt_ops},
+	{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
 };
 #elif defined CONFIG_ISP_2_6
 struct isp_block_cfg s_blk_cfgs[] = {
@@ -224,9 +227,9 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_RGB_LTM, array_offset(struct isp_context, rgb_ltm), sizeof(struct isp_rgb_ltm_param), &s_rgb_ltm_ops},
 	{ISP_BLK_YUV_LTM, array_offset(struct isp_context, yuv_ltm), sizeof(struct isp_rgb_ltm_param), &s_yuv_ltm_ops},
 	{ISP_BLK_RAW_GTM, array_offset(struct isp_context, gtm), sizeof(struct isp_raw_gtm_param), &s_gtm_ops},
+	{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
 };
 #endif
-
 
 struct isp_block_cfg *isp_pm_get_block_cfg(cmr_u32 id)
 {
