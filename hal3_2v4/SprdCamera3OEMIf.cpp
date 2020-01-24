@@ -3488,12 +3488,11 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     }
     WaitForPreviewStop();
 
-    if (mNonZslSnapshot == true && mBurstCapture == true) {
+    if (mNonZslSnapshot && mBurstCapture) {
         int32_t frame_num;
         SprdCamera3RegularChannel *channel =
             reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         mNonZslSnapshot = false;
-        mBurstCapture == false;
         frame_num = mTakePicNum - 1;
         channel->channelClearInvalidQBuff(frame_num, start_timestamp,
                                           CAMERA_STREAM_TYPE_PREVIEW);
