@@ -927,7 +927,12 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		if (cxt->ops.ai_ops.ioctrl)
 			cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_SET_FLASH_NOTICE, (void *)&(flash_notice->mode), NULL);
 		break;
+	case ISP_FLASH_CLOSE:
+		ae_notice.mode = AE_FLASH_MAIN_CLOSE;
+		if (cxt->ops.ae_ops.ioctrl)
+			cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);
 
+		break;
 	case ISP_FLASH_AF_DONE:
 		break;
 
