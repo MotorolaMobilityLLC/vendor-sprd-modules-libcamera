@@ -28,8 +28,8 @@
 */
 
 #define LOG_TAG "SprdCamera3Stream"
-//#define LOG_NDEBUG 0
 
+//#define LOG_NDEBUG 0
 #include <utils/Log.h>
 #include <utils/Errors.h>
 #include "SprdCamera3HWI.h"
@@ -122,14 +122,13 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber,
         mBufferList.add(buff_hal);
         ret = NO_ERROR;
     } else {
-        HAL_LOGV("addr_phy = %p, addr_vir = %p, fd=0x%x, size = %d, mStreamType = %d",
-                 buf_mem_info->addr_phy, buf_mem_info->addr_vir, buf_mem_info->fd,
-                 buf_mem_info->size, mStreamType);
+        HAL_LOGV("addr_phy=%p,addr_vir=%p,fd=0x%x,size=%d,mStreamType=%d",
+                 buf_mem_info->addr_phy, buf_mem_info->addr_vir,
+                 buf_mem_info->fd, buf_mem_info->size, mStreamType);
         mBuffNum++;
         buff_hal->buffer_handle = buffer;
         buff_hal->frame_number = frameNumber;
-        HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
-                 buff_hal->frame_number, buffer, mStreamType);
+        HAL_LOGV("frame_number %d, handle %p", buff_hal->frame_number, buffer);
         mBufferList.add(buff_hal);
     }
 
@@ -171,16 +170,15 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber,
         mBufferList.add(buff_hal);
         ret = NO_ERROR;
     } else {
-        HAL_LOGV("addr_phy = %p, addr_vir = %p, fd=0x%x, size = 0x%x"
-                 ", mStreamType = %d, fmt=%d,width=%d, height=%d",
-                 buf_mem_info->addr_phy, buf_mem_info->addr_vir,buf_mem_info->fd,
-                 buf_mem_info->size, mStreamType, buf_mem_info->format,
-                 buf_mem_info->width,buf_mem_info->height);
+        HAL_LOGV("addr_phy=%p,addr_vir=%p,fd=0x%x,size=0x%x,w=%d,h=%d",
+                buf_mem_info->addr_phy, buf_mem_info->addr_vir,
+                buf_mem_info->fd, buf_mem_info->size,
+                buf_mem_info->width, buf_mem_info->height);
+        HAL_LOGV("mStreamType=%d,fmt=%d,frame_number %d, handle %p",
+                 mStreamType, buf_mem_info->format, frameNumber, buffer);
         mBuffNum++;
         buff_hal->buffer_handle = buffer;
         buff_hal->frame_number = frameNumber;
-        HAL_LOGV("frame_number %d, handle %p, mStreamType %d",
-                 buff_hal->frame_number, buffer, mStreamType);
         mBufferList.add(buff_hal);
     }
 
@@ -236,9 +234,8 @@ int SprdCamera3Stream::buffFirstDoneDQ(uint32_t *frameNumber,
         *frameNumber = (uint32_t)((*iter)->frame_number);
         mMemory->unmap((*iter)->buffer_handle, &((*iter)->mem_info));
 
-        HAL_LOGV(
-            "buffer queue First Done DQ frame_number = %d, mStreamType = %d",
-            (*iter)->frame_number, mStreamType);
+        HAL_LOGV("frame_number=%d,mStreamType=%d", (*iter)->frame_number,
+                 mStreamType);
 
         delete *iter;
         mBufferList.erase(iter);
@@ -262,48 +259,16 @@ int SprdCamera3Stream::getHeapSize(uint32_t *mm_heap_size) {
     return NO_ERROR;
 }
 
-int SprdCamera3Stream::getHeapNum(uint32_t *mm_heap_num) {
-    //*mm_heap_num = mBufferTable.size();
-
-    return NO_ERROR;
-}
-
-int SprdCamera3Stream::getRegisterBuffPhyAddr(cmr_uint *buff_phy) {
-    /*cmr_uint* buff_phy_p = buff_phy;
-    for (Vector<hal_buffer_idex_table_t*>::iterator
-    iter=mBufferTable.begin();iter!=mBufferTable.end();iter++)
-    {
-            if(*iter){
-                    *buff_phy_p = (cmr_uint)((*iter)->mem_info.addr_phy);
-                    buff_phy_p++;
-            }
-    }*/
-
-    return NO_ERROR;
-}
-
-int SprdCamera3Stream::getRegisterBuffVirAddr(cmr_uint *buff_vir) {
-    /*cmr_uint* buff_vir_p = buff_vir;
-    for (Vector<hal_buffer_idex_table_t*>::iterator
-    iter=mBufferTable.begin();iter!=mBufferTable.end();iter++)
-    {
-            if(*iter){
-                    *buff_vir_p = (cmr_uint)((*iter)->mem_info.addr_vir);
-                    buff_vir_p++;
-            }
-    }*/
-
-    return NO_ERROR;
-}
-
 int SprdCamera3Stream::getQBufListNum(int32_t *buff_num) {
     Mutex::Autolock l(mLock);
     *buff_num = mBufferList.size();
+
     return NO_ERROR;
 }
 
 int SprdCamera3Stream::getRegisterBufListNum(int32_t *buff_num) {
     *buff_num = mBuffNum;
+
     return NO_ERROR;
 }
 
@@ -329,17 +294,20 @@ int SprdCamera3Stream::getQBuffFirstPhy(cmr_uint *addr_phy) {
         *addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
         return NO_ERROR;
     }
+
     return BAD_VALUE;
 }
 
 int SprdCamera3Stream::getQBuffFirstFd(cmr_s32 *fd) {
     Mutex::Autolock l(mLock);
     Vector<hal_buff_list_t *>::iterator iter;
+
     if (mBufferList.size()) {
         iter = mBufferList.begin();
         *fd = (cmr_s32)((*iter)->mem_info.fd);
         return NO_ERROR;
     }
+
     return BAD_VALUE;
 }
 
@@ -349,8 +317,8 @@ int SprdCamera3Stream::getQBuffFirstNum(uint32_t *frameNumber) {
 
     if (mBufferList.size()) {
         iter = mBufferList.begin();
-
         *frameNumber = (uint32_t)((*iter)->frame_number);
+
         return NO_ERROR;
     }
 
@@ -494,6 +462,7 @@ void SprdCamera3Stream::setHandledFrameNum(uint32_t frameNum) {
 }
 
 void SprdCamera3Stream::setUltraWideMode(bool ultra_wide_mode) {
+
     mIsUltraWideMode = ultra_wide_mode;
     HAL_LOGD("mIsUltraWideMode:%d", mIsUltraWideMode);
 }

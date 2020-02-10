@@ -53,13 +53,11 @@ namespace sprdcamera {
 SprdCamera3Channel::SprdCamera3Channel(SprdCamera3OEMIf *oem_if,
                                        channel_cb_routine cb_routine,
                                        SprdCamera3Setting *setting,
-                                       // SprdCamera3Channel *metadata_channel,
                                        void *userData) {
     mOEMIf = oem_if;
     mUserData = userData;
     mChannelCB = cb_routine;
     mSetting = setting;
-    // mMetadataChannel = metadata_channel;
 }
 
 SprdCamera3Channel::~SprdCamera3Channel() {}
@@ -71,28 +69,26 @@ bool SprdCamera3Channel::isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo) {
     }
     return false;
 }
-/**************************SprdCamera3RegularChannel
- * start**********************************/
+/**********************SprdCamera3RegularChannel start*************************/
 SprdCamera3RegularChannel::SprdCamera3RegularChannel(
     SprdCamera3OEMIf *oem_if, channel_cb_routine cb_routine,
     SprdCamera3Setting *setting, SprdCamera3Channel *metadata_channel,
     camera_channel_type_t channel_type, void *userData)
     : SprdCamera3Channel(oem_if, cb_routine, setting, userData) {
+
     HAL_LOGV("E");
-
     mChannelType = channel_type;
-
-    for (size_t i = 0; i < CHANNEL_MAX_STREAM_NUM; i++) {
+    for (size_t i = 0; i < CHANNEL_MAX_STREAM_NUM; i++)
         mCamera3Stream[i] = NULL;
-    }
+
     mInputBuff = NULL;
     mMemory = new SprdCamera3GrallocMemory();
     if (NULL == mMemory) {
         HAL_LOGE("no mem!");
     }
     memset(&mInputBufInfo, 0, sizeof(hal_mem_info_t));
-
     mMetadataChannel = metadata_channel;
+
     HAL_LOGV("X");
 }
 
@@ -111,14 +107,15 @@ SprdCamera3RegularChannel::~SprdCamera3RegularChannel() {
 
 int SprdCamera3RegularChannel::start(uint32_t frame_number) {
     int ret = NO_ERROR;
-    size_t i = 0;
 
     ret = mOEMIf->start(mChannelType, frame_number);
+
     return ret;
 }
 
 int SprdCamera3RegularChannel::stop(uint32_t frame_number) {
     int ret;
+
     ret = mOEMIf->stop(mChannelType, frame_number);
 
     return NO_ERROR;
@@ -137,6 +134,7 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 #ifdef CAMERA_POWER_DEBUG_ENABLE
     bool cam_not_disp;
     char value[PROPERTY_VALUE_MAX];
+
     property_get("vendor.camera.nodisplay", value, "false");
     cam_not_disp = !strcmp(value, "true");
 #endif
@@ -153,15 +151,14 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 
     // same stream, first in, should first out
     handledFrameNum = mCamera3Stream[index]->getHandledFrameNum();
-    if (frame_number - handledFrameNum > 1 || frame_number == 1) {
+    if (frame_number - handledFrameNum > 1 || frame_number == 1)
         channelClearInvalidQBuff(frame_number - 1, timestamp, stream_type);
-    }
 
     mCamera3Stream[index]->getStreamInfo(&stream);
     ret = mCamera3Stream[index]->buffDoneDQ(frame_number, &buffer);
     if (ret != NO_ERROR) {
-        HAL_LOGE("dq error, stream_type = %d , index = %d , fram_number = %d",
-                 stream_type, index, frame_number);
+        HAL_LOGE("dq error,stream_type=%d,index=%d,fram_number=%d", stream_type,
+                 index, frame_number);
         return BAD_VALUE;
     }
 
@@ -176,8 +173,7 @@ int SprdCamera3RegularChannel::channelCbRoutine(
     // before used,set reserved[0] to null
     stream->reserved[0] = NULL;
     if (ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ==
-            controlInfo.capture_intent &&
-        sprddefInfo->sprd_eis_enabled &&
+        controlInfo.capture_intent && sprddefInfo->sprd_eis_enabled &&
         stream->data_space == HAL_DATASPACE_UNKNOWN) {
         mSetting->getEISCROPTag(&eiscrop_Info);
         stream->reserved[0] = (void *)&eiscrop_Info;
@@ -228,7 +224,7 @@ int SprdCamera3RegularChannel::channelClearInvalidQBuff(
     }
 
     if (mCamera3Stream[index] == NULL) {
-        HAL_LOGW("channel has no valied stream, stream_type = %d", stream_type);
+        HAL_LOGW("channel has no valied stream, stream_type %d", stream_type);
         return INVALID_OPERATION;
     }
 
@@ -383,6 +379,7 @@ int SprdCamera3RegularChannel::addStream(camera_stream_type_t stream_type,
     camera3_stream_t *oldstream;
     int8_t index = stream_type - REGULAR_STREAM_TYPE_BASE;
     camera_dimension_t stream_size;
+
     HAL_LOGD("E: index = %d", index);
     if (index < 0) {
         HAL_LOGE("stream_type %d is not valied type", stream_type);
@@ -412,7 +409,8 @@ int SprdCamera3RegularChannel::addStream(camera_stream_type_t stream_type,
         return INVALID_OPERATION;
     }
 
-    HAL_LOGD("X");
+    HAL_LOGV("X");
+
     return NO_ERROR;
 }
 
@@ -493,8 +491,7 @@ int SprdCamera3RegularChannel::releaseInputBuff() {
 }
 
 int SprdCamera3RegularChannel::kMaxBuffers = 4;
-/**************************SprdCamera3PicChannel
- * start**********************************/
+/***********************SprdCamera3PicChannel start****************************/
 SprdCamera3PicChannel::SprdCamera3PicChannel(
     SprdCamera3OEMIf *oem_if, channel_cb_routine cb_routine,
     SprdCamera3Setting *setting, SprdCamera3Channel *metadata_channel,
@@ -523,7 +520,6 @@ SprdCamera3PicChannel::~SprdCamera3PicChannel() {
 
 int SprdCamera3PicChannel::start(uint32_t frame_number) {
     int ret = NO_ERROR;
-    size_t i = 0;
 
     ret = mOEMIf->start(mChannelType, frame_number);
     return ret;
@@ -531,6 +527,7 @@ int SprdCamera3PicChannel::start(uint32_t frame_number) {
 
 int SprdCamera3PicChannel::stop(uint32_t frame_number) {
     int ret;
+
     ret = mOEMIf->stop(mChannelType, frame_number);
 
     return NO_ERROR;
@@ -704,6 +701,7 @@ int32_t SprdCamera3PicChannel::request(camera3_stream_t *stream,
     }
 
     HAL_LOGE("buff request failed, has no stream %p", stream);
+
     return INVALID_OPERATION;
 }
 
@@ -713,6 +711,7 @@ int SprdCamera3PicChannel::addStream(camera_stream_type_t stream_type,
     camera3_stream_t *oldstream;
     int8_t index = stream_type - PIC_STREAM_TYPE_BASE;
     camera_dimension_t stream_size;
+
     HAL_LOGD("E: index = %d", index);
 
     if (index < 0) {
@@ -795,13 +794,10 @@ int SprdCamera3PicChannel::setCapturePara(camera_capture_mode_t cap_mode) {
 }
 
 int SprdCamera3PicChannel::kMaxBuffers = 1;
-/**************************SprdCamera3MetadataChannel
- * start**********************************/
+/*******************SprdCamera3MetadataChannel start***************************/
 SprdCamera3MetadataChannel::SprdCamera3MetadataChannel(
     SprdCamera3OEMIf *oem_if, channel_cb_routine cb_routine,
-    SprdCamera3Setting *setting,
-    // SprdCamera3Channel *metadata_channel,
-    void *userData)
+    SprdCamera3Setting *setting, void *userData)
     : SprdCamera3Channel(oem_if, cb_routine, setting, userData) {}
 
 SprdCamera3MetadataChannel::~SprdCamera3MetadataChannel() {}
@@ -814,6 +810,7 @@ int SprdCamera3MetadataChannel::request(const CameraMetadata &metadata) {
 int SprdCamera3MetadataChannel::channelCbRoutine(
     uint32_t frame_number, int64_t timestamp,
     camera_stream_type_t stream_type) {
+
     HAL_LOGD("E");
 
     cam_result_data_info_t result_info;
@@ -823,7 +820,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
     result_info.timestamp = timestamp;
     result_info.frame_number = 0;
     mChannelCB(&result_info, mUserData);
-    HAL_LOGD("X");
+    HAL_LOGV("X");
 
     return NO_ERROR;
 }
@@ -1101,7 +1098,8 @@ int SprdCamera3MetadataChannel::stop(uint32_t frame_number) {
     if ((controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) ||
         (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_IDLE))
         mOEMIf->cancelAutoFocus();
-    HAL_LOGD("X");
+    HAL_LOGV("X");
+
     return 0;
 }
 

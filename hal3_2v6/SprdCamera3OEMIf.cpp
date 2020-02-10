@@ -10358,7 +10358,7 @@ int SprdCamera3OEMIf::SetChannelHandle(void *regular_chan, void *picture_chan) {
     return NO_ERROR;
 }
 
-int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
+int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
                                        int stream_tpye) {
     uint32_t imageFormat = CAM_IMG_FMT_BAYER_MIPI_RAW;
     int isYuvSensor = 0, i;

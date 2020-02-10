@@ -36,12 +36,7 @@
 namespace sprdcamera {
 
 class SprdCamera3Stream;
-/*
-typedef struct {
-        hal_mem_info_t mem_info;
-        buffer_handle_t *buffer_handle;
-} hal_buffer_idex_table_t;
-*/
+
 typedef struct {
     buffer_handle_t *buffer_handle;
     uint32_t frame_number;
@@ -53,6 +48,7 @@ class SprdCamera3Stream {
     SprdCamera3Stream(camera3_stream_t *new_stream, camera_dimension_t dim,
                       camera_stream_type_t type, void *userdata);
     virtual ~SprdCamera3Stream();
+
     int registerBuffers(uint32_t num_buffers, buffer_handle_t **buffers);
     int getStreamType(camera_stream_type_t *stream_type);
     int getStreamInfo(camera3_stream_t **stream);
@@ -64,9 +60,7 @@ class SprdCamera3Stream {
     int buffDoneDQ(uint32_t frameNumber, buffer_handle_t **buffer);
     int buffFirstDoneDQ(uint32_t *frameNumber, buffer_handle_t **buffer);
     int getHeapSize(uint32_t *mm_heap_size);
-    int getHeapNum(uint32_t *mm_heap_num);
-    int getRegisterBuffPhyAddr(cmr_uint *buff_phy);
-    int getRegisterBuffVirAddr(cmr_uint *buff_vir);
+
     int getQBufListNum(int32_t *buff_num);
     int getRegisterBufListNum(int32_t *buff_num);
     int getQBuffFirstVir(cmr_uint *addr_vir);
@@ -96,7 +90,6 @@ class SprdCamera3Stream {
 
     uint32_t mBuffNum;
     uint8_t mIsUltraWideMode;
-    //	Vector<hal_buffer_idex_table_t*> mBufferTable;
     Vector<hal_buff_list_t *> mBufferList;
 
     SprdCamera3GrallocMemory *mMemory;

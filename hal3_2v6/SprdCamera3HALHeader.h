@@ -45,22 +45,22 @@ namespace sprdcamera {
 
 #define MAX_NUM_STREAMS 8
 
-extern volatile uint32_t gHALLogLevel;
+extern volatile uint32_t gHalLogLevel;
 
 #define HAL_LOGE(fmt, args...)                                                 \
     ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
 #define HAL_LOGW(fmt, args...)                                                 \
-    ALOGW_IF(gHALLogLevel >= 2, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+    ALOGW_IF(gHalLogLevel >= 2, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
 #define HAL_LOGI(fmt, args...)                                                 \
-    ALOGI_IF(gHALLogLevel >= 3, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+    ALOGI_IF(gHalLogLevel >= 3, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
 #define HAL_LOGD(fmt, args...)                                                 \
-    ALOGD_IF(gHALLogLevel >= 4, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+    ALOGD_IF(gHalLogLevel >= 4, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
 #define HAL_LOGV(fmt, args...)                                                 \
-    ALOGD_IF(gHALLogLevel >= 5, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+    ALOGD_IF(gHalLogLevel >= 5, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
 class SprdCamera3Channel;
 
@@ -74,11 +74,6 @@ typedef struct {
     int32_t numerator;
     int32_t denominator;
 } cam_rational_type_t;
-
-typedef struct {
-    int32_t width;
-    int32_t height;
-} cam_dimension_t;
 
 typedef struct meta_info {/*   for some metadata,   result meta should be
                              corresponding with request meta */
@@ -214,7 +209,7 @@ typedef struct {
 typedef struct {
     cam_stream_type_t type;
     cam_format_t format;
-    cam_dimension_t dimension;
+    struct img_size dimension;
     uint32_t num_buffers;
 } hal_stream_info_t;
 
@@ -309,7 +304,7 @@ typedef struct {
 } camera_dimension_t;
 
 typedef struct {
-    cam_dimension_t stream_size;
+    struct img_size stream_size;
     camera_stream_type_t stream_type;
     camera_channel_type_t channel_type;
 } camera_stream_configure_t;

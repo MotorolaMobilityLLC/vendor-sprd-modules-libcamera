@@ -56,22 +56,20 @@ typedef struct {
 class SprdCamera3Memory {
 
   public:
+    SprdCamera3Memory();
+    virtual ~SprdCamera3Memory();
+
+    static int getUsage(int stream_type, cmr_uint &usage);
+
     int cleanCache(int index) { return cacheOps(index, 0); }
     int invalidateCache(int index) { return cacheOps(index, 0); }
     int cleanInvalidateCache(int index) { return cacheOps(index, 0); }
 
     virtual int cacheOps(int index, unsigned int cmd) = 0;
-
-    SprdCamera3Memory();
-    virtual ~SprdCamera3Memory();
-
     virtual int map(buffer_handle_t *buffer_handle,
                     hal_mem_info_t *mem_info) = 0;
     virtual int unmap(buffer_handle_t *buffer_handle,
                       hal_mem_info_t *mem_info) = 0;
-
-  public:
-    static int getUsage(int stream_type, cmr_uint &usage);
 
   protected:
     int cacheOpsInternal(int index, unsigned int cmd, void *vaddr);

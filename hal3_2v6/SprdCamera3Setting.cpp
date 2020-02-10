@@ -338,7 +338,7 @@ enum {
     CAMERA_ISO_MAX
 };
 
-const cam_dimension_t default_sensor_max_sizes[CAMERA_ID_COUNT] = {
+const struct img_size default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 #if defined(CONFIG_CAMERA_SUPPORT_32M)
     {6528, 4896},
 #elif defined(CONFIG_CAMERA_SUPPORT_21M)
@@ -5833,49 +5833,49 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     return resultMetadata;
 }
 
-int SprdCamera3Setting::setPreviewSize(cam_dimension_t size) {
+int SprdCamera3Setting::setPreviewSize(struct img_size size) {
     s_setting[mCameraId].preview_size = size;
 
     return 0;
 }
 
-int SprdCamera3Setting::getPreviewSize(cam_dimension_t *size) {
+int SprdCamera3Setting::getPreviewSize(struct img_size *size) {
     if (size) {
         *size = s_setting[mCameraId].preview_size;
     }
     return 0;
 }
 
-int SprdCamera3Setting::setPictureSize(cam_dimension_t size) {
+int SprdCamera3Setting::setPictureSize(struct img_size size) {
     s_setting[mCameraId].picture_size = size;
     return 0;
 }
 
-int SprdCamera3Setting::getPictureSize(cam_dimension_t *size) {
+int SprdCamera3Setting::getPictureSize(struct img_size *size) {
     if (size) {
         *size = s_setting[mCameraId].picture_size;
     }
     return 0;
 }
 
-int SprdCamera3Setting::setCallbackSize(cam_dimension_t size) {
+int SprdCamera3Setting::setCallbackSize(struct img_size size) {
     s_setting[mCameraId].callback_size = size;
     return 0;
 }
 
-int SprdCamera3Setting::getCallbackSize(cam_dimension_t *size) {
+int SprdCamera3Setting::getCallbackSize(struct img_size *size) {
     if (size) {
         *size = s_setting[mCameraId].callback_size;
     }
     return 0;
 }
 
-int SprdCamera3Setting::setVideoSize(cam_dimension_t size) {
+int SprdCamera3Setting::setVideoSize(struct img_size size) {
     s_setting[mCameraId].video_size = size;
     return 0;
 }
 
-int SprdCamera3Setting::getVideoSize(cam_dimension_t *size) {
+int SprdCamera3Setting::getVideoSize(struct img_size *size) {
     if (size) {
         *size = s_setting[mCameraId].video_size;
     }

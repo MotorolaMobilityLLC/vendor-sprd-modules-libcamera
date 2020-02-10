@@ -211,8 +211,7 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
         ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
                                bounds, &ycbcr);
         if (ret != NO_ERROR) {
-            HAL_LOGV("lockcbcr.onQueueFilled, mapper.lock failed try "
-                     "lockycbcr. %p, ret %d",
+            HAL_LOGV("lockcbcr.onQueueFilled,failed try lockycbcr %p, ret %d",
                      *buffer_handle, ret);
             ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
                               bounds, &vaddr);
@@ -229,13 +228,12 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
         ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
                           bounds, &vaddr);
         if (ret != NO_ERROR) {
-            HAL_LOGV("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
-                     "ret %d",
+            HAL_LOGV("lockonQueueFilled,lock failed try lockycbcr %p,ret %d",
                      *buffer_handle, ret);
             ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle,
                                    usage, bounds, &ycbcr);
             if (ret != NO_ERROR) {
-                HAL_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                HAL_LOGE("lockycbcr.onQueueFilled, Fail %p, ret %d",
                          *buffer_handle, ret);
             } else {
                 mem_info->addr_vir = ycbcr.y;
@@ -245,16 +243,15 @@ int SprdCamera3GrallocMemory::map(buffer_handle_t *buffer_handle,
         }
     }
     mem_info->fd = ADP_BUFFD(*buffer_handle);
-    // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
     mem_info->size = ADP_BUFSIZE(*buffer_handle);
     mem_info->width = ADP_WIDTH(*buffer_handle);
     mem_info->height = ADP_HEIGHT(*buffer_handle);
-    mem_info->format= ADP_FORMAT(*buffer_handle);
-    HAL_LOGV("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
-             " buf size = 0x%x, width = %d, height = %d, fmt = %d",
+    mem_info->format = ADP_FORMAT(*buffer_handle);
+    HAL_LOGV("fd=0x%x,offset=%p,addr_vir=%p,size=0x%x,w=%d,h=%d,fmt=%d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
-             mem_info->size, mem_info->width, mem_info->height, mem_info->format);
+             mem_info->size, mem_info->width, mem_info->height,
+             mem_info->format);
 
 err_out:
     return ret;
@@ -268,7 +265,6 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
         HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
         return -EINVAL;
     }
-    HAL_LOGV("E");
 
     int width = ADP_WIDTH(*buffer_handle);
     int height = ADP_HEIGHT(*buffer_handle);
@@ -286,13 +282,12 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
         ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
                                bounds, &ycbcr);
         if (ret != NO_ERROR) {
-            HAL_LOGV("lockcbcr.onQueueFilled, mapper.lock failed try "
-                     "lockycbcr. %p, ret %d",
+            HAL_LOGV("onQueueFilled, Failed try lockycbcr. %p, ret %d",
                      *buffer_handle, ret);
             ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
                               bounds, &vaddr);
             if (ret != NO_ERROR) {
-                HAL_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
+                HAL_LOGE("onQueueFilled, mapper.lock fail %p, ret %d",
                          *buffer_handle, ret);
             } else {
                 mem_info->addr_vir = vaddr;
@@ -304,13 +299,12 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
         ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
                           bounds, &vaddr);
         if (ret != NO_ERROR) {
-            HAL_LOGV("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
-                     "ret %d",
+            HAL_LOGV("onQueueFilled, Failed try lockycbcr. %p, ret %d",
                      *buffer_handle, ret);
             ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle,
                                    usage, bounds, &ycbcr);
             if (ret != NO_ERROR) {
-                HAL_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                HAL_LOGE("lockycbcr.onQueueFilled, Fail %p, ret %d",
                          *buffer_handle, ret);
             } else {
                 mem_info->addr_vir = ycbcr.y;
@@ -320,16 +314,15 @@ int SprdCamera3GrallocMemory::map2(buffer_handle_t *buffer_handle,
         }
     }
     mem_info->fd = ADP_BUFFD(*buffer_handle);
-    // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
     mem_info->size = ADP_BUFSIZE(*buffer_handle);
     mem_info->width = ADP_WIDTH(*buffer_handle);
     mem_info->height = ADP_HEIGHT(*buffer_handle);
-    mem_info->format= ADP_FORMAT(*buffer_handle);
-    HAL_LOGV("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
-             " buf size = %zu, width = %d, height = %d, fmt = %d",
+    mem_info->format = ADP_FORMAT(*buffer_handle);
+    HAL_LOGV("fd=0x%x,offset=%p,addr_vir=%p,size=%zu,w=%d,t=%d,fmt=%d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
-             mem_info->size, mem_info->width, mem_info->height, mem_info->format);
+             mem_info->size, mem_info->width, mem_info->height,
+             mem_info->format);
 
 err_out:
     return ret;
@@ -349,9 +342,9 @@ int SprdCamera3GrallocMemory::unmap(buffer_handle_t *buffer_handle,
     int ret = NO_ERROR;
     GraphicBufferMapper &mapper = GraphicBufferMapper::get();
     ret = mapper.unlock((const native_handle_t *)*buffer_handle);
-    if (ret != NO_ERROR) {
-        ALOGE("onQueueFilled, mapper.unlock fail %p", *buffer_handle);
-    }
+    if (ret != NO_ERROR)
+        HAL_LOGE("onQueueFilled, mapper.unlock fail %p", *buffer_handle);
+
     return ret;
 }
 /*===========================================================================
@@ -400,13 +393,11 @@ int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
     if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
         ret = mem_info->pbuffer->lockYCbCr(usage, bounds, &ycbcr);
         if (ret != NO_ERROR) {
-            HAL_LOGV("lockcbcr.onQueueFilled, mapper.lock failed try "
-                     "lockycbcr. %p, ret %d",
+            HAL_LOGV("onQueueFilled,Failed try lockycbcr. %p, ret %d",
                      *buffer_handle, ret);
             ret = mem_info->pbuffer->lock(usage, bounds, &vaddr);
             if (ret != NO_ERROR) {
-                HAL_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
-                         *buffer_handle, ret);
+                HAL_LOGE("onQueueFilled, Fail %p, ret %d", *buffer_handle, ret);
             } else {
                 mem_info->addr_vir = vaddr;
             }
@@ -416,7 +407,7 @@ int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
     } else {
         ret = mem_info->pbuffer->lock(usage, bounds, &vaddr);
         if (ret != NO_ERROR) {
-            HAL_LOGV("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
+            HAL_LOGV("onQueueFilled, mapper.lock failed try lockycbcr. %p, "
                      "ret %d",
                      *buffer_handle, ret);
             ret = mem_info->pbuffer->lockYCbCr(usage, bounds, &ycbcr);
@@ -431,16 +422,15 @@ int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
         }
     }
     mem_info->fd = ADP_BUFFD(*buffer_handle);
-    // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
     mem_info->size = ADP_BUFSIZE(*buffer_handle);
     mem_info->width = ADP_WIDTH(*buffer_handle);
     mem_info->height = ADP_HEIGHT(*buffer_handle);
     mem_info->format = ADP_FORMAT(*buffer_handle);
-    HAL_LOGV("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
-             " buf size = %zu, width = %d, height = %d, format = %d",
+    HAL_LOGV("fd=0x%x,offset=%p,addr_vir=%p,size=%zu,w=%d,h=%d,format=%d",
              mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
-             mem_info->size, mem_info->width, mem_info->height, mem_info->format);
+             mem_info->size, mem_info->width, mem_info->height,
+             mem_info->format);
 
 err_out:
     return ret;

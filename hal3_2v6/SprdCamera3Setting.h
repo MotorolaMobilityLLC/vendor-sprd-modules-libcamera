@@ -479,16 +479,16 @@ enum vcm_result {
 };
 
 typedef struct cam_stream_info {
-    cam_dimension_t stream_sizes_tbl;
+    struct img_size stream_sizes_tbl;
     int64_t stream_min_duration;
     int64_t stream_stall_duration;
 } cam_stream_info_t;
 
 typedef struct {
-    cam_dimension_t preview_size;
-    cam_dimension_t picture_size;
-    cam_dimension_t video_size;
-    cam_dimension_t callback_size;
+    struct img_size preview_size;
+    struct img_size picture_size;
+    struct img_size video_size;
+    struct img_size callback_size;
 
     COLOR_Tag colorInfo;
     CONTROL_Tag controlInfo;
@@ -592,17 +592,17 @@ class SprdCamera3Setting {
     int popSprdParaTag();
     void releaseAndroidParaTag();
 
-    int setPreviewSize(cam_dimension_t size);
-    int getPreviewSize(cam_dimension_t *size);
+    int setPreviewSize(struct img_size size);
+    int getPreviewSize(struct img_size *size);
 
-    int setPictureSize(cam_dimension_t size);
-    int getPictureSize(cam_dimension_t *size);
+    int setPictureSize(struct img_size size);
+    int getPictureSize(struct img_size *size);
 
-    int setCallbackSize(cam_dimension_t size);
-    int getCallbackSize(cam_dimension_t *size);
+    int setCallbackSize(struct img_size size);
+    int getCallbackSize(struct img_size *size);
 
-    int setVideoSize(cam_dimension_t size);
-    int getVideoSize(cam_dimension_t *size);
+    int setVideoSize(struct img_size size);
+    int getVideoSize(struct img_size *size);
 
     int setCOLORTag(COLOR_Tag colorInfo);
     int getCOLORTag(COLOR_Tag *colorInfo);

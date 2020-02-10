@@ -54,15 +54,15 @@ namespace sprdcamera {
 unsigned int SprdCamera3HWI::mCameraSessionActive = 0;
 multiCameraMode SprdCamera3HWI::mMultiCameraMode = MODE_SINGLE_CAMERA;
 
-// gHALLogLevel(default is 4):
+// gHalLogLevel(default is 4):
 //   1 - only show ALOGE, err log is always show
 //   2 - show ALOGE and ALOGW
 //   3 - show ALOGE, ALOGW and ALOGI
 //   4 - show ALOGE, ALOGW, ALOGI and ALOGD
 //   5 - show ALOGE, ALOGW, ALOGI and ALOGD, ALOGV
-// use the following command to change gHALLogLevel:
+// use the following command to change gHalLogLevel:
 //   adb shell setprop persist.vendor.cam.hal.log 1
-volatile uint32_t gHALLogLevel = 4;
+volatile uint32_t gHalLogLevel = 4;
 
 camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
     .initialize = SprdCamera3HWI::initialize,
@@ -214,7 +214,7 @@ static int ispVideoSetParam(uint32_t width, uint32_t height) {
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3PicChannel *picChannel = dev->getPicChan();
     SprdCamera3OEMIf *oemIf = dev->getOEMif();
-    cam_dimension_t capture_size;
+    struct img_size capture_size;
 
     HAL_LOGI("SET PARAM");
 
@@ -235,7 +235,7 @@ static int ispVideoSetJpegQuality(uint32_t param1, uint32_t param2) {
     SprdCamera3HWI *dev =
         reinterpret_cast<SprdCamera3HWI *>(g_cam_device->priv);
     SprdCamera3Setting *setting = dev->mSetting;
-    cam_dimension_t capture_size;
+    struct img_size capture_size;
     JPEG_Tag jpgInfo;
 
     memset(&jpgInfo, 0, sizeof(JPEG_Tag));
@@ -578,9 +578,9 @@ int SprdCamera3HWI::configureStreams(
     char value2[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
     size_t i;
-    cam_dimension_t preview_size = {0, 0}, video_size = {0, 0};
-    cam_dimension_t callback_size = {0, 0}, capture_size = {0, 0};
-    cam_dimension_t yuv2_size = {0, 0};
+    struct img_size preview_size = {0, 0}, video_size = {0, 0};
+    struct img_size callback_size = {0, 0}, capture_size = {0, 0};
+    struct img_size yuv2_size = {0, 0};
     int previewFormat = 0, videoFormat = 0;
     int callbackFormat = 0, yuv2Format = 0, captureFormat = 0;
     int previewStreamType = 0, videoStreamType = 0;
@@ -1115,13 +1115,13 @@ void SprdCamera3HWI::getLogLevel() {
     // user verson camera log dont print >= LOGD
     property_get("ro.debuggable", value, "1");
     if (!strcmp(value, "0") || turn_off_flag) {
-        gHALLogLevel = LEVEL_OVER_LOGI;
+        gHalLogLevel = LEVEL_OVER_LOGI;
     }
 
     property_get("persist.vendor.cam.hal.log", value, "0");
     val = atoi(value);
     if (val > 0) {
-        gHALLogLevel = (uint32_t)val;
+        gHalLogLevel = (uint32_t)val;
     }
 }
 /* If need always zsl or non-zsl 4in1, please setprop

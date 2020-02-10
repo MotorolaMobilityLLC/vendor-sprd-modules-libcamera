@@ -276,7 +276,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int setCapturePara(camera_capture_mode_t stream_type,
                        uint32_t frame_number);
     int SetChannelHandle(void *regular_chan, void *picture_chan);
-    int setCamStreamInfo(cam_dimension_t size, int format, int stream_type);
+    int setCamStreamInfo(struct img_size size, int format, int stream_type);
     int CameraConvertCoordinateToFramework(int32_t *rect);
     int CameraConvertCoordinateFromFramework(int32_t *rect);
     int CameraConvertRegionFromFramework(int32_t *rect);
