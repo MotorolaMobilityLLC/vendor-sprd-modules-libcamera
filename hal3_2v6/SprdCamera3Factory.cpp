@@ -59,10 +59,11 @@ SprdCamera3Wrapper *gSprdCamera3Wrapper = NULL;
  * RETURN     : None
  *==========================================================================*/
 SprdCamera3Factory::SprdCamera3Factory() {
-    camera_info info;
     char boot_mode[PROPERTY_VALUE_MAX] = {'\0'};
+
     property_get("ro.bootmode", boot_mode, "0");
     LOGI("%s boot_mode = %s", __FUNCTION__, boot_mode);
+
     if (strcmp(boot_mode, "autotest") && strcmp(boot_mode, "cali")) {
         mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
     }
@@ -130,16 +131,9 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
 
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.id", value, "null");
-    if (!strcmp(value, "0"))
-        camera_id = 0;
-    else if (!strcmp(value, "2"))
-        camera_id = 2;
-    else if (!strcmp(value, "3"))
-        camera_id = 3;
-    else if (!strcmp(value, "4"))
-        camera_id = 4;
-    else if (!strcmp(value, "5"))
-        camera_id = 5;
+    if (value[0] >= '0' && value[0] <= '9') {
+        camera_id = value[0] - '0';
+    }
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
     if (camera_id == SPRD_MULTI_CAMERA_ID)
@@ -149,13 +143,13 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
     if (camera_id == SPRD_BACK_HIGH_RESOLUTION_ID ||
         camera_id == SPRD_FRONT_HIGH_RES)
         return gSprdCamera3Factory.getHighResolutionSize(
-            multiCameraModeIdToPhyId(camera_id), info);
+            multi_id_to_phyid(camera_id), info);
 
-    if (isSingleIdExposeOnMultiCameraMode(camera_id))
+    if (is_single_expose(camera_id))
         return gSprdCamera3Wrapper->getCameraInfo(camera_id, info);
     else
-        return gSprdCamera3Factory.getCameraInfo(
-            multiCameraModeIdToPhyId(camera_id), info);
+        return gSprdCamera3Factory.getCameraInfo(multi_id_to_phyid(camera_id),
+                                                 info);
 }
 
 /*===========================================================================
@@ -168,7 +162,7 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
  * RETURN     : number of cameras detected
  *==========================================================================*/
 int SprdCamera3Factory::getNumberOfCameras() {
-    if(mNumOfCameras == 0) {
+    if (mNumOfCameras == 0) {
         mNumOfCameras = SprdCamera3Setting::getNumberOfCameras();
     }
     return mNumOfCameras;
@@ -278,24 +272,14 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
                 ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT;
         }
     }
-/*
-    memcpy(available_stream_configurations, &(available_stream_configs[0]),
-           available_stream_configs.size() * sizeof(int32_t));
-    for (array_size = 0; array_size < CAMERA_SETTINGS_CONFIG_ARRAYSIZE;
-         array_size++) {
-        if (available_stream_configurations[array_size * 4] == 0) {
-            break;
-        }
-    }
-*/
+
     metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
                     avail_stream_config, array_size);
 
     mStaticMetadata = metadata.release();
     SprdCamera3Setting::getCameraInfo(camera_id, info);
 
-    info->device_version =
-        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
+    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
 
@@ -304,7 +288,7 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
 }
 
 /*====================================================================
-*FUNCTION     :setTorchMode
+*FUNCTION     :set_torch_mode
 *DESCRIPTION  :Attempt to turn on or off the torch of the flash unint.
 *
 *PARAMETERS   :
@@ -314,28 +298,27 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
 *RETURN       : 0         --success
 *               non zero  --failure
 *===================================================================*/
-int SprdCamera3Factory::setTorchMode(const char *camera_id, bool enabled) {
+int SprdCamera3Factory::set_torch_mode(const char *camera_id, bool enabled) {
     int retval = 0;
-    ALOGV("%s: In,camera_id:%s,enable:%d", __func__, camera_id, enabled);
 
     retval = SprdCamera3Flash::setTorchMode(camera_id, enabled);
-    ALOGV("retval = %d", retval);
+    HAL_LOGV("camera_id %d,enabled %d ret %d", camera_id, enabled, retval);
 
     return retval;
 }
 
 int SprdCamera3Factory::set_callbacks(
     const camera_module_callbacks_t *callbacks) {
-    ALOGV("%s :In", __func__);
     int retval = 0;
 
+    HAL_LOGV("E");
     retval = SprdCamera3Flash::registerCallbacks(callbacks);
 
     return retval;
 }
 
 void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t *ops) {
-    ALOGV("%s : ops=%p", __func__, ops);
+    HAL_LOGV("E,ops=%p", ops);
     ops->get_tag_count = SprdCamera3Setting::get_tag_count;
     ops->get_all_tags = SprdCamera3Setting::get_all_tags;
     ops->get_section_name = SprdCamera3Setting::get_section_name;
@@ -360,21 +343,21 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     int rc = NO_ERROR;
     int phyId = 0;
     int is_high_res_mode = 0;
+    unsigned int on_off = 0;
     struct phySensorInfo *phyPtr = NULL;
     char prop[PROPERTY_VALUE_MAX];
 
-    if (camera_id < 0 || multiCameraModeIdToPhyId(camera_id) >= mNumOfCameras)
+    phyId = multi_id_to_phyid(camera_id);
+    if (camera_id < 0 || phyId >= mNumOfCameras)
         return -ENODEV;
 
-    phyId = multiCameraModeIdToPhyId(camera_id);
     if (phyId < 0)
         phyId = 0;
     phyPtr = sensorGetPhysicalSnsInfo(phyId);
     if (phyPtr->phyId != phyPtr->slotId)
         return -ENODEV;
 
-    SprdCamera3HWI *hw =
-        new SprdCamera3HWI(multiCameraModeIdToPhyId(camera_id));
+    SprdCamera3HWI *hw = new SprdCamera3HWI(phyId);
 
     if (!hw) {
         HAL_LOGE("Allocation of hardware interface failed");
@@ -384,10 +367,6 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     // Only 3d calibration use this
     // TBD: move 3d calibration to multi camera
     HAL_LOGD("SPRD Camera Hal, camera_id=%d", camera_id);
-    if (SPRD_FRONT_HIGH_RES == camera_id ||
-        SPRD_BACK_HIGH_RESOLUTION_ID == camera_id) {
-        is_high_res_mode = 1;
-    }
     if (SPRD_3D_CALIBRATION_ID == camera_id) {
         hw->setMultiCameraMode(MODE_3D_CALIBRATION);
         property_set("vendor.cam.dualmode", "high_mode");
@@ -404,10 +383,11 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     } else {
         if (SPRD_FRONT_HIGH_RES == camera_id ||
             SPRD_BACK_HIGH_RESOLUTION_ID == camera_id) {
+            is_high_res_mode = 1;
             hw->camera_ioctrl(CAMERA_TOCTRL_SET_HIGH_RES_MODE,
                               &is_high_res_mode, NULL);
         }
-        unsigned int on_off = 0;
+
         property_get("persist.vendor.cam.ultrawide.enable", prop, "1");
         if (SPRD_ULTRA_WIDE_ID == camera_id)
             on_off = atoi(prop);
@@ -439,7 +419,7 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
         return INVALID_OPERATION;
     }
     if (!id) {
-        ALOGE("Invalid camera id");
+        HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
@@ -453,19 +433,13 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     }
 #endif
 
-    // for camera id 0&2&3 debug
+    // for camera id debug 0,2,3;if set, 0<=id<=9
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.id", value, "null");
-    if (!strcmp(value, "0"))
-        id = "0";
-    else if (!strcmp(value, "2"))
-        id = "2";
-    else if (!strcmp(value, "3"))
-        id = "3";
-    else if (!strcmp(value, "4"))
-        id = "4";
-    else if (!strcmp(value, "5"))
-        id = "5";
+    if (value[0] >= '0' && value[0] <= '9') {
+        value[1] = '\0';
+        id = value;
+    }
 
     HAL_LOGI("multi cameraId=%d", atoi(id));
 
@@ -476,7 +450,7 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     }
 #endif
 
-    if (isSingleIdExposeOnMultiCameraMode(atoi(id))) {
+    if (is_single_expose(atoi(id))) {
         return gSprdCamera3Wrapper->cameraDeviceOpen(module, id, hw_device);
     } else {
         return gSprdCamera3Factory.cameraDeviceOpen(atoi(id), hw_device);
@@ -493,7 +467,7 @@ MODE_3D_CAPTURE
 camera apk use two camera id MODE_REFOCUS and 2 to open Camera
 ValidationTools apk use two camera id MODE_3D_CALIBRATION and 3 to open Camera
 */
-bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
+bool SprdCamera3Factory::is_single_expose(int cameraId) {
 
     if ((SprdCamera3Setting::mPhysicalSensorNum > cameraId) ||
         (cameraId > SPRD_MULTI_CAMERA_MAX_ID)) {
@@ -512,7 +486,7 @@ bool SprdCamera3Factory::isSingleIdExposeOnMultiCameraMode(int cameraId) {
     return true;
 }
 
-int SprdCamera3Factory::multiCameraModeIdToPhyId(int cameraId) {
+int SprdCamera3Factory::multi_id_to_phyid(int cameraId) {
     char prop[PROPERTY_VALUE_MAX];
 
     if (MIN_MULTI_CAMERA_FAKE_ID > cameraId) {

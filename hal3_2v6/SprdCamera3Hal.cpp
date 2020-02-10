@@ -58,5 +58,5 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     .get_vendor_tag_ops =
         sprdcamera::SprdCamera3Factory::get_vendor_tag_ops, /*HAL 3.2*/
     .open_legacy = HAL_open_legacy,
-    .set_torch_mode = sprdcamera::SprdCamera3Factory::setTorchMode,
+    .set_torch_mode = sprdcamera::SprdCamera3Factory::set_torch_mode,
 };
