@@ -2400,7 +2400,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 // 9 back portrait mode
 #ifdef CONFIG_PORTRAIT_SUPPORT
     available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.daul.portrait",
+        resetFeatureStatus("persist.vendor.cam.ip.dual.portrait",
                            "persist.vendor.cam.ba.portrait.enable"));
 #else
     available_cam_features.add(
@@ -2505,6 +2505,26 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
                            "persist.vendor.cam.fov.fusion.enable"));
+
+    //24 nightshot pro
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.night",
+                                      "persist.vendor.cam.night.pro.enable"));
+
+    // 25 camera lightportrait_ba
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.light.dual.portrait",
+                           "persist.vendor.cam.lightportrait.ba.enable"));
+#else
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
+                           "persist.vendor.cam.lightportrait.ba.enable"));
+#endif
+    // 26 camera lightportrait_fr
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
+                           "persist.vendor.cam.lightportrait.fr.enable"));
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -6736,6 +6756,20 @@ int SprdCamera3Setting::getAUTOTRACKINGTag(
 int SprdCamera3Setting::getSensorFov(float *w_fov, float *sw_fov) {
     *w_fov = sensor_angle_fov[0];
     *sw_fov = sensor_angle_fov[1];
+    return 0;
+}
+
+int SprdCamera3Setting::setFdScore(int *fd_score,int number_of_faces) {
+    for(int i = 0;i < number_of_faces;i++){
+        s_setting[mCameraId].fd_score[i] = *(fd_score+i);
+    }
+    return 0;
+}
+
+int SprdCamera3Setting::getFdScore(int *fd_score,int number_of_faces) {
+    for(int i = 0;i < number_of_faces;i++){
+        *(fd_score+i) = s_setting[mCameraId].fd_score[i];
+    }
     return 0;
 }
 

@@ -3685,6 +3685,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     int32_t sy = 0;
     int32_t ex = 0;
     int32_t ey = 0;
+    int32_t fd_score[10];
     struct img_rect rect = {0, 0, 0, 0};
     mSetting->getFACETag(&faceInfo);
 #ifdef CONFIG_CAMERA_EIS
@@ -3743,10 +3744,12 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
                    sizeof(camera_face_t));
             orifaceInfo.angle[k] = frame->face_info[k].angle;
             orifaceInfo.pose[k] = frame->face_info[k].pose;
-            HAL_LOGD("smile level %d. face:%d  %d  %d  %d ,angle %d\n",
+            fd_score[k] = frame->face_info[k].score;
+
+            HAL_LOGD("smile level %d. face:%d  %d  %d  %d ,angle %d,fd_score %d\n",
                      frame->face_info[k].smile_level, faceInfo.face[k].rect[0],
                      faceInfo.face[k].rect[1], faceInfo.face[k].rect[2],
-                     faceInfo.face[k].rect[3], faceInfo.angle[k]);
+                     faceInfo.face[k].rect[3], faceInfo.angle[k], fd_score[k]);
             CameraConvertCoordinateToFramework(faceInfo.face[k].rect);
             /*When the half of face at the edge of the screen,the smile level
             returned by face detection library  can often more than 30.
@@ -3761,6 +3764,7 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     }
     mSetting->setORIFACETag(&orifaceInfo);
     mSetting->setFACETag(&faceInfo);
+    mSetting->setFdScore(fd_score, number_of_faces);
 }
 
 void SprdCamera3OEMIf::receivePreviewATFrame(struct camera_frame_type *frame) {
@@ -3968,7 +3972,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     struct faceBeautyLevels beautyLevels;
     struct facebeauty_param_info fb_param_map_prev;
     if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
-        isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)) {
+        isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)
+        && (getMultiCameraMode() != MODE_BOKEH)
+        && (getMultiCameraMode() != MODE_BLUR)) {
         FACE_Tag faceInfo;
         fbBeautyFacetT beauty_face;
         fb_beauty_image_t beauty_image;
@@ -4071,13 +4077,16 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beauty_image.inputImage.addr[0] = (void *)frame->y_vir_addr;
         beauty_image.inputImage.addr[1] = (void *)frame->uv_vir_addr;
         beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
+
         beauty_image.inputImage.ion_fd = frame->fd;
+        
         beauty_image.inputImage.offset[0] = 0;
         beauty_image.inputImage.offset[1] = frame->width * frame->height;
         beauty_image.inputImage.width = frame->width;
         beauty_image.inputImage.height = frame->height;
         beauty_image.inputImage.stride = frame->width;
         beauty_image.inputImage.size = frame->width * frame->height * 3 / 2;
+
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
                                &beauty_image);
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,

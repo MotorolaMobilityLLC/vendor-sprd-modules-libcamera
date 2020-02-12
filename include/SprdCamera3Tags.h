@@ -108,6 +108,8 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_CALIBRATION_OTP_DATA,
     ANDROID_SPRD_CALIBRATION_OTP_RESULT,
     ANDROID_SPRD_3D_PARAM,
+    ANDROID_SPRD_LIGHTPORTRAITTYPE,
+    ANDROID_SPRD_LIGHTPORTRAITTIPS,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

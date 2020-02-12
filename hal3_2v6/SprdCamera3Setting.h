@@ -537,6 +537,7 @@ typedef struct {
     int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
     AUTO_TRACKING_Tag autotrackingInfo;
     MLOG_Tag mlogInfo;
+    int32_t fd_score[10];
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {
@@ -733,6 +734,8 @@ class SprdCamera3Setting {
     int setAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
     int getAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
     int getSensorFov(float *w_fov,float  *sw_fov);
+    int setFdScore(int32_t *fd_score, int num);
+    int getFdScore(int32_t *fd_score, int num);
 
 
     static uint8_t mMaxCameraCount;

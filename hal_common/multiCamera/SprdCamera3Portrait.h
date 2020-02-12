@@ -119,7 +119,7 @@ typedef enum {
 } CameraPortraitID;
 
 typedef enum {
-    CAM_DUAL_PORTRAIT_MODE = 0,
+    CAM_COMMON_MODE = 0,
     CAM_PORTRAIT_PORTRAIT_MODE = 1
 } CameraPortraitMode;
 
@@ -197,23 +197,27 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     new_mem_t mLocalBuffer[LOCAL_BUFFER_NUM];
     new_mem_t mLocalScaledBuffer;
     struct img_frm mScaleInfo;
+    List<bokeh_params> mCapFaceInfoList;
     Mutex mRequestLock;
     List<new_mem_t *> mLocalBufferList;
     List<camera3_notify_msg_t> mNotifyListMain;
+    List<camera3_notify_msg_t> mPrevFrameNotifyList;
     Mutex mNotifyLockMain;
+    Mutex mPrevFrameNotifyLock;
+    uint64_t capture_result_timestamp;
     List<camera3_notify_msg_t> mNotifyListAux;
     Mutex mNotifyLockAux;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
     bool mIsCapturing;
+    bool mSnapshotResultReturn;
     bool mIsCapDepthFinish;
     bool mHdrSkipBlur;
     int mjpegSize;
     uint8_t mCameraId;
-#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
-    faceBeautyLevels mPerfectskinlevel;
-#else
-    face_beauty_levels mPerfectskinlevel;
+    bool mFaceBeautyFlag;
+#ifdef CONFIG_FACE_BEAUTY
+    faceBeautyLevels facebeautylevel;
 #endif
     bool mFlushing;
     bool mIsSupportPBokeh;
@@ -221,6 +225,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mApiVersion;
     int mJpegOrientation;
     uint8_t mBokehMode;
+    uint8_t lightPortraitType;
     int mDoPortrait;
     bool mPrevPortrait;
     int mlimited_infi;
@@ -264,6 +269,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
 
     static int jpeg_callback_thread_init(void *p_data);
     static void *jpeg_callback_thread_proc(void *p_data);
+    camera_metadata_t *reConfigResultMeta(camera_metadata_t *meta);
 
   public:
     SprdCamera3Portrait();
@@ -414,7 +420,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     void dumpCaptureBokeh(unsigned char *result_buffer_addr,
                           uint32_t jpeg_size);
     void bokehFaceMakeup(buffer_handle_t *buffer_handle, void *input_buf1_addr);
-    void updateApiParams(CameraMetadata metaSettings, int type);
+    void updateApiParams(CameraMetadata metaSettings, int type, uint32_t cur_frame_number);
     int bokehHandle(buffer_handle_t *output_buf, buffer_handle_t *inputbuff1,
                     buffer_handle_t *inputbuff2,
                     CameraModePortrait camera_mode);

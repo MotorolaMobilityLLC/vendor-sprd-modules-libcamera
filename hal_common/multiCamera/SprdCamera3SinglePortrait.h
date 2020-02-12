@@ -56,28 +56,25 @@
 #include <jni.h>
 #endif
 #include "../arithmetic/portrait/inc/PortraitCapture_Interface.h"
+#include "../arithmetic/lightportrait/inc/camera_light_portrait.h"
+#include "../arithmetic/face_dense_align/inc/camera_face_dense_align.h"
+
+#ifdef CONFIG_FACE_BEAUTY
+#include "sprd_facebeauty_adapter.h"
+#endif
 
 namespace sprdcamera {
 
 //#define YUV_CONVERT_TO_JPEG
-#define ISP_SUPPORT_MICRODEPTH
 
 #define BLUR_LOCAL_CAPBUFF_NUM (4)
-
-#ifdef ISP_SUPPORT_MICRODEPTH
-#define BLUR3_REFOCUS_COMMON_PARAM_NUM (28)
-#define BLUR_REFOCUS_PARAM2_NUM (52)
-#else
 #define BLUR3_REFOCUS_COMMON_PARAM_NUM (12)
 #define BLUR_REFOCUS_PARAM2_NUM (11)
-#endif
 
 #define BLUR_REFOCUS_COMMON_PARAM_NUM (27)
 #define BLUR_MAX_NUM_STREAMS (3)
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
-#define BLUR_LIB_BOKEH_CAPTURE "libbokeh_gaussian_cap.so"
-#define BLUR_LIB_BOKEH_CAPTURE2 "libBokeh2Frames.so"
 #define BLUR_LIB_BOKEH_NUM (2)
 
 #define BLUR_REFOCUS_2_PARAM_NUM (17)
@@ -223,24 +220,11 @@ typedef struct {
     int (*iSmoothInit)(void **handle, int width, int height, float min_slope,
                        float max_slope, float findex2gamma_adjust_ratio,
                        int box_filter_size);
-    int (*iSmoothCapInit)(void **handle, capture_single_portrait_init_params_t *params);
-    int (*iSmoothCap_VersionInfo_Get)(void *a_pOutBuf, int a_dInBufMaxSize);
     int (*iSmoothDeinit)(void *handle);
     int (*iSmoothCreateWeightMap)(void *handle,
                                   preview_single_portrait_weight_params_t *params);
-    int (*iSmoothCapCreateWeightMap)(void *handle,
-                                     capture_single_portrait_weight_params_t *params,
-                                     unsigned char *Src_YUV,
-                                     unsigned short *outWeightMap);
-    int (*iSmoothCapGetAIWeightInfo)(void *handle, unsigned int *modelWidth,
-                                     unsigned int *modelHeight,
-                                     unsigned int *bufferSize);
     int (*iSmoothBlurImage)(void *handle, unsigned char *Src_YUV,
                             unsigned char *Output_YUV);
-    int (*iSmoothCapBlurImage)(void *handle, unsigned char *Src_YUV,
-                               unsigned short *inWeightMap,
-                               capture_single_portrait_weight_params_t *params,
-                               unsigned char *Output_YUV);
     void *mHandle;
 } SinglePortraitAPI_t;
 
@@ -266,36 +250,11 @@ typedef struct {
     cmr_u32 tmp_thr;
 } capture2_single_portrait_init_params_t;
 
-#ifdef ISP_SUPPORT_MICRODEPTH
-typedef struct {
-    cmr_u8 *microdepth_buffer;
-    cmr_u32 microdepth_size;
-} MicrodepthBoke2Frames_single_portrait;
-#endif
-
 typedef struct {
     int f_number;         // 1 ~ 20
     unsigned short sel_x; /* The point which be touched */
     unsigned short sel_y; /* The point which be touched */
 } capture2_single_portrait_weight_params_t;
-
-typedef struct {
-    void *handle;
-    int (*BokehFrames_VersionInfo_Get)(char a_acOutRetbuf[256],
-                                       unsigned int a_udInSize);
-    int (*BokehFrames_Init)(void **handle, int width, int height,
-                            capture2_single_portrait_init_params_t *params);
-    int (*BokehFrames_WeightMap)(void *img0_src, void *img1_src, void *dis_map,
-                                 void *handle);
-    int (*Bokeh2Frames_Process)(void *img0_src, void *img_rslt, void *dis_map,
-                                void *handle, capture2_single_portrait_weight_params_t *params);
-#ifdef ISP_SUPPORT_MICRODEPTH
-    int (*BokehFrames_ParamInfo_Get)(void *handle,
-                                     MicrodepthBoke2Frames_single_portrait **microdepthInfo);
-#endif
-    int (*BokehFrames_Deinit)(void *handle);
-    void *mHandle;
-} SinglePortraitAPI2_t;
 
 typedef enum {
     DUMP_SINGLE_PORTRAIT_COMBO,  // process start
@@ -358,7 +317,6 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
     Mutex mRequestLock;
     int mjpegSize;
     void *m_pNearYuvBuffer;
-    void *m_pFarYuvBuffer;
     int mNearJpegSize;
     int mFarJpegSize;
     buffer_handle_t *m_pNearJpegBuffer;
@@ -368,10 +326,15 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
     int32_t mPerfectskinlevel;
     int mCoverValue;
     uint8_t mBlurMode;
-#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+    bool mSnapshotResultReturn;
+#ifdef CONFIG_FACE_BEAUTY
     faceBeautyLevels fbLevels;
-#else
-    face_beauty_levels fbLevels;
+    bool mFaceBeautyFlag;
+    bool mFirstSprdFB;
+    fb_beauty_param_t fb_prev;
+    fb_beauty_param_t fb_cap;
+    fbBeautyFacetT beauty_face;
+    fb_beauty_image_t beauty_image;
 #endif
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
@@ -394,6 +357,21 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         int initBlur20Params();
         int initBlurInitParams();
         void initBlurWeightParams();
+        int initPortraitParams();
+        int initPortraitLightParams();
+        int deinitLightPortrait();
+        int prevLPT(void *input_buff, int picWidth, int picHeight);
+        int runDFA(void *input_buff, int picWidth, int picHeight, int mode);
+        int capLPT(void *output_buff, int picWidth, int picHeight,
+                             unsigned char *outPortraitMask);
+        int getPortraitMask(void *output_buff, void *input_buf1_addr,
+                                      int vcmCurValue, unsigned char *result);
+#ifdef CONFIG_FACE_BEAUTY
+        int initFaceBeautyParams();
+        int deinitFaceBeauty();
+        int doFaceBeauty(unsigned char *mask, void *input_buff, int picWidth, int picHeight, 
+                    int mode, faceBeautyLevels *facebeautylevel);
+#endif
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
         void saveCaptureBlurParams(buffer_handle_t *result_buff,
                                    uint32_t jpeg_size);
@@ -404,17 +382,8 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
                             void *combo_buff_addr,
                             buffer_handle_t *output_buffer,
                             void *output_buff_addr, uint32_t combo_frm_num);
-        int blurProcessVerN(buffer_handle_t *combo_buffer,
-                            void *combo_buff_addr,
-                            buffer_handle_t *output_buffer,
-                            void *output_buff_addr, uint32_t combo_frm_num);
-        int blurProcessVer3(buffer_handle_t *combo_buffer,
-                            void *combo_buff_addr,
-                            buffer_handle_t *output_buffer,
-                            void *output_buff_addr, uint32_t combo_frm_num);
         void dumpBlurIMG(dump_single_portrait_type type,
                          dump_single_portrait_t *dump_buffs[DUMP_SINGLE_PORTRAIT_TYPE_MAX]);
-        uint8_t getIspAfFullscanInfo();
         int prevBlurHandle(buffer_handle_t *input1, void *input1_addr,
                            void *input2, buffer_handle_t *output,
                            void *output_addr);
@@ -436,7 +405,6 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         camera3_stream_t mMainStreams[BLUR_MAX_NUM_STREAMS];
         uint8_t mCaptureStreamsNum;
         SinglePortraitAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
-        SinglePortraitAPI2_t *mBlurApi2;
         int mFirstUpdateFrame;
         int mFaceInfoX;
         int mFaceInfoY;
@@ -455,18 +423,15 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         unsigned int mWeightWidth;
         unsigned int mWeightHeight;
         uint8_t mLastFaceNum;
-        uint8_t mSkipFaceNum;
         int mGaussEnable; // when back blur only have blur 1.0 and 1.2
         unsigned short mWinPeakPos[BLUR_AF_WINDOW_NUM];
         preview_single_portrait_init_params_t mPreviewInitParams;
         preview_single_portrait_weight_params_t mPreviewWeightParams;
+        preview_single_portrait_weight_params_t mPreviewLptAndBeautyFaceinfo;
         capture_single_portrait_init_params_t mCaptureInitParams;
         capture_single_portrait_weight_params_t mCaptureWeightParams;
         capture2_single_portrait_init_params_t mCapture2InitParams;
         capture2_single_portrait_weight_params_t mCapture2WeightParams;
-#ifdef ISP_SUPPORT_MICRODEPTH
-        bokeh_micro_depth_tune_param mIspCapture2InitParams;
-#endif
         int32_t mFaceInfo[4];
         uint32_t mRotation;
         int32_t mLastTouchX;
@@ -479,10 +444,25 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         single_portrait_isp_info_t mIspInfo;
         unsigned short *mOutWeightBuff;
         bool mAlgorithmFlag;
+        bool mFirstSprdLightPortrait;
+        bool mFirstSprdDfa;
+        int prev_sensor_orientation;
+        FACE_Tag faceDetectionInfo;
+        int lightPortraitType;
+        int cameraBV;
+        int cameraISO;
+        int cameraCT;
+        int lpt_return_val;
+        class_lpt lpt_prev;
+        class_lpt lpt_cap;
+        class_dfa dfa_prev;
+        class_dfa dfa_cap;
+        lpt_options lptOptions_prev;
+        lpt_options lptOptions_cap;
+        int32_t fd_score[10];
+
 //        unsigned short *mOutWeightMap;
-#ifdef ISP_SUPPORT_MICRODEPTH
-        MicrodepthBoke2Frames_single_portrait *mMicrodepthInfo;
-#endif
+
       private:
         void waitMsgAvailable();
         void BlurFaceMakeup(buffer_handle_t *buffer_handle, void *buffer_addr);

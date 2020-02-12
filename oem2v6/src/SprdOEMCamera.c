@@ -1228,7 +1228,6 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_GET_ISO: {
         ret = camera_get_iso_info(handle,(cmr_u32 *)param);
-        break;
     }
     default:
         break;

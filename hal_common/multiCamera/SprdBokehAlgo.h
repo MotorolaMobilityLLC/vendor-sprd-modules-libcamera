@@ -4,6 +4,9 @@
 #include "./spreadst/sprd_depth_configurable_param.h"
 #include "IBokehAlgo.h"
 #include "../arithmetic/portrait/inc/PortraitCapture_Interface.h"
+#include "../arithmetic/lightportrait/inc/camera_light_portrait.h"
+#include "../arithmetic/face_dense_align/inc/camera_face_dense_align.h"
+
 
 namespace sprdcamera {
 
@@ -18,6 +21,8 @@ class SprdBokehAlgo : public IBokehAlgo {
     void getBokenParam(void *param);
 
     void setBokenParam(void *param);
+
+    void setCapFaceParam(void *param);
 
     int prevDepthRun(void *para1, void *para2, void *para3, void *para4);
 
@@ -57,6 +62,33 @@ class SprdBokehAlgo : public IBokehAlgo {
 
     int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
                            bool galleryBokeh);
+
+    int initPortraitLightParams();
+
+    int deinitLightPortrait();
+
+    void setLightPortraitParam(int param1, int param2, int param3, int param4);
+
+    void getLightPortraitParam(int *param);
+
+    int prevLPT(void *input_buff, int picWidth, int picHeight);
+
+    int capLPT(void *output_buff, int picWidth, int picHeight, 
+                        unsigned char *outPortraitMask, int lightPortraitType);
+
+    int runDFA(void *input_buff, int picWidth, int picHeight, int mode);
+
+    int doFaceBeauty(unsigned char *mask, void *input_buff, 
+                int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel);
+
+    void setFaceInfo(int *angle, int *pose, int *fd_score);
+
+    int initFaceBeautyParams();
+
+    int deinitFaceBeauty();
+
+    int getPortraitMask(void *output_buff, void *input_buf1_addr, 
+                    int vcmCurValue, unsigned char *result);
 
   private:
     bool mFirstSprdBokeh;

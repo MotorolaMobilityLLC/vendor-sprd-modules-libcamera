@@ -105,6 +105,8 @@ void SprdBokehAlgo::getBokenParam(void *param) {
            sizeof(SPRD_BOKEH_PARAM));
 }
 
+void SprdBokehAlgo::setCapFaceParam(void *param) {}
+
 void SprdBokehAlgo::setBokenParam(void *param) {
     if (!param) {
         HAL_LOGE("para is illegal");
@@ -671,22 +673,71 @@ void SprdBokehAlgo::loadDebugOtp() {
     }
 }
 
-int sprdcamera::SprdBokehAlgo::initPortraitParams(BokehSize *size,
+int SprdBokehAlgo::initPortraitParams(BokehSize *size,
                                                   OtpData *data,
                                                   bool galleryBokeh) {
     int rc = NO_ERROR;
     return rc;
 }
 
-int sprdcamera::SprdBokehAlgo::capPortraitDepthRun(
+int SprdBokehAlgo::capPortraitDepthRun(
     void *para1, void *para2, void *para3, void *para4, void *input_buf1_addr,
     void *output_buf, int vcmCurValue, int vcmUp, int vcmDown) {
     int rc = NO_ERROR;
     return rc;
 }
 
-int sprdcamera::SprdBokehAlgo::deinitPortrait() {
+int SprdBokehAlgo::deinitPortrait() {
     int rc = NO_ERROR;
     return rc;
 }
+int SprdBokehAlgo::initPortraitLightParams() {
+    int rc = NO_ERROR;
+    return rc;
+}
+int SprdBokehAlgo::deinitLightPortrait(){
+    int rc = NO_ERROR;
+    return rc;
+}
+void SprdBokehAlgo::setLightPortraitParam(int param1, int param2, int param3, int param4){
+
+}
+void SprdBokehAlgo::getLightPortraitParam(int *param){
+
+}
+int SprdBokehAlgo::prevLPT(void *input_buff, int picWidth, int picHeight){
+    int rc = NO_ERROR;
+    return rc;
+}
+int SprdBokehAlgo::capLPT(void *output_buff, int picWidth, int picHeight, 
+                        unsigned char *outPortraitMask, int lightPortraitType) {
+    int rc = NO_ERROR;
+    return rc;
+}
+int SprdBokehAlgo::runDFA(void *input_buff, int picWidth, int picHeight, int mode) {
+    int rc = NO_ERROR;
+    return rc;
+}
+void SprdBokehAlgo::setFaceInfo(int *angle, int *pose, int *fd_score) {
+
+}
+int SprdBokehAlgo::doFaceBeauty(unsigned char *mask, void *input_buff, 
+                    int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel) {
+    int rc = NO_ERROR;
+    return rc;
+}
+int SprdBokehAlgo::initFaceBeautyParams() {
+    int rc = NO_ERROR;
+    return rc;
+}
+int SprdBokehAlgo::deinitFaceBeauty() {
+    int rc = NO_ERROR;
+    return rc;
+}
+int SprdBokehAlgo::getPortraitMask(void *output_buff, void *input_buf1_addr, 
+                    int vcmCurValue, unsigned char *result) {
+    int rc = NO_ERROR;
+    return rc;
+}
+
 }

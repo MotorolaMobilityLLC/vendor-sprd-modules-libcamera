@@ -443,6 +443,7 @@ typedef struct {
     OTP_Tag otpInfo;
     VCM_Tag vcmInfo;
     int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
+    int32_t fd_score[10];
 } sprd_setting_info_t;
 
 class SprdCamera3Setting {

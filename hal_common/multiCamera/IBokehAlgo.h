@@ -30,6 +30,7 @@ typedef struct {
 } bokeh_cap_params_t;
 
 typedef struct {
+    uint32_t cur_frame_number;
     int sel_x;    /* The point which be touched */
     int sel_y;    /* The point which be touched */
     int capture_x;
@@ -65,6 +66,8 @@ class IBokehAlgo {
     virtual void getBokenParam(void *param) = 0;
 
     virtual void setBokenParam(void *param) = 0;
+
+    virtual void setCapFaceParam(void *param) = 0;
 
     virtual int prevDepthRun(void *para1, void *para2, void *para3,
                              void *para4) = 0;
@@ -107,6 +110,34 @@ class IBokehAlgo {
 
     virtual int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
                                    bool galleryBokeh) = 0;
+
+    virtual int initPortraitLightParams() = 0;
+
+    virtual int deinitLightPortrait() = 0;
+
+    virtual void setLightPortraitParam(int param1, int param2, int param3, int param4) = 0;
+
+    virtual void getLightPortraitParam(int *param) = 0;
+
+    virtual int prevLPT(void *input_buff, int picWidth, int picHeight) = 0;
+
+    virtual int capLPT(void *output_buff, int picWidth, int picHeight, 
+                        unsigned char *outPortraitMask, int lightPortraitType) = 0;
+
+    virtual int runDFA(void *input_buff, int picWidth, int picHeight, int mode) = 0;
+
+    virtual int doFaceBeauty(unsigned char *mask, void *input_buff,
+                         int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel) = 0;
+
+    virtual void setFaceInfo(int *angle, int *pose, int *fd_score) = 0;
+
+    virtual int initFaceBeautyParams() = 0;
+
+    virtual int deinitFaceBeauty() = 0;
+
+    virtual int getPortraitMask(void *output_buff, void *input_buf1_addr, 
+                    int vcmCurValue, unsigned char *result) = 0;
+
 };
 }
 

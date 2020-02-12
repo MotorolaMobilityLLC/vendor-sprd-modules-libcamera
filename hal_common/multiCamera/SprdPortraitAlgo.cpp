@@ -1,16 +1,22 @@
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL) 
 #include "SprdPortraitAlgo.h"
+#include <cutils/trace.h>
+typedef enum { PREVIEW = 0, CAPTURE = 1 } portrait_mode;
 
 using namespace android;
 namespace sprdcamera {
 
 SprdPortraitAlgo::SprdPortraitAlgo() {
     mFirstSprdBokeh = false;
+    mFirstSprdLightPortrait = false;
+    mFirstSprdDfa = false;
     mReadOtp = false;
     mDepthPrevHandle = NULL;
     mDepthCapHandle = NULL;
     mBokehCapHandle = NULL;
     mBokehDepthPrevHandle = NULL;
     mPortraitHandle = NULL;
+    lpt_return_val = 0;
 
     memset(&mSize, 0, sizeof(BokehSize));
     memset(&mCalData, 0, sizeof(OtpData));
@@ -18,11 +24,31 @@ SprdPortraitAlgo::SprdPortraitAlgo() {
     memset(&mCapbokehParam, 0, sizeof(bokeh_cap_params_t));
     memset(&mBokehParams, 0, sizeof(SPRD_BOKEH_PARAM));
     memset(&mPortraitCapParam, 0, sizeof(bokeh_params));
+    memset(&lpt_prev, 0, sizeof(class_lpt));
+    memset(&lpt_cap, 0, sizeof(class_lpt));
+    memset(&dfa_prev, 0, sizeof(class_dfa));
+    memset(&dfa_cap, 0, sizeof(class_dfa));
+    memset(&lptOptions, 0, sizeof(lpt_options));
+    memset(&lptOptions_cap, 0, sizeof(lpt_options));
+#ifdef CONFIG_FACE_BEAUTY
+    mFirstSprdFB = false;
+    memset(&fb_prev, 0, sizeof(fb_beauty_param_t));
+    memset(&fb_cap, 0, sizeof(fb_beauty_param_t));
+    memset(&face_info, 0, sizeof(FACE_Tag));
+    memset(&beautyLevels, 0, sizeof(faceBeautyLevelsT));
+    memset(&beauty_face, 0, sizeof(fbBeautyFacetT));
+    memset(&beauty_image, 0, sizeof(fb_beauty_image_t));
+#endif
 }
 
 SprdPortraitAlgo::~SprdPortraitAlgo() {
     mFirstSprdBokeh = false;
+    mFirstSprdLightPortrait = false;
+    mFirstSprdDfa = false;
     mReadOtp = false;
+#ifdef CONFIG_FACE_BEAUTY
+    mFirstSprdFB = false;
+#endif
 }
 
 int SprdPortraitAlgo::initParam(BokehSize *size, OtpData *data,
@@ -84,10 +110,10 @@ int SprdPortraitAlgo::initParam(BokehSize *size, OtpData *data,
         mReadOtp = true;
     }
 
-    HAL_LOGD("msize preview %d x %d, depth out prev %d x %d, capture %d x %d, "
+    HAL_LOGD("msize preview %d x %d,  depth_snap_out %d x %d, capture %d x %d, "
              "otp exist %d",
-             mSize.preview_w, mSize.preview_h, mSize.depth_prev_out_w,
-             mSize.depth_prev_out_h, mSize.capture_w, mSize.capture_h,
+             mSize.preview_w, mSize.preview_h, mSize.depth_snap_out_w,
+             mSize.depth_snap_out_h, mSize.capture_w, mSize.capture_h,
              mCalData.otp_exist);
 exit:
     return rc;
@@ -106,6 +132,14 @@ void SprdPortraitAlgo::getBokenParam(void *param) {
            sizeof(SPRD_BOKEH_PARAM));
 }
 
+void SprdPortraitAlgo::setCapFaceParam(void *param){
+    memcpy(&mPortraitCapParam, (bokeh_params *)param, sizeof(bokeh_params));
+    HAL_LOGD("face_info %d %d %d %d",mPortraitCapParam.portrait_param.x1[0] * mSize.capture_w / mSize.depth_snap_out_w,
+            mPortraitCapParam.portrait_param.y1[0] * mSize.capture_w / mSize.depth_snap_out_w,
+            mPortraitCapParam.portrait_param.x2[0] * mSize.capture_w / mSize.depth_snap_out_w,
+            mPortraitCapParam.portrait_param.y2[0] * mSize.capture_w / mSize.depth_snap_out_w);
+}
+
 void SprdPortraitAlgo::setBokenParam(void *param) {
     if (!param) {
         HAL_LOGE("para is illegal");
@@ -117,7 +151,6 @@ void SprdPortraitAlgo::setBokenParam(void *param) {
     bokeh_params bokeh_param;
     memset(&bokeh_param, 0, sizeof(bokeh_params));
     memcpy(&bokeh_param, (bokeh_params *)param, sizeof(bokeh_params));
-    memcpy(&mPortraitCapParam, (bokeh_params *)param, sizeof(bokeh_params));
 
     mPreviewbokehParam.weight_params.sel_x = bokeh_param.sel_x;
     mPreviewbokehParam.weight_params.sel_y = bokeh_param.sel_y;
@@ -675,11 +708,9 @@ void SprdPortraitAlgo::loadDebugOtp() {
         }
     }
 }
-}
 
-int sprdcamera::SprdPortraitAlgo::initPortraitParams(BokehSize *size,
-                                                     OtpData *data,
-                                                     bool galleryBokeh) {
+int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
+                                         bool galleryBokeh) {
     int rc = NO_ERROR;
     if (mPortraitHandle) {
         rc = sprd_portrait_capture_deinit(mPortraitHandle);
@@ -737,19 +768,20 @@ int sprdcamera::SprdPortraitAlgo::initPortraitParams(BokehSize *size,
         goto exit;
     }
     if (mPortraitHandle) {
-        unsigned int maskW = mSize.depth_snap_out_w, maskH = mSize.depth_snap_out_h;
+        unsigned int maskW = mSize.depth_snap_out_w,
+                     maskH = mSize.depth_snap_out_h;
         unsigned int maskSize = maskW * maskH * 2;
-        rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
-                                                &maskSize);
+        rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW,
+                                                 &maskH, &maskSize);
     }
-
 exit:
     return rc;
 }
 
-int sprdcamera::SprdPortraitAlgo::capPortraitDepthRun(
-    void *para1, void *para2, void *para3, void *para4, void *input_buf1_addr,
-    void *output_buf, int vcmCurValue, int vcmUp, int vcmDown) {
+int SprdPortraitAlgo::capPortraitDepthRun(void *para1, void *para2, void *para3,
+                                          void *para4, void *input_buf1_addr,
+                                          void *output_buf, int vcmCurValue,
+                                          int vcmUp, int vcmDown) {
     HAL_LOGI(" SprdPortraitAlgo ==>E");
     int rc = NO_ERROR;
     int f_number = 0;
@@ -757,12 +789,7 @@ int sprdcamera::SprdPortraitAlgo::capPortraitDepthRun(
     ProcDepthInputMap depthData;
     PortaitCapProcParams wParams;
     InoutYUV yuvData;
-    char prop1[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    char prop2[PROPERTY_VALUE_MAX] = {
-        0,
-    };
+
     if (!para1 || !para3 || !para4) {
         HAL_LOGE(" para is null");
         rc = BAD_VALUE;
@@ -804,12 +831,6 @@ int sprdcamera::SprdPortraitAlgo::capPortraitDepthRun(
 
     yuvData.Src_YUV = (unsigned char *)input_buf1_addr;
     yuvData.Dst_YUV = (unsigned char *)output_buf;
-    /*
-    unsigned int maskW = mSize.depth_snap_out_w, maskH = mSize.depth_snap_out_h;
-    unsigned int maskSize = maskW * maskH * 2;
-    rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
-                                             &maskSize);
-    */
     rc = sprd_portrait_capture_process(mPortraitHandle, &depthData, &wParams,
                                        &yuvData, para1, 1);
 
@@ -818,8 +839,9 @@ exit:
     return rc;
 }
 
-int sprdcamera::SprdPortraitAlgo::deinitPortrait() {
+int SprdPortraitAlgo::deinitPortrait() {
     int rc = NO_ERROR;
+    HAL_LOGD("E");
     if (mFirstSprdBokeh) {
         if (mPortraitHandle) {
             rc = sprd_portrait_capture_deinit(mPortraitHandle);
@@ -830,6 +852,687 @@ int sprdcamera::SprdPortraitAlgo::deinitPortrait() {
         }
     }
     mPortraitHandle = NULL;
+    HAL_LOGD("X");
+    return rc;
+}
+
+int SprdPortraitAlgo::initPortraitLightParams() {
+    int rc = NO_ERROR;
+    HAL_LOGD("E");
+    /*dfa init*/
+    const char *dfaVersion = NULL;
+    dfaVersion = DFA_GetVersion();
+    char *dfav = new char[strlen(dfaVersion) + 1];
+    strcpy(dfav, dfaVersion);
+    HAL_LOGD("dfa version :%s", dfav);
+    create_dfa_handle(&dfa_prev, 1);
+    if (!dfa_prev.hSprdDfa) {
+        HAL_LOGE(" create_dfa_handle failed");
+    } else {
+        mFirstSprdDfa = true;
+    }
+
+    /*lpt init*/
+    const char *lptVerison = NULL;
+    lptVerison = LPT_GetVersion();
+    char *lptv = new char[strlen(lptVerison) + 1];
+    strcpy(lptv, lptVerison);
+    HAL_LOGD("lpt version :%s", lptv);
+    init_lpt_options(&lpt_prev);
+    int workMode =
+        LPT_WORKMODE_MOVIE; /*1：LPT_WORKMODE_MOVIE(preview)，0：LPT_WORKMODE_STILL(capture)
+                               */
+    int threadNum = 4;
+    create_lpt_handle(&lpt_prev, workMode, threadNum);
+    if (!lpt_prev.hSprdLPT) {
+        HAL_LOGE("create_lpt_handle failed!");
+    } else {
+        mFirstSprdLightPortrait = true;
+    }
+    /*construct lightportrait options */
+    lptOptions.lightCursor =
+        5; /* Control fill light and shade ratio. Value range [0, 35]*/
+    lptOptions.lightWeight =
+        12; /* Control fill light intensity. Value range [0, 20]*/
+    lptOptions.lightSplitMode = LPT_LIGHTSPLIT_RIGHT;
+    lptOptions.debugMode = 0;
+    lptOptions.cameraWork = LPT_CAMERA_REAR;
+
+    delete [] dfav;
+    delete [] lptv;
+    HAL_LOGD("X");
+    return rc;
+}
+int SprdPortraitAlgo::initFaceBeautyParams() {
+    int rc = NO_ERROR;
+    HAL_LOGD("E");
+#ifdef CONFIG_FACE_BEAUTY
+    face_beauty_set_devicetype(&fb_prev, SPRD_CAMALG_RUN_TYPE_CPU);
+    face_beauty_init(&fb_prev, 1, 2, SHARKL5PRO);
+    if (!fb_prev.hSprdFB) {
+        HAL_LOGE(" create_fb_handle failed");
+    } else {
+        mFirstSprdFB = true;
+    }
+    beautyLevels.blemishLevel = 0;
+    beautyLevels.smoothLevel = 6;
+    beautyLevels.skinColor = FB_SKINCOLOR_WHITE;
+    beautyLevels.skinLevel = 0;
+    beautyLevels.brightLevel = 6;
+    beautyLevels.lipColor = FB_LIPCOLOR_CRIMSON;
+    beautyLevels.lipLevel = 0;
+    beautyLevels.slimLevel = 2;
+    beautyLevels.largeLevel = 2;
+    beautyLevels.cameraWork = FB_CAMERA_REAR;
+#endif
+    HAL_LOGD("X");
+    return rc;
+}
+
+int SprdPortraitAlgo::deinitFaceBeauty() {
+    int rc = NO_ERROR;
+    HAL_LOGD("E %d", fb_prev.runType);
+#ifdef CONFIG_FACE_BEAUTY
+    if (mFirstSprdFB) {
+        if (fb_prev.hSprdFB) {
+            rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_FAST_STOP_CMD, NULL);
+            face_beauty_deinit(&fb_prev);
+        }
+        if (fb_prev.hSprdFB) {
+            HAL_LOGE("deinitFB failed");
+        }
+        mFirstSprdFB = false;
+    }
+#endif
+    HAL_LOGD("X");
+    return rc;
+}
+
+int SprdPortraitAlgo::deinitLightPortrait() {
+    int rc = NO_ERROR;
+    HAL_LOGD("E");
+    if (mFirstSprdLightPortrait) {
+        if (lpt_prev.hSprdLPT) {
+            deinit_lpt_handle(&lpt_prev);
+        }
+        if (lpt_prev.hSprdLPT) {
+            HAL_LOGE("deinitLightPortrait failed");
+        }
+        mFirstSprdLightPortrait = false;
+    }
+    if (mFirstSprdDfa) {
+        if (dfa_prev.hSprdDfa) {
+            deinit_dfa_handle(&dfa_prev);
+        }
+        if (dfa_prev.hSprdDfa) {
+            HAL_LOGE("deinit_dfa_handle failed");
+        }
+        mFirstSprdDfa = false;
+    }
+    HAL_LOGD("X");
+    return rc;
+}
+
+void SprdPortraitAlgo::setLightPortraitParam(int param1, int param2, int param3,
+                                             int param4) {
+    if (!param1 || !param2 || !param3) {
+        HAL_LOGE("setLightPortraitParam failed!");
+        return;
+    }
+    lptOptions.cameraBV = param1;
+    lptOptions.cameraISO = param2;
+    lptOptions.cameraCT = param3;
+    lptOptions.lightPortraitType = param4;
+    lptOptions_cap.cameraBV = param1;
+    lptOptions_cap.cameraISO = param2;
+    lptOptions_cap.cameraCT = param3;
+}
+void SprdPortraitAlgo::getLightPortraitParam(int *param) {
+    if (lpt_return_val != 0)
+        *param = lpt_return_val;
+    else
+        *param = 0;
+}
+
+int SprdPortraitAlgo::prevLPT(void *input_buff, int picWidth, int picHeight) {
+    int rc = NO_ERROR;
+    HAL_LOGI("prevLPT E");
+    /*run dfa */
+    HAL_LOGI("runDFA E");
+    ATRACE_BEGIN("dfa");
+    rc = runDFA(input_buff, picWidth, picHeight, PREVIEW);
+    ATRACE_END();
+    HAL_LOGI("runDFA X");
+    if (rc != NO_ERROR) {
+        HAL_LOGE("prevLPT runDFA failed");
+    }
+    HAL_LOGV("lightPortraitType %d", lptOptions.lightPortraitType);
+    construct_lpt_options(&lpt_prev, lptOptions);
+    int index = mPreviewbokehParam.depth_param.portrait_param.face_num;
+    for (int j = 0; j < index; j++) {
+        int sx = 0, sy = 0, ex = 0, ey = 0;
+        if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 0) {
+            sx = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            sy = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+            ex = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            ey = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+        } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 90) {
+            sx = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            sy = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+            ex = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            ey = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+        } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 180) {
+            sx = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            sy = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+            ex = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            ey = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+        } else {
+            sx = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            sy = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+            ex = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+                 mSize.depth_snap_out_w;
+            ey = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+                 mSize.depth_snap_out_h;
+        }
+        int yaw = face_info.pose[j];
+        int roll = face_info.angle[j];
+        int fScore = Fd_score[j];
+        unsigned char attriRace = 0;
+        unsigned char attriGender = 0;
+        unsigned char attriAge = 0;
+        construct_lpt_face(&lpt_prev, j, sx, sy, ex, ey, yaw, roll, fScore,
+                           attriRace, attriGender, attriAge);
+        HAL_LOGD("prev_ yaw %d roll %d fScore %d", yaw, roll, fScore);
+    }
+    unsigned char *addrY = (unsigned char *)input_buff;
+    unsigned char *addrUV = (unsigned char *)input_buff + picWidth * picHeight;
+    int format = 1; /*NV21*/
+    construct_lpt_image(&lpt_prev, picWidth, picHeight, addrY, addrUV, format);
+    int facecount = mPreviewbokehParam.depth_param.portrait_param.face_num;
+
+    /*do lpt */
+    HAL_LOGI("do_image_lpt E");
+    ATRACE_BEGIN("lpt");
+    rc = do_image_lpt(&lpt_prev, facecount);
+    ATRACE_END();
+    HAL_LOGI("do_image_lpt X");
+    lpt_return_val = rc;
+    if (rc != NO_ERROR) {
+        HAL_LOGD("do_image_lpt error %d", rc);
+        rc = NO_ERROR;
+    }
+    HAL_LOGI("prevLPT X");
+    return rc;
+}
+
+int SprdPortraitAlgo::capLPT(void *output_buff, int picWidth, int picHeight,
+                             unsigned char *outPortraitMask, int lightPortraitType) {
+    HAL_LOGD(" capLPT E");
+    int rc = NO_ERROR;
+    /*init handle*/
+    lptOptions_cap.lightCursor =
+        5; /* Control fill light and shade ratio. Value range [0, 35]*/
+    lptOptions_cap.lightWeight =
+        12; /* Control fill light intensity. Value range [0, 20]*/
+    lptOptions_cap.lightSplitMode = LPT_LIGHTSPLIT_RIGHT;
+    lptOptions_cap.debugMode = 0;
+    lptOptions_cap.cameraWork = LPT_CAMERA_REAR;
+    lptOptions_cap.lightPortraitType = lightPortraitType;
+    int64_t lpt_cost = systemTime();
+    init_lpt_options(&lpt_cap);
+    create_lpt_handle(&lpt_cap, LPT_WORKMODE_STILL, 4);
+    HAL_LOGD("init+create handle cost %lld ms", ns2ms(systemTime() - lpt_cost));
+    if (!lpt_cap.hSprdLPT) {
+        HAL_LOGE("create_lpt_handle failed!");
+    }
+
+    /*portrait mask*/
+    construct_lpt_mask(&lpt_cap, 512, 384, outPortraitMask);
+
+    /*run dfa */
+    rc = runDFA(output_buff, picWidth, picHeight, CAPTURE);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("capLPT runDFA failed");
+    }
+    construct_lpt_options(&lpt_cap, lptOptions_cap);
+    unsigned char *addrY = (unsigned char *)output_buff;
+    unsigned char *addrUV = (unsigned char *)output_buff + picWidth * picHeight;
+    int format = 1; /*NV21*/
+    int index = mPortraitCapParam.portrait_param.face_num;
+    int facecount = mPortraitCapParam.portrait_param.face_num;
+    for (int j = 0; j < index; j++) {
+        int sx = 0, sy = 0, ex = 0, ey = 0;
+        if (mPortraitCapParam.portrait_param.mobile_angle == 0) {
+            sx = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            sy = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            ex = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            ey = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+        } else if (mPortraitCapParam.portrait_param.mobile_angle == 90) {
+            sx = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            sy = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            ex = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            ey = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+        } else if (mPortraitCapParam.portrait_param.mobile_angle == 180) {
+            sx = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            sy = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            ex = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            ey = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+        } else {
+            sx = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            sy = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            ex = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+            ey = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+        }
+        int yaw = face_info.pose[j];
+        int roll = face_info.angle[j];
+        int fScore = Fd_score[j];
+        unsigned char attriRace = 0;
+        unsigned char attriGender = 0;
+        unsigned char attriAge = 0;
+        construct_lpt_face(&lpt_cap, j, sx, sy, ex, ey, yaw, roll, fScore,
+                           attriRace, attriGender, attriAge);
+        HAL_LOGD("cap yaw %d roll %d fScore %d", yaw, roll, fScore);
+    }
+    construct_lpt_image(&lpt_cap, picWidth, picHeight, addrY, addrUV, format);
+    rc = do_image_lpt(&lpt_cap, facecount);
+    if (rc != NO_ERROR) {
+        HAL_LOGD("do_image_lpt error %d", rc);
+        rc = NO_ERROR;
+    }
+
+    if (lpt_cap.hSprdLPT) {
+        deinit_lpt_handle(&lpt_cap);
+    }
+    HAL_LOGD(" capLPT X");
+    return rc;
+}
+
+int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
+                             int mode) {
+    int rc = NO_ERROR;
+    /*construct dfa options */
+    unsigned char *addrY = (unsigned char *)input_buff;
+    unsigned char *addrUV = (unsigned char *)input_buff + picWidth * picHeight;
+    int format = 1; /*NV21*/
+    if (mode == CAPTURE) {
+        int64_t dfa_cost = systemTime();
+        create_dfa_handle(&dfa_cap, 0);
+        HAL_LOGD("runDFA create handle cost %lld ms",
+                 ns2ms(systemTime() - dfa_cost));
+        construct_dfa_yuv420sp(&dfa_cap, picWidth, picHeight, addrY, addrUV, format);
+        unsigned char rType = 0;
+        int index = mPortraitCapParam.portrait_param.face_num;
+
+        for (int j = 0; j < index; j++) {
+            int rX = 0, rY = 0, rWidth = 0, rHeight = 0;
+            if (mPortraitCapParam.portrait_param.mobile_angle == 0) {
+                rX = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                rY = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                rWidth = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w - rX;
+                rHeight = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h - rY;
+            } else if (mPortraitCapParam.portrait_param.mobile_angle == 90) {
+                rX = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                rY = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                rWidth = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w - rX;
+                rHeight = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h - rY;
+            } else if (mPortraitCapParam.portrait_param.mobile_angle == 180) {
+                rX = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                rY = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                rWidth = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w - rX;
+                rHeight = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h - rY;
+            } else {
+                rX = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                rY = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                rWidth = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w - rX;
+                rHeight = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h - rY;
+            }
+            int rRollAngle = face_info.angle[j];
+            construct_dfa_face(&dfa_cap, j, rX, rY, rWidth, rHeight, rRollAngle,
+                               rType);
+        }
+        HAL_LOGV("face_info %d %d %d %d",mPortraitCapParam.portrait_param.x1[0] * mSize.capture_w / mSize.depth_snap_out_w,
+            mPortraitCapParam.portrait_param.y1[0] * mSize.capture_w / mSize.depth_snap_out_w,
+            mPortraitCapParam.portrait_param.x2[0] * mSize.capture_w / mSize.depth_snap_out_w,
+            mPortraitCapParam.portrait_param.y2[0] * mSize.capture_w / mSize.depth_snap_out_w);
+        /*do dfa */
+        DFA_RESULT *dfa_result = NULL;
+        dfa_result = do_dfa_image_yuv420sp(&dfa_cap, mPortraitCapParam.portrait_param.face_num);
+        if (!dfa_result) {
+            HAL_LOGE("runDFA failed!");
+        }
+        construct_lpt_dfaInfo(
+            &lpt_cap, dfa_result->pitch, dfa_result->yaw, dfa_result->roll,
+            dfa_result->t3d, 3, dfa_result->scale, dfa_result->R, 3,
+            dfa_result->alpha_shp, 40, dfa_result->alpha_exp, 20);
+        if (dfa_cap.hSprdDfa) {
+            deinit_dfa_handle(&dfa_cap);
+        }
+    } else {
+        construct_dfa_yuv420sp(&dfa_prev, picWidth, picHeight, addrY, addrUV, format);
+        unsigned char rType = 0;
+        int index = mPreviewbokehParam.depth_param.portrait_param.face_num;
+        for (int i = 0; i < index; i++) {
+            int rX = 0, rY = 0, rWidth = 0, rHeight = 0;
+            if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 0) {
+                rX = mPreviewbokehParam.depth_param.portrait_param.x2[i] * mSize.preview_w /
+                     mSize.depth_snap_out_w;
+                rY = mPreviewbokehParam.depth_param.portrait_param.y1[i] * mSize.preview_h /
+                     mSize.depth_snap_out_h;
+                rWidth = mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w -
+                         mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w;
+                rHeight = mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h -
+                          mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h;
+            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 90) {
+                rX = mPreviewbokehParam.depth_param.portrait_param.x2[i] * mSize.preview_w /
+                     mSize.depth_snap_out_w;
+                rY = mPreviewbokehParam.depth_param.portrait_param.y2[i] * mSize.preview_h /
+                     mSize.depth_snap_out_h;
+                rWidth = mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w -
+                         mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w;
+                rHeight = mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h -
+                          mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h;
+            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 180) {
+                rX = mPreviewbokehParam.depth_param.portrait_param.x1[i] * mSize.preview_w /
+                     mSize.depth_snap_out_w;
+                rY = mPreviewbokehParam.depth_param.portrait_param.y2[i] * mSize.preview_h /
+                     mSize.depth_snap_out_h;
+                rWidth = mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w -
+                         mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w;
+                rHeight = mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h -
+                          mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h;
+            } else {
+                rX = mPreviewbokehParam.depth_param.portrait_param.x1[i] * mSize.preview_w /
+                     mSize.depth_snap_out_w;
+                rY = mPreviewbokehParam.depth_param.portrait_param.y1[i] * mSize.preview_h /
+                     mSize.depth_snap_out_h;
+                rWidth = mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w -
+                         mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                             mSize.preview_w / mSize.depth_snap_out_w;
+                rHeight = mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h -
+                          mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                              mSize.preview_h / mSize.depth_snap_out_h;
+            }
+            int rRollAngle = face_info.angle[i];
+            construct_dfa_face(&dfa_prev, i, rX, rY, rWidth, rHeight, rRollAngle,
+                               rType);
+        }
+        /*do dfa */
+        DFA_RESULT *dfa_result = NULL;
+        dfa_result = do_dfa_image_yuv420sp(&dfa_prev, mPreviewbokehParam.depth_param.portrait_param.face_num);
+        if (!dfa_result) {
+            HAL_LOGE("runDFA failed!");
+        }
+        construct_lpt_dfaInfo(
+            &lpt_prev, dfa_result->pitch, dfa_result->yaw, dfa_result->roll,
+            dfa_result->t3d, 3, dfa_result->scale, dfa_result->R, 3,
+            dfa_result->alpha_shp, 40, dfa_result->alpha_exp, 20);
+    }
 
     return rc;
+}
+
+int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
+                                   int picWidth, int picHeight, int mode,
+                                   faceBeautyLevels *facebeautylevel) {
+    HAL_LOGV("E");
+    int rc = NO_ERROR;
+    if (mode == CAPTURE) {
+#ifdef CONFIG_FACE_BEAUTY
+        face_beauty_set_devicetype(&fb_cap, SPRD_CAMALG_RUN_TYPE_CPU);
+        face_beauty_init(&fb_cap, 0, 2, SHARKL5PRO);
+        int index = mPortraitCapParam.portrait_param.face_num;
+        for (int j = 0; j < index; j++) {
+            int sx = 0, sy = 0, ex = 0, ey = 0, angle = 0, pose = 0;
+            beauty_face.idx = j;
+            if (mPortraitCapParam.portrait_param.mobile_angle == 0) {
+                beauty_face.startX = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                beauty_face.endX = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            } else if (mPortraitCapParam.portrait_param.mobile_angle == 90) {
+                beauty_face.startX = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                beauty_face.endX = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            } else if (mPortraitCapParam.portrait_param.mobile_angle == 180) {
+                beauty_face.startX = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                beauty_face.endX = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            } else {
+                beauty_face.startX = mPortraitCapParam.portrait_param.x1[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPortraitCapParam.portrait_param.y1[j] * mSize.capture_h / mSize.depth_snap_out_h;
+                beauty_face.endX = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
+            }
+            beauty_face.angle = face_info.angle[j];
+            beauty_face.pose = face_info.pose[j];
+            rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                                  &beauty_face);
+        }
+        beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+        beauty_image.inputImage.addr[0] = (unsigned char *)input_buff;
+        beauty_image.inputImage.addr[1] = 0x0;
+        beauty_image.inputImage.addr[2] = 0x0;
+        beauty_image.inputImage.ion_fd = 22;
+        beauty_image.inputImage.offset[0] = 0;
+        beauty_image.inputImage.offset[1] = picWidth * picHeight;
+        beauty_image.inputImage.width = picWidth;
+        beauty_image.inputImage.height = picHeight;
+        beauty_image.inputImage.stride = picWidth;
+        beauty_image.inputImage.size = picWidth * picHeight * 3 / 2;
+        // update
+        beautyLevels.blemishLevel = facebeautylevel->blemishLevel;
+        beautyLevels.smoothLevel = facebeautylevel->smoothLevel;
+        beautyLevels.skinColor = facebeautylevel->skinColor;
+        beautyLevels.skinLevel = facebeautylevel->skinLevel;
+        beautyLevels.brightLevel = facebeautylevel->brightLevel;
+        beautyLevels.lipColor = facebeautylevel->lipColor;
+        beautyLevels.lipLevel = facebeautylevel->lipLevel;
+        beautyLevels.slimLevel = facebeautylevel->slimLevel;
+        beautyLevels.largeLevel = facebeautylevel->largeLevel;
+        beautyLevels.cameraBV = lptOptions_cap.cameraBV;
+        beautyLevels.cameraISO = lptOptions_cap.cameraISO;
+        beautyLevels.cameraCT = lptOptions_cap.cameraCT;
+        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                              &beauty_image);
+        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                              &beautyLevels);
+        fb_beauty_mask_t fbMask;
+        fbMask.fb_mask.width = 512;
+        fbMask.fb_mask.height = 384;
+        fbMask.fb_mask.data = mask;
+        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_MASK_CMD, &(fbMask));
+        fb_beauty_lptparam_t lpt_param;
+        lpt_param.faceCount = mPortraitCapParam.portrait_param.face_num;
+        lpt_param.lightPortraitType = lptOptions_cap.lightPortraitType;
+        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_PROCESS_CMD, &(lpt_param));
+
+        HAL_LOGD("capture face beauty done!");
+        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_FAST_STOP_CMD, NULL);
+        face_beauty_deinit(&fb_cap);
+#endif
+    } else {
+        int index = mPreviewbokehParam.depth_param.portrait_param.face_num;
+        int faceCount = mPreviewbokehParam.depth_param.portrait_param.face_num;
+        for (int j = 0; j < index; j++) {
+            int sx = 0, sy = 0, ex = 0, ey = 0, angle = 0, pose = 0;
+            beauty_face.idx = j;
+            if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 0) {
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+                                     mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
+                                     mSize.preview_h /
+                                     mSize.depth_snap_out_h;
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+                                   mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
+                                   mSize.preview_h / mSize.depth_snap_out_h;
+            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 90) {
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+                                     mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
+                                     mSize.preview_h /
+                                     mSize.depth_snap_out_h;
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+                                   mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
+                                   mSize.preview_h / mSize.depth_snap_out_h;
+            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 180) {
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+                                     mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
+                                     mSize.preview_h /
+                                     mSize.depth_snap_out_h;
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+                                   mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
+                                   mSize.preview_h / mSize.depth_snap_out_h;
+            } else {
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+                                     mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
+                                     mSize.preview_h /
+                                     mSize.depth_snap_out_h;
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+                                   mSize.preview_w / mSize.depth_snap_out_w;
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
+                                   mSize.preview_h / mSize.depth_snap_out_h;
+            }
+            beauty_face.angle = face_info.angle[j];
+            beauty_face.pose = face_info.pose[j];
+            rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                                  &beauty_face);
+        }
+        beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+
+        beauty_image.inputImage.addr[0] = (unsigned char *)input_buff;
+        beauty_image.inputImage.addr[1] = 0X0;
+        beauty_image.inputImage.addr[2] = 0x0;
+        beauty_image.inputImage.ion_fd = 22; // ADP_BUFFD(*(buffer_handle_t *)input_buff);
+        beauty_image.inputImage.offset[0] = 0;
+        beauty_image.inputImage.offset[1] = picWidth * picHeight;
+        beauty_image.inputImage.width = picWidth;
+        beauty_image.inputImage.height = picHeight;
+        beauty_image.inputImage.stride = picWidth;
+        beauty_image.inputImage.size = picWidth * picHeight * 3 / 2;
+        // update
+        beautyLevels.blemishLevel = facebeautylevel->blemishLevel;
+        beautyLevels.smoothLevel = facebeautylevel->smoothLevel;
+        beautyLevels.skinColor = facebeautylevel->skinColor;
+        beautyLevels.skinLevel = facebeautylevel->skinLevel;
+        beautyLevels.brightLevel = facebeautylevel->brightLevel;
+        beautyLevels.lipColor = facebeautylevel->lipColor;
+        beautyLevels.lipLevel = facebeautylevel->lipLevel;
+        beautyLevels.slimLevel = facebeautylevel->slimLevel;
+        beautyLevels.largeLevel = facebeautylevel->largeLevel;
+        beautyLevels.cameraBV = lptOptions.cameraBV;
+        beautyLevels.cameraISO = lptOptions.cameraISO;
+        beautyLevels.cameraCT = lptOptions.cameraCT;
+        rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                              &beauty_image);
+        rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                              &beautyLevels);
+        fb_beauty_lptparam_t lpt_param;
+        lpt_param.faceCount = mPreviewbokehParam.depth_param.portrait_param.face_num;
+        lpt_param.lightPortraitType = lptOptions.lightPortraitType;
+        rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_PROCESS_CMD, &(lpt_param));
+    }
+    HAL_LOGV("X");
+    return rc;
+}
+
+int SprdPortraitAlgo::getPortraitMask(void *output_buff, void *input_buf1_addr,
+                                      int vcmCurValue, unsigned char *result) {
+    /*get portrait_mask*/
+    HAL_LOGD("E");
+    int rc = NO_ERROR;
+    int f_number = 0;
+    weightmap_param weightParams;
+    PortaitCapProcParams wParams;
+    InoutYUV yuvData;
+
+    if (!output_buff || !input_buf1_addr) {
+        HAL_LOGE(" buff is null");
+        rc = BAD_VALUE;
+        return rc;
+    }
+    memset(&wParams, 0, sizeof(PortaitCapProcParams));
+    memset(&yuvData, 0, sizeof(InoutYUV));
+
+    wParams.DisparityImage = NULL;
+    wParams.VCM_cur_value = vcmCurValue;
+    memcpy(&wParams.golden_vcm_data, &mPortraitCapParam.relbokeh_oem_data,
+           sizeof(struct af_golden_vcm_data));
+    wParams.version = 1;
+    wParams.roi_type = 2;
+    f_number = mPortraitCapParam.f_number;
+    wParams.F_number = (MAX_F_FUMBER + 1 - f_number) * 255 / MAX_F_FUMBER;
+    wParams.sel_x = mPortraitCapParam.sel_x * mSize.capture_w / mSize.preview_w;
+    wParams.sel_y = mPortraitCapParam.sel_y * mSize.capture_h / mSize.preview_h;
+    wParams.CircleSize = 50;
+    wParams.valid_roi = mPortraitCapParam.portrait_param.valid_roi;
+    wParams.total_roi = mPortraitCapParam.portrait_param.face_num;
+    memcpy(&wParams.x1, &mPortraitCapParam.portrait_param.x1,
+           mPortraitCapParam.portrait_param.face_num * sizeof(int));
+    memcpy(&wParams.x2, &mPortraitCapParam.portrait_param.x2,
+           mPortraitCapParam.portrait_param.face_num * sizeof(int));
+    memcpy(&wParams.y1, &mPortraitCapParam.portrait_param.y1,
+           mPortraitCapParam.portrait_param.face_num * sizeof(int));
+    memcpy(&wParams.y2, &mPortraitCapParam.portrait_param.y2,
+           mPortraitCapParam.portrait_param.face_num * sizeof(int));
+    wParams.rear_cam_en = mPortraitCapParam.portrait_param.rear_cam_en; // true
+    wParams.rotate_angle = mPortraitCapParam.portrait_param.mRotation;  //--
+    wParams.camera_angle = mPortraitCapParam.portrait_param.camera_angle;
+    wParams.mobile_angle = mPortraitCapParam.portrait_param.mobile_angle;
+
+    yuvData.Src_YUV = (unsigned char *)input_buf1_addr;
+    yuvData.Dst_YUV = (unsigned char *)output_buff;
+
+    unsigned int maskW = 0, maskH = 0, maskSize = 0;
+    rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
+                                             &maskSize);
+
+    rc = sprd_portrait_capture_process_lpt(mPortraitHandle, NULL, &wParams,
+                                           &yuvData, NULL, 1, result);
+
+    HAL_LOGD("x");
+    return rc;
+}
+
+void SprdPortraitAlgo::setFaceInfo(int *angle, int *pose, int *fd_score) {
+    for (int i = 0; i < 10; i++) {
+        face_info.angle[i] = *(angle + i);
+        face_info.pose[i] = *(pose + i);
+        Fd_score[i]= *(fd_score+i);
+    }
+}
 }
