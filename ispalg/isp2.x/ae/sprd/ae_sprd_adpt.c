@@ -1630,9 +1630,20 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 			do_ae_flash_main_before(cxt);
 		break;
 
+	case AE_FLASH_MAIN_CLOSE:
+		ISP_LOGD("ae_flash_status FLASH_MAIN_CLOSE, cameraId:%d", cxt->camera_id);
+		if(cxt->cur_status.settings.flash != FLASH_MAIN){
+			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_MAIN",cxt->cur_status.settings.flash);
+			rtn = AE_ERROR;
+			break;
+		}
+		cxt->cur_status.settings.flash = FLASH_MAIN_CLOSE;
+
+		break;
+
 	case AE_FLASH_MAIN_AFTER:
 		ISP_LOGD("ae_flash_status FLASH_MAIN_AFTER");
-		if(cxt->cur_status.settings.flash != FLASH_MAIN){
+		if(cxt->cur_status.settings.flash != FLASH_MAIN_CLOSE){
 			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_MAIN",cxt->cur_status.settings.flash);
 			rtn = AE_ERROR;
 			break;
@@ -3318,8 +3329,9 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			main_flash_capture_counts);
 
 		if ((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->settings.flash)
-			|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash)) {
-			ISP_LOGD("ae_flash1_status shake_4 %d, %d, cnt: %d\n", cxt->send_once[2], cxt->send_once[4], main_flash_counts);
+			|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->settings.flash)
+			|| FLASH_MAIN_CLOSE == current_status->settings.flash) {
+			ISP_LOGD("ae_flash1_status shake_4 %d, %d, cnt: %d, flash_status: %d", cxt->send_once[2], cxt->send_once[4], main_flash_counts, current_status->settings.flash);
 
 			if (cxt->cur_param->flash_control_param.main_set_count == cxt->send_once[4]) {
 				ISP_LOGD("ae_flash m: led level: %d, %d\n", cxt->flash_esti_result.captureFlahLevel1, cxt->flash_esti_result.captureFlahLevel2);
@@ -3345,6 +3357,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 					ISP_LOGD("ae_flash1_callback do-capture!\r\n");
 				}
 			} else if (((main_flash_capture_counts + 1 == cxt->send_once[4]) && (cxt->mainFlashEn != 0)) || ((4 == cxt->send_once[4]) && (cxt->mainFlashEn == 0))) {
+				#if 0
 				sensor_param_updating_interface(cxt);
 				ISP_LOGD("ae_flash1_callback update next prev-param!\r\n");
 			//} else if (main_flash_capture_counts + 2 == cxt->send_once[4]) {
@@ -3356,6 +3369,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				cfg.led1_enable = 0;
 				cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
 				ISP_LOGD("ae_flash1_callback close main flash!\r\n");
+				#endif
 			} else {
 				if (1 > cxt->send_once[4]) {
 					ISP_LOGD("ae_flash1 wait-main-flash!\r\n");
@@ -3364,6 +3378,14 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				} else {
 					ISP_LOGD("ae_flash1 wait-capture!\r\n");
 				}
+			}
+
+			if (FLASH_MAIN_CLOSE == current_status->settings.flash) {
+				sensor_param_updating_interface(cxt);
+				ISP_LOGD("ae_flash1_callback update next prev-param!\r\n");
+				cb_type = AE_CB_RECOVER_GAIN;
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, NULL);
+				ISP_LOGD("ae_flash1_callback revover_gain!\r\n");
 			}
 
 		if (0 >= main_flash_counts) {
