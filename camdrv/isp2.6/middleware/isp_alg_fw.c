@@ -2538,6 +2538,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
 			smart_proc_in.cal_para.ct = awb_output->ct;
 			smart_proc_in.cal_para.abl_weight = ae_in->ae_output.abl_weight;
+			smart_proc_in.cal_para.fps = ae_in->ae_output.fps;
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 			if (cxt->remosaic_type == 1)
 				smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[1];
