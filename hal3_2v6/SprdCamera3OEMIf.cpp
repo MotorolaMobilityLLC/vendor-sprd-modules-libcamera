@@ -6249,17 +6249,21 @@ int SprdCamera3OEMIf::openCamera() {
         return UNKNOWN_ERROR;
     }
 
+    if (mCameraId >= CAMERA_ID_COUNT) {
+        // for coverity, normally can't run to here
+        HAL_LOGW("camera id error,set to 0, mCameraId=%d", mCameraId);
+        mCameraId = 0;
+    }
     mIsMlogMode = 0; //default disable
     property_get("persist.vendor.cam.mlog.mode.enable", value, "false");
     if (!strcmp(value, "true")) {
         mIsMlogMode = 1;
         mSetting->clearMLOGTag();
-              /* clear global variable for mlog */
-       if (mCameraId < CAMERA_ID_COUNT)
-            memset(&mlog_info[mCameraId], 0x00, sizeof(struct mlog_infotag));
-       getCalibrationInfo(&mlog_info[mCameraId]);
+        /* clear global variable for mlog */
+        memset(&mlog_info[mCameraId], 0x00, sizeof(struct mlog_infotag));
+        getCalibrationInfo(&mlog_info[mCameraId]);
 
-       HAL_LOGI("mlog enable");
+        HAL_LOGI("mlog enable");
     }
 
     GET_START_TIME;
@@ -6459,11 +6463,7 @@ int SprdCamera3OEMIf::openCamera() {
             MLOG_Tag *mlogInfo;
 
             mSetting->getMLOGTag(&mlogInfo);
-            if (mCameraId == 0) {
-                mlogInfo->otp_size = otp_info.dual_otp.data_3d.size;
-            } else {
-                mlogInfo->otp_size = otp_info.dual_otp.data_3d.size;
-            }
+            mlogInfo->otp_size = otp_info.dual_otp.data_3d.size;
         }
     }
 
@@ -6740,6 +6740,7 @@ int SprdCamera3OEMIf::getCalibrationInfo(struct mlog_infotag *mlog_info)
     if (len > 0)
         tmp_buf[len] = '\0';
 
+    i = 0;
     while (len && GetNameAndValue(tmp_buf, i, &pn, &pv) == 0) {
         // fscanf(fp, "%s %d", &tmp_buf[0], &mlog_info->vcm_version);
         mlog_info->vcm_version = atoi(pv);
