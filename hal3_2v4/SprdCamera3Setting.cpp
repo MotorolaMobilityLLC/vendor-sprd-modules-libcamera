@@ -197,7 +197,7 @@ const int32_t ksupported_preview_formats[4] = {
 
 const int32_t kavailable_fps_ranges_back[] = {5,  15, 15, 15, 5,  20, 5,  24,
                                               24, 24, 5,  30, 20, 30, 30, 30};
-const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5,  30,
+const int32_t kavailable_fps_ranges_front[] = {5,  15, 15, 15, 5, 24, 24, 24, 5, 30,
                                                15, 30, 20, 30, 30, 30};
 
 const int32_t kexposureCompensationRange[2] = {-16, 16};
