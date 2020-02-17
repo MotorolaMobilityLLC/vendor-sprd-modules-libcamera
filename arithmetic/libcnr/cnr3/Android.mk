@@ -40,6 +40,7 @@ LOCAL_CFLAGS += -DCAMERA_CNR3_ENABLE
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+LOCAL_SHARED_LIBRARIES +=liblog
 
 include $(BUILD_PREBUILT)
 

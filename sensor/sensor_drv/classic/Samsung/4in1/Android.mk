@@ -35,6 +35,8 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+LOCAL_SHARED_LIBRARIES +=liblog
+
 include $(BUILD_PREBUILT)
 #include $(PREBUILT_SHARED_LIBRARY)
 
@@ -52,6 +54,8 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+LOCAL_SHARED_LIBRARIES +=liblog libcutils libutils
+
 include $(BUILD_PREBUILT)
 #include $(PREBUILT_SHARED_LIBRARY)
 

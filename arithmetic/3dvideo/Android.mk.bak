@@ -31,6 +31,7 @@ LOCAL_SRC_FILES_64 := lib64/$(LOCAL_MODULE).so
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+LOCAL_SHARED_LIBRARIES +=liblog libui libcutils libutils libEGL libGLESv2
 
 include $(BUILD_PREBUILT)
 endif

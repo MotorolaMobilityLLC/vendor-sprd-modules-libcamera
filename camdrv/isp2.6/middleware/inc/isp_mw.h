@@ -24,12 +24,12 @@
 
 /* TODO - Please define PDAF buffer size according to specific sensor PDAF data size. */
 /* It should be up-aligned to page size (0x1000)  */
-#ifdef CONFIG_ISP_2_7
+/*#ifdef CONFIG_ISP_2_7
 #define ISP_PDAF_STATIS_BUF_SIZE  (0x3A3000)
 #else
 #define ISP_PDAF_STATIS_BUF_SIZE  (0x12000)
 #endif
-
+*/
 
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 

@@ -52,8 +52,9 @@
 
 /* isp yuv hist (only Y) */
 #define STATIS_ISP_HIST2_BUF_SIZE   (256 * 4)
+#define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE)
 
-
+#if 0
 #ifdef CONFIG_ISP_2_7
 
 #define STATIS_AEM_BUF_NUM 4
@@ -97,7 +98,7 @@
 #define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE)
 
 #endif
-
+*/
 /* temp solution for sharkl3 compiling */
 struct lsc_monitor_info {
 	cmr_u32 shift;
@@ -115,7 +116,7 @@ struct isp_lsc_statistic_info{
 	cmr_u32 usec;
 };
 #endif
-
+#endif
 
 
 
@@ -146,7 +147,7 @@ struct isp_statis_info {
 	cmr_u32 width;
 	cmr_u32 height;
 };
-
+//#define STATIS_BUF_NUM_MAX 255
 struct isp_stats_alloc_info {
 	cmr_u32 alloc_num;
 	cmr_u32 alloc_size;
@@ -162,7 +163,7 @@ struct isp_stats_alloc_info {
 	cmr_uint uaddr[STATIS_BUF_NUM_MAX];
 };
 
-
+//#define STATIS_TYPE_MAX 255
 struct isp_mem_info {
 	struct isp_stats_alloc_info buf_info[STATIS_TYPE_MAX];
 

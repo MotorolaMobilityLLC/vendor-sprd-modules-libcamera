@@ -72,7 +72,7 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/modules/libmemion \
     $(TOP)/frameworks/native/libs/sensor/include \
     $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
-    $(TOP)/system/core/libion/kernel-headers \
+    $(TOP)/system/memory/libion/kernel-headers \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
     $(LOCAL_PATH)/kernel_module/interface
 
@@ -294,7 +294,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES = tool/baseband_autotester_camera/test_camera.cpp
+#LOCAL_SRC_FILES = tool/baseband_autotester_camera/test_camera.cpp
 LOCAL_C_INCLUDES := \
     $(TOP)/system/core/libutils/include/ \
     $(TOP)/vendor/sprd/proprietories-source/engpc/sprd_fts_inc \
@@ -323,7 +323,7 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/modules/libmemion \
     $(TOP)/frameworks/native/libs/sensor/include \
     $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
-    $(TOP)/system/core/libion/kernel-headers \
+    $(TOP)/system/memory/libion/kernel-headers \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
     $(LOCAL_PATH)/kernel_module/interface
 

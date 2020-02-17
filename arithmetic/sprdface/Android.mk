@@ -32,7 +32,9 @@ LOCAL_MODULE_STEM_32 := libsprdfd.so
 LOCAL_MODULE_STEM_64 := libsprdfd.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfd.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfd.so
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm libsprdfd_hw
 LOCAL_MODULE_TAGS := optional
+
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
@@ -48,6 +50,7 @@ LOCAL_MODULE_STEM_32 := libsprdfa.so
 LOCAL_MODULE_STEM_64 := libsprdfa.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfa.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfa.so
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
 LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
@@ -64,6 +67,7 @@ LOCAL_MODULE_STEM_32 := libsprdfarcnn.so
 LOCAL_MODULE_STEM_64 := libsprdfarcnn.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfarcnn.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfarcnn.so
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
 LOCAL_MODULE_TAGS := optional
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

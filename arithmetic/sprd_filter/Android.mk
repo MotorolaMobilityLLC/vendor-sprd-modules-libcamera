@@ -31,6 +31,7 @@ LOCAL_MODULE_STEM_32 := libSprdImageFilter.so
 LOCAL_MODULE_STEM_64 := libSprdImageFilter.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libSprdImageFilter.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libSprdImageFilter.so
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
 LOCAL_MODULE_TAGS := optional
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))

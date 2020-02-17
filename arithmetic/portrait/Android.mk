@@ -32,6 +32,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprd_portrait_cap.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprd_portrait_cap.so
+LOCAL_SHARED_LIBRARIES := libSegLiteMNN libSegLite libc libdl liblog libm libz
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
@@ -55,6 +56,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libSegLiteMNN.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libSegLiteMNN.so
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm libz
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
