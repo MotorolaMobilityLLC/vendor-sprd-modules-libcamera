@@ -1640,6 +1640,11 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
         ey = MAX(
             MAX(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
             MAX(frame_param->face_info[i].ey, frame_param->face_info[i].ely));
+        CMR_LOGV("id %u, s %d %d, sr %d %d, e %d %d, el %d %d", cxt->camera_id,
+                frame_param->face_info[i].sx, frame_param->face_info[i].sy,
+                frame_param->face_info[i].srx, frame_param->face_info[i].sry,
+                frame_param->face_info[i].ex, frame_param->face_info[i].ey,
+                frame_param->face_info[i].elx, frame_param->face_info[i].ely);
         // save face info in cmr cxt for other case.such as face beauty
         // takepicture
         cxt->fd_face_area.face_info[i].sx = sx;
@@ -1677,21 +1682,31 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
             tag = cxt->is_ultra_wide ? SETTING_GET_REPROCESS_ZOOM_RATIO : SETTING_GET_ZOOM_PARAM;
             ret = cmr_setting_ioctl(setting_cxt->setting_handle, tag, &setting_param);
             if (ret) {
-                CMR_LOGE("failed to get zoom param %ld", ret);
+                CMR_LOGW("failed to get zoom param %ld", ret);
             } else {
                 struct zoom_info *info = &setting_param.zoom_param.zoom_info;
                 struct img_rect *rect = &info->crop_region;
 
-                CMR_LOGV("fix rect from %u %u %u %u to %u %u %u %u",
-                        scalerCrop.x, scalerCrop.y, scalerCrop.w, scalerCrop.h,
-                        rect->start_x, rect->start_y, rect->width, rect->height);
-
                 /* hal_param is bzero-ed on init, this check should be enough... */
                 if (rect->start_x || rect->start_y || rect->width || rect->height) {
-                    scalerCrop.x = rect->start_x;
-                    scalerCrop.y = rect->start_y;
-                    scalerCrop.w = rect->width;
-                    scalerCrop.h = rect->height;
+                    struct img_rect src, dst;
+
+                    src.start_x = 0;
+                    src.start_y = 0;
+                    src.width = face_area->frame_width;
+                    src.height = face_area->frame_height;
+
+                    dst = camera_apply_rect_and_ratio(info->pixel_size, info->crop_region,
+                            src, (float)src.width / (float)src.height);
+
+                    CMR_LOGV("fix rect from %u %u %u %u to %u %u %u %u",
+                            scalerCrop.x, scalerCrop.y, scalerCrop.w, scalerCrop.h,
+                            dst.start_x, dst.start_y, dst.width, dst.height);
+
+                    scalerCrop.x = dst.start_x;
+                    scalerCrop.y = dst.start_y;
+                    scalerCrop.w = dst.width;
+                    scalerCrop.h = dst.height;
                 }
             }
         }
@@ -1731,9 +1746,11 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
         face_area->face_info[i].roll_angle = frame_param->face_info[i].angle;
         face_area->face_info[i].score = frame_param->face_info[i].score;
         face_area->face_info[i].id = frame_param->face_info[i].face_id;
-        CMR_LOGV("preview face info sx %d sy %d ex %d, ey %d",
+        CMR_LOGV("id %u, s %d %d, e %d %d, center (%d, %d)", cxt->camera_id,
                  face_area->face_info[i].sx, face_area->face_info[i].sy,
-                 face_area->face_info[i].ex, face_area->face_info[i].ey);
+                 face_area->face_info[i].ex, face_area->face_info[i].ey,
+                 (face_area->face_info[i].sx + face_area->face_info[i].ex) / 2,
+                 (face_area->face_info[i].sy + face_area->face_info[i].ey) / 2);
     }
 }
 
