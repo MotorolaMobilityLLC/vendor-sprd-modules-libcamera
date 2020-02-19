@@ -27,8 +27,10 @@
 #define NUM_TYPES 3
 int dumpFrameCount = 0;
 char value[PROPERTY_VALUE_MAX];
+int faceLevelMap = 0;
+struct facebeauty_param_t fbParam;
 
-void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum) {
+void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum,fb_chipinfo chipinfo) {
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
@@ -67,10 +69,10 @@ void deinit_fb_handle(struct class_fb *faceBeauty) {
         }
         faceBeauty->noFaceFrmCnt = 0;
     }
+    faceLevelMap = 0;
 }
 
-void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
-                       int ex, int ey, int angle, int pose) {
+void construct_fb_face(struct class_fb *faceBeauty, struct fb_beauty_face_t faceinfo) {
     char debug_value[PROPERTY_VALUE_MAX];
     if (!faceBeauty) {
         ALOGE("construct_fb_face faceBeauty is null");
@@ -80,22 +82,22 @@ void construct_fb_face(struct class_fb *faceBeauty, int j, int sx, int sy,
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
-        faceBeauty->fb_face[j].x = sx;
-        faceBeauty->fb_face[j].y = sy;
-        faceBeauty->fb_face[j].width = ex - sx;
-        faceBeauty->fb_face[j].height = ey - sy;
-        faceBeauty->fb_face[j].rollAngle = angle;
-        faceBeauty->fb_face[j].yawAngle = pose;
-        faceBeauty->fb_face[j].score = 0;
-        faceBeauty->fb_face[j].faceAttriRace = 0;
-        faceBeauty->fb_face[j].faceAttriGender= 0;
-        faceBeauty->fb_face[j].faceAttriAge= 0;
+        faceBeauty->fb_face[faceinfo.idx].x = faceinfo.startX;
+        faceBeauty->fb_face[faceinfo.idx].y = faceinfo.startY;
+        faceBeauty->fb_face[faceinfo.idx].width = faceinfo.endX - faceinfo.startX;
+        faceBeauty->fb_face[faceinfo.idx].height = faceinfo.endY - faceinfo.startY;
+        faceBeauty->fb_face[faceinfo.idx].rollAngle = faceinfo.angle;
+        faceBeauty->fb_face[faceinfo.idx].yawAngle = faceinfo.pose;
+        faceBeauty->fb_face[faceinfo.idx].score = faceinfo.score;
+        faceBeauty->fb_face[faceinfo.idx].faceAttriRace = faceinfo.faceAttriRace;
+        faceBeauty->fb_face[faceinfo.idx].faceAttriGender= faceinfo.faceAttriGender;
+        faceBeauty->fb_face[faceinfo.idx].faceAttriAge= faceinfo.faceAttriAge;
         property_get("ro.debuggable", debug_value, "0");
         if (!strcmp(debug_value, "1")) {
-            ALOGD("sprdfb,  fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
-                    j, faceBeauty->fb_face[j].x, faceBeauty->fb_face[j].y,
-                    faceBeauty->fb_face[j].width, faceBeauty->fb_face[j].height,
-                    angle, pose);
+            ALOGD("sprdfb, fb_face[%d] x:%d, y:%d, w:%d, h:%d , angle:%d, pose%d.",
+                    faceinfo.idx, faceBeauty->fb_face[faceinfo.idx].x, faceBeauty->fb_face[faceinfo.idx].y,
+                    faceBeauty->fb_face[faceinfo.idx].width, faceBeauty->fb_face[faceinfo.idx].height,
+                    faceinfo.angle, faceinfo.pose);
         }
     }
 }
@@ -120,6 +122,12 @@ void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
     } 
 }
 
+void construct_fb_map(facebeauty_param_info_t *facemap){
+    ALOGI("construct_fb_map");
+    faceLevelMap++;
+    fbParam = facemap->cur.fb_param[FB_SKIN_DEFAULT];
+
+}
 void construct_fb_level(struct class_fb *faceBeauty,
                         struct face_beauty_levels beautyLevels) {
     if (!faceBeauty) {
@@ -143,77 +151,133 @@ void construct_fb_level(struct class_fb *faceBeauty,
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
-        unsigned char map_pictureSkinSmoothLevel[NUM_LEVELS] = {
-            0, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14};
-        unsigned char map_previewSkinSmoothLevel[NUM_LEVELS] = {
-            0, 2, 2, 3, 3, 4, 4, 6, 6, 8, 8};
-        unsigned char map_skinBrightLevel[NUM_LEVELS] = {0, 2, 4, 6, 6, 8,
+        if (!faceLevelMap) {
+            unsigned char map_pictureSkinSmoothLevel[NUM_LEVELS] = {
+                0, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14};
+            unsigned char map_previewSkinSmoothLevel[NUM_LEVELS] = {
+                0, 2, 2, 3, 3, 4, 4, 6, 6, 8, 8};
+            unsigned char map_skinBrightLevel[NUM_LEVELS] = {0, 2, 4, 6, 6, 8,
                                                          8, 10, 10, 12, 12};
-        unsigned char map_slimFaceLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
+            unsigned char map_slimFaceLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
                                                        6, 7, 8, 9, 10};
-        unsigned char map_largeEyeLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
+            unsigned char map_largeEyeLevel[NUM_LEVELS] = {0, 1, 2, 3, 4, 5,
                                                        6, 7, 8, 9, 10};
-        unsigned char map_skinSmoothRadiusCoeff[NUM_LEVELS] = {
-            55, 55, 55, 50, 50, 40, 40, 30, 30, 20, 20};
-        unsigned char map_pictureSkinTextureHiFreqLevel[NUM_LEVELS] = {
-            0, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
-        unsigned char map_pictureSkinTextureLoFreqLevel[NUM_LEVELS] = {
-            4, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0};
-        unsigned char map_lipColorLevel[NUM_LEVELS] = {0, 2, 3, 5, 6, 8, 9, 10, 11, 12, 12};
-        unsigned char map_skinColorLevel[NUM_LEVELS] = {0, 2, 3, 5, 6, 8, 9, 10, 11, 12, 12};
+            unsigned char map_skinSmoothRadiusCoeff[NUM_LEVELS] = {
+                55, 55, 55, 50, 50, 40, 40, 30, 30, 20, 20};
+            unsigned char map_pictureSkinTextureHiFreqLevel[NUM_LEVELS] = {
+                0, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
+            unsigned char map_pictureSkinTextureLoFreqLevel[NUM_LEVELS] = {
+                4, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0};
+            unsigned char map_lipColorLevel[NUM_LEVELS] = {0, 2, 3, 5, 6, 8, 9, 10, 11, 12, 12};
+            unsigned char map_skinColorLevel[NUM_LEVELS] = {0, 2, 3, 5, 6, 8, 9, 10, 11, 12, 12};
 
-        faceBeauty->fb_option.skinBrightLevel =
-            map_skinBrightLevel[beautyLevels.brightLevel];
-        faceBeauty->fb_option.slimFaceLevel =
-            map_slimFaceLevel[beautyLevels.slimLevel];
-        faceBeauty->fb_option.largeEyeLevel =
-            map_largeEyeLevel[beautyLevels.largeLevel];
-        faceBeauty->fb_option.lipColorLevel =
-            map_lipColorLevel[beautyLevels.lipLevel];
-        faceBeauty->fb_option.skinColorLevel =
-            map_skinColorLevel[beautyLevels.skinLevel];
+            faceBeauty->fb_option.skinBrightLevel =
+                map_skinBrightLevel[beautyLevels.brightLevel];
+            faceBeauty->fb_option.slimFaceLevel =
+                map_slimFaceLevel[beautyLevels.slimLevel];
+            faceBeauty->fb_option.largeEyeLevel =
+                map_largeEyeLevel[beautyLevels.largeLevel];
+            faceBeauty->fb_option.lipColorLevel =
+                map_lipColorLevel[beautyLevels.lipLevel];
+            faceBeauty->fb_option.skinColorLevel =
+                map_skinColorLevel[beautyLevels.skinLevel];
 
-        /* We don't use the following options */
-        faceBeauty->fb_option.removeBlemishFlag = 0;
-        faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
-        faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
-        faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
-        faceBeauty->fb_option.blemishSizeThrCoeff = 14;
+           // We don't use the following options
+            faceBeauty->fb_option.removeBlemishFlag = 0;
+            faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
+            faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
+            faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
+            faceBeauty->fb_option.blemishSizeThrCoeff = 14;
 
-        faceBeauty->fb_option.cameraWork = FB_CAMERA_REAR;
-        faceBeauty->fb_option.cameraBV = 0;
-        faceBeauty->fb_option.cameraISO = 0;
-        faceBeauty->fb_option.cameraCT = 0;
+            faceBeauty->fb_option.cameraWork = FB_CAMERA_REAR;
+            faceBeauty->fb_option.cameraBV = beautyLevels.cameraBV;
+            faceBeauty->fb_option.cameraISO = 0;
+            faceBeauty->fb_option.cameraCT = 0;
 
-        if (faceBeauty->fb_mode == 1) {
-            faceBeauty->fb_option.skinSmoothRadiusCoeff =
-                map_skinSmoothRadiusCoeff[beautyLevels.smoothLevel];
-            faceBeauty->fb_option.skinSmoothLevel =
-                map_previewSkinSmoothLevel[beautyLevels.smoothLevel];
-            faceBeauty->fb_option.skinTextureHiFreqLevel = 0;
-            faceBeauty->fb_option.skinTextureLoFreqLevel = 0;
+            if (faceBeauty->fb_mode == 1) {
+                faceBeauty->fb_option.skinSmoothRadiusCoeff =
+                    map_skinSmoothRadiusCoeff[beautyLevels.smoothLevel];
+                faceBeauty->fb_option.skinSmoothLevel =
+                    map_previewSkinSmoothLevel[beautyLevels.smoothLevel];
+                faceBeauty->fb_option.skinTextureHiFreqLevel = 0;
+                faceBeauty->fb_option.skinTextureLoFreqLevel = 0;
+            } else {
+                faceBeauty->fb_option.skinSmoothRadiusCoeff = 55;
+                faceBeauty->fb_option.skinSmoothLevel =
+                    map_pictureSkinSmoothLevel[beautyLevels.smoothLevel];
+                faceBeauty->fb_option.skinTextureHiFreqLevel =
+                    map_pictureSkinTextureHiFreqLevel[beautyLevels.smoothLevel];
+                faceBeauty->fb_option.skinTextureLoFreqLevel =
+                    map_pictureSkinTextureLoFreqLevel[beautyLevels.smoothLevel];
+            }
         } else {
-            faceBeauty->fb_option.skinSmoothRadiusCoeff = 55;
-            faceBeauty->fb_option.skinSmoothLevel =
-                map_pictureSkinSmoothLevel[beautyLevels.smoothLevel];
-            faceBeauty->fb_option.skinTextureHiFreqLevel =
-                map_pictureSkinTextureHiFreqLevel[beautyLevels.smoothLevel];
-            faceBeauty->fb_option.skinTextureLoFreqLevel =
-                map_pictureSkinTextureLoFreqLevel[beautyLevels.smoothLevel];
-        }
 
-        if (!strcmp(isDebug, "1")) {
-            faceBeauty->fb_option.debugMode = 1;
-            faceBeauty->fb_option.removeBlemishFlag = 1;
+            /*set default value*/
+            faceBeauty->fb_option.skinBrightLevel = fbParam.fb_layer.skinBrightDefaultLevel;
+            faceBeauty->fb_option.slimFaceLevel = fbParam.fb_layer.slimFaceDefaultLevel;
+            faceBeauty->fb_option.largeEyeLevel = fbParam.fb_layer.largeEyeDefaultLevel;
+            faceBeauty->fb_option.lipColorLevel = fbParam.fb_layer.lipColorDefaultLevel;
+            faceBeauty->fb_option.skinColorLevel = fbParam.fb_layer.skinColorDefaultLevel;
+            faceBeauty->fb_option.removeBlemishFlag = fbParam.removeBlemishFlag;
+            faceBeauty->fb_option.lipColorType = fbParam.lipColorType;
+            faceBeauty->fb_option.skinColorType = fbParam.skinColorType;
+            faceBeauty->fb_option.blemishSizeThrCoeff = fbParam.blemishSizeThrCoeff;
+
+            faceBeauty->fb_option.skinSmoothRadiusCoeff = fbParam.fb_layer.skinSmoothRadiusDefaultLevel;
+            faceBeauty->fb_option.skinSmoothLevel = fbParam.fb_layer.skinSmoothDefaultLevel;
+            faceBeauty->fb_option.skinTextureHiFreqLevel = fbParam.fb_layer.skinTextureHiFreqDefaultLevel;
+            faceBeauty->fb_option.skinTextureLoFreqLevel = fbParam.fb_layer.skinTextureLoFreqDefaultLevel;
+
+            /*set value*/
+            faceBeauty->fb_option.skinBrightLevel = fbParam.fb_layer.skinBrightLevel[beautyLevels.brightLevel/2];
+            faceBeauty->fb_option.slimFaceLevel = fbParam.fb_layer.slimFaceLevel[beautyLevels.slimLevel/2];
+            faceBeauty->fb_option.largeEyeLevel = fbParam.fb_layer.largeEyeLevel[beautyLevels.largeLevel/2];
+            faceBeauty->fb_option.lipColorLevel = fbParam.fb_layer.lipColorLevel[beautyLevels.lipLevel/2];
+            faceBeauty->fb_option.skinColorLevel = fbParam.fb_layer.skinColorLevel[beautyLevels.skinLevel/2];
+
+            faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
+            faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
+            faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
+
+            faceBeauty->fb_option.skinSmoothRadiusCoeff = fbParam.fb_layer.skinSmoothRadiusCoeff[beautyLevels.smoothLevel/2];
+            faceBeauty->fb_option.skinSmoothLevel = fbParam.fb_layer.skinSmoothLevel[beautyLevels.smoothLevel/2];
+            faceBeauty->fb_option.skinTextureHiFreqLevel = fbParam.fb_layer.skinTextureHiFreqLevel[beautyLevels.smoothLevel/2];
+            faceBeauty->fb_option.skinTextureLoFreqLevel = fbParam.fb_layer.skinTextureLoFreqLevel[beautyLevels.smoothLevel/2];
+
+            faceBeauty->fb_option.cameraWork = beautyLevels.cameraWork;
+            faceBeauty->fb_option.cameraBV = beautyLevels.cameraBV;
+            faceBeauty->fb_option.cameraISO = beautyLevels.cameraISO;
+            faceBeauty->fb_option.cameraCT = beautyLevels.cameraCT;
+        }
+        char isLevelDebug[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.beauty.level.debug", isLevelDebug, "0");
+        if(!strcmp(isLevelDebug, "1")){
+           ALOGD("SPRD_FB: skinBrightLevel: %d, slimFaceLevel: %d, "
+                          "largeEyeLevel: %d \n",
+                          faceBeauty->fb_option.skinBrightLevel,
+                          faceBeauty->fb_option.slimFaceLevel,
+                          faceBeauty->fb_option.largeEyeLevel);
+           ALOGD("SPRD_FB: skinSmoothLevel: %d, removeBlemishFlag: %d, "
+                         "skinColorLevel: %d \n",
+                         faceBeauty->fb_option.skinSmoothLevel,
+                         faceBeauty->fb_option.removeBlemishFlag,
+                         faceBeauty->fb_option.skinColorLevel);
+           ALOGD("SPRD_FB: lipColorLevel: %d \n",
+                         faceBeauty->fb_option.lipColorLevel);
+        }
+    }
+
+    if (!strcmp(isDebug, "1")) {
+        faceBeauty->fb_option.debugMode = 1;
+            /*faceBeauty->fb_option.removeBlemishFlag = 1;
             faceBeauty->fb_option.skinColorType = 1;
             faceBeauty->fb_option.skinColorLevel = 7;
             faceBeauty->fb_option.lipColorType = 2;
             faceBeauty->fb_option.lipColorLevel = 5;
             faceBeauty->fb_option.slimFaceLevel = 7;
-            faceBeauty->fb_option.largeEyeLevel = 7;
-        } else {
-            faceBeauty->fb_option.debugMode = 0;
-        }
+            faceBeauty->fb_option.largeEyeLevel = 7;*/
+    } else {
+        faceBeauty->fb_option.debugMode = 0;
     }
 }
 

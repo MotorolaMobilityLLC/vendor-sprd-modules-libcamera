@@ -8,6 +8,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include "sprdfacebeauty.h"
+#include "faceparam.h"
 #include "sprd_fb_vdsp_api.h"
 #include <cutils/properties.h>
 #include "sprd_camalg_adapter.h"
@@ -21,6 +22,7 @@ typedef enum {
     FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
     FB_BEAUTY_PROCESS_CMD,
     FB_BEAUTY_FAST_STOP_CMD,
+    FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
     FB_BEAUTY_MAX_CMD
 } fb_beauty_cmd_t;
 
@@ -28,7 +30,7 @@ typedef struct {
     const char *pVersion;
 } fb_beauty_version_t;
 
-typedef struct {
+typedef struct fbBeautyFacetT{
     int idx;
     int startX;
     int startY;
@@ -40,7 +42,7 @@ typedef struct {
     unsigned char faceAttriRace;    /* Skin color of race: yellow, white, black, or indian        */
     unsigned char faceAttriGender;  /* Gender from face attribute detection demo */
     unsigned char faceAttriAge;     /* Age from face attribute detection demo    */
-} fb_beauty_face_t;
+} fbBeautyFacetT;
 
 typedef struct {
     struct sprd_camalg_image inputImage;
@@ -75,7 +77,7 @@ typedef struct faceBeautyLevels {
     int cameraCT; /* The value of ct for judjing color temperature */
 } faceBeautyLevelsT;
 
-JNIEXPORT void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum);
+JNIEXPORT void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum, fb_chipinfo chipinfo);
 JNIEXPORT void face_beauty_deinit(fb_beauty_param_t *faceBeauty);
 
 /*
