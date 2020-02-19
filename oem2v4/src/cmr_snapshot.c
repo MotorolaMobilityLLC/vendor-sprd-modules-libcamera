@@ -206,7 +206,6 @@ struct snp_context {
     sem_t ipm_sync_sm;
     sem_t redisplay_sm;
     sem_t writer_exif_sm;
-    sem_t sync_encode;
     struct snp_cvt_context cvt;
 };
 /********************************* internal data type
@@ -684,7 +683,7 @@ void snp_post_proc_err_exit(cmr_handle snp_handle, cmr_int err_code) {
     cmr_bzero(&cxt->cur_frame_info, sizeof(cxt->cur_frame_info));
     snp_set_request(snp_handle, TAKE_PICTURE_NO);
     sem_post(&cxt->proc_done_sm);
-    if (CODEC_WORKING == snp_get_request(snp_handle)) {
+    if (CODEC_WORKING == snp_get_status(snp_handle)) {
         sem_post(&cxt->jpeg_sync_sm);
     }
     snp_set_status(snp_handle, IDLE);
@@ -1055,17 +1054,14 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
         snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
     }
     camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
-    sem_wait(&snp_cxt->sync_encode);
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
                                     &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
                                     &jpeg_in_ptr->mean, NULL);
     if (ret) {
         CMR_LOGE("failed to start enc %ld", ret);
-        sem_post(&snp_cxt->sync_encode);
         goto exit;
     }
     snp_set_status(snp_handle, CODEC_WORKING);
-    sem_post(&snp_cxt->sync_encode);
 exit:
     CMR_LOGD("ret = %ld", ret);
     if (ret) {
@@ -2695,7 +2691,6 @@ void snp_local_init(cmr_handle snp_handle) {
     sem_init(&cxt->redisplay_sm, 0, 0);
     sem_init(&cxt->writer_exif_sm, 0, 0);
     sem_init(&cxt->ipm_sync_sm, 0, 1);
-    sem_init(&cxt->sync_encode, 0, 1);
 }
 
 void snp_local_deinit(cmr_handle snp_handle) {
@@ -2710,7 +2705,6 @@ void snp_local_deinit(cmr_handle snp_handle) {
     sem_destroy(&cxt->redisplay_sm);
     sem_destroy(&cxt->writer_exif_sm);
     sem_destroy(&cxt->ipm_sync_sm);
-    sem_destroy(&cxt->sync_encode);
     cxt->is_inited = 0;
 }
 
@@ -4955,7 +4949,6 @@ cmr_int snp_stop_proc(cmr_handle snp_handle) {
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
     CMR_LOGI("E");
-
     ret = snp_checkout_exit(snp_handle);
     snp_set_status(snp_handle, IDLE);
     CMR_LOGI("X");
@@ -5541,7 +5534,6 @@ cmr_int cmr_snapshot_stop(cmr_handle snapshot_handle) {
     CMR_MSG_INIT(message);
 
     CHECK_HANDLE_VALID(snapshot_handle);
-    sem_wait(&cxt->sync_encode);
     snp_set_request(snapshot_handle, TAKE_PICTURE_NO);
     message.msg_type = SNP_EVT_STOP;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -5550,7 +5542,6 @@ cmr_int cmr_snapshot_stop(cmr_handle snapshot_handle) {
     if (ret) {
         CMR_LOGE("failed to send stop msg to main thr %ld", ret);
     }
-    sem_post(&cxt->sync_encode);
     return ret;
 }
 

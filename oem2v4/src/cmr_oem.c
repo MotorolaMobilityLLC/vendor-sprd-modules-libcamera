@@ -9299,23 +9299,6 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
 
     camera_get_iso_value(oem_handle);
 
-    if(cxt->snp_cxt.status == CODEC_WORKING) {
-        CMR_LOGI("wait for jpeg encode");
-        int time = 0;
-        while (1) {
-            if (time > 2000) {
-                CMR_LOGE("timeout");
-                break;
-            }
-            time++;
-            if (cxt->snp_cxt.status != CODEC_WORKING) {
-                CMR_LOGI("jpeg encode ok wait up");
-                break;
-            }
-            usleep(1000);
-        }
-    }
-
     prev_ret = cmr_preview_stop(cxt->prev_cxt.preview_handle, cxt->camera_id);
     if (ret) {
         CMR_LOGE("failed to stop prev %ld", ret);
