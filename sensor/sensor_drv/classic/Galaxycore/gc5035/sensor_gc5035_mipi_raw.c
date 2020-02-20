@@ -873,7 +873,7 @@ static cmr_int gc5035_drv_stream_on(cmr_handle handle, cmr_uint param)
 	
 #if defined(CONFIG_DUAL_MODULE)
 	//gc5035_drv_set_master_FrameSync(handle,param);
-	gc5035_drv_set_slave_FrameSync(handle,param);
+	//gc5035_drv_set_slave_FrameSync(handle,param);
 #endif   
 	/*TODO*/
 	//usleep(100*1000);
