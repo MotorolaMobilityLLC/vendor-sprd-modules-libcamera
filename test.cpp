@@ -82,6 +82,15 @@ static uint32_t mIspFirmwareReserved_cnt = 0;
 static const int kISPB4awbCount = 16;
 static sprd_camera_memory_t *mIspB4awbHeapReserved[kISPB4awbCount];
 static sprd_camera_memory_t *mIspRawAemHeapReserved[kISPB4awbCount];
+static sprd_camera_memory_t *mIspStatsAemHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStatsAfmHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStatsAflHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStatsBayerHistHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStatsYuvHistHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStats3DNRHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStatsEbdHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStatsPdafHeap[ISP_STATS_MAX];
+static sprd_camera_memory_t *mIspStatsLscmHeap[ISP_STATS_MAX];
 static sprd_camera_memory_t
     *previewHeapArray[PREVIEW_BUFF_NUM]; /*preview heap arrary*/
 static uint32_t target_buffer_id = 0;
@@ -713,6 +722,72 @@ static int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
         }
     }
 
+    // new buffer handles (mIspStats***Heap) for all isp statis data type
+    if (type == CAMERA_ISPSTATS_AEM) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsAemHeap[i]) {
+                freeCameraMem(mIspStatsAemHeap[i]);
+            }
+            mIspStatsAemHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_AFM) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsAfmHeap[i]) {
+                freeCameraMem(mIspStatsAfmHeap[i]);
+            }
+            mIspStatsAfmHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_AFL) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsAflHeap[i]) {
+                freeCameraMem(mIspStatsAflHeap[i]);
+            }
+            mIspStatsAflHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_LSCM) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsLscmHeap[i]) {
+                freeCameraMem(mIspStatsLscmHeap[i]);
+            }
+            mIspStatsLscmHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_BAYERHIST) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsBayerHistHeap[i]) {
+                freeCameraMem(mIspStatsBayerHistHeap[i]);
+            }
+            mIspStatsBayerHistHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_YUVHIST) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsYuvHistHeap[i]) {
+                freeCameraMem(mIspStatsYuvHistHeap[i]);
+            }
+            mIspStatsYuvHistHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_3DNR) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStats3DNRHeap[i]) {
+                freeCameraMem(mIspStats3DNRHeap[i]);
+            }
+            mIspStats3DNRHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_PDAF) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsPdafHeap[i]) {
+                freeCameraMem(mIspStatsPdafHeap[i]);
+            }
+            mIspStatsPdafHeap[i] = NULL;
+        }
+    } else if (type == CAMERA_ISPSTATS_EBD) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsEbdHeap[i]) {
+                freeCameraMem(mIspStatsEbdHeap[i]);
+            }
+            mIspStatsEbdHeap[i] = NULL;
+        }
+    }
+
     return 0;
 }
 
@@ -764,10 +839,34 @@ static cmr_int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
 
     if (CAMERA_PREVIEW == type) {
         ret = Callback_PreviewFree(phy_addr, vir_addr, fd, sum);
-    } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
-               type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
-               type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
-               type == CAMERA_ISP_ANTI_FLICKER) {
+    } else if (CAMERA_PREVIEW_RESERVED == type ||
+               CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
+               CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
+               CAMERA_DEPTH_MAP_RESERVED == type ||
+               CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
+               CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
+               CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
+               CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
+               CAMERA_PREVIEW_DEPTH == type || CAMERA_PREVIEW_SW_OUT == type ||
+               CAMERA_4IN1_PROC == type || CAMERA_CHANNEL_0_RESERVED == type ||
+               CAMERA_ISP_ANTI_FLICKER == type || CAMERA_PREVIEW_3DNR == type ||
+               CAMERA_ISPSTATS_AEM == type ||
+               CAMERA_ISPSTATS_AFM == type ||
+               CAMERA_ISPSTATS_AFL == type ||
+               CAMERA_ISPSTATS_PDAF == type ||
+               CAMERA_ISPSTATS_BAYERHIST == type ||
+               CAMERA_ISPSTATS_YUVHIST == type ||
+               CAMERA_ISPSTATS_LSCM == type ||
+               CAMERA_ISPSTATS_3DNR == type ||
+               CAMERA_ISPSTATS_EBD == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type ||
+               CAMERA_CHANNEL_1_RESERVED == type ||
+               CAMERA_CHANNEL_2_RESERVED == type ||
+               CAMERA_CHANNEL_3_RESERVED == type ||
+               CAMERA_CHANNEL_4_RESERVED == type ||
+               CAMERA_PREVIEW_SCALE_AI_SCENE == type ||
+               CAMERA_FD_SMALL == type ||
+               CAMERA_PREVIEW_SCALE_AUTO_TRACKING == type) {
         ret = Callback_OtherFree(type, phy_addr, vir_addr, fd, sum);
     } else {
         ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
@@ -1067,6 +1166,106 @@ static int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
         *vir_addr++ = (cmr_uint)memory->data;
         *fd++ = memory->fd;
         *fd++ = memory->dev_fd;
+    } else if (type == CAMERA_ISPSTATS_AEM) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, false);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsAemHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+    } else if (type == CAMERA_ISPSTATS_AFM) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, false);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsAfmHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+    } else if (type == CAMERA_ISPSTATS_AFL) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, false);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsAflHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+    } else if (type == CAMERA_ISPSTATS_BAYERHIST) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, false);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsBayerHistHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+    } else if (type == CAMERA_ISPSTATS_YUVHIST) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, true);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsYuvHistHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+    } else if (type == CAMERA_ISPSTATS_LSCM) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, false);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsLscmHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+    } else if (type == CAMERA_ISPSTATS_3DNR) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, false);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStats3DNRHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+
+    } else if (type == CAMERA_ISPSTATS_EBD) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, false);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsEbdHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
+    } else if (type == CAMERA_ISPSTATS_PDAF) {
+        for (i = 0; i < sum; i++) {
+            memory = allocCameraMem(size, 1, true);
+            if (NULL == memory) {
+                HAL_LOGE("error memory is null,malloced type %d", type);
+                goto mem_fail;
+            }
+            mIspStatsPdafHeap[i] = memory;
+            *vir_addr++ = (cmr_uint)memory->data;
+            *fd++ = memory->fd;
+        }
     } else {
         ALOGE("%s,%s,%d, type ignore: %d, do nothing.", __FILE__, __func__,
               __LINE__, type);
@@ -1107,10 +1306,33 @@ static cmr_int Callback_Malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
         /* preview buffer */
         ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         ret = Callback_PreviewMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
-               type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
-               type == CAMERA_ISP_BINGING4AWB || type == CAMERA_ISP_RAWAE ||
-               type == CAMERA_ISP_ANTI_FLICKER) {
+    } else if (CAMERA_PREVIEW_RESERVED == type ||
+               CAMERA_VIDEO_RESERVED == type || CAMERA_ISP_FIRMWARE == type ||
+               CAMERA_SNAPSHOT_ZSL_RESERVED == type ||
+               CAMERA_PDAF_RAW_RESERVED == type || CAMERA_ISP_LSC == type ||
+               CAMERA_ISP_STATIS == type || CAMERA_ISP_BINGING4AWB == type ||
+               CAMERA_ISP_RAW_DATA == type || CAMERA_ISP_PREVIEW_Y == type ||
+               CAMERA_ISP_PREVIEW_YUV == type || CAMERA_SNAPSHOT_3DNR == type ||
+               CAMERA_PREVIEW_DEPTH == type || CAMERA_PREVIEW_SW_OUT == type ||
+               CAMERA_4IN1_PROC == type || CAMERA_CHANNEL_0_RESERVED == type ||
+               CAMERA_ISP_ANTI_FLICKER == type ||
+               CAMERA_ISPSTATS_AEM == type ||
+               CAMERA_ISPSTATS_AFM == type ||
+               CAMERA_ISPSTATS_AFL == type ||
+               CAMERA_ISPSTATS_PDAF == type ||
+               CAMERA_ISPSTATS_BAYERHIST == type ||
+               CAMERA_ISPSTATS_YUVHIST == type ||
+               CAMERA_ISPSTATS_LSCM == type ||
+               CAMERA_ISPSTATS_3DNR == type ||
+               CAMERA_ISPSTATS_EBD == type ||
+               CAMERA_CHANNEL_1_RESERVED == type ||
+               CAMERA_CHANNEL_2_RESERVED == type ||
+               CAMERA_CHANNEL_3_RESERVED == type ||
+               CAMERA_CHANNEL_4_RESERVED == type ||
+               CAMERA_PREVIEW_SCALE_AI_SCENE == type ||
+               CAMERA_PREVIEW_3DNR == type ||
+               CAMERA_PREVIEW_SCALE_3DNR == type || CAMERA_FD_SMALL == type ||
+               CAMERA_PREVIEW_SCALE_AUTO_TRACKING == type) {
         ALOGI("%s,%s,%d", __FILE__, __func__, __LINE__);
         ret = Callback_OtherMalloc(type, size, sum, phy_addr, vir_addr, fd);
     } else {
