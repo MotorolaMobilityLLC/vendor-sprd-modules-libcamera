@@ -79,7 +79,7 @@ extern "C" {
 		AE_VIDEO_STOP,
 		AE_VIDEO_START,
 		AE_HDR_START,
-		AE_DRE_CAP_START,
+		AE_CAP_EV_ADJUST_START,
 		AE_CAF_LOCKAE_START,
 		AE_CAF_LOCKAE_STOP,
 		AE_SET_BYPASS,
@@ -174,7 +174,7 @@ extern "C" {
 		AE_CB_CLOSE_MAIN_FLASH,
 		AE_CB_HDR_START,
 		AE_CB_HDR_STATUS,
-		AE_CB_DRE_START,
+		AE_CB_EV_ADJUST_NOTIFY,
 		AE_CB_LED_NOTIFY,
 		AE_CB_FLASH_FIRED,
 		AE_CB_PROCESS_OUT,
@@ -237,6 +237,12 @@ extern "C" {
 		AE_GYROSCOPE,
 		AE_LIGHT,
 		AE_PROXIMITY,
+	};
+
+	enum ae_snapshot_tpye {
+		AE_SNAPSHOT_NULL = 0,
+		AE_SNAPSHOT_DRE,
+		AE_SNAPSHOT_GTM,
 	};
 
 	struct ae_gyro_info {
@@ -563,8 +569,11 @@ extern "C" {
 		cmr_u8 *log;
 		cmr_u32 size;
 	};
-	struct ae_dre_param {
-		cmr_u32 dre_enable;
+	struct ae_ev_adj_param {
+		cmr_u32 enable;
+		cmr_u32 ev_effect_valid_num;
+		cmr_u32 ev_adjust_cnt;
+		enum ae_snapshot_tpye type;
 	};
 
 	struct ae_calc_out {
