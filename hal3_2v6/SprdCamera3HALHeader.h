@@ -36,8 +36,8 @@ extern "C" {
 #include <sys/types.h>
 #include <utils/Log.h>
 #include <utils/Timers.h>
-#include <utils/Mutex.h>
 }
+#include <utils/Mutex.h>
 
 using namespace android;
 
