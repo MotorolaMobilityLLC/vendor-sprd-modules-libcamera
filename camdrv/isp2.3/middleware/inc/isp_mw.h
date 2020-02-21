@@ -122,7 +122,7 @@ enum isp_callback_cmd {
 	ISP_AF_VCM_NOTICE_CALLBACK = 0x00008000,
 	ISP_3DNR_CALLBACK = 0x00009000,
 	ISP_HIST_REPORT_CALLBACK = 0x0000A000,
-	ISP_DRE_EV_EFFECT_CALLBACK = 0x0000B000,
+	ISP_EV_EFFECT_CALLBACK = 0x0000B000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -383,7 +383,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO,
 	ISP_CTRL_SET_SENSOR_SIZE,
 	ISP_CTRL_GET_DRE_PARAM,
-	ISP_CTRL_DRE,
+	ISP_CTRL_SET_AE_ADJUST,
 	ISP_CTRL_MAX
 };
 
@@ -732,8 +732,17 @@ struct isp_hdr_param {
 	cmr_u32 ev_effect_valid_num;
 };
 
-struct isp_dre_param {   // param OEM sent to ISP
-       cmr_u32 dre_enable;
+ enum camera_snapshot_tpye {
+	SNAPSHOT_NULL = 0,
+	SNAPSHOT_DRE,
+	SNAPSHOT_GTM,
+} ;
+
+struct isp_snp_ae_param {   // param OEM sent to ISP
+	cmr_u32 enable;
+	cmr_u32 ev_effect_valid_num;
+	cmr_u32 ev_adjust_count;
+	enum camera_snapshot_tpye type;
 };
 
 struct isp_info {

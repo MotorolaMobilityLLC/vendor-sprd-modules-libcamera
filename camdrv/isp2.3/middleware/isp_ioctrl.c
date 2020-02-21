@@ -2829,14 +2829,15 @@ static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int ispctl_dre(cmr_handle isp_alg_handle, void *param_ptr)
+static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 
+#ifdef CONFIG_ISP_2_3
 	struct isp_alg_fw_context *cxt =
 		(struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_dre_param *isp_dre = (struct isp_dre_param *)param_ptr;
-	struct ae_dre_param ae_dre = {0};
+	struct isp_snp_ae_param *isp_ae_adj = (struct isp_snp_ae_param *)param_ptr;
+	struct ae_ev_adj_param ae_adj_param = {0};
 
 	if (isp_alg_handle == NULL || param_ptr == NULL) {
 		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p",
@@ -2844,13 +2845,21 @@ static cmr_int ispctl_dre(cmr_handle isp_alg_handle, void *param_ptr)
 		return ISP_PARAM_NULL;
 	}
 
-	ae_dre.dre_enable = isp_dre->dre_enable;
+	ae_adj_param.enable = isp_ae_adj->enable;
+	ae_adj_param.ev_effect_valid_num = isp_ae_adj->ev_effect_valid_num;
+	ae_adj_param.ev_adjust_cnt = isp_ae_adj->ev_adjust_count;
+	ae_adj_param.type = (enum ae_snapshot_tpye)(isp_ae_adj->type);
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle,
-					     AE_DRE_CAP_START, &ae_dre, NULL);
+					     AE_CAP_EV_ADJUST_START, &ae_adj_param, NULL);
 
-	ISP_LOGI("DRE cap start, ret %ld", ret);
+	ISP_LOGI("ev adj cap start, ret %ld", ret);
+
+#else
+    UNUSED(isp_alg_handle);
+    UNUSED(param_ptr);
+#endif
 
 	return ret;
 }
@@ -2945,7 +2954,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
 	{ISP_CTRL_GET_DRE_PARAM, ispctl_get_dre_param},
-	{ISP_CTRL_DRE, ispctl_dre},
+	{ISP_CTRL_SET_AE_ADJUST, ispctl_ev_adj},
 	{ISP_CTRL_MAX, NULL}
 };
 
