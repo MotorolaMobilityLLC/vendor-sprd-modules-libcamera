@@ -2721,6 +2721,52 @@ static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
 
 }
 
+static cmr_int ispctl_get_fb_pre_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data,
+		ISP_PM_BLK_ISP_SETTING, ISP_BLK_FB, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+		ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr,
+			sizeof(struct isp_fb_param_info));
+	} else {
+		ISP_LOGE("fail to get preview fb param");
+	}
+	return ret;
+}
+
+static cmr_int ispctl_get_fb_cap_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data,
+		ISP_PM_BLK_ISP_SETTING, ISP_BLK_FB, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+		ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr,
+			sizeof(struct isp_fb_param_info));
+	} else {
+		ISP_LOGE("fail to get capture fb param");
+	}
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -2803,6 +2849,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_CNR2_YNR_EN, ispctl_get_cnr2_ynr_en},
 	{ISP_CTRL_GET_CNR2_PARAM, ispctl_get_cnr2_param},
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
+	{ISP_CTRL_GET_FB_PREV_PARAM, ispctl_get_fb_pre_param},
+	{ISP_CTRL_GET_FB_CAP_PARAM, ispctl_get_fb_cap_param},
 	{ISP_CTRL_MAX, NULL}
 };
 

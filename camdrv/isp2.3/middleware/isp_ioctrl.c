@@ -2864,6 +2864,54 @@ static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_get_fb_pre_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_FB, cxt->mode_id[ISP_MODE_PRV], NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+	ret = isp_pm_ioctl(cxt->handle_pm,
+		ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr,
+			sizeof(struct isp_fb_param_info));
+	} else {
+		ISP_LOGE("fail to get valid fb param");
+	}
+	return ret;
+}
+
+static cmr_int ispctl_get_fb_cap_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(param_data, ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_FB, cxt->mode_id[ISP_MODE_CAP], NULL, 0);
+	input.param_num = 1;
+	input.param_data_ptr = &param_data;
+	ret = isp_pm_ioctl(cxt->handle_pm,
+		ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr,
+			sizeof(struct isp_fb_param_info));
+	} else {
+		ISP_LOGE("fail to get valid fb param");
+	}
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{IST_CTRL_SNAPSHOT_NOTICE, ispctl_snapshot_notice},
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
@@ -2955,6 +3003,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
 	{ISP_CTRL_GET_DRE_PARAM, ispctl_get_dre_param},
 	{ISP_CTRL_SET_AE_ADJUST, ispctl_ev_adj},
+	{ISP_CTRL_GET_FB_PREV_PARAM, ispctl_get_fb_pre_param},
+	{ISP_CTRL_GET_FB_CAP_PARAM, ispctl_get_fb_cap_param},
 	{ISP_CTRL_MAX, NULL}
 };
 

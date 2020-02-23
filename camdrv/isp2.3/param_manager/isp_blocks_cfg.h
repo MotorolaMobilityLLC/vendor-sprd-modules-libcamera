@@ -78,6 +78,16 @@ enum isp_slice_pos_info {
 	ISP_SLICE_LAST,
 };
 
+enum
+{
+	ISP_PM_FB_SKINTONE_DEFAULT,
+	ISP_PM_FB_SKINTONE_YELLOW,
+	ISP_PM_FB_SKINTONE_WHITE,
+	ISP_PM_FB_SKINTONE_BLACK,
+	ISP_PM_FB_SKINTONE_INDIAN,
+	ISP_PM_FB_SKINTONE_NUM
+};
+
 struct isp_slice_param {
 	enum isp_slice_pos_info pos_info;
 	cmr_u32 slice_line;
@@ -417,6 +427,46 @@ struct isp_ynr_param {
 	cmr_uint *param_ptr;
 	cmr_uint *scene_ptr;
 	cmr_u32 nr_mode_setting;
+};
+
+struct isp_facebeauty_level
+{
+	cmr_u8 skinSmoothLevel[11];
+	cmr_u8 skinSmoothDefaultLevel;
+	cmr_u8 skinTextureHiFreqLevel[11];
+	cmr_u8 skinTextureHiFreqDefaultLevel;
+	cmr_u8 skinTextureLoFreqLevel[11];
+	cmr_u8 skinTextureLoFreqDefaultLevel;
+	cmr_u8 skinSmoothRadiusCoeff[11];
+	cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
+	cmr_u8 skinBrightLevel[11];
+	cmr_u8 skinBrightDefaultLevel;
+	cmr_u8 largeEyeLevel[11];
+	cmr_u8 largeEyeDefaultLevel;
+	cmr_u8 slimFaceLevel[11];
+	cmr_u8 slimFaceDefaultLevel;
+	cmr_u8 skinColorLevel[11];
+	cmr_u8 skinColorDefaultLevel;
+	cmr_u8 lipColorLevel[11];
+	cmr_u8 lipColorDefaultLevel;
+};
+
+struct isp_facebeauty_param
+{
+	cmr_u8 removeBlemishFlag;
+	cmr_u8 blemishSizeThrCoeff;
+	cmr_u8 skinColorType;
+	cmr_u8 lipColorType;
+	struct isp_facebeauty_level fb_layer;
+};
+
+struct isp_facebeauty_param_cfg_info
+{
+	struct isp_facebeauty_param fb_param[ISP_PM_FB_SKINTONE_NUM];
+};
+
+struct isp_facebeauty_param_info {
+	struct isp_facebeauty_param_cfg_info cur;
 };
 
 struct isp_3d_nr_pre_param {
@@ -789,6 +839,7 @@ struct isp_context {
 	struct isp_ynrs_param ynrs;
 
 	struct isp_dres_param dre;
+	struct isp_facebeauty_param_info fb;
 };
 
 /*******************************isp_block_com******************************/
@@ -1094,6 +1145,10 @@ cmr_s32 _pm_ynrs_get_param(void *ynrs_param, cmr_u32 cmd, void *rtn_param0, void
 cmr_s32 _pm_dre_init(void *dst_dre_param, void *src_dre_param, void *param1, void *param2);
 cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_dre_get_param(void *dre_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_fb_init(void *dst_fb_param, void *src_fb_param, void *param1, void *param2);
+cmr_s32 _pm_fb_set_param(void *fb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_fb_get_param(void *fb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);
