@@ -117,8 +117,25 @@ struct isp_lsc_statistic_info{
 };
 #endif
 #endif
+#ifndef CONFIG_ISP_2_7
+/* temp solution for sharkl3 compiling */
+struct lsc_monitor_info {
+	cmr_u32 shift;
+	cmr_u32 work_mode;
+	cmr_u32 skip_num;
+	struct isp_size win_size;
+	struct isp_size win_num;
+	struct isp_trim_size trim;
+};
+struct isp_lsc_statistic_info{
+	cmr_u32 r_info[2];
+	cmr_u32 g_info[2];
+	cmr_u32 b_info[2];
+	cmr_u32 sec;
+	cmr_u32 usec;
+};
 
-
+#endif
 
 struct isp_file {
 	cmr_s32 fd;
