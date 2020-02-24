@@ -684,14 +684,11 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct dcam_dev_aem_win aem_win;
-	struct dcam_dev_hist_info bayerHist_info;
 
 	ISP_LOGD("win %d %d %d %d %d %d\n",
 			aem_info->trim.x, aem_info->trim.y,
 			aem_info->win_size.w, aem_info->win_size.h,
 			aem_info->win_num.w, aem_info->win_num.h);
-
-
 
 	cxt->ae_cxt.win_num.w = aem_info->win_num.w;
 	cxt->ae_cxt.win_num.h = aem_info->win_num.h;
@@ -714,22 +711,6 @@ static cmr_int ispalg_set_aem_win(cmr_handle isp_alg_handle, struct ae_monitor_i
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
 			ISP_DEV_SET_AE_MONITOR_WIN,
 			&aem_win, NULL);
-
-	/* temp enable and configure bayerhist to fixed mode */
-	/* todo - configure bayer hist according to algo requirement */
-	if (!cxt->first_frm)
-		return ret;
-	memset(&bayerHist_info, 0, sizeof(bayerHist_info));
-	bayerHist_info.hist_bypass = 0;
-	bayerHist_info.bayer_hist_endx = cxt->commn_cxt.prv_size.w;
-	bayerHist_info.bayer_hist_endy = cxt->commn_cxt.prv_size.h;
-	bayerHist_info.hist_mode_sel = 1;
-	bayerHist_info.hist_mul_enable = 1;
-	bayerHist_info.hist_initial_clear = 1;
-	bayerHist_info.hist_skip_num_clr = 1;
-
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
-			ISP_DEV_SET_BAYERHIST_CFG, &bayerHist_info, NULL);
 
 	return ret;
 }
@@ -755,6 +736,40 @@ static cmr_int ispalg_set_aem_thrd(cmr_handle isp_alg_handle, struct ae_monitor_
 
 	return ret;
 }
+
+static cmr_int ispalg_set_bayerhist(cmr_handle isp_alg_handle, struct ae_bayer_hist_cfg *cfg)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct dcam_dev_hist_info bayerHist_info;
+
+	if (cfg == NULL) {
+		ISP_LOGE("fail to get ae_bayer_hist_cfg ptr\n");
+		return ISP_ERROR;
+	}
+
+	ISP_LOGD("cam%ld, bypass %d, mode %d, win %d %d %d %d\n", cxt->camera_id,
+		cfg->bypass, cfg->mode,
+		cfg->hist_rect.start_x, cfg->hist_rect.start_y,
+		cfg->hist_rect.end_x, cfg->hist_rect.end_y);
+
+	memset(&bayerHist_info, 0, sizeof(bayerHist_info));
+	bayerHist_info.hist_bypass = cfg->bypass;
+	bayerHist_info.bayer_hist_stx = cfg->hist_rect.start_x;
+	bayerHist_info.bayer_hist_sty = cfg->hist_rect.start_y;
+	bayerHist_info.bayer_hist_endx = cfg->hist_rect.end_x;
+	bayerHist_info.bayer_hist_endy = cfg->hist_rect.end_y;
+	bayerHist_info.hist_mode_sel = 1;
+	bayerHist_info.hist_mul_enable = 1;
+	bayerHist_info.hist_initial_clear = 1;
+	bayerHist_info.hist_skip_num_clr = 1;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_SET_BAYERHIST_CFG, &bayerHist_info, NULL);
+
+	return ret;
+}
+
 
 
 static cmr_int ispalg_lsc_set_cb(cmr_handle isp_alg_handle,
@@ -925,6 +940,9 @@ static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		break;
 	case ISP_AE_GET_RGB_GAIN:
 		ret = ispalg_get_rgb_gain(cxt, param0);
+		break;
+	case ISP_AE_SET_BAYER_HIST:
+		ret = ispalg_set_bayerhist(cxt, param0);
 		break;
 	case ISP_AE_SET_WBC_GAIN:
 	{
@@ -2061,8 +2079,11 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 	hist_stats->value[j++] = (cmr_u32)(val0 & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)((val0 >> 24) & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)(((val1 & 0xff) << 16) | ((val0 >> 48) & 0xffff));
-	ISP_LOGV("frm %d, time %d.%06d, data: r %d %d, g %d %d, b %d %d\n",
-		statis_info->frame_id, statis_info->sec, statis_info->usec,
+
+	ISP_LOGD("cam%ld, frm %d, time %d.%06d, roi (%d %d %d %d),  data: r %d %d, g %d %d, b %d %d\n",
+		cxt->camera_id, statis_info->frame_id, statis_info->sec, statis_info->usec,
+		hist_info->bayer_hist_stx, hist_info->bayer_hist_sty,
+		hist_info->bayer_hist_endx, hist_info->bayer_hist_endy,
 		cxt->bayer_hist_stats[0].value[0], cxt->bayer_hist_stats[0].value[1],
 		cxt->bayer_hist_stats[1].value[0], cxt->bayer_hist_stats[1].value[1],
 		cxt->bayer_hist_stats[2].value[0], cxt->bayer_hist_stats[2].value[1]);

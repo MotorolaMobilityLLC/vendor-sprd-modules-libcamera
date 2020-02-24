@@ -386,6 +386,14 @@ extern "C" {
 		struct ae_rgb_l low_region_thrd;/*it will come from ae algorithm tuning parameter, not from AEM param*/
 	};
 
+	struct ae_bayer_hist_cfg {
+		cmr_u32 bypass;
+		cmr_u32 skip_num;
+		cmr_u32 shift;
+		cmr_u32 mode;
+		struct ae_rect hist_rect;
+	};
+
 	struct ae_blk_num {
 		cmr_u32 x;
 		cmr_u32 y;
