@@ -222,6 +222,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mJpegOrientation;
     uint8_t mBokehMode;
     int mDoPortrait;
+    bool mPrevPortrait;
     int mlimited_infi;
     int mlimited_macro;
 #ifdef YUV_CONVERT_TO_JPEG
