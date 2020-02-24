@@ -11681,7 +11681,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
             (setting_param.camera_id == 0 ||
              cxt->is_multi_mode == MODE_MULTI_CAMERA ||
-             setting_param.camera_id == 4)) {
+             cxt->is_multi_mode == MODE_FOV_FUSION)) {
             if (cxt->ipm_cxt.ai_scene_inited == 0) {
                 struct ipm_open_in in_param;
                 struct ipm_open_out out_param;

@@ -897,6 +897,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int64_t mZslSnapshotTime;
     bool mIsIspToolMode;
     bool mIsUltraWideMode;
+    bool mIsFovFusionMode;
     bool mIsRawCapture;
 #ifdef CONFIG_FACE_BEAUTY
     struct fb_beauty_param face_beauty;

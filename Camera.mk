@@ -101,11 +101,12 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/sprd_yuvprocess/inc\
     $(LOCAL_PATH)/arithmetic/sprd_scale/inc\
     $(LOCAL_PATH)/arithmetic/sprd_warp/inc \
+    $(LOCAL_PATH)/arithmetic/sprd_wt/inc \
     $(LOCAL_PATH)/arithmetic/libxmp/inc \
     $(LOCAL_PATH)/arithmetic/libxmp/inc/client-glue
 
-LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/arithmetic/OpticsZoom/inc
+#LOCAL_C_INCLUDES += \
+#    $(LOCAL_PATH)/arithmetic/OpticsZoom/inc
 
 # for bbat
 LOCAL_C_INCLUDES += \
@@ -150,13 +151,6 @@ CAMERA_C_INCLUDES := $(LOCAL_C_INCLUDES)
 CAMERA_HEADER_LIBRARIES := $(LOCAL_HEADER_LIBRARIES)
 CAMERA_STATIC_LIBRARIES := $(LOCAL_STATIC_LIBRARIES)
 CAMERA_SHARED_LIBRARIES := $(LOCAL_SHARED_LIBRARIES)
-
-
-
-
-
-
-
 
 
 # camera so

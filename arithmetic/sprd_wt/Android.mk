@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_support)),true)
+ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
@@ -27,12 +27,33 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
-LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
-LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libWT.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libWT.so
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_wt_adapter.cpp
+LOCAL_MODULE := libsprdwtadapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wno-error=unused-parameter
+LOCAL_SHARED_LIBRARIES := libcutils liblog libWT
+
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+	 $(LOCAL_PATH)/../inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
+
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_SHARED_LIBRARY)
+
 endif

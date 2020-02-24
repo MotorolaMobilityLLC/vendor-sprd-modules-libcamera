@@ -421,7 +421,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
-      mIsUltraWideMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
+      mIsUltraWideMode(false), mIsFovFusionMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0)
 
@@ -1691,6 +1691,14 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
             mIsUltraWideMode = true;
         } else {
             mIsUltraWideMode = false;
+        }
+        break;
+    }
+    case CAMERA_IOCTRL_FOV_FUSION_MODE: {
+        if (*(unsigned int *)param1 == 1) {
+            mIsFovFusionMode = true;
+        } else {
+            mIsFovFusionMode = false;
         }
         break;
     }
@@ -6575,7 +6583,12 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
              zoomRatio, mIsUltraWideMode);
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
-    mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
+    if (mIsFovFusionMode == true) {
+       mZoomInfo.zoom_info.capture_aspect_ratio = 1.0;
+    } else {
+       mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
+    }
+    HAL_LOGD("mIsFovFusionMode %d, capture_aspect_ratio=%f", mIsFovFusionMode, mZoomInfo.zoom_info.capture_aspect_ratio);
     mZoomInfo.zoom_info.video_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.pixel_size.width = sensorOrgW;
     mZoomInfo.zoom_info.pixel_size.height = sensorOrgH;

@@ -1966,6 +1966,7 @@ typedef enum {
     MODE_PORTRAIT_SINGLE,
     MODE_3D_FACEID_REGISTER,
     MODE_3D_FACEID_UNLOCK,
+    MODE_FOV_FUSION,
     MODE_CAMERA_MAX
 } multiCameraMode;
 
@@ -1998,8 +1999,9 @@ typedef enum {
     SPRD_OPTICSZOOM_W_ID = 40,
     SPRD_OPTICSZOOM_T_ID = 41,
     SPRD_PORTRAIT_SINGLE_ID = 42,
-	SPRD_3D_FACEID_REGISTER_ID = 46,
+    SPRD_3D_FACEID_REGISTER_ID = 46,
     SPRD_3D_FACEID_UNLOCK_ID = 47,
+    SPRD_FOV_FUSION_ID = 48,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 
@@ -2101,6 +2103,7 @@ typedef enum {
     CAMERA_TOCTRL_GET_SN_STREAM_STATUS,
     CAMERA_IOCTRL_GET_CT,
     CAMERA_IOCTRL_GET_ISO,
+    CAMERA_IOCTRL_FOV_FUSION_MODE,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);
