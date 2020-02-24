@@ -112,10 +112,9 @@ static void ov13b10_drv_write_shutter(cmr_handle handle,
     if (aec_info->shutter->size) {
         /*TODO*/
 
-        aec_info->shutter->settings[0].reg_value = (shutter >> 0x0c) & 0x0f;
-        aec_info->shutter->settings[1].reg_value = (shutter >> 0x04) & 0xff;
-        aec_info->shutter->settings[2].reg_value = (shutter << 0x04) & 0xff;
-
+        aec_info->shutter->settings[0].reg_value = (shutter >> 16) & 0xff;
+        aec_info->shutter->settings[1].reg_value = (shutter >> 8) & 0xff;
+        aec_info->shutter->settings[2].reg_value = shutter & 0xff;
         /*END*/
     }
 }
