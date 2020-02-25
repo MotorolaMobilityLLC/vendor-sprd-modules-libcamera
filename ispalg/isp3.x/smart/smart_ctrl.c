@@ -857,6 +857,19 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 					fix_data->value[0] = index;
 					fix_data->value[1] = index;
 				}
+			} else if ((smart_id == ISP_SMART_RAW_GTM)||(smart_id == ISP_SMART_RGB_LTM)){
+				if(!gtm_switch_flag){
+					fix_data->value[0] = cfg->default_val;
+					fix_data->value[1] = cfg->default_val;
+					ISP_LOGV("Disable GTM when by setting gtm_switch_flag:%d",fix_data->value[0]);
+				}else if(cfg->use_flash_val){
+					cmr_u32 fps_limit = cfg->flash_val;
+					if (cur_fps <= fps_limit ){
+						fix_data->value[0] = cfg->default_val;
+						fix_data->value[1] = cfg->default_val;
+						ISP_LOGV("Disable GTM when low fps by setting cfg:%d",fix_data->value[0]);
+					}
+				}
 			}
 
 			if (1 == is_print_log()) {
