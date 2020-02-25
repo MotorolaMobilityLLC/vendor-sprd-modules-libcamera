@@ -4205,7 +4205,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     frame_out = EisVideoFrameStab(frame, frame_num);
                 }
                 if (frame_out.frame_data) {
-                    channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*10000000,
+                    channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000,
                                                     CAMERA_STREAM_TYPE_VIDEO);
                 }
                 HAL_LOGV("video callback frame vir address=0x%lx,frame_num=%d",
@@ -11382,7 +11382,12 @@ void SprdCamera3OEMIf::setVideoAFBCFlag(cmr_u32 value) {
 #ifdef CONFIG_CAMERA_EIS
 void SprdCamera3OEMIf::EisPreview_init() {
     int i = 0;
-    int num = sizeof(eis_init_info_tab) / sizeof(sprd_eis_init_info_t);
+    int num = 0;
+    if (mMultiCameraMode == MODE_MULTI_CAMERA) {
+        num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
+    }else {
+        num = sizeof(eis_init_info_tab) / sizeof(sprd_eis_init_info_t);
+    }
     video_stab_param_default(&mPreviewParam);
     mPreviewParam.src_w = (uint16_t)mPreviewWidth;
     mPreviewParam.src_h = (uint16_t)mPreviewHeight;
@@ -11398,14 +11403,23 @@ void SprdCamera3OEMIf::EisPreview_init() {
     mPreviewParam.ts = 0.0001f;
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
-        if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
-            0) {
-            mPreviewParam.f = eis_init_info_tab[i].f;   // 1230;
-            mPreviewParam.td = eis_init_info_tab[i].td; // 0.004;
-            mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
-        }
+         if(mMultiCameraMode == MODE_MULTI_CAMERA) {
+           if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
+                 0) && (mCameraId == eis_multi_init_info_tab[i].camera_id)) {
+                mPreviewParam.f = eis_multi_init_info_tab[i].f;   // 1230;
+                mPreviewParam.td = eis_multi_init_info_tab[i].td; // 0.004;
+                mPreviewParam.ts = eis_multi_init_info_tab[i].ts; // 0.021;
+           }
+         }else {
+           if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
+                 0) {
+                mPreviewParam.f = eis_init_info_tab[i].f;   // 1230;
+                mPreviewParam.td = eis_init_info_tab[i].td; // 0.004;
+                mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
+           }
+		}
     }
-    HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mPreviewParam.f, mPreviewParam.td,
+    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf", mCameraId, mPreviewParam.f, mPreviewParam.td,
              mPreviewParam.ts);
     video_stab_open(&mPreviewInst, &mPreviewParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
@@ -11416,7 +11430,12 @@ void SprdCamera3OEMIf::EisPreview_init() {
 void SprdCamera3OEMIf::EisVideo_init() {
     // mParam = {0};
     int i = 0;
-    int num = sizeof(eis_init_info_tab) / sizeof(sprd_eis_init_info_t);
+    int num = 0;
+    if (mMultiCameraMode == MODE_MULTI_CAMERA) {
+        num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
+    } else {
+        num = sizeof(eis_init_info_tab) / sizeof(sprd_eis_init_info_t);
+    }
     video_stab_param_default(&mVideoParam);
     mVideoParam.src_w = (uint16_t)mVideoWidth;
     mVideoParam.src_h = (uint16_t)mVideoHeight;
@@ -11432,14 +11451,23 @@ void SprdCamera3OEMIf::EisVideo_init() {
     mVideoParam.ts = 0.0001f;
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
-        if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
-            0) {
-            mVideoParam.f = eis_init_info_tab[i].f;   // 1230;
-            mVideoParam.td = eis_init_info_tab[i].td; // 0.004;
-            mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
-        }
+         if(mMultiCameraMode == MODE_MULTI_CAMERA) {
+           if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
+                 0) && (mCameraId == eis_multi_init_info_tab[i].camera_id)) {
+               mVideoParam.f = eis_multi_init_info_tab[i].f;   // 1230;
+               mVideoParam.td = eis_multi_init_info_tab[i].td; // 0.004;
+               mVideoParam.ts = eis_multi_init_info_tab[i].ts; // 0.021;
+           }
+         }else {
+           if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
+               0) {
+               mVideoParam.f = eis_init_info_tab[i].f;   // 1230;
+               mVideoParam.td = eis_init_info_tab[i].td; // 0.004;
+               mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
+           }
+         }
     }
-    HAL_LOGI("mParam f: %lf, td:%lf, ts:%lf", mVideoParam.f, mVideoParam.td,
+    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf", mCameraId, mVideoParam.f, mVideoParam.td,
              mVideoParam.ts);
     video_stab_open(&mVideoInst, &mVideoParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
