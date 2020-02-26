@@ -24,18 +24,18 @@
 
 enum PIX_BITS
 {
-    PIX_BITS_8  = 8,
-    PIX_BITS_10 = 10,
-    PIX_BITS_12 = 12,
-    PIX_BITS_14 = 14,
-    PIX_BITS_UNKNOWN,
+	PIX_BITS_8  = 8,
+	PIX_BITS_10 = 10,
+	PIX_BITS_12 = 12,
+	PIX_BITS_14 = 14,
+	PIX_BITS_UNKNOWN,
 } ;
 
-double gtm_log2(cmr_s32 x)
+double gtm_log2(double x)
 {
-    cmr_s32 out;
-    out = (cmr_s32)(log(x)/log((cmr_s32)(2.0)));
-    return out;
+	double out;
+	out = (double)(log(x)/log((double)(2.0)));
+	return out;
 }
 
 static void cal_gtm_hist(cmr_s32 in_bit_depth, struct dcam_dev_raw_gtm_block_info *gtm)
@@ -82,7 +82,7 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 	struct isp_pm_block_header *gtm_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-	dst_ptr->cur.gtm_mod_en = (~gtm_header_ptr->bypass);
+	dst_ptr->cur.gtm_mod_en = !gtm_header_ptr->bypass;
 	index = src_ptr->cur_idx.x0;
 	dst_ptr->cur_idx.x0 = src_ptr->cur_idx.x0;
 	dst_ptr->cur_idx.x1 = src_ptr->cur_idx.x1;
@@ -110,8 +110,8 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 			dst_ptr->gtm_param[i].gtm_imgkey_setting_mode = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_image.image_key_set_mode;
 
 			dst_ptr->gtm_param[i].gtm_cur_ymin_weight = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.cur_Ymin_weight;
-			dst_ptr->gtm_param[i].gtm_ymax_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Yavg_diff_thr;
-			dst_ptr->gtm_param[i].gtm_yavg_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Ymax_diff_thr;
+			dst_ptr->gtm_param[i].gtm_ymax_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Ymax_diff_thr;
+			dst_ptr->gtm_param[i].gtm_yavg_diff_thr = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.luma_sm_Yavg_diff_thr;
 			dst_ptr->gtm_param[i].gtm_pre_ymin_weight = src_ptr->raw_gtm_param[i].raw_gtm_stat.gtm_stat_video.pre_Ymin_weight;
 		}
 
@@ -143,6 +143,10 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 		dst_ptr->cur.gtm_mod_en = 0;
 
 	gtm_header_ptr->is_update = ISP_ONE;
+
+	ISP_LOGD("gtm bypass %d en %d, map %d stat %d\n",
+		gtm_header_ptr->bypass, dst_ptr->cur.gtm_mod_en,
+		dst_ptr->cur.gtm_map_bypass, dst_ptr->cur.gtm_hist_stat_bypass);
 
 	return rtn;
 }
@@ -180,6 +184,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 				dst_ptr->cur.gtm_map_bypass = 1;
 				dst_ptr->cur.gtm_hist_stat_bypass = 1;
 				header_ptr->is_update = ISP_ONE;
+				ISP_LOGV("bypass all\n");
 				return ISP_SUCCESS;
 			}
 
@@ -225,6 +230,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			dst_ptr->cur.gtm_ymax_diff_thr = dst_ptr->gtm_param[index].gtm_ymax_diff_thr;
 			dst_ptr->cur.gtm_yavg_diff_thr = dst_ptr->gtm_param[index].gtm_yavg_diff_thr;
 			dst_ptr->cur.gtm_pre_ymin_weight = dst_ptr->gtm_param[index].gtm_pre_ymin_weight;
+
 			cal_gtm_hist(PIX_BITS_14, &(dst_ptr->cur));
 			data_num = 1;
 			if (!dst_ptr->cur.gtm_target_norm_setting_mode) {
@@ -249,6 +255,11 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 				dst_ptr->cur.gtm_mod_en = 0;
 			else
 				dst_ptr->cur.gtm_mod_en = 1;
+
+			ISP_LOGV("SMART: w (%d %d) v (%d %d); weight (%d %d), index %d; en %d map %d stat %d\n",
+				bv_value->weight[0], bv_value->weight[1], bv_value->value[0], bv_value->value[1],
+				weight[0], weight[1], index, dst_ptr->cur.gtm_mod_en,
+				dst_ptr->cur.gtm_map_bypass, dst_ptr->cur.gtm_hist_stat_bypass);
 
 			header_ptr->is_update = ISP_ONE;
 		}
@@ -277,6 +288,12 @@ cmr_s32 _pm_gtm_get_param(void *gtm_param, cmr_u32 cmd, void *rtn_param0, void *
 		param_data_ptr->data_ptr = (void *)&gtm_ptr->cur;
 		param_data_ptr->data_size = sizeof(gtm_ptr->cur);
 		*update_flag = 0;
+		break;
+
+	case ISP_PM_BLK_GTM_STATUS:
+		param_data_ptr->data_ptr = (void *)&gtm_ptr->cur.gtm_mod_en;
+		param_data_ptr->data_size = sizeof(gtm_ptr->cur.gtm_mod_en);
+		ISP_LOGD("gtm on %d\n", gtm_ptr->cur.gtm_mod_en);
 		break;
 
 	default:
