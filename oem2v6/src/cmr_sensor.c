@@ -787,6 +787,21 @@ exit:
     return ret;
 }
 
+/* for get sensor stream status
+ * return: 1:on, 0:off
+ */
+cmr_int cmr_sensor_get_stream_status(cmr_handle sensor_handle,
+                                     cmr_u32 sensor_id) {
+    struct cmr_sensor_handle *handle =
+                (struct cmr_sensor_handle *)sensor_handle;
+    struct sensor_drv_context *sensor_cxt = NULL;
+
+    CHECK_HANDLE_VALID(handle);
+    sensor_cxt = &(handle->sensor_cxt[sensor_id]);
+
+    return sensor_cxt->stream_on;
+}
+
 /**---------------------------------------------------------------------------*
  **                         Local Functions Contents                          *
  **---------------------------------------------------------------------------*/

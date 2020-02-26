@@ -232,6 +232,7 @@ class SprdCamera3HWI {
     uint64_t mCurFrameTimeStamp;
     int mSprdCameraLowpower;
     bool mFirstRequestGet;
+    bool mHighResNonzsl; // high res,1:non-zsl,0:zsl
 
     cam3_stream_configuration_t mStreamConfiguration;
 };

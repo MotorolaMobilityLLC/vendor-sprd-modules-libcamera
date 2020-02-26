@@ -3206,7 +3206,9 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                         }
                     } else {
                         setting_isp_flash_notify(cpt, parm, ISP_FLASH_CLOSE);
-                        setting_isp_wait_notice(cpt);
+                        /* no need when non-zsl, if do should timeout */
+                        if (hal_param->sprd_zsl_enabled)
+                            setting_isp_wait_notice(cpt);
                         hal_param->flash_param.has_preflashed = 0;
                         hal_param->flash_param.last_preflash_time = 0;
                         hal_param->flash_param.flash_status =
@@ -3237,7 +3239,9 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 hal_param->flash_param.flash_status = setting_flash_status;
 
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_LIGHTING);
-                setting_isp_wait_notice(cpt);
+                /* no need when non-zsl, if do should timeout */
+                if (hal_param->sprd_zsl_enabled)
+                   setting_isp_wait_notice(cpt);
                 CMR_LOGD("high flash will do-capture");
             } else {
                 setting_set_flashdevice(cpt, parm, ctrl_flash_status);

@@ -1671,13 +1671,12 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		tmp = !tmp; /* need be 1 when high light */
 		if (ret)
 			tmp = cxt->ambient_highlight;
+		if (cxt->fix_highlight) /* !=0, fix to highlight or lowlight */
+			tmp = (cxt->fix_highlight == 1) ? 1 : 0;
 		if (tmp != cxt->ambient_highlight) { /* value change */
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG,
 				&tmp, &cxt->commn_cxt.isp_pm_mode[1]);
 			ISP_LOGI("ambient_highlight = %d", tmp);
-		}
-		if (cxt->fix_highlight) {
-			tmp = (cxt->fix_highlight == 1) ? 1 : 0;
 		}
 		cxt->ambient_highlight = tmp;
 	}
