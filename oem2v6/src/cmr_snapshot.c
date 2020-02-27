@@ -127,6 +127,7 @@ struct snp_scale_param {
 struct snp_jpeg_param {
     struct img_frm src;
     struct img_frm dst;
+    struct img_frm super;
     struct cmr_op_mean mean;
 };
 
@@ -815,6 +816,98 @@ exit:
     return ret;
 }
 
+#ifdef SUPER_MACRO
+cmr_int snp_save_yuv_for_macro(cmr_handle snp_handle, struct snp_jpeg_param *jpeg_in)
+{
+    cmr_u32 tmp = 0;
+    cmr_int ret = 0;
+    cmr_uint tmp_dst_addr = 0;
+    cmr_uint tmp_src_addr = 0;
+    cmr_uint rotation = 0;
+    char name[20] = {0};
+    char value[PROPERTY_VALUE_MAX] = {0};
+    struct camera_context *cxt = NULL;
+    struct setting_context *setting_cxt = NULL;
+    struct snp_context *snp_cxt = NULL;
+    struct setting_cmd_parameter setting_param = {0};
+    struct cmr_op_mean op_mean = {0};
+    struct img_frm *src = NULL;
+    struct img_frm *dst = NULL;
+
+    snp_cxt = (struct snp_context *)snp_handle;
+    cxt = (struct camera_context *)snp_cxt->oem_handle;
+    setting_cxt = &cxt->setting_cxt;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                SETTING_GET_ENCODE_ROTATION, &setting_param);
+    rotation = setting_param.cmd_type_value;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                SETTING_GET_FLIP_ON, &setting_param);
+    op_mean.flip = setting_param.cmd_type_value;
+
+    CMR_LOGV("flip %d rotation %d", op_mean.flip, rotation);
+
+    if (rotation != 0) {
+        if (90 == rotation)
+            op_mean.rot = IMG_ANGLE_90;
+        else if (180 == rotation) {
+            op_mean.rot = IMG_ANGLE_180;
+        } else if (270 == rotation) {
+            op_mean.rot = IMG_ANGLE_270;
+        }
+
+        src = &jpeg_in->src;
+        dst = &jpeg_in->super;
+        dst->addr_phy.addr_u = src->addr_phy.addr_u;
+
+        CMR_LOGV("src fd 0x%x, phy Y 0x%x, U 0x%x, V 0x%x",
+            src->fd, src->addr_phy.addr_y, src->addr_phy.addr_u, src->addr_phy.addr_v);
+        CMR_LOGV("dst fd 0x%x, phy Y 0x%x, U 0x%x, v 0x%x",
+            dst->fd, dst->addr_phy.addr_y, dst->addr_phy.addr_u, dst->addr_phy.addr_v);
+
+        src->data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+        dst->data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+        if (rotation == 90 || rotation == 270) {
+            tmp = dst->size.width;
+            dst->size.width = dst->size.height;
+            dst->size.height = tmp;
+        }
+
+        if (snp_cxt->ops.start_rot != NULL)
+            ret = snp_cxt->ops.start_rot(snp_cxt->oem_handle,
+                        (cmr_handle)snp_cxt,src, dst, &op_mean);
+        else
+            CMR_LOGW("cannot do rotation");
+        tmp_dst_addr = jpeg_in->super.addr_vir.addr_y;
+    } else {
+        tmp_dst_addr = jpeg_in->super.addr_vir.addr_y;
+        tmp_src_addr = jpeg_in->src.addr_vir.addr_y;
+        memcpy((char *)tmp_dst_addr, (char *)tmp_src_addr, jpeg_in->src.buf_size);
+    }
+    tmp_src_addr = jpeg_in->super.size.width;
+    tmp_dst_addr += jpeg_in->src.buf_size;
+    memcpy((char *)tmp_dst_addr, (char *)&tmp_src_addr, sizeof(int));
+    tmp_src_addr = jpeg_in->super.size.height;
+    tmp_dst_addr += sizeof(int);
+    memcpy((char *)tmp_dst_addr, (char *)&tmp_src_addr, sizeof(int));
+    tmp_src_addr = jpeg_in->super.buf_size;
+    tmp_dst_addr += sizeof(int);
+    memcpy((char *)tmp_dst_addr, (char *)&tmp_src_addr, sizeof(int));
+    property_get("persist.vendor.cam.macro.dump", value, "0");
+    if (atoi(value) == 1) {
+        sprintf(name, "sp_yuv_rot_%d", rotation);
+        dump_image(name, CAM_IMG_FMT_YUV420_NV21,
+            jpeg_in->super.size.width, jpeg_in->super.size.height,
+            FORM_DUMPINDEX(SNP_ENCODE_SRC_DATA, 1, 0),
+            &jpeg_in->super.addr_vir,
+            jpeg_in->super.size.width * jpeg_in->super.size.height *
+            3 / 2);
+    }
+
+    return ret;
+}
+#endif
+
 cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -887,16 +980,33 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
         (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
         snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
     }
+
     camera_take_snapshot_step(CMR_STEP_JPG_ENC_S);
     sem_wait(&snp_cxt->pre_start_encode_sync_sm);
     ret = snp_cxt->ops.start_encode(snp_cxt->oem_handle, snp_handle,
-                                    &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
-                                    &jpeg_in_ptr->mean, NULL);
+                                &jpeg_in_ptr->src, &jpeg_in_ptr->dst,
+                                &jpeg_in_ptr->mean, NULL);
+
+#ifdef SUPER_MACRO
+    if (jpeg_in_ptr->super.addr_vir.addr_y != 0 && snp_cxt->req_param.is_super) {
+        snp_save_yuv_for_macro(snp_handle, jpeg_in_ptr);
+    }
+#endif
     sem_post(&snp_cxt->pre_start_encode_sync_sm);
     if (ret) {
         CMR_LOGE("failed to start enc %ld", ret);
         goto exit;
     }
+#ifdef SUPER_MACRO
+    if (snp_cxt->req_param.is_super == 1) {
+        camera_take_snapshot_step(CMR_STEP_JPG_ENC_E);
+        sem_post(&snp_cxt->jpeg_sync_sm);
+        snp_set_status(snp_handle, POST_PROCESSING);
+        snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_STATE,
+                                SNAPSHOT_CB_EVT_ENC_DONE, NULL,
+                                sizeof(struct camera_frame_type));
+    }
+#endif
     snp_set_status(snp_handle, CODEC_WORKING);
 
 exit:
@@ -1780,6 +1890,18 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     CMR_LOGD("need free %d stream %d cap cnt %d total num %d",
              enc_param.need_free, enc_param.size, cxt->cap_cnt,
              cxt->req_param.total_num);
+#ifdef SUPER_MACRO
+    /* copy super info to camera_jpeg_param->super */
+    if (jpeg_in_ptr->super.addr_vir.addr_y != 0 && cxt->req_param.is_super) {
+        enc_param.super.addr = jpeg_in_ptr->super.addr_vir.addr_y;
+        enc_param.super.width = jpeg_in_ptr->super.size.width;
+        enc_param.super.height = jpeg_in_ptr->super.size.height;
+        enc_param.super.size = jpeg_in_ptr->super.buf_size + sizeof(int)*3;
+
+        CMR_LOGV("super: addr 0x%x, (%d, %d), size %d", enc_param.super.addr, enc_param.super.width,
+            enc_param.super.height, enc_param.super.size);
+    }
+#endif
     camera_take_snapshot_step(CMR_STEP_CALL_BACK);
     // just for perf tuning
     // camera_snapshot_step_statisic(&image_size);
@@ -2866,6 +2988,7 @@ cmr_int snp_set_jpeg_enc_param(cmr_handle snp_handle) {
         jpeg_ptr->src = req_param_ptr->post_proc_setting.mem[i].target_yuv;
         jpeg_ptr->dst = req_param_ptr->post_proc_setting.mem[i].target_jpeg;
         jpeg_ptr->src.size = req_param_ptr->post_proc_setting.actual_snp_size;
+        jpeg_ptr->super = req_param_ptr->post_proc_setting.mem[i].super_macro;
         if (req_param_ptr->is_cfg_rot_cap &&
             (IMG_ANGLE_0 != req_param_ptr->jpeg_setting.set_encode_rotation) &&
             (IMG_ANGLE_180 !=

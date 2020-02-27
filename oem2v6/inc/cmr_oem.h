@@ -237,6 +237,7 @@ struct snapshot_context {
     cmr_u32 zsl_frame;
     cmr_uint filter_type;
     cmr_uint is_req_snp;
+    cmr_u8 is_super;
     // fix burst called cmr_grab_start_capture repeatedly
     cmr_u32 start_capture_flag;
     cmr_s64 cap_time_stamp;

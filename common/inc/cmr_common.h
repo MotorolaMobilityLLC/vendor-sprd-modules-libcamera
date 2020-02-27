@@ -1031,6 +1031,7 @@ struct cmr_cap_mem {
     struct img_frm scale_tmp;
     struct img_frm cap_yuv_rot;
     struct img_frm isp_tmp;
+    struct img_frm super_macro;
 };
 /********************************* memory end *********************************/
 
@@ -1781,6 +1782,8 @@ enum camera_param_type {
     CAMERA_PARAM_GET_SENSOR_ORIENTATION,
     CAMERA_PARAM_SPRD_AUTO_FDR_ENABLED,
     CAMERA_PARAM_SPRD_ENABLE_POSTEE,
+    CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE,
+    CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1860,12 +1863,20 @@ struct camera_face_info {
     cmr_u32 gender_age_race;
 };
 
+struct super_cap {
+ cmr_uint addr;
+ cmr_u32 width;
+ cmr_u32 height;
+ cmr_u32 size;
+};
+
 struct camera_jpeg_param {
     void *outPtr;
     cmr_u32 size;
     cmr_u32 need_free;
     cmr_u32 index;
     cmr_u32 reserved;
+    struct super_cap super;
 };
 
 struct camera_sensor_info {

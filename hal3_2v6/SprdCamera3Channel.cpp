@@ -1081,6 +1081,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_SMILE_CAPTURE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_SMILE_CAPTURE);
             break;
+        case ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE:
+            HAL_LOGV("ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

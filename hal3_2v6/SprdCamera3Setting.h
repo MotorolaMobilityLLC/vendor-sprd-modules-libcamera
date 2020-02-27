@@ -416,6 +416,7 @@ typedef struct {
     uint8_t high_resolution_mode;
     uint8_t fin1_highlight_mode;
     int32_t stl3d_id;
+    uint8_t sprd_super_macro;
 } SPRD_DEF_Tag;
 
 typedef struct {

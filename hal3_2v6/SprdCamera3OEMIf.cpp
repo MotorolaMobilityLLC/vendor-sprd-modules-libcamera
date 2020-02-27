@@ -5149,6 +5149,29 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     jpegBlob->jpeg_size = encInfo->size + ispInfoSize;
     jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
 
+#ifdef SUPER_MACRO
+    /* copy yuv for super macro capture */
+    if (encInfo->super.addr != 0) {
+        HAL_LOGV("enc_param: addr 0x%x, (%d, %d), size %d, dst addr 0x%x", encInfo->super.addr, encInfo->super.width,
+            encInfo->super.height, encInfo->super.size, ((char *)pic_addr_vir + jpegBlob->jpeg_size));
+
+        int value[3] = {0};
+        if (jpegBlob->jpeg_size + encInfo->super.size < maxJpegSize - sizeof(camera3_jpeg_blob)) {
+            memcpy(((char *)pic_addr_vir + jpegBlob->jpeg_size), (char *)encInfo->super.addr, encInfo->super.size);
+            jpegBlob->jpeg_size += encInfo->super.size;
+            jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
+        } else {
+            HAL_LOGE("not enought buf: %d > %d", jpegBlob->jpeg_size + encInfo->super.size,
+				maxJpegSize - sizeof(camera3_jpeg_blob));
+        }
+        memset(value, 0, 12);
+        memcpy(&value[0], (char *)(pic_addr_vir + jpegBlob->jpeg_size - 12), sizeof(int));
+        memcpy(&value[1], (char *)(pic_addr_vir + jpegBlob->jpeg_size - 8), sizeof(int));
+        memcpy(&value[2], (char *)(pic_addr_vir + jpegBlob->jpeg_size - 4), sizeof(int));
+        HAL_LOGV("width = %d, height = %d, size = %d", value[0], value[1], value[2]);
+    }
+#endif
+
     picChannel->channelCbRoutine(frame_num, timestamp,
                                  CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
 
@@ -7873,6 +7896,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED,
                  sprdInfo->sprd_is_time_watermark);
     } break;
+    case ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE: {
+        SPRD_DEF_Tag sprdInfo;
+        mSetting->getSPRDDEFTag(&sprdInfo);
+        SET_PARM(mHalOem, mCameraHandle,
+                 CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE,
+                 sprdInfo.sprd_super_macro);
+        break;
+    }
     default:
         ret = BAD_VALUE;
         break;

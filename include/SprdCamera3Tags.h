@@ -112,6 +112,7 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_LIGHTPORTRAITTIPS,
     ANDROID_SPRD_PORTRAIT_SCENE_BG_ID,
     ANDROID_SPRD_AVAILABLE_AUTO_FDR,
+    ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

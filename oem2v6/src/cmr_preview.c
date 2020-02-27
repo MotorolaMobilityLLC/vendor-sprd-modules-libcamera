@@ -480,6 +480,9 @@ struct prev_context {
     cmr_uint cap_3dnr_phys_addr_path_array[CAP_3DNR_NUM];
     cmr_uint cap_3dnr_virt_addr_path_array[CAP_3DNR_NUM];
     cmr_s32 cap_3dnr_fd_path_array[CAP_3DNR_NUM];
+    cmr_uint super_phys_addr_array[CMR_CAPTURE_MEM_SUM];
+    cmr_uint super_virt_addr_array[CMR_CAPTURE_MEM_SUM];
+    cmr_s32 super_fd_array[CMR_CAPTURE_MEM_SUM];
 
     struct cmr_cap_mem cap_mem[CMR_CAPTURE_MEM_SUM];
     struct img_frm cap_frm[CMR_CAPTURE_MEM_SUM];
@@ -572,6 +575,8 @@ struct prev_context {
     //20191030
     cmr_u32 sensor_out_width;
     cmr_u32 sensor_out_height;
+    /* super macro */
+    cmr_uint is_super;
 };
 
 struct prev_thread_cxt {
@@ -5001,6 +5006,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     struct cmr_cap_2_frm cap_2_mems;
     struct img_frm *cur_img_frm = NULL;
     struct cmr_zoom_param *zoom_param = NULL;
+
     cmr_u32 sum = 0;
     cmr_u32 is_normal_cap = 0;
     cmr_int zoom_post_proc = 0;
@@ -5010,6 +5016,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     int32_t buffer_id = 0;
     cmr_int is_need_scaling = 1;
     cmr_u32 hdr_cap_sum = HDR_CAP_NUM - 1;
+    cmr_u32 super_macro_size = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -5095,6 +5102,21 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
             }
         }
     }
+#ifdef SUPER_MACRO
+    if (prev_cxt->is_super == 1 && !is_restart) {
+        CMR_LOGI("macro photo, w*h %d, %d, size %d", cap_max_size->width, cap_max_size->height,
+            cap_max_size->width*cap_max_size->height*3/2);
+        super_macro_size += cap_max_size->width*cap_max_size->height*3/2;
+        super_macro_size += sizeof(int)*3;
+        mem_ops->alloc_mem(CAMERA_SNAPSHOT, handle->oem_handle, &super_macro_size,
+                           &sum, prev_cxt->super_phys_addr_array,
+                           prev_cxt->super_virt_addr_array,
+                           prev_cxt->super_fd_array);
+
+        CMR_LOGV("super mem size 0x%x, addr 0x%x", super_macro_size,
+			prev_cxt->super_virt_addr_array[0]);
+    }
+#endif
 
     /*arrange the buffer*/
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
@@ -5127,6 +5149,15 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 is_need_scaling, 1, buf_4in1_flag);
     }
 
+#ifdef SUPER_MACRO
+    if (prev_cxt->is_super == 1) {
+        prev_cxt->cap_mem[0].super_macro.fd = prev_cxt->super_fd_array[0];
+        prev_cxt->cap_mem[0].super_macro.buf_size = cap_max_size->width*cap_max_size->height*3/2;
+        prev_cxt->cap_mem[0].super_macro.size.width = cap_max_size->width;
+        prev_cxt->cap_mem[0].super_macro.size.height = cap_max_size->height;
+        prev_cxt->cap_mem[0].super_macro.addr_vir.addr_y = prev_cxt->super_virt_addr_array[0];
+    }
+#endif
     buffer->channel_id = 0; /*should be update when channel cfg complete*/
     buffer->base_id = CMR_CAP0_ID_BASE;
     buffer->count = CMR_CAPTURE_MEM_SUM;
@@ -5370,6 +5401,21 @@ cmr_int prev_free_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                   CMR_CAPTURE_MEM_SUM * sizeof(cmr_uint));
         cmr_bzero(prev_cxt->cap_fd_array,
                   CMR_CAPTURE_MEM_SUM * sizeof(cmr_s32));
+#ifdef SUPER_MACRO
+        if (prev_cxt->is_super == 1) {
+            CMR_LOGD("free super buffer");
+            mem_ops->free_mem(
+                CAMERA_SNAPSHOT, handle->oem_handle, prev_cxt->super_phys_addr_array,
+                prev_cxt->super_virt_addr_array, prev_cxt->super_fd_array, sum);
+
+            cmr_bzero(prev_cxt->super_phys_addr_array,
+                      CMR_CAPTURE_MEM_SUM * sizeof(cmr_uint));
+            cmr_bzero(prev_cxt->super_virt_addr_array,
+                      CMR_CAPTURE_MEM_SUM * sizeof(cmr_uint));
+            cmr_bzero(prev_cxt->super_fd_array,
+                      CMR_CAPTURE_MEM_SUM * sizeof(cmr_s32));
+        }
+#endif
     }
 
     CMR_LOGD("X");
@@ -12499,6 +12545,8 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
     struct img_data_end endian;
     struct cmr_path_capability capability;
     struct buffer_cfg buf_cfg;
+    struct camera_context *cxt = NULL;
+    struct setting_cmd_parameter setting_param = {0};
     cmr_u32 i;
 
     CHECK_HANDLE_VALID(handle);
@@ -12526,11 +12574,16 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->cap_skip_num = sensor_info->capture_skip_num;
     chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
+    cxt = (struct camera_context *)handle->oem_handle;
+    setting_param.camera_id = camera_id;
+    cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+        CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM, &setting_param);
+    prev_cxt->is_super = setting_param.cmd_type_value;
     CMR_LOGI("preview_eb %d , snapshot_eb %d, frame_ctrl %d, frame_count %d, "
-             "is_restart %d",
+             "is_restart %d, is super %d",
              prev_cxt->prev_param.preview_eb, prev_cxt->prev_param.snapshot_eb,
              prev_cxt->prev_param.frame_ctrl, prev_cxt->prev_param.frame_count,
-             is_restart);
+             is_restart, prev_cxt->is_super);
 
     chn_param.frm_num = -1;
     chn_param.cap_inf_cfg.chn_deci_factor = 0;

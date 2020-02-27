@@ -214,6 +214,7 @@ struct setting_hal_param {
     cmr_uint sprd_logo_watermark;
     cmr_uint sprd_time_watermark;
     struct img_size originalPictureSize;
+    cmr_uint is_super_macrophoto;
 };
 
 struct setting_camera_info {
@@ -3956,6 +3957,28 @@ static cmr_int setting_get_original_picture_size(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int set_super_macrophoto(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm){
+
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->is_super_macrophoto = parm->cmd_type_value;
+
+    return ret;
+}
+
+static cmr_int get_super_macrophoto(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm){
+
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->is_super_macrophoto;
+
+    return ret;
+}
+
 cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
     if (cmd < SETTING_TYPE_MAX) {
         CMR_LOGD(" cmd %lu,fun_ptr %p", cmd, fun_ptr);
@@ -4237,6 +4260,10 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(SETTING_GET_FDR, setting_get_fdr);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_POSTEE, setting_set_ee);
     cmr_add_cmd_fun_to_table(SETTING_GET_EE, setting_get_ee);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE,
+                             set_super_macrophoto);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM,
+                             get_super_macrophoto);
     setting_parms_inited = 1;
     return 0;
 }

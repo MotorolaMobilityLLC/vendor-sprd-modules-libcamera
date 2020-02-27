@@ -2518,11 +2518,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
                            "persist.vendor.cam.fov.fusion.enable"));
 
-    //24 nightshot pro
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.night",
-                                      "persist.vendor.cam.night.pro.enable"));
-
     // 25 camera lightportrait_ba
 #ifdef CONFIG_PORTRAIT_SUPPORT
     available_cam_features.add(
@@ -2556,6 +2551,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(0);
 #endif
 
+    // 28 higher micro photo
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
+                           "persist.vendor.cam.higher.macrophoto.enable"));
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -5313,7 +5312,15 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].sprddefInfo.sprd_is_time_watermark, valueU8,
             ANDROID_SPRD_TIMEWATERMARK_ENABLED, 1);
     }
-
+#ifdef SUPER_MACRO
+    if (frame_settings.exists(ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE).data.u8[0];
+        GET_VALUE_IF_DIF(
+            s_setting[mCameraId].sprddefInfo.sprd_super_macro, valueU8,
+            ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE, 1);
+    }
+#endif
     HAL_LOGD("mCameraId=%d, focus_distance=%f, ae_precap_trigger= %d, "
              "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
              "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "

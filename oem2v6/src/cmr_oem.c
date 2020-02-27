@@ -6998,7 +6998,7 @@ exit:
         free(pnum);
     if (ptext)
         free(ptext);
-/*    if (ptextout) // 逻辑死代码 (DEADCODE)
+/*    if (ptextout) //(logic DEADCODE)
  *       free(ptextout);
  */
     CMR_LOGE("fail,rtn = %d", rtn);
@@ -7682,8 +7682,13 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         if (watermark_flush)  // for cache coherency
             cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
 
-        ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
-                              (struct jpg_op_mean *)&enc_mean, enc_cb_param);
+        /* if super cap, encode will skip and return success */
+        if (cxt->snp_cxt.is_super == 0)
+            ret = cmr_jpeg_encode(jpeg_cxt->jpeg_handle, &enc_src, &enc_dst,
+                                  (struct jpg_op_mean *)&enc_mean, enc_cb_param);
+        else
+            ret = CMR_CAMERA_SUCCESS;
+
         if (ret) {
             CMR_LOGE("failed to jpeg codec %ld", ret);
             goto exit;
@@ -11637,6 +11642,15 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     setting_param.camera_id = cxt->camera_id;
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get macrophoto flag %ld", ret);
+        goto exit;
+    }
+    out_ptr->is_super = setting_param.cmd_type_value;
+    cxt->snp_cxt.is_super = out_ptr->is_super;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_SPRD_3DCAL_ENABLE, &setting_param);
     if (ret) {
         CMR_LOGE("failed to get 3dcal flag %ld", ret);
@@ -12358,6 +12372,10 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         CMR_LOGI(" face attributes enable =%lu", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
+        break;
+    case CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id, &setting_param);
         break;
     default:
         CMR_LOGI("don't support %d", id);
@@ -13808,6 +13826,10 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         break;
     }
 
+    case CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE: {
+        camera_set_setting(oem_handle, id, param);
+        break;
+    }
     default:
         ret = camera_set_setting(oem_handle, id, param);
         break;
