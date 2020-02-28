@@ -94,7 +94,7 @@ static int _lsc_gain_14bits_to_16bits(unsigned short *src_14bits, unsigned short
 	return dst_gain_num;
 }
 
-static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_width, int image_height, int *tbl_w, int *tbl_h)
+static int _lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_width, int image_height, int *tbl_w, int *tbl_h, uint16_t * dst_table)
 {
 	int ret = ISP_SUCCESS;
 	lsc2d_calib_param_t calib_param;
@@ -104,13 +104,12 @@ static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_
 	uint16_t *otp_chn[4], *tbl_chn[4];
 	int w = image_width / 2;
 	int h = image_height / 2;
-	uint16_t *lsc_table = NULL;
 	int i;
 	void *lsc_handle = dlopen("libsprdlsc.so", RTLD_NOW);
 	if (!lsc_handle) {
 		ISP_LOGE("init_lsc_otp, fail to dlopen libsprdlsc lib");
 		ret = ISP_ERROR;
-		return lsc_table;
+		return ret;
 	}
 
 	struct lsc_wrapper_ops lsc_ops;
@@ -147,13 +146,12 @@ static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_
 	sx = nx + 2;
 	sy = ny + 2;
 
-	lsc_table = (uint16_t *) malloc(4 * sx * sy * sizeof(uint16_t));
 	*tbl_w = sx;
 	*tbl_h = sy;
 
 	for (i = 0; i < 4; i++) {
 		otp_chn[i] = lsc_otp_tbl + i * nx * ny;
-		tbl_chn[i] = lsc_table + i * sx * sy;
+		tbl_chn[i] = dst_table + i * sx * sy;
 	}
 
 	lsc_ops.lsc2d_calib_param_default(&calib_param, grid, lpf_radius, shading_pct);
@@ -166,7 +164,7 @@ static uint16_t *_lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_
 	dlclose(lsc_handle);
 	lsc_handle = NULL;
 
-	return lsc_table;
+	return ret;
 }
 
 static void _lsc_get_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_height, cmr_s32 * lsc_otp_width, cmr_s32 * lsc_otp_height, cmr_s32 lsc_otp_grid)
@@ -186,124 +184,95 @@ static void _lsc_get_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_heig
 	}
 }
 
-static void _scale_bilinear_short(unsigned short* src_buf, int src_width, int src_height, unsigned short* dst_buf, int dst_width, int dst_height){
-
-    int i, j, x, y;
-    float xx, yy;
-    int a, b, c, d, tmp;
-
-    for (j=0; j<dst_height; j++){
-        float sy = (float)(j * src_height) / dst_height;
-        if (sy > src_height-2) sy = (float)(src_height-2);
-        y = (short)sy;
-        yy = sy - y;
-
-        for (i=0; i<dst_width; i++){
-            float sx = (float)(i * src_width) / dst_width;
-            if (sx > src_width-2) sx = (float)(src_width-2);
-            x = (short)sx;
-            xx = sx - x;
-
-            a = src_buf[src_width * y + x];
-            b = src_buf[src_width * (y+1) + x];
-            c = src_buf[src_width * y + x+1];
-            d = src_buf[src_width * (y+1) + x+1];
-
-            tmp = (short)(a * (1-xx) * (1-yy) + b * (1-xx) * yy + c * xx * (1-yy) + d * xx * yy + 0.5f);
-
-            dst_buf[dst_width * j + i] = tmp;
-        }
-    }
-}
-
-static void _table_linear_scaler(unsigned short* lsc_tab, unsigned int src_width, unsigned int src_height, unsigned int dst_width, unsigned int dst_height)
+static void _lsc_chnl_linear_scaler(unsigned short* src_tab, int src_grid, int src_width, int src_height, unsigned short* dst_tab, int dst_grid, int dst_width, int dst_height)
 {
-	unsigned int i,j;
+	int i, j, start_x, start_y;
+	float x_info, y_info, ratio_x1, ratio_y1, ratio_x2, ratio_y2;
+	unsigned short LT, RT, LD, RD, LT_L1, LD_L1, LT_U1, RT_U1;
 
-	//scale pre table to new gain size
-	unsigned short pre_contain_r_tab [ 32 * 32 ]={0};
-	unsigned short pre_contain_gr_tab[ 32 * 32 ]={0};
-	unsigned short pre_contain_gb_tab[ 32 * 32 ]={0};
-	unsigned short pre_contain_b_tab [ 32 * 32 ]={0};
-	unsigned short new_contain_r_tab [ 32 * 32 ]={0};
-	unsigned short new_contain_gr_tab[ 32 * 32 ]={0};
-	unsigned short new_contain_gb_tab[ 32 * 32 ]={0};
-	unsigned short new_contain_b_tab [ 32 * 32 ]={0};
-	unsigned short output_r_tab [ 32 * 32 ]={0};
-	unsigned short output_gr_tab[ 32 * 32 ]={0};
-	unsigned short output_gb_tab[ 32 * 32 ]={0};
-	unsigned short output_b_tab [ 32 * 32 ]={0};
-	unsigned short* otp_r  = lsc_tab;
-	unsigned short* otp_gr = lsc_tab + src_width * src_height;
-	unsigned short* otp_gb = lsc_tab + src_width * src_height*2;
-	unsigned short* otp_b  = lsc_tab + src_width * src_height*3;
+	for(j=1; j<dst_height-1; j++){
+		for(i=1; i<dst_width-1; i++){
+			x_info = ((float)dst_grid * (i-1) / src_grid) + 1.0;
+			y_info = ((float)dst_grid * (j-1) / src_grid) + 1.0;
+			start_x = (int)x_info;
+			start_y = (int)y_info;
+			ratio_x1 = x_info - start_x;
+			ratio_y1 = y_info - start_y;
+			ratio_x2 = 1.0 - ratio_x1;
+			ratio_y2 = 1.0 - ratio_y1;
+			LT = src_tab[start_y    *(src_width) + start_x];
+			RT = src_tab[start_y    *(src_width) + (start_x+1)];
+			LD = src_tab[(start_y+1)*(src_width) + start_x];
+			RD = src_tab[(start_y+1)*(src_width) + (start_x+1)];
 
-	// copy the color channels
-	memcpy(output_r_tab , otp_r , src_width * src_height * sizeof(unsigned short));
-	memcpy(output_gr_tab, otp_gr, src_width * src_height * sizeof(unsigned short));
-	memcpy(output_gb_tab, otp_gb, src_width * src_height * sizeof(unsigned short));
-	memcpy(output_b_tab , otp_b , src_width * src_height * sizeof(unsigned short));
-
-
-	// get contain from pre_tab
-	for(j=0; j<src_height-2; j++){
-		for(i=0; i<src_width-2; i++){
-			pre_contain_r_tab [ j*(src_width-2) + i ] = output_r_tab [ (j+1)*src_width + (i+1)];
-			pre_contain_gr_tab[ j*(src_width-2) + i ] = output_gr_tab[ (j+1)*src_width + (i+1)];
-			pre_contain_gb_tab[ j*(src_width-2) + i ] = output_gb_tab[ (j+1)*src_width + (i+1)];
-			pre_contain_b_tab [ j*(src_width-2) + i ] = output_b_tab [ (j+1)*src_width + (i+1)];
-		}
-	}
-
-	// scale pre_contain to new_contain
-	_scale_bilinear_short(pre_contain_r_tab , src_width-2, src_height-2, new_contain_r_tab , dst_width-2, dst_height-2);
-	_scale_bilinear_short(pre_contain_gr_tab, src_width-2, src_height-2, new_contain_gr_tab, dst_width-2, dst_height-2);
-	_scale_bilinear_short(pre_contain_gb_tab, src_width-2, src_height-2, new_contain_gb_tab, dst_width-2, dst_height-2);
-	_scale_bilinear_short(pre_contain_b_tab , src_width-2, src_height-2, new_contain_b_tab , dst_width-2, dst_height-2);
-
-	// set contain to output tab
-	for(j=0; j<dst_height-2; j++){
-		for(i=0; i<dst_width-2; i++){
-			output_r_tab [ (j+1)*dst_width + (i+1)] = new_contain_r_tab [ j*(dst_width-2) + i];
-			output_gr_tab[ (j+1)*dst_width + (i+1)] = new_contain_gr_tab[ j*(dst_width-2) + i];
-			output_gb_tab[ (j+1)*dst_width + (i+1)] = new_contain_gb_tab[ j*(dst_width-2) + i];
-			output_b_tab [ (j+1)*dst_width + (i+1)] = new_contain_b_tab [ j*(dst_width-2) + i];
+			if(start_x >= src_width - 1 && start_y < src_height - 1){
+				LT_L1 = src_tab[start_y    *(src_width) + start_x - 1];
+				LD_L1 = src_tab[(start_y+1)*(src_width) + start_x - 1];
+				dst_tab[j*(dst_width) + i] = (LT + (LT - LT_L1)*ratio_x1)*ratio_y2 + (LD + (LD -LD_L1)*ratio_x1)*ratio_y1;
+			}else if(start_x < src_width - 1 && start_y >= src_height - 1){
+				LT_U1 = src_tab[(start_y-1)*(src_width) + start_x];
+				RT_U1 = src_tab[(start_y-1)*(src_width) + (start_x+1)];
+				dst_tab[j*(dst_width) + i] = (LT + (LT -LT_U1)*ratio_y1)*ratio_x2 + (RT + (RT - RT_U1)*ratio_y1)*ratio_x1;
+			}else if(start_x >= src_width - 1 && start_y >= src_height - 1){
+				LT_L1 = src_tab[start_y    *(src_width) + start_x - 1];
+				LT_U1 = src_tab[(start_y-1)*(src_width) + start_x];
+				dst_tab[j*(dst_width) + i] = (LT + (LT - LT_L1)*ratio_x1)*((ratio_x1+0.00001)/(ratio_x1+ratio_y1+0.00002)) + (LT + (LT - LT_U1)*ratio_y1)*((ratio_y1+0.00001)/(ratio_x1+ratio_y1+0.00002));
+			}else{
+				dst_tab[j*(dst_width) + i] = (unsigned short)(LT*ratio_x2*ratio_y2 + RT*ratio_x1*ratio_y2 + LD*ratio_x2*ratio_y1 + RD*ratio_x1*ratio_y1 + 0.5);
+			}
 		}
 	}
 
 	// set top and bottom edge
 	for(i=1; i<dst_width-1; i++){
-		output_r_tab [ 0*dst_width + i ] = 3*output_r_tab [ 1*dst_width + i ] - 3*output_r_tab [ 2*dst_width + i ] + output_r_tab [ 3*dst_width + i ];
-		output_gr_tab[ 0*dst_width + i ] = 3*output_gr_tab[ 1*dst_width + i ] - 3*output_gr_tab[ 2*dst_width + i ] + output_gr_tab[ 3*dst_width + i ];
-		output_gb_tab[ 0*dst_width + i ] = 3*output_gb_tab[ 1*dst_width + i ] - 3*output_gb_tab[ 2*dst_width + i ] + output_gb_tab[ 3*dst_width + i ];
-		output_b_tab [ 0*dst_width + i ] = 3*output_b_tab [ 1*dst_width + i ] - 3*output_b_tab [ 2*dst_width + i ] + output_b_tab [ 3*dst_width + i ];
-		output_r_tab [ (dst_height-1)*dst_width + i ] = 3*output_r_tab [ (dst_height-2)*dst_width + i ] - 3*output_r_tab [ (dst_height-3)*dst_width + i ] + output_r_tab [ (dst_height-4)*dst_width + i ];
-		output_gr_tab[ (dst_height-1)*dst_width + i ] = 3*output_gr_tab[ (dst_height-2)*dst_width + i ] - 3*output_gr_tab[ (dst_height-3)*dst_width + i ] + output_gr_tab[ (dst_height-4)*dst_width + i ];
-		output_gb_tab[ (dst_height-1)*dst_width + i ] = 3*output_gb_tab[ (dst_height-2)*dst_width + i ] - 3*output_gb_tab[ (dst_height-3)*dst_width + i ] + output_gb_tab[ (dst_height-4)*dst_width + i ];
-		output_b_tab [ (dst_height-1)*dst_width + i ] = 3*output_b_tab [ (dst_height-2)*dst_width + i ] - 3*output_b_tab [ (dst_height-3)*dst_width + i ] + output_b_tab [ (dst_height-4)*dst_width + i ];
+		dst_tab [ 0*dst_width + i ] = 3*dst_tab [ 1*dst_width + i ] - 3*dst_tab [ 2*dst_width + i ] + dst_tab [ 3*dst_width + i ];
+		dst_tab [ (dst_height-1)*dst_width + i ] = 3*dst_tab [ (dst_height-2)*dst_width + i ] - 3*dst_tab [ (dst_height-3)*dst_width + i ] + dst_tab [ (dst_height-4)*dst_width + i ];
 	}
 
 	// set left and right edge
 	for(j=0; j<dst_height; j++){
-		output_r_tab [ j*dst_width + 0 ] = 3*output_r_tab [ j*dst_width + 1 ] - 3*output_r_tab [ j*dst_width + 2 ] + output_r_tab [ j*dst_width + 3 ];
-		output_gr_tab[ j*dst_width + 0 ] = 3*output_gr_tab[ j*dst_width + 1 ] - 3*output_gr_tab[ j*dst_width + 2 ] + output_gr_tab[ j*dst_width + 3 ];
-		output_gb_tab[ j*dst_width + 0 ] = 3*output_gb_tab[ j*dst_width + 1 ] - 3*output_gb_tab[ j*dst_width + 2 ] + output_gb_tab[ j*dst_width + 3 ];
-		output_b_tab [ j*dst_width + 0 ] = 3*output_b_tab [ j*dst_width + 1 ] - 3*output_b_tab [ j*dst_width + 2 ] + output_b_tab [ j*dst_width + 3 ];
-		output_r_tab [ j*dst_width + (dst_width-1) ] = 3*output_r_tab [ j*dst_width + (dst_width-2) ] - 3*output_r_tab [ j*dst_width + (dst_width-3) ] + output_r_tab [ j*dst_width + (dst_width-4) ];
-		output_gr_tab[ j*dst_width + (dst_width-1) ] = 3*output_gr_tab[ j*dst_width + (dst_width-2) ] - 3*output_gr_tab[ j*dst_width + (dst_width-3) ] + output_gr_tab[ j*dst_width + (dst_width-4) ];
-		output_gb_tab[ j*dst_width + (dst_width-1) ] = 3*output_gb_tab[ j*dst_width + (dst_width-2) ] - 3*output_gb_tab[ j*dst_width + (dst_width-3) ] + output_gb_tab[ j*dst_width + (dst_width-4) ];
-		output_b_tab [ j*dst_width + (dst_width-1) ] = 3*output_b_tab [ j*dst_width + (dst_width-2) ] - 3*output_b_tab [ j*dst_width + (dst_width-3) ] + output_b_tab [ j*dst_width + (dst_width-4) ];
+		dst_tab [ j*dst_width + 0 ] = 3*dst_tab [ j*dst_width + 1 ] - 3*dst_tab [ j*dst_width + 2 ] + dst_tab [ j*dst_width + 3 ];
+		dst_tab [ j*dst_width + (dst_width-1) ] = 3*dst_tab [ j*dst_width + (dst_width-2) ] - 3*dst_tab [ j*dst_width + (dst_width-3) ] + dst_tab [ j*dst_width + (dst_width-4) ];
 	}
+}
 
-	// merge color channels to table
-	otp_r  = lsc_tab;
-	otp_gr = lsc_tab + dst_width * dst_height;
-	otp_gb = lsc_tab + dst_width * dst_height*2;
-	otp_b  = lsc_tab + dst_width * dst_height*3;
-	memcpy(otp_r , output_r_tab , dst_width * dst_height * sizeof(unsigned short));
-	memcpy(otp_gr, output_gr_tab, dst_width * dst_height * sizeof(unsigned short));
-	memcpy(otp_gb, output_gb_tab, dst_width * dst_height * sizeof(unsigned short));
-	memcpy(otp_b , output_b_tab , dst_width * dst_height * sizeof(unsigned short));
+static void  _lsc_table_scaler(unsigned short *table, int src_grid, int src_width, int src_height, int dst_grid, int dst_width, int dst_height)
+{
+	unsigned short src_tab_r [MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short src_tab_gr[MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short src_tab_gb[MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short src_tab_b [MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short dst_tab_r [MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short dst_tab_gr[MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short dst_tab_gb[MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short dst_tab_b [MAX_WIDTH*MAX_HEIGHT] = {0};
+	unsigned short* ch_r  = table;
+	unsigned short* ch_gr = table + src_width * src_height;
+	unsigned short* ch_gb = table + src_width * src_height * 2;
+	unsigned short* ch_b  = table + src_width * src_height * 3;
+
+	ISP_LOGV("src:[%d, %d, %d], dst:[%d, %d, %d]", src_grid, src_width, src_height, dst_grid, dst_width, dst_height);
+
+	//scale pre table to new gain size
+	memcpy(src_tab_r , ch_r , src_width * src_height * sizeof(unsigned short));
+	memcpy(src_tab_gr, ch_gr, src_width * src_height * sizeof(unsigned short));
+	memcpy(src_tab_gb, ch_gb, src_width * src_height * sizeof(unsigned short));
+	memcpy(src_tab_b , ch_b , src_width * src_height * sizeof(unsigned short));
+
+	// scale src_tab to dst_tab
+	_lsc_chnl_linear_scaler(src_tab_r , src_grid, src_width, src_height, dst_tab_r , dst_grid, dst_width, dst_height);
+	_lsc_chnl_linear_scaler(src_tab_gr, src_grid, src_width, src_height, dst_tab_gr, dst_grid, dst_width, dst_height);
+	_lsc_chnl_linear_scaler(src_tab_gb, src_grid, src_width, src_height, dst_tab_gb, dst_grid, dst_width, dst_height);
+	_lsc_chnl_linear_scaler(src_tab_b , src_grid, src_width, src_height, dst_tab_b , dst_grid, dst_width, dst_height);
+
+	ch_r  = table;
+	ch_gr = table + dst_width * dst_height;
+	ch_gb = table + dst_width * dst_height * 2;
+	ch_b  = table + dst_width * dst_height * 3;
+	memcpy(ch_r , dst_tab_r , dst_width * dst_height * sizeof(unsigned short));
+	memcpy(ch_gr, dst_tab_gr, dst_width * dst_height * sizeof(unsigned short));
+	memcpy(ch_gb, dst_tab_gb, dst_width * dst_height * sizeof(unsigned short));
+	memcpy(ch_b , dst_tab_b , dst_width * dst_height * sizeof(unsigned short));
 }
 
 static cmr_s32 _lsc_calculate_otplen_chn(cmr_u32 full_width , cmr_u32 full_height , cmr_u32 lsc_grid)
@@ -321,6 +290,7 @@ static cmr_s32 _lsc_calculate_otplen_chn(cmr_u32 full_width , cmr_u32 full_heigh
 
 static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 {
+	int ret = ISP_SUCCESS;
 	struct sensor_otp_data_info *lsc_otp_info;
 	struct sensor_otp_data_info *oc_otp_info;
 	cmr_u8 *module_info;
@@ -343,6 +313,12 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	struct sensor_otp_section_info *lsc_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *oc_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *module_info_ptr = NULL;
+	cmr_u32 otp_raw_img_width = full_img_width;
+	cmr_u32 otp_raw_img_height = full_img_height;
+	double grid_ratio = 1.0;
+	int param_table_width = lsc_param->gain_width;
+	int param_table_height = lsc_param->gain_height;
+	int param_grid = lsc_param->grid;
 
 	// case for isp2.0 of 8M and 13M
 	if((3264-100 <= full_img_width && full_img_width <= 3264+100 && 2448-100 <= full_img_height && full_img_height <= 2448+100 && lsc_param->grid == 128)
@@ -422,12 +398,21 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 				otp_data_len = lsc_otp_info_ptr->rdm_info.data_size;
 
 				if(otp_data_ptr != NULL && otp_data_len != 0 ){
-				lsc_otp_addr = otp_data_ptr + 1 + 16 + 5;
-				lsc_otp_len = otp_data_len - 1 - 16 - 5;
-					}else{
+					lsc_otp_addr = otp_data_ptr + 1 + 16 + 5;
+					lsc_otp_len = otp_data_len - 1 - 16 - 5;
+				}else{
 					ISP_LOGE("lsc otp_data_ptr = %p, otp_data_len = %d. Parser fail !", otp_data_ptr, otp_data_len);
 					goto EXIT;
-						}
+				}
+
+				otp_raw_img_width   = (cmr_u32)((otp_data_ptr[18] << 8) | otp_data_ptr[17]);
+				otp_raw_img_height  = (cmr_u32)((otp_data_ptr[20] << 8) | otp_data_ptr[19]);
+				lsc_otp_grid = (cmr_u32)otp_data_ptr[21];
+
+				_lsc_get_otp_size_info(otp_raw_img_width, otp_raw_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
+
+				full_img_width = otp_raw_img_width;
+				full_img_height = otp_raw_img_height;
 
 				resolution = (full_img_width * full_img_height + 500000) / 1000000;
 				switch (resolution) {
@@ -438,7 +423,7 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 				case 5:
 				case 4:
 				case 2:
-					lsc_otp_len_chn = _lsc_calculate_otplen_chn(full_img_width, full_img_height,lsc_otp_grid);
+					lsc_otp_len_chn = _lsc_calculate_otplen_chn(otp_raw_img_width, otp_raw_img_height,lsc_otp_grid);
 					break;
 				default:
 					ISP_LOGW("not support resolution now , may be add later");
@@ -487,23 +472,31 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
 		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
 
-		lsc_table = _lsc_table_wrapper(lsc_16_bits, lsc_otp_grid, full_img_width, full_img_height, &gain_w, &gain_h);	//  wrapper otp table
+		lsc_table = (uint16_t *) malloc(32 * 32 * 4);
+		ret = _lsc_table_wrapper(lsc_16_bits, lsc_otp_grid, otp_raw_img_width, otp_raw_img_height, &gain_w, &gain_h, lsc_table);	//  wrapper otp table
 
 		free(lsc_16_bits);
-		if (lsc_table == NULL) {
+		if (ret != ISP_SUCCESS) {
 			ISP_LOGE("init_lsc_otp, sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_len, lsc_otp_chn_gain_num,
 					 lsc_otp_width, lsc_otp_height, lsc_otp_grid);
 			goto EXIT;
 		}
 
-		// case for isp2.0 of 8M and 13M
-		if((3264-100 <= full_img_width && full_img_width <= 3264+100 && 2448-100 <= full_img_height && full_img_height <= 2448+100 && lsc_param->grid == 128)
-		 ||(4224-100 <= full_img_width && full_img_width <= 4224+100 && 3136-100 <= full_img_height && full_img_height <= 3136+100 && lsc_param->grid == 128)){
-			_lsc_get_otp_size_info(full_img_width, full_img_height, &lsc_otp_width, &lsc_otp_height, 128);
-			_table_linear_scaler(lsc_table, gain_w, gain_h, lsc_otp_width+2, lsc_otp_height+2);
-			gain_w = lsc_otp_width+2;
-			gain_h = lsc_otp_height+2;
-			lsc_otp_grid = 128;
+		// scale otp table to param table size
+		if(gain_w !=param_table_width || gain_h != param_table_height){
+
+			grid_ratio = 1.0;
+			if((gain_w > param_table_width || gain_h > param_table_height) && (lsc_otp_grid > param_grid))
+				grid_ratio = 2.0; // otp use full size image, camera is binning size image
+			else if((gain_w < param_table_width || gain_h < param_table_height) && (lsc_otp_grid < param_grid))
+				grid_ratio = 0.5; // otp use bining size image, camera is full size image
+			else if((gain_w-1 == param_table_width || gain_h-1 == param_table_height) && (lsc_otp_grid*2 == param_grid))
+				grid_ratio = 0.5; // otp use bining size image (this raw image is without crop), camera is full size image
+
+			_lsc_table_scaler(lsc_table, lsc_otp_grid, gain_w, gain_h, param_grid*grid_ratio, param_table_width, param_table_height);
+			gain_w = lsc_param->gain_width;
+			gain_h = lsc_param->gain_height;
+			lsc_otp_grid = lsc_param->grid;
 		}
 
 		lsc_param->lsc_otp_table_width = gain_w;
