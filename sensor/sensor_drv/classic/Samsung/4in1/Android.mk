@@ -32,7 +32,7 @@ LOCAL_SRC_FILES_32  := $(LIB_PATH)/armeabi-v7a/libremosaiclib.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)/arm64-v8a/libremosaiclib.so
 LOCAL_MODULE_TAGS := optional
 #LOCAL_EXPORT_C_INCLUDE := $(LOCAL_PATH)/inc/remosaic_itf.h
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 LOCAL_SHARED_LIBRARIES +=liblog
@@ -51,7 +51,7 @@ LOCAL_SRC_FILES_32  := $(LIB_PATH)/armeabi-v7a/libremosaic_wrapper.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)/arm64-v8a/libremosaic_wrapper.so
 LOCAL_MODULE_TAGS := optional
 #LOCAL_EXPORT_C_INCLUDE := $(LOCAL_PATH)/inc/remosaic_itf.h
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 LOCAL_SHARED_LIBRARIES +=liblog libcutils libutils
@@ -73,7 +73,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc
 LOCAL_CFLAGS :=  -O3 #-llibremosaiclib -llibremosaic_wrapper#-fno-strict-aliasing -fPIC -fvisibility=hidden -nodefaultlibs -lc -lm -ldl  #-lstdc++#-std=c++11
 LOCAL_SHARED_LIBRARIES += libremosaiclib  libremosaic_wrapper#libc++_shared#libc++#libgnustl_shared
 LOCAL_EXPORT_C_INCLUDE := $(LOCAL_PATH)/inc/sprd_fcell_ss.h
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_SHARED_LIBRARY)

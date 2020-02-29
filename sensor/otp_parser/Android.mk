@@ -31,7 +31,7 @@ LOCAL_SRC_FILES := $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)
 LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libutils
 LOCAL_SHARED_LIBRARIES += liblog
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

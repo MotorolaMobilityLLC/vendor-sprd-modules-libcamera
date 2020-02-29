@@ -225,7 +225,7 @@ ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
 LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

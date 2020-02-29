@@ -34,7 +34,7 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprddepth.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprddepth.so
 LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

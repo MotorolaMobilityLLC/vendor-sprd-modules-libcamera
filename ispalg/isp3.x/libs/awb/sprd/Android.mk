@@ -25,7 +25,7 @@ LIB_PATH_32 := x86_lib
 LIB_PATH_64 := x86_lib64
 endif
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
@@ -55,7 +55,7 @@ LIB_PATH_32 := x86_lib
 LIB_PATH_64 := x86_lib64
 endif
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

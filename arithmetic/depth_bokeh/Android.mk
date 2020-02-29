@@ -34,7 +34,7 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libbokeh_depth.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libbokeh_depth.so
 LOCAL_SHARED_LIBRARIES := libEGL libGLESv3 libc++ libc libcutils libdl liblog libm libui libutils
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := libbokeh_depth
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES

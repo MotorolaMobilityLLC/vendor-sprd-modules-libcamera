@@ -35,7 +35,7 @@ LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH_32)/$(LOCAL_MODULE).so
 LOCAL_SRC_FILES_64 := $(LIB_PATH_64)/$(LOCAL_MODULE).so
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 ifeq ($(PLATFORM_VERSION),4.4.4)

@@ -31,7 +31,7 @@ LOCAL_SRC_FILES_32  := $(LIB_PATH)/armeabi-v7a/libfcell.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)/arm64-v8a/libfcell.so
 LOCAL_MODULE_TAGS := optional
 LOCAL_EXPORT_C_INCLUDE := $(LOCAL_PATH)/inc/fcell.h
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_PREBUILT)
@@ -51,7 +51,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc
 LOCAL_CFLAGS :=  -O3 #-fno-strict-aliasing -fPIC -fvisibility=hidden -nodefaultlibs
 LOCAL_SHARED_LIBRARIES += libfcell
 LOCAL_EXPORT_C_INCLUDE := $(LOCAL_PATH)/inc/sprd_fcell.h
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_SHARED_LIBRARY)

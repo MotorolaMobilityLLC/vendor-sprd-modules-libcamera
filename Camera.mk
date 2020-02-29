@@ -41,7 +41,7 @@ endif
 
 LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format -DXMP_UNIXBuild -DUNIX_ENV -fexceptions
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_CFLAGS += -DCONFIG_SPRD_ANDROID_8
 endif
 
@@ -135,7 +135,7 @@ LOCAL_HEADER_LIBRARIES += jni_headers
 
 LOCAL_SHARED_LIBRARIES := liblog libxml2
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_SHARED_LIBRARIES += libsensorndkbridge
 endif
 
@@ -287,7 +287,7 @@ LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_SHARED_LIBRARY)
@@ -341,7 +341,7 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_MODULE := libcamcalitest
 LOCAL_MODULE_TAGS := optional
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

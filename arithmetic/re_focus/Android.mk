@@ -31,7 +31,7 @@ LOCAL_MODULE_STEM_32 := $(LIB_PATH)/libalRnBLV.so
 LOCAL_MODULE_STEM_64 := $(LIB_PATH)/libalRnBLV.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libalRnBLV.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)/libalRnBLV_v8a.so
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

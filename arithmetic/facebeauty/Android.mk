@@ -32,7 +32,7 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty.so
 LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
 LOCAL_MODULE_TAGS := optional
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 #LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/lib/
 LOCAL_PROPRIETARY_MODULE := true
 endif
@@ -49,7 +49,7 @@ LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfacebeauty_vdsp.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfacebeauty_vdsp.so
 LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
 LOCAL_MODULE_TAGS := optional
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
@@ -77,7 +77,7 @@ LOCAL_SHARED_LIBRARIES:= \
 LOCAL_MODULE := libcamfb
 LOCAL_MODULE_TAGS := optional
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
@@ -106,7 +106,7 @@ LOCAL_SHARED_LIBRARIES:= \
 LOCAL_MODULE := libcamfacebeauty
 LOCAL_MODULE_TAGS := optional
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

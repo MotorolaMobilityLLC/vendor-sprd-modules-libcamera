@@ -38,7 +38,7 @@ LOCAL_SRC_FILES := param_manager.c
 
 LOCAL_SHARED_LIBRARIES := libcutils libdl libutils
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

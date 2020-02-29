@@ -957,7 +957,7 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_MMITEST_PREVIEWSIZE)),640X480)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_MMITEST_PREVIEWSIZE_640X480
 endif
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
 LOCAL_CFLAGS += -DCONFIG_USE_CAMERASERVER_PROC
 endif
 
@@ -978,7 +978,7 @@ ifeq ($(strip $(TARGET_BOARD_ECONOMIZE_MEMORY)),true)
 LOCAL_CFLAGS += -DECONOMIZE_MEMORY
 endif
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
 LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/vendor/cameraserver\"
 else
 LOCAL_CFLAGS += -DCAMERA_DATA_FILE=\"/data/misc/media\"

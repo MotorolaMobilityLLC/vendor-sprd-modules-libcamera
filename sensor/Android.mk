@@ -106,11 +106,11 @@ LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libxml2
 
 LOCAL_SHARED_LIBRARIES += liblog libcam_otp_parser
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 7)))
 LOCAL_CFLAGS += -DCONFIG_USE_CAMERASERVER_PROC
 endif
 
