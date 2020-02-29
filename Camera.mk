@@ -2,7 +2,8 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-ANDROID_MAJOR_VER := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
+ANDROID_MAJOR_VER := 11
+#ANDROID_MAJOR_VER := #$(word 1, $(subst ., , $(PLATFORM_VERSION)))
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
 HAL_DIR := hal3_2v6
