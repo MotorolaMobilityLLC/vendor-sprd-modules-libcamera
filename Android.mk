@@ -1,3 +1,6 @@
+TARGET_HAS_LIBCAMERA ?= true
+ifeq ($(strip $(TARGET_HAS_LIBCAMERA)),true)
+
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -19,5 +22,6 @@ endef
 include $(call first-makefiles-under-cus,$(LOCAL_PATH))
 endif
 
+endif
 endif
 
