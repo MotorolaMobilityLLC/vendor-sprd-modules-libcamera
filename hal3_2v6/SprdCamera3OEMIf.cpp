@@ -3426,11 +3426,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     mZslCaptureExitLoop = true;
 
     if (isCapturing()) {
-        setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
-        if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
-            HAL_LOGE("camera_stop_capture failed!");
-            goto exit;
-        }
+        cancelPictureInternal();
     }
 
     if (isPreviewStart()) {

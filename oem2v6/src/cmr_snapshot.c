@@ -583,7 +583,7 @@ void snp_post_proc_err_exit(cmr_handle snp_handle, cmr_int err_code) {
     cmr_bzero(&cxt->cur_frame_info, sizeof(cxt->cur_frame_info));
     snp_set_request(snp_handle, TAKE_PICTURE_NO);
     sem_post(&cxt->proc_done_sm);
-    if (CODEC_WORKING == snp_get_request(snp_handle)) {
+    if (CODEC_WORKING == snp_get_status(snp_handle)) {
         sem_post(&cxt->jpeg_sync_sm);
     }
     snp_set_status(snp_handle, IDLE);
