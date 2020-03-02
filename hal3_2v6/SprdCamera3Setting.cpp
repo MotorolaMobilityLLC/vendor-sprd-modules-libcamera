@@ -4988,54 +4988,9 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].controlInfo.ae_precapture_id);
     }
     if (frame_settings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
-        int32_t fps_range[2] = {0}, max_fps_range[2] = {0};
-        HAL_LOGV("AE target fps min %d, max %d",
-                 s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
-                 s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
-
-        fps_range[0] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
-                           .data.i32[0];
-        fps_range[1] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
-                           .data.i32[1];
-
-        if (s_setting[mCameraId].callback_size.width ==
-            largest_picture_size[mCameraId].stream_sizes_tbl.width) {
-            switch (largest_picture_size[mCameraId].stream_min_duration) {
-            case 33331760:
-                max_fps_range[0] = 30;
-                max_fps_range[1] = 30;
-                break;
-            case 41666666:
-                max_fps_range[0] = 24;
-                max_fps_range[1] = 24;
-                break;
-            case 50000000:
-                max_fps_range[0] = 20;
-                max_fps_range[1] = 20;
-                break;
-            case 66666670:
-                max_fps_range[0] = 15;
-                max_fps_range[1] = 15;
-                break;
-            case 100000000:
-                max_fps_range[0] = 10;
-                max_fps_range[1] = 10;
-                break;
-            deafult:
-                break;
-            }
-            if (fps_range[0] > max_fps_range[0]) {
-                fps_range[0] = max_fps_range[0];
-                fps_range[1] = max_fps_range[1];
-            }
-        }
-
-        GET_VALUE_IF_DIF(
-            s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
-            fps_range[0], ANDROID_CONTROL_AE_TARGET_FPS_RANGE, 2)
-        HAL_LOGV("AE target fps min %d, max %d",
-                 s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
-                 s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
+        camera_metadata_ro_entry_t entry =
+            frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE);
+        setFpsRange(entry.data.i32[0], entry.data.i32[1]);
     }
 
     // Before start af, need set af region
@@ -5291,6 +5246,78 @@ int SprdCamera3Setting::checkROIValid(int32_t *roi_area, int32_t *crop_area) {
 
 exit:
     return ret;
+}
+
+/*
+ * Below code is copied from @updateWorkParameters because it's too hard to maintain.
+ */
+void SprdCamera3Setting::setFpsRange(int min, int max) {
+    bool is_push = false;
+    int rc = 0;
+
+#define GET_VALUE_IF_DIF(x, y, tag, count)                                     \
+    is_push = false;                                                           \
+    for (size_t i = 0; i < count; i++) {                                       \
+        if ((*(&x + i) != *(&y + i)) ||                                        \
+            (*(&x + i) == *(&y + i) && *(&x + i) == 0)) {                      \
+            is_push = true;                                                    \
+            break;                                                             \
+        }                                                                      \
+    }                                                                          \
+    if (is_push == true) {                                                     \
+        rc++;                                                                  \
+        for (size_t i = 0; i < count; i++)                                     \
+            *(&x + i) = *(&y + i);                                             \
+        pushAndroidParaTag(tag);                                               \
+    }
+
+    int32_t fps_range[2] = {0}, max_fps_range[2] = {0};
+    fps_range[0] = min;
+    fps_range[1] = max;
+
+    if (s_setting[mCameraId].callback_size.width ==
+            largest_picture_size[mCameraId].stream_sizes_tbl.width) {
+        switch (largest_picture_size[mCameraId].stream_min_duration) {
+        case 33331760:
+            max_fps_range[0] = 30;
+            max_fps_range[1] = 30;
+            break;
+        case 41666666:
+            max_fps_range[0] = 24;
+            max_fps_range[1] = 24;
+            break;
+        case 50000000:
+            max_fps_range[0] = 20;
+            max_fps_range[1] = 20;
+            break;
+        case 66666670:
+            max_fps_range[0] = 15;
+            max_fps_range[1] = 15;
+            break;
+        case 100000000:
+            max_fps_range[0] = 10;
+            max_fps_range[1] = 10;
+            break;
+        default:
+            break;
+        }
+
+        if (fps_range[0] > max_fps_range[0]) {
+            fps_range[0] = max_fps_range[0];
+            fps_range[1] = max_fps_range[1];
+        }
+    }
+
+    HAL_LOGV("id %u, AE target fps [%d, %d], fps range [%d, %d]", mCameraId,
+            s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
+            s_setting[mCameraId].controlInfo.ae_target_fps_range[1],
+            fps_range[0], fps_range[1]);
+
+    GET_VALUE_IF_DIF(
+            s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
+            fps_range[0], ANDROID_CONTROL_AE_TARGET_FPS_RANGE, 2);
+
+#undef GET_VALUE_IF_DIF
 }
 
 int SprdCamera3Setting::checkTouchAreaUpdate(int32_t *am_area,

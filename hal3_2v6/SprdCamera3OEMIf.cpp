@@ -2253,6 +2253,10 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
              fps_param.video_mode);
 }
 
+void SprdCamera3OEMIf::setPreviewFpsWrapper() {
+    setPreviewFps(mRecordingMode);
+}
+
 void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
     CONTROL_Tag controlInfo;
     uint32_t state;

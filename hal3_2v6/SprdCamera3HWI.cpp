@@ -2316,6 +2316,11 @@ void SprdCamera3HWI::setVisibleRegion(uint32_t serial, int32_t region[4]) {
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_VISIBLE_REGION, &info, NULL);
 }
 
+void SprdCamera3HWI::setFpsRange(int min, int max) {
+    mSetting->setFpsRange(min, max);
+    mOEMIf->setPreviewFpsWrapper();
+}
+
 void SprdCamera3HWI::setGlobalZoomRatio(float ratio) {
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO, &ratio, NULL);
 }

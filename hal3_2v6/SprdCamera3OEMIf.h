@@ -297,6 +297,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int camera_ioctrl(int cmd, void *param1, void *param2);
     void setMimeType(int type);
 
+    void setPreviewFpsWrapper();
+
   public:
     uint32_t isPreAllocCapMem();
 
