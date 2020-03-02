@@ -36,6 +36,9 @@ extern "C" {
 		cnr_param_t *cnr3Param;   //CNR3.0
 		int width;
 		int height;
+		float zoom_ratio;
+		int ynr_ration_base;
+		int cnr_ration_base;
 	} sprd_yuv_denoise_param_t;
 
 	/*
@@ -109,6 +112,7 @@ extern "C" {
     cnr_param_t *cnr3Param;   //CNR3.0
     int width;
     int height;
+    float zoom_ratio;
   } sprd_yuv_denoise_param_t;
 
   /*

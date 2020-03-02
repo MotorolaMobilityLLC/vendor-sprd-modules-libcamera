@@ -16058,7 +16058,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                       param_info.zoomRatio, param_info.fullsize_height,
                       param_info.fullsize_width, param_info.input_height, param_info.input_width,
                       param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
-
+                  cxt->zoom_ratio = param_info.zoomRatio;
                   if (handle->ops.isp_ioctl) {
                            struct common_isp_cmd_param param;
                            param.camera_id = camera_id;

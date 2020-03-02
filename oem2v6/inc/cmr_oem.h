@@ -420,6 +420,8 @@ struct camera_context {
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
     cmr_uint is_high_res_mode;
+    /*for ynr room ratio*/
+        float zoom_ratio;
 };
 
 struct prev_ai_scene_info {

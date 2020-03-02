@@ -144,6 +144,8 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     Denoise_Param denoiseParam;
     YNR_Param ynrParam;
     CNR_Parameter cnrParam;
+    float ratio;
+
     cmr_bzero(&imgBuffer, sizeof(denoise_buffer));
     cmr_bzero(&denoiseParam, sizeof(Denoise_Param));
     cmr_bzero(&ynrParam, sizeof(YNR_Param));
@@ -188,7 +190,16 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
             goto exit;
         }
         memcpy(&ynrParam, &isp_cmd_parm.ynr_param, sizeof(YNR_Param));
+        ratio =((float)ynrParam.ynr_Radius)/((float)ynrParam.ynr_imgCenterX*2);
+        CMR_LOGD("input radius =%d,center x =%d ,center y =%d",ynrParam.ynr_Radius,ynrParam.ynr_imgCenterX,ynrParam.ynr_imgCenterY);
+        ynrParam.ynr_Radius = ratio * in->src_frame.size.width*cxt->zoom_ratio;
+        if(ynrParam.ynr_Radius > in->src_frame.size.width) {
+            ynrParam.ynr_Radius = in->src_frame.size.width;
+        }
+        ynrParam.ynr_imgCenterX = in->src_frame.size.width/2;
+        ynrParam.ynr_imgCenterY = in->src_frame.size.height/2;
         denoiseParam.ynrParam = &ynrParam;
+        CMR_LOGD("output zoom_ratio = %f,center x =%d,center y =%d,radius =%d",cxt->zoom_ratio,ynrParam.ynr_imgCenterX,ynrParam.ynr_imgCenterY,ynrParam.ynr_Radius);
         if (cxt->nr_flag == 3) {
             ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
                                         &isp_cmd_parm);

@@ -10312,6 +10312,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 }
             }
         }
+
         ret = cmr_preview_update_zoom(cxt->prev_cxt.preview_handle,
                                       cxt->camera_id,
                                       (struct cmr_zoom_param *)param);
@@ -10329,6 +10330,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 CMR_LOGE("failed to set zoom factor to isp  %ld", ret);
             }
         }
+        cxt->zoom_ratio = zoom_param->zoom_info.zoom_ratio;
         break;
     }
     case CAMERA_PARAM_ISO:
