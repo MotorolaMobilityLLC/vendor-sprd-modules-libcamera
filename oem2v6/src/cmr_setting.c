@@ -3204,10 +3204,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                             cmr_sem_post(&cpt->preflash_sem);
                         }
                     } else {
-#ifdef CONFIG_ISP_2_7
                         setting_isp_flash_notify(cpt, parm, ISP_FLASH_CLOSE);
                         setting_isp_wait_notice(cpt);
-#endif
                         hal_param->flash_param.has_preflashed = 0;
                         hal_param->flash_param.last_preflash_time = 0;
                         hal_param->flash_param.flash_status =
