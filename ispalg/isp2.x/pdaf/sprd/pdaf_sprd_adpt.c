@@ -294,9 +294,9 @@ cmr_s32 pdaf_otp_info_parser(struct pdaf_ctrl_init_in * in_p)
 				module_info_ptr = in_p->otp_info_ptr->dual_otp.master_module_info;
 				ISP_LOGV("pass pdaf otp, dual cam master");
 			} else {
-				pdaf_otp_info_ptr = NULL;
-				module_info_ptr = NULL;
-				ISP_LOGV("dual cam slave pdaf is NULL");
+				pdaf_otp_info_ptr = in_p->otp_info_ptr->dual_otp.slave_pdaf_info;
+				module_info_ptr = in_p->otp_info_ptr->dual_otp.slave_module_info;
+				ISP_LOGV("pass pdaf otp, dual cam slave");
 			}
 		}
 	} else {
@@ -641,8 +641,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_s32 dBuf_height = 0;
 	cmr_s32 *pPD_left = NULL;
 	cmr_s32 *pPD_right = NULL;
-	cmr_s32 *pPD_left_rotation = NULL;
-	cmr_s32 *pPD_right_rotation = NULL;
 	cmr_s32 *pPD_left_final = NULL;
 	cmr_s32 *pPD_right_final = NULL;
 	cmr_s32 *pPD_left_reorder = NULL;
@@ -660,10 +658,10 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	cmr_s32 i=0;
 	cmr_s32 j=0;
-	cmr_u8 *ucOTPBuffer = NULL;
-	cmr_s32 otp_orientation = 0;
-	cmr_u8 OTPSensorStatus = 0;
 	cmr_s32 area_index;
+	cmr_s32 pixel_num_x = 0;
+	cmr_s32 pixel_num_y = 0;
+	cmr_s32 pixel_num = 0;
 	char value[PROPERTY_VALUE_MAX];
 	void *pInPhaseBuf_left = NULL;
 	void *pInPhaseBuf_right = NULL;
@@ -731,6 +729,11 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		dRectW = ROI_Width;
 		dRectH = ROI_Height;
 	}
+
+	pixel_num_x = ROI_Width / cxt->pd_gobal_setting.pd_pair_w;
+	pixel_num_y = ROI_Height / cxt->pd_gobal_setting.pd_pair_h;
+	pixel_num = pixel_num_x * pixel_num_y;
+
 	property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
 	if(atoi(value)) {
 		if((PD_FRAME_ID % 30) ==0){
@@ -738,91 +741,43 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			#define MLOG_FILE_NAME_SIZE 200
 			char file_name_r[MLOG_FILE_NAME_SIZE] = {0};
 			char file_name_l[MLOG_FILE_NAME_SIZE] = {0};
-			cmr_s32 temp_int = 0;
-			cmr_s16 temp_short = 0;
 			cmr_s32 *pTempBuf = NULL;
-			cmr_s32 tp3index = 0, count = 0;
+			cmr_s32 dumpNum = (pixel_num * 4) / 3;
 			FILE *fp = NULL;
-			sprintf(file_name_l, CAMERA_DATA_FILE"/pdaf_L_tp3_128X192_%d.raw", PD_FRAME_ID);
-			sprintf(file_name_r, CAMERA_DATA_FILE"/pdaf_R_tp3_128X192_%d.raw", PD_FRAME_ID);
+			sprintf(file_name_l, CAMERA_DATA_FILE"/pdaf_L_tp3_%dX%d_%d.raw", pixel_num_x, pixel_num_y, PD_FRAME_ID);
+			sprintf(file_name_r, CAMERA_DATA_FILE"/pdaf_R_tp3_%dX%d_%d.raw", pixel_num_x, pixel_num_y, PD_FRAME_ID);
 
 			pTempBuf = ((pInPhaseBuf_left == NULL) ? NULL : pInPhaseBuf_left);
 			fp = fopen(file_name_l, "wb+");
 			if(fp != NULL && pTempBuf != NULL){
-				while(tp3index != (33024/4)){	//pdaf raw total of 33024 bytes, storing 3 pixels every four bytes
-					temp_int = *pTempBuf;
-					for(count = 0; count < 3; count++){
-						if(0 == count)
-							temp_short = (temp_int & 0x3ff);	//extract the first pixel
-						else if(1 == count)
-							temp_short = ((temp_int >> 10) & 0x3ff); //extract the second pixel
-						else
-							temp_short = ((temp_int >> 20) & 0x3ff); //extract the third pixel
-
-						fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
-						temp_short = 0;
-					}
-					temp_int = 0;
-					pTempBuf++;
-					tp3index++;
-				}
+				fwrite(pTempBuf, sizeof(cmr_u8), dumpNum, fp);
 			}
 			if(fp != NULL){
 				fclose(fp);
 			}
 			pTempBuf = NULL;
-			tp3index = 0;
 			fp = NULL;
 
 			pTempBuf = ((pInPhaseBuf_right == NULL) ? NULL : pInPhaseBuf_right);
 			fp = fopen(file_name_r, "wb+");
 			if(fp != NULL && pTempBuf != NULL){
-				while(tp3index != (33024/4)){
-					temp_int = *pTempBuf;
-					for(count = 0; count < 3; count++){
-						if(0 == count)
-							temp_short = (temp_int & 0x3ff);
-						else if(1 == count)
-							temp_short = ((temp_int >> 10) & 0x3ff);
-						else
-							temp_short = ((temp_int >> 20) & 0x3ff);
-
-						fwrite(&temp_short, sizeof(cmr_s16), 1, fp);
-						temp_short = 0;
-					}
-					temp_int = 0;
-					pTempBuf++;
-					tp3index++;
-				}
+				fwrite(pTempBuf, sizeof(cmr_u8), dumpNum, fp);
 			}
 			if(fp != NULL){
 				fclose(fp);
 			}
 			fp = NULL;
 			pTempBuf = NULL;
-			tp3index = 0;
 		}
 		PD_FRAME_ID++;
 	}
 
-	ucOTPBuffer = (cmr_u8 *) cxt->pd_gobal_setting.OTPBuffer;
+	ISP_LOGV("PDALGO Converter. Sensor[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, cxt->pd_gobal_setting.dSensorMode);
 
-	//Check OTP orientation
-	if (ucOTPBuffer != NULL) {
-		OTPSensorStatus = (*(ucOTPBuffer - 2936) & 0x0C) >> 2;	//0x0B8C - 0x0014 = 0xB78 = 2936
-		if (OTPSensorStatus == 3) {
-			otp_orientation = 1;
-		}
-	}
-
-	ISP_LOGV("PDALGO Converter. Sensor[%d] OTP[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, otp_orientation, cxt->pd_gobal_setting.dSensorMode);
-
-	pPD_left  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
-	pPD_right = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
-	pPD_left_rotation  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
-	pPD_right_rotation = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
-	pPD_left_reorder  = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
-	pPD_right_reorder = (cmr_s32 *)malloc(PD_PIXEL_NUM*sizeof(cmr_s32));
+	pPD_left  = (cmr_s32 *)malloc(pixel_num*sizeof(cmr_s32));
+	pPD_right = (cmr_s32 *)malloc(pixel_num*sizeof(cmr_s32));
+	pPD_left_reorder  = (cmr_s32 *)malloc(pixel_num*sizeof(cmr_s32));
+	pPD_right_reorder = (cmr_s32 *)malloc(pixel_num*sizeof(cmr_s32));
 
 	//For IMX258 Type2
 	pBufLeft_Type2 = (cmr_u16 *)malloc(PDAF_FULL_NUM_IMX258*sizeof(cmr_u16));
@@ -985,23 +940,14 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 
 	if( (cxt->pd_gobal_setting.dSensorMode != SENSOR_ID_3) && (cxt->pd_gobal_setting.dSensorMode != SENSOR_ID_4)) {
-	  ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, PD_PIXEL_NUM, PD_PIXEL_NUM);
+	  ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, pixel_num, pixel_num);
 	}
 	else{
 		ISP_LOGV("PDALGO No need Converter. SensorID[%d]", cxt->pd_gobal_setting.dSensorMode);
 	}
 
-	if (cxt->pd_gobal_setting.dSensorSetting != otp_orientation) {
-		for (i = 0; i < PD_PIXEL_NUM; i++) {
-			pPD_left_rotation[i] = pPD_left[PD_PIXEL_NUM - i - 1];
-			pPD_right_rotation[i] = pPD_right[PD_PIXEL_NUM - i - 1];
-		}
-		pPD_left_final = pPD_left_rotation;
-		pPD_right_final = pPD_right_rotation;
-	} else {
-		pPD_left_final = pPD_left;
-		pPD_right_final = pPD_right;
-	}
+	pPD_left_final = pPD_left;
+	pPD_right_final = pPD_right;
 
 	//Phase Pixel Reorder: for 3L8
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_2) {
@@ -1099,8 +1045,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	free(pPD_left);
 	free(pPD_right);
-	free(pPD_left_rotation);
-	free(pPD_right_rotation);
 	free(pPD_left_reorder);
 	free(pPD_right_reorder);
 	free(pBufLeft_Type2);
