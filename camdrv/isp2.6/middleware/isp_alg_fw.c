@@ -1966,6 +1966,7 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	struct dcam_dev_hist_info *hist_info;
 	struct img_rect win;
+	struct hist_param param;
 
 	cxt->bayerhist_update = 1;
 
@@ -1975,6 +1976,16 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 	win.width = hist_info->bayer_hist_endx - hist_info->bayer_hist_stx;
 	win.height = hist_info->bayer_hist_endy - hist_info->bayer_hist_sty;
 	isp_br_ioctrl(cxt->sensor_role, SET_HIST_WIN, &win, NULL);
+
+	// TODO when below API works properly, remove above one
+	param.win.st_x = hist_info->bayer_hist_stx;
+	param.win.st_y = hist_info->bayer_hist_sty;
+	param.win.width = hist_info->bayer_hist_endx - hist_info->bayer_hist_stx;
+	param.win.height = hist_info->bayer_hist_endy - hist_info->bayer_hist_sty;
+	param.idx = statis_info->frame_id;
+	param.sec = statis_info->sec;
+	param.usec = statis_info->usec;
+	isp_br_ioctrl(cxt->sensor_role, SET_HIST_PARAM, &param, NULL);
 
 	ptr = (cmr_u64 *)(statis_info->uaddr + STATIS_HIST_HEADER_SIZE);
 
