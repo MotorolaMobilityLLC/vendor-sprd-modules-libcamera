@@ -11514,6 +11514,7 @@ void SprdCamera3OEMIf::EisPreview_init() {
     mPreviewParam.dst_w = (uint16_t)mPreviewWidth * 5 / 6;
     mPreviewParam.dst_h = (uint16_t)mPreviewHeight * 5 / 6;
     mPreviewParam.method = 0;
+    mPreviewParam.camera_id = mCameraId;
     mPreviewParam.wdx = 0;
     mPreviewParam.wdy = 0;
     mPreviewParam.wdz = 0;
@@ -11562,6 +11563,7 @@ void SprdCamera3OEMIf::EisVideo_init() {
     mVideoParam.dst_w = (uint16_t)mVideoWidth;
     mVideoParam.dst_h = (uint16_t)mVideoHeight;
     mVideoParam.method = 1;
+    mVideoParam.camera_id = mCameraId;
     mVideoParam.wdx = 0;
     mVideoParam.wdy = 0;
     mVideoParam.wdz = 0;
