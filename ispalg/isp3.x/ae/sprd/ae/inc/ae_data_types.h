@@ -452,6 +452,8 @@ struct ae_face_data_type {
 	cmr_s32 pose;	/* face pose: frontal, half-profile, full-profile */
 	cmr_u32 face_lum;
 	cmr_s32 angle;
+	cmr_s32 yaw_angle;
+	cmr_s32 roll_angle;
 };
 
 struct ae_ev_setting_param {
