@@ -6746,43 +6746,17 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 
 	/*start read front or rear flash tuning param */
 	if (1 == cxt->camera_id) {
-		if (0 != cxt->cur_param->flash_swith_param.flash_open_thr)
-			cxt->flash_swith.led_thr_down = cxt->cur_param->flash_swith_param.flash_open_thr;
-		else
-			cxt->flash_swith.led_thr_down = 250;
-		if (0 != cxt->cur_param->flash_swith_param.flash_close_thr)
-			cxt->flash_swith.led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr;
-		else
-			cxt->flash_swith.led_thr_up = 400;
+		cxt->flash_swith.led_thr_down = cxt->cur_param->flash_swith_param.flash_open_thr ? cxt->cur_param->flash_swith_param.flash_open_thr : 250 ;
+		cxt->flash_swith.led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr ? cxt->cur_param->flash_swith_param.flash_close_thr : 400 ;
 
-		if (0 != cxt->cur_param->threednr_ctrl_param.thr_down)
-			cxt->threednr_en_thrd.thr_down = cxt->cur_param->threednr_ctrl_param.thr_down;
-		else
-			cxt->threednr_en_thrd.thr_down = 250;
+		cxt->threednr_en_thrd.thr_down = cxt->cur_param->threednr_ctrl_param.thr_down ? cxt->cur_param->threednr_ctrl_param.thr_down : 250;
+		cxt->threednr_en_thrd.thr_up = cxt->cur_param->threednr_ctrl_param.thr_up ? cxt->cur_param->threednr_ctrl_param.thr_up : 500;
+	} else {
+		cxt->flash_swith.led_thr_down = cxt->cur_param->flash_swith_param.flash_open_thr ? cxt->cur_param->flash_swith_param.flash_open_thr : 380 ;
+		cxt->flash_swith.led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr ? cxt->cur_param->flash_swith_param.flash_close_thr : 480 ;
 
-		if (0 != cxt->cur_param->threednr_ctrl_param.thr_up)
-			cxt->threednr_en_thrd.thr_up = cxt->cur_param->threednr_ctrl_param.thr_up;
-		else
-			cxt->threednr_en_thrd.thr_up = 500;
-	}
-	if (0 == cxt->camera_id) {
-		if (0 != cxt->cur_param->flash_swith_param.flash_open_thr)
-			cxt->flash_swith.led_thr_down = cxt->cur_param->flash_swith_param.flash_open_thr;
-		else
-			cxt->flash_swith.led_thr_down = 380;
-		if (0 != cxt->cur_param->flash_swith_param.flash_close_thr)
-			cxt->flash_swith.led_thr_up = cxt->cur_param->flash_swith_param.flash_close_thr;
-		else
-			cxt->flash_swith.led_thr_up = 480;
-		if (0 != cxt->cur_param->threednr_ctrl_param.thr_down)
-			cxt->threednr_en_thrd.thr_down = cxt->cur_param->threednr_ctrl_param.thr_down;
-		else
-			cxt->threednr_en_thrd.thr_down = 380;
-
-		if (0 != cxt->cur_param->threednr_ctrl_param.thr_up)
-			cxt->threednr_en_thrd.thr_up = cxt->cur_param->threednr_ctrl_param.thr_up;
-		else
-			cxt->threednr_en_thrd.thr_up = 480;
+		cxt->threednr_en_thrd.thr_down = cxt->cur_param->threednr_ctrl_param.thr_down ? cxt->cur_param->threednr_ctrl_param.thr_down : 380;
+		cxt->threednr_en_thrd.thr_up = cxt->cur_param->threednr_ctrl_param.thr_up ? cxt->cur_param->threednr_ctrl_param.thr_up : 480;
 	}
 	property_get("persist.vendor.cam.isp.ae.threednr_thrddown", ae_property, "");
 	if (atoi(ae_property) != 0) {
