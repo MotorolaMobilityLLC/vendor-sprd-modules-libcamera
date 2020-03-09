@@ -35,6 +35,7 @@ LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprd_portrait_cap.so
 LOCAL_SHARED_LIBRARIES := libSegLiteMNN libSegLite libc libdl liblog libm libz
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_ALLOW_UNDEFINED_SYMBOLS := true
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

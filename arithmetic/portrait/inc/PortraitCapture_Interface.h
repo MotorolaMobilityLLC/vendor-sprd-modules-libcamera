@@ -65,7 +65,7 @@ struct SGMParamStruct {
 typedef struct {
     int libLevel;
     int productInfo; // Product/Platform ID
-    int calcDepth; // 0, not calc, 1 calc
+    int calcDepth; // 0, not depth mode or used in gallary, 1 depth mode
 
     // single capture
     int width;  // image width
@@ -127,6 +127,10 @@ JNIEXPORT int sprd_portrait_capture_process(void *handle,
                                             PortaitCapProcParams *wParams,
                                             InoutYUV *yuvData,
                                             void *outWeightMap, int isCapture);
+JNIEXPORT int sprd_portrait_capture_process_lpt(
+    void *handle, ProcDepthInputMap *depthInputData,
+    PortaitCapProcParams *procParams, InoutYUV *yuvData, void *WeightMap,
+    int isCapture, void *WeightMask);
 JNIEXPORT int sprd_portrait_capture_get_mask_info(void *handle,
                                                   unsigned int *width,
                                                   unsigned int *height,
