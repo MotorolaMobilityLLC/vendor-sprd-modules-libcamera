@@ -1297,9 +1297,9 @@ exit:
     return num;
 }
 
-bool SprdCamera3Setting::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
+bool SprdCamera3Setting::isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo) {
     for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
-        if (sprddefInfo.perfect_skin_level[i] != 0)
+        if (sprddefInfo->perfect_skin_level[i] != 0)
             return true;
     }
     return false;
@@ -5214,7 +5214,7 @@ int SprdCamera3Setting::updateWorkParameters(
              "android zsl enable = %d,is_smile_capture=%d",
              mCameraId, s_setting[mCameraId].lensInfo.focus_distance,
              s_setting[mCameraId].controlInfo.ae_precap_trigger,
-             isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
+             isFaceBeautyOn(&s_setting[mCameraId].sprddefInfo),
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
              s_setting[mCameraId].flashInfo.mode,
              s_setting[mCameraId].controlInfo.ae_lock,
@@ -5626,7 +5626,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        1);
     if (ANDROID_STATISTICS_FACE_DETECT_MODE_OFF !=
             (s_setting[mCameraId].statisticsInfo.face_detect_mode) ||
-        (isFaceBeautyOn(s_setting[mCameraId].sprddefInfo))) {
+        (isFaceBeautyOn(&s_setting[mCameraId].sprddefInfo))) {
 #define MAX_ROI 10
         FACE_Tag *faceDetectionInfo =
             (FACE_Tag *)&(s_setting[mCameraId].faceInfo);
@@ -6533,9 +6533,17 @@ int SprdCamera3Setting::setSPRDDEFTag(SPRD_DEF_Tag sprddefInfo) {
     return 0;
 }
 
+/* please use getSPRDDEFTagPTR
+ * less memory copy
+ * only change the variable which use
+ */
 int SprdCamera3Setting::getSPRDDEFTag(SPRD_DEF_Tag *sprddefInfo) {
     *sprddefInfo = s_setting[mCameraId].sprddefInfo;
     return 0;
+}
+
+SPRD_DEF_Tag *SprdCamera3Setting::getSPRDDEFTagPTR(void) {
+    return &s_setting[mCameraId].sprddefInfo;
 }
 
 int SprdCamera3Setting::setGEOMETRICTag(GEOMETRIC_Tag geometricInfo) {

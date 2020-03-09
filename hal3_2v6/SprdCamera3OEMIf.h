@@ -223,7 +223,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setCaptureReprocessMode(bool mode, uint32_t width, uint32_t height);
 
     void antiShakeParamSetup();
-    bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+    bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     bool mManualExposureEnabled;
     char *mFrontFlash;
 

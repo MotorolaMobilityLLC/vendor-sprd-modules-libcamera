@@ -127,6 +127,8 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mCurFrameTimeStamp = 0;
     mMasterId = 0;
     mHighResNonzsl = 0;
+    // get property for high res
+    getHighResZslSetting();
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -583,8 +585,7 @@ int SprdCamera3HWI::configureStreams(
     int callbackFormat = 0, yuv2Format = 0, captureFormat = 0;
     int previewStreamType = 0, videoStreamType = 0;
     int callbackStreamType = 0, yuv2StreamType = 0, captureStreamType = 0;
-    SPRD_DEF_Tag sprddefInfo;
-    memset(&sprddefInfo, 0x00, sizeof(SPRD_DEF_Tag));
+    SPRD_DEF_Tag *sprddefInfo;
     // for two HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
     uint32_t alreadyHasPreviewStream = 0;
     // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
@@ -809,10 +810,10 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.yuv2.stream = newStream;
             }
 
-            mSetting->getSPRDDEFTag(&sprddefInfo);
+            sprddefInfo = mSetting->getSPRDDEFTagPTR();
             if (preview_size.width > 3264 && preview_size.height > 2448)
                 SprdCamera3RegularChannel::kMaxBuffers = 2;
-            else if (sprddefInfo.slowmotion > 1) {
+            else if (sprddefInfo->slowmotion > 1) {
                 SprdCamera3RegularChannel::kMaxBuffers = 24;
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
@@ -821,7 +822,7 @@ int SprdCamera3HWI::configureStreams(
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
             } else
                 SprdCamera3RegularChannel::kMaxBuffers = 4;
-            HAL_LOGD("slowmotion=%d, kMaxBuffers=%d", sprddefInfo.slowmotion,
+            HAL_LOGD("slowmotion=%d, kMaxBuffers=%d", sprddefInfo->slowmotion,
                      SprdCamera3RegularChannel::kMaxBuffers);
 
             newStream->max_buffers = SprdCamera3RegularChannel::kMaxBuffers;
@@ -1123,6 +1124,28 @@ void SprdCamera3HWI::getLogLevel() {
         gHALLogLevel = (uint32_t)val;
     }
 }
+/* If need always zsl or non-zsl 4in1, please setprop
+ * persist.vendor.cam.back.high.res.zsl:1:zsl,2:nonzsl,other:detect
+ * persist.vendor.cam.front.high.res.zsl
+ */
+void SprdCamera3HWI::getHighResZslSetting(void) {
+    char value[PROPERTY_VALUE_MAX];
+    int tmp;
+
+    if (mCameraId == 0) // back main
+        property_get("persist.vendor.cam.back.high.res.zsl", value, "0");
+    else if (mCameraId == 1)
+        property_get("persist.vendor.cam.front.high.res.zsl", value, "0");
+
+    mHighResFixZsl = atoi(value);
+}
+
+void SprdCamera3HWI::checkHighResZslSetting(uint32_t *ambient_highlight) {
+        if (mHighResFixZsl == 1) // lowlight~zsl
+            *ambient_highlight = 0;
+        else if (mHighResFixZsl == 2) // highlight~nonzsl
+            *ambient_highlight = 1;
+}
 
 int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     ATRACE_CALL();
@@ -1142,7 +1165,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     PendingRequestInfo pendingRequest;
     FLASH_Tag flashInfo;
     CONTROL_Tag controlInfo;
-    SPRD_DEF_Tag sprddefInfo;
+    SPRD_DEF_Tag *sprddefInfo;
     REQUEST_Tag requestInfo;
     struct fin1_info fin1_info;
 
@@ -1165,7 +1188,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     meta = request->settings;
     mMetadataChannel->request(meta);
 
-    mSetting->getSPRDDEFTag(&sprddefInfo);
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
     mSetting->getCONTROLTag(&controlInfo);
     mSetting->getFLASHTag(&flashInfo);
     captureIntent = controlInfo.capture_intent;
@@ -1231,7 +1254,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
-        if (sprddefInfo.high_resolution_mode == 1 && mHighResNonzsl == 1) {
+        if (sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) {
             int i = 600, tmp;
             // high res, preview need wait nonzsl capture finish(sensor stream off)
             mHighResNonzsl = 0; // once per non-zsl capture
@@ -1250,7 +1273,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mStreamConfiguration.snapshot.status == CONFIGURED) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
                 // when sensor_rotation is 1 for volte, volte dont need capture
-                if (sprddefInfo.sensor_rotation == 0) {
+                if (sprddefInfo->sensor_rotation == 0) {
                     mOEMIf->setStreamOnWithZsl();
                 }
                 mFirstRegularRequest = 1;
@@ -1314,7 +1337,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 #endif
                 {
                     // when sensor_rotation is 1 for volte, volte dont need capture
-                    if (sprddefInfo.sensor_rotation == 0) {
+                    if (sprddefInfo->sensor_rotation == 0) {
                         mOEMIf->setStreamOnWithZsl();
                     }
                     mFirstRegularRequest = 1;
@@ -1397,20 +1420,19 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         break;
 
     case ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE:
-        if (sprddefInfo.high_resolution_mode == 1) {
+        if (sprddefInfo->high_resolution_mode == 1) {
             camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
-            if (sprddefInfo.fin1_highlight_mode != fin1_info.ambient_highlight) {
-                mSetting->getSPRDDEFTag(&sprddefInfo);
-                sprddefInfo.fin1_highlight_mode = fin1_info.ambient_highlight;
-                mSetting->setSPRDDEFTag(sprddefInfo);
+            checkHighResZslSetting(&fin1_info.ambient_highlight);
+            if (sprddefInfo->fin1_highlight_mode != fin1_info.ambient_highlight) {
+                sprddefInfo->fin1_highlight_mode = fin1_info.ambient_highlight;
             }
-            mHighResNonzsl = !!sprddefInfo.fin1_highlight_mode;
+            mHighResNonzsl = !!sprddefInfo->fin1_highlight_mode;
             HAL_LOGD("high res non-zsl %d", mHighResNonzsl);
         }
 
         // raw capture need non-zsl for now
         if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode() ||
-            (sprddefInfo.high_resolution_mode && sprddefInfo.fin1_highlight_mode)) {
+            (sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode)) {
             mPictureRequest = 1;
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                    mFrameNum);
@@ -1489,7 +1511,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
         mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
     } else {
-        if((sprddefInfo.high_resolution_mode && sprddefInfo.fin1_highlight_mode)&&
+        if((sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode)&&
             captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)
             mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE ;
         else

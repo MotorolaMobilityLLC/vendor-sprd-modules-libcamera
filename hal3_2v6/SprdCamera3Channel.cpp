@@ -64,9 +64,9 @@ SprdCamera3Channel::SprdCamera3Channel(SprdCamera3OEMIf *oem_if,
 
 SprdCamera3Channel::~SprdCamera3Channel() {}
 
-bool SprdCamera3Channel::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
+bool SprdCamera3Channel::isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo) {
     for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
-        if (sprddefInfo.perfect_skin_level[i] != 0)
+        if (sprddefInfo->perfect_skin_level[i] != 0)
             return true;
     }
     return false;
@@ -168,16 +168,16 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 #ifdef CONFIG_CAMERA_EIS
     // stream reserved[0] used for save eis crop rect.
     EIS_CROP_Tag eiscrop_Info;
-    SPRD_DEF_Tag sprddefInfo;
+    SPRD_DEF_Tag *sprddefInfo;
     CONTROL_Tag controlInfo;
-    mSetting->getSPRDDEFTag(&sprddefInfo);
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
     mSetting->getCONTROLTag(&controlInfo);
     memset(&eiscrop_Info, 0x00, sizeof(EIS_CROP_Tag));
     // before used,set reserved[0] to null
     stream->reserved[0] = NULL;
     if (ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ==
             controlInfo.capture_intent &&
-        sprddefInfo.sprd_eis_enabled &&
+        sprddefInfo->sprd_eis_enabled &&
         stream->data_space == HAL_DATASPACE_UNKNOWN) {
         mSetting->getEISCROPTag(&eiscrop_Info);
         stream->reserved[0] = (void *)&eiscrop_Info;
@@ -830,7 +830,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
 
 int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
     CONTROL_Tag controlInfo;
-    SPRD_DEF_Tag sprddefInfo;
+    SPRD_DEF_Tag *sprddefInfo;
     JPEG_Tag jpegInfo;
     STATISTICS_Tag statisticsInfo;
     int tag = 0;
@@ -905,7 +905,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             break;
         case ANDROID_STATISTICS_FACE_DETECT_MODE:
             HAL_LOGV("FACE DECTION");
-            mSetting->getSPRDDEFTag(&sprddefInfo);
+            sprddefInfo = mSetting->getSPRDDEFTagPTR();
             mSetting->getSTATISTICSTag(&statisticsInfo);
             if (statisticsInfo.face_detect_mode ==
                     ANDROID_STATISTICS_FACE_DETECT_MODE_OFF &&

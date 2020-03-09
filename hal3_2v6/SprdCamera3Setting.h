@@ -658,6 +658,7 @@ class SprdCamera3Setting {
 
     int setSPRDDEFTag(SPRD_DEF_Tag sprddefInfo);
     int getSPRDDEFTag(SPRD_DEF_Tag *sprddefInfo);
+    SPRD_DEF_Tag *getSPRDDEFTagPTR(void);
 
     int setGEOMETRICTag(GEOMETRIC_Tag geometricInfo);
     int getGEOMETRICTag(GEOMETRIC_Tag *geometricInfo);
@@ -772,7 +773,7 @@ class SprdCamera3Setting {
                            int is_mirror, struct img_size *preview_size,
                            struct img_rect *preview_rect);
     static int GetFovParam(int32_t cameraId);
-    bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+    bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     void autotrackingCoordinateConvert(int32_t *area);
     static int resetFeatureStatus(const char* fea_ip,const char* fea_eb);
 };
