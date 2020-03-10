@@ -19,7 +19,7 @@
  *
  */
 
-#define LOG_TAG "9850ka_gc2385" 
+#define LOG_TAG "gc2385_wj_1_9863a1c10"
 
 #include "sensor_gc2385_mipi_raw.h"
 

@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "hi846_wide_sensor_drv"
+#define LOG_TAG "hi846_gj_1_9863a1c10"
 
 #if defined(HI846_WIDE_MIPI_4LANE)
 #include "sensor_hi846_wide_mipi_raw_4lane.h"

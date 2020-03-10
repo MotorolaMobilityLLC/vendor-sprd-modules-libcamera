@@ -2855,6 +2855,10 @@ static cmr_int general_otp_drv_delete(cmr_handle otp_drv_handle) {
     return sensor_otp_drv_delete(otp_drv_handle);
 }
 
+#ifdef CONFIG_CAMERA_SENSOR_OTP
+#include "sensor_otp/hi846_gj_1_sensor_otp_drv.c"
+#endif
+
 /*malloc buffer and read otp raw data from eeprom or bin file*/
 static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
@@ -2906,28 +2910,8 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
     property_get("persist.vendor.read.otp.from.bin", value2, "0");
     if (atoi(value2) == 1) {
         /* read otp from bin file */
-        if (otp_cxt->sensor_id == 0) {
-            /* including rear dual_master and single */
-            snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
-                     "rear_master");
-        } else if (otp_cxt->sensor_id == 2) {
-            /* including rear dual_slave */
-            snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
-                     "rear_slave");
-        } else if (otp_cxt->sensor_id == 1) {
-            /* including front dual_master and single */
-            snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
-                     "front_master");
-        } else if (otp_cxt->sensor_id == 3) {
-            /* including front dual_slave */
-            snprintf(otp_read_bin_path, sizeof(otp_read_bin_path),
-                     "%s%s_otp.bin", "/data/vendor/cameraserver/",
-                     "front_slave");
-        }
-
+        snprintf(otp_read_bin_path, sizeof(otp_read_bin_path), "%s%s%d_otp.bin",
+                 "/data/vendor/cameraserver/", "id", otp_cxt->sensor_id);
         OTP_LOGD("otp_data_read_path:%s", otp_read_bin_path);
         if (-1 == access(otp_read_bin_path, 0)) {
             OTP_LOGE("otp bin file don't exist");
@@ -2967,16 +2951,30 @@ static cmr_int general_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
             otp_cxt->otp_raw_data.buffer[0] = 0;
             otp_cxt->otp_raw_data.buffer[1] = 0;
             OTP_LOGD("i2c addr:0x%x", otp_cxt->eeprom_i2c_addr);
-            ret = hw_sensor_read_i2c(
-                otp_cxt->hw_handle, otp_cxt->eeprom_i2c_addr >> 1,
-                otp_cxt->otp_raw_data.buffer,
-                otp_cxt->eeprom_size << 16 | SENSOR_I2C_REG_16BIT);
-            if (OTP_CAMERA_SUCCESS != ret) {
-                OTP_LOGE("kernel read i2c error, failed to read eeprom");
-                goto exit;
-            } else {
-                OTP_LOGD("read otp raw data from eeprom successfully, size %d",
-                         otp_cxt->eeprom_size);
+
+#ifdef CONFIG_CAMERA_SENSOR_OTP
+            /* read otp from sensor */
+            if (!strcmp(otp_cxt->dev_name, "hi846_gj_1_2lane")) {
+                hi846_sensor_otp_read(otp_drv_handle);
+                OTP_LOGD(
+                    "read otp raw data from sensor %s successfully, size %d",
+                    otp_cxt->dev_name, otp_cxt->eeprom_size);
+            } else
+#endif
+            {
+                ret = hw_sensor_read_i2c(
+                    otp_cxt->hw_handle, otp_cxt->eeprom_i2c_addr >> 1,
+                    otp_cxt->otp_raw_data.buffer,
+                    otp_cxt->eeprom_size << 16 | SENSOR_I2C_REG_16BIT);
+
+                if (OTP_CAMERA_SUCCESS != ret) {
+                    OTP_LOGE("kernel read i2c error, failed to read eeprom");
+                    goto exit;
+                } else {
+                    OTP_LOGD(
+                        "read otp raw data from eeprom successfully, size %d",
+                        otp_cxt->eeprom_size);
+                }
             }
 
             if (!strcmp(otp_cxt->dev_name, "ov8856_shine") &&
@@ -2999,23 +2997,8 @@ exit:
         property_get("debug.camera.save.otp.raw.data", value3, "0");
         if (atoi(value3) == 1) {
             /* dump otp to bin file */
-            if (otp_cxt->sensor_id == 0) {
-                /* including rear dual_master and single */
-                snprintf(otp_dump_name, sizeof(otp_dump_name), "%s_%s",
-                         otp_cxt->dev_name, "rear_master");
-            } else if (otp_cxt->sensor_id == 2) {
-                /* including rear dual_slave */
-                snprintf(otp_dump_name, sizeof(otp_dump_name), "%s_%s",
-                         otp_cxt->dev_name, "rear_slave");
-            } else if (otp_cxt->sensor_id == 1) {
-                /* including front dual_master and single */
-                snprintf(otp_dump_name, sizeof(otp_dump_name), "%s_%s",
-                         otp_cxt->dev_name, "front_master");
-            } else if (otp_cxt->sensor_id == 3) {
-                /* including front dual_slave */
-                snprintf(otp_dump_name, sizeof(otp_dump_name), "%s_%s",
-                         otp_cxt->dev_name, "front_slave");
-            }
+            snprintf(otp_dump_name, sizeof(otp_dump_name), "%s_%s%d",
+                     otp_cxt->dev_name, "id", otp_cxt->sensor_id);
             if (sensor_otp_dump_raw_data(otp_cxt->otp_raw_data.buffer,
                                          otp_cxt->eeprom_size, otp_dump_name))
                 OTP_LOGE("dump otp bin file failed");
@@ -3066,19 +3049,7 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
     if (module_info->otp_version == OTP_1_1) {
         _general_otp_parse_module_data_1v1(otp_drv_handle);
 
-        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1) {
-            _general_otp_parse_af_1v1(otp_drv_handle);
-            _general_otp_parse_awb_1v1(otp_drv_handle);
-            _general_otp_parse_lsc_1v1(otp_drv_handle);
-            _general_otp_parse_pdaf_1v1(otp_drv_handle);
-            _general_otp_parse_xtalk_4in1_1v1(otp_drv_handle);
-            _general_otp_parse_dpc_4in1_1v1(otp_drv_handle);
-            _general_otp_parse_spw_1v1(otp_drv_handle);
-            _general_otp_parse_bokeh_1v1(otp_drv_handle);
-            _general_otp_parse_wt_1v1(otp_drv_handle);
-        }
-
-        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3) {
+        if (otp_cxt->sensor_id < 6) {
             _general_otp_parse_af_1v1(otp_drv_handle);
             _general_otp_parse_awb_1v1(otp_drv_handle);
             _general_otp_parse_lsc_1v1(otp_drv_handle);
@@ -3110,7 +3081,8 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
 #ifdef SENSOR_OV8856_TELE
         else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2)
 #else
-        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3)
+        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3 ||
+                 otp_cxt->sensor_id == 4 || otp_cxt->sensor_id == 5)
 #endif
         {
             _general_otp_parse_slave_af_1v0(otp_drv_handle);
@@ -3206,7 +3178,8 @@ static cmr_int general_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
 #ifdef SENSOR_OV8856_TELE
         else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2)
 #else
-        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3)
+        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3 ||
+                 otp_cxt->sensor_id == 4 || otp_cxt->sensor_id == 5)
 #endif
         {
             _general_otp_compatible_convert_slave(otp_drv_handle, param);

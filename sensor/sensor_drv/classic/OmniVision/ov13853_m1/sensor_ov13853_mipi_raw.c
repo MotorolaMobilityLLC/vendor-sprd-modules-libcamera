@@ -19,7 +19,7 @@
  *
  */
 
-#define LOG_TAG "ov13853_sharkl2" 
+#define LOG_TAG "ov13853_m1_9863a1c10"
 
 //#define MIPI_NUM_2LANE
  

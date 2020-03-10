@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "gc02m1b_sharkl2"
+#define LOG_TAG "gc02m1b_js_1_9863a1c10"
 
 
 #include "sensor_gc02m1b_mipi_raw.h"

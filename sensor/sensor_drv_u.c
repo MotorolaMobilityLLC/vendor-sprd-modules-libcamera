@@ -206,7 +206,8 @@ void *sensor_get_dev_cxt_Ex(cmr_u32 slot_id) {
     return (void *)sensor_cxt;
 }
 
-static cmr_int sensor_write_pdaf_info(struct sensor_pdaf_info phasePixelMap, char *name) {
+static cmr_int sensor_write_pdaf_info(struct sensor_pdaf_info phasePixelMap,
+                                      char *name) {
     FILE *fp = NULL;
     char pd_file_path[128];
     PhasePixel_MAP pixel_info_saved;
@@ -224,17 +225,18 @@ static cmr_int sensor_write_pdaf_info(struct sensor_pdaf_info phasePixelMap, cha
                 pixel_info_saved.block_start_row);
     SENSOR_LOGV("block_width is %u -->%u", pixel_info_saved.block_width,
                 pixel_info_saved.block_height);
-    for(int i = 0; i < pixel_info_saved.count; i++) {
+    for (int i = 0; i < pixel_info_saved.count; i++) {
         pixel_info_saved.pixel[i].rx = phasePixelMap.pd_pos_col[i];
         pixel_info_saved.pixel[i].ry = phasePixelMap.pd_pos_row[i];
         pixel_info_saved.pixel[i].phase_pos = phasePixelMap.pd_is_right[i];
-        SENSOR_LOGV("pixel coordinate is [%u, %u, %u]", pixel_info_saved.pixel[i].rx,
-            pixel_info_saved.pixel[i].ry, pixel_info_saved.pixel[i].phase_pos);
+        SENSOR_LOGV("pixel coordinate is [%u, %u, %u]",
+                    pixel_info_saved.pixel[i].rx, pixel_info_saved.pixel[i].ry,
+                    pixel_info_saved.pixel[i].phase_pos);
     }
     SENSOR_LOGV("finish prepare pd file with nam %s", name);
     sprintf(pd_file_path, "%s%s.bin", "/data/vendor/cameraserver/pd_", name);
     fp = fopen(pd_file_path, "wb+");
-    if(!fp) {
+    if (!fp) {
         SENSOR_LOGE("Cannot open file");
         goto exit;
     } else {
@@ -256,18 +258,21 @@ static cmr_int sensor_save_pdaf_info(struct sensor_drv_context *sensor_cxt) {
     struct sensor_ic_ops *sns_ops = PNULL;
     cmr_int ret = SENSOR_SUCCESS;
     memset(&property_value, 0, sizeof(property_value));
-    property_get("persist.vendor.cam.sensor.store.pdaf.file", property_value, "0");
+    property_get("persist.vendor.cam.sensor.store.pdaf.file", property_value,
+                 "0");
     SENSOR_LOGV("property_value is %s", property_value);
-    if(atoi(property_value) && sensor_cxt && sensor_cxt->static_info
-        && sensor_cxt->static_info->pdaf_supported) {
-        SENSOR_LOGV("support pdaf info is %u", sensor_cxt->static_info->pdaf_supported);
+    if (atoi(property_value) && sensor_cxt && sensor_cxt->static_info &&
+        sensor_cxt->static_info->pdaf_supported) {
+        SENSOR_LOGV("support pdaf info is %u",
+                    sensor_cxt->static_info->pdaf_supported);
         val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
         val.pval = &phasePixelMap;
         sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
-        if(sns_ops && !sns_ops->ext_ops[sns_cmd].ops
-            (sensor_cxt->sns_ic_drv_handle, (cmr_u32)&val)) {
+        if (sns_ops &&
+            !sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                           (cmr_u32)&val)) {
             name_of_sensor = sensor_cxt->xml_info->cfgPtr->sensor_name;
-            if(sensor_write_pdaf_info(phasePixelMap, name_of_sensor)) {
+            if (sensor_write_pdaf_info(phasePixelMap, name_of_sensor)) {
                 goto exit;
             }
         } else
@@ -1898,7 +1903,7 @@ sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt) {
     if (sn_4in1_info.is_4in1_supported) {
         sensor_type = FOURINONE_SW; // 4in1 sensor, need software remosaic
     } else if (sn_4in1_info.limited_4in1_width > 0 &&
-        sn_4in1_info.limited_4in1_height > 0) {
+               sn_4in1_info.limited_4in1_height > 0) {
         sensor_type = FOURINONE_HW; // 4in1 sensor, hardware remosaic
     } else {
         switch (sensor_format) {
@@ -3070,6 +3075,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     res_info_ptr = sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_RESOLUTION);
 
     hw_Sensor_SendRegTabToSensor(sensor_cxt->hw_drv_handle, &res_info_ptr[0]);
+    SENSOR_LOGD("CONFIG_CAMERA_SENSOR_OTP set mode SENSOR_MODE_COMMON_INIT");
 #endif
     sensor_af_init(sensor_cxt);
     sensor_otp_module_init(sensor_cxt);
@@ -3749,7 +3755,7 @@ int sensorGetRole(enum camera_module_id ModuleId) {
     return -1;
 }
 
-cmr_int sensorGetZoomParam(struct sensor_zoom_param_input* zoom_param) {
+cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
     int ret = CMR_CAMERA_SUCCESS;
     char value[PROPERTY_VALUE_MAX] = {0};
     property_get("persist.vendor.cam.multi.section", value, "3");
@@ -3764,15 +3770,15 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input* zoom_param) {
         zoom_param->ZoomRatioSection[5] = 0;
         zoom_param->BinningRatio = 5.0;
     } else if (atoi(value) == 2) {
-            zoom_param->PhyCameras = 2;
-            zoom_param->MaxDigitalZoom = 8.0;
-            zoom_param->ZoomRatioSection[0] = 0.6;
-            zoom_param->ZoomRatioSection[1] = 1.0;
-            zoom_param->ZoomRatioSection[2] = 8.0;
-            zoom_param->ZoomRatioSection[3] = 0;
-            zoom_param->ZoomRatioSection[4] = 0;
-            zoom_param->ZoomRatioSection[5] = 0;
-            zoom_param->BinningRatio = 8.0;
+        zoom_param->PhyCameras = 2;
+        zoom_param->MaxDigitalZoom = 8.0;
+        zoom_param->ZoomRatioSection[0] = 0.6;
+        zoom_param->ZoomRatioSection[1] = 1.0;
+        zoom_param->ZoomRatioSection[2] = 8.0;
+        zoom_param->ZoomRatioSection[3] = 0;
+        zoom_param->ZoomRatioSection[4] = 0;
+        zoom_param->ZoomRatioSection[5] = 0;
+        zoom_param->BinningRatio = 8.0;
     }
     return ret;
 }

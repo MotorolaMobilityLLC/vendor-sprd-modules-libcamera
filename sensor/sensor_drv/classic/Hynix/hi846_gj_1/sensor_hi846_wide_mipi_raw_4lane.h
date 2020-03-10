@@ -28,7 +28,7 @@
 #include "sensor_raw.h"
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "hi846_wide_mipi_raw"
+#define SENSOR_NAME "hi846_gj_1_4lane"
 
 #if defined(CONFIG_DUAL_MODULE)
 #define I2C_SLAVE_ADDR 0x46 /* 8bit slave address*/
@@ -664,7 +664,7 @@ SENSOR_INFO_T g_hi846_wide_mipi_raw_info = {
     .raw_info_ptr = &s_hi846_wide_mipi_raw_info_ptr,
 
     .video_tab_info_ptr = NULL,
-    .sensor_version_info = (cmr_s8 *)"hi846_wide_v1",
+    .sensor_version_info = (cmr_s8 *)"hi846_gj_1",
 };
 
 #endif

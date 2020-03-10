@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "gc2375_sharkl2"
+#define LOG_TAG "gc2375_js_2_9863a1c10"
 
 //#define MIPI_NUM_2LANE
 
