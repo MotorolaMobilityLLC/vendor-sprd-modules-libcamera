@@ -26,7 +26,7 @@ typedef struct vs_param {
     uint16_t dst_w;
     uint16_t dst_h;
     int method;
-
+    int camera_id;
     double f;
     double td;
     double ts;
@@ -48,6 +48,14 @@ typedef struct sprd_eis_init_info {
     double td;
     double ts;
 } sprd_eis_init_info_t;
+
+typedef struct sprd_eis_multi_init_info {
+	char board_name[36];
+    int camera_id;
+	double f;
+	double td;
+	double ts;
+} sprd_eis_multi_init_info_t;
 
 typedef struct eis_info {
     float zoom_ratio;
@@ -95,6 +103,12 @@ const sprd_eis_init_info_t eis_init_info_tab[] = {
     {"sp9863a-1", 0.7747f, 0.038f, 0.024f},
     {"ums312-1", 0.768f, 0.01f, 0.0144f},
     {"ums512-1", 0.7385f, 0.014f, 0.021f},
+};
+
+const sprd_eis_multi_init_info eis_multi_init_info_tab[] = {
+    {"ums512-1", 0, 0.7432f, 0.0289f, 0.0208f},
+    {"ums512-1", 2, 0.4468f, 0.0297f, 0.0204f},
+    {"ums512-1", 3, 1.5442f, 0.0308f, 0.0222f},
 };
 
 #ifdef __cplusplus
