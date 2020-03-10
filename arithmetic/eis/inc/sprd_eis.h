@@ -26,7 +26,7 @@ typedef struct vs_param {
     uint16_t dst_w;
     uint16_t dst_h;
     int method;
-
+    int camera_id;
     double f;
     double td;
     double ts;
