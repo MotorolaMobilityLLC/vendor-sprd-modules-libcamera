@@ -3065,26 +3065,15 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
     } else if (module_info->otp_version == OTP_1_0) {
         _general_otp_parse_module_data_1v0(otp_drv_handle);
 
-#ifdef SENSOR_OV8856_TELE
-        if (otp_cxt->sensor_id == 0)
-#else
-        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1)
-#endif
-        {
+        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1) {
             _general_otp_parse_master_af_1v0(otp_drv_handle);
             _general_otp_parse_master_awb_1v0(otp_drv_handle);
             _general_otp_parse_master_lsc_1v0(otp_drv_handle);
             _general_otp_parse_master_pdaf(otp_drv_handle);
             _general_otp_parse_master_ae_1v0(otp_drv_handle);
             _general_otp_parse_master_dualcam_1v0(otp_drv_handle);
-        }
-#ifdef SENSOR_OV8856_TELE
-        else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2)
-#else
-        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3 ||
-                 otp_cxt->sensor_id == 4 || otp_cxt->sensor_id == 5)
-#endif
-        {
+        } else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3 ||
+                   otp_cxt->sensor_id == 4 || otp_cxt->sensor_id == 5) {
             _general_otp_parse_slave_af_1v0(otp_drv_handle);
             _general_otp_parse_slave_awb_1v0(otp_drv_handle);
             _general_otp_parse_slave_lsc_1v0(otp_drv_handle);
@@ -3161,12 +3150,7 @@ static cmr_int general_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
     switch (cmd) {
     case CMD_SNS_OTP_DATA_COMPATIBLE_CONVERT:
 
-#ifdef SENSOR_OV8856_TELE
-        if (otp_cxt->sensor_id == 0)
-#else
-        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1)
-#endif
-        {
+        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1) {
             if (otp_cxt->eeprom_num == DUAL_CAM_ONE_EEPROM ||
                 otp_cxt->eeprom_num == DUAL_CAM_TWO_EEPROM ||
                 otp_cxt->eeprom_num == MULTICAM_INDEPENDENT_EEPROM) {
@@ -3174,14 +3158,8 @@ static cmr_int general_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
             } else {
                 _general_otp_compatible_convert_single(otp_drv_handle, param);
             }
-        }
-#ifdef SENSOR_OV8856_TELE
-        else if (otp_cxt->sensor_id == 1 || otp_cxt->sensor_id == 2)
-#else
-        else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3 ||
-                 otp_cxt->sensor_id == 4 || otp_cxt->sensor_id == 5)
-#endif
-        {
+        } else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3 ||
+                   otp_cxt->sensor_id == 4 || otp_cxt->sensor_id == 5) {
             _general_otp_compatible_convert_slave(otp_drv_handle, param);
         } else {
             OTP_LOGE("illegal sensor id");

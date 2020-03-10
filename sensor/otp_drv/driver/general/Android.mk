@@ -37,10 +37,6 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_SENSOR_OTP)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_SENSOR_OTP
 endif
 
-ifeq ($(strip $(SENSOR_OV8856_TELE)),true)
-LOCAL_CFLAGS += -DSENSOR_OV8856_TELE
-endif
-
 LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libutils libcamsensor liblog libcam_otp_parser libxml2
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
