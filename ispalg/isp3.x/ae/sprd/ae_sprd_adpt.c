@@ -3394,26 +3394,22 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 		fliker_unit_time = 8333333;
 
 	if(exposure > fliker_unit_time){
-		if(2 == cxt->hdr_flag)
-			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time + 0.5) * fliker_unit_time;
-		else
-			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time ) * fliker_unit_time;
-
+		exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time + 0.5) * fliker_unit_time;
 		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
-
+		if(gain < 128){
+			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time ) * fliker_unit_time;
+			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+			gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+		}
 	}else{
 		exp_time = fliker_unit_time;
 		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
 		if(gain < 128){
-			if(2 == cxt->hdr_flag){
-				gain = 128;
-				ISP_LOGD("flicker:clip gain (%d) to 128",gain);
-			}else{
-				gain = in_gain;
-				exp_line = (cmr_u32) (1.0 * in_exposure / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-			}
+			gain = in_gain;
+			exp_line = (cmr_u32) (1.0 * in_exposure / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+			ISP_LOGD("HDR calc fail for Gain<128 ");
 		}
 	}
 	*out_exp_l = exp_line;
