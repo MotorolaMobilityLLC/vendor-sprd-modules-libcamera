@@ -69,7 +69,11 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
 #define Clamp(x, a, b) (((x) < (a)) ? (a) : ((x) > (b)) ? (b) : (x))
 
 #define CAMERA_LOGO_PATH "/vendor/logo/"
+typedef void(*CMR_IP_INTERFACE_DEINIT)(void);
+typedef int (*CMR_IP_INTERFACE_INIT)(char **error);
+typedef int (*CMR_IP_INTERFACE_CLOSE)(char **error);
 
+#define CMR_IP_PATH "libinterface.so"
 typedef struct {
     int imgW;
     int imgH;
@@ -96,10 +100,6 @@ typedef struct {
     ((cxt->camera_id >= 2 && (is_multi_camera_mode_oem == MODE_BLUR ||         \
                               is_multi_camera_mode_oem == MODE_SELF_SHOT ||    \
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
-
-typedef int (*INTERFACE_INIT)(char **error);
-typedef int (*INTERFACE_CLOSE_ALL)(char **error);
-typedef int (*INTERFACE_FOR_ALGO)(char *name, char **error, char **level);
 
 static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
@@ -4169,12 +4169,12 @@ cmr_int camera_interface_init()
 {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     if (!handle_interface) {
-        handle_interface = dlopen("libinterface.so", RTLD_NOW);
+        handle_interface = dlopen(CMR_IP_PATH, RTLD_NOW);
         if(!handle_interface) {
             CMR_LOGE("decrypt interface open failed with %s", dlerror());
             return ret;
         }
-        INTERFACE_INIT interface_init =
+        CMR_IP_INTERFACE_INIT interface_init =
             dlsym(handle_interface, "interface_init");
         if (!interface_init) {
             CMR_LOGE("func open failed with error = %s", dlerror());
@@ -4193,11 +4193,11 @@ cmr_int camera_interface_init()
     return ret;
 }
 
-cmr_int camera_interface_deinit()
+cmr_int camera_interface_close()
 {
     int ret = CMR_CAMERA_SUCCESS;
     if (handle_interface) {
-        INTERFACE_CLOSE_ALL interface_close =
+        CMR_IP_INTERFACE_CLOSE interface_close =
             dlsym(handle_interface, "interface_close_all");
         char *error = NULL;
         if (interface_close)
@@ -4208,7 +4208,16 @@ cmr_int camera_interface_deinit()
     }
     return ret;
 }
-
+void camera_interface_deinit()
+{
+    if(handle_interface) {
+        CMR_IP_INTERFACE_DEINIT cmr_ip_deinit = dlsym(handle_interface, "enc_interface_deinit");
+        if(!cmr_ip_deinit)
+            CMR_LOGD("Cannot analyze function with %s", dlerror());
+        else
+            cmr_ip_deinit();
+    }
+}
 cmr_int camera_snapshot_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -5118,7 +5127,7 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
 
     camera_ipm_deinit(oem_handle);
 
-    camera_interface_deinit();
+    camera_interface_close();
 
     camera_deinit_thread(oem_handle);
 
@@ -11109,6 +11118,8 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     }
 
     camera_get_iso_value(oem_handle);
+
+    camera_interface_deinit();
 
     prev_ret = cmr_preview_stop(cxt->prev_cxt.preview_handle, cxt->camera_id);
     if (prev_ret) {
