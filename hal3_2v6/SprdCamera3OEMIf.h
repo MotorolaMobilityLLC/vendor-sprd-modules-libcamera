@@ -611,6 +611,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mIsUnpopped;
     // add for blur2 capture
     bool mIsBlur2Zsl;
+    bool mIsSlowmotion;
 
     void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char *tmpbuf);
     int nv21Scale(const uint8_t *src_y, const uint8_t *src_vu, int src_width,

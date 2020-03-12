@@ -9857,7 +9857,8 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->picture_size = setting_param.size_param;
     cxt->snp_cxt.request_size = setting_param.size_param;
     if (out_param_ptr->picture_size.width > 0 &&
-        out_param_ptr->picture_size.height > 0) {
+        out_param_ptr->picture_size.height > 0 &&
+        out_param_ptr->video_slowmotion_eb == 0) {
         out_param_ptr->snapshot_eb = 1;
         CMR_LOGD("snapshot_eb=%d", out_param_ptr->snapshot_eb);
     }

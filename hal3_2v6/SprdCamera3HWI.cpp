@@ -582,8 +582,8 @@ int SprdCamera3HWI::configureStreams(
     int callbackFormat = 0, yuv2Format = 0, captureFormat = 0;
     int previewStreamType = 0, videoStreamType = 0;
     int callbackStreamType = 0, yuv2StreamType = 0, captureStreamType = 0;
-    SPRD_DEF_Tag sprddefInfo;
-    memset(&sprddefInfo, 0x00, sizeof(SPRD_DEF_Tag));
+    CONTROL_Tag controlInfo;
+    memset(&controlInfo, 0x00, sizeof(CONTROL_Tag));
     // for two HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
     uint32_t alreadyHasPreviewStream = 0;
     // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
@@ -808,10 +808,10 @@ int SprdCamera3HWI::configureStreams(
                 mStreamConfiguration.yuv2.stream = newStream;
             }
 
-            mSetting->getSPRDDEFTag(&sprddefInfo);
+            mSetting->getCONTROLTag(&controlInfo);
             if (preview_size.width > 3264 && preview_size.height > 2448)
                 SprdCamera3RegularChannel::kMaxBuffers = 2;
-            else if (sprddefInfo.slowmotion > 1) {
+              else if (streamList->operation_mode == 1) { //slowmotion
                 SprdCamera3RegularChannel::kMaxBuffers = 24;
                 if (stream_type == CAMERA_STREAM_TYPE_PREVIEW)
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
@@ -820,7 +820,7 @@ int SprdCamera3HWI::configureStreams(
                 SprdCamera3RegularChannel::kMaxBuffers = 16;
             } else
                 SprdCamera3RegularChannel::kMaxBuffers = 4;
-            HAL_LOGD("slowmotion=%d, kMaxBuffers=%d", sprddefInfo.slowmotion,
+            HAL_LOGD("for slowmotion min fps=%d, kMaxBuffers=%d", controlInfo.ae_target_fps_range[0],
                      SprdCamera3RegularChannel::kMaxBuffers);
 
             newStream->max_buffers = SprdCamera3RegularChannel::kMaxBuffers;

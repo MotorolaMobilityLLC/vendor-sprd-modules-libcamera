@@ -397,7 +397,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdFullscanEnabled(0),
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
-      mIsUnpopped(false), mIsBlur2Zsl(false),
+      mIsUnpopped(false), mIsBlur2Zsl(false), mIsSlowmotion(false),
       mPreviewFormat(CAM_IMG_FMT_YUV420_NV21),
       mVideoFormat(CAM_IMG_FMT_YUV420_NV21),
       mCallbackFormat(CAM_IMG_FMT_YUV420_NV21),
@@ -789,6 +789,7 @@ void SprdCamera3OEMIf::initialize() {
     mTopAppId = TOP_APP_NONE;
     mChannel2FaceBeautyFlag = 0;
     mZslCaptureExitLoop = false;
+    mIsSlowmotion = false;
     mFlush = 0;
     mVideoAFBCFlag = 0;
 #ifdef CONFIG_FACE_BEAUTY
@@ -1255,13 +1256,11 @@ int SprdCamera3OEMIf::cancelPicture() {
 
 status_t SprdCamera3OEMIf::faceDectect(bool enable) {
     status_t ret = NO_ERROR;
-    SPRD_DEF_Tag sprddefInfo;
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    if (sprddefInfo.slowmotion > 1)
+    if (mIsSlowmotion == true)
         return ret;
 
     if (enable) {
@@ -1274,7 +1273,6 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable) {
 
 status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     status_t ret = NO_ERROR;
-    SPRD_DEF_Tag sprddefInfo;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -1287,8 +1285,7 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
         return ret;
     }
 
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    if (sprddefInfo.slowmotion > 1)
+    if (mIsSlowmotion == true)
         return ret;
 
     if (enable) {
@@ -1939,7 +1936,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
     // video
     if (mVideoWidth > 0 && mVideoHeight > 0) {
         // TBD: will remove this
-        if (sprddefInfo.slowmotion <= 1)
+        if (mIsSlowmotion != true)
             mCaptureMode = CAMERA_ZSL_MODE;
     }
 
@@ -2212,6 +2209,11 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
             fps_param.min_fps = val_min > 5 ? val_min : 5;
             fps_param.max_fps = val_max;
         }
+        if(fps_param.min_fps == SLOWMOTION_120FPS && fps_param.max_fps == SLOWMOTION_120FPS) {
+            mIsSlowmotion = true;
+        } else {
+            mIsSlowmotion = false;
+        }
     } else {
         fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
@@ -2245,17 +2247,13 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         }
     }
 
-    if (mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
-        fps_param.min_fps = SLOWMOTION_120FPS;
-        fps_param.max_fps = SLOWMOTION_120FPS;
-    }
-
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, (cmr_uint)mIsSlowmotion);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
              (cmr_uint)&fps_param);
 
-    HAL_LOGD("camera id= %d, min_fps=%ld, max_fps=%ld, video_mode=%ld",
+    HAL_LOGD("camera id= %d, min_fps=%ld, max_fps=%ld, video_mode=%ld, mIsSlowmotion:%d",
              mCameraId, fps_param.min_fps, fps_param.max_fps,
-             fps_param.video_mode);
+             fps_param.video_mode, mIsSlowmotion);
 }
 
 void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
@@ -3263,7 +3261,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
     } else if (mRecordingMode == false && mStreamOnWithZsl == 1) {
         mSprdZslEnabled = true;
-    } else if ((mRecordingMode == true && sprddefInfo.slowmotion > 1) ||
+    } else if ((mRecordingMode == true && mIsSlowmotion == true) ||
                (mRecordingMode == true && mVideoSnapshotType == 1)) {
         mSprdZslEnabled = false;
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW) {
@@ -4247,7 +4245,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
                 } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
-                           sprddefInfo.slowmotion > 1) {
+                           mIsSlowmotion == true) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (mRecordingMode == true) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
@@ -7194,17 +7192,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->setCALOTPRETag(otp_info.cal_otp_result);
     } break;
 
-    case ANDROID_SPRD_SLOW_MOTION: {
-        SPRD_DEF_Tag sprddefInfo;
-        mSetting->getSPRDDEFTag(&sprddefInfo);
-        HAL_LOGD("slow_motion=%d", sprddefInfo.slowmotion);
-        if (sprddefInfo.slowmotion > 1) {
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG,
-                     sprddefInfo.slowmotion);
-        } else {
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, 0);
-        }
-    } break;
 #ifdef CONFIG_CAMERA_PIPVIV_SUPPORT
     case ANDROID_SPRD_PIPVIV_ENABLED: {
         SPRD_DEF_Tag sprddefInfo;
@@ -7703,11 +7690,9 @@ int SprdCamera3OEMIf::Callback_VideoMalloc(cmr_u32 size, cmr_u32 sum,
                                            cmr_uint *vir_addr, cmr_s32 *fd) {
     sprd_camera_memory_t *memory = NULL;
     cmr_int i = 0;
-    SPRD_DEF_Tag sprddefInfo;
     int BufferCount = kVideoBufferCount;
 
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    if (sprddefInfo.slowmotion <= 1)
+    if (mIsSlowmotion != true)
         BufferCount = 8;
 
     HAL_LOGD("size %d sum %d mVideoHeapNum %d", size, sum, mVideoHeapNum);
@@ -7889,11 +7874,9 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     sprd_camera_memory_t *memory = NULL;
     cmr_int i = 0;
     int ret;
-    SPRD_DEF_Tag sprddefInfo;
     int BufferCount = kZslBufferCount;
 
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    if (sprddefInfo.slowmotion <= 1)
+    if (mIsSlowmotion != true)
         BufferCount = 8;
 
     HAL_LOGD("size %d sum %d mZslHeapNum %d, BufferCount %d", size, sum,
@@ -8121,11 +8104,9 @@ int SprdCamera3OEMIf::Callback_PreviewMalloc(cmr_u32 size, cmr_u32 sum,
                                              cmr_uint *vir_addr, cmr_s32 *fd) {
     sprd_camera_memory_t *memory = NULL;
     cmr_uint i = 0;
-    SPRD_DEF_Tag sprddefInfo;
     int BufferCount = kPreviewBufferCount;
 
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    if (sprddefInfo.slowmotion <= 1)
+    if (mIsSlowmotion != true)
         BufferCount = 8;
 
     HAL_LOGD("size %d sum %d mPreviewHeapNum %d, BufferCount %d", size, sum,
@@ -9859,7 +9840,7 @@ int SprdCamera3OEMIf::setCamStreamInfo(cam_dimension_t size, int format,
         }
 
         if (mVideoWidth > 0 && mVideoWidth == mCaptureWidth &&
-            mVideoHeight == mCaptureHeight && sprddefInfo.slowmotion <= 1) {
+            mVideoHeight == mCaptureHeight && mIsSlowmotion != true) {
             mVideoSnapshotType = 1;
         } else {
             mVideoSnapshotType = 0;

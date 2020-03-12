@@ -211,6 +211,9 @@ const int32_t kavailable_fps_ranges_back[] = {
     5, 15, 15, 15, 5, 20, 20, 20, 5, 24, 24, 24, 5, 30, 20, 30, 30, 30};
 const int32_t kavailable_fps_ranges_front[] = {5, 15, 15, 15, 5,  20, 20, 20,
                                                5, 30, 15, 30, 20, 30, 30, 30};
+const int32_t kavailable_high_speed_video_configration[] = {
+    1280, 720, 30, 120, 1280, 720, 120, 120};
+
 
 const int32_t kexposureCompensationRange[2] = {-32, 32};
 const camera_metadata_rational kae_compensation_step = {1, 16};
@@ -256,6 +259,7 @@ const uint8_t avail_scene_modes[] = {
     ANDROID_CONTROL_SCENE_MODE_ACTION,
     ANDROID_CONTROL_SCENE_MODE_PORTRAIT,
     ANDROID_CONTROL_SCENE_MODE_LANDSCAPE,
+    ANDROID_CONTROL_SCENE_MODE_HIGH_SPEED_VIDEO,
 };
 
 const uint8_t avail_antibanding_modes[] = {
@@ -660,6 +664,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
     ANDROID_CONTROL_AE_COMPENSATION_STEP,
     ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
+    ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
     ANDROID_CONTROL_MAX_REGIONS,
     ANDROID_CONTROL_AE_COMPENSATION_RANGE,
     ANDROID_CONTROL_AVAILABLE_EFFECTS,
@@ -795,6 +800,7 @@ const uint8_t kavailable_capabilities[] = {
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
 };
 
 const uint8_t kavailable_noise_reduction_modes[] = {
@@ -2711,6 +2717,11 @@ int SprdCamera3Setting::initStaticMetadata(
         ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
         s_setting[cameraId].controlInfo.available_video_stab_modes,
         ARRAY_SIZE(s_setting[cameraId].controlInfo.available_video_stab_modes));
+
+    staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
+                      kavailable_high_speed_video_configration,
+                      ARRAY_SIZE(kavailable_high_speed_video_configration));
+
     staticInfo.update(ANDROID_CONTROL_MAX_REGIONS,
                       s_setting[cameraId].controlInfo.max_regions,
                       ARRAY_SIZE(s_setting[cameraId].controlInfo.max_regions));
@@ -4355,7 +4366,7 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_SPRD_SLOW_MOTION).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.slowmotion, valueU8,
                          ANDROID_SPRD_SLOW_MOTION, 1)
-        HAL_LOGV("slowmotion %d", s_setting[mCameraId].sprddefInfo.slowmotion);
+        HAL_LOGD("slowmotion %d", s_setting[mCameraId].sprddefInfo.slowmotion);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_METERING_MODE)) {
@@ -4986,7 +4997,7 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
 
         fps_range[0] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
-                           .data.i32[0];
+                            .data.i32[0];
         fps_range[1] = frame_settings.find(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)
                            .data.i32[1];
 
@@ -5025,7 +5036,7 @@ int SprdCamera3Setting::updateWorkParameters(
         GET_VALUE_IF_DIF(
             s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
             fps_range[0], ANDROID_CONTROL_AE_TARGET_FPS_RANGE, 2)
-        HAL_LOGV("AE target fps min %d, max %d",
+        HAL_LOGD("AE target fps min %d, max %d",
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[0],
                  s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
     }

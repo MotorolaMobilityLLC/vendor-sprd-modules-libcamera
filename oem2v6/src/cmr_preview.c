@@ -7465,13 +7465,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
 #ifdef SPRD_SLOWMOTION_OPTIMIZE
     if (prev_cxt->prev_param.video_eb &&
         prev_cxt->prev_param.video_slowmotion_eb) {
-        if (prev_cxt->prev_param.video_slowmotion_eb == 4) {
-            chn_param.cap_inf_cfg.chn_deci_factor = 3;
-            prev_cxt->prev_skip_num = 2;
-        } else if (prev_cxt->prev_param.video_slowmotion_eb == 3) {
-            chn_param.cap_inf_cfg.chn_deci_factor = 2;
-            prev_cxt->prev_skip_num = 2;
-        }
+        chn_param.cap_inf_cfg.chn_deci_factor = 3;
+        prev_cxt->prev_skip_num = 2;
     }
 #endif
 
