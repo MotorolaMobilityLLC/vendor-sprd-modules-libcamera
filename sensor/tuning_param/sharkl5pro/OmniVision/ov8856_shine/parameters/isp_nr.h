@@ -133,3 +133,4 @@ static struct sensor_nr_scene_map_param s_ov8856_nr_scene_map_param = {{
 #ifdef _NR_CNR3_PARAM_
 #include "NR/common/normal/cnr3_param.h"
 #endif
+
