@@ -5211,8 +5211,8 @@ static cmr_s32 ae_get_dc_dv_fps_range(struct ae_ctrl_cxt *cxt, void *result)
 
 static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 {
-	if((cxt->is_multi_mode) && (!cxt->is_master)){
-		ISP_LOGD("is_multi_mode=%d",cxt->is_multi_mode);
+	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (!cxt->is_master)){
+		ISP_LOGD("[HDR]is_multi_mode=%d",cxt->is_multi_mode);
 	}
 	else if (param) {
 		struct ae_hdr_param *hdr_param = (struct ae_hdr_param *)param;
