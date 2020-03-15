@@ -46,6 +46,24 @@ struct tar_lum_range{//added by feifan.wang
 	cmr_u32 target_lum_range_out_bak;
 };
 
+struct bhist_param {
+	cmr_u32 cam_id;
+	cmr_s32 frame_id;
+	struct ae_hist_data_type hist_data[3];
+	struct ae_rect hist_roi;
+};
+
+struct touch_param {
+	cmr_u32 cam_id;
+	cmr_s32 frame_id;
+	struct ae_trim touch_roi;
+};
+
+struct ae_debug_info {
+	struct bhist_param hist_info[3];
+	struct touch_param touch_info[3];
+};
+
 struct ae_lib_init_in {
 	cmr_u32 cam_id;
 	cmr_u32 mlog_en;
@@ -157,6 +175,8 @@ struct ae_lib_calc_in {
 	struct ae_stats_sensor_info aux_sensor_data;
 	/*advanced information*/
 	struct ae_adv_param adv_param;
+	/*debug info*/
+	struct ae_debug_info debug_info;
 };
 
 struct ae_lib_calc_out  {

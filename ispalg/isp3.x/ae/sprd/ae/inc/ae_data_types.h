@@ -27,6 +27,7 @@
 #define AEC_MONITOR_DATA_SIZE_MAX (128 * 128)
 #define AE_EV_LEVEL_MAX 16
 #define AE_LIB_SCENE_MAX 8
+#define AE_PIECEWISE_SAMPLE2_NUM 5
 
 #ifndef _AE_COMMON_DATA_TYPE_DEF
 #define _AE_COMMON_DATA_TYPE_DEF
@@ -230,6 +231,12 @@ struct ae_sample {
 struct ae_piecewise_func {
 	cmr_s32 num;
 	struct ae_sample samples[AE_PIECEWISE_SAMPLE_NUM];
+};
+
+/*below structure drived from above struct,space goes down because the reserved space not enough for hm at that time.*/
+struct ae_piecewise_funcv2 {
+	cmr_s32 num;
+	struct ae_sample samples[AE_PIECEWISE_SAMPLE2_NUM];
 };
 
 struct ae_range {
