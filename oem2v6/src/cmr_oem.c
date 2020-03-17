@@ -943,8 +943,7 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 
     camera_local_normal_snapshot_need_pause(oem_handle, &need_pause);
     chn_bit = 1 << frm_ptr->channel_id;
-    CMR_LOGV(
-        "chn_id=%d, pre_chn_id=%d snp_chn_bits=%d, total_num=%d,zsl_frame %d",
+    CMR_LOGV("chn_id=%d,pre_chn_id=%d,snp_chn_id=%d,total=%d,zsl_frame %d",
         frm_ptr->channel_id, cxt->prev_cxt.preview_channel_id,
         cxt->snp_cxt.channel_id, cxt->snp_cxt.total_num,
         cxt->snp_cxt.zsl_frame);
@@ -1018,7 +1017,7 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
                          sizeof(struct frm_info));
                 ret = cmr_preview_receive_data(cxt->prev_cxt.preview_handle,
                                                cxt->camera_id, evt, data);
-                CMR_LOGV("camera id = %d,  cur_chn_data.yaddr_vir 0x%x, "
+                CMR_LOGV("camera id=%d, cur_chn_data.yaddr_vir 0x%x, "
                          "yaddr_vir 0x%x",
                          cxt->camera_id, cxt->snp_cxt.cur_chn_data.yaddr_vir,
                          frm_ptr->yaddr_vir);
@@ -4930,6 +4929,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
     cmr_uint is_filter;
+
     CMR_LOGI("E");
 
     setting_param.camera_id = cxt->camera_id;
@@ -4966,7 +4966,6 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     CHECK_HANDLE_VALID(ipm_cxt);
 
     is_filter = cxt->snp_cxt.filter_type;
-
     if (cxt->skipframe) {
         camera_snapshot_set_ev(oem_handle, 0, SNAPSHOT_NULL);
         cxt->skipframe = 0;
@@ -9289,7 +9288,6 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
-    cmr_uint is_zsl_enable = 0;
     cmr_uint video_snapshot_type = VIDEO_SNAPSHOT_NONE;
     struct sprd_img_capture_param capture_param;
     struct sprd_img_function_mode img_func_mode;
@@ -9317,16 +9315,6 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     if (cxt->is_start_snapshot != 1) {
         cmr_bzero(&setting_param, sizeof(setting_param));
         setting_param.camera_id = cxt->camera_id;
-        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
-        if (ret) {
-            CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-            goto exit;
-        }
-        is_zsl_enable = setting_param.cmd_type_value;
-
-        cmr_bzero(&setting_param, sizeof(setting_param));
-        setting_param.camera_id = cxt->camera_id;
         ret =
             cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                               SETTING_GET_VIDEO_SNAPSHOT_TYPE, &setting_param);
@@ -9337,7 +9325,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
         video_snapshot_type = setting_param.cmd_type_value;
 
         /* for sharkl2 offline path */
-        if ((channel_bits & OFFLINE_CHANNEL_BIT) && is_zsl_enable == 0 &&
+        if ((channel_bits & OFFLINE_CHANNEL_BIT) && cxt->zsl_enabled == 0 &&
             video_snapshot_type != VIDEO_SNAPSHOT_VIDEO) {
             cmr_bzero(&capture_param, sizeof(capture_param));
             capture_param.type = 1;
@@ -9677,8 +9665,6 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         param_ptr->size_param = cxt->snp_cxt.post_proc_setting.snp_size;
         break;
     case SETTING_IO_GET_ACTUAL_CAPTURE_SIZE:
-        // param_ptr->size_param =
-        // cxt->snp_cxt.post_proc_setting.actual_snp_size;
         param_ptr->size_param =
             cxt->snp_cxt.post_proc_setting.dealign_actual_snp_size;
         break;
@@ -11439,15 +11425,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     }
 #endif
 
-    cmr_bzero(&setting_param, sizeof(setting_param));
-    setting_param.camera_id = cxt->camera_id;
-    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                            SETTING_GET_SPRD_ZSL_ENABLED, &setting_param);
-    if (ret) {
-        CMR_LOGE("failed to get preview sprd zsl enabled flag %ld", ret);
-        goto exit;
-    }
-    out_param_ptr->sprd_zsl_enabled = setting_param.cmd_type_value;
+    out_param_ptr->sprd_zsl_enabled = cxt->zsl_enabled;
     CMR_LOGD("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
 
     cmr_bzero(&setting_param, sizeof(setting_param));
@@ -12254,6 +12232,8 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     case CAMERA_PARAM_SPRD_ZSL_ENABLED:
+        cxt->zsl_enabled = param;
+        CMR_LOGD("zsl %d", cxt->zsl_enabled);
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
@@ -14213,9 +14193,9 @@ cmr_int camera_local_set_zsl_snapshot_buffer(cmr_handle oem_handle,
         img_frame.data_end.y_endian = 1;  // ?
         img_frame.data_end.uv_endian = 2; // ?
         img_frame.fd = fd;
-        CMR_LOGD("in src_phy_addr 0x%lx src_vir_addr 0x%lx, img_frame.fd 0x%x",
-                 src_phy_addr, src_vir_addr, img_frame.fd);
-
+        CMR_LOGD("in src vir addr[0x%lx, 0x%lx], img_frame.fd 0x%x",
+                 img_frame.addr_vir.addr_y, img_frame.addr_vir.addr_u,
+                 img_frame.fd);
         zsl_snp_update_post_proc_param(cxt->snp_cxt.snapshot_handle,
                                        (void *)&img_frame);
 #endif
@@ -16139,6 +16119,7 @@ cmr_int camera_set_high_res_mode(cmr_handle oem_handle,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cxt->is_high_res_mode = is_high_res_mode;
     CMR_LOGI("is_high_res_mode %ld", cxt->is_high_res_mode);
+
     return ret;
 }
 

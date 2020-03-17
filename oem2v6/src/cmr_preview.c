@@ -5144,6 +5144,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
             ret = (prev_cxt->prev_param.is_cfg_rot_cap &&
                  (IMG_ANGLE_0 != prev_cxt->prev_param.encode_angle));
         }
+
         ret = camera_arrange_capture_buf(
                 &cap_2_mems, &prev_cxt->cap_sn_size,
                 &prev_cxt->cap_sn_trim_rect, &prev_cxt->max_size,
@@ -5459,8 +5460,10 @@ cmr_int prev_alloc_cap_reserve_buf(struct prev_handle *handle,
         width = prev_cxt->max_size.width;
         height = prev_cxt->max_size.height;
     } else {
-        width = prev_cxt->actual_pic_size.width;
-        height = prev_cxt->actual_pic_size.height;
+//        width = prev_cxt->actual_pic_size.width;
+//        height = prev_cxt->actual_pic_size.height;
+        width = prev_cxt->cap_org_size.width;
+        height = prev_cxt->cap_org_size.height;
     }
 
     small_w = width >> 1;
@@ -5641,7 +5644,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    CMR_LOGD("is_restart %d", is_restart);
+    CMR_LOGD("is_restart %d,zoom_post_proc %d", is_restart, zoom_post_proc);
 
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
     mem_ops = &prev_cxt->prev_param.memory_setting;
@@ -5652,8 +5655,10 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         width = prev_cxt->max_size.width;
         height = prev_cxt->max_size.height;
     } else {
-        width = prev_cxt->actual_pic_size.width;
-        height = prev_cxt->actual_pic_size.height;
+//        width = prev_cxt->actual_pic_size.width;
+//        height = prev_cxt->actual_pic_size.height;
+        width = prev_cxt->cap_org_size.width;
+        height = prev_cxt->cap_org_size.height;
     }
 
     CMR_LOGD("width %d height %d", width, height);
@@ -13175,6 +13180,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     struct sensor_mode_info *sn_mode_info = NULL;
     struct cmr_zoom_param *zoom_param = NULL;
     struct prev_context *prev_cxt = NULL;
+    struct camera_context *cxt = NULL;
     cmr_u32 sc_factor = 0, sc_capability = 0, sc_threshold = 0;
     cmr_int zoom_post_proc = 0;
     struct img_size trim_sz;
@@ -13185,6 +13191,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     CMR_LOGD("camera_id %d", camera_id);
+    cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
     sensor_size = &prev_cxt->cap_sn_size;
     sn_trim_rect = &prev_cxt->cap_sn_trim_rect;
@@ -13352,8 +13359,9 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         if ((img_cap->src_img_rect.width >= cap_size->width ||
              cap_size->width <= sc_threshold) &&
             ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) {
-            /*if the out size is smaller than the in size, try to use scaler on
-             * the fly*/
+            /* if the out size is smaller than the in size, try to
+             * use scaler on the fly
+             */
             if (cap_size->width > tmp_width) {
                 if (tmp_width > sc_capability) {
                     img_cap->dst_img_size.width = sc_capability;
@@ -13363,7 +13371,7 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
                 img_cap->dst_img_size.height =
                     (cmr_u32)(img_cap->src_img_rect.height * sc_factor);
             } else {
-                /*just use scaler on the fly*/
+                /* just use scaler on the fly */
                 img_cap->dst_img_size.width = cap_size->width;
                 img_cap->dst_img_size.height = cap_size->height;
             }
@@ -13372,6 +13380,19 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
             img_cap->dst_img_size.height = cap_size->height;
         }
     }
+    /* If 4in1 high resolution && zsl
+     * sensor output binning size, isp hardware output binning size
+     * scale up after post process
+     * so cap_org_size used as the isp hardware output size, post process size
+     */
+    if (cxt->is_high_res_mode == 1 && cxt->zsl_enabled == 1) {
+        /* for set to kernel by output_size(IOCTL),
+         * and set this size to cap_org_size below
+         */
+        img_cap->dst_img_size.width /= 2;
+        img_cap->dst_img_size.height /= 2;
+    }
+
 
     /*save original cap size*/
     if (prev_cxt->prev_param.video_snapshot_type == VIDEO_SNAPSHOT_VIDEO) {
@@ -14365,8 +14386,10 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         width = prev_cxt->max_size.width;
         height = prev_cxt->max_size.height;
     } else {
-        width = prev_cxt->actual_pic_size.width;
-        height = prev_cxt->actual_pic_size.height;
+//        width = prev_cxt->actual_pic_size.width;
+//        height = prev_cxt->actual_pic_size.height;
+        width = prev_cxt->cap_org_size.width;
+        height = prev_cxt->cap_org_size.height;
     }
     if (prev_cxt->is_reprocessing && cxt->is_multi_mode == MODE_3D_CAPTURE) {
         width = prev_cxt->cap_sn_size.width;
@@ -15320,6 +15343,7 @@ cmr_int prev_get_cap_post_proc_param(struct prev_handle *handle,
     out_param_ptr->channel_zoom_mode = prev_cxt->cap_zoom_mode;
     out_param_ptr->snp_size = prev_cxt->aligned_pic_size;
     out_param_ptr->actual_snp_size = prev_cxt->actual_pic_size;
+    out_param_ptr->cap_org_size = prev_cxt->cap_org_size;
     out_param_ptr->dealign_actual_snp_size = prev_cxt->dealign_actual_pic_size;
     out_param_ptr->max_size = prev_cxt->max_size;
 

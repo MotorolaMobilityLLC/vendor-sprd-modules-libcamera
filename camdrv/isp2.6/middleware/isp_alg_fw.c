@@ -3612,10 +3612,10 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 			tool_eb = 1;
 
 		/* 4in1 full size capture(non-zsl), awb don't need work */
-		if (((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->ambient_highlight == 1))
+		if (((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->zsl_flag == 0))
 			|| ((tool_eb == 1) && (cxt->work_mode == 1))) {
 			cxt->aem_is_update = 1;
-			ret = ispalg_ae_process((cmr_handle) cxt);
+			ret = ispalg_ae_process((cmr_handle)cxt);
 			ISP_LOGD("high res high light capture.\n");
 		} else {
 			ret = ispalg_ae_process((cmr_handle) cxt);

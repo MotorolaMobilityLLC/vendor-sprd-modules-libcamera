@@ -487,6 +487,7 @@ struct camera_context {
     cmr_u32 flash_skip_frame_num;
     struct isp_face_area fd_face_area_capture;
     bool is_capture_face;
+    cmr_u32 zsl_enabled; /* 1: zsl,0: non-zsl */
 
     /* new 4in1 plan, 20191028 */
     cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */

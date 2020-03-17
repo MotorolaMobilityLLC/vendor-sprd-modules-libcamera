@@ -317,8 +317,10 @@ int camera_arrange_capture_buf(
     struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     struct img_rect *sn_trim, struct img_size *image_size, uint32_t orig_fmt,
     struct img_size *cap_size, struct img_size *thum_size,
-    struct cmr_cap_mem *capture_mem,struct sensor_exp_info *sn_if, uint32_t need_rot, uint32_t need_scale,
+    struct cmr_cap_mem *capture_mem,struct sensor_exp_info *sn_if,
+    uint32_t need_rot, uint32_t need_scale,
     uint32_t image_cnt, cmr_u32 is_4in1_mode) {
+
     if (NULL == cap_2_frm || NULL == image_size || NULL == thum_size ||
         NULL == capture_mem || NULL == sn_size || NULL == sn_trim) {
         CMR_LOGE("Parameter error 0x%p 0x%p 0x%p 0x%p 0x%p 0x%p", cap_2_frm,
@@ -475,40 +477,9 @@ int camera_arrange_capture_buf(
              cap_mem->scale_tmp.addr_vir.addr_y, cap_mem->scale_tmp.fd,
              cap_mem->scale_tmp.buf_size);
 
-    for (i = 1; i < image_cnt; i++) {
-        memcpy((void *)&capture_mem[i].cap_raw, (void *)&capture_mem[0].cap_raw,
-               sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].cap_raw2,
-               (void *)&capture_mem[0].cap_raw2, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].target_yuv,
-               (void *)&capture_mem[0].target_yuv, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].cap_yuv, (void *)&capture_mem[0].cap_yuv,
-               sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].target_jpeg,
-               (void *)&capture_mem[0].target_jpeg, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].thum_yuv,
-               (void *)&capture_mem[0].thum_yuv, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].thum_jpeg,
-               (void *)&capture_mem[0].thum_jpeg, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].jpeg_tmp,
-               (void *)&capture_mem[0].jpeg_tmp, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].scale_tmp,
-               (void *)&capture_mem[0].scale_tmp, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].cap_yuv_rot,
-               (void *)&capture_mem[0].cap_yuv_rot, sizeof(struct img_frm));
-
-        memcpy((void *)&capture_mem[i].isp_tmp, (void *)&capture_mem[0].isp_tmp,
-               sizeof(struct img_frm));
-    }
+    for (i = 1; i < image_cnt; i++)
+        memcpy((void *)&capture_mem[i], (void *)&capture_mem[0],
+               sizeof(struct cmr_cap_mem));
 
     return 0;
 }

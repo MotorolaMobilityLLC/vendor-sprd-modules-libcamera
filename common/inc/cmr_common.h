@@ -1245,6 +1245,7 @@ struct snp_proc_param {
     cmr_uint rot_angle;
     cmr_uint channel_zoom_mode;
     struct img_size dealign_actual_snp_size;
+    struct img_size cap_org_size; // as prev_cxt->cap_org_size
     struct img_size actual_snp_size;
     struct img_size snp_size;
     struct img_size max_size;

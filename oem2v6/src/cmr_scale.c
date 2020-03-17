@@ -482,32 +482,36 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     frame_params->output_addr_vir.y = (uint32_t)dst_img->addr_vir.addr_y;
     frame_params->output_addr_vir.u = (uint32_t)dst_img->addr_vir.addr_u;
 
-    CMR_LOGV("src: y_vir=0x%x, u_vir=0x%x, dst: y_vir=0x%x, u_vir=0x%x",
-             frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
-             frame_params->output_addr_vir.y, frame_params->output_addr_vir.u);
-
     frame_params->scale_deci.hor =
         get_deci_param(frame_params->input_size.w, frame_params->output_size.w);
     frame_params->scale_deci.ver =
         get_deci_param(frame_params->input_size.h, frame_params->output_size.h);
 
-    CMR_LOGV(
-        "input size: %d x %d, input rect:x=%d, y=%d, w=%d, h=%d, input "
-        "format: %d, input_addr: y=%d, u=%d, v=%d, input_addr_vir:"
-        " y=%d, u=%d, v =%d, input_endian: y_endian=%d, uv_endian=%d, "
-        "Sc_trim: x=%d, y=%d, w=%d, h=%d, output_size: w=%d, h=%d, "
-        "output_format:%d, input mfd:%d",
+    // address
+    CMR_LOGV("src: fd 0x%x,phy[0x%x,0x%x,0x%x],vir[0x%x,0x%x,0x%x]",
+             src_img->fd, frame_params->input_addr.y,
+             frame_params->input_addr.u, frame_params->input_addr.v,
+             frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
+             frame_params->input_addr_vir.v);
+    CMR_LOGV("dst: fd 0x%x,phy[0x%xm0x%xm0x%x],vir[0x%x,0x%x,0x%x]",
+             dst_img->fd,frame_params->output_addr.y,
+             frame_params->output_addr.u, frame_params->output_addr.v,
+             frame_params->output_addr_vir.y, frame_params->output_addr_vir.u,
+             frame_params->output_addr_vir.v);
+
+    CMR_LOGV("input: size[%dx%d], rect:[%d,%d,%d,%d], format:%d,"
+        "endian: y:%d, uv:%d, trim:[%d,%d,%d,%d]",
         frame_params->input_size.w, frame_params->input_size.h,
         frame_params->input_rect.x, frame_params->input_rect.y,
         frame_params->input_rect.w, frame_params->input_rect.h,
-        frame_params->input_format, frame_params->input_addr.y,
-        frame_params->input_addr.u, frame_params->input_addr.v,
-        frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
-        frame_params->input_addr_vir.v, frame_params->input_endian.y_endian,
+        frame_params->input_format, frame_params->input_endian.y_endian,
         frame_params->input_endian.uv_endian, frame_params->sc_trim.x,
         frame_params->sc_trim.y, frame_params->sc_trim.w,
-        frame_params->sc_trim.h, frame_params->output_size.w,
-        frame_params->output_size.h, frame_params->output_format, src_img->fd);
+        frame_params->sc_trim.h);
+    CMR_LOGV("output: size[%d,%d], format:%d",
+             frame_params->output_size.w, frame_params->output_size.h,
+             frame_params->output_format);
+
     memcpy((void *)&frame_params->output_endian, (void *)&dst_img->data_end,
            sizeof(struct sprd_cpp_scale_endian_sel));
 

@@ -434,7 +434,12 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
             CMR_LOGE("can not open file: %s", file_name);
             return 0;
         }
-        fwrite((void *)vir_addr->addr_y, 1, width * height * 3 / 2, fp);
+        CMR_LOGV("yuv addr_vir:0x%x,0x%x,0x%x", vir_addr->addr_y,
+                 vir_addr->addr_u, vir_addr->addr_v);
+        // dump y
+        fwrite((void *)vir_addr->addr_y, 1, width * height * 1, fp);
+        // dump uv, uv can independent of y
+        fwrite((void *)vir_addr->addr_u, 1, width * height * 1 / 2, fp);
         fclose(fp);
     } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, ".mipi_raw");

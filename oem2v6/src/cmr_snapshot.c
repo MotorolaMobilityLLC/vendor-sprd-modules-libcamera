@@ -2635,6 +2635,15 @@ cmr_int snp_check_post_proc_param(struct snapshot_param *param_ptr) {
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    if (proc_param_ptr->cap_org_size.width == 0 ||
+        proc_param_ptr->cap_org_size.height == 0) {
+        CMR_LOGW("cap_org_size[%d %d], set as [%d %d]",
+                proc_param_ptr->cap_org_size.width,
+                proc_param_ptr->cap_org_size.height,
+                proc_param_ptr->actual_snp_size.width,
+                proc_param_ptr->actual_snp_size.height);
+        proc_param_ptr->cap_org_size = proc_param_ptr->actual_snp_size;
+    }
     snp_size = proc_param_ptr->snp_size;
     if (0 == snp_size.width || 0 == snp_size.height) {
         CMR_LOGE("err, snp size is zero");
@@ -2739,7 +2748,9 @@ cmr_int snp_set_ipm_param(cmr_handle snp_handle) {
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
         ipm_ptr->src = req_param_ptr->post_proc_setting.mem[i].target_yuv;
-        ipm_ptr->src.size = req_param_ptr->post_proc_setting.actual_snp_size;
+        // ipm_ptr->src.size = req_param_ptr->post_proc_setting.actual_snp_size;
+        // [4in1 && zsl]scale after post process
+        ipm_ptr->src.size = req_param_ptr->post_proc_setting.cap_org_size;
         ipm_ptr++;
     }
     ipm_ptr = &chn_param_ptr->ipm[0];
@@ -3308,54 +3319,11 @@ void snp_get_is_scaling(cmr_handle snp_handle, cmr_s32 is_normal_snapshot) {
     struct img_size tmp_size;
     cmr_u32 is_scaling = 0;
     cmr_uint i;
-    /*
-            ret = cxt->ops.get_sensor_info(cxt->oem_handle,
-       req_param_ptr->camera_id, sensor_info_ptr);
-            sensor_mode_ptr =
-       &sensor_info_ptr->mode_info[req_param_ptr->sn_mode];
 
-            if (IMG_ANGLE_0 == proc_param_ptr->rot_angle || IMG_ANGLE_180 ==
-       proc_param_ptr->rot_angle) {
-                    tmp_size = proc_param_ptr->chn_out_frm[0].size;
-            } else {
-                    tmp_size.width = proc_param_ptr->chn_out_frm[0].size.height;
-                    tmp_size.height = proc_param_ptr->chn_out_frm[0].size.width;
-            }
-
-            if (ZOOM_POST_PROCESS == proc_param_ptr->channel_zoom_mode) {
-                    if (ZOOM_LEVEL == req_param_ptr->zoom_param.mode) {
-                            if (!((0 == req_param_ptr->zoom_param.zoom_level)
-                                    && (sensor_mode_ptr->trim_width ==
-       sensor_mode_ptr->scaler_trim.width)
-                                    && (sensor_mode_ptr->trim_height ==
-       sensor_mode_ptr->scaler_trim.height))) {
-                                    is_scaling = 1;
-                            }
-                    } else {
-                            if (!((req_param_ptr->zoom_param.zoom_rect.width ==
-       sensor_mode_ptr->scaler_trim.width)
-                                    &&
-       (req_param_ptr->zoom_param.zoom_rect.height ==
-       sensor_mode_ptr->scaler_trim.height))) {
-                                    is_scaling = 1;
-                            }
-                    }
-            }
-            if ((tmp_size.width == proc_param_ptr->actual_snp_size.width)
-                    && (tmp_size.height ==
-       proc_param_ptr->actual_snp_size.height)
-                    &&(ZOOM_BY_CAP == proc_param_ptr->channel_zoom_mode
-                    || 0 == is_scaling)) {
-                    cxt->chn_param.is_scaling = 0;
-            } else {
-                    cxt->chn_param.is_scaling = 1;
-            }
-            cxt->chn_param.is_scaling = 0;
-    */
     cxt->chn_param.is_scaling =
         cxt->req_param.post_proc_setting.is_need_scaling;
 
-    CMR_LOGD("is_need_scaling %ld, rot_angle %ld, is_normal_snapshot %d",
+    CMR_LOGD("is_need_scaling %d, rot_angle %d, is_normal_snapshot %d",
              cxt->req_param.post_proc_setting.is_need_scaling,
              cxt->req_param.post_proc_setting.rot_angle, is_normal_snapshot);
 
@@ -3382,7 +3350,7 @@ void snp_get_is_scaling(cmr_handle snp_handle, cmr_s32 is_normal_snapshot) {
             }
         }
     }
-    CMR_LOGD("@xin channel id %d is scaling %d", cxt->req_param.channel_id,
+    CMR_LOGD("channel id %d is scaling %d", cxt->req_param.channel_id,
              cxt->chn_param.is_scaling);
 }
 
@@ -3410,14 +3378,11 @@ cmr_int snp_update_postproc_src_size(cmr_handle snp_handle,
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct snp_proc_param *proc_param_ptr = &cxt->req_param.post_proc_setting;
 
-    cmr_u32 width =
-        cxt->req_param.post_proc_setting.chn_out_frm[0].size.width;
-    cmr_u32 height =
-        cxt->req_param.post_proc_setting.chn_out_frm[0].size.height;
-    cmr_u32 act_width =
-        cxt->req_param.post_proc_setting.actual_snp_size.width;
-    cmr_u32 act_height =
-        cxt->req_param.post_proc_setting.actual_snp_size.height;
+    cmr_u32 width = proc_param_ptr->chn_out_frm[0].size.width;
+    cmr_u32 height = proc_param_ptr->chn_out_frm[0].size.height;
+    //[4in1 && zsl]scale after post process
+    cmr_u32 act_width = proc_param_ptr->cap_org_size.width;
+    cmr_u32 act_height = proc_param_ptr->cap_org_size.height;
 
     if (ZOOM_POST_PROCESS == proc_param_ptr->channel_zoom_mode) {
         chn_data->addr_vir.addr_u =
@@ -3552,7 +3517,9 @@ cmr_int snp_update_ipm_param(cmr_handle snp_handle, struct img_frm chn_data) {
 
     for (i = 0; i < CMR_CAPTURE_MEM_SUM; i++) {
         ipm_ptr->src = chn_data;
-        ipm_ptr->src.size = req_param_ptr->post_proc_setting.actual_snp_size;
+        // ipm_ptr->src.size = req_param_ptr->post_proc_setting.actual_snp_size;
+        // [4in1 && zsl]scale after post process
+        ipm_ptr->src.size = req_param_ptr->post_proc_setting.cap_org_size;
         ipm_ptr++;
     }
 
@@ -4521,9 +4488,7 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
             sem_post(&cxt->jpeg_sync_sm);
             goto exit;
         }
-    }
-
-    if (!chn_param_ptr->is_scaling) {
+    } else { //!chn_param_ptr->is_scaling
         ret = snp_start_encode(snp_handle, data);
         if (ret) {
             CMR_LOGE("failed to start encode %ld", ret);
