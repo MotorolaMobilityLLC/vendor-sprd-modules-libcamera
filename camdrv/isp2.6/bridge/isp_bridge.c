@@ -58,6 +58,7 @@ struct match_data {
 struct match_data_param {
 	struct module_info module_info;
 	float zoom_ratio;
+	cmr_u32 frameId;
 
 	struct aem_info aem_stat_info[CAM_SENSOR_MAX];
 	struct ae_match_data ae_info[CAM_SENSOR_MAX];
@@ -869,6 +870,29 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			memcpy(out, &cxt->match_param.ae_sync_lib_output[sensor_role],
 				sizeof(cxt->match_param.ae_sync_lib_output[sensor_role]));
 			sem_post(&cxt->ae_sm);
+		break;
+
+	case SET_FRAME_ID:
+		{
+			if (in) {
+				cmr_u32 *frameId = (cmr_u32 *)in;
+
+				sem_wait(&cxt->module_sm);
+				cxt->match_param.frameId = *frameId;
+				sem_post(&cxt->module_sm);
+			}
+		}
+		break;
+
+	case GET_FRAME_ID:
+		{
+			if (out) {
+				cmr_u32 *frameId = (cmr_u32 *)out;
+				sem_wait(&cxt->module_sm);
+				*frameId = cxt->match_param.frameId;;
+				sem_post(&cxt->module_sm);
+			}
+		}
 		break;
 
 	default:

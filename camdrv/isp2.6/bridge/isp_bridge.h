@@ -98,6 +98,9 @@ enum isp_br_ioctl_cmd {
 
 	SET_SYNC_SLAVE_SYNC_OUTPUT,
 	GET_SYNC_SLAVE_SYNC_OUTPUT,
+
+	SET_FRAME_ID,
+	GET_FRAME_ID,
 };
 
 struct awb_gain_data {
