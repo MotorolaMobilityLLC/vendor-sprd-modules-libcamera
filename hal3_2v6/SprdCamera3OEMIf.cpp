@@ -3567,6 +3567,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
           zoomHeight = 0;
     uint32_t i = 0;
     int ret = 0;
+    int flag_square = 0;
     SCALER_Tag scaleInfo;
     struct img_rect scalerCrop;
     uint16_t picW = 0, picH = 0, fdWid = 0, fdHeight = 0;
@@ -3577,6 +3578,8 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
         HAL_LOGE("parameters error.");
         return 1;
     }
+    if (fdWid == fdHeight)
+        flag_square = 1;
     mSetting->getSCALERTag(&scaleInfo);
     HAL_LOGD("mCameraId=%d,face rect %d %d %d %d, scaleInfo crop %d %d %d %d",
              mCameraId, cropRegion[0], cropRegion[1], cropRegion[2],
@@ -3616,6 +3619,21 @@ int SprdCamera3OEMIf::CameraConvertCoordinateToFramework(int32_t *cropRegion) {
     cropRegion[1] = (cmr_u32)((float)cropRegion[1] * zoomHeight + top);
     cropRegion[2] = (cmr_u32)((float)cropRegion[2] * zoomWidth + left);
     cropRegion[3] = (cmr_u32)((float)cropRegion[3] * zoomHeight + top);
+    //for facebeauty, face crop must be square
+    fdWid = cropRegion[2] - cropRegion[0];
+    fdHeight = cropRegion[3] - cropRegion[1];
+    if (flag_square == 1){
+        HAL_LOGD("mCameraId=%d, Crop calculated before correct "
+             "(xs=%d,ys=%d,xe=%d,ye=%d, )",
+             mCameraId, cropRegion[0], cropRegion[1], cropRegion[2],
+             cropRegion[3]);
+        if (fdWid > fdHeight){
+           cropRegion[2] = cropRegion[0] +fdHeight;
+        }else if (fdHeight > fdWid){
+           cropRegion[3] = cropRegion[1]+ fdWid;
+        }
+        flag_square = 0;
+}
     HAL_LOGD("mCameraId=%d, crop_face_rect calculated "
              "(xs=%d,ys=%d,xe=%d,ye=%d, )",
              mCameraId, cropRegion[0], cropRegion[1], cropRegion[2],
@@ -3675,6 +3693,7 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
           zoomHeight = 0;
     uint32_t i = 0;
     int ret = 0;
+    int flag_square = 0;
     SCALER_Tag scaleInfo;
     struct img_rect scalerCrop;
     uint16_t sensorOrgW = 0, sensorOrgH = 0, fdWid = 0, fdHeight = 0;
@@ -3687,6 +3706,8 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
         HAL_LOGE("parameters error.");
         return 1;
     }
+    if (fdWid == fdHeight)
+        flag_square = 1;
     mSetting->getSCALERTag(&scaleInfo);
     scalerCrop.start_x = scaleInfo.crop_region[0];
     scalerCrop.start_y = scaleInfo.crop_region[1];
@@ -3711,6 +3732,22 @@ int SprdCamera3OEMIf::CameraConvertCoordinateFromFramework(
     cropRegion[1] = (cmr_u32)(((float)cropRegion[1] - top) * zoomHeight);
     cropRegion[2] = (cmr_u32)(((float)cropRegion[2] - left) * zoomWidth);
     cropRegion[3] = (cmr_u32)(((float)cropRegion[3] - top) * zoomHeight);
+    //for facebeauty, face crop must be square
+    fdWid = cropRegion[2] - cropRegion[0];
+    fdHeight = cropRegion[3] - cropRegion[1];
+    if (flag_square == 1){
+         HAL_LOGD("mCameraId=%d, crop_face_rect calculated before correct"
+             "(xs=%d,ys=%d,xe=%d,ye=%d, )",
+             mCameraId, cropRegion[0], cropRegion[1], cropRegion[2],
+             cropRegion[3]);
+        if (fdWid > fdHeight){
+           cropRegion[2] = cropRegion[0] +fdHeight;
+        }else if (fdHeight > fdWid){
+           cropRegion[3] = cropRegion[1]+ fdWid;
+        }
+        flag_square = 0;
+}
+
     HAL_LOGD("Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d, )", cropRegion[0],
              cropRegion[1], cropRegion[2], cropRegion[3]);
     return ret;

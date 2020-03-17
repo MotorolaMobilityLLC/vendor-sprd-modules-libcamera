@@ -1346,6 +1346,9 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
     clock_t start_time, end_time;
     int duration;
     float ratio;
+    cmr_u32 face_square = 0;
+    int w = 0;
+    int h = 0;
     cmr_u32 i = 0;
     cmr_bzero(&fd_img, sizeof(fd_img));
     if (!message || !class_handle) {
@@ -1525,7 +1528,6 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
                           &(class_handle->frame_out.face_area),
                           class_handle->fd_small.size,
                           class_handle->curr_frame_idx);
-
         class_handle->frame_out.dst_frame.size.width =
             class_handle->frame_in.src_frame.size.width;
         class_handle->frame_out.dst_frame.size.height =
@@ -1542,6 +1544,12 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
 
         /* coherence of coordinates */
         for (i = 0; i < class_handle->frame_out.face_area.face_count; i++) {
+            w = class_handle->frame_out.face_area.range[i].ex -
+                class_handle->frame_out.face_area.range[i].sx;
+            h = class_handle->frame_out.face_area.range[i].ey -
+		   class_handle->frame_out.face_area.range[i].sy;
+            if (w == h)
+                face_square = 1;
             class_handle->frame_out.face_area.range[i].sx =
                 class_handle->frame_out.face_area.range[i].sx * ratio;
             class_handle->frame_out.face_area.range[i].sy =
@@ -1558,6 +1566,35 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
                 class_handle->frame_out.face_area.range[i].elx * ratio;
             class_handle->frame_out.face_area.range[i].ely =
                 class_handle->frame_out.face_area.range[i].ely * ratio;
+            w = class_handle->frame_out.face_area.range[i].ex -
+                class_handle->frame_out.face_area.range[i].sx;
+            h = class_handle->frame_out.face_area.range[i].ey -
+                class_handle->frame_out.face_area.range[i].sy;
+            if(w != h)
+	         CMR_LOGV("sx %d,ex %d, sy %d ey %d,srx %d,elx %d, sry %d ely %d",
+	                 class_handle->frame_out.face_area.range[i].sx,
+                        class_handle->frame_out.face_area.range[i].ex,
+                        class_handle->frame_out.face_area.range[i].sy,
+	                 class_handle->frame_out.face_area.range[i].ey,
+	                 class_handle->frame_out.face_area.range[i].srx,
+	                 class_handle->frame_out.face_area.range[i].elx,
+	                 class_handle->frame_out.face_area.range[i].sry,
+	                 class_handle->frame_out.face_area.range[i].ely);
+            if(face_square == 1){
+                if(w > h){
+                    class_handle->frame_out.face_area.range[i].ex =
+                        class_handle->frame_out.face_area.range[i].sx + h;
+                    class_handle->frame_out.face_area.range[i].srx =
+                        class_handle->frame_out.face_area.range[i].elx + h;
+               }else if (w < h) {
+                    class_handle->frame_out.face_area.range[i].ey =
+                        class_handle->frame_out.face_area.range[i].sy + w;
+                    class_handle->frame_out.face_area.range[i].ely =
+                        class_handle->frame_out.face_area.range[i].sry + w;
+               }
+
+               face_square = 0;
+            }
         }
 
         /* save a copy for next frame to directly callback if busying */
