@@ -268,6 +268,8 @@ struct ae_frm_sync_param {
 	/*for Hybrid Zoom*/
 	struct ae_rect zoom_roi;
 	cmr_u32 zoom_ratio;
+	/*AWB gain*/
+	struct ae_alg_rgb_gain awb_gain;
 	/*the AEM statistic data, and other information*/
 	cmr_u32 aem[3 * 1024];/*aem statistics data*/
 	struct ae_rect aem_roi_rect;/*AEM Statistic data ROI*/
