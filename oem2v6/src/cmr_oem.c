@@ -11157,8 +11157,6 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
 
     camera_get_iso_value(oem_handle);
 
-    camera_interface_deinit();
-
     prev_ret = cmr_preview_stop(cxt->prev_cxt.preview_handle, cxt->camera_id);
     if (prev_ret) {
         CMR_LOGE("failed to stop prev %ld", ret);

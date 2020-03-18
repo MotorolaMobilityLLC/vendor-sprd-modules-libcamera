@@ -3843,6 +3843,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
+    camera_interface_deinit();
     prev_cxt = &handle->prev_cxt[camera_id];
     sem_destroy(&prev_cxt->ultra_video);
     if (!handle->ops.channel_stop || !handle->ops.isp_stop_video) {

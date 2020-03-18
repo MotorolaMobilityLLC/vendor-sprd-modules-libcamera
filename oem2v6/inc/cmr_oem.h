@@ -447,6 +447,8 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
 
 cmr_int camera_local_deinit(cmr_handle oem_handle);
 
+void camera_interface_deinit();
+
 cmr_int camera_local_fd_start(cmr_handle oem_handle);
 
 cmr_int camera_local_start_preview(cmr_handle oem_handle,
