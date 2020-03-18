@@ -3831,6 +3831,7 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
 	input.init_mode_id = ISP_MODE_ID_PRV_0;
+	input.sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_raw_info_ptr;
 
 	cxt->handle_pm = isp_pm_init(&input, &output);
 	cxt->commn_cxt.multi_nr_flag = output.multi_nr_flag;

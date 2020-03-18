@@ -663,13 +663,17 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	cmr_u32 data_area_size = 0;
 	cmr_u32 i = 0, j = 0, size = 0, offset = 0;
 	cmr_u32 k = 0;
-	cmr_u32 add_ae_len = 0, add_awb_len = 0, add_lnc_len = 0;
+	cmr_u32 add_ae_len = 0, ae_end_len = 16,add_awb_len = 0, add_lnc_len = 0;
 	cmr_u32 extend_offset = 0;
+	cmr_u32 version_id = 0;
+	cmr_u32 is_ae3x = 0;
+	
 	struct sensor_raw_fix_info *fix_data_ptr = PNULL;
 	struct sensor_nr_fix_info *nr_fix_ptr = PNULL;
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr = PNULL;
 	struct sensor_nr_level_map_param *nr_level_number_ptr = PNULL;
 	struct sensor_nr_level_map_param *nr_default_level_ptr = PNULL;
+	void * fix_ae_datap = PNULL;
 
 	cmr_u8 *src_data_ptr = PNULL;
 	cmr_u8 *dst_data_ptr = PNULL;
@@ -704,6 +708,15 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	} else {
 		ISP_LOGE("fail to get  sensor name from Tune file!");
 	}
+	
+	version_id = input->sensor_raw_info_ptr->version_info->version_id;
+	ISP_LOGD("p_m version id:%x.\n",version_id);
+
+	is_ae3x = 0;
+	 if ((version_id & PM_VER_CHIP_MASK) == 0x00070000 &&(version_id & PM_VER_SW_MASK) == 0x000B){
+	 	is_ae3x = 1;
+	 }
+	ISP_LOGD("p_m AE version:%d.\n",is_ae3x);
 
 	if (PNULL != nr_fix_ptr){
 		nr_scene_map_ptr = (struct sensor_nr_scene_map_param *)(nr_fix_ptr->nr_scene_ptr);
@@ -737,6 +750,15 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 		size = data_area_size + sizeof(struct isp_pm_mode_param);
 
 		add_ae_len = fix_data_ptr->ae.ae_param.ae_len;
+		fix_ae_datap = (void *)fix_data_ptr->ae.ae_param.ae;
+
+		if(is_ae3x == 1){
+			add_ae_len = fix_data_ptr->ae3x.ae_param.ae_len;//ae3x
+			fix_ae_datap = (void *)fix_data_ptr->ae3x.ae_param.ae;//ae3x
+			ISP_LOGD("p_m AE3x tuning param:%p,size:%d.\n",fix_ae_datap,add_ae_len);
+		}
+		
+		
 		add_lnc_len = fix_data_ptr->lnc.lnc_param.lnc_len;
 		add_awb_len = fix_data_ptr->awb.awb_param.awb_len;
 		size += add_ae_len + add_lnc_len + add_awb_len;
@@ -792,9 +814,17 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 			case ISP_BLK_AE_NEW:{
 					extend_offset += add_ae_len;
 					dst_header[j].size = src_header[j].size + add_ae_len;
+
+					if(is_ae3x){
+					ISP_LOGD("is ae3x,  datap %p, data size = %d + %d + %d\n",fix_ae_datap, src_header[j].size, ae_end_len, ae_end_len);
+					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len),fix_ae_datap, add_ae_len);
+					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len + add_ae_len),(void *)(src_data_ptr + src_header[j].size - ae_end_len),ae_end_len);						
+					}
+					else{
 					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001)), (void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
 					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001) + add_ae_len),
 					       (void *)(src_data_ptr + sizeof(struct ae_param_tmp_001)), (src_header[j].size - sizeof(struct ae_param_tmp_001)));
+					}
 				}
 				break;
 			case ISP_BLK_AWB_NEW:{

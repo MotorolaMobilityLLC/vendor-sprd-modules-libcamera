@@ -27,6 +27,9 @@ extern "C" {
 #define ISP_TUNE_MODE_MAX 16
 #define ISP_TUNE_BLOCK_MAX 256
 
+#define PM_VER_CHIP_MASK		(0xFFFF0000)
+#define PM_VER_SW_MASK		(0x0000FFFF)
+
 enum isp_pm_blk_cmd {
 	ISP_PM_BLK_ISP_SETTING = 0x0000,
 	ISP_PM_BLK_SMART_SETTING,
