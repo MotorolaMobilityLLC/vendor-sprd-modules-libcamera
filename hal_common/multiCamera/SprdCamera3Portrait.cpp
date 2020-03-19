@@ -2926,6 +2926,8 @@ int SprdCamera3Portrait::configureStreams(
     mAfstate = 0;
     mDoPortrait = 0;
     mPrevPortrait = false;
+    mbokehParm.f_number = 0;
+
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * PORTRAIT__MAX_NUM_STREAMS);
     memset(pauxStreams, 0,

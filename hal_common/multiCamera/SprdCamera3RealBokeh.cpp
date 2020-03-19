@@ -3200,6 +3200,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mCaptureThread->mCaptureMsgList.clear();
     mDepthMuxerThread->mDepthMuxerMsgList.clear();
     mAfstate = 0;
+    mbokehParm.f_number = 0;
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
