@@ -27,7 +27,7 @@ cmr_s32 _pm_brightness_init(void *dst_brightness, void *src_brightness, void *pa
 	dst_ptr->cur_index = src_ptr->cur_index;
 	dst_ptr->cur.bypass = bright_header_ptr->bypass;
 
-	dst_ptr->cur.factor = src_ptr->factor[src_ptr->cur_index];
+	dst_ptr->cur_level.factor = src_ptr->factor[src_ptr->cur_index];
 	memcpy((void *)dst_ptr->bright_tab, (void *)src_ptr->factor, sizeof(dst_ptr->bright_tab));
 	memcpy((void *)dst_ptr->scene_mode_tab, (void *)src_ptr->scenemode, sizeof(dst_ptr->scene_mode_tab));
 	bright_header_ptr->is_update = 1;
@@ -48,9 +48,19 @@ cmr_s32 _pm_brightness_set_param(void *bright_param, cmr_u32 cmd, void *param_pt
 		bright_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
 		break;
 
+	case ISP_PM_BLK_AI_SCENE_B_CUR:
+		{
+			memcpy((void *)&bright_ptr->final_level, param_ptr0, sizeof(bright_ptr->final_level));
+
+			bright_ptr->cur.factor = bright_ptr->final_level.factor;
+
+			bright_header_ptr->is_update = ISP_ONE;
+		}
+		break;
+
 	case ISP_PM_BLK_BRIGHT:
 		bright_ptr->cur_index = *((cmr_u32 *) param_ptr0);
-		bright_ptr->cur.factor = bright_ptr->bright_tab[bright_ptr->cur_index];
+		bright_ptr->cur_level.factor = bright_ptr->bright_tab[bright_ptr->cur_index];
 		break;
 
 	case ISP_PM_BLK_SCENE_MODE:
@@ -82,6 +92,12 @@ cmr_s32 _pm_brightness_get_param(void *bright_param, cmr_u32 cmd, void *rtn_para
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
+	case ISP_PM_BLK_AI_SCENE_B:
+		param_data_ptr->data_ptr = (void *)&bright_ptr->cur_level;
+		param_data_ptr->data_size = sizeof(bright_ptr->cur_level);
+		*update_flag = 0;
+		break;
+
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = (void *)&bright_ptr->cur;
 		param_data_ptr->data_size = sizeof(bright_ptr->cur);

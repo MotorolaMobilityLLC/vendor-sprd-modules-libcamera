@@ -89,6 +89,7 @@ extern "C" {
 		cmr_u32 mode_flag;
 		cmr_u32 scene_flag;
 		cmr_u32 ai_scene_id;
+		cmr_u32 ai_scene_pro_flag;
 		cmr_u32 mode_flag_changed;
 		struct smart_component_result component[4];
 	};
@@ -151,6 +152,7 @@ extern "C" {
 		cmr_u32 mode_flag;
 		cmr_u32 scene_flag;
 		cmr_u32 ai_scene_id;
+		cmr_u32 ai_scene_pro_flag;
 		cmr_u32 lsc_sprd_version;	// LSC version of Spreadtrum
 		cmr_u32 *r_info;
 		cmr_u32 *g_info;

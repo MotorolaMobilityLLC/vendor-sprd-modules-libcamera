@@ -8798,6 +8798,17 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         goto exit;
     }
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_APPMODE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+        goto exit;
+    }
+    isp_param.app_mode = setting_param.cmd_type_value;
+        CMR_LOGD("isp_param.app_mode %d", isp_param.app_mode);
+
     ret = cmr_sensor_get_info(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                               &exp_info);
     if (ret) {

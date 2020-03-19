@@ -58,10 +58,8 @@ else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
 LOCAL_SRC_FILES += $(call all-c-files-under, blk_v26)
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
 LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
-	blk_v26/isp_blk_bchs.c \
 	blk_v26/isp_blk_bpc.c \
 	blk_v26/isp_blk_cnr2.c \
-	blk_v26/isp_blk_edge.c \
 	blk_v26/isp_blk_nlm.c \
 	blk_v26/isp_blk_posterize.c \
 	blk_v26/isp_blk_sw3dnr.c \

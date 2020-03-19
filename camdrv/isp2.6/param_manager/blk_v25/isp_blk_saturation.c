@@ -26,8 +26,8 @@ cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *para
 	UNUSED(param_ptr2);
 
 	dst_csa_ptr->cur.bypass = csa_header_ptr->bypass;
-	dst_csa_ptr->cur.csa_factor_u = src_csa_ptr->csa_factor_u[src_csa_ptr->index_u];
-	dst_csa_ptr->cur.csa_factor_v = src_csa_ptr->csa_factor_v[src_csa_ptr->index_v];
+	dst_csa_ptr->cur_level.csa_factor_u = src_csa_ptr->csa_factor_u[src_csa_ptr->index_u];
+	dst_csa_ptr->cur_level.csa_factor_v = src_csa_ptr->csa_factor_v[src_csa_ptr->index_v];
 	dst_csa_ptr->cur_u_idx = src_csa_ptr->index_u;
 	dst_csa_ptr->cur_v_idx = src_csa_ptr->index_v;
 	for (i = 0; i < SENSOR_LEVEL_NUM; i++) {
@@ -55,6 +55,18 @@ cmr_s32 _pm_saturation_set_param(void *csa_param, cmr_u32 cmd, void *param_ptr0,
 		csa_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
 		csa_header_ptr->is_update = ISP_ONE;
 		break;
+
+	case ISP_PM_BLK_AI_SCENE_S_CUR:
+		{
+			memcpy((void *)&csa_ptr->final_level, param_ptr0, sizeof(csa_ptr->final_level));
+
+			csa_ptr->cur.csa_factor_u = csa_ptr->final_level.csa_factor_u;
+			csa_ptr->cur.csa_factor_v = csa_ptr->final_level.csa_factor_v;
+
+			csa_header_ptr->is_update = ISP_ONE;
+		}
+		break;
+
 
 	case ISP_PM_BLK_SATURATION:
 		{
@@ -129,6 +141,12 @@ cmr_s32 _pm_saturation_get_param(void *csa_param, cmr_u32 cmd, void *rtn_param0,
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
+	case ISP_PM_BLK_AI_SCENE_S:
+		param_data_ptr->data_ptr = (void *)&csa_ptr->cur_level;
+		param_data_ptr->data_size = sizeof(csa_ptr->cur_level);
+		*update_flag = 0;
+		break;
+
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = (void *)&csa_ptr->cur;
 		param_data_ptr->data_size = sizeof(csa_ptr->cur);

@@ -25,18 +25,18 @@ static cmr_u32 _pm_edge_convert_param(
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
-	cmr_u32 i;
+	cmr_u32 i, j;
 	char prop[PROPERTY_VALUE_MAX];
 	cmr_u32 ee_param_log_en = 0;
 	cmr_u32 foliage_coeff = 10;
 	cmr_u32 text_coeff = 7;
 	cmr_u32 pet_coeff = 8;
-	cmr_u32 building_coeff = 2;
+	cmr_u32 building_coeff = 5;
 	cmr_u32 snow_coeff = 6;
 	cmr_u32 night_coeff = 9;
 	cmr_u32 sel_coeff = INVALID_EE_COEFF;
 	cmr_u32 max_ee_neg = 0x100;
-	struct isp_edge_param_v1*dst_ptr = (struct isp_edge_param_v1 *)dst_edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
@@ -176,6 +176,34 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur_ai_level.ee_neg_c[0] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c1_cfg;
 		dst_ptr->cur_ai_level.ee_neg_c[1] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c2_cfg;
 		dst_ptr->cur_ai_level.ee_neg_c[2] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c3_cfg;
+
+		/* (from sharkl5) newly added bellow */
+		dst_ptr->cur.ee_new_pyramid_en = edge_param[strength_level].ee_offset_layer.ee_new_pyramid_en;
+		dst_ptr->cur.ee_old_gradient_en = edge_param[strength_level].ee_offset_layer.ee_old_gradient_en;
+		dst_ptr->cur_ai_level.ee_ratio_old_gradient = edge_param[strength_level].ee_offset_layer.ee_ratio_old_gradient;
+		dst_ptr->cur_ai_level.ee_ratio_new_pyramid = edge_param[strength_level].ee_offset_layer.ee_ratio_new_pyramid;
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 4; j++) {
+				dst_ptr->cur.ee_offset_thr_layer_curve_pos[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].thr_layer_cv_pos[j];
+				dst_ptr->cur.ee_offset_thr_layer_curve_neg[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].thr_layer_cv_neg[j];
+			}
+			for (j = 0; j < 3; j++) {
+				dst_ptr->cur.ee_offset_ratio_layer_curve_pos[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_cv_pos[j];
+				dst_ptr->cur.ee_offset_clip_layer_curve_pos[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].clip_layer_cv_pos[j];
+				dst_ptr->cur.ee_offset_ratio_layer_curve_neg[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_cv_neg[j];
+				dst_ptr->cur.ee_offset_clip_layer_curve_neg[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].clip_layer_cv_neg[j];
+				dst_ptr->cur.ee_offset_ratio_layer_lum_curve[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_lum_cv[j];
+				dst_ptr->cur.ee_offset_ratio_layer_freq_curve[i][j] =
+					edge_param[strength_level].ee_offset_layer.ee_offset_layer[i].ratio_layer_freq_cv[j];
+			}
+		}
 	}
 
 	property_get("debug.isp.ee.foliage_coeff.val", prop, "10");
@@ -184,7 +212,7 @@ static cmr_u32 _pm_edge_convert_param(
 	text_coeff = atoi(prop);
 	property_get("debug.isp.ee.pet_coeff.val", prop, "8");
 	pet_coeff = atoi(prop);
-	property_get("debug.isp.ee.building_coeff.val", prop, "2");
+	property_get("debug.isp.ee.building_coeff.val", prop, "5");
 	building_coeff = atoi(prop);
 	property_get("debug.isp.ee.snow_coeff.val", prop, "6");
 	snow_coeff = atoi(prop);
@@ -258,7 +286,6 @@ static cmr_u32 _pm_edge_convert_param(
 
 		if ((dst_ptr->cur_ai_level.ee_neg_c[2] & 0xFF) < 0x80)
 			dst_ptr->cur_ai_level.ee_neg_c[2] = 0x80;
-
 		if (ee_param_log_en) {
 			for (i = 0; i < 3; i++) {
 				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
@@ -276,7 +303,7 @@ cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, 
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_edge_param;
-	struct isp_edge_param_v1 *dst_ptr = (struct isp_edge_param_v1 *)dst_edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	UNUSED(param2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
@@ -304,7 +331,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
-	struct isp_edge_param_v1 *dst_ptr = (struct isp_edge_param_v1 *)edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)edge_param;
 
 	switch (cmd) {
 	case ISP_PM_BLK_EDGE_BYPASS:
@@ -321,6 +348,8 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 		{
 			memcpy((void *)&dst_ptr->final_ai_level, param_ptr0, sizeof(dst_ptr->final_ai_level));
 
+			dst_ptr->cur.ee_ratio_old_gradient = dst_ptr->final_ai_level.ee_ratio_old_gradient;
+			dst_ptr->cur.ee_ratio_new_pyramid = dst_ptr->final_ai_level.ee_ratio_new_pyramid;
 			dst_ptr->cur.ee_gain_hv_r[0][0] =dst_ptr->final_ai_level.ee_gain_hv_r[0][0];
 			dst_ptr->cur.ee_gain_hv_r[0][1] = dst_ptr->final_ai_level.ee_gain_hv_r[0][1];
 			dst_ptr->cur.ee_gain_hv_r[0][2] = dst_ptr->final_ai_level.ee_gain_hv_r[0][2];
@@ -349,6 +378,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 			header_ptr->is_update = ISP_ONE;
 		}
 		break;
+
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
@@ -373,6 +403,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 				dst_ptr->cur_level = level;
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[ISP_BLK_EDGE_T] = 0;
+
 				ISP_LOGD("block_result->ai_scene_pro_flag %d",block_result->ai_scene_pro_flag);
 				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level,
 							header_ptr->mode_id,
@@ -401,22 +432,23 @@ cmr_s32 _pm_edge_get_param(void *edge_param,
 		cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_edge_param_v1 *edge_ptr = (struct isp_edge_param_v1 *)edge_param;
+	struct isp_edge_param *edge_ptr = (struct isp_edge_param *)edge_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
+	case ISP_PM_BLK_ISP_SETTING:
+		param_data_ptr->data_ptr = (void *)&edge_ptr->cur;
+		param_data_ptr->data_size = sizeof(edge_ptr->cur);
+		*update_flag = 0;
+		break;
+
 	case ISP_PM_BLK_AI_SCENE_EE:
 		param_data_ptr->data_ptr = &edge_ptr->cur_ai_level;
 		param_data_ptr->data_size = sizeof(edge_ptr->cur_ai_level);
 		*update_flag = 0;
-		break;
-	case ISP_PM_BLK_ISP_SETTING:
-		param_data_ptr->data_ptr = &edge_ptr->cur;
-		param_data_ptr->data_size = sizeof(edge_ptr->cur);
-		*update_flag = ISP_ZERO;
 		break;
 
 	default:

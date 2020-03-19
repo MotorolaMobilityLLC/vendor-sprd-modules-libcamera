@@ -72,6 +72,7 @@ struct isp_block_operations s_cnr3_ops = { _pm_cnr3_init, _pm_cnr3_set_param, _p
 struct isp_block_operations s_mfnr_ops = { _pm_mfnr_init, _pm_mfnr_set_param, _pm_mfnr_get_param, PNULL, PNULL };
 struct isp_block_operations s_dre_ops = { _pm_dre_init, _pm_dre_set_param, _pm_dre_get_param, PNULL, PNULL };
 struct isp_block_operations s_dre_pro_ops = { _pm_dre_pro_init, _pm_dre_pro_set_param, _pm_dre_pro_get_param, PNULL, PNULL };
+struct isp_block_operations s_ai_ops = { _pm_ai_pro_init, _pm_ai_pro_set_param, _pm_ai_pro_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_6
@@ -104,6 +105,7 @@ struct isp_block_operations s_yuv_ltm_ops = { _pm_yuv_ltm_init, _pm_yuv_ltm_set_
 struct isp_block_operations s_gtm_ops = { _pm_gtm_init, _pm_gtm_set_param, _pm_gtm_get_param, PNULL, PNULL };
 struct isp_block_operations s_fb_ops = { _pm_fb_init, _pm_fb_set_param, _pm_fb_get_param, PNULL, PNULL };
 struct isp_block_operations s_mfnr_ops = { _pm_mfnr_init, _pm_mfnr_set_param, _pm_mfnr_get_param, PNULL, PNULL };
+struct isp_block_operations s_ai_ops = { _pm_ai_pro_init, _pm_ai_pro_set_param, _pm_ai_pro_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_5
@@ -155,6 +157,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
 	{ISP_BLK_DRE, array_offset(struct isp_context, dre), sizeof(struct isp_dres_param), &s_dre_ops},
 	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},
+	{ISP_BLK_AI_PRO_V1, array_offset(struct isp_context, ai_pro), sizeof(struct isp_ai_param), &s_ai_ops},
 };
 #elif defined CONFIG_ISP_2_6
 struct isp_block_cfg s_blk_cfgs[] = {
@@ -252,6 +255,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
 	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
 	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},
+	{ISP_BLK_AI_PRO_V1, array_offset(struct isp_context, ai_pro), sizeof(struct isp_ai_param), &s_ai_ops},
 };
 #endif
 

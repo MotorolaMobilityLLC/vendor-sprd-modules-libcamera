@@ -997,6 +997,7 @@ struct isp_video_start {
 	/* new 4in1 solution, 20191028 */
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 	cmr_u32 is_high_res_mode; /* 1: high resolution mode */
+	cmr_u16 app_mode;
 };
 
 struct isp_img_param {

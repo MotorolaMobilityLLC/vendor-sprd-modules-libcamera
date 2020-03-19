@@ -102,6 +102,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_MFNR, 0 }, /* NR block */
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
+	{ ISP_BLK_AI_PRO_V1, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -285,6 +286,8 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
 	{ ISP_BLK_DRE, 0 },
+	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
+	{ ISP_BLK_AI_PRO_V1, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -1471,6 +1474,7 @@ get_blocks:
 		break;
 	}
 	case ISP_PM_CMD_SET_SMART:
+	case ISP_PM_CMD_SET_AI_SCENE_PARAM:
 	{
 		cmr_u32 i = 0;
 		cmr_u32 set_id;

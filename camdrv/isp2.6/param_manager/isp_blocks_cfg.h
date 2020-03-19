@@ -345,20 +345,38 @@ struct isp_bright_cfg {
 	cmr_u32 factor;
 };
 
+struct isp_ai_bright_param {
+	cmr_s32 factor;
+};
+
 struct isp_contrast_cfg {
 	cmr_u32 factor;
+};
+
+struct isp_ai_contrast_param {
+	cmr_s32 factor;
 };
 
 struct isp_saturation_cfg {
 	cmr_u32 factor;
 };
 
+struct isp_ai_hue_param {
+	cmr_s32 theta;
+};
+
+struct isp_ai_csa_param {
+	cmr_s32 csa_factor_u;
+	cmr_s32 csa_factor_v;
+};
 
 struct isp_bright_param {
 	cmr_u32 cur_index;
 	struct isp_dev_brightness_info cur;
-	cmr_u8 bright_tab[16];
+	cmr_s8 bright_tab[16];
 	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
+	struct isp_ai_bright_param cur_level;
+	struct isp_ai_bright_param final_level;
 };
 
 struct isp_contrast_param {
@@ -366,18 +384,22 @@ struct isp_contrast_param {
 	struct isp_dev_contrast_info cur;
 	cmr_u8 tab[16];
 	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
+	struct isp_ai_contrast_param cur_level;
+	struct isp_ai_contrast_param final_level;
 };
 
 struct isp_hue_param {
 	cmr_u32 cur_idx;
-	cmr_s16 tab_sin[16];
-	cmr_s16 tab_cos[16];
+	cmr_u16 tab_sin[16];
+	cmr_u16 tab_cos[16];
 };
 
 struct isp_hue_param_v0 {
 	struct isp_dev_hue_info_l3 cur;
 	cmr_u32 cur_idx;
 	cmr_s16 tab[SENSOR_LEVEL_NUM];
+	struct isp_ai_hue_param cur_level;
+	struct isp_ai_hue_param final_level;
 };
 
 struct isp_chrom_saturation_param {
@@ -386,6 +408,17 @@ struct isp_chrom_saturation_param {
 	cmr_u32 cur_v_idx;
 	cmr_u8 tab[2][SENSOR_LEVEL_NUM];
 	cmr_u8 scene_mode_tab[2][MAX_SCENEMODE_NUM];
+	struct isp_ai_csa_param cur_level;
+	struct isp_ai_csa_param final_level;
+};
+
+struct isp_bchs_ai_info{
+	cmr_s16 brta_factor;
+	cmr_s16 cnta_factor;
+	cmr_s16 hua_cos_value;
+	cmr_s16 hua_sina_value;
+	cmr_s16 csa_factor_u;
+	cmr_s16 csa_factor_v;
 };
 
 struct isp_bchs_param {
@@ -397,6 +430,8 @@ struct isp_bchs_param {
 		struct isp_hue_param_v0 hue_v0;
 	};
 	struct isp_chrom_saturation_param saturation;
+	struct isp_bchs_ai_info cur_level;
+	struct isp_bchs_ai_info final_level;
 };
 
 struct isp_cce_param {
@@ -435,6 +470,26 @@ struct isp_edge_cfg {
 	cmr_u32 factor;
 };
 
+struct isp_edge_ai_param_v1 {
+	cmr_s8 ee_gain_hv_r[2][3];
+	cmr_s8 ee_gain_diag_r[2][3];
+	cmr_s8 ee_pos_r[3];
+	cmr_s8 ee_pos_c[3];
+	cmr_s8 ee_neg_r[3];
+	cmr_s8 ee_neg_c[3];
+};
+
+struct isp_edge_ai_param {
+	cmr_s16 ee_ratio_old_gradient;
+	cmr_s16 ee_ratio_new_pyramid;
+	cmr_s8 ee_gain_hv_r[2][3];
+	cmr_s8 ee_gain_diag_r[2][3];
+	cmr_s8 ee_pos_r[3];
+	cmr_s8 ee_pos_c[3];
+	cmr_s8 ee_neg_r[3];
+	cmr_s8 ee_neg_c[3];
+};
+
 struct isp_edge_param {
 	struct isp_dev_edge_info_v2 cur;
 	cmr_u32 cur_level;
@@ -442,6 +497,19 @@ struct isp_edge_param {
 	cmr_uint *param_ptr;
 	cmr_uint *scene_ptr;
 	cmr_u32 nr_mode_setting;
+	struct isp_edge_ai_param cur_ai_level;
+	struct isp_edge_ai_param final_ai_level;
+};
+
+struct isp_edge_param_v1 {
+	struct isp_dev_edge_info_v2 cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+	struct isp_edge_ai_param_v1 cur_ai_level;
+	struct isp_edge_ai_param_v1 final_ai_level;
 };
 
 struct isp_frgb_gamc_param {
@@ -475,7 +543,11 @@ struct isp_hsv_param {
 
 struct isp_hsv_table {
 	cmr_s16 hue_table[SENSOR_HSV_TAB_NUM];
-	cmr_u16 sat_table[SENSOR_HSV_TAB_NUM];
+	cmr_s16 sat_table[SENSOR_HSV_TAB_NUM];
+};
+
+struct isp_hsv_table_v1 {
+	cmr_u64 hsv_table_addr;
 };
 
 struct isp_hsv_param_new2 {
@@ -483,6 +555,8 @@ struct isp_hsv_param_new2 {
 	struct isp_sample_point_info cur_idx;
 	struct isp_hsv_table hsv_table[SENSOR_HSV_NUM];
 	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
+	struct isp_hsv_table cur_hsv_table;
+	struct isp_hsv_table final_hsv_table;
 };
 
 struct isp_hsv_param_new {
@@ -492,6 +566,8 @@ struct isp_hsv_param_new {
 	struct isp_data_info map[SENSOR_HSV_NUM_NEW];
 	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 	cmr_u32 *ct_result[2];
+	cmr_u64 *hsv_table_addr;
+	cmr_u64 *hsv_table_addr_final;
 };
 
 struct isp_iircnr_iir_param {
@@ -731,6 +807,226 @@ struct isp_dres_pro_param {
 	struct isp_dre_pro_level levels[16];
 };
 
+//AI
+enum ai_scene_pro{
+	AI_SECNE_PM_PRO_DEFAULT = 0,
+	AI_SECNE_PM_PRO_FOOD,
+	AI_SECNE_PM_PRO_PORTRAIT,
+	AI_SECNE_PM_PRO_FOLIAGE,
+	AI_SECNE_PM_PRO_SKY,
+	AI_SECNE_PM_PRO_NIGHT,
+	AI_SECNE_PM_PRO_DOCUMENT,
+	AI_SECNE_PM_PRO_SUNRISESET,
+	AI_SECNE_PM_PRO_BUILDING,
+	AI_SECNE_PM_PRO_SNOW,
+	AI_SECNE_PM_PRO_FIREWORK,
+	AI_SECNE_PM_PRO_PET,
+	AI_SECNE_PM_PRO_FLOWER,//11
+	AI_SECNE_PM_PRO_RESERVED0,
+	AI_SECNE_PM_PRO_RESERVED1,
+	AI_SECNE_PM_PRO_RESERVED2,
+	AI_SECNE_PM_PRO_RESERVED3,
+	AI_SECNE_PM_PRO_RESERVED4,
+	AI_SECNE_PM_PRO_RESERVED5,
+	AI_SECNE_PM_PRO_RESERVED6,
+	AI_SECNE_PM_PRO_RESERVED7,
+	AI_SCENE_PM_PRO_MAX
+};
+//AI_Bchs
+struct ai_brightness_info {
+	bool brightness_ai_adj_eb;
+	cmr_s16 brightness_adj_factor_offset[8];
+};
+struct ai_contrast_info {
+	bool contrast_adj_ai_eb;
+	cmr_s16 contrast_adj_factor_offset[8];
+};
+struct ai_hue_info {
+	bool hue_adj_ai_eb;
+	cmr_s16 hue_sin_offset[8];
+	cmr_s16 hue_cos_offset[8];
+};
+struct ai_hue_info_v1 {
+	bool hue_adj_ai_eb;
+	cmr_s16 theta_offset[8];
+};
+
+struct ai_saturation_info {
+	bool saturation_adj_ai_eb;
+	cmr_s16 saturation_adj_factor_u_offset[8];
+	cmr_s16 saturation_adj_factor_v_offset[8];
+};
+struct isp_ai_bchs_info {
+	struct ai_brightness_info ai_brightness;
+	struct ai_contrast_info ai_contrast;
+	union{
+	struct ai_hue_info ai_hue;
+	struct ai_hue_info_v1 ai_hue_v1;
+	};
+	struct ai_saturation_info ai_saturation;
+};
+//AI_hsv
+struct isp_ai_hsv_info {
+	bool hue_adj_ai_eb;
+	cmr_s16 hue_table_item_offset[360];
+	cmr_s16 saturation_table_item_offset[360];
+};
+
+#ifdef CONFIG_ISP_2_6
+enum ai_scene{
+	AI_SECNE_PRO_DEFAULT = 0,
+	AI_SECNE_PRO_FOOD,
+	AI_SECNE_PRO_PORTRAIT,
+	AI_SECNE_PRO_FOLIAGE,
+	AI_SECNE_PRO_SKY,
+	AI_SECNE_PRO_NIGHT,
+	AI_SECNE_PRO_DOCUMENT,
+	AI_SECNE_PRO_SUNRISESET,
+	AI_SECNE_PRO_BUILDING,
+	AI_SECNE_PRO_SNOW,
+	AI_SECNE_PRO_FIREWORK,
+	AI_SECNE_PRO_PET,
+	AI_SECNE_PRO_FLOWER,//12
+	AI_SECNE_PRO_RESERVED0,
+	AI_SECNE_PRO_RESERVED1,
+	AI_SECNE_PRO_RESERVED2,
+	AI_SECNE_PRO_RESERVED3,
+	AI_SECNE_PRO_RESERVED4,
+	AI_SECNE_PRO_RESERVED5,
+	AI_SECNE_PRO_RESERVED6,
+	AI_SCENE_PRO_MAX
+};
+
+//AI_ee
+struct sensor_ee_r_cfg_offset {
+	cmr_s8 ee_r1_cfg_offset;
+	cmr_s8 ee_r2_cfg_offset;
+	cmr_s8 ee_r3_cfg_offset;
+	cmr_s8 reserved;
+};
+struct sensor_ee_c_cfg_offset {
+	cmr_s8 ee_c1_cfg_offset;
+	cmr_s8 ee_c2_cfg_offset;
+	cmr_s8 ee_c3_cfg_offset;
+	cmr_s8 reserved;
+};
+#endif
+
+//AI_ee
+struct isp_ee_r_cfg_offset {
+	cmr_s8 ee_r1_cfg_offset;
+	cmr_s8 ee_r2_cfg_offset;
+	cmr_s8 ee_r3_cfg_offset;
+};
+struct isp_ee_c_cfg_offset {
+	cmr_s8 ee_c1_cfg_offset;
+	cmr_s8 ee_c2_cfg_offset;
+	cmr_s8 ee_c3_cfg_offset;
+};
+struct isp_ai_ee_info {
+	bool ee_enable;
+	cmr_u16 ratio_old_gradient_offset[8];
+	cmr_u16 ratio_new_pyramid_offset[8];
+	struct sensor_ee_r_cfg_offset ee_gain_hv1[8];
+	struct sensor_ee_r_cfg_offset ee_gain_hv2[8];
+	struct sensor_ee_r_cfg_offset ee_gain_diag1[8];
+	struct sensor_ee_r_cfg_offset ee_gain_diag2[8];
+	struct sensor_ee_r_cfg_offset ee_pos_r[8];
+	struct sensor_ee_c_cfg_offset ee_pos_c[8];
+	struct sensor_ee_r_cfg_offset ee_neg_r[8];
+	struct sensor_ee_c_cfg_offset ee_neg_c[8];
+};
+
+struct isp_ai_ee_info_v1 {
+	bool ee_enable;
+	cmr_u16 ratio_old_gradient_offset[8];
+	cmr_u16 ratio_new_pyramid_offset[8];
+	struct sensor_ee_r_cfg_offset ee_gain_hv1[8];
+	struct sensor_ee_r_cfg_offset ee_gain_hv2[8];
+	struct sensor_ee_r_cfg_offset ee_gain_diag1[8];
+	struct sensor_ee_r_cfg_offset ee_gain_diag2[8];
+	struct sensor_ee_r_cfg_offset ee_pos_r[8];
+	struct sensor_ee_c_cfg_offset ee_pos_c[8];
+	struct sensor_ee_r_cfg_offset ee_neg_r[8];
+	struct sensor_ee_c_cfg_offset ee_neg_c[8];
+};
+
+struct ai_isp_brightness_param {
+	bool brightness_ai_adj_eb;
+	cmr_s16 brightness_adj_factor_offset;
+};
+struct ai_isp_contrast_param {
+	bool contrast_adj_ai_eb;
+	cmr_s16 contrast_adj_factor_offset;
+};
+struct ai_isp_hue_param {
+	bool hue_adj_ai_eb;
+	cmr_s16 hue_sin_offset;
+	cmr_s16 hue_cos_offset;
+};
+
+struct ai_isp_hue_param_v1 {
+	bool hue_adj_ai_eb;
+	cmr_s16 theta_offset;
+};
+
+struct ai_isp_saturation_param {
+	bool saturation_adj_ai_eb;
+	cmr_s16 saturation_adj_factor_u_offset;
+	cmr_s16 saturation_adj_factor_v_offset;
+};
+struct isp_ai_bchs_param {
+	struct ai_isp_brightness_param ai_brightness;
+	struct ai_isp_contrast_param ai_contrast;
+	union {
+		struct ai_isp_hue_param ai_hue;
+		struct ai_isp_hue_param_v1 ai_hue_v1;
+	};
+	struct ai_isp_saturation_param ai_saturation;
+};
+
+struct isp_ai_ee_param {
+	bool ee_enable;
+	cmr_u8 reserved;
+	cmr_u16 ratio_old_gradient_offset;
+	cmr_u16 ratio_new_pyramid_offset;
+	struct isp_ee_r_cfg_offset ee_gain_hv1;
+	struct isp_ee_r_cfg_offset ee_gain_hv2;
+	struct isp_ee_r_cfg_offset ee_gain_diag1;
+	struct isp_ee_r_cfg_offset ee_gain_diag2;
+	struct isp_ee_r_cfg_offset ee_pos_r;
+	struct isp_ee_c_cfg_offset ee_pos_c;
+	struct isp_ee_r_cfg_offset ee_neg_r;
+	struct isp_ee_c_cfg_offset ee_neg_c;
+};
+
+struct isp_ai_ee_param_v1 {
+	bool ee_enable;
+	cmr_u8 reserved;
+	struct isp_ee_r_cfg_offset ee_gain_hv1;
+	struct isp_ee_r_cfg_offset ee_gain_hv2;
+	struct isp_ee_r_cfg_offset ee_gain_diag1;
+	struct isp_ee_r_cfg_offset ee_gain_diag2;
+	struct isp_ee_r_cfg_offset ee_pos_r;
+	struct isp_ee_c_cfg_offset ee_pos_c;
+	struct isp_ee_r_cfg_offset ee_neg_r;
+	struct isp_ee_c_cfg_offset ee_neg_c;
+};
+
+struct isp_ai_param {
+	struct isp_ai_bchs_param bchs_cur;
+	struct isp_ai_hsv_info hsv_cur;
+	union {
+		struct isp_ai_ee_param ee_cur;
+		struct isp_ai_ee_param_v1 ee_cur_v1;
+	};
+	cmr_u16 smooth_frame_ai_cur;
+	cmr_u16 smooth_frame_ai[AI_SCENE_PRO_MAX];
+	struct isp_ai_bchs_info isp_ai_bchs[AI_SCENE_PRO_MAX];
+	struct isp_ai_hsv_info isp_ai_hsv[AI_SCENE_PRO_MAX];
+	struct isp_ai_ee_info isp_ai_ee[AI_SCENE_PRO_MAX];
+};
+
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 is_locked;
@@ -795,6 +1091,7 @@ struct isp_context {
 	struct isp_dres_pro_param dre_pro;
 	struct isp_cnr3_param cnr3;
 	struct isp_facebeauty_param_info fb;
+	struct isp_ai_param ai_pro;
 };
 
 /*******************************isp_block_com******************************/
@@ -1035,6 +1332,10 @@ cmr_s32 _pm_fb_get_param(void *fb_param, cmr_u32 cmd, void *rtn_param0, void *rt
 cmr_s32 _pm_dre_pro_init(void *dst_dre_pro_param, void *src_dre_param, void *param1, void *param2);
 cmr_s32 _pm_dre_pro_set_param(void *dre_pro_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_dre_pro_get_param(void *dre_pro_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_ai_pro_init(void *dst_ai_param, void *src_ai_param, void *param1, void *param2);
+cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_ai_pro_get_param(void *ai_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);

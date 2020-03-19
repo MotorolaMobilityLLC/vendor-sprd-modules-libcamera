@@ -26,7 +26,7 @@ cmr_s32 _pm_hue_init(void *dst_hue_param, void *src_hue_param, void *param1, voi
 
 	dst_hue_ptr->cur.bypass = hue_header_ptr->bypass;
 	if (src_hue_ptr->cur_index < 16) {
-		dst_hue_ptr->cur.theta = src_hue_ptr->hue_theta[src_hue_ptr->cur_index];
+		dst_hue_ptr->cur_level.theta = src_hue_ptr->hue_theta[src_hue_ptr->cur_index];
 	} else {
 		ISP_LOGE("fail to make subscript not out of bounds-array");
 	}
@@ -47,11 +47,21 @@ cmr_s32 _pm_hue_set_param(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *
 		hue_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
 		break;
 
+	case ISP_PM_BLK_AI_SCENE_H_CUR:
+		{
+			memcpy((void *)&hue_ptr->final_level, param_ptr0, sizeof(hue_ptr->final_level));
+
+			hue_ptr->cur.theta = hue_ptr->final_level.theta;
+
+			hue_header_ptr->is_update = ISP_ONE;
+		}
+		break;
+
 	case ISP_PM_BLK_HUE:
 		{
 			cmr_u32 level = *((cmr_u32 *) param_ptr0);
 			hue_ptr->cur_idx = level;
-			hue_ptr->cur.theta = hue_ptr->tab[hue_ptr->cur_idx];
+			hue_ptr->cur_level.theta = hue_ptr->tab[hue_ptr->cur_idx];
 		}
 		break;
 
@@ -73,6 +83,12 @@ cmr_s32 _pm_hue_get_param(void *hue_param, cmr_u32 cmd, void *rtn_param0, void *
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
+	case ISP_PM_BLK_AI_SCENE_H:
+		param_data_ptr->data_ptr = (void *)&hue_ptr->cur_level;
+		param_data_ptr->data_size = sizeof(hue_ptr->cur_level);
+		*update_flag = 0;
+		break;
+
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = (void *)&hue_ptr->cur;
 		param_data_ptr->data_size = sizeof(hue_ptr->cur);

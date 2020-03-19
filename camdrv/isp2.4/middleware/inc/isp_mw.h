@@ -870,8 +870,9 @@ struct isp_video_start {
 	struct isp_img_frm s_yuv_sw_out;
 	cmr_u32 is_restart;
 	cmr_u32 is_4in1_sensor;
-    cmr_u32 remosaic_type;
-    cmr_u32 is_high_res_mode;
+	cmr_u32 remosaic_type;
+	cmr_u32 is_high_res_mode;
+	cmr_u16 app_mode;
 };
 
 struct isp_img_param {

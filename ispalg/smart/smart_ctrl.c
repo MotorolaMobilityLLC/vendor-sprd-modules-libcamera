@@ -2376,6 +2376,7 @@ cmr_int _smart_calc(cmr_handle handle_smart, struct smart_proc_input * in_ptr)
 			block_result->scene_flag = in_ptr->scene_flag;
 		}
 		block_result->ai_scene_id = in_ptr->ai_scene_id;
+		block_result->ai_scene_pro_flag = in_ptr->ai_scene_pro_flag;
 
 #if !defined(CONFIG_ISP_2_4)
 		if (block_result->block_id == ISP_BLK_RGB_GAMC)
