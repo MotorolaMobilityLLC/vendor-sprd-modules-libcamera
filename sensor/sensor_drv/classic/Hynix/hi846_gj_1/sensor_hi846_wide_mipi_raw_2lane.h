@@ -103,6 +103,8 @@
 /* please don't change it */
 #define EX_MCLK 24
 
+static const cmr_u32 sns_binning_fact[] = {1, 1, 2, 1};
+
 /*==============================================================================
  * Description:
  * register setting

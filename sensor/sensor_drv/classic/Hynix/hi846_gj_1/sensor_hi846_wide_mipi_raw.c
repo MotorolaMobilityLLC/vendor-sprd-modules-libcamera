@@ -336,6 +336,7 @@ static cmr_int hi846_wide_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->sns_binning_factor = sns_binning_fact;
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
