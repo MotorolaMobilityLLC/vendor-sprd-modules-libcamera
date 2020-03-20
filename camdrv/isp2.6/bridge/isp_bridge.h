@@ -191,6 +191,13 @@ struct ae_lib_output_data {
 	cmr_u32 isp_gain;
 };
 
+struct ae_rect_data {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
+};
+
 struct ae_sync_lib_outout_data {
 	cmr_u32 ae_idx;
 	cmr_u32 exp_time;
@@ -233,7 +240,7 @@ struct ae_target_region {
 struct ae_sync_data {
 	cmr_u32 num;
 	cmr_u32 ref_camera_id;
-	struct ae_rect target_rect;
+	struct ae_rect_data target_rect;
 	struct isp_size block_size;
 	struct isp_rect block_rect;
 	struct isp_size sensor_size;

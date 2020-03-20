@@ -20,6 +20,8 @@ LOCAL_SENSOR_PATH:= $(call my-dir)
 LOCAL_OTP_PATH:= $(call my-dir)
 LOCAL_VCM_PATH:= $(call my-dir)
 
+ISPALG_DIR := ispalg
+
 include $(CLEAR_VARS)
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wno-unused-parameter -Wno-error=format#-Werror
@@ -43,7 +45,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/driver/inc \
     $(LOCAL_PATH)/../$(ISPDRV_DIR)/param_manager \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/ae/inc \
-    $(LOCAL_PATH)/../$(ISPALG_DIR)/ae/sprd_ae/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/ae/sprd/ae2.x/ae/inc \
+    $(LOCAL_PATH)/../$(ISPALG_DIR)/ae/sprd/ae3.x/ae/inc \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/awb/inc \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/awb/alc_awb/inc \
     $(LOCAL_PATH)/../$(ISPALG_DIR)/awb/sprd_awb/inc \

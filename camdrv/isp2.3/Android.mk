@@ -29,24 +29,23 @@ LOCAL_C_INCLUDES := \
 	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(LOCAL_PATH)/../../common/inc \
 	$(LOCAL_PATH)/../../$(OEM_DIR)/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/sprd/ae/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/ae/flash/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/alc_awb/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/awb/sprd/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/afv1/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sprd/aft/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/sft_af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/af/alc_af/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/lsc/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/common/inc/ \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/afl/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/smart \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/tof \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/inc \
-	$(LOCAL_PATH)/../../ispalg/isp2.x/pdaf/sprd/inc \
+	$(LOCAL_PATH)/../../ispalg/ae/inc \
+	$(LOCAL_PATH)/../../ispalg/ae/sprd/ae2.x/ae/inc \
+	$(LOCAL_PATH)/../../ispalg/ae/sprd/ae3.x/ae/inc \
+	$(LOCAL_PATH)/../../ispalg/ae/sprd/ae2.x/flash/inc \
+	$(LOCAL_PATH)/../../ispalg/ae/sprd/ae3.x/flash/inc \
+	$(LOCAL_PATH)/../../ispalg/awb/inc \
+	$(LOCAL_PATH)/../../ispalg/awb/sprd/inc \
+	$(LOCAL_PATH)/../../ispalg/af/inc \
+	$(LOCAL_PATH)/../../ispalg/af/sprd/afv1/inc \
+	$(LOCAL_PATH)/../../ispalg/af/sprd/aft/inc \
+	$(LOCAL_PATH)/../../ispalg/lsc/inc \
+	$(LOCAL_PATH)/../../ispalg/common/inc/ \
+	$(LOCAL_PATH)/../../ispalg/afl/inc \
+	$(LOCAL_PATH)/../../ispalg/smart \
+	$(LOCAL_PATH)/../../ispalg/tof \
+	$(LOCAL_PATH)/../../ispalg/pdaf/inc \
+	$(LOCAL_PATH)/../../ispalg/pdaf/sprd/inc \
 	$(LOCAL_PATH)/../../sensor/inc \
 	$(LOCAL_PATH)/../../kernel_module/interface
 

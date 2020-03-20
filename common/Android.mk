@@ -8,6 +8,9 @@ include $(LOCAL_PATH)/../SprdCtrl.mk
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc/
 
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/../ispalg/common/inc
+
 LOCAL_SRC_FILES += $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g )
 
 LOCAL_MODULE := libcamcommon

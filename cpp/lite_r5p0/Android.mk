@@ -30,7 +30,7 @@ LOCAL_CFLAGS += -DTEST_ON_HAPS
 #define some folder here,use them when hal = hal3dummy
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FUNCTION_DUMMY)), true)
 	OEM_DIR:=oem2v6
-	ISPALG_DIR:=ispalg/isp2.x
+	ISPALG_DIR:=ispalg
 	ISPDRV_DIR:=camdrv/isp2.7
 endif
 

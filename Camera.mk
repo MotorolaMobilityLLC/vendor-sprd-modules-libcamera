@@ -8,29 +8,26 @@ ANDROID_MAJOR_VER := 11
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
 HAL_DIR := hal3_2v6
 OEM_DIR := oem2v6
-ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.3
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
 HAL_DIR := hal3_2v4
 OEM_DIR := oem2v4
-ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.4
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
 HAL_DIR := hal3_2v6
 OEM_DIR := oem2v6
-ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.6
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
 HAL_DIR := hal3_2v6
 OEM_DIR := oem2v6
-ISPALG_DIR := ispalg/isp2.x
 ISPDRV_DIR := camdrv/isp2.6
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
 HAL_DIR := hal3_2v6
 OEM_DIR := oem2v6
-ISPALG_DIR := ispalg/isp3.x
 ISPDRV_DIR := camdrv/isp2.6
 endif
+
+ISPALG_DIR := ispalg
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CPP_MODULAR_KERNEL)),lite_r5p0)
 CPP_DIR:=cpp/lite_r5p0

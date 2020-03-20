@@ -25,7 +25,7 @@ sensor_macro:=$(shell echo $(split_sensor) | tr a-z A-Z)
 $(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
-ISPALG_DIR = ispalg/isp2.x
+ISPALG_DIR = ispalg
 ISPDRV_DIR = camdrv/isp2.4
 LOCAL_C_INCLUDES := \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \

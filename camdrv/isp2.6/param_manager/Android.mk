@@ -18,14 +18,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
-ALG_DIR := ispalg/isp2.x
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
-ALG_DIR := ispalg/isp2.x
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
-ALG_DIR := ispalg/isp3.x
-endif
-
+ALG_DIR := ispalg
 
 LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function -Werror
 LOCAL_CFLAGS += -DLOCAL_INCLUDE_ONLY
@@ -45,7 +38,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../../../$(ALG_DIR)/smart \
 	$(LOCAL_PATH)/../../../$(ALG_DIR)/awb/inc \
 	$(LOCAL_PATH)/../../../$(ALG_DIR)/ae/inc \
-	$(LOCAL_PATH)/../../../$(ALG_DIR)/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/../../../$(ALG_DIR)/ae/sprd/ae2.x/ae/inc \
+	$(LOCAL_PATH)/../../../$(ALG_DIR)/ae/sprd/ae3.x/ae/inc \
 	$(LOCAL_PATH)/../../../$(ALG_DIR)/common/inc/ \
 	$(LOCAL_PATH)/../middleware/inc \
 	$(LOCAL_PATH)/../calibration/inc \

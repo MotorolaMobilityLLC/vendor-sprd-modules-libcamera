@@ -102,6 +102,7 @@
 #endif
 
 /* temp solution for sharkl3 compiling */
+#if 0 /*lyc*/
 struct lsc_monitor_info {
 	cmr_u32 shift;
 	cmr_u32 work_mode;
@@ -110,6 +111,7 @@ struct lsc_monitor_info {
 	struct isp_size win_num;
 	struct isp_trim_size trim;
 };
+
 struct isp_lsc_statistic_info{
 	cmr_u32 r_info[2];
 	cmr_u32 g_info[2];
@@ -117,6 +119,7 @@ struct isp_lsc_statistic_info{
 	cmr_u32 sec;
 	cmr_u32 usec;
 };
+#endif 
 #endif
 
 

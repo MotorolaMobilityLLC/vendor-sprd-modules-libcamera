@@ -35,13 +35,15 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/smart \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/awb/inc \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/sprd/ae3.x/ae/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/sprd/ae2.x/ae/inc \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/af/inc \
-	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/sprd/ae/inc \
 	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/common/inc \
 	$(LOCAL_PATH)/../../../$(OEM_DIR)/inc \
 	$(LOCAL_PATH)/../middleware/inc \
 	$(LOCAL_PATH)/../param_manager \
 	$(LOCAL_PATH)/../driver/inc
+
 
 #LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 

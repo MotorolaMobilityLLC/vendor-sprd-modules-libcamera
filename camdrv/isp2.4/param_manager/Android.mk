@@ -38,11 +38,12 @@ endif
 # internal header file
 # ************************************************
 LOCAL_C_INCLUDES += \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/smart \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/awb/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/ae/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/ae/sprd/ae/inc \
-	$(LOCAL_PATH)/../../../ispalg/isp2.x/common/inc/ \
+	$(LOCAL_PATH)/../../../ispalg/smart \
+	$(LOCAL_PATH)/../../../ispalg/awb/inc \
+	$(LOCAL_PATH)/../../../ispalg/ae/inc \
+	$(LOCAL_PATH)/../../../ispalg/ae/sprd/ae2.x/ae/inc \
+	$(LOCAL_PATH)/../../../ispalg/ae/sprd/ae3.x/ae/inc \
+	$(LOCAL_PATH)/../../../ispalg/common/inc/ \
 	$(LOCAL_PATH)/../middleware/inc \
 	$(LOCAL_PATH)/../calibration/inc \
 	$(LOCAL_PATH)/../isp_tune \

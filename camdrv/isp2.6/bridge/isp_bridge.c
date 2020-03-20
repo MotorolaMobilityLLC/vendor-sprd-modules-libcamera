@@ -95,7 +95,7 @@ struct ispbr_context {
 	struct match_data_param match_param;
 
 	cmr_u32 ae_ref_camera_id;
-	struct ae_rect ae_region[CAM_SENSOR_MAX];
+	struct ae_rect_data ae_region[CAM_SENSOR_MAX];
 
 	sem_t br_role_sm;
 	cmr_u32 id2role[CAMERA_ID_MAX];

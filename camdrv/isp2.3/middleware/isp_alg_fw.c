@@ -2284,6 +2284,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ae_info->ae_rlt_info.cur_ev = ae_in->ae_output.cur_ev;
 		ae_info->ae_rlt_info.cur_index = ae_in->ae_output.cur_index;
 		ae_info->ae_rlt_info.cur_iso = ae_in->ae_output.cur_iso;
+		ae_info->ae_rlt_info.cur_fps = ae_in->ae_output.fps;
 		ae_info->is_update = 1;
 	}
 
@@ -2352,7 +2353,7 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_CALC_RESULTS, NULL, &ae_result);
 		ae_ctrl_calc_result.is_skip_cur_frame = ae_result.is_skip_cur_frame;
 		ae_ctrl_calc_result.ae_output = ae_result.ae_output;
-		ae_ctrl_calc_result.ae_result = ae_result.ae_result;
+		//ae_ctrl_calc_result.ae_result = ae_result.ae_result;
 		ae_ctrl_calc_result.ae_ev = ae_result.ae_ev;
 		ae_ctrl_calc_result.monitor_info = ae_result.monitor_info;
 		ae_ctrl_calc_result.flash_param.captureFlashEnvRatio = ae_result.flash_param.captureFlashEnvRatio;

@@ -60,7 +60,10 @@ enum isp_alg_set_cmd {
 	ISP_AE_SET_STATISTICS_MODE,
 	ISP_AE_SET_STATS_MONITOR,
 	ISP_AE_SET_RGB_GAIN,
+	ISP_AE_SET_RGB_GAIN_SLAVE0,
+	ISP_AE_SET_RGB_GAIN_SLAVE1,
 	ISP_AE_SET_RGB_GAIN_FOR_4IN1,
+	ISP_LSC_SET_MONITOR,
 	ISP_AE_SET_AE_CALLBACK,
 	ISP_AE_SET_EXPOSURE,
 	ISP_AE_EX_SET_EXPOSURE,
@@ -1315,6 +1318,7 @@ typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void
 typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_afl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+typedef cmr_int(*isp_lsc_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
 cmr_int isp_init(struct isp_init_param *ptr, cmr_handle *handle);
 cmr_int isp_deinit(cmr_handle handle);

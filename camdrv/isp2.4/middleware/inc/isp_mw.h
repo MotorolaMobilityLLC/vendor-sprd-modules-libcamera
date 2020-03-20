@@ -69,6 +69,9 @@ enum isp_alg_set_cmd {
 	ISP_AE_GET_FLASH_TIME,
 	ISP_AE_FLASH_CTRL,
 	ISP_AE_GET_RGB_GAIN,
+	ISP_AE_SET_RGB_GAIN_SLAVE0,
+	ISP_AE_SET_RGB_GAIN_SLAVE1,
+	ISP_LSC_SET_MONITOR,
 	ISP_AE_SET_WBC_GAIN,
 	ISP_AE_MULTI_WRITE,
 	ISP_AE_SET_BLK_NUM,
@@ -1252,6 +1255,8 @@ typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void
 typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_afl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+typedef cmr_int(*isp_lsc_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+
 
 cmr_int isp_mw_pm_mem_init(void *mem);
 void isp_mw_pm_mem_deinit(void *mem);
