@@ -4214,7 +4214,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x010E,
+						0x00E6,
 						/*addback0*/
 						0x002A,
 						/*addback1*/
@@ -4290,7 +4290,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0136,
+						0x00FA,
 						/*addback0*/
 						0x002A,
 						/*addback1*/
@@ -4366,7 +4366,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x014A,
+						0x0118,
 						/*addback0*/
 						0x002A,
 						/*addback1*/
@@ -4988,7 +4988,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x012C,
+						0x010E,
 						/*addback0*/
 						0x002A,
 						/*addback1*/
@@ -5064,7 +5064,7 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0136,
+						0x012C,
 						/*addback0*/
 						0x002A,
 						/*addback1*/
@@ -7002,7 +7002,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x02,
+						0x03,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7020,7 +7020,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x01,
+						0x03,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7078,7 +7078,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x04,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7096,7 +7096,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x03,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7172,7 +7172,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x07,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7700,7 +7700,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x08,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7718,7 +7718,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x02,
+						0x07,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7776,7 +7776,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x07,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7794,7 +7794,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x09,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7852,7 +7852,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x0E,
+						0x07,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7870,7 +7870,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x08,
+						0x09,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -8398,7 +8398,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x08,
+						0x03,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -8474,7 +8474,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x06,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -8492,7 +8492,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x03,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -8550,7 +8550,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x0D,
+						0x07,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9096,7 +9096,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x06,
+						0x02,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9114,7 +9114,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x02,
+						0x03,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9132,7 +9132,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0B,
+						0x07,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -9172,7 +9172,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x08,
+						0x04,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9190,7 +9190,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x08,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9208,7 +9208,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0C,
+						0x09,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -9248,7 +9248,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x09,
+						0x06,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9266,7 +9266,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x0A,
+						0x08,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9284,7 +9284,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0F,
+						0x0B,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -9325,11 +9325,11 @@
 				/*flat_thresh_max0*/
 				0x07D0,
 				/*flat_thresh_coef0*/
-				0x0064,
+				0x0000,
 				/*flat_thresh_max1*/
-				0x0640,
+				0x07D0,
 				/*flat_thresh_coef1*/
-				0x0096,
+				0x0064,
 				/*flat_thresh_max2*/
 				0x04B0,
 				/*flat_thresh_coef2*/
@@ -9341,11 +9341,11 @@
 				/*flat_thresh_max0*/
 				0x07D0,
 				/*flat_thresh_coef0*/
-				0x0078,
+				0x0000,
 				/*flat_thresh_max1*/
-				0x0640,
+				0x07D0,
 				/*flat_thresh_coef1*/
-				0x0096,
+				0x0078,
 				/*flat_thresh_max2*/
 				0x04B0,
 				/*flat_thresh_coef2*/
@@ -9357,11 +9357,11 @@
 				/*flat_thresh_max0*/
 				0x07D0,
 				/*flat_thresh_coef0*/
-				0x0078,
+				0x0000,
 				/*flat_thresh_max1*/
-				0x0640,
+				0x07D0,
 				/*flat_thresh_coef1*/
-				0x0096,
+				0x0078,
 				/*flat_thresh_max2*/
 				0x04B0,
 				/*flat_thresh_coef2*/
@@ -9812,7 +9812,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x01,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9830,7 +9830,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x09,
+						0x07,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -9888,7 +9888,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x03,
+						0x09,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9906,7 +9906,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0B,
+						0x09,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -9964,7 +9964,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x05,
+						0x09,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -9982,7 +9982,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x0D,
+						0x0B,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -10023,7 +10023,7 @@
 				/*flat_thresh_max0*/
 				0x07D0,
 				/*flat_thresh_coef0*/
-				0x0064,
+				0x0096,
 				/*flat_thresh_max1*/
 				0x05DC,
 				/*flat_thresh_coef1*/
@@ -10039,7 +10039,7 @@
 				/*flat_thresh_max0*/
 				0x07D0,
 				/*flat_thresh_coef0*/
-				0x0078,
+				0x0096,
 				/*flat_thresh_max1*/
 				0x05DC,
 				/*flat_thresh_coef1*/
@@ -10055,7 +10055,7 @@
 				/*flat_thresh_max0*/
 				0x07D0,
 				/*flat_thresh_coef0*/
-				0x0078,
+				0x00C8,
 				/*flat_thresh_max1*/
 				0x05DC,
 				/*flat_thresh_coef1*/
