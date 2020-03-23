@@ -12554,7 +12554,8 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         if (setting_param.cmd_type_value != CAMERA_MODE_3DNR_PHOTO) {
             cxt->nightscepro_flag = 1;
         }
-        if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
+        if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
+	    setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) &&
             (setting_param.camera_id == 0 ||
              cxt->is_multi_mode == MODE_MULTI_CAMERA ||
              cxt->is_multi_mode == MODE_FOV_FUSION)) {
