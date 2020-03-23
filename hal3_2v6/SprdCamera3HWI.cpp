@@ -1129,7 +1129,7 @@ void SprdCamera3HWI::getLogLevel() {
  * persist.vendor.cam.front.high.res.zsl
  */
 void SprdCamera3HWI::getHighResZslSetting(void) {
-    char value[PROPERTY_VALUE_MAX];
+    char value[PROPERTY_VALUE_MAX] = "0";
     int tmp;
 
     if (mCameraId == 0) // back main
@@ -1137,7 +1137,7 @@ void SprdCamera3HWI::getHighResZslSetting(void) {
     else if (mCameraId == 1)
         property_get("persist.vendor.cam.front.high.res.zsl", value, "0");
 
-    mHighResFixZsl = atoi(value);
+    mHighResFixZsl = (uint8_t)atoi(value);
 }
 
 void SprdCamera3HWI::checkHighResZslSetting(uint32_t *ambient_highlight) {
