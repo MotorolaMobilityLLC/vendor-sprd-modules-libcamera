@@ -4837,7 +4837,7 @@ cmr_int camera_preview_face_beauty_handle(void *data,
     int sx, sy, ex, ey, angle, pose;
     int face_beauty_on = 0;
     int facecount = cxt->fd_face_area.face_num;
-    fb_beauty_face_t beauty_face;
+    fbBeautyFacetT beauty_face;
     fb_beauty_image_t beauty_image;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
@@ -4925,7 +4925,17 @@ cmr_int camera_preview_face_beauty_handle(void *data,
              face_beauty_set_devicetype(&(cxt->prev_face_beauty),
                                                      SPRD_CAMALG_RUN_TYPE_CPU);
 #endif
-             face_beauty_init(&(cxt->prev_face_beauty), 1, 2);
+             fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+                chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+                chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+                chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+                chipinfo = SHARKL5PRO;
+#endif
+             face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
              if (cxt->prev_face_beauty.hSprdFB != NULL)
                  cxt->mflagfb = true;
          }
@@ -4969,7 +4979,7 @@ cmr_int camera_video_face_beauty_handle(void *data,
     int sx, sy, ex, ey, angle, pose;
     int face_beauty_on = 0;
     int facecount = cxt->fd_face_area.face_num;
-    fb_beauty_face_t beauty_face;
+    fbBeautyFacetT beauty_face;
     fb_beauty_image_t beauty_image;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
@@ -5053,7 +5063,18 @@ cmr_int camera_video_face_beauty_handle(void *data,
 #else
             face_beauty_set_devicetype(&(cxt->video_face_beauty), SPRD_CAMALG_RUN_TYPE_CPU);
 #endif
-            face_beauty_init(&(cxt->video_face_beauty), 1, 2);
+
+      fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+                chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+                chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+                chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+                chipinfo = SHARKL5PRO;
+#endif
+            face_beauty_init(&(cxt->video_face_beauty), 1, 2, chipinfo);
             if (cxt->video_face_beauty.hSprdFB != NULL) {
                cxt->mvideofb = true;
             }
@@ -6818,9 +6839,10 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 #ifdef CONFIG_FACE_BEAUTY
             int face_beauty_on = 0;
             int facecount = cxt->fd_face_area.face_num;
-            fb_beauty_face_t beauty_face;
+            fbBeautyFacetT beauty_face;
             fb_beauty_image_t beauty_image;
             struct faceBeautyLevels beautyLevels;
+            struct facebeauty_param_info fb_param_map_cap;
             struct common_isp_cmd_param isp_param;
             memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -6831,7 +6853,37 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 goto exit;
             }
             ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
-            beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_COL_TEM, &isp_param);
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_SENS, &isp_param);
+
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_FB_CAP_PARAM, &isp_param);
+            if (ret == ISP_SUCCESS) {
+                memcpy(&fb_param_map_cap, &isp_param.fb_param, sizeof(struct isp_fb_param_info));
+                for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
+                    CMR_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
+                        "lipColorType %d skinColorType %d", i,
+                        fb_param_map_cap.cur.fb_param[i].blemishSizeThrCoeff,
+                        fb_param_map_cap.cur.fb_param[i].removeBlemishFlag,
+                        fb_param_map_cap.cur.fb_param[i].lipColorType,
+                        fb_param_map_cap.cur.fb_param[i].skinColorType);
+                    CMR_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                        "skinSmoothRadiusDefaultLevel %d",
+                        fb_param_map_cap.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                        fb_param_map_cap.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                        fb_param_map_cap.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+                    for(int j = 0; j < 11; j++){
+                        CMR_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
+                            "skinSmoothRadiusCoeff %d", i, j,
+                            fb_param_map_cap.cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                            fb_param_map_cap.cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                            fb_param_map_cap.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+                    }
+                }
+                ret = face_beauty_ctrl(&(cxt->face_beauty),
+                       FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
+                       (void *)&fb_param_map_cap);
+            }
+
             beautyLevels.blemishLevel =
                 (unsigned char)setting_param.fb_param.blemishLevel;
             beautyLevels.smoothLevel =
@@ -6850,6 +6902,13 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 (unsigned char)setting_param.fb_param.slimLevel;
             beautyLevels.largeLevel =
                 (unsigned char)setting_param.fb_param.largeLevel;
+            beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
+            beautyLevels.cameraCT = (int)isp_param.isp_cur_ct;
+            beautyLevels.cameraISO = (int)isp_param.isp_cur_iso;
+            beautyLevels.cameraWork = (int)cxt->camera_id;
+            CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
+                beautyLevels.cameraBV, beautyLevels.cameraWork,
+                beautyLevels.cameraCT,  beautyLevels.cameraISO);
 
             ret =
                 cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -6895,7 +6954,18 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 }
                 face_beauty_set_devicetype(&(cxt->face_beauty),
                                            SPRD_CAMALG_RUN_TYPE_CPU);
-                face_beauty_init(&(cxt->face_beauty), 0, 2);
+
+                fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+                chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+                chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+                chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+                chipinfo = SHARKL5PRO;
+#endif
+                face_beauty_init(&(cxt->face_beauty), 0, 2, chipinfo);
                 beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
                 beauty_image.inputImage.addr[0] =
                     (void *)(src->addr_vir.addr_y);
@@ -9519,6 +9589,19 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->isp_adgain;
         break;
+    case COM_ISP_GET_CUR_COL_TEM:
+        isp_cmd = ISP_CTRL_GET_AWB_CT;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->isp_cur_ct;
+        break;
+    case COM_ISP_GET_CUR_SENS:
+        isp_cmd = ISP_CUR_ISO;
+        isp_param_ptr = (void *)&param_ptr->isp_cur_iso;
+        ret = isp_capability(isp_cxt->isp_handle, isp_cmd, isp_param_ptr);
+        if (ret) {
+            CMR_LOGE("Failed to read isp capability ret = %ld", ret);
+        }
+        return ret;
     case COM_ISP_SET_AF:
         isp_cmd = ISP_CTRL_AF;
         ptr_flag = 1;
@@ -9754,6 +9837,18 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 #endif
         break;
 
+    case COM_ISP_GET_FB_PREV_PARAM:
+        isp_cmd = ISP_CTRL_GET_FB_PREV_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->fb_param;
+        break;
+
+    case COM_ISP_GET_FB_CAP_PARAM:
+        isp_cmd = ISP_CTRL_GET_FB_CAP_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->fb_param;
+        break;
+
     case COM_ISP_GET_YNRS_PARAM:
 #ifdef CONFIG_CAMERA_CNR
         isp_cmd = ISP_CTRL_GET_YNRS_PARAM;
@@ -9927,6 +10022,27 @@ void camera_get_iso_value(cmr_handle oem_handle) {
         cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                             SENSOR_EXIF_CTRL_ISOSPEEDRATINGS, isp_param);
     }
+}
+
+cmr_int camera_get_fb_param(cmr_handle handle, struct isp_fb_param_info *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)handle;
+    struct common_isp_cmd_param isp_param;
+    if (!handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_isp_ioctl(handle, COM_ISP_GET_FB_PREV_PARAM, &isp_param);
+    if (ret) {
+        goto exit;
+    }
+    memcpy(param, &isp_param.fb_param,
+        sizeof(struct isp_fb_param_info));
+
+exit:
+    CMR_LOGV("done ret = %d", ret);
+    return ret;
 }
 
 void camera_set_exif_exposure_time(cmr_handle oem_handle) {
@@ -14821,6 +14937,30 @@ cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info) {
           return ret;
     }
     *bv_info = isp_param.isp_adgain.bv;
+    return ret;
+}
+
+cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_param;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_COL_TEM, &isp_param);
+    if (ret) {
+          CMR_LOGE("failed to get isp param %d",ret);
+          return ret;
+    }
+    *ct_info = isp_param.isp_cur_ct;
+    return ret;
+}
+
+cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct common_isp_cmd_param isp_param;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_SENS, &isp_param);
+    if (ret) {
+          CMR_LOGE("failed to get isp param %d",ret);
+          return ret;
+    }
+    *iso_info = isp_param.isp_cur_iso;
     return ret;
 }
 
