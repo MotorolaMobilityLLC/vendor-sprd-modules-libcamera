@@ -2770,7 +2770,10 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 			}
 			else if(current_status->adv_param.mode_param.mode == AE_MODE_AUTO_SHUTTER_PRI){ // shutter fix , iso auto
 				capExp = cxt->sync_cur_result.ev_setting.exp_time;
-				capGain = cxt->flash_esti_result.captureGain *(cmr_u32)(cxt->flash_esti_result.captureExposure) / cxt->sync_cur_result.ev_setting.exp_time;
+				capGain = (cmr_u32)(((float)(cxt->flash_esti_result.captureGain)) *cxt->flash_esti_result.captureExposure / ((float)(cxt->sync_cur_result.ev_setting.exp_time)));
+				if(capGain > cxt->ae_tbl_param.max_gain) /*max gain is 8192*/
+					capGain = cxt->ae_tbl_param.max_gain;
+				ISP_LOGV("ae_flash, sync_result_exp_time:%f, flash_esti_result_captureGain:%f, flash_esti_result_captureExposure:%f", (float)cxt->sync_cur_result.ev_setting.exp_time, (float)(cxt->flash_esti_result.captureGain), cxt->flash_esti_result.captureExposure);
 			}
 			else if(current_status->adv_param.mode_param.mode == AE_MODE_MANUAL_EXP_GAIN){
 				capExp = cxt->sync_cur_result.ev_setting.exp_time;
@@ -2899,6 +2902,11 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->flash_timing_param.main_param_update_delay,
 			cxt->flash_timing_param.main_open_delay,
 			main_flash_capture_counts);
+
+		/*flash's self protect will close main flash advance when shutter is 1/5s*/
+		if ((cxt->cur_status.adv_param.mode_param.mode == AE_MODE_AUTO_SHUTTER_PRI) && (200000000 == cxt->sync_cur_result.ev_setting.exp_time)) {
+			main_flash_capture_counts = main_flash_capture_counts - 2;
+		}
 
 		if ((FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_BEFORE == current_status->adv_param.flash)
 			|| (FLASH_MAIN_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN == current_status->adv_param.flash)
