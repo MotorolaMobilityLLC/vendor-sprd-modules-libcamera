@@ -832,7 +832,9 @@ static cmr_s32 ae_sync_lib_out_data_process(struct ae_ctrl_cxt *cxt, struct ae_l
 	exp_data_sync->actual_data.sensor_gain = actual_item[0].sensor_gain;
 	exp_data_sync->actual_data.isp_gain = actual_item[0].isp_gain;
 	exp_data_sync->actual_data.frm_len = actual_item[0].frm_len;
+	exp_data_sync->actual_data.gain = actual_item[0].sensor_gain * actual_item[0].isp_gain/4096;
 
+	ISP_LOGV("ae_sync_lib_out_data_process, master, gain:%d", exp_data_sync->actual_data.gain);
 
 	if(cxt->cam_cap_flag && cxt->cam_large_pix_num) {
 		double rgb_coeff = 0;
