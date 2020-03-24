@@ -3040,6 +3040,7 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	input.num = MAX_MODE_NUM;
 	version_info = (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
 	input.sensor_name = version_info->sensor_ver_name.sensor_name;
+	input.sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_raw_info_ptr;
 
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		input.tuning_data[i].data_ptr = sensor_raw_info_ptr->mode_ptr[i].addr;

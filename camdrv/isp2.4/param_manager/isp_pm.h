@@ -77,6 +77,7 @@ enum isp_pm_cmd {
 
 struct isp_pm_init_input {
 	cmr_u32 num;
+	struct sensor_raw_info *sensor_raw_info_ptr;
 	struct isp_data_info tuning_data[ISP_TUNE_MODE_MAX];
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
