@@ -350,6 +350,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct sprd_pdaf_context *cxt = NULL;
 	struct isp_alg_fw_context *isp_ctx = NULL;
 	cmr_u16 i;
+	cmr_s32 base_w = 512, base_h = 384;
+	cmr_s32 offset_w = 0, offset_h = 0, temp_win_start_x = 0, temp_win_start_y = 0;
 	UNUSED(out);
 
 	if (!in_p) {
@@ -431,105 +433,6 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 
 	ISP_LOGV("PDALGO Init. Sensor Mode[%d] ", cxt->pd_gobal_setting.dSensorMode);
 
-	#ifdef CONFIG_ISP_2_5_OLD
-	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
-	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
-	for (i=0; i< in_p->pd_info->pd_pos_size * 2; i++) {
-		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
-		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
-		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
-	}
-
-	if (cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_1 ) {
-		cxt->roi_info.win.x = ROI_X_1;
-		cxt->roi_info.win.y = ROI_Y_1;
-		cxt->roi_info.win.w = ROI_Width;
-		cxt->roi_info.win.h = ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_1;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_1;
-	} else if(cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_2){
-		cxt->roi_info.win.x = ROI_X_2;
-		cxt->roi_info.win.y = ROI_Y_2;
-		cxt->roi_info.win.w = ROI_Width;
-		cxt->roi_info.win.h = ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_2;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_2;
-	} else {
-		cxt->roi_info.win.x = ROI_X_0;
-		cxt->roi_info.win.y = ROI_Y_0;
-		cxt->roi_info.win.w = ROI_Width;
-		cxt->roi_info.win.h = ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_0;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_0;
-	}
-	#else
-	cxt->ppi_info.block.start_x = in_p->pd_info->pd_offset_x;
-	cxt->ppi_info.block.end_x = in_p->pd_info->pd_end_x;
-	cxt->ppi_info.block.start_y = in_p->pd_info->pd_offset_y;
-	cxt->ppi_info.block.end_y = in_p->pd_info->pd_end_y;
-	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
-	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
-	for (i = 0; i < in_p->pd_info->pd_pos_size * 2; i++) {
-		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
-		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
-		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
-	}
-
-	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_1) {
-		cxt->roi_info.win.start_x = ROI_X_1;
-		cxt->roi_info.win.start_y = ROI_Y_1;
-		cxt->roi_info.win.end_x = ROI_X_1 + ROI_Width;
-		cxt->roi_info.win.end_y = ROI_Y_1 + ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_1;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_1;
-	} else if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_2) {
-		cxt->roi_info.win.start_x = ROI_X_2;
-		cxt->roi_info.win.start_y = ROI_Y_2;
-		cxt->roi_info.win.end_x = ROI_X_2 + ROI_Width;
-		cxt->roi_info.win.end_y = ROI_Y_2 + ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_2;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_2;
-	} else if(cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_3){
-		cxt->roi_info.win.start_x = ROI_X_3;
-		cxt->roi_info.win.start_y = ROI_Y_3;
-		cxt->roi_info.win.end_x = ROI_X_3 + ROI_Width;
-		cxt->roi_info.win.end_y = ROI_Y_3 + ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_3;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_3;
-	}else if(cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_4){
-		cxt->roi_info.win.start_x = ROI_X_4;
-		cxt->roi_info.win.start_y = ROI_Y_4;
-		cxt->roi_info.win.end_x = ROI_X_4 + ROI_Width;
-		cxt->roi_info.win.end_y = ROI_Y_4 + ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_4;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_4;
-	}else if(cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_5){
-		cxt->roi_info.win.start_x = ROI_X_5;
-		cxt->roi_info.win.start_y = ROI_Y_5;
-		cxt->roi_info.win.end_x = ROI_X_5 + ROI_Width;
-		cxt->roi_info.win.end_y = ROI_Y_5 + ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_5;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_5;
-	}else if(cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_6){
-		cxt->roi_info.win.start_x = ROI_X_6;
-		cxt->roi_info.win.start_y = ROI_Y_6;
-		cxt->roi_info.win.end_x = ROI_X_6 + ROI_Width;
-		cxt->roi_info.win.end_y = ROI_Y_6 + ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_6;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_6;
-	} else {
-		cxt->roi_info.win.start_x = ROI_X_0;
-		cxt->roi_info.win.start_y = ROI_Y_0;
-		cxt->roi_info.win.end_x = ROI_X_0 + ROI_Width;
-		cxt->roi_info.win.end_y = ROI_Y_0 + ROI_Height;
-		cxt->pd_gobal_setting.dBeginX = BEGIN_X_0;
-		cxt->pd_gobal_setting.dBeginY = BEGIN_Y_0;
-	}
-	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x) / (8 << cxt->ppi_info.block_size.width);
-	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y) / (8 << cxt->ppi_info.block_size.height);
-	cmr_u32 phasepixel_total_num = block_num_x * block_num_y * in_p->pd_info->pd_pos_size;
-	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
-	#endif
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
 	cxt->pd_gobal_setting.OTPBuffer = in_p->pdaf_otp.otp_data;
@@ -556,6 +459,72 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->pd_gobal_setting.pd_pos_row[i] = in_p->pd_info->pd_pos_row[i];
 		cxt->pd_gobal_setting.pd_pos_col[i] = in_p->pd_info->pd_pos_col[i];
 	}
+
+	if(cxt->pd_gobal_setting.dAreaW < ROI_Width * 2 || cxt->pd_gobal_setting.dAreaH < ROI_Height * 2){
+		base_w = (cxt->pd_gobal_setting.dAreaW / cxt->pd_gobal_setting.pd_unit_w / 8) * cxt->pd_gobal_setting.pd_unit_w;
+		base_h = (cxt->pd_gobal_setting.dAreaH / cxt->pd_gobal_setting.pd_unit_h / 8) * cxt->pd_gobal_setting.pd_unit_h;
+	}
+
+	cxt->pd_gobal_setting.dBeginX = in_p->pd_info->pd_offset_x;
+	cxt->pd_gobal_setting.dBeginY = in_p->pd_info->pd_offset_y;
+	temp_win_start_x = cxt->pd_gobal_setting.dBeginX + 2 * base_w;
+	temp_win_start_y = cxt->pd_gobal_setting.dBeginY + 2 * base_h;
+	offset_w = cxt->pd_gobal_setting.dAreaW - 8 * base_w;
+	offset_h = cxt->pd_gobal_setting.dAreaH - 8 * base_h;
+
+	if((offset_w / cxt->pd_gobal_setting.pd_unit_w) > 1){
+		if(0 == (offset_w / cxt->pd_gobal_setting.pd_unit_w) % 2){
+			cxt->pd_gobal_setting.dBeginX += (offset_w / 2);
+			temp_win_start_x += (offset_w / 2);
+		} else {
+			cxt->pd_gobal_setting.dBeginX += ((offset_w - cxt->pd_gobal_setting.pd_unit_w) / 2);
+			temp_win_start_x += ((offset_w - cxt->pd_gobal_setting.pd_unit_w) / 2);
+		}
+	}
+
+	if((offset_h / cxt->pd_gobal_setting.pd_unit_h) > 1){
+		if(0 == (offset_h / cxt->pd_gobal_setting.pd_unit_h) % 2){
+			cxt->pd_gobal_setting.dBeginY += (offset_h / 2);
+			temp_win_start_y += (offset_h / 2);
+		} else {
+			cxt->pd_gobal_setting.dBeginY += ((offset_h - cxt->pd_gobal_setting.pd_unit_h) / 2);
+			temp_win_start_y += ((offset_h - cxt->pd_gobal_setting.pd_unit_h) / 2);
+		}
+	}
+	cxt->pd_gobal_setting.dAreaW = 8 * base_w;
+	cxt->pd_gobal_setting.dAreaH = 8 * base_h;
+	ISP_LOGI("ROI_start_coor(%d, %d) ROI_WH(%d, %d) PD_area_begin_coor(%d, %d) PD_area_WH(%d, %d)", temp_win_start_x, temp_win_start_y,
+				(4*base_w), (4*base_h), cxt->pd_gobal_setting.dBeginX, cxt->pd_gobal_setting.dBeginY, cxt->pd_gobal_setting.dAreaW, cxt->pd_gobal_setting.dAreaH);
+
+	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
+	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
+	for (i=0; i< in_p->pd_info->pd_pos_size * 2; i++) {
+		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
+		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
+		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
+	}
+
+	#ifdef CONFIG_ISP_2_5_OLD
+	cxt->roi_info.win.x = temp_win_start_x;
+	cxt->roi_info.win.y = temp_win_start_y;
+	cxt->roi_info.win.w = 4 * base_w;
+	cxt->roi_info.win.h = 4 * base_h;
+	#else
+	cxt->ppi_info.block.start_x = in_p->pd_info->pd_offset_x;
+	cxt->ppi_info.block.end_x = in_p->pd_info->pd_end_x;
+	cxt->ppi_info.block.start_y = in_p->pd_info->pd_offset_y;
+	cxt->ppi_info.block.end_y = in_p->pd_info->pd_end_y;
+
+	cxt->roi_info.win.start_x = temp_win_start_x;
+	cxt->roi_info.win.start_y = temp_win_start_y;
+	cxt->roi_info.win.end_x = cxt->roi_info.win.start_x + 4 * base_w;
+	cxt->roi_info.win.end_y = cxt->roi_info.win.start_y + 4 * base_h;
+
+	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x) / (8 << cxt->ppi_info.block_size.width);
+	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y) / (8 << cxt->ppi_info.block_size.height);
+	cmr_u32 phasepixel_total_num = block_num_x * block_num_y * in_p->pd_info->pd_pos_size;
+	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
+	#endif
 
 	property_get("debug.isp.pdaf.otp.dump", otp_pdaf_name, "/dev/null");
 	if (strcmp(otp_pdaf_name, "/dev/null") != 0) {
@@ -693,45 +662,20 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 	}
 
-	if (cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_1) {
-		dRectX = ROI_X_1;
-		dRectY = ROI_Y_1;
-		dRectW = ROI_Width;
-		dRectH = ROI_Height;
-	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_2) {
-		dRectX = ROI_X_2;
-		dRectY = ROI_Y_2;
-		dRectW = ROI_Width;
-		dRectH = ROI_Height;
-	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_3) {
-		dRectX = ROI_X_3;
-		dRectY = ROI_Y_3;
-		dRectW = ROI_Width;
-		dRectH = ROI_Height;
-	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_4) {
-		dRectX = ROI_X_4;
-		dRectY = ROI_Y_4;
-		dRectW = ROI_Width;
-		dRectH = ROI_Height;
-	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_5) {
-		dRectX = ROI_X_5;
-		dRectY = ROI_Y_5;
-		dRectW = ROI_Width;
-		dRectH = ROI_Height;
-	} else if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_6) {
-		dRectX = ROI_X_6;
-		dRectY = ROI_Y_6;
-		dRectW = ROI_Width;
-		dRectH = ROI_Height;
-	}else {
-		dRectX = ROI_X_0;
-		dRectY = ROI_Y_0;
-		dRectW = ROI_Width;
-		dRectH = ROI_Height;
-	}
+	#ifdef CONFIG_ISP_2_5_OLD
+	dRectX = cxt->roi_info.win.x;
+	dRectY = cxt->roi_info.win.y;
+	dRectW = cxt->roi_info.win.w;
+	dRectH = cxt->roi_info.win.h;
+	#else
+	dRectX = cxt->roi_info.win.start_x;
+	dRectY = cxt->roi_info.win.start_y;
+	dRectW = cxt->roi_info.win.end_x - cxt->roi_info.win.start_x;
+	dRectH = cxt->roi_info.win.end_y - cxt->roi_info.win.start_y;
+	#endif
 
-	pixel_num_x = ROI_Width / cxt->pd_gobal_setting.pd_pair_w;
-	pixel_num_y = ROI_Height / cxt->pd_gobal_setting.pd_pair_h;
+	pixel_num_x = dRectW / cxt->pd_gobal_setting.pd_pair_w;
+	pixel_num_y = dRectH / cxt->pd_gobal_setting.pd_pair_h;
 	pixel_num = pixel_num_x * pixel_num_y;
 
 	property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
@@ -951,8 +895,8 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	//Phase Pixel Reorder: for 3L8
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_2) {
-		dBuf_width = ROI_Width / SENSOR_ID_2_BLOCK_W * 4;
-		dBuf_height = ROI_Height / SENSOR_ID_2_BLOCK_H * 4;
+		dBuf_width = dRectW / SENSOR_ID_2_BLOCK_W * 4;
+		dBuf_height = dRectH / SENSOR_ID_2_BLOCK_H * 4;
 		ISP_LOGI("PDALGO Reorder Buf. W[%d] H[%d]", dBuf_width, dBuf_height);
 		ret = PD_PhasePixelReorder(pPD_left_final, pPD_right_final, pPD_left_reorder, pPD_right_reorder, dBuf_width, dBuf_height);
 	}
