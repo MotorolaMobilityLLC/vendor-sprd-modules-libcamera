@@ -10,10 +10,6 @@ static struct sensor_nr_level_map_param s_ov5675_default_nr_level_map_param = {{
 }};
 
 static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
-	
-	
-	
-	
 	0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
 	0x00000000,0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000
 }};
@@ -121,5 +117,6 @@ static struct sensor_nr_scene_map_param s_ov5675_nr_scene_map_param = {{
 #ifdef _NR_YNRS_PARAM_
 #include "NR/common/normal/ynrs_param.h"
 #endif
+
 
 
