@@ -3029,8 +3029,10 @@ static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 	case AF_FLASH_MAIN_AFTER:
 	case AF_FLASH_PRE_AFTER:
 		if (1 == af->flash_on) {
-			af->flash_on = 0;
+                    af->flash_on = 0;
+                    if (af->request_mode != AF_MODE_MANUAL) {
 			trigger_start(af);
+                    }
 		}
 		break;
 	default:
