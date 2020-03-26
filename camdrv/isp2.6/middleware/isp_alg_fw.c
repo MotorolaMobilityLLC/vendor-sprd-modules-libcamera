@@ -341,6 +341,7 @@ struct isp_alg_fw_context {
 	cmr_u32 work_mode;
 	cmr_u32 zsl_flag;
 	cmr_u32 sn_mode;
+	cmr_u32 gtm_ltm_on;
 	/* for 4x zoom focus */
 	cmr_u32 last_ratio;
 	cmr_u32 cur_ratio;
@@ -1598,6 +1599,11 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
 	param_data = output.prv_param_data;
 	for (i = 0; i < output.prv_param_num; i++) {
+		if ((cxt->gtm_ltm_on == 0) &&
+			(param_data->id == ISP_BLK_RAW_GTM || param_data->id == ISP_BLK_RGB_LTM)) {
+			param_data++;
+			continue;
+		}
 		sub_block_info.block_info = param_data->data_ptr;
 		sub_block_info.scene_id = scene_id;
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
@@ -1608,6 +1614,11 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	if ((cxt->work_mode == 0) && cxt->zsl_flag)  {
 		param_data = output.cap_param_data;
 		for (i = 0; i < output.cap_param_num; i++) {
+			if ((cxt->gtm_ltm_on == 0) &&
+				(param_data->id == ISP_BLK_RAW_GTM || param_data->id == ISP_BLK_RGB_LTM)) {
+				param_data++;
+				continue;
+			}
 			sub_block_info.block_info = param_data->data_ptr;
 			sub_block_info.scene_id = PM_SCENE_CAP;
 			if ((!IS_DCAM_BLOCK(param_data->id)) || cxt->remosaic_type) {
@@ -5062,7 +5073,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		cxt->commn_cxt.isp_pm_mode[1] = pm_output.mode_id[1];
 	else
 		cxt->commn_cxt.isp_pm_mode[1] = ISP_TUNE_MODE_INVALID;
-	ISP_LOGD("pm mode 0x%x 0x%x\n", cxt->commn_cxt.isp_pm_mode[0], cxt->commn_cxt.isp_pm_mode[1]);
+
+	ISP_LOGD("cam %ld, pm mode 0x%x 0x%x,  gtm_ltm on %d\n", cxt->camera_id,
+		cxt->commn_cxt.isp_pm_mode[0], cxt->commn_cxt.isp_pm_mode[1], cxt->gtm_ltm_on);
 
 	cxt->commn_cxt.param_index = ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &in_ptr->size);
 

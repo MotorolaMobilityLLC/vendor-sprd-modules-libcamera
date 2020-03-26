@@ -3294,6 +3294,11 @@ static cmr_int ispctl_get_gtm_status(cmr_handle isp_alg_handle, void *param_ptr)
 	if (param_ptr == NULL)
 		return ret;
 
+	if (cxt->gtm_ltm_on == 0) {
+		*(cmr_u32 *)param_ptr = 0;
+		return 0;
+	}
+
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data,
 			ISP_PM_BLK_GTM_STATUS,
@@ -3308,6 +3313,141 @@ static cmr_int ispctl_get_gtm_status(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 
 	*(cmr_u32 *)param_ptr = gtm_on;
+
+	return ret;
+}
+
+static cmr_int ispctl_gtm_switch(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 enable, blk_id;
+	struct isp_gtm_switch_param *gtm_switch;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct dcam_dev_raw_gtm_block_info gtm_data, *p_gtm;
+	struct isp_dev_rgb_ltm_info ltm_data, *p_ltm;
+	struct isp_u_blocks_info sub_block_info;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	if (param_ptr == NULL) {
+		ISP_LOGE("fail to get valid param ptr!");
+		return ISP_PARAM_NULL;
+	}
+	gtm_switch = (struct isp_gtm_switch_param *)param_ptr;
+	enable = gtm_switch->enable;
+
+	ISP_LOGD("cam%ld, on: %d", cxt->camera_id, enable);
+
+	if (enable && cxt->gtm_ltm_on) {
+		ISP_LOGD("cam%ld gtm_ltm is already on\n", cxt->camera_id);
+		return 0;
+	}
+	if (!enable && !cxt->gtm_ltm_on) {
+		ISP_LOGD("cam%ld gtm_ltm is already off\n", cxt->camera_id);
+		return 0;
+	}
+
+	/* force GTM/LTM off */
+	if (!enable) {
+		/* lock pm to avoid parameter is set to driver in sof */
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_LOCK, NULL, NULL);
+		cxt->gtm_ltm_on = 0;
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_UNLOCK, NULL, NULL);
+
+		memset(&gtm_data, 0, sizeof(struct dcam_dev_raw_gtm_block_info));
+		gtm_data.gtm_mod_en = 0;
+		gtm_data.gtm_map_bypass = 1;
+		gtm_data.gtm_hist_stat_bypass = 1;
+		blk_id = ISP_BLK_RAW_GTM;
+		sub_block_info.block_info = &gtm_data;
+		sub_block_info.scene_id = PM_SCENE_CAP;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+		sub_block_info.scene_id = PM_SCENE_PRE;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+
+		memset(&ltm_data, 0, sizeof(struct isp_dev_rgb_ltm_info));
+		ltm_data.ltm_map.bypass = 1;
+		ltm_data.ltm_stat.bypass = 1;
+		blk_id = ISP_BLK_RGB_LTM;
+		sub_block_info.block_info = &gtm_data;
+		sub_block_info.scene_id = PM_SCENE_CAP;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+		sub_block_info.scene_id = PM_SCENE_PRE;
+		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+	}
+
+
+	if (enable) {
+		/* restore GTM from tuning param */
+		blk_id = ISP_BLK_RAW_GTM;
+		memset(&param_data, 0, sizeof(param_data));
+		memset(&output, 0, sizeof(output));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, blk_id, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
+				&input, &output);
+		if (!ret && 1 == output.param_num && output.param_data->data_ptr) {
+			sub_block_info.block_info = output.param_data->data_ptr;
+			sub_block_info.scene_id = PM_SCENE_CAP;
+			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+
+			p_gtm = (struct dcam_dev_raw_gtm_block_info *)output.param_data->data_ptr;
+			ISP_LOGD("cam%ld restore GTM %d %d %d\n", cxt->camera_id,
+				p_gtm->gtm_mod_en, p_gtm->gtm_map_bypass, p_gtm->gtm_hist_stat_bypass);
+		}
+
+		memset(&param_data, 0, sizeof(param_data));
+		memset(&output, 0, sizeof(output));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, blk_id, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_SINGLE_SETTING,
+				&input, &output);
+		if (!ret && 1 == output.param_num && output.param_data->data_ptr) {
+			sub_block_info.block_info = output.param_data->data_ptr;
+			sub_block_info.scene_id = PM_SCENE_PRE;
+			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+
+			p_gtm = (struct dcam_dev_raw_gtm_block_info *)output.param_data->data_ptr;
+			ISP_LOGD("cam%ld restore GTM %d %d %d\n", cxt->camera_id,
+				p_gtm->gtm_mod_en, p_gtm->gtm_map_bypass, p_gtm->gtm_hist_stat_bypass);
+		}
+
+		/* restore LTM from tuning param */
+		blk_id = ISP_BLK_RGB_LTM;
+		memset(&param_data, 0, sizeof(param_data));
+		memset(&output, 0, sizeof(output));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, blk_id, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
+				&input, &output);
+		if (!ret && 1 == output.param_num && output.param_data->data_ptr) {
+			sub_block_info.block_info = output.param_data->data_ptr;
+			sub_block_info.scene_id = PM_SCENE_CAP;
+			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+
+			p_ltm = (struct isp_dev_rgb_ltm_info *)output.param_data->data_ptr;
+			ISP_LOGD("cam%ld restore LTM %d %d\n", cxt->camera_id,
+				p_ltm->ltm_map.bypass, p_ltm->ltm_stat.bypass);
+		}
+
+		memset(&param_data, 0, sizeof(param_data));
+		memset(&output, 0, sizeof(output));
+		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, blk_id, NULL, 0);
+		ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_SINGLE_SETTING,
+				&input, &output);
+		if (!ret && 1 == output.param_num && output.param_data->data_ptr) {
+			sub_block_info.block_info = output.param_data->data_ptr;
+			sub_block_info.scene_id = PM_SCENE_PRE;
+			isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, blk_id);
+
+			p_ltm = (struct isp_dev_rgb_ltm_info *)output.param_data->data_ptr;
+			ISP_LOGD("cam%ld restore LTM %d %d\n", cxt->camera_id,
+				p_ltm->ltm_map.bypass, p_ltm->ltm_stat.bypass);
+		}
+		cxt->gtm_ltm_on = 1;
+	}
 
 	return ret;
 }
@@ -3742,19 +3882,6 @@ static cmr_int ispctl_set_cap_flag(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int ispctl_gtm_switch(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_gtm_switch_param *gtm_switch= (struct isp_gtm_switch_param *)param_ptr;
-	struct isp_alg_fw_context *cxt =
-		(struct isp_alg_fw_context *)isp_alg_handle;
-	cmr_u32 enable = gtm_switch->enable;
-	ISP_LOGI("ispctl_gtm_switch =%d",enable);
-	if (cxt->ops.smart_ops.ioctrl)
-		ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle, ISP_SMART_IOCTL_SET_GTM_SWITCH, (void *)&enable, NULL);
-	return ret;
-}
-
 static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3958,9 +4085,9 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_SET_VISIBLE_REGION, ispctl_ae_set_visible_region},
 	{ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO, ispctl_ae_set_global_zoom_ratio},
 	{ISP_CTRL_GET_GTM_STATUS, ispctl_get_gtm_status},
+	{ISP_CTRL_SET_GTM_ONFF, ispctl_gtm_switch},
 	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},
 	{ISP_CTRL_SET_AE_ADJUST, ispctl_ev_adj},
-	{ISP_CTRL_SET_GTM_ONFF, ispctl_gtm_switch},
 #ifdef CAMERA_CNR3_ENABLE
 	{ISP_CTRL_GET_CNR3_PARAM, ispctl_get_cnr3_param},
 #endif
