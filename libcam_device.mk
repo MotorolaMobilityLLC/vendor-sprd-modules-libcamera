@@ -22,10 +22,22 @@ ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512), )
 PRODUCT_COPY_FILES += vendor/sprd/modules/libcamera/arithmetic/sprd_easy_hdr/firmware/hdr_cadence.bin:vendor/firmware/hdr_cadence.bin \
                       vendor/sprd/modules/libcamera/arithmetic/sprd_warp/firmware/warp_cadence.bin:vendor/firmware/warp_cadence.bin \
                       vendor/sprd/modules/libcamera/arithmetic/facebeauty/firmware/facebeauty_cadence.bin:vendor/firmware/facebeauty_cadence.bin \
-					  vendor/sprd/modules/libcamera/arithmetic/libmfnr/firmware/mfnr_cadence.bin:vendor/firmware/mfnr_cadence.bin
+					  vendor/sprd/modules/libcamera/arithmetic/libmfnr/firmware/mfnr_cadence.bin:vendor/firmware/mfnr_cadence.bin\
+		      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/hourglass_cadence.bin:vendor/firmware/hourglass_cadence.bin \
+		      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/hourglass_network.bin:vendor/firmware/hourglass_network.bin
+COM_IMG_PATH :=$(LOCAL_PATH)/arithmetic/sprd_portrait_scene/image/common
+img_files := $(shell ls $(COM_IMG_PATH))
+PRODUCT_COPY_FILES += $(foreach file, $(img_files), \
+         $(COM_IMG_PATH)/$(file):vendor/etc/aiimg/common/$(file))
+
+COM_IMG_PATH :=$(LOCAL_PATH)/arithmetic/sprd_portrait_scene/image/front
+img_files := $(shell ls $(COM_IMG_PATH))
+PRODUCT_COPY_FILES += $(foreach file, $(img_files), \
+         $(COM_IMG_PATH)/$(file):vendor/etc/aiimg/front/$(file))
 endif
 
 TF_MODEL_PATH := vendor/sprd/modules/libcamera/arithmetic/tf_models
 model_files := $(shell ls $(TF_MODEL_PATH))
 PRODUCT_COPY_FILES += $(foreach file, $(model_files), \
          $(TF_MODEL_PATH)/$(file):vendor/etc/tf_models/$(file))
+

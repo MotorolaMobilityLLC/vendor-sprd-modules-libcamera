@@ -398,6 +398,18 @@ typedef enum {
 } CameraBlurID;
 
 typedef enum {
+    /* Main camera device id*/
+    CAM_PBRP_MAIN_ID = 0,
+    /* Main front camera device id*/
+    CAM_PBRP_MAIN_ID_2 = 1,
+    /* Aux camera device id*/
+    CAM_PBRP_AUX_ID = 2,
+    /* Aux front camera device id*/
+    CAM_PBRP_AUX_ID_2 = 3,
+} CameraPortraitSceneID;
+
+
+typedef enum {
     /* Main camera of the related cam subsystem which controls*/
     CAM_TYPE_MAIN = 0,
     /* Aux camera of the related cam subsystem */

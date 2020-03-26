@@ -80,6 +80,10 @@ ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SINGLE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libSegLiteMNN libBokeh2Frames libsprd_portrait_cap libcamlpt liblightportrait libcamdfa libdfa
 endif
 
+ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SCENE_SUPPORT)),true)
+LOCAL_SHARED_LIBRARIES += libsprdportraitsceneadapter libportrait_scene_prev libportrait_scene_cap libSegLiteXNNC libTfliteWrapper libSegLite
+endif
+
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libimagestitcher
 else ifeq ($(strip $(TARGET_BOARD_STEREOPREVIEW_SUPPORT)),true)

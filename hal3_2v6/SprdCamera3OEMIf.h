@@ -638,6 +638,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mIsBlur2Zsl;
     bool mIsSlowmotion;
 
+    // add for portraitscene prev fb
+    bool mIsPortraitScene;
+
     void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char *tmpbuf);
     int nv21Scale(const uint8_t *src_y, const uint8_t *src_vu, int src_width,
                   int src_height, uint8_t *dst_y, uint8_t *dst_vu,

@@ -26,6 +26,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#define LOG_TAG "Cam3MultiBase"
 
 #include "SprdCamera3MultiBase.h"
 //#include <linux/ion.h>
@@ -37,7 +38,6 @@
 #include <algorithm>
 
 #include <ui/GraphicBufferMapper.h>
-
 using namespace android;
 using namespace std;
 
@@ -652,7 +652,6 @@ int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
     } else if (new_stream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
         stream_type = CALLBACK_STREAM;
     }
-
     return stream_type;
 }
 
@@ -1410,14 +1409,12 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     memset(&dst_img, 0, sizeof(struct img_frm));
     convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420,
                      src_vir_addr);
-
     convertToImg_frm(pic_enc_private_handle, &pic_enc_img, IMG_DATA_TYPE_JPEG,
                      pic_vir_addr);
     if (dst_private_handle != NULL) {
         convertToImg_frm(dst_private_handle, &dst_img, IMG_DATA_TYPE_JPEG,
                          dst_vir_addr);
     }
-
     memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
     memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
     memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
@@ -1767,7 +1764,11 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_2M, {{1600, 1200}, {960, 720}, {320, 240}}},
     {RES_1080P, {{1920, 1080}, {1440, 1080}, {960, 720},{640, 480}}},
     {RES_5M, {{2592, 1944}, {960, 720}, {320, 240}}},
+    {RES_PORTRAIT_SCENE_5M, {{2592, 1944}, {1920, 1080},{960, 720}, 
+        {1280, 720}, {720, 480}, {320, 240}}},
     {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
+    {RES_PORTRAIT_SCENE_8M, {{3264, 2448}, {1920, 1080}, {960, 720},
+        {1280, 720}, {720, 480}, {320, 240}}},
     {RES_12M, {{4000, 3000}, {960, 720}, {320, 240}}},
     {RES_13M, {{4160, 3120}, {2592, 1944}, {960, 720}, {320, 240}}},
     {RES_MULTI, {{3264, 2448}, {3264, 1836}, {2304, 1728},
@@ -1791,8 +1792,12 @@ int SprdCamera3MultiBase::get_support_res_size(const char *resolution) {
         size = RES_1080P;
     else if (!strncmp(resolution, "RES_5M", 12))
         size = RES_5M;
+    else if (!strncmp(resolution, "RES_PS_5M", 12))
+        size = RES_PORTRAIT_SCENE_5M;
     else if (!strncmp(resolution, "RES_8M", 12))
         size = RES_8M;
+    else if (!strncmp(resolution, "RES_PS_8M", 12))
+        size = RES_PORTRAIT_SCENE_8M;
     else if (!strncmp(resolution, "RES_12M", 12))
         size = RES_12M;
     else if (!strncmp(resolution, "RES_13M", 12))
@@ -1838,7 +1843,6 @@ void SprdCamera3MultiBase::addAvailableStreamSize(CameraMetadata &metadata,
         available_stream_configurations[CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4];
     memset(available_stream_configurations, 0,
            CAMERA_SETTINGS_CONFIG_ARRAYSIZE * 4);
-
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_cnt; i++) {
             if ((stream_info[i].width == 0) || (stream_info[i].height == 0))
@@ -1875,7 +1879,11 @@ int SprdCamera3MultiBase::getJpegStreamSize(const char *resolution) {
         jpeg_stream_size = (1920 * 1080 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     else if (!strncmp(resolution, "RES_5M", 12))
         jpeg_stream_size = (2592 * 1944 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_PS_5M", 12))
+        jpeg_stream_size = (2592 * 1944 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     else if (!strncmp(resolution, "RES_8M", 12))
+        jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    else if (!strncmp(resolution, "RES_PS_8M", 12))
         jpeg_stream_size = (3264 * 2448 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     else if (!strncmp(resolution, "RES_12M", 12))
         jpeg_stream_size = (4000 * 3000 * 3 / 2 + sizeof(camera3_jpeg_blob_t));

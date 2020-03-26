@@ -26,7 +26,7 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
+#define LOG_TAG "Cam3Wrapper"
 #include "SprdCamera3Wrapper.h"
 
 using namespace android;
@@ -58,6 +58,9 @@ const multiCameraMode available_mutiCamera_mode[MODE_CAMERA_MAX] = {
     MODE_3D_FACE,
 #endif
 
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    MODE_PORTRAIT_SCENE
+#endif
 };
 const muti_camera_mode_map_t cameraid_map_mode[MODE_CAMERA_MAX] = {
     {SPRD_3D_VIDEO_ID, MODE_3D_VIDEO},
@@ -79,7 +82,10 @@ const muti_camera_mode_map_t cameraid_map_mode[MODE_CAMERA_MAX] = {
     {SPRD_PORTRAIT_SINGLE_ID, MODE_PORTRAIT_SINGLE},
     {SPRD_3D_FACEID_REGISTER_ID, MODE_3D_FACEID_REGISTER},
     {SPRD_3D_FACEID_UNLOCK_ID, MODE_3D_FACEID_UNLOCK},
-    {SPRD_FOV_FUSION_ID, MODE_FOV_FUSION}};
+    {SPRD_FOV_FUSION_ID, MODE_FOV_FUSION},
+    {SPRD_PORTRAIT_SCENE_FRONT_ID, MODE_PORTRAIT_SCENE},
+    {SPRD_PORTRAIT_SCENE_REAR_ID, MODE_PORTRAIT_SCENE}
+    };
 
 int SprdCamera3Wrapper::mLogicalSensorNum = CAMERA_LOGICAL_SENSOR_NUM;
 int SprdCamera3Wrapper::mPhysicalSensorNum = CAMERA_SENSOR_NUM;
@@ -129,6 +135,9 @@ SprdCamera3Wrapper::SprdCamera3Wrapper() {
 #endif
 #ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
     SprdCamera3SinglePortrait::getCameraBlur(&mSinglePortrait);
+#endif
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    SprdCamera3PortraitScene::getCameraPortraitScene(&mPortraitScene);
 #endif
 }
 
@@ -190,6 +199,7 @@ multiCameraMode SprdCamera3Wrapper::getMultiCameraMode(int camera_id) {
             }
         }
     }
+
     HAL_LOGI("mode:%d", mode);
     return mode;
 }
@@ -280,6 +290,12 @@ int SprdCamera3Wrapper::cameraDeviceOpen(
 #ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
     case MODE_PORTRAIT_SINGLE:
         rc = mSinglePortrait->camera_device_open(module, id, hw_device);
+        break;
+#endif
+
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    case MODE_PORTRAIT_SCENE:
+        rc = mPortraitScene->camera_device_open(module, id, hw_device);
         break;
 #endif
 
@@ -380,6 +396,12 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 #ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
     case MODE_PORTRAIT_SINGLE:
         rc = mSinglePortrait->get_camera_info(camera_id, info);
+        break;
+#endif
+
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    case MODE_PORTRAIT_SCENE:
+        rc = mPortraitScene->get_camera_info(camera_id, info);
         break;
 #endif
 

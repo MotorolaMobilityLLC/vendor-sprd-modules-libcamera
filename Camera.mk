@@ -101,7 +101,8 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/sprd_warp/inc \
     $(LOCAL_PATH)/arithmetic/sprd_wt/inc \
     $(LOCAL_PATH)/arithmetic/libxmp/inc \
-    $(LOCAL_PATH)/arithmetic/libxmp/inc/client-glue
+    $(LOCAL_PATH)/arithmetic/libxmp/inc/client-glue \
+    $(LOCAL_PATH)/arithmetic/sprd_portrait_scene/inc
 
 #LOCAL_C_INCLUDES += \
 #    $(LOCAL_PATH)/arithmetic/OpticsZoom/inc
@@ -233,6 +234,11 @@ LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera3SinglePortrait.cpp
 endif
 
+ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SCENE_SUPPORT)),true)
+LOCAL_SRC_FILES+= \
+    hal_common/multiCamera/SprdCamera3PortraitScene.cpp
+endif
+
 ifeq ($(strip $(TARGET_BOARD_3D_FACE_UNLOCK_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera33DFaceId.cpp
@@ -345,6 +351,7 @@ CAMERA_NPI_FILE := /vendor/lib/libcamcalitest.so
 SYMLINK := $(TARGET_OUT_VENDOR)/lib/npidevice/libcamcalitest.so
 LOCAL_POST_INSTALL_CMD := $(hide) \
 	mkdir -p $(TARGET_OUT_VENDOR)/lib/npidevice; \
+    mkdir -p $(TARGET_OUT_VENDOR)/etc/aiimg;\
 	rm -rf $(SYMLINK) ;\
 	ln -sf $(CAMERA_NPI_FILE) $(SYMLINK);
 

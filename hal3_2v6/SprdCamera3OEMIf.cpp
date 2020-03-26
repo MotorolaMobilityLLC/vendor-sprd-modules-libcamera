@@ -469,6 +469,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
       mIsUnpopped(false), mIsBlur2Zsl(false), mIsSlowmotion(false),
+      mIsPortraitScene(false),
       mPreviewFormat(CAM_IMG_FMT_YUV420_NV21),
       mVideoFormat(CAM_IMG_FMT_YUV420_NV21),
       mCallbackFormat(CAM_IMG_FMT_YUV420_NV21),
@@ -1742,17 +1743,20 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         sprddefInfo->high_resolution_mode = *(unsigned int *)param1;
         break;
     }
-    case CAMERA_IOCTRL_SET_VISIBLE_REGION:
-        {
-            struct visible_region_info *info = (struct visible_region_info *)param1;
+    case CAMERA_IOCTRL_SET_VISIBLE_REGION:{
+        struct visible_region_info *info = (struct visible_region_info *)param1;
 
-            if (info) {
-                uint16_t w, h;
+        if (info) {
+            uint16_t w, h;
 
-                mSetting->getLargestSensorSize(mCameraId, &w, &h);
-                info->max_size.width = w;
-                info->max_size.height = h;
-            }
+            mSetting->getLargestSensorSize(mCameraId, &w, &h);
+            info->max_size.width = w;
+            info->max_size.height = h;
+        }
+        break;
+    }
+    case CAMERA_IOCTRL_SET_FB_SWITCH:{
+            mIsPortraitScene = *((bool *)param1);
         }
         break;
     } /* switch */
@@ -3952,13 +3956,14 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
         isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)
         && (getMultiCameraMode() != MODE_BOKEH)
-        && (getMultiCameraMode() != MODE_BLUR)) {
+        && (getMultiCameraMode() != MODE_BLUR|| mIsPortraitScene==true)) {
         FACE_Tag faceInfo;
         fbBeautyFacetT beauty_face;
         fb_beauty_image_t beauty_image;
         cmr_u32 bv;
         cmr_u32 ct;
         cmr_u32 iso;
+        CMR_LOGD("thomas face fb mode=%d",face_beauty.fb_mode);
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);

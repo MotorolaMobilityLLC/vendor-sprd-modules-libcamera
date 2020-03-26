@@ -86,6 +86,10 @@
 #ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
 #include "SprdCamera3SinglePortrait.h"
 #endif
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+#include "SprdCamera3PortraitScene.h"
+#endif
+
 
 namespace sprdcamera {
 
@@ -148,6 +152,10 @@ class SprdCamera3Wrapper {
 #ifdef CONFIG_PORTRAIT_SINGLE_SUPPORT
     SprdCamera3SinglePortrait *mSinglePortrait;
 #endif
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    SprdCamera3PortraitScene *mPortraitScene;
+#endif
+
 };
 };
 #endif

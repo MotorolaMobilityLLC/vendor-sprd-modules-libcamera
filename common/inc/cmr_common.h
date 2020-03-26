@@ -1978,6 +1978,7 @@ typedef enum {
     MODE_3D_FACEID_REGISTER,
     MODE_3D_FACEID_UNLOCK,
     MODE_FOV_FUSION,
+    MODE_PORTRAIT_SCENE,
     MODE_CAMERA_MAX
 } multiCameraMode;
 
@@ -2013,6 +2014,8 @@ typedef enum {
     SPRD_3D_FACEID_REGISTER_ID = 46,
     SPRD_3D_FACEID_UNLOCK_ID = 47,
     SPRD_FOV_FUSION_ID = 48,
+    SPRD_PORTRAIT_SCENE_FRONT_ID = 52,
+    SPRD_PORTRAIT_SCENE_REAR_ID = 53,
     SPRD_MULTI_CAMERA_MAX_ID
 } multiCameraId;
 
@@ -2022,7 +2025,8 @@ typedef enum {
     SPRD_MIMETPYE_BLUR = 12,
     SPRD_MIMETPYE_BOKEH = 16,
     SPRD_MIMETPYE_BOKEH_HDR = 17,
-    SPRD_MIMETPYE_AI = 36
+    SPRD_MIMETPYE_AI = 36 ,
+    SPRD_MIMETPYE_PORTRAIT_SCENE = 48
 } multiCameraMimetype;
 
 struct img_sbs_info {
@@ -2116,6 +2120,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_ISO,
     CAMERA_IOCTRL_GET_COLOR_TEMP,
     CAMERA_IOCTRL_FOV_FUSION_MODE,
+    CAMERA_IOCTRL_SET_FB_SWITCH,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

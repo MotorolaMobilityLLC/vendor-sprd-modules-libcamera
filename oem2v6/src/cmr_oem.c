@@ -6726,6 +6726,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     struct jpeg_context *jpeg_cxt = NULL;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
+    cmr_s32 filter_type = 0;
     int ret = CMR_CAMERA_SUCCESS;
     int need_exif_flag = (dst.addr_vir.addr_y == 0) ? 0 : 1;
     cmr_u32 SUPER_FINE = 95;
@@ -6743,6 +6744,8 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
 
     sem_wait(&cxt->access_sm);
     // 1.construct param
+    cmr_bzero((void *)&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
     memset(&mean, 0, sizeof(struct cmr_op_mean));
     mean.quality_level = SUPER_FINE;
     mean.slice_mode = JPEG_YUV_SLICE_ONE_BUF;
@@ -6751,6 +6754,193 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     src.data_end.y_endian = 0;
     src.data_end.uv_endian = 2;
 
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_FILTER_TEYP, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get filtertype %ld", ret);
+        goto exit;
+    }
+    CMR_LOGD("thomas face");
+    filter_type = setting_param.cmd_type_value;
+    CMR_LOGD("thomas face_first=%d,second=%d,the=%d,forth=%d",
+             cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
+             cxt->is_multi_mode == MODE_SELF_SHOT ||
+             cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+             cxt->is_multi_mode == MODE_BOKEH,
+             (cxt->is_multi_mode == MODE_BLUR &&
+              cxt->blur_facebeauty_flag == 1),
+              filter_type == 0,
+              !cxt->prev_cxt.video_eb
+             );
+    if ((cxt->is_multi_mode == MODE_SINGLE_CAMERA ||
+             cxt->is_multi_mode == MODE_SELF_SHOT ||
+             cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+             cxt->is_multi_mode == MODE_BOKEH ||
+             (cxt->is_multi_mode == MODE_BLUR &&
+              cxt->blur_facebeauty_flag == 1)) &&
+            (filter_type == 0) && (!cxt->prev_cxt.video_eb)) {
+
+#ifdef CONFIG_FACE_BEAUTY
+            int face_beauty_on = 0;
+            int facecount = cxt->fd_face_area.face_num;
+            fbBeautyFacetT beauty_face;
+            fb_beauty_image_t beauty_image;
+            struct faceBeautyLevels beautyLevels;
+            struct facebeauty_param_info fb_param_map_cap;
+            struct common_isp_cmd_param isp_param;
+            memset(&beautyLevels, 0, sizeof(struct faceBeautyLevels));
+            ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                    SETTING_GET_PERFECT_SKINLEVEL,
+                                    &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to get perfect skinlevel %ld", ret);
+                goto exit;
+            }
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_COL_TEM, &isp_param);
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_CUR_SENS, &isp_param);
+
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_FB_CAP_PARAM, &isp_param);
+            if (ret == ISP_SUCCESS) {
+                memcpy(&fb_param_map_cap, &isp_param.fb_param, sizeof(struct isp_fb_param_info));
+                for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
+                    CMR_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
+                        "lipColorType %d skinColorType %d", i,
+                        fb_param_map_cap.cur.fb_param[i].blemishSizeThrCoeff,
+                        fb_param_map_cap.cur.fb_param[i].removeBlemishFlag,
+                        fb_param_map_cap.cur.fb_param[i].lipColorType,
+                        fb_param_map_cap.cur.fb_param[i].skinColorType);
+                    CMR_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                        "skinSmoothRadiusDefaultLevel %d",
+                        fb_param_map_cap.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                        fb_param_map_cap.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                        fb_param_map_cap.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+                    for(int j = 0; j < 11; j++){
+                        CMR_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
+                            "skinSmoothRadiusCoeff %d", i, j,
+                            fb_param_map_cap.cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                            fb_param_map_cap.cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                            fb_param_map_cap.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+                    }
+                }
+                ret = face_beauty_ctrl(&(cxt->face_beauty),
+                       FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
+                       (void *)&fb_param_map_cap);
+            }
+
+            beautyLevels.blemishLevel =
+                (unsigned char)setting_param.fb_param.blemishLevel;
+            beautyLevels.smoothLevel =
+                (unsigned char)setting_param.fb_param.smoothLevel;
+            beautyLevels.skinColor =
+                (unsigned char)setting_param.fb_param.skinColor;
+            beautyLevels.skinLevel =
+                (unsigned char)setting_param.fb_param.skinLevel;
+            beautyLevels.brightLevel =
+                (unsigned char)setting_param.fb_param.brightLevel;
+            beautyLevels.lipColor =
+                (unsigned char)setting_param.fb_param.lipColor;
+            beautyLevels.lipLevel =
+                (unsigned char)setting_param.fb_param.lipLevel;
+            beautyLevels.slimLevel =
+                (unsigned char)setting_param.fb_param.slimLevel;
+            beautyLevels.largeLevel =
+                (unsigned char)setting_param.fb_param.largeLevel;
+            beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
+            beautyLevels.cameraCT = (int)isp_param.isp_cur_ct;
+            beautyLevels.cameraISO = (int)isp_param.isp_cur_iso;
+            beautyLevels.cameraWork = (int)cxt->camera_id;
+            CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
+                beautyLevels.cameraBV, beautyLevels.cameraWork,
+                beautyLevels.cameraCT,  beautyLevels.cameraISO);
+
+            ret =
+                cmr_setting_ioctl(setting_cxt->setting_handle,
+                                  SETTING_GET_ENCODE_ROTATION, &setting_param);
+            if (ret) {
+                CMR_LOGE("failed to get enc rotation %ld", ret);
+            }
+
+            face_beauty_on = beautyLevels.blemishLevel ||
+                             beautyLevels.smoothLevel ||
+                             beautyLevels.skinColor || beautyLevels.skinLevel ||
+                             beautyLevels.brightLevel ||
+                             beautyLevels.lipColor || beautyLevels.lipLevel ||
+                             beautyLevels.slimLevel || beautyLevels.largeLevel;
+            CMR_LOGD("thomas face_on=%d",face_beauty_on);
+            if (face_beauty_on) {
+                CMR_LOGD("thomas face_beauty smooth %d,bright %d,slim %d,large %d,cameraBV %d",
+                         beautyLevels.smoothLevel, beautyLevels.brightLevel,
+                         beautyLevels.slimLevel, beautyLevels.largeLevel,beautyLevels.cameraBV);
+                if (cxt->is_multi_mode == MODE_BOKEH) {
+                    cmr_copy(&cxt->fd_face_area, &cxt->fd_face_area_capture,
+                             sizeof(struct isp_face_area));
+                }
+                int sx, sy, ex, ey, angle, pose;
+                for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
+                    beauty_face.idx = i;
+                    beauty_face.startX =
+                        (cxt->fd_face_area.face_info[i].sx * src.size.width) /
+                        (cxt->fd_face_area.frame_width);
+                    beauty_face.startY =
+                        (cxt->fd_face_area.face_info[i].sy * src.size.height) /
+                        (cxt->fd_face_area.frame_height);
+                    beauty_face.endX =
+                        (cxt->fd_face_area.face_info[i].ex * src.size.width) /
+                        (cxt->fd_face_area.frame_width);
+                    beauty_face.endY =
+                        (cxt->fd_face_area.face_info[i].ey * src.size.height) /
+                        (cxt->fd_face_area.frame_height);
+                    beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
+                    beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+                    ret = face_beauty_ctrl(&(cxt->face_beauty),
+                                           FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                                           (void *)&beauty_face);
+                }
+                face_beauty_set_devicetype(&(cxt->face_beauty),
+                                           SPRD_CAMALG_RUN_TYPE_CPU);
+             fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+            chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+            chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+            chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+            chipinfo = SHARKL5;
+#elif defined(CONFIG_ISP_2_7)
+            chipinfo = SHARKL5PRO;
+#endif
+                face_beauty_init(&(cxt->face_beauty), 0, 2, chipinfo);
+                beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+                beauty_image.inputImage.addr[0] =
+                    (void *)(src.addr_vir.addr_y);
+                beauty_image.inputImage.addr[1] =
+                    (void *)(src.addr_vir.addr_u);
+                beauty_image.inputImage.addr[2] =
+                    (void *)(src.addr_vir.addr_v);
+                beauty_image.inputImage.ion_fd = src.fd;
+                beauty_image.inputImage.offset[0] = 0;
+                beauty_image.inputImage.offset[1] =
+                    src.size.width * src.size.height;
+                beauty_image.inputImage.width = src.size.width;
+                beauty_image.inputImage.height = src.size.height;
+                beauty_image.inputImage.stride = src.size.width;
+                beauty_image.inputImage.size =
+                    src.size.width * src.size.height * 3 / 2;
+                ret = face_beauty_ctrl(&(cxt->face_beauty),
+                                       FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                                       (void *)&beauty_image);
+                ret = face_beauty_ctrl(&(cxt->face_beauty),
+                                       FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                                       (void *)&beautyLevels);
+                ret =
+                    face_beauty_ctrl(&(cxt->face_beauty), FB_BEAUTY_PROCESS_CMD,
+                                     (void *)&facecount);
+                face_beauty_deinit(&(cxt->face_beauty));
+            }
+#endif
+        }
     /* add watermark: logo, or time */
     sizeparam.imgW = src.size.width;
     sizeparam.imgH = src.size.height;
@@ -6759,28 +6949,30 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     cmr_uint flip_on = param->flip_on;
     cmr_u32 tmp = 0;
 
-    if (0 != sizeparam.angle) {
-        if (90 == sizeparam.angle)
-            mean.rot = 1;
-        else if (180 == sizeparam.angle) {
-            mean.flip = 1;
-            mean.mirror = 1;
-        } else if (270 == sizeparam.angle) {
-            mean.rot = 1;
-            mean.flip = 1;
-            mean.mirror = 1;
+    if (cxt->is_multi_mode == MODE_BOKEH) {
+        if (0 != sizeparam.angle) {
+            if (90 == sizeparam.angle)
+                mean.rot = 1;
+            else if (180 == sizeparam.angle) {
+                mean.flip = 1;
+                mean.mirror = 1;
+            } else if (270 == sizeparam.angle) {
+                mean.rot = 1;
+                mean.flip = 1;
+                mean.mirror = 1;
+            }
         }
-    }
-    if (flip_on) {
-          if (mean.mirror)
-              mean.mirror = 0;
-          else
-              mean.mirror = 1;
-      }
-    if ((90 == sizeparam.angle || 270 == sizeparam.angle)) {
-       tmp = pic_enc.size.height;
-       pic_enc.size.height = pic_enc.size.width;
-       pic_enc.size.width = tmp;
+        if (flip_on) {
+              if (mean.mirror)
+                  mean.mirror = 0;
+              else
+                  mean.mirror = 1;
+          }
+        if ((90 == sizeparam.angle || 270 == sizeparam.angle)) {
+           tmp = pic_enc.size.height;
+           pic_enc.size.height = pic_enc.size.width;
+           pic_enc.size.width = tmp;
+        }
     }
 
     watermark_add_yuv(oem_handle, (cmr_u8 *)src.addr_vir.addr_y, &sizeparam);

@@ -1250,8 +1250,6 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
         return -1;
     }
 
-    HAL_LOGV("cameraId=%d", cameraId);
-
     // TBD: for spreadtrum internal development use
     // add struct light camera info and three back camera phone info
 
@@ -2116,6 +2114,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     struct phySensorInfo *phyPtr = NULL;
 
     phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+
     if (phyPtr->sensor_type == FOURINONE_SW ||
         phyPtr->sensor_type == FOURINONE_HW) {
         int32_t w, h;
@@ -2497,7 +2496,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
                             "persist.vendor.cam.video.face.beauty.enable"));
 
-    // 23 fov fusion
+    //23 fov fusion
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
                            "persist.vendor.cam.fov.fusion.enable"));
@@ -2521,6 +2520,22 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
                            "persist.vendor.cam.lightportrait.fr.enable"));
+
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    // 27 portrait scene mode
+    HAL_LOGD("pbrb_enable=%d",atoi(prop));
+    property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
+    if(atoi(prop)==0){
+        property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
+        property_set("persist.vendor.cam.ip.wechat.back.replace","0");
+    }
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
+                           "persist.vendor.cam.portrait.scene.enable"));
+#else
+    available_cam_features.add(0);
+#endif
+
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -5749,7 +5764,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             int32_t g_face_info4 =
                 camMetadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
                     .data.i32[3];
-            HAL_LOGV("id%d:face sx %d sy %d ex %d ey %d", mCameraId,
+            HAL_LOGD("id%d:face sx %d sy %d ex %d ey %d", mCameraId,
                      g_face_info1, g_face_info2, g_face_info3, g_face_info4);
         }
 // Bit0 and Bit1 represent ages,
@@ -6613,10 +6628,10 @@ int SprdCamera3Setting::setSPRDDEFTag(SPRD_DEF_Tag sprddefInfo) {
     return 0;
 }
 
-/* please use getSPRDDEFTagPTR
- * less memory copy
- * only change the variable which use
- */
+  /* please use getSPRDDEFTagPTR
+   * less memory copy
+   * only change the variable which use
+   */
 int SprdCamera3Setting::getSPRDDEFTag(SPRD_DEF_Tag *sprddefInfo) {
     *sprddefInfo = s_setting[mCameraId].sprddefInfo;
     return 0;

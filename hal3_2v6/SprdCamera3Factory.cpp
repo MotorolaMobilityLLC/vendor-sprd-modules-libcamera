@@ -411,6 +411,7 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
 int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
                                            const char *id,
                                            struct hw_device_t **hw_device) {
+    char value[PROPERTY_VALUE_MAX];
     if (module != &HAL_MODULE_INFO_SYM.common) {
         HAL_LOGE("Invalid module. Trying to open %p, expect %p", module,
                  &HAL_MODULE_INFO_SYM.common);
@@ -431,8 +432,20 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     }
 #endif
 
-    // for camera id debug 0,2,3;if set, 0<=id<=9
-    char value[PROPERTY_VALUE_MAX];
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+        property_get("persist.vendor.cam.ip.wechat.back.replace", value, "0");
+        if(!strcmp(value,"1")) {
+            HAL_LOGD("com.tencent.mm call camera, use camera pbrp");
+            if (atoi(id) == 0){
+                id = "53";
+            }else if (atoi(id) == 1){
+                id = "52";
+            }else{
+                HAL_LOGI("unsupport camera id for tencent camera!!");
+            }
+        }
+#endif
+    // for camera id 0&2&3 debug
     property_get("persist.vendor.cam.id", value, "null");
     if (value[0] >= '0' && value[0] <= '9') {
         value[1] = '\0';
