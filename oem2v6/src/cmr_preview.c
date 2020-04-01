@@ -7003,7 +7003,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
                  frame_type->vcm_step, frame_type->timestamp);
 
         if (prev_cxt->prev_param.is_support_fd &&
-            prev_cxt->prev_param.is_fd_on) {
+            prev_cxt->prev_param.is_fd_on && (cxt->ref_camera_id == camera_id || cxt->is_multi_mode != MODE_MULTI_CAMERA)) {
             /*after image processed, timestamp and zoom ratio will be needed*/
             frm_ptr->reserved = info;
             prev_fd_send_data(handle, camera_id, frm_ptr);
