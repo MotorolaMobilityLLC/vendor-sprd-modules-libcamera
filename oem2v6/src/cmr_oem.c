@@ -441,7 +441,7 @@ cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
         goto exit;
     }
 
-    CMR_LOGD("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
+    CMR_LOGD("mem_type=%d size=%d sum=%d", mem_type, *size_ptr, *sum_ptr);
 
     ret = cxt->hal_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr, fd,
                           cxt->client_data);
@@ -473,7 +473,7 @@ cmr_int camera_gpu_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
         goto exit;
     }
 
-    CMR_LOGD("mem type %d size %d sum %d", mem_type, *size_ptr, *sum_ptr);
+    CMR_LOGD("mem_type=%d size=%d sum=%d", mem_type, *size_ptr, *sum_ptr);
 
     ret = cxt->hal_gpu_malloc(mem_type, size_ptr, sum_ptr, phy_addr, vir_addr,
                               fd, handle, width, height, cxt->client_data);
@@ -495,7 +495,7 @@ cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
                  mem_type, oem_handle, fd, vir_addr);
         return -CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGD("mem_type=%d, sum=%d", mem_type, sum);
+    CMR_LOGD("mem_type=%d sum=%d", mem_type, sum);
     ret =
         cxt->hal_free(mem_type, phy_addr, vir_addr, fd, sum, cxt->client_data);
 

@@ -95,6 +95,12 @@ enum camera_mem_cb_type {
     CAMERA_MEM_CB_TYPE_MAX
 };
 
+enum camera_mem_is_cache {
+    CACHE_FASLE = 0,
+    CACHE_TRUE,
+    CACHE_MAX
+};
+
 typedef unsigned long cmr_uint;
 typedef long cmr_int;
 typedef uint64_t cmr_u64;
@@ -106,6 +112,11 @@ typedef short cmr_s16;
 typedef unsigned char cmr_u8;
 typedef signed char cmr_s8;
 typedef void *cmr_handle;
+
+struct CAMERA_MEM_CB_TYPE_STAT {
+    cmr_uint    mem_type;
+    cmr_uint    is_cache;
+};
 
 #ifndef bzero
 #define bzero(p, len) memset(p, 0, len);
