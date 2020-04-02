@@ -49,6 +49,7 @@ extern "C" {
 		ISP_SMART_IOCTL_SET_WORK_MODE,
 		ISP_SMART_IOCTL_SET_FLASH_MODE,
 		ISP_SMART_IOCTL_SET_ATM_SWITCH_STATE,
+		ISP_SMART_IOCTL_SET_GTM_SWITCH,
 		ISP_SMART_IOCTL_CMD_MAX,
 	};
 
@@ -63,6 +64,10 @@ extern "C" {
 		SMART_CTRL_ATM_SWITCH_ON = 0x0,
 		SMART_CTRL_ATM_SWITCH_OFF = 0x1,
 		SMART_CTRL_ATM_SWITCH_MAX = 0x2
+	};
+
+	struct smart_gtm_switch_param {
+        	cmr_u32 enable;
 	};
 
 	struct smart_component_result {
@@ -135,6 +140,7 @@ extern "C" {
 		cmr_s32 flash_ratio;
 		cmr_s32 flash_ratio1;
 		cmr_u16 abl_weight;
+		cmr_u32 fps;
 		void *gamma_tab;
 	};
 

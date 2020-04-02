@@ -2,7 +2,7 @@
 /*  Copyright(C) 2019 by Spreadtrum                                  */
 /*  All Rights Reserved.                                             */
 /*-------------------------------------------------------------------*/
-/*
+/* 
     Face Detection Library API
 */
 
@@ -64,13 +64,13 @@ typedef struct
 /* The image context */
 typedef struct
 {
-    int orientation;                  /* orientation compare to device            */
-    int brightValue;                  /* AE result: bright value                  */
-    bool aeStable;                    /* AE result: stable state                  */
-    unsigned int backlightPro;        /* AE result: backlight probability         */
-    unsigned int hist[256];           /* HIST result                              */
-    int zoomRatio;                    /* zoom ratio                               */
-    int frameID;                      /* frame ID                                 */
+   int orientation;
+   int brightValue;
+   bool aeStable;
+   unsigned int backlightPro;
+   unsigned int hist[256];
+   int zoomRatio;
+   int frameID;
 } FD_IMAGE_CONTEXT;
 
 /* The gray-scale image structure */
@@ -81,11 +81,11 @@ typedef struct
     int width;                        /* Image width                              */
     int height;                       /* Image height                             */
     int step;                         /* The byte count per scan line             */
-    FD_IMAGE_CONTEXT context;         /* Image context                            */
+   FD_IMAGE_CONTEXT context;
 }FD_IMAGE;
 
 /* The face information structure */
-typedef struct
+typedef struct 
 {
     int x, y, width, height;          /* Face rectangle                           */
     int yawAngle;                     /* Out-of-plane rotation angle (Yaw);In [-90, +90] degrees;   */
@@ -108,7 +108,7 @@ typedef struct
 #define PLATFORM_ID_ROC1       0x0600
 
 /* Face Detection option */
-typedef struct
+typedef struct 
 {
     unsigned int platform;           /* Piek2/SharkLE/SharkL3 and so on*/
     unsigned int fdEnv;              /* FD_ENV_SW or FD_ENV_HW*/
@@ -135,6 +135,7 @@ typedef struct
     unsigned int holdSizeRate;       /* If the size change during tracking is below the rate, the face size will be corrected back to the previous one. (In [0, 30]) */
     unsigned int swapFaceRate;       /* When the detected face count is larger than "maxFaceNum", only if the new face is larger than the old face by the rate, the old face is replaced by the new face. */
     unsigned int guessFaceDirection; /* 1-->TRUE; 0 --> FALSE; If set as TRUE, new face search will only be performed on the guessed directions, which can speed up the detection */
+
 } FD_OPTION;
 
 /* Face Detector handle */
@@ -168,7 +169,7 @@ FDAPI(int)  FdGetFaceCount(const FD_HANDLE hDT);
 /* Get the face information at the specified index */
 FDAPI(int)  FdGetFaceInfo(const FD_HANDLE hDT, int faceIndex, FD_FACEINFO *faceInfo);
 
-// This function is provided for speed up face detection.
+// This function is provided for speed up face detection. 
 // minFaceSize and refFaceAngle will override the settings in FD_OPTION
 // It can only run the the STILL mode
 // faceDirection must be a subset of FD_OPTION.directions

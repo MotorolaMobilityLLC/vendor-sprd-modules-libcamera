@@ -139,6 +139,9 @@ class SprdCamera3MultiBase {
                                 int *height);
     virtual int map(buffer_handle_t *buffer, void **vir_addr);
     virtual int unmap(buffer_handle_t *buffer);
+    virtual int allocateBufferList(int w, int h, new_mem_t *new_mem,
+              int index, int stream_type, bool byte_unalign, sprd_camera_memory_t *memory, int type);
+    virtual void freeBufferList(new_mem_t *buffer, bool byte_unalign);
     /*
 #ifdef CONFIG_FACE_BEAUTY
 virtual void doFaceMakeup(struct camera_frame_type *frame,
@@ -148,6 +151,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
                                int height);
 #endif
 */
+    sprd_camera_memory_t *allocateIonMem(int buf_size, int num_bufs,
+                                         uint32_t is_cache);
+    void freeIonMem(sprd_camera_memory_t *camera_memory);
     bool ScaleNV21(uint8_t *a_ucDstBuf, uint16_t a_uwDstWidth,
                    uint16_t a_uwDstHeight, uint8_t *a_ucSrcBuf,
                    uint16_t a_uwSrcWidth, uint16_t a_uwSrcHeight,

@@ -14,4 +14,6 @@
 
 #define DENOISE_LOGW(format,...) ALOGW(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
+#define DENOISE_LOGD(format,...) ALOGD(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+
 #endif

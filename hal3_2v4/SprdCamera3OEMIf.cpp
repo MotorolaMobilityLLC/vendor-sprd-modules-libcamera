@@ -890,6 +890,7 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     int rc = 0;
     HAL_LOGI("E");
 
+    Mutex::Autolock l(&mLock);
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (isPreviewing()) {
         if (mCameraId == 0 ||
@@ -3458,11 +3459,8 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     HAL_LOGI("E camera id %d", mCameraId);
     if (isCapturing()) {
-        setCameraState(SPRD_INTERNAL_CAPTURE_STOPPING, STATE_CAPTURE);
-        if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
-            HAL_LOGE("camera_stop_capture failed!");
-            return;
-        }
+        Mutex::Autolock l(&mLock);
+        cancelPictureInternal();
     }
 
     if (isPreviewStart()) {

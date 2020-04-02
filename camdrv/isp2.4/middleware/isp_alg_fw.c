@@ -414,7 +414,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	switch (cb_type) {
 	case AE_CB_FLASHING_CONVERGED:
 	case AE_CB_CONVERGED:
-	case AE_CB_CLOSE_PREFLASH:
+	case AE_CB_RECOVER_GAIN:
 	case AE_CB_PREFLASH_PERIOD_END:
 	case AE_CB_CLOSE_MAIN_FLASH:
 		cmd = ISP_AE_STAB_CALLBACK;

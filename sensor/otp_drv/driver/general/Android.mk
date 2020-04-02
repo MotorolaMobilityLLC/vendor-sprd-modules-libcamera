@@ -31,8 +31,15 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../inc \
                     $(LOCAL_PATH)/../../../otp_drv \
                     general_otp_drv.h
 
-
 LOCAL_SRC_FILES := general_otp_drv.c
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SENSOR_OTP)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_SENSOR_OTP
+endif
+
+ifeq ($(strip $(SENSOR_OV8856_TELE)),true)
+LOCAL_CFLAGS += -DSENSOR_OV8856_TELE
+endif
 
 LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libutils libcamsensor liblog libcam_otp_parser libxml2
 

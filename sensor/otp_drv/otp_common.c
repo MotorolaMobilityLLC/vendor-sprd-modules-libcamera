@@ -27,7 +27,7 @@ static char *otp_bin_path = "/data/vendor/cameraserver/";
  *       |    otp raw data (general is 8K)    |
  *        -------------------------------------
  **/
-static cmr_u8 *otp_raw_buffer[4] = {NULL, NULL, NULL, NULL};
+static cmr_u8 *otp_raw_buffer[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
 /**
  * NOTE: the pointer point otp formatted data that has be parsed.
@@ -42,7 +42,8 @@ static cmr_u8 *otp_raw_buffer[4] = {NULL, NULL, NULL, NULL};
  *       |              otp parsed data              |
  *        --------------------------------------------
  **/
-static cmr_u8 *otp_formatted_data_buffer[4] = {NULL, NULL, NULL, NULL};
+static cmr_u8 *otp_formatted_data_buffer[6] = {NULL, NULL, NULL,
+                                               NULL, NULL, NULL};
 
 /** sensor_otp_rw_data_from_file:
  *  @otp_drv_handle: sensor driver instance.

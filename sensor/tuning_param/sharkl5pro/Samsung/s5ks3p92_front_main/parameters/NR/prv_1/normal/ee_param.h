@@ -4322,9 +4322,9 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -4878,9 +4878,9 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -6546,9 +6546,9 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -7102,9 +7102,9 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -7658,9 +7658,9 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -8214,9 +8214,9 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
-		0x0001,
+		0x0000,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/

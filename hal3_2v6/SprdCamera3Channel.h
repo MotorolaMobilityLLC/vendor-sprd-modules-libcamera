@@ -68,7 +68,7 @@ class SprdCamera3Channel {
     registerBuffers(const camera3_stream_buffer_set_t *buffer_set) = 0;
     virtual int request(camera3_stream_t *stream, buffer_handle_t *buffer,
                         uint32_t frameNumber) = 0;
-    bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+    bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
 
   protected:
     SprdCamera3OEMIf *mOEMIf;

@@ -3200,6 +3200,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mCaptureThread->mCaptureMsgList.clear();
     mDepthMuxerThread->mDepthMuxerMsgList.clear();
     mAfstate = 0;
+    mbokehParm.f_number = 0;
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
@@ -5247,7 +5248,7 @@ void *SprdCamera3RealBokeh::jpeg_callback_thread_proc(void *p_data) {
     const camera3_stream_buffer_t *output_buffers = obj->mJpegOutputBuffers;
     uint32_t result_buffer_size = ADP_WIDTH(*output_buffers->buffer);
     rc = obj->map(output_buffers->buffer, (void **)&result_buffer_addr);
-    if (rc != NO_ERROR) {
+    if (rc != NO_ERROR || result_buffer_addr == NULL) {
         HAL_LOGE("fail to map output_buffers buffer");
         return NULL;
     }

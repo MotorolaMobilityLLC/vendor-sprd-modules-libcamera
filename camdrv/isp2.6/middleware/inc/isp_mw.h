@@ -24,12 +24,11 @@
 
 /* TODO - Please define PDAF buffer size according to specific sensor PDAF data size. */
 /* It should be up-aligned to page size (0x1000)  */
-/*#ifdef CONFIG_ISP_2_7
+#ifdef CONFIG_ISP_2_7
 #define ISP_PDAF_STATIS_BUF_SIZE  (0x3A3000)
 #else
 #define ISP_PDAF_STATIS_BUF_SIZE  (0x12000)
 #endif
-*/
 
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
@@ -155,7 +154,7 @@ enum isp_callback_cmd {
 	ISP_AF_VCM_NOTICE_CALLBACK = 0x00008000,
 	ISP_HIST_REPORT_CALLBACK = 0x00009000,
 	ISP_3DNR_CALLBACK = 0x0000A000,
-	ISP_DRE_EV_EFFECT_CALLBACK = 0x0000B000,
+	ISP_EV_EFFECT_CALLBACK = 0x0000B000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -200,6 +199,7 @@ enum isp_flash_mode {
 	ISP_FLASH_SLAVE_FLASH_OFF,
 	ISP_FLASH_SLAVE_FLASH_TORCH,
 	ISP_FLASH_SLAVE_FLASH_AUTO,
+	ISP_FLASH_CLOSE,
 	ISP_FLASH_MODE_MAX
 };
 
@@ -421,9 +421,11 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AE_SET_REF_CAMERA_ID,
 	ISP_CTRL_AE_SET_VISIBLE_REGION,
 	ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO,
+	ISP_CTRL_GET_GTM_STATUS,
 	ISP_CTRL_SET_SENSOR_SIZE,
 	ISP_CTRL_GET_DRE_PARAM,
-	ISP_CTRL_DRE,
+	ISP_CTRL_SET_AE_ADJUST,
+	ISP_CTRL_SET_GTM_ONFF,
 #ifdef CAMERA_CNR3_ENABLE
 	ISP_CTRL_GET_CNR3_PARAM,
 #endif
@@ -540,6 +542,10 @@ struct isp_flash_cfg {
 struct isp_3dnr_ctrl_param {
 	cmr_u32 enable;
 	cmr_u32 count;
+};
+
+struct isp_gtm_switch_param {
+	cmr_u32 enable;
 };
 
 struct isp_adgain_exp_info {
@@ -800,8 +806,20 @@ struct isp_hdr_param {
 	cmr_u32 ev_effect_valid_num;
 };
 
-struct isp_dre_param {   // param OEM sent to ISP
-       cmr_u32 dre_enable;
+
+ enum camera_snapshot_tpye {
+	SNAPSHOT_NULL = 0,
+	SNAPSHOT_DRE,
+	SNAPSHOT_GTM,
+} ;
+
+
+
+struct isp_snp_ae_param {   // param OEM sent to ISP
+	cmr_u32 enable;
+	cmr_u32 ev_effect_valid_num;
+	cmr_u32 ev_adjust_count;
+	enum camera_snapshot_tpye type;
 };
 
 struct isp_info {

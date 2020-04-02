@@ -67,6 +67,8 @@ static cmr_int sprd_filter_doeffect(struct class_filter *filter_handle,
     CMR_LOGI("E");
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_uint type = filter_handle->filter_type;
+    FilterParam_t param;
+    int filter_version;
 
     if (type != 0 && pic_data->width > 0 && pic_data->height > 0) {
         if ((pic_data->width != pic_data->last_width) ||
@@ -96,9 +98,19 @@ static cmr_int sprd_filter_doeffect(struct class_filter *filter_handle,
         outputData.c1 = (void *)pic_data->dst_addr->addr_y;
         outputData.c2 = (void *)pic_data->dst_addr->addr_u;
         outputData.c3 = NULL;
+
+        char value[PROPERTY_VALUE_MAX];
+        property_get("persist.sys.cam.filter.version", value, "2");
+        filter_version = atoi(value);
+
+        param.orientation = pic_data->orientation;
+        param.flip_on = pic_data->flip_on;
+        param.is_front = pic_data->is_front;
+        param.filter_version = filter_version;
+        CMR_LOGV("orientation=%d,flip_on=%d,FilterType=%d,filter_version=%d,is_front=%d",
+                 param.orientation, param.flip_on,(IFFilterType)type,param.filter_version,param.is_front);
         ret = ImageFilterRun(filter_handle->handle, &inputData, &outputData,
-                             (IFFilterType)type, NULL);
-        CMR_LOGI("ImageFilterRun res = %ld", ret);
+                             (IFFilterType)type, &param, NULL);
         if (ret) {
             CMR_LOGE("failed to ImageFilterRun %ld", ret);
             goto exit;

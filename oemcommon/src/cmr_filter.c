@@ -174,13 +174,17 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     width = in->src_frame.size.width;
     height = in->src_frame.size.height;
     filter_handle->filter_type = (int)out->private_data;
+    in -> is_front = (cxt ->camera_id == 1) ? 1 : 0;
+    memcpy(&(filter_handle->frame_in), in, sizeof(struct ipm_frame_in));
 
     char value[PROPERTY_VALUE_MAX];
     property_get("debug.dump.filter.frame", value, "null");
     if (!strcmp(value, "true")) {
         camera_save_yuv_to_file(0, IMG_DATA_TYPE_YUV420, width, height, addr);
     }
-    CMR_LOGI("w=%lu,h=%lu,type=%lu", width, height, filter_handle->filter_type);
+    CMR_LOGI("w=%lu,h=%lu,type=%lu,orientation=%lu,flip_on=%lu,is_front=%lu",width, height,
+        filter_handle->filter_type,filter_handle->frame_in.orientation,filter_handle->frame_in.flip_on,
+        filter_handle->frame_in.is_front);
     LAUNCHLOGS(CMR_FILTER_DO_T);
 
     ret = filter_arithmetic_do(class_handle, addr, width, height);
@@ -193,8 +197,7 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     out->dst_frame = in->src_frame;
     out->private_data = in->private_data;
 
-    CMR_LOGI("x,private_data=%p,type=%lu", out->private_data,
-             filter_handle->filter_type);
+    CMR_LOGI("x,private_data=%p", out->private_data);
 exit:
     sem_post(&filter_handle->sem);
     return ret;
@@ -272,6 +275,9 @@ static cmr_int filter_arithmetic_do(cmr_handle class_handle,
     pic_data.width = width;
     pic_data.height = height;
     pic_data.dst_addr = dst_addr;
+    pic_data.orientation = (int)(filter_handle->frame_in.orientation);
+    pic_data.flip_on= (int)(filter_handle->frame_in.flip_on);
+    pic_data.is_front = (int)(filter_handle->frame_in.is_front);
 
     if (filter_handle->filter_ops && filter_handle->filter_ops->doeffect) {
         clock_gettime(CLOCK_BOOTTIME, &start_time);

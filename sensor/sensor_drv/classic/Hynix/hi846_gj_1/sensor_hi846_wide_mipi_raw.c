@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "hi846_wide_sensor_drv"
+#define LOG_TAG "hi846_gj_1_9863a1c10"
 
 #if defined(HI846_WIDE_MIPI_4LANE)
 #include "sensor_hi846_wide_mipi_raw_4lane.h"
@@ -336,6 +336,7 @@ static cmr_int hi846_wide_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->sns_binning_factor = sns_binning_fact;
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;

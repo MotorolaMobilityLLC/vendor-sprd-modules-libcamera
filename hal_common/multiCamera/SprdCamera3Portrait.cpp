@@ -1261,11 +1261,8 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                 bool isDoDepth = false;
                 void *output_buf_addr = NULL;
                 void *input_buf1_addr = NULL;
-                if ((mPortrait->mApiVersion == SPRD_API_PORTRAIT_MODE &&
-                     mPortrait->mBokehMode != CAM_PORTRAIT_PORTRAIT_MODE) ||
-                    (mPortrait->mApiVersion == SPRD_API_PORTRAIT_MODE &&
-                     mPortrait->mDoPortrait &&
-                     mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)) {
+                if (mPortrait->mApiVersion == SPRD_API_PORTRAIT_MODE &&
+                     mPortrait->mPrevPortrait) {
                     rc = sprdBokehPreviewHandle(output_buffer,
                                                 muxer_msg.combo_frame.buffer1);
                     if (rc != NO_ERROR) {
@@ -2631,7 +2628,8 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings,
         }
         mbokehParm.portrait_param.valid_roi = numFaces;
     }
-
+    if(mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE)
+        mPrevPortrait = numFaces;
     if (mbokehParm.portrait_param.valid_roi &&
         mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE) {
         mDoPortrait = 1;
@@ -2694,7 +2692,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings,
             metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[3];
     }
 #endif
-    if (mDoPortrait == 1) {
+    if (mPrevPortrait) {
         int x = face_rect[max_index].left +
                 (face_rect[max_index].right - face_rect[max_index].left) / 2;
         int y = face_rect[max_index].top +
@@ -2926,6 +2924,10 @@ int SprdCamera3Portrait::configureStreams(
     mCaptureThread->mCaptureMsgList.clear();
     mDepthMuxerThread->mDepthMuxerMsgList.clear();
     mAfstate = 0;
+    mDoPortrait = 0;
+    mPrevPortrait = false;
+    mbokehParm.f_number = 0;
+
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * PORTRAIT__MAX_NUM_STREAMS);
     memset(pauxStreams, 0,

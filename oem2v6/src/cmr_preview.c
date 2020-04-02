@@ -412,6 +412,14 @@ struct prev_context {
     cmr_int video_mem_valid_num;
     cmr_int cache_buffer_cont;
 
+    cmr_u32 eis_video_mem_size;
+    cmr_u32 eis_video_ultra_wide_mem_num;
+    cmr_uint eis_video_phys_addr;
+    cmr_uint eis_video_virt_addr;
+    cmr_s32 eis_video_fd;
+    void *dst_eis_video_buffer_handle;
+    sem_t ultra_video;
+
     // for channel0
     channel0_t channel0;
     cmr_uint channel0_work_mode;
@@ -3605,7 +3613,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(&isp_param, sizeof(struct video_start_param));
 
     prev_cxt = &handle->prev_cxt[camera_id];
-
+    sem_init(&prev_cxt->ultra_video, 0, 1);
     work_mode = MAX(prev_cxt->prev_mode, prev_cxt->video_mode);
     work_mode = MAX(work_mode, prev_cxt->cap_mode);
     work_mode = MAX(work_mode, prev_cxt->channel0_work_mode);
@@ -3743,7 +3751,6 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     /*update preview status*/
     if (preview_enable) {
         prev_cxt->prev_status = PREVIEWING;
-
         /*init fd*/
         CMR_LOGD("is_support_fd %lu", prev_cxt->prev_param.is_support_fd);
         if (prev_cxt->prev_param.is_support_fd) {
@@ -3836,8 +3843,9 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
+    camera_interface_deinit();
     prev_cxt = &handle->prev_cxt[camera_id];
-
+    sem_destroy(&prev_cxt->ultra_video);
     if (!handle->ops.channel_stop || !handle->ops.isp_stop_video) {
         CMR_LOGE("ops is null");
         ret = CMR_CAMERA_INVALID_PARAM;
@@ -3922,6 +3930,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         if (prev_cxt->prev_param.is_ultra_wide) {
             prev_ultra_wide_close(handle, camera_id);
         }
+
         /*deinit 3dnr_preview*/
         if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                   prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
@@ -4338,6 +4347,7 @@ cmr_int prev_alloc_prev_buf(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->prev_ultra_wide_frm[i].size.height =
                 prev_cxt->actual_prev_size.height;
         }
+
         if (is_restart) {
             buffer->count = 0;
             for (i = 0; i < PREV_ULTRA_WIDE_ALLOC_CNT; i++) {
@@ -4535,6 +4545,28 @@ cmr_int prev_alloc_video_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->video_fd_array + video_mem_num,
                 prev_cxt->video_ultra_wide_handle_array, &real_width,
                 &real_height);
+            if (prev_cxt->prev_param.sprd_eis_enabled == 1) {
+                prev_cxt->eis_video_ultra_wide_mem_num = 0;
+                prev_cxt->eis_video_phys_addr = 0;
+                prev_cxt->eis_video_virt_addr = 0;
+                prev_cxt->eis_video_fd = 0;
+                prev_cxt->dst_eis_video_buffer_handle = NULL;
+
+                prev_cxt->eis_video_mem_size = prev_cxt->video_mem_size;
+                prev_cxt->eis_video_ultra_wide_mem_num = 1;
+                mem_ops->gpu_alloc_mem(
+                    CAMERA_VIDEO_EIS_ULTRA_WIDE, handle->oem_handle,
+                    (cmr_u32 *)&prev_cxt->eis_video_mem_size,
+                    &prev_cxt->eis_video_ultra_wide_mem_num,
+                    &prev_cxt->eis_video_phys_addr,
+                    &prev_cxt->eis_video_virt_addr,
+                    &prev_cxt->eis_video_fd,
+                    &prev_cxt->dst_eis_video_buffer_handle,
+                    &real_width, &real_height);
+                CMR_LOGD("eis vir addr=0x%x, fd=0x%x,size=0x%x",
+                    prev_cxt->eis_video_virt_addr, prev_cxt->eis_video_fd,
+                    prev_cxt->eis_video_mem_size);
+            }
         }
 
         /*check memory valid*/
@@ -4721,6 +4753,11 @@ cmr_int prev_free_video_buf(struct prev_handle *handle, cmr_u32 camera_id,
                               ultra_wide_mem_num);
             cmr_bzero(prev_cxt->video_ultra_wide_handle_array,
                       (ultra_wide_mem_num) * sizeof(void *));
+            mem_ops->free_mem(
+                CAMERA_VIDEO_EIS_ULTRA_WIDE, handle->oem_handle,
+                &prev_cxt->eis_video_phys_addr, &prev_cxt->eis_video_virt_addr,
+                &prev_cxt->eis_video_fd, prev_cxt->eis_video_ultra_wide_mem_num);
+            prev_cxt->dst_eis_video_buffer_handle = NULL;
         }
 
         cmr_bzero(prev_cxt->video_phys_addr_array,
@@ -7145,7 +7182,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         CMR_LOGV("ae_time: %" PRId64 ", zoom_ratio: %f", frame_type->ae_time,
                  frame_type->zoom_ratio);
         frame_type->type = PREVIEW_VIDEO_FRAME;
-
+if (camera_id == 2) {
         char value[PROPERTY_VALUE_MAX];
         property_get("debug.camera.video.dump.count", value, "null");
         cmr_uint dump_num = atoi(value);
@@ -7159,7 +7196,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
                 g_video_frame_dump_cnt++;
             }
         }
-
+        }
     } else {
         CMR_LOGE("ignored, channel id %d, frame id %d", info->channel_id,
                  info->frame_id);
@@ -7903,7 +7940,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(prev_cxt->video_rot_frm_is_lock,
               PREV_ROT_FRM_CNT * sizeof(cmr_uint));
     cmr_bzero(prev_cxt->video_ultra_wide_frm_is_lock,
-              PREV_ROT_FRM_CNT * sizeof(cmr_uint));
+              VIDEO_ULTRA_WIDE_ALLOC_CNT * sizeof(cmr_uint));
     prev_cxt->video_rot_index = 0;
     prev_cxt->video_ultra_wide_index = 0;
     prev_cxt->video_frm_cnt = 0;
@@ -15863,31 +15900,36 @@ cmr_int prev_ultra_wide_close(struct prev_handle *handle, cmr_u32 camera_id) {
 
 cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                                   struct frm_info *data) {
-    struct img_frm src, dst;
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 frm_id = 0;
     cmr_uint ultra_wide_frm_id = 0;
+    int frame_type = PREVIEW_FRAME;
+    int zoom_changed = 1, cap_zoom_changed = 1;
+    float org_zoom = 1.0f;
+    float cap_org_zoom =1.0f;
+    const float EPSINON = 0.0001f;
+    ipm_param_t param_info;
+    struct img_frm src, dst;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct prev_context *prev_cxt = NULL;
     struct ipm_frame_in ipm_in_param;
-    int frame_type = PREVIEW_FRAME;
     struct setting_cmd_parameter setting_param;
-    void *src_buffer_handle = NULL;
-    void *dst_buffer_handle = NULL;
-    cmr_handle *ultra_wide_handle = NULL;
-    ipm_param_t param_info;
     struct channel_start_param chn_param;
     struct sensor_exp_info *sensor_info = NULL;
     struct sensor_mode_info *sensor_mode_info = NULL;
-    float org_zoom = 1.0f;
-    float cap_org_zoom =1.0f;
-    int zoom_changed = 1, cap_zoom_changed = 1;
-    const float EPSINON = 0.0001f;
+    struct img_frm *dst_img = NULL;
+    struct img_frm *src_img = NULL;
+    struct img_frm *dst_eis_img = NULL;
+    void *src_buffer_handle = NULL;
+    void *dst_buffer_handle = NULL;
+    void * dst_eis_video_buffer_handle = NULL;
+    cmr_handle *ultra_wide_handle = NULL;
+
     cmr_bzero(&setting_param, sizeof(setting_param));
     cmr_bzero(&chn_param, sizeof(struct channel_start_param));
+    dst_eis_img = (struct img_frm *)malloc (sizeof(struct img_frm));
     setting_param.camera_id = camera_id;
-
     prev_cxt = &handle->prev_cxt[camera_id];
 
     if (prev_cxt->prev_param.is_ultra_wide == 0) {
@@ -15897,8 +15939,6 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     if (PREVIEWING == prev_cxt->prev_status) {
-        struct img_frm *dst_img = NULL;
-        struct img_frm *src_img = NULL;
         ret =
             prev_get_src_ultra_wide_buffer(prev_cxt, data, &ultra_wide_frm_id);
         if (ret) {
@@ -16008,11 +16048,124 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                   param_info.crop_height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
                   param_info.crop_width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
 
-                  CMR_LOGD("prev ultrawid set ratio %f", param_info.zoomRatio);
-                  CMR_LOGD("prev fullsize_height=%d,fullsize_width=%d",param_info.fullsize_height, param_info.fullsize_width);
-                  CMR_LOGD("prev input_height=%d,input_width=%d", param_info.input_height, param_info.input_width);
-                  CMR_LOGD("prev crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
-                           param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
+                  CMR_LOGD("prev ultrawid set ratio=%f, fullsize_height=%d"
+                      ", fullsize_width=%d, input_height=%d, input_width=%d",
+                      ", crop_x=%d, crop_y=%d, crop_width=%d, crop_height=%d",
+                      param_info.zoomRatio, param_info.fullsize_height,
+                      param_info.fullsize_width, param_info.input_height, param_info.input_width,
+                      param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
+                  cxt->zoom_ratio = param_info.zoomRatio;
+                  if (handle->ops.isp_ioctl) {
+                           struct common_isp_cmd_param param;
+                           param.camera_id = camera_id;
+                           param.ae_target_region = chn_param.cap_inf_cfg.cfg.src_img_rect;
+                           ret = handle->ops.isp_ioctl(handle->oem_handle,
+                                   COM_ISP_SET_AE_TARGET_REGION, &param);
+                      if (ret < 0) {
+                            CMR_LOGW("fail to set AE roi");
+                      }
+                 }
+            //}
+        } else if (IS_VIDEO_FRM(data->frame_id)) {
+            frame_type = PREVIEW_VIDEO_FRAME;
+            src_img = &prev_cxt->video_ultra_wide_frm[ultra_wide_frm_id];
+            src_buffer_handle =
+                prev_cxt->video_ultra_wide_handle_array[ultra_wide_frm_id];
+            frm_id = data->frame_id - CMR_VIDEO_ID_BASE;
+            dst_img = &prev_cxt->video_frm[frm_id];
+            ultra_wide_handle = prev_cxt->video_ultra_wide_handle;
+            param_info.zoomRatio = setting_param.zoom_param.zoom_info.video_aspect_ratio;
+
+            /*float new_zoom = setting_param.zoom_param.zoom_info.video_aspect_ratio;
+            if(fabs(org_zoom - new_zoom) >= EPSINON)
+                  zoom_changed = 1;
+            else
+                  zoom_changed = 0;
+            org_zoom = new_zoom;
+            if(zoom_changed) {*/      /*set AE ROI*/
+                  chn_param.sensor_mode = prev_cxt->video_mode;
+                  sensor_info = &prev_cxt->sensor_info;
+                  sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
+
+                  chn_param.cap_inf_cfg.cfg.dst_img_fmt = prev_cxt->prev_param.preview_fmt;
+                  chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
+                  chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
+                  chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
+
+                  chn_param.cap_inf_cfg.cfg.dst_img_size.width =
+                           prev_cxt->actual_video_size.width;
+                  chn_param.cap_inf_cfg.cfg.dst_img_size.height =
+                           prev_cxt->actual_video_size.height;
+                  chn_param.cap_inf_cfg.cfg.notice_slice_height =
+                           chn_param.cap_inf_cfg.cfg.dst_img_size.height;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.start_x =
+                           sensor_mode_info->scaler_trim.start_x;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.start_y =
+                           sensor_mode_info->scaler_trim.start_y;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.width =
+                           sensor_mode_info->scaler_trim.width;
+                  chn_param.cap_inf_cfg.cfg.src_img_rect.height =
+                           sensor_mode_info->scaler_trim.height;
+
+                  CMR_LOGV("video src_img_rect %d %d %d %d",
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_x,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.width,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.height);
+
+                  param_info.fullsize_height = sensor_info->source_height_max;
+                  param_info.fullsize_width = sensor_info->source_width_max;
+                  param_info.input_height = src_img->size.height;
+                  param_info.input_width = src_img->size.width;
+
+                  /*caculate trim rect*/
+                  if (ZOOM_INFO != setting_param.zoom_param.mode) {
+                           ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                                   setting_param.zoom_param.zoom_level,
+                                   &chn_param.cap_inf_cfg.cfg.dst_img_size);
+                  } else {
+                           float real_ratio = setting_param.zoom_param.zoom_info.video_aspect_ratio;
+                           float aspect_ratio = 1.0 * prev_cxt->actual_video_size.width /
+                                  prev_cxt->actual_video_size.height;
+
+                           if (setting_param.zoom_param.zoom_info.crop_region.width > 0) {
+                                 chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                                         setting_param.zoom_param.zoom_info.pixel_size,
+                                         setting_param.zoom_param.zoom_info.crop_region,
+                                         chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+                           } else {
+                           float aspect_ratio = 1.0 * prev_cxt->actual_video_size.width /
+                                    prev_cxt->actual_video_size.height;
+                           ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                                    setting_param.zoom_param.zoom_info.video_aspect_ratio,
+                                    aspect_ratio,
+                                    sensor_mode_info->scaler_trim.width,
+                                    sensor_mode_info->scaler_trim.height,
+                                    prev_cxt->prev_param.cap_rot);
+                           }
+                  }
+                  if (ret) {
+                           CMR_LOGE("video get trim failed, %d",ret);
+                  }
+
+                  CMR_LOGV("camera %u video after src_img_rect %d %d %d %d", camera_id,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_x,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.start_y,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.width,
+                           chn_param.cap_inf_cfg.cfg.src_img_rect.height);
+
+                  param_info.crop_x= chn_param.cap_inf_cfg.cfg.src_img_rect.start_x;
+                  param_info.crop_y = chn_param.cap_inf_cfg.cfg.src_img_rect.start_y;
+                  param_info.crop_height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
+                  param_info.crop_width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
+
+                  CMR_LOGD("video ultrawid set ratio=%f, fullsize_height=%d"
+                      ", fullsize_width=%d, input_height=%d, input_width=%d",
+                      ", crop_x=%d, crop_y=%d, crop_width=%d, crop_height=%d",
+                      param_info.zoomRatio, param_info.fullsize_height,
+                      param_info.fullsize_width, param_info.input_height, param_info.input_width,
+                      param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
+
                   if (handle->ops.isp_ioctl) {
                            struct common_isp_cmd_param param;
                            param.camera_id = camera_id;
@@ -16139,7 +16292,6 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             src_img = &prev_cxt->cap_zsl_ultra_wide_frm[ultra_wide_frm_id];
             src_buffer_handle =
                 prev_cxt->cap_zsl_ultra_wide_handle_array[ultra_wide_frm_id];
-
             frm_id = data->frame_id - CMR_CAP1_ID_BASE;
             dst_img = &prev_cxt->cap_zsl_frm[frm_id];
             dst_fd = prev_cxt->cap_zsl_fd_array[frm_id];
@@ -16222,11 +16374,12 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                   param_info.crop_height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
                   param_info.crop_width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
 
-                  CMR_LOGD("cap ultrawid set ratio %f", param_info.zoomRatio);
-                  CMR_LOGD("cap fullsize_height=%d,fullsize_width=%d",param_info.fullsize_height, param_info.fullsize_width);
-                  CMR_LOGD("cap input_height=%d,input_width=%d", param_info.input_height, param_info.input_width);
-                  CMR_LOGD("cap crop_x=%d,crop_y=%d,crop_width=%d,crop_height=%d",
-                           param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
+                  CMR_LOGD("cap ultrawid set ratio=%f, fullsize_height=%d"
+                      ", fullsize_width=%d, input_height=%d, input_width=%d",
+                      ", crop_x=%d, crop_y=%d, crop_width=%d, crop_height=%d",
+                      param_info.zoomRatio, param_info.fullsize_height,
+                      param_info.fullsize_width, param_info.input_height, param_info.input_width,
+                      param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
             //}
         } else {
             CMR_LOGW("ignored  prev_status %ld, frame_id 0x%x",
@@ -16256,28 +16409,46 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                 ret = CMR_CAMERA_FAIL;
                 goto exit;
             }
-            CMR_LOGD("ultra wide src:%p, dst:%p size:%ld, src_buf_hd:%p, "
-                     "dst_buf_hd:%p\n",
+            CMR_LOGD("ultra wide src:%p, dst:%p size:%ld"
+                     ", src_buf_hd:%p, dst_buf_hd:%p\n",
                      (void *)src_img->addr_vir.addr_y,
-                     (void *)dst_img->addr_vir.addr_y, dst_img->buf_size,
-                     src_buffer_handle, dst_buffer_handle);
+                     (void *)dst_img->addr_vir.addr_y,
+                     dst_img->buf_size, src_buffer_handle, dst_buffer_handle);
             cmr_bzero(&ipm_in_param, sizeof(struct ipm_frame_in));
             ipm_in_param.src_frame = *src_img;
             ipm_in_param.src_frame.frame_number = prev_cxt->prev_frm_cnt;
             ipm_in_param.src_frame.reserved = src_buffer_handle;
-            ipm_in_param.dst_frame = *dst_img;
-            ipm_in_param.dst_frame.reserved = dst_buffer_handle;
-            //ipm_in_param.private_data = &setting_param.zoom_param.zoom_info;
-            ipm_in_param.private_data = (void *)&param_info;
+
+            if (prev_cxt->prev_param.sprd_eis_enabled == 1 && frame_type == PREVIEW_VIDEO_FRAME) {
+                    dst_eis_img->fd = prev_cxt->eis_video_fd;
+                    dst_eis_img->addr_vir.addr_y = prev_cxt->eis_video_virt_addr;
+                    dst_eis_img->addr_phy.addr_y = prev_cxt->eis_video_phys_addr;
+                    dst_eis_img->size.width = prev_cxt->actual_video_size.width;
+                    dst_eis_img->size.height = prev_cxt->actual_video_size.height;
+                    dst_eis_img->buf_size = prev_cxt->eis_video_mem_size;
+                    ipm_in_param.dst_frame = *dst_eis_img;
+                    ipm_in_param.dst_frame.reserved = prev_cxt->dst_eis_video_buffer_handle;
+                    ipm_in_param.private_data = (void *)&param_info;
+                    CMR_LOGD("dst vir addr=0x%x, eis virt addr=0x%x, fd=%d, size=0x%x",
+                        dst_img->addr_vir.addr_y, prev_cxt->eis_video_virt_addr,
+                        prev_cxt->eis_video_fd, prev_cxt->eis_video_mem_size);
+            } else {
+                ipm_in_param.dst_frame = *dst_img;
+                ipm_in_param.dst_frame.reserved = dst_buffer_handle;
+                ipm_in_param.private_data = (void *)&param_info;
+            }
+            sem_wait(&prev_cxt->ultra_video);
             if (src_buffer_handle != NULL && dst_buffer_handle != NULL) {
                 ret =
                     ipm_transfer_frame(ultra_wide_handle, &ipm_in_param, NULL);
             }
-
+            if (prev_cxt->prev_param.sprd_eis_enabled == 1 && frame_type == PREVIEW_VIDEO_FRAME) {
+                memcpy((void *)dst_img->addr_vir.addr_y, (void*)dst_eis_img->addr_vir.addr_y, prev_cxt->eis_video_mem_size);
+            }
+            sem_post(&prev_cxt->ultra_video);
             handle->ops.release_buff_handle(handle->oem_handle, frame_type,
                                             &buf_info);
         }
-
         if (ret) {
             CMR_LOGE("ultra_wide failed");
             ret = CMR_CAMERA_FAIL;
@@ -16290,6 +16461,8 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
+    free(dst_eis_img);
+    dst_eis_img = NULL;
     return ret;
 }
 cmr_int prev_ai_scene_send_data(struct prev_handle *handle, cmr_u32 camera_id,

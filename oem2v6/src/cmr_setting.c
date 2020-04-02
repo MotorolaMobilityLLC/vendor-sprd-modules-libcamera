@@ -756,7 +756,7 @@ static cmr_int setting_set_encode_angle(struct setting_component *cpt,
     hal_param->encode_rotation = encode_rotation;
     hal_param->encode_angle = encode_angle;
 
-    CMR_LOGD("encode_angle %ld", hal_param->encode_angle);
+    CMR_LOGD("encode_angle %ld, encode_rotation=%d", hal_param->encode_angle,hal_param->encode_rotation);
     return ret;
 }
 
@@ -764,7 +764,6 @@ static cmr_int setting_get_encode_angle(struct setting_component *cpt,
                                         struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-    ;
 
     parm->cmd_type_value = hal_param->encode_angle;
     return ret;
@@ -776,6 +775,7 @@ static cmr_int setting_get_encode_rotation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->encode_rotation;
+    CMR_LOGV("encode_rotation=%d", hal_param->encode_rotation);
     return ret;
 }
 
@@ -2915,29 +2915,21 @@ static cmr_int setting_clear_hdr(struct setting_component *cpt,
     return 0;
 }
 
-static cmr_int setting_ctrl_dre(struct setting_component *cpt,
+static cmr_int setting_ctrl_ae_adjust(struct setting_component *cpt,
                                 struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
 
-    cmr_setting_clear_sem(cpt);
-    CMR_LOGD("start wait for dre ev effect");
+    CMR_LOGD("start wait for isp ev effect");
     setting_isp_wait_notice(cpt);
-    CMR_LOGD("end wait for dre ev effect");
+    CMR_LOGD("end wait for isp ev effect");
 
     return ret;
 }
 
-static cmr_int setting_clear_dre(struct setting_component *cpt,
+static cmr_int setting_clear_ae_adjust(struct setting_component *cpt,
                                  struct setting_cmd_parameter *parm) {
-    if (!cpt) {
-        CMR_LOGE("camera_context is null.");
-        return -1;
-    }
 
-    pthread_mutex_lock(&cpt->isp_mutex);
-    cmr_sem_post(&cpt->isp_sem);
-    pthread_mutex_unlock(&cpt->isp_mutex);
-
+    cmr_setting_clear_sem(cpt);
     CMR_LOGD("Done");
     return 0;
 }
@@ -3165,6 +3157,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 }
 
                 setting_set_flashdevice(cpt, parm, ctrl_flash_status);
+		hal_param->flash_param.last_preflash_time =
+                    systemTime(CLOCK_MONOTONIC);
                 hal_param->flash_param.flash_status = setting_flash_status;
                 time1 = systemTime(CLOCK_MONOTONIC);
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_PRE_LIGHTING);
@@ -3172,10 +3166,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 time2 = systemTime(CLOCK_MONOTONIC);
                 CMR_LOGI("isp_flash_pre_lighting cost %" PRId64 " ms",
                          (time2 - time1) / 1000000);
-
                 hal_param->flash_param.has_preflashed = 1;
-                hal_param->flash_param.last_preflash_time =
-                    systemTime(CLOCK_MONOTONIC);
+
             } else {
                 setting_set_flashdevice(cpt, parm, ctrl_flash_status);
             }
@@ -3205,6 +3197,10 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                             cmr_sem_post(&cpt->preflash_sem);
                         }
                     } else {
+                        setting_isp_flash_notify(cpt, parm, ISP_FLASH_CLOSE);
+                        /* no need when non-zsl, if do should timeout */
+                        if (hal_param->sprd_zsl_enabled)
+                            setting_isp_wait_notice(cpt);
                         hal_param->flash_param.has_preflashed = 0;
                         hal_param->flash_param.last_preflash_time = 0;
                         hal_param->flash_param.flash_status =
@@ -3235,7 +3231,9 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 hal_param->flash_param.flash_status = setting_flash_status;
 
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_LIGHTING);
-                setting_isp_wait_notice(cpt);
+                /* no need when non-zsl, if do should timeout */
+                if (hal_param->sprd_zsl_enabled)
+                   setting_isp_wait_notice(cpt);
                 CMR_LOGD("high flash will do-capture");
             } else {
                 setting_set_flashdevice(cpt, parm, ctrl_flash_status);
@@ -4090,10 +4088,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_logo_watermark);
     cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_TIME_WATERMARK,
                              setting_get_time_watermark);
-    cmr_add_cmd_fun_to_table(SETTING_CTRL_DRE,
-                             setting_ctrl_dre);
-    cmr_add_cmd_fun_to_table(SETTING_CLEAR_DRE,
-                             setting_clear_dre);
+    cmr_add_cmd_fun_to_table(SETTING_CTRL_AE_NOTIFY,
+                             setting_ctrl_ae_adjust);
+    cmr_add_cmd_fun_to_table(SETTING_CLEAR_AE_NOTIFY,
+                             setting_clear_ae_adjust);
     setting_parms_inited = 1;
     return 0;
 }

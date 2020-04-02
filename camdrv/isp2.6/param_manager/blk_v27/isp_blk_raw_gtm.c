@@ -82,7 +82,7 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 	struct isp_pm_block_header *gtm_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-	dst_ptr->cur.gtm_mod_en = (~gtm_header_ptr->bypass);
+	dst_ptr->cur.gtm_mod_en = !gtm_header_ptr->bypass;
 	index = src_ptr->cur_idx.x0;
 	dst_ptr->cur_idx.x0 = src_ptr->cur_idx.x0;
 	dst_ptr->cur_idx.x1 = src_ptr->cur_idx.x1;
@@ -145,6 +145,10 @@ cmr_s32 _pm_gtm_init(void *dst_gtm_param, void *src_gtm_param, void *param1, voi
 
 	gtm_header_ptr->is_update = ISP_ONE;
 
+	ISP_LOGD("gtm bypass %d en %d, map %d stat %d\n",
+		gtm_header_ptr->bypass, dst_ptr->cur.gtm_mod_en,
+		dst_ptr->cur.gtm_map_bypass, dst_ptr->cur.gtm_hist_stat_bypass);
+
 	return rtn;
 }
 
@@ -181,6 +185,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 				dst_ptr->cur.gtm_map_bypass = 1;
 				dst_ptr->cur.gtm_hist_stat_bypass = 1;
 				header_ptr->is_update = ISP_ONE;
+				ISP_LOGV("bypass all\n");
 				return ISP_SUCCESS;
 			}
 
@@ -226,7 +231,7 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			dst_ptr->cur.gtm_ymax_diff_thr = dst_ptr->gtm_param[index].gtm_ymax_diff_thr;
 			dst_ptr->cur.gtm_yavg_diff_thr = dst_ptr->gtm_param[index].gtm_yavg_diff_thr;
 			dst_ptr->cur.gtm_pre_ymin_weight = dst_ptr->gtm_param[index].gtm_pre_ymin_weight;
-			ISP_LOGV("gtm_target_norm_coeff %d",dst_ptr->cur.gtm_target_norm_coeff);
+
 			cal_gtm_hist(PIX_BITS_14, &(dst_ptr->cur));
 			data_num = 1;
 			if (!dst_ptr->cur.gtm_target_norm_setting_mode) {
@@ -252,7 +257,11 @@ cmr_s32 _pm_gtm_set_param(void *gtm_param, cmr_u32 cmd, void *param_ptr0, void *
 			else
 				dst_ptr->cur.gtm_mod_en = 1;
 
-			ISP_LOGV("dst3 %d",*(cmr_u16 *) dst3);
+			ISP_LOGV("SMART: w (%d %d) v (%d %d); weight (%d %d), index %d; en %d map %d stat %d\n",
+				bv_value->weight[0], bv_value->weight[1], bv_value->value[0], bv_value->value[1],
+				weight[0], weight[1], index, dst_ptr->cur.gtm_mod_en,
+				dst_ptr->cur.gtm_map_bypass, dst_ptr->cur.gtm_hist_stat_bypass);
+
 			header_ptr->is_update = ISP_ONE;
 		}
 		break;
@@ -281,6 +290,12 @@ cmr_s32 _pm_gtm_get_param(void *gtm_param, cmr_u32 cmd, void *rtn_param0, void *
 		param_data_ptr->data_ptr = (void *)&gtm_ptr->cur;
 		param_data_ptr->data_size = sizeof(gtm_ptr->cur);
 		*update_flag = 0;
+		break;
+
+	case ISP_PM_BLK_GTM_STATUS:
+		param_data_ptr->data_ptr = (void *)&gtm_ptr->cur.gtm_mod_en;
+		param_data_ptr->data_size = sizeof(gtm_ptr->cur.gtm_mod_en);
+		ISP_LOGD("gtm on %d\n", gtm_ptr->cur.gtm_mod_en);
 		break;
 
 	default:

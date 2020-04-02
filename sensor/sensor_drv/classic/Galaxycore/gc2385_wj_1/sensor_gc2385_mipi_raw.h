@@ -34,7 +34,7 @@
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME			"gc2385_mipi_raw"
+#define SENSOR_NAME			"gc2385_wj_1"
 #define I2C_SLAVE_ADDR			0x6e   /* 8bit slave address*/
 
 #define GC2385_PID_ADDR			  0xf0
@@ -509,7 +509,7 @@ SENSOR_INFO_T g_gc2385_mipi_raw_info = {
     .raw_info_ptr = &s_gc2385_mipi_raw_info_ptr,
 
     .video_tab_info_ptr = NULL,
-    .sensor_version_info = (cmr_s8 *)"gc2385_v1",
+    .sensor_version_info = (cmr_s8 *)"gc2385_wj_1",
 };
 
 #endif

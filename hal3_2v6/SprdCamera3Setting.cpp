@@ -1300,9 +1300,9 @@ exit:
     return num;
 }
 
-bool SprdCamera3Setting::isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo) {
+bool SprdCamera3Setting::isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo) {
     for (int i = 0; i < SPRD_FACE_BEAUTY_PARAM_NUM; i++) {
-        if (sprddefInfo.perfect_skin_level[i] != 0)
+        if (sprddefInfo->perfect_skin_level[i] != 0)
             return true;
     }
     return false;
@@ -2470,6 +2470,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(1);
     else
         available_cam_features.add(0);
+
+    // 22 video face beauty
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
+                            "persist.vendor.cam.video.face.beauty.enable"));
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -5171,11 +5176,11 @@ int SprdCamera3Setting::updateWorkParameters(
         if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
             !strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") &&
             cameraInfo.facing == CAMERA_FACING_FRONT) {
-            s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode =
-                frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
-            pushAndroidParaTag(ANDROID_SPRD_FLASH_LCD_MODE);
-            HAL_LOGV("flash lcd mode %d",
-                     s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode);
+            int32_t sprd_flash_lcd_mode = frame_settings.find(ANDROID_SPRD_FLASH_LCD_MODE).data.u8[0];
+            GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_flash_lcd_mode,
+                    sprd_flash_lcd_mode, ANDROID_SPRD_FLASH_LCD_MODE, 1)
+            HAL_LOGV("flash lcd mode %d,available =%d",sprd_flash_lcd_mode,
+                     s_setting[mCameraId].flash_InfoInfo.available);
         }
     }
 
@@ -5222,7 +5227,7 @@ int SprdCamera3Setting::updateWorkParameters(
              "android zsl enable = %d,is_smile_capture=%d",
              mCameraId, s_setting[mCameraId].lensInfo.focus_distance,
              s_setting[mCameraId].controlInfo.ae_precap_trigger,
-             isFaceBeautyOn(s_setting[mCameraId].sprddefInfo),
+             isFaceBeautyOn(&s_setting[mCameraId].sprddefInfo),
              s_setting[mCameraId].sprddefInfo.sprd_eis_enabled,
              s_setting[mCameraId].flashInfo.mode,
              s_setting[mCameraId].controlInfo.ae_lock,
@@ -5634,7 +5639,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        1);
     if (ANDROID_STATISTICS_FACE_DETECT_MODE_OFF !=
             (s_setting[mCameraId].statisticsInfo.face_detect_mode) ||
-        (isFaceBeautyOn(s_setting[mCameraId].sprddefInfo))) {
+        (isFaceBeautyOn(&s_setting[mCameraId].sprddefInfo))) {
 #define MAX_ROI 10
         FACE_Tag *faceDetectionInfo =
             (FACE_Tag *)&(s_setting[mCameraId].faceInfo);
@@ -6541,9 +6546,17 @@ int SprdCamera3Setting::setSPRDDEFTag(SPRD_DEF_Tag sprddefInfo) {
     return 0;
 }
 
+/* please use getSPRDDEFTagPTR
+ * less memory copy
+ * only change the variable which use
+ */
 int SprdCamera3Setting::getSPRDDEFTag(SPRD_DEF_Tag *sprddefInfo) {
     *sprddefInfo = s_setting[mCameraId].sprddefInfo;
     return 0;
+}
+
+SPRD_DEF_Tag *SprdCamera3Setting::getSPRDDEFTagPTR(void) {
+    return &s_setting[mCameraId].sprddefInfo;
 }
 
 int SprdCamera3Setting::setGEOMETRICTag(GEOMETRIC_Tag geometricInfo) {

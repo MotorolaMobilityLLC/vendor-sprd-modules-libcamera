@@ -64,6 +64,9 @@ typedef enum { // optional params
     BismuthFilter = 33,
     WarmLBA75Filter = 43,
     HistoryFilter = 44,
+    HaloFilter = 45,
+    WaterReflectionFilter = 46,
+    LightFilter = 47
 } IFFilterType;
 
 typedef enum {
@@ -82,6 +85,13 @@ typedef struct {
     void *param1;
     void *param2;
 } IFFilterParam;
+
+typedef struct {
+    int orientation;
+    int flip_on;
+    int is_front;
+    int filter_version;
+} FilterParam_t;
 
 typedef struct { unsigned char val[3][3]; } IFMatrix3x3;
 
@@ -115,7 +125,7 @@ typedef struct {
 
 JNIEXPORT IFENGINE ImageFilterCreateEngine(IFInitParam *initParam);
 JNIEXPORT int ImageFilterRun(IFENGINE engine, IFImageData *input,
-                             IFImageData *output, IFFilterType filterType,
+                             IFImageData *output,IFFilterType filterType, FilterParam_t *param,
                              IFFilterParam *filterParam);
 JNIEXPORT int ImageFilterDestroyEngine(IFENGINE engine);
 

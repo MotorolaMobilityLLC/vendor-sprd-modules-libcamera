@@ -135,6 +135,7 @@ struct smart_context {
 	smart_debuginfo smt_dbginfo;
 	struct atm_tune_param atm_tuning_param;
 	enum smart_ctrl_atm_switch_state atm_switch_state;
+	cmr_u32 gtm_enable ;
 
 };
 
@@ -348,6 +349,21 @@ static cmr_s32 smart_ctl_set_atm_switch_state(struct smart_context *cxt, void *i
 
 	return rtn;
 }
+
+static cmr_s32 smart_ctl_set_gtm_switch_state(struct smart_context *cxt, void *in_param)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	struct smart_gtm_switch_param *param = (struct smart_gtm_switch_param*)in_param;
+
+	if (NULL == in_param) {
+		ISP_LOGE("fail to get valid in param");
+		return ISP_ERROR;
+	}
+	cxt->gtm_enable  = param->enable;
+
+	return rtn;
+}
+
 
 static cmr_s32 smart_ctl_check_block_param(struct isp_smart_block_cfg *blk_cfg)
 {
@@ -696,7 +712,7 @@ static cmr_s32 smart_ctl_calc_bv_section(struct isp_range bv_range[], cmr_u32 nu
 	return rtn;
 }
 
-static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, struct smart_calc_param *param, struct smart_component_result *result, cmr_u32 smart_id)
+static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, struct smart_calc_param *param, struct smart_component_result *result, cmr_u32 smart_id,cmr_u32 gtm_switch_flag)
 {
 	if ((NULL == cfg) || (NULL == param)) {
 		ISP_LOGE("smart_ctl_calc_component param is null!\n");
@@ -709,6 +725,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 	cmr_s32 bv_gain = param->bv_gain;
 	cmr_u32 ct = param->ct;
 	cmr_u16 abl_weight = param->abl_weight;
+	cmr_u32 cur_fps = param->fps;
 	struct isp_weight_value func_result = { {0}, {0} };
 	struct isp_weight_value *fix_data = (struct isp_weight_value *)result->fix_data;
 	struct isp_weight_value bv_result = { {0}, {0} };
@@ -796,6 +813,21 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 		result->size = sizeof(cmr_s32);
 		result->fix_data[0] = func_result.value[0];
 		ISP_LOGV("value = %d", result->fix_data[0]);
+
+		if ((smart_id == ISP_SMART_RAW_GTM)||(smart_id == ISP_SMART_RGB_LTM)) {
+			fix_data->weight[0] = SMART_WEIGHT_UNIT;
+			if(!gtm_switch_flag){
+				fix_data->value[0] = cfg->default_val;
+				ISP_LOGV("Disable GTM when by setting gtm_switch_flag:%d",fix_data->value[0]);
+			}
+			else if(cfg->use_flash_val){
+				cmr_u32 fps_limit = cfg->flash_val;
+				if (cur_fps <= fps_limit ){
+					fix_data->value[0] = cfg->default_val;
+					ISP_LOGV("Disable GTM when low fps by setting cfg default_val:%d",fix_data->value[0]);
+				}
+			}
+		}
 		break;
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
@@ -856,6 +888,19 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 				if ((index >=0) && (index <=8)) {
 					fix_data->value[0] = index;
 					fix_data->value[1] = index;
+				}
+			} else if ((smart_id == ISP_SMART_RAW_GTM)||(smart_id == ISP_SMART_RGB_LTM)){
+				if(!gtm_switch_flag){
+					fix_data->value[0] = cfg->default_val;
+					fix_data->value[1] = cfg->default_val;
+					ISP_LOGV("Disable GTM when by setting gtm_switch_flag:%d",fix_data->value[0]);
+				}else if(cfg->use_flash_val){
+					cmr_u32 fps_limit = cfg->flash_val;
+					if (cur_fps <= fps_limit ){
+						fix_data->value[0] = cfg->default_val;
+						fix_data->value[1] = cfg->default_val;
+						ISP_LOGV("Disable GTM when low fps by setting cfg:%d",fix_data->value[0]);
+					}
 				}
 			}
 
@@ -935,7 +980,7 @@ static cmr_s32 smart_ctl_calc_component_flash(struct isp_smart_component_cfg *cf
 }
 
 static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, struct smart_calc_param *param,
-				    struct smart_block_result *result, enum smart_ctrl_flash_mode flash_mode)
+				    struct smart_block_result *result, enum smart_ctrl_flash_mode flash_mode,cmr_u32 gtm_switch_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0;
@@ -961,7 +1006,7 @@ static cmr_s32 smart_ctl_calc_block(struct isp_smart_block_cfg *cfg, struct smar
 		if (1 == is_print_log()) {
 			ISP_LOGV("ISP_TAG: flash_mode = %d, use_flash_val = %d. bv = %d, ct = %d abl_weight= %d\n", flash_mode, cfg->component[i].use_flash_val, param->bv, param->ct,param->abl_weight);
 		}
-		rtn = smart_ctl_calc_component(&cfg->component[i], param, &component_result, cfg->smart_id);
+		rtn = smart_ctl_calc_component(&cfg->component[i], param, &component_result, cfg->smart_id, gtm_switch_flag);
 
 		if (SMART_CTRL_FLASH_MAIN == flash_mode && 1 == cfg->component[i].use_flash_val) {
 			rtn = smart_ctl_calc_component_flash(&cfg->component[i], param, &component_result, cfg->smart_id);
@@ -1747,6 +1792,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	cur_param = cxt->cur_param;
 	flash_mode = cxt->flash_mode;
+	cmr_u32 gtm_switch_flag = cxt->gtm_enable;
 
 	if (1 == cur_param->bypass) {
 		rtn = ISP_SUCCESS;
@@ -1758,7 +1804,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 
 	for (i = 0; i < smart_param->block_num; i++) {
 		cxt->block_result.update = 0;
-		rtn = smart_ctl_calc_block(&smart_param->block[i], param, &cxt->block_result, flash_mode);
+		rtn = smart_ctl_calc_block(&smart_param->block[i], param, &cxt->block_result, flash_mode, gtm_switch_flag);
 
 		if (1 == cxt->block_result.update) {
 			cxt->calc_result[update_block_num] = cxt->block_result;
@@ -1962,6 +2008,9 @@ cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *r
 
 	case ISP_SMART_IOCTL_SET_ATM_SWITCH_STATE:
 		rtn = smart_ctl_set_atm_switch_state(cxt_ptr, param);
+		break;
+	case ISP_SMART_IOCTL_SET_GTM_SWITCH:
+		rtn = smart_ctl_set_gtm_switch_state(cxt_ptr, param);
 		break;
 
 	default:

@@ -27,6 +27,7 @@
 #define AEC_MONITOR_DATA_SIZE_MAX (128 * 128)
 #define AE_EV_LEVEL_MAX 16
 #define AE_LIB_SCENE_MAX 8
+#define AE_PIECEWISE_SAMPLE2_NUM 5
 
 #ifndef _AE_COMMON_DATA_TYPE_DEF
 #define _AE_COMMON_DATA_TYPE_DEF
@@ -137,6 +138,7 @@ enum alg_flash_type {
 	FLASH_MAIN_RECEIVE,
 	FLASH_MAIN_AFTER,
 	FLASH_MAIN_AFTER_RECEIVE,
+	FLASH_MAIN_CLOSE,
 	FLASH_LED_ON,
 	FLASH_LED_OFF,
 	FLASH_LED_AUTO,
@@ -229,6 +231,12 @@ struct ae_sample {
 struct ae_piecewise_func {
 	cmr_s32 num;
 	struct ae_sample samples[AE_PIECEWISE_SAMPLE_NUM];
+};
+
+/*below structure drived from above struct,space goes down because the reserved space not enough for hm at that time.*/
+struct ae_piecewise_funcv2 {
+	cmr_s32 num;
+	struct ae_sample samples[AE_PIECEWISE_SAMPLE2_NUM];
 };
 
 struct ae_range {
@@ -345,6 +353,7 @@ struct ae_sync_info{			//ae_dynamic_sync struct
 	cmr_s32 dmy_line;
 	cmr_u32 frm_len;
 	cmr_u32 frm_len_def;
+	struct ae_alg_rgb_gain awb_gain;
 	cmr_u64 monoboottime;
 };
 
@@ -451,6 +460,8 @@ struct ae_face_data_type {
 	cmr_s32 pose;	/* face pose: frontal, half-profile, full-profile */
 	cmr_u32 face_lum;
 	cmr_s32 angle;
+	cmr_s32 yaw_angle;
+	cmr_s32 roll_angle;
 };
 
 struct ae_ev_setting_param {

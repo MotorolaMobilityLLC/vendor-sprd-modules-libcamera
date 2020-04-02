@@ -32,39 +32,37 @@
 #define SPRDCAMERA3MULTICAMERA_H_HEADER
 
 #include <hardware/camera3.h>
+#include <utils/Singleton.h>
 
 namespace sprdcamera {
 
 /*
  * A wrapper to multi-camera class.
  */
-class SprdCamera3MultiCamera {
+class SprdCamera3MultiCamera
+    : public android::Singleton<SprdCamera3MultiCamera> {
   public:
     static int get_camera_info(int camera_id, struct camera_info *info);
     static int camera_device_open(const struct hw_module_t *module,
-            const char *id, struct hw_device_t **hw_device);
+                                  const char *id,
+                                  struct hw_device_t **hw_device);
 
   private:
-    static SprdCamera3MultiCamera *GetInstance();
-    static SprdCamera3MultiCamera *sInstance;
-
-    typedef void *HandleType;
-    typedef int (*FuncType1)(int, struct camera_info *);
-    typedef int (*FuncType2)(const struct hw_module_t *,
-            const char *, struct hw_device_t **);
-
     SprdCamera3MultiCamera();
-    SprdCamera3MultiCamera(HandleType h, FuncType1 f1, FuncType2 f2);
-    /* TODO will never be called */
     ~SprdCamera3MultiCamera();
 
-    const bool mAuthorized;
-    HandleType mHandle;
-    FuncType1 mFunc1;
-    FuncType2 mFunc2;
-};
+    typedef void *HandleType;
+    typedef int (*FuncType_GetCameraInfo)(int, struct camera_info *);
+    typedef int (*FuncType_Open)(const struct hw_module_t *, const char *,
+                                 struct hw_device_t **);
 
+    bool mAuthorized;
+    HandleType mHandle;
+    FuncType_GetCameraInfo mFuncGetCameraInfo;
+    FuncType_Open mFuncOpen;
+
+    friend class android::Singleton<SprdCamera3MultiCamera>;
+};
 };
 
 #endif
-

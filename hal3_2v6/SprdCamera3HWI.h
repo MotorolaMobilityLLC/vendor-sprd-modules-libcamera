@@ -127,7 +127,8 @@ class SprdCamera3HWI {
     void flushRequest(uint32_t frame_num);
     void getLogLevel();
     int resetVariablesToDefault();
-
+    void getHighResZslSetting(void);
+    void checkHighResZslSetting(uint32_t *ambient_highlight);
   public:
     SprdCamera3Setting *mSetting;
     uint32_t mFrameNum;
@@ -232,6 +233,9 @@ class SprdCamera3HWI {
     uint64_t mCurFrameTimeStamp;
     int mSprdCameraLowpower;
     bool mFirstRequestGet;
+    bool mHighResNonzsl; // high res,1:non-zsl,0:zsl
+    //1:always zsl,2:non-zsl,other:detect
+    uint8_t mHighResFixZsl;
 
     cam3_stream_configuration_t mStreamConfiguration;
 };

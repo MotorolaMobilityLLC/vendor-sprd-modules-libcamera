@@ -223,7 +223,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setCaptureReprocessMode(bool mode, uint32_t width, uint32_t height);
 
     void antiShakeParamSetup();
-    bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
+    bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     bool mManualExposureEnabled;
     char *mFrontFlash;
 
@@ -512,6 +512,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                    cmr_s32 *fd);
     int Callback_CapturePathFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                  cmr_s32 *fd, cmr_u32 sum);
+    int Callback_EisGraphicBufferMalloc(cmr_u32 size, cmr_u32 sum,
+                                     cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                     cmr_s32 *fd, void **handle, cmr_uint width,
+                                     cmr_uint height);
     int Callback_GraphicBufferMalloc(cmr_u32 size, cmr_u32 sum,
                                      cmr_uint *phy_addr, cmr_uint *vir_addr,
                                      cmr_s32 *fd, void **handle, cmr_uint width,
@@ -520,6 +524,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                         cmr_uint *phy_addr, cmr_uint *vir_addr,
                                         cmr_s32 *fd, void **handle,
                                         cmr_uint width, cmr_uint height);
+    int Callback_EisGraphicBufferFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                   cmr_s32 *fd, cmr_u32 sum);
     int Callback_GraphicBufferFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                    cmr_s32 *fd, cmr_u32 sum);
     int Callback_OtherFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
@@ -655,6 +661,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_graphic_memory_t mGraphicBufArray[MAX_GRAPHIC_BUF_NUM];
+    sprd_graphic_memory_t mEisGraphicBufArray[MAX_GRAPHIC_BUF_NUM];
     sprd_graphic_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
 
     sprd_camera_memory_t *mReDisplayHeap;
@@ -742,6 +749,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mPdafRawHeapNum;
     uint32_t mSubRawHeapNum;
     uint32_t mGraphicBufNum;
+    uint32_t mEisGraphicBufNum;
     uint32_t mSubRawHeapSize;
     uint32_t mPathRawHeapNum;
     uint32_t mPathRawHeapSize;

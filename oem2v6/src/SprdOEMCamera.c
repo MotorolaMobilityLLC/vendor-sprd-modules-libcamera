@@ -1196,8 +1196,15 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         break;
     }
     case CAMERA_TOCTRL_GET_4IN1_INFO: {
-	ret = camera_get_4in1_info(handle, (struct fin1_info *)param);
-	break;
+        ret = camera_get_4in1_info(handle, (struct fin1_info *)param);
+        break;
+    }
+    case CAMERA_TOCTRL_GET_SN_STREAM_STATUS: {
+        struct camera_context *cxt = (struct camera_context *)handle;
+
+        ret = cmr_sensor_get_stream_status(cxt->sn_cxt.sensor_handle, cxt->camera_id);
+        *((int *)param) = ret;
+        break;
     }
     case CAMERA_TOCTRL_SET_HIGH_RES_MODE: {
         ret = camera_set_high_res_mode(handle, *(cmr_uint *)param);

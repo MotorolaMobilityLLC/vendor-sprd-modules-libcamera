@@ -523,7 +523,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	switch (cb_type) {
 	case AE_CB_FLASHING_CONVERGED:
 	case AE_CB_CONVERGED:
-	case AE_CB_CLOSE_PREFLASH:
+	case AE_CB_RECOVER_GAIN:
 	case AE_CB_PREFLASH_PERIOD_END:
 	case AE_CB_CLOSE_MAIN_FLASH:
 		cmd = ISP_AE_STAB_CALLBACK;
@@ -567,8 +567,8 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
         cmd = ISP_AE_EXP_TIME;
         break;
 #ifdef CONFIG_ISP_2_7
-	case AE_CB_DRE_START:
-		cmd = ISP_DRE_EV_EFFECT_CALLBACK;
+	case AE_CB_EV_ADJUST_NOTIFY:
+		cmd = ISP_EV_EFFECT_CALLBACK;
 		break;
 #endif
 	default:
@@ -1671,13 +1671,12 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		tmp = !tmp; /* need be 1 when high light */
 		if (ret)
 			tmp = cxt->ambient_highlight;
+		if (cxt->fix_highlight) /* !=0, fix to highlight or lowlight */
+			tmp = (cxt->fix_highlight == 1) ? 1 : 0;
 		if (tmp != cxt->ambient_highlight) { /* value change */
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_LOWLIGHT_FLAG,
 				&tmp, &cxt->commn_cxt.isp_pm_mode[1]);
 			ISP_LOGI("ambient_highlight = %d", tmp);
-		}
-		if (cxt->fix_highlight) {
-			tmp = (cxt->fix_highlight == 1) ? 1 : 0;
 		}
 		cxt->ambient_highlight = tmp;
 	}
@@ -2539,6 +2538,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
 			smart_proc_in.cal_para.ct = awb_output->ct;
 			smart_proc_in.cal_para.abl_weight = ae_in->ae_output.abl_weight;
+			smart_proc_in.cal_para.fps = ae_in->ae_output.fps;
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 			if (cxt->remosaic_type == 1)
 				smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[1];

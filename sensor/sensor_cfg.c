@@ -732,6 +732,7 @@ const SNS_MULTI_CAMERA_INFO_T multi_camera_sensor_group[] = {
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"ov12a10", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl5 ums312_1h10
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"imx363", "0", "ov5675_dual", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for roc1 ud710_3h10
     {SPRD_BLUR_ID, MODE_BOKEH, 2, {"hi1336_m0", "0", "gc2375_js_2", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 9863a_1c10
+    {SPRD_BLUR_ID, MODE_BOKEH, 2, {"hi1336_m0", "0", "gc02m1b_js_1", "0", "0", "0"}, SNS_FACE_BACK, 90}, // for sharkl3 9863a_1c10
 #endif
 #ifdef CONFIG_BLUR_SUPPORT
     {SPRD_BLUR_FRONT_ID, MODE_BLUR, 0, {"any", "any", "any", "any", "any", "any"}, SNS_FACE_FRONT, 270},

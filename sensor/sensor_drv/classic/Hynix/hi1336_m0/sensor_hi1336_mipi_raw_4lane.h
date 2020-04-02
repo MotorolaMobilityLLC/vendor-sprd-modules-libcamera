@@ -38,7 +38,7 @@
 
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "hi1336_mipi_raw"
+#define SENSOR_NAME "hi1336_m0"
 
 
 #define I2C_SLAVE_ADDR 0x40 /* 8bit slave address*/
@@ -1515,7 +1515,7 @@ SENSOR_INFO_T g_hi1336_mipi_raw_info = {
     .raw_info_ptr = &s_hi1336_mipi_raw_info_ptr,
 
     .video_tab_info_ptr = NULL,
-    .sensor_version_info = (cmr_s8 *)"hi1336_v1",
+    .sensor_version_info = (cmr_s8 *)"hi1336_m0",
 };
 
 #endif

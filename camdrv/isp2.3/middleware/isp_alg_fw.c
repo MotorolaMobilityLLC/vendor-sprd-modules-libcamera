@@ -420,7 +420,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	switch (cb_type) {
 	case AE_CB_FLASHING_CONVERGED:
 	case AE_CB_CONVERGED:
-	case AE_CB_CLOSE_PREFLASH:
+	case AE_CB_RECOVER_GAIN:
 	case AE_CB_PREFLASH_PERIOD_END:
 	case AE_CB_CLOSE_MAIN_FLASH:
 		cmd = ISP_AE_STAB_CALLBACK;
@@ -455,8 +455,8 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_3DNR_NOTIFY:
 		cmd = ISP_3DNR_CALLBACK;
 		break;
-	case AE_CB_DRE_START:
-		cmd = ISP_DRE_EV_EFFECT_CALLBACK;
+	case AE_CB_EV_ADJUST_NOTIFY:
+		cmd = ISP_EV_EFFECT_CALLBACK;
 		break;
 	default:
 		ISP_LOGI("fail to get known cb_type=%ld", cb_type);

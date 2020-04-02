@@ -324,12 +324,17 @@ extern "C" {
 		cmr_s32 smooth_flag;
 		cmr_s32 frameid;
 		/*
-		 * DRE control
+		 * EV adjust control
 		 */
-		cmr_s8 dre_enable;
-		cmr_u16 dre_exp_line;
-		cmr_s16 dre_gain;
-		cmr_s8 dre_frame_cnt;
+		cmr_s8 ev_adj_enable;
+		cmr_u16 ev_adj_exp_line;
+		cmr_s16 ev_adj_gain;
+		cmr_s8 ev_adj_frame_cnt;
+		cmr_s8 ev_adj_flag;
+		cmr_s8 ev_adjust_cnt;
+		cmr_s8 ev_adj_ev_effect_valid_num;
+		cmr_s8 ev_adj_snp_type;
+
 		cmr_s8 threednr_mode_flag;
 		/*
 		 *dual flash simulation

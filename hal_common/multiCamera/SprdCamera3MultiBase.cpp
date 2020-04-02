@@ -1613,6 +1613,154 @@ int SprdCamera3MultiBase::NV21Rotate(int8_t *dst_buf, uint16_t dst_fd,
     return ret;
 }
 
+sprd_camera_memory_t *SprdCamera3MultiBase::allocateIonMem(int buf_size,
+                                                       int num_bufs,
+                                                       uint32_t is_cache) {
+    unsigned long paddr = 0;
+    size_t psize = 0;
+    int result = 0;
+    size_t mem_size = 0;
+    MemIon *pHeapIon = NULL;
+
+    HAL_LOGD("buf_size %d, num_bufs %d", buf_size, num_bufs);
+    sprd_camera_memory_t *memory =
+        (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
+    if (NULL == memory) {
+        HAL_LOGE("fatal error! memory pointer is null.");
+        goto getpmem_fail;
+    }
+    memset(memory, 0, sizeof(sprd_camera_memory_t));
+    memory->busy_flag = false;
+
+    mem_size = buf_size * num_bufs;
+    // to make it page size aligned
+    mem_size = (mem_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+    if (mem_size == 0) {
+        goto getpmem_fail;
+    }
+
+    if (!mIommuEnabled) {
+        if (is_cache) {
+            pHeapIon =
+                new MemIon("/dev/ion", mem_size, 0,
+                            (1 << 31) | ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+        } else {
+            pHeapIon =
+                new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                            ION_HEAP_ID_MASK_MM | ION_FLAG_NO_CLEAR);
+        }
+    } else {
+        if (is_cache) {
+            pHeapIon =
+                new MemIon("/dev/ion", mem_size, 0,
+                            (1 << 31) | ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+        } else {
+            pHeapIon =
+                new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING,
+                            ION_HEAP_ID_MASK_SYSTEM | ION_FLAG_NO_CLEAR);
+        }
+    }
+
+    if (pHeapIon == NULL || pHeapIon->getHeapID() < 0) {
+        HAL_LOGE("pHeapIon is null or getHeapID failed");
+        goto getpmem_fail;
+    }
+
+    if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
+        HAL_LOGE("error getBase is null.");
+        goto getpmem_fail;
+    }
+
+    memory->ion_heap = pHeapIon;
+    memory->fd = pHeapIon->getHeapID();
+    memory->dev_fd = pHeapIon->getIonDeviceFd();
+    // memory->phys_addr is offset from memory->fd, always set 0 for yaddr
+    memory->phys_addr = 0;
+    memory->phys_size = mem_size;
+    memory->data = pHeapIon->getBase();
+
+    HAL_LOGD("fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+        memory->fd, memory->phys_addr, memory->data, memory->phys_size,
+        pHeapIon);
+
+    return memory;
+
+getpmem_fail:
+    if (memory != NULL) {
+        free(memory);
+        memory = NULL;
+    }
+    return NULL;
+}
+
+int SprdCamera3MultiBase::allocateBufferList(int w, int h, new_mem_t *new_mem,
+                                      int index, int stream_type, bool byte_unalign, sprd_camera_memory_t *memory, int type) {
+    sp<GraphicBuffer> graphicBuffer = NULL;
+    native_handle_t *native_handle = NULL;
+    unsigned long phy_addr = 0;
+    size_t buf_size = 0;
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                          GraphicBuffer::USAGE_SW_READ_OFTEN |
+                          GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+#if defined(CONFIG_SPRD_ANDROID_8)
+    graphicBuffer =
+        new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
+                              yuvTextUsage, "dualcamera");
+#else
+    graphicBuffer =
+        new GraphicBuffer(w, h, HAL_PIXEL_FORMAT_YCrCb_420_SP,
+                              yuvTextUsage);
+#endif
+    native_handle = (native_handle_t *)graphicBuffer->handle;
+
+    new_mem->phy_addr = (void *)phy_addr;
+    new_mem->native_handle = native_handle;
+    new_mem->graphicBuffer = graphicBuffer;
+    new_mem->width = w;
+    new_mem->height = h;
+    new_mem->type = (camera_buffer_type_t)type;
+    HAL_LOGD("w=%d,h=%d,phy_addr=0x%x",
+        w, h, new_mem->phy_addr);
+  return NO_ERROR;
+}
+
+void SprdCamera3MultiBase::freeIonMem(sprd_camera_memory_t *memory) {
+    if (memory) {
+        if (memory->ion_heap) {
+            HAL_LOGD(
+                "fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p",
+                memory->fd, memory->phys_addr, memory->data, memory->phys_size,
+                memory->ion_heap);
+            delete memory->ion_heap;
+            memory->ion_heap = NULL;
+        } else {
+            HAL_LOGD("memory->ion_heap is null:fd=0x%x, phys_addr=0x%lx, "
+                     "virt_addr=%p, size=0x%lx",
+                     memory->fd, memory->phys_addr, memory->data,
+                     memory->phys_size);
+        }
+        free(memory);
+        memory = NULL;
+    }
+}
+
+void SprdCamera3MultiBase::freeBufferList(new_mem_t *buffer, bool byte_unalign) {
+    if (buffer != NULL) {
+        if (buffer->graphicBuffer != NULL) {
+            buffer->graphicBuffer.clear();
+            buffer->graphicBuffer = NULL;
+            buffer->phy_addr = NULL;
+            buffer->vir_addr = NULL;
+        }
+        buffer->native_handle = NULL;
+    } else {
+        HAL_LOGD("Not allocated, No need to free");
+    }
+    HAL_LOGI("X");
+    return;
+}
+
 #define SUPPORT_RES_NUM 15
 static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_0_3M, {{640, 480}}},

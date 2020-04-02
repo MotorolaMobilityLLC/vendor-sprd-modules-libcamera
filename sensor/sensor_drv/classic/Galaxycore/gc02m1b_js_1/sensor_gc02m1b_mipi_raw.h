@@ -33,7 +33,7 @@
  
 
 #define VENDOR_NUM           1
-#define SENSOR_NAME          "gc02m1b_mipi_raw"
+#define SENSOR_NAME          "gc02m1b_js_1"
 
 #define I2C_SLAVE_ADDR       0x6e 	/*0x20*//* 8bit slave address*/
 
@@ -586,7 +586,7 @@ SENSOR_INFO_T g_gc02m1b_mipi_raw_info = {
     .raw_info_ptr = &s_gc02m1b_mipi_raw_info_ptr,
 
     .video_tab_info_ptr = NULL,
-    .sensor_version_info = (cmr_s8 *)"gc02m1b_v1",
+    .sensor_version_info = (cmr_s8 *)"gc02m1b_js_1",
 };
 
 #endif

@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "hi1336_sharkl3"
+#define LOG_TAG "hi1336_s0_9863a1c10"
 
 
 #include "sensor_hi1336_mipi_raw_4lane.h"

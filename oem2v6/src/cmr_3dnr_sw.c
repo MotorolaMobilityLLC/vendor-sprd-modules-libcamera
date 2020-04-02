@@ -1960,11 +1960,13 @@ static cmr_int threednr_thread_destroy(struct class_3dnr *class_handle) {
 
     if (class_handle->is_inited) {
 
+        ret = cmr_thread_destroy(class_handle->scaler_thread);
+        class_handle->scaler_thread = 0;
+
         ret = cmr_thread_destroy(class_handle->threednr_thread);
         class_handle->threednr_thread = 0;
 
-        ret = cmr_thread_destroy(class_handle->scaler_thread);
-        class_handle->scaler_thread = 0;
+
 
         class_handle->is_inited = 0;
     }

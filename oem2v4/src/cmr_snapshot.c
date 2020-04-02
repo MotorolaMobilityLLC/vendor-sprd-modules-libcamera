@@ -684,7 +684,7 @@ void snp_post_proc_err_exit(cmr_handle snp_handle, cmr_int err_code) {
     cmr_bzero(&cxt->cur_frame_info, sizeof(cxt->cur_frame_info));
     snp_set_request(snp_handle, TAKE_PICTURE_NO);
     sem_post(&cxt->proc_done_sm);
-    if (CODEC_WORKING == snp_get_request(snp_handle)) {
+    if (CODEC_WORKING == snp_get_status(snp_handle)) {
         sem_post(&cxt->jpeg_sync_sm);
     }
     snp_set_status(snp_handle, IDLE);
@@ -4425,7 +4425,7 @@ cmr_int snp_thumbnail(cmr_handle snp_handle, struct frm_info *data) {
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
-
+    sem_wait(&cxt->sync_encode);
     if (!data) {
         CMR_LOGE("param error");
         ret = CMR_CAMERA_INVALID_PARAM;
@@ -4443,6 +4443,7 @@ cmr_int snp_thumbnail(cmr_handle snp_handle, struct frm_info *data) {
     }
 exit:
     ATRACE_END();
+    sem_post(&cxt->sync_encode);
     sem_post(&cxt->scaler_sync_sm);
     return ret;
 }
@@ -4955,7 +4956,6 @@ cmr_int snp_stop_proc(cmr_handle snp_handle) {
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
     CMR_LOGI("E");
-
     ret = snp_checkout_exit(snp_handle);
     snp_set_status(snp_handle, IDLE);
     CMR_LOGI("X");

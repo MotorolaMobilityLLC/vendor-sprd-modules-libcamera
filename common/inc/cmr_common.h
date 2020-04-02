@@ -23,6 +23,7 @@ extern "C" {
 #include "cmr_type.h"
 #include "isp_app.h"
 #include "sensor_raw.h"
+#include <cutils/properties.h>
 #include <sys/types.h>
 #include <utils/Log.h>
 #include <utils/Timers.h>
@@ -428,7 +429,8 @@ enum common_isp_cmd_type {
     COM_ISP_SET_RANGE_FPS,
     COM_ISP_GET_AE_LUM,
     COM_ISP_SET_HDR,
-    COM_ISP_SET_DRE,
+    COM_ISP_SET_AE_ADJUST,
+    COM_ISP_SET_GTM_ONFF,
     COM_ISP_SET_AE_LOCK_UNLOCK,
     COM_ISP_SET_ROI_CONVERGENCE_REQ,
     COM_ISP_SET_SNAPSHOT_FINISHED,
@@ -1119,6 +1121,12 @@ struct yuv_sn_af_param {
     struct img_rect zone[FOCUS_ZONE_CNT_MAX];
 };
 
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_7)
+struct isp_ev_control {
+    cmr_u32 cmd_value;
+    enum camera_snapshot_tpye snapshot_type ;
+};
+#endif
 /********************************* sensor end *********************************/
 
 /***************************** common ctrl start ******************************/
@@ -1143,6 +1151,9 @@ struct common_isp_cmd_param {
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
         cmr_u32 cnr2_ynr_en;
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_7)
+        struct isp_ev_control ev_setting;
+#endif
 #ifdef CAMERA_CNR3_ENABLE
         cmr_u32 cnr2cnr3_ynr_en;
 #endif
@@ -1585,6 +1596,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_HIST_REPORT,
     CAMERA_EVT_CB_INVALIDATE_BUF,
     CAMERA_EVT_CB_FLUSH_BUF,
+    CAMERA_EVT_CB_EV_ADJUST_SCENE,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -2078,6 +2090,7 @@ typedef enum {
     CAMERA_TOCTRL_GET_4IN1_INFO,
     CAMERA_IOCTRL_SET_CAP_STATE,
     CAMERA_IOCTRL_GET_BV,
+    CAMERA_TOCTRL_GET_SN_STREAM_STATUS,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

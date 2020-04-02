@@ -326,6 +326,16 @@ struct camera_context {
     cmr_handle snp_cb_thr_handle;
     cmr_handle snp_secondary_thr_handle;
     cmr_handle snp_send_raw_image_handle;
+#ifdef CONFIG_FACE_BEAUTY
+    /*video face beauty*/
+    cmr_handle video_cb_thr_handle;
+    struct fb_beauty_param video_face_beauty;
+    bool mvideofb;
+    struct fb_beauty_param prev_face_beauty;
+    bool mflagfb;
+    cmr_u32 start_video_face_beauty;
+#endif
+    cmr_int video_face_beauty_en;
 
     /*for setting*/
     cmr_u32 ref_camera_id;
@@ -396,16 +406,18 @@ struct camera_context {
     cmr_s32 swisp_out_mfd;
 
     cmr_s64 hdr_capture_timestamp;
-    cmr_s64 dre_capture_timestamp;
+    cmr_s64 capture_timestamp;
     cmr_u32 hdr_skip_frame_enable;
     cmr_u32 hdr_skip_frame_cnt;
-    cmr_u32 dre_skip_frame_enable;
-    cmr_u32 dre_skip_frame_cnt;
+    cmr_u32 skip_frame_enable;
+    cmr_u32 skip_frame_cnt;
+    enum camera_snapshot_tpye snapshot_type;
     struct img_rect trim_reset_info;
     cmr_u8 nr_flag;
     cmr_u8 dre_flag;
+    cmr_u8 gtm_flag;
     cmr_u8 predre_flag;
-    cmr_u8 dre_skipframe;
+    cmr_u8 skipframe;
 
     /*for flash skip preview frame*/
     cmr_s64 flash_handle_timestamp;
@@ -420,6 +432,8 @@ struct camera_context {
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
     cmr_uint is_high_res_mode;
+    /*for ynr room ratio*/
+        float zoom_ratio;
 };
 
 struct prev_ai_scene_info {
@@ -442,6 +456,8 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
                          void *cb_of_free);
 
 cmr_int camera_local_deinit(cmr_handle oem_handle);
+
+void camera_interface_deinit();
 
 cmr_int camera_local_fd_start(cmr_handle oem_handle);
 

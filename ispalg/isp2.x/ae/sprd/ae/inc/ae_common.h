@@ -129,6 +129,7 @@ enum alg_flash_type {
 	FLASH_MAIN_RECEIVE,
 	FLASH_MAIN_AFTER,
 	FLASH_MAIN_AFTER_RECEIVE,
+	FLASH_MAIN_CLOSE,
 	FLASH_LED_ON,
 	FLASH_LED_OFF,
 	FLASH_LED_AUTO,
@@ -341,6 +342,7 @@ struct ae_sync_info{			//ae_dynamic_sync struct
 	cmr_s32 dmy_line;
 	cmr_u32 frm_len;
 	cmr_u32 frm_len_def;
+	struct ae_alg_rgb_gain awb_gain;
 	cmr_u64 monoboottime;
 };
 

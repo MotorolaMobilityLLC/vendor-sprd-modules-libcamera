@@ -127,6 +127,7 @@ cmr_int cmr_sensor_get_fps_info(cmr_handle sensor_handle, cmr_u32 camera_id,
                                 SENSOR_MODE_FPS_T_PTR fps_info_ptr);
 cmr_int cmr_sensor_set_bypass_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
                                    cmr_u32 bypass_mode);
+cmr_int cmr_sensor_get_stream_status(cmr_handle sensor_handle, cmr_u32 sensor_id);
 
 #ifdef __cplusplus
 }

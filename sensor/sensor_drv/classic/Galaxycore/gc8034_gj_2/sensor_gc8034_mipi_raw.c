@@ -19,7 +19,7 @@
  *
  */
 
-#define LOG_TAG "gc8034_sharkl2"  
+#define LOG_TAG "gc8034_gj_2_9863a1c10"
 
 #include "sensor_gc8034_mipi_raw.h"
 pthread_mutex_t gc8034_sensor_mutex;

@@ -354,6 +354,7 @@ typedef struct {
     void *vir_addr;
     void *phy_addr;
     camera_buffer_type_t type;
+    void *private_handle;
 } new_mem_t;
 
 typedef struct {
