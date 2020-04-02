@@ -118,15 +118,11 @@ LOCAL_SRC_FILES += src/cmr_uvdenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums312 ud710 ums512 ums7520 ums518 ums518-zebu sp9832e),)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums312 ud710 ums512 ums7520 ums518 ums518-zebu sp9832e sp9863a),)
 LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
-LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2
-LOCAL_SHARED_LIBRARIES += libSprd3dnrAdapter
-else
-LOCAL_SRC_FILES += src/cmr_3dnr.c
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
-LOCAL_SHARED_LIBRARIES += libsprd3dnr
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libmfnr/blacksesame/inc
+LOCAL_SHARED_LIBRARIES += libmfnr libui libEGL libGLESv2
+LOCAL_SHARED_LIBRARIES += libSprdMfnrAdapter
 endif
 endif
 
@@ -144,6 +140,12 @@ LOCAL_SRC_FILES+= src/cmr_dre.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libdre/inc
 LOCAL_SHARED_LIBRARIES += libsprddre
 LOCAL_SHARED_LIBRARIES += libsprddreadapter
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_DRE_PRO_CAPTURE)),true)
+LOCAL_CFLAGS += -DCONFIG_CAMERA_DRE_PRO
+LOCAL_SHARED_LIBRARIES += libsprddrepro
+LOCAL_SHARED_LIBRARIES += libsprddreproadapter
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FILTER_VERSION)),0)

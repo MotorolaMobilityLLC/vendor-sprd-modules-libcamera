@@ -142,6 +142,18 @@ struct ipm_context {
     cmr_u32 four_in_one_inited;
 };
 
+struct ipm_pro_context {
+    cmr_handle ipm_pro_handle;
+    cmr_handle mfnr_handle;
+    cmr_handle cnr_pro_handle;
+    cmr_handle dre_pro_handle;
+    cmr_u32 pro_inited;
+    cmr_u32 frm_num;
+    cmr_u32 mfnr_num;
+    cmr_u32 cnr_pro_inited;
+    cmr_u32 dre_pro_inited;
+};
+
 struct preview_context {
     cmr_handle preview_handle;
     cmr_u32 inited;
@@ -294,6 +306,7 @@ struct camera_context {
     struct snapshot_context snp_cxt;
     struct focus_context focus_cxt;
     struct ipm_context ipm_cxt;
+    struct ipm_pro_context ipm_pro_cxt;
     struct setting_context setting_cxt;
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     struct mm_dvfs_context mm_dvfs_cxt;
@@ -311,6 +324,7 @@ struct camera_context {
     sem_t ai_scene_flag_sm;
     sem_t cnr_flag_sm;
     sem_t dre_flag_sm;
+    sem_t dre_pro_flag_sm;
     sem_t threednr_flag_sm;
     sem_t threednr_proc_sm;
     sem_t filter_sm;
@@ -419,6 +433,7 @@ struct camera_context {
     cmr_u8 gtm_flag;
     cmr_u8 predre_flag;
     cmr_u8 skipframe;
+    bool night_flag;
 
     /*for flash skip preview frame*/
     cmr_s64 flash_handle_timestamp;
@@ -662,7 +677,12 @@ cmr_int camera_local_set_mm_dvfs_policy(cmr_handle oem_handle,
                                         enum DVFS_MM_MODULE module,
                                         enum CamProcessingState camera_state);
 #endif
-
+cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable);
+cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value ,enum camera_snapshot_tpye type);
+cmr_int camera_get_tuning_info(cmr_handle oem_handle,
+                               struct isp_adgain_exp_info *adgain_exp_info_ptr);
+cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
+                                struct common_isp_cmd_param *param_ptr);
 cmr_int cmr_get_reboke_data(cmr_handle oem_handle,
                             struct af_relbokeh_oem_data *golden_distance);
 cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
@@ -679,6 +699,7 @@ cmr_int camera_get_fb_param(cmr_handle oem_handle, struct isp_fb_param_info *par
 cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);
+
 
 #ifdef __cplusplus
 }

@@ -160,7 +160,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     }
 
     cxt = (struct camera_context *)in->private_data;
-    denoise_mode mode = cxt->nr_flag - 1;
+    denoise_mode mode = cxt->nr_flag;
 
     sem_wait(&cnr_handle->sem);
     imgBuffer.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;

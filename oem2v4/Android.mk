@@ -117,13 +117,9 @@ endif
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),sp7731e)
     LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
-    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/blacksesame/inc
-    LOCAL_SHARED_LIBRARIES += libtdnsTest libui libEGL libGLESv2
-    LOCAL_SHARED_LIBRARIES += libSprd3dnrAdapter
-else
-    LOCAL_SRC_FILES += src/cmr_3dnr.c
-    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/lib3dnr/sprd/inc
-    LOCAL_SHARED_LIBRARIES += libsprd3dnr
+    LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libmfnr/blacksesame/inc
+    LOCAL_SHARED_LIBRARIES += libmfnr libui libEGL libGLESv2
+    LOCAL_SHARED_LIBRARIES += libSprdMfnrAdapter
 endif
 endif
 

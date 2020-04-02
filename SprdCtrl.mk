@@ -581,8 +581,10 @@ ifeq ($(strip $(TARGET_BOARD_PLATFORM)),ums512)
 LOCAL_CFLAGS += -DCAMERA_3DNR_GPU_ENABLE
 endif
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),ums512)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312),)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_CNR_CAPTURE)),true)
 LOCAL_CFLAGS += -DCAMERA_CNR3_ENABLE
+endif
 endif
 
 ifeq ($(strip $(TARGET_BOARD_PLATFORM)),ums512)

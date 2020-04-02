@@ -7671,7 +7671,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 #endif
             }
 
-            if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_3DNR_VIDEO) {
+            if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
+#if defined(CONFIG_ISP_2_3) // for sharkle
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_CAP_SW;
+#else
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_SW;
+#endif
+            }
+            if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_3DNR_VIDEO ||
+                   sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_VIDEO) {
 // 3dnr video mode
 #if defined(CONFIG_ISP_2_3) // for sharkle
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW;
@@ -10308,10 +10316,17 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
             }
             HAL_LOGD("3dnr fd=0x%x", zsl_frame.fd);
-            mHalOem->ops->image_sw_algorithm_processing(
-                obj->mCameraHandle, &src_sw_algorithm_buf,
-                &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
-                CAM_IMG_FMT_YUV420_NV21);
+	    if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
+	        mHalOem->ops->image_sw_algorithm_processing(
+                    obj->mCameraHandle, &src_sw_algorithm_buf,
+                    &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT,
+                    CAM_IMG_FMT_YUV420_NV21);
+	    } else {
+                mHalOem->ops->image_sw_algorithm_processing(
+                    obj->mCameraHandle, &src_sw_algorithm_buf,
+                    &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
+                    CAM_IMG_FMT_YUV420_NV21);
+	    }
 
             sw_algorithm_buf_cnt++;
             if (sw_algorithm_buf_cnt >= 5) {

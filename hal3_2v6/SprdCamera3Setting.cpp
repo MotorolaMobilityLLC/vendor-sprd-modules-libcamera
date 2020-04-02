@@ -2497,7 +2497,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
                             "persist.vendor.cam.video.face.beauty.enable"));
-    // 23 fov fusion
+    //23 nightshot pro
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.night",
+                                      "persist.vendor.cam.night.pro.enable"));
+    // 24 fov fusion
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
                            "persist.vendor.cam.fov.fusion.enable"));

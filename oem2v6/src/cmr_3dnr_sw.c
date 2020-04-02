@@ -24,14 +24,14 @@
 #include "cmr_common.h"
 #include "cmr_sensor.h"
 #include "cmr_oem.h"
-#include "threednr_adapt_interface.h"
+#include "mfnr_adapt_interface.h"
 #include <cutils/properties.h>
 #include "isp_mw.h"
 #include "sw_3dnr_param.h"
 #include <string.h>
 
 typedef struct c3dn_io_info {
-    c3dnr_buffer_t image[3];
+    mfnr_buffer_t image[3];
     cmr_u32 width;
     cmr_u32 height;
     cmr_s8 mv_x;
@@ -105,7 +105,7 @@ struct class_3dnr_pre { // 3dnr pre
     // ************************************
     cmr_u32 g_num;
     cmr_uint is_stop;
-    c3dnr_buffer_t *out_image;
+    mfnr_buffer_t *out_image;
     sem_t sem_3dnr;
     void *proc_handle;
 };
@@ -125,7 +125,7 @@ struct class_3dnr {
     struct img_addr dst_addr;
     ipm_callback reg_cb;
     struct ipm_frame_in frame_in;
-    union c3dnr_buffer out_buf;
+    union mfnr_buffer out_buf;
     cmr_uint out_buf_phy;
     cmr_uint out_buf_vir;
     cmr_uint small_buf_phy[CAP_3DNR_NUM];
@@ -375,7 +375,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     struct class_3dnr *threednr_handle = NULL;
     cmr_uint size;
     cmr_int i = 0;
-    c3dnr_param_info_t param;
+    mfnr_param_info_t param;
     struct ipm_context_t *ipm_cxt = (struct ipm_context_t *)ipm_handle;
     cmr_handle oem_handle = NULL;
     struct ipm_init_in *ipm_in = (struct ipm_init_in *)&ipm_cxt->init_in;
@@ -389,7 +389,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     struct threednr_tuning_param *cap_3dnr_param;
     struct common_isp_cmd_param isp_cmd_parm;
     char flag[PROPERTY_VALUE_MAX];
-    c3dnr_cmd_proc_t process_param;
+    mfnr_cmd_proc_t process_param;
 
     CMR_LOGD("E");
     if (!out || !in || !ipm_handle || !class_handle) {
@@ -541,8 +541,26 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
              sensor_id, param_3dnr_index, param.SearchWindow_x,
              param.SearchWindow_y, param.threthold[3][2]);
 
+    if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+          ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
+                                &isp_cmd_parm);
+          if (ret) {
+              CMR_LOGE("failed to get isp param  %ld", ret);
+          } else {
+              param.SearchWindow_x = isp_cmd_parm.threednr_param.searchWindow_x;
+              param.SearchWindow_y = isp_cmd_parm.threednr_param.searchWindow_y;
+              param.recur_str = isp_cmd_parm.threednr_param.recur_str;
+              param.match_ratio_sad = isp_cmd_parm.threednr_param.match_ratio_sad;
+              param.match_ratio_pro = isp_cmd_parm.threednr_param.match_ratio_pro;
+              param.feat_thr = isp_cmd_parm.threednr_param.feat_thr;
+              param.luma_ratio_high = isp_cmd_parm.threednr_param.luma_ratio_high;
+              param.luma_ratio_low = isp_cmd_parm.threednr_param.luma_ratio_low;
+              param.zone_size = isp_cmd_parm.threednr_param.zone_size;
+              memcpy(param.reserverd, isp_cmd_parm.threednr_param.reserverd,(16 * sizeof(int)));
+          }
+    }
     param.productInfo = PLATFORM_ID;
-    ret = sprd_3dnr_adpt_init((void **)&(threednr_handle->proc_handle),  &param, (void *)cap_3dnr_param);
+    ret = sprd_mfnr_adpt_init((void **)&(threednr_handle->proc_handle),  &param, (void *)cap_3dnr_param);
     if (ret != 0 || !threednr_handle->proc_handle) {
         CMR_LOGE("Fail to call threednr_init, ret = %d",ret);
     } else {
@@ -557,7 +575,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
 
         memcpy(process_param.proc_param.setpara_param.thr, isp_cmd_parm.threednr_param.threshold, (4*sizeof(int)));
         memcpy(process_param.proc_param.setpara_param.slp, isp_cmd_parm.threednr_param.slope, (4 * sizeof(int)));
-        ret = sprd_3dnr_adpt_ctrl((void *)(threednr_handle->proc_handle), SPRD_3DNR_PROC_SET_PARAMS_CMD, (void *)&process_param);
+        ret = sprd_mfnr_adpt_ctrl((void *)(threednr_handle->proc_handle), SPRD_MFNR_PROC_SET_PARAMS_CMD, (void *)&process_param);
         if(ret != 0){
             CMR_LOGE("failed to set 3dnr init params. ret = %d",ret);
         }
@@ -594,7 +612,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
         CMR_LOGE("3dnr failed to destroy 3dnr thread");
     }
 
-    ret = sprd_3dnr_adpt_deinit((void **)&(threednr_handle->proc_handle));
+    ret = sprd_mfnr_adpt_deinit((void **)&(threednr_handle->proc_handle));
     if (ret != 0) {
         CMR_LOGE("3dnr failed to threednr_deinit, ret = %d", ret);
     }
@@ -742,23 +760,35 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct class_3dnr *threednr_handle =
         (struct class_3dnr *)info->class_handle;
-    c3dnr_buffer_t small_image,big_buf,small_buf;
-    c3dnr_cap_gpu_buffer_t orig_image;
+    mfnr_buffer_t small_image,big_image, big_buf,small_buf;
+    mfnr_cap_gpu_buffer_t orig_image;
     cmr_u32 cur_frm = info->cur_frame_num;
     cmr_handle oem_handle;
     char filename[128];
     struct camera_context *cam_cxt = NULL;
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
-    c3dnr_cmd_proc_t process_param;
+    mfnr_cmd_proc_t process_param;
+    sprd_camalg_device_type run_type;
+
+    ret = sprd_mfnr_get_devicetype(&run_type);
     // call 3dnr function
     CMR_LOGD("Call the threednr_function() yaddr 0x%x cur_frm: %d",
              in->src_frame.addr_vir.addr_y, cur_frm);
-    orig_image.gpuHandle = out->private_data;
-    orig_image.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
-    orig_image.bufferU =
-        orig_image.bufferY + threednr_handle->width * threednr_handle->height;
-    orig_image.bufferV = orig_image.bufferU;
+
+    if(run_type != SPRD_CAMALG_RUN_TYPE_VDSP) {
+        orig_image.gpuHandle = out->private_data;
+        orig_image.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
+        orig_image.bufferU =
+            orig_image.bufferY + threednr_handle->width * threednr_handle->height;
+        orig_image.bufferV = orig_image.bufferU;
+    }else {
+        big_image.cpu_buffer.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
+        big_image.cpu_buffer.bufferU = big_image.cpu_buffer.bufferY +
+            threednr_handle->width * threednr_handle->height;
+        big_image.cpu_buffer.bufferV = big_image.cpu_buffer.bufferU;
+        big_image.cpu_buffer.fd = (int32_t)in->src_frame.fd;
+    }
     CMR_LOGI("cam_cxt->snp_cxt.sprd_3dnr_type=%d",cam_cxt->snp_cxt.sprd_3dnr_type);
 
     if(cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW )
@@ -794,10 +824,16 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     }
     CMR_LOGD("big_buf.gpu_buffer.handle %p", big_buf.gpu_buffer.handle);
 
-    process_param.proc_param.cap_new_param.small_image = &small_image;
-    process_param.proc_param.cap_new_param.orig_image = &orig_image;
-    process_param.callWay = 1;
-    ret = sprd_3dnr_adpt_ctrl(threednr_handle->proc_handle, SPRD_3DNR_PROC_CAPTURE_CMD, (void *)&process_param);
+    if(run_type != SPRD_CAMALG_RUN_TYPE_VDSP) {
+        process_param.proc_param.cap_new_param.small_image = &small_image;
+        process_param.proc_param.cap_new_param.orig_image = &orig_image;
+        process_param.callWay = 1;
+    }else {
+        process_param.proc_param.cap_param.small_image = &small_image;
+        process_param.proc_param.cap_param.orig_image = &big_image;
+        process_param.callWay = 0;
+    }
+    ret = sprd_mfnr_adpt_ctrl(threednr_handle->proc_handle, SPRD_MFNR_PROC_CAPTURE_CMD, (void *)&process_param);
     if (ret != 0) {
         CMR_LOGE("Fail to call the threednr_function, ret =%d",ret);
     }
@@ -1056,13 +1092,13 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
     cmr_handle oem_handle;
     cmr_u32 sensor_id = 0;
     cmr_u32 threednr_enable = 0;
-    union c3dnr_buffer big_buf, small_buf, video_buf;
+    union mfnr_buffer big_buf, small_buf, video_buf;
     struct img_frm *src, dst;
     cmr_u32 cur_frm_idx;
     char filename[128];
     char tmp_name[64];
-    struct c3dnr_pre_inparam preview_param;
-    c3dnr_cmd_proc_t process_param;
+    struct mfnr_pre_inparam preview_param;
+    mfnr_cmd_proc_t process_param;
 
     if (!class_handle || !in || !out) {
         CMR_LOGE("in parm error");
@@ -1175,7 +1211,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 
             if ((small_buf.cpu_buffer.bufferY != NULL) &&
                 (big_buf.cpu_buffer.bufferY != NULL)){
-                ret = sprd_3dnr_adpt_ctrl(threednr_prev_handle->proc_handle,SPRD_3DNR_PROC_PREVIEW_CMD,(void *)&process_param);
+                ret = sprd_mfnr_adpt_ctrl(threednr_prev_handle->proc_handle,SPRD_MFNR_PROC_PREVIEW_CMD,(void *)&process_param);		
             }
             else {
                 CMR_LOGE(
@@ -1224,7 +1260,7 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
             if ((small_buf.cpu_buffer.bufferY != NULL) &&
                 (big_buf.cpu_buffer.bufferY != NULL)){
                 process_param.proc_param.pre_param.out_image = NULL;
-                ret = sprd_3dnr_adpt_ctrl(threednr_prev_handle->proc_handle,SPRD_3DNR_PROC_PREVIEW_CMD,(void *)&process_param);
+                ret = sprd_mfnr_adpt_ctrl(threednr_prev_handle->proc_handle,SPRD_MFNR_PROC_PREVIEW_CMD,(void *)&process_param);
             }
             if (!strcmp(value, "1")) {
                 sprintf(tmp_name, "%ldx%ld_preview_result_index%d.yuv",
@@ -1315,7 +1351,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     struct class_3dnr_pre *threednr_prev_handle = NULL;
     cmr_uint size;
     cmr_int i = 0;
-    struct c3dnr_param_info param;
+    struct mfnr_param_info param;
     cmr_handle oem_handle = NULL;
     struct camera_context *cam_cxt = NULL;
     struct preview_context *prev_cxt = NULL;
@@ -1428,7 +1464,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     param.total_frame_num = PRE_3DNR_NUM;
     // need release
     threednr_prev_handle->out_image =
-        (union c3dnr_buffer *)malloc(sizeof(union c3dnr_buffer));
+        (union mfnr_buffer *)malloc(sizeof(union mfnr_buffer));
     threednr_prev_handle->out_image->cpu_buffer.bufferY =
         (uint8_t *)threednr_prev_handle->pre_buf_vir[0];
     threednr_prev_handle->out_image->cpu_buffer.bufferU =
@@ -1473,7 +1509,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
              param.SearchWindow_y, param.threthold[3][2]);
 
     param.productInfo = PLATFORM_ID;
-    ret = sprd_3dnr_adpt_init((void **)&(threednr_prev_handle->proc_handle), &param, (void *)prev_3dnr_param);
+    ret = sprd_mfnr_adpt_init((void **)&(threednr_prev_handle->proc_handle), &param, (void *)prev_3dnr_param);
     if (ret != 0) {
         CMR_LOGE("Fail to call preview threednr_init");
     } else {
@@ -1556,7 +1592,7 @@ cmr_int threednr_close_prev(cmr_handle class_handle) {
     }
 
     CMR_LOGI("OK to threednr_cancel for preview");
-    ret = sprd_3dnr_adpt_deinit((void **)&(threednr_prev_handle->proc_handle));
+    ret = sprd_mfnr_adpt_deinit((void **)&(threednr_prev_handle->proc_handle));
     if (ret != 0) {
         CMR_LOGE("3dnr preview failed to threednr_deinit");
     }
@@ -1822,8 +1858,8 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
     cmr_handle oem_handle;
     cmr_u32 sensor_id = 0;
     cmr_u32 dnr_enable = 0;
-    union c3dnr_buffer small_image;
-    c3dnr_cap_gpu_buffer_t orig_image;
+    union mfnr_buffer small_image;
+    mfnr_cap_gpu_buffer_t orig_image;
     cmr_u32 cur_num = threednr_handle->g_num;
 
     if (!out) {
