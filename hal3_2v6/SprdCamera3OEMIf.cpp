@@ -3776,6 +3776,10 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     Mutex::Autolock l(&mPreviewCbLock);
     FACE_Tag faceInfo;
     FACE_Tag orifaceInfo;
+#ifdef CONFIG_CAMERA_EIS
+    EIS_CROP_Tag eiscrop_Info;
+    SPRD_DEF_Tag *sprddefInfo;
+#endif
 
     ssize_t offset = frame->buf_id;
     // camera_frame_metadata_t metadata;
@@ -3787,6 +3791,12 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     int32_t ey = 0;
     struct img_rect rect = {0, 0, 0, 0};
     mSetting->getFACETag(&faceInfo);
+#ifdef CONFIG_CAMERA_EIS
+    int32_t delta_w = 0;
+    int32_t delta_h = 0;
+    mSetting->getEISCROPTag(&eiscrop_Info);
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+#endif
     memset(&faceInfo, 0, sizeof(FACE_Tag));
     memset(&orifaceInfo, 0, sizeof(FACE_Tag));
     HAL_LOGV("receive face_num %d.mid=%d", frame->face_num, mCameraId);
@@ -3811,10 +3821,26 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
                      frame->face_info[k].srx, frame->face_info[k].sry,
                      frame->face_info[k].ex, frame->face_info[k].ey,
                      frame->face_info[k].elx, frame->face_info[k].ely);
+#ifdef CONFIG_CAMERA_EIS
+            if(sprddefInfo->sprd_eis_enabled) {
+               delta_w = ((ex - sx)*frame->width)/(eiscrop_Info.crop[2] - eiscrop_Info.crop[0]);
+               delta_h = ((ey - sy)*frame->height)/(eiscrop_Info.crop[3] - eiscrop_Info.crop[1]);
+               faceInfo.face[k].rect[0] = ((sx - eiscrop_Info.crop[0])*frame->width)/(eiscrop_Info.crop[2] - eiscrop_Info.crop[0]);
+               faceInfo.face[k].rect[1] = ((sy - eiscrop_Info.crop[1])*frame->height)/(eiscrop_Info.crop[3] - eiscrop_Info.crop[1]);
+               faceInfo.face[k].rect[2] = faceInfo.face[k].rect[0] + delta_w;
+               faceInfo.face[k].rect[3] = faceInfo.face[k].rect[1] + delta_h;
+            }else {
+               faceInfo.face[k].rect[0] = sx;
+               faceInfo.face[k].rect[1] = sy;
+               faceInfo.face[k].rect[2] = ex;
+               faceInfo.face[k].rect[3] = ey;
+            }
+#else
             faceInfo.face[k].rect[0] = sx;
             faceInfo.face[k].rect[1] = sy;
             faceInfo.face[k].rect[2] = ex;
             faceInfo.face[k].rect[3] = ey;
+#endif
             faceInfo.angle[k] = frame->face_info[k].angle;
             faceInfo.pose[k] = frame->face_info[k].pose;
             memcpy(&orifaceInfo.face[k], &faceInfo.face[k],
