@@ -686,6 +686,54 @@ LOCAL JPEG_RET_E Jpeg_WriteExifSpecInfo(JPEG_WRITE_STREAM_CONTEXT_T *context_ptr
         entries++;
     }
 
+    if (PNULL != date_time_ptr && date_time_ptr->valid.DateTimeOriginal)
+    {
+        ifd_info.tag = IFD_OFFSETTIME;
+        ifd_info.type = IFD_ASCII;
+        //add an NULL char
+        ifd_info.count = 10;
+        ifd_info.value_offset.long_value = ifd_value_offset - ifh_offset;
+        ifd_info.value_ptr = (void *)date_time_ptr->OffsetTime;
+        if (!Jpeg_WriteByteIFD(context_ptr, &ifd_info, &ifd_offset, &ifd_value_offset))
+        {
+            return JPEG_FAILED;
+        }
+
+        entries++;
+    }
+
+    if (PNULL != date_time_ptr && date_time_ptr->valid.DateTimeOriginal)
+    {
+        ifd_info.tag = IFD_OFFSETTIMEORIGINAL;
+        ifd_info.type = IFD_ASCII;
+        //add an NULL char
+        ifd_info.count = 10;
+        ifd_info.value_offset.long_value = ifd_value_offset - ifh_offset;
+        ifd_info.value_ptr = (void *)date_time_ptr->OffsetTimeOriginal;
+        if (!Jpeg_WriteByteIFD(context_ptr, &ifd_info, &ifd_offset, &ifd_value_offset))
+        {
+            return JPEG_FAILED;
+        }
+
+        entries++;
+    }
+
+    if (PNULL != date_time_ptr && date_time_ptr->valid.DateTimeOriginal)
+    {
+        ifd_info.tag = IFD_OFFSETTIMEDIGITILIZED;
+        ifd_info.type = IFD_ASCII;
+        //add an NULL char
+        ifd_info.count = 10;
+        ifd_info.value_offset.long_value = ifd_value_offset - ifh_offset;
+        ifd_info.value_ptr = (void *)date_time_ptr->OffsetTimeDigitized;
+        if (!Jpeg_WriteByteIFD(context_ptr, &ifd_info, &ifd_offset, &ifd_value_offset))
+        {
+            return JPEG_FAILED;
+        }
+
+        entries++;
+    }
+
     if (PNULL != date_time_ptr && date_time_ptr->valid.DateTimeDigitized)
     {
         ifd_info.tag = IFD_DATETIMEDIGITILIZED;

@@ -1571,9 +1571,14 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
     struct setting_flash_param *flash_param = &hal_param->flash_param;
 
     char datetime_buf[20] = {0};
+    char zone_buf[10] = {0};
     time_t timep;
     struct tm *p;
     char *datetime;
+    int second1 ;
+    int second2;
+    int hour;
+    int minute;
     uint32_t focal_length_numerator;
     uint32_t focal_length_denominator;
     uint32_t rotation_angle;
@@ -1657,6 +1662,31 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
     datetime = datetime_buf;
 
     CMR_LOGD("datetime %s", datetime);
+
+    /*calculate zone info begin*/
+    second1 = timep % (24 * 60 * 60);
+    second2 = p->tm_hour * 3600 + p->tm_min * 60 + p->tm_sec;
+    hour = (second2 - second1)/3600;
+    minute =((second2 - second1)%3600)/60;
+
+    if( hour >= 0 )
+        sprintf(zone_buf, "+%02d:%02d", hour,minute);
+    else
+        sprintf(zone_buf, "%03d:%02d", hour,minute);
+
+    zone_buf[6] = '\0';
+
+    strcpy(
+        (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTimeOriginal,
+        (char *)zone_buf);
+    strcpy(
+        (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTimeDigitized,
+        (char *)zone_buf);
+    strcpy(
+        (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTime,
+        (char *)zone_buf);
+    CMR_LOGD("zone_buf=%s",zone_buf);
+    /*calculate zone info end*/
 
     /*update gps info*/
     setting_update_gps_info(cpt, parm);
