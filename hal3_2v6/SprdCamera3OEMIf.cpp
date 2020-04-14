@@ -6718,6 +6718,7 @@ int SprdCamera3OEMIf::CameraConvertCropRegion(uint32_t sensorWidth,
 }
 
 int SprdCamera3OEMIf::setJpegOrientation(int jpegOrientation) {
+    int sensorOrientation;
 
     SprdCamera3Setting::s_setting[mCameraId].jpgInfo.orientation =
         jpegOrientation;
@@ -6726,6 +6727,10 @@ int SprdCamera3OEMIf::setJpegOrientation(int jpegOrientation) {
              jpegOrientation);
     HAL_LOGD("jpegOrientation = %d", jpegOrientation);
 
+    sensorOrientation = SprdCamera3Setting::s_setting[mCameraId].sensorInfo.orientation;
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SENSOR_ORIENTATION,
+             sensorOrientation);
+    HAL_LOGD("sensorOrientation = %d", sensorOrientation);
     return NO_ERROR;
 }
 

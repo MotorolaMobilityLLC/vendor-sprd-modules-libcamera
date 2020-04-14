@@ -3676,6 +3676,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_device_orientation);
     cmr_add_cmd_fun_to_table(SETTING_GET_CNRMODE, setting_get_cnrmode);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_CNR, setting_set_cnrmode);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_SENSOR_ORIENTATION,
+                             setting_get_sensor_orientation);
     setting_parms_inited = 1;
     return 0;
 }

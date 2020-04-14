@@ -4597,11 +4597,11 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
 	    struct setting_cmd_parameter setting_param;
             struct setting_context *setting_cxt = &cxt->setting_cxt;
 
-            /*get rotation*/
+            /*get orientation*/
             cmr_bzero(&setting_param, sizeof(setting_param));
             setting_param.camera_id = cxt->camera_id;
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
-                            SETTING_GET_ENCODE_ROTATION, &setting_param);
+                            CAMERA_PARAM_GET_SENSOR_ORIENTATION, &setting_param);
             if (ret) {
                  CMR_LOGE("failed to get enc rotation %ld", ret);
             }
