@@ -436,6 +436,8 @@ enum common_isp_cmd_type {
     COM_ISP_SET_SNAPSHOT_FINISHED,
     COM_ISP_SET_EXIF_DEBUG_INFO,
     COM_ISP_GET_EXIF_DEBUG_INFO,
+    COM_ISP_GET_CUR_SENS,
+    COM_ISP_GET_CUR_COL_TEM,
     COM_ISP_GET_CUR_ADGAIN_EXP,
     COM_ISP_SET_FLASH_MODE,
     COM_ISP_GET_YIMG_INFO,
@@ -487,6 +489,8 @@ enum common_isp_cmd_type {
 #ifdef CAMERA_CNR3_ENABLE
     COM_ISP_GET_CNR3_PARAM,
 #endif
+    COM_ISP_GET_FB_PREV_PARAM,
+    COM_ISP_GET_FB_CAP_PARAM,
     COM_ISP_TYPE_MAX
 };
 
@@ -1133,6 +1137,8 @@ struct isp_ev_control {
 struct common_isp_cmd_param {
     cmr_uint camera_id;
     union {
+        cmr_u32 isp_cur_iso;
+        cmr_u32 isp_cur_ct;
         cmr_u32 cmd_value;
         void *cmd_ptr;
         cmr_u32 padding;
@@ -1180,6 +1186,7 @@ struct common_isp_cmd_param {
         struct af_relbokeh_oem_data relbokeh_info;
         struct auto_tracking_info af_ot_info;
         struct img_rect ae_target_region;
+        struct isp_fb_param_info fb_param;
     };
 };
 
@@ -2090,8 +2097,11 @@ typedef enum {
     CAMERA_TOCTRL_SET_HIGH_RES_MODE,
     CAMERA_TOCTRL_GET_4IN1_INFO,
     CAMERA_IOCTRL_SET_CAP_STATE,
+    CAMERA_IOCTRL_GET_FB_PARAM,
     CAMERA_IOCTRL_GET_BV,
     CAMERA_TOCTRL_GET_SN_STREAM_STATUS,
+    CAMERA_IOCTRL_GET_CT,
+    CAMERA_IOCTRL_GET_ISO,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

@@ -4178,10 +4178,15 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     cmr_s32 callbuf_fd = 0;
 
 #ifdef CONFIG_FACE_BEAUTY
-    int sx, sy, ex, ey, angle, pose;
+    cmr_u32 bv;
+    cmr_u32 ct;
+    cmr_u32 iso;
     struct face_beauty_levels beautyLevels;
-    beautyLevels.blemishLevel =
-        (unsigned char)sprddefInfo.perfect_skin_level[0];
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
+
+    beautyLevels.blemishLevel = (unsigned char)sprddefInfo.perfect_skin_level[0];
     beautyLevels.smoothLevel = (unsigned char)sprddefInfo.perfect_skin_level[1];
     beautyLevels.skinColor = (unsigned char)sprddefInfo.perfect_skin_level[2];
     beautyLevels.skinLevel = (unsigned char)sprddefInfo.perfect_skin_level[3];
@@ -4190,6 +4195,11 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     beautyLevels.lipLevel = (unsigned char)sprddefInfo.perfect_skin_level[6];
     beautyLevels.slimLevel = (unsigned char)sprddefInfo.perfect_skin_level[7];
     beautyLevels.largeLevel = (unsigned char)sprddefInfo.perfect_skin_level[8];
+    beautyLevels.cameraWork = (int)mCameraId;
+    beautyLevels.cameraBV = (int)bv;
+    beautyLevels.cameraCT = (int)ct;
+    beautyLevels.cameraISO = (int)iso;
+    CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
 #endif
 
     mSetting->getSENSORTag(&sensorInfo);
@@ -4208,6 +4218,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
              rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
+    struct fb_beauty_face_t beauty_face;
     if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
         faceDectect(1);
         if (isPreviewing() && frame->type == PREVIEW_FRAME) {
@@ -4219,17 +4230,28 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     for (int i = 0; i < faceInfo.face_num; i++) {
                         CameraConvertCoordinateFromFramework(
                             faceInfo.face[i].rect);
-                        sx = faceInfo.face[i].rect[0];
-                        sy = faceInfo.face[i].rect[1];
-                        ex = faceInfo.face[i].rect[2];
-                        ey = faceInfo.face[i].rect[3];
-                        angle = faceInfo.angle[i];
-                        pose = faceInfo.pose[i];
-                        construct_fb_face(&face_beauty, i, sx, sy, ex, ey,
-                                          angle, pose);
+                        beauty_face.startX= faceInfo.face[i].rect[0];
+                        beauty_face.startY= faceInfo.face[i].rect[1];
+                        beauty_face.endX= faceInfo.face[i].rect[2];
+                        beauty_face.endY= faceInfo.face[i].rect[3];
+                        beauty_face.angle = faceInfo.angle[i];
+                        beauty_face.pose = faceInfo.pose[i];
+                        beauty_face.idx = i;
+                        construct_fb_face(&face_beauty, beauty_face);
                     }
                 }
-                init_fb_handle(&face_beauty, 1, 2);
+
+                fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+                chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+                chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+                chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+                chipinfo = SHARKL5PRO;
+#endif
+                init_fb_handle(&face_beauty, 1, 2, chipinfo);
                 construct_fb_image(
                     &face_beauty, frame->width, frame->height,
                     (unsigned char *)(frame->y_vir_addr),

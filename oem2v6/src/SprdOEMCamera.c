@@ -1212,6 +1212,19 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_GET_BV: {
         ret = camera_get_bv_info(handle,(cmr_u32 *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_GET_FB_PARAM: {
+        ret = camera_get_fb_param(handle, (struct isp_fb_param_info *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_GET_CT: {
+        ret = camera_get_ct_info(handle,(cmr_u32 *)param);
+        break;
+    }
+    case CAMERA_IOCTRL_GET_ISO: {
+        ret = camera_get_iso_info(handle,(cmr_u32 *)param);
+        break;
     }
     default:
         break;

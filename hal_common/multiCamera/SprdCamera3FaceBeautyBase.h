@@ -27,7 +27,6 @@ public:
     virtual void doFaceMakeup2(struct camera_frame_type *frame,
                                faceBeautyLevels levels, FACE_Tag *face_info,
                                int work_mode) {
-        int sx, sy, ex, ey, angle, pose;
         int ret = 0;
         int facecount = face_info->face_num;
         beautyLevels.blemishLevel = levels.blemishLevel;
@@ -39,7 +38,7 @@ public:
         beautyLevels.lipLevel = levels.lipLevel;
         beautyLevels.slimLevel = levels.slimLevel;
         beautyLevels.largeLevel = levels.largeLevel;
-        fb_beauty_face_t beauty_face;
+        fbBeautyFacetT beauty_face;
         fb_beauty_image_t beauty_image;
         if (face_info->face_num > 0) {
             for (int i = 0; i < face_info->face_num; i++) {
@@ -55,7 +54,19 @@ public:
             }
         }
         face_beauty_set_devicetype(&face_beauty ,SPRD_CAMALG_RUN_TYPE_CPU);
-        face_beauty_init(&face_beauty, 0, 2);
+
+        fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+        chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+        chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+        chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+        chipinfo = SHARKL5PRO;
+#endif
+
+        face_beauty_init(&face_beauty, 0, 2, chipinfo);
         beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
         beauty_image.inputImage.addr[0] = (void*)frame->y_vir_addr;
         beauty_image.inputImage.addr[1] = (void*)frame->uv_vir_addr;
@@ -97,7 +108,7 @@ public:
     virtual void doFaceMakeup2(struct camera_frame_type *frame,
                                face_beauty_levels levels, FACE_Tag *face_info,
                                int work_mode) {
-        int sx, sy, ex, ey, angle, pose;
+        struct fb_beauty_face_t faceinfo;
 
         beautyLevels.blemishLevel = levels.blemishLevel;
         beautyLevels.smoothLevel = levels.smoothLevel;
@@ -110,16 +121,28 @@ public:
         beautyLevels.largeLevel = levels.largeLevel;
         if (face_info->face_num > 0) {
             for (int i = 0; i < face_info->face_num; i++) {
-                sx = face_info->face[i].rect[0];
-                sy = face_info->face[i].rect[1];
-                ex = face_info->face[i].rect[2];
-                ey = face_info->face[i].rect[3];
-                angle = face_info->angle[i];
-                pose = face_info->pose[i];
-                construct_fb_face(&face_beauty, i, sx, sy, ex, ey, angle, pose);
+                faceinfo.startX= face_info->face[i].rect[0];
+                faceinfo.startY= face_info->face[i].rect[1];
+                faceinfo.endX= face_info->face[i].rect[2];
+                faceinfo.endY= face_info->face[i].rect[3];
+                faceinfo.angle = face_info->angle[i];
+                faceinfo.pose = face_info->pose[i];
+                faceinfo.idx = i;
+                construct_fb_face(&face_beauty, faceinfo);
             }
         }
-        init_fb_handle(&face_beauty, work_mode, 2);
+
+        fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+        chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+        chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+        chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+        chipinfo = SHARKL5PRO;
+#endif
+        init_fb_handle(&face_beauty, work_mode, 2, chipinfo);
         construct_fb_image(
             &face_beauty, frame->width, frame->height,
             (unsigned char *)(frame->y_vir_addr),

@@ -4024,15 +4024,19 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
              rec_stream, callback_stream);
 
 #ifdef CONFIG_FACE_BEAUTY
-    int sx, sy, ex, ey, angle, pose;
     struct faceBeautyLevels beautyLevels;
+    struct facebeauty_param_info fb_param_map_prev;
     if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
         isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)) {
         FACE_Tag faceInfo;
-        fb_beauty_face_t beauty_face;
+        fbBeautyFacetT beauty_face;
         fb_beauty_image_t beauty_image;
-	cmr_u32 bv;
-	ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
+        cmr_u32 bv;
+        cmr_u32 ct;
+        cmr_u32 iso;
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
             for (int i = 0; i < faceInfo.face_num; i++) {
@@ -4066,20 +4070,62 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             (unsigned char)sprddefInfo->perfect_skin_level[7];
         beautyLevels.largeLevel =
             (unsigned char)sprddefInfo->perfect_skin_level[8];
-	beautyLevels.cameraBV = (int)bv;
-	CMR_LOGD("cameraBV %d",bv);
+        beautyLevels.cameraBV = (int)bv;
+        beautyLevels.cameraWork = (int)mCameraId;
+        beautyLevels.cameraCT = (int)ct;
+        beautyLevels.cameraISO = (int)iso;
+        CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
+            bv, mCameraId, ct, iso);
+
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
+                       &fb_param_map_prev);
+        if (ret == ISP_SUCCESS) {
+            for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
+                HAL_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
+                    "lipColorType %d skinColorType %d", i,
+                    fb_param_map_prev.cur.fb_param[i].blemishSizeThrCoeff,
+                    fb_param_map_prev.cur.fb_param[i].removeBlemishFlag,
+                    fb_param_map_prev.cur.fb_param[i].lipColorType,
+                    fb_param_map_prev.cur.fb_param[i].skinColorType);
+                HAL_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                    "skinSmoothRadiusCoeffDefaultLevel %d",
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+                for(int j = 0; j < 11; j++){
+                HAL_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
+                    "skinSmoothRadiusCoeff %d", i, j,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+                }
+            }
+            ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
+                                   &fb_param_map_prev);
+        }
+
         if (!mflagfb) {
 #ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
 #else
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
 #endif
-            face_beauty_init(&face_beauty, 1, 2);
+
+            fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+            chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+            chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+            chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+            chipinfo = SHARKL5PRO;
+#endif
+            face_beauty_init(&face_beauty, 1, 2, chipinfo);
             if (face_beauty.hSprdFB != NULL) {
                 mflagfb = true;
             }
         }
-
         invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
                         frame->width * frame->height * 3 / 2);
         beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
@@ -4103,10 +4149,14 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                        frame->width * frame->height * 3 / 2);
     }  else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME){
         FACE_Tag faceInfo;
-        fb_beauty_face_t beauty_face;
+        fbBeautyFacetT beauty_face;
         fb_beauty_image_t beauty_image;
-	cmr_u32 bv;
-	ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
+        cmr_u32 bv;
+        cmr_u32 ct;
+        cmr_u32 iso;
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
         mSetting->getFACETag(&faceInfo);
         if (faceInfo.face_num > 0) {
             for (int i = 0; i < faceInfo.face_num; i++) {
@@ -4133,19 +4183,61 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.lipLevel = 0;
         beautyLevels.slimLevel = 2;
         beautyLevels.largeLevel = 2;
-	beautyLevels.cameraBV = (int)bv;
+        beautyLevels.cameraBV = (int)bv;
+        beautyLevels.cameraWork = (int)mCameraId;
+        beautyLevels.cameraCT = (int)ct;
+        beautyLevels.cameraISO = (int)iso;
+        CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
+
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
+                       &fb_param_map_prev);
+        if (ret == ISP_SUCCESS) {
+            for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
+                HAL_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
+                    "lipColorType %d skinColorType %d", i,
+                    fb_param_map_prev.cur.fb_param[i].blemishSizeThrCoeff,
+                    fb_param_map_prev.cur.fb_param[i].removeBlemishFlag,
+                    fb_param_map_prev.cur.fb_param[i].lipColorType,
+                    fb_param_map_prev.cur.fb_param[i].skinColorType);
+                HAL_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                    "skinSmoothRadiusCoeffDefaultLevel %d",
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+                for(int j = 0; j < 11; j++){
+                HAL_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
+                    "skinSmoothRadiusCoeff %d", i, j,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+                }
+            }
+            ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
+                                   &fb_param_map_prev);
+        }
+
         if (!mflagfb) {
 #ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
 #else
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
 #endif
-            face_beauty_init(&face_beauty, 1, 2);
+
+            fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+            chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+            chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+            chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_7)
+            chipinfo = SHARKL5PRO;
+#endif
+            face_beauty_init(&face_beauty, 1, 2, chipinfo);
             if (face_beauty.hSprdFB != NULL) {
                 mflagfb = true;
             }
         }
-
         invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
                         frame->width * frame->height * 3 / 2);
         beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
