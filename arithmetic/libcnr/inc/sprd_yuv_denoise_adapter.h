@@ -12,7 +12,7 @@ extern "C" {
 #define JNIEXPORT  __attribute__ ((visibility ("default")))
 
 	typedef enum {
-		SPRD_YNR_PROCESS_CMD = 0,
+		SPRD_YNR_PROCESS_CMD = 1,
 		SPRD_CNR2_PROCESS_CMD,
 		SPRD_YNR_CNR2_PROCESS_CMD,
 		SPRD_CNR3_PROCESS_CMD,

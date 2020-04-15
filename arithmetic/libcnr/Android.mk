@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),ums512)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312),)
 LOCAL_PATH := $(call my-dir)
 include $(LOCAL_PATH)/cnr3/Android.mk
 else
@@ -37,8 +37,11 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdcnr.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdcnr.so
+
 LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
-ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_CHECK_ELF_FILES := false
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
@@ -58,7 +61,7 @@ LOCAL_C_INCLUDES := \
          $(TOP)/system/core/include/cutils/ \
          $(TOP)/system/core/include/
 
-ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

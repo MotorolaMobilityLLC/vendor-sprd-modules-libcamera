@@ -9,7 +9,7 @@ extern "C" {
 #define LAYER_NUM 5
 	typedef enum
 	{
-		MODE_YNR,
+		MODE_YNR = 1,
 		MODE_CNR2,
 		MODE_YNR_CNR2,
 		MODE_CNR3,
