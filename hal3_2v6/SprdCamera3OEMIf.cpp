@@ -4101,11 +4101,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         if (!mflagfb) {
-#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
-            face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
-#else
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
-#endif
 
             fb_chipinfo chipinfo;
 #if defined(CONFIG_ISP_2_3)
