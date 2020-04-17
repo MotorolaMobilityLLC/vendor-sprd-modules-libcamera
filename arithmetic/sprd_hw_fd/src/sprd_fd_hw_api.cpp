@@ -445,7 +445,7 @@ int  hwfd_start_fd(HWFD_DETECTOR_HANDLE hDT,void* i_request,void* o_response)
 			FreeFDMem(cmd_queue);
 			return HWFD_ERROR;
 		}
-asfdsaf
+
 		/*Get face num*/
 		cmd_para.reg_param = SPRD_FD_REG_PARAM_FACE_NUM;
 		cmd_para.reg_val = 0;

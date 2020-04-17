@@ -1121,7 +1121,7 @@ struct yuv_sn_af_param {
     struct img_rect zone[FOCUS_ZONE_CNT_MAX];
 };
 
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 struct isp_ev_control {
     cmr_u32 cmd_value;
     enum camera_snapshot_tpye snapshot_type ;
@@ -1151,7 +1151,7 @@ struct common_isp_cmd_param {
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
         cmr_u32 cnr2_ynr_en;
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
         struct isp_ev_control ev_setting;
 #endif
 #ifdef CAMERA_CNR3_ENABLE
