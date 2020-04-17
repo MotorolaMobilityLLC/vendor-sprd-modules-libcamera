@@ -954,6 +954,8 @@ int SprdCamera3OEMIf::takePicture() {
     ATRACE_CALL();
 
     int ret = 0;
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
     HAL_LOGD("E");
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -1019,6 +1021,13 @@ int SprdCamera3OEMIf::takePicture() {
     }
 
     setSnapshotParams();
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if ((!strcmp(value, "raw")) || (sprddefInfo->high_resolution_mode == 1)) {
+        mCNRMode = 1;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
+        HAL_LOGD("mCNRMode=%d", mCNRMode);
+    }
 
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (CMR_CAMERA_SUCCESS !=

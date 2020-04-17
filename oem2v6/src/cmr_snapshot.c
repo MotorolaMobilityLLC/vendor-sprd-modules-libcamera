@@ -4383,7 +4383,9 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     struct frm_info *chn_data_ptr = (struct frm_info *)data;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct snp_channel_param *chn_param_ptr = &cxt->chn_param;
+    struct camera_context *cam_cxt = cxt->oem_handle;
     cmr_u32 index;
+    cmr_uint cnr_type;
     char value[PROPERTY_VALUE_MAX];
 
     if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
@@ -4409,6 +4411,11 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
         ret = CMR_CAMERA_NORNAL_EXIT;
         goto exit;
     }
+
+    cnr_type = cxt->ops.get_cnr_realtime_flag(cxt->oem_handle);
+    cxt->req_param.nr_flag = cnr_type;
+    cam_cxt->nr_flag = cnr_type;
+    CMR_LOGV("cnr_type %d", cnr_type);
 
     snp_set_status(snp_handle, POST_PROCESSING);
     if ((cxt->req_param.filter_type || cxt->req_param.nr_flag

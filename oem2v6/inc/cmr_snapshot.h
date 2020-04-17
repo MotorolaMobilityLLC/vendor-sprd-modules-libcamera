@@ -159,6 +159,7 @@ struct snapshot_md_ops {
     int (*dump_image_with_3a_info)(cmr_handle oem_handle, uint32_t img_fmt,
                                    uint32_t width, uint32_t height,
                                    uint32_t dump_size, struct img_addr *addr);
+    cmr_u32 (*get_cnr_realtime_flag)(cmr_handle oem_handle);
 };
 
 struct snapshot_init_param {

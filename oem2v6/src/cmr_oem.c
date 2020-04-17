@@ -4595,6 +4595,7 @@ cmr_int camera_snapshot_init(cmr_handle oem_handle) {
     init_param.ops.stop_codec = camera_stop_codec;
     init_param.ops.ipm_process = camera_ipm_process;
     init_param.ops.dump_image_with_3a_info = dump_image_with_3a_info;
+    init_param.ops.get_cnr_realtime_flag = camera_get_cnr_realtime_flag;
     init_param.private_data = NULL;
     ret = cmr_snapshot_init(&init_param, &snp_cxt->snapshot_handle);
     if (ret) {
@@ -11723,7 +11724,6 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
     cmr_int i;
-    cmr_uint cnr_typ;
     struct common_isp_cmd_param isp_cmd_parm;
     cmr_u32 gtm_on = 0;
 
@@ -11859,9 +11859,6 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         cxt->ipm_cxt.filter_inited = 1;
     }
 
-    cnr_typ = camera_get_cnr_realtime_flag(oem_handle);
-    out_ptr->nr_flag = cnr_typ;
-    cxt->nr_flag = cnr_typ;
     out_ptr->ee_flag = camera_get_ee_flag(oem_handle);
     cxt->ee_flag = out_ptr->ee_flag;
 
