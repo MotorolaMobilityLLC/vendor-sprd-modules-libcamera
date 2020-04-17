@@ -1273,6 +1273,7 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable) {
 status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     status_t ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
+    int sensorOrientation;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -1288,6 +1289,11 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     if (sprddefInfo->slowmotion > 1)
         return ret;
+
+    sensorOrientation = SprdCamera3Setting::s_setting[mCameraId].sensorInfo.orientation;
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SENSOR_ORIENTATION,
+             sensorOrientation);
+    HAL_LOGV("sensorOrientation = %d", sensorOrientation);
 
     if (enable) {
         mHalOem->ops->camera_fd_enable(mCameraHandle, 1);

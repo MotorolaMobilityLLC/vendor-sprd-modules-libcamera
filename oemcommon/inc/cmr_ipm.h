@@ -152,6 +152,7 @@ struct ipm_common {
 struct fd_auxiliary_data {
     cmr_u32 camera_id;
     cmr_u32 orientation;
+    cmr_u32 sensorOrientation;
     cmr_u32 bright_value;
     cmr_u32 ae_stable;
     cmr_u32 backlight_pro;

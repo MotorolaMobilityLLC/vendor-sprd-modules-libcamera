@@ -15433,9 +15433,24 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     private_data.camera_id = camera_id;
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                      CAMERA_PARAM_GET_SENSOR_ORIENTATION, &setting_param);
+    private_data.sensorOrientation = (cmr_u32)setting_param.cmd_type_value;
+    CMR_LOGD("sensorOrientation = %d", private_data.sensorOrientation);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
     private_data.orientation = (cmr_u32)setting_param.cmd_type_value;
+    if((private_data.sensorOrientation == 90) && (camera_id == 1)) {
+        if(private_data.orientation == 0)
+            private_data.orientation = 180;
+        else if(private_data.orientation == 90)
+            private_data.orientation = 270;
+        else if(private_data.orientation == 180)
+            private_data.orientation = 0;
+        else if(private_data.orientation == 270)
+            private_data.orientation = 90;
+    }
+    CMR_LOGD("orientation = %d", private_data.orientation);
     private_data.bright_value = prev_cxt->ae_stab[AE_CB_BV_INDEX];
     private_data.ae_stable = prev_cxt->ae_stab[AE_CB_STABLE_INDEX];
     private_data.backlight_pro = prev_cxt->ae_stab[AE_CB_BLS_INDEX];
