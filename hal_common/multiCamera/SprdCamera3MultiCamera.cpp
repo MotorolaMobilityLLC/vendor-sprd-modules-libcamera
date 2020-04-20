@@ -1,5 +1,7 @@
 #define LOG_TAG "MultiCameraWrapper"
 
+#include <dlfcn.h>
+#include <log/log.h>
 #include <SprdCamera3Factory.h>
 #include "SprdCamera3MultiCamera.h"
 
@@ -28,7 +30,7 @@ int SprdCamera3MultiCamera::camera_device_open(const struct hw_module_t *module,
         return inst.mFuncOpen(module, id, hw_device);
     } else {
         ALOGW("Fallback to id \"0\"");
-        return SprdCamera3Factory::mModuleMethods.open(module, "0", hw_device);
+        return SprdCamera3Factory::open(module, "0", hw_device);
     }
 }
 

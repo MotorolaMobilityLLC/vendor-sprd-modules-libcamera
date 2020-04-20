@@ -132,6 +132,9 @@ LOCAL_HEADER_LIBRARIES += jni_headers
 
 LOCAL_SHARED_LIBRARIES := liblog libxml2
 
+LOCAL_HEADER_LIBRARIES += libjsoncpp_headers
+LOCAL_SHARED_LIBRARIES += libjsoncpp
+
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_SHARED_LIBRARIES += libsensorndkbridge
 endif
@@ -262,6 +265,20 @@ endif
 ifeq ($(strip $(TARGET_BOARD_MULTICAMERA_SUPPORT)),true)
 LOCAL_SRC_FILES+= \
     hal_common/multiCamera/SprdCamera3MultiCamera.cpp
+endif
+
+LOCAL_C_INCLUDES += \
+    $(LOCAL_PATH)/hal_common/logical_camera \
+    $(LOCAL_PATH)/hal_common/logical_camera/device
+LOCAL_SRC_FILES += \
+    hal_common/logical_camera/Configurator.cpp \
+    hal_common/logical_camera/Camera3DeviceBase.cpp \
+    hal_common/logical_camera/CameraDevice_3_2.cpp \
+    hal_common/logical_camera/CameraDevice_3_5.cpp \
+    hal_common/logical_camera/device/SingleCameraWrapper.cpp
+ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
+LOCAL_SRC_FILES += \
+    hal_common/logical_camera/device/BokehCamera.cpp
 endif
 
 LOCAL_SRC_FILES += \

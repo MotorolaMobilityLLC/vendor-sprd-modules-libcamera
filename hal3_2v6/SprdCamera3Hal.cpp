@@ -28,30 +28,34 @@
 
 #include "SprdCamera3Factory.h"
 
-static int hal_open_legacy(const struct hw_module_t *module, const char *id,
-                           uint32_t halVersion, struct hw_device_t **device) {
-    return -EINVAL;
-}
-
-static hw_module_t camera_common = {
-    .tag = HARDWARE_MODULE_TAG,
-    .module_api_version = CAMERA_MODULE_API_VERSION_2_4,
-    .hal_api_version = HARDWARE_HAL_API_VERSION,
-    .id = CAMERA_HARDWARE_MODULE_ID,
-    .name = "Sprd Camera HAL3",
-    .author = "Spreadtrum Corporation",
-    .methods = &sprdcamera::SprdCamera3Factory::mModuleMethods,
-    .dso = NULL,
-    .reserved = {0},
+static struct hw_module_methods_t methods = {
+    .open = sprdcamera::SprdCamera3Factory::open,
 };
 
 camera_module_t HAL_MODULE_INFO_SYM = {
-    .common = camera_common,
+    .common =
+        {
+            .tag = HARDWARE_MODULE_TAG,
+            .module_api_version = CAMERA_MODULE_API_VERSION_2_5,
+            .hal_api_version = HARDWARE_HAL_API_VERSION,
+            .id = CAMERA_HARDWARE_MODULE_ID,
+            .name = "Sprd Camera HAL3",
+            .author = "Spreadtrum Corporation",
+            .methods = &methods,
+            .dso = NULL,
+        },
     .get_number_of_cameras =
         sprdcamera::SprdCamera3Factory::get_number_of_cameras,
     .get_camera_info = sprdcamera::SprdCamera3Factory::get_camera_info,
     .set_callbacks = sprdcamera::SprdCamera3Factory::set_callbacks,
     .get_vendor_tag_ops = sprdcamera::SprdCamera3Factory::get_vendor_tag_ops,
-    .open_legacy = hal_open_legacy,
+    .open_legacy = sprdcamera::SprdCamera3Factory::open_legacy,
     .set_torch_mode = sprdcamera::SprdCamera3Factory::set_torch_mode,
+    .init = sprdcamera::SprdCamera3Factory::init,
+    .get_physical_camera_info =
+        sprdcamera::SprdCamera3Factory::get_physical_camera_info,
+    .is_stream_combination_supported =
+        sprdcamera::SprdCamera3Factory::is_stream_combination_supported,
+    .notify_device_state_change =
+        sprdcamera::SprdCamera3Factory::notify_device_state_change,
 };
