@@ -106,7 +106,7 @@ static cmr_int sprd_filter_doeffect(struct class_filter *filter_handle,
         param.flip_on = pic_data->flip_on;
         param.is_front = pic_data->is_front;
         param.filter_version = filter_version;
-        CMR_LOGV("orientation=%d,flip_on=%d,FilterType=%d,filter_version=%d,is_front=%d",
+        CMR_LOGD("sensor_orientation=%d,flip_on=%d,FilterType=%d,filter_version=%d,is_front=%d",
                  param.orientation, param.flip_on,(IFFilterType)type,param.filter_version,param.is_front);
         ret = ImageFilterRun(filter_handle->handle, &inputData, &outputData,
                              (IFFilterType)type, &param, NULL);

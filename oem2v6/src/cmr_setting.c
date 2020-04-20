@@ -1316,6 +1316,7 @@ setting_get_sensor_orientation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->sensor_orientation;
+    CMR_LOGV("get sensor_orientation %d",parm->cmd_type_value);
     return ret;
 }
 
@@ -1326,6 +1327,7 @@ setting_set_sensor_orientation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     hal_param->sensor_orientation = parm->cmd_type_value;
+    CMR_LOGV("set sensor_orientation %d",hal_param->sensor_orientation);
     return ret;
 }
 
@@ -4092,6 +4094,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_ctrl_ae_adjust);
     cmr_add_cmd_fun_to_table(SETTING_CLEAR_AE_NOTIFY,
                              setting_clear_ae_adjust);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_SENSOR_ORIENTATION,
+                             setting_get_sensor_orientation);
     setting_parms_inited = 1;
     return 0;
 }

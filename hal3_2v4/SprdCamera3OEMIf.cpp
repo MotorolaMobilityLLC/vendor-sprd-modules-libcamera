@@ -6444,6 +6444,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_JPEG_ORIENTATION: {
         JPEG_Tag jpegInfo;
+	int sensorOrientation;
         mSetting->getJPEGTag(&jpegInfo);
         mJpegRotaSet = true;
 #ifdef CONFIG_CAMERA_ROTATION_CAPTURE
@@ -6457,6 +6458,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ENCODE_ROTATION,
                  jpegInfo.orientation);
         HAL_LOGD("JPEG orientation = %d", jpegInfo.orientation);
+
+        sensorOrientation = SprdCamera3Setting::s_setting[mCameraId].sensorInfo.orientation;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SENSOR_ORIENTATION,
+                   sensorOrientation);
+        HAL_LOGD("sensorOrientation = %d", sensorOrientation);
     } break;
 
     case ANDROID_CONTROL_AE_MODE:
