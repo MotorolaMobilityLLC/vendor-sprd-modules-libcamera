@@ -138,13 +138,14 @@ FBAPI(int) FB_FaceBeauty_YUV420SP(FB_BEAUTY_HANDLE hFB,
                                   const FB_FACEINFO *faceInfo,
                                   int faceCount);
 
-
 typedef enum fb_chipinfo{
     PIKE2 = 0,
     SHARKLE,
     SHARKL3,
     SHARKL5PRO
 } fb_chipinfo;
+
+
 #ifdef  __cplusplus
 }
 #endif
