@@ -73,8 +73,6 @@ int sprd_yuv_denoise_adpt_deinit(void *handle)
 int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *param)
 {
 	int ret = 0;
-	int max_radius = 0;
-	int i = 0;
 	if(handle==NULL||param==NULL)
 	{
 		DENOISE_LOGE("params is NULL\n");
@@ -90,6 +88,9 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
 	int height=denoise_param->height;
 	denoise_mode cmd_in = (denoise_mode)cmd;
 
+#ifdef CAMERA_RADIUS_ENABLE
+	int max_radius = 0;
+	int i = 0;
 	if(paramInfo.ynrParam != NULL)
 	{
 		paramInfo.ynrParam->ynr_imgCenterX = denoise_param->width / 2;
@@ -121,7 +122,7 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
 			paramInfo.cnr3Param->paramLayer[i].imgCenterY,max_radius,paramInfo.cnr3Param->paramLayer[i].baseRadius);
 		}
 	}
-
+#endif
 	if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU) 
 	{
 		denoise_buffer imgBuffer;
