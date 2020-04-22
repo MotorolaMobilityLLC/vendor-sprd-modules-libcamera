@@ -3678,6 +3678,16 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
 		cxt->last_exp_param.is_ev_setting = cxt->is_ev_setting;
 
+		if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C) && (cxt->sensor_role != CAM_SENSOR_MASTER)) {
+			struct ae_sync_lib_outout_data ae_sync_lib_output = {0};
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_SYNC_OUTPUT, NULL, &ae_sync_lib_output);
+			cxt->last_exp_param.exp_line = ae_sync_lib_output.exp_line;
+			cxt->last_exp_param.exp_time = ae_sync_lib_output.exp_time;
+			cxt->last_exp_param.dummy = ae_sync_lib_output.dmy_line;
+			cxt->last_exp_param.gain = ae_sync_lib_output.ae_gain;
+			ISP_LOGD("GET_SYNC_SLAVE_SYNC_OUTPUT:exp_line:%d, dummy:%d, gain:%d", cxt->last_exp_param.exp_line, cxt->last_exp_param.dummy, cxt->last_exp_param.gain);
+		}
+
 		if(0 != cxt->sync_cur_result.touch_status){
 			cxt->last_exp_param.exp_line = cxt->backup_touch.exp_line;
 			cxt->last_exp_param.exp_time = cxt->backup_touch.exp_time;
