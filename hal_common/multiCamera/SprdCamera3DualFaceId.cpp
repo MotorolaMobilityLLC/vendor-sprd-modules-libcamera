@@ -1023,6 +1023,13 @@ int SprdCamera3DualFaceId::processCaptureRequest(
             metaSettingsAux.update(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE, &sprdFaceAttributesEnabled,
                                    1);
         }
+	if (metaSettingsMain.exists(ANDROID_SPRD_SMILE_CAPTURE_ENABLE)) {
+            uint8_t sprdSmileCaptureEnabled = 0;
+            metaSettingsMain.update(ANDROID_SPRD_SMILE_CAPTURE_ENABLE, &sprdSmileCaptureEnabled,
+                                    1);
+            metaSettingsAux.update(ANDROID_SPRD_SMILE_CAPTURE_ENABLE, &sprdSmileCaptureEnabled,
+                                   1);
+        }
     }
     // get phy addr from faceidservice
     if (metaSettingsMain.exists(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)) {

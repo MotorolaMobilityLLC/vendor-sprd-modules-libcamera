@@ -15780,6 +15780,13 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                             &setting_param);
     ipm_in_param.face_attribute_on = setting_param.cmd_type_value;
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_SPRD_SMILE_CAPTURE_ENABLED,
+                            &setting_param);
+    ipm_in_param.smile_capture_on = setting_param.cmd_type_value;
+
     /* collect face detect private data */
     private_data.camera_id = camera_id;
     cmr_bzero(&setting_param, sizeof(setting_param));

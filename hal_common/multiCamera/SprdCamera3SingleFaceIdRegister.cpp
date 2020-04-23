@@ -950,6 +950,9 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::processCaptureRequest(
         // disable face attribute
         cmr_u8 sprdFaceAttributesEnabled = 0;
         metaSettings.update(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE, &sprdFaceAttributesEnabled, 1);
+
+	cmr_u8 sprdSmileCaptureEnabled = 0;
+	metaSettings.update(ANDROID_SPRD_SMILE_CAPTURE_ENABLE, &sprdSmileCaptureEnabled, 1);
     }
 
     // get phy addr from faceidservice

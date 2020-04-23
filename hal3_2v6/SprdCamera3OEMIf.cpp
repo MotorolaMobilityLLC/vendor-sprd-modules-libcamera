@@ -7347,6 +7347,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
                  (uint32_t)sprddefInfo->gender_race_age_enable);
     } break;
+    case ANDROID_SPRD_SMILE_CAPTURE_ENABLE: {
+        SPRD_DEF_Tag *sprddefInfo;
+        sprddefInfo = mSetting->getSPRDDEFTagPTR();
+        HAL_LOGD(" sprddefInfo->is_smile_capture: %d",
+                 sprddefInfo->smile_capture_enable);
+
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SMILE_CAPTURE_ENABLE,
+                 (uint32_t)sprddefInfo->smile_capture_enable);
+    } break;
 
     case ANDROID_SPRD_TOUCH_INFO: {
         SPRD_DEF_Tag *sprddefInfo;

@@ -43,6 +43,7 @@ struct ipm_frame_in {
     cmr_uint orientation;
     cmr_uint flip_on;
     cmr_uint is_front;
+    cmr_uint smile_capture_on;
 };
 
 struct ipm_frame_out {

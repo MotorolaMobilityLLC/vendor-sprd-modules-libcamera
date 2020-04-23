@@ -5087,7 +5087,16 @@ int SprdCamera3Setting::updateWorkParameters(
             pushAndroidParaTag(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE);
         }
     }
-
+    if (frame_settings.exists(ANDROID_SPRD_SMILE_CAPTURE_ENABLE)) {
+        if (s_setting[mCameraId].sprddefInfo.smile_capture_enable !=
+            frame_settings.find(ANDROID_SPRD_SMILE_CAPTURE_ENABLE)
+                .data.u8[0]) {
+            s_setting[mCameraId].sprddefInfo.smile_capture_enable =
+                frame_settings.find(ANDROID_SPRD_SMILE_CAPTURE_ENABLE)
+                    .data.u8[0];
+            pushAndroidParaTag(ANDROID_SPRD_SMILE_CAPTURE_ENABLE);
+        }
+    }
     if (frame_settings.exists(ANDROID_CONTROL_MODE)) {
         s_setting[mCameraId].controlInfo.mode =
             frame_settings.find(ANDROID_CONTROL_MODE).data.u8[0];

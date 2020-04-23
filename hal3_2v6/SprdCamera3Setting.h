@@ -418,6 +418,7 @@ typedef struct {
     uint8_t return_previewframe_after_nozsl_cap;
     int32_t stl3d_id;
     uint8_t sprd_super_macro;
+    uint8_t smile_capture_enable;
 } SPRD_DEF_Tag;
 
 typedef struct {

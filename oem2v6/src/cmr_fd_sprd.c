@@ -89,6 +89,7 @@ struct class_fd {
     FAR_HANDLE hFAR_v2;
     struct img_frm fd_small;
     cmr_uint is_face_attribute;
+    cmr_uint is_smile_capture;
     cmr_uint face_attributes_off;
     struct frm_info trans_frm;
     cmr_uint fd_x;
@@ -420,6 +421,7 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     fd_handle->frame_in.touch_x = in->touch_x;
     fd_handle->frame_in.touch_y = in->touch_y;
     fd_handle->frame_in.face_attribute_on = in->face_attribute_on;
+    fd_handle->frame_in.smile_capture_on = in->smile_capture_on;
 
     // reduce the frame rate, because the current face detection (tracking mode)
     // is too fast!!
@@ -895,26 +897,19 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
                                 }
                             }
                             CMR_LOGV(
-                                "face num %d fattr_v2_vec %d %d %d %d %d %d %d "
-                                "%d %d %d %d %d",
+                                "face num %d fattr_v2_vec smile%d eyeClose%d infant%d genderPre%d genderCnn%d race%d"
+                                "raceScore0=%d raceScore1=%d raceScore2=%d raceScore3=%d faceIdx=%d",
                                 fattr_v2_vec.faceNum,
                                 new_attr_array.face_v2[fd_idx].attr_v2.smile,
                                 new_attr_array.face_v2[fd_idx].attr_v2.eyeClose,
                                 new_attr_array.face_v2[fd_idx].attr_v2.infant,
-                                new_attr_array.face_v2[fd_idx]
-                                    .attr_v2.genderPre,
-                                new_attr_array.face_v2[fd_idx].attr_v2.agePre,
-                                new_attr_array.face_v2[fd_idx]
-                                    .attr_v2.genderCnn,
+                                new_attr_array.face_v2[fd_idx].attr_v2.genderPre,
+                                new_attr_array.face_v2[fd_idx].attr_v2.genderCnn,
                                 new_attr_array.face_v2[fd_idx].attr_v2.race,
-                                new_attr_array.face_v2[fd_idx]
-                                    .attr_v2.raceScore[0],
-                                new_attr_array.face_v2[fd_idx]
-                                    .attr_v2.raceScore[1],
-                                new_attr_array.face_v2[fd_idx]
-                                    .attr_v2.raceScore[2],
-                                new_attr_array.face_v2[fd_idx]
-                                    .attr_v2.raceScore[3],
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[0],
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[1],
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[2],
+                                new_attr_array.face_v2[fd_idx].attr_v2.raceScore[3],
                                 new_attr_array.face_v2[fd_idx].attr_v2.faceIdx);
                         }
                     }
@@ -1212,6 +1207,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
                                 face_ptr->gender_age_race = gender_age;
                                 break;
                             }
+                            CMR_LOGV("gender_age_race %d",face_ptr->gender_age_race);
                         }
                         break;
                     }
@@ -1482,14 +1478,12 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             break;
         }
 
-        if ((class_handle->frame_in.face_attribute_on == 1) &&
+        if ((class_handle->frame_in.face_attribute_on == 1 ||
+            class_handle->frame_in.smile_capture_on == 1) &&
             (class_handle->is_face_attribute_init == 0)) {
             if (sprd_fd_api == SPRD_API_MODE_V2) {
                 FAR_OPTION_V2 opt_v2;
                 FAR_InitOption(&opt_v2);
-                opt_v2.raceOn = 1;
-                opt_v2.ageOn = 1;
-                opt_v2.smileOn = 1;
                 opt_v2.trackInterval = 8;
                 int threadNum = FD_THREAD_NUM;
                 opt_v2.workMode = FAR_WORKMODE_MOVIE;
@@ -1506,12 +1500,39 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             }
         }
 
+        bool updateFlag = (class_handle->is_face_attribute != class_handle->frame_in.face_attribute_on)
+            ||  (class_handle->is_smile_capture != class_handle->frame_in.smile_capture_on);
+        if(updateFlag && sprd_fd_api == SPRD_API_MODE_V2) {
+              CMR_LOGD("FarRecognizerHandle_V2: Update race %d, smile %d",
+                class_handle->frame_in.face_attribute_on, class_handle->frame_in.smile_capture_on);
+              FAR_OPTION_V2 opt_v2;
+              FAR_InitOption(&opt_v2);
+              if(class_handle->frame_in.smile_capture_on == 1)
+                    opt_v2.smileOn = 1;
+              else opt_v2.smileOn = 0;
+              if(class_handle->frame_in.face_attribute_on == 1) {
+                    opt_v2.genderCnnOn = 1;
+                    opt_v2.raceOn = 1;
+              } else {
+                    opt_v2.genderCnnOn = 0;
+                    opt_v2.raceOn = 0;
+              }
+              FAR_updateOption(class_handle->hFAR_v2, &opt_v2);
+              FarResetFaceArray(class_handle->hFAR_v2);
+              class_handle->is_face_attribute = class_handle->frame_in.face_attribute_on;
+              class_handle->is_smile_capture = class_handle->frame_in.smile_capture_on;
+        }
+
         /* recognize face attribute (smile detection) */
-        fd_recognize_face_attribute(class_handle->hDT, class_handle->hFaceAlign,
+        if(class_handle->frame_in.face_attribute_on == 1 ||
+            class_handle->frame_in.smile_capture_on == 1 ||
+            sprd_fd_api == SPRD_API_MODE)
+             fd_recognize_face_attribute(class_handle->hDT, class_handle->hFaceAlign,
                                     class_handle->hFAR, class_handle->hFAR_v2,
                                     class_handle);
 
-        if ((class_handle->frame_in.face_attribute_on == 0) &&
+        if ((class_handle->frame_in.face_attribute_on == 0 &&
+            class_handle->frame_in.smile_capture_on == 0) &&
             (class_handle->is_face_attribute_init == 1)) {
             if (sprd_fd_api == SPRD_API_MODE_V2) {
                 FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
@@ -1627,14 +1648,12 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             fd_set_busy(class_handle, 0);
             break;
         }
-        if ((class_handle->frame_in.face_attribute_on == 1) &&
+        if ((class_handle->frame_in.face_attribute_on == 1 ||
+            class_handle->frame_in.smile_capture_on == 1) &&
             (class_handle->is_face_attribute_init == 0)) {
             if (sprd_fd_api == SPRD_API_MODE_V2) {
                 FAR_OPTION_V2 opt_v2;
                 FAR_InitOption(&opt_v2);
-                opt_v2.raceOn = 1;
-                opt_v2.ageOn = 1;
-                opt_v2.smileOn = 1;
                 opt_v2.trackInterval = 8;
                 int threadNum = FD_THREAD_NUM;
                 opt_v2.workMode = FAR_WORKMODE_MOVIE;
@@ -1650,11 +1669,39 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
                 }
             }
         }
+
+        bool updateFlag = (class_handle->is_face_attribute != class_handle->frame_in.face_attribute_on)
+            ||  (class_handle->is_smile_capture != class_handle->frame_in.smile_capture_on);
+        if(updateFlag && sprd_fd_api == SPRD_API_MODE_V2) {
+              CMR_LOGD("FarRecognizerHandle_V2: Update race %d, smile %d",
+                class_handle->frame_in.face_attribute_on, class_handle->frame_in.smile_capture_on);
+              FAR_OPTION_V2 opt_v2;
+              FAR_InitOption(&opt_v2);
+              if(class_handle->frame_in.smile_capture_on == 1)
+                    opt_v2.smileOn = 1;
+              else opt_v2.smileOn = 0;
+              if(class_handle->frame_in.face_attribute_on == 1) {
+                    opt_v2.genderCnnOn = 1;
+                    opt_v2.raceOn = 1;
+              } else {
+                    opt_v2.genderCnnOn = 0;
+                    opt_v2.raceOn = 0;
+              }
+              FAR_updateOption(class_handle->hFAR_v2, &opt_v2);
+              FarResetFaceArray(class_handle->hFAR_v2);
+              class_handle->is_face_attribute = class_handle->frame_in.face_attribute_on;
+              class_handle->is_smile_capture = class_handle->frame_in.smile_capture_on;
+        }
+
         /* recognize face attribute (smile detection) */
-        fd_recognize_face_attribute(class_handle->hDT, class_handle->hFaceAlign,
+        if(class_handle->frame_in.face_attribute_on == 1 ||
+            class_handle->frame_in.smile_capture_on == 1 ||
+            sprd_fd_api == SPRD_API_MODE)
+            fd_recognize_face_attribute(class_handle->hDT, class_handle->hFaceAlign,
                                     class_handle->hFAR, class_handle->hFAR_v2,
                                     class_handle);
-        if ((class_handle->frame_in.face_attribute_on == 0) &&
+        if ((class_handle->frame_in.face_attribute_on == 0 &&
+            class_handle->frame_in.smile_capture_on == 0) &&
             (class_handle->is_face_attribute_init == 1)) {
             if (sprd_fd_api == SPRD_API_MODE_V2) {
                 FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));

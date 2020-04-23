@@ -211,6 +211,7 @@ struct setting_hal_param {
     cmr_uint device_orientation;
     cmr_uint ot_status;
     cmr_uint face_attributes_enabled;
+    cmr_uint smile_capture_enabled;
     cmr_uint sprd_logo_watermark;
     cmr_uint sprd_time_watermark;
     struct img_size originalPictureSize;
@@ -2012,6 +2013,28 @@ setting_get_face_attributes_enable(struct setting_component *cpt,
 
     parm->cmd_type_value = hal_param->face_attributes_enabled;
     CMR_LOGD("face_attributes_enabled=%ld", hal_param->face_attributes_enabled);
+    return ret;
+}
+
+static cmr_int
+setting_get_smile_capture(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->smile_capture_enabled;
+    CMR_LOGD("get smile_capture_enabled=%ld", hal_param->smile_capture_enabled);
+    return ret;
+}
+
+static cmr_int
+setting_set_smile_capture(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->smile_capture_enabled = parm->cmd_type_value;
+    CMR_LOGD("set smile_capture_enabled=%ld", hal_param->smile_capture_enabled);
     return ret;
 }
 
@@ -4263,6 +4286,10 @@ static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
                              set_super_macrophoto,
     [CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM] =
                              get_super_macrophoto,
+    [CAMERA_PARAM_SMILE_CAPTURE_ENABLE] =
+                             setting_set_smile_capture,
+    [SETTING_GET_SPRD_SMILE_CAPTURE_ENABLED] =
+                             setting_get_smile_capture,
 };
 
 setting_ioctl_fun_ptr cmr_get_cmd_fun_from_table(cmr_uint cmd) {

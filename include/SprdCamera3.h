@@ -252,6 +252,7 @@ static tags_info_t
         {"sprdportraitbackgroundreplacementtype", TYPE_INT32},
         {"sprdAvailableAutoFdr", TYPE_BYTE},
         {"supermacrophoto", TYPE_BYTE},
+        {"sprdSimleShutterEnable", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
