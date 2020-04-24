@@ -4330,14 +4330,9 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 if (frame_out.frame_data) {
                     channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000,
                                                     CAMERA_STREAM_TYPE_VIDEO);
-                }else{
-                    HAL_LOGD("eis fail video callback frame vir address=0x%lx,frame_num %d",
-                            frame->y_vir_addr,frame_num);
-                    channel->channelCbRoutine(frame_num, frame->timestamp*1000000000,
-                                                    CAMERA_STREAM_TYPE_VIDEO);
                 }
                 HAL_LOGV("video callback frame vir address=0x%lx,frame_num=%d",
-						    frame_out.frame_data, frame_out.frame_num);
+                          frame_out.frame_data, frame_out.frame_num);
                 goto bypass_rec;
             }
 #endif
