@@ -132,7 +132,9 @@ typedef enum {
 	PIKE2IVST = 0x32,
 	PIKE2VST = 0x33,
 	PIKE2CNR2 = 0x3B,
+	PIKE2MFNR = 0x45,
 	PIKE2YNRS = 0x4F,
+	PIKE2CNR30 = 0x52,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -772,6 +774,11 @@ unsigned int get_nr_block_id_by_sub_type(cmr_u16 sub_type)
 		return ISP_BLK_CNR2_T;
 	case PIKE2YNRS:
 		return ISP_BLK_YNRS_T;
+	case PIKE2MFNR:
+		return ISP_BLK_MFNR_T;
+	case PIKE2CNR30:
+		return ISP_BLK_CNR3_T;
+
 	default:
 		return ISP_BLK_TYPE_MAX;
 	}
@@ -780,7 +787,7 @@ unsigned int get_nr_block_id_by_sub_type(cmr_u16 sub_type)
 
 unsigned long get_nr_tool_flag_index(unsigned long nr_blk_id)
 {
-#define NR_TOOL_FLAG_MAX 19
+#define NR_TOOL_FLAG_MAX ISP_BLK_TYPE_MAX
 	switch (nr_blk_id) {
 	case BDN:
 		return 2;
@@ -822,6 +829,11 @@ unsigned long get_nr_tool_flag_index(unsigned long nr_blk_id)
 		return 17;
 	case PIKE2YNRS:
 		return 18;
+	case PIKE2MFNR:
+		return ISP_BLK_MFNR_T;
+	case PIKE2CNR30:
+		return ISP_BLK_CNR3_T;
+
 	default:
 		return NR_TOOL_FLAG_MAX;
 	}

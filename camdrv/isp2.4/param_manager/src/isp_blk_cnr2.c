@@ -71,6 +71,10 @@ cmr_s32 _pm_cnr2_init(void *dst_cnr2_param, void *src_cnr2_param, void *param1, 
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
 	rtn = _pm_cnr2_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	if (header_ptr->bypass) {
+		dst_ptr->level_info.level_enable = 0;
+		dst_ptr->level_info.low_ct_thrd = 0;
+	}
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm cnr2 param !");
 		return rtn;
@@ -110,12 +114,17 @@ cmr_s32 _pm_cnr2_set_param(void *cnr2_param, cmr_u32 cmd, void *param_ptr0, void
 
 			level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (level != dst_ptr->cur_level || nr_tool_flag[17] || block_result->mode_flag_changed) {
+			if (level != dst_ptr->cur_level ||nr_tool_flag[ISP_BLK_CNR2_T]
+				|| block_result->mode_flag_changed) {
 				dst_ptr->cur_level = level;
 				header_ptr->is_update = ISP_ONE;
-				nr_tool_flag[17] = 0;
+				nr_tool_flag[ISP_BLK_CNR2_T] = 0;
 
 				rtn = _pm_cnr2_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
+				if (header_ptr->bypass) {
+					dst_ptr->level_info.level_enable = 0;
+					dst_ptr->level_info.low_ct_thrd = 0;
+				}
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm edge param !");
 					return rtn;
