@@ -573,9 +573,9 @@
 	/*sigma_d*/
 	8.00,
 	/*sigma_u*/
-	10.00,
+	8.00,
 	/*sigma_v*/
-	10.00,
+	8.00,
 	/*adpt_med_thr*/
 	0x0028,
 	/*median_mode*/

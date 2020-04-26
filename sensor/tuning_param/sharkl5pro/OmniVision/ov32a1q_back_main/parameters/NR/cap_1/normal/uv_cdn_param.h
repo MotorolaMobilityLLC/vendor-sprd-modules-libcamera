@@ -121,9 +121,9 @@
 /*v21_sensor_uv_cdn_level*/
 {
 	/*sigma_u*/
-	10.00,
+	8.00,
 	/*sigma_v*/
-	10.00,
+	8.00,
 	/*median_thru0*/
 	0x1E,
 	/*median_thru1*/
