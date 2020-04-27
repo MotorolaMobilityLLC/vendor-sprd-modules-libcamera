@@ -5872,6 +5872,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     cmr_int sn_mode = 0;
     cmr_uint valid_max_sn_mode = 0;
     struct sensor_mode_fps_tag fps_info;
+    struct camera_context *cam_cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cam_cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
 
     cmr_bzero(&fps_info, sizeof(struct sensor_mode_fps_tag));
 
@@ -6114,8 +6117,18 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         }
     }
 
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                    SETTING_GET_APPMODE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+        goto exit;
+    }
+    CMR_LOGV("app_mode = %d", setting_param.cmd_type_value);
     /*get sensor video_slowmotion work mode*/
-    if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb) {
+    if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb ||
+        setting_param.cmd_type_value == CAMERA_MODE_SLOWMOTION) {
         for (sn_mode = SENSOR_MODE_PREVIEW_ONE; sn_mode < SENSOR_MODE_MAX;
              sn_mode++) {
             ret = handle->ops.get_sensor_fps_info(
