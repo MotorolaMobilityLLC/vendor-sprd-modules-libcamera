@@ -22,6 +22,7 @@ struct class_fb {
     FB_FACEINFO fb_face[10];
     FB_BEAUTY_HANDLE hSprdFB;
 };
+
 typedef struct fb_beauty_face_t {
     int idx;
     int startX;
@@ -35,6 +36,11 @@ typedef struct fb_beauty_face_t {
     unsigned char faceAttriGender;  /* Gender from face attribute detection demo */
     unsigned char faceAttriAge;     /* Age from face attribute detection demo    */
 } fb_beauty_face_t;
+
+/*typedef struct {
+    FB_PORTRAITMASK fb_mask;
+}fb_beauty_mask;*/
+
 struct face_beauty_levels {
     unsigned char
         blemishLevel; /* Flag for removing blemish; 0 --> OFF; 1 --> ON    */
@@ -59,6 +65,8 @@ void construct_fb_face(struct class_fb *faceBeauty, struct fb_beauty_face_t face
 void construct_fb_image(struct class_fb *faceBeauty, int picWidth,
                         int picHeight, unsigned char *addrY,
                         unsigned char *addrU, int format);
+//void construct_fb_mask(struct class_fb *faceBeauty, fb_beauty_mask mFbMask);
+void construct_fb_portraitType(int portraitType);
 void construct_fb_level(struct class_fb *faceBeauty,
                         struct face_beauty_levels beautyLevels);
 void do_face_beauty(struct class_fb *faceBeauty, int faceCount);

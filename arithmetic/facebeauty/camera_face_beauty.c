@@ -29,6 +29,8 @@ int dumpFrameCount = 0;
 char value[PROPERTY_VALUE_MAX];
 int faceLevelMap = 0;
 struct facebeauty_param_t fbParam;
+int lightPortraitType = 0;
+//fb_beauty_mask *fbMask = NULL;
 
 void init_fb_handle(struct class_fb *faceBeauty, int workMode, int threadNum,fb_chipinfo chipinfo) {
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
@@ -126,8 +128,25 @@ void construct_fb_map(facebeauty_param_info_t *facemap){
     ALOGI("construct_fb_map");
     faceLevelMap++;
     fbParam = facemap->cur.fb_param[FB_SKIN_DEFAULT];
-
 }
+
+void construct_fb_portraitType(int portraitType){
+    lightPortraitType = portraitType;
+}
+/*void construct_fb_mask(struct class_fb *faceBeauty, fb_beauty_mask mFbMask) {
+    if (!faceBeauty) {
+        ALOGE("construct_fb_mask faceBeauty is null");
+        return;
+    }
+    fbMask = &mFbMask;
+    char debug_value[PROPERTY_VALUE_MAX];
+    property_get("ro.debuggable", debug_value, "0");
+    if (!strcmp(debug_value, "1")) {
+        ALOGD("construct_fb_mask: width:%d, height:%d", fbMask->fb_mask.width,fbMask->fb_mask.height);
+    }
+fa
+}*/
+
 void construct_fb_level(struct class_fb *faceBeauty,
                         struct face_beauty_levels beautyLevels) {
     if (!faceBeauty) {
@@ -326,7 +345,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
     unsigned int duration;
     if (!faceBeauty) {
         ALOGE("do_face_beauty faceBeauty is null");
-        return;
+        return ;
     }
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm,
                  "1");
@@ -354,10 +373,21 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                           faceBeauty->fb_image.height,
                           faceBeauty->fb_image.yData, "be");
         }
-        retVal =
-            FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
-                                   &(faceBeauty->fb_option),
-                                   faceBeauty->fb_face, faceCount);
+        /*if (lightPortraitType >=5 && faceBeauty->fb_mode == FB_WORKMODE_STILL && faceBeauty->fb_option.slimFaceLevel > 0) {
+            retVal =
+                FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
+                                       &(faceBeauty->fb_option),
+                                       faceBeauty->fb_face, faceCount, &(fbMask->fb_mask));
+        }else {
+            ALOGV("do_face_beauty mask null");
+            retVal =
+                FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
+                                       &(faceBeauty->fb_option),
+                                       faceBeauty->fb_face, faceCount, NULL);
+        }*/
+        FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
+                                &(faceBeauty->fb_option),
+                                faceBeauty->fb_face, faceCount, NULL);
         if (!strcmp(dump_value, "fb")) {
             save_yuv_data(dumpFrameCount, faceBeauty->fb_image.width,
                           faceBeauty->fb_image.height,

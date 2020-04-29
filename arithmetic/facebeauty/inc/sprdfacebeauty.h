@@ -42,6 +42,12 @@
 #define FB_LIPCOLOR_PINK        1     /* Pink color                               */
 #define FB_LIPCOLOR_FUCHSIA     2     /* Fuchsia colr                             */
 
+/* Light portrait type defintions */
+#define FB_LPT_LIGHT_SATGE         5     /* Stage lighting                        */
+#define FB_LPT_LIGHT_CLASSIC       6     /* Classic lighting                      */
+#define FB_LPT_LIGHT_WINDOW        7     /* Window lighting                       */
+#define FB_LPT_LIGHT_WAVEDOT       8     /* Wavedot lighting                      */
+
 /* Face beautify options */
 typedef struct {
     unsigned char skinSmoothLevel;         /* Smooth skin level. Value range [0, 20]            */
@@ -83,6 +89,13 @@ typedef struct {
     unsigned char *uvData;           /* UV data pointer                          */
 } FB_IMAGE_YUV420SP;
 
+/* The portrait background segmentation template */
+typedef struct
+{
+    int width;                      /* Image width                               */
+    int height;                     /* Image height                              */
+    unsigned char *data;            /* Data pointer                              */
+} FB_PORTRAITMASK;
 
 /* The face information structure */
 typedef struct
@@ -136,7 +149,8 @@ FBAPI(int) FB_FaceBeauty_YUV420SP(FB_BEAUTY_HANDLE hFB,
                                   FB_IMAGE_YUV420SP *imageYUV,
                                   const FB_BEAUTY_OPTION *option,
                                   const FB_FACEINFO *faceInfo,
-                                  int faceCount);
+                                  int faceCount,
+                                  FB_PORTRAITMASK *imageMask);
 
 typedef enum fb_chipinfo{
     PIKE2 = 0,

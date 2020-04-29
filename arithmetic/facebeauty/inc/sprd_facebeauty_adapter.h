@@ -20,6 +20,7 @@ typedef enum {
     FB_BEAUTY_CONSTRUCT_FACE_CMD,
     FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
     FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+    FB_BEAUTY_CONSTRUCT_MASK_CMD,
     FB_BEAUTY_PROCESS_CMD,
     FB_BEAUTY_FAST_STOP_CMD,
     FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
@@ -30,7 +31,12 @@ typedef struct {
     const char *pVersion;
 } fb_beauty_version_t;
 
-typedef struct fbBeautyFacetT{
+typedef struct {
+    int faceCount;
+    unsigned char lightPortraitType;
+}fb_beauty_lptparam_t;
+
+typedef struct {
     int idx;
     int startX;
     int startY;
@@ -43,6 +49,10 @@ typedef struct fbBeautyFacetT{
     unsigned char faceAttriGender;  /* Gender from face attribute detection demo */
     unsigned char faceAttriAge;     /* Age from face attribute detection demo    */
 } fbBeautyFacetT;
+
+typedef struct {
+    FB_PORTRAITMASK fb_mask;
+}fb_beauty_mask_t;
 
 typedef struct {
     struct sprd_camalg_image inputImage;
@@ -79,7 +89,7 @@ typedef struct faceBeautyLevels {
 
 JNIEXPORT void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum, fb_chipinfo chipinfo);
 JNIEXPORT void face_beauty_deinit(fb_beauty_param_t *faceBeauty);
-
+/*JNIEXPORT fb_beauty_mask_t *get_fb_mask();*/
 /*
 	fb adapter cmd process interface
 	return value: 0 is ok, other value is failed

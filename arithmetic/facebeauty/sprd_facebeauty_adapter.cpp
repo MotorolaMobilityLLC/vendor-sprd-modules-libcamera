@@ -13,6 +13,9 @@
 int dumpFrameCount = 0;
 int faceLevelMap = 0;
 struct facebeauty_param_t fbParam;
+unsigned char lightPortraitType = 0;
+fb_beauty_mask_t *fbMaskT = NULL;
+
 void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum, fb_chipinfo chipinfo)
 {
     if (!faceBeauty) {
@@ -146,6 +149,19 @@ void construct_fb_map(facebeauty_param_info_t *facemap){
     ALOGI("construct_fb_map facemap");
     faceLevelMap++;
     fbParam = facemap->cur.fb_param[FB_SKIN_DEFAULT];
+}
+
+void construct_fb_mask(fb_beauty_param_t *faceBeauty, fb_beauty_mask_t mFbMaskT) {
+    if (!faceBeauty) {
+        ALOGE("construct_fb_mask faceBeauty is null");
+        return;
+    }
+    fbMaskT = &mFbMaskT;
+    char debug_value[PROPERTY_VALUE_MAX];
+    property_get("ro.debuggable", debug_value, "0");
+    if (!strcmp(debug_value, "1")) {
+        ALOGD("construct_fb_mask: width:%d, height:%d", fbMaskT->fb_mask.width,fbMaskT->fb_mask.height);
+    }
 }
 
 void construct_fb_level(fb_beauty_param_t *faceBeauty,
@@ -289,18 +305,15 @@ void construct_fb_level(fb_beauty_param_t *faceBeauty,
 
     if (!strcmp(isDebug, "1")) {
         faceBeauty->fb_option.debugMode = 1;
-            /*faceBeauty->fb_option.removeBlemishFlag = 1;
-            faceBeauty->fb_option.skinColorType = 1;
-            faceBeauty->fb_option.skinColorLevel = 7;
-            faceBeauty->fb_option.lipColorType = 2;
-            faceBeauty->fb_option.lipColorLevel = 5;
-            faceBeauty->fb_option.slimFaceLevel = 7;
-            faceBeauty->fb_option.largeEyeLevel = 7;*/
     } else {
         faceBeauty->fb_option.debugMode = 0;
     }
 
 }
+
+/*void construct_fb_portraitType(int portraitType){
+    lightPortraitType = portraitType;
+}*/
 
 void save_yuv_data(int num, int width, int height, unsigned char *addr_y,
                    char flag[10]) {
@@ -377,8 +390,17 @@ void do_face_beauty(fb_beauty_param_t *faceBeauty, int faceCount) {
             FB_FACEINFO faceInfo[10];
             memcpy(faceInfo, faceBeauty->fb_face, faceCount*sizeof(FB_FACEINFO));
 
-            retVal = FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &inputImage,
-                                            &option, faceInfo, faceCount);
+            if (lightPortraitType >= 5 && faceBeauty->fb_mode == FB_WORKMODE_STILL && faceBeauty->fb_option.slimFaceLevel > 0) {
+                retVal =
+                    FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &inputImage,
+                                          &option, faceInfo, faceCount,&(fbMaskT->fb_mask));
+
+            }else {
+                ALOGV("do_face_beauty mask null");
+                retVal =
+                    FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &inputImage,
+                                           &option, faceInfo, faceCount,NULL);
+            }
         } else if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_VDSP) {
             retVal = FB_FaceBeauty_YUV420SP_VDSP(faceBeauty->hSprdFB, &(faceBeauty->fb_image),
                                             &(faceBeauty->fb_option),faceBeauty->fb_face, faceCount);
@@ -453,6 +475,11 @@ int face_beauty_ctrl(fb_beauty_param_t *faceBeauty, fb_beauty_cmd_t cmd, void *p
         construct_fb_map(pFaceMap);
         break;
     }
+    case FB_BEAUTY_CONSTRUCT_MASK_CMD: {
+        fb_beauty_mask_t *fbMask = (fb_beauty_mask_t *)param;
+        construct_fb_mask(faceBeauty, *fbMask);
+        break;
+    }
     case FB_BEAUTY_CONSTRUCT_IMAGE_CMD: {
         int picWidth, picHeight, format;
         unsigned char *addrY, *addrU;
@@ -488,7 +515,11 @@ int face_beauty_ctrl(fb_beauty_param_t *faceBeauty, fb_beauty_cmd_t cmd, void *p
         break;
     }
     case FB_BEAUTY_PROCESS_CMD: {
-        int faceCount = *(int *)param;
+        //int faceCount = *(int *)param;
+        //lightPortraitType = *((char *)param + sizeof(int));
+        fb_beauty_lptparam_t *lptParam = (fb_beauty_lptparam_t *)param;
+        int faceCount = lptParam->faceCount;
+        lightPortraitType = lptParam->lightPortraitType;
         do_face_beauty(faceBeauty, faceCount);
         break;
     }
