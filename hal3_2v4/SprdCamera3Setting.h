@@ -70,7 +70,7 @@ namespace sprdcamera {
 #define UNUSED(x) (void) x
 #endif
 
-#define CAMERA_ID_COUNT 4
+#define CAMERA_ID_COUNT 6
 
 #define MIN_DIGITAL_ZOOM_RATIO (1.0f)
 
@@ -463,6 +463,7 @@ class SprdCamera3Setting {
                                      cmr_u16 *height);
     static int getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo);
     static int getNumberOfCameras();
+    static void * getCameraIdentifyState();
     static int initDefaultParameters(int32_t cameraId);
     static int getStaticMetadata(int32_t cameraId,
                                  camera_metadata_t **static_metadata);
@@ -623,6 +624,7 @@ class SprdCamera3Setting {
     int mFaceDetectModeSet;
     static int mLogicalSensorNum;
     static int mPhysicalSensorNum;
+    static uint8_t camera_identify_state[CAMERA_ID_COUNT];
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);

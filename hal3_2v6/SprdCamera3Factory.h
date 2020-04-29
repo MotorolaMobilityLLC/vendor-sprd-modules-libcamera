@@ -96,6 +96,7 @@ class SprdCamera3Factory {
     int mNumberOfCameras;
     int mNumOfCameras;
     SprdCamera3Wrapper *mWrapper;
+    const camera_module_callbacks_t * mCameraCallbacks;
 
     void registerCameraCreators();
     void registerOneCreator(std::string name,

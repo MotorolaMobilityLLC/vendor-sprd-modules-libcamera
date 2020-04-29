@@ -839,6 +839,7 @@ const int64_t SEC = MSEC * 1000LL;
 sprd_setting_info_t SprdCamera3Setting::s_setting[CAMERA_ID_COUNT];
 int SprdCamera3Setting::mLogicalSensorNum = 0;
 int SprdCamera3Setting::mPhysicalSensorNum = 0;
+uint8_t SprdCamera3Setting::camera_identify_state[] = {1, 1, 1, 1, 1, 1};
 
 enum cmr_flash_lcd_mode {
     FLASH_LCD_MODE_OFF = 0,
@@ -1248,6 +1249,18 @@ void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area) {
              s_setting[mCameraId].autotrackingInfo.at_start_info[1],
              s_setting[mCameraId].autotrackingInfo.at_start_info[2],
              s_setting[mCameraId].autotrackingInfo.frame_id);
+}
+
+void * SprdCamera3Setting::getCameraIdentifyState() {
+    void *devPtr=NULL;
+    devPtr = sensorGetIdentifyState();
+    for (int m = 0; m < mPhysicalSensorNum; m++) {
+        camera_identify_state[m] =
+            ((struct camera_device_manager *)devPtr)->identify_state[m];
+        HAL_LOGD("identify_state[%d]=%d",
+            m, camera_identify_state[m]);
+    }
+    return devPtr;
 }
 
 // just for physical camera, multi-camera fill the info in multi-camera layer
@@ -2322,22 +2335,33 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // for sprd camera features
     Vector<uint8_t> available_cam_features;
     char prop[PROPERTY_VALUE_MAX];
-    int physicalNumberOfCameras;
-    physicalNumberOfCameras = SprdCamera3Setting::mPhysicalSensorNum;
+    uint32_t dualPropSupport = 0;
+    bool hasRealCameraUnuseful = false;
+    bool hasFrontCameraUnuseful = false;
+
+    for (int i = 0; i < mPhysicalSensorNum; i++) {
+        if (camera_identify_state[1] == IDENTIFY_STATUS_NOT_PRESENT){
+            hasFrontCameraUnuseful = true;
+        }
+        if (i != 1 && camera_identify_state[i] == IDENTIFY_STATUS_NOT_PRESENT) {
+            hasRealCameraUnuseful = true;
+        }
+        HAL_LOGV("camera_identify_state[%d]=%d, hasRealCameraUnuseful=%d, hasFrontCameraUnuseful=%d",
+            i, camera_identify_state[i], hasRealCameraUnuseful, hasFrontCameraUnuseful);
+    }
 
     // 0 facebeauty version
     property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
     available_cam_features.add(atoi(prop));
 
-    uint32_t dualPropSupport = 0;
     if (/* mSensorType[cameraId] != FOURINONESENSOR && */
-        mSensorType[cameraId] != YUVSENSOR && physicalNumberOfCameras != 1) {
+        mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
         dualPropSupport = 1;
     }
 
     // 1 back blur or bokeh version
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
-    if (!dualPropSupport) {
+    if (!dualPropSupport || hasRealCameraUnuseful == true) {
         available_cam_features.add(0);
     } else if (atoi(prop) == 1) {
         available_cam_features.add(0);
@@ -2394,7 +2418,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
 
     // 7 back ultra wide enable
-    if (sensorGetRole(MODULE_SPW_NONE_BACK) >= 0) {
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else if (sensorGetRole(MODULE_SPW_NONE_BACK) >= 0) {
         available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.warp",
                                "persist.vendor.cam.ultra.wide.enable"));
@@ -2402,22 +2428,30 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         available_cam_features.add(0);
     }
 
-// 8 bokeh gdepth enable
+    // 8 bokeh gdepth enable
 #ifdef CONFIG_SUPPORT_GDEPTH
     available_cam_features.add(1);
 #else
     available_cam_features.add(0);
 #endif
 
-// 9 back portrait mode
+    // 9 back portrait mode
 #ifdef CONFIG_PORTRAIT_SUPPORT
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.dual.portrait",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.dual.portrait",
                            "persist.vendor.cam.ba.portrait.enable"));
+    }
 #else
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
                            "persist.vendor.cam.ba.portrait.enable"));
+    }
 #endif
 
     // 10 front portrait mode
@@ -2437,7 +2471,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
     }
 
-// 12 default quarter size
+    // 12 default quarter size
 #ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
     available_cam_features.add(0);
 #else
@@ -2445,23 +2479,31 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     // 13 multi camera superwide & wide & tele
-    available_cam_features.add(
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
-                           "persist.vendor.cam.multi.camera.enable"));
+            "persist.vendor.cam.multi.camera.enable"));
+    }
 
     // 14 camera back high resolution definition mode
     property_get("persist.vendor.cam.back.high.resolution.mode", prop, "NULL");
-    if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
-        phyPtr = sensorGetPhysicalSnsInfo(0); // camera id == 0
-        i = 0;
-        if (phyPtr->sensor_type == FOURINONE_SW ||
-            phyPtr->sensor_type == FOURINONE_HW)
-            i = 1;
-        HAL_LOGI("Auto set rear camera high resolution %d", i);
+    if (camera_identify_state[0] == IDENTIFY_STATUS_NOT_PRESENT) {
+        available_cam_features.add(0);
     } else {
-        i = atoi(prop);
+        if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
+            phyPtr = sensorGetPhysicalSnsInfo(0); // camera id == 0
+            i = 0;
+            if (phyPtr->sensor_type == FOURINONE_SW ||
+                phyPtr->sensor_type == FOURINONE_HW)
+                i = 1;
+            HAL_LOGI("Auto set rear camera high resolution %d", i);
+        } else {
+            i = atoi(prop);
+        }
+        available_cam_features.add(!!i);
     }
-    available_cam_features.add(!!i);
 
     // 15 camera hdr_zsl
     property_get("persist.vendor.cam.hdr.zsl", prop, "0");
@@ -2473,15 +2515,27 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 17 camera infrared
     property_get("persist.vendor.cam.infrared.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
 
     // 18 camera macrophoto
     property_get("persist.vendor.cam.macrophoto.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
 
     // 19 camera macrovideo
     property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
 
     // 20 camera front high resolution definition mode
     property_get("persist.vendor.cam.front.high.resolution.mode", prop, "NULL");
@@ -2497,8 +2551,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
     available_cam_features.add(!!i);
 
-    ALOGV("available_cam_features=%d", available_cam_features.size());
-
     // 21 stl3denable
     if (isStl3dAvailable())
         available_cam_features.add(1);
@@ -2511,9 +2563,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                             "persist.vendor.cam.video.face.beauty.enable"));
 
     //23 fov fusion
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
                            "persist.vendor.cam.fov.fusion.enable"));
+    }
 
     //24 nightshot pro
     available_cam_features.add(
@@ -2522,46 +2578,68 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     // 25 camera lightportrait_ba
 #ifdef CONFIG_PORTRAIT_SUPPORT
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.light.dual.portrait",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.light.dual.portrait",
                            "persist.vendor.cam.lightportrait.ba.enable"));
+    }
 #else
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
                            "persist.vendor.cam.lightportrait.ba.enable"));
+    }
 #endif
+
     // 26 camera lightportrait_fr
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
                            "persist.vendor.cam.lightportrait.fr.enable"));
+
     // 27 FDR
     available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.fdr",
                                       "persist.vendor.cam.fdr.enable"));
 
     //28 dual view video
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.dualview.pro",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.dualview.pro",
                            "persist.vendor.cam.dual.view.video.enable"));
+    }
 
 #ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
     // 29 portrait scene mode
     HAL_LOGD("pbrb_enable=%d",atoi(prop));
     property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
-    if(atoi(prop)==0){
-        property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
-        property_set("persist.vendor.cam.ip.wechat.back.replace","0");
-    }
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        if(atoi(prop)==0){
+            property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
+            property_set("persist.vendor.cam.ip.wechat.back.replace","0");
+        }
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
                            "persist.vendor.cam.portrait.scene.enable"));
+    }
 #else
     available_cam_features.add(0);
 #endif
 
     // 30 higher micro photo
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
                            "persist.vendor.cam.higher.macrophoto.enable"));
+    }
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
@@ -2569,11 +2647,14 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
         available_cam_features.size();
 
+    ALOGV("available_cam_features=%d", available_cam_features.size());
+
     property_set("persist.vendor.cam.ip.switch.on", "0");
     HAL_LOGI("available_cam_features=%d",
              s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
 
     return ret;
+
 }
 
 int SprdCamera3Setting::initStaticMetadataforLensInfo(

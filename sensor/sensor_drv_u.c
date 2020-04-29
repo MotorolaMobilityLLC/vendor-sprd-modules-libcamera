@@ -3726,6 +3726,13 @@ static cmr_int sensor_drv_scan_hw(void) {
                                               physical_num);
             physical_num++;
             probe_identify[slot_id] = 1;
+            devPtr->identify_state[slot_id] = IDENTIFY_STATUS_PRESENT;
+            SENSOR_LOGV("useful sensor identify_state[%d] = %d",
+                slot_id,devPtr->identify_state[slot_id]);
+        } else {
+            devPtr->identify_state[slot_id] = IDENTIFY_STATUS_NOT_PRESENT;
+            SENSOR_LOGV("unuseful sensor identify_state[%d] = %d",
+                slot_id,devPtr->identify_state[slot_id]);
         }
 
         sensor_context_deinit(sensor_cxt, 0);
@@ -3776,6 +3783,11 @@ int sensorGetLogicalSnsNum(void) {
 
     return devPtr->logical_num;
 };
+
+void * sensorGetIdentifyState() {
+
+    return (void *)&camera_dev_manger;
+}
 
 PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id) {
 

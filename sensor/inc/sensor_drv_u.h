@@ -701,6 +701,11 @@ enum SENSOR_EVT_TYPE {
     SENSOR_EVT_CFG_OTP
 };
 
+enum sensor_identify_state {
+    IDENTIFY_STATUS_NOT_PRESENT = 0,
+    IDENTIFY_STATUS_PRESENT = 1,
+};
+
 #define CALI_FILE_DIR "/data/"
 
 struct sns_thread_cxt {
@@ -760,6 +765,7 @@ struct camera_device_manager {
     cmr_int physical_num;
     cmr_int logical_num;
     cmr_u8 drv_idx[SENSOR_ID_MAX];
+    cmr_u8 identify_state[SENSOR_ID_MAX];
 };
 
 #define CMR_SENSOR_DEV_NAME "/dev/sprd_sensor"
@@ -808,6 +814,7 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
 int sensorGetPhysicalSnsNum(void);
 int sensorGetLogicalSnsNum(void);
+void * sensorGetIdentifyState();
 PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId);

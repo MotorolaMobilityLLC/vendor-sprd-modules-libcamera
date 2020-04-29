@@ -108,6 +108,7 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
 int SprdCamera3Factory::set_callbacks(
     const camera_module_callbacks_t *callbacks) {
     HAL_LOGV("E");
+    gSprdCamera3Factory.mCameraCallbacks = callbacks;
     return SprdCamera3Flash::registerCallbacks(callbacks);
 }
 
@@ -386,7 +387,19 @@ int SprdCamera3Factory::multi_id_to_phyid(int cameraId) {
 int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,
                                                    struct camera_info *info) {
     camera_metadata_t *staticMetadata;
+    struct camera_device_manager *devPtr = NULL;
     int rc;
+
+    devPtr =
+        (struct camera_device_manager *)SprdCamera3Setting::getCameraIdentifyState();
+    for (int m = 0; m < mNumOfCameras; m++) {
+        HAL_LOGV("factory identify_state[%d]=%d", m, devPtr->identify_state[m]);
+        if (gSprdCamera3Factory.mCameraCallbacks != NULL) {
+            gSprdCamera3Factory.mCameraCallbacks->camera_device_status_change(
+                gSprdCamera3Factory.mCameraCallbacks,
+                m, devPtr->identify_state[m]);
+        }
+    }
 
     SprdCamera3Setting::getSensorStaticInfo(cameraId);
     SprdCamera3Setting::initDefaultParameters(cameraId);
@@ -398,8 +411,17 @@ int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,
 
     SprdCamera3Setting::getCameraInfo(cameraId, info);
 
-    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;
-    info->static_camera_characteristics = staticMetadata;
+    if (devPtr->identify_state[cameraId] == IDENTIFY_STATUS_NOT_PRESENT) {
+        info->static_camera_characteristics = NULL;
+        HAL_LOGV("unuseful camera_id = %d, static_camera_characteristics=%p",
+            cameraId, info->static_camera_characteristics);
+    } else {
+        info->static_camera_characteristics = staticMetadata;
+        HAL_LOGV("useful camera_id = %d, static_camera_characteristics=%p",
+            cameraId, info->static_camera_characteristics);
+    }
+    info->device_version =
+        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_2;
 
     return rc;
 }

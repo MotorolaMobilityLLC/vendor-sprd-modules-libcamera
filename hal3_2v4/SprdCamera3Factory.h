@@ -62,6 +62,7 @@ class SprdCamera3Factory {
 
   private:
     int mNumOfCameras;
+    const camera_module_callbacks_t * mCameraCallbacks;
     Mutex mLock;
 };
 

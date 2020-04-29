@@ -153,12 +153,24 @@ int SprdCamera3Factory::getNumberOfCameras() {
  *==========================================================================*/
 int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     int rc;
+    struct camera_device_manager *devPtr = NULL;
     Mutex::Autolock l(mLock);
 
-    HAL_LOGV("E, camera_id = %d", camera_id);
+    HAL_LOGD("E, camera_id = %d", camera_id);
     if (!mNumOfCameras || camera_id >= mNumOfCameras || !info ||
         (camera_id < 0)) {
         return -ENODEV;
+    }
+
+    devPtr =
+        (struct camera_device_manager *)SprdCamera3Setting::getCameraIdentifyState();
+    for (int m = 0; m < mNumOfCameras; m++) {
+        HAL_LOGV("factory identify_state[%d]=%d", m, devPtr->identify_state[m]);
+        if (gSprdCamera3Factory.mCameraCallbacks != NULL) {
+            gSprdCamera3Factory.mCameraCallbacks->camera_device_status_change(
+                gSprdCamera3Factory.mCameraCallbacks,
+                m, devPtr->identify_state[m]);
+        }
     }
 
     SprdCamera3Setting::getSensorStaticInfo(camera_id);
@@ -172,12 +184,20 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
 
+    if (devPtr->identify_state[camera_id] == IDENTIFY_STATUS_NOT_PRESENT) {
+        info->static_camera_characteristics = NULL;
+        HAL_LOGV("unuseful camera_id = %d, static_camera_characteristics=%p",
+            camera_id, info->static_camera_characteristics);
+    } else {
+        info->static_camera_characteristics = mStaticMetadata;
+        HAL_LOGV("useful camera_id = %d, static_camera_characteristics=%p",
+            camera_id, info->static_camera_characteristics);
+    }
     info->device_version =
-        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
-    info->static_camera_characteristics = mStaticMetadata;
+        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_2;
     info->conflicting_devices_length = 0;
 
-    HAL_LOGV("X");
+    HAL_LOGE("X");
     return rc;
 }
 /*====================================================================
@@ -205,7 +225,7 @@ int SprdCamera3Factory::set_callbacks(
     const camera_module_callbacks_t *callbacks) {
     ALOGV("%s :In", __func__);
     int retval = 0;
-
+    gSprdCamera3Factory.mCameraCallbacks = callbacks;
     retval = SprdCamera3Flash::registerCallbacks(callbacks);
 
     return retval;
