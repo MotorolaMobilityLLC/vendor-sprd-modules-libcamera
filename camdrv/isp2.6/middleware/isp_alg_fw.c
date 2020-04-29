@@ -3255,7 +3255,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 	case ISP_EVT_AE: {
 		struct isp_statis_info *statis_info = (struct isp_statis_info *)message->data;
 
-		if (cxt->fw_started == 0)
+		if (cxt->fw_started == 0 && cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE)
 			break;
 
 		ISP_LOGV("aem no.%d, timestamp %03d.%06d\n", statis_info->frame_id, statis_info->sec, statis_info->usec);
