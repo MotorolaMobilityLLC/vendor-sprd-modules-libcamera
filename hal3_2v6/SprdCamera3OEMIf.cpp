@@ -4588,6 +4588,10 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
     int src_width, src_height, dst_width, dst_height;
     int64_t timestamp = frame->monoboottime;
 
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+   if (sprddefInfo->high_resolution_mode == 1)
+        sprddefInfo->return_previewframe_after_nozsl_cap = 1;
     SprdCamera3RegularChannel *regular_channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     SprdCamera3PicChannel *pic_channel =
@@ -4695,6 +4699,9 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
 
     regular_channel->channelCbRoutine(frame_num, timestamp,
                                       CAMERA_STREAM_TYPE_PREVIEW);
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+    if (sprddefInfo->high_resolution_mode == 1)
+        sprddefInfo->return_previewframe_after_nozsl_cap = 0;
 
 exit:
     HAL_LOGV("X");

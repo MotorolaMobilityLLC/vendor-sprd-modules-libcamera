@@ -1771,7 +1771,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     SprdCamera3Stream *pre_stream = NULL;
     int receive_req_max = SprdCamera3RegularChannel::kMaxBuffers;
     int32_t width = 0, height = 0;
-
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
     for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
          i != mPendingRequestsList.end();) {
         camera3_capture_result_t result;
@@ -1910,8 +1911,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                     result_buffers->stream = stream;
                     result_buffers->buffer = buffer;
-                    if (mBufferStatusError) {
+                    if (mBufferStatusError || (mHighResNonzsl == 1 && sprddefInfo ->return_previewframe_after_nozsl_cap == 1)) {
                         result_buffers->status = CAMERA3_BUFFER_STATUS_ERROR;
+                        HAL_LOGI("bufferstatus:%d",result_buffers->status);
                     } else {
                         result_buffers->status = buffer_status;
                     }

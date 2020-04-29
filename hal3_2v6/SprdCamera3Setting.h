@@ -415,6 +415,7 @@ typedef struct {
     int32_t face_angle_info[20];
     uint8_t high_resolution_mode;
     uint8_t fin1_highlight_mode;
+    uint8_t return_previewframe_after_nozsl_cap;
     int32_t stl3d_id;
     uint8_t sprd_super_macro;
 } SPRD_DEF_Tag;
