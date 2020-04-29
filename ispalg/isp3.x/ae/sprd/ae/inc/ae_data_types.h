@@ -23,7 +23,7 @@
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
 #define AE_PIECEWISE_MAX_NUM 16
 #define AEC_LINETIME_PRECESION (1000000000.0f) /*ns*/
-#define AEC_HIST_BIN_MAX (1<<16)
+#define AEC_HIST_BIN_MAX (1<<8)
 #define AEC_MONITOR_DATA_SIZE_MAX (128 * 128)
 #define AE_EV_LEVEL_MAX 16
 #define AE_LIB_SCENE_MAX 8
@@ -262,6 +262,16 @@ struct ae_trim {
 };
 
 struct ae_rect {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
+};
+
+struct ae_hist_win_info {
+	cmr_u32 idx;
+	cmr_u32 sec;
+	cmr_u32 usec;
 	cmr_u32 start_x;
 	cmr_u32 start_y;
 	cmr_u32 end_x;
@@ -565,6 +575,24 @@ struct ae_ev_param_table {
 	cmr_u32 diff_num;
 	/* index of default */
 	cmr_u32 default_level;
+};
+
+struct ae_bayer_hist_param {
+	cmr_u32 cam_id;
+	cmr_s32 frame_id;
+	struct ae_hist_data_type hist_data[3];
+	struct ae_rect hist_roi;
+};
+
+struct ae_touch_roi_param {
+	cmr_u32 cam_id;
+	cmr_s32 frame_id;
+	struct ae_trim touch_roi;
+};
+
+struct ae_debug_info {
+	struct ae_bayer_hist_param hist_info[3];
+	struct ae_touch_roi_param touch_info[3];
 };
 
 #endif

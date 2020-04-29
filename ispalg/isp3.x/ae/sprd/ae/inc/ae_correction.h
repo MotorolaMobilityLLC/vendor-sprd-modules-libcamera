@@ -46,24 +46,6 @@ struct tar_lum_range{//added by feifan.wang
 	cmr_u32 target_lum_range_out_bak;
 };
 
-struct bhist_param {
-	cmr_u32 cam_id;
-	cmr_s32 frame_id;
-	struct ae_hist_data_type hist_data[3];
-	struct ae_rect hist_roi;
-};
-
-struct touch_param {
-	cmr_u32 cam_id;
-	cmr_s32 frame_id;
-	struct ae_trim touch_roi;
-};
-
-struct ae_debug_info {
-	struct bhist_param hist_info[3];
-	struct touch_param touch_info[3];
-};
-
 struct ae_lib_init_in {
 	cmr_u32 cam_id;
 	cmr_u32 mlog_en;
@@ -116,7 +98,8 @@ struct ae_adv_param {
 	struct ae_monitor_data_type stats_data_adv;
 	/*Histogram Data*/
 	struct ae_hist_data_type hist_data;/*yuv histogram data in yuv domain*/
-	struct ae_rect hist_roi;
+	//struct ae_rect hist_roi;
+	struct ae_hist_win_info hist_roi;/*raw hist roi and other info*/
 	struct ae_hist_data_type bhist_data[3];/*raw rgb histogram data in raw bayer domain*/
 	/*ASD: advanced Scene Detection: based on AI*/
 	struct ai_scene_detect detect_scene;
@@ -204,7 +187,9 @@ struct ae_lib_calc_out  {
 	struct ae_point_type aem_roi_st;
 	struct ae_size aem_blk_size;
 	/*Bayer Hist ROI setting*/
-	//struct ae_rect adjust_hist_roi;
+
+	struct ae_rect adjust_hist_roi;
+
 	/*APEX parameters*/
 	float bv;
 	float av;
