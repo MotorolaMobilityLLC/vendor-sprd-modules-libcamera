@@ -42,4 +42,5 @@ PRODUCT_PACKAGES += libsensor_imx351 \
     libsensor_ov13853_m1 \
     libsensor_ov13853_s1 \
     libsensor_gc8034_gj_2 \
-    libsensor_gc2375_wj_2
+    libsensor_gc2375_wj_2 \
+    libsensor_ov12a10

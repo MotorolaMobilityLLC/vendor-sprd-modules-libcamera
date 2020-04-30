@@ -840,7 +840,10 @@ static cmr_int ov12a10_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     ret = sensor_ic_get_private_data(handle, cmd, param);
     return ret;
 }
-
+void *sensor_ic_open_lib(void)
+{
+     return &g_ov12a10_mipi_raw_info;
+}
 /*==============================================================================
  * Description:
  * all ioctl functoins

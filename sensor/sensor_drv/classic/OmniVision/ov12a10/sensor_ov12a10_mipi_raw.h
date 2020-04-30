@@ -28,7 +28,7 @@
 #include "sensor_drv_u.h"
 #include "sensor_raw.h"
 
-#include "parameters/parameters_sharkl5/sensor_ov12a10_raw_param_main.c"
+//#include "parameters/parameters_sharkl5/sensor_ov12a10_raw_param_main.c"
 
 #define VENDOR_NUM 1
 #define SENSOR_NAME "ov12a10_mipi_raw"
@@ -383,7 +383,7 @@ static struct sensor_module_info s_ov12a10_module_info_tab[VENDOR_NUM] = {
 };
 
 static struct sensor_ic_ops s_ov12a10_ops_tab;
-struct sensor_raw_info *s_ov12a10_mipi_raw_info_ptr = &s_ov12a10_mipi_raw_info;
+struct sensor_raw_info *s_ov12a10_mipi_raw_info_ptr = PNULL;
 
 /*==============================================================================
  * Description:
