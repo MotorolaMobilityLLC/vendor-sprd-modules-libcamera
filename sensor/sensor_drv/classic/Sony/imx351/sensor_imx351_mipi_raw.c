@@ -871,6 +871,7 @@ static cmr_int imx351_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     ex_info->embedded_line_enable = static_info->embedded_line_enable;
     memcpy(&ex_info->fov_info, &static_info->fov_info,
            sizeof(static_info->fov_info));
+    ex_info->mono_sensor = static_info->mono_sensor;
 
 exit:
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);

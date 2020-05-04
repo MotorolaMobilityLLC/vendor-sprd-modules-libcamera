@@ -800,7 +800,8 @@ const uint8_t kavailable_capabilities[] = {
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE,
-    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME
 };
 
 const uint8_t kavailable_noise_reduction_modes[] = {
@@ -2172,11 +2173,18 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                      cameraId);
         }
     }
-
     memcpy(s_setting[cameraId].requestInfo.available_result_keys,
            kavailable_result_keys, sizeof(kavailable_result_keys));
     memcpy(s_setting[cameraId].requestInfo.available_capabilites,
            kavailable_capabilities, sizeof(kavailable_capabilities));
+    if (phyPtr->mono_sensor == 1) {
+        memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+           kavailable_capabilities, sizeof(kavailable_capabilities));
+    }
+    else {
+        memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+           kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+    }
     s_setting[cameraId].requestInfo.partial_result_count = 1;
     s_setting[cameraId].requestInfo.pipeline_max_depth = 8;
 
@@ -2637,6 +2645,7 @@ int SprdCamera3Setting::initStaticMetadata(
     int i = 0;
     CameraMetadata staticInfo;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
+    struct phySensorInfo *phyPtr = NULL;
 
 #define FILL_CAM_INFO(Array, Start, Num, Flag)                                 \
     for (array_size = Start; array_size < Num; array_size++) {                 \
@@ -2651,6 +2660,7 @@ int SprdCamera3Setting::initStaticMetadata(
             break;                                                             \
     }                                                                          \
     staticInfo.update(Flag, Array, array_size * 4);
+    phyPtr = sensorGetPhysicalSnsInfo(cameraId);
 
     /* android.info: hardware level */
     staticInfo.update(ANDROID_INFO_SUPPORTED_HARDWARE_LEVEL,
@@ -2743,9 +2753,15 @@ int SprdCamera3Setting::initStaticMetadata(
         s_setting[cameraId].controlInfo.ae_available_abtibanding_modes, 1, 4,
         ANDROID_CONTROL_AE_AVAILABLE_ANTIBANDING_MODES)
     FILL_CAM_INFO(s_setting[cameraId].controlInfo.af_available_modes, 1, 6,
-                  ANDROID_CONTROL_AF_AVAILABLE_MODES)
-    FILL_CAM_INFO(s_setting[cameraId].controlInfo.awb_available_modes, 1, 9,
-                  ANDROID_CONTROL_AWB_AVAILABLE_MODES)
+                  ANDROID_CONTROL_AF_AVAILABLE_MODES)     
+    if (phyPtr->mono_sensor == 1) {
+        s_setting[cameraId].controlInfo.awb_available_modes[0] = ANDROID_CONTROL_AWB_MODE_AUTO;
+        staticInfo.update(ANDROID_CONTROL_AWB_AVAILABLE_MODES, s_setting[cameraId].controlInfo.awb_available_modes, sizeof(uint8_t));
+    }
+    else {
+        FILL_CAM_INFO(s_setting[cameraId].controlInfo.awb_available_modes, 1, 9,
+        ANDROID_CONTROL_AWB_AVAILABLE_MODES)
+    }
     FILL_CAM_INFO(s_setting[cameraId].controlInfo.ae_available_modes, 1, 5,
                   ANDROID_CONTROL_AE_AVAILABLE_MODES)
 

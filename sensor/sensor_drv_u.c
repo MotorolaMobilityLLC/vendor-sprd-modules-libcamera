@@ -2884,7 +2884,7 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->face_type = sensor_cxt->xml_info->cfgPtr->facing;
     phyPtr->angle = sensor_cxt->xml_info->cfgPtr->orientation;
     phyPtr->resource_cost = sensor_cxt->xml_info->cfgPtr->resource_cost;
-
+    phyPtr->mono_sensor = sensor_cxt->mono_sensor;
     // customize camera attribute
     sensor_customize_cam_attribute(phyPtr, slot_id);
 
@@ -3113,6 +3113,7 @@ static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
             memcpy(&sensor_cxt->fov_info, &sn_ex_info_slv.fov_info,
                    sizeof(sn_ex_info_slv.fov_info));
             sensor_cxt->fov_angle = sn_ex_info_slv.fov_angle;
+            sensor_cxt->mono_sensor = sn_ex_info_slv.mono_sensor;
         } else {
             SENSOR_LOGE("get sensor ex info failed");
             return -1;

@@ -303,6 +303,7 @@ struct sensor_static_info {
     /*module fov information*/
     float fov_angle;
     struct module_fov_info fov_info;
+    cmr_u8 mono_sensor;
 };
 
 typedef struct sensor_static_info_tab {
@@ -738,6 +739,7 @@ typedef struct phySensorInfo {
     int sensor_type;
     cmr_u16 pdaf_supported;
     char sensor_name[SENSOR_IC_NAME_LEN];
+    cmr_u8 mono_sensor;
 } PHYSICAL_SENSOR_INFO_T;
 
 typedef struct logicalSensorInfo {

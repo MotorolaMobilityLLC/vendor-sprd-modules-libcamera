@@ -741,6 +741,7 @@ struct sensor_drv_context {
     cmr_handle otp_drv_handle;
     cmr_handle af_drv_handle;
     cmr_handle sns_ic_drv_handle;
+    cmr_u8 mono_sensor;	
 };
 
 struct tuning_param_lib {

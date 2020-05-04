@@ -1050,7 +1050,8 @@ static SENSOR_STATIC_INFO_T s_imx351_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 2,
-                     .fov_info = {{4.656f, 3.496f}, 3.698f}}},
+                     .fov_info = {{4.656f, 3.496f}, 3.698f},
+                     .mono_sensor = 0}}
 };
 
 /*==============================================================================
