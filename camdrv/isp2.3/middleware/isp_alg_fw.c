@@ -249,6 +249,7 @@ struct ispalg_lib_ops {
 
 struct isp_alg_fw_context {
 	cmr_int camera_id;
+	cmr_u8 alg_enable;
 	cmr_u8 aem_is_update;
 	cmr_u8 binning_is_update; /* check for bin statis */
 	struct isp_hist_statistic_info hist_stats;
@@ -4829,6 +4830,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		ret = ISP_PARAM_ERROR;
 		goto exit;
 	}
+	if (!cxt->alg_enable) {
+		ISP_LOGD("alg bypass\n");
+		return ret;
+	}
 
 	cxt->zsl_flag = in_ptr->zsl_flag;
 	cxt->capture_mode = in_ptr->capture_mode;
@@ -5045,6 +5050,10 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
+	if (!cxt->alg_enable) {
+		ISP_LOGD("alg bypass\n");
+		return ret;
+	}
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_VIDEO_STOP, NULL, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_VIDEO_STOP"));
@@ -5113,6 +5122,11 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_size org_size;
 	struct isp_video_start param;
 	struct alsc_fwprocstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+
+	if (!cxt->alg_enable) {
+		ISP_LOGD("alg bypass\n");
+		return ret;
+	}
 
 	org_size.w = cxt->commn_cxt.src.w;
 	org_size.h = cxt->commn_cxt.src.h;
@@ -5230,6 +5244,11 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	enum isp_ctrl_cmd cmd = io_cmd & 0x7fffffff;
 	isp_io_fun io_ctrl = NULL;
 
+	if (!cxt->alg_enable) {
+		ISP_LOGD("alg bypass\n");
+		return ret;
+	}
+
 	cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
 	io_ctrl = isp_ioctl_get_fun(cmd);
 	if (NULL != io_ctrl) {
@@ -5253,16 +5272,28 @@ cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd 
 
 	switch (cmd) {
 	case ISP_LOW_LUX_EB:
+		if (!cxt->alg_enable) {
+			*((cmr_u32 *) param_ptr) = 0;
+			break;
+		}
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_EB, NULL, &out_param);
 		*((cmr_u32 *) param_ptr) = out_param;
 		break;
 	case ISP_CUR_ISO:
+		if (!cxt->alg_enable) {
+			*((cmr_u32 *) param_ptr) = 100;
+			break;
+		}
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_ISO, NULL, &out_param);
 		*((cmr_u32 *) param_ptr) = out_param;
 		break;
 	case ISP_CTRL_GET_AE_LUM:
+		if (!cxt->alg_enable) {
+			*((cmr_u32 *) param_ptr) = 200;
+			break;
+		}
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_BV_BY_LUM_NEW, NULL, &out_param);
 		*((cmr_u32 *) param_ptr) = out_param;
@@ -5278,6 +5309,9 @@ cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd 
 cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 alg_bypass = 0;
+	char value[PROPERTY_VALUE_MAX];
+	cmr_s8 *sensor_name = NULL;
 	struct isp_alg_fw_context *cxt = NULL;
 	struct isp_alg_sw_init_in isp_alg_input;
 	struct sensor_raw_info *sensor_raw_info_ptr = NULL;
@@ -5289,15 +5323,48 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 	}
 
 	*isp_alg_handle = NULL;
-	sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->init_param->setting_param_ptr;
-
 	cxt = (struct isp_alg_fw_context *)malloc(sizeof(struct isp_alg_fw_context));
 	if (!cxt) {
 		ISP_LOGE("fail to malloc");
 		ret = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	memset(cxt, 0, sizeof(*cxt));
+	memset(cxt, 0, sizeof(struct isp_alg_fw_context));
+
+	sensor_raw_info_ptr =
+		(struct sensor_raw_info *)input_ptr->init_param->setting_param_ptr;
+
+	if (sensor_raw_info_ptr && sensor_raw_info_ptr->version_info)
+		sensor_name = &sensor_raw_info_ptr->version_info->sensor_ver_name.sensor_name[0];
+
+	property_get("persist.vendor.cam.bringup.sensor", value, "null");
+	if (!strcmp(value, "all")) {
+		alg_bypass = 1;
+		ISP_LOGI("ISP 3A/pm will bypass for all sensor\n");
+	} else if (sensor_raw_info_ptr == NULL) {
+		alg_bypass = 1;
+		ISP_LOGI("ISP 3A/pm will bypass for NULL sensor_raw_info\n");
+	} else if (!strcmp(value, "auto")) {
+		cmr_u32 i, valid_pm = 0;
+		for (i = 0; i < MAX_MODE_NUM; i++) {
+			if (sensor_raw_info_ptr->mode_ptr[i].addr && sensor_raw_info_ptr->mode_ptr[i].len) {
+				valid_pm = 1;
+				break;
+			}
+		}
+		alg_bypass = !valid_pm;
+		if (alg_bypass)
+			ISP_LOGI("ISP 3A/pm will bypass because no tuning param\n");
+	} else if (sensor_name && (!strcmp(value, (const char *)sensor_name))) {
+		alg_bypass = 1;
+		ISP_LOGI("ISP 3A/pm will bypass for this sensor: %s\n", sensor_name);
+	}
+
+	if (alg_bypass) {
+		cxt->alg_enable = 0;
+		*isp_alg_handle = (cmr_handle)cxt;
+		return ret;
+	}
 
 	ret = ispalg_pm_init(cxt, input_ptr->init_param);
 
@@ -5353,6 +5420,7 @@ exit:
 			free((void *)cxt);
 		}
 	} else {
+		cxt->alg_enable = 1;
 		*isp_alg_handle = (cmr_handle)cxt;
 		isp_dev_access_evt_reg(cxt->dev_access_handle, ispalg_dev_evt_msg, (cmr_handle) cxt);
 	}
@@ -5369,6 +5437,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	if (!cxt) {
 		ISP_LOGE("fail to get cxt pointer");
 		goto exit;
+	}
+	if (!cxt->alg_enable) {
+		free((void *)cxt);
+		ISP_LOGI("done %d\n", ret);
+		return ret;
 	}
 
 	ispalg_destroy_thread_proc((cmr_handle) cxt);
