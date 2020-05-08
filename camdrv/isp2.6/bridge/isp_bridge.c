@@ -40,6 +40,9 @@ struct awb_data {
 
 struct hist_data {
 	/* MW to ISP */
+	cmr_u32 idx;
+	cmr_u32 sec;
+	cmr_u32 usec;
 	struct isp_rect win;
 	struct isp_hist_statistic_info stats_info[3];
 };
@@ -58,6 +61,7 @@ struct match_data {
 struct match_data_param {
 	struct module_info module_info;
 	float zoom_ratio;
+	cmr_u32 frameId;
 
 	struct aem_info aem_stat_info[CAM_SENSOR_MAX];
 	struct ae_match_data ae_info[CAM_SENSOR_MAX];
@@ -451,7 +455,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 				sem_wait(&cxt->ae_sm);
 				data->ae.win = *win;
 
-				ISP_LOGD("set %s AE offset %d %d, blk_num %u %u, blk_size %u %u",
+				ISP_LOGV("set %s AE offset %d %d, blk_num %u %u, blk_size %u %u",
 						get_role_name(sensor_role), win->offset_x, win->offset_y,
 						win->blk_num_x, win->blk_num_y, win->blk_size_x, win->blk_size_y);
 				sem_post(&cxt->ae_sm);
@@ -538,7 +542,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 				data->hist.win.st_y = win->start_y;
 				data->hist.win.width = win->width;
 				data->hist.win.height = win->height;
-				ISP_LOGD("set %s HIST win %u %u %u %u", get_role_name(sensor_role),
+				ISP_LOGV("set %s HIST win %u %u %u %u", get_role_name(sensor_role),
 						win->start_x, win->start_y, win->width, win->height);
 				sem_post(&cxt->ae_sm);
 			}
@@ -552,6 +556,41 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 				sem_wait(&cxt->ae_sm);
 				*win = data->hist.win;
+				sem_post(&cxt->ae_sm);
+			}
+		}
+		break;
+
+	case SET_HIST_PARAM:
+		{
+			if (in) {
+				struct hist_param *param = (struct hist_param *)in;
+
+				sem_wait(&cxt->ae_sm);
+				data->hist.idx = param->idx;
+				data->hist.sec = param->sec;
+				data->hist.usec = param->usec;
+				data->hist.win = param->win;
+				ISP_LOGV("set %s HIST idx %u, ts %u.%u, win %d %d %u %u",
+						get_role_name(sensor_role), param->idx,
+						param->sec, param->usec,
+						param->win.st_x, param->win.st_y,
+						param->win.width, param->win.height);
+				sem_post(&cxt->ae_sm);
+			}
+		}
+		break;
+
+	case GET_HIST_PARAM:
+		{
+			if (out) {
+				struct hist_param *param = (struct hist_param *)out;
+
+				sem_wait(&cxt->ae_sm);
+				param->idx = data->hist.idx;
+				param->sec = data->hist.sec;
+				param->usec = data->hist.usec;
+				param->win = data->hist.win;
 				sem_post(&cxt->ae_sm);
 			}
 		}
@@ -735,7 +774,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 
 				sem_wait(&cxt->module_sm);
 				cxt->match_param.zoom_ratio = *ratio;
-				ISP_LOGD("set %s ratio %f", get_role_name(sensor_role), *ratio);
+				ISP_LOGV("set %s ratio %f", get_role_name(sensor_role), *ratio);
 				sem_post(&cxt->module_sm);
 			}
 		}
@@ -792,7 +831,7 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sem_wait(&cxt->ae_sm);
 			if (in) {
 				struct visible_region_info *info = (struct visible_region_info *)in;
-				ISP_LOGD("set %s AE visible %u %u %u %u, serial %u",
+				ISP_LOGV("set %s AE visible %u %u %u %u, serial %u",
 						get_role_name(sensor_role),
 						info->region.start_x,
 						info->region.start_y,
@@ -871,6 +910,29 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sem_post(&cxt->ae_sm);
 		break;
 
+	case SET_FRAME_ID:
+		{
+			if (in) {
+				cmr_u32 *frameId = (cmr_u32 *)in;
+
+				sem_wait(&cxt->module_sm);
+				cxt->match_param.frameId = *frameId;
+				sem_post(&cxt->module_sm);
+			}
+		}
+		break;
+
+	case GET_FRAME_ID:
+		{
+			if (out) {
+				cmr_u32 *frameId = (cmr_u32 *)out;
+				sem_wait(&cxt->module_sm);
+				*frameId = cxt->match_param.frameId;;
+				sem_post(&cxt->module_sm);
+			}
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -928,6 +990,8 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 	cmr_int ret = ISP_SUCCESS;
 	struct ispbr_context *cxt = &br_cxt;
 	cmr_u32 sensor_role = CAM_SENSOR_MAX;
+
+	ISP_LOGI("camera_id %u", camera_id);
 
 	sensor_role = get_role_by_id(cxt, camera_id);
 

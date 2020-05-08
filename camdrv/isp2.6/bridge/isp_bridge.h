@@ -58,6 +58,8 @@ enum isp_br_ioctl_cmd {
 	// HIST
 	SET_HIST_WIN,
 	GET_HIST_WIN,
+	SET_HIST_PARAM,
+	GET_HIST_PARAM,
 	SET_HIST_STATS,
 	GET_HIST_STATS,
 
@@ -98,6 +100,9 @@ enum isp_br_ioctl_cmd {
 
 	SET_SYNC_SLAVE_SYNC_OUTPUT,
 	GET_SYNC_SLAVE_SYNC_OUTPUT,
+
+	SET_FRAME_ID,
+	GET_FRAME_ID,
 };
 
 struct awb_gain_data {
@@ -232,6 +237,13 @@ struct ae_sync_data {
 	struct isp_size block_size;
 	struct isp_rect block_rect;
 	struct isp_size sensor_size;
+};
+
+struct hist_param {
+	cmr_u32 idx;
+	cmr_u32 sec;
+	cmr_u32 usec;
+	struct isp_rect win;
 };
 
 cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_master);

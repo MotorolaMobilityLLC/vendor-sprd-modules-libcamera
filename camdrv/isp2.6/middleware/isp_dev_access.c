@@ -205,7 +205,7 @@ static cmr_int set_statis_buf(struct isp_dev_access_context *cxt,
 		 (void *)statis_info->uaddr,
 		 statis_info->frame_id);
 
-#if 0 /* temp disable cache for statis buffer */
+//#if 0 /* temp disable cache for statis buffer */
 	if (statis_info->buf_type != STATIS_HIST2 &&
 		mem_hdl && mem_hdl->invalidate_cb)
 		mem_hdl->invalidate_cb(
@@ -214,7 +214,7 @@ static cmr_int set_statis_buf(struct isp_dev_access_context *cxt,
 				statis_info->buf_size,
 				0,
 				statis_info->uaddr);
-#endif
+//#endif
 
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 	statis_buf.type = statis_info->buf_type;

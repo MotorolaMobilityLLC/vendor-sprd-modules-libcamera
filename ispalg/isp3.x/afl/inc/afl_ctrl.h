@@ -47,6 +47,7 @@ struct afl_proc_in {
 	cmr_s32 ae_exp_flag;
 	cmr_s32 pm_param_num;
 	cmr_uint vir_addr;
+	cmr_uint vir_addr_region;
 	struct isp_awb_statistic_info *ae_stat_ptr;
 	struct isp_antiflicker_param *afl_param_ptr;
 	cmr_u32 afl_mode;
