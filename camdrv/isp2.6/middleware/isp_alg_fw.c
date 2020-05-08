@@ -368,6 +368,62 @@ static nsecs_t ispalg_get_sys_timestamp(void)
 	return timestamp;
 }
 
+static cmr_s32 dump_lsc_data(struct isp_alg_fw_context *cxt, cmr_u32 start, cmr_u32 prev, void *data)
+{
+	FILE *fp = NULL;
+	char file_name[256];
+	struct dcam_dev_lsc_info *lsc;
+	cmr_uint addr;
+	cmr_u32 i;
+	cmr_s16 *wtab;
+	cmr_u16 *gain_tab;
+	nsecs_t cur_time = 0;
+
+	lsc = (struct dcam_dev_lsc_info *)data;
+	cur_time = ispalg_get_sys_timestamp();
+	if (start)
+		sprintf(file_name, "%scam%d_lsc_t%08d_%s_start.txt", CAMERA_DUMP_PATH,
+			(cmr_u32)cxt->camera_id, (cmr_u32)cur_time, prev ? "prev" : "cap");
+	else
+		sprintf(file_name, "%scam%d_lsc_t%08d_%s.txt", CAMERA_DUMP_PATH,
+			(cmr_u32)cxt->camera_id, (cmr_u32)cur_time, prev ? "prev" : "cap");
+	fp = fopen(file_name, "w+");
+	if (fp == NULL) {
+		ISP_LOGE("fail to open lsc data file %s\n", file_name);
+		return -1;
+	}
+
+	fprintf(fp, "====== lsc base info ==========\n");
+	fprintf(fp, "bypass = %d\n", lsc->bypass);
+	fprintf(fp, "update_all = %d\n", lsc->update_all);
+	fprintf(fp, "grid = %d\n", lsc->grid_width);
+	fprintf(fp, "grid_x_num = %d\n", lsc->grid_x_num);
+	fprintf(fp, "grid_y_num = %d\n", lsc->grid_y_num);
+	fprintf(fp, "grid_num_t = %d\n", lsc->grid_num_t);
+	fprintf(fp, "grid tab size = %d\n", lsc->gridtab_len);
+	fprintf(fp, "weight tab size = %d\n", lsc->weight_num);
+
+	addr = (cmr_uint)lsc->weight_tab;
+	wtab = (cmr_s16 *)addr;
+
+	fprintf(fp, "\n====== weight tab ========\n");
+	for (i = 0; i < (lsc->weight_num / sizeof(cmr_s16)); i += 3)
+		fprintf(fp, "idx %04d: %d, %d, %d\n", i, wtab[i],  wtab[i + 1], wtab[i + 2]);
+
+	addr = (cmr_uint)lsc->grid_tab;
+	gain_tab = (cmr_u16 *)addr;
+
+	fprintf(fp, "\n====== gain tab ========\n");
+	for (i = 0; i < (lsc->gridtab_len / sizeof(cmr_u16)); i += 4)
+		fprintf(fp, "idx %04d:  0x%04x 0x%04x 0x%04x 0x%04x\n", i,
+			gain_tab[i], gain_tab[i + 1], gain_tab[i + 2], gain_tab[i + 3]);
+
+	fclose(fp);
+	ISP_LOGD("write lsc data file %s\n", file_name);
+
+	return 0;
+}
+
 static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -1599,6 +1655,11 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	struct isp_pm_ioctl_output_param output;
 	struct isp_pm_param_data *param_data;
 	struct isp_u_blocks_info sub_block_info;
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+	int dump_lsc;
+
+	property_get("debug.vendor.cam.pm.lsc.dump", value, "0");
+	dump_lsc = !!atoi(value);
 
 	memset((void *)&input, 0x00, sizeof(struct isp_pm_ioctl_input_param));
 	memset((void *)&output, 0x00, sizeof(struct isp_pm_ioctl_output_param));
@@ -1625,6 +1686,9 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 		sub_block_info.block_info = param_data->data_ptr;
 		sub_block_info.scene_id = scene_id;
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+		if (dump_lsc && param_data->id == ISP_BLK_2D_LSC)
+			dump_lsc_data(cxt, start, ((scene_id == PM_SCENE_PRE) ? 1 : 0), param_data->data_ptr);
+
 		ISP_LOGV("cfg block %x for prev.\n", param_data->id);
 		param_data++;
 	}
@@ -1641,6 +1705,9 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			sub_block_info.scene_id = PM_SCENE_CAP;
 			if ((!IS_DCAM_BLOCK(param_data->id)) || cxt->remosaic_type) {
 				/* todo: refine for 4in1 sensor */
+				if (dump_lsc && param_data->id == ISP_BLK_2D_LSC)
+					dump_lsc_data(cxt, start, 0, param_data->data_ptr);
+
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
 			}
@@ -5449,9 +5516,6 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 		}
 	}
 
-	if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE)
-		return ISP_SUCCESS;
-
 	if (lsc_ver.LSC_SPD_VERSION >= 2) {
 		memset(&pm_param, 0, sizeof(pm_param));
 		BLOCK_PARAM_CFG(io_pm_input, pm_param, ISP_PM_BLK_LSC_INFO, ISP_BLK_2D_LSC, PNULL, 0);
@@ -5514,6 +5578,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_raw_proc_info raw_proc_in;
 	struct pm_workmode_input  pm_input;
 	struct pm_workmode_output pm_output;
+	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
 
 	if (!isp_alg_handle || !in_ptr) {
 		ISP_LOGE("fail to get valid ptr.");
@@ -5604,12 +5669,15 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
 		ret = ispalg_update_alg_param(cxt);
 		ISP_RETURN_IF_FAIL(ret, ("fail to update alg parm"));
+
+		ret = ispalg_update_alsc_result(cxt, (void *)&fwstart_info);
+		ISP_RETURN_IF_FAIL(ret, ("fail to update alsc result"));
 	} else {
 		ret = ispalg_update_smart_param(cxt);
 		ISP_RETURN_IF_FAIL(ret, ("fail to update smart parm"));
-	}
 
-	ispalg_alsc_update(isp_alg_handle);
+		ispalg_alsc_update(isp_alg_handle);
+	}
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
@@ -5634,6 +5702,11 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_RGB_GAIN, NULL, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to set rgb gain"));
+	}
+
+	if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE && cxt->ops.lsc_ops.ioctrl) {
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
 	}
 
 	/* PDAF TYPE 3 PD info stored in sensor info, not in pm */
