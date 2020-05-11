@@ -143,7 +143,8 @@ typedef enum fb_chipinfo{
     PIKE2 = 0,
     SHARKLE,
     SHARKL3,
-    SHARKL5PRO
+    SHARKL5PRO,
+    SHARKL5
 } fb_chipinfo;
 #ifdef  __cplusplus
 }

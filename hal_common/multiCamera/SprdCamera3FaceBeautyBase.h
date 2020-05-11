@@ -62,6 +62,8 @@ public:
         chipinfo = PIKE2;
 #elif defined(CONFIG_ISP_2_5)
         chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+        chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
         chipinfo = SHARKL5PRO;
 #endif
@@ -139,6 +141,8 @@ public:
         chipinfo = PIKE2;
 #elif defined(CONFIG_ISP_2_5)
         chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+        chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
         chipinfo = SHARKL5PRO;
 #endif

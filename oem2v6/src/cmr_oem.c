@@ -4934,13 +4934,15 @@ cmr_int camera_preview_face_beauty_handle(void *data,
 #endif
              fb_chipinfo chipinfo;
 #if defined(CONFIG_ISP_2_3)
-                chipinfo = SHARKLE;
+             chipinfo = SHARKLE;
 #elif defined(CONFIG_ISP_2_4)
-                chipinfo = PIKE2;
+             chipinfo = PIKE2;
 #elif defined(CONFIG_ISP_2_5)
-                chipinfo = SHARKL3;
+             chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+             chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
-                chipinfo = SHARKL5PRO;
+             chipinfo = SHARKL5PRO;
 #endif
              face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
              if (cxt->prev_face_beauty.hSprdFB != NULL)
@@ -5073,15 +5075,17 @@ cmr_int camera_video_face_beauty_handle(void *data,
             face_beauty_set_devicetype(&(cxt->video_face_beauty), SPRD_CAMALG_RUN_TYPE_CPU);
 #endif
 
-      fb_chipinfo chipinfo;
+            fb_chipinfo chipinfo;
 #if defined(CONFIG_ISP_2_3)
-                chipinfo = SHARKLE;
+            chipinfo = SHARKLE;
 #elif defined(CONFIG_ISP_2_4)
-                chipinfo = PIKE2;
+            chipinfo = PIKE2;
 #elif defined(CONFIG_ISP_2_5)
-                chipinfo = SHARKL3;
+            chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+            chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
-                chipinfo = SHARKL5PRO;
+            chipinfo = SHARKL5PRO;
 #endif
             face_beauty_init(&(cxt->video_face_beauty), 1, 2, chipinfo);
             if (cxt->video_face_beauty.hSprdFB != NULL) {
@@ -6988,6 +6992,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                 chipinfo = PIKE2;
 #elif defined(CONFIG_ISP_2_5)
                 chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+                chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
                 chipinfo = SHARKL5PRO;
 #endif
