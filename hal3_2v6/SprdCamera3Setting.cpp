@@ -4712,13 +4712,6 @@ int SprdCamera3Setting::updateWorkParameters(
     }
 
     // JPEG
-    if (frame_settings.exists(ANDROID_JPEG_QUALITY)) {
-        valueU8 = frame_settings.find(ANDROID_JPEG_QUALITY).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.quality, valueU8,
-                         ANDROID_JPEG_QUALITY, 1)
-        HAL_LOGV("jpeg quality is %d", valueU8);
-    }
-
     if (frame_settings.exists(ANDROID_JPEG_THUMBNAIL_QUALITY)) {
         valueU8 =
             frame_settings.find(ANDROID_JPEG_THUMBNAIL_QUALITY).data.u8[0];
@@ -4747,6 +4740,13 @@ int SprdCamera3Setting::updateWorkParameters(
                 s_setting[mCameraId].controlInfo.capture_intent) {
             is_capture = 1;
         }
+    }
+
+    if (frame_settings.exists(ANDROID_JPEG_QUALITY) && is_capture) {
+        valueU8 = frame_settings.find(ANDROID_JPEG_QUALITY).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].jpgInfo.quality, valueU8,
+                         ANDROID_JPEG_QUALITY, 1)
+        HAL_LOGV("jpeg quality is %d", valueU8);
     }
 
     if (frame_settings.exists(ANDROID_JPEG_ORIENTATION) && is_capture) {
