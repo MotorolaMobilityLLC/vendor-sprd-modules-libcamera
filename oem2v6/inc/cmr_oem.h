@@ -381,6 +381,7 @@ struct camera_context {
     cmr_uint is_3dnr_video;
     cmr_u32 blur_facebeauty_flag;
     cmr_uint is_ultra_wide;
+    cmr_uint is_fov_fusion;
     cmr_u32 is_real_bokeh;
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
@@ -622,6 +623,8 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
                                    cmr_uint is_ultra_wide);
+cmr_int camera_set_fov_fusion_mode(cmr_handle oem_handle,
+                                   cmr_uint is_fov_fusion);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);
 cmr_int cmr_get_microdepth_param(cmr_handle oem_handle, void *param);
 cmr_int cmr_set_microdepth_debug_info(cmr_handle oem_handle, void *param);
