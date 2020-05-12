@@ -11055,7 +11055,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             }
             hdr_fd[sw_algorithm_buf_cnt] = zsl_frame.fd;
             sw_algorithm_buf_cnt++;
-            if (mMultiCameraMode == MODE_BOKEH) {
+            if (mMultiCameraMode == MODE_BOKEH || mIsFovFusionMode == true) {
                 char prop[PROPERTY_VALUE_MAX] = {
                     0,
                 };
@@ -11068,7 +11068,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
                     receiveRawPicture(&zsl_frame);
                 }
-                if (sw_algorithm_buf_cnt == 3 && mCameraId == 2) {
+                if (sw_algorithm_buf_cnt == 3 && (mCameraId == 2 || (mIsFovFusionMode == true && mCameraId == 3))) {
                     mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
                                                 CAMERA_IOCTRL_SET_HDR_DISABLE,
                                                 &value);
@@ -11077,7 +11077,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                         zsl_frame.y_vir_addr, zsl_frame.fd);
                     break;
                 }
-                if (mCameraId == 2) {
+                if (mCameraId == 2 || (mIsFovFusionMode == true && mCameraId == 3)) {
                     continue;
                 }
             }
