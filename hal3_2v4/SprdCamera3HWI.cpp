@@ -348,8 +348,15 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
     // open two cameras.
     if ((mCameraSessionActive == 1 && !(isMultiCameraMode(mMultiCameraMode))) ||
         mCameraSessionActive > 2) {
+	int count = 10;
+	while (count> 0 && mCameraSessionActive == 1) {
+		usleep (30 * 1000); // sleep 30ms
+		count--;
+	}
+	if (mCameraSessionActive == 1 || mCameraSessionActive> 2) {
         HAL_LOGE("multiple simultaneous camera instance not supported");
         return -EUSERS;
+	}
     }
 
     if (mCameraOpened) {

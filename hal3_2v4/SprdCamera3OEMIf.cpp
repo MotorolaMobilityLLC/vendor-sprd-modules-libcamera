@@ -4056,14 +4056,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         return;
     }
 
-    SENSOR_Tag sensorInfo;
-    mSetting->getSENSORTag(&sensorInfo);
-    if (0 != frame->sensor_info.exposure_time_denominator) {
-        sensorInfo.exposure_time = 1000000000ll *
-                                   frame->sensor_info.exposure_time_numerator /
-                                   frame->sensor_info.exposure_time_denominator;
-    }
-    mSetting->setSENSORTag(sensorInfo);
+SENSOR_Tag sensorInfo;
 
     if (SHAKE_TEST == getShakeTestState()) {
         overwritePreviewFrame(frame);
@@ -4971,14 +4964,6 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     HAL_LOGD("mReDisplayHeap = %p,frame->y_vir_addr 0x%lx ", mReDisplayHeap,
              frame->y_vir_addr);
 
-    SENSOR_Tag sensorInfo;
-    mSetting->getSENSORTag(&sensorInfo);
-    if (0 != frame->sensor_info.exposure_time_denominator) {
-        sensorInfo.exposure_time = 1000000000ll *
-                                   frame->sensor_info.exposure_time_numerator /
-                                   frame->sensor_info.exposure_time_denominator;
-    }
-    mSetting->setSENSORTag(sensorInfo);
 
     display_flag = iSDisplayCaptureFrame();
     callback_flag = iSCallbackCaptureFrame();
