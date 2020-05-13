@@ -344,6 +344,29 @@ int SprdCamera3Stream::getQBufAddrForNum(uint32_t frameNumber,
     return BAD_VALUE;
 }
 
+int SprdCamera3Stream::getBufAddrForDualVideo(hal_mem_info_t *buf_mem_info,
+                                              cmr_uint *addr_vir,
+                                              cmr_uint *addr_phy, cmr_s32 *fd) {
+    Mutex::Autolock l(mLock);
+    int ret = NO_ERROR;
+
+    if (buf_mem_info == NULL) {
+       HAL_LOGE("buf_mem_info is null");
+       return BAD_VALUE;
+    }
+
+    *addr_vir = (cmr_uint)(buf_mem_info->addr_vir);
+    *addr_phy = (cmr_uint)(buf_mem_info->addr_phy);
+    *fd = (cmr_s32)(buf_mem_info->fd);
+
+    HAL_LOGD("addr_phy = 0x%lx, addr_vir = 0x%lx,"
+             "fd = 0x%x",
+             addr_phy, addr_vir, fd);
+
+    return ret;
+}
+
+
 int SprdCamera3Stream::getQBufHandleForNum(uint32_t frameNumber,
                                            buffer_handle_t **buff) {
     Mutex::Autolock l(mLock);

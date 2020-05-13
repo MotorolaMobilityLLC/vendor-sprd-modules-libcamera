@@ -2383,6 +2383,19 @@ int SprdCamera3HWI::setCameraClearQBuff() {
     return ret;
 }
 
+void SprdCamera3HWI::pushDualVideoBuffer(hal_mem_info_t *mem_info) {
+    if (mem_info == NULL) {
+       HAL_LOGE("mem_info is null");
+       return;
+    }
+
+    mOEMIf->pushDualVideoBuffer(mem_info);
+}
+
+void SprdCamera3HWI::setRealMultiMode(bool mode) {
+    mOEMIf->setRealMultiMode(mode);
+}
+
 void SprdCamera3HWI::getDualOtpData(void **addr, int *size, int *read) {
     void *otp_data = NULL;
     int otp_size = 0;

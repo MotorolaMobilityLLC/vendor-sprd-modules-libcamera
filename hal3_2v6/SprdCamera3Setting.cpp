@@ -2536,8 +2536,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.fdr",
                                       "persist.vendor.cam.fdr.enable"));
 
+    //28 dual view video
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.dualview.pro",
+                           "persist.vendor.cam.dual.view.video.enable"));
+
 #ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
-    // 27 portrait scene mode
+    // 29 portrait scene mode
     HAL_LOGD("pbrb_enable=%d",atoi(prop));
     property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
     if(atoi(prop)==0){

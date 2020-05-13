@@ -3833,19 +3833,20 @@ int sensorGetRole(enum camera_module_id ModuleId) {
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
     int ret = CMR_CAMERA_SUCCESS;
     char value[PROPERTY_VALUE_MAX] = {0};
+
     property_get("persist.vendor.cam.multi.section", value, "3");
     if (atoi(value) == 3) {
-      if (zoom_param->camera_id== SPRD_FOV_FUSION_ID) {
-        zoom_param->PhyCameras = 3;
+     if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
+        zoom_param->PhyCameras = 2;
         zoom_param->MaxDigitalZoom = 10.0;
-        zoom_param->ZoomRatioSection[0] = 0.6;
-        zoom_param->ZoomRatioSection[1] = 1.0;
-        zoom_param->ZoomRatioSection[2] = 2.0;
-        zoom_param->ZoomRatioSection[3] = 10.0;
+        zoom_param->ZoomRatioSection[0] = 2.0;
+        zoom_param->ZoomRatioSection[1] = 10.0;
+        zoom_param->ZoomRatioSection[2] = 0;
+        zoom_param->ZoomRatioSection[3] = 0;
         zoom_param->ZoomRatioSection[4] = 0;
         zoom_param->ZoomRatioSection[5] = 0;
         zoom_param->BinningRatio = 5.0;
-      } else {
+    } else {
         zoom_param->PhyCameras = 3;
         zoom_param->MaxDigitalZoom = 10.0;
         zoom_param->ZoomRatioSection[0] = 0.6;
@@ -3867,6 +3868,7 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
         zoom_param->ZoomRatioSection[5] = 0;
         zoom_param->BinningRatio = 8.0;
     }
+
     return ret;
 }
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,

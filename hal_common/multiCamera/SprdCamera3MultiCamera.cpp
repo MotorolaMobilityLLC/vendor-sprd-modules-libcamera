@@ -8,14 +8,14 @@ ANDROID_SINGLETON_STATIC_INSTANCE(sprdcamera::SprdCamera3MultiCamera);
 namespace sprdcamera {
 
 int SprdCamera3MultiCamera::get_camera_info(int camera_id,
-                                            struct camera_info *info) {
+                                               struct camera_info *info) {
     auto &inst = SprdCamera3MultiCamera::getInstance();
 
     if (inst.mAuthorized) {
-        return inst.mFuncGetCameraInfo(camera_id, info);
+       return inst.mFuncGetCameraInfo(camera_id, info);
     } else {
-        ALOGW("Fallback to id \"0\"");
-        return SprdCamera3Factory::get_camera_info(0, info);
+       ALOGW("Fallback to id \"0\"");
+       return SprdCamera3Factory::get_camera_info(0, info);
     }
 }
 
@@ -33,28 +33,29 @@ int SprdCamera3MultiCamera::camera_device_open(const struct hw_module_t *module,
 }
 
 SprdCamera3MultiCamera::SprdCamera3MultiCamera()
-    : mAuthorized(false), mHandle(NULL), mFuncGetCameraInfo(NULL),
-      mFuncOpen(NULL) {
-    mHandle = dlopen("/vendor/lib/libmulticam.so", RTLD_LAZY);
-    if (!mHandle) {
+    : mAuthorized(false), mHandle(NULL) {
+      mFuncGetCameraInfo=NULL;
+      mFuncOpen=NULL;
+
+      mHandle = dlopen("/vendor/lib/libmulticam.so", RTLD_LAZY);
+      if (!mHandle) {
         ALOGE("Fail to load library: %s", dlerror());
         goto exit;
-    }
+      }
 
-    mFuncGetCameraInfo =
-        (FuncType_GetCameraInfo)dlsym(mHandle, "get_camera_info");
-    if (!mFuncGetCameraInfo) {
-        ALOGE("Fail to load symbol: %s", dlerror());
-        dlclose(mHandle);
-        goto exit;
-    }
-
-    mFuncOpen = (FuncType_Open)dlsym(mHandle, "camera_device_open");
-    if (!mFuncOpen) {
-        ALOGE("Fail to load symbol: %s", dlerror());
-        dlclose(mHandle);
-        goto exit;
-    }
+      mFuncGetCameraInfo =
+              (FuncType_GetCameraInfo)dlsym(mHandle, "get_camera_info");
+      if (!mFuncGetCameraInfo) {
+         ALOGE("Fail to load symbol: %s", dlerror());
+         dlclose(mHandle);
+         goto exit;
+      }
+      mFuncOpen = (FuncType_Open)dlsym(mHandle, "camera_device_open");
+      if (!mFuncOpen) {
+         ALOGE("Fail to load symbol: %s", dlerror());
+         dlclose(mHandle);
+         goto exit;
+      }
 
     mAuthorized = true;
 

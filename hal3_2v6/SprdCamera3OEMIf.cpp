@@ -500,7 +500,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 {
     ATRACE_CALL();
     HAL_LOGI(":hal3: Constructor E camId=%d", cameraId);
-
+    mDualVideoShotFlag =0;
+    mDualVideoMode = 0;
 #ifdef CONFIG_FACE_BEAUTY
     memset(&face_beauty, 0, sizeof(face_beauty));
     mflagfb = false;
@@ -4080,7 +4081,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
 
         beauty_image.inputImage.ion_fd = frame->fd;
-        
         beauty_image.inputImage.offset[0] = 0;
         beauty_image.inputImage.offset[1] = frame->width * frame->height;
         beauty_image.inputImage.width = frame->width;
@@ -4259,8 +4259,22 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (frame->type == PREVIEW_VIDEO_FRAME) {
             if (mVideoWidth <= mCaptureWidth &&
                 mVideoHeight <= mCaptureHeight) {
-                if (mVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))
-                    PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_VIDEO);
+                HAL_LOGD(
+                    "mDualVideoMode %d, mVideoShotFlag = %d mDualVideoShotFlag %d",
+                    mDualVideoMode, mVideoShotFlag, mDualVideoShotFlag);
+		HAL_LOGD(
+                    "frame_num %d mVideoSnapshotFrameNum %d",
+                    frame_num, mVideoSnapshotFrameNum);
+                if (mDualVideoMode) {
+                    if (mVideoShotFlag && mDualVideoShotFlag &&
+                        (frame_num >= mVideoSnapshotFrameNum))
+                        PushVideoSnapShotbuff(frame_num,
+                                              CAMERA_STREAM_TYPE_VIDEO);
+                } else {
+                    if (mVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))
+                        PushVideoSnapShotbuff(frame_num,
+                                              CAMERA_STREAM_TYPE_VIDEO);
+                }
             }
 
             if (mSlowPara.last_frm_timestamp == 0) { /*record first frame*/
@@ -9660,7 +9674,7 @@ int SprdCamera3OEMIf::PushVideoSnapShotbuff(int32_t frame_number,
     SprdCamera3Stream *stream = NULL;
     int ret = NO_ERROR;
 
-    HAL_LOGD("E");
+    HAL_LOGI("E");
 
     if (mVideoShotPushFlag == 0 && frame_number == mVideoShotNum)
         mVideoShotWait.wait(mPreviewCbLock);
@@ -9671,6 +9685,10 @@ int SprdCamera3OEMIf::PushVideoSnapShotbuff(int32_t frame_number,
         if (stream) {
             ret = stream->getQBufAddrForNum(frame_number, &addr_vir, &addr_phy,
                                             &fd);
+            HAL_LOGD("mDualVideoMode %d", mDualVideoMode);
+            if (mDualVideoMode)
+                ret = stream->getBufAddrForDualVideo(mSnapBuffInfo, &addr_vir,
+                                                     &addr_phy, &fd);
             HAL_LOGD("mCameraId = %d, addr_phy = 0x%lx, addr_vir = 0x%lx, "
                      "fd = 0x%x, frame_number = %d",
                      mCameraId, addr_phy, addr_vir, fd, frame_number);
@@ -9682,12 +9700,25 @@ int SprdCamera3OEMIf::PushVideoSnapShotbuff(int32_t frame_number,
 
             mVideoShotPushFlag = 0;
             mVideoShotFlag = 0;
+            mDualVideoShotFlag = 0;
         }
     }
 
     HAL_LOGD("X");
 
     return NO_ERROR;
+}
+
+void SprdCamera3OEMIf::pushDualVideoBuffer(hal_mem_info_t *mem_info) {
+    mSnapBuffInfo = mem_info;
+    mDualVideoShotFlag = 1;
+    HAL_LOGD("pushDualVideoBuffer %p", mSnapBuffInfo);
+}
+
+void SprdCamera3OEMIf::setRealMultiMode(bool mode) {
+    mDualVideoShotFlag = 0;
+    mDualVideoMode = mode;
+    HAL_LOGD("mDualVideoMode %d", mDualVideoMode);
 }
 
 ZslBufferQueue SprdCamera3OEMIf::popZSLQueue() {

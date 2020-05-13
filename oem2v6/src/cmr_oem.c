@@ -15305,13 +15305,13 @@ cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
     cmr_preview_get_prev_aspect_ratio(cxt->prev_cxt.preview_handle, cxt->camera_id, &ratio);
     dst_rect = camera_apply_rect_and_ratio(info->max_size, info->region, cur_rect, ratio);
 
-    CMR_LOGV("src: size %u %u rect %u %u %u %u, dst: size %u %u rect %u %u %u %u, ratio: %f",
+    CMR_LOGV("src: size %u %u rect %u %u %u %u, dst: size %u %u rect %u %u %u %u, ratio: %f, camera_id %d",
             info->max_size.width, info->max_size.height,
             info->region.start_x, info->region.start_y,
             info->region.width, info->region.height,
             cur_size.width, cur_size.height,
             dst_rect.start_x, dst_rect.start_y,
-            dst_rect.width, dst_rect.height, ratio);
+            dst_rect.width, dst_rect.height, ratio, cxt->camera_id);
 
     info->max_size = cur_size;
     info->region = dst_rect;

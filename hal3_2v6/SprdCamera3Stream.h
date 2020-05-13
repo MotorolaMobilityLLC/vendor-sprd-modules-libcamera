@@ -80,6 +80,8 @@ class SprdCamera3Stream {
     uint32_t getHandledFrameNum();
     void setHandledFrameNum(uint32_t frameNum);
     void setUltraWideMode(bool ultra_wide_mode);
+    int getBufAddrForDualVideo(hal_mem_info_t *buf_mem_info, cmr_uint *addr_vir,
+                          cmr_uint *addr_phy, cmr_s32 *fd);
 
   private:
     camera_stream_type_t mStreamType;

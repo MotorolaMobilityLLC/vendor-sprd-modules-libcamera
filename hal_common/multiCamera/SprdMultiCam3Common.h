@@ -475,6 +475,7 @@ typedef enum {
     MULTI_FACE_ATTRIBUTES,
     MULTI_OTP_DATA,
     MULTI_APP_MODE_ID,
+    MULTI_AUTO_SLIDE_POSITION,
 }multi_tag;
 
 };

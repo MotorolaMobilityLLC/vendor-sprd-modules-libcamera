@@ -1973,6 +1973,9 @@ int SprdCamera3MultiBase::getMultiTagToSprdTag(uint8_t multi_tag) {
     case MULTI_APP_MODE_ID:
         sprd_tag = ANDROID_SPRD_APP_MODE_ID;
         break;
+    case MULTI_AUTO_SLIDE_POSITION:
+        sprd_tag = ANDROID_SPRD_AUTO_SLIDE_POSITION;
+        break;
     default:
         break;
     }

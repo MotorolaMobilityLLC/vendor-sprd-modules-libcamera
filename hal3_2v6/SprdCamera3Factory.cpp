@@ -122,7 +122,7 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
                                         struct camera_info *info) {
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
-    if (camera_id == SPRD_MULTI_CAMERA_ID || camera_id == SPRD_FOV_FUSION_ID) {
+    if (camera_id == SPRD_MULTI_CAMERA_ID || camera_id == SPRD_FOV_FUSION_ID || camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
         if (NULL == sensorGetLogicaInfo4MulitCameraId(SPRD_MULTI_CAMERA_ID)) {
             camera_id = 0;
         }
@@ -136,7 +136,7 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
     }
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
-    if (camera_id == SPRD_MULTI_CAMERA_ID || camera_id == SPRD_FOV_FUSION_ID)
+    if (camera_id == SPRD_MULTI_CAMERA_ID || camera_id == SPRD_FOV_FUSION_ID || camera_id == SPRD_DUAL_VIEW_VIDEO_ID)
         return SprdCamera3MultiCamera::get_camera_info(camera_id, info);
 #endif
     /* high resolution id */
@@ -425,7 +425,7 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     HAL_LOGI("SPRD Camera Hal :hal3: cameraId=%d", atoi(id));
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
-    if (atoi(id) == SPRD_MULTI_CAMERA_ID || atoi(id) ==SPRD_FOV_FUSION_ID) {
+    if (atoi(id) == SPRD_MULTI_CAMERA_ID || atoi(id) ==SPRD_FOV_FUSION_ID || atoi(id) == SPRD_DUAL_VIEW_VIDEO_ID) {
         if (NULL == sensorGetLogicaInfo4MulitCameraId(SPRD_MULTI_CAMERA_ID)) {
             id = "0";
         }
@@ -455,7 +455,7 @@ int SprdCamera3Factory::camera_device_open(const struct hw_module_t *module,
     HAL_LOGI("multi cameraId=%d", atoi(id));
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
-    if (atoi(id) == SPRD_MULTI_CAMERA_ID || atoi(id) ==SPRD_FOV_FUSION_ID) {
+    if (atoi(id) == SPRD_MULTI_CAMERA_ID || atoi(id) ==SPRD_FOV_FUSION_ID || atoi(id) == SPRD_DUAL_VIEW_VIDEO_ID) {
         return SprdCamera3MultiCamera::camera_device_open(module, id,
                                                           hw_device);
     }

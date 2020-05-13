@@ -248,6 +248,7 @@ static tags_info_t
         {"sprd3DParam", TYPE_BYTE},
         {"sprdlightPortraitType", TYPE_INT32},
         {"sprdlightPortraitTips", TYPE_INT32},
+        {"sprdSlidePosition", TYPE_INT32},
         {"sprdportraitbackgroundreplacementtype", TYPE_INT32},
         {"sprdAvailableAutoFdr", TYPE_BYTE},
         {"supermacrophoto", TYPE_BYTE},

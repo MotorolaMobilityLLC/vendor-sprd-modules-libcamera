@@ -334,6 +334,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int camera_ioctrl(int cmd, void *param1, void *param2);
     void setMimeType(int type);
     void setOriginalPictureSize(int32_t width,int32_t height);
+    void pushDualVideoBuffer(hal_mem_info_t *mem_info);
+    void setRealMultiMode(bool mode);
 
   public:
     uint32_t isPreAllocCapMem();
@@ -813,6 +815,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int32_t mVideoShotFlag;
     int32_t mVideoShotPushFlag;
     Condition mVideoShotWait;
+    hal_mem_info_t *mSnapBuffInfo;
+    int32_t mDualVideoShotFlag;
+    int32_t mDualVideoMode;
 
     // pre-alloc capture memory
     uint32_t mIsPreAllocCapMem;
