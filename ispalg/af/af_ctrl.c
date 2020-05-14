@@ -543,16 +543,12 @@ static cmr_int afctrl_create_thread(struct afctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	rtn = cmr_thread_create(&cxt_ptr->thr_handle, AFCTRL_THREAD_QUEUE_NUM, afctrl_ctrl_thr_proc, (void *)cxt_ptr);
+	rtn = cmr_thread_create2(&cxt_ptr->thr_handle, AFCTRL_THREAD_QUEUE_NUM,
+            afctrl_ctrl_thr_proc, (void *)cxt_ptr, "afctrl");
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
 		goto exit;
-	}
-	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "afctrl");
-	if (CMR_MSG_SUCCESS != rtn) {
-		ISP_LOGE("fail to set afctrl name");
-		rtn = CMR_MSG_SUCCESS;
 	}
 exit:
 	ISP_LOGI("af_ctrl thread rtn %ld", rtn);

@@ -152,18 +152,13 @@ cmr_int cmr_focus_init(struct af_init_param *parm_ptr, cmr_u32 camera_id,
     sem_init(&af_cxt->isp_af_sem, 0, 0);
 
     /*create thread*/
-    ret = cmr_thread_create((cmr_handle *)&af_cxt->thread_handle,
+    ret = cmr_thread_create2((cmr_handle *)&af_cxt->thread_handle,
                             CMR_AF_MSG_QUEUE_SIZE, af_thread_proc,
-                            (void *)af_cxt);
+                            (void *)af_cxt, "focus_init");
 
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("create thread fail");
         goto af_init_end;
-    }
-    ret = cmr_thread_set_name(af_cxt->thread_handle, "focus_init");
-    if (CMR_MSG_SUCCESS != ret) {
-        CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
     }
     *af_handle = (cmr_handle)af_cxt;
 

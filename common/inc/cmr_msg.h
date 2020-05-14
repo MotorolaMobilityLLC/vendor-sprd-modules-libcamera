@@ -38,6 +38,7 @@ enum {
     CMR_MSG_QUEUE_DESTROYED,
 };
 
+/* see struct cmr_msg.sync_flag */
 enum {
     CMR_MSG_SYNC_NONE = 0,
     CMR_MSG_SYNC_RECEIVED,
@@ -49,10 +50,12 @@ struct cmr_msg {
     cmr_u32 sub_msg_type;
     void *data;
     cmr_u32 alloc_flag; /*0 , no alloc; 1, data alloc-ed by the send */
-    cmr_u32
-        sync_flag;  /*0 , no sync, post whatever is received or processed; 1,
-                       sync by it is received; 2 sync by it is processed*/
-    void *cmr_priv; /*reserved by cmr thread, not opened for any user*/
+    /* 0, no sync, post whatever is received or processed;
+     * 1, sync by it is received;
+     * 2 sync by it is processed
+     */
+    cmr_u32 sync_flag;
+    void *cmr_priv; /* reserved by cmr thread, not opened for any user */
 };
 
 #define MSG_INIT(name)                                                         \
@@ -82,7 +85,11 @@ cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle);
 cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle);
 
 cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
-                          msg_process proc_cb, void *p_data);
+                     msg_process proc_cb, void *p_data);
+
+cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
+                           msg_process proc_cb, void *p_data,
+                           const char *thread_name);
 
 cmr_int cmr_thread_destroy(cmr_handle thread_handle);
 

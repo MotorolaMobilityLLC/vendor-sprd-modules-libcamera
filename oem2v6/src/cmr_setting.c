@@ -4272,18 +4272,13 @@ cmr_int cmr_setting_init(struct setting_init_in *param_ptr,
     cmr_bzero(cpt, sizeof(*cpt));
 
     /*create thread */
-    ret = cmr_thread_create(&cpt->thread_handle, SETTING_MSG_QUEUE_SIZE,
-                            setting_thread_proc, (void *)cpt);
+    ret = cmr_thread_create2(&cpt->thread_handle, SETTING_MSG_QUEUE_SIZE,
+                            setting_thread_proc, (void *)cpt, "setting");
 
     if (CMR_MSG_SUCCESS != ret) {
         CMR_LOGE("create thread failed");
         ret = -CMR_CAMERA_NO_MEM;
         goto setting_out;
-    }
-    ret = cmr_thread_set_name(cpt->thread_handle, "setting");
-    if (CMR_MSG_SUCCESS != ret) {
-        CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
     }
 
     for (i = 0; i < CAMERA_ID_MAX; ++i) {

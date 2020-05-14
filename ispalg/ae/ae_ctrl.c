@@ -592,16 +592,11 @@ static cmr_int aectrl_create_thread(struct aectrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, aectrl_ctrl_thr_proc, (cmr_handle) cxt_ptr);
+	rtn = cmr_thread_create2(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, aectrl_ctrl_thr_proc, (cmr_handle) cxt_ptr, "aectrl");
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
 		goto aectrl_create_thread_exit;
-	}
-	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "aectrl");
-	if (CMR_MSG_SUCCESS != rtn) {
-		ISP_LOGE("fail to set aectrl name");
-		rtn = CMR_MSG_SUCCESS;
 	}
   aectrl_create_thread_exit:
 	ISP_LOGV("done %ld", rtn);

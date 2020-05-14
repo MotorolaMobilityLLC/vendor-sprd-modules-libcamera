@@ -318,19 +318,13 @@ static cmr_int cmr_scale_create_thread(struct scale_file *file) {
     }
 
     if (!file->is_inited) {
-        ret = cmr_thread_create(&file->scale_thread, SCALE_MSG_QUEUE_SIZE,
-                                cmr_scale_thread_proc, (void *)file);
+        ret = cmr_thread_create2(&file->scale_thread, SCALE_MSG_QUEUE_SIZE,
+                                cmr_scale_thread_proc, (void *)file, "scale");
         if (ret) {
             CMR_LOGE("create thread failed!");
             ret = CMR_CAMERA_FAIL;
             goto out;
         }
-        ret = cmr_thread_set_name(file->scale_thread, "scale");
-        if (CMR_MSG_SUCCESS != ret) {
-            CMR_LOGE("fail to set thr name");
-            ret = CMR_MSG_SUCCESS;
-        }
-
         file->is_inited = 1;
     }
 

@@ -133,17 +133,13 @@ static cmr_int yde_thread_create(struct class_yde *class_handle) {
     if (!class_handle->is_inited) {
         for (thread_id = 0; thread_id < THREAD_YDE; thread_id++) {
             cur_handle_ptr = &yde_handle->thread_handles[thread_id];
-            ret = cmr_thread_create(cur_handle_ptr, CAMERA_YDE_MSG_QUEUE_SIZE,
-                                    yde_thread_proc, (void *)class_handle);
+            ret = cmr_thread_create2(cur_handle_ptr, CAMERA_YDE_MSG_QUEUE_SIZE,
+                                    yde_thread_proc, (void *)class_handle,
+                                    "yde");
             if (ret) {
                 CMR_LOGE("send msg failed!");
                 ret = CMR_CAMERA_FAIL;
                 return ret;
-            }
-            ret = cmr_thread_set_name(*cur_handle_ptr, "yde");
-            if (CMR_MSG_SUCCESS != ret) {
-                CMR_LOGE("fail to set thr name");
-                ret = CMR_MSG_SUCCESS;
             }
             message.sync_flag = CMR_MSG_SYNC_PROCESSED;
             message.msg_type = CMR_EVT_YDE_INIT;

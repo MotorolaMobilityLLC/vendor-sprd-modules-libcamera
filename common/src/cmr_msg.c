@@ -55,6 +55,7 @@ struct cmr_thread {
     void *p_data; // specific data
     cmr_int magic;
     msg_process msg_process_cb;
+    char name[16]; /* name(no more than 15) for log */
 };
 
 enum { CMR_THREAD_INIT_EVT = 0x00FFFFFF, CMR_THREAD_EXIT_EVT = 0x01FFFFFF };
@@ -378,9 +379,8 @@ static void *cmr_common_routine(void *client_data) {
             break;
         }
 
-        CMR_LOGV("thread 0x%p, data 0x%p, message.msg_type 0x%x, sub-type 0x%x",
-                 thread, thread->p_data, message.msg_type,
-                 message.sub_msg_type);
+        CMR_LOGV("thread[%p]%s, message_type 0x%x, 0x%x",
+                 thread, thread->name, message.msg_type, message.sub_msg_type);
 
         switch (message.msg_type) {
         case CMR_THREAD_INIT_EVT:
@@ -415,12 +415,83 @@ static void *cmr_common_routine(void *client_data) {
 
     return NULL;
 }
+/* Fuction: cmr_thread_create
+ * Suggest: please use cmr_thread_create2
+ *   maybe will remove this function later, now remain this for
+ *   those gerrit using but not merged
+ */
 cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
-                          msg_process proc_cb, void *p_data) {
+                     msg_process proc_cb, void *p_data) {
     cmr_int rtn = CMR_MSG_SUCCESS;
     pthread_attr_t attr;
     struct cmr_thread *thread = NULL;
     CMR_MSG_INIT(message);
+
+    CMR_LOGV("E");
+
+    if (!thread_handle || !queue_length || !proc_cb) {
+        return CMR_MSG_PARAM_ERR;
+    }
+
+    *thread_handle = 0;
+    thread = (struct cmr_thread *)malloc(sizeof(struct cmr_thread));
+    if (!thread) {
+        CMR_LOGE("No mem!");
+        return CMR_MSG_NO_MEM;
+    }
+    thread->magic = CMR_THREAD_MAGIC_CODE;
+    thread->p_data = p_data;
+    thread->msg_process_cb = proc_cb;
+    memset(thread->name, 0x00, sizeof(thread->name));
+    CMR_LOGV("thread 0x%p, data 0x%p", thread, p_data);
+    rtn = cmr_msg_queue_create(queue_length, &thread->queue_handle);
+    if (rtn) {
+        CMR_LOGE("No mem to create msg queue");
+        free((void *)thread);
+        thread = NULL;
+        return rtn;
+    }
+
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    rtn = pthread_create(&thread->thread_handle, &attr, cmr_common_routine,
+                         thread);
+    if (rtn) {
+        CMR_LOGE("Fail to create thread");
+        free((void *)thread->queue_handle);
+        free((void *)thread);
+        thread = NULL;
+        return rtn;
+    }
+    message.msg_type = CMR_THREAD_INIT_EVT;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    rtn = cmr_msg_post(thread->queue_handle, &message, 1);
+    if (rtn) {
+        CMR_LOGE("Fail to send INIT message to thread");
+        free((void *)thread->queue_handle);
+        free((void *)thread);
+        thread->queue_handle = NULL;
+        thread = NULL;
+        return rtn;
+    }
+
+    pthread_attr_destroy(&attr);
+    *thread_handle = (cmr_handle)thread;
+
+    CMR_LOGV("X");
+    return rtn;
+}
+/* Function: cmr_thread_create2
+ * recommended, simple, can print name to log
+ */
+cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
+                           msg_process proc_cb, void *p_data,
+                           const char *thread_name) {
+    cmr_int rtn = CMR_MSG_SUCCESS;
+    pthread_attr_t attr;
+    struct cmr_thread *thread = NULL;
+    CMR_MSG_INIT(message);
+    int i;
 
     CMR_LOGV("E");
 
@@ -457,6 +528,17 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
         thread = NULL;
         return rtn;
     }
+    // set name, if no, auto named as :cam_xxxx
+    pthread_setname_np(thread->thread_handle, thread_name);
+    if (thread_name == NULL)
+        snprintf(thread->name, sizeof(thread->name), "cam_%X",
+                (uint16_t)(thread->thread_handle >> 8));
+    else if (strlen(thread_name) < 1)
+        snprintf(thread->name, sizeof(thread->name), "cam_%X",
+                (uint16_t)(thread->thread_handle >> 8));
+    else
+        snprintf(thread->name, sizeof(thread->name), "%s", thread_name);
+    CMR_LOGV("[%p]%s size %d", thread, thread->name, (int)sizeof(thread->name));
 
     message.msg_type = CMR_THREAD_INIT_EVT;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
@@ -531,6 +613,7 @@ cmr_int cmr_thread_msg_num(cmr_handle thread_handle, cmr_u32 *pmsg_num) {
 cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name) {
     cmr_int ret = CMR_MSG_SUCCESS;
     struct cmr_thread *thread = NULL;
+    int i;
 
     if (!thread_handle || !name) {
         return CMR_MSG_PARAM_ERR;
@@ -538,6 +621,11 @@ cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name) {
 
     thread = (struct cmr_thread *)thread_handle;
     ret = pthread_setname_np(thread->thread_handle, name);
+    // save name
+    i = strlen(name);
+    i = i < sizeof(thread->name) ? i : (sizeof(thread->name) - 1);
+    memcpy(thread->name, name, i);
+
     return ret;
 }
 

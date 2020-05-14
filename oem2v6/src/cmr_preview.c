@@ -2172,33 +2172,22 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
         pthread_mutex_init(&handle->thread_cxt.prev_stop_mutex, NULL);
         sem_init(&handle->thread_cxt.prev_sync_sem, 0, 0);
 
-        ret = cmr_thread_create(&handle->thread_cxt.assist_thread_handle,
+        ret = cmr_thread_create2(&handle->thread_cxt.assist_thread_handle,
                                 PREV_MSG_QUEUE_SIZE, prev_assist_thread_proc,
-                                (void *)handle);
+                                (void *)handle, "prev_assist");
         if (ret) {
             CMR_LOGE("send msg failed!");
             ret = CMR_CAMERA_FAIL;
             goto end;
-        }
-        ret = cmr_thread_set_name(handle->thread_cxt.assist_thread_handle,
-                                  "prev_assist");
-        if (CMR_MSG_SUCCESS != ret) {
-            CMR_LOGE("fail to set thr name");
-            ret = CMR_MSG_SUCCESS;
         }
 
-        ret = cmr_thread_create(&handle->thread_cxt.thread_handle,
+        ret = cmr_thread_create2(&handle->thread_cxt.thread_handle,
                                 PREV_MSG_QUEUE_SIZE, prev_thread_proc,
-                                (void *)handle);
+                                (void *)handle, "prev");
         if (ret) {
             CMR_LOGE("send msg failed!");
             ret = CMR_CAMERA_FAIL;
             goto end;
-        }
-        ret = cmr_thread_set_name(handle->thread_cxt.thread_handle, "prev");
-        if (CMR_MSG_SUCCESS != ret) {
-            CMR_LOGE("fail to set thr name");
-            ret = CMR_MSG_SUCCESS;
         }
 
         handle->thread_cxt.is_inited = 1;
@@ -2267,18 +2256,13 @@ cmr_int prev_create_cb_thread(struct prev_handle *handle) {
 
     CMR_LOGI("E");
 
-    ret = cmr_thread_create(&handle->thread_cxt.cb_thread_handle,
+    ret = cmr_thread_create2(&handle->thread_cxt.cb_thread_handle,
                             PREV_MSG_QUEUE_SIZE, prev_cb_thread_proc,
-                            (void *)handle);
+                            (void *)handle, "prev_cb");
     if (ret) {
         CMR_LOGE("send msg failed!");
         ret = CMR_CAMERA_FAIL;
         goto end;
-    }
-    ret = cmr_thread_set_name(handle->thread_cxt.cb_thread_handle, "prev_cb");
-    if (CMR_MSG_SUCCESS != ret) {
-        CMR_LOGE("fail to set thr name");
-        ret = CMR_MSG_SUCCESS;
     }
 
     message.msg_type = PREV_EVT_CB_INIT;

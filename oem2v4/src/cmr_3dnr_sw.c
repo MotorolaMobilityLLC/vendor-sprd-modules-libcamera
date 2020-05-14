@@ -1633,20 +1633,14 @@ static cmr_int threednr_prevthread_create(struct class_3dnr_pre *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create(&class_handle->threednr_prevthread,
+        ret = cmr_thread_create2(&class_handle->threednr_prevthread,
                                 /*CAMERA_3DNR_MSG_QUEUE_SIZE*/ 8,
                                 threednr_process_prevthread_proc,
-                                (void *)class_handle);
+                                (void *)class_handle, "threednr_prv");
         if (ret) {
             CMR_LOGE("send msg failed!");
             ret = CMR_CAMERA_FAIL;
             return ret;
-        }
-        ret = cmr_thread_set_name(class_handle->threednr_prevthread,
-                                  "threednr_prv");
-        if (CMR_MSG_SUCCESS != ret) {
-            CMR_LOGE("fail to set 3dnr prev name");
-            ret = CMR_MSG_SUCCESS;
         }
         message.msg_type = CMR_EVT_3DNR_PREV_INIT;
         message.sync_flag = CMR_MSG_SYNC_RECEIVED;
@@ -1685,34 +1679,22 @@ static cmr_int threednr_thread_create(struct class_3dnr *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create(
-            &class_handle->threednr_thread, CAMERA_3DNR_MSG_QUEUE_SIZE,
-            threednr_process_thread_proc, (void *)class_handle);
+        ret = cmr_thread_create2(&class_handle->threednr_thread,
+                CAMERA_3DNR_MSG_QUEUE_SIZE, threednr_process_thread_proc,
+                (void *)class_handle, "threednr");
         if (ret) {
             CMR_LOGE("send msg failed!");
             ret = CMR_CAMERA_FAIL;
             return ret;
         }
-        ret = cmr_thread_set_name(class_handle->threednr_thread, "threednr");
-        if (CMR_MSG_SUCCESS != ret) {
-            CMR_LOGE("fail to set 3dnr name");
-            ret = CMR_MSG_SUCCESS;
-        }
-
-        ret = cmr_thread_create(
-            &class_handle->scaler_thread, CAMERA_3DNR_MSG_QUEUE_SIZE,
-            threednr_scaler_thread_proc, (void *)class_handle);
+        ret = cmr_thread_create2(&class_handle->scaler_thread,
+                CAMERA_3DNR_MSG_QUEUE_SIZE, threednr_scaler_thread_proc,
+                (void *)class_handle, "scaler_3dnr");
         if (ret) {
             CMR_LOGE("send msg failed!");
             ret = CMR_CAMERA_FAIL;
             return ret;
         }
-        ret = cmr_thread_set_name(class_handle->scaler_thread, "scaler_3dnr");
-        if (CMR_MSG_SUCCESS != ret) {
-            CMR_LOGE("fail to set 3dnr name");
-            ret = CMR_MSG_SUCCESS;
-        }
-
         class_handle->is_inited = 1;
     }
 

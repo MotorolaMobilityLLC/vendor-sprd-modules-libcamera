@@ -259,16 +259,11 @@ static cmr_int awbctrl_create_thread(struct awbctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, awbctrl_ctrl_thr_proc, (cmr_handle) cxt_ptr);
+	rtn = cmr_thread_create2(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, awbctrl_ctrl_thr_proc, (cmr_handle) cxt_ptr, "awbctrl");
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
 		goto exit;
-	}
-	rtn = cmr_thread_set_name(cxt_ptr->thr_handle, "awbctrl");
-	if (CMR_MSG_SUCCESS != rtn) {
-		ISP_LOGE("fail to set awbctrl name");
-		rtn = CMR_MSG_SUCCESS;
 	}
   exit:
 	ISP_LOGI("done %ld", rtn);

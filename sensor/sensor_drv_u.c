@@ -706,9 +706,10 @@ LOCAL cmr_int sensor_create_ctrl_thread(struct sensor_drv_context *sensor_cxt) {
         pthread_mutex_init(&sensor_cxt->ctrl_thread_cxt.sensor_mutex, NULL);
         sem_init(&sensor_cxt->ctrl_thread_cxt.sensor_sync_sem, 0, 0);
 
-        ret = cmr_thread_create(&sensor_cxt->ctrl_thread_cxt.thread_handle,
+        ret = cmr_thread_create2(&sensor_cxt->ctrl_thread_cxt.thread_handle,
                                 SENSOR_CTRL_MSG_QUEUE_SIZE,
-                                sensor_ctrl_thread_proc, (void *)sensor_cxt);
+                                sensor_ctrl_thread_proc, (void *)sensor_cxt,
+                                "sn_ctrl");
         if (ret) {
             SENSOR_LOGE("send msg failed!");
             ret = SENSOR_FAIL;

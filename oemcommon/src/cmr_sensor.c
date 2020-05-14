@@ -826,14 +826,9 @@ cmr_int cmr_sns_create_thread(struct cmr_sensor_handle *handle) {
     CMR_LOGI("is_inited %ld", handle->thread_cxt.is_inited);
 
     if (!handle->thread_cxt.is_inited) {
-        ret = cmr_thread_create(&handle->thread_cxt.thread_handle,
+        ret = cmr_thread_create2(&handle->thread_cxt.thread_handle,
                                 SENSOR_MSG_QUEUE_SIZE, cmr_sns_thread_proc,
-                                (void *)handle);
-        ret = cmr_thread_set_name(handle->thread_cxt.thread_handle, "sensor");
-        if (CMR_MSG_SUCCESS != ret) {
-            CMR_LOGE("fail to set thr name");
-            ret = CMR_CAMERA_FAIL;
-        }
+                                (void *)handle, "sensor");
     }
 
 end:

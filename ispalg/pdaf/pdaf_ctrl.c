@@ -283,16 +283,11 @@ static cmr_int pdafctrl_create_thread(cmr_handle handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct pdafctrl_context *cxt = (struct pdafctrl_context *)handle;
 
-	ret = cmr_thread_create(&cxt->thread_cxt.ctrl_thr_handle, PDAFCTRL_MSG_QUEUE_SIZE, pdafctrl_thread_proc, (void *)handle);
+	ret = cmr_thread_create2(&cxt->thread_cxt.ctrl_thr_handle, PDAFCTRL_MSG_QUEUE_SIZE, pdafctrl_thread_proc, (void *)handle, "pdafctrl");
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create main thread %ld", ret);
 		ret = ISP_ERROR;
 		goto exit;
-	}
-	ret = cmr_thread_set_name(cxt->thread_cxt.ctrl_thr_handle, "pdafctrl");
-	if (CMR_MSG_SUCCESS != ret) {
-		ISP_LOGE("fail to set pdafctrl name");
-		ret = CMR_MSG_SUCCESS;
 	}
   exit:
 	ISP_LOGV("done %ld", ret);

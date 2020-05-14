@@ -8401,9 +8401,9 @@ int SprdCameraHardware::ZSLMode_monitor_thread_init(void *p_data) {
     SprdCameraHardware *obj = (SprdCameraHardware *)p_data;
 
     if (!obj->mZSLModeMonitorInited) {
-        ret = cmr_thread_create((cmr_handle *)&obj->mZSLModeMonitorMsgQueHandle,
+        ret = cmr_thread_create2((cmr_handle *)&obj->mZSLModeMonitorMsgQueHandle,
                                 ZSLMode_MONITOR_QUEUE_SIZE,
-                                ZSLMode_monitor_thread_proc, (void *)obj);
+                                ZSLMode_monitor_thread_proc, (void *)obj, "zsl_moni");
         if (ret) {
             LOGE("ZSLMode_monitor_thread_init create send msg failed!");
             return ret;
