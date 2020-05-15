@@ -1617,6 +1617,7 @@ enum isp_smart_x_type {
 	ISP_SMART_X_TYPE_BV_GAIN = 1,
 	ISP_SMART_X_TYPE_CT = 2,
 	ISP_SMART_X_TYPE_BV_CT = 3,
+	ISP_SMART_X_TYPE_BV_ABLWEIGHT = 4,//raw_gtm,rgb_ltm,yuv_ltm
 };
 
 enum isp_smart_y_type {
@@ -1935,6 +1936,45 @@ struct sensor_ae_tab {
 	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
 };
 
+//DRE feature
+struct sensor_predre_param
+{
+	cmr_u8 enable;
+	cmr_u8 imgKey_setting_mode;
+	cmr_u8 tarNorm_setting_mode;
+	cmr_u8 target_norm;
+	cmr_u16 imagekey;
+	cmr_u16 min_per;
+	cmr_u16 max_per;
+	cmr_u16 stat_step ;
+	cmr_u16 low_thresh;
+	cmr_u16 high_thresh;
+	cmr_u8 uv_gain_ratio;
+	cmr_u8 tarCoeff;
+	cmr_u8 reserved[2];//for 4-byte alignment
+};
+
+struct sensor_postdre_param
+{
+	cmr_u8 enable;
+	cmr_u8 strength;
+	cmr_u8 texture_counter_en;
+	cmr_u8 text_point_thres;
+	cmr_u8 text_prop_thres;
+	cmr_u8 tile_num_auto;
+	cmr_u8 tile_num_x;
+	cmr_u8 tile_num_y;
+	cmr_u16 text_point_alpha;
+	cmr_u16 reserved;
+};
+
+//DRE
+struct sensor_dre_level {
+	struct sensor_predre_param predre_param[16];
+	struct sensor_postdre_param postdre_param[16];
+	cmr_u8 reserved[280];
+ };
+ 
 struct sensor_lens_map_info {
 	cmr_u32 envi;
 	cmr_u32 ct;

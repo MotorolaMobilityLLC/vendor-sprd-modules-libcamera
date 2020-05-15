@@ -1187,6 +1187,7 @@ enum isp_smart_x_type {
 	ISP_SMART_X_TYPE_BV_GAIN = 1,
 	ISP_SMART_X_TYPE_CT = 2,
 	ISP_SMART_X_TYPE_BV_CT = 3,
+	ISP_SMART_X_TYPE_BV_ABLWEIGHT = 4,//raw_gtm,rgb_ltm,yuv_ltm
 };
 
 enum isp_smart_y_type {
