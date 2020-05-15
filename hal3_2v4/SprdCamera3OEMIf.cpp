@@ -1956,8 +1956,15 @@ bool SprdCamera3OEMIf::setCameraPreviewDimensions() {
                         capture_size.width = (cmr_u32)mVideoWidth;
                         capture_size.height = (cmr_u32)mVideoHeight;
                     } else {
-                        capture_size.width = (cmr_u32)mPreviewWidth;
-                        capture_size.height = (cmr_u32)mPreviewHeight;
+                        /*for testVideoPreviewSurfaceSharing*/
+                        if(mPreviewWidth && mPreviewHeight) {
+                            capture_size.width = (cmr_u32)mPreviewWidth;
+                            capture_size.height = (cmr_u32)mPreviewHeight;
+                        } else {
+                            capture_size.width = mVideoWidth;
+                            capture_size.height = mVideoHeight;
+                        }
+                        /*for testVideoPreviewSurfaceSharing*/
                     }
                 } else {
                     if (mCaptureWidth != 0 && mCaptureHeight != 0) {

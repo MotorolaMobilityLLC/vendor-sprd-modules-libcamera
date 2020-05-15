@@ -404,10 +404,16 @@ int SprdCamera3Stream::getQBufForHandle(buffer_handle_t *buff,
 
     for (iter = mBufferList.begin(); iter != mBufferList.end(); iter++) {
         if ((*iter) && (*iter)->buffer_handle == buff) {
-            *addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
-            *addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
-            *fd = (*iter)->mem_info.fd;
-            return ret;
+            HAL_LOGV("share_fd 0x%x, fd 0x%x",(*iter)->mem_info.fd,((struct private_handle_t *)(*buff))->share_fd);
+            if ((*iter)->mem_info.fd == ((struct private_handle_t *)(*buff))->share_fd) {
+                *addr_vir = (cmr_uint)((*iter)->mem_info.addr_vir);
+                *addr_phy = (cmr_uint)((*iter)->mem_info.addr_phy);
+                *fd = (*iter)->mem_info.fd;
+                return ret;
+            } else {
+                HAL_LOGE("error fd matched, share_fd 0x%x, fd 0x%x",(*iter)->mem_info.fd,((struct private_handle_t *)(*buff))->share_fd);
+                continue;
+            }
         }
     }
 
