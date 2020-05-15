@@ -18,7 +18,7 @@
 #include "isp_blocks_cfg.h"
 
 static void post_dre_init(struct isp_dres_param *dst_ptr,
-			  struct sensor_postdre_param *src_ptr)
+			struct sensor_postdre_param *src_ptr)
 {
 	struct isp_dres_param *pdst = dst_ptr;
 	struct sensor_postdre_param *psrc = src_ptr;
@@ -63,7 +63,7 @@ static void pre_dre_init(struct isp_dres_param *dst_ptr,
 }
 
 cmr_s32 _pm_dre_init(void *dst_dre_param, void *src_dre_param, void *param1,
-		     void *param2)
+			void *param2)
 {
 	//cmr_u32 i = 0;
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -78,8 +78,9 @@ cmr_s32 _pm_dre_init(void *dst_dre_param, void *src_dre_param, void *param1,
 
 	pre_dre_init(dst_ptr, &src_ptr->predre_param[0]);
 	post_dre_init(dst_ptr, &src_ptr->postdre_param[0]);
-	dst_ptr->levels[def_lv].predre_param.enable &= !header_ptr->bypass;
-	dst_ptr->levels[def_lv].postdre_param.enable &= !header_ptr->bypass;
+
+	dst_ptr->levels[def_lv].predre_param.enable |= !header_ptr->bypass;
+	dst_ptr->levels[def_lv].postdre_param.enable |= !header_ptr->bypass;
 	ISP_LOGV("pre_en %d post_en %d",
 		dst_ptr->levels[def_lv].predre_param.enable,
 		dst_ptr->levels[def_lv].postdre_param.enable);
@@ -97,7 +98,7 @@ cmr_s32 _pm_dre_init(void *dst_dre_param, void *src_dre_param, void *param1,
 }
 
 cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0,
-			  void *param_ptr1)
+			void *param_ptr1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr =
@@ -119,9 +120,8 @@ cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0,
 			return ISP_SUCCESS;
 		}
 
-
 		rtn = _pm_check_smart_param(block_result, &val_range, 1,
-						ISP_SMART_Y_TYPE_VALUE);
+					ISP_SMART_Y_TYPE_VALUE);
 		if (ISP_SUCCESS != rtn) {
 			ISP_LOGE("fail to check pm smart param !");
 			return rtn;
@@ -159,7 +159,7 @@ cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0,
 
 		dst_ptr->cur.postdre_param.enable =
 			dst_ptr->levels[level].postdre_param.enable;
-		dst_ptr->cur.predre_param.enable &= !header_ptr->bypass;
+		dst_ptr->cur.postdre_param.enable &= !header_ptr->bypass;
 		dst_ptr->cur.postdre_param.tile_num_x =
 			dst_ptr->levels[level].postdre_param.tile_num_x;
 		dst_ptr->cur.postdre_param.tile_num_y =
@@ -192,7 +192,7 @@ cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0,
 }
 
 cmr_s32 _pm_dre_get_param(void *dre_param, cmr_u32 cmd, void *rtn_param0,
-			  void *rtn_param1)
+			void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_dres_param *dre_ptr = (struct isp_dres_param *)dre_param;

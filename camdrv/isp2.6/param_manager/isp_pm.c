@@ -98,6 +98,10 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_4IN1_PARAM, 0 },
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
+	{ ISP_BLK_CNR3, 0 },
+	{ ISP_BLK_MFNR, 0 }, /* NR block */
+	{ ISP_BLK_DRE, 0 },
+	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -123,6 +127,8 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ DCAM_BLK_NLM,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
 	{ DCAM_BLK_NLM,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
 	{ DCAM_BLK_NLM,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+	{ ISP_BLK_MFNR,			ISP_BLK_MFNR_T, sizeof(struct sensor_mfnr_level) },
+	{ ISP_BLK_CNR3,			ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
 };
 
 #elif defined CONFIG_ISP_2_6 /* for SharkL5 */
@@ -179,6 +185,11 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_4IN1_PARAM, 0 },
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
+	{ ISP_BLK_YNRS, 0 }, /* NR block */
+	{ ISP_BLK_CNR3, 0 },
+	{ ISP_BLK_MFNR, 0 }, /* NR block */
+	{ ISP_BLK_DRE, 0 },
+	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -201,9 +212,12 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_CNR2_V1,			ISP_BLK_CNR2_T, sizeof(struct sensor_cnr_level) },
 	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },
 	{ ISP_BLK_YUV_NOISEFILTER_V1,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
+	{ ISP_BLK_YNRS,			ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
 	{ ISP_BLK_NLM_V1,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
 	{ ISP_BLK_NLM_V1,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
 	{ ISP_BLK_NLM_V1,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+	{ ISP_BLK_MFNR,			ISP_BLK_MFNR_T, sizeof(struct sensor_mfnr_level) },
+	{ ISP_BLK_CNR3,			ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
 };
 
 #elif defined CONFIG_ISP_2_7 /* for SharkL5Pro */
@@ -248,12 +262,10 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
 
 	/* software algo blocks */
-	{ ISP_BLK_DRE, sizeof(struct sensor_dre_level) },
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
 	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */
-	{ ISP_BLK_CNR3, 0 }, /* NR block */
 	{ ISP_BLK_AE_NEW, 0 },
 	{ ISP_BLK_ALSC, 0 },
 	{ ISP_BLK_AF_NEW, 0 },
@@ -266,6 +278,10 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_4IN1_PARAM, 0 },
 	{ ISP_BLK_TOF_TUNE, 0 },
 	{ ISP_BLK_ATM_TUNE, 0 },
+	{ ISP_BLK_CNR3, 0 },
+	{ ISP_BLK_MFNR, 0 }, /* NR block */
+	{ ISP_BLK_DRE, 0 },
+	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -293,6 +309,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_YNRS,				ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
 	{ ISP_BLK_BWU_BWD,			ISP_BLK_BWU_BWD_T, sizeof(struct sensor_bwu_bwd_level) },
 	{ ISP_BLK_CNR3,				ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
+	{ ISP_BLK_MFNR,				ISP_BLK_MFNR_T, sizeof(struct sensor_mfnr_level) },
 };
 #endif
 /************************ Project adapt data END *******************************************/
@@ -510,7 +527,6 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_UV_POSTCDN_V1:
 	case ISP_BLK_YUV_NOISEFILTER_V1:
 	case ISP_BLK_CNR2_V1:
-	case ISP_BLK_SW3DNR:
 		return 1;
 	/* NR for SharkL3 */
 	case DCAM_BLK_RGB_AFM:
@@ -531,6 +547,8 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_YUV_NOISEFILTER:
 	case ISP_BLK_CNR2:
 	case ISP_BLK_YNRS:
+	case ISP_BLK_MFNR:
+	case ISP_BLK_SW3DNR:
 		return 1;
 	case ISP_BLK_IMBALANCE_V1:
 	case ISP_BLK_NLM_V2:
@@ -556,6 +574,9 @@ static struct isp_pm_block_header *isp_pm_get_block_header(
 
 	for (i = 0; i < blk_num; i++) {
 		if (id == blk_header[i].block_id) {
+			if(id == ISP_BLK_MFNR || id == ISP_BLK_CNR3 || id == ISP_BLK_DRE_PRO)
+				ISP_LOGV("id=0x%x,blk_header[i].block_id=%x",
+									id, blk_header[i].block_id);
 			header_ptr = (struct isp_pm_block_header *)&blk_header[i];
 			*index = i;
 			return header_ptr;
@@ -601,7 +622,8 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 set_id)
 				continue;
 			}
 		}
-		ISP_LOGV("i %d, blk 0x%04x, cfgptr %p,  source_flag %x\n", i, id, blk_cfg_ptr, blk_header_ptr->source_flag);
+		ISP_LOGV("i %d, blk 0x%04x, cfgptr %p, source_flag %x\n",
+				i, id, blk_cfg_ptr, blk_header_ptr->source_flag);
 		if (blk_cfg_ptr != PNULL && blk_cfg_ptr->ops) {
 			ops = blk_cfg_ptr->ops;
 			if (ops->init && blk_header_ptr->size > 0) {
@@ -610,7 +632,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 set_id)
 				blk_ptr = (void *)(isp_cxt_start_addr + offset);
 				param_data_ptr = (void *)blk_header_ptr->absolute_addr;
 				if (param_data_ptr == PNULL) {
-					ISP_LOGE("fail to get valid param,  i:%d, block_id:0x%x, blk_addr:%p, param:%p",
+					ISP_LOGE("fail to get valid param, i:%d, block_id:0x%x, blk_addr:%p, param:%p",
 						 i, id, blk_ptr, param_data_ptr);
 					rtn = ISP_ERROR;
 					return rtn;
@@ -808,7 +830,10 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_context *pm_cxt_ptr,
 		id = block_param_data_ptr->id;
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = isp_pm_get_block_header(blk_param_ptr, id, &index);
-
+		if(id == ISP_BLK_MFNR || id == ISP_BLK_CNR3 || id == ISP_BLK_DRE_PRO) {
+			ISP_LOGD("id = 0x%x, cmd=%d, blk_cfg_ptr=%p, blk_header_ptr=%p",
+				id, cmd, blk_cfg_ptr, blk_header_ptr);
+		}
 		if ((PNULL != blk_cfg_ptr) && (PNULL != blk_header_ptr) && blk_cfg_ptr->ops) {
 			ops = blk_cfg_ptr->ops;
 			if (ops->get) {

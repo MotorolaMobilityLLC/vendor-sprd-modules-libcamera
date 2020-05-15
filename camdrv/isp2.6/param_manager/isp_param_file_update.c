@@ -51,6 +51,8 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"yuv_noisefilter",
 	"cnr",
 	"ynrs",
+	"cnr3",
+	"mfnr",
 };
 #elif defined CONFIG_ISP_2_6 /* for SharkL5 */
 char nr_param_name[ISP_BLK_NR_MAX][20] = {
@@ -76,6 +78,9 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"imbalance",
 	"ltm",
 	"sw3dnr",
+	"ynrs",
+	"cnr3",
+	"mfnr",
 };
 #elif defined CONFIG_ISP_2_7 /* for SharkL5Pro */
 char nr_param_name[ISP_BLK_NR_MAX][20] = {
@@ -103,7 +108,8 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"sw3dnr",
 	"bwu_bwd",
 	"ynrs",
-	"cnr3"
+	"cnr3",
+	"mfnr",
 };
 #endif
 

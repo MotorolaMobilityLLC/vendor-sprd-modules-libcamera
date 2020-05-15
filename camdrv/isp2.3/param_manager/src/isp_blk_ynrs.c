@@ -37,16 +37,26 @@ cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param, cmr_u32 strength_level, cmr
 
 	if(ynrs_param != PNULL){
 		for(i = 0; i < 5; i++){
-			dst_ptr->cur.gf_rnr_ratio[i] = ynrs_param[strength_level].gf_rnr_ratio[i];
-			dst_ptr->cur.gf_addback_enable[i] = ynrs_param[strength_level].gf_addback_enable[i];
-			dst_ptr->cur.gf_addback_ratio[i] = ynrs_param[strength_level].gf_addback_ratio[i];
-			dst_ptr->cur.gf_addback_clip[i] = ynrs_param[strength_level].gf_addback_clip[i];
-			dst_ptr->cur.gf_enable[i] = ynrs_param[strength_level].gf_enable[i];
-			dst_ptr->cur.gf_radius[i] = ynrs_param[strength_level].gf_radius[i];
-			dst_ptr->cur.gf_rnr_offset[i] = ynrs_param[strength_level].gf_rnr_offset[i];
-			dst_ptr->cur.gf_epsilon[i][0] = ynrs_param[strength_level].gf_epsilon[i][0];
-			dst_ptr->cur.gf_epsilon[i][1] = ynrs_param[strength_level].gf_epsilon[i][1];
-			dst_ptr->cur.gf_epsilon[i][2] = ynrs_param[strength_level].gf_epsilon[i][2];
+			dst_ptr->cur.gf_rnr_ratio[i] =
+					ynrs_param[strength_level].gf_rnr_ratio[i];
+			dst_ptr->cur.gf_addback_enable[i] =
+					ynrs_param[strength_level].gf_addback_enable[i];
+			dst_ptr->cur.gf_addback_ratio[i] =
+					ynrs_param[strength_level].gf_addback_ratio[i];
+			dst_ptr->cur.gf_addback_clip[i] =
+					ynrs_param[strength_level].gf_addback_clip[i];
+			dst_ptr->cur.gf_enable[i] =
+					ynrs_param[strength_level].gf_enable[i];
+			dst_ptr->cur.gf_radius[i] =
+					ynrs_param[strength_level].gf_radius[i];
+			dst_ptr->cur.gf_rnr_offset[i] =
+					ynrs_param[strength_level].gf_rnr_offset[i];
+			dst_ptr->cur.gf_epsilon[i][0] =
+					ynrs_param[strength_level].gf_epsilon[i][0];
+			dst_ptr->cur.gf_epsilon[i][1] =
+					ynrs_param[strength_level].gf_epsilon[i][1];
+			dst_ptr->cur.gf_epsilon[i][2] =
+					ynrs_param[strength_level].gf_epsilon[i][2];
 		}
 		dst_ptr->cur.lumi_thresh[0] = ynrs_param[strength_level].lumi_thresh[0];
 		dst_ptr->cur.lumi_thresh[1] = ynrs_param[strength_level].lumi_thresh[1];
@@ -54,8 +64,10 @@ cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param, cmr_u32 strength_level, cmr
 		dst_ptr->cur.imgCenterX = ynrs_param[strength_level].imgCenterX;
 		dst_ptr->cur.imgCenterY = ynrs_param[strength_level].imgCenterY;
 		dst_ptr->cur.bypass = ynrs_param[strength_level].bypass;
-		ISP_LOGV("Radius = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x \n",
-			dst_ptr->cur.Radius, dst_ptr->cur.imgCenterX, dst_ptr->cur.imgCenterY, dst_ptr->cur.bypass, dst_ptr->cur.lumi_thresh[0], dst_ptr->cur.gf_rnr_ratio[0]);
+		ISP_LOGV("Radius = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x "
+			"bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x \n",
+			dst_ptr->cur.Radius, dst_ptr->cur.imgCenterX, dst_ptr->cur.imgCenterY,
+			dst_ptr->cur.bypass, dst_ptr->cur.lumi_thresh[0], dst_ptr->cur.gf_rnr_ratio[0]);
 	}
 
 	return rtn;
@@ -75,7 +87,9 @@ cmr_s32 _pm_ynrs_init(void *dst_ynrs_param, void *src_ynrs_param, void *param1, 
 	dst_ptr->scene_ptr = src_ptr->multi_nr_map_ptr;
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
-	rtn = _pm_ynrs_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	rtn = _pm_ynrs_convert_param(dst_ptr,
+			dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	dst_ptr->cur.bypass &= !header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm ynrs param !");
 		return rtn;
@@ -107,7 +121,8 @@ cmr_s32 _pm_ynrs_set_param(void *ynrs_param, cmr_u32 cmd, void *param_ptr0, void
 				return ISP_SUCCESS;
 			}
 
-			rtn = _pm_check_smart_param(block_result, &val_range, 1, ISP_SMART_Y_TYPE_VALUE);
+			rtn = _pm_check_smart_param(block_result,
+					&val_range, 1, ISP_SMART_Y_TYPE_VALUE);
 			if (ISP_SUCCESS != rtn) {
 				ISP_LOGE("fail to check pm smart param !");
 				return rtn;
@@ -115,12 +130,14 @@ cmr_s32 _pm_ynrs_set_param(void *ynrs_param, cmr_u32 cmd, void *param_ptr0, void
 
 			level = (cmr_u32) block_result->component[0].fix_data[0];
 
-			if (level != dst_ptr->cur_level || nr_tool_flag[18] || block_result->mode_flag_changed) {
+			if (level != dst_ptr->cur_level
+					|| nr_tool_flag[ISP_BLK_YNRS_T] ||block_result->mode_flag_changed) {
 				dst_ptr->cur_level = level;
 				header_ptr->is_update = ISP_ONE;
-				nr_tool_flag[18] = 0;
+				nr_tool_flag[ISP_BLK_YNRS_T] = 0;
 
 				rtn = _pm_ynrs_convert_param(dst_ptr, dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
+				dst_ptr->cur.bypass &= !header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm edge param !");
 					return rtn;

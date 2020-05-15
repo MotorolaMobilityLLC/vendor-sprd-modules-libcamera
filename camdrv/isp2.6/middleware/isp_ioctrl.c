@@ -175,6 +175,12 @@ static cmr_int denoise_param_read_v25(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_YNRS:
 			update_param->ynrs_level_ptr = (struct sensor_ynrs_level *)fix_data_ptr->nr.nr_set_group.ynrs;
 			break;
+		case ISP_BLK_MFNR:
+			update_param->mfnr_level_ptr = (struct sensor_mfnr_level *)fix_data_ptr->nr.nr_set_group.mfnr;
+			break;
+		case ISP_BLK_CNR3:
+			update_param->cnr3_level_ptr = (struct sensor_cnr3_level *)fix_data_ptr->nr.nr_set_group.cnr3;
+			break;
 		default:
 			break;
 		}
@@ -283,6 +289,15 @@ static cmr_int denoise_param_read_v26(cmr_handle isp_alg_handle, void *param_ptr
 			break;
 		case ISP_BLK_SW3DNR:
 			update_param->sw3dnr_level_ptr = (struct sensor_sw3dnr_level *)fix_data_ptr->nr.nr_set_group.sw_3dnr;
+			break;
+		case ISP_BLK_YNRS:
+			update_param->ynrs_level_ptr = (struct sensor_ynrs_level *)fix_data_ptr->nr.nr_set_group.ynrs;
+			break;
+		case ISP_BLK_MFNR:
+			update_param->mfnr_level_ptr = (struct sensor_mfnr_level *)fix_data_ptr->nr.nr_set_group.mfnr;
+			break;
+		case ISP_BLK_CNR3:
+			update_param->cnr3_level_ptr = (struct sensor_cnr3_level *)fix_data_ptr->nr.nr_set_group.cnr3;
 			break;
 		default:
 			break;
@@ -401,6 +416,9 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 			break;
 		case ISP_BLK_CNR3:
 			update_param->cnr3_level_ptr = (struct sensor_cnr3_level *)fix_data_ptr->nr.nr_set_group.cnr3;
+			break;
+		case ISP_BLK_MFNR:
+			update_param->mfnr_level_ptr = (struct sensor_mfnr_level *)fix_data_ptr->nr.nr_set_group.mfnr;
 			break;
 		default:
 			break;
@@ -3543,33 +3561,6 @@ static cmr_int ispctl_ai_set_fd_status(cmr_handle isp_alg_handle, void *param_pt
 	return ret;
 }
 
-static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt =
-		(struct isp_alg_fw_context *)isp_alg_handle;
-
-	struct isp_pm_param_data param_data;
-	struct isp_pm_ioctl_input input = { NULL, 0 };
-	struct isp_pm_ioctl_output output = { NULL, 0 };
-
-	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data,
-			ISP_PM_BLK_ISP_SETTING,
-			ISP_BLK_DRE, NULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-			&input, &output);
-	if (ISP_SUCCESS == ret && 1 == output.param_num)
-		memcpy(param_ptr, output.param_data->data_ptr,
-			sizeof(struct isp_dre_level));
-	else
-		ISP_LOGE("fail to get valid dre param, %ld  num %d",
-			 ret, output.param_num);
-
-	return ret;
-}
-
 static cmr_int ispctl_get_fb_pre_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3613,6 +3604,60 @@ static cmr_int ispctl_get_fb_cap_param(cmr_handle isp_alg_handle, void *param_pt
 	} else {
 		ISP_LOGE("fail to get capture fb param");
 	}
+	return ret;
+}
+
+static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt =
+		(struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data,
+			ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_DRE, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+			ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
+			&input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num)
+		memcpy(param_ptr, output.param_data->data_ptr,
+			sizeof(struct isp_dre_level));
+	else
+		ISP_LOGE("fail to get valid dre param, %ld  num %d",
+			 ret, output.param_num);
+
+	return ret;
+}
+
+static cmr_int ispctl_get_dre_pro_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt =
+		(struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data,
+			ISP_PM_BLK_ISP_SETTING,
+			ISP_BLK_DRE_PRO, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
+				&input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num)
+		memcpy(param_ptr, output.param_data->data_ptr,
+			sizeof(struct isp_dre_pro_level));
+	else
+		ISP_LOGE("fail to get valid dre_pro param, %ld  num %d",
+			ret, output.param_num);
+
 	return ret;
 }
 
@@ -3841,6 +3886,8 @@ static cmr_int ispctl_get_cnr2_ynr_en(cmr_handle isp_alg_handle, void *param_ptr
 			ISP_LOGV("level_enable = %d, low_ct_thrd = %d", level_enable, low_ct_thrd);
 			if (level_enable || (ct < low_ct_thrd))
 				cnr2_en = 1;
+			else
+				cnr2_en = 0;
 		} else {
 			ISP_LOGE("fail to get valid cnr2 level info");
 		}
@@ -3951,22 +3998,53 @@ static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_get_sw3dnr_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_alg_fw_context *cxt =
+				(struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_param_data param_data;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
-
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param ptr!");
 		return ISP_PARAM_NULL;
 	}
 	memset(&param_data, 0, sizeof(param_data));
-	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, ISP_BLK_SW3DNR, NULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
+				ISP_BLK_SW3DNR, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
-		memcpy(param_ptr, output.param_data->data_ptr, output.param_data->data_size);
+		memcpy(param_ptr, output.param_data->data_ptr,
+				output.param_data->data_size);
 	} else {
 		ISP_LOGE("fail to get valid sw3dnr param");
+		return ISP_PARAM_ERROR;
+	}
+
+	return ret;
+}
+
+static cmr_int ispctl_get_mfnr_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt =
+				(struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_pm_param_data param_data;
+	struct isp_pm_ioctl_input input = { NULL, 0 };
+	struct isp_pm_ioctl_output output = { NULL, 0 };
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param ptr!");
+		return ISP_PARAM_NULL;
+	}
+	memset(&param_data, 0, sizeof(param_data));
+	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
+				ISP_BLK_MFNR, NULL, 0);
+	ret = isp_pm_ioctl(cxt->handle_pm,
+				ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
+	if (ISP_SUCCESS == ret && 1 == output.param_num) {
+		memcpy(param_ptr, output.param_data->data_ptr,
+				output.param_data->data_size);
+	} else {
+		ISP_LOGE("fail to get valid mfnr param");
 		return ISP_PARAM_ERROR;
 	}
 
@@ -4096,6 +4174,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 #endif
 	{ISP_CTRL_GET_FB_PREV_PARAM, ispctl_get_fb_pre_param},
 	{ISP_CTRL_GET_FB_CAP_PARAM, ispctl_get_fb_cap_param},
+	{ISP_CTRL_GET_MFNR_PARAM, ispctl_get_mfnr_param},
+	{ISP_CTRL_GET_DRE_PRO_PARAM, ispctl_get_dre_pro_param},
 	{ISP_CTRL_MAX, NULL}
 };
 

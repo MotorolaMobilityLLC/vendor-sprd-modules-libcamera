@@ -39,16 +39,26 @@ cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param,
 
 	if(ynrs_param != PNULL){
 		for(i = 0; i < 5; i++){
-			dst_ptr->cur.ynrs_param.gf_rnr_ratio[i] = ynrs_param[strength_level].gf_rnr_ratio[i];
-			dst_ptr->cur.ynrs_param.gf_addback_enable[i] = ynrs_param[strength_level].gf_addback_enable[i];
-			dst_ptr->cur.ynrs_param.gf_addback_ratio[i] = ynrs_param[strength_level].gf_addback_ratio[i];
-			dst_ptr->cur.ynrs_param.gf_addback_clip[i] = ynrs_param[strength_level].gf_addback_clip[i];
-			dst_ptr->cur.ynrs_param.gf_enable[i] = ynrs_param[strength_level].gf_enable[i];
-			dst_ptr->cur.ynrs_param.gf_radius[i] = ynrs_param[strength_level].gf_radius[i];
-			dst_ptr->cur.ynrs_param.gf_rnr_offset[i] = ynrs_param[strength_level].gf_rnr_offset[i];
-			dst_ptr->cur.ynrs_param.gf_epsilon[i][0] = ynrs_param[strength_level].gf_epsilon[i][0];
-			dst_ptr->cur.ynrs_param.gf_epsilon[i][1] = ynrs_param[strength_level].gf_epsilon[i][1];
-			dst_ptr->cur.ynrs_param.gf_epsilon[i][2] = ynrs_param[strength_level].gf_epsilon[i][2];
+			dst_ptr->cur.ynrs_param.gf_rnr_ratio[i] =
+					ynrs_param[strength_level].gf_rnr_ratio[i];
+			dst_ptr->cur.ynrs_param.gf_addback_enable[i] =
+					ynrs_param[strength_level].gf_addback_enable[i];
+			dst_ptr->cur.ynrs_param.gf_addback_ratio[i] =
+					ynrs_param[strength_level].gf_addback_ratio[i];
+			dst_ptr->cur.ynrs_param.gf_addback_clip[i] =
+					ynrs_param[strength_level].gf_addback_clip[i];
+			dst_ptr->cur.ynrs_param.gf_enable[i] =
+					ynrs_param[strength_level].gf_enable[i];
+			dst_ptr->cur.ynrs_param.gf_radius[i] =
+					ynrs_param[strength_level].gf_radius[i];
+			dst_ptr->cur.ynrs_param.gf_rnr_offset[i] =
+					ynrs_param[strength_level].gf_rnr_offset[i];
+			dst_ptr->cur.ynrs_param.gf_epsilon[i][0] =
+					ynrs_param[strength_level].gf_epsilon[i][0];
+			dst_ptr->cur.ynrs_param.gf_epsilon[i][1] =
+					ynrs_param[strength_level].gf_epsilon[i][1];
+			dst_ptr->cur.ynrs_param.gf_epsilon[i][2] =
+					ynrs_param[strength_level].gf_epsilon[i][2];
 		}
 		dst_ptr->cur.ynrs_param.lumi_thresh[0] = ynrs_param[strength_level].lumi_thresh[0];
 		dst_ptr->cur.ynrs_param.lumi_thresh[1] = ynrs_param[strength_level].lumi_thresh[1];
@@ -57,7 +67,8 @@ cmr_u32 _pm_ynrs_convert_param(void *dst_ynrs_param,
 		dst_ptr->cur.ynrs_param.bypass = ynrs_param[strength_level].bypass;
 		dst_ptr->cur.ynrs_param.Radius_factor = ynrs_param[strength_level].Radius_factor;
 		dst_ptr->cur.radius_base = ynrs_param[strength_level].radius_base;
-		ISP_LOGI("dst_ptr->cur.radius_base = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x dst_ptr->cur.Radius_factor = 0x%x\n",
+		ISP_LOGV("dst_ptr->cur.radius_base = 0x%x imgCenterX = 0x%x imgCenterY = 0x%x "
+			"bypass = 0x%x lumi_thresh[0] = 0x%x gf_rnr_ratio[0]= 0x%x dst_ptr->cur.Radius_factor = 0x%x\n",
 			dst_ptr->cur.radius_base, dst_ptr->cur.ynrs_param.imgCenterX, dst_ptr->cur.ynrs_param.imgCenterY,
 			dst_ptr->cur.ynrs_param.bypass, dst_ptr->cur.ynrs_param.lumi_thresh[0], dst_ptr->cur.ynrs_param.gf_rnr_ratio[0],dst_ptr->cur.ynrs_param.Radius_factor);
 	}
@@ -80,6 +91,7 @@ cmr_s32 _pm_ynrs_init(void *dst_ynrs_param, void *src_ynrs_param, void *param1, 
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
 	rtn = _pm_ynrs_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
+	dst_ptr->cur.ynrs_param.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm ynrs param !");
 		return rtn;
@@ -125,12 +137,12 @@ cmr_s32 _pm_ynrs_set_param(void *ynrs_param, cmr_u32 cmd, void *param_ptr0, void
 				nr_tool_flag[ISP_BLK_YNRS_T] = 0;
 
 				rtn = _pm_ynrs_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
+				dst_ptr->cur.ynrs_param.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm edge param !");
 					return rtn;
 				}
 			}
-
 		}
 		break;
 
@@ -138,7 +150,8 @@ cmr_s32 _pm_ynrs_set_param(void *ynrs_param, cmr_u32 cmd, void *param_ptr0, void
 		break;
 	}
 
-	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ee_level=%d", cmd, header_ptr->is_update, dst_ptr->cur_level);
+	ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ee_level=%d",
+			cmd, header_ptr->is_update, dst_ptr->cur_level);
 
 	return rtn;
 }

@@ -68,6 +68,12 @@ struct isp_block_operations s_saturation_ops = { _pm_saturation_init, _pm_satura
 struct isp_block_operations s_hue_ops = { _pm_hue_init, _pm_hue_set_param, _pm_hue_get_param, PNULL, PNULL };
 struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
 struct isp_block_operations s_fb_ops = { _pm_fb_init, _pm_fb_set_param, _pm_fb_get_param, PNULL, PNULL };
+#ifdef CAMERA_CNR3_ENABLE
+struct isp_block_operations s_cnr3_ops = { _pm_cnr3_init, _pm_cnr3_set_param, _pm_cnr3_get_param, PNULL, PNULL };
+#endif
+struct isp_block_operations s_mfnr_ops = { _pm_mfnr_init, _pm_mfnr_set_param, _pm_mfnr_get_param, PNULL, PNULL };
+struct isp_block_operations s_dre_ops = { _pm_dre_init, _pm_dre_set_param, _pm_dre_get_param, PNULL, PNULL };
+struct isp_block_operations s_dre_pro_ops = { _pm_dre_pro_init, _pm_dre_pro_set_param, _pm_dre_pro_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_6
@@ -75,8 +81,14 @@ struct isp_block_operations s_hsv_ops = { _pm_hsv_init, _pm_hsv_set_param, _pm_h
 struct isp_block_operations s_ppe_ops = { _pm_ppe_init, _pm_ppe_set_param, _pm_ppe_get_param, PNULL, PNULL };
 struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _pm_bchs_get_param, PNULL, PNULL };
 struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_param, _pm_sw3dnr_get_param, PNULL, PNULL };
+struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
 struct isp_block_operations s_ltm_ops = { _pm_ltm_init, _pm_ltm_set_param, _pm_ltm_get_param, PNULL, PNULL };
 struct isp_block_operations s_imblance_ops = { _pm_imblance_init, _pm_imblance_set_param, _pm_imblance_get_param, PNULL, PNULL};
+//struct isp_block_operations s_fb_ops = { _pm_fb_init, _pm_fb_set_param, _pm_fb_get_param, PNULL, PNULL };
+struct isp_block_operations s_cnr3_ops = { _pm_cnr3_init, _pm_cnr3_set_param, _pm_cnr3_get_param, PNULL, PNULL };
+struct isp_block_operations s_mfnr_ops = { _pm_mfnr_init, _pm_mfnr_set_param, _pm_mfnr_get_param, PNULL, PNULL };
+//struct isp_block_operations s_dre_ops = { _pm_dre_init, _pm_dre_set_param, _pm_dre_get_param, PNULL, PNULL };
+struct isp_block_operations s_dre_pro_ops = { _pm_dre_pro_init, _pm_dre_pro_set_param, _pm_dre_pro_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_7
@@ -87,11 +99,13 @@ struct isp_block_operations s_sw3dnr_ops = { _pm_sw3dnr_init, _pm_sw3dnr_set_par
 struct isp_block_operations s_imblance_ops = { _pm_imblance_init, _pm_imblance_set_param, _pm_imblance_get_param, PNULL, PNULL};
 struct isp_block_operations s_ynrs_ops = { _pm_ynrs_init, _pm_ynrs_set_param, _pm_ynrs_get_param, PNULL, PNULL };
 struct isp_block_operations s_dre_ops = { _pm_dre_init, _pm_dre_set_param, _pm_dre_get_param, PNULL, PNULL };
+struct isp_block_operations s_dre_pro_ops = { _pm_dre_pro_init, _pm_dre_pro_set_param, _pm_dre_pro_get_param, PNULL, PNULL };
 struct isp_block_operations s_cnr3_ops = { _pm_cnr3_init, _pm_cnr3_set_param, _pm_cnr3_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_ltm_ops = { _pm_rgb_ltm_init, _pm_rgb_ltm_set_param, _pm_rgb_ltm_get_param, PNULL, PNULL };
 struct isp_block_operations s_yuv_ltm_ops = { _pm_yuv_ltm_init, _pm_yuv_ltm_set_param, _pm_yuv_ltm_get_param, PNULL, PNULL };
 struct isp_block_operations s_gtm_ops = { _pm_gtm_init, _pm_gtm_set_param, _pm_gtm_get_param, PNULL, PNULL };
 struct isp_block_operations s_fb_ops = { _pm_fb_init, _pm_fb_set_param, _pm_fb_get_param, PNULL, PNULL };
+struct isp_block_operations s_mfnr_ops = { _pm_mfnr_init, _pm_mfnr_set_param, _pm_mfnr_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_5
@@ -139,6 +153,12 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
 	{ISP_BLK_AE_ADAPT_PARAM, array_offset(struct isp_context, ae_adapt), sizeof(struct isp_ae_adapt_param), &s_ae_adapt_ops},
 	{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
+#ifdef CAMERA_CNR3_ENABLE
+	{ISP_BLK_CNR3, array_offset(struct isp_context, cnr3), sizeof(struct isp_cnr3_param), &s_cnr3_ops},
+#endif
+	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
+	{ISP_BLK_DRE, array_offset(struct isp_context, dre), sizeof(struct isp_dres_param), &s_dre_ops},
+	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},
 };
 #elif defined CONFIG_ISP_2_6
 struct isp_block_cfg s_blk_cfgs[] = {
@@ -179,7 +199,13 @@ struct isp_block_cfg s_blk_cfgs[] = {
 
 	/* ======== soft algo blocks list starts ======= */
 	{ISP_BLK_CNR2_V1, array_offset(struct isp_context, cnr2), sizeof(struct isp_cnr2_param), &s_cnr2_ops},
+	{ISP_BLK_YNRS, array_offset(struct isp_context, ynrs), sizeof(struct isp_ynrs_param), &s_ynrs_ops},
 	{ISP_BLK_SW3DNR, array_offset(struct isp_context, sw3dnr), sizeof(struct isp_sw3dnr_param), &s_sw3dnr_ops},
+	//{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
+	{ISP_BLK_CNR3, array_offset(struct isp_context, cnr3), sizeof(struct isp_cnr3_param), &s_cnr3_ops},
+	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
+	//{ISP_BLK_DRE, array_offset(struct isp_context, dre), sizeof(struct isp_dres_param), &s_dre_ops},
+	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},
 };
 #elif defined CONFIG_ISP_2_7
 struct isp_block_cfg s_blk_cfgs[] = {
@@ -228,6 +254,8 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_YUV_LTM, array_offset(struct isp_context, yuv_ltm), sizeof(struct isp_rgb_ltm_param), &s_yuv_ltm_ops},
 	{ISP_BLK_RAW_GTM, array_offset(struct isp_context, gtm), sizeof(struct isp_raw_gtm_param), &s_gtm_ops},
 	{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
+	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
+	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},
 };
 #endif
 

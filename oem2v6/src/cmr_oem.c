@@ -9925,6 +9925,16 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->fb_param;
         break;
 
+    case COM_ISP_GET_DRE_PRO_PARAM:
+#ifdef CONFIG_CAMERA_DRE_PRO
+        isp_cmd = ISP_CTRL_GET_DRE_PRO_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->dre_pro_param;
+#else
+        isp_cmd = ISP_CTRL_MAX;
+#endif
+        break;
+
     case COM_ISP_GET_YNRS_PARAM:
 #ifdef CONFIG_CAMERA_CNR
         isp_cmd = ISP_CTRL_GET_YNRS_PARAM;
@@ -9985,6 +9995,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_GET_SW3DNR_PARAM;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->threednr_param;
+        break;
+    case COM_ISP_GET_MFNR_PARAM:
+        isp_cmd = ISP_CTRL_GET_MFNR_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->mfnr_param;
         break;
     case COM_ISP_GET_CALIBRATION_VCMINFO:
         isp_cmd = ISP_CTRL_GET_BOKEH_RANGE;
@@ -10181,6 +10196,10 @@ bool prev_get_appmode(cmr_handle oem_handle,cmr_u32 camera_id)
         CMR_LOGE("failed to get app mode %ld", ret);
     }
     CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+    cxt->nightscepro_flag = 0;
+    if (setting_param.cmd_type_value != CAMERA_MODE_3DNR_PHOTO) {
+        cxt->nightscepro_flag = 1;
+    }
     if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
         // auto 3dnr available
         is_autophoto = true;
@@ -11755,6 +11774,10 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
             goto exit;
         }
         CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+        cxt->nightscepro_flag = 0;
+        if (setting_param.cmd_type_value != CAMERA_MODE_3DNR_PHOTO){
+            cxt->nightscepro_flag = 1;
+        }
         if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
             (setting_param.camera_id == 0 ||
              cxt->is_multi_mode == MODE_MULTI_CAMERA ||

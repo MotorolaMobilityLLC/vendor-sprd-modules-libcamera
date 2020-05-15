@@ -57,7 +57,9 @@ char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"iircnr",
 	"yuv_noisefilter",
 	"cnr",
-	"ynrs"
+	"ynrs",
+	"cnr3",
+	"mfnr",
 };
 
 char nr_mode_name[MAX_MODE_NUM][8] = {
@@ -208,6 +210,8 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_BINNING4AWB:
 	case ISP_BLK_CNR2:
 	case ISP_BLK_YNRS:
+	case ISP_BLK_CNR3:
+	case ISP_BLK_MFNR:
 		{
 			return 1;
 		}
@@ -449,6 +453,9 @@ static struct isp_pm_block_header *isp_pm_get_block_header(
 
 	for (i = 0; i < blk_num; i++) {
 		if (id == blk_header[i].block_id) {
+			if(id == ISP_BLK_MFNR || id == ISP_BLK_CNR3)
+				ISP_LOGV("id=0x%x,blk_header[i].block_id=%d",
+						id, blk_header[i].block_id);
 			break;
 		}
 	}
@@ -936,27 +943,41 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 					nr_set_size = sizeof(struct sensor_ynrs_level);
 				}
 				break;
+			case ISP_BLK_CNR3:{
+					isp_blk_nr_type = ISP_BLK_CNR3_T;
+					nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.cnr3);
+					nr_set_size = sizeof(struct sensor_cnr3_level);
+				}
+				break;
+			case ISP_BLK_MFNR:{
+					isp_blk_nr_type = ISP_BLK_MFNR_T;
+					nr_set_addr = (intptr_t)(fix_data_ptr->nr.nr_set_group.mfnr);
+					nr_set_size = sizeof(struct sensor_mfnr_level);
+				}
+				break;
 			default:
 				break;
 			}
 			if (src_header[j].block_id == ISP_BLK_PDAF_CORRECT
-			    || src_header[j].block_id == ISP_BLK_RGB_DITHER
-			    || src_header[j].block_id == ISP_BLK_BPC
-			    || src_header[j].block_id == ISP_BLK_GRGB
-			    || src_header[j].block_id == ISP_BLK_CFA
-			    || src_header[j].block_id == ISP_BLK_RGB_AFM
-			    || src_header[j].block_id == ISP_BLK_UVDIV
-			    || src_header[j].block_id == ISP_BLK_3DNR_PRE
-			    || src_header[j].block_id == ISP_BLK_3DNR_CAP
-			    || src_header[j].block_id == ISP_BLK_YUV_PRECDN
-			    || src_header[j].block_id == ISP_BLK_UV_CDN
-			    || src_header[j].block_id == ISP_BLK_UV_POSTCDN
-			    || src_header[j].block_id == ISP_BLK_YNR
-			    || src_header[j].block_id == ISP_BLK_EDGE
-			    || src_header[j].block_id == ISP_BLK_IIRCNR_IIR
-			    || src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER
-			    || src_header[j].block_id == ISP_BLK_CNR2
-			    || src_header[j].block_id == ISP_BLK_YNRS) {
+				|| src_header[j].block_id == ISP_BLK_RGB_DITHER
+				|| src_header[j].block_id == ISP_BLK_BPC
+				|| src_header[j].block_id == ISP_BLK_GRGB
+				|| src_header[j].block_id == ISP_BLK_CFA
+				|| src_header[j].block_id == ISP_BLK_RGB_AFM
+				|| src_header[j].block_id == ISP_BLK_UVDIV
+				|| src_header[j].block_id == ISP_BLK_3DNR_PRE
+				|| src_header[j].block_id == ISP_BLK_3DNR_CAP
+				|| src_header[j].block_id == ISP_BLK_YUV_PRECDN
+				|| src_header[j].block_id == ISP_BLK_UV_CDN
+				|| src_header[j].block_id == ISP_BLK_UV_POSTCDN
+				|| src_header[j].block_id == ISP_BLK_YNR
+				|| src_header[j].block_id == ISP_BLK_EDGE
+				|| src_header[j].block_id == ISP_BLK_IIRCNR_IIR
+				|| src_header[j].block_id == ISP_BLK_YUV_NOISEFILTER
+				|| src_header[j].block_id == ISP_BLK_CNR2
+				|| src_header[j].block_id == ISP_BLK_YNRS
+				|| src_header[j].block_id == ISP_BLK_CNR3
+				|| src_header[j].block_id == ISP_BLK_MFNR) {
 				nr_param_update_info.param_type = isp_blk_nr_type;
 				nr_param_update_info.nr_param_ptr = (cmr_uint *) nr_set_addr;
 				nr_param_update_info.size_of_per_unit = nr_set_size * nr_level_number_ptr->nr_level_map[isp_blk_nr_type];
@@ -1628,6 +1649,10 @@ static cmr_s32 isp_pm_get_single_block_param(struct isp_pm_mode_param *mode_para
 		cmd = block_param_data_ptr[i].cmd;
 		blk_header_ptr = isp_pm_get_block_header(mode_param_in, id, &tm_idx);
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
+		if(id == ISP_BLK_MFNR ||id == ISP_BLK_CNR3) {
+			ISP_LOGV("id = 0x%x,cmd=%d,blk_cfg_ptr=%p,blk_header_ptr=%p",
+					id, cmd, blk_cfg_ptr, blk_header_ptr);
+		}
 		if ((NULL != blk_cfg_ptr) && (NULL != blk_header_ptr)) {
 			isp_cxt_start_addr = (intptr_t) isp_cxt_ptr;
 			offset = blk_cfg_ptr->offset;

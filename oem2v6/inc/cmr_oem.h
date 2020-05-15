@@ -429,12 +429,13 @@ struct camera_context {
     bool is_capture_face;
 
     /* new 4in1 plan, 20191028 */
-	cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */
-	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
-	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
+    cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */
+    cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
+    cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
     cmr_uint is_high_res_mode;
     /*for ynr room ratio*/
-        float zoom_ratio;
+    float zoom_ratio;
+    cmr_u8 nightscepro_flag;
 };
 
 struct prev_ai_scene_info {

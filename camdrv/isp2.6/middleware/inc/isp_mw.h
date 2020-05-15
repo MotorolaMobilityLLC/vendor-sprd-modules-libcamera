@@ -432,6 +432,8 @@ enum isp_ctrl_cmd {
 #endif
 	ISP_CTRL_GET_FB_PREV_PARAM,
 	ISP_CTRL_GET_FB_CAP_PARAM,
+	ISP_CTRL_GET_MFNR_PARAM,
+	ISP_CTRL_GET_DRE_PRO_PARAM,
 	ISP_CTRL_MAX
 };
 
@@ -543,6 +545,40 @@ struct isp_postdre_param {
 struct isp_dre_level {
 	struct isp_predre_param predre_param;
 	struct isp_postdre_param postdre_param;
+};
+
+//DRE_pro feature
+struct isp_predre_pro_param {
+	cmr_s32 enable;
+	cmr_s32 imgKey_setting_mode;
+	cmr_s32 tarNorm_setting_mode;
+	cmr_s32 target_norm;
+	cmr_s32 imagekey;
+	cmr_s32 min_per;
+	cmr_s32 max_per;
+	cmr_s32 stat_step ;
+	cmr_s32 low_thresh;
+	cmr_s32 high_thresh;
+	cmr_s32 uv_gain_ratio;
+	cmr_s32 tarCoeff;
+};
+
+struct isp_postdre_pro_param {
+	cmr_s32 enable;
+	cmr_s32 strength;
+	cmr_s32 texture_counter_en;
+	cmr_s32 text_point_thres;
+	cmr_s32 text_prop_thres;
+	cmr_s32 tile_num_auto;
+	cmr_s32 tile_num_x;
+	cmr_s32 tile_num_y;
+	cmr_s32 text_point_alpha;
+};
+
+//DRE_pro level
+struct isp_dre_pro_level {
+	struct isp_predre_pro_param predre_pro_param;
+	struct isp_postdre_pro_param postdre_pro_param;
 };
 
 struct isp_flash_cfg {
@@ -964,19 +1000,34 @@ struct isp_3dnr_info {
 /* used to pass sw3dnr param from tuning array to HAL->3dnr adapt
   * must keep consistent with struct ( sensor_sw3dnr_level) in sensor_raw_xxx.h
   * should not be modified except sensor_raw_xxx.h changes corresponding structure */
+struct isp_mfnr_info {
+	cmr_s32 threshold[4];
+	cmr_s32 slope[4];
+	cmr_u16 searchWindow_x;
+	cmr_u16 searchWindow_y;
+	cmr_s32 recur_str;
+	cmr_s32 match_ratio_sad;
+	cmr_s32 match_ratio_pro;
+	cmr_s32 feat_thr;
+	cmr_s32 zone_size;
+	cmr_s32 luma_ratio_high;
+	cmr_s32 luma_ratio_low;
+	cmr_s32 reserverd[16];
+};
+
 struct isp_sw3dnr_info {
-        cmr_s32 threshold[4];
-        cmr_s32 slope[4];
-        cmr_u16 searchWindow_x;
-        cmr_u16 searchWindow_y;
-        cmr_s32 recur_str;
-        cmr_s32 match_ratio_sad;
-        cmr_s32 match_ratio_pro;
-        cmr_s32 feat_thr;
-        cmr_s32 zone_size;
-        cmr_s32 luma_ratio_high;
-        cmr_s32 luma_ratio_low;
-        cmr_s32 reserverd[16];
+	cmr_s32 threshold[4];
+	cmr_s32 slope[4];
+	cmr_u16 searchWindow_x;
+	cmr_u16 searchWindow_y;
+	cmr_s32 recur_str;
+	cmr_s32 match_ratio_sad;
+	cmr_s32 match_ratio_pro;
+	cmr_s32 feat_thr;
+	cmr_s32 zone_size;
+	cmr_s32 luma_ratio_high;
+	cmr_s32 luma_ratio_low;
+	cmr_s32 reserverd[16];
 };
 
 struct isp_exp_compensation{

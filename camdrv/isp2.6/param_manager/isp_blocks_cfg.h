@@ -214,6 +214,15 @@ struct isp_sw3dnr_param {
 	cmr_u32 nr_mode_setting;
 };
 
+struct isp_mfnr_param {
+	void *cur_data;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
 struct isp_ltm_param {
 	struct isp_dev_ltm_info cur;
 	cmr_u32 cur_level;
@@ -737,6 +746,11 @@ struct isp_dres_param {
 	struct isp_dre_level levels[16];
 };
 
+struct isp_dres_pro_param {
+	struct isp_dre_pro_level cur;
+	struct isp_dre_pro_level levels[16];
+};
+
 struct isp_context {
 	cmr_u32 is_validate;
 	cmr_u32 mode_id;
@@ -760,6 +774,7 @@ struct isp_context {
 	/* isp blocks below */
 	struct isp_nr3d_param nr3d;
 	struct isp_sw3dnr_param sw3dnr;
+	struct isp_mfnr_param mfnr;
 	struct isp_bchs_param bchs;
 	struct isp_cce_param cce;
 	struct isp_cfa_param cfa;
@@ -796,6 +811,7 @@ struct isp_context {
 	struct isp_cnr2_param cnr2;
 	struct isp_ynrs_param ynrs;
 	struct isp_dres_param dre;
+	struct isp_dres_pro_param dre_pro;
 #ifdef CAMERA_CNR3_ENABLE
 	struct isp_cnr3_param cnr3;
 #endif
@@ -1027,6 +1043,10 @@ cmr_s32 _pm_sw3dnr_init(void *dst_3d_nr_param, void *src_3d_nr_param, void *para
 cmr_s32 _pm_sw3dnr_set_param(void *nr_3d_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_sw3dnr_get_param(void *nr_3d_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
+cmr_s32 _pm_mfnr_init(void *dst_mfnr_param, void *src_mfnr_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_mfnr_set_param(void *mfnr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_mfnr_get_param(void *mfnr_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
 cmr_s32 _pm_dre_init(void *dst_dre_param, void *src_dre_param, void *param1, void *param2);
 cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_dre_get_param(void *dre_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
@@ -1034,6 +1054,10 @@ cmr_s32 _pm_dre_get_param(void *dre_param, cmr_u32 cmd, void *rtn_param0, void *
 cmr_s32 _pm_fb_init(void *dst_fb_param, void *src_fb_param, void *param1, void *param2);
 cmr_s32 _pm_fb_set_param(void *fb_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_fb_get_param(void *fb_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_dre_pro_init(void *dst_dre_pro_param, void *src_dre_param, void *param1, void *param2);
+cmr_s32 _pm_dre_pro_set_param(void *dre_pro_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_dre_pro_get_param(void *dre_pro_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);

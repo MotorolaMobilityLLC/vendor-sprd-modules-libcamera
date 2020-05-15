@@ -67,13 +67,18 @@ cmr_s32 _pm_dre_init(void *dst_dre_param, void *src_dre_param, void *param1, voi
 
 	pre_dre_init(dst_ptr, &src_ptr->predre_param[0]);
 	post_dre_init(dst_ptr, &src_ptr->postdre_param[0]);
+	dst_ptr->levels[def_lv].predre_param.enable &= !header_ptr->bypass;
+	dst_ptr->levels[def_lv].postdre_param.enable &= !header_ptr->bypass;
+	ISP_LOGV("predre_en %d postdre_en %d",
+		dst_ptr->levels[def_lv].predre_param.enable,
+		dst_ptr->levels[def_lv].postdre_param.enable);
 
 	memcpy(&dst_ptr->cur.predre_param,
-	       &dst_ptr->levels[def_lv].predre_param,
-	       sizeof(struct isp_predre_param));
+		&dst_ptr->levels[def_lv].predre_param,
+		sizeof(struct isp_predre_param));
 	memcpy(&dst_ptr->cur.postdre_param,
-	       &dst_ptr->levels[def_lv].postdre_param,
-	       sizeof(struct isp_postdre_param));
+		&dst_ptr->levels[def_lv].postdre_param,
+		sizeof(struct isp_postdre_param));
 
 	header_ptr->is_update = ISP_ONE;
 
@@ -115,6 +120,7 @@ cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0, void *
 
 			dst_ptr->cur.predre_param.enable =
 				dst_ptr->levels[level].predre_param.enable;
+			dst_ptr->cur.predre_param.enable &= !header_ptr->bypass;
 			dst_ptr->cur.predre_param.imgKey_setting_mode =
 				dst_ptr->levels[level].predre_param.imgKey_setting_mode;
 			dst_ptr->cur.predre_param.tarNorm_setting_mode	=
@@ -138,6 +144,7 @@ cmr_s32 _pm_dre_set_param(void *dre_param, cmr_u32 cmd, void *param_ptr0, void *
 
 			dst_ptr->cur.postdre_param.enable =
 				dst_ptr->levels[level].postdre_param.enable;
+			dst_ptr->cur.predre_param.enable &= !header_ptr->bypass;
 			dst_ptr->cur.postdre_param.tile_num_x =
 				dst_ptr->levels[level].postdre_param.tile_num_x;
 			dst_ptr->cur.postdre_param.tile_num_y =

@@ -459,8 +459,9 @@ enum common_isp_cmd_type {
     COM_ISP_GET_DRE_PARAM,
 #ifdef CAMERA_CNR3_ENABLE
     COM_ISP_GET_CNR2CNR3_YNR_EN,
-#endif
+#else
     COM_ISP_GET_CNR2_YNR_EN,
+#endif
     COM_ISP_GET_CNR2_EN,
     COM_ISP_SET_AUTO_HDR,
     COM_ISP_SET_SPRD_APP_MODE,
@@ -491,6 +492,8 @@ enum common_isp_cmd_type {
 #endif
     COM_ISP_GET_FB_PREV_PARAM,
     COM_ISP_GET_FB_CAP_PARAM,
+    COM_ISP_GET_MFNR_PARAM,
+    COM_ISP_GET_DRE_PRO_PARAM,
     COM_ISP_TYPE_MAX
 };
 
@@ -1170,9 +1173,13 @@ struct common_isp_cmd_param {
         struct isp_sw_cnr3_info cnr3_param;
 #endif
 #endif
+        struct isp_mfnr_info mfnr_param;
         struct isp_sw3dnr_info threednr_param;
 #ifdef CONFIG_CAMERA_DRE
         struct isp_dre_level dre_param;
+#endif
+#ifdef CONFIG_CAMERA_DRE_PRO
+        struct isp_dre_pro_level dre_pro_param;
 #endif
         struct isp_ai_img_param ai_img_param;
         struct isp_ai_img_status ai_img_status;

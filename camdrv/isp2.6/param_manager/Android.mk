@@ -73,7 +73,10 @@ LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
 	blk_v26/isp_blk_sw3dnr.c \
 	blk_v26/isp_blk_uv_div.c \
 	blk_v26/isp_blk_ynr.c \
-	blk_v26/isp_blk_yuv_noisefilter.c
+	blk_v26/isp_blk_yuv_noisefilter.c \
+	blk_v26/isp_blk_mfnr.c \
+	blk_v26/isp_blk_cnr3.c \
+	blk_v26/isp_blk_dre_pro.c
 LOCAL_SRC_FILES += $(call all-c-files-under, blk_v27)
 endif
 
