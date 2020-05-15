@@ -6613,6 +6613,7 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
 
     float max_binning_ratio = 0;
     struct sensor_zoom_param_input ZoomInputParam;
+    ZoomInputParam.camera_id = cxt->is_multi_camera_id;
     ret = sensorGetZoomParam(&ZoomInputParam);
     ret = CMR_CAMERA_SUCCESS;
     max_binning_ratio = ZoomInputParam.BinningRatio;
@@ -6760,6 +6761,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
 
     float max_binning_ratio = 0;
     struct sensor_zoom_param_input ZoomInputParam;
+    ZoomInputParam.camera_id = cxt->is_multi_camera_id;
     ret = sensorGetZoomParam(&ZoomInputParam);
     ret = CMR_CAMERA_SUCCESS;
     max_binning_ratio = ZoomInputParam.BinningRatio;

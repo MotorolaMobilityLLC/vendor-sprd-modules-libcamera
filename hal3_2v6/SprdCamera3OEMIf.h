@@ -914,11 +914,13 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_u32 mVideoAFBCFlag;
 
     bool mIsJpegWithBigSizePreview;
+
 	static std::atomic_int mLogMonitor; //0:thread exit, 1:init, 2~x:count
 	static sem_t mLogMonitorSem; //logmonitor exit without wait 1s
 
     //for LPT type
     int lightportrait_type;
+    uint32_t mMultiCameraId;
 };
 
 }; // namespace sprdcamera

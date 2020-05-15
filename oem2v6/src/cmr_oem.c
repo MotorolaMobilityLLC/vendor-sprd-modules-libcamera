@@ -8398,6 +8398,15 @@ cmr_int camera_set_fov_fusion_mode(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_set_multi_camera_id(cmr_handle oem_handle,
+                                   cmr_uint is_multi_camera_id) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->is_multi_camera_id = is_multi_camera_id;
+    CMR_LOGI("is_multi_camera_id %ld", cxt->is_multi_camera_id);
+    return ret;
+}
+
 cmr_int camera_open_sensor(cmr_handle oem_handle, cmr_u32 camera_id) {
     ATRACE_BEGIN(__FUNCTION__);
 

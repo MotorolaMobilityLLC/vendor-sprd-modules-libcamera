@@ -494,9 +494,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
       mIsYuvSensor(0),
-      mIsUltraWideMode(false), mIsFovFusionMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
+      mIsUltraWideMode(false), mIsFovFusionMode(false),
+      mIsRawCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
-      mIsJpegWithBigSizePreview(0), lightportrait_type(0)
+      mIsJpegWithBigSizePreview(0), lightportrait_type(0),
+      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID)
 
 {
     ATRACE_CALL();
@@ -1748,6 +1750,10 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         } else {
             mIsFovFusionMode = false;
         }
+        break;
+    }
+    case CAMERA_IOCTRL_MULTI_CAMERA_ID: {
+        mMultiCameraId = *(uint32_t *)param1;
         break;
     }
     case CAMERA_TOCTRL_SET_HIGH_RES_MODE: {
@@ -6896,6 +6902,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     }
 
     struct sensor_zoom_param_input ZoomInputParam;
+    ZoomInputParam.camera_id = mMultiCameraId;
     ret = sensorGetZoomParam(&ZoomInputParam);
     PhyCam = ZoomInputParam.PhyCameras;
 
