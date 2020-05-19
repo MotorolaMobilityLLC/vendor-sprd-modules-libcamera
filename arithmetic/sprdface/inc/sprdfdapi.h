@@ -1,9 +1,9 @@
 /*-------------------------------------------------------------------*/
-/*  Copyright(C) 2019 by Spreadtrum                                  */
+/*  Copyright(C) 2020 by UNISOC                                  */
 /*  All Rights Reserved.                                             */
 /*-------------------------------------------------------------------*/
 /* 
-    Face Detection Library API
+Face Detection Library API
 */
 
 #ifndef __SPRD_FD_API_H__
@@ -43,8 +43,9 @@
 #define FD_WORKMODE_FACEAUTH    0x03  /* Face authentication mode                 */
 #define FD_WORKMODE_DEFAULT     FD_WORKMODE_STILL /* the default work mode        */
 
-#define FD_ENV_SW  0x00
-#define FD_ENV_HW  0x01
+#define FD_ENV_SW   0x00
+#define FD_ENV_HW   0x01
+#define FD_ENV_DMS  0x02
 #define FD_ENV_DEFAULT  FD_ENV_SW
 
 /**
@@ -64,13 +65,13 @@ typedef struct
 /* The image context */
 typedef struct
 {
-   int orientation;
-   int brightValue;
-   bool aeStable;
-   unsigned int backlightPro;
-   unsigned int hist[256];
-   int zoomRatio;
-   int frameID;
+    int orientation;
+    int brightValue;
+    bool aeStable;
+    unsigned int backlightPro;
+    unsigned int hist[256];
+    int zoomRatio;
+    int frameID;
 } FD_IMAGE_CONTEXT;
 
 /* The gray-scale image structure */
@@ -81,13 +82,16 @@ typedef struct
     int width;                        /* Image width                              */
     int height;                       /* Image height                             */
     int step;                         /* The byte count per scan line             */
-   FD_IMAGE_CONTEXT context;
+    FD_IMAGE_CONTEXT context;
 }FD_IMAGE;
 
 /* The face information structure */
 typedef struct 
 {
     int x, y, width, height;          /* Face rectangle                           */
+#ifdef DMS_API
+    int landmark[10];
+#endif
     int yawAngle;                     /* Out-of-plane rotation angle (Yaw);In [-90, +90] degrees;   */
     int rollAngle;                    /* In-plane rotation angle (Roll); In (-180, +180] degrees;   */
     int score;                        /* Confidence score; In [0, 1000]           */
@@ -145,38 +149,38 @@ typedef void * FD_HANDLE;
 extern "C" {
 #endif
 
-/* Get the software version_new*/
-FDAPI(int)  FdGetVersion(FD_VERSION* version);
+    /* Get the software version_new*/
+    FDAPI(int)  FdGetVersion(FD_VERSION* version);
 
-/* Init the FD_OPTION structure by default values */
-FDAPI(void) FdInitOption(FD_OPTION *option);
+    /* Init the FD_OPTION structure by default values */
+    FDAPI(void) FdInitOption(FD_OPTION *option);
 
-/* Create a Face Detector handle according to the input option */
-FDAPI(int)  FdCreateDetector(FD_HANDLE *hDT, const FD_OPTION *option);
+    /* Create a Face Detector handle according to the input option */
+    FDAPI(int)  FdCreateDetector(FD_HANDLE *hDT, const FD_OPTION *option);
 
-/* Release the Face Detector handle */
-FDAPI(void) FdDeleteDetector(FD_HANDLE *hDT);
+    /* Release the Face Detector handle */
+    FDAPI(void) FdDeleteDetector(FD_HANDLE *hDT);
 
-/* Detect face on the input gray-scale image */
-FDAPI(int)  FdDetectFace(FD_HANDLE hDT, const FD_IMAGE *grayImage);
+    /* Detect face on the input gray-scale image */
+    FDAPI(int)  FdDetectFace(FD_HANDLE hDT, const FD_IMAGE *grayImage);
 
-/* Clear the faces detected in the previous image */
-FDAPI(int)  FdClearFace(FD_HANDLE hDT);
+    /* Clear the faces detected in the previous image */
+    FDAPI(int)  FdClearFace(FD_HANDLE hDT);
 
-/* Get the detected face count */
-FDAPI(int)  FdGetFaceCount(const FD_HANDLE hDT);
+    /* Get the detected face count */
+    FDAPI(int)  FdGetFaceCount(const FD_HANDLE hDT);
 
-/* Get the face information at the specified index */
-FDAPI(int)  FdGetFaceInfo(const FD_HANDLE hDT, int faceIndex, FD_FACEINFO *faceInfo);
+    /* Get the face information at the specified index */
+    FDAPI(int)  FdGetFaceInfo(const FD_HANDLE hDT, int faceIndex, FD_FACEINFO *faceInfo);
 
-// This function is provided for speed up face detection. 
-// minFaceSize and refFaceAngle will override the settings in FD_OPTION
-// It can only run the the STILL mode
-// faceDirection must be a subset of FD_OPTION.directions
-FDAPI(int)  FdDetectFaceExt(FD_HANDLE hDT,
-                            const FD_IMAGE *grayImage,
-                            unsigned int minFaceSize,
-                            unsigned int faceDirection);
+    // This function is provided for speed up face detection. 
+    // minFaceSize and refFaceAngle will override the settings in FD_OPTION
+    // It can only run the the STILL mode
+    // faceDirection must be a subset of FD_OPTION.directions
+    FDAPI(int)  FdDetectFaceExt(FD_HANDLE hDT,
+        const FD_IMAGE *grayImage,
+        unsigned int minFaceSize,
+        unsigned int faceDirection);
 
 #ifdef  __cplusplus
 }
