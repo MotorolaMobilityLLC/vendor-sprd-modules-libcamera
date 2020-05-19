@@ -4237,6 +4237,9 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.grid = lsc_info->grid;
 	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
+#ifdef CONFIG_ISP_2_6
+	lsc_param.lib_param.version_id = 1;
+#endif
 #ifdef CONFIG_ISP_2_7
 	lsc_param.caller_handle = (cmr_handle) cxt;
 	lsc_param.lsc_set_cb = ispalg_lsc_set_cb;

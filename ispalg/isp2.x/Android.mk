@@ -114,7 +114,14 @@ LOCAL_SHARED_LIBRARIES += libdeflicker
 
 LOCAL_SHARED_LIBRARIES += libae libflash libhdr
 LOCAL_SHARED_LIBRARIES += libawb libawb1
-LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc liblsc_v1
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
+LOCAL_SHARED_LIBRARIES += liblsc_v1
+else
+LOCAL_SHARED_LIBRARIES += liblsc
+endif
+
+LOCAL_SHARED_LIBRARIES += libsprdlsc
 LOCAL_SHARED_LIBRARIES += libatm
 LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
 LOCAL_SHARED_LIBRARIES += libsprdaic libsprdscenedetect
