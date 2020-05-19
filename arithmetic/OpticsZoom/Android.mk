@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
+ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_support)),true)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))

@@ -95,6 +95,7 @@ struct class_fd {
     cmr_uint fd_y;
     cmr_uint is_face_attribute_init;
     cmr_int work_mode;
+    sem_t sem_facearea;
 };
 
 struct fd_start_parameter {
@@ -303,6 +304,8 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     ret = fd_call_init(fd_handle, fd_img_size);
 #endif
 
+    sem_init(&fd_handle->sem_facearea, 0 , 1);
+
     if (ret) {
         CMR_LOGE("failed to init fd");
         fd_close(fd_handle);
@@ -346,6 +349,7 @@ static cmr_int fd_close(cmr_handle class_handle) {
         cmr_thread_destroy(fd_handle->thread_handle);
         fd_handle->thread_handle = 0;
         fd_handle->is_inited = 0;
+        sem_destroy(&fd_handle->sem_facearea);
     }
 
 #ifdef CONFIG_SPRD_FD_HW_SUPPORT
@@ -489,8 +493,10 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
         }
     } else if (!fd_handle->is_get_result) {
         /*!!Warning: The following codes are not thread-safe */
+        sem_wait(&fd_handle->sem_facearea);
         memcpy(&fd_handle->frame_out.face_area, &fd_handle->face_area_prev,
                sizeof(struct img_face_area));
+        sem_post(&fd_handle->sem_facearea);
         fd_handle->frame_out.dst_frame.size.width =
             fd_handle->frame_in.src_frame.size.width;
         fd_handle->frame_out.dst_frame.size.height =
@@ -1598,9 +1604,11 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         }
 
         /* save a copy for next frame to directly callback if busying */
+        sem_wait(&class_handle->sem_facearea);
         memcpy(&(class_handle->face_area_prev),
                &(class_handle->frame_out.face_area),
                sizeof(struct img_face_area));
+        sem_post(&class_handle->sem_facearea);
 
         duration = (end_time - start_time) * 1000 / CLOCKS_PER_SEC;
         CMR_LOGD("%dx%d, face_num=%ld, time=%d ms",
@@ -1664,6 +1672,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
 
         class_handle->is_get_result = 1;
         /* extract face detection results */
+        sem_wait(&class_handle->sem_facearea);
         fd_get_fd_results(class_handle->hDT, &(class_handle->faceattr_arr),
                           &(class_handle->face_area_prev),
                           &(class_handle->frame_out.face_area),
@@ -1673,6 +1682,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         memcpy(&(class_handle->face_area_prev),
                &(class_handle->frame_out.face_area),
                sizeof(struct img_face_area));
+        sem_post(&class_handle->sem_facearea);
 
         class_handle->frame_out.dst_frame.size.width =
             class_handle->frame_in.src_frame.size.width;

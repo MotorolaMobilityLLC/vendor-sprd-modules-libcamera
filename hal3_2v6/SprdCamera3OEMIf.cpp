@@ -490,7 +490,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
-      mIsUltraWideMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
+      mIsUltraWideMode(false), mIsFovFusionMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0)
 
@@ -1730,6 +1730,14 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
             mIsUltraWideMode = true;
         } else {
             mIsUltraWideMode = false;
+        }
+        break;
+    }
+    case CAMERA_IOCTRL_FOV_FUSION_MODE: {
+        if (*(unsigned int *)param1 == 1) {
+            mIsFovFusionMode = true;
+        } else {
+            mIsFovFusionMode = false;
         }
         break;
     }
@@ -3659,6 +3667,10 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     Mutex::Autolock l(&mPreviewCbLock);
     FACE_Tag faceInfo;
     FACE_Tag orifaceInfo;
+#ifdef CONFIG_CAMERA_EIS
+    EIS_CROP_Tag eiscrop_Info;
+    SPRD_DEF_Tag *sprddefInfo;
+#endif
 
     ssize_t offset = frame->buf_id;
     // camera_frame_metadata_t metadata;
@@ -3670,6 +3682,12 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
     int32_t ey = 0;
     struct img_rect rect = {0, 0, 0, 0};
     mSetting->getFACETag(&faceInfo);
+#ifdef CONFIG_CAMERA_EIS
+    int32_t delta_w = 0;
+    int32_t delta_h = 0;
+    mSetting->getEISCROPTag(&eiscrop_Info);
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+#endif
     memset(&faceInfo, 0, sizeof(FACE_Tag));
     memset(&orifaceInfo, 0, sizeof(FACE_Tag));
     HAL_LOGV("receive face_num %d.mid=%d", frame->face_num, mCameraId);
@@ -3694,10 +3712,26 @@ void SprdCamera3OEMIf::receivePreviewFDFrame(struct camera_frame_type *frame) {
                      frame->face_info[k].srx, frame->face_info[k].sry,
                      frame->face_info[k].ex, frame->face_info[k].ey,
                      frame->face_info[k].elx, frame->face_info[k].ely);
+#ifdef CONFIG_CAMERA_EIS
+            if(sprddefInfo->sprd_eis_enabled) {
+               delta_w = ((ex - sx)*frame->width)/(eiscrop_Info.crop[2] - eiscrop_Info.crop[0]);
+               delta_h = ((ey - sy)*frame->height)/(eiscrop_Info.crop[3] - eiscrop_Info.crop[1]);
+               faceInfo.face[k].rect[0] = ((sx - eiscrop_Info.crop[0])*frame->width)/(eiscrop_Info.crop[2] - eiscrop_Info.crop[0]);
+               faceInfo.face[k].rect[1] = ((sy - eiscrop_Info.crop[1])*frame->height)/(eiscrop_Info.crop[3] - eiscrop_Info.crop[1]);
+               faceInfo.face[k].rect[2] = faceInfo.face[k].rect[0] + delta_w;
+               faceInfo.face[k].rect[3] = faceInfo.face[k].rect[1] + delta_h;
+            }else {
+               faceInfo.face[k].rect[0] = sx;
+               faceInfo.face[k].rect[1] = sy;
+               faceInfo.face[k].rect[2] = ex;
+               faceInfo.face[k].rect[3] = ey;
+            }
+#else
             faceInfo.face[k].rect[0] = sx;
             faceInfo.face[k].rect[1] = sy;
             faceInfo.face[k].rect[2] = ex;
             faceInfo.face[k].rect[3] = ey;
+#endif
             faceInfo.angle[k] = frame->face_info[k].angle;
             faceInfo.pose[k] = frame->face_info[k].pose;
             memcpy(&orifaceInfo.face[k], &faceInfo.face[k],
@@ -4007,11 +4041,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         if (!mflagfb) {
-#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
-            face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
-#else
             face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
-#endif
 
             fb_chipinfo chipinfo;
 #if defined(CONFIG_ISP_2_3)
@@ -6772,7 +6802,12 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
              zoomRatio, mIsUltraWideMode);
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
-    mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
+    if (mIsFovFusionMode == true) {
+       mZoomInfo.zoom_info.capture_aspect_ratio = 1.0;
+    } else {
+       mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
+    }
+    HAL_LOGD("mIsFovFusionMode %d, capture_aspect_ratio=%f", mIsFovFusionMode, mZoomInfo.zoom_info.capture_aspect_ratio);
     mZoomInfo.zoom_info.video_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.pixel_size.width = sensorOrgW;
     mZoomInfo.zoom_info.pixel_size.height = sensorOrgH;
@@ -10311,7 +10346,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             }
             hdr_fd[sw_algorithm_buf_cnt] = zsl_frame.fd;
             sw_algorithm_buf_cnt++;
-            if (mMultiCameraMode == MODE_BOKEH) {
+            if (mMultiCameraMode == MODE_BOKEH || mIsFovFusionMode == true) {
                 char prop[PROPERTY_VALUE_MAX] = {
                     0,
                 };
@@ -10324,7 +10359,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
                     receiveRawPicture(&zsl_frame);
                 }
-                if (sw_algorithm_buf_cnt == 3 && mCameraId == 2) {
+                if (sw_algorithm_buf_cnt == 3 && (mCameraId == 2 || (mIsFovFusionMode == true && mCameraId == 3))) {
                     mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
                                                 CAMERA_IOCTRL_SET_HDR_DISABLE,
                                                 &value);
@@ -10333,7 +10368,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                         zsl_frame.y_vir_addr, zsl_frame.fd);
                     break;
                 }
-                if (mCameraId == 2) {
+                if (mCameraId == 2 || (mIsFovFusionMode == true && mCameraId == 3)) {
                     continue;
                 }
             }

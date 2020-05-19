@@ -434,6 +434,7 @@ int SprdCamera3HWI::closeCamera() {
     int ret = NO_ERROR;
 
     if (mOEMIf) {
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
         if (mOEMIf->isIspToolMode()) {
             stopispserver();
             ispvideo_RegCameraFunc(1, NULL);
@@ -1996,6 +1997,10 @@ int SprdCamera3HWI::flush() {
     int ret = NO_ERROR;
     int64_t timestamp = 0;
     // Mutex::Autolock l(mLock);
+    if (mOEMIf) {
+        mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+    }
+
     timestamp = systemTime();
     if (mHDRProcessFlag == true) {
         if (mPicChan) {

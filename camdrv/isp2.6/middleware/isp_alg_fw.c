@@ -496,7 +496,6 @@ static cmr_s32 dump_lsc_data(struct isp_alg_fw_context *cxt, cmr_u32 start, cmr_
 	else
 		sprintf(file_name, "%scam%d_lsc_t%08d_%s.txt", CAMERA_DUMP_PATH,
 			(cmr_u32)cxt->camera_id, (cmr_u32)cur_time, prev ? "prev" : "cap");
-
 	fp = fopen(file_name, "w+");
 	if (fp == NULL) {
 		ISP_LOGE("fail to open lsc data file %s\n", file_name);
@@ -1800,6 +1799,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			dump_lsc_data(cxt, start, ((scene_id == PM_SCENE_PRE) ? 1 : 0), param_data->data_ptr);
 
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
+
 		ISP_LOGV("cfg block %x for prev.\n", param_data->id);
 		param_data++;
 	}
@@ -1816,7 +1816,6 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			sub_block_info.scene_id = PM_SCENE_CAP;
 			if ((!IS_DCAM_BLOCK(param_data->id)) || cxt->remosaic_type) {
 				/* todo: refine for 4in1 sensor */
-
 				if (dump_lsc && param_data->id == ISP_BLK_2D_LSC)
 					dump_lsc_data(cxt, start, 0, param_data->data_ptr);
 
@@ -3378,7 +3377,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 	case ISP_EVT_AE: {
 		struct isp_statis_info *statis_info = (struct isp_statis_info *)message->data;
 
-		if (cxt->fw_started == 0)
+		if (cxt->fw_started == 0 && cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE)
 			break;
 
 		ISP_LOGV("aem no.%d, timestamp %03d.%06d\n", statis_info->frame_id, statis_info->sec, statis_info->usec);

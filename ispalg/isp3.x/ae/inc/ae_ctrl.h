@@ -107,6 +107,9 @@ extern "C" {
 	};
 
 	struct ae_ctrl_hist_win_info {
+		cmr_u32 idx;
+		cmr_u32 sec;
+		cmr_u32 usec;
 		cmr_u32 start_x;
 		cmr_u32 start_y;
 		cmr_u32 width;

@@ -864,6 +864,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // grab capability
     struct cmr_path_capability grab_capability;
     int64_t mLastCafDoneTime;
+    uint32_t mIsPowerhintWait;
+    sys_performance_camera_scene mGetLastPowerHint;
+
 };
 
 }; // namespace sprdcamera

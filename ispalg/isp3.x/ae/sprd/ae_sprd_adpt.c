@@ -1644,10 +1644,10 @@ static cmr_s32 ae_cfg_monitor_block(struct ae_ctrl_cxt *cxt)
 		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_WINDOW_RECT, &info.trim, NULL);
 	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
 		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_AE_BLOCK_SIZE, &info.win_size, NULL);
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_WINDOW_RECT, &info.trim, NULL);
+		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_AE_WINDOW_RECT, &info.trim, NULL);
 	} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
 		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_AE_BLOCK_SIZE, &info.win_size, NULL);
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_AE_WINDOW_RECT, &info.trim, NULL);
+		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_AE_WINDOW_RECT, &info.trim, NULL);
 	}
 
 	if (cxt->isp_ops.set_statistics_mode) {
@@ -1755,6 +1755,9 @@ static cmr_s32 ae_set_bayer_hist(struct ae_ctrl_cxt *cxt, struct ae_rect *hist_r
 	}
 	bhist_cfg = &cxt->bhist_cfg;
 
+	ISP_LOGV("ae_set_bayer_hist, cameraId:%d, start_x:%d, start_y:%d, end_x:%d, end_y:%d",\
+		cxt->camera_id, hist_rect->start_x, hist_rect->start_y, hist_rect->end_x, hist_rect->end_y);
+
 	if (bhist_cfg) {
 		bhist_cfg->bypass = cxt->bhist_cfg.bypass;
 		bhist_cfg->mode = cxt->bhist_cfg.mode;
@@ -1783,9 +1786,9 @@ static cmr_s32 ae_set_zoom_win_info(struct ae_ctrl_cxt *cxt)
 		return AE_ERROR;
 	}
 
-	ISP_LOGV("aem_roi_st, x:%d, y:%d", cxt->cur_result.aem_roi_st.x, cxt->cur_result.aem_roi_st.y);
-	ISP_LOGV("aem_blk_size, w:%d, h:%d", cxt->cur_result.aem_blk_size.w, cxt->cur_result.aem_blk_size.h);
-	ISP_LOGV("blk_num, w:%d, h:%d", cxt->monitor_cfg.blk_num.w, cxt->monitor_cfg.blk_num.h);
+	ISP_LOGV("aem_roi_st, cameraId:%d, x:%d, y:%d", cxt->camera_id, cxt->cur_result.aem_roi_st.x, cxt->cur_result.aem_roi_st.y);
+	ISP_LOGV("aem_blk_size, cameraId:%d, w:%d, h:%d", cxt->camera_id, cxt->cur_result.aem_blk_size.w, cxt->cur_result.aem_blk_size.h);
+	ISP_LOGV("blk_num, cameraId:%d, w:%d, h:%d", cxt->camera_id, cxt->monitor_cfg.blk_num.w, cxt->monitor_cfg.blk_num.h);
 
 	if ((cxt->cur_result.aem_roi_st.x == cxt->sync_cur_result.aem_roi_st.x) && (cxt->cur_result.aem_roi_st.y == cxt->sync_cur_result.aem_roi_st.y)\
 		&& (cxt->cur_result.aem_blk_size.w == cxt->sync_cur_result.aem_blk_size.w) && (cxt->cur_result.aem_blk_size.h == cxt->sync_cur_result.aem_blk_size.h)) {
@@ -3394,26 +3397,22 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 		fliker_unit_time = 8333333;
 
 	if(exposure > fliker_unit_time){
-		if(2 == cxt->hdr_flag)
-			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time + 0.5) * fliker_unit_time;
-		else
-			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time ) * fliker_unit_time;
-
+		exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time + 0.5) * fliker_unit_time;
 		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
-
+		if(gain < 128){
+			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time ) * fliker_unit_time;
+			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+			gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+		}
 	}else{
 		exp_time = fliker_unit_time;
 		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
 		if(gain < 128){
-			if(2 == cxt->hdr_flag){
-				gain = 128;
-				ISP_LOGD("flicker:clip gain (%d) to 128",gain);
-			}else{
-				gain = in_gain;
-				exp_line = (cmr_u32) (1.0 * in_exposure / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-			}
+			gain = in_gain;
+			exp_line = (cmr_u32) (1.0 * in_exposure / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+			ISP_LOGD("HDR calc fail for Gain<128 ");
 		}
 	}
 	*out_exp_l = exp_line;
@@ -3678,6 +3677,16 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 
 		cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
 		cxt->last_exp_param.is_ev_setting = cxt->is_ev_setting;
+
+		if ((cxt->is_multi_mode == ISP_ALG_DUAL_C_C) && (cxt->sensor_role != CAM_SENSOR_MASTER)) {
+			struct ae_sync_lib_outout_data ae_sync_lib_output = {0};
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_SYNC_OUTPUT, NULL, &ae_sync_lib_output);
+			cxt->last_exp_param.exp_line = ae_sync_lib_output.exp_line;
+			cxt->last_exp_param.exp_time = ae_sync_lib_output.exp_time;
+			cxt->last_exp_param.dummy = ae_sync_lib_output.dmy_line;
+			cxt->last_exp_param.gain = ae_sync_lib_output.ae_gain;
+			ISP_LOGD("GET_SYNC_SLAVE_SYNC_OUTPUT:exp_line:%d, dummy:%d, gain:%d", cxt->last_exp_param.exp_line, cxt->last_exp_param.dummy, cxt->last_exp_param.gain);
+		}
 
 		if(0 != cxt->sync_cur_result.touch_status){
 			cxt->last_exp_param.exp_line = cxt->backup_touch.exp_line;
@@ -5372,14 +5381,17 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 #endif
 	struct ae_sync_data aem_sync_info = {0};
 	struct ae_ctrl_visible_region_info zoom_roi = {0};
+	struct ae_ctrl_visible_region_info ae_debug_zoom_roi[3] = {{0},{0},{0}};
 	struct ae_ctrl_win_info ae_win_info = {0};
 	struct ae_ctrl_hist_win_info hist_win_info = {0};
-
-	cmr_u32 bayer_hist_data_temp[256] = {0};
-
+	struct ae_ctrl_hist_win_info ae_debug_hist_win_info[3] = {{0},{0},{0}};
 	float zoom_ratio = 0;
 
-	struct isp_hist_statistic_info get_bayerhist_stats[3];
+	cmr_u32 ae_debug_framId[3] = {0};
+	cmr_u32 i,j,k = 0;
+	struct isp_hist_statistic_info ae_debug_m_get_bayerhist_stats[3];
+	struct isp_hist_statistic_info ae_debug_s0_get_bayerhist_stats[3];
+	struct isp_hist_statistic_info ae_debug_s1_get_bayerhist_stats[3];
 
 	if (NULL == param) {
 		ISP_LOGE("fail to get param, in %p", param);
@@ -5421,38 +5433,120 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	/*send multi_mode to lib*/
 	cxt->cur_status.is_multi_mode = cxt->is_multi_mode;
 
-	/*get bayserhist when not ISP_ALG_TRIBLE_W_T_UW mode*/
-	if (cxt->is_multi_mode < ISP_ALG_TRIBLE_W_T_UW) {
-		memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &calc_in->bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
-		memcpy(&cxt->cur_status.adv_param.bhist_data[1].hist_data, &calc_in->bayerhist_stats[1].value, 256 * sizeof(cmr_u32));
-		memcpy(&cxt->cur_status.adv_param.bhist_data[2].hist_data, &calc_in->bayerhist_stats[2].value, 256 * sizeof(cmr_u32));
-		cxt->cur_status.adv_param.bhist_data[0].hist_bin = calc_in->bayerhist_stats[0].bin;
-		cxt->cur_status.adv_param.bhist_data[1].hist_bin = calc_in->bayerhist_stats[1].bin;
-		cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
+	/*set frame id to bridge*/
+	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
+	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
+	} else {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
 	}
+
+	/*get frame id for ae debug*/
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_FRAME_ID, NULL, &ae_debug_framId[0]);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_FRAME_ID, NULL, &ae_debug_framId[1]);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_FRAME_ID, NULL, &ae_debug_framId[2]);
+	ISP_LOGV("ae_debug, frameId, m:%d, s0:%d, s1:%d", ae_debug_framId[0], ae_debug_framId[1], ae_debug_framId[2]);
+
+	/*get bayserhist stat*/
+	memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &calc_in->bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
+	memcpy(&cxt->cur_status.adv_param.bhist_data[1].hist_data, &calc_in->bayerhist_stats[1].value, 256 * sizeof(cmr_u32));
+	memcpy(&cxt->cur_status.adv_param.bhist_data[2].hist_data, &calc_in->bayerhist_stats[2].value, 256 * sizeof(cmr_u32));
+	cxt->cur_status.adv_param.bhist_data[0].hist_bin = calc_in->bayerhist_stats[0].bin;
+	cxt->cur_status.adv_param.bhist_data[1].hist_bin = calc_in->bayerhist_stats[1].bin;
+	cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
+
+	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_HIST_STATS, calc_in->bayerhist_stats, NULL);
+	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_HIST_STATS, calc_in->bayerhist_stats, NULL);
+	} else {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_HIST_STATS, calc_in->bayerhist_stats, NULL);
+	}
+
+	/*add hist stat info to ae debug info*/
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_STATS, NULL, ae_debug_m_get_bayerhist_stats);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_HIST_STATS, NULL, ae_debug_s0_get_bayerhist_stats);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_HIST_STATS, NULL, ae_debug_s1_get_bayerhist_stats);
+
+	for (k = 0; k <3 ; k++) {
+		memcpy(&cxt->cur_status.debug_info.hist_info[0].hist_data[k].hist_data, &ae_debug_m_get_bayerhist_stats[k].value, 256 * sizeof(cmr_u32));
+		cxt->cur_status.debug_info.hist_info[0].hist_data[k].hist_bin = ae_debug_m_get_bayerhist_stats[k].bin;
+	}
+
+	for (k = 0; k <3 ; k++) {
+		memcpy(&cxt->cur_status.debug_info.hist_info[1].hist_data[k].hist_data, &ae_debug_s0_get_bayerhist_stats[k].value, 256 * sizeof(cmr_u32));
+		cxt->cur_status.debug_info.hist_info[1].hist_data[k].hist_bin = ae_debug_s0_get_bayerhist_stats[k].bin;
+	}
+
+	for (k = 0; k <3 ; k++) {
+		memcpy(&cxt->cur_status.debug_info.hist_info[2].hist_data[k].hist_data, &ae_debug_s1_get_bayerhist_stats[k].value, 256 * sizeof(cmr_u32));
+		cxt->cur_status.debug_info.hist_info[2].hist_data[k].hist_bin = ae_debug_s1_get_bayerhist_stats[k].bin;
+	}
+
+	/*get hist roi info*/
+	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_PARAM, NULL, &hist_win_info);
+	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_HIST_PARAM, NULL, &hist_win_info);
+	} else {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_HIST_PARAM, NULL, &hist_win_info);
+	}
+	cxt->cur_status.adv_param.hist_roi.idx = hist_win_info.idx;
+	cxt->cur_status.adv_param.hist_roi.sec = hist_win_info.sec;
+	cxt->cur_status.adv_param.hist_roi.usec = hist_win_info.usec;
+	cxt->cur_status.adv_param.hist_roi.start_x = hist_win_info.start_x;
+	cxt->cur_status.adv_param.hist_roi.start_y = hist_win_info.start_y;
+	cxt->cur_status.adv_param.hist_roi.end_x = hist_win_info.start_x + hist_win_info.width;
+	cxt->cur_status.adv_param.hist_roi.end_y = hist_win_info.start_y + hist_win_info.height;
+
+	ISP_LOGV("hist roi, sensor_role:%d, cameraId:%d, idx:%d, sec:%d, usec:%d, start_x:%d, start_y:%d, end_x:%d, end_y:%d",
+	cxt->sensor_role, cxt->camera_id, cxt->cur_status.adv_param.hist_roi.idx, cxt->cur_status.adv_param.hist_roi.sec, cxt->cur_status.adv_param.hist_roi.usec, \
+	cxt->cur_status.adv_param.hist_roi.start_x, hist_win_info.start_y, cxt->cur_status.adv_param.hist_roi.end_x, cxt->cur_status.adv_param.hist_roi.end_y);
+
+	/*add hist roi info to ae debug info*/
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_PARAM, NULL, &ae_debug_hist_win_info[0]);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_HIST_PARAM, NULL, &ae_debug_hist_win_info[1]);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_HIST_PARAM, NULL, &ae_debug_hist_win_info[2]);
+
+	cxt->cur_status.debug_info.hist_info[0].cam_id = 0;
+	cxt->cur_status.debug_info.hist_info[1].cam_id = 2;
+	cxt->cur_status.debug_info.hist_info[2].cam_id = 3;
+
+	for (j = 0; j < 3; j++) {
+		cxt->cur_status.debug_info.hist_info[j].frame_id = ae_debug_framId[j];
+		cxt->cur_status.debug_info.hist_info[j].hist_roi.start_x = ae_debug_hist_win_info[j].start_x;
+		cxt->cur_status.debug_info.hist_info[j].hist_roi.start_y= ae_debug_hist_win_info[j].start_y;
+		cxt->cur_status.debug_info.hist_info[j].hist_roi.end_x = ae_debug_hist_win_info[j].width + ae_debug_hist_win_info[j].start_x;
+		cxt->cur_status.debug_info.hist_info[j].hist_roi.end_y = ae_debug_hist_win_info[j].height + ae_debug_hist_win_info[j].start_y;
+
+		ISP_LOGV("ae debug, hist roi, j:%d, frameId:%d, start_x:%d, start_y:%d, end_x:%d, end_x:%d", j, cxt->cur_status.debug_info.hist_info[j].frame_id,\
+		cxt->cur_status.debug_info.hist_info[j].hist_roi.start_x, cxt->cur_status.debug_info.hist_info[j].hist_roi.start_y, \
+		cxt->cur_status.debug_info.hist_info[j].hist_roi.end_x, cxt->cur_status.debug_info.hist_info[j].hist_roi.end_y);
+	}
+
+	/*get aem roi info*/
+	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_AE_WIN, NULL, &ae_win_info);
+	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_AE_WIN, NULL, &ae_win_info);
+	} else {
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_AE_WIN, NULL, &ae_win_info);
+	}
+
+	ISP_LOGV("aem roi, sensro_role:%d, cameraId:%d, blk_num_x:%d, blk_num_y:%d, blk_size_x:%d, blk_size_y:%d",\
+	cxt->sensor_role, cxt->camera_id,\
+	ae_win_info.blk_num_x, ae_win_info.blk_num_y, ae_win_info.blk_size_x, ae_win_info.blk_size_y);
+
+	cxt->cur_status.aem_roi.start_x = ae_win_info.offset_x;
+	cxt->cur_status.aem_roi.start_y = ae_win_info.offset_y;
+	cxt->cur_status.aem_roi.end_x = ae_win_info.offset_x + ae_win_info.blk_num_x*ae_win_info.blk_size_x;
+	cxt->cur_status.aem_roi.end_y = ae_win_info.offset_y + ae_win_info.blk_num_y*ae_win_info.blk_size_y;
+	cxt->cur_status.adv_param.stats_data_adv.blk_size.w = ae_win_info.blk_size_x;
+	cxt->cur_status.adv_param.stats_data_adv.blk_size.h = ae_win_info.blk_size_y;
 
 	/*get ae sync data for ISP_ALG_TRIBLE_W_T_UW mode*/
 	if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
-
-		/*get aem roi info*/
-		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_AE_WIN, NULL, &ae_win_info);
-		} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_AE_WIN, NULL, &ae_win_info);
-		} else {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_AE_WIN, NULL, &ae_win_info);
-		}
-
-		ISP_LOGV("aem roi, sensro_role:%d, cameraId:%d, blk_num_x:%d, blk_num_y:%d, blk_size_x:%d, blk_size_y:%d",\
-		cxt->sensor_role, cxt->camera_id,\
-		ae_win_info.blk_num_x, ae_win_info.blk_num_y, ae_win_info.blk_size_x, ae_win_info.blk_size_y);
-
-		cxt->cur_status.aem_roi.start_x = ae_win_info.offset_x;
-		cxt->cur_status.aem_roi.start_y = ae_win_info.offset_y;
-		cxt->cur_status.aem_roi.end_x = ae_win_info.offset_x + ae_win_info.blk_num_x*ae_win_info.blk_size_x;
-		cxt->cur_status.aem_roi.end_y = ae_win_info.offset_x + ae_win_info.blk_num_y*ae_win_info.blk_size_y;
-		cxt->cur_status.adv_param.stats_data_adv.blk_size.w = ae_win_info.blk_size_x;
-		cxt->cur_status.adv_param.stats_data_adv.blk_size.h = ae_win_info.blk_size_y;
 
 		/*get zoom roi info*/
 		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
@@ -5472,6 +5566,25 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->cur_status.zoom_roi.end_x = zoom_roi.region.start_x + zoom_roi.region.width;
 		cxt->cur_status.zoom_roi.end_y = zoom_roi.region.start_y + zoom_roi.region.height;
 
+		/*add zoom roi info to ae debug info*/
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_AE_VISIBLE_REGION, NULL, &ae_debug_zoom_roi[0]);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_AE_VISIBLE_REGION, NULL, &ae_debug_zoom_roi[1]);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_AE_VISIBLE_REGION, NULL, &ae_debug_zoom_roi[2]);
+
+		cxt->cur_status.debug_info.touch_info[0].cam_id = 0;
+		cxt->cur_status.debug_info.touch_info[1].cam_id = 2;
+		cxt->cur_status.debug_info.touch_info[2].cam_id = 3;
+
+		for (i = 0; i++; i < 3) {
+			cxt->cur_status.debug_info.touch_info[i].frame_id = ae_debug_framId[i];
+			cxt->cur_status.debug_info.touch_info[i].touch_roi.x = ae_debug_zoom_roi[i].region.start_x;
+			cxt->cur_status.debug_info.touch_info[i].touch_roi.y = ae_debug_zoom_roi[i].region.start_y;
+			cxt->cur_status.debug_info.touch_info[i].touch_roi.w = ae_debug_zoom_roi[i].region.width;
+			cxt->cur_status.debug_info.touch_info[i].touch_roi.h = ae_debug_zoom_roi[i].region.height;
+			ISP_LOGV("ae_debug, touch info, i:%d, frameId:%d, start_x:%d, start_y:%d, width:%d, height:%d", i, cxt->cur_status.debug_info.touch_info[i].frame_id,\
+			cxt->cur_status.debug_info.touch_info[i].touch_roi.x, cxt->cur_status.debug_info.touch_info[i].touch_roi.y, cxt->cur_status.debug_info.touch_info[i].touch_roi.w, cxt->cur_status.debug_info.touch_info[i].touch_roi.h);
+		}
+
 		/*get zoom ratio*/
 		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_GLOBAL_ZOOM_RATIO, NULL, &zoom_ratio);
@@ -5489,46 +5602,6 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 		cxt->cur_status.ref_camera_id = aem_sync_info.ref_camera_id;
 		ISP_LOGV("ref_camera_id, sensor_role:%d, cameraId:%d, ref_cameraId:%d", cxt->sensor_role, cxt->camera_id, aem_sync_info.ref_camera_id);
 
-		/*get hist stat info*/
-		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-			memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &calc_in->bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
-			memcpy(&cxt->cur_status.adv_param.bhist_data[1].hist_data, &calc_in->bayerhist_stats[1].value, 256 * sizeof(cmr_u32));
-			memcpy(&cxt->cur_status.adv_param.bhist_data[2].hist_data, &calc_in->bayerhist_stats[2].value, 256 * sizeof(cmr_u32));
-			cxt->cur_status.adv_param.bhist_data[0].hist_bin = calc_in->bayerhist_stats[0].bin;
-			cxt->cur_status.adv_param.bhist_data[1].hist_bin = calc_in->bayerhist_stats[1].bin;
-			cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_HIST_STATS, calc_in->bayerhist_stats, NULL);
-
-		} else {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_STATS, NULL, get_bayerhist_stats);
-			memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &get_bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
-			memcpy(&cxt->cur_status.adv_param.bhist_data[1].hist_data, &get_bayerhist_stats[1].value, 256 * sizeof(cmr_u32));
-			memcpy(&cxt->cur_status.adv_param.bhist_data[2].hist_data, &get_bayerhist_stats[2].value, 256 * sizeof(cmr_u32));
-			/*if slave bayerhist value is zero, stop the calc*/
-			if (0 == memcmp(bayer_hist_data_temp, cxt->cur_status.adv_param.bhist_data[0].hist_data, 256 * sizeof(cmr_u32))) {
-				ISP_LOGV("hist_data, salve bayerhist value is 0");
-				rtn = AE_ERROR;
-				goto ae_calculation_error_exit;
-			}
-		}
-
-		/*get hist roi info*/
-		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_WIN, NULL, &hist_win_info);
-		} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_HIST_WIN, NULL, &hist_win_info);
-		} else {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_HIST_WIN, NULL, &hist_win_info);
-		}
-
-		ISP_LOGV("hist roi, sensor_role:%d, cameraId:%d, start_x:%d, start_y:%d, width:%d, height:%d", \
-		cxt->sensor_role, cxt->camera_id,\
-		hist_win_info.start_x, hist_win_info.start_y, hist_win_info.width, hist_win_info.height);
-
-		cxt->cur_status.adv_param.hist_roi.start_x = hist_win_info.start_x;
-		cxt->cur_status.adv_param.hist_roi.start_y = hist_win_info.start_y;
-		cxt->cur_status.adv_param.hist_roi.end_x = hist_win_info.start_x + hist_win_info.width;
-		cxt->cur_status.adv_param.hist_roi.end_y = hist_win_info.start_x + hist_win_info.height;
 	}
 
 	#if 0
@@ -5656,12 +5729,15 @@ cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle result)
 	cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
 
 	ISP_LOGV("misc_calc_in:camerId:%d, is_multi_mode:%d, ae_gain:%d, exp_time:%d", cxt->camera_id, cxt->is_multi_mode, cxt->cur_status.adv_param.mode_param.value.exp_gain[1], cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
+
 	if (0 == cxt->skip_update_param_flag) {
 		rtn = ae_lib_calculation(cxt->misc_handle, misc_calc_in, misc_calc_out);
 	}
 	ISP_LOGV("misc_calc_out: cameraId:%d, ae_idx:%d, ae_gain:%d, exp_time:%d", cxt->camera_id, cxt->cur_result.ev_setting.ae_idx, cxt->cur_result.ev_setting.ae_gain, cxt->cur_result.ev_setting.exp_time);
 
 	ae_set_zoom_win_info(cxt);
+
+	ae_set_bayer_hist(cxt, &cxt->cur_result.adjust_hist_roi);
 
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();

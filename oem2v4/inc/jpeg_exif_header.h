@@ -219,6 +219,9 @@ typedef struct exif_spec_date_time_tag {
 
     EXIF_ASCII_T DateTimeOriginal[20];
     EXIF_ASCII_T DateTimeDigitized[20];
+    EXIF_ASCII_T OffsetTimeOriginal[10];
+    EXIF_ASCII_T OffsetTimeDigitized[10];
+    EXIF_ASCII_T OffsetTime[10];
     EXIF_ASCII_T SubSecTime[MAX_ASCII_STR_SIZE];
     EXIF_ASCII_T SubSecTimeOriginal[MAX_ASCII_STR_SIZE];
     EXIF_ASCII_T SubSecTimeDigitized[MAX_ASCII_STR_SIZE];

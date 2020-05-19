@@ -1457,6 +1457,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		COPY_LOG(smart, SMART);
 		COPY_LOG(ai, AI);
 
+
 		if (cxt->otp_data != NULL) {
 			size_t len = copy_log(cxt->commn_cxt.log_isp + off,
 						cxt->otp_data->total_otp.data_ptr,
@@ -2732,6 +2733,8 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 	awbc_cfg->g_gain = calc_result.awb_gain[0].g_gain;
 	awbc_cfg->b_gain = calc_result.awb_gain[0].b_gain;
 	*ct = calc_result.awb_gain[0].ct;
+	memcpy(awb_log_buff, calc_result.log_buffer, calc_result.log_size);
+	cxt->awb_cxt.log_awb_size = calc_result.log_size;
 	} else if(!strncmp(awb_ver, "awb3.x", 6)){
 
 		ISP_LOGD("awb3.x");
@@ -2823,6 +2826,8 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		awbc_cfg->g_gain = calc_result_3_0.awb_gain.g_gain;
 		awbc_cfg->b_gain = calc_result_3_0.awb_gain.b_gain;
 		*ct = calc_result_3_0.awb_gain.ct;
+		memcpy(awb_log_buff, calc_result_3_0.log_buffer, calc_result_3_0.log_size);
+		cxt->awb_cxt.log_awb_size = calc_result_3_0.log_size;
 
 		property_get("persist.vendor.cam.debug.simulation", value, "false");
 		if (!strcmp(value, "true")) {
@@ -2834,9 +2839,7 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 
 	/*for debug info*/
 	if (cxt != NULL) {
-            memcpy(awb_log_buff, calc_result.log_buffer, calc_result.log_size);
             cxt->awb_cxt.log_awb = awb_log_buff;
-            cxt->awb_cxt.log_awb_size = calc_result.log_size;
 	}
 
 	if (!strcmp(awb_ver, "awb2.x"))

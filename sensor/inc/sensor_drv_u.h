@@ -328,6 +328,7 @@ struct sensor_zoom_param_input{
     float MaxDigitalZoom;
     float ZoomRatioSection[6];
     float BinningRatio;
+    int camera_id;
 };
 
 struct sensor_zoom_otp_data {

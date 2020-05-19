@@ -729,7 +729,7 @@ static struct sensor_ic_ops s_hi1336_ops_tab = {
     .ex_write_exp = hi1336_drv_write_exposure,
     .write_gain_value = hi1336_drv_write_gain_value,
 
-#if 0//defined(CONFIG_DUAL_MODULE)
+#if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = hi1336_drv_read_aec_info,
 #endif
 
