@@ -2175,8 +2175,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
     memcpy(s_setting[cameraId].requestInfo.available_result_keys,
            kavailable_result_keys, sizeof(kavailable_result_keys));
-    memcpy(s_setting[cameraId].requestInfo.available_capabilites,
-           kavailable_capabilities, sizeof(kavailable_capabilities));
     if (phyPtr->mono_sensor == 1) {
         memcpy(s_setting[cameraId].requestInfo.available_capabilites,
            kavailable_capabilities, sizeof(kavailable_capabilities));
