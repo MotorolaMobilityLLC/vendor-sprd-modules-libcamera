@@ -4967,7 +4967,7 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
             if (exists) {
                 HAL_LOGI("Format = %s", formatValue.c_str());
             } else {
-                meta.SetProperty(gDepthURI, "Format", "RangeLinear", 0);
+                meta.SetProperty(gDepthURI, "Format", "RangeInverse", 0);
             }
             HAL_LOGI("Format");
 
@@ -5008,64 +5008,6 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
                                  encodeToBase64String.c_str(), 0);
             }
             HAL_LOGI("depth:Data %s", encodeToBase64String.c_str());
-
-            string unitsValue;
-            exists = meta.GetProperty(gDepthURI, "Units", &unitsValue, NULL);
-            if (exists) {
-                HAL_LOGI("Units = %s", unitsValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Units", "m", 0);
-            }
-            HAL_LOGI("Units");
-
-            string measureTypeValue;
-            exists = meta.GetProperty(gDepthURI, "MeasureType",
-                                      &measureTypeValue, NULL);
-            if (exists) {
-                HAL_LOGI("MeasureType = %s", measureTypeValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "MeasureType", "OpticalAxis", 0);
-            }
-            HAL_LOGI("MeasureType");
-
-            string confidenceMimeValue;
-            exists = meta.GetProperty(gDepthURI, "ConfidenceMime",
-                                      &confidenceMimeValue, NULL);
-            if (exists) {
-                HAL_LOGI("ConfidenceMime = %s", confidenceMimeValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "ConfidenceMime", "image/jpeg", 0);
-            }
-            HAL_LOGI("ConfidenceMime");
-
-            string manufacturerValue;
-            exists = meta.GetProperty(gDepthURI, "Manufacturer",
-                                      &manufacturerValue, NULL);
-            if (exists) {
-                HAL_LOGI("Manufacturer = %s", manufacturerValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Manufacturer", "UNISOC", 0);
-            }
-            HAL_LOGI("Manufacturer");
-
-            string modelValue;
-            exists = meta.GetProperty(gDepthURI, "Model", &modelValue, NULL);
-            if (exists) {
-                HAL_LOGI("Model = %s", modelValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Model", "SharkLE", 0);
-            }
-            HAL_LOGI("Model");
-
-            string softwareValue;
-            exists =
-                meta.GetProperty(gDepthURI, "Software", &softwareValue, NULL);
-            if (exists) {
-                HAL_LOGI("Software = %s", softwareValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Software", "ALgo", 0);
-            }
-            HAL_LOGI("Software");
 
             XMP_Int32 imageWidthValue = 0;
             exists = meta.GetProperty_Int(gDepthURI, "ImageWidth",

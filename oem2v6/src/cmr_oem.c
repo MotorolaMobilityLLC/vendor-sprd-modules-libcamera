@@ -6661,6 +6661,33 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     sizeparam.imgH = src.size.height;
     sizeparam.angle = param->rotation;
     sizeparam.isMirror = 0;
+    cmr_uint flip_on = param->flip_on;
+    cmr_u32 tmp = 0;
+
+    if (0 != sizeparam.angle) {
+        if (90 == sizeparam.angle)
+            mean.rot = 1;
+        else if (180 == sizeparam.angle) {
+            mean.flip = 1;
+            mean.mirror = 1;
+        } else if (270 == sizeparam.angle) {
+            mean.rot = 1;
+            mean.flip = 1;
+            mean.mirror = 1;
+        }
+    }
+    if (flip_on) {
+          if (mean.mirror)
+              mean.mirror = 0;
+          else
+              mean.mirror = 1;
+      }
+    if ((90 == sizeparam.angle || 270 == sizeparam.angle)) {
+       tmp = pic_enc.size.height;
+       pic_enc.size.height = pic_enc.size.width;
+       pic_enc.size.width = tmp;
+    }
+
     watermark_add_yuv(oem_handle, (cmr_u8 *)src.addr_vir.addr_y, &sizeparam);
     // for cache coherency
     cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, &src);
