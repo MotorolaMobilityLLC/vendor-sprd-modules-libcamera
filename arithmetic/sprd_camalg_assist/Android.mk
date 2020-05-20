@@ -10,9 +10,10 @@ LOCAL_SRC_FILES := sprd_camalg_assist_ionmem.cpp \
 
 LOCAL_C_INCLUDES := vendor/sprd/modules/libmemion \
                     vendor/sprd/external/kernel-headers \
-                    vendor/sprd/modules/vdsp/Cadence/xrp/vdsp-interface
+                    vendor/sprd/modules/vdsp/Cadence/xrp/vdsp-interface \
+                    $(TOP)/system/core/include/cutils
 
-LOCAL_SHARED_LIBRARIES := liblog libmemion libutils libbinder
+LOCAL_SHARED_LIBRARIES := liblog libmemion libutils libbinder libcutils
 LOCAL_CFLAGS := -fvisibility=hidden
 LOCAL_PROPRIETARY_MODULE := true
 

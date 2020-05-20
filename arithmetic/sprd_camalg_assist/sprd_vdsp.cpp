@@ -53,3 +53,21 @@ JNIEXPORT int sprd_caa_vdsp_Send(const char *nsid, int priority,
 #endif
 	return 0;
 }
+
+JNIEXPORT int sprd_caa_vdsp_maxfreq_lock(void *h_vdsp)
+{
+#ifdef VDSP_CADENCE
+	return cadence_vdsp_maxfreq_lock(h_vdsp);
+#else
+    return 0;
+#endif
+}
+
+JNIEXPORT int sprd_caa_vdsp_maxfreq_unlock(void *h_vdsp)
+{
+#ifdef VDSP_CADENCE
+	return cadence_vdsp_maxfreq_unlock(h_vdsp);
+#else
+    return 0;
+#endif
+}

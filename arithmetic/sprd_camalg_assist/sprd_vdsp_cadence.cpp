@@ -8,6 +8,7 @@
 #include "sprd_camalg_assist_common.h"
 #include "sprd_camalg_assist.h"
 #include "vdsp_interface.h"
+#include "properties.h"
 
 typedef struct {
 	struct vdsp_handle hd;
@@ -127,6 +128,23 @@ _ERR_EXIT:
 	return ret;
 }
 
+void dump_buffer(int buf_id, void *buf, uint32_t size)
+{
+    char isdump[256];
+    property_get("persist.vendor.cam.assist.dump_vdsp_cmd_buf", isdump , "");
+    if (strcmp(isdump, "yes"))
+        return;
+    char fullname[256];
+    sprintf(fullname, "/data/vendor/cameraserver/vdsp_cmd_buf%d.bin", buf_id);
+    FILE *fp = fopen(fullname, "wb");
+    if (!fp) {
+        CAA_LOGE("open %s failed\n", fullname);
+        return;
+    }
+    fwrite(buf, 1, size, fp);
+    fclose(fp);
+}
+
 int cadence_vdsp_send(void *h_vdsp, const char *nsid, int priority,
 	void **h_ionmem_list, uint32_t h_ionmem_num)
 {
@@ -167,6 +185,7 @@ int cadence_vdsp_send(void *h_vdsp, const char *nsid, int priority,
 		in->viraddr = ionGroup[0]->v_addr;
 		in->size = ionGroup[0]->size;
 		in->flag = SPRD_VDSP_XRP_READ_WRITE;
+		dump_buffer(0, in->viraddr, in->size);
 		CAA_LOGD("buffer 0: fd(%d), size(%u)\n", ionGroup[0]->fd, ionGroup[0]->size);
 	}
 
@@ -176,6 +195,7 @@ int cadence_vdsp_send(void *h_vdsp, const char *nsid, int priority,
 		out->viraddr = ionGroup[1]->v_addr;
 		out->size = ionGroup[1]->size;
 		out->flag = SPRD_VDSP_XRP_READ_WRITE;
+		dump_buffer(1, out->viraddr, out->size);
 		CAA_LOGD("buffer 1: fd(%d), size(%u)\n", ionGroup[1]->fd, ionGroup[1]->size);
 	}
 
@@ -187,6 +207,7 @@ int cadence_vdsp_send(void *h_vdsp, const char *nsid, int priority,
 			buffer[i-2].viraddr = ionGroup[i]->v_addr;
 			buffer[i-2].size = ionGroup[i]->size;
 			buffer[i-2].flag = SPRD_VDSP_XRP_READ_WRITE;
+			dump_buffer(i, buffer[i-2].viraddr, buffer[i-2].size);
 			CAA_LOGD("buffer %d: fd(%d), size(%u)\n", i, ionGroup[i]->fd, ionGroup[i]->size);
 		}
 	}
@@ -220,4 +241,23 @@ _ERR_EXIT:
 		ret = 1;
 	return ret;
 }
+
+int cadence_vdsp_maxfreq_lock(void *h_vdsp)
+{
+	if (NULL == h_vdsp) {
+		CAA_LOGE("invalid handle\n");
+		return 1;
+	}
+	return sprd_cavdsp_power_hint(h_vdsp, SPRD_VDSP_POWERHINT_LEVEL_5, SPRD_VDSP_POWERHINT_ACQUIRE);
+}
+
+int cadence_vdsp_maxfreq_unlock(void *h_vdsp)
+{
+	if (NULL == h_vdsp) {
+		CAA_LOGE("invalid handle\n");
+		return 1;
+	}
+	return sprd_cavdsp_power_hint(h_vdsp, SPRD_VDSP_POWERHINT_LEVEL_5, SPRD_VDSP_POWERHINT_RELEASE);
+}
+
 #endif

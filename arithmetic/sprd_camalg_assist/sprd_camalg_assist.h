@@ -34,6 +34,10 @@ int sprd_caa_vdsp_Send(const char *nsid, int priority,
 //加载算法firmware(cadence vdsp)
 int sprd_caa_cadence_vdsp_load_library(void *h_vdsp, const char *nsid);
 
+int sprd_caa_vdsp_maxfreq_lock(void *h_vdsp);
+
+int sprd_caa_vdsp_maxfreq_unlock(void *h_vdsp);
+
 /************************
  * ionmem
  ***********************/
@@ -48,6 +52,9 @@ int sprd_caa_ionmem_flush(void *h_ionmem, uint32_t size);
 
 //invalid ionmem
 int sprd_caa_ionmem_invalid(void *h_ionmem);
+
+//sync ionmem
+int sprd_caa_ionmem_sync(void *h_ionmem);
 
 //获取ionmem虚拟地址
 void *sprd_caa_ionmem_get_vaddr(void *h_ionmem);

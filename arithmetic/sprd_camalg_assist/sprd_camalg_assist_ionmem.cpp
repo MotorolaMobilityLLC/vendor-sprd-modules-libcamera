@@ -60,15 +60,10 @@ JNIEXPORT int sprd_caa_ionmem_flush(void *h_ionmem, uint32_t size)
 		return 1;
 	}
 	ionmem_handle_t *handle = (ionmem_handle_t *)h_ionmem;
-	MemIon *pHeapIon = (MemIon *)handle->pHeapIon;
-	int ret = -1;
-	if (pHeapIon) {
-		size_t size_ret = 0;
-		unsigned long p_addr = 0;
-		pHeapIon->get_phy_addr_from_ion(&p_addr, &size_ret);
-		ret = pHeapIon->flush_ion_buffer(handle->v_addr, (void *)p_addr, size);
-	}
-	return ret;
+	size_t size_ret = 0;
+	unsigned long p_addr = 0;
+	MemIon::Get_phy_addr_from_ion(handle->fd, &p_addr, &size_ret);
+	return MemIon::Flush_ion_buffer(handle->fd, handle->v_addr, (void *)p_addr, size);
 }
 
 JNIEXPORT int sprd_caa_ionmem_invalid(void *h_ionmem)
@@ -78,8 +73,17 @@ JNIEXPORT int sprd_caa_ionmem_invalid(void *h_ionmem)
 		return 1;
 	}
 	ionmem_handle_t *handle = (ionmem_handle_t *)h_ionmem;
-	MemIon *pHeapIon = (MemIon *)handle->pHeapIon;
-	return pHeapIon->invalid_ion_buffer();
+	return MemIon::Invalid_ion_buffer(handle->fd);
+}
+
+JNIEXPORT int sprd_caa_ionmem_sync(void *h_ionmem)
+{
+	if (h_ionmem == NULL) {
+		CAA_LOGE("invalid h_ionmem(%p)\n", h_ionmem);
+		return 1;
+	}
+	ionmem_handle_t *handle = (ionmem_handle_t *)h_ionmem;
+	return MemIon::Sync_ion_buffer(handle->fd);
 }
 
 JNIEXPORT void *sprd_caa_ionmem_get_vaddr(void *h_ionmem)

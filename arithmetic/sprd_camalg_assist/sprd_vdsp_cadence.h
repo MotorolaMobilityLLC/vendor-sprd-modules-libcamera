@@ -7,5 +7,7 @@ int cadence_vdsp_send(void *h_vdsp, const char *nsid, int priority,
 	void **h_ionmem_list, uint32_t h_ionmem_num);
 int cadence_vdsp_Send(const char *nsid, int priority,
 	void **h_ionmem_list, uint32_t h_ionmem_num);
+int cadence_vdsp_maxfreq_lock(void *h_vdsp);
+int cadence_vdsp_maxfreq_unlock(void *h_vdsp);
 
 #endif

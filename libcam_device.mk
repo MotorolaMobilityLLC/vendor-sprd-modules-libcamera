@@ -19,7 +19,8 @@ PRODUCT_PACKAGES += $(SPRD_LIB)
 PRODUCT_COPY_FILES += vendor/sprd/modules/libcamera/arithmetic/sprd_easy_hdr/param/sprd_hdr_tuning.param:vendor/etc/sprd_hdr_tuning.param
 
 ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512), )
-PRODUCT_COPY_FILES += vendor/sprd/modules/libcamera/arithmetic/sprd_easy_hdr/firmware/hdr_cadence.bin:vendor/firmware/hdr_cadence.bin \
+PRODUCT_COPY_FILES += vendor/sprd/modules/libcamera/arithmetic/sprd_fdr/firmware/fdr_cadence.bin:vendor/firmware/fdr_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/sprd_easy_hdr/firmware/hdr_cadence.bin:vendor/firmware/hdr_cadence.bin \
                       vendor/sprd/modules/libcamera/arithmetic/sprd_warp/firmware/warp_cadence.bin:vendor/firmware/warp_cadence.bin \
                       vendor/sprd/modules/libcamera/arithmetic/facebeauty/firmware/facebeauty_cadence.bin:vendor/firmware/facebeauty_cadence.bin \
 					  vendor/sprd/modules/libcamera/arithmetic/libmfnr/firmware/mfnr_cadence.bin:vendor/firmware/mfnr_cadence.bin\
