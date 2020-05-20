@@ -637,13 +637,6 @@ cmr_int camera_takepicture_process(cmr_handle camera_handle,
     return ret;
 }
 
-int camera_get_postprocess_capture_size(cmr_u32 camera_id, cmr_u32 *mem_size, struct sensor_exp_info *sn_if) {
-    int ret = CMR_CAMERA_SUCCESS;
-
-    ret = camera_get_postproc_capture_size(camera_id, mem_size, sn_if->sn_interface.is_loose);
-    return ret;
-}
-
 uint32_t camera_get_size_align_page(uint32_t size) { return size; }
 
 cmr_int camera_fast_ctrl(cmr_handle camera_handle, enum fast_ctrl_mode mode,
@@ -1377,7 +1370,7 @@ static oem_ops_t oem_module_ops = {
     // camera_safe_scale_th,
     NULL, camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
     camera_get_redisplay_data, camera_is_change_size,
-    camera_get_postprocess_capture_size, camera_get_preview_rect,
+    NULL, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,
     camera_get_sensor_trim, camera_get_sensor_trim2,
     camera_get_preview_rot_angle, camera_fd_enable, camera_flip_enable,

@@ -208,7 +208,7 @@ int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
 * w * h * 3 / 2 + w * h * 3 / 2 + thumW * thumH * 3 = 3 * w * h + thumW * thumH
 * * 3(bytes);
 */
-int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cmr_u32 is_loose) {
+int camera_get_raw_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cmr_u32 is_loose) {
     cmr_u32 max_w, max_h, thumb_w, thumb_h;
     cmr_u32 redundance_size;
     char value[PROPERTY_VALUE_MAX];
@@ -310,6 +310,29 @@ int camera_get_4in1_postproc_capture_size(cmr_u32 camera_id,
     CMR_LOGD("postporc_capture_size=0x%x, small_w =%d, small_h =%d",
              *pp_cap_size, small_w, small_h);
 
+    return 0;
+}
+
+int camera_get_postproc_capture_size(cmr_u32 camera_id,
+                              cmr_u32 * pp_cap_size, cmr_u32 channel_size) {
+    cmr_u32 thumb_w, thumb_h;
+    cmr_u32 redundance_size;
+
+    if (pp_cap_size == NULL) {
+        CMR_LOGE("pp_cap_size=%p", pp_cap_size);
+        return -1;
+    }
+
+    // we assume that thumb size is not bigger than 512*512
+    thumb_w = 512;
+    thumb_h = 512;
+
+    // alloc more redundance_size(1M) memory for alignment use
+    redundance_size = 1 * 1024 * 1024;
+
+    *pp_cap_size = 3 * channel_size + 3 * thumb_w * thumb_h + redundance_size;
+
+    CMR_LOGD("postporc_capture_size=%d", *pp_cap_size);
     return 0;
 }
 
@@ -861,9 +884,9 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
 
     tmp1 = image_size->width * image_size->height * 3 / 2;
     tmp2 = cap_size->width * cap_size->height * 3 / 2;
-    tmp3 = sn_size->width * sn_size->height * 3 / 2;
+//    tmp3 = sn_size->width * sn_size->height * 3 / 2;
     max_size = tmp1 > tmp2 ? tmp1 : tmp2;
-    max_size = max_size > tmp3 ? max_size : tmp3;
+//    max_size = max_size > tmp3 ? max_size : tmp3;
     max_size = (max_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
     cap_mem->target_yuv.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y;
@@ -901,13 +924,13 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
 
     tmp1 = max_size + max_size;
     tmp2 = max_size + cap_mem->target_jpeg.buf_size;
-    tmp3 = tmp1 > tmp2 ? tmp1 : tmp2;
-    tmp3 = (tmp3 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+    tmp2 = tmp1 > tmp2 ? tmp1 : tmp2;
+    tmp2 = (tmp2 + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
-    CMR_NO_MEM(tmp3, mem_res);
+    CMR_NO_MEM(tmp2, mem_res);
 
-    *io_mem_res = mem_res - tmp3;
-    *io_mem_end = mem_end + tmp3;
+    *io_mem_res = mem_res - tmp2;
+    *io_mem_end = mem_end + tmp2;
 
     return 0;
 }
