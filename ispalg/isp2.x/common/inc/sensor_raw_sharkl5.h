@@ -54,6 +54,7 @@
 #define VST_IVST_NUM 1024
 
 #define CNR_LEVEL 4
+#define CNR3_LAYER_NUM 5
 
 #define AE_VERSION    0x00000000
 #define AWB_VERSION   0x00000000
@@ -66,6 +67,11 @@
 
 #define TUNE_FILE_CHIP_VER_MASK 0x0000FFFF
 #define TUNE_FILE_SW_VER_MASK 0xFFFF0000
+
+#define AEC_EXP_GAIN_TABLE_SIZE 512
+#define AEC_WEIGHT_TABLE_SIZE 1024
+#define AEC_ISO_NUM 10
+#define AE_WEIGHT_TABLE_SZ 4
 
 enum isp_scene_mode {
 	ISP_SCENEMODE_AUTO = 0x00,
@@ -209,6 +215,35 @@ struct ae_table_param_2 {
 	struct ae_weight_table weight_table[AE_WEIGHT_TABLE_NUM];
 	struct ae_scene_info_2 scene_info[AE_SCENE_NUM];
 	struct ae_auto_iso_tab auto_iso_tab;
+};
+
+//AE 3.0
+struct ae_exp_gain_index_3 {
+	cmr_u16 min_index;
+	cmr_u16 max_index;
+	cmr_u8 exp_mode;   /* 0: ae table exposure is exposure time; 1: ae table exposure is exposure line */
+	cmr_u8 reserved[3];
+};
+
+struct ae_exp_gain_table_3 {
+	struct ae_exp_gain_index_3 index;
+	cmr_u16 gain[AEC_EXP_GAIN_TABLE_SIZE];
+	cmr_u32 exposure[AEC_EXP_GAIN_TABLE_SIZE];
+};
+struct ae_scene_info_3 {
+	cmr_u16 ae_header[12];
+	struct ae_exp_gain_table_3 ae_table[AE_FLICKER_NUM];
+};
+
+struct aec_weight_table {
+	cmr_u8 weight[AEC_WEIGHT_TABLE_SIZE];
+};
+struct ae_table_param_3 {
+	struct ae_exp_gain_table_3 ae_table[AE_FLICKER_NUM][AEC_ISO_NUM];
+	struct ae_exp_gain_table_3 ae_table_cus[AE_FLICKER_NUM][AE_ISO_NUM_NEW];/*it is for user define, 0: video, 1: flash*/
+	struct aec_weight_table weight_table[AE_WEIGHT_TABLE_SZ];/*average/center/spot/user define*/
+	struct ae_scene_info_3 scene_info[AE_SCENE_NUM];
+	cmr_u32 ae_tab_reserved[8996];
 };
 
 struct sensor_nr_header_param {
@@ -1547,6 +1582,82 @@ struct sensor_cnr_level {
 	float rang_sigma[CNR_LEVEL][2];
 };
 
+//cnr3.0
+struct sensor_multilayer_param {
+	cmr_u8 lowpass_filter_en;
+	cmr_u8 denoise_radial_en;
+	cmr_u8 reserved0[3];
+	cmr_u8 order[3];
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 slope;
+	cmr_u16 baseRadius;
+	cmr_u16 baseRadius_factor;
+	cmr_u16 minRatio;
+	cmr_u16 luma_th[2];
+	float sigma[3];
+	cmr_u16 reserved1[10];
+};
+
+struct sensor_cnr3_level {
+	cmr_u8 level_enable;
+	cmr_u8 reserved0[3];
+	cmr_u16 low_ct_thrd;
+	cmr_u16 radius_base;
+	struct sensor_multilayer_param param_layer[CNR3_LAYER_NUM];
+	cmr_u16 reserved1[10];
+};
+
+//facebeauty param
+
+enum
+{
+	FB_SKINTONE_DEFAULT,
+	FB_SKINTONE_YELLOW,
+	FB_SKINTONE_WHITE,
+	FB_SKINTONE_BLACK,
+	FB_SKINTONE_INDIAN,
+	FB_SKINTONE_NUM
+};
+
+struct facebeauty_level
+{
+    cmr_u8 skinSmoothLevel[11];
+    cmr_u8 skinSmoothDefaultLevel;
+    cmr_u8 skinTextureHiFreqLevel[11];
+    cmr_u8 skinTextureHiFreqDefaultLevel;
+    cmr_u8 skinTextureLoFreqLevel[11];
+    cmr_u8 skinTextureLoFreqDefaultLevel;
+    cmr_u8 skinSmoothRadiusCoeff[11];
+    cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
+    cmr_u8 skinBrightLevel[11];
+    cmr_u8 skinBrightDefaultLevel;
+    cmr_u8 largeEyeLevel[11];
+    cmr_u8 largeEyeDefaultLevel;
+    cmr_u8 slimFaceLevel[11];
+    cmr_u8 slimFaceDefaultLevel;
+    cmr_u8 skinColorLevel[11];
+    cmr_u8 skinColorDefaultLevel;
+    cmr_u8 lipColorLevel[11];
+    cmr_u8 lipColorDefaultLevel;
+    cmr_u8 reserved[4];
+};
+struct facebeauty_param
+{
+    cmr_u8 removeBlemishFlag;
+    cmr_u8 blemishSizeThrCoeff;
+    cmr_u8 skinColorType;
+    cmr_u8 lipColorType;
+    struct facebeauty_level fb_layer;
+    cmr_u8 reserved[20];
+};
+
+struct sensor_facebeauty_param
+{
+    struct facebeauty_param fb_param[FB_SKINTONE_NUM];
+    cmr_u8 reserved1[20];
+};
+
 struct sensor_ae_adapt_param {
 	cmr_u16 binning_factor; // 1x = 128
 	cmr_u16 reserved[19];
@@ -1663,6 +1774,7 @@ enum isp_smart_x_type {
 	ISP_SMART_X_TYPE_BV_GAIN = 1,
 	ISP_SMART_X_TYPE_CT = 2,
 	ISP_SMART_X_TYPE_BV_CT = 3,
+	ISP_SMART_X_TYPE_BV_ABLWEIGHT = 4,//raw_gtm,rgb_ltm,yuv_ltm
 };
 
 enum isp_smart_y_type {
@@ -1743,6 +1855,26 @@ struct sensor_y_delay_param {
 	//cmr_u16 bypass;//   can't bypass!!!
 	cmr_u16 ydelay_step;
 };
+
+// ynrs domain
+struct sensor_ynrs_level {
+	cmr_u8 lumi_thresh[2];
+	cmr_u8 gf_rnr_ratio[5];
+	cmr_u8 gf_addback_enable[5];
+	cmr_u8 gf_addback_ratio[5];
+	cmr_u8 gf_addback_clip[5];
+	cmr_u16 Radius;
+	cmr_u16 Radius_factor;
+	cmr_u16 radius_base;
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 gf_epsilon[5][3];
+	cmr_u16 gf_enable[5];
+	cmr_u16 gf_radius[5];
+	cmr_u16 gf_rnr_offset[5];
+	cmr_u16 bypass;
+	cmr_u8 reserved[2];
+ };
 
 //IIR color noise reduction, should named CCNR in tuning tool
 struct sensor_iircnr_pre {
@@ -1843,6 +1975,22 @@ struct sensor_sw3dnr_level {
         cmr_s32 reserverd[16];
 };
 
+struct sensor_mfnr_level {
+	cmr_s32 threshold[4];
+	cmr_s32 slope[4];
+	cmr_u16 searchWindow_x;
+	cmr_u16 searchWindow_y;
+	cmr_s32 recur_str;
+	cmr_s32 match_ratio_sad;
+	cmr_s32 match_ratio_pro;
+	cmr_s32 feat_thr;
+	cmr_s32 zone_size;
+	cmr_s32 luma_ratio_high;
+	cmr_s32 luma_ratio_low;
+	cmr_s32 reserverd[16];
+};
+
+
 enum {
 	ISP_BLK_NLM_T = 0x00,
 	ISP_BLK_VST_T,
@@ -1866,6 +2014,9 @@ enum {
 	ISP_BLK_IMBALANCEE_T,
 	ISP_BLK_LTM_T,
 	ISP_BLK_SW3DNR_T,
+	ISP_BLK_YNRS_T,
+	ISP_BLK_CNR3_T,
+	ISP_BLK_MFNR_T,
 	ISP_BLK_NR_MAX
 };
 
@@ -1921,6 +2072,43 @@ struct sensor_version_info {
 	cmr_u32 reserve4;
 	cmr_u32 reserve5;
 	cmr_u32 reserve6;
+};
+
+//DRE_Pro feature
+struct sensor_predre_pro_param {
+	cmr_u8 enable;
+	cmr_u8 imgKey_setting_mode;
+	cmr_u8 tarNorm_setting_mode;
+	cmr_u8 target_norm;
+	cmr_u16 imagekey;
+	cmr_u16 min_per;
+	cmr_u16 max_per;
+	cmr_u16 stat_step ;
+	cmr_u16 low_thresh;
+	cmr_u16 high_thresh;
+	cmr_u8 uv_gain_ratio;
+	cmr_u8 tarCoeff;
+	cmr_u8 reserved[2];//for 4-byte alignment
+};
+
+struct sensor_postdre_pro_param {
+	cmr_u8 enable;
+	cmr_u8 strength;
+	cmr_u8 texture_counter_en;
+	cmr_u8 text_point_thres;
+	cmr_u8 text_prop_thres;
+	cmr_u8 tile_num_auto;
+	cmr_u8 tile_num_x;
+	cmr_u8 tile_num_y;
+	cmr_u16 text_point_alpha;
+	cmr_u16 reserved;
+};
+
+//DRE_Pro
+struct sensor_dre_pro_level {
+	struct sensor_predre_pro_param predre_param[16];
+	struct sensor_postdre_pro_param postdre_param[16];
+	cmr_u8 reserved[280];
 };
 
 struct sensor_ae_tab_param {
@@ -1983,6 +2171,40 @@ struct sensor_ae_tab {
 	struct ae_weight_tab weight_tab[AE_WEIGHT_TABLE_NUM];
 	struct ae_scene_exp_gain_tab scene_tab[AE_SCENE_NUM][AE_FLICKER_NUM];
 	struct ae_auto_iso_tab_v1 auto_iso_tab[AE_FLICKER_NUM];
+};
+
+//AE 3.0
+struct ae_exp_gain_tab_3_x {
+	cmr_u16 *index;
+	cmr_u32 index_len;
+	cmr_u16 *gain;
+	cmr_u32 gain_len;
+	cmr_u32 *exposure;
+	cmr_u32 exposure_len;
+};
+
+struct ae_scene_exp_gain_tab_3_x {
+	cmr_u16 *scene_info;
+	cmr_u32 scene_info_len;
+	cmr_u16 *index;
+	cmr_u32 index_len;
+	cmr_u16 *gain;
+	cmr_u32 gain_len;
+	cmr_u32 *exposure;
+	cmr_u32 exposure_len;
+};
+struct ae_reserve {
+	cmr_u32 *ae_reserve;
+	cmr_u32 len;
+};
+
+struct sensor_ae_tab_3_x {
+	struct sensor_ae_tab_param ae_param;
+	struct ae_exp_gain_tab_3_x ae_tab[AE_FLICKER_NUM][AEC_ISO_NUM];
+	struct ae_exp_gain_tab_3_x ae_table_cus[AE_FLICKER_NUM][AE_ISO_NUM_NEW];
+	struct ae_weight_tab weight_tab[AE_WEIGHT_TABLE_SZ];
+	struct ae_scene_exp_gain_tab_3_x scene_info[AE_SCENE_NUM][AE_FLICKER_NUM];
+	struct ae_reserve ae_reserve;
 };
 
 struct sensor_lens_map_info {
@@ -2073,6 +2295,12 @@ struct sensor_nr_set_group_param {
 	cmr_u32 ltm_len;
 	cmr_u8 *sw_3dnr;
 	cmr_u32 sw_3dnr_len;
+	cmr_u8 *ynrs;
+	cmr_u32 ynrs_len;
+	cmr_u8 *cnr3;
+	cmr_u32 cnr3_len;
+	cmr_u8 *mfnr;
+	cmr_u32 mfnr_len;
 };
 
 struct sensor_nr_param {
@@ -2106,6 +2334,7 @@ struct sensor_raw_fix_info {
 	struct sensor_lsc_map lnc;
 	struct sensor_awb_map_weight_param awb;
 	struct sensor_nr_param nr;
+	struct sensor_ae_tab_3_x ae3x;
 };
 
 struct sensor_raw_note_info {
@@ -2162,6 +2391,9 @@ struct denoise_param_update {
 	struct sensor_nr_scene_map_param *nr_scene_map_ptr;
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
+	struct sensor_ynrs_level *ynrs_level_ptr;
+	struct sensor_cnr3_level *cnr3_level_ptr;
+	struct sensor_mfnr_level *mfnr_level_ptr;
 	cmr_u32 multi_nr_flag;
 };
 
