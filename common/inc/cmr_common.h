@@ -99,6 +99,7 @@ extern "C" {
 #define FOCUS_FAIL 2048
 #define DUAL_PD 4
 #define ISP_STATS_MAX 8
+#define ISP_STATSDBG_MAX 32
 
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080
@@ -221,6 +222,8 @@ struct after_set_cb_param {
     cmr_u32 padding;
     nsecs_t timestamp;
 };
+
+enum cam_fdr_post_scene {CAM_FDR_POST_LOW = 1, CAM_FDR_POST_HIGH};
 
 enum preview_param_mode { PARAM_NORMAL = 0, PARAM_ZOOM, PARAM_MODE_MAX };
 
@@ -429,6 +432,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_RANGE_FPS,
     COM_ISP_GET_AE_LUM,
     COM_ISP_SET_HDR,
+    COM_ISP_SET_FDR,
     COM_ISP_SET_AE_ADJUST,
     COM_ISP_SET_GTM_ONFF,
     COM_ISP_SET_AE_LOCK_UNLOCK,
@@ -494,6 +498,7 @@ enum common_isp_cmd_type {
     COM_ISP_GET_FB_PREV_PARAM,
     COM_ISP_GET_FB_CAP_PARAM,
     COM_ISP_GET_DRE_PRO_PARAM,
+    COM_ISP_SET_AUTO_FDR,
     COM_ISP_TYPE_MAX
 };
 
@@ -529,6 +534,7 @@ enum common_sn_cmd_type {
     COM_SN_GET_INFO,
     COM_SN_GET_FLASH_LEVEL,
     COM_SN_GET_4IN1_FORMAT_CONVERT,
+    COM_SN_SET_FDR_EV,
     COM_SN_TYPE_MAX,
 };
 
@@ -631,6 +637,9 @@ struct img_mfd {
 };
 
 struct img_frm {
+    cmr_u32 base_id;
+    cmr_uint sec;
+    cmr_uint usec;
     cmr_u32 fmt;
     cmr_u32 buf_size;
     struct img_rect rect;
@@ -643,6 +652,8 @@ struct img_frm {
     void *reserved;
     cmr_s64 monoboottime;
     cmr_u32 frame_number;
+    cmr_u32 is_fdr_frame_l;
+    cmr_u32 is_fdr_frame_h;
 };
 
 struct snp_thumb_yuv_param {
@@ -938,6 +949,8 @@ struct buffer_cfg {
     cmr_u32 frame_number;
     cmr_uint zsl_private;
     cmr_uint is_4in1;
+    cmr_uint is_fdr;
+    cmr_u32 scene_mode;
     cmr_s64 monoboottime;
     struct hal_sprd_slave_info slave_frame_info;
 };
@@ -1249,6 +1262,7 @@ enum ipm_class_type {
     IPM_TYPE_NONE = 0x0,
     IPM_TYPE_HDR = 0x00000001,
     IPM_TYPE_FD = 0x00000002,
+    IPM_TYPE_FDR = 0x00000003,
     IPM_TYPE_UVDE = 0x00000004,
     IPM_TYPE_YDE = 0x00000008,
     IPM_TYPE_REFOCUS = 0x00000010,
@@ -1261,6 +1275,8 @@ enum ipm_class_type {
     IPM_TYPE_ULTRA_WIDE = 0x00000300,
     IPM_TYPE_AUTO_TRACKING = 0x00000400,
     IPM_TYPE_DRE = 0x00000500,
+    IPM_TYPE_EE_FDR = 0x00000600,
+    IPM_TYPE_CNR_FDR = 0x00000700,
 };
 
 enum img_fmt {
@@ -1431,6 +1447,10 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
                    cmr_u32 index, struct img_addr *vir_addr,
                    cmr_u32 image_size);
+cmr_int dump_image_tags(char *tag, char *tag_suffix,
+                    cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
+                    cmr_s32 index, struct img_addr *vir_addr,
+                    cmr_u32 image_size);
 
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size);
 
@@ -1473,6 +1493,7 @@ enum {
     CAMERA_SCENE_MODE_NORMAL,
     CAMERA_SCENE_MODE_HDR,
     CAMERA_SCENE_MODE_PANORAMA,
+    CAMERA_SCENE_MODE_FDR,
     CAMERA_SCENE_MODE_MAX
 };
 
@@ -1544,6 +1565,7 @@ enum sprd_camera_app_mode {
     CAMERA_MODE_AR_VIDEO,
     CAMERA_MODE_BACK_ULTRA_WIDE,
     CAMERA_MODE_PORTRAIT_PHOTO,
+    CAMERA_MODE_FOV_FUSION_MODE = 35,
     CAMERA_MODE_NIGHT_PHOTO = 53,
     CAMERA_MODE_NIGHT_VIDEO = 54,
     CAMERA_MODE_MAX
@@ -1616,6 +1638,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_INVALIDATE_BUF,
     CAMERA_EVT_CB_FLUSH_BUF,
     CAMERA_EVT_CB_EV_ADJUST_SCENE,
+    CAMERA_EVT_CB_FDR_SCENE,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1756,6 +1779,8 @@ enum camera_param_type {
     CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED,
     CAMERA_PARAM_WRITE_CALIBRATION_OTP_DATA,
     CAMERA_PARAM_GET_SENSOR_ORIENTATION,
+    CAMERA_PARAM_SPRD_AUTO_FDR_ENABLED,
+    CAMERA_PARAM_SPRD_ENABLE_POSTEE,
     CAMERA_PARAM_TYPE_MAX
 };
 

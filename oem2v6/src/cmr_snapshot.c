@@ -3670,7 +3670,7 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
 
     if (0 == snp_get_request(snp_handle)) {
         if (IPM_WORKING == snp_get_status(snp_handle)) {
-            if (cxt->req_param.filter_type || cxt->req_param.nr_flag) {
+            if (cxt->req_param.filter_type || cxt->req_param.nr_flag   || cxt->req_param.ee_flag) {
                 sem_wait(&cxt->ipm_sync_sm);
             } else {
                 sem_post(&cxt->hdr_sync_sm);
@@ -4288,7 +4288,9 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     }
 
     snp_set_status(snp_handle, POST_PROCESSING);
-    if ((cxt->req_param.filter_type || cxt->req_param.nr_flag || cxt->req_param.dre_flag) && !cxt->req_param.is_yuv_callback_mode) {
+    if ((cxt->req_param.filter_type || cxt->req_param.nr_flag
+        || cxt->req_param.dre_flag || cxt->req_param.ee_flag)
+        && !cxt->req_param.is_yuv_callback_mode) {
         CMR_LOGI("before snp_ipm_process cameraid = %d ",cxt->camera_id);
         snp_ipm_process(snp_handle, data);
     }

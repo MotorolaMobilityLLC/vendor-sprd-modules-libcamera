@@ -147,15 +147,62 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct jpeg_codec_caller_handle *codec_handle = NULL;
     struct jpeg_lib_cxt *jcxt = NULL;
+    struct yuvbuf_frm jpeg_src;
+    struct yuvbuf_frm jpeg_dst;
 
     if (!jpeg_handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
-    src->fmt = cmr_fmt_transfer(src->fmt);
-    ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, (struct yuvbuf_frm *)src,
-                                (struct yuvbuf_frm *)dst, mean, enc_cb_param);
+
+    jpeg_src.fmt = src->fmt;
+    jpeg_src.buf_size = src->buf_size;
+    jpeg_src.rect.start_x = src->rect.start_x;
+    jpeg_src.rect.start_y = src->rect.start_y;
+    jpeg_src.rect.width = src->rect.width;
+    jpeg_src.rect.height = src->rect.height;
+    jpeg_src.size.width = src->size.width;
+    jpeg_src.size.height = src->size.height;
+    jpeg_src.addr_phy.addr_y = src->addr_phy.addr_y;
+    jpeg_src.addr_phy.addr_u = src->addr_phy.addr_u;
+    jpeg_src.addr_phy.addr_v = src->addr_phy.addr_v;
+    jpeg_src.addr_vir.addr_y = src->addr_vir.addr_y;
+    jpeg_src.addr_vir.addr_u = src->addr_vir.addr_u;
+    jpeg_src.addr_vir.addr_v = src->addr_vir.addr_v;
+    jpeg_src.fd = src->fd;
+    jpeg_src.data_end.y_endian = src->data_end.y_endian;
+    jpeg_src.data_end.uv_endian = src->data_end.uv_endian;
+    jpeg_src.data_end.reserved0 = src->data_end.reserved0;
+    jpeg_src.data_end.reserved1 = src->data_end.reserved1;
+    jpeg_src.format_pattern = src->format_pattern;
+    jpeg_src.reserved = src->reserved;
+
+    jpeg_dst.fmt = dst->fmt;
+    jpeg_dst.buf_size = dst->buf_size;
+    jpeg_dst.rect.start_x = dst->rect.start_x;
+    jpeg_dst.rect.start_y = dst->rect.start_y;
+    jpeg_dst.rect.width = dst->rect.width;
+    jpeg_dst.rect.height = dst->rect.height;
+    jpeg_dst.size.width = dst->size.width;
+    jpeg_dst.size.height = dst->size.height;
+    jpeg_dst.addr_phy.addr_y = dst->addr_phy.addr_y;
+    jpeg_dst.addr_phy.addr_u = dst->addr_phy.addr_u;
+    jpeg_dst.addr_phy.addr_v = dst->addr_phy.addr_v;
+    jpeg_dst.addr_vir.addr_y = dst->addr_vir.addr_y;
+    jpeg_dst.addr_vir.addr_u = dst->addr_vir.addr_u;
+    jpeg_dst.addr_vir.addr_v = dst->addr_vir.addr_v;
+    jpeg_dst.fd = dst->fd;
+    jpeg_dst.data_end.y_endian = dst->data_end.y_endian;
+    jpeg_dst.data_end.uv_endian = dst->data_end.uv_endian;
+    jpeg_dst.data_end.reserved0 = dst->data_end.reserved0;
+    jpeg_dst.data_end.reserved1 = dst->data_end.reserved1;
+    jpeg_dst.format_pattern = dst->format_pattern;
+    jpeg_dst.reserved = dst->reserved;
+    jpeg_src.fmt = cmr_fmt_transfer(src->fmt);
+
+    ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean,
+		                                enc_cb_param);
     if (ret) {
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
@@ -169,6 +216,8 @@ cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct jpeg_codec_caller_handle *codec_handle = NULL;
     struct jpeg_lib_cxt *jcxt = NULL;
+    struct yuvbuf_frm jpeg_src;
+    struct yuvbuf_frm jpeg_dst;
 
     if (!jpeg_handle) {
         CMR_LOGE("Invalid Param!");
@@ -177,13 +226,56 @@ cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
 
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
 
-    ret = jcxt->ops.jpeg_decode(jcxt->codec_handle, (struct yuvbuf_frm *)src,
-                                (struct yuvbuf_frm *)dst, mean);
+    jpeg_src.fmt = src->fmt;
+    jpeg_src.buf_size = src->buf_size;
+    jpeg_src.rect.start_x = src->rect.start_x;
+    jpeg_src.rect.start_y = src->rect.start_y;
+    jpeg_src.rect.width = src->rect.width;
+    jpeg_src.rect.height = src->rect.height;
+    jpeg_src.size.width = src->size.width;
+    jpeg_src.size.height = src->size.height;
+    jpeg_src.addr_phy.addr_y = src->addr_phy.addr_y;
+    jpeg_src.addr_phy.addr_u = src->addr_phy.addr_u;
+    jpeg_src.addr_phy.addr_v = src->addr_phy.addr_v;
+    jpeg_src.addr_vir.addr_y = src->addr_vir.addr_y;
+    jpeg_src.addr_vir.addr_u = src->addr_vir.addr_u;
+    jpeg_src.addr_vir.addr_v = src->addr_vir.addr_v;
+    jpeg_src.fd = src->fd;
+    jpeg_src.data_end.y_endian = src->data_end.y_endian;
+    jpeg_src.data_end.uv_endian = src->data_end.uv_endian;
+    jpeg_src.data_end.reserved0 = src->data_end.reserved0;
+    jpeg_src.data_end.reserved1 = src->data_end.reserved1;
+    jpeg_src.format_pattern = src->format_pattern;
+    jpeg_src.reserved = src->reserved;
+
+    jpeg_dst.fmt = dst->fmt;
+    jpeg_dst.buf_size = dst->buf_size;
+    jpeg_dst.rect.start_x = dst->rect.start_x;
+    jpeg_dst.rect.start_y = dst->rect.start_y;
+    jpeg_dst.rect.width = dst->rect.width;
+    jpeg_dst.rect.height = dst->rect.height;
+    jpeg_dst.size.width = dst->size.width;
+    jpeg_dst.size.height = dst->size.height;
+    jpeg_dst.addr_phy.addr_y = dst->addr_phy.addr_y;
+    jpeg_dst.addr_phy.addr_u = dst->addr_phy.addr_u;
+    jpeg_dst.addr_phy.addr_v = dst->addr_phy.addr_v;
+    jpeg_dst.addr_vir.addr_y = dst->addr_vir.addr_y;
+    jpeg_dst.addr_vir.addr_u = dst->addr_vir.addr_u;
+    jpeg_dst.addr_vir.addr_v = dst->addr_vir.addr_v;
+    jpeg_dst.fd = dst->fd;
+    jpeg_dst.data_end.y_endian = dst->data_end.y_endian;
+    jpeg_dst.data_end.uv_endian = dst->data_end.uv_endian;
+    jpeg_dst.data_end.reserved0 = dst->data_end.reserved0;
+    jpeg_dst.data_end.reserved1 = dst->data_end.reserved1;
+    jpeg_dst.format_pattern = dst->format_pattern;
+    jpeg_dst.reserved = dst->reserved;
+
+    ret = jcxt->ops.jpeg_decode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean);
     if (ret) {
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
     }
-    CMR_LOGD("ret %ld", ret);
+    CMR_LOGD("ret %d", ret);
     return ret;
 }
 

@@ -249,6 +249,7 @@ static tags_info_t
         {"sprdlightPortraitType", TYPE_INT32},
         {"sprdlightPortraitTips", TYPE_INT32},
         {"sprdportraitbackgroundreplacementtype", TYPE_INT32},
+        {"sprdAvailableAutoFdr", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

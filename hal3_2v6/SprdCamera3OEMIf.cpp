@@ -486,7 +486,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIspToolStart(false), mSubRawHeapNum(0), mGraphicBufNum(0),
       mSubRawHeapSize(0), mPathRawHeapNum(0), mPathRawHeapSize(0),
       mPreviewDcamAllocBufferCnt(0), mIsRecording(false),
-      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mCNRMode(0),
+      mZSLModeMonitorMsgQueHandle(0), mZSLModeMonitorInited(0), mCNRMode(0), mEEMode(0),
       mGyroInit(0), mGyroExit(0), mEisPreviewInit(false), mEisVideoInit(false),
       mGyroNum(0), mSprdEisEnabled(false), mVideoSnapshotType(0),
       mIommuEnabled(false), mFlashCaptureFlag(0),
@@ -537,11 +537,13 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     memset(mSubRawHeapArray, 0, sizeof(mSubRawHeapArray));
     memset(mZslHeapArray, 0, sizeof(mZslHeapArray));
+    memset(mZslRawHeapArray, 0, sizeof(mZslRawHeapArray));
     memset(&mSlowPara, 0, sizeof(slow_motion_para));
     memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
     memset(mGraphicBufArray, 0, sizeof(mGraphicBufArray));
     memset(mRawHeapArray, 0, sizeof(mRawHeapArray));
     memset(mZslGraphicsHandle, 0, sizeof(mZslGraphicsHandle));
+    memset(mIspStatsDebugHeap, 0, sizeof(mIspStatsDebugHeap));
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -616,6 +618,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mRegularChan = NULL;
     mPictureChan = NULL;
 
+    mZslRawHeapNum = 0;
     mZslHeapNum = 0;
     mSubRawHeapSize = 0;
     m3dnrGraphicPathHeapNum = 0;
@@ -2945,6 +2948,14 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
     }
     mZslHeapNum = 0;
 
+    for (j = 0; j < mZslRawHeapNum; j++) {
+        if (NULL != mZslRawHeapArray[j]) {
+            freeCameraMem(mZslRawHeapArray[j]);
+            mZslRawHeapArray[j] = NULL;
+        }
+    }
+    mZslRawHeapNum = 0;
+
     for (j = 0; j < mPathRawHeapNum; j++) {
         if (NULL != mPathRawHeapArray[j]) {
             freeCameraMem(mPathRawHeapArray[j]);
@@ -2987,6 +2998,13 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
         }
     }
 
+    sum = ISP_STATSDBG_MAX;
+    for (i = 0; i < sum; i++) {
+        if (NULL != mIspStatsDebugHeap[i]) {
+            freeCameraMem(mIspStatsDebugHeap[i]);
+        }
+        mIspStatsDebugHeap[i] = NULL;
+    }
     freeRawBuffers();
     delete memory;
 
@@ -5506,6 +5524,10 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         break;
     }
     case CAMERA_EVT_CB_RETURN_ZSL_BUF: {
+	 CONTROL_Tag controlInfo;
+	 int8_t drvSceneMode = 0;
+        mSetting->getCONTROLTag(&controlInfo);
+        mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
         if (isPreviewing() && iSZslMode() &&
             (mSprd3dCalibrationEnabled || mSprdYuvCallBack ||
              mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_BOKEH ||
@@ -5520,9 +5542,9 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                 HAL_LOGW("zsl lost a buffer, this should not happen");
                 break;
             }
-            HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
+            HAL_LOGD("zsl_frame->fd=0x%x, drvSceneMode:%d", zsl_frame->fd, drvSceneMode);
             buf_id = getZslBufferIDForFd(zsl_frame->fd);
-            if (buf_id != 0xFFFFFFFF) {
+            if (buf_id != 0xFFFFFFFF && drvSceneMode != CAMERA_SCENE_MODE_FDR) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     mCameraHandle, mZslHeapArray[buf_id]->phys_addr,
                     (cmr_uint)mZslHeapArray[buf_id]->data,
@@ -5592,6 +5614,10 @@ void SprdCamera3OEMIf::HandleCancelPicture(enum camera_cb_type cb,
 
 void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
+    CONTROL_Tag controlInfo;
+    int8_t drvSceneMode = 0;
+    mSetting->getCONTROLTag(&controlInfo);
+    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
 
     HAL_LOGD("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCaptureState()));
@@ -5624,10 +5650,15 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
             HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
             buf_id = getZslBufferIDForFd(zsl_frame->fd);
             if (buf_id != 0xFFFFFFFF) {
-                mHalOem->ops->camera_set_zsl_buffer(
-                    mCameraHandle, mZslHeapArray[buf_id]->phys_addr,
-                    (cmr_uint)mZslHeapArray[buf_id]->data,
-                    mZslHeapArray[buf_id]->fd);
+                if(mSprdAppmodeId == CAMERA_MODE_AUDIO_PICTURE &&
+                        drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+                    HAL_LOGD("fdr mode, skip set zsl buffer");
+                } else {
+                    mHalOem->ops->camera_set_zsl_buffer(
+                        mCameraHandle, mZslHeapArray[buf_id]->phys_addr,
+                        (cmr_uint)mZslHeapArray[buf_id]->data,
+                         mZslHeapArray[buf_id]->fd);
+               }
             }
         }
         break;
@@ -5867,6 +5898,14 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         sprdInfo = mSetting->getSPRDDEFTagPTR();
         sprdInfo->sprd_is_hdr_scene = *(uint8_t *)parm4;
         HAL_LOGV("sprd_is_hdr_scene = %d", sprdInfo->sprd_is_hdr_scene);
+        break;
+    case CAMERA_EVT_CB_FDR_SCENE:
+        SPRD_DEF_Tag *sprdFdrInfo;
+        sprdFdrInfo = mSetting->getSPRDDEFTagPTR();
+        sprdFdrInfo->sprd_is_fdr_scene = *(uint8_t *)parm4;
+        sprdFdrInfo->sprd_is_hdr_scene = *(uint8_t *)parm4;
+        HAL_LOGD("need to set fdr scene, now use hdr instead,  sprd_is_hdr_scene = %d",
+                  sprdFdrInfo->sprd_is_hdr_scene);
         break;
     case CAMERA_EVT_CB_3DNR_SCENE:
         SPRD_DEF_Tag *sprd3dnrInfo;
@@ -6998,6 +7037,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t drvSceneMode = 0;
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
+        HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d", drvSceneMode, mMultiCameraMode);
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_PANORAMA) {
             drvSceneMode = CAMERA_SCENE_MODE_PANORAMA;
         }
@@ -7735,12 +7775,28 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
     } break;
     case ANDROID_SPRD_AUTO_HDR_ENABLED: {
-        SPRD_DEF_Tag *sprdInfo;
-        sprdInfo = mSetting->getSPRDDEFTagPTR();
-        HAL_LOGD("sprdInfo->sprd_auto_hdr_enables=%d ",
-                 sprdInfo->sprd_auto_hdr_enable);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
-                 sprdInfo->sprd_auto_hdr_enable);
+        SPRD_DEF_Tag *sprddefInfo;
+        sprddefInfo = mSetting->getSPRDDEFTagPTR();
+        HAL_LOGD("sprddefInfo.sprd_auto_hdr_enables=%d, mSprdAppmodeId:%d ",
+                 sprddefInfo->sprd_auto_hdr_enable, mSprdAppmodeId);
+        if(CAMERA_MODE_AUDIO_PICTURE == mSprdAppmodeId || 
+           mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO ||
+           mSprdAppmodeId == CAMERA_MODE_BACK_ULTRA_WIDE) {
+#ifdef CONFIG_SUPPROT_AUTO_FDR
+            HAL_LOGD("change from auto hdr to auto fdr enable:%d", sprddefInfo->sprd_auto_hdr_enable);
+            sprddefInfo->sprd_auto_fdr_enable = sprdInfo.sprd_auto_hdr_enable;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_FDR_ENABLED,
+                 sprddefInfo->sprd_auto_fdr_enable);
+#else
+            HAL_LOGD("set auto hdr because not config CONFIG_SUPPROT_AUTO_FDR");
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
+                 sprddefInfo->sprd_auto_hdr_enable);
+#endif
+       } else {
+            HAL_LOGD("set auto hdr not audio picture mode");
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
+                 sprddefInfo->sprd_auto_hdr_enable);
+       }
     } break;
     case ANDROID_SPRD_DEVICE_ORIENTATION: {
         SPRD_DEF_Tag *sprddefInfo;
@@ -8271,6 +8327,72 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
 mem_fail:
     Callback_ZslFree(0, 0, 0, 0);
     return BAD_VALUE;
+}
+
+int SprdCamera3OEMIf::Callback_Zsl_raw_Malloc(cmr_u32 size, cmr_u32 sum,
+                                         cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                         cmr_s32 *fd) {
+    sprd_camera_memory_t *memory = NULL;
+    cmr_int i = 0;
+    int ret;
+
+    HAL_LOGD("size %d sum %d mZslHeapNum %d", size, sum, mZslHeapNum);
+
+    *phy_addr = 0;
+    *vir_addr = 0;
+    *fd = 0;
+
+    if (mZslRawHeapNum >= (kZslBufferCount + kZslRotBufferCount + 1)) {
+        HAL_LOGE("error mPreviewHeapNum %d", mZslRawHeapNum);
+        return BAD_VALUE;
+    }
+
+    if ((mZslRawHeapNum + sum) >= (kZslBufferCount + kZslRotBufferCount + 1)) {
+        HAL_LOGE("malloc is too more %d %d", mZslRawHeapNum, sum);
+        return BAD_VALUE;
+    }
+
+        HAL_LOGD("zsl_raw num %d", sum);
+        for (i = 0; i < (cmr_int)sum; i++) {
+            if(mZslRawHeapArray[i] == NULL) {
+                memory = allocCameraMem(size, 1, true);
+                if (NULL == memory) {
+                    HAL_LOGE("error memory is null.");
+                    goto mem_fail;
+                }
+                mZslRawHeapArray[i] = memory;
+                mZslRawHeapNum++;
+            }
+            *phy_addr++ = (cmr_uint)mZslRawHeapArray[i]->phys_addr;
+            *vir_addr++ = (cmr_uint)mZslRawHeapArray[i]->data;
+            *fd++ = mZslRawHeapArray[i]->fd;
+        }
+
+        return 0;
+
+mem_fail:
+    Callback_ZslRawFree(0, 0, 0, 0);
+    return BAD_VALUE;
+}
+
+int SprdCamera3OEMIf::Callback_ZslRawFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                       cmr_s32 *fd, cmr_u32 sum) {
+    cmr_u32 i;
+    Mutex::Autolock l(&mPrevBufLock);
+    Mutex::Autolock zsllock(&mZslBufLock);
+    SPRD_DEF_Tag sprddefInfo;
+
+    HAL_LOGD("mZslRawHeapNum %d sum %d", mZslRawHeapNum, sum);
+    for (i = 0; i < mZslRawHeapNum; i++) {
+        if (NULL != mZslRawHeapArray[i]) {
+            freeCameraMem(mZslRawHeapArray[i]);
+        }
+        mZslRawHeapArray[i] = NULL;
+    }
+
+    mZslRawHeapNum = 0;
+
+    return 0;
 }
 
 int SprdCamera3OEMIf::Callback_CaptureFree(cmr_uint *phy_addr,
@@ -8833,6 +8955,15 @@ int SprdCamera3OEMIf::Callback_CommonFree(enum camera_mem_cb_type type,
 
     HAL_LOGD("mem_type=%d sum=%d", type, sum);
 
+    if (type == CAMERA_ISPSTATS_DEBUG) {
+        for (i = 0; i < sum; i++) {
+            if (NULL != mIspStatsDebugHeap[i]) {
+                freeCameraMem(mIspStatsDebugHeap[i]);
+            }
+            mIspStatsDebugHeap[i] = NULL;
+        }
+    }
+
     for (List<MemIonQueue>::iterator i = cam_MemIonQueue.begin(); i != cam_MemIonQueue.end(); i++) {
         if ((type == i->mem_type) && (NULL != i->mIonHeap)) {
             HAL_LOGV("mem_type=%d mIonHeap=%p", type, i->mIonHeap);
@@ -8991,6 +9122,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
         // ret = camera->Callback_CaptureFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_SNAPSHOT_ZSL == type) {
         ret = camera->Callback_ZslFree(phy_addr, vir_addr, fd, sum);
+    } else if (CAMERA_SNAPSHOT_ZSL_RAW == type) {
+        ret = camera->Callback_ZslRawFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_SNAPSHOT_PATH == type) {
         ret = camera->Callback_CapturePathFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_PREVIEW_ULTRA_WIDE == type ||
@@ -9041,6 +9174,8 @@ int SprdCamera3OEMIf::Callback_IonMalloc(enum camera_mem_cb_type type,
         ret = camera->Callback_CaptureMalloc(size, sum, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT_ZSL == type) {
         ret = camera->Callback_ZslMalloc(size, sum, phy_addr, vir_addr, fd);
+    } else if (CAMERA_SNAPSHOT_ZSL_RAW == type) {
+        ret = camera->Callback_Zsl_raw_Malloc(size, sum, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT_PATH == type) {
         ret = camera->Callback_CapturePathMalloc(size, sum, phy_addr, vir_addr,
                                                  fd);
@@ -10130,8 +10265,10 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             continue;
         }
 
+        int8_t drvSceneMode = 0;
+        mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
         // for zsl hdr
-        if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+        if (drvSceneMode == CAMERA_SCENE_MODE_HDR) {
             if (zsl_frame.monoboottime < mZslSnapshotTime) {
                 HAL_LOGD("not the right hdr frame, skip it");
                 mHalOem->ops->camera_set_zsl_buffer(
@@ -10386,8 +10523,27 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
             mCNRMode = 1;
         }
     }
+    int8_t drvSceneMode;
+    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
+    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+        property_get("persist.vendor.cam.cnr.mode", value, "0");
+        if (atoi(value)) {
+            mCNRMode = 1;
+            HAL_LOGD("fdr mode, set cnr mode to 1");
+        }
+    }
     HAL_LOGD("mCNRMode = %d", mCNRMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
+
+    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+       property_get("persist.vendor.cam.fdr.enable", value, "0");
+       if (atoi(value)) {
+            mEEMode = 1;
+            HAL_LOGD("ee mode, set ee mode to 1");
+       }
+    }
+    HAL_LOGD("mEEMode = %d", mEEMode);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_POSTEE, mEEMode);
 
     JPEG_Tag jpgInfo;
     struct img_size jpeg_thumb_size;

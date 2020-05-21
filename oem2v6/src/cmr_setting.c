@@ -84,6 +84,7 @@ enum setting_general_type {
     SETTING_GENERAL_AUTO_3DNR,
     SETTING_GENERAL_EXPOSURE_TIME,
     SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE,
+    SETTING_GENERAL_AUTO_FDR,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -131,6 +132,7 @@ struct setting_hal_common {
     cmr_uint ai_scene;
     cmr_uint is_auto_3dnr;
     cmr_uint is_auto_tracking;
+    cmr_uint is_auto_fdr;
     struct cmr_ae_compensation_param ae_compensation_param;
 };
 
@@ -182,9 +184,11 @@ struct setting_hal_param {
 
     struct camera_position_type position_info;
     cmr_uint is_hdr;
+    cmr_uint is_fdr;
     cmr_uint is_3dnr;
     cmr_uint sprd_3dnr_type;
     cmr_uint is_cnr;
+    cmr_uint is_ee;
     cmr_uint is_android_zsl;
     cmr_uint app_mode;
     struct cmr_range_fps_param range_fps;
@@ -578,7 +582,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_EXPOSURE_TIME, &hal_param->hal_common.exposure_time,
          COM_ISP_SET_EXPOSURE_TIME, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE, &hal_param->hal_common.is_auto_tracking,
-         COM_ISP_SET_AUTO_TRACKING_ENABLE, COM_SN_TYPE_MAX}
+         COM_ISP_SET_AUTO_TRACKING_ENABLE, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_AUTO_FDR, &hal_param->hal_common.is_auto_fdr,
+         COM_ISP_SET_AUTO_FDR, COM_SN_TYPE_MAX}
     };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
@@ -660,6 +666,14 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         goto setting_out;
     }
 
+    if (type == SETTING_GENERAL_AUTO_HDR) {
+        CMR_LOGD("hdr type:%d, force_set%d, type_val:%d, cmd_type_value:%d",
+                    type, cpt->force_set, type_val, *(item->cmd_type_value));
+    }
+    if (type == SETTING_GENERAL_AUTO_FDR) {
+        CMR_LOGD("fdr type:%d, force_set%d, type_val:%d, cmd_type_value:%d",
+                    type, cpt->force_set, type_val, *(item->cmd_type_value));
+    }
     if ((type_val != *(item->cmd_type_value)) || (cpt->force_set)) {
         if (setting_is_active(cpt)) {
             ret = setting_before_set_ctrl(cpt, PARAM_NORMAL);
@@ -1069,6 +1083,11 @@ static cmr_int setting_set_scene_mode(struct setting_component *cpt,
         hal_param->is_hdr = 1;
     } else {
         hal_param->is_hdr = 0;
+    }
+    if (CAMERA_SCENE_MODE_FDR == parm->cmd_type_value) {
+        hal_param->is_fdr = 1;
+    } else {
+        hal_param->is_fdr = 0;
     }
     ret = setting_set_general(cpt, SETTING_GENERAL_SCENE_MODE, parm);
 
@@ -2184,6 +2203,18 @@ static cmr_int setting_set_cnr(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_ee(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->is_ee = parm->cmd_type_value;
+
+    CMR_LOGD("setting_set_ee=%ld", hal_param->is_ee);
+    return ret;
+}
+
+
 static cmr_int setting_set_touch_xy(struct setting_component *cpt,
                                     struct setting_cmd_parameter *parm) {
 
@@ -2569,6 +2600,18 @@ static cmr_int setting_set_auto_hdr(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_auto_fdr(struct setting_component *cpt,
+                                    struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    CMR_LOGD("set auto fdr %ld", parm->cmd_type_value);
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_AUTO_FDR, parm);
+
+    return ret;
+}
+
 static cmr_int setting_set_auto_3dnr(struct setting_component *cpt,
                                      struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2832,6 +2875,17 @@ exit:
     return ret;
 }
 
+static cmr_int setting_get_fdr(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->is_fdr;
+    CMR_LOGD("get fdr %ld", parm->cmd_type_value);
+
+    return ret;
+}
+
 static cmr_int setting_get_hdr(struct setting_component *cpt,
                                struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2908,6 +2962,17 @@ static cmr_int setting_get_cnr(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_get_ee(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->cmd_type_value = hal_param->is_ee;
+
+    CMR_LOGD("get ee %ld", parm->cmd_type_value);
+    return ret;
+}
+
+
 static cmr_int setting_ctrl_hdr(struct setting_component *cpt,
                                 struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2921,6 +2986,34 @@ static cmr_int setting_ctrl_hdr(struct setting_component *cpt,
 }
 
 static cmr_int setting_clear_hdr(struct setting_component *cpt,
+                                 struct setting_cmd_parameter *parm) {
+
+    if (!cpt) {
+        CMR_LOGE("camera_context is null.");
+        return -1;
+    }
+
+    pthread_mutex_lock(&cpt->isp_mutex);
+    cmr_sem_post(&cpt->isp_sem);
+    pthread_mutex_unlock(&cpt->isp_mutex);
+
+    CMR_LOGD("Done");
+    return 0;
+}
+
+static cmr_int setting_ctrl_fdr(struct setting_component *cpt,
+                                struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    cmr_setting_clear_sem(cpt);
+    CMR_LOGD("start wait for fdr ev effect");
+    ret = setting_isp_wait_notice(cpt);
+    CMR_LOGD("end wait for fdr ev effect");
+
+    return ret;
+}
+
+static cmr_int setting_clear_fdr(struct setting_component *cpt,
                                  struct setting_cmd_parameter *parm) {
 
     if (!cpt) {
@@ -4081,6 +4174,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_get_yuv_callback_enable);
     cmr_add_cmd_fun_to_table(SETTING_CTRL_HDR, setting_ctrl_hdr);
     cmr_add_cmd_fun_to_table(SETTING_CLEAR_HDR, setting_clear_hdr);
+    cmr_add_cmd_fun_to_table(SETTING_CTRL_FDR, setting_ctrl_fdr);
+    cmr_add_cmd_fun_to_table(SETTING_CLEAR_FDR, setting_clear_fdr);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXIF_MIME_TYPE,
                              setting_set_exif_mime_type);
     cmr_add_cmd_fun_to_table(SETTING_GET_APPMODE, setting_get_appmode);
@@ -4093,6 +4188,8 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_focus_distance);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
                              setting_set_auto_hdr);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_FDR_ENABLED,
+                             setting_set_auto_fdr);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SET_DEVICE_ORIENTATION,
                              setting_set_device_orientation);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_DEVICE_ORIENTATION,
@@ -4137,6 +4234,9 @@ static cmr_int cmr_setting_parms_init() {
                              setting_set_original_picture_size);
     cmr_add_cmd_fun_to_table(SETTING_GET_ORIGINAL_PICTURE_SIZE,
                              setting_get_original_picture_size);
+    cmr_add_cmd_fun_to_table(SETTING_GET_FDR, setting_get_fdr);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_POSTEE, setting_set_ee);
+    cmr_add_cmd_fun_to_table(SETTING_GET_EE, setting_get_ee);
     setting_parms_inited = 1;
     return 0;
 }

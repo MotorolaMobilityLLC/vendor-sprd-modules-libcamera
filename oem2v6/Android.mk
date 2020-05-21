@@ -109,6 +109,13 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/inc/ydenoise_paten
 LOCAL_SRC_FILES += src/cmr_ydenoise.c
 endif
 
+#include fdr files
+ifeq ($(strip $(TARGET_BOARD_CAMERA_FDR_CAPTURE)),true)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_fdr/inc
+LOCAL_SHARED_LIBRARIES += libsprdfdr
+LOCAL_SHARED_LIBRARIES += libsprdfdradapter
+endif
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 LOCAL_SRC_FILES += src/cmr_hdr.c
 endif

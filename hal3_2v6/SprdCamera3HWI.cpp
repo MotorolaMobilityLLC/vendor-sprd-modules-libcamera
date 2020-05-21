@@ -2283,8 +2283,10 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device) {
     if(MODE_3D_CALIBRATION == mMultiCameraMode) {
         property_set("vendor.cam.dualmode", "");
     }
-    mMultiCameraMode = MODE_SINGLE_CAMERA;
-
+    if (mCameraSessionActive == 0) {
+        HAL_LOGI("fdr set multi mode to single");
+        mMultiCameraMode = MODE_SINGLE_CAMERA;
+    }
     HAL_LOGI(":hal3: camera3->close X mCameraSessionActive %d",
              mCameraSessionActive);
 

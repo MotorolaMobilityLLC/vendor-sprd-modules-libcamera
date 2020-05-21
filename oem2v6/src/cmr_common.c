@@ -473,6 +473,82 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     return 0;
 }
 
+// more tags for file
+cmr_int dump_image_tags(char *tag, char *tag_suffix,
+                    cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
+                    cmr_s32 index, struct img_addr *vir_addr,
+                    cmr_u32 image_size)
+ {
+     cmr_int ret = CMR_CAMERA_SUCCESS;
+     cmr_u32 size;
+     char file_name[512];
+     char tmp_str[40];
+     FILE *fp = NULL;
+
+     CMR_LOGD("%s:  format %d width %d height %d img_size %d", tag, img_fmt, width, height, image_size);
+
+    cmr_bzero(file_name, 512);
+    strcpy(file_name, CAMERA_DUMP_PATH);
+
+    sprintf(tmp_str, "%s_", tag);
+    strcat(file_name, tmp_str);
+    sprintf(tmp_str, "%d", width);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "X");
+    sprintf(tmp_str, "%d", height);
+    strcat(file_name, tmp_str);
+
+    if (index >= 10000) {
+        sprintf(tmp_str, "_frame_%05d", index);
+        strcat(file_name, tmp_str);
+    } else if (index > 0) {
+        sprintf(tmp_str, "_frame_%04d", index);
+        strcat(file_name, tmp_str);
+    }
+    if (tag_suffix) {
+        sprintf(tmp_str, "_%s", tag_suffix);
+        strcat(file_name, tmp_str);
+    }
+
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt) {
+        strcat(file_name, ".yuv");
+        size = width * height * 3 / 2;
+
+    } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
+        strcat(file_name, ".mipi_raw");
+        size = width * height * 5 / 4;
+
+    } else if (CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW == img_fmt) {
+        strcat(file_name, ".dcam.mipi_raw");
+        size = width * height * 5 / 4;
+
+    } else if (CAM_IMG_FMT_JPEG == img_fmt) {
+        strcat(file_name, ".jpg");
+        size = image_size;
+
+    } else if (CAM_IMG_FMT_RAW14BIT == img_fmt) {
+        strcat(file_name, ".raw");
+        size = width * height * 2;
+
+    } else if (CAM_IMG_FMT_DCAM_RAW14BIT == img_fmt) {
+        strcat(file_name, ".dcam.raw");
+        size = width * height * 2;
+
+    }
+
+    CMR_LOGD("file name %s", file_name);
+    fp = fopen(file_name, "wb");
+    if (NULL == fp) {
+        CMR_LOGE("can not open file: %s", file_name);
+        return 0;
+    }
+    fwrite((void *)vir_addr->addr_y, 1, size, fp);
+    fflush(fp);
+    fclose(fp);
+
+    return 0;
+}
+
 cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                                 cmr_u32 height, cmr_u32 stream_size,
                                 struct img_addr *addr) {

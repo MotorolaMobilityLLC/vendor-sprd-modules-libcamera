@@ -159,6 +159,8 @@ struct frm_info {
     int fd;
     cmr_s64 monoboottime;
     cmr_uint is_4in1_frame;
+    cmr_uint is_fdr_frame_l;
+    cmr_uint is_fdr_frame_h;
     cmr_u32 frame_num;
     cmr_u32 zoom_ratio;
 };

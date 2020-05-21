@@ -534,6 +534,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
                          cmr_u32 sum);
     int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
                            cmr_uint *vir_addr, cmr_s32 *fd);
+    int Callback_Zsl_raw_Malloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
+                           cmr_uint *vir_addr, cmr_s32 *fd);
+    int Callback_ZslRawFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
+                                       cmr_s32 *fd, cmr_u32 sum);
     int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                              cmr_s32 *fd, cmr_u32 sum);
     int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
@@ -762,6 +766,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     bool mIsAutoFocus;
     bool mIspToolStart;
+    uint32_t mZslRawHeapNum;
     uint32_t mZslHeapNum;
     uint32_t mSubRawHeapNum;
     uint32_t mGraphicBufNum;
@@ -776,6 +781,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mPreviewDcamAllocBufferCnt;
     sprd_camera_memory_t
         *mZslHeapArray[kZslBufferCount + kZslRotBufferCount + 1];
+    sprd_camera_memory_t
+        *mZslRawHeapArray[kVideoBufferCount + kVideoRotBufferCount + 1];
     sprd_3dnr_memory_t
         mZslGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t *mRawHeapArray[kRawBufferCount + 1];
@@ -787,7 +794,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef USE_ONE_RESERVED_BUF
     sprd_camera_memory_t *mCommonHeapReserved;
 #endif
-
+    sprd_camera_memory_t *mIspStatsDebugHeap[ISP_STATSDBG_MAX];
     static bool mZslCaptureExitLoop;
 
     uint32_t mPreviewHeapBakUseFlag;
@@ -816,6 +823,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // enable or disable powerhint for CNR (only for capture)
     uint32_t mCNRMode;
 
+    uint32_t mEEMode;
     bool mFbOn;
 
     SprdCameraSystemPerformance *mSysPerformace;

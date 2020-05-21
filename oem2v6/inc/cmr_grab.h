@@ -106,6 +106,8 @@ cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
 cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg);
 cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
                              struct buffer_cfg *buf_cfg);
+cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
+                             struct buffer_cfg *buf_cfg);
 cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle,
                                   struct sprd_img_vcm_param *info);
 cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line);
@@ -147,6 +149,10 @@ cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
                                struct sprd_img_capture_param capture_param);
 // for offline isp architecture
 cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
+
+
+cmr_int cmr_grab_stream_pause(cmr_handle grab_handle);
+cmr_int cmr_grab_stream_resume(cmr_handle grab_handle);
 
 #ifdef __cplusplus
 }

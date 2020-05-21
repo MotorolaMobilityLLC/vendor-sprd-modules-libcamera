@@ -99,6 +99,7 @@ typedef struct {
     uint8_t availableBrightNess[7];
     uint8_t availableIso[7];
     uint8_t availableAutoHdr;
+    uint8_t availableAutoFdr;
     uint8_t availableAiScene;
     uint8_t availableAuto3Dnr;
     uint8_t availDistortionCorrectionModes[1];
@@ -308,6 +309,12 @@ const uint8_t availableSlowMotion[] = {0, 1, 4};
 const uint8_t availableAutoHDR = 1;
 #else
 const uint8_t availableAutoHDR = 0;
+#endif
+
+#ifdef CONFIG_SUPPROT_AUTO_FDR
+const uint8_t availableAutoFDR = 1;
+#else
+const uint8_t availableAutoFDR = 0;
 #endif
 
 #ifdef CONFIG_SUPPROT_AUTO_3DNR
@@ -1417,6 +1424,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            availableFaceDetectModes, sizeof(availableFaceDetectModes));
 
     camera3_default_info.common.availableAutoHdr = availableAutoHDR;
+    camera3_default_info.common.availableAutoFdr = availableAutoFDR;
     camera3_default_info.common.availableAuto3Dnr = availableAuto3DNR;
     camera3_default_info.common.availLogoWatermark = availLogoWatermark;
     camera3_default_info.common.availTimeWatermark = availTimeWatermark;
@@ -2258,6 +2266,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.prev_rec_size_diff_support = 0;
     s_setting[cameraId].sprddefInfo.availabe_auto_hdr =
         camera3_default_info.common.availableAutoHdr;
+    s_setting[cameraId].sprddefInfo.availabe_auto_fdr =
+        camera3_default_info.common.availableAutoFdr;
     s_setting[cameraId].sprddefInfo.availabe_auto_3dnr =
         camera3_default_info.common.availableAuto3Dnr;
     s_setting[cameraId].sprddefInfo.available_logo_watermark =
@@ -2298,6 +2308,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 #endif
 
     s_setting[cameraId].sprddefInfo.sprd_is_hdr_scene = 0;
+    s_setting[cameraId].sprddefInfo.sprd_is_fdr_scene = 0;
     s_setting[cameraId].sprddefInfo.sprd_is_3dnr_scene = 0;
     s_setting[cameraId].sprddefInfo.availabe_ai_scene =
         camera3_default_info.common.availableAiScene;
@@ -2526,6 +2537,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
                            "persist.vendor.cam.lightportrait.fr.enable"));
+    // 27 FDR
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.fdr",
+                                      "persist.vendor.cam.fdr.enable"));
 
 #ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
     // 27 portrait scene mode
@@ -2980,6 +2994,9 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AUTO_HDR,
                       &(s_setting[cameraId].sprddefInfo.availabe_auto_hdr), 1);
+
+    staticInfo.update(ANDROID_SPRD_AVAILABLE_AUTO_FDR,
+                      &(s_setting[cameraId].sprddefInfo.availabe_auto_fdr), 1);
 
     staticInfo.update(
         ANDROID_SPRD_AVAILABLE_LOGOWATERMARK,
@@ -6410,6 +6427,7 @@ int SprdCamera3Setting::androidIsoToDrvMode(int32_t androidIso,
 int SprdCamera3Setting::androidSceneModeToDrvMode(uint8_t androidScreneMode,
                                                   int8_t *convertDrvMode) {
     int ret = 0;
+    char prop[PROPERTY_VALUE_MAX];
 
     HAL_LOGD("scene %d", androidScreneMode);
     switch (androidScreneMode) {
@@ -6434,7 +6452,15 @@ int SprdCamera3Setting::androidSceneModeToDrvMode(uint8_t androidScreneMode,
         break;
 
     case ANDROID_CONTROL_SCENE_MODE_HDR:
-        *convertDrvMode = CAMERA_SCENE_MODE_HDR;
+        property_get("persist.vendor.cam.fdr.enable", prop, "0");
+        //in bokeh mode and fov fusion mode, fdr is disable, use hdr feature
+        if (atoi(prop) == 1 &&
+			s_setting[mCameraId].sprddefInfo.sprd_appmode_id != CAMERA_MODE_REFOCUS &&
+            s_setting[mCameraId].sprddefInfo.sprd_appmode_id != CAMERA_MODE_FOV_FUSION_MODE) {
+            *convertDrvMode = CAMERA_SCENE_MODE_FDR;
+        } else {
+            *convertDrvMode = CAMERA_SCENE_MODE_HDR;
+        }
         break;
 
     default:

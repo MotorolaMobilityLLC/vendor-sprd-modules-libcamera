@@ -162,6 +162,7 @@ struct preview_md_ops {
     cmr_int (*release_buff_handle)(cmr_handle oem_handle, int frame_type,
                                    cam_graphic_buffer_info_t *buf_info);
     cmr_int (*isp_buff_cfg)(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+    cmr_int (*fdr_set_ev)(cmr_handle oem_handle, cmr_u32 enable);
     cmr_int (*hdr_set_ev)(cmr_handle oem_handle);
     cmr_int (*set_3dnr_ev)(cmr_handle oem_handle, cmr_u32 enable);
     cmr_int (*sw_3dnr_info_cfg)(cmr_handle oem_handle,
@@ -230,6 +231,7 @@ struct preview_param {
 
     cmr_u32 is_dv;
     cmr_u32 is_hdr;
+    cmr_u32 is_fdr;
     cmr_u32 is_auto_3dnr;
     cmr_u32 sprd_3dnr_type;
     cmr_u32 isp_width_limit;
@@ -326,6 +328,17 @@ cmr_int cmr_preview_get_prev_rect(cmr_handle preview_handle, cmr_u32 camera_id,
 cmr_int cmr_preview_receive_data(cmr_handle preview_handle, cmr_u32 camera_id,
                                  cmr_uint evt, void *data);
 
+cmr_int cmr_preview_get_fdr_zsl_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
+                                 struct img_frm *data);
+cmr_int cmr_preview_get_fdr_sn_size(cmr_handle preview_handle, cmr_u32 camera_id,
+                                 struct img_size *pic_size);
+
+cmr_int cmr_preview_set_fdr_used_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
+                                 cmr_s32 fd);
+cmr_int cmr_preview_get_fdr_free_buffer(cmr_handle preview_handle, cmr_u32 camera_id,
+                                 struct buffer_cfg *buf_cfg);
+cmr_int cmr_preview_cfg_fdr_buffer(cmr_handle preview_handle, cmr_u32 camera_id);
+
 cmr_int cmr_preview_update_zoom(cmr_handle preview_handle, cmr_u32 camera_id,
                                 struct cmr_zoom_param *param);
 
@@ -407,6 +420,12 @@ cmr_preview_set_autotracking_param(cmr_handle preview_handle, cmr_u32 camera_id,
 cmr_int
 cmr_preview_af_status_set_to_autotracking(cmr_handle preview_handle, cmr_u32 camera_id,
                                   cmr_uint af_status);
+
+cmr_int
+cmr_preview_realloc_buffer_for_fdr(cmr_handle preview_handle, cmr_u32 camera_id);
+
+cmr_int
+cmr_preview_free_fdr_buffer(cmr_handle preview_handle, cmr_u32 camera_id);
 
 cmr_int cmr_preview_set_fd_touch_param(cmr_handle preview_handle,
                                        cmr_u32 camera_id,

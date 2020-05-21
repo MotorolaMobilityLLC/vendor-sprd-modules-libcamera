@@ -55,6 +55,7 @@ extern struct class_tab_t ultrawide_tab_info;
 #endif
 extern struct class_tab_t ai_scene_tab_info;
 
+
 struct ipm_class_tab class_type_tab[] = {
     {IPM_TYPE_NONE, NULL},
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
@@ -214,6 +215,7 @@ cmr_int cmr_ipm_pre_proc(cmr_handle ipm_class_handle) {
 
     CHECK_HANDLE_VALID(common_handle);
 
+    CMR_LOGD("fdr pre_proc handle:%p", common_handle->ops->pre_proc);
     if (NULL != common_handle->ops->pre_proc)
         ret = common_handle->ops->pre_proc(ipm_class_handle);
 

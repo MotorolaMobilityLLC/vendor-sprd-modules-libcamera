@@ -889,6 +889,11 @@ cmr_int cmr_grab_buff_cfg(cmr_handle grab_handle, struct buffer_cfg *buf_cfg) {
                  buf_cfg->is_reserved_buf);
     }
 
+    if(buf_cfg->is_fdr) {
+        CMR_LOGD("fdr. set raw addr");
+        parm.pixel_fmt = IMG_PIX_FMT_GREY;
+    }
+
     if (buf_cfg->count > 0) {
         if (buf_cfg->is_4in1) {
             CMR_LOGD("4in1. set raw addr");
@@ -972,6 +977,94 @@ cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
 
 exit:
     ATRACE_END();
+    return ret;
+}
+
+cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
+                             struct buffer_cfg *buf_cfg) {
+    cmr_int ret = 0;
+    cmr_u32 i, j;
+    struct sprd_img_parm parm;
+    struct cmr_grab *p_grab;
+    cmr_s64 frm_time;
+
+    if(buf_cfg != NULL) {
+        CMR_LOGD("fdr transfer base_id: 0x%x, sec: %u, usec %u monoboottime=%" PRId64,
+              buf_cfg->base_id,
+              buf_cfg->slice_height,
+              buf_cfg->start_buf_id,
+              buf_cfg->monoboottime);
+        for (i = 0; i< 6; i++) {
+            CMR_LOGD("for transfer, chn_id=%d, i=%d, fd=%d addr:0x%lx, 0x%lx, 0x%lx, addr_vir:0x%lx, 0x%lx, 0x%lx",
+                 buf_cfg->channel_id, i, buf_cfg->fd[i],
+                 buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
+                 buf_cfg->addr[i].addr_v,
+                 buf_cfg->addr_vir[i].addr_y, buf_cfg->addr_vir[i].addr_u,
+                 buf_cfg->addr_vir[i].addr_v);
+        }
+    }
+
+    if (NULL == buf_cfg || buf_cfg->count > GRAB_BUF_MAX) {
+        CMR_LOGE("null buffer ");
+        return -1;
+    }
+    p_grab = (struct cmr_grab *)grab_handle;
+
+    cmr_bzero(&parm, sizeof(parm));
+    parm.channel_id = buf_cfg->channel_id;
+    parm.buffer_count = buf_cfg->count;
+    parm.pixel_fmt = IMG_PIX_FMT_GREY;
+
+    /* real frame id and sec/usec/monoboottime must be set */
+    parm.index = buf_cfg->base_id;  // real frame id 
+    parm.reserved[0] = buf_cfg->slice_height; // sec
+    parm.reserved[1] = buf_cfg->start_buf_id; // usec
+    frm_time = buf_cfg->slice_height;
+    frm_time = (frm_time<<32) | (buf_cfg->start_buf_id & 0xffffffff);
+    buf_cfg->monoboottime = frm_time;
+    // low 32bit for timestamp
+    parm.reserved[2] = (cmr_u32)buf_cfg->monoboottime;
+    // high 32bit for timestamp
+    parm.reserved[3] = (cmr_u32)(buf_cfg->monoboottime >> 32);
+
+    CMR_LOGD("after convert frame id 0x%x,sec %u usec %u monoboottime=%" PRId64,
+                         parm.index, parm.reserved[0],
+                         parm.reserved[1], buf_cfg->monoboottime);
+
+    for (i = 0; i < 3; i++) {
+        /* re-use fisrt 3 buffers for low */
+        parm.frame_addr_array[i].y = buf_cfg->addr[i].addr_y;
+        parm.frame_addr_array[i].u = buf_cfg->addr[i].addr_u;
+        parm.frame_addr_array[i].v = buf_cfg->addr[i].addr_v;
+        parm.frame_addr_vir_array[i].y = buf_cfg->addr_vir[i].addr_y;
+        parm.frame_addr_vir_array[i].u = buf_cfg->addr_vir[i].addr_u;
+        parm.frame_addr_vir_array[i].v = buf_cfg->addr_vir[i].addr_v;
+        parm.fd_array[i] = buf_cfg->fd[i];
+    }
+    parm.scene_mode = FDR_POST_LOW;
+    CMR_LOGD("fdr raw->yuv");
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_POST_FDR, &parm);
+    if (ret)
+        CMR_LOGE("failed to post FDR_LOW,  ret=%ld,", ret);
+
+    for (i = 3; i < 6; i++) {
+        /* re-use fisrt 3 buffers for high */
+        j = i-3;
+        parm.frame_addr_array[j].y = buf_cfg->addr[i].addr_y;
+        parm.frame_addr_array[j].u = buf_cfg->addr[i].addr_u;
+        parm.frame_addr_array[j].v = buf_cfg->addr[i].addr_v;
+        parm.frame_addr_vir_array[j].y = buf_cfg->addr_vir[i].addr_y;
+        parm.frame_addr_vir_array[j].u = buf_cfg->addr_vir[i].addr_u;
+        parm.frame_addr_vir_array[j].v = buf_cfg->addr_vir[i].addr_v;
+        parm.fd_array[j] = buf_cfg->fd[i];
+    }
+
+    parm.scene_mode = FDR_POST_HIGH;
+    CMR_LOGD("fdr high raw->yuv");
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_POST_FDR, &parm);
+    if (ret)
+        CMR_LOGE("failed to post FDR_HIGH,  ret=%ld,", ret);
+
     return ret;
 }
 
@@ -1106,6 +1199,37 @@ cmr_int cmr_grab_cap_stop(cmr_handle grab_handle) {
     return ret;
 }
 
+cmr_int cmr_grab_stream_pause(cmr_handle grab_handle)
+{
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    cmr_u32 temp = 0;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_PAUSE, &temp);
+    CMR_LOGD("ret = %ld", ret);
+    return ret;
+}
+
+cmr_int cmr_grab_stream_resume(cmr_handle grab_handle)
+{
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    cmr_u32 temp = 0;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_STREAM_RESUME, &temp);
+    CMR_LOGD("ret = %ld", ret);
+    return ret;
+}
+
+
 // for offline isp architecture
 cmr_int cmr_grab_start_capture(cmr_handle grab_handle,
                                struct sprd_img_capture_param capture_param) {
@@ -1136,6 +1260,7 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle) {
     CMR_CHECK_HANDLE;
     CMR_CHECK_FD;
 
+    CMR_LOGV("fdr stop capture");
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
     if (ret) {
         CMR_LOGE("failed to stop offline path");
@@ -1479,6 +1604,8 @@ static void *cmr_grab_thread_proc(void *data) {
         } else {
             // normal irq
             if (op.parm.frame.irq_type == CAMERA_IRQ_IMG ||
+                op.parm.frame.irq_type == CAMERA_IRQ_FDRL ||
+                op.parm.frame.irq_type == CAMERA_IRQ_FDRH ||
                 op.parm.frame.irq_type == CAMERA_IRQ_4IN1_DONE) {
                 evt_id = cmr_grab_evt_id(op.evt);
                 if (CMR_GRAB_MAX == evt_id) {
@@ -1491,14 +1618,38 @@ static void *cmr_grab_thread_proc(void *data) {
                     frame.is_4in1_frame = 0;
                 }
 
+                if (op.parm.frame.irq_type == CAMERA_IRQ_FDRL) {
+                    CMR_LOGD("read fdr yuv_L");
+                    frame.is_fdr_frame_l = 1;
+                    frame.is_fdr_frame_h = 0;
+                } else if (op.parm.frame.irq_type == CAMERA_IRQ_FDRH) {
+                    CMR_LOGD("read fdr yuv_H");
+                    frame.is_fdr_frame_l = 0;
+                    frame.is_fdr_frame_h = 1;
+                    cmr_u32 stop = 1;
+                    ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
+                } else {
+                    CMR_LOGD("read nomal yuv");
+                    frame.is_fdr_frame_l = 0;
+                    frame.is_fdr_frame_h = 0;
+                }
+
                 frame.channel_id = op.parm.frame.channel_id;
 
-                CMR_LOGV("sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x "
-                         "sec %u usec %u fd 0x%x, yaddr_vir 0x%x",
-                         p_grab->init_param.sensor_id, op.parm.frame.channel_id,
-                         op.parm.frame.index, evt_id, op.parm.frame.sec,
-                         op.parm.frame.usec, op.parm.frame.mfd,
-                         op.parm.frame.yaddr_vir);
+                if (frame.channel_id == 3) {
+                    CMR_LOGD("fdr real id=%d, monoboottime=%" PRId64,
+                             op.parm.frame.real_index,
+                             op.parm.frame.monoboottime);
+                    CMR_LOGD("sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x "
+                             "sec %u usec %u fd 0x%x, yaddr_vir 0x%lx, frame height:%d, length:%d",
+                             p_grab->init_param.sensor_id, op.parm.frame.channel_id,
+                             op.parm.frame.index, evt_id, op.parm.frame.sec,
+                             op.parm.frame.usec, op.parm.frame.mfd,
+                             op.parm.frame.yaddr_vir, op.parm.frame.height, op.parm.frame.length);
+                    CMR_LOGD("fdr addr: 0x%lx, 0x%lx, 0x%lx, vir_addr: 0x%lx, 0x%lx, 0x%lx",
+                         op.parm.frame.yaddr, op.parm.frame.uaddr, op.parm.frame.vaddr,
+                         op.parm.frame.yaddr_vir, op.parm.frame.uaddr_vir, op.parm.frame.vaddr_vir);
+                }
 
                 frame.height = op.parm.frame.height;
                 frame.frame_id = op.parm.frame.index;

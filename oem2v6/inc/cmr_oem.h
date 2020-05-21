@@ -55,6 +55,14 @@ extern "C" {
 #define MIRROR_FLIP_ROTATION_BY_JPEG 1
 //#define MIRROR_FLIP_BY_ISP                         1
 
+struct debug_context {
+    cmr_handle debug_handle;
+    cmr_u32 inited;
+    cmr_u32 dump_bits;
+    char tags[128];
+    struct buffer_cfg buff_cfg;
+};
+
 struct grab_context {
     cmr_handle grab_handle;
     /*	struct process_status    proc_status;*/
@@ -120,6 +128,7 @@ struct rotation_context {
 struct ipm_context {
     cmr_handle ipm_handle;
     cmr_handle hdr_handle;
+    cmr_handle fdr_handle;
     cmr_handle filter_handle;
     cmr_handle uvde_handle;
     cmr_handle yde_handle;
@@ -128,6 +137,7 @@ struct ipm_context {
     cmr_handle handle_4in1;
     cmr_handle ai_scene_handle;
     cmr_handle cnr_handle;
+    cmr_handle ee_handle;
     cmr_handle dre_handle;
     cmr_u32 inited;
     cmr_u32 frm_num;
@@ -137,6 +147,7 @@ struct ipm_context {
     cmr_u32 filter_inited;
     cmr_u32 ai_scene_inited;
     cmr_u32 cnr_inited;
+    cmr_u32 ee_inited;
     cmr_u32 dre_inited;
     struct ipm_version hdr_version;
     cmr_u32 four_in_one_inited;
@@ -153,6 +164,19 @@ struct ipm_pro_context {
     cmr_u32 cnr_pro_inited;
     cmr_u32 dre_pro_inited;
 };
+
+struct ipm_fdr_context {
+    cmr_handle ipm_fdr_handle;
+    cmr_handle fdr_handle;
+    cmr_handle cnr_fdr_handle;
+    cmr_handle ee_fdr_handle;
+    cmr_u32 fdr_inited;
+    cmr_u32 fdr_num;
+    cmr_u32 frm_num;
+    cmr_u32 cnr_fdr_inited;
+    cmr_u32 ee_fdr_inited;
+};
+
 
 struct preview_context {
     cmr_handle preview_handle;
@@ -202,6 +226,7 @@ struct snapshot_context {
     cmr_u32 skip_num;
     cmr_u32 channel_id;
     cmr_u32 is_hdr;
+    cmr_u32 is_fdr;
     cmr_u32 is_3dnr;
     cmr_u32 sprd_3dnr_type;
     cmr_u32 total_num;
@@ -225,6 +250,8 @@ struct snapshot_context {
     struct img_data_end data_endian;
     struct frm_info cur_chn_data;
     struct touch_coordinate touch_xy;
+    struct isp_blkpm_t fdr_tuning_param;
+    struct isp_blkpm_t ee_tuning_param;
 };
 
 struct focus_context {
@@ -307,7 +334,9 @@ struct camera_context {
     struct focus_context focus_cxt;
     struct ipm_context ipm_cxt;
     struct ipm_pro_context ipm_pro_cxt;
+    struct ipm_fdr_context ipm_fdr_cxt;
     struct setting_context setting_cxt;
+   struct debug_context dbg_cxt;
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     struct mm_dvfs_context mm_dvfs_cxt;
 #endif
@@ -319,6 +348,7 @@ struct camera_context {
     cmr_u32 inited;
     cmr_u32 camera_mode;
     cmr_uint is_discard_frm;
+    sem_t fdr_flag_sm;
     sem_t hdr_sync_sm;
     sem_t hdr_flag_sm;
     sem_t ai_scene_flag_sm;
@@ -327,6 +357,8 @@ struct camera_context {
     sem_t dre_pro_flag_sm;
     sem_t threednr_flag_sm;
     sem_t threednr_proc_sm;
+    sem_t cnr_fdr_flag_sm;
+    sem_t ee_fdr_flag_sm;
     sem_t filter_sm;
     sem_t share_path_sm;
     sem_t access_sm;
@@ -340,6 +372,8 @@ struct camera_context {
     cmr_handle snp_cb_thr_handle;
     cmr_handle snp_secondary_thr_handle;
     cmr_handle snp_send_raw_image_handle;
+    /* for fdr snapshot image handle */
+    cmr_handle snp_fdr_thr_handle;
 #ifdef CONFIG_FACE_BEAUTY
     /*video face beauty*/
     cmr_handle video_cb_thr_handle;
@@ -363,6 +397,7 @@ struct camera_context {
     cmr_u32 is_lls_enable;
     cmr_u32 lls_shot_mode;
     cmr_u32 is_vendor_hdr;
+    cmr_u32 is_vendor_fdr;
     cmr_u32 is_pipviv_mode;
     cmr_u32 isp_to_dram;
     cmr_int cap_cnt;
@@ -421,14 +456,22 @@ struct camera_context {
     cmr_s32 swisp_out_mfd;
 
     cmr_s64 hdr_capture_timestamp;
+    cmr_s64 fdr_capture_timestamp;
     cmr_s64 capture_timestamp;
     cmr_u32 hdr_skip_frame_enable;
     cmr_u32 hdr_skip_frame_cnt;
+    cmr_u32 fdr_skip_frame_enable;
+    cmr_u32 fdr_skip_frame_cnt;
+    cmr_u32 fdr_capture_frame_cnt;
+    cmr_u32 fdr_call_stream_off;
     cmr_u32 skip_frame_enable;
     cmr_u32 skip_frame_cnt;
     enum camera_snapshot_tpye snapshot_type;
     struct img_rect trim_reset_info;
+    int fdr_total_frame_cnt;
+    int fdr_ref_frame_num;
     cmr_u8 nr_flag;
+    cmr_u8 ee_flag;
     cmr_u8 dre_flag;
     cmr_u8 gtm_flag;
     cmr_u8 predre_flag;
@@ -678,6 +721,11 @@ cmr_int camera_local_set_mm_dvfs_policy(cmr_handle oem_handle,
                                         enum CamProcessingState camera_state);
 #endif
 cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable);
+cmr_int camera_get_sensor_info(cmr_handle oem_handle, cmr_uint sensor_id,
+                               struct sensor_exp_info *exp_info_ptr);
+cmr_int camera_sensor_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
+                            struct common_sn_cmd_param *param_ptr);
+cmr_int camera_channel_reproc(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
 cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value ,enum camera_snapshot_tpye type);
 cmr_int camera_get_tuning_info(cmr_handle oem_handle,
                                struct isp_adgain_exp_info *adgain_exp_info_ptr);
@@ -687,6 +735,17 @@ cmr_int cmr_get_reboke_data(cmr_handle oem_handle,
                             struct af_relbokeh_oem_data *golden_distance);
 cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
                                       struct tuning_param_info *tuning_info);
+cmr_int camera_get_fdr_tuning_param(cmr_handle oem_handle,
+                                      struct isp_blkpm_t *tuning_param);
+cmr_int camera_get_ee_tuning_param(cmr_handle oem_handle,
+                                      struct isp_blkpm_t *tuning_param);
+cmr_int camera_get_blc_info(cmr_handle oem_handle, struct isp_blc_data *blc);
+cmr_int camera_get_adgain_exp_info(cmr_handle oem_handle, struct isp_adgain_exp_info *isp_adgain);
+cmr_int camera_get_fdr_free_buf(cmr_handle oem_handle, struct buffer_cfg *buf_cfg);
+cmr_int camera_fdr_get_frame_cnt(cmr_handle oem_handle, int *total_frame_num, int *ref_frame_num);
+// the last time to get fdr frame cnt before start capture
+cmr_int camera_fdr_get_last_frm_cnt(cmr_handle oem_handle, int *total_frame_num, int *ref_frame_num);
+
 cmr_int cmr_get_bokeh_sn_trim(cmr_handle handle,
                               struct sprd_img_path_rect *trim_param);
 
@@ -698,6 +757,10 @@ cmr_int camera_set_high_res_mode(cmr_handle oem_handle,cmr_uint is_high_res_mode
 cmr_int camera_get_fb_param(cmr_handle oem_handle, struct isp_fb_param_info *param);
 cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info);
+cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle);
+cmr_u32 camera_get_ee_flag(cmr_handle oem_handle);
+cmr_u32 camera_get_fdr_flag(struct camera_context *cxt);
+void camera_grab_handle(cmr_int evt, void *data, void *privdata);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);
 void camera_local_set_original_picture_size(cmr_handle oem_handle ,int32_t width , int32_t height);
 
