@@ -851,7 +851,7 @@ static struct sensor_ic_ops s_gc2375_ops_tab = {
     .write_gain_value = gc2375_drv_write_gain_value,
 
 #if defined(CONFIG_DUAL_MODULE)
-	//.read_aec_info = gc2375_drv_read_aec_info,
+	.read_aec_info = gc2375_drv_read_aec_info,
 #endif
 
     .ext_ops = {

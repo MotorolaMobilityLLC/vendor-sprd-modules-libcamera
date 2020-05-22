@@ -1082,6 +1082,10 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         ret = camera_set_ultra_wide_mode(handle, *(cmr_uint *)param);
         break;
     }
+    case CAMERA_IOCTRL_FOV_FUSION_MODE: {
+        ret = camera_set_fov_fusion_mode(handle, *(cmr_uint *)param);
+        break;
+    }
     case CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP: {
         ret = cmr_set_snapshot_timestamp(handle, *(int64_t *)param);
         break;

@@ -135,7 +135,7 @@ enum VIDEO_3DNR {
 #define CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH 0x805
 
 #define UPDATE_RANGE_FPS_COUNT 0x04
-
+#define CAM_POWERHINT_WAIT_COUNT 35
 /**********************Static Members**********************/
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
@@ -490,6 +490,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mMasterId = 0;
     clearPrevStream = false;
     mBurstCapture = false;
+    mIsPowerhintWait = 0;
 
     HAL_LOGI(":hal3: X");
 }
@@ -630,9 +631,11 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
     HAL_LOGI("channel_type = %d, frame_number = %d", channel_type,
              frame_number);
     mStartFrameNum = frame_number;
+    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
 
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR: {
+        mIsPowerhintWait = 1;
         if (mParaDCDVMode == CAMERA_PREVIEW_FORMAT_DV)
             mRecordingFirstFrameTime = 0;
 
@@ -660,7 +663,6 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
-        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
         if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
             mTakePictureMode == SNAPSHOT_ONLY_MODE){
             mTakePicNum = frame_number;
@@ -1270,6 +1272,11 @@ status_t SprdCamera3OEMIf::autoFocus() {
 
     if (mCameraId == 3) {
         return NO_ERROR;
+    }
+
+    if (mSysPerformace) {
+        mGetLastPowerHint = mSysPerformace->mCurrentPowerHintScene;
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
     }
 
     mSetting->getCONTROLTag(&controlInfo);
@@ -4074,7 +4081,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             writeCamInitTimeToProc(cam_init_time);
         }
         miSPreviewFirstFrame = 0;
-        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
     }
 
     SPRD_DEF_Tag sprddefInfo;
@@ -4378,6 +4384,26 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
         HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%lld", frame->fd,
                  buff_vir, frame_num, buffer_timestamp);
+        if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
+            if ((frame_num > mStartFrameNum) &&
+                (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
+                if (getMultiCameraMode() == MODE_BLUR ||
+                    getMultiCameraMode() == MODE_BOKEH ||
+                    getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM ||
+                    mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
+                    mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO || mSprdAppmodeId == -1) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+                } else if (mRecordingMode == true) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+                } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
+                                sprddefInfo.slowmotion > 1) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+                } else {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+                }
+                mIsPowerhintWait = 0;
+            }
+        }
 
         if (frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum &&
             (frame_num > mPictureFrameNum || frame_num == 0)) {
@@ -5170,8 +5196,17 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
             deinitCapture(mIsPreAllocCapMem);
         }
     }
-    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
-
+    if (getMultiCameraMode() == MODE_BLUR ||
+        getMultiCameraMode() == MODE_BOKEH ||
+        mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO) {
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+    } else if (mRecordingMode == true) {
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
+    } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE) {
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+    } else {
+        setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+    }
 exit:
     HAL_LOGD("X");
 }
@@ -5720,6 +5755,9 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EXIT_CB_DONE:
         HAL_LOGV("camera cb: autofocus succeeded.");
         {
+            if (mIsAutoFocus) {
+                setCamPreformaceScene(mGetLastPowerHint);
+            }
             controlInfo.af_state = ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED;
             mSetting->setAfCONTROLTag(&controlInfo);
             // channel->channelCbRoutine(0, timeStamp,
@@ -5735,6 +5773,9 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
 
     case CAMERA_EXIT_CB_ABORT:
     case CAMERA_EXIT_CB_FAILED: {
+        if (mIsAutoFocus) {
+            setCamPreformaceScene(mGetLastPowerHint);
+        }
         controlInfo.af_state = ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED;
         mSetting->setAfCONTROLTag(&controlInfo);
         // channel->channelCbRoutine(0, timeStamp, CAMERA_STREAM_TYPE_DEFAULT);

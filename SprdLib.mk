@@ -89,7 +89,7 @@ LOCAL_SHARED_LIBRARIES += libimagestitcher
 endif
 
 ifeq ($(strip $(TARGET_BOARD_OPTICSZOOM_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libWT
+LOCAL_SHARED_LIBRARIES += libWT libsprdwtadapter
 endif
 
 LOCAL_SHARED_LIBRARIES += libyuv

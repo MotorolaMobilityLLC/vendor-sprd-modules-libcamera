@@ -28,6 +28,7 @@
 #include <cutils/properties.h>
 #include "isp_mw.h"
 #include "sw_3dnr_param.h"
+#include <cutils/trace.h>
 
 typedef struct c3dn_io_info {
     c3dnr_buffer_t image[3];
@@ -1437,7 +1438,9 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
                      "small:%p , video buffer:%p",
                      big_buf.cpu_buffer.bufferY, small_buf.cpu_buffer.bufferY,
                      video_buf.cpu_buffer.bufferY);
+                ATRACE_BEGIN("threednr_function_pre");
                 ret = threednr_function_pre(threednr_prev_handle->proc_handle, &small_buf, &big_buf, &video_buf, &preview_param);
+                ATRACE_END();
             } else {
                 CMR_LOGE(
                     "preview or scale image is null, direct copy video buffer");
@@ -1484,8 +1487,10 @@ cmr_int threednr_process_prev_frame(cmr_handle class_handle,
 
             if ((small_buf.cpu_buffer.bufferY != NULL) &&
                 (big_buf.cpu_buffer.bufferY != NULL))
+                ATRACE_BEGIN("threednr_function_pre");
                 ret = threednr_function_pre(threednr_prev_handle->proc_handle, &small_buf, &big_buf, NULL,
                                             &preview_param);
+                ATRACE_END();
             if (!strcmp(value, "1")) {
                 sprintf(tmp_name,"%ldx%ld_preview_result_index%d.yuv",
                           threednr_prev_handle->width,

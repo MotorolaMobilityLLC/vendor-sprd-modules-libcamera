@@ -7703,6 +7703,15 @@ cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_set_fov_fusion_mode(cmr_handle oem_handle,
+                                   cmr_uint is_fov_fusion) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->is_fov_fusion = is_fov_fusion;
+    CMR_LOGI("is_fov_fusion %ld", cxt->is_fov_fusion);
+    return ret;
+}
+
 cmr_int camera_open_sensor(cmr_handle oem_handle, cmr_u32 camera_id) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -11714,7 +11723,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO &&
             (setting_param.camera_id == 0 ||
              cxt->is_multi_mode == MODE_MULTI_CAMERA ||
-             setting_param.camera_id == 4)) {
+             cxt->is_multi_mode == MODE_FOV_FUSION)) {
             if (cxt->ipm_cxt.ai_scene_inited == 0) {
                 struct ipm_open_in in_param;
                 struct ipm_open_out out_param;

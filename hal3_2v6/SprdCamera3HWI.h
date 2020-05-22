@@ -114,6 +114,7 @@ class SprdCamera3HWI {
     void getOnlineBuffer(void *cali_info);
     void getIspDebugInfo(void **addr, int *size);
     void setUltraWideMode(unsigned int on_off);
+    void setFovFusionMode(unsigned int on_off);
     void setMultiCaptureTimeStamp(uint64_t time_stamp);
 
   private:

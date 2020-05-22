@@ -1380,7 +1380,7 @@ static cmr_u8 if_motion_sensor_get_data(motion_sensor_result_t * ms_result, void
 	} else {
 		af->g_orientation = AF_G_NONE;
 	}
-	ISP_LOGD("ISP_AFv1: %x, %x", gsensor_x, gsensor_y);
+	ISP_LOGV("ISP_AFv1: %x, %x", gsensor_x, gsensor_y);
 
 	return 0;
 }
@@ -3029,8 +3029,10 @@ static cmr_s32 af_sprd_set_flash_notice(cmr_handle handle, void *param0)
 	case AF_FLASH_MAIN_AFTER:
 	case AF_FLASH_PRE_AFTER:
 		if (1 == af->flash_on) {
-			af->flash_on = 0;
+                    af->flash_on = 0;
+                    if (af->request_mode != AF_MODE_MANUAL) {
 			trigger_start(af);
+                    }
 		}
 		break;
 	default:
@@ -4605,6 +4607,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time_trigger = systemTime(CLOCK_MONOTONIC);
 	ISP_LOGV("SYSTEM_TEST-trigger:%dus", (cmr_s32) ((system_time_trigger - system_time0) / 1000));
 	if (AF_DATA_AF == inparam->data_type) {
+		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_PRE_TRIGGER_DATA, NULL);
 		switch (af->state) {
 		case STATE_NORMAL_AF:
 		case STATE_FAF:
@@ -4619,7 +4622,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 			if (AF_SEARCHING == af->focus_state) {
 				af_process_frame(af);
 			} else {
-				af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_PRE_TRIGGER_DATA, NULL);
+				//af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_PRE_TRIGGER_DATA, NULL);
 			}
 			break;
 		case STATE_ENGINEER:

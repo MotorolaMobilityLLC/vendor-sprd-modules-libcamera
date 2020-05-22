@@ -355,6 +355,7 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 		cfg.type = type;
 		cfg.multiColorLcdEn = cxt->multiColorLcdEn;
 		element.index = led1_driver_ind;
+		ISP_LOGD("control_led, flash_set_charge1, cfg_type:%d, element_index:%d", cfg.type, element.index);
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 
 		if (led2 == -1)
@@ -366,6 +367,7 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 		cfg.type = type;
 		cfg.multiColorLcdEn = cxt->multiColorLcdEn;
 		element.index = led2_driver_ind;
+		ISP_LOGD("control_led, flash_set_charge2, cfg_type:%d, element_index:%d", cfg.type, element.index);
 		cxt->isp_ops.flash_set_charge(cxt->isp_ops.isp_handler, &cfg, &element);
 		}
 
@@ -380,6 +382,8 @@ static void control_led(struct ae_ctrl_cxt *cxt, int onoff, int isMainflash, int
 			cfg.led1_enable = 1;
 
 		cfg.type = type;
+		ISP_LOGD("control_led, flash_ctrl, cfg_type:%d, led0_enable:%d, led1_enable:%d", cfg.type, cfg.led0_enable, cfg.led1_enable);
+		usleep(1000*50);
 		cxt->isp_ops.flash_ctrl(cxt->isp_ops.isp_handler, &cfg, NULL);
 	}
 
