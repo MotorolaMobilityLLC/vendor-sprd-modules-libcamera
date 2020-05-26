@@ -246,9 +246,6 @@ int do_image_lpt(struct class_lpt *lpt, int faceCount) {
         } else
             lpt->noFaceFrmCnt = 0;
 
-        /*from face to no face.remain 10 frames to do face light*/
-        if (lpt->noFaceFrmCnt < 10)
-            faceCount = faceCount > 0 ? faceCount : 1;
     }
     property_get("debug.camera.light.dump.frame", dump_value, "null");
     if (!strcmp(dump_value, "lpt")) {
