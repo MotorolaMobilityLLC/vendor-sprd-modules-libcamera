@@ -253,7 +253,10 @@ struct hist_param {
 	struct isp_rect win;
 };
 
+__BEGIN_DECLS
 cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_master);
 cmr_int isp_br_deinit(cmr_u32 camera_id);
 cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out);
+__END_DECLS
+
 #endif

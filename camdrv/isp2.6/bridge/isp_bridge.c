@@ -121,30 +121,20 @@ static inline const char *get_role_name(cmr_u32 sensor_role) {
 	return role_names[sensor_role];
 }
 
-static inline cmr_u32 user_cnt_inc() {
-	cmr_u32 cnt = 0;
-
-	pthread_mutex_lock(&g_br_mutex);
-	cnt = ++g_br_user_cnt;
-	pthread_mutex_unlock(&g_br_mutex);
-	ISP_LOGV("cnt = %d", cnt);
-
-	return cnt;
+static inline void semaphore_init(struct ispbr_context *cxt) {
+	sem_init(&cxt->ae_sm, 0, 1);
+	sem_init(&cxt->awb_sm, 0, 1);
+	sem_init(&cxt->af_sm, 0, 1);
+	sem_init(&cxt->module_sm, 0, 1);
+	sem_init(&cxt->br_role_sm, 0, 1);
 }
 
-static inline cmr_u32 user_cnt_dec() {
-	cmr_u32 cnt = 0;
-
-	pthread_mutex_lock(&g_br_mutex);
-	cnt = --g_br_user_cnt;
-	pthread_mutex_unlock(&g_br_mutex);
-	ISP_LOGV("cnt = %d", cnt);
-
-	return cnt;
-}
-
-static inline cmr_u32 user_cnt_get() {
-	return g_br_user_cnt;
+static inline void semaphore_deinit(struct ispbr_context *cxt) {
+	sem_destroy(&cxt->ae_sm);
+	sem_destroy(&cxt->awb_sm);
+	sem_destroy(&cxt->af_sm);
+	sem_destroy(&cxt->module_sm);
+	sem_destroy(&cxt->br_role_sm);
 }
 
 static void role_clear(struct ispbr_context *cxt) {
@@ -161,6 +151,50 @@ static void role_clear(struct ispbr_context *cxt) {
 	for (i = 0; i < CAMERA_ID_MAX; i++)
 		cxt->id2role[i] = CAM_SENSOR_MAX;
 	sem_post(&cxt->br_role_sm);
+}
+
+static inline cmr_u32 user_cnt_inc(struct ispbr_context *cxt) {
+	cmr_u32 cnt = 0;
+
+	pthread_mutex_lock(&g_br_mutex);
+	cnt = ++g_br_user_cnt;
+
+	if (cnt == 1) {
+		ISP_LOGI("init ispbr_context %p", cxt);
+		semaphore_init(cxt);
+		role_clear(cxt);
+		cxt->start_user_cnt = 0;
+		cxt->ae_ref_camera_id = 0;
+	}
+
+	pthread_mutex_unlock(&g_br_mutex);
+	ISP_LOGV("cnt = %d", cnt);
+
+	return cnt;
+}
+
+static inline cmr_u32 user_cnt_dec(struct ispbr_context *cxt) {
+	cmr_u32 cnt = 0;
+
+	pthread_mutex_lock(&g_br_mutex);
+	cnt = --g_br_user_cnt;
+
+	if (cnt == 0) {
+		cxt->ae_ref_camera_id = 0;
+		cxt->start_user_cnt = 0;
+		role_clear(cxt);
+		semaphore_deinit(cxt);
+		ISP_LOGI("de-init ispbr_context %p", cxt);
+	}
+
+	pthread_mutex_unlock(&g_br_mutex);
+	ISP_LOGV("cnt = %d", cnt);
+
+	return cnt;
+}
+
+static inline cmr_u32 user_cnt_get() {
+	return g_br_user_cnt;
 }
 
 static cmr_u32 role_add(struct ispbr_context *cxt,
@@ -253,22 +287,6 @@ static cmr_u32 get_id_by_role(struct ispbr_context *cxt, cmr_u32 sensor_role) {
 	return id;
 }
 
-static inline void semaphore_init(struct ispbr_context *cxt) {
-	sem_init(&cxt->ae_sm, 0, 1);
-	sem_init(&cxt->awb_sm, 0, 1);
-	sem_init(&cxt->af_sm, 0, 1);
-	sem_init(&cxt->module_sm, 0, 1);
-	sem_init(&cxt->br_role_sm, 0, 1);
-}
-
-static inline void semaphore_deinit(struct ispbr_context *cxt) {
-	sem_destroy(&cxt->ae_sm);
-	sem_destroy(&cxt->awb_sm);
-	sem_destroy(&cxt->af_sm);
-	sem_destroy(&cxt->module_sm);
-	sem_destroy(&cxt->br_role_sm);
-}
-
 static cmr_int stats_data_alloc(struct ispbr_context *cxt, cmr_u32 sensor_role) {
 	cmr_int ret = ISP_SUCCESS;
 	struct match_data *data = &cxt->match_param.data[sensor_role];
@@ -276,14 +294,14 @@ static cmr_int stats_data_alloc(struct ispbr_context *cxt, cmr_u32 sensor_role) 
 	data->ae.stats_data.stats_data = malloc(ISP_AEM_STAT_SIZE_MAX);
 	if (!data->ae.stats_data.stats_data) {
 		ISP_LOGE("fail to alloc AE stats data");
-		ret = ISP_ALLOC_ERROR;
+		ret = -ISP_ALLOC_ERROR;
 		goto ae_alloc_fail;
 	}
 
 	data->awb.stats_data.stats_data = malloc(ISP_AEM_STAT_SIZE_MAX);
 	if (!data->awb.stats_data.stats_data) {
 		ISP_LOGE("fail to alloc AWB stats data");
-		ret = ISP_ALLOC_ERROR;
+		ret = -ISP_ALLOC_ERROR;
 		goto awb_alloc_fail;
 	}
 
@@ -950,17 +968,13 @@ cmr_int isp_br_init(cmr_u32 camera_id, cmr_handle isp_3a_handle, cmr_u32 is_mast
 	ISP_LOGI("camera_id %u, is_master %u, isp_handle %p",
 			camera_id, is_master, isp_3a_handle);
 
-	if (user_cnt_inc() == 1) {
-		ISP_LOGI("init ispbr_context %p", cxt);
-		semaphore_init(cxt);
-		role_clear(cxt);
-		cxt->start_user_cnt = 0;
-		cxt->ae_ref_camera_id = 0;
-	}
+	user_cnt_inc(cxt);
 
 	sensor_role = role_add(cxt, camera_id, is_master);
-	if (sensor_role == CAM_SENSOR_MAX)
+	if (sensor_role == CAM_SENSOR_MAX) {
+        ret = -ISP_ERROR;
 		goto role_add_fail;
+    }
 
 	ret = stats_data_alloc(cxt, sensor_role);
 	if (ret)
@@ -974,13 +988,7 @@ alloc_fail:
 	role_delete(cxt, camera_id);
 
 role_add_fail:
-	if (user_cnt_dec() == 0) {
-		cxt->ae_ref_camera_id = 0;
-		cxt->start_user_cnt = 0;
-		role_clear(cxt);
-		semaphore_deinit(cxt);
-		ISP_LOGI("de-init ispbr_context %p", cxt);
-	}
+	user_cnt_dec(cxt);
 
 	return ret;
 }
@@ -1002,13 +1010,7 @@ cmr_int isp_br_deinit(cmr_u32 camera_id)
 
 	role_delete(cxt, camera_id);
 
-	if (user_cnt_dec() == 0) {
-		cxt->ae_ref_camera_id = 0;
-		cxt->start_user_cnt = 0;
-		role_clear(cxt);
-		semaphore_deinit(cxt);
-		ISP_LOGI("de-init ispbr_context %p", cxt);
-	}
+	user_cnt_dec(cxt);
 
 	return ret;
 }

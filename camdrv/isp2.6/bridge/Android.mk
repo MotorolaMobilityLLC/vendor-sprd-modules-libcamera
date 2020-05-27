@@ -47,7 +47,7 @@ LOCAL_C_INCLUDES += \
 
 #LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 
-LOCAL_SRC_FILES += $(call all-c-files-under, .)
+LOCAL_SRC_FILES += isp_bridge.c
 
 include $(LOCAL_PATH)/../../../SprdCtrl.mk
 
@@ -64,5 +64,51 @@ endif
 
 LOCAL_CFLAGS += -DTEST_ON_HAPS
 include $(BUILD_SHARED_LIBRARY)
+
+
+# self test item
+include $(CLEAR_VARS)
+
+LOCAL_CFLAGS += -fno-strict-aliasing -Wunused-variable -Wunused-function -Werror
+
+# ************************************************
+# external header file
+# ************************************************
+LOCAL_C_INCLUDES := \
+	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
+	$(LOCAL_PATH)/../../../common/inc \
+	$(LOCAL_PATH)/../../../kernel_module/interface
+
+# ************************************************
+# internal header file
+# ************************************************
+LOCAL_C_INCLUDES += \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/smart \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/awb/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/af/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/ae/sprd/ae/inc \
+	$(LOCAL_PATH)/../../../$(ISPALG_DIR)/common/inc \
+	$(LOCAL_PATH)/../../../$(OEM_DIR)/inc \
+	$(LOCAL_PATH)/../middleware/inc \
+	$(LOCAL_PATH)/../param_manager \
+	$(LOCAL_PATH)/../driver/inc
+
+#LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
+
+LOCAL_SRC_FILES += isp_bridge_test.cpp
+
+include $(LOCAL_PATH)/../../../SprdCtrl.mk
+
+LOCAL_MODULE := ispbr_test
+
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
+LOCAL_SHARED_LIBRARIES += libcamcommon libcambr
+
+LOCAL_PROPRIETARY_MODULE := true
+
+include $(BUILD_EXECUTABLE)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))
