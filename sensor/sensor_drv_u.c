@@ -85,6 +85,10 @@ static cmr_int sensor_drv_vcm_unload_library(struct vcm_drv_lib *libPtr);
 static cmr_int sensor_drv_tuning_load_library(const char *name,
                                               struct tuning_param_lib *libPtr);
 static cmr_int
+sensor_drv_tuning_load_default_library(param_input_t param_input,
+                                       const char *name,
+                                       struct tuning_param_lib *libPtr);
+static cmr_int
 sensor_drv_tuning_unload_library(struct tuning_param_lib *libPtr);
 static cmr_int
 sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
@@ -3021,11 +3025,35 @@ sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt) {
     struct tuning_param_lib *libTuningPtr =
         &tuning_lib_mngr[sensor_cxt->slot_id];
     sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
+    param_input_t tuning_param_input;
+    char default_tuning_para_name[MAX_NAME_LEN] = {0};
 
     camera_cfg = sensor_cxt->xml_info;
     sensor_drv_xml_parse_tuning_param_info(camera_cfg);
-    ret = sensor_drv_tuning_load_library(
-        camera_cfg->cfgPtr->tuning_info.tuning_para_name, libTuningPtr);
+
+    if (!strcmp(camera_cfg->cfgPtr->tuning_info.tuning_para_name, "default")) {
+        cmr_bzero(&tuning_param_input, sizeof(param_input_t));
+
+        strcpy(tuning_param_input.module_cfg.sensor_basic_info.sensor_name,
+               camera_cfg->cfgPtr->sensor_name);
+
+        /* size_info[0]: fullsize */
+        tuning_param_input.module_cfg.sensor_cfg.sensor_settings_info
+            .size_info[0]
+            .size_w = sensor_cxt->sensor_info_ptr->source_width_max;
+        tuning_param_input.module_cfg.sensor_cfg.sensor_settings_info
+            .size_info[0]
+            .size_h = sensor_cxt->sensor_info_ptr->source_height_max;
+
+        snprintf(default_tuning_para_name, MAX_NAME_LEN, "default_id_%d",
+                 sensor_cxt->slot_id);
+        ret = sensor_drv_tuning_load_default_library(
+            tuning_param_input, default_tuning_para_name, libTuningPtr);
+    } else {
+        ret = sensor_drv_tuning_load_library(
+            camera_cfg->cfgPtr->tuning_info.tuning_para_name, libTuningPtr);
+    }
+
     if (!ret) {
         sns_module->sensor_info->raw_info_ptr =
             (struct sensor_raw_info **)&libTuningPtr->raw_info_ptr;
@@ -3403,6 +3431,52 @@ static cmr_int sensor_drv_tuning_load_library(const char *name,
         goto exit;
     }
     libPtr->raw_info_ptr = (struct sensor_raw_info *)tuning_param_get_ptr();
+    if (!libPtr->raw_info_ptr) {
+        SENSOR_LOGE("load tuning_info_ptr failed");
+        dlclose(libPtr->tuning_lib_handle);
+        libPtr->tuning_lib_handle = NULL;
+        goto exit;
+    }
+
+    ret = 0;
+exit:
+
+    return ret;
+}
+
+static cmr_int
+sensor_drv_tuning_load_default_library(param_input_t param_input,
+                                       const char *name,
+                                       struct tuning_param_lib *libPtr) {
+    cmr_int ret = SENSOR_FAIL;
+    char libso_name[SENSOR_LIB_NAME_LEN] = {0};
+
+    void *(*default_tuning_param_get_ptr)(param_input_t tuning_param_input) = NULL;
+    int32_t bytes = 0;
+
+    if (!strlen(name)) {
+        SENSOR_LOGI("don't config tuning in xml file");
+        goto exit;
+    }
+
+    bytes = snprintf(libso_name, SENSOR_LIB_NAME_LEN, "libparam_%s.so", name);
+    SENSOR_LOGD("tuning:libso_name %s", libso_name);
+    libPtr->tuning_lib_handle = dlopen(libso_name, RTLD_NOW);
+    if (!libPtr->tuning_lib_handle) {
+        SENSOR_LOGE("tuning lib handle failed");
+        goto exit;
+    }
+
+    *(void **)&default_tuning_param_get_ptr =
+        dlsym(libPtr->tuning_lib_handle, "default_tuning_param_get_ptr");
+    if (!default_tuning_param_get_ptr) {
+        SENSOR_LOGE("tuning param open lib function failed");
+        dlclose(libPtr->tuning_lib_handle);
+        libPtr->tuning_lib_handle = NULL;
+        goto exit;
+    }
+    libPtr->raw_info_ptr =
+        (struct sensor_raw_info *)default_tuning_param_get_ptr(param_input);
     if (!libPtr->raw_info_ptr) {
         SENSOR_LOGE("load tuning_info_ptr failed");
         dlclose(libPtr->tuning_lib_handle);

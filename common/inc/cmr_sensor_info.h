@@ -365,44 +365,44 @@ struct sensor_dual_otp_info {
 };
 
 struct sensor_triple_otp_info {
-	cmr_u8 triple_flag; /*multicam flag, bokeh-1, wt-2, spw-3, stl3d-4*/
-	struct sensor_data_info data_3d;
+    cmr_u8 triple_flag; /*multicam flag, bokeh-1, wt-2, spw-3, stl3d-4*/
+    struct sensor_data_info data_3d;
 
-	struct sensor_otp_section_info *master_module_info;
-	struct sensor_otp_section_info *master_af_info;
-	struct sensor_otp_section_info *master_iso_awb_info;
-	struct sensor_otp_section_info *master_optical_center_info;
-	struct sensor_otp_section_info *master_lsc_info;
-	struct sensor_otp_section_info *master_pdaf_info;
-	struct sensor_otp_section_info *master_spc_info;
-	struct sensor_otp_section_info *master_ae_info;
-	struct sensor_otp_section_info *master_xtalk_4in1_info;
-	struct sensor_otp_section_info *master_dpc_4in1_info;
-	struct sensor_otp_section_info *master_spw_info;
+    struct sensor_otp_section_info *master_module_info;
+    struct sensor_otp_section_info *master_af_info;
+    struct sensor_otp_section_info *master_iso_awb_info;
+    struct sensor_otp_section_info *master_optical_center_info;
+    struct sensor_otp_section_info *master_lsc_info;
+    struct sensor_otp_section_info *master_pdaf_info;
+    struct sensor_otp_section_info *master_spc_info;
+    struct sensor_otp_section_info *master_ae_info;
+    struct sensor_otp_section_info *master_xtalk_4in1_info;
+    struct sensor_otp_section_info *master_dpc_4in1_info;
+    struct sensor_otp_section_info *master_spw_info;
 
-	struct sensor_otp_section_info *slave0_module_info;
-	struct sensor_otp_section_info *slave0_af_info;
-	struct sensor_otp_section_info *slave0_iso_awb_info;
-	struct sensor_otp_section_info *slave0_optical_center_info;
-	struct sensor_otp_section_info *slave0_lsc_info;
-	struct sensor_otp_section_info *slave0_pdaf_info;
-	struct sensor_otp_section_info *slave0_spc_info;
-	struct sensor_otp_section_info *slave0_ae_info;
-	struct sensor_otp_section_info *slave0_xtalk_4in1_info;
-	struct sensor_otp_section_info *slave0_dpc_4in1_info;
-	struct sensor_otp_section_info *slave0_spw_info;
+    struct sensor_otp_section_info *slave0_module_info;
+    struct sensor_otp_section_info *slave0_af_info;
+    struct sensor_otp_section_info *slave0_iso_awb_info;
+    struct sensor_otp_section_info *slave0_optical_center_info;
+    struct sensor_otp_section_info *slave0_lsc_info;
+    struct sensor_otp_section_info *slave0_pdaf_info;
+    struct sensor_otp_section_info *slave0_spc_info;
+    struct sensor_otp_section_info *slave0_ae_info;
+    struct sensor_otp_section_info *slave0_xtalk_4in1_info;
+    struct sensor_otp_section_info *slave0_dpc_4in1_info;
+    struct sensor_otp_section_info *slave0_spw_info;
 
-	struct sensor_otp_section_info *slave1_module_info;
-	struct sensor_otp_section_info *slave1_af_info;
-	struct sensor_otp_section_info *slave1_iso_awb_info;
-	struct sensor_otp_section_info *slave1_optical_center_info;
-	struct sensor_otp_section_info *slave1_lsc_info;
-	struct sensor_otp_section_info *slave1_pdaf_info;
-	struct sensor_otp_section_info *slave1_spc_info;
-	struct sensor_otp_section_info *slave1_ae_info;
-	struct sensor_otp_section_info *slave1_xtalk_4in1_info;
-	struct sensor_otp_section_info *slave1_dpc_4in1_info;
-	struct sensor_otp_section_info *slave1_spw_info;
+    struct sensor_otp_section_info *slave1_module_info;
+    struct sensor_otp_section_info *slave1_af_info;
+    struct sensor_otp_section_info *slave1_iso_awb_info;
+    struct sensor_otp_section_info *slave1_optical_center_info;
+    struct sensor_otp_section_info *slave1_lsc_info;
+    struct sensor_otp_section_info *slave1_pdaf_info;
+    struct sensor_otp_section_info *slave1_spc_info;
+    struct sensor_otp_section_info *slave1_ae_info;
+    struct sensor_otp_section_info *slave1_xtalk_4in1_info;
+    struct sensor_otp_section_info *slave1_dpc_4in1_info;
+    struct sensor_otp_section_info *slave1_spw_info;
 };
 
 struct sensor_otp_cust_info {
@@ -410,7 +410,7 @@ struct sensor_otp_cust_info {
     enum otp_vendor_type otp_vendor;
     struct sensor_single_otp_info single_otp;
     struct sensor_dual_otp_info dual_otp;
-	struct sensor_triple_otp_info triple_otp;
+    struct sensor_triple_otp_info triple_otp;
 };
 
 enum sensor_pdaf_type {
@@ -531,7 +531,7 @@ struct sensor_embedded_info {
 };
 
 struct sensor_4in1_info {
-    cmr_u32 is_4in1_supported; /* 191105: 1: software remosaic; 0:other */
+    cmr_u32 is_4in1_supported;  /* 191105: 1: software remosaic; 0:other */
     cmr_u32 limited_4in1_width; /* >0: 4in1 sensor, 0: other */
     cmr_u32 limited_4in1_height;
     cmr_u32 *sns_mode; // sensor mode for 4in1
@@ -561,7 +561,7 @@ struct sensor_ex_exposure {
     cmr_u32 exposure;
     cmr_u32 dummy;
     cmr_u32 size_index;
-	cmr_u32 exp_time;
+    cmr_u32 exp_time;
 };
 
 struct sensor_i2c_reg_tab {
@@ -589,9 +589,106 @@ struct sensor_multi_ae_info {
     cmr_int camera_id;
     cmr_handle handle;
     cmr_u32 count;
-	cmr_u32 ignore;
+    cmr_u32 ignore;
     cmr_u32 gain;
     struct sensor_ex_exposure exp;
 };
 
+/*for default tuning parameters start*/
+#define SETTINGS_MAX 6
+typedef struct {
+    cmr_u32 ae_lib_version;
+    cmr_u32 awb_lib_version;
+    cmr_u32 af_lib_version;
+    cmr_u32 alsc_lib_version;
+    cmr_u32 flash_lib_version;
+    cmr_u32 hdr_lib_version;
+    cmr_u32 bokeh_lib_version;
+    cmr_u32 tof_lib_version;
+    cmr_u32 reserved[32];
+} alg_lib_version_info;
+
+typedef struct {
+    cmr_u32 chip_version;
+    cmr_u32 android_vers;
+    cmr_u32 sw_vers;
+    cmr_u32 reserved[8];
+    alg_lib_version_info alg_lib_version;
+} platform_info_t;
+
+typedef struct {
+    char sensor_type[24];
+    char sensor_module_vensor[24];
+    char sensor_vendor[24];
+    char sensor_name[36];
+    cmr_u32 reserved[32];
+} sensor_basic_info_t;
+
+typedef struct {
+    cmr_u32 size_w;
+    cmr_u32 size_h;
+} size_info_t;
+
+typedef struct {
+    cmr_u32 blc_r;
+    cmr_u32 blc_gr;
+    cmr_u32 blc_gb;
+    cmr_u32 blc_b;
+} blc_t;
+
+typedef struct {
+    cmr_u16 line_time;
+    cmr_u16 min_line;
+    cmr_u16 max_gain;
+    cmr_u16 gain_precision;
+    cmr_u8 gain_skip_num;
+    cmr_u8 isp_gain_skip_num;
+    cmr_u8 exp_skip_num;
+    cmr_u8 binning_factor;
+    cmr_u32 reserved[32];
+} sensor_ae_info_t;
+
+typedef struct {
+    cmr_u32 settings_num;
+    cmr_u32 bayer_pattern[SETTINGS_MAX];
+    size_info_t size_info[SETTINGS_MAX];
+    blc_t blc[SETTINGS_MAX];
+    cmr_u32 reserved[32];
+    sensor_ae_info_t sensor_ae_info[SETTINGS_MAX];
+} sensor_settings_info_t;
+
+typedef struct {
+    cmr_int raw_raw_bits;
+    cmr_int sensor_type;
+    cmr_u32 reserved[32];
+    sensor_settings_info_t sensor_settings_info;
+} sensor_cfg_t;
+
+typedef struct {
+    sensor_basic_info_t sensor_basic_info;
+    sensor_cfg_t sensor_cfg;
+    // otp_cfg_t otp_cfg;
+    cmr_u32 reserved[32];
+} module_cfg_t;
+
+typedef struct {
+    cmr_u8 sensor_pos;
+    bool is_withtof;
+    bool is_withflash;
+    cmr_u32 reserved[32];
+} hw_info_t;
+
+typedef struct {
+    hw_info_t hw_info;
+    cmr_u8 is_withctsensor;
+    cmr_u32 reserved[64];
+} project_cfg_t;
+
+typedef struct {
+    platform_info_t platform_info;
+    module_cfg_t module_cfg;
+    project_cfg_t project_cfg;
+    cmr_u32 reserved[256];
+} param_input_t;
+/*for default tuning parameters end*/
 #endif
