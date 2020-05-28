@@ -230,7 +230,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     if (cxt->nr_flag & CNR3_ENABLE) {
         if(cxt->nightscepro_flag != 1) {
             valid_nr_type |= (!CNR3_ENABLE);
-        } else {
+        } else { //auto
             ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR3_PARAM,
                             &isp_cmd_parm);
             if (CMR_CAMERA_SUCCESS != ret) {
@@ -253,6 +253,10 @@ proc:
     if (valid_nr_type == 0) {
         CMR_LOGD("valid_nr_type is 0");
         goto exit;
+    }
+    if (cxt->nightscepro_flag == 1) {
+        if((valid_nr_type & CNR3_ENABLE) == CNR3_ENABLE)
+            valid_nr_type &= (~CNR2_ENABLE);
     }
     mode = valid_nr_type;
     CMR_LOGD("valid_nr_type %d, param %p, %p, %p\n", valid_nr_type,
