@@ -89,3 +89,9 @@ PRODUCT_PACKAGES += libparam_ov8856_shine_back
 PRODUCT_PACKAGES += libparam_ov5675_front_main
 PRODUCT_PACKAGES += libparam_ov5675_dual
 #endif
+
+#default tuning 
+PRODUCT_PACKAGES += libparam_default_id_0
+PRODUCT_PACKAGES += libparam_default_id_1
+PRODUCT_PACKAGES += libparam_default_id_2
+PRODUCT_PACKAGES += libparam_default_id_3
