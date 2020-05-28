@@ -85,7 +85,7 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET 8
-#define SENSOR_MAX_GAIN 0x07FF
+#define SENSOR_MAX_GAIN 0x0F80
 #define SENSOR_BASE_GAIN 0x0080
 #define SENSOR_MIN_SHUTTER 4
 
@@ -516,7 +516,7 @@ static SENSOR_STATIC_INFO_T s_ov13b10_static_info[VENDOR_NUM] = {
      .static_info = {.f_num = 200,
                      .focal_length = 354,
                      .max_fps = 30,
-                     .max_adgain = 16,
+                     .max_adgain = 15.5,
                      .ois_supported = 0,
                      .pdaf_supported = 3,
                      .exp_valid_frame_num = 1,
