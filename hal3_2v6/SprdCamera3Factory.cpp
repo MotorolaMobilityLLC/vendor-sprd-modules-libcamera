@@ -206,7 +206,6 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
-    info->conflicting_devices_length = 0;
 
     HAL_LOGV("X");
     return rc;
@@ -281,7 +280,6 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
 
     info->device_version = CAMERA_DEVICE_API_VERSION_3_2;
     info->static_camera_characteristics = mStaticMetadata;
-    info->conflicting_devices_length = 0;
 
     HAL_LOGV("X");
     return rc;
