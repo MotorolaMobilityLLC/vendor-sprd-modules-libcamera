@@ -7064,6 +7064,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_PANORAMA) {
             drvSceneMode = CAMERA_SCENE_MODE_PANORAMA;
         }
+	  if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_SLOWMOTION) {
+            drvSceneMode = CAMERA_SCENE_MODE_SLOWMOTION;
+        }
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
     } break;
 
