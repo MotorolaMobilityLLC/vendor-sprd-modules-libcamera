@@ -579,6 +579,8 @@ class SprdCamera3Setting {
     int setNOISETag(NOISE_Tag noiseInfo);
     int getNOISETag(NOISE_Tag *noiseInfo);
 
+    int setExposureTimeTag(int64_t exposureTime);
+
     int setSENSORTag(SENSOR_Tag sensorInfo);
     int getSENSORTag(SENSOR_Tag *sensorInfo);
 

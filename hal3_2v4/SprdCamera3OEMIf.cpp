@@ -4056,8 +4056,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         return;
     }
 
-SENSOR_Tag sensorInfo;
-
     if (SHAKE_TEST == getShakeTestState()) {
         overwritePreviewFrame(frame);
     }
@@ -4207,7 +4205,8 @@ SENSOR_Tag sensorInfo;
     beautyLevels.cameraISO = (int)iso;
     HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
 #endif
-
+  
+    SENSOR_Tag sensorInfo;
     mSetting->getSENSORTag(&sensorInfo);
     sensorInfo.timestamp = buffer_timestamp;
     mSetting->setSENSORTag(sensorInfo);
@@ -4945,6 +4944,7 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     uint32_t dst_width = 0;
     uint32_t dst_height = 0;
     cmr_uint dst_vaddr = 0;
+    int64_t exposureTime = 0;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -4963,7 +4963,12 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
 
     HAL_LOGD("mReDisplayHeap = %p,frame->y_vir_addr 0x%lx ", mReDisplayHeap,
              frame->y_vir_addr);
-
+    if (0 != frame->sensor_info.exposure_time_denominator) {
+        exposureTime = 1000000000ll *
+                       frame->sensor_info.exposure_time_numerator /
+                       frame->sensor_info.exposure_time_denominator;
+        mSetting->setExposureTimeTag(exposureTime);
+    }
 
     display_flag = iSDisplayCaptureFrame();
     callback_flag = iSCallbackCaptureFrame();
@@ -5054,6 +5059,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     unsigned char is_raw_capture = 0;
     void *ispInfoAddr = NULL;
     int ispInfoSize = 0;
+    int64_t exposureTime = 0;
 
     HAL_LOGD("E encInfo->size = %d, enc->buffer = %p, encInfo->need_free = %d "
              "time=%lld",
@@ -5065,16 +5071,13 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         goto exit;
     }
 
-    SENSOR_Tag sensorInfo;
-    mSetting->getSENSORTag(&sensorInfo);
     if (0 != frame->sensor_info.exposure_time_denominator) {
-        sensorInfo.exposure_time = 1000000000ll *
-                                   frame->sensor_info.exposure_time_numerator /
-                                   frame->sensor_info.exposure_time_denominator;
+        exposureTime = 1000000000ll *
+                       frame->sensor_info.exposure_time_numerator /
+                       frame->sensor_info.exposure_time_denominator;
+        mSetting->setExposureTimeTag(exposureTime);
     }
-    sensorInfo.timestamp = frame->timestamp;
-    mSetting->setSENSORTag(sensorInfo);
-    timestamp = sensorInfo.timestamp;
+    timestamp = frame->timestamp;
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
@@ -5508,24 +5511,6 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         LENS_Tag lensInfo;
         mHalOem->ops->camera_get_sensor_result_exif_info(mCameraHandle,
                                                          &exif_pic_info);
-
-        struct camera_frame_type *frame = NULL;
-        frame = (struct camera_frame_type *)parm4;
-        SENSOR_Tag sensorInfo;
-        mSetting->getSENSORTag(&sensorInfo);
-        if (0 != frame->sensor_info.exposure_time_denominator) {
-            sensorInfo.exposure_time =
-                1000000000ll * frame->sensor_info.exposure_time_numerator /
-                frame->sensor_info.exposure_time_denominator;
-        } else {
-            frame->sensor_info.exposure_time_denominator =
-                exif_pic_info.ExposureTime.denominator;
-            frame->sensor_info.exposure_time_numerator =
-                exif_pic_info.ExposureTime.numerator;
-        }
-        sensorInfo.timestamp = frame->timestamp;
-        mSetting->setSENSORTag(sensorInfo);
-
         if (exif_pic_info.ApertureValue.denominator)
             aperture = (float)exif_pic_info.ApertureValue.numerator /
                        (float)exif_pic_info.ApertureValue.denominator;

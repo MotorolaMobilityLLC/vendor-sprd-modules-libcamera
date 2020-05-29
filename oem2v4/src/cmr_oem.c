@@ -1790,15 +1790,6 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             struct exif_spec_pic_taking_cond_tag exif_pic_info;
             struct camera_frame_type *preview_frame =
                 (struct camera_frame_type *)param;
-            cmr_sensor_get_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                                &exif_pic_info);
-            preview_frame->sensor_info.exposure_time_numerator =
-                exif_pic_info.ExposureTime.numerator;
-            preview_frame->sensor_info.exposure_time_denominator =
-                exif_pic_info.ExposureTime.denominator;
-            CMR_LOGV("exposure_time_numerator %d exposure_time_denominator %d",
-                     preview_frame->sensor_info.exposure_time_numerator,
-                     preview_frame->sensor_info.exposure_time_denominator);
         }
 
         if ((cxt->is_lls_enable) && (PREVIEW_EVT_CB_FRAME == cb_type)) {
@@ -1969,23 +1960,14 @@ void camera_snapshot_cb_to_hal(cmr_handle oem_handle, enum snapshot_cb_type cb,
             message.alloc_flag = 1;
             frame_ptr = (struct camera_frame_type *)message.data;
             memcpy(message.data, param, sizeof(struct camera_frame_type));
+            struct exif_spec_pic_taking_cond_tag exif_pic_info;
+            cmr_sensor_get_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                                &exif_pic_info);
             frame_ptr->sensor_info.exposure_time_numerator =
-                cxt->sn_cxt.exif_info.ExposureTime.numerator;
+                exif_pic_info.ExposureTime.numerator;
             frame_ptr->sensor_info.exposure_time_denominator =
-                cxt->sn_cxt.exif_info.ExposureTime.denominator;
+                exif_pic_info.ExposureTime.denominator;
         }
-    }
-
-    if (CAMERA_EVT_CB_SNAPSHOT_DONE == oem_cb_type && frame_ptr != NULL) {
-        struct setting_cmd_parameter setting_param;
-        struct exif_spec_pic_taking_cond_tag exif_pic_info;
-        EXIF_RATIONAL_T exposure_time;
-        exposure_time.numerator = frame_ptr->sensor_info.exposure_time_numerator;
-        exposure_time.denominator = frame_ptr->sensor_info.exposure_time_denominator ;
-        setting_param.camera_id = cxt->camera_id;
-        setting_param.cmd_type_value = (cmr_uint)&exposure_time;
-        cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                          SETTING_SET_EXIF_EXPOSURE_TIME, &setting_param);
     }
 
     message.msg_type = oem_func;
