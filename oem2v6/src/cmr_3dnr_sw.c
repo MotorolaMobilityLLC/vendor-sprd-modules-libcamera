@@ -927,7 +927,7 @@ static cmr_int threadnr_scaler_process(cmr_handle class_handle,
     struct class_3dnr *threednr_handle =
         (struct class_3dnr *)info->class_handle;
     struct img_frm *src, dst;
-    cmr_u32 cur_frm;
+    cmr_u32 cur_frm = 0;
     char filename[128];
     if (threednr_handle->is_stop) {
         CMR_LOGE("threednr_handle is stop");

@@ -17,6 +17,7 @@
 #ifndef _CMR_LOG_H_
 #define _CMR_LOG_H_
 
+#include "cam_log.h"
 /*
  * LEVEL_OVER_LOGE - only show ALOGE, err log is always show
  * LEVEL_OVER_LOGW - show ALOGE and ALOGW
@@ -41,20 +42,17 @@ extern long g_oem_log_level;
 extern long g_sensor_log_level;
 
 #ifndef WIN32
-#define ISP_LOGE(format, ...) ALOGE(DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define ISP_LOGW(format, ...)                                                  \
-    ALOGW_IF(g_isp_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
-#define ISP_LOGI(format, ...)                                                  \
-    ALOGI_IF(g_isp_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
-#define ISP_LOGD(format, ...)                                                  \
-    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
-/* ISP_LOGV uses ALOGD_IF */
-#define ISP_LOGV(format, ...)                                                  \
-    ALOGD_IF(g_isp_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
+#define ISP_LOGE(format, args...) LOG(LOG_PRI_E, LOG_ISP_MW, LOG_ALL, format, ##args)
+#define ISP_LOGW(format, args...) LOG(LOG_PRI_W, LOG_ISP_MW, LOG_ALL, format, ##args)
+#define ISP_LOGI(format, args...) LOG(LOG_PRI_I, LOG_ISP_MW, LOG_ALL, format, ##args)
+#define ISP_LOGD(format, args...) LOG(LOG_PRI_D, LOG_ISP_MW, LOG_ALL, format, ##args)
+#define ISP_LOGV(format, args...) LOG(LOG_PRI_V, LOG_ISP_MW, LOG_ALL, format, ##args)
+
+#define F_ISP_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_ISP_MW, func, format, ##args)
+#define F_ISP_LOGW(func, format, args...) LOG(LOG_PRI_W, LOG_ISP_MW, func, format, ##args)
+#define F_ISP_LOGI(func, format, args...) LOG(LOG_PRI_I, LOG_ISP_MW, func, format, ##args)
+#define F_ISP_LOGD(func, format, args...) LOG(LOG_PRI_D, LOG_ISP_MW, func, format, ##args)
+#define F_ISP_LOGV(func, format, args...) LOG(LOG_PRI_V, LOG_ISP_MW, func, format, ##args)
 #else
 #define ISP_LOGE printf
 #define ISP_LOGW printf
@@ -63,40 +61,62 @@ extern long g_sensor_log_level;
 #define ISP_LOGV printf
 #endif
 
-#define CMR_LOGE(format, ...) ALOGE(ERROR_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define CMR_LOGW(format, ...)                                                  \
-    ALOGW_IF(g_oem_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
-#define CMR_LOGI(format, ...)                                                  \
-    ALOGI_IF(g_oem_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
-#define CMR_LOGD(format, ...)                                                  \
-    ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
-/* CMR_LOGV uses ALOGD_IF */
-#define CMR_LOGV(format, ...)                                                  \
-    ALOGD_IF(g_oem_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
-             ##__VA_ARGS__)
+#define CMR_LOGE(format, args...) LOG(LOG_PRI_E, LOG_OEM, LOG_ALL, format, ##args)
+#define CMR_LOGW(format, args...) LOG(LOG_PRI_W, LOG_OEM, LOG_ALL, format, ##args)
+#define CMR_LOGI(format, args...) LOG(LOG_PRI_I, LOG_OEM, LOG_ALL, format, ##args)
+#define CMR_LOGD(format, args...) LOG(LOG_PRI_D, LOG_OEM, LOG_ALL, format, ##args)
+#define CMR_LOGV(format, args...) LOG(LOG_PRI_V, LOG_OEM, LOG_ALL, format, ##args)
 
-#define SENSOR_LOGE(format, ...)                                               \
-    ALOGE(ERROR_STR format, DEBUG_ARGS, ##__VA_ARGS__)
-#define SENSOR_LOGW(format, ...)                                               \
-    ALOGW_IF(g_sensor_log_level >= LEVEL_OVER_LOGW, DEBUG_STR format,          \
-             DEBUG_ARGS, ##__VA_ARGS__)
-#define SENSOR_LOGI(format, ...)                                               \
-    ALOGI_IF(g_sensor_log_level >= LEVEL_OVER_LOGI, DEBUG_STR format,          \
-             DEBUG_ARGS, ##__VA_ARGS__)
-#define SENSOR_LOGD(format, ...)                                               \
-    ALOGD_IF(g_sensor_log_level >= LEVEL_OVER_LOGD, DEBUG_STR format,          \
-             DEBUG_ARGS, ##__VA_ARGS__)
-/* SENSOR_LOGV uses ALOGD_IF */
-#define SENSOR_LOGV(format, ...)                                               \
-    ALOGD_IF(g_sensor_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format,          \
-             DEBUG_ARGS, ##__VA_ARGS__)
+#define F_CMR_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_OEM, func, format, ##args)
+#define F_CMR_LOGW(func, format, args...) LOG(LOG_PRI_W, LOG_OEM, func, format, ##args)
+#define F_CMR_LOGI(func, format, args...) LOG(LOG_PRI_I, LOG_OEM, func, format, ##args)
+#define F_CMR_LOGD(func, format, args...) LOG(LOG_PRI_D, LOG_OEM, func, format, ##args)
+#define F_CMR_LOGV(func, format, args...) LOG(LOG_PRI_V, LOG_OEM, func, format, ##args)
+
+
+#define SENSOR_LOGE(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGW(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGI(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGD(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGV(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
+
+#define F_SENSOR_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
+
+
 #define SENSOR_PRINT_ERR SENSOR_LOGE
 #define SENSOR_PRINT_HIGH SENSOR_LOGI
 #define SENSOR_PRINT SENSOR_LOGI
 #define SENSOR_TRACE SENSOR_LOGI
+
+#define ARITH_LOGE(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGW(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGI(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGD(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGV(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
+
+#define F_ARITH_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
+
+#define HAL_LOGE(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGW(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGI(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGD(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGV(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+
+#define F_HAL_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+
+
 
 void isp_init_log_level(void);
 void oem_init_log_level(void);

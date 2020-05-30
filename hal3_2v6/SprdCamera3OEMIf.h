@@ -370,6 +370,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
                              struct cmr_af_aux_sensor_info *sensor_info);
 #endif
 
+    static void *log_monitor_thread_proc(void *p_data);
+    static int log_monitor_thread_init(void *p_data);
+    static int log_monitor_thread_deinit(void *p_data);
+
     void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
     void setUltraWideMode();
     bool mSetCapRatioFlag;
@@ -837,6 +841,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     SprdCameraSystemPerformance *mSysPerformace;
 
+    pthread_t mLogHandle;
+
     // for eis
     bool mGyroInit;
     bool mGyroExit;
@@ -914,6 +920,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_u32 mVideoAFBCFlag;
 
     bool mIsJpegWithBigSizePreview;
+	static std::atomic_int mLogMonitor; //0:thread exit, 1:init, 2~x:count
+	static sem_t mLogMonitorSem; //logmonitor exit without wait 1s
 };
 
 }; // namespace sprdcamera

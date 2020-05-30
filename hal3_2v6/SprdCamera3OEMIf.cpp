@@ -20,6 +20,7 @@
 
 #include "SprdCamera3OEMIf.h"
 #include "cmr_common.h"
+#include "cam_log.h"
 #include <cutils/properties.h>
 #include <fcntl.h>
 #include <math.h>
@@ -254,6 +255,9 @@ uint32_t SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
 bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
 multiCameraMode SprdCamera3OEMIf::mMultiCameraMode = MODE_SINGLE_CAMERA;
+std::atomic_int SprdCamera3OEMIf::mLogMonitor = 1;
+sem_t SprdCamera3OEMIf::mLogMonitorSem;
+
 
 struct stateMachine aeStateMachine[] = {
     {ANDROID_CONTROL_AE_STATE_INACTIVE, AE_START,
@@ -797,6 +801,7 @@ void SprdCamera3OEMIf::closeCamera() {
     }
 
     ZSLMode_monitor_thread_deinit((void *)this);
+    log_monitor_thread_deinit((void *)this);
 
     mReleaseFLag = true;
     HAL_LOGI(":hal3: X");
@@ -3310,7 +3315,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     ATRACE_CALL();
 
     nsecs_t start_timestamp = systemTime();
-    nsecs_t end_timestamp;
+    nsecs_t end_timestamp = systemTime();
     int ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -6179,6 +6184,7 @@ int SprdCamera3OEMIf::openCamera() {
     GET_START_TIME;
     memset(mode_info, 0, sizeof(struct sensor_mode_info) * SENSOR_MODE_MAX);
 
+    log_monitor_thread_init((void *)this);
     mSetting->getLargestPictureSize(mCameraId, &picW, &picH);
     mSetting->getLargestSensorSize(mCameraId, &snsW, &snsH);
     if (picW * picH > snsW * snsH) {
@@ -10808,6 +10814,145 @@ void SprdCamera3OEMIf::setFlushFlag(int32_t value) { mFlush = value; }
 
 void SprdCamera3OEMIf::setVideoAFBCFlag(cmr_u32 value) {
     mVideoAFBCFlag = value;
+}
+
+ void *SprdCamera3OEMIf::log_monitor_thread_proc(void *p_data){
+      char prop[PROPERTY_VALUE_MAX];
+      int val=0;
+      struct timespec ts;
+
+      HAL_LOGI("E, %d",mLogMonitor.load());
+	  while(mLogMonitor.load() > 1) {
+	  /*
+      *bit[0]:hal,bit[1]:oem,bit[2]:isp_middleware,bit[3]:sensor
+      *bit[4]:ispalg,bit[5]:arithmetic
+	  */
+      property_get("persist.vendor.cam.log.modulelog", prop, 0);
+      val=atoi(prop);
+      if(0 < val) {
+         g_log_module_setting = val;
+      }
+      /*
+      *bit[0]:AE,bit[1]:AF,bit[3]:all
+      */
+      property_get("persist.vendor.cam.log.functionlog", prop, 0);
+      val=atoi(prop);
+      if(0 < val) {
+         g_log_func_setting = val;
+      }
+	  /*
+	  *bit[3:0]:hal,bit[7:4]:oem,bit[11:8]:isp_middleware
+	  *bit[15:12]:sensor,bit[19:16]:ispalg,bit[23:20]:arithmetic
+	  *default value:LOG_PRI_D=4
+	  */
+      property_get("persist.vendor.cam.log.loglevel", prop, 0);
+      val=atoi(prop);
+      if(0 < val) {
+         g_log_level = val;
+      }
+      property_get("persist.vendor.cam.log.info", prop, 0);
+      val=atoi(prop);
+      if(0 < val) {
+         ALOGE("Module setting: %d,func setting: %d,log level val:%d",
+               g_log_module_setting,g_log_func_setting,g_log_level);
+      }
+      property_get("persist.vendor.cam.log.testcase", prop, 0);
+      val=atoi(prop);
+      if(0 < val) {
+      switch(val) {
+      case 1:ALOGE("testcase1:module test");
+             HAL_LOGE("hal module log_ret=%d", 101);
+		     CMR_LOGW("oem module log_ret=%d", 102);
+             ISP_LOGI("isp module log_ret=%d", 103);
+             ARITH_LOGD("arithmetic module log_ret=%d", 104);
+             SENSOR_LOGD("sensor module log_ret=%d", 105);
+
+             F_HAL_LOGE(LOG_AE,"hal module f_log_ret=%d", 1001);
+             F_CMR_LOGW(LOG_AF,"oem module f_log_ret=%d", 1002);
+             F_ISP_LOGI(LOG_ALL,"isp module f_log_ret=%d", 1003);
+             F_ARITH_LOGD(LOG_AE,"arithmetic module f_log_ret=%d", 1004);
+             F_SENSOR_LOGD(LOG_AF,"sensor module f_log_ret=%d", 1005);
+             break;
+      case 2:ALOGE("testcase2:loglevel test");
+             HAL_LOGE("hal loglevel_ret=%d", 201);
+             HAL_LOGW("hal loglevel_ret=%d", 202);
+             HAL_LOGI("hal loglevel_ret=%d", 203);
+             HAL_LOGD("hal loglevel_ret=%d", 204);
+             HAL_LOGV("hal loglevel_ret=%d", 205);
+
+             F_HAL_LOGE(LOG_AE,"hal loglevel_ret=%d", 2001);
+             F_HAL_LOGW(LOG_AE,"hal loglevel_ret=%d", 2002);
+             F_HAL_LOGI(LOG_AE,"hal loglevel_ret=%d", 2003);
+             F_HAL_LOGD(LOG_AE,"hal loglevel_ret=%d", 2004);
+             F_HAL_LOGV(LOG_AE,"hal loglevel_ret=%d", 2005);
+             break;
+      case 3:ALOGE("testcase1:function test start");
+             F_HAL_LOGE(LOG_AE,"hal function log_ae_ret=%d",3001);
+             F_HAL_LOGE(LOG_AF,"hal function log_af_ret=%d",3002);
+             F_HAL_LOGE(LOG_AWBC,"hal function log_awbc_ret=%d",3003);
+             F_HAL_LOGE(LOG_ALL,"hal function log_all_ret=%d",3004);
+             break;
+       }
+      }
+// sleep(1);
+   if (clock_gettime(CLOCK_REALTIME, &ts))
+       continue;
+
+   ts.tv_nsec += ms2ns(1000);
+   if (ts.tv_nsec > 1000000000) {
+       ts.tv_sec += 1;
+       ts.tv_nsec -= 1000000000;
+   }
+   sem_timedwait(&mLogMonitorSem, &ts);
+  }
+  mLogMonitor = 0;
+  HAL_LOGV("X");
+
+  return NULL;
+}
+
+int SprdCamera3OEMIf::log_monitor_thread_init(void * p_data) {
+    int ret = NO_ERROR;
+    pthread_attr_t attr;
+    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+	if(!obj) {
+       return -1;
+    }
+    mLogMonitor++;
+    if (mLogMonitor.load() > 2)
+        return ret;
+    mLogMonitorSem.count = 0;
+	sem_init(&mLogMonitorSem, 0, 0);
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    ret = pthread_create(&obj->mLogHandle, &attr,
+                          log_monitor_thread_proc, (void *)obj);
+    pthread_setname_np(obj->mLogHandle, "logstatus");
+    pthread_attr_destroy(&attr);
+    return ret;
+}
+
+int SprdCamera3OEMIf::log_monitor_thread_deinit(void * p_data) {
+    int ret = NO_ERROR;
+    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
+    int i = 10;
+
+	if (!obj) {
+       return UNKNOWN_ERROR;
+	}
+	mLogMonitor--;
+	if (mLogMonitor.load() == 1 && obj->mLogHandle) {
+        sem_post(&mLogMonitorSem);
+		while (i--) {
+           if (mLogMonitor.load() == 0)
+               break;
+		   usleep(1000);
+        }
+        mLogMonitor = 1;
+        sem_destroy(&mLogMonitorSem);
+        obj->mLogHandle = 0;
+    }
+    return ret;
 }
 
 #ifdef CONFIG_CAMERA_EIS
