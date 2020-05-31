@@ -1855,24 +1855,24 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                     p_stream_info[i].stream_sizes_tbl.height);
 
 #if defined(CONFIG_ISP_2_3)
-                int32_t stream_size = stream_info[i].stream_sizes_tbl.width *
-                                      stream_info[i].stream_sizes_tbl.height;
+                int32_t stream_size = p_stream_info[i].stream_sizes_tbl.width *
+                                      p_stream_info[i].stream_sizes_tbl.height;
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
                     if (stream_size > 8000000) {
-                        HAL_LOGD("YUV %d*%d output in ~100ms in sharkle"
+                        HAL_LOGD("8M YUV %d*%d output in ~100ms in sharkle"
                                  "offline so change min frame duration",
-                                 stream_info[i].stream_sizes_tbl.width,
-                                 stream_info[i].stream_sizes_tbl.height);
+                                 p_stream_info[i].stream_sizes_tbl.width,
+                                 p_stream_info[i].stream_sizes_tbl.height);
                         stream_min_duration = 100000000L;
                     } else if (stream_size > 5000000) {
-                        HAL_LOGD("YUV %d*%d output in ~100ms in sharkle"
+                        HAL_LOGD("5M YUV %d*%d output in ~100ms in sharkle"
                                  "offline so change min frame duration",
-                                 stream_info[i].stream_sizes_tbl.width,
-                                 stream_info[i].stream_sizes_tbl.height);
+                                 p_stream_info[i].stream_sizes_tbl.width,
+                                 p_stream_info[i].stream_sizes_tbl.height);
                         stream_min_duration = 66666670L;
                     } else {
                         stream_min_duration =
-                            stream_info[i].stream_min_duration;
+                            p_stream_info[i].stream_min_duration;
                     }
                 } else {
                     stream_min_duration = p_stream_info[i].stream_min_duration;
