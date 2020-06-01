@@ -118,8 +118,6 @@ typedef int64_t nsecs_t;
 
 #define EV_EFFECT_FRAME_NUM 3
 
-#define CONFLICT_DEVICE_LEN 1
-
 typedef struct {
     uint8_t correction_mode;
     uint8_t aberration_mode;

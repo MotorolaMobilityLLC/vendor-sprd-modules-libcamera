@@ -1269,22 +1269,21 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
     } else {
         cameraInfo->facing = phyPtr->face_type;
         cameraInfo->orientation = phyPtr->angle;
-        char conflictCamId0[CONFLICT_DEVICE_LEN][2] = {"1"};
-        char conflictCamId1[CONFLICT_DEVICE_LEN][2] = {"0"};
-        cameraInfo->conflicting_devices_length = CONFLICT_DEVICE_LEN;
+
+        int numOfCameras = getNumberOfCameras();
+        cameraInfo->conflicting_devices_length = numOfCameras - 1;
         cameraInfo->conflicting_devices = (char **)malloc(sizeof(char *) * (cameraInfo->conflicting_devices_length));
-        char (*conflictCamId)[2] = NULL;
-        if (cameraId == 0) {
-            conflictCamId = conflictCamId0;
-        } else {
-            conflictCamId = conflictCamId1;
+        for (int i = 0, j = 0; i < numOfCameras; i++) {
+            if (i == cameraId)
+                continue;
+            char conflictCamIdStr[2];
+            cameraInfo->conflicting_devices[j] = (char *)malloc(sizeof(char)+1);
+            snprintf(conflictCamIdStr, 2, "%d", i);
+            strcpy(cameraInfo->conflicting_devices[j], conflictCamIdStr);
+            HAL_LOGD("conflict_dev[%d]=%s", j, cameraInfo->conflicting_devices[j]);
+            j++;
         }
 
-        for (int i = 0; i < cameraInfo->conflicting_devices_length; i++) {
-            cameraInfo->conflicting_devices[i] = (char *)malloc(sizeof(char)+1);
-            strcpy(cameraInfo->conflicting_devices[i], conflictCamId[i]);
-            HAL_LOGD("conflict_dev[%d]=%s", i, cameraInfo->conflicting_devices[i]);
-        }
         cameraInfo->resource_cost = phyPtr->resource_cost;
     }
     // TBD: may be will add other variable in struct camera_info
