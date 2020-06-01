@@ -6778,7 +6778,15 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
 
 #if defined(CONFIG_ISP_2_3)
     if (is_raw_capture == 0) {
-        if (dst->size.height == 1952 && dst->size.width == 2592) {
+        if (dst->size.height == 2352 && dst->size.width == 4160) {
+            enc_dst.size.height = 2340;
+        } else if (dst->size.height == 3008 && dst->size.width == 4000) {
+            enc_dst.size.height = 3000;
+        } else if (dst->size.height == 2256 && dst->size.width == 4000) {
+            enc_dst.size.height = 2250;
+        } else if (dst->size.height == 1904 && dst->size.width == 4000) {
+            enc_dst.size.height = 1896;
+        } else if (dst->size.height == 1952 && dst->size.width == 2592) {
             enc_dst.size.height = 1944;
         } else if (dst->size.height == 1472 && dst->size.width == 2592) {
             enc_dst.size.height = 1458;
