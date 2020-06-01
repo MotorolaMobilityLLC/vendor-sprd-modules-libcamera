@@ -104,19 +104,6 @@ extern long g_sensor_log_level;
 #define F_ARITH_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
 #define F_ARITH_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
 
-#define HAL_LOGE(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGW(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGI(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGD(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGV(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-
-#define F_HAL_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-
-
 
 void isp_init_log_level(void);
 void oem_init_log_level(void);

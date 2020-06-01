@@ -31,6 +31,8 @@
 
 #include <hardware/camera3.h>
 #include "cmr_type.h"
+#include "cam_log.h"
+
 
 extern "C" {
 #include <sys/types.h>
@@ -47,20 +49,18 @@ namespace sprdcamera {
 
 extern volatile uint32_t gHALLogLevel;
 
-#define HAL_LOGE(fmt, args...)                                                 \
-    ALOGE("%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+#define HAL_LOGE(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGW(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGI(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGD(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGV(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
 
-#define HAL_LOGW(fmt, args...)                                                 \
-    ALOGW_IF(gHALLogLevel >= 2, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
+#define F_HAL_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
 
-#define HAL_LOGI(fmt, args...)                                                 \
-    ALOGI_IF(gHALLogLevel >= 3, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-
-#define HAL_LOGD(fmt, args...)                                                 \
-    ALOGD_IF(gHALLogLevel >= 4, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-
-#define HAL_LOGV(fmt, args...)                                                 \
-    ALOGD_IF(gHALLogLevel >= 5, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 
 class SprdCamera3Channel;
 
