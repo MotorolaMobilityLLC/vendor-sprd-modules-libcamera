@@ -3004,9 +3004,11 @@ static struct sensor_res_tab_info s_s5k3p9sx04_resolution_Tab_RAW[VENDOR_NUM] =
                0, .width = 2320, .height = 1744, .xclk_to_sensor = 24,
                .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
+#if 0
               {ADDR_AND_LEN_OF_ARRAY(s5k3p9sx04_4032x3024_4lane_setting), PNULL,
                0, .width = 4032, .height = 3024,
                .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+#endif
 
               {ADDR_AND_LEN_OF_ARRAY(s5k3p9sx04_4640x3488_4lane_setting), PNULL,
                0, .width = 4640, .height = 3488, .xclk_to_sensor = 24,
@@ -3027,6 +3029,7 @@ static SENSOR_TRIM_T s_s5k3p9sx04_Resolution_Trim_Tab[VENDOR_NUM] = {
                     .frame_line = 2196,
                     .scaler_trim = {.x = 0, .y = 0, .w = 2320, .h = 1744}},
 
+#if 0
                    {.trim_start_x = 0,
                     .trim_start_y = 0,
                     .trim_width = 4032,
@@ -3035,6 +3038,7 @@ static SENSOR_TRIM_T s_s5k3p9sx04_Resolution_Trim_Tab[VENDOR_NUM] = {
                     .bps_per_lane = 1428,
                     .frame_line = 3668,
                     .scaler_trim = {.x = 0, .y = 0, .w = 4032, .h = 3024}},
+#endif
 
                    {.trim_start_x = 0,
                     .trim_start_y = 0,
