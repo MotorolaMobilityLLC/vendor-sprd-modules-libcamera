@@ -972,10 +972,6 @@ static cmr_int ov5675_drv_access_val(cmr_handle handle, unsigned long param) {
 
     SENSOR_LOGV("E: param_ptr = %p,type=%x", param_ptr, param_ptr->type);
     switch (param_ptr->type) {
-    case SENSOR_VAL_TYPE_SHUTTER:
-        *((cmr_u32 *)param_ptr->pval) =
-            sns_drv_cxt->sensor_ev_info.preview_shutter;
-        break;
     case SENSOR_VAL_TYPE_GET_STATIC_INFO:
         rtn = ov5675_drv_get_static_info(handle, param_ptr->pval);
         break;
