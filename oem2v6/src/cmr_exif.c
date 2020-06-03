@@ -36,6 +36,18 @@ static EXIF_PRI_DATA_STRUCT_T exif_pri_data_struct_info = {
           the visual left-hand side*/
     0};
 
+#ifdef CONFIG_SUPPORT_GDEPTH
+static EXIF_PRI_DESC_T exif_pri_desc_info = {
+    {0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}, /*valid*/
+    "Default Date",                             /*Date */
+    "",                                         /*ImageDescription*/
+    "",                                         /*Make */
+    "",                                         /*Model */
+    "",                                         /*Software*/
+    "",                                         /*Artist */
+    ""                                          /*Copyright*/
+};
+#else
 static EXIF_PRI_DESC_T exif_pri_desc_info = {
     {0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01}, /*valid*/
     "Default Date",                             /*Date */
@@ -46,6 +58,7 @@ static EXIF_PRI_DESC_T exif_pri_desc_info = {
     "Artist-freed",                             /*Artist */
     "Copyright(C),Spreadtrum,2014"              /*Copyright*/
 };
+#endif
 
 static EXIF_SPEC_USER_T exif_spec_user_info;
 

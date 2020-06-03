@@ -1592,10 +1592,17 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         is_raw_capture = 1;
     }
 
+#ifdef CONFIG_SUPPORT_GDEPTH
+#define EXIF_DEF_MAKER ""
+#define EXIF_DEF_MODEL ""
+    static const char image_desc[] = "";
+    static const char copyright[] = "";
+#else
 #define EXIF_DEF_MAKER "Spreadtrum"
 #define EXIF_DEF_MODEL "spxxxx"
     static const char image_desc[] = "Exif_JPEG_420";
     static const char copyright[] = "Copyright,Spreadtrum,2011";
+#endif
 
     if (FLASH_OPEN == flash_param->flash_hw_status) {
         setting_set_flashdevice(cpt, parm, (uint32_t)FLASH_CLOSE_AFTER_OPEN);

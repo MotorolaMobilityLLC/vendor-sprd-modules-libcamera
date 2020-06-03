@@ -1421,7 +1421,7 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     memcpy(&encode_exif_param.src, &src_img, sizeof(struct img_frm));
     memcpy(&encode_exif_param.pic_enc, &pic_enc_img, sizeof(struct img_frm));
     memcpy(&encode_exif_param.last_dst, &dst_img, sizeof(struct img_frm));
-    encode_exif_param.rotation = rotation;
+    encode_exif_param.rotation = 0;
 
     ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC,
                              &encode_exif_param, NULL);
