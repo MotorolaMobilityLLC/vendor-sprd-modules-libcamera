@@ -49,16 +49,16 @@ namespace sprdcamera {
 extern volatile uint32_t gHalLogLevel;
 
 #define HAL_LOGE(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGW(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGI(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGD(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
-#define HAL_LOGV(format, args...) LOG(LOG_PRI_E, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGW(format, args...) LOG(LOG_PRI_W, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGI(format, args...) LOG(LOG_PRI_I, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGD(format, args...) LOG(LOG_PRI_D, LOG_HAL, LOG_ALL, format, ##args)
+#define HAL_LOGV(format, args...) LOG(LOG_PRI_V, LOG_HAL, LOG_ALL, format, ##args)
 
 #define F_HAL_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
-#define F_HAL_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGW(func, format, args...) LOG(LOG_PRI_W, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGI(func, format, args...) LOG(LOG_PRI_I, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGD(func, format, args...) LOG(LOG_PRI_D, LOG_HAL, func, format, ##args)
+#define F_HAL_LOGV(func, format, args...) LOG(LOG_PRI_V, LOG_HAL, func, format, ##args)
 
 
 class SprdCamera3Channel;

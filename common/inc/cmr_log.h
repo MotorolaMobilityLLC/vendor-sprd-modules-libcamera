@@ -75,16 +75,16 @@ extern long g_sensor_log_level;
 
 
 #define SENSOR_LOGE(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
-#define SENSOR_LOGW(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
-#define SENSOR_LOGI(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
-#define SENSOR_LOGD(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
-#define SENSOR_LOGV(format, args...) LOG(LOG_PRI_E, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGW(format, args...) LOG(LOG_PRI_W, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGI(format, args...) LOG(LOG_PRI_I, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGD(format, args...) LOG(LOG_PRI_D, LOG_SENSOR, LOG_ALL, format, ##args)
+#define SENSOR_LOGV(format, args...) LOG(LOG_PRI_V, LOG_SENSOR, LOG_ALL, format, ##args)
 
 #define F_SENSOR_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
-#define F_SENSOR_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
-#define F_SENSOR_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
-#define F_SENSOR_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
-#define F_SENSOR_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGW(func, format, args...) LOG(LOG_PRI_W, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGI(func, format, args...) LOG(LOG_PRI_I, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGD(func, format, args...) LOG(LOG_PRI_D, LOG_SENSOR, func, format, ##args)
+#define F_SENSOR_LOGV(func, format, args...) LOG(LOG_PRI_V, LOG_SENSOR, func, format, ##args)
 
 
 #define SENSOR_PRINT_ERR SENSOR_LOGE
@@ -93,16 +93,16 @@ extern long g_sensor_log_level;
 #define SENSOR_TRACE SENSOR_LOGI
 
 #define ARITH_LOGE(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
-#define ARITH_LOGW(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
-#define ARITH_LOGI(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
-#define ARITH_LOGD(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
-#define ARITH_LOGV(format, args...) LOG(LOG_PRI_E, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGW(format, args...) LOG(LOG_PRI_W, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGI(format, args...) LOG(LOG_PRI_I, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGD(format, args...) LOG(LOG_PRI_D, LOG_ARITH, LOG_ALL, format, ##args)
+#define ARITH_LOGV(format, args...) LOG(LOG_PRI_V, LOG_ARITH, LOG_ALL, format, ##args)
 
 #define F_ARITH_LOGE(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
-#define F_ARITH_LOGW(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
-#define F_ARITH_LOGI(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
-#define F_ARITH_LOGD(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
-#define F_ARITH_LOGV(func, format, args...) LOG(LOG_PRI_E, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGW(func, format, args...) LOG(LOG_PRI_W, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGI(func, format, args...) LOG(LOG_PRI_I, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGD(func, format, args...) LOG(LOG_PRI_D, LOG_ARITH, func, format, ##args)
+#define F_ARITH_LOGV(func, format, args...) LOG(LOG_PRI_V, LOG_ARITH, func, format, ##args)
 
 
 void isp_init_log_level(void);
