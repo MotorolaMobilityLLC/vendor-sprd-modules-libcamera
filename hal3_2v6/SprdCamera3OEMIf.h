@@ -533,10 +533,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
                          cmr_u32 sum);
     int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
                            cmr_uint *vir_addr, cmr_s32 *fd);
-    int Callback_RefocusMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
-                               cmr_uint *vir_addr, cmr_s32 *fd);
-    int Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
-                               cmr_uint *vir_addr, cmr_s32 *fd);
     int Callback_CaptureFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                              cmr_s32 *fd, cmr_u32 sum);
     int Callback_CaptureMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
@@ -549,15 +545,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int Callback_GraphicBufferMalloc(enum camera_mem_cb_type type, cmr_u32 size,
                                      cmr_u32 sum,cmr_uint *phy_addr, cmr_uint *vir_addr,
                                      cmr_s32 *fd, void **handle, cmr_uint width, cmr_uint height);
-    int Callback_EisGraphicBufferFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
-                                   cmr_s32 *fd, cmr_u32 sum);
     int Callback_GraphicBufferFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
-		                           cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
+                                   cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
     int Callback_CommonFree(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                            cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum);
-    int Callback_OtherMalloc(enum camera_mem_cb_type type, cmr_u32 size,
-                             cmr_u32 *sum_ptr, cmr_uint *phy_addr,
-                             cmr_uint *vir_addr, cmr_s32 *fd);
     int Callback_CommonMalloc(enum camera_mem_cb_type type, cmr_u32 size,
                              cmr_u32 *sum_ptr, cmr_uint *phy_addr,
                              cmr_uint *vir_addr, cmr_s32 *fd);
@@ -689,7 +680,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_camera_memory_t *mSubRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_camera_memory_t *mPathRawHeapArray[MAX_SUB_RAWHEAP_NUM];
     sprd_graphic_memory_t mGraphicBufArray[MAX_GRAPHIC_BUF_NUM];
-    sprd_graphic_memory_t mEisGraphicBufArray[MAX_GRAPHIC_BUF_NUM];
     sprd_graphic_memory_t m3DNRGraphicPathArray[MAX_SUB_RAWHEAP_NUM];
 
     int mPreviewHeight;
@@ -769,8 +759,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mIsAutoFocus;
     bool mIspToolStart;
     uint32_t mZslHeapNum;
-    uint32_t mRefocusHeapNum;
-    uint32_t mPdafRawHeapNum;
     uint32_t mSubRawHeapNum;
     uint32_t mGraphicBufNum;
     uint32_t mSubRawHeapSize;
@@ -783,20 +771,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     uint32_t mPreviewDcamAllocBufferCnt;
     sprd_camera_memory_t
-        *mPreviewHeapArray[kPreviewBufferCount + kPreviewRotBufferCount + 1];
-    sprd_camera_memory_t
-        *mVideoHeapArray[kVideoBufferCount + kVideoRotBufferCount + 1];
-    sprd_camera_memory_t
         *mZslHeapArray[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_3dnr_memory_t
         mZslGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t *mRawHeapArray[kRawBufferCount + 1];
-    sprd_camera_memory_t *mRefocusHeapArray[kRefocusBufferCount + 1];
-    sprd_camera_memory_t *mPdafRawHeapArray[kPdafRawBufferCount + 1];
-    cmr_uint mRefocusHeapArray_phy[kRefocusBufferCount + 1];
-    cmr_uint mRefocusHeapArray_vir[kRefocusBufferCount + 1];
-    uint32_t mRefocusHeapArray_size[kRefocusBufferCount + 1];
-    uint32_t mRefocusHeapArray_mfd[kRefocusBufferCount + 1];
     cmr_u32 hdr_fd[3];
 
     List<MemIonQueue> cam_MemIonQueue;
@@ -805,10 +783,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef USE_ONE_RESERVED_BUF
     sprd_camera_memory_t *mCommonHeapReserved;
 #endif
-    sprd_camera_memory_t *mIspStatisHeapReserved;
-    sprd_camera_memory_t *mIspB4awbHeapReserved[kISPB4awbCount];
-    static sprd_camera_memory_t *mIspFirmwareReserved;
-    static uint32_t mIspFirmwareReserved_cnt;
+
     static bool mZslCaptureExitLoop;
 
     uint32_t mPreviewHeapBakUseFlag;

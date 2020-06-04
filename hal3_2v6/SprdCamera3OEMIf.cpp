@@ -250,8 +250,6 @@ bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
 
-sprd_camera_memory_t *SprdCamera3OEMIf::mIspFirmwareReserved = NULL;
-uint32_t SprdCamera3OEMIf::mIspFirmwareReserved_cnt = 0;
 bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
 multiCameraMode SprdCamera3OEMIf::mMultiCameraMode = MODE_SINGLE_CAMERA;
@@ -538,14 +536,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     memset(mSubRawHeapArray, 0, sizeof(mSubRawHeapArray));
     memset(mZslHeapArray, 0, sizeof(mZslHeapArray));
-    memset(mPreviewHeapArray, 0, sizeof(mPreviewHeapArray));
-    memset(mVideoHeapArray, 0, sizeof(mVideoHeapArray));
     memset(&mSlowPara, 0, sizeof(slow_motion_para));
-    memset(mPdafRawHeapArray, 0, sizeof(mPdafRawHeapArray));
-    memset(mRefocusHeapArray, 0, sizeof(mRefocusHeapArray));
     memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
     memset(mGraphicBufArray, 0, sizeof(mGraphicBufArray));
-    memset(mEisGraphicBufArray, 0, sizeof(mEisGraphicBufArray));
     memset(mRawHeapArray, 0, sizeof(mRawHeapArray));
     memset(mZslGraphicsHandle, 0, sizeof(mZslGraphicsHandle));
 
@@ -616,7 +609,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mCameraHandle = NULL;
 
     memset(mGps_processing_method, 0, sizeof(mGps_processing_method));
-    memset(mIspB4awbHeapReserved, 0, sizeof(mIspB4awbHeapReserved));
 
     mPicCaptureCnt = 0;
 
@@ -624,8 +616,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mPictureChan = NULL;
 
     mZslHeapNum = 0;
-    mRefocusHeapNum = 0;
-    mPdafRawHeapNum = 0;
     mSubRawHeapSize = 0;
     m3dnrGraphicPathHeapNum = 0;
     mTotalIonSize = 0;
@@ -635,8 +625,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #ifdef USE_ONE_RESERVED_BUF
     mCommonHeapReserved = NULL;
 #endif
-
-    mIspStatisHeapReserved = NULL;
 
     mVideoShotFlag = 0;
     mVideoShotNum = 0;
@@ -804,7 +792,8 @@ void SprdCamera3OEMIf::closeCamera() {
     log_monitor_thread_deinit((void *)this);
 
     mReleaseFLag = true;
-    HAL_LOGI(":hal3: X");
+    HAL_LOGI(":hal3: X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
+              mCameraId, mTotalIonSize, mTotalGpuSize);
 }
 
 int SprdCamera3OEMIf::getCameraId() const { return mCameraId; }
@@ -2963,26 +2952,13 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
 
     Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
 
-    if (NULL != mIspStatisHeapReserved) {
-        mIspStatisHeapReserved->ion_heap->free_kaddr();
-        freeCameraMem(mIspStatisHeapReserved);
-        mIspStatisHeapReserved = NULL;
-    }
-
-    for (i = 0; i < kISPB4awbCount; i++) {
-        if (NULL != mIspB4awbHeapReserved[i]) {
-            freeCameraMem(mIspB4awbHeapReserved[i]);
-            mIspB4awbHeapReserved[i] = NULL;
-        }
-    }
-
 #ifdef USE_ONE_RESERVED_BUF
     if (NULL != mCommonHeapReserved) {
         freeCameraMem(mCommonHeapReserved);
         mCommonHeapReserved = NULL;
     }
 #endif
-
+    // free all ION buffer
     for (List<MemIonQueue>::iterator i = cam_MemIonQueue.begin(); i != cam_MemIonQueue.end(); i++) {
         if (i->mIonHeap != NULL) {
             HAL_LOGV("mem_type=%d mIonHeap=%p", i->mem_type, i->mIonHeap);
@@ -2991,6 +2967,7 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
             cam_MemIonQueue.erase(i);
         }
     }
+    // free all GPU buffer
     for (List<MemGpuQueue>::iterator i = cam_MemGpuQueue.begin(); i != cam_MemGpuQueue.end(); i++) {
         if (i->mGpuHeap.bufferhandle != NULL) {
             if (mIsUltraWideMode) {
@@ -3006,14 +2983,14 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
         }
     }
 
-    mRefocusHeapNum = 0;
-    mPdafRawHeapNum = 0;
-
     freeRawBuffers();
     delete memory;
 
-    HAL_LOGD("TotalIonSize=%d TotalGpuSize=%d", mTotalIonSize, mTotalGpuSize);
-    HAL_LOGI(":hal3: X");
+    if ((mTotalIonSize != 0) || (mTotalGpuSize != 0))
+        HAL_LOGE("ION/GPU buffer memory leak!!!");
+
+    HAL_LOGI(":hal3: X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
+              mCameraId, mTotalIonSize, mTotalGpuSize);
 }
 
 bool SprdCamera3OEMIf::initPreview() {
@@ -3306,7 +3283,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     // used for single camera need raw stream
     // queueRawBuffers();
 
-    HAL_LOGI("X camera id %d", mCameraId);
+    HAL_LOGI("X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
+              mCameraId, mTotalIonSize, mTotalGpuSize);
 
     return NO_ERROR;
 }
@@ -8277,92 +8255,6 @@ mem_fail:
     return BAD_VALUE;
 }
 
-int SprdCamera3OEMIf::Callback_RefocusMalloc(cmr_u32 size, cmr_u32 sum,
-                                             cmr_uint *phy_addr,
-                                             cmr_uint *vir_addr, cmr_s32 *fd) {
-    sprd_camera_memory_t *memory = NULL;
-    MemIonQueue memIon_queue;
-    cmr_int i = 0;
-
-    HAL_LOGD("size %d sum %d mRefocusHeapNum %d", size, sum, mRefocusHeapNum);
-
-    *phy_addr = 0;
-    *vir_addr = 0;
-
-    if (mRefocusHeapNum >= kRefocusBufferCount) {
-        HAL_LOGE("error mRefocusHeapNum %d", mRefocusHeapNum);
-        return BAD_VALUE;
-    }
-    if (mRefocusHeapNum + sum >= kRefocusBufferCount) {
-        HAL_LOGE("malloc is too more %d %d", mRefocusHeapNum, sum);
-        return BAD_VALUE;
-    }
-
-    for (i = 0; i < (cmr_int)sum; i++) {
-        memIon_queue.mIonHeap= allocCameraMem(size, 1, true);
-        if (NULL == memIon_queue.mIonHeap) {
-            HAL_LOGE("error memory is null.");
-            goto mem_fail;
-        }
-        memIon_queue.mem_type = CAMERA_DEPTH_MAP;
-        cam_MemIonQueue.push_back(memIon_queue);
-        mRefocusHeapNum++;
-        *phy_addr++ = 0;
-        *vir_addr++ = (cmr_uint)memIon_queue.mIonHeap->data;
-        if (NULL != fd)
-            *fd++ = (cmr_s32)memIon_queue.mIonHeap->fd;
-    }
-
-    return 0;
-
-mem_fail:
-    Callback_CommonFree(CAMERA_DEPTH_MAP, 0, 0, 0, 0);
-    return BAD_VALUE;
-}
-
-int SprdCamera3OEMIf::Callback_PdafRawMalloc(cmr_u32 size, cmr_u32 sum,
-                                             cmr_uint *phy_addr,
-                                             cmr_uint *vir_addr, cmr_s32 *fd) {
-    sprd_camera_memory_t *memory = NULL;
-    MemIonQueue memIon_queue;
-    cmr_int i = 0;
-
-    HAL_LOGD("size %d sum %d mPdafRawHeapNum %d", size, sum, mPdafRawHeapNum);
-
-    *phy_addr = 0;
-    *vir_addr = 0;
-
-    if (mPdafRawHeapNum >= kPdafRawBufferCount) {
-        HAL_LOGE("error mPdafRawHeapNum %d", mPdafRawHeapNum);
-        return BAD_VALUE;
-    }
-    if (mPdafRawHeapNum + sum >= kPdafRawBufferCount) {
-        HAL_LOGE("malloc is too more %d %d", mPdafRawHeapNum, sum);
-        return BAD_VALUE;
-    }
-
-    for (i = 0; i < (cmr_int)sum; i++) {
-        memIon_queue.mIonHeap= allocCameraMem(size, 1, true);
-        if (NULL == memIon_queue.mIonHeap) {
-            HAL_LOGE("error memory is null.");
-            goto mem_fail;
-        }
-        memIon_queue.mem_type = CAMERA_PDAF_RAW;
-        cam_MemIonQueue.push_back(memIon_queue);
-        mPdafRawHeapNum++;
-        *phy_addr++ = 0;
-        *vir_addr++ = (cmr_uint)memIon_queue.mIonHeap->data;
-        if (NULL != fd)
-            *fd++ = (cmr_s32)memIon_queue.mIonHeap->fd;
-    }
-
-    return 0;
-
-mem_fail:
-    Callback_CommonFree(CAMERA_PDAF_RAW, 0, 0, 0, 0);
-    return BAD_VALUE;
-}
-
 int SprdCamera3OEMIf::Callback_CaptureFree(cmr_uint *phy_addr,
                                            cmr_uint *vir_addr, cmr_s32 *fd,
                                            cmr_u32 sum) {
@@ -8865,33 +8757,6 @@ malloc_failed:
     return ret;
 }
 
-int SprdCamera3OEMIf::Callback_EisGraphicBufferFree(cmr_uint *phy_addr,
-                                                 cmr_uint *vir_addr,
-                                                 cmr_s32 *fd, cmr_u32 sum) {
-    cmr_u32 i = 0;
-    SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
-
-    for (List<MemGpuQueue>::iterator i = cam_MemGpuQueue.begin(); i != cam_MemGpuQueue.end(); i++) {
-        if ((CAMERA_VIDEO_EIS_ULTRA_WIDE == i->mem_type) &&
-            i->mGpuHeap.bufferhandle != NULL && i->mGpuHeap.private_handle == (void *)fd) {
-            if (mIsUltraWideMode) {
-                i->mGpuHeap.bufferhandle->unlock();
-            } else {
-                memory->unmap(&(i->mGpuHeap.bufferhandle->handle),
-                              NULL);
-            }
-            mTotalGpuSize = mTotalGpuSize - (i->mGpuHeap.buf_size);
-            i->mGpuHeap.bufferhandle.clear();
-            i->mGpuHeap.bufferhandle = NULL;
-            cam_MemGpuQueue.erase(i);
-        }
-    }
-    HAL_LOGD("mem_type=%d sum=%d TotalGpuSize=%d", CAMERA_VIDEO_EIS_ULTRA_WIDE, sum, mTotalGpuSize);
-    delete memory;
-
-    return 0;
-}
-
 int SprdCamera3OEMIf::Callback_GraphicBufferFree(
                     enum camera_mem_cb_type type, cmr_uint *phy_addr,
                     cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum) {
@@ -8950,34 +8815,6 @@ int SprdCamera3OEMIf::Callback_CommonFree(enum camera_mem_cb_type type,
 
     HAL_LOGD("mem_type=%d sum=%d", type, sum);
 
-    if (type == CAMERA_DEPTH_MAP)
-        mRefocusHeapNum = 0;
-    if (type == CAMERA_PDAF_RAW)
-        mPdafRawHeapNum = 0;
-
-    if (type == CAMERA_ISP_STATIS) {
-        if (NULL != mIspStatisHeapReserved) {
-            freeCameraMem(mIspStatisHeapReserved);
-        }
-        mIspStatisHeapReserved = NULL;
-    }
-
-    if (type == CAMERA_ISP_BINGING4AWB) {
-        for (i = 0; i < kISPB4awbCount; i++) {
-            if (NULL != mIspB4awbHeapReserved[i]) {
-                freeCameraMem(mIspB4awbHeapReserved[i]);
-            }
-            mIspB4awbHeapReserved[i] = NULL;
-        }
-    }
-
-    if (type == CAMERA_ISP_FIRMWARE) {
-        if (NULL != mIspFirmwareReserved && !(--mIspFirmwareReserved_cnt)) {
-            freeCameraMem(mIspFirmwareReserved);
-            mIspFirmwareReserved = NULL;
-        }
-    }
-
     for (List<MemIonQueue>::iterator i = cam_MemIonQueue.begin(); i != cam_MemIonQueue.end(); i++) {
         if ((type == i->mem_type) && (NULL != i->mIonHeap)) {
             HAL_LOGV("mem_type=%d mIonHeap=%p", type, i->mIonHeap);
@@ -8988,98 +8825,6 @@ int SprdCamera3OEMIf::Callback_CommonFree(enum camera_mem_cb_type type,
     }
 
     return 0;
-}
-
-int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
-                                           cmr_u32 size, cmr_u32 *sum_ptr,
-                                           cmr_uint *phy_addr,
-                                           cmr_uint *vir_addr, cmr_s32 *fd) {
-    sprd_camera_memory_t *memory = NULL;
-    cmr_u32 i;
-    cmr_u32 mem_size;
-    cmr_u32 sum = *sum_ptr;
-
-    HAL_LOGD("mem_type=%d size=%d sum=%d", type, size, sum);
-    *phy_addr = 0;
-    *vir_addr = 0;
-    *fd = 0;
-
-    if (type == CAMERA_ISP_STATIS) {
-        cmr_u64 kaddr = 0;
-        size_t ksize = 0;
-        cmr_s32 rtn = 0;
-        if (mIspStatisHeapReserved == NULL) {
-            memory = allocCameraMem(size, 1, false);
-            if (NULL == memory) {
-                HAL_LOGE("memory is null");
-                goto mem_fail;
-            }
-            mIspStatisHeapReserved = memory;
-        }
-        // shark5 dont need kernel software r/w the buffer
-        // rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr,
-        // &ksize);
-        // if (rtn) {
-        //    HAL_LOGE("get kaddr error");
-        //    goto mem_fail;
-        //}
-        *phy_addr++ = kaddr;
-        *phy_addr = kaddr >> 32;
-        *vir_addr++ = (cmr_uint)mIspStatisHeapReserved->data;
-        *fd++ = mIspStatisHeapReserved->fd;
-        *fd++ = mIspStatisHeapReserved->dev_fd;
-    } else if (type == CAMERA_ISP_BINGING4AWB) {
-        cmr_u64 *phy_addr_64 = (cmr_u64 *)phy_addr;
-        cmr_u64 *vir_addr_64 = (cmr_u64 *)vir_addr;
-        cmr_u64 kaddr = 0;
-        size_t ksize = 0;
-        cmr_s32 rtn = 0;
-
-        for (i = 0; i < sum; i++) {
-            memory = allocCameraMem(size, 1, false);
-            if (NULL == memory) {
-                HAL_LOGE("error memory is null,malloced type %d", type);
-                goto mem_fail;
-            }
-            mIspB4awbHeapReserved[i] = memory;
-            *phy_addr_64++ = (cmr_u64)memory->phys_addr;
-            *vir_addr_64++ = (cmr_u64)memory->data;
-            rtn = memory->ion_heap->get_kaddr(&kaddr, &ksize);
-            if (rtn) {
-                HAL_LOGE("get kaddr error");
-                goto mem_fail;
-            }
-            *phy_addr++ = kaddr;
-            *phy_addr = kaddr >> 32;
-            *fd++ = memory->fd;
-        }
-    } else if (type == CAMERA_ISP_FIRMWARE) {
-        cmr_u64 kaddr = 0;
-        size_t ksize = 0;
-
-        if (++mIspFirmwareReserved_cnt == 1) {
-            memory = allocCameraMem(size, 1, false);
-            if (NULL == memory) {
-                LOGE("error memory is null,malloced type %d", type);
-                goto mem_fail;
-            }
-            mIspFirmwareReserved = memory;
-        } else {
-            memory = mIspFirmwareReserved;
-        }
-        if (memory->ion_heap)
-            memory->ion_heap->get_kaddr(&kaddr, &ksize);
-        *phy_addr++ = kaddr;
-        *phy_addr++ = kaddr >> 32;
-        *vir_addr++ = (cmr_uint)memory->data;
-        *fd++ = memory->fd;
-        *fd++ = memory->dev_fd;
-    }
-
-    return 0;
-mem_fail:
-    Callback_CommonFree(type, 0, 0, 0, 0);
-    return BAD_VALUE;
 }
 
 int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
@@ -9139,9 +8884,19 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
     //ion memory reuse
     for (List<MemIonQueue>::iterator i = cam_MemIonQueue.begin(); i != cam_MemIonQueue.end(); i++) {
         if ((type == i->mem_type) && (NULL != i->mIonHeap)) {
-            *phy_addr++ = (cmr_uint)(i->mIonHeap)->phys_addr;
-            *vir_addr++ = (cmr_uint)(i->mIonHeap)->data;
-            *fd++ = (i->mIonHeap)->fd;
+            HAL_LOGD("use pre-alloc this type mem");
+            if (type == CAMERA_ISP_STATIS) {
+                cmr_u64 kaddr = 0;
+                *phy_addr++ = kaddr;
+                *phy_addr = kaddr >> 32;
+                *vir_addr++ = (cmr_uint)(i->mIonHeap)->data;
+                *fd++ = (i->mIonHeap)->fd;
+                *fd++ = (i->mIonHeap)->dev_fd;
+            } else {
+                *phy_addr++ = (cmr_uint)(i->mIonHeap)->phys_addr;
+                *vir_addr++ = (cmr_uint)(i->mIonHeap)->data;
+                *fd++ = (i->mIonHeap)->fd;
+            }
             reuse++;
         }
     }
@@ -9155,7 +8910,7 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
             }
             memIon_queue.mem_type = type;
             HAL_LOGV("mem_type=%d mIonHeap=%p is_cache=%d",memIon_queue.mem_type,
-                     memIon_queue.mIonHeap, mem_cb_stat[type].is_cache);
+                      memIon_queue.mIonHeap, mem_cb_stat[type].is_cache);
             cam_MemIonQueue.push_back(memIon_queue);
             if ((type == CAMERA_CHANNEL_1 || type == CAMERA_CHANNEL_2 ||
                  type == CAMERA_CHANNEL_3 || type == CAMERA_CHANNEL_4) &&
@@ -9163,9 +8918,26 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
                 HAL_LOGE("malloced type %d", type);
                 goto mem_fail;
             }
-            *phy_addr++ = (cmr_uint)memIon_queue.mIonHeap->phys_addr;
-            *vir_addr++ = (cmr_uint)memIon_queue.mIonHeap->data;
-            *fd++ = memIon_queue.mIonHeap->fd;
+            if (type == CAMERA_ISP_STATIS) {
+                cmr_u64 kaddr = 0;
+                //size_t ksize = 0;
+                //cmr_s32 rtn = 0;
+                // shark5 dont need kernel software r/w the buffer
+               //rtn = mIspStatisHeapReserved->ion_heap->get_kaddr(&kaddr, &ksize);
+              // if (rtn) {
+              //    HAL_LOGE("get kaddr error");
+              //    goto mem_fail;
+              //}
+                *phy_addr++ = kaddr;
+                *phy_addr = kaddr >> 32;
+                *vir_addr++ = (cmr_uint)memIon_queue.mIonHeap->data;
+                *fd++ = memIon_queue.mIonHeap->fd;
+                *fd++ = memIon_queue.mIonHeap->dev_fd;
+            } else {
+                *phy_addr++ = (cmr_uint)memIon_queue.mIonHeap->phys_addr;
+                *vir_addr++ = (cmr_uint)memIon_queue.mIonHeap->data;
+                *fd++ = memIon_queue.mIonHeap->fd;
+            }
         }
     }
 
@@ -9204,11 +8976,10 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
     } else if (CAMERA_SNAPSHOT_PATH == type) {
         ret = camera->Callback_CapturePathFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_PREVIEW_ULTRA_WIDE == type ||
-                CAMERA_VIDEO_ULTRA_WIDE == type ||
-                CAMERA_SNAPSHOT_ULTRA_WIDE == type) {
+               CAMERA_VIDEO_ULTRA_WIDE == type ||
+               CAMERA_SNAPSHOT_ULTRA_WIDE == type ||
+               CAMERA_VIDEO_EIS_ULTRA_WIDE == type) {
         ret = camera->Callback_GraphicBufferFree(type, phy_addr, vir_addr, fd, sum);
-    } else if (CAMERA_VIDEO_EIS_ULTRA_WIDE == type) {
-        ret = camera->Callback_EisGraphicBufferFree(phy_addr, vir_addr, fd, sum);
     }else if (CAMERA_SNAPSHOT_SW3DNR == type) {
         ret = camera->Callback_Sw3DNRCapturePathFree(phy_addr, vir_addr, fd, sum);
     } else {
@@ -9252,18 +9023,9 @@ int SprdCamera3OEMIf::Callback_IonMalloc(enum camera_mem_cb_type type,
         ret = camera->Callback_CaptureMalloc(size, sum, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT_ZSL == type) {
         ret = camera->Callback_ZslMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_DEPTH_MAP == type) {
-        ret = camera->Callback_RefocusMalloc(size, sum, phy_addr, vir_addr, fd);
-    } else if (CAMERA_PDAF_RAW == type) {
-        ret = camera->Callback_PdafRawMalloc(size, sum, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT_PATH == type) {
         ret = camera->Callback_CapturePathMalloc(size, sum, phy_addr, vir_addr,
                                                  fd);
-    } else if (CAMERA_ISP_STATIS == type ||
-               CAMERA_ISP_BINGING4AWB == type ||
-               CAMERA_ISP_FIRMWARE == type) {
-        ret = camera->Callback_OtherMalloc(type, size, sum_ptr, phy_addr,
-                                           vir_addr, fd);
     } else {
         ret = camera->Callback_CommonMalloc(type, size, sum_ptr, phy_addr,
                                            vir_addr, fd);
