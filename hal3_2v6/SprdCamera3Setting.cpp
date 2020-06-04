@@ -688,7 +688,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SPRD_AVAILABLE_BRIGHTNESS,
     ANDROID_SPRD_AVAILABLE_CONTRAST,
     ANDROID_SPRD_AVAILABLE_SATURATION,
-    ANDROID_SPRD_AVAILABLE_ISO,
+    /* ANDROID_SPRD_AVAILABLE_ISO, */
     ANDROID_SPRD_FLASH_MODE_SUPPORT,
     ANDROID_SPRD_PRV_REC_DIFFERENT_SIZE_SUPPORT,
     ANDROID_SPRD_VIDEO_SNAPSHOT_SUPPORT,
@@ -2905,12 +2905,13 @@ int SprdCamera3Setting::initStaticMetadata(
     staticInfo.update(
         ANDROID_SPRD_AVAILABLE_ANTIBAND_AUTOSUPPORTED,
         &(s_setting[cameraId].sprddefInfo.availabe_antiband_auto_supported), 1);
+    /* using Android ISO standard TAG
     if (cameraId == 0 || cameraId == 1 || cameraId == 2 || cameraId == 3 || cameraId == 4) {
         staticInfo.update(
             ANDROID_SPRD_AVAILABLE_ISO,
             s_setting[cameraId].sprddefInfo.availabe_iso,
             ARRAY_SIZE(s_setting[cameraId].sprddefInfo.availabe_iso));
-    }
+    } */
     staticInfo.update(ANDROID_SPRD_FLASH_MODE_SUPPORT,
                       &(s_setting[cameraId].sprddefInfo.flash_mode_support), 1);
     staticInfo.update(
