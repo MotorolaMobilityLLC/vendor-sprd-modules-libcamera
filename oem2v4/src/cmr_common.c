@@ -719,3 +719,59 @@ cmr_int camera_get_snap_postproc_time() {
                            1000000);
     return postproc_time;
 }
+
+
+// tag used for description, for example, preview, video, snapshot and so on
+ cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
+                    cmr_u32 index, struct img_addr *vir_addr,
+                    cmr_u32 image_size) {
+     cmr_int ret = CMR_CAMERA_SUCCESS;
+     char file_name[0x80];
+     char tmp_str[40];
+     char datetime[15];
+     FILE *fp = NULL;
+
+     CMR_LOGD("%s: format %d width %d height %d", tag, img_fmt, width, height);
+
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+    sprintf(datetime, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+
+    cmr_bzero(file_name, 0x80);
+    strcpy(file_name, CAMERA_DUMP_PATH);
+
+    sprintf(tmp_str, "%s_", tag);
+    strcat(file_name, tmp_str);
+    sprintf(tmp_str, "%d", width);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "X");
+    sprintf(tmp_str, "%d", height);
+    strcat(file_name, tmp_str);
+    strcat(file_name, "_");
+    sprintf(tmp_str, "_frame_num_%d", index);
+    strcat(file_name, tmp_str);
+    sprintf(tmp_str, "_%s", datetime);
+    strcat(file_name, tmp_str);
+
+    if (CAM_IMG_FMT_YUV420_NV21 == img_fmt) {
+        strcat(file_name, ".yuv");
+        CMR_LOGD("file name %s", file_name);
+        fp = fopen(file_name, "wb");
+        if (NULL == fp) {
+            CMR_LOGE("can not open file: %s", file_name);
+            return 0;
+        }
+        CMR_LOGV("yuv addr_vir:0x%x,0x%x,0x%x", vir_addr->addr_y,
+                 vir_addr->addr_u, vir_addr->addr_v);
+        // dump y
+        fwrite((void *)vir_addr->addr_y, 1, width * height * 1, fp);
+        // dump uv, uv can independent of y
+        fwrite((void *)vir_addr->addr_u, 1, width * height * 1 / 2, fp);
+        fclose(fp);
+    }
+    return 0;
+}
+

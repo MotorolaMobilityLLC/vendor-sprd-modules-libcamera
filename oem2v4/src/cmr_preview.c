@@ -1825,7 +1825,7 @@ cmr_int cmr_preview_get_3dnr_buf_extra(cmr_handle handle, cmr_u32 camera_id,
         }
 
         if (i == CAP_3DNR_NUM) {
-            CMR_LOGE("search hdr buffer failed");
+            CMR_LOGE("search 3dnr buffer failed");
             ret = CMR_CAMERA_FAIL;
             goto exit;
         }

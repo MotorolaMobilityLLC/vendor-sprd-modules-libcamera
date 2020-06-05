@@ -412,7 +412,6 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_handle->common.ops = &threednr_ops_tab_info;
     threednr_handle->common.receive_frame_count = 0;
     threednr_handle->common.save_frame_count = 0;
-    threednr_handle->common.ops = &threednr_ops_tab_info;
 
     threednr_handle->mem_size = size;
 
@@ -811,7 +810,6 @@ static cmr_int threednr_scaler_thread_proc(struct cmr_msg *message,
     }
 
     evt = (cmr_u32)message->msg_type;
-
     switch (evt) {
     case CMR_EVT_3DNR_SCALER_INIT:
         CMR_LOGD("3dnr scaler thread inited.");

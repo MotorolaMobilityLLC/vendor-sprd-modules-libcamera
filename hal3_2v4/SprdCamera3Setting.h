@@ -452,6 +452,7 @@ class SprdCamera3Setting {
     virtual ~SprdCamera3Setting();
 
     static int getSensorStaticInfo(int32_t cameraId);
+    static int isStl3dAvailable();
     static int getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                     cmr_u16 *height);
     static int setLargestSensorSize(int32_t cameraId, cmr_u16 width,
@@ -616,6 +617,7 @@ class SprdCamera3Setting {
     static sprd_setting_info_t s_setting[CAMERA_ID_COUNT];
     static CameraMetadata mStaticInfo[CAMERA_ID_COUNT];
     static uint8_t mSensorFocusEnable[CAMERA_ID_COUNT];
+    static uint16_t mModuleId[CAMERA_ID_COUNT];
     int mFaceDetectModeSet;
     static int mLogicalSensorNum;
     static int mPhysicalSensorNum;

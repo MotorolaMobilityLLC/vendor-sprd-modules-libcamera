@@ -4205,7 +4205,7 @@ SENSOR_Tag sensorInfo;
     beautyLevels.cameraBV = (int)bv;
     beautyLevels.cameraCT = (int)ct;
     beautyLevels.cameraISO = (int)iso;
-    CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
+    HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
 #endif
 
     mSetting->getSENSORTag(&sensorInfo);
@@ -6794,7 +6794,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.sprd_appmode_id);
         if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
             (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
-            (CAMERA_MODE_3DNR_PHOTO != mSprdAppmodeId) &&
             (0 == mFbOn) &&
             (0 == mMultiCameraMode) &&
             (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&

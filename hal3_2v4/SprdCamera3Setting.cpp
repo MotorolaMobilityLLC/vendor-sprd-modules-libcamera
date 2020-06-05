@@ -42,6 +42,7 @@ using namespace android;
 namespace sprdcamera {
 
 uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0};
+uint16_t SprdCamera3Setting::mModuleId[] = {0, 0, 0, 0};
 
 /**********************Macro Define**********************/
 #ifdef CONFIG_CAMERA_FACE_DETECT
@@ -921,6 +922,31 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
 exit:
 
     HAL_LOGI("X");
+    return 0;
+}
+
+int SprdCamera3Setting::isStl3dAvailable() {
+    int irL = 0;
+    int irR = 0;
+    int cameraId = -1;
+    struct phySensorInfo *phyPtr = NULL;
+
+    for (cameraId = 0; cameraId < CAMERA_ID_COUNT; cameraId++) {
+        phyPtr = sensorGetPhysicalSnsInfo(cameraId);
+        mModuleId[cameraId] = phyPtr->module_id;
+        HAL_LOGV("mModuleId[%d] = 0x%x", cameraId, mModuleId[cameraId]);
+        switch (mModuleId[cameraId]) {
+        case MODULE_STL3D_IRL_FRONT:
+            irL = 1;
+            break;
+        case MODULE_STL3D_IRR_FRONT:
+            irR = 1;
+            break;
+        }
+        if (irL && irR)
+            return irL + irR;
+    }
+    HAL_LOGD("Stl3d is not available");
     return 0;
 }
 
@@ -1848,6 +1874,27 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // 20 camera front high resolution definition mode
     property_get("persist.vendor.cam.front.high.resolution.mode", prop, "0");
     available_cam_features.add(!!atoi(prop));
+
+    // 21 stl3denable
+    if (isStl3dAvailable())
+        available_cam_features.add(1);
+    else
+        available_cam_features.add(0);
+
+    // 22 video face beauty
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
+                            "persist.vendor.cam.video.face.beauty.enable"));
+
+    //23 fov fusion
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
+                           "persist.vendor.cam.fov.fusion.enable"));
+
+    //24 nightshot pro
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.night",
+                                      "persist.vendor.cam.night.pro.enable"));
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
 

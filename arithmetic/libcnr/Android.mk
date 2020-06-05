@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312),)
+
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312 sp7731e),)
 LOCAL_PATH := $(call my-dir)
 include $(LOCAL_PATH)/cnr3/Android.mk
 else

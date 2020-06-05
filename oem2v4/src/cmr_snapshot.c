@@ -59,6 +59,7 @@
 #define SNP_EVT_THUMB (SNP_EVT_BASE + 45)
 #define SNP_EVT_CHANNEL_VIDEO_DONE (SNP_EVT_BASE + 46)
 #define SNP_EVT_3DNR_DONE (SNP_EVT_BASE + 47) /*SNAPSHOT_EVT_3DNR_DONE*/
+#define SNP_EVT_NIGHT_PRO_MFNR_DONE (SNP_EVT_BASE + 48) /*NIGHT_PRO_MFNR_DONE*/
 
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
@@ -935,6 +936,9 @@ cmr_int snp_proc_cb_thread_proc(struct cmr_msg *message, void *p_data) {
         snp_ipm_cb_handle((cmr_handle)cxt, message->data);
         break;
     case SNP_EVT_3DNR_DONE:
+        snp_ipm_cb_handle((cmr_handle)cxt, message->data);
+        break;
+    case SNP_EVT_NIGHT_PRO_MFNR_DONE:
         snp_ipm_cb_handle((cmr_handle)cxt, message->data);
         break;
 
@@ -4511,7 +4515,6 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     }
 
     snp_set_status(snp_handle, POST_PROCESSING);
-
     snp_ipm_process(snp_handle, data);
 
     if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||
@@ -5471,6 +5474,11 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
         break;
     case SNAPSHOT_EVT_3DNR_DONE:
         snp_evt = SNP_EVT_3DNR_DONE;
+        malloc_len = sizeof(struct frm_info);
+        send_thr_handle = cxt->thread_cxt.proc_cb_thr_handle;
+        break;
+    case SNAPSHOT_EVT_NIGHT_PRO_MFNR_DONE:
+        snp_evt = SNP_EVT_NIGHT_PRO_MFNR_DONE;
         malloc_len = sizeof(struct frm_info);
         send_thr_handle = cxt->thread_cxt.proc_cb_thr_handle;
         break;

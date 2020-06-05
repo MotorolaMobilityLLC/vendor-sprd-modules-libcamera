@@ -457,6 +457,7 @@ enum common_isp_cmd_type {
     COM_ISP_GET_CNR2_PARAM,
     COM_ISP_GET_YNRS_PARAM,
     COM_ISP_GET_DRE_PARAM,
+    COM_ISP_GET_MFNR_PARAM,
 #ifdef CAMERA_CNR3_ENABLE
     COM_ISP_GET_CNR2CNR3_YNR_EN,
 #else
@@ -492,7 +493,6 @@ enum common_isp_cmd_type {
 #endif
     COM_ISP_GET_FB_PREV_PARAM,
     COM_ISP_GET_FB_CAP_PARAM,
-    COM_ISP_GET_MFNR_PARAM,
     COM_ISP_GET_DRE_PRO_PARAM,
     COM_ISP_TYPE_MAX
 };
@@ -607,7 +607,8 @@ typedef enum {
     SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
     SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
     SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT,
-    SPRD_CAM_IMAGE_SW_ALGORITHM_MAX
+    SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT_PRO,
+    SPRD_CAM_IMAGE_SW_ALGORITHM_MAX,
 } sprd_cam_image_sw_algorithm_type_t;
 
 typedef enum {
@@ -1891,6 +1892,9 @@ struct image_sw_algorithm_buf {
     cmr_uint y_phy_addr;
     cmr_u32 fd;
     void *reserved;
+/*for pike2 night pro*/
+    cmr_uint phy_addr_u;
+    cmr_uint phy_addr_v;
 };
 
 /*

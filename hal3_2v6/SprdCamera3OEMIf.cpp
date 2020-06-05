@@ -4004,7 +4004,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.cameraWork = (int)mCameraId;
         beautyLevels.cameraCT = (int)ct;
         beautyLevels.cameraISO = (int)iso;
-        CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
+        HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
             bv, mCameraId, ct, iso);
 
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
@@ -4118,7 +4118,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.cameraWork = (int)mCameraId;
         beautyLevels.cameraCT = (int)ct;
         beautyLevels.cameraISO = (int)iso;
-        CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
+        HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
 
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
                        &fb_param_map_prev);

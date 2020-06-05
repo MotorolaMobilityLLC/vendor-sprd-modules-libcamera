@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312),)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312 sp7731e),)
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CNR_CAPTURE)),true)
 LOCAL_PATH := $(call my-dir)

@@ -124,6 +124,18 @@ struct ipm_context {
     struct ipm_version hdr_version;
 };
 
+struct ipm_pro_context {
+    cmr_handle ipm_pro_handle;
+    cmr_handle mfnr_handle;
+    cmr_handle cnr_pro_handle;
+    cmr_handle dre_pro_handle;
+    cmr_u32 pro_inited;
+    cmr_u32 mfnr_num;
+    cmr_u32 frm_num;
+    cmr_u32 cnr_pro_inited;
+    cmr_u32 dre_pro_inited;
+};
+
 struct preview_context {
     cmr_handle preview_handle;
     cmr_u32 inited;
@@ -152,6 +164,7 @@ struct snapshot_context {
     cmr_u32 snapshot_sn_mode;
     cmr_u32 skip_num;
     cmr_u32 channel_bits;
+    cmr_u32 sprd_3dnr_type;
     cmr_u32 is_hdr;
     cmr_u32 filter_type;
     cmr_u32 is_3dnr;
@@ -249,6 +262,7 @@ struct camera_context {
     struct snapshot_context snp_cxt;
     struct focus_context focus_cxt;
     struct ipm_context ipm_cxt;
+    struct ipm_pro_context ipm_pro_cxt;
     struct setting_context setting_cxt;
 
     /*for the workflow management*/
@@ -353,8 +367,11 @@ struct camera_context {
     nsecs_t snp_high_flash_time;
     struct img_rect trim_reset_info;
     cmr_u8 nr_flag;
+    cmr_u8 dre_flag;
     /*for ynr room ratio*/
     float zoom_ratio;
+    bool night_flag;
+    cmr_u8 nightscepro_flag;
 };
 
 struct prev_threednr_info {
@@ -371,6 +388,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
                          cmr_handle *oem_handle, void *cb_of_malloc,
                          void *cb_of_free);
 
+void camera_post_share_path_available(cmr_handle oem_handle);
 cmr_int camera_local_deinit(cmr_handle oem_handle);
 
 cmr_int camera_local_fd_start(cmr_handle oem_handle);
@@ -385,6 +403,12 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                                     cmr_uint is_snapshot);
 
 cmr_int camera_local_stop_snapshot(cmr_handle oem_handle);
+
+cmr_int camera_get_tuning_info(cmr_handle oem_handle,
+                               struct isp_adgain_exp_info *adgain_exp_info_ptr);
+cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
+                                struct common_isp_cmd_param *param_ptr);
+cmr_int camera_3dnr_set_ev(cmr_handle oem_handle, cmr_u32 enable);
 
 cmr_int camera_local_redisplay_data(
     cmr_handle oem_handle, cmr_s32 output_fd, cmr_uint output_addr,

@@ -463,7 +463,6 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
-
     struct scale_cfg_param_t *cfg_params = NULL;
 	struct scale_frame_param_t      *frame_params = NULL;
     struct scale_file *file = (struct scale_file *)(scale_handle);
