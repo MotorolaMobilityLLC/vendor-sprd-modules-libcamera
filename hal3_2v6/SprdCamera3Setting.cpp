@@ -2932,6 +2932,8 @@ int SprdCamera3Setting::initStaticMetadata(
         calibrationCaptureSize = 12;
     } else if (!strcmp(value, "RES_8M")) {
         calibrationCaptureSize = 8;
+    } else if (!strcmp(value, "RES_5M")) {
+        calibrationCaptureSize = 5;
     } else {
         calibrationCaptureSize = 0;
     }
