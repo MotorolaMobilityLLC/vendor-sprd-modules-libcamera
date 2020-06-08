@@ -6368,8 +6368,8 @@ void stopispserver()
 		shutdown(sock_fd, 0);
 		shutdown(sock_fd, 1);
 	}
-
-	ispParserFree((void *)preview_buf_ptr);
+	if (preview_buf_ptr != 0x00)
+		ispParserFree((void *)preview_buf_ptr);
 
 	preview_flag = 0;
 	capture_flag = 0;
