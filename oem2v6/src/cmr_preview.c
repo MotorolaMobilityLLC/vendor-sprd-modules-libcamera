@@ -3023,7 +3023,8 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
 
-        if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW )
+        if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW &&
+            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
         {
             prev_cxt->prev_buf_id = frame_type.buf_id;
             ret = prev_pop_preview_buffer(handle, camera_id, data, 0);
@@ -3039,7 +3040,8 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
          }
 
     } else {
-        if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW )
+        if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW &&
+            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
         {
             /*need rotation*/
             if (prev_cxt->prev_mem_valid_num > 0) {
@@ -3953,7 +3955,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             prev_ultra_wide_open(handle, camera_id);
         }
         /*init 3dnr*/
-       if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
+       if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
+            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
             prev_3dnr_open(handle, camera_id);
         }
         /*init at, dual pd sensor default open 4d auto tracking */
@@ -7320,7 +7323,8 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
             frm_ptr->reserved = info;
             prev_fd_send_data(handle, camera_id, frm_ptr);
         }
-        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW)
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
+            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
         {
             struct frm_info data;
             if (((void *)(frm_ptr->addr_vir.addr_y) != NULL) &&
