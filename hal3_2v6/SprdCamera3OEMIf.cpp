@@ -4949,6 +4949,7 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     uint32_t dst_width = 0;
     uint32_t dst_height = 0;
     cmr_uint dst_vaddr = 0;
+    cmr_u32 value = 0;
 
     HAL_LOGD("E");
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
@@ -4969,6 +4970,18 @@ void SprdCamera3OEMIf::receiveRawPicture(struct camera_frame_type *frame) {
     if (mIsIspToolMode == 1) {
         HAL_LOGI("isp tool dont go this way");
         goto exit;
+    }
+
+    //fovfusion mode tele need close hdr when hdr arithmetic done
+    CONTROL_Tag controlInfo;
+    mSetting->getCONTROLTag(&controlInfo);
+
+    if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR
+        && mCameraId == sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK)
+        && mIsFovFusionMode == true) {
+        mHalOem->ops->camera_ioctrl(mCameraHandle,
+                                    CAMERA_IOCTRL_SET_HDR_DISABLE,
+                                    &value);
     }
 
     hasPreviewBuf = isJpegWithPreview();
@@ -10138,7 +10151,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             }
             hdr_fd[sw_algorithm_buf_cnt] = zsl_frame.fd;
             sw_algorithm_buf_cnt++;
-            if (mMultiCameraMode == MODE_BOKEH || mIsFovFusionMode == true) {
+            if (mMultiCameraMode == MODE_BOKEH) {
                 char prop[PROPERTY_VALUE_MAX] = {
                     0,
                 };
@@ -10151,7 +10164,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
 
                     receiveRawPicture(&zsl_frame);
                 }
-                if (sw_algorithm_buf_cnt == 3 && (mCameraId == 2 || (mIsFovFusionMode == true && mCameraId == 3))) {
+                if (sw_algorithm_buf_cnt == 3 && mCameraId == 2) {
                     mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
                                                 CAMERA_IOCTRL_SET_HDR_DISABLE,
                                                 &value);
@@ -10160,7 +10173,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                         zsl_frame.y_vir_addr, zsl_frame.fd);
                     break;
                 }
-                if (mCameraId == 2 || (mIsFovFusionMode == true && mCameraId == 3)) {
+                if (mCameraId == 2) {
                     continue;
                 }
             }
