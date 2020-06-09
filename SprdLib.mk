@@ -59,13 +59,13 @@ LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libSegLite libBokeh2Frames
+LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libTfliteWrapper libSegLite libBokeh2Frames
 endif
 
 LOCAL_SHARED_LIBRARIES += libXMPCore libXMPFiles
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libSegLite
+LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libTfliteWrapper libSegLite
 #else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
 #LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
 endif
