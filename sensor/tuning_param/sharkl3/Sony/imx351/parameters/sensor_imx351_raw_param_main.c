@@ -104,7 +104,7 @@ static struct sensor_raw_ioctrl s_imx351_ioctrl=
 
 static struct sensor_version_info s_imx351_version_info=
 {
-	0x00090007,
+	0x0009000A,
 	{
 		{
 			0x33786D69,
