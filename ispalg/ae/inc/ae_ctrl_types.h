@@ -110,6 +110,8 @@ extern "C" {
 		AE_SET_3DNR_MODE,
 		AE_SET_3DNR_THR,
 		AE_SET_AF_STATUS,
+		AE_FDR_START,
+		AE_SET_AUTO_FDR,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -184,6 +186,8 @@ extern "C" {
 		AE_CB_EXPTIME_NOTIFY,
 		AE_CB_HDR_STATIS_SIZE,
 		AE_CB_3DNR_NOTIFY,
+		AE_CB_FDR_START,
+		AE_CB_FDR_STATUS,
 		AE_CB_MAX
 	};
 	enum ae_cb_result_notify_hal {
@@ -578,6 +582,12 @@ extern "C" {
 		cmr_u32 ev_effect_valid_num;
 		cmr_u32 ev_adjust_cnt;
 		enum ae_snapshot_tpye type;
+	};
+
+	struct ae_fdr_param {
+		cmr_u32 fdr_enable;
+		cmr_u32 ev_effect_valid_num;
+		cmr_u32 ev_effect_cnt;
 	};
 
 	struct ae_flash_power {

@@ -127,6 +127,27 @@ extern "C" {
 		cmr_s8 auto_hdr_enable;
 	};
 
+	struct fdr_stat_t {
+		cmr_u32 *hist256;      /*!< histogram buffer pointer */
+		cmr_s8 *img;           /*!< gray image buffer pointer */
+		int w;                  /*!< image width */
+		int h;                  /*!< image height */
+		int s;                  /*!< image buffer stride */
+		struct ae_fd_param fd_param;
+		cmr_u16 base_target_lum;
+		cmr_u16 target_lum;
+		cmr_u32 face_stable;
+		cmr_u32 camera_id;
+	} ;
+
+	struct fdr_det_status_t{
+		int smooth_flag;
+		int frameID;
+	} ;
+	struct fdr_lib_ops{
+		cmr_s32 (*fdr_scndet)(void *fdr_tuning_param, struct fdr_stat_t *stat, float *ev,struct fdr_det_status_t *det_status);
+	};
+
 /**************************************************************************/
 /*
 * BEGIN: FDAE related definitions
@@ -334,6 +355,25 @@ extern "C" {
 		cmr_s8 ev_adjust_cnt;
 		cmr_s8 ev_adj_ev_effect_valid_num;
 		cmr_s8 ev_adj_snp_type;
+		/*
+		 * FDR control
+		 */
+		cmr_s8 fdr_enable;
+		cmr_s8 fdr_frame_cnt;
+		cmr_s8 fdr_cb_cnt;
+		cmr_s8 fdr_flag;
+		cmr_s16 fdr_up;
+		float fdr_down_ev;
+		cmr_s16 fdr_base_ae_idx;
+		cmr_u16 fdr_exp_line;
+		cmr_s16 fdr_gain;
+		cmr_u8 fdr_version;
+		cmr_u8 fdr_menu_ctrl; /* auto: 1*/
+		float fdr_calc_ev;
+		cmr_handle fdr_lib_handle;
+		struct fdr_det_status_t fdr_det_status;
+		struct fdr_lib_ops fdr_ops;
+		void *fdr_tuning_param;
 
 		cmr_s8 threednr_mode_flag;
 		/*

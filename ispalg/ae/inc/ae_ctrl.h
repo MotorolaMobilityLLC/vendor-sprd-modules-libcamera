@@ -61,6 +61,8 @@ extern "C" {
 		cmr_s16 bv_thd;
 		cmr_u32 is_mono_sensor;
 		cmr_u32 is_faceId_unlock;
+		void *fdr_tuning_param;
+		cmr_s32 fdr_tuning_size;
 	};
 
 	struct ae_init_out {
