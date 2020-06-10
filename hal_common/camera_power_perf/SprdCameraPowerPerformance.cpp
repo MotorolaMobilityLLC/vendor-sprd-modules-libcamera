@@ -332,7 +332,7 @@ int SprdCameraSystemPerformance::setDfsPolicy(int dfs_policy) {
 
     const char *dfs_scene = NULL;
     const char *const scenario_dfs =
-        "/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs";
+        "/sys/class/devfreq/scene-frequency/sprd-governor/scenario_dfs";
     FILE *fp = fopen(scenario_dfs, "wb");
     if (NULL == fp) {
         HAL_LOGW("failed to open %s X", scenario_dfs);
@@ -365,7 +365,7 @@ int SprdCameraSystemPerformance::releaseDfsPolicy(int dfs_policy) {
 
     const char *dfs_scene = NULL;
     const char *const scenario_dfs =
-        "/sys/class/devfreq/scene-frequency/sprd_governor/exit_scene";
+        "/sys/class/devfreq/scene-frequency/sprd-governor/exit_scene";
     FILE *fp = fopen(scenario_dfs, "wb");
     if (NULL == fp) {
         HAL_LOGW("failed to open %s X", scenario_dfs);
