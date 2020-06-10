@@ -173,6 +173,7 @@ struct ae_lib_calc_out  {
 	cmr_u16 cur_lum;			/*the lum of image:0 ~255 */
 	cmr_u16 cur_lum_avg;	/*the lum without weight of image:0 ~255*/
 	cmr_u16 target_lum;
+	cmr_u16 base_target_lum;		//no face AE target luma
 	cmr_u16 stab_zone_in;
 	cmr_u16 stab_zone_out;
 	cmr_u32 flash_status;

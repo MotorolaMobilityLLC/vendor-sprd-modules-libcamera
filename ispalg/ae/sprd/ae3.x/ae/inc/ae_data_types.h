@@ -212,16 +212,6 @@ struct ae_weight_value {
 	cmr_s16 weight[2];
 };
 
-#if 0
-#ifndef _AE_POINT_TYPE_DEF_
-#define _AE_POINT_TYPE_DEF_
-struct ae_point_type {
-	cmr_s16 x;
-	cmr_s16 y;
-};
-#endif
-#endif
-
 #ifndef _AE_SAMPLE_DEF_
 #define _AE_SAMPLE_DEF_
 struct ae_sample {
@@ -436,10 +426,13 @@ struct ae_monitor_item_data_type {
 	cmr_u32 ue_conts;
 };
 
+#ifndef _AE_POINT_TYPE_DEF_
+#define _AE_POINT_TYPE_DEF_
 struct ae_point_type {
 	cmr_s16 x;
 	cmr_s16 y;
 };
+#endif
 
 struct ae_stats_data_type {
 	cmr_u32 *stat_data;/*10bit*/
