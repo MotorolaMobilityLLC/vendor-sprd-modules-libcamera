@@ -106,7 +106,7 @@ static struct sensor_raw_ioctrl s_s5k3p9sx04_ioctrl=
 
 static struct sensor_version_info s_s5k3p9sx04_version_info=
 {
-	0x00090007,
+	0x0009000A,
 	{
 		{
 			0x336B3573,
