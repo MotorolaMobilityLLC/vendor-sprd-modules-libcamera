@@ -191,3 +191,27 @@ static struct sensor_nr_scene_map_param s_ov12a10_nr_scene_map_param = {{
 #include "NR/prv_1/normal/sw3dnr_param.h"
 #endif
 
+#ifdef _NR_YNRS_PARAM_
+#include "NR/common/normal/ynrs_param.h"
+#include "NR/common/night/ynrs_param.h"
+#include "NR/prv_0/normal/ynrs_param.h"
+#include "NR/prv_0/night/ynrs_param.h"
+#include "NR/prv_1/normal/ynrs_param.h"
+#endif
+
+#ifdef _NR_CNR3_PARAM_
+#include "NR/common/normal/cnr3_param.h"
+#include "NR/common/night/cnr3_param.h"
+#include "NR/prv_0/normal/cnr3_param.h"
+#include "NR/prv_0/night/cnr3_param.h"
+#include "NR/prv_1/normal/cnr3_param.h"
+#endif
+
+#ifdef _NR_MFNR_PARAM_
+#include "NR/common/normal/mfnr_param.h"
+#include "NR/common/night/mfnr_param.h"
+#include "NR/prv_0/normal/mfnr_param.h"
+#include "NR/prv_0/night/mfnr_param.h"
+#include "NR/prv_1/normal/mfnr_param.h"
+#endif
+
