@@ -144,6 +144,7 @@ enum tuning_mode {
 	WORKMODE_PREVIEW = 0x0000,
 	WORKMODE_CAPTURE,
 	WORKMODE_VIDEO,
+	WORKMODE_FDR,
 	WORKMODE_MAX,
 };
 
@@ -1771,6 +1772,170 @@ struct sensor_cnr3_level {
 	struct sensor_multilayer_param param_layer[CNR3_LAYER_NUM];
 	cmr_u16 reserved1[10];
 };
+//soft_ee
+struct ee_ipd_param{
+	cmr_u8 ee_ipd_en;
+	cmr_u8 reserved[3];
+	cmr_u16 direction_mode;
+	cmr_u16 direction_thresh_diff;
+	cmr_u16 direction_thresh_min;
+	cmr_u16 direction_freq_hop_control_en;
+	cmr_u16 direction_freq_hop_thresh;
+	cmr_u16 direction_freq_hop_total_num_thresh;
+	cmr_u16 direction_hop_thresh_diff;
+	cmr_u16 direction_hop_thresh_min;
+};
+struct ee_offet_param{
+	cmr_u16 thr_layer_curve_pos[4];
+	cmr_u16 ratio_layer_curve_pos[3];
+	cmr_u16 clip_layer_curve_pos[3];
+	cmr_u16 thr_layer_curve_neg[4];
+	cmr_u16 ratio_layer_curve_neg[3];
+	cmr_s16 clip_layer_curve_neg[3];
+	cmr_u16 ratio_layer_lum_curve[3];
+	cmr_u16 ratio_layer_freq_curve[3];
+};
+struct ee_layer_param{
+	cmr_u8 ee_racial_en;
+	cmr_u8 reserved;
+	cmr_u16 center_x;
+	cmr_u16 center_y;
+	cmr_u16 radius_threshold;
+	cmr_u16 radius_threshold_factor;
+	cmr_s16 ratio_coef;
+	cmr_u16 ratio_gain_max;
+	cmr_u16 ratio_gain_min;
+};
+struct ee_layer_laplace_param{
+	cmr_u8 nr_en;
+	cmr_u16 nr_mode;
+	cmr_u8 reserved;
+	cmr_u16 nr_blending_en;
+	cmr_u16 nr_blending_weight;
+};
+struct sensor_post_ee_level {
+	cmr_u8 ee_bypass;
+	cmr_u8 ee_pyramid_en;
+	cmr_u16 radius_base;
+	cmr_u16 ee_lum_t[4];
+	cmr_u16 ee_freq_t[4];
+	struct ee_ipd_param ipd_param;
+	struct ee_offet_param offet_param[3];
+	struct ee_layer_param layer_param[3];
+	struct ee_layer_laplace_param layer_laplace_param[3];
+};
+
+//FDR
+#define CONST_NUM 32
+//fdr_merge
+struct sensor_fdr_const_gain {
+	float const0[CONST_NUM];
+	float const1[CONST_NUM];
+	cmr_u32 const_gain_x[CONST_NUM];
+	cmr_u16 const_gain_num;
+	cmr_u16 reserved;
+};
+
+struct sensor_fdr_merge {
+	struct sensor_fdr_const_gain fdr_const_gain;
+	float sf_coef_curve_in[3][25];
+	float k_thr;
+	float k_thegma;
+	cmr_u32 sf_coef_gain[8][2];
+	cmr_u16 sf_coef_num;
+	cmr_u16 reserved;
+};
+
+//fdr_exp_fusion
+struct sensor_fdr_curve {
+	cmr_u16 curve_th[4][8];
+	cmr_u16 curve_ratio[3][8];
+	cmr_u16 reserved[2];
+};
+struct sensor_fdr_gamma_post {
+	cmr_u16 gmc_v_post[3][1025];
+	cmr_u8 bv_th_num;
+	cmr_u8 post_gamma_en;
+	cmr_s16 gmc_post_bvth[2][8];
+};
+struct sensor_fdr_exp_fusion {
+	struct sensor_fdr_curve fdr_curve[3];
+	struct sensor_fdr_gamma_post fdr_gamma_post;
+	cmr_u16 w_dlayer[4];
+	cmr_u16 combine_th[2];
+	cmr_u16 weight_table[2][1025];
+	cmr_u16 low_th;
+	cmr_u8 lumoffset_opt;
+	cmr_u8 gamma_en;
+	cmr_s16 curve_bvth[2][8];
+	cmr_u8 curve_bv_th_num;
+	cmr_u8 reserved[3];
+};
+
+//fdr_hist_analy
+struct sensor_fdr_scene {
+	float Dark_Range[2];
+	float Bright_Range[2];
+	float EV_FDR;
+	cmr_u8 SCENE;
+	cmr_u8 reserved[3];
+};
+struct sensor_fdr_hist_analy {
+	struct sensor_fdr_scene fdr_scene[50];
+	cmr_u16 dark_threshold;
+	cmr_u16 bright_threshold;
+	cmr_u16 fdr_scene_num;
+	cmr_u8 reserved[2];
+};
+
+//fdr_frame_num
+struct sensor_fdr_frame_num{
+	cmr_s16 BV_max[10];
+	cmr_s16 BV_min[10];
+	cmr_u8 BV_Frame_num[10];
+	cmr_u8 BV_Frame_case;
+	cmr_u8 reserved;
+};
+//fdr_alignment
+struct sensor_fdr_alignment{
+	cmr_u8 factor_down_sample[3];
+	cmr_u8 ref_frame_num;
+	cmr_u8 search_window[4];
+	cmr_u8 tile_scale[4];
+	cmr_u8 imresize_mode[3];
+	cmr_u8 reserved;
+};
+//fdr gain_calculation
+struct sensor_fdr_gain_th{
+	cmr_u16 target_high;
+	cmr_u16 target_min;
+	cmr_u16 idx_high;
+	cmr_u16 idx_min;
+};
+struct sensor_fdr_gain_cal {
+	struct sensor_fdr_gain_th fdr_gain_th[3];
+	cmr_s16 gain_th_bvth[2][8];
+	cmr_u8 bv_th_num;
+	cmr_u16 idx_0;
+	cmr_u8 reserved;
+	float maxGain;
+	float ae_limit;
+};
+struct sensor_fdr_ISPparam {
+	cmr_u16 gmc_v[1025];
+	cmr_u8 reserved[2];
+	float nlm_in_ratio[4];
+};
+
+struct sensor_fdr_param {
+	struct sensor_fdr_hist_analy fdr_hist_analy;
+	struct sensor_fdr_frame_num fdr_frame_num;
+	struct sensor_fdr_alignment fdr_alignment;
+	struct sensor_fdr_merge fdr_merge;
+	struct sensor_fdr_gain_cal fdr_gain_cal;
+	struct sensor_fdr_ISPparam fdr_ISPparam;
+	struct sensor_fdr_exp_fusion fdr_exp_fusion;
+};
 
 //facebeauty param
 
@@ -2181,6 +2346,7 @@ enum {
 	ISP_BLK_YNRS_T,
 	ISP_BLK_CNR3_T,
 	ISP_BLK_MFNR_T,
+	ISP_BLK_POST_EE_T,
 	ISP_BLK_NR_MAX
 };
 
@@ -2458,6 +2624,8 @@ struct sensor_nr_set_group_param {
 	cmr_u32 cnr3_len;
 	cmr_u8 *mfnr;
 	cmr_u32 mfnr_len;
+	cmr_u8 *post_ee;
+	cmr_u32 post_ee_len;
 };
 
 struct sensor_nr_param {
@@ -2550,6 +2718,7 @@ struct denoise_param_update {
 	struct sensor_nr_level_map_param *nr_level_number_map_ptr;
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
 	struct sensor_sw3dnr_level *sw3dnr_level_ptr;
+	struct sensor_post_ee_level *soft_ee_level_ptr;
 	cmr_u32 multi_nr_flag;
 };
 
