@@ -289,7 +289,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-#LOCAL_SRC_FILES = tool/baseband_autotester_camera/test_camera.cpp
+LOCAL_SRC_FILES = tool/baseband_autotester_camera/test_camera.cpp
 LOCAL_C_INCLUDES := \
     $(TOP)/system/core/libutils/include/ \
     $(TOP)/vendor/sprd/proprietories-source/engpc/sprd_fts_inc \
