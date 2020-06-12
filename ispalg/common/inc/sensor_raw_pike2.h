@@ -49,6 +49,7 @@
 #define LNC_MAP_COUNT 9
 #define LNC_WEIGHT_LEN 4096
 #define CNR_LEVEL 4
+#define CNR3_LAYER_NUM 5
 
 #define AE_VERSION    0x00000000
 #define AWB_VERSION   0x00000000
@@ -1319,6 +1320,22 @@ struct sensor_y_delay_param {
 	cmr_u16 ydelay_step;
 };
 
+
+struct sensor_mfnr_level {
+	cmr_s32 threshold[4];
+	cmr_s32 slope[4];
+	cmr_u16 searchWindow_x;
+	cmr_u16 searchWindow_y;
+	cmr_s32 recur_str;
+	cmr_s32 match_ratio_sad;
+	cmr_s32 match_ratio_pro;
+	cmr_s32 feat_thr;
+	cmr_s32 zone_size;
+	cmr_s32 luma_ratio_high;
+	cmr_s32 luma_ratio_low;
+	cmr_s32 reserverd[16];
+};
+
 /************************************************************************************/
 //Hue
 struct sensor_hue_param {
@@ -1500,6 +1517,33 @@ struct sensor_cnr_level {
 };
 //////////////////////////////////////////////////
 
+
+//cnr3.0
+struct sensor_multilayer_param {
+	cmr_u8 lowpass_filter_en;
+	cmr_u8 denoise_radial_en;
+	cmr_u8 reserved0[3];
+	cmr_u8 order[3];
+	cmr_u16 imgCenterX;
+	cmr_u16 imgCenterY;
+	cmr_u16 slope;
+	cmr_u16 baseRadius;
+	cmr_u16 baseRadius_factor;
+	cmr_u16 minRatio;
+	cmr_u16 luma_th[2];
+	float sigma[3];
+	cmr_u16 reserved1[10];
+};
+
+struct sensor_cnr3_level {
+	cmr_u8 level_enable;
+	cmr_u8 reserved0[3];
+	cmr_u16 low_ct_thrd;
+	cmr_u16 radius_base;
+	struct sensor_multilayer_param param_layer[CNR3_LAYER_NUM];
+	cmr_u16 reserved1[10];
+};
+
 // SOFTYNR domain
 /************************************************************************************/
 struct sensor_ynrs_level {
@@ -1594,6 +1638,8 @@ enum {
 	ISP_BLK_RGB_AFM_T,
 	ISP_BLK_CNR2_T,
 	ISP_BLK_YNRS_T,
+	ISP_BLK_CNR3_T,
+	ISP_BLK_MFNR_T,
 	ISP_BLK_TYPE_MAX
 };
 
@@ -1868,6 +1914,10 @@ struct sensor_nr_set_group_param {
 	cmr_u32 cnr2_len;
 	cmr_u8 *ynrs;
 	cmr_u32 ynrs_len;
+	cmr_u8 *cnr3;
+	cmr_u32 cnr3_len;
+	cmr_u8 *mfnr;
+	cmr_u32 mfnr_len;
 	//cmr_u8 *yiq_afm;
 	//cmr_u32 yiq_afm_len;
 };
@@ -1947,6 +1997,8 @@ struct denoise_param_update {
 	struct sensor_nr_level_map_param *nr_default_level_map_ptr;
 	struct sensor_cnr_level *cnr2_level_ptr;
 	struct sensor_ynrs_level *ynrs_level_ptr;
+	struct sensor_cnr3_level *cnr3_level_ptr;
+	struct sensor_mfnr_level *mfnr_level_ptr;
 	cmr_u32 multi_nr_flag;
 };
 
