@@ -498,7 +498,6 @@ camera_metadata_t *SprdCamera3HWI::constructDefaultMetadata(int type) {
 int SprdCamera3HWI::checkStreamList(
     camera3_stream_configuration_t *streamList) {
     int ret = NO_ERROR;
-
     // Sanity check stream_list
     if (streamList == NULL) {
         HAL_LOGE("NULL stream configuration");
@@ -507,14 +506,19 @@ int SprdCamera3HWI::checkStreamList(
     if (streamList->streams == NULL) {
         HAL_LOGE("NULL stream list");
         return BAD_VALUE;
-    } else if (streamList->streams[0]->width == 0 ||
+    } else if (streamList->streams[0] != NULL) {
+         if(streamList->streams[0]->width == 0 ||
                streamList->streams[0]->height == 0 ||
                streamList->streams[0]->width == UINT32_MAX ||
                streamList->streams[0]->height == UINT32_MAX ||
                (uint32_t)streamList->streams[0]->format == UINT32_MAX ||
                (uint32_t)streamList->streams[0]->rotation == UINT32_MAX) {
-        HAL_LOGE("INVALID stream list");
-        return BAD_VALUE; /*vts configureStreamsInvalidOutputs */
+              HAL_LOGE("INVALID stream list");
+              return BAD_VALUE; /*vts configureStreamsInvalidOutputs */
+         }
+    } else {
+        HAL_LOGE("NULL streamList->streams[0]");
+        return BAD_VALUE;
     }
 
     if (streamList->num_streams < 1) {
@@ -643,7 +647,10 @@ int SprdCamera3HWI::configureStreams(
 
     // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
     for (i = 0; i < streamList->num_streams; i++) {
-        if (streamList->streams[i]->stream_type == CAMERA3_STREAM_OUTPUT) {
+        if(streamList->streams[i] == NULL) {
+	    HAL_LOGE("NULL streamList->streams[%d]", i);
+            return BAD_VALUE;
+	} else if (streamList->streams[i]->stream_type == CAMERA3_STREAM_OUTPUT) {
             if (streamList->streams[i]->format ==
                     HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
                 streamList->streams[i]->format ==
