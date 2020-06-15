@@ -24,6 +24,7 @@
 #include "cmr_types.h"
 #include "inttypes.h"
 #include <cutils/properties.h>
+#include "cmr_common.h"
 
 #ifdef ISP_LOGV
 #undef ISP_LOGV
@@ -165,7 +166,7 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 	ISP_LOGV("timestamp: %"PRIu64".", ae_param->timestamp);
 	ISP_LOGV("r_g_b_info: %p, %p, %p.", ae_param->ae_stat.r_info, ae_param->ae_stat.g_info, ae_param->ae_stat.b_info);
 	ISP_LOGV("r_g_b_info data: %d, %d, %d.", *ae_param->ae_stat.r_info, *ae_param->ae_stat.g_info, *ae_param->ae_stat.b_info);
-	ISP_LOGV("curr_bv: %d, flash_enable: %d.", ae_param->curr_bv, cxt->flash_enable);
+	ISP_LOGV("curr_bv: %d, flash_enable: %d, app_mode: %d", ae_param->curr_bv, cxt->flash_enable,ae_param->app_mode);
 
 	cxt->aic_aeminfo.frame_id = ae_param->frame_id;
 	cxt->aic_aeminfo.timestamp = ae_param->timestamp;
@@ -182,7 +183,7 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 	cxt->aic_aeminfo.flash_enable = cxt->flash_enable;
 	cxt->aic_aeminfo.stable = ae_param->stable;
 	cxt->aic_aeminfo.data_valid = 1;
-
+	cxt->aic_aeminfo.app_mode = (ae_param->app_mode == CAMERA_MODE_3DNR_PHOTO) ? 1 : 0 ;
 	ISP_LOGV("ae_param_stable: %d, aic_aeminfo_stable:%d", ae_param->stable, cxt->aic_aeminfo.stable);
 
 	if (0 != AIC_SetAemInfo(cxt->aic_handle, &cxt->aic_aeminfo, &cxt->aic_result)) {

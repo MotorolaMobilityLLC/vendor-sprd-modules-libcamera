@@ -133,6 +133,7 @@ typedef struct
 	uint32_t flash_enable;
 	uint16_t stable;
 	bool data_valid;
+	uint32_t app_mode;
 } aic_aeminfo_t;
 
 typedef struct
