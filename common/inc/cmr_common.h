@@ -2165,6 +2165,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_COLOR_TEMP,
     CAMERA_IOCTRL_FOV_FUSION_MODE,
     CAMERA_IOCTRL_SET_FB_SWITCH,
+    CAMERA_IOCTRL_DO_FACE_BEAUTY,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

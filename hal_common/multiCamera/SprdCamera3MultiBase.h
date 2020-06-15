@@ -194,6 +194,8 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     uint32_t getJpegSize(uint8_t *jpegBuffer, uint32_t maxSize);
     void setJpegSize(char *jpeg_base, uint32_t max_jpeg_size,
                      uint32_t jpeg_size);
+    int yuv_do_face_beauty_simplify(
+            buffer_handle_t *src_private_handle,void *src_vir_addr, SprdCamera3HWI *hwi);
     int jpeg_encode_exif_simplify(img_frm *src_img, img_frm *pic_enc_img,
                                   struct img_frm *dst_img, SprdCamera3HWI *hwi);
 

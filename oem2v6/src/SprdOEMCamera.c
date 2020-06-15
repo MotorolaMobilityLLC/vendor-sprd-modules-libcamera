@@ -1228,7 +1228,12 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
     }
     case CAMERA_IOCTRL_GET_ISO: {
         ret = camera_get_iso_info(handle,(cmr_u32 *)param);
+        break;
     }
+    case CAMERA_IOCTRL_DO_FACE_BEAUTY: {
+        ret = camera_yuv_do_face_beauty_simplify(handle,(struct img_frm*)param);
+        break;
+    }   
     default:
         break;
     }

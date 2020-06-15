@@ -544,7 +544,7 @@ void SprdCamera3MultiBase::pushBufferList(new_mem_t *localbuffer,
         }
     }
     if (i >= localbuffer_num) {
-        HAL_LOGE("find backbuf failed");
+        HAL_LOGE("find backbuf failed,handle addr=%p",backbuf);
     }
     return;
 }
@@ -1436,6 +1436,17 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify(
     }
 
     HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
+int SprdCamera3MultiBase::yuv_do_face_beauty_simplify(
+    buffer_handle_t *src_private_handle,void *src_vir_addr, SprdCamera3HWI *hwi){
+    struct img_frm src_img;
+    memset(&src_img, 0, sizeof(struct img_frm));
+    convertToImg_frm(src_private_handle, &src_img, IMG_DATA_TYPE_YUV420,
+                     src_vir_addr);
+    int ret = hwi->camera_ioctrl(CAMERA_IOCTRL_DO_FACE_BEAUTY,
+                                &src_img, NULL);
     return ret;
 }
 

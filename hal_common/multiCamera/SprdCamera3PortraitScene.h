@@ -66,6 +66,7 @@ namespace sprdcamera {
 #define AI_BG_REAR_CAP_IMG_PATH "vendor/etc/aiimg/common/BG_CAP_"
 #define PBRP_THREAD_TIMEOUT 50e6
 #define PBRP_LOCAL_BUFF_NUM (4)
+#define PBRP_PREV_TMP_BUFF_NUM (5)
 #define PBRP_MAX_NUM_STREAMS (4)
 #define PBRP_REFOCUS_COMMON_PARAM_NUM (11)
 #define PBRP_MAX_ROI (10)
@@ -175,8 +176,8 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     static camera3_callback_ops callback_ops_aux;
 
     void updateWeightParams(CameraMetadata metaSettings, int type);
-    void CallBackPrevResultInternal(portrait_scene_queue_msg_t *muxer_msg);
-    void CallBackResult(portrait_scene_queue_msg_t *muxer_msg);
+    int CallBackPrevResultInternal(portrait_scene_queue_msg_t *muxer_msg);
+    int CallBackResult(portrait_scene_queue_msg_t *muxer_msg);
     void CallSnapBackResult(camera3_capture_result_t *result,
                             camera3_buffer_status_t buffer_status);
     void CallBackVidResult(portrait_scene_queue_msg_t *muxer_msg);
@@ -223,6 +224,9 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     bool mUpdataTouch;
     int mFaceInfoX;
     int mFaceInfoY;
+    uint32_t mOrientationAngle;
+    bool mIsRunAlgo;
+    bool mUseFWBuffer;
     camera3_stream_t mMainStreams[PBRP_MAX_NUM_STREAMS];
     /*wechat default stream*/
     List<request_saved_msg_t> mDefaultSavedReqList;
@@ -232,6 +236,8 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     int mBGHeight;
     int mPreviewStreamsNum;
     List<request_saved_msg_t> mPrevSavedReqList;
+    List<new_mem_t*> mPrevTmpBuffList;
+    new_mem_t mPrevTmpBuffArr[PBRP_PREV_TMP_BUFF_NUM];
     /*capture*/
     sprd_portrait_scene_proc_t mCacheCapWeightParams;
     int32_t mFaceInfo[4];
@@ -264,6 +270,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     int mVideoHeight;
     int mVideoStreamsNum;
     bool mIsRecordMode;
+    sprd_camera_memory_t *mRecordTmpIon[2];
     List<request_saved_msg_t> mVidSavedReqList;
 
     int getCameraInfo(int blur_camera_id, struct camera_info *info);
@@ -283,8 +290,8 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     int _flush(const struct camera3_device *device);
     int initThread();
     int resetVariablesToDefault();
-    void freeLocalCapBuffer();
-    void freeLocalBuffer();
+    void freeCapBuffer();
+    void freePrevBuffer();
     void freePrevBgBuffer(int isHorizon);
     int allocateBuff(int w, int h);
     // int BuffClean(sprd_portrait_scene_channel_t ch);
@@ -309,7 +316,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
         virtual void requestExit();
         int initCapParams();
         void initCapWeightParams();
-        void saveCaptureParams(buffer_handle_t *result_buff,
+        int saveCaptureParams(buffer_handle_t *result_buff,
                                uint32_t jpeg_size);
         void dumpPbrpImg(dump_portrait_scene_type type,
                          dump_portrait_scene_t *dump_buffs);
@@ -337,7 +344,6 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
 
       private:
         void waitMsgAvailable();
-        void BlurFaceMakeup(buffer_handle_t *buffer_handle, void *buffer_addr);
     };
     sp<CaptureThread> mCapT;
 
@@ -398,7 +404,8 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
       public:
         PreviewPostThread();
         ~PreviewPostThread();
-        int initPrevPostInitParams();
+        int prevFuse(portrait_scene_queue_msg_t* muxer_msg,
+                      void *buffer_addr);
         virtual bool threadLoop();
         virtual void requestExit();
         virtual void requestInit();

@@ -697,6 +697,8 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on);
 cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
                                   struct snp_thumb_yuv_param *param);
 cmr_int camera_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *param);
+cmr_int camera_yuv_do_face_beauty_simplify(cmr_handle oem_handle,
+                                           struct img_frm *src);
 cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
                                          struct enc_exif_param *param);
 cmr_int camera_local_set_gpu_mem_ops(cmr_handle oem_handle, void *cb_of_malloc,
