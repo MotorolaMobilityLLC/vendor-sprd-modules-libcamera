@@ -4229,7 +4229,8 @@ SENSOR_Tag sensorInfo;
         faceDectect(1);
         if (isPreviewing() && frame->type == PREVIEW_FRAME) {
             if (MODE_3D_VIDEO != mMultiCameraMode &&
-                MODE_3D_PREVIEW != mMultiCameraMode) {
+                MODE_3D_PREVIEW != mMultiCameraMode &&
+                (getMultiCameraMode() != MODE_BLUR)) {
                 FACE_Tag faceInfo;
                 mSetting->getFACETag(&faceInfo);
                 if (faceInfo.face_num > 0) {
@@ -4246,7 +4247,6 @@ SENSOR_Tag sensorInfo;
                         construct_fb_face(&face_beauty, beauty_face);
                     }
                 }
-
                 fb_chipinfo chipinfo;
 #if defined(CONFIG_ISP_2_3)
                 chipinfo = SHARKLE;
