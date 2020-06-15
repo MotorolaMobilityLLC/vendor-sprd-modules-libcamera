@@ -1513,6 +1513,55 @@ int SprdCamera3MultiBase::jpeg_encode_exif_simplify_format(
     return ret;
 }
 
+int SprdCamera3MultiBase::jpeg_decode_to_yuv(
+    buffer_handle_t *jpg_private_handle, void *jpg_vir_addr,
+    buffer_handle_t *yuv_private_handle, void *yuv_vir_addr,
+    SprdCamera3HWI *hwi) {
+    int ret = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    struct enc_exif_param encode_exif_param;
+    struct img_frm jpg_img;
+    struct img_frm yuv_img;
+
+    HAL_LOGI("jpg_private_handle :%p, yuv_private_handle:%p",
+             jpg_private_handle, yuv_private_handle);
+    if (hwi == NULL) {
+        HAL_LOGE("hwi is NULL");
+        return BAD_VALUE;
+    }
+
+    memset(&encode_exif_param, 0, sizeof(struct enc_exif_param));
+    memset(&jpg_img, 0, sizeof(struct img_frm));
+    memset(&yuv_img, 0, sizeof(struct img_frm));
+    convertToImg_frm(jpg_private_handle, &jpg_img, IMG_DATA_TYPE_JPEG, jpg_vir_addr);
+    convertToImg_frm(yuv_private_handle, &yuv_img, IMG_DATA_TYPE_YUV420,
+                     yuv_vir_addr);
+
+    memcpy(&encode_exif_param.src, &jpg_img, sizeof(struct img_frm));
+    memcpy(&encode_exif_param.pic_enc, &yuv_img, sizeof(struct img_frm));
+
+    ret = hwi->camera_ioctrl(CAMERA_IOCTRL_JPEG_DECODE_PROC,
+                             &encode_exif_param, NULL);
+
+    if (ret == NO_ERROR)
+        ret = encode_exif_param.stream_real_size;
+    else
+        ret = UNKNOWN_ERROR;
+
+    property_get("persist.vendor.cam.decode_dump", prop, "0");
+    if (atoi(prop) != 0) {
+        unsigned char *vir_yuv = (unsigned char *)(yuv_vir_addr);
+        dumpData(vir_yuv, 1, encode_exif_param.stream_real_size,
+                 jpg_img.size.width, jpg_img.size.height, 0,
+                 "jpegDecode_SimpleFormat");
+    }
+
+    HAL_LOGI("out,ret=%d", ret);
+    return ret;
+}
+
 int SprdCamera3MultiBase::hwScale(uint8_t *dst_buf, uint16_t dst_width,
                                   uint16_t dst_height, uint16_t dst_fd,
                                   uint8_t *src_buf, uint16_t src_width,
@@ -1778,7 +1827,7 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
     {RES_2M, {{1600, 1200}, {960, 720}, {320, 240}}},
     {RES_1080P, {{1920, 1080}, {1440, 1080}, {960, 720},{640, 480}}},
     {RES_5M, {{2592, 1944}, {960, 720}, {320, 240}}},
-    {RES_PORTRAIT_SCENE_5M, {{2592, 1944}, {1920, 1080},{960, 720}, 
+    {RES_PORTRAIT_SCENE_5M, {{2592, 1944}, {1920, 1080},{960, 720},
         {1280, 720}, {720, 480}, {320, 240}}},
     {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
     {RES_PORTRAIT_SCENE_8M, {{3264, 2448}, {1920, 1080}, {960, 720},

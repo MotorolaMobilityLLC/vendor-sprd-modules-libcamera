@@ -210,6 +210,10 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
         buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,
         buffer_handle_t *dst_private_handle, void *dst_vir_addr,
         SprdCamera3HWI *hwi, uint8_t fmt, cmr_uint rotation, cmr_uint flip_on);
+	int jpeg_decode_to_yuv(
+        buffer_handle_t *jpg_private_handle, void *jpg_vir_addr,
+        buffer_handle_t *yuv_private_handle, void *yuv_vir_addr,
+        SprdCamera3HWI *hwi);
     static void addAvailableStreamSize(CameraMetadata &metadata,
                                 const char *resolution);
     void setLogicIdTag(CameraMetadata &metadata, uint8_t *physical_ids,

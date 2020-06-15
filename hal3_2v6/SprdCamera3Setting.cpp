@@ -2570,9 +2570,9 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
                            "persist.vendor.cam.lightportrait.fr.enable"));
 
-    // 27 FDR
-    available_cam_features.add(resetFeatureStatus(
-        "persist.vendor.cam.ip.fdr", "persist.vendor.cam.fdr.enable"));
+      // 27 FDR
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.fdr",
+                                      "persist.vendor.cam.fdr.enable"));
 
     // 28 dual view video
     if (hasRealCameraUnuseful == true) {
@@ -2582,23 +2582,27 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
             resetFeatureStatus("persist.vendor.cam.ip.dualview.pro",
                                "persist.vendor.cam.dual.view.video.enable"));
     }
-
-#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
     // 29 portrait scene mode
-    HAL_LOGD("pbrb_enable=%d", atoi(prop));
-    property_get("persist.vendor.cam.wechat.portrait.scene.enable", prop, "2");
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    char strRunType[PROPERTY_VALUE_MAX];
+    char debugSwitch[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
+    property_get("ro.boot.lwfq.type", strRunType , "-1");
+    property_get("persist.vendor.cam.portrait.scene.debug", debugSwitch , "0");
     if (hasRealCameraUnuseful == true) {
         available_cam_features.add(0);
+    } else if (atoi(debugSwitch) != 0){
+        available_cam_features.add(1);
+        HAL_LOGD("portraitscene on");
     } else {
-        if (atoi(prop) == 0) {
-            property_set("persist.vendor.cam.wechat.portrait.scene.enable", "1");
-            property_set("persist.vendor.cam.ip.wechat.back.replace", "0");
-            property_get("ro.boot.auto.efuse", prop, "0");
-            if (strcmp(prop,"T618")){
-                property_set("persist.vendor.cam.wechat.portrait.scene.enable", "2");
-                property_set("persist.vendor.cam.ip.wechat.back.replace", "2");
-            }
+        if (!strcmp("1", strRunType)) {
+            property_set("persist.vendor.cam.ip.portrait.back.replace","2");
+            property_set("persist.vendor.cam.portrait.scene.enable","2");
+        } else if(atoi(prop) == 0){
+            property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
+            property_set("persist.vendor.cam.ip.wechat.back.replace","0");
         }
+
         available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
                                "persist.vendor.cam.portrait.scene.enable"));
@@ -6932,21 +6936,14 @@ int SprdCamera3Setting::resetFeatureStatus(const char *fea_ip,
     property_get(fea_eb, prop, "2");
     if ((atoi(feature_switch) == 1) && (atoi(prop) == 0)) {
         rc = 1;
-        if (atoi(prop) != 2)
-            property_set(fea_ip, "1");
+        property_set(fea_ip, "1");
     } else if (atoi(prop) == 1) {
         rc = 1;
-        if (atoi(prop) == 0) {
-            property_set(fea_ip, "0");
-        } else if (atoi(prop) == 1) {
-            property_set(fea_ip, "1");
-        }
+        property_set(fea_ip, "1");
     } else {
         rc = 0;
         if (atoi(prop) == 0) {
             property_set(fea_ip, "0");
-        } else if (atoi(prop) == 1) {
-            property_set(fea_ip, "1");
         }
     }
 

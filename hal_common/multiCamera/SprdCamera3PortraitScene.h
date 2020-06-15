@@ -65,7 +65,7 @@ namespace sprdcamera {
 #define AI_BG_FRONT_CAP_IMG_PATH "vendor/etc/aiimg/front/BG_CAP_"
 #define AI_BG_REAR_CAP_IMG_PATH "vendor/etc/aiimg/common/BG_CAP_"
 #define PBRP_THREAD_TIMEOUT 50e6
-#define PBRP_LOCAL_BUFF_NUM (4)
+#define PBRP_LOCAL_BUFF_NUM (5)
 #define PBRP_PREV_TMP_BUFF_NUM (4)
 #define PBRP_MAX_NUM_STREAMS (4)
 #define PBRP_REFOCUS_COMMON_PARAM_NUM (11)
@@ -142,6 +142,11 @@ typedef struct {
     uint16_t* mask;
 } portrait_scene_queue_msg_t;
 
+typedef struct{
+  int64_t time;
+  uint32_t idx;
+}portrait_time_t;
+
 class SprdCamera3PortraitScene : SprdCamera3MultiBase,
                                  SprdCamera3FaceBeautyBase {
   public:
@@ -181,11 +186,11 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     int CallBackResult(portrait_scene_queue_msg_t *muxer_msg);
     void CallSnapBackResult(camera3_capture_result_t *result,
                             camera3_buffer_status_t buffer_status);
-    void CallBackVidResult(portrait_scene_queue_msg_t *muxer_msg);
     bool checkIsVideo();
     bool Copy2Video(portrait_scene_queue_msg_t *prev_msg);
+    void printUseTime(uint32_t frame_num,char* tag);
     Mutex mWeightLock;
-
+    Mutex mTimeLock;
   private:
     /*common*/
     sprdcamera_physical_descriptor_t *m_pPhyCamera;
@@ -194,8 +199,12 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     int m_nPhyCameras;
     Mutex mLock;
     Mutex mRequestLock;
+    Mutex mCapBGLock;
+    Mutex mCapLock;
+    Mutex mPrevBGLock;
+
     sprd_camera_memory_t *mPrevBgIon[2][AI_BGIMG_BUFF_NUM];
-    sprd_camera_memory_t *mCapBgIon;
+    new_mem_t mCapBgIon;
     portraitSceneBgID mBgID;
     portraitSceneBgID mCacheBgID;
     portraitSceneBgID mCapBgID;
@@ -215,6 +224,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     fbBeautyFacetT beauty_face;
     fb_beauty_image_t beauty_image;
 #endif
+    List<portrait_time_t> mUseTime;
     bool isWechatClient;
     int mCircleSizeScale;
     uint8_t mLastFaceNum;
@@ -227,7 +237,6 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     int mFaceInfoY;
     uint32_t mOrientationAngle;
     bool mIsRunAlgo;
-    bool mUseFWBuffer;
     camera3_stream_t mMainStreams[PBRP_MAX_NUM_STREAMS];
     /*wechat default stream*/
     List<request_saved_msg_t> mDefaultSavedReqList;
@@ -238,14 +247,13 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     bool mPrevBuffReady;
     int mPreviewStreamsNum;
     List<request_saved_msg_t> mPrevSavedReqList;
-    List<new_mem_t*> mPrevTmpBuffList;
     List<uint16_t*> mPrevMaskBuffList;
-    new_mem_t mPrevTmpBuffArr[PBRP_PREV_TMP_BUFF_NUM];
     sprd_camera_memory_t *mPrevMaskBuffArr[PBRP_PREV_TMP_BUFF_NUM];
+    sprd_camera_memory_t *mdebugPrev;
+    bool mdebugPrevSwitch;
     /*capture*/
     sprd_portrait_scene_proc_t mCacheCapWeightParams;
     int32_t mFaceInfo[4];
-    bool mCapBGReady;
     int mCurrCapFrameNum;
 
     int mCaptureWidth;
@@ -307,7 +315,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
                      const camera_metadata_t *settings);
     void EnQResultMsg(camera3_capture_result_t *result);
     int setupPhysicalCameras();
-
+    bool clearVideoRequst();
   public:
     SprdCamera3PortraitScene();
     virtual ~SprdCamera3PortraitScene();
@@ -328,6 +336,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
                              void *combo_buff_addr, buffer_handle_t *maskBuffer,
                              void *mask_data, uint32_t combo_frm_num);
         bool capReadHandle(portrait_scene_queue_msg_t *post_msg);
+        int capFuse(void* combo_buff_addr, void* mask_data);
         // This queue stores matched buffer as frame_matched_info_t
         List<portrait_scene_queue_msg_t> mCapMsgList;
         Mutex mMergequeueMutex;
@@ -425,16 +434,6 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
         void waitMsgAvailable();
     };
     sp<PreviewPostThread> mPrevPostT;
-
-    typedef struct Video {
-        List<portrait_scene_queue_msg_t> mVidMsgList;
-        const camera3_callback_ops_t *mCallbackOps;
-        Mutex mMergequeueMutex;
-        Condition mMergequeueSignal;
-        Mutex mLock;
-    } Video_t;
-
-    Video_t *mVid;
 };
 };
 

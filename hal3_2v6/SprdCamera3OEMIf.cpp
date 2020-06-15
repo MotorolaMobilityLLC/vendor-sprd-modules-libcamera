@@ -475,7 +475,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mSprdRefocusEnabled(0), mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
       mIsUnpopped(false), mIsBlur2Zsl(false), mIsSlowmotion(false),
-      mIsPortraitScene(false),
       mPreviewFormat(CAM_IMG_FMT_YUV420_NV21),
       mVideoFormat(CAM_IMG_FMT_YUV420_NV21),
       mCallbackFormat(CAM_IMG_FMT_YUV420_NV21),
@@ -1797,11 +1796,6 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         }
         break;
     }
-    case CAMERA_IOCTRL_SET_FB_SWITCH:{
-            mIsPortraitScene = *((bool *)param1);
-        }
-        break;
-
     case CAMERA_IOCTRL_SET_LPT_TYPE:{
             lightportrait_type = *(int *)param1;
         }
@@ -4535,7 +4529,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
         isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)
         && (getMultiCameraMode() != MODE_BOKEH)
-        && (getMultiCameraMode() != MODE_BLUR || mIsPortraitScene==true)) {
+        && (getMultiCameraMode() != MODE_BLUR)) {
 
         beautyLevels.blemishLevel =
             (unsigned char)sprddefInfo->perfect_skin_level[0];

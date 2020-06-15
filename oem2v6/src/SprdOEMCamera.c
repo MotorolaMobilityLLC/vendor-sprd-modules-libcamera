@@ -1146,6 +1146,11 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
                                                (struct enc_exif_param *)param);
         break;
     }
+	case CAMERA_IOCTRL_JPEG_DECODE_PROC: {
+        ret = camera_jpeg_decode_simplify(handle,
+                                               (struct enc_exif_param *)param);
+        break;
+    }
     case CAMERA_IOCTRL_GET_BLUR_COVERED: {
         ret = camera_get_blur_covered_type(handle, (cmr_s32 *)param);
         break;
