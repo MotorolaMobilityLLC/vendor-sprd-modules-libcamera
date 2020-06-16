@@ -164,6 +164,18 @@ struct ipm_pro_context {
     cmr_u32 cnr_pro_inited;
     cmr_u32 dre_pro_inited;
 };
+struct nightpro_context {
+    cmr_uint is_authorized;
+    void *sw_handle;
+    int (*sw_open)(cmr_handle oem_handle);
+    int (*sw_process)(cmr_handle oem_handle,
+                                 struct image_sw_algorithm_buf *src_buf,
+                                 struct image_sw_algorithm_buf *dst_buf);
+    int (*sw_close)(cmr_handle oem_handle);
+    int (*ipmpro_init)(cmr_handle oem_handle);
+    int (*ipmpro_deinit)(cmr_handle oem_handle);
+    int (*ipmpro_process)(cmr_handle oem_handle, void *data);
+};
 
 struct ipm_fdr_context {
     cmr_handle ipm_fdr_handle;
@@ -479,6 +491,7 @@ struct camera_context {
     cmr_u8 predre_flag;
     cmr_u8 skipframe;
     bool night_flag;
+    struct nightpro_context night_cxt;
 
     /*for flash skip preview frame*/
     cmr_s64 flash_handle_timestamp;
