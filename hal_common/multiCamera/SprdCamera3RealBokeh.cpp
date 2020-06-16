@@ -2268,20 +2268,45 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
 #ifdef YUV_CONVERT_TO_JPEG
                 mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
                     mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
-                rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
-                                     &pic_vir_addr);
-                if (rc != NO_ERROR) {
-                    HAL_LOGE("fail to map jpeg buffer");
+                if (mBokehResult) {
+                    rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
+                                         &pic_vir_addr);
+                    if (rc != NO_ERROR) {
+                        HAL_LOGE("fail to map jpeg buffer");
+                    }
+
+                    mRealBokeh->mOrigJpegSize =
+                        mRealBokeh->jpeg_encode_exif_simplify(
+                            capture_msg.combo_buff.buffer1, input_buf1_addr,
+                            mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL,
+                            NULL,
+                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                            SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                                .jpgInfo.orientation);
+                    mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
+#ifdef CONFIG_SUPPORT_GDEPTH
+                    mRealBokeh->m_pDstGDepthOriJpegBuffer =
+                        (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
+                                                   SNAPSHOT_MAIN_BUFFER));
+                    rc = mRealBokeh->map(mRealBokeh->m_pDstGDepthOriJpegBuffer,
+                                         &pic_vir_addr);
+                    if (rc != NO_ERROR) {
+                        HAL_LOGE("fail to map GDepth jpeg buffer");
+                    }
+                    mRealBokeh->mGDepthOriJpegSize =
+                        mRealBokeh->jpeg_encode_exif_simplify_format(
+                            capture_msg.combo_buff.buffer1, input_buf1_addr,
+                            mRealBokeh->m_pDstGDepthOriJpegBuffer, pic_vir_addr,
+                            NULL, NULL,
+                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                            IMG_DATA_TYPE_YUV420,
+                            SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                                .jpgInfo.orientation,
+                            0);
+                    mRealBokeh->unmap(mRealBokeh->m_pDstGDepthOriJpegBuffer);
+#endif
                 }
 
-                mRealBokeh->mOrigJpegSize =
-                    mRealBokeh->jpeg_encode_exif_simplify(
-                        capture_msg.combo_buff.buffer1, input_buf1_addr,
-                        mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
-                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
-                        SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
-                            .jpgInfo.orientation);
-                mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
 #else
                 mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
 #endif
