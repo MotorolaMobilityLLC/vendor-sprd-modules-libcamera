@@ -209,6 +209,7 @@ struct setting_hal_param {
     cmr_uint face_attributes_enabled;
     cmr_uint sprd_logo_watermark;
     cmr_uint sprd_time_watermark;
+    struct img_size originalPictureSize;
 };
 
 struct setting_camera_info {
@@ -1625,41 +1626,22 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
                                  SETTING_IO_GET_ACTUAL_CAPTURE_SIZE,
                                  &cmd_param);
         exif_unit->actual_picture_size = cmd_param.size_param;
+    }
 
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue, for sharkle only
 #if defined(CONFIG_ISP_2_3)
-                if (is_raw_capture == 0) {
-                    if (exif_unit->picture_size.height == 1952 &&
-                        exif_unit->picture_size.width == 2592) {
-                        exif_unit->picture_size.height = 1944;
-                    } else if (exif_unit->picture_size.height == 1472 &&
-                               exif_unit->picture_size.width == 2592) {
-                        exif_unit->picture_size.height = 1458;
-                    } else if (exif_unit->picture_size.height == 1840 &&
-                               exif_unit->picture_size.width == 3264) {
-                        exif_unit->picture_size.height = 1836;
-                    } else if (exif_unit->picture_size.height == 368 &&
-                               exif_unit->picture_size.width == 640) {
-                        exif_unit->picture_size.height = 360;
-                    }
-
-                    if (exif_unit->actual_picture_size.height == 1952 &&
-                        exif_unit->actual_picture_size.width == 2592) {
-                        exif_unit->actual_picture_size.height = 1944;
-                    } else if (exif_unit->actual_picture_size.height == 1472 &&
-                               exif_unit->actual_picture_size.width == 2592) {
-                        exif_unit->actual_picture_size.height = 1458;
-                    } else if (exif_unit->actual_picture_size.height == 1840 &&
-                               exif_unit->actual_picture_size.width == 3264) {
-                        exif_unit->actual_picture_size.height = 1836;
-                    } else if (exif_unit->actual_picture_size.height == 368 &&
-                               exif_unit->actual_picture_size.width == 640) {
-                        exif_unit->actual_picture_size.height = 360;
-                    }
-                }
-#endif
+    if ((is_raw_capture == 0) && (hal_param->originalPictureSize.height % 16 != 0)) {
+          if (exif_unit->picture_size.width == hal_param->originalPictureSize.width &&
+               exif_unit->picture_size.height != hal_param->originalPictureSize.height) {
+               exif_unit->picture_size.height = hal_param->originalPictureSize.height;
+          }
+          if (exif_unit->actual_picture_size.width == hal_param->originalPictureSize.width &&
+               exif_unit->actual_picture_size.height != hal_param->originalPictureSize.height) {
+               exif_unit->actual_picture_size.height  = hal_param->originalPictureSize.height;
+          }
     }
+#endif
 
     time(&timep);
     p = localtime(&timep);
@@ -3863,6 +3845,24 @@ setting_set_highflash_ae_measure(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_original_picture_size(struct setting_component *cpt,
+                                    struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    hal_param->originalPictureSize.height = parm->originalPictureSize.height;
+    hal_param->originalPictureSize.width = parm->originalPictureSize.width;
+    return ret;
+}
+
+static cmr_int setting_get_original_picture_size(struct setting_component *cpt,
+                                    struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->originalPictureSize.height = hal_param->originalPictureSize.height;
+    parm->originalPictureSize.width = hal_param->originalPictureSize.width;
+    return ret;
+}
+
 cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
     if (cmd < SETTING_TYPE_MAX) {
         CMR_LOGD(" cmd %lu,fun_ptr %p", cmd, fun_ptr);
@@ -4133,6 +4133,10 @@ static cmr_int cmr_setting_parms_init() {
                              setting_clear_ae_adjust);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_SENSOR_ORIENTATION,
                              setting_get_sensor_orientation);
+    cmr_add_cmd_fun_to_table(SETTING_SET_ORIGINAL_PICTURE_SIZE,
+                             setting_set_original_picture_size);
+    cmr_add_cmd_fun_to_table(SETTING_GET_ORIGINAL_PICTURE_SIZE,
+                             setting_get_original_picture_size);
     setting_parms_inited = 1;
     return 0;
 }

@@ -6157,7 +6157,7 @@ int SprdCamera3OEMIf::openCamera() {
     cmr_u16 picW, picH, snsW, snsH;
     int i = 0;
     char file_name[128];
-    struct exif_info exif_info = {0, 0};
+    struct exif_info exif_info = {0, 0, {0, 0}};
     LENS_Tag lensInfo;
     SPRD_DEF_Tag *sprddefInfo;
     struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
@@ -11601,6 +11601,13 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
     HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
 
     return ret;
+}
+
+void SprdCamera3OEMIf::setOriginalPictureSize( int32_t width ,int32_t  height) {
+   if (width == 0 || height == 0) {
+         CMR_LOGI("original picture width and height must not be 0");
+    }
+    mHalOem->ops->camera_set_original_picture_size(mCameraHandle ,width,height);
 }
 
 #endif

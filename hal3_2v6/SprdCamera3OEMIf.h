@@ -333,6 +333,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isVideoCopyFromPreview();
     int camera_ioctrl(int cmd, void *param1, void *param2);
     void setMimeType(int type);
+    void setOriginalPictureSize(int32_t width,int32_t height);
 
   public:
     uint32_t isPreAllocCapMem();

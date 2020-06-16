@@ -1355,6 +1355,12 @@ cmr_int camera_set_gpu_mem_ops(cmr_handle camera_handle, void *cb_of_malloc,
 
     return ret;
 }
+
+void camera_set_original_picture_size(cmr_handle handle,int32_t width,
+                                      int32_t height) {
+    camera_local_set_original_picture_size(handle,width,height);
+}
+
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1396,6 +1402,7 @@ static oem_ops_t oem_module_ops = {
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     camera_set_mm_dvfs_policy,
 #endif
+    camera_set_original_picture_size,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

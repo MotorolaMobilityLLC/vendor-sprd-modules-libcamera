@@ -2671,7 +2671,7 @@ bool SprdCamera3OEMIf::startCameraIfNecessary() {
     cmr_uint is_support_zsl = 0;
     cmr_uint max_width = 0;
     cmr_uint max_height = 0;
-    struct exif_info exif_info = {0, 0};
+    struct exif_info exif_info = {0, 0, {0, 0}};
     LENS_Tag lensInfo;
     SPRD_DEF_Tag sprddefInfo;
     memset(&sprddefInfo, 0, sizeof(SPRD_DEF_Tag));

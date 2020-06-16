@@ -699,6 +699,7 @@ cmr_int camera_get_fb_param(cmr_handle oem_handle, struct isp_fb_param_info *par
 cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);
+void camera_local_set_original_picture_size(cmr_handle oem_handle ,int32_t width , int32_t height);
 
 
 #ifdef __cplusplus

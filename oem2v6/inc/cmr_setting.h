@@ -96,6 +96,8 @@ enum setting_cmd_type {
     SETTING_GET_SPRD_TIME_WATERMARK,
     SETTING_CTRL_AE_NOTIFY,
     SETTING_CLEAR_AE_NOTIFY,
+    SETTING_SET_ORIGINAL_PICTURE_SIZE,
+    SETTING_GET_ORIGINAL_PICTURE_SIZE,
     SETTING_TYPE_MAX
 };
 
@@ -106,6 +108,7 @@ enum setting_io_type {
     SETTING_IO_GET_PREVIEW_MODE,
     SETTING_IO_GET_FLASH_MAX_CAPACITY,
     SETTING_IO_SET_TOUCH,
+    SETTING_IO_SET_ORIGINAL_PICTURE_SIZE,
     SETTING_IO_TYPE_MAX
 };
 
@@ -144,6 +147,7 @@ struct setting_cmd_parameter {
         struct cmr_ae_compensation_param ae_compensation_param;
         struct cmr_range_fps_param range_fps;
         struct touch_coordinate touch_param;
+        struct img_size originalPictureSize;
     };
 };
 

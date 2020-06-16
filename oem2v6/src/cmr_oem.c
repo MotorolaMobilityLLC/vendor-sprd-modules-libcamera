@@ -7064,41 +7064,14 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     setting_param.camera_id = cxt->camera_id;
 
 #if defined(CONFIG_ISP_2_3)
-    if (is_raw_capture == 0) {
-        if (dst->size.height == 2352 && dst->size.width == 4160) {
-            enc_dst.size.height = 2340;
-        } else if (dst->size.height == 3008 && dst->size.width == 4000) {
-            enc_dst.size.height = 3000;
-        } else if (dst->size.height == 2256 && dst->size.width == 4000) {
-            enc_dst.size.height = 2250;
-        } else if (dst->size.height == 1904 && dst->size.width == 4000) {
-            enc_dst.size.height = 1896;
-        } else if (dst->size.height == 1952 && dst->size.width == 2592) {
-            enc_dst.size.height = 1944;
-        } else if (dst->size.height == 1472 && dst->size.width == 2592) {
-            enc_dst.size.height = 1458;
-        } else if (dst->size.height == 1232 && dst->size.width == 2592) {
-            enc_dst.size.height = 1224;
-        } else if (dst->size.height == 1744 && dst->size.width == 2320) {
-            enc_dst.size.height = 1740;
-        } else if (dst->size.height == 1840 && dst->size.width == 3264) {
-            enc_dst.size.height = 1836;
-        } else if (dst->size.height == 1088 && dst->size.width == 2272) {
-            enc_dst.size.height = 1080;
-        } else if (dst->size.height == 1088 && dst->size.width == 2160) {
-            enc_dst.size.height = 1080;
-        } else if (dst->size.height == 1088 && dst->size.width == 1440) {
-            enc_dst.size.height = 1080;
-        } else if (dst->size.height == 912 && dst->size.width == 1600) {
-            enc_dst.size.height = 900;
-        } else if (dst->size.height == 768 && dst->size.width == 1600) {
-            enc_dst.size.height = 758;
-        } else if (dst->size.height == 608 && dst->size.width == 800) {
-            enc_dst.size.height = 600;
-        } else if (dst->size.height == 368 && dst->size.width == 640) {
-            enc_dst.size.height = 360;
-        }
-    }
+     if (is_raw_capture == 0) {
+           ret = cmr_setting_ioctl(setting_cxt->setting_handle,SETTING_GET_ORIGINAL_PICTURE_SIZE, &setting_param);
+           if ( (setting_param.originalPictureSize.height % 16 != 0) &&
+                (setting_param.originalPictureSize.height !=  dst->size.height &&
+                 setting_param.originalPictureSize.width == dst->size.width)) {
+                 enc_dst.size.height = setting_param.originalPictureSize.height;
+            }
+     }
 #endif
 
 /* from sharkl2, jpeg support mirror/flip/rotation, mirror feature always use
@@ -15568,4 +15541,14 @@ cmr_int cmr_get_bokeh_sn_trim(cmr_handle handle,
 #endif
 
     return ret;
+}
+
+void camera_local_set_original_picture_size(cmr_handle oem_handle , int32_t width , int32_t height ){
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    setting_param.originalPictureSize.width = width;
+    setting_param.originalPictureSize.height = height;
+    setting_param.camera_id = cxt->camera_id;
+    cmr_setting_ioctl(setting_cxt->setting_handle,SETTING_SET_ORIGINAL_PICTURE_SIZE, &setting_param);
 }

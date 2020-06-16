@@ -212,6 +212,8 @@ cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
                                   enum DVFS_MM_MODULE module,
                                   enum CamProcessingState camera_state);
 #endif
+void camera_set_original_picture_size(cmr_handle camera_handle,
+                                   int32_t width,int32_t height);
 
 #ifdef __cplusplus
 }

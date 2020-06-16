@@ -892,6 +892,7 @@ int SprdCamera3HWI::configureStreams(
     mOEMIf->setUltraWideMode();
 
 #if defined(CONFIG_ISP_2_3)
+    mOEMIf->setOriginalPictureSize(capture_size.width,capture_size.height);
    //do aligment for sharkle due to hardware diff
     if (capture_size.height % 16 != 0) {
             capture_size.height = capture_size.height + 16 - capture_size.height % 16;

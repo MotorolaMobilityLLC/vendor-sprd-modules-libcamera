@@ -1088,6 +1088,7 @@ struct sensor_view_angle {
 struct exif_info {
     float aperture;
     float focus_distance;
+    struct img_size originalImageSize;
 };
 
 struct sensor_exp_info {
@@ -2371,7 +2372,8 @@ typedef struct oem_ops {
                                          enum DVFS_MM_MODULE module,
                                          enum CamProcessingState camera_state);
 #endif
-
+    void (*camera_set_original_picture_size)(cmr_handle handle, int32_t width,
+                                             int32_t height);
 } oem_ops_t;
 
 typedef struct oem_module {
