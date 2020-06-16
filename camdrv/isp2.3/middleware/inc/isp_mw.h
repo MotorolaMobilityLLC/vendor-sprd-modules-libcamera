@@ -129,6 +129,8 @@ enum isp_callback_cmd {
 	ISP_3DNR_CALLBACK = 0x00009000,
 	ISP_HIST_REPORT_CALLBACK = 0x0000A000,
 	ISP_EV_EFFECT_CALLBACK = 0x0000B000,
+	ISP_FDR_EV_EFFECT_CALLBACK = 0x0000C000,
+	ISP_AUTO_FDR_STATUS_CALLBACK = 0x0000D000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -387,6 +389,17 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AI_SET_FD_STATUS,
 	ISP_CTRL_SET_VCM_DIST,
 	ISP_CTRL_GET_YNRS_PARAM,
+	ISP_CTRL_SET_DBG_TAG,
+	ISP_CTRL_SET_FDR_DBG_DATA,
+	ISP_CTRL_INIT_FDR,
+	ISP_CTRL_DEINIT_FDR,
+	ISP_CTRL_START_FDR,
+	ISP_CTRL_STOP_FDR,
+	ISP_CTRL_UPDATE_FDR,
+	ISP_CTRL_DONE_FDR,
+	ISP_CTRL_AUTO_FDR_MODE,
+	ISP_CTRL_GET_BLC,
+	ISP_CTRL_GET_POSTEE,
 	ISP_CTRL_AE_SET_TARGET_REGION,
 	ISP_CTRL_AE_SET_REF_CAMERA_ID,
 	ISP_CTRL_AE_SET_VISIBLE_REGION,
@@ -760,6 +773,12 @@ struct isp_hdr_param {
 	cmr_u32 ev_effect_valid_num;
 };
 
+struct isp_fdr_param {
+	cmr_u32 fdr_enable;
+	cmr_u32 ev_effect_valid_num;
+	cmr_u32 ev_effect_cnt;
+};
+
  enum camera_snapshot_tpye {
 	SNAPSHOT_NULL = 0,
 	SNAPSHOT_DRE,
@@ -776,6 +795,37 @@ struct isp_snp_ae_param {   // param OEM sent to ISP
 struct isp_info {
 	void *addr;
 	cmr_s32 size;
+};
+
+struct isp_blkpm_t {
+	cmr_u32 param_size;
+	void *param_ptr;
+	cmr_u32 *multi_nr_map;
+	cmr_s32 mode_num;
+	cmr_s32 scene_num;
+	cmr_s32 level_num;
+	cmr_s32 mode_id;
+	cmr_s32 scene_id;
+	cmr_s32 ai_scene_id;
+	/* smart result */
+	cmr_s32 idx0;
+	cmr_s32 idx1;
+	cmr_s32 weight0;
+	cmr_s32 weight1;
+};
+
+struct isp_blc_data {
+	cmr_u32 r;
+	cmr_u32 b;
+	cmr_u32 gr;
+	cmr_u32 gb;
+};
+
+struct isp_nlm_factor {
+	cmr_s32 nlm_out_ratio0;
+	cmr_s32 nlm_out_ratio1;
+	cmr_s32 nlm_out_ratio2;
+	cmr_s32 nlm_out_ratio3;
 };
 
 struct isp_hdr_ev_param {
@@ -1007,6 +1057,57 @@ struct isp_exp_compensation{
 	cmr_s32 step_numerator;
 	cmr_s32 step_denominator;
 };
+
+
+/* for new raw capture sulotion  --- start */
+#define CAMDBG_FIXED_BYTES  (0x1A2B3C4D)
+
+enum {
+	CAMINFO_OTP = 0x01,
+	CAMINFO_AE = 0x10,
+	CAMINFO_AF = 0x11,
+	CAMINFO_AFL = 0x12,
+	CAMINFO_AWB = 0x13,
+	CAMINFO_PDAF = 0x14,
+	CAMINFO_SMARTIN = 0x1F,
+
+	CAMINFO_DRVPM = 0x20,
+
+	/*Tuning param */
+	CAMINFO_FDR_BASE = 0x31,
+	CAMINFO_FDR_TUN = 0x32,
+	CAMINFO_POSTEE = 0x33,
+};
+
+
+struct cam_debug_data_header {
+	cmr_s32 fixed_bytes;
+	cmr_s32 data_type;
+	cmr_s32 data_size;
+	cmr_s32 reserved;
+	char data_name[8];
+	cmr_s32 reserved1[2];
+};
+
+struct isp_fdr_dbgdata {
+	cmr_s32 align_mode;
+	cmr_s32 merge_mode;
+	cmr_s32 fusion_mode;
+	cmr_s32 run_type;
+	cmr_s32 pre_bv;
+	cmr_s32 total_frm_num;
+	cmr_s32 ref_frm_num;
+	cmr_s32 sensor_gain;
+	cmr_s32 bv;
+	cmr_s32 merge_gain;
+	cmr_s32 merge_bin0;
+	cmr_s32 nlm_out_ratio0;
+	cmr_s32 nlm_out_ratio1;
+	cmr_s32 nlm_out_ratio2;
+	cmr_s32 nlm_out_ratio3;
+	cmr_s32 reserved[5];
+};
+/* for new raw capture sulotion  --- end */
 
 struct isp_ops {
 	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);

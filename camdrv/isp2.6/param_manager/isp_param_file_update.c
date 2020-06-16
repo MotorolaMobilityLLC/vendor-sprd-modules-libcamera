@@ -89,7 +89,6 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 };
 #elif defined CONFIG_ISP_2_7 /* for SharkL5Pro */
 char nr_param_name[ISP_BLK_NR_MAX][20] = {
-	/* todo */
 	"bayer_nr",
 	"vst",
 	"ivst",
@@ -115,6 +114,7 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"ynrs",
 	"cnr3",
 	"mfnr",
+	"post_ee",
 };
 #endif
 
@@ -133,7 +133,9 @@ char nr_mode_name[MAX_MODE_NUM][12] = {
 	"video_1",
 	"video_2",
 	"video_3",
-	"main",
+	"fdr_cap0",
+	"fdr_cap1",
+	"fdr_cap2",
 };
 
 char nr_scene_name[MAX_SCENEMODE_NUM][12] = {
@@ -1702,7 +1704,7 @@ cmr_s32 read_libuse_info(FILE * fp, struct sensor_raw_info * sensor_raw_ptr)
 	return 0;
 }
 
-cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name)
+cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name, char *param_path)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 i = 0, j = 0, k = 0;
@@ -1749,6 +1751,8 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	for (k = 0; k < ISP_BLK_NR_MAX; k++) {
 		size_of_per_unit = nr_set_size[k] * nr_level_number_ptr->nr_level_map[k];
 		nr_param_ptr = nr_ptr[k].nr_ptr;
+		ISP_LOGD("check NR block %s\n",  nr_param_name[k]);
+
 		for (i = 0; i < MAX_MODE_NUM; i++) {
 			if (multi_nr_scene_map_ptr[i] == 0)
 				continue;
@@ -1758,12 +1762,13 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 			}
 			for (j = 0; j < MAX_SCENEMODE_NUM; j++) {
 				if ((multi_nr_scene_map_ptr[i] >> j) & 0x01) {
-					sprintf(filename, "%s%s_%s_%s_%s_param.bin", CAMERA_DUMP_PATH, sensor_name,
+					sprintf(filename, "%s%s_%s_%s_%s_param.bin", param_path, sensor_name,
 						nr_mode_name[i], nr_scene_name[j], nr_param_name[k]);
 					if (0 != access(filename, R_OK)) {
 						ISP_LOGI("no such file : %s",filename);
 					} else {
 						if (NULL != (fp = fopen(filename, "rb"))) {
+							ISP_LOGD("OKOK to fopen %s",filename);
 							rtn = fread((void *)nr_param_ptr, 1, size_of_per_unit, fp);
 							if (rtn < 0) {
 								ISP_LOGE("fail to fread %s",filename);
@@ -1786,7 +1791,7 @@ cmr_s32 read_nr_param(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	return rtn;
 }
 
-cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name)
+cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *sensor_name, char *param_path)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_s32 i = 0;
@@ -1810,7 +1815,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	struct sensor_nr_scene_map_param *nr_map_ptr = PNULL;
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
-	char *filename[14] = { PNULL };
+	char *filename[MAX_MODE_NUM + 1] = { PNULL };
 	FILE *fp = PNULL;
 
 	version_id = sensor_raw_ptr->version_info->version_id;
@@ -1832,7 +1837,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		return rtn;
 	}
 
-	for (i = 0; i < 14; i++) {
+	for (i = 0; i < (MAX_MODE_NUM + 1); i++) {
 		filename[i] = (char *)malloc(256 * sizeof(char));
 		if (NULL == filename[i]) {
 			ISP_LOGE("fail to malloc mem!");
@@ -1841,7 +1846,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		}
 	}
 
-	sprintf(filename[0], "%s%s", CAMERA_DUMP_PATH, "isp_nr.h");
+	sprintf(filename[0], "%s%s", param_path, "isp_nr.h");
 	sprintf(nr_level_number, "static struct sensor_nr_level_map_param s_%s_nr_level_number_map_param", sensor_name);
 	sprintf(nr_default_level, "static struct sensor_nr_level_map_param s_%s_default_nr_level_map_param", sensor_name);
 	sprintf(nr_scene_map, "static struct sensor_nr_scene_map_param s_%s_nr_scene_map_param", sensor_name);
@@ -1858,6 +1863,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		rtn = 0x01;
 		goto exit;
 	}
+	ISP_LOGD("OKOK to fopen %s",filename[0]);
 
 	while (!feof(fp)) {
 		if (fgets(line_buf, 512, fp) == NULL) {
@@ -1901,20 +1907,26 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	fclose(fp);
 
 	sprintf(libuse_info, "static uint32_t s_%s_libuse_info", sensor_name);
-	for (i = 0; i < 14; i++) {
-		sprintf(filename[i], "%ssensor_%s_raw_param_%s.c", CAMERA_DUMP_PATH, sensor_name, &nr_mode_name[i][0]);
-		sprintf(tune_info, "static uint8_t s_%s_tune_info_%s", sensor_name, &nr_mode_name[i][0]);
-		sprintf(note_name, "static uint8_t s_%s_%s_tool_ui_input", sensor_name, &nr_mode_name[i][0]);
-		sprintf(ae_tab, "static struct ae_table_param_2 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
-		sprintf(ae3_tab, "static struct ae_table_param_3 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
-		sprintf(awb_tab, "static struct sensor_awb_table_param s_%s_%s_awb_table_param", sensor_name, &nr_mode_name[i][0]);
-		sprintf(lsc_tab, "static struct sensor_lsc_2d_table_param s_%s_%s_lsc_2d_table_param", sensor_name, &nr_mode_name[i][0]);
+
+	for (i = 0; i < (MAX_MODE_NUM + 1); i++) {
+		if (i < MAX_MODE_NUM) {
+			sprintf(filename[i], "%ssensor_%s_raw_param_%s.c", param_path, sensor_name, &nr_mode_name[i][0]);
+			sprintf(tune_info, "static uint8_t s_%s_tune_info_%s", sensor_name, &nr_mode_name[i][0]);
+			sprintf(note_name, "static uint8_t s_%s_%s_tool_ui_input", sensor_name, &nr_mode_name[i][0]);
+			sprintf(ae_tab, "static struct ae_table_param_2 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
+			sprintf(ae3_tab, "static struct ae_table_param_3 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
+			sprintf(awb_tab, "static struct sensor_awb_table_param s_%s_%s_awb_table_param", sensor_name, &nr_mode_name[i][0]);
+			sprintf(lsc_tab, "static struct sensor_lsc_2d_table_param s_%s_%s_lsc_2d_table_param", sensor_name, &nr_mode_name[i][0]);
+		} else {
+			sprintf(filename[i], "%ssensor_%s_raw_param_main.c", param_path, sensor_name);
+		}
 
 		fp = fopen(filename[i], "r");
 		if (NULL == fp) {
 			ISP_LOGE("fail to open file %s!\n", filename[i]);
 			continue;
-		}
+		} else
+			ISP_LOGD("OKOK to open file %s\n", filename[i]);
 
 		while (!feof(fp)) {
 			if (fgets(line_buf, 512, fp) == NULL) {
@@ -2023,7 +2035,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		fclose(fp);
 	}
 
-	rtn = read_nr_param(sensor_raw_ptr, sensor_name);
+	rtn = read_nr_param(sensor_raw_ptr, sensor_name, param_path);
 	if (0x00 != rtn) {
 		ISP_LOGE("fail to read_nr_param!");
 		goto exit;
@@ -2041,7 +2053,7 @@ exit:
 	return rtn;
 }
 
-cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
+cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr, char *data_path)
 {
 	cmr_s32 rtn = 0x00;
 	const char *sensor_name = PNULL;
@@ -2052,10 +2064,17 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 	char *filename = NULL;
 	char filename0[256];
 	char filename1[256];
+	char path[256];
 	sensor_name = (char *)&sensor_raw_info_ptr->version_info->sensor_ver_name.sensor_name;
 
-	sprintf(filename0, "%ssensor_%s_raw_param.c", CAMERA_DUMP_PATH, sensor_name);
-	sprintf(filename1, "%ssensor_%s_raw_param_common.c", CAMERA_DUMP_PATH, sensor_name);
+	if (data_path && data_path[0] != 0) {
+		ISP_LOGD("tuning param data path %s\n", data_path);
+		strcpy(path, data_path);
+	} else {
+		strcpy(path, CAMERA_DUMP_PATH);
+	}
+	sprintf(filename0, "%ssensor_%s_raw_param.c", path, sensor_name);
+	sprintf(filename1, "%ssensor_%s_raw_param_common.c", path, sensor_name);
 
 	if (-1 != access(filename0, 0)) {
 		ISP_LOGV("access %s!\n", filename0);
@@ -2078,7 +2097,7 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr)
 
 	version_id = sensor_raw_info_ptr->version_info->version_id;
 	if ((version_id & PM_VER_CHIP_MASK) >= ISP_PARAM_VERSION_V25) {
-		rtn = update_params(sensor_raw_info_ptr, sensor_name);
+		rtn = update_params(sensor_raw_info_ptr, sensor_name, path);
 		if (0x00 != rtn) {
 			ISP_LOGE("fail to update param!");
 			return rtn;

@@ -40,9 +40,17 @@ enum {
 	PM_CHIP_VER_V27 = 0x000B0000,
 };
 
+#ifndef MAX
+#define MAX(a, b) ((a > b) ? a : b)
+#endif
+#ifndef MIN
+#define MIN(a, b) ((a < b) ? a : b)
+#endif
+
 enum {
 	PARAM_SET0 = 0,
 	PARAM_SET1,
+	PARAM_SET2,
 	PARAM_SET_MAX
 };
 
@@ -150,6 +158,7 @@ enum isp_pm_blk_cmd {
 	ISP_PM_BLK_NLM_BASE = 0x1300,
 	ISP_PM_BLK_NLM_BYPASS,
 	ISP_PM_BLK_NLM_STRENGTH_LEVEL,
+	ISP_PM_BLK_NLM_FDR_UPDATE,
 
 	ISP_PM_BLK_IVST_BASE = 0x1400,
 	ISP_PM_BLK_IVST_BYPASS,
@@ -283,6 +292,7 @@ struct isp_pm_nr_simple_header_param {
 	cmr_u32 nr_mode_setting;
 	cmr_uint *multi_nr_map_ptr;
 	cmr_uint *param_ptr;
+	cmr_u32 param_size;
 };
 
 #ifdef	 __cplusplus

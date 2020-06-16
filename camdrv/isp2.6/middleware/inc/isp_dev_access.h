@@ -35,6 +35,7 @@
 #define ISP_EVT_HIST2			(1 << 11)
 #define ISP_EVT_CFG				(1 << 12)
 #define ISP_EVT_LSC				(1 << 13)
+#define ISP_EVT_PARAM			(1 << 14)
 
 
 enum isp_dev_access_ctrl_cmd {

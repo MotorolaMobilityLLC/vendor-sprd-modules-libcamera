@@ -249,6 +249,72 @@ cmr_s32 _pm_nlm_set_param(void *nlm_param, cmr_u32 cmd, void *param_ptr0, void *
 		}
 		break;
 
+	case ISP_PM_BLK_NLM_FDR_UPDATE: {
+		cmr_s32 i, j;
+		struct isp_nlm_factor *in = (struct isp_nlm_factor *)param_ptr0;
+		struct isp_dev_nlm_info_v2 *cur = &nlm_ptr->cur;
+
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 3; j++) {
+				cmr_s32 val = (cmr_s32)cur->lum_flat[i][j].thresh;
+				ISP_LOGD("thresh  %d, val %d\n", cur->lum_flat[i][j].thresh, val);
+				val = val + in->nlm_out_ratio0;
+				val = MAX(0, MIN(val, 9207));
+				cur->lum_flat[i][j].thresh = (cmr_u16)(val & 0xFFFF);
+			}
+		}
+
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 4; j++) {
+				cmr_s32 val = (cmr_s32)cur->lum_flat_addback_max[i][j];
+				ISP_LOGD("lum_flat_addback_max  %d, val %d\n",
+					cur->lum_flat_addback_max[i][j], val);
+				val = val + in->nlm_out_ratio1;
+				val = MAX(0, MIN(val, 1023));
+				cur->lum_flat_addback_max[i][j] = (cmr_u16)(val & 0xFFFF);
+
+				val = (cmr_s32)cur->lum_flat_addback_min[i][j];
+				/* lum_flat_addback_min should be signed int, maybe negtive */
+				ISP_LOGD("orig %d, val %d\n", cur->lum_flat_addback_min[i][j], val);
+				val <<= 16;
+				val >>= 16;
+				ISP_LOGD("new val %d\n", val);
+
+				val = val + in->nlm_out_ratio1;
+				val =  MAX(-1024, MIN(val, 0));
+				cur->lum_flat_addback_min[i][j] = (cmr_u16)(val & 0xFFFF);
+			}
+		}
+
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 3; j++) {
+				cmr_s32 val = (cmr_s32)cur->nlm_first_lum_flat_thresh_coef[i][j];
+				ISP_LOGD("nlm_first_lum_flat_thresh_coef  %d, val %d\n",
+					cur->nlm_first_lum_flat_thresh_coef[i][j], val);
+
+				val <<= 16;
+				val >>= 16;
+				val = val + in->nlm_out_ratio2;
+				val = MAX(-8192, MIN(val, 8191));
+				cur->nlm_first_lum_flat_thresh_coef[i][j]  = (cmr_u32)val;
+			}
+		}
+
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 3; j++) {
+				cmr_s32 val = (cmr_s32)cur->nlm_first_lum_flat_thresh_max[i][j];
+
+				ISP_LOGD("nlm_first_lum_flat_thresh_max  %d, val %d\n",
+					cur->nlm_first_lum_flat_thresh_max[i][j], val);
+
+				val = val + in->nlm_out_ratio3;
+				val = MAX(0, MIN(val, 9207));
+				cur->nlm_first_lum_flat_thresh_max[i][j]  = val;
+			}
+		}
+		nlm_header_ptr->is_update = ISP_ONE;
+		break;
+	}
 	default:
 		break;
 	}

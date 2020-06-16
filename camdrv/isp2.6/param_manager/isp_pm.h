@@ -45,13 +45,16 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_UNLOCK,
 	ISP_PM_CMD_SET_BASE = 0x1000,
 	ISP_PM_CMD_SET_MODE,
+	ISP_PM_CMD_SET_FDR_MODE,
+	ISP_PM_CMD_SET_FDR_LOCK,
+	ISP_PM_CMD_SET_FDR_UNLOCK,
+	ISP_PM_CMD_SET_FDR_PARAM,
 	ISP_PM_CMD_SET_AWB,
-	ISP_PM_CMD_SET_AE,
-	ISP_PM_CMD_SET_AF,
 	ISP_PM_CMD_SET_SMART,
 	ISP_PM_CMD_SET_OTHERS,
 	ISP_PM_CMD_SET_GRID0,
 	ISP_PM_CMD_SET_GRID1,
+	ISP_PM_CMD_SET_GRID2,
 	ISP_PM_CMD_SET_SPECIAL_EFFECT,
 	ISP_PM_CMD_SET_PARAM_SOURCE,
 	ISP_PM_CMD_SET_LOWLIGHT_FLAG,
@@ -71,6 +74,8 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
 	ISP_PM_CMD_GET_ISP_SETTING,
 	ISP_PM_CMD_GET_ISP_ALL_SETTING,
+	ISP_PM_CMD_GET_ISP_FDR_SETTING,
+	ISP_PM_CMD_GET_ISP_FDR_ALL_SETTING,
 	ISP_PM_CMD_GET_DV_MODEID_BY_FPS,
 	ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION,
 	ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION,
@@ -79,6 +84,8 @@ enum isp_pm_cmd {
 	ISP_PM_CMD_GET_AE_ADAPT_PARAM,
 	ISP_PM_CMD_GET_4IN1_PARAM,
 	ISP_PM_CMD_GET_ATM_PARAM,
+	ISP_PM_CMD_GET_FDR_PARAM,
+	ISP_PM_CMD_GET_MULTI_NRDATA,
 
 	ISP_PM_CMD_UPDATE_BASE = 0x3000,
 	ISP_PM_CMD_UPDATE_ALL_PARAMS,
@@ -110,6 +117,7 @@ struct isp_pm_init_input {
 	struct sensor_raw_fix_info *fix_data[ISP_TUNE_MODE_MAX];
 	struct sensor_nr_fix_info *nr_fix_info;
 	cmr_u32 is_4in1_sensor;
+	cmr_s8 *push_param_path;
 };
 
 struct isp_pm_init_output {
@@ -126,16 +134,8 @@ struct isp_pm_ioctl_output {
 	cmr_u32 param_num;
 };
 
-struct isp_pm_ioctl_input_param {
-	struct isp_pm_param_data *param_data_ptr;
-	struct isp_pm_param_data *prv_param_data_ptr;
-	struct isp_pm_param_data *cap_param_data_ptr;
-	cmr_u32 param_num;
-	cmr_u32 prv_param_num;
-	cmr_u32 cap_param_num;
-};
 
-struct isp_pm_ioctl_output_param {
+struct isp_pm_setting_params {
 	struct isp_pm_param_data *param_data;
 	struct isp_pm_param_data *prv_param_data;
 	struct isp_pm_param_data *cap_param_data;

@@ -56,6 +56,8 @@
 
 #ifdef CONFIG_ISP_2_7
 
+#define CAM_RAW_BITS (14)
+
 #define STATIS_AEM_BUF_NUM 4
 #define STATIS_AFM_BUF_NUM 4
 #define STATIS_AFL_BUF_NUM 3
@@ -69,9 +71,16 @@
 #define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE)
 #define AFL_RBUF_OFFSET	STATIS_AFL_GBUF_SIZE
 
+#define PM0_SIZE	(sizeof(struct dcam_param_data_l5pro) + sizeof(struct debug_base_info))
+#define DCAM_PARAM_SIZE  (cmr_u32)((PM0_SIZE + 15) & ~15)
+#define PM1_SIZE 	(sizeof(struct isp_param_data_l5pro) + sizeof(struct debug_base_info))
+#define ISP_PARAM_SIZE	(cmr_u32)((PM1_SIZE + 15) & ~15)
+
 #else
 
 #ifdef CONFIG_ISP_2_5
+
+#define CAM_RAW_BITS (10)
 
 #define STATIS_AEM_BUF_NUM 4
 #define STATIS_AFM_BUF_NUM 4
@@ -85,7 +94,14 @@
 #define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE3)
 #define AFL_RBUF_OFFSET	STATIS_AFL_GBUF_SIZE3
 
+#define PM0_SIZE	(sizeof(struct dcam_param_data_l3) + sizeof(struct debug_base_info))
+#define DCAM_PARAM_SIZE  (cmr_u32)((PM0_SIZE + 15) & ~15)
+#define PM1_SIZE 	(sizeof(struct isp_param_data_l3) + sizeof(struct debug_base_info))
+#define ISP_PARAM_SIZE	(cmr_u32)((PM1_SIZE + 15) & ~15)
+
 #else
+
+#define CAM_RAW_BITS (10)
 
 #define STATIS_AEM_BUF_NUM 4
 #define STATIS_AFM_BUF_NUM 4
@@ -98,6 +114,8 @@
 #define STATIS_ISP_HIST2_BUF_NUM 4
 #define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE)
 #define AFL_RBUF_OFFSET	STATIS_AFL_GBUF_SIZE
+#define DCAM_PARAM_SIZE  0
+#define ISP_PARAM_SIZE  0
 
 #endif
 
@@ -168,9 +186,24 @@ struct isp_stats_alloc_info {
 	cmr_uint uaddr[STATIS_BUF_NUM_MAX];
 };
 
+struct isp_pmdbg_alloc_info {
+	cmr_u32 alloc_num;
+	cmr_u32 alloc_size;
+	cmr_u32 align_alloc_size;
+	cmr_s32 alloc_mfd[PARAM_BUF_NUM_MAX];
+	cmr_uint alloc_uaddr[PARAM_BUF_NUM_MAX];
+
+	cmr_u32 size;
+	cmr_u32 align_size;
+	cmr_u32 num;
+	cmr_s32 mfd[PARAM_BUF_NUM_MAX];
+	cmr_u32 offset[PARAM_BUF_NUM_MAX];
+	cmr_uint uaddr[PARAM_BUF_NUM_MAX];
+};
 
 struct isp_mem_info {
 	struct isp_stats_alloc_info buf_info[STATIS_TYPE_MAX];
+	struct isp_pmdbg_alloc_info dbg_buf;
 
 	void *buffer_client_data;
 	cmr_malloc alloc_cb;

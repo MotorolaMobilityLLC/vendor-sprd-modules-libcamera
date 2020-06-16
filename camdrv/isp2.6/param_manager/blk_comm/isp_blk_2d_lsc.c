@@ -99,9 +99,10 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
 	_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, dst_ptr->map_tab[index].grid);
 
-	dst_ptr->cur.grid_tab = dst_ptr->final_lsc_param.data_ptr;
+	dst_ptr->cur.grid_tab_addr = (cmr_u64)dst_ptr->final_lsc_param.data_ptr;
 	dst_ptr->cur.gridtab_len = dst_ptr->map_tab[index].gain_w * dst_ptr->map_tab[index].gain_h * 4 * sizeof(cmr_u16);
-	dst_ptr->cur.weight_tab = (void *)dst_ptr->weight_tab;
+
+	dst_ptr->cur.weight_tab_addr = (cmr_u64)dst_ptr->weight_tab;
 	dst_ptr->cur.weight_num =  (dst_ptr->map_tab[index].grid / 2 + 1) * 3 * sizeof(cmr_s16);
 	dst_ptr->cur.grid_width = dst_ptr->map_tab[index].grid;
 
@@ -146,11 +147,13 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 			cmr_u16 *ptr = NULL;
 
 			memcpy((void *)dst_lnc_ptr->final_lsc_param.data_ptr, param_ptr0, dst_lnc_ptr->final_lsc_param.size);
-			dst_lnc_ptr->cur.grid_tab = dst_lnc_ptr->final_lsc_param.data_ptr;
+			dst_lnc_ptr->cur.grid_tab_addr = (cmr_u64)dst_lnc_ptr->final_lsc_param.data_ptr;
+
 			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
 			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
 
-			ptr = (void *)dst_lnc_ptr->cur.grid_tab;
+			ptr = (cmr_u16 *)dst_lnc_ptr->final_lsc_param.data_ptr;
+
 			ISP_LOGV("lsc[0]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *ptr, *(ptr + 1), *(ptr + 2), *(ptr + 3));
 			ISP_LOGV("lsc[1]: 0x%0x, 0x%0x, 0x%0x, 0x%0x", *(ptr + 4), *(ptr + 5), *(ptr + 6), *(ptr + 7));
 		}
@@ -177,7 +180,8 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 				memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
 				_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, lsc_grid);
 
-				dst_ptr->cur.weight_tab = (void *)dst_ptr->weight_tab;
+				dst_ptr->cur.weight_tab_addr = (cmr_u64)dst_ptr->weight_tab;
+
 				dst_ptr->lsc_info.grid = lsc_grid;
 				dst_ptr->resolution.w = cur_resolution_w;
 				dst_ptr->resolution.h = cur_resolution_h;

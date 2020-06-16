@@ -34,7 +34,7 @@
 
 #define DATA_CMD_LENGTH 32
 #define PACKET_MSG_HEADER 8
-#define ISP_READ_MODE_ID_MAX 13
+#define ISP_READ_MODE_ID_MAX		MAX_MODE_NUM
 
 #define ISP_NR_BLOCK_MIN 0
 #ifdef CONFIG_ISP_2_7
@@ -162,6 +162,7 @@ typedef enum {
 	SHARKL5_PRO_IVST = 0x51,
 	CNR30 = 0x52,
 	MFNR = 0x53,
+	POST_EE = 0x54,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -2018,6 +2019,19 @@ cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_IVST_T] = 1;
 			break;
 		}
+	case POST_EE:
+		{
+			static cmr_u32 post_edge_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_post_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POST_EE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.soft_ee_level_ptr)) + nr_offset_addr + post_edge_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				post_edge_ptr_offset += data_actual_len;
+			else
+				post_edge_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_POST_EE_T] = 1;
+			break;
+		}
 	case YNRS:
 		{
 			static cmr_u32 ynrs_ptr_offset;
@@ -2328,6 +2342,14 @@ cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case POST_EE:
+		{
+			data_head_ptr->sub_type = POST_EE;
+			src_size = sizeof(struct sensor_post_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POST_EE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.soft_ee_level_ptr + offset_units * src_size;
 			break;
 		}
 	case YNRS:
@@ -3618,12 +3640,16 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
 					data_mode_id[isp_mode_num] = i;
 					isp_mode_num++;
+					ISP_LOGD("mode no.%d, ptr %p, len %d\n", i,
+						sensor_raw_info_ptr->mode_ptr[i].addr,
+						sensor_raw_info_ptr->mode_ptr[i].len);
 				}
 			}
 			data_len = isp_mode_num;
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
+				ISP_LOGD("mode num %d, ptr %p, len %d\n", isp_mode_num, data_addr, data_len);
 				memcpy((cmr_u8 *) data_addr, data_mode_id, isp_mode_num);
 				rtn = send_isp_mode_id_param(read_cmd, msg, data_addr, data_len);
 			}
@@ -3640,6 +3666,8 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				data_addr[1] = mode_id;
 				data_addr[2] = mode_param->width;
 				data_addr[3] = mode_param->height;
+				ISP_LOGD("send mode no.%d, ptr %p, len %d\n", mode_id,
+						mode_param_info.addr, mode_param_info.len);
 				memcpy((void *)((cmr_u8 *) data_addr), (void *)mode_param_info.addr, mode_param_info.len);
 				rtn = send_tune_info_param(read_cmd, msg, data_addr, data_len);
 				if (0x00 != rtn) {
@@ -4083,7 +4111,8 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0 == flag) {
 				buf_len = mode_param_info.len;
 				data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
-				ISP_LOGD("mode tune buf len = %d, data_addr %p, mode addr %p", buf_len, data_addr, mode_param_info.addr);
+				ISP_LOGD("mode no.%d, mode tune buf len = %d, data_addr %p, mode addr %p",
+					mode_id, buf_len, data_addr, mode_param_info.addr);
 				if (!data_addr) {
 					ISP_LOGE("fail to do malloc mem!");
 					return ISP_ERROR;

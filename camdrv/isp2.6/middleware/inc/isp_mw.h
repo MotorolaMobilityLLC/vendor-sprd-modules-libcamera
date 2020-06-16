@@ -30,6 +30,7 @@
 #define ISP_PDAF_STATIS_BUF_SIZE  (0x12000)
 #endif
 
+
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
 #define ISP_EVT_MASK	 0x0000FF00
@@ -45,9 +46,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_AI_FD_NUM (20)
 //#define ISP_AI_AE_STAT_SIZE (16384) /*128*128*/
 #define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
-#ifdef CAMERA_CNR3_ENABLE
 #define CNR3_LAYER_NUM 5
-#endif
 
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
@@ -156,6 +155,8 @@ enum isp_callback_cmd {
 	ISP_HIST_REPORT_CALLBACK = 0x00009000,
 	ISP_3DNR_CALLBACK = 0x0000A000,
 	ISP_EV_EFFECT_CALLBACK = 0x0000B000,
+	ISP_FDR_EV_EFFECT_CALLBACK = 0x0000C000,
+	ISP_AUTO_FDR_STATUS_CALLBACK = 0x0000D000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -393,11 +394,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_MICRODEPTH_PARAM = 113,
 	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
 	ISP_CTRL_SENSITIVITY,
-#ifdef CAMERA_CNR3_ENABLE
-	ISP_CTRL_GET_CNR2CNR3_YNR_EN,
-#else
 	ISP_CTRL_GET_CNR2_YNR_EN,
-#endif
 	ISP_CTRL_GET_CNR2_PARAM = 117,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_CAP_FLAG,
@@ -427,9 +424,20 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_DRE_PARAM,
 	ISP_CTRL_SET_AE_ADJUST,
 	ISP_CTRL_SET_GTM_ONFF,
-#ifdef CAMERA_CNR3_ENABLE
+	ISP_CTRL_SET_DBG_TAG = 150,
+	ISP_CTRL_SET_FDR_DBG_DATA,
+	ISP_CTRL_SET_SIMU_SMART,
+	ISP_CTRL_INIT_FDR = 160,
+	ISP_CTRL_DEINIT_FDR,
+	ISP_CTRL_START_FDR,
+	ISP_CTRL_STOP_FDR,
+	ISP_CTRL_UPDATE_FDR,
+	ISP_CTRL_DONE_FDR,
+	ISP_CTRL_AUTO_FDR_MODE,
+	ISP_CTRL_GET_BLC,
+	ISP_CTRL_GET_POSTEE,
+	ISP_CTRL_GET_CNR2CNR3_YNR_EN = 180,
 	ISP_CTRL_GET_CNR3_PARAM,
-#endif
 	ISP_CTRL_GET_FB_PREV_PARAM,
 	ISP_CTRL_GET_FB_CAP_PARAM,
 	ISP_CTRL_GET_MFNR_PARAM,
@@ -855,6 +863,11 @@ struct isp_hdr_param {
 	cmr_u32 ev_effect_valid_num;
 };
 
+struct isp_fdr_param {
+	cmr_u32 fdr_enable;
+	cmr_u32 ev_effect_valid_num;
+	cmr_u32 ev_effect_cnt;
+};
 
  enum camera_snapshot_tpye {
 	SNAPSHOT_NULL = 0,
@@ -876,6 +889,37 @@ struct isp_info {
 	cmr_s32 size;
 };
 
+struct isp_blkpm_t {
+	cmr_u32 param_size;
+	void *param_ptr;
+	cmr_u32 *multi_nr_map;
+	cmr_s32 mode_num;
+	cmr_s32 scene_num;
+	cmr_s32 level_num;
+	cmr_s32 mode_id;
+	cmr_s32 scene_id;
+	cmr_s32 ai_scene_id;
+	/* smart result */
+	cmr_s32 idx0;
+	cmr_s32 idx1;
+	cmr_s32 weight0;
+	cmr_s32 weight1;
+	cmr_u32 reserved[3];
+};
+
+struct isp_blc_data {
+	cmr_u32 r;
+	cmr_u32 b;
+	cmr_u32 gr;
+	cmr_u32 gb;
+};
+
+struct isp_nlm_factor {
+	cmr_s32 nlm_out_ratio0;
+	cmr_s32 nlm_out_ratio1;
+	cmr_s32 nlm_out_ratio2;
+	cmr_s32 nlm_out_ratio3;
+};
 
 struct isp_sensor_resolution_info {
 	struct isp_size yuv_img_size;
@@ -958,7 +1002,7 @@ struct isp_video_start {
 	cmr_handle oem_handle;
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
-    cmr_u32 is_4in1_sensor; /* bind 4in1 sensor,not care sensor out size */
+	cmr_u32 is_4in1_sensor; /* bind 4in1 sensor,not care sensor out size */
 	/* new 4in1 solution, 20191028 */
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 	cmr_u32 is_high_res_mode; /* 1: high resolution mode */
@@ -1037,6 +1081,58 @@ struct isp_exp_compensation{
 	cmr_s32 step_denominator;
 };
 
+
+/* for new raw capture sulotion  --- start */
+#define CAMDBG_FIXED_BYTES  (0x1A2B3C4D)
+
+enum {
+	CAMINFO_OTP = 0x01,
+	CAMINFO_AE = 0x10,
+	CAMINFO_AF = 0x11,
+	CAMINFO_AFL = 0x12,
+	CAMINFO_AWB = 0x13,
+	CAMINFO_PDAF = 0x14,
+	CAMINFO_SMARTIN = 0x1F,
+
+	CAMINFO_DRVPM = 0x20,
+
+	/*Tuning param */
+	CAMINFO_FDR_BASE = 0x31,
+	CAMINFO_FDR_TUN = 0x32,
+	CAMINFO_POSTEE = 0x33,
+};
+
+
+struct cam_debug_data_header {
+	cmr_s32 fixed_bytes;
+	cmr_s32 data_type;
+	cmr_s32 data_size;
+	cmr_s32 reserved;
+	char data_name[8];
+	cmr_s32 reserved1[2];
+};
+
+struct isp_fdr_dbgdata {
+	cmr_s32 align_mode;
+	cmr_s32 merge_mode;
+	cmr_s32 fusion_mode;
+	cmr_s32 run_type;
+	cmr_s32 pre_bv;
+	cmr_s32 total_frm_num;
+	cmr_s32 ref_frm_num;
+	cmr_s32 sensor_gain;
+	cmr_s32 bv;
+	cmr_s32 merge_gain;
+	cmr_s32 merge_bin0;
+	cmr_s32 nlm_out_ratio0;
+	cmr_s32 nlm_out_ratio1;
+	cmr_s32 nlm_out_ratio2;
+	cmr_s32 nlm_out_ratio3;
+	cmr_s32 reserved[5];
+};
+/* for new raw capture sulotion  --- end */
+
+
 struct isp_ops {
 	cmr_s32 (*flash_get_charge)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
 	cmr_s32 (*flash_get_time)(void *handler, struct isp_flash_cfg *cfg_ptr, struct isp_flash_cell *cell);
@@ -1070,10 +1166,12 @@ struct isp_init_param {
 
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
-	uint32_t multi_mode;
-	uint32_t is_master;
-	uint32_t is_4in1_sensor;
-	uint32_t is_faceId_unlock;
+	cmr_u32 is_simulator;
+	cmr_s8 *param_path;
+	cmr_u32 multi_mode;
+	cmr_u32 is_master;
+	cmr_u32 is_4in1_sensor;
+	cmr_u32 is_faceId_unlock;
 };
 
 struct isp_sw_filter_weights
@@ -1088,12 +1186,10 @@ struct isp_sw_cnr2_info {
 	struct isp_sw_filter_weights weight[4][2];
 };
 
-#ifdef CAMERA_CNR3_ENABLE
 struct isp_sw_cnr3_level_info {
 	cmr_u8 level_enable;
 	cmr_u16 low_ct_thrd;
 };
-#endif
 
 #ifdef CAMERA_RADIUS_ENABLE
 struct isp_ynrs_tolib_param {
@@ -1141,7 +1237,6 @@ struct img_offset {
 	uint32_t y;
 };
 
-#ifdef CAMERA_CNR3_ENABLE
 //cnr3.0
 struct isp_sw_multilayer_param {
 	cmr_u8 lowpass_filter_en;
@@ -1161,7 +1256,6 @@ struct isp_sw_cnr3_info {
 	cmr_u16 baseRadius;
 	struct isp_sw_multilayer_param param_layer[CNR3_LAYER_NUM];
 };
-#endif
 
 struct isp_fb_level
 {

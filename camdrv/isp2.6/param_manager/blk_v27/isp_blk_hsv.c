@@ -55,8 +55,8 @@ cmr_s32 _pm_hsv_new2_init(void *dst_hsv_param, void *src_hsv_param, void *param1
 	}
 
 	for (i = 0; i < SENSOR_HSV_TAB_NUM; i++) {
-		dst_ptr->cur.hue[i] = dst_ptr->hsv_table[index].hue_table[i];
-		dst_ptr->cur.sat[i] = dst_ptr->hsv_table[index].sat_table[i];
+		dst_ptr->cur.d.hs.hue[i] = dst_ptr->hsv_table[index].hue_table[i];
+		dst_ptr->cur.d.hs.sat[i] = dst_ptr->hsv_table[index].sat_table[i];
 	}
 
 	header_ptr->is_update = ISP_ONE;
@@ -100,7 +100,6 @@ cmr_s32 _pm_hsv_new2_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 			weight_value = (struct isp_weight_value *)block_result->component[0].fix_data;
 			bv_value = &weight_value[0];
 
-			ISP_LOGV("ai_scene_id %d", block_result->ai_scene_id);
 			switch (block_result->ai_scene_id) {
 			case ISP_PM_AI_SCENE_FOOD:
 				hsv_level = 10;
@@ -149,8 +148,8 @@ cmr_s32 _pm_hsv_new2_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 				bv_value->weight[1] = 0;
 			}
 
-			dst = &dst_hsv_ptr->cur.hue;
-			dst1 = &dst_hsv_ptr->cur.sat;
+			dst = &dst_hsv_ptr->cur.d.hs.hue;
+			dst1 = &dst_hsv_ptr->cur.d.hs.sat;
 			data_num = SENSOR_HSV_TAB_NUM;
 			src_h[0] = (void *)&dst_hsv_ptr->hsv_table[bv_value->value[0]].hue_table;
 			src_h[1] = (void *)&dst_hsv_ptr->hsv_table[bv_value->value[1]].hue_table;

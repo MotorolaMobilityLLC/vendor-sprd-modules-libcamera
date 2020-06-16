@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef CAMERA_CNR3_ENABLE
+
 #define LOG_TAG "isp_blk_cnr3"
 #include "isp_blocks_cfg.h"
 
@@ -170,4 +170,3 @@ cmr_s32 _pm_cnr3_get_param(void *cnr3_param, cmr_u32 cmd, void *rtn_param0, void
 
 	return rtn;
 }
-#endif

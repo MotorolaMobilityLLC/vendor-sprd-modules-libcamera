@@ -63,6 +63,97 @@ cmr_int isp_dev_cfg_block(cmr_handle isp_dev_handle, void *data_ptr, cmr_int dat
 	return ret;
 }
 
+cmr_int isp_alloc_pmdbg_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 j, use_split = 1;
+	cmr_u32 alloc_type, offset, total = 0;
+	cmr_uint kaddr[2] = { 0, 0 };
+	struct isp_statis_buf_input statis_buf;
+	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
+	struct isp_pmdbg_alloc_info *buf_info = &in_ptr->dbg_buf;
+
+	if (buf_info->size == 0 || buf_info->num == 0 || buf_info->num > PARAM_BUF_NUM_MAX) {
+		ISP_LOGD("no alloc for: size %d num %d\n", buf_info->size, buf_info->num);
+		return 0;
+	}
+
+	memset(&statis_buf, 0, sizeof(struct isp_statis_buf_input));
+	alloc_type = CAMERA_ISPSTATS_DEBUG;
+	if (use_split) {
+		buf_info->alloc_num = 1;
+		buf_info->alloc_size = buf_info->size * buf_info->num;
+		buf_info->align_size = buf_info->size;
+	} else {
+		buf_info->alloc_num = buf_info->num;
+		buf_info->alloc_size =  buf_info->size;
+		buf_info->align_size = (buf_info->size + PAGE_SIZE - 1) & (~(PAGE_SIZE - 1));
+	}
+
+	buf_info->align_alloc_size = (buf_info->alloc_size + PAGE_SIZE - 1) & (~(PAGE_SIZE - 1));
+	total += buf_info->align_alloc_size * buf_info->alloc_num;
+
+	ret = in_ptr->alloc_cb(alloc_type,
+			in_ptr->oem_handle,
+			&buf_info->alloc_size,
+			&buf_info->alloc_num,
+			kaddr,
+			&buf_info->alloc_uaddr[0],
+			&buf_info->alloc_mfd[0]);
+	if (ret) {
+		memset(&buf_info->alloc_mfd[0], 0, sizeof(buf_info->alloc_mfd));
+		ISP_LOGE("fail to alloc memory type %d, size %x\n", alloc_type, buf_info->alloc_size);
+		return 0;
+	}
+
+	ISP_LOGD("typs %d  size 0x%x num %d,  total 0x%x\n",
+		alloc_type, buf_info->size, buf_info->num,
+		buf_info->align_size * buf_info->alloc_num);
+
+	if (use_split) {
+		if (buf_info->alloc_mfd[0] <= 0) {
+			ISP_LOGE("fail to alloc buffer for dbg\n");
+			memset(buf_info, 0,sizeof(struct isp_pmdbg_alloc_info));
+			return 0;
+		}
+		offset = 0;
+		for (j = 0; j < buf_info->num; j++) {
+			buf_info->mfd[j] = buf_info->alloc_mfd[0];
+			buf_info->uaddr[j] = buf_info->alloc_uaddr[0] + offset;
+			buf_info->offset[j] = offset;
+			offset += buf_info->size;
+			memset((void *)buf_info->uaddr[j], 0, buf_info->size);
+
+			ISP_LOGD("mfd %d, addr %lx,  offset %d\n",
+				buf_info->mfd[j], buf_info->uaddr[j], buf_info->offset[j]);
+
+			statis_buf.mfd_pmdbg[j] = buf_info->mfd[j];
+			statis_buf.offset_pmdbg[j] = buf_info->offset[j];
+		}
+	} else {
+		for (j = 0; j < buf_info->num; j++) {
+			if (buf_info->alloc_mfd[j] <= 0)
+				return 0;
+			buf_info->mfd[j] = buf_info->alloc_mfd[j];
+			buf_info->offset[j] = 0;
+			buf_info->uaddr[j] = buf_info->alloc_uaddr[j];
+			memset((void *)buf_info->uaddr[j], 0, buf_info->size);
+
+			ISP_LOGD("idx %d, mfd %d, addr %lx,  offset %d\n",
+				j, buf_info->mfd[j], buf_info->uaddr[j], buf_info->offset[j]);
+
+			statis_buf.mfd_pmdbg[j] = buf_info->mfd[j];
+			statis_buf.offset_pmdbg[j] = buf_info->offset[j];
+		}
+	}
+
+	/* Initialize statis buffer setting for driver. */
+	statis_buf.type = STATIS_DBG_INIT;
+	isp_dev_set_statis_buf(cxt->isp_driver_handle, &statis_buf);
+
+	return 0;
+}
+
 cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -84,12 +175,13 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 		if (buf_info->size <= SPLIT_MEM_SIZE) {
 			buf_info->alloc_num = 1;
 			buf_info->alloc_size = buf_info->size * buf_info->num;
+			buf_info->align_size = buf_info->size;
 		} else {
 			buf_info->alloc_num = buf_info->num;
 			buf_info->alloc_size =  buf_info->size;
+			buf_info->align_size = (buf_info->size + PAGE_SIZE - 1) & (~(PAGE_SIZE - 1));
 		}
 
-		buf_info->align_size = (buf_info->size + PAGE_SIZE - 1) & (~(PAGE_SIZE - 1));
 		buf_info->align_alloc_size = (buf_info->alloc_size + PAGE_SIZE - 1) & (~(PAGE_SIZE - 1));
 		total += buf_info->align_alloc_size * buf_info->alloc_num;
 
@@ -105,6 +197,9 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 			ISP_LOGE("fail to alloc memory type %d, size %x\n", alloc_type, buf_info->alloc_size);
 			continue;
 		}
+
+		if (ret)
+			return ret;
 
 		ISP_LOGV("typs %d %d,  size 0x%x num %d,  total 0x%x\n",
 			i, alloc_type,
@@ -154,6 +249,35 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 	cxt->mem_handle = (cmr_handle)in_ptr;
 	ISP_LOGD("statis buf size %d, handle %lx\n", total, (cmr_uint)cxt->mem_handle);
 
+	isp_alloc_pmdbg_buf(cxt, in_ptr);
+
+	return ret;
+}
+
+cmr_int isp_free_pmdbg_buf(struct isp_mem_info *in_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	cmr_u32 alloc_type;
+	struct isp_pmdbg_alloc_info *buf_info = &in_ptr->dbg_buf;
+
+	if (buf_info->alloc_num == 0) {
+		memset(buf_info, 0, sizeof(struct isp_pmdbg_alloc_info));
+		return ret;
+	}
+
+	alloc_type = CAMERA_ISPSTATS_DEBUG;
+	ISP_LOGD("free %d, num %d, mfd %d\n", alloc_type,
+		buf_info->alloc_num, buf_info->alloc_mfd[0]);
+
+	in_ptr->free_cb(alloc_type,
+			in_ptr->oem_handle,
+			NULL,
+			&buf_info->alloc_uaddr[0],
+			&buf_info->alloc_mfd[0],
+			buf_info->alloc_num);
+
+	memset(buf_info, 0, sizeof(struct isp_pmdbg_alloc_info));
+
 	return ret;
 }
 
@@ -184,6 +308,8 @@ cmr_int isp_dev_free_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr)
 				buf_info->alloc_num);
 	}
 	memset(&in_ptr->buf_info[0], 0, sizeof(in_ptr->buf_info));
+
+	isp_free_pmdbg_buf(in_ptr);
 
 	return ret;
 }
@@ -232,6 +358,24 @@ static cmr_uint get_statis_buf_uaddr(
 {
 	cmr_u32 j;
 	struct isp_stats_alloc_info *buf_info;
+
+	if (statis_type == STATIS_PARAM) {
+		struct isp_pmdbg_alloc_info *buf_info;
+
+		buf_info = &mem_hdl->dbg_buf;
+		for (j = 0; j < buf_info->num; j++) {
+			if ((mfd > 0) && (mfd == buf_info->mfd[j])
+				&& (offset == buf_info->offset[j])) {
+
+				if (buf_size)
+					*buf_size = buf_info->align_size;
+
+				ISP_LOGV("get  idx %d,  uaddr %lx, size %d\n", j, buf_info->uaddr[j], buf_info->size);
+				return buf_info->uaddr[j];
+			}
+		}
+		return 0;
+	}
 
 	if (statis_type >= STATIS_TYPE_MAX ||
 		statis_type == STATIS_INIT) {
@@ -343,6 +487,10 @@ void isp_dev_statis_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 	} else if (irq_info->irq_property == STATIS_LSCM) {
 		if (cxt->isp_event_cb) {
 			(*cxt->isp_event_cb) (ISP_EVT_LSC, statis_info, (void *)cxt->evt_alg_handle);
+		}
+	} else if (irq_info->irq_property == STATIS_PARAM) {
+		if (cxt->isp_event_cb) {
+			(*cxt->isp_event_cb) (ISP_EVT_PARAM, statis_info, (void *)cxt->evt_alg_handle);
 		}
 	} else {
 		set_statis_buf(cxt, statis_info);
