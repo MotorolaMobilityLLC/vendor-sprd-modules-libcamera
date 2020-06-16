@@ -1,0 +1,47 @@
+{
+	"halCaseLists" : 
+	[
+		{
+			"CaseID" : 0,
+			"Priority": 0,
+			"CameraID" : 0
+		},
+
+		{
+			"CaseID" : 1,
+			"Priority": 1,
+			"FuncName" : "opencamera",
+			"CameraID" : 0,
+			"FrameNum" : 5,
+			"Time" : 0,
+			"StreamList" : [
+  				{"type" : 1, "width" : 1440,"height" : 1080, "format": 34,"usage" : 4},
+				{"type" : 6, "width" : 3264,"height" : 2448, "format": 33,"usage" : 4}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.control.awbMode", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,10]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 2,
+			"Priority": 5,
+			"FuncName" : "takepicture",
+			"CameraID" : 0,
+			"FrameNum" : 5,
+			"Time" : 0,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 3,
+			"Priority": 5,
+			"CameraID" : 0
+		}
+
+	]
+}

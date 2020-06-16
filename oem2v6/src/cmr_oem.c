@@ -5353,7 +5353,7 @@ camera_preview_face_beauty_handle(void *data,
                 face_beauty_set_devicetype(&(cxt->prev_face_beauty),
                                            SPRD_CAMALG_RUN_TYPE_CPU);
 #endif
-                fb_chipinfo chipinfo = SHARKLE;
+             fb_chipinfo chipinfo = SHARKLE;
 #if defined(CONFIG_ISP_2_3)
              chipinfo = SHARKLE;
 #elif defined(CONFIG_ISP_2_4)
