@@ -68,6 +68,7 @@ void deinit_fb_handle(struct class_fb *faceBeauty) {
             ALOGD("deinit_fb_handle to FB_DeleteBeautyHandle begin");
             FB_DeleteBeautyHandle(&(faceBeauty->hSprdFB));
             faceBeauty->hSprdFB = NULL;
+            memset(faceBeauty->fb_face,0,sizeof(faceBeauty->fb_face));
         }
         faceBeauty->noFaceFrmCnt = 0;
     }
