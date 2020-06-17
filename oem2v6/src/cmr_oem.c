@@ -2590,11 +2590,34 @@ cmr_u32 camera_get_watermark_flag(cmr_handle oem_handle) {
 }
 
 /* select one logo for capture
+ * which picture use which one logo, do as you like
  * return: 0 success,other fail
  */
 cmr_int camera_select_logo(sizeParam_t *size) {
     cmr_int ret = -1;
     cmr_int i;
+#if 1  /* range mode: set one logo for one range picture
+        * for more than one project
+        * width and height both >= , then use this logo
+        */
+    const sizeParam_t cap_logo[] = {
+        {4000, 2250, 1000, 200, 0, 0, 0, 0},
+        {2592, 1836,  800, 160, 0, 0, 0, 0},
+        {2048, 1152,  600, 120, 0, 0, 0, 0},
+        {0,    0,     300,  60, 0, 0, 0, 0}
+    };
+    for (i = 0; i < ARRAY_SIZE(cap_logo); i++) {
+        if (size->imgW >= cap_logo[i].imgW && size->imgH >= cap_logo[i].imgH) {
+            size->posX = cap_logo[i].posX;
+            size->posY = cap_logo[i].posY;
+            size->logoW = cap_logo[i].logoW;
+            size->logoH = cap_logo[i].logoH;
+            ret = 0; /* got */
+            break;
+        }
+    }
+
+#else   /* one by one mode: set one logo for one picture */
     const sizeParam_t cap_logo[] = {
         /* cap: width,height;logo:width,height;cap:posx,posy */
         /* L3 */
@@ -2617,9 +2640,10 @@ cmr_int camera_select_logo(sizeParam_t *size) {
             size->logoW = cap_logo[i].logoW;
             size->logoH = cap_logo[i].logoH;
             ret = 0; /* got */
+            break;
         }
     }
-
+#endif
     return ret;
 }
 
@@ -6755,15 +6779,21 @@ int sprd_fusion_yuv420_semiplanar(unsigned char *img, unsigned char *logo,
             posY = imgH - logoH - posY;
         }
     }
-    CMR_LOGI("src[%d %d], logo[%d %d %d %d] angle[%d %d]", imgW, imgH, posX,
-             posY, logoW, logoH, angle, isMirror);
-    posX = posX < 0 ? 0 : posX;
-    posY = posY < 0 ? 0 : posY;
+    posX = (posX < 0) ? 0 : posX;
+    posY = (posY < 0) ? 0 : posY;
+    /* logo large than image */
     if (posX + logoW > imgW)
-        posX = imgW - logoW;
+        posX =  imgW - logoW;
     if (posY + logoH > imgH)
         posY = imgH - logoH;
 
+    CMR_LOGI("src[%d %d], logo[%d %d %d %d] angle[%d %d]", imgW, imgH, posX,
+             posY, logoW, logoH, angle, isMirror);
+    if (posX < 0 || posY < 0) {
+        CMR_LOGW("src img too small to add logo watermark");
+        free(logoRotate);
+        return -1;
+    }
     imgY = img + posY * imgW + posX;
     imgUV = img + imgSize + posY / 2 * imgW + posX;
     logoY = logo;
@@ -6879,14 +6909,21 @@ static int fusion_yuv420_yuv420(cmr_u8 *img, cmr_u8 *logo, sizeParam_t *param) {
         }
     }
     /* check */
-    posX = posX < 0 ? 0 : posX;
-    posY = posY < 0 ? 0 : posY;
+    posX = (posX < 0) ? 0 : posX;
+    posY = (posY < 0) ? 0 : posY;
+    /* logo too large, start 0 */
     if (posX + logoW > imgW)
         posX = imgW - logoW;
     if (posY + logoH > imgH)
         posY = imgH - logoH;
+
     CMR_LOGI("src[%d %d], text[%d %d %d %d], angle %d %d", imgW, imgH, posX,
              posY, logoW, logoH, angle, isMirror);
+    if (posX < 0 || posY < 0) {
+        CMR_LOGW("Src img too small to add time watermark");
+        free(logoRotate);
+        return -1;
+    }
 
     imgY = img + posY * imgW + posX;
     imgUV = img + imgSize + posY / 2 * imgW + posX;
@@ -6984,9 +7021,9 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     /* info of source file for number */
     const char file_name[] =
         "time.yuv";               /* source file for number:0123456789-:  */
-    const int subnum_total = 13;  /* 0--9,-,:, (space), all= 13 */
-    const int subnum_width = 80;  /* sub number width:align 2 */
-    const int subnum_height = 40; /* sub number height:align 2 */
+    const int subnum_total = 13;  /* 0--9,-,:, (space), total = 13 */
+    const int subnum_width = 72;  /* sub number width:align 2 */
+    const int subnum_height = 36; /* sub number height:align 2 */
     const int num_height =
         subnum_height * subnum_total; /* as time.yuv height */
     const int subnum_len =
@@ -6997,7 +7034,7 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     cmr_u8 *pnum = NULL, *ptext = NULL, *ptextout = NULL;
     time_t timep;
     struct tm *p;
-    char time_text[TEST_SIZE]; /* total = 19,string:"2019-11-04 13:30:50" */
+    char time_text[TEST_SIZE]; /* total = 19,string as:"2019-11-04 13:30:50" */
     cmr_u32 i, j;
     cmr_u8 *pdst, *psrc, *puvs;
     int dst_width, dst_height;
@@ -7146,15 +7183,15 @@ static int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
         cmr_u8 *ptime;
         ret = camera_get_time_yuv420(&ptime, &time_width, &time_height);
         if (!ret) {
-            /* time watermark position,align 2 */
-            if (!((sizeparam->imgW - sizeparam->logoW) & 0x1))
-                sizeparam->posX = sizeparam->imgW - sizeparam->logoW;
-            else
-                sizeparam->posX = sizeparam->imgW - sizeparam->logoW - 1;
-            sizeparam->posY = 0;
             sizeparam->logoW = time_width;
             sizeparam->logoH = time_height;
-            fusion_yuv420_yuv420(pyuv, ptime, sizeparam);
+            sizeparam->posY = 0; /* lower right corner */
+            /* time watermark position,align 2 */
+            sizeparam->posX = (sizeparam->imgW - sizeparam->logoW) & (~0x1);
+            if (sizeparam->posX >= 0)
+                fusion_yuv420_yuv420(pyuv, ptime, sizeparam);
+            else
+                CMR_LOGW("Src img to small to add time watermark");
             free(ptime);
         }
     }
@@ -7424,7 +7461,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
         }
     }
 
-    watermark_add_yuv(oem_handle, (cmr_u8 *)src.addr_vir.addr_y, &sizeparam);
+//    watermark_add_yuv(oem_handle, (cmr_u8 *)src.addr_vir.addr_y, &sizeparam);
     // for cache coherency
     cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, &src);
 
