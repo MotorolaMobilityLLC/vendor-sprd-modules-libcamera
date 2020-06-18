@@ -109,7 +109,7 @@ static struct sensor_raw_ioctrl s_ov8856_ioctrl=
 
 static struct sensor_version_info s_ov8856_version_info=
 {
-	0x00070005,
+	0x0007000B,
 	{
 		{
 			0x3838766F,
