@@ -2406,9 +2406,14 @@ cmr_int prev_receive_data(struct prev_handle *handle, cmr_u32 camera_id,
     case CMR_GRAB_TX_NO_MEM:
     case CMR_GRAB_CSI2_ERR:
     case CMR_GRAB_TIME_OUT:
-    case CMR_SENSOR_ERROR:
-        ret = prev_error_handle(handle, camera_id, evt);
+    case CMR_SENSOR_ERROR:{
+        char value1[PROPERTY_VALUE_MAX];
+        property_get("vendor.cam.recovery.on", value1, "1");
+        if (!strcmp(value1, "1")) {
+            ret = prev_error_handle(handle, camera_id, evt);
+        }
         break;
+    }
 
     case PREVIEW_CHN_PAUSE:
         ret = prev_pause_cap_channel(handle, camera_id, data);
