@@ -2566,6 +2566,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, void *in_ptr)
 	u_addr = statis_info->vir_addr;
 
 	pdaf_param_in.u_addr = u_addr;
+	pdaf_param_in.u_addr_right = u_addr + ISP_PDAF_STATIS_BUF_SIZE / 2;
 
 	if (cxt->ops.pdaf_ops.ioctrl)
 		cxt->ops.pdaf_ops.ioctrl(cxt->pdaf_cxt.handle, PDAF_CTRL_CMD_GET_BUSY, NULL, &pdaf_param_out);

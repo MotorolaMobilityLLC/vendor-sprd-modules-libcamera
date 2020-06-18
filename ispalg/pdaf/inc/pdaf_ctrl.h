@@ -72,6 +72,7 @@ struct pdaf_ctrl_process_in {
 	cmr_u16 dcurrentVCM;
 	cmr_s32 dBv;
 	cmr_uint u_addr;
+	cmr_uint u_addr_right;
 	//struct pd_raw_info pd_raw;
 };
 

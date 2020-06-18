@@ -483,6 +483,7 @@ struct sensor_pdaf_info {
     cmr_u16 pd_end_y;
     cmr_u16 pd_block_w;
     cmr_u16 pd_block_h;
+    cmr_u32 pd_data_size;
     cmr_u16 *pd_is_right;
     cmr_u16 *pd_pos_row;
     cmr_u16 *pd_pos_col;

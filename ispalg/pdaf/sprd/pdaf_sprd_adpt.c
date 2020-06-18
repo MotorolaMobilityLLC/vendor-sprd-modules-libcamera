@@ -658,7 +658,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		ISP_LOGV("pInPhaseBuf_Dual_PD = %p", pInPhaseBuf_Dual_PD);
 	}else{
 		pInPhaseBuf_left = (cmr_s32 *) (cmr_uint)(proc_in->u_addr);
-		pInPhaseBuf_right = (cmr_s32 *) (cmr_uint)(proc_in->u_addr + ISP_PDAF_STATIS_BUF_SIZE/2);
+		pInPhaseBuf_right = (cmr_s32 *) (cmr_uint)(proc_in->u_addr_right);
 		ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
 	}
 

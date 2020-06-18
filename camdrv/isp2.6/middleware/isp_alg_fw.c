@@ -3298,10 +3298,10 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
 	memset((void *)&pdaf_param_out, 0x00, sizeof(pdaf_param_out));
 
-	u_addr = statis_info->uaddr;
-	pdaf_param_in.u_addr = statis_info->uaddr;
 	offset = statis_info->buf_size / 2;
-	ISP_LOGV("addr 0x%lx, offset %x\n", statis_info->uaddr, offset);
+	pdaf_param_in.u_addr = statis_info->uaddr;
+	pdaf_param_in.u_addr_right = statis_info->uaddr + offset;
+	ISP_LOGV("addr 0x%lx, addr1 0x%lx, offset %x\n", statis_info->uaddr, pdaf_param_in.u_addr_right, offset);
 
 	switch (cxt->pdaf_cxt.pdaf_support) {
 	case SENSOR_PDAF_TYPE1_ENABLE:
@@ -5494,14 +5494,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 				ISP_LOGI("pdaf_info->sns_mode = %d",pdaf_info->sns_mode[sn_mode]);
 				isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE1_CFG;
 			}
-			/* TODO - calc pdaf buffer according to sensor type */
-			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = ISP_PDAF_STATIS_BUF_SIZE;
+			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = pdaf_info->pd_data_size;
 			cxt->stats_mem_info.buf_info[STATIS_PDAF].num = STATIS_PDAF_BUF_NUM;
 			break;
 		case SENSOR_PDAF_TYPE2_ENABLE:
 			isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE2_CFG;
-			/* TODO - calc pdaf buffer according to sensor type */
-			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = ISP_PDAF_STATIS_BUF_SIZE;
+			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = pdaf_info->pd_data_size;
 			cxt->stats_mem_info.buf_info[STATIS_PDAF].num = STATIS_PDAF_BUF_NUM;
 			break;
 		case SENSOR_PDAF_TYPE3_ENABLE:
@@ -5521,14 +5519,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 				ppi_info.pattern_pixel_col[i] = pdaf_info->pd_pos_col[i];
 			}
 			isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &ppi_info, NULL);
-			/* TODO - calc pdaf buffer according to sensor type */
-			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = ISP_PDAF_STATIS_BUF_SIZE;
+			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = pdaf_info->pd_data_size;
 			cxt->stats_mem_info.buf_info[STATIS_PDAF].num = STATIS_PDAF_BUF_NUM;
 			break;
 		case SENSOR_DUAL_PDAF_ENABLE:
 			isp_pdaf_type = ISP_DEV_SET_DUAL_PDAF_CFG;
-			/* TODO - calc pdaf buffer according to sensor type */
-			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = ISP_PDAF_STATIS_BUF_SIZE;
+			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = pdaf_info->pd_data_size;
 			cxt->stats_mem_info.buf_info[STATIS_PDAF].num = STATIS_PDAF_BUF_NUM;
 			break;
 		default:
@@ -5536,13 +5532,23 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 			break;
 		}
 
+		if (cxt->stats_mem_info.buf_info[STATIS_PDAF].size == 0) {
+			ISP_LOGW("warning:  cam%ld pdaf data size is 0, please set it to correct size\n", cxt->camera_id);
+			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = 256 * 1024;
+		} else if (cxt->stats_mem_info.buf_info[STATIS_PDAF].size < 4096) {
+			ISP_LOGD("pdaf size is smaller than one page\n");
+			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = 4096;
+		} else {
+			cxt->stats_mem_info.buf_info[STATIS_PDAF].size += STATIS_TAIL_RESERVED_SIZE;
+		}
+
 		vch2_info.bypass = pdaf_info->vch2_info.bypass;
 		vch2_info.vch2_vc = pdaf_info->vch2_info.vch2_vc;
 		vch2_info.vch2_data_type = pdaf_info->vch2_info.vch2_data_type;
 		vch2_info.vch2_mode = pdaf_info->vch2_info.vch2_mode;
-		ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, mode = 0x%x",
-				vch2_info.bypass, vch2_info.vch2_vc,
-				vch2_info.vch2_data_type, vch2_info.vch2_mode);
+		ISP_LOGI("vch2_info.bypass = 0x%x, vc = 0x%x, data_type = 0x%x, data_size %d, mode = 0x%x",
+				vch2_info.bypass, vch2_info.vch2_vc, vch2_info.vch2_data_type,
+				cxt->stats_mem_info.buf_info[STATIS_PDAF].size, vch2_info.vch2_mode);
 		if (isp_pdaf_type != 0)
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, isp_pdaf_type, &vch2_info, 0);
 	} /* end config pdaf */
@@ -6002,7 +6008,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 					NULL, NULL);
 			ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf"));
 		}
-		cxt->stats_mem_info.buf_info[STATIS_PDAF].size = ISP_PDAF_STATIS_BUF_SIZE;
+		cxt->stats_mem_info.buf_info[STATIS_PDAF].size = 4096;
 		cxt->stats_mem_info.buf_info[STATIS_PDAF].num = 1;
 	}
 
