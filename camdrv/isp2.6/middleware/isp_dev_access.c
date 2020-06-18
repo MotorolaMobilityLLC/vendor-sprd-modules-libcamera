@@ -314,33 +314,40 @@ cmr_int isp_dev_free_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_ptr)
 	return ret;
 }
 
+static cmr_int invalidate_statis_bufcache(struct isp_dev_access_context *cxt,
+				struct isp_statis_info *statis_info)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_mem_info *mem_hdl;
+
+	mem_hdl = (struct isp_mem_info *)cxt->mem_handle;
+	if (!mem_hdl || !mem_hdl->invalidate_cb) {
+		ISP_LOGE("fail to get mem handle %p\n", mem_hdl);
+		return ISP_ERROR;
+	}
+
+	mem_hdl->invalidate_cb(
+			mem_hdl->oem_handle,
+			statis_info->mfd,
+			statis_info->buf_size,
+			0,
+			statis_info->uaddr);
+
+	return ret;
+}
+
 static cmr_int set_statis_buf(struct isp_dev_access_context *cxt,
 				struct isp_statis_info *statis_info)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_statis_buf_input statis_buf;
-	struct isp_mem_info *mem_hdl;
 
-	mem_hdl = (struct isp_mem_info *)cxt->mem_handle;
-	if (!mem_hdl || !mem_hdl->invalidate_cb)
-		ISP_LOGE("fail to get mem handle %p\n", mem_hdl);
-
-	ISP_LOGV("get stats %p type %d, uaddr %p, frame id %d\n",
+	ISP_LOGV("get stats %p type %d, mfd %d, uaddr %p, frame id %d\n",
 		 statis_info,
 		 statis_info->buf_type,
+		 statis_info->mfd,
 		 (void *)statis_info->uaddr,
 		 statis_info->frame_id);
-
-//#if 0 /* temp disable cache for statis buffer */
-	if (statis_info->buf_type != STATIS_HIST2 &&
-		mem_hdl && mem_hdl->invalidate_cb)
-		mem_hdl->invalidate_cb(
-				mem_hdl->oem_handle,
-				statis_info->mfd,
-				statis_info->buf_size,
-				0,
-				statis_info->uaddr);
-//#endif
 
 	memset((void *)&statis_buf, 0, sizeof(statis_buf));
 	statis_buf.type = statis_info->buf_type;
@@ -747,6 +754,9 @@ cmr_int isp_dev_access_ioctl(cmr_handle isp_dev_handle,
 		break;
 	case ISP_DEV_SET_RGB_GAIN:
 		ret = dcam_u_rgb_gain_block(cxt->isp_driver_handle, param0);
+		break;
+	case ISP_DEV_INVALIDATE_STSTIS_BUFCACHE:
+		ret = invalidate_statis_bufcache(cxt, param0);
 		break;
 	case ISP_DEV_SET_STSTIS_BUF:
 		ret = set_statis_buf(cxt, param0);

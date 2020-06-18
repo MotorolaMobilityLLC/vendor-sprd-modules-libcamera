@@ -2022,6 +2022,9 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cnt_g_oe = 0;
 	cmr_u32 cnt_g_ue = 0;
 
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
+
 	ae_stat_ptr = &cxt->aem_stats_data;
 	ae_shift = cxt->ae_cxt.shift;
 
@@ -2231,6 +2234,9 @@ static cmr_int ispalg_lscm_stats_parser(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 sum_g = 0;
 	cmr_u32 sum_g1 = 0;
 
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
+
 	lscm_stat_ptr = &cxt->lscm_stats_data;
 	blk_num = cxt->lsc_cxt.lscm_win_num.w * cxt->lsc_cxt.lscm_win_num.h;
 	uaddr = (cmr_u64 *)statis_info->uaddr;
@@ -2270,6 +2276,9 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 	struct dcam_dev_hist_info *hist_info;
 	struct img_rect win;
 	struct hist_param param;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
 
 	cxt->bayerhist_update = 1;
 
@@ -3147,6 +3156,9 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ISP_TRACE_IF_FAIL(ret, ("fail to AFL_GET_INFO"));
 	}
 
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
+
 	cxt->afl_cxt.afl_statis_info = *statis_info;
 	afl_input.ae_stat_ptr = &cxt->aem_stats_data;
 	afl_input.ae_exp_flag = ae_exp_flag;
@@ -3192,9 +3204,11 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			cmr_u32 af_temp[15*20][3];
 			cmr_u32 *ptr, *dst;
 			cmr_u32 *zoom_ratio;
-			struct isp_statis_info *statis_info = NULL;
+			struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
 
-			statis_info = (struct isp_statis_info *)in_ptr;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+					ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
+
 			ptr = (cmr_u32 *)statis_info->uaddr;
 			dst = &af_temp[0][0];
 			blk_num = cxt->af_cxt.win_num.x * cxt->af_cxt.win_num.y;
@@ -3295,6 +3309,9 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	struct pdaf_ctrl_param_out pdaf_param_out;
 	UNUSED(data_type);
 
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
+
 	memset((void *)&pdaf_param_in, 0x00, sizeof(pdaf_param_in));
 	memset((void *)&pdaf_param_out, 0x00, sizeof(pdaf_param_out));
 
@@ -3340,6 +3357,9 @@ static cmr_int ispalg_ebd_process(cmr_handle isp_alg_handle, cmr_u32 data_type, 
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
 	struct sensor_embedded_info sensor_ebd_info;
 	UNUSED(data_type);
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
 
 	memset((void *)&sensor_ebd_info, 0x00, sizeof(sensor_ebd_info));
 	sensor_ebd_info.embedded_data = (cmr_u8 *)statis_info->uaddr;
