@@ -1598,6 +1598,100 @@ typedef struct _af_tuning_param {
 
 #endif
 /**********************************************************************************/
+//AI
+enum ai_scene{
+	AI_SECNE_PRO_DEFAULT = 0,
+	AI_SECNE_PRO_FOOD,
+	AI_SECNE_PRO_PORTRAIT,
+	AI_SECNE_PRO_FOLIAGE,
+	AI_SECNE_PRO_SKY,
+	AI_SECNE_PRO_NIGHT,
+	AI_SECNE_PRO_DOCUMENT,
+	AI_SECNE_PRO_SUNRISESET,
+	AI_SECNE_PRO_BUILDING,
+	AI_SECNE_PRO_SNOW,
+	AI_SECNE_PRO_FIREWORK,
+	AI_SECNE_PRO_PET,
+	AI_SECNE_PRO_FLOWER,//12
+	AI_SECNE_PRO_RESERVED0,
+	AI_SECNE_PRO_RESERVED1,
+	AI_SECNE_PRO_RESERVED2,
+	AI_SECNE_PRO_RESERVED3,
+	AI_SECNE_PRO_RESERVED4,
+	AI_SECNE_PRO_RESERVED5,
+	AI_SECNE_PRO_RESERVED6,
+	AI_SCENE_PRO_MAX
+};
+//AI_Bchs
+struct ai_brightness_param {
+	cmr_u8 brightness_ai_adj_eb;
+	cmr_u8 reserved[3];
+	cmr_s8 brightness_adj_factor_offset[8];
+};
+struct ai_contrast_param {
+	cmr_u8 contrast_adj_ai_eb;
+	cmr_u8 reserved[3];
+	cmr_s8 contrast_adj_factor_offset[8];
+};
+struct ai_hue_param {
+	cmr_u8 hue_adj_ai_eb;
+	cmr_u8 reserved[3];
+	cmr_s16 hue_theta_offset[8];
+};
+struct ai_saturation_param {
+	cmr_u8 saturation_adj_ai_eb;
+	cmr_u8 reserved[3];
+	cmr_s8 saturation_adj_factor_u_offset[8];
+	cmr_s8 saturation_adj_factor_v_offset[8];
+};
+struct sensor_ai_bchs_param {
+	struct ai_brightness_param ai_brightness;
+	struct ai_contrast_param ai_contrast;
+	struct ai_hue_param ai_hue;
+	struct ai_saturation_param ai_saturation;
+};
+//AI_hsv
+struct sensor_ai_hsv_param {
+	cmr_u8 hue_adj_ai_eb;
+	cmr_u8 reserved[3];
+	cmr_s16 hue_table_item_offset[360];
+	cmr_s16 saturation_table_item_offset[360];
+};
+
+//AI_ee
+struct sensor_ee_r_cfg_offset {
+	cmr_s8 ee_r1_cfg_offset;
+	cmr_s8 ee_r2_cfg_offset;
+	cmr_s8 ee_r3_cfg_offset;
+	cmr_s8 reserved;
+};
+struct sensor_ee_c_cfg_offset {
+	cmr_s8 ee_c1_cfg_offset;
+	cmr_s8 ee_c2_cfg_offset;
+	cmr_s8 ee_c3_cfg_offset;
+	cmr_s8 reserved;
+};
+struct sensor_ai_ee_param {
+	cmr_u8 ee_bypass;
+	cmr_u8 reserved[3];
+	struct sensor_ee_r_cfg_offset ee_gain_hv1[8];
+	struct sensor_ee_r_cfg_offset ee_gain_hv2[8];
+	struct sensor_ee_r_cfg_offset ee_gain_diag1[8];
+	struct sensor_ee_r_cfg_offset ee_gain_diag2[8];
+	struct sensor_ee_r_cfg_offset ee_pos_r[8];
+	struct sensor_ee_c_cfg_offset ee_pos_c[8];
+	struct sensor_ee_r_cfg_offset ee_neg_r[8];
+	struct sensor_ee_c_cfg_offset ee_neg_c[8];
+};
+
+struct sensor_ai_param {
+	cmr_u16 smooth_frame_ai[AI_SCENE_PRO_MAX];
+	struct sensor_ai_bchs_param sensor_ai_bchs[AI_SCENE_PRO_MAX];
+	struct sensor_ai_hsv_param sensor_ai_hsv[AI_SCENE_PRO_MAX];
+	struct sensor_ai_ee_param sensor_ai_ee[AI_SCENE_PRO_MAX];
+};
+
+
 //aft
 typedef struct isp_aft_param {
 	cmr_u32 img_blk_support;
