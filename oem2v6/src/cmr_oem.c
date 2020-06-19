@@ -190,7 +190,10 @@ static cmr_int camera_sensor_deinit(cmr_handle oem_handle);
 static cmr_int camera_grab_init(cmr_handle oem_handle);
 static cmr_int camera_grab_deinit(cmr_handle oem_handle);
 static cmr_int camera_jpeg_init(cmr_handle oem_handle);
+static cmr_int camera_jpeg_init_async(cmr_handle oem_handle);
+static cmr_int camera_jpeg_init_wait(cmr_handle oem_handle);
 static cmr_int camera_jpeg_deinit(cmr_handle oem_handle);
+static cmr_int camera_jpeg_deinit_async(cmr_handle oem_handle);
 static cmr_int camera_scaler_init(cmr_handle oem_handle);
 static cmr_int camera_scaler_deinit(cmr_handle oem_handle);
 static cmr_int camera_rotation_init(cmr_handle oem_handle);
@@ -3367,6 +3370,109 @@ exit:
     return ret;
 }
 
+static cmr_int camera_jpeg_init_async_message_handler(struct cmr_msg *message, void *data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)data;
+    cmr_u32 msg_type = 0;
+
+    msg_type = (cmr_u32)message->msg_type;
+    switch (msg_type) {
+    case CMR_EVT_INIT:
+        ret = camera_jpeg_init(cxt);
+        if (ret) {
+            CMR_LOGE("failed to init jpeg async %ld", ret);
+        } else {
+            CMR_LOGI("jpeg async init ready");
+        }
+        break;
+
+    case CMR_EVT_WAIT:
+        CMR_LOGI("wait here");
+        break;
+
+    case CMR_EVT_EXIT:
+        CMR_LOGI("exit here");
+        break;
+
+    default:
+        break;
+    }
+    return ret;
+}
+
+cmr_int camera_jpeg_init_async(cmr_handle oem_handle) {
+    int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    ret = cmr_thread_create(&cxt->jpeg_async_init_handle, 10,
+            camera_jpeg_init_async_message_handler, (void *)oem_handle);
+    if (ret) {
+        CMR_LOGE("fail to create jpeg async init thread, %d", ret);
+        goto exit;
+    }
+    CMR_LOGI("init jpeg async");
+
+    CMR_MSG_INIT(message);
+    message.msg_type = CMR_EVT_INIT;
+    message.sync_flag = CMR_MSG_SYNC_NONE;
+    ret = cmr_thread_msg_send(cxt->jpeg_async_init_handle, &message);
+    if (ret) {
+        CMR_LOGE("fail to send message to jpeg async init thread, %d", ret);
+        goto exit;
+    }
+    CMR_LOGI("send message to jpeg async init thread");
+
+exit:
+    return ret;
+}
+
+cmr_int camera_jpeg_init_wait(cmr_handle oem_handle) {
+    ATRACE_BEGIN(__FUNCTION__);
+
+    int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CMR_MSG_INIT(message);
+    message.msg_type = CMR_EVT_WAIT;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    ret = cmr_thread_msg_send(cxt->jpeg_async_init_handle, &message);
+    if (ret) {
+        CMR_LOGE("fail to send wait message to jpeg async init thread, %d", ret);
+        goto exit;
+    }
+    CMR_LOGI("send wait message to jpeg async init thread");
+
+exit:
+    ATRACE_END();
+    return ret;
+}
+
+cmr_int camera_jpeg_deinit_async(cmr_handle oem_handle) {
+    int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CMR_MSG_INIT(message);
+    message.msg_type = CMR_EVT_EXIT;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    ret = cmr_thread_msg_send(cxt->jpeg_async_init_handle, &message);
+    if (ret) {
+        CMR_LOGE("fail to send exit message to jpeg async init thread, %d", ret);
+        goto exit;
+    }
+    CMR_LOGI("send exit message to jpeg async init thread");
+
+    ret = cmr_thread_destroy(cxt->jpeg_async_init_handle);
+    if (ret) {
+        CMR_LOGE("fail to destroy jpeg async thread");
+        goto exit;
+    }
+
+    ret = camera_jpeg_deinit(oem_handle);
+
+exit:
+    return ret;
+}
+
 cmr_int camera_jpeg_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -5919,22 +6025,6 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         goto exit;
     }
 
-    ret = camera_jpeg_init(oem_handle);
-    if (ret) {
-        CMR_LOGE("failed to init jpeg %ld", ret);
-        goto exit;
-    }
-
-// move it to front before isp init,because iommu flag need check through
-// grab_handle
-#if 0
-    ret = camera_grab_init(oem_handle);
-    if (ret) {
-        CMR_LOGE("failed to init grab %ld", ret);
-        goto exit;
-    }
-#endif
-
     ret = camera_scaler_init(oem_handle);
     if (ret) {
         CMR_LOGE("failed to init scaler %ld", ret);
@@ -5989,8 +6079,6 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
 
     camera_preview_deinit(oem_handle);
 
-    camera_jpeg_deinit(oem_handle);
-
     camera_focus_deinit(oem_handle);
 
     camera_setting_deinit(oem_handle);
@@ -5998,8 +6086,6 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     camera_rotation_deinit(oem_handle);
 
     camera_scaler_deinit(oem_handle);
-
-    //	camera_grab_deinit(oem_handle);
 
     camera_ipm_deinit(oem_handle);
     if (is_authorized) {
@@ -6245,9 +6331,16 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
         CMR_LOGE("failed to init isp %ld", ret);
         goto res_deinit;
     }
+
     ret = camera_res_init_done(oem_handle);
     if (ret) {
-        CMR_LOGE("failed to init res %ld", ret);
+        CMR_LOGE("failed to wait res done %ld", ret);
+        goto isp_deinit;
+    }
+
+    ret = camera_jpeg_init_async(oem_handle);
+    if (ret) {
+        CMR_LOGE("failed to init jpeg %ld", ret);
         goto isp_deinit;
     }
 
@@ -6268,6 +6361,11 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     goto exit;
 
 isp_deinit:
+    ret_deinit = camera_isp_deinit_notice(oem_handle);
+    if (ret_deinit) {
+        CMR_LOGE("failed to camera_isp_deinit_notice %ld", ret_deinit);
+    }
+
     ret_deinit = camera_isp_deinit(oem_handle);
     if (ret_deinit) {
         CMR_LOGE("failed to camera_isp_deinit %ld", ret_deinit);
@@ -6322,6 +6420,7 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     }
 
     camera_front_lcd_enhance_module_deinit(oem_handle);
+    camera_jpeg_deinit_async(oem_handle);
     camera_isp_deinit_notice(oem_handle);
     camera_isp_deinit(oem_handle);
     camera_res_deinit(oem_handle);
@@ -12780,6 +12879,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGE("error handle");
         goto exit;
     }
+
+    ret = camera_jpeg_init_wait(oem_handle);
+    if (ret < 0)
+        goto exit;
+
     camera_take_snapshot_step(CMR_STEP_TAKE_PIC);
     prev_cxt = &cxt->prev_cxt;
 

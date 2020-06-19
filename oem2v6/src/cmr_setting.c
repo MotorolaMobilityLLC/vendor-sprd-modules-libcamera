@@ -258,8 +258,6 @@ struct setting_exif_cb_param {
 typedef cmr_int (*setting_ioctl_fun_ptr)(struct setting_component *cpt,
                                          struct setting_cmd_parameter *parm);
 
-static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX];
-
 static cmr_int setting_isp_wait_notice_withtime(struct setting_component *cpt,
                                                 cmr_uint timeout);
 static cmr_int cmr_setting_clear_sem(struct setting_component *cpt);
@@ -3979,15 +3977,270 @@ static cmr_int get_super_macrophoto(struct setting_component *cpt,
     return ret;
 }
 
-cmr_int cmr_add_cmd_fun_to_table(cmr_uint cmd, setting_ioctl_fun_ptr fun_ptr) {
-    if (cmd < SETTING_TYPE_MAX) {
-        CMR_LOGD(" cmd %lu,fun_ptr %p", cmd, fun_ptr);
-        setting_list[cmd] = (setting_ioctl_fun_ptr)fun_ptr;
-    } else {
-        CMR_LOGD(" out of cmd %lu", cmd);
-    }
-    return 0;
-}
+static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
+
+    [CAMERA_PARAM_ZOOM] = setting_set_zoom_param,
+    [CAMERA_PARAM_REPROCESS_ZOOM_RATIO] =
+                             setting_set_reprocess_zoom_ratio,
+    [CAMERA_PARAM_ENCODE_ROTATION] =
+                             setting_set_encode_angle,
+    [CAMERA_PARAM_CONTRAST] = setting_set_contrast,
+    [CAMERA_PARAM_BRIGHTNESS] = setting_set_brightness,
+    [CAMERA_PARAM_AI_SCENE_ENABLED] =
+                             setting_set_ai_scence,
+    [CAMERA_PARAM_SHARPNESS] = setting_set_sharpness,
+    [CAMERA_PARAM_WB] = setting_set_wb,
+    [CAMERA_PARAM_EFFECT] = setting_set_effect,
+    [CAMERA_PARAM_FLASH] = setting_set_flash_mode,
+    [CAMERA_PARAM_ANTIBANDING] = setting_set_antibanding,
+    [CAMERA_PARAM_FOCUS_RECT] = NULL, /*by focus module*/
+    [CAMERA_PARAM_AF_MODE] = NULL,    /*by focus module*/
+    [CAMERA_PARAM_AUTO_EXPOSURE_MODE] =
+                             setting_set_auto_exposure_mode,
+    [CAMERA_PARAM_ISO] = setting_set_iso,
+    [CAMERA_PARAM_EXPOSURE_COMPENSATION] =
+                             setting_set_exposure_compensation,
+    [CAMERA_PARAM_PREVIEW_FPS] = setting_set_preview_fps,
+    [CAMERA_PARAM_PREVIEW_LLS_FPS] =
+                             setting_set_preview_lls_fps,
+    [CAMERA_PARAM_SATURATION] = setting_set_saturation,
+    [CAMERA_PARAM_SCENE_MODE] = setting_set_scene_mode,
+    [CAMERA_PARAM_JPEG_QUALITY] =
+                             setting_set_jpeg_quality,
+    [CAMERA_PARAM_THUMB_QUALITY] =
+                             setting_set_thumb_quality,
+    [CAMERA_PARAM_SENSOR_ORIENTATION] =
+                             setting_set_sensor_orientation,
+    [CAMERA_PARAM_FOCAL_LENGTH] =
+                             setting_set_focal_length,
+    [CAMERA_PARAM_SENSOR_ROTATION] =
+                             setting_set_capture_angle,
+    [CAMERA_PARAM_PERFECT_SKIN_LEVEL] =
+                             setting_set_perfect_skinlevel,
+    [CAMERA_PARAM_FLIP_ON] = setting_set_flip_on,
+    [CAMERA_PARAM_SHOT_NUM] = setting_set_shot_num,
+    [CAMERA_PARAM_ROTATION_CAPTURE] =
+                             setting_set_rotation_capture,
+    [CAMERA_PARAM_POSITION] = setting_set_position,
+    [CAMERA_PARAM_PREVIEW_SIZE] =
+                             setting_set_preview_size,
+    [CAMERA_PARAM_RAW_CAPTURE_SIZE] =
+                             setting_set_raw_capture_size,
+    [CAMERA_PARAM_PREVIEW_FORMAT] =
+                             setting_set_preview_format,
+    [CAMERA_PARAM_CAPTURE_SIZE] =
+                             setting_set_capture_size,
+    [CAMERA_PARAM_CAPTURE_FORMAT] =
+                             setting_set_capture_format,
+    [CAMERA_PARAM_CAPTURE_MODE] =
+                             setting_set_capture_mode,
+    [CAMERA_PARAM_THUMB_SIZE] = setting_set_thumb_size,
+    [CAMERA_PARAM_ANDROID_ZSL] = setting_set_android_zsl,
+    [CAMERA_PARAM_VIDEO_SIZE] = setting_set_video_size,
+    [CAMERA_PARAM_VIDEO_FORMAT] =
+                             setting_set_video_format,
+    [CAMERA_PARAM_YUV_CALLBACK_SIZE] =
+                             setting_set_yuv_callback_size,
+    [CAMERA_PARAM_YUV_CALLBACK_FORMAT] =
+                             setting_set_yuv_callback_format,
+    [CAMERA_PARAM_YUV2_SIZE] = setting_set_yuv2_size,
+    [CAMERA_PARAM_YUV2_FORMAT] = setting_set_yuv2_format,
+    [CAMERA_PARAM_RAW_SIZE] = setting_set_raw_size,
+    [CAMERA_PARAM_RAW_FORMAT] = setting_set_raw_format,
+    [CAMERA_PARAM_RANGE_FPS] = setting_set_range_fps,
+    [CAMERA_PARAM_ISP_FLASH] =
+                             setting_set_isp_flash_mode,
+    [CAMERA_PARAM_SPRD_ZSL_ENABLED] =
+                             setting_set_sprd_zsl_enabled,
+    [CAMERA_PARAM_ISP_AE_LOCK_UNLOCK] =
+                             setting_set_ae_lock_unlock,
+    [CAMERA_PARAM_SLOW_MOTION_FLAG] =
+                             setting_set_slow_motion_flag,
+    [CAMERA_PARAM_SPRD_PIPVIV_ENABLED] =
+                             setting_set_sprd_pipviv_enabled,
+
+    [CAMERA_PARAM_SPRD_EIS_ENABLED] =
+                             setting_set_sprd_eis_enabled,
+    [CAMERA_PARAM_REFOCUS_ENABLE] =
+                             setting_set_refocus_enable,
+    [CAMERA_PARAM_TOUCH_XY] = setting_set_touch_xy,
+    [CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE] =
+                             setting_set_video_snapshot_type,
+    [CAMERA_PARAM_SPRD_3DCAL_ENABLE] =
+                             setting_set_3dcalibration_enable,
+
+    [CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE] =
+                             setting_set_yuv_callback_enable,
+
+    [CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK] =
+                             setting_set_awb_lock_unlock,
+    [CAMERA_PARAM_AE_REGION] = setting_set_ae_region,
+    [CAMERA_PARAM_SPRD_SET_APPMODE] =
+                             setting_set_appmode,
+    [CAMERA_PARAM_SPRD_ENABLE_CNR] = setting_set_cnr,
+    [CAMERA_PARAM_SPRD_3DNR_ENABLED] =
+                             setting_set_3dnr_enable,
+    [CAMERA_PARAM_SPRD_3DNR_TYPE] =
+                             setting_set_3dnr_type,
+    [SETTING_SET_EXIF_EXPOSURE_TIME] =
+                             setting_set_exif_exposure_time,
+    [CAMERA_PARAM_TYPE_MAX] = NULL,
+    [SETTING_GET_PREVIEW_ANGLE] =
+                             setting_get_preview_angle,
+    [SETTING_GET_CAPTURE_ANGLE] =
+                             setting_get_capture_angle,
+    [SETTING_GET_ZOOM_PARAM] = setting_get_zoom_param,
+    [SETTING_GET_REPROCESS_ZOOM_RATIO] =
+                             setting_get_reprocess_zoom_ratio,
+    [SETTING_GET_ENCODE_ANGLE] =
+                             setting_get_encode_angle,
+    [SETTING_GET_EXIF_INFO] = setting_get_exif_info,
+    [SETTING_GET_JPEG_QUALITY] =
+                             setting_get_jpeg_quality,
+    [SETTING_GET_THUMB_QUALITY] =
+                             setting_get_thumb_quality,
+    [SETTING_GET_THUMB_SIZE] = setting_get_thumb_size,
+    [SETTING_GET_ROTATION_CAPTURE] =
+                             setting_get_rotation_capture,
+    [SETTING_GET_SHOT_NUMBER] = setting_get_shot_num,
+    [SETTING_SET_ENVIRONMENT] = setting_set_environment,
+    [SETTING_GET_CAPTURE_SIZE] =
+                             setting_get_capture_size,
+    [SETTING_GET_CAPTURE_FORMAT] =
+                             setting_get_capture_format,
+    [SETTING_GET_PREVIEW_SIZE] =
+                             setting_get_preview_size,
+    [SETTING_GET_RAW_CAPTURE_SIZE] =
+                             setting_get_raw_capture_size,
+    [SETTING_GET_PREVIEW_FORMAT] =
+                             setting_get_preview_format,
+    [SETTING_GET_VIDEO_SIZE] = setting_get_video_size,
+    [SETTING_GET_VIDEO_FORMAT] =
+                             setting_get_video_format,
+    [SETTING_GET_YUV_CALLBACK_SIZE] =
+                             setting_get_yuv_callback_size,
+    [SETTING_GET_YUV_CALLBACK_FORMAT] =
+                             setting_get_yuv_callback_format,
+    [SETTING_GET_YUV2_SIZE] = setting_get_yuv2_size,
+    [SETTING_GET_YUV2_FORMAT] = setting_get_yuv2_format,
+    [SETTING_GET_RAW_SIZE] = setting_get_raw_size,
+    [SETTING_GET_RAW_FORMAT] = setting_get_raw_format,
+    [SETTING_GET_HDR] = setting_get_hdr,
+    [SETTING_GET_3DNR] = setting_get_3dnr,
+    [SETTING_GET_AUTO_3DNR] = setting_get_auto_3dnr,
+    [SETTING_GET_3DNR_TYPE] = setting_get_3dnr_type,
+    [SETTING_GET_ANDROID_ZSL_FLAG] =
+                             setting_get_android_zsl,
+    [SETTING_CTRL_FLASH] = setting_ctrl_flash,
+    [SETTING_GET_CAPTURE_MODE] =
+                             setting_get_capture_mode,
+    [SETTING_GET_DV_MODE] = setting_get_dv_mode,
+    [SETTING_SET_PRE_LOWFLASH] =
+                             setting_set_pre_lowflash,
+    [SETTING_GET_FLASH_STATUS] =
+                             setting_get_flash_status,
+    [SETTING_SET_HIGHFLASH_AE_MEASURE] =
+                             setting_set_highflash_ae_measure,
+    [SETTING_GET_HW_FLASH_STATUS] =
+                             setting_get_HW_flash_status,
+    [SETTING_GET_PERFECT_SKINLEVEL] =
+                             setting_get_perfect_skinlevel,
+    [SETTING_GET_FLIP_ON] = setting_get_flip_on,
+    [SETTING_GET_SPRD_ZSL_ENABLED] =
+                             setting_get_sprd_zsl_enabled,
+    [SETTING_GET_SLOW_MOTION_FLAG] =
+                             setting_get_slow_motion_flag,
+    [SETTING_GET_SPRD_PIPVIV_ENABLED] =
+                             setting_get_sprd_pipviv_enabled,
+
+    [SETTING_GET_ENCODE_ROTATION] =
+                             setting_get_encode_rotation,
+    [SETTING_GET_SPRD_EIS_ENABLED] =
+                             setting_get_sprd_eis_enabled,
+    [SETTING_GET_REFOCUS_ENABLE] =
+                             setting_get_refocus_enable,
+    [SETTING_GET_TOUCH_XY] = setting_get_touch_info,
+    [SETTING_GET_VIDEO_SNAPSHOT_TYPE] =
+                             setting_get_video_snapshot_type,
+    [SETTING_GET_EXIF_PIC_INFO] =
+                             setting_get_exif_pic_info,
+    [SETTING_GET_PRE_LOWFLASH_VALUE] =
+                             setting_get_pre_lowflash_value,
+    [SETTING_GET_SPRD_3DCAL_ENABLE] =
+                             setting_get_3dcalibration_enable,
+
+    [SETTING_GET_SPRD_YUV_CALLBACK_ENABLE] =
+                             setting_get_yuv_callback_enable,
+    [SETTING_CTRL_HDR] = setting_ctrl_hdr,
+    [SETTING_CLEAR_HDR] = setting_clear_hdr,
+    [SETTING_CTRL_FDR] = setting_ctrl_fdr,
+    [SETTING_CLEAR_FDR] = setting_clear_fdr,
+    [CAMERA_PARAM_EXIF_MIME_TYPE] =
+                             setting_set_exif_mime_type,
+    [SETTING_GET_APPMODE] = setting_get_appmode,
+    [SETTING_GET_CNR] = setting_get_cnr,
+    [CAMERA_PARAM_FILTER_TYPE] =
+                             setting_set_sprd_filter_type,
+    [SETTING_GET_FILTER_TEYP] =
+                             setting_get_sprd_filter_type,
+    [CAMERA_PARAM_LENS_FOCUS_DISTANCE] =
+                             setting_set_focus_distance,
+    [CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED] =
+                             setting_set_auto_hdr,
+    [CAMERA_PARAM_SPRD_AUTO_FDR_ENABLED] =
+                             setting_set_auto_fdr,
+    [CAMERA_PARAM_SET_DEVICE_ORIENTATION] =
+                             setting_set_device_orientation,
+    [CAMERA_PARAM_GET_DEVICE_ORIENTATION] =
+                             setting_get_device_orientation,
+    [CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED] =
+                             setting_set_auto_3dnr,
+    [CAMERA_PARAM_SPRD_AFBC_ENABLED] =
+                             setting_set_afbc_enable,
+    [SETTING_GET_SPRD_AFBC_ENABLED] =
+                             setting_get_afbc_enabled,
+    [CAMERA_PARAM_AE_MODE] =
+                             setting_set_ae_mode,
+    [CAMERA_PARAM_EXPOSURE_TIME] =
+                             setting_set_exposure_time,
+    [CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE] =
+                             setting_set_auto_tracking_enable,
+    [SETTING_GET_SPRD_AUTOCHASING_REGION_ENABLE] =
+                             setting_get_auto_tracking_enable,
+    [SETTING_SET_SPRD_AUTOCHASING_STATUS] =
+                             setting_set_auto_tracking_status,
+    [SETTING_GET_SPRD_AUTOCHASING_STATUS] =
+                             setting_get_auto_tracking_status,
+    [CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE] =
+                             setting_set_face_attributes_enable,
+    [SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED] =
+                             setting_get_face_attributes_enable,
+    [CAMERA_PARAM_SPRD_LOGO_WATERMARK_ENABLED] =
+                             setting_set_logo_watermark,
+    [CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED] =
+                             setting_set_time_watermark,
+    [SETTING_GET_SPRD_LOGO_WATERMARK] =
+                             setting_get_logo_watermark,
+    [SETTING_GET_SPRD_TIME_WATERMARK] =
+                             setting_get_time_watermark,
+    [SETTING_CTRL_AE_NOTIFY] =
+                             setting_ctrl_ae_adjust,
+    [SETTING_CLEAR_AE_NOTIFY] =
+                             setting_clear_ae_adjust,
+    [CAMERA_PARAM_GET_SENSOR_ORIENTATION] =
+                             setting_get_sensor_orientation,
+    [SETTING_SET_ORIGINAL_PICTURE_SIZE] =
+                             setting_set_original_picture_size,
+    [SETTING_GET_ORIGINAL_PICTURE_SIZE] =
+                             setting_get_original_picture_size,
+    [SETTING_GET_FDR] = setting_get_fdr,
+    [CAMERA_PARAM_SPRD_ENABLE_POSTEE] = setting_set_ee,
+    [SETTING_GET_EE] = setting_get_ee,
+    [CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE] =
+                             set_super_macrophoto,
+    [CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM] =
+                             get_super_macrophoto,
+};
 
 setting_ioctl_fun_ptr cmr_get_cmd_fun_from_table(cmr_uint cmd) {
     if (cmd < SETTING_TYPE_MAX) {
@@ -3995,277 +4248,6 @@ setting_ioctl_fun_ptr cmr_get_cmd_fun_from_table(cmr_uint cmd) {
     } else {
         return NULL;
     }
-}
-
-static cmr_int setting_parms_inited = 0;
-static cmr_int cmr_setting_parms_init() {
-
-    memset(setting_list, 0x00,
-           sizeof(setting_ioctl_fun_ptr) * SETTING_TYPE_MAX);
-
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ZOOM, setting_set_zoom_param);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
-                             setting_set_reprocess_zoom_ratio);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ENCODE_ROTATION,
-                             setting_set_encode_angle);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_CONTRAST, setting_set_contrast);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_BRIGHTNESS, setting_set_brightness);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AI_SCENE_ENABLED,
-                             setting_set_ai_scence);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SHARPNESS, setting_set_sharpness);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_WB, setting_set_wb);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EFFECT, setting_set_effect);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FLASH, setting_set_flash_mode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ANTIBANDING, setting_set_antibanding);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FOCUS_RECT, NULL); /*by focus module*/
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AF_MODE, NULL);    /*by focus module*/
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AUTO_EXPOSURE_MODE,
-                             setting_set_auto_exposure_mode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ISO, setting_set_iso);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_COMPENSATION,
-                             setting_set_exposure_compensation);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_PREVIEW_FPS, setting_set_preview_fps);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_PREVIEW_LLS_FPS,
-                             setting_set_preview_lls_fps);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SATURATION, setting_set_saturation);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SCENE_MODE, setting_set_scene_mode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_JPEG_QUALITY,
-                             setting_set_jpeg_quality);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_THUMB_QUALITY,
-                             setting_set_thumb_quality);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SENSOR_ORIENTATION,
-                             setting_set_sensor_orientation);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FOCAL_LENGTH,
-                             setting_set_focal_length);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SENSOR_ROTATION,
-                             setting_set_capture_angle);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_PERFECT_SKIN_LEVEL,
-                             setting_set_perfect_skinlevel);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FLIP_ON, setting_set_flip_on);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SHOT_NUM, setting_set_shot_num);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ROTATION_CAPTURE,
-                             setting_set_rotation_capture);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_POSITION, setting_set_position);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_PREVIEW_SIZE,
-                             setting_set_preview_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_RAW_CAPTURE_SIZE,
-                             setting_set_raw_capture_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_PREVIEW_FORMAT,
-                             setting_set_preview_format);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_CAPTURE_SIZE,
-                             setting_set_capture_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_CAPTURE_FORMAT,
-                             setting_set_capture_format);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_CAPTURE_MODE,
-                             setting_set_capture_mode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_THUMB_SIZE, setting_set_thumb_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ANDROID_ZSL, setting_set_android_zsl);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_VIDEO_SIZE, setting_set_video_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_VIDEO_FORMAT,
-                             setting_set_video_format);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV_CALLBACK_SIZE,
-                             setting_set_yuv_callback_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV_CALLBACK_FORMAT,
-                             setting_set_yuv_callback_format);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_SIZE, setting_set_yuv2_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_YUV2_FORMAT, setting_set_yuv2_format);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_RAW_SIZE, setting_set_raw_size);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_RAW_FORMAT, setting_set_raw_format);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_RANGE_FPS, setting_set_range_fps);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ISP_FLASH,
-                             setting_set_isp_flash_mode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ZSL_ENABLED,
-                             setting_set_sprd_zsl_enabled);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
-                             setting_set_ae_lock_unlock);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SLOW_MOTION_FLAG,
-                             setting_set_slow_motion_flag);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_PIPVIV_ENABLED,
-                             setting_set_sprd_pipviv_enabled);
-
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_EIS_ENABLED,
-                             setting_set_sprd_eis_enabled);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_REFOCUS_ENABLE,
-                             setting_set_refocus_enable);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_TOUCH_XY, setting_set_touch_xy);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,
-                             setting_set_video_snapshot_type);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DCAL_ENABLE,
-                             setting_set_3dcalibration_enable);
-
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_YUV_CALLBACK_ENABLE,
-                             setting_set_yuv_callback_enable);
-
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
-                             setting_set_awb_lock_unlock);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_REGION, setting_set_ae_region);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SET_APPMODE,
-                             setting_set_appmode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_CNR, setting_set_cnr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DNR_ENABLED,
-                             setting_set_3dnr_enable);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_3DNR_TYPE,
-                             setting_set_3dnr_type);
-    cmr_add_cmd_fun_to_table(SETTING_SET_EXIF_EXPOSURE_TIME,
-                             setting_set_exif_exposure_time);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_TYPE_MAX, NULL);
-    cmr_add_cmd_fun_to_table(SETTING_GET_PREVIEW_ANGLE,
-                             setting_get_preview_angle);
-    cmr_add_cmd_fun_to_table(SETTING_GET_CAPTURE_ANGLE,
-                             setting_get_capture_angle);
-    cmr_add_cmd_fun_to_table(SETTING_GET_ZOOM_PARAM, setting_get_zoom_param);
-    cmr_add_cmd_fun_to_table(SETTING_GET_REPROCESS_ZOOM_RATIO,
-                             setting_get_reprocess_zoom_ratio);
-    cmr_add_cmd_fun_to_table(SETTING_GET_ENCODE_ANGLE,
-                             setting_get_encode_angle);
-    cmr_add_cmd_fun_to_table(SETTING_GET_EXIF_INFO, setting_get_exif_info);
-    cmr_add_cmd_fun_to_table(SETTING_GET_JPEG_QUALITY,
-                             setting_get_jpeg_quality);
-    cmr_add_cmd_fun_to_table(SETTING_GET_THUMB_QUALITY,
-                             setting_get_thumb_quality);
-    cmr_add_cmd_fun_to_table(SETTING_GET_THUMB_SIZE, setting_get_thumb_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_ROTATION_CAPTURE,
-                             setting_get_rotation_capture);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SHOT_NUMBER, setting_get_shot_num);
-    cmr_add_cmd_fun_to_table(SETTING_SET_ENVIRONMENT, setting_set_environment);
-    cmr_add_cmd_fun_to_table(SETTING_GET_CAPTURE_SIZE,
-                             setting_get_capture_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_CAPTURE_FORMAT,
-                             setting_get_capture_format);
-    cmr_add_cmd_fun_to_table(SETTING_GET_PREVIEW_SIZE,
-                             setting_get_preview_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_RAW_CAPTURE_SIZE,
-                             setting_get_raw_capture_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_PREVIEW_FORMAT,
-                             setting_get_preview_format);
-    cmr_add_cmd_fun_to_table(SETTING_GET_VIDEO_SIZE, setting_get_video_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_VIDEO_FORMAT,
-                             setting_get_video_format);
-    cmr_add_cmd_fun_to_table(SETTING_GET_YUV_CALLBACK_SIZE,
-                             setting_get_yuv_callback_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_YUV_CALLBACK_FORMAT,
-                             setting_get_yuv_callback_format);
-    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_SIZE, setting_get_yuv2_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_YUV2_FORMAT, setting_get_yuv2_format);
-    cmr_add_cmd_fun_to_table(SETTING_GET_RAW_SIZE, setting_get_raw_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_RAW_FORMAT, setting_get_raw_format);
-    cmr_add_cmd_fun_to_table(SETTING_GET_HDR, setting_get_hdr);
-    cmr_add_cmd_fun_to_table(SETTING_GET_3DNR, setting_get_3dnr);
-    cmr_add_cmd_fun_to_table(SETTING_GET_AUTO_3DNR, setting_get_auto_3dnr);
-    cmr_add_cmd_fun_to_table(SETTING_GET_3DNR_TYPE, setting_get_3dnr_type);
-    cmr_add_cmd_fun_to_table(SETTING_GET_ANDROID_ZSL_FLAG,
-                             setting_get_android_zsl);
-    cmr_add_cmd_fun_to_table(SETTING_CTRL_FLASH, setting_ctrl_flash);
-    cmr_add_cmd_fun_to_table(SETTING_GET_CAPTURE_MODE,
-                             setting_get_capture_mode);
-    cmr_add_cmd_fun_to_table(SETTING_GET_DV_MODE, setting_get_dv_mode);
-    cmr_add_cmd_fun_to_table(SETTING_SET_PRE_LOWFLASH,
-                             setting_set_pre_lowflash);
-    cmr_add_cmd_fun_to_table(SETTING_GET_FLASH_STATUS,
-                             setting_get_flash_status);
-    cmr_add_cmd_fun_to_table(SETTING_SET_HIGHFLASH_AE_MEASURE,
-                             setting_set_highflash_ae_measure);
-    cmr_add_cmd_fun_to_table(SETTING_GET_HW_FLASH_STATUS,
-                             setting_get_HW_flash_status);
-    cmr_add_cmd_fun_to_table(SETTING_GET_PERFECT_SKINLEVEL,
-                             setting_get_perfect_skinlevel);
-    cmr_add_cmd_fun_to_table(SETTING_GET_FLIP_ON, setting_get_flip_on);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_ZSL_ENABLED,
-                             setting_get_sprd_zsl_enabled);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SLOW_MOTION_FLAG,
-                             setting_get_slow_motion_flag);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_PIPVIV_ENABLED,
-                             setting_get_sprd_pipviv_enabled);
-
-    cmr_add_cmd_fun_to_table(SETTING_GET_ENCODE_ROTATION,
-                             setting_get_encode_rotation);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_EIS_ENABLED,
-                             setting_get_sprd_eis_enabled);
-    cmr_add_cmd_fun_to_table(SETTING_GET_REFOCUS_ENABLE,
-                             setting_get_refocus_enable);
-    cmr_add_cmd_fun_to_table(SETTING_GET_TOUCH_XY, setting_get_touch_info);
-    cmr_add_cmd_fun_to_table(SETTING_GET_VIDEO_SNAPSHOT_TYPE,
-                             setting_get_video_snapshot_type);
-    cmr_add_cmd_fun_to_table(SETTING_GET_EXIF_PIC_INFO,
-                             setting_get_exif_pic_info);
-    cmr_add_cmd_fun_to_table(SETTING_GET_PRE_LOWFLASH_VALUE,
-                             setting_get_pre_lowflash_value);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_3DCAL_ENABLE,
-                             setting_get_3dcalibration_enable);
-
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_YUV_CALLBACK_ENABLE,
-                             setting_get_yuv_callback_enable);
-    cmr_add_cmd_fun_to_table(SETTING_CTRL_HDR, setting_ctrl_hdr);
-    cmr_add_cmd_fun_to_table(SETTING_CLEAR_HDR, setting_clear_hdr);
-    cmr_add_cmd_fun_to_table(SETTING_CTRL_FDR, setting_ctrl_fdr);
-    cmr_add_cmd_fun_to_table(SETTING_CLEAR_FDR, setting_clear_fdr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXIF_MIME_TYPE,
-                             setting_set_exif_mime_type);
-    cmr_add_cmd_fun_to_table(SETTING_GET_APPMODE, setting_get_appmode);
-    cmr_add_cmd_fun_to_table(SETTING_GET_CNR, setting_get_cnr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FILTER_TYPE,
-                             setting_set_sprd_filter_type);
-    cmr_add_cmd_fun_to_table(SETTING_GET_FILTER_TEYP,
-                             setting_get_sprd_filter_type);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_LENS_FOCUS_DISTANCE,
-                             setting_set_focus_distance);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_HDR_ENABLED,
-                             setting_set_auto_hdr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_FDR_ENABLED,
-                             setting_set_auto_fdr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SET_DEVICE_ORIENTATION,
-                             setting_set_device_orientation);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_DEVICE_ORIENTATION,
-                             setting_get_device_orientation);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
-                             setting_set_auto_3dnr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AFBC_ENABLED,
-                             setting_set_afbc_enable);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AFBC_ENABLED,
-                             setting_get_afbc_enabled);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_AE_MODE,
-                             setting_set_ae_mode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_TIME,
-                             setting_set_exposure_time);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_AUTOCHASING_REGION_ENABLE,
-                             setting_set_auto_tracking_enable);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AUTOCHASING_REGION_ENABLE,
-                             setting_get_auto_tracking_enable);
-    cmr_add_cmd_fun_to_table(SETTING_SET_SPRD_AUTOCHASING_STATUS,
-                             setting_set_auto_tracking_status);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_AUTOCHASING_STATUS,
-                             setting_get_auto_tracking_status);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE,
-                             setting_set_face_attributes_enable);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_FACE_ATTRIBUTES_ENABLED,
-                             setting_get_face_attributes_enable);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_LOGO_WATERMARK_ENABLED,
-                             setting_set_logo_watermark);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_TIME_WATERMARK_ENABLED,
-                             setting_set_time_watermark);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_LOGO_WATERMARK,
-                             setting_get_logo_watermark);
-    cmr_add_cmd_fun_to_table(SETTING_GET_SPRD_TIME_WATERMARK,
-                             setting_get_time_watermark);
-    cmr_add_cmd_fun_to_table(SETTING_CTRL_AE_NOTIFY,
-                             setting_ctrl_ae_adjust);
-    cmr_add_cmd_fun_to_table(SETTING_CLEAR_AE_NOTIFY,
-                             setting_clear_ae_adjust);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_SENSOR_ORIENTATION,
-                             setting_get_sensor_orientation);
-    cmr_add_cmd_fun_to_table(SETTING_SET_ORIGINAL_PICTURE_SIZE,
-                             setting_set_original_picture_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_ORIGINAL_PICTURE_SIZE,
-                             setting_get_original_picture_size);
-    cmr_add_cmd_fun_to_table(SETTING_GET_FDR, setting_get_fdr);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_POSTEE, setting_set_ee);
-    cmr_add_cmd_fun_to_table(SETTING_GET_EE, setting_get_ee);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE,
-                             set_super_macrophoto);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM,
-                             get_super_macrophoto);
-    setting_parms_inited = 1;
-    return 0;
 }
 
 cmr_int cmr_setting_init(struct setting_init_in *param_ptr,
@@ -4316,9 +4298,6 @@ cmr_int cmr_setting_init(struct setting_init_in *param_ptr,
     sem_init(&cpt->preflash_sem, 0, 0);
 
     *out_setting_handle = (cmr_handle)cpt;
-    if (setting_parms_inited == 0) {
-        cmr_setting_parms_init();
-    }
     return 0;
 
 setting_out:
