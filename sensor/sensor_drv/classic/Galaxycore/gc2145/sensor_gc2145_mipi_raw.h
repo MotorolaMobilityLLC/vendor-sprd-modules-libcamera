@@ -1158,7 +1158,7 @@ static struct sensor_module_info s_gc2145_module_info_tab[VENDOR_NUM] = {
                      .dvdd_val = SENSOR_AVDD_1800MV,
 
 #ifndef SENSOR_GC2145_RAW
-                     .image_pattern = SENSOR_IMAGE_PATTERN_YUV422_YUYV,
+                     .image_pattern = SENSOR_IMAGE_PATTERN_YUV422_YVYU,
 #else
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
 #endif

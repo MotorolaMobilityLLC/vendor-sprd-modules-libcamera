@@ -15133,6 +15133,10 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     struct sprd_img_capture_param capture_param;
     struct common_isp_cmd_param isp_param;
 
+    struct sensor_exp_info sensor_info;
+
+    ret = camera_get_sensor_info(cxt, cxt->camera_id, &sensor_info);
+
     cmr_bzero(&capture_param, sizeof(capture_param));
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
     capture_param.type = DCAM_CAPTURE_START;
@@ -15186,8 +15190,10 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         cxt->dre_flag, cxt->skipframe, flash_status);
 
     isp_param.cmd_value = 1;
-    ret =
-        camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
+
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format)
+        ret =
+            camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
 
     ret = cmr_grab_start_capture(cxt->grab_cxt.grab_handle, capture_param);
     if (ret) {
@@ -15196,8 +15202,10 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     }
     cxt->is_capture_face = true;
     isp_param.cmd_value = 0;
-    ret =
-        camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
+
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info.image_format)
+        ret =
+            camera_isp_ioctl(oem_handle, COM_ISP_SET_CAP_FLAG, (void *)&isp_param);
 
 exit:
     return ret;

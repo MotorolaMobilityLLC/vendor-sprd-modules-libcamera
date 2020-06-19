@@ -25,6 +25,7 @@ PRODUCT_PACKAGES += libsensor_imx351 \
     libsensor_ov8858 \
     libsensor_s5k5e8yx \
     libsensor_gc2375 \
+    libsensor_gc2145 \
     libsensor_s5k3l6xx03 \
     libsensor_s5k4h7 \
     libsensor_gc5035 \

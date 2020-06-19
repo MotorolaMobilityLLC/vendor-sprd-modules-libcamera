@@ -795,12 +795,16 @@ static struct sensor_ic_ops s_gc2145_ops_tab = {
 
     .power = gc2145_drv_power_on,
     .identify = gc2145_drv_identify,
+#ifdef SENSOR_GC2145_RAW
     .ex_write_exp = gc2145_drv_write_exposure,
     .write_gain_value = gc2145_drv_write_gain,
+#endif
 
     .ext_ops =
         {
+#ifdef SENSOR_GC2145_RAW
                 [SENSOR_IOCTL_BEFORE_SNAPSHOT].ops = gc2145_drv_before_snapshot,
+#endif
                 [SENSOR_IOCTL_STREAM_ON].ops = gc2145_drv_stream_on,
                 [SENSOR_IOCTL_STREAM_OFF].ops = gc2145_drv_stream_off,
                 /* expand interface,if you want to add your sub cmd ,

@@ -7870,35 +7870,38 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
-    /*caculate trim rect*/
-    if (ZOOM_INFO != zoom_param->mode) {
-        CMR_LOGD("zoom level %ld, dst_img_size %d %d", zoom_param->zoom_level,
-                 chn_param.cap_inf_cfg.cfg.dst_img_size.width,
-                 chn_param.cap_inf_cfg.cfg.dst_img_size.height);
-        ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                                   zoom_param->zoom_level,
-                                   &chn_param.cap_inf_cfg.cfg.dst_img_size);
-    } else {
-        float real_ratio = zoom_param->zoom_info.prev_aspect_ratio;
-        float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
-                             prev_cxt->actual_prev_size.height;
-
-        if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401 ) {
-            chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
-                    zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
-                    chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+    if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_info->image_format)
+    {
+        /*caculate trim rect*/
+        if (ZOOM_INFO != zoom_param->mode) {
+            CMR_LOGD("zoom level %ld, dst_img_size %d %d", zoom_param->zoom_level,
+                     chn_param.cap_inf_cfg.cfg.dst_img_size.width,
+                     chn_param.cap_inf_cfg.cfg.dst_img_size.height);
+            ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                                       zoom_param->zoom_level,
+                                       &chn_param.cap_inf_cfg.cfg.dst_img_size);
         } else {
-            ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
-                    real_ratio, aspect_ratio,
-                    sensor_mode_info->scaler_trim.width,
-                    sensor_mode_info->scaler_trim.height,
-                    prev_cxt->prev_param.prev_rot);
+            float real_ratio = zoom_param->zoom_info.prev_aspect_ratio;
+            float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
+                                 prev_cxt->actual_prev_size.height;
+
+            if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401 ) {
+                chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
+                        zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
+                        chn_param.cap_inf_cfg.cfg.src_img_rect, aspect_ratio);
+            } else {
+                ret = camera_get_trim_rect2(&chn_param.cap_inf_cfg.cfg.src_img_rect,
+                        real_ratio, aspect_ratio,
+                        sensor_mode_info->scaler_trim.width,
+                        sensor_mode_info->scaler_trim.height,
+                        prev_cxt->prev_param.prev_rot);
+            }
         }
-    }
-    if (ret) {
-        CMR_LOGE("prev get trim failed");
-        ret = CMR_CAMERA_FAIL;
-        goto exit;
+        if (ret) {
+            CMR_LOGE("prev get trim failed");
+            ret = CMR_CAMERA_FAIL;
+            goto exit;
+        }
     }
 
     CMR_LOGD("camera %u after src_img_rect %d %d %d %d", camera_id,

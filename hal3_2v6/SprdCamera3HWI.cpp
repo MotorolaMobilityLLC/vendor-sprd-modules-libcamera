@@ -1254,7 +1254,11 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.yuvcallback.status == CONFIGURED &&
                mStreamConfiguration.snapshot.status == CONFIGURED) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+
+        if(!mOEMIf->isYuvSensor()) {
+            captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+        }
+
     } else if (mStreamConfiguration.num_streams == 3 &&
                mStreamConfiguration.preview.status == CONFIGURED &&
                mStreamConfiguration.video.status == CONFIGURED &&
@@ -1262,6 +1266,15 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
         captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
     }
+
+	HAL_LOGV("captureIntent %d ,num_streams = %d, prv status %d, snap status %d, vid status %d, yuvcallbackk status %d",
+			captureIntent,
+			mStreamConfiguration.num_streams,
+			mStreamConfiguration.preview.status,
+			mStreamConfiguration.snapshot.status,
+			mStreamConfiguration.video.status,
+			mStreamConfiguration.yuvcallback.status);
+
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
         if (sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) {
@@ -1277,13 +1290,25 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             HAL_LOGD("non-zsl,sensor stream off, i=%d", i);
         }
 
+        if (mOEMIf->isYuvSensor() &&
+            mStreamConfiguration.num_streams > 1 &&
+            mStreamConfiguration.preview.status == CONFIGURED &&
+            mStreamConfiguration.snapshot.status == CONFIGURED) {
+            if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE ||
+                mOldCapIntent != ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW) {
+                mFirstRegularRequest = 1;
+                mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW,
+                                        mFrameNum);
+            }
+        }
+
         if (mStreamConfiguration.num_streams == 3 &&
             mStreamConfiguration.preview.status == CONFIGURED &&
             mStreamConfiguration.yuvcallback.status == CONFIGURED &&
             mStreamConfiguration.snapshot.status == CONFIGURED) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
                 // when sensor_rotation is 1 for volte, volte dont need capture
-                if (sprddefInfo->sensor_rotation == 0) {
+                if ((mOEMIf->isYuvSensor() == 0) && (sprddefInfo->sensor_rotation == 0)) {
                     mOEMIf->setStreamOnWithZsl();
                 }
                 mFirstRegularRequest = 1;
@@ -1347,7 +1372,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 #endif
                 {
                     // when sensor_rotation is 1 for volte, volte dont need capture
-                    if (sprddefInfo->sensor_rotation == 0) {
+                    if ((mOEMIf->isYuvSensor() == 0) && (sprddefInfo->sensor_rotation == 0)) {
                         mOEMIf->setStreamOnWithZsl();
                     }
                     mFirstRegularRequest = 1;
@@ -1378,8 +1403,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mStreamConfiguration.yuvcallback.status == CONFIGURED &&
             mMultiCameraMode == MODE_3D_CALIBRATION) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
-                mOEMIf->setStreamOnWithZsl();
-
+                if (mOEMIf->isYuvSensor() == 0)
+                    mOEMIf->setStreamOnWithZsl();
                 HAL_LOGD("call back stream request");
                 mOEMIf->setCallBackYuvMode(1);
                 if (streamType[0] == CAMERA_STREAM_TYPE_CALLBACK ||
@@ -1406,7 +1431,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
         if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
             if (mStreamConfiguration.snapshot.status == CONFIGURED) {
-                mOEMIf->setStreamOnWithZsl();
+                if (mOEMIf->isYuvSensor() == 0) {
+                    mOEMIf->setStreamOnWithZsl();
+                }
             }
             mFirstRegularRequest = 1;
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);
@@ -1451,7 +1478,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
         if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
             if (mStreamConfiguration.snapshot.status == CONFIGURED) {
-                mOEMIf->setStreamOnWithZsl();
+                if (mOEMIf->isYuvSensor() == 0) {
+                    mOEMIf->setStreamOnWithZsl();
+                }
             }
             mFirstRegularRequest = 1;
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_PREVIEW, mFrameNum);

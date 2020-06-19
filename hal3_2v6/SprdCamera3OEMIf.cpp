@@ -493,6 +493,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
+      mIsYuvSensor(0),
       mIsUltraWideMode(false), mIsFovFusionMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0)
@@ -9349,7 +9350,8 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
     mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_SENSOR_FORMAT,
                                 &imageFormat);
     if (imageFormat == CAM_IMG_FMT_YUV422P) {
-        isYuvSensor = 1;
+        mIsYuvSensor = 1;
+        HAL_LOGE("remove  YuvSensor flag");
     }
 
     switch (stream_tpye) {
@@ -10818,6 +10820,8 @@ void SprdCamera3OEMIf::setSensorCloseFlag() {
     // for performance: dont delay for dc/dv switch or front/back switch
     mHalOem->ops->camera_set_sensor_close_flag(mCameraHandle);
 }
+
+bool SprdCamera3OEMIf::isYuvSensor() { return mIsYuvSensor; }
 
 bool SprdCamera3OEMIf::isIspToolMode() { return mIsIspToolMode; }
 

@@ -304,6 +304,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setSensorCloseFlag();
     int checkIfNeedToStopOffLineZsl();
     bool isIspToolMode();
+    bool isYuvSensor();
     bool isRawCapture();
     void ispToolModeInit();
     int32_t setStreamOnWithZsl();
@@ -879,6 +880,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
     bool mIsIspToolMode;
+    bool mIsYuvSensor;
     bool mIsUltraWideMode;
     bool mIsMlogMode;
     int64_t mtimestamplast;

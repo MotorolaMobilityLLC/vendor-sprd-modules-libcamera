@@ -3606,15 +3606,16 @@ static cmr_int sensor_drv_open(struct sensor_drv_context *sensor_cxt,
                         module ? module->otp_drv_info.otp_drv_entry : NULL);
         }
         sensor_set_raw_infor(sensor_cxt, vendor_id);
-
-        sensor_set_export_Info(sensor_cxt);
-        sensor_cxt->stream_on = 1;
-        sensor_stream_off(sensor_cxt);
-        SENSOR_LOGI("open success");
     }
+    sensor_set_export_Info(sensor_cxt);
+    sensor_cxt->stream_on = 1;
+    sensor_stream_off(sensor_cxt);
+
     if ((SENSOR_SUCCESS == ret) && (1 == sensor_cxt->is_autotest)) {
         sensor_set_mode_done_common(sensor_cxt);
     }
+
+    SENSOR_LOGI("open success");
 
 exit:
     ATRACE_END();
