@@ -105,7 +105,7 @@ static struct sensor_raw_ioctrl s_ov12a10_ioctrl=
 
 static struct sensor_version_info s_ov12a10_version_info=
 {
-	0x000A0008,
+	0x000A000E,
 	{
 		{
 			0x3231766F,
