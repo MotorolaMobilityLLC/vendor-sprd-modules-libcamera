@@ -134,24 +134,23 @@ void construct_dfa_face(struct class_dfa *dfa, int i, int rX, int rY, int rWidth
     }
 }
 
-DFA_RESULT *do_dfa_image_yuv420sp(struct class_dfa *dfa, int faceCount){
+void do_dfa_image_yuv420sp(struct class_dfa *dfa, int faceCount,DFA_RESULT *dfa_result){
     struct timespec start_time, end_time;
     unsigned int duration;
     char debug_value[PROPERTY_VALUE_MAX];
     int retVal = 0;
     if (!dfa) {
         ALOGE("do_dfa_image_yuv420sp dfa is null");
-        return NULL;
+        return;
     }
     char dfa_prop[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.lpt.level.enable", dfa_prop, "0");
     clock_gettime(CLOCK_BOOTTIME, &start_time);
-    DFA_RESULT dfa_result;
     if ((!(strcmp("1", dfa_prop)) && (dfa_mode == 0)) || (!(strcmp("0", dfa_prop)))){
         if (faceCount > 0) {
             retVal = DFA_Run_YUV420SP(dfa->hSprdDfa,
                                    &(dfa->dfa_image_sp),
-                                   dfa->dfa_face, &dfa_result);
+                                   dfa->dfa_face, dfa_result);
         }
 
     }
@@ -165,23 +164,20 @@ DFA_RESULT *do_dfa_image_yuv420sp(struct class_dfa *dfa, int faceCount){
         ALOGD("SPRD_DFA: DFA_Run_YUV420SP duration is %d ms", duration);
     }
     if (retVal != 0) {
-        return NULL;
+        return;
         ALOGE("do_dfa_image_yuv420sp ERROR!, ret is %d", retVal);
-    }else {
-        return &dfa_result;
     }
 }
 
-DFA_RESULT *do_dfa_image_yuv420(struct class_dfa *dfa, int faceCount){
+void do_dfa_image_yuv420(struct class_dfa *dfa, int faceCount, DFA_RESULT *dfa_result){
     struct timespec start_time, end_time;
     char debug_value[PROPERTY_VALUE_MAX];
     unsigned int duration;
-    DFA_RESULT dfa_result;
     int retVal = 0;
 
     if (!dfa) {
         ALOGE("do_dfa_image_yuv420 dfa is null");
-        return NULL;
+        return;
     }
     char dfa_prop[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.lpt.level.enable", dfa_prop, "0");
@@ -190,7 +186,7 @@ DFA_RESULT *do_dfa_image_yuv420(struct class_dfa *dfa, int faceCount){
         if (faceCount > 0) {
             retVal = DFA_Run_YUV420(dfa->hSprdDfa,
                                  &(dfa->dfa_image),
-                                 dfa->dfa_face, &dfa_result);
+                                 dfa->dfa_face, dfa_result);
         }
     }
     clock_gettime(CLOCK_BOOTTIME, &end_time);
@@ -203,23 +199,20 @@ DFA_RESULT *do_dfa_image_yuv420(struct class_dfa *dfa, int faceCount){
         ALOGD("SPRD_DFA: DFA_Run_YUV420 duration is %d ms", duration);
      }
     if (retVal != 0) {
-        return NULL;
+        return ;
         ALOGE("do_dfa_image_yuv420 ERROR!, ret is %d", retVal);
-    }else {
-        return &dfa_result;
     }
 }
 
-DFA_RESULT *do_dfa_image_bgr(struct class_dfa *dfa, int faceCount){
+void do_dfa_image_bgr(struct class_dfa *dfa, int faceCount, DFA_RESULT *dfa_result){
     struct timespec start_time, end_time;
     char debug_value[PROPERTY_VALUE_MAX];
     unsigned int duration;
-    DFA_RESULT dfa_result;
     int retVal = 0;
 
     if (!dfa) {
         ALOGE("do_dfa_image_yuv420 dfa is null");
-        return NULL;
+        return ;
     }
     char dfa_prop[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.lpt.level.enable", dfa_prop, "0");
@@ -228,7 +221,7 @@ DFA_RESULT *do_dfa_image_bgr(struct class_dfa *dfa, int faceCount){
         if (faceCount > 0) {
             retVal = DFA_Run_BGR(dfa->hSprdDfa,
                          &(dfa->dfa_bgr),
-                         dfa->dfa_face, &dfa_result);
+                         dfa->dfa_face, dfa_result);
         }
     }
     clock_gettime(CLOCK_BOOTTIME, &end_time);
@@ -241,11 +234,8 @@ DFA_RESULT *do_dfa_image_bgr(struct class_dfa *dfa, int faceCount){
         ALOGD("SPRD_DFA: DFA_Run_BGR duration is %d ms", duration);
      }
     if (retVal != 0) {
-        return NULL;
+        return ;
         ALOGE("do_dfa_image_bgr ERROR!, ret is %d", retVal);
-    }else {
-        return &dfa_result;
     }
 }
-
 #endif

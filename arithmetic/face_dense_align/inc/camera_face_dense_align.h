@@ -35,11 +35,10 @@ void construct_dfa_bgr(struct class_dfa *dfa, int picWidth,
                           unsigned char *pGdata, unsigned char *pRdata);
 void construct_dfa_face(struct class_dfa *dfa, int i, int rX, int rY, int rWidth,
                         int rHeight,int rRollAngle,unsigned char rType);
-//void output_dfa_result(struct class_dfa *dfa);
 
-DFA_RESULT *do_dfa_image_yuv420sp(struct class_dfa *dfa,int faceCount);
-DFA_RESULT *do_dfa_image_yuv420(struct class_dfa *dfa,int faceCount);
-DFA_RESULT *do_dfa_image_bgr(struct class_dfa *dfa,int faceCount);
+void do_dfa_image_yuv420sp(struct class_dfa *dfa, int faceCount, DFA_RESULT *dfa_result);
+void do_dfa_image_yuv420(struct class_dfa *dfa, int faceCount, DFA_RESULT *dfa_result);
+void do_dfa_image_bgr(struct class_dfa *dfa, int faceCount, DFA_RESULT *dfa_result);
 
 #ifdef __cplusplus
 }
