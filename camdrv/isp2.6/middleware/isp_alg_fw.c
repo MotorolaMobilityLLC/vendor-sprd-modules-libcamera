@@ -46,6 +46,21 @@
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 #define MIN_FRAME_INTERVAL_MS  (10)
 
+
+enum {
+	FW_INIT_GOING = 0,
+	FW_INIT_DONE,
+	FW_INIT_ERR,
+};
+
+enum {
+	AI_CMD_INIT,
+	AI_CMD_START,
+	AI_CMD_STOP,
+	AI_CMD_WAIT,
+	AI_CMD_MAX
+};
+
 enum {
 	FDR_STATUS_NONE = 0,
 	FDR_STATUS_CAPTURE,
@@ -333,6 +348,9 @@ struct ispalg_lib_ops {
 
 struct isp_alg_fw_context {
 	cmr_int camera_id;
+	void *init_cxt;
+	cmr_u8 init_status;
+	cmr_u8 ai_init_status;
 	cmr_u8 alg_enable;
 	cmr_u8 aem_is_update;
 	cmr_u8 bayerhist_update;
@@ -341,6 +359,7 @@ struct isp_alg_fw_context {
 	cmr_u8 first_frm;
 	cmr_u8 aethd_pri_set;
 	nsecs_t last_sof_time;
+	pthread_mutex_t pm_getting_lock;
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_awb_statistic_info aem_ue;
 	struct isp_awb_statistic_info aem_ae;
@@ -374,6 +393,7 @@ struct isp_alg_fw_context {
 	cmr_handle thr_handle;
 	cmr_handle thr_aehandle;
 	cmr_handle thr_afhandle;
+	cmr_handle thr_aihandle;
 	cmr_handle dev_access_handle;
 	cmr_handle handle_pm;
 	cmr_handle tof_handle;
@@ -409,6 +429,35 @@ struct isp_alg_fw_context {
 	cmr_u32 save_data;
 	struct cam_debug_info dbg_cxt;
 };
+
+struct fw_init_local {
+	cmr_u32 lib_init_status;
+	cmr_u32 ae_init_status;
+	cmr_u32 af_init_status;
+	cmr_u32 afl_init_status;
+	cmr_u32 awb_init_status;
+	cmr_u32 lsc_init_status;
+	cmr_u32 smart_init_status;
+	cmr_u32 pdaf_init_status;
+	cmr_u32 tof_init_status;
+
+	pthread_t init_thread_handle;
+
+	pthread_t lib_thread_handle;
+	pthread_t ae_thread_handle;
+	pthread_t af_thread_handle;
+	pthread_t afl_thread_handle;
+	pthread_t awb_thread_handle;
+	pthread_t lsc_thread_handle;
+	pthread_t smart_thread_handle;
+	pthread_t pdaf_thread_handle;
+	pthread_t tof_thread_handle;
+
+	struct isp_alg_fw_context *cxt;
+	struct isp_pm_init_input pm_init_input;
+};
+
+cmr_int ispalg_aithread_proc(struct cmr_msg *message, void *p_data);
 
 #define FEATRUE_ISP_FW_IOCTRL
 #include "isp_ioctrl.c"
@@ -580,6 +629,7 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 	BLOCK_PARAM_CFG(input, param_data,
 			ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_RGB_GAIN, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			&input, &output);
@@ -598,6 +648,7 @@ static cmr_int ispalg_get_rgb_gain(cmr_handle isp_fw_handle, cmr_u32 *param)
 	} else {
 		*param = 4096;
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	ISP_LOGV("D-gain global gain ori: %d\n", *param);
 
@@ -669,6 +720,8 @@ static cmr_int ispalg_get_aem_param(cmr_handle isp_fw_handle, struct isp_rgb_aem
 
 	memset(&param_data, 0, sizeof(param_data));
 
+	pthread_mutex_lock(&cxt->pm_getting_lock);
+
 	/* supported AE win num: 32x32, 64x64, 128x128 */
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_AEM_WIN, ISP_BLK_RGB_AEM, NULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
@@ -683,6 +736,7 @@ static cmr_int ispalg_get_aem_param(cmr_handle isp_fw_handle, struct isp_rgb_aem
 		param->blk_num.h = 32;
 		ISP_LOGV("set default blk_num 32x32\n");
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 }
@@ -1670,6 +1724,8 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 
 	ISP_LOGV("enter\n");
 
+	pthread_mutex_lock(&cxt->pm_getting_lock);
+
 	memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
 	BLOCK_PARAM_CFG(io_pm_input, pm_param,
 			ISP_PM_BLK_LSC_GET_LSCTAB,
@@ -1680,6 +1736,7 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 
 	if ((ret != ISP_SUCCESS) || (io_pm_output.param_num != 1)
 		|| (io_pm_output.param_data->data_ptr == NULL)) {
+		pthread_mutex_unlock(&cxt->pm_getting_lock);
 		ISP_LOGE("fail to get lsc tab");
 		return ISP_ERROR;
 	}
@@ -1697,10 +1754,12 @@ static cmr_s32 ispalg_alsc_get_info(cmr_handle isp_alg_handle)
 
 	if ((ret != ISP_SUCCESS) || (io_pm_output.param_num != 1)
 		|| (io_pm_output.param_data->data_ptr == NULL)) {
+		pthread_mutex_unlock(&cxt->pm_getting_lock);
 		ISP_LOGE("fail to get lsc info");
 		return ISP_ERROR;
 	}
 	cxt->lsc_cxt.lsc_info = (struct isp_lsc_info *)io_pm_output.param_data->data_ptr;
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ISP_SUCCESS;
 }
@@ -3695,6 +3754,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	CMR_MSG_INIT(message);
 
 	ret = cmr_thread_create(&cxt->thr_handle,
 			ISP_THREAD_QUEUE_NUM,
@@ -3746,6 +3806,25 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 		ret = CMR_MSG_SUCCESS;
 	}
 
+	ret = cmr_thread_create(&cxt->thr_aihandle,
+			ISP_THREAD_QUEUE_NUM,
+			ispalg_aithread_proc, (void *)cxt);
+	if (CMR_MSG_SUCCESS != ret) {
+		cxt->thr_aihandle = (cmr_handle) NULL;
+		ISP_LOGE("fail to create isp ai process thread");
+		return CMR_MSG_SUCCESS;
+	}
+	ret = cmr_thread_set_name(cxt->thr_aihandle, "algai");
+	if (CMR_MSG_SUCCESS != ret) {
+		ISP_LOGE("fail to set ai thread name");
+		ret = CMR_MSG_SUCCESS;
+	}
+
+	ISP_LOGD("cam%ld send AI init message\n", cxt->camera_id);
+	message.msg_type = AI_CMD_INIT;
+	message.sync_flag = CMR_MSG_SYNC_NONE;
+	cmr_thread_msg_send(cxt->thr_aihandle, &message);
+
 	return ret;
 }
 
@@ -3780,7 +3859,16 @@ static cmr_int ispalg_destroy_thread_proc(cmr_handle isp_alg_handle)
 			ISP_LOGE("fail to destroy algae process thread");
 		}
 	}
-exit:
+
+	if (cxt->thr_aihandle) {
+		ret = cmr_thread_destroy(cxt->thr_aihandle);
+		if (!ret) {
+			cxt->thr_aihandle = (cmr_handle) NULL;
+		} else {
+			ISP_LOGE("fail to destroy isp alg ai process thread");
+		}
+	}
+
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -3802,18 +3890,17 @@ static cmr_u32 ispalg_get_param_index(
 	return param_index;
 }
 
-static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *input_ptr)
+static cmr_int ispalg_pm_init_sync(
+	struct fw_init_local *init_cxt,
+	struct isp_init_param *input_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_alg_fw_context *cxt = init_cxt->cxt;
 	struct sensor_raw_info *sensor_raw_info_ptr  = PNULL;
 	struct isp_pm_init_input pm_init_input;
-	struct isp_pm_init_output pm_init_output;
 	cmr_u32 i = 0;
 
 	memset(&pm_init_input, 0, sizeof(pm_init_input));
-	memset(&pm_init_output, 0, sizeof(pm_init_output));
-
 	sensor_raw_info_ptr = (struct sensor_raw_info *)input_ptr->setting_param_ptr;
 	for (i = 0; i < MAX_MODE_NUM; i++) {
 		pm_init_input.tuning_data[i].data_ptr = sensor_raw_info_ptr->mode_ptr[i].addr;
@@ -3825,21 +3912,7 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	pm_init_input.is_4in1_sensor = cxt->is_4in1_sensor;
 	pm_init_input.push_param_path = input_ptr->param_path;
 
-	cxt->handle_pm = isp_pm_init(&pm_init_input, &pm_init_output);
-	if (PNULL == cxt->handle_pm) {
-		ISP_LOGE("fail to do isp_pm_init");
-		return ISP_ERROR;
-	}
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
-	cxt->commn_cxt.multi_nr_flag = pm_init_output.multi_nr_flag;
-	cxt->commn_cxt.src.w = input_ptr->size.w;
-	cxt->commn_cxt.src.h = input_ptr->size.h;
-	cxt->commn_cxt.prv_size.w = input_ptr->size.w;
-	cxt->commn_cxt.prv_size.h = input_ptr->size.h;
-	cxt->commn_cxt.callback = input_ptr->ctrl_callback;
-	cxt->commn_cxt.caller_id = input_ptr->oem_handle;
-	cxt->commn_cxt.ops = input_ptr->ops;
-
 	cxt->ioctrl_ptr = sensor_raw_info_ptr->ioctrl_ptr;
 	if (cxt->ioctrl_ptr == NULL) {
 		ISP_LOGW("Warning: sensor ioctrl is null.");
@@ -3852,6 +3925,33 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	cxt->commn_cxt.param_index =
 		ispalg_get_param_index(cxt->commn_cxt.input_size_trim, &input_ptr->size);
 
+	memcpy(&init_cxt->pm_init_input, &pm_init_input, sizeof(struct isp_pm_init_input));
+	return ret;
+}
+
+
+/* async init */
+static cmr_int ispalg_pm_init(struct fw_init_local *init_cxt)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = init_cxt->cxt;
+	struct isp_pm_init_input pm_init_input;
+	struct isp_pm_init_output pm_init_output;
+
+	ISP_LOGD("cam%ld start\n", cxt->camera_id);
+
+	memcpy(&pm_init_input, &init_cxt->pm_init_input, sizeof(struct isp_pm_init_input));
+	memset(&pm_init_output, 0, sizeof(pm_init_output));
+
+	cxt->handle_pm = isp_pm_init(&pm_init_input, &pm_init_output);
+	if (PNULL == cxt->handle_pm) {
+		ISP_LOGE("fail to do isp_pm_init");
+		return ISP_ERROR;
+	}
+	cxt->commn_cxt.multi_nr_flag = pm_init_output.multi_nr_flag;
+	pthread_mutex_init(&cxt->pm_getting_lock, NULL);
+
+	ISP_LOGD("cam%ld done\n", cxt->camera_id);
 	return ret;
 }
 
@@ -3869,6 +3969,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 
 	memset((void *)&result, 0, sizeof(result));
 	memset((void *)&ae_input, 0, sizeof(ae_input));
+
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_DUAL_FLASH, NULL, &output);
@@ -3930,6 +4032,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 			++param_data;
 		}
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
+
 	ae_input.param_num = num;
 	ae_input.dflash_num = dflash_num;
 	ae_input.fdr_tuning_param = cxt->fdr_cxt.tuning_param_ptr;
@@ -4007,6 +4111,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_input input;
 	struct isp_pm_ioctl_output output;
 	struct awb_ctrl_init_param param;
+	struct isp_rgb_aem_info aem_info;
 	struct ae_monitor_info info;
 
 	memset((void *)&input, 0, sizeof(input));
@@ -4020,6 +4125,13 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MONITOR_INFO, NULL, (void *)&info);
 		ISP_TRACE_IF_FAIL(ret, ("fail to get ae monitor info"));
+		if (ret) {
+			ret = ispalg_get_aem_param(cxt, &aem_info);
+			info.win_num.w = aem_info.blk_num.w;
+			info.win_num.h = aem_info.blk_num.h;
+			info.win_size.w = ((cxt->commn_cxt.src.w / aem_info.blk_num.w) & ~7);
+			info.win_size.h = ((cxt->commn_cxt.src.h / aem_info.blk_num.h) & ~7);
+		}
 	}
 
 	param.camera_id = cxt->camera_id;
@@ -4037,12 +4149,15 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	ISP_LOGI("awb get ae win %d %d %d %d %d %d\n", info.trim.x, info.trim.y,
 		info.win_size.w, info.win_size.h, info.win_num.w, info.win_num.h);
 
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AWB, &input, &output);
 	ISP_TRACE_IF_FAIL(ret, ("fail to get awb init param"));
 	if (ret == ISP_SUCCESS && output.param_data != NULL) {
 		param.tuning_param = output.param_data->data_ptr;
 		param.param_size = output.param_data->data_size;
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
+
 	param.lib_param = cxt->lib_use_info->awb_lib_info;
 	ISP_LOGV("param addr is %p size %d", param.tuning_param, param.param_size);
 
@@ -4130,6 +4245,7 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 	memset(&smart_init_param, 0, sizeof(smart_init_param));
 	memset(&pm_output, 0, sizeof(pm_output));
 
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_SMART, NULL, &pm_output);
 	if (ISP_SUCCESS == ret) {
 		for (i = 0; i < pm_output.param_num; ++i) {
@@ -4138,6 +4254,7 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 			smart_init_param.tuning_param[mode].data.data_ptr = pm_output.param_data[i].data_ptr;
 		}
 	} else {
+		pthread_mutex_unlock(&cxt->pm_getting_lock);
 		ISP_LOGE("fail to get smart init param ");
 		return ret;
 	}
@@ -4153,6 +4270,7 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 			smart_init_param.atm_size = pm_output.param_data->data_size;
 		}
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	if (cxt->ops.smart_ops.init) {
 		cxt->smart_cxt.handle = cxt->ops.smart_ops.init(&smart_init_param, NULL);
@@ -4190,6 +4308,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.is_supoprt = is_af_support;
 	af_input.pdaf_type = cxt->pdaf_cxt.pdaf_support;
 	cxt->af_cxt.sw_bypass = 0;
+
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 
 	//get af tuning parameters
 	memset((void *)&output, 0, sizeof(output));
@@ -4229,6 +4349,7 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 			af_input.toftuning_data_len = output.param_data[0].data_size;
 		}
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	af_input.is_master = cxt->is_master;
 	af_input.sensor_role = cxt->sensor_role;
@@ -4297,6 +4418,15 @@ static cmr_int ispalg_pdaf_init(struct isp_alg_fw_context *cxt)
 	struct pdaf_ctrl_init_in pdaf_input;
 	struct pdaf_ctrl_init_out pdaf_output;
 
+	if (!cxt->pdaf_cxt.pdaf_support || cxt->pdaf_info == NULL) {
+		ISP_LOGI("cam%ld no pdaf %d %p\n", cxt->camera_id,
+			cxt->pdaf_cxt.pdaf_support, cxt->pdaf_info);
+		cxt->pdaf_cxt.pdaf_support = 0;
+		cxt->pdaf_cxt.pdaf_en = 0;
+		return ret;
+	}
+	ISP_LOGD("cam%ld start\n", cxt->camera_id);
+
 	memset(&pdaf_input, 0x00, sizeof(pdaf_input));
 	memset(&pdaf_output, 0x00, sizeof(pdaf_output));
 
@@ -4349,6 +4479,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_tab_param_ptr = (struct isp_2d_lsc_param *)(cxt->lsc_cxt.lsc_tab_address);
 	lsc_info = (struct isp_lsc_info *)cxt->lsc_cxt.lsc_info;
 
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_GET_INIT_ALSC, &io_pm_input, &io_pm_output);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do get init alsc"));
 
@@ -4358,6 +4489,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	} else {
 		lsc_param.tune_param_ptr = io_pm_output.param_data->data_ptr;
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	lsc_param.otp_info_ptr = cxt->otp_data;
 	lsc_param.is_master = cxt->is_master;
@@ -4461,11 +4593,6 @@ static cmr_int ispalg_ai_init(struct isp_alg_fw_context *cxt)
 	struct ai_init_in ai_input;
 	struct ai_init_out result;
 
-	if (!cxt) {
-		ret = ISP_PARAM_ERROR;
-		goto exit;
-	}
-
 	memset((void *)&result, 0, sizeof(result));
 	memset((void *)&ai_input, 0, sizeof(ai_input));
 
@@ -4476,6 +4603,18 @@ static cmr_int ispalg_ai_init(struct isp_alg_fw_context *cxt)
 
 	if (cxt->ops.ai_ops.init)
 		ret = cxt->ops.ai_ops.init(&ai_input, &cxt->ai_cxt.handle, (cmr_handle)&result);
+	if (ret) {
+		ISP_LOGE("cam%ld failed to init ai\n", cxt->camera_id);
+		cxt->ai_cxt.handle = (cmr_handle)NULL;
+		cxt->ai_init_status = FW_INIT_ERR;
+		goto exit;
+	}
+
+	cxt->ops.ai_ops.ioctrl = dlsym(cxt->ispalg_lib_handle, "ai_ctrl_ioctrl");
+	if (!cxt->ops.ai_ops.ioctrl) {
+		ISP_LOGE("fail to dlsym ai_ops.ioctrl");
+	}
+	cxt->ai_init_status = FW_INIT_DONE;
 exit:
 	ISP_LOGI("done %ld", ret);
 	return ret;
@@ -4563,43 +4702,7 @@ static cmr_int ispalg_tof_init(struct isp_alg_fw_context *cxt)
 		cxt->tof_handle = tof_handle;
 	}
 
-	return ret;
-}
-
-static cmr_u32 ispalg_init(struct isp_alg_fw_context *cxt)
-{
-	cmr_int ret = ISP_SUCCESS;
-
-	ret = ispalg_ae_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do ae_init"));
-
-	ret = ispalg_afl_init(cxt);
-	ISP_RETURN_IF_FAIL(ret, ("fail to do afl_init"));
-
-	ret = ispalg_awb_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do awb_init"));
-
-	ret = ispalg_smart_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do smart_init"));
-
-	ret = ispalg_af_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do af_init"));
-
-	ret = ispalg_pdaf_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do pdaf_init"));
-
-	ret = ispalg_tof_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do tof_init"));
-
-	ret = ispalg_lsc_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do lsc_init"));
-
-	ret = ispalg_ai_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do ai_init"));
-	ret = ispalg_bypass_init(cxt);
-	ISP_TRACE_IF_FAIL(ret, ("fail to do bypass_init"));
-
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGD("cam%ld done\n", cxt->camera_id);
 	return ret;
 }
 
@@ -4607,31 +4710,31 @@ static cmr_u32 ispalg_deinit(cmr_handle isp_alg_handle)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	if (cxt->ops.pdaf_ops.deinit)
+	if (cxt->ops.pdaf_ops.deinit && cxt->pdaf_cxt.handle)
 		cxt->ops.pdaf_ops.deinit(&cxt->pdaf_cxt.handle);
 
-	if (cxt->ops.tof_ops.deinit)
+	if (cxt->ops.tof_ops.deinit && cxt->tof_handle)
 		cxt->ops.tof_ops.deinit(&cxt->tof_handle);
 
-	if (cxt->ops.af_ops.deinit)
+	if (cxt->ops.af_ops.deinit && cxt->af_cxt.handle)
 		cxt->ops.af_ops.deinit(&cxt->af_cxt.handle);
 
-	if (cxt->ops.ae_ops.deinit)
+	if (cxt->ops.ae_ops.deinit && cxt->ae_cxt.handle)
 		cxt->ops.ae_ops.deinit(&cxt->ae_cxt.handle);
 
-	if (cxt->ops.lsc_ops.deinit)
+	if (cxt->ops.lsc_ops.deinit && cxt->lsc_cxt.handle)
 		cxt->ops.lsc_ops.deinit(&cxt->lsc_cxt.handle);
 
-	if (cxt->ops.smart_ops.deinit)
+	if (cxt->ops.smart_ops.deinit && cxt->smart_cxt.handle)
 		cxt->ops.smart_ops.deinit(&cxt->smart_cxt.handle, NULL, NULL);
 
-	if (cxt->ops.awb_ops.deinit)
+	if (cxt->ops.awb_ops.deinit && cxt->awb_cxt.handle)
 		cxt->ops.awb_ops.deinit(&cxt->awb_cxt.handle);
 
-	if (cxt->ops.afl_ops.deinit)
+	if (cxt->ops.afl_ops.deinit && cxt->afl_cxt.handle)
 		cxt->ops.afl_ops.deinit(&cxt->afl_cxt.handle);
 
-	if (cxt->ops.ai_ops.deinit)
+	if (cxt->ops.ai_ops.deinit && cxt->ai_cxt.handle)
 		cxt->ops.ai_ops.deinit(&cxt->ai_cxt.handle);
 	ISP_LOGI("done");
 	return ISP_SUCCESS;
@@ -4642,7 +4745,9 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)adpt_handle;
 
-	cxt->ispalg_lib_handle = dlopen(LIBCAM_ALG_FILE, RTLD_NOW);
+	ISP_LOGD("cam%ld start\n", cxt->camera_id);
+
+	cxt->ispalg_lib_handle = dlopen(LIBCAM_ALG_FILE, RTLD_LAZY);//RTLD_LAZY,RTLD_NOW
 	if (!cxt->ispalg_lib_handle) {
 		ISP_LOGE("fail to dlopen (%s)",dlerror());
 		goto error_dlopen;
@@ -4841,11 +4946,8 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		ISP_LOGE("fail to dlsym ai_ops.deinit");
 		goto error_dlsym;
 	}
-	cxt->ops.ai_ops.ioctrl = dlsym(cxt->ispalg_lib_handle, "ai_ctrl_ioctrl");
-	if (!cxt->ops.ai_ops.ioctrl) {
-		ISP_LOGE("fail to dlsym ai_ops.ioctrl");
-		goto error_dlsym;
-	}
+
+	ISP_LOGD("cam%ld done\n", cxt->camera_id);
 	return 0;
 error_dlsym:
 	dlclose(cxt->ispalg_lib_handle);
@@ -4855,15 +4957,488 @@ error_dlopen:
 	return ret;
 }
 
-static cmr_int ispalg_libops_init(cmr_handle adpt_handle)
+/************************* new asyn init ****************/
+static void * ispalg_libops_init_thread(void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct  isp_alg_fw_context *)adpt_handle;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
 
 	ret = ispalg_load_library(cxt);
-	ISP_LOGI("done %ld", ret);
+
+	if (ret)
+		init_cxt->lib_init_status = FW_INIT_ERR;
+	else
+		init_cxt->lib_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+cmr_int ispalg_aithread_proc(struct cmr_msg *message, void *p_data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	enum isp_ctrl_cmd cmd = ISP_CTRL_MAX;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
+	isp_io_fun io_ctrl = NULL;
+
+	if (!message || !p_data) {
+		ISP_LOGE("fail to check input param ");
+		goto exit;
+	}
+
+	ISP_LOGD("cam%ld ai_msg_type %d, %d, data %p", cxt->camera_id,
+		message->msg_type, message->sub_msg_type, message->data);
+
+	switch (message->msg_type) {
+	case AI_CMD_INIT:
+		ret = ispalg_ai_init(cxt);
+		break;
+	case AI_CMD_START:
+		cmd = ISP_CTRL_AI_PROCESS_START;
+		break;
+	case AI_CMD_STOP:
+		cmd = ISP_CTRL_AI_PROCESS_STOP;
+		break;
+	case AI_CMD_WAIT:
+		ISP_LOGI("cam%ld wait here\n", cxt->camera_id);
+		break;
+	default:
+		ISP_LOGV("don't support msg");
+		break;
+	}
+
+	if (cmd != ISP_CTRL_MAX)
+		io_ctrl = isp_ioctl_get_fun(cmd);
+
+	if (io_ctrl) {
+		ret = io_ctrl(cxt, message->data);
+		ISP_LOGD("cam%ld ai ctl_cmd %d, ret %ld, data %p, val %d\n", cxt->camera_id,
+			cmd, ret, message->data, *(cmr_u32 *)message->data);
+		if (NULL != cxt->commn_cxt.callback || !message->sub_msg_type) {
+			cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
+			ISP_CALLBACK_EVT | ISP_CTRL_CALLBACK | cmd, NULL, ISP_ZERO);
+		}
+	}
+
+exit:
+	ISP_LOGD("done %ld", ret);
 	return ret;
 }
+
+static void * ispalg_ae_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_ae_init(cxt);
+
+	if (ret)
+		init_cxt->ae_init_status = FW_INIT_ERR;
+	else
+		init_cxt->ae_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static void * ispalg_af_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_af_init(cxt);
+
+	if (ret)
+		init_cxt->af_init_status = FW_INIT_ERR;
+	else
+		init_cxt->af_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static void * ispalg_afl_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_afl_init(cxt);
+
+	if (ret)
+		init_cxt->afl_init_status = FW_INIT_ERR;
+	else
+		init_cxt->afl_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static void * ispalg_awb_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_awb_init(cxt);
+
+	if (ret)
+		init_cxt->awb_init_status = FW_INIT_ERR;
+	else
+		init_cxt->awb_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static void * ispalg_lsc_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_lsc_init(cxt);
+
+	if (ret)
+		init_cxt->lsc_init_status = FW_INIT_ERR;
+	else
+		init_cxt->lsc_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static void * ispalg_smart_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_smart_init(cxt);
+
+	if (ret)
+		init_cxt->smart_init_status = FW_INIT_ERR;
+	else
+		init_cxt->smart_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static void * ispalg_pdaf_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_pdaf_init(cxt);
+
+	if (ret)
+		init_cxt->pdaf_init_status = FW_INIT_ERR;
+	else
+		init_cxt->pdaf_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static void * ispalg_tof_init_thread(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt  = init_cxt->cxt;;
+
+	ret = ispalg_tof_init(cxt);
+
+	if (ret)
+		init_cxt->tof_init_status = FW_INIT_ERR;
+	else
+		init_cxt->tof_init_status = FW_INIT_DONE;
+	return NULL;
+}
+
+static cmr_u32 ispalg_init_async(struct fw_init_local *init_cxt)
+{
+	cmr_int ret = ISP_SUCCESS;
+	pthread_attr_t attr;
+	struct isp_alg_fw_context *cxt = init_cxt->cxt;
+
+	/*  AE */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->ae_thread_handle, &attr,
+							ispalg_ae_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->ae_thread_handle, "isp_ae_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create ae thread %ld\n", cxt->camera_id, ret);
+		init_cxt->ae_init_status = FW_INIT_ERR;
+		init_cxt->ae_thread_handle = 0;
+	}
+
+	/*  SMART */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->smart_thread_handle, &attr,
+							ispalg_smart_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->smart_thread_handle, "isp_smart_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create smart thread %ld\n", cxt->camera_id, ret);
+		init_cxt->smart_init_status = FW_INIT_ERR;
+		init_cxt->smart_thread_handle = 0;
+	}
+
+	/*  LSC */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->lsc_thread_handle, &attr,
+							ispalg_lsc_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->lsc_thread_handle, "isp_lsc_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create lsc thread %ld\n", cxt->camera_id, ret);
+		init_cxt->lsc_init_status = FW_INIT_ERR;
+		init_cxt->lsc_thread_handle = 0;
+	}
+
+	/*  AF */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->af_thread_handle, &attr,
+							ispalg_af_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->af_thread_handle, "isp_af_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create af thread %ld\n", cxt->camera_id, ret);
+		init_cxt->af_init_status = FW_INIT_ERR;
+		init_cxt->af_thread_handle = 0;
+	}
+
+	/*  AWB */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->awb_thread_handle, &attr,
+							ispalg_awb_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->awb_thread_handle, "isp_awb_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create awb thread %ld\n", cxt->camera_id, ret);
+		init_cxt->awb_init_status = FW_INIT_ERR;
+		init_cxt->awb_thread_handle = 0;
+	}
+
+	/*  PDAF */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->pdaf_thread_handle, &attr,
+							ispalg_pdaf_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->pdaf_thread_handle, "isp_pdaf_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create pdaf thread %ld\n", cxt->camera_id, ret);
+		init_cxt->pdaf_init_status = FW_INIT_ERR;
+		init_cxt->pdaf_thread_handle = 0;
+	}
+
+	/*  AFL */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->afl_thread_handle, &attr,
+							ispalg_afl_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->afl_thread_handle, "isp_afl_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create afl thread %ld\n", cxt->camera_id, ret);
+		init_cxt->afl_init_status = FW_INIT_ERR;
+		init_cxt->afl_thread_handle = 0;
+	}
+
+	/*  TOF */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->tof_thread_handle, &attr,
+							ispalg_tof_init_thread,
+							(void *)init_cxt);
+	pthread_setname_np(init_cxt->tof_thread_handle, "isp_tof_init");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		ISP_LOGE("cam%ld fail to create tof thread %ld\n", cxt->camera_id, ret);
+		init_cxt->tof_init_status = FW_INIT_ERR;
+		init_cxt->tof_thread_handle = 0;
+	}
+
+	ispalg_bypass_init(cxt);
+
+	ISP_LOGV("cam%ld done\n", cxt->camera_id);
+	return 0;
+}
+
+static cmr_u32 ispalg_init_async_done(struct fw_init_local *init_cxt)
+{
+	void *dummy;
+
+	if (init_cxt->ae_thread_handle) {
+		pthread_join(init_cxt->ae_thread_handle, &dummy);
+		init_cxt->ae_thread_handle = 0;
+	}
+
+	if (init_cxt->af_thread_handle) {
+		pthread_join(init_cxt->af_thread_handle, &dummy);
+		init_cxt->af_thread_handle = 0;
+	}
+
+	if (init_cxt->afl_thread_handle) {
+		pthread_join(init_cxt->afl_thread_handle, &dummy);
+		init_cxt->afl_thread_handle = 0;
+	}
+
+	if (init_cxt->awb_thread_handle) {
+		pthread_join(init_cxt->awb_thread_handle, &dummy);
+		init_cxt->awb_thread_handle = 0;
+	}
+
+	if (init_cxt->smart_thread_handle) {
+		pthread_join(init_cxt->smart_thread_handle, &dummy);
+		init_cxt->smart_thread_handle = 0;
+	}
+
+	if (init_cxt->lsc_thread_handle) {
+		pthread_join(init_cxt->lsc_thread_handle, &dummy);
+		init_cxt->lsc_thread_handle = 0;
+	}
+
+	if (init_cxt->pdaf_thread_handle) {
+		pthread_join(init_cxt->pdaf_thread_handle, &dummy);
+		init_cxt->pdaf_thread_handle = 0;
+	}
+
+	if (init_cxt->tof_thread_handle) {
+		pthread_join(init_cxt->tof_thread_handle, &dummy);
+		init_cxt->tof_thread_handle = 0;
+	}
+
+	return 0;
+}
+
+static void * isp_alg_fw_init_async(void *data)
+{
+	cmr_int ret = ISP_SUCCESS;
+	void *dummy;
+	pthread_attr_t attr;
+	struct fw_init_local *init_cxt = (struct fw_init_local *)data;
+	struct isp_alg_fw_context *cxt;
+
+	if (data == NULL || init_cxt->cxt == NULL) {
+		ISP_LOGE("error: NULL ptr\n");
+		return NULL;
+	}
+
+	cxt = init_cxt->cxt;
+	ISP_LOGD("cam%ld enter\n", cxt->camera_id);
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->lib_thread_handle, &attr,
+						ispalg_libops_init_thread,
+						(void *)init_cxt);
+	pthread_setname_np(init_cxt->lib_thread_handle, "load_isplib");
+	pthread_attr_destroy(&attr);
+	if (ret) {
+		init_cxt->lib_thread_handle = 0;
+		ISP_LOGE("cam%ld fail to create init thread %ld\n", cxt->camera_id, ret);
+		goto exit;
+	}
+
+	ret = ispalg_pm_init(init_cxt);
+	if (ISP_SUCCESS != ret) {
+		ISP_LOGE("fail to do ispalg_pm_init");
+		goto exit;
+	}
+
+	ret = isp_br_init(cxt->camera_id, cxt, cxt->is_master);
+	if (ret) {
+		ISP_LOGE("fail to init isp bridge");
+		goto exit;
+	}
+
+	if (cxt->is_multi_mode) {
+		cmr_u32 id = cxt->camera_id;
+		cmr_u32 role = CAM_SENSOR_MAX;
+
+		ret = isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_ROLE, &id, &role);
+		if (ret) {
+			ISP_LOGE("fail to get sensor role");
+			goto exit;
+		}
+
+		cxt->sensor_role = role;
+		ISP_LOGD("cam%ld sensor_role %u", cxt->camera_id, role);
+	}
+
+	ISP_LOGD("cam%ld wait libload\n", cxt->camera_id);
+	/* sync with libalg loading done */
+	if (init_cxt->lib_thread_handle) {
+		pthread_join(init_cxt->lib_thread_handle, &dummy);
+		init_cxt->lib_thread_handle = 0;
+	}
+
+	if (init_cxt->lib_init_status == FW_INIT_ERR) {
+		ISP_LOGE("cam%ld load libalg error\n", cxt->camera_id);
+		goto exit;
+	}
+	ISP_LOGD("cam%ld wait libload done\n", cxt->camera_id);
+
+	ispalg_init_async(init_cxt);
+
+	ret = ispalg_create_thread((cmr_handle)cxt);
+	if (ret) {
+		ISP_LOGE("fail to create thread.\n");
+		goto exit;
+	}
+	isp_dev_access_evt_reg(cxt->dev_access_handle, ispalg_dev_evt_msg, (cmr_handle) cxt);
+
+	ISP_LOGD("cam%ld wait isp alg\n", cxt->camera_id);
+
+	/* sync with ispalg all done */
+	ispalg_init_async_done(init_cxt);
+
+	ISP_LOGD("cam%ld wait isp alg done\n", cxt->camera_id);
+
+	cxt->init_status = FW_INIT_DONE;
+	ISP_LOGI("cam%ld done, alg enable %d, init %d\n", cxt->camera_id, cxt->alg_enable, cxt->init_status);
+	return NULL;
+
+exit:
+	if (init_cxt->lib_thread_handle) {
+		pthread_join(init_cxt->lib_thread_handle, &dummy);
+		init_cxt->lib_thread_handle = 0;
+	}
+	ispalg_init_async_done(init_cxt);
+	cxt->init_status = FW_INIT_ERR;
+	ISP_LOGE("cam%ld init error\n", cxt->camera_id);
+	return NULL;
+}
+
+static cmr_u32 isp_alg_fw_init_async_done(struct isp_alg_fw_context *cxt)
+{
+	void *dummy;
+	struct fw_init_local *init_cxt = cxt->init_cxt;
+
+	if (init_cxt == NULL)
+		return 0;
+
+	if (init_cxt->init_thread_handle) {
+		pthread_join(init_cxt->init_thread_handle, &dummy);
+		init_cxt->init_thread_handle = 0;
+	}
+	if (init_cxt->lib_thread_handle) {
+		pthread_join(init_cxt->lib_thread_handle, &dummy);
+		init_cxt->lib_thread_handle = 0;
+	}
+	ispalg_init_async_done(init_cxt);
+
+	free(cxt->init_cxt);
+	cxt->init_cxt = NULL;
+
+	return 0;
+}
+/************************* new asyn init  end ****************/
+
 
 static cmr_int ispalg_ae_set_work_mode(
 		cmr_handle isp_alg_handle, cmr_u32 new_mode,
@@ -5372,6 +5947,15 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	if (!cxt->alg_enable) {
 		ISP_LOGD("alg bypass\n");
 		return ret;
+	}
+
+	ISP_LOGI("cam%ld init status %d\n", cxt->camera_id, cxt->init_status);
+
+	isp_alg_fw_init_async_done(cxt);
+
+	if (cxt->init_status == FW_INIT_ERR) {
+		ISP_LOGE("cam%ld fw init error\n", cxt->camera_id);
+		return ISP_ERROR;
 	}
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_RESET, NULL, NULL);
@@ -6062,14 +6646,68 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_ctrl_cmd cmd = io_cmd & 0x7fffffff;
 	isp_io_fun io_ctrl = NULL;
+	cmr_u32 loop = 1000,  cnt = 0, time_out = 0;
+	cmr_u32 is_sync_ai = 0, is_aysnc_ai = 0, is_ai_cmd = 0, *msg_data;
+	cmr_u8 *wait_status;
+	CMR_MSG_INIT(message);
 
 	if (!cxt->alg_enable) {
 		ISP_LOGD("alg bypass\n");
 		return ret;
 	}
 	cxt->commn_cxt.isp_callback_bypass = io_cmd & 0x80000000;
+
+	if ((cmd == ISP_CTRL_AI_PROCESS_START)
+		|| (cmd == ISP_CTRL_AI_PROCESS_STOP))
+		is_aysnc_ai = 1;
+	if ((cmd == ISP_CTRL_AI_SET_IMG_PARAM)
+		|| (cmd == ISP_CTRL_AI_GET_IMG_FLAG)
+		|| (cmd == ISP_CTRL_AI_GET_STATUS)
+		|| (cmd == ISP_CTRL_AI_SET_FD_STATUS))
+		is_sync_ai = 1;
+
+	is_ai_cmd = (is_aysnc_ai | is_sync_ai);
+
+	if (is_aysnc_ai && (cxt->ai_init_status == FW_INIT_GOING)) {
+		if (!cxt->thr_aihandle) {
+			ISP_LOGE("cam%ld ai is not init\n", cxt->camera_id);
+			return ret;
+		}
+		msg_data = (cmr_u32 *)malloc(sizeof(cmr_u32));
+		if (msg_data == NULL) {
+			ISP_LOGE("fail to malloc a int ptr\n");
+			return ret;
+		}
+		*msg_data = *(cmr_u32 *)param_ptr;
+		message.msg_type =
+				(cmd == ISP_CTRL_AI_PROCESS_START) ?
+				AI_CMD_START : AI_CMD_STOP;
+		message.sync_flag = CMR_MSG_SYNC_NONE;
+		message.sub_msg_type = cxt->commn_cxt.isp_callback_bypass;
+		message.alloc_flag = 1;
+		message.data = msg_data;
+
+		ISP_LOGD("cam%ld send AI cmd %d, %d, data %p, val %d\n",
+				cxt->camera_id, message.msg_type, cmd, msg_data, *msg_data);
+		ret = cmr_thread_msg_send(cxt->thr_aihandle, &message);
+		return ret;
+	}
+
 	io_ctrl = isp_ioctl_get_fun(cmd);
 	if (NULL != io_ctrl) {
+		wait_status = (is_ai_cmd ? &cxt->ai_init_status :  &cxt->init_status);
+		while (*wait_status== FW_INIT_GOING) {
+			ISP_LOGD("cam%ld cmd %d wait init done %d\n", cxt->camera_id, cmd, cnt);
+			usleep(1 * 1000);
+			if (cnt++ >= loop) {
+				time_out = 1;
+				break;
+			}
+		}
+		if (*wait_status == FW_INIT_ERR || time_out) {
+			ISP_LOGE("cam%ld fw init error or time out %d\n", cxt->camera_id, time_out);
+			return ISP_ERROR;
+		}
 		ret = io_ctrl(cxt, param_ptr);
 	} else {
 		ISP_LOGV("io_ctrl fun is null, cmd %d", cmd);
@@ -6088,6 +6726,21 @@ cmr_int isp_alg_fw_capability(cmr_handle isp_alg_handle, enum isp_capbility_cmd 
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 out_param = 0;
+	cmr_u32 loop = 1000,  cnt = 0, time_out = 0;
+
+	while (cxt->alg_enable && cxt->init_status == FW_INIT_GOING) {
+		ISP_LOGD("cam%ld cmd %d wait init done %d\n", cxt->camera_id, cmd, cnt);
+		usleep(1 * 1000);
+		if (cnt++ >= loop) {
+			time_out = 1;
+			break;
+		}
+	}
+
+	if (cxt->init_status == FW_INIT_ERR || time_out) {
+		ISP_LOGE("cam%ld fw init error or time out %d\n", cxt->camera_id, time_out);
+		return ISP_ERROR;
+	}
 
 	switch (cmd) {
 	case ISP_LOW_LUX_EB:
@@ -6132,6 +6785,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cmr_u32 alg_bypass = 0;
 	char value[PROPERTY_VALUE_MAX];
 	cmr_s8 *sensor_name = NULL;
+	pthread_attr_t attr;
+	struct fw_init_local *init_cxt = NULL;
 	struct isp_alg_fw_context *cxt = NULL;
 	struct sensor_raw_info *sensor_raw_info_ptr = NULL;
 
@@ -6142,13 +6797,17 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	}
 	*isp_alg_handle = NULL;
 
+	init_cxt = (struct fw_init_local *)malloc(sizeof(struct fw_init_local));
 	cxt = (struct isp_alg_fw_context *)malloc(sizeof(struct isp_alg_fw_context));
-	if (!cxt) {
+	if (!cxt || !init_cxt) {
 		ISP_LOGE("fail to malloc");
 		ret = ISP_ALLOC_ERROR;
-		return ret;
+		goto exit;
 	}
+	memset(init_cxt, 0, sizeof(struct fw_init_local));
 	memset(cxt, 0, sizeof(struct isp_alg_fw_context));
+	init_cxt->cxt = cxt;
+	cxt->init_cxt = (void *)init_cxt;
 
 	sensor_raw_info_ptr =
 		(struct sensor_raw_info *)input_ptr->init_param->setting_param_ptr;
@@ -6185,7 +6844,8 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	if (alg_bypass) {
 		cxt->alg_enable = 0;
 		*isp_alg_handle = (cmr_handle)cxt;
-		return ret;
+		free((void *)init_cxt);
+		return 0;
 	}
 
 	cxt->save_data = 0;
@@ -6209,84 +6869,59 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->is_simulator = input_ptr->init_param->is_simulator;
 	cxt->commn_cxt.is_faceId_unlock =input_ptr->init_param->is_faceId_unlock;
 	cxt->commn_cxt.sensor_max_size = input_ptr->init_param->sensor_max_size;
+	cxt->commn_cxt.src.w = input_ptr->init_param->size.w;
+	cxt->commn_cxt.src.h = input_ptr->init_param->size.h;
+	cxt->commn_cxt.prv_size.w = input_ptr->init_param->size.w;
+	cxt->commn_cxt.prv_size.h = input_ptr->init_param->size.h;
+	cxt->commn_cxt.callback = input_ptr->init_param->ctrl_callback;
+	cxt->commn_cxt.caller_id = input_ptr->init_param->oem_handle;
+	cxt->commn_cxt.ops = input_ptr->init_param->ops;
+
 	ISP_LOGI("camera_id = %ld, master %d, is_4in1_sensor %d\n", cxt->camera_id,
 		cxt->is_master, cxt->is_4in1_sensor);
 
-
-	cxt->pdaf_info = (struct sensor_pdaf_info *)malloc(sizeof(struct sensor_pdaf_info));
-	if (!cxt->pdaf_info) {
-		ISP_LOGE("fail to malloc pdaf_info buf");
-		ret = ISP_ALLOC_ERROR;
-		goto err_mem;
-	}
-	if (input_ptr->init_param->pdaf_info)
-		memcpy(cxt->pdaf_info, input_ptr->init_param->pdaf_info, sizeof(struct sensor_pdaf_info));
-
-	ret = ispalg_libops_init(cxt);
-	if (ret) {
-		ISP_LOGE("fail to init alg library and ops");
-		goto err_mem;
-	}
-
-	ret = ispalg_pm_init(cxt, input_ptr->init_param);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("fail to do ispalg_pm_init");
-		goto err_mem;
-	}
-
-	ret = isp_br_init(cxt->camera_id, cxt, cxt->is_master);
-	if (ret) {
-		ISP_LOGE("fail to init isp bridge");
-		goto err_br;
-	}
-
-	if (cxt->is_multi_mode) {
-		cmr_u32 id = cxt->camera_id;
-		cmr_u32 role = CAM_SENSOR_MAX;
-
-		ret = isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_ROLE, &id, &role);
-		if (ret) {
-			ISP_LOGE("fail to get sensor role");
-			goto err_alg;
+	if (input_ptr->init_param->pdaf_info) {
+		cxt->pdaf_info = (struct sensor_pdaf_info *)malloc(sizeof(struct sensor_pdaf_info));
+		if (!cxt->pdaf_info) {
+			ISP_LOGE("fail to malloc pdaf_info buf");
+			ret = ISP_ALLOC_ERROR;
+			goto exit;
 		}
-
-		cxt->sensor_role = role;
-		ISP_LOGI("sensor_role %u", role);
+		memcpy(cxt->pdaf_info, input_ptr->init_param->pdaf_info, sizeof(struct sensor_pdaf_info));
 	}
 
-	ret = ispalg_init(cxt);
+	ret = ispalg_pm_init_sync(init_cxt, input_ptr->init_param);
+
+	ISP_LOGD("cam%ld create fw init thread, cxt %p %p\n", cxt->camera_id, init_cxt, cxt);
+
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_create(&init_cxt->init_thread_handle, &attr,
+				isp_alg_fw_init_async,
+				(void *)init_cxt);
+	pthread_setname_np(init_cxt->init_thread_handle, "fw_init_async");
+	pthread_attr_destroy(&attr);
 	if (ret) {
-		ISP_LOGE("fail to init ispalg\n");
-		goto err_alg;
+		ISP_LOGE("cam%ld fail to create init thread %ld\n", cxt->camera_id, ret);
+		goto exit;
 	}
-
-	ret = ispalg_create_thread((cmr_handle)cxt);
-	if (ret) {
-		ISP_LOGE("fail to create thread.\n");
-		goto err_thrd;
-	}
-	isp_dev_access_evt_reg(cxt->dev_access_handle, ispalg_dev_evt_msg, (cmr_handle) cxt);
 
 	cxt->alg_enable = 1;
 	*isp_alg_handle = (cmr_handle)cxt;
 
-	ISP_LOGI("done %ld", ret);
+	ISP_LOGI("cam%ld done, alg enable %d, init status %d\n", cxt->camera_id, cxt->alg_enable, cxt->init_status);
 	return 0;
 
-err_thrd:
-	ispalg_deinit((cmr_handle) cxt);
-err_alg:
-	isp_br_deinit(cxt->camera_id);
-err_br:
-	isp_pm_deinit(cxt->handle_pm);
-err_mem:
-	if (cxt->ispalg_lib_handle) {
-		dlclose(cxt->ispalg_lib_handle);
-		cxt->ispalg_lib_handle = NULL;
-	}
-	if (cxt->pdaf_info)
+exit:
+	if (cxt && cxt->pdaf_info) {
 		free((void *)cxt->pdaf_info);
-	free((void *)cxt);
+		cxt->pdaf_info = NULL;
+	}
+	if (init_cxt)
+		free((void *)init_cxt);
+	if (cxt)
+		free(cxt);
+
 	s_lsc_set_cb = ispalg_lsc_set_cb;
 	ISP_LOGE("done: %ld", ret);
 	return ret;
@@ -6296,6 +6931,7 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	CMR_MSG_INIT(message);
 
 	if (!cxt) {
 		ISP_LOGE("fail to get cxt pointer");
@@ -6308,10 +6944,23 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		return ret;
 	}
 
+	/* sync with all done if init async is triggered  */
+	/* Just for abnormal case deinit called */
+	isp_alg_fw_init_async_done(cxt);
+	if (cxt->thr_aihandle) {
+		message.msg_type = AI_CMD_WAIT;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		ISP_LOGI("cam%ld send AI sync wait\n", cxt->camera_id);
+		ret = cmr_thread_msg_send(cxt->thr_aihandle, &message);
+	}
+
 	ispalg_destroy_thread_proc((cmr_handle) cxt);
 	ispalg_deinit((cmr_handle) cxt);
 	isp_br_deinit(cxt->camera_id);
+
+	pthread_mutex_destroy(&cxt->pm_getting_lock);
 	isp_pm_deinit(cxt->handle_pm);
+
 	if (cxt->ispalg_lib_handle) {
 		dlclose(cxt->ispalg_lib_handle);
 		cxt->ispalg_lib_handle = NULL;
@@ -6328,9 +6977,6 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->commn_cxt.log_isp = NULL;
 	}
 
-	free((void *)cxt->pdaf_info);
-	free((void *)cxt);
-
 	if (cxt->dbg_cxt.fp_dat) {
 		fclose(cxt->dbg_cxt.fp_dat);
 		cxt->dbg_cxt.fp_dat = NULL;
@@ -6339,6 +6985,12 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		fclose(cxt->dbg_cxt.fp_info);
 		cxt->dbg_cxt.fp_info = NULL;
 	}
+
+	if (cxt->pdaf_info) {
+		free((void *)cxt->pdaf_info);
+		cxt->pdaf_info= NULL;
+	}
+	free((void *)cxt);
 
 	ISP_LOGI("done %d", ret);
 	return ret;
