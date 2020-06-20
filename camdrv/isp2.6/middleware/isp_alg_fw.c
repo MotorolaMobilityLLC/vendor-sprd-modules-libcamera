@@ -41,6 +41,7 @@
 #include "ai_ctrl.h"
 #include "tof_ctrl.h"
 #include "isp_simulation.h"
+#include <libloader.h>
 
 #define LIBCAM_ALG_FILE "libispalg.so"
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
@@ -4970,7 +4971,11 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 
 	ISP_LOGD("cam%ld start\n", cxt->camera_id);
 
+#if 0
 	cxt->ispalg_lib_handle = dlopen(LIBCAM_ALG_FILE, RTLD_LAZY);//RTLD_LAZY,RTLD_NOW
+#else
+    cxt->ispalg_lib_handle = get_lib_handle(LIBCAM_ALG_FILE);
+#endif
 	if (!cxt->ispalg_lib_handle) {
 		ISP_LOGE("fail to dlopen (%s)",dlerror());
 		goto error_dlopen;
@@ -5173,7 +5178,11 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 	ISP_LOGD("cam%ld done\n", cxt->camera_id);
 	return 0;
 error_dlsym:
-	dlclose(cxt->ispalg_lib_handle);
+#if 0
+    dlclose(cxt->ispalg_lib_handle);
+#else
+    put_lib_handle(cxt->ispalg_lib_handle);
+#endif
 	cxt->ispalg_lib_handle = NULL;
 error_dlopen:
 
@@ -7188,7 +7197,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	isp_pm_deinit(cxt->handle_pm);
 
 	if (cxt->ispalg_lib_handle) {
+#if 0
 		dlclose(cxt->ispalg_lib_handle);
+#else
+        put_lib_handle(cxt->ispalg_lib_handle);
+#endif
 		cxt->ispalg_lib_handle = NULL;
 	}
 	isp_dev_free_buf(cxt->dev_access_handle, &cxt->stats_mem_info);

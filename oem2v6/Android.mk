@@ -170,6 +170,9 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_yuvprocess/inc
 LOCAL_SRC_FILES += ../arithmetic/sprd_yuvprocess/src/cmr_yuvprocess.c
 LOCAL_SHARED_LIBRARIES += libyuv
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../performance
+LOCAL_SHARED_LIBRARIES += libcamperf
+
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
 include $(LOCAL_PATH)/../SprdCtrl.mk

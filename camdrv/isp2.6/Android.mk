@@ -82,6 +82,9 @@ LOCAL_SHARED_LIBRARIES := libcutils libutils libdl liblog
 
 LOCAL_SHARED_LIBRARIES += libcamsensor libcambr libcamcommon libcampm libxml2
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../performance
+LOCAL_SHARED_LIBRARIES += libcamperf
+
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
