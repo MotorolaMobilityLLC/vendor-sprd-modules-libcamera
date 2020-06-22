@@ -4293,31 +4293,34 @@ static void ae_set_ev_adjust_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *pa
 static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
 static struct ae_exposure_param_switch_m s_ae_manual[4] = {{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0}};
 
-static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
+static void ae_save_exp_gain_param(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
 {
 	cmr_u32 i = 0;
 	FILE *pf = NULL;
 	char version[1024];
+	char file_name[1024];
 	property_get("ro.build.version.release", version, "");
 	if (atoi(version) > 6) {
-		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "wb");
+		sprintf(file_name, "%scamera_%d_ae.file", AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, cxt->camera_id);
+		pf = fopen(file_name, "wb");
 		if (pf) {
 			for (i = 0; i < num; ++i) {
 				ISP_LOGV("write:[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
 			}
-
+			ISP_LOGV("save_exp_gain from:%s, camera_id[%d]: \n", file_name, cxt->camera_id);
 			fwrite((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
 			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
 			fclose(pf);
 			pf = NULL;
 		}
 	} else {
-		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, "wb");
+		sprintf(file_name, "%scamera_%d_ae.file", AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, cxt->camera_id);
+		pf = fopen(file_name, "wb");
 		if (pf) {
 			for (i = 0; i < num; ++i) {
 				ISP_LOGV("write:[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
 			}
-
+			ISP_LOGV("save_exp_gain from:%s, camera_id[%d]: \n", file_name, cxt->camera_id);
 			fwrite((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
 			fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
 			fclose(pf);
@@ -4327,15 +4330,17 @@ static void ae_save_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 
 }
 
-static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
+static void ae_read_exp_gain_param(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
 {
 	cmr_u32 i = 0;
 	FILE *pf = NULL;
 	char version[1024];
+	char file_name[1024];
 	property_get("ro.build.version.release", version, "");
 	cmr_u32 readnum;
 	if (atoi(version) > 6) {
-		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, "rb");
+		sprintf(file_name, "%scamera_%d_ae.file", AE_EXP_GAIN_PARAM_FILE_NAME_CAMERASERVER, cxt->camera_id);
+		pf = fopen(file_name, "rb");
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
 			readnum = fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
@@ -4346,13 +4351,14 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 			    ISP_LOGV("Failed to read ae_exposure_param_switch_m \n");
 			fclose(pf);
 			pf = NULL;
-
+			ISP_LOGV("read_exp_gain from:%s, camera_id[%d]: \n", file_name, cxt->camera_id);
 			for (i = 0; i < num; ++i) {
 				ISP_LOGV("read[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
 			}
 		}
 	} else {
-		pf = fopen(AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, "rb");
+		sprintf(file_name, "%scamera_%d_ae.file", AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, cxt->camera_id);
+		pf = fopen(file_name, "rb");
 		if (pf) {
 			memset((void *)param, 0, sizeof(struct ae_exposure_param) * num);
 			readnum = fread((char *)param, 1, num * sizeof(struct ae_exposure_param), pf);
@@ -4363,7 +4369,7 @@ static void ae_read_exp_gain_param(struct ae_exposure_param *param, cmr_u32 num,
 			    ISP_LOGV("Failed to read ae_exposure_param_switch_m \n");
 			fclose(pf);
 			pf = NULL;
-
+			ISP_LOGV("read_exp_gain from:%s, camera_id[%d]: \n", file_name, cxt->camera_id);
 			for (i = 0; i < num; ++i) {
 				ISP_LOGV("read[%d]: %d, %d, %d, %d, %d\n", i, param[i].exp_line, param[i].exp_time, param[i].dummy, param[i].gain, param[i].bv);
 			}
@@ -4464,7 +4470,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			}
 		}
 
-		ae_save_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param), &s_ae_manual[0]);
+		ae_save_exp_gain_param(cxt, &s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param), &s_ae_manual[0]);
 		ISP_LOGI("AE_VIDEO_STOP(in preview) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d,enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->last_exp_param.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	} else {
 		if ((1 == cxt->is_snapshot) && ((FLASH_NONE == cxt->cur_status.settings.flash) || FLASH_MAIN_BEFORE <= cxt->cur_status.settings.flash)) {
@@ -4791,7 +4797,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				last_cam_mode = 0;
 		}
 	} else {
-		ae_read_exp_gain_param(&s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param),&s_ae_manual[0]);
+		ae_read_exp_gain_param(cxt, &s_bakup_exp_param[0], sizeof(s_bakup_exp_param) / sizeof(struct ae_exposure_param),&s_ae_manual[0]);
 		if ((0 != s_bakup_exp_param[cxt->camera_id].exp_line)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].exp_time)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)
