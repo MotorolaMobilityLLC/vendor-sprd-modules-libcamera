@@ -1,15 +1,15 @@
-/*versionid=0x00070005*/
+/*versionid=0x000B0009*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
-		0x00000003,0x00000003,0x00000003,0x00000002/*0-3*/
+		0x00000001,0x00000001,0x00000001,0x00000001/*0-3*/
 	},
 	/*slope*/
 	{
-		0x00000005,0x00000005,0x00000005,0x00000005/*0-3*/
+		0x0000000F,0x0000000F,0x0000000F,0x0000000F/*0-3*/
 	},
 	/*searchWindow_x*/
 	0x000B,
@@ -37,7 +37,7 @@
 }
 ,
 /*param1.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -45,7 +45,7 @@
 	},
 	/*slope*/
 	{
-		0x00000006,0x00000006,0x00000006,0x00000006/*0-3*/
+		0x0000000C,0x0000000C,0x0000000C,0x0000000C/*0-3*/
 	},
 	/*searchWindow_x*/
 	0x000B,
@@ -73,7 +73,7 @@
 }
 ,
 /*param2.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -81,7 +81,7 @@
 	},
 	/*slope*/
 	{
-		0x00000007,0x00000007,0x00000007,0x00000006/*0-3*/
+		0x0000000A,0x0000000A,0x0000000A,0x0000000A/*0-3*/
 	},
 	/*searchWindow_x*/
 	0x000B,
@@ -109,7 +109,7 @@
 }
 ,
 /*param3.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -145,7 +145,7 @@
 }
 ,
 /*param4.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -162,7 +162,7 @@
 	/*recur_str*/
 	0xFFFFFFFF,
 	/*match_ratio_sad*/
-	0x00000000,
+	0x00000057,
 	/*match_ratio_pro*/
 	0x0000000C,
 	/*feat_thr*/
@@ -181,7 +181,7 @@
 }
 ,
 /*param5.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -198,7 +198,7 @@
 	/*recur_str*/
 	0xFFFFFFFF,
 	/*match_ratio_sad*/
-	0x00000000,
+	0x00000057,
 	/*match_ratio_pro*/
 	0x0000000C,
 	/*feat_thr*/
@@ -217,7 +217,7 @@
 }
 ,
 /*param6.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -253,7 +253,7 @@
 }
 ,
 /*param7.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -289,7 +289,7 @@
 }
 ,
 /*param8.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -325,7 +325,7 @@
 }
 ,
 /*param9.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -361,7 +361,7 @@
 }
 ,
 /*param10.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -397,7 +397,7 @@
 }
 ,
 /*param11.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -433,7 +433,7 @@
 }
 ,
 /*param12.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -469,7 +469,7 @@
 }
 ,
 /*param13.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -505,7 +505,7 @@
 }
 ,
 /*param14.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -541,7 +541,7 @@
 }
 ,
 /*param15.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -577,7 +577,7 @@
 }
 ,
 /*param16.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -613,7 +613,7 @@
 }
 ,
 /*param17.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -649,7 +649,7 @@
 }
 ,
 /*param18.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -685,7 +685,7 @@
 }
 ,
 /*param19.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -721,7 +721,7 @@
 }
 ,
 /*param20.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -757,7 +757,7 @@
 }
 ,
 /*param21.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -793,7 +793,7 @@
 }
 ,
 /*param22.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -829,7 +829,7 @@
 }
 ,
 /*param23.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
@@ -865,7 +865,7 @@
 }
 ,
 /*param24.&BasePoint=1&*/
-/*v21_sensor_mfnr_level*/
+/*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
