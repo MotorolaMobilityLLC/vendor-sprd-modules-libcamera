@@ -9225,14 +9225,23 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     if (ret) {
         CMR_LOGE("failed to get app mode %ld", ret);
     }
-    CMR_LOGV("app_mode = %d", setting_param.cmd_type_value);
+    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
     if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
-        // auto 3dnr available
+        // auto 3dnr available in auto mode
         ret = cmr_grab_auto_3dnr_cfg(cxt->grab_cxt.grab_handle, 1);
         if (ret) {
             CMR_LOGE("failed to cap cfg %ld", ret);
         }
     }
+#ifdef CONFIG_SUPPROT_AUTO_3DNR_IN_HIGH_RES
+    if (setting_param.cmd_type_value == CAMERA_MODE_HIGH_RES_PHOTO) {
+        // auto 3dnr available in high_res mode
+        ret = cmr_grab_auto_3dnr_cfg(cxt->grab_cxt.grab_handle, 1);
+        if (ret) {
+            CMR_LOGE("failed to cap cfg %ld", ret);
+        }
+    }
+#endif
 #endif
 
     if (1 == sn_cxt->cur_sns_ex_info.embedded_line_enable) {
@@ -12956,7 +12965,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGE("failed to get snp num %ld", ret);
         goto exit;
     }
-
+    CMR_LOGI("snp_param.is_3dnr =%d",snp_param.is_3dnr);
     if ((snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW) ||
         (snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW) ||
         (snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)) {

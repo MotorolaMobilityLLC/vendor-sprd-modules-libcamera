@@ -798,11 +798,11 @@ cmr_int cmr_grab_3dnr_cfg(cmr_handle grab_handle, cmr_u32 channel_id,
 
     sprd_3dnr_mode.channel_id = channel_id;
     sprd_3dnr_mode.need_3dnr = need_3dnr;
-    CMR_LOGV("channel id:%d, need_3dnr: %d", channel_id,
+    CMR_LOGD("channel id:%d, need_3dnr: %d", channel_id,
              sprd_3dnr_mode.need_3dnr);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR_MODE, &sprd_3dnr_mode);
 
-    CMR_LOGV("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 
@@ -816,10 +816,10 @@ cmr_int cmr_grab_auto_3dnr_cfg(cmr_handle grab_handle,
     cmr_bzero(&auto_3dnr_mode, sizeof(struct sprd_img_auto_3dnr_mode));
 
     auto_3dnr_mode.auto_3dnr_enable = auto_3dnr_enable;
-    CMR_LOGV("auto_3dnr_enable: %d", auto_3dnr_mode.auto_3dnr_enable);
+    CMR_LOGD("auto_3dnr_enable: %d", auto_3dnr_mode.auto_3dnr_enable);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_AUTO_3DNR_MODE, &auto_3dnr_enable);
 
-    CMR_LOGV("ret %ld", ret);
+    CMR_LOGD("ret %ld", ret);
     return ret;
 }
 

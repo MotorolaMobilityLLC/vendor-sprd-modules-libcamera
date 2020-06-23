@@ -7832,7 +7832,22 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             sprd_3dnr_enabled = 0;
         }
 
-        HAL_LOGV("sprd_3dnr_enabled: %d, sprd_auto_3dnr_enable:%d, "
+#ifdef CONFIG_SUPPROT_AUTO_3DNR_IN_HIGH_RES
+        if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_HIGH_RES_PHOTO) {
+            if(sprddefInfo->fin1_highlight_mode) {
+                sprd_3dnr_enabled = 0;
+            } else {
+                if((controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) ||
+                    (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH &&
+                    mIsNeedFlashFired == 1))
+                    sprd_3dnr_enabled = 0;
+                else
+                    sprd_3dnr_enabled = 1;
+            }
+        }
+#endif
+
+        HAL_LOGD("sprd_3dnr_enabled: %d, sprd_auto_3dnr_enable:%d, "
                  "sprd_appmode_id:%d, mIsNeedFlashFired:%d",
                  sprd_3dnr_enabled, sprddefInfo->sprd_auto_3dnr_enable,
                  sprddefInfo->sprd_appmode_id, mIsNeedFlashFired);
@@ -7871,6 +7886,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_SW;
 #endif
             }
+
+#ifdef CONFIG_SUPPROT_AUTO_3DNR_IN_HIGH_RES
+            if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_HIGH_RES_PHOTO) {
+                HAL_LOGI("high resulotion mode ,set 3dnr type");
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
+            }
+#endif
+
             if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_3DNR_VIDEO ||
                    sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_VIDEO) {
 // 3dnr video mode
