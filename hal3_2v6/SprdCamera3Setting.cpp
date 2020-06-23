@@ -2519,6 +2519,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
                            "persist.vendor.cam.fov.fusion.enable"));
 
+    //24 nightshot pro
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.night",
+                                      "persist.vendor.cam.night.pro.enable"));
+
     // 25 camera lightportrait_ba
 #ifdef CONFIG_PORTRAIT_SUPPORT
     available_cam_features.add(
@@ -2557,7 +2562,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(0);
 #endif
 
-    // 28 higher micro photo
+    // 30 higher micro photo
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
                            "persist.vendor.cam.higher.macrophoto.enable"));
