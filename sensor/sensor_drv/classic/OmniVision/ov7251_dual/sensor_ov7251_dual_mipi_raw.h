@@ -47,15 +47,15 @@
 /* please ref your spec */
 #define FRAME_OFFSET 4
 #define SENSOR_BASE_GAIN 0x10
-#define ISP_BASE_GAIN			0x80
-#define SENSOR_MIN_SHUTTER		8
+#define ISP_BASE_GAIN 0x80
+#define SENSOR_MIN_SHUTTER 8
 
 /* please don't change it */
 #define EX_MCLK 24
 
 static struct sensor_module_info s_ov7251_dual_module_info_tab[VENDOR_NUM] = {
     {
-        .module_id = MODULE_STL3D_IRR_FRONT,
+        .module_id = MODULE_SUNNY,
         .module_info = {
             .major_i2c_addr = 0xc0 >> 1,//0xe0 >> 1, //0xc0---main2
             .minor_i2c_addr = 0xe0 >> 1,//I2C_SLAVE_ADDR >> 1,
@@ -319,7 +319,7 @@ static const SENSOR_REG_T ov7251_dual_640x480_raw10_20fps_slave_setting[] = {
 
 static SENSOR_STATIC_INFO_T s_ov7251_dual_static_info[VENDOR_NUM] = {
     {
-        .module_id = MODULE_STL3D_IRR_FRONT,
+        .module_id = MODULE_SUNNY,
         .static_info = {
             .f_num = 200,
             .focal_length = 354,
@@ -338,7 +338,7 @@ static SENSOR_STATIC_INFO_T s_ov7251_dual_static_info[VENDOR_NUM] = {
 
 static SENSOR_MODE_FPS_INFO_T s_ov7251_dual_mode_fps_info[VENDOR_NUM] = {
     {
-        .module_id = MODULE_STL3D_IRR_FRONT,
+        .module_id = MODULE_SUNNY,
         .fps_info = {
             .is_init = 0,
             .sensor_mode_fps = {
@@ -359,7 +359,7 @@ static SENSOR_MODE_FPS_INFO_T s_ov7251_dual_mode_fps_info[VENDOR_NUM] = {
 
 static struct sensor_res_tab_info s_ov7251_dual_resolution_tab_raw[VENDOR_NUM] = {
     {
-        .module_id = MODULE_STL3D_IRR_FRONT,
+        .module_id = MODULE_SUNNY,
         .reg_tab = {
             {
                 ADDR_AND_LEN_OF_ARRAY(ov7251_dual_init_setting),
@@ -386,7 +386,7 @@ static struct sensor_res_tab_info s_ov7251_dual_resolution_tab_raw[VENDOR_NUM] =
 
 static SENSOR_TRIM_T s_ov7251_dual_resolution_trim_tab[VENDOR_NUM] = {
     {
-        .module_id = MODULE_STL3D_IRR_FRONT,
+        .module_id = MODULE_SUNNY,
         .trim_info = {
             {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
             {

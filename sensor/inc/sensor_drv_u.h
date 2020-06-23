@@ -323,7 +323,7 @@ typedef struct sensor_otp_data {
     struct otp_data_tag golden;
 } OTP_DATA_INFO_TAG;
 
-struct sensor_zoom_param_input{
+struct sensor_zoom_param_input {
     int PhyCameras;
     float MaxDigitalZoom;
     float ZoomRatioSection[6];
@@ -747,7 +747,7 @@ struct sensor_drv_context {
     cmr_handle otp_drv_handle;
     cmr_handle af_drv_handle;
     cmr_handle sns_ic_drv_handle;
-    cmr_u8 mono_sensor;	
+    cmr_u8 mono_sensor;
 };
 
 struct tuning_param_lib {
@@ -814,12 +814,13 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
 int sensorGetPhysicalSnsNum(void);
 int sensorGetLogicalSnsNum(void);
-void * sensorGetIdentifyState();
+void *sensorGetIdentifyState();
 PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id);
-LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId);
-int sensorGetRole(enum camera_module_id ModuleId);
-cmr_int sensorGetZoomParam(struct sensor_zoom_param_input* zoom_param);
+cmr_uint sensorGetPhyId4Role(enum sensor_role role, enum face_type facing);
+LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(cmr_int multiCameraId);
+
+cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param);
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_data);
 cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,

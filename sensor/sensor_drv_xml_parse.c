@@ -1,7 +1,10 @@
 #define LOG_TAG "sns_drv_xml"
 #include "sensor_drv_xml.h"
 #include "cmr_log.h"
-#define RECURSIVE_TRAVERSAL_ENABLE
+//#define RECURSIVE_TRAVERSAL_ENABLE
+#define MAX_SUPPORT_ROLE_NUM 8 // cmr_u32, 4 bits means a role_group
+static uint32_t first_sensor_role_index = 5;
+static uint32_t sensor_role_num = 0;
 
 int sensor_drv_xml_load_file(char *file_name, xmlDocPtr *pDocPtr,
                              xmlNodePtr *pRootPtr, const char *nodeName) {
@@ -62,7 +65,7 @@ xmlNodePtr sensor_drv_xml_get_node(xmlNodePtr pNodePtr, const char *nodeName,
         if (!xmlStrcmp(curPtr->name, (const xmlChar *)nodeName)) {
             if (node_index == node_num) {
                 nodePtr = curPtr;
-                SENSOR_LOGD("the node index is %d of %s", node_num, nodeName);
+                SENSOR_LOGD("the node index of %s is %d", nodeName, node_num);
                 break;
             }
             node_num++;
@@ -121,7 +124,7 @@ int sensor_drv_xml_get_node_num(xmlNodePtr pNodePtr, const char *nodeName) {
     }
 
 exit:
-    SENSOR_LOGD("the num is %d of %s", node_num, nodeName);
+    SENSOR_LOGD("the num of %s is %d", nodeName, node_num);
     return node_num;
 #else
     return sensor_drv_xml_get_node_num_recursive(pNodePtr, nodeName);
@@ -150,7 +153,7 @@ int sensor_drv_xml_get_node_num_recursive(xmlNodePtr pNodePtr,
     }
 
 exit:
-    SENSOR_LOGV("the num is %d of %s", node_num, nodeName);
+    SENSOR_LOGV("the num of %s is %d", nodeName, node_num);
     return node_num;
 }
 
@@ -175,7 +178,7 @@ int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
 #ifdef RECURSIVE_TRAVERSAL_ENABLE
     nodePtr = sensor_drv_xml_get_node(pNodePtr, nodeName, node_index);
     if (!nodePtr) {
-        SENSOR_LOGE("node %s get null", nodeName);
+        SENSOR_LOGI("node %s get null", nodeName);
         goto exit;
     }
 #else
@@ -189,18 +192,28 @@ int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
         case XML_ELEMENT_NODE: {
             SENSOR_LOGV("element node data name %s", nodePtr->name);
 
-            for (curPtr = xmlFirstElementChild(nodePtr);
-                 curPtr &&
-                 xmlStrcmp(curPtr->name, (const xmlChar *)xml_hash_map[i].key);
-                 curPtr = xmlNextElementSibling(curPtr))
-                ;
+            for (curPtr = xmlFirstElementChild(nodePtr); curPtr;
+                 curPtr = xmlNextElementSibling(curPtr)) {
+                if (!xmlStrcmp(curPtr->name,
+                               (const xmlChar *)xml_hash_map[i].key)) {
+                    if (!xmlStrcmp(curPtr->name, "SensorRole")) {
+                        curPtr = sensor_drv_xml_get_node(
+                            nodePtr, "SensorRole", i - first_sensor_role_index);
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+            }
 
             if (!curPtr) {
-                SENSOR_LOGW("Node Tag %s not present in XML file",
+                SENSOR_LOGI("node tag %s not present in xml file",
                             xml_hash_map[i].key);
                 continue;
             }
-            xml_str = (char *)xmlNodeGetContent(curPtr->children);
+
+            xml_str = (char *)xmlNodeGetContent(curPtr);
+
         } break;
         case XML_ATTRIBUTE_NODE: {
             SENSOR_LOGV("attribute node data name %s", nodePtr->name);
@@ -215,11 +228,12 @@ int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
         }
 
         if (!xml_str) {
-            SENSOR_LOGW("node %s not found in XML file", xml_hash_map[i].key);
+            SENSOR_LOGI("node %s not found in xml file", xml_hash_map[i].key);
             continue;
         }
 
-        SENSOR_LOGD("index i = %d xm_str = %s", i, xml_str);
+        SENSOR_LOGD("%s index i = %d, %s = %s", nodeName, i,
+                    xml_hash_map[i].key, xml_str);
 
         switch (xml_hash_map[i].data_type) {
         case XML_DATA_STRING:
@@ -271,33 +285,61 @@ exit:
     return ret;
 }
 
-static int sensor_drv_xml_str_to_integer(char *str, int *digit) {
-    if (!strcmp(str, "BACK"))
+/*
+ * For the detailed definition of sensor_role_code, please refer to
+ * the notes above function sensorGetPhyId4Role in sensor_drv_u.c
+ */
+static int sensor_drv_xml_str_to_integer(char *str, cmr_u32 *digit) {
+    if (!strcmp(str, "BACK")) {
         *digit = SNS_FACE_BACK;
-    else if (!strcmp(str, "FRONT"))
+    } else if (!strcmp(str, "FRONT")) {
         *digit = SNS_FACE_FRONT;
-    else
+    } else if (!strcmp(str, "dualcam_master")) {
+        *digit = (*digit & ~(0xf << 4)) | (0x1 << 4);
+    } else if (!strcmp(str, "dualcam_slave")) {
+        *digit = (*digit & ~(0xf << 4)) | (0x2 << 4);
+    } else if (!strcmp(str, "multicam_superwide")) {
+        *digit = (*digit & ~(0xf << 8)) | (0x1 << 8);
+    } else if (!strcmp(str, "multicam_wide")) {
+        *digit = (*digit & ~(0xf << 8)) | (0x2 << 8);
+    } else if (!strcmp(str, "multicam_tele")) {
+        *digit = (*digit & ~(0xf << 8)) | (0x3 << 8);
+    } else if (!strcmp(str, "stl3d_rgb")) {
+        *digit = (*digit & ~(0xf << 12)) | (0x1 << 12);
+    } else if (!strcmp(str, "stl3d_ir_left")) {
+        *digit = (*digit & ~(0xf << 12)) | (0x2 << 12);
+    } else if (!strcmp(str, "stl3d_ir_right")) {
+        *digit = (*digit & ~(0xf << 12)) | (0x3 << 12);
+    } else if (!strcmp(str, "single_ir")) {
+        *digit = (*digit & ~0xf) | 0x1;
+    } else if (!strcmp(str, "single_macro")) {
+        *digit = (*digit & ~0xf) | 0x2;
+    } else if (!strcmp(str, "single")) {
+        *digit = (*digit & ~0xf) | 0x0;
+    } else {
         return -1;
-
+    }
     return 0;
 }
 
 int sensor_drv_xml_parse_camera_module_info(
     struct xml_camera_cfg_info *camera_cfg) {
     int ret = 0;
+    int i = 0;
     uint32_t elem_num = 0;
     xmlDocPtr docPtr = camera_cfg->docPtr;
     xmlNodePtr nodePtr = camera_cfg->nodePtr;
     xml_camera_module_cfg_t *cfgPtr = camera_cfg->cfgPtr;
     struct xmlHashMap xml_hash_map[MAX_HASH_MAP_SIZE];
     char facing[16];
+    char sensor_role[MAX_SUPPORT_ROLE_NUM][MAX_NAME_LEN];
 
     XML_NODE_CHECK_PTR(docPtr);
     XML_NODE_CHECK_PTR(nodePtr);
     XML_NODE_CHECK_PTR(cfgPtr);
 
     memset(cfgPtr, 0, sizeof(xml_camera_module_cfg_t));
-    cfgPtr->slot_id = 0xff;
+    cfgPtr->slot_id = SENSOR_ID_INVALID;
 
     strlcpy(xml_hash_map[elem_num].key, "SlotId", MAX_KEY_LEN);
     xml_hash_map[elem_num].value = &cfgPtr->slot_id;
@@ -329,6 +371,22 @@ int sensor_drv_xml_parse_camera_module_info(
     xml_hash_map[elem_num].elem_type = XML_ELEMENT_NODE;
     elem_num++;
 
+    first_sensor_role_index = elem_num;
+    sensor_role_num = sensor_drv_xml_get_node_num(nodePtr, "SensorRole");
+    if (sensor_role_num > MAX_SUPPORT_ROLE_NUM) {
+        sensor_role_num = MAX_SUPPORT_ROLE_NUM;
+        SENSOR_LOGI("max support sensor_role_num %d", sensor_role_num);
+    }
+
+    for (i = 0; i < sensor_role_num; i++) {
+        strlcpy(xml_hash_map[elem_num].key, "SensorRole", MAX_KEY_LEN);
+        xml_hash_map[elem_num].value = sensor_role[i];
+        xml_hash_map[elem_num].data_type = XML_DATA_STRING;
+        xml_hash_map[elem_num].elem_type = XML_ELEMENT_NODE;
+        elem_num++;
+    }
+
+    SENSOR_LOGD("elem_num = %d", elem_num);
     ret = sensor_drv_xml_parse_node_data(nodePtr, "CameraModuleCfg",
                                          xml_hash_map, elem_num, 0);
 
@@ -336,6 +394,10 @@ int sensor_drv_xml_parse_camera_module_info(
         goto exit;
 
     sensor_drv_xml_str_to_integer(facing, &cfgPtr->facing);
+    for (i = 0; i < sensor_role_num; i++) {
+        sensor_drv_xml_str_to_integer(sensor_role[i],
+                                      &cfgPtr->sensor_role_code);
+    }
 
 exit:
     return ret;

@@ -50,7 +50,7 @@ static cmr_uint _otp_parser_get_lsc_chn_len(cmr_int raw_height,
     cmr_int lsc_otp_height = 0;
 
     if (0 == grid) {
-        CMR_LOGE("lsc grid is 0");
+        CMR_LOGI("lsc grid is 0");
         return 0;
     }
 
@@ -267,7 +267,7 @@ static cmr_int _otp_parser_af_v05(void *raw_data, cmr_uint start_offset,
     cmr_u8 *af_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no af data");
+        CMR_LOGI("there is no af data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -275,7 +275,7 @@ static cmr_int _otp_parser_af_v05(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, af_start_offset, af_data_size,
                                af_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("af checksum error");
+        CMR_LOGI("af checksum error");
         return rtn;
     }
 
@@ -304,7 +304,7 @@ static cmr_int _otp_parser_awb_v05(void *raw_data, cmr_uint start_offset,
     cmr_u8 *awb_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no awb data");
+        CMR_LOGI("there is no awb data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -312,7 +312,7 @@ static cmr_int _otp_parser_awb_v05(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, awb_start_offset, awb_data_size,
                                awb_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("awb checksum error");
+        CMR_LOGI("awb checksum error");
         return rtn;
     }
 
@@ -347,7 +347,7 @@ static cmr_int _otp_parser_lsc_v05(void *raw_data, cmr_uint start_offset,
     cmr_u32 lsc_chn_len = 0;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no lsc data");
+        CMR_LOGI("there is no lsc data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -355,7 +355,7 @@ static cmr_int _otp_parser_lsc_v05(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, lsc_start_offset, lsc_data_size,
                                lsc_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("lsc checksum error");
+        CMR_LOGI("lsc checksum error");
         return rtn;
     }
 
@@ -406,7 +406,7 @@ static cmr_int _otp_parser_pdaf1_v05(void *raw_data, cmr_uint start_offset,
     cmr_u8 *pdaf1_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no pdaf_sprd data");
+        CMR_LOGI("there is no pdaf_sprd data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -414,7 +414,7 @@ static cmr_int _otp_parser_pdaf1_v05(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, pdaf1_start_offset, pdaf1_data_size,
                                pdaf1_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("pdaf_sprd checksum error");
+        CMR_LOGI("pdaf_sprd checksum error");
         return rtn;
     }
 
@@ -440,7 +440,7 @@ static cmr_int _otp_parser_pdaf2_v05(void *raw_data, cmr_uint start_offset,
     cmr_u8 *pdaf2_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no pdaf spc vendor data");
+        CMR_LOGI("there is no pdaf spc vendor data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -448,7 +448,7 @@ static cmr_int _otp_parser_pdaf2_v05(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, pdaf2_start_offset, pdaf2_data_size,
                                pdaf2_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("pdaf spc vendor checksum error");
+        CMR_LOGI("pdaf spc vendor checksum error");
         return rtn;
     }
 
@@ -472,7 +472,7 @@ static cmr_int _otp_parser_ae_v05(void *raw_data, cmr_uint start_offset,
     cmr_u8 *ae_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no ae data");
+        CMR_LOGI("there is no ae data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -480,7 +480,7 @@ static cmr_int _otp_parser_ae_v05(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, ae_start_offset, ae_data_size,
                                ae_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("ae checksum error");
+        CMR_LOGI("ae checksum error");
         return rtn;
     }
 
@@ -516,7 +516,7 @@ static cmr_int _otp_parser_dualcamera_v05(void *raw_data, cmr_uint start_offset,
     cmr_u8 *dual_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no dual camera data");
+        CMR_LOGI("there is no dual camera data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -525,14 +525,14 @@ static cmr_int _otp_parser_dualcamera_v05(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, dual_start_offset, 230,
                                dual_start_offset + 230);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("dual camera checksum error");
+        CMR_LOGI("dual camera checksum error");
         return rtn;
     }
 
     rtn = _otp_parser_checksum(raw_data, dual_start_offset + 231, 25,
                                dual_start_offset + 231 + 25);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("dual camera checksum error");
+        CMR_LOGI("dual camera checksum error");
         return rtn;
     }
 
@@ -557,7 +557,7 @@ cmr_int otp_parser_map_v05(void *raw_data, enum otp_parser_cmd cmd,
     cmr_uint start_offset = 0;
     cmr_uint data_size = 0;
 
-    CMR_LOGI("E");
+    CMR_LOGD("E");
 
     rtn = _otp_parser_get_start_offset_v05((cmr_u8 *)raw_data, eeprom_num,
                                            camera_id, raw_height, raw_width);
@@ -597,12 +597,12 @@ cmr_int otp_parser_map_v05(void *raw_data, enum otp_parser_cmd cmd,
                                          result);
         break;
     default:
-        CMR_LOGV("input cmd error");
+        CMR_LOGI("input cmd error");
         rtn = OTP_PARSER_CMD_ERR;
         break;
     }
 
-    CMR_LOGI("X");
+    CMR_LOGD("X");
 
     return rtn;
 }

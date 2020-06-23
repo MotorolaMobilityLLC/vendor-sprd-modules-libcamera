@@ -219,7 +219,7 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
 
     /* get single camera id */
     int phyId = multi_id_to_phyid(id);
-    if (phyId < 0)
+    if (phyId == SENSOR_ID_INVALID)
         return -ENODEV;
 
     /* then try single camera */
@@ -260,7 +260,7 @@ int SprdCamera3Factory::overrideCameraIdIfNeeded(int cameraId) {
     /* fallback to '0' if no multi-camera module info found */
     if ((cameraId == SPRD_MULTI_CAMERA_ID || cameraId == SPRD_FOV_FUSION_ID ||
          cameraId == SPRD_DUAL_VIEW_VIDEO_ID) &&
-        !sensorGetLogicaInfo4MulitCameraId(SPRD_MULTI_CAMERA_ID)) {
+        !sensorGetLogicaInfo4multiCameraId(SPRD_MULTI_CAMERA_ID)) {
         HAL_LOGW("fallback to 0 since no module info found");
         return 0;
     }
@@ -372,16 +372,16 @@ int SprdCamera3Factory::multi_id_to_phyid(int cameraId) {
         }
         return 1;
     } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
-        return sensorGetRole(MODULE_SPW_NONE_BACK);
+        return sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK);
     } else if (SPRD_FRONT_HIGH_RES == cameraId) {
         return 1;
     } else if (SPRD_OPTICSZOOM_W_ID == cameraId) {
-        return sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK);
+        return sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_WIDE, SNS_FACE_BACK);
     } else if (SPRD_OPTICSZOOM_T_ID == cameraId) {
-        return sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK);
+        return sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK);
     }
 
-    return 0xff;
+    return SENSOR_ID_INVALID;
 }
 
 int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,

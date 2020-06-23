@@ -99,7 +99,7 @@ static cmr_int _general_otp_get_lsc_channel_size(cmr_u16 width, cmr_u16 height,
     |   16M    | ov16885              | 4672 | 3504 |128 |      526       |
     |----------|----------------------|------|------|----|----------------|*/
     if (grid == 0) {
-        OTP_LOGE("lsc grid is 0!");
+        OTP_LOGI("lsc grid is 0!");
         return 0;
     }
 
@@ -171,7 +171,7 @@ static cmr_int _general_otp_parse_map_version(cmr_handle otp_drv_handle) {
         OTP_LOGI("otp version is 0.1");
     } else {
         module_info->otp_version = VER_ERROR;
-        OTP_LOGE("otp version error! calib_version = 0x%04x",
+        OTP_LOGI("otp version error! calib_version = 0x%04x",
                  module_info->calib_version);
     }
 
@@ -194,7 +194,7 @@ static cmr_int _general_otp_parse_module_data_0v4(cmr_handle otp_drv_handle,
         otp_cxt->otp_raw_data.buffer, module_info_offset, 15,
         module_info_offset + 15, module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("module info checksum error!");
+        OTP_LOGI("module info checksum error!");
         return ret;
     }
     OTP_LOGD("module info checksum passed");
@@ -420,7 +420,7 @@ static cmr_int _general_otp_parse_module_data_1v0(cmr_handle otp_drv_handle) {
     ret = _general_otp_section_checksum(otp_cxt->otp_raw_data.buffer, 0x00, 80,
                                         0x50, module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("module info checksum error!");
+        OTP_LOGI("module info checksum error!");
         return ret;
     }
     OTP_LOGD("module info checksum passed");
@@ -655,7 +655,7 @@ static cmr_int _general_otp_parse_module_data_1v1(cmr_handle otp_drv_handle) {
     ret = _general_otp_section_checksum(otp_cxt->otp_raw_data.buffer, 0x00, 89,
                                         0x59, module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("module info checksum error!");
+        OTP_LOGI("module info checksum error!");
         return ret;
     }
     OTP_LOGD("module info checksum passed");
@@ -806,12 +806,12 @@ static cmr_int _general_otp_parse_master_af_0v4(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_af_info.offset) {
-        OTP_LOGE("AF section start address is null");
+        OTP_LOGI("AF section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_af_info.size) {
-        OTP_LOGE("AF section size is 0");
+        OTP_LOGI("AF section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -822,7 +822,7 @@ static cmr_int _general_otp_parse_master_af_0v4(cmr_handle otp_drv_handle) {
         module_info->master_af_info.offset + module_info->master_af_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AF checksum error");
+        OTP_LOGI("AF checksum error");
         return ret;
     }
     OTP_LOGD("AF checksum passed");
@@ -892,12 +892,12 @@ static cmr_int _general_otp_parse_slave_af_0v4(cmr_handle otp_drv_handle) {
 
     /* including dual_slave */
     if (!module_info->slave_af_info.offset) {
-        OTP_LOGE("AF section start address is null");
+        OTP_LOGI("AF section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_af_info.size) {
-        OTP_LOGE("AF section size is 0");
+        OTP_LOGI("AF section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -908,7 +908,7 @@ static cmr_int _general_otp_parse_slave_af_0v4(cmr_handle otp_drv_handle) {
         module_info->slave_af_info.offset + module_info->slave_af_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AF checksum error");
+        OTP_LOGI("AF checksum error");
         return ret;
     }
     OTP_LOGD("AF checksum passed");
@@ -978,12 +978,12 @@ static cmr_int _general_otp_parse_master_af_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_af_info.offset) {
-        OTP_LOGE("AF section start address is null");
+        OTP_LOGI("AF section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_af_info.size) {
-        OTP_LOGE("AF section size is 0");
+        OTP_LOGI("AF section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -994,7 +994,7 @@ static cmr_int _general_otp_parse_master_af_1v0(cmr_handle otp_drv_handle) {
         module_info->master_af_info.offset + module_info->master_af_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AF checksum error");
+        OTP_LOGI("AF checksum error");
         return ret;
     }
     OTP_LOGD("AF checksum passed");
@@ -1055,12 +1055,12 @@ static cmr_int _general_otp_parse_slave_af_1v0(cmr_handle otp_drv_handle) {
 
     /* including dual_slave */
     if (!module_info->slave_af_info.offset) {
-        OTP_LOGE("AF section start address is null");
+        OTP_LOGI("AF section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_af_info.size) {
-        OTP_LOGE("AF section size is 0");
+        OTP_LOGI("AF section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1071,7 +1071,7 @@ static cmr_int _general_otp_parse_slave_af_1v0(cmr_handle otp_drv_handle) {
         module_info->slave_af_info.offset + module_info->slave_af_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AF checksum error");
+        OTP_LOGI("AF checksum error");
         return ret;
     }
     OTP_LOGD("AF checksum passed");
@@ -1131,7 +1131,7 @@ static cmr_int _general_otp_parse_af_1v1(cmr_handle otp_drv_handle) {
                         otp_cxt->sensor_id, &af_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AF checksum error");
+        OTP_LOGI("AF checksum error");
         return ret;
     }
     OTP_LOGD("AF checksum passed");
@@ -1159,12 +1159,12 @@ static cmr_int _general_otp_parse_master_awb_0v4(cmr_handle otp_drv_handle) {
     static awb_target_packet_t master_golden_awb = {0, 0, 0, 0, 0, 0};
 
     if (!module_info->master_awb_info.offset) {
-        OTP_LOGE("AWB section start address is null");
+        OTP_LOGI("AWB section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_awb_info.size) {
-        OTP_LOGE("AWB section size is 0");
+        OTP_LOGI("AWB section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1175,7 +1175,7 @@ static cmr_int _general_otp_parse_master_awb_0v4(cmr_handle otp_drv_handle) {
         module_info->master_awb_info.offset + module_info->master_awb_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AWB checksum error");
+        OTP_LOGI("AWB checksum error");
         return ret;
     }
     OTP_LOGD("AWB checksum passed");
@@ -1275,12 +1275,12 @@ static cmr_int _general_otp_parse_slave_awb_0v4(cmr_handle otp_drv_handle) {
     static awb_target_packet_t slave_golden_awb = {0, 0, 0, 0, 0, 0};
 
     if (!module_info->slave_awb_info.offset) {
-        OTP_LOGE("AWB section start address is null");
+        OTP_LOGI("AWB section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_awb_info.size) {
-        OTP_LOGE("AWB section size is 0");
+        OTP_LOGI("AWB section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1291,7 +1291,7 @@ static cmr_int _general_otp_parse_slave_awb_0v4(cmr_handle otp_drv_handle) {
         module_info->slave_awb_info.offset + module_info->slave_awb_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AWB checksum error");
+        OTP_LOGI("AWB checksum error");
         return ret;
     }
     OTP_LOGD("AWB checksum passed");
@@ -1360,12 +1360,12 @@ static cmr_int _general_otp_parse_master_awb_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_awb_info.offset) {
-        OTP_LOGE("AWB section start address is null");
+        OTP_LOGI("AWB section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_awb_info.size) {
-        OTP_LOGE("AWB section size is 0");
+        OTP_LOGI("AWB section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1376,7 +1376,7 @@ static cmr_int _general_otp_parse_master_awb_1v0(cmr_handle otp_drv_handle) {
         module_info->master_awb_info.offset + module_info->master_awb_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AWB checksum error");
+        OTP_LOGI("AWB checksum error");
         return ret;
     }
     OTP_LOGD("AWB checksum passed");
@@ -1424,12 +1424,12 @@ static cmr_int _general_otp_parse_slave_awb_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->slave_awb_info.offset) {
-        OTP_LOGE("AWB section start address is null");
+        OTP_LOGI("AWB section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_awb_info.size) {
-        OTP_LOGE("AWB section size is 0");
+        OTP_LOGI("AWB section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1440,7 +1440,7 @@ static cmr_int _general_otp_parse_slave_awb_1v0(cmr_handle otp_drv_handle) {
         module_info->slave_awb_info.offset + module_info->slave_awb_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AWB checksum error");
+        OTP_LOGI("AWB checksum error");
         return ret;
     }
     OTP_LOGD("AWB checksum passed");
@@ -1487,7 +1487,7 @@ static cmr_int _general_otp_parse_awb_1v1(cmr_handle otp_drv_handle) {
                         otp_cxt->sensor_id, &awb_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AWB checksum error");
+        OTP_LOGI("AWB checksum error");
         return ret;
     }
     OTP_LOGD("AWB checksum passed");
@@ -1515,12 +1515,12 @@ static cmr_int _general_otp_parse_master_lsc_0v4(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_lsc_info.offset) {
-        OTP_LOGE("LSC section start address is null");
+        OTP_LOGI("LSC section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_lsc_info.size) {
-        OTP_LOGE("LSC section size is 0");
+        OTP_LOGI("LSC section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1531,7 +1531,7 @@ static cmr_int _general_otp_parse_master_lsc_0v4(cmr_handle otp_drv_handle) {
         module_info->master_lsc_info.offset + module_info->master_lsc_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("LSC checksum error");
+        OTP_LOGI("LSC checksum error");
         return ret;
     }
     OTP_LOGD("LSC checksum passed");
@@ -1587,12 +1587,12 @@ static cmr_int _general_otp_parse_slave_lsc_0v4(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->slave_lsc_info.offset) {
-        OTP_LOGE("LSC section start address is null");
+        OTP_LOGI("LSC section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_lsc_info.size) {
-        OTP_LOGE("LSC section size is 0");
+        OTP_LOGI("LSC section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1614,7 +1614,7 @@ static cmr_int _general_otp_parse_slave_lsc_0v4(cmr_handle otp_drv_handle) {
             module_info->otp_version);
     }
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("LSC checksum error");
+        OTP_LOGI("LSC checksum error");
         return ret;
     }
     OTP_LOGD("LSC checksum passed");
@@ -1669,12 +1669,12 @@ static cmr_int _general_otp_parse_master_lsc_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_lsc_info.offset) {
-        OTP_LOGE("LSC section start address is null");
+        OTP_LOGI("LSC section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_lsc_info.size) {
-        OTP_LOGE("LSC section size is 0");
+        OTP_LOGI("LSC section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1685,7 +1685,7 @@ static cmr_int _general_otp_parse_master_lsc_1v0(cmr_handle otp_drv_handle) {
         module_info->master_lsc_info.offset + module_info->master_lsc_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("LSC checksum error");
+        OTP_LOGI("LSC checksum error");
         return ret;
     }
     OTP_LOGD("LSC checksum passed");
@@ -1750,12 +1750,12 @@ static cmr_int _general_otp_parse_slave_lsc_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->slave_lsc_info.offset) {
-        OTP_LOGE("LSC section start address is null");
+        OTP_LOGI("LSC section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_lsc_info.size) {
-        OTP_LOGE("LSC section size is 0");
+        OTP_LOGI("LSC section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1766,7 +1766,7 @@ static cmr_int _general_otp_parse_slave_lsc_1v0(cmr_handle otp_drv_handle) {
         module_info->slave_lsc_info.offset + module_info->slave_lsc_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("LSC checksum error");
+        OTP_LOGI("LSC checksum error");
         return ret;
     }
     OTP_LOGD("LSC checksum passed");
@@ -1830,7 +1830,7 @@ static cmr_int _general_otp_parse_lsc_1v1(cmr_handle otp_drv_handle) {
                         otp_cxt->sensor_id, &lsc_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("LSC checksum error");
+        OTP_LOGI("LSC checksum error");
         return ret;
     }
     OTP_LOGD("LSC checksum passed");
@@ -1857,12 +1857,12 @@ static cmr_int _general_otp_parse_master_pdaf(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_pdaf1_info.offset) {
-        OTP_LOGE("PDAF section start address is null");
+        OTP_LOGI("PDAF section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_pdaf1_info.size) {
-        OTP_LOGE("PDAF section size is 0");
+        OTP_LOGI("PDAF section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1874,7 +1874,7 @@ static cmr_int _general_otp_parse_master_pdaf(cmr_handle otp_drv_handle) {
                                             module_info->master_pdaf1_info.size,
                                         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("PDAF checksum error");
+        OTP_LOGI("PDAF checksum error");
         return ret;
     }
     OTP_LOGD("PDAF checksum passed");
@@ -1907,7 +1907,7 @@ static cmr_int _general_otp_parse_pdaf_1v1(cmr_handle otp_drv_handle) {
                         otp_cxt->sensor_id, &pdaf_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("PDAF checksum error");
+        OTP_LOGI("PDAF checksum error");
         return ret;
     }
     OTP_LOGD("PDAF checksum passed");
@@ -1934,12 +1934,12 @@ static cmr_int _general_otp_parse_master_ae_0v4(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_ae_info.offset) {
-        OTP_LOGE("AE section start address is null");
+        OTP_LOGI("AE section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_ae_info.size) {
-        OTP_LOGE("AE section size is 0");
+        OTP_LOGI("AE section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -1950,7 +1950,7 @@ static cmr_int _general_otp_parse_master_ae_0v4(cmr_handle otp_drv_handle) {
         module_info->master_ae_info.offset + module_info->master_ae_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AE checksum error");
+        OTP_LOGI("AE checksum error");
         return ret;
     }
     OTP_LOGD("AE checksum passed");
@@ -2001,12 +2001,12 @@ static cmr_int _general_otp_parse_slave_ae_0v4(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->slave_ae_info.offset) {
-        OTP_LOGE("AE section start address is null");
+        OTP_LOGI("AE section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_ae_info.size) {
-        OTP_LOGE("AE section size is 0");
+        OTP_LOGI("AE section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -2017,7 +2017,7 @@ static cmr_int _general_otp_parse_slave_ae_0v4(cmr_handle otp_drv_handle) {
         module_info->slave_ae_info.offset + module_info->slave_ae_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AE checksum error");
+        OTP_LOGI("AE checksum error");
         return ret;
     }
     OTP_LOGD("AE checksum passed");
@@ -2068,12 +2068,12 @@ static cmr_int _general_otp_parse_master_ae_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_ae_info.offset) {
-        OTP_LOGE("AE section start address is null");
+        OTP_LOGI("AE section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_ae_info.size) {
-        OTP_LOGE("AE section size is 0");
+        OTP_LOGI("AE section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -2084,7 +2084,7 @@ static cmr_int _general_otp_parse_master_ae_1v0(cmr_handle otp_drv_handle) {
         module_info->master_ae_info.offset + module_info->master_ae_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AE checksum error");
+        OTP_LOGI("AE checksum error");
         return ret;
     }
     OTP_LOGD("AE checksum passed");
@@ -2137,12 +2137,12 @@ static cmr_int _general_otp_parse_slave_ae_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->slave_ae_info.offset) {
-        OTP_LOGE("AE section start address is null");
+        OTP_LOGI("AE section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->slave_ae_info.size) {
-        OTP_LOGE("AE section size is 0");
+        OTP_LOGI("AE section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -2153,7 +2153,7 @@ static cmr_int _general_otp_parse_slave_ae_1v0(cmr_handle otp_drv_handle) {
         module_info->slave_ae_info.offset + module_info->slave_ae_info.size,
         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("AE checksum error");
+        OTP_LOGI("AE checksum error");
         return ret;
     }
     OTP_LOGD("AE checksum passed");
@@ -2207,7 +2207,7 @@ static cmr_int _general_otp_parse_xtalk_4in1_1v1(cmr_handle otp_drv_handle) {
                         &xtalk_4in1_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("XTALK_4IN1 checksum error");
+        OTP_LOGI("XTALK_4IN1 checksum error");
         return ret;
     }
     OTP_LOGD("XTALK_4IN1 checksum passed");
@@ -2235,7 +2235,7 @@ static cmr_int _general_otp_parse_dpc_4in1_1v1(cmr_handle otp_drv_handle) {
                       otp_cxt->sensor_id, &dpc_4in1_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("DPC_4IN1 checksum error");
+        OTP_LOGI("DPC_4IN1 checksum error");
         return ret;
     }
     OTP_LOGD("DPC_4IN1 checksum passed");
@@ -2261,7 +2261,7 @@ static cmr_int _general_otp_parse_spw_1v1(cmr_handle otp_drv_handle) {
                         otp_cxt->sensor_id, &spw_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("SPW checksum error");
+        OTP_LOGI("SPW checksum error");
         return ret;
     }
     OTP_LOGD("SPW checksum passed");
@@ -2290,12 +2290,12 @@ _general_otp_parse_master_dualcam_0v4(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_bokeh_info.offset) {
-        OTP_LOGE("Dualcam section start address is null");
+        OTP_LOGI("Dualcam section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_bokeh_info.size) {
-        OTP_LOGE("Dualcam section size is 0");
+        OTP_LOGI("Dualcam section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -2306,7 +2306,7 @@ _general_otp_parse_master_dualcam_0v4(cmr_handle otp_drv_handle) {
             230, module_info->master_bokeh_info.offset + 230,
             module_info->otp_version);
         if (OTP_CAMERA_SUCCESS != ret) {
-            OTP_LOGE("otp v0.5 dualcam 230bytes part checksum error");
+            OTP_LOGI("otp v0.5 dualcam 230bytes part checksum error");
             return ret;
         }
         ret = _general_otp_section_checksum(
@@ -2315,7 +2315,7 @@ _general_otp_parse_master_dualcam_0v4(cmr_handle otp_drv_handle) {
             module_info->master_bokeh_info.offset + 256,
             module_info->otp_version);
         if (OTP_CAMERA_SUCCESS != ret) {
-            OTP_LOGE("otp v0.5 dualcam new part checksum error");
+            OTP_LOGI("otp v0.5 dualcam new part checksum error");
             return ret;
         }
     } else {
@@ -2326,7 +2326,7 @@ _general_otp_parse_master_dualcam_0v4(cmr_handle otp_drv_handle) {
                 module_info->master_bokeh_info.size,
             module_info->otp_version);
         if (OTP_CAMERA_SUCCESS != ret) {
-            OTP_LOGE("Dualcam 230bytes checksum error");
+            OTP_LOGI("Dualcam 230bytes checksum error");
             return ret;
         }
     }
@@ -2390,12 +2390,12 @@ _general_otp_parse_master_dualcam_1v0(cmr_handle otp_drv_handle) {
     char value[255];
 
     if (!module_info->master_bokeh_info.offset) {
-        OTP_LOGE("Dualcam section start address is null");
+        OTP_LOGI("Dualcam section start address is null");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
     if (!module_info->master_bokeh_info.size) {
-        OTP_LOGE("Dualcam section size is 0");
+        OTP_LOGI("Dualcam section size is 0");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -2407,7 +2407,7 @@ _general_otp_parse_master_dualcam_1v0(cmr_handle otp_drv_handle) {
                                             module_info->master_bokeh_info.size,
                                         module_info->otp_version);
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("Dualcam checksum error");
+        OTP_LOGI("Dualcam checksum error");
         return ret;
     }
     OTP_LOGD("Dualcam checksum passed");
@@ -2468,7 +2468,7 @@ static cmr_int _general_otp_parse_bokeh_1v1(cmr_handle otp_drv_handle) {
                         otp_cxt->sensor_id, &bokeh_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("BOKEH checksum error");
+        OTP_LOGI("BOKEH checksum error");
         return ret;
     }
     OTP_LOGD("BOKEH checksum passed");
@@ -2493,7 +2493,7 @@ static cmr_int _general_otp_parse_wt_1v1(cmr_handle otp_drv_handle) {
                         otp_cxt->sensor_id, &wt_section);
 
     if (OTP_CAMERA_SUCCESS != ret) {
-        OTP_LOGE("W+T checksum error");
+        OTP_LOGI("W+T checksum error");
         return ret;
     }
     OTP_LOGD("W+T checksum passed");
@@ -2529,7 +2529,7 @@ static cmr_int _general_otp_compatible_convert_single(cmr_handle otp_drv_handle,
     }
 
     if (otp_cxt->otp_module_info.otp_version == VER_ERROR) {
-        OTP_LOGE("otp version error! will not pass data to isp!");
+        OTP_LOGI("otp version error! will not pass data to isp!");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -2615,7 +2615,7 @@ static cmr_int _general_otp_compatible_convert_master(cmr_handle otp_drv_handle,
     }
 
     if (otp_cxt->otp_module_info.otp_version == VER_ERROR) {
-        OTP_LOGE("otp version error! will not pass data to isp!");
+        OTP_LOGI("otp version error! will not pass data to isp!");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -2740,7 +2740,7 @@ static cmr_int _general_otp_compatible_convert_slave(cmr_handle otp_drv_handle,
     }
 
     if (otp_cxt->otp_module_info.otp_version == VER_ERROR) {
-        OTP_LOGE("otp version error! will not pass data to isp!");
+        OTP_LOGI("otp version error! will not pass data to isp!");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }
@@ -3032,7 +3032,7 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
 
     _general_otp_parse_map_version(otp_drv_handle);
     if (module_info->otp_version == VER_ERROR) {
-        OTP_LOGE("otp version error! will not start parse!");
+        OTP_LOGI("otp version error! will not start parse!");
         ret = OTP_CAMERA_FAIL;
         return ret;
     }

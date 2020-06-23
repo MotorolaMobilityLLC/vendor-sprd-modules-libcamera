@@ -163,8 +163,8 @@ typedef enum {
  *  following.
  **/
 enum camera_module_id {
-    MODULE_DEFAULT = 0x00, /*NULL*/
-    MODULE_SUNNY = 0x01,
+    MODULE_DEFAULT = 0, /*NULL*/
+    MODULE_SUNNY = 1,
     MODULE_TRULY,
     MODULE_RTECH,
     MODULE_QTECH,
@@ -178,11 +178,9 @@ enum camera_module_id {
     MODULE_SUNWIN,
     MODULE_OFLIM,
     MODULE_HONGSHI,
-
     MODULE_SUNNINESS, /*15*/
     MODULE_RIYONG,
     MODULE_TONGJU,
-    /*add camera vendor name index here*/
     MODULE_A_KERR,
     MODULE_LITEARRAY,
     MODULE_HUAQUAN, /*20*/
@@ -191,40 +189,9 @@ enum camera_module_id {
     MODULE_LAIMU,
     MODULE_WDSEN,
     MODULE_SUNRISE, /*25*/
+    /*add camera vendor name index here*/
 
     MODULE_MAX, /*NOTE:This used to be the last line*/
-
-    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * MODULE: feature|sensor role|module face
-     * feature:
-     *     NONE-0, BOKEH-1, OPTICSZOOM-2, SPW(Superwide)-3,
-     *     STL3D(Structure Light 3D)-4
-     * sensor role:
-     *     NONE-0,
-     *     BOKEH:
-     *         MASTER-1, SLAVE-2
-     *     OPTICSZOOM:
-     *         WIDE-1, TELE-2, SUPERWIDE-3
-     *     STL3D:
-     *         RGB-1, IRL(IR Left)-2, IRR(IR Right)-3
-     * module facing:
-     *     BACK-0, FRONT-1
-     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-    MODULE_BOKEH_MASTER_BACK = 0x110,
-    MODULE_BOKEH_SLAVE_BACK = 0x120,
-    MODULE_BOKEH_MASTER_FRONT = 0x111,
-    MODULE_BOKEH_SLAVE_FRONT = 0x121,
-    MODULE_OPTICSZOOM_WIDE_BACK = 0x210,
-    MODULE_OPTICSZOOM_TELE_BACK = 0x220,
-    MODULE_OPTICSZOOM_SUPERWIDE_BACK = 0x230,
-    MODULE_OPTICSZOOM_WIDE_FRONT = 0x211,
-    MODULE_OPTICSZOOM_TELE_FRONT = 0x221,
-    MODULE_OPTICSZOOM_SUPERWIDE_FRONT = 0x231,
-    MODULE_SPW_NONE_BACK = 0x300,
-    MODULE_SPW_NONE_FRONT = 0x301,
-    MODULE_STL3D_RGB_FRONT = 0x411,
-    MODULE_STL3D_IRL_FRONT = 0x421,
-    MODULE_STL3D_IRR_FRONT = 0x431,
 };
 
 typedef enum {
@@ -407,7 +374,7 @@ struct sensor_ic_drv_init_para {
     cmr_handle caller_handle;
     cmr_u8 sensor_id;
 
-    /*current module id,get from sensor_cfg.c*/
+    /*current module vendor id*/
     cmr_u16 module_id;
 
     /*callback from sensor_drv_u.c*/
@@ -724,9 +691,8 @@ typedef struct slotSensorInfo {
 typedef struct phySensorInfo {
     int phyId;
     int slotId;
-    cmr_u16 module_id;
-    int sensor_role;
-    int face_type;
+    cmr_u32 sensor_role_code;
+    cmr_u32 face_type;
     int angle;
     int resource_cost;
     SENSOR_IMAGE_FORMAT image_format;
@@ -742,12 +708,18 @@ typedef struct phySensorInfo {
     cmr_u8 mono_sensor;
 } PHYSICAL_SENSOR_INFO_T;
 
+struct phy_id_group {
+    int phyId;
+    int sensor_role;
+};
+
 typedef struct logicalSensorInfo {
     int logicalId;
     int multiCameraId;
     int multiCameraMode;
     int physicalNum;
-    int phyIdGroup[SENSOR_ID_MAX];
+    struct phy_id_group phyIdGroup[SENSOR_ID_MAX];
+    cmr_u32 face_type;
 } LOGICAL_SENSOR_INFO_T;
 
 cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,

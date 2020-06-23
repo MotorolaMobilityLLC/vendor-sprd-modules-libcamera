@@ -10,11 +10,12 @@ static char *otp_lib_path = "/system/lib/libcamotp.so";
 
 static char *otp_bin_path = "/data/vendor/cameraserver/";
 /**
- * NOTE: the pointer point otp raw data that not be parsed.
- *       General the data size is 8k,however it also depends
- *       on the specific configuration of the OTP driver.
- *       There are four element for multi camera otp handle.
- *       you can get you otp data by sensor id.
+ * NOTE: the otp_raw_buffer pointer points to otp raw data
+ *       that not be parsed. General the data size is 8k,
+ *       however it also depends on the specific configuration
+ *       of the OTP driver. There are 6 elements of otp handle,
+ *       which means support 6 sensor id.
+ *       You can get your otp raw data by sensor id.
  *
  * Memory Map:
  *       --------------------------------------
@@ -30,10 +31,12 @@ static char *otp_bin_path = "/data/vendor/cameraserver/";
 static cmr_u8 *otp_raw_buffer[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
 /**
- * NOTE: the pointer point otp formatted data that has be parsed.
- *       The data size depends on the specific configuration of
- *       the OTP driver.There are four element for multi camera
- *       otp handle.You can get you otp parsed data by sensor id.
+ * NOTE: the otp_formatted_data_buffer pointer points to otp
+ *       formatted data that has been parsed. The data size
+ *       depends on the specific configuration of the OTP driver.
+ *       There are 6 elements of otp handle, which means support
+ *       6 sensor id.
+ *       You can get your otp parsed data by sensor id.
  *
  * Memory Map:
  *        --------------------------------------------

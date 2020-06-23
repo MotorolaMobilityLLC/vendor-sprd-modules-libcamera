@@ -87,7 +87,8 @@ typedef struct xml_camera_module_cfg {
     /*+++sensor section+++*/
     unsigned char slot_id;
     char sensor_name[MAX_NAME_LEN];
-    int facing;
+    cmr_u32 sensor_role_code;
+    cmr_u32 facing;
     int orientation;
     int resource_cost;
     /*---sensor section---*/
@@ -121,9 +122,11 @@ int sensor_drv_xml_unload_file(xmlDocPtr docPtr);
 xmlNodePtr sensor_drv_xml_get_node(xmlNodePtr pNodePtr, const char *nodeName,
                                    int node_index);
 int sensor_drv_xml_get_node_num(xmlNodePtr pNodePtr, const char *nodeName);
-xmlNodePtr sensor_drv_xml_get_node_recursive(xmlNodePtr pNodePtr, const char *nodeName,
-                                   int node_index);
-int sensor_drv_xml_get_node_num_recursive(xmlNodePtr pNodePtr, const char *nodeName);
+xmlNodePtr sensor_drv_xml_get_node_recursive(xmlNodePtr pNodePtr,
+                                             const char *nodeName,
+                                             int node_index);
+int sensor_drv_xml_get_node_num_recursive(xmlNodePtr pNodePtr,
+                                          const char *nodeName);
 int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
                                    struct xmlHashMap *xml_hash_map,
                                    unsigned int data_size, int node_index);
@@ -131,5 +134,5 @@ int sensor_drv_xml_parse_camera_module_info(
     struct xml_camera_cfg_info *camera_cfg);
 int sensor_drv_xml_parse_vcm_info(struct xml_camera_cfg_info *camera_cfg);
 int sensor_drv_xml_parse_otp_info(struct xml_camera_cfg_info *camera_cfg);
-int sensor_drv_xml_parse_tuning_param_info(struct xml_camera_cfg_info *camera_cfg);
-
+int sensor_drv_xml_parse_tuning_param_info(
+    struct xml_camera_cfg_info *camera_cfg);

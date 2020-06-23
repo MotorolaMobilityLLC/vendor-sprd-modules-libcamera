@@ -74,7 +74,7 @@ extern "C" {
 #define CMR_DOLPHIN_SCALING_TH 1280
 #define GRAB_BUF_MAX IMG_PATH_BUFFER_COUNT
 #define GRAB_CHANNEL_MAX 6
-#define SESNOR_NAME_LEN 40
+#define SENSOR_ID_INVALID 0xff
 #define CMR_CAPTURE_MEM_SUM 1
 
 #define CAMERA_PIXEL_ALIGNED 4
@@ -223,7 +223,7 @@ struct after_set_cb_param {
     nsecs_t timestamp;
 };
 
-enum cam_fdr_post_scene {CAM_FDR_POST_LOW = 1, CAM_FDR_POST_HIGH};
+enum cam_fdr_post_scene { CAM_FDR_POST_LOW = 1, CAM_FDR_POST_HIGH };
 
 enum preview_param_mode { PARAM_NORMAL = 0, PARAM_ZOOM, PARAM_MODE_MAX };
 
@@ -263,12 +263,17 @@ enum face_type {
 };
 
 enum sensor_role {
-    SENSOR_SINGLE = 0,
-    SENSOR_MASTER,
-    SENSOR_SLAVE,
-    SENSOR_TW,
-    SENSOR_IR_L,
-    SENSOR_IR_R,
+    SENSOR_ROLE_SINGLE = 0,
+    SENSOR_ROLE_SINGLE_IR,
+    SENSOR_ROLE_SINGLE_MACRO,
+    SENSOR_ROLE_DUALCAM_MASTER,
+    SENSOR_ROLE_DUALCAM_SLAVE,
+    SENSOR_ROLE_MULTICAM_SUPERWIDE,
+    SENSOR_ROLE_MULTICAM_WIDE,
+    SENSOR_ROLE_MULTICAM_TELE,
+    SENSOR_ROLE_STL3D_RGB,
+    SENSOR_ROLE_STL3D_IR_LEFT,
+    SENSOR_ROLE_STL3D_IR_RIGHT,
     SENSOR_ROLE_MAX
 };
 
@@ -1049,7 +1054,12 @@ enum sensor_mode {
     SENSOR_MODE_MAX
 };
 
-enum sensor_type { RAWSENSOR = 0, FOURINONE_SW = 1, YUVSENSOR = 2, FOURINONE_HW};
+enum sensor_type {
+    RAWSENSOR = 0,
+    FOURINONE_SW = 1,
+    YUVSENSOR = 2,
+    FOURINONE_HW = 3
+};
 
 #define SENSOR_VIDEO_MODE_MAX 4
 #define SENSOR_IC_NAME_LEN 36
@@ -1145,10 +1155,11 @@ struct yuv_sn_af_param {
     struct img_rect zone[FOCUS_ZONE_CNT_MAX];
 };
 
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
+    defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 struct isp_ev_control {
     cmr_u32 cmd_value;
-    enum camera_snapshot_tpye snapshot_type ;
+    enum camera_snapshot_tpye snapshot_type;
 };
 #endif
 /********************************* sensor end *********************************/
@@ -1177,7 +1188,8 @@ struct common_isp_cmd_param {
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
         cmr_u32 cnr2_ynr_en;
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
+    defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
         struct isp_ev_control ev_setting;
 #endif
 #ifdef CAMERA_CNR3_ENABLE
@@ -1449,10 +1461,9 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
                    cmr_u32 index, struct img_addr *vir_addr,
                    cmr_u32 image_size);
-cmr_int dump_image_tags(char *tag, char *tag_suffix,
-                    cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
-                    cmr_s32 index, struct img_addr *vir_addr,
-                    cmr_u32 image_size);
+cmr_int dump_image_tags(char *tag, char *tag_suffix, cmr_u32 img_fmt,
+                        cmr_u32 width, cmr_u32 height, cmr_s32 index,
+                        struct img_addr *vir_addr, cmr_u32 image_size);
 
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size);
 
@@ -1866,10 +1877,10 @@ struct camera_face_info {
 };
 
 struct super_cap {
- cmr_uint addr;
- cmr_u32 width;
- cmr_u32 height;
- cmr_u32 size;
+    cmr_uint addr;
+    cmr_u32 width;
+    cmr_u32 height;
+    cmr_u32 size;
 };
 
 struct camera_jpeg_param {
@@ -1931,19 +1942,19 @@ struct image_sw_algorithm_buf {
     cmr_uint y_phy_addr;
     cmr_u32 fd;
     void *reserved;
-/*for pike2 night pro*/
+    /*for pike2 night pro*/
     cmr_uint phy_addr_u;
     cmr_uint phy_addr_v;
 };
 
 /*
 struct camera_cap_frm_info {
-        cmr_uint                 y_virt_addr;
-        cmr_uint                 u_virt_addr;
-        cmr_u32                  width;
-        cmr_u32                  height;
-        cmr_s64                  timestamp;
-        struct frm_info          frame_info;
+    cmr_uint y_virt_addr;
+    cmr_uint u_virt_addr;
+    cmr_u32 width;
+    cmr_u32 height;
+    cmr_s64 timestamp;
+    struct frm_info frame_info;
 };*/
 
 typedef struct prev_sn_param_dvfs_type {
@@ -2070,7 +2081,7 @@ typedef enum {
     SPRD_MIMETPYE_BLUR = 12,
     SPRD_MIMETPYE_BOKEH = 16,
     SPRD_MIMETPYE_BOKEH_HDR = 17,
-    SPRD_MIMETPYE_AI = 36 ,
+    SPRD_MIMETPYE_AI = 36,
     SPRD_MIMETPYE_PORTRAIT_SCENE = 48
 } multiCameraMimetype;
 

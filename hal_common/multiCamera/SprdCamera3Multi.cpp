@@ -198,12 +198,12 @@ int SprdCamera3Multi::getCameraInfo(int id, struct camera_info *info) {
     }
     parse_configure_info(config_info);
 
-    logicalPtr = sensorGetLogicaInfo4MulitCameraId(id);
+    logicalPtr = sensorGetLogicaInfo4multiCameraId(id);
     if (logicalPtr) {
         if (m_nPhyCameras == logicalPtr->physicalNum) {
             for (i = 0; i < logicalPtr->physicalNum; i++) {
-                m_pPhyCamera[i].id = (uint8_t)logicalPtr->phyIdGroup[i];
-                HAL_LOGD("i = %d, phyId = %d", i, logicalPtr->phyIdGroup[i]);
+                m_pPhyCamera[i].id = (uint8_t)logicalPtr->phyIdGroup[i].phyId;
+                HAL_LOGD("i = %d, phyId = %d", i, logicalPtr->phyIdGroup[i].phyId);
             }
         }
     }

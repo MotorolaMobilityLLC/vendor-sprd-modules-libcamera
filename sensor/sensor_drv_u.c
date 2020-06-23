@@ -22,14 +22,12 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <cutils/sockets.h>
-#include "ams/tcs3430/tcs_3430_drv.h"
-#include "hw_sensor_drv.h"
+#include <fcntl.h>
+#include "dlfcn.h"
 #include "sensor_cfg.h"
 #include "sensor_drv_u.h"
-#include "../otp_drv/otp_info.h"
 #include "../otp_cali/otp_cali.h"
-#include "dlfcn.h"
-#include <fcntl.h>
+#include "ams/tcs3430/tcs_3430_drv.h"
 
 #define SENSOR_CTRL_MSG_QUEUE_SIZE 10
 #define WRITE_DUAL_OTP_SIZE 230
@@ -44,7 +42,7 @@ static pthread_mutex_t cali_otp_mutex;
 #define SENSOR_CTRL_EVT_CFGOTP (SENSOR_CTRL_EVT_BASE + 0x4)
 #define SENSOR_CTRL_EVT_STREAM_CTRL (SENSOR_CTRL_EVT_BASE + 0x5)
 
-#define LOGICAL_SENSOR_ID_MAX 10
+#define LOGICAL_SENSOR_ID_MAX 16
 
 /**---------------------------------------------------------------------------*
  **                         Local Variables                                   *
@@ -62,12 +60,6 @@ static struct tuning_param_lib tuning_lib_mngr[SENSOR_ID_MAX] = {0};
 
 static SENSOR_MATCH_T sensor_cfg_tab[SENSOR_ID_MAX] = {0};
 static struct xml_camera_cfg_info xml_cfg_tab[SENSOR_ID_MAX] = {0};
-
-static const int sensor_is_support[] = {
-    BACK_CAMERA_SENSOR_SUPPORT,  FRONT_CAMERA_SENSOR_SUPPORT,
-    BACK2_CAMERA_SENSOR_SUPPORT, FRONT2_CAMERA_SENSOR_SUPPORT,
-    BACK3_CAMERA_SENSOR_SUPPORT, FRONT3_CAMERA_SENSOR_SUPPORT,
-};
 
 /**---------------------------------------------------------------------------*
  **                         Local Functions                                   *
@@ -707,9 +699,9 @@ LOCAL cmr_int sensor_create_ctrl_thread(struct sensor_drv_context *sensor_cxt) {
         sem_init(&sensor_cxt->ctrl_thread_cxt.sensor_sync_sem, 0, 0);
 
         ret = cmr_thread_create2(&sensor_cxt->ctrl_thread_cxt.thread_handle,
-                                SENSOR_CTRL_MSG_QUEUE_SIZE,
-                                sensor_ctrl_thread_proc, (void *)sensor_cxt,
-                                "sn_ctrl");
+                                 SENSOR_CTRL_MSG_QUEUE_SIZE,
+                                 sensor_ctrl_thread_proc, (void *)sensor_cxt,
+                                 "sn_ctrl");
         if (ret) {
             SENSOR_LOGE("send msg failed!");
             ret = SENSOR_FAIL;
@@ -931,7 +923,7 @@ cmr_int sensor_open_common(struct sensor_drv_context *sensor_cxt,
         sensor_drv_scan_hw();
     }
 
-    if (phyPtr->slotId == 0xff) {
+    if (phyPtr->slotId == SENSOR_ID_INVALID) {
         SENSOR_LOGE("slotId is 255.please check and connect the sensor,restart "
                     "the phone");
         return ret;
@@ -2053,7 +2045,7 @@ static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id) {
     ssize_t ret;
     int fd;
 
-    SENSOR_LOGI("E");
+    SENSOR_LOGV("E");
 
     SENSOR_LOGI("sensor_version_info info %s \n", sensor_info);
 
@@ -2071,12 +2063,13 @@ static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id) {
     ret = property_set("vendor.cam.sensor.info", sensor_info);
     close(fd);
     SENSOR_LOGI("slot id is %d", slot_id);
-    if(strlen(sensor_info) < sizeof(sensor_info_with_slot_id)) {
-        sprintf(sensor_info_with_slot_id, "<slot:%d>\n%s", slot_id, sensor_info);
+    if (strlen(sensor_info) < sizeof(sensor_info_with_slot_id)) {
+        sprintf(sensor_info_with_slot_id, "<slot:%d>\n%s", slot_id,
+                sensor_info);
         property_set("vendor.cam.sensor.slot.info", sensor_info_with_slot_id);
     }
 exit:
-    SENSOR_LOGI("X");
+    SENSOR_LOGV("X");
 }
 
 /*--------------------------AF INTERFACE-----------------------------*/
@@ -2135,10 +2128,10 @@ static cmr_int sensor_af_deinit(cmr_handle sns_module_handle) {
                 return SENSOR_FAIL;
         }
     } else {
-        SENSOR_LOGI("AF_DEINIT:Don't register af driver,return directly");
+        SENSOR_LOGI("not register af driver, return directly");
         return SENSOR_FAIL;
     }
-    SENSOR_LOGI("X:");
+    SENSOR_LOGD("X");
     return ret;
 }
 
@@ -2162,7 +2155,7 @@ static cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, cmr_u32 pos) {
             SENSOR_LOGE("set_pos is null please check your af driver.");
         }
     } else {
-        SENSOR_LOGE("af driver not exist,return directly");
+        SENSOR_LOGE("af driver not exist, return directly");
         return SENSOR_FAIL;
     }
 
@@ -2186,7 +2179,7 @@ static cmr_int sensor_af_get_pos(cmr_handle sns_module_handle, cmr_u16 *pos) {
                 return SENSOR_FAIL;
         }
     } else {
-        SENSOR_LOGE("af driver not exist,return directly");
+        SENSOR_LOGE("af driver not exist, return directly");
         return SENSOR_FAIL;
     }
     return ret;
@@ -2211,7 +2204,7 @@ static cmr_int sensor_af_get_pos_info(cmr_handle sns_module_handle,
                 return SENSOR_FAIL;
         }
     } else {
-        SENSOR_LOGE("af driver not exist,return directly");
+        SENSOR_LOGE("af driver not exist, return directly");
         return SENSOR_FAIL;
     }
     return ret;
@@ -2223,7 +2216,7 @@ static cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
 
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-    SENSOR_LOGI("in");
+    SENSOR_LOGD("E");
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
     otp_drv_init_para_t input_para = {0, NULL, 0, 0, 0, 0, 0, 0, 0};
 
@@ -2244,9 +2237,9 @@ static cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
         ret = module->otp_drv_info.otp_drv_entry->otp_ops.sensor_otp_create(
             &input_para, &sensor_cxt->otp_drv_handle);
     } else {
-        SENSOR_LOGI("otp_drv_entry is not configured in sensor_cfg.c");
+        SENSOR_LOGI("otp driver is not configured");
     }
-    SENSOR_LOGI("out");
+    SENSOR_LOGV("X");
     ATRACE_END();
     return ret;
 }
@@ -2254,7 +2247,7 @@ static cmr_int sensor_otp_module_init(struct sensor_drv_context *sensor_cxt) {
 static cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
-    SENSOR_LOGI("in");
+    SENSOR_LOGD("E");
     SENSOR_MATCH_T *module = sensor_cxt->current_module;
 
     if (module && (module->otp_drv_info.otp_drv_entry) &&
@@ -2263,9 +2256,9 @@ static cmr_int sensor_otp_module_deinit(struct sensor_drv_context *sensor_cxt) {
             sensor_cxt->otp_drv_handle);
         sensor_cxt->otp_drv_handle = NULL;
     } else {
-        SENSOR_LOGI("Don't has otp instance,no need to release");
+        SENSOR_LOGI("not register otp driver, no need to release");
     }
-    SENSOR_LOGI("out");
+    SENSOR_LOGV("X");
     return ret;
 }
 
@@ -2691,7 +2684,7 @@ cmr_int sensor_ic_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
         break;
     default:
         break;
-    };
+    }
 
     return ret;
 }
@@ -2758,7 +2751,7 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
         break;
     default:
         break;
-    };
+    }
 
     SENSOR_LOGV("X:");
     return ret;
@@ -2773,13 +2766,12 @@ static void sensor_drv_print_slot_list_info() {
     struct slotSensorInfo *slotPtr = slot_sensor_info_list;
 
     for (i = 0; i < SENSOR_ID_MAX; i++) {
-        if ((slotPtr + i)->slotId == 0xff)
+        if ((slotPtr + i)->slotId == SENSOR_ID_INVALID)
             continue;
-        SENSOR_LOGI("slotId %d,sensor_index %d,sensor_name %s\n",
-                    (slotPtr + i)->slotId, (slotPtr + i)->sensor_index,
+        SENSOR_LOGI("slotId %d, sensor_name %s\n", (slotPtr + i)->slotId,
                     (slotPtr + i)->sensor_name);
     }
-};
+}
 
 static void sensor_drv_print_phy_list_info() {
     cmr_int i = 0;
@@ -2787,10 +2779,12 @@ static void sensor_drv_print_phy_list_info() {
     struct camera_device_manager *devPtr = &camera_dev_manger;
 
     for (i = 0; i < devPtr->physical_num; i++) {
-        SENSOR_LOGI("phyId %d,slotId %d,sensor_name %s\n", (phyPtr + i)->phyId,
-                    (phyPtr + i)->slotId, (phyPtr + i)->sensor_name);
+        SENSOR_LOGI(
+            "phyId %d, slotId %d, sensor_name %s, sensor_role_code 0x%x\n",
+            (phyPtr + i)->phyId, (phyPtr + i)->slotId,
+            (phyPtr + i)->sensor_name, (phyPtr + i)->sensor_role_code);
     }
-};
+}
 
 static void sensor_drv_print_logical_list_info() {
     cmr_int i, j;
@@ -2798,15 +2792,17 @@ static void sensor_drv_print_logical_list_info() {
     struct camera_device_manager *devPtr = &camera_dev_manger;
 
     for (i = 0; i < devPtr->logical_num; i++) {
-        SENSOR_LOGI("logicalId %d,multiCameraId %d,physicalNum %d\n",
+        SENSOR_LOGI("logicalId %d, multiCameraId %d, physicalNum %d\n",
                     (logicalPtr + i)->logicalId,
                     (logicalPtr + i)->multiCameraId,
                     (logicalPtr + i)->physicalNum);
         for (j = 0; j < (logicalPtr + i)->physicalNum; j++) {
-            SENSOR_LOGI("---phyId %d\n", (logicalPtr + i)->phyIdGroup[j]);
+            SENSOR_LOGI("----phyId %d, sensor_role %d\n",
+                        (logicalPtr + i)->phyIdGroup[j].phyId,
+                        (logicalPtr + i)->phyIdGroup[j].sensor_role);
         }
     }
-};
+}
 
 static cmr_int sensor_drv_sensor_info_list_init() {
     cmr_int i = 0;
@@ -2816,21 +2812,21 @@ static cmr_int sensor_drv_sensor_info_list_init() {
 
     for (i = 0; i < SENSOR_ID_MAX; i++) {
         // slot sensor list
-        (slotPtr + i)->slotId = 0xff;
+        (slotPtr + i)->slotId = SENSOR_ID_INVALID;
         (slotPtr + i)->sensor_index = 0xff;
         memset((slotPtr + i)->sensor_name, 0, SENSOR_IC_NAME_LEN);
         // physical sensor list
-        (phyPtr + i)->phyId = 0xff;
-        (phyPtr + i)->slotId = 0xff;
+        (phyPtr + i)->phyId = SENSOR_ID_INVALID;
+        (phyPtr + i)->slotId = SENSOR_ID_INVALID;
     }
     // logical sensor list
     for (i = 0; i < LOGICAL_SENSOR_ID_MAX; i++) {
-        (logicalPtr + i)->logicalId = 0xff;
-        (logicalPtr + i)->multiCameraId = 0xff;
+        (logicalPtr + i)->logicalId = SENSOR_ID_INVALID;
+        (logicalPtr + i)->multiCameraId = SENSOR_ID_INVALID;
     }
 
     return 0;
-};
+}
 
 static cmr_int
 sensor_drv_create_slot_sensor_info(struct sensor_drv_context *sensor_cxt,
@@ -2843,7 +2839,17 @@ sensor_drv_create_slot_sensor_info(struct sensor_drv_context *sensor_cxt,
     strcpy(slotPtr->sensor_name, module->sn_name);
 
     return 0;
-};
+}
+
+static void sensor_drv_special_phy_sensor_info(PHYSICAL_SENSOR_INFO_T *phyPtr,
+                                               cmr_u32 slot_id) {
+
+    if (slot_id == SENSOR_SUB2 &&
+        !strcmp(phyPtr->sensor_name, "ov8856_shine")) {
+        phyPtr->face_type = SNS_FACE_BACK;
+        phyPtr->angle = 90;
+    }
+}
 
 static cmr_int
 sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
@@ -2862,7 +2868,7 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->phyId = phy_id;
     strcpy(phyPtr->sensor_name, slotPtr->sensor_name);
 
-    SENSOR_LOGV("phy_id %d,slot_id %d,sensor_name %s", phy_id, slot_id,
+    SENSOR_LOGV("phy_id %d, slot_id %d, sensor_name %s", phy_id, slot_id,
                 phyPtr->sensor_name);
 
     // config sensor attribute
@@ -2886,129 +2892,224 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
 
     phyPtr->image_format = sensor_cxt->sensor_info_ptr->image_format;
     phyPtr->sensor_type = sensor_cxt->sensor_type;
-    phyPtr->module_id = module->module_id;
     phyPtr->data_type = 0;
     phyPtr->pdaf_supported = sensor_cxt->static_info->pdaf_supported;
 
-    phyPtr->sensor_role = 0;
+    phyPtr->sensor_role_code = sensor_cxt->xml_info->cfgPtr->sensor_role_code;
     phyPtr->face_type = sensor_cxt->xml_info->cfgPtr->facing;
     phyPtr->angle = sensor_cxt->xml_info->cfgPtr->orientation;
     phyPtr->resource_cost = sensor_cxt->xml_info->cfgPtr->resource_cost;
     phyPtr->mono_sensor = sensor_cxt->mono_sensor;
-    // customize camera attribute
-    sensor_customize_cam_attribute(phyPtr, slot_id);
+    // special phyiscal sensor info overwrite
+    sensor_drv_special_phy_sensor_info(phyPtr, slot_id);
 
     return 0;
-};
+}
 
 static cmr_int sensor_drv_create_logical_sensor_info(cmr_int physical_num) {
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    struct snsMultiCameraInfo *multiCameraGroupPtr;
-    cmr_int i, j, k = 0;
-    cmr_int multiCamNum = 0;
-    cmr_int group_num = 0;
+    cmr_int i = 0;
     cmr_int logical_num = 0;
-    int slotId;
-    int singleFaceUnlockId = 0xff;
-    int phyIdGroup[SENSOR_ID_MAX];
+    cmr_uint phyId[SENSOR_ID_MAX];
 
-    // single sensor
-    /*
-    single sensor config logical list info
-    the logical id is equal the physical id for single sensor
-    */
+    // single camera feature
+    /* single sensor config logical list info
+     * logical id is equal to physical id for single sensor
+     */
     for (i = 0; i < physical_num; i++) {
         (logicalPtr + i)->logicalId = (phyPtr + i)->phyId;
-        (logicalPtr + i)->multiCameraId = 0xff;
+        (logicalPtr + i)->multiCameraId = SENSOR_ID_INVALID;
         (logicalPtr + i)->multiCameraMode = MODE_SINGLE_CAMERA;
         (logicalPtr + i)->physicalNum = 1;
-        (logicalPtr + i)->phyIdGroup[0] = (phyPtr + i)->phyId;
-        /*
-           store the physical id of front camera to prepare for single face
-           unlock multicamera mode
-        */
-        if (singleFaceUnlockId == 0xff &&
-            SNS_FACE_FRONT == (phyPtr + i)->face_type) {
-            singleFaceUnlockId = (phyPtr + i)->phyId;
-        }
+        (logicalPtr + i)->phyIdGroup[0].phyId = (phyPtr + i)->phyId;
+        /* NOTE:
+         * single sensor role's code_value must be equal to its enum sensor_role in cmr_common.h
+         * for example,
+         * single_ir's code_value = sensor_role_code & 0xf == 1,
+         * in enum sensor_role, SENSOR_ROLE_SINGLE_IR == 1.
+         */
+        (logicalPtr + i)->phyIdGroup[0].sensor_role =
+            (phyPtr + i)->sensor_role_code & 0xf;
+        (logicalPtr + i)->face_type = (phyPtr + i)->face_type;
     }
 
     // multi camera feature
-    multiCameraGroupPtr = sensor_get_multi_cam_cfg_group(&group_num);
-    logicalPtr += physical_num;
-    SENSOR_LOGV("group_num %d\n", group_num);
+    i = physical_num;
+    logicalPtr += i;
 
-    for (i = 0; i < group_num; i++) {
-        SENSOR_LOGV("sensorNum %d\n", (multiCameraGroupPtr + i)->sensorNum);
-
-        if ((multiCameraGroupPtr + i)->sensorNum > physical_num)
-            continue;
-
-        if ((multiCameraGroupPtr + i)->sensorNum < 2 &&
-            singleFaceUnlockId != 0xff) {
-            /*
-                config the logical info for single face unlock multicamera mode
-            */
-            (logicalPtr + multiCamNum)->logicalId = physical_num + multiCamNum;
-            (logicalPtr + multiCamNum)->multiCameraId =
-                (multiCameraGroupPtr + i)->multiCameraId;
-            (logicalPtr + multiCamNum)->multiCameraMode =
-                (multiCameraGroupPtr + i)->multiCameraMode;
-            (logicalPtr + multiCamNum)->physicalNum = 1;
-            (logicalPtr + multiCamNum)->phyIdGroup[0] = singleFaceUnlockId;
-
-            multiCamNum++;
-        } else if ((multiCameraGroupPtr + i)->sensorNum >= 2) {
-            /*
-                config the logical info for dual/trible multicamera mode
-            */
-            memset(phyIdGroup, 0xff, SENSOR_ID_MAX);
-            k = 0;
-            for (j = 0; j < physical_num; j++) {
-                slotId = (phyPtr + j)->slotId;
-                SENSOR_LOGV("slotId %d\n", slotId);
-                if (slotId == 0xff)
-                    continue;
-
-                SENSOR_LOGV("group sensor_name %s,phyiscal sensor_name %s",
-                            (multiCameraGroupPtr + i)->sensor_name[slotId],
-                            (phyPtr + j)->sensor_name);
-
-                if (!strcmp((multiCameraGroupPtr + i)->sensor_name[slotId],
-                            (phyPtr + j)->sensor_name)) {
-                    phyIdGroup[k] = (phyPtr + j)->phyId;
-                    k++;
-                }
-
-                if (k == (multiCameraGroupPtr + i)->sensorNum) {
-                    (logicalPtr + multiCamNum)->logicalId =
-                        physical_num + multiCamNum;
-                    (logicalPtr + multiCamNum)->multiCameraId =
-                        (multiCameraGroupPtr + i)->multiCameraId;
-                    (logicalPtr + multiCamNum)->multiCameraMode =
-                        (multiCameraGroupPtr + i)->multiCameraMode;
-                    (logicalPtr + multiCamNum)->physicalNum =
-                        (multiCameraGroupPtr + i)->sensorNum;
-                    for (k = 0; k < (multiCameraGroupPtr + i)->sensorNum; k++) {
-                        (logicalPtr + multiCamNum)->phyIdGroup[k] =
-                            phyIdGroup[k];
-                        (phyPtr + phyIdGroup[k])->face_type =
-                            (multiCameraGroupPtr + i)->face_type;
-                        (phyPtr + phyIdGroup[k])->angle =
-                            (multiCameraGroupPtr + i)->angle;
-                    }
-                    multiCamNum++;
-                    break;
-                }
-            }
-        }
+    // auto create logical info for dualcam bokeh & Portrait
+    memset(phyId, SENSOR_ID_INVALID, SENSOR_ID_MAX);
+    phyId[0] = sensorGetPhyId4Role(SENSOR_ROLE_DUALCAM_MASTER, SNS_FACE_BACK);
+    phyId[1] = sensorGetPhyId4Role(SENSOR_ROLE_DUALCAM_SLAVE, SNS_FACE_BACK);
+    if (phyId[0] != SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID) {
+        logicalPtr->logicalId = i;
+        logicalPtr->multiCameraId = SPRD_BLUR_ID;
+        logicalPtr->multiCameraMode = MODE_BOKEH;
+        logicalPtr->physicalNum = 2;
+        logicalPtr->phyIdGroup[0].phyId = phyId[0];
+        logicalPtr->phyIdGroup[0].sensor_role = SENSOR_ROLE_DUALCAM_MASTER;
+        logicalPtr->phyIdGroup[1].phyId = phyId[1];
+        logicalPtr->phyIdGroup[1].sensor_role = SENSOR_ROLE_DUALCAM_SLAVE;
+        logicalPtr->face_type = SNS_FACE_BACK;
+        SENSOR_LOGD(
+            "create back dualcam bokeh multiCameraId %d, phyId M %d, S %d",
+            SPRD_BLUR_ID, phyId[0], phyId[1]);
+        logicalPtr++;
+        i++;
+    } else {
+        SENSOR_LOGD("sensor not support back dualcam bokeh, will not create "
+                    "logical info, M %d, S %d",
+                    phyId[0], phyId[1]);
     }
 
-    logical_num = physical_num + multiCamNum;
+    if (phyId[0] != SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID) {
+        logicalPtr->logicalId = i;
+        logicalPtr->multiCameraId = SPRD_PORTRAIT_ID;
+        logicalPtr->multiCameraMode = MODE_BOKEH;
+        logicalPtr->physicalNum = 2;
+        logicalPtr->phyIdGroup[0].phyId = phyId[0];
+        logicalPtr->phyIdGroup[0].sensor_role = SENSOR_ROLE_DUALCAM_MASTER;
+        logicalPtr->phyIdGroup[1].phyId = phyId[1];
+        logicalPtr->phyIdGroup[1].sensor_role = SENSOR_ROLE_DUALCAM_SLAVE;
+        logicalPtr->face_type = SNS_FACE_BACK;
+        SENSOR_LOGD(
+            "create back dualcam portrait multiCameraId %d, phyId M %d, S %d",
+            SPRD_PORTRAIT_ID, phyId[0], phyId[1]);
+        logicalPtr++;
+        i++;
+    } else {
+        SENSOR_LOGD("sensor not support back dualcam portrait, will not create "
+                    "logical info, M %d, S %d",
+                    phyId[0], phyId[1]);
+    }
+
+    // auto create logical info for opticszoom & & fov_fusion & dual_view_video
+    memset(phyId, SENSOR_ID_INVALID, SENSOR_ID_MAX);
+    phyId[0] =
+        sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK);
+    phyId[1] = sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_WIDE, SNS_FACE_BACK);
+    phyId[2] = sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK);
+    if (phyId[0] != SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID &&
+        phyId[2] != SENSOR_ID_INVALID) {
+        logicalPtr->logicalId = i;
+        logicalPtr->multiCameraId = SPRD_MULTI_CAMERA_ID;
+        logicalPtr->multiCameraMode = MODE_MULTI_CAMERA;
+        logicalPtr->physicalNum = 3;
+        logicalPtr->phyIdGroup[0].phyId = phyId[0];
+        logicalPtr->phyIdGroup[0].sensor_role = SENSOR_ROLE_MULTICAM_SUPERWIDE;
+        logicalPtr->phyIdGroup[1].phyId = phyId[1];
+        logicalPtr->phyIdGroup[1].sensor_role = SENSOR_ROLE_MULTICAM_WIDE;
+        logicalPtr->phyIdGroup[2].phyId = phyId[2];
+        logicalPtr->phyIdGroup[2].sensor_role = SENSOR_ROLE_MULTICAM_TELE;
+        logicalPtr->face_type = SNS_FACE_BACK;
+        SENSOR_LOGD("create back SW+W+T opticszoom multiCameraId %d, phyId SW "
+                    "%d, W %d, T %d",
+                    SPRD_MULTI_CAMERA_ID, phyId[0], phyId[1], phyId[2]);
+        logicalPtr++;
+        i++;
+    } else if (phyId[0] != SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID &&
+               phyId[2] == SENSOR_ID_INVALID) {
+        logicalPtr->logicalId = i;
+        logicalPtr->multiCameraId = SPRD_MULTI_CAMERA_ID;
+        logicalPtr->multiCameraMode = MODE_MULTI_CAMERA;
+        logicalPtr->physicalNum = 2;
+        logicalPtr->phyIdGroup[0].phyId = phyId[0];
+        logicalPtr->phyIdGroup[0].sensor_role = SENSOR_ROLE_MULTICAM_SUPERWIDE;
+        logicalPtr->phyIdGroup[1].phyId = phyId[1];
+        logicalPtr->phyIdGroup[1].sensor_role = SENSOR_ROLE_MULTICAM_WIDE;
+        logicalPtr->face_type = SNS_FACE_BACK;
+        SENSOR_LOGD(
+            "create back SW+W opticszoom multiCameraId %d, phyId SW %d, W %d",
+            SPRD_MULTI_CAMERA_ID, phyId[0], phyId[1]);
+        logicalPtr++;
+        i++;
+    } else if (phyId[0] == SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID &&
+               phyId[2] != SENSOR_ID_INVALID) {
+        SENSOR_LOGD("hal multiCamera not support only W+T opticszoom temporarily, "
+                    "will not create logical info, SW %d, W %d, T %d",
+                    phyId[0], phyId[1], phyId[2]);
+    } else {
+        SENSOR_LOGD("sensor not support opticszoom, will not create logical "
+                    "info, SW %d, W %d, T %d",
+                    phyId[0], phyId[1], phyId[2]);
+    }
+
+    if (phyId[1] != SENSOR_ID_INVALID && phyId[2] != SENSOR_ID_INVALID) {
+        logicalPtr->logicalId = i;
+        logicalPtr->multiCameraId = SPRD_FOV_FUSION_ID;
+        logicalPtr->multiCameraMode = MODE_FOV_FUSION;
+        logicalPtr->physicalNum = 2;
+        logicalPtr->phyIdGroup[1].phyId = phyId[1];
+        logicalPtr->phyIdGroup[1].sensor_role = SENSOR_ROLE_MULTICAM_WIDE;
+        logicalPtr->phyIdGroup[2].phyId = phyId[2];
+        logicalPtr->phyIdGroup[2].sensor_role = SENSOR_ROLE_MULTICAM_TELE;
+        logicalPtr->face_type = SNS_FACE_BACK;
+        SENSOR_LOGD(
+            "create back W+T fov_fusion multiCameraId %d, phyId W %d, T %d",
+            SPRD_FOV_FUSION_ID, phyId[1], phyId[2]);
+        logicalPtr++;
+        i++;
+    } else {
+        SENSOR_LOGD("sensor not support fov_fusion, will not create logical "
+                    "info, phyId W %d, T %d",
+                    phyId[1], phyId[2]);
+    }
+
+    if (phyId[0] != SENSOR_ID_INVALID && phyId[2] != SENSOR_ID_INVALID) {
+        logicalPtr->logicalId = i;
+        logicalPtr->multiCameraId = SPRD_DUAL_VIEW_VIDEO_ID;
+        logicalPtr->multiCameraMode = MODE_DUAL_VIEW_VIDEO;
+        logicalPtr->physicalNum = 2;
+        logicalPtr->phyIdGroup[0].phyId = phyId[0];
+        logicalPtr->phyIdGroup[0].sensor_role = SENSOR_ROLE_MULTICAM_SUPERWIDE;
+        logicalPtr->phyIdGroup[2].phyId = phyId[2];
+        logicalPtr->phyIdGroup[2].sensor_role = SENSOR_ROLE_MULTICAM_TELE;
+        logicalPtr->face_type = SNS_FACE_BACK;
+        SENSOR_LOGD("create back SW+T dual_view_video multiCameraId %d, phyId "
+                    "SW %d, T %d",
+                    SPRD_DUAL_VIEW_VIDEO_ID, phyId[0], phyId[2]);
+        logicalPtr++;
+        i++;
+    } else {
+        SENSOR_LOGD("sensor not support dual_view_video, will not create "
+                    "logical info, phyId SW %d, T %d",
+                    phyId[0], phyId[2]);
+    }
+
+    // auto create logical info for 3d structure light
+    memset(phyId, SENSOR_ID_INVALID, SENSOR_ID_MAX);
+    phyId[0] = sensorGetPhyId4Role(SENSOR_ROLE_STL3D_RGB, SNS_FACE_FRONT);
+    phyId[1] = sensorGetPhyId4Role(SENSOR_ROLE_STL3D_IR_LEFT, SNS_FACE_FRONT);
+    phyId[2] = sensorGetPhyId4Role(SENSOR_ROLE_STL3D_IR_RIGHT, SNS_FACE_FRONT);
+    if (phyId[0] != SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID &&
+        phyId[2] != SENSOR_ID_INVALID) {
+        logicalPtr->logicalId = i;
+        logicalPtr->multiCameraId = SPRD_3D_FACE_ID;
+        logicalPtr->multiCameraMode = MODE_3D_FACE;
+        logicalPtr->physicalNum = 3;
+        logicalPtr->phyIdGroup[0].phyId = phyId[0];
+        logicalPtr->phyIdGroup[0].sensor_role = SENSOR_ROLE_STL3D_RGB;
+        logicalPtr->phyIdGroup[1].phyId = phyId[1];
+        logicalPtr->phyIdGroup[1].sensor_role = SENSOR_ROLE_STL3D_IR_LEFT;
+        logicalPtr->phyIdGroup[2].phyId = phyId[2];
+        logicalPtr->phyIdGroup[2].sensor_role = SENSOR_ROLE_STL3D_IR_RIGHT;
+        logicalPtr->face_type = SNS_FACE_FRONT;
+        SENSOR_LOGD("create front 3d structure light multiCameraId %d, phyId "
+                    "RGB %d, IR_L %d IR_R %d",
+                    SPRD_3D_FACE_ID, phyId[0], phyId[1], phyId[2]);
+        logicalPtr++;
+        i++;
+    } else {
+        SENSOR_LOGD("sensor not support 3d structure light, will not create "
+                    "logical info, phyId RGB %d, IR_L %d IR_R %d",
+                    phyId[0], phyId[1], phyId[2]);
+    }
+
+    logical_num = i;
 
     return logical_num;
-};
+}
 
 static cmr_int
 sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
@@ -3457,7 +3558,8 @@ sensor_drv_tuning_load_default_library(param_input_t param_input,
     cmr_int ret = SENSOR_FAIL;
     char libso_name[SENSOR_LIB_NAME_LEN] = {0};
 
-    void *(*default_tuning_param_get_ptr)(param_input_t tuning_param_input) = NULL;
+    void *(*default_tuning_param_get_ptr)(param_input_t tuning_param_input) =
+        NULL;
     int32_t bytes = 0;
 
     if (!strlen(name)) {
@@ -3626,7 +3728,7 @@ static cmr_int sensor_drv_open(struct sensor_drv_context *sensor_cxt,
 exit:
     ATRACE_END();
     return ret;
-};
+}
 
 static cmr_int sensor_drv_scan_hw(void) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
@@ -3676,7 +3778,7 @@ static cmr_int sensor_drv_scan_hw(void) {
     module_cfg_num = sensor_drv_xml_get_node_num(rootPtr, "CameraModuleCfg");
     SENSOR_LOGD("module_cfg_num %d", module_cfg_num);
 
-    if (!module_cfg_num && module_cfg_num > MODULE_CFG_MAX_NUM) {
+    if (!module_cfg_num || module_cfg_num > MODULE_CFG_MAX_NUM) {
         SENSOR_LOGE("module_cfg_num is invaild");
         goto exit;
     }
@@ -3702,7 +3804,10 @@ static cmr_int sensor_drv_scan_hw(void) {
 
         if (module_cfg.slot_id < SENSOR_ID_MAX &&
             probe_identify[module_cfg.slot_id]) {
-            SENSOR_LOGI("slot_id %d has probed successful", module_cfg.slot_id);
+            SENSOR_LOGD(
+                "slot_id %d has been identified successfully before, is %s",
+                module_cfg.slot_id,
+                slot_sensor_info_list[module_cfg.slot_id].sensor_name);
             continue;
         }
         slot_id = module_cfg.slot_id;
@@ -3727,13 +3832,15 @@ static cmr_int sensor_drv_scan_hw(void) {
                                               physical_num);
             physical_num++;
             probe_identify[slot_id] = 1;
+            SENSOR_LOGD("slot_id %d %s is identified successfully", slot_id,
+                        slot_sensor_info_list[slot_id].sensor_name);
             devPtr->identify_state[slot_id] = IDENTIFY_STATUS_PRESENT;
-            SENSOR_LOGV("useful sensor identify_state[%d] = %d",
-                slot_id,devPtr->identify_state[slot_id]);
+            SENSOR_LOGV("useful sensor identify_state[%d] = %d", slot_id,
+                        devPtr->identify_state[slot_id]);
         } else {
             devPtr->identify_state[slot_id] = IDENTIFY_STATUS_NOT_PRESENT;
-            SENSOR_LOGV("unuseful sensor identify_state[%d] = %d",
-                slot_id,devPtr->identify_state[slot_id]);
+            SENSOR_LOGV("unuseful sensor identify_state[%d] = %d", slot_id,
+                        devPtr->identify_state[slot_id]);
         }
 
         sensor_context_deinit(sensor_cxt, 0);
@@ -3762,12 +3869,12 @@ exit:
     }
     SENSOR_LOGI("scan physical number %d logical number %d",
                 devPtr->physical_num, devPtr->logical_num);
-    // sensor_drv_print_slot_list_info();
-    // sensor_drv_print_phy_list_info();
-    // sensor_drv_print_logical_list_info();
+    sensor_drv_print_slot_list_info();
+    sensor_drv_print_phy_list_info();
+    sensor_drv_print_logical_list_info();
 
     return devPtr->physical_num;
-};
+}
 
 int sensorGetPhysicalSnsNum(void) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
@@ -3775,7 +3882,7 @@ int sensorGetPhysicalSnsNum(void) {
     sensor_drv_scan_hw();
 
     return devPtr->physical_num;
-};
+}
 
 int sensorGetLogicalSnsNum(void) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
@@ -3783,9 +3890,9 @@ int sensorGetLogicalSnsNum(void) {
     sensor_drv_scan_hw();
 
     return devPtr->logical_num;
-};
+}
 
-void * sensorGetIdentifyState() {
+void *sensorGetIdentifyState() {
 
     return (void *)&camera_dev_manger;
 }
@@ -3796,7 +3903,7 @@ PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id) {
         return NULL;
 
     return &phy_sensor_info_list[phy_id];
-};
+}
 
 LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id) {
 
@@ -3804,16 +3911,138 @@ LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id) {
         return NULL;
 
     return &logical_sensor_info_list[logical_id];
-};
+}
+
+/**
+ * NOTE: sensor_role_code in physical sensor info is a cmr_u32 digit.
+ *       4 bits means a role_group, total 8 groups. Now low 16 bits have
+ *       been used, high 16 bits are reserved.
+ * NOTE: If 32 bits have been used up, sensor_role_code will expand to 8-bit
+ *       or 32-bit array in future. Do not change cmr_u32 type to cmr_u64
+ *       directly, in case of type conversion bug.
+ *       (function sensor_drv_xml_str_to_integer in sensor_drv_xml_parse.c)
+ *
+ * cmr_u32 sensor_role_code definition:
+ *       0~3 bits: single-camera role
+ *           0 -- single
+ *           1 -- single_ir
+ *           2 -- single_macro
+ *           3~f -- reserved
+ *       4~7 bits: dualcamera role
+ *           0 -- none
+ *           1 -- dualcam_master
+ *           2 -- dualcam_slave
+ *           3~f -- reserved
+ *       8~11 bits: multicamera opticszoom role
+ *           0 -- none
+ *           1 -- multicam_superwide
+ *           2 -- multicam_wide
+ *           3 -- multicam_tele
+ *           4~f -- reserved
+ *       12~15 bits: multicamera 3d structure light role
+ *           0 -- none
+ *           1 -- stl3d_rgb
+ *           2 -- stl3d_ir_left
+ *           3 -- stl3d_ir_right
+ *           4~f -- reserved
+ *       16~31 bits: reserved
+ *
+ * NOTE: single-camera superwide now multiplexes multicam_superwide, not create
+ *       a single-camera role for it purposely.
+ *
+ * for example, sharkl5pro ums512_1h10 back master camera's sensor_role_code
+ * is 0x00000210, means it's a bokeh master camera and an opticszoom wide camera
+ * at the same time, no special single-camera feature.
+ **/
+cmr_uint sensorGetPhyId4Role(enum sensor_role role, enum face_type facing) {
+    int phyId = SENSOR_ID_INVALID;
+    cmr_u32 code = 0;
+    int face = 0;
+    struct phySensorInfo *phyPtr = NULL;
+
+    /* only return the first sensor that meets role,
+     * and surely this sensor has been identified successfully */
+    for (phyId = 0; phyId < SENSOR_ID_MAX; phyId++) {
+        phyPtr = sensorGetPhysicalSnsInfo(phyId);
+        code = phyPtr->sensor_role_code;
+        face = phyPtr->face_type;
+        switch (role) {
+        case SENSOR_ROLE_DUALCAM_MASTER:
+            if (((code >> 4) & 0xf) == 0x1 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_DUALCAM_SLAVE:
+            if (((code >> 4) & 0xf) == 0x2 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_MULTICAM_SUPERWIDE:
+            if (((code >> 8) & 0xf) == 0x1 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_MULTICAM_WIDE:
+            if (((code >> 8) & 0xf) == 0x2 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_MULTICAM_TELE:
+            if (((code >> 8) & 0xf) == 0x3 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_STL3D_RGB:
+            if (((code >> 12) & 0xf) == 0x1 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_STL3D_IR_LEFT:
+            if (((code >> 12) & 0xf) == 0x2 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_STL3D_IR_RIGHT:
+            if (((code >> 12) & 0xf) == 0x3 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_SINGLE_IR:
+            if ((code & 0xf) == 0x1 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_SINGLE_MACRO:
+            if ((code & 0xf) == 0x2 && face == facing) {
+                goto exit;
+            }
+            break;
+        case SENSOR_ROLE_SINGLE:
+            SENSOR_LOGD(
+                "finding sensor_role single is meaningless, return 0xff");
+            return SENSOR_ID_INVALID;
+        default:
+            SENSOR_LOGD("not support sensor_role %d", role);
+            return SENSOR_ID_INVALID;
+        }
+    }
+    SENSOR_LOGD("can't find sensor_role %d at facing %d", role, facing);
+    return SENSOR_ID_INVALID;
+
+exit:
+    SENSOR_LOGD("find sensor_role %d at facing %d, phyId %d", role, facing,
+                phyId);
+    return phyId;
+}
 
 LOGICAL_SENSOR_INFO_T *
-sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId) {
+sensorGetLogicaInfo4multiCameraId(cmr_int multiCameraId) {
     int i = 0;
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
 
     for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
-        if ((logicalPtr + i)->logicalId == 0xff)
+        if ((logicalPtr + i)->logicalId == SENSOR_ID_INVALID)
             continue;
 
         if (multiCameraId == (logicalPtr + i)->multiCameraId) {
@@ -3823,30 +4052,6 @@ sensorGetLogicaInfo4MulitCameraId(cmr_int multiCameraId) {
     }
 
     return NULL;
-};
-
-int sensorGetRole(enum camera_module_id ModuleId) {
-    int sensor_id = -1;
-    struct phySensorInfo *phyPtr = NULL;
-
-    for (sensor_id = 0; sensor_id < SENSOR_ID_MAX; sensor_id++) {
-        phyPtr = sensorGetPhysicalSnsInfo(sensor_id);
-        if (ModuleId == phyPtr->module_id) {
-            if (ModuleId == MODULE_SPW_NONE_BACK) {
-                SENSOR_LOGD("find ultraWide sensor, id %d", sensor_id);
-            } else if (ModuleId == MODULE_OPTICSZOOM_WIDE_BACK) {
-                SENSOR_LOGD("find opticszoom wide sensor, id %d", sensor_id);
-            } else if (ModuleId == MODULE_OPTICSZOOM_TELE_BACK) {
-                SENSOR_LOGD("find opticszoom tele sensor, id %d", sensor_id);
-            } else {
-                SENSOR_LOGD("find sensor role 0x%x, id %d", ModuleId,
-                            sensor_id);
-            }
-            return sensor_id;
-        }
-    }
-    SENSOR_LOGD("can't find sensor role 0x%x", ModuleId);
-    return -1;
 }
 
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
@@ -3855,27 +4060,27 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
 
     property_get("persist.vendor.cam.multi.section", value, "3");
     if (atoi(value) == 3) {
-     if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
-        zoom_param->PhyCameras = 2;
-        zoom_param->MaxDigitalZoom = 10.0;
-        zoom_param->ZoomRatioSection[0] = 2.0;
-        zoom_param->ZoomRatioSection[1] = 10.0;
-        zoom_param->ZoomRatioSection[2] = 0;
-        zoom_param->ZoomRatioSection[3] = 0;
-        zoom_param->ZoomRatioSection[4] = 0;
-        zoom_param->ZoomRatioSection[5] = 0;
-        zoom_param->BinningRatio = 5.0;
-    } else {
-        zoom_param->PhyCameras = 3;
-        zoom_param->MaxDigitalZoom = 10.0;
-        zoom_param->ZoomRatioSection[0] = 0.6;
-        zoom_param->ZoomRatioSection[1] = 1.0;
-        zoom_param->ZoomRatioSection[2] = 2.0;
-        zoom_param->ZoomRatioSection[3] = 10.0;
-        zoom_param->ZoomRatioSection[4] = 0;
-        zoom_param->ZoomRatioSection[5] = 0;
-        zoom_param->BinningRatio = 5.0;
-      }
+        if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
+            zoom_param->PhyCameras = 2;
+            zoom_param->MaxDigitalZoom = 10.0;
+            zoom_param->ZoomRatioSection[0] = 2.0;
+            zoom_param->ZoomRatioSection[1] = 10.0;
+            zoom_param->ZoomRatioSection[2] = 0;
+            zoom_param->ZoomRatioSection[3] = 0;
+            zoom_param->ZoomRatioSection[4] = 0;
+            zoom_param->ZoomRatioSection[5] = 0;
+            zoom_param->BinningRatio = 5.0;
+        } else {
+            zoom_param->PhyCameras = 3;
+            zoom_param->MaxDigitalZoom = 10.0;
+            zoom_param->ZoomRatioSection[0] = 0.6;
+            zoom_param->ZoomRatioSection[1] = 1.0;
+            zoom_param->ZoomRatioSection[2] = 2.0;
+            zoom_param->ZoomRatioSection[3] = 10.0;
+            zoom_param->ZoomRatioSection[4] = 0;
+            zoom_param->ZoomRatioSection[5] = 0;
+            zoom_param->BinningRatio = 5.0;
+        }
     } else if (atoi(value) == 2) {
         zoom_param->PhyCameras = 2;
         zoom_param->MaxDigitalZoom = 8.0;
@@ -3890,6 +4095,7 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
 
     return ret;
 }
+
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
                                     struct sensor_otp_cust_info *otp_data) {
     cmr_u8 otpdata[SPRD_DUAL_OTP_SIZE] = {0};
@@ -3911,7 +4117,7 @@ cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
         SENSOR_LOGE("read calibration otp data failed, size:%d", otpsize);
         return SENSOR_FAIL;
     }
-};
+}
 
 cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
                                      cmr_u16 otp_size) {

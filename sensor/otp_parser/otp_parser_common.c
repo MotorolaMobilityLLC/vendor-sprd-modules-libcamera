@@ -119,7 +119,7 @@ cmr_int otp_parser(void *raw_data, enum otp_parser_cmd cmd, cmr_uint eeprom_num,
 
     rtn = _otp_get_map_version(raw_data, &map_version);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("otp map version is wrong");
+        CMR_LOGI("otp map version is wrong");
         goto exit;
     }
 
@@ -148,7 +148,7 @@ cmr_int otp_parser(void *raw_data, enum otp_parser_cmd cmd, cmr_uint eeprom_num,
         rtn = otp_parser_map_v11(raw_data, cmd, camera_id, result);
         break;
     default:
-        CMR_LOGD("map version is 0x%04x, no parser", map_version);
+        CMR_LOGI("map version is 0x%04x, no parser", map_version);
         break;
     }
 
@@ -172,7 +172,7 @@ cmr_int otp_parser_v1(void *raw_data, enum otp_parser_cmd cmd,
 
     rtn = _otp_get_map_version(raw_data, &map_version);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("otp map version is wrong");
+        CMR_LOGI("otp map version is wrong");
         goto exit;
     }
 
@@ -192,7 +192,7 @@ cmr_int otp_parser_v1(void *raw_data, enum otp_parser_cmd cmd,
         rtn = otp_parser_map_v11(raw_data, cmd, camera_id, result);
         break;
     default:
-        CMR_LOGD("map version is 0x%04x, no parser", map_version);
+        CMR_LOGI("map version is 0x%04x, no parser", map_version);
         break;
     }
 

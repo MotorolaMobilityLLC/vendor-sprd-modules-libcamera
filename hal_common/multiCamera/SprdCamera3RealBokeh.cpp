@@ -178,6 +178,8 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mHdrSkipBlur = false;
     mHdrCallbackCnt = 0;
     mAfstate = 0;
+    mCameraIdMaster = CAM_BOKEH_MAIN_ID;
+    mCameraIdSlave = CAM_DEPTH_ID;
     mSavedRequestList.clear();
     setupPhysicalCameras();
     mCaptureThread = new BokehCaptureThread();
@@ -307,25 +309,12 @@ int SprdCamera3RealBokeh::camera_device_open(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
-    struct logicalSensorInfo *logicalPtr = NULL;
-    int i = 0;
 
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
     HAL_LOGD("id= %d", atoi(id));
-
-    logicalPtr = sensorGetLogicaInfo4MulitCameraId(atoi(id));
-    if (logicalPtr) {
-        if (mRealBokeh->m_nPhyCameras == logicalPtr->physicalNum) {
-            for (i = 0; i < logicalPtr->physicalNum; i++) {
-                mRealBokeh->m_pPhyCamera[i].id =
-                    (uint8_t)logicalPtr->phyIdGroup[i];
-                HAL_LOGD("i = %d, phyId = %d", i, logicalPtr->phyIdGroup[i]);
-            }
-        }
-    }
 
     rc = mRealBokeh->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGD("id= %d, rc: %d", atoi(id), rc);
@@ -979,11 +968,10 @@ int SprdCamera3RealBokeh::cameraDeviceOpen(__unused int camera_id,
                                            struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
     uint8_t phyId = 0;
-
     HAL_LOGI(" E");
     hw_device_t *hw_dev[m_nPhyCameras];
-    mCameraId = CAM_BOKEH_MAIN_ID;
-    m_VirtualCamera.id = (uint8_t)CAM_BOKEH_MAIN_ID;
+    mCameraId = mCameraIdMaster;
+    m_VirtualCamera.id = (uint8_t)mCameraIdMaster;
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
         phyId = m_pPhyCamera[i].id;
@@ -995,7 +983,7 @@ int SprdCamera3RealBokeh::cameraDeviceOpen(__unused int camera_id,
         hw_dev[i] = NULL;
 
         hw->setMultiCameraMode(MODE_BOKEH);
-        hw->setMasterId(MASTER_ID);
+        hw->setMasterId(mCameraIdMaster);
 
         rc = hw->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
@@ -1072,6 +1060,7 @@ int SprdCamera3RealBokeh::getCameraInfo(int id, struct camera_info *info) {
     int camera_id = 0;
     int32_t img_size = 0;
     int version = SPRD_API_MODE;
+    struct logicalSensorInfo *logicalPtr = NULL;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -1081,7 +1070,22 @@ int SprdCamera3RealBokeh::getCameraInfo(int id, struct camera_info *info) {
     if (mStaticMetadata)
         free_camera_metadata(mStaticMetadata);
 
-    m_VirtualCamera.id = CAM_BOKEH_MAIN_ID;
+    logicalPtr = sensorGetLogicaInfo4multiCameraId(id);
+    if (logicalPtr) {
+        if (mRealBokeh->m_nPhyCameras == logicalPtr->physicalNum) {
+            for (int i = 0; i < logicalPtr->physicalNum; i++) {
+                mRealBokeh->m_pPhyCamera[i].id = (uint8_t)logicalPtr->phyIdGroup[i].phyId;
+                if (SENSOR_ROLE_DUALCAM_MASTER == logicalPtr->phyIdGroup[i].sensor_role)
+                    mRealBokeh->mCameraIdMaster =  mRealBokeh->m_pPhyCamera[i].id;
+                if (SENSOR_ROLE_DUALCAM_SLAVE == logicalPtr->phyIdGroup[i].sensor_role)
+                    mRealBokeh->mCameraIdSlave = mRealBokeh->m_pPhyCamera[i].id;
+                HAL_LOGD("i = %d, phyId = %d", i, logicalPtr->phyIdGroup[i].phyId);
+            }
+        }
+    }
+
+    m_VirtualCamera.id = mRealBokeh->mCameraIdMaster;
+
     camera_id = (int)m_VirtualCamera.id;
     SprdCamera3Setting::initDefaultParameters(camera_id);
     rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
@@ -4326,7 +4330,7 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
                         mNotifyListMain.erase(i++);
                         return;
                     }
-                }else
+                } else
                     i++;
             }
         }
@@ -4497,7 +4501,7 @@ void SprdCamera3RealBokeh::processCaptureResultAux(
                         mNotifyListAux.erase(i++);
                         return;
                     }
-                }else
+                } else
                     i++;
             }
         }

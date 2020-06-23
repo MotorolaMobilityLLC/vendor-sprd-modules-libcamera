@@ -178,7 +178,7 @@ static cmr_int _otp_parser_af_v11(void *raw_data, cmr_uint start_offset,
     cmr_u8 *af_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no af data");
+        CMR_LOGI("there is no af data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -186,7 +186,7 @@ static cmr_int _otp_parser_af_v11(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, af_start_offset, af_data_size,
                                af_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("af checksum error");
+        CMR_LOGI("af checksum error");
         return rtn;
     }
 
@@ -217,7 +217,7 @@ static cmr_int _otp_parser_awb_v11(void *raw_data, cmr_uint start_offset,
     cmr_u8 *awb_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no awb data");
+        CMR_LOGI("there is no awb data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -225,7 +225,7 @@ static cmr_int _otp_parser_awb_v11(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, awb_start_offset, awb_data_size,
                                awb_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("awb checksum error");
+        CMR_LOGI("awb checksum error");
         return rtn;
     }
 
@@ -258,7 +258,7 @@ static cmr_int _otp_parser_lsc_v11(void *raw_data, cmr_uint start_offset,
     cmr_u8 *lsc_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no lsc data");
+        CMR_LOGI("there is no lsc data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -266,7 +266,7 @@ static cmr_int _otp_parser_lsc_v11(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, lsc_start_offset, lsc_data_size,
                                lsc_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("lsc checksum error");
+        CMR_LOGI("lsc checksum error");
         return rtn;
     }
 
@@ -309,7 +309,7 @@ static cmr_int _otp_parser_pdaf1_v11(void *raw_data, cmr_uint start_offset,
     cmr_u8 *pdaf1_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no pdaf_sprd_isp data");
+        CMR_LOGI("there is no pdaf_sprd_isp data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -317,7 +317,7 @@ static cmr_int _otp_parser_pdaf1_v11(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, pdaf1_start_offset, pdaf1_data_size,
                                pdaf1_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("pdaf_sprd_isp checksum error");
+        CMR_LOGI("pdaf_sprd_isp checksum error");
         return rtn;
     }
 
@@ -344,7 +344,7 @@ static cmr_int _otp_parser_pdaf2_v11(void *raw_data, cmr_uint start_offset,
     cmr_u8 *pdaf2_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("there is no pdaf_sensor data");
+        CMR_LOGI("there is no pdaf_sensor data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -352,7 +352,7 @@ static cmr_int _otp_parser_pdaf2_v11(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, pdaf2_start_offset, pdaf2_data_size,
                                pdaf2_end_offset);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("pdaf_sensor checksum error");
+        CMR_LOGI("pdaf_sensor checksum error");
         return rtn;
     }
 
@@ -376,7 +376,7 @@ static cmr_int _otp_parser_section_with_version_v11(void *raw_data,
     cmr_u8 *section_buf = NULL;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("no data");
+        CMR_LOGI("no data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -384,7 +384,7 @@ static cmr_int _otp_parser_section_with_version_v11(void *raw_data,
     rtn = _otp_parser_checksum(raw_data, start_offset, data_size,
                                start_offset + data_size);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("checksum error");
+        CMR_LOGI("checksum error");
         return rtn;
     }
 
@@ -407,7 +407,7 @@ static cmr_int _otp_parser_section_v11(void *raw_data, cmr_uint start_offset,
         (struct otp_parser_section *)result;
 
     if (0 == start_offset || 0 == data_size) {
-        CMR_LOGE("no data");
+        CMR_LOGI("no data");
         rtn = OTP_PARSER_CMD_ERR;
         return rtn;
     }
@@ -415,7 +415,7 @@ static cmr_int _otp_parser_section_v11(void *raw_data, cmr_uint start_offset,
     rtn = _otp_parser_checksum(raw_data, start_offset, data_size,
                                start_offset + data_size);
     if (OTP_PARSER_SUCCESS != rtn) {
-        CMR_LOGE("checksum error");
+        CMR_LOGI("checksum error");
         return rtn;
     }
 
@@ -519,7 +519,7 @@ cmr_int otp_parser_map_v11(void *raw_data, enum otp_parser_cmd cmd,
             _otp_parser_section_v11(raw_data, start_offset, data_size, result);
         break;
     default:
-        CMR_LOGV("input cmd error");
+        CMR_LOGI("input cmd error");
         rtn = OTP_PARSER_CMD_ERR;
         break;
     }

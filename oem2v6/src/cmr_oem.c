@@ -3737,7 +3737,7 @@ cmr_int camera_get_otpinfo(cmr_handle oem_handle, cmr_u8 dual_flag,
 
     ret = sensor_read_calibration_otp(dual_flag, otp_data);
     if (CMR_CAMERA_SUCCESS == ret) {
-        CMR_LOGD("dual_otp data from socket");
+        CMR_LOGD("dual_otp data from bin file");
     } else {
         if (3 == dualflag) {
 #ifdef L5PRO_CLOSE_SPW_OTP
@@ -3757,12 +3757,12 @@ cmr_int camera_get_otpinfo(cmr_handle oem_handle, cmr_u8 dual_flag,
                 CMR_LOGD("dual_otp data in eeprom");
             } else {
                 ret = CMR_CAMERA_FAIL;
-                CMR_LOGI("no dual_otp data from socket or eeprom");
+                CMR_LOGI("no dual_otp data from bin or eeprom");
                 goto exit;
             }
         } else {
             ret = CMR_CAMERA_FAIL;
-            CMR_LOGI("no dual_otp data from socket or eeprom");
+            CMR_LOGI("no dual_otp data from bin or eeprom");
             goto exit;
         }
     }
@@ -12450,7 +12450,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     phyPtr = sensorGetPhysicalSnsInfo(camera_id);
     cxt->facing = phyPtr->face_type;
 
-    CMR_LOGI("cxt=%p, client_data=%p", cxt, cxt->client_data);
+    CMR_LOGI("cxt=%p, client_data=%p, master_id=%d", cxt, cxt->client_data, cxt->master_id);
     ret = camera_init_internal((cmr_handle)cxt, is_autotest);
     if (ret) {
         CMR_LOGE("camera_init_internal failed");

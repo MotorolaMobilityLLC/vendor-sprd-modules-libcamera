@@ -7792,17 +7792,16 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->prev_zoom = true;
     prev_cxt->cap_zoom = true;
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
-    if(camera_id == sensorGetRole(MODULE_SPW_NONE_BACK) && cxt->is_ultra_wide) {
-        prev_cxt->prev_zoom =
-            sprd_warp_adapter_get_isISPZoom(WARP_PREVIEW);
-        if(!(prev_cxt->prev_zoom))
+    if (camera_id == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE,
+                                         SNS_FACE_BACK) && cxt->is_ultra_wide) {
+        prev_cxt->prev_zoom = sprd_warp_adapter_get_isISPZoom(WARP_PREVIEW);
+        if (!(prev_cxt->prev_zoom))
             zoom_param->zoom_info.prev_aspect_ratio = 1.0f;
-        prev_cxt->cap_zoom =
-            sprd_warp_adapter_get_isISPZoom(WARP_CAPTURE);
-        if(!(prev_cxt->cap_zoom))
+        prev_cxt->cap_zoom = sprd_warp_adapter_get_isISPZoom(WARP_CAPTURE);
+        if (!(prev_cxt->cap_zoom))
             zoom_param->zoom_info.capture_aspect_ratio = 1.0f;
-        CMR_LOGV("ID=%d,pre %d,cap %d",camera_id,
-            prev_cxt->prev_zoom,prev_cxt->cap_zoom);
+        CMR_LOGV("ID=%d,pre %d,cap %d", camera_id, prev_cxt->prev_zoom,
+                 prev_cxt->cap_zoom);
     }
 #endif
     chn_param.is_lightly = 0;
@@ -8268,13 +8267,12 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->video_zoom = true;
 
 #ifdef CONFIG_CAMERA_SUPPORT_ULTRA_WIDE
-    if(camera_id == sensorGetRole(MODULE_SPW_NONE_BACK) && cxt->is_ultra_wide) {
-        prev_cxt->video_zoom =
-            sprd_warp_adapter_get_isISPZoom(WARP_PREVIEW);
-        if(!(prev_cxt->video_zoom))
+    if (camera_id == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE,
+                                         SNS_FACE_BACK) && cxt->is_ultra_wide) {
+        prev_cxt->video_zoom = sprd_warp_adapter_get_isISPZoom(WARP_PREVIEW);
+        if (!(prev_cxt->video_zoom))
             zoom_param->zoom_info.video_aspect_ratio = 1.0f;
-        CMR_LOGV("ID=%d,video %d",camera_id,
-            prev_cxt->video_zoom);
+        CMR_LOGV("ID=%d,video %d", camera_id, prev_cxt->video_zoom);
     }
 #endif
 
@@ -8353,7 +8351,7 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
                              prev_cxt->actual_video_size.height;
 
         // TODO WORKAROUND
-        if (camera_id == sensorGetRole(MODULE_SPW_NONE_BACK))
+        if (camera_id == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK))
             real_ratio = 1.0f;
 
         if (zoom_param->zoom_info.crop_region.width > 0) {

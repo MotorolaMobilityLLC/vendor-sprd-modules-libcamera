@@ -545,7 +545,6 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::cameraDeviceOpen(
     cmr_s32 rc = NO_ERROR;
     cmr_s32 i = 0;
     cmr_u32 Phy_id = 0;
-    struct logicalSensorInfo *logicalPtr = NULL;
 
     if (SPRD_SINGLE_FACEID_UNLOCK_ID == camera_id) {
         mPhyCameraNum = 1;
@@ -555,16 +554,6 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::cameraDeviceOpen(
 
     hw_device_t *hw_dev[mPhyCameraNum];
     setupPhysicalCameras();
-
-    logicalPtr = sensorGetLogicaInfo4MulitCameraId(camera_id);
-    if (logicalPtr) {
-        if (mPhyCameraNum == logicalPtr->physicalNum) {
-            for (i = 0; i < logicalPtr->physicalNum; i++) {
-                m_pPhyCamera[i].id = (uint8_t)logicalPtr->phyIdGroup[i];
-                HAL_LOGD("i = %d, phyId = %d", i, logicalPtr->phyIdGroup[i]);
-            }
-        }
-    }
 
     // Open all physical cameras
     for (i = 0; i < mPhyCameraNum; i++) {
@@ -619,7 +608,6 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::getCameraInfo(cmr_s32 face_camera_id,
     cmr_s32 rc = NO_ERROR;
     cmr_s32 camera_id = 0;
     cmr_s32 img_size = 0;
-    struct logicalSensorInfo *logicalPtr = NULL;
 
     HAL_LOGD("camera_id=%d", face_camera_id);
 
@@ -627,14 +615,6 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::getCameraInfo(cmr_s32 face_camera_id,
         m_VirtualCamera.id = CAM_FACE_MAIN_ID;
     } else {
         HAL_LOGW("unlock mode camera_id should not be %d", camera_id);
-    }
-
-    logicalPtr = sensorGetLogicaInfo4MulitCameraId(face_camera_id);
-    if (logicalPtr) {
-        if (1 == logicalPtr->physicalNum) {
-            m_VirtualCamera.id = (uint8_t)logicalPtr->phyIdGroup[0];
-            HAL_LOGD("phyId = %d", logicalPtr->phyIdGroup[0]);
-        }
     }
 
     camera_id = m_VirtualCamera.id;

@@ -526,7 +526,6 @@ int SprdCamera3SinglePortrait::cameraDeviceOpen(
     int rc = NO_ERROR;
     uint32_t phyId = 0;
     uint8_t master_id = 0;
-    struct logicalSensorInfo *logicalPtr = NULL;
 
     char prop[PROPERTY_VALUE_MAX] = {
         0,
@@ -554,17 +553,6 @@ int SprdCamera3SinglePortrait::cameraDeviceOpen(
     }
     hw_device_t *hw_dev[m_nPhyCameras];
     setupPhysicalCameras();
-    logicalPtr = sensorGetLogicaInfo4MulitCameraId(camera_id);
-    if (logicalPtr) {
-        if (1 == logicalPtr->physicalNum) {
-            m_nPhyCameras = 1;
-            m_VirtualCamera.id = (uint8_t)logicalPtr->phyIdGroup[0];
-            mCameraId = m_VirtualCamera.id;
-            master_id = m_VirtualCamera.id;
-            m_pPhyCamera[CAM_TYPE_MAIN].id = m_VirtualCamera.id;
-            HAL_LOGD("phyId = %d", logicalPtr->phyIdGroup[0]);
-        }
-    }
 
     // Open all physical cameras
     for (uint32_t i = 0; i < m_nPhyCameras; i++) {
@@ -621,7 +609,6 @@ int SprdCamera3SinglePortrait::getCameraInfo(int blur_camera_id,
     int rc = NO_ERROR;
     int camera_id = 0;
     int32_t img_size = 0;
-    struct logicalSensorInfo *logicalPtr = NULL;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -640,13 +627,6 @@ int SprdCamera3SinglePortrait::getCameraInfo(int blur_camera_id,
         property_get("persist.vendor.cam.ba.blur.version", prop, "0");
     }
 
-    logicalPtr = sensorGetLogicaInfo4MulitCameraId(blur_camera_id);
-    if (logicalPtr) {
-        if (1 == logicalPtr->physicalNum) {
-            m_VirtualCamera.id = (uint8_t)logicalPtr->phyIdGroup[0];
-            HAL_LOGD("phyId = %d", logicalPtr->phyIdGroup[0]);
-        }
-    }
     camera_id = m_VirtualCamera.id;
     mCaptureThread->mVersion = atoi(prop);
     HAL_LOGI("E, camera_id = %d version:%d", camera_id,

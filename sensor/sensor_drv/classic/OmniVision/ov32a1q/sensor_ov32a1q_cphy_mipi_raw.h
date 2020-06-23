@@ -1819,7 +1819,7 @@ static const SENSOR_REG_T ov32a1q_video_setting[] = {
 };
 
 static struct sensor_res_tab_info s_ov32a1q_resolution_tab_raw[VENDOR_NUM] = {
-    {.module_id = MODULE_OPTICSZOOM_WIDE_BACK,
+    {.module_id = MODULE_SUNNY,
      .reg_tab =
          {{ADDR_AND_LEN_OF_ARRAY(ov32a1q_init_setting1), PNULL, 0, .width = 0,
            .height = 0, .xclk_to_sensor = EX_MCLK,
@@ -1841,7 +1841,7 @@ static struct sensor_res_tab_info s_ov32a1q_resolution_tab_raw[VENDOR_NUM] = {
 };
 
 static SENSOR_TRIM_T s_ov32a1q_resolution_trim_tab[VENDOR_NUM] = {
-    {.module_id = MODULE_OPTICSZOOM_WIDE_BACK,
+    {.module_id = MODULE_SUNNY,
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
@@ -1945,7 +1945,7 @@ static const cmr_u16 ov32a1q_pd_col[] = {
     36, 40, 32, 36, 32, 36, 36, 40, 56, 52, 52, 48, 52, 48, 56, 52};
 
 static SENSOR_STATIC_INFO_T s_ov32a1q_static_info[VENDOR_NUM] = {
-    {.module_id = MODULE_OPTICSZOOM_WIDE_BACK,
+    {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 180,
                      .focal_length = 384,
                      .max_fps = 30,
@@ -1965,7 +1965,7 @@ static SENSOR_STATIC_INFO_T s_ov32a1q_static_info[VENDOR_NUM] = {
 };
 
 static SENSOR_MODE_FPS_INFO_T s_ov32a1q_mode_fps_info[VENDOR_NUM] = {
-    {.module_id = MODULE_OPTICSZOOM_WIDE_BACK,
+    {.module_id = MODULE_SUNNY,
      {.is_init = 0,
       {{SENSOR_MODE_COMMON_INIT, 0, 1, 0, 0},
        {SENSOR_MODE_PREVIEW_ONE, 0, 1, 0, 0},
@@ -1980,7 +1980,7 @@ static SENSOR_MODE_FPS_INFO_T s_ov32a1q_mode_fps_info[VENDOR_NUM] = {
 };
 
 static struct sensor_module_info s_ov32a1q_module_info_tab[VENDOR_NUM] = {
-    {.module_id = MODULE_OPTICSZOOM_WIDE_BACK,
+    {.module_id = MODULE_SUNNY,
      .module_info =
          {.major_i2c_addr = 0x20 >> 1,
           .minor_i2c_addr = 0x6c >> 1,
