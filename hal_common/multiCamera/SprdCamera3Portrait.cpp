@@ -3297,12 +3297,14 @@ int SprdCamera3Portrait::configureStreams(
     rc = mBokehAlgo->initParam(&mBokehSize, &mOtpData,
                                mCaptureThread->mAbokehGallery);
 
-    rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
-                                        mCaptureThread->mAbokehGallery);
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to initPortraitParams");
-        mPortraitFlag = false;
-        rc = NO_ERROR;
+    if (mPortraitFlag){
+       rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
+                                           mCaptureThread->mAbokehGallery);
+       if (rc != NO_ERROR) {
+           HAL_LOGE("fail to initPortraitParams");
+           mPortraitFlag = false;
+           rc = NO_ERROR;
+       }
     }
 
     rc = mBokehAlgo->initPortraitLightParams();
