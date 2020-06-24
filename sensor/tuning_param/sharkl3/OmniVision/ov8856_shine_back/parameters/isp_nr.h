@@ -186,3 +186,6 @@ static struct sensor_nr_scene_map_param s_ov8856_back_nr_scene_map_param = {{
 #include "NR/video_2/normal/cnr_param.h"
 #endif
 
+
+
+
