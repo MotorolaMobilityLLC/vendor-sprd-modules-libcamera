@@ -436,6 +436,10 @@ static cmr_int ipg_drv_handle_delete(cmr_handle handle, void *param) {
     ret = sensor_ic_drv_delete(handle, param);
     return ret;
 }
+void *sensor_ic_open_lib(void)
+{
+     return &g_ipg_mipi_raw_info;
+}
 
 static struct sensor_ic_ops s_ipg_ops_tab = {
     .create_handle = ipg_drv_handle_create,
