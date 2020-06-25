@@ -5365,45 +5365,43 @@ camera_preview_face_beauty_handle(void *data,
 #elif defined(CONFIG_ISP_2_7)
              chipinfo = SHARKL5PRO;
 #endif
-                face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
-                if (cxt->prev_face_beauty.hSprdFB != NULL)
-                    cxt->mflagfb = true;
-            }
+         face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
+             if (cxt->prev_face_beauty.hSprdFB != NULL)
+                 cxt->mflagfb = true;
+         }
 
-            camera_invalidate_buf(data, preview_frame->fd,
-                                  preview_frame->width * preview_frame->height *
-                                      3 / 2,
-                                  0, preview_frame->y_vir_addr);
-            beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
-            beauty_image.inputImage.addr[0] = (void *)preview_frame->y_vir_addr;
-            beauty_image.inputImage.addr[1] =
-                (void *)preview_frame->uv_vir_addr;
-            beauty_image.inputImage.addr[2] =
-                (void *)preview_frame->uv_vir_addr;
-            beauty_image.inputImage.ion_fd = preview_frame->fd;
-            beauty_image.inputImage.offset[0] = 0;
-            beauty_image.inputImage.offset[1] =
-                preview_frame->width * preview_frame->height;
-            beauty_image.inputImage.width = preview_frame->width;
-            beauty_image.inputImage.height = preview_frame->height;
-            beauty_image.inputImage.stride = preview_frame->width;
-            beauty_image.inputImage.size =
-                preview_frame->width * preview_frame->height * 3 / 2;
+         camera_invalidate_buf(data, preview_frame->fd, preview_frame->width *
+                          preview_frame->height * 3 / 2, 0, preview_frame->y_vir_addr);
+         beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+         beauty_image.inputImage.addr[0] = (void *)preview_frame->y_vir_addr;
+         beauty_image.inputImage.addr[1] = (void *)preview_frame->uv_vir_addr;
+         beauty_image.inputImage.addr[2] = (void *)preview_frame->uv_vir_addr;
+         beauty_image.inputImage.ion_fd = preview_frame->fd;
+         beauty_image.inputImage.offset[0] = 0;
+         beauty_image.inputImage.offset[1] =
+                 preview_frame->width * preview_frame->height;
+         beauty_image.inputImage.width = preview_frame->width;
+         beauty_image.inputImage.height = preview_frame->height;
+         beauty_image.inputImage.stride = preview_frame->width;
+         beauty_image.inputImage.size =
+                 preview_frame->width * preview_frame->height * 3 / 2;
 
-            ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
-                                   FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
-                                   (void *)&beauty_image);
-            ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
-                                   FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
-                                   (void *)&beautyLevels);
-            ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
-                                   FB_BEAUTY_PROCESS_CMD, (void *)&facecount);
-            camera_flush_buf(data, preview_frame->fd,
-                             preview_frame->width * preview_frame->height * 3 /
-                                 2,
-                             0, preview_frame->y_vir_addr);
-        }
-    }
+         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                               (void *)&beauty_image);
+         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                               (void *)&beautyLevels);
+         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_PROCESS_CMD,
+                               (void *)&facecount);
+         camera_flush_buf(data, preview_frame->fd, preview_frame->width *
+                  preview_frame->height * 3 / 2, 0, preview_frame->y_vir_addr);
+         }
+       }else{
+          if (cxt->mflagfb) {
+              cxt->mflagfb = false;
+              ret = face_beauty_ctrl(&cxt->prev_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+              face_beauty_deinit(&cxt->prev_face_beauty);
+           }
+      }
 exit:
     CMR_LOGV("X,ret=%ld", ret);
 #endif
@@ -5540,10 +5538,16 @@ cmr_int camera_video_face_beauty_handle(void *data,
         ret = face_beauty_ctrl(&(cxt->video_face_beauty), FB_BEAUTY_PROCESS_CMD,
                                (void *)&facecount);
         camera_flush_buf(data, video_frame->fd,
-                         video_frame->width * video_frame->height * 3 / 2, 0,
+                         video_frame->width * video_frame->height * 3 / 2, 0, 
                          video_frame->y_vir_addr);
-    }
-
+     }else{
+         if (cxt->mvideofb) {
+             cxt->mvideofb = false;
+             cxt->start_video_face_beauty = false;
+             ret = face_beauty_ctrl(&cxt->video_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+             face_beauty_deinit(&cxt->video_face_beauty);
+        }
+     }
 exit:
     CMR_LOGV("X,ret=%ld", ret);
 #endif
@@ -12661,13 +12665,17 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
 
 #ifdef CONFIG_FACE_BEAUTY
     if (cxt->video_face_beauty_en) {
-        if (cxt->mvideofb) {
-            cxt->mvideofb = false;
-            cxt->start_video_face_beauty = false;
-            ret = face_beauty_ctrl(&cxt->video_face_beauty,
-                                   FB_BEAUTY_FAST_STOP_CMD, NULL);
-            face_beauty_deinit(&cxt->video_face_beauty);
-        }
+       if (cxt->mvideofb) {
+          cxt->mvideofb = false;
+	   cxt->start_video_face_beauty = false;
+          ret = face_beauty_ctrl(&cxt->video_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+          face_beauty_deinit(&cxt->video_face_beauty);
+      }
+       if (cxt->mflagfb) {
+          cxt->mflagfb = false;
+          ret = face_beauty_ctrl(&cxt->prev_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+          face_beauty_deinit(&cxt->prev_face_beauty);
+      }
     }
 #endif
     cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
