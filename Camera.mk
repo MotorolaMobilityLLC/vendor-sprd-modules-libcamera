@@ -289,12 +289,6 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := \
-    tool/camera_tool/npi_app/npi_camera_interface.cpp \
-    tool/camera_tool/npi_app/bbat_camera.cpp \
-    tool/camera_tool/cpat_sdk/cpat_flash.cpp \
-    tool/camera_tool/cpat_sdk/cpat_camera.cpp
-
 LOCAL_C_INCLUDES := \
     $(TOP)/system/core/libutils/include/ \
     $(TOP)/vendor/sprd/proprietories-source/engpc/sprd_fts_inc \
@@ -326,9 +320,8 @@ LOCAL_C_INCLUDES := \
     $(TOP)/system/memory/libion/kernel-headers \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
     $(LOCAL_PATH)/kernel_module/interface \
-    tool/camera_tool/npi_app/bbat_camera.h \
-    tool/camera_tool/cpat_sdk/cpat_flash.h \
-    tool/camera_tool/cpat_sdk/cpat_camera.h
+    tool/camera_tool/npi_app \
+    tool/camera_tool/cpat_sdk
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(OEM_DIR)/inc \
@@ -341,6 +334,13 @@ LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(ISPDRV_DIR)/driver/inc
 
 #$(error ${LOCAL_C_INCLUDES})
+
+LOCAL_SRC_FILES := \
+    tool/camera_tool/npi_app/npi_camera_interface.cpp \
+    tool/camera_tool/npi_app/bbat_camera.cpp \
+    tool/camera_tool/cpat_sdk/cpat_flash.cpp \
+    tool/camera_tool/cpat_sdk/cpat_camera.cpp \
+    tool/camera_tool/npi_app/simb_camera.cpp
 
 LOCAL_MODULE := libcamcalitest
 LOCAL_MODULE_TAGS := optional

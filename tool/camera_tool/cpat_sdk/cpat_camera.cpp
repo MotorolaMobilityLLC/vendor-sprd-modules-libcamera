@@ -105,6 +105,8 @@ static cmr_int cpat_callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_
                                void *private_data);
 static int  cpat_load_hal_lib(void);
 
+static int capt_camera_restart_hw_scan(void);
+
 static int cpat_get_iommu_is_enabled(void) {
     int ret;
     int iommu_is_enabled = 0;
@@ -843,4 +845,45 @@ int cpat_read_cam_buf(void **pp_image_addr, int size, int *p_out_size) {
 
     CMR_LOGI("X");
     return 1;
+}
+
+static int capt_camera_restart_hw_scan(void) {
+    void *handle = dlopen(SENSOR_LIBRARY_PATH, RTLD_NOW);
+    int ret = 0;
+    if(!handle) {
+        CMR_LOGI("cannot open %s; with error = %s", SENSOR_LIBRARY_PATH, dlerror());
+        return SENSOR_CAPT_FAIL;
+    }
+    GET_CAM_INFO get_sensor_info = (GET_CAM_INFO)dlsym(handle, "sensorGetLogicalSnsNum");
+    if(!get_sensor_info) {
+        ret = SENSOR_CAPT_FAIL;
+        CMR_LOGI("cannot func func with error = %s", dlerror());
+        goto exit;
+    }
+    get_sensor_info();
+exit:
+    dlclose(handle);
+    handle = NULL;
+    return ret;
+}
+
+int cpat_camera_get_camera_info(char *req, char *rsp) {
+    int ret;
+    if(!rsp)
+        return SENSOR_CAPT_FAIL;
+    ret = 0;
+    do {
+        capt_camera_restart_hw_scan();
+        property_get("vendor.cam.sensor.slot.info", rsp, SENSOR_DEFAULT_INFO);
+        if(!strcmp(rsp, SENSOR_DEFAULT_INFO)) {
+            CMR_LOGI("cannot get sensor_info");
+            ret = SENSOR_CAPT_FAIL;
+            goto exit;
+        }
+    } while(0);
+exit:
+    if(ret)
+        sprintf(rsp, "<%s>", "NO SENSOR SCANED");
+    CMR_LOGI("CPAT output info is %s", rsp);
+    return ret;
 }

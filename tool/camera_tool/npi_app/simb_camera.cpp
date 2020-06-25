@@ -19,4 +19,27 @@
 #include <utils/Mutex.h>
 #include "MemIon.h"
 #include "sprd_fts_type.h"
+#include "../cpat_sdk/cpat_camera.h"
 
+static int simba_handle_req(char *input, char *output);
+
+int simba_camera_info_test(char *req, char *rsp) {
+    if(!rsp || !req)
+        return SENSOR_CAPT_FAIL;
+    cpat_camera_get_camera_info(req, rsp);
+    return 0;
+}
+
+static int simba_handle_req(char *input, char *output) {
+    int count = 0;
+    int input_length = (int)strlen(input);
+    char *pointer_for_output = NULL;
+    char temp_for_sensor[64];
+    pointer_for_output = strtok(input, "\n");
+    while (pointer_for_output) {
+        strcat(output, pointer_for_output);
+        pointer_for_output = strtok(NULL, "\n");
+        count++;
+    }
+    return count;
+}

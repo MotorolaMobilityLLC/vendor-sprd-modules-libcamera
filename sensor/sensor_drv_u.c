@@ -125,7 +125,7 @@ static cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
 
 static cmr_int sensor_init_defaul_exif(struct sensor_drv_context *sensor_cxt);
 
-static void sensor_rid_save_sensor_info(char *sensor_info);
+static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id);
 
 static cmr_int sensor_hw_read_i2c(cmr_handle sns_module_handle,
                                   cmr_u16 slave_addr, cmr_u8 *cmd,
@@ -2045,9 +2045,10 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
 
 #include <cutils/properties.h>
 
-static void sensor_rid_save_sensor_info(char *sensor_info) {
+static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id) {
     const char *const sensorInterface0 =
         "/sys/devices/virtual/misc/sprd_sensor/camera_sensor_name";
+    char sensor_info_with_slot_id[256];
     ssize_t ret;
     int fd;
 
@@ -2068,7 +2069,11 @@ static void sensor_rid_save_sensor_info(char *sensor_info) {
     }
     ret = property_set("vendor.cam.sensor.info", sensor_info);
     close(fd);
-
+    SENSOR_LOGI("slot id is %d", slot_id);
+    if(strlen(sensor_info) < sizeof(sensor_info_with_slot_id)) {
+        sprintf(sensor_info_with_slot_id, "<slot:%d>\n%s", slot_id, sensor_info);
+        property_set("vendor.cam.sensor.slot.info", sensor_info_with_slot_id);
+    }
 exit:
     SENSOR_LOGI("X");
 }
@@ -3726,7 +3731,7 @@ static cmr_int sensor_drv_scan_hw(void) {
         sensor_context_deinit(sensor_cxt, 0);
     }
 
-    sensor_rid_save_sensor_info(sensor_version_info);
+    sensor_rid_save_sensor_info(sensor_version_info, slot_id);
 
 #ifdef CAMERA_CONFIG_SENSOR_NUM
     for (i = 0; i < SENSOR_ID_MAX; i++) {
