@@ -5840,7 +5840,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 {
 	cmr_s32 rtn = AE_ERROR;
 	cmr_int cb_type;
-	cmr_u32 stat_chnl_len = 0;
+	//cmr_u32 stat_chnl_len = 0;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status;
 	struct ae_alg_calc_result *current_result;
@@ -5884,6 +5884,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	//memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
 	down_size_for_ae_stat(cxt, calc_in->stat_img);
 	cxt->cur_status.stat_img = cxt->sync_aem;
+#if 0
 	stat_chnl_len = calc_in->binning_stat_info.binning_size.w * calc_in->binning_stat_info.binning_size.h;
 	memcpy(&cxt->sync_binning_stats_data[0], calc_in->binning_stat_info.r_info, stat_chnl_len * sizeof(cmr_u16));
 	memcpy(&cxt->sync_binning_stats_data[stat_chnl_len], calc_in->binning_stat_info.g_info, stat_chnl_len * sizeof(cmr_u16));
@@ -5893,6 +5894,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	cxt->cur_status.binning_stat_data = &cxt->sync_binning_stats_data[0];
 	cxt->cur_status.binnig_stat_size.w = calc_in->binning_stat_info.binning_size.w;
 	cxt->cur_status.binnig_stat_size.h = calc_in->binning_stat_info.binning_size.h;
+#endif
 	// get effective E&g
 	cxt->cur_status.effect_frm_len = cxt->exp_data.actual_data.frm_len;
 	cxt->cur_status.effect_expline = cxt->exp_data.actual_data.exp_line;
@@ -6018,7 +6020,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cmr_s32 rtn = AE_ERROR;
 	cmr_int cb_type;
 	cmr_s32 stop_skip_en;
-	cmr_u32 stat_chnl_len = 0;
+	//cmr_u32 stat_chnl_len = 0;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status = NULL;
 	struct ae_alg_calc_result *current_result = NULL;
@@ -6072,6 +6074,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	//memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
 	down_size_for_ae_stat(cxt, calc_in->stat_img);
 	cxt->cur_status.stat_img = cxt->sync_aem;
+#if 0
 	stat_chnl_len = calc_in->binning_stat_info.binning_size.w * calc_in->binning_stat_info.binning_size.h;
 	memcpy(&cxt->sync_binning_stats_data[0], calc_in->binning_stat_info.r_info, stat_chnl_len * sizeof(cmr_u16));
 	memcpy(&cxt->sync_binning_stats_data[stat_chnl_len], calc_in->binning_stat_info.g_info, stat_chnl_len * sizeof(cmr_u16));
@@ -6081,6 +6084,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.binning_stat_data = &cxt->sync_binning_stats_data[0];
 	cxt->cur_status.binnig_stat_size.w = calc_in->binning_stat_info.binning_size.w;
 	cxt->cur_status.binnig_stat_size.h = calc_in->binning_stat_info.binning_size.h;
+#endif
 
 	static int ae_dynamic_sync = 0;
 	if((cxt->is_multi_mode) && (cxt->is_master == 1) && (cxt->ae_sync_param.mode == 1)) {

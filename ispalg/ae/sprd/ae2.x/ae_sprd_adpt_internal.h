@@ -265,7 +265,7 @@ extern "C" {
 		cmr_handle flash_alg_handle;
 		cmr_u16 aem_stat_rgb[3 * 1024];	/*save the average data of AEM Stats data */
 		cmr_u32 sync_aem[3 * 1024 + 4];	/*aem statistics data, 0: frame id;1: exposure time, 2: dummy line, 3: gain; */
-		cmr_u16 sync_binning_stats_data[3 * 640 * 480];	/*binning statistics data */
+		//cmr_u16 sync_binning_stats_data[3 * 640 * 480];	/*binning statistics data */
 		struct ae_size binning_stat_size;
 		cmr_u8 bakup_ae_status_for_flash;	/* 0:unlock 1:lock 2:pause 3:wait-lock */
 		cmr_s16 pre_flash_level1;
