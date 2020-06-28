@@ -3962,15 +3962,12 @@ int SprdCamera3SinglePortrait::CaptureThread::runDFA(void *input_buff,
                                rType);
         }
         /*do dfa */
-        DFA_RESULT *dfa_result = NULL;
-        dfa_result = do_dfa_image_yuv420sp(&dfa_cap, faceDetectionInfo.face_num);
-        if (!dfa_result) {
-            HAL_LOGE("runDFA failed!");
-        }
+        DFA_RESULT dfa_result;
+        do_dfa_image_yuv420sp(&dfa_cap, faceDetectionInfo.face_num, &dfa_result);
         construct_lpt_dfaInfo(
-            &lpt_cap, dfa_result->pitch, dfa_result->yaw, dfa_result->roll,
-            dfa_result->t3d, 3, dfa_result->scale, dfa_result->R, 3,
-            dfa_result->alpha_shp, 40, dfa_result->alpha_exp, 20);
+            &lpt_cap, dfa_result.pitch, dfa_result.yaw, dfa_result.roll,
+            dfa_result.t3d, 3, dfa_result.scale, dfa_result.R, 3,
+            dfa_result.alpha_shp, 40, dfa_result.alpha_exp, 20);
         if (dfa_cap.hSprdDfa) {
             deinit_dfa_handle(&dfa_cap);
         }
@@ -3989,15 +3986,12 @@ int SprdCamera3SinglePortrait::CaptureThread::runDFA(void *input_buff,
                                rType);
         }
          /*do dfa */
-        DFA_RESULT *dfa_result = NULL;
-        dfa_result = do_dfa_image_yuv420sp(&dfa_prev, faceDetectionInfo.face_num);
-        if (!dfa_result) {
-            HAL_LOGE("runDFA failed!");
-        }
+        DFA_RESULT dfa_result;
+        do_dfa_image_yuv420sp(&dfa_prev, faceDetectionInfo.face_num, &dfa_result);
         construct_lpt_dfaInfo(
-            &lpt_prev, dfa_result->pitch, dfa_result->yaw, dfa_result->roll,
-            dfa_result->t3d, 3, dfa_result->scale, dfa_result->R, 3,
-            dfa_result->alpha_shp, 40, dfa_result->alpha_exp, 20);
+            &lpt_prev, dfa_result.pitch, dfa_result.yaw, dfa_result.roll,
+            dfa_result.t3d, 3, dfa_result.scale, dfa_result.R, 3,
+            dfa_result.alpha_shp, 40, dfa_result.alpha_exp, 20);
     }
     return rc;
 }
