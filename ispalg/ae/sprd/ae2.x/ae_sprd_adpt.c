@@ -321,8 +321,7 @@ static cmr_s32 ae_sync_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposu
 		}
 	}
 
-	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
-	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
+
 	return ISP_SUCCESS;
 }
 
@@ -488,8 +487,7 @@ static cmr_s32 ae_sync_write_to_sensor_normal(struct ae_ctrl_cxt *cxt, struct ae
 		}
 	}
 
-	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
-	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_MATCH_BV_DATA, &cxt->cur_result.cur_bv, NULL);
+
 
 	return ISP_SUCCESS;
 }
@@ -5179,7 +5177,7 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 	cmr_u16 change_idx = 0;
 	cmr_s16 change_offset = 0;
 	if (exp_comp) {
-		if ((1 == cxt->app_mode) && (cxt->cur_status.settings.flash == FLASH_NONE)) {
+		if ((1 == cxt->app_mode) && ((cxt->cur_status.settings.flash == FLASH_NONE) || (cxt->cur_status.settings.flash == FLASH_MAIN_AFTER))) {
 			struct ae_set_ev ev;
 			ev.level = exp_comp->comp_val + exp_comp->comp_range.max;
 			if (ev.level < AE_LEVEL_MAX) {
