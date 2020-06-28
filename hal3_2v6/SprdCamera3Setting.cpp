@@ -3605,7 +3605,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
             } else if (characteristicsInfo
                            .find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
                            .data.i32[i] == ANDROID_SENSOR_SENSITIVITY) {
-                int32_t sensorSen = 100;
+                int32_t sensorSen = CAMERA_ISO_AUTO;
                 requestInfo.update(ANDROID_SENSOR_SENSITIVITY, &sensorSen, 1);
             }
         }
