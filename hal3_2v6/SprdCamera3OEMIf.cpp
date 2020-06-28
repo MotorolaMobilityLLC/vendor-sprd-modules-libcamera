@@ -11019,10 +11019,11 @@ void SprdCamera3OEMIf::EisPreview_init() {
     mPreviewParam.wdx = 0;
     mPreviewParam.wdy = 0;
     mPreviewParam.wdz = 0;
-    // f,td,ts is different in each project.
-    mPreviewParam.f = 1230.0f;
-    mPreviewParam.td = 0.0001f;
-    mPreviewParam.ts = 0.0001f;
+    // f,td,ts is different in each project.default single sharkl3
+    mPreviewParam.f = 0.7747f;
+    mPreviewParam.td = 0.038f;
+    mPreviewParam.ts = 0.024f;
+    mPreviewParam.fov_loss = 0.2f;
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
          if(mMultiCameraMode == MODE_MULTI_CAMERA) {
@@ -11041,8 +11042,9 @@ void SprdCamera3OEMIf::EisPreview_init() {
            }
 		}
     }
-    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf", mCameraId, mPreviewParam.f, mPreviewParam.td,
-             mPreviewParam.ts);
+    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf, fov_loss:%lf",
+             mCameraId, mPreviewParam.f, mPreviewParam.td, mPreviewParam.ts,
+             mPreviewParam.fov_loss);
     video_stab_open(&mPreviewInst, &mPreviewParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
              mPreviewParam.src_w, mPreviewParam.src_h, mPreviewParam.dst_w,
@@ -11068,10 +11070,11 @@ void SprdCamera3OEMIf::EisVideo_init() {
     mVideoParam.wdx = 0;
     mVideoParam.wdy = 0;
     mVideoParam.wdz = 0;
-    // f,td,ts is different in each project.
-    mVideoParam.f = 1230.0f;
-    mVideoParam.td = 0.0001f;
-    mVideoParam.ts = 0.0001f;
+    // f,td,ts is different in each project.default single sharkl3
+    mVideoParam.f = 0.7747f;
+    mVideoParam.td = 0.038f;
+    mVideoParam.ts = 0.024f;
+    mVideoParam.fov_loss = 0.2f;
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
          if(mMultiCameraMode == MODE_MULTI_CAMERA) {
@@ -11090,8 +11093,9 @@ void SprdCamera3OEMIf::EisVideo_init() {
            }
          }
     }
-    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf", mCameraId, mVideoParam.f, mVideoParam.td,
-             mVideoParam.ts);
+    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf , fov_loss:%lf",
+             mCameraId, mVideoParam.f, mVideoParam.td, mVideoParam.ts,
+             mVideoParam.fov_loss);
     video_stab_open(&mVideoInst, &mVideoParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
              mVideoParam.src_w, mVideoParam.src_h, mVideoParam.dst_w,

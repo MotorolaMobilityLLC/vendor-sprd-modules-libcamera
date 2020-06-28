@@ -33,6 +33,7 @@ typedef struct vs_param {
     double wdx;
     double wdy;
     double wdz;
+    float fov_loss;
 } vsParam;
 
 typedef struct gyro_vs {
@@ -106,6 +107,8 @@ const sprd_eis_init_info_t eis_init_info_tab[] = {
 };
 
 const sprd_eis_multi_init_info eis_multi_init_info_tab[] = {
+    {"sp9863a-1", 0, 0.7766f, 0.0397f, 0.0224f},
+    {"sp9863a-1", 3, 0.4701f, 0.0397f, 0.0219f},
     {"ums512-1", 0, 0.7432f, 0.0289f, 0.0208f},
     {"ums512-1", 2, 0.4468f, 0.0297f, 0.0204f},
     {"ums512-1", 3, 1.5442f, 0.0308f, 0.0222f},
