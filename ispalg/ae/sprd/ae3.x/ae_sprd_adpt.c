@@ -2145,6 +2145,8 @@ static cmr_s32 ae_set_fd_param(struct ae_ctrl_cxt *cxt, cmr_handle param)
 				cxt->cur_status.adv_param.face_data.face_data[i].pose = fd->face_area[i].pose;
 				cxt->cur_status.adv_param.face_data.face_data[i].face_lum = fd->face_area[i].face_lum;
 				cxt->cur_status.adv_param.face_data.face_data[i].angle = fd->face_area[i].angle;
+				cxt->cur_status.adv_param.face_data.face_data[i].yaw_angle = fd->face_area[i].yaw_angle;
+				cxt->cur_status.adv_param.face_data.face_data[i].roll_angle = fd->face_area[i].roll_angle;
 			}
 		} else {
 			cxt->cur_status.adv_param.face_data.face_num = 0;
@@ -2156,6 +2158,8 @@ static cmr_s32 ae_set_fd_param(struct ae_ctrl_cxt *cxt, cmr_handle param)
 				cxt->cur_status.adv_param.face_data.face_data[i].pose = -1;
 				cxt->cur_status.adv_param.face_data.face_data[i].face_lum = 0;
 				cxt->cur_status.adv_param.face_data.face_data[i].angle = 0;
+				cxt->cur_status.adv_param.face_data.face_data[i].yaw_angle = 0;
+				cxt->cur_status.adv_param.face_data.face_data[i].roll_angle = 0;
 			}
 		}
 	} else {
@@ -6506,12 +6510,12 @@ cmr_s32 ae_sprd_deinit_v1(cmr_handle handle, cmr_handle in_param, cmr_handle out
 	rtn = ae_lib_deinit(cxt->misc_handle, NULL, NULL);
 
 	if (AE_SUCCESS != rtn)
-		ISP_LOGE("fail to deinit ae misc， rtn: %d\n", rtn);
+		ISP_LOGE("fail to deinit ae misc, rtn: %d\n", rtn);
 	//ae_seq_reset(cxt->seq_handle);
 
 	rtn = s_q_close(cxt->seq_handle);
 	if (AE_SUCCESS != rtn)
-		ISP_LOGE("fail to deinit ae misc， rtn: %d\n", rtn);
+		ISP_LOGE("fail to deinit ae misc, rtn: %d\n", rtn);
 
 	if (cxt->debug_enable) {
 		if (cxt->debug_info_handle) {
