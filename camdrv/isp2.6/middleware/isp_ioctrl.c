@@ -2295,6 +2295,8 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 			ae_fd_param.face_area[i].rect.end_y = face_area->face_info[i].ey;
 			ae_fd_param.face_area[i].face_lum = face_area->face_info[i].brightness;
 			ae_fd_param.face_area[i].pose = face_area->face_info[i].pose;
+			ae_fd_param.face_area[i].yaw_angle= face_area->face_info[i].yaw_angle;
+			ae_fd_param.face_area[i].roll_angle= face_area->face_info[i].roll_angle;
 		}
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &ae_fd_param, NULL);
