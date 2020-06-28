@@ -89,10 +89,14 @@ static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_ini
 		goto exit;
 	}
 	lib_ptr = &cxt_ptr->work_lib;
-	if(lib_ptr == NULL)
+	if(lib_ptr == NULL){
 		ISP_LOGE("cxt_ptr->work_lib == NULL");
-	if(lib_ptr->adpt_ops == NULL)
+		goto exit;
+	}
+	if(lib_ptr->adpt_ops == NULL){
 		ISP_LOGE("cxt_ptr->work_lib->adpt_ops == NULL");
+		goto exit;
+	}
 	ISP_LOGV("ENTER THE awbctrl_init_lib2");
 	if (lib_ptr->adpt_ops->adpt_init) {
 		ISP_LOGV("ENTER THE awbctrl_init_lib3");
