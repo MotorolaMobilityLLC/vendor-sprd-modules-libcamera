@@ -672,9 +672,7 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
     ANDROID_CONTROL_AE_COMPENSATION_STEP,
     ANDROID_CONTROL_AVAILABLE_VIDEO_STABILIZATION_MODES,
-    #if !defined(HIGH_SPEED_VIDEO) && defined(SPRD_SLOWMOTION_OPTIMIZE)
     ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
-    #endif
     ANDROID_CONTROL_MAX_REGIONS,
     ANDROID_CONTROL_AE_COMPENSATION_RANGE,
     ANDROID_CONTROL_AVAILABLE_EFFECTS,
@@ -2109,12 +2107,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].controlInfo.am_available_modes,
            camera3_default_info.common.availableAmModes,
            sizeof(camera3_default_info.common.availableAmModes));
-#ifndef HIGH_SPEED_VIDEO
     if (cameraId == 0 || cameraId == 1)
         memcpy(s_setting[cameraId].sprddefInfo.availabe_slow_motion,
                camera3_default_info.common.availableSlowMotion,
                sizeof(camera3_default_info.common.availableSlowMotion));
-#endif
     // quirks
     s_setting[cameraId].quirksInfo.use_parital_result = 1;
 
@@ -2816,11 +2812,9 @@ int SprdCamera3Setting::initStaticMetadata(
         s_setting[cameraId].controlInfo.available_video_stab_modes,
         ARRAY_SIZE(s_setting[cameraId].controlInfo.available_video_stab_modes));
 
-#if !defined(HIGH_SPEED_VIDEO) && defined(SPRD_SLOWMOTION_OPTIMIZE)
     staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
                       kavailable_high_speed_video_configration,
                       ARRAY_SIZE(kavailable_high_speed_video_configration));
-#endif
 
     staticInfo.update(ANDROID_CONTROL_MAX_REGIONS,
                       s_setting[cameraId].controlInfo.max_regions,
@@ -4145,15 +4139,14 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
 
     uint8_t saturation = 3;
     requestInfo.update(ANDROID_SPRD_SATURATION, &saturation, 1);
-#if defined(SPRD_SLOWMOTION_OPTIMIZE)
+
     uint8_t slowMotion = 1;
     requestInfo.update(ANDROID_SPRD_SLOW_MOTION, &slowMotion, 1);
-#endif
     /*uint8_t iso = 0;
     requestInfo.update(ANDROID_SPRD_ISO, &iso, 1); */
 
     uint8_t iso_sensitivity = 0;
-    requestInfo.update(ANDROID_SENSOR_SENSITIVITY, &iso_sensitivity, 1); 
+    requestInfo.update(ANDROID_SENSOR_SENSITIVITY, &iso_sensitivity, 1);
 
     requestInfo.update(ANDROID_SPRD_METERING_MODE,
                        &(s_setting[mCameraId].sprddefInfo.am_mode), 1);
@@ -4467,7 +4460,7 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("saturation is %d",
                  s_setting[mCameraId].sprddefInfo.saturation);
     }
-	
+
     /*if (frame_settings.exists(ANDROID_SPRD_ISO)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.iso, valueU8,
