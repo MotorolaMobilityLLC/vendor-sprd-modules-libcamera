@@ -34,8 +34,10 @@ LOCAL_C_INCLUDES := \
 	$(TOP)/vendor/sprd/modules/libcamera/sensor/inc \
 	$(TOP)/vendor/sprd/modules/libcamera/hal_common/camera_power_perf \
 	$(TOP)/vendor/sprd/modules/libcamera \
+	$(TOP)/vendor/sprd/modules/libcamera/test/suite \
 	$(TOP)/vendor/sprd/modules/libcamera/arithmetic/facebeauty/inc \
 	$(TOP)/vendor/sprd/modules/libcamera/arithmetic/inc \
+	$(TOP)/vendor/sprd/modules/libcamera/test/framework/json/include \
     $(TOP)/vendor/sprd/modules/libcamera/ispalg/common/inc \
     $(TOP)/system/memory/libion/kernel-headers \
 	$(TOP)/vendor/sprd/modules/libcamera/hal1.0/inc \

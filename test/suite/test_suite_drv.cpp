@@ -29,11 +29,16 @@
 #include "test_suite_drv.h"
 #define LOG_TAG "IT-suiteDrv"
 #define THIS_MODULE_NAME "drv"
+#define JSON_PATH "./drv.json"
+#include "test_drv_isp_parameter.h"
+
+struct host_info_t host_info[ISP_PATH_NUM] = {0};
 
 TestSuiteDRV::TestSuiteDRV()
 {
-    IT_LOGD("");
-    m_Module=GetModuleWrapper(string(THIS_MODULE_NAME));
+	IT_LOGD("");
+	m_Module=GetModuleWrapper(string(THIS_MODULE_NAME));
+	m_json2 = new CameraDrvIT;
 }
 
 TestSuiteDRV::~TestSuiteDRV()
@@ -63,14 +68,49 @@ int TestSuiteDRV::ControlEmulator(IT_SWITCH_T status)
 
 int TestSuiteDRV::Run(IParseJson *Json2)
 {
-    int ret = IT_OK;
-    IT_LOGD("");
-    return ret;
+	int ret=IT_OK;
+	IT_LOGD(" TestSuiteDRV::Run start \n");
+	DrvCaseComm *json2=(DrvCaseComm *)Json2;
+	json2->g_host_info = host_info;
+	if (0 != isp_path_init(json2) ){
+		IT_LOGE("fail to parse cam config parameters\n");
+	}
+	 if (m_Module)
+		ret = m_Module->Run(json2);
+	 return ret;
 }
 
 int TestSuiteDRV::ParseSecJson(caseid* caseid, vector<IParseJson*>* pVec_TotalCase)
 {
-    int ret=IT_OK;
-    IT_LOGD("");
-    return ret;
+	int ret=IT_OK;
+	if (!m_isParsed){
+		string path= JSON_PATH;
+		string input = m_json2->readInputTestFile(path.data());
+		if (input.empty()) {
+			IT_LOGD("Failed to read input or empty input: %s", path.data());
+			return IT_FILE_EMPTY;
+		}
+		int exitCode = m_json2->ParseJson(input);
+		std::vector<DrvCaseComm *>::iterator i;
+		/* json2 debug */
+		for (i = m_json2->m_casecommArr.begin();
+			i != m_json2->m_casecommArr.end(); i++) {
+			IT_LOGD("================");
+			IT_LOGD("caseID:%d",(*i)->m_caseID);
+			IT_LOGD("chipID:%d",(*i)->m_chipID);
+			IT_LOGD("pathID:%d",(*i)->m_pathID);
+			IT_LOGD("testMode:%d",(*i)->m_testMode);
+			IT_LOGD("parmPath:%s",(*i)->m_parmPath.data());
+			IT_LOGD("imagePath:%s",(*i)->m_imageName.data());
+		}
+	}
+	IParseJson* caseData= m_json2->getCaseAt(caseid->getID());
+	if (caseData) {
+		caseData->m_thisModuleName=THIS_MODULE_NAME;
+		pVec_TotalCase->push_back(caseData);
+	} else {
+	IT_LOGE("Failed to find this case ID:%d",caseid->getID());
+	ret = IT_ERR;
+	}
+	return ret;
 }

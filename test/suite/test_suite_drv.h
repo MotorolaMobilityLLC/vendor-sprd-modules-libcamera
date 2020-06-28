@@ -8,16 +8,15 @@
 
 class TestSuiteDRV : public SuiteBase
 {
-
 public:
-    TestSuiteDRV();
-    ~TestSuiteDRV();
-    int ParseSecJson(caseid* caseid, vector<IParseJson*>* pVec_TotalCase);
-    int Run(IParseJson *Json2);
-    int ControlEmulator(IT_SWITCH_T status);
-    int SetUp();
-    int TearDown();
-
+	TestSuiteDRV();
+	~TestSuiteDRV();
+	int ParseSecJson(caseid* caseid, vector<IParseJson*>* pVec_TotalCase);
+	int Run(IParseJson *Json2);
+	int ControlEmulator(IT_SWITCH_T status);
+	int SetUp();
+	int TearDown();
+	CameraDrvIT* m_json2;
 };
 
 #endif /* __TEST_SUITE_DRV_H__ */

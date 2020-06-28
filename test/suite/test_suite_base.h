@@ -6,6 +6,7 @@
 #include "module_wrapper_base.h"
 #include "json1case.h"
 #include "json2hal.h"
+#include "json2drv.h"
 
 class SuiteBase// : public TestSuiteManager
 {
