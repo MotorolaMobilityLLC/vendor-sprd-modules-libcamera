@@ -496,7 +496,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsYuvSensor(0),
       mIsUltraWideMode(false), mIsFovFusionMode(false), mIsRawCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
-      mIsJpegWithBigSizePreview(0)
+      mIsJpegWithBigSizePreview(0), lightportrait_type(0)
 
 {
     ATRACE_CALL();
@@ -1771,6 +1771,11 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
     }
     case CAMERA_IOCTRL_SET_FB_SWITCH:{
             mIsPortraitScene = *((bool *)param1);
+        }
+        break;
+
+    case CAMERA_IOCTRL_SET_LPT_TYPE:{
+            lightportrait_type = *(int *)param1;
         }
         break;
     } /* switch */
@@ -10605,7 +10610,10 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         if (atoi(value)) {
             mCNRMode = 1;
         }
+        if(lightportrait_type != 0)
+            mCNRMode = 0;
     }
+    HAL_LOGD("lightportrait_type = %d, mCNRMode = %d", lightportrait_type, mCNRMode);
     int8_t drvSceneMode;
     mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
     if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
@@ -10617,7 +10625,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
     HAL_LOGD("mCNRMode = %d", mCNRMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
-
     if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
        property_get("persist.vendor.cam.fdr.enable", value, "0");
        if (atoi(value)) {

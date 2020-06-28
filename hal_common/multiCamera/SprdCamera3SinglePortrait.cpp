@@ -1417,7 +1417,6 @@ bool SprdCamera3SinglePortrait::CaptureThread::yuvReprocessCaptureRequest(
         mime_type = (int)SPRD_MIMETPYE_BLUR;
     }
     mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE, &mime_type, NULL);
-
     memcpy((void *)&output_stream_buff, &mSavedCapReqstreambuff,
            sizeof(camera3_stream_buffer_t));
     output_stream_buff.stream->width = mSinglePortrait->mCaptureWidth;
@@ -1853,6 +1852,7 @@ void SprdCamera3SinglePortrait::CaptureThread::updateBlurWeightParams(
     int rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_BV, &cameraBV, NULL);
     rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_ISO, &cameraISO, NULL);
     rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_CT, &cameraCT, NULL);
+    rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_LPT_TYPE, &lightPortraitType, NULL);
     for(int i = 0;i < faceDetectionInfo.face_num;i++){
         *(fd_score+i) = SprdCamera3Setting::s_setting[mSinglePortrait->mCameraId].fd_score[i];
     }
