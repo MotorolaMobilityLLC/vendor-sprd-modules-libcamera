@@ -36,9 +36,9 @@
 #define ISP_READ_MODE_ID_MAX 13
 
 #define ISP_NR_BLOCK_MIN 0
-#define ISP_ISO_NUM_MAX 7
+#define ISP_ISO_NUM_MAX 9
 #define ISP_ISO_NUM_MIN 0
-#define ISP_AE_WEIGHT_TYPE_MAX 2
+#define ISP_AE_WEIGHT_TYPE_MAX 3
 #define ISP_AE_WEIGHT_TYPE_MIN 0
 #define ISP_SCENE_NUM_MAX 7
 #define ISP_SCENE_NUM_MIN 0
@@ -48,6 +48,8 @@
 #define ISP_LNC_TAB_MIN 0
 #define ISP_SIMULATOR_MAX 0xffff
 #define ISP_SIMULATOR_MIN 0x0000
+#define PM_VER_SW_MASK (0x0000FFFF)
+
 enum {
 	CMD_START_PREVIEW = 1,
 	CMD_STOP_PREVIEW,
@@ -163,14 +165,17 @@ enum {
 	MODE_NR_DATA,
 	MODE_ISP_ID = 0x02,
 	MODE_TUNE_INFO = 0x03,
-	MODE_AE_TABLE,
-	MODE_AE_WEIGHT_TABLE,
-	MODE_AE_SCENE_TABLE,
-	MODE_AE_AUTO_ISO_TABLE,
-	MODE_LNC_DATA,
-	MODE_AWB_DATA,
-	MODE_NOTE_DATA,
-	MODE_LIB_INFO_DATA,
+	MODE_AE_TABLE = 0x04,
+	MODE_AE_WEIGHT_TABLE = 0x05,
+	MODE_AE_SCENE_TABLE = 0x06,
+	MODE_AE_AUTO_ISO_TABLE = 0x07,
+	MODE_LNC_DATA = 0x08,
+	MODE_AWB_DATA = 0x09,
+	MODE_NOTE_DATA = 0x0A,
+	MODE_LIB_INFO_DATA = 0x0B,
+	MODE_SIMULATOR = 0x0C,
+	MODE_SEARCH_TABLE = 0x0D,
+	MODE_AE_FLASH_TABLE = 0x0E,
 	MODE_MAX
 };
 
@@ -726,6 +731,8 @@ unsigned long nr_blk_level_size[ISP_BLK_TYPE_MAX] = {
 	sizeof(struct sensor_rgb_afm_level),
 	sizeof(struct sensor_cnr_level),
 	sizeof(struct sensor_ynrs_level),
+	sizeof(struct sensor_cnr3_level),
+	sizeof(struct sensor_mfnr_level),
 };
 
 unsigned int get_nr_block_id_by_sub_type(cmr_u16 sub_type)
@@ -884,6 +891,12 @@ void *get_nr_block_level_ptr(struct denoise_param_update *base,
 		return base->cnr2_level_ptr;
 	case ISP_BLK_YNRS_T:
 		return base->ynrs_level_ptr;
+	case ISP_BLK_CNR3_T:
+		return base->cnr3_level_ptr;
+	case ISP_BLK_MFNR_T:
+		return base->mfnr_level_ptr;
+	default :
+		ISP_LOGI("nukown block_id %d", nr_block_id);
 	}
 	return NULL;
 };
@@ -1473,7 +1486,7 @@ cmr_s32 send_libuse_info_param(struct isp_data_header_read * read_cmd, struct ms
 	return rtn;
 }
 
-cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len, cmr_u32 ae3x_flag)
 {
 	cmr_s32 rtn = 0x00;
 
@@ -1481,16 +1494,23 @@ cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, c
 	cmr_u8 iso = sub_type & 0x0f;
 
 	if (NULL != data_len) {
-		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
-		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
-		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len;
-		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].again_len;
-		*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len;
+		if (ae3x_flag) {
+			*data_len = *data_len + sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len;
+			*data_len = *data_len + sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len;
+			*data_len = *data_len + sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len;
+
+		} else {
+			*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
+			*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
+			*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len;
+			*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].again_len;
+			*data_len = *data_len + sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len;
+		}
 	}
 	return rtn;
 }
 
-cmr_s32 get_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+cmr_s32 get_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr, cmr_u32 ae3x_flag)
 {
 	cmr_s32 rtn = 0x00;
 
@@ -1499,55 +1519,115 @@ cmr_s32 get_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 
 	cmr_u8 iso = sub_type & 0x0f;
 
 	if (NULL != data_addr) {
-		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
-		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
-		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy, sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
-		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again, sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
-		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain, sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+		if (ae3x_flag) {
+			memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].index, sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain, sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure, sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len);
+		} else {
+			memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy, sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again, sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain, sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+		}
 	}
 	return rtn;
 }
 
-cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+cmr_s32 get_ae3x_table_cus_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u16 weight = sub_type;
-	*data_len = *data_len + sensor_raw_fix->ae.weight_tab[weight].len;
+
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if ((flicker < AE_FLICKER_NUM)  && (iso < AE_ISO_NUM_NEW) && data_len) {
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure_len;
+	}
 	return rtn;
 }
 
-cmr_s32 get_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+cmr_s32 get_ae3x_table_cus_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
-	cmr_u16 weight = sub_type;
-	if (NULL != data_addr)
-		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, sensor_raw_fix->ae.weight_tab[weight].len);
+
+	cmr_u32 *tmp_ptr = NULL;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if ((flicker < AE_FLICKER_NUM)  && (iso < AE_ISO_NUM_NEW) && data_addr) {
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index, sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain, sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure, sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure_len);
+	}
 	return rtn;
 }
 
-cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len, cmr_u32 ae3x_flag)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u16 weight = sub_type;
+
+	if (ae3x_flag) {
+		*data_len = *data_len + sensor_raw_fix->ae3x.weight_tab[weight].len;
+	} else {
+		*data_len = *data_len + sensor_raw_fix->ae.weight_tab[weight].len;
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr, cmr_u32 ae3x_flag)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u16 weight = sub_type;
+	if (NULL != data_addr) {
+		if (ae3x_flag) {
+			memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.weight_tab[weight].weight_table, sensor_raw_fix->ae3x.weight_tab[weight].len);
+		} else {
+			memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, sensor_raw_fix->ae.weight_tab[weight].len);
+		}
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len, cmr_u32 ae3x_flag)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u8 scene = (sub_type >> 4) & 0x0f;
 	cmr_u8 flicker = sub_type & 0x0f;
 
 	if (NULL != data_len) {
-		*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len;
-		*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].index_len;
-		*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len;
-		*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len;
-		*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].again_len;
-		*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len;
+		if (ae3x_flag) {
+			*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len;
+			*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len;
+			*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len;
+			*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len;
+		} else {
+			*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len;
+			*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].index_len;
+			*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len;
+			*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len;
+			*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].again_len;
+			*data_len = *data_len + sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len;
+		}
 	}
 	return rtn;
 }
 
-cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr, cmr_u32 ae3x_flag)
 {
 	cmr_s32 rtn = 0x00;
 
@@ -1556,18 +1636,29 @@ cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 
 	cmr_u8 flicker = sub_type & 0x0f;
 
 	if (NULL != data_addr && flicker < 2) {
-		memcpy(data_addr, sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info, sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
-		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].index, sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
-		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].exposure, sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
-		memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].dummy, sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
-		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again, sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
-		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain, sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
-		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+		if (ae3x_flag) {
+			memcpy(data_addr, sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info, sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len);
+			memcpy(tmp_ptr, sensor_raw_fix->ae3x.scene_info[scene][flicker].index, sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].gain, sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len);
+			memcpy(tmp_ptr, sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure, sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len);
+		} else {
+			memcpy(data_addr, sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info, sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
+			memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].index, sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
+			memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].exposure, sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
+			memcpy(tmp_ptr, sensor_raw_fix->ae.scene_tab[scene][flicker].dummy, sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again, sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
+			memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain, sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+			tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+		}
 	}
 	return rtn;
 }
@@ -1587,6 +1678,24 @@ cmr_s32 get_ae_auto_iso_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u
 	cmr_u8 iso = sub_type;
 	if (NULL != data_addr)
 		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae.auto_iso_tab[iso].auto_iso_tab, sensor_raw_fix->ae.auto_iso_tab[iso].len);
+
+	return rtn;
+}
+
+cmr_s32 get_ae3x_reserve_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	*data_len = *data_len + sensor_raw_fix->ae3x.ae_reserve.len;
+	return rtn;
+}
+
+cmr_s32 get_ae3x_reserve_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	if (NULL != data_addr)
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.ae_reserve.ae_reserve, sensor_raw_fix->ae3x.ae_reserve.len);
 
 	return rtn;
 }
@@ -1665,6 +1774,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	cmr_u32 data_len = 0;
 	cmr_u32 *data_addr = NULL;
 	cmr_u8 mode_id = 0;
+	cmr_u32 ae3x_flag = 0;
 
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
 	struct isp_mode_param_info mode_param_info;
@@ -1689,7 +1799,10 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
 		sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
 	}
-	ISP_LOGV("read_cmd->main_type = %d", read_cmd->main_type);
+	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000C) {
+		ae3x_flag = 1;
+	}
+	ISP_LOGV("read_cmd->main_type %d, ae3x_flag %d", read_cmd->main_type, ae3x_flag);
 
 	switch (read_cmd->main_type) {
 	case MODE_ISP_ID:
@@ -1738,26 +1851,43 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				return rtn;
 			}
 			data_len = 0;
-			rtn = get_ae_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			rtn = get_ae_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len, ae3x_flag);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-				rtn = get_ae_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = get_ae_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr, ae3x_flag);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
 		}
 		break;
+        case MODE_AE_FLASH_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae3x_table_cus_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            ISP_LOGD("read MODE_AE_FLASH_TABLE data %p, len %d, sub_type 0x%x\n",
+            data_addr, data_len, read_cmd->sub_type);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                rtn = get_ae3x_table_cus_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
 	case MODE_AE_WEIGHT_TABLE:
 		{
 			if (NULL == sensor_raw_fix) {
 				return rtn;
 			}
 			data_len = 0;
-			rtn = get_ae_weight_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			rtn = get_ae_weight_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len, ae3x_flag);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-				rtn = get_ae_weight_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = get_ae_weight_param(sensor_raw_fix, read_cmd->sub_type, data_addr, ae3x_flag);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
 		}
@@ -1768,11 +1898,11 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				return rtn;
 			}
 			data_len = 0;
-			rtn = get_ae_scene_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			rtn = get_ae_scene_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len, ae3x_flag);
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-				rtn = get_ae_scene_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				rtn = get_ae_scene_param(sensor_raw_fix, read_cmd->sub_type, data_addr, ae3x_flag);
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
 		}
@@ -1783,11 +1913,19 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 				return rtn;
 			}
 			data_len = 0;
-			rtn = get_ae_auto_iso_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			if (ae3x_flag) {
+				rtn = get_ae3x_reserve_length(sensor_raw_fix, &data_len);
+			} else {
+				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+			}
 			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
 			memset((cmr_u8 *) data_addr, 0x00, data_len);
 			if (0 != data_len && NULL != data_addr) {
-				rtn = get_ae_auto_iso_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				if (ae3x_flag) {
+					rtn = get_ae3x_reserve_param(sensor_raw_fix, data_addr);
+				} else {
+					rtn = get_ae_auto_iso_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+				}
 				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
 			}
 		}
@@ -1839,7 +1977,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	return rtn;
 }
 
-cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr, cmr_u32 ae3x_flag)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
@@ -1851,19 +1989,53 @@ cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
-	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
-	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
-	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
-	offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].again_len;
-	memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+
+	if (ae3x_flag) {
+		memcpy((void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len);
+		offset_tmp += sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len;
+		memcpy((void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len);
+		offset_tmp += sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len;
+		memcpy((void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len);
+		offset_tmp += sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len;
+	} else {
+		memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].index_len);
+		offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].index_len;
+		memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len);
+		offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].exposure_len;
+		memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dummy, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len);
+		offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].dummy_len;
+		memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].again, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].again_len);
+		offset_tmp += sensor_raw_fix->ae.ae_tab[flicker][iso].again_len;
+		memcpy((void *)sensor_raw_fix->ae.ae_tab[flicker][iso].dgain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.ae_tab[flicker][iso].dgain_len);
+	}
 	return rtn;
 }
 
-cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+cmr_s32 down_ae3x_table_cus_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+	cmr_u32 offset_tmp = 0;
+	struct ae_exp_gain_tab_3_x *cur_tab;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr || (flicker >= AE_FLICKER_NUM) || (iso >= AE_ISO_NUM_NEW)) {
+		ISP_LOGE("fail to check param %p %p, sub_type 0x%x\n", sensor_raw_fix, data_addr, sub_type);
+		rtn = 0x01;
+		return rtn;
+	}
+	cur_tab = &sensor_raw_fix->ae3x.ae_table_cus[flicker][iso];
+	memcpy((void *)cur_tab->index, (void *)(data_addr + offset_tmp), cur_tab->index_len);
+	offset_tmp += cur_tab->index_len;
+	memcpy((void *)cur_tab->gain, (void *)(data_addr + offset_tmp), cur_tab->gain_len);
+	offset_tmp += cur_tab->gain_len;
+	memcpy((void *)cur_tab->exposure, (void *)(data_addr + offset_tmp), cur_tab->exposure_len);
+	offset_tmp += cur_tab->exposure_len;
+
+	return rtn;
+}
+
+cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr, cmr_u32 ae3x_flag)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u8 weight = sub_type;
@@ -1874,11 +2046,16 @@ cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u1
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.weight_tab[weight].len);
+
+	if (ae3x_flag) {
+		memcpy((void *)sensor_raw_fix->ae3x.weight_tab[weight].weight_table, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.weight_tab[weight].len);
+	} else {
+		memcpy((void *)sensor_raw_fix->ae.weight_tab[weight].weight_table, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.weight_tab[weight].len);
+	}
 	return rtn;
 }
 
-cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr, cmr_u32 ae3x_flag)
 {
 	cmr_s32 rtn = 0x00;
 	cmr_u8 scene = (sub_type >> 4) & 0x0f;
@@ -1890,17 +2067,42 @@ cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 		rtn = 0x01;
 		return rtn;
 	}
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
-	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
-	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].index_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
-	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dummy, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
-	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
-	offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].again_len;
-	memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+
+	if (ae3x_flag) {
+		memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len);
+		offset_tmp += sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len;
+		memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len);
+		offset_tmp += sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len;
+		memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].gain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len);
+		offset_tmp += sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len;
+		memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len);
+	} else {
+		memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len);
+		offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].scene_info_len;
+		memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].index_len);
+		offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].index_len;
+		memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len);
+		offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].exposure_len;
+		memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dummy, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len);
+		offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].dummy_len;
+		memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].again, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].again_len);
+		offset_tmp += sensor_raw_fix->ae.scene_tab[scene][flicker].again_len;
+		memcpy((void *)sensor_raw_fix->ae.scene_tab[scene][flicker].dgain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae.scene_tab[scene][flicker].dgain_len);
+	}
+	return rtn;
+}
+
+cmr_s32 down_ae3x_reserve_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae3x.ae_reserve.ae_reserve, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_reserve.len);
 	return rtn;
 }
 
@@ -1955,6 +2157,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	static cmr_u32 offset = 0;
 	static cmr_u32 flag = 0;
 	cmr_u32 data_len = 0;
+	cmr_u32 ae3x_flag = 0;
 
 	cmr_u8 mode_id = write_cmd->isp_mode;
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
@@ -1989,7 +2192,10 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 		ISP_LOGE("fail to check param");
 		return ISP_ERROR;
 	}
-	ISP_LOGV("down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
+	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000C) {
+		ae3x_flag = 1;
+	}
+	ISP_LOGV("write_cmd->main_type %d, ae3x_flag %d\n", write_cmd->main_type, ae3x_flag);
 
 	switch (write_cmd->main_type) {
 	case MODE_TUNE_INFO:
@@ -2040,7 +2246,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				return rtn;
 			}
 			if (0 == flag) {
-				rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len, ae3x_flag);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -2055,7 +2261,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
-				rtn = down_ae_table_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				rtn = down_ae_table_param(sensor_raw_fix, write_cmd->sub_type, data_addr, ae3x_flag);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);
@@ -2070,6 +2276,52 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			}
 		}
 		break;
+        case MODE_AE_FLASH_TABLE:
+        {
+            ISP_LOGV("MODE_AE_FLASH_TABLE\n");
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                data_len = 0;
+                rtn = get_ae3x_table_cus_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                ISP_LOGD("write MODE_AE_FLASH_TABLE data %p, len %d, sub_type 0x%x\n",
+                data_addr, data_len, write_cmd->sub_type);
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+/*            if ((offset + data_len) > data_len) {
+  *              ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", data_len, offset);
+  *              data_len = buf_len - offset;
+  *          } */
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae3x_table_cus_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
 	case MODE_AE_WEIGHT_TABLE:
 		{
 			ISP_LOGV("MODE_AE_WEIGHT_TABLE \n");
@@ -2079,7 +2331,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				return rtn;
 			}
 			if (0 == flag) {
-				rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len, ae3x_flag);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -2095,7 +2347,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
-				rtn = down_ae_weight_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				rtn = down_ae_weight_param(sensor_raw_fix, write_cmd->sub_type, data_addr, ae3x_flag);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);
@@ -2118,7 +2370,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				return rtn;
 			}
 			if (0 == flag) {
-				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len, ae3x_flag);
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -2133,7 +2385,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
-				rtn = down_ae_scene_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				rtn = down_ae_scene_param(sensor_raw_fix, write_cmd->sub_type, data_addr, ae3x_flag);
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);
@@ -2157,7 +2409,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 				return rtn;
 			}
 			if (0 == flag) {
-				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				if (ae3x_flag) {
+					rtn = get_ae3x_reserve_length(sensor_raw_fix, &data_len);
+				} else {
+					rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+				}
 				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
 				if (NULL == data_addr) {
 					ISP_LOGE("fail to malloc mem!");
@@ -2172,7 +2428,11 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 			if (0x01 == write_cmd->packet_status) {
 				flag = 0;
 				offset = 0;
-				rtn = down_ae_auto_iso_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				if (ae3x_flag) {
+					rtn = down_ae3x_reserve_param(sensor_raw_fix, data_addr);
+				} else {
+					rtn = down_ae_auto_iso_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+				}
 				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 				if (NULL != data_addr) {
 					free(data_addr);
