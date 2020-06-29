@@ -6911,7 +6911,8 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
              zoomRatio, mIsUltraWideMode);
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
-    if (mIsFovFusionMode == true && sensorGetRole(MODULE_OPTICSZOOM_WIDE_BACK)) {
+    if (mIsFovFusionMode == true && (mCameraId == 0 ||
+       (mCameraId == 3 && zoomRatio < 1.09))) {
        mZoomInfo.zoom_info.capture_aspect_ratio = 1.0;
     } else {
        mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
