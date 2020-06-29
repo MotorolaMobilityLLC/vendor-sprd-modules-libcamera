@@ -4429,7 +4429,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 
 		s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
 
-		if((cxt->app_mode < 32)){
+		if((cxt->app_mode < CAMERA_MODE_MAX)){
 			cxt->mode_switch[cxt->app_mode].exp_line = cxt->last_exp_param.exp_line;
 			cxt->mode_switch[cxt->app_mode].dummy = cxt->last_exp_param.dummy;
 			cxt->mode_switch[cxt->app_mode].gain = cxt->last_exp_param.gain;
@@ -4671,7 +4671,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][cxt->cur_status.settings.iso];
 	ISP_LOGD("current ae table fliker mode %d iso mode:%d",cxt->cur_status.settings.flicker, cxt->cur_status.settings.iso);
 
-	if ((AE_SCENE_NORMAL != cxt->sync_cur_status.settings.scene_mode) || (CAMERA_MODE_3DNR_PHOTO == cxt->app_mode)) {
+	if ((AE_SCENE_NORMAL != cxt->cur_status.settings.scene_mode) || (CAMERA_MODE_3DNR_PHOTO == cxt->app_mode)) {
 		cmr_u32 i = 0;
 		struct ae_scene_info *scene_info = &cxt->cur_param->scene_info[0];
 
@@ -4723,7 +4723,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			last_cam_mode = 0;
 		}
 		src_exp.cur_index = cxt->last_index;
-		if((cxt->app_mode < 32) && !work_info->is_snapshot){
+		if((cxt->app_mode < CAMERA_MODE_MAX) && !work_info->is_snapshot){
 			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
 			cmr_u32 last_sensitivity = cxt->mode_switch[last_app_mode].sensitivity;
 			cmr_u32 cur_sensitivity = cxt->mode_switch[cxt->app_mode].sensitivity;
@@ -6362,7 +6362,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 
 	ISP_LOGV("ae_make_calc_result:exp_line:%d, exp_time:%d, gain:%d, dummy:%d", cxt->exp_data.lib_data.exp_line, cxt->exp_data.lib_data.exp_time, cxt->exp_data.lib_data.gain, cxt->exp_data.lib_data.dummy);
 
-	if (cxt->is_multi_mode == ISP_ALG_SINGLE) {
+	if ((cxt->is_multi_mode == ISP_ALG_SINGLE)||(cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW)){
 
 		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 

@@ -410,7 +410,7 @@ extern "C" {
 		cmr_u32 app_mode;
 		cmr_u32 manual_level;
 		cmr_u32 munaul_iso_index;
-		struct ae_exposure_param_switch mode_switch[32];
+		struct ae_exposure_param_switch mode_switch[64];
 		cmr_u32 last_cam_mode;
 		cmr_u32 last_cur_lum;
 		cmr_u32 last_table_index; /* for non-zsl, there is a 'ae_set_video_start' between pf and mf.which we need keep the previous table index */
