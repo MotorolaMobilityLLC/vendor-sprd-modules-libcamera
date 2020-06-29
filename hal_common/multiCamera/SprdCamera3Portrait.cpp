@@ -4205,12 +4205,12 @@ void SprdCamera3Portrait::processCaptureResultMain(
             Mutex::Autolock l(mNotifyLockMain);
             for (List<camera3_notify_msg_t>::iterator i =
                      mNotifyListMain.begin();
-                 i != mNotifyListMain.end(); i++) {
+                 i != mNotifyListMain.end();) {
                 if (i->message.shutter.frame_number == cur_frame_number) {
                     if (i->type == CAMERA3_MSG_SHUTTER) {
                         searchnotifyresult = NOTIFY_SUCCESS;
                         result_timestamp = i->message.shutter.timestamp;
-                        mNotifyListMain.erase(i);
+                        mNotifyListMain.erase(i++);
                     } else if (i->type == CAMERA3_MSG_ERROR) {
                         HAL_LOGE("Return local buffer:%d caused by error "
                                  "Notify status",
@@ -4221,10 +4221,11 @@ void SprdCamera3Portrait::processCaptureResultMain(
                                        mLocalBufferNumber, mLocalBufferList);
                         CallBackResult(cur_frame_number,
                                        CAMERA3_BUFFER_STATUS_ERROR);
-                        mNotifyListMain.erase(i);
+                        mNotifyListMain.erase(i++);
                         return;
                     }
-                }
+                }else
+                    i++;
             }
         }
         if (searchnotifyresult == NOTIFY_NOT_FOUND) {
@@ -4377,12 +4378,12 @@ void SprdCamera3Portrait::processCaptureResultAux(
             Mutex::Autolock l(mNotifyLockAux);
             for (List<camera3_notify_msg_t>::iterator i =
                      mNotifyListAux.begin();
-                 i != mNotifyListAux.end(); i++) {
+                 i != mNotifyListAux.end();) {
                 if (i->message.shutter.frame_number == cur_frame_number) {
                     if (i->type == CAMERA3_MSG_SHUTTER) {
                         searchnotifyresult = NOTIFY_SUCCESS;
                         result_timestamp = i->message.shutter.timestamp;
-                        mNotifyListAux.erase(i);
+                        mNotifyListAux.erase(i++);
                     } else if (i->type == CAMERA3_MSG_ERROR) {
                         HAL_LOGE("Return local buffer:%d caused by error "
                                  "Notify status",
@@ -4391,10 +4392,11 @@ void SprdCamera3Portrait::processCaptureResultAux(
                         pushBufferList(mLocalBuffer,
                                        result->output_buffers->buffer,
                                        mLocalBufferNumber, mLocalBufferList);
-                        mNotifyListAux.erase(i);
+                        mNotifyListAux.erase(i++);
                         return;
                     }
-                }
+                }else
+                    i++;
             }
         }
         if (searchnotifyresult == NOTIFY_NOT_FOUND) {
@@ -4491,8 +4493,7 @@ void SprdCamera3Portrait::CallBackMetadata() {
             mCallbackOps->process_capture_result(mCallbackOps, &result);
             free_camera_metadata(
                 const_cast<camera_metadata_t *>(result.result));
-            mMetadataList.erase(itor);
-            itor++;
+            mMetadataList.erase(itor++);
         }
     }
 }
@@ -4717,8 +4718,9 @@ void SprdCamera3Portrait::clearFrameNeverMatched(uint32_t main_frame_number,
                            mLocalBufferList);
             HAL_LOGD("clear frame main idx:%d", itor->frame_number);
             frame_num = itor->frame_number;
-            mUnmatchedFrameListMain.erase(itor);
+            mUnmatchedFrameListMain.erase(itor++);
             CallBackResult(frame_num, CAMERA3_BUFFER_STATUS_ERROR);
+            continue;
         }
         itor++;
     }
@@ -4729,7 +4731,8 @@ void SprdCamera3Portrait::clearFrameNeverMatched(uint32_t main_frame_number,
             pushBufferList(mLocalBuffer, itor->buffer, mLocalBufferNumber,
                            mLocalBufferList);
             HAL_LOGD("clear frame aux idx:%d", itor->frame_number);
-            mUnmatchedFrameListAux.erase(itor);
+            mUnmatchedFrameListAux.erase(itor++);
+            continue;
         }
         itor++;
     }
