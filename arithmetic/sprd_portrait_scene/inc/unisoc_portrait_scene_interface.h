@@ -67,6 +67,9 @@ typedef struct sprd_portrait_scene_init {
 	int16_t isFrontCamera; //1 is front camera, 0 back camera
     enum camalg_run_type run_type;  //operation platform, CPU or VDSP
     void *handle;
+	int mask_w;
+	int mask_h;
+	int mask_size;
 } sprd_portrait_scene_init_t;
 
 
@@ -92,9 +95,8 @@ typedef struct sprd_portrait_scene_proc {
 	int16_t rotate_angle; // counter clock-wise. 0:face up body down 90:face left body right 180:face down body up 270:face right body left
 	int16_t camera_angle;
 	int16_t mobile_angle;
-	uint8_t isCapture; //1 is front camera, 0 back camera
+	uint8_t isCapture; //1
 	uint8_t isFrontCamera; //1 is front camera, 0 back camera
-
 	void * ptr1;         //reserve
 	void * ptr2;         //reserve
 } sprd_portrait_scene_proc_t;
@@ -113,6 +115,7 @@ typedef struct sprd_portrait_scene_fuse {
     int32_t height[PORTRAIT_SCENE_MAX_CNT];//height of current scene img
     sprd_image_file_format_t fileFormat[PORTRAIT_SCENE_MAX_CNT];//format of scene file in SD card
     void *yuv420[PORTRAIT_SCENE_MAX_CNT];//scene file will be converted to yuv format, and save here
+	uint16_t *mask;
 } sprd_portrait_scene_fuse_t;
 
 typedef struct BgrpVersion_t{
@@ -203,9 +206,9 @@ JNIEXPORT int32_t unisoc_portrait_scene_capture_create_weight_map(void *handle, 
 		Zero: success
 		Non-Zero: fail
 ********************************************/
-JNIEXPORT int32_t unisoc_portrait_scene_preview_process(void *handle, uint8_t *src_yuv, uint8_t *dst_yuv);
+JNIEXPORT int32_t unisoc_portrait_scene_preview_process(void *handle, uint8_t *src_yuv, uint8_t *dst_yuv,uint16_t *mask);
 
-JNIEXPORT int32_t unisoc_portrait_scene_capture_process(void *handle, uint8_t *src_yuv, uint8_t *dst_yuv);
+JNIEXPORT int32_t unisoc_portrait_scene_capture_process(void *handle, uint8_t *src_yuv, uint8_t *dst_yuv,uint16_t *mask);
 
 /********************************************
 	Func name: unisoc_portrait_scene_preview_fuse_img

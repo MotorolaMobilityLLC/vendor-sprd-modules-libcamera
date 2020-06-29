@@ -24,8 +24,8 @@ PRODUCT_COPY_FILES += vendor/sprd/modules/libcamera/arithmetic/sprd_fdr/firmware
                       vendor/sprd/modules/libcamera/arithmetic/sprd_warp/firmware/warp_cadence.bin:vendor/firmware/warp_cadence.bin \
                       vendor/sprd/modules/libcamera/arithmetic/facebeauty/firmware/facebeauty_cadence.bin:vendor/firmware/facebeauty_cadence.bin \
 					  vendor/sprd/modules/libcamera/arithmetic/libmfnr/firmware/mfnr_cadence.bin:vendor/firmware/mfnr_cadence.bin\
-		      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/hourglass_cadence.bin:vendor/firmware/hourglass_cadence.bin \
-		      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/hourglass_network.bin:vendor/firmware/hourglass_network.bin
+		      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/portraitseg_cadence.bin:vendor/firmware/portraitseg_cadence.bin \
+		      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/portraitseg_network.bin:vendor/firmware/portraitseg_network.bin
 
 COM_IMG_PATH :=$(LOCAL_PATH)/arithmetic/sprd_portrait_scene/image/common
 img_files := $(shell ls $(COM_IMG_PATH))

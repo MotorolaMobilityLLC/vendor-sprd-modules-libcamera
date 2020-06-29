@@ -20,6 +20,7 @@ typedef struct sprd_portrait_scene_adapter_mask {
 	sprd_portrait_scene_channel_t ch;
 	uint8_t *src_YUV;
 	uint8_t *dst_YUV;
+	uint16_t *mask;
 } sprd_portrait_scene_adapter_mask_t;
 
 typedef struct sprd_portrait_scene_adapter_fuse {

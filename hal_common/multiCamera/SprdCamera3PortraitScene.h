@@ -66,7 +66,7 @@ namespace sprdcamera {
 #define AI_BG_REAR_CAP_IMG_PATH "vendor/etc/aiimg/common/BG_CAP_"
 #define PBRP_THREAD_TIMEOUT 50e6
 #define PBRP_LOCAL_BUFF_NUM (4)
-#define PBRP_PREV_TMP_BUFF_NUM (5)
+#define PBRP_PREV_TMP_BUFF_NUM (4)
 #define PBRP_MAX_NUM_STREAMS (4)
 #define PBRP_REFOCUS_COMMON_PARAM_NUM (11)
 #define PBRP_MAX_ROI (10)
@@ -139,6 +139,7 @@ typedef struct {
     void *apihandle;
     portraitSceneMsgType msg_type;
     portrait_scene_buffer_combination_t combo_buff;
+    uint16_t* mask;
 } portrait_scene_queue_msg_t;
 
 class SprdCamera3PortraitScene : SprdCamera3MultiBase,
@@ -234,10 +235,13 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     sprd_portrait_scene_proc_t mCachePrevWeightParams;
     int mBGWidth;
     int mBGHeight;
+    bool mPrevBuffReady;
     int mPreviewStreamsNum;
     List<request_saved_msg_t> mPrevSavedReqList;
     List<new_mem_t*> mPrevTmpBuffList;
+    List<uint16_t*> mPrevMaskBuffList;
     new_mem_t mPrevTmpBuffArr[PBRP_PREV_TMP_BUFF_NUM];
+    sprd_camera_memory_t *mPrevMaskBuffArr[PBRP_PREV_TMP_BUFF_NUM];
     /*capture*/
     sprd_portrait_scene_proc_t mCacheCapWeightParams;
     int32_t mFaceInfo[4];

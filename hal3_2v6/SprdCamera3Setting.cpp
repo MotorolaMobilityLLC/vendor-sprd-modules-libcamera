@@ -2582,6 +2582,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         if (atoi(prop) == 0) {
             property_set("persist.vendor.cam.wechat.portrait.scene.enable", "1");
             property_set("persist.vendor.cam.ip.wechat.back.replace", "0");
+            property_get("ro.boot.auto.efuse", prop, "0");
+            if (strcmp(prop,"T618")){
+                property_set("persist.vendor.cam.wechat.portrait.scene.enable", "2");
+                property_set("persist.vendor.cam.ip.wechat.back.replace", "2");
+            }
         }
         available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",

@@ -115,13 +115,12 @@ int sprd_portrait_scene_adpt_ctrl(void *handle, sprd_portrait_scene_cmd_t cmd, v
 	    case SPRD_PORTRAIT_SCENE_PROCESS_CMD:{
 	        sprd_portrait_scene_adapter_mask_t *_param=(sprd_portrait_scene_adapter_mask_t *)param;
 	        if(_param->ch == SPRD_PORTRAIT_SCENE_PREVIEW){
-				rc = unisoc_portrait_scene_preview_process(handle, _param->src_YUV,  _param->dst_YUV);
+				rc = unisoc_portrait_scene_preview_process(handle, _param->src_YUV,  _param->dst_YUV, _param->mask);
 				PScene_LOGI("preview process rc%d", rc);
 				return rc;
 	        }else if(_param->ch == SPRD_PORTRAIT_SCENE_CAPTURE){
                 PScene_LOGI("src_yuv=%p,dst_yuv=%p",_param->src_YUV,_param->dst_YUV);
-				rc= unisoc_portrait_scene_capture_process(handle, _param->src_YUV, 
-                                                            _param->dst_YUV);
+				rc= unisoc_portrait_scene_capture_process(handle, _param->src_YUV,  _param->dst_YUV,_param->mask);
 				PScene_LOGI("capture process rc%d", rc);
 				return rc;
             }else{
