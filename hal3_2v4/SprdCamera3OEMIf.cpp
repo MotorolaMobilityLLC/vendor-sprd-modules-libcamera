@@ -5807,19 +5807,15 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         if (parm4 != NULL) {
             ae_info = (cmr_u32 *)parm4;
             ae_stab = ae_info[AE_CB_STABLE_INDEX];
-            HAL_LOGD("ae_info = 0x%x, ae_stab = %d", ae_info, ae_stab);
+            HAL_LOGV("ae_info = 0x%x, ae_stab = %d", ae_info, ae_stab);
         }
-        if (ae_stab == 1 && controlInfo.ae_comp_change && controlInfo.ae_lock &&
-			controlInfo.ae_comp_effect_frames_cnt != 0) {
+        if (ae_stab == 1 && controlInfo.ae_lock &&
+            controlInfo.ae_comp_effect_frames_cnt != 0) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
             mSetting->setAeCONTROLTag(&controlInfo);
             goto exit;
-        } else if (ae_stab == 0 && controlInfo.ae_lock &&
-                   controlInfo.ae_comp_change) {
-            controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_SEARCHING;
-            mSetting->setAeCONTROLTag(&controlInfo);
-            goto exit;
         }
+
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
             controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_CONVERGED;
             // callback ae info
@@ -5835,8 +5831,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
 
         exit:
-        HAL_LOGV("CAMERA_EVT_CB_AE_STAB_NOTIFY, ae_state = %d",
-                 controlInfo.ae_state);
+        HAL_LOGD("ae_stab = %d, ae_state = %d",
+                 ae_stab, controlInfo.ae_state);
         break;
     case CAMERA_EVT_CB_AE_LOCK_NOTIFY:
         // controlInfo.ae_state = ANDROID_CONTROL_AE_STATE_LOCKED;
@@ -6553,7 +6549,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_CONTROL_AE_LOCK: {
         uint8_t ae_lock;
         ae_lock = controlInfo.ae_lock;
-        HAL_LOGD("ANDROID_CONTROL_AE_LOCK, ae_lock = %d", ae_lock);
+        HAL_LOGD("ANDROID_CONTROL_AE_LOCK, ae_lock = %d ae_mode = %d ae_state= %d",
+            ae_lock, controlInfo.ae_mode, controlInfo.ae_state);
         if (ae_lock && controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
                      ae_lock);
