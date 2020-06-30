@@ -39,9 +39,9 @@
 #define ISP_READ_MODE_ID_MAX 13
 
 #define ISP_NR_BLOCK_MIN 0
-#define ISP_ISO_NUM_MAX 7
+#define ISP_ISO_NUM_MAX 9
 #define ISP_ISO_NUM_MIN 0
-#define ISP_AE_WEIGHT_TYPE_MAX 2
+#define ISP_AE_WEIGHT_TYPE_MAX 3
 #define ISP_AE_WEIGHT_TYPE_MIN 0
 #define ISP_SCENE_NUM_MAX 7
 #define ISP_SCENE_NUM_MIN 0
@@ -51,6 +51,8 @@
 #define ISP_LNC_TAB_MIN 0
 #define ISP_SIMULATOR_MAX 0xffff
 #define ISP_SIMULATOR_MIN 0x0000
+#define PM_VER_SW_MASK (0x0000FFFF)
+
 enum {
 	CMD_START_PREVIEW = 1,
 	CMD_STOP_PREVIEW,
@@ -154,19 +156,22 @@ typedef enum {
 } DENOISE_SCENE_NAME;
 
 enum {
-	MODE_DUMP_DATA,
-	MODE_NR_DATA,
-	MODE_ISP_ID = 0x02,
-	MODE_TUNE_INFO = 0x03,
-	MODE_AE_TABLE,
-	MODE_AE_WEIGHT_TABLE,
-	MODE_AE_SCENE_TABLE,
-	MODE_AE_AUTO_ISO_TABLE,
-	MODE_LNC_DATA,
-	MODE_AWB_DATA,
-	MODE_NOTE_DATA,
-	MODE_LIB_INFO_DATA,
-	MODE_MAX
+    MODE_DUMP_DATA,
+    MODE_NR_DATA,
+    MODE_ISP_ID = 0x02,
+    MODE_TUNE_INFO = 0x03,
+    MODE_AE_TABLE = 0x04,
+    MODE_AE_WEIGHT_TABLE = 0x05,
+    MODE_AE_SCENE_TABLE = 0x06,
+    MODE_AE_AUTO_ISO_TABLE = 0x07,
+    MODE_LNC_DATA = 0x08,
+    MODE_AWB_DATA = 0x09,
+    MODE_NOTE_DATA = 0x0A,
+    MODE_LIB_INFO_DATA = 0x0B,
+    MODE_SIMULATOR = 0x0C,
+    MODE_SEARCH_TABLE = 0x0D,
+    MODE_AE_FLASH_TABLE = 0x0E,
+    MODE_MAX
 };
 
 enum {
@@ -1787,6 +1792,146 @@ cmr_s32 send_libuse_info_param(struct isp_data_header_read * read_cmd, struct ms
 	return rtn;
 }
 
+/* AE 3.0 INTERFACE start */
+cmr_s32 get_ae3x_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if (NULL != data_len) {
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len;
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae3x_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u32 *tmp_ptr = NULL;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if (NULL != data_addr) {
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].index, sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain, sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure, sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len);
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae3x_table_cus_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if ((flicker < AE_FLICKER_NUM)  && (iso < AE_ISO_NUM_NEW) && data_len) {
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure_len;
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae3x_table_cus_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u32 *tmp_ptr = NULL;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+
+	if ((flicker < AE_FLICKER_NUM)  && (iso < AE_ISO_NUM_NEW) && data_addr) {
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index, sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain, sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].gain_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure, sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.ae_table_cus[flicker][iso].exposure_len);
+	}
+	return rtn;
+}
+cmr_s32 get_ae3x_weight_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u16 weight = sub_type;
+	*data_len = *data_len + sensor_raw_fix->ae3x.weight_tab[weight].len;
+	return rtn;
+}
+
+cmr_s32 get_ae3x_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u16 weight = sub_type;
+	if (NULL != data_addr)
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.weight_tab[weight].weight_table, sensor_raw_fix->ae3x.weight_tab[weight].len);
+	return rtn;
+}
+
+cmr_s32 get_ae3x_scene_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
+	cmr_u8 flicker = sub_type & 0x0f;
+
+	if (NULL != data_len) {
+		*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len;
+		*data_len = *data_len + sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len;
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae3x_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u32 *tmp_ptr = NULL;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
+	cmr_u8 flicker = sub_type & 0x0f;
+
+	if (NULL != data_addr && flicker < 2) {
+		memcpy(data_addr, sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info, sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) data_addr + sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len);
+		memcpy(tmp_ptr, sensor_raw_fix->ae3x.scene_info[scene][flicker].index, sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len);
+		memcpy((void *)tmp_ptr, (void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].gain, sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len);
+		memcpy(tmp_ptr, sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure, sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len);
+		tmp_ptr = (cmr_u32 *) ((cmr_u8 *) tmp_ptr + sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len);
+	}
+	return rtn;
+}
+
+cmr_s32 get_ae3x_reserve_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	*data_len = *data_len + sensor_raw_fix->ae3x.ae_reserve.len;
+	return rtn;
+}
+
+cmr_s32 get_ae3x_reserve_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u32 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+
+	if (NULL != data_addr)
+		memcpy((void *)data_addr, (void *)sensor_raw_fix->ae3x.ae_reserve.ae_reserve, sensor_raw_fix->ae3x.ae_reserve.len);
+
+	return rtn;
+}
+/* AE 3.0 INTERFACE end */
+
 cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
@@ -2047,170 +2192,441 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	}
 	ISP_LOGV("read_cmd->main_type = %d", read_cmd->main_type);
 
-	switch (read_cmd->main_type) {
-	case MODE_ISP_ID:
-		{
-			cmr_u8 i;
-			cmr_u8 isp_mode_num = 0;
-			cmr_u8 data_mode_id[ISP_READ_MODE_ID_MAX] = { 0 };
+    if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000B) {
+        /* AE 3.0 VERSION */
+        switch (read_cmd->main_type) {
+        case MODE_ISP_ID:
+        {
+            cmr_u8 i;
+            cmr_u8 isp_mode_num = 0;
+            cmr_u8 data_mode_id[ISP_READ_MODE_ID_MAX] = { 0 };
 
-			for (i = 0; i < ISP_READ_MODE_ID_MAX; i++) {
-				if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
-					data_mode_id[isp_mode_num] = i;
-					isp_mode_num++;
-				}
-			}
-			data_len = isp_mode_num;
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				memcpy((cmr_u8 *) data_addr, data_mode_id, isp_mode_num);
-				rtn = send_isp_mode_id_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
-	case MODE_TUNE_INFO:
-		{
-			struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
-			data_len = mode_param_info.len;
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				data_addr[0] = mode_param->version_id;
-				data_addr[1] = mode_id;
-				data_addr[2] = mode_param->width;
-				data_addr[3] = mode_param->height;
-				memcpy((void *)((cmr_u8 *) data_addr), (void *)mode_param_info.addr, mode_param_info.len);
-				rtn = send_tune_info_param(read_cmd, msg, data_addr, data_len);
-				if (0x00 != rtn) {
-					ISP_LOGE("fail to send tune_info");
-				}
-			}
-		}
-		break;
-	case MODE_AE_TABLE:
-		{
-			if (NULL == sensor_raw_fix) {
-				return rtn;
-			}
-			data_len = 0;
-			rtn = get_ae_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				rtn = get_ae_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
-				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
-	case MODE_AE_WEIGHT_TABLE:
-		{
-			if (NULL == sensor_raw_fix) {
-				return rtn;
-			}
-			data_len = 0;
-			rtn = get_ae_weight_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				rtn = get_ae_weight_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
-				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
-	case MODE_AE_SCENE_TABLE:
-		{
-			if (NULL == sensor_raw_fix) {
-				return rtn;
-			}
-			data_len = 0;
-			rtn = get_ae_scene_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				rtn = get_ae_scene_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
-				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
-	case MODE_AE_AUTO_ISO_TABLE:
-		{
-			if (NULL == sensor_raw_fix) {
-				return rtn;
-			}
-			data_len = 0;
-			rtn = get_ae_auto_iso_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				rtn = get_ae_auto_iso_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
-				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
-	case MODE_LNC_DATA:
-		{
-			if (NULL == sensor_raw_fix) {
-				return rtn;
-			}
-			data_len = 0;
-			rtn = get_lnc_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				rtn = get_lnc_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
-				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
+            for (i = 0; i < ISP_READ_MODE_ID_MAX; i++) {
+                if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
+                    data_mode_id[isp_mode_num] = i;
+                    isp_mode_num++;
+                    ISP_LOGD("mode no.%d, ptr %p, len %d\n", i,
+                    sensor_raw_info_ptr->mode_ptr[i].addr,
+                    sensor_raw_info_ptr->mode_ptr[i].len);
+                }
+            }
+            data_len = isp_mode_num;
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                ISP_LOGD("mode num %d, ptr %p, len %d\n", isp_mode_num, data_addr, data_len);
+                memcpy((cmr_u8 *) data_addr, data_mode_id, isp_mode_num);
+                rtn = send_isp_mode_id_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_TUNE_INFO:
+        {
+            struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
+            data_len = mode_param_info.len;
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                data_addr[0] = mode_param->version_id;
+                data_addr[1] = mode_id;
+                data_addr[2] = mode_param->width;
+                data_addr[3] = mode_param->height;
+                ISP_LOGD("send mode no.%d, ptr %p, len %d\n", mode_id,
+                mode_param_info.addr, mode_param_info.len);
+                memcpy((void *)((cmr_u8 *) data_addr), (void *)mode_param_info.addr, mode_param_info.len);
+                rtn = send_tune_info_param(read_cmd, msg, data_addr, data_len);
+                if (0x00 != rtn) {
+                    ISP_LOGE("fail to send tune_info");
+                }
+            }
+            break;
+        }
+        case MODE_AE_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae3x_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            ISP_LOGD("read MODE_AE_TABLE data %p, len %d, sub_type 0x%x\n",
+            data_addr, data_len, read_cmd->sub_type);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                rtn = get_ae3x_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_AE_FLASH_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae3x_table_cus_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            ISP_LOGD("read MODE_AE_FLASH_TABLE data %p, len %d, sub_type 0x%x\n",
+            data_addr, data_len, read_cmd->sub_type);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                rtn = get_ae3x_table_cus_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_AE_WEIGHT_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae3x_weight_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                rtn = get_ae3x_weight_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_AE_SCENE_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae3x_scene_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                rtn = get_ae3x_scene_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_AE_AUTO_ISO_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae3x_reserve_length(sensor_raw_fix, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                rtn = get_ae3x_reserve_param(sensor_raw_fix, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_LNC_DATA:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_lnc_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                rtn = get_lnc_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_NOTE_DATA:
+        {
+            data_len = sensor_note_param.node_len;
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memcpy((cmr_u8 *) data_addr, sensor_note_param.note, data_len);
+                rtn = send_note_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_LIB_INFO_DATA:
+        {
+            data_len = sizeof(struct sensor_libuse_info);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (NULL != data_addr) {
+                memcpy((cmr_u8 *) data_addr, sensor_raw_info_ptr->libuse_info, data_len);
+                rtn = send_libuse_info_param(read_cmd, msg, data_addr, data_len);
+            } else {
+                ISP_LOGE("fail to get libuse!");
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    } else {
+        /* AE 2.0 VERSION */
+        switch (read_cmd->main_type) {
+        case MODE_ISP_ID:
+        {
+            cmr_u8 i;
+            cmr_u8 isp_mode_num = 0;
+            cmr_u8 data_mode_id[ISP_READ_MODE_ID_MAX] = { 0 };
+
+            for (i = 0; i < ISP_READ_MODE_ID_MAX; i++) {
+                if (NULL != sensor_raw_info_ptr->mode_ptr[i].addr) {
+                    data_mode_id[isp_mode_num] = i;
+                    isp_mode_num++;
+                }
+            }
+            data_len = isp_mode_num;
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                memcpy((cmr_u8 *) data_addr, data_mode_id, isp_mode_num);
+                rtn = send_isp_mode_id_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_TUNE_INFO:
+        {
+            struct isp_mode_param *mode_param = (struct isp_mode_param *)mode_param_info.addr;
+            data_len = mode_param_info.len;
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                data_addr[0] = mode_param->version_id;
+                data_addr[1] = mode_id;
+                data_addr[2] = mode_param->width;
+                data_addr[3] = mode_param->height;
+                memcpy((void *)((cmr_u8 *) data_addr), (void *)mode_param_info.addr, mode_param_info.len);
+                rtn = send_tune_info_param(read_cmd, msg, data_addr, data_len);
+                if (0x00 != rtn) {
+                    ISP_LOGE("fail to send tune_info");
+                }
+            }
+            break;
+        }
+        case MODE_AE_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae_table_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                rtn = get_ae_table_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_AE_WEIGHT_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae_weight_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                rtn = get_ae_weight_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_AE_SCENE_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae_scene_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                rtn = get_ae_scene_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_AE_AUTO_ISO_TABLE:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_ae_auto_iso_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                rtn = get_ae_auto_iso_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_LNC_DATA:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_lnc_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                rtn = get_lnc_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
 #if 0
-	case MODE_AWB_DATA:
-		{
-			if (NULL == sensor_raw_fix) {
-				return rtn;
-			}
-			data_len = 0;
-			rtn = get_awb_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			memset((cmr_u8 *) data_addr, 0x00, data_len);
-			if (0 != data_len && NULL != data_addr && NULL != mode_param) {
-				rtn = get_awb_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
-				rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
+        case MODE_AWB_DATA:
+        {
+            if (NULL == sensor_raw_fix) {
+                return rtn;
+            }
+            data_len = 0;
+            rtn = get_awb_param_length(sensor_raw_fix, read_cmd->sub_type, &data_len);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            memset((cmr_u8 *) data_addr, 0x00, data_len);
+            if (0 != data_len && NULL != data_addr && NULL != mode_param) {
+                rtn = get_awb_param(sensor_raw_fix, read_cmd->sub_type, data_addr);
+                rtn = send_fix_param(read_cmd, msg, data_addr, data_len);
+            }
+        }
+        break;
 #endif
-	case MODE_NOTE_DATA:
-		{
-			data_len = sensor_note_param.node_len;
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (0 != data_len && NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				memcpy((cmr_u8 *) data_addr, sensor_note_param.note, data_len);
-				rtn = send_note_param(read_cmd, msg, data_addr, data_len);
-			}
-		}
-		break;
-	case MODE_LIB_INFO_DATA:
-		{
-			data_len = sizeof(struct sensor_libuse_info);
-			data_addr = (cmr_u32 *) ispParserAlloc(data_len);
-			if (NULL != data_addr) {
-			        memset((cmr_u8 *) data_addr, 0x00, data_len);
-				memcpy((cmr_u8 *) data_addr, sensor_raw_info_ptr->libuse_info, data_len);
-				rtn = send_libuse_info_param(read_cmd, msg, data_addr, data_len);
-			} else {
-				ISP_LOGE("fail to get libuse!");
-			}
-		}
-		break;
-	default:
-		break;
-	}
+        case MODE_NOTE_DATA:
+        {
+            data_len = sensor_note_param.node_len;
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (0 != data_len && NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                memcpy((cmr_u8 *) data_addr, sensor_note_param.note, data_len);
+                rtn = send_note_param(read_cmd, msg, data_addr, data_len);
+            }
+            break;
+        }
+        case MODE_LIB_INFO_DATA:
+        {
+            data_len = sizeof(struct sensor_libuse_info);
+            data_addr = (cmr_u32 *) ispParserAlloc(data_len);
+            if (NULL != data_addr) {
+                memset((cmr_u8 *) data_addr, 0x00, data_len);
+                memcpy((cmr_u8 *) data_addr, sensor_raw_info_ptr->libuse_info, data_len);
+                rtn = send_libuse_info_param(read_cmd, msg, data_addr, data_len);
+            } else {
+                ISP_LOGE("fail to get libuse!");
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
 
 	ispParserFree(data_addr);
 	return rtn;
 }
+
+/* AE 3.0 INTERFACE start */
+cmr_s32 down_ae3x_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len);
+	offset_tmp += sensor_raw_fix->ae3x.ae_tab[flicker][iso].index_len;
+	memcpy((void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len);
+	offset_tmp += sensor_raw_fix->ae3x.ae_tab[flicker][iso].gain_len;
+	memcpy((void *)sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len);
+	offset_tmp += sensor_raw_fix->ae3x.ae_tab[flicker][iso].exposure_len;
+	return rtn;
+}
+
+cmr_s32 down_ae3x_table_cus_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
+	cmr_u8 iso = sub_type & 0x0f;
+	cmr_u32 offset_tmp = 0;
+	struct ae_exp_gain_tab_3_x *cur_tab;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr || (flicker >= AE_FLICKER_NUM) || (iso >= AE_ISO_NUM_NEW)) {
+		ISP_LOGE("fail to check param %p %p, sub_type 0x%x\n", sensor_raw_fix, data_addr, sub_type);
+		rtn = 0x01;
+		return rtn;
+	}
+	cur_tab = &sensor_raw_fix->ae3x.ae_table_cus[flicker][iso];
+	memcpy((void *)cur_tab->index, (void *)(data_addr + offset_tmp), cur_tab->index_len);
+	offset_tmp += cur_tab->index_len;
+	memcpy((void *)cur_tab->gain, (void *)(data_addr + offset_tmp), cur_tab->gain_len);
+	offset_tmp += cur_tab->gain_len;
+	memcpy((void *)cur_tab->exposure, (void *)(data_addr + offset_tmp), cur_tab->exposure_len);
+	offset_tmp += cur_tab->exposure_len;
+
+	return rtn;
+}
+
+cmr_s32 down_ae3x_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 weight = sub_type;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae3x.weight_tab[weight].weight_table, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.weight_tab[weight].len);
+	return rtn;
+}
+
+cmr_s32 down_ae3x_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u8 scene = (sub_type >> 4) & 0x0f;
+	cmr_u8 flicker = sub_type & 0x0f;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len);
+	offset_tmp += sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len;
+	memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].index, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len);
+	offset_tmp += sensor_raw_fix->ae3x.scene_info[scene][flicker].index_len;
+	memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].gain, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len);
+	offset_tmp += sensor_raw_fix->ae3x.scene_info[scene][flicker].gain_len;
+	memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].exposure_len);
+	return rtn;
+}
+
+cmr_s32 down_ae3x_reserve_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u8 * data_addr)
+{
+	cmr_s32 rtn = 0x00;
+	cmr_u32 offset_tmp = 0;
+
+	if (NULL == sensor_raw_fix || NULL == data_addr) {
+		ISP_LOGE("fail to check param");
+		rtn = 0x01;
+		return rtn;
+	}
+	memcpy((void *)sensor_raw_fix->ae3x.ae_reserve.ae_reserve, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.ae_reserve.len);
+	return rtn;
+}
+/* AE 3.0 INTERFACE end */
 
 cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
 {
@@ -2363,373 +2779,795 @@ cmr_s32 down_awb_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_
 
 cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * write_cmd, struct msg_head_tag * msg, cmr_u8 * isp_data_ptr, cmr_s32 value)
 {
-	cmr_s32 rtn = 0x00;
-	static cmr_u8 *data_addr = NULL;
-	static cmr_u32 offset = 0;
-	static cmr_u32 flag = 0;
-	cmr_u32 data_len = 0;
+    cmr_s32 rtn = 0x00;
+    static cmr_u8 *data_addr = NULL;
+    static cmr_u32 offset = 0;
+    static cmr_u32 flag = 0;
+    cmr_u32 data_len = 0;
+    cmr_u32 buf_len = 0;
 
-	cmr_u8 mode_id = write_cmd->isp_mode;
-	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
-	struct isp_mode_param_info mode_param_info;
-	struct sensor_raw_note_info sensor_note_param;
-	struct msg_head_tag *msg_ret = (struct msg_head_tag *)(eng_rsp_diag + 1);
-	memset(&mode_param_info, 0, sizeof(struct isp_mode_param_info));
-	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
-	cmr_u32 len_msg = sizeof(struct msg_head_tag);
-	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
+    cmr_u8 mode_id = write_cmd->isp_mode;
+    struct sensor_raw_fix_info *sensor_raw_fix = NULL;
+    struct isp_mode_param_info mode_param_info;
+    struct sensor_raw_note_info sensor_note_param;
+    struct msg_head_tag *msg_ret = (struct msg_head_tag *)(eng_rsp_diag + 1);
+    memset(&mode_param_info, 0, sizeof(struct isp_mode_param_info));
+    memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
+    cmr_u32 len_msg = sizeof(struct msg_head_tag);
+    cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
-	if (MAX_MODE_NUM > mode_id) {
-		if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
-			sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
-		} else {
-			return ISP_ERROR;
-		}
-		if (NULL != sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
-			mode_param_info = sensor_raw_info_ptr->mode_ptr[mode_id];
-		} else {
-			return ISP_ERROR;
-		}
-		if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
-			sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
-		} else {
-			return ISP_ERROR;
-		}
-	}
-	if (!isp_data_ptr) {
-		ISP_LOGE("fail to check param");
-		return ISP_ERROR;
-	}
-	ISP_LOGV("down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
+    SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+    struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+    if (MAX_MODE_NUM > mode_id) {
+        if (NULL != sensor_raw_info_ptr->fix_ptr[mode_id]) {
+            sensor_raw_fix = sensor_raw_info_ptr->fix_ptr[mode_id];
+        } else {
+            return ISP_ERROR;
+        }
+        if (NULL != sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
+            mode_param_info = sensor_raw_info_ptr->mode_ptr[mode_id];
+        } else {
+            return ISP_ERROR;
+        }
+        if (NULL != sensor_raw_info_ptr->note_ptr[mode_id].note) {
+            sensor_note_param = sensor_raw_info_ptr->note_ptr[mode_id];
+        } else {
+            return ISP_ERROR;
+        }
+    }
+    if (!isp_data_ptr) {
+        ISP_LOGE("fail to check param");
+        return ISP_ERROR;
+    }
+    ISP_LOGV("down_isp_param write_cmd->main_type %d\n", write_cmd->main_type);
 
-	switch (write_cmd->main_type) {
-	case MODE_TUNE_INFO:
-		{
-			if (0 == flag) {
-				data_len = mode_param_info.len;
-				ISP_LOGV("mode tune data len = %d", data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
-				if (!data_addr) {
-					ISP_LOGE("fail to do malloc mem!");
-				}
-				data_len = msg->len - len_msg - len_data_header;
-				memcpy(data_addr + offset, isp_data_ptr, data_len);
-				offset += data_len;
-				flag++;
-			} else {
-				data_len = msg->len - len_msg - len_data_header;
-				memcpy(data_addr + offset, isp_data_ptr, data_len);
-				offset += data_len;
-			}
-			if (0x01 == write_cmd->packet_status) {
-				offset = 0;
-				flag = 0;
-				if (MAX_MODE_NUM > mode_id){
-					if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
-						ISP_LOGV(" sensor raw mode ptr addr is , mode_id=%d", mode_id);
-					}
-					memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
-				}
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-		}
-		break;
-	case MODE_AE_TABLE:
-		{
-			if (0 == flag) {
-				if (NULL == sensor_raw_fix) {
-					ISP_LOGE("fail to check param!");
-					rtn = 0x01;
-					return rtn;
-				}
-				rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_table_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
+    if((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000B) {
+        /* AE 3.0 version */
+        switch (write_cmd->main_type) {
+        case MODE_TUNE_INFO:
+        {
+            ISP_LOGV("MODE_TUNE_INFO \n");
+            if (0 == flag) {
+                buf_len = mode_param_info.len;
+                data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+                ISP_LOGD("mode no.%d, mode tune buf len = %d, data_addr %p, mode addr %p",
+                mode_id, buf_len, data_addr, mode_param_info.addr);
+                if (!data_addr) {
+                    ISP_LOGE("fail to do malloc mem!");
+                    return ISP_ERROR;
+                }
+                flag++;
+            }
 
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-		}
-		break;
-	case MODE_AE_WEIGHT_TABLE:
-		{
-			ISP_LOGV("MODE_AE_WEIGHT_TABLE0 \n");
-			if (0 == flag) {
-				if (NULL == sensor_raw_fix) {
-					ISP_LOGE("fail to check param!");
-					rtn = 0x01;
-					return rtn;
-				}
-				rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                offset = 0;
+                flag = 0;
+                if (MAX_MODE_NUM > mode_id){
+                    if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
+                        ISP_LOGE("sensor raw mode ptr addr is NULL, mode_id=%d", mode_id);
+                    } else {
+                        memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
+                    }
+                }
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_TABLE:
+        {
+            ISP_LOGV("MODE_AE_TABLE \n");
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae3x_table_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                ISP_LOGD("write MODE_AE_TABLE data %p, len %d, sub_type 0x%x\n",
+                data_addr, data_len, write_cmd->sub_type);
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae3x_table_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
 
-			ISP_LOGV("MODE_AE_WEIGHT_TABLE1 \n");
-			if (0x01 == write_cmd->packet_status) {
-				ISP_LOGV("MODE_AE_WEIGHT_TABLE2 \n");
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_weight_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_FLASH_TABLE:
+        {
+            ISP_LOGV("MODE_AE_FLASH_TABLE\n");
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae3x_table_cus_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                ISP_LOGD("write MODE_AE_FLASH_TABLE data %p, len %d, sub_type 0x%x\n",
+                data_addr, data_len, write_cmd->sub_type);
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae3x_table_cus_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
 
-				ISP_LOGV("MODE_AE_WEIGHT_TABLE3 \n");
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("MODE_AE_WEIGHT_TABLE4\n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-		}
-		break;
-	case MODE_AE_SCENE_TABLE:
-		{
-			if (0 == flag) {
-				if (NULL == sensor_raw_fix) {
-					ISP_LOGE("fail to check param!");
-					rtn = 0x01;
-					return rtn;
-				}
-				rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_scene_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_WEIGHT_TABLE:
+        {
+            ISP_LOGV("MODE_AE_WEIGHT_TABLE \n");
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
 
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("MODE_AE_SCENE_TABLE \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-		}
-		break;
-	case MODE_AE_AUTO_ISO_TABLE:
-		{
-			if (0 == flag) {
-				if (NULL == sensor_raw_fix) {
-					ISP_LOGE("fail to check param!");
-					rtn = 0x01;
-					return rtn;
-				}
-				rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_ae_auto_iso_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae_weight_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
 
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("MODE_AE_AUTO_ISO_TABLE \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-		}
-		break;
-	case MODE_LNC_DATA:
-		{
-			if (0 == flag) {
-				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_lnc_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_SCENE_TABLE:
+        {
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &buf_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae_scene_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
 
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("MODE_LNC_DATA \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-		}
-		break;
-	case MODE_AWB_DATA:
-		{
-			if (0 == flag) {
-				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				rtn = down_awb_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
-				rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_AE_SCENE_TABLE \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_AUTO_ISO_TABLE:
+        {
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae3x_reserve_length(sensor_raw_fix, &buf_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae3x_reserve_param(sensor_raw_fix, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
 
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("MODE_AWB_DATA \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-			break;
-		}
-	case MODE_NOTE_DATA:
-		{
-			if (0 == flag) {
-				data_len = sensor_note_param.node_len;
-				data_addr = (cmr_u8 *) ispParserAlloc(data_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				offset = 0;
-				flag = 0;
-				if (MAX_MODE_NUM > mode_id)
-					memcpy(sensor_raw_info_ptr->note_ptr[mode_id].note, data_addr, sensor_raw_info_ptr->note_ptr[mode_id].node_len);
-				if (NULL != data_addr) {
-					free(data_addr);
-					data_addr = NULL;
-				}
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_AE_AUTO_ISO_TABLE \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_LNC_DATA:
+        {
+            if (0 == flag) {
+                buf_len = write_cmd->data_total_len;
+                data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_lnc_param(sensor_raw_fix, write_cmd->sub_type, data_addr, buf_len);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-			break;
-		}
-	case MODE_LIB_INFO_DATA:
-		{
-			if (0 == flag) {
-				data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
-				if (NULL == data_addr) {
-					ISP_LOGE("fail to malloc mem!");
-					rtn = 0x01;
-					return rtn;
-				}
-				flag++;
-			}
-			data_len = msg->len - len_msg - len_data_header;
-			memcpy(data_addr + offset, isp_data_ptr, data_len);
-			offset += data_len;
-			if (0x01 == write_cmd->packet_status) {
-				flag = 0;
-				offset = 0;
-				memcpy(sensor_raw_info_ptr->libuse_info, data_addr, sizeof(struct sensor_libuse_info));
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_LNC_DATA \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AWB_DATA:
+        {
+            if (0 == flag) {
+                buf_len = write_cmd->data_total_len;
+                data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_awb_param(sensor_raw_fix, write_cmd->sub_type, data_addr, buf_len);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
 
-				eng_rsp_diag[value] = 0x00;
-				value = value + 0x04;
-				msg_ret->len = value - 1;
-				eng_rsp_diag[value] = 0x7e;
-				ISP_LOGV("MODE_LIB_INFO_DATA: \n");
-				rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
-			}
-			break;
-		}
-	default:
-		break;
-	}
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_AWB_DATA \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_NOTE_DATA:
+        {
+            if (0 == flag) {
+                buf_len = sensor_note_param.node_len;
+                data_addr = (cmr_u8 *) ispParserAlloc(buf_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                offset = 0;
+                flag = 0;
+                if (MAX_MODE_NUM > mode_id)
+                    memcpy(sensor_raw_info_ptr->note_ptr[mode_id].note, data_addr, sensor_raw_info_ptr->note_ptr[mode_id].node_len);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_LIB_INFO_DATA:
+        {
+            if (0 == flag) {
+                buf_len = write_cmd->data_total_len;
+                data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            if ((offset + data_len) > buf_len) {
+                ISP_LOGE("out range of total_len(%d). cur %d, end %d\n", buf_len, offset, offset + data_len);
+                data_len = buf_len - offset;
+            }
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                if (buf_len < sizeof(struct sensor_libuse_info)) {
+                    ISP_LOGE("total data len is smaller %d\n", buf_len);
+                    memcpy(sensor_raw_info_ptr->libuse_info, data_addr, buf_len);
+                } else {
+                    memcpy(sensor_raw_info_ptr->libuse_info, data_addr, sizeof(struct sensor_libuse_info));
+                }
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_LIB_INFO_DATA: \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    } else {
+        /* AE 2.0 version */
+        switch (write_cmd->main_type) {
+        case MODE_TUNE_INFO:
+        {
+            ISP_LOGV("MODE_TUNE_INFO \n");
+            if (0 == flag) {
+                data_len = mode_param_info.len;
+                ISP_LOGV("mode tune data len = %d", data_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+                if (!data_addr) {
+                    ISP_LOGE("fail to do malloc mem!");
+                }
+                data_len = msg->len - len_msg - len_data_header;
+                memcpy(data_addr + offset, isp_data_ptr, data_len);
+                offset += data_len;
+                flag++;
+            } else {
+                data_len = msg->len - len_msg - len_data_header;
+                memcpy(data_addr + offset, isp_data_ptr, data_len);
+                offset += data_len;
+            }
+            if (0x01 == write_cmd->packet_status) {
+                offset = 0;
+                flag = 0;
+                if (MAX_MODE_NUM > mode_id){
+                    if (!sensor_raw_info_ptr->mode_ptr[mode_id].addr) {
+                        ISP_LOGV(" sensor raw mode ptr addr is , mode_id=%d", mode_id);
+                    }
+                    memcpy(sensor_raw_info_ptr->mode_ptr[mode_id].addr, data_addr, sensor_raw_info_ptr->mode_ptr[mode_id].len);
+                }
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_TABLE:
+        {
+            if (0 == flag) {
+                ISP_LOGV("MODE_AE_TABLE \n");
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae_table_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae_table_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_WEIGHT_TABLE:
+        {
+            ISP_LOGV("MODE_AE_WEIGHT_TABLE0 \n");
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae_weight_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+
+            ISP_LOGV("MODE_AE_WEIGHT_TABLE1 \n");
+            if (0x01 == write_cmd->packet_status) {
+                ISP_LOGV("MODE_AE_WEIGHT_TABLE2 \n");
+                flag = 0;
+                offset = 0;
+                rtn = down_ae_weight_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+
+                ISP_LOGV("MODE_AE_WEIGHT_TABLE3 \n");
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_AE_WEIGHT_TABLE4\n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_SCENE_TABLE:
+        {
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae_scene_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae_scene_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_AE_SCENE_TABLE \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AE_AUTO_ISO_TABLE:
+        {
+            if (0 == flag) {
+                if (NULL == sensor_raw_fix) {
+                    ISP_LOGE("fail to check param!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                rtn = get_ae_auto_iso_param_length(sensor_raw_fix, write_cmd->sub_type, &data_len);
+                data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_ae_auto_iso_param(sensor_raw_fix, write_cmd->sub_type, data_addr);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_AE_AUTO_ISO_TABLE \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_LNC_DATA:
+        {
+            if (0 == flag) {
+                data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_lnc_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_LNC_DATA \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_AWB_DATA:
+        {
+            if (0 == flag) {
+                data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                rtn = down_awb_param(sensor_raw_fix, write_cmd->sub_type, data_addr, write_cmd->data_total_len);
+                rtn = isp_ioctl(isp_handler, ISP_CTRL_IFX_PARAM_UPDATE | ISP_TOOL_CMD_ID, data_addr);
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_AWB_DATA \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_NOTE_DATA:
+        {
+            if (0 == flag) {
+                data_len = sensor_note_param.node_len;
+                data_addr = (cmr_u8 *) ispParserAlloc(data_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                offset = 0;
+                flag = 0;
+                if (MAX_MODE_NUM > mode_id)
+                    memcpy(sensor_raw_info_ptr->note_ptr[mode_id].note, data_addr, sensor_raw_info_ptr->note_ptr[mode_id].node_len);
+                if (NULL != data_addr) {
+                    free(data_addr);
+                    data_addr = NULL;
+                }
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("CMD_WRITE_ISP_PARAM3 \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        case MODE_LIB_INFO_DATA:
+        {
+            if (0 == flag) {
+                data_addr = (cmr_u8 *) ispParserAlloc(write_cmd->data_total_len);
+                if (NULL == data_addr) {
+                    ISP_LOGE("fail to malloc mem!");
+                    rtn = 0x01;
+                    return rtn;
+                }
+                flag++;
+            }
+            data_len = msg->len - len_msg - len_data_header;
+            memcpy(data_addr + offset, isp_data_ptr, data_len);
+            offset += data_len;
+            if (0x01 == write_cmd->packet_status) {
+                flag = 0;
+                offset = 0;
+                memcpy(sensor_raw_info_ptr->libuse_info, data_addr, sizeof(struct sensor_libuse_info));
+
+                eng_rsp_diag[value] = 0x00;
+                value = value + 0x04;
+                msg_ret->len = value - 1;
+                eng_rsp_diag[value] = 0x7e;
+                ISP_LOGV("MODE_LIB_INFO_DATA: \n");
+                rtn = send(sockfd, eng_rsp_diag, value + 1, 0);
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
 	return rtn;
 }
 
