@@ -1886,14 +1886,6 @@ void SprdCamera3SinglePortrait::CaptureThread::updateBlurWeightParams(
                         (MAX_F_FUMBER + 1 - fnum / 2) * 255 / MAX_F_FUMBER;
                     mUpdatePreviewWeightParams = true;
                 }
-            } else {
-                fnum = (fnum)*MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
-                if (mPreviewWeightParams.f_number != fnum) {
-                    mPreviewWeightParams.f_number = fnum;
-                    mCaptureWeightParams.f_number = fnum;
-                    mCapture2WeightParams.f_number = fnum;
-                    mUpdatePreviewWeightParams = true;
-                }
             }
         }
         if (metaSettings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {

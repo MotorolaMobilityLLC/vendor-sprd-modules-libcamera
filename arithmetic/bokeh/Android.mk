@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
+ifneq ($(TARGET_BOARD_BOKEH_MODE_SUPPORT)_$(TARGET_BOARD_PORTRAIT_SINGLE_SUPPORT)_$(TARGET_BOARD_PORTRAIT_SUPPORT), false_false_false)
 ifneq ($(PLATFORM_VERSION),4.4.4)
 LOCAL_PATH := $(call my-dir)
 
