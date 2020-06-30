@@ -451,6 +451,7 @@ static cmr_int camera_fdr_handle_for_yuv(void *data, void *privdata);
 static cmr_int camera_mm_dvfs_init(cmr_handle oem_handle);
 static cmr_int camera_mm_dvfs_deinit(cmr_handle oem_handle);
 #endif
+static cmr_int cmr_preview_waitencode(cmr_handle oem_handle);
 
 cmr_int camera_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
                       cmr_u32 *size_ptr, cmr_u32 *sum_ptr, cmr_uint *phy_addr,
@@ -1379,6 +1380,7 @@ void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
     case CMR_JPEG_ENC_DONE:
         camera_take_snapshot_step(CMR_STEP_JPG_ENC_E);
         temp_evt = SNAPSHOT_EVT_JPEG_ENC_DONE;
+        cxt->jpg_encode = JPEG_ENCODE_DONE;
         break;
     case CMR_JPEG_DEC_DONE:
         temp_evt = SNAPSHOT_EVT_JPEG_DEC_DONE;
@@ -7783,6 +7785,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         if (mean->is_sync != 0) {
             dst->buf_size = enc_dst.buf_size;
         }
+        cxt->jpg_encode = JPEG_ENCODING;
     } else {
         enc_dst.buf_size = (enc_dst.size.height * enc_dst.size.width) * 3;
         enc_dst.buf_size = enc_dst.buf_size / 2;
@@ -12681,6 +12684,32 @@ exit:
     return ret;
 }
 
+cmr_int cmr_preview_waitencode(cmr_handle oem_handle) {
+    ATRACE_BEGIN(__FUNCTION__);
+    cmr_int time = 0;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if (cxt->jpg_encode == JPEG_ENCODING) {
+        CMR_LOGI("wait for jpeg encode");
+        while (1) {
+            if (time > JPG_ENCODE_WAIT_TIMEOUT) {
+                CMR_LOGE("wait jpg encode timeout");
+                ret = -1;
+                goto exit;
+            }
+            time++;
+            if (cxt->jpg_encode == JPEG_ENCODE_DONE) {
+                CMR_LOGI("jpeg encode ok wait up");
+                break;
+            }
+            usleep(1000);
+        }
+   }
+exit:
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 
@@ -12720,7 +12749,8 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     }
 
     camera_get_iso_value(oem_handle);
-
+    if (cxt->jpg_encode == JPEG_ENCODING)
+        cmr_preview_waitencode(oem_handle);
     prev_ret = cmr_preview_stop(cxt->prev_cxt.preview_handle, cxt->camera_id);
     if (prev_ret) {
         CMR_LOGE("failed to stop prev %ld", ret);

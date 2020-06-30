@@ -54,6 +54,7 @@ extern "C" {
 /* should only define just one of the following two */
 #define MIRROR_FLIP_ROTATION_BY_JPEG 1
 //#define MIRROR_FLIP_BY_ISP                         1
+#define JPG_ENCODE_WAIT_TIMEOUT 2000
 
 struct debug_context {
     cmr_handle debug_handle;
@@ -334,6 +335,13 @@ struct camera_settings {
     pthread_mutex_t isp_alg_mutex;
 };
 
+typedef enum {
+    JPEG_ENCODE_MIN = 0,
+    JPEG_ENCODING,
+    JPEG_ENCODE_DONE,
+    JPEG_ENCODE_MAX,
+} jpg_encode_status;
+
 struct camera_context {
     /*for the device OEM layer owned*/
     struct grab_context grab_cxt;
@@ -510,6 +518,7 @@ struct camera_context {
     cmr_uint is_high_res_mode;
     /*for ynr room ratio*/
     float zoom_ratio;
+    jpg_encode_status jpg_encode;
     cmr_u8 nightscepro_flag;
 };
 
