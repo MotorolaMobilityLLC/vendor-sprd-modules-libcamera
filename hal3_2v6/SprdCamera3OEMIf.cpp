@@ -4003,7 +4003,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         cmr_u32 bv;
         cmr_u32 ct;
         cmr_u32 iso;
-        CMR_LOGD("thomas face fb mode=%d",face_beauty.fb_mode);
+        CMR_LOGD("face fb mode=%d",face_beauty.fb_mode);
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
         ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
@@ -4113,6 +4113,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                                &beauty_image);
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
                                &beautyLevels);
+        CMR_LOGD("face fb mode=%d",face_beauty.fb_mode);
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_PROCESS_CMD,
                                &(faceInfo.face_num));
         flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,

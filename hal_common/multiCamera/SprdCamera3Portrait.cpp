@@ -2492,6 +2492,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         HAL_LOGE("no mem!");
         return rc;
     }
+    sem_wait(&mPortrait->mFaceinfoSignSem);
     mPortrait->mBokehAlgo->getPortraitMask(output_buf_addr, input_buf1_addr, 
                 mPortrait->mVcmStepsFixed, outPortraitMask);
     if(!outPortraitMask) {
@@ -2809,8 +2810,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings,
         }
         mbokehParm.cur_frame_number = cur_frame_number;
         mCapFaceInfoList.push_back(mbokehParm);
-
-        if (mSnapshotResultReturn) {
+        if (mSnapshotResultReturn && type == 1) {
             bokeh_params capfaceinfo;
             memset(&capfaceinfo,0,sizeof(bokeh_params));
             if (!mCapFaceInfoList.empty()){
@@ -2841,6 +2841,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings,
             }
 
             mBokehAlgo->setCapFaceParam((void *)&capfaceinfo);
+            sem_post(&mFaceinfoSignSem);
             mSnapshotResultReturn = false;
         }
 
@@ -3111,7 +3112,7 @@ int SprdCamera3Portrait::configureStreams(
     mDoPortrait = 0;
     mPrevPortrait = false;
     mbokehParm.f_number = 0;
-
+    sem_init(&mFaceinfoSignSem, 0, 0); 
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * PORTRAIT__MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
@@ -3543,6 +3544,8 @@ int SprdCamera3Portrait::processCaptureRequest(
             metaSettingsMain.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[7];
         facebeautylevel.largeLevel =
             metaSettingsMain.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[8];
+        CMR_LOGD("fb blemishLevel %d, smoothLevel %d, skinColor %d, lipLevel %d",
+            facebeautylevel.blemishLevel, facebeautylevel.smoothLevel, facebeautylevel.skinColor, facebeautylevel.lipLevel);
     }
 
     if((facebeautylevel.blemishLevel!=0)||(facebeautylevel.smoothLevel!=0)||
@@ -4671,6 +4674,7 @@ int SprdCamera3Portrait::_flush(const struct camera3_device *device) {
     Mutex::Autolock l(mFlushLock);
     Mutex::Autolock jcl(mJpegCallbackLock);
     mFlushing = true;
+    sem_destroy(&mFaceinfoSignSem);
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].dev);
 

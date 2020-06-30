@@ -399,6 +399,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     IBokehAlgo *mBokehAlgo;
     bool mIsHdrMode;
     bool mPortraitFlag;
+    sem_t mFaceinfoSignSem;
     int initialize(const camera3_callback_ops_t *callback_ops);
     int configureStreams(const struct camera3_device *device,
                          camera3_stream_configuration_t *stream_list);
