@@ -627,10 +627,14 @@ static cmr_int sp2509v_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("ms multi_mode %d",sns_drv_cxt->is_multi_mode);
 
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-    if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode != 0)
-        sp2509v_SetSlave_FrameSync(handle, param);
+        if (sns_drv_cxt->sensor_id == 2 && sns_drv_cxt->is_multi_mode != 0)
+            sp2509v_SetSlave_FrameSync(handle, param);
 #endif
+    }
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xac, 0x01);

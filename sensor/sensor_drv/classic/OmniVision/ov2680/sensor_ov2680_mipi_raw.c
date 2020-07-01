@@ -713,8 +713,14 @@ static cmr_int ov2680_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
     }
 #endif
-    if (2 == sns_drv_cxt->sensor_id && MODE_BOKEH == sns_drv_cxt->is_multi_mode) {
-        ov2680_drv_set_slave_FrameSync(handle, 0);
+
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
+        if (2 == sns_drv_cxt->sensor_id &&
+            MODE_BOKEH == sns_drv_cxt->is_multi_mode) {
+            ov2680_drv_set_slave_FrameSync(handle, 0);
+        }
     }
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);

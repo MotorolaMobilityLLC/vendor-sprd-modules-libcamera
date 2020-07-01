@@ -764,10 +764,16 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3047));
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3049));
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x315d));*/
+
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-//    imx586_drv_set_master_FrameSync(handle, param);
-// imx586_drv_set_slave_FrameSync(handle, param);
+        // imx586_drv_set_master_FrameSync(handle, param);
+        // imx586_drv_set_slave_FrameSync(handle, param);
 #endif
+    }
+
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);

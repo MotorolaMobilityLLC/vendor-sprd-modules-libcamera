@@ -661,9 +661,14 @@ static cmr_int gc030af_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-    gc030af_drv_set_master_FrameSync(handle, param);
+        gc030af_drv_set_master_FrameSync(handle, param);
 #endif
+    }
+
     /*TODO*/
     usleep(100 * 1000);
 

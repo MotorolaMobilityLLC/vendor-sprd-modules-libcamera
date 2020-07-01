@@ -988,8 +988,8 @@ static cmr_int ov32a1q_drv_stream_on(cmr_handle handle, cmr_uint param) {
 		ov32a1q_drv_set_xtalk_data(handle, param);
 
     char value2[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.framesync", value2, "on");
-    if (!strcmp(value2, "on")) {
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
 #if defined(CONFIG_DUAL_MODULE) && defined(OV32A1Q_USE_CPHY)
         if (sns_drv_cxt->is_multi_mode == MODE_BOKEH) {
             ov32a1q_drv_set_slave_FrameSync(handle, param);

@@ -786,7 +786,12 @@ static cmr_int ov8858_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5000, 0x06);
 
-    // ov8858_drv_set_master_FrameSync(handle, param);
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
+        // ov8858_drv_set_master_FrameSync(handle, param);
+    }
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
     /*delay*/

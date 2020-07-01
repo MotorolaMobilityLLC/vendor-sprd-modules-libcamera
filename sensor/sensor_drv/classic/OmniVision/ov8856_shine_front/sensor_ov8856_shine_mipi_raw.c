@@ -724,8 +724,12 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5004, 0x00);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x36);
         }
-        if (sns_drv_cxt->sensor_id == 2)
-            ov8856s_SetSlave_FrameSync(handle, param);
+        char value2[PROPERTY_VALUE_MAX];
+        property_get("vendor.cam.hw.framesync.on", value2, "1");
+        if (!strcmp(value2, "1")) {
+            if (sns_drv_cxt->sensor_id == 2)
+                ov8856s_SetSlave_FrameSync(handle, param);
+        }
     } else {
         /* ov8856 sharkl5 front camera module, sharkl3 back_slave and front new
          * camera module, or SENSOR_OV8856_TELE, 2 lane, IMAGE_NORMAL_MIRROR */
@@ -748,16 +752,6 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
         }
     }
 
-#if 0 // defined(CONFIG_DUAL_MODULE)
-//#ifndef SENSOR_OV8856_TELE
-    if (sns_drv_cxt->sensor_id == 2)
-        ov8856s_SetSlave_FrameSync(handle, param);
-//#endif
-#endif
-
-#if 0 // defined(CONFIG_DUAL_MODULE)
-	ov8856_drv_set_master_FrameSync(handle, param);
-#endif
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);

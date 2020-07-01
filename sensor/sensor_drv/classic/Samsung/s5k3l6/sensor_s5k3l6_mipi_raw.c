@@ -707,9 +707,13 @@ static cmr_int s5k3l6_drv_stream_on(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("E");
 
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-    s5k3l6_drv_set_master_FrameSync(handle, param);
+        s5k3l6_drv_set_master_FrameSync(handle, param);
 #endif
+    }
 
     /*TODO*/
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C1E, 0x0100);

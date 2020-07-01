@@ -743,7 +743,12 @@ static cmr_int sp250a_drv_stream_on(cmr_handle handle, cmr_uint param)
 #endif
 
     SENSOR_LOGI("E");
-    //sp250a_drv_set_master_FrameSync(handle,param);
+
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
+        //sp250a_drv_set_master_FrameSync(handle,param);
+    }
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x01);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xac, 0x01);

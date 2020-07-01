@@ -715,7 +715,13 @@ static cmr_int ov9282_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #endif
 
     SENSOR_LOGI("E");
-    ov9282_drv_set_slave_FrameSync(handle, param);
+
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
+        ov9282_drv_set_slave_FrameSync(handle, param);
+    }
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
  //   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4242, 0x00);
     /*delay*/

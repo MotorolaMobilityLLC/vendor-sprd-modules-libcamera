@@ -726,9 +726,11 @@ static cmr_int ov7251_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 
     SENSOR_LOGI("E");
-	ov7251_drv_set_strobe(handle, param);
-	char value0[PROPERTY_VALUE_MAX];
-	char value1[PROPERTY_VALUE_MAX];
+    ov7251_drv_set_strobe(handle, param);
+    char value0[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX];
+    char value3[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value3, "1");
     //ov7251_drv_write_exposure_dummy(handle, 3261,360, 1);
 	// ov7251_dual_drv_write_exposure_dummy(handle, 3261,360, 1);
 	 property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
@@ -742,17 +744,25 @@ static cmr_int ov7251_drv_stream_on(cmr_handle handle, cmr_uint param) {
 		  property_get("persist.vendor.cam.ae.ir.gain", value1, "1280");
 		  ov7251_drv_write_exposure_dummy(handle, exposure, dummy, size_index);
 		  ov7251_drv_write_gain(handle, atoi(value1));
-		  ov7251_drv_set_slave_FrameSync(handle, param);
+		  if (!strcmp(value3, "1")) {
+		      ov7251_drv_set_slave_FrameSync(handle, param);
+		  }
 		  hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
 	}else{
 #if defined(CONFIG_ISP_2_7)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x00);
-    ov7251_drv_set_slave_FrameSync(handle, param);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
+    if (!strcmp(value3, "1")) {
+        ov7251_drv_set_slave_FrameSync(handle, param);
+    }
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
 #else
-	ov7251_drv_set_master_FrameSync(handle, param);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);//8);
+    if (!strcmp(value3, "1")) {
+        ov7251_drv_set_master_FrameSync(handle, param);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);
+    } else {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
+    }
 #endif
 	}
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);

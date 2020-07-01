@@ -731,6 +731,9 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5e00, 0x80);
     }
 
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+
     SENSOR_LOGI("E:ov8856_otp_module_vendor_id = 0x%x, sensor_mode %d",
                 ov8856_otp_module_vendor_id, mode);
     if (ov8856_otp_module_vendor_id == 1) {
@@ -751,8 +754,11 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5004, 0x00);
             hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x376b, 0x36);
         }
-        if ((2 == sns_drv_cxt->sensor_id) && (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
-            ov8856_drv_SetSlave_FrameSync(handle, param);
+        if (!strcmp(value2, "1")) {
+            if ((2 == sns_drv_cxt->sensor_id) &&
+                (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
+                ov8856_drv_SetSlave_FrameSync(handle, param);
+            }
         }
     } else {
         /* ov8856 sharkl5 front camera module, sharkl3 back_slave and front new
@@ -776,19 +782,15 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
         }
     }
 
-#if 0 // defined(CONFIG_DUAL_MODULE)
-//#ifndef SENSOR_OV8856_TELE
-    if (sns_drv_cxt->sensor_id == 2)
-        ov8856_drv_SetSlave_FrameSync(handle, param);
-//#endif
-#endif
-
+    if (!strcmp(value2, "1")) {
 #if 1 // defined(CONFIG_DUAL_MODULE)
-	char value0[PROPERTY_VALUE_MAX];
-	property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
-	 if (!strcmp(value0, "1"))
-		ov8856_drv_set_master_FrameSync(handle, param);
+        char value0[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+        if (!strcmp(value0, "1"))
+            ov8856_drv_set_master_FrameSync(handle, param);
 #endif
+    }
+
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);

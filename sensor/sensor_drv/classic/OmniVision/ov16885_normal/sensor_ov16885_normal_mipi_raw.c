@@ -730,8 +730,8 @@ static cmr_int ov16885_normal_drv_stream_on(cmr_handle handle, cmr_uint param)
     }
 
     char value2[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.framesync", value2, "on");
-    if (!strcmp(value2, "on")) {
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
         if (sns_drv_cxt->is_multi_mode == MODE_BOKEH) {
             ov16885_normal_drv_set_master_FrameSync(handle, param);

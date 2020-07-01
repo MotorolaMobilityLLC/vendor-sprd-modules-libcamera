@@ -872,14 +872,19 @@ static cmr_int gc5035_drv_stream_on(cmr_handle handle, cmr_uint param)
 	
 	SENSOR_LOGI("E");
 
-    if ((2 == sns_drv_cxt->sensor_id) && (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
+        if ((2 == sns_drv_cxt->sensor_id) &&
+            (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
 #if defined(CONFIG_DUAL_MODULE)
-        gc5035_drv_set_slave_FrameSync(handle, param);
-        sleep_time = 3 * (sns_drv_cxt->sensor_ev_info.preview_framelength *
-                          sns_drv_cxt->line_time_def / 1000000) + 10;
-        usleep(sleep_time * 1000);
-        SENSOR_LOGI("slave gc5035 Hw-FrameSync delay %d ms", sleep_time);
+            gc5035_drv_set_slave_FrameSync(handle, param);
+            sleep_time = 3 * (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                              sns_drv_cxt->line_time_def / 1000000) + 10;
+            usleep(sleep_time * 1000);
+            SENSOR_LOGI("slave gc5035 Hw-FrameSync delay %d ms", sleep_time);
 #endif
+        }
     }
 
 	/*TODO*/

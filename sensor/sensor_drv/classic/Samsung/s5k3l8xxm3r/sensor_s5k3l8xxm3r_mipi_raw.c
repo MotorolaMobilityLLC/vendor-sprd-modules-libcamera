@@ -651,9 +651,14 @@ static cmr_int s5k3l8xxm3r_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
   SENSOR_LOGI("E");
 
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-  s5k3l8xxm3r_drv_set_master_FrameSync(handle, param);
+        s5k3l8xxm3r_drv_set_master_FrameSync(handle, param);
 #endif
+    }
+
 /*TODO*/
 #ifdef CONFIG_FLIP
   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0103);

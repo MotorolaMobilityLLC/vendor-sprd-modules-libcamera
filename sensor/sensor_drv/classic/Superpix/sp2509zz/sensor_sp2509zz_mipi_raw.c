@@ -642,11 +642,15 @@ static cmr_int sp2509zz_drv_stream_on(cmr_handle handle, cmr_uint param) {
   if (sns_drv_cxt->current_state_machine == SENSOR_STATE_STREAM_ON) {
 return 0;
 }*/
+
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-    if (sns_drv_cxt->sensor_id == 2)
-        sp2509zz_SetSlave_FrameSync(handle, param);
-// sp2509zz_SetMaster_FrameSync(handle, param);
+        if (sns_drv_cxt->sensor_id == 2)
+            sp2509zz_SetSlave_FrameSync(handle, param);
 #endif
+    }
 
     /*TODO*/
     // usleep(100* 1000);

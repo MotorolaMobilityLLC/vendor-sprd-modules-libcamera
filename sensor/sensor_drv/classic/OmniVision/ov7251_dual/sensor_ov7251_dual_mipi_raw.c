@@ -715,18 +715,23 @@ static cmr_int ov7251_dual_drv_stream_on(cmr_handle handle, cmr_uint param) {
 		 ov7251_dual_drv_write_gain(handle, atoi(value1));
 	 }
 
+    char value3[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value3, "1");
+    if (!strcmp(value3, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
 #if defined(CONFIG_ISP_2_7)
-	if (!strcmp(value0, "1"))
-		ov7251_dual_drv_set_slave_FrameSync(handle, param);
-	else
-		ov7251_dual_drv_set_master_FrameSync(handle, param);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);
+        if (!strcmp(value0, "1"))
+            ov7251_dual_drv_set_slave_FrameSync(handle, param);
+        else
+            ov7251_dual_drv_set_master_FrameSync(handle, param);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x0a);
 #else
-    ov7251_dual_drv_set_slave_FrameSync(handle, param);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
+        ov7251_dual_drv_set_slave_FrameSync(handle, param);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3005, 0x08);
 #endif
 #endif
+    }
+
    if (1){//(sns_drv_cxt->sensor_id % 2 == 0){
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3820, 0x40);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3821, 0x04);

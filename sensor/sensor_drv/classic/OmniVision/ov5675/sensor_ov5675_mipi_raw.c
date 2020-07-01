@@ -763,8 +763,15 @@ static cmr_int ov5675_drv_stream_on(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E:module_id=%d", sns_drv_cxt->module_id);
-    if (sns_drv_cxt->module_id == MODULE_SUNNY)
-        ov5675_drv_set_frame_sync(handle, 0);
+
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
+        if (sns_drv_cxt->module_id == MODULE_SUNNY) {
+            ov5675_drv_set_frame_sync(handle, 0);
+        }
+    }
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
     return 0;

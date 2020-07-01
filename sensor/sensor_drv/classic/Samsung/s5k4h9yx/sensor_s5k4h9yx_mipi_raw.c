@@ -654,14 +654,18 @@ static cmr_int s5k4h9yx_drv_stream_on(cmr_handle handle, cmr_uint param)
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 	cmr_int ret = 0;
-	
+
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
 #if 1//defined(CONFIG_DUAL_MODULE)
-	char value0[PROPERTY_VALUE_MAX];
-	property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
-	 if (!strcmp(value0, "1"))
-		s5k4h9yx_drv_set_master_FrameSync(handle, param);
-	//s5k4h9yx_drv_set_slave_FrameSync(handle, param);
-#endif   
+        char value0[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.ae.ir.manual", value0, "0");
+        if (!strcmp(value0, "1"))
+            s5k4h9yx_drv_set_master_FrameSync(handle, param);
+#endif
+    }
+
 	/*TODO*/
    if (sns_drv_cxt->sensor_id % 2 == 0)
          hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0101);

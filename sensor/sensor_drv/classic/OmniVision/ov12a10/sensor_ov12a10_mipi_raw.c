@@ -730,10 +730,14 @@ static cmr_int ov12a10_drv_stream_on(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4503, 0x80);
     }
 
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-    ov12a10_drv_set_master_FrameSync(handle, param);
-// ov12a10_drv_set_slave_FrameSync(handle, param);
+        ov12a10_drv_set_master_FrameSync(handle, param);
 #endif
+    }
+
     /*TODO*/
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);

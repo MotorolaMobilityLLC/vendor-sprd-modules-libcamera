@@ -854,9 +854,15 @@ static cmr_int ov13855_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #endif
 
     SENSOR_LOGI("E");
+
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-    ov13855_drv_set_master_FrameSync(handle, param);
+        ov13855_drv_set_master_FrameSync(handle, param);
 #endif
+    }
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
     /*delay*/
     usleep(10 * 1000);

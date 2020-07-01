@@ -605,7 +605,11 @@ static cmr_int hi846_wide_drv_stream_on(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     SENSOR_LOGI("E");
 
-    // hi846_wide_drv_set_master_FrameSync(handle, param);
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("vendor.cam.hw.framesync.on", value1, "1");
+    if (!strcmp(value1, "1")) {
+        // hi846_wide_drv_set_master_FrameSync(handle, param);
+    }
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0a00, 0x0100);
 
