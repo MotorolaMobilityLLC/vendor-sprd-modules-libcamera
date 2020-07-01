@@ -6918,9 +6918,15 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
              zoomRatio, mIsUltraWideMode);
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
-    if (mIsFovFusionMode == true && (mCameraId == 0 ||
-       (mCameraId == 3 && zoomRatio < 1.09))) {
+    if (mIsFovFusionMode == true &&
+        (SprdCamera3Setting::s_setting[sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK)]
+                      .otpInfo.otp_size != 0) && (mCameraId == 0 ||
+        (mCameraId == 3 && zoomRatio < 1.09))) {
        mZoomInfo.zoom_info.capture_aspect_ratio = 1.0;
+    } else if (mIsFovFusionMode == true &&
+       (SprdCamera3Setting::s_setting[sensorGetRole(MODULE_OPTICSZOOM_TELE_BACK)]
+                      .otpInfo.otp_size == 0)) {
+       mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
     } else {
        mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
     }
