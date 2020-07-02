@@ -413,10 +413,10 @@
 			/*blf_en*/
 			0x01,
 			/*wfindex*/
-			0x05,
+			0x03,
 			/*eurodist*/
 			{
-				0x0F,0x04,0x01/*0-2*/
+				0x0F,0x03,0x01/*0-2*/
 			},
 			/*reserved*/
 			{
@@ -882,7 +882,7 @@
 	/*ynr_region*/
 	{
 		/*max_radius*/
-		0x16BC,
+		0x0B5E,
 		/*radius*/
 		0x06D4,
 		/*imgcetx*/
@@ -890,7 +890,7 @@
 		/*imgcety*/
 		0x06D4,
 		/*dist_interval*/
-		0x000003FA,
+		0x00000122,
 
 	},
 	/*ynr_txt_calc*/
@@ -1000,7 +1000,7 @@
 			0x0A,
 			/*eurodist*/
 			{
-				0x0F,0x08,0x08/*0-2*/
+				0x0F,0x07,0x06/*0-2*/
 			},
 			/*reserved*/
 			{
