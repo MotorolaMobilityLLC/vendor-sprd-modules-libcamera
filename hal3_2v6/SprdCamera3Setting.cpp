@@ -2641,6 +2641,11 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                            "persist.vendor.cam.higher.macrophoto.enable"));
     }
 
+    // 31 eis_pro video
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.eis.pro",
+                           "persist.vendor.cam.dv.ba.eispro.enable"));
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
