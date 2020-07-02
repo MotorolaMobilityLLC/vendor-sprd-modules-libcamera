@@ -2742,6 +2742,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, LSC_CMD_DO_POSTPROCESS, &post_gain_param, fwstart_info->lsc_result_address_new);
 		}
 		memcpy(cxt->fwstart_new_scaled_table, fwstart_info->lsc_result_address_new, chnl_gain_num * 4 * sizeof(cmr_u16));
+		memcpy(cxt->lsc_buffer, fwstart_info->lsc_result_address_new, chnl_gain_num * 4 * sizeof(cmr_u16));
 		//planar2interlace for driver use
 		if (cxt->is_planar == 1) {
 			lsc_table_planar2interlace(fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new, fwstart_info->gain_height_new,
