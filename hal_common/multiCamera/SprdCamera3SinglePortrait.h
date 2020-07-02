@@ -389,7 +389,7 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
                            void *output_addr);
         int capBlurHandle(buffer_handle_t *input1, void *input1_addr,
                           void *input2, buffer_handle_t *output,
-                          void *output_addr);
+                          void *output_addr, void *mask);
 
         void CallSnapBackResult(camera3_buffer_status_t buffer_status);
         // This queue stores matched buffer as frame_matched_info_t

@@ -781,58 +781,15 @@ exit:
 int SprdPortraitAlgo::capPortraitDepthRun(void *para1, void *para2, void *para3,
                                           void *para4, void *input_buf1_addr,
                                           void *output_buf, int vcmCurValue,
-                                          int vcmUp, int vcmDown) {
+                                          int vcmUp, int vcmDown, void *mask) {
     HAL_LOGI(" SprdPortraitAlgo ==>E");
     int rc = NO_ERROR;
-    int f_number = 0;
-    weightmap_param weightParams;
-    ProcDepthInputMap depthData;
-    PortaitCapProcParams wParams;
     InoutYUV yuvData;
-
-    if (!para1 || !para3 || !para4) {
-        HAL_LOGE(" para is null");
-        rc = BAD_VALUE;
-        return rc;
-    }
-    memset(&depthData, 0, sizeof(ProcDepthInputMap));
-    memset(&wParams, 0, sizeof(PortaitCapProcParams));
     memset(&yuvData, 0, sizeof(InoutYUV));
-
-    depthData.mainMap = para4;
-    depthData.subMap = para3;
-    wParams.DisparityImage = NULL;
-    wParams.VCM_cur_value = vcmCurValue;
-    memcpy(&wParams.golden_vcm_data, &mPortraitCapParam.relbokeh_oem_data,
-           sizeof(struct af_golden_vcm_data));
-
-    wParams.version = 1;
-    wParams.roi_type = 2;
-
-    f_number = mPortraitCapParam.f_number;
-    wParams.F_number = (MAX_F_FUMBER + 1 - f_number) * 255 / MAX_F_FUMBER;
-    wParams.sel_x = mPortraitCapParam.sel_x * mSize.capture_w / mSize.preview_w;
-    wParams.sel_y = mPortraitCapParam.sel_y * mSize.capture_h / mSize.preview_h;
-    wParams.CircleSize = 50;
-    wParams.valid_roi = mPortraitCapParam.portrait_param.valid_roi;
-    wParams.total_roi = mPortraitCapParam.portrait_param.face_num;
-    memcpy(&wParams.x1, &mPortraitCapParam.portrait_param.x1,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    memcpy(&wParams.x2, &mPortraitCapParam.portrait_param.x2,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    memcpy(&wParams.y1, &mPortraitCapParam.portrait_param.y1,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    memcpy(&wParams.y2, &mPortraitCapParam.portrait_param.y2,
-           mPortraitCapParam.portrait_param.face_num * sizeof(int));
-    wParams.rear_cam_en = mPortraitCapParam.portrait_param.rear_cam_en; // true
-    wParams.rotate_angle = mPortraitCapParam.portrait_param.mRotation;  //--
-    wParams.camera_angle = mPortraitCapParam.portrait_param.camera_angle;
-    wParams.mobile_angle = mPortraitCapParam.portrait_param.mobile_angle;
 
     yuvData.Src_YUV = (unsigned char *)input_buf1_addr;
     yuvData.Dst_YUV = (unsigned char *)output_buf;
-    rc = sprd_portrait_capture_process(mPortraitHandle, &depthData, &wParams,
-                                       &yuvData, para1, 1);
+    rc = sprd_portrait_capture_process(mPortraitHandle, &yuvData, mask, 1);
 
 exit:
     HAL_LOGI(" X");
@@ -1464,13 +1421,14 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
     return rc;
 }
 
-int SprdPortraitAlgo::getPortraitMask(void *output_buff, void *input_buf1_addr,
+int SprdPortraitAlgo::getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr,
                                       int vcmCurValue, unsigned char *result) {
     /*get portrait_mask*/
     HAL_LOGD("E");
     int rc = NO_ERROR;
     int f_number = 0;
     weightmap_param weightParams;
+    ProcDepthInputMap depthData;
     PortaitCapProcParams wParams;
     InoutYUV yuvData;
 
@@ -1480,8 +1438,11 @@ int SprdPortraitAlgo::getPortraitMask(void *output_buff, void *input_buf1_addr,
         return rc;
     }
     memset(&wParams, 0, sizeof(PortaitCapProcParams));
+    memset(&depthData, 0, sizeof(ProcDepthInputMap));
     memset(&yuvData, 0, sizeof(InoutYUV));
 
+    depthData.mainMap = para2;
+    depthData.subMap = para1;
     wParams.DisparityImage = NULL;
     wParams.VCM_cur_value = vcmCurValue;
     memcpy(&wParams.golden_vcm_data, &mPortraitCapParam.relbokeh_oem_data,
@@ -1515,8 +1476,8 @@ int SprdPortraitAlgo::getPortraitMask(void *output_buff, void *input_buf1_addr,
     rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
                                              &maskSize);
 
-    rc = sprd_portrait_capture_process_lpt(mPortraitHandle, NULL, &wParams,
-                                           &yuvData, NULL, 1, result);
+    rc = sprd_portrait_capture_get_mask(mPortraitHandle, &depthData, &wParams,
+                                           &yuvData, result);
 
     HAL_LOGD("x");
     return rc;

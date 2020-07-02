@@ -59,7 +59,7 @@ class SprdPortraitAlgo : public IBokehAlgo {
 
     int capPortraitDepthRun(void *para1, void *para2, void *para3, void *para4,
                             void *input_buf1_addr, void *output_buf,
-                            int vcmCurValue, int vcmUp, int vcmDown);
+                            int vcmCurValue, int vcmUp, int vcmDown, void *mask);
     int deinitPortrait();
 
     int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
@@ -85,13 +85,11 @@ class SprdPortraitAlgo : public IBokehAlgo {
 
     void setFaceInfo(int *angle, int *pose, int *fd_score);
 
-    void getPortraitMask();
-
     int initFaceBeautyParams();
 
     int deinitFaceBeauty();
 
-    int getPortraitMask(void *output_buff, void *input_buf1_addr, 
+    int getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr, 
                     int vcmCurValue, unsigned char *result);
 
   private:

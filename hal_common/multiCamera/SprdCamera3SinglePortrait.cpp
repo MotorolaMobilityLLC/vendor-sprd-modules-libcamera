@@ -1013,7 +1013,7 @@ int SprdCamera3SinglePortrait::CaptureThread::prevBlurHandle(
 
 int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
     buffer_handle_t *input1, void *input1_addr, void *input2,
-    buffer_handle_t *output, void *output_addr) {
+    buffer_handle_t *output, void *output_addr, void *mask) {
     int ret = 0;
     unsigned char *srcYUV = NULL;
     unsigned char *destYUV = NULL;
@@ -1035,41 +1035,6 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
         ret = NO_ERROR;
     }
     HAL_LOGD("mAlgorithmFlag %d", mAlgorithmFlag);
-    if (mAlgorithmFlag) {
-        ret = sprd_portrait_capture_get_mask_info(mBlurApi[1]->mHandle, &mWeightWidth,
-                                                  &mWeightHeight, &mBuffSize);
-        if(mBuffSize != mWeightSize){
-            if(mOutWeightBuff != NULL){
-                free(mOutWeightBuff);
-            }
-            mOutWeightBuff = (unsigned short *)malloc(mBuffSize);
-            memset(mOutWeightBuff, 0, mBuffSize);
-            mWeightSize = mBuffSize;
-        }
-    }
-    PortaitCapProcParams wParams;
-    memset(&wParams, 0, sizeof(PortaitCapProcParams));
-    wParams.DisparityImage = NULL;
-    wParams.version = mCaptureWeightParams.version;
-    wParams.roi_type = mCaptureWeightParams.roi_type;
-    wParams.F_number = mCaptureWeightParams.f_number;
-    wParams.sel_x = mCaptureWeightParams.sel_x;
-    wParams.sel_y = mCaptureWeightParams.sel_y;
-    wParams.CircleSize = 50;
-    wParams.valid_roi = mCaptureWeightParams.valid_roi;
-    wParams.total_roi = mCaptureWeightParams.total_roi;
-    memcpy(&wParams.x1, &mCaptureWeightParams.x1,
-            wParams.total_roi * sizeof(int));
-    memcpy(&wParams.x2, &mCaptureWeightParams.x2,
-            wParams.total_roi * sizeof(int));
-    memcpy(&wParams.y1, &mCaptureWeightParams.y1,
-            wParams.total_roi * sizeof(int));
-    memcpy(&wParams.y2, &mCaptureWeightParams.y2,
-            wParams.total_roi * sizeof(int));
-    wParams.rear_cam_en = mCaptureWeightParams.rear_cam_en;   // true
-    wParams.rotate_angle = mCaptureWeightParams.rotate_angle; //--
-    wParams.camera_angle = mCaptureWeightParams.camera_angle;
-    wParams.mobile_angle = mCaptureWeightParams.mobile_angle;
 
     InoutYUV yuvData;
     memset(&yuvData, 0, sizeof(InoutYUV));
@@ -1095,9 +1060,8 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
 
     int64_t blurStart = systemTime();
     if (mAlgorithmFlag) {
-        ret = sprd_portrait_capture_process(mBlurApi[1]->mHandle, NULL,
-                                            &wParams, &yuvData,
-                                            mOutWeightBuff, 1);
+        ret = sprd_portrait_capture_process(mBlurApi[1]->mHandle, &yuvData,
+                                            mask, 1);
     } else {
         memcpy(destYUV, srcYUV, mSinglePortrait->mCaptureWidth *
                                     mSinglePortrait->mCaptureHeight * 3 /
@@ -1285,7 +1249,7 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
         if(portrait_flag){
             ret = capBlurHandle(combo_buffer, combo_buff_addr,
                             mSinglePortrait->m_pNearYuvBuffer, output_buffer,
-                            output_buff_addr);
+                            output_buff_addr, (void *)outPortraitMask);
         }
         if(facebeauty_flag){
             if(!portrait_flag){
@@ -4016,8 +3980,8 @@ int SprdCamera3SinglePortrait::CaptureThread:: getPortraitMask(void *output_buff
     rc = sprd_portrait_capture_get_mask_info(mBlurApi[1]->mHandle, &maskW, &maskH,
                                              &maskSize);
 
-    rc = sprd_portrait_capture_process_lpt(mBlurApi[1]->mHandle, NULL, &wParams,
-                                           &yuvData, NULL, 1, result);
+    rc = sprd_portrait_capture_get_mask(mBlurApi[1]->mHandle, NULL, &wParams,
+                                           &yuvData, result);
 
     HAL_LOGD("X");
     return rc;

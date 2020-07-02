@@ -682,7 +682,7 @@ int SprdBokehAlgo::initPortraitParams(BokehSize *size,
 
 int SprdBokehAlgo::capPortraitDepthRun(
     void *para1, void *para2, void *para3, void *para4, void *input_buf1_addr,
-    void *output_buf, int vcmCurValue, int vcmUp, int vcmDown) {
+    void *output_buf, int vcmCurValue, int vcmUp, int vcmDown, void *mask) {
     int rc = NO_ERROR;
     return rc;
 }
@@ -734,7 +734,7 @@ int SprdBokehAlgo::deinitFaceBeauty() {
     int rc = NO_ERROR;
     return rc;
 }
-int SprdBokehAlgo::getPortraitMask(void *output_buff, void *input_buf1_addr, 
+int SprdBokehAlgo::getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr, 
                     int vcmCurValue, unsigned char *result) {
     int rc = NO_ERROR;
     return rc;

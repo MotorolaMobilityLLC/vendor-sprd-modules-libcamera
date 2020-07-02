@@ -2511,15 +2511,11 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         goto exit;
     }
     sem_wait(&mPortrait->mFaceinfoSignSem);
-    mPortrait->mBokehAlgo->getPortraitMask(output_buf_addr, input_buf1_addr,
-                                           mPortrait->mVcmStepsFixed,
-                                           outPortraitMask);
-    if (mPortrait->mFlushing) {
-        rc = BAD_VALUE;
-        goto exit;
-    }
-
-    if (!outPortraitMask) {
+    mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                (void *)mPortrait->mScaleInfo.addr_vir.addr_y, 
+                output_buf_addr, input_buf1_addr, 
+                mPortrait->mVcmStepsFixed, outPortraitMask);
+    if(!outPortraitMask) {
         HAL_LOGE("no thing!");
     }
     /*do portrait*/
@@ -2532,18 +2528,16 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
                 mPortrait->mLastOnlieVcm == mPortrait->mVcmSteps) {
                 rc = mPortrait->mBokehAlgo->capPortraitDepthRun(
                     mPortrait->mDepthBuffer.snap_depth_buffer,
-                    mPortrait->mDepthBuffer.depth_out_map_table,
-                    input_buf2_addr,
-                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                    input_buf1_addr, output_buf_addr, mPortrait->mVcmStepsFixed,
-                    mPortrait->mlimited_infi, mPortrait->mlimited_macro);
+                    mPortrait->mDepthBuffer.depth_out_map_table, input_buf2_addr,
+                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y, input_buf1_addr,
+                    output_buf_addr, mPortrait->mVcmStepsFixed,
+                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, outPortraitMask);
             } else {
                 rc = mPortrait->mBokehAlgo->capPortraitDepthRun(
-                    mPortrait->mDepthBuffer.snap_depth_buffer, NULL,
-                    input_buf2_addr,
-                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                    input_buf1_addr, output_buf_addr, mPortrait->mVcmStepsFixed,
-                    mPortrait->mlimited_infi, mPortrait->mlimited_macro);
+                    mPortrait->mDepthBuffer.snap_depth_buffer, NULL, input_buf2_addr,
+                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y, input_buf1_addr,
+                    output_buf_addr, mPortrait->mVcmStepsFixed,
+                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, outPortraitMask);
                 HAL_LOGD("close online depth");
             }
             // memcpy(output_buf_addr,input_buf1_addr, ADP_BUFSIZE(*input_buf1));

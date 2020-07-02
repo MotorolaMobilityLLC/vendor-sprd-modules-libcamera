@@ -105,7 +105,7 @@ class IBokehAlgo {
     virtual int capPortraitDepthRun(void *para1, void *para2, void *para3,
                                     void *para4, void *input_buf1_addr,
                                     void *output_buf, int vcmCurValue,
-                                    int vcmUp, int vcmDown) = 0;
+                                    int vcmUp, int vcmDown, void *mask) = 0;
 
     virtual int deinitPortrait() = 0;
 
@@ -136,7 +136,7 @@ class IBokehAlgo {
 
     virtual int deinitFaceBeauty() = 0;
 
-    virtual int getPortraitMask(void *output_buff, void *input_buf1_addr, 
+    virtual int getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr, 
                     int vcmCurValue, unsigned char *result) = 0;
 
 };
