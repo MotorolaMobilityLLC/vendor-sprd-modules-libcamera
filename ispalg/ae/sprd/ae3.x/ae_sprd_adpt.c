@@ -2479,6 +2479,7 @@ static cmr_s32 flash_pre_start(struct ae_ctrl_cxt *cxt)
 	in.maxCapGain = cxt->ae_tbl_param.max_gain;
 	in.minCapExposure = cxt->ae_tbl_param.min_exp / SENSOR_LINETIME_BASE;
 	in.maxCapExposure = cxt->ae_tbl_param.max_exp / SENSOR_LINETIME_BASE;
+	ISP_LOGD("in.minGain %d  in.maxnGain %d in.minCapGain %d in.maxCapGain %d " ,in.minGain,in.maxGain,in.minCapGain,in.maxCapGain);
 	if(cxt->cur_flicker == 0) {
 		if(in.maxCapExposure> 600000) {
 			in.maxCapExposure= 600000;
@@ -4193,6 +4194,7 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 {
 	if (param) {
 		struct ae_set_iso *iso = param;
+		struct ae_scene_param_in scene_param_in;
 		if (iso->mode < AE_ISO_MAX) {
 			if(cxt->cur_status.adv_param.iso == iso->mode){
 				ISP_LOGD("iso mode no change,no need to set");
@@ -4244,6 +4246,8 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 			}
 		}
+		scene_param_in.iso_mod = cxt->manual_iso_value ;
+		ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
 		ISP_LOGD("manual_exp_time %d, manual_iso_value %d, exp %d, mode %d",cxt->manual_exp_time,cxt->manual_iso_value, cxt->cur_status.adv_param.mode_param.value.exp_gain[0], cxt->cur_status.adv_param.mode_param.mode);
 	}
 	return AE_SUCCESS;
