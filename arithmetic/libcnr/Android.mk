@@ -75,3 +75,7 @@ LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_CPU
 include $(BUILD_SHARED_LIBRARY)
 endif
 endif
+
+include $(CLEAR_VARS)
+include $(LOCAL_PATH)/../tests/Android.mk
+

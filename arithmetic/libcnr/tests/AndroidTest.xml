@@ -1,0 +1,13 @@
+<configuration description="Run native tests.">
+    <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
+        <option name="push-file" key="sprd_cnr_test_adpt" value="/data/local/tmp/sprd_cnr_test_adpt" />
+    </target_preparer>
+    <option name="test-tag" value="sprd_cnr_adpt_native_tests" />
+    <test class="com.android.tradefed.testtype.GTest" >
+        <option name="native-test-device-path" value="/data/local/tmp" />
+        <option name="module-name" value="sprd_cnr_test_adpt" />
+    </test>
+    <result_reporter class="com.android.tradefed.result.ConsoleResultReporter" />
+    <result_reporter class="com.android.tradefed.result.XmlResultReporter" />
+</configuration>
+
