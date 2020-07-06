@@ -890,11 +890,11 @@ struct sensor_nlm_lum {
 
 struct sensor_nlm_flat_thresh {
 	cmr_u16 flat_thresh_max0;
-	cmr_u16 flat_thresh_coef0;
+	cmr_s16 flat_thresh_coef0;
 	cmr_u16 flat_thresh_max1;
-	cmr_u16 flat_thresh_coef1;
+	cmr_s16 flat_thresh_coef1;
 	cmr_u16 flat_thresh_max2;
-	cmr_u16 flat_thresh_coef2;
+	cmr_s16 flat_thresh_coef2;
 };
 
 struct sensor_nlm_direction_addback {
