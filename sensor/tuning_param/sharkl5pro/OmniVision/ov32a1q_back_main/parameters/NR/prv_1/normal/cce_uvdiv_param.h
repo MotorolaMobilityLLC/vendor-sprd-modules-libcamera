@@ -718,9 +718,9 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_max_h*/
-		0x14,
+		0x1E,
 		/*chroma_max_l*/
-		0x0A,
+		0x14,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -773,7 +773,7 @@
 	/*uvdiv_ratio*/
 	{
 		/*chroma_ratio*/
-		0x40,
+		0x30,
 		/*luma_ratio*/
 		0x40,
 		/*ratio_0*/
@@ -781,7 +781,7 @@
 		/*ratio_1*/
 		0x38,
 		/*ratio_uv_min*/
-		0x30,
+		0x28,
 		/*ratio_y_min0*/
 		0x40,
 		/*ratio_y_min1*/
@@ -797,7 +797,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x01,
+	0x00,
 }
 ,
 /*param8.&BasePoint=1&*/
