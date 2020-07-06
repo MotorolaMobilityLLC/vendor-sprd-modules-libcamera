@@ -4,7 +4,7 @@
 /*sharkl3_sensor_cnr3_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*reserved0*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -75,7 +75,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0594,
+			0x0355,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -114,7 +114,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x02CA,
+			0x00D5,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -153,7 +153,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0165,
+			0x0035,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -192,7 +192,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x00B2,
+			0x000D,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -221,7 +221,7 @@
 /*sharkl3_sensor_cnr3_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*reserved0*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -253,7 +253,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x06AA,
+			0x0B28,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -331,7 +331,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x01AA,
+			0x00D5,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -370,7 +370,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x00D5,
+			0x0035,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -409,7 +409,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x006A,
+			0x000D,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -438,7 +438,7 @@
 /*sharkl3_sensor_cnr3_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*reserved0*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -470,7 +470,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0355,
+			0x0B28,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -509,7 +509,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x01AA,
+			0x0355,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -587,7 +587,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x006A,
+			0x0035,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -626,7 +626,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0035,
+			0x000D,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -4159,7 +4159,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0002,
+			0x3DB1,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -4198,7 +4198,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0001,
+			0x9ED8,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -4237,7 +4237,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0000,
+			0x4F6C,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -4276,7 +4276,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0000,
+			0x27B6,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -4315,7 +4315,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0000,
+			0x13CC,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -4376,7 +4376,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0xE060,
+			0x9A02,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -4415,7 +4415,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x7030,
+			0x4D01,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -4454,7 +4454,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x3818,
+			0x2680,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -4493,7 +4493,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1C0C,
+			0x1340,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -4532,7 +4532,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0DFB,
+			0x0999,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -4593,7 +4593,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x3A06,
+			0x0000,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -4632,7 +4632,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1D03,
+			0x0000,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -4671,7 +4671,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0E81,
+			0x0000,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -4710,7 +4710,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0740,
+			0x0000,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -4749,7 +4749,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x039D,
+			0x0000,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -4810,7 +4810,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0xA1C4,
+			0x0096,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -4849,7 +4849,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x50E2,
+			0x004B,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -4888,7 +4888,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x2871,
+			0x0025,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -4927,7 +4927,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1438,
+			0x0012,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -4966,7 +4966,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0A15,
+			0x0009,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -5027,7 +5027,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0xB936,
+			0x4D4F,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -5066,7 +5066,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x5C9B,
+			0x26A7,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -5105,7 +5105,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x2E4D,
+			0x9353,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -5144,7 +5144,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1726,
+			0x49A9,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -5183,7 +5183,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0B8B,
+			0x24BA,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -5244,7 +5244,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x5B7F,
+			0x1439,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -5283,7 +5283,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0xADBF,
+			0x8A1C,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -5322,7 +5322,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x56DF,
+			0x450E,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -5361,7 +5361,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x2B6F,
+			0x2287,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -5400,7 +5400,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x15A8,
+			0x1137,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
