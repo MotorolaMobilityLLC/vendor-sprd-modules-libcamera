@@ -6826,11 +6826,17 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprddefInfo.device_orietation);
     } break;
     case ANDROID_SPRD_FLASH_LCD_MODE: {
-        int8_t flashMode;
-        SPRD_DEF_Tag sprddefInfo;
-        mSetting->getSPRDDEFTag(&sprddefInfo);
-        mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode, &flashMode);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
+        if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON||
+            controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
+            controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) {
+            if (!isCapturing()) {
+                int8_t flashMode;
+                SPRD_DEF_Tag sprddefInfo;
+                mSetting->getSPRDDEFTag(&sprddefInfo);
+                mSetting->flashLcdModeToDrvFlashMode(sprddefInfo.sprd_flash_lcd_mode, &flashMode);
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, flashMode);
+            }
+        }
     } break;
     case ANDROID_SENSOR_EXPOSURE_TIME:
         if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
