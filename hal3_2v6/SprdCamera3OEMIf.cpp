@@ -7572,8 +7572,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_FLASH_MODE:
-        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-            mCameraId == 1 || mCameraId == 4 || mCameraId == 3) {
+        if (getMultiCameraMode() == MODE_MULTI_CAMERA || 0 <= mCameraId <= 16) {
             int8_t flashMode;
             FLASH_Tag flashInfo;
             mSetting->getFLASHTag(&flashInfo);
