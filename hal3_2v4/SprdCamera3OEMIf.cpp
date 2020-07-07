@@ -600,7 +600,6 @@ void SprdCamera3OEMIf::closeCamera() {
         WaitForCameraStop();
     }
 
-    pre_alloc_cap_mem_thread_deinit((void *)this);
     ZSLMode_monitor_thread_deinit((void *)this);
     log_monitor_thread_deinit();
 
@@ -5310,10 +5309,6 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
 
     switch (cb) {
     case CAMERA_EXIT_CB_PREPARE:
-        if (isPreAllocCapMem() && mSprdZslEnabled == 1) {
-            pre_alloc_cap_mem_thread_init((void *)this);
-        }
-
         if (mCaptureMode == CAMERA_NORMAL_MODE) {
             int fd = 0;
             uint32_t dst_width = mPreviewWidth;
@@ -9903,106 +9898,6 @@ uint32_t SprdCamera3OEMIf::isPreAllocCapMem() {
     } else {
         return 1;
     }
-}
-
-int SprdCamera3OEMIf::pre_alloc_cap_mem_thread_init(void *p_data) {
-    int ret = NO_ERROR;
-    pthread_attr_t attr;
-
-    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-
-    if (!obj) {
-        HAL_LOGE("obj null  error");
-        return -1;
-    }
-
-    HAL_LOGD("inited=%d", obj->mPreAllocCapMemInited);
-
-    if (!obj->mPreAllocCapMemInited) {
-        obj->mPreAllocCapMemInited = 1;
-        obj->mIsPreAllocCapMemDone = 0;
-        sem_init(&obj->mPreAllocCapMemSemDone, 0, 0);
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-        ret = pthread_create(&obj->mPreAllocCapMemThread, &attr,
-                             pre_alloc_cap_mem_thread_proc, (void *)obj);
-        pthread_attr_destroy(&attr);
-        if (ret) {
-            obj->mPreAllocCapMemInited = 0;
-            sem_destroy(&obj->mPreAllocCapMemSemDone);
-            HAL_LOGE("fail to send init msg");
-        }
-    }
-
-    return ret;
-}
-
-int SprdCamera3OEMIf::pre_alloc_cap_mem_thread_deinit(void *p_data) {
-    int ret = NO_ERROR;
-    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-
-    if (!obj) {
-        HAL_LOGE("obj null  error");
-        return -1;
-    }
-
-    HAL_LOGD("inited=%d", obj->mPreAllocCapMemInited);
-
-    if (obj->mPreAllocCapMemInited) {
-        sem_wait(&obj->mPreAllocCapMemSemDone);
-        sem_destroy(&obj->mPreAllocCapMemSemDone);
-        obj->mPreAllocCapMemInited = 0;
-        obj->mIsPreAllocCapMemDone = 0;
-    }
-    return ret;
-}
-
-void *SprdCamera3OEMIf::pre_alloc_cap_mem_thread_proc(void *p_data) {
-    cmr_u32 mem_size = 0;
-    int32_t buffer_id = 0;
-    cmr_u32 sum = 0;
-    int ret = 0;
-    cmr_uint phy_addr, virt_addr;
-    cmr_s32 fd;
-    SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-    HAL_LOGD("E");
-
-    if (!obj) {
-        HAL_LOGE("obj=%p", obj);
-        return NULL;
-    }
-
-    if (NULL == obj->mHalOem || NULL == obj->mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return NULL;
-    }
-
-    ret = obj->mHalOem->ops->camera_get_postprocess_capture_size(obj->mCameraId,
-                                                                 &mem_size, NULL);
-    if (ret) {
-        HAL_LOGE("camera_get_postprocess_capture_size failed");
-        obj->mIsPreAllocCapMem = 0;
-        goto exit;
-    }
-
-    obj->mSubRawHeapSize = mem_size;
-    sum = 1;
-    ret =
-        obj->Callback_CaptureMalloc(mem_size, sum, &phy_addr, &virt_addr, &fd);
-    if (ret) {
-        obj->mIsPreAllocCapMem = 0;
-        HAL_LOGE("Callback_CaptureMalloc failed");
-        goto exit;
-    }
-
-    obj->mIsPreAllocCapMemDone = 1;
-
-exit:
-    sem_post(&obj->mPreAllocCapMemSemDone);
-
-    HAL_LOGD("X");
-
-    return NULL;
 }
 
 void SprdCamera3OEMIf::setSensorCloseFlag() {

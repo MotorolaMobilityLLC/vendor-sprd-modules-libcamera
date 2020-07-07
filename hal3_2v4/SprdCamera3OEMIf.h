@@ -256,9 +256,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setMimeType(int type);
 
   public:
-    static int pre_alloc_cap_mem_thread_init(void *p_data);
-    static int pre_alloc_cap_mem_thread_deinit(void *p_data);
-    static void *pre_alloc_cap_mem_thread_proc(void *p_data);
     uint32_t isPreAllocCapMem();
 
     static int ZSLMode_monitor_thread_init(void *p_data);

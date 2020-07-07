@@ -182,7 +182,37 @@ int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
 * w * h * 3 / 2 + w * h * 3 / 2 + thumW * thumH * 3 = 3 * w * h + thumW * thumH
 * * 3(bytes);
 */
-int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
+int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size,
+                                                         cmr_u32 channel_size) {
+    cmr_u32 max_w, max_h, thumb_w, thumb_h;
+    cmr_u32 redundance_size;
+
+    if (pp_cap_size == NULL) {
+        CMR_LOGE("pp_cap_size=%p", pp_cap_size);
+        return -1;
+    }
+
+    // we assume that thumb size is not bigger than 512*512
+    thumb_w = 512;
+    thumb_h = 512;
+
+    // alloc more redundance_size(1M) memory for alignment use
+    redundance_size = 1 * 1024 * 1024;
+
+    *pp_cap_size = 3 * channel_size + 3 * thumb_w * thumb_h + redundance_size;
+
+    // the above is default configuration, for some special case, you can change
+    // it like this:
+    // if (max_w * max_h <= xyyz && max_w * max_h > abcd) {
+    //    *pp_cap_size = you_wanted_size;
+    //}
+
+    CMR_LOGD("postporc_capture_size=%d", *pp_cap_size);
+
+    return 0;
+}
+
+int camera_get_raw_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size) {
     cmr_u32 max_w, max_h, thumb_w, thumb_h;
     cmr_u32 redundance_size;
 
@@ -646,9 +676,9 @@ int arrange_yuv_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
 
     tmp1 = image_size->width * image_size->height;
     tmp2 = cap_size->width * cap_size->height;
-    tmp3 = sn_size->width * sn_size->height;
+//    tmp3 = sn_size->width * sn_size->height;
     max_size = tmp1 > tmp2 ? tmp1 : tmp2;
-    max_size = max_size > tmp3 ? max_size : tmp3;
+//    max_size = max_size > tmp3 ? max_size : tmp3;
 
     cap_mem->target_yuv.addr_phy.addr_y = cap_2_frm->mem_frm.addr_phy.addr_y;
     cap_mem->target_yuv.addr_vir.addr_y = cap_2_frm->mem_frm.addr_vir.addr_y;

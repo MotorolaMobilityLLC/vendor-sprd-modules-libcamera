@@ -40,7 +40,8 @@ struct cmr_cap_2_frm {
 int camera_set_largest_pict_size(cmr_u32 camera_id, cmr_u16 width,
                                  cmr_u16 height);
 
-int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size);
+int camera_get_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size, cmr_u32 channel_size);
+int camera_get_raw_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size);
 
 int camera_arrange_capture_buf(
     struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,

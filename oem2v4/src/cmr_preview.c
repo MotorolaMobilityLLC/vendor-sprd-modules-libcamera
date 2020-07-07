@@ -4829,6 +4829,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 channel_buffer_size = 0;
     cmr_u32 cap_sum = 0;
     int32_t buffer_id = 0;
+    cmr_u32 is_raw_capture = 0;
     cmr_int is_need_scaling = 1;
     cmr_u32 hdr_cap_sum = HDR_CAP_NUM - 1;
     cmr_u32 threednr_cap_sum = CAP_3DNR_NUM - 1;
@@ -4842,6 +4843,11 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
     sum = 1;
     cap_sum = CMR_CAPTURE_MEM_SUM;
     CMR_LOGD("camera_id %d, is_restart %d", camera_id, is_restart);
@@ -4879,8 +4885,11 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
 
     is_need_scaling = prev_is_need_scaling(handle, camera_id);
     /*caculate memory size for capture*/
-
-    ret = camera_get_postproc_capture_size(camera_id, &total_mem_size);
+    if (is_raw_capture == 1) {
+        ret = camera_get_raw_postproc_capture_size(camera_id, &total_mem_size);
+    } else {
+        ret = camera_get_postproc_capture_size(camera_id, &total_mem_size, channel_size);
+    }
     if (ret) {
         CMR_LOGE("get mem size err");
         return CMR_CAMERA_FAIL;
