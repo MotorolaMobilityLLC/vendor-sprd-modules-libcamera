@@ -122,6 +122,7 @@ struct CAMERA_MEM_CB_TYPE_STAT mem_cb_stat[CAMERA_MEM_CB_TYPE_MAX] = {
     {CAMERA_ISPSTATS_LSCM, CACHE_TRUE},
     {CAMERA_ISPSTATS_3DNR, CACHE_TRUE},
     {CAMERA_ISPSTATS_EBD, CACHE_TRUE},
+    {CAMERA_ISPSTATS_DEBUG, CACHE_TRUE},
     {CAMERA_CHANNEL_0_RESERVED, CACHE_TRUE},
     {CAMERA_CHANNEL_1, CACHE_TRUE},
     {CAMERA_CHANNEL_1_RESERVED, CACHE_TRUE},
@@ -133,6 +134,7 @@ struct CAMERA_MEM_CB_TYPE_STAT mem_cb_stat[CAMERA_MEM_CB_TYPE_MAX] = {
     {CAMERA_CHANNEL_4_RESERVED, CACHE_TRUE},
     {CAMERA_FD_SMALL, CACHE_TRUE},
     {CAMERA_SNAPSHOT_SW3DNR_SMALL_PATH, CACHE_TRUE},
+    {CAMERA_SNAPSHOT_ZSL_RAW, CACHE_TRUE},
 };
 using namespace android;
 
@@ -547,7 +549,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mGraphicBufArray, 0, sizeof(mGraphicBufArray));
     memset(mRawHeapArray, 0, sizeof(mRawHeapArray));
     memset(mZslGraphicsHandle, 0, sizeof(mZslGraphicsHandle));
-    memset(mIspStatsDebugHeap, 0, sizeof(mIspStatsDebugHeap));
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -3020,13 +3021,6 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
         }
     }
 
-    sum = ISP_STATSDBG_MAX;
-    for (i = 0; i < sum; i++) {
-        if (NULL != mIspStatsDebugHeap[i]) {
-            freeCameraMem(mIspStatsDebugHeap[i]);
-        }
-        mIspStatsDebugHeap[i] = NULL;
-    }
     freeRawBuffers();
     delete memory;
 
@@ -9040,15 +9034,6 @@ int SprdCamera3OEMIf::Callback_CommonFree(enum camera_mem_cb_type type,
 
     HAL_LOGD("mem_type=%d sum=%d", type, sum);
 
-    if (type == CAMERA_ISPSTATS_DEBUG) {
-        for (i = 0; i < sum; i++) {
-            if (NULL != mIspStatsDebugHeap[i]) {
-                freeCameraMem(mIspStatsDebugHeap[i]);
-            }
-            mIspStatsDebugHeap[i] = NULL;
-        }
-    }
-
     for (List<MemIonQueue>::iterator i = cam_MemIonQueue.begin(); i != cam_MemIonQueue.end(); i++) {
         if ((type == i->mem_type) && (NULL != i->mIonHeap)) {
             HAL_LOGV("mem_type=%d mIonHeap=%p", type, i->mIonHeap);
@@ -9118,7 +9103,7 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
     //ion memory reuse
     for (List<MemIonQueue>::iterator i = cam_MemIonQueue.begin(); i != cam_MemIonQueue.end(); i++) {
         if ((type == i->mem_type) && (NULL != i->mIonHeap)) {
-            HAL_LOGD("use pre-alloc this type mem");
+            HAL_LOGD("this mem_cb_type already pre-alloc ");
             if (type == CAMERA_ISP_STATIS) {
                 cmr_u64 kaddr = 0;
                 *phy_addr++ = kaddr;

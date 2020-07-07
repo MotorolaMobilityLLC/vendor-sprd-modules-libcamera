@@ -797,7 +797,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef USE_ONE_RESERVED_BUF
     sprd_camera_memory_t *mCommonHeapReserved;
 #endif
-    sprd_camera_memory_t *mIspStatsDebugHeap[ISP_STATSDBG_MAX];
     static bool mZslCaptureExitLoop;
 
     uint32_t mPreviewHeapBakUseFlag;
