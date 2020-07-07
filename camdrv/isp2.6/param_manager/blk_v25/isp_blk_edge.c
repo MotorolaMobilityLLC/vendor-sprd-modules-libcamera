@@ -36,7 +36,7 @@ static cmr_u32 _pm_edge_convert_param(
 	cmr_u32 night_coeff = 9;
 	cmr_u32 sel_coeff = INVALID_EE_COEFF;
 	cmr_u32 max_ee_neg = 0x100;
-	struct isp_edge_param_v1*dst_ptr = (struct isp_edge_param_v1 *)dst_edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	struct sensor_ee_level *edge_param = PNULL;
 
 	if (SENSOR_MULTI_MODE_FLAG != dst_ptr->nr_mode_setting) {
@@ -110,12 +110,12 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur.ee_gain_hv_t[1][1] = edge_param[strength_level].ee_gradient.ee_gain_hv2.t_cfg.ee_t2_cfg;
 		dst_ptr->cur.ee_gain_hv_t[1][2] = edge_param[strength_level].ee_gradient.ee_gain_hv2.t_cfg.ee_t3_cfg;
 		dst_ptr->cur.ee_gain_hv_t[1][3] = edge_param[strength_level].ee_gradient.ee_gain_hv2.t_cfg.ee_t4_cfg;
-		dst_ptr->cur_ai_level.ee_gain_hv_r[0][0] = edge_param[strength_level].ee_gradient.ee_gain_hv1.r_cfg.ee_r1_cfg;
-		dst_ptr->cur_ai_level.ee_gain_hv_r[0][1] = edge_param[strength_level].ee_gradient.ee_gain_hv1.r_cfg.ee_r2_cfg;
-		dst_ptr->cur_ai_level.ee_gain_hv_r[0][2] = edge_param[strength_level].ee_gradient.ee_gain_hv1.r_cfg.ee_r3_cfg;
-		dst_ptr->cur_ai_level.ee_gain_hv_r[1][0] = edge_param[strength_level].ee_gradient.ee_gain_hv2.r_cfg.ee_r1_cfg;
-		dst_ptr->cur_ai_level.ee_gain_hv_r[1][1] = edge_param[strength_level].ee_gradient.ee_gain_hv2.r_cfg.ee_r2_cfg;
-		dst_ptr->cur_ai_level.ee_gain_hv_r[1][2] = edge_param[strength_level].ee_gradient.ee_gain_hv2.r_cfg.ee_r3_cfg;
+		dst_ptr->cur.ee_gain_hv_r[0][0] = edge_param[strength_level].ee_gradient.ee_gain_hv1.r_cfg.ee_r1_cfg;
+		dst_ptr->cur.ee_gain_hv_r[0][1] = edge_param[strength_level].ee_gradient.ee_gain_hv1.r_cfg.ee_r2_cfg;
+		dst_ptr->cur.ee_gain_hv_r[0][2] = edge_param[strength_level].ee_gradient.ee_gain_hv1.r_cfg.ee_r3_cfg;
+		dst_ptr->cur.ee_gain_hv_r[1][0] = edge_param[strength_level].ee_gradient.ee_gain_hv2.r_cfg.ee_r1_cfg;
+		dst_ptr->cur.ee_gain_hv_r[1][1] = edge_param[strength_level].ee_gradient.ee_gain_hv2.r_cfg.ee_r2_cfg;
+		dst_ptr->cur.ee_gain_hv_r[1][2] = edge_param[strength_level].ee_gradient.ee_gain_hv2.r_cfg.ee_r3_cfg;
 
 		dst_ptr->cur.ee_gain_diag_t[0][0] = edge_param[strength_level].ee_gradient.ee_gain_dg1.t_cfg.ee_t1_cfg;
 		dst_ptr->cur.ee_gain_diag_t[0][1] = edge_param[strength_level].ee_gradient.ee_gain_dg1.t_cfg.ee_t2_cfg;
@@ -125,12 +125,12 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur.ee_gain_diag_t[1][1] = edge_param[strength_level].ee_gradient.ee_gain_dg2.t_cfg.ee_t2_cfg;
 		dst_ptr->cur.ee_gain_diag_t[1][2] = edge_param[strength_level].ee_gradient.ee_gain_dg2.t_cfg.ee_t3_cfg;
 		dst_ptr->cur.ee_gain_diag_t[1][3] = edge_param[strength_level].ee_gradient.ee_gain_dg2.t_cfg.ee_t4_cfg;
-		dst_ptr->cur_ai_level.ee_gain_diag_r[0][0] = edge_param[strength_level].ee_gradient.ee_gain_dg1.r_cfg.ee_r1_cfg;
-		dst_ptr->cur_ai_level.ee_gain_diag_r[0][1] = edge_param[strength_level].ee_gradient.ee_gain_dg1.r_cfg.ee_r2_cfg;
-		dst_ptr->cur_ai_level.ee_gain_diag_r[0][2] = edge_param[strength_level].ee_gradient.ee_gain_dg1.r_cfg.ee_r3_cfg;
-		dst_ptr->cur_ai_level.ee_gain_diag_r[1][0] = edge_param[strength_level].ee_gradient.ee_gain_dg2.r_cfg.ee_r1_cfg;
-		dst_ptr->cur_ai_level.ee_gain_diag_r[1][1] = edge_param[strength_level].ee_gradient.ee_gain_dg2.r_cfg.ee_r2_cfg;
-		dst_ptr->cur_ai_level.ee_gain_diag_r[1][2] = edge_param[strength_level].ee_gradient.ee_gain_dg2.r_cfg.ee_r3_cfg;
+		dst_ptr->cur.ee_gain_diag_r[0][0] = edge_param[strength_level].ee_gradient.ee_gain_dg1.r_cfg.ee_r1_cfg;
+		dst_ptr->cur.ee_gain_diag_r[0][1] = edge_param[strength_level].ee_gradient.ee_gain_dg1.r_cfg.ee_r2_cfg;
+		dst_ptr->cur.ee_gain_diag_r[0][2] = edge_param[strength_level].ee_gradient.ee_gain_dg1.r_cfg.ee_r3_cfg;
+		dst_ptr->cur.ee_gain_diag_r[1][0] = edge_param[strength_level].ee_gradient.ee_gain_dg2.r_cfg.ee_r1_cfg;
+		dst_ptr->cur.ee_gain_diag_r[1][1] = edge_param[strength_level].ee_gradient.ee_gain_dg2.r_cfg.ee_r2_cfg;
+		dst_ptr->cur.ee_gain_diag_r[1][2] = edge_param[strength_level].ee_gradient.ee_gain_dg2.r_cfg.ee_r3_cfg;
 
 		dst_ptr->cur.ee_cv_t[0] = edge_param[strength_level].ee_cv.t_cfg.ee_t1_cfg;
 		dst_ptr->cur.ee_cv_t[1] = edge_param[strength_level].ee_cv.t_cfg.ee_t2_cfg;
@@ -160,22 +160,22 @@ static cmr_u32 _pm_edge_convert_param(
 		dst_ptr->cur.ee_pos_t[1] = edge_param[strength_level].ee_clip.ee_pos.t_cfg.ee_t2_cfg;
 		dst_ptr->cur.ee_pos_t[2] = edge_param[strength_level].ee_clip.ee_pos.t_cfg.ee_t3_cfg;
 		dst_ptr->cur.ee_pos_t[3] = edge_param[strength_level].ee_clip.ee_pos.t_cfg.ee_t4_cfg;
-		dst_ptr->cur_ai_level.ee_pos_r[0] = edge_param[strength_level].ee_clip.ee_pos.r_cfg.ee_r1_cfg;
-		dst_ptr->cur_ai_level.ee_pos_r[1] = edge_param[strength_level].ee_clip.ee_pos.r_cfg.ee_r2_cfg;
-		dst_ptr->cur_ai_level.ee_pos_r[2] = edge_param[strength_level].ee_clip.ee_pos.r_cfg.ee_r3_cfg;
-		dst_ptr->cur_ai_level.ee_pos_c[0] = edge_param[strength_level].ee_clip.ee_pos_c.ee_c1_cfg;
-		dst_ptr->cur_ai_level.ee_pos_c[1] = edge_param[strength_level].ee_clip.ee_pos_c.ee_c2_cfg;
-		dst_ptr->cur_ai_level.ee_pos_c[2] = edge_param[strength_level].ee_clip.ee_pos_c.ee_c3_cfg;
+		dst_ptr->cur.ee_pos_r[0] = edge_param[strength_level].ee_clip.ee_pos.r_cfg.ee_r1_cfg;
+		dst_ptr->cur.ee_pos_r[1] = edge_param[strength_level].ee_clip.ee_pos.r_cfg.ee_r2_cfg;
+		dst_ptr->cur.ee_pos_r[2] = edge_param[strength_level].ee_clip.ee_pos.r_cfg.ee_r3_cfg;
+		dst_ptr->cur.ee_pos_c[0] = edge_param[strength_level].ee_clip.ee_pos_c.ee_c1_cfg;
+		dst_ptr->cur.ee_pos_c[1] = edge_param[strength_level].ee_clip.ee_pos_c.ee_c2_cfg;
+		dst_ptr->cur.ee_pos_c[2] = edge_param[strength_level].ee_clip.ee_pos_c.ee_c3_cfg;
 		dst_ptr->cur.ee_neg_t[0] = edge_param[strength_level].ee_clip.ee_neg.t_cfg.ee_t1_cfg;
 		dst_ptr->cur.ee_neg_t[1] = edge_param[strength_level].ee_clip.ee_neg.t_cfg.ee_t2_cfg;
 		dst_ptr->cur.ee_neg_t[2] = edge_param[strength_level].ee_clip.ee_neg.t_cfg.ee_t3_cfg;
 		dst_ptr->cur.ee_neg_t[3] = edge_param[strength_level].ee_clip.ee_neg.t_cfg.ee_t4_cfg;
-		dst_ptr->cur_ai_level.ee_neg_r[0] = edge_param[strength_level].ee_clip.ee_neg.r_cfg.ee_r1_cfg;
-		dst_ptr->cur_ai_level.ee_neg_r[1] = edge_param[strength_level].ee_clip.ee_neg.r_cfg.ee_r2_cfg;
-		dst_ptr->cur_ai_level.ee_neg_r[2] = edge_param[strength_level].ee_clip.ee_neg.r_cfg.ee_r3_cfg;
-		dst_ptr->cur_ai_level.ee_neg_c[0] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c1_cfg;
-		dst_ptr->cur_ai_level.ee_neg_c[1] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c2_cfg;
-		dst_ptr->cur_ai_level.ee_neg_c[2] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c3_cfg;
+		dst_ptr->cur.ee_neg_r[0] = edge_param[strength_level].ee_clip.ee_neg.r_cfg.ee_r1_cfg;
+		dst_ptr->cur.ee_neg_r[1] = edge_param[strength_level].ee_clip.ee_neg.r_cfg.ee_r2_cfg;
+		dst_ptr->cur.ee_neg_r[2] = edge_param[strength_level].ee_clip.ee_neg.r_cfg.ee_r3_cfg;
+		dst_ptr->cur.ee_neg_c[0] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c1_cfg;
+		dst_ptr->cur.ee_neg_c[1] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c2_cfg;
+		dst_ptr->cur.ee_neg_c[2] = edge_param[strength_level].ee_clip.ee_neg_c.ee_c3_cfg;
 	}
 
 	property_get("debug.isp.ee.foliage_coeff.val", prop, "10");
@@ -232,38 +232,38 @@ static cmr_u32 _pm_edge_convert_param(
 		sel_coeff = INVALID_EE_COEFF;
 
 	if (sel_coeff != INVALID_EE_COEFF) {
-		dst_ptr->cur_ai_level.ee_pos_r[0] = dst_ptr->cur_ai_level.ee_pos_r[0] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_pos_r[1] = dst_ptr->cur_ai_level.ee_pos_r[1] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_pos_r[2] = dst_ptr->cur_ai_level.ee_pos_r[2] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_pos_c[0] = dst_ptr->cur_ai_level.ee_pos_c[0] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_pos_c[1] = dst_ptr->cur_ai_level.ee_pos_c[1] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_pos_c[2] = dst_ptr->cur_ai_level.ee_pos_c[2] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_neg_r[0] = dst_ptr->cur_ai_level.ee_neg_r[0] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_neg_r[1] = dst_ptr->cur_ai_level.ee_neg_r[1] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_neg_r[2] = dst_ptr->cur_ai_level.ee_neg_r[2] * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur_ai_level.ee_neg_c[0]) * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur_ai_level.ee_neg_c[1]) * 10 / sel_coeff;
-		dst_ptr->cur_ai_level.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur_ai_level.ee_neg_c[2]) * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] * 10 / sel_coeff;
+		dst_ptr->cur.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_c[0] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[0]) * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_c[1] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[1]) * 10 / sel_coeff;
+		dst_ptr->cur.ee_neg_c[2] = max_ee_neg - (max_ee_neg - dst_ptr->cur.ee_neg_c[2]) * 10 / sel_coeff;
 
 		/* Bug 1082178 ee_neg_c param value should be betwen
 		  * [-128,0]. To check we just  consider 8 LSBs. If any of the value is
 		  * not in range then we assign 0x80 effectively it will become  128-256 = -128.
 		  */
 
-		if ((dst_ptr->cur_ai_level.ee_neg_c[0] & 0xFF) < 0x80)
-			dst_ptr->cur_ai_level.ee_neg_c[0] = 0x80;
+		if ((dst_ptr->cur.ee_neg_c[0] & 0xFF) < 0x80)
+			dst_ptr->cur.ee_neg_c[0] = 0x80;
 
-		if ((dst_ptr->cur_ai_level.ee_neg_c[1] & 0xFF) < 0x80)
-			dst_ptr->cur_ai_level.ee_neg_c[1] = 0x80;
+		if ((dst_ptr->cur.ee_neg_c[1] & 0xFF) < 0x80)
+			dst_ptr->cur.ee_neg_c[1] = 0x80;
 
-		if ((dst_ptr->cur_ai_level.ee_neg_c[2] & 0xFF) < 0x80)
-			dst_ptr->cur_ai_level.ee_neg_c[2] = 0x80;
+		if ((dst_ptr->cur.ee_neg_c[2] & 0xFF) < 0x80)
+			dst_ptr->cur.ee_neg_c[2] = 0x80;
 
 		if (ee_param_log_en) {
 			for (i = 0; i < 3; i++) {
 				ISP_LOGV("i = %d, pos_r = 0x%x, pos_c = 0x%x, neg_r = 0x%x, neg_c = 0x%x",
-					i, dst_ptr->cur_ai_level.ee_pos_r[i], dst_ptr->cur_ai_level.ee_pos_c[i],
-					dst_ptr->cur_ai_level.ee_neg_r[i], dst_ptr->cur_ai_level.ee_neg_c[i]);
+					i, dst_ptr->cur.ee_pos_r[i], dst_ptr->cur.ee_pos_c[i],
+					dst_ptr->cur.ee_neg_r[i], dst_ptr->cur.ee_neg_c[i]);
 			}
 		}
 	}
@@ -276,7 +276,7 @@ cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, 
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	struct isp_pm_nr_header_param *src_ptr = (struct isp_pm_nr_header_param *)src_edge_param;
-	struct isp_edge_param_v1 *dst_ptr = (struct isp_edge_param_v1 *)dst_edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)dst_edge_param;
 	UNUSED(param2);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
@@ -304,7 +304,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
-	struct isp_edge_param_v1 *dst_ptr = (struct isp_edge_param_v1 *)edge_param;
+	struct isp_edge_param *dst_ptr = (struct isp_edge_param *)edge_param;
 
 	switch (cmd) {
 	case ISP_PM_BLK_EDGE_BYPASS:
@@ -317,38 +317,6 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 		header_ptr->is_update = ISP_ONE;
 		break;
 
-	case ISP_PM_BLK_AI_SCENE_EE_CUR:
-		{
-			memcpy((void *)&dst_ptr->final_ai_level, param_ptr0, sizeof(dst_ptr->final_ai_level));
-
-			dst_ptr->cur.ee_gain_hv_r[0][0] =dst_ptr->final_ai_level.ee_gain_hv_r[0][0];
-			dst_ptr->cur.ee_gain_hv_r[0][1] = dst_ptr->final_ai_level.ee_gain_hv_r[0][1];
-			dst_ptr->cur.ee_gain_hv_r[0][2] = dst_ptr->final_ai_level.ee_gain_hv_r[0][2];
-			dst_ptr->cur.ee_gain_hv_r[1][0] = dst_ptr->final_ai_level.ee_gain_hv_r[1][0];
-			dst_ptr->cur.ee_gain_hv_r[1][1] =dst_ptr->final_ai_level.ee_gain_hv_r[1][1];
-			dst_ptr->cur.ee_gain_hv_r[1][2] = dst_ptr->final_ai_level.ee_gain_hv_r[1][2];
-			dst_ptr->cur.ee_gain_diag_r[0][0] = dst_ptr->final_ai_level.ee_gain_diag_r[0][0];
-			dst_ptr->cur.ee_gain_diag_r[0][1] = dst_ptr->final_ai_level.ee_gain_diag_r[0][1];
-			dst_ptr->cur.ee_gain_diag_r[0][2] = dst_ptr->final_ai_level.ee_gain_diag_r[0][2];
-			dst_ptr->cur.ee_gain_diag_r[1][0] = dst_ptr->final_ai_level.ee_gain_diag_r[1][0];
-			dst_ptr->cur.ee_gain_diag_r[1][1] = dst_ptr->final_ai_level.ee_gain_diag_r[1][1];
-			dst_ptr->cur.ee_gain_diag_r[1][2] = dst_ptr->final_ai_level.ee_gain_diag_r[1][2];
-			dst_ptr->cur.ee_pos_r[0] = dst_ptr->final_ai_level.ee_pos_r[0];
-			dst_ptr->cur.ee_pos_r[1] = dst_ptr->final_ai_level.ee_pos_r[1];
-			dst_ptr->cur.ee_pos_r[2] = dst_ptr->final_ai_level.ee_pos_r[2];
-			dst_ptr->cur.ee_pos_c[0] = dst_ptr->final_ai_level.ee_pos_c[0];
-			dst_ptr->cur.ee_pos_c[1] = dst_ptr->final_ai_level.ee_pos_c[1];
-			dst_ptr->cur.ee_pos_c[2] = dst_ptr->final_ai_level.ee_pos_c[2];
-			dst_ptr->cur.ee_neg_r[0] = dst_ptr->final_ai_level.ee_neg_r[0];
-			dst_ptr->cur.ee_neg_r[1] = dst_ptr->final_ai_level.ee_neg_r[1];
-			dst_ptr->cur.ee_neg_r[2] = dst_ptr->final_ai_level.ee_neg_r[2];
-			dst_ptr->cur.ee_neg_c[0] = dst_ptr->final_ai_level.ee_neg_c[0];
-			dst_ptr->cur.ee_neg_c[1] = dst_ptr->final_ai_level.ee_neg_c[1];
-			dst_ptr->cur.ee_neg_c[2] = dst_ptr->final_ai_level.ee_neg_c[2];
-
-			header_ptr->is_update = ISP_ONE;
-		}
-		break;
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			struct smart_block_result *block_result = (struct smart_block_result *)param_ptr0;
@@ -373,7 +341,7 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 				dst_ptr->cur_level = level;
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[ISP_BLK_EDGE_T] = 0;
-				ISP_LOGD("block_result->ai_scene_pro_flag %d",block_result->ai_scene_pro_flag);
+
 				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level,
 							header_ptr->mode_id,
 							block_result->scene_flag,
@@ -390,6 +358,136 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 		}
 		break;
 
+	case ISP_PM_BLK_AI_SCENE_UPDATE_EE:
+		{
+			cmr_u32 i, k;
+			cmr_s16 smooth_factor, smooth_base;
+			struct isp_ai_update_param *cfg_data;
+			struct isp_ai_ee_param_v1 *ee_cur;
+			struct isp_edge_ai_param_v1 ee_updata;
+
+			cfg_data = (struct isp_ai_update_param *)param_ptr0;
+			ee_cur = (struct isp_ai_ee_param_v1*)cfg_data->param_ptr;
+			smooth_factor = cfg_data->smooth_factor;
+			smooth_base = cfg_data->smooth_base;
+			if (smooth_factor == 0) {
+				if (!header_ptr->is_update)
+					break;
+				smooth_factor = 1;
+				smooth_base = 1;
+			} else if (!header_ptr->is_update) {
+				smooth_factor = (smooth_factor > 0) ? 1 :  -1;
+			}
+
+			ee_updata.ee_gain_hv_r[0][0] = dst_ptr->cur.ee_gain_hv_r[0][0] & 0xFF;
+			ee_updata.ee_gain_hv_r[0][1] = dst_ptr->cur.ee_gain_hv_r[0][1] & 0xFF;
+			ee_updata.ee_gain_hv_r[0][2] = dst_ptr->cur.ee_gain_hv_r[0][2] & 0xFF;
+			ee_updata.ee_gain_hv_r[1][0] = dst_ptr->cur.ee_gain_hv_r[1][0] & 0xFF;
+			ee_updata.ee_gain_hv_r[1][1] = dst_ptr->cur.ee_gain_hv_r[1][1] & 0xFF;
+			ee_updata.ee_gain_hv_r[1][2] = dst_ptr->cur.ee_gain_hv_r[1][2] & 0xFF;
+			ee_updata.ee_gain_diag_r[0][0] = dst_ptr->cur.ee_gain_diag_r[0][0] & 0xFF;
+			ee_updata.ee_gain_diag_r[0][1] = dst_ptr->cur.ee_gain_diag_r[0][1] & 0xFF;
+			ee_updata.ee_gain_diag_r[0][2] = dst_ptr->cur.ee_gain_diag_r[0][2] & 0xFF;
+			ee_updata.ee_gain_diag_r[1][0] = dst_ptr->cur.ee_gain_diag_r[1][0] & 0xFF;
+			ee_updata.ee_gain_diag_r[1][1] = dst_ptr->cur.ee_gain_diag_r[1][1] & 0xFF;
+			ee_updata.ee_gain_diag_r[1][2] = dst_ptr->cur.ee_gain_diag_r[1][2] & 0xFF;
+			ee_updata.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] & 0xFF;
+			ee_updata.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] & 0xFF;
+			ee_updata.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] & 0xFF;
+			ee_updata.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] & 0xFF;
+			ee_updata.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] & 0xFF;
+			ee_updata.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] & 0xFF;
+			ee_updata.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] & 0xFF;
+			ee_updata.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] & 0xFF;
+			ee_updata.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] & 0xFF;
+			ee_updata.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] & 0xFF;
+			ee_updata.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] & 0xFF;
+			ee_updata.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] & 0xFF;
+
+			ee_updata.ee_gain_hv_r[0][0] += ee_cur->ee_gain_hv1.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[0][1] += ee_cur->ee_gain_hv1.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[0][2] += ee_cur->ee_gain_hv1.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[1][0] += ee_cur->ee_gain_hv2.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[1][1] += ee_cur->ee_gain_hv2.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[1][2] += ee_cur->ee_gain_hv2.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[0][0] += ee_cur->ee_gain_diag1.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[0][1] += ee_cur->ee_gain_diag1.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[0][2] += ee_cur->ee_gain_diag1.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[1][0] += ee_cur->ee_gain_diag2.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[1][1] += ee_cur->ee_gain_diag2.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[1][2] += ee_cur->ee_gain_diag2.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_r[0] += ee_cur->ee_pos_r.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_r[1] += ee_cur->ee_pos_r.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_r[2] += ee_cur->ee_pos_r.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_c[0] += ee_cur->ee_pos_c.ee_c1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_c[1] += ee_cur->ee_pos_c.ee_c2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_c[2] += ee_cur->ee_pos_c.ee_c3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_r[0] += ee_cur->ee_neg_r.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_r[1] += ee_cur->ee_neg_r.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_r[2] += ee_cur->ee_neg_r.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_c[0] += ee_cur->ee_neg_c.ee_c1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_c[1] += ee_cur->ee_neg_c.ee_c2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_c[2] += ee_cur->ee_neg_c.ee_c3_cfg_offset * smooth_factor / smooth_base;
+
+			for(i = 0; i < 2; i++) {
+				for (k = 0; k < 3; k++) {
+					if (ee_updata.ee_gain_hv_r[i][k] > 31 )
+						ee_updata.ee_gain_hv_r[i][k] = 31;
+					if (ee_updata.ee_gain_hv_r[i][k] < 0 )
+						ee_updata.ee_gain_hv_r[i][k] = 0;
+					if (ee_updata.ee_gain_diag_r[i][k] > 31 )
+						ee_updata.ee_gain_diag_r[i][k] = 31;
+					if (ee_updata.ee_gain_diag_r[i][k] < 0 )
+						ee_updata.ee_gain_diag_r[i][k] = 0;
+				}
+			}
+			for(i = 0; i < 3; i++) {
+				if (ee_updata.ee_pos_r[i] > 127 )
+					ee_updata.ee_pos_r[i] = 127;
+				if (ee_updata.ee_pos_r[i] < 0 )
+					ee_updata.ee_pos_r[i] = 0;
+				if (ee_updata.ee_pos_c[i] > 127 )
+					ee_updata.ee_pos_c[i] = 127;
+				if (ee_updata.ee_pos_c[i] < 0 )
+					ee_updata.ee_pos_c[i] = 0;
+				if (ee_updata.ee_neg_r[i] > 127 )
+					ee_updata.ee_neg_r[i] = 127;
+				if (ee_updata.ee_neg_r[i] < 0 )
+					ee_updata.ee_neg_r[i] = 0;
+				if (ee_updata.ee_neg_c[i] >0 )
+					ee_updata.ee_neg_c[i] = 0;
+				if (ee_updata.ee_neg_c[i] < -128 )
+					ee_updata.ee_neg_c[i] = -128;
+			}
+
+			dst_ptr->cur.ee_gain_hv_r[0][0] = ee_updata.ee_gain_hv_r[0][0];
+			dst_ptr->cur.ee_gain_hv_r[0][1] = ee_updata.ee_gain_hv_r[0][1];
+			dst_ptr->cur.ee_gain_hv_r[0][2] = ee_updata.ee_gain_hv_r[0][2];
+			dst_ptr->cur.ee_gain_hv_r[1][0] = ee_updata.ee_gain_hv_r[1][0];
+			dst_ptr->cur.ee_gain_hv_r[1][1] = ee_updata.ee_gain_hv_r[1][1];
+			dst_ptr->cur.ee_gain_hv_r[1][2] = ee_updata.ee_gain_hv_r[1][2];
+			dst_ptr->cur.ee_gain_diag_r[0][0] = ee_updata.ee_gain_diag_r[0][0];
+			dst_ptr->cur.ee_gain_diag_r[0][1] = ee_updata.ee_gain_diag_r[0][1];
+			dst_ptr->cur.ee_gain_diag_r[0][2] = ee_updata.ee_gain_diag_r[0][2];
+			dst_ptr->cur.ee_gain_diag_r[1][0] = ee_updata.ee_gain_diag_r[1][0];
+			dst_ptr->cur.ee_gain_diag_r[1][1] = ee_updata.ee_gain_diag_r[1][1];
+			dst_ptr->cur.ee_gain_diag_r[1][2] = ee_updata.ee_gain_diag_r[1][2];
+			dst_ptr->cur.ee_pos_r[0] = ee_updata.ee_pos_r[0];
+			dst_ptr->cur.ee_pos_r[1] = ee_updata.ee_pos_r[1];
+			dst_ptr->cur.ee_pos_r[2] = ee_updata.ee_pos_r[2];
+			dst_ptr->cur.ee_pos_c[0] = ee_updata.ee_pos_c[0];
+			dst_ptr->cur.ee_pos_c[1] = ee_updata.ee_pos_c[1];
+			dst_ptr->cur.ee_pos_c[2] = ee_updata.ee_pos_c[2];
+			dst_ptr->cur.ee_neg_r[0] = ee_updata.ee_neg_r[0];
+			dst_ptr->cur.ee_neg_r[1] = ee_updata.ee_neg_r[1];
+			dst_ptr->cur.ee_neg_r[2] = ee_updata.ee_neg_r[2];
+			dst_ptr->cur.ee_neg_c[0] = ee_updata.ee_neg_c[0];
+			dst_ptr->cur.ee_neg_c[1] = ee_updata.ee_neg_c[1];
+			dst_ptr->cur.ee_neg_c[2] = ee_updata.ee_neg_c[2];
+
+			header_ptr->is_update = ISP_ONE;
+		}
+		break;
 	default:
 		break;
 	}
@@ -401,18 +499,13 @@ cmr_s32 _pm_edge_get_param(void *edge_param,
 		cmr_u32 cmd, void *rtn_param0, void *rtn_param1)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	struct isp_edge_param_v1 *edge_ptr = (struct isp_edge_param_v1 *)edge_param;
+	struct isp_edge_param *edge_ptr = (struct isp_edge_param *)edge_param;
 	struct isp_pm_param_data *param_data_ptr = (struct isp_pm_param_data *)rtn_param0;
 	cmr_u32 *update_flag = (cmr_u32 *) rtn_param1;
 
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
-	case ISP_PM_BLK_AI_SCENE_EE:
-		param_data_ptr->data_ptr = &edge_ptr->cur_ai_level;
-		param_data_ptr->data_size = sizeof(edge_ptr->cur_ai_level);
-		*update_flag = 0;
-		break;
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = &edge_ptr->cur;
 		param_data_ptr->data_size = sizeof(edge_ptr->cur);

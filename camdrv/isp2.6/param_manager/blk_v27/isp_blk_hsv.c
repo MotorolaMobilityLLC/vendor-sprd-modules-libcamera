@@ -55,8 +55,8 @@ cmr_s32 _pm_hsv_new2_init(void *dst_hsv_param, void *src_hsv_param, void *param1
 	}
 
 	for (i = 0; i < SENSOR_HSV_TAB_NUM; i++) {
-		dst_ptr->cur_hsv_table.hue_table[i] = dst_ptr->hsv_table[index].hue_table[i];
-		dst_ptr->cur_hsv_table.sat_table[i] = dst_ptr->hsv_table[index].sat_table[i];
+		dst_ptr->cur.d.hs.hue[i] = dst_ptr->hsv_table[index].hue_table[i];
+		dst_ptr->cur.d.hs.sat[i] = dst_ptr->hsv_table[index].sat_table[i];
 	}
 
 	header_ptr->is_update = ISP_ONE;
@@ -70,19 +70,6 @@ cmr_s32 _pm_hsv_new2_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 	struct isp_pm_block_header *hsv_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
-	case ISP_PM_BLK_AI_SCENE_HSV_CUR:
-		{
-			cmr_u32 i;
-			memcpy((void *)&dst_hsv_ptr->final_hsv_table, param_ptr0, sizeof(dst_hsv_ptr->final_hsv_table));
-
-			for (i = 0; i < SENSOR_HSV_TAB_NUM; i++) {
-				dst_hsv_ptr->cur.hue[i] = dst_hsv_ptr->final_hsv_table.hue_table[i];
-				dst_hsv_ptr->cur.sat[i] = dst_hsv_ptr->final_hsv_table.sat_table[i];
-			}
-			hsv_header_ptr->is_update = ISP_ONE;
-		}
-		break;
-
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			cmr_u32 data_num;
@@ -158,26 +145,61 @@ cmr_s32 _pm_hsv_new2_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 			if (block_result->ai_scene_pro_flag == 1 || block_result->ai_scene_id == ISP_PM_AI_SCENE_NIGHT)
 				hsv_level = -1;
 
-			if (hsv_level != -1){
+			if (hsv_level != -1) {
 				bv_value->value[0] = hsv_level;
 				bv_value->value[1] = hsv_level;
 				bv_value->weight[0] = 256;
 				bv_value->weight[1] = 0;
 			}
 
-			dst = (void *)dst_hsv_ptr->cur_hsv_table.hue_table;
-			dst1 = (void *)dst_hsv_ptr->cur_hsv_table.sat_table;
+			dst = &dst_hsv_ptr->cur.d.hs.hue;
+			dst1 = &dst_hsv_ptr->cur.d.hs.sat;
 			data_num = SENSOR_HSV_TAB_NUM;
-			src_h[0] = (void *)dst_hsv_ptr->hsv_table[bv_value->value[0]].hue_table;
-			src_h[1] = (void *)dst_hsv_ptr->hsv_table[bv_value->value[1]].hue_table;
-			src_s[0] = (void *)dst_hsv_ptr->hsv_table[bv_value->value[0]].sat_table;
-			src_s[1] = (void *)dst_hsv_ptr->hsv_table[bv_value->value[1]].sat_table;
+			src_h[0] = (void *)&dst_hsv_ptr->hsv_table[bv_value->value[0]].hue_table;
+			src_h[1] = (void *)&dst_hsv_ptr->hsv_table[bv_value->value[1]].hue_table;
+			src_s[0] = (void *)&dst_hsv_ptr->hsv_table[bv_value->value[0]].sat_table;
+			src_s[1] = (void *)&dst_hsv_ptr->hsv_table[bv_value->value[1]].sat_table;
 			weight[0] = bv_value->weight[0];
 			weight[1] = bv_value->weight[1];
 			weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 			weight[1] = SMART_WEIGHT_UNIT - weight[0];
 			isp_interp_data((void *)dst, src_h , weight , data_num , ISP_INTERP_UINT16);
 			isp_interp_data((void *)dst1, src_s , weight , data_num , ISP_INTERP_UINT16);
+
+			hsv_header_ptr->is_update = ISP_ONE;
+		}
+		break;
+
+	case ISP_PM_BLK_AI_SCENE_UPDATE_HSV:
+		{
+			cmr_u32 i;
+			cmr_s16 smooth_factor, smooth_base;
+			struct isp_ai_update_param *cfg_data;
+			struct isp_ai_hsv_info *hsv_cur;
+			struct isp_hsv_table  data, *hsv_param = &data;
+
+			cfg_data = (struct isp_ai_update_param *)param_ptr0;
+			hsv_cur = (struct isp_ai_hsv_info *)cfg_data->param_ptr;
+			smooth_factor = cfg_data->smooth_factor;
+			smooth_base = cfg_data->smooth_base;
+			if (smooth_factor == 0) {
+				if (!hsv_header_ptr->is_update)
+					break;
+				smooth_factor = 1;
+				smooth_base = 1;
+			} else if (!hsv_header_ptr->is_update) {
+				smooth_factor = (smooth_factor > 0) ? 1 :  -1;
+			}
+
+			memcpy(hsv_param, &dst_hsv_ptr->cur.d.hs, sizeof(struct isp_hsv_table));
+			for (i = 0; i < 360; i++) {
+				hsv_param->hue_table[i] += hsv_cur->hue_table_item_offset[i] * smooth_factor / smooth_base;
+				hsv_param->sat_table[i] += hsv_cur->saturation_table_item_offset[i]  * smooth_factor / smooth_base;
+				hsv_param->hue_table[i] = MAX(0, MIN(359, hsv_param->hue_table[i]));
+				hsv_param->sat_table[i] = MAX(0, MIN(2047, hsv_param->sat_table[i]));
+			}
+			memcpy(&dst_hsv_ptr->cur.d.hs, hsv_param, sizeof(struct isp_hsv_table));
+
 			hsv_header_ptr->is_update = ISP_ONE;
 		}
 		break;
@@ -206,11 +228,6 @@ cmr_s32 _pm_hsv_new2_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, v
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
-	case ISP_PM_BLK_AI_SCENE_HSV:
-		param_data_ptr->data_ptr = (void *)&hsv_ptr->cur_hsv_table;
-		param_data_ptr->data_size = sizeof(hsv_ptr->cur_hsv_table);
-		*update_flag = 0;
-		break;
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = (void *)&hsv_ptr->cur;
 		param_data_ptr->data_size = sizeof(hsv_ptr->cur);

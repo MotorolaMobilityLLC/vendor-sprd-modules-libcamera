@@ -20,7 +20,7 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 {
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
-	cmr_u32 index = 0;
+	cmr_u32 index = 0, cpy_size;
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_uint addr = 0, tmp_addr = 0, addr1 = 0;
 	cmr_uint base, end;
@@ -76,15 +76,6 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 		goto exit;
 	}
 
-	if (PNULL == dst_ptr->final_map.data_ptr) {
-		dst_ptr->final_map.data_ptr = (void *)malloc(src_ptr->map[index].size);
-		if (PNULL == dst_ptr->final_map.data_ptr) {
-			ISP_LOGE("fail to malloc  hsv map\n");
-			rtn = ISP_ERROR;
-			goto exit;
-		}
-	}
-
 	for (i = 0; i < 2; i++) {
 		if (PNULL == dst_ptr->ct_result[i]) {
 			dst_ptr->ct_result[i] = (cmr_u32 *)malloc(src_ptr->map[index].size);
@@ -96,8 +87,15 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 		}
 	}
 
-	memcpy((void *)dst_ptr->final_map.data_ptr, dst_ptr->map[index].data_ptr, dst_ptr->map[index].size);
-	dst_ptr->final_map.size = dst_ptr->map[index].size;
+	cpy_size = (cmr_u32)sizeof(dst_ptr->cur.d.hsv_table);
+	if (cpy_size < dst_ptr->map[index].size)
+		ISP_LOGE("error: hsv table size %d is smaller than target %d\n", cpy_size, dst_ptr->map[index].size);
+	else
+		cpy_size =  dst_ptr->map[index].size;
+
+	dst_ptr->final_map.data_ptr = &dst_ptr->cur.d.hsv_table[0];
+	dst_ptr->final_map.size = cpy_size;
+	memcpy((void *)dst_ptr->final_map.data_ptr, dst_ptr->map[index].data_ptr, cpy_size);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	for (i = 0; i < 5; i++) {
@@ -114,8 +112,8 @@ cmr_s32 _pm_hsv_init(void *dst_hsv_param, void *src_hsv_param, void *param1, voi
 
 	}
 	dst_ptr->cur.size = dst_ptr->final_map.size;
-	dst_ptr->cur.hsv_table_addr = (cmr_u64)dst_ptr->final_map.data_ptr;
-	ISP_LOGV("hsv table addr 0x%lx, size %d\n", (cmr_uint)dst_ptr->cur.hsv_table_addr, dst_ptr->cur.size);
+	ISP_LOGD("hsv table addr 0x%lx, size %d, size dst %d\n", (cmr_uint)dst_ptr->cur.d.hsv_table,
+		dst_ptr->cur.size,  (cmr_u32)sizeof(dst_ptr->cur.d.hsv_table));
 
 	header_ptr->is_update = ISP_ONE;
 	return 0;
@@ -125,11 +123,8 @@ exit:
 	dst_ptr->cur.bypass = 1;
 	header_ptr->bypass = 1;
 	header_ptr->is_update = ISP_ZERO;
-	if (dst_ptr->final_map.data_ptr) {
-		free(dst_ptr->final_map.data_ptr);
-		dst_ptr->final_map.data_ptr = PNULL;
-		dst_ptr->final_map.size = 0;
-	}
+	dst_ptr->final_map.data_ptr = PNULL;
+	dst_ptr->final_map.size = 0;
 	for (j = 0; j < 2; j++) {
 		if (dst_ptr->ct_result[j]) {
 			free(dst_ptr->ct_result[j]);
@@ -276,18 +271,24 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 	case ISP_PM_BLK_SPECIAL_EFFECT:
 		{
 			cmr_u32 idx = *((cmr_u32 *) param_ptr0);
+			cmr_u32 cpy_size;
+			struct isp_data_info *hsv_data;
 			if (hsv_header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
 				return ISP_SUCCESS;
 			}
-			if (0 == idx) {
-				dst_hsv_ptr->cur.size = dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].size;
-				dst_hsv_ptr->cur.hsv_table_addr = (cmr_u64)dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr;
-			} else {
-				dst_hsv_ptr->cur.size = dst_hsv_ptr->specialeffect_tab[idx].size;
-				dst_hsv_ptr->cur.hsv_table_addr = (cmr_u64)dst_hsv_ptr->specialeffect_tab[idx].data_ptr;
-			}
-			ISP_LOGV("hsv table addr 0x%lx\n", (cmr_uint)dst_hsv_ptr->cur.hsv_table_addr);
+			if (0 == idx)
+				hsv_data = &dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0];
+			else
+				hsv_data = &dst_hsv_ptr->specialeffect_tab[idx];
+
+			cpy_size = (cmr_u32)sizeof(dst_hsv_ptr->cur.d.hsv_table);
+			if (cpy_size < hsv_data->size)
+				ISP_LOGE("error: hsv table size %d is smaller than target %d\n", cpy_size, hsv_data->size);
+			else
+				cpy_size =  hsv_data->size;
+			dst_hsv_ptr->cur.size = cpy_size;
+			memcpy((void *)dst_hsv_ptr->final_map.data_ptr, hsv_data->data_ptr, cpy_size);
 			hsv_header_ptr->is_update = ISP_ONE;
 		}
 		break;
@@ -329,11 +330,8 @@ cmr_s32 _pm_hsv_deinit(void *hsv_param)
 	cmr_s32 j;
 	struct isp_hsv_param *dst_ptr = (struct isp_hsv_param *)hsv_param;
 
-	if (dst_ptr->final_map.data_ptr) {
-		free(dst_ptr->final_map.data_ptr);
-		dst_ptr->final_map.data_ptr = PNULL;
-		dst_ptr->final_map.size = 0;
-	}
+	dst_ptr->final_map.data_ptr = PNULL;
+	dst_ptr->final_map.size = 0;
 	for (j = 0; j < 2; j++) {
 		if (dst_ptr->ct_result[j]) {
 			free(dst_ptr->ct_result[j]);

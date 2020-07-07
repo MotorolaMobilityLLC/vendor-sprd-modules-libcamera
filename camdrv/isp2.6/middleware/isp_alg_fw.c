@@ -1867,46 +1867,60 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 	return ret;
 }
 
-#ifdef CONFIG_ISP_2_7
 static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 num = 0, i = 0, j = 0 ,k = 0;
+	cmr_u32 num = 0, i = 0, j = 0, cmd;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_ai_update_param ai_update_data;
 	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
 	struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
 	struct isp_pm_ioctl_input ioctl_output = { PNULL, 0 };
-	struct isp_pm_ioctl_input ioctl_input;
-	struct isp_pm_param_data ioctl_data;
+	struct isp_pm_ioctl_input ioctl_input = { PNULL, 0 };
 	struct isp_pm_param_data pm_param;
-	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
-	struct isp_bchs_ai_info *bchs_param[2];
-	struct isp_bchs_ai_info bchs_param_final[2];
-	struct isp_hsv_table *hsv_param[2];
-	struct isp_edge_ai_param *ee_param[2];
-	struct isp_ai_bchs_param *bchs_cur[2];
-	struct isp_ai_hsv_info *hsv_cur[2];
-	struct isp_ai_ee_param *ee_cur[2];
+	struct isp_ai_bchs_param *bchs_cur[2] = { PNULL, PNULL };
+	struct isp_ai_hsv_info *hsv_cur[2] = { PNULL, PNULL };
+	struct isp_ai_ee_param *ee_cur[2] = { PNULL, PNULL };
 	cmr_u32 blk_id = 0, blk_num = 0;
 	cmr_u16 smooth_ratio = 0;
 	enum ai_status ai_sta = AI_STATUS_MAX;
+#ifdef CONFIG_ISP_2_7
+	cmr_u32 hsv_blk_id = ISP_BLK_HSV_NEW2;
+	cmr_u32 ee_blk_id = ISP_BLK_EE_V1;
+	cmr_u32 bchs_blk_id[4] = { ISP_BLK_BCHS, ISP_BLK_ID_MAX,  ISP_BLK_ID_MAX, ISP_BLK_ID_MAX};
+#elif defined CONFIG_ISP_2_5
+	cmr_u32 hsv_blk_id = ISP_BLK_HSV_NEW;
+	cmr_u32 ee_blk_id = ISP_BLK_EDGE;
+	cmr_u32 bchs_blk_id[4] = { ISP_BLK_BRIGHT, ISP_BLK_CONTRAST,  ISP_BLK_HUE, ISP_BLK_SATURATION};
+#elif defined CONFIG_ISP_2_6
+	cmr_u32 hsv_blk_id = ISP_BLK_HSV;
+	cmr_u32 ee_blk_id = ISP_BLK_EE_V1;
+	cmr_u32 bchs_blk_id[4] = { ISP_BLK_BCHS, ISP_BLK_ID_MAX,  ISP_BLK_ID_MAX, ISP_BLK_ID_MAX};
+#endif
 
 	if (cxt->ops.ai_ops.ioctrl) {
 		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)(&ai_sta), NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to AI_GET_STATUS"));
+		ISP_RETURN_IF_FAIL(ret, ("fail to AI_GET_STATUS"));
 	}
 
 	blk_num = mode_common_ptr->block_num;
-	for(i; i < blk_num; i++){
+	for(i = 0; i < blk_num; i++){
 		blk_id = mode_common_ptr->block_header[i].block_id;
 		if ( blk_id == ISP_BLK_AI_PRO_V1)
 			cxt->is_ai_scene_pro = !mode_common_ptr->block_header[i].bypass;
 		ISP_LOGV("cxt->is_ai_scene_pro = %d, blk_num = %d, i = %d", cxt->is_ai_scene_pro, blk_num, i);
 	}
+	ISP_LOGD("cxt->is_ai_scene_pro = %d", cxt->is_ai_scene_pro);
+	if (!cxt->is_ai_scene_pro ||
+		((ai_sta != AI_STATUS_PROCESSING) && !cxt->ai_scene_flag))
+		return ret;
+
+	ISP_LOGV("cam%ld ai_pro, run_status %d,  last ai_scene %d, cur scene %d",
+		cxt->camera_id, ai_sta, cxt->ai_scene_flag, cxt->commn_cxt.ai_scene_id);
 
 	num = (cxt->zsl_flag) ? 2 : 1;
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
+	memset(&pm_param, 0, sizeof(pm_param));
+	BLOCK_PARAM_CFG(ioctl_input, pm_param,
 			ISP_PM_BLK_AI_SCENE_SMOOTH,
 			ISP_BLK_AI_PRO_V1, PNULL, 0);
 	ret = isp_pm_ioctl(cxt->handle_pm,
@@ -1916,418 +1930,128 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 
 	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
 		smooth_ratio = *(cmr_u16 *)ioctl_output.param_data_ptr->data_ptr;
-	if (cxt->ai_scene_flag != cxt->commn_cxt.ai_scene_id){
-		if (cxt->commn_cxt.ai_scene_id == ISP_PM_AI_SCENE_PORTRAIT ||
-			cxt->commn_cxt.ai_scene_id == ISP_PM_AI_SCENE_NIGHT)
-			goto set_param;
+
+	if (smooth_ratio == 0) {
+		ISP_LOGW("warning: smooth ratio is 0\n");
+		smooth_ratio = 1;
+	}
+
+	if (cxt->ai_scene_flag != cxt->commn_cxt.ai_scene_id) {
+		ISP_LOGD("cam%ld ai_pro, run_status %d,  last ai_scene %d, cur scene %d, smooth %d",
+			cxt->camera_id, ai_sta, cxt->ai_scene_flag, cxt->commn_cxt.ai_scene_id, smooth_ratio);
 
 		cxt->smooth_ratio = smooth_ratio;
 		cxt->ai_scene_flag = cxt->commn_cxt.ai_scene_id;
-		ISP_LOGV("cxt->smooth_ratio %d,cxt->ai_scene_flag %d!", cxt->smooth_ratio, cxt->ai_scene_flag);
+		if (cxt->commn_cxt.ai_scene_id == ISP_PM_AI_SCENE_PORTRAIT ||
+			cxt->commn_cxt.ai_scene_id == ISP_PM_AI_SCENE_NIGHT) {
+			cxt->smooth_ratio = smooth_ratio = 1;
+		}
 	}
 
-	ISP_LOGD("cxt->is_ai_scene_pro = %d", cxt->is_ai_scene_pro);
+	if (ai_sta != AI_STATUS_PROCESSING) {
+		cxt->smooth_ratio = smooth_ratio = 1;
+		ISP_LOGD("cam%ld  ai_stopped\n", cxt->camera_id);
+	}
 
-set_param:
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_HSV,
-			ISP_BLK_HSV_NEW2, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get hsv PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		hsv_param[0] = (struct isp_hsv_table *)ioctl_output.param_data_ptr->data_ptr;
+	if (cxt->smooth_ratio == 0) {
+		ai_update_data.smooth_factor = 0;
+		ai_update_data.smooth_base = (cmr_s16)smooth_ratio;
+	} else {
+		ai_update_data.smooth_factor = (cmr_s16)smooth_ratio - cxt->smooth_ratio + 1;
+		ai_update_data.smooth_base = (cmr_s16)smooth_ratio;
+		if (!cxt->ai_scene_flag)
+			ai_update_data.smooth_factor = 0 - ai_update_data.smooth_factor;
+	}
 
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_HSV_PARAM,
-			ISP_BLK_AI_PRO_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get hsv ai PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		hsv_cur[0] = (struct isp_ai_hsv_info *)ioctl_output.param_data_ptr->data_ptr;
-
-	if (cxt->zsl_flag){
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_HSV,
-				ISP_BLK_HSV_NEW2, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get hsv PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			hsv_param[1] = (struct isp_hsv_table *)ioctl_output.param_data_ptr->data_ptr;
-
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
+	for (i = 0; i < num; i++) {
+		memset(&pm_param, 0, sizeof(pm_param));
+		cmd = (i == 0) ? ISP_PM_CMD_GET_SINGLE_SETTING : ISP_PM_CMD_GET_CAP_SINGLE_SETTING;
+		BLOCK_PARAM_CFG(ioctl_input, pm_param,
 				ISP_PM_BLK_AI_SCENE_HSV_PARAM,
 				ISP_BLK_AI_PRO_V1, PNULL, 0);
 		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
+				cmd, (void *)&ioctl_input, (void *)&ioctl_output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to get hsv ai PARAM"));
 		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			hsv_cur[1] = (struct isp_ai_hsv_info *)ioctl_output.param_data_ptr->data_ptr;
+			hsv_cur[i] = (struct isp_ai_hsv_info *)ioctl_output.param_data_ptr->data_ptr;
+
+		if (hsv_cur[i] && hsv_cur[i]->hue_adj_ai_eb) {
+			if (cxt->smooth_ratio == 0 && !cxt->ai_scene_flag)
+				continue;
+
+			ai_update_data.param_ptr = (void *)hsv_cur[i];
+			memset(&pm_param, 0, sizeof(pm_param));
+			BLOCK_PARAM_CFG(ioctl_input, pm_param,
+				ISP_PM_BLK_AI_SCENE_UPDATE_HSV,
+				hsv_blk_id,
+				&ai_update_data,
+				sizeof(struct isp_ai_update_param));
+
+			ioctl_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[i];
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &ioctl_input, NULL);
+		}
 	}
 
-	for (j = 0; j < num; j++){
-		if (AI_STATUS_PROCESSING == ai_sta && cxt->is_ai_scene_pro){
-			if (cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-				for (i = 0; i < 360; i++) {
-					hsv_param[j]->hue_table[i] += hsv_cur[j]->hue_table_item_offset[i] /smooth_ratio;
-					hsv_param[j]->sat_table[i] += hsv_cur[j]->saturation_table_item_offset[i] / smooth_ratio;
-				}
-			} else if (!cxt->ai_scene_flag && cxt->smooth_ratio > 0 &&smooth_ratio) {
-				for (i = 0; i < 360; i++) {
-					hsv_param[j]->hue_table[i] -= hsv_cur[j]->hue_table_item_offset[i] /smooth_ratio;
-					hsv_param[j]->sat_table[i] -= hsv_cur[j]->saturation_table_item_offset[i] / smooth_ratio;
-				}
-			} else {
-				for (i = 0; i < 360; i++) {
-					hsv_param[j]->hue_table[i] += hsv_cur[j]->hue_table_item_offset[i];
-					hsv_param[j]->sat_table[i] += hsv_cur[j]->saturation_table_item_offset[i];
-
-				}
-			}
-		}
-
-		for (i = 0; i < 360; i++) {
-			if (hsv_param[j]->hue_table[i] > 359 )
-				hsv_param[j]->hue_table[i] = 359;
-			if (hsv_param[j]->hue_table[i] < 0 )
-				hsv_param[j]->hue_table[i] = 0;
-			if (hsv_param[j]->sat_table[i] > 2047)
-				hsv_param[j]->sat_table[i] = 2047;
-			if (hsv_param[j]->sat_table[i] < 0)
-				hsv_param[j]->sat_table[i] = 0;
-		}
+	for (i = 0; i < num; i++) {
 		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-			ISP_PM_BLK_AI_SCENE_HSV_CUR,
-			ISP_BLK_HSV_NEW2,
-			hsv_param[j],
-			sizeof(struct isp_hsv_table));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set hsv cur"));
-	}
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_BCHS,
-			ISP_BLK_BCHS, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get bchs PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		bchs_param[0] = (struct isp_bchs_ai_info *)ioctl_output.param_data_ptr->data_ptr;
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_BCHS_PARAM,
-			ISP_BLK_AI_PRO_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get bchs ai PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		bchs_cur[0] = (struct isp_ai_bchs_param *)ioctl_output.param_data_ptr->data_ptr;
-
-	if (cxt->zsl_flag){
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_BCHS,
-				ISP_BLK_BCHS, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get bchs PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			bchs_param[1] = (struct isp_bchs_ai_info *)ioctl_output.param_data_ptr->data_ptr;
-
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
+		cmd = (i == 0) ? ISP_PM_CMD_GET_SINGLE_SETTING : ISP_PM_CMD_GET_CAP_SINGLE_SETTING;
+		BLOCK_PARAM_CFG(ioctl_input, pm_param,
 				ISP_PM_BLK_AI_SCENE_BCHS_PARAM,
 				ISP_BLK_AI_PRO_V1, PNULL, 0);
 		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
+				cmd, (void *)&ioctl_input, (void *)&ioctl_output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to get bchs ai PARAM"));
 		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			bchs_cur[1] = (struct isp_ai_bchs_param *)ioctl_output.param_data_ptr->data_ptr;
-	}
+			bchs_cur[i] = (struct isp_ai_bchs_param *)ioctl_output.param_data_ptr->data_ptr;
 
-	for (j = 0; j < num; j++){
-		if (AI_STATUS_PROCESSING == ai_sta && cxt->is_ai_scene_pro){
-			ISP_LOGV("j %d, get bchs_param->brta_factor offset %x bchs_param[1]->brta_factor %x",j,bchs_cur[j]->ai_brightness.brightness_adj_factor_offset,bchs_param[j]->brta_factor);
-			if (cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-				bchs_param_final[j].brta_factor = bchs_param[j]->brta_factor + bchs_cur[j]->ai_brightness.brightness_adj_factor_offset /smooth_ratio;
-				bchs_param_final[j].cnta_factor = bchs_param[j]->cnta_factor + bchs_cur[j]->ai_contrast.contrast_adj_factor_offset /smooth_ratio;
-				bchs_param_final[j].hua_sina_value = bchs_param[j]->hua_sina_value + bchs_cur[j]->ai_hue.hue_sin_offset /smooth_ratio;
-				bchs_param_final[j].hua_cos_value = bchs_param[j]->hua_cos_value + bchs_cur[j]->ai_hue.hue_cos_offset /smooth_ratio;
-				bchs_param_final[j].csa_factor_u = bchs_param[j]->csa_factor_u + bchs_cur[j]->ai_saturation.saturation_adj_factor_u_offset /smooth_ratio;
-				bchs_param_final[j].csa_factor_v = bchs_param[j]->csa_factor_v + bchs_cur[j]->ai_saturation.saturation_adj_factor_v_offset /smooth_ratio;
-			} else if (!cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-				bchs_param_final[j].brta_factor = bchs_param[j]->brta_factor - bchs_cur[j]->ai_brightness.brightness_adj_factor_offset /smooth_ratio;
-				bchs_param_final[j].cnta_factor = bchs_param[j]->cnta_factor - bchs_cur[j]->ai_contrast.contrast_adj_factor_offset /smooth_ratio;
-				bchs_param_final[j].hua_sina_value = bchs_param[j]->hua_sina_value - bchs_cur[j]->ai_hue.hue_sin_offset /smooth_ratio;
-				bchs_param_final[j].hua_cos_value = bchs_param[j]->hua_cos_value - bchs_cur[j]->ai_hue.hue_cos_offset /smooth_ratio;
-				bchs_param_final[j].csa_factor_u = bchs_param[j]->csa_factor_u - bchs_cur[j]->ai_saturation.saturation_adj_factor_u_offset /smooth_ratio;
-				bchs_param_final[j].csa_factor_v = bchs_param[j]->csa_factor_v - bchs_cur[j]->ai_saturation.saturation_adj_factor_v_offset /smooth_ratio;
-			} else {
-				bchs_param_final[j].brta_factor = bchs_param[j]->brta_factor + bchs_cur[j]->ai_brightness.brightness_adj_factor_offset;
-				bchs_param_final[j].cnta_factor = bchs_param[j]->cnta_factor + bchs_cur[j]->ai_contrast.contrast_adj_factor_offset;
-				bchs_param_final[j].hua_sina_value = bchs_param[j]->hua_sina_value + bchs_cur[j]->ai_hue.hue_sin_offset;
-				bchs_param_final[j].hua_cos_value = bchs_param[j]->hua_cos_value + bchs_cur[j]->ai_hue.hue_cos_offset;
-				bchs_param_final[j].csa_factor_u = bchs_param[j]->csa_factor_u + bchs_cur[j]->ai_saturation.saturation_adj_factor_u_offset;
-				bchs_param_final[j].csa_factor_v = bchs_param[j]->csa_factor_v + bchs_cur[j]->ai_saturation.saturation_adj_factor_v_offset;
+		if (bchs_cur[i]) {
+			if (cxt->smooth_ratio == 0 && !cxt->ai_scene_flag)
+				continue;
+
+			ai_update_data.param_ptr = (void *)bchs_cur[i];
+			for (j = 0; j < 4; j++) {
+				if (bchs_blk_id[j] == ISP_BLK_ID_MAX)
+					break;
+				memset(&pm_param, 0, sizeof(pm_param));
+				BLOCK_PARAM_CFG(ioctl_input, pm_param,
+					ISP_PM_BLK_AI_SCENE_UPDATE_BCHS,
+					bchs_blk_id[j],
+					&ai_update_data,
+					sizeof(struct isp_ai_update_param));
+
+				ioctl_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[i];
+				ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &ioctl_input, NULL);
 			}
-		} else {
-			bchs_param_final[j].brta_factor = bchs_param[j]->brta_factor;
-			bchs_param_final[j].cnta_factor = bchs_param[j]->cnta_factor;
-			bchs_param_final[j].hua_sina_value = bchs_param[j]->hua_sina_value;
-			bchs_param_final[j].hua_cos_value = bchs_param[j]->hua_cos_value;
-			bchs_param_final[j].csa_factor_u = bchs_param[j]->csa_factor_u;
-			bchs_param_final[j].csa_factor_v = bchs_param[j]->csa_factor_v;
 		}
-
-		if (bchs_param_final[j].brta_factor > 127 )
-			bchs_param_final[j].brta_factor = 127;
-		if (bchs_param_final[j].brta_factor < -128 )
-			bchs_param_final[j].brta_factor = -128;
-		if (bchs_param_final[j].cnta_factor > 255 )
-			bchs_param_final[j].cnta_factor = 255;
-		if (bchs_param_final[j].cnta_factor < 0 )
-			bchs_param_final[j].cnta_factor = 0;
-		if (bchs_param_final[j].hua_sina_value > 180 )
-			bchs_param_final[j].hua_sina_value = 180;
-		if (bchs_param_final[j].hua_sina_value < -180 )
-			bchs_param_final[j].hua_sina_value = -180;
-		if (bchs_param_final[j].hua_cos_value > 180 )
-			bchs_param_final[j].hua_cos_value = 180;
-		if (bchs_param_final[j].hua_cos_value < -180 )
-			bchs_param_final[j].hua_cos_value = -180;
-		if (bchs_param_final[j].csa_factor_u > 255 )
-			bchs_param_final[j].csa_factor_u = 255;
-		if (bchs_param_final[j].csa_factor_u < 0 )
-			bchs_param_final[j].csa_factor_u = 0;
-		if (bchs_param_final[j].csa_factor_v > 255 )
-			bchs_param_final[j].csa_factor_v = 255;
-		if (bchs_param_final[j].csa_factor_v < 0 )
-			bchs_param_final[j].csa_factor_v = 0;
-		ISP_LOGV("j %d,get bchs_param->brta_factor %x,bchs_param[0]->cnta_factor  %d,bchs_param[0]->hua_sina_value %d,bchs_param[0]->hua_cos_value %d, %d, %d!",
-				j ,bchs_param_final[j].brta_factor, bchs_param_final[j].cnta_factor ,bchs_param_final[j].hua_sina_value,bchs_param_final[j].hua_cos_value,bchs_param_final[j].csa_factor_u,bchs_param_final[j].csa_factor_v);
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_AI_SCENE_BCHS_CUR,
-				ISP_BLK_BCHS,
-				&bchs_param_final[j],
-				sizeof(struct isp_bchs_ai_info));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set hsv cur"));
 	}
 
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_EE,
-			ISP_BLK_EE_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get ee PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		ee_param[0] = (struct isp_edge_ai_param *)ioctl_output.param_data_ptr->data_ptr;
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_EE_PARAM,
-			ISP_BLK_AI_PRO_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get ee ai PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		ee_cur[0] = (struct isp_ai_ee_param *)ioctl_output.param_data_ptr->data_ptr;
-
-	if (cxt->zsl_flag){
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_EE,
-				ISP_BLK_EE_V1, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get ee PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			ee_param[1] = (struct isp_edge_ai_param *)ioctl_output.param_data_ptr->data_ptr;
-
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
+	for (i = 0; i < num; i++) {
+		memset(&pm_param, 0, sizeof(pm_param));
+		cmd = (i == 0) ? ISP_PM_CMD_GET_SINGLE_SETTING : ISP_PM_CMD_GET_CAP_SINGLE_SETTING;
+		BLOCK_PARAM_CFG(ioctl_input, pm_param,
 				ISP_PM_BLK_AI_SCENE_EE_PARAM,
 				ISP_BLK_AI_PRO_V1, PNULL, 0);
 		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get ee ai PARAM"));
+				cmd, (void *)&ioctl_input, (void *)&ioctl_output);
+		ISP_TRACE_IF_FAIL(ret, ("fail to get bchs ai PARAM"));
 		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			ee_cur[1] = (struct isp_ai_ee_param *)ioctl_output.param_data_ptr->data_ptr;
-	}
+			ee_cur[i] = (struct isp_ai_ee_param *)ioctl_output.param_data_ptr->data_ptr;
 
-	for (j = 0; j < num; j++){
-		if (AI_STATUS_PROCESSING == ai_sta && cxt->is_ai_scene_pro){
-			if (cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-				ee_param[j]->ee_ratio_old_gradient += ee_cur[j]->ratio_old_gradient_offset /smooth_ratio;
-				ee_param[j]->ee_ratio_new_pyramid += ee_cur[j]->ratio_new_pyramid_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][0] += ee_cur[j]->ee_gain_hv1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][1] += ee_cur[j]->ee_gain_hv1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][2] += ee_cur[j]->ee_gain_hv1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][0] += ee_cur[j]->ee_gain_hv2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][1] += ee_cur[j]->ee_gain_hv2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][2] += ee_cur[j]->ee_gain_hv2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][0] += ee_cur[j]->ee_gain_diag1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][1] += ee_cur[j]->ee_gain_diag1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][2] += ee_cur[j]->ee_gain_diag1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][0] += ee_cur[j]->ee_gain_diag2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][1] += ee_cur[j]->ee_gain_diag2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][2] += ee_cur[j]->ee_gain_diag2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[0] += ee_cur[j]->ee_pos_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[1] += ee_cur[j]->ee_pos_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[2] += ee_cur[j]->ee_pos_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[0] += ee_cur[j]->ee_pos_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[1] += ee_cur[j]->ee_pos_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[2] += ee_cur[j]->ee_pos_c.ee_c3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[0] += ee_cur[j]->ee_neg_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[1] += ee_cur[j]->ee_neg_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[2] += ee_cur[j]->ee_neg_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[0] += ee_cur[j]->ee_neg_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[1] += ee_cur[j]->ee_neg_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[2] += ee_cur[j]->ee_neg_c.ee_c3_cfg_offset /smooth_ratio;
-			} else if (!cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio){
-				ee_param[j]->ee_ratio_old_gradient -= ee_cur[j]->ratio_old_gradient_offset /smooth_ratio;
-				ee_param[j]->ee_ratio_new_pyramid -= ee_cur[j]->ratio_new_pyramid_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][0] -= ee_cur[j]->ee_gain_hv1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][1] -= ee_cur[j]->ee_gain_hv1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][2] -= ee_cur[j]->ee_gain_hv1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][0] -= ee_cur[j]->ee_gain_hv2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][1] -= ee_cur[j]->ee_gain_hv2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][2] -= ee_cur[j]->ee_gain_hv2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][0] -= ee_cur[j]->ee_gain_diag1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][1] -= ee_cur[j]->ee_gain_diag1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][2] -= ee_cur[j]->ee_gain_diag1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][0] -= ee_cur[j]->ee_gain_diag2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][1] -= ee_cur[j]->ee_gain_diag2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][2] -= ee_cur[j]->ee_gain_diag2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[0] -= ee_cur[j]->ee_pos_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[1] -= ee_cur[j]->ee_pos_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[2] -= ee_cur[j]->ee_pos_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[0] -= ee_cur[j]->ee_pos_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[1] -= ee_cur[j]->ee_pos_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[2] -= ee_cur[j]->ee_pos_c.ee_c3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[0] -= ee_cur[j]->ee_neg_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[1] -= ee_cur[j]->ee_neg_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[2] -= ee_cur[j]->ee_neg_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[0] -= ee_cur[j]->ee_neg_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[1] -= ee_cur[j]->ee_neg_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[2] -= ee_cur[j]->ee_neg_c.ee_c3_cfg_offset /smooth_ratio;
-			}else {
-				ee_param[j]->ee_ratio_old_gradient += ee_cur[j]->ratio_old_gradient_offset;
-				ee_param[j]->ee_ratio_new_pyramid += ee_cur[j]->ratio_new_pyramid_offset;
-				ee_param[j]->ee_gain_hv_r[0][0] +=ee_cur[j]->ee_gain_hv1.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[0][1] += ee_cur[j]->ee_gain_hv1.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[0][2] += ee_cur[j]->ee_gain_hv1.ee_r3_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[1][0] += ee_cur[j]->ee_gain_hv2.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[1][1] += ee_cur[j]->ee_gain_hv2.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[1][2] += ee_cur[j]->ee_gain_hv2.ee_r3_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[0][0] += ee_cur[j]->ee_gain_diag1.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[0][1] += ee_cur[j]->ee_gain_diag1.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[0][2] += ee_cur[j]->ee_gain_diag1.ee_r3_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[1][0] += ee_cur[j]->ee_gain_diag2.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[1][1] += ee_cur[j]->ee_gain_diag2.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[1][2] += ee_cur[j]->ee_gain_diag2.ee_r3_cfg_offset;
-				ee_param[j]->ee_pos_r[0] += ee_cur[j]->ee_pos_r.ee_r1_cfg_offset;
-				ee_param[j]->ee_pos_r[1] += ee_cur[j]->ee_pos_r.ee_r2_cfg_offset;
-				ee_param[j]->ee_pos_r[2] += ee_cur[j]->ee_pos_r.ee_r3_cfg_offset;
-				ee_param[j]->ee_pos_c[0] += ee_cur[j]->ee_pos_c.ee_c1_cfg_offset;
-				ee_param[j]->ee_pos_c[1] += ee_cur[j]->ee_pos_c.ee_c2_cfg_offset;
-				ee_param[j]->ee_pos_c[2] += ee_cur[j]->ee_pos_c.ee_c3_cfg_offset;
-				ee_param[j]->ee_neg_r[0] += ee_cur[j]->ee_neg_r.ee_r1_cfg_offset;
-				ee_param[j]->ee_neg_r[1] += ee_cur[j]->ee_neg_r.ee_r2_cfg_offset;
-				ee_param[j]->ee_neg_r[2] += ee_cur[j]->ee_neg_r.ee_r3_cfg_offset;
-				ee_param[j]->ee_neg_c[0] += ee_cur[j]->ee_neg_c.ee_c1_cfg_offset;
-				ee_param[j]->ee_neg_c[1] += ee_cur[j]->ee_neg_c.ee_c2_cfg_offset;
-				ee_param[j]->ee_neg_c[2] += ee_cur[j]->ee_neg_c.ee_c3_cfg_offset;
-				}
+		ISP_LOGV("ai scene %d,  ee %p, enable %d", cxt->ai_scene_flag, ee_cur[i], ee_cur[i]->ee_enable);
+		if (ee_cur[i] && ee_cur[i] ->ee_enable) {
+			if (cxt->smooth_ratio == 0 && !cxt->ai_scene_flag)
+				continue;
+
+			ai_update_data.param_ptr = (void *)ee_cur[i];
+			memset(&pm_param, 0, sizeof(pm_param));
+			BLOCK_PARAM_CFG(ioctl_input, pm_param,
+				ISP_PM_BLK_AI_SCENE_UPDATE_EE,
+				ee_blk_id, &ai_update_data,
+				sizeof(struct isp_ai_update_param));
+
+			ioctl_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[i];
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &ioctl_input, NULL);
 		}
-
-		if (ee_param[j]->ee_ratio_old_gradient > 63 )
-			ee_param[j]->ee_ratio_old_gradient = 63;
-		if (ee_param[j]->ee_ratio_old_gradient < 0 )
-			ee_param[j]->ee_ratio_old_gradient = 0;
-		if (ee_param[j]->ee_ratio_new_pyramid > 63 )
-			ee_param[j]->ee_ratio_new_pyramid = 63;
-		if (ee_param[j]->ee_ratio_new_pyramid < 0 )
-			ee_param[j]->ee_ratio_new_pyramid = 0;
-		for(i = 0; i < 2; i++){
-			for (k = 0; k < 3; k++){
-				if (ee_param[j]->ee_gain_hv_r[i][k] > 31 )
-					ee_param[j]->ee_gain_hv_r[i][k] =31;
-				if (ee_param[j]->ee_gain_hv_r[i][k] < 0 )
-					ee_param[j]->ee_gain_hv_r[i][k] =0;
-				if (ee_param[j]->ee_gain_diag_r[i][k] > 31 )
-					ee_param[j]->ee_gain_diag_r[i][k] = 31;
-				if (ee_param[j]->ee_gain_diag_r[i][k] < 0 )
-					ee_param[j]->ee_gain_diag_r[i][k] = 0;
-			}
-		}
-		for(i = 0; i < 3; i++)
-			if (ee_param[j]->ee_pos_r[i] > 127 )
-				ee_param[j]->ee_pos_r[i] =127;
-			if (ee_param[j]->ee_pos_r[i] < 0 )
-				ee_param[j]->ee_pos_r[i] =0;
-			if (ee_param[j]->ee_pos_c[i] > 127 )
-				ee_param[j]->ee_pos_c[i] = 127;
-			if (ee_param[j]->ee_pos_c[i] < 0 )
-				ee_param[j]->ee_pos_c[i] = 0;
-			if (ee_param[j]->ee_neg_r[i] > 127 )
-				ee_param[j]->ee_neg_r[i] = 127;
-			if (ee_param[j]->ee_neg_r[i] < 0 )
-				ee_param[j]->ee_neg_r[i] = 0;
-			if (ee_param[j]->ee_neg_c[i] >0 )
-				ee_param[j]->ee_neg_c[i] = 0;
-			if (ee_param[j]->ee_neg_c[i] < -128 )
-				ee_param[j]->ee_neg_c[i] = -128;
-		ISP_LOGV("j %d, ratio_old_gradient_offset %d , %d,%d, %d,  %d,%d ,%d,%d , ee_pos_r.ee_r1_cfg_offset %d,%d, %d,  %d,%d ,%d,ee_neg_r.ee_r1_cfg_offset%d,%d,%d\n",
-			j,ee_param[j]->ee_ratio_old_gradient, ee_param[j]->ee_ratio_new_pyramid,
-			ee_param[j]->ee_gain_hv_r[0][0],ee_param[j]->ee_gain_hv_r[0][1],
-			ee_param[j]->ee_gain_hv_r[0][2],ee_param[j]->ee_gain_hv_r[1][0],
-			ee_param[j]->ee_gain_hv_r[1][1],ee_param[j]->ee_gain_hv_r[1][2],
-			ee_param[j]->ee_pos_r[0],ee_param[j]->ee_pos_r[1],
-			ee_param[j]->ee_pos_r[2],ee_param[j]->ee_pos_c[0],
-			ee_param[j]->ee_pos_c[1],ee_param[j]->ee_pos_c[2],
-			ee_param[j]->ee_neg_r[0],ee_param[j]->ee_neg_r[1],
-			ee_param[j]->ee_neg_r[2]);
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_AI_SCENE_EE_CUR,
-				ISP_BLK_EE_V1,
-				ee_param[j],
-				sizeof(struct isp_edge_ai_param));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ISP_LOGV("mode io_pm_input.param_data_ptr->mode_id %d.\n", io_pm_input.param_data_ptr->mode_id);
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set ee cur"));
 	}
 
 	if (cxt->smooth_ratio > 0)
@@ -2335,739 +2059,7 @@ set_param:
 	ISP_LOGV("cxt->smooth_ratio after %d.\n", cxt->smooth_ratio);
 	return ret;
 }
-#elif defined  CONFIG_ISP_2_5
-static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
-{
-	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 num = 0, i = 0, j = 0 ,k = 0;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
-	struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
-	struct isp_pm_ioctl_input ioctl_output = { PNULL, 0 };
-	struct isp_pm_ioctl_input ioctl_input;
-	struct isp_pm_param_data ioctl_data;
-	struct isp_pm_param_data pm_param;
-	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
-	struct isp_ai_bright_param*b_param[2];
-	struct isp_ai_contrast_param *c_param[2];
-	struct isp_ai_hue_param *h_param[2];
-	struct isp_ai_csa_param *s_param[2];
-	struct isp_ai_bright_param b_param_final[2];
-	struct isp_ai_contrast_param c_param_final[2];
-	struct isp_ai_hue_param h_param_final[2];
-	struct isp_ai_csa_param s_param_final[2];
-	cmr_u32  *reg_addr0 = NULL;
-	cmr_u32  *reg_addr1 = NULL;
-	cmr_u32 dst0[360];
-	cmr_u32 dst1[360];
-	struct isp_ai_bchs_param *bchs_cur[2];
-	struct isp_edge_ai_param_v1 *ee_param[2];
-	struct isp_ai_ee_param_v1 *ee_cur[2];
-	struct isp_ai_hsv_info *hsv_cur[2];
-	cmr_u16 smooth_ratio = 0;
-	enum ai_status ai_sta = AI_STATUS_MAX;
-	cmr_u32 blk_id = 0, blk_num = 0;
 
-	blk_num = mode_common_ptr->block_num;
-	for(i; i < blk_num; i++){
-		blk_id = mode_common_ptr->block_header[i].block_id;
-		if ( blk_id == ISP_BLK_AI_PRO_V1)
-			cxt->is_ai_scene_pro = !mode_common_ptr->block_header[i].bypass;
-		ISP_LOGV("cxt->is_ai_scene_pro = %d, blk_num = %d, i = %d", cxt->is_ai_scene_pro, blk_num, i);
-	}
-
-	if (cxt->ops.ai_ops.ioctrl) {
-		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)(&ai_sta), NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to AI_GET_STATUS"));
-	}
-
-	num = (cxt->zsl_flag) ? 2 : 1;
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_SMOOTH,
-			ISP_BLK_AI_PRO_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-			ISP_TRACE_IF_FAIL(ret, ("fail to get AI PRO PARAM"));
-
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		smooth_ratio = *(cmr_u16 *)ioctl_output.param_data_ptr->data_ptr;
-	if (cxt->ai_scene_flag != cxt->commn_cxt.ai_scene_id){
-		if (cxt->commn_cxt.ai_scene_id == ISP_PM_AI_SCENE_PORTRAIT ||
-			cxt->commn_cxt.ai_scene_id == ISP_PM_AI_SCENE_NIGHT)
-			goto set_param;
-
-		cxt->smooth_ratio = smooth_ratio;
-		cxt->ai_scene_flag = cxt->commn_cxt.ai_scene_id;
-		ISP_LOGV("cxt->smooth_ratio %d,cxt->ai_scene_flag %d!", cxt->smooth_ratio, cxt->ai_scene_flag);
-	}
-
-	ISP_LOGD("cxt->is_ai_scene_pro = %d", cxt->is_ai_scene_pro);
-
-set_param:
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_B,
-			ISP_BLK_BRIGHT, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get b PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		b_param[0] = (struct isp_ai_bright_param *)ioctl_output.param_data_ptr->data_ptr;
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_C,
-			ISP_BLK_CONTRAST, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get c PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		c_param[0] = (struct isp_ai_contrast_param *)ioctl_output.param_data_ptr->data_ptr;
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_H,
-			ISP_BLK_HUE, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get h PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		h_param[0] = (struct isp_ai_hue_param *)ioctl_output.param_data_ptr->data_ptr;
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_S,
-			ISP_BLK_SATURATION, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get s PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		s_param[0] = (struct isp_ai_csa_param *)ioctl_output.param_data_ptr->data_ptr;
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_BCHS_PARAM,
-			ISP_BLK_AI_PRO_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get bchs ai PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		bchs_cur[0] = (struct isp_ai_bchs_param *)ioctl_output.param_data_ptr->data_ptr;
-	ISP_LOGV("b_param[0]->factor %d ,%d,%d,%d,%d",b_param[0]->factor, c_param[0]->factor,h_param[0]->theta,s_param[0]->csa_factor_u,s_param[0]->csa_factor_v);
-
-	if (cxt->zsl_flag){
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_B,
-				ISP_BLK_BRIGHT, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get b PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			b_param[1] = (struct isp_ai_bright_param *)ioctl_output.param_data_ptr->data_ptr;
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_C,
-				ISP_BLK_CONTRAST, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get c PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			c_param[1] = (struct isp_ai_contrast_param *)ioctl_output.param_data_ptr->data_ptr;
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_H,
-				ISP_BLK_HUE, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get h PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			h_param[1] = (struct isp_ai_hue_param *)ioctl_output.param_data_ptr->data_ptr;
-
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_S,
-				ISP_BLK_SATURATION, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get s PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			s_param[1] = (struct isp_ai_csa_param *)ioctl_output.param_data_ptr->data_ptr;
-
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_BCHS_PARAM,
-				ISP_BLK_AI_PRO_V1, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get bchs ai PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			bchs_cur[1] = (struct isp_ai_bchs_param *)ioctl_output.param_data_ptr->data_ptr;
-	}
-
-	for (j = 0; j < num; j++){
-		if (AI_STATUS_PROCESSING == ai_sta && cxt->is_ai_scene_pro){
-			ISP_LOGV("j %d, get bchs_param->brta_factor offset %x bchs_param[j]->brta_factor %x",j,bchs_cur[j]->ai_contrast.contrast_adj_factor_offset,c_param[j]->factor);
-			if (cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-				b_param_final[j].factor = b_param[j]->factor + bchs_cur[j]->ai_brightness.brightness_adj_factor_offset /smooth_ratio;
-				c_param_final[j].factor = c_param[j]->factor + bchs_cur[j]->ai_contrast.contrast_adj_factor_offset /smooth_ratio;
-				h_param_final[j].theta = h_param[j]->theta+ bchs_cur[j]->ai_hue_v1.theta_offset /smooth_ratio;
-				s_param_final[j].csa_factor_u = s_param[j]->csa_factor_u + bchs_cur[j]->ai_saturation.saturation_adj_factor_u_offset /smooth_ratio;
-				s_param_final[j].csa_factor_v = s_param[j]->csa_factor_v + bchs_cur[j]->ai_saturation.saturation_adj_factor_v_offset /smooth_ratio;
-			} else if (!cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-				b_param_final[j].factor = b_param[j]->factor - bchs_cur[j]->ai_brightness.brightness_adj_factor_offset /smooth_ratio;
-				c_param_final[j].factor = c_param[j]->factor - bchs_cur[j]->ai_contrast.contrast_adj_factor_offset /smooth_ratio;
-				h_param_final[j].theta = h_param[j]->theta+ bchs_cur[j]->ai_hue_v1.theta_offset /smooth_ratio;
-				s_param_final[j].csa_factor_u = s_param[j]->csa_factor_u - bchs_cur[j]->ai_saturation.saturation_adj_factor_u_offset /smooth_ratio;
-				s_param_final[j].csa_factor_v = s_param[j]->csa_factor_v - bchs_cur[j]->ai_saturation.saturation_adj_factor_v_offset /smooth_ratio;
-			} else {
-				b_param_final[j].factor = b_param[j]->factor + bchs_cur[j]->ai_brightness.brightness_adj_factor_offset;
-				c_param_final[j].factor = c_param[j]->factor + bchs_cur[j]->ai_contrast.contrast_adj_factor_offset;
-				h_param_final[j].theta = h_param[j]->theta+ bchs_cur[j]->ai_hue_v1.theta_offset;
-				s_param_final[j].csa_factor_u = s_param[j]->csa_factor_u + bchs_cur[j]->ai_saturation.saturation_adj_factor_u_offset;
-				s_param_final[j].csa_factor_v = s_param[j]->csa_factor_v + bchs_cur[j]->ai_saturation.saturation_adj_factor_v_offset;
-			}
-		} else {
-			b_param_final[j].factor = b_param[j]->factor;
-			c_param_final[j].factor = c_param[j]->factor;
-			h_param_final[j].theta = h_param[j]->theta;
-			s_param_final[j].csa_factor_u = s_param[j]->csa_factor_u;
-			s_param_final[j].csa_factor_v = s_param[j]->csa_factor_v;
-		}
-
-		if (b_param_final[j].factor > 127 )
-			b_param_final[j].factor = 127;
-		if (b_param_final[j].factor < -128 )
-			b_param_final[j].factor = -128;
-		if (c_param_final[j].factor > 255 )
-			c_param_final[j].factor = 255;
-		if (c_param_final[j].factor < 0 )
-			c_param_final[j].factor = 0;
-		if (h_param_final[j].theta > 180 )
-			h_param_final[j].theta = 180;
-		if (h_param_final[j].theta < -180 )
-			h_param_final[j].theta = -180;
-		if (s_param_final[j].csa_factor_u > 255 )
-			s_param_final[j].csa_factor_u = 255;
-		if (s_param_final[j].csa_factor_u < 0 )
-			s_param_final[j].csa_factor_u = 0;
-		if (s_param_final[j].csa_factor_v > 255 )
-			s_param_final[j].csa_factor_v = 255;
-		if (s_param_final[j].csa_factor_v < 0 )
-			s_param_final[j].csa_factor_v = 0;
-		ISP_LOGV("j %d,get bchs_param->brta_factor %x,bchs_param[0]->cnta_factor  %d,bchs_param[0]->theta %d, %d, %d!",
-				j ,b_param_final[j].factor, c_param_final[j].factor ,h_param_final[j].theta,s_param_final[j].csa_factor_u,s_param_final[j].csa_factor_v);
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_AI_SCENE_B_CUR,
-				ISP_BLK_BRIGHT,
-				&b_param_final[j],
-				sizeof(struct isp_ai_bright_param));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set bright cur"));
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_AI_SCENE_C_CUR,
-				ISP_BLK_CONTRAST,
-				&c_param_final[j],
-				sizeof(struct isp_ai_contrast_param));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set contrast cur"));
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_AI_SCENE_H_CUR,
-				ISP_BLK_HUE,
-				&h_param_final[j],
-				sizeof(struct isp_ai_hue_param));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set hue cur"));
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_AI_SCENE_S_CUR,
-				ISP_BLK_SATURATION,
-				&s_param_final[j],
-				sizeof(struct isp_ai_csa_param));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set saturation cur"));
-	}
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_EE,
-			ISP_BLK_EDGE, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get ee PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		ee_param[0] = (struct isp_edge_ai_param_v1*)ioctl_output.param_data_ptr->data_ptr;
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_EE_PARAM,
-			ISP_BLK_AI_PRO_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get ee ai PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		ee_cur[0] = (struct isp_ai_ee_param_v1 *)ioctl_output.param_data_ptr->data_ptr;
-
-	if (cxt->zsl_flag){
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_EE,
-				ISP_BLK_EDGE, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get ee PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			ee_param[1] = (struct isp_edge_ai_param_v1*)ioctl_output.param_data_ptr->data_ptr;
-
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_EE_PARAM,
-				ISP_BLK_AI_PRO_V1, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get ee ai PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			ee_cur[1] = (struct isp_ai_ee_param_v1*)ioctl_output.param_data_ptr->data_ptr;
-	}
-
-	for (j = 0; j < num; j++){
-		if (AI_STATUS_PROCESSING == ai_sta && cxt->is_ai_scene_pro){
-			if (cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-				ee_param[j]->ee_gain_hv_r[0][0] += ee_cur[j]->ee_gain_hv1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][1] += ee_cur[j]->ee_gain_hv1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][2] += ee_cur[j]->ee_gain_hv1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][0] += ee_cur[j]->ee_gain_hv2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][1] += ee_cur[j]->ee_gain_hv2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][2] += ee_cur[j]->ee_gain_hv2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][0] += ee_cur[j]->ee_gain_diag1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][1] += ee_cur[j]->ee_gain_diag1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][2] += ee_cur[j]->ee_gain_diag1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][0] += ee_cur[j]->ee_gain_diag2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][1] += ee_cur[j]->ee_gain_diag2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][2] += ee_cur[j]->ee_gain_diag2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[0] += ee_cur[j]->ee_pos_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[1] += ee_cur[j]->ee_pos_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[2] += ee_cur[j]->ee_pos_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[0] += ee_cur[j]->ee_pos_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[1] += ee_cur[j]->ee_pos_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[2] += ee_cur[j]->ee_pos_c.ee_c3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[0] += ee_cur[j]->ee_neg_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[1] += ee_cur[j]->ee_neg_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[2] += ee_cur[j]->ee_neg_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[0] += ee_cur[j]->ee_neg_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[1] += ee_cur[j]->ee_neg_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[2] += ee_cur[j]->ee_neg_c.ee_c3_cfg_offset /smooth_ratio;
-			} else if (!cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio){
-				ee_param[j]->ee_gain_hv_r[0][0] -= ee_cur[j]->ee_gain_hv1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][1] -= ee_cur[j]->ee_gain_hv1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[0][2] -= ee_cur[j]->ee_gain_hv1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][0] -= ee_cur[j]->ee_gain_hv2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][1] -= ee_cur[j]->ee_gain_hv2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_hv_r[1][2] -= ee_cur[j]->ee_gain_hv2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][0] -= ee_cur[j]->ee_gain_diag1.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][1] -= ee_cur[j]->ee_gain_diag1.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[0][2] -= ee_cur[j]->ee_gain_diag1.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][0] -= ee_cur[j]->ee_gain_diag2.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][1] -= ee_cur[j]->ee_gain_diag2.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_gain_diag_r[1][2] -= ee_cur[j]->ee_gain_diag2.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[0] -= ee_cur[j]->ee_pos_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[1] -= ee_cur[j]->ee_pos_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_r[2] -= ee_cur[j]->ee_pos_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[0] -= ee_cur[j]->ee_pos_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[1] -= ee_cur[j]->ee_pos_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_pos_c[2] -= ee_cur[j]->ee_pos_c.ee_c3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[0] -= ee_cur[j]->ee_neg_r.ee_r1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[1] -= ee_cur[j]->ee_neg_r.ee_r2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_r[2] -= ee_cur[j]->ee_neg_r.ee_r3_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[0] -= ee_cur[j]->ee_neg_c.ee_c1_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[1] -= ee_cur[j]->ee_neg_c.ee_c2_cfg_offset /smooth_ratio;
-				ee_param[j]->ee_neg_c[2] -= ee_cur[j]->ee_neg_c.ee_c3_cfg_offset /smooth_ratio;
-			}else {
-				ee_param[j]->ee_gain_hv_r[0][0] +=ee_cur[j]->ee_gain_hv1.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[0][1] += ee_cur[j]->ee_gain_hv1.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[0][2] += ee_cur[j]->ee_gain_hv1.ee_r3_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[1][0] += ee_cur[j]->ee_gain_hv2.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[1][1] += ee_cur[j]->ee_gain_hv2.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_hv_r[1][2] += ee_cur[j]->ee_gain_hv2.ee_r3_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[0][0] += ee_cur[j]->ee_gain_diag1.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[0][1] += ee_cur[j]->ee_gain_diag1.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[0][2] += ee_cur[j]->ee_gain_diag1.ee_r3_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[1][0] += ee_cur[j]->ee_gain_diag2.ee_r1_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[1][1] += ee_cur[j]->ee_gain_diag2.ee_r2_cfg_offset;
-				ee_param[j]->ee_gain_diag_r[1][2] += ee_cur[j]->ee_gain_diag2.ee_r3_cfg_offset;
-				ee_param[j]->ee_pos_r[0] += ee_cur[j]->ee_pos_r.ee_r1_cfg_offset;
-				ee_param[j]->ee_pos_r[1] += ee_cur[j]->ee_pos_r.ee_r2_cfg_offset;
-				ee_param[j]->ee_pos_r[2] += ee_cur[j]->ee_pos_r.ee_r3_cfg_offset;
-				ee_param[j]->ee_pos_c[0] += ee_cur[j]->ee_pos_c.ee_c1_cfg_offset;
-				ee_param[j]->ee_pos_c[1] += ee_cur[j]->ee_pos_c.ee_c2_cfg_offset;
-				ee_param[j]->ee_pos_c[2] += ee_cur[j]->ee_pos_c.ee_c3_cfg_offset;
-				ee_param[j]->ee_neg_r[0] += ee_cur[j]->ee_neg_r.ee_r1_cfg_offset;
-				ee_param[j]->ee_neg_r[1] += ee_cur[j]->ee_neg_r.ee_r2_cfg_offset;
-				ee_param[j]->ee_neg_r[2] += ee_cur[j]->ee_neg_r.ee_r3_cfg_offset;
-				ee_param[j]->ee_neg_c[0] += ee_cur[j]->ee_neg_c.ee_c1_cfg_offset;
-				ee_param[j]->ee_neg_c[1] += ee_cur[j]->ee_neg_c.ee_c2_cfg_offset;
-				ee_param[j]->ee_neg_c[2] += ee_cur[j]->ee_neg_c.ee_c3_cfg_offset;
-				}
-		}
-
-		for(i = 0; i < 2; i++){
-			for (k = 0; k < 3; k++){
-				if (ee_param[j]->ee_gain_hv_r[i][k] > 31 )
-					ee_param[j]->ee_gain_hv_r[i][k] =31;
-				if (ee_param[j]->ee_gain_hv_r[i][k] < 0 )
-					ee_param[j]->ee_gain_hv_r[i][k] =0;
-				if (ee_param[j]->ee_gain_diag_r[i][k] > 31 )
-					ee_param[j]->ee_gain_diag_r[i][k] = 31;
-				if (ee_param[j]->ee_gain_diag_r[i][k] < 0 )
-					ee_param[j]->ee_gain_diag_r[i][k] = 0;
-			}
-		}
-		for(i = 0; i < 3; i++){
-			if (ee_param[j]->ee_pos_r[i] > 127 )
-				ee_param[j]->ee_pos_r[i] =127;
-			if (ee_param[j]->ee_pos_r[i] < 0 )
-				ee_param[j]->ee_pos_r[i] =0;
-			if (ee_param[j]->ee_pos_c[i] > 127 )
-				ee_param[j]->ee_pos_c[i] = 127;
-			if (ee_param[j]->ee_pos_c[i] < 0 )
-				ee_param[j]->ee_pos_c[i] = 0;
-			if (ee_param[j]->ee_neg_r[i] > 127 )
-				ee_param[j]->ee_neg_r[i] = 127;
-			if (ee_param[j]->ee_neg_r[i] < 0 )
-				ee_param[j]->ee_neg_r[i] = 0;
-			if (ee_param[j]->ee_neg_c[i] >0 )
-				ee_param[j]->ee_neg_c[i] = 0;
-			if (ee_param[j]->ee_neg_c[i] < -128 )
-				ee_param[j]->ee_neg_c[i] = -128;
-		}
-		ISP_LOGV(" j %d,%d, %d,  %d,%d ,%d,%d , ee_pos_r.ee_r1_cfg_offset %d,%d, %d,  %d,%d ,%d,ee_neg_r.ee_r1_cfg_offset%d,%d,%d\n",
-			j,ee_param[j]->ee_gain_hv_r[0][0],ee_param[j]->ee_gain_hv_r[0][1],
-			ee_param[j]->ee_gain_hv_r[0][2],ee_param[j]->ee_gain_hv_r[1][0],
-			ee_param[j]->ee_gain_hv_r[1][1],ee_param[j]->ee_gain_hv_r[1][2],
-			ee_param[j]->ee_pos_r[0],ee_param[j]->ee_pos_r[1],
-			ee_param[j]->ee_pos_r[2],ee_param[j]->ee_pos_c[0],
-			ee_param[j]->ee_pos_c[1],ee_param[j]->ee_pos_c[2],
-			ee_param[j]->ee_neg_r[0],ee_param[j]->ee_neg_r[1],
-			ee_param[j]->ee_neg_r[2]);
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_AI_SCENE_EE_CUR,
-				ISP_BLK_EDGE,
-				ee_param[j],
-				sizeof(struct isp_edge_ai_param_v1));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[j];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set ee cur"));
-	}
-
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_HSV,
-			ISP_BLK_HSV_NEW, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		reg_addr0= (cmr_u32 *)ioctl_output.param_data_ptr->data_ptr;
-
-	if (reg_addr0 == NULL){
-		return ret;
-	}
-	memset(&ioctl_data, 0, sizeof(ioctl_data));
-	BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-			ISP_PM_BLK_AI_SCENE_HSV_PARAM,
-			ISP_BLK_AI_PRO_V1, PNULL, 0);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_GET_SINGLE_SETTING,
-			(void *)&ioctl_input, (void *)&ioctl_output);
-	ISP_TRACE_IF_FAIL(ret, ("fail to get PARAM"));
-	if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-		hsv_cur[0] = (struct isp_ai_hsv_info *)ioctl_output.param_data_ptr->data_ptr;
-
-	for (i = 0; i < 360 ; i++){
-		cmr_u32 dst_val = 0;
-		cmr_u32 src0_val = (cmr_u32) (*reg_addr0);
-		cmr_s32 src0_val_h = src0_val & 0x1FF;
-		cmr_s32 src0_val_s = (src0_val >> 9) & 0x7FF;
-		ISP_LOGV(" j %d,i %d,hsv_param[j]->sat_table[i] %d,%d,0x%p", j,i, src0_val_h,src0_val_s,reg_addr0);
-
-		if (AI_STATUS_PROCESSING == ai_sta && cxt->is_ai_scene_pro){
-			if (cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-					src0_val_h += hsv_cur[0]->hue_table_item_offset[i] /smooth_ratio;
-					src0_val_s += hsv_cur[0]->saturation_table_item_offset[i] / smooth_ratio;
-					ISP_LOGV(" j %d,hsv_param[1]->sat_table[i] %d,%d", j, src0_val_h,src0_val_s);
-					if (src0_val_h > 359 )
-						src0_val_h = 359;
-					if (src0_val_h < 0 )
-						src0_val_h = 0;
-					if (src0_val_s > 2047)
-						src0_val_s = 2047;
-					if (src0_val_s < 0)
-						src0_val_s = 0;
-					if (src0_val_h + 128 < i)
-						src0_val_h += 360;
-					if (src0_val_h - 128 > i)
-						src0_val_h -= 360;
-					if (src0_val_h <0)
-						src0_val_h += 360;
-					else
-						src0_val_h %= 360;
-					dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-				}
-			 else if (!cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-					src0_val_h += hsv_cur[0]->hue_table_item_offset[i] /smooth_ratio;
-					src0_val_s += hsv_cur[0]->saturation_table_item_offset[i] / smooth_ratio;
-					ISP_LOGV("hsv_param[0]->sat_table[i] %d,%d", src0_val_h,src0_val_s);
-					if (src0_val_h > 359 )
-						src0_val_h = 359;
-					if (src0_val_h < 0 )
-						src0_val_h = 0;
-					if (src0_val_s > 2047)
-						src0_val_s = 2047;
-					if (src0_val_s < 0)
-						src0_val_s = 0;
-					if (src0_val_h + 128 < i)
-						src0_val_h += 360;
-					if (src0_val_h - 128 > i)
-						src0_val_h -= 360;
-					if (src0_val_h <0)
-						src0_val_h += 360;
-					else
-						src0_val_h %= 360;
-					dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-			} else {
-					src0_val_h += hsv_cur[0]->hue_table_item_offset[i];
-					src0_val_s += hsv_cur[0]->saturation_table_item_offset[i];
-					ISP_LOGV(" hsv_cur[0]->hue_table_item_offset[i] %d,%d", hsv_cur[0]->hue_table_item_offset[i],hsv_cur[0]->saturation_table_item_offset[i]);
-					ISP_LOGV(" hsv_param[0]->sat_table[i] %d,%d", src0_val_h,src0_val_s);
-					if (src0_val_h > 359 )
-						src0_val_h = 359;
-					if (src0_val_h < 0 )
-						src0_val_h = 0;
-					if (src0_val_s > 2047)
-						src0_val_s = 2047;
-					if (src0_val_s < 0)
-						src0_val_s = 0;
-					if (src0_val_h + 128 < i)
-						src0_val_h += 360;
-					if (src0_val_h - 128 > i)
-						src0_val_h -= 360;
-					if (src0_val_h <0)
-						src0_val_h += 360;
-					else
-						src0_val_h %= 360;
-					dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-					ISP_LOGV(" dst_val %d", dst_val);
-			}
-		}else {
-				if (src0_val_h > 359 )
-					src0_val_h = 359;
-				if (src0_val_h < 0 )
-					src0_val_h = 0;
-				if (src0_val_s > 2047)
-					src0_val_s = 2047;
-				if (src0_val_s < 0)
-					src0_val_s = 0;
-				if (src0_val_h + 128 < i)
-					src0_val_h += 360;
-				if (src0_val_h - 128 > i)
-					src0_val_h -= 360;
-				if (src0_val_h <0)
-					src0_val_h += 360;
-				else
-					src0_val_h %= 360;
-				dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-		}
-			dst0[i] = (cmr_u32)dst_val;
-			ISP_LOGV("dst0%p", &dst0);
-			reg_addr0++;
-	}
-
-	memset(&pm_param, 0, sizeof(pm_param));
-	BLOCK_PARAM_CFG(io_pm_input, pm_param,
-		ISP_PM_BLK_AI_SCENE_HSV_CUR,
-		ISP_BLK_HSV_NEW,
-		&dst0,
-		sizeof(cmr_u32));
-
-	io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[0];
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-	ISP_TRACE_IF_FAIL(ret, ("fail to set hsv cur"));
-
-	if (cxt->zsl_flag){
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_HSV,
-				ISP_BLK_HSV_NEW, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			reg_addr1 = (cmr_u32 *)ioctl_output.param_data_ptr->data_ptr;
-
-		if (reg_addr0 == NULL){
-			return ret;
-		}
-		memset(&ioctl_data, 0, sizeof(ioctl_data));
-		BLOCK_PARAM_CFG(ioctl_input, ioctl_data,
-				ISP_PM_BLK_AI_SCENE_HSV_PARAM,
-				ISP_BLK_AI_PRO_V1, PNULL, 0);
-		ret = isp_pm_ioctl(cxt->handle_pm,
-				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
-				(void *)&ioctl_input, (void *)&ioctl_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to get PARAM"));
-		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
-			hsv_cur[1] = (struct isp_ai_hsv_info *)ioctl_output.param_data_ptr->data_ptr;
-
-		for (i = 0; i < 360 ; i++){
-			cmr_u32 dst_val = 0;
-			cmr_u32 src0_val = (cmr_u32) (*reg_addr1);
-			cmr_s32 src0_val_h = src0_val & 0x1FF;
-			cmr_s32 src0_val_s = (src0_val >> 9) & 0x7FF;
-			ISP_LOGV(" j %d,i %d,hsv_param[j]->sat_table[i] %d,%d,%p", j,i, src0_val_h,src0_val_s,reg_addr1);
-
-			if (AI_STATUS_PROCESSING == ai_sta && cxt->is_ai_scene_pro){
-				if (cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-					src0_val_h += hsv_cur[1]->hue_table_item_offset[i] /smooth_ratio;
-					src0_val_s += hsv_cur[1]->saturation_table_item_offset[i] / smooth_ratio;
-					ISP_LOGV(" j %d,hsv_param[1]->sat_table[i] %d,%d", j, src0_val_h,src0_val_s);
-					if (src0_val_h > 359 )
-						src0_val_h = 359;
-					if (src0_val_h < 0 )
-						src0_val_h = 0;
-					if (src0_val_s > 2047)
-						src0_val_s = 2047;
-					if (src0_val_s < 0)
-						src0_val_s = 0;
-					if (src0_val_h + 128 < i)
-						src0_val_h += 360;
-					if (src0_val_h - 128 > i)
-						src0_val_h -= 360;
-					if (src0_val_h <0)
-						src0_val_h += 360;
-					else
-						src0_val_h %= 360;
-					dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-				} else if (!cxt->ai_scene_flag && cxt->smooth_ratio > 0 && smooth_ratio) {
-					src0_val_h += hsv_cur[1]->hue_table_item_offset[i] /smooth_ratio;
-					src0_val_s += hsv_cur[1]->saturation_table_item_offset[i] / smooth_ratio;
-					ISP_LOGV(" j %d,hsv_param[1]->sat_table[i] %d,%d", j, src0_val_h,src0_val_s);
-					if (src0_val_h > 359 )
-						src0_val_h = 359;
-					if (src0_val_h < 0 )
-						src0_val_h = 0;
-					if (src0_val_s > 2047)
-						src0_val_s = 2047;
-					if (src0_val_s < 0)
-						src0_val_s = 0;
-					if (src0_val_h + 128 < i)
-						src0_val_h += 360;
-					if (src0_val_h - 128 > i)
-						src0_val_h -= 360;
-					if (src0_val_h <0)
-						src0_val_h += 360;
-					else
-						src0_val_h %= 360;
-					dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-				} else {
-					src0_val_h += hsv_cur[1]->hue_table_item_offset[i];
-					src0_val_s += hsv_cur[1]->saturation_table_item_offset[i];
-					ISP_LOGV("hsv_cur[1]->hue_table_item_offset[i] %d,%d",hsv_cur[1]->hue_table_item_offset[i],hsv_cur[1]->saturation_table_item_offset[i]);
-					ISP_LOGV("hsv_param[1]->sat_table[i] %d,%d", src0_val_h,src0_val_s);
-					if (src0_val_h > 359 )
-						src0_val_h = 359;
-					if (src0_val_h < 0 )
-						src0_val_h = 0;
-					if (src0_val_s > 2047)
-						src0_val_s = 2047;
-					if (src0_val_s < 0)
-						src0_val_s = 0;
-					if (src0_val_h + 128 < i)
-						src0_val_h += 360;
-					if (src0_val_h - 128 > i)
-						src0_val_h -= 360;
-					if (src0_val_h <0)
-						src0_val_h += 360;
-					else
-						src0_val_h %= 360;
-					dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-					ISP_LOGV(" dst_val %d", dst_val);
-				}
-			} else {
-				if (src0_val_h > 359 )
-					src0_val_h = 359;
-				if (src0_val_h < 0 )
-					src0_val_h = 0;
-				if (src0_val_s > 2047)
-					src0_val_s = 2047;
-				if (src0_val_s < 0)
-					src0_val_s = 0;
-				if (src0_val_h + 128 < i)
-					src0_val_h += 360;
-				if (src0_val_h - 128 > i)
-					src0_val_h -= 360;
-				if (src0_val_h <0)
-					src0_val_h += 360;
-				else
-					src0_val_h %= 360;
-				dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
-			}
-				dst1[i] = (cmr_u32)dst_val;
-				ISP_LOGV("dst1 %p", &dst1);
-				reg_addr1++;
-		}
-
-		memset(&pm_param, 0, sizeof(pm_param));
-		BLOCK_PARAM_CFG(io_pm_input, pm_param,
-			ISP_PM_BLK_AI_SCENE_HSV_CUR,
-			ISP_BLK_HSV_NEW,
-			&dst1,
-			sizeof(cmr_u32));
-
-		io_pm_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[1];
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &io_pm_input, NULL);
-		ISP_TRACE_IF_FAIL(ret, ("fail to set hsv cur"));
-	}
-	if (cxt->smooth_ratio > 0)
-		(cxt->smooth_ratio)--;
-	ISP_LOGV("cxt->smooth_ratio after %d.\n", cxt->smooth_ratio);
-	return ret;
-}
-#endif
 static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -3085,6 +2077,8 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 
 	memset((void *)&output, 0x00, sizeof(struct isp_pm_setting_params));
 	memset((void *)&sub_block_info, 0x00, sizeof(sub_block_info));
+
+	ispalg_ai_pro_param_compatible((cmr_handle) cxt);
 
 	if (start)
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, NULL, &output);
@@ -4837,9 +3831,6 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		cxt->aem_is_update = 0;
 
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
-#ifndef  CONFIG_ISP_2_6
-		ispalg_ai_pro_param_compatible((cmr_handle) cxt);
-#endif
 
 		message1.msg_type = ISP_EVT_CFG;
 		message1.sync_flag = CMR_MSG_SYNC_NONE;
@@ -7358,9 +6349,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
-#ifndef  CONFIG_ISP_2_6
-	ispalg_ai_pro_param_compatible(cxt);
-#endif
+
 	ret = ispalg_cfg_param(cxt, 1);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ispalg_cfg_param"));
 
@@ -7766,9 +6755,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
-#ifndef  CONFIG_ISP_2_6
-	ispalg_ai_pro_param_compatible(cxt);
-#endif
+
 	ret = ispalg_cfg_param(cxt, 1);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 

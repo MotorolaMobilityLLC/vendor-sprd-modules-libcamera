@@ -21,7 +21,7 @@
 
 static cmr_u32 _pm_edge_convert_param(
 	void *dst_edge_param, cmr_u32 strength_level,
-	cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 ai_scene_id)
+	cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 ai_scene_id, cmr_u32 ai_pro_scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
@@ -253,6 +253,9 @@ static cmr_u32 _pm_edge_convert_param(
 		break;
 	}
 
+	if (ai_pro_scene_flag == 1 || ai_scene_id == ISP_PM_AI_SCENE_NIGHT)
+		sel_coeff = 10;
+
 	if (sel_coeff == 0)
 		sel_coeff = INVALID_EE_COEFF;
 
@@ -313,7 +316,7 @@ cmr_s32 _pm_edge_init(void *dst_edge_param, void *src_edge_param, void *param1, 
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 	if (!header_ptr->bypass)
 		rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level,
-				ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO, ISP_PM_AI_SCENE_DEFAULT);
+				ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO, ISP_PM_AI_SCENE_DEFAULT, 0);
 	dst_ptr->cur.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm edge param !");
@@ -370,7 +373,8 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 				rtn = _pm_edge_convert_param(dst_ptr, dst_ptr->cur_level,
 							header_ptr->mode_id,
 							block_result->scene_flag,
-							block_result->ai_scene_id);
+							block_result->ai_scene_id,
+							block_result->ai_scene_pro_flag);
 				dst_ptr->cur.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm edge param !");
@@ -379,6 +383,153 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 			}
 			ISP_LOGV("ISP_SMART_NR: cmd=%d, update=%d, ee_level=%d",
 				cmd, header_ptr->is_update, dst_ptr->cur_level);
+		}
+		break;
+
+	case ISP_PM_BLK_AI_SCENE_UPDATE_EE:
+		{
+			cmr_u32 i, k;
+			cmr_s16 smooth_factor, smooth_base;
+			struct isp_ai_update_param *cfg_data;
+			struct isp_ai_ee_param *ee_cur;
+			struct isp_edge_ai_param ee_updata;
+
+			cfg_data = (struct isp_ai_update_param *)param_ptr0;
+			ee_cur = (struct isp_ai_ee_param *)cfg_data->param_ptr;
+			smooth_factor = cfg_data->smooth_factor;
+			smooth_base = cfg_data->smooth_base;
+			if (smooth_factor == 0) {
+				if (!header_ptr->is_update)
+					break;
+				smooth_factor = 1;
+				smooth_base = 1;
+			} else if (!header_ptr->is_update) {
+				smooth_factor = (smooth_factor > 0) ? 1 :  -1;
+			}
+
+			ee_updata.ee_ratio_old_gradient = dst_ptr->cur.ee_ratio_old_gradient & 0xFFFF;
+			ee_updata.ee_ratio_new_pyramid = dst_ptr->cur.ee_ratio_new_pyramid & 0xFFFF;
+			ee_updata.ee_gain_hv_r[0][0] = dst_ptr->cur.ee_gain_hv_r[0][0] & 0xFF;
+			ee_updata.ee_gain_hv_r[0][1] = dst_ptr->cur.ee_gain_hv_r[0][1] & 0xFF;
+			ee_updata.ee_gain_hv_r[0][2] = dst_ptr->cur.ee_gain_hv_r[0][2] & 0xFF;
+			ee_updata.ee_gain_hv_r[1][0] = dst_ptr->cur.ee_gain_hv_r[1][0] & 0xFF;
+			ee_updata.ee_gain_hv_r[1][1] = dst_ptr->cur.ee_gain_hv_r[1][1] & 0xFF;
+			ee_updata.ee_gain_hv_r[1][2] = dst_ptr->cur.ee_gain_hv_r[1][2] & 0xFF;
+			ee_updata.ee_gain_diag_r[0][0] = dst_ptr->cur.ee_gain_diag_r[0][0] & 0xFF;
+			ee_updata.ee_gain_diag_r[0][1] = dst_ptr->cur.ee_gain_diag_r[0][1] & 0xFF;
+			ee_updata.ee_gain_diag_r[0][2] = dst_ptr->cur.ee_gain_diag_r[0][2] & 0xFF;
+			ee_updata.ee_gain_diag_r[1][0] = dst_ptr->cur.ee_gain_diag_r[1][0] & 0xFF;
+			ee_updata.ee_gain_diag_r[1][1] = dst_ptr->cur.ee_gain_diag_r[1][1] & 0xFF;
+			ee_updata.ee_gain_diag_r[1][2] = dst_ptr->cur.ee_gain_diag_r[1][2] & 0xFF;
+			ee_updata.ee_pos_r[0] = dst_ptr->cur.ee_pos_r[0] & 0xFF;
+			ee_updata.ee_pos_r[1] = dst_ptr->cur.ee_pos_r[1] & 0xFF;
+			ee_updata.ee_pos_r[2] = dst_ptr->cur.ee_pos_r[2] & 0xFF;
+			ee_updata.ee_pos_c[0] = dst_ptr->cur.ee_pos_c[0] & 0xFF;
+			ee_updata.ee_pos_c[1] = dst_ptr->cur.ee_pos_c[1] & 0xFF;
+			ee_updata.ee_pos_c[2] = dst_ptr->cur.ee_pos_c[2] & 0xFF;
+			ee_updata.ee_neg_r[0] = dst_ptr->cur.ee_neg_r[0] & 0xFF;
+			ee_updata.ee_neg_r[1] = dst_ptr->cur.ee_neg_r[1] & 0xFF;
+			ee_updata.ee_neg_r[2] = dst_ptr->cur.ee_neg_r[2] & 0xFF;
+			ee_updata.ee_neg_c[0] = dst_ptr->cur.ee_neg_c[0] & 0xFF;
+			ee_updata.ee_neg_c[1] = dst_ptr->cur.ee_neg_c[1] & 0xFF;
+			ee_updata.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] & 0xFF;
+
+
+			ee_updata.ee_ratio_old_gradient += ee_cur->ratio_old_gradient_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_ratio_new_pyramid += ee_cur->ratio_new_pyramid_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_hv_r[0][0] += ee_cur->ee_gain_hv1.ee_r1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_hv_r[0][1] += ee_cur->ee_gain_hv1.ee_r2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_hv_r[0][2] += ee_cur->ee_gain_hv1.ee_r3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_hv_r[1][0] += ee_cur->ee_gain_hv2.ee_r1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_hv_r[1][1] += ee_cur->ee_gain_hv2.ee_r2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_hv_r[1][2] += ee_cur->ee_gain_hv2.ee_r3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_diag_r[0][0] += ee_cur->ee_gain_diag1.ee_r1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_diag_r[0][1] += ee_cur->ee_gain_diag1.ee_r2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_diag_r[0][2] += ee_cur->ee_gain_diag1.ee_r3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_diag_r[1][0] += ee_cur->ee_gain_diag2.ee_r1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_diag_r[1][1] += ee_cur->ee_gain_diag2.ee_r2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_gain_diag_r[1][2] += ee_cur->ee_gain_diag2.ee_r3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_pos_r[0] += ee_cur->ee_pos_r.ee_r1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_pos_r[1] += ee_cur->ee_pos_r.ee_r2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_pos_r[2] += ee_cur->ee_pos_r.ee_r3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_pos_c[0] += ee_cur->ee_pos_c.ee_c1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_pos_c[1] += ee_cur->ee_pos_c.ee_c2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_pos_c[2] += ee_cur->ee_pos_c.ee_c3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_neg_r[0] += ee_cur->ee_neg_r.ee_r1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_neg_r[1] += ee_cur->ee_neg_r.ee_r2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_neg_r[2] += ee_cur->ee_neg_r.ee_r3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_neg_c[0] += ee_cur->ee_neg_c.ee_c1_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_neg_c[1] += ee_cur->ee_neg_c.ee_c2_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_neg_c[2] += ee_cur->ee_neg_c.ee_c3_cfg_offset * smooth_factor / smooth_base;;
+
+
+			if (ee_updata.ee_ratio_old_gradient > 63 )
+				ee_updata.ee_ratio_old_gradient = 63;
+			if (ee_updata.ee_ratio_old_gradient < 0 )
+				ee_updata.ee_ratio_old_gradient = 0;
+			if (ee_updata.ee_ratio_new_pyramid > 63 )
+				ee_updata.ee_ratio_new_pyramid = 63;
+			if (ee_updata.ee_ratio_new_pyramid < 0 )
+				ee_updata.ee_ratio_new_pyramid = 0;
+			for(i = 0; i < 2; i++){
+				for (k = 0; k < 3; k++){
+					if (ee_updata.ee_gain_hv_r[i][k] > 31 )
+						ee_updata.ee_gain_hv_r[i][k] =31;
+					if (ee_updata.ee_gain_hv_r[i][k] < 0 )
+						ee_updata.ee_gain_hv_r[i][k] =0;
+					if (ee_updata.ee_gain_diag_r[i][k] > 31 )
+						ee_updata.ee_gain_diag_r[i][k] = 31;
+					if (ee_updata.ee_gain_diag_r[i][k] < 0 )
+						ee_updata.ee_gain_diag_r[i][k] = 0;
+				}
+			}
+			for(i = 0; i < 3; i++) {
+				if (ee_updata.ee_pos_r[i] > 127 )
+					ee_updata.ee_pos_r[i] =127;
+				if (ee_updata.ee_pos_r[i] < 0 )
+					ee_updata.ee_pos_r[i] =0;
+				if (ee_updata.ee_pos_c[i] > 127 )
+					ee_updata.ee_pos_c[i] = 127;
+				if (ee_updata.ee_pos_c[i] < 0 )
+					ee_updata.ee_pos_c[i] = 0;
+				if (ee_updata.ee_neg_r[i] > 127 )
+					ee_updata.ee_neg_r[i] = 127;
+				if (ee_updata.ee_neg_r[i] < 0 )
+					ee_updata.ee_neg_r[i] = 0;
+				if (ee_updata.ee_neg_c[i] >0 )
+					ee_updata.ee_neg_c[i] = 0;
+				if (ee_updata.ee_neg_c[i] < -128 )
+					ee_updata.ee_neg_c[i] = -128;
+			}
+
+			dst_ptr->cur.ee_ratio_old_gradient = ee_updata.ee_ratio_old_gradient;
+			dst_ptr->cur.ee_ratio_new_pyramid = ee_updata.ee_ratio_new_pyramid;
+			dst_ptr->cur.ee_gain_hv_r[0][0] =ee_updata.ee_gain_hv_r[0][0];
+			dst_ptr->cur.ee_gain_hv_r[0][1] = ee_updata.ee_gain_hv_r[0][1];
+			dst_ptr->cur.ee_gain_hv_r[0][2] = ee_updata.ee_gain_hv_r[0][2];
+			dst_ptr->cur.ee_gain_hv_r[1][0] = ee_updata.ee_gain_hv_r[1][0];
+			dst_ptr->cur.ee_gain_hv_r[1][1] =ee_updata.ee_gain_hv_r[1][1];
+			dst_ptr->cur.ee_gain_hv_r[1][2] = ee_updata.ee_gain_hv_r[1][2];
+			dst_ptr->cur.ee_gain_diag_r[0][0] = ee_updata.ee_gain_diag_r[0][0];
+			dst_ptr->cur.ee_gain_diag_r[0][1] = ee_updata.ee_gain_diag_r[0][1];
+			dst_ptr->cur.ee_gain_diag_r[0][2] = ee_updata.ee_gain_diag_r[0][2];
+			dst_ptr->cur.ee_gain_diag_r[1][0] = ee_updata.ee_gain_diag_r[1][0];
+			dst_ptr->cur.ee_gain_diag_r[1][1] = ee_updata.ee_gain_diag_r[1][1];
+			dst_ptr->cur.ee_gain_diag_r[1][2] = ee_updata.ee_gain_diag_r[1][2];
+			dst_ptr->cur.ee_pos_r[0] = ee_updata.ee_pos_r[0];
+			dst_ptr->cur.ee_pos_r[1] = ee_updata.ee_pos_r[1];
+			dst_ptr->cur.ee_pos_r[2] = ee_updata.ee_pos_r[2];
+			dst_ptr->cur.ee_pos_c[0] = ee_updata.ee_pos_c[0];
+			dst_ptr->cur.ee_pos_c[1] = ee_updata.ee_pos_c[1];
+			dst_ptr->cur.ee_pos_c[2] = ee_updata.ee_pos_c[2];
+			dst_ptr->cur.ee_neg_r[0] = ee_updata.ee_neg_r[0];
+			dst_ptr->cur.ee_neg_r[1] = ee_updata.ee_neg_r[1];
+			dst_ptr->cur.ee_neg_r[2] = ee_updata.ee_neg_r[2];
+			dst_ptr->cur.ee_neg_c[0] = ee_updata.ee_neg_c[0];
+			dst_ptr->cur.ee_neg_c[1] = ee_updata.ee_neg_c[1];
+			dst_ptr->cur.ee_neg_c[2] = ee_updata.ee_neg_c[2];
+
+			header_ptr->is_update = ISP_ONE;
 		}
 		break;
 

@@ -84,6 +84,7 @@ static struct blk_info blocks_array[] = {
 
 	/* software algo blocks */
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
+	{ ISP_BLK_AI_PRO_V1, sizeof(struct sensor_ai_param) },
 	{ ISP_BLK_CNR2, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */
 	{ ISP_BLK_AE_NEW, 0 },
@@ -102,7 +103,6 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_MFNR, 0 }, /* NR block */
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
-	{ ISP_BLK_AI_PRO_V1, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -238,7 +238,7 @@ static struct blk_info blocks_array[] = {
 	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
 
 	/*  ISP blocks */
-	{ ISP_BLK_HSV_NEW2, 0 }, /* parsed in hsv block init() */
+	{ ISP_BLK_HSV_NEW2, 0 },  /* parsed in hsv block init() */
 	{ ISP_BLK_BCHS, sizeof(struct sensor_bchs_level) },
 	{ ISP_BLK_CCE, sizeof(struct sensor_cce_param) },
 	{ ISP_BLK_CMC10, sizeof(struct sensor_cmc10_param) },
@@ -265,6 +265,7 @@ static struct blk_info blocks_array[] = {
 
 	/* software algo blocks */
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
+	{ ISP_BLK_AI_PRO_V1, sizeof(struct sensor_ai_param) },
 	{ ISP_BLK_CNR2_V1, 0 }, /* NR block */
 	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */
@@ -287,7 +288,6 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_ATM_TUNE, 0 },
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
-	{ ISP_BLK_AI_PRO_V1, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {

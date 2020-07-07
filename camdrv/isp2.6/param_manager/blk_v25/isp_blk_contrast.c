@@ -26,7 +26,7 @@ cmr_s32 _pm_contrast_init(void *dst_contrast, void *src_contrast, void *param1, 
 
 	dst_ptr->cur_index = src_ptr->cur_index;
 	dst_ptr->cur.bypass = contrast_header_ptr->bypass;
-	dst_ptr->cur_level.factor = src_ptr->factor[src_ptr->cur_index];
+	dst_ptr->cur.factor = src_ptr->factor[src_ptr->cur_index];
 	memcpy((void *)dst_ptr->tab, (void *)src_ptr->factor, sizeof(dst_ptr->tab));
 	memcpy((void *)dst_ptr->scene_mode_tab, (void *)src_ptr->scenemode, sizeof(dst_ptr->scene_mode_tab));
 	contrast_header_ptr->is_update = ISP_ONE;
@@ -40,26 +40,17 @@ cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void *param_pt
 	struct isp_contrast_param *contrast_ptr = (struct isp_contrast_param *)contrast_param;
 	struct isp_pm_block_header *contrast_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
-	contrast_header_ptr->is_update = ISP_ONE;
 
 	switch (cmd) {
 	case ISP_PM_BLK_CONTRAST_BYPASS:
 		contrast_ptr->cur.bypass = *((cmr_u32 *) param_ptr0);
-		break;
-
-	case ISP_PM_BLK_AI_SCENE_C_CUR:
-		{
-			memcpy((void *)&contrast_ptr->final_level, param_ptr0, sizeof(contrast_ptr->final_level));
-
-			contrast_ptr->cur.factor = contrast_ptr->final_level.factor;
-
-			contrast_header_ptr->is_update = ISP_ONE;
-		}
+		contrast_header_ptr->is_update = ISP_ONE;
 		break;
 
 	case ISP_PM_BLK_CONTRAST:
 		contrast_ptr->cur_index = *((cmr_u32 *) param_ptr0);
-		contrast_ptr->cur_level.factor = contrast_ptr->tab[contrast_ptr->cur_index];
+		contrast_ptr->cur.factor = contrast_ptr->tab[contrast_ptr->cur_index];
+		contrast_header_ptr->is_update = ISP_ONE;
 		break;
 
 	case ISP_PM_BLK_SCENE_MODE:
@@ -70,6 +61,31 @@ cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void *param_pt
 			} else {
 				contrast_ptr->cur.factor = contrast_ptr->scene_mode_tab[idx];
 			}
+		}
+		contrast_header_ptr->is_update = ISP_ONE;
+		break;
+
+	case ISP_PM_BLK_AI_SCENE_UPDATE_BCHS:
+		{
+			cmr_s16 smooth_factor, smooth_base;
+			struct isp_ai_update_param *cfg_data;
+			struct isp_ai_bchs_param *bchs_cur;
+			cmr_s32 contrast_factor;
+
+			cfg_data = (struct isp_ai_update_param *)param_ptr0;
+			bchs_cur = (struct isp_ai_bchs_param *)cfg_data->param_ptr;
+			smooth_factor = cfg_data->smooth_factor;
+			smooth_base = cfg_data->smooth_base;
+			if (smooth_factor == 0)
+				break;
+
+			contrast_factor = contrast_ptr->tab[contrast_ptr->cur_index];
+			if (bchs_cur->ai_contrast.contrast_adj_ai_eb) {
+				contrast_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
+				contrast_factor = MAX(0, MIN(255,  contrast_factor));
+			}
+			contrast_ptr->cur.factor = contrast_factor;
+			contrast_header_ptr->is_update = ISP_ONE;
 		}
 		break;
 
@@ -94,12 +110,6 @@ cmr_s32 _pm_contrast_get_param(void *contrast_param, cmr_u32 cmd, void *rtn_para
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = (void *)&contrast_ptr->cur;
 		param_data_ptr->data_size = sizeof(contrast_ptr->cur);
-		*update_flag = 0;
-		break;
-
-	case ISP_PM_BLK_AI_SCENE_C:
-		param_data_ptr->data_ptr = (void *)&contrast_ptr->cur_level;
-		param_data_ptr->data_size = sizeof(contrast_ptr->cur_level);
 		*update_flag = 0;
 		break;
 

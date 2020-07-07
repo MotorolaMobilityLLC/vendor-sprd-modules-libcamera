@@ -20,7 +20,7 @@ cmr_s32 _pm_hsv_new_init(void *dst_hsv_param, void *src_hsv_param, void *param1,
 {
 	cmr_u32 i = 0;
 	cmr_u32 j = 0;
-	cmr_u32 index = 0;
+	cmr_u32 index = 0, cpy_size;
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_uint addr = 0, tmp_addr = 0, addr1 = 0;
 	cmr_uint base, end;
@@ -76,15 +76,6 @@ cmr_s32 _pm_hsv_new_init(void *dst_hsv_param, void *src_hsv_param, void *param1,
 		goto exit;
 	}
 
-	if (PNULL == dst_ptr->final_map.data_ptr) {
-		dst_ptr->final_map.data_ptr = (void *)malloc(src_ptr->map_new[index].size);
-		if (PNULL == dst_ptr->final_map.data_ptr) {
-			ISP_LOGE("fail to malloc  hsv map\n");
-			rtn = ISP_ERROR;
-			goto exit;
-		}
-	}
-
 	for (i = 0; i < 2; i++) {
 		if (PNULL == dst_ptr->ct_result[i]) {
 			dst_ptr->ct_result[i] = (cmr_u32 *)malloc(src_ptr->map_new[index].size);
@@ -96,8 +87,15 @@ cmr_s32 _pm_hsv_new_init(void *dst_hsv_param, void *src_hsv_param, void *param1,
 		}
 	}
 
-	memcpy((void *)dst_ptr->final_map.data_ptr, dst_ptr->map[index].data_ptr, dst_ptr->map[index].size);
-	dst_ptr->final_map.size = dst_ptr->map[index].size;
+	cpy_size = (cmr_u32)sizeof(dst_ptr->cur.d.hsv_table);
+	if (cpy_size < dst_ptr->map[index].size)
+		ISP_LOGE("error: hsv table size %d is smaller than target %d\n", cpy_size, dst_ptr->map[index].size);
+	else
+		cpy_size =  dst_ptr->map[index].size;
+
+	dst_ptr->final_map.data_ptr = &dst_ptr->cur.d.hsv_table[0];
+	dst_ptr->final_map.size = cpy_size;
+	memcpy((void *)dst_ptr->final_map.data_ptr, dst_ptr->map[index].data_ptr, cpy_size);
 
 	dst_ptr->cur.bypass = header_ptr->bypass;
 	for (i = 0; i < 5; i++) {
@@ -110,8 +108,8 @@ cmr_s32 _pm_hsv_new_init(void *dst_hsv_param, void *src_hsv_param, void *param1,
 
 	}
 	dst_ptr->cur.size = dst_ptr->final_map.size;
-	dst_ptr->hsv_table_addr = (cmr_u64 *)dst_ptr->final_map.data_ptr;
-	ISP_LOGD("table addr 0x%lx, size %d\n", (cmr_uint)dst_ptr->hsv_table_addr, dst_ptr->cur.size);
+	ISP_LOGD("hsv table addr 0x%lx, size %d, size dst %d\n", (cmr_uint)dst_ptr->cur.d.hsv_table,
+		dst_ptr->cur.size,  (cmr_u32)sizeof(dst_ptr->cur.d.hsv_table));
 
 	header_ptr->is_update = ISP_ONE;
 	return 0;
@@ -121,11 +119,8 @@ exit:
 	dst_ptr->cur.bypass = 1;
 	header_ptr->bypass = 1;
 	header_ptr->is_update = ISP_ZERO;
-	if (dst_ptr->final_map.data_ptr) {
-		free(dst_ptr->final_map.data_ptr);
-		dst_ptr->final_map.data_ptr = PNULL;
-		dst_ptr->final_map.size = 0;
-	}
+	dst_ptr->final_map.data_ptr = PNULL;
+	dst_ptr->final_map.size = 0;
 	for (j = 0; j < 2; j++) {
 		if (dst_ptr->ct_result[j]) {
 			free(dst_ptr->ct_result[j]);
@@ -142,14 +137,6 @@ cmr_s32 _pm_hsv_new_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, vo
 	struct isp_pm_block_header *hsv_header_ptr = (struct isp_pm_block_header *)param_ptr1;
 
 	switch (cmd) {
-	case ISP_PM_BLK_AI_SCENE_HSV_CUR:
-		{
-			dst_hsv_ptr->hsv_table_addr_final = (void *)param_ptr0;
-			dst_hsv_ptr->cur.hsv_table_addr = (cmr_u64)dst_hsv_ptr->hsv_table_addr_final;
-			hsv_header_ptr->is_update = ISP_ONE;
-		}
-		break;
-
 	case ISP_PM_BLK_SMART_SETTING:
 		{
 			cmr_u32 i;
@@ -230,9 +217,9 @@ cmr_s32 _pm_hsv_new_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, vo
 				break;
 			}
 
-			ISP_LOGV("block_result->ai_scene_pro_flag %d",block_result->ai_scene_pro_flag);
 			if (block_result->ai_scene_pro_flag == 1 || block_result->ai_scene_id == ISP_PM_AI_SCENE_NIGHT)
 				hsv_level = -1;
+
 			if (hsv_level != -1 && hsv_level < SENSOR_HSV_NUM_NEW) {
 				src_map[0] = dst_hsv_ptr->map[hsv_level].data_ptr;
 				if (src_map[0] != NULL) {
@@ -252,7 +239,6 @@ cmr_s32 _pm_hsv_new_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, vo
 
 				dst = (cmr_u32 *)dst_hsv_ptr->final_map.data_ptr;
 				data_num = dst_hsv_ptr->final_map.size / sizeof(cmr_u32);
-
 				for(i = 0; i < 2; i++) {
 					src_map[0] = (void *)dst_hsv_ptr->map[ct_value[i]->value[0]].data_ptr;
 					src_map[1] = (void *)dst_hsv_ptr->map[ct_value[i]->value[1]].data_ptr;
@@ -282,21 +268,76 @@ cmr_s32 _pm_hsv_new_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, vo
 		}
 		break;
 
+	case ISP_PM_BLK_AI_SCENE_UPDATE_HSV:
+		{
+			cmr_u32 i, *src_ptr, dst0[360];
+			cmr_s16 smooth_factor, smooth_base;
+			struct isp_ai_update_param *cfg_data;
+			struct isp_ai_hsv_info *hsv_cur;
+
+			cfg_data = (struct isp_ai_update_param *)param_ptr0;
+			hsv_cur = (struct isp_ai_hsv_info *)cfg_data->param_ptr;
+			src_ptr = dst_hsv_ptr->cur.d.hsv_table;
+			smooth_factor = cfg_data->smooth_factor;
+			smooth_base = cfg_data->smooth_base;
+			if (smooth_factor == 0) {
+				if (!hsv_header_ptr->is_update)
+					break;
+				smooth_factor = 1;
+				smooth_base = 1;
+			} else if (!hsv_header_ptr->is_update) {
+				smooth_factor = (smooth_factor > 0) ? 1 :  -1;
+			}
+
+			for (i = 0; i < 360 ; i++) {
+				cmr_u32 dst_val = 0;
+				cmr_u32 src0_val = src_ptr[i];
+				cmr_s32 src0_val_h = src0_val & 0x1FF;
+				cmr_s32 src0_val_s = (src0_val >> 9) & 0x7FF;
+
+				src0_val_h += hsv_cur->hue_table_item_offset[i] * smooth_factor / smooth_base;
+				src0_val_s += hsv_cur->saturation_table_item_offset[i] * smooth_factor / smooth_base;
+				src0_val_h = MAX(0, MIN(359, src0_val_h));
+				src0_val_s = MAX(0, MIN(2047, src0_val_s));
+				if ((src0_val_h + 128) < i)
+					src0_val_h += 360;
+				if ((src0_val_h - 128) > i)
+					src0_val_h -= 360;
+				if (src0_val_h < 0)
+					src0_val_h += 360;
+				else
+					src0_val_h %= 360;
+				dst_val = (src0_val_h & 0x1FF) | ((src0_val_s & 0x7FF) << 9);
+
+				dst0[i] = (cmr_u32)dst_val;
+			}
+
+			memcpy(&dst_hsv_ptr->cur.d.hs, dst0, sizeof(dst0));
+			hsv_header_ptr->is_update = ISP_ONE;
+		}
+		break;
+
 	case ISP_PM_BLK_SPECIAL_EFFECT:
 		{
 			cmr_u32 idx = *((cmr_u32 *) param_ptr0);
+			cmr_u32 cpy_size;
+			struct isp_data_info *hsv_data;
 			if (hsv_header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
 				return ISP_SUCCESS;
 			}
-			if (0 == idx) {
-				dst_hsv_ptr->cur.size = dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].size;
-				dst_hsv_ptr->cur.hsv_table_addr = (cmr_u64)dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0].data_ptr;
-			} else {
-				dst_hsv_ptr->cur.size = dst_hsv_ptr->specialeffect_tab[idx].size;
-				dst_hsv_ptr->cur.hsv_table_addr = (cmr_u64)dst_hsv_ptr->specialeffect_tab[idx].data_ptr;
-			}
-			ISP_LOGV("hsv table addr 0x%lx\n", (cmr_uint)dst_hsv_ptr->cur.hsv_table_addr);
+			if (0 == idx)
+				hsv_data = &dst_hsv_ptr->map[dst_hsv_ptr->cur_idx.x0];
+			else
+				hsv_data = &dst_hsv_ptr->specialeffect_tab[idx];
+
+			cpy_size = (cmr_u32)sizeof(dst_hsv_ptr->cur.d.hsv_table);
+			if (cpy_size < hsv_data->size)
+				ISP_LOGE("error: hsv table size %d is smaller than target %d\n", cpy_size, hsv_data->size);
+			else
+				cpy_size =  hsv_data->size;
+			dst_hsv_ptr->cur.size = cpy_size;
+			memcpy((void *)dst_hsv_ptr->final_map.data_ptr, hsv_data->data_ptr, cpy_size);
 			hsv_header_ptr->is_update = ISP_ONE;
 		}
 		break;
@@ -304,7 +345,6 @@ cmr_s32 _pm_hsv_new_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, vo
 	default:
 		break;
 	}
-
 
 	return rtn;
 }
@@ -319,11 +359,6 @@ cmr_s32 _pm_hsv_new_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, vo
 	param_data_ptr->cmd = cmd;
 
 	switch (cmd) {
-	case ISP_PM_BLK_AI_SCENE_HSV:
-		param_data_ptr->data_ptr = (void *)hsv_ptr->hsv_table_addr;
-		param_data_ptr->data_size = sizeof(hsv_ptr->hsv_table_addr);
-		*update_flag = 0;
-		break;
 	case ISP_PM_BLK_ISP_SETTING:
 		param_data_ptr->data_ptr = (void *)&hsv_ptr->cur;
 		param_data_ptr->data_size = sizeof(hsv_ptr->cur);
@@ -343,11 +378,8 @@ cmr_s32 _pm_hsv_new_deinit(void *hsv_param)
 	cmr_s32 j;
 	struct isp_hsv_param_new *dst_ptr = (struct isp_hsv_param_new *)hsv_param;
 
-	if (dst_ptr->final_map.data_ptr) {
-		free(dst_ptr->final_map.data_ptr);
-		dst_ptr->final_map.data_ptr = PNULL;
-		dst_ptr->final_map.size = 0;
-	}
+	dst_ptr->final_map.data_ptr = PNULL;
+	dst_ptr->final_map.size = 0;
 	for (j = 0; j < 2; j++) {
 		if (dst_ptr->ct_result[j]) {
 			free(dst_ptr->ct_result[j]);
