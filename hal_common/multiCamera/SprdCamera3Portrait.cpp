@@ -2866,6 +2866,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
                 }
             }
 
+            capfaceinfo.portrait_param.mRotation = mJpegOrientation;
             mBokehAlgo->setCapFaceParam((void *)&capfaceinfo);
             sem_post(&mFaceinfoSignSem);
             mSnapshotResultReturn = false;
