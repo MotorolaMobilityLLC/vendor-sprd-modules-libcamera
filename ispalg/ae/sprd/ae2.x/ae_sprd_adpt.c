@@ -4741,7 +4741,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				cxt->manual_level = s_ae_manual[cxt->camera_id].manual_level;
 			}
 			else if(0 != cxt->mode_switch[last_app_mode].gain){
-				if ((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) && (0 != cxt->mode_switch[cxt->app_mode].gain)){
+				if (((cxt->sync_cur_result.cur_bv < cxt->flash_swith.led_thr_down) || (cxt->app_mode == last_app_mode)) && (0 != cxt->mode_switch[cxt->app_mode].gain)){
 					src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
 					src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
 					src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
@@ -4786,7 +4786,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				}
 			}
 
-			if (work_info->is_snapshot && (cxt->cur_status.line_time != cxt->last_exp_param.line_time)){
+			if (cxt->cur_status.line_time != cxt->last_exp_param.line_time){
 				src_exp.exp_line = (cmr_u32) (1.0 * cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.line_time + 0.5);
 				if (cxt->min_exp_line > src_exp.exp_line) {
 					src_exp.exp_line = cxt->min_exp_line;
