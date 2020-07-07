@@ -68,7 +68,6 @@ void deinit_fb_handle(struct class_fb *faceBeauty) {
             ALOGD("deinit_fb_handle to FB_DeleteBeautyHandle begin");
             FB_DeleteBeautyHandle(&(faceBeauty->hSprdFB));
             faceBeauty->hSprdFB = NULL;
-            memset(faceBeauty->fb_face,0,sizeof(faceBeauty->fb_face));
         }
         faceBeauty->noFaceFrmCnt = 0;
     }
@@ -367,6 +366,10 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
             /*from face to no face.remain 10 frames to do face beauty*/
             if (faceBeauty->noFaceFrmCnt < 10)
                 faceCount = faceCount > 0 ? faceCount : 1;
+            else {
+                //no longer do face beauty after 10 frames no face.
+                faceBeauty->isFaceGot == 0;
+            }
         }
         property_get("debug.camera.dump.frame", dump_value, "null");
         if (!strcmp(dump_value, "fb")) {
