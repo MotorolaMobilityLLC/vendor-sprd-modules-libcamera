@@ -3018,7 +3018,10 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                     setting_isp_wait_notice(cpt);
                 }
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_CLOSE);
-                setting_isp_wait_notice(cpt);
+                CMR_LOGV("hal_param->sprd_zsl_enabled %d",hal_param->sprd_zsl_enabled);
+                if (hal_param->sprd_zsl_enabled) {
+                    setting_isp_wait_notice(cpt);
+                }
                 hal_param->flash_param.has_preflashed = 0;
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_AFTER);
             }
