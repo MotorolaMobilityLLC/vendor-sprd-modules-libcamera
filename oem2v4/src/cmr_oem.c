@@ -81,15 +81,11 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
                               is_multi_camera_mode_oem == MODE_SELF_SHOT ||    \
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 /**********************************************************************************************/
-typedef int (*INTERFACE_INIT)(char** error);
-typedef int (*INTERFACE_CLOSE_ALL)(char **error);
-typedef int (*INTERFACE_FOR_ALGO)(char *name, char **error, char **level);
 
 struct image_sw_algorithm_buf src_sw_algorithm_buf;
 struct image_sw_algorithm_buf dst_sw_algorithm_buf;
 static cmr_uint sw_algorithm_buf_cnt = 0;
 
-static void *handle_interface = NULL;
 static uint32_t is_dual_capture = 0;
 static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
@@ -4424,48 +4420,6 @@ cmr_int camera_deinit_thread(cmr_handle oem_handle) {
     return CMR_CAMERA_SUCCESS;
 }
 
-cmr_int camera_interface_init()
-{
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    if (!handle_interface) {
-        handle_interface = dlopen("libinterface.so", RTLD_NOW);
-        if(!handle_interface) {
-            CMR_LOGE("decrypt interface open failed with %s", dlerror());
-            return ret;
-        }
-        INTERFACE_INIT interface_init =
-            dlsym(handle_interface, "interface_init");
-        if (!interface_init) {
-            CMR_LOGE("func open failed with error = %s", dlerror());
-            return ret;
-        }
-        char *error = NULL;
-        int init = interface_init(&error);
-        if (init) {
-            ret = CMR_CAMERA_FAIL;
-            CMR_LOGV("interface init func running with %s and ret is %d", error, init);
-        }
-    } else
-        CMR_LOGV("libinterface is inited");
-    return ret;
-}
-
-cmr_int camera_interface_deinit()
-{
-    int ret = CMR_CAMERA_SUCCESS;
-    if (handle_interface) {
-        INTERFACE_CLOSE_ALL interface_close =
-            dlsym(handle_interface, "interface_close_all");
-        char *error = NULL;
-        if (interface_close)
-            ret = interface_close(&error);
-        dlclose(handle_interface);
-        handle_interface = NULL;
-        CMR_LOGV("interface closing succeed");
-    }
-    return ret;
-}
-
 static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
@@ -4539,8 +4493,6 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         goto exit;
     }
 
-    ret = camera_interface_init();
-
     ret = camera_snapshot_init(oem_handle);
     if (ret) {
         CMR_LOGE("failed to init snapshot %ld", ret);
@@ -4593,8 +4545,6 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     if (cxt->night_cxt.is_authorized) {
         camera_nightpro_deinit(oem_handle);
     }
-
-    camera_interface_deinit();
 
     camera_deinit_thread(oem_handle);
 

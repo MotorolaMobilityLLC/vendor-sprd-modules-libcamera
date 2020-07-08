@@ -39,7 +39,7 @@
 #include "include/SprdCamera3Tags.h"
 #include "SprdCamera3HALHeader.h"
 #include "cmr_common.h"
-
+#include <dlfcn.h>
 using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
 
@@ -543,7 +543,7 @@ typedef struct {
     MLOG_Tag mlogInfo;
     int32_t fd_score[10];
 } sprd_setting_info_t;
-
+typedef int (*CAMIP_INTERFACE_INIT)(char **);
 class SprdCamera3Setting {
   public:
     SprdCamera3Setting(int cameraId);
@@ -560,6 +560,7 @@ class SprdCamera3Setting {
                                      cmr_u16 *height);
     static int getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo);
     static int getNumberOfCameras();
+    static int getCameraIPInited();
     static void * getCameraIdentifyState();
     static int initDefaultParameters(int32_t cameraId);
     static int getStaticMetadata(int32_t cameraId,

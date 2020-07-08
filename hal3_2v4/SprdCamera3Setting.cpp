@@ -36,7 +36,7 @@
 #include "include/SprdCamera3.h"
 //#include "SprdCameraHardwareConfig2.h"
 #include "inc/SprdCamera3Config.h"
-
+#include <dlfcn.h>
 using namespace android;
 
 namespace sprdcamera {
@@ -1050,6 +1050,23 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
     return 0;
 }
 
+int SprdCamera3Setting::getCameraIPInited() {
+    void *handle = dlopen("libinterface.so", RTLD_LAZY);
+    char *error = NULL;
+    if(!handle) {
+        HAL_LOGD("CameraIP open failed");
+        return -1;
+    }
+    CAMIP_INTERFACE_INIT camip_init = (CAMIP_INTERFACE_INIT)dlsym(handle, "interface_init");
+    if(!camip_init) {
+        HAL_LOGD("dlysm func failed");
+        return -1;
+    }
+    camip_init(&error);
+    dlclose(handle);
+    return 0;
+}
+
 int SprdCamera3Setting::getNumberOfCameras() {
     int num = 0;
 
@@ -2016,7 +2033,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            sizeof(camera3_default_info.common.availDistortionCorrectionModes));
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
-
+    getCameraIPInited();
     property_set("persist.vendor.cam.ip.switch.on", "0");
     HAL_LOGI("available_cam_features = %d",
              s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
