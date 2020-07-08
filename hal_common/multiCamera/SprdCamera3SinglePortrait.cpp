@@ -4237,27 +4237,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
                 mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height / 
                                                                     mCaptureInitParams.depthH;
             }
-            if(mSinglePortrait->mCameraId == CAM_BLUR_MAIN_ID) {
-                if(mobile_angle_cap == 0) {
-                    mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width / 
-                                                                    mCaptureInitParams.depthW;
-                    mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height / 
-                                                                    mCaptureInitParams.depthH;
-                    mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width / 
-                                                                    mCaptureInitParams.depthW;
-                    mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height / 
-                                                                    mCaptureInitParams.depthH;
-                } else if(mobile_angle_cap == 180) {
-                    mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width / 
-                                                                    mCaptureInitParams.depthW;
-                    mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height / 
-                                                                    mCaptureInitParams.depthH;
-                    mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width / 
-                                                                    mCaptureInitParams.depthW;
-                    mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height / 
-                                                                    mCaptureInitParams.depthH;
-                }
-            }
+
             mSinglePortrait->beauty_face.angle = faceDetectionInfo.angle[j];
             mSinglePortrait->beauty_face.pose = faceDetectionInfo.pose[j];
             rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_CONSTRUCT_FACE_CMD,
