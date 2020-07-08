@@ -426,7 +426,9 @@ static cmr_uint imx351_drv_get_trim_tab(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int imx351_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
+    cmr_u32 cap_exptime = 0;
     cmr_u32 prv_shutter = 0;
+    cmr_u32 prv_exptime = 0;
     float gain = 0;
     float cap_gain = 0;
     cmr_u32 capture_mode = param & 0xffff;
@@ -450,24 +452,28 @@ static cmr_int imx351_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
+        cap_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
         cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
         goto snapshot_info;
     }
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
+    prv_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime;
 
     cap_shutter = imx351_drv_update_exposure(handle, cap_shutter, 0);
+    cap_exptime = prv_exptime;
     cap_gain = gain;
     imx351_drv_write_gain(handle, cap_gain);
-    SENSOR_LOGI("preview_shutter = %d, preview_gain = %f",
+    SENSOR_LOGI("preview_shutter = %d, preview_exptime= %d, preview_gain = %f",
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
+                sns_drv_cxt->sensor_ev_info.preview_exptime,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
 
-    SENSOR_LOGI("capture_shutter = %d, capture_gain = %f", cap_shutter,
-                cap_gain);
+    SENSOR_LOGI("capture_shutter = %d, capture_exptime = %d, capture_gain = %f",
+                cap_shutter, cap_exptime, cap_gain);
 snapshot_info:
     sns_drv_cxt->hdr_info.capture_shutter = cap_shutter;
     sns_drv_cxt->hdr_info.capture_gain = cap_gain;
@@ -478,8 +484,8 @@ snapshot_info:
 
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
-                                          cap_shutter);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME,
+                                          cap_exptime);
     } else {
         sns_drv_cxt->exif_info.exposure_line = cap_shutter;
     }
@@ -527,6 +533,7 @@ static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 mode = 0x00;
+    cmr_u32 exp_time = 0x00;
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(ex);
@@ -535,6 +542,7 @@ static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     mode = ex->size_index;
+    exp_time = ex->exp_time;
 
     SENSOR_LOGD("current mode = %d, exposure_line = %d, dummy_line=%d", mode,
                 exposure_line, dummy_line);
@@ -543,10 +551,12 @@ static cmr_int imx351_drv_ex_write_exposure(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->line_time_def = sns_drv_cxt->trim_tab_info[mode].line_time;
     sns_drv_cxt->sensor_ev_info.preview_shutter =
         imx351_drv_update_exposure(handle, exposure_line, dummy_line);
+
+    sns_drv_cxt->sensor_ev_info.preview_exptime= exp_time;
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
-                                          exposure_line);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME,
+                                          exp_time);
     } else {
         sns_drv_cxt->exif_info.exposure_line = exposure_line;
     }
@@ -1211,6 +1221,7 @@ static unsigned long imx351_drv_read_aec_info(cmr_handle handle,
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 mode = 0x00;
+    cmr_u32 exp_time = 0x00;
     double real_gain = 0;
     cmr_u32 gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -1222,6 +1233,7 @@ static unsigned long imx351_drv_read_aec_info(cmr_handle handle,
     exposure_line = info->exp.exposure;
     dummy_line = info->exp.dummy;
     mode = info->exp.size_index;
+    exp_time = info->exp.exp_time;
     sns_drv_cxt->frame_length_def = sns_drv_cxt->trim_tab_info[mode].frame_line;
 
 #if 1
@@ -1250,6 +1262,9 @@ imx351_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
     sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
+
+    sns_drv_cxt->sensor_ev_info.preview_exptime =
+        (PREVIEW_FRAME_LENGTH - FRAME_OFFSET) * PREVIEW_LINE_TIME;
 
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
