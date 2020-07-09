@@ -36,9 +36,11 @@
 #define ISP_READ_MODE_ID_MAX 13
 
 #define ISP_NR_BLOCK_MIN 0
-#define ISP_ISO_NUM_MAX 9
+#define ISP_AE3_0_ISO_NUM_MAX 9
+#define ISP_AE3_0_WEIGHT_TYPE_MAX 3
+#define ISP_ISO_NUM_MAX 7
 #define ISP_ISO_NUM_MIN 0
-#define ISP_AE_WEIGHT_TYPE_MAX 3
+#define ISP_AE_WEIGHT_TYPE_MAX 2
 #define ISP_AE_WEIGHT_TYPE_MIN 0
 #define ISP_SCENE_NUM_MAX 7
 #define ISP_SCENE_NUM_MIN 0
@@ -2591,11 +2593,23 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 
 	cmr_u32 len_msg = sizeof(struct msg_head_tag);
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
+	cmr_u32 iso_max = ISP_ISO_NUM_MAX;
+	cmr_u32 weight_max = ISP_AE_WEIGHT_TYPE_MAX;
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr = NULL;
 	struct isp_data_header_normal data_header;
 	struct msg_head_tag msg_tag;
+
 	memset(&data_header, 0, sizeof(struct isp_data_header_normal));
 	memset(&msg_tag, 0, sizeof(struct msg_head_tag));
-
+	if (sensor_info_ptr) {
+		sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+		if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000C) {
+			iso_max = ISP_AE3_0_ISO_NUM_MAX;
+			weight_max = ISP_AE3_0_WEIGHT_TYPE_MAX;
+			ISP_LOGV("AE3.0, iso_max %d, weight_max %d", iso_max, weight_max);
+		}
+	}
 	struct isp_check_cmd_valid *cmd_ptr = (struct isp_check_cmd_valid *)cmd;
 	cmr_u32 unvalid_flag = 0;
 	if (MODE_MAX >= cmd_ptr->main_type) {
@@ -2614,7 +2628,7 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 				if (ISP_ANTIFLICKER_MAX < flicker) {
 					unvalid_flag = 1;
 				} else {
-					if (ISP_ISO_NUM_MAX < iso) {
+					if (iso_max < iso) {
 						unvalid_flag = 1;
 					}
 				}
@@ -2622,7 +2636,7 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 			break;
 		case MODE_AE_WEIGHT_TABLE:
 			{
-				if (ISP_AE_WEIGHT_TYPE_MAX < cmd_ptr->sub_type) {
+				if (weight_max < cmd_ptr->sub_type) {
 					unvalid_flag = 1;
 				}
 			}
