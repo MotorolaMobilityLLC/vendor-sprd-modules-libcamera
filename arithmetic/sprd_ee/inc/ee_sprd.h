@@ -25,14 +25,6 @@ extern "C" {
 
 	/****** cpu interface ******/
 	/*
-	usage: get the version of ee
-	return value: 0 is ok, other value is failed
-	@param: 
-	-a_pOutBuf: string buffer
-	-a_dInBufMaxSize: string size
-	*/
-	int sprd_ee_get_version(void *a_pOutBuf, int a_dInBufMaxSize);
-	/*
 	usage: init ee instance
 	return value: handle 
 	@param: 

@@ -90,13 +90,6 @@ int sprd_ee_adpt_ctrl(sprd_ee_cmd_t cmd, void *param)
 			ret=sprd_ee_adpt_deinit(ee_param->ctx);
 			break;
 		}
-	case SPRD_EE_VERSION_CMD:
-		{
-			char acVersion[256];
-			ret=sprd_ee_get_version((void *)acVersion,256);
-			EE_LOGI("EE Api Version [%s]", acVersion);
-			break;
-		}
 	case SPRD_EE_PROCESS_CMD:
 		{
 			sprd_ee_param_t *ee_param=(sprd_ee_param_t *)param;

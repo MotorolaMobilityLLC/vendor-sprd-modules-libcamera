@@ -12,7 +12,6 @@ extern "C" {
 	typedef enum {
 		SPRD_EE_OPEN_CMD = 0,
 		SPRD_EE_CLOSE_CMD,
-		SPRD_EE_VERSION_CMD,
 		SPRD_EE_PROCESS_CMD,
 		SPRD_EE_MAX_CMD
 	} sprd_ee_cmd_t;
