@@ -2059,6 +2059,19 @@ cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_CNR3_T] = 1;
 			break;
 		}
+	case MFNR:
+		{
+			static cmr_u32 mfnr_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_mfnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_MFNR_T];
+			memcpy(((cmr_u8 *) (nr_update_param.mfnr_level_ptr)) + nr_offset_addr + mfnr_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			if (0x01 != data_head->packet_status)
+				mfnr_ptr_offset += data_actual_len;
+			else
+				mfnr_ptr_offset = 0;
+			nr_tool_flags[ISP_BLK_MFNR_T] = 1;
+			break;
+		}
 	default:
 		break;
 	}
