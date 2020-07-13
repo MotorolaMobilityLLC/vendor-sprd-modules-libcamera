@@ -32,6 +32,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <vector>
 #include <hardware/camera3.h>
@@ -93,10 +94,14 @@ class SprdCamera3Factory {
     UseCameraId mUseCameraId;
     std::map<std::string, std::shared_ptr<ICameraCreator>> mCreators;
     std::vector<std::shared_ptr<ICameraBase>> mCameras;
+    std::map<int, int> mHiddenCameraParents;
+    std::map<int, std::set<int>> mConflictingCameraIds;
+    std::map<int, char **> mConflictingDevices;
+    std::map<int, size_t> mConflictingDevicesCount;
     int mNumberOfCameras;
     int mNumOfCameras;
     SprdCamera3Wrapper *mWrapper;
-    const camera_module_callbacks_t * mCameraCallbacks;
+    const camera_module_callbacks_t *mCameraCallbacks;
 
     void registerCameraCreators();
     void registerOneCreator(std::string name,
@@ -104,6 +109,11 @@ class SprdCamera3Factory {
     bool tryParseCameraConfig();
     bool validateSensorId(int id);
     int getPhysicalCameraInfo(int id, camera_metadata_t **static_metadata);
+    int
+    isStreamCombinationSupported(int id,
+                                 const camera_stream_combination_t *streams);
+    char **allocateConflictingDevices(const std::vector<int> &devices);
+    void freeConflictingDevices(char **devices, size_t size);
 };
 
 }; /*namespace sprdcamera*/

@@ -48,6 +48,13 @@ vector<shared_ptr<Configurator>> Configurator::parseFromFile(string filename) {
 
 shared_ptr<Configurator>
 Configurator::createInstance(const Json::Value &value) {
+    /* camera id */
+    if (value["id"].isNull()) {
+        ALOGE("need \"id\" for this camera");
+        return nullptr;
+    }
+    int id = value["id"].asInt();
+
     /* camera type */
     if (value["type"].isNull()) {
         ALOGE("need \"type\" for this camera");
@@ -67,10 +74,9 @@ Configurator::createInstance(const Json::Value &value) {
     /* feature */
     Json::Value feature = value["features"];
 
-    auto config =
-        shared_ptr<Configurator>(new Configurator(type, sensorIds, feature));
-
-    ALOGD("parsed camera \"%s\" using sensor %s", type.c_str(),
+    auto config = make_shared<Configurator>(id, type, sensorIds, feature);
+    ALOGD("parsed camera \"%s\" with id \"%d\" using sensor %s",
+          config->getType().c_str(), config->getCameraId(),
           config->getSensorIdsAsString().c_str());
 
     // TODO feature is k-v pair for now, change code below if impl changed
@@ -91,20 +97,15 @@ shared_ptr<Configurator>
 Configurator::createInstance(int cameraId, const string &type,
                              const vector<int> &sensorIds,
                              const vector<int> &physicalIds) {
-    shared_ptr<Configurator> c =
-        shared_ptr<Configurator>(new Configurator(type, sensorIds));
-    c->setCameraId(cameraId);
-    c->setPhysicalIds(physicalIds);
-    return c;
+    return make_shared<Configurator>(cameraId, type, sensorIds, Json::Value(),
+                                     physicalIds);
 }
 
 shared_ptr<Configurator> Configurator::createInstance(int cameraId,
                                                       int sensorId) {
-    shared_ptr<Configurator> c = shared_ptr<Configurator>(
-        new Configurator(string(kFeatureSingleCamera), {sensorId}));
-    c->setCameraId(cameraId);
-    c->setPhysicalIds({cameraId});
-    return c;
+    return make_shared<Configurator>(cameraId, string(kFeatureSingleCamera),
+                                     vector<int>({sensorId}), Json::Value(),
+                                     vector<int>({sensorId}));
 }
 
 int Configurator::getCameraId() const { return mCameraId; }
@@ -139,24 +140,18 @@ string Configurator::getBrief() const {
     return s.str();
 }
 
-void Configurator::setCameraId(int cameraId) { mCameraId = cameraId; }
-
 void Configurator::setPhysicalIds(const vector<int> &physicalIds) {
     mPhysicalIds.assign(physicalIds.begin(), physicalIds.end());
 }
 
 shared_ptr<Configurator> Configurator::clone() const {
-    shared_ptr<Configurator> c = shared_ptr<Configurator>(
-        new Configurator(mType, mSensorIds, mFeatures));
-    c->setCameraId(mCameraId);
-    c->setPhysicalIds(mPhysicalIds);
-
-    return c;
+    return make_shared<Configurator>(mCameraId, mType, mSensorIds, mFeatures,
+                                     mPhysicalIds);
 }
 
-Configurator::Configurator(const string &type, const vector<int> &sensorIds)
-    : mCameraId(-1), mType(type), mSensorIds(sensorIds) {}
-
-Configurator::Configurator(const string &type, const vector<int> &sensorIds,
-                           const Json::Value &features)
-    : mCameraId(-1), mType(type), mSensorIds(sensorIds), mFeatures(features) {}
+Configurator::Configurator(const int cameraId, const string &type,
+                           const vector<int> &sensorIds,
+                           const Json::Value &features,
+                           const vector<int> &physicalIds)
+    : mCameraId(cameraId), mType(type), mSensorIds(sensorIds),
+      mFeatures(features), mPhysicalIds(physicalIds) {}

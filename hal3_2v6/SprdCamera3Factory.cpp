@@ -90,6 +90,12 @@ SprdCamera3Factory::~SprdCamera3Factory() {
         mWrapper = NULL;
     }
 
+    for (auto &p : mConflictingDevices)
+        freeConflictingDevices(p.second, mConflictingDevicesCount[p.first]);
+    mConflictingDevices.clear();
+    mConflictingDevicesCount.clear();
+    mConflictingCameraIds.clear();
+    mHiddenCameraParents.clear();
     mCameras.clear();
     mCreators.clear();
 }
@@ -157,9 +163,7 @@ int SprdCamera3Factory::get_physical_camera_info(
 int SprdCamera3Factory::is_stream_combination_supported(
     int camera_id, const camera_stream_combination_t *streams) {
     HAL_LOGV("E");
-
-    // TODO return not supported for now
-    return -EINVAL;
+    return gSprdCamera3Factory.isStreamCombinationSupported(camera_id, streams);
 }
 
 void SprdCamera3Factory::notify_device_state_change(uint64_t deviceState) {
@@ -199,8 +203,28 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     HAL_LOGD("get_camera_info: %d", id);
 
     /* try dynamic ID */
-    if (mUseCameraId == DynamicId && id < mNumberOfCameras)
-        return mCameras[id]->getCameraInfo(info);
+    if (mUseCameraId == DynamicId && id < mNumberOfCameras) {
+        int ret = mCameras[id]->getCameraInfo(info);
+        if (ret < 0)
+            return ret;
+
+        if (mConflictingDevices.find(id) == mConflictingDevices.cend()) {
+            for (size_t i = 0; i < info->conflicting_devices_length; i++)
+                mConflictingCameraIds[id].insert(
+                    atoi(info->conflicting_devices[i]));
+
+            mConflictingDevices[id] = allocateConflictingDevices(
+                vector<int>(mConflictingCameraIds[id].begin(),
+                            mConflictingCameraIds[id].end()));
+            mConflictingDevicesCount[id] = mConflictingCameraIds[id].size();
+        }
+
+        /* append conflicting devices due to sharing sensor */
+        info->conflicting_devices_length = mConflictingDevicesCount[id];
+        info->conflicting_devices = mConflictingDevices[id];
+
+        return 0;
+    }
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
     /* try private multi-camera */
@@ -376,7 +400,8 @@ int SprdCamera3Factory::multi_id_to_phyid(int cameraId) {
         }
         return 1;
     } else if (SPRD_ULTRA_WIDE_ID == cameraId) {
-        return sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK);
+        return sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE,
+                                   SNS_FACE_BACK);
     } else if (SPRD_FRONT_HIGH_RES == cameraId) {
         return 1;
     } else if (SPRD_OPTICSZOOM_W_ID == cameraId) {
@@ -394,14 +419,14 @@ int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,
     struct camera_device_manager *devPtr = NULL;
     int rc;
 
-    devPtr =
-        (struct camera_device_manager *)SprdCamera3Setting::getCameraIdentifyState();
+    devPtr = (struct camera_device_manager *)
+        SprdCamera3Setting::getCameraIdentifyState();
     for (int m = 0; m < mNumOfCameras; m++) {
         HAL_LOGV("factory identify_state[%d]=%d", m, devPtr->identify_state[m]);
         if (gSprdCamera3Factory.mCameraCallbacks != NULL) {
             gSprdCamera3Factory.mCameraCallbacks->camera_device_status_change(
-                gSprdCamera3Factory.mCameraCallbacks,
-                m, devPtr->identify_state[m]);
+                gSprdCamera3Factory.mCameraCallbacks, m,
+                devPtr->identify_state[m]);
         }
     }
 
@@ -568,29 +593,36 @@ void SprdCamera3Factory::registerOneCreator(
 }
 
 bool SprdCamera3Factory::tryParseCameraConfig() {
-    auto rawConfigs = Configurator::getConfigurators();
-    if (!rawConfigs.size())
+    auto configs = Configurator::getConfigurators();
+    if (!configs.size())
         return false;
 
-    vector<shared_ptr<Configurator>> configs;
     map<int, int> singleCameras;
+    int expectedId = 0;
 
-    /* filter out invalid raw configs */
-    for (auto cfg : rawConfigs) {
+    /* check configs */
+    for (auto cfg : configs) {
+        /* check if camera id is continuously increasing from 0 */
+        int cameraId = cfg->getCameraId();
+        if (cameraId != expectedId++) {
+            ALOGE("invalid camera id %d, abort", cameraId);
+            return false;
+        }
+
         /* check if creator of this type exists */
         string type = cfg->getType();
         if (mCreators.find(type) == mCreators.cend()) {
-            ALOGW("unrecognized camera '%s', ignore", type.c_str());
-            continue;
+            ALOGE("unrecognized camera '%s', abort", type.c_str());
+            return false;
         }
 
         /* check sensor id count */
         auto sensorIds = cfg->getSensorIds();
         if (!sensorIds.size() || (type == Configurator::kFeatureSingleCamera &&
                                   sensorIds.size() > 1)) {
-            ALOGW("invalid sensor count %zu as '%s', ignore", sensorIds.size(),
+            ALOGE("invalid sensor count %zu as '%s', abort", sensorIds.size(),
                   type.c_str());
-            continue;
+            return false;
         }
 
         /* check if sensor id is valid */
@@ -604,35 +636,50 @@ bool SprdCamera3Factory::tryParseCameraConfig() {
             }
         }
         if (!valid) {
-            ALOGW("invalid sensor id %d, ignore", invalidId);
-            continue;
+            ALOGE("invalid sensor id %d, abort", invalidId);
+            return false;
         }
 
-        /* assign camera ID */
-        auto c = cfg->clone();
-        c->setCameraId(configs.size());
-        if (type == Configurator::kFeatureSingleCamera &&
-            singleCameras.find(sensorIds[0]) == singleCameras.cend()) {
-            /* record first single camera ID */
-            singleCameras[sensorIds[0]] = c->getCameraId();
+        /*
+         * record physical camera ID
+         *
+         * For now, we don't allow multiple single camera being backed up by
+         * same physical camera, UNLESS it's hidden
+         */
+        if (type == Configurator::kFeatureSingleCamera) {
+            if (singleCameras.find(sensorIds[0]) != singleCameras.cend()) {
+                ALOGE("multiple single camera (%d and %d) backed up by same "
+                      "physical camera (%d) is not allowed for now, abort",
+                      singleCameras[sensorIds[0]], cameraId, sensorIds[0]);
+                return false;
+            }
+            singleCameras[sensorIds[0]] = cameraId;
         }
-        configs.push_back(c);
     }
 
     /* assign physical camera IDs */
     size_t count = configs.size();
     for (size_t id = 0; id < count; id++) {
-        if (configs[id]->getType() == Configurator::kFeatureSingleCamera)
-            continue;
-
         vector<int> physicalIds;
         for (auto sensorId : configs[id]->getSensorIds()) {
             if (singleCameras.find(sensorId) == singleCameras.cend()) {
+                /*
+                 * create hidden single camera ID
+                 *
+                 * Version of hidden camera device follows version of its
+                 * parent, which must be a logical multi-camera. So some
+                 * metadata conversion must be done by logical camera before
+                 * reporting camera info. In this case we generate hidden
+                 * camera ID of each sensor for every logical camera.
+                 */
                 auto c = Configurator::createInstance(configs.size(), sensorId);
-                singleCameras[sensorId] = c->getCameraId();
                 configs.push_back(c);
+                mHiddenCameraParents[c->getCameraId()] =
+                    configs[id]->getCameraId();
+                physicalIds.push_back(c->getCameraId());
+            } else {
+                physicalIds.push_back(singleCameras[sensorId]);
             }
-            physicalIds.push_back(singleCameras[sensorId]);
         }
 
         configs[id]->setPhysicalIds(physicalIds);
@@ -642,14 +689,32 @@ bool SprdCamera3Factory::tryParseCameraConfig() {
     for (auto cfg : configs) {
         auto camera = mCreators[cfg->getType()]->createInstance(cfg);
         if (!camera) {
-            ALOGW("fail to create camera %d as '%s', ignore",
-                  cfg->getCameraId(), cfg->getType().c_str());
-            count--;
-            continue;
+            ALOGE("fail to create camera %d as '%s', abort", cfg->getCameraId(),
+                  cfg->getType().c_str());
+            return false;
         }
         ALOGI("create camera: %s", cfg->getBrief().c_str());
         mCameras.push_back(camera);
     }
+
+    /* save cameras accessing same sensor */
+    map<int, set<int>> popularSensors;
+    for (auto cfg : configs) {
+        for (auto id : cfg->getSensorIds())
+            popularSensors[id].insert(cfg->getCameraId());
+    }
+
+    /* generate conflicted devices due to sharing same sensor */
+    for (auto &p : popularSensors) {
+        if (p.second.size() < 2)
+            continue;
+        for (auto id : p.second)
+            mConflictingCameraIds[id].insert(p.second.begin(), p.second.end());
+    }
+
+    /* filter out self */
+    for (auto &p : mConflictingCameraIds)
+        p.second.erase(p.first);
 
     /* create hidden cameras */
     mNumberOfCameras = count;
@@ -675,18 +740,57 @@ int SprdCamera3Factory::getPhysicalCameraInfo(
 
     if (id < mNumberOfCameras || id >= mCameras.size()) {
         HAL_LOGE("invalid physical camera id %d", id);
-        return -ENODEV;
+        return -EINVAL;
     }
 
-    struct camera_info info;
-    if (mCameras[id]->getCameraInfo(&info) < 0) {
-        HAL_LOGE("fail to get camera info for %d", id);
-        return -ENODEV;
+    if (mHiddenCameraParents.find(id) == mHiddenCameraParents.cend()) {
+        HAL_LOGE("invalid hidden camera id %d", id);
+        return -EINVAL;
     }
 
-    *static_metadata =
-        const_cast<camera_metadata_t *>(info.static_camera_characteristics);
-    return 0;
+    int parentId = mHiddenCameraParents[id];
+    return mCameras[parentId]->getPhysicalCameraInfoForId(id, static_metadata);
+}
+
+int SprdCamera3Factory::isStreamCombinationSupported(
+    int id, const camera_stream_combination_t *streams) {
+    if (id < 0 || id >= mNumberOfCameras) {
+        HAL_LOGE("invalid camera id %d", id);
+        return -EINVAL;
+    }
+
+    if (!streams) {
+        HAL_LOGE("invalid parameter");
+        return -EINVAL;
+    }
+
+    if (mUseCameraId == DynamicId)
+        return mCameras[id]->isStreamCombinationSupported(streams);
+
+    // TODO need to support this call
+    return -EINVAL;
+}
+
+char **
+SprdCamera3Factory::allocateConflictingDevices(const vector<int> &devices) {
+    static const int DEVICE_ID_LENGTH = 4;
+
+    char **cd = new char *[devices.size()];
+    for (uint32_t i = 0; i < devices.size(); i++) {
+        cd[i] = new char[DEVICE_ID_LENGTH + 1];
+        size_t s = snprintf(cd[i], DEVICE_ID_LENGTH, "%d", devices[i]);
+        cd[i][s] = '\0';
+    }
+
+    return cd;
+}
+
+void SprdCamera3Factory::freeConflictingDevices(char **devices, size_t size) {
+    if (devices) {
+        for (size_t i = 0; i < size; i++)
+            delete[] devices[i];
+        delete[] devices;
+    }
 }
 
 }; // namespace sprdcamera

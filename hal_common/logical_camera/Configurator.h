@@ -22,6 +22,11 @@ class Configurator {
     static std::shared_ptr<Configurator> createInstance(int cameraId,
                                                         int sensorId);
 
+    Configurator(const int cameraId, const std::string &type,
+                 const std::vector<int> &sensorIds,
+                 const Json::Value &features = Json::Value(),
+                 const std::vector<int> &physicalIds = std::vector<int>());
+
     int getCameraId() const;
     std::string getType() const;
     std::vector<int> getSensorIds() const;
@@ -29,7 +34,6 @@ class Configurator {
     Json::Value getFeaturesAsJson() const;
 
     std::string getBrief() const;
-    void setCameraId(int cameraId);
     void setPhysicalIds(const std::vector<int> &physicalIds);
     std::shared_ptr<Configurator> clone() const;
 
@@ -39,16 +43,12 @@ class Configurator {
     static std::shared_ptr<Configurator>
     createInstance(const Json::Value &value);
 
-    Configurator(const std::string &type, const std::vector<int> &sensorIds);
-    Configurator(const std::string &type, const std::vector<int> &sensorIds,
-                 const Json::Value &features);
-
     std::string getSensorIdsAsString() const;
 
-    int mCameraId;
-    std::string mType;
-    std::vector<int> mSensorIds;
+    const int mCameraId;
+    const std::string mType;
+    const std::vector<int> mSensorIds;
+    const Json::Value mFeatures;
     std::vector<int> mPhysicalIds;
-    Json::Value mFeatures;
 };
 }
