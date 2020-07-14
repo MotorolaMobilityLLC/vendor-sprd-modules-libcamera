@@ -67,6 +67,13 @@ enum {
 	FDR_STATUS_PROC,
 };
 
+enum {
+	PARAM_CFG_DEFAULT = 0,
+	PARAM_CFG_START = 1,
+	PARAM_CFG_FDRL,
+	PARAM_CFG_FDRH,
+};
+
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
 static isp_lsc_cb s_lsc_set_cb; /* workaround for sharkl3 compiling*/
@@ -563,7 +570,7 @@ exit:
 	return 0;
 }
 
-static cmr_s32 dump_lsc_data(struct isp_alg_fw_context *cxt, cmr_u32 start, cmr_u32 prev, void *data)
+static cmr_s32 dump_lsc_data(struct isp_alg_fw_context *cxt, cmr_u32 start, cmr_u32 scene, void *data)
 {
 	FILE *fp = NULL;
 	char file_name[256];
@@ -578,10 +585,13 @@ static cmr_s32 dump_lsc_data(struct isp_alg_fw_context *cxt, cmr_u32 start, cmr_
 	cur_time = ispalg_get_sys_timestamp();
 	if (start)
 		sprintf(file_name, "%scam%d_lsc_t%08d_%s_start.txt", CAMERA_DUMP_PATH,
-			(cmr_u32)cxt->camera_id, (cmr_u32)cur_time, prev ? "prev" : "cap");
+			(cmr_u32)cxt->camera_id, (cmr_u32)cur_time,
+			(scene == PM_SCENE_PRE) ? "prev" : ((scene == PM_SCENE_CAP) ? "cap" : "fdr"));
 	else
 		sprintf(file_name, "%scam%d_lsc_t%08d_%s.txt", CAMERA_DUMP_PATH,
-			(cmr_u32)cxt->camera_id, (cmr_u32)cur_time, prev ? "prev" : "cap");
+			(cmr_u32)cxt->camera_id, (cmr_u32)cur_time,
+			(scene == PM_SCENE_PRE) ? "prev" : ((scene == PM_SCENE_CAP) ? "cap" : "fdr"));
+
 	fp = fopen(file_name, "w+");
 	if (fp == NULL) {
 		ISP_LOGE("fail to open lsc data file %s\n", file_name);
@@ -2060,11 +2070,13 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
+static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	cmr_u32 i = 0;
-	cmr_u32 scene_id;
+	cmr_u32 scene_id, start;
+	cmr_u32 gtm_ltm_on = 0, work_mode;
+	struct dcam_dev_lsc_info *lsc = NULL;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_setting_params output;
 	struct isp_pm_param_data *param_data;
@@ -2075,40 +2087,63 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	property_get("debug.vendor.cam.pm.lsc.dump", value, "0");
 	dump_lsc = !!atoi(value);
 
+	pthread_mutex_lock(&cxt->pm_getting_lock);
+
 	memset((void *)&output, 0x00, sizeof(struct isp_pm_setting_params));
 	memset((void *)&sub_block_info, 0x00, sizeof(sub_block_info));
 
-	ispalg_ai_pro_param_compatible((cmr_handle) cxt);
+	if (cfg_type < PARAM_CFG_FDRL)
+		ispalg_ai_pro_param_compatible((cmr_handle) cxt);
 
-	if (start)
+	if (cfg_type == PARAM_CFG_START)
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, NULL, &output);
-	else
+	else if (cfg_type == PARAM_CFG_DEFAULT)
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, NULL, &output);
+	else
+		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_FDR_ALL_SETTING, NULL, &output);
+
 	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
 
 	/* lock pm to avoid parameter is updated by algo while driver reading */
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_LOCK, NULL, NULL);
 
 	/* work_mode: 1 - capture only, 0 - auto/preview */
-	scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
+	if ((cfg_type == PARAM_CFG_FDRL) || (cfg_type == PARAM_CFG_FDRH)) {
+		gtm_ltm_on = 0;
+		work_mode = 1;
+		scene_id = (cfg_type == PARAM_CFG_FDRL) ? PM_SCENE_FDRL : PM_SCENE_FDRH;
+		ISP_LOGD("cam%ld cfg FDR param %d\n", cxt->camera_id, cfg_type);
+	} else {
+		gtm_ltm_on = cxt->gtm_ltm_on;
+		work_mode = cxt->work_mode;
+		scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
+	}
+	start = (cfg_type == PARAM_CFG_START) ?  1 : 0;
+
 	param_data = output.prv_param_data;
 	for (i = 0; i < output.prv_param_num; i++) {
-		if ((cxt->gtm_ltm_on == 0) &&
-			(param_data->id == ISP_BLK_RAW_GTM || param_data->id == ISP_BLK_RGB_LTM)) {
+		if ((gtm_ltm_on == 0) && (param_data->id == ISP_BLK_RAW_GTM ||
+			(param_data->id == ISP_BLK_RGB_LTM) || (param_data->id == ISP_BLK_YUV_LTM))) {
 			param_data++;
 			continue;
 		}
 		sub_block_info.block_info = param_data->data_ptr;
 		sub_block_info.scene_id = scene_id;
-		if (dump_lsc && param_data->id == ISP_BLK_2D_LSC)
-			dump_lsc_data(cxt, start, ((scene_id == PM_SCENE_PRE) ? 1 : 0), param_data->data_ptr);
+		if (param_data->id == ISP_BLK_2D_LSC) {
+			if (scene_id == PM_SCENE_FDRL || scene_id == PM_SCENE_FDRH) {
+				lsc = (struct dcam_dev_lsc_info *)sub_block_info.block_info;
+				lsc->update_all = 1;
+			}
+			if (dump_lsc)
+				dump_lsc_data(cxt, start, scene_id, param_data->data_ptr);
+		}
 
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 		ISP_LOGV("cfg block %x for prev.\n", param_data->id);
 		param_data++;
 	}
 
-	if ((cxt->work_mode == 0) && cxt->zsl_flag)  {
+	if ((work_mode == 0) && cxt->zsl_flag) {
 		param_data = output.cap_param_data;
 		for (i = 0; i < output.cap_param_num; i++) {
 			if ((cxt->gtm_ltm_on == 0) &&
@@ -2121,7 +2156,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 			if ((!IS_DCAM_BLOCK(param_data->id)) || cxt->remosaic_type) {
 				/* todo: refine for 4in1 sensor */
 				if (dump_lsc && param_data->id == ISP_BLK_2D_LSC)
-					dump_lsc_data(cxt, start, 0, param_data->data_ptr);
+					dump_lsc_data(cxt, start, PM_SCENE_CAP, param_data->data_ptr);
 
 				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
 				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
@@ -2131,6 +2166,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 start)
 	}
 
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_UNLOCK, NULL, NULL);
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	/* Enable hist statis (Y-256). Only one will take effect. Driver MUST decide it */
 	if (start) {
@@ -3833,6 +3869,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
 
 		message1.msg_type = ISP_EVT_CFG;
+		message1.sub_msg_type = PARAM_CFG_DEFAULT;
 		message1.sync_flag = CMR_MSG_SYNC_NONE;
 		ret = cmr_thread_msg_send(cxt->thr_handle, &message1);
 		break;
@@ -3889,13 +3926,17 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_3dnr_statis_parser((cmr_handle) cxt, message->data);
 		break;
 	case ISP_EVT_CFG:
+		if (message->sub_msg_type != PARAM_CFG_DEFAULT) {
+			ret = ispalg_cfg_param(cxt, message->sub_msg_type);
+			break;
+		}
 		cur_time = ispalg_get_sys_timestamp();
 		timems_diff = (cmr_u32)(cur_time - cxt->last_sof_time);
 		if (timems_diff < MIN_FRAME_INTERVAL_MS) {
 			ISP_LOGW("time interval is too small: %d\n", timems_diff);
 		}
 		cxt->last_sof_time = cur_time;
-		ret = ispalg_cfg_param(cxt, 0);
+		ret = ispalg_cfg_param(cxt, message->sub_msg_type);
 		break;
 	case ISP_EVT_LSC:
 		ret = ispalg_lscm_stats_parser((cmr_handle) cxt, message->data);
@@ -6350,7 +6391,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
 
-	ret = ispalg_cfg_param(cxt, 1);
+	ret = ispalg_cfg_param(cxt, PARAM_CFG_START);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do ispalg_cfg_param"));
 
 	if (cxt->afl_cxt.handle) {
@@ -6756,7 +6797,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
 
-	ret = ispalg_cfg_param(cxt, 1);
+	ret = ispalg_cfg_param(cxt, PARAM_CFG_START);
 	ISP_RETURN_IF_FAIL(ret, ("fail to do isp cfg"));
 
 	if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {

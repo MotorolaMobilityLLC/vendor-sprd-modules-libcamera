@@ -3229,11 +3229,13 @@ static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
 		ISP_BLK_YNRS, &cfg_set_id, sizeof(cfg_set_id));
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if(ISP_SUCCESS == ret && 1 == output.param_num)
 		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_ynrs_info));
 	else
 		ISP_LOGE("fail to get valid cnr2 param");
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 
@@ -3254,12 +3256,14 @@ static cmr_int ispctl_get_cnr3_param(cmr_handle isp_alg_handle, void *param_ptr)
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
 		ISP_BLK_CNR3, &cfg_set_id, sizeof(cfg_set_id));
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_sw_cnr3_info));
 	} else {
 		ISP_LOGE("fail to get valid cnr3 param");
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 }
@@ -3327,6 +3331,7 @@ static cmr_int ispctl_get_gtm_status(cmr_handle isp_alg_handle, void *param_ptr)
 	BLOCK_PARAM_CFG(input, param_data,
 			ISP_PM_BLK_GTM_STATUS,
 			ISP_BLK_RAW_GTM, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
 			&input, &output);
@@ -3335,6 +3340,7 @@ static cmr_int ispctl_get_gtm_status(cmr_handle isp_alg_handle, void *param_ptr)
 		gtm_on = *(cmr_u32 *)output.param_data->data_ptr;
 		ISP_LOGD("get gtm on %d\n", gtm_on);
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	*(cmr_u32 *)param_ptr = gtm_on;
 
@@ -3405,6 +3411,9 @@ static cmr_int ispctl_gtm_switch(cmr_handle isp_alg_handle, void *param_ptr)
 	if (enable) {
 		/* restore GTM from tuning param */
 		blk_id = ISP_BLK_RAW_GTM;
+
+		pthread_mutex_lock(&cxt->pm_getting_lock);
+
 		memset(&param_data, 0, sizeof(param_data));
 		memset(&output, 0, sizeof(output));
 		BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, blk_id, NULL, 0);
@@ -3470,6 +3479,8 @@ static cmr_int ispctl_gtm_switch(cmr_handle isp_alg_handle, void *param_ptr)
 			ISP_LOGD("cam%ld restore LTM %d %d\n", cxt->camera_id,
 				p_ltm->ltm_map.bypass, p_ltm->ltm_stat.bypass);
 		}
+		pthread_mutex_unlock(&cxt->pm_getting_lock);
+
 		cxt->gtm_ltm_on = 1;
 	}
 
@@ -3576,6 +3587,7 @@ static cmr_int ispctl_get_fb_pre_param(cmr_handle isp_alg_handle, void *param_pt
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data,
 		ISP_PM_BLK_ISP_SETTING, ISP_BLK_FB, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 		ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
@@ -3584,6 +3596,7 @@ static cmr_int ispctl_get_fb_pre_param(cmr_handle isp_alg_handle, void *param_pt
 	} else {
 		ISP_LOGE("fail to get preview fb param");
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 	return ret;
 }
 
@@ -3599,6 +3612,7 @@ static cmr_int ispctl_get_fb_cap_param(cmr_handle isp_alg_handle, void *param_pt
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data,
 		ISP_PM_BLK_ISP_SETTING, ISP_BLK_FB, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 		ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
@@ -3607,6 +3621,7 @@ static cmr_int ispctl_get_fb_cap_param(cmr_handle isp_alg_handle, void *param_pt
 	} else {
 		ISP_LOGE("fail to get capture fb param");
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 	return ret;
 }
 
@@ -3624,6 +3639,7 @@ static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
 	BLOCK_PARAM_CFG(input, param_data,
 			ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_DRE, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
 			&input, &output);
@@ -3633,6 +3649,7 @@ static cmr_int ispctl_get_dre_param(cmr_handle isp_alg_handle, void *param_ptr)
 	else
 		ISP_LOGE("fail to get valid dre param, %ld  num %d",
 			 ret, output.param_num);
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 }
@@ -3651,6 +3668,7 @@ static cmr_int ispctl_get_dre_pro_param(cmr_handle isp_alg_handle, void *param_p
 	BLOCK_PARAM_CFG(input, param_data,
 			ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_DRE_PRO, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
 				&input, &output);
@@ -3660,6 +3678,7 @@ static cmr_int ispctl_get_dre_pro_param(cmr_handle isp_alg_handle, void *param_p
 	else
 		ISP_LOGE("fail to get valid dre_pro param, %ld  num %d",
 			ret, output.param_num);
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 }
@@ -3780,6 +3799,8 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_CT, (void *)&ct, NULL);
 	}
 
+	pthread_mutex_lock(&cxt->pm_getting_lock);
+
 	blk_id = get_cnr_blkid();
 	if (blk_id != 0) {
 		memset(&param_data, 0, sizeof(param_data));
@@ -3852,6 +3873,7 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 	} else {
 		ISP_LOGE("fail to get valid ynrs level info");
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	cnr2cnr3_ynr_en = (cnr3_en<<2) | (cnr2_en << 1) | ynrs_en;
 	if (cnr2cnr3_ynr_en != 0)
@@ -4333,6 +4355,7 @@ static cmr_int ispctl_start_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 			ISP_PM_BLK_GAMMA_TAB,
 			ISP_BLK_RGB_GAMC,
 			&cfg_set_id, sizeof(cfg_set_id));
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_SINGLE_SETTING,
 			(void *)&ioctl_input, (void *)&ioctl_output);
@@ -4345,6 +4368,7 @@ static cmr_int ispctl_start_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 		cxt->smart_cxt.tunning_gamma_cur[PARAM_SET2] = cxt->smart_cxt.tunning_gamma_cur[PARAM_SET0];
 		ISP_LOGD("get fdr gamma tab %p form prev\n", cxt->smart_cxt.tunning_gamma_cur[PARAM_SET2] );
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	if (cxt->ops.smart_ops.ioctrl) {
 		enum smart_ctrl_atm_switch_state atm_state = SMART_CTRL_ATM_SWITCH_OFF;
@@ -4419,16 +4443,14 @@ static cmr_int ispctl_end_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 i, blk_id = 0, max_val;
+	cmr_u32 blk_id = 0, max_val;
 	struct dcam_dev_rgb_gain_info *rgb_gain;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	struct isp_pm_setting_params output;
 	struct isp_u_blocks_info cfg;
-	struct isp_pm_param_data *param_data;
 	struct isp_nlm_factor *in;
-	struct dcam_dev_lsc_info *lsc = NULL;
+	CMR_MSG_INIT(message);
 
 	if (param_ptr == NULL) {
 		ISP_LOGE("fail to get ptr %p\n", param_ptr);
@@ -4450,25 +4472,10 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_FDR_LOCK, &input, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to set fdr pm locked"));
 
-	memset((void *)&output, 0x00, sizeof(struct isp_pm_setting_params));
-	memset((void *)&cfg, 0x00, sizeof(cfg));
-
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_FDR_SETTING, NULL, &output);
-	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
-
-	/* cfg FDR params */
-	param_data = output.prv_param_data;
-	for (i = 0; i < output.prv_param_num; i++) {
-		cfg.block_info = param_data->data_ptr;
-		cfg.scene_id = PM_SCENE_FDRL;
-		if (param_data->id == ISP_BLK_2D_LSC) {
-			lsc = (struct dcam_dev_lsc_info *)cfg.block_info;
-			lsc->update_all = 1;
-		}
-		isp_dev_cfg_block(cxt->dev_access_handle, &cfg, param_data->id);
-		ISP_LOGV("cfg block %x for fdr_l.\n", param_data->id);
-		param_data++;
-	}
+	message.msg_type = ISP_EVT_CFG;
+	message.sub_msg_type = PARAM_CFG_FDRL;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	ret = cmr_thread_msg_send(cxt->thr_handle, &message);
 
 	/* update NLM for FDR_H accoring to algo output */
 	in = (struct isp_nlm_factor *)param_ptr;
@@ -4485,26 +4492,10 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_FDR_PARAM, &input, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
 
-
-	memset((void *)&output, 0x00, sizeof(struct isp_pm_setting_params));
-	memset((void *)&cfg, 0x00, sizeof(cfg));
-
-	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_FDR_SETTING, NULL, &output);
-	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
-
-	/* update FDR_H params */
-	param_data = output.prv_param_data;
-	for (i = 0; i < output.prv_param_num; i++) {
-		cfg.block_info = param_data->data_ptr;
-		cfg.scene_id = PM_SCENE_FDRH;
-		if (param_data->id == ISP_BLK_2D_LSC) {
-			lsc = (struct dcam_dev_lsc_info *)cfg.block_info;
-			lsc->update_all = 1;
-		}
-		isp_dev_cfg_block(cxt->dev_access_handle, &cfg, param_data->id);
-		ISP_LOGV("cfg block %x for fdr_high.\n", param_data->id);
-		param_data++;
-	}
+	message.msg_type = ISP_EVT_CFG;
+	message.sub_msg_type = PARAM_CFG_FDRH;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+	ret = cmr_thread_msg_send(cxt->thr_handle, &message);
 
 	rgb_gain = &cxt->fdr_cxt.rgb_gain;
 	max_val = (1 << CAM_RAW_BITS) - 1;
@@ -4552,6 +4543,7 @@ static cmr_int ispctl_get_blc(cmr_handle isp_alg_handle, void *param_ptr)
 	BLOCK_PARAM_CFG(input, param_data,
 			ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_BLC, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 				ISP_PM_CMD_GET_CAP_SINGLE_SETTING,
 				&input, &output);
@@ -4560,7 +4552,7 @@ static cmr_int ispctl_get_blc(cmr_handle isp_alg_handle, void *param_ptr)
 	else
 		ISP_LOGE("fail to get blc %ld  num %d, ptr %p",
 			ret, output.param_num, output.param_data);
-
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	if (blc_info) {
 		cxt->fdr_cxt.blc_data = *blc_info;
@@ -4621,6 +4613,7 @@ static cmr_int ispctl_get_postee(cmr_handle isp_alg_handle, void *param_ptr)
 			ISP_PM_BLK_ISP_SETTING,
 			ISP_BLK_POST_EE,
 			&set_id, sizeof(set_id));
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 			ISP_PM_CMD_GET_MULTI_NRDATA,
 			&input, &output);
@@ -4628,7 +4621,6 @@ static cmr_int ispctl_get_postee(cmr_handle isp_alg_handle, void *param_ptr)
 		ISP_LOGE("fail to get postee param. ret %ld, num %d\n", ret, output.param_num);
 		return -ISP_PARAM_ERROR;
 	}
-
 	cur = output.param_data;
 	for (i = 0; i < output.param_num; i++, cur++) {
 		bypass = cur->user_data[0];
@@ -4652,6 +4644,7 @@ static cmr_int ispctl_get_postee(cmr_handle isp_alg_handle, void *param_ptr)
 		out_ptr->multi_nr_map, out_ptr->level_num,
 		out_ptr->mode_id, out_ptr->scene_id,
 		out_ptr->idx0, out_ptr->idx1, out_ptr->weight0,  out_ptr->weight1);
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	if (out_ptr->param_ptr) {
 		char *ptr = (char *)out_ptr->param_ptr;
@@ -4756,12 +4749,14 @@ static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING, blk_id, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		memcpy(param_ptr, output.param_data->data_ptr, sizeof(struct isp_sw_cnr2_info));
 	} else {
 		ISP_LOGE("fail to get valid cnr2 param");
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 }
@@ -4782,6 +4777,7 @@ static cmr_int ispctl_get_sw3dnr_param(cmr_handle isp_alg_handle, void *param_pt
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
 				ISP_BLK_SW3DNR, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 				ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
@@ -4789,8 +4785,9 @@ static cmr_int ispctl_get_sw3dnr_param(cmr_handle isp_alg_handle, void *param_pt
 				output.param_data->data_size);
 	} else {
 		ISP_LOGE("fail to get valid sw3dnr param");
-		return ISP_PARAM_ERROR;
+		ret = ISP_PARAM_ERROR;
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 }
@@ -4810,6 +4807,7 @@ static cmr_int ispctl_get_mfnr_param(cmr_handle isp_alg_handle, void *param_ptr)
 	memset(&param_data, 0, sizeof(param_data));
 	BLOCK_PARAM_CFG(input, param_data, ISP_PM_BLK_ISP_SETTING,
 				ISP_BLK_MFNR, NULL, 0);
+	pthread_mutex_lock(&cxt->pm_getting_lock);
 	ret = isp_pm_ioctl(cxt->handle_pm,
 				ISP_PM_CMD_GET_CAP_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
@@ -4817,8 +4815,9 @@ static cmr_int ispctl_get_mfnr_param(cmr_handle isp_alg_handle, void *param_ptr)
 				output.param_data->data_size);
 	} else {
 		ISP_LOGE("fail to get valid mfnr param");
-		return ISP_PARAM_ERROR;
+		ret = ISP_PARAM_ERROR;
 	}
+	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
 	return ret;
 }
