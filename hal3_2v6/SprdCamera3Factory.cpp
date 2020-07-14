@@ -411,15 +411,7 @@ int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,
 
     SprdCamera3Setting::getCameraInfo(cameraId, info);
 
-    if (devPtr->identify_state[cameraId] == IDENTIFY_STATUS_NOT_PRESENT) {
-        info->static_camera_characteristics = NULL;
-        HAL_LOGV("unuseful camera_id = %d, static_camera_characteristics=%p",
-            cameraId, info->static_camera_characteristics);
-    } else {
-        info->static_camera_characteristics = staticMetadata;
-        HAL_LOGV("useful camera_id = %d, static_camera_characteristics=%p",
-            cameraId, info->static_camera_characteristics);
-    }
+    info->static_camera_characteristics = staticMetadata;
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_2;
 

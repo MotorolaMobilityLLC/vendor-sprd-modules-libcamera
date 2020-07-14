@@ -184,20 +184,12 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
 
-    if (devPtr->identify_state[camera_id] == IDENTIFY_STATUS_NOT_PRESENT) {
-        info->static_camera_characteristics = NULL;
-        HAL_LOGV("unuseful camera_id = %d, static_camera_characteristics=%p",
-            camera_id, info->static_camera_characteristics);
-    } else {
-        info->static_camera_characteristics = mStaticMetadata;
-        HAL_LOGV("useful camera_id = %d, static_camera_characteristics=%p",
-            camera_id, info->static_camera_characteristics);
-    }
+    info->static_camera_characteristics = mStaticMetadata;
     info->device_version =
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_2;
     info->conflicting_devices_length = 0;
 
-    HAL_LOGE("X");
+    HAL_LOGD("X");
     return rc;
 }
 /*====================================================================
