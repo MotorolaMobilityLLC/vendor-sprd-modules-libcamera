@@ -4741,14 +4741,6 @@ int SprdCamera3Setting::updateWorkParameters(
                          blur_fnum[valueI32 - 1], ANDROID_SPRD_BLUR_F_NUMBER, 1)
         HAL_LOGD("lens f_number is %f", blur_fnum[valueI32 - 1]);
     }
-    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
-        valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.focus_distance,
-                         valueFloat, ANDROID_LENS_FOCUS_DISTANCE, 1)
-        if (valueFloat) {
-            s_setting[mCameraId].vcm_result = VCM_RESULT_IN;
-        }
-    }
 
     // REQUEST
     /*if (frame_settings.exists(ANDROID_REQUEST_ID)) {
@@ -5283,6 +5275,14 @@ int SprdCamera3Setting::updateWorkParameters(
         valueU8 = frame_settings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.af_mode, valueU8,
                          ANDROID_CONTROL_AF_MODE, 1)
+    }
+    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
+        valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.focus_distance,
+                         valueFloat, ANDROID_LENS_FOCUS_DISTANCE, 1)
+        if (valueFloat) {
+            s_setting[mCameraId].vcm_result = VCM_RESULT_IN;
+        }
     }
     if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
