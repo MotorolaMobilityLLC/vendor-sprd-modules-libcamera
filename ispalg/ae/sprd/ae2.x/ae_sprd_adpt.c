@@ -2626,15 +2626,25 @@ static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	if (param) {
 		lock = !(*(cmr_u32 *) param);
 		if (0 == *(cmr_u32 *) param) {
-			cxt->cur_status.settings.manual_mode = 0;
+			if(cxt->manual_iso_value){
+				cxt->cur_status.settings.reserve_case = 1;
+				ae_set_force_pause(cxt, 1);
+			}else{
+				cxt->cur_status.settings.reserve_case = 2;
+				ae_set_force_pause(cxt, 0);
+			}
+			cxt->cur_status.settings.exp_line = cxt->manual_exp_line_bkup;
+		}else if (0 == cxt->exposure_compensation.ae_compensation_flag) {//on
+			ae_set_force_pause(cxt, 0);
 			cxt->manual_exp_time = 0;
-			cxt->manual_iso_value = 0;
-			ae_set_force_pause(cxt, lock);
-		} else if (0 == cxt->exposure_compensation.ae_compensation_flag) {
-			ae_set_force_pause(cxt, lock);
-			cxt->cur_status.settings.reserve_case = 0;
+			if(cxt->manual_iso_value){
+				cxt->cur_status.settings.gain = cxt->manual_iso_value;
+				cxt->cur_status.settings.reserve_case = 3;
+			}else{
+				cxt->cur_status.settings.reserve_case = 0;
+			}
 		}
-		ISP_LOGV("AE_SET_MANUAL_MODE: %d, manual: 0, auto: 1\n", *(cmr_u32 *) param);
+		ISP_LOGD("manual_mode %d, manual_iso_value %d ,exp_line %d,reserve_case %d", *(cmr_u32 *) param,cxt->manual_iso_value,cxt->cur_status.settings.exp_line,cxt->cur_status.settings.reserve_case);
 	}
 	return rtn;
 }
@@ -2642,31 +2652,36 @@ static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
 static cmr_s32 ae_set_exp_time(struct ae_ctrl_cxt *cxt, cmr_handle param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_u32 exp_time = 10000000;	//init default value(10ms)
-	cmr_u32 line_time = cxt->snr_info.line_time;
-	cmr_u16 gain = 1280;		//init default value(10xgain)
-
+	cmr_u32 exp_time = 10000000;
 	if (param) {
 		exp_time = *(cmr_u32 *) param;
-		if (exp_time > 0)
+		if (exp_time >= 0) {
 			cxt->manual_exp_time = exp_time;
-		else {
-			ISP_LOGE("set invalid expouser time: %d", exp_time);
-			exp_time = cxt->cur_result.wts.exposure_time;
 		}
-		if (cxt->manual_iso_value > 0)
-			gain = (cxt->manual_iso_value / 50) * 128;
-		else
-			gain = cxt->cur_result.wts.cur_again;	//reusing current gain
-
-		if (AE_STATE_LOCKED == cxt->cur_status.settings.lock_ae) {
-			cxt->cur_status.settings.exp_line = exp_time / line_time;
-			cxt->cur_status.settings.gain = gain;
-			cxt->cur_status.settings.manual_mode = 0;
-			cxt->cur_status.settings.reserve_case = 1;
-			ISP_LOGV("exp_time: %d line_time: %d gain: %d iso: %d", exp_time, line_time, gain, cxt->manual_iso_value);
+		if(cxt->manual_iso_value) {
+			if(cxt->manual_exp_time) {
+				ae_set_force_pause(cxt, 1);
+				cxt->cur_status.settings.gain = cxt->manual_iso_value;
+				cxt->cur_status.settings.manual_mode = 0;
+				cxt->cur_status.settings.reserve_case = 1;
+			}else {
+				ae_set_force_pause(cxt, 0);
+				cxt->cur_status.settings.gain = cxt->manual_iso_value;
+				cxt->cur_status.settings.reserve_case = 3;
+			}
+		}else {
+			if(cxt->manual_exp_time) {
+				ae_set_force_pause(cxt, 0);
+				cxt->cur_status.settings.reserve_case = 2;
+			}else {
+				ae_set_force_pause(cxt, 0);
+				cxt->cur_status.settings.reserve_case = 0;
+			}
 		}
-	}
+		cxt->cur_status.settings.exp_line = cxt->manual_exp_time / cxt->snr_info.line_time;
+		cxt->manual_exp_line_bkup = cxt->cur_status.settings.exp_line;
+	} 
+	ISP_LOGI("manual_exp_time %d, manual_iso_value %d, exp_line %d, reserve_case %d",cxt->manual_exp_time,cxt->manual_iso_value, cxt->cur_status.settings.exp_line, cxt->cur_status.settings.reserve_case);
 	return rtn;
 }
 
@@ -2732,10 +2747,12 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
                }
        } else {
                if (2 > cxt->cur_status.settings.pause_cnt) {
-                       cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
-                       cxt->cur_status.settings.pause_cnt = 0;
-                       cxt->cur_status.settings.exp_line = 0;
-                       cxt->cur_status.settings.gain = 0;
+			   		cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
+					cxt->cur_status.settings.pause_cnt = 0;
+					if(cxt->cur_status.settings.reserve_case!=2)
+                       		cxt->cur_status.settings.exp_line = 0;
+					   if(cxt->cur_status.settings.reserve_case!=3)
+                      		cxt->cur_status.settings.gain = 0;
                        cxt->cur_status.settings.manual_mode = -1;
                }
        }
@@ -2768,8 +2785,10 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 		if (2 > cxt->cur_status.settings.pause_cnt) {
 			cxt->cur_status.settings.lock_ae = AE_STATE_NORMAL;
 			cxt->cur_status.settings.pause_cnt = 0;
-			cxt->cur_status.settings.exp_line = 0;
-			cxt->cur_status.settings.gain = 0;
+			if(cxt->cur_status.settings.reserve_case!=2)
+				cxt->cur_status.settings.exp_line = 0;
+			if(cxt->cur_status.settings.reserve_case!=3)
+				cxt->cur_status.settings.gain = 0;
 			cxt->cur_status.settings.manual_mode = -1;
 		}
 	}
@@ -3286,79 +3305,108 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 		if ((FLASH_MAIN_BEFORE == current_status->settings.flash) || (FLASH_MAIN == current_status->settings.flash)) {
 			if (cxt->flash_esti_result.isEnd) {
-				if ((1 == cxt->exposure_compensation.ae_compensation_flag) && (cxt->capcompvalue_norm!=0)) {
-					if(current_status->settings.manual_mode !=2){
-						cmr_u32 maxcapexp = 0;
-						double offset = 0.0;
-						double exp_user_comp = 0.0;
-						double gain_alpha = 0.5;
-						cmr_u32 origin_capexp = 0;
-						uint32 modify_gain = 0;
-						struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-						struct ae_exposure_param dst_exp;
-						struct ae_range fps_range;
+					if ((1 == cxt->exposure_compensation.ae_compensation_flag) && (cxt->capcompvalue_norm!=0)) {
+						if(current_status->settings.manual_mode !=2){
+							cmr_u32 maxcapexp = 0;
+							double offset = 0.0;
+							double exp_user_comp = 0.0;
+							double gain_alpha = 0.5;
+							cmr_u32 origin_capexp = 0;
+							uint32 modify_gain = 0;
+							struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+							struct ae_exposure_param dst_exp;
+							struct ae_range fps_range;
 
-						origin_capexp = (cmr_u32) (cxt->flash_esti_result.captureExposure/ current_status->line_time + 0.5);
-						/* clip for min and max value by flicker */
-						if(cxt->cur_flicker == 0) {
-							maxcapexp = FLASHMAIN_MAXCAP_60HZ;
-						} else if(cxt->cur_flicker == 1) {
-							maxcapexp = FLASHMAIN_MAXCAP_50HZ;
-						}
-						/* levelup depends on linear val
-						 * leveldown depends on non-linear(exponential)
-						 **/
-						if (cxt->exposure_compensation.comp_val > 0) {
-							offset = 1.0*(maxcapexp - cxt->flash_esti_result.captureExposure );
-							exp_user_comp = 1.0*cxt->flash_esti_result.captureExposure + offset*cxt->capcompvalue_norm;
-							if (exp_user_comp >= maxcapexp)
-								/* exp max using gain */
-								modify_gain = cxt->flash_esti_result.captureGain*(1+cxt->capcompvalue_norm * gain_alpha);
-							else
+							origin_capexp = (cmr_u32) (cxt->flash_esti_result.captureExposure/ current_status->line_time + 0.5);
+							/* clip for min and max value by flicker */
+							if(cxt->cur_flicker == 0) {
+								maxcapexp = FLASHMAIN_MAXCAP_60HZ;
+							} else if(cxt->cur_flicker == 1) {
+								maxcapexp = FLASHMAIN_MAXCAP_50HZ;
+							}
+							/* levelup depends on linear val
+							 * leveldown depends on non-linear(exponential)
+							 **/
+							if (cxt->exposure_compensation.comp_val > 0) {
+								offset = 1.0*(maxcapexp - cxt->flash_esti_result.captureExposure );
+								exp_user_comp = 1.0*cxt->flash_esti_result.captureExposure + offset*cxt->capcompvalue_norm;
+								if (exp_user_comp >= maxcapexp)
+									/* exp max using gain */
+									modify_gain = cxt->flash_esti_result.captureGain*(1+cxt->capcompvalue_norm * gain_alpha);
+								else
+									modify_gain = cxt->flash_esti_result.captureGain;
+
+							} else {
+								offset = 0;
+								exp_user_comp = 1.0*cxt->flash_esti_result.captureExposure*cxt->capcompvalue_norm;
 								modify_gain = cxt->flash_esti_result.captureGain;
+							}
+							current_status->settings.exp_line = (cmr_u32) (exp_user_comp / current_status->line_time + 0.5);
 
-						} else {
-							offset = 0;
-							exp_user_comp = 1.0*cxt->flash_esti_result.captureExposure*cxt->capcompvalue_norm;
-							modify_gain = cxt->flash_esti_result.captureGain;
+							/* exp align with flicker*/
+							src_exp.exp_line = current_status->settings.exp_line;
+							src_exp.exp_time = exp_user_comp;
+							src_exp.gain = modify_gain;
+							src_exp.cur_index = cxt->cur_result.wts.cur_index;
+							src_exp.frm_len = cxt->cur_result.wts.frm_len;
+							src_exp.frm_len_def = cxt->cur_result.wts.frm_len_def;
+							fps_range.min = cxt->fps_range.min;
+							fps_range.max = cxt->fps_range.max;
+							ae_adjust_exp_gain(cxt, &src_exp, &fps_range, cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index] /* max_exp */, &dst_exp);
+
+							current_status->settings.manual_mode = 0;
+							current_status->settings.table_idx = 0;
+							current_status->settings.gain = dst_exp.gain;
+							current_status->settings.exp_line = dst_exp.exp_line;
+							ISP_LOGD("origi et,el,g:(%f,%d,%d); aftercomp el,g:(%d,%d); norm,ffset(%f,%f)",
+										cxt->flash_esti_result.captureExposure,
+										origin_capexp,
+										cxt->flash_esti_result.captureGain,
+										current_status->settings.exp_line,
+										current_status->settings.gain,
+										cxt->capcompvalue_norm,
+										offset);
 						}
-						current_status->settings.exp_line = (cmr_u32) (exp_user_comp / current_status->line_time + 0.5);
+						if ((cxt->send_once[4] >= (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 2)) {
+							current_status->settings.manual_mode = 0;
+							current_status->settings.table_idx = 0;
+							current_status->settings.exp_line = cxt->flash_backup.exp_line;
+							current_status->settings.gain = cxt->flash_backup.gain;
+						}
+					} else {
 
-						/* exp align with flicker*/
-						src_exp.exp_line = current_status->settings.exp_line;
-						src_exp.exp_time = exp_user_comp;
-						src_exp.gain = modify_gain;
-						src_exp.cur_index = cxt->cur_result.wts.cur_index;
-						src_exp.frm_len = cxt->cur_result.wts.frm_len;
-						src_exp.frm_len_def = cxt->cur_result.wts.frm_len_def;
-						fps_range.min = cxt->fps_range.min;
-						fps_range.max = cxt->fps_range.max;
-						ae_adjust_exp_gain(cxt, &src_exp, &fps_range, cxt->cur_status.ae_table->exposure[cxt->cur_status.ae_table->max_index] /* max_exp */, &dst_exp);
+					uint32 capGain = 0;
+					cmr_u32 capExp = 0.0;
 
-						current_status->settings.manual_mode = 0;
-						current_status->settings.table_idx = 0;
-						current_status->settings.gain = dst_exp.gain;
-						current_status->settings.exp_line = dst_exp.exp_line;
-						ISP_LOGD("origi et,el,g:(%f,%d,%d); aftercomp el,g:(%d,%d); norm,ffset(%f,%f)",
-									cxt->flash_esti_result.captureExposure,
-									origin_capexp,
-									cxt->flash_esti_result.captureGain,
-									current_status->settings.exp_line,
-									current_status->settings.gain,
-									cxt->capcompvalue_norm,
-									offset);
+					if(cxt->cur_status.settings.reserve_case == 0){
+						capExp = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
+						capGain = cxt->flash_esti_result.captureGain;
 					}
-					if ((cxt->send_once[4] >= (cxt->cur_param->flash_control_param.main_capture_count + cxt->cur_param->flash_control_param.main_set_count) + 2)) {
-						current_status->settings.manual_mode = 0;
-						current_status->settings.table_idx = 0;
-						current_status->settings.exp_line = cxt->flash_backup.exp_line;
-						current_status->settings.gain = cxt->flash_backup.gain;
+					else if(cxt->cur_status.settings.reserve_case == 3){ // shutter auto , iso fix
+						capGain = cxt->sync_cur_result.wts.cur_again;
+						capExp = (cmr_u32)(cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5)*cxt->flash_esti_result.captureGain/cxt->sync_cur_result.wts.cur_again;
 					}
-				} else {
+					else if(cxt->cur_status.settings.reserve_case == 2){ // shutter fix , iso auto
+						capExp = cxt->sync_cur_result.wts.cur_exp_line;
+						capGain = cxt->flash_esti_result.captureGain *(cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5) / cxt->sync_cur_result.wts.cur_exp_line;
+					}
+					else if(cxt->cur_status.settings.reserve_case == 1){
+						capExp = cxt->sync_cur_result.wts.cur_exp_line;
+						capGain = cxt->sync_cur_result.wts.cur_again;
+					}
+					ISP_LOGD("rsv:%d, usr E,G:(%d,%d), flh E,G:(%d,%d), CapE,G:(%d,%d)",
+							cxt->cur_status.settings.reserve_case,
+							cxt->sync_cur_result.wts.cur_exp_line,
+							cxt->sync_cur_result.wts.cur_again,
+							(cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5),
+							cxt->flash_esti_result.captureGain,
+							capExp,
+							capGain);
+
 					current_status->settings.manual_mode = 0;
 					current_status->settings.table_idx = 0;
-					current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
-					current_status->settings.gain = cxt->flash_esti_result.captureGain;
+					current_status->settings.exp_line = capExp;
+					current_status->settings.gain = capGain;
 					/*
 					 * during mainflash period, we should do updating param earlily.
 					 * [T0] ae_flash1_callback: do-capture
@@ -3373,8 +3421,8 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 					if (Bavoid_rewrite_prev_param==0) {
 						current_status->settings.manual_mode = 0;
 						current_status->settings.table_idx = 0;
-						current_status->settings.exp_line = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
-						current_status->settings.gain = cxt->flash_esti_result.captureGain;
+						current_status->settings.exp_line = capExp;
+						current_status->settings.gain = capGain;
 					}else{
 						current_status->settings.manual_mode = 0;
 						current_status->settings.table_idx = 0;
@@ -4580,7 +4628,6 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->cur_status.snr_max_fps = work_info->sensor_fps.max_fps;
 	cxt->cur_status.snr_min_fps = work_info->sensor_fps.min_fps;
 	cxt->cur_status.settings.sensor_max_fps = work_info->resolution_info.snr_setting_max_fps;
-	cxt->cur_status.settings.reserve_case = 0;
 
 	if (cxt->is_multi_mode) {
 		/* save master & slave sensor info */
@@ -4701,7 +4748,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	}
 
 	cxt->cur_status.ae_table->min_index = 0;
-	cxt->mod_update_list.is_mev = (CAMERA_MODE_MANUAL == cxt->app_mode) ? 1 : 0;
+	if(CAMERA_MODE_MANUAL == cxt->app_mode){
+		cxt->mod_update_list.is_mev = 1;
+	}else{
+		cxt->mod_update_list.is_mev = 0;
+		cxt->cur_status.settings.reserve_case = 0;
+	}
 
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.line_time == cxt->last_exp_param.line_time) {
@@ -5006,13 +5058,11 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 {
 	if (param) {
 		struct ae_set_iso *iso = param;
-
 		if (iso->mode < AE_ISO_MAX) {
 			cxt->cur_status.settings.iso = iso->mode;
 			cxt->mod_update_list.is_miso = 1;
-			cxt->munaul_iso_index = iso->mode;
 		}
-		ISP_LOGD("AE_SET_ISO %d", cxt->cur_status.settings.iso);
+
 		if (AE_SCENE_NORMAL == cxt->cur_status.settings.scene_mode) {
 			cxt->cur_status.ae_table = &cxt->cur_param->ae_table[cxt->cur_status.settings.flicker][cxt->cur_status.settings.iso];
 			if(!cxt->cur_status.ae_table->max_index){
@@ -5020,6 +5070,52 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 				ISP_LOGD("Do not have this iso ae_table");
 			}
 		}
+
+		switch (iso->mode) {
+		case AE_ISO_100:
+			cxt->manual_iso_value = 256;
+			break;
+		case AE_ISO_200:
+			cxt->manual_iso_value = 512;
+			break;
+		case AE_ISO_400:
+			cxt->manual_iso_value = 1024;
+			break;
+		case AE_ISO_800:
+			cxt->manual_iso_value = 2048;
+			break;
+		case AE_ISO_1600:
+			cxt->manual_iso_value = 4096;
+			break;
+		case AE_ISO_AUTO:
+		case AE_ISO_MAX:
+		default:
+			cxt->manual_iso_value = 0;
+			break;
+		}
+
+		if(cxt->manual_exp_time){
+			if(cxt->manual_iso_value){
+				ae_set_force_pause(cxt, 1);
+				cxt->cur_status.settings.gain = cxt->manual_iso_value;
+				cxt->cur_status.settings.manual_mode = 0;
+				cxt->cur_status.settings.reserve_case = 1;
+			}else{
+				ae_set_force_pause(cxt, 0);
+				cxt->cur_status.settings.reserve_case = 2;
+			}
+			cxt->cur_status.settings.exp_line = cxt->manual_exp_time / cxt->snr_info.line_time;
+		} else {
+			if(cxt->manual_iso_value){
+				ae_set_force_pause(cxt, 0);
+				cxt->cur_status.settings.gain = cxt->manual_iso_value;
+				cxt->cur_status.settings.reserve_case = 3;
+			}else{
+				ae_set_force_pause(cxt, 0);
+				cxt->cur_status.settings.reserve_case = 0;
+			}
+		}
+		ISP_LOGD("manual_exp_time %d, manual_iso_value %d, exp_line %d, reserve_case %d",cxt->manual_exp_time,cxt->manual_iso_value, cxt->cur_status.settings.exp_line, cxt->cur_status.settings.reserve_case);
 	}
 	return AE_SUCCESS;
 }
@@ -6287,6 +6383,16 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		property_get("persist.vendor.cam.isp.ae.threednr_thrdup", prop, "");
 		if (atoi(prop) != 0) {
 			cxt->threednr_en_thrd.thr_up = atoi(prop);
+		}
+	}
+	if(!( (cxt->cur_status.settings.flash >= FLASH_PRE_BEFORE) && (cxt->cur_status.settings.flash <= FLASH_PRE_AFTER))){
+		if (cxt->cur_status.settings.reserve_case == 1) {
+			cxt->cur_status.settings.exp_line = cxt->manual_exp_line_bkup;
+			cxt->cur_status.settings.gain = cxt->manual_iso_value;
+		}else if (cxt->cur_status.settings.reserve_case == 2) {
+			cxt->cur_status.settings.exp_line = cxt->manual_exp_line_bkup;
+                }else if (cxt->cur_status.settings.reserve_case == 3) {
+			cxt->cur_status.settings.gain = cxt->manual_iso_value;
 		}
 	}
 	pthread_mutex_lock(&cxt->data_sync_lock);

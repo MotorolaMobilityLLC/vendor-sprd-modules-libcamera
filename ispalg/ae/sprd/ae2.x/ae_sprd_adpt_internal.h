@@ -333,6 +333,7 @@ extern "C" {
 		 */
 		cmr_u32 manual_exp_time;
 		cmr_u32 manual_iso_value;
+		cmr_u32 manual_exp_line_bkup;
 		/*
 		 * flash_callback control
 		 */
