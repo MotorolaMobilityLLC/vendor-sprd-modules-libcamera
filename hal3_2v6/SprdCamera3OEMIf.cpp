@@ -510,6 +510,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #ifdef CONFIG_FACE_BEAUTY
     memset(&face_beauty, 0, sizeof(face_beauty));
     mflagfb = false;
+    memset(&cb_face_beauty, 0, sizeof(cb_face_beauty));
+    mcbflagfb = false;
 #endif
 
     mFrontFlash = (char *)malloc(10 * sizeof(char));
@@ -707,6 +709,11 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
         mflagfb = false;
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
         face_beauty_deinit(&face_beauty);
+    }
+    if (mcbflagfb) {
+        mcbflagfb = false;
+        ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+        face_beauty_deinit(&cb_face_beauty);
     }
 #endif
 
@@ -3407,6 +3414,11 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
         face_beauty_deinit(&face_beauty);
     }
+    if (mcbflagfb) {
+        mcbflagfb = false;
+        ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+        face_beauty_deinit(&cb_face_beauty);
+    }
 #endif
     // used for single camera need raw stream
     // freeRawBuffers();
@@ -4444,7 +4456,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
                 channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
                                           CAMERA_STREAM_TYPE_PREVIEW);
-            } else {
+            }else {
                 channel->channelCbRoutine(frame_num, buffer_timestamp,
                                           CAMERA_STREAM_TYPE_PREVIEW);
             }
@@ -4483,7 +4495,132 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGD("callback fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
                  ", frame type = %ld",
                  frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
+        if (isFaceBeautyOn(sprddefInfo) && (mCameraId == 1)
+		&& (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)){
+          struct faceBeautyLevels beautyLevels;
+          struct facebeauty_param_info fb_param_map_prev;
+          FACE_Tag faceInfo;
+          fbBeautyFacetT beauty_face;
+          fb_beauty_image_t beauty_image;
+          cmr_u32 bv;
+          cmr_u32 ct;
+          cmr_u32 iso;
+          CMR_LOGD("face fb mode=%d",cb_face_beauty.fb_mode);
+          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
+          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
+          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
+          mSetting->getFACETag(&faceInfo);
+          if (faceInfo.face_num > 0) {
+            for (int i = 0; i < faceInfo.face_num; i++) {
+                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
+                beauty_face.idx = i;
+                beauty_face.startX = faceInfo.face[i].rect[0];
+                beauty_face.startY = faceInfo.face[i].rect[1];
+                beauty_face.endX = faceInfo.face[i].rect[2];
+                beauty_face.endY = faceInfo.face[i].rect[3];
+                beauty_face.angle = faceInfo.angle[i];
+                beauty_face.pose = faceInfo.pose[i];
+                ret = face_beauty_ctrl(
+                    &cb_face_beauty, FB_BEAUTY_CONSTRUCT_FACE_CMD, &beauty_face);
+            }
+          }
+          beautyLevels.blemishLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[0];
+          beautyLevels.smoothLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[1];
+          beautyLevels.skinColor =
+            (unsigned char)sprddefInfo->perfect_skin_level[2];
+          beautyLevels.skinLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[3];
+          beautyLevels.brightLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[4];
+          beautyLevels.lipColor =
+            (unsigned char)sprddefInfo->perfect_skin_level[5];
+          beautyLevels.lipLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[6];
+          beautyLevels.slimLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[7];
+          beautyLevels.largeLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[8];
+          beautyLevels.cameraBV = (int)bv;
+          beautyLevels.cameraWork = (int)mCameraId;
+          beautyLevels.cameraCT = (int)ct;
+          beautyLevels.cameraISO = (int)iso;
+          HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
+            bv, mCameraId, ct, iso);
 
+          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
+                       &fb_param_map_prev);
+          if (ret == ISP_SUCCESS) {
+            for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
+                HAL_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
+                    "lipColorType %d skinColorType %d", i,
+                    fb_param_map_prev.cur.fb_param[i].blemishSizeThrCoeff,
+                    fb_param_map_prev.cur.fb_param[i].removeBlemishFlag,
+                    fb_param_map_prev.cur.fb_param[i].lipColorType,
+                    fb_param_map_prev.cur.fb_param[i].skinColorType);
+                HAL_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                    "skinSmoothRadiusCoeffDefaultLevel %d",
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+                for(int j = 0; j < 11; j++){
+                HAL_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
+                    "skinSmoothRadiusCoeff %d", i, j,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+                }
+            }
+            ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
+                                   &fb_param_map_prev);
+          }
+
+          if (!mcbflagfb) {
+            face_beauty_set_devicetype(&cb_face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
+
+            fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+            chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+            chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+            chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+            chipinfo = SHARKL5;
+#elif defined(CONFIG_ISP_2_7)
+            chipinfo = SHARKL5PRO;
+#endif
+            face_beauty_init(&cb_face_beauty, 1, 2, chipinfo);
+            if (cb_face_beauty.hSprdFB != NULL) {
+                mcbflagfb = true;
+            }
+          }
+          invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
+                        frame->width * frame->height * 3 / 2);
+          beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+          beauty_image.inputImage.addr[0] = (void *)frame->y_vir_addr;
+          beauty_image.inputImage.addr[1] = (void *)frame->uv_vir_addr;
+          beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
+
+          beauty_image.inputImage.ion_fd = frame->fd;
+          beauty_image.inputImage.offset[0] = 0;
+          beauty_image.inputImage.offset[1] = frame->width * frame->height;
+          beauty_image.inputImage.width = frame->width;
+          beauty_image.inputImage.height = frame->height;
+          beauty_image.inputImage.stride = frame->width;
+          beauty_image.inputImage.size = frame->width * frame->height * 3 / 2;
+
+          ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                               &beauty_image);
+          ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                               &beautyLevels);
+          CMR_LOGD("face fb mode=%d",cb_face_beauty.fb_mode);
+          ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_PROCESS_CMD,
+                               &(faceInfo.face_num));
+          flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
+                       frame->width * frame->height * 3 / 2);
+      }
         channel->channelCbRoutine(frame_num, buffer_timestamp,
                                   CAMERA_STREAM_TYPE_CALLBACK);
 
