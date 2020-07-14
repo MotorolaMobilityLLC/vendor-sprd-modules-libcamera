@@ -2114,7 +2114,8 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 		}
 
 		for (i = 0; i < init_param->dflash_num && i < AE_MAX_PARAM_NUM; ++i) {
-			memcpy(&cxt->dflash_param[i], init_param->flash_tuning[i].param, sizeof(struct flash_tune_param));
+			cmr_u32 size = (init_param->flash_tuning[i].size > sizeof(struct flash_tune_param)) ? sizeof(struct flash_tune_param) : init_param->flash_tuning[i].size;
+			memcpy(&cxt->dflash_param[i], init_param->flash_tuning[i].param, size);
 		}
 
 		ISP_LOGD("multiColorLcdEn = %d", cxt->dflash_param[0].multiColorLcdEn);

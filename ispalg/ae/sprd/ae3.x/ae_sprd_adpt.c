@@ -6723,8 +6723,8 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	// parser ae otp info
 	ae_parser_otp_info(init_param);
 	/* HJW_S: dual flash algorithm init */
-
-	memcpy(&cxt->dflash_param[0], init_param->flash_tuning[0].param, sizeof(struct flash_tune_param));
+	cmr_u32 size = (init_param->flash_tuning[0].size > sizeof(struct flash_tune_param)) ? sizeof(struct flash_tune_param) : init_param->flash_tuning[0].size;
+	memcpy(&cxt->dflash_param[0], init_param->flash_tuning[0].param, size);
 	ISP_LOGD("multiColorLcdEn = %d", cxt->dflash_param[0].multiColorLcdEn);
 	flash_in.debug_level = 1;	/*it will be removed in the future, and get it from dual flash tuning parameters */
 	flash_in.tune_info = &cxt->dflash_param[0];
@@ -6788,8 +6788,6 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 		}
 	}
 	#endif
-
-	
 	misc_init_in.mlog_en = cxt->debug_enable;//ok
 	misc_init_in.log_level = g_isp_log_level;
 	misc_init_in.line_time = init_param->resolution_info.line_time;
