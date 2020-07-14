@@ -92,5 +92,3 @@ static struct sensor_nr_scene_map_param s_gc2385_nr_scene_map_param = {{
 #endif
 
 
-
-
