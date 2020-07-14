@@ -2689,13 +2689,14 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
     int32_t fd_score[10] = {0};
     for (int i = 0; i < numFaces; i++) {
         *(fd_score + i) = hwiMain->mSetting->s_setting[phyId].fd_score[i];
+        *(faceDetectionInfo->fd_score + i) = hwiMain->mSetting->s_setting[phyId].fd_score[i];
     }
-
     int j = 0;
     int max = 0;
     int max_index = 0;
-    mBokehAlgo->setFaceInfo(faceDetectionInfo->angle, faceDetectionInfo->pose,
-                            fd_score);
+
+    mBokehAlgo->setFaceInfo(faceDetectionInfo->angle, faceDetectionInfo->pose, fd_score);
+    memcpy(&mbokehParm.face_tag_info, faceDetectionInfo, sizeof(FACE_Tag));
 
     for (int i = 0; i < numFaces; i++) {
         convertToRegions(faceDetectionInfo->face[i].rect, faceRectangles + j,
@@ -2875,6 +2876,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
                         capfaceinfo.f_number = i->f_number;
                         capfaceinfo.relbokeh_oem_data = i->relbokeh_oem_data;
                         capfaceinfo.portrait_param = i->portrait_param;
+                        capfaceinfo.face_tag_info = i->face_tag_info;
                         break;
                     }
                 }

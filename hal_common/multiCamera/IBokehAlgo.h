@@ -30,6 +30,7 @@ typedef struct {
 } bokeh_cap_params_t;
 
 typedef struct {
+    FACE_Tag face_tag_info;
     uint32_t cur_frame_number;
     int sel_x;    /* The point which be touched */
     int sel_y;    /* The point which be touched */

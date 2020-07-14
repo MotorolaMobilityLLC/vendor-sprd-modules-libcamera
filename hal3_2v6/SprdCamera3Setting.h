@@ -426,6 +426,7 @@ typedef struct {
     int pose[10];
     uint8_t face_num;
     int gender_age_race[10];
+    int fd_score[10];
 } FACE_Tag;
 
 typedef struct {

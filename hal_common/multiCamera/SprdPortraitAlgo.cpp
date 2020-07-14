@@ -1137,9 +1137,9 @@ int SprdPortraitAlgo::capLPT(void *output_buff, int picWidth, int picHeight,
             ex = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
             ey = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
         }
-        int yaw = face_info.pose[j];
-        int roll = face_info.angle[j];
-        int fScore = Fd_score[j];
+        int yaw = mPortraitCapParam.face_tag_info.pose[j];
+        int roll = mPortraitCapParam.face_tag_info.angle[j];
+        int fScore = mPortraitCapParam.face_tag_info.fd_score[j];
         unsigned char attriRace = 0;
         unsigned char attriGender = 0;
         unsigned char attriAge = 0;
@@ -1200,7 +1200,7 @@ int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
                 rWidth = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w - rX;
                 rHeight = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h - rY;
             }
-            int rRollAngle = face_info.angle[j];
+            int rRollAngle = mPortraitCapParam.face_tag_info.angle[j];
             construct_dfa_face(&dfa_cap, j, rX, rY, rWidth, rHeight, rRollAngle,
                                rType);
         }
@@ -1327,8 +1327,8 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
                 beauty_face.endX = mPortraitCapParam.portrait_param.x2[j] * mSize.capture_w / mSize.depth_snap_out_w;
                 beauty_face.endY = mPortraitCapParam.portrait_param.y2[j] * mSize.capture_h / mSize.depth_snap_out_h;
             }
-            beauty_face.angle = face_info.angle[j];
-            beauty_face.pose = face_info.pose[j];
+            beauty_face.angle = mPortraitCapParam.face_tag_info.angle[j];
+            beauty_face.pose = mPortraitCapParam.face_tag_info.pose[j];
             rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_FACE_CMD,
                                   &beauty_face);
         }
