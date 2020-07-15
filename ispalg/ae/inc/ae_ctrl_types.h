@@ -112,6 +112,7 @@ extern "C" {
 		AE_SET_AF_STATUS,
 		AE_FDR_START,
 		AE_SET_AUTO_FDR,
+		AE_SET_PROF_MODE,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -763,7 +764,7 @@ extern "C" {
 		cmr_s32 step_numerator;
 		cmr_s32 step_denominator;
 	};
-	
+
 #ifdef __cplusplus
 }
 #endif

@@ -4321,6 +4321,23 @@ static cmr_s32 ae_set_3dnr_thr(struct ae_ctrl_cxt *cxt, cmr_handle *mode)
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_set_prof_mode(struct ae_ctrl_cxt *cxt, cmr_u32 *mode)
+{
+	if(1 == *mode){
+		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+		cxt->cur_status.adv_param.prof_mode = 1;
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->sync_cur_result.ev_setting.exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->sync_cur_result.ev_setting.ae_gain;
+	}
+	else{
+		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+		cxt->cur_status.adv_param.prof_mode = 0;
+	}
+
+	ISP_LOGD("AE_SET_PRO_MODE %d",*mode);
+	return AE_SUCCESS;
+}
+
 static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 {
 	if (param) {
@@ -4389,6 +4406,7 @@ static cmr_s32 ae_set_auto_hdr(struct ae_ctrl_cxt *cxt,  void *param)
 		cmr_u8 *menu_ctrl = (cmr_u8 *) param;
 		cxt->hdr_menu_ctrl = *menu_ctrl;
 		ISP_LOGI("hdr_menu %d", cxt->hdr_menu_ctrl);
+
 	}
 	return AE_SUCCESS;
 }
@@ -4410,6 +4428,148 @@ static cmr_s32 ae_set_fps_info(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->fps_range.min = fps->min_fps;
 			cxt->fps_range.max = fps->max_fps;
 			ISP_LOGV("AE_SET_FPS (%d, %d)", fps->min_fps, fps->max_fps);
+	}
+
+	return AE_SUCCESS;
+}
+
+static void ae_set_fdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
+{
+	UNUSED(param);
+	cmr_u32 base_exposure_line = 0;
+	cmr_u32 down_exposure = 0;
+	cmr_u16 base_gain = 0;
+	cmr_u32 max_frame_line = 0;
+	cmr_u32 min_frame_line = 0;
+	cmr_u32 exp_line = 0;
+	cmr_u32 gain = 0;
+	float ev_result = 0.0;
+
+	ev_result = cxt->fdr_down_ev;
+	ISP_LOGD("fdr (cap) ev[0] %f", ev_result);
+
+	cxt->fdr_frame_cnt++;
+	if (cxt->fdr_cb_cnt == cxt->fdr_frame_cnt) {
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FDR_START, NULL);
+		ISP_LOGD("_isp_fdr_callback do-capture!\r\n");
+	}
+		max_frame_line = (cmr_u32) (1.0 * 1000000000 / cxt->fps_range.min / cxt->cur_status.adv_param.cur_ev_setting.line_time);
+		min_frame_line = (cmr_u32) (1.0 * cxt->ae_tbl_param.min_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+
+		ISP_LOGV("max_frame_line %d, min_frame_line %d, fps_min %d, cur_line_time %d\n", max_frame_line, min_frame_line, cxt->fps_range.min, cxt->cur_status.adv_param.cur_ev_setting.line_time);
+		//if (cxt->fdr_frame_cnt <= cxt->fdr_flag ) {
+			base_exposure_line = cxt->fdr_exp_line;
+			base_gain = cxt->fdr_gain;
+			down_exposure = pow(2,ev_result)* base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  ev_result);
+			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+			ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->cur_status.adv_param.prof_mode = 1;
+			ISP_LOGD("_isp_fdr_down_exp: exp_line %d, gain %d\n", exp_line, gain);
+		/*}else{
+			base_exposure_line = cxt->fdr_exp_line;
+			base_gain = cxt->fdr_gain;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = base_gain;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->cur_status.adv_param.prof_mode = 1;
+			ISP_LOGD("_isp_fdr_normal_exp: exp_line %d, gain %d\n", base_exposure_line, base_gain);
+		}
+		*/
+}
+
+static void ae_set_fdr_detect(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
+{
+	cmr_s8 auto_fdr_enable = 0;
+	struct ae_size fdr_stat_size = {0,0};
+	float ev_result = 0.0;
+
+	if(!cxt->is_snapshot) {
+		struct fdr_stat_t fdr_stat = {0,};
+		fdr_stat.hist256 = param->hist_stats.value;
+		if (cxt->isp_ops.callback) {
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATIS_SIZE, &fdr_stat_size);
+		}
+		if(fdr_stat_size.w && fdr_stat_size.h) {
+			fdr_stat.w = fdr_stat_size.w;
+			fdr_stat.h = fdr_stat_size.h;
+		} else {
+			fdr_stat.w = cxt->snr_info.frame_size.w;
+			fdr_stat.h = cxt->snr_info.frame_size.h;
+		}
+
+		fdr_stat.fd_param.face_num = cxt->cur_status.adv_param.face_data.face_num;
+		fdr_stat.fd_param.height = cxt->cur_status.adv_param.face_data.img_size.h;
+		fdr_stat.fd_param.width = cxt->cur_status.adv_param.face_data.img_size.w;
+
+		for (int i = 0; i < fdr_stat.fd_param.face_num; i++) {
+			fdr_stat.fd_param.face_area[i].angle = cxt->cur_status.adv_param.face_data.face_data[i].angle;
+			fdr_stat.fd_param.face_area[i].face_lum = cxt->cur_status.adv_param.face_data.face_data[i].face_lum;
+			fdr_stat.fd_param.face_area[i].pose = cxt->cur_status.adv_param.face_data.face_data[i].pose;
+			fdr_stat.fd_param.face_area[i].rect.start_x = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.start_x;
+			fdr_stat.fd_param.face_area[i].rect.start_y = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.start_y;
+			fdr_stat.fd_param.face_area[i].rect.end_x = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.end_x;
+			fdr_stat.fd_param.face_area[i].rect.end_y = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.end_y;
+		}
+		fdr_stat.base_target_lum = cxt->sync_cur_result.base_target_lum;
+		fdr_stat.target_lum = cxt->sync_cur_result.target_lum;
+		fdr_stat.face_stable = cxt->sync_cur_result.face_stable;
+		fdr_stat.camera_id = cxt->camera_id;
+
+		if(cxt->fdr_tuning_param && cxt->fdr_ops.fdr_scndet)
+			auto_fdr_enable = (cmr_s8)cxt->fdr_ops.fdr_scndet(cxt->fdr_tuning_param, &fdr_stat, &ev_result,&cxt->fdr_det_status);
+
+		cxt->fdr_calc_ev = ev_result;
+
+		ISP_LOGV("auto_fdr camera_id %d w %d h %d face_num %d ev %f ",fdr_stat.camera_id, fdr_stat.w, fdr_stat.h, fdr_stat.fd_param.face_num, ev_result);
+		ISP_LOGV("auto_fdr base target %d target %d face_stable %d ", fdr_stat.base_target_lum, fdr_stat.target_lum, fdr_stat.face_stable);
+	}
+	if (cxt->fdr_menu_ctrl) {
+		cxt->hdr_calc_result.auto_hdr_enable = auto_fdr_enable;
+		if(-1 == auto_fdr_enable)
+			auto_fdr_enable = 0;
+		if(cxt->isp_ops.callback)
+			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_FDR_STATUS, &auto_fdr_enable);
+		else
+			ISP_LOGE("isp_ops.callback is NULL");
+	}
+}
+
+static cmr_s32 ae_set_fdr_start(struct ae_ctrl_cxt *cxt, void *param)
+{
+	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
+		ISP_LOGD("[FDR]is_multi_mode=%d",cxt->is_multi_mode);
+	}
+	else if (param) {
+		struct ae_fdr_param *fdr_param = (struct ae_fdr_param *)param;
+		cxt->fdr_enable = fdr_param->fdr_enable;
+		cxt->fdr_cb_cnt = fdr_param->ev_effect_valid_num;
+		cxt->fdr_flag = fdr_param->ev_effect_cnt;
+		cxt->fdr_frame_cnt = 0;
+		if (cxt->fdr_enable) {
+			cxt->fdr_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
+			cxt->fdr_gain = cxt->sync_cur_result.ev_setting.ae_gain;
+			cxt->fdr_down_ev = cxt->fdr_calc_ev;
+			//ae_set_force_pause(cxt, 1, 16);//lock/unlock is handled by FDR capture processing
+		} else {
+			//ae_set_force_pause(cxt, 0, 17);
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->fdr_exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->fdr_gain;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->cur_status.adv_param.prof_mode = 1;
+			ISP_LOGD("_isp_fdr_normal_exp: exp_line %d, gain %d\n", cxt->fdr_exp_line, cxt->fdr_gain);
+		}
+		ISP_LOGD("AE_SET_FDR: fdr_enable %d, fdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d,fdr_down_ev %f,fdr_flag %d",
+			cxt->fdr_enable,
+			cxt->fdr_cb_cnt,
+			cxt->fdr_exp_line,
+			cxt->fdr_gain,
+			cxt->cur_status.adv_param.lock,
+			cxt->fdr_down_ev,
+			cxt->fdr_flag);
 	}
 
 	return AE_SUCCESS;
@@ -4609,149 +4769,6 @@ static cmr_s32 ae_set_ev_adjust_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->ev_adj_exp_line,
 			cxt->ev_adj_gain,
 			cxt->cur_status.adv_param.lock);
-	}
-
-	return AE_SUCCESS;
-}
-
-static void ae_set_fdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
-{
-	UNUSED(param);
-	cmr_u32 base_exposure_line = 0;
-	cmr_u32 down_exposure = 0;
-	cmr_u16 base_gain = 0;
-	cmr_u32 max_frame_line = 0;
-	cmr_u32 min_frame_line = 0;
-	cmr_u32 exp_line = 0;
-	cmr_u32 gain = 0;
-	float ev_result = 0.0;
-
-	ev_result = cxt->fdr_down_ev;
-	ISP_LOGD("fdr (cap) ev[0] %f", ev_result);
-
-	cxt->fdr_frame_cnt++;
-	if (cxt->fdr_cb_cnt == cxt->fdr_frame_cnt) {
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FDR_START, NULL);
-		ISP_LOGD("_isp_fdr_callback do-capture!\r\n");
-	}
-		max_frame_line = (cmr_u32) (1.0 * 1000000000 / cxt->fps_range.min / cxt->cur_status.adv_param.cur_ev_setting.line_time);
-		min_frame_line = (cmr_u32) (1.0 * cxt->ae_tbl_param.min_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-
-		ISP_LOGV("max_frame_line %d, min_frame_line %d, fps_min %d, cur_line_time %d\n", max_frame_line, min_frame_line, cxt->fps_range.min, cxt->cur_status.adv_param.cur_ev_setting.line_time);
-		//if (cxt->fdr_frame_cnt <= cxt->fdr_flag ) {
-			base_exposure_line = cxt->fdr_exp_line;
-			base_gain = cxt->fdr_gain;
-			down_exposure = pow(2,ev_result)* base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-			ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  ev_result);
-			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
-			ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
-			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-			cxt->cur_status.adv_param.prof_mode = 1;
-			ISP_LOGD("_isp_fdr_down_exp: exp_line %d, gain %d\n", exp_line, gain);
-		/*}else{
-			base_exposure_line = cxt->fdr_exp_line;
-			base_gain = cxt->fdr_gain;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = base_gain;
-			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-			cxt->cur_status.adv_param.prof_mode = 1;
-			ISP_LOGD("_isp_fdr_normal_exp: exp_line %d, gain %d\n", base_exposure_line, base_gain);
-		}
-		*/
-}
-
-static void ae_set_fdr_detect(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
-{
-	cmr_s8 auto_fdr_enable = 0;
-	struct ae_size fdr_stat_size = {0,0};
-	float ev_result = 0.0;
-
-	if(!cxt->is_snapshot) {
-		struct fdr_stat_t fdr_stat = {0,};
-		fdr_stat.hist256 = param->hist_stats.value;
-		if (cxt->isp_ops.callback) {
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATIS_SIZE, &fdr_stat_size);
-		}
-		if(fdr_stat_size.w && fdr_stat_size.h) {
-			fdr_stat.w = fdr_stat_size.w;
-			fdr_stat.h = fdr_stat_size.h;
-		} else {
-			fdr_stat.w = cxt->snr_info.frame_size.w;
-			fdr_stat.h = cxt->snr_info.frame_size.h;
-		}
-
-		fdr_stat.fd_param.face_num = cxt->cur_status.adv_param.face_data.face_num;
-		fdr_stat.fd_param.height = cxt->cur_status.adv_param.face_data.img_size.h;
-		fdr_stat.fd_param.width = cxt->cur_status.adv_param.face_data.img_size.w;
-
-		for (int i = 0; i < fdr_stat.fd_param.face_num; i++) {
-			fdr_stat.fd_param.face_area[i].angle = cxt->cur_status.adv_param.face_data.face_data[i].angle;
-			fdr_stat.fd_param.face_area[i].face_lum = cxt->cur_status.adv_param.face_data.face_data[i].face_lum;
-			fdr_stat.fd_param.face_area[i].pose = cxt->cur_status.adv_param.face_data.face_data[i].pose;
-			fdr_stat.fd_param.face_area[i].rect.start_x = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.start_x;
-			fdr_stat.fd_param.face_area[i].rect.start_y = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.start_y;
-			fdr_stat.fd_param.face_area[i].rect.end_x = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.end_x;
-			fdr_stat.fd_param.face_area[i].rect.end_y = cxt->cur_status.adv_param.face_data.face_data[i].face_rect.end_y;
-		}
-		fdr_stat.base_target_lum = cxt->sync_cur_result.base_target_lum;
-		fdr_stat.target_lum = cxt->sync_cur_result.target_lum;
-		fdr_stat.face_stable = cxt->sync_cur_result.face_stable;
-		fdr_stat.camera_id = cxt->camera_id;
-
-		if(cxt->fdr_tuning_param && cxt->fdr_ops.fdr_scndet)
-			auto_fdr_enable = (cmr_s8)cxt->fdr_ops.fdr_scndet(cxt->fdr_tuning_param, &fdr_stat, &ev_result,&cxt->fdr_det_status);
-
-		cxt->fdr_calc_ev = ev_result;
-
-		ISP_LOGV("auto_fdr camera_id %d w %d h %d face_num %d ev %f ",fdr_stat.camera_id, fdr_stat.w, fdr_stat.h, fdr_stat.fd_param.face_num, ev_result);
-		ISP_LOGV("auto_fdr base target %d target %d face_stable %d ", fdr_stat.base_target_lum, fdr_stat.target_lum, fdr_stat.face_stable);
-	}
-	if (cxt->fdr_menu_ctrl) {
-		cxt->hdr_calc_result.auto_hdr_enable = auto_fdr_enable;
-		if(-1 == auto_fdr_enable)
-			auto_fdr_enable = 0;
-		if(cxt->isp_ops.callback)
-			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_FDR_STATUS, &auto_fdr_enable);
-		else
-			ISP_LOGE("isp_ops.callback is NULL");
-	}
-}
-
-static cmr_s32 ae_set_fdr_start(struct ae_ctrl_cxt *cxt, void *param)
-{
-	if((ISP_ALG_DUAL_C_C == cxt->is_multi_mode) && (CAM_SENSOR_MASTER != cxt->sensor_role)){
-		ISP_LOGD("[FDR]is_multi_mode=%d",cxt->is_multi_mode);
-	}
-	else if (param) {
-		struct ae_fdr_param *fdr_param = (struct ae_fdr_param *)param;
-		cxt->fdr_enable = fdr_param->fdr_enable;
-		cxt->fdr_cb_cnt = fdr_param->ev_effect_valid_num;
-		cxt->fdr_flag = fdr_param->ev_effect_cnt;
-		cxt->fdr_frame_cnt = 0;
-		if (cxt->fdr_enable) {
-			cxt->fdr_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
-			cxt->fdr_gain = cxt->sync_cur_result.ev_setting.ae_gain;
-			cxt->fdr_down_ev = cxt->fdr_calc_ev;
-			//ae_set_force_pause(cxt, 1, 16);//lock/unlock is handled by FDR capture processing
-		} else {
-			//ae_set_force_pause(cxt, 0, 17);
-			cxt->cur_status.adv_param.prof_mode = 0;
-			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
-			cxt->fdr_down_ev = 0;
-			cxt->cur_result.ev_setting.exp_line = cxt->fdr_exp_line;
-			cxt->cur_result.ev_setting.ae_gain = cxt->fdr_gain;
-			ISP_LOGD("isp_fdr_normal_exp: exp_line %d, gain %d\n", cxt->fdr_exp_line, cxt->fdr_gain);
-		}
-		ISP_LOGD("AE_SET_FDR: fdr_enable %d, fdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d,fdr_down_ev %f,fdr_flag %d",
-			cxt->fdr_enable,
-			cxt->fdr_cb_cnt,
-			cxt->fdr_exp_line,
-			cxt->fdr_gain,
-			cxt->cur_status.adv_param.lock,
-			cxt->fdr_down_ev,
-			cxt->fdr_flag);
 	}
 
 	return AE_SUCCESS;
@@ -6023,16 +6040,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		ISP_LOGV("normal notify stable_flag %d", cur_calc_result->ae_output.is_stab);
 	}
 
-	if(!( (cxt->cur_status.adv_param.flash >= FLASH_PRE_BEFORE) && (cxt->cur_status.adv_param.flash <= FLASH_PRE_AFTER))){
-		if (cxt->cur_status.adv_param.mode_param.mode == AE_MODE_MANUAL_EXP_GAIN) {
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_line_bkup;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
-		}else if (cxt->cur_status.adv_param.mode_param.mode == AE_MODE_AUTO_SHUTTER_PRI) {
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_line_bkup;
-		}else if (cxt->cur_status.adv_param.mode_param.mode == AE_MODE_AUTO_ISO_PRI) {
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->manual_iso_value;
-		}
-	}
+
 /***********************************************************/
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	memcpy(current_result, &cxt->cur_result, sizeof(struct ae_lib_calc_out));
@@ -6455,6 +6463,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_AF_STATUS:
 		cxt->cur_status.adv_param.af_status = *(cmr_u32 *) param;
+		break;
+
+	case AE_SET_PROF_MODE:
+		rtn = ae_set_prof_mode(cxt, param);
 		break;
 
 	default:

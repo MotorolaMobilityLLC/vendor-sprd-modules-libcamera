@@ -415,6 +415,7 @@ enum isp_ctrl_cmd {
 #endif
 	ISP_CTRL_GET_MFNR_PARAM,
 	ISP_CTRL_GET_DRE_PRO_PARAM,
+	ISP_CTRL_SET_PROF_MODE,
 	ISP_CTRL_MAX
 };
 
