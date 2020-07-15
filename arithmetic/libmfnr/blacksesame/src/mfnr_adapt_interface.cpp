@@ -2,6 +2,9 @@
 #include "mfnr_adapt_log.h"
 #include "properties.h"
 #include <string.h>
+#include <cutils/trace.h>
+
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
 
 #ifdef DEFAULT_RUNTYPE_VDSP
@@ -168,7 +171,9 @@ int sprd_mfnr_adpt_ctrl(void *handle, sprd_mfnr_cmd_e cmd, void* param)
 			LOGI("MFNR ADAPT CTRL pre_param_ptr->gain = %d \n", pre_param_ptr->gain);
 			if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU ||g_run_type == SPRD_CAMALG_RUN_TYPE_GPU)
 			{
+                ATRACE_BEGIN("mfnr_function_pre");
                 retval = mfnr_function_pre(handle, pre_param_ptr->small_image, pre_param_ptr->orig_image, pre_param_ptr->out_image, &pre_inparam);
+                ATRACE_END();
 			}
 			else if(g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP)
 			{
