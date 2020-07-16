@@ -430,6 +430,33 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int getCalibrationInfo(struct mlog_infotag *mlog_info);
     int getAeInfo(struct mlog_infotag *mlog_info);
     int saveMlogInfo();
+    /* Cyclomatic complexity sub functions */
+    void PreviewFrameUpdateMlogInfo(void);
+    void PreviewFrameFaceBeauty(struct camera_frame_type *frame,
+                                struct faceBeautyLevels *beautyLevels);
+    int PreviewFrameCamDebug(struct camera_frame_type *frame);
+    int PreviewFrameVideoStream(struct camera_frame_type *frame,
+                                int64_t &buffer_timestamp );
+    int PreviewFramePreviewStream(struct camera_frame_type *frame,
+                                int64_t &buffer_timestamp );
+    int PreviewFrameCallbackStream(struct camera_frame_type *frame,
+                                int64_t &buffer_timestamp );
+    int PreviewFrameYuv2Stream(struct camera_frame_type *frame,
+                                int64_t &buffer_timestamp );
+    int PreviewFrameZslStream(struct camera_frame_type *frame,
+                                int64_t &buffer_timestamp );
+    int SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
+                          struct camera_frame_type *zsl_frame,
+                          struct image_sw_algorithm_buf *src_alg_buf,
+                          struct image_sw_algorithm_buf *dst_alg_buf,
+                          uint32_t &buf_cnt);
+    int SnapshotZslHdr(SprdCamera3OEMIf *obj,
+                          struct camera_frame_type *zsl_frame,
+                          struct image_sw_algorithm_buf *src_alg_buf,
+                          struct image_sw_algorithm_buf *dst_alg_buf,
+                          uint32_t &buf_cnt);
+    int SnapshotZslOther(SprdCamera3OEMIf *obj,
+	                     struct camera_frame_type *zsl_frame);
 
     enum Sprd_camera_state {
         SPRD_INIT,

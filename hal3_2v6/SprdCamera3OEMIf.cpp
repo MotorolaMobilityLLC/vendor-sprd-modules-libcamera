@@ -3900,24 +3900,596 @@ bool SprdCamera3OEMIf::isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo) {
     return false;
 }
 
+
+void SprdCamera3OEMIf::PreviewFrameUpdateMlogInfo(void) {
+    MLOG_Tag *mlogInfo;
+    int ret;
+
+    mSetting->getMLOGTag(&mlogInfo);
+    if (((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH ||
+        getMultiCameraMode() == MODE_MULTI_CAMERA) &&
+        (mCameraId == 0 || mCameraId == 4)) ||
+        getMultiCameraMode() == MODE_OPTICSZOOM_CALIBRATION) {
+        VCM_Tag sprdvcmInfo;
+        uint32_t vcm_step = 0;
+
+        mSetting->getVCMTag(&sprdvcmInfo);
+        mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
+                                                 &vcm_step);
+        HAL_LOGD("mCameraId %d, mMultiCameraMode %d, vcm_step %d 0x%x",
+                 mCameraId, mMultiCameraMode, vcm_step, vcm_step);
+
+        sprdvcmInfo.vcm_step = vcm_step;
+        mSetting->setVCMTag(sprdvcmInfo);
+        mlogInfo->vcm_step = vcm_step;
+    }
+
+    if (mSprdRefocusEnabled == true && mSprdFullscanEnabled &&
+        (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
+         mCameraId == 4)) {
+        struct vcm_range_info range;
+
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
+                CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
+        mSetting->setVCMDACTag(range.vcm_dac, range.total_seg);
+        mSprdFullscanEnabled = 0;
+        if (mIsMlogMode && (getMultiCameraMode() == MODE_BOKEH ||
+           getMultiCameraMode() == MODE_3D_CALIBRATION) && range.total_seg) {
+            mlogInfo->vcm_dac = range.vcm_dac[range.total_seg - 1];
+            mlogInfo->vcm_num = range.total_seg;
+            HAL_LOGV("vcm dac %d num %d",mlogInfo->vcm_dac, mlogInfo->vcm_num);
+        }
+    }
+}
+
+#ifdef CONFIG_FACE_BEAUTY
+void SprdCamera3OEMIf::PreviewFrameFaceBeauty(struct camera_frame_type *frame,
+                              struct faceBeautyLevels *beautyLevels) {
+    FACE_Tag faceInfo;
+    fbBeautyFacetT beauty_face;
+    fb_beauty_image_t beauty_image;
+    struct facebeauty_param_info fb_param_map_prev;
+    cmr_u32 bv;
+    cmr_u32 ct;
+    cmr_u32 iso;
+    int ret;
+
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
+    CMR_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
+        bv, mCameraId, ct, iso);
+    beautyLevels->cameraBV = (int)bv;
+    beautyLevels->cameraWork = (int)mCameraId;
+    beautyLevels->cameraCT = (int)ct;
+    beautyLevels->cameraISO = (int)iso;
+
+    mSetting->getFACETag(&faceInfo);
+
+    for (int i = 0; i < faceInfo.face_num; i++) {
+        CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
+        beauty_face.idx = i;
+        beauty_face.startX = faceInfo.face[i].rect[0];
+        beauty_face.startY = faceInfo.face[i].rect[1];
+        beauty_face.endX = faceInfo.face[i].rect[2];
+        beauty_face.endY = faceInfo.face[i].rect[3];
+        beauty_face.angle = faceInfo.angle[i];
+        beauty_face.pose = faceInfo.pose[i];
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                               &beauty_face);
+    }
+
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
+                   CAMERA_IOCTRL_GET_FB_PARAM, &fb_param_map_prev);
+    if (ret == ISP_SUCCESS) {
+        for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
+            HAL_LOGV("[%d]blemishSizeThrCoeff %d removeBlemishFlag %d "
+                "lipColorType %d skinColorType %d", i,
+                fb_param_map_prev.cur.fb_param[i].blemishSizeThrCoeff,
+                fb_param_map_prev.cur.fb_param[i].removeBlemishFlag,
+                fb_param_map_prev.cur.fb_param[i].lipColorType,
+                fb_param_map_prev.cur.fb_param[i].skinColorType);
+            HAL_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                "skinSmoothRadiusCoeffDefaultLevel %d",
+                fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+            for(int j = 0; j < 11; j++){
+                HAL_LOGV("[%d,%d]largeEyeLevel %d skinBrightLevel %d "
+                    "skinSmoothRadiusCoeff %d", i, j,
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+            }
+        }
+        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
+                               &fb_param_map_prev);
+    }
+
+    if (!mflagfb) {
+#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
+        face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
+#else
+        face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
+#endif
+
+        fb_chipinfo chipinfo;
+#if defined(CONFIG_ISP_2_3)
+        chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+        chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+        chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+        chipinfo = SHARKL5;
+#elif defined(CONFIG_ISP_2_7)
+        chipinfo = SHARKL5PRO;
+#endif
+        face_beauty_init(&face_beauty, 1, 2, chipinfo);
+        if (face_beauty.hSprdFB != NULL) {
+            mflagfb = true;
+        }
+    }
+    invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
+                    frame->width * frame->height * 3 / 2);
+    beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+    beauty_image.inputImage.addr[0] = (void *)frame->y_vir_addr;
+    beauty_image.inputImage.addr[1] = (void *)frame->uv_vir_addr;
+    beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
+    beauty_image.inputImage.ion_fd = frame->fd;
+    beauty_image.inputImage.offset[0] = 0;
+    beauty_image.inputImage.offset[1] = frame->width * frame->height;
+    beauty_image.inputImage.width = frame->width;
+    beauty_image.inputImage.height = frame->height;
+    beauty_image.inputImage.stride = frame->width;
+    beauty_image.inputImage.size = frame->width * frame->height * 3 / 2;
+    ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                           &beauty_image);
+    ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                           beautyLevels);
+    ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_PROCESS_CMD,
+                           &(faceInfo.face_num));
+    flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
+                   frame->width * frame->height * 3 / 2);
+}
+#endif // CONFIG_FACE_BEAUTY
+
+int SprdCamera3OEMIf::PreviewFrameCamDebug(struct camera_frame_type *frame) {
+    char value[PROPERTY_VALUE_MAX];
+    int ret = 0;
+
+    property_get("persist.vendor.cam.debug", value, "0");
+    if (atoi(value) != 0) {
+        img_debug img_debug;
+        FACE_Tag ftag;
+
+        img_debug.input.addr_y = frame->y_vir_addr;
+        img_debug.input.addr_u = frame->uv_vir_addr;
+        img_debug.input.addr_v = img_debug.input.addr_u;
+        // process img data on input addr, so set output addr to 0.
+        img_debug.output.addr_y = 0;
+        img_debug.output.addr_u = 0;
+        img_debug.output.addr_v = img_debug.output.addr_u;
+        img_debug.size.width = frame->width;
+        img_debug.size.height = frame->height;
+        img_debug.format = frame->format;
+        mSetting->getFACETag(&ftag);
+        img_debug.params = &ftag;
+        ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
+                                          CAMERA_IOCTRL_DEBUG_IMG, &img_debug);
+    }
+    return ret;
+}
+
+int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
+                            int64_t &buffer_timestamp ) {
+    int ret = 0;
+    SprdCamera3RegularChannel *channel;
+    cmr_uint rec_addr_vir = 0;
+    uint32_t frame_num = 0;
+    SprdCamera3Stream *rec_stream = NULL;
+    cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
+    const SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
+
+    channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
+    HAL_LOGV("video_stream %p", rec_stream);
+
+    if (!rec_stream) {
+        HAL_LOGW("rec_stream is NULL");
+        return 0;
+    }
+
+    ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
+    if (ret) {
+        HAL_LOGE("GetQBuffer fail %d", ret);
+        return 0;
+    }
+
+
+    ATRACE_BEGIN("video_frame");
+    HAL_LOGD("record:mCameraId=%d,fd=0x%x,vir=0x%lx,num=%d,time=%" PRId64
+             ",rec=%" PRId64,
+             mCameraId, frame->fd, buff_vir, frame_num,
+             buffer_timestamp, mSlowPara.rec_timestamp);
+    if (frame->type == PREVIEW_VIDEO_FRAME) {
+        if (mVideoWidth <= mCaptureWidth &&
+            mVideoHeight <= mCaptureHeight) {
+            HAL_LOGD("mDualVideoMode %d, mVideoShotFlag %d mDualVideoShotFlag %d",
+                    mDualVideoMode, mVideoShotFlag, mDualVideoShotFlag);
+            HAL_LOGD("frame_num %d mVideoSnapshotFrameNum %d",
+                    frame_num, mVideoSnapshotFrameNum);
+            if (mDualVideoMode) {
+                if (mVideoShotFlag && mDualVideoShotFlag &&
+                    (frame_num >= mVideoSnapshotFrameNum))
+                    PushVideoSnapShotbuff(frame_num,
+                                          CAMERA_STREAM_TYPE_VIDEO);
+            } else {
+                if (mVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))
+                    PushVideoSnapShotbuff(frame_num,
+                                          CAMERA_STREAM_TYPE_VIDEO);
+            }
+        }
+
+        if (mSlowPara.last_frm_timestamp == 0) { /*record first frame*/
+            mSlowPara.last_frm_timestamp = buffer_timestamp;
+            mSlowPara.rec_timestamp = buffer_timestamp;
+            mIsRecording = true;
+        }
+        calculateTimestampForSlowmotion(buffer_timestamp);
+
+#ifdef CONFIG_CAMERA_EIS
+        vsOutFrame frame_out;
+        frame_out.frame_data = NULL;
+        HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
+        if (sprddefInfo->sprd_eis_enabled) {
+            // camera exit/switch dont need to do eis
+            if (mFlush == 0) {
+                Mutex::Autolock l(&mEisVideoProcessLock);
+                frame_out = EisVideoFrameStab(frame, frame_num);
+            }
+            if (frame_out.frame_data) {
+                channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000,
+                                                CAMERA_STREAM_TYPE_VIDEO);
+            }
+            HAL_LOGV("video callback frame vir address=0x%lx,frame_num=%d",
+                      frame_out.frame_data, frame_out.frame_num);
+            goto bypass_rec;
+        }
+#endif
+        channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
+                                  CAMERA_STREAM_TYPE_VIDEO);
+    } else {
+        channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
+                                          CAMERA_STREAM_TYPE_VIDEO);
+    }
+
+    ATRACE_END();
+
+bypass_rec:
+    HAL_LOGV("rec_stream X");
+    return ret;
+}
+
+/* return: 0~success, 1:fail(as before goto exit) */
+int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
+                            int64_t &buffer_timestamp ) {
+    int ret = 0;
+    SprdCamera3RegularChannel *channel;
+    uint32_t frame_num = 0;
+    SprdCamera3Stream *pre_stream = NULL, *rec_stream = NULL;
+    cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
+    int64_t tmp64;
+    cmr_s32 fd0 = 0;
+    cmr_s32 fd1 = 0;
+    cmr_uint videobuf_phy = 0;
+    cmr_uint videobuf_vir = 0;
+    cmr_uint prebuf_phy = 0;
+    cmr_uint prebuf_vir = 0;
+    const SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
+
+    channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
+    channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
+    HAL_LOGV("preview_stream %p", pre_stream);
+
+    if (!pre_stream) {
+        HAL_LOGE("pre_stream is NULL");
+        return 0;
+    }
+
+    ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
+    if (ret) {
+        HAL_LOGE("GetQBuffer fail %d", ret);
+        pre_stream = NULL;
+        ret = 0;
+        goto bypass_pre;
+    }
+    ATRACE_BEGIN("preview_frame");
+    HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, "
+             "height=%d, time=%" PRId64,
+             mCameraId, frame->fd, buff_vir, frame_num, frame->width,
+             frame->height, buffer_timestamp);
+
+    if (mIsMlogMode) {
+        MLOG_Tag *mlogInfo;
+
+        mSetting->getMLOGTag(&mlogInfo);
+        if (mtimestamplast == 0) {
+            mtimestamplast = frame->monoboottime / 1000000;
+        } else {
+            mlogInfo->prev_timestamp = frame->monoboottime / 1000000;
+            tmp64 = mlogInfo->prev_timestamp - mtimestamplast;
+            mtimestamplast = mlogInfo->prev_timestamp;
+            if (tmp64)
+                mlogInfo->fps = 1000 / tmp64;
+        }
+    }
+    if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
+        if ((frame_num > mStartFrameNum) &&
+            (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
+            if (getMultiCameraMode() == MODE_BLUR ||
+                getMultiCameraMode() == MODE_BOKEH ||
+                mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
+                mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
+                mSprdAppmodeId == CAMERA_MODE_FILTER ||
+                mSprdAppmodeId == -1 ||
+                (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
+                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+            } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
+                       sprddefInfo->slowmotion > 1) {
+                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+            } else if (mRecordingMode == true) {
+                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
+            } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
+                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+            }
+            mIsPowerhintWait = 0;
+        }
+    }
+
+    if (frame->type == PREVIEW_FRAME) {
+#ifdef CONFIG_CAMERA_EIS
+        HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
+        if (sprddefInfo->sprd_eis_enabled) {
+            // camera exit/switch dont need to do eis
+            if (mFlush == 0) {
+                Mutex::Autolock l(&mEisPreviewProcessLock);
+                EisPreviewFrameStab(frame);
+            }
+        }
+#endif
+
+        if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
+            if (rec_stream) {
+                ret = rec_stream->getQBufAddrForNum(
+                    frame_num, &videobuf_vir, &videobuf_phy, &fd0);
+                if (ret == NO_ERROR && videobuf_vir != 0) {
+                    mIsRecording = true;
+                    if (mSlowPara.last_frm_timestamp == 0) {
+                        mSlowPara.last_frm_timestamp = buffer_timestamp;
+                        mSlowPara.rec_timestamp = buffer_timestamp;
+                    }
+                }
+            }
+        }
+
+        if (mIsRecording && rec_stream) {
+            calculateTimestampForSlowmotion(buffer_timestamp);
+            if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
+                ret = rec_stream->getQBufAddrForNum(
+                    frame_num, &videobuf_vir, &videobuf_phy, &fd0);
+                if (ret || videobuf_vir == 0) {
+                    HAL_LOGE("getQBufAddrForNum failed");
+                    ret = -1; /* goto exit after return */
+                    goto bypass_pre_at;
+                }
+                pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
+                                              &prebuf_phy, &fd1);
+                HAL_LOGV("frame_num=%d, videobuf_phy=0x%lx, "
+                         "videobuf_vir=0x%lx,fd=0x%x",
+                         frame_num, videobuf_phy, videobuf_vir, fd0);
+                HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
+                         frame_num, prebuf_phy, prebuf_vir);
+		        if (mVideoCopyFromPreviewFlag) {
+                    memcpy((void *)videobuf_vir, (void *)prebuf_vir,
+                           mPreviewWidth * mPreviewHeight * 3 / 2);
+                }
+                flushIonBuffer(fd0, (void *)videobuf_vir, 0,
+                               mPreviewWidth * mPreviewHeight * 3 / 2);
+                channel->channelCbRoutine(frame_num,
+                                          mSlowPara.rec_timestamp,
+                                          CAMERA_STREAM_TYPE_VIDEO);
+            }
+
+            channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
+                                      CAMERA_STREAM_TYPE_PREVIEW);
+        } else {
+            channel->channelCbRoutine(frame_num, buffer_timestamp,
+                                      CAMERA_STREAM_TYPE_PREVIEW);
+        }
+    } else {
+        channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
+                                          CAMERA_STREAM_TYPE_PREVIEW);
+    }
+
+    if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
+        timer_set(this, 1, timer_hand_take);
+    }
+
+    if (mSprdCameraLowpower && (0 == frame_num % 100)) {
+        adjustFpsByTemp();
+    }
+
+bypass_pre_at:
+    ATRACE_END();
+bypass_pre:
+    HAL_LOGV("pre_stream X");
+
+    return ret;
+}
+
+int SprdCamera3OEMIf::PreviewFrameCallbackStream(struct camera_frame_type *frame,
+                            int64_t &buffer_timestamp ) {
+    int ret = 0;
+    SprdCamera3RegularChannel *channel;
+    uint32_t frame_num = 0;
+    SprdCamera3Stream *callback_stream = NULL;
+    cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
+    bool isJpegRequest = false;
+    SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
+
+    channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
+    HAL_LOGV("callback_stream %p", callback_stream);
+
+    if (!callback_stream) {
+        HAL_LOGE("callback_stream is NULL");
+        return ret;
+    }
+
+    ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
+    if (ret) {
+        goto bypass_callback;
+    }
+
+    ATRACE_BEGIN("callback_frame");
+
+    HAL_LOGD("callback fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
+             ", frame type = %ld",
+             frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
+
+    if (isFaceBeautyOn(sprddefInfo) && (mCameraId == 1)
+		&& (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)){
+          struct faceBeautyLevels beautyLevels;
+
+          beautyLevels.blemishLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[0];
+          beautyLevels.smoothLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[1];
+          beautyLevels.skinColor =
+            (unsigned char)sprddefInfo->perfect_skin_level[2];
+          beautyLevels.skinLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[3];
+          beautyLevels.brightLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[4];
+          beautyLevels.lipColor =
+            (unsigned char)sprddefInfo->perfect_skin_level[5];
+          beautyLevels.lipLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[6];
+          beautyLevels.slimLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[7];
+          beautyLevels.largeLevel =
+            (unsigned char)sprddefInfo->perfect_skin_level[8];
+          PreviewFrameFaceBeauty(frame, &beautyLevels);
+      }
+
+    channel->channelCbRoutine(frame_num, buffer_timestamp,
+                              CAMERA_STREAM_TYPE_CALLBACK);
+
+    if ((mTakePictureMode == SNAPSHOT_PREVIEW_MODE) &&
+        (isJpegRequest == true)) {
+        timer_set(this, 1, timer_hand_take);
+    }
+    ATRACE_END();
+
+bypass_callback:
+        HAL_LOGV("callback_stream X");
+
+    return ret;
+}
+
+int SprdCamera3OEMIf::PreviewFrameYuv2Stream(struct camera_frame_type *frame,
+                            int64_t &buffer_timestamp ) {
+    int ret = 0;
+    SprdCamera3RegularChannel *channel;
+    SprdCamera3Stream *yuv2_stream = NULL;
+    uint32_t frame_num = 0;
+    cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
+
+    channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
+    if (!yuv2_stream) {
+        HAL_LOGE("yuv_stream is NULL");
+        return ret;
+    }
+
+    ret = yuv2_stream->getQBufNumForVir(buff_vir, &frame_num);
+    if (ret) {
+        goto bypass_yuv2;
+    }
+
+    HAL_LOGD("yuv2 fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
+             ", frame type = %ld",
+             frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
+    channel->channelCbRoutine(frame_num, buffer_timestamp,
+                              CAMERA_STREAM_TYPE_YUV2);
+bypass_yuv2:
+    HAL_LOGV("yuv2_stream X");
+
+    return ret;
+}
+
+int SprdCamera3OEMIf::PreviewFrameZslStream(struct camera_frame_type *frame,
+                            int64_t &buffer_timestamp) {
+    int ret = 0;
+    cmr_int need_pause;
+    struct camera_frame_type zsl_frame;
+
+    if (!mSprdZslEnabled) {
+        return ret;
+    }
+
+    CMR_MSG_INIT(message);
+    mHalOem->ops->camera_zsl_snapshot_need_pause(mCameraHandle,
+                                                 &need_pause);
+    if (PREVIEW_ZSL_FRAME == frame->type) {
+        ATRACE_BEGIN("zsl_frame");
+
+        HAL_LOGD("zsl buff fd=0x%x, frame type=%ld", frame->fd,
+                 frame->type);
+        pushZslFrame(frame);
+
+        if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
+            struct camera_frame_type zsl_frame;
+            zsl_frame = popZslFrame();
+            if (zsl_frame.y_vir_addr != 0) {
+                mHalOem->ops->camera_set_zsl_buffer(
+                    mCameraHandle, zsl_frame.y_phy_addr,
+                    zsl_frame.y_vir_addr, zsl_frame.fd);
+            }
+        }
+
+        ATRACE_END();
+    } else if (PREVIEW_ZSL_CANCELED_FRAME == frame->type) {
+        if (!isCapturing() || !need_pause) {
+            mHalOem->ops->camera_set_zsl_buffer(
+                mCameraHandle, frame->y_phy_addr, frame->y_vir_addr,
+                frame->fd);
+        }
+    }
+
+    return ret;
+}
+
 void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     ATRACE_CALL();
 
     Mutex::Autolock cbLock(&mPreviewCbLock);
     int ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
-    sprddefInfo = mSetting->getSPRDDEFTagPTR();
-    MLOG_Tag *mlogInfo;
-    mSetting->getMLOGTag(&mlogInfo);
+
+    int64_t buffer_timestamp;
 
     HAL_LOGV("E");
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
         NULL == frame) {
-        HAL_LOGE("mCameraHandle=%p, mHalOem=%p,", mCameraHandle, mHalOem);
-        HAL_LOGE("frame=%p", frame);
+        HAL_LOGE("mCameraHandle=%p, mHalOem=%p, frame=%p",
+                 mCameraHandle, mHalOem, frame);
         return;
     }
 
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
     if (miSPreviewFirstFrame) {
         GET_END_TIME;
         GET_USE_TIME;
@@ -3938,111 +4510,30 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                       frame->width * frame->height * 3 / 2);
     }
 
-    int64_t buffer_timestamp = frame->monoboottime;
+    buffer_timestamp = frame->monoboottime;
+    if (!buffer_timestamp)
+        HAL_LOGW("buffer_timestamp shouldn't be 0,please check");
 
-    if (0 == buffer_timestamp)
-        HAL_LOGE("buffer_timestamp shouldn't be 0,please check your code");
-
-    VCM_Tag sprdvcmInfo;
-    if (((mSprdRefocusEnabled == true || getMultiCameraMode() == MODE_BOKEH ||
-          getMultiCameraMode() == MODE_MULTI_CAMERA) &&
-         (mCameraId == 0 || mCameraId == 4)) ||
-        getMultiCameraMode() == MODE_OPTICSZOOM_CALIBRATION) {
-        mSetting->getVCMTag(&sprdvcmInfo);
-        uint32_t vcm_step = 0;
-        mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
-                                                 &vcm_step);
-        HAL_LOGD("mCameraId %d, mMultiCameraMode %d, vcm_step %d 0x%x",
-                 mCameraId, mMultiCameraMode, vcm_step, vcm_step);
-        sprdvcmInfo.vcm_step = vcm_step;
-        mSetting->setVCMTag(sprdvcmInfo);
-        sprdvcmInfo.vcm_step = vcm_step;
-        mlogInfo->vcm_step = vcm_step;
-   }
-
-    if (mSprdRefocusEnabled == true && mSprdFullscanEnabled &&
-        (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-         mCameraId == 4)) {
-        struct vcm_range_info range;
-
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
-                CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO, &range);
-        mSetting->setVCMDACTag(range.vcm_dac, range.total_seg);
-        mSprdFullscanEnabled = 0;
-        if (mIsMlogMode && (getMultiCameraMode() == MODE_BOKEH ||
-           getMultiCameraMode() == MODE_3D_CALIBRATION) && range.total_seg) {
-            mlogInfo->vcm_dac = range.vcm_dac[range.total_seg - 1];
-            mlogInfo->vcm_num = range.total_seg;
-            HAL_LOGV("vcm dac %d num %d",mlogInfo->vcm_dac, mlogInfo->vcm_num);
-        }
-    }
+    //update info
+    PreviewFrameUpdateMlogInfo();
 
     SprdCamera3RegularChannel *channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-    cmr_uint pre_addr_vir = 0, rec_addr_vir = 0, callback_addr_vir = 0;
-    SprdCamera3Stream *pre_stream = NULL, *rec_stream = NULL,
-                      *callback_stream = NULL, *yuv2_stream = NULL;
-    int32_t pre_dq_num;
-    uint32_t frame_num = 0;
-    cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
-    uint32_t buff_id = frame->buf_id;
-    uint16_t img_width = frame->width, img_height = frame->height;
-    buffer_handle_t *buff_handle = NULL;
-    int32_t buf_deq_num = 0;
-    int32_t buf_num = 0;
-
-    cmr_uint videobuf_phy = 0;
-    cmr_uint videobuf_vir = 0;
-    cmr_uint prebuf_phy = 0;
-    cmr_uint prebuf_vir = 0;
-    cmr_s32 fd0 = 0;
-    cmr_s32 fd1 = 0;
-    int64_t tmp64;
 
     if (channel == NULL) {
         HAL_LOGE("channel=%p", channel);
         goto exit;
     }
 
-    channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &pre_stream);
-    channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);
-    channel->getStream(CAMERA_STREAM_TYPE_CALLBACK, &callback_stream);
-    channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
-    HAL_LOGV("pre_stream %p, rec_stream %p, callback_stream %p", pre_stream,
-             rec_stream, callback_stream);
-
+    // face beauty
 #ifdef CONFIG_FACE_BEAUTY
     struct faceBeautyLevels beautyLevels;
-    struct facebeauty_param_info fb_param_map_prev;
+    //preview
     if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
         isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)
         && (getMultiCameraMode() != MODE_BOKEH)
-        && (getMultiCameraMode() != MODE_BLUR|| mIsPortraitScene==true)) {
-        FACE_Tag faceInfo;
-        fbBeautyFacetT beauty_face;
-        fb_beauty_image_t beauty_image;
-        cmr_u32 bv;
-        cmr_u32 ct;
-        cmr_u32 iso;
-        CMR_LOGD("face fb mode=%d",face_beauty.fb_mode);
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
-        mSetting->getFACETag(&faceInfo);
-        if (faceInfo.face_num > 0) {
-            for (int i = 0; i < faceInfo.face_num; i++) {
-                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
-                beauty_face.idx = i;
-                beauty_face.startX = faceInfo.face[i].rect[0];
-                beauty_face.startY = faceInfo.face[i].rect[1];
-                beauty_face.endX = faceInfo.face[i].rect[2];
-                beauty_face.endY = faceInfo.face[i].rect[3];
-                beauty_face.angle = faceInfo.angle[i];
-                beauty_face.pose = faceInfo.pose[i];
-                ret = face_beauty_ctrl(
-                    &face_beauty, FB_BEAUTY_CONSTRUCT_FACE_CMD, &beauty_face);
-            }
-        }
+        && (getMultiCameraMode() != MODE_BLUR || mIsPortraitScene==true)) {
+
         beautyLevels.blemishLevel =
             (unsigned char)sprddefInfo->perfect_skin_level[0];
         beautyLevels.smoothLevel =
@@ -4061,109 +4552,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             (unsigned char)sprddefInfo->perfect_skin_level[7];
         beautyLevels.largeLevel =
             (unsigned char)sprddefInfo->perfect_skin_level[8];
-        beautyLevels.cameraBV = (int)bv;
-        beautyLevels.cameraWork = (int)mCameraId;
-        beautyLevels.cameraCT = (int)ct;
-        beautyLevels.cameraISO = (int)iso;
-        HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
-            bv, mCameraId, ct, iso);
-
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
-                       &fb_param_map_prev);
-        if (ret == ISP_SUCCESS) {
-            for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
-                HAL_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
-                    "lipColorType %d skinColorType %d", i,
-                    fb_param_map_prev.cur.fb_param[i].blemishSizeThrCoeff,
-                    fb_param_map_prev.cur.fb_param[i].removeBlemishFlag,
-                    fb_param_map_prev.cur.fb_param[i].lipColorType,
-                    fb_param_map_prev.cur.fb_param[i].skinColorType);
-                HAL_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
-                    "skinSmoothRadiusCoeffDefaultLevel %d",
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
-                for(int j = 0; j < 11; j++){
-                HAL_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
-                    "skinSmoothRadiusCoeff %d", i, j,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeLevel[j],
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinBrightLevel[j],
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
-                }
-            }
-            ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
-                                   &fb_param_map_prev);
-        }
-
-        if (!mflagfb) {
-            face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
-
-            fb_chipinfo chipinfo;
-#if defined(CONFIG_ISP_2_3)
-            chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-            chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-            chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-            chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-            chipinfo = SHARKL5PRO;
-#endif
-            face_beauty_init(&face_beauty, 1, 2, chipinfo);
-            if (face_beauty.hSprdFB != NULL) {
-                mflagfb = true;
-            }
-        }
-        invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
-                        frame->width * frame->height * 3 / 2);
-        beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
-        beauty_image.inputImage.addr[0] = (void *)frame->y_vir_addr;
-        beauty_image.inputImage.addr[1] = (void *)frame->uv_vir_addr;
-        beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
-
-        beauty_image.inputImage.ion_fd = frame->fd;
-        beauty_image.inputImage.offset[0] = 0;
-        beauty_image.inputImage.offset[1] = frame->width * frame->height;
-        beauty_image.inputImage.width = frame->width;
-        beauty_image.inputImage.height = frame->height;
-        beauty_image.inputImage.stride = frame->width;
-        beauty_image.inputImage.size = frame->width * frame->height * 3 / 2;
-
-        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
-                               &beauty_image);
-        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
-                               &beautyLevels);
-        CMR_LOGD("face fb mode=%d",face_beauty.fb_mode);
-        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_PROCESS_CMD,
-                               &(faceInfo.face_num));
-        flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
-                       frame->width * frame->height * 3 / 2);
-    }  else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME){
-        FACE_Tag faceInfo;
-        fbBeautyFacetT beauty_face;
-        fb_beauty_image_t beauty_image;
-        cmr_u32 bv;
-        cmr_u32 ct;
-        cmr_u32 iso;
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
-        mSetting->getFACETag(&faceInfo);
-        if (faceInfo.face_num > 0) {
-            for (int i = 0; i < faceInfo.face_num; i++) {
-                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
-                beauty_face.idx = i;
-                beauty_face.startX = faceInfo.face[i].rect[0];
-                beauty_face.startY = faceInfo.face[i].rect[1];
-                beauty_face.endX = faceInfo.face[i].rect[2];
-                beauty_face.endY = faceInfo.face[i].rect[3];
-                beauty_face.angle = faceInfo.angle[i];
-                beauty_face.pose = faceInfo.pose[i];
-                ret = face_beauty_ctrl(
-                    &face_beauty, FB_BEAUTY_CONSTRUCT_FACE_CMD, &beauty_face);
-            }
-        }
+        PreviewFrameFaceBeauty(frame, &beautyLevels);
+    } else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME){
 
         // defalt beautyLevels for third app like wechat
         beautyLevels.blemishLevel = 0;
@@ -4175,90 +4565,13 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         beautyLevels.lipLevel = 0;
         beautyLevels.slimLevel = 2;
         beautyLevels.largeLevel = 2;
-        beautyLevels.cameraBV = (int)bv;
-        beautyLevels.cameraWork = (int)mCameraId;
-        beautyLevels.cameraCT = (int)ct;
-        beautyLevels.cameraISO = (int)iso;
-        HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",bv, mCameraId, ct, iso);
-
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
-                       &fb_param_map_prev);
-        if (ret == ISP_SUCCESS) {
-            for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
-                HAL_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
-                    "lipColorType %d skinColorType %d", i,
-                    fb_param_map_prev.cur.fb_param[i].blemishSizeThrCoeff,
-                    fb_param_map_prev.cur.fb_param[i].removeBlemishFlag,
-                    fb_param_map_prev.cur.fb_param[i].lipColorType,
-                    fb_param_map_prev.cur.fb_param[i].skinColorType);
-                HAL_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
-                    "skinSmoothRadiusCoeffDefaultLevel %d",
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
-                for(int j = 0; j < 11; j++){
-                HAL_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
-                    "skinSmoothRadiusCoeff %d", i, j,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeLevel[j],
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinBrightLevel[j],
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
-                }
-            }
-            ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
-                                   &fb_param_map_prev);
-        }
-
-        if (!mflagfb) {
-#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
-            face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_VDSP);
-#else
-            face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
-#endif
-
-            fb_chipinfo chipinfo;
-#if defined(CONFIG_ISP_2_3)
-            chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-            chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-            chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-            chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-            chipinfo = SHARKL5PRO;
-#endif
-            face_beauty_init(&face_beauty, 1, 2, chipinfo);
-            if (face_beauty.hSprdFB != NULL) {
-                mflagfb = true;
-            }
-        }
-        invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
-                        frame->width * frame->height * 3 / 2);
-        beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
-        beauty_image.inputImage.addr[0] = (void *)frame->y_vir_addr;
-        beauty_image.inputImage.addr[1] = (void *)frame->uv_vir_addr;
-        beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
-        beauty_image.inputImage.ion_fd = frame->fd;
-        beauty_image.inputImage.offset[0] = 0;
-        beauty_image.inputImage.offset[1] = frame->width * frame->height;
-        beauty_image.inputImage.width = frame->width;
-        beauty_image.inputImage.height = frame->height;
-        beauty_image.inputImage.stride = frame->width;
-        beauty_image.inputImage.size = frame->width * frame->height * 3 / 2;
-        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
-                               &beauty_image);
-        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
-                               &beautyLevels);
-        ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_PROCESS_CMD,
-                               &(faceInfo.face_num));
-        flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
-                       frame->width * frame->height * 3 / 2);
-
+        PreviewFrameFaceBeauty(frame, &beautyLevels);
     } else {
         if (frame->type != PREVIEW_ZSL_FRAME &&
             frame->type != PREVIEW_CANCELED_FRAME &&
             frame->type != CHANNEL2_FRAME &&
-            frame->type != PREVIEW_VIDEO_FRAME && mflagfb) {
+            frame->type != PREVIEW_VIDEO_FRAME &&
+            frame->type != PREVIEW_FRAME && mflagfb) {
             mflagfb = false;
             ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
             face_beauty_deinit(&face_beauty);
@@ -4266,423 +4579,23 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     }
 #endif
 
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.debug", value, "0");
-    if (atoi(value) != 0) {
-        img_debug img_debug;
-        img_debug.input.addr_y = frame->y_vir_addr;
-        img_debug.input.addr_u = frame->uv_vir_addr;
-        img_debug.input.addr_v = img_debug.input.addr_u;
-        // process img data on input addr, so set output addr to 0.
-        img_debug.output.addr_y = 0;
-        img_debug.output.addr_u = 0;
-        img_debug.output.addr_v = img_debug.output.addr_u;
-        img_debug.size.width = frame->width;
-        img_debug.size.height = frame->height;
-        img_debug.format = frame->format;
-        FACE_Tag ftag;
-        mSetting->getFACETag(&ftag);
-        img_debug.params = &ftag;
-        ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
-                                          CAMERA_IOCTRL_DEBUG_IMG, &img_debug);
-    }
+    /* check persist.vendor.cam.debug */
+    PreviewFrameCamDebug(frame);
 
-    if (rec_stream) {
-        ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
-        if (ret) {
-            goto bypass_rec;
-        }
+    /* video stream */
+    PreviewFrameVideoStream(frame, buffer_timestamp);
 
-        ATRACE_BEGIN("video_frame");
-        HAL_LOGD("record:mCameraId = %d, fd = 0x%x, vir = 0x%lx, num = %d"
-                 ", time = %" PRId64 ", rec = %" PRId64,
-                 mCameraId, frame->fd, buff_vir, frame_num, buffer_timestamp,
-                 mSlowPara.rec_timestamp);
-        if (frame->type == PREVIEW_VIDEO_FRAME) {
-            if (mVideoWidth <= mCaptureWidth &&
-                mVideoHeight <= mCaptureHeight) {
-                HAL_LOGD(
-                    "mDualVideoMode %d, mVideoShotFlag = %d mDualVideoShotFlag %d",
-                    mDualVideoMode, mVideoShotFlag, mDualVideoShotFlag);
-		HAL_LOGD(
-                    "frame_num %d mVideoSnapshotFrameNum %d",
-                    frame_num, mVideoSnapshotFrameNum);
-                if (mDualVideoMode) {
-                    if (mVideoShotFlag && mDualVideoShotFlag &&
-                        (frame_num >= mVideoSnapshotFrameNum))
-                        PushVideoSnapShotbuff(frame_num,
-                                              CAMERA_STREAM_TYPE_VIDEO);
-                } else {
-                    if (mVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))
-                        PushVideoSnapShotbuff(frame_num,
-                                              CAMERA_STREAM_TYPE_VIDEO);
-                }
-            }
+    /* preview stream, original code has goto exit */
+    ret = PreviewFramePreviewStream(frame, buffer_timestamp);
+    if (ret)
+        goto exit;
+    /* callback stream */
+    PreviewFrameCallbackStream(frame, buffer_timestamp);
+    /* yuv2 stream */
+    PreviewFrameYuv2Stream(frame, buffer_timestamp);
+    /* zsl stream */
+    PreviewFrameZslStream(frame, buffer_timestamp);
 
-            if (mSlowPara.last_frm_timestamp == 0) { /*record first frame*/
-                mSlowPara.last_frm_timestamp = buffer_timestamp;
-                mSlowPara.rec_timestamp = buffer_timestamp;
-                mIsRecording = true;
-            }
-            calculateTimestampForSlowmotion(buffer_timestamp);
-
-#ifdef CONFIG_CAMERA_EIS
-            vsOutFrame frame_out;
-            frame_out.frame_data = NULL;
-            HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
-            if (sprddefInfo->sprd_eis_enabled) {
-                // camera exit/switch dont need to do eis
-                if (mFlush == 0) {
-                    Mutex::Autolock l(&mEisVideoProcessLock);
-                    frame_out = EisVideoFrameStab(frame, frame_num);
-                }
-                if (frame_out.frame_data) {
-                    channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000,
-                                                    CAMERA_STREAM_TYPE_VIDEO);
-                }
-                HAL_LOGV("video callback frame vir address=0x%lx,frame_num=%d",
-                          frame_out.frame_data, frame_out.frame_num);
-                goto bypass_rec;
-            }
-#endif
-            channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
-                                      CAMERA_STREAM_TYPE_VIDEO);
-        } else {
-            channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
-                                              CAMERA_STREAM_TYPE_VIDEO);
-        }
-
-        ATRACE_END();
-
-    bypass_rec:
-        HAL_LOGV("rec_stream X");
-    }
-
-    if (pre_stream) {
-        ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
-        if (ret) {
-            pre_stream = NULL;
-            goto bypass_pre;
-        }
-        ATRACE_BEGIN("preview_frame");
-        HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, "
-                 "height=%d, time=%" PRId64,
-                 mCameraId, frame->fd, buff_vir, frame_num, frame->width,
-                 frame->height, buffer_timestamp);
-
-        if (mIsMlogMode) {
-            if (mtimestamplast == 0) {
-                mtimestamplast = frame->monoboottime / 1000000;
-            } else {
-                mlogInfo->prev_timestamp = frame->monoboottime / 1000000;
-                tmp64 = mlogInfo->prev_timestamp - mtimestamplast;
-                mtimestamplast = mlogInfo->prev_timestamp;
-                if (tmp64)
-                    mlogInfo->fps = 1000 / tmp64;
-            }
-        }
-        if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
-            if ((frame_num > mStartFrameNum) &&
-                (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
-                if (getMultiCameraMode() == MODE_BLUR ||
-                    getMultiCameraMode() == MODE_BOKEH ||
-                    mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
-                    mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
-                    mSprdAppmodeId == CAMERA_MODE_FILTER ||
-                    mSprdAppmodeId == -1 ||
-                    (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
-                } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
-                           sprddefInfo->slowmotion > 1) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
-                } else if (mRecordingMode == true) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
-                } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
-                }
-                mIsPowerhintWait = 0;
-            }
-        }
-
-        if (frame->type == PREVIEW_FRAME) {
-#ifdef CONFIG_CAMERA_EIS
-            HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
-            if (sprddefInfo->sprd_eis_enabled) {
-                // camera exit/switch dont need to do eis
-                if (mFlush == 0) {
-                    Mutex::Autolock l(&mEisPreviewProcessLock);
-                    EisPreviewFrameStab(frame);
-                }
-            }
-#endif
-
-            if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
-                if (rec_stream) {
-                    ret = rec_stream->getQBufAddrForNum(
-                        frame_num, &videobuf_vir, &videobuf_phy, &fd0);
-                    if (ret == NO_ERROR && videobuf_vir != 0) {
-                        mIsRecording = true;
-                        if (mSlowPara.last_frm_timestamp == 0) {
-                            mSlowPara.last_frm_timestamp = buffer_timestamp;
-                            mSlowPara.rec_timestamp = buffer_timestamp;
-                        }
-                    }
-                }
-            }
-
-            if (mIsRecording && rec_stream) {
-                calculateTimestampForSlowmotion(buffer_timestamp);
-                if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
-                    ret = rec_stream->getQBufAddrForNum(
-                        frame_num, &videobuf_vir, &videobuf_phy, &fd0);
-                    if (ret || videobuf_vir == 0) {
-                        HAL_LOGE("getQBufAddrForNum failed");
-                        goto exit;
-                    }
-                    pre_stream->getQBufAddrForNum(frame_num, &prebuf_vir,
-                                                  &prebuf_phy, &fd1);
-                    HAL_LOGV("frame_num=%d, videobuf_phy=0x%lx, "
-                             "videobuf_vir=0x%lx,fd=0x%x",
-                             frame_num, videobuf_phy, videobuf_vir, fd0);
-                    HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
-                             frame_num, prebuf_phy, prebuf_vir);
-			if (mVideoCopyFromPreviewFlag) {
-                            memcpy((void *)videobuf_vir, (void *)prebuf_vir,
-                               mPreviewWidth * mPreviewHeight * 3 / 2);
-                    }
-                    flushIonBuffer(fd0, (void *)videobuf_vir, 0,
-                                   mPreviewWidth * mPreviewHeight * 3 / 2);
-                    channel->channelCbRoutine(frame_num,
-                                              mSlowPara.rec_timestamp,
-                                              CAMERA_STREAM_TYPE_VIDEO);
-                }
-
-                channel->channelCbRoutine(frame_num, mSlowPara.rec_timestamp,
-                                          CAMERA_STREAM_TYPE_PREVIEW);
-            }else {
-                channel->channelCbRoutine(frame_num, buffer_timestamp,
-                                          CAMERA_STREAM_TYPE_PREVIEW);
-            }
-        } else {
-            channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
-                                              CAMERA_STREAM_TYPE_PREVIEW);
-        }
-
-        if (mTakePictureMode == SNAPSHOT_PREVIEW_MODE) {
-            timer_set(this, 1, timer_hand_take);
-        }
-
-        if (mSprdCameraLowpower && (0 == frame_num % 100)) {
-            adjustFpsByTemp();
-        }
-
-        ATRACE_END();
-    bypass_pre:
-        HAL_LOGV("pre_stream X");
-    }
-
-    if (callback_stream) {
-        uint32_t pic_frame_num;
-        bool isJpegRequest = false;
-        SprdCamera3Stream *local_pic_stream = NULL;
-        SprdCamera3PicChannel *local_pic_channel =
-            reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
-
-        ret = callback_stream->getQBufNumForVir(buff_vir, &frame_num);
-        if (ret) {
-            goto bypass_callback;
-        }
-
-        ATRACE_BEGIN("callback_frame");
-
-        HAL_LOGD("callback fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
-                 ", frame type = %ld",
-                 frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
-        if (isFaceBeautyOn(sprddefInfo) && (mCameraId == 1)
-		&& (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)){
-          struct faceBeautyLevels beautyLevels;
-          struct facebeauty_param_info fb_param_map_prev;
-          FACE_Tag faceInfo;
-          fbBeautyFacetT beauty_face;
-          fb_beauty_image_t beauty_image;
-          cmr_u32 bv;
-          cmr_u32 ct;
-          cmr_u32 iso;
-          CMR_LOGD("face fb mode=%d",cb_face_beauty.fb_mode);
-          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
-          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
-          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
-          mSetting->getFACETag(&faceInfo);
-          if (faceInfo.face_num > 0) {
-            for (int i = 0; i < faceInfo.face_num; i++) {
-                CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
-                beauty_face.idx = i;
-                beauty_face.startX = faceInfo.face[i].rect[0];
-                beauty_face.startY = faceInfo.face[i].rect[1];
-                beauty_face.endX = faceInfo.face[i].rect[2];
-                beauty_face.endY = faceInfo.face[i].rect[3];
-                beauty_face.angle = faceInfo.angle[i];
-                beauty_face.pose = faceInfo.pose[i];
-                ret = face_beauty_ctrl(
-                    &cb_face_beauty, FB_BEAUTY_CONSTRUCT_FACE_CMD, &beauty_face);
-            }
-          }
-          beautyLevels.blemishLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[0];
-          beautyLevels.smoothLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[1];
-          beautyLevels.skinColor =
-            (unsigned char)sprddefInfo->perfect_skin_level[2];
-          beautyLevels.skinLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[3];
-          beautyLevels.brightLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[4];
-          beautyLevels.lipColor =
-            (unsigned char)sprddefInfo->perfect_skin_level[5];
-          beautyLevels.lipLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[6];
-          beautyLevels.slimLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[7];
-          beautyLevels.largeLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[8];
-          beautyLevels.cameraBV = (int)bv;
-          beautyLevels.cameraWork = (int)mCameraId;
-          beautyLevels.cameraCT = (int)ct;
-          beautyLevels.cameraISO = (int)iso;
-          HAL_LOGV("cameraBV %d, cameraWork %d, cameraCT %d, cameraISO %d",
-            bv, mCameraId, ct, iso);
-
-          ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_FB_PARAM,
-                       &fb_param_map_prev);
-          if (ret == ISP_SUCCESS) {
-            for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
-                HAL_LOGV("i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
-                    "lipColorType %d skinColorType %d", i,
-                    fb_param_map_prev.cur.fb_param[i].blemishSizeThrCoeff,
-                    fb_param_map_prev.cur.fb_param[i].removeBlemishFlag,
-                    fb_param_map_prev.cur.fb_param[i].lipColorType,
-                    fb_param_map_prev.cur.fb_param[i].skinColorType);
-                HAL_LOGV("largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
-                    "skinSmoothRadiusCoeffDefaultLevel %d",
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
-                for(int j = 0; j < 11; j++){
-                HAL_LOGV("i %d, j %d largeEyeLevel %d skinBrightLevel %d "
-                    "skinSmoothRadiusCoeff %d", i, j,
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.largeEyeLevel[j],
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinBrightLevel[j],
-                    fb_param_map_prev.cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
-                }
-            }
-            ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
-                                   &fb_param_map_prev);
-          }
-
-          if (!mcbflagfb) {
-            face_beauty_set_devicetype(&cb_face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
-
-            fb_chipinfo chipinfo;
-#if defined(CONFIG_ISP_2_3)
-            chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-            chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-            chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-            chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-            chipinfo = SHARKL5PRO;
-#endif
-            face_beauty_init(&cb_face_beauty, 1, 2, chipinfo);
-            if (cb_face_beauty.hSprdFB != NULL) {
-                mcbflagfb = true;
-            }
-          }
-          invalidateCache(frame->fd, (void *)frame->y_vir_addr, 0,
-                        frame->width * frame->height * 3 / 2);
-          beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
-          beauty_image.inputImage.addr[0] = (void *)frame->y_vir_addr;
-          beauty_image.inputImage.addr[1] = (void *)frame->uv_vir_addr;
-          beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
-
-          beauty_image.inputImage.ion_fd = frame->fd;
-          beauty_image.inputImage.offset[0] = 0;
-          beauty_image.inputImage.offset[1] = frame->width * frame->height;
-          beauty_image.inputImage.width = frame->width;
-          beauty_image.inputImage.height = frame->height;
-          beauty_image.inputImage.stride = frame->width;
-          beauty_image.inputImage.size = frame->width * frame->height * 3 / 2;
-
-          ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
-                               &beauty_image);
-          ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
-                               &beautyLevels);
-          CMR_LOGD("face fb mode=%d",cb_face_beauty.fb_mode);
-          ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_PROCESS_CMD,
-                               &(faceInfo.face_num));
-          flushIonBuffer(frame->fd, (void *)frame->y_vir_addr, 0,
-                       frame->width * frame->height * 3 / 2);
-      }
-        channel->channelCbRoutine(frame_num, buffer_timestamp,
-                                  CAMERA_STREAM_TYPE_CALLBACK);
-
-        if ((mTakePictureMode == SNAPSHOT_PREVIEW_MODE) &&
-            (isJpegRequest == true)) {
-            timer_set(this, 1, timer_hand_take);
-        }
-        ATRACE_END();
-
-    bypass_callback:
-        HAL_LOGV("callback_stream X");
-    }
-
-    if (yuv2_stream) {
-        ret = yuv2_stream->getQBufNumForVir(buff_vir, &frame_num);
-        if (ret) {
-            goto bypass_yuv2;
-        }
-
-        HAL_LOGD("yuv2 fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
-                 ", frame type = %ld",
-                 frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
-        channel->channelCbRoutine(frame_num, buffer_timestamp,
-                                  CAMERA_STREAM_TYPE_YUV2);
-    bypass_yuv2:
-        HAL_LOGV("yuv2_stream X");
-    }
-
-    if (mSprdZslEnabled) {
-        cmr_int need_pause;
-        CMR_MSG_INIT(message);
-        mHalOem->ops->camera_zsl_snapshot_need_pause(mCameraHandle,
-                                                     &need_pause);
-        if (PREVIEW_ZSL_FRAME == frame->type) {
-            ATRACE_BEGIN("zsl_frame");
-
-            HAL_LOGD("zsl buff fd=0x%x, frame type=%ld", frame->fd,
-                     frame->type);
-            pushZslFrame(frame);
-
-            if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
-                struct camera_frame_type zsl_frame;
-                zsl_frame = popZslFrame();
-                if (zsl_frame.y_vir_addr != 0) {
-                    mHalOem->ops->camera_set_zsl_buffer(
-                        mCameraHandle, zsl_frame.y_phy_addr,
-                        zsl_frame.y_vir_addr, zsl_frame.fd);
-                }
-            }
-
-            ATRACE_END();
-        } else if (PREVIEW_ZSL_CANCELED_FRAME == frame->type) {
-            if (!isCapturing() || !need_pause) {
-                mHalOem->ops->camera_set_zsl_buffer(
-                    mCameraHandle, frame->y_phy_addr, frame->y_vir_addr,
-                    frame->fd);
-            }
-        }
-    }
     /* mlog */
     if (mIsMlogMode) {
         ret = gatherInfoForMlog();
@@ -8000,7 +7913,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         sprddefInfo = mSetting->getSPRDDEFTagPTR();
         HAL_LOGD("sprddefInfo.sprd_auto_hdr_enables=%d, mSprdAppmodeId:%d ",
                  sprddefInfo->sprd_auto_hdr_enable, mSprdAppmodeId);
-        if(CAMERA_MODE_AUDIO_PICTURE == mSprdAppmodeId || 
+        if (CAMERA_MODE_AUDIO_PICTURE == mSprdAppmodeId ||
            mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO ||
            mSprdAppmodeId == CAMERA_MODE_BACK_ULTRA_WIDE) {
 #ifdef CONFIG_SUPPROT_AUTO_FDR
@@ -8095,13 +8008,12 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  sprdInfo->sprd_is_time_watermark);
     } break;
     case ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE: {
-        SPRD_DEF_Tag sprdInfo;
-        mSetting->getSPRDDEFTag(&sprdInfo);
+        SPRD_DEF_Tag *sprdInfo;
+        sprdInfo = mSetting->getSPRDDEFTagPTR();
         SET_PARM(mHalOem, mCameraHandle,
                  CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE,
-                 sprdInfo.sprd_super_macro);
-        break;
-    }
+                 sprdInfo->sprd_super_macro);
+    } break;
     default:
         ret = BAD_VALUE;
         break;
@@ -9150,7 +9062,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferFree(
             continue;
         }
         HAL_LOGV("mem_type=%d", itor->mem_type);
-        itor ++;
+        itor++;
     }
     mGraphicBufNum = 0;
     HAL_LOGD("mem_type=%d sum=%d TotalGpuSize=%d", type, sum, mTotalGpuSize);
@@ -10380,6 +10292,260 @@ void SprdCamera3OEMIf::skipZslFrameForFlashCapture() {
 exit:
     HAL_LOGV("X");
 }
+/* return: 0: success, -1: goto exit */
+int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
+                      struct camera_frame_type *zsl_frame,
+                      struct image_sw_algorithm_buf *src_alg_buf,
+                      struct image_sw_algorithm_buf *dst_alg_buf,
+                      uint32_t &buf_cnt) {
+
+    int ret = 0;
+    cmr_u32 buf_id = 0;
+    SPRD_DEF_Tag *sprddefInfo;
+
+    HAL_LOGI("E");
+    // for 3dnr sw 2.0
+    buf_id = getZslBufferIDForFd(zsl_frame->fd);
+    if (buf_id == 0xFFFFFFFF)
+        return -1;
+
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+        src_alg_buf->reserved =
+            (void *)m3DNRGraphicPathArray[buf_id].bufferhandle.get();
+    } else {
+        src_alg_buf->reserved =
+            (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
+    }
+    src_alg_buf->height = zsl_frame->height;
+    src_alg_buf->width = zsl_frame->width;
+    src_alg_buf->fd = zsl_frame->fd;
+    src_alg_buf->format = zsl_frame->format;
+    src_alg_buf->y_vir_addr = zsl_frame->y_vir_addr;
+    src_alg_buf->y_phy_addr = zsl_frame->y_phy_addr;
+
+    // dst_alg_buf use first intput frame for now
+    if (buf_cnt == 0) {
+        dst_alg_buf->height = zsl_frame->height;
+        dst_alg_buf->width = zsl_frame->width;
+        dst_alg_buf->fd = zsl_frame->fd;
+        dst_alg_buf->format = zsl_frame->format;
+        dst_alg_buf->y_vir_addr = zsl_frame->y_vir_addr;
+        dst_alg_buf->y_phy_addr = zsl_frame->y_phy_addr;
+    }
+    HAL_LOGD("3dnr fd=0x%x", zsl_frame->fd);
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+    if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
+        mHalOem->ops->image_sw_algorithm_processing(
+                    obj->mCameraHandle, src_alg_buf,
+                    dst_alg_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT,
+                    CAM_IMG_FMT_YUV420_NV21);
+    } else {
+        mHalOem->ops->image_sw_algorithm_processing(
+                    obj->mCameraHandle, src_alg_buf,
+                    dst_alg_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
+                    CAM_IMG_FMT_YUV420_NV21);
+    }
+
+    buf_cnt++;
+    if (buf_cnt >= 5) {
+        ret =
+            obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
+        if (ret) {
+            HAL_LOGE("camera_stop_capture failed");
+        }
+        obj->mFlagOffLineZslStart = 0;
+        return -1;
+    }
+    return 0;
+}
+/* SnapshotZslHdr[sub function for snapshotZsl]
+ * return: 0~success,-1~goto exit
+ */
+int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
+                      struct camera_frame_type *zsl_frame,
+                      struct image_sw_algorithm_buf *src_alg_buf,
+                      struct image_sw_algorithm_buf *dst_alg_buf,
+                      uint32_t &buf_cnt) {
+    int ret = 0;
+    cmr_u32 value = 0;
+
+    HAL_LOGI("E");
+    if (zsl_frame->monoboottime < mZslSnapshotTime) {
+        HAL_LOGD("not the right hdr frame, skip it");
+        mHalOem->ops->camera_set_zsl_buffer(
+            obj->mCameraHandle, zsl_frame->y_phy_addr,
+            zsl_frame->y_vir_addr, zsl_frame->fd);
+        return 0;
+    }
+    src_alg_buf->height = zsl_frame->height;
+    src_alg_buf->width = zsl_frame->width;
+    src_alg_buf->fd = zsl_frame->fd;
+    src_alg_buf->format = zsl_frame->format;
+    src_alg_buf->y_vir_addr = zsl_frame->y_vir_addr;
+    src_alg_buf->y_phy_addr = zsl_frame->y_phy_addr;
+
+    if (buf_cnt == 0) {
+        dst_alg_buf->height = zsl_frame->height;
+        dst_alg_buf->width = zsl_frame->width;
+        dst_alg_buf->fd = zsl_frame->fd;
+        dst_alg_buf->format = zsl_frame->format;
+        dst_alg_buf->y_vir_addr = zsl_frame->y_vir_addr;
+        dst_alg_buf->y_phy_addr = zsl_frame->y_phy_addr;
+    }
+    hdr_fd[buf_cnt] = zsl_frame->fd;
+    buf_cnt++;
+    if (mMultiCameraMode == MODE_BOKEH) {
+        char prop[PROPERTY_VALUE_MAX] = {0,};
+        property_get("persist.vendor.cam.bokeh.hdr.ev", prop, "3");
+        if (buf_cnt == (uint32_t)atoi(prop)) {
+            if (mIsStoppingPreview == 1) {
+                HAL_LOGD("preview is stoped");
+//                goto exit;
+                return -1;
+            }
+
+            receiveRawPicture(zsl_frame);
+        }
+        if (buf_cnt == 3 && mCameraId == 2) {
+            mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
+                                        CAMERA_IOCTRL_SET_HDR_DISABLE,
+                                        &value);
+            mHalOem->ops->camera_set_zsl_snapshot_buffer(
+                obj->mCameraHandle, zsl_frame->y_phy_addr,
+                zsl_frame->y_vir_addr, zsl_frame->fd);
+//            break;
+            return -1;
+        }
+        if (mCameraId == 2) {
+//            continue;
+            return 0;
+        }
+    }
+
+    HAL_LOGD("hdr fd=0x%x", zsl_frame->fd);
+
+    mHalOem->ops->image_sw_algorithm_processing(
+        obj->mCameraHandle, src_alg_buf,
+        dst_alg_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
+        CAM_IMG_FMT_YUV420_NV21);
+
+    if (buf_cnt >= 3) {
+        ret =
+            obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
+        if (ret) {
+            HAL_LOGE("camera_stop_capture failed");
+        }
+        obj->mFlagOffLineZslStart = 0;
+//        break;
+        return -1;
+    }
+//    continue;
+    return 0;
+}
+
+/* return: 0~success,-1~goto exit
+ * Maybe need more refine(first time: do like original code)
+ */
+int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
+                     struct camera_frame_type *zsl_frame) {
+    int ret = 0;
+    uint32_t cnt = 0;
+    int64_t diff_ms = 0;
+    SPRD_DEF_Tag *sprddefInfo;
+
+    HAL_LOGI("E");
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+    if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
+            char prop[PROPERTY_VALUE_MAX];
+            uint32_t ae_fps = 30;
+            uint32_t delay_time = 200;
+
+            property_get("persist.vendor.cam.blur3.zsl.time", prop, "200");
+            if (atoi(prop) != 0) {
+                delay_time = atoi(prop);
+            }
+            HAL_LOGV("delay_time=%d,ae_fps=%d", delay_time, ae_fps);
+            if (mZslSnapshotTime > zsl_frame->monoboottime ||
+                ((mZslSnapshotTime < zsl_frame->monoboottime) &&
+                 (((zsl_frame->monoboottime - mZslSnapshotTime) / 1000000) <
+                  delay_time))) {
+                mHalOem->ops->camera_set_zsl_buffer(
+                    obj->mCameraHandle, zsl_frame->y_phy_addr,
+                    zsl_frame->y_vir_addr, zsl_frame->fd);
+//                continue;
+                return 0;
+            }
+
+            HAL_LOGD("blur fd=0x%x", zsl_frame->fd);
+            mHalOem->ops->camera_set_zsl_snapshot_buffer(
+                obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+                zsl_frame->fd);
+//            break;
+            return -1;
+        }
+
+        if (mMultiCameraMode == MODE_BOKEH ||
+            mMultiCameraMode == MODE_3D_CALIBRATION) {
+            if (mIsMlogMode) {
+                MLOG_Tag *mlogInfo;
+
+                mSetting->getMLOGTag(&mlogInfo);
+                if (mCameraId == 0) {
+                    mlogInfo->cap_timestamp = zsl_frame->monoboottime / 1000000;
+                } else if (mCameraId == 2) {
+                    mlogInfo->cap_timestamp = zsl_frame->monoboottime / 1000000;
+                }
+            }
+            HAL_LOGD("bokeh/calibration fd=0x%x", zsl_frame->fd);
+            // for calibration/verification debug
+            if (SprdCamera3Setting::mSensorFocusEnable[mCameraId])
+                HAL_LOGV("diff_ms=%" PRId64,
+                         (zsl_frame->monoboottime - obj->mLatestFocusDoneTime) /
+                             1000000);
+            mHalOem->ops->camera_set_zsl_snapshot_buffer(
+                obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+                zsl_frame->fd);
+//            break;
+            return -1;
+        }
+
+        if (mZslSnapshotTime > zsl_frame->monoboottime) {
+            diff_ms = (mZslSnapshotTime - zsl_frame->monoboottime) / 1000000;
+            HAL_LOGV("diff_ms=%" PRId64, diff_ms);
+            // make single capture frame time > mZslSnapshotTime
+            if (sprddefInfo->capture_mode == 1 ||
+                diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
+                HAL_LOGD("not the right frame, skip it");
+                mHalOem->ops->camera_set_zsl_buffer(
+                    obj->mCameraHandle, zsl_frame->y_phy_addr,
+                    zsl_frame->y_vir_addr, zsl_frame->fd);
+//                continue;
+                return 0;
+            }
+        }
+
+        // single capture wait the caf focused frame
+        if (sprddefInfo->capture_mode == 1 && obj->mLatestFocusDoneTime > 0 &&
+            zsl_frame->monoboottime < obj->mLatestFocusDoneTime &&
+            mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene) {
+            HAL_LOGD("not the focused frame, skip it");
+            mHalOem->ops->camera_set_zsl_buffer(
+                obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+                zsl_frame->fd);
+//            continue;
+            return 0;
+        }
+
+        // for debug
+        // diff_ms = (zsl_frame->monoboottime - mZslSnapshotTime) / 1000000;
+        // HAL_LOGD("diff_ms=%" PRId64, diff_ms);
+        HAL_LOGD("fd=0x%x", zsl_frame->fd);
+        mHalOem->ops->camera_set_zsl_snapshot_buffer(
+            obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+            zsl_frame->fd);
+//        break;
+        return -1;
+}
 
 void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     ATRACE_CALL();
@@ -10387,12 +10553,12 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     int ret;
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
     struct camera_frame_type zsl_frame;
-    struct image_sw_algorithm_buf src_sw_algorithm_buf;
-    struct image_sw_algorithm_buf dst_sw_algorithm_buf;
+    struct image_sw_algorithm_buf src_alg_buf;
+    struct image_sw_algorithm_buf dst_alg_buf;
     cmr_u32 value = 0;
     uint32_t cnt = 0;
     int64_t diff_ms = 0;
-    uint32_t sw_algorithm_buf_cnt = 0;
+    uint32_t buf_cnt = 0;
     cmr_u32 buf_id = 0;
     int sleep_rtn = 0;
 
@@ -10409,36 +10575,35 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     mSetting->getCONTROLTag(&controlInfo);
 
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
-    bzero(&src_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
-    bzero(&dst_sw_algorithm_buf, sizeof(struct image_sw_algorithm_buf));
+    bzero(&src_alg_buf, sizeof(struct image_sw_algorithm_buf));
+    bzero(&dst_alg_buf, sizeof(struct image_sw_algorithm_buf));
 
     // this is for real zsl flash capture, like sharkls/sharklt8, not
     // sharkl2-like
     // obj->skipZslFrameForFlashCapture();
 
-    while (1) {
+    do {
+        ret = 0;
         // for exception exit
         if (obj->mZslCaptureExitLoop == true) {
             HAL_LOGD("zsl loop exit done.");
             break;
         }
-
         zsl_frame = obj->popZslFrame();
         if (zsl_frame.y_vir_addr == 0) {
             HAL_LOGD("wait for correct zsl frame");
             sleep_rtn = usleep(20 * 1000);
             if (sleep_rtn) {
-                HAL_LOGE("ERROR: no pause for 1000ms");
+                HAL_LOGW("Not pause for 2000ms");
             }
             continue;
         }
-
         if (mFlush) {
             HAL_LOGD("mFlush=%d", mFlush);
             goto exit;
         }
 
-/*for sharkle auto3dnr skip frame*/
+        /* for sharkle auto3dnr skip frame*/
         if (mZslSnapshotTime > zsl_frame.monoboottime &&
             mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
             diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
@@ -10452,221 +10617,34 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 continue;
             }
         }
-
         // for 3dnr sw 2.0
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
             mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
-
-            buf_id = getZslBufferIDForFd(zsl_frame.fd);
-            if (buf_id == 0xFFFFFFFF) {
-                goto exit;
-            }
-            if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
-                src_sw_algorithm_buf.reserved =
-                    (void *)m3DNRGraphicPathArray[buf_id].bufferhandle.get();
-            } else {
-                src_sw_algorithm_buf.reserved =
-                    (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
-            }
-            src_sw_algorithm_buf.height = zsl_frame.height;
-            src_sw_algorithm_buf.width = zsl_frame.width;
-            src_sw_algorithm_buf.fd = zsl_frame.fd;
-            src_sw_algorithm_buf.format = zsl_frame.format;
-            src_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
-            src_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
-
-            // dst_sw_algorithm_buf use first intput frame for now
-            if (sw_algorithm_buf_cnt == 0) {
-                dst_sw_algorithm_buf.height = zsl_frame.height;
-                dst_sw_algorithm_buf.width = zsl_frame.width;
-                dst_sw_algorithm_buf.fd = zsl_frame.fd;
-                dst_sw_algorithm_buf.format = zsl_frame.format;
-                dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
-                dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
-            }
-            HAL_LOGD("3dnr fd=0x%x", zsl_frame.fd);
-	    if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
-	        mHalOem->ops->image_sw_algorithm_processing(
-                    obj->mCameraHandle, &src_sw_algorithm_buf,
-                    &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT,
-                    CAM_IMG_FMT_YUV420_NV21);
-	    } else {
-                mHalOem->ops->image_sw_algorithm_processing(
-                    obj->mCameraHandle, &src_sw_algorithm_buf,
-                    &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR,
-                    CAM_IMG_FMT_YUV420_NV21);
-	    }
-
-            sw_algorithm_buf_cnt++;
-            if (sw_algorithm_buf_cnt >= 5) {
-                ret =
-                    obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
-                if (ret) {
-                    HAL_LOGE("camera_stop_capture failed");
-                }
-                obj->mFlagOffLineZslStart = 0;
-                break;
-            }
-            continue;
+            ret = SnapshotZsl3dnr(obj, &zsl_frame,
+                       &src_alg_buf, &dst_alg_buf, buf_cnt);
+            if (ret)
+                 break;
+            else
+                continue;
         }
-
+        // for zsl hdr
         int8_t drvSceneMode = 0;
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
-        // for zsl hdr
         if (drvSceneMode == CAMERA_SCENE_MODE_HDR) {
-            if (zsl_frame.monoboottime < mZslSnapshotTime) {
-                HAL_LOGD("not the right hdr frame, skip it");
-                mHalOem->ops->camera_set_zsl_buffer(
-                    obj->mCameraHandle, zsl_frame.y_phy_addr,
-                    zsl_frame.y_vir_addr, zsl_frame.fd);
-                continue;
-            }
-            src_sw_algorithm_buf.height = zsl_frame.height;
-            src_sw_algorithm_buf.width = zsl_frame.width;
-            src_sw_algorithm_buf.fd = zsl_frame.fd;
-            src_sw_algorithm_buf.format = zsl_frame.format;
-            src_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
-            src_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
-
-            if (sw_algorithm_buf_cnt == 0) {
-                dst_sw_algorithm_buf.height = zsl_frame.height;
-                dst_sw_algorithm_buf.width = zsl_frame.width;
-                dst_sw_algorithm_buf.fd = zsl_frame.fd;
-                dst_sw_algorithm_buf.format = zsl_frame.format;
-                dst_sw_algorithm_buf.y_vir_addr = zsl_frame.y_vir_addr;
-                dst_sw_algorithm_buf.y_phy_addr = zsl_frame.y_phy_addr;
-            }
-            hdr_fd[sw_algorithm_buf_cnt] = zsl_frame.fd;
-            sw_algorithm_buf_cnt++;
-            if (mMultiCameraMode == MODE_BOKEH) {
-                char prop[PROPERTY_VALUE_MAX] = {
-                    0,
-                };
-                property_get("persist.vendor.cam.bokeh.hdr.ev", prop, "3");
-                if (sw_algorithm_buf_cnt == (uint32_t)atoi(prop)) {
-                    if (mIsStoppingPreview == 1) {
-                        HAL_LOGD("preview is stoped");
-                        goto exit;
-                    }
-
-                    receiveRawPicture(&zsl_frame);
-                }
-                if (sw_algorithm_buf_cnt == 3 && mCameraId == 2) {
-                    mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
-                                                CAMERA_IOCTRL_SET_HDR_DISABLE,
-                                                &value);
-                    mHalOem->ops->camera_set_zsl_snapshot_buffer(
-                        obj->mCameraHandle, zsl_frame.y_phy_addr,
-                        zsl_frame.y_vir_addr, zsl_frame.fd);
-                    break;
-                }
-                if (mCameraId == 2) {
-                    continue;
-                }
-            }
-
-            HAL_LOGD("hdr fd=0x%x", zsl_frame.fd);
-            mHalOem->ops->image_sw_algorithm_processing(
-                obj->mCameraHandle, &src_sw_algorithm_buf,
-                &dst_sw_algorithm_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
-                CAM_IMG_FMT_YUV420_NV21);
-
-            if (sw_algorithm_buf_cnt >= 3) {
-                ret =
-                    obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
-                if (ret) {
-                    HAL_LOGE("camera_stop_capture failed");
-                }
-                obj->mFlagOffLineZslStart = 0;
-                break;
-            }
-            continue;
+             ret = SnapshotZslHdr(obj, &zsl_frame,
+                     &src_alg_buf, &dst_alg_buf, buf_cnt);
+             if (ret)
+                 break;
+             else
+                 continue;
         }
-
-        if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
-            char prop[PROPERTY_VALUE_MAX];
-            uint32_t ae_fps = 30;
-            uint32_t delay_time = 200;
-            property_get("persist.vendor.cam.blur3.zsl.time", prop, "200");
-            if (atoi(prop) != 0) {
-                delay_time = atoi(prop);
-            }
-            HAL_LOGV("delay_time=%d,ae_fps=%d", delay_time, ae_fps);
-            if (mZslSnapshotTime > zsl_frame.monoboottime ||
-                ((mZslSnapshotTime < zsl_frame.monoboottime) &&
-                 (((zsl_frame.monoboottime - mZslSnapshotTime) / 1000000) <
-                  delay_time))) {
-                mHalOem->ops->camera_set_zsl_buffer(
-                    obj->mCameraHandle, zsl_frame.y_phy_addr,
-                    zsl_frame.y_vir_addr, zsl_frame.fd);
-                continue;
-            }
-
-            HAL_LOGD("blur fd=0x%x", zsl_frame.fd);
-            mHalOem->ops->camera_set_zsl_snapshot_buffer(
-                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
-                zsl_frame.fd);
-            break;
-        }
-
-        if (mMultiCameraMode == MODE_BOKEH ||
-            mMultiCameraMode == MODE_3D_CALIBRATION) {
-            if (mIsMlogMode) {
-                MLOG_Tag *mlogInfo;
-
-                mSetting->getMLOGTag(&mlogInfo);
-                if (mCameraId == 0) {
-                    mlogInfo->cap_timestamp = zsl_frame.monoboottime / 1000000;
-                } else if (mCameraId == 2) {
-                    mlogInfo->cap_timestamp = zsl_frame.monoboottime / 1000000;
-                }
-            }
-            HAL_LOGD("bokeh/calibration fd=0x%x", zsl_frame.fd);
-            // for calibration/verification debug
-            if (SprdCamera3Setting::mSensorFocusEnable[mCameraId])
-                HAL_LOGV("diff_ms=%" PRId64,
-                         (zsl_frame.monoboottime - obj->mLatestFocusDoneTime) /
-                             1000000);
-            mHalOem->ops->camera_set_zsl_snapshot_buffer(
-                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
-                zsl_frame.fd);
-            break;
-        }
-
-        if (mZslSnapshotTime > zsl_frame.monoboottime) {
-            diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
-            HAL_LOGV("diff_ms=%" PRId64, diff_ms);
-            // make single capture frame time > mZslSnapshotTime
-            if (sprddefInfo->capture_mode == 1 ||
-                diff_ms > ZSL_SNAPSHOT_THRESHOLD_TIME) {
-                HAL_LOGD("not the right frame, skip it");
-                mHalOem->ops->camera_set_zsl_buffer(
-                    obj->mCameraHandle, zsl_frame.y_phy_addr,
-                    zsl_frame.y_vir_addr, zsl_frame.fd);
-                continue;
-            }
-        }
-
-        // single capture wait the caf focused frame
-        if (sprddefInfo->capture_mode == 1 && obj->mLatestFocusDoneTime > 0 &&
-            zsl_frame.monoboottime < obj->mLatestFocusDoneTime &&
-            mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene) {
-            HAL_LOGD("not the focused frame, skip it");
-            mHalOem->ops->camera_set_zsl_buffer(
-                obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
-                zsl_frame.fd);
-            continue;
-        }
-
-        // for debug
-        // diff_ms = (zsl_frame.monoboottime - mZslSnapshotTime) / 1000000;
-        // HAL_LOGD("diff_ms=%" PRId64, diff_ms);
-        HAL_LOGD("fd=0x%x", zsl_frame.fd);
-        mHalOem->ops->camera_set_zsl_snapshot_buffer(
-            obj->mCameraHandle, zsl_frame.y_phy_addr, zsl_frame.y_vir_addr,
-            zsl_frame.fd);
-        break;
-    }
+        //other
+        ret = SnapshotZslOther(obj, &zsl_frame);
+//        if (ret)
+//             break;
+//        else
+//             continue;
+    } while (ret == 0);
 
 exit:
     obj->mZslShotPushFlag = 0;
