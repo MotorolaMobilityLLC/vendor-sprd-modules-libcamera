@@ -3688,6 +3688,7 @@ setting_get_pre_lowflash_value(struct setting_component *cpt,
 
 static cmr_int cmr_setting_clear_sem(struct setting_component *cpt) {
     int tmpVal = 0;
+    struct camera_context *cxt = (struct camera_context *)cpt->init_in.oem_handle;
 
     if (!cpt) {
         CMR_LOGE("camera_context is null.");
@@ -3698,6 +3699,13 @@ static cmr_int cmr_setting_clear_sem(struct setting_component *cpt) {
     while (0 < tmpVal && cpt->flash_need_quit != FLASH_NEED_QUIT) {
         sem_wait(&cpt->isp_sem);
         sem_getvalue(&cpt->isp_sem, &tmpVal);
+    }
+
+    if (1 == camera_get_fdr_flag(cxt)) {
+        while (0 < tmpVal) {
+            sem_wait(&cpt->isp_sem);
+            sem_getvalue(&cpt->isp_sem, &tmpVal);
+        }
     }
 
     sem_getvalue(&cpt->quick_ae_sem, &tmpVal);

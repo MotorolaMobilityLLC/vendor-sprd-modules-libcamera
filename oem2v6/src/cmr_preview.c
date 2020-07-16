@@ -3290,6 +3290,7 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_cb_info cb_data_info;
     cmr_uint rot_index = 0;
     cmr_uint ultra_wide_index = 0;
+    cmr_u32 is_fdr = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -3357,8 +3358,15 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
                 CMR_LOGE("construct frm 0x%x err", data->frame_id);
                 goto exit;
             }
-            CMR_LOGD("fdr skip pop zsl buffer, and set ultra wide flag,is_fdr_frame_h:%d", data->is_fdr_frame_h);
-            if (!data->is_fdr_frame_h) {
+
+            if (handle->ops.get_fdr_enable) {
+                CMR_LOGV("get fdr flag handle");
+                ret = handle->ops.get_fdr_enable(handle->oem_handle, &is_fdr);
+            } else {
+                CMR_LOGE("get fdr flag handle failed");
+            }
+            CMR_LOGD("fdr skip pop zsl buffer, and set ultra wide flag,is_fdr:%d",  is_fdr);
+            if (!is_fdr) {
                 ret = prev_set_ultra_wide_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
                                                   ultra_wide_index, 0);
                 if (ret) {
@@ -3393,8 +3401,15 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
 
-        CMR_LOGD("fdr skip pop zsl buffer,is_fdr_frame_h:%d", data->is_fdr_frame_h);
-        if (!data->is_fdr_frame_h) {
+        if (handle->ops.get_fdr_enable) {
+            CMR_LOGV("get fdr flag handle");
+            ret = handle->ops.get_fdr_enable(handle->oem_handle, &is_fdr);
+        } else {
+            CMR_LOGE("get fdr flag handle failed");
+        }
+        CMR_LOGD("fdr skip pop zsl buffer,is_fdr:%d", is_fdr);
+        if (!is_fdr) {
+
             ret = prev_pop_zsl_buffer(handle, camera_id, data, 0);
             if (ret) {
                 CMR_LOGE("pop frm 0x%x err", data->channel_id);
