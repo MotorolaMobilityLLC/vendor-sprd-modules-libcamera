@@ -112,4 +112,3 @@ static struct sensor_nr_scene_map_param s_hi1336_nr_scene_map_param = {{
 
 
 
-
