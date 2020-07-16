@@ -4391,11 +4391,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
                     mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO || mSprdAppmodeId == -1) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+                } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
+                    mSprdAppmodeId == CAMERA_MODE_NIGHT_VIDEO ||
+                    sprddefInfo.slowmotion > 1) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (mRecordingMode == true) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
-                } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
-                                sprddefInfo.slowmotion > 1) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
                 }
