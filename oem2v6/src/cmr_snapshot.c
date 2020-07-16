@@ -1488,12 +1488,13 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
             raw_format = 0x08;
         }
-        CMR_LOGI("fetch_pitch raw buf size, %d\n", mem_ptr->cap_raw.buf_size);
+        CMR_LOGI("fetch_pitch raw buf size, %d", mem_ptr->cap_raw.buf_size);
         if (frm_ptr->is_4in1_frame) {
             if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
                 buff_forisp14bit =
                     malloc(mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2);
                 isp_raw_buff.addr_y = (cmr_uint)buff_forisp14bit;
+                CMR_LOGI("fetch_4ini1_pitch raw buf size, %d", cap_raw_big.buf_size);
                 if (isp_raw_buff.addr_y != 0) {
                     raw14bit_process(&mem_ptr->cap_raw.addr_vir, &isp_raw_buff,
                         mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height);
@@ -1501,15 +1502,15 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                 send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
                           mem_ptr->cap_raw.size.height,
                           (char *)isp_raw_buff.addr_y,
-                          mem_ptr->cap_raw.buf_size, 0, 0, 0, 0);
+                          cap_raw_big.buf_size, 0, 0, 0, 0);
                 free(buff_forisp14bit);
             } else {
                 send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
                           mem_ptr->cap_raw.size.height,
                           (char *)mem_ptr->cap_raw.addr_vir.addr_y,
-                          mem_ptr->cap_raw.buf_size, 0, 0, 0, 0);
+                          cap_raw_big.buf_size, 0, 0, 0, 0);
             }
-        } else {
+        }else {
             send_capture_data(raw_format, mem_ptr->cap_raw.size.width,
                           mem_ptr->cap_raw.size.height,
                           (char *)mem_ptr->cap_raw.addr_vir.addr_y,
@@ -1548,7 +1549,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                         snp_cxt->ops.dump_image_with_3a_info(
                             snp_cxt->oem_handle, REMOSAIC_CAM_IMG_FMT_RAW14BIT,
                             mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2,
+                            cap_raw_big.buf_size,
                             &raw_buff);
                     }
                     free(buff_for14bit);
