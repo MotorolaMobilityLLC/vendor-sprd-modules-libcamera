@@ -119,6 +119,7 @@ class SprdCamera3HWI {
     void setMultiCaptureTimeStamp(uint64_t time_stamp);
     void pushDualVideoBuffer(hal_mem_info_t *mem_info);
     void setRealMultiMode(bool mode);
+    void setMultiAppRatio(float app_ratio);
 
   private:
     int openCamera();

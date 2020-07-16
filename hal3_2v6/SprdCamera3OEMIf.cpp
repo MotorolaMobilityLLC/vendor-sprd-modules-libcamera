@@ -643,6 +643,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mVideoShotFlag = 0;
     mVideoShotNum = 0;
     mVideoShotPushFlag = 0;
+    mAppRatio = 0;
 
     mRestartFlag = false;
 
@@ -6977,19 +6978,25 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
              zoomRatio, mIsUltraWideMode);
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
-    if (mIsFovFusionMode == true &&
-        (SprdCamera3Setting::s_setting[sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK)]
-                      .otpInfo.otp_size != 0) && (mCameraId == 0 ||
-        (mCameraId == 3 && zoomRatio < 1.09))) {
+
+
+    int indexT = sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK);
+    if (indexT < 0xff) {
+      HAL_LOGE("fail to get sensor info for T");
+      return -1;
+    }
+    OTP_Tag *otpT = &SprdCamera3Setting::s_setting[indexT].otpInfo;
+
+    HAL_LOGV("mCameraId=%d, mIsFovFusionMode %d, otpT->otp_size%d, mAppRatio %f",
+             mCameraId, mIsFovFusionMode, otpT->otp_size, mAppRatio);
+    if (mIsFovFusionMode == true && otpT->otp_size != 0 && mAppRatio < 2.0) {
        mZoomInfo.zoom_info.capture_aspect_ratio = 1.0;
-    } else if (mIsFovFusionMode == true &&
-       (SprdCamera3Setting::s_setting[sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK)]
-                      .otpInfo.otp_size == 0)) {
-       mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
     } else {
        mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
     }
-    HAL_LOGD("mIsFovFusionMode %d, capture_aspect_ratio=%f", mIsFovFusionMode, mZoomInfo.zoom_info.capture_aspect_ratio);
+    HAL_LOGD("mIsFovFusionMode %d, capture_aspect_ratio=%f",
+             mIsFovFusionMode, mZoomInfo.zoom_info.capture_aspect_ratio);
+
     mZoomInfo.zoom_info.video_aspect_ratio = zoomRatio;
     mZoomInfo.zoom_info.pixel_size.width = sensorOrgW;
     mZoomInfo.zoom_info.pixel_size.height = sensorOrgH;
@@ -9811,6 +9818,11 @@ void SprdCamera3OEMIf::setRealMultiMode(bool mode) {
     mDualVideoShotFlag = 0;
     mDualVideoMode = mode;
     HAL_LOGD("mDualVideoMode %d", mDualVideoMode);
+}
+
+void SprdCamera3OEMIf::setMultiAppRatio(float app_ratio) {
+    mAppRatio = app_ratio;
+    HAL_LOGD("mAppRatio %f", app_ratio);
 }
 
 ZslBufferQueue SprdCamera3OEMIf::popZSLQueue() {

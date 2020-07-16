@@ -2438,6 +2438,10 @@ void SprdCamera3HWI::setRealMultiMode(bool mode) {
     mOEMIf->setRealMultiMode(mode);
 }
 
+void SprdCamera3HWI::setMultiAppRatio(float app_ratio) {
+    mOEMIf->setMultiAppRatio(app_ratio);
+}
+
 void SprdCamera3HWI::getDualOtpData(void **addr, int *size, int *read) {
     void *otp_data = NULL;
     int otp_size = 0;
