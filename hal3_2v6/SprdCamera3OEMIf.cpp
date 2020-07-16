@@ -255,6 +255,7 @@ struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
 bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
 multiCameraMode SprdCamera3OEMIf::mMultiCameraMode = MODE_SINGLE_CAMERA;
+std::atomic_int SprdCamera3OEMIf::mLogState = 0;
 std::atomic_int SprdCamera3OEMIf::mLogMonitor = 1;
 sem_t SprdCamera3OEMIf::mLogMonitorSem;
 
@@ -11028,7 +11029,8 @@ void SprdCamera3OEMIf::setVideoAFBCFlag(cmr_u32 value) {
       int val=0;
       struct timespec ts;
 
-      HAL_LOGI("E, %d",mLogMonitor.load());
+	  mLogState = 1;
+	  HAL_LOGI("E, %d",mLogMonitor.load());
 	  while(mLogMonitor.load() > 1) {
 	  /*
       *bit[0]:hal,bit[1]:oem,bit[2]:isp_middleware,bit[3]:sensor
@@ -11112,7 +11114,7 @@ void SprdCamera3OEMIf::setVideoAFBCFlag(cmr_u32 value) {
    }
    sem_timedwait(&mLogMonitorSem, &ts);
   }
-  mLogMonitor = 0;
+  mLogState = 0;
   HAL_LOGV("X");
 
   return NULL;
@@ -11126,6 +11128,7 @@ int SprdCamera3OEMIf::log_monitor_thread_init(void * p_data) {
        return -1;
     }
     mLogMonitor++;
+	HAL_LOGV("mLogMonitor init, %d",mLogMonitor.load());
     if (mLogMonitor.load() > 2)
         return ret;
     mLogMonitorSem.count = 0;
@@ -11134,7 +11137,7 @@ int SprdCamera3OEMIf::log_monitor_thread_init(void * p_data) {
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     ret = pthread_create(&obj->mLogHandle, &attr,
                           log_monitor_thread_proc, (void *)obj);
-    pthread_setname_np(obj->mLogHandle, "logstatus");
+    //pthread_setname_np(obj->mLogHandle, "logstatus");
     pthread_attr_destroy(&attr);
     return ret;
 }
@@ -11148,14 +11151,14 @@ int SprdCamera3OEMIf::log_monitor_thread_deinit(void * p_data) {
        return UNKNOWN_ERROR;
 	}
 	mLogMonitor--;
+	HAL_LOGV("mLogMonitor deinit, %d",mLogMonitor.load());
 	if (mLogMonitor.load() == 1 && obj->mLogHandle) {
         sem_post(&mLogMonitorSem);
 		while (i--) {
-           if (mLogMonitor.load() == 0)
+           if (mLogState.load() == 0)
                break;
 		   usleep(1000);
         }
-        mLogMonitor = 1;
         sem_destroy(&mLogMonitorSem);
         obj->mLogHandle = 0;
     }

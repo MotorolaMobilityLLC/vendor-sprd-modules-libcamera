@@ -916,8 +916,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     bool mIsJpegWithBigSizePreview;
 
-	static std::atomic_int mLogMonitor; //0:thread exit, 1:init, 2~x:count
-	static sem_t mLogMonitorSem; //logmonitor exit without wait 1s
+    static std::atomic_int mLogState; //0:thread exit, 1:init
+    static std::atomic_int mLogMonitor; // 1~x:count
+    static sem_t mLogMonitorSem; //logmonitor exit without wait 1s
 
     //for LPT type
     int lightportrait_type;
