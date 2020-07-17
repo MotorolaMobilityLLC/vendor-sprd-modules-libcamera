@@ -687,6 +687,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mGyrodata, 0, sizeof(mGyrodata));
     memset(&mPreviewParam, 0, sizeof(mPreviewParam));
     memset(&mVideoParam, 0, sizeof(mVideoParam));
+    mGyroPreviewInfo.clear();
+    mGyroVideoInfo.clear();
     mPreviewInst = NULL;
     mVideoInst = NULL;
 #endif
@@ -9133,7 +9135,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferFree(
     Callback_ZslFree(0, 0, 0, 0);
 
     for (List<MemGpuQueue>::iterator itor = cam_MemGpuQueue.begin();
-                              itor != cam_MemGpuQueue.end();) {
+                                       itor != cam_MemGpuQueue.end();) {
         if ((type == itor->mem_type) && itor->mGpuHeap.bufferhandle != NULL) {
             if (mIsUltraWideMode) {
                 itor->mGpuHeap.bufferhandle->unlock();
@@ -9144,7 +9146,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferFree(
             mTotalGpuSize = mTotalGpuSize - (itor->mGpuHeap.buf_size);
             itor->mGpuHeap.bufferhandle.clear();
             itor->mGpuHeap.bufferhandle = NULL;
-            cam_MemGpuQueue.erase(itor);
+            itor = cam_MemGpuQueue.erase(itor);
             continue;
         }
         HAL_LOGV("mem_type=%d", itor->mem_type);
@@ -11288,7 +11290,11 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
         }
 
         do {
-            gyro_num = mGyroPreviewInfo.size();
+             {
+                Mutex::Autolock l(&mEisPreviewLock);
+                gyro_num = mGyroPreviewInfo.size();
+                HAL_LOGV("gyro_num = %d", gyro_num);
+             }
             if (gyro_num) {
                 gyro = (vsGyro *)malloc(gyro_num * sizeof(vsGyro));
                 if (NULL == gyro) {
@@ -11377,8 +11383,11 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
         }
 
         do {
-            gyro_num = mGyroVideoInfo.size();
-            HAL_LOGV("gyro_num = %d", gyro_num);
+             {
+                Mutex::Autolock l(&mEisVideoLock);
+                gyro_num = mGyroVideoInfo.size();
+                HAL_LOGV("gyro_num = %d", gyro_num);
+             }
             if (gyro_num) {
                 gyro = (vsGyro *)malloc(gyro_num * sizeof(vsGyro));
                 if (NULL == gyro) {
@@ -11525,8 +11534,8 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
         if (frame->zoom_ratio == 0)
             frame->zoom_ratio = 1.0f;
         float zoom_ratio = frame->zoom_ratio;
-        HAL_LOGV("boot_time = %" PRId64, boot_time);
-        HAL_LOGV("ae_time = %" PRId64 ", zoom_ratio = %f", ae_time, zoom_ratio);
+        HAL_LOGV("zoom_ratio = %f , boot_time = %" PRId64 ", ae_time = %" PRId64,
+                 zoom_ratio , boot_time , ae_time);
         frame_in.frame_data = (uint8_t *)buff_vir;
         frame_in.timestamp = (double)boot_time / 1000000000;
         frame_in.ae_time = (double)ae_time / 1000000000;
@@ -11577,8 +11586,8 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
         if (frame->zoom_ratio == 0)
             frame->zoom_ratio = 1.0f;
         float zoom_ratio = frame->zoom_ratio;
-        HAL_LOGV("boot_time = %lld,ae_time =%lld,zoom_ratio = %f", boot_time,
-                 ae_time, zoom_ratio);
+        HAL_LOGV("zoom_ratio = %f , boot_time = %" PRId64 ", ae_time = %" PRId64,
+                 zoom_ratio , boot_time , ae_time);
         frame_in.frame_data = (uint8_t *)buff_vir;
         frame_in.timestamp = (double)boot_time / 1000000000;
         frame_in.ae_time = (double)ae_time / 1000000000;
