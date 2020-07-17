@@ -22,7 +22,6 @@
 
 #include "sensor_raw.h"
 
-
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
@@ -49,7 +48,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.0501 */
+/* IspToolVersion=R1.20.2901 */
 
 
 /* Capture Sizes:
@@ -83,7 +82,6 @@ static struct sensor_raw_resolution_info_tab s_ov8856_trim_info=
 
 static struct sensor_raw_ioctrl s_ov8856_ioctrl=
 {
-	0,
 	0,
 	0,
 	0,
