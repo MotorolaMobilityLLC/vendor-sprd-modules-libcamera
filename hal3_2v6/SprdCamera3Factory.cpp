@@ -222,6 +222,8 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     if (phyId == SENSOR_ID_INVALID)
         return -ENODEV;
 
+    info->conflicting_devices_length = 0;
+
     /* then try single camera */
     return getSingleCameraInfoChecked(phyId, info);
 }
@@ -326,6 +328,8 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
 
     info->device_version = CAMERA_DEVICE_API_VERSION_3_2;
     info->static_camera_characteristics = staticMetadata;
+
+    info->conflicting_devices_length = 0;
 
     HAL_LOGV("X");
     return rc;
