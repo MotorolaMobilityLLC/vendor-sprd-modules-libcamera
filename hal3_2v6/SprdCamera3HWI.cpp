@@ -42,6 +42,9 @@
 #include "SprdCamera3HWI.h"
 #include <sprd_ion.h>
 #include <gralloc_public.h>
+#include <android/hardware/graphics/common/1.0/types.h>
+
+using android::hardware::graphics::common::V1_0::BufferUsage;
 
 extern "C" {
 #include "isp_video.h"
@@ -698,7 +701,7 @@ int SprdCamera3HWI::configureStreams(
                 } else if (alreadyHasPreviewStream == 0) {
                     stream_type = CAMERA_STREAM_TYPE_PREVIEW;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
-                    newStream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+                    newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
                     newStream->usage |= GRALLOC_USAGE_PRIVATE_1;
                     // for two HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED steam
                     alreadyHasPreviewStream = 1;
@@ -754,9 +757,9 @@ int SprdCamera3HWI::configureStreams(
         }
 
         HAL_LOGD(":hal3: stream %d: stream_type=%d, chn_type=%d, w=%d, h=%d, "
-                 "format=%d",
+                 "format=%d usage=%d",
                  i, stream_type, channel_type, newStream->width,
-                 newStream->height, newStream->format);
+                 newStream->height, newStream->format,newStream->usage);
 
         switch (channel_type) {
         case CAMERA_CHANNEL_TYPE_REGULAR: {
