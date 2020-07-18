@@ -1329,6 +1329,15 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     mPictureRequest = 1;
                     mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                            mFrameNum);
+                } else if((streamType[0] == CAMERA_STREAM_TYPE_CALLBACK ||
+                    streamType[1] == CAMERA_STREAM_TYPE_CALLBACK ||
+                    streamType[2] == CAMERA_STREAM_TYPE_CALLBACK) &&
+                    mMultiCameraMode == MODE_BOKEH) {
+                    mOEMIf->setCallBackYuvMode(1);
+                    mPictureRequest = 1;
+                    HAL_LOGD("mode_bokeh mPictureRequest = 1");
+                    mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
+                                           mFrameNum);
                 }
                 break;
             }

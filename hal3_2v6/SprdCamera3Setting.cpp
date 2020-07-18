@@ -3162,6 +3162,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     size_t i = 0;
     int32_t j = 0;
     if (mDefaultMetadata[type] != NULL) {
+        *metadata = mDefaultMetadata[type];
         return 0;
     }
     CameraMetadata requestInfo;
@@ -4219,7 +4220,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     /*uint8_t iso = 0;
     requestInfo.update(ANDROID_SPRD_ISO, &iso, 1); */
 
-    uint8_t iso_sensitivity = 0;
+    int32_t iso_sensitivity = 0;
     requestInfo.update(ANDROID_SENSOR_SENSITIVITY, &iso_sensitivity, 1);
 
     requestInfo.update(ANDROID_SPRD_METERING_MODE,
@@ -5534,7 +5535,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     maxRegionsAe = s_setting[mCameraId].controlInfo.max_regions[0];
     maxRegionsAwb = s_setting[mCameraId].controlInfo.max_regions[1];
     maxRegionsAf = s_setting[mCameraId].controlInfo.max_regions[2];
-
     // HAL_LOGD("timestamp = %" PRId64 ", request_id = %d, frame_count = %d,
     // mCameraId
     // = %d",s_setting[mCameraId].sensorInfo.timestamp,

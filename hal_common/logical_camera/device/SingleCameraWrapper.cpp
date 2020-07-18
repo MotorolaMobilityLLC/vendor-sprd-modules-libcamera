@@ -22,6 +22,8 @@ int SingleCamera::openCamera(hw_device_t **dev) {
     int rc = hwi->openCamera(dev);
     if (rc < 0) {
         ALOGE("fail to open single camera %d", mCameraId);
+        /* just follow SprdCamera3Factory... */
+        delete hwi;
         return rc;
     }
 
@@ -57,7 +59,8 @@ int SingleCamera::getCameraInfo(camera_info_t *info) {
     return rc;
 }
 
-SingleCamera::SingleCamera(int cameraId) : mCameraId(cameraId), mDev(nullptr) {}
+SingleCamera::SingleCamera(int cameraId, int physicalId)
+    : mCameraId(cameraId), mPhysicalId(physicalId), mDev(nullptr) {}
 
 SingleCamera::~SingleCamera() {}
 
@@ -92,5 +95,6 @@ shared_ptr<ICameraBase> SingleCamera::SingleCameraCreator::createInstance(
     if (!cfg)
         return nullptr;
 
-    return shared_ptr<ICameraBase>(new SingleCamera(cfg->getSensorIds()[0]));
+    return shared_ptr<ICameraBase>(
+        new SingleCamera(cfg->getSensorIds()[0], cfg->getCameraId()));
 }

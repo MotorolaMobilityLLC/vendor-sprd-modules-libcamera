@@ -16,7 +16,7 @@ class SingleCamera : public CameraDevice_3_2, public ICameraBase {
     int getCameraInfo(camera_info_t *info) override;
 
   private:
-    SingleCamera(int cameraId);
+    SingleCamera(int cameraId, int physicalId);
 
     int close();
     int initialize(const camera3_callback_ops_t *callback_ops) override;
@@ -28,6 +28,7 @@ class SingleCamera : public CameraDevice_3_2, public ICameraBase {
     int flush() override;
 
     const int mCameraId;
+    const int mPhysicalId;
     camera3_device_t *mDev;
 
     class SingleCameraCreator : public ICameraCreator {

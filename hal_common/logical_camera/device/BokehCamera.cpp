@@ -2,12 +2,15 @@
 
 #include <log/log.h>
 #include "BokehCamera.h"
-//#include "otp_info.h"
 #include <android/hardware/graphics/common/1.0/types.h>
 
 using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace sprdcamera;
 using namespace std;
+
+#ifdef CONFIG_SUPPORT_GDEPTH
+#undef CONFIG_SUPPORT_GDEPTH
+#endif
 
 #define BOKEH_THREAD_TIMEOUT (50e6)
 #define CLEAR_PRE_FRAME_UNMATCH_TIMEOUT (2000) // 2s
@@ -45,51 +48,25 @@ using namespace std;
 #define PENDINGTIME (1000000)
 #define PENDINGTIMEOUT (5000000000)
 #define MASTER_ID 0
-#define EXTEND_MODE_NUM 3
+#define EXTEND_MODE_NUM 2
+#define STREAM_NUM 5
 BokehCamera *mBokehCamera;
-const uint8_t kavailable_capabilities[] = {
-    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA
-};
-const int32_t kavl_high_speed_video_configration[] = {
-      DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT, 120, 120, 1};
-int32_t kavailableExtendedSceneModeMaxSizes[EXTEND_MODE_NUM][3] = {
-    {ANDROID_CONTROL_EXTENDED_SCENE_MODE_DISABLED, 0, 0},
-    {ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE,
-        DEFAULT_CAPTURE_WIDTH, DEFAULT_CAPTURE_HEIGHT},
-    {ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS,
-        DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT}
-};
-int32_t kscalerAvailableStreamConfugurations[][4] = { /*format, width, height, output/input stream*/
-     {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT,
-          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
-     {HAL_PIXEL_FORMAT_YCBCR_420_888, DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT,
-          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
-     {HAL_PIXEL_FORMAT_BLOB, DEFAULT_CAPTURE_WIDTH, DEFAULT_CAPTURE_HEIGHT,
-          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT},
-     {HAL_PIXEL_FORMAT_YCBCR_420_888, DEFAULT_CAPTURE_WIDTH, DEFAULT_CAPTURE_HEIGHT,
-          ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT}
-     //{HAL_PIXEL_FORMAT_YCBCR_420_888, 320, 240, ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT}
-};
-const float kavailableZoomRatioRanges[EXTEND_MODE_NUM - 1][2] = {
-    {1.0, 1.0}, {1.0, 1.0}
-};
+
 const uint8_t kavailableExtendedSceneModes[] = {
     ANDROID_CONTROL_EXTENDED_SCENE_MODE_DISABLED,
     ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE,
-    ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS
-};
+    ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_CONTINUOUS};
 
 // Error Check Macros
 #define CHECK_CAPTURE()                                                        \
-    if (!mBokehCamera) {                                                         \
+    if (!mBokehCamera) {                                                       \
         HAL_LOGE("Error getting capture ");                                    \
         return;                                                                \
     }
 
 // Error Check Macros
 #define CHECK_CAPTURE_ERROR()                                                  \
-    if (!mBokehCamera) {                                                         \
+    if (!mBokehCamera) {                                                       \
         HAL_LOGE("Error getting capture ");                                    \
         return -ENODEV;                                                        \
     }
@@ -112,13 +89,15 @@ camera3_callback_ops BokehCamera::callback_ops_aux = {
     .process_capture_result = BokehCamera::process_capture_result_aux,
     .notify = BokehCamera::notifyAux};
 
-BokehCamera::BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physicalIds):
-        mPhysicalIds(physicalIds) {
+BokehCamera::BokehCamera(shared_ptr<Configurator> cfg,
+                         const vector<int> &physicalIds)
+    : mPhysicalIds(physicalIds) {
     HAL_LOGI(" E");
-    //m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera mode
+    // m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera
+    // mode
     mCameraId = (uint8_t)cfg->getCameraId();
     std::vector<int> mSensorIds = cfg->getSensorIds();
-    m_nPhyCameras = mSensorIds.size();     //BokehCamera's physical camera num.
+    m_nPhyCameras = mSensorIds.size(); // BokehCamera's physical camera num.
     setupPhysicalCameras(mSensorIds);
     bzero(&m_VirtualCamera, sizeof(sprd_virtual_camera_t));
     m_VirtualCamera.id = mCameraId;
@@ -126,9 +105,10 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physic
     mCaptureStreamsNum = 0;
     mCallbackStreamsNum = 0;
     mPreviewStreamsNum = 0;
+    mVideoStreamsNum = -1;
     mPendingRequest = 0;
     mSavedCapStreams = NULL;
-    mCapFrameNumber = 0;
+    mCapFrameNumber = -1;
     mPrevBlurFrameNumber = 0;
     mPrevFrameNumber = 0;
     mIsCapturing = false;
@@ -138,7 +118,7 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physic
     mFlushing = false;
     mVcmSteps = 0;
     mVcmStepsFixed = 0;
-    mApiVersion = SPRD_API_MODE;
+    mApiVersion = BOKEH_API_MODE;
     mLocalBufferNumber = 0;
     mIsSupportPBokeh = false;
     mhasCallbackStream = false;
@@ -156,8 +136,8 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physic
 #else
     m_pMainSnapBuffer = NULL;
 #endif
-    mDepthStatus = DEPTH_INVALID;
-    mDepthTrigger = TRIGGER_FNUM;
+    mDepthStatus = BOKEH_DEPTH_INVALID;
+    mDepthTrigger = BOKEH_TRIGGER_FNUM;
     mReqTimestamp = 0;
     mLastOnlieVcm = 0;
     mBokehAlgo = NULL;
@@ -167,11 +147,13 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physic
     mHdrCallbackCnt = 0;
     mAfstate = 0;
     mSavedRequestList.clear();
+    mSavedVideoReqList.clear();
     mCaptureThread = new BokehCaptureThread();
     mPreviewMuxerThread = new PreviewMuxerThread();
     mDepthMuxerThread = new DepthMuxerThread();
     memset(&mScaleInfo, 0, sizeof(struct img_frm));
     memset(&mBokehSize, 0, sizeof(BokehSize));
+    memset(&mBokehStream, 0, sizeof(mBokehStream));
     memset(mLocalBuffer, 0, sizeof(new_mem_t) * LOCAL_BUFFER_NUM);
     memset(&mLocalScaledBuffer, 0, sizeof(new_mem_t));
     memset(mAuxStreams, 0,
@@ -186,7 +168,7 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physic
 #endif
 
     memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
-    memset(&mDepthBuffer, 0, sizeof(DepthBuffer));
+    memset(&mBokehDepthBuffer, 0, sizeof(BokehDepthBuffer));
     memset(&mOtpData, 0, sizeof(OtpData));
     memset(&mbokehParm, 0, sizeof(bokeh_params));
 
@@ -197,6 +179,11 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physic
     mNotifyListMain.clear();
     mNotifyListAux.clear();
     mPrevFrameNotifyList.clear();
+    mMetadataReqList.clear();
+    mExtendMode = 0;
+    physicIds = new uint8_t[mPhysicalIds.size() * 2];
+    mConflictDevices = NULL;
+    mCameraNum = 0;
 
     HAL_LOGI("X");
 }
@@ -212,6 +199,17 @@ BokehCamera::~BokehCamera() {
         free_camera_metadata(mStaticMetadata);
     mJpegCallbackThread = 0;
     delete[] mJpegOutputBuffers;
+    if (mConflictDevices) {
+        for (int i = 0; i < mCameraNum - 1; i++)
+            delete[] mConflictDevices[i];
+        delete[] mConflictDevices;
+        mConflictDevices = NULL;
+    }
+
+    if (physicIds) {
+        delete[] physicIds;
+        physicIds = NULL;
+    }
 
     HAL_LOGI("X");
 }
@@ -249,7 +247,7 @@ int BokehCamera::openCamera(hw_device_t **dev) {
             return rc;
         }
 #ifdef CONFIG_BOKEH_CROP
-        if (phyId == CAM_BOKEH_MAIN_ID) {
+        if (i == 0) {
             char prop[PROPERTY_VALUE_MAX] = {
                 0,
             };
@@ -275,11 +273,13 @@ int BokehCamera::openCamera(hw_device_t **dev) {
         m_pPhyCamera[i].hwi = hw;
     }
 
-    char prop[PROPERTY_VALUE_MAX] = {0,};
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     property_get("persist.vendor.cam.bokeh.api.version", prop, "0");
     mApiVersion = atoi(prop);
     HAL_LOGD("api version %d", mApiVersion);
-    if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
 #ifdef CONFIG_SPRD_BOKEH_SUPPORT
         mBokehAlgo = new SprdBokehAlgo();
         mLocalBufferNumber = LOCAL_BUFFER_NUM;
@@ -295,111 +295,53 @@ int BokehCamera::openCamera(hw_device_t **dev) {
 int BokehCamera::getCameraInfo(camera_info_t *info) {
     if (!info)
         return -EINVAL;
-
     int rc = NO_ERROR;
-    int camera_id, mCameraNum;
+    int camera_id;
     int32_t img_size = 0;
-    int version = SPRD_API_MODE;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    int32_t jpeg_stream_size = 0;
 
     if (mStaticMetadata)
         free_camera_metadata(mStaticMetadata);
 
-    camera_id = 0;
     HAL_LOGI("BokehCamera mCameraId = %d", mCameraId);
-
+    camera_id = 0;
+    SprdCamera3Setting::getSensorStaticInfo(camera_id);
     SprdCamera3Setting::initDefaultParameters(camera_id);
     rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
     if (rc < 0) {
         return rc;
     }
-
     CameraMetadata metadata = clone_camera_metadata(mStaticMetadata);
-
-    property_get("persist.vendor.cam.res.bokeh", prop, "RES_5M");
-    HAL_LOGI("bokeh support cap resolution %s", prop);
-    SprdCamera3MultiBase::addAvailableStreamSize(metadata, prop);
-    jpeg_stream_size = getMaxSize(prop);
-
-    property_get("persist.vendor.cam.api.version", prop, "0");
-    version = atoi(prop);
-
-    if (version == SPRD_API_MODE) {
-        img_size = jpeg_stream_size * 2 +
-                   (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT * 2) +
-                   (BOKEH_REFOCUS_COMMON_PARAM_NUM * 4) +
-                   BOKEH_REFOCUS_COMMON_XMP_SIZE + sizeof(camera3_jpeg_blob_t) +
-                   1024;
-    }
-    metadata.update(ANDROID_JPEG_MAX_SIZE, &img_size, 1);
-    metadata.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES, kavailable_capabilities,
-                sizeof(kavailable_capabilities)/sizeof(uint8_t));
-    metadata.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
-                (int32_t *)kavl_high_speed_video_configration,
-                sizeof(kavl_high_speed_video_configration)/sizeof(int32_t));
-    setLogicalMultiTag(metadata);
-    uint8_t flashAvailable = 0;
-    metadata.update(ANDROID_FLASH_INFO_AVAILABLE,
-                &flashAvailable, 1);
-    uint8_t aeLockAvailable = 0;    /*AE_LOCK_AVAILABLE*/
-    metadata.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE,
-                &aeLockAvailable, 1);
-    uint8_t awbLockAvailable = 0;    /*AWB_LOCK_AVAILABLE*/
-    metadata.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
-                &awbLockAvailable, 1);
-    float zoomRatioRange[2] = {1.0, 1.0};
-    metadata.update(ANDROID_CONTROL_ZOOM_RATIO_RANGE,
-                zoomRatioRange, 2);
-    metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
-                (int32_t *)kscalerAvailableStreamConfugurations,
-                sizeof(kscalerAvailableStreamConfugurations) / sizeof(int32_t));
-    float availableMaxDigitalZoom = 1.0;
-    metadata.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
-                &availableMaxDigitalZoom, 1);
-    const int32_t kavailable_fps_ranges_back[] = {
-                10, 10, 5, 15, 15, 15, 5, 20, 20, 20, 5, 24, 24, 24, 5, 30, 20, 30, 30, 30};
-    metadata.update(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
-                kavailable_fps_ranges_back, sizeof(kavailable_fps_ranges_back)/sizeof(int32_t));
-    uint8_t availableControlModes[] = {ANDROID_CONTROL_MODE_OFF,
-                ANDROID_CONTROL_MODE_AUTO,
-                ANDROID_CONTROL_MODE_USE_EXTENDED_SCENE_MODE};
-    metadata.update(ANDROID_CONTROL_AVAILABLE_MODES,
-                availableControlModes, sizeof(availableControlModes)/sizeof(uint8_t));
-    uint8_t aeAvlModes = {ANDROID_CONTROL_AE_MODE_ON};    //AE_MODES
-    metadata.update(ANDROID_CONTROL_AE_AVAILABLE_MODES,
-                &aeAvlModes,1);
-    uint8_t awbAvlModes = {ANDROID_CONTROL_AWB_MODE_AUTO};   //AWB_MODES
-    metadata.update(ANDROID_CONTROL_AWB_AVAILABLE_MODES,
-                &awbAvlModes,1);
-
+    setBokehCameraTags(metadata);
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
     mCameraNum = SprdCamera3Factory::get_number_of_cameras();
     HAL_LOGD("mCameraNum %d", mCameraNum);
-    mConflictDevices = new char[mCameraNum - 1];
-    for(int i = 0,index = 0; i < mCameraNum; i++) {
-        if(i != mCameraId) {
-            mConflictDevices[index] = (char)(i + '0');
-	    index ++;
-	}
+    if (mCameraNum - 1) {
+        mConflictDevices = new char *[mCameraNum - 1];
+        int id = 0, i = 0;
+        while (id < mCameraNum) {
+            if (id != mCameraId) {
+                mConflictDevices[i] = new char[5];
+                size_t s = snprintf(mConflictDevices[i], 4, "%d", id);
+                mConflictDevices[i][s] = '\0';
+                HAL_LOGD("mConflictDevices[%d] %s", i, mConflictDevices[i]);
+                i++;
+            }
+            id++;
+        }
     }
     info->device_version = CAMERA_DEVICE_API_VERSION_3_5;
     info->static_camera_characteristics = mStaticMetadata;
-    info->conflicting_devices = &mConflictDevices;
+    info->conflicting_devices = mConflictDevices;
     info->conflicting_devices_length = mCameraNum - 1;
-    HAL_LOGD("conflicting_devices %d [%s]",
-        mCameraNum - 1, mConflictDevices);
+    info->resource_cost = 100;
     HAL_LOGI("X rc = %d", rc);
 
     return rc;
 }
 
-int BokehCamera::initialize(
-    const camera3_callback_ops_t *callback_ops) {
+int BokehCamera::initialize(const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
     HAL_LOGI("E");
     mPendingRequest = 0;
@@ -407,10 +349,12 @@ int BokehCamera::initialize(
     mBokehSize.capture_h = 0;
     mPreviewStreamsNum = 0;
     mCaptureStreamsNum = 1;
+    mCallbackStreamsNum = 2;
+    mVideoStreamsNum = -1;
     mCaptureThread->mReprocessing = false;
     mIsCapturing = false;
     mSnapshotResultReturn = false;
-    mCapFrameNumber = 0;
+    mCapFrameNumber = -1;
     mPrevBlurFrameNumber = 0;
     mjpegSize = 0;
     mFlushing = false;
@@ -431,6 +375,7 @@ int BokehCamera::initialize(
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
     mHdrCallbackCnt = 0;
+    mMetadataReqList.clear();
 #ifdef YUV_CONVERT_TO_JPEG
     mOrigJpegSize = 0;
     m_pDstJpegBuffer = NULL;
@@ -442,8 +387,7 @@ int BokehCamera::initialize(
     mlimited_macro = 0;
     memset(&mbokehParm, 0, sizeof(bokeh_params));
 
-    sprdcamera_physical_descriptor_t sprdCam =
-        m_pPhyCamera[CAM_TYPE_BOKEH_MAIN];
+    sprdcamera_physical_descriptor_t sprdCam = m_pPhyCamera[CAM_BOKEH_MAIN];
     SprdCamera3HWI *hwiMain = sprdCam.hwi;
     CHECK_HWI_ERROR(hwiMain);
     SprdCamera3MultiBase::initialize(MODE_BOKEH, hwiMain);
@@ -454,7 +398,7 @@ int BokehCamera::initialize(
         return rc;
     }
 
-    sprdCam = m_pPhyCamera[CAM_TYPE_DEPTH];
+    sprdCam = m_pPhyCamera[CAM_BOKEH_DEPTH];
     SprdCamera3HWI *hwiAux = sprdCam.hwi;
     CHECK_HWI_ERROR(hwiAux);
 
@@ -476,8 +420,17 @@ int BokehCamera::initialize(
     mCaptureThread->mSavedOneResultBuff = NULL;
 
     mCaptureThread->mCallbackOps = callback_ops;
-    mCaptureThread->mDevmain = &m_pPhyCamera[CAM_TYPE_BOKEH_MAIN];
+    mCaptureThread->mDevmain = &m_pPhyCamera[CAM_BOKEH_MAIN];
 
+    OTP_Tag otp = SprdCamera3Setting::s_setting[0].otpInfo;
+    HAL_LOGD("dual_otp_flag %d, otp_type %d, otp_size %d", otp.dual_otp_flag,
+             otp.otp_type, otp.otp_size);
+    if (mOtpData.otp_exist == false && otp.otp_size > 0) {
+        mOtpData.otp_exist = true;
+        mOtpData.otp_type = otp.otp_type;
+        mOtpData.otp_size = otp.otp_size;
+        memcpy(mOtpData.otp_data, otp.otp_data, mOtpData.otp_size);
+    }
     HAL_LOGI("X");
     return rc;
 }
@@ -499,9 +452,8 @@ int BokehCamera::close(__unused hw_device_t *hw_dev) {
  *
  * RETURN     :
  *==========================================================================*/
-int BokehCamera::initialize(
-    __unused const struct camera3_device *device,
-    const camera3_callback_ops_t *callback_ops) {
+int BokehCamera::initialize(__unused const struct camera3_device *device,
+                            const camera3_callback_ops_t *callback_ops) {
     int rc = NO_ERROR;
 
     HAL_LOGI("E");
@@ -520,10 +472,8 @@ int BokehCamera::close() {
 
     HAL_LOGI("E");
     Mutex::Autolock jcl(mJpegCallbackLock);
-    if (!mFlushing) {
-        mFlushing = true;
-        preClose();
-    }
+    mFlushing = true;
+    preClose();
     // Attempt to close all cameras regardless of unbundle results
     for (uint32_t i = m_nPhyCameras; i > 0; i--) {
         sprdCam = &m_pPhyCamera[i - 1];
@@ -539,12 +489,14 @@ int BokehCamera::close() {
         sprdCam->hwi = NULL;
         sprdCam->dev = NULL;
     }
+    HAL_LOGD("close camera device end");
 
     mReqTimestamp = 0;
     mPrevFrameNumber = 0;
-    mCapFrameNumber = 0;
+    mCapFrameNumber = -1;
     freeLocalBuffer();
     mSavedRequestList.clear();
+    mSavedVideoReqList.clear();
     mLocalBufferList.clear();
     mMetadataList.clear();
     mUnmatchedFrameListMain.clear();
@@ -552,7 +504,8 @@ int BokehCamera::close() {
     mNotifyListMain.clear();
     mNotifyListAux.clear();
     mPrevFrameNotifyList.clear();
-
+    mMetadataReqList.clear();
+    HAL_LOGD("deinit mBokehAlgo");
     if (mBokehAlgo) {
         rc = mBokehAlgo->deinitAlgo();
         if (rc != NO_ERROR) {
@@ -587,7 +540,7 @@ int BokehCamera::configure_streams(
 
     HAL_LOGI(" E");
     CHECK_CAPTURE_ERROR();
-    if(stream_list == NULL || stream_list->streams[0] == NULL) {
+    if (stream_list == NULL || stream_list->streams[0] == NULL) {
         HAL_LOGE("NULL stream_list");
         return -EINVAL;
     }
@@ -610,7 +563,7 @@ BokehCamera::construct_default_request_settings(int type) {
     }
     rc = mBokehCamera->constructDefaultRequestSettings(type);
 
-    HAL_LOGD("X, rc: %d", rc);
+    HAL_LOGD("X, rc: %p", rc);
 
     return rc;
 }
@@ -639,28 +592,49 @@ int BokehCamera::flush() {
     Mutex::Autolock l(mFlushLock);
     Mutex::Autolock jcl(mJpegCallbackLock);
     mFlushing = true;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-    rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
+    rc = hwiMain->flush(m_pPhyCamera[CAM_BOKEH_MAIN].dev);
 
-    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
-    rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
+    rc = hwiAux->flush(m_pPhyCamera[CAM_BOKEH_DEPTH].dev);
 
-    preClose();
+    mFlushing = false;
     HAL_LOGI("X");
     return rc;
 }
 
-int  BokehCamera::isStreamCombinationSupported(
-            const camera_stream_combination_t *comb) {
+int BokehCamera::isStreamCombinationSupported(
+    const camera_stream_combination_t *comb) {
+    /*
+     * [CTS] LogicalCameraDeviceTest#testBasicLogicalPhysicalStreamCombination
+     * [CTS] LogicalCameraDeviceTest#testBasicPhysicalStreaming
+     * [CTS] NativeCameraDeviceTest#testCameraDeviceLogicalPhysicalStreaming
+     *
+     * don't support any physical stream for now
+     */
+    if (comb) {
+        for (uint32_t i = 0; i < comb->num_streams; i++) {
+            camera_stream_t *stream = &comb->streams[i];
+            if (stream->physical_camera_id &&
+                strlen(stream->physical_camera_id)) {
+                HAL_LOGW("assign physical camera id %d to stream is currently "
+                         "not supported",
+                         atoi(stream->physical_camera_id));
+                return -EINVAL;
+            }
+        }
+    }
+
     int rc = 0;
-    camera3_stream_configuration_t streamList = {comb->num_streams, /*streams*/ nullptr,
-            comb->operation_mode, /*session_parameters*/ nullptr};
-    streamList.streams = new camera3_stream_t * [comb->num_streams];
+    camera3_stream_configuration_t streamList = {
+        comb->num_streams, /*streams*/ nullptr, comb->operation_mode,
+        /*session_parameters*/ nullptr};
+    streamList.streams = new camera3_stream_t *[comb->num_streams];
     camera3_stream_t *streamBuffer = new camera3_stream_t[comb->num_streams];
     int inputStreamNum = 0, outputStreamNum = 0;
     HAL_LOGI("E");
     if (comb == NULL) {
-        HAL_LOGD("NULL stream combination");
+        HAL_LOGE("NULL stream combination");
         rc = -EINVAL;
         goto exit;
     }
@@ -669,64 +643,72 @@ int  BokehCamera::isStreamCombinationSupported(
         rc = -EINVAL;
         goto exit;
     }
-    if (comb->num_streams < 1 || comb->num_streams > REAL_BOKEH_MAX_NUM_STREAMS) {
-        HAL_LOGD("Bad number of streams num: %d", comb->num_streams);
+    if (comb->num_streams < 1 ||
+        comb->num_streams > REAL_BOKEH_MAX_NUM_STREAMS) {
+        HAL_LOGE("Bad number of streams num: %d", comb->num_streams);
         rc = -EINVAL;
         goto exit;
     }
-    if(comb->operation_mode != 0) { //CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE
-	HAL_LOGD("error operation_mode %d", comb->operation_mode);
+    if (comb->operation_mode != 0) { // CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE
+        HAL_LOGE("error operation_mode %d", comb->operation_mode);
         rc = -EINVAL;
         goto exit;
     }
 
-    for (uint8_t  i = 0; i < comb->num_streams; i++) {
-	int streamType;
-        streamBuffer[i] = {comb->streams[i].stream_type, comb->streams[i].width,
-            comb->streams[i].height, comb->streams[i].format, comb->streams[i].usage,
-            /*max_buffers*/ 0, /*priv*/ nullptr, comb->streams[i].data_space,
-            comb->streams[i].rotation, comb->streams[i].physical_camera_id, /*reserved*/ {nullptr}};
+    for (uint8_t i = 0; i < comb->num_streams; i++) {
+        int streamType;
+        streamBuffer[i] = {comb->streams[i].stream_type,
+                           comb->streams[i].width,
+                           comb->streams[i].height,
+                           comb->streams[i].format,
+                           comb->streams[i].usage,
+                           /*max_buffers*/ 0,
+                           /*priv*/ nullptr,
+                           comb->streams[i].data_space,
+                           comb->streams[i].rotation,
+                           comb->streams[i].physical_camera_id,
+                           /*reserved*/ {nullptr}};
         streamList.streams[i] = &streamBuffer[i];
-	if(sizeof(streamList.streams[i]->physical_camera_id) > 0) {
-	    HAL_LOGD("logical camera, physical_camera_id's length should be 0");
-            rc = -EINVAL;
-	    goto exit;
-	}
-	streamType = getStreamTypes(streamList.streams[i]);
-	if(streamType == PREVIEW_STREAM) {
-	    if(streamList.streams[i]->width > maxPrevWidth ||
-                  streamList.streams[i]->height > maxPrevHeight ||
-                  streamList.streams[i]->width < DEPTH_SNAP_OUTPUT_WIDTH ||
-                  streamList.streams[i]->width < DEPTH_SNAP_OUTPUT_HEIGHT) {
-	        HAL_LOGD("dont support prev size width %d, height %d",
-                        streamList.streams[i]->width, streamList.streams[i]->height);
-	        rc = -EINVAL;
-	        goto exit;
-	    }
-	} else if(streamType == SNAPSHOT_STREAM) {
-            if(streamList.streams[i]->width > maxWidth ||
-                streamList.streams[i]->height > maxHeight)
+        streamType = getStreamTypes(streamList.streams[i]);
+        if (streamType == PREVIEW_STREAM) {
+            if (streamList.streams[i]->width > 1920 ||
+                streamList.streams[i]->height > 1080 ||
+                streamList.streams[i]->width < 320 ||
+                streamList.streams[i]->height < 240) {
+                HAL_LOGE("dont support prev size width %d, height %d",
+                         streamList.streams[i]->width,
+                         streamList.streams[i]->height);
+                rc = -EINVAL;
+                goto exit;
+            }
+        } else if (streamType == SNAPSHOT_STREAM) {
+            if (streamList.streams[i]->width > maxCapWidth ||
+                streamList.streams[i]->height > maxCapHeight ||
+                streamList.streams[i]->width < 320 ||
+                streamList.streams[i]->height < 240) {
                 HAL_LOGD("dont support cap size width %d, height %d",
-                    streamList.streams[i]->width, streamList.streams[i]->height);
-	        rc = -EINVAL;
-	        goto exit;
-	}
-        if(streamList.streams[i]->stream_type == CAMERA3_STREAM_OUTPUT) {
-	    outputStreamNum ++;
-	} else if(streamList.streams[i]->stream_type == CAMERA3_STREAM_INPUT) {
-	    HAL_LOGD("%d, input stream", i);
-	    inputStreamNum ++;
-	}
+                         streamList.streams[i]->width,
+                         streamList.streams[i]->height);
+                rc = -EINVAL;
+                goto exit;
+            }
+        }
+        if (streamList.streams[i]->stream_type == CAMERA3_STREAM_OUTPUT) {
+            outputStreamNum++;
+        } else if (streamList.streams[i]->stream_type == CAMERA3_STREAM_INPUT) {
+            HAL_LOGD("%d, input stream", i);
+            inputStreamNum++;
+        }
     }
-    if(outputStreamNum < 1) {
-        HAL_LOGD("without output stream configuration.");
-	rc = -EINVAL;
-	goto exit;
+    if (outputStreamNum < 1 || inputStreamNum > 0) {
+        HAL_LOGE("without output stream configuration or have input stream configuration.");
+        rc = -EINVAL;
+        goto exit;
     }
-    HAL_LOGI("X, rc: %d", rc);
 exit:
-    delete [] streamBuffer;
-    delete [] streamList.streams;
+    HAL_LOGI("X, rc: %d", rc);
+    delete[] streamBuffer;
+    delete[] streamList.streams;
     return rc;
 }
 
@@ -746,22 +728,19 @@ void BokehCamera::process_capture_result_aux(
     mBokehCamera->processCaptureResultAux(result);
 }
 
-int BokehCamera::configureStreams(
-    camera3_stream_configuration_t *stream_list) {
+int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
     HAL_LOGI("E");
     int rc = 0;
-    size_t i = 0;
-    size_t j = 0;
     camera3_stream_t *pmainStreams[REAL_BOKEH_MAX_NUM_STREAMS];
     camera3_stream_t *pauxStreams[REAL_BOKEH_MAX_NUM_STREAMS];
     camera3_stream_t *newStream = NULL;
     camera3_stream_t *previewStream = NULL;
     camera3_stream_t *snapStream = NULL;
-    camera3_stream_t *thumbStream = NULL;
     mBokehSize.depth_prev_out_w = DEPTH_OUTPUT_WIDTH;
     mBokehSize.depth_prev_out_h = DEPTH_OUTPUT_HEIGHT;
     mBokehSize.depth_snap_out_w = DEPTH_SNAP_OUTPUT_WIDTH;
     mBokehSize.depth_snap_out_h = DEPTH_SNAP_OUTPUT_HEIGHT;
+    mVideoPrevShare = false;
     far = 0;
     near = 0;
     mBokehSize.depth_jepg_size = 0;
@@ -772,49 +751,66 @@ int BokehCamera::configureStreams(
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
     sn_trim_flag = true;
+    mReqCapType.frame_number = -1;
+    mReqCapType.reqType = 0;
     struct af_relbokeh_oem_data af_relbokeh_info;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
+    bool prevStreamMalloc = false, snapStreamMalloc = false;
+
+    Mutex::Autolock l(mLock);
+    preClose();
     mPreviewMuxerThread->mPreviewMuxerMsgList.clear();
     mCaptureThread->mCaptureMsgList.clear();
     mDepthMuxerThread->mDepthMuxerMsgList.clear();
+
     mAfstate = 0;
-    mbokehParm.f_number = 20;
+    mbokehParm.f_number = 2;
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     bzero(&af_relbokeh_info, sizeof(struct af_relbokeh_oem_data));
+    mBokehStream.video_w = 0;
+    mBokehStream.video_h = 0;
+    mVideoStreamsNum = -1;
 
-    Mutex::Autolock l(mLock);
+    HAL_LOGD("stream_list %p, num_streams %d", stream_list,
+             stream_list->num_streams);
+    for (size_t i = 0; i < stream_list->num_streams; i++) {
+        HAL_LOGD("framework configurestreams %d, streamtype:%d, format:%d, "
+                 "width:%d, "
+                 "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
+                 "rotation %d, %s",
+                 i, stream_list->streams[i]->stream_type,
+                 stream_list->streams[i]->format,
+                 stream_list->streams[i]->width,
+                 stream_list->streams[i]->height, stream_list->streams[i]->priv,
+                 stream_list->streams[i]->usage,
+                 stream_list->streams[i]->max_buffers,
+                 stream_list->streams[i]->data_space,
+                 stream_list->streams[i]->rotation,
+                 stream_list->streams[i]->physical_camera_id);
 
-    HAL_LOGD("prevNum %d, capNum %d, callbackNum %d", mPreviewStreamsNum, mCaptureStreamsNum,
-		mCallbackStreamsNum);
-    HAL_LOGD("stream_list %p, num_streams %d", stream_list, stream_list->num_streams);
-    if(stream_list->num_streams >= 3) {
-        stream_list->streams[2]->width = 320;
-	stream_list->streams[2]->height = 240;
-	stream_list->streams[2]->format = HAL_PIXEL_FORMAT_YCBCR_420_888; //35
-        stream_list->streams[2]->data_space = HAL_DATASPACE_JFIF;  //257
-        stream_list->streams[1]->data_space = HAL_DATASPACE_JFIF;
-    }
-    for (i = 0; i < stream_list->num_streams; i++) {
-        HAL_LOGD(
-            "framework configurestreams %d, streamtype:%d, format:%d, width:%d, "
-            "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, rotation %d",
-            i, stream_list->streams[i]->stream_type,
-            stream_list->streams[i]->format, stream_list->streams[i]->width,
-            stream_list->streams[i]->height, stream_list->streams[i]->priv,
-            stream_list->streams[i]->usage, stream_list->streams[i]->max_buffers,
-            stream_list->streams[i]->data_space, stream_list->streams[i]->rotation);
+        /*
+         * [CTS]
+         * LogicalCameraDeviceTest#testBasicLogicalPhysicalStreamCombination
+         * [CTS] LogicalCameraDeviceTest#testBasicPhysicalStreaming
+         * [CTS] NativeCameraDeviceTest#testCameraDeviceLogicalPhysicalStreaming
+         *
+         * don't support any physical stream for now
+         */
+        if (stream_list->streams[i]->physical_camera_id &&
+            strlen(stream_list->streams[i]->physical_camera_id)) {
+            HAL_LOGW("assign physical camera id %d to stream is currently not "
+                     "supported",
+                     atoi(stream_list->streams[i]->physical_camera_id));
+            return -EINVAL;
+        }
     }
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         int requestStreamType = getStreamTypes(stream_list->streams[i]);
-        HAL_LOGD("configurestreams, org streamtype:%d",
-                 stream_list->streams[i]->stream_type);
         HAL_LOGD("requestStreamType %d", requestStreamType);
         if (requestStreamType == PREVIEW_STREAM && (previewStream == NULL)) {
+            HAL_LOGD("PreviewStream index %d", mPreviewStreamsNum);
             previewStream = stream_list->streams[i];
             mBokehSize.preview_w = stream_list->streams[i]->width;
             mBokehSize.preview_h = stream_list->streams[i]->height;
@@ -823,21 +819,15 @@ int BokehCamera::configureStreams(
                               &mBokehSize.depth_prev_sub_h, requestStreamType);
             mMainStreams[mPreviewStreamsNum] = *stream_list->streams[i];
             mAuxStreams[mPreviewStreamsNum] = *stream_list->streams[i];
-            (mMainStreams[mPreviewStreamsNum]).data_space = HAL_DATASPACE_UNKNOWN;
-            (mAuxStreams[mPreviewStreamsNum]).data_space = HAL_DATASPACE_UNKNOWN;
             (mAuxStreams[mPreviewStreamsNum]).width =
                 mBokehSize.depth_prev_sub_w;
-	    (mAuxStreams[mPreviewStreamsNum]).height =
+            (mAuxStreams[mPreviewStreamsNum]).height =
                 mBokehSize.depth_prev_sub_h;
-            (mMainStreams[mPreviewStreamsNum]).format =
-				HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
-            (mMainStreams[mPreviewStreamsNum]).usage = 0x900;
-            (mAuxStreams[mPreviewStreamsNum]).format =
-				HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
-            (mAuxStreams[mPreviewStreamsNum]).usage = 0x900;
-            pmainStreams[mPreviewStreamsNum] = &mMainStreams[mPreviewStreamsNum];
+            pmainStreams[mPreviewStreamsNum] =
+                &mMainStreams[mPreviewStreamsNum];
             pauxStreams[mPreviewStreamsNum] = &mAuxStreams[mPreviewStreamsNum];
         } else if (requestStreamType == SNAPSHOT_STREAM && snapStream == NULL) {
+            HAL_LOGD("CaptureStream index %d", mCaptureStreamsNum);
             snapStream = stream_list->streams[i];
             mBokehSize.capture_w = stream_list->streams[i]->width;
             mBokehSize.capture_h = stream_list->streams[i]->height;
@@ -880,7 +870,6 @@ int BokehCamera::configureStreams(
             pmainStreams[mCaptureStreamsNum] =
                 &mMainStreams[mCaptureStreamsNum];
 
-            mCallbackStreamsNum = REAL_BOKEH_MAX_NUM_STREAMS - 1;
             mMainStreams[mCallbackStreamsNum].max_buffers = 1;
             mMainStreams[mCallbackStreamsNum].width = mBokehSize.capture_w;
             mMainStreams[mCallbackStreamsNum].height = mBokehSize.capture_h;
@@ -913,86 +902,104 @@ int BokehCamera::configureStreams(
             mAuxStreams[mCallbackStreamsNum].rotation =
                 stream_list->streams[i]->rotation;
             pauxStreams[mCaptureStreamsNum] = &mAuxStreams[mCallbackStreamsNum];
-        } else if (requestStreamType == CALLBACK_STREAM) {
+        } else if (requestStreamType == DEFAULT_STREAM) {
             mhasCallbackStream = true;
             (stream_list->streams[i])->max_buffers = 1;
+        } else if (requestStreamType == VIDEO_STREAM) {
+            mVideoStreamsNum = i;
+            HAL_LOGD("mVideoStreamsNum %d", mVideoStreamsNum);
+            (stream_list->streams[i])->max_buffers = 7;
+            mBokehStream.video_w = (stream_list->streams[i])->width;
+            mBokehStream.video_h = (stream_list->streams[i])->height;
         }
     }
-    if(previewStream == NULL) {
-        previewStream = (struct camera3_stream *)malloc(sizeof(struct camera3_stream));
-	memcpy(previewStream, (struct camera3_stream *)(stream_list->streams[0]),
-                   sizeof(struct camera3_stream));
-        mBokehSize.preview_w = maxPrevWidth;
-        mBokehSize.preview_h = maxPrevHeight;
+    HAL_LOGD("mVideoStreamsNum %d", mVideoStreamsNum);
+    if (previewStream == NULL) {
+        HAL_LOGD("PreviewStream index %d", mPreviewStreamsNum);
+        prevStreamMalloc = true;
+        previewStream =
+            (struct camera3_stream *)malloc(sizeof(struct camera3_stream));
+        memcpy(previewStream,
+               (struct camera3_stream *)(stream_list->streams[0]),
+               sizeof(struct camera3_stream));
+        if (mVideoStreamsNum >= 0) {
+            mVideoPrevShare = true;
+            mBokehSize.preview_w = mBokehStream.video_w;
+            mBokehSize.preview_h = mBokehStream.video_h;
+        } else {
+            mBokehSize.preview_w = maxPrevWidth;
+            mBokehSize.preview_h = maxPrevHeight;
+        }
+        HAL_LOGD("mBokehSize %d, %d", mBokehSize.preview_w,
+                 mBokehSize.preview_h);
         getDepthImageSize(mBokehSize.preview_w, mBokehSize.preview_h,
-            &mBokehSize.depth_prev_sub_w,
-            &mBokehSize.depth_prev_sub_h, PREVIEW_STREAM);
+                          &mBokehSize.depth_prev_sub_w,
+                          &mBokehSize.depth_prev_sub_h, PREVIEW_STREAM);
 
         mMainStreams[mPreviewStreamsNum] = *previewStream;
         mAuxStreams[mPreviewStreamsNum] = *previewStream;
-        (mAuxStreams[mPreviewStreamsNum]).width =
-            mBokehSize.depth_prev_sub_w;
-        (mAuxStreams[mPreviewStreamsNum]).height =
-            mBokehSize.depth_prev_sub_h;
+        (mAuxStreams[mPreviewStreamsNum]).width = mBokehSize.depth_prev_sub_w;
+        (mAuxStreams[mPreviewStreamsNum]).height = mBokehSize.depth_prev_sub_h;
+        (mMainStreams[mPreviewStreamsNum]).data_space = HAL_DATASPACE_UNKNOWN;
+        (mAuxStreams[mPreviewStreamsNum]).data_space = HAL_DATASPACE_UNKNOWN;
+        (mMainStreams[mPreviewStreamsNum]).format =
+            HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
+        (mAuxStreams[mPreviewStreamsNum]).format =
+            HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED;
+        (mMainStreams[mPreviewStreamsNum]).usage = 0x900;
+        (mAuxStreams[mPreviewStreamsNum]).usage = 0x900;
         pmainStreams[mPreviewStreamsNum] = &mMainStreams[mPreviewStreamsNum];
         pauxStreams[mPreviewStreamsNum] = &mAuxStreams[mPreviewStreamsNum];
     }
-    if(snapStream == NULL) {
-            snapStream = (struct camera3_stream *)malloc(sizeof(struct camera3_stream));
-            memcpy(snapStream, (struct camera3_stream *)(stream_list->streams[0]),
-                   sizeof(struct camera3_stream));
-            snapStream->width = maxWidth;
-	    snapStream->height = maxHeight;
-            mBokehSize.capture_w = snapStream->width;
-            mBokehSize.capture_h = snapStream->height;
-            mBokehSize.callback_w = mBokehSize.capture_w;
-            mBokehSize.callback_h = mBokehSize.capture_h;
-            getDepthImageSize(mBokehSize.capture_w, mBokehSize.capture_h,
-                              &mBokehSize.depth_snap_sub_w,
-                              &mBokehSize.depth_snap_sub_h, SNAPSHOT_STREAM);
-            mMainStreams[mCaptureStreamsNum] = *snapStream;
-            (mMainStreams[mCaptureStreamsNum]).format = HAL_PIXEL_FORMAT_BLOB;
-            (mMainStreams[mCaptureStreamsNum]).data_space = HAL_DATASPACE_JFIF;
-            mAuxStreams[mCaptureStreamsNum] = *snapStream;
-            (mAuxStreams[mCaptureStreamsNum]).width =
-                mBokehSize.depth_snap_sub_w;
-            (mAuxStreams[mCaptureStreamsNum]).height =
-                mBokehSize.depth_snap_sub_h;
-	    (mAuxStreams[mCaptureStreamsNum]).data_space = HAL_DATASPACE_JFIF;
-            (mAuxStreams[mCaptureStreamsNum]).usage = 0x3;
-            pmainStreams[mCaptureStreamsNum] =
-                &mMainStreams[mCaptureStreamsNum];
-
-            mCallbackStreamsNum = REAL_BOKEH_MAX_NUM_STREAMS - 1;
-            mMainStreams[mCallbackStreamsNum].max_buffers = 1;
-            mMainStreams[mCallbackStreamsNum].width = mBokehSize.capture_w;
-            mMainStreams[mCallbackStreamsNum].height = mBokehSize.capture_h;
-            mMainStreams[mCallbackStreamsNum].format =
-                HAL_PIXEL_FORMAT_YCbCr_420_888;
-            mMainStreams[mCallbackStreamsNum].usage = 0x3;
-            mMainStreams[mCallbackStreamsNum].stream_type =
-                CAMERA3_STREAM_OUTPUT;
-            mMainStreams[mCallbackStreamsNum].data_space = HAL_DATASPACE_JFIF;
-            mMainStreams[mCallbackStreamsNum].rotation =
-                snapStream->rotation;
-            pmainStreams[mCallbackStreamsNum] =
-                &mMainStreams[mCallbackStreamsNum];
-            mAuxStreams[mCallbackStreamsNum].max_buffers = 1;
-            mAuxStreams[mCallbackStreamsNum].width =
-                mBokehSize.depth_snap_sub_w;
-            mAuxStreams[mCallbackStreamsNum].height =
-                mBokehSize.depth_snap_sub_h;
-            mAuxStreams[mCallbackStreamsNum].format =
-                HAL_PIXEL_FORMAT_YCbCr_420_888;
-            mAuxStreams[mCallbackStreamsNum].stream_type =
-                CAMERA3_STREAM_OUTPUT;
-            mAuxStreams[mCallbackStreamsNum].data_space = HAL_DATASPACE_JFIF;
-            mAuxStreams[mCallbackStreamsNum].rotation =
-                snapStream->rotation;
-            mAuxStreams[mCallbackStreamsNum].usage = 0x3;
-            pauxStreams[mCaptureStreamsNum] = &mAuxStreams[mCallbackStreamsNum];
-            HAL_LOGD("snapStream w %d h %d format %d", snapStream->width,
-                snapStream->height, snapStream->format);
+    if (snapStream == NULL) {
+        HAL_LOGD("CaptureStream index %d", mCaptureStreamsNum);
+        snapStreamMalloc = true;
+        snapStream =
+            (struct camera3_stream *)malloc(sizeof(struct camera3_stream));
+        memcpy(snapStream, (struct camera3_stream *)(stream_list->streams[0]),
+               sizeof(struct camera3_stream));
+        snapStream->width = maxCapWidth;
+        snapStream->height = maxCapHeight;
+        mBokehSize.capture_w = snapStream->width;
+        mBokehSize.capture_h = snapStream->height;
+        mBokehSize.callback_w = mBokehSize.capture_w;
+        mBokehSize.callback_h = mBokehSize.capture_h;
+        getDepthImageSize(mBokehSize.capture_w, mBokehSize.capture_h,
+                          &mBokehSize.depth_snap_sub_w,
+                          &mBokehSize.depth_snap_sub_h, SNAPSHOT_STREAM);
+        mMainStreams[mCaptureStreamsNum] = *snapStream;
+        (mMainStreams[mCaptureStreamsNum]).format = HAL_PIXEL_FORMAT_BLOB;
+        snapStream->format = HAL_PIXEL_FORMAT_BLOB;
+        (mMainStreams[mCaptureStreamsNum]).data_space = HAL_DATASPACE_JFIF;
+        mAuxStreams[mCaptureStreamsNum] = *snapStream;
+        (mAuxStreams[mCaptureStreamsNum]).width = mBokehSize.depth_snap_sub_w;
+        (mAuxStreams[mCaptureStreamsNum]).height = mBokehSize.depth_snap_sub_h;
+        (mAuxStreams[mCaptureStreamsNum]).data_space = HAL_DATASPACE_JFIF;
+        (mAuxStreams[mCaptureStreamsNum]).usage = 0x3;
+        pmainStreams[mCaptureStreamsNum] = &mMainStreams[mCaptureStreamsNum];
+        HAL_LOGD("CallbackStream index %d", mCallbackStreamsNum);
+        mMainStreams[mCallbackStreamsNum].max_buffers = 1;
+        mMainStreams[mCallbackStreamsNum].width = mBokehSize.capture_w;
+        mMainStreams[mCallbackStreamsNum].height = mBokehSize.capture_h;
+        mMainStreams[mCallbackStreamsNum].format =
+            HAL_PIXEL_FORMAT_YCbCr_420_888;
+        mMainStreams[mCallbackStreamsNum].usage = 0x3;
+        mMainStreams[mCallbackStreamsNum].stream_type = CAMERA3_STREAM_OUTPUT;
+        mMainStreams[mCallbackStreamsNum].data_space = HAL_DATASPACE_JFIF;
+        mMainStreams[mCallbackStreamsNum].rotation = snapStream->rotation;
+        pmainStreams[mCallbackStreamsNum] = &mMainStreams[mCallbackStreamsNum];
+        mAuxStreams[mCallbackStreamsNum].max_buffers = 1;
+        mAuxStreams[mCallbackStreamsNum].width = mBokehSize.depth_snap_sub_w;
+        mAuxStreams[mCallbackStreamsNum].height = mBokehSize.depth_snap_sub_h;
+        mAuxStreams[mCallbackStreamsNum].format =
+            HAL_PIXEL_FORMAT_YCbCr_420_888;
+        mAuxStreams[mCallbackStreamsNum].stream_type = CAMERA3_STREAM_OUTPUT;
+        mAuxStreams[mCallbackStreamsNum].data_space = HAL_DATASPACE_JFIF;
+        mAuxStreams[mCallbackStreamsNum].rotation = snapStream->rotation;
+        mAuxStreams[mCallbackStreamsNum].usage = 0x3;
+        pauxStreams[mCaptureStreamsNum] = &mAuxStreams[mCallbackStreamsNum];
+        HAL_LOGD("snapStream w %d h %d format %d", snapStream->width,
+                 snapStream->height, snapStream->format);
     }
     mBokehSize.depth_prev_scale_size =
         mBokehSize.depth_prev_out_w * mBokehSize.depth_prev_out_h * sizeof(int);
@@ -1012,56 +1019,84 @@ int BokehCamera::configureStreams(
     if (rc < 0) {
         HAL_LOGE("failed to allocateBuff.");
     }
-    intDepthPrevBufferFlag();
+    initPrevDepthBufferFlag();
 
     camera3_stream_configuration mainconfig;
     mainconfig = *stream_list;
     mainconfig.num_streams = REAL_BOKEH_MAX_NUM_STREAMS;
     mainconfig.streams = pmainStreams;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
 
     camera3_stream_configuration auxconfig;
     auxconfig = *stream_list;
     auxconfig.num_streams = REAL_BOKEH_MAX_NUM_STREAMS - 1;
     auxconfig.streams = pauxStreams;
-    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
     HAL_LOGD("AuxConfig Num %d", auxconfig.num_streams);
-    for(i = 0;i < auxconfig.num_streams;i++) {
-        HAL_LOGD(
-            "auxconfig configurestreams %d, streamtype:%d, format:%d, width:%d, "
-            "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, rotation %d",
-            i, auxconfig.streams[i]->stream_type,
-            auxconfig.streams[i]->format, auxconfig.streams[i]->width,
-            auxconfig.streams[i]->height, auxconfig.streams[i]->priv,
-            auxconfig.streams[i]->usage, auxconfig.streams[i]->max_buffers,
-            auxconfig.streams[i]->data_space, auxconfig.streams[i]->rotation);
+    for (size_t i = 0; i < auxconfig.num_streams; i++) {
+        HAL_LOGD("auxconfig configurestreams %d, streamtype:%d, format:%d, "
+                 "width:%d, "
+                 "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
+                 "rotation %d",
+                 i, auxconfig.streams[i]->stream_type,
+                 auxconfig.streams[i]->format, auxconfig.streams[i]->width,
+                 auxconfig.streams[i]->height, auxconfig.streams[i]->priv,
+                 auxconfig.streams[i]->usage, auxconfig.streams[i]->max_buffers,
+                 auxconfig.streams[i]->data_space,
+                 auxconfig.streams[i]->rotation);
     }
-    rc =
-        hwiAux->configure_streams(m_pPhyCamera[CAM_TYPE_DEPTH].dev, &auxconfig);
+    rc = hwiAux->configure_streams(m_pPhyCamera[CAM_BOKEH_DEPTH].dev,
+                                   &auxconfig);
     if (rc < 0) {
         HAL_LOGE("failed. configure aux streams!!");
-        return rc;
+        goto exit;
     } else {
         HAL_LOGD("success. configure aux streams.");
     }
+    for (size_t i = 0; i < auxconfig.num_streams; i++) {
+        HAL_LOGD("auxconfig configurestreams %d, streamtype:%d, format:%d, "
+                 "width:%d, "
+                 "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
+                 "rotation %d",
+                 i, auxconfig.streams[i]->stream_type,
+                 auxconfig.streams[i]->format, auxconfig.streams[i]->width,
+                 auxconfig.streams[i]->height, auxconfig.streams[i]->priv,
+                 auxconfig.streams[i]->usage, auxconfig.streams[i]->max_buffers,
+                 auxconfig.streams[i]->data_space,
+                 auxconfig.streams[i]->rotation);
+    }
     HAL_LOGD("MainConfig Num %d", mainconfig.num_streams);
-    for(i = 0;i < mainconfig.num_streams;i++) {
+    for (size_t i = 0; i < mainconfig.num_streams; i++) {
         HAL_LOGD(
-            "mainconfig configurestreams %d, streamtype:%d, format:%d, width:%d, "
-            "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, rotation %d",
+            "mainconfig configurestreams %d, streamtype:%d, format:%d, "
+            "width:%d, "
+            "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
+            "rotation %d",
             i, mainconfig.streams[i]->stream_type,
             mainconfig.streams[i]->format, mainconfig.streams[i]->width,
             mainconfig.streams[i]->height, mainconfig.streams[i]->priv,
             mainconfig.streams[i]->usage, mainconfig.streams[i]->max_buffers,
             mainconfig.streams[i]->data_space, mainconfig.streams[i]->rotation);
     }
-    rc = hwiMain->configure_streams(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev,
+    rc = hwiMain->configure_streams(m_pPhyCamera[CAM_BOKEH_MAIN].dev,
                                     &mainconfig);
     if (rc < 0) {
         HAL_LOGE("failed. configure main streams!!");
-        return rc;
+        goto exit;
     } else {
         HAL_LOGD("success. configure main streams.");
+    }
+    for (size_t i = 0; i < mainconfig.num_streams; i++) {
+        HAL_LOGD(
+            "mainconfig configurestreams %d, streamtype:%d, format:%d, "
+            "width:%d, "
+            "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
+            "rotation %d",
+            i, mainconfig.streams[i]->stream_type,
+            mainconfig.streams[i]->format, mainconfig.streams[i]->width,
+            mainconfig.streams[i]->height, mainconfig.streams[i]->priv,
+            mainconfig.streams[i]->usage, mainconfig.streams[i]->max_buffers,
+            mainconfig.streams[i]->data_space, mainconfig.streams[i]->rotation);
     }
 
     if (previewStream != NULL) {
@@ -1078,7 +1113,7 @@ int BokehCamera::configureStreams(
     }
     mCaptureThread->run(String8::format("Bokeh-Cap").string());
     mPreviewMuxerThread->run(String8::format("Bokeh-Prev").string());
-    if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
         mDepthMuxerThread->run(String8::format("depth-prev").string());
     }
 
@@ -1090,13 +1125,18 @@ int BokehCamera::configureStreams(
                            NULL);
     memcpy(&mbokehParm.relbokeh_oem_data, &af_relbokeh_info,
            sizeof(af_relbokeh_oem_data));
+    HAL_LOGD("ALG mBokehAlgo->initParam start");
     rc = mBokehAlgo->initParam(&mBokehSize, &mOtpData,
                                mCaptureThread->mAbokehGallery);
+    HAL_LOGD("ALG mBokehAlgo->initParam end");
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to initParam");
     }
 
     if (mOtpData.otp_exist) {
+        char prop[PROPERTY_VALUE_MAX] = {
+            0,
+        };
         property_get("persist.vendor.cam.pbokeh.enable", prop, "1");
         mIsSupportPBokeh = atoi(prop);
         HAL_LOGD("mIsSupportPBokeh prop %d", mIsSupportPBokeh);
@@ -1108,71 +1148,90 @@ int BokehCamera::configureStreams(
         mPreviewMuxerThread->requestInit();
     }
     HAL_LOGI("x rc%d.", rc);
-    for (i = 0; i < stream_list->num_streams; i++) {
-        HAL_LOGD(
-            "configurestreams, streamtype:%d, format:%d, width:%d, "
-            "height:%d, max_buffers:%d, priv:%p",
-            stream_list->streams[i]->stream_type,
-            stream_list->streams[i]->format, stream_list->streams[i]->width,
-            stream_list->streams[i]->height, stream_list->streams[i]->priv);
+    for (size_t i = 0; i < stream_list->num_streams; i++) {
+        if (getStreamTypes(stream_list->streams[i]) == PREVIEW_STREAM ||
+            getStreamTypes(stream_list->streams[i]) == VIDEO_STREAM)
+            stream_list->streams[i]->max_buffers = previewStream->max_buffers;
+        HAL_LOGD("configurestreams %d, streamtype:%d, format:%d, width:%d, "
+                 "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
+                 "rotation %d",
+                 i, stream_list->streams[i]->stream_type,
+                 stream_list->streams[i]->format,
+                 stream_list->streams[i]->width,
+                 stream_list->streams[i]->height, stream_list->streams[i]->priv,
+                 stream_list->streams[i]->usage,
+                 stream_list->streams[i]->max_buffers,
+                 stream_list->streams[i]->data_space,
+                 stream_list->streams[i]->rotation);
+        if (stream_list->streams[i]->max_buffers <= 0)
+            stream_list->streams[i]->max_buffers = 1;
     }
-    HAL_LOGI("mum_streams:%d,%d,w,h:(%d,%d)(%d,%d)(%d,%d)(%d,%d)),"
+    HAL_LOGI("mum_streams:%d,%d,depth_cap (%d,%d),cap (%d,%d),"
+             "depth_prev (%d,%d), prev (%d,%d), video (%d, %d), "
              "mIsSupportPBokeh:%d,",
              mainconfig.num_streams, auxconfig.num_streams,
              mBokehSize.depth_snap_sub_w, mBokehSize.depth_snap_sub_h,
              mBokehSize.capture_w, mBokehSize.capture_h,
              mBokehSize.depth_prev_sub_w, mBokehSize.depth_prev_sub_h,
-             mBokehSize.preview_w, mBokehSize.preview_h, mIsSupportPBokeh);
-
+             mBokehSize.preview_w, mBokehSize.preview_h, mBokehStream.video_w,
+             mBokehStream.video_h, mIsSupportPBokeh);
+exit:
+    if (prevStreamMalloc) {
+        free(previewStream);
+        previewStream = NULL;
+    }
+    if (snapStreamMalloc) {
+        free(snapStream);
+        snapStream = NULL;
+    }
     return rc;
 }
 
 const camera_metadata_t *
 BokehCamera::constructDefaultRequestSettings(int type) {
     const camera_metadata_t *fwk_metadata = NULL;
-    SprdCamera3HWI *hw = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-    SprdCamera3HWI *hw_depth = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+    SprdCamera3HWI *hw = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
+    SprdCamera3HWI *hw_depth = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
     Mutex::Autolock l(mLock);
     if (!hw) {
         HAL_LOGE("NULL camera device");
         return NULL;
     }
 
-    fwk_metadata = hw_depth->construct_default_request_settings(
-        m_pPhyCamera[CAM_TYPE_DEPTH].dev, type);
     fwk_metadata = hw->construct_default_request_settings(
-        m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev, type);
+        m_pPhyCamera[CAM_BOKEH_MAIN].dev, type);
+    HAL_LOGD("fwk_metadata %p", fwk_metadata);
     if (!fwk_metadata) {
         HAL_LOGE("constructDefaultMetadata failed");
         return NULL;
     }
-    CameraMetadata metadata;
-    metadata = fwk_metadata;
-    if (mOtpData.otp_exist == false && metadata.exists(ANDROID_SPRD_OTP_DATA)) {
-        uint8_t otpType;
-        int otpSize;
-        otpType = SprdCamera3Setting::s_setting[CAM_TYPE_BOKEH_MAIN]
-                      .otpInfo.otp_type;
-        otpSize = SprdCamera3Setting::s_setting[CAM_TYPE_BOKEH_MAIN]
-                      .otpInfo.otp_size;
-        HAL_LOGI("otpType %d, otpSize %d", otpType, otpSize);
-        mOtpData.otp_exist = true;
-        mOtpData.otp_type = otpType;
-        mOtpData.otp_size = otpSize;
-        memcpy(mOtpData.otp_data, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,
-               otpSize);
+
+    /*
+     * [CTS] LogicalCameraDeviceTest#testDefaultFov
+     *
+     * logical camera must provide android.scaler.cropRegion
+     */
+    {
+        CameraMetadata data(const_cast<camera_metadata_t *>(fwk_metadata));
+
+        int32_t cropRegion[4] = {0, 0, maxCapWidth, maxCapHeight};
+        data.update(ANDROID_SCALER_CROP_REGION, cropRegion, 4);
+        HAL_LOGD("update crop region to (0, 0, %d, %d) for type %d",
+                 maxCapWidth, maxCapHeight, type);
+
+        data.release();
     }
+
     HAL_LOGD("X");
 
     return fwk_metadata;
 }
 
-int BokehCamera::processCaptureRequest(
-    camera3_capture_request_t *request) {
+int BokehCamera::processCaptureRequest(camera3_capture_request_t *request) {
     int rc = 0;
     uint32_t i = 0;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
     CameraMetadata metaSettingsMain, metaSettingsAux;
     camera3_capture_request_t *req = request;
     camera3_capture_request_t req_main;
@@ -1184,12 +1243,9 @@ int BokehCamera::processCaptureRequest(
     bool is_captureing = false;
     uint32_t tagCnt = 0;
     camera3_stream_t *preview_stream = NULL;
-    char value[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    int32_t crop_Region[4] = {0, 0, 0, 0};
     cmr_u16 snsW, snsH;
-    float mZoomValue = 0.0f;
+    req_type curReqType = {.frame_number = (int)request->frame_number,
+                           .reqType = 0};
     bzero(out_streams_main,
           sizeof(camera3_stream_buffer_t) * REAL_BOKEH_MAX_NUM_STREAMS);
     bzero(out_streams_aux,
@@ -1204,9 +1260,17 @@ int BokehCamera::processCaptureRequest(
     metaSettingsMain = request->settings;
     metaSettingsAux = request->settings;
 
+    if (metaSettingsMain.exists(ANDROID_CONTROL_EXTENDED_SCENE_MODE)) {
+        mExtendMode = metaSettingsMain.find(ANDROID_CONTROL_EXTENDED_SCENE_MODE)
+                          .data.u8[0];
+        HAL_LOGD("request %d, extend_mode %d", request->frame_number,
+                 mExtendMode);
+    }
+    saveRequest(request);
+
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
     // only sprd bokeh api support hdr
-    if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
         if (metaSettingsMain.exists(ANDROID_CONTROL_SCENE_MODE)) {
             uint8_t scene_mode =
                 metaSettingsMain.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
@@ -1225,36 +1289,57 @@ int BokehCamera::processCaptureRequest(
         metaSettingsAux.update(ANDROID_CONTROL_SCENE_MODE, &value, 1);
     }
 #endif
-    if(metaSettingsMain.exists(ANDROID_CONTROL_EXTENDED_SCENE_MODE)) {
-        uint8_t extend_mode = metaSettingsMain.find(
-	    ANDROID_CONTROL_EXTENDED_SCENE_MODE).data.u8[0];
-        HAL_LOGD("extend_mode: %d", extend_mode);
-    }
+    /*if (metaSettingsMain.exists(ANDROID_SPRD_APP_MODE_ID)) {
+        int32_t appMode = CAMERA_MODE_REFOCUS;
+        metaSettingsMain.update(ANDROID_SPRD_APP_MODE_ID, &appMode, 1);
+        metaSettingsAux.update(ANDROID_SPRD_APP_MODE_ID, &appMode, 1);
+        HAL_LOGD("appMode %d", appMode);
+    }*/
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         camera3_stream_t *stream = request->output_buffers[i].stream;
         HAL_LOGD("request %d, streamType:%d, width:%d, height:%d, format:%d,"
-                      "usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, priv:%p, phyId:%s",
-                      i, stream->stream_type, stream->width, stream->height, stream->format,
-                      stream->usage, stream->max_buffers, stream->data_space, stream->rotation,
-                      stream->priv, stream->physical_camera_id);
+                 "usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, "
+                 "priv:%p, phyId:%s, physcam_id %s",
+                 i, stream->stream_type, stream->width, stream->height,
+                 stream->format, stream->usage, stream->max_buffers,
+                 stream->data_space, stream->rotation, stream->priv,
+                 stream->physical_camera_id, request->physcam_id);
+        HAL_LOGD("idx: %d, %p", request->frame_number,
+                 request->output_buffers[i].buffer);
     }
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         int requestStreamType =
             getStreamTypes(request->output_buffers[i].stream);
-        HAL_LOGD("streamtype:%d",requestStreamType);
+        HAL_LOGD("streamtype:%d", requestStreamType);
         if (requestStreamType == SNAPSHOT_STREAM) {
             mIsCapturing = true;
             is_captureing = mIsCapturing;
+            mSnapshotMainReturn = false;
+            mSnapshotAuxReturn = false;
+            curReqType.reqType |= 2;
+            HAL_LOGD("curReqType %d %d", curReqType.frame_number,
+                     curReqType.reqType);
             if (metaSettingsMain.exists(ANDROID_JPEG_ORIENTATION)) {
                 mJpegOrientation =
                     metaSettingsMain.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
             }
             mBokehCamera->mIsCapDepthFinish = false;
             HAL_LOGD("mJpegOrientation=%d", mJpegOrientation);
-        } else if (requestStreamType == CALLBACK_STREAM || requestStreamType == PREVIEW_STREAM) {
+        } else if (requestStreamType == CALLBACK_STREAM ||
+                   requestStreamType == PREVIEW_STREAM ||
+                   (mVideoPrevShare && requestStreamType == VIDEO_STREAM)) {
+            curReqType.reqType |= 1;
+            HAL_LOGD("curReqType %d %d", curReqType.frame_number,
+                     curReqType.reqType);
             preview_stream = (request->output_buffers[i]).stream;
             updateApiParams(metaSettingsMain, 0, request->frame_number);
         }
+    }
+    if (curReqType.reqType >= 2) {
+        mReqCapType.frame_number = curReqType.frame_number;
+        mReqCapType.reqType = curReqType.reqType;
+        HAL_LOGD("mReqCapType %d %d", mReqCapType.frame_number,
+                 mReqCapType.reqType);
     }
     if (metaSettingsMain.exists(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)) {
         mBokehMode =
@@ -1277,13 +1362,24 @@ int BokehCamera::processCaptureRequest(
         metaSettingsMain.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
         metaSettingsAux.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
     }
-    saveRequest(request);
-    /* save Perfectskinlevel */
-    /*if (metaSettingsMain.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
-        mPerfectskinlevel.smoothLevel =
-            metaSettingsMain.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
-        HAL_LOGV("smoothLevel=%d", mPerfectskinlevel.smoothLevel);
-    }*/
+    if (metaSettingsMain.exists(ANDROID_SCALER_CROP_REGION)) {
+        int32_t crop_region[4];
+        crop_region[0] =
+            metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[0];
+        crop_region[1] =
+            metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[1];
+        crop_region[2] =
+            metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[2];
+        crop_region[3] =
+            metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[3];
+        HAL_LOGD("crop_region %d %d %d %d", crop_region[0], crop_region[1],
+                 crop_region[2], crop_region[3]);
+        metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[0] = 0;
+        metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[1] = 0;
+        metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[2] = 0;
+        metaSettingsMain.find(ANDROID_SCALER_CROP_REGION).data.i32[3] = 0;
+    }
+
     req_main = *req;
     req_aux = *req;
     req_main.settings = metaSettingsMain.release();
@@ -1296,9 +1392,11 @@ int BokehCamera::processCaptureRequest(
             getStreamTypes(request->output_buffers[i].stream);
         new_stream = (req->output_buffers[i]).stream;
         new_buffer = (req->output_buffers[i]).buffer;
-        HAL_LOGD("%d, streamtype:%d", i, requestStreamType);
-        HAL_LOGD("%d, w: %d, h: %d, format: %d, usage: %d", i, new_stream->width, new_stream->height,
-                new_stream->format,new_stream->usage);
+        HAL_LOGD("%d, output_buffers %d, streamtype:%d", i,
+                 req->num_output_buffers, requestStreamType);
+        HAL_LOGD("%d, w: %d, h: %d, format: %d, usage: %d", i,
+                 new_stream->width, new_stream->height, new_stream->format,
+                 new_stream->usage);
         if (requestStreamType == SNAPSHOT_STREAM) {
             // first step: save capture request stream info
             if (NULL != mCaptureThread->mSavedCapReqsettings) {
@@ -1368,7 +1466,8 @@ int BokehCamera::processCaptureRequest(
             }
             aux_buffer_index++;
         } else if (requestStreamType == CALLBACK_STREAM ||
-               requestStreamType == PREVIEW_STREAM) {
+                   requestStreamType == PREVIEW_STREAM ||
+                   (requestStreamType == VIDEO_STREAM && mVideoPrevShare)) {
             out_streams_main[main_buffer_index] = req->output_buffers[i];
             out_streams_main[main_buffer_index].stream =
                 &mMainStreams[mPreviewStreamsNum];
@@ -1407,6 +1506,29 @@ int BokehCamera::processCaptureRequest(
     req_main.output_buffers = out_streams_main;
     req_aux.output_buffers = out_streams_aux;
 
+    for (size_t i = 0; i < req_main.num_output_buffers; i++) {
+        camera3_stream_t *stream = req_main.output_buffers[i].stream;
+        HAL_LOGD("main_req , output_buffer:%d, streamType:%d, width:%d, "
+                 "height:%d, format:%d,"
+                 "usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, "
+                 "priv:%p, phyId:%s",
+                 i, stream->stream_type, stream->width, stream->height,
+                 stream->format, stream->usage, stream->max_buffers,
+                 stream->data_space, stream->rotation, stream->priv,
+                 stream->physical_camera_id);
+    }
+    for (size_t i = 0; i < req_aux.num_output_buffers; i++) {
+        camera3_stream_t *stream = req_aux.output_buffers[i].stream;
+        HAL_LOGD("aux_req , output_buffer:%d, streamType:%d, width:%d, "
+                 "height:%d, format:%d,"
+                 "usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, "
+                 "priv:%p, phyId:%s",
+                 i, stream->stream_type, stream->width, stream->height,
+                 stream->format, stream->usage, stream->max_buffers,
+                 stream->data_space, stream->rotation, stream->priv,
+                 stream->physical_camera_id);
+    }
+
     if (is_captureing) {
         struct timespec t1;
         clock_gettime(CLOCK_BOOTTIME, &t1);
@@ -1421,7 +1543,7 @@ int BokehCamera::processCaptureRequest(
             hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP,
                                    &currentmainTimestamp, NULL);
             rc = hwiMain->process_capture_request(
-                m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev, &req_main);
+                m_pPhyCamera[CAM_BOKEH_MAIN].dev, &req_main);
             if (rc < 0) {
                 HAL_LOGE("failed, idx:%d", req_main.frame_number);
                 goto req_fail;
@@ -1431,7 +1553,7 @@ int BokehCamera::processCaptureRequest(
             HAL_LOGD("start sub, idx:%d", req_aux.frame_number);
             if (!mFlushing) {
                 rc = hwiAux->process_capture_request(
-                    m_pPhyCamera[CAM_TYPE_DEPTH].dev, &req_aux);
+                    m_pPhyCamera[CAM_BOKEH_DEPTH].dev, &req_aux);
                 if (rc < 0) {
                     HAL_LOGE("failed, idx:%d", req_aux.frame_number);
                     goto req_fail;
@@ -1444,7 +1566,7 @@ int BokehCamera::processCaptureRequest(
                                   &currentmainTimestamp, NULL);
             if (!mFlushing) {
                 rc = hwiAux->process_capture_request(
-                    m_pPhyCamera[CAM_TYPE_DEPTH].dev, &req_aux);
+                    m_pPhyCamera[CAM_BOKEH_DEPTH].dev, &req_aux);
                 if (rc < 0) {
                     HAL_LOGE("failed, idx:%d", req_aux.frame_number);
                     goto req_fail;
@@ -1454,38 +1576,27 @@ int BokehCamera::processCaptureRequest(
                                    &currentmainTimestamp, NULL);
             HAL_LOGD("start main, idx:%d", req_main.frame_number);
             rc = hwiMain->process_capture_request(
-                m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev, &req_main);
+                m_pPhyCamera[CAM_BOKEH_MAIN].dev, &req_main);
             if (rc < 0) {
                 HAL_LOGE("failed, idx:%d", req_main.frame_number);
                 goto req_fail;
             }
         }
     } else {
-        HAL_LOGD("process_capture_request main, id=%d,frame_num:%d",m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].id, req_main.frame_number);
-        for (size_t i = 0; i <req_main.num_output_buffers; i++) {
-            camera3_stream_t *stream = req_main.output_buffers[i].stream;
-            HAL_LOGD("main_req, output_buffer:%d, streamType:%d, width:%d, height:%d, format:%d,"
-			"usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, priv:%p, phyId:%s",
-			i, stream->stream_type, stream->width, stream->height, stream->format,
-			stream->usage, stream->max_buffers, stream->data_space, stream->rotation,
-			stream->priv, stream->physical_camera_id);
-        }
-        rc = hwiMain->process_capture_request(
-            m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev, &req_main);
+        /*HAL_LOGD("process_capture_request main,
+         * id=%d,frame_num:%d",m_pPhyCamera[CAM_BOKEH_MAIN].id,
+         * req_main.frame_number);
+        */
+        rc = hwiMain->process_capture_request(m_pPhyCamera[CAM_BOKEH_MAIN].dev,
+                                              &req_main);
         if (rc < 0) {
             HAL_LOGE("failed, idx:%d", req_main.frame_number);
             goto req_fail;
         }
-	HAL_LOGD("process_capture_request aux, id=%d,frame_num:%d", m_pPhyCamera[CAM_TYPE_DEPTH].id, req_aux.frame_number);
-	for (size_t i = 0; i <req_aux.num_output_buffers; i++) {
-            camera3_stream_t *stream = req_aux.output_buffers[i].stream;
-            HAL_LOGD("aux_req, output_buffer:%d, streamType:%d, width:%d, height:%d, format:%d,"
-			"usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, priv:%p, phyId:%s",
-			i, stream->stream_type, stream->width, stream->height, stream->format,
-			stream->usage, stream->max_buffers, stream->data_space, stream->rotation,
-			stream->priv, stream->physical_camera_id);
-        }
-        rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_TYPE_DEPTH].dev,
+        /*HAL_LOGD("process_capture_request aux, id=%d,frame_num:%d",
+         * m_pPhyCamera[CAM_BOKEH_DEPTH].id, req_aux.frame_number);
+        */
+        rc = hwiAux->process_capture_request(m_pPhyCamera[CAM_BOKEH_DEPTH].dev,
                                              &req_aux);
         if (rc < 0) {
             HAL_LOGE("failed, idx:%d", req_aux.frame_number);
@@ -1520,7 +1631,7 @@ req_fail:
 
     if (req_aux.settings)
         free_camera_metadata((camera_metadata_t *)req_aux.settings);
-    HAL_LOGD("rc. %d idx%d", rc, request->frame_number);
+    HAL_LOGD("rc. %d req_frame_num %d", rc, request->frame_number);
 
     return rc;
 }
@@ -1536,8 +1647,8 @@ void BokehCamera::processCaptureResultMain(
     int vcmSteps_fixed = 0;
     uint8_t afState = 0;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
     if (result_buffer == NULL) {
         // meta process
         HAL_LOGD("result_buffer == NULL");
@@ -1545,6 +1656,7 @@ void BokehCamera::processCaptureResultMain(
         updateApiParams(metadata, 1, cur_frame_number);
         if (metadata.exists(ANDROID_SPRD_VCM_STEP) && cur_frame_number) {
             vcmSteps = metadata.find(ANDROID_SPRD_VCM_STEP).data.i32[0];
+            HAL_LOGD("vcm %d", vcmSteps);
             setDepthTrigger(vcmSteps);
         }
         if (metadata.exists(ANDROID_SPRD_VCM_STEP_FOR_BOKEH) &
@@ -1558,10 +1670,10 @@ void BokehCamera::processCaptureResultMain(
                 vcmSteps_fixed = FOCUS_FAIL;
             }
             mVcmStepsFixed = vcmSteps_fixed;
-            HAL_LOGD("VCM_INFO:vcmSteps=%d afState %d", vcmSteps_fixed,
+            HAL_LOGD("VCM_INFO:vcmSteps_fixed=%d afState %d", vcmSteps_fixed,
                      afState);
         }
-        if (cur_frame_number == mCapFrameNumber && cur_frame_number != 0) {
+        if (cur_frame_number == mCapFrameNumber) {
             if (mCaptureThread->mReprocessing) {
                 HAL_LOGD("hold jpeg picture call bac1k, framenumber:%d",
                          result->frame_number);
@@ -1572,7 +1684,6 @@ void BokehCamera::processCaptureResultMain(
                     metadata_t.metadata = clone_camera_metadata(result->result);
                     mMetadataList.push_back(metadata_t);
                 }
-                CallBackMetadata();
             }
             return;
         } else {
@@ -1592,13 +1703,15 @@ void BokehCamera::processCaptureResultMain(
             return;
         }
     }
-
+    HAL_LOGD("num_output_buffers %d", result->num_output_buffers);
     int currStreamType = getStreamTypes(result_buffer->stream);
+    HAL_LOGD("streamType: %d", currStreamType);
     /* Process error buffer for Main camera*/
     if (result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
         HAL_LOGD("Return local buffer:%d caused by error Buffer status",
                  result->frame_number);
-        if (currStreamType == CALLBACK_STREAM) {
+        if (currStreamType == CALLBACK_STREAM ||
+            currStreamType == PREVIEW_STREAM) {
             pushBufferList(mLocalBuffer, result->output_buffers->buffer,
                            mLocalBufferNumber, mLocalBufferList);
         }
@@ -1611,9 +1724,15 @@ void BokehCamera::processCaptureResultMain(
 
         return;
     }
-
-    if (mIsCapturing && (currStreamType == DEFAULT_STREAM)) {
+    HAL_LOGD("mIsCapturing %d, cap_f %d, cur_f %d", mIsCapturing,
+             mCapFrameNumber, cur_frame_number);
+    if (mIsCapturing && (mCapFrameNumber == cur_frame_number) &&
+        (currStreamType != SNAPSHOT_STREAM) &&
+        (mSavedCapStreams->width == result_buffer->stream->width &&
+         mSavedCapStreams->height == result_buffer->stream->height) &&
+        !mSnapshotMainReturn) {
         mSnapshotResultReturn = true;
+        mSnapshotMainReturn = true;
         if (mFlushing ||
             result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
             if (mhasCallbackStream &&
@@ -1637,8 +1756,9 @@ void BokehCamera::processCaptureResultMain(
             mCaptureThread->mSavedOneResultBuff =
                 result->output_buffers->buffer;
         } else {
-            capture_queue_msg_t_bokeh capture_msg;
-            capture_msg.msg_type = BOKEH_MSG_DATA_PROC;
+            capture_queue_msg_t capture_msg;
+            HAL_LOGD("MSG_DATA_PROC");
+            capture_msg.msg_type = MSG_DATA_PROC;
             capture_msg.combo_buff.frame_number = result->frame_number;
             capture_msg.combo_buff.buffer1 = result->output_buffers->buffer;
             // hdr mode: the first DEFAULT_STREAM is normal frame,
@@ -1670,7 +1790,8 @@ void BokehCamera::processCaptureResultMain(
                sizeof(camera3_stream_buffer_t));
 
         jpeg_callback_thread_init((void *)this);
-    } else if (currStreamType == CALLBACK_STREAM) {
+    } else if (currStreamType == CALLBACK_STREAM ||
+               currStreamType == PREVIEW_STREAM) {
         if (!mIsSupportPBokeh) {
             CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK);
             return;
@@ -1680,13 +1801,13 @@ void BokehCamera::processCaptureResultMain(
             Mutex::Autolock l(mNotifyLockMain);
             for (List<camera3_notify_msg_t>::iterator i =
                      mNotifyListMain.begin();
-                 i != mNotifyListMain.end(); i++) {
+                 i != mNotifyListMain.end();) {
                 if (i->message.shutter.frame_number == cur_frame_number) {
                     HAL_LOGD("i->type: %d", i->type);
                     if (i->type == CAMERA3_MSG_SHUTTER) {
                         searchnotifyresult = NOTIFY_SUCCESS;
                         result_timestamp = i->message.shutter.timestamp;
-                        mNotifyListMain.erase(i);
+                        mNotifyListMain.erase(i++);
                     } else if (i->type == CAMERA3_MSG_ERROR) {
                         HAL_LOGE("Return local buffer:%d caused by error "
                                  "Notify status",
@@ -1697,10 +1818,11 @@ void BokehCamera::processCaptureResultMain(
                                        mLocalBufferNumber, mLocalBufferList);
                         CallBackResult(cur_frame_number,
                                        CAMERA3_BUFFER_STATUS_ERROR);
-                        mNotifyListMain.erase(i);
+                        mNotifyListMain.erase(i++);
                         return;
                     }
-                }
+                } else
+                    i++;
             }
         }
         if (searchnotifyresult == NOTIFY_NOT_FOUND) {
@@ -1718,10 +1840,12 @@ void BokehCamera::processCaptureResultMain(
         cur_frame.buffer = (result->output_buffers)->buffer;
         {
             Mutex::Autolock l(mUnmatchedQueueLock);
+            HAL_LOGD("matchTwoFrame");
             if (MATCH_SUCCESS == matchTwoFrame(cur_frame,
                                                mUnmatchedFrameListAux,
                                                &matched_frame)) {
                 muxer_queue_msg_t muxer_msg;
+                HAL_LOGD("MUXER_MSG_DATA_PROC");
                 muxer_msg.msg_type = MUXER_MSG_DATA_PROC;
                 muxer_msg.combo_frame.frame_number = cur_frame.frame_number;
                 muxer_msg.combo_frame.buffer1 = cur_frame.buffer;
@@ -1731,9 +1855,9 @@ void BokehCamera::processCaptureResultMain(
                     Mutex::Autolock l(mPreviewMuxerThread->mMergequeueMutex);
                     HAL_LOGD("Enqueue combo frame:%d for frame merge!",
                              muxer_msg.combo_frame.frame_number);
-                    if (cur_frame.frame_number > 5)
-                        clearFrameNeverMatched(cur_frame.frame_number,
-                                               matched_frame.frame_number);
+                    // if (cur_frame.frame_number > 5)
+                    clearFrameNeverMatched(cur_frame.frame_number,
+                                           matched_frame.frame_number);
                     mPreviewMuxerThread->mPreviewMuxerMsgList.push_back(
                         muxer_msg);
                     mPreviewMuxerThread->mMergequeueSignal.signal();
@@ -1744,12 +1868,13 @@ void BokehCamera::processCaptureResultMain(
                 hwi_frame_buffer_info_t *discard_frame =
                     pushToUnmatchedQueue(cur_frame, mUnmatchedFrameListMain);
                 if (discard_frame != NULL) {
-                    HAL_LOGD("discard frame_number %u", cur_frame_number);
+                    HAL_LOGD("discard frame_number %u",
+                             discard_frame->frame_number);
                     pushBufferList(mLocalBuffer, discard_frame->buffer,
                                    mLocalBufferNumber, mLocalBufferList);
-                    if (cur_frame.frame_number > 5)
-                        CallBackResult(discard_frame->frame_number,
-                                       CAMERA3_BUFFER_STATUS_ERROR);
+                    // if (cur_frame.frame_number > 5)
+                    CallBackResult(discard_frame->frame_number,
+                                   CAMERA3_BUFFER_STATUS_ERROR);
                     delete discard_frame;
                 }
             }
@@ -1767,8 +1892,8 @@ void BokehCamera::processCaptureResultAux(
     uint64_t result_timestamp = 0;
     uint32_t searchnotifyresult = NOTIFY_NOT_FOUND;
     camera3_stream_t *newStream = NULL;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
     HAL_LOGD("aux frame_number %d", cur_frame_number);
     if (result->output_buffers == NULL) {
         return;
@@ -1780,16 +1905,19 @@ void BokehCamera::processCaptureResultAux(
     }
 
     int currStreamType = getStreamTypes(result_buffer->stream);
-    if (mIsCapturing && currStreamType == DEFAULT_STREAM) {
+    if (mIsCapturing && mCapFrameNumber == cur_frame_number &&
+        !mSnapshotAuxReturn) {
+        mSnapshotAuxReturn = true;
         Mutex::Autolock l(mDefaultStreamLock);
         result_buffer = result->output_buffers;
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
+            HAL_LOGD("save aux");
             mCaptureThread->mSavedOneResultBuff =
                 result->output_buffers->buffer;
         } else {
-            capture_queue_msg_t_bokeh capture_msg;
-
-            capture_msg.msg_type = BOKEH_MSG_DATA_PROC;
+            capture_queue_msg_t capture_msg;
+            HAL_LOGD("send msg MSG_DATA_PROC");
+            capture_msg.msg_type = MSG_DATA_PROC;
             capture_msg.combo_buff.frame_number = result->frame_number;
             capture_msg.combo_buff.buffer1 =
                 mCaptureThread->mSavedOneResultBuff;
@@ -1811,7 +1939,8 @@ void BokehCamera::processCaptureResultAux(
     } else if (mIsCapturing && currStreamType == SNAPSHOT_STREAM) {
         HAL_LOGD("should not entry here, shutter frame:%d",
                  result->frame_number);
-    } else if (currStreamType == CALLBACK_STREAM) {
+    } else if (currStreamType == CALLBACK_STREAM ||
+               currStreamType == PREVIEW_STREAM) {
         if (!mIsSupportPBokeh) {
             pushBufferList(mLocalBuffer, result->output_buffers->buffer,
                            mLocalBufferNumber, mLocalBufferList);
@@ -1822,12 +1951,12 @@ void BokehCamera::processCaptureResultAux(
             Mutex::Autolock l(mNotifyLockAux);
             for (List<camera3_notify_msg_t>::iterator i =
                      mNotifyListAux.begin();
-                 i != mNotifyListAux.end(); i++) {
+                 i != mNotifyListAux.end();) {
                 if (i->message.shutter.frame_number == cur_frame_number) {
                     if (i->type == CAMERA3_MSG_SHUTTER) {
                         searchnotifyresult = NOTIFY_SUCCESS;
                         result_timestamp = i->message.shutter.timestamp;
-                        mNotifyListAux.erase(i);
+                        mNotifyListAux.erase(i++);
                     } else if (i->type == CAMERA3_MSG_ERROR) {
                         HAL_LOGE("Return local buffer:%d caused by error "
                                  "Notify status",
@@ -1836,10 +1965,11 @@ void BokehCamera::processCaptureResultAux(
                         pushBufferList(mLocalBuffer,
                                        result->output_buffers->buffer,
                                        mLocalBufferNumber, mLocalBufferList);
-                        mNotifyListAux.erase(i);
+                        mNotifyListAux.erase(i++);
                         return;
                     }
-                }
+                } else
+                    i++;
             }
         }
         if (searchnotifyresult == NOTIFY_NOT_FOUND) {
@@ -1864,10 +1994,12 @@ void BokehCamera::processCaptureResultAux(
         cur_frame.buffer = (result->output_buffers)->buffer;
         {
             Mutex::Autolock l(mUnmatchedQueueLock);
+            HAL_LOGD("matchTwoFrame");
             if (MATCH_SUCCESS == matchTwoFrame(cur_frame,
                                                mUnmatchedFrameListMain,
                                                &matched_frame)) {
                 muxer_queue_msg_t muxer_msg;
+                HAL_LOGD("MUXER_MSG_DATA_PROC");
                 muxer_msg.msg_type = MUXER_MSG_DATA_PROC;
                 muxer_msg.combo_frame.frame_number = matched_frame.frame_number;
                 muxer_msg.combo_frame.buffer1 = matched_frame.buffer;
@@ -1885,9 +2017,9 @@ void BokehCamera::processCaptureResultAux(
                     // app need the point that the first meta updated to
                     // hide
                     // image cover
-                    if (cur_frame.frame_number > 5)
-                        clearFrameNeverMatched(matched_frame.frame_number,
-                                               cur_frame.frame_number);
+                    // if (cur_frame.frame_number > 5)
+                    clearFrameNeverMatched(matched_frame.frame_number,
+                                           cur_frame.frame_number);
                     mPreviewMuxerThread->mPreviewMuxerMsgList.push_back(
                         muxer_msg);
                     mPreviewMuxerThread->mMergequeueSignal.signal();
@@ -1910,7 +2042,7 @@ void BokehCamera::processCaptureResultAux(
 }
 
 void BokehCamera::notifyMain(const struct camera3_callback_ops *ops,
-                                      const camera3_notify_msg_t *msg) {
+                             const camera3_notify_msg_t *msg) {
     HAL_LOGD("idx:%d", msg->message.shutter.frame_number);
     mBokehCamera->notifyMain(msg);
 }
@@ -1919,8 +2051,7 @@ void BokehCamera::notifyMain(const camera3_notify_msg_t *msg) {
     uint32_t cur_frame_number = msg->message.shutter.frame_number;
 
     if (msg->type == CAMERA3_MSG_SHUTTER &&
-        cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number &&
-        cur_frame_number != 0) {
+        cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number) {
         if (msg->message.shutter.timestamp != 0) {
             capture_result_timestamp = msg->message.shutter.timestamp;
         }
@@ -1932,10 +2063,13 @@ void BokehCamera::notifyMain(const camera3_notify_msg_t *msg) {
         HAL_LOGD("hold cap notify");
         return;
     }
-
-    if ((!(cur_frame_number == mCapFrameNumber && cur_frame_number != 0)) &&
+    HAL_LOGD("%d %d", mReqCapType.frame_number, mReqCapType.reqType);
+    if ((cur_frame_number != mCapFrameNumber ||
+         (cur_frame_number == mReqCapType.frame_number &&
+          (mReqCapType.reqType & 1) == 1)) &&
         mIsSupportPBokeh) {
         Mutex::Autolock l(mNotifyLockMain);
+        HAL_LOGD("push_back mNotifyListMain");
         mNotifyListMain.push_back(*msg);
         Mutex::Autolock m(mPrevFrameNotifyLock);
         mPrevFrameNotifyList.push_back(*msg);
@@ -1943,12 +2077,13 @@ void BokehCamera::notifyMain(const camera3_notify_msg_t *msg) {
             mPrevFrameNotifyList.erase(mPrevFrameNotifyList.begin());
         }
     }
-
+    HAL_LOGD("frame_number:%d, type: %d", msg->message.shutter.frame_number,
+             msg->type);
     mCallbackOps->notify(mCallbackOps, msg);
 }
 
 void BokehCamera::notifyAux(const struct camera3_callback_ops *ops,
-                                     const camera3_notify_msg_t *msg) {
+                            const camera3_notify_msg_t *msg) {
     CHECK_CAPTURE();
     mBokehCamera->notifyAux(msg);
 }
@@ -1956,7 +2091,9 @@ void BokehCamera::notifyAux(const struct camera3_callback_ops *ops,
 void BokehCamera::notifyAux(const camera3_notify_msg_t *msg) {
     uint32_t cur_frame_number = msg->message.shutter.frame_number;
 
-    if ((!(cur_frame_number == mCapFrameNumber && cur_frame_number != 0)) &&
+    if ((cur_frame_number != mCapFrameNumber ||
+         (cur_frame_number == mReqCapType.frame_number &&
+          mReqCapType.reqType == 3)) &&
         mIsSupportPBokeh) {
         Mutex::Autolock l(mNotifyLockAux);
         HAL_LOGD("notifyAux push success frame_number %d", cur_frame_number);
@@ -1965,32 +2102,32 @@ void BokehCamera::notifyAux(const camera3_notify_msg_t *msg) {
     return;
 }
 
-void BokehCamera::intDepthPrevBufferFlag() {
+void BokehCamera::initPrevDepthBufferFlag() {
     int index = 0;
     for (; index < 2; index++) {
-        mDepthBuffer.prev_depth_buffer[index].w_flag = true;
-        mDepthBuffer.prev_depth_buffer[index].r_flag = false;
+        mBokehDepthBuffer.prev_depth_buffer[index].w_flag = true;
+        mBokehDepthBuffer.prev_depth_buffer[index].r_flag = false;
     }
 }
 
-void BokehCamera::setPrevDepthBufferFlag(BUFFER_FLAG cur_flag,
-                                                  int index) {
-    Mutex::Autolock l(mDepthBufferLock);
+void BokehCamera::setPrevDepthBufferFlag(BufferFlag cur_flag, int index) {
+    Mutex::Autolock l(mBokehDepthBufferLock);
     int tmp = 0;
+    HAL_LOGD("cur_flag %d, index %d", cur_flag, index);
 
     if (index < 0)
         return;
 
     switch (cur_flag) {
-    case BUFFER_PING:
-        mDepthBuffer.prev_depth_buffer[index].w_flag = true;
-        mDepthBuffer.prev_depth_buffer[index].r_flag = true;
+    case BOKEH_BUFFER_PING:
+        mBokehDepthBuffer.prev_depth_buffer[index].w_flag = true;
+        mBokehDepthBuffer.prev_depth_buffer[index].r_flag = true;
         tmp = index == 0 ? 1 : 0;
-        mDepthBuffer.prev_depth_buffer[tmp].w_flag = true;
-        mDepthBuffer.prev_depth_buffer[tmp].r_flag = false;
+        mBokehDepthBuffer.prev_depth_buffer[tmp].w_flag = true;
+        mBokehDepthBuffer.prev_depth_buffer[tmp].r_flag = false;
         break;
-    case BUFFER_PANG:
-        mDepthBuffer.prev_depth_buffer[index].w_flag = true;
+    case BOKEH_BUFFER_PANG:
+        mBokehDepthBuffer.prev_depth_buffer[index].w_flag = true;
         break;
     default:
         HAL_LOGI("buffer flag err");
@@ -1998,27 +2135,32 @@ void BokehCamera::setPrevDepthBufferFlag(BUFFER_FLAG cur_flag,
     }
 }
 
-int BokehCamera::getPrevDepthBuffer(BUFFER_FLAG need_flag) {
-    Mutex::Autolock l(mDepthBufferLock);
+int BokehCamera::getPrevDepthBufferFlag(BufferFlag need_flag) {
+    Mutex::Autolock l(mBokehDepthBufferLock);
     int index = 0;
     int ret = -1;
 
     switch (need_flag) {
-    case BUFFER_PING:
+    case BOKEH_BUFFER_PING:
         for (index = 0; index < 2; index++) {
-            if (mDepthBuffer.prev_depth_buffer[index].w_flag &&
-                !mDepthBuffer.prev_depth_buffer[index].r_flag) {
-                mDepthBuffer.prev_depth_buffer[index].w_flag = false;
-                mDepthBuffer.prev_depth_buffer[index].r_flag = false;
+            HAL_LOGD("prev_depth_buffer[%d].w_flag:%d, r_flag %d", index,
+                     mBokehDepthBuffer.prev_depth_buffer[index].w_flag,
+                     mBokehDepthBuffer.prev_depth_buffer[index].r_flag);
+            if (mBokehDepthBuffer.prev_depth_buffer[index].w_flag &&
+                !mBokehDepthBuffer.prev_depth_buffer[index].r_flag) {
+                mBokehDepthBuffer.prev_depth_buffer[index].w_flag = false;
+                mBokehDepthBuffer.prev_depth_buffer[index].r_flag = false;
                 ret = index;
                 break;
             }
         }
         break;
-    case BUFFER_PANG:
+    case BOKEH_BUFFER_PANG:
         for (index = 0; index < 2; index++) {
-            if (mDepthBuffer.prev_depth_buffer[index].r_flag) {
-                mDepthBuffer.prev_depth_buffer[index].w_flag = false;
+            HAL_LOGD("prev_depth_buffer[%d].r_flag:%d", index,
+                     mBokehDepthBuffer.prev_depth_buffer[index].r_flag);
+            if (mBokehDepthBuffer.prev_depth_buffer[index].r_flag) {
+                mBokehDepthBuffer.prev_depth_buffer[index].w_flag = false;
                 ret = index;
                 break;
             }
@@ -2043,7 +2185,9 @@ int BokehCamera::allocateBuff() {
     HAL_LOGI(":E");
     mLocalBufferList.clear();
     mSavedRequestList.clear();
+    mSavedVideoReqList.clear();
     mMetadataList.clear();
+    mMetadataReqList.clear();
     mUnmatchedFrameListMain.clear();
     mUnmatchedFrameListAux.clear();
     mNotifyListMain.clear();
@@ -2124,7 +2268,7 @@ int BokehCamera::allocateBuff() {
     count += SNAP_TRANSF_NUM;
 #endif
 
-    if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
         if (0 > allocateOne(mBokehSize.depth_snap_main_w,
                             mBokehSize.depth_snap_main_h, &mLocalScaledBuffer,
                             YUV420)) {
@@ -2132,7 +2276,7 @@ int BokehCamera::allocateBuff() {
             goto mem_fail;
         } else {
             rc = mBokehCamera->map(&mLocalScaledBuffer.native_handle,
-                                 (void **)&mScaleInfo.addr_vir.addr_y);
+                                   (void **)&mScaleInfo.addr_vir.addr_y);
             if (rc != NO_ERROR) {
                 HAL_LOGE("map buf failed.");
                 goto mem_fail;
@@ -2170,64 +2314,66 @@ int BokehCamera::allocateBuff() {
 
         mBokehCamera->mLocalBufferNumber = count;
         for (j = 0; j < 2; j++) {
-            mDepthBuffer.prev_depth_buffer[j].buffer =
+            mBokehDepthBuffer.prev_depth_buffer[j].buffer =
                 (void *)malloc(mBokehSize.depth_prev_size);
-            if (mDepthBuffer.prev_depth_buffer[j].buffer == NULL) {
-                HAL_LOGE("mDepthBuffer.prev_depth_buffer malloc failed");
+            if (mBokehDepthBuffer.prev_depth_buffer[j].buffer == NULL) {
+                HAL_LOGE("mBokehDepthBuffer.prev_depth_buffer malloc failed");
                 goto mem_fail;
             } else {
-                memset(mDepthBuffer.prev_depth_buffer[j].buffer, 0,
+                memset(mBokehDepthBuffer.prev_depth_buffer[j].buffer, 0,
                        mBokehSize.depth_prev_size);
             }
         }
-        mDepthBuffer.snap_depth_buffer =
+        mBokehDepthBuffer.snap_depth_buffer =
             (void *)malloc(mBokehSize.depth_snap_size);
-        if (mDepthBuffer.snap_depth_buffer == NULL) {
-            HAL_LOGE("mDepthBuffer.snap_depth_buffer malloc failed");
+        if (mBokehDepthBuffer.snap_depth_buffer == NULL) {
+            HAL_LOGE("mBokehDepthBuffer.snap_depth_buffer malloc failed");
             goto mem_fail;
         } else {
-            memset(mDepthBuffer.snap_depth_buffer, 0,
+            memset(mBokehDepthBuffer.snap_depth_buffer, 0,
                    mBokehSize.depth_snap_size);
         }
 
 #if defined(CONFIG_SUPPORT_GDEPTH) ||                                          \
     defined(CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV)
-        mDepthBuffer.snap_depthConfidence_buffer =
+        mBokehDepthBuffer.snap_depthConfidence_buffer =
             (uint8_t *)malloc(mBokehSize.depth_confidence_map_size);
-        if (mDepthBuffer.snap_depthConfidence_buffer == NULL) {
-            HAL_LOGE("mDepthBuffer.snap_depth_buffer malloc failed");
+        if (mBokehDepthBuffer.snap_depthConfidence_buffer == NULL) {
+            HAL_LOGE("mBokehDepthBuffer.snap_depth_buffer malloc failed");
             goto mem_fail;
         } else {
-            memset(mDepthBuffer.snap_depthConfidence_buffer, 0,
+            memset(mBokehDepthBuffer.snap_depthConfidence_buffer, 0,
                    mBokehSize.depth_confidence_map_size);
         }
-        mDepthBuffer.depth_normalize_data_buffer =
+        mBokehDepthBuffer.depth_normalize_data_buffer =
             (uint8_t *)malloc(mBokehSize.depth_yuv_normalize_size);
-        if (mDepthBuffer.depth_normalize_data_buffer == NULL) {
-            HAL_LOGE("mDepthBuffer.depth_normalize_data_buffer malloc failed");
+        if (mBokehDepthBuffer.depth_normalize_data_buffer == NULL) {
+            HAL_LOGE(
+                "mBokehDepthBuffer.depth_normalize_data_buffer malloc failed");
             goto mem_fail;
         } else {
-            memset(mDepthBuffer.depth_normalize_data_buffer, 0,
+            memset(mBokehDepthBuffer.depth_normalize_data_buffer, 0,
                    mBokehSize.depth_yuv_normalize_size);
         }
 #endif
 
-        mDepthBuffer.depth_out_map_table =
+        mBokehDepthBuffer.depth_out_map_table =
             (void *)malloc(mBokehSize.depth_weight_map_size);
-        if (mDepthBuffer.depth_out_map_table == NULL) {
-            HAL_LOGE("mDepthBuffer.depth_out_map_table  malloc failed.");
+        if (mBokehDepthBuffer.depth_out_map_table == NULL) {
+            HAL_LOGE("mBokehDepthBuffer.depth_out_map_table  malloc failed.");
             goto mem_fail;
         } else {
-            memset(mDepthBuffer.depth_out_map_table, 0,
+            memset(mBokehDepthBuffer.depth_out_map_table, 0,
                    mBokehSize.depth_weight_map_size);
         }
-        mDepthBuffer.prev_depth_scale_buffer =
+        mBokehDepthBuffer.prev_depth_scale_buffer =
             (void *)malloc(mBokehSize.depth_prev_scale_size);
-        if (mDepthBuffer.prev_depth_scale_buffer == NULL) {
-            HAL_LOGE("mDepthBuffer.prev_depth_scale_buffer  malloc failed.");
+        if (mBokehDepthBuffer.prev_depth_scale_buffer == NULL) {
+            HAL_LOGE(
+                "mBokehDepthBuffer.prev_depth_scale_buffer  malloc failed.");
             goto mem_fail;
         } else {
-            memset(mDepthBuffer.prev_depth_scale_buffer, 0,
+            memset(mBokehDepthBuffer.prev_depth_scale_buffer, 0,
                    mBokehSize.depth_prev_scale_size);
         }
     }
@@ -2263,50 +2409,49 @@ void BokehCamera::freeLocalBuffer() {
         }
         freeOneBuffer(&mLocalScaledBuffer);
     }
-    if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
 
         for (int i = 0; i < 2; i++) {
-            if (mDepthBuffer.prev_depth_buffer[i].buffer != NULL) {
-                free(mDepthBuffer.prev_depth_buffer[i].buffer);
-                mDepthBuffer.prev_depth_buffer[i].buffer = NULL;
+            if (mBokehDepthBuffer.prev_depth_buffer[i].buffer != NULL) {
+                free(mBokehDepthBuffer.prev_depth_buffer[i].buffer);
+                mBokehDepthBuffer.prev_depth_buffer[i].buffer = NULL;
             }
         }
-        if (mDepthBuffer.snap_depth_buffer != NULL) {
-            free(mDepthBuffer.snap_depth_buffer);
-            mDepthBuffer.snap_depth_buffer = NULL;
+        if (mBokehDepthBuffer.snap_depth_buffer != NULL) {
+            free(mBokehDepthBuffer.snap_depth_buffer);
+            mBokehDepthBuffer.snap_depth_buffer = NULL;
         }
 
 #if defined(CONFIG_SUPPORT_GDEPTH) ||                                          \
     defined(CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV)
-        if (mDepthBuffer.snap_depthConfidence_buffer != NULL) {
-            free(mDepthBuffer.snap_depthConfidence_buffer);
-            mDepthBuffer.snap_depthConfidence_buffer = NULL;
+        if (mBokehDepthBuffer.snap_depthConfidence_buffer != NULL) {
+            free(mBokehDepthBuffer.snap_depthConfidence_buffer);
+            mBokehDepthBuffer.snap_depthConfidence_buffer = NULL;
         }
-        if (mDepthBuffer.depth_normalize_data_buffer != NULL) {
-            free(mDepthBuffer.depth_normalize_data_buffer);
-            mDepthBuffer.depth_normalize_data_buffer = NULL;
+        if (mBokehDepthBuffer.depth_normalize_data_buffer != NULL) {
+            free(mBokehDepthBuffer.depth_normalize_data_buffer);
+            mBokehDepthBuffer.depth_normalize_data_buffer = NULL;
         }
 #endif
 
-        if (mDepthBuffer.depth_out_map_table != NULL) {
-            free(mDepthBuffer.depth_out_map_table);
-            mDepthBuffer.depth_out_map_table = NULL;
+        if (mBokehDepthBuffer.depth_out_map_table != NULL) {
+            free(mBokehDepthBuffer.depth_out_map_table);
+            mBokehDepthBuffer.depth_out_map_table = NULL;
         }
-        if (mDepthBuffer.prev_depth_scale_buffer != NULL) {
-            free(mDepthBuffer.prev_depth_scale_buffer);
-            mDepthBuffer.prev_depth_scale_buffer = NULL;
+        if (mBokehDepthBuffer.prev_depth_scale_buffer != NULL) {
+            free(mBokehDepthBuffer.prev_depth_scale_buffer);
+            mBokehDepthBuffer.prev_depth_scale_buffer = NULL;
         }
     }
 }
 
 void BokehCamera::getDepthImageSize(int inputWidth, int inputHeight,
-                                             int *outWidth, int *outHeight,
-                                             int type) {
+                                    int *outWidth, int *outHeight, int type) {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
     int value = 0;
-    if (mApiVersion == SPRD_API_MODE) {
+    if (mApiVersion == BOKEH_API_MODE) {
         int aspect_ratio = (inputWidth * SFACTOR) / inputHeight;
         if (ABS(aspect_ratio - AR4_3) < 1) {
             *outWidth = 240;
@@ -2333,6 +2478,9 @@ void BokehCamera::getDepthImageSize(int inputWidth, int inputHeight,
             property_get("persist.vendor.cam.bokeh.main.h", prop, "600");
             value = atoi(prop);
             mBokehSize.depth_snap_main_h = value;
+        } else if (type == VIDEO_STREAM) {
+            *outWidth = CAM_AUX_PREV_WIDTH;
+            *outHeight = CAM_AUX_PREV_HEIGHT;
         }
     }
 
@@ -2348,8 +2496,8 @@ int BokehCamera::setupPhysicalCameras(std::vector<int> SensorIds) {
     }
     memset(m_pPhyCamera, 0x00,
            (m_nPhyCameras * sizeof(sprdcamera_physical_descriptor_t)));
-    for(int i = 0; i < m_nPhyCameras; i++) {
-	m_pPhyCamera[i].id = SensorIds[i];
+    for (int i = 0; i < m_nPhyCameras; i++) {
+        m_pPhyCamera[i].id = SensorIds[i];
     }
     return NO_ERROR;
 }
@@ -2360,8 +2508,8 @@ int BokehCamera::setupPhysicalCameras(std::vector<int> SensorIds) {
  * PARAMETERS :
  * RETURN     : none
  *==========================================================================*/
-void BokehCamera::updateApiParams(CameraMetadata metaSettings,
-           int type, uint32_t cur_frame_number) {
+void BokehCamera::updateApiParams(CameraMetadata metaSettings, int type,
+                                  uint32_t cur_frame_number) {
     // always get f_num in request
     int32_t origW =
         SprdCamera3Setting::s_setting[0].sensor_InfoInfo.pixer_array_size[0];
@@ -2373,7 +2521,7 @@ void BokehCamera::updateApiParams(CameraMetadata metaSettings,
     phyId = m_pPhyCamera[CAM_TYPE_MAIN].id;
     int32_t faceInfo[4];
 
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
     FACE_Tag *faceDetectionInfo =
         (FACE_Tag *)&(hwiMain->mSetting->s_setting[phyId].faceInfo);
     uint8_t numFaces = faceDetectionInfo->face_num;
@@ -2478,8 +2626,7 @@ void BokehCamera::updateApiParams(CameraMetadata metaSettings,
         mbokehParm.portrait_param.valid_roi = numFaces;
     }
 
-    if (mbokehParm.portrait_param.valid_roi &&
-        mBokehMode == CAM_PORTRAIT_MODE) {
+    if (mbokehParm.portrait_param.valid_roi && mBokehMode == PORTRAIT_MODE) {
         mDoPortrait = 1;
     } else {
         mDoPortrait = 0;
@@ -2502,8 +2649,12 @@ void BokehCamera::updateApiParams(CameraMetadata metaSettings,
         }
         if (fnum != mbokehParm.f_number) {
             mbokehParm.f_number = fnum;
+            HAL_LOGD("fnum %d", fnum);
+            HAL_LOGD("ALG mBokehAlgo->setBokenParam start");
             mBokehAlgo->setBokenParam((void *)&mbokehParm);
-            mDepthTrigger = TRIGGER_FNUM;
+            HAL_LOGD("ALG mBokehAlgo->setBokenParam end");
+            mDepthTrigger = BOKEH_TRIGGER_FNUM;
+            HAL_LOGD("mDepthTrigger:%d", mDepthTrigger);
         }
     }
     if (metaSettings.exists(ANDROID_SPRD_AF_ROI)) {
@@ -2601,11 +2752,44 @@ void BokehCamera::updateApiParams(CameraMetadata metaSettings,
                  mbokehParm.sel_y);
     }
     if (isUpdate) {
+        HAL_LOGD("ALG mBokehAlgo->setBokenParam start");
+        HAL_LOGD("fnum %d", mbokehParm.f_number);
         mBokehAlgo->setBokenParam((void *)&mbokehParm);
+        HAL_LOGD("ALG mBokehAlgo->setBokenParam end");
     }
 }
 
-void BokehCamera::setLogicalMultiTag(CameraMetadata &metadata) {
+void BokehCamera::setBokehCameraTags(CameraMetadata &metadata) {
+    uint8_t available = 1, unavailable = 0;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    property_get("persist.vendor.cam.res.bokeh", prop, "RES_5M");
+    HAL_LOGI("bokeh support cap resolution %s", prop);
+    getMaxSize(prop);
+    /*ANDROID_JPEG_MAX_SIZE*/
+    int32_t jpeg_stream_size =
+        (maxCapHeight * maxCapWidth * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    int32_t img_size =
+        jpeg_stream_size * 2 +
+        (DEPTH_SNAP_OUTPUT_WIDTH * DEPTH_SNAP_OUTPUT_HEIGHT * 2) +
+        (BOKEH_REFOCUS_COMMON_PARAM_NUM * 4) + BOKEH_REFOCUS_COMMON_XMP_SIZE +
+        sizeof(camera3_jpeg_blob_t) + 1024;
+    metadata.update(ANDROID_JPEG_MAX_SIZE, &img_size, 1);
+    /*ANDROID_REQUEST_AVAILABLE_CAPABILITIES*/
+    const uint8_t kavl_capabilities[] = {
+        ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
+        ANDROID_REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA};
+    metadata.update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES, kavl_capabilities,
+                    sizeof(kavl_capabilities) / sizeof(uint8_t));
+    /*ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS*/
+    const int32_t kavl_high_speed_video_configration[] = {
+        maxPrevWidth, maxPrevHeight, 120, 120, 1};
+    metadata.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
+                    (int32_t *)kavl_high_speed_video_configration,
+                    sizeof(kavl_high_speed_video_configration) /
+                        sizeof(int32_t));
+    /*ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS*/
     camera_metadata_entry_t entry =
         metadata.find(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS);
     size_t count = entry.count;
@@ -2616,49 +2800,138 @@ void BokehCamera::setLogicalMultiTag(CameraMetadata &metadata) {
     key[count++] = ANDROID_CONTROL_AVAILABLE_MODES;
     key[count++] = ANDROID_CONTROL_AE_LOCK_AVAILABLE;
     key[count++] = ANDROID_CONTROL_AWB_LOCK_AVAILABLE;
-    metadata.update(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, key,
-                           count);
+    metadata.update(ANDROID_REQUEST_AVAILABLE_CHARACTERISTICS_KEYS, key, count);
     delete[] key;
 
-    //ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS
-    uint8_t *physicalIds = new uint8_t[mPhysicalIds.size() * 2];
+    /*ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS*/
     for (size_t i = 0; i < mPhysicalIds.size(); i++) {
-        physicalIds[i * 2] = '0' + mPhysicalIds[i];
-        physicalIds[i * 2 + 1] = '\0';
-        HAL_LOGD("physicalIds[%d], id %d", i*2, mPhysicalIds[i]);
+        physicIds[i * 2] = '0' + mPhysicalIds[i];
+        physicIds[i * 2 + 1] = '\0';
+        HAL_LOGD("physicalIds[%d], id %d", i * 2, mPhysicalIds[i]);
     }
-    metadata.update(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS,
-                           physicalIds, mPhysicalIds.size() * 2);
-    delete[] physicalIds;
+    metadata.update(ANDROID_LOGICAL_MULTI_CAMERA_PHYSICAL_IDS, physicIds,
+                    mPhysicalIds.size() * 2);
 
-    //ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE
-    uint8_t sync_type = ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED;
-    metadata.update(ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE,
-            &sync_type, 1);
+    /*ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE*/
+    uint8_t sync_type =
+        ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE_CALIBRATED;
+    metadata.update(ANDROID_LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE, &sync_type,
+                    1);
 
-
-    //ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS
+    /*ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS*/
     camera_metadata_entry_t entrys =
         metadata.find(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS);
     count = entrys.count;
-    int32_t *keys = new int32_t[count + 3];
+    int32_t *keys = new int32_t[count + 4];
     memcpy(keys, entrys.data.i32, entrys.count * sizeof(int32_t));
     keys[count++] = ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_MAX_SIZES;
-    keys[count++] = ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES;
+    keys[count++] =
+        ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES;
     keys[count++] = ANDROID_CONTROL_ZOOM_RATIO;
-    metadata.update(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, keys,count);
+    keys[count++] = ANDROID_CONTROL_EXTENDED_SCENE_MODE;
+    metadata.update(ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS, keys, count);
     delete[] keys;
-    //ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_MAX_SIZES
-    metadata.update(ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_MAX_SIZES, 
-              (int32_t *)kavailableExtendedSceneModeMaxSizes,
-              sizeof(kavailableExtendedSceneModeMaxSizes) /sizeof(int32_t));
-    //ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES
-    metadata.update(ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES,
-              (float *)kavailableZoomRatioRanges,
-              sizeof(kavailableZoomRatioRanges) /sizeof(float));
+    {
+        /*ANDROID_REQUEST_AVAILABLE_RESULT_KEYS*/
+        entrys = metadata.find(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS);
+        count = entrys.count;
+        keys = new int32_t[count + 2];
+        memcpy(keys, entrys.data.i32, entrys.count * sizeof(int32_t));
+        keys[count++] = ANDROID_CONTROL_EXTENDED_SCENE_MODE;
+        keys[count++] = ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID;
+        metadata.update(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, keys, count);
+        delete[] keys;
+    }
+    /*ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_MAX_SIZES*/
+    int32_t kavailableExtendedSceneModeMaxSizes[EXTEND_MODE_NUM][3] = {
+        {ANDROID_CONTROL_EXTENDED_SCENE_MODE_DISABLED, 0, 0},
+        {ANDROID_CONTROL_EXTENDED_SCENE_MODE_BOKEH_STILL_CAPTURE, maxPrevWidth,
+         maxPrevHeight}, /*YUV_420_888*/
+    };
+    metadata.update(ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_MAX_SIZES,
+                    (int32_t *)kavailableExtendedSceneModeMaxSizes,
+                    sizeof(kavailableExtendedSceneModeMaxSizes) /
+                        sizeof(int32_t));
+    /*ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES*/
+    const float kavailableZoomRatioRanges[2] = {1.0, 1.0};
+    metadata.update(
+        ANDROID_CONTROL_AVAILABLE_EXTENDED_SCENE_MODE_ZOOM_RATIO_RANGES,
+        (float *)kavailableZoomRatioRanges,
+        sizeof(kavailableZoomRatioRanges) / sizeof(float));
 
-    HAL_LOGI("BokeCamera, fill logical multi-camera Tags");
-#undef FILL_CAM_INFO
+    int32_t avlThmbSizes[4] = {0, 0, 320, 240};
+    metadata.update(ANDROID_JPEG_AVAILABLE_THUMBNAIL_SIZES, avlThmbSizes, 4);
+    metadata.update(ANDROID_FLASH_INFO_AVAILABLE, &unavailable, 1);
+    /*AE AWB LOCK*/
+    metadata.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE, &unavailable, 1);
+    uint8_t awbLockAvailable = 0; /*AWB_LOCK_AVAILABLE*/
+    metadata.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE, &unavailable, 1);
+    float zoomRatioRange[2] = {1.0, 1.0};
+    metadata.update(ANDROID_CONTROL_ZOOM_RATIO_RANGE, zoomRatioRange, 2);
+    /*ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS*/
+    int32_t kAvlStreamConfig[][4] = {
+        /*format, width, height, output/input stream*/
+        //{HAL_PIXEL_FORMAT_BLOB, 320, 240, 0},
+        //{HAL_PIXEL_FORMAT_BLOB, 640, 480, 0},
+        //{HAL_PIXEL_FORMAT_BLOB, 1280, 720, 0},
+        {HAL_PIXEL_FORMAT_BLOB, maxCapWidth, maxCapHeight, 0},
+        {HAL_PIXEL_FORMAT_BLOB, 1920, 1080, 0},
+        {HAL_PIXEL_FORMAT_YCBCR_420_888, maxPrevWidth, maxPrevHeight, 0},
+        {HAL_PIXEL_FORMAT_YCBCR_420_888, 320, 240, 0},
+        {HAL_PIXEL_FORMAT_YCBCR_420_888, 640, 480, 0},
+        {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, maxPrevWidth, maxPrevHeight,
+         0},
+        {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 320, 240, 0},
+        {HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, 640, 480, 0},
+    };
+    metadata.update(ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS,
+                    (int32_t *)kAvlStreamConfig,
+                    sizeof(kAvlStreamConfig) / sizeof(int32_t));
+    /*ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS*/
+    int32_t stream_num = sizeof(kAvlStreamConfig) / sizeof(int32_t) / 4;
+    HAL_LOGD("stream_num %d", stream_num);
+    Vector<int64_t> min_duration, stall_duration;
+    int64_t duration = 33331760;
+    for (int i = 0; i < stream_num; i++) {
+        for (int j = 0; j < 3; j++) {
+            min_duration.add(kAvlStreamConfig[i][j]);
+            stall_duration.add(kAvlStreamConfig[i][j]);
+        }
+        min_duration.add(duration);
+        if (kAvlStreamConfig[i][0] == HAL_PIXEL_FORMAT_BLOB)
+            stall_duration.add(duration);
+        else
+            stall_duration.add(0);
+    }
+    metadata.update(ANDROID_SCALER_AVAILABLE_MIN_FRAME_DURATIONS,
+                    min_duration.array(), min_duration.size());
+    metadata.update(ANDROID_SCALER_AVAILABLE_STALL_DURATIONS,
+                    stall_duration.array(), stall_duration.size());
+
+    int32_t activeArraySize[4] = {0, 0, maxCapWidth, maxCapHeight};
+    metadata.update(ANDROID_SENSOR_INFO_ACTIVE_ARRAY_SIZE, activeArraySize, 4);
+    int32_t pixelArraySize[2] = {maxCapWidth, maxCapHeight};
+    metadata.update(ANDROID_SENSOR_INFO_PIXEL_ARRAY_SIZE, pixelArraySize, 2);
+
+    float availableMaxDigitalZoom = 1.0f;
+    metadata.update(ANDROID_SCALER_AVAILABLE_MAX_DIGITAL_ZOOM,
+                    &availableMaxDigitalZoom, 1);
+    const int32_t kavailable_fps_ranges_back[] = {10, 10, 5,  15, 15, 15, 5,
+                                                  20, 20, 20, 5,  24, 24, 24,
+                                                  5,  30, 20, 30, 30, 30};
+    metadata.update(ANDROID_CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES,
+                    kavailable_fps_ranges_back,
+                    sizeof(kavailable_fps_ranges_back) / sizeof(int32_t));
+    uint8_t availableControlModes[] = {
+        ANDROID_CONTROL_MODE_OFF, ANDROID_CONTROL_MODE_AUTO,
+        ANDROID_CONTROL_MODE_USE_EXTENDED_SCENE_MODE};
+    metadata.update(ANDROID_CONTROL_AVAILABLE_MODES, availableControlModes,
+                    sizeof(availableControlModes) / sizeof(uint8_t));
+    uint8_t aeAvlModes = {ANDROID_CONTROL_AE_MODE_ON}; // AE_MODES
+    metadata.update(ANDROID_CONTROL_AE_AVAILABLE_MODES, &aeAvlModes, 1);
+    uint8_t awbAvlModes = {ANDROID_CONTROL_AWB_MODE_AUTO}; // AWB_MODES
+    metadata.update(ANDROID_CONTROL_AWB_AVAILABLE_MODES, &awbAvlModes, 1);
+    HAL_LOGI("fill BokeCamera Tags");
 }
 
 /*===========================================================================
@@ -2672,7 +2945,7 @@ void BokehCamera::setLogicalMultiTag(CameraMetadata &metadata) {
  *==========================================================================*/
 #ifdef CONFIG_FACE_BEAUTY
 void BokehCamera::bokehFaceMakeup(buffer_handle_t *buffer_handle,
-                                           void *input_buf1_addr) {
+                                  void *input_buf1_addr) {
 
     struct camera_frame_type cap_3d_frame;
     struct camera_frame_type *frame = NULL;
@@ -2689,14 +2962,15 @@ void BokehCamera::bokehFaceMakeup(buffer_handle_t *buffer_handle,
     faceInfo[2] = mFaceInfo[2] * mBokehSize.capture_w / mBokehSize.preview_w;
     faceInfo[3] = mFaceInfo[3] * mBokehSize.capture_w / mBokehSize.preview_w;
 
-    newFace.face_num =
-        SprdCamera3Setting::s_setting[mBokehCamera->mCameraId].faceInfo.face_num;
+    newFace.face_num = SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
+                           .faceInfo.face_num;
     newFace.face[0].rect[0] = faceInfo[0];
     newFace.face[0].rect[1] = faceInfo[1];
     newFace.face[0].rect[2] = faceInfo[2];
     newFace.face[0].rect[3] = faceInfo[3];
-    mBokehCamera->doFaceMakeup2(frame, mBokehCamera->mPerfectskinlevel, &newFace,
-                              0); // work mode 1 for preview, 0 for picture
+    mBokehCamera->doFaceMakeup2(frame, mBokehCamera->mPerfectskinlevel,
+                                &newFace,
+                                0); // work mode 1 for preview, 0 for picture
 }
 #endif
 
@@ -2713,33 +2987,77 @@ void BokehCamera::saveRequest(camera3_capture_request_t *request) {
     size_t i = 0;
     camera3_stream_t *newStream = NULL;
     multi_request_saved_t currRequest;
+    multi_request_saved_t curVideoRequest;
+    meta_req_t curMeta;
+    memset(&currRequest, 0, sizeof(multi_request_saved_t));
+    memset(&curVideoRequest, 0, sizeof(multi_request_saved_t));
+    memset(&curMeta, 0, sizeof(meta_req_t));
+    HAL_LOGD(" E %d", request->frame_number);
+    {
+        Mutex::Autolock l(mMetaReqLock);
+        curMeta.frame_number = request->frame_number;
+        curMeta.metadata = request->settings;
+        if (!curMeta.metadata.exists(ANDROID_CONTROL_EXTENDED_SCENE_MODE)) {
+            camera_metadata_entry_t entrys =
+                curMeta.metadata.find(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS);
+            int count = entrys.count;
+            int32_t *keys = new int32_t[count + 1];
+            memcpy(keys, entrys.data.i32, entrys.count * sizeof(int32_t));
+            keys[count++] = ANDROID_CONTROL_EXTENDED_SCENE_MODE;
+            curMeta.metadata.update(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, keys,
+                                    count);
+            delete[] keys;
+        }
+        curMeta.metadata.update(ANDROID_CONTROL_EXTENDED_SCENE_MODE,
+                                &mExtendMode, 1);
+        mMetadataReqList.push_back(curMeta);
+    }
     Mutex::Autolock l(mRequestLock);
     for (i = 0; i < request->num_output_buffers; i++) {
         newStream = (request->output_buffers[i]).stream;
         newStream->reserved[0] = NULL;
-        if (getStreamTypes(newStream) == CALLBACK_STREAM) {
+        int type = getStreamTypes(newStream);
+        if (type == CALLBACK_STREAM || type == PREVIEW_STREAM) {
             currRequest.buffer = request->output_buffers[i].buffer;
             currRequest.preview_stream = request->output_buffers[i].stream;
             currRequest.input_buffer = request->input_buffer;
             currRequest.frame_number = request->frame_number;
-            HAL_LOGD("save request:id %d, ", request->frame_number);
+            HAL_LOGD("%d, %dx%d", i, currRequest.preview_stream->width,
+                     currRequest.preview_stream->height);
+            HAL_LOGD("save request:id %d", request->frame_number);
             mSavedRequestList.push_back(currRequest);
-        } else if (getStreamTypes(newStream) == DEFAULT_STREAM) {
+        } else if (type == DEFAULT_STREAM) {
             mThumbReq.buffer = request->output_buffers[i].buffer;
             mThumbReq.preview_stream = request->output_buffers[i].stream;
             mThumbReq.input_buffer = request->input_buffer;
             mThumbReq.frame_number = request->frame_number;
-            HAL_LOGD("save thumb request:id %d, w= %d,h=%d",
+            HAL_LOGD("save pic request:id %d, w= %d,h=%d",
                      request->frame_number, (mThumbReq.preview_stream)->width,
                      (mThumbReq.preview_stream)->height);
+        } else if (type == VIDEO_STREAM) {
+            curVideoRequest.buffer = (request->output_buffers[i]).buffer;
+            curVideoRequest.input_buffer = request->input_buffer;
+            curVideoRequest.video_stream = request->output_buffers[i].stream;
+            curVideoRequest.frame_number = request->frame_number;
+            HAL_LOGD("save video request:id %d", request->frame_number);
+            mSavedVideoReqList.push_back(curVideoRequest);
+            if (mVideoPrevShare) {
+                currRequest.buffer = request->output_buffers[i].buffer;
+                currRequest.preview_stream = request->output_buffers[i].stream;
+                currRequest.input_buffer = request->input_buffer;
+                currRequest.frame_number = request->frame_number;
+                HAL_LOGD("save prev request:id %d", request->frame_number);
+                mSavedRequestList.push_back(currRequest);
+            }
         }
     }
+    HAL_LOGD(" X");
 }
 
 int BokehCamera::thumbYuvProc(buffer_handle_t *src_buffer) {
     int ret = NO_ERROR;
     int angle = 0;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
     struct img_frm src_img;
     struct img_frm dst_img;
     struct snp_thumb_yuv_param thumb_param;
@@ -2847,7 +3165,7 @@ fail_map_src:
 }
 
 void BokehCamera::dumpCaptureBokeh(unsigned char *result_buffer_addr,
-                                            uint32_t jpeg_size) {
+                                   uint32_t jpeg_size) {
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -2861,7 +3179,7 @@ void BokehCamera::dumpCaptureBokeh(unsigned char *result_buffer_addr,
         int xmp_size = 0;
         xmp_size = BOKEH_REFOCUS_COMMON_XMP_SIZE;
 
-        if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+        if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
             para_size = BOKEH_REFOCUS_COMMON_PARAM_NUM * 4;
             depth_size =
                 mBokehSize.depth_snap_out_w * mBokehSize.depth_snap_out_h * 2;
@@ -2902,7 +3220,8 @@ void BokehCamera::dumpCaptureBokeh(unsigned char *result_buffer_addr,
 #else
         buffer_base -= (int)(orig_yuv_size);
         dumpData(buffer_base, 1, orig_yuv_size, mBokehSize.capture_w,
-                 mBokehSize.capture_h, mBokehCamera->mCapFrameNumber, "origYuv");
+                 mBokehSize.capture_h, mBokehCamera->mCapFrameNumber,
+                 "origYuv");
 #endif
     }
 }
@@ -2916,20 +3235,25 @@ void BokehCamera::dumpCaptureBokeh(unsigned char *result_buffer_addr,
  *
  * RETURN     : None
  *==========================================================================*/
-void BokehCamera::CallBackMetadata() {
+void BokehCamera::CallBackMetadata(uint32_t frame_number) {
     camera3_capture_result_t result;
     bzero(&result, sizeof(camera3_capture_result_t));
     List<meta_save_t>::iterator itor;
     {
         Mutex::Autolock l(mMetatLock);
         itor = mMetadataList.begin();
-        while (itor != mMetadataList.end()) {
+        while (itor != mMetadataList.end() &&
+               itor->frame_number <= frame_number) {
             result.frame_number = itor->frame_number;
             result.result = const_cast<camera_metadata_t *>(itor->metadata);
             result.num_output_buffers = 0;
             result.output_buffers = NULL;
             result.input_buffer = NULL;
             result.partial_result = 1;
+            CameraMetadata metadata = clone_camera_metadata(result.result);
+            setResultMetadata(metadata, result.frame_number);
+            result.result = metadata.release();
+            HAL_LOGD("CallBackMetadata, %d", result.frame_number);
             mCallbackOps->process_capture_result(mCallbackOps, &result);
             free_camera_metadata(
                 const_cast<camera_metadata_t *>(result.result));
@@ -2958,30 +3282,37 @@ void BokehCamera::CallBackSnapResult(int status) {
     result.output_buffers = &result_buffers;
     result.input_buffer = NULL;
     result.partial_result = 0;
-
+    CallBackMetadata(result.frame_number);
     mCallbackOps->process_capture_result(mCallbackOps, &result);
     memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
     HAL_LOGD("snap id: %d ", result.frame_number);
 }
 
-void BokehCamera::CallBackResult(
-    uint32_t frame_number, camera3_buffer_status_t buffer_status) {
+void BokehCamera::CallBackResult(uint32_t frame_number,
+                                 camera3_buffer_status_t buffer_status) {
 
     camera3_capture_result_t result;
-    List<multi_request_saved_t>::iterator itor;
+    List<multi_request_saved_t>::iterator itor, itor2;
     camera3_stream_buffer_t result_buffers;
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
 
-    CallBackMetadata();
-    if ((frame_number != mBokehCamera->mCapFrameNumber) || (frame_number == 0)) {
+    if ((frame_number != mBokehCamera->mCapFrameNumber) ||
+        (frame_number == mReqCapType.frame_number &&
+         (mReqCapType.reqType & 1) == 1)) {
         Mutex::Autolock l(mBokehCamera->mRequestLock);
         itor = mBokehCamera->mSavedRequestList.begin();
         while (itor != mBokehCamera->mSavedRequestList.end()) {
             if (itor->frame_number == frame_number) {
-                HAL_LOGD("erase frame_number %u", frame_number);
+                CallBackMetadata(frame_number);
                 result_buffers.stream = itor->preview_stream;
                 result_buffers.buffer = itor->buffer;
+                HAL_LOGD("mVideoStreamsNum %d", mVideoStreamsNum);
+                if (mVideoStreamsNum >= 0) {
+                    callbackVideoResult(frame_number, buffer_status,
+                                        result_buffers.buffer);
+                }
+                HAL_LOGD("erase frame_number %u", frame_number);
                 mBokehCamera->mSavedRequestList.erase(itor);
                 break;
             }
@@ -2991,7 +3322,43 @@ void BokehCamera::CallBackResult(
             HAL_LOGE("can't find frame in mSavedRequestList %u:", frame_number);
             return;
         }
+        itor2 = mBokehCamera->mSavedRequestList.begin();
+        while (itor2 != mBokehCamera->mSavedRequestList.end()) {
+            if (itor2->frame_number == frame_number) {
+                camera3_capture_result_t result2;
+                camera3_stream_buffer_t result_buffers2;
+                bzero(&result2, sizeof(camera3_capture_result_t));
+                bzero(&result_buffers2, sizeof(camera3_stream_buffer_t));
+                void *addr = NULL, *addr2 = NULL;
+                uint32_t size =
+                    itor2->stream->width * itor2->stream->height * 3 / 2;
+                mBokehCamera->map(itor2->buffer, &addr2);
+                mBokehCamera->map(result_buffers.buffer, &addr);
+                memcpy(addr2, addr, size);
+                mBokehCamera->unmap(itor2->buffer);
+                mBokehCamera->unmap(result_buffers.buffer);
+                result_buffers2.stream = itor2->preview_stream;
+                result_buffers2.buffer = itor2->buffer;
+                result_buffers2.status = buffer_status;
+                result_buffers2.acquire_fence = -1;
+                result_buffers2.release_fence = -1;
+                result2.result = NULL;
+                result2.frame_number = frame_number;
+                result2.num_output_buffers = 1;
+                result2.output_buffers = &result_buffers2;
+                result2.input_buffer = NULL;
+                result2.partial_result = 0;
+                HAL_LOGD("id:%d buffer_status %u, %p", result2.frame_number,
+                         buffer_status, (result2.output_buffers)->buffer);
+                mCallbackOps->process_capture_result(mCallbackOps, &result2);
+                HAL_LOGD("erase frame_number %u", frame_number);
+                mBokehCamera->mSavedRequestList.erase(itor2);
+                break;
+            }
+            itor2++;
+        }
     } else {
+        CallBackMetadata(frame_number);
         result_buffers.stream = mBokehCamera->mSavedCapStreams;
         result_buffers.buffer = mCaptureThread->mSavedCapReqStreamBuff.buffer;
     }
@@ -3005,13 +3372,22 @@ void BokehCamera::CallBackResult(
     result.input_buffer = NULL;
     result.partial_result = 0;
 
-    mCallbackOps->process_capture_result(mCallbackOps, &result);
-    HAL_LOGD("id:%d buffer_status %u", result.frame_number, buffer_status);
+    if (!mVideoPrevShare) {
+        HAL_LOGD("priv:%p,%s", result_buffers.stream->priv,
+                 result_buffers.stream->physical_camera_id);
+        HAL_LOGD("result_buffer:%d,%d", result_buffers.stream->width,
+                 result_buffers.stream->height);
+        HAL_LOGD("id:%d buffer_status %u, %p", result.frame_number,
+                 buffer_status, (result.output_buffers)->buffer);
+        mCallbackOps->process_capture_result(mCallbackOps, &result);
+    }
     if (!buffer_status) {
         mBokehCamera->dumpFps();
     }
 
-    if ((frame_number != mBokehCamera->mCapFrameNumber) || (frame_number == 0)) {
+    if ((frame_number != mBokehCamera->mCapFrameNumber) ||
+        (frame_number == mReqCapType.frame_number &&
+         (mReqCapType.reqType & 1) == 1)) {
         Mutex::Autolock l(mBokehCamera->mPendingLock);
         mBokehCamera->mPendingRequest--;
         if (mBokehCamera->mPendingRequest < mBokehCamera->mMaxPendingCount) {
@@ -3019,9 +3395,65 @@ void BokehCamera::CallBackResult(
                      mBokehCamera->mPendingRequest);
             mBokehCamera->mRequestSignal.signal();
         }
+        if (frame_number == mReqCapType.frame_number &&
+            (mReqCapType.reqType & 1) == 1)
+            mReqCapType.reqType &= 2;
     } else {
-        mBokehCamera->mCapFrameNumber = 0;
+        mBokehCamera->mCapFrameNumber = -1;
+        mReqCapType.reqType &= 1;
     }
+}
+
+void BokehCamera::callbackVideoResult(uint32_t frame_number,
+                                      camera3_buffer_status_t buffer_status,
+                                      buffer_handle_t *buffer) {
+    void *prev_addr = NULL;
+    void *video_addr = NULL;
+    buffer_handle_t *video_buffer;
+    camera3_capture_result_t result;
+    List<multi_request_saved_t>::iterator itor;
+    camera3_stream_buffer_t result_buffers;
+    bzero(&result, sizeof(camera3_capture_result_t));
+    bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
+    itor = mBokehCamera->mSavedVideoReqList.begin();
+    while (itor != mBokehCamera->mSavedVideoReqList.end()) {
+        if (itor->frame_number == frame_number) {
+            int rc = mBokehCamera->map(buffer, &prev_addr);
+            if (rc != NO_ERROR) {
+                HAL_LOGE("fail to map video buffer %d", frame_number);
+                return;
+            }
+            rc = mBokehCamera->map(itor->buffer, &video_addr);
+            uint32_t buf_size =
+                mBokehStream.video_w * mBokehStream.video_h * 3 / 2;
+            memcpy(video_addr, prev_addr, buf_size);
+            mBokehCamera->unmap(buffer);
+            mBokehCamera->unmap(itor->buffer);
+            result_buffers.stream = itor->video_stream;
+            result_buffers.buffer = itor->buffer;
+            HAL_LOGD("erase frame_number %u", frame_number);
+            mBokehCamera->mSavedVideoReqList.erase(itor);
+            break;
+        }
+        itor++;
+    }
+    if (itor == mBokehCamera->mSavedVideoReqList.end()) {
+        HAL_LOGE("can't find frame in mSavedVideoReqList %u:", frame_number);
+        return;
+    }
+    result_buffers.status = buffer_status;
+    result_buffers.acquire_fence = -1;
+    result_buffers.release_fence = -1;
+    result.result = NULL;
+    result.frame_number = frame_number;
+    result.num_output_buffers = 1;
+    result.output_buffers = &result_buffers;
+    result.input_buffer = NULL;
+    result.partial_result = 0;
+    HAL_LOGD("result_buffer:%d,%d", result_buffers.stream->width,
+             result_buffers.stream->height);
+    mCallbackOps->process_capture_result(mCallbackOps, &result);
+    HAL_LOGD("id:%d buffer_status %u", result.frame_number, buffer_status);
 }
 
 /*===========================================================================
@@ -3034,7 +3466,7 @@ void BokehCamera::CallBackResult(
  * RETURN     : None
  *==========================================================================*/
 void BokehCamera::clearFrameNeverMatched(uint32_t main_frame_number,
-                                                  uint32_t sub_frame_number) {
+                                         uint32_t sub_frame_number) {
     List<hwi_frame_buffer_info_t>::iterator itor;
     uint32_t frame_num = 0;
     Mutex::Autolock l(mClearBufferLock);
@@ -3046,8 +3478,9 @@ void BokehCamera::clearFrameNeverMatched(uint32_t main_frame_number,
                            mLocalBufferList);
             HAL_LOGD("clear frame main idx:%d", itor->frame_number);
             frame_num = itor->frame_number;
-            mUnmatchedFrameListMain.erase(itor);
+            mUnmatchedFrameListMain.erase(itor++);
             CallBackResult(frame_num, CAMERA3_BUFFER_STATUS_ERROR);
+            continue;
         }
         itor++;
     }
@@ -3058,29 +3491,30 @@ void BokehCamera::clearFrameNeverMatched(uint32_t main_frame_number,
             pushBufferList(mLocalBuffer, itor->buffer, mLocalBufferNumber,
                            mLocalBufferList);
             HAL_LOGD("clear frame aux idx:%d", itor->frame_number);
-            mUnmatchedFrameListAux.erase(itor);
+            mUnmatchedFrameListAux.erase(itor++);
+            continue;
         }
         itor++;
     }
 }
 
-void BokehCamera::setDepthStatus(DepthStatus state) {
-
+void BokehCamera::setDepthStatus(BokehDepthStatus state) {
+    HAL_LOGD("state %d", state);
     Mutex::Autolock l(mDepthStatusLock);
-    DepthStatus pre_status = mDepthStatus;
+    BokehDepthStatus pre_status = mDepthStatus;
     switch (pre_status) {
-    case DEPTH_DONING:
+    case BOKEH_DEPTH_DONING:
         mDepthStatus = state;
-        if (state == DEPTH_DONE) {
-            mDepthTrigger = TRIGGER_FALSE;
+        if (state == BOKEH_DEPTH_DONE) {
+            mDepthTrigger = BOKEH_TRIGGER_FALSE;
         }
         break;
-    case DEPTH_DONE:
+    case BOKEH_DEPTH_DONE:
         mDepthStatus = state;
         break;
-    case DEPTH_INVALID:
-        if (state == DEPTH_DONE) {
-            mDepthStatus = DEPTH_INVALID;
+    case BOKEH_DEPTH_INVALID:
+        if (state == BOKEH_DEPTH_DONE) {
+            mDepthStatus = BOKEH_DEPTH_INVALID;
         } else {
             mDepthStatus = state;
         }
@@ -3091,10 +3525,10 @@ void BokehCamera::setDepthStatus(DepthStatus state) {
     }
 
     if (mFlushing) {
-        mDepthStatus = DEPTH_INVALID;
+        mDepthStatus = BOKEH_DEPTH_INVALID;
     }
-    HAL_LOGD("set depth status %d to %d,mDepthTrigger=%d", pre_status, state,
-             mDepthTrigger);
+    HAL_LOGD("set depth status %d to %d,mDepthTrigger=%d", pre_status,
+             mDepthStatus, mDepthTrigger);
 }
 
 /*===========================================================================
@@ -3108,19 +3542,19 @@ void BokehCamera::setDepthStatus(DepthStatus state) {
 void BokehCamera::setDepthTrigger(int vcm) {
 
     if (mAfstate) {
-        mDepthTrigger = TRIGGER_AF;
-    } else if (mVcmSteps != vcm || mFlushing) {
-        setDepthStatus(DEPTH_INVALID);
-        mDepthTrigger = TRIGGER_FALSE;
+        mDepthTrigger = BOKEH_TRIGGER_AF;
+    } else if (/*mVcmSteps != vcm ||*/ mFlushing) {
+        setDepthStatus(BOKEH_DEPTH_INVALID);
+        mDepthTrigger = BOKEH_TRIGGER_FALSE;
     }
-    HAL_LOGD("mDepthStatus %d,trigger=%d,vcm=%d,%d,mAfstate=%d", mDepthStatus,
-             mDepthTrigger, mVcmSteps, vcm, mAfstate);
+    HAL_LOGD("mDepthStatus %d,mDepthTrigger=%d,mVcmSteps=%d,vcm=%d,mAfstate=%d",
+             mDepthStatus, mDepthTrigger, mVcmSteps, vcm, mAfstate);
 
     mVcmSteps = vcm;
 }
 
 unsigned char *BokehCamera::getaddr(unsigned char *result_buffer_addr,
-                                             uint32_t buffer_size) {
+                                    uint32_t buffer_size) {
     unsigned char *buffer_base = result_buffer_addr;
     HAL_LOGI("buffer_base %p", buffer_base);
     buffer_base += buffer_size;
@@ -3137,9 +3571,9 @@ unsigned char *BokehCamera::getaddr(unsigned char *result_buffer_addr,
  *
  * RETURN     : None
  *==========================================================================*/
-int BokehCamera::insertGDepthMetadata(
-    unsigned char *result_buffer_addr, uint32_t result_buffer_size,
-    uint32_t jpeg_size) {
+int BokehCamera::insertGDepthMetadata(unsigned char *result_buffer_addr,
+                                      uint32_t result_buffer_size,
+                                      uint32_t jpeg_size) {
     int rc = 0;
     FILE *fp = NULL;
     char file2_name[256] = {0};
@@ -3158,7 +3592,8 @@ int BokehCamera::insertGDepthMetadata(
     depth_size = mBokehCamera->mBokehSize.depth_snap_size;
     xmp_size = BOKEH_REFOCUS_COMMON_XMP_SIZE;
 #ifdef CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV
-    depth_yuv_normalize_size = mBokehCamera->mBokehSize.depth_yuv_normalize_size;
+    depth_yuv_normalize_size =
+        mBokehCamera->mBokehSize.depth_yuv_normalize_size;
 #endif
     uint32_t use_size = para_size + depth_yuv_normalize_size + depth_size +
                         mBokehCamera->mOrigJpegSize + jpeg_size + xmp_size;
@@ -3232,7 +3667,8 @@ int BokehCamera::insertGDepthMetadata(
             if (exists) {
                 HAL_LOGI("Near = %f", nearValueD);
             } else {
-                meta.SetProperty_Float(gDepthURI, "Near", mBokehCamera->near, 0);
+                meta.SetProperty_Float(gDepthURI, "Near", mBokehCamera->near,
+                                       0);
             }
             HAL_LOGI("Near1 %u ", mBokehCamera->near);
 
@@ -3407,7 +3843,7 @@ int BokehCamera::insertGDepthMetadata(
     fclose(fp);
 
     mBokehCamera->setJpegSize((char *)result_buffer_addr, result_buffer_size,
-                            size);
+                              size);
 
     return rc;
 }
@@ -3417,13 +3853,13 @@ void BokehCamera::encodeOriginalJPEGandDepth(
 
     // string encodeToBase64String;
     SXMPUtils::EncodeToBase64(
-        (char *)mBokehCamera->mDepthBuffer.snap_gdepthjpeg_buffer_addr,
+        (char *)mBokehCamera->mBokehDepthBuffer.snap_gdepthjpeg_buffer_addr,
         mBokehCamera->mBokehSize.depth_jepg_size, encodeToBase64String);
-    mBokehCamera->unmap(mBokehCamera->mDepthBuffer.snap_gdepthJpg_buffer);
+    mBokehCamera->unmap(mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer);
     HAL_LOGI("encodeToBase64String = %s", encodeToBase64String->c_str());
     void *gdepth_ori_jpeg_addr = NULL;
     mBokehCamera->map(mBokehCamera->m_pDstGDepthOriJpegBuffer,
-                    &gdepth_ori_jpeg_addr);
+                      &gdepth_ori_jpeg_addr);
     SXMPUtils::EncodeToBase64((char *)gdepth_ori_jpeg_addr,
                               mBokehCamera->mGDepthOriJpegSize,
                               encodeToBase64StringOrigJpeg);
@@ -3459,7 +3895,7 @@ int BokehCamera::jpeg_callback_thread_init(void *p_data) {
 void *BokehCamera::jpeg_callback_thread_proc(void *p_data) {
     int ret = 0;
     BokehCamera *obj = (BokehCamera *)p_data;
-
+    HAL_LOGD(" E");
     if (!obj) {
         HAL_LOGE("obj=%p", obj);
         return NULL;
@@ -3491,7 +3927,7 @@ void *BokehCamera::jpeg_callback_thread_proc(void *p_data) {
         save_param = true;
     }
 #endif
-    if (save_param && mBokehCamera->mBokehMode == CAM_DUAL_BOKEH_MODE) {
+    if (save_param && mBokehCamera->mBokehMode == DUAL_BOKEH_MODE) {
         obj->mCaptureThread->saveCaptureBokehParams(result_buffer_addr,
                                                     obj->mjpegSize, jpeg_size);
 #ifdef CONFIG_SUPPORT_GDEPTH
@@ -3511,68 +3947,51 @@ void *BokehCamera::jpeg_callback_thread_proc(void *p_data) {
                         obj->mLocalBufferNumber, obj->mLocalBufferList);
 #endif
 #endif
-    obj->CallBackResult(obj->mCapFrameNumber, CAMERA3_BUFFER_STATUS_OK);
     obj->mCaptureThread->mReprocessing = false;
     obj->mIsCapturing = false;
+    obj->CallBackResult(obj->mCapFrameNumber, CAMERA3_BUFFER_STATUS_OK);
+    HAL_LOGD(" X");
     return NULL;
 }
 /*
     {RES_8M, {{3264, 2448}, {960, 720}, {320, 240}}},
     {RES_12M, {{4000, 3000}, {960, 720}, {320, 240}}},
 */
-int BokehCamera::getMaxSize(const char *resolution) {
+void BokehCamera::getMaxSize(const char *resolution) {
     char value[PROPERTY_VALUE_MAX];
     int32_t jpeg_stream_size = 0;
 
-   if (!strncmp(resolution, "RES_8M", 12)) {
-        maxWidth = 3264;
-	maxHeight = 2448;
-	maxPrevWidth = 960;
-	maxPrevHeight = 720;
+    if (!strncmp(resolution, "RES_8M", 12)) {
+        maxCapWidth = 3264;
+        maxCapHeight = 2448;
+        maxPrevWidth = 960;
+        maxPrevHeight = 720;
     } else if (!strncmp(resolution, "RES_12M", 12)) {
-        maxWidth = 4000;
-	maxHeight = 3000;
-	maxPrevWidth = 960;
-	maxPrevHeight = 720;
-    } else{
+        maxCapWidth = 4000;
+        maxCapHeight = 3000;
+        maxPrevWidth = 960;
+        maxPrevHeight = 720;
+    } else {
         HAL_LOGE("Error,not support resolution %s", resolution);
-        maxWidth = 6528;
-	maxHeight = 4896;
+        maxCapWidth = 6528;
+        maxCapHeight = 4896;
     }
-    jpeg_stream_size = (maxHeight * maxWidth * 3 / 2 + sizeof(camera3_jpeg_blob_t));
-    kavailableExtendedSceneModeMaxSizes[1][1] = maxWidth;
-    kavailableExtendedSceneModeMaxSizes[1][2] = maxHeight;
-    kavailableExtendedSceneModeMaxSizes[2][1] = maxPrevWidth;
-    kavailableExtendedSceneModeMaxSizes[2][2] = maxPrevHeight;
-
-    kscalerAvailableStreamConfugurations[0][1] = maxPrevWidth;
-    kscalerAvailableStreamConfugurations[0][2] = maxPrevHeight;
-    kscalerAvailableStreamConfugurations[1][1] = maxPrevWidth;
-    kscalerAvailableStreamConfugurations[1][2] = maxPrevHeight;
-    kscalerAvailableStreamConfugurations[2][1] = maxWidth;
-    kscalerAvailableStreamConfugurations[2][2] = maxHeight;
     // enlarge buffer size for isp debug info for userdebug version
     property_get("ro.debuggable", value, "0");
     if (!strcmp(value, "1")) {
         jpeg_stream_size += 1024 * 1024;
     }
-    CMR_LOGI("W %d, H %d, PW %d, PH %d, jpeg_stream_size %d",
-		maxWidth, maxHeight, maxPrevWidth, maxPrevHeight, jpeg_stream_size);
-
-    return jpeg_stream_size;
+    CMR_LOGI("W %d, H %d, PW %d, PH %d, jpeg_stream_size %d", maxCapWidth,
+             maxCapHeight, maxPrevWidth, maxPrevHeight, jpeg_stream_size);
 }
 
 int BokehCamera::getStreamTypes(camera3_stream_t *new_stream) {
     int stream_type = 0;
     int format = new_stream->format;
     CMR_LOGD("new_stream w %d, h %d", new_stream->width, new_stream->height);
-    if(new_stream->width == maxPrevWidth && new_stream->height == maxPrevHeight &&
-		format == HAL_PIXEL_FORMAT_YCbCr_420_888) { //35
-        stream_type = PREVIEW_STREAM;
-	return stream_type;
-    } else if (new_stream->stream_type == CAMERA3_STREAM_OUTPUT) {
-        if (format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
-            format = HAL_PIXEL_FORMAT_YCrCb_420_SP;    //17
+    if (new_stream->stream_type == CAMERA3_STREAM_OUTPUT) {
+        if (format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) // 34
+            format = HAL_PIXEL_FORMAT_YCrCb_420_SP; // 17
         HAL_LOGD("format %d, usage %d", format, new_stream->usage);
         switch (format) {
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
@@ -3593,31 +4012,31 @@ int BokehCamera::getStreamTypes(camera3_stream_t *new_stream) {
             }
             break;
         case HAL_PIXEL_FORMAT_YV12:
-        case HAL_PIXEL_FORMAT_YCbCr_420_888:
+        case HAL_PIXEL_FORMAT_YCbCr_420_888: // 35
             if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
-                HAL_LOGD("CALLBACK_STREAM");
-                stream_type = CALLBACK_STREAM;
+                HAL_LOGD("PREVIEW_STREAM");
+                stream_type = PREVIEW_STREAM;
             }
             break;
         case HAL_PIXEL_FORMAT_BLOB:
+            HAL_LOGD("SNAPSHOT_STREAM");
             stream_type = SNAPSHOT_STREAM;
             break;
         default:
-	    HAL_LOGD("DEFAULT_STREAM");
+            HAL_LOGD("DEFAULT_STREAM");
             stream_type = DEFAULT_STREAM;
             break;
         }
     } else if (new_stream->stream_type == CAMERA3_STREAM_BIDIRECTIONAL) {
         stream_type = CALLBACK_STREAM;
     }
-
     return stream_type;
 }
 
 void BokehCamera::preClose(void) {
 
     HAL_LOGI("E");
-    if ((mBokehCamera->mApiVersion == SPRD_API_MODE) && mBokehAlgo) {
+    if ((mBokehCamera->mApiVersion == BOKEH_API_MODE) && mBokehAlgo) {
         mBokehAlgo->setFlag();
     }
     if (mCaptureThread != NULL) {
@@ -3628,8 +4047,10 @@ void BokehCamera::preClose(void) {
         mCaptureThread->join();
     }
     if (mPreviewMuxerThread != NULL) {
-        if (mPreviewMuxerThread->isRunning()) {
+        if (mPreviewMuxerThread
+                ->isRunning() /*&& mPreviewMuxerThread->is_inited*/) {
             mPreviewMuxerThread->requestExit();
+            // mPreviewMuxerThread->is_inited = false;
         }
         // wait threads quit to relese object
         mPreviewMuxerThread->join();
@@ -3645,10 +4066,86 @@ void BokehCamera::preClose(void) {
     HAL_LOGI("X");
 }
 
+void BokehCamera::setResultMetadata(CameraMetadata &metadata,
+                                    uint32_t frame_number) {
+    uint8_t unavl = 0;
+    List<meta_req_t>::iterator itor;
+    Mutex::Autolock l(mMetaReqLock);
+    itor = mMetadataReqList.begin();
+    while (itor != mMetadataReqList.end()) {
+        if (frame_number == itor->frame_number) {
+            CameraMetadata meta = itor->metadata;
+            uint8_t exSceneMode = 0;
+            if (meta.exists(ANDROID_CONTROL_EXTENDED_SCENE_MODE))
+                exSceneMode =
+                    meta.find(ANDROID_CONTROL_EXTENDED_SCENE_MODE).data.u8[0];
+            HAL_LOGD("result %d, extend_mode %d", frame_number, exSceneMode);
+            metadata.update(ANDROID_CONTROL_EXTENDED_SCENE_MODE, &exSceneMode,
+                            1);
+
+            /*ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID*/
+            camera_metadata_entry_t entrys =
+                metadata.find(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS);
+            int count = entrys.count;
+            int32_t *keys = new int32_t[count + 1];
+            memcpy(keys, entrys.data.i32, entrys.count * sizeof(int32_t));
+            keys[count++] = ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID;
+            metadata.update(ANDROID_REQUEST_AVAILABLE_RESULT_KEYS, keys, count);
+            delete[] keys;
+            metadata.update(ANDROID_LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID,
+                            physicIds, mPhysicalIds.size() * 2);
+
+            if (meta.exists(ANDROID_SCALER_CROP_REGION)) {
+                for (int i = 0; i < 4; i++) {
+                    metadata.find(ANDROID_SCALER_CROP_REGION).data.i32[i] =
+                        meta.find(ANDROID_SCALER_CROP_REGION).data.i32[i];
+                }
+            }
+            if (metadata.exists(ANDROID_FLASH_STATE)) {
+                metadata.update(ANDROID_FLASH_STATE, &unavl, 1);
+            }
+            mMetadataReqList.erase(itor);
+            break;
+        }
+        itor++;
+    }
+}
+
+bool BokehCamera::matchTwoFrame(hwi_frame_buffer_info_t result1,
+                                List<hwi_frame_buffer_info_t> &list,
+                                hwi_frame_buffer_info_t *result2) {
+    List<hwi_frame_buffer_info_t>::iterator itor2;
+    int64_t mMatchTimeThreshold = 400;
+    if (list.empty()) {
+        HAL_LOGE("match failed for idx:%d, unmatched queue is empty",
+                 result1.frame_number);
+        return MATCH_FAILED;
+    } else {
+        itor2 = list.begin();
+        while (itor2 != list.end()) {
+            int64_t diff =
+                (int64_t)result1.timestamp - (int64_t)itor2->timestamp;
+            HAL_LOGD("T1:%llu,T2:%llu", result1.timestamp, itor2->timestamp);
+            if (ns2ms(abs((cmr_s32)diff)) < mMatchTimeThreshold) {
+                *result2 = *itor2;
+                list.erase(itor2);
+                HAL_LOGD("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
+                         result1.frame_number, itor2->frame_number, diff,
+                         result1.timestamp, itor2->timestamp);
+                return MATCH_SUCCESS;
+            }
+            itor2++;
+        }
+        HAL_LOGD("no match for idx:%d, could not find matched frame",
+                 result1.frame_number);
+        return MATCH_FAILED;
+    }
+}
+
 shared_ptr<ICameraBase>
 BokehCamera::BokehCreator::createInstance(shared_ptr<Configurator> cfg) {
-    if(!cfg)
-	return nullptr;
+    if (!cfg)
+        return nullptr;
     auto physicalIds = cfg->getPhysicalIds();
     mBokehCamera = new BokehCamera(cfg, physicalIds);
     return shared_ptr<ICameraBase>(mBokehCamera);
@@ -3711,12 +4208,16 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
         }
         switch (muxer_msg.msg_type) {
         case MUXER_MSG_INIT: {
+            HAL_LOGD("ALG mBokehAlgo->initAlgo start");
             rc = mBokehCamera->mBokehAlgo->initAlgo();
+            HAL_LOGD("ALG mBokehAlgo->initAlgo end");
             if (rc != NO_ERROR) {
                 HAL_LOGE("fail to initAlgo");
                 // return rc;
             }
+            HAL_LOGD("ALG mBokehAlgo->initPrevDepth start");
             rc = mBokehCamera->mBokehAlgo->initPrevDepth();
+            HAL_LOGD("ALG mBokehAlgo->initPrevDepth end");
             if (rc != NO_ERROR) {
                 HAL_LOGE("fail to initPrevDepth");
                 // return rc;
@@ -3731,7 +4232,7 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
 #endif
         } break;
         case MUXER_MSG_EXIT: {
-
+            HAL_LOGD("MUXER_MSG_EXIT.");
             List<multi_request_saved_t>::iterator itor =
                 mBokehCamera->mSavedRequestList.begin();
             HAL_LOGD("exit frame_number %u", itor->frame_number);
@@ -3739,11 +4240,12 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
                 frame_number = itor->frame_number;
                 itor++;
                 mBokehCamera->CallBackResult(frame_number,
-                                           CAMERA3_BUFFER_STATUS_ERROR);
+                                             CAMERA3_BUFFER_STATUS_ERROR);
             }
         }
             return false;
         case MUXER_MSG_DATA_PROC: {
+            HAL_LOGD("MUXER_MSG_DATA_PROC");
             {
                 Mutex::Autolock l(mBokehCamera->mRequestLock);
 
@@ -3768,18 +4270,19 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
                 bool isDoDepth = false;
                 void *output_buf_addr = NULL;
                 void *input_buf1_addr = NULL;
-                if ((mBokehCamera->mApiVersion == SPRD_API_MODE &&
-                     mBokehCamera->mBokehMode != CAM_PORTRAIT_MODE) ||
-                    (mBokehCamera->mApiVersion == SPRD_API_MODE &&
+                if ((mBokehCamera->mApiVersion == BOKEH_API_MODE &&
+                     mBokehCamera->mBokehMode != PORTRAIT_MODE) ||
+                    (mBokehCamera->mApiVersion == BOKEH_API_MODE &&
                      mBokehCamera->mDoPortrait &&
-                     mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) {
+                     mBokehCamera->mBokehMode == PORTRAIT_MODE)) {
                     rc = sprdBokehPreviewHandle(output_buffer,
                                                 muxer_msg.combo_frame.buffer1);
                     if (rc != NO_ERROR) {
                         HAL_LOGE("sprdBokehPreviewHandle failed");
                         return false;
                     }
-                    if (mBokehCamera->mDepthTrigger != TRIGGER_FALSE &&
+                    HAL_LOGD("mDepthTrigger %d", mBokehCamera->mDepthTrigger);
+                    if (mBokehCamera->mDepthTrigger != BOKEH_TRIGGER_FALSE &&
                         mBokehCamera->mOtpData.otp_exist) {
                         isDoDepth = sprdDepthHandle(&muxer_msg);
                     }
@@ -3791,7 +4294,7 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
                         goto fail_map_output;
                     }
                     rc = mBokehCamera->map(muxer_msg.combo_frame.buffer1,
-                                         &input_buf1_addr);
+                                           &input_buf1_addr);
                     if (rc != NO_ERROR) {
                         HAL_LOGE("fail to map input buffer");
                         goto fail_map_input;
@@ -3800,8 +4303,8 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
                     memcpy(output_buf_addr, input_buf1_addr,
                            ADP_BUFSIZE(*muxer_msg.combo_frame.buffer1));
                     mBokehCamera->flushIonBuffer(ADP_BUFFD(*output_buffer),
-                                               output_buf_addr,
-                                               ADP_BUFSIZE(*output_buffer));
+                                                 output_buf_addr,
+                                                 ADP_BUFSIZE(*output_buffer));
 
                     mBokehCamera->unmap(muxer_msg.combo_frame.buffer1);
                 fail_map_input:
@@ -3810,17 +4313,19 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
                     rc = NO_ERROR;
                 }
                 if (!isDoDepth) {
-                    mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
-                                               muxer_msg.combo_frame.buffer1,
-                                               mBokehCamera->mLocalBufferNumber,
-                                               mBokehCamera->mLocalBufferList);
-                    mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
-                                               muxer_msg.combo_frame.buffer2,
-                                               mBokehCamera->mLocalBufferNumber,
-                                               mBokehCamera->mLocalBufferList);
+                    mBokehCamera->pushBufferList(
+                        mBokehCamera->mLocalBuffer,
+                        muxer_msg.combo_frame.buffer1,
+                        mBokehCamera->mLocalBufferNumber,
+                        mBokehCamera->mLocalBufferList);
+                    mBokehCamera->pushBufferList(
+                        mBokehCamera->mLocalBuffer,
+                        muxer_msg.combo_frame.buffer2,
+                        mBokehCamera->mLocalBufferNumber,
+                        mBokehCamera->mLocalBufferList);
                 }
                 mBokehCamera->CallBackResult(frame_number,
-                                           CAMERA3_BUFFER_STATUS_OK);
+                                             CAMERA3_BUFFER_STATUS_OK);
             }
         } break;
         default:
@@ -3851,6 +4356,7 @@ bool BokehCamera::PreviewMuxerThread::sprdDepthHandle(
              send_muxer_msg.combo_frame.frame_number,
              mBokehCamera->mDepthMuxerThread->mDepthMuxerMsgList.size());
     if (mBokehCamera->mDepthMuxerThread->mDepthMuxerMsgList.empty()) {
+        HAL_LOGD("mDepthMuxerMsgList.push_back");
         mBokehCamera->mDepthMuxerThread->mDepthMuxerMsgList.push_back(
             send_muxer_msg);
         mBokehCamera->mDepthMuxerThread->mMergequeueSignal.signal();
@@ -3881,15 +4387,18 @@ int BokehCamera::PreviewMuxerThread::sprdBokehPreviewHandle(
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
     }
-    buffer_index = mBokehCamera->getPrevDepthBuffer(BUFFER_PANG);
-
+    buffer_index = mBokehCamera->getPrevDepthBufferFlag(BOKEH_BUFFER_PANG);
+    HAL_LOGD(
+        "buffer_index:%d,mIsSupportPBokeh:%d,mDepthStatus:%d,mDepthTrigger:%d",
+        buffer_index, mBokehCamera->mIsSupportPBokeh,
+        mBokehCamera->mDepthStatus, mBokehCamera->mDepthTrigger);
     if (mBokehCamera->mIsSupportPBokeh &&
-        (mBokehCamera->mDepthStatus == DEPTH_DONE ||
-         (mBokehCamera->mDepthStatus == DEPTH_DONING &&
-          mBokehCamera->mDepthTrigger == TRIGGER_FNUM)) &&
+        (mBokehCamera->mDepthStatus == BOKEH_DEPTH_DONE ||
+         (mBokehCamera->mDepthStatus == BOKEH_DEPTH_DONING &&
+          mBokehCamera->mDepthTrigger == BOKEH_TRIGGER_FNUM)) &&
         buffer_index != -1) {
         unsigned char *depth_buffer =
-            (unsigned char *)(mBokehCamera->mDepthBuffer
+            (unsigned char *)(mBokehCamera->mBokehDepthBuffer
                                   .prev_depth_buffer[buffer_index]
                                   .buffer);
         /*Bokeh GPU interface start*/
@@ -3927,8 +4436,10 @@ int BokehCamera::PreviewMuxerThread::sprdBokehPreviewHandle(
             new GraphicBuffer(inWidth, inHeight, yuvTextFormat, yuvTextUsage,
                               inStride, (native_handle_t *)(*output_buf), 0);
 #endif
+        HAL_LOGD("ALG mBokehAlgo->prevBluImage start");
         mBokehCamera->mBokehAlgo->prevBluImage(srcBuffer, dstBuffer,
-                                             (void *)depth_buffer);
+                                               (void *)depth_buffer);
+        HAL_LOGD("ALG mBokehAlgo->prevBluImage end");
         {
             char prop[PROPERTY_VALUE_MAX] = {
                 0,
@@ -3941,14 +4452,15 @@ int BokehCamera::PreviewMuxerThread::sprdBokehPreviewHandle(
                     HAL_LOGE("fail to map output buffer");
                 }
                 mBokehCamera->dumpData((unsigned char *)output_buf_addr, 1,
-                                     ADP_BUFSIZE(*output_buf),
-                                     mBokehCamera->mBokehSize.preview_w,
-                                     mBokehCamera->mBokehSize.preview_h,
-                                     mBokehCamera->mPrevBlurFrameNumber, "bokeh");
+                                       ADP_BUFSIZE(*output_buf),
+                                       mBokehCamera->mBokehSize.preview_w,
+                                       mBokehCamera->mBokehSize.preview_h,
+                                       mBokehCamera->mPrevBlurFrameNumber,
+                                       "bokeh");
                 mBokehCamera->unmap(output_buf);
             }
         }
-        mBokehCamera->setPrevDepthBufferFlag(BUFFER_PANG, buffer_index);
+        mBokehCamera->setPrevDepthBufferFlag(BOKEH_BUFFER_PANG, buffer_index);
 
     } else {
 
@@ -3965,7 +4477,7 @@ int BokehCamera::PreviewMuxerThread::sprdBokehPreviewHandle(
 
         memcpy(output_buf_addr, input_buf1_addr, ADP_BUFSIZE(*input_buf1));
         mBokehCamera->flushIonBuffer(ADP_BUFFD(*output_buf), output_buf_addr,
-                                   ADP_BUFSIZE(*output_buf));
+                                     ADP_BUFSIZE(*output_buf));
 
         mBokehCamera->unmap(input_buf1);
     fail_map_input:
@@ -4030,14 +4542,15 @@ void BokehCamera::PreviewMuxerThread::waitMsgAvailable() {
         struct timespec t1;
         clock_gettime(CLOCK_BOOTTIME, &t1);
         uint64_t now_time_stamp = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
-        if (mBokehCamera->mReqTimestamp && mBokehCamera->mPrevFrameNumber != 0 &&
+        if (mBokehCamera->mReqTimestamp &&
+            mBokehCamera->mPrevFrameNumber != 0 &&
             (ns2ms(now_time_stamp - mBokehCamera->mReqTimestamp) >
              CLEAR_PRE_FRAME_UNMATCH_TIMEOUT)) {
             HAL_LOGD("clear unmatch frame for force kill app");
             Mutex::Autolock l(mBokehCamera->mUnmatchedQueueLock);
-            mBokehCamera->clearFrameNeverMatched(mBokehCamera->mPrevFrameNumber + 1,
-                                               mBokehCamera->mPrevFrameNumber +
-                                                   1);
+            mBokehCamera->clearFrameNeverMatched(
+                mBokehCamera->mPrevFrameNumber + 1,
+                mBokehCamera->mPrevFrameNumber + 1);
         }
     }
 }
@@ -4096,28 +4609,34 @@ bool BokehCamera::DepthMuxerThread::threadLoop() {
             muxer_msg = *it;
         }
         switch (muxer_msg.msg_type) {
-        case MUXER_MSG_EXIT: {
+        case MUXER_MSG_EXIT:
+            HAL_LOGD("MUXER_MSG_EXIT.");
             {
                 Mutex::Autolock l(mMergequeueMutex);
                 mDepthMuxerMsgList.erase(it);
             }
             return false;
         case MUXER_MSG_DATA_PROC: {
-
-            mBokehCamera->setDepthStatus(DEPTH_DONING);
+            // Mutex::Autolock l(mLock);
+            HAL_LOGD("MUXER_MSG_DATA_PROC.");
+            mBokehCamera->setDepthStatus(BOKEH_DEPTH_DONING);
             rc = sprdDepthDo(muxer_msg.combo_frame.buffer1,
                              muxer_msg.combo_frame.buffer2);
             if (rc != NO_ERROR) {
                 HAL_LOGE("sprdDepthDo failed");
-                mBokehCamera->setDepthStatus(DEPTH_INVALID);
+                mBokehCamera->setDepthStatus(BOKEH_DEPTH_INVALID);
+            } else {
+                HAL_LOGD("sprdDepthDo success.");
             }
 
-            mBokehCamera->pushBufferList(
-                mBokehCamera->mLocalBuffer, muxer_msg.combo_frame.buffer1,
-                mBokehCamera->mLocalBufferNumber, mBokehCamera->mLocalBufferList);
-            mBokehCamera->pushBufferList(
-                mBokehCamera->mLocalBuffer, muxer_msg.combo_frame.buffer2,
-                mBokehCamera->mLocalBufferNumber, mBokehCamera->mLocalBufferList);
+            mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
+                                         muxer_msg.combo_frame.buffer1,
+                                         mBokehCamera->mLocalBufferNumber,
+                                         mBokehCamera->mLocalBufferList);
+            mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
+                                         muxer_msg.combo_frame.buffer2,
+                                         mBokehCamera->mLocalBufferNumber,
+                                         mBokehCamera->mLocalBufferList);
             {
                 Mutex::Autolock l(mMergequeueMutex);
                 mDepthMuxerMsgList.erase(it);
@@ -4126,7 +4645,6 @@ bool BokehCamera::DepthMuxerThread::threadLoop() {
         } break;
         default:
             break;
-        }
         };
     }
     waitMsgAvailable();
@@ -4143,80 +4661,125 @@ bool BokehCamera::DepthMuxerThread::threadLoop() {
  *
  * RETURN     : None
  *==========================================================================*/
-int BokehCamera::DepthMuxerThread::sprdDepthDo(
-    buffer_handle_t *input_buf1, buffer_handle_t *input_buf2) {
+int BokehCamera::DepthMuxerThread::sprdDepthDo(buffer_handle_t *input_buf1,
+                                               buffer_handle_t *input_buf2) {
     int rc = NO_ERROR;
     void *input_buf1_addr = NULL;
     void *input_buf2_addr = NULL;
     int buffer_index = 0;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     if (input_buf1 == NULL || input_buf2 == NULL) {
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
     }
 
+    HAL_LOGD("map1 start");
     rc = mBokehCamera->map(input_buf1, &input_buf1_addr);
+    HAL_LOGD("map1 end");
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to map input buffer1");
         goto fail_map_input1;
     }
-
+    HAL_LOGD("map2 start");
     rc = mBokehCamera->map(input_buf2, &input_buf2_addr);
+    HAL_LOGD("map2 end");
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to map input buffer2");
         goto fail_map_input2;
     }
-    buffer_index = mBokehCamera->getPrevDepthBuffer(BUFFER_PING);
+    HAL_LOGD("buf1:%p,buf2:%p", input_buf1_addr, input_buf2_addr);
+
+    property_get("persist.vendor.cam.bokehcamera.dump", prop, "all");
+    if (!strcmp(prop, "predepth") || !strcmp(prop, "all")) {
+        mBokehCamera->dumpData((unsigned char *)input_buf1_addr, 1,
+                               ADP_BUFSIZE(*input_buf1),
+                               mBokehCamera->mBokehSize.preview_w,
+                               mBokehCamera->mBokehSize.preview_h,
+                               mBokehCamera->mPrevBlurFrameNumber, "buf1_0");
+        mBokehCamera->dumpData((unsigned char *)input_buf2_addr, 1,
+                               ADP_BUFSIZE(*input_buf2),
+                               mBokehCamera->mBokehSize.depth_prev_sub_w,
+                               mBokehCamera->mBokehSize.depth_prev_sub_h,
+                               mBokehCamera->mPrevBlurFrameNumber, "buf2_0");
+    }
+    buffer_index = mBokehCamera->getPrevDepthBufferFlag(BOKEH_BUFFER_PING);
+    HAL_LOGD("PING buffer_index %d", buffer_index);
     if (buffer_index == -1) {
         goto fail_map_input3;
     }
 
     mBokehCamera->mLastOnlieVcm = 0;
     rc = mBokehCamera->mBokehAlgo->onLine(
-        mBokehCamera->mDepthBuffer.depth_out_map_table, input_buf1_addr,
-        input_buf2_addr, mBokehCamera->mDepthBuffer.prev_depth_scale_buffer);
+        mBokehCamera->mBokehDepthBuffer.depth_out_map_table, input_buf1_addr,
+        input_buf2_addr,
+        mBokehCamera->mBokehDepthBuffer.prev_depth_scale_buffer);
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("Sprd algo onLine failed! %d", rc);
         mBokehCamera->mLastOnlieVcm = 0;
         goto fail_map_input3;
     } else {
         mBokehCamera->mLastOnlieVcm = mBokehCamera->mVcmSteps;
+        HAL_LOGD("vcm %d", mBokehCamera->mLastOnlieVcm);
     }
 
-    rc = mBokehCamera->mBokehAlgo->prevDepthRun(
-        mBokehCamera->mDepthBuffer.prev_depth_buffer[buffer_index].buffer,
+    HAL_LOGD("buf1:%p,buf2:%p", input_buf1_addr, input_buf2_addr);
+    property_get("persist.vendor.cam.bokehcamera.dump", prop, "all");
+    if (!strcmp(prop, "predepth") || !strcmp(prop, "all")) {
+        mBokehCamera->dumpData((unsigned char *)input_buf1_addr, 1,
+                               ADP_BUFSIZE(*input_buf1),
+                               mBokehCamera->mBokehSize.preview_w,
+                               mBokehCamera->mBokehSize.preview_h,
+                               mBokehCamera->mPrevBlurFrameNumber, "buf1_1");
+        mBokehCamera->dumpData((unsigned char *)input_buf2_addr, 1,
+                               ADP_BUFSIZE(*input_buf2),
+                               mBokehCamera->mBokehSize.depth_prev_sub_w,
+                               mBokehCamera->mBokehSize.depth_prev_sub_h,
+                               mBokehCamera->mPrevBlurFrameNumber, "buf2_1");
+    }
+    HAL_LOGD(
+        "buffer_index %d,w_flag %d, r_flag %d", buffer_index,
+        mBokehCamera->mBokehDepthBuffer.prev_depth_buffer[buffer_index].w_flag,
+        mBokehCamera->mBokehDepthBuffer.prev_depth_buffer[buffer_index].r_flag);
+    HAL_LOGD(
+        "ALG mBokehAlgo->prevDepthRun start %p, %p, %p, %p  ",
+        mBokehCamera->mBokehDepthBuffer.prev_depth_buffer[buffer_index].buffer,
         input_buf1_addr, input_buf2_addr,
-        mBokehCamera->mDepthBuffer.prev_depth_scale_buffer);
+        mBokehCamera->mBokehDepthBuffer.prev_depth_scale_buffer);
+    rc = mBokehCamera->mBokehAlgo->prevDepthRun(
+        mBokehCamera->mBokehDepthBuffer.prev_depth_buffer[buffer_index].buffer,
+        input_buf1_addr, input_buf2_addr,
+        mBokehCamera->mBokehDepthBuffer.prev_depth_scale_buffer);
+    HAL_LOGD("ALG mBokehAlgo->prevDepthRun end");
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
         goto fail_map_input3;
     }
-    mBokehCamera->setPrevDepthBufferFlag(BUFFER_PING, buffer_index);
-    mBokehCamera->setDepthStatus(DEPTH_DONE);
-
+    mBokehCamera->setPrevDepthBufferFlag(BOKEH_BUFFER_PING, buffer_index);
+    mBokehCamera->setDepthStatus(BOKEH_DEPTH_DONE);
+    HAL_LOGD("buf1:%p,buf2:%p", input_buf1_addr, input_buf2_addr);
     {
-        char prop[PROPERTY_VALUE_MAX] = {
-            0,
-        };
-
         property_get("persist.vendor.cam.bokeh.dump", prop, "0");
         if (!strcmp(prop, "predepth") || !strcmp(prop, "all")) {
-            mBokehCamera->dumpData((unsigned char *)mBokehCamera->mDepthBuffer
-                                     .prev_depth_buffer[buffer_index]
-                                     .buffer,
-                                 6, mBokehCamera->mBokehSize.depth_prev_size,
-                                 mBokehCamera->mBokehSize.preview_w,
-                                 mBokehCamera->mBokehSize.preview_h,
-                                 mBokehCamera->mPrevBlurFrameNumber, "depth");
-            mBokehCamera->dumpData((unsigned char *)input_buf2_addr, 1,
-                                 ADP_BUFSIZE(*input_buf2),
-                                 mBokehCamera->mBokehSize.depth_prev_sub_w,
-                                 mBokehCamera->mBokehSize.depth_prev_sub_h,
-                                 mBokehCamera->mPrevBlurFrameNumber, "prevSub");
-            mBokehCamera->dumpData((unsigned char *)input_buf1_addr, 1,
-                                 ADP_BUFSIZE(*input_buf1),
-                                 mBokehCamera->mBokehSize.preview_w,
-                                 mBokehCamera->mBokehSize.preview_h,
-                                 mBokehCamera->mPrevBlurFrameNumber, "prevMain");
+            mBokehCamera->dumpData(
+                (unsigned char *)mBokehCamera->mBokehDepthBuffer
+                    .prev_depth_buffer[buffer_index]
+                    .buffer,
+                6, mBokehCamera->mBokehSize.depth_prev_size,
+                mBokehCamera->mBokehSize.preview_w,
+                mBokehCamera->mBokehSize.preview_h,
+                mBokehCamera->mPrevBlurFrameNumber, "depth");
+            mBokehCamera->dumpData(
+                (unsigned char *)input_buf2_addr, 1, ADP_BUFSIZE(*input_buf2),
+                mBokehCamera->mBokehSize.depth_prev_sub_w,
+                mBokehCamera->mBokehSize.depth_prev_sub_h,
+                mBokehCamera->mPrevBlurFrameNumber, "prevSub");
+            mBokehCamera->dumpData(
+                (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),
+                mBokehCamera->mBokehSize.preview_w,
+                mBokehCamera->mBokehSize.preview_h,
+                mBokehCamera->mPrevBlurFrameNumber, "prevMain");
         }
     }
 fail_map_input3:
@@ -4249,7 +4812,7 @@ void BokehCamera::DepthMuxerThread::requestExit() {
 /*===========================================================================
  * FUNCTION   :waitMsgAvailable
  *
- * DESCRIPTION: wait util list has data
+ * DESCRIPTION: wait util list fif data
  *
  * PARAMETERS :
  *
@@ -4334,7 +4897,7 @@ int BokehCamera::BokehCaptureThread::saveCaptureBokehParams(
     BOKEH_PARAM param;
     memset(&param, 0, sizeof(BOKEH_PARAM));
     mBokehCamera->mBokehAlgo->getBokenParam((void *)&param);
-    if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
         if (result_buffer_addr == NULL) {
             HAL_LOGE("result_buff is NULL!");
             return BAD_VALUE;
@@ -4368,19 +4931,21 @@ int BokehCamera::BokehCaptureThread::saveCaptureBokehParams(
 #else
     uint32_t use_size = para_size + depth_size + orig_yuv_size + jpeg_size;
 #endif
-    if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
 
-        depth_yuv = (unsigned char *)mBokehCamera->mDepthBuffer.snap_depth_buffer;
+        depth_yuv =
+            (unsigned char *)mBokehCamera->mBokehDepthBuffer.snap_depth_buffer;
 
 #ifdef CONFIG_SUPPORT_GDEPTH
-        depthJpg = (unsigned char *)
-                       mBokehCamera->mDepthBuffer.snap_gdepthjpeg_buffer_addr;
+        depthJpg =
+            (unsigned char *)
+                mBokehCamera->mBokehDepthBuffer.snap_gdepthjpeg_buffer_addr;
 #endif
 
 #ifdef CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV
         depth_yuv_normalize =
             (unsigned char *)
-                mBokehCamera->mDepthBuffer.depth_normalize_data_buffer;
+                mBokehCamera->mBokehDepthBuffer.depth_normalize_data_buffer;
 #endif
 
         // refocus commom param
@@ -4397,8 +4962,9 @@ int BokehCamera::BokehCaptureThread::saveCaptureBokehParams(
         uint32_t position_x = param.sprd.cap.sel_x;
         uint32_t position_y = param.sprd.cap.sel_y;
         uint32_t param_state = param.sprd.cap.param_state;
-        uint32_t rotation = SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
-                                .jpgInfo.orientation;
+        uint32_t rotation =
+            SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
+                .jpgInfo.orientation;
         uint32_t bokeh_version = 0;
 #ifndef CONFIG_SUPPORT_GDEPTH
         bokeh_version = 0x1C0101;
@@ -4458,8 +5024,8 @@ int BokehCamera::BokehCaptureThread::saveCaptureBokehParams(
 
 #ifdef YUV_CONVERT_TO_JPEG
     // cpoy original jpeg
-    ret =
-        mBokehCamera->map(mBokehCamera->m_pDstJpegBuffer, (void **)&orig_jpeg_data);
+    ret = mBokehCamera->map(mBokehCamera->m_pDstJpegBuffer,
+                            (void **)&orig_jpeg_data);
     if (ret != NO_ERROR) {
         HAL_LOGE("fail to map dst jpeg buffer");
         goto fail_map_dst;
@@ -4468,8 +5034,8 @@ int BokehCamera::BokehCaptureThread::saveCaptureBokehParams(
     memcpy(buffer_base, orig_jpeg_data, orig_jpeg_size);
 #else
     // cpoy original yuv
-    ret =
-        mBokehCamera->map(mBokehCamera->m_pMainSnapBuffer, (void **)&orig_yuv_data);
+    ret = mBokehCamera->map(mBokehCamera->m_pMainSnapBuffer,
+                            (void **)&orig_yuv_data);
     if (ret != NO_ERROR) {
         HAL_LOGE("fail to map snap buffer");
         goto fail_map_dst;
@@ -4480,7 +5046,7 @@ int BokehCamera::BokehCaptureThread::saveCaptureBokehParams(
 #ifndef CONFIG_SUPPORT_GDEPTH
     // blob to indicate all image size(use_size)
     mBokehCamera->setJpegSize((char *)result_buffer_addr, result_buffer_size,
-                            use_size);
+                              use_size);
 #endif
 
 #ifdef YUV_CONVERT_TO_JPEG
@@ -4498,7 +5064,7 @@ fail_map_dst:
  *
  * DESCRIPTION: reprocessReq
  *
- * PARAMETERS : buffer_handle_t *output_buffer, capture_queue_msg_t_bokeh
+ * PARAMETERS : buffer_handle_t *output_buffer, capture_queue_msg_t
  * capture_msg
  *               buffer_handle_t *depth_output_buffer, buffer_handle_t
  * scaled_buffer
@@ -4506,11 +5072,12 @@ fail_map_dst:
  * RETURN     : None
  *==========================================================================*/
 void BokehCamera::BokehCaptureThread::reprocessReq(
-    buffer_handle_t *output_buffer, capture_queue_msg_t_bokeh capture_msg) {
+    buffer_handle_t *output_buffer, capture_queue_msg_t capture_msg) {
     camera3_capture_request_t request = mSavedCapRequest;
     camera3_stream_buffer_t output_buffers;
     camera3_stream_buffer_t input_buffer;
 
+    Mutex::Autolock l(mBokehCamera->mFlushLock);
     memset(&output_buffers, 0x00, sizeof(camera3_stream_buffer_t));
     memset(&input_buffer, 0x00, sizeof(camera3_stream_buffer_t));
     memcpy(&input_buffer, &mSavedCapReqStreamBuff,
@@ -4536,9 +5103,8 @@ void BokehCamera::BokehCaptureThread::reprocessReq(
         void *output_handle_addr = NULL;
         void *transform_buffer_addr = NULL;
 
-        if ((!mAbokehGallery ||
-             (mBokehCamera->mDoPortrait &&
-              mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) &&
+        if ((!mAbokehGallery || (mBokehCamera->mDoPortrait &&
+                                 mBokehCamera->mBokehMode == PORTRAIT_MODE)) &&
             mBokehResult) {
             output_handle = output_buffer;
         } else {
@@ -4575,9 +5141,8 @@ void BokehCamera::BokehCaptureThread::reprocessReq(
         input_buffer.stream->height = mBokehCamera->mBokehSize.capture_h;
         output_buffers.stream->width = mBokehCamera->mBokehSize.capture_w;
         output_buffers.stream->height = mBokehCamera->mBokehSize.capture_h;
-        if ((!mAbokehGallery ||
-             (mBokehCamera->mDoPortrait &&
-              mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) &&
+        if ((!mAbokehGallery || (mBokehCamera->mDoPortrait &&
+                                 mBokehCamera->mBokehMode == PORTRAIT_MODE)) &&
             mBokehResult) {
             input_buffer.buffer = output_buffer;
         } else {
@@ -4590,7 +5155,7 @@ void BokehCamera::BokehCaptureThread::reprocessReq(
     output_buffers.stream->width = mBokehCamera->mBokehSize.capture_w;
     output_buffers.stream->height = mBokehCamera->mBokehSize.capture_h;
     if ((!mAbokehGallery || (mBokehCamera->mDoPortrait &&
-                             mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) &&
+                             mBokehCamera->mBokehMode == PORTRAIT_MODE)) &&
         mBokehResult) {
         input_buffer.buffer = output_buffer;
     } else {
@@ -4605,16 +5170,16 @@ void BokehCamera::BokehCaptureThread::reprocessReq(
     request.input_buffer = &input_buffer;
     mReprocessing = true;
     if (!mAbokehGallery || (mBokehCamera->mDoPortrait &&
-                            mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) {
+                            mBokehCamera->mBokehMode == PORTRAIT_MODE)) {
         mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer, output_buffer,
-                                   mBokehCamera->mLocalBufferNumber,
-                                   mBokehCamera->mLocalBufferList);
+                                     mBokehCamera->mLocalBufferNumber,
+                                     mBokehCamera->mLocalBufferList);
     }
 #ifdef BOKEH_YUV_DATA_TRANSFORM
     if (mBokehCamera->mBokehSize.transform_w != 0) {
-        mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer, transform_buffer,
-                                   mBokehCamera->mLocalBufferNumber,
-                                   mBokehCamera->mLocalBufferList);
+        mBokehCamera->pushBufferList(
+            mBokehCamera->mLocalBuffer, transform_buffer,
+            mBokehCamera->mLocalBufferNumber, mBokehCamera->mLocalBufferList);
     }
 #endif
     mBokehCamera->pushBufferList(
@@ -4629,7 +5194,7 @@ void BokehCamera::BokehCaptureThread::reprocessReq(
 
     if (mBokehCamera->mFlushing) {
         mBokehCamera->CallBackResult(mBokehCamera->mCapFrameNumber,
-                                   CAMERA3_BUFFER_STATUS_ERROR);
+                                     CAMERA3_BUFFER_STATUS_ERROR);
         goto exit;
     }
     if (0 > mDevmain->hwi->process_capture_request(mDevmain->dev, &request)) {
@@ -4657,15 +5222,14 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
     void *src_vir_addr = NULL;
     void *pic_vir_addr = NULL;
     void *pic_jpg_vir_addr = NULL;
-    capture_queue_msg_t_bokeh capture_msg;
+    capture_queue_msg_t capture_msg;
     int rc = 0;
     int mime_type = 0;
 
     while (!mCaptureMsgList.empty()) {
         {
             Mutex::Autolock l(mMergequeueMutex);
-            List<capture_queue_msg_t_bokeh>::iterator itor1 =
-                mCaptureMsgList.begin();
+            List<capture_queue_msg_t>::iterator itor1 = mCaptureMsgList.begin();
             capture_msg = *itor1;
             // The specail case is continuous 2 frames data of main camera,
             // but data of aux camera has't come in.
@@ -4680,14 +5244,14 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
             mCaptureMsgList.erase(itor1);
         }
         switch (capture_msg.msg_type) {
-        case BOKEH_MSG_EXIT: {
+        case MSG_EXIT: {
             // flush queue
-            HAL_LOGI("BOKEH_MSG_EXIT,mCapFrameNumber=%d",
+            HAL_LOGI("MSG_EXIT,mCapFrameNumber=%d",
                      mBokehCamera->mCapFrameNumber);
-            if (mBokehCamera->mCapFrameNumber) {
+            if (mBokehCamera->mCapFrameNumber != -1) {
                 HAL_LOGE("error.HAL don't send capture frame");
                 mBokehCamera->CallBackResult(mBokehCamera->mCapFrameNumber,
-                                           CAMERA3_BUFFER_STATUS_ERROR);
+                                             CAMERA3_BUFFER_STATUS_ERROR);
             }
             memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
             memset(&mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
@@ -4697,10 +5261,12 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
             }
             return false;
         }
-        case BOKEH_MSG_DATA_PROC: {
+        case MSG_DATA_PROC: {
+            HAL_LOGD("MSG_DATA_PROC,mCapFrameNumber=%d",
+                     mBokehCamera->mCapFrameNumber);
             void *input_buf1_addr = NULL;
             rc = mBokehCamera->map(capture_msg.combo_buff.buffer1,
-                                 &input_buf1_addr);
+                                   &input_buf1_addr);
             if (rc != NO_ERROR) {
                 HAL_LOGE("fail to map input buffer1");
                 return false;
@@ -4710,13 +5276,13 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                 mBokehCamera->mFaceInfo[2] - mBokehCamera->mFaceInfo[0] > 0 &&
                 mBokehCamera->mFaceInfo[3] - mBokehCamera->mFaceInfo[1] > 0) {
                 mBokehCamera->bokehFaceMakeup(capture_msg.combo_buff.buffer1,
-                                            input_buf1_addr);
+                                              input_buf1_addr);
             }
 #endif
             mBokehResult = true;
             if (!mAbokehGallery ||
                 (mBokehCamera->mDoPortrait &&
-                 mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) {
+                 mBokehCamera->mBokehMode == PORTRAIT_MODE)) {
                 output_buffer = (mBokehCamera->popBufferList(
                     mBokehCamera->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
             }
@@ -4729,7 +5295,7 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                 mBokehCamera->m_pDstJpegBuffer = (mBokehCamera->popBufferList(
                     mBokehCamera->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
                 rc = mBokehCamera->map(mBokehCamera->m_pDstJpegBuffer,
-                                     &pic_vir_addr);
+                                       &pic_vir_addr);
                 if (rc != NO_ERROR) {
                     HAL_LOGE("fail to map jpeg buffer");
                 }
@@ -4737,13 +5303,14 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                 mBokehCamera->mOrigJpegSize =
                     mBokehCamera->jpeg_encode_exif_simplify(
                         capture_msg.combo_buff.buffer1, input_buf1_addr,
-                        mBokehCamera->m_pDstJpegBuffer, pic_vir_addr, NULL, NULL,
-                        mBokehCamera->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                        mBokehCamera->m_pDstJpegBuffer, pic_vir_addr, NULL,
+                        NULL, mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
                         SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
                             .jpgInfo.orientation);
                 mBokehCamera->unmap(mBokehCamera->m_pDstJpegBuffer);
 #else
-                mBokehCamera->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
+                mBokehCamera->m_pMainSnapBuffer =
+                    capture_msg.combo_buff.buffer1;
 #endif
                 if (!mAbokehGallery) {
                     rc = sprdBokehCaptureHandle(output_buffer,
@@ -4761,13 +5328,13 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
             }
             HAL_LOGD("start process normal frame to get "
                      "depth data!");
-            if (mBokehCamera->mApiVersion == SPRD_API_MODE) {
+            if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
                 HAL_LOGD("mBokehCamera->mOtpData.otp_exist %d",
                          mBokehCamera->mOtpData.otp_exist);
                 if ((mBokehCamera->mOtpData.otp_exist &&
-                     mBokehCamera->mBokehMode == CAM_DUAL_BOKEH_MODE) ||
+                     mBokehCamera->mBokehMode == DUAL_BOKEH_MODE) ||
                     (mBokehCamera->mDoPortrait &&
-                     mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) {
+                     mBokehCamera->mBokehMode == PORTRAIT_MODE)) {
                     rc = sprdDepthCaptureHandle(capture_msg.combo_buff.buffer1,
                                                 input_buf1_addr,
                                                 capture_msg.combo_buff.buffer2);
@@ -4780,12 +5347,13 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                 }
                 HAL_LOGI("mBokehCamera->mIsHdrMode=%d,mAbokehGallery=%d,"
                          "mBokehResult=%d",
-                         mBokehCamera->mIsHdrMode, mAbokehGallery, mBokehResult);
+                         mBokehCamera->mIsHdrMode, mAbokehGallery,
+                         mBokehResult);
                 if ((!mBokehCamera->mIsHdrMode && !mAbokehGallery &&
                      (mBokehResult == true) &&
-                     mBokehCamera->mBokehMode == CAM_DUAL_BOKEH_MODE) ||
+                     mBokehCamera->mBokehMode == DUAL_BOKEH_MODE) ||
                     (mBokehCamera->mDoPortrait &&
-                     mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE)) {
+                     mBokehCamera->mBokehMode == PORTRAIT_MODE)) {
                     rc = sprdBokehCaptureHandle(output_buffer,
                                                 capture_msg.combo_buff.buffer1,
                                                 input_buf1_addr);
@@ -4811,7 +5379,8 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                     mime_type = (int)SPRD_MIMETPYE_BOKEH;
                 }
             }
-            if (mBokehCamera->mBokehMode == CAM_PORTRAIT_MODE) {
+            HAL_LOGD("mime_type %d", mime_type);
+            if (mBokehCamera->mBokehMode == PORTRAIT_MODE) {
                 mime_type = SPRD_MIMETPYE_NONE;
             }
             if (!mBokehCamera->mIsHdrMode) {
@@ -4820,7 +5389,7 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                     mBokehCamera->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
                 if (mBokehResult) {
                     rc = mBokehCamera->map(mBokehCamera->m_pDstJpegBuffer,
-                                         &pic_vir_addr);
+                                           &pic_vir_addr);
                     if (rc != NO_ERROR) {
                         HAL_LOGE("fail to map jpeg buffer");
                     }
@@ -4830,34 +5399,39 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                             capture_msg.combo_buff.buffer1, input_buf1_addr,
                             mBokehCamera->m_pDstJpegBuffer, pic_vir_addr, NULL,
                             NULL,
-                            mBokehCamera->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
-                            SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
+                            mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
+                            SprdCamera3Setting::s_setting[mBokehCamera
+                                                              ->mCameraId]
                                 .jpgInfo.orientation);
                     mBokehCamera->unmap(mBokehCamera->m_pDstJpegBuffer);
 #ifdef CONFIG_SUPPORT_GDEPTH
                     mBokehCamera->m_pDstGDepthOriJpegBuffer =
-                        (mBokehCamera->popBufferList(mBokehCamera->mLocalBufferList,
-                                                   SNAPSHOT_MAIN_BUFFER));
-                    rc = mBokehCamera->map(mBokehCamera->m_pDstGDepthOriJpegBuffer,
-                                         &pic_vir_addr);
+                        (mBokehCamera->popBufferList(
+                            mBokehCamera->mLocalBufferList,
+                            SNAPSHOT_MAIN_BUFFER));
+                    rc = mBokehCamera->map(
+                        mBokehCamera->m_pDstGDepthOriJpegBuffer, &pic_vir_addr);
                     if (rc != NO_ERROR) {
                         HAL_LOGE("fail to map GDepth jpeg buffer");
                     }
                     mBokehCamera->mGDepthOriJpegSize =
                         mBokehCamera->jpeg_encode_exif_simplify_format(
                             capture_msg.combo_buff.buffer1, input_buf1_addr,
-                            mBokehCamera->m_pDstGDepthOriJpegBuffer, pic_vir_addr,
-                            NULL, NULL,
-                            mBokehCamera->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                            mBokehCamera->m_pDstGDepthOriJpegBuffer,
+                            pic_vir_addr, NULL, NULL,
+                            mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
                             IMG_DATA_TYPE_YUV420,
-                            SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
+                            SprdCamera3Setting::s_setting[mBokehCamera
+                                                              ->mCameraId]
                                 .jpgInfo.orientation,
                             0);
-                    mBokehCamera->unmap(mBokehCamera->m_pDstGDepthOriJpegBuffer);
+                    mBokehCamera->unmap(
+                        mBokehCamera->m_pDstGDepthOriJpegBuffer);
 #endif
                 }
 #else
-                mBokehCamera->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
+                mBokehCamera->m_pMainSnapBuffer =
+                    capture_msg.combo_buff.buffer1;
 #endif
             }
 
@@ -4869,20 +5443,20 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                 reprocessReq(output_buffer, capture_msg);
             } else {
                 if (!mAbokehGallery) {
-                    mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
-                                               output_buffer,
-                                               mBokehCamera->mLocalBufferNumber,
-                                               mBokehCamera->mLocalBufferList);
+                    mBokehCamera->pushBufferList(
+                        mBokehCamera->mLocalBuffer, output_buffer,
+                        mBokehCamera->mLocalBufferNumber,
+                        mBokehCamera->mLocalBufferList);
                 }
 
                 mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
-                                           capture_msg.combo_buff.buffer1,
-                                           mBokehCamera->mLocalBufferNumber,
-                                           mBokehCamera->mLocalBufferList);
+                                             capture_msg.combo_buff.buffer1,
+                                             mBokehCamera->mLocalBufferNumber,
+                                             mBokehCamera->mLocalBufferList);
                 mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
-                                           capture_msg.combo_buff.buffer2,
-                                           mBokehCamera->mLocalBufferNumber,
-                                           mBokehCamera->mLocalBufferList);
+                                             capture_msg.combo_buff.buffer2,
+                                             mBokehCamera->mLocalBufferNumber,
+                                             mBokehCamera->mLocalBufferList);
             }
         } break;
         default:
@@ -4906,9 +5480,9 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
 void BokehCamera::BokehCaptureThread::requestExit() {
     HAL_LOGI("E");
     Mutex::Autolock l(mMergequeueMutex);
-    capture_queue_msg_t_bokeh capture_msg;
-    bzero(&capture_msg, sizeof(capture_queue_msg_t_bokeh));
-    capture_msg.msg_type = BOKEH_MSG_EXIT;
+    capture_queue_msg_t capture_msg;
+    bzero(&capture_msg, sizeof(capture_queue_msg_t));
+    capture_msg.msg_type = MSG_EXIT;
     mCaptureMsgList.push_front(capture_msg);
     mMergequeueSignal.signal();
 }
@@ -4960,8 +5534,9 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
 #ifdef CONFIG_SUPPORT_GDEPTH
     buffer_handle_t *snapshot_gdepth_buffer = (mBokehCamera->popBufferList(
         mBokehCamera->mLocalBufferList, SNAPSHOT_GDEPTH_BUFFER));
-    mBokehCamera->mDepthBuffer.snap_gdepthJpg_buffer = (mBokehCamera->popBufferList(
-        mBokehCamera->mLocalBufferList, SNAP_GDEPTHJPEG_BUFFER));
+    mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer =
+        (mBokehCamera->popBufferList(mBokehCamera->mLocalBufferList,
+                                     SNAP_GDEPTHJPEG_BUFFER));
 #endif
 
     rc = mBokehCamera->map(input_buf2, &input_buf2_addr);
@@ -4971,17 +5546,19 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
     }
 
 #ifdef CONFIG_SUPPORT_GDEPTH
-    rc = mBokehCamera->map(snapshot_gdepth_buffer, &snapshot_gdepth_buffer_addr);
+    rc =
+        mBokehCamera->map(snapshot_gdepth_buffer, &snapshot_gdepth_buffer_addr);
     if (rc != NO_ERROR) {
         HAL_LOGE("fail to map snapshot_gdepth_buffer");
         goto fail_map_gdepth;
     }
 
     rc = mBokehCamera->map(
-        mBokehCamera->mDepthBuffer.snap_gdepthJpg_buffer,
-        &(mBokehCamera->mDepthBuffer.snap_gdepthjpeg_buffer_addr));
+        mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer,
+        &(mBokehCamera->mBokehDepthBuffer.snap_gdepthjpeg_buffer_addr));
     if (rc != NO_ERROR) {
-        HAL_LOGE("fail to map  mBokehCamera->mDepthBuffer.snap_gdepthJpg_buffer");
+        HAL_LOGE("fail to map  "
+                 "mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer");
         goto fail_map_gdepthJpg;
     }
 #endif
@@ -4991,8 +5568,9 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
         mBokehCamera->swScale(
             (uint8_t *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
             mBokehCamera->mBokehSize.depth_snap_main_w,
-            mBokehCamera->mBokehSize.depth_snap_main_h, mBokehCamera->mScaleInfo.fd,
-            (uint8_t *)input_buf1_addr, mBokehCamera->mBokehSize.capture_w,
+            mBokehCamera->mBokehSize.depth_snap_main_h,
+            mBokehCamera->mScaleInfo.fd, (uint8_t *)input_buf1_addr,
+            mBokehCamera->mBokehSize.capture_w,
             mBokehCamera->mBokehSize.capture_h, ADP_BUFFD(*input_buf1));
 
     } else if (!strcmp(prop, "yuv_sw")) {
@@ -5008,8 +5586,9 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
         mBokehCamera->hwScale(
             (uint8_t *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
             mBokehCamera->mBokehSize.depth_snap_main_w,
-            mBokehCamera->mBokehSize.depth_snap_main_h, mBokehCamera->mScaleInfo.fd,
-            (uint8_t *)input_buf1_addr, mBokehCamera->mBokehSize.capture_w,
+            mBokehCamera->mBokehSize.depth_snap_main_h,
+            mBokehCamera->mScaleInfo.fd, (uint8_t *)input_buf1_addr,
+            mBokehCamera->mBokehSize.capture_w,
             mBokehCamera->mBokehSize.capture_h, ADP_BUFFD(*input_buf1));
     }
     HAL_LOGD("scale src:%d,%d,dst:%d,%d", mBokehCamera->mBokehSize.capture_w,
@@ -5021,15 +5600,15 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
     if (mBokehCamera->mLastOnlieVcm &&
         mBokehCamera->mLastOnlieVcm == mBokehCamera->mVcmSteps) {
         rc = mBokehCamera->mBokehAlgo->capDepthRun(
-            mBokehCamera->mDepthBuffer.snap_depth_buffer,
-            mBokehCamera->mDepthBuffer.depth_out_map_table, input_buf2_addr,
-            (void *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
+            mBokehCamera->mBokehDepthBuffer.snap_depth_buffer,
+            mBokehCamera->mBokehDepthBuffer.depth_out_map_table,
+            input_buf2_addr, (void *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
             mBokehCamera->mVcmStepsFixed, mBokehCamera->mlimited_infi,
             mBokehCamera->mlimited_macro);
     } else {
         rc = mBokehCamera->mBokehAlgo->capDepthRun(
-            mBokehCamera->mDepthBuffer.snap_depth_buffer, NULL, input_buf2_addr,
-            (void *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
+            mBokehCamera->mBokehDepthBuffer.snap_depth_buffer, NULL,
+            input_buf2_addr, (void *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
             mBokehCamera->mVcmStepsFixed, mBokehCamera->mlimited_infi,
             mBokehCamera->mlimited_macro);
         HAL_LOGD("close online depth");
@@ -5044,11 +5623,11 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
     defined(CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV)
     memset(&mGDepthOutputParam, 0, sizeof(gdepth_outparam));
     mGDepthOutputParam.confidence_map =
-        mBokehCamera->mDepthBuffer.snap_depthConfidence_buffer;
+        mBokehCamera->mBokehDepthBuffer.snap_depthConfidence_buffer;
     mGDepthOutputParam.depthnorm_data =
-        mBokehCamera->mDepthBuffer.depth_normalize_data_buffer;
+        mBokehCamera->mBokehDepthBuffer.depth_normalize_data_buffer;
     mBokehCamera->mBokehAlgo->getGDepthInfo(
-        mBokehCamera->mDepthBuffer.snap_depth_buffer, &mGDepthOutputParam);
+        mBokehCamera->mBokehDepthBuffer.snap_depth_buffer, &mGDepthOutputParam);
     mBokehCamera->far = mGDepthOutputParam.far;
     mBokehCamera->near = mGDepthOutputParam.near;
 #endif
@@ -5058,9 +5637,9 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
     mBokehCamera->mBokehSize.depth_jepg_size =
         mBokehCamera->jpeg_encode_exif_simplify_format(
             snapshot_gdepth_buffer, snapshot_gdepth_buffer_addr,
-            mBokehCamera->mDepthBuffer.snap_gdepthJpg_buffer,
-            mBokehCamera->mDepthBuffer.snap_gdepthjpeg_buffer_addr, NULL, NULL,
-            mBokehCamera->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+            mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer,
+            mBokehCamera->mBokehDepthBuffer.snap_gdepthjpeg_buffer_addr, NULL,
+            NULL, mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
             IMG_DATA_TYPE_YUV400,
             SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
                 .jpgInfo.orientation,
@@ -5073,33 +5652,36 @@ exit : { // dump yuv data
     property_get("persist.vendor.cam.bokeh.dump", prop, "0");
     if (!strcmp(prop, "capdepth") || !strcmp(prop, "all")) {
         // input_buf1 or left image
-        mBokehCamera->dumpData(
-            (unsigned char *)input_buf1_addr, 1, ADP_BUFSIZE(*input_buf1),
-            mBokehCamera->mBokehSize.capture_w, mBokehCamera->mBokehSize.capture_h,
-            mBokehCamera->mCapFrameNumber, "Main");
+        mBokehCamera->dumpData((unsigned char *)input_buf1_addr, 1,
+                               ADP_BUFSIZE(*input_buf1),
+                               mBokehCamera->mBokehSize.capture_w,
+                               mBokehCamera->mBokehSize.capture_h,
+                               mBokehCamera->mCapFrameNumber, "Main");
         // input_buf2 or right image
         mBokehCamera->dumpData((unsigned char *)input_buf2_addr, 1,
-                             ADP_BUFSIZE(*input_buf2),
-                             mBokehCamera->mBokehSize.depth_snap_sub_w,
-                             mBokehCamera->mBokehSize.depth_snap_sub_h,
-                             mBokehCamera->mCapFrameNumber, "Sub");
-        mBokehCamera->dumpData((uint8_t *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
-                             1, mBokehCamera->mScaleInfo.buf_size,
-                             mBokehCamera->mBokehSize.depth_snap_main_w,
-                             mBokehCamera->mBokehSize.depth_snap_main_h,
-                             mBokehCamera->mCapFrameNumber, "MainScale");
+                               ADP_BUFSIZE(*input_buf2),
+                               mBokehCamera->mBokehSize.depth_snap_sub_w,
+                               mBokehCamera->mBokehSize.depth_snap_sub_h,
+                               mBokehCamera->mCapFrameNumber, "Sub");
         mBokehCamera->dumpData(
-            (unsigned char *)(mBokehCamera->mDepthBuffer.snap_depth_buffer), 5,
-            mBokehCamera->mBokehSize.depth_snap_size,
+            (uint8_t *)mBokehCamera->mScaleInfo.addr_vir.addr_y, 1,
+            mBokehCamera->mScaleInfo.buf_size,
+            mBokehCamera->mBokehSize.depth_snap_main_w,
+            mBokehCamera->mBokehSize.depth_snap_main_h,
+            mBokehCamera->mCapFrameNumber, "MainScale");
+        mBokehCamera->dumpData((unsigned char *)(mBokehCamera->mBokehDepthBuffer
+                                                     .snap_depth_buffer),
+                               5, mBokehCamera->mBokehSize.depth_snap_size,
+                               mBokehCamera->mBokehSize.depth_snap_out_w,
+                               mBokehCamera->mBokehSize.depth_snap_out_h,
+                               mBokehCamera->mCapFrameNumber, "depth");
+#ifdef CONFIG_SUPPORT_GDEPTH
+        mBokehCamera->dumpData(
+            (unsigned char *)snapshot_gdepth_buffer_addr, 5,
+            mBokehCamera->mBokehSize.depth_yuv_normalize_size,
             mBokehCamera->mBokehSize.depth_snap_out_w,
             mBokehCamera->mBokehSize.depth_snap_out_h,
-            mBokehCamera->mCapFrameNumber, "depth");
-#ifdef CONFIG_SUPPORT_GDEPTH
-        mBokehCamera->dumpData((unsigned char *)snapshot_gdepth_buffer_addr, 5,
-                             mBokehCamera->mBokehSize.depth_yuv_normalize_size,
-                             mBokehCamera->mBokehSize.depth_snap_out_w,
-                             mBokehCamera->mBokehSize.depth_snap_out_h,
-                             mBokehCamera->mCapFrameNumber, "depthLinear");
+            mBokehCamera->mCapFrameNumber, "depthLinear");
 #endif
     }
 }
@@ -5115,13 +5697,13 @@ fail_map_gdepth:
 fail_map_input2:
 
 #ifdef CONFIG_SUPPORT_GDEPTH
-    mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer, snapshot_gdepth_buffer,
-                               mBokehCamera->mLocalBufferNumber,
-                               mBokehCamera->mLocalBufferList);
-    mBokehCamera->pushBufferList(mBokehCamera->mLocalBuffer,
-                               mBokehCamera->mDepthBuffer.snap_gdepthJpg_buffer,
-                               mBokehCamera->mLocalBufferNumber,
-                               mBokehCamera->mLocalBufferList);
+    mBokehCamera->pushBufferList(
+        mBokehCamera->mLocalBuffer, snapshot_gdepth_buffer,
+        mBokehCamera->mLocalBufferNumber, mBokehCamera->mLocalBufferList);
+    mBokehCamera->pushBufferList(
+        mBokehCamera->mLocalBuffer,
+        mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer,
+        mBokehCamera->mLocalBufferNumber, mBokehCamera->mLocalBufferList);
 #endif
 
     return rc;
@@ -5141,6 +5723,9 @@ int BokehCamera::BokehCaptureThread::sprdBokehCaptureHandle(
     void *input_buf1_addr) {
     void *output_buf_addr = NULL;
     int rc = NO_ERROR;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
     HAL_LOGI("E");
     if (output_buf == NULL || input_buf1 == NULL) {
         HAL_LOGE("buffer is NULL!");
@@ -5151,11 +5736,15 @@ int BokehCamera::BokehCaptureThread::sprdBokehCaptureHandle(
         HAL_LOGE("fail to map output buffer");
         goto fail_map_output;
     }
-
+    HAL_LOGD("%p,%p,%p, mDoPortrait %d", input_buf1_addr,
+             mBokehCamera->mBokehDepthBuffer.snap_depth_buffer, output_buf_addr,
+             mBokehCamera->mDoPortrait);
+    HAL_LOGD("capBlurImage start");
     mBokehCamera->mBokehAlgo->capBlurImage(
-        input_buf1_addr, mBokehCamera->mDepthBuffer.snap_depth_buffer,
+        input_buf1_addr, mBokehCamera->mBokehDepthBuffer.snap_depth_buffer,
         output_buf_addr, DEPTH_SNAP_OUTPUT_WIDTH, DEPTH_SNAP_OUTPUT_HEIGHT,
         mBokehCamera->mDoPortrait);
+    HAL_LOGD("capBlurImage end");
     {
         char prop[PROPERTY_VALUE_MAX] = {
             0,
@@ -5163,10 +5752,10 @@ int BokehCamera::BokehCaptureThread::sprdBokehCaptureHandle(
         property_get("persist.vendor.cam.bokeh.dump", prop, "0");
         if (!strcmp(prop, "sprdcapyuv") || !strcmp(prop, "all")) {
             mBokehCamera->dumpData((unsigned char *)output_buf_addr, 1,
-                                 ADP_BUFSIZE(*output_buf),
-                                 mBokehCamera->mBokehSize.capture_w,
-                                 mBokehCamera->mBokehSize.capture_h,
-                                 mBokehCamera->mCapFrameNumber, "bokeh");
+                                   ADP_BUFSIZE(*output_buf),
+                                   mBokehCamera->mBokehSize.capture_w,
+                                   mBokehCamera->mBokehSize.capture_h,
+                                   mBokehCamera->mCapFrameNumber, "bokeh");
         }
     }
 
@@ -5177,4 +5766,3 @@ fail_map_output:
 
     return rc;
 }
-
