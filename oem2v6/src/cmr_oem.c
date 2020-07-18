@@ -7221,6 +7221,8 @@ cmr_int camera_do_face_beauty_body(cmr_handle oem_handle,
 
 #ifdef CONFIG_FACE_BEAUTY
     int face_beauty_on = 0;
+    cmr_u32 w = 0, h = 0;
+    float ratio;
     int facecount = cxt->fd_face_area.face_num;
     fbBeautyFacetT beauty_face;
     fb_beauty_image_t beauty_image;
@@ -7317,20 +7319,23 @@ cmr_int camera_do_face_beauty_body(cmr_handle oem_handle,
         int sx, sy, ex, ey, angle, pose;
         for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
             beauty_face.idx = i;
-            beauty_face.startX =
-                (cxt->fd_face_area.face_info[i].sx * src.size.width) /
-                (cxt->fd_face_area.frame_width);
-            beauty_face.startY =
-                (cxt->fd_face_area.face_info[i].sy * src.size.height) /
-                (cxt->fd_face_area.frame_height);
-            beauty_face.endX =
-                (cxt->fd_face_area.face_info[i].ex * src.size.width) /
-                (cxt->fd_face_area.frame_width);
-            beauty_face.endY =
-                (cxt->fd_face_area.face_info[i].ey * src.size.height) /
-                (cxt->fd_face_area.frame_height);
+            w = cxt->fd_face_area.face_info[i].ex - cxt->fd_face_area.face_info[i].sx;
+            h = cxt->fd_face_area.face_info[i].ey -cxt->fd_face_area.face_info[i].sy;
+            ratio = (float)src.size.width / (float)(cxt->fd_face_area.frame_width);
+            beauty_face.startX = (int)(cxt->fd_face_area.face_info[i].sx * ratio);
+            beauty_face.startY = (int)(cxt->fd_face_area.face_info[i].sy * ratio);
+            beauty_face.endX = (int)(beauty_face.startX + w * ratio);
+            beauty_face.endY = (int)(beauty_face.startY + h * ratio);
             beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
             beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+            CMR_LOGD("src face_info(idx[%d]:sx,ex(%d, %d) sy,ey(%d, %d)", i,
+                cxt->fd_face_area.face_info[i].sx, cxt->fd_face_area.face_info[i].ex,
+                cxt->fd_face_area.face_info[i].sy, cxt->fd_face_area.face_info[i].ey);
+            CMR_LOGD("dst face_info(idx[%d]:w,h(%d, %d) sx,ex(%d, %d) sy,ey(%d, %d)", i,
+                beauty_face.endX - beauty_face.startX,
+                beauty_face.endY - beauty_face.startY,
+                beauty_face.startX, beauty_face.endX,
+                beauty_face.startY, beauty_face.endY);
             ret = face_beauty_ctrl(&(cxt->face_beauty),
                                    FB_BEAUTY_CONSTRUCT_FACE_CMD,
                                    (void *)&beauty_face);
