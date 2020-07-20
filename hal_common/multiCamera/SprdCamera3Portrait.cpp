@@ -2505,10 +2505,19 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         HAL_LOGE("no mem!");
         return rc;
     }
+    if (mPortrait->mFlushing) {
+        rc = BAD_VALUE;
+        goto exit;
+    }
     sem_wait(&mPortrait->mFaceinfoSignSem);
     mPortrait->mBokehAlgo->getPortraitMask(output_buf_addr, input_buf1_addr,
                                            mPortrait->mVcmStepsFixed,
                                            outPortraitMask);
+    if (mPortrait->mFlushing) {
+        rc = BAD_VALUE;
+        goto exit;
+    }
+
     if (!outPortraitMask) {
         HAL_LOGE("no thing!");
     }
@@ -2546,6 +2555,10 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             HAL_LOGE("otp.data null");
         }
     }
+    if (mPortrait->mFlushing) {
+        rc = BAD_VALUE;
+        goto exit;
+    }
 #ifdef CONFIG_FACE_BEAUTY
     /*do face beauty*/
     if (mFaceBeautyFlag) {
@@ -2579,7 +2592,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             goto exit;
         }
     }
-    free(outPortraitMask);
+
 
 #if defined(CONFIG_SUPPORT_GDEPTH) ||                                          \
     defined(CONFIG_BOKEH_JPEG_APPEND_NORMALIZED_DEPTH_YUV)
@@ -2635,7 +2648,7 @@ exit : { // dump yuv data
     }
 }
     HAL_LOGI(":X");
-
+    free(outPortraitMask);
     mPortrait->unmap(output_buf);
 fail_map_output:
     mPortrait->unmap(input_buf2);
