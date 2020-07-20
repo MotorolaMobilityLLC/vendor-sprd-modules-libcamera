@@ -333,6 +333,8 @@ static cmr_int hi846_wide_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
     ex_info->name = (cmr_s8 *)g_hi846_wide_mipi_raw_info.name;
     ex_info->sensor_version_info =
         (cmr_s8 *)g_hi846_wide_mipi_raw_info.sensor_version_info;
+    memcpy(&ex_info->fov_info, &static_info->fov_info,
+             sizeof(static_info->fov_info));
 
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
