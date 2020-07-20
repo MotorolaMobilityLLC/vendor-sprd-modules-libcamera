@@ -2973,7 +2973,7 @@ static SENSOR_STATIC_INFO_T s_ov16885_normal_static_info[VENDOR_NUM] = {
         .clamp_level = 64,
         .adgain_valid_frame_num = 1,
         .fov_angle= 117.0,
-        .fov_info = {{4.741f, 3.564f}, 3.570f}}
+        .fov_info = {{4.741f, 3.564f}, 2.245f}}
     }
     /*If there are multiple modules,please add here*/
 };
