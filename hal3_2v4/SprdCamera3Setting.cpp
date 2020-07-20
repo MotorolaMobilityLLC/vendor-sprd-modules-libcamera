@@ -1935,6 +1935,95 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(resetFeatureStatus(
         "persist.vendor.cam.ip.night", "persist.vendor.cam.night.pro.enable"));
 
+    // 25 camera lightportrait_ba
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.light.dual.portrait",
+                           "persist.vendor.cam.lightportrait.ba.enable"));
+    }
+#else
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
+                           "persist.vendor.cam.lightportrait.ba.enable"));
+    }
+#endif
+
+    // 26 camera lightportrait_fr
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
+                           "persist.vendor.cam.lightportrait.fr.enable"));
+
+      // 27 FDR
+    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.fdr",
+                                      "persist.vendor.cam.fdr.enable"));
+
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    // 27 portrait scene mode
+    HAL_LOGD("pbrb_enable=%d",atoi(prop));
+    property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        if(atoi(prop)==0){
+            property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
+            property_set("persist.vendor.cam.ip.wechat.back.replace","0");
+        }
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
+                           "persist.vendor.cam.portrait.scene.enable"));
+    }
+#else
+    available_cam_features.add(0);
+#endif
+
+    // 28 higher micro photo
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
+                           "persist.vendor.cam.higher.macrophoto.enable"));
+    }
+
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    // 29 portrait scene mode
+    HAL_LOGD("pbrb_enable=%d", atoi(prop));
+    property_get("persist.vendor.cam.wechat.portrait.scene.enable", prop, "2");
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        if (atoi(prop) == 0) {
+            property_set("persist.vendor.cam.wechat.portrait.scene.enable", "1");
+            property_set("persist.vendor.cam.ip.wechat.back.replace", "0");
+        }
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
+                               "persist.vendor.cam.portrait.scene.enable"));
+    }
+#else
+    available_cam_features.add(0);
+#endif
+
+    // 30 higher micro photo
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
+                               "persist.vendor.cam.higher.macrophoto.enable"));
+    }
+
+    // 31 eis_pro video
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.eis.pro",
+                           "persist.vendor.cam.dv.ba.eispro.enable"));
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));

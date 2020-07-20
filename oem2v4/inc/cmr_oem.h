@@ -136,6 +136,19 @@ struct ipm_pro_context {
     cmr_u32 dre_pro_inited;
 };
 
+struct nightpro_context {
+    cmr_uint is_authorized;
+    void *sw_handle;
+    int (*sw_open)(cmr_handle oem_handle);
+    int (*sw_process)(cmr_handle oem_handle,
+                                 struct image_sw_algorithm_buf *src_buf,
+                                 struct image_sw_algorithm_buf *dst_buf);
+    int (*sw_close)(cmr_handle oem_handle);
+    int (*ipmpro_init)(cmr_handle oem_handle);
+    int (*ipmpro_deinit)(cmr_handle oem_handle);
+    int (*ipmpro_process)(cmr_handle oem_handle, void *data);
+};
+
 struct preview_context {
     cmr_handle preview_handle;
     cmr_u32 inited;
@@ -372,6 +385,7 @@ struct camera_context {
     float zoom_ratio;
     bool night_flag;
     cmr_u8 nightscepro_flag;
+    struct nightpro_context night_cxt;
 };
 
 struct prev_threednr_info {
