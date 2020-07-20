@@ -211,6 +211,8 @@ const int32_t kavailable_fps_ranges_back[] = {
     10, 10, 5, 15, 15, 15, 5, 20, 20, 20, 5, 24, 24, 24, 5, 30, 20, 30, 30, 30};
 const int32_t kavailable_fps_ranges_front[] = {5, 15, 15, 15, 5,  20, 20, 20,
                                                5, 30, 15, 30, 20, 30, 30, 30};
+const int32_t kavailable_fps_ranges_sub[] = {5, 15, 15, 15, 24, 24, 5, 30, 30, 30};
+
 const int32_t kavailable_high_speed_video_configration[] = {
     1280, 720, 30, 120, 1280, 720, 120, 120};
 
@@ -516,11 +518,6 @@ const cam_stream_info_t stream_info[] = {
     {{4160, 2340}, 33331760L, 33331760L},
     {{4160, 2080}, 33331760L, 33331760L},
     {{4160, 1968}, 33331760L, 33331760L},
-    // because calibration and bokeh only support 4000*3000
-    //{{4032, 3024}, 33331760L, 33331760L},
-    //{{4032, 2268}, 33331760L, 33331760L},
-    //{{4032, 2016}, 33331760L, 33331760L},
-    //{{4032, 1912}, 33331760L, 33331760L},
     {{4000, 3000}, 33331760L, 33331760L},
     {{4000, 2250}, 33331760L, 33331760L},
     {{4000, 2000}, 33331760L, 33331760L},
@@ -545,29 +542,14 @@ const cam_stream_info_t stream_info[] = {
     {{2048, 1152}, 33331760L, 33331760L},
     {{1920, HEIGHT_2M}, 33331760L, 33331760L},
     {{1600, 1200}, 33331760L, 33331760L},
-    {{1600, 900}, 33331760L, 33331760L},
-    {{1600, 800}, 33331760L, 33331760L},
-    {{1600, 758}, 33331760L, 33331760L},
-    {{1520, 720}, 33331760L, 33331760L},
     {{1440, 1080}, 33331760L, 33331760L},
-    {{1440, 720}, 33331760L, 33331760L},
-    {{1280, 960}, 33331760L, 33331760L},
-    {{1200, 900}, 33331760L, 33331760L},
     {{1280, 720}, 33331760L, 33331760L},
     {{960, 720}, 33331760L, 33331760L},
-    {{864, 480}, 33331760L, 33331760L},
     {{800, 600}, 33331760L, 33331760L},
-    {{720, 544}, 33331760L, 33331760L},
     {{720, 480}, 33331760L, 33331760L},
     {{640, 480}, 33331760L, 33331760L},
-    {{640, 360}, 33331760L, 33331760L},
-    {{624, 352}, 33331760L, 33331760L},
-    {{480, 640}, 33331760L, 33331760L},
-    {{480, 480}, 33331760L, 33331760L},
     {{352, 288}, 33331760L, 33331760L},
     {{320, 240}, 33331760L, 33331760L},
-    {{288, 352}, 33331760L, 33331760L},
-    {{240, 320}, 33331760L, 33331760L},
     {{176, 144}, 33331760L, 33331760L}};
 
 const cam_stream_info_t subSensor_stream_info[] = {
@@ -1340,13 +1322,21 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
            ksupported_preview_formats, sizeof(ksupported_preview_formats));
     camera3_default_info.common.processed_min_durations[0] =
         camera3_default_info.common.frame_duration_range[0];
-    if (cameraId == 0 || cameraId == 2 || cameraId == 3 || cameraId == 4)
+    if (cameraId == 0 || cameraId == 2)
         memcpy(camera3_default_info.common.available_fps_ranges,
                kavailable_fps_ranges_back, sizeof(kavailable_fps_ranges_back));
     else
         memcpy(camera3_default_info.common.available_fps_ranges,
                kavailable_fps_ranges_front,
                sizeof(kavailable_fps_ranges_front));
+
+    if (cameraId > 2) {
+        memset(camera3_default_info.common.available_fps_ranges, 0,
+            sizeof(camera3_default_info.common.available_fps_ranges));
+        memcpy(camera3_default_info.common.available_fps_ranges,
+               kavailable_fps_ranges_sub, sizeof(kavailable_fps_ranges_sub));
+    }
+
     memcpy(&camera3_default_info.common.exposureCompensationStep,
            &kexposureCompensationStep, sizeof(kexposureCompensationStep));
     memcpy(camera3_default_info.common.exposureCompensationRange,
@@ -2015,13 +2005,21 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     initStaticParametersforSensorInfo(cameraId);
 
     // control
-    if (cameraId == 0 || cameraId == 2 || cameraId == 3 || cameraId == 4)
+    if (cameraId == 0 || cameraId == 2)
         memcpy(s_setting[cameraId].controlInfo.ae_available_fps_ranges,
                kavailable_fps_ranges_back, sizeof(kavailable_fps_ranges_back));
     else
         memcpy(s_setting[cameraId].controlInfo.ae_available_fps_ranges,
                kavailable_fps_ranges_front,
                sizeof(kavailable_fps_ranges_front));
+
+    if (cameraId > 2) {
+        memset(s_setting[cameraId].controlInfo.ae_available_fps_ranges, 0,
+            sizeof(s_setting[cameraId].controlInfo.ae_available_fps_ranges));
+        memcpy(s_setting[cameraId].controlInfo.ae_available_fps_ranges,
+               kavailable_fps_ranges_sub, sizeof(kavailable_fps_ranges_sub));
+    }
+
     memcpy(s_setting[cameraId].controlInfo.available_video_stab_modes,
            camera3_default_info.common.availableVideoStabModes,
            sizeof(camera3_default_info.common.availableVideoStabModes));
