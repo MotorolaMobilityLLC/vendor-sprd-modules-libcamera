@@ -2355,9 +2355,10 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
             }
 
             mPortrait->unmap(capture_msg.combo_buff.buffer1);
-            if (!mPortrait->mFlushing)
+            /*if (!mPortrait->mFlushing)
                 mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                              &mime_type, NULL);
+            */
             if (!mPortrait->mIsHdrMode) {
                 reprocessReq(output_buffer, capture_msg);
             } else {

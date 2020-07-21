@@ -1396,7 +1396,7 @@ bool SprdCamera3SinglePortrait::CaptureThread::yuvReprocessCaptureRequest(
         input_stream_buff.buffer = output_buffer;
         mime_type = (int)SPRD_MIMETPYE_BLUR;
     }
-    mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE, &mime_type, NULL);
+    //mDevMain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE, &mime_type, NULL);
     memcpy((void *)&output_stream_buff, &mSavedCapReqstreambuff,
            sizeof(camera3_stream_buffer_t));
     output_stream_buff.stream->width = mSinglePortrait->mCaptureWidth;
