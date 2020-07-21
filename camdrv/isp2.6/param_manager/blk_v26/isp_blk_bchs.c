@@ -135,7 +135,7 @@ cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void
 
 	case ISP_PM_BLK_AI_SCENE_UPDATE_BCHS:
 		{
-			cmr_s16 smooth_factor, smooth_base;
+			cmr_s16 smooth_factor, smooth_base, ai_status;
 			struct isp_ai_update_param *cfg_data;
 			struct isp_ai_bchs_param *bchs_cur;
 			struct isp_bchs_ai_info bchs_updata;
@@ -144,6 +144,7 @@ cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void
 			bchs_cur = (struct isp_ai_bchs_param *)cfg_data->param_ptr;
 			smooth_factor = cfg_data->smooth_factor;
 			smooth_base = cfg_data->smooth_base;
+			ai_status = cfg_data->ai_status;
 			if (smooth_factor == 0)
 				break;
 
@@ -161,25 +162,27 @@ cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void
 			bchs_updata.csa_factor_u = (dst_ptr->cur.csa_factor_u & 0xFFFF);
 			bchs_updata.csa_factor_v = (dst_ptr->cur.csa_factor_v & 0xFFFF);
 
-			if (bchs_cur->ai_brightness.brightness_ai_adj_eb) {
-				bchs_updata.brta_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
-				bchs_updata.brta_factor = MAX(-128, MIN(127,  bchs_updata.brta_factor));
-			}
-			if (bchs_cur->ai_contrast.contrast_adj_ai_eb) {
-				bchs_updata.cnta_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
-				bchs_updata.cnta_factor = MAX(0, MIN(255,  bchs_updata.cnta_factor));
-			}
-			if (bchs_cur->ai_hue.hue_adj_ai_eb) {
-				bchs_updata.hua_cos_value += bchs_cur->ai_hue.hue_cos_offset * smooth_factor / smooth_base;
-				bchs_updata.hua_sina_value += bchs_cur->ai_hue.hue_sin_offset * smooth_factor / smooth_base;
-				bchs_updata.hua_cos_value = MAX(-180, MIN(180,  bchs_updata.hua_cos_value));
-				bchs_updata.hua_sina_value = MAX(-180, MIN(180,  bchs_updata.hua_sina_value));
-			}
-			if (bchs_cur->ai_saturation.saturation_adj_ai_eb) {
-				bchs_updata.csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
-				bchs_updata.csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
-				bchs_updata.csa_factor_u = MAX(0, MIN(255,  bchs_updata.csa_factor_u));
-				bchs_updata.csa_factor_v = MAX(0, MIN(255,  bchs_updata.csa_factor_v));
+			if (ai_status){
+				if (bchs_cur->ai_brightness.brightness_ai_adj_eb) {
+					bchs_updata.brta_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
+					bchs_updata.brta_factor = MAX(-128, MIN(127,  bchs_updata.brta_factor));
+				}
+				if (bchs_cur->ai_contrast.contrast_adj_ai_eb) {
+					bchs_updata.cnta_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
+					bchs_updata.cnta_factor = MAX(0, MIN(255,  bchs_updata.cnta_factor));
+				}
+				if (bchs_cur->ai_hue.hue_adj_ai_eb) {
+					bchs_updata.hua_cos_value += bchs_cur->ai_hue.hue_cos_offset * smooth_factor / smooth_base;
+					bchs_updata.hua_sina_value += bchs_cur->ai_hue.hue_sin_offset * smooth_factor / smooth_base;
+					bchs_updata.hua_cos_value = MAX(-180, MIN(180,  bchs_updata.hua_cos_value));
+					bchs_updata.hua_sina_value = MAX(-180, MIN(180,  bchs_updata.hua_sina_value));
+				}
+				if (bchs_cur->ai_saturation.saturation_adj_ai_eb) {
+					bchs_updata.csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
+					bchs_updata.csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
+					bchs_updata.csa_factor_u = MAX(0, MIN(255,  bchs_updata.csa_factor_u));
+					bchs_updata.csa_factor_v = MAX(0, MIN(255,  bchs_updata.csa_factor_v));
+				}
 			}
 			dst_ptr->cur.brta_factor = bchs_updata.brta_factor;
 			dst_ptr->cur.cnta_factor = bchs_updata.cnta_factor;

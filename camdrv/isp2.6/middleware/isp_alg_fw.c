@@ -1959,8 +1959,11 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 	}
 
 	if (ai_sta != AI_STATUS_PROCESSING) {
+		ai_update_data.ai_status = 0;
 		cxt->smooth_ratio = smooth_ratio = 1;
 		ISP_LOGD("cam%ld  ai_stopped\n", cxt->camera_id);
+	} else {
+		ai_update_data.ai_status = 1;
 	}
 
 	if (cxt->smooth_ratio == 0) {

@@ -58,7 +58,7 @@ cmr_s32 _pm_hue_set_param(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *
 
 	case ISP_PM_BLK_AI_SCENE_UPDATE_BCHS:
 		{
-			cmr_s16 smooth_factor, smooth_base;
+			cmr_s16 smooth_factor, smooth_base, ai_status;
 			struct isp_ai_update_param *cfg_data;
 			struct isp_ai_bchs_param *bchs_cur;
 			cmr_s32 theta;
@@ -67,13 +67,16 @@ cmr_s32 _pm_hue_set_param(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *
 			bchs_cur = (struct isp_ai_bchs_param *)cfg_data->param_ptr;
 			smooth_factor = cfg_data->smooth_factor;
 			smooth_base = cfg_data->smooth_base;
+			ai_status = cfg_data->ai_status;
 			if (smooth_factor == 0)
 				break;
 
 			theta = hue_ptr->tab[hue_ptr->cur_idx];
-			if (bchs_cur->ai_hue_v1.hue_adj_ai_eb) {
-				theta += bchs_cur->ai_hue_v1.theta_offset * smooth_factor / smooth_base;
-				theta = MAX(-180, MIN(180,  theta));
+			if (ai_status){
+				if (bchs_cur->ai_hue_v1.hue_adj_ai_eb) {
+					theta += bchs_cur->ai_hue_v1.theta_offset * smooth_factor / smooth_base;
+					theta = MAX(-180, MIN(180,  theta));
+				}
 			}
 			hue_ptr->cur.theta = theta;
 			hue_header_ptr->is_update = ISP_ONE;
