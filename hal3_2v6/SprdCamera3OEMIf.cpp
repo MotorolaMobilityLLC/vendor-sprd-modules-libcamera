@@ -11502,9 +11502,11 @@ void SprdCamera3OEMIf::popEISVideoQueue(vsGyro *gyro, int gyro_num) {
             gyro[i].w[2] = GyroInfo->w[2];
             HAL_LOGV("gyro i %d,timestamp %lf, x: %lf, y: %lf, z: %lf", i,
                      gyro[i].t, gyro[i].w[0], gyro[i].w[1], gyro[i].w[2]);
-        } else
+            mGyroVideoInfo.erase(mGyroVideoInfo.begin());
+        } else {
             HAL_LOGW("gyro data is null in %d", i);
-        mGyroVideoInfo.erase(mGyroVideoInfo.begin());
+            break;
+        }
     }
 }
 
