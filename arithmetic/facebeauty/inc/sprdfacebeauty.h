@@ -19,6 +19,14 @@
 #define FBAPI(rettype) extern FB_EXPORTS rettype
 #endif
 
+typedef enum{
+    PIKE2 = 0,
+    SHARKLE = 1,
+    SHARKL3 = 2,
+    SHARKL5PRO = 3,
+    SHARKL5 = 4
+}fb_chipinfo;
+
 /* The error codes */
 #define FB_OK                   0     /* Ok!                                      */
 #define FB_ERROR_INTERNAL       -1    /* Error: Unknown internal error            */
@@ -152,13 +160,7 @@ FBAPI(int) FB_FaceBeauty_YUV420SP(FB_BEAUTY_HANDLE hFB,
                                   int faceCount,
                                   FB_PORTRAITMASK *imageMask);
 
-typedef enum fb_chipinfo{
-    PIKE2 = 0,
-    SHARKLE,
-    SHARKL3,
-    SHARKL5PRO,
-    SHARKL5
-} fb_chipinfo;
+
 #ifdef  __cplusplus
 }
 #endif
