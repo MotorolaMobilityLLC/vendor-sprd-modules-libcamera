@@ -575,6 +575,12 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 		break;
 
 	case ISP_FLASH_CLOSE:
+		awb_flash_status = AWB_FLASH_MAIN_AFTER;
+		if (cxt->ops.awb_ops.ioctrl)
+			cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_FLASH_STATUS, (void *)&awb_flash_status, NULL);
+
+		if (cxt->ops.awb_ops.ioctrl)
+			cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
 		ae_notice.mode = AE_FLASH_MAIN_CLOSE;
 		if (cxt->ops.ae_ops.ioctrl)
 			cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE, &ae_notice, NULL);

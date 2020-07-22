@@ -2602,6 +2602,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		}
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
 		cxt->flash_info.flash_enable = AWB_CTRL_FLASH_END;
+		cxt->awb_result.update_gain = cxt->flash_update_awb;
 
 		break;
 
@@ -2776,6 +2777,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl_v3(void *handle, cmr_s32 cmd, void *in, void *out)
 		}
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_END;
 		cxt->flash_info.flash_enable = AWB_CTRL_FLASH_END;
+		cxt->awb_result.update_gain = cxt->flash_update_awb;
 
 		break;
 
