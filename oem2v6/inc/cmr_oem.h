@@ -190,6 +190,19 @@ struct ipm_fdr_context {
     cmr_u32 ee_fdr_inited;
 };
 
+struct camera_core_context {
+    cmr_uint is_authorized;
+    void *sw_handle;
+    int (*sw_open)(cmr_handle oem_handle);
+    int (*sw_process)(cmr_handle oem_handle,
+                      struct img_frm *in_frame, struct img_frm *out_frame);
+    int (*sw_close)(cmr_handle oem_handle);
+    int (*ipmcore_init)(cmr_handle oem_handle);
+    int (*ipmcore_deinit)(cmr_handle oem_handle);
+    int (*ipmcore_process)(cmr_handle oem_handle, void *data);
+};
+
+
 
 struct preview_context {
     cmr_handle preview_handle;
@@ -501,6 +514,7 @@ struct camera_context {
     cmr_u8 skipframe;
     bool night_flag;
     struct nightpro_context night_cxt;
+    struct camera_core_context cam_core_cxt;
 
     /*for flash skip preview frame*/
     cmr_s64 flash_handle_timestamp;

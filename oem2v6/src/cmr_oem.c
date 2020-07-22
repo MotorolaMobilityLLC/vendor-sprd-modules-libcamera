@@ -102,26 +102,9 @@ typedef struct {
                               is_multi_camera_mode_oem == MODE_SELF_SHOT ||    \
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 
-typedef int (*CAMERA_SW_OPEN)(cmr_handle oem_handle);
-typedef int (*CAMERA_SW_PROCESS)(cmr_handle oem_handle,
-        struct image_sw_algorithm_buf *src_buf,
-        struct image_sw_algorithm_buf *dst_buf);
-typedef int (*CAMERA_SW_IPM_PROCESS)(cmr_handle oem_handle,
-        struct img_frm *in_frame, struct img_frm *out_frame);
-typedef int (*CAMERA_SW_CLOSE)(cmr_handle oem_handle);
-typedef int (*CAMERA_IPMPRO_INIT)(cmr_handle oem_handle);
-typedef int (*CAMERA_IPMPRO_DEINIT)(cmr_handle oem_handle);
-typedef int (*CAMERA_IPMPRO_PROCESS)(cmr_handle oem_handle, void *data);
-
-CAMERA_SW_OPEN sw_fdr_open = NULL;
-CAMERA_SW_IPM_PROCESS sw_fdr_process = NULL;
-CAMERA_SW_CLOSE sw_fdr_close = NULL;
-CAMERA_IPMPRO_INIT ipmfdr_init = NULL;
-CAMERA_IPMPRO_DEINIT ipmfdr_deinit = NULL;
-CAMERA_IPMPRO_PROCESS ipmfdr_process = NULL;
-static cmr_uint is_fdr_authorized = 0;
 
 static cmr_int camera_fdr_init(cmr_handle oem_handle);
+static cmr_int camera_fdr_deinit(cmr_handle oem_handle);
 
 static cmr_int camera_nightpro_init(cmr_handle oem_handle);
 static cmr_int camera_nightpro_deinit(cmr_handle oem_handle);
@@ -2907,8 +2890,8 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
             } else if (((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) ||
             (setting_param.cmd_type_value == CAMERA_MODE_AUDIO_PICTURE) ||
             (setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE)) &&
-              (1 == camera_get_fdr_flag(cxt)) && is_fdr_authorized) {
-                ret = sw_fdr_close(cxt);
+              (1 == camera_get_fdr_flag(cxt)) && cxt->cam_core_cxt.is_authorized) {
+                ret = cxt->cam_core_cxt.sw_close(cxt);
             }
             CMR_LOGD("jpeg enc done");
             break;
@@ -4705,17 +4688,15 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         return ret;
     }
 
-    if(((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) ||
-       (setting_param.cmd_type_value == CAMERA_MODE_AUDIO_PICTURE) ||
-       (setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE)) &&
-       (1 == camera_get_fdr_flag(cxt))) {
-          if( is_fdr_authorized) {
-              ret= sw_fdr_open(cxt);
-              if(ret)
-                  CMR_LOGE("failed to open fdr %ld", ret);
-          }
-          CMR_LOGV("fdr total frame cnt %d", cxt->fdr_total_frame_cnt);
-          return ret;
+    if (((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) ||
+        (setting_param.cmd_type_value == CAMERA_MODE_AUDIO_PICTURE) ||
+         (setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE)) &&
+           (1 == camera_get_fdr_flag(cxt)) && cxt->cam_core_cxt.is_authorized) {
+            ret= cxt->cam_core_cxt.sw_open(cxt);
+            if (ret) {
+                CMR_LOGE("failed to open fdr %ld", ret);
+            }
+        return ret;
     }
 
     if (1 == camera_get_hdr_flag(cxt)) {
@@ -4906,18 +4887,16 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
         goto exit;
     }
 
-	if(((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) ||
-		  (setting_param.cmd_type_value == CAMERA_MODE_AUDIO_PICTURE) ||
-		  (setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE)) &&
-		   (1 == camera_get_fdr_flag(cxt))) {
-		   if(is_fdr_authorized) {
-			   ret= ipmfdr_process(oem_handle, data);
-			   if(ret) {
-				   CMR_LOGE("failed to process ipmfdr %ld",ret);
-			   }
-		   }
-		   goto exit;
-	   }
+    if (((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) ||
+       (setting_param.cmd_type_value == CAMERA_MODE_AUDIO_PICTURE) ||
+        (setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE)) &&
+         (1 == camera_get_fdr_flag(cxt)) && cxt->cam_core_cxt.is_authorized) {
+           ret= cxt->cam_core_cxt.ipmcore_process(oem_handle, data);
+           if (ret) {
+              CMR_LOGE("failed to process ipmfdr %ld",ret);
+           }
+           goto exit;
+     }
 
 
     CHECK_HANDLE_VALID(oem_handle);
@@ -6054,8 +6033,8 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
         camera_nightpro_deinit(oem_handle);
     }
 
-    if (is_fdr_authorized) {
-        ipmfdr_deinit(oem_handle);
+    if (cxt->cam_core_cxt.is_authorized) {
+        camera_fdr_deinit(oem_handle);
     }
 
     camera_deinit_thread(oem_handle);
@@ -6494,35 +6473,70 @@ cmr_int camera_nightpro_deinit(cmr_handle oem_handle) {
 
 cmr_int camera_fdr_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    void *sw_handle = NULL;
-    sw_handle = dlopen("libfdr.so", RTLD_NOW);
-    if(!sw_handle) {
-          CMR_LOGD("libfdr open failed with %s",dlerror());
+    cxt->cam_core_cxt.sw_handle = dlopen("libfdr.so", RTLD_NOW);
+    if(!cxt->cam_core_cxt.sw_handle) {
+       cxt->cam_core_cxt.is_authorized = 0;
+       CMR_LOGE("libfdr open failed with %s",dlerror());
     } else {
-        sw_fdr_open = dlsym(sw_handle, "camera_sw_fdr_open");
-        sw_fdr_process = dlsym(sw_handle, "camera_sw_fdr_process");
-        sw_fdr_close = dlsym(sw_handle, "camera_sw_fdr_close");
-        ipmfdr_init = dlsym(sw_handle, "camera_ipm_fdr_init");
-        ipmfdr_deinit = dlsym(sw_handle, "camera_ipm_fdr_deinit");
-        ipmfdr_process = dlsym(sw_handle, "camera_ipm_fdr_process");
-        if (!sw_fdr_open|| !sw_fdr_process || !sw_fdr_close || !ipmfdr_init ||
-            !ipmfdr_deinit || !ipmfdr_process ) {
+        cxt->cam_core_cxt.sw_open = dlsym(cxt->cam_core_cxt.sw_handle, "camera_sw_fdr_open");
+        cxt->cam_core_cxt.sw_process = dlsym(cxt->cam_core_cxt.sw_handle, "camera_sw_fdr_process");
+        cxt->cam_core_cxt.sw_close = dlsym(cxt->cam_core_cxt.sw_handle, "camera_sw_fdr_close");
+        cxt->cam_core_cxt.ipmcore_init = dlsym(cxt->cam_core_cxt.sw_handle, "camera_ipm_fdr_init");
+        cxt->cam_core_cxt.ipmcore_deinit = dlsym(cxt->cam_core_cxt.sw_handle, "camera_ipm_fdr_deinit");
+        cxt->cam_core_cxt.ipmcore_process = dlsym(cxt->cam_core_cxt.sw_handle, "camera_ipm_fdr_process");
+        if (!cxt->cam_core_cxt.sw_open || !cxt->cam_core_cxt.sw_open ||
+            !cxt->cam_core_cxt.sw_close || !cxt->cam_core_cxt.ipmcore_init ||
+            !cxt->cam_core_cxt.ipmcore_deinit || !cxt->cam_core_cxt.ipmcore_process ) {
             CMR_LOGD("func analyzing failed with %s", dlerror());
+            goto exit;
         } else {
-            is_fdr_authorized = 1;
+            cxt->cam_core_cxt.is_authorized = 1;
         }
     }
-    CMR_LOGV("is_fdr_authorized %d", is_fdr_authorized);
+    CMR_LOGV("is_fdr_authorized %d", cxt->cam_core_cxt.is_authorized);
 
-    if (is_fdr_authorized) {
-        ret= ipmfdr_init(oem_handle);
+    if (cxt->cam_core_cxt.is_authorized) {
+        ret= cxt->cam_core_cxt.ipmcore_init(oem_handle);
         if (ret) {
             CMR_LOGE("failed to init ipm fdr %ld", ret);
+            goto exit;
         }
     }
-
     ATRACE_END();
+    return ret;
+
+exit:
+    dlclose(cxt->cam_core_cxt.sw_handle);
+    cxt->cam_core_cxt.sw_handle = NULL;
+    cxt->cam_core_cxt.sw_open = NULL;
+    cxt->cam_core_cxt.sw_process = NULL;
+    cxt->cam_core_cxt.sw_close = NULL;
+    cxt->cam_core_cxt.ipmcore_init = NULL;
+    cxt->cam_core_cxt.ipmcore_deinit = NULL;
+    cxt->cam_core_cxt.ipmcore_process = NULL;
+    cxt->cam_core_cxt.is_authorized = 0;
+    return ret;
+}
+
+
+cmr_int camera_fdr_deinit(cmr_handle oem_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    if(cxt->cam_core_cxt.ipmcore_deinit) {
+        cxt->cam_core_cxt.ipmcore_deinit(oem_handle);
+    }
+    if (cxt->cam_core_cxt.sw_handle) {
+        dlclose(cxt->cam_core_cxt.sw_handle);
+    }
+    cxt->cam_core_cxt.sw_open = NULL;
+    cxt->cam_core_cxt.sw_process = NULL;
+    cxt->cam_core_cxt.sw_close = NULL;
+    cxt->cam_core_cxt.ipmcore_init = NULL;
+    cxt->cam_core_cxt.ipmcore_deinit = NULL;
+    cxt->cam_core_cxt.ipmcore_process = NULL;
+    cxt->cam_core_cxt.is_authorized = 0;
     return ret;
 }
 
@@ -13249,8 +13263,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
             CMR_LOGE("failed to clear hdr sem");
         }
     }
-    if (camera_get_fdr_flag(cxt)) {
-        ret = sw_fdr_close(cxt);
+    if (camera_get_fdr_flag(cxt) && cxt->cam_core_cxt.is_authorized) {
+        ret = cxt->cam_core_cxt.sw_close(cxt);
         if(ret) {
            CMR_LOGE("failed to close fdr");
         }
@@ -16031,7 +16045,12 @@ cmr_int camera_fdr_handle(void *data, void *privdata) {
 
     }
 
-    ret = sw_fdr_process(oem_handle, &src_param, &dst_param);
+    if (cxt->cam_core_cxt.is_authorized) {
+        ret = cxt->cam_core_cxt.sw_process(oem_handle, &src_param, &dst_param);
+        if (ret) {
+            CMR_LOGE("fdr raw process, frame transform error!");
+        }
+    }
 
 exit:
     CMR_LOGI("X");
@@ -16125,8 +16144,12 @@ cmr_int camera_fdr_handle_for_yuv(void *data, void *privdata) {
                             cxt->camera_id, &yuv_param);
     }
 
-    ret = sw_fdr_process(oem_handle, &src_param, &yuv_param);
-
+    if (cxt->cam_core_cxt.is_authorized) {
+        ret = cxt->cam_core_cxt.sw_process(oem_handle, &src_param, &yuv_param);
+        if (ret) {
+            CMR_LOGE("fdr yuv process, frame transform error!");
+        }
+    }
 
 
     /* FDR offline all done */
