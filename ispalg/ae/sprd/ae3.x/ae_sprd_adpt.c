@@ -2773,11 +2773,11 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 				capExp = (cmr_u32)cxt->flash_esti_result.captureExposure;
 				capGain = cxt->flash_esti_result.captureGain;
 			}
-			else if(current_status->adv_param.mode_param.mode == AE_MODE_AUTO_ISO_PRI){ // shutter auto , iso fix
+			else if((current_status->adv_param.mode_param.mode == AE_MODE_AUTO_ISO_PRI)||(cxt->flash_backup.mode == AE_MODE_AUTO_ISO_PRI)){ // shutter auto , iso fix
 				capGain = cxt->sync_cur_result.ev_setting.ae_gain;
-				capExp = (cmr_u32)(cxt->flash_esti_result.captureExposure) * cxt->flash_esti_result.captureGain/cxt->sync_cur_result.ev_setting.ae_gain;
+				capExp = (cmr_u32)((float)(cxt->flash_esti_result.captureExposure) * cxt->flash_esti_result.captureGain / cxt->sync_cur_result.ev_setting.ae_gain);
 			}
-			else if(current_status->adv_param.mode_param.mode == AE_MODE_AUTO_SHUTTER_PRI){ // shutter fix , iso auto
+			else if((current_status->adv_param.mode_param.mode == AE_MODE_AUTO_SHUTTER_PRI)||(cxt->flash_backup.mode == AE_MODE_AUTO_SHUTTER_PRI)){ // shutter fix , iso auto
 				capExp = cxt->sync_cur_result.ev_setting.exp_time;
 				capGain = (cmr_u32)(((float)(cxt->flash_esti_result.captureGain)) *cxt->flash_esti_result.captureExposure / ((float)(cxt->sync_cur_result.ev_setting.exp_time)));
 				if(capGain > cxt->ae_tbl_param.max_gain) /*max gain is 8192*/
@@ -4246,7 +4246,7 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 			}
 		}
-		scene_param_in.iso_mod = cxt->manual_iso_value ;
+		scene_param_in.iso_mod = cxt->cur_status.adv_param.iso ;
 		ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
 		ISP_LOGD("manual_exp_time %d, manual_iso_value %d, exp %d, mode %d",cxt->manual_exp_time,cxt->manual_iso_value, cxt->cur_status.adv_param.mode_param.value.exp_gain[0], cxt->cur_status.adv_param.mode_param.mode);
 	}
