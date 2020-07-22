@@ -1429,6 +1429,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 		}
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
+	input.sensor_raw_info_ptr = sensor_raw_info_ptr;
 
 	ret = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, PNULL);
 	if (ISP_SUCCESS != ret) {
