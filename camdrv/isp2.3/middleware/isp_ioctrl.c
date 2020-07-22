@@ -1479,9 +1479,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 	struct awb_data_info awb_data_ptr = { NULL, 0 };
 	UNUSED(param_ptr);
 
-	ISP_LOGV("E");
-
-	if (NULL == isp_alg_handle || NULL == cxt->sn_cxt.sn_raw_info) {
+	if (NULL == isp_alg_handle ||NULL == cxt->sn_cxt.sn_raw_info) {
 		ISP_LOGE("fail to update param");
 		ret = ISP_ERROR;
 		return ret;
@@ -1493,6 +1491,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 
 	version_info = (struct sensor_version_info *)sensor_raw_info_ptr->version_info;
 	input.sensor_name = version_info->sensor_ver_name.sensor_name;
+	ISP_LOGD("version_id %x", version_info->version_id);
 
 	if (NULL == cxt->handle_pm) {
 		ISP_LOGE("fail to get valid param!");
@@ -1515,7 +1514,7 @@ static cmr_int ispctl_fix_param_update(cmr_handle isp_alg_handle, void *param_pt
 		}
 	}
 	input.nr_fix_info = &(sensor_raw_info_ptr->nr_fix);
-
+	input.sensor_raw_info_ptr = sensor_raw_info_ptr;
 	ret = isp_pm_update(cxt->handle_pm, ISP_PM_CMD_UPDATE_ALL_PARAMS, &input, PNULL);
 	if (ISP_SUCCESS != ret) {
 		ISP_LOGE("fail to update isp param");
