@@ -25,7 +25,7 @@
 #define AE_WEIGHT_TABLE_NUM 3
 #define AE_SCENE_NUM 8
 #define SNR_NAME_MAX_LEN 64
-
+#define SENSOR_PDAF_MODE 4
 typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len,
                                    void *privdata);
 enum sns_cmd_section { CMD_SNS_OTP, CMD_SNS_IC, CMD_SNS_AF };
@@ -465,6 +465,12 @@ struct pd_vch2_info {
     cmr_u32 vch2_vc;
     cmr_u32 vch2_data_type;
     cmr_u32 vch2_mode;
+};
+
+
+enum sensor_pdaf_mode {
+    SENSOR_PDAF_MODE_DISABLE = 0,
+    SENSOR_PDAF_MODE_ENABLE
 };
 
 struct sensor_pdaf_info {

@@ -918,6 +918,10 @@ static const struct pd_pos_info _imx258_pd_pos_r[] = {
     {1, 8}, {17, 8}, {10, 21}, {26, 21},
 };
 
+static const cmr_u32 pd_sns_mode[] = {
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_DISABLE,
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_ENABLE
+};
 static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
@@ -954,6 +958,7 @@ static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_is_right = (cmr_u16 *)imx258_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)imx258_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)imx258_pd_col;
+    pdaf_info->pd_data_size =  pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y * 8 * 5;
 
     cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_imx258_pd_pos_r);
     cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_imx258_pd_pos_l);
@@ -994,6 +999,7 @@ static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->vch2_info.vch2_vc = 0;
     pdaf_info->vch2_info.vch2_data_type = 0x2f;
     pdaf_info->vch2_info.vch2_mode = 0x01;
+    pdaf_info->sns_mode = pd_sns_mode;
     return rtn;
 }
 

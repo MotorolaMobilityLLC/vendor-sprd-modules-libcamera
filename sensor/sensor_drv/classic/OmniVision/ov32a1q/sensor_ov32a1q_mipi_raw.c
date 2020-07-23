@@ -374,6 +374,11 @@ static cmr_int ov32a1q_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
+static const cmr_u32 pd_sns_mode[] = {
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_DISABLE,
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_DISABLE
+};
+
 static cmr_int ov32a1q_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
@@ -409,6 +414,7 @@ static cmr_int ov32a1q_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_col = (cmr_u16 *)ov32a1q_pd_col;
     // pdaf_info->vendor_type = SENSOR_VENDOR_XXX;
     pdaf_info->sns_orientation = 1; /*1: mirror+flip; 0: normal*/
+    pdaf_info->sns_mode = pd_sns_mode;
 
     return rtn;
 }

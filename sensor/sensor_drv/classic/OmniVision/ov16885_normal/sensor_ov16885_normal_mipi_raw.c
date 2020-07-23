@@ -415,7 +415,10 @@ static const struct pd_pos_info _ov16885_normal_pd_pos_l[] = {
 static const struct pd_pos_info _ov16885_normal_pd_pos_r[] = {
     {14, 2}, {6, 14},
 };
-static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
+static const cmr_u32 pd_sns_mode[] = {
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_DISABLE,
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_ENABLE
+};
 
 static cmr_int ov16885_normal_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param)
 {

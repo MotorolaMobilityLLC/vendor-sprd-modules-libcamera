@@ -409,7 +409,10 @@ static const struct pd_pos_info _ov13b10_pd_pos_r[] = {
     {14, 2}, {6, 14},
 };
 #endif
-static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
+static const cmr_u32 pd_sns_mode[] = {
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_DISABLE,
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_ENABLE
+};
 #define PDAF_BLOCK_SIZE_W 16
 #define PDAF_BLOCK_SIZE_H 16
 

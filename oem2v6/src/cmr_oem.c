@@ -8693,7 +8693,8 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     cmr_u32 sn_mode = 0;
     struct sensor_exp_info exp_info;
     struct sensor_exp_info *sensor_info_ptr;
-
+    SENSOR_VAL_T val;
+    struct sensor_pdaf_info pdaf_info;
     char prop[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.dual.preview", prop, "0");
 
@@ -8707,6 +8708,7 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
 
     cmr_bzero(&isp_param, sizeof(struct isp_video_start));
     cmr_bzero(&exp_info, sizeof(struct sensor_exp_info));
+    cmr_bzero(&pdaf_info, sizeof(struct sensor_pdaf_info));
 
     isp_param.size.w = param_ptr->size.width;
     isp_param.size.h = param_ptr->size.height;
@@ -8833,9 +8835,15 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         cxt->sn_cxt.sensor_info.source_height_max;
     isp_param.is_refocus = cxt->is_refocus_mode;
 
-    if (isp_param.resolution_info.sensor_max_size.w ==
-        isp_param.resolution_info.sensor_output_size.w) {
-        isp_param.pdaf_enable = 1;
+    if(cxt->sn_cxt.cur_sns_ex_info.pdaf_supported) {
+        val.type = SENSOR_VAL_TYPE_GET_PDAF_INFO;
+        val.pval = &pdaf_info;
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                                SENSOR_ACCESS_VAL, (cmr_uint)&val);
+        CMR_LOGI("output ret id %d", ret);
+        if (!ret && sn_mode < SENSOR_PDAF_MODE && pdaf_info.sns_mode)
+            if (pdaf_info.sns_mode[sn_mode])
+                isp_param.pdaf_enable = 1;
     }
 
     SENSOR_MODE_FPS_T fps_info;
