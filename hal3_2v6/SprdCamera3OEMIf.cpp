@@ -11631,16 +11631,14 @@ int SprdCamera3OEMIf::gyro_monitor_thread_init(void *p_data) {
 
     if (!obj->mGyroInit) {
         obj->mGyroInit = 1;
-        sem_init(&obj->mGyro_sem, 0, 0);
         pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
         ret = pthread_create(&obj->mGyroMsgQueHandle, &attr,
                              gyro_monitor_thread_proc, (void *)obj);
         pthread_setname_np(obj->mGyroMsgQueHandle, "gyro");
         pthread_attr_destroy(&attr);
         if (ret) {
             obj->mGyroInit = 0;
-            sem_destroy(&obj->mGyro_sem);
             HAL_LOGE("fail to init gyro thread");
         }
     }
@@ -11751,7 +11749,6 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     mSensorManager = ASensorManager_getInstanceForPackage("");
     if (mSensorManager == NULL) {
         HAL_LOGE("can not get ISensorManager service");
-        sem_post(&obj->mGyro_sem);
         obj->mGyroExit = 1;
         return NULL;
     }
@@ -11806,7 +11803,6 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
 
 exit:
     ASensorManager_destroyEventQueue(mSensorManager, sensorEventQueue);
-    sem_post(&obj->mGyro_sem);
     obj->mGyroExit = 1;
     HAL_LOGV("X");
     return NULL;
@@ -11841,7 +11837,6 @@ void *SprdCamera3OEMIf::gyro_SensorManager_process(void *p_data) {
     Sensor const *gsensor = mgr.getDefaultSensor(Sensor::TYPE_ACCELEROMETER);
     if (q == NULL) {
         HAL_LOGE("createEventQueue error");
-        sem_post(&obj->mGyro_sem);
         obj->mGyroExit = 1;
         return NULL;
     }
@@ -11920,7 +11915,6 @@ void *SprdCamera3OEMIf::gyro_SensorManager_process(void *p_data) {
     }
 
 exit:
-    sem_post(&obj->mGyro_sem);
     obj->mGyroExit = 1;
     HAL_LOGV("X");
     return NULL;
@@ -11938,7 +11932,6 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
     if (NULL == obj->mCameraHandle || NULL == obj->mHalOem ||
         NULL == obj->mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
-        sem_post(&obj->mGyro_sem);
         obj->mGyroExit = 1;
         return NULL;
     }
@@ -11959,8 +11952,6 @@ void *SprdCamera3OEMIf::gyro_monitor_thread_proc(void *p_data) {
 
 int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
     int ret = NO_ERROR;
-    void *dummy;
-    struct timespec ts;
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
 
     if (!obj) {
@@ -11973,26 +11964,9 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
     if (obj->mGyroInit) {
         obj->mGyroInit = 0;
 
-        if (!obj->mGyroExit) {
-            if (clock_gettime(CLOCK_REALTIME, &ts)) {
-                HAL_LOGE("get time failed");
-                return UNKNOWN_ERROR;
-            }
-            /*when gyro thread proc time is long when camera close, we
-             * should wait for thread end at last 1000ms*/
-            ts.tv_nsec += ms2ns(1000);
-            if (ts.tv_nsec > 1000000000) {
-                ts.tv_sec += 1;
-                ts.tv_nsec -= 1000000000;
-            }
-            ret = sem_timedwait(&obj->mGyro_sem, &ts);
-            if (ret)
-                HAL_LOGW("wait for gyro timeout");
-        } else
-            HAL_LOGW("gyro thread already end");
 
-        sem_destroy(&obj->mGyro_sem);
-        // ret = pthread_join(obj->mGyroMsgQueHandle, &dummy);
+        HAL_LOGD("Waiting for gyro");
+        ret = pthread_join(obj->mGyroMsgQueHandle, NULL);
         obj->mGyroMsgQueHandle = 0;
 
 #ifdef CONFIG_CAMERA_EIS
