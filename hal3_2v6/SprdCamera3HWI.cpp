@@ -692,10 +692,10 @@ int SprdCamera3HWI::configureStreams(
                         newStream->usage |= GRALLOC_USAGE_CURSOR;
                         mOEMIf->setVideoAFBCFlag(1);
 #else
-                        newStream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+                        newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
 #endif
                     } else {
-                        newStream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+                        newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
                     }
 
                 } else if (alreadyHasPreviewStream == 0) {
