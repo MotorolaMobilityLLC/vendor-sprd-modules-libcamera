@@ -1905,6 +1905,9 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->cur_result.cur_bv = cxt->flash_backup.bv;
 		cxt->cur_result.ev_setting.frm_len = cxt->flash_backup.frm_len;
 
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->flash_backup.exp_time;
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->flash_backup.gain;
+
 		cxt->sync_cur_result.ev_setting.exp_time = cxt->cur_result.ev_setting.exp_time;
 		cxt->sync_cur_result.ev_setting.exp_line = cxt->cur_result.ev_setting.exp_line;
 		cxt->sync_cur_result.ev_setting.ae_gain = cxt->cur_result.ev_setting.ae_gain;
@@ -1925,12 +1928,6 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		if((0==cxt->cur_status.adv_param.cur_ev_setting.ae_idx)&&(0 == cxt->app_mode)){
 			//ae_reset_base_index(cxt);
 			cxt->flash_backup.table_idx = cxt->cur_status.adv_param.cur_ev_setting.ae_idx;//注意此处
-		}
-
-		if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
-			//ae_reset_base_index(cxt);
-			rtn = ae_set_force_pause_flash(cxt, 0);
-			ISP_LOGD("flash unlock AE_SET_FORCE_RESTORE");
 		}
 
 		cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = cxt->send_once[5] = 0;
@@ -2897,6 +2894,11 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		if (FLASH_PRE_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_AFTER == current_status->adv_param.flash) {
 			cxt->cur_status.adv_param.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
+			if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
+			//ae_reset_base_index(cxt);
+				rtn = ae_set_force_pause_flash(cxt, 0);
+				ISP_LOGD("flash unlock AE_SET_FORCE_RESTORE");
+			}
 		}
 
 		if (1 < cxt->capture_skip_num)
@@ -4248,6 +4250,8 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 			}
 		}
 		scene_param_in.iso_mod = cxt->cur_status.adv_param.iso ;
+		scene_param_in.scene_mod = cxt->cur_status.adv_param.scene_mode ;
+		scene_param_in.flicker_mod = cxt->cur_status.adv_param.flicker ;
 		ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
 		ISP_LOGD("manual_exp_time %d, manual_iso_value %d, exp %d, mode %d",cxt->manual_exp_time,cxt->manual_iso_value, cxt->cur_status.adv_param.mode_param.value.exp_gain[0], cxt->cur_status.adv_param.mode_param.mode);
 	}
