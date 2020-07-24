@@ -349,6 +349,7 @@ static cmr_int gc02m1b_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
     memcpy(&ex_info->fov_info, &static_info->fov_info, sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->mono_sensor = static_info->mono_sensor;
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
