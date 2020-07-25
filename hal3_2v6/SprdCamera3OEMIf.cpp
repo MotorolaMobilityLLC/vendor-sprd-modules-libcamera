@@ -6979,18 +6979,18 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     mZoomInfo.zoom_info.zoom_ratio = zoomRatio;
     mZoomInfo.zoom_info.prev_aspect_ratio = zoomRatio;
 
-
-    int indexT = sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK);
-    if (indexT < 0xff) {
-      HAL_LOGE("fail to get sensor info for T");
-      return -1;
-    }
-    OTP_Tag *otpT = &SprdCamera3Setting::s_setting[indexT].otpInfo;
-
-    HAL_LOGV("mCameraId=%d, mIsFovFusionMode %d, otpT->otp_size%d, mAppRatio %f",
-             mCameraId, mIsFovFusionMode, otpT->otp_size, mAppRatio);
-    if (mIsFovFusionMode == true && otpT->otp_size != 0 && mAppRatio < 2.0) {
-       mZoomInfo.zoom_info.capture_aspect_ratio = 1.0;
+    HAL_LOGV("mCameraId=%d, mIsFovFusionMode %d, mAppRatio %f",
+             mCameraId, mIsFovFusionMode, mAppRatio);
+    if (mIsFovFusionMode == true && mAppRatio < 2.0) {
+        int indexT = sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK);
+        if (indexT>CAMERA_ID_COUNT) {
+           HAL_LOGE("fail to get sensor info for T");
+           return BAD_VALUE;
+        }
+        if(SprdCamera3Setting::s_setting[indexT].otpInfo.otp_size != 0)
+            mZoomInfo.zoom_info.capture_aspect_ratio = 1.0;
+        else
+            mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
     } else {
        mZoomInfo.zoom_info.capture_aspect_ratio = zoomRatio;
     }
