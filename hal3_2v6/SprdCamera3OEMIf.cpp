@@ -4234,6 +4234,7 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
                 (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
                 setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
             } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
+                mSprdAppmodeId == CAMERA_MODE_FOV_FUSION_MODE ||
                        sprddefInfo->slowmotion > 1) {
                 setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
             } else if (mRecordingMode == true) {
