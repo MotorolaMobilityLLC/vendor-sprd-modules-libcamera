@@ -119,22 +119,11 @@ typedef struct _PortaitCapProcParams {
     short mobile_angle;
 } PortaitCapProcParams;
 
-JNIEXPORT int sprd_portrait_capture_init(void **handle,
-                                         PortraitCap_Init_Params *initParams);
+JNIEXPORT int sprd_portrait_capture_init(void **handle, PortraitCap_Init_Params *initParams);
 JNIEXPORT int sprd_portrait_capture_deinit(void *handle);
-JNIEXPORT int sprd_portrait_capture_process(void *handle,
-                                            ProcDepthInputMap *depthData,
-                                            PortaitCapProcParams *wParams,
-                                            InoutYUV *yuvData,
-                                            void *outWeightMap, int isCapture);
-JNIEXPORT int sprd_portrait_capture_process_lpt(
-    void *handle, ProcDepthInputMap *depthInputData,
-    PortaitCapProcParams *procParams, InoutYUV *yuvData, void *WeightMap,
-    int isCapture, void *WeightMask);
-JNIEXPORT int sprd_portrait_capture_get_mask_info(void *handle,
-                                                  unsigned int *width,
-                                                  unsigned int *height,
-                                                  unsigned int *bufSize);
+JNIEXPORT int sprd_portrait_capture_get_mask(void *handle , ProcDepthInputMap *depthInputData, PortaitCapProcParams *procParams, InoutYUV *yuvData, void *WeightMask);
+JNIEXPORT int sprd_portrait_capture_process(void *handle , InoutYUV *yuvData, void *WeightMask, int isCapture);
+JNIEXPORT int sprd_portrait_capture_get_mask_info(void *handle, unsigned int *width, unsigned int *height, unsigned int *bufSize);
 JNIEXPORT int sprd_portrait_capture_get_version(char *verInfo, int bufSize);
 
 #ifdef __cplusplus
