@@ -375,9 +375,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
                              struct cmr_af_aux_sensor_info *sensor_info);
 #endif
 
+    void log_monitor_test(void);
     static void *log_monitor_thread_proc(void *p_data);
-    static int log_monitor_thread_init(void *p_data);
-    static int log_monitor_thread_deinit(void *p_data);
+    int log_monitor_thread_init(void);
+    int log_monitor_thread_deinit(void);
 
     void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
     void setUltraWideMode();
@@ -945,9 +946,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     bool mIsJpegWithBigSizePreview;
 
-    static std::atomic_int mLogState; //0:thread exit, 1:init
-    static std::atomic_int mLogMonitor; // 1~x:count
-    static sem_t mLogMonitorSem; //logmonitor exit without wait 1s
+    static std::atomic_int s_mLogState; //0:thread exit, 1:init
+    static std::atomic_int s_mLogMonitor; // 1~x:count
+    static sem_t s_mLogMonitorSem; //logmonitor exit without wait 1s
 
     //for LPT type
     int lightportrait_type;

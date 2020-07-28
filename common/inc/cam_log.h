@@ -1,4 +1,4 @@
-/*
+ /*
 * Copyright (C) 2012 The Android Open Source Project
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,14 +21,8 @@
 extern "C" {
 #endif
 
-typedef enum{
-    LOG_PRI_E =  1,
-    LOG_PRI_W,
-    LOG_PRI_I,
-    LOG_PRI_D,
-    LOG_PRI_V,
-    LOG_PRI_MAX,
-} LOG_PRIO_E;
+
+
 
 typedef enum{
     LOG_HAL = 0,
@@ -37,37 +31,49 @@ typedef enum{
     LOG_SENSOR,
     LOG_ISPALG,
     LOG_ARITH,
+    LOG_MODULE_MAX,
 }LOG_MODULE_E;
 
 typedef enum{
-    LOG_AE = 0,
+    LOG_ALL = 0,
+    LOG_AE,
     LOG_AF,
     LOG_AWBC,
-    LOG_ALL,
+    LOG_FUNC_MAX
 }LOG_FUNC_E;
 
-extern uint32_t g_log_level;
-extern uint32_t g_log_module_setting;
-extern uint32_t g_log_func_setting;
+extern const int LOG_STATUS_EN;
+extern const int LOG_STATUS_DIS;
+extern const int LOG_PRI_E;
+extern const int LOG_PRI_W;
+extern const int LOG_PRI_I;
+extern const int LOG_PRI_D;
+extern const int LOG_PRI_V;
+extern char g_log_level[LOG_MODULE_MAX];
+extern char g_log_module_setting[LOG_MODULE_MAX];
+extern char g_log_func_setting[LOG_FUNC_MAX];
+
+
+
 int __print_log(int pri, int module, int func,
-						const char* tag, const char* format, ...);
+                     const char* tag, const char* format, ...);
 
 #ifndef LOG
 #define LOG(prio, module, func,format,...) \
-  				((void)PRI_LOG(prio, module, func,LOG_TAG, \
-  				"%d, %s: " format,__LINE__, __FUNCTION__,##__VA_ARGS__))
+               ((void)PRI_LOG(prio, module, func,LOG_TAG, \
+                 "%d, %s: " format,__LINE__, __FUNCTION__,##__VA_ARGS__))
 #endif
 
 #ifndef LOG_DEBUG
 #define LOG_DEBUG(prio,module,func,format,args...)  \
-  	          	LOG_T(prio, module, func, "%d, %s: " format,__LINE__, __FUNCTION__, ##args)
+              LOG_T(prio, module, func, "%d, %s: " format,__LINE__, __FUNCTION__, ##args)
 #define LOG_T(prio, module, func,...) \
 	          ((void)PRI_LOG(prio, module, func,LOG_TAG, ##__VA_ARGS__))
 #endif
 
 #ifndef PRI_LOG
 #define PRI_LOG(prio, module, func,tag, format...) \
-  	                __print_log(prio,module,func,tag,format)
+	    __print_log(prio,module,func,tag,format)
 #endif
 #ifdef __cplusplus
  }

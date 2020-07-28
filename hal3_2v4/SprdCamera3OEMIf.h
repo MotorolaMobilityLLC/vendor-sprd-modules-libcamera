@@ -271,6 +271,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setMultiCameraMode(multiCameraMode mode);
     void setMasterId(uint8_t masterId);
 
+    void log_monitor_test(void);
+    static void *log_monitor_thread_proc(void *p_data);
+    int log_monitor_thread_init(void);
+    int log_monitor_thread_deinit(void);
+
 #ifdef CONFIG_CAMERA_EIS
     virtual void EisPreview_init();
     virtual void EisVideo_init();
@@ -808,6 +813,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     bool mFbOn = 0;
 
+    pthread_t mLogHandle;
+
     /* for eis*/
     bool mGyroInit;
     bool mGyroExit;
@@ -866,6 +873,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int64_t mLastCafDoneTime;
     uint32_t mIsPowerhintWait;
     sys_performance_camera_scene mGetLastPowerHint;
+
+    static std::atomic_int s_mLogState; //0:thread exit, 1:init
+    static std::atomic_int s_mLogMonitor; // 1~x:count
+    static sem_t s_mLogMonitorSem; //logmonitor exit without wait 1s
 
 };
 
