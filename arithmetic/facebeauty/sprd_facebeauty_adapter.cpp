@@ -12,7 +12,8 @@
 #define CLIP(x, lo, hi) (((x) == (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
 int dumpFrameCount = 0;
 int faceLevelMap = 0;
-struct facebeauty_param_t fbParam;
+struct facebeauty_param_t fbPrevParam;
+struct facebeauty_param_t fbCapParam;
 unsigned char lightPortraitType = 0;
 fb_beauty_mask_t *fbMaskT = NULL;
 
@@ -145,10 +146,15 @@ void construct_fb_image(fb_beauty_param_t *faceBeauty, int picWidth,
     }
 }
 
-void construct_fb_map(facebeauty_param_info_t *facemap){
+void construct_fb_map(fb_beauty_param_t *faceBeauty,facebeauty_param_info_t *facemap){
     ALOGI("construct_fb_map facemap");
     faceLevelMap++;
-    fbParam = facemap->cur.fb_param[FB_SKIN_DEFAULT];
+    if (faceBeauty->fb_mode == 1){
+        fbPrevParam = facemap->cur.fb_param[FB_SKIN_DEFAULT];
+    } else {
+        ALOGI("construct_fb_map capture");
+        fbCapParam = facemap->cur.fb_param[FB_SKIN_DEFAULT];
+    }
 }
 
 void construct_fb_mask(fb_beauty_param_t *faceBeauty, fb_beauty_mask_t mFbMaskT) {
@@ -247,46 +253,88 @@ void construct_fb_level(fb_beauty_param_t *faceBeauty,
                     map_pictureSkinTextureLoFreqLevel[beautyLevels.smoothLevel];
             }
         } else {
+            if (faceBeauty->fb_mode == 1) {
+                /*set default value*/
+                faceBeauty->fb_option.skinBrightLevel = fbPrevParam.fb_layer.skinBrightDefaultLevel;
+                faceBeauty->fb_option.slimFaceLevel = fbPrevParam.fb_layer.slimFaceDefaultLevel;
+                faceBeauty->fb_option.largeEyeLevel = fbPrevParam.fb_layer.largeEyeDefaultLevel;
+                faceBeauty->fb_option.lipColorLevel = fbPrevParam.fb_layer.lipColorDefaultLevel;
+                faceBeauty->fb_option.skinColorLevel = fbPrevParam.fb_layer.skinColorDefaultLevel;
+                faceBeauty->fb_option.removeBlemishFlag = fbPrevParam.removeBlemishFlag;
+                faceBeauty->fb_option.lipColorType = fbPrevParam.lipColorType;
+                faceBeauty->fb_option.skinColorType = fbPrevParam.skinColorType;
+                faceBeauty->fb_option.blemishSizeThrCoeff = fbPrevParam.blemishSizeThrCoeff;
 
-            /*set default value*/
-            faceBeauty->fb_option.skinBrightLevel = fbParam.fb_layer.skinBrightDefaultLevel;
-            faceBeauty->fb_option.slimFaceLevel = fbParam.fb_layer.slimFaceDefaultLevel;
-            faceBeauty->fb_option.largeEyeLevel = fbParam.fb_layer.largeEyeDefaultLevel;
-            faceBeauty->fb_option.lipColorLevel = fbParam.fb_layer.lipColorDefaultLevel;
-            faceBeauty->fb_option.skinColorLevel = fbParam.fb_layer.skinColorDefaultLevel;
-            faceBeauty->fb_option.removeBlemishFlag = fbParam.removeBlemishFlag;
-            faceBeauty->fb_option.lipColorType = fbParam.lipColorType;
-            faceBeauty->fb_option.skinColorType = fbParam.skinColorType;
-            faceBeauty->fb_option.blemishSizeThrCoeff = fbParam.blemishSizeThrCoeff;
+                faceBeauty->fb_option.skinSmoothRadiusCoeff = fbPrevParam.fb_layer.skinSmoothRadiusDefaultLevel;
+                faceBeauty->fb_option.skinSmoothLevel = fbPrevParam.fb_layer.skinSmoothDefaultLevel;
+                faceBeauty->fb_option.skinTextureHiFreqLevel = fbPrevParam.fb_layer.skinTextureHiFreqDefaultLevel;
+                faceBeauty->fb_option.skinTextureLoFreqLevel = fbPrevParam.fb_layer.skinTextureLoFreqDefaultLevel;
 
-            faceBeauty->fb_option.skinSmoothRadiusCoeff = fbParam.fb_layer.skinSmoothRadiusDefaultLevel;
-            faceBeauty->fb_option.skinSmoothLevel = fbParam.fb_layer.skinSmoothDefaultLevel;
-            faceBeauty->fb_option.skinTextureHiFreqLevel = fbParam.fb_layer.skinTextureHiFreqDefaultLevel;
-            faceBeauty->fb_option.skinTextureLoFreqLevel = fbParam.fb_layer.skinTextureLoFreqDefaultLevel;
+                /*set value*/
+                faceBeauty->fb_option.skinBrightLevel = fbPrevParam.fb_layer.skinBrightLevel[beautyLevels.brightLevel/2];
+                faceBeauty->fb_option.slimFaceLevel = fbPrevParam.fb_layer.slimFaceLevel[beautyLevels.slimLevel/2];
+                faceBeauty->fb_option.largeEyeLevel = fbPrevParam.fb_layer.largeEyeLevel[beautyLevels.largeLevel/2];
+                faceBeauty->fb_option.lipColorLevel = fbPrevParam.fb_layer.lipColorLevel[beautyLevels.lipLevel/2];
+                faceBeauty->fb_option.skinColorLevel = fbPrevParam.fb_layer.skinColorLevel[beautyLevels.skinLevel/2];
 
-            /*set value*/
-            faceBeauty->fb_option.skinBrightLevel = fbParam.fb_layer.skinBrightLevel[beautyLevels.brightLevel/2];
-            faceBeauty->fb_option.slimFaceLevel = fbParam.fb_layer.slimFaceLevel[beautyLevels.slimLevel/2];
-            faceBeauty->fb_option.largeEyeLevel = fbParam.fb_layer.largeEyeLevel[beautyLevels.largeLevel/2];
-            faceBeauty->fb_option.lipColorLevel = fbParam.fb_layer.lipColorLevel[beautyLevels.lipLevel/2];
-            faceBeauty->fb_option.skinColorLevel = fbParam.fb_layer.skinColorLevel[beautyLevels.skinLevel/2];
+                faceBeauty->fb_option.skinSmoothRadiusCoeff = fbPrevParam.fb_layer.skinSmoothRadiusCoeff[beautyLevels.smoothLevel/2];
+                faceBeauty->fb_option.skinSmoothLevel = fbPrevParam.fb_layer.skinSmoothLevel[beautyLevels.smoothLevel/2];
+                faceBeauty->fb_option.skinTextureHiFreqLevel = fbPrevParam.fb_layer.skinTextureHiFreqLevel[beautyLevels.smoothLevel/2];
+                faceBeauty->fb_option.skinTextureLoFreqLevel = fbPrevParam.fb_layer.skinTextureLoFreqLevel[beautyLevels.smoothLevel/2];
+            } else {
+                /*set default value*/
+                faceBeauty->fb_option.skinBrightLevel = fbCapParam.fb_layer.skinBrightDefaultLevel;
+                faceBeauty->fb_option.slimFaceLevel = fbCapParam.fb_layer.slimFaceDefaultLevel;
+                faceBeauty->fb_option.largeEyeLevel = fbCapParam.fb_layer.largeEyeDefaultLevel;
+                faceBeauty->fb_option.lipColorLevel = fbCapParam.fb_layer.lipColorDefaultLevel;
+                faceBeauty->fb_option.skinColorLevel = fbCapParam.fb_layer.skinColorDefaultLevel;
+                faceBeauty->fb_option.removeBlemishFlag = fbCapParam.removeBlemishFlag;
+                faceBeauty->fb_option.lipColorType = fbCapParam.lipColorType;
+                faceBeauty->fb_option.skinColorType = fbCapParam.skinColorType;
+                faceBeauty->fb_option.blemishSizeThrCoeff = fbCapParam.blemishSizeThrCoeff;
+
+                faceBeauty->fb_option.skinSmoothRadiusCoeff = fbCapParam.fb_layer.skinSmoothRadiusDefaultLevel;
+                faceBeauty->fb_option.skinSmoothLevel = fbCapParam.fb_layer.skinSmoothDefaultLevel;
+                faceBeauty->fb_option.skinTextureHiFreqLevel = fbCapParam.fb_layer.skinTextureHiFreqDefaultLevel;
+                faceBeauty->fb_option.skinTextureLoFreqLevel = fbCapParam.fb_layer.skinTextureLoFreqDefaultLevel;
+
+                /*set value*/
+                faceBeauty->fb_option.skinBrightLevel = fbCapParam.fb_layer.skinBrightLevel[beautyLevels.brightLevel/2];
+                faceBeauty->fb_option.slimFaceLevel = fbCapParam.fb_layer.slimFaceLevel[beautyLevels.slimLevel/2];
+                faceBeauty->fb_option.largeEyeLevel = fbCapParam.fb_layer.largeEyeLevel[beautyLevels.largeLevel/2];
+                faceBeauty->fb_option.lipColorLevel = fbCapParam.fb_layer.lipColorLevel[beautyLevels.lipLevel/2];
+                faceBeauty->fb_option.skinColorLevel = fbCapParam.fb_layer.skinColorLevel[beautyLevels.skinLevel/2];
+
+                faceBeauty->fb_option.skinSmoothRadiusCoeff = fbCapParam.fb_layer.skinSmoothRadiusCoeff[beautyLevels.smoothLevel/2];
+                faceBeauty->fb_option.skinSmoothLevel = fbCapParam.fb_layer.skinSmoothLevel[beautyLevels.smoothLevel/2];
+                faceBeauty->fb_option.skinTextureHiFreqLevel = fbCapParam.fb_layer.skinTextureHiFreqLevel[beautyLevels.smoothLevel/2];
+                faceBeauty->fb_option.skinTextureLoFreqLevel = fbCapParam.fb_layer.skinTextureLoFreqLevel[beautyLevels.smoothLevel/2];
+                ALOGD("SPRD_FB: skinBrightLevel: %d, slimFaceLevel: %d, "
+                              "largeEyeLevel: %d \n",
+                              faceBeauty->fb_option.skinBrightLevel,
+                              faceBeauty->fb_option.slimFaceLevel,
+                              faceBeauty->fb_option.largeEyeLevel);
+                ALOGD("SPRD_FB: skinSmoothLevel: %d, removeBlemishFlag: %d, "
+                             "skinColorLevel: %d \n",
+                             faceBeauty->fb_option.skinSmoothLevel,
+                             faceBeauty->fb_option.removeBlemishFlag,
+                             faceBeauty->fb_option.skinColorLevel);
+                ALOGD("SPRD_FB: lipColorLevel: %d \n",
+                             faceBeauty->fb_option.lipColorLevel);
+            }
 
             faceBeauty->fb_option.removeBlemishFlag = beautyLevels.blemishLevel;
             faceBeauty->fb_option.lipColorType = beautyLevels.lipColor;
             faceBeauty->fb_option.skinColorType = beautyLevels.skinColor;
 
-            faceBeauty->fb_option.skinSmoothRadiusCoeff = fbParam.fb_layer.skinSmoothRadiusCoeff[beautyLevels.smoothLevel/2];
-            faceBeauty->fb_option.skinSmoothLevel = fbParam.fb_layer.skinSmoothLevel[beautyLevels.smoothLevel/2];
-            faceBeauty->fb_option.skinTextureHiFreqLevel = fbParam.fb_layer.skinTextureHiFreqLevel[beautyLevels.smoothLevel/2];
-            faceBeauty->fb_option.skinTextureLoFreqLevel = fbParam.fb_layer.skinTextureLoFreqLevel[beautyLevels.smoothLevel/2];
-
             faceBeauty->fb_option.cameraWork = beautyLevels.cameraWork;
             faceBeauty->fb_option.cameraBV = beautyLevels.cameraBV;
             faceBeauty->fb_option.cameraISO = beautyLevels.cameraISO;
             faceBeauty->fb_option.cameraCT = beautyLevels.cameraCT;
-            char isLevelDebug[PROPERTY_VALUE_MAX];
-            property_get("persist.vendor.cam.beauty.level.debug", isLevelDebug, "0");
-            if(!strcmp(isLevelDebug, "1")){
+        }
+        char isLevelDebug[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.beauty.level.debug", isLevelDebug, "0");
+        if(!strcmp(isLevelDebug, "1")){
                ALOGD("SPRD_FB: skinBrightLevel: %d, slimFaceLevel: %d, "
                               "largeEyeLevel: %d \n",
                               faceBeauty->fb_option.skinBrightLevel,
@@ -299,7 +347,6 @@ void construct_fb_level(fb_beauty_param_t *faceBeauty,
                              faceBeauty->fb_option.skinColorLevel);
                ALOGD("SPRD_FB: lipColorLevel: %d \n",
                              faceBeauty->fb_option.lipColorLevel);
-            }
         }
     }
 
@@ -472,7 +519,7 @@ int face_beauty_ctrl(fb_beauty_param_t *faceBeauty, fb_beauty_cmd_t cmd, void *p
     }
     case FB_BEAUTY_CONSTRUCT_FACEMAP_CMD:{
         facebeauty_param_info_t *pFaceMap = (facebeauty_param_info_t*)param;
-        construct_fb_map(pFaceMap);
+        construct_fb_map(faceBeauty,pFaceMap);
         break;
     }
     case FB_BEAUTY_CONSTRUCT_MASK_CMD: {

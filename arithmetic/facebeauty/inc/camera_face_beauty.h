@@ -70,7 +70,7 @@ void construct_fb_portraitType(int portraitType);
 void construct_fb_level(struct class_fb *faceBeauty,
                         struct face_beauty_levels beautyLevels);
 void do_face_beauty(struct class_fb *faceBeauty, int faceCount);
-void construct_fb_map(facebeauty_param_info_t *facemap);
+void construct_fb_map(struct class_fb *faceBeauty,facebeauty_param_info_t *facemap);
 
 #ifdef __cplusplus
 }
