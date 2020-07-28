@@ -16,6 +16,7 @@
 
 //#define LOG_NDEBUG 0
 #define LOG_TAG "Cam3Setting"
+#define LOCAL_PLATFORM_ID_SHARKL5P 0x0401
 
 #include "cmr_common.h"
 #include <cutils/properties.h>
@@ -2616,6 +2617,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
         available_cam_features.size();
 
+    // 32 portrait mutex lpt
+    HAL_LOGD("PLATFORM_ID %x",PLATFORM_ID);
+    if(PLATFORM_ID == LOCAL_PLATFORM_ID_SHARKL5P){
+        available_cam_features.add(1);
+    } else {
+        available_cam_features.add(0);
+    }
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
     property_set("persist.vendor.cam.ip.switch.on", "0");
