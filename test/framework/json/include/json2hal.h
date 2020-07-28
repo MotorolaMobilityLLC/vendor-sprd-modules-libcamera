@@ -94,7 +94,6 @@ class stream : public IParseJson {
 
 class HalCaseComm : public IParseJson {
   public:
-    uint32_t m_caseID;
     uint32_t m_cameraID;
     std::string m_funcName;
     uint32_t m_frameNum;
@@ -159,7 +158,6 @@ class HalCaseComm : public IParseJson {
         }
         return this;
     }
-    virtual uint32_t getID() { return m_caseID; }
 };
 
 class CameraHalIT : public IParseJson {

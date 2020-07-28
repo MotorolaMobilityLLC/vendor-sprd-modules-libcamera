@@ -30,6 +30,8 @@ class suiteManager {
     int FailedTestCount() const;
     int TotalTestCount() const;
     int ReadInjectData();
+    int prepareResultFile();
+    void Now(string& time);
     SuiteBase *CreateTestSuite(const char *test_suite_name);
     void SetCurrentTestSuite(SuiteBase *a_current_test_suite) {
         m_CurrentSuite = a_current_test_suite;
@@ -49,8 +51,10 @@ class suiteManager {
     bool m_isParse;
     vector<IParseJson *> mVec_TotalCase;
     SuiteBase *m_CurrentSuite;
-    uint32_t m_curr1CaseID;
+    int32_t m_curr1CaseID;
     map<uint32_t, test_camera_memory_t *> m_injectImg;
+    string m_ResultPath;
+    FILE* m_ResultFile;
 };
 
 #endif /* __TEST_SUITE_MANAGER_H__ */

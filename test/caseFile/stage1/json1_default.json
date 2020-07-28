@@ -2,9 +2,9 @@
 	"caselists":[
 		{
 			"ID":0,
+			"README":"example for write case,including formats of injectDataInfo（Temporarily unavailable） and openSimulator（Temporarily unavailable）",
 			"injectDataInfo":[
-				{"frameOrder":0,"path":"./bokeh_left.yuv","otherInfo":""},
-				{"frameOrder":1,"path":"./bokeh_right.yuv","otherInfo":""}
+				{"frameOrder":0,"path":"./bokeh_left.yuv","otherInfo":""}
 			],
 			"openSimulator":["DRV","OEM"],
 			"order":[
@@ -17,28 +17,7 @@
 		},
 		{
 			"ID":1,
-			"order":[
-				{"index":0,"time":0,"module":
-					[
-						{"name":"DRV","mcaseid":[1,2,3]},
-						{"name":"HAL","mcaseid":[1,2,3]}
-					]
-				},
-				{"index":1,"time":0,"module":
-					[
-						{"name":"OEM","mcaseid":[1,2,3]},
-						{"name":"MUTL","mcaseid":[2,3]}
-					]
-				}
-			]
-		},
-		{
-			"ID":2,
-			"injectDataInfo":[
-				{"frameOrder":0,"path":"./bokeh_left.yuv","otherInfo":""},
-				{"frameOrder":1,"path":"./bokeh_right.yuv","otherInfo":""}
-			],
-			"openSimulator":["DRV","OEM"],
+			"README":"example for video ",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
@@ -46,6 +25,7 @@
 					]
 				}
 			]
+			
 		}
 	]
 }

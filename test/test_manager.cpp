@@ -181,11 +181,6 @@ int body(testManager *p_TestManager, originData_t originData, uint32_t id,
     }
     runResult = p_TestManager->Run();
     p_TestManager->Clear();
-    if (runResult != IT_OK) {
-        IT_LOGI("CASE Failture,stage:%d ,id:%d", cmd, id);
-    } else {
-        IT_LOGI("CASE Success,stage:%d ,id:%d", cmd, id);
-    }
     return runResult;
 exit:
     IT_LOGI("Fail to start this case,stage:%d ,id:%d", cmd, id);
@@ -193,7 +188,7 @@ exit:
 }
 
 int main(int argc, char *argv[]) {
-    IT_LOGI("IT BEGIN");
+    IT_LOGI("=====camera IT begin!=====");
     std::vector<caseid *>::iterator itor;
     testManager *p_TestManager = testManager::GetTestManager();
     int ret = IT_OK;
@@ -230,6 +225,7 @@ int main(int argc, char *argv[]) {
         }
     }
 exit:
+    IT_LOGI("=====Camera IT completed!=====");
     delete p_TestManager;
     return 0;
 }

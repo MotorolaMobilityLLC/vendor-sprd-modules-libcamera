@@ -27,6 +27,9 @@
  *
  */
 #include "test_suite_hal.h"
+#include <string.h>
+#include<stdio.h>
+#include<stdlib.h>
 #define LOG_TAG "IT-suiteHal"
 #define THIS_MODULE_NAME "hal"
 #define JSON_PATH "./hal.json"

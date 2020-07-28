@@ -2548,7 +2548,6 @@ int ModuleWrapperHAL::TearDown() {
 int ModuleWrapperHAL::Run(IParseJson *Json2) {
     int ret = IT_OK;
     HalCaseComm *_json2 = (HalCaseComm *)Json2;
-    IT_LOGD("hal case id= %d", _json2->getID());
 
     int g_rotate = 0;
     int mirror = 0;

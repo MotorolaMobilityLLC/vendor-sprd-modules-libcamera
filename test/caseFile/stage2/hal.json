@@ -3,6 +3,7 @@
 	[
 		{
 			"CaseID" : 0,
+			"README":"CameraID can be changed for other case to test any mode",
 			"Priority": 0,
 			"FuncName" : "opencamera",
 			"CameraID" : 0

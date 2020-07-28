@@ -23,10 +23,17 @@ class IParseJson {
 
     std::string readInputTestFile(const char *path);
 
+    string getModuleName(){return m_thisModuleName;};
+
+    int getID(){return m_caseID;};
+
+    int getPriority(){return m_thisCasePriority;};
+
     std::string m_thisModuleName;
 
-    BOOL m_thisCasePriority;
+    int m_thisCasePriority;
 
+    int m_caseID;
   protected:
     virtual void DealJsonNode(string strNode, string value) {}
 
@@ -41,6 +48,8 @@ class IParseJson {
   private:
     virtual void PrintValueTree(Json::Value &value, IParseJson *pParent,
                                 IParseJson *pCurObj, const std::string strkey);
+
+
 };
 
 #endif
