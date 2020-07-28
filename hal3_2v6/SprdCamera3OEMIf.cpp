@@ -4568,8 +4568,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (frame->type != PREVIEW_ZSL_FRAME &&
             frame->type != PREVIEW_CANCELED_FRAME &&
             frame->type != CHANNEL2_FRAME &&
-            frame->type != PREVIEW_VIDEO_FRAME &&
-            frame->type != PREVIEW_FRAME && mflagfb) {
+            frame->type != PREVIEW_VIDEO_FRAME && mflagfb) {
             mflagfb = false;
             ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
             face_beauty_deinit(&face_beauty);
