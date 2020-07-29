@@ -9664,13 +9664,13 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
     }
     CMR_LOGI("skip num %ld %d", skip_number, channel_bits);
     camera_take_snapshot_step(CMR_STEP_CAP_S);
-
+/*
     if (cxt->remosaic_type) {
-        /* 4in1 capture need 3 frame previous skip */
+        // 4in1 capture need 3 frame previous skip
         skip_number = 3;
         CMR_LOGI("skip_num %ld", skip_number);
     }
-
+*/
     ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
     if (ret) {
         CMR_LOGE("failed to start cap %ld", ret);
