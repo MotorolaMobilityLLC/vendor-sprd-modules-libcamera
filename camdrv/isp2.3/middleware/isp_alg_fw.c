@@ -252,6 +252,8 @@ struct isp_alg_fw_context {
 	cmr_u8 alg_enable;
 	cmr_u8 aem_is_update;
 	cmr_u8 binning_is_update; /* check for bin statis */
+	cmr_u8 fw_started;
+	pthread_mutex_t fw_started_lock;
 	struct isp_hist_statistic_info hist_stats;
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
@@ -2823,12 +2825,18 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
-
 	if (!message || !p_data) {
 		ISP_LOGE("fail to check input param");
 		goto exit;
 	}
 	ISP_LOGV("message.msg_type 0x%x, data %p", message->msg_type, message->data);
+
+	pthread_mutex_lock(&cxt->fw_started_lock);
+	if((cxt->fw_started == 0) && (message->msg_type != ISP_CTRL_EVT_TX)) {
+		ISP_LOGD("cam%ld fw is stopped already\n", cxt->camera_id);
+		pthread_mutex_unlock(&cxt->fw_started_lock);
+		goto exit;
+	}
 
 	switch (message->msg_type) {
 	case ISP_CTRL_EVT_TX:
@@ -2870,6 +2878,7 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		ISP_LOGV("don't support msg");
 		break;
 	}
+	pthread_mutex_unlock(&cxt->fw_started_lock);
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -5034,6 +5043,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 		ISP_LOGV("index %d frame_line %d", default_exp.size_index, default_exp.exposure);
 		ispalg_write_exp_gain(isp_alg_handle, default_exp, default_gain);
 	}
+
+	cxt->fw_started = 1;
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -5066,13 +5077,17 @@ cmr_int isp_alg_fw_stop(cmr_handle isp_alg_handle)
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_STOP"));
 	}
 
+	pthread_mutex_lock(&cxt->fw_started_lock);
 	if (cxt->zsl_flag) {
 		ISP_LOGV("zsl deinit: %d", cxt->mode_id[1]);
 		cxt->zsl_flag = 0;
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_RESET_SECOND, &cxt->mode_id[1], NULL);
 	}
+	cxt->fw_started = 0;
+	pthread_mutex_unlock(&cxt->fw_started_lock);
 
 exit:
+
 	ISP_LOGV("done %ld", ret);
 	return ret;
 }
@@ -5387,6 +5402,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in *input_ptr, cmr_handle *isp_al
 		cxt->af_cxt.af_supported, cxt->pdaf_cxt.pdaf_support, cxt->commn_cxt.ebd_support, cxt->commn_cxt.is_face_id_unlock);
 
 	pthread_mutex_init(&cxt->stats_buf_lock, NULL);
+	pthread_mutex_init(&cxt->fw_started_lock, NULL);
 
 	ret = ispalg_libops_init(cxt);
 	if (ret) {
@@ -5444,6 +5460,7 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	ISP_TRACE_IF_FAIL(ret, ("fail to do ispalg_deinit"));
 
 	pthread_mutex_destroy(&cxt->stats_buf_lock);
+	pthread_mutex_destroy(&cxt->fw_started_lock);
 
 	ret = isp_pm_deinit(cxt->handle_pm, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_pm_deinit"));
