@@ -2622,11 +2622,13 @@ static cmr_s32 ae_set_scene_mode(struct ae_ctrl_cxt *cxt, enum ae_scene_mode cur
 static cmr_s32 ae_set_manual_mode(struct ae_ctrl_cxt *cxt, cmr_handle param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_s32 lock;
-
 	if (param) {
-		lock = !(*(cmr_u32 *) param);
-		if (0 == *(cmr_u32 *) param) {
+		if(*(cmr_u32 *) param == cxt->manual_ae_mode){
+			ISP_LOGD("ae mode no change,no need to set");
+			return AE_SUCCESS;
+		}
+		cxt->manual_ae_mode = *(cmr_u32 *) param;
+		if (!cxt->manual_ae_mode) {
 			if(cxt->manual_iso_value){
 				cxt->cur_status.settings.reserve_case = 1;
 				ae_set_force_pause(cxt, 1);
@@ -2657,6 +2659,10 @@ static cmr_s32 ae_set_exp_time(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	if (param) {
 		exp_time = *(cmr_u32 *) param;
 		if (exp_time >= 0) {
+			if(cxt->manual_exp_time == exp_time){
+				ISP_LOGD("shutter no change,no need to set");
+				return AE_SUCCESS;
+			}
 			cxt->manual_exp_time = exp_time;
 		}
 		if(cxt->manual_iso_value) {
@@ -5060,6 +5066,10 @@ static cmr_s32 ae_set_iso(struct ae_ctrl_cxt *cxt, void *param)
 	if (param) {
 		struct ae_set_iso *iso = param;
 		if (iso->mode < AE_ISO_MAX) {
+			if(cxt->cur_status.settings.iso == iso->mode){
+				ISP_LOGD("iso mode no change,no need to set");
+				return AE_SUCCESS;
+			}
 			cxt->cur_status.settings.iso = iso->mode;
 			cxt->mod_update_list.is_miso = 1;
 		}
