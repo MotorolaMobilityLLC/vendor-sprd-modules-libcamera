@@ -957,7 +957,7 @@ static cmr_int imx363_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_is_right = (cmr_u16 *)imx363_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)imx363_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)imx363_pd_col;
-
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y * 32 * 32;
     cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_imx363_pd_pos_r);
     cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_imx363_pd_pos_l);
 

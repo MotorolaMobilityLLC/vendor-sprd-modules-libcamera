@@ -3618,6 +3618,7 @@ static cmr_int ispalg_pdaf_process(cmr_handle isp_alg_handle, cmr_u32 data_type,
 	memset((void *)&pdaf_param_out, 0x00, sizeof(pdaf_param_out));
 
 	offset = statis_info->buf_size / 2;
+	u_addr = statis_info->uaddr;
 	pdaf_param_in.u_addr = statis_info->uaddr;
 	pdaf_param_in.u_addr_right = statis_info->uaddr + offset;
 	ISP_LOGV("addr 0x%lx, addr1 0x%lx, offset %x\n", statis_info->uaddr, pdaf_param_in.u_addr_right, offset);
@@ -6161,6 +6162,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cmr_int isp_pdaf_type = 0;
 	cmr_int i = 0;
 	cmr_u32 sn_mode = 0;
+	cmr_u32 pdaf_bypass = 0;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
@@ -6296,6 +6298,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ISP_LOGI("pdaf_support = %d, pdaf_enable = %d, is_multi_mode = %d",
 			cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable, cxt->is_multi_mode);
+	if(cxt->pdaf_cxt.pdaf_support > 0 && in_ptr->pdaf_enable )
+	        isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, &pdaf_bypass, NULL);
 
 	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support
 		&& in_ptr->pdaf_enable) {
@@ -6372,7 +6376,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		}
 
 		if (cxt->stats_mem_info.buf_info[STATIS_PDAF].size == 0) {
-			ISP_LOGW("warning:  cam%ld pdaf data size is 0, please set it to correct size\n", cxt->camera_id);
+			ISP_LOGE("pdaf error:  cam%ld pdaf data size is 0, please set it to correct size\n", cxt->camera_id);
 			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = 256 * 1024;
 		} else if (cxt->stats_mem_info.buf_info[STATIS_PDAF].size < 4096) {
 			ISP_LOGD("pdaf size is smaller than one page\n");

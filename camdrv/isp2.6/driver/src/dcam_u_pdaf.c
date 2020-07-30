@@ -32,7 +32,7 @@ cmr_s32 dcam_u_pdaf_bypass(cmr_handle handle, cmr_u32 *bypass)
 	file = (struct isp_file *)(handle);
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_BYPASS;
+	param.property = DCAM_PDAF_BYPASS;
 	param.property_param = bypass;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -53,7 +53,7 @@ cmr_s32 dcam_u_pdaf_work_mode(cmr_handle handle, cmr_u32 *work_mode)
 	file = (struct isp_file *)(handle);
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_SET_MODE;
+	param.property = DCAM_PDAF_TYPE3_SET_MODE;
 	param.property_param = work_mode;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -74,7 +74,7 @@ cmr_s32 dcam_u_pdaf_skip_num(cmr_handle handle, cmr_u32 *skip_num)
 	file = (struct isp_file *)(handle);
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_SET_SKIP_NUM;
+	param.property = DCAM_PDAF_TYPE3_SET_SKIP_NUM;
 	param.property_param = skip_num;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -95,7 +95,7 @@ cmr_s32 dcam_u_pdaf_roi(cmr_handle handle, void *roi_info)
 	file = (struct isp_file *)(handle);
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_SET_ROI;
+	param.property = DCAM_PDAF_TYPE3_SET_ROI;
 	param.property_param = roi_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -116,7 +116,7 @@ cmr_s32 dcam_u_pdaf_ppi_info(cmr_handle handle, void *ppi_info)
 	file = (struct isp_file *)(handle);
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_SET_PPI_INFO;
+	param.property = DCAM_PDAF_TYPE3_SET_PPI_INFO;
 	param.property_param = ppi_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -138,7 +138,7 @@ cmr_s32 dcam_u_pdaf_block(cmr_handle handle, void *block_info)
 
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_BLOCK;
+	param.property = DCAM_PDAF_TYPE3_SET_INFO;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -161,7 +161,7 @@ cmr_s32 dcam_u_pdaf_type1_block(cmr_handle handle, void *block_info)
 
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_TYPE1_BLOCK;
+	param.property = DCAM_PDAF_TYPE1_BLOCK;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -184,7 +184,7 @@ cmr_s32 dcam_u_pdaf_type2_block(cmr_handle handle, void *block_info)
 
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_TYPE2_BLOCK;
+	param.property = DCAM_PDAF_TYPE2_BLOCK;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -206,7 +206,7 @@ cmr_s32 dcam_u_pdaf_type3_block(cmr_handle handle, void *block_info)
 
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_PDAF_TYPE3_BLOCK;
+	param.property = DCAM_PDAF_TYPE3_BLOCK;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
@@ -229,7 +229,7 @@ cmr_s32 dcam_u_dual_pdaf_block(cmr_handle handle, void *block_info)
 
 	param.scene_id = 0;
 	param.sub_block = DCAM_BLOCK_PDAF;
-	param.property = DCAM_PRO_DUAL_PDAF_BLOCK;
+	param.property = DCAM_DUAL_PDAF_BLOCK;
 	param.property_param = block_info;
 
 	ret = ioctl(file->fd, SPRD_ISP_IO_CFG_PARAM, &param);
