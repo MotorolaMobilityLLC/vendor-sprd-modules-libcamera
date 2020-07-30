@@ -2517,12 +2517,17 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     } else {
         available_cam_features.add(0);
     }
-
-    // 22 video face beauty
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
+    // 22 video face beauty T618
+    property_get("ro.boot.auto.efuse", prop, "T618");
+    if (!strcmp("T618", prop)) {
+        available_cam_features.add(
+          resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
                            "persist.vendor.cam.video.face.beauty.enable"));
-
+    } else {
+        //T610
+        property_set("persist.vendor.cam.ip.video.beauty","2");
+        available_cam_features.add(0);
+    }
     // 23 fov fusion
     if (hasRealCameraUnuseful == true) {
         available_cam_features.add(0);
