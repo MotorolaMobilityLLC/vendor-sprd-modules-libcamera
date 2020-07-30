@@ -4131,80 +4131,47 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 	cmr_u32 exp_line = 0;
 	cmr_u32 exp_time = 0;
 	cmr_u32 gain = in_gain;
-	cmr_u32 base_gain = in_gain;
 	cmr_u32 exposure = in_exposure;
 	cmr_u32 max_frame_line = in_max_frame_line;
 	cmr_u32 min_frame_line = in_min_frame_line;
+	cmr_u32 fliker_unit_time = 10000000;
+	UNUSED(base_exposure);
 
-	if (cxt->cur_flicker == 0) {
-		if (exposure > (max_frame_line * cxt->cur_status.line_time))
-			exposure = max_frame_line * cxt->cur_status.line_time;
-		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
-			exposure = min_frame_line * cxt->cur_status.line_time;
+	if (exposure > (max_frame_line * cxt->cur_status.line_time))
+		exposure = max_frame_line * cxt->cur_status.line_time;
+	else if (exposure < (min_frame_line * cxt->cur_status.line_time))
+		exposure = min_frame_line * cxt->cur_status.line_time;
 
-		exp_time = (cmr_u32) (1.0 * exposure / 10000000 + 0.5) * 10000000;
+	if (cxt->cur_flicker == 0)
+		fliker_unit_time = 10000000;
+	else if(cxt->cur_flicker == 1)
+		fliker_unit_time = 8333333;
 
-		if(base_gain * base_exposure * cxt->cur_status.line_time > 10000000 * 128){//flicker0
-			if(exp_time < 10000000)
-				exp_time = 10000000;
-		}else if(!exp_time){
-			if(in_exposure > min_frame_line * cxt->cur_status.line_time){
-				gain = 128;
-				exp_line = (cmr_u32) (1.0 * in_exposure * in_gain / (128 * cxt->cur_status.line_time) + 0.5);
-			}else
-				exp_time = min_frame_line * cxt->cur_status.line_time;
-		}
-
-		if(!exp_line && exp_time != 0){
+	if(exposure > fliker_unit_time){
+		exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time + 0.5) * fliker_unit_time;
+		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
+		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+		if(gain < 128){
+			exp_time = (cmr_u32) (1.0 * exposure / fliker_unit_time ) * fliker_unit_time;
 			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
-			if(cxt->is_multi_mode)
-				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
-			else
-				gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
-			if(gain < 128){
-				ISP_LOGD("flicker0:clip gain (%d) to 128", gain);
-				gain = 128;
-			}
+			gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+		}
+	}else{
+		exp_time = fliker_unit_time;
+		exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
+		gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
+		if(gain < 128){
+			gain = in_gain;
+			exp_line = (cmr_u32) (1.0 * in_exposure / cxt->cur_status.line_time + 0.5);
+			ISP_LOGD("HDR calc fail for Gain<128 ");
 		}
 	}
-
-	if (cxt->cur_flicker == 1) {
-		if (exposure > (max_frame_line * cxt->cur_status.line_time))
-			exposure = max_frame_line * cxt->cur_status.line_time;
-		else if (exposure < (min_frame_line * cxt->cur_status.line_time))
-			exposure = min_frame_line * cxt->cur_status.line_time;
-
-		exp_time = (cmr_u32) (1.0 * exposure / 8333333 + 0.5) * 8333333;
-
-		if(base_gain * base_exposure * cxt->cur_status.line_time > 8333333 * 128){//flicker0
-			if(exp_time < 8333333)
-				exp_time = 8333333;
-		}else if(!exp_time){
-			if(in_exposure > min_frame_line * cxt->cur_status.line_time){
-				gain = 128;
-				exp_line = (cmr_u32) (1.0 * in_exposure * in_gain / (128 * cxt->cur_status.line_time) + 0.5);
-			}else
-				exp_time = (cmr_u32) (min_frame_line * cxt->cur_status.line_time);
-		}
-
-		if(!exp_line && exp_time != 0){
-			exp_line = (cmr_u32) (1.0 * exp_time / cxt->cur_status.line_time + 0.5);
-			if(cxt->is_multi_mode)
-				gain = (cmr_u32) (1.0 * in_exposure * gain / exp_time + 0.5);
-			else
-				gain = (cmr_u32) (1.0 * exposure * gain / exp_time + 0.5);
-			if(gain < 128){
-				ISP_LOGD("flicker1:clip gain (%d) to 128", gain);
-				gain = 128;
-			}
-		}
-	}
-
 	*out_exp_l = exp_line;
 	*out_gain = gain;
 
-	ISP_LOGV("exposure %d, max_frame_line %d, min_frame_line %d, exp_time %d, exp_line %d, gain %d", in_exposure, in_max_frame_line, in_min_frame_line, exp_time, exp_line, gain);
+	ISP_LOGD("exposure %d, max_frame_line %d, min_frame_line %d, exp_time %d, exp_line %d, gain %d", in_exposure, in_max_frame_line, in_min_frame_line, exp_time, exp_line, gain);
 }
+
 
 static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
