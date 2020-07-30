@@ -53,14 +53,11 @@ class testManager {
     int ParseFirstJson(int caseID);
     int ParseSecJson(originData_t originData);
 
-    int nTestResult;
-    int nPassed;
-    int nFailed;
-
     suiteManager *impl() { return suitManager; }
     testManager();
     virtual ~testManager();
     suiteManager *suitManager;
+    uint32_t m_PassedNum=0,m_FailedNum=0;
 
     // DISALLOW_COPY_AND_ASSIGN_(testManager);
 };
@@ -181,6 +178,18 @@ int body(testManager *p_TestManager, originData_t originData, uint32_t id,
     }
     runResult = p_TestManager->Run();
     p_TestManager->Clear();
+
+    switch(runResult){
+    case -IT_NO_THIS_CASE:{
+        goto exit;
+    }break;
+    case IT_OK:{
+        p_TestManager->m_PassedNum++;
+    }break;
+    default:{
+        p_TestManager->m_FailedNum++;
+    }break;
+    }
     return runResult;
 exit:
     IT_LOGI("Fail to start this case,stage:%d ,id:%d", cmd, id);
@@ -214,8 +223,9 @@ int main(int argc, char *argv[]) {
     if (itor != originData.caseIDList.end() &&
         (*itor)->getID() == RUN_ALL_CASE) {
         for (uint32_t i = 0; i < RUN_ALL_CASE; i++) {
-            if (-IT_NO_THIS_CASE == body(p_TestManager, originData, i, cmd))
+            if (-IT_NO_THIS_CASE == body(p_TestManager, originData, i, cmd)){
                 goto exit;
+            }
         }
     } else {
         while (itor != originData.caseIDList.end()) {
@@ -225,6 +235,10 @@ int main(int argc, char *argv[]) {
         }
     }
 exit:
+    IT_LOGI("Results summary for test-tag 'cameraIT': %d Tests [%d Passed %d Failed]",
+            p_TestManager->m_PassedNum+p_TestManager->m_FailedNum,
+            p_TestManager->m_PassedNum,p_TestManager->m_FailedNum);
+
     IT_LOGI("=====Camera IT completed!=====");
     delete p_TestManager;
     return 0;

@@ -35,7 +35,7 @@
 #include<string.h>
 #define LOG_TAG "IT-suiteManager"
 #define JSON_1_FILE_PATH "./json1_default.json"
-#define RESULT_FILE_PATH "/data/vendor/cameraserver/IT_Result_"
+#define RESULT_FILE_PATH "/data/ylog/ap/cameraIT_Result_"
 #define CHAR_MAX_LEN 255
 
 using namespace std;
