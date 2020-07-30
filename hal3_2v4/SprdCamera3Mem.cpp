@@ -40,6 +40,9 @@
 #include <sprd_ion.h>
 #include "SprdCamera3HALHeader.h"
 #include "SprdCamera3Mem.h"
+#include <android/hardware/graphics/common/1.0/types.h>
+
+using android::hardware::graphics::common::V1_0::BufferUsage;
 
 using namespace android;
 
@@ -70,11 +73,11 @@ SprdCamera3Memory::~SprdCamera3Memory() {}
 int SprdCamera3Memory::getUsage(int stream_type, cmr_uint &usage) {
     switch (stream_type) {
     case CAMERA3_STREAM_INPUT:
-        usage = GRALLOC_USAGE_SW_READ_OFTEN;
+        usage = (uint64_t)BufferUsage::CPU_READ_OFTEN;
         break;
 
     case CAMERA3_STREAM_BIDIRECTIONAL:
-        usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+        usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
         break;
 
     case CAMERA3_STREAM_OUTPUT:

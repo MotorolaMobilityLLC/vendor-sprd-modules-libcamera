@@ -53,7 +53,9 @@
 extern "C" {
 #include "isp_video.h"
 }
+#include <android/hardware/graphics/common/1.0/types.h>
 
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace android;
 
 namespace sprdcamera {
@@ -552,14 +554,14 @@ SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t *new_stream,
             if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
                 *stream_type = CAMERA_STREAM_TYPE_VIDEO;
                 *channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
-                new_stream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
-            } else if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+                new_stream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
+            } else if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 *stream_type = CAMERA_STREAM_TYPE_CALLBACK;
                 *channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
             } else {
                 *stream_type = CAMERA_STREAM_TYPE_PREVIEW;
                 *channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
-                new_stream->usage |= GRALLOC_USAGE_SW_READ_OFTEN;
+                new_stream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
                 new_stream->usage |= GRALLOC_USAGE_PRIVATE_1;
 #ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
                 if (new_stream->width * new_stream->height >
@@ -574,7 +576,7 @@ SprdCamera3HWI::tranStreamAndChannelType(camera3_stream_t *new_stream,
             break;
         case HAL_PIXEL_FORMAT_YV12:
         case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 *stream_type = CAMERA_STREAM_TYPE_DEFAULT;
                 *channel_type = CAMERA_CHANNEL_TYPE_RAW_CALLBACK;
             }

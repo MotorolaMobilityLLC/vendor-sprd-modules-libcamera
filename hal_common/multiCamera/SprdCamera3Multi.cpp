@@ -32,6 +32,9 @@
 #if (MINICAMERA != 1)
 #include <ui/Fence.h>
 #endif
+#include <android/hardware/graphics/common/1.0/types.h>
+
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace android;
 namespace sprdcamera {
 SprdCamera3Multi *mMultiBase = NULL;
@@ -308,7 +311,7 @@ int SprdCamera3Multi::createHalStream(
                 memcpy(output, callback_stream, sizeof(camera3_stream_t));
             } else {
                 output->format = HAL_PIXEL_FORMAT_YCbCr_420_888;
-                output->usage = GRALLOC_USAGE_SW_READ_OFTEN;
+                output->usage = (uint64_t)BufferUsage::CPU_READ_OFTEN;
             }
 
             break;

@@ -38,6 +38,9 @@
 #include <algorithm>
 
 #include <ui/GraphicBufferMapper.h>
+#include <android/hardware/graphics/common/1.0/types.h>
+
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace android;
 using namespace std;
 
@@ -561,7 +564,7 @@ int SprdCamera3MultiBase::map(buffer_handle_t *buffer_handle, void **vaddr1) {
     GraphicBufferMapper &mapper = GraphicBufferMapper::get();
 
     bzero((void *)&ycbcr, sizeof(ycbcr));
-    usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+    usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
 
     if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
         ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
@@ -625,20 +628,20 @@ int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
             if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
                 stream_type = VIDEO_STREAM;
-            } else if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            } else if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 stream_type = CALLBACK_STREAM;
             } else {
                 stream_type = PREVIEW_STREAM;
             }
             break;
         case HAL_PIXEL_FORMAT_RAW16:
-            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 stream_type = DEFAULT_STREAM;
             }
             break;
         case HAL_PIXEL_FORMAT_YV12:
         case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 stream_type = DEFAULT_STREAM;
             }
             break;

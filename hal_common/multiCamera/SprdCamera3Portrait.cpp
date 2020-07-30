@@ -35,7 +35,9 @@
 #define TXMP_STRING_TYPE std::string
 #include <XMP.hpp>
 #include <XMP.incl_cpp>
+#include <android/hardware/graphics/common/1.0/types.h>
 
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace android;
 namespace sprdcamera {
 
@@ -3230,7 +3232,7 @@ int SprdCamera3Portrait::configureStreams(
             mMainStreams[mCallbackStreamsNum].format =
                 HAL_PIXEL_FORMAT_YCbCr_420_888;
             mMainStreams[mCallbackStreamsNum].usage =
-                GRALLOC_USAGE_SW_READ_OFTEN;
+                (uint64_t)BufferUsage::CPU_READ_OFTEN;
             mMainStreams[mCallbackStreamsNum].stream_type =
                 CAMERA3_STREAM_OUTPUT;
             mMainStreams[mCallbackStreamsNum].data_space =
@@ -3248,7 +3250,7 @@ int SprdCamera3Portrait::configureStreams(
             mAuxStreams[mCallbackStreamsNum].format =
                 HAL_PIXEL_FORMAT_YCbCr_420_888;
             mAuxStreams[mCallbackStreamsNum].usage =
-                GRALLOC_USAGE_SW_READ_OFTEN;
+                (uint64_t)BufferUsage::CPU_READ_OFTEN;
             mAuxStreams[mCallbackStreamsNum].stream_type =
                 CAMERA3_STREAM_OUTPUT;
             mAuxStreams[mCallbackStreamsNum].data_space =

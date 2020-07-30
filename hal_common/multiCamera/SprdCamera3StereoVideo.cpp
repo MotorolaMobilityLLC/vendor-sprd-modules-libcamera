@@ -29,7 +29,9 @@
 #define LOG_TAG "Cam3StereoVideo"
 //#define LOG_NDEBUG 0
 #include "SprdCamera3StereoVideo.h"
+#include <android/hardware/graphics/common/1.0/types.h>
 
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace android;
 namespace sprdcamera {
 // extern  camera_face_info   g_face_info;
@@ -1617,7 +1619,7 @@ int SprdCamera3StereoVideo::getStreamType(camera3_stream_t *new_stream) {
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
             if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
                 stream_type = VIDEO_STREAM;
-            } else if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            } else if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 stream_type = CALLBACK_STREAM;
             } else {
                 stream_type = PREVIEW_STREAM;
@@ -1625,7 +1627,7 @@ int SprdCamera3StereoVideo::getStreamType(camera3_stream_t *new_stream) {
             break;
         case HAL_PIXEL_FORMAT_YV12:
         case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 stream_type = DEFAULT_STREAM;
             }
             break;

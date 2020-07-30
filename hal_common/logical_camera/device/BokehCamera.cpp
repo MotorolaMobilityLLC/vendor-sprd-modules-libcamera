@@ -3,7 +3,9 @@
 #include <log/log.h>
 #include "BokehCamera.h"
 //#include "otp_info.h"
+#include <android/hardware/graphics/common/1.0/types.h>
 
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace sprdcamera;
 using namespace std;
 
@@ -885,7 +887,7 @@ int BokehCamera::configureStreams(
             mMainStreams[mCallbackStreamsNum].format =
                 HAL_PIXEL_FORMAT_YCbCr_420_888;
             mMainStreams[mCallbackStreamsNum].usage =
-                GRALLOC_USAGE_SW_READ_OFTEN;
+                (uint64_t)BufferUsage::CPU_READ_OFTEN;
             mMainStreams[mCallbackStreamsNum].stream_type =
                 CAMERA3_STREAM_OUTPUT;
             mMainStreams[mCallbackStreamsNum].data_space =
@@ -903,7 +905,7 @@ int BokehCamera::configureStreams(
             mAuxStreams[mCallbackStreamsNum].format =
                 HAL_PIXEL_FORMAT_YCbCr_420_888;
             mAuxStreams[mCallbackStreamsNum].usage =
-                GRALLOC_USAGE_SW_READ_OFTEN;
+                (uint64_t)BufferUsage::CPU_READ_OFTEN;
             mAuxStreams[mCallbackStreamsNum].stream_type =
                 CAMERA3_STREAM_OUTPUT;
             mAuxStreams[mCallbackStreamsNum].data_space =
@@ -3577,7 +3579,7 @@ int BokehCamera::getStreamTypes(camera3_stream_t *new_stream) {
             if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
                 HAL_LOGD("VIDEO_STREAM");
                 stream_type = VIDEO_STREAM;
-            } else if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            } else if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 HAL_LOGD("CALLBACK_STREAM");
                 stream_type = CALLBACK_STREAM;
             } else {
@@ -3586,13 +3588,13 @@ int BokehCamera::getStreamTypes(camera3_stream_t *new_stream) {
             }
             break;
         case HAL_PIXEL_FORMAT_RAW16:
-            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 stream_type = DEFAULT_STREAM;
             }
             break;
         case HAL_PIXEL_FORMAT_YV12:
         case HAL_PIXEL_FORMAT_YCbCr_420_888:
-            if (new_stream->usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+            if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 HAL_LOGD("CALLBACK_STREAM");
                 stream_type = CALLBACK_STREAM;
             }

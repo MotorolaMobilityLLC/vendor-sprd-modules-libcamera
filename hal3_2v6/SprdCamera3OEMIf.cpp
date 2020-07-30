@@ -136,6 +136,9 @@ struct CAMERA_MEM_CB_TYPE_STAT mem_cb_stat[CAMERA_MEM_CB_TYPE_MAX] = {
     {CAMERA_SNAPSHOT_SW3DNR_SMALL_PATH, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL_RAW, CACHE_TRUE},
 };
+#include <android/hardware/graphics/common/1.0/types.h>
+
+using android::hardware::graphics::common::V1_0::BufferUsage;
 using namespace android;
 
 namespace sprdcamera {
@@ -8304,7 +8307,7 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
     if (!mIommuEnabled) {
         yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
     }
-    int usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+    int usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
 
     Rect bounds(mCaptureWidth, mCaptureHeight);
     HAL_LOGD("size %d sum %d mZslHeapNum %d", size, sum, mZslHeapNum);
@@ -8982,7 +8985,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
             goto malloc_failed;
         if (mIsUltraWideMode) {
             int usage =
-                GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+                (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
             Rect bounds(width, height);
             void *vaddr = NULL;
             android_ycbcr ycbcr;
