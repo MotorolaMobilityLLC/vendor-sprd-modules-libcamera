@@ -1963,33 +1963,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.fdr",
                                       "persist.vendor.cam.fdr.enable"));
 
-#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
-    // 27 portrait scene mode
-    HAL_LOGD("pbrb_enable=%d",atoi(prop));
-    property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        if(atoi(prop)==0){
-            property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
-            property_set("persist.vendor.cam.ip.wechat.back.replace","0");
-        }
-        available_cam_features.add(
-            resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
-                           "persist.vendor.cam.portrait.scene.enable"));
-    }
-#else
+    // 28 dual view video
     available_cam_features.add(0);
-#endif
-
-    // 28 higher micro photo
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
-            resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
-                           "persist.vendor.cam.higher.macrophoto.enable"));
-    }
 
 #ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
     // 29 portrait scene mode
@@ -2023,6 +1998,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     available_cam_features.add(
         resetFeatureStatus("persist.vendor.cam.ip.eis.pro",
                            "persist.vendor.cam.dv.ba.eispro.enable"));
+
+    // 32 portrait mutex lpt not support in pike2
+    available_cam_features.add(0);
+
+    // 33 video face detect
+    property_get("persist.vendor.cam.video.fd.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),

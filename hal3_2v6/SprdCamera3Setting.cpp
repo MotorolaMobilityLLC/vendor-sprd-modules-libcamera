@@ -2611,12 +2611,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         resetFeatureStatus("persist.vendor.cam.ip.eis.pro",
                            "persist.vendor.cam.dv.ba.eispro.enable"));
 
-    memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
-           &(available_cam_features[0]),
-           available_cam_features.size() * sizeof(uint8_t));
-    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
-        available_cam_features.size();
-
     // 32 portrait mutex lpt
     HAL_LOGD("PLATFORM_ID %x",PLATFORM_ID);
     if(PLATFORM_ID == LOCAL_PLATFORM_ID_SHARKL5P){
@@ -2624,6 +2618,16 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     } else {
         available_cam_features.add(0);
     }
+
+    // 33 video face detect support default
+    available_cam_features.add(1);
+
+    memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+           &(available_cam_features[0]),
+           available_cam_features.size() * sizeof(uint8_t));
+    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
+        available_cam_features.size();
+
     ALOGV("available_cam_features=%d", available_cam_features.size());
 
     property_set("persist.vendor.cam.ip.switch.on", "0");
