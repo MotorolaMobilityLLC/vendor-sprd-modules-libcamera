@@ -8442,14 +8442,15 @@ int SprdCamera3OEMIf::Callback_OtherMalloc(enum camera_mem_cb_type type,
         type == CAMERA_SNAPSHOT_ZSL_RESERVED) {
         if (mCommonHeapReserved == NULL) {
             /*using 0.3M sensor, preview size maybe larger than sensor size*/
-            if (mPreviewWidth * mPreviewHeight <=
+            /*if (mPreviewWidth * mPreviewHeight <=
                 mLargestPictureWidth * mLargestPictureHeight)
                 mem_size = mLargestPictureWidth *
                            (CAMERA_ALIGNED_16(mLargestPictureHeight)) * 3 / 2;
             else {
                 mem_size =
                     mPreviewWidth * (CAMERA_ALIGNED_16(mPreviewHeight)) * 3 / 2;
-            }
+            }*/
+            mem_size = PAGE_SIZE;
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
                 HAL_LOGE("memory is null");
