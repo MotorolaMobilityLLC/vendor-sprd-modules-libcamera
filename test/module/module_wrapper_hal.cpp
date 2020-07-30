@@ -233,7 +233,7 @@ static int capture_frame = -10;      // reocording capture frame
 static int max_buffers = 4;
 static streamconfig *g_streamConfig; // stream config
 int g_stream_count = 0;
-static bool volatile g_result[10] = {false}; // result struct
+static bool volatile  g_result[CAMERA_TEST_MAX] = {false}; // result struct
 
 new_mem_t mLocalBuffer[20];
 new_mem_t mCallbackBuffer[20];
@@ -615,7 +615,7 @@ class NativeCameraHidl {
     //    sp<ANativeWindow> nativeWindow = NULL;
 };
 
-bool volatile g_need_exit = false;
+static bool volatile g_need_exit = false;
 static NativeCameraHidl native_camera;
 bool g_first_open = false;
 bool g_first_preview = false;
@@ -2484,10 +2484,6 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
               delete []anwBuffers;*/
             session->flush();
             ret = session->close();
-            g_result[CAMERA_CLOSE_CAMERA] = true;
-            ALOGI("g_result[CAMERA_CLOSE_CAMERA] =%d,address=%p ",
-                  g_result[CAMERA_CLOSE_CAMERA],
-                  &g_result[CAMERA_CLOSE_CAMERA]);
         }
     }
     g_need_exit = true;
@@ -2506,7 +2502,6 @@ int NativeCameraHidl::freeAllBuffers() //create preview running thread
     }
     /*free snapshot buffer */
     freeOneBuffer(&snapshot_buffer);
-
     free(g_streamConfig);
     return ret;
 }
@@ -2578,7 +2573,9 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         openResult.funcName = _json2->m_funcName;
         pVec_Result->push_back(openResult);
     }
+
     if (strcmp(_json2->m_funcName.c_str(),"startpreview")== 0 && !g_first_preview) {
+        g_stream_count = 0;
         g_streamConfig = (streamconfig *)malloc(8 * sizeof(streamconfig));
         for (auto &stream : _json2->m_StreamArr) {
             g_streamConfig[g_stream_count].stream_type =
@@ -2598,8 +2595,6 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         native_camera.previewstop = 0;
         native_camera.startpreview();
         g_first_preview = true;
-        ALOGI("g_streamConfig .stream_type =%d", g_streamConfig[0].stream_type);
-
         while (!g_need_exit) // result check
         {
             if ((g_result[CAMERA_START_PREVIEW] && strcmp(_json2->m_funcName.c_str(),"startpreview")== 0)) {
@@ -2647,6 +2642,15 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         }
         ALOGI("exit success,g_result[CAMERA_CLOSE_CAMERA]=%d,g_need_exit=%d",
               g_result[CAMERA_CLOSE_CAMERA], g_need_exit);
+        g_first_open = false;
+        g_first_preview = false;
+        g_need_exit = false;
+        native_camera.streamlist.clear();
+        for(int i = 0; i< CAMERA_TEST_MAX; i++)
+        {
+            g_result[i] = false;
+        }
+
         resultData CloseResult;
         native_camera.freeAllBuffers();
         CloseResult.available = 1;
