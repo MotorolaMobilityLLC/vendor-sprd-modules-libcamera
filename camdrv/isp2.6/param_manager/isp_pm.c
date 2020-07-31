@@ -1284,8 +1284,8 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 	case ISP_PM_CMD_SET_MODE:
 	case ISP_PM_CMD_SET_FDR_MODE:
 	{
-		cmr_u32 i, k, set_id, max;
-		cmr_u32 *search, mode_id;
+		cmr_u32 i, k, set_id, max, mode_id;
+		cmr_u32 *search = NULL;
 		struct pm_workmode_input *input = (struct pm_workmode_input *)param_ptr;
 		struct pm_workmode_output *output = (struct pm_workmode_output *)out_ptr;
 		struct isp_context *isp_cxt_ptr = PNULL;
