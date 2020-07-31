@@ -770,7 +770,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     cam_cxt = (struct camera_context *)oem_handle;
     mfnr_cmd_proc_t process_param;
     sprd_camalg_device_type run_type;
-
+    memset(&orig_image, 0, sizeof(mfnr_cap_gpu_buffer_t));
     ret = sprd_mfnr_get_devicetype(&run_type);
     // call 3dnr function
     CMR_LOGD("Call the threednr_function() yaddr 0x%x cur_frm: %d",
@@ -1641,7 +1641,12 @@ queue_preview_smallbufer(struct preview_smallbuf_queue *psmall_buf_queue,
     CMR_LOGV("add new node:%p , smallbffqueue:%p", pnewnode, psmall_buf_queue);
     pthread_mutex_lock(&psmall_buf_queue->mutex);
     if ((NULL == pnewnode) || (NULL == pnode)) {
-        CMR_LOGE("alloc pnewnode failed");
+        if(NULL != pnewnode) {
+           CMR_LOGE("alloc pnewnode failed");
+           free(pnewnode);
+        } else {
+           CMR_LOGE("alloc pnewnode failed");
+        }
         pthread_mutex_unlock(&psmall_buf_queue->mutex);
         return -1;
     }
