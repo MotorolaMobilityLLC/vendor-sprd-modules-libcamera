@@ -260,7 +260,6 @@ struct ae_rect {
 	cmr_u32 end_y;
 };
 
-
 struct ae_rgb_l {
 	cmr_u32 r;
 	cmr_u32 g;
@@ -407,6 +406,7 @@ struct ae_hist_win_info {
 	cmr_u32 end_x;
 	cmr_u32 end_y;
 };
+
 struct ae_monitor_cfg {
 	struct ae_rect monitor_rect;
 	struct ae_size blk_size;
