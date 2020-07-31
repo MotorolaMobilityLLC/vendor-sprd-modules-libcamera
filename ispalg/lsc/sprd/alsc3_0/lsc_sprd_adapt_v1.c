@@ -1493,14 +1493,14 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 static void lsc_inverse_ae_stat(struct lsc_sprd_ctrl_context *cxt, cmr_u16 * inverse_table)
 {
 	cmr_u32 i;
-	cmr_u16 gain_r[32 * 32];
-	cmr_u16 gain_gr[32 * 32];
-	cmr_u16 gain_gb[32 * 32];
-	cmr_u16 gain_b[32 * 32];
-	cmr_u16 gain_g[32 * 32];
-	cmr_u16 scaled_gain_r[32 * 32];
-	cmr_u16 scaled_gain_g[32 * 32];
-	cmr_u16 scaled_gain_b[32 * 32];
+	cmr_u16 gain_r[32 * 32] = {0};
+	cmr_u16 gain_gr[32 * 32] = {0};
+	cmr_u16 gain_gb[32 * 32] = {0};
+	cmr_u16 gain_b[32 * 32] = {0};
+	cmr_u16 gain_g[32 * 32] = {0};
+	cmr_u16 scaled_gain_r[32 * 32] = {0};
+	cmr_u16 scaled_gain_g[32 * 32] = {0};
+	cmr_u16 scaled_gain_b[32 * 32] = {0};
 
 	cmr_u32 *stat_r = &cxt->ae_stat[0];
 	cmr_u32 *stat_g = &cxt->ae_stat[1024];
@@ -2268,6 +2268,18 @@ EXIT:
 
 	if (NULL != cxt) {
 		rtn = lsc_unload_lib(cxt);
+		lsc_std_free(cxt->dst_gain);
+		lsc_std_free(cxt->lsc_buffer);
+		lsc_std_free(cxt->fwstart_new_scaled_table);
+		lsc_std_free(cxt->fwstop_output_table);
+		lsc_std_free(cxt->lsc_last_info);
+		lsc_std_free(cxt->ae_stat);
+		lsc_std_free(cxt->lsc_flash_proc_param);
+		lsc_std_free(cxt->flash_y_gain);
+		lsc_std_free(cxt->last_lsc_table);
+		lsc_std_free(cxt->output_lsc_table);
+		lsc_std_free(cxt->lsc_buffer_interlace);
+		lsc_std_free(cxt->lscm_info);
 		free(cxt);
 		cxt = NULL;
 	}

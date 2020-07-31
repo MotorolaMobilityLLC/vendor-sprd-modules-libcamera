@@ -718,6 +718,10 @@ static void *lsc_sprd_init(void *in, void *out)
 	}
 	if (NULL != cxt) {
 		rtn = _lscsprd_unload_lib(cxt);
+		free(cxt->dst_gain);
+		cxt->dst_gain = NULL;
+		free(cxt->ae_stat);
+		cxt->ae_stat = NULL;
 		free(cxt);
 		cxt = NULL;
 	}
@@ -758,9 +762,10 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 	free(cxt->lsc_buffer);
 	cxt->lsc_buffer = NULL;
 
-	if(cxt->ae_stat)
+	if(cxt->ae_stat){
 		free(cxt->ae_stat);
-
+		cxt->ae_stat = NULL;
+       }
 	memset(cxt, 0, sizeof(*cxt));
 	free(cxt);
 	cxt = NULL;
