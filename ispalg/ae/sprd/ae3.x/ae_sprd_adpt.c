@@ -5360,7 +5360,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		cxt->cur_status.adv_param.bhist_data[1].hist_bin = calc_in->bayerhist_stats[1].bin;
 		cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
 	}
-	
+
 	if(0 == aem_type){
 		ae_binning_for_aem_stats(cxt, calc_in->stat_img);
 		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
@@ -5370,13 +5370,22 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	}
 
 	// get effective E&g
-	cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.actual_data.cur_index;
-	cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.actual_data.frm_len;
-	cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->exp_data.actual_data.exp_line;
-	cxt->cur_status.adv_param.cur_ev_setting.exp_time = cxt->exp_data.actual_data.exp_time;
-	cxt->cur_status.adv_param.cur_ev_setting.dmy_line = cxt->exp_data.actual_data.dummy;
-	cxt->cur_status.adv_param.cur_ev_setting.ae_gain = (cmr_s32) (1.0 * cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
-
+	if(cxt->monitor_cfg.skip_num > cxt->exp_skip_num){
+		/*write param already take effective when next ae calc(skipping 2or3 frames at high_fps mode)*/
+		cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.write_data.cur_index;
+		cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.write_data.frm_len;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->exp_data.write_data.exp_line;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_time = cxt->exp_data.write_data.exp_time;
+		cxt->cur_status.adv_param.cur_ev_setting.dmy_line = cxt->exp_data.write_data.dummy;
+		cxt->cur_status.adv_param.cur_ev_setting.ae_gain = (cmr_s32) (1.0 * cxt->exp_data.write_data.isp_gain * cxt->exp_data.write_data.sensor_gain / 4096.0 + 0.5);
+	}else{
+		cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.actual_data.cur_index;
+		cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.actual_data.frm_len;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->exp_data.actual_data.exp_line;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_time = cxt->exp_data.actual_data.exp_time;
+		cxt->cur_status.adv_param.cur_ev_setting.dmy_line = cxt->exp_data.actual_data.dummy;
+		cxt->cur_status.adv_param.cur_ev_setting.ae_gain = (cmr_s32) (1.0 * cxt->exp_data.actual_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096.0 + 0.5);
+	}
 	backup_expline = cxt->cur_status.adv_param.cur_ev_setting.exp_line;
 	backup_gain = cxt->cur_status.adv_param.cur_ev_setting.ae_gain;
 	backup_expgain = backup_expline*backup_gain;
