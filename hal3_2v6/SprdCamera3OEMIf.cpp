@@ -10743,6 +10743,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
         (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode) &&
         (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
+        (mSprdAppmodeId != -1) &&
         (false == mRecordingMode)) {
         property_get("persist.vendor.cam.cnr.mode", value, "0");
         if (atoi(value)) {
