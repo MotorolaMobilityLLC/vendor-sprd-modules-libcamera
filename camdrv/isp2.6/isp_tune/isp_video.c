@@ -2838,76 +2838,15 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 	return ret;
 }
 
-cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len)
-{
-	cmr_s32 ret = ISP_SUCCESS;
-	struct isp_info param_info;
-	MSG_HEAD_T *msg_ret;
-	struct isp_data_header_normal *data_head_ptr;
-	cmr_u8 *data_ptr;
-	cmr_u32 data_valid_len;
-	cmr_u32 src_size;
-	void *src_ptr;
-	cmr_u32 num, i;
-	cmr_u32 tail_len;
-
-	if (NULL == tx_buf || NULL == handler) {
-		ISP_LOGE("fail to check param");
-		return ISP_PARAM_ERROR;
-	}
-
-	msg_ret = (MSG_HEAD_T *) (tx_buf + 1);
-	data_head_ptr = (struct isp_data_header_normal *)(tx_buf + sizeof(MSG_HEAD_T) + 1);
-	data_head_ptr->main_type = 0x00;	//dump isp reg
-	data_ptr = ((cmr_u8 *) data_head_ptr) + sizeof(struct isp_data_header_normal);
-	data_valid_len = len - 2 - sizeof(MSG_HEAD_T) - sizeof(struct isp_data_header_normal);
-
-	ret = isp_ioctl(handler, ISP_CTRL_DUMP_REG, (void *)&param_info);
-
-	src_ptr = param_info.addr;
-	src_size = param_info.size;
-
-	num = src_size / data_valid_len;
-	tail_len = src_size % data_valid_len;
-
-	for (i = 0; i < num; i++) {
-		memcpy(data_ptr, (cmr_u8 *) src_ptr + i * data_valid_len, data_valid_len);
-		msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + data_valid_len;
-		*(tx_buf + (msg_ret->len) + 1) = 0x7e;
-		if (0 == tail_len && i == (num - 1))
-			data_head_ptr->packet_status = 0x01;	//last one
-		else
-			data_head_ptr->packet_status = 0x00;
-
-		ret = send(sockfd, tx_buf, (msg_ret->len) + 2, 0);
-	}
-	if (0 != tail_len) {
-		memcpy(data_ptr, (cmr_u8 *) src_ptr + num * data_valid_len, tail_len);
-		msg_ret->len = sizeof(MSG_HEAD_T) + sizeof(struct isp_data_header_normal) + tail_len;
-		*(tx_buf + (msg_ret->len) + 1) = 0x7e;
-		data_head_ptr->packet_status = 0x01;	//last one
-		ret = send(sockfd, tx_buf, (msg_ret->len) + 2, 0);
-	}
-	if (NULL != src_ptr) {
-		free(src_ptr);
-		src_ptr = NULL;
-	}
-	ISP_LOGV("dump over! ret=%d", ret);
-	return ret;
-}
-
 static cmr_s32 isp_nr_reg_read(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len, cmr_u8 * rx_buf)
 {
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_data_header_read *data_head = (struct isp_data_header_read *)(rx_buf + sizeof(MSG_HEAD_T) + 1);
-	if (0x01 == data_head->main_type) {
+	UNUSED(handler);
+
+	if (MODE_NR_DATA == data_head->main_type) {
 		ret = isp_denoise_read(tx_buf, len, data_head);
 		ISP_LOGV("denoise_read over");
-		return ret;
-	}
-	if (0x00 == data_head->main_type) {
-		ret = isp_dump_reg(handler, tx_buf, len);
-		ISP_LOGV("isp_dump_reg  over");
 		return ret;
 	}
 	return ret;
@@ -5084,7 +5023,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	case CMD_SFT_GET_POS:
 		{
 			ISP_LOGV("get pos");
-			cmr_u32 pos;
+			cmr_u32 pos = 0;
 			ret = isp_ioctl(isp_handler, ISP_CTRL_GET_AF_POS, &pos);
 			if (!ret) {
 				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
@@ -5872,6 +5811,8 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	case CMD_WRTIE_SCENE_PARAM:
 		{
 			struct isptool_scene_param scene_info;
+
+			memset(&scene_info, 0, sizeof(struct isptool_scene_param));
 			ret = ispvideo_GetSceneInfo(buf, &scene_info);
 
 			if (0x00 == ret) {
@@ -6051,9 +5992,9 @@ void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, 
 		pthread_mutex_lock(&ispstream_lock);
 
 		char *img_ptr = (char *)preview_buf_ptr;
-		cmr_s32 img_len;
-		cmr_u32 img_w;
-		cmr_u32 img_h;
+		cmr_s32 img_len = 0;
+		cmr_u32 img_w = 0;
+		cmr_u32 img_h = 0;
 		/* if preview size more than vga that is subsample to less than vga for preview frame ratio */
 		ispvideo_Scale(format, width, height, imgptr, imagelen, &img_w, &img_h, &img_ptr, &img_len);
 
