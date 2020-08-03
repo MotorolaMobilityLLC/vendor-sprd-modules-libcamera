@@ -94,6 +94,8 @@ extern "C" {
 		AWB_CTRL_CMD_RESULT_INFO,
 		AWB_CTRL_CMD_SET_SCENE_INFO,
 		AWB_CTRL_CMD_GET_GAIN_AND_OFFSET,
+		//APP_MODE: AUTO_MODE/MANUAL_MODE
+		AWB_SET_APP_MODE,
 		AWB_DIRECT_MSG_END,
 	};
 
@@ -208,6 +210,7 @@ extern "C" {
 		struct sensor_otp_cust_info *otp_info_ptr;
 		cmr_u8 is_master;
 		cmr_u32 is_mono_sensor;
+		cmr_u32 app_mode;
 	};
 
 	struct awb_ctrl_init_result {

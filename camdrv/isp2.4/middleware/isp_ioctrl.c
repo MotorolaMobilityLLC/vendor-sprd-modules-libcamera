@@ -2659,6 +2659,8 @@ static cmr_int ispctl_set_app_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_APP_MODE, (void *)&app_mode, NULL);
+	if (cxt->ops.awb_ops.ioctrl)
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_SET_APP_MODE, (void *)&app_mode, NULL);
 	return ret;
 }
 
