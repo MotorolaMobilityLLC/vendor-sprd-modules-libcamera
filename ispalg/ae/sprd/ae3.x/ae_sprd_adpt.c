@@ -49,8 +49,9 @@
 static cmr_int g_ae_log_level = LEVEL_OVER_LOGD;
 static cmr_int g_ae_perf_log_level = LEVEL_OVER_LOGD;
 extern long g_isp_log_level;
+#define LEVEL_OVER_MAX 6
 #define ISP_LOGV(format, ...)                                                  \
-	ALOGD_IF((((g_ae_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_ae_log_level!=6)), DEBUG_STR format, DEBUG_ARGS, \
+	ALOGD_IF((((g_ae_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_ae_log_level!=LEVEL_OVER_MAX)), DEBUG_STR format, DEBUG_ARGS, \
         ##__VA_ARGS__)
 #define ISP_LOG_PERF(format, ...)                                                  \
 	ALOGD_IF(g_ae_perf_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
