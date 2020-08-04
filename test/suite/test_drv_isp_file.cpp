@@ -722,10 +722,10 @@ int dcam_read_lens_param(struct host_info_t *host_info)
 			}
 		}
 		uint32 bayer_mode = host_info->isp_param.general_info.bayer_pattern;
-		uint16 *pBuf16b;
-		uint16 *pBuf16gb;
-		uint16 *pBuf16gr;
-		uint16 *pBuf16r;
+		uint16 *pBuf16b = NULL;
+		uint16 *pBuf16gb = NULL;
+		uint16 *pBuf16gr = NULL;
+		uint16 *pBuf16r = NULL;
 
 		switch (bayer_mode){
 		case 0://gr r b gb
@@ -898,6 +898,8 @@ int isp_read_ltm_map_param(struct host_info_t *host_info)
 
 			fclose(fp);
 			fclose(fp_stat);
+			fp = NULL;
+			fp_stat = NULL;
 		}
 	}
 	return 0;
@@ -984,5 +986,8 @@ int dcam_read_raw_gtm_param(struct host_info_t *host_info)
 		fclose(fp_hist);
 	}
 	fclose(fp);
+	fp = NULL;
+	fp_stat = NULL;
+	fp_hist = NULL;
 	return 0;
 }
