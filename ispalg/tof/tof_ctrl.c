@@ -18,7 +18,7 @@
 
 static int tof_fd;
 
-cmr_int vl53l0_open_dev()
+cmr_int vl53l0_open_dev(void)
 {
 	tof_fd = open("/dev/stmvl53l0_ranging",O_RDWR | O_SYNC);
 	if (tof_fd <= 0) {
@@ -28,7 +28,7 @@ cmr_int vl53l0_open_dev()
 	return ISP_SUCCESS;
 }
 
-cmr_int vl53l0_init()
+cmr_int vl53l0_init(void)
 {
 	cmr_int rtn = ISP_SUCCESS;
 	//read xtak calibration data
@@ -138,7 +138,7 @@ cmr_int vl53l0_init()
 	return rtn;
 }
 
-cmr_int vl53l0_deinit()
+cmr_int vl53l0_deinit(void)
 {
 	if (ioctl(tof_fd, VL53L0_IOCTL_STOP , NULL) != ISP_SUCCESS) {
 		ISP_LOGE("Error: Could not perform VL53L0_IOCTL_DEINIT");
