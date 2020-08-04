@@ -3339,7 +3339,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 								exp_user_comp = 1.0*cxt->flash_esti_result.captureExposure + offset*cxt->capcompvalue_norm;
 								if (exp_user_comp >= maxcapexp)
 									/* exp max using gain */
-									modify_gain = cxt->flash_esti_result.captureGain*(1+cxt->capcompvalue_norm * gain_alpha);
+									modify_gain = cxt->flash_esti_result.captureGain*(cmr_u32)(1+cxt->capcompvalue_norm * gain_alpha);
 								else
 									modify_gain = cxt->flash_esti_result.captureGain;
 
@@ -3352,7 +3352,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 
 							/* exp align with flicker*/
 							src_exp.exp_line = current_status->settings.exp_line;
-							src_exp.exp_time = exp_user_comp;
+							src_exp.exp_time = (cmr_u32)exp_user_comp;
 							src_exp.gain = modify_gain;
 							src_exp.cur_index = cxt->cur_result.wts.cur_index;
 							src_exp.frm_len = cxt->cur_result.wts.frm_len;
@@ -3383,7 +3383,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 					} else {
 
 					uint32 capGain = 0;
-					cmr_u32 capExp = 0.0;
+					cmr_u32 capExp = 0;
 
 					if(cxt->cur_status.settings.reserve_case == 0){
 						capExp = (cmr_u32) (cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5);
@@ -3391,7 +3391,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 					}
 					else if(cxt->cur_status.settings.reserve_case == 3){ // shutter auto , iso fix
 						capGain = cxt->sync_cur_result.wts.cur_again;
-						capExp = (cmr_u32)(cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5)*cxt->flash_esti_result.captureGain/cxt->sync_cur_result.wts.cur_again;
+						capExp = (cmr_u32)(cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5)*cxt->flash_esti_result.captureGain/(cmr_u32)(cxt->sync_cur_result.wts.cur_again);
 					}
 					else if(cxt->cur_status.settings.reserve_case == 2){ // shutter fix , iso auto
 						capExp = cxt->sync_cur_result.wts.cur_exp_line;
