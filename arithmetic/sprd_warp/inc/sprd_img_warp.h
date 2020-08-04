@@ -64,7 +64,7 @@ typedef struct {
     int ion_fd;                  // reserved for ion_buffer
     void *addr[MAX_CHANNAL_NUM]; // reserved for virtual address
     int offset[MAX_CHANNAL_NUM]; // reserved for channal offset
-    void *graphic_handle;        // graphic buffer pointer
+    void *graphic_handle;        // graphic buffer pointer; for 1.3.0 above, need getNatveBuffer
 } img_warp_buffer_t;
 
 typedef struct { float warp_projective[3][3]; } img_warp_projective_param_t;
@@ -93,6 +93,11 @@ typedef struct {
     void (*ProcessState_startThreadPool)();
     void (*IPCThreadState_joinThreadPool)(bool isMain);
     void (*IPCThreadState_stopProcess)(bool immediate);
+    void *(*GraphicBuffer_new)(uint32_t width, uint32_t height, int format);
+    void (*GraphicBuffer_delete)(void *h_graphic_buffer);
+    void *(*GraphicBuffer_lock)(void *h_graphic_buffer);
+    void (*GraphicBuffer_unlock)(void *h_graphic_buffer);
+    void *(*GraphicBuffer_getNativeBuffer)(void *h_graphic_buffer);
 } camalg_assist_lib_api_t;
 
 typedef enum {

@@ -80,6 +80,27 @@ void IPCThreadState_joinThreadPool(bool isMain);
 //IPCThreadState::stopProcess(bool immediate)
 void IPCThreadState_stopProcess(bool immediate);
 
+/************************
+ * GraphicBuffer
+ ***********************/
+#define FORMAT_RGB_888        0
+#define FORMAT_YCRCB_420_SP   1//NV21
+
+//分配GraphicBuffer，返回h_graphic_buffer
+void *GraphicBuffer_new(uint32_t width, uint32_t height, int format);
+
+//释放GraphicBuffer
+void GraphicBuffer_delete(void *h_graphic_buffer);
+
+//lock GraphicBuffer，返回CPU地址
+void *GraphicBuffer_lock(void *h_graphic_buffer);
+
+//unlock GraphicBuffer
+void GraphicBuffer_unlock(void *h_graphic_buffer);
+
+//getNativeBuffer
+void *GraphicBuffer_getNativeBuffer(void *h_graphic_buffer);
+
 #ifdef __cplusplus
 }
 #endif

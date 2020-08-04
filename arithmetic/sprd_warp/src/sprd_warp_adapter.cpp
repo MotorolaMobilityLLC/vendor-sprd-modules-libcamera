@@ -4,6 +4,9 @@
 #include "properties.h"
 #include <string.h>
 #include <utils/Log.h>
+#include <ui/GraphicBuffer.h>
+
+using namespace android;
 
 #define LOG_TAG "sprd_warp_adapter"
 #define WARP_LOGE(format,...) ALOGE(format, ##__VA_ARGS__)
@@ -51,11 +54,19 @@ int sprd_warp_adapter_open(img_warp_inst_t *inst, bool *isISPZoom, void *param, 
     return ret;
 }
 
+void *GraphicBufferHandleConvert(void *graphic_buffer_handle)
+{
+    GraphicBuffer *gb = (GraphicBuffer *)graphic_buffer_handle;
+    return gb->getNativeBuffer();
+}
+
 void sprd_warp_adapter_run(img_warp_inst_t inst, img_warp_buffer_t *input, img_warp_buffer_t *output, void *param, INST_TAG tag)
 {
-    if (g_run_type[tag] == SPRD_CAMALG_RUN_TYPE_GPU)
+    if (g_run_type[tag] == SPRD_CAMALG_RUN_TYPE_GPU) {
+        input->graphic_handle = GraphicBufferHandleConvert(input->graphic_handle);
+        output->graphic_handle = GraphicBufferHandleConvert(output->graphic_handle);
         img_warp_grid_run(inst, input, output, param);
-    else if (g_run_type[tag] == SPRD_CAMALG_RUN_TYPE_VDSP)
+    } else if (g_run_type[tag] == SPRD_CAMALG_RUN_TYPE_VDSP)
         img_warp_grid_vdsp_run(inst, input, output, param);
     else
         img_warp_grid_cpu_run(inst, input, output, param);

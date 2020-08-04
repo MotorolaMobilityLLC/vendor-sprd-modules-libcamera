@@ -43,13 +43,14 @@ LOCAL_SRC_FILES := src/sprd_warp_adapter.cpp
 LOCAL_MODULE := libsprdwarpadapter
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
-LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdwarp
+LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdwarp libui
 
 LOCAL_C_INCLUDES := \
          $(LOCAL_PATH)/inc \
          $(LOCAL_PATH)/../inc \
          $(TOP)/system/core/include/cutils/ \
-         $(TOP)/system/core/include/
+         $(TOP)/system/core/include/ \
+         $(TOP)/frameworks/native/include
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
