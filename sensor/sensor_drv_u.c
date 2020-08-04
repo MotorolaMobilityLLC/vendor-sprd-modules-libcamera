@@ -1284,30 +1284,26 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
         }
         ret = sensor_stream_on(sensor_cxt);
     } else if (on_off == 2) {
-        if (SENSOR_SUCCESS == ret) {
-            if (SENSOR_INTERFACE_TYPE_CSI2 ==
-                mod_cfg_info->sensor_interface.type) {
-                struct hw_mipi_init_param init_param;
-                mode = sensor_cxt->sensor_mode;
-                init_param.lane_num =
-                    sensor_cxt->sensor_exp_info.sensor_interface.bus_width;
-                init_param.bps_per_lane =
-                    sensor_cxt->sensor_exp_info.sensor_mode_info[mode]
-                        .bps_per_lane;
-                init_param.is_cphy =
-                    sensor_cxt->sensor_exp_info.sensor_interface.is_cphy == 1
-                        ? 1
-                        : 0;
-                if (sensor_cxt->sensor_exp_info.sensor_interface.lane_switch_eb)
-                    init_param.lane_seq =
-                        sensor_cxt->sensor_exp_info.sensor_interface.lane_seq;
-                else
-                    init_param.lane_seq = 0x0123;
-                SENSOR_LOGI("is_cphy %d %lx", init_param.is_cphy,
-                            init_param.lane_seq);
-                ret = hw_sensor_mipi_switch(sensor_cxt->hw_drv_handle,
-                                            init_param);
-            }
+        if (SENSOR_INTERFACE_TYPE_CSI2 == mod_cfg_info->sensor_interface.type) {
+            struct hw_mipi_init_param init_param;
+            mode = sensor_cxt->sensor_mode;
+            init_param.lane_num =
+                sensor_cxt->sensor_exp_info.sensor_interface.bus_width;
+            init_param.bps_per_lane =
+                sensor_cxt->sensor_exp_info.sensor_mode_info[mode]
+                    .bps_per_lane;
+            init_param.is_cphy =
+                sensor_cxt->sensor_exp_info.sensor_interface.is_cphy == 1
+                    ? 1
+                    : 0;
+            if (sensor_cxt->sensor_exp_info.sensor_interface.lane_switch_eb)
+                init_param.lane_seq =
+                    sensor_cxt->sensor_exp_info.sensor_interface.lane_seq;
+            else
+                init_param.lane_seq = 0x0123;
+            SENSOR_LOGI("is_cphy %d %lx", init_param.is_cphy,
+                        init_param.lane_seq);
+            ret = hw_sensor_mipi_switch(sensor_cxt->hw_drv_handle,init_param);
         }
     } else {
         ret = sensor_stream_off(sensor_cxt);
