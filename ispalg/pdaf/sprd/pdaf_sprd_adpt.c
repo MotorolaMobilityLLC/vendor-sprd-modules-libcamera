@@ -973,7 +973,11 @@ static cmr_s32 pdafsprd_adpt_set_mode(cmr_handle adpt_handle, struct pdaf_ctrl_p
 		break;
 	case AF_MODE_CONTINUE:
 	case AF_MODE_VIDEO:
-		cxt->af_type = PASSIVE;
+		if (1 == cxt->ot_switch) {
+			cxt->af_type = ACTIVE;
+		} else {
+			cxt->af_type = PASSIVE;
+		}
 		break;
 	default:
 		cxt->af_type = PASSIVE;
