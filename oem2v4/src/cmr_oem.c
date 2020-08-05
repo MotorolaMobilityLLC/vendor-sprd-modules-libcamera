@@ -5024,7 +5024,7 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    CMR_LOGD(" E");
+    CMR_LOGD("E");
     cxt->night_cxt.sw_handle = dlopen("libnight.so", RTLD_NOW);
     if(!cxt->night_cxt.sw_handle) {
           CMR_LOGD("libnight open failed with %s",dlerror());
@@ -5054,9 +5054,9 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
             CMR_LOGE("failed to init ipm pro %ld", ret);
         }
     }
-    CMR_LOGD(" X");
-    return ret;
     ATRACE_END();
+    CMR_LOGD("X");
+    return ret;
 }
 
 cmr_int camera_nightpro_deinit(cmr_handle oem_handle) {
@@ -5075,9 +5075,9 @@ cmr_int camera_nightpro_deinit(cmr_handle oem_handle) {
     cxt->night_cxt.ipmpro_deinit = NULL;
     cxt->night_cxt.ipmpro_process = NULL;
     cxt->night_cxt.is_authorized = 0;
+    ATRACE_END();
     CMR_LOGD("X");
     return ret;
-    ATRACE_END();
 }
 
 cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
