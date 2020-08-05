@@ -1376,6 +1376,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_info *info_ptr = param_ptr;
+	struct awb_ctrl_calc_result awb_output;
 	cmr_u32 total_size = 0;
 	cmr_u32 mem_offset = 0;
 	struct sprd_isp_debug_info *p;
@@ -1426,6 +1427,15 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		if (ISP_SUCCESS != ispctl_get_ai_debug_info(cxt)) {
 			ISP_LOGE("fail to get ai debug info");
 		}
+
+		memset(&awb_output, 0, sizeof(awb_output));
+		if (cxt->ops.awb_ops.ioctrl) {
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+					AWB_CTRL_CMD_RESULT_INFO, (void *)&awb_output, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+		}
+		cxt->awb_cxt.log_awb = awb_output.log_awb.log;
+		cxt->awb_cxt.log_awb_size = awb_output.log_awb.size;
 
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
 		    + calc_log_size(cxt->ae_cxt.log_ae, cxt->ae_cxt.log_ae_size, AE_START, AE_END)

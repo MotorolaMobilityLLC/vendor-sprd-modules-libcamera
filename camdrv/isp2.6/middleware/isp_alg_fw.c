@@ -3037,8 +3037,6 @@ cmr_int ispalg_awb_post_process(cmr_handle isp_alg_handle, struct awb_ctrl_calc_
 		ISP_TRACE_IF_FAIL(ret, ("fail to set isp block param"));
 
 	}
-	cxt->awb_cxt.log_awb = awb_output->log_awb.log;
-	cxt->awb_cxt.log_awb_size = awb_output->log_awb.size;
 
 	if (awb_output->use_lsc) {
 		switch (cxt->commn_cxt.image_pattern) {
