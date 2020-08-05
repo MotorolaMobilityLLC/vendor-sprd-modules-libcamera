@@ -261,7 +261,7 @@ extern "C" {
 		struct Flash_pfOneIterationOutput flash_esti_result;
 		struct Flash_mfCalcInput flash_main_esti_input;
 		struct Flash_mfCalcOutput flash_main_esti_result;
-		cmr_s32 flash_last_exp_line;
+		cmr_u32 flash_last_exp_line;
 		cmr_s32 flash_last_gain;
 		float ctTabRg[20];
 		float ctTab[20];
@@ -290,7 +290,7 @@ extern "C" {
 		cmr_handle seq_handle;
 		cmr_s8 exp_skip_num;
 		cmr_s8 gain_skip_num;
-		cmr_s16 sensor_gain_precision;
+		cmr_u16 sensor_gain_precision;
 		cmr_u16 sensor_max_gain;	/*the max gain that sensor can be used */
 		cmr_u16 sensor_min_gain;	/*the mini gain that sensor can be used */
 		cmr_u16 min_exp_line;	/*the mini exposure line that sensor can be used */

@@ -1672,7 +1672,7 @@ static cmr_u32 ae_set_pflash_exposure_compensation(struct ae_ctrl_cxt *cxt, int 
 	cmr_u32 ae_base_idx = 0;
 	cmr_u32 cur_lum = cxt->sync_cur_result.cur_lum;
 	cmr_u16 max_idx = cxt->cur_status.ae_table->max_index;
-	cmr_s32 tar_lum = cxt->cur_status.target_lum + cxt->cur_status.target_offset;
+	cmr_u32 tar_lum = cxt->cur_status.target_lum + cxt->cur_status.target_offset;
 	cmr_s32 tgoft = cur_lum - tar_lum;
 
 	tar_lum = tar_lum ? tar_lum : 1;
@@ -4265,7 +4265,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 		base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
 		base_gain = cxt->cur_status.ae_table->again[base_idx];
 #ifdef CONFIG_SUPPROT_AUTO_HDR
-		up_exposure = pow(2, cxt->hdr_calc_result.ev[1]) * base_exposure_line * cxt->cur_status.line_time;
+		up_exposure = (cmr_u32)(pow(2, cxt->hdr_calc_result.ev[1]) * base_exposure_line * cxt->cur_status.line_time);
 		ISP_LOGD("up_exp %d, pow2 %f\n", up_exposure, pow(2, cxt->hdr_calc_result.ev[1]));
 #else
 		up_exposure = pow(2, up_EV_offset / 100.0) * base_exposure_line * cxt->cur_status.line_time;
@@ -5272,9 +5272,9 @@ static cmr_s32 ae_set_compensation_calc_2(struct ae_ctrl_cxt *cxt, cmr_s16 *out_
 	temp = pow(2, temp);
 	//ISP_LOGV("temp%f\n",temp);
 	if (0 < cxt->exposure_compensation.comp_val) {
-		target_offset = cxt->exposure_compensation.ae_base_target * temp;
-	} else if (0 > cxt->exposure_compensation.comp_val) { 
-		target_offset = cxt->exposure_compensation.ae_base_target * (temp -1);
+		target_offset = (cmr_s16)(cxt->exposure_compensation.ae_base_target * temp);
+	} else if (0 > cxt->exposure_compensation.comp_val) {
+		target_offset = (cmr_s16)(cxt->exposure_compensation.ae_base_target * (temp -1));
 	} else {
 		target_offset = 0;
 	}
@@ -5807,7 +5807,7 @@ static cmr_s32 ae_parser_otp_info(struct ae_init_in *init_param)
 			ISP_LOGV("ae otp map:(gain_1x_exp:%d),(gain_2x_exp:%d),(gain_4x_exp:%d),(gain_8x_exp:%d).\n",
 					    (int)info.gain_1x_exp,(int)info.gain_2x_exp,(int)info.gain_4x_exp,(int)info.gain_8x_exp);
 
-			rtn = init_param->ptr_isp_br_ioctrl(init_param->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, SET_OTP_AE, &info, NULL);
+			rtn = (cmr_s32) init_param->ptr_isp_br_ioctrl(init_param->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, SET_OTP_AE, &info, NULL);
 			//ISP_LOGV("lum=%" PRIu16 ", 1x=%" PRIu64 ", 2x=%" PRIu64 ", 4x=%" PRIu64 ", 8x=%" PRIu64, info.ae_target_lum,info.gain_1x_exp,info.gain_2x_exp,info.gain_4x_exp,info.gain_8x_exp);
 		} else {
 			ISP_LOGE("ae rdm_otp_data = %p, rdm_otp_len = %d. Parser fail", rdm_otp_data, rdm_otp_len);
@@ -5899,7 +5899,7 @@ static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
 {
 	cmr_u32 i,j,ii,jj = 0;
 	//cmr_u64 r = 0, g = 0, b = 0;
-	cmr_u64 avg;
+	cmr_u32 avg;
 	cmr_u32 tmp_r = 0,tmp_g = 0,tmp_b = 0;
 	cmr_u32 blk_num_w = cxt->monitor_cfg.blk_num.w;
 	cmr_u32 blk_num_h = cxt->monitor_cfg.blk_num.h;

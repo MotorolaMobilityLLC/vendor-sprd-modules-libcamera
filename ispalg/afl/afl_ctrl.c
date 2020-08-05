@@ -132,7 +132,7 @@ static cmr_s32 aflctrl_save_to_file(cmr_s32 height, cmr_s32 * addr, cmr_u32 cnt)
 static void afl_scl_for_ae_stat(cmr_u32 *dst, struct afl_proc_in *afl_in)
 {
 	cmr_u32 i,j,ii,jj;
-	cmr_u64 r = 0, g = 0, b = 0;
+	cmr_u32 r = 0, g = 0, b = 0;
 	cmr_u32 blk_num_w = afl_in->ae_win_num.w;
 	cmr_u32 blk_num_h = afl_in->ae_win_num.h;
 	cmr_u32 *r_stat = (cmr_u32*)afl_in->ae_stat_ptr->r_info;
