@@ -1036,6 +1036,7 @@ void SprdCamera33DFaceId::saveRequest(camera3_capture_request_t *request) {
         newStream = (request->output_buffers[i]).stream;
         if (CALLBACK_STREAM == getStreamType(newStream)) {
             multi_request_saved_t prevRequest;
+	    memset(&prevRequest, 0x00, sizeof(multi_request_saved_t));
             HAL_LOGV("save request num=%d", request->frame_number);
 
             Mutex::Autolock l(mRequestLock);
@@ -1127,12 +1128,12 @@ int SprdCamera33DFaceId::processCaptureRequest(
                     .data.i64[0];
         for (j = 0; j < THREE_D_FACEID_BUFFER_SUM; j++) {
             if (get_reg_phyaddr == (uint64_t)mToFaceIDServiceBuffer[j].phy_addr) {
+                map(&mToFaceIDServiceBuffer[j].native_handle, &arrAddr);
+                memcpy(phyaddr, arrAddr, 5 * sizeof(int64_t));
+                unmap(&mToFaceIDServiceBuffer[j].native_handle);
                 break;
             }
         }
-
-        map(&mToFaceIDServiceBuffer[j].native_handle, &arrAddr);
-        memcpy(phyaddr, arrAddr, 5 * sizeof(int64_t));
 
         for (i = 0; i < THREE_D_FACEID_BUFFER_SUM; i++) {
             if (phyaddr[0] == (uint64_t)mLocalBufferAuxL[i].phy_addr) {
@@ -1153,7 +1154,6 @@ int SprdCamera33DFaceId::processCaptureRequest(
                 mLocalBufferListMain.push_back(&mLocalBufferMain[i]);
             }
         }
-        unmap(&mToFaceIDServiceBuffer[j].native_handle);
         {
             Mutex::Autolock l(mToFaceLock);
             mToFaceIDServiceBuffer[j].type = (camera_buffer_type_t)FACE_ADDR_BUFFER;

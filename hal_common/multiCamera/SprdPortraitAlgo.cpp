@@ -1167,6 +1167,7 @@ int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
             mPortraitCapParam.portrait_param.y2[0] * mSize.capture_w / mSize.depth_snap_out_w);
         /*do dfa */
         DFA_RESULT dfa_result;
+        memset(&dfa_result, 0, sizeof(DFA_RESULT));
         do_dfa_image_yuv420sp(&dfa_cap, mPortraitCapParam.portrait_param.face_num, &dfa_result);
         construct_lpt_dfaInfo(
             &lpt_cap, dfa_result.pitch, dfa_result.yaw, dfa_result.roll,
@@ -1240,6 +1241,7 @@ int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
         }
         /*do dfa */
         DFA_RESULT dfa_result;
+        memset(&dfa_result, 0, sizeof(DFA_RESULT));
         do_dfa_image_yuv420sp(&dfa_prev, mPreviewbokehParam.depth_param.portrait_param.face_num, &dfa_result);
         construct_lpt_dfaInfo(
             &lpt_prev, dfa_result.pitch, dfa_result.yaw, dfa_result.roll,

@@ -1056,6 +1056,8 @@ int SprdCamera3Multi::reprocessReq(buffer_handle_t *input_buffers) {
     void *output_handle_addr = NULL;
 #endif
     camera3_capture_request_t request;
+    memset(&request, 0x00, sizeof(camera3_capture_request_t));
+
     if (!input_buffers) {
         HAL_LOGE("reprocess para is null");
         return UNKNOWN_ERROR;
@@ -1644,6 +1646,7 @@ void SprdCamera3Multi::processCaptureResultMain(
     const camera3_stream_buffer_t *result_buffer = result->output_buffers;
     CameraMetadata metadata;
     meta_save_t metadata_t;
+    memset(&metadata_t, 0x00, sizeof(meta_save_t));
     int index = 0;
 
     HAL_LOGV("E,id=%u", cur_frame_number);
@@ -1687,6 +1690,7 @@ void SprdCamera3Multi::processCaptureResultAux1(
     int index = 0;
     if (result_buffer == NULL) {
         meta_save_t metadata_t;
+	memset(&metadata_t, 0x00, sizeof(meta_save_t));
         // meta process
         metadata = result->result;
         HAL_LOGV("send  meta, framenumber:%u", cur_frame_number);
@@ -1729,6 +1733,7 @@ void SprdCamera3Multi::processCaptureResultAux2(
     int index = 0;
     if (result_buffer == NULL) {
         meta_save_t metadata_t;
+        memset(&metadata_t, 0x00, sizeof(meta_save_t));
         // meta process
         metadata = result->result;
         HAL_LOGV("send  meta, framenumber:%u", cur_frame_number);
@@ -1769,6 +1774,7 @@ void SprdCamera3Multi::processCaptureResultAux3(
     int index = 0;
     if (result_buffer == NULL) {
         meta_save_t metadata_t;
+		memset(&metadata_t, 0x00, sizeof(meta_save_t));
         // meta process
         metadata = result->result;
         HAL_LOGV("send  meta, framenumber:%u", cur_frame_number);

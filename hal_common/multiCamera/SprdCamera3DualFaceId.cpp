@@ -924,6 +924,7 @@ void SprdCamera3DualFaceId::saveRequest(camera3_capture_request_t *request) {
         newStream = (request->output_buffers[i]).stream;
         if (CALLBACK_STREAM == getStreamType(newStream)) {
             multi_request_saved_t prevRequest;
+            memset(&prevRequest, 0x00, sizeof(multi_request_saved_t));
             HAL_LOGV("save request num=%d", request->frame_number);
 
             Mutex::Autolock l(mRequestLock);

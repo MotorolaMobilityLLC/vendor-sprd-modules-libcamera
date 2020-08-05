@@ -224,6 +224,7 @@ void SprdCamera33dFace::processCaptureResultMain(
 
     int currStreamType = getStreamType(result_buffer->stream);
     hwi_frame_buffer_info_t cur_frame;
+    memset(&cur_frame, 0, sizeof(hwi_frame_buffer_info_t));
     cur_frame.frame_number = cur_frame_number;
     cur_frame.buffer = result->output_buffers->buffer;
     if (currStreamType == DEFAULT_STREAM) { // CallBack stream  process

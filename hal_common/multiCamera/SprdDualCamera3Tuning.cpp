@@ -960,6 +960,8 @@ int SprdDualCamera3Tuning::processCaptureRequest(
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
+    memset(&metaSettingsMain, 0, sizeof(CameraMetadata));
+    memset(&metaSettingsAux, 0, sizeof(CameraMetadata));
     bzero(out_streams_main,
           sizeof(camera3_stream_buffer_t) * MAX_NUM_TUNING_STREAMS);
     bzero(out_streams_aux,

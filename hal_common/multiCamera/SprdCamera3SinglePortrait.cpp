@@ -3899,6 +3899,7 @@ int SprdCamera3SinglePortrait::CaptureThread::runDFA(void *input_buff,
         }
         /*do dfa */
         DFA_RESULT dfa_result;
+        memset(&dfa_result, 0, sizeof(DFA_RESULT));
         do_dfa_image_yuv420sp(&dfa_cap, faceDetectionInfo.face_num, &dfa_result);
         construct_lpt_dfaInfo(
             &lpt_cap, dfa_result.pitch, dfa_result.yaw, dfa_result.roll,
@@ -3923,6 +3924,7 @@ int SprdCamera3SinglePortrait::CaptureThread::runDFA(void *input_buff,
         }
          /*do dfa */
         DFA_RESULT dfa_result;
+        memset(&dfa_result, 0, sizeof(DFA_RESULT));
         do_dfa_image_yuv420sp(&dfa_prev, faceDetectionInfo.face_num, &dfa_result);
         construct_lpt_dfaInfo(
             &lpt_prev, dfa_result.pitch, dfa_result.yaw, dfa_result.roll,

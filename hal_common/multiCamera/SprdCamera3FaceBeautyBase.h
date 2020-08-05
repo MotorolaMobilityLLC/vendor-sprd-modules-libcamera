@@ -111,6 +111,7 @@ public:
                                face_beauty_levels levels, FACE_Tag *face_info,
                                int work_mode) {
         struct fb_beauty_face_t faceinfo;
+	memset(&faceinfo, 0, sizeof(fb_beauty_face_t));
 
         beautyLevels.blemishLevel = levels.blemishLevel;
         beautyLevels.smoothLevel = levels.smoothLevel;

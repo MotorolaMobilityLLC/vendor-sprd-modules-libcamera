@@ -3517,6 +3517,7 @@ void SprdCamera3RealBokeh::saveRequest(camera3_capture_request_t *request) {
     size_t i = 0;
     camera3_stream_t *newStream = NULL;
     multi_request_saved_t currRequest;
+    memset(&currRequest, 0, sizeof(multi_request_saved_t));
     Mutex::Autolock l(mRequestLock);
     for (i = 0; i < request->num_output_buffers; i++) {
         newStream = (request->output_buffers[i]).stream;
