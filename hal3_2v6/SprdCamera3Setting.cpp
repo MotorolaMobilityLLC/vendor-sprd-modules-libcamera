@@ -1406,7 +1406,7 @@ bool SprdCamera3Setting::getLcdSize(uint32_t *width, uint32_t *height) {
 
     int fd = -1;
     int i = 0;
-    char name[64];
+    char name[64] = { 0};
 
     if (NULL == width || NULL == height)
         return false;

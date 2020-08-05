@@ -210,7 +210,7 @@ int SprdCamera3RegularChannel::channelCbRoutine(
 int SprdCamera3RegularChannel::channelClearInvalidQBuff(
     uint32_t frame_num, int64_t timestamp, camera_stream_type_t stream_type) {
     camera3_stream_t *stream;
-    buffer_handle_t *buffer;
+    buffer_handle_t *buffer = NULL;
     int32_t buff_num;
     uint32_t buff_frame_number;
     int8_t index = stream_type - REGULAR_STREAM_TYPE_BASE;

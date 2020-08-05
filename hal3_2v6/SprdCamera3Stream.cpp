@@ -128,6 +128,8 @@ int SprdCamera3Stream::buffDoneQ2(uint32_t frameNumber,
         mBuffNum++;
         buff_hal->buffer_handle = buffer;
         buff_hal->frame_number = frameNumber;
+        buff_hal->mem_info.bufferPtr = NULL;
+        buff_hal->mem_info.pbuffer = NULL;
         HAL_LOGV("frame_number %d, handle %p", buff_hal->frame_number, buffer);
         mBufferList.add(buff_hal);
     }
@@ -179,6 +181,8 @@ int SprdCamera3Stream::buffDoneQ(uint32_t frameNumber,
         mBuffNum++;
         buff_hal->buffer_handle = buffer;
         buff_hal->frame_number = frameNumber;
+        buff_hal->mem_info.bufferPtr = NULL;
+        buff_hal->mem_info.pbuffer = NULL;
         mBufferList.add(buff_hal);
     }
 

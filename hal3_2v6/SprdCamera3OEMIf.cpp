@@ -4141,6 +4141,7 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
 #ifdef CONFIG_CAMERA_EIS
         vsOutFrame frame_out;
         frame_out.frame_data = NULL;
+        frame_out.frame_num = 0;
         HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
         if (sprddefInfo->sprd_eis_enabled) {
             // camera exit/switch dont need to do eis
@@ -5138,7 +5139,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     cmr_uint pic_addr_vir = 0x0;
     SprdCamera3Stream *pic_stream = NULL;
     int ret;
-    uint32_t heap_size;
+    uint32_t heap_size = 0;
     SprdCamera3PicChannel *picChannel =
         reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
     SprdCamera3RegularChannel *regularChannel =
@@ -7631,7 +7632,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_FLASH_MODE:
         if (getMultiCameraMode() == MODE_MULTI_CAMERA || 0 <= mCameraId <= 16) {
-            int8_t flashMode;
+            int8_t flashMode = 0;
             FLASH_Tag flashInfo;
             mSetting->getFLASHTag(&flashInfo);
             mSetting->androidFlashModeToDrvFlashMode(flashInfo.mode,
@@ -11573,6 +11574,7 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
+    frame_in.frame_num = 0;
     frame_out.frame_data = NULL;
     EIS_CROP_Tag eiscrop_Info;
     int64_t boot_time = frame->monoboottime;
