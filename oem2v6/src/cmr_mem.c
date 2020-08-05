@@ -221,6 +221,7 @@ int camera_get_raw_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size
     char prop[PROPERTY_VALUE_MAX] = {0};
     property_get("persist.vendor.cam.res.multi.camera.fullsize", prop, "0");
     if (atoi(prop) == 1 && camera_id == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK) &&
+        sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK) != SENSOR_ID_INVALID &&
         sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_WIDE, SNS_FACE_BACK) != SENSOR_ID_INVALID) {
         if (largest_picture_width[sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_WIDE, SNS_FACE_BACK)] != 0) {
             largest_picture_width[camera_id] =

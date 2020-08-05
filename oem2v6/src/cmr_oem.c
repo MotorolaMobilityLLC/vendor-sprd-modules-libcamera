@@ -7456,6 +7456,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     cmr_u32 NORMAL = 70;
     sizeParam_t sizeparam;
     cmr_bzero(&sizeparam, sizeof(sizeparam));
+    cmr_bzero(&enc_cb_param, sizeof(enc_cb_param));
 
     if (!oem_handle || !src.addr_vir.addr_y || !pic_enc.addr_vir.addr_y) {
         CMR_LOGE("in parm error");
@@ -9757,6 +9758,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             if (!camera_front_lcd_flash_activie(cfg.flash_idx))
                 ret = cmr_grab_cfg_flash(grab_handle, &cfg);
         }
+        cmr_bzero(&flash_opt, sizeof(flash_opt));
 
         if ((param_ptr->cmd_value == FLASH_OPEN ||
              param_ptr->cmd_value == FLASH_HIGH_LIGHT) &&
@@ -14038,6 +14040,8 @@ cmr_int camera_local_set_video_buffer(cmr_handle oem_handle,
     struct camera_context *cxt;
     struct sensor_exp_info exp_info;
     cam_buffer_info_t buffer;
+    memset(&buffer, 0, sizeof(cam_buffer_info_t));
+
     if (!oem_handle || !fd || !src_vir_addr) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
@@ -15312,7 +15316,7 @@ cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
     struct img_rect cur_rect;
     struct img_size cur_size;
     struct img_rect dst_rect;
-    float ratio;
+    float ratio = 0;
     cmr_u32 sn_mode = 0;
 
     cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id, &sn_mode);
@@ -16530,6 +16534,7 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
     struct awbc_cfg awbc;
     char datetime[18];
 
+    cmr_bzero(&awbc, sizeof(awbc));
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
     if (isp_cxt->isp_handle == NULL) {

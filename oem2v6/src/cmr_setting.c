@@ -1453,7 +1453,7 @@ static cmr_int setting_update_gps_info(struct setting_component *cpt,
     uint32_t longitude_mm_denominator = 0;
     uint32_t longitude_ss_numerator = 0;
     uint32_t longitude_ss_denominator = 0;
-    char gps_date_buf[12] = {0};
+    char gps_date_buf[11] = {0};
     time_t timep;
     struct tm *p;
     char *gps_date;

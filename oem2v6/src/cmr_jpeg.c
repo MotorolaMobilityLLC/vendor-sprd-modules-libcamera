@@ -185,6 +185,8 @@ exit:
             codec_handle = NULL;
         }
         if (jcxt) {
+            dlclose(jcxt->mLibHandle);
+            jcxt->mLibHandle = NULL;
             free(jcxt);
             jcxt = NULL;
         }
@@ -362,6 +364,8 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr,
     if (PNULL == input_param.temp_exif_isp_buf_ptr) {
         free(input_param.temp_buf_ptr);
         input_param.temp_buf_ptr = NULL;
+        free(input_param.temp_exif_isp_dbg_buf_ptr);
+        input_param.temp_exif_isp_dbg_buf_ptr = NULL;
         return JPEG_CODEC_NO_MEM;
     }
 

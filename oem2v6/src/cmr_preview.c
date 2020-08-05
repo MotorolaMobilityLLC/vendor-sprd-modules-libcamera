@@ -2294,7 +2294,7 @@ cmr_int threednr_sw_prev_callback_process(struct ipm_frame_out *cb_param) {
     prev_pop_video_buffer_sw_3dnr(prev_handle, threednr_info->camera_id,
                                   &threednr_info->data, 0);
     if (IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
-        cmr_uint rot_index;
+        cmr_uint rot_index = CMR_CAMERA_SUCCESS;
         ret =
             prev_get_src_rot_buffer(prev_cxt, &threednr_info->data, &rot_index);
         CMR_LOGD("rot_index %ld", rot_index);
@@ -16171,7 +16171,7 @@ cmr_int prev_ultra_wide_open(struct prev_handle *handle, cmr_u32 camera_id) {
         CMR_LOGD("ultra wide handle preview inited already");
         goto exit;
     }
-
+    cmr_bzero(&out_param, sizeof(out_param));
     cmr_grab_get_dcam_path_trim(cxt->grab_cxt.grab_handle, &sn_trim);
     sensor_info = &handle->prev_cxt[camera_id].sensor_info;
 

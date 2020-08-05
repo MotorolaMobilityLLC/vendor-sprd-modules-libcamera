@@ -485,7 +485,7 @@ cmr_int dump_image_tags(char *tag, char *tag_suffix,
                     cmr_u32 image_size)
  {
      cmr_int ret = CMR_CAMERA_SUCCESS;
-     cmr_u32 size;
+     cmr_u32 size = 0;
      char file_name[512];
      char tmp_str[40];
      FILE *fp = NULL;
