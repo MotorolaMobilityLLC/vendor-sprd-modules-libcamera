@@ -496,7 +496,7 @@ static cmr_s32 ispctl_set_lsc_gain(cmr_handle isp_alg_handle)
 		BLOCK_PARAM_CFG(io_pm_input, pm_param,
 			ISP_PM_BLK_LSC_MEM_ADDR,
 			ISP_BLK_2D_LSC, update_info.lsc_buffer_addr,
-			lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
+			(cmr_u32)(lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16)));
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
 	}
 

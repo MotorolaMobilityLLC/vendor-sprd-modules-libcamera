@@ -137,7 +137,7 @@ static void lsc_cmd_set_output(cmr_u16 * table, cmr_u32 width, cmr_u32 height, c
 {
 	char prop[256];
 	property_get("debug.isp.alsc.table.pattern", prop, "0");
-	int index_r, index_gr, index_gb, index_b;
+	unsigned int index_r, index_gr, index_gb, index_b;
 	unsigned int i, j;
 
 	switch (gain_pattern) {
@@ -219,7 +219,7 @@ static void lsc_cmd_set_output(cmr_u16 * table, cmr_u32 width, cmr_u32 height, c
 static int lsc_dump_stat_bmp(char *file, cmr_uint img_width, cmr_uint img_height, cmr_uint width, cmr_uint height, cmr_u32 * r, cmr_u32 * g, cmr_u32 * b)
 {
 	unsigned int i, j;
-	unsigned int line_align = (width * 3 + 3) & (~3);
+	unsigned int line_align = (unsigned int)((width * 3 + 3) & (~3));
 	unsigned char *pbgr = (unsigned char *)malloc(line_align * height);
 	memset(pbgr, 0, line_align * height);
 
@@ -229,6 +229,9 @@ static int lsc_dump_stat_bmp(char *file, cmr_uint img_width, cmr_uint img_height
 	unsigned int divisor = pix_num_per_block * 4;	// 10 bit to 8 bit
 
 	unsigned char *pbuf = pbgr;
+	if (NULL == pbgr){
+		return -1;
+	}
 	for (j = 0; j < height; j++) {
 		for (i = 0; i < width; i++) {
 			unsigned int r32 = *r++ / divisor;
@@ -378,16 +381,16 @@ static void lsc_dump_gain(cmr_u16 * table, cmr_u32 width, cmr_u32 height, cmr_u3
 	if (mkdir(CAMERA_DATA_FILE "/lsc/", 0755) != 0) {
 		char filename[256];
 		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_gr.txt", camera_id, frame_count);
-		lsc_dump(tmp + width * height * off_gr, width, height, filename);
+		lsc_dump(tmp + (long)(width * height * off_gr), width, height, filename);
 
 		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_r.txt", camera_id, frame_count);
-		lsc_dump(tmp + width * height * off_r, width, height, filename);
+		lsc_dump(tmp + (long)(width * height * off_r), width, height, filename);
 
 		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_b.txt", camera_id, frame_count);
-		lsc_dump(tmp + width * height * off_b, width, height, filename);
+		lsc_dump(tmp + (long)(width * height * off_b), width, height, filename);
 
 		sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_%05d_gb.txt", camera_id, frame_count);
-		lsc_dump(tmp + width * height * off_gb, width, height, filename);
+		lsc_dump(tmp + (long)(width * height * off_gb), width, height, filename);
 	}
 }
 
@@ -832,17 +835,17 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 
 	if (cxt->is_planar == 0) {
 		for (i = 0; i < new_width * new_height; i++) {
-			lsc_result_address_new[4 * i + off_gr] = output_gr[i] * lsc_new_weight_tab_gr[i];
-			lsc_result_address_new[4 * i + off_r] = output_r[i] * lsc_new_weight_tab_r[i];
-			lsc_result_address_new[4 * i + off_b] = output_b[i] * lsc_new_weight_tab_b[i];
-			lsc_result_address_new[4 * i + off_gb] = output_gb[i] * lsc_new_weight_tab_gb[i];
+			lsc_result_address_new[4 * i + off_gr] = (cmr_u16)(output_gr[i] * lsc_new_weight_tab_gr[i]);
+			lsc_result_address_new[4 * i + off_r] = (cmr_u16)(output_r[i] * lsc_new_weight_tab_r[i]);
+			lsc_result_address_new[4 * i + off_b] = (cmr_u16)(output_b[i] * lsc_new_weight_tab_b[i]);
+			lsc_result_address_new[4 * i + off_gb] = (cmr_u16)(output_gb[i] * lsc_new_weight_tab_gb[i]);
 		}
 	} else {
 		for (i = 0; i < new_width * new_height; i++) {
-			lsc_result_address_new[i + off_gr * new_width * new_height] = output_gr[i] * lsc_new_weight_tab_gr[i];
-			lsc_result_address_new[i + off_r * new_width * new_height] = output_r[i] * lsc_new_weight_tab_r[i];
-			lsc_result_address_new[i + off_b * new_width * new_height] = output_b[i] * lsc_new_weight_tab_b[i];
-			lsc_result_address_new[i + off_gb * new_width * new_height] = output_gb[i] * lsc_new_weight_tab_gb[i];
+			lsc_result_address_new[i + off_gr * new_width * new_height] = (cmr_u16)(output_gr[i] * lsc_new_weight_tab_gr[i]);
+			lsc_result_address_new[i + off_r * new_width * new_height] = (cmr_u16)(output_r[i] * lsc_new_weight_tab_r[i]);
+			lsc_result_address_new[i + off_b * new_width * new_height] = (cmr_u16)(output_b[i] * lsc_new_weight_tab_b[i]);
+			lsc_result_address_new[i + off_gb * new_width * new_height] = (cmr_u16)(output_gb[i] * lsc_new_weight_tab_gb[i]);
 		}
 	}
 
@@ -884,10 +887,10 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 	cmr_u32 full_img_height = lsc_param->img_height;
 	cmr_u32 lsc_otp_grid = lsc_param->grid;
 	cmr_u8 *lsc_otp_addr;
-	cmr_u16 lsc_otp_len;
+	cmr_u16 lsc_otp_len = 0;
 	cmr_s32 compressed_lens_bits = 14;
 	cmr_s32 lsc_otp_width, lsc_otp_height;
-	cmr_s32 lsc_otp_len_chn;
+	cmr_s32 lsc_otp_len_chn = 0;
 	cmr_s32 lsc_otp_chn_gain_num;
 	cmr_u8 *oc_otp_data;
 	cmr_u16 oc_otp_len;
@@ -952,7 +955,7 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 				lsc_otp_info = &lsc_otp_info_ptr->rdm_info;
 				oc_otp_info = &oc_otp_info_ptr->rdm_info;
 
-				if (lsc_otp_info != NULL && oc_otp_info != NULL) {
+				if (NULL != lsc_otp_info && NULL != oc_otp_info) {
 					lsc_otp_addr = (cmr_u8 *) lsc_otp_info->data_addr;
 					lsc_otp_len = lsc_otp_info->data_size;
 					lsc_otp_len_chn = lsc_otp_len / 4;
@@ -1046,10 +1049,10 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 	if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
 		cmr_u16 *lsc_16_bits = (cmr_u16 *) malloc(lsc_ori_chn_len * 4);
-		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
-		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + lsc_otp_len_chn * 1), lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
-		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
-		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
+		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + (long)(lsc_otp_len_chn * 0)), lsc_16_bits + (long)(lsc_otp_chn_gain_num * 0), lsc_otp_chn_gain_num);
+		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + (long)(lsc_otp_len_chn * 1)), lsc_16_bits + (long)(lsc_otp_chn_gain_num * 1), lsc_otp_chn_gain_num);
+		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + (long)(lsc_otp_len_chn * 2)), lsc_16_bits + (long)(lsc_otp_chn_gain_num * 2), lsc_otp_chn_gain_num);
+		lsc_gain_14bits_to_16bits((cmr_u16 *) (lsc_otp_addr + (long)(lsc_otp_len_chn * 3)), lsc_16_bits + (long)(lsc_otp_chn_gain_num * 3), lsc_otp_chn_gain_num);
 
 		lsc_param->lsc_otp_raw_width = otp_raw_img_width;
 		lsc_param->lsc_otp_raw_height = otp_raw_img_height;
@@ -1062,13 +1065,13 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 		if (cxt->cmd_alsc_dump_otp == 1) {
 			char filename[256];
 			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_r.txt", lsc_param->camera_id);
-			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 0, lsc_otp_width, lsc_otp_height, filename);
+			lsc_dump(lsc_16_bits + (long)(lsc_otp_width * lsc_otp_height * 0), lsc_otp_width, lsc_otp_height, filename);
 			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_gr.txt", lsc_param->camera_id);
-			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 1, lsc_otp_width, lsc_otp_height, filename);
+			lsc_dump(lsc_16_bits + (long)(lsc_otp_width * lsc_otp_height * 1), lsc_otp_width, lsc_otp_height, filename);
 			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_gb.txt", lsc_param->camera_id);
-			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 2, lsc_otp_width, lsc_otp_height, filename);
+			lsc_dump(lsc_16_bits + (long)(lsc_otp_width * lsc_otp_height * 2), lsc_otp_width, lsc_otp_height, filename);
 			sprintf(filename, CAMERA_DATA_FILE "/lsc/cam%d_otp_dump_b.txt", lsc_param->camera_id);
-			lsc_dump(lsc_16_bits + lsc_otp_width * lsc_otp_height * 3, lsc_otp_width, lsc_otp_height, filename);
+			lsc_dump(lsc_16_bits + (long)(lsc_otp_width * lsc_otp_height * 3), lsc_otp_width, lsc_otp_height, filename);
 		}
 
 		ISP_LOGV("lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_width, lsc_otp_height, lsc_otp_grid);
@@ -1481,8 +1484,8 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 			BR = (float)org_tab[(jj + 1) * gain_width + (ii + 1)];
 			det_L = D_L[i];
 			det_U = D_U[j];
-			det_R = 2 * grid - det_L;
-			det_D = 2 * grid - det_U;
+			det_R = (float)(2 * grid - det_L);
+			det_D = (float)(2 * grid - det_U);
 
 			tmp = coef * (TL * det_D * det_R + TR * det_D * det_L + BL * det_U * det_R + BR * det_U * det_L);
 			new_tab[j * stat_width + i] = (unsigned short)LSC_CLIP(tmp + 0.5f, LSC_GAIN_LOWER, LSC_GAIN_UPPER);
@@ -1905,10 +1908,10 @@ static void lsc_save_last_info(struct lsc_last_info *cxt, unsigned int camera_id
 
 	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
 	//read all last info in lsc.file first
-	if (fp == NULL) {
+	if (NULL == fp) {
 		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3);
 	} else {
-		num_read = fread(ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3, fp);
+		num_read = (int)fread(ptr, 1, sizeof(struct lsc_last_info) * MAX_CAMERA_ID * 3, fp);
 		fclose(fp);
 		fp = NULL;
 	}
@@ -1919,7 +1922,7 @@ static void lsc_save_last_info(struct lsc_last_info *cxt, unsigned int camera_id
 
 	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "wb");
 
-	if (fp) {
+	if (NULL != fp ) {
 		ISP_LOGD("camera_id:%d, bv:%d, bv_gain:%d, table_rgb[%d,%d,%d,%d], table_size[%d,%d]", camera_id, cxt->bv, cxt->bv_gain,
 		     cxt->table[index[0]], cxt->table[index[1]], cxt->table[index[2]], cxt->table[index[3]], cxt->gain_width, cxt->gain_height);
 
@@ -1940,9 +1943,9 @@ static int lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id,
 
 	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
 
-	if (fp) {
+	if (NULL != fp) {
 		memset((void *)ptr, 0, sizeof(struct lsc_last_info) * 3 * MAX_CAMERA_ID); // each camera maximum have 3 kinds of lsc table size
-		num_read = fread((char *)ptr, 1, sizeof(struct lsc_last_info) * 3 * MAX_CAMERA_ID, fp);
+		num_read = (int)fread((char *)ptr, 1, sizeof(struct lsc_last_info) * 3 * MAX_CAMERA_ID, fp);
 
 		ptr = ptr + sizeof(struct lsc_last_info) * 3 * camera_id + sizeof(struct lsc_last_info) * table_flag; // table_flag: 0, 1, 2
 		memcpy((char *)cxt, (char *)ptr, sizeof(struct lsc_last_info));
@@ -1995,11 +1998,9 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			pm_lsc_full->gain_height = cxt->init_gain_height;
 			// Notice, if the crop action from binning size raw, do following action
 			binning_crop = 1;
-			if (binning_crop) {
-				pm_lsc_full->img_width /= 2;
-				pm_lsc_full->img_height /= 2;
-				pm_lsc_full->grid /= 2;
-			}
+			pm_lsc_full->img_width /= 2;
+			pm_lsc_full->img_height /= 2;
+			pm_lsc_full->grid /= 2;
 
 			pm_lsc_crop = (struct pm_lsc_crop *)malloc(sizeof(struct pm_lsc_crop));
 			pm_lsc_crop->img_width = fwstart_info->img_width_new;
@@ -2032,11 +2033,9 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			pm_lsc_full->gain_height = cxt->init_gain_height;
 			// Notice, if the crop action from binning size raw, do following action
 			binning_crop = 1;
-			if (binning_crop) {
-				pm_lsc_full->img_width /= 2;
-				pm_lsc_full->img_height /= 2;
-				pm_lsc_full->grid /= 2;
-			}
+			pm_lsc_full->img_width /= 2;
+			pm_lsc_full->img_height /= 2;
+			pm_lsc_full->grid /= 2;
 
 			pm_lsc_crop = (struct pm_lsc_crop *)malloc(sizeof(struct pm_lsc_crop));
 			pm_lsc_crop->img_width = fwstart_info->img_width_new;

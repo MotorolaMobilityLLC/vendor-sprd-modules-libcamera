@@ -150,8 +150,8 @@ static int _lsc_table_wrapper(uint16_t * lsc_otp_tbl, int grid, int image_width,
 	*tbl_h = sy;
 
 	for (i = 0; i < 4; i++) {
-		otp_chn[i] = lsc_otp_tbl + i * nx * ny;
-		tbl_chn[i] = dst_table + i * sx * sy;
+		otp_chn[i] = lsc_otp_tbl + ((long) i * nx * ny);
+		tbl_chn[i] = dst_table + ((long) i * sx * sy);
 	}
 
 	lsc_ops.lsc2d_calib_param_default(&calib_param, grid, lpf_radius, shading_pct);
@@ -208,15 +208,15 @@ static void _lsc_chnl_linear_scaler(unsigned short* src_tab, int src_grid, int s
 			if(start_x >= src_width - 1 && start_y < src_height - 1){
 				LT_L1 = src_tab[start_y    *(src_width) + start_x - 1];
 				LD_L1 = src_tab[(start_y+1)*(src_width) + start_x - 1];
-				dst_tab[j*(dst_width) + i] = (LT + (LT - LT_L1)*ratio_x1)*ratio_y2 + (LD + (LD -LD_L1)*ratio_x1)*ratio_y1;
+				dst_tab[j*(dst_width) + i] =  (unsigned short)((LT + (LT - LT_L1)*ratio_x1)*ratio_y2 + (LD + (LD -LD_L1)*ratio_x1)*ratio_y1);
 			}else if(start_x < src_width - 1 && start_y >= src_height - 1){
 				LT_U1 = src_tab[(start_y-1)*(src_width) + start_x];
 				RT_U1 = src_tab[(start_y-1)*(src_width) + (start_x+1)];
-				dst_tab[j*(dst_width) + i] = (LT + (LT -LT_U1)*ratio_y1)*ratio_x2 + (RT + (RT - RT_U1)*ratio_y1)*ratio_x1;
+				dst_tab[j*(dst_width) + i] =  (unsigned short)((LT + (LT -LT_U1)*ratio_y1)*ratio_x2 + (RT + (RT - RT_U1)*ratio_y1)*ratio_x1);
 			}else if(start_x >= src_width - 1 && start_y >= src_height - 1){
 				LT_L1 = src_tab[start_y    *(src_width) + start_x - 1];
 				LT_U1 = src_tab[(start_y-1)*(src_width) + start_x];
-				dst_tab[j*(dst_width) + i] = (LT + (LT - LT_L1)*ratio_x1)*((ratio_x1+0.00001)/(ratio_x1+ratio_y1+0.00002)) + (LT + (LT - LT_U1)*ratio_y1)*((ratio_y1+0.00001)/(ratio_x1+ratio_y1+0.00002));
+				dst_tab[j*(dst_width) + i] =  (unsigned short)((LT + (LT - LT_L1)*ratio_x1)*((ratio_x1+0.00001)/(ratio_x1+ratio_y1+0.00002)) + (LT + (LT - LT_U1)*ratio_y1)*((ratio_y1+0.00001)/(ratio_x1+ratio_y1+0.00002)));
 			}else{
 				dst_tab[j*(dst_width) + i] = (unsigned short)(LT*ratio_x2*ratio_y2 + RT*ratio_x1*ratio_y2 + LD*ratio_x2*ratio_y1 + RD*ratio_x1*ratio_y1 + 0.5);
 			}
@@ -236,7 +236,7 @@ static void _lsc_chnl_linear_scaler(unsigned short* src_tab, int src_grid, int s
 	}
 }
 
-static void  _lsc_table_scaler(unsigned short *table, int src_grid, int src_width, int src_height, int dst_grid, int dst_width, int dst_height)
+static void  _lsc_table_scaler(unsigned short *table, unsigned int src_grid, unsigned int src_width, unsigned int src_height, unsigned int dst_grid, unsigned int dst_width, unsigned int dst_height)
 {
 	unsigned short src_tab_r [MAX_WIDTH*MAX_HEIGHT] = {0};
 	unsigned short src_tab_gr[MAX_WIDTH*MAX_HEIGHT] = {0};
@@ -247,9 +247,12 @@ static void  _lsc_table_scaler(unsigned short *table, int src_grid, int src_widt
 	unsigned short dst_tab_gb[MAX_WIDTH*MAX_HEIGHT] = {0};
 	unsigned short dst_tab_b [MAX_WIDTH*MAX_HEIGHT] = {0};
 	unsigned short* ch_r  = table;
-	unsigned short* ch_gr = table + src_width * src_height;
-	unsigned short* ch_gb = table + src_width * src_height * 2;
-	unsigned short* ch_b  = table + src_width * src_height * 3;
+	unsigned short* ch_gr = table + ((long)src_width * src_height);
+	unsigned short* ch_gb = table + ((long)src_width * src_height * 2);
+	unsigned short* ch_b  = table + ((long)src_width * src_height * 3);
+	if(NULL == table){
+		return;
+	}
 
 	ISP_LOGV("src:[%d, %d, %d], dst:[%d, %d, %d]", src_grid, src_width, src_height, dst_grid, dst_width, dst_height);
 
@@ -266,9 +269,9 @@ static void  _lsc_table_scaler(unsigned short *table, int src_grid, int src_widt
 	_lsc_chnl_linear_scaler(src_tab_b , src_grid, src_width, src_height, dst_tab_b , dst_grid, dst_width, dst_height);
 
 	ch_r  = table;
-	ch_gr = table + dst_width * dst_height;
-	ch_gb = table + dst_width * dst_height * 2;
-	ch_b  = table + dst_width * dst_height * 3;
+	ch_gr = table + ((long)dst_width * dst_height);
+	ch_gb = table + ((long)dst_width * dst_height * 2);
+	ch_b  = table + ((long)dst_width * dst_height * 3);
 	memcpy(ch_r , dst_tab_r , dst_width * dst_height * sizeof(unsigned short));
 	memcpy(ch_gr, dst_tab_gr, dst_width * dst_height * sizeof(unsigned short));
 	memcpy(ch_gb, dst_tab_gb, dst_width * dst_height * sizeof(unsigned short));
@@ -297,15 +300,15 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	cmr_u32 full_img_width = lsc_param->img_width;
 	cmr_u32 full_img_height = lsc_param->img_height;
 	cmr_u32 lsc_otp_grid = lsc_param->grid;
-	cmr_u8 *lsc_otp_addr;
-	cmr_u16 lsc_otp_len;
+	cmr_u8 *lsc_otp_addr = NULL;
+	cmr_u16 lsc_otp_len = 0;
 	cmr_s32 compressed_lens_bits = 14;
 	cmr_s32 lsc_otp_width, lsc_otp_height;
-	cmr_s32 lsc_otp_len_chn;
-	cmr_s32 lsc_otp_chn_gain_num;
+	cmr_s32 lsc_otp_len_chn = 0;
+	cmr_s32 lsc_otp_chn_gain_num = 0;
 	cmr_s32 gain_w, gain_h;
 	uint16_t *lsc_table = NULL;
-	cmr_u8 *oc_otp_data;
+	cmr_u8 *oc_otp_data = NULL;
 	cmr_u16 oc_otp_len;
 	cmr_u8 *otp_data_ptr;
 	cmr_u32 otp_data_len;
@@ -316,9 +319,9 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	cmr_u32 otp_raw_img_width = full_img_width;
 	cmr_u32 otp_raw_img_height = full_img_height;
 	double grid_ratio = 1.0;
-	int param_table_width = lsc_param->gain_width;
-	int param_table_height = lsc_param->gain_height;
-	int param_grid = lsc_param->grid;
+	unsigned int param_table_width = lsc_param->gain_width;
+	unsigned int param_table_height = lsc_param->gain_height;
+	unsigned int param_grid = lsc_param->grid;
 
 	// case for isp2.0 of 8M and 13M
 	if((3264-100 <= full_img_width && full_img_width <= 3264+100 && 2448-100 <= full_img_height && full_img_height <= 2448+100 && lsc_param->grid == 128)
@@ -376,7 +379,7 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 				lsc_otp_info = &lsc_otp_info_ptr->rdm_info;
 				oc_otp_info = &oc_otp_info_ptr->rdm_info;
 
-					if(lsc_otp_info != NULL && oc_otp_info != NULL){
+					if(NULL != lsc_otp_info && NULL!= oc_otp_info ){
 					lsc_otp_addr = (cmr_u8 *) lsc_otp_info->data_addr;
 					lsc_otp_len = lsc_otp_info->data_size;
 					lsc_otp_len_chn = lsc_otp_len / 4;
@@ -462,15 +465,15 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 		goto EXIT;
 	}
 
-	cmr_s32 lsc_ori_chn_len = lsc_otp_chn_gain_num * sizeof(uint16_t);
+	cmr_u32 lsc_ori_chn_len = (cmr_u32)(lsc_otp_chn_gain_num * sizeof(uint16_t));
 
 	if ((lsc_otp_addr != NULL) && (lsc_otp_len != 0)) {
 
 		uint16_t *lsc_16_bits = (uint16_t *) malloc(lsc_ori_chn_len * 4);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 0), lsc_16_bits + lsc_otp_chn_gain_num * 0, lsc_otp_chn_gain_num);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 1), lsc_16_bits + lsc_otp_chn_gain_num * 1, lsc_otp_chn_gain_num);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 2), lsc_16_bits + lsc_otp_chn_gain_num * 2, lsc_otp_chn_gain_num);
-		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + lsc_otp_len_chn * 3), lsc_16_bits + lsc_otp_chn_gain_num * 3, lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + ((long)lsc_otp_len_chn * 0)), lsc_16_bits + ((long)lsc_otp_chn_gain_num * 0), lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + ((long)lsc_otp_len_chn * 1)), lsc_16_bits + ((long)lsc_otp_chn_gain_num * 1), lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + ((long)lsc_otp_len_chn * 2)), lsc_16_bits + ((long)lsc_otp_chn_gain_num * 2), lsc_otp_chn_gain_num);
+		_lsc_gain_14bits_to_16bits((unsigned short *)(lsc_otp_addr + ((long)lsc_otp_len_chn * 3)), lsc_16_bits + ((long)lsc_otp_chn_gain_num * 3), lsc_otp_chn_gain_num);
 
 		lsc_table = (uint16_t *) malloc(32 * 32 * 4);
 		ret = _lsc_table_wrapper(lsc_16_bits, lsc_otp_grid, otp_raw_img_width, otp_raw_img_height, &gain_w, &gain_h, lsc_table);	//  wrapper otp table
@@ -493,7 +496,7 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 			else if((gain_w-1 == param_table_width || gain_h-1 == param_table_height) && (lsc_otp_grid*2 == param_grid))
 				grid_ratio = 0.5; // otp use bining size image (this raw image is without crop), camera is full size image
 
-			_lsc_table_scaler(lsc_table, lsc_otp_grid, gain_w, gain_h, param_grid*grid_ratio, param_table_width, param_table_height);
+			_lsc_table_scaler(lsc_table, lsc_otp_grid, gain_w, gain_h, (unsigned int)(param_grid*grid_ratio), param_table_width, param_table_height);
 			gain_w = lsc_param->gain_width;
 			gain_h = lsc_param->gain_height;
 			lsc_otp_grid = lsc_param->grid;
@@ -663,9 +666,9 @@ static void *lsc_sprd_init(void *in, void *out)
 		rtn = LSC_ALLOC_ERROR;
 		ISP_LOGE("fail to alloc!");
 		goto EXIT;
+	}else{
+		memset(cxt, 0, sizeof(*cxt));
 	}
-
-	memset(cxt, 0, sizeof(*cxt));
 
 	cxt->dst_gain = (cmr_u16 *) malloc(32 * 32 * 4 * sizeof(cmr_u16));
 	if (NULL == cxt->dst_gain) {
@@ -777,7 +780,7 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 static void lsc_scl_for_ae_stat(struct lsc_ctrl_context *cxt, struct lsc_adv_calc_param *param)
 {
 	cmr_u32 i,j,ii,jj;
-	cmr_u64 r = 0, g = 0, b = 0;
+	cmr_u32 r = 0, g = 0, b = 0;
 	cmr_u32 blk_num_w = param->stat_size.w;
 	cmr_u32 blk_num_h = param->stat_size.h;
 	cmr_u32 *r_stat = (cmr_u32*)param->stat_img.r;
@@ -816,12 +819,12 @@ static void lsc_scl_for_ae_stat(struct lsc_ctrl_context *cxt, struct lsc_adv_cal
 
 static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 {
-	cmr_int rtn = LSC_SUCCESS;
+	cmr_s32 rtn = LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
 	struct lsc_adv_calc_param *param = (struct lsc_adv_calc_param *)in;
 	struct lsc_adv_calc_result *result = (struct lsc_adv_calc_result *)out;
 	struct alsc_update_info update_info = { 0, 0, NULL };
-	cmr_s32 dst_gain_size = param->gain_width * param->gain_height * 4 * sizeof(cmr_u16);
+	cmr_u32 dst_gain_size = (cmr_u32)(param->gain_width * param->gain_height * 4 * sizeof(cmr_u16));
 
 	if (!handle) {
 		ISP_LOGE("fail to check param is NULL!");
@@ -849,7 +852,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 
 static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 {
-	cmr_int rtn = LSC_SUCCESS;
+	cmr_s32 rtn = LSC_SUCCESS;
 	struct lsc_ctrl_context *cxt = NULL;
 
 	if (!handle) {
