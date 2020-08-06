@@ -3435,7 +3435,6 @@ cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, c
 	if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 		(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 		is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 	if (NULL != data_len) {
 		if(is_compat_ae3) {
@@ -3467,7 +3466,6 @@ cmr_s32 get_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 
 	if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 		(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 		is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 	if (NULL != data_addr) {
 		if(is_compat_ae3) {
@@ -3576,7 +3574,6 @@ cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info * sensor_raw_fix, 
 	if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 		(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 		is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 	if(is_compat_ae3) {
 		*data_len = *data_len + sensor_raw_fix->ae3x.weight_tab[weight].len;
@@ -3598,7 +3595,6 @@ cmr_s32 get_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 	if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 		(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 		is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 	if (NULL != data_addr) {
 		if(is_compat_ae3) {
@@ -3622,7 +3618,6 @@ cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info * sensor_raw_fix, c
 	if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 		(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 		is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 	if (NULL != data_len) {
 		if(is_compat_ae3) {
@@ -3656,7 +3651,6 @@ cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 
 	if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 		(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 		is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 	if (NULL != data_addr && flicker < 2) {
 		if(is_compat_ae3) {
@@ -4173,7 +4167,6 @@ cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 		if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 			(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 			is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
@@ -4315,7 +4308,6 @@ cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 	if (((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000A) ||
 		(sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) == 0x000E)
 		is_compat_ae3 = 1;
-		ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 #endif
 	if(is_compat_ae3) {
 		memcpy((void *)sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info, (void *)(data_addr + offset_tmp), sensor_raw_fix->ae3x.scene_info[scene][flicker].scene_info_len);
