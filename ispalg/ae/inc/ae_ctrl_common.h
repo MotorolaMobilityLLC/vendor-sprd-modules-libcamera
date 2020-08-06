@@ -81,6 +81,51 @@ struct ae_lib_calc_out_2_x {
 	cmr_s32 evd_value;
 };
 
+struct ae_lib_calc_out_3_x {		//	ae_lib_calc_out
+	cmr_u32 frame_id;
+	cmr_u32 stable;
+	cmr_u32 face_stable;
+	cmr_u32 face_enable;
+	cmr_u32 near_stable;
+	cmr_s32 cur_bv;
+	cmr_s32 cur_bv_nonmatch;
+	cmr_u16 cur_lum;			/*the lum of image:0 ~255 */
+	cmr_u16 cur_lum_avg;	/*the lum without weight of image:0 ~255*/
+	cmr_u16 target_lum;
+	cmr_u16 base_target_lum;		//no face AE target luma
+	cmr_u16 stab_zone_in;
+	cmr_u16 stab_zone_out;
+	cmr_u32 flash_status;
+	cmr_s8 touch_status;
+	float cur_fps;				/*current fps:1~120 */
+	cmr_u16 abl_confidence;
+	cmr_s32 evd_value;
+	struct ae_ev_setting_param ev_setting;
+	struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
+	struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
+	/*AEM ROI setting*/
+	struct ae_point_type aem_roi_st;
+	struct ae_size aem_blk_size;
+	/*Bayer Hist ROI setting*/
+
+	struct ae_rect adjust_hist_roi;
+
+	/*APEX parameters*/
+	float bv;
+	float av;
+	float tv;
+	float sv;
+	/*mlog information(LCD display)*/
+	void *log_buf;
+	cmr_u32 log_len;
+	/*debug information(JPG Exif)*/
+	void *debug_info;
+	cmr_u32 debug_len;
+	/*privated information*/
+	cmr_u32 privated_data;
+
+};
+#if 0
 struct ae_lib_calc_out_3_x  {
 	cmr_u32 frame_id;
 	cmr_u32 stable;
@@ -121,7 +166,7 @@ struct ae_lib_calc_out_3_x  {
 	/*privated information*/
 	cmr_u32 privated_data;
 };
-
+#endif
 struct ae_lib_calc_out_common   {
 	struct ae_lib_calc_out_2_x ae_result_2_x;
 	struct ae_lib_calc_out_3_x ae_result_3_x;

@@ -25,7 +25,7 @@
 #include "ae/inc/ae_debug.h"
 #include "ae_ctrl.h"
 #include "flash/inc/flash.h"
-#include "isp_debug.h"
+//#include "isp_debug.h"
 #include "hdr/inc/sprd_hdr_api.h"
 #ifdef WIN32
 #include "stdio.h"
@@ -3592,7 +3592,7 @@ static void ae_save_exp_gain_param(struct ae_ctrl_cxt *cxt, struct ae_exposure_p
 			fclose(pf);
 			pf = NULL;
 		}
-	} else {
+	} else {	//sprintf -> snprintf 	for modify converity problem
 		sprintf(file_name, "%scamera_%d_ae.file", AE_EXP_GAIN_PARAM_FILE_NAME_MEDIA, cxt->camera_id);
 		pf = fopen(file_name, "wb");
 		if (pf) {
@@ -3891,8 +3891,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	trim.y = 0;
 	trim.w = work_info->resolution_info.frame_size.w;
 	trim.h = work_info->resolution_info.frame_size.h;
-	ae_update_monitor_unit(cxt, &trim);
-	ae_cfg_monitor(cxt);
+	cmr_s32 rtn1 = ae_update_monitor_unit(cxt, &trim);	//rtn1 rtn2 no means for avoiding to converity problem
+	cmr_s32 rtn2 = ae_cfg_monitor(cxt);
+	ISP_LOGV("ae_update_monitor_unit &ae_cfg_monitor; %d\n", (rtn1 & rtn2));
+	
 	/*for sharkle monitor */
 	ae_set_monitor(cxt, &trim);
 
@@ -3920,7 +3922,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			slave_aem_info.aem_stat_win_h = cxt->monitor_cfg.blk_num.h;
 
 			rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SLAVE_AEM_INFO, &slave_aem_info, NULL);
-			ISP_LOGD("sync:slave0, SET_SLAVE_AEM_INFO");
+			ISP_LOGD("sync:slave0, SET_SLAVE_AEM_INFO : %d\n", rtn);
 		}
 	}
 
@@ -3935,7 +3937,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		cxt->cur_status.adv_param.prof_mode = 0;
 		cxt->cur_status.adv_param.comp_param.mode = 0;
 		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
-		cxt->cur_status.adv_param.comp_param.value.ev_index = 0.0;			//(AE_EV_MOD_OFFSET): EV setting in professial mode
+		cxt->cur_status.adv_param.comp_param.value.ev_index = 0;			//(AE_EV_MOD_OFFSET): EV setting in professial mode
 	}
 
 	scene_param_in.scene_mod = cxt->cur_status.adv_param.scene_mode;
@@ -4459,32 +4461,32 @@ static void ae_set_fdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FDR_START, NULL);
 		ISP_LOGD("_isp_fdr_callback do-capture!\r\n");
 	}
-		max_frame_line = (cmr_u32) (1.0 * 1000000000 / cxt->fps_range.min / cxt->cur_status.adv_param.cur_ev_setting.line_time);
-		min_frame_line = (cmr_u32) (1.0 * cxt->ae_tbl_param.min_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+	max_frame_line = (cmr_u32) (1.0 * 1000000000 / cxt->fps_range.min / cxt->cur_status.adv_param.cur_ev_setting.line_time);
+	min_frame_line = (cmr_u32) (1.0 * cxt->ae_tbl_param.min_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 
-		ISP_LOGV("max_frame_line %d, min_frame_line %d, fps_min %d, cur_line_time %d\n", max_frame_line, min_frame_line, cxt->fps_range.min, cxt->cur_status.adv_param.cur_ev_setting.line_time);
-		//if (cxt->fdr_frame_cnt <= cxt->fdr_flag ) {
-			base_exposure_line = cxt->fdr_exp_line;
-			base_gain = cxt->fdr_gain;
-			down_exposure = (cmr_u32)(pow(2,ev_result)* base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
-			ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  ev_result);
-			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
-			ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
-			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-			cxt->cur_status.adv_param.prof_mode = 1;
-			ISP_LOGD("_isp_fdr_down_exp: exp_line %d, gain %d\n", exp_line, gain);
-		/*}else{
-			base_exposure_line = cxt->fdr_exp_line;
-			base_gain = cxt->fdr_gain;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = base_gain;
-			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-			cxt->cur_status.adv_param.prof_mode = 1;
-			ISP_LOGD("_isp_fdr_normal_exp: exp_line %d, gain %d\n", base_exposure_line, base_gain);
-		}
-		*/
+	ISP_LOGV("max_frame_line %d, min_frame_line %d, fps_min %d, cur_line_time %d\n", max_frame_line, min_frame_line, cxt->fps_range.min, cxt->cur_status.adv_param.cur_ev_setting.line_time);
+	//if (cxt->fdr_frame_cnt <= cxt->fdr_flag ) {
+	base_exposure_line = cxt->fdr_exp_line;
+	base_gain = cxt->fdr_gain;
+	down_exposure = pow(2,ev_result)* base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+	ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  ev_result);
+	ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+	ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
+	cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+	cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
+	cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+	cxt->cur_status.adv_param.prof_mode = 1;
+	ISP_LOGD("_isp_fdr_down_exp: exp_line %d, gain %d\n", exp_line, gain);
+	/*}else{
+		base_exposure_line = cxt->fdr_exp_line;
+		base_gain = cxt->fdr_gain;
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = base_gain;
+		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+		cxt->cur_status.adv_param.prof_mode = 1;
+		ISP_LOGD("_isp_fdr_normal_exp: exp_line %d, gain %d\n", base_exposure_line, base_gain);
+	}
+	*/
 }
 
 static void ae_set_fdr_detect(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
@@ -5030,7 +5032,7 @@ static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	}
 
 	calc_result->is_skip_cur_frame = cxt->calc_results.is_skip_cur_frame;
-	memcpy(&calc_result->ae_result_3_x, &cxt->calc_results.ae_result, sizeof(struct ae_calc_results_3_x));
+	memcpy(&calc_result->ae_result_3_x, &cxt->calc_results.ae_result, sizeof(struct ae_lib_calc_out_3_x));
 	memcpy(&calc_result->ae_output, &cxt->calc_results.ae_output, sizeof(struct ae_calc_out));
 	memcpy(&calc_result->ae_ev, &cxt->calc_results.ae_ev, sizeof(struct ae_get_ev));
 	memcpy(&calc_result->monitor_info, &cxt->calc_results.monitor_info, sizeof(struct ae_monitor_info));
@@ -5172,7 +5174,7 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 	 {
 		char fname11[256];
 		char dir_str11[256] ="/data/vendor/cameraserver/";
-		sprintf(fname11, "%saem_new_binning_avg4RGB.txt",dir_str11);
+		snprintf(fname11, "%saem_new_binning_avg4RGB.txt",dir_str11);
 		FILE* fp11 = fopen(fname11, "w");
 		if (fp11){
 			for (int ii = 0; ii < 64; ii++){
@@ -5194,7 +5196,7 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 {
 		char fname22[256];
 		char dir_str22[256] ="/data/vendor/cameraserver/";
-		sprintf(fname22, "%saem_new_sum.txt",dir_str22);
+		snprintf(fname22, "%saem_new_sum.txt",dir_str22);
 		FILE* fp22 = fopen(fname22, "w");
 		if (fp22){
 			for (int ii = 0; ii < 64; ii++){
@@ -5281,7 +5283,7 @@ static void ae_binning_for_aem_stats(struct ae_ctrl_cxt *cxt, void * img_stat)
  	{
 		char fname11[256];
 		char dir_str11[256] ="/data/vendor/cameraserver/";
-		sprintf(fname11, "%saem_old_sum.txt",dir_str11);
+		snprintf(fname11, "%saem_old_sum.txt",dir_str11);
 		FILE* fp11 = fopen(fname11, "w");
 		if (fp11){
 			for (int ii = 0; ii < 64; ii++){
@@ -5490,8 +5492,8 @@ static void ae_calculation_debug(struct ae_ctrl_cxt *cxt, struct ae_calc_in *cal
 				fprintf(fp,"\n");
 			}
 		//}
+		fclose(fp);
 	}
-	fclose(fp);
 	}
 
 	{
@@ -5518,8 +5520,8 @@ static void ae_calculation_debug(struct ae_ctrl_cxt *cxt, struct ae_calc_in *cal
 					fprintf(fp33,"\n");
 				}
 			}
-		}
-		fclose(fp33);
+			fclose(fp33);
+		}	
 	}
 
 	{
@@ -5529,13 +5531,12 @@ static void ae_calculation_debug(struct ae_ctrl_cxt *cxt, struct ae_calc_in *cal
 	FILE* fp0 = fopen(fname, "w");
 	if (fp0){
 		for (int ii = 0; ii < 128; ii++){
-			for (int jj = 0; jj < 128; jj++ ){
+			for (int jj = 0; jj < 128; jj++ )
 				fprintf(fp0,"%d,%d,%d  ",calc_in->stat_img[ii * 128 + jj],calc_in->stat_img[ii * 128 + jj + 128*128],calc_in->stat_img[ii * 128 + jj + 2 * 128*128] );
-			}
-				fprintf(fp0,"\n");
+			fprintf(fp0,"\n");
 		}
+		fclose(fp0);
 	}
-	fclose(fp0);
 	}
 }
 
@@ -5787,7 +5788,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		cxt->cur_status.debug_info.touch_info[1].cam_id = 2;
 		cxt->cur_status.debug_info.touch_info[2].cam_id = 3;
 
-		for (i = 0; i++; i < 3) {
+		for (i = 0;  i < 3; i++) {
 			cxt->cur_status.debug_info.touch_info[i].frame_id = ae_debug_framId[i];
 			cxt->cur_status.debug_info.touch_info[i].touch_roi.x = ae_debug_zoom_roi[i].region.start_x;
 			cxt->cur_status.debug_info.touch_info[i].touch_roi.y = ae_debug_zoom_roi[i].region.start_y;
@@ -6842,15 +6843,16 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 				len = ftell(pf);/*to get the size of bin file */
 				fseek(pf, 0L, SEEK_SET);/*move the index flag to the start position*/
 				if(len != -1){
-                                        cxt->tune_buf = malloc(len);
-                                        int sz = 0;
-                                        sz = fread(cxt->tune_buf, 1, len, pf);
-                                        if(sz != len)
-                                                ISP_LOGE("ae_sprd_init fread faild");
-                                        fclose(pf);
+					cxt->tune_buf = (cmr_u32 *) malloc(len);
+					int sz = 0;
+					if(cxt->tune_buf)
+						sz = fread(cxt->tune_buf, 1, len, pf);
+					if(sz != len)
+						ISP_LOGE("ae_sprd_init fread faild");
+					misc_init_in.tuning_param = (void*)&cxt->tune_buf[0];
 				}else
-                                        ISP_LOGE("ae_sprd_init fseek faild");
-				misc_init_in.tuning_param = (void*)&cxt->tune_buf[0];
+					ISP_LOGE("ae_sprd_init fseek faild");
+				fclose(pf);
 			} else
 				ISP_LOGW("read tune bin failed: %s\n", file_name);
 		}

@@ -2658,13 +2658,13 @@ static cmr_s32 ae_set_exp_time(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	cmr_u32 exp_time = 10000000;
 	if (param) {
 		exp_time = *(cmr_u32 *) param;
-		if (exp_time >= 0) {
-			if(cxt->manual_exp_time == exp_time){
-				ISP_LOGD("shutter no change,no need to set");
-				return AE_SUCCESS;
-			}
-			cxt->manual_exp_time = exp_time;
+		
+		if(cxt->manual_exp_time == exp_time){
+			ISP_LOGD("shutter no change,no need to set");
+			return AE_SUCCESS;
 		}
+		cxt->manual_exp_time = exp_time;
+		
 		if(cxt->manual_iso_value) {
 			if(cxt->manual_exp_time) {
 				ae_set_force_pause(cxt, 1);
@@ -2699,6 +2699,7 @@ static cmr_s32 ae_set_manual_iso(struct ae_ctrl_cxt *cxt, cmr_handle param)
 	cmr_u32 exp_time = 10000000;	//init default value(10ms)
 	cmr_u32 line_time = cxt->snr_info.line_time;
 	cmr_u32 gain = 1280;		//init default value(10xgain)
+	ISP_LOGV("Init_default_value: iso: %d, exp_time: %d, gain: %d\n", iso, exp_time, gain);
 
 	if (param) {
 		iso = *(cmr_u32 *) param;
@@ -2718,6 +2719,8 @@ static cmr_s32 ae_set_manual_iso(struct ae_ctrl_cxt *cxt, cmr_handle param)
 			cxt->cur_status.settings.reserve_case = 1;
 			ISP_LOGV("exp_time: %d line_time: %d gain: %d iso: %d", exp_time, line_time, gain, iso);
 		}
+	} else {
+		rtn = AE_ERROR;
 	}
 	return rtn;
 }
@@ -4536,9 +4539,9 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 	cxt->calcFirstFlag = 0;
 }
 
-#include <cutils/sched_policy.h>
+//#include <cutils/sched_policy.h>
 #include <sys/resource.h>
-#include <system/thread_defs.h>
+//#include <system/thread_defs.h>
 static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -5885,7 +5888,7 @@ static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 		return rtn;
 	}
 	calc_result->is_skip_cur_frame = cxt->calc_results.is_skip_cur_frame;
-	memcpy(&calc_result->ae_result_2_x, &cxt->calc_results.ae_result, sizeof(struct ae_calc_results_2_x));
+	memcpy(&calc_result->ae_result_2_x, &cxt->calc_results.ae_result, sizeof(struct ae_lib_calc_out_2_x));
 	memcpy(&calc_result->ae_output, &cxt->calc_results.ae_output, sizeof(struct ae_calc_out));
 	memcpy(&calc_result->ae_ev, &cxt->calc_results.ae_ev, sizeof(struct ae_get_ev));
 	memcpy(&calc_result->monitor_info, &cxt->calc_results.monitor_info, sizeof(struct ae_monitor_info));
@@ -6210,7 +6213,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 
 	if(ae_dynamic_sync == 1) {
-		struct ae_match_stats_data stat_data = {0};
+		struct ae_match_stats_data *stat_data = (struct ae_match_stats_data *)malloc(sizeof(struct ae_match_stats_data));
+		memset(stat_data, 0, sizeof(struct ae_match_stats_data));
 		cmr_u32 sync_aem_stats[3*1024] = {0};
 		cmr_u32 aem_blk_num = 1024;
 		cmr_u32 cur_sensor_role =0;
@@ -6221,20 +6225,22 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		}
 
 		if(cxt->is_multi_mode) {
-			stat_data.is_last_frm = calc_in->is_last_frm;
-			stat_data.monoboottime = calc_in->monoboottime;
-			stat_data.stats_data = &sync_aem_stats[0];
-			stat_data.len = sizeof(sync_aem_stats);
+			stat_data->is_last_frm = calc_in->is_last_frm;
+			stat_data->monoboottime = calc_in->monoboottime;
+			stat_data->stats_data = &sync_aem_stats[0];
+			stat_data->len = sizeof(sync_aem_stats);
 			for(cmr_u32 i = 0; i < 3 * 1024; i++) {
 				sync_aem_stats[i] = cxt->sync_aem[i]>>2;
 			}
-			rtn = cxt->ptr_isp_br_ioctrl(cur_sensor_role, SET_AEM_SYNC_STAT, &stat_data, NULL );
+			rtn = cxt->ptr_isp_br_ioctrl(cur_sensor_role, SET_AEM_SYNC_STAT, stat_data, NULL );
 			if(rtn) {
 				ISP_LOGE("Dynamic AE_sync mode,  set master AEM data err.\n");
 			} else {
 				ISP_LOGV("Dynamic AE_sync mode,  master win_size.h=%d, win_size.w=%d",cxt->cur_status.win_size.h ,cxt->cur_status.win_size.w);
 			}
 		}
+		free(stat_data);
+		//stat_data = NULL;
 	}
 
 	// get effective E&g
@@ -6457,8 +6463,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 
 	if (rtn) {
-		ISP_LOGE("fail to calc ae misc");
 		rtn = AE_ERROR;
+		ISP_LOGE("fail to calc ae misc: %d\n", rtn);
 		goto ERROR_EXIT;
 	}
 	cxt->cur_status.ae1_finfo.update_flag = 0;	// add by match box for fd_ae reset the status
@@ -6526,7 +6532,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			cxt->has_mf = cxt->has_mf_cnt = 0;
 			cb_type = AE_CB_CONVERGED;
 			stop_skip_en = 1;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stop_skip_en);
+			if(*cxt->isp_ops.callback)
+				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &stop_skip_en);
 			ISP_LOGD("skip_num stop \r\n");
 		} else {
 			ISP_LOGD("skip_num prepare\r\n");
