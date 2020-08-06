@@ -51,8 +51,8 @@
 
 /* sensor parameters begin */
 /* effective sensor output image size */
-#define VIDEO_WIDTH 2104
-#define VIDEO_HEIGHT 1560
+#define VIDEO_WIDTH 1280//2104
+#define VIDEO_HEIGHT 720//1560
 #define PREVIEW_WIDTH 2104
 #define PREVIEW_HEIGHT 1560
 #define SNAPSHOT_WIDTH 4208
@@ -61,8 +61,8 @@
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
 #define VIDEO_TRIM_Y 0
-#define VIDEO_TRIM_W 2104
-#define VIDEO_TRIM_H 1560
+#define VIDEO_TRIM_W 1280//2104
+#define VIDEO_TRIM_H 720//1560
 #define PREVIEW_TRIM_X 0
 #define PREVIEW_TRIM_Y 0
 #define PREVIEW_TRIM_W 2104
@@ -76,7 +76,7 @@
 #define LANE_NUM 4
 #define RAW_BITS 10
 
-#define VIDEO_MIPI_PER_LANE_BPS 576    /* 2*Mipi clk */
+#define VIDEO_MIPI_PER_LANE_BPS 190.4    /* 2*Mipi clk */
 #define PREVIEW_MIPI_PER_LANE_BPS 576  /* 2*Mipi clk */
 #define SNAPSHOT_MIPI_PER_LANE_BPS 1152 /* 2*Mipi clk */
 
@@ -86,7 +86,7 @@
 #define SNAPSHOT_LINE_TIME 10006
 
 /* frame length*/
-#define VIDEO_FRAME_LENGTH 3328
+#define VIDEO_FRAME_LENGTH 1110
 #define PREVIEW_FRAME_LENGTH 3328
 #define SNAPSHOT_FRAME_LENGTH 3328
 
@@ -1240,53 +1240,61 @@ static const SENSOR_REG_T hi1336_video_setting[] = {
     // Firmware Ver.   : v15
     ////////////////////////////////////////////////
 
-	{0x3250, 0xa060}, 
-	{0x0730, 0x600f}, 
-	{0x0732, 0xe1b0}, 
-	{0x1118, 0x0004}, 
-	{0x1200, 0x011f}, 
-	{0x1204, 0x1c01}, 
-	{0x1240, 0x0100}, 
-	{0x0b20, 0x8200}, 
-	{0x0f00, 0x0400}, 
-	{0x103e, 0x0100}, 
-	{0x1020, 0xc106}, 
-	{0x1022, 0x0617}, 
-	{0x1024, 0x0306}, 
-	{0x1026, 0x0609}, 
-	{0x1028, 0x1207}, 
-	{0x102a, 0x090a}, 
-	{0x102c, 0x1400}, 
-	{0x1010, 0x1340}, 
-	{0x1012, 0x0010}, 
-	{0x1014, 0x001b}, 
-	{0x1016, 0x001b}, 
-	{0x101a, 0x001b}, 
-	{0x0404, 0x0008}, 
-	{0x0406, 0x1087}, 
-	{0x0220, 0x0008}, 
-	{0x022a, 0x0017}, 
-	{0x0222, 0x0c80}, 
-	{0x022c, 0x0c89}, 
-	{0x0224, 0x002c}, 
-	{0x022e, 0x0c61}, 
-	{0x0f04, 0x0004}, 
-	{0x0f06, 0x0000}, 
-	{0x023a, 0x1122}, 
-	{0x0234, 0x1111}, 
-	{0x0238, 0x3311}, 
-	{0x0246, 0x0020}, 
-	{0x020a, 0x0cfb}, 
-	{0x021c, 0x0008}, 
-	{0x0206, 0x05dd}, 
-	{0x020e, 0x0d00}, 
-	{0x0b12, 0x0838}, 
-	{0x0b14, 0x0618}, 
-	{0x0204, 0x0000}, 
-	{0x041c, 0x0048}, 
-	{0x041e, 0x1047}, 
-	{0x0b04, 0x037e}, 
-	{0x027e, 0x0100}, 
+	{0x3250, 0xa060}, //sreg8 - RAMP,B[15:10]:d2a_ramp_rng_ctrl
+	{0x0730, 0x770f}, //pll_cfg_mipi_a PLL_CLK=750mhz b7-6:00_isp_div2(1/1) 
+	{0x0732, 0xe2b0}, //pll_cfg_mipi_b b13-11:100_isp_div1(1/5) b10-8:010_mipi_div1(1/3) b1-0:00_mipi_div2(1/1) 
+	{0x1118, 0x01a8}, //LSC r_win_y B[11]: Bit8 of y offset in start block when cropping. B[10:8] y start index of block when cropping. B[7:0] y offset in start block when cropping.
+	{0x1200, 0x011f}, //PDPC BYPASS : Dyna-DPC ON, PDEN flag OFF, PD-DPC ON
+	{0x1204, 0x1c01}, //PDPC DC Counting OFF, PD Around BYPASS OFF
+	{0x1240, 0x0100}, //pdpc_pd_cnt_max_value
+	{0x0b20, 0x8300}, //HBIN mode
+	{0x0f00, 0x0800}, //fmt ctrl
+	{0x1002, 0xc319}, //mipi_tx_op_mode_h, mipi_tx_op_mode_l
+	{0x1004, 0x2bab}, //mipi_data_id_ctrl, mipi_pd_data_id_ctrl
+	{0x103e, 0x0200}, //mipi_tx_col_read_ctrl
+	{0x1020, 0xc104}, //mipi_exit_seq, tlpx
+	{0x1022, 0x0410}, //mipi_tclk_prepare, tclk_zero
+	{0x1024, 0x0304}, //mipi_tclk_pre, ths_prepare
+	{0x1026, 0x0507}, //mipi_ths_zero, ths_trail
+	{0x1028, 0x0d05}, //mipi_tclk_post, tclk_trail
+	{0x102a, 0x0704}, //mipi_texit, tsync
+	{0x102c, 0x1400}, //mipi_tpd_sync
+	{0x1010, 0x07d0}, //mipi_vblank_delay
+	{0x1012, 0x009c}, //mipi_ch0_hblank_delay
+	{0x1014, 0x0013}, //mipi_hblank_short_delay1
+	{0x1016, 0x0013}, //mipi_hblank_short_delay2
+	{0x101a, 0x0013}, //mipi_pd_hblank_delay
+	{0x1038, 0x0000}, //mipi_virtual_channel_ctrl
+	{0x1042, 0x0008}, //mipi_pd_sep_ctrl_h, mipi_pd_sep_ctrl_l
+	{0x1048, 0x0080}, //mipi_pd_max_col_size
+	{0x1044, 0x0100}, //mipi_pd_col_size
+	{0x1046, 0x0004}, //mipi_pd_row_size
+	{0x0404, 0x0008}, //x addr start active
+	{0x0406, 0x1087}, //x addr end active
+	{0x0220, 0x0008}, //y addr start fobp
+	{0x022a, 0x0017}, //y addr end fobp
+	{0x0222, 0x0c80}, //y addr start dummy
+	{0x022c, 0x0c89}, //y addr end dummy
+	{0x0224, 0x020a}, //y addr start active
+	{0x022e, 0x0a83}, //y addr end active
+	{0x0f04, 0x0040}, //fmt x cropping
+	{0x0f06, 0x0000}, //fmt y cropping
+	{0x023a, 0x3333}, //y dummy size
+	{0x0234, 0x3333}, //y even/odd inc tobp
+	{0x0238, 0x3333}, //y even/odd inc active
+	{0x0246, 0x0020}, //y read dummy address
+	{0x020a, 0x0bb6}, //coarse integ time
+	{0x021c, 0x0008}, //coarse integ time short for iHDR
+	{0x0206, 0x05dd}, //line length pck
+	{0x020e, 0x0456}, //frame length lines
+//	{0x020e, 0x033d}, //frame length lines
+	{0x0b12, 0x0500}, //x output size
+	{0x0b14, 0x02d0}, //y output size
+	{0x0204, 0x0000}, //d2a_row_binning_en
+	{0x041c, 0x0048}, //pdaf patch start x-address 
+	{0x041e, 0x1047}, //pdaf patch end x-address 
+	{0x0b04, 0x037e}, //isp enable
+	{0x027e, 0x0100}, //tg enable
 
 };
 
@@ -1297,9 +1305,9 @@ static struct sensor_res_tab_info s_hi1336_resolution_tab_raw[VENDOR_NUM] = {
            .height = 0, .xclk_to_sensor = EX_MCLK,
            .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          /*{ADDR_AND_LEN_OF_ARRAY(hi1336_video_setting), PNULL, 0,
+          {ADDR_AND_LEN_OF_ARRAY(hi1336_video_setting), PNULL, 0,
            .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},*/
+           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
           {ADDR_AND_LEN_OF_ARRAY(hi1336_preview_setting), PNULL, 0,
            .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
@@ -1318,7 +1326,7 @@ static SENSOR_TRIM_T s_hi1336_resolution_trim_tab[VENDOR_NUM] = {
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
 
-             /*{.trim_start_x = VIDEO_TRIM_X,
+             {.trim_start_x = VIDEO_TRIM_X,
               .trim_start_y = VIDEO_TRIM_Y,
               .trim_width = VIDEO_TRIM_W,
               .trim_height = VIDEO_TRIM_H,
@@ -1328,7 +1336,7 @@ static SENSOR_TRIM_T s_hi1336_resolution_trim_tab[VENDOR_NUM] = {
               .scaler_trim = {.x = VIDEO_TRIM_X,
                               .y = VIDEO_TRIM_Y,
                               .w = VIDEO_TRIM_W,
-                              .h = VIDEO_TRIM_H}},*/
+                              .h = VIDEO_TRIM_H}},
 
              {.trim_start_x = PREVIEW_TRIM_X,
               .trim_start_y = PREVIEW_TRIM_Y,
@@ -1413,7 +1421,7 @@ static SENSOR_STATIC_INFO_T s_hi1336_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.614f, 3.444f}, 3.629f}}}
+                     .fov_info = {{4.659f, 3.494f}, 3.402f}}}
     /*If there are multiple modules,please add here*/
 };
 
