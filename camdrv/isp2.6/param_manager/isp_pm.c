@@ -2190,7 +2190,6 @@ start_parse:
 					dst_blk_data->param_size = nr_set_size;
 
 					extend_offset += sizeof(struct isp_pm_nr_simple_header_param);
-					dst_header[j].size = sizeof(struct isp_pm_nr_simple_header_param);
 					dst_header[j].size = nr_set_size;
 					ISP_LOGV("blk 0x%04x, data %p,  size %d\n", dst_header[j].block_id, (void *)nr_set_addr, nr_set_size);
 					nr_data_len[isp_blk_nr_type] = nr_set_size;

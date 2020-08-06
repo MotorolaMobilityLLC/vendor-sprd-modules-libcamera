@@ -157,7 +157,7 @@ cmr_s32 _pm_dre_pro_set_param(void *dre_pro_param, cmr_u32 cmd, void *param_ptr0
 			dst_ptr->levels[level].predre_pro_param.low_thresh;
 		dst_ptr->cur.predre_pro_param.high_thresh =
 			dst_ptr->levels[level].predre_pro_param.high_thresh;
-		dst_ptr->levels[level].predre_pro_param.uv_gain_ratio =
+		dst_ptr->cur.predre_pro_param.uv_gain_ratio =
 			dst_ptr->levels[level].predre_pro_param.uv_gain_ratio;
 		dst_ptr->cur.predre_pro_param.tarCoeff =
 			dst_ptr->levels[level].predre_pro_param.tarCoeff;

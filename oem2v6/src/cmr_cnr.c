@@ -196,7 +196,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     oem_handle = cnr_handle->common.ipm_cxt->init_in.oem_handle;
 
     struct ipm_init_in *ipm_in = &cnr_handle->common.ipm_cxt->init_in;
-    CMR_LOGI("cxt->nr_flag %d,cxt->nightscepro_flag %d",
+    CMR_LOGD("cxt->nr_flag %d,cxt->nightscepro_flag %d",
                     cxt->nr_flag, cxt->nightscepro_flag);
     if (cxt->nr_flag & YNRS_ENABLE) {
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_YNRS_PARAM,
@@ -259,7 +259,7 @@ proc:
             valid_nr_type &= (~CNR2_ENABLE);
     }
     mode = valid_nr_type;
-    CMR_LOGD("valid_nr_type %d, param %p, %p, %p\n", valid_nr_type,
+    CMR_LOGI("valid_nr_type %d, param %p, %p, %p\n", valid_nr_type,
         denoise_param.ynrParam, denoise_param.cnr2Param, denoise_param.cnr3Param);
     char prop[PROPERTY_VALUE_MAX];
     property_get("debug.dump.nr.mode", prop, "0");

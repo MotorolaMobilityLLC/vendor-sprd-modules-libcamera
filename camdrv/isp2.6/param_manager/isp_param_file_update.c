@@ -1247,12 +1247,12 @@ cmr_s32 read_fix_ae3_info(FILE * fp, struct sensor_ae_tab_3_x * ae_ptr)
 			}
 		}
 		if (strstr(line_buf, "ae_tab_reserved") != NULL) {
-					rtn = read_ae3_reserve(fp, &ae_ptr->ae_reserve);
-					if (0x00 != rtn) {
-						goto exit;
-					}
-						flag_end = 1;
-					break;
+			rtn = read_ae3_reserve(fp, &ae_ptr->ae_reserve);
+			if (0x00 != rtn) {
+				goto exit;
+			}
+			flag_end = 1;
+			break;
 		}
 		if (0 != flag_end)
 			break;
