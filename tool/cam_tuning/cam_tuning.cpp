@@ -118,7 +118,8 @@ static int stdin_getint(char *prompt) {
         fprintf(stdout, "%s", prompt);
     else
         fprintf(stdout, "please input a number: ");
-    fscanf(stdin, "%d", &t);
+    if (fscanf(stdin, "%d", &t) <= 0)
+        return 0;
 
     return t;
 }
@@ -130,7 +131,8 @@ static char stdin_getchar(char *prompt) {
         fprintf(stdout, "%s", prompt);
     else
         fprintf(stdout, "please input a number: ");
-    fscanf(stdin, "%c", &t);
+    if (fscanf(stdin, "%c", &t) <= 0)
+        return 0;
 
     return t;
 }
@@ -196,8 +198,8 @@ static int camtuning_parse_param(int argc, char **argv) {
             }
         } else if (strcmp(argv[i], "-mode") == 0) {
             cxt->captureMode = (enum takepicture_mode)atoi(argv[++i]);
-            if (cxt->captureMode < 0 ||
-                cxt->captureMode >= TAKEPICTURE_MODE_MAX) {
+            if ((int)cxt->captureMode < 0 ||
+                (int)cxt->captureMode >= TAKEPICTURE_MODE_MAX) {
                 cxt->captureMode = CAMERA_NORMAL_MODE;
             }
 
@@ -350,6 +352,7 @@ static void camtuning_cb(enum camera_cb_type cb, const void *client_data,
 
         if (cxt->oem_dev == NULL || cxt->ops == NULL) {
             CMR_LOGE("oem_dev is null");
+            pthread_mutex_unlock(&previewlock);
             break;
         }
         frame->buf_id = get_preview_buffer_id_for_fd(frame->fd);
@@ -394,7 +397,6 @@ static int callback_previewfree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     UNUSED(fd);
     UNUSED(sum);
 
-    pthread_mutex_lock(&previewlock);
     for (i = 0; i < PREVIEW_BUFF_NUM; i++) {
         if (!previewHeapArray[i])
             continue;
@@ -403,7 +405,6 @@ static int callback_previewfree(cmr_uint *phy_addr, cmr_uint *vir_addr,
         previewHeapArray[i] = NULL;
     }
 
-    pthread_mutex_unlock(&previewlock);
 
     return 0;
 }
@@ -417,7 +418,6 @@ static int callback_capturefree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     UNUSED(fd);
     UNUSED(sum);
 
-    pthread_mutex_lock(&previewlock);
     for (i = 0; i < CAPTURE_BUFF_NUM; i++) {
         if (!captureHeapArray[i])
             continue;
@@ -425,8 +425,6 @@ static int callback_capturefree(cmr_uint *phy_addr, cmr_uint *vir_addr,
         free_camera_mem(captureHeapArray[i]);
         captureHeapArray[i] = NULL;
     }
-
-    pthread_mutex_unlock(&previewlock);
 
     return 0;
 }
@@ -506,7 +504,7 @@ getpmem_fail:
 static int callback_preview_malloc(cmr_u32 size, cmr_u32 sum,
                                    cmr_uint *phy_addr, cmr_uint *vir_addr,
                                    cmr_s32 *fd) {
-    sprd_camera_memory_t *memory = NULL;
+    sprd_camera_memory_t *memory;
     cmr_uint i = 0;
 
     CMR_LOGI("size=%d sum=%d", size, sum);
@@ -949,7 +947,8 @@ static int camtuning_init(void) {
                                 (void *)callback_free);
 
     is_iommu_enabled = iommu_is_enabled(cxt);
-    CMR_LOGI("iommu_enabled=%d, sensor max[%d %d]", is_iommu_enabled);
+    CMR_LOGI("iommu_enabled=%d, sensor max[%d %d]",
+            is_iommu_enabled, maxw, maxh);
 
     return ret;
 }
@@ -964,7 +963,7 @@ static int camtuning_startpreview(uint32_t param1, uint32_t param2) {
     int ret = 0;
     struct cmr_zoom_param zoom_param;
     struct cmr_range_fps_param fps_param;
-    enum takepicture_mode captureMode = CAPTURE_MODE;
+    enum takepicture_mode captureMode;
     cmr_uint zsl_enable = 0;
     struct img_size cap_size = {0, 0};
 
@@ -1077,7 +1076,7 @@ exit:
 static int camtuning_takepicture(uint32_t param1, uint32_t param2) {
     int ret;
     int quality;
-    enum takepicture_mode captureMode = CAPTURE_MODE;
+    enum takepicture_mode captureMode;
     struct img_size jpeg_thumb_size;
     cmr_uint zsl_enable = 0;
     uint32_t capture_format = param2;
@@ -1160,7 +1159,7 @@ int main(int argc, char **argv) {
     char value2[PROPERTY_VALUE_MAX];
 
     cxt = &cxt_main;
-    memset((void *)cxt, 0, sizeof(cxt));
+    memset((void *)cxt, 0, sizeof(*cxt));
 
     pthread_mutex_init(&previewlock, NULL);
 
