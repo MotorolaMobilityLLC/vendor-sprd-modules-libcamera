@@ -71,7 +71,8 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
         OtpBkDataPath = OTPBK_CALI_OZ2_PATH;
         break;
     default:
-        break;
+        SENSOR_LOGE("Invalid cali data type:%d", dual_flag);
+        return 0;
     }
 
     // 1 read origin file
@@ -261,7 +262,8 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
         OtpBkDataPath = OTPBK_CALI_OZ2_PATH;
         break;
     default:
-        break;
+        SENSOR_LOGE("Invalid cali data type:%d", dual_flag);
+        return 0;
     }
 
     header_ptr->magic = OTP_HEAD_MAGIC;
