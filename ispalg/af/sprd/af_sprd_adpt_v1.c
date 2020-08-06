@@ -1749,6 +1749,9 @@ static void *af_lib_init(af_ctrl_t * af)
 		return NULL;
 
 	alg_cxt = af->af_ops.init(&af_in, &af_out);
+	if (NULL == alg_cxt) {
+		unload_af_lib(af);
+	}
 	af->af_dump_info_len = af_out.af_dump_len;
 
 	return alg_cxt;
