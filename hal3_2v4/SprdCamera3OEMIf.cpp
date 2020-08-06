@@ -7534,11 +7534,13 @@ cap_malloc:
 
     if (mSubRawHeapNum >= MAX_SUB_RAWHEAP_NUM) {
         HAL_LOGE("error mSubRawHeapNum %d", mSubRawHeapNum);
+        mCapBufLock.unlock();
         return BAD_VALUE;
     }
 
     if ((mSubRawHeapNum + sum) >= MAX_SUB_RAWHEAP_NUM) {
         HAL_LOGE("malloc is too more %d %d", mSubRawHeapNum, sum);
+        mCapBufLock.unlock();
         return BAD_VALUE;
     }
 

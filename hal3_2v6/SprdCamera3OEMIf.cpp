@@ -686,6 +686,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mIsNeedFlashFired = 0;
     mIsPowerhintWait = 0;
     mtimestamplast = 0ll;
+    mVideoProcessedWithPreview = false;
+    mLastAeMode = 0;
+    mLastAwbMode = 0;
+    mSprd3dnrType = 0;
+    mLastAfMode = 0;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -6124,7 +6129,8 @@ void SprdCamera3OEMIf::HandleGetBufHandle(enum camera_cb_type cb, void *parm4) {
             reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (channel != NULL)
             channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
-        ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
+        if (stream != NULL)
+            ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
                                     buf_info->fd, &buff_handle,
                                     &(buf_info->graphic_buffer));
 
@@ -6139,7 +6145,8 @@ void SprdCamera3OEMIf::HandleGetBufHandle(enum camera_cb_type cb, void *parm4) {
             reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
         if (channel != NULL)
             channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &stream);
-        ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
+        if (stream != NULL)
+            ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
                                     buf_info->fd, &buff_handle,
                                     &(buf_info->graphic_buffer));
         if (buff_handle != NULL)
@@ -6153,7 +6160,8 @@ void SprdCamera3OEMIf::HandleGetBufHandle(enum camera_cb_type cb, void *parm4) {
             reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
         if (channel != NULL)
             channel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &stream);
-        ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
+        if (stream != NULL)
+            ret = stream->getQBufHandle(buf_info->addr_vir, buf_info->addr_phy,
                                     buf_info->fd, &buff_handle,
                                     &(buf_info->graphic_buffer));
         if (buff_handle != NULL)
@@ -8579,11 +8587,13 @@ cap_malloc:
 
     if (mSubRawHeapNum >= MAX_SUB_RAWHEAP_NUM) {
         HAL_LOGE("error mSubRawHeapNum %d", mSubRawHeapNum);
+        mCapBufLock.unlock();
         return BAD_VALUE;
     }
 
     if ((mSubRawHeapNum + sum) >= MAX_SUB_RAWHEAP_NUM) {
         HAL_LOGE("malloc is too more %d %d", mSubRawHeapNum, sum);
+        mCapBufLock.unlock();
         return BAD_VALUE;
     }
 
