@@ -1,4 +1,4 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000B0009*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*v21_sensor_yuv_precdn_level*/
@@ -34,13 +34,13 @@
 
 	},
 	/*sigma_y*/
-	5.00,
+	8.00,
 	/*sigma_d*/
-	5.00,
+	8.00,
 	/*sigma_u*/
-	6.00,
+	8.00,
 	/*sigma_v*/
-	6.00,
+	8.00,
 	/*r_segu*/
 	{
 		/*r_segu_0*/
@@ -422,7 +422,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -459,13 +459,13 @@
 
 	},
 	/*sigma_y*/
-	5.00,
+	20.00,
 	/*sigma_d*/
-	5.00,
+	8.00,
 	/*sigma_u*/
-	6.00,
+	20.00,
 	/*sigma_v*/
-	6.00,
+	20.00,
 	/*r_segu*/
 	{
 		/*r_segu_0*/
@@ -507,7 +507,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param6.&BasePoint=1&*/
@@ -520,7 +520,7 @@
 		/*median_writeback_en*/
 		0x00,
 		/*median_mode*/
-		0x01,
+		0x00,
 		/*den_stren*/
 		0x00,
 		/*uv_joint*/
@@ -540,17 +540,17 @@
 			0x0A,0x64/*0-1*/
 		},
 		/*median_thr*/
-		0x00000050,
+		0x00000028,
 
 	},
 	/*sigma_y*/
-	25.00,
+	20.00,
 	/*sigma_d*/
-	25.00,
+	8.00,
 	/*sigma_u*/
-	25.00,
+	20.00,
 	/*sigma_v*/
-	25.00,
+	20.00,
 	/*r_segu*/
 	{
 		/*r_segu_0*/
@@ -592,7 +592,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param7.&BasePoint=1&*/
@@ -605,7 +605,7 @@
 		/*median_writeback_en*/
 		0x00,
 		/*median_mode*/
-		0x01,
+		0x00,
 		/*den_stren*/
 		0x00,
 		/*uv_joint*/
@@ -625,17 +625,17 @@
 			0x0A,0x64/*0-1*/
 		},
 		/*median_thr*/
-		0x00000050,
+		0x00000028,
 
 	},
 	/*sigma_y*/
-	30.00,
+	20.00,
 	/*sigma_d*/
-	30.00,
+	20.00,
 	/*sigma_u*/
-	30.00,
+	20.00,
 	/*sigma_v*/
-	30.00,
+	20.00,
 	/*r_segu*/
 	{
 		/*r_segu_0*/
@@ -677,7 +677,7 @@
 	/*reserved0*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param8.&BasePoint=1&*/

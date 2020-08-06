@@ -36,6 +36,7 @@
 #include "sensor_imx258_raw_param_cap_1.c"
 #include "sensor_imx258_raw_param_video_0.c"
 #include "sensor_imx258_raw_param_video_1.c"
+#include "sensor_imx258_raw_param_video_2.c"
 
 /* End Include */
 
@@ -49,7 +50,7 @@
 
 
 /* Capture Sizes:
-	4160x3120,2080x1560
+	4160x3120,2080x1560,1280x720
 */
 
 
@@ -99,8 +100,13 @@ static struct sensor_raw_ioctrl s_imx258_ioctrl=
 };
 
 
-/************************************************************************/
-
+/********************************************************************************
+ * static struct sensor_version_info s_****_version_info, **** is the sensor name .
+ * Param[2]/ Param[3] are ASCII values of the sensor name string ****.
+ * Please modify the sensor name by using rename sensor function of the ISP TOOL, 
+ * then the Param[2]/ Param[3] are changed accordingly.
+ * NO modifying manually.
+********************************************************************************/
 
 static struct sensor_version_info s_imx258_version_info=
 {
@@ -165,6 +171,9 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 		{NULL, 0},
 		{s_imx258_tune_info_video_0, sizeof(s_imx258_tune_info_video_0)},
 		{s_imx258_tune_info_video_1, sizeof(s_imx258_tune_info_video_1)},
+		{s_imx258_tune_info_video_2, sizeof(s_imx258_tune_info_video_2)},
+		{NULL, 0},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -183,6 +192,9 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 		NULL,
 		&s_imx258_fix_info_video_0,
 		&s_imx258_fix_info_video_1,
+		&s_imx258_fix_info_video_2,
+		NULL,
+		NULL,
 		NULL,
 		NULL,
 	},
@@ -198,6 +210,9 @@ static struct sensor_raw_info s_imx258_mipi_raw_info=
 		{NULL, 0},
 		{s_imx258_video_0_tool_ui_input, sizeof(s_imx258_video_0_tool_ui_input)},
 		{s_imx258_video_1_tool_ui_input, sizeof(s_imx258_video_1_tool_ui_input)},
+		{s_imx258_video_2_tool_ui_input, sizeof(s_imx258_video_2_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 	},

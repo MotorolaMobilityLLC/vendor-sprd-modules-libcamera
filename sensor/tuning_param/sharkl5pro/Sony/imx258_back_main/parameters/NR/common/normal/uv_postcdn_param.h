@@ -1,4 +1,4 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000B0009*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*v21_sensor_uv_postcdn_level*/
@@ -737,7 +737,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param5.&BasePoint=1&*/
@@ -885,7 +885,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param6.&BasePoint=1&*/
@@ -1015,11 +1015,11 @@
 
 	},
 	/*sigma_d*/
-	23.00,
+	20.00,
 	/*sigma_u*/
-	23.00,
+	25.00,
 	/*sigma_v*/
-	23.00,
+	25.00,
 	/*adpt_med_thr*/
 	0x0028,
 	/*median_mode*/
@@ -1033,7 +1033,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param7.&BasePoint=1&*/
@@ -1163,11 +1163,11 @@
 
 	},
 	/*sigma_d*/
-	30.00,
+	20.00,
 	/*sigma_u*/
-	30.00,
+	25.00,
 	/*sigma_v*/
-	30.00,
+	25.00,
 	/*adpt_med_thr*/
 	0x0028,
 	/*median_mode*/
@@ -1181,7 +1181,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000000,
+	0x00000001,
 }
 ,
 /*param8.&BasePoint=1&*/
