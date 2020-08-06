@@ -1399,12 +1399,18 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
                 if ((tmp_S & 1) == 1)  // ilen is odd
                 {
                     cong_Ycom_hor[i][j + 1] = cong_Ycom_hor[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_Ycom_hor[i][j - 1] = cong_Ycom_hor[i][j - 1] + (tmpi - 1) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_Ycom_hor[i][j - 1] = cong_Ycom_hor[i][j - 1] + (tmpi - 1) / 2 ;
+                    }
                 }
                 else  // ilen is even
                 {
                     cong_Ycom_hor[i][j + 1] = cong_Ycom_hor[i][j + 1] + (tmpi ) / 2 ;
-                    cong_Ycom_hor[i][j - 1] = cong_Ycom_hor[i][j - 1] + (tmpi ) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_Ycom_hor[i][j - 1] = cong_Ycom_hor[i][j - 1] + (tmpi ) / 2 ;
+                    }
                 }
             }
         }
@@ -1437,12 +1443,18 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
                 if ((tmp_S & 1) == 1)  // ilen is odd
                 {
                     cong_UVcom_hor[i][j + 1] = cong_UVcom_hor[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_UVcom_hor[i][j - 1] = cong_UVcom_hor[i][j - 1] + (tmpi - 1) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_UVcom_hor[i][j - 1] = cong_UVcom_hor[i][j - 1] + (tmpi - 1) / 2 ;
+                    }
                 }
                 else
                 {
                     cong_UVcom_hor[i][j + 1] = cong_UVcom_hor[i][j + 1] + (tmpi ) / 2 ;
-                    cong_UVcom_hor[i][j - 1] = cong_UVcom_hor[i][j - 1] + (tmpi ) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_UVcom_hor[i][j - 1] = cong_UVcom_hor[i][j - 1] + (tmpi ) / 2 ;
+                    }
                 }
             }
         }
@@ -1503,12 +1515,18 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
                 if ((tmp_S & 1) == 1)  // ilen is odd
                 {
                     cong_Ycom_ver[i][j + 1] = cong_Ycom_ver[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_Ycom_ver[i][j - 1] = cong_Ycom_ver[i][j - 1] + (tmpi - 1) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_Ycom_ver[i][j - 1] = cong_Ycom_ver[i][j - 1] + (tmpi - 1) / 2 ;
+                    }
                 }
                 else  // ilen is even
                 {
                     cong_Ycom_ver[i][j + 1] = cong_Ycom_ver[i][j + 1] + (tmpi ) / 2 ;
-                    cong_Ycom_ver[i][j - 1] = cong_Ycom_ver[i][j - 1] + (tmpi ) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_Ycom_ver[i][j - 1] = cong_Ycom_ver[i][j - 1] + (tmpi ) / 2 ;
+                    }
                 }
             }
         }
@@ -1565,12 +1583,18 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
                 if ((tmp_S & 1) == 1)  // ilen is odd
                 {
                     cong_UVcom_ver[i][j + 1] = cong_UVcom_ver[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_UVcom_ver[i][j - 1] = cong_UVcom_ver[i][j - 1] + (tmpi - 1) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_UVcom_ver[i][j - 1] = cong_UVcom_ver[i][j - 1] + (tmpi - 1) / 2 ;
+                    }
                 }
                 else  // ilen is even
                 {
                     cong_UVcom_ver[i][j + 1] = cong_UVcom_ver[i][j + 1] + (tmpi ) / 2 ;
-                    cong_UVcom_ver[i][j - 1] = cong_UVcom_ver[i][j - 1] + (tmpi ) / 2 ;
+                    if(j >= 1)
+                    {
+                        cong_UVcom_ver[i][j - 1] = cong_UVcom_ver[i][j - 1] + (tmpi ) / 2 ;
+                    }
                 }
             }
         }

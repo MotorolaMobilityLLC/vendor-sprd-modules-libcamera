@@ -139,6 +139,8 @@ static void scaler_calculate_region(
     pipe_region_info *wndOrgPtr;
     yuvscaler_param_t *core_param = &scaler_param_ptr->frame_param;
 
+    memset(&wndInTemp, 0,sizeof(pipe_region_info));
+    memset(&wndOutTemp, 0,sizeof(pipe_region_info));
     phaseTemp.init_phase_hor = 0;
     phaseTemp.init_phase_ver = 0;
 
