@@ -1030,6 +1030,11 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         return 0;
     }
 
+    if (cameraId < 0 || cameraId >= CAMERA_ID_COUNT) {
+        HAL_LOGE("illegal cameraId %d", cameraId);
+        return -1;
+    }
+
     if (alreadyGetSensorStaticInfo[cameraId] == 1) {
         HAL_LOGI("already get sensor info");
         return 0;

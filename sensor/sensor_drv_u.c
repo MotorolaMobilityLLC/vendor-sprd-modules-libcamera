@@ -2060,7 +2060,7 @@ static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id) {
     close(fd);
     SENSOR_LOGI("slot id is %d", slot_id);
     if (strlen(sensor_info) < sizeof(sensor_info_with_slot_id)) {
-        sprintf(sensor_info_with_slot_id, "<slot:%d>\n%s", slot_id,
+        sprintf(sensor_info_with_slot_id, "<slot:%ld>\n%s", slot_id,
                 sensor_info);
         property_set("vendor.cam.sensor.slot.info", sensor_info_with_slot_id);
     }
@@ -2905,9 +2905,9 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
 static cmr_int sensor_drv_create_logical_sensor_info(cmr_int physical_num) {
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    cmr_int i = 0;
+    int i = 0;
     cmr_int logical_num = 0;
-    cmr_uint phyId[SENSOR_ID_MAX];
+    int phyId[SENSOR_ID_MAX];
 
     // single camera feature
     /* single sensor config logical list info
@@ -3950,10 +3950,10 @@ LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id) {
  * is 0x00000210, means it's a bokeh master camera and an opticszoom wide camera
  * at the same time, no special single-camera feature.
  **/
-cmr_uint sensorGetPhyId4Role(enum sensor_role role, enum face_type facing) {
+int sensorGetPhyId4Role(enum sensor_role role, enum face_type facing) {
     int phyId = SENSOR_ID_INVALID;
     cmr_u32 code = 0;
-    int face = 0;
+    cmr_u32 face = 0;
     struct phySensorInfo *phyPtr = NULL;
 
     /* only return the first sensor that meets role,

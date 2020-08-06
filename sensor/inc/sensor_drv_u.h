@@ -817,7 +817,7 @@ int sensorGetLogicalSnsNum(void);
 void *sensorGetIdentifyState();
 PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id);
-cmr_uint sensorGetPhyId4Role(enum sensor_role role, enum face_type facing);
+int sensorGetPhyId4Role(enum sensor_role role, enum face_type facing);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(cmr_int multiCameraId);
 
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param);
