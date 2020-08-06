@@ -175,9 +175,9 @@
 			/*grgb_r1_cfg*/
 			0x10,
 			/*grgb_r2_cfg*/
-			0x10,
+			0x08,
 			/*grgb_r3_cfg*/
-			0x10,
+			0x00,
 			/*reserved*/
 			0x00,
 
@@ -191,7 +191,7 @@
 /*v21_sensor_grgb_level*/
 {
 	/*diff_th*/
-	0x64,
+	0x78,
 	/*hv_edge_thr*/
 	0x28,
 	/*hv_flat_thr*/
@@ -364,9 +364,9 @@
 			/*grgb_r1_cfg*/
 			0x10,
 			/*grgb_r2_cfg*/
-			0x10,
+			0x08,
 			/*grgb_r3_cfg*/
-			0x10,
+			0x00,
 			/*reserved*/
 			0x00,
 
