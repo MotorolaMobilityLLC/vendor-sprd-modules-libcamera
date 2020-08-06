@@ -87,3 +87,10 @@ static struct sensor_nr_scene_map_param s_ov7251_dual_nr_scene_map_param = {{
 #include "NR/common/normal/uv_postcdn_param.h"
 #endif
 
+#ifdef _NR_CNR_PARAM_
+#include "NR/common/normal/cnr_param.h"
+#endif
+
+
+
+

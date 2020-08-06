@@ -45,7 +45,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.0501 */
+/* IspToolVersion=R1.18.2001 */
 
 
 /* Capture Sizes:
@@ -99,7 +99,13 @@ static struct sensor_raw_ioctrl s_ov5675_ioctrl=
 };
 
 
-/************************************************************************/
+/********************************************************************************
+ * static struct sensor_version_info s_****_version_info, **** is the sensor name .
+ * Param[2]/ Param[3] are ASCII values of the sensor name string ****.
+ * Please modify the sensor name by using rename sensor function of the ISP TOOL, 
+ * then the Param[2]/ Param[3] are changed accordingly.
+ * NO modifying manually.
+********************************************************************************/
 
 
 static struct sensor_version_info s_ov5675_version_info=
