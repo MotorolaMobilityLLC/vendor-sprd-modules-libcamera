@@ -1902,6 +1902,7 @@ static int isp_parse_config(DrvCaseComm *json2)
 		}
 	}
 	fclose(pf);
+	pf = NULL;
 	return 0;
 }
 
