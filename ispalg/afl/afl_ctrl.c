@@ -222,8 +222,8 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 		ev_setting.input_image_size.width = 640;
 		ev_setting.input_image_size.height = 480;
 	} else {
-		ev_setting.input_image_size.width = cxt->width;
-		ev_setting.input_image_size.height = cxt->height;
+		ev_setting.input_image_size.width = (cmr_u32)cxt->width;
+		ev_setting.input_image_size.height = (cmr_u32)cxt->height;
 	}
 
 	addr = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr;
@@ -248,7 +248,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	}
 	for (fm = 0; fm < cxt->frame_num; fm++) {
 		for(i = 0; i < AFL_GLB_ROW; i++) {
-			memcpy(data, addr + AFL_GLB_ROW * 16/4 * fm + i * 16/4, 16);
+			memcpy(data, addr + (cmr_s32)AFL_GLB_ROW * 16/4 * fm + i * 16/4, 16);
 			out[k++] = ((data[2] & 0x3)<<16)|((data[1] & 0xff)<<8)|(data[0]&0xff);
 			out[k++] = ((data[4] & 0xf)<<14)|((data[3] & 0xff)<<6)|((data[2]>>2)&0x3f);
 			out[k++] = ((data[6] & 0x3f)<<12)|((data[5] & 0xff)<<4)|((data[4]>>4)&0xf);
@@ -478,7 +478,7 @@ cmr_int afl_ctrl_cfg(isp_handle isp_afl_handle)
 	cmr_int rtn = ISP_SUCCESS;
 	struct isp_anti_flicker_cfg *cxt = (struct isp_anti_flicker_cfg *)isp_afl_handle;;
 	struct isp_dev_anti_flicker_info afl_info;
-	cxt->vheight = cxt->height;
+	cxt->vheight = (cmr_u32)cxt->height;
 	cxt->start_col = 0;
 	cxt->end_col = cxt->width - 1;
 
@@ -506,9 +506,9 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	struct isp_anti_flicker_cfg *cxt = (struct isp_anti_flicker_cfg *)isp_afl_handle;
 	struct isp_dev_anti_flicker_new_info afl_info_v3;
 
-	cxt->vheight = cxt->height;
+	cxt->vheight = (cmr_u32)cxt->height;
 	cxt->start_col = 0;
-	cxt->end_col = cxt->width;
+	cxt->end_col = (cmr_u32)cxt->width;
 
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	afl_info_v3.bayer2y_chanel = 0;
