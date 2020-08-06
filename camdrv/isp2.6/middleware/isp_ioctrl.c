@@ -4650,6 +4650,7 @@ static cmr_int ispctl_get_postee(cmr_handle isp_alg_handle, void *param_ptr)
 			&input, &output);
 	if (ISP_SUCCESS != ret || output.param_num < 2 || output.param_data == NULL) {
 		ISP_LOGE("fail to get postee param. ret %ld, num %d\n", ret, output.param_num);
+		pthread_mutex_unlock(&cxt->pm_getting_lock);
 		return -ISP_PARAM_ERROR;
 	}
 	cur = output.param_data;

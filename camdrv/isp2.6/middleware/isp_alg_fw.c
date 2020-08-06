@@ -2051,7 +2051,6 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
 			ee_cur[i] = (struct isp_ai_ee_param *)ioctl_output.param_data_ptr->data_ptr;
 
-		ISP_LOGV("ai scene %d,  ee %p, enable %d", cxt->ai_scene_flag, ee_cur[i], ee_cur[i]->ee_enable);
 		if (ee_cur[i] && ee_cur[i] ->ee_enable) {
 			if (cxt->smooth_ratio == 0 && !cxt->ai_scene_flag)
 				continue;

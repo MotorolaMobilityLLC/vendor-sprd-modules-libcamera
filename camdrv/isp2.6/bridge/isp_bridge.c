@@ -348,10 +348,13 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		break;
 
 	case GET_MATCH_AE_DATA:
-		sem_wait(&cxt->ae_sm);
-		memcpy(out, &cxt->match_param.ae_info[sensor_role],
-			sizeof(cxt->match_param.ae_info[sensor_role]));
-		sem_post(&cxt->ae_sm);
+		{
+			sem_wait(&cxt->ae_sm);
+			if (out)
+				memcpy(out, &cxt->match_param.ae_info[sensor_role],
+					sizeof(cxt->match_param.ae_info[sensor_role]));
+			sem_post(&cxt->ae_sm);
+		}
 		break;
 
 	case SET_SLAVE_AEM_INFO:
