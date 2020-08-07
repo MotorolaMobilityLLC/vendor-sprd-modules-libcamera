@@ -2646,6 +2646,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.src.w = cxt->commn_cxt.src.w;
 	af_input.src.h = cxt->commn_cxt.src.h;
 	af_input.is_supoprt = is_af_support;
+	af_input.br_ctrl = isp_br_ioctrl;
+
 	cxt->af_cxt.sw_bypass = 0;
 
 	if(1 == is_af_support) {

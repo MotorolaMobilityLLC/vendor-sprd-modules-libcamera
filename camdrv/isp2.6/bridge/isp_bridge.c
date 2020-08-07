@@ -651,6 +651,17 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sizeof(cxt->match_param.af_info[sensor_role]));
 		sem_post(&cxt->af_sm);
 		break;
+        case GET_AF_SYNC_INFO:
+		if (out) {
+			struct af_sync_info *info = (struct af_sync_info *)out;
+			sem_wait(&cxt->ae_sm);
+			info->cur_master_id = cxt->ae_ref_camera_id;
+			info->camera_id = 0;
+			info->sensor_role = 0;
+			sem_post(&cxt->ae_sm);
+		}
+
+		break;
 
 	// OTP
 	case SET_OTP_AE:

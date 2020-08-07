@@ -214,20 +214,6 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 		sem_post(&cxt->af_sm);
 		break;
 
-	case SET_AF_MANUAL_INFO:
-		sem_wait(&cxt->af_sm);
-		memcpy(&cxt->match_param.af_manual[sensor_role], in,
-			sizeof(cxt->match_param.af_manual[sensor_role]));
-		sem_post(&cxt->af_sm);
-		break;
-
-	case GET_AF_MANUAL_INFO:
-		sem_wait(&cxt->af_sm);
-		memcpy(out, &cxt->match_param.af_manual[sensor_role],
-			sizeof(cxt->match_param.af_manual[sensor_role]));
-		sem_post(&cxt->af_sm);
-		break;
-
 	// OTP
 	case SET_OTP_AE:
 		sem_wait(&cxt->module_sm);
