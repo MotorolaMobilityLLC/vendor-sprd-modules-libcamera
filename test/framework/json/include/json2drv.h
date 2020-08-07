@@ -9,7 +9,7 @@ class DrvCaseComm : public IParseJson {
   public:
     uint32_t m_caseID;
     uint32_t m_chipID;
-    uint32_t m_pathID;
+    std::vector<uint32_t> m_pathID;
     uint32_t m_testMode;
     std::string m_parmPath;
     std::string m_imageName;
@@ -36,7 +36,7 @@ class DrvCaseComm : public IParseJson {
         this->m_chipID = *(static_cast<uint32_t *>(value));
     }
     void Set_PathID(string strKey, void *value) {
-        this->m_pathID = *(static_cast<uint32_t *>(value));
+        this->m_pathID.push_back(*(static_cast<uint32_t *>(value)));
     }
     void Set_TestMode(string strKey, void *value) {
         this->m_testMode = *(static_cast<uint32_t *>(value));

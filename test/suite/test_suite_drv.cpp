@@ -98,7 +98,8 @@ int TestSuiteDRV::ParseSecJson(caseid* caseid, vector<IParseJson*>* pVec_TotalCa
 			IT_LOGD("================");
 			IT_LOGD("caseID:%d",(*i)->m_caseID);
 			IT_LOGD("chipID:%d",(*i)->m_chipID);
-			IT_LOGD("pathID:%d",(*i)->m_pathID);
+			for(int j = 0; j < (*i)->m_pathID.size(); j++)
+				IT_LOGD("pathID[%d]:%d\n",j,(*i)->m_pathID[j]);
 			IT_LOGD("testMode:%d",(*i)->m_testMode);
 			IT_LOGD("parmPath:%s",(*i)->m_parmPath.data());
 			IT_LOGD("imagePath:%s",(*i)->m_imageName.data());

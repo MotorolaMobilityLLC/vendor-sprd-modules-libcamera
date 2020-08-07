@@ -4,7 +4,7 @@
 		{
 			"CaseID" : 0,
 			"ChipID" : 0,
-			"PathID" : 1,
+			"PathID" :[1,0],
 			"TestMode" : 1,
 			"ParmPath" : "/data/vendor/cameraserver/testdcam/",
 			"ImagePath" : "/data/vendor/cameraserver/testimage/input_0.raw"
@@ -13,7 +13,7 @@
 		{
 			"CaseID" : 1,
 			"ChipID" : 5,
-			"PathID" : 0,
+			"PathID" : [0,1],
 			"TestMode" : 1,
 			"ParmPath" : "/data/vendor/cameraserver/testisp/",
 			"ImagePath" : "/data/vendor/cameraserver/testimage/input_1.raw"
