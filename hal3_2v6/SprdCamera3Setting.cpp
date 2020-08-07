@@ -990,6 +990,11 @@ int SprdCamera3Setting::setLargestSensorSize(int32_t cameraId, cmr_u16 width,
 
 int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                              cmr_u16 *height) {
+    if (cameraId < 0 || cameraId >= CAMERA_ID_COUNT) {
+        HAL_LOGE("invalid camera id %d", cameraId);
+        return -EINVAL;
+    }
+
     *width = sensor_max_width[cameraId];
     *height = sensor_max_height[cameraId];
 
@@ -1009,6 +1014,11 @@ int SprdCamera3Setting::getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
 
 int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
                                               cmr_u16 *height) {
+    if (cameraId < 0 || cameraId >= CAMERA_ID_COUNT) {
+        HAL_LOGE("invalid camera id %d", cameraId);
+        return -EINVAL;
+    }
+
     *width = largest_picture_size[cameraId].stream_sizes_tbl.width;
     *height = largest_picture_size[cameraId].stream_sizes_tbl.height;
     HAL_LOGD("camId=%d, max_width=%d, max_height=%d", cameraId, *width,
@@ -1019,6 +1029,11 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
 int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     struct phySensorInfo *phyPtr = NULL;
     int ret = 0;
+
+    if (cameraId < 0 || cameraId >= CAMERA_ID_COUNT) {
+        HAL_LOGE("invalid camera id %d", cameraId);
+        return -EINVAL;
+    }
 
     // just for camera developer debug
     char value[PROPERTY_VALUE_MAX];
