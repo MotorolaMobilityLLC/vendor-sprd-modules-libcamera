@@ -459,6 +459,7 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
     if (rtn) {
         CMR_LOGE("Fail to create thread");
         free((void *)thread->queue_handle);
+        thread->queue_handle = NULL;
         free((void *)thread);
         thread = NULL;
         return rtn;
@@ -469,8 +470,8 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
     if (rtn) {
         CMR_LOGE("Fail to send INIT message to thread");
         free((void *)thread->queue_handle);
-        free((void *)thread);
         thread->queue_handle = NULL;
+        free((void *)thread);
         thread = NULL;
         return rtn;
     }
@@ -524,6 +525,7 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
     if (rtn) {
         CMR_LOGE("Fail to create thread");
         free((void *)thread->queue_handle);
+        thread->queue_handle = NULL;
         free((void *)thread);
         thread = NULL;
         return rtn;
@@ -546,8 +548,8 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
     if (rtn) {
         CMR_LOGE("Fail to send INIT message to thread");
         free((void *)thread->queue_handle);
-        free((void *)thread);
         thread->queue_handle = NULL;
+        free((void *)thread);
         thread = NULL;
         return rtn;
     }
