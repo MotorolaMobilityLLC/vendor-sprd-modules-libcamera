@@ -534,10 +534,10 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
     pthread_setname_np(thread->thread_handle, thread_name);
     if (thread_name == NULL)
         snprintf(thread->name, sizeof(thread->name), "cam_%X",
-                (uint16_t)(thread->thread_handle >> 8));
+                (uint32_t)thread->thread_handle);
     else if (strlen(thread_name) < 1)
         snprintf(thread->name, sizeof(thread->name), "cam_%X",
-                (uint16_t)(thread->thread_handle >> 8));
+                (uint32_t)thread->thread_handle);
     else
         snprintf(thread->name, sizeof(thread->name), "%s", thread_name);
     CMR_LOGV("[%p]%s size %d", thread, thread->name, (int)sizeof(thread->name));
@@ -615,7 +615,7 @@ cmr_int cmr_thread_msg_num(cmr_handle thread_handle, cmr_u32 *pmsg_num) {
 cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name) {
     cmr_int ret = CMR_MSG_SUCCESS;
     struct cmr_thread *thread = NULL;
-    int i;
+    size_t i;
 
     if (!thread_handle || !name) {
         return CMR_MSG_PARAM_ERR;

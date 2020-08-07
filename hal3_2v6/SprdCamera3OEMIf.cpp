@@ -4101,7 +4101,6 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
     HAL_LOGV("video_stream %p", rec_stream);
 
     if (!rec_stream) {
-        HAL_LOGW("rec_stream is NULL");
         return 0;
     }
 
@@ -4200,7 +4199,6 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     HAL_LOGV("preview_stream %p", pre_stream);
 
     if (!pre_stream) {
-        HAL_LOGE("pre_stream is NULL");
         return 0;
     }
 
@@ -4351,7 +4349,6 @@ int SprdCamera3OEMIf::PreviewFrameCallbackStream(struct camera_frame_type *frame
     HAL_LOGV("callback_stream %p", callback_stream);
 
     if (!callback_stream) {
-        HAL_LOGE("callback_stream is NULL");
         return ret;
     }
 
@@ -4417,7 +4414,6 @@ int SprdCamera3OEMIf::PreviewFrameYuv2Stream(struct camera_frame_type *frame,
     channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
     if (!yuv2_stream) {
-        HAL_LOGE("yuv_stream is NULL");
         return ret;
     }
 

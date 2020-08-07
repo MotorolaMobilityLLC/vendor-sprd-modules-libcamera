@@ -1204,7 +1204,7 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
         struct camera_context *cxt = (struct camera_context *)handle;
 
         ret = cmr_sensor_get_stream_status(cxt->sn_cxt.sensor_handle, cxt->camera_id);
-        *((int *)param) = ret;
+        *((int *)param) = (int)ret;
         break;
     }
     case CAMERA_TOCTRL_SET_HIGH_RES_MODE: {
