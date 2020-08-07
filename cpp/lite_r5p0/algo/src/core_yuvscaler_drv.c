@@ -11,7 +11,6 @@ void __cppassert (const char *function, const char *file, unsigned int line,
 		const char *assertion)
 {
 	printf("ASSERT: %s %s <%d> : %s\n", file, function, line, assertion);
-	while(1);
 }
 #endif
 
@@ -1677,7 +1676,7 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
                 }
                 else
                 {
-                    if(l >= D_ver_bak - 1)
+                    if(l >= D_ver_bak_uv - 1)
                     {
                         cong_UVcom_ver[8][spec_tap + 2] += cong_UVcom_ver[phase][j+chroma_ver_tap/2-1];
                     }
