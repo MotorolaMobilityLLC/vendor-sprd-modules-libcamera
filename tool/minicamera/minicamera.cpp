@@ -113,12 +113,12 @@ static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
     int i = 0;
     int num = 0;
 
-    cxt->loop = 0;
     if (!cxt) {
         CMR_LOGE("failed: input cxt is null");
         goto exit;
     }
 
+    cxt->loop = 0;
     if (argc < MINICAMERA_PARAM_NUM) {
         usage();
         goto exit;

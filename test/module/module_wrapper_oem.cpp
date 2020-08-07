@@ -125,13 +125,13 @@ static int minicamera_parse_param(struct minicamera_context *cxt, int argc,
     int i = 0;
     int num = 0;
 
-    cxt->loop = 0;
     if (!cxt) {
         CMR_LOGE("failed: input cxt is null");
         goto exit;
     }
     IT_LOGD("oem parse%d", argc);
 
+    cxt->loop = 0;
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-cameraid") == 0 && (i < argc - 1)) {
             cxt->camera_id = atoi(argv[++i]);
@@ -291,6 +291,7 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
 
     if (oem_dev == NULL || oem_dev->ops == NULL) {
         CMR_LOGE("oem_dev is null");
+        pthread_mutex_unlock(&previewlock);
         return;
     }
 
