@@ -2549,6 +2549,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             }
             HAL_LOGD("depth run cost %lld ms", ns2ms(systemTime() - depthRun));
         } else {
+            memcpy(output_buf_addr,input_buf1_addr, ADP_BUFSIZE(*input_buf1));
             HAL_LOGE("otp.data null");
         }
     }
