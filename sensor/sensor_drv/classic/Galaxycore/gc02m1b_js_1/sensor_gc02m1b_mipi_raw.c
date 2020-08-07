@@ -607,21 +607,45 @@ static cmr_int gc02m1b_drv_read_aec_info(cmr_handle handle, cmr_uint param)
     return ret_value;
 }
 
-static cmr_int gc02m1b_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param) 
+static cmr_int gc02m1b_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
-	SENSOR_LOGI("E");
 
-	/*TODO*/
+    SENSOR_LOGI("E");
 
-	//hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
-	
-	/*END*/
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x82, 0x08);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x83, 0x0a);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x85, 0x51);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x88, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x89, 0x04);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x8a, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x8b, 0x12);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7f, 0x09);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
 
     return SENSOR_SUCCESS;
 }
+
+static cmr_int gc02m1b_drv_set_master_FrameSync(cmr_handle handle, cmr_uint param)
+{
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    SENSOR_LOGI("E");
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x84, 0x81);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x80, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x83, 0x20);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x81, 0x13);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7f, 0x0b);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x82, 0x01);
+
+    return SENSOR_SUCCESS;
+}
+
 
 /*==============================================================================
  * Description:
@@ -632,17 +656,19 @@ static cmr_int gc02m1b_drv_stream_on(cmr_handle handle, cmr_uint param)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-	
-	SENSOR_LOGI("E");
 
+    SENSOR_LOGI("E");
+
+#if defined(CONFIG_DUAL_MODULE)
     char value1[PROPERTY_VALUE_MAX];
     property_get("vendor.cam.hw.framesync.on", value1, "1");
     if (!strcmp(value1, "1")) {
-#if defined(CONFIG_DUAL_MODULE)
-	//gc02m1b_drv_set_master_FrameSync(handle, param);
-	//gc02m1b_drv_set_slave_FrameSync(handle, param);
-#endif
+        if (MODE_BOKEH == sns_drv_cxt->is_multi_mode) {
+            gc02m1b_drv_set_slave_FrameSync(handle, param);
+            //gc02m1b_drv_set_master_FrameSync(handle, param);
+        }
     }
+#endif
 
 	usleep(100 * 1000);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);

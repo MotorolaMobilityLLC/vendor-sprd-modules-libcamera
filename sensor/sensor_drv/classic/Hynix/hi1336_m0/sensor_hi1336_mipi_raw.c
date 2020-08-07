@@ -586,9 +586,31 @@ static cmr_int hi1336_drv_set_master_FrameSync(cmr_handle handle,
 
     /*TODO*/
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0250, 0x0100);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0254, 0x1c00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0256, 0x0000);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0258, 0x0001);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x025A, 0x0000);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x025C, 0x0000);
 
     /*END*/
+
+    return SENSOR_SUCCESS;
+}
+
+static cmr_int hi1336_drv_set_slave_FrameSync(cmr_handle handle,
+                                              cmr_uint param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    SENSOR_LOGI("E");
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0250, 0x0300);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0254, 0x0011);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0256, 0x0100);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0258, 0x0002);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x025A, 0x03E8);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x025C, 0x0002);
 
     return SENSOR_SUCCESS;
 }
@@ -604,13 +626,16 @@ static cmr_int hi1336_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
+#if defined(CONFIG_DUAL_MODULE)
     char value1[PROPERTY_VALUE_MAX];
     property_get("vendor.cam.hw.framesync.on", value1, "1");
     if (!strcmp(value1, "1")) {
-#if 0//defined(CONFIG_DUAL_MODULE)
-        hi1336_drv_set_master_FrameSync(handle, param);
-#endif
+        if (MODE_BOKEH == sns_drv_cxt->is_multi_mode) {
+            hi1336_drv_set_master_FrameSync(handle, param);
+            //hi1336_drv_set_slave_FrameSync(handle, param);
+        }
     }
+#endif
 
     /*TODO*/
 	usleep(100 * 1000);
