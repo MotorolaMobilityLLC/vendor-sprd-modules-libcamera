@@ -560,7 +560,7 @@ int SprdCamera3PortraitScene::CaptureThread::capMattingHandle(
 
     SprdCamera3HWI *hwi = mPbrp->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
 
-    uint32_t orientation = 
+    uint32_t orientation =
             SprdCamera3Setting::s_setting[mPbrp->mCameraId].jpgInfo.orientation;
     void *orgJpegBufferAddr = NULL;
     dump_portrait_scene_t combo_buff, mask_buff;
@@ -660,6 +660,7 @@ void UpdateWeightParam(sprd_portrait_scene_proc_t* dst,sprd_portrait_scene_proc_
  *==========================================================================*/
 bool SprdCamera3PortraitScene::CaptureThread::threadLoop() {
     portrait_scene_queue_msg_t capture_msg;
+    memset(&capture_msg, 0, sizeof(portrait_scene_queue_msg_t));
     void *combo_buff_addr = NULL;
     void *mask_data = NULL;
     bool matched = false;
@@ -1206,6 +1207,7 @@ int SprdCamera3PortraitScene::CaptureThread::saveCaptureParams(
 void SprdCamera3PortraitScene::CaptureThread::requestExit() {
     HAL_LOGI("E");
     portrait_scene_queue_msg_t blur_msg;
+    memset(&blur_msg, 0, sizeof(portrait_scene_queue_msg_t));
     blur_msg.msg_type = PORTRAIT_SCENE_MSG_EXIT;
     mCapMsgList.push_back(blur_msg);
     mMergequeueSignal.signal();
@@ -1356,6 +1358,7 @@ bool SprdCamera3PortraitScene::CapturePostThread::yuvReprocessCaptureRequest(
 
 bool SprdCamera3PortraitScene::CapturePostThread::threadLoop() {
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     buffer_handle_t *output_buffer = NULL;
     uint32_t frame_number = 0;
     int ret = 0;
@@ -1414,6 +1417,7 @@ bool SprdCamera3PortraitScene::CapturePostThread::threadLoop() {
 void SprdCamera3PortraitScene::CapturePostThread::requestInit() {
     Mutex::Autolock l(mMergequeueMutex);
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     muxer_msg.msg_type = PORTRAIT_SCENE_MSG_INIT;
     mCapPostMsgList.push_back(muxer_msg);
     mMergequeueSignal.signal();
@@ -1431,6 +1435,7 @@ void SprdCamera3PortraitScene::CapturePostThread::requestExit() {
     HAL_LOGI("E");
     Mutex::Autolock l(mMergequeueMutex);
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     muxer_msg.msg_type = PORTRAIT_SCENE_MSG_EXIT;
     mCapPostMsgList.push_back(muxer_msg);
     mMergequeueSignal.signal();
@@ -1677,6 +1682,7 @@ int SprdCamera3PortraitScene::PreviewThread::prevMattingHandle(
 
 bool SprdCamera3PortraitScene::PreviewThread::threadLoop() {
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     int last_frame = 0;
     int rc = 0;
     bool matched = false;
@@ -1696,7 +1702,6 @@ bool SprdCamera3PortraitScene::PreviewThread::threadLoop() {
         } break;
         case PORTRAIT_SCENE_MSG_EXIT: {
             HAL_LOGD("PREVIEW_PORTRAIT_SCENE_MSG_EXIT");
-            portrait_scene_queue_msg_t clear_msg;
         }
             return false;
         case PORTRAIT_SCENE_MSG_DATA_PROC: {
@@ -1810,6 +1815,7 @@ bool SprdCamera3PortraitScene::PreviewThread::prevFuseHandle(
 void SprdCamera3PortraitScene::PreviewThread::requestInit() {
     Mutex::Autolock l(mMergequeueMutex);
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     muxer_msg.msg_type = PORTRAIT_SCENE_MSG_INIT;
     mPrevMsgList.push_back(muxer_msg);
     mMergequeueSignal.signal();
@@ -1827,6 +1833,7 @@ void SprdCamera3PortraitScene::PreviewThread::requestExit() {
     HAL_LOGI("PrevT E");
     Mutex::Autolock l(mMergequeueMutex);
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     muxer_msg.msg_type = PORTRAIT_SCENE_MSG_EXIT;
     // mPrevMsgList.clear();
     mPrevMsgList.push_back(muxer_msg);
@@ -1885,7 +1892,7 @@ SprdCamera3PortraitScene::PreviewPostThread::~PreviewPostThread() {
 /*===========================================================================
  * FUNCTION   :prevFuse
  *
- * DESCRIPTION: 
+ * DESCRIPTION:
  *
  * PARAMETERS :
  *
@@ -1986,7 +1993,9 @@ int SprdCamera3PortraitScene::PreviewPostThread::prevFuse(
 
 bool SprdCamera3PortraitScene::PreviewPostThread::threadLoop() {
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     portrait_scene_queue_msg_t video_msg;
+    memset(&video_msg, 0, sizeof(portrait_scene_queue_msg_t));
     buffer_handle_t *output_buffer = NULL;
     uint32_t frame_number = 0;
     int rc = 0, ID2index = 0, ret = 0, isHorizon = 0;
@@ -2048,6 +2057,7 @@ bool SprdCamera3PortraitScene::PreviewPostThread::threadLoop() {
 void SprdCamera3PortraitScene::PreviewPostThread::requestInit() {
     Mutex::Autolock l(mMergequeueMutex);
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     muxer_msg.msg_type = PORTRAIT_SCENE_MSG_INIT;
     mPrevPostMsgList.push_back(muxer_msg);
     mMergequeueSignal.signal();
@@ -2065,6 +2075,7 @@ void SprdCamera3PortraitScene::PreviewPostThread::requestExit() {
     HAL_LOGI("E");
     Mutex::Autolock l(mMergequeueMutex);
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     muxer_msg.msg_type = PORTRAIT_SCENE_MSG_EXIT;
     mPrevPostMsgList.push_back(muxer_msg);
     mMergequeueSignal.signal();
@@ -2501,7 +2512,7 @@ int SprdCamera3PortraitScene::configureStreams(
                     mPrevT->mPrevInitParams.height * mCircleSizeScale / 100 / 2;
             }
             //mPrevT->requestInit();
-            
+
             HAL_LOGD("config preview stream[%zu], size: %dx%d, format %d, "
                      "usage %d",
                      i, stream_list->streams[i]->width,
@@ -3283,7 +3294,6 @@ int SprdCamera3PortraitScene::loadBgImageInternal(sprd_camera_memory_t *ion,
 
     if (ion->phys_size >= file_len - fileHeader && file_len > 0) {
         file_len = fread(ion->data, 1, file_len - fileHeader, fp);
-        fclose(fp);
     } else {
         HAL_LOGE("Failed to read file, buffer is too small! buffer "
                  "size=%d,file size=%d",
@@ -3291,6 +3301,8 @@ int SprdCamera3PortraitScene::loadBgImageInternal(sprd_camera_memory_t *ion,
         ret = -1;
     }
 exit:
+    if(fp)
+        fclose(fp);
     return ret;
 }
 
@@ -3624,8 +3636,9 @@ void SprdCamera3PortraitScene::EnQResultMsg(camera3_capture_result_t *result) {
     size_t i = 0;
     camera3_stream_t *newStream = NULL;
     portrait_scene_queue_msg_t msg;
+    memset(&msg, 0, sizeof(portrait_scene_queue_msg_t));
     portrait_scene_queue_msg_t muxer_msg;
-
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     if ((mFlushing && !mIsRecordMode) ) {
         Mutex::Autolock l(mPbrp->mRequestLock);
         List<request_saved_msg_t>::iterator itor = mPrevSavedReqList.begin();
@@ -3813,6 +3826,7 @@ bool SprdCamera3PortraitScene::Copy2Video(
     void *prev_addr = NULL;
     void *vid_addr = NULL;
     portrait_scene_queue_msg_t muxer_msg;
+    memset(&muxer_msg, 0, sizeof(portrait_scene_queue_msg_t));
     int ret = 0;
     int size = mPbrp->mVideoWidth * mPbrp->mVideoHeight * 3 / 2;
     camera3_capture_result_t newResult;
@@ -4218,7 +4232,7 @@ void SprdCamera3PortraitScene::updateWeightParams(CameraMetadata metaSettings,
 
     // get WeightParams in result
     if (type == 1) {
-        
+
         face_num =
             SprdCamera3Setting::s_setting[mPbrp->mCameraId].faceInfo.face_num;
         if (mLastFaceNum > 0 && face_num <= 0 && mSkipFaceNum < SKIP_FACE_NUM) {
