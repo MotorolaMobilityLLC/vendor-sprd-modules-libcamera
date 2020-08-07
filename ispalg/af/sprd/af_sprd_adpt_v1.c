@@ -3838,8 +3838,9 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	AF_OTP_Data otp_info;
 	lens_range_info lens_range;
 	bokeh_golden_data_info golden_data;
+	struct af_sync_info af_sync;
 	memset((void *)&otp_info, 0, sizeof(AF_OTP_Data));
-
+	memset(&af_sync, 0, sizeof(struct af_sync_info));
 	if (NULL == init_param) {
 		ISP_LOGE("fail to init param:%p, result:%p", init_param, result);
 		return NULL;
@@ -3908,24 +3909,25 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->pdaf_support = init_param->pdaf_support;
 	af->slave_focus_cnt = 0;
 
-	if (AF_ALG_DUAL_W_T == af->is_multi_mode) {
-		if (1 == init_param->is_master) {
-			af->sensor_role = AF_ROLE_MASTER;
+	if (AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode || AF_ALG_DUAL_W_T == af->is_multi_mode) {
+		if (NULL == af->bridge_ctrl) {
+			ISP_LOGE("isp_bridge is null");
+			free(af);
+			af = NULL;
+			return NULL;
 		} else {
-			af->sensor_role = AF_ROLE_SLAVE0;
+			af->bridge_ctrl(0, GET_AF_SYNC_INFO, NULL, &af_sync);
+			if (af->camera_id == af_sync.cur_master_id) {
+				af->sensor_role = AF_ROLE_MASTER;
+			} else {
+				af->sensor_role = AF_ROLE_SLAVE;
+			}
+			af->cur_master_id = af_sync.cur_master_id;
 		}
 	}
 
-	if (AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode) {
-		if (0 == init_param->sensor_role) {
-			af->sensor_role = AF_ROLE_MASTER;
-		} else if (1 == init_param->sensor_role) {
-			af->sensor_role = AF_ROLE_SLAVE0;
-		} else if (2 == init_param->sensor_role) {
-			af->sensor_role = AF_ROLE_SLAVE1;
-		}
-	}
-	ISP_LOGI("is_multi_mode %d, cameraid %d, sensor_role %d, pdaf_type %d", af->is_multi_mode, af->camera_id, af->sensor_role, af->pdaf_type);
+	ISP_LOGI("is_multi_mode %d, cameraid %d, cur_master_id %d,sensor_role %d, pdaf_type %d", af->is_multi_mode,
+		 af->camera_id, af_sync.cur_master_id, af->sensor_role, af->pdaf_type);
 	ISP_LOGI("width = %d, height = %d, win_num = %d", af->isp_info.width, af->isp_info.height, af->isp_info.win_num);
 	ISP_LOGV
 	    ("module otp data (infi,macro) = (%d,%d), gldn (infi,macro) = (%d,%d)",
@@ -4059,20 +4061,21 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	nsecs_t system_time0 = 0;
 	nsecs_t system_time1 = 0;
 	nsecs_t system_time_trigger = 0;
+	nsecs_t system_time_force = 0;
 	cmr_s32 rtn = AFV1_SUCCESS;
 	UNUSED(out);
 	struct af_status_info status_info;
 	struct af_status_info status_master;
-	struct af_status_info status_slave;
 	struct aft_proc_result sync_result;
+	struct af_sync_info af_sync;
 	cmr_u32 pd_workable = 0;
 	cmr_u16 i = 0, max_index = 0;
 	cmr_u32 max_area = 0, area = 0;
 
 	memset(&status_info, 0, sizeof(struct af_status_info));
 	memset(&status_master, 0, sizeof(struct af_status_info));
-	memset(&status_slave, 0, sizeof(struct af_status_info));
 	memset(&sync_result, 0, sizeof(struct aft_proc_result));
+	memset(&af_sync, 0, sizeof(struct af_sync_info));
 
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
@@ -4120,13 +4123,30 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	system_time0 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_BEGIN(__FUNCTION__);
 	ISP_LOGV("state = %s, focus_state = %s, data_type %d", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
+	switch (inparam->data_type) {
+	case AF_DATA_AF:
+		afm_set_fv(af, inparam->data);
+		af->trigger_source_type |= AF_DATA_AF;
+		break;
+	case AF_DATA_IMG_BLK:
+		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state || STATE_NORMAL_AF == af->state) {
+			caf_monitor_process(af);
+		}
+		break;
+	default:
+		ISP_LOGV("unsupported data type: %d", inparam->data_type);
+		rtn = AFV1_ERROR;
+		break;
+	}
+	ATRACE_END();
+	system_time_trigger = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGV("SYSTEM_TEST-trigger:%dus", (cmr_s32) ((system_time_trigger - system_time0) / 1000));
+
 	if (af->bridge_ctrl != NULL && (AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode || AF_ALG_DUAL_W_T == af->is_multi_mode)
 	    && af->sensor_role != AF_ROLE_MASTER && STATE_NORMAL_AF != af->state) {
 		af->bridge_ctrl(AF_ROLE_MASTER, GET_AF_STATUS_INFO, NULL, &status_master);
-		af->bridge_ctrl(af->sensor_role, GET_AF_STATUS_INFO, NULL, &status_slave);
-		ISP_LOGV("cameraid %d, mode%d, state%d, status%d, pos%d", af->camera_id, status_master.af_mode, status_master.af_state, status_master.af_status,
+		ISP_LOGV("camera_id %d, mode%d, state%d, status%d, pos%d", af->camera_id, status_master.af_mode, status_master.af_state, status_master.af_status,
 			 status_master.af_position);
-
 		if (AF_SEARCHING == status_master.af_status && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)
 		    && af->slave_focus_cnt == 0) {
 			switch (status_master.af_state) {
@@ -4181,8 +4201,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 					af->win.face[0].sy = af->face_info.face_info[max_index].sy;
 					af->win.face[0].ey = af->face_info.face_info[max_index].ey;
 					af->win.face[0].roll_angle = af->face_info.face_info[max_index].angle;
-
 					af->roll_angle = af->win.face[0].roll_angle;
+
 					if (af->roll_angle >= -180 && af->roll_angle <= 180) {
 						if (af->roll_angle >= -45 && af->roll_angle <= 45) {
 							af->f_orientation = FACE_UP;
@@ -4220,28 +4240,77 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 
 	}
-	ISP_LOGV("cameraid %d, state = %s, focus_state = %s, data_type %d", af->camera_id, STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state), inparam->data_type);
 
-	switch (inparam->data_type) {
-	case AF_DATA_AF:
-		afm_set_fv(af, inparam->data);
-		af->trigger_source_type |= AF_DATA_AF;
-		break;
+	if (af->bridge_ctrl != NULL && (AF_ALG_DUAL_W_T == af->is_multi_mode || AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode)) {
+		af->bridge_ctrl(0, GET_AF_SYNC_INFO, NULL, &af_sync);
+		if (af->cur_master_id != af_sync.cur_master_id) {
+			af->cur_master_id = af_sync.cur_master_id;
+			ISP_LOGI("af->cur_master_id : %d,af_sync.cur_master_id : %d", af->cur_master_id, af_sync.cur_master_id);
+			if (af->camera_id == af_sync.cur_master_id) {
+				af->sensor_role = AF_ROLE_MASTER;
+				if (AF_SEARCHING != status_master.af_status) {
+					trigger_start(af);
+				} else if (AF_SEARCHING == status_master.af_status) {
+					if (STATE_FAF != status_master.af_status) {
+					} else if (STATE_FAF == status_master.af_status && STATE_FAF != af->state) {
+						if (0 == af->face_info.face_num) {
+							ISP_LOGI("face do not sync!");
+						} else {
+							af_stop_search(af);
+							af->af_ops.calc(af->af_alg_cxt);
+							for (i = 0; i < af->face_info.face_num; i++) {
+								if (af->face_info.face_info[i].sx <= af->face_info.frame_width
+								    && af->face_info.face_info[i].ex <= af->face_info.frame_width
+								    && af->face_info.face_info[i].sy <= af->face_info.frame_height
+								    && af->face_info.face_info[i].ey <= af->face_info.frame_height) {
+									area =
+									    ABS(af->face_info.face_info[i].ex - af->face_info.face_info[i].sx) * ABS(af->face_info.face_info[i].ey -
+																		     af->face_info.face_info[i].sy);
+									if (max_area < area) {
+										max_index = i;
+										max_area = area;
+									}
+								}
+							}
+							if (max_index == af->face_info.face_num || 0 == max_area)
+								return rtn;
 
-	case AF_DATA_IMG_BLK:
-		if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_FAF == af->state || STATE_NORMAL_AF == af->state) {
-			caf_monitor_process(af);
+							af->win.win_num = 1;
+							af->win.face[0].sx = af->face_info.face_info[max_index].sx;
+							af->win.face[0].ex = af->face_info.face_info[max_index].ex;
+							af->win.face[0].sy = af->face_info.face_info[max_index].sy;
+							af->win.face[0].ey = af->face_info.face_info[max_index].ey;
+							af->win.face[0].roll_angle = af->face_info.face_info[max_index].angle;
+
+							af->roll_angle = af->win.face[0].roll_angle;
+							if (af->roll_angle >= -180 && af->roll_angle <= 180) {
+								if (af->roll_angle >= -45 && af->roll_angle <= 45) {
+									af->f_orientation = FACE_UP;
+								} else if ((af->roll_angle >= -180 && af->roll_angle <= -135) || (af->roll_angle >= 135 && af->roll_angle <= 180)) {
+									af->f_orientation = FACE_DOWN;
+								} else if (af->roll_angle > -135 && af->roll_angle < -45) {
+									af->f_orientation = FACE_LEFT;
+								} else if (af->roll_angle > 45 && af->roll_angle < 135) {
+									af->f_orientation = FACE_RIGHT;
+								}
+							} else {
+								af->f_orientation = FACE_NONE;
+							}
+							af->pre_state = af->state;
+							af->state = STATE_FAF;
+							faf_start(af, &af->win);
+							af->focus_state = AF_SEARCHING;
+						}
+					}
+				}
+			} else {
+				af->sensor_role = AF_ROLE_SLAVE;
+			}
 		}
-		break;
-
-	default:
-		ISP_LOGV("unsupported data type: %d", inparam->data_type);
-		rtn = AFV1_ERROR;
-		break;
 	}
 
-	system_time_trigger = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGV("SYSTEM_TEST-trigger:%dus", (cmr_s32) ((system_time_trigger - system_time0) / 1000));
+	system_time1 = systemTime(CLOCK_MONOTONIC);
+	ATRACE_BEGIN(__FUNCTION__);
 	if (AF_DATA_AF == inparam->data_type) {
 		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_PRE_TRIGGER_DATA, NULL);
 		switch (af->state) {
@@ -4270,8 +4339,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 	}
 	ATRACE_END();
-	system_time1 = systemTime(CLOCK_MONOTONIC);
-	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32) ((system_time1 - system_time0) / 1000));
+	system_time_force = systemTime(CLOCK_MONOTONIC);
+	ISP_LOGV("SYSTEM_TEST-af:%dus", (cmr_s32) ((system_time_force - system_time1) / 1000));
 
 #ifdef Enable_mlog_AFtime
 
@@ -4292,13 +4361,13 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		}
 	}
 #endif
-
-	if (af->bridge_ctrl != NULL && (AF_ALG_DUAL_W_T == af->is_multi_mode || AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode)) {
+	if (af->bridge_ctrl != NULL && (AF_ALG_DUAL_W_T == af->is_multi_mode || AF_ALG_TRIBLE_W_T_UW == af->is_multi_mode)
+	    && AF_ROLE_MASTER == af->sensor_role) {
 		status_info.af_mode = af->request_mode;
 		status_info.af_state = af->state;
 		status_info.af_status = af->focus_state;
 		status_info.af_position = af->lens.pos;
-		af->bridge_ctrl(af->sensor_role, SET_AF_STATUS_INFO, &status_info, NULL);
+		af->bridge_ctrl(AF_ROLE_MASTER, SET_AF_STATUS_INFO, &status_info, NULL);
 	}
 	return rtn;
 }
