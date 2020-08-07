@@ -191,7 +191,7 @@ static cmr_s32 _check_handle(cmr_handle handle)
 }
 
 // misc
-static cmr_u64 get_systemtime_ns()
+static cmr_u64 get_systemtime_ns(void)
 {
 	cmr_s64 timestamp = systemTime(CLOCK_MONOTONIC);
 	return timestamp;
@@ -977,7 +977,7 @@ static cmr_u8 if_lock_partial_ae(cmr_u32 lock, void *cookie)
 	af_ctrl_t *af = cookie;
 	ISP_LOGV("%s, lock_num = %d", LOCK == lock ? "lock" : "unlock", af->ae_partial_lock_num);
 
-	if (LOCK == ! !lock) {
+	if (LOCK == lock) {
 		if (0 == af->ae_partial_lock_num) {
 			af->cb_ops.lock_module(af->caller, AF_LOCKER_AE_CAF);
 			af->ae_partial_lock_num++;
@@ -1554,7 +1554,7 @@ static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 	FILE *fp = NULL;
 
 	if (0 == access(aft_tuning_path, R_OK)) {	// read request successs
-		cmr_s32 len = 0;
+		cmr_int len = 0;
 
 		fp = fopen(aft_tuning_path, "rb");
 		if (NULL == fp) {
@@ -1779,8 +1779,10 @@ static cmr_s32 trigger_init(af_ctrl_t * af, const char *lib_name)
 		if (!strcmp(value, "save")) {
 			FILE *fp = NULL;
 			fp = fopen("/data/vendor/cameraserver/aft_tuning_params.bin", "wb");
-			fwrite(aft_in.tuning.data, 1, aft_in.tuning.data_len, fp);
-			fclose(fp);
+			if (NULL != fp) {
+				fwrite(aft_in.tuning.data, 1, aft_in.tuning.data_len, fp);
+				fclose(fp);
+			}
 			ISP_LOGV("aft tuning size = %d", aft_in.tuning.data_len);
 		}
 	}
@@ -2849,7 +2851,7 @@ static void ae_calibration(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
 static void scl_for_ae_stat(struct af_img_blk_info *rgb, isp_awb_statistic_hist_info_t * dst_data)
 {
 	cmr_u32 i, j, ii, jj;
-	cmr_u64 sum;
+	cmr_u32 sum;
 	cmr_u32 blk_num_w = (rgb->block_w < 32) ? 32 : rgb->block_w;
 	cmr_u32 blk_num_h = (rgb->block_h < 32) ? 32 : rgb->block_h;
 	cmr_u32 ratio_h = blk_num_h / 32;
@@ -2929,7 +2931,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_info *rgb)
 		}
 
 		ae_area = 1.0 * (Y_ex - Y_sx + 1) * (Y_ey - Y_sy + 1);
-		y_sum = (((0.299 * r_sum) + (0.587 * g_sum) + (0.114 * b_sum)) / ae_area);
+		y_sum = (cmr_u32)(((0.299 * r_sum) + (0.587 * g_sum) + (0.114 * b_sum)) / ae_area);
 		af->roi_RGBY.R_sum[i] = r_sum;
 		af->roi_RGBY.G_sum[i] = g_sum;
 		af->roi_RGBY.B_sum[i] = b_sum;
@@ -3118,7 +3120,7 @@ static cmr_s32 af_sprd_set_type1_pd_info(cmr_handle handle, void *param0)
 		raw = ((*(pIMX351Buf + i + 1) & 0x0F) << 6) | ((*(pIMX351Buf + i + 2) & 0xFC) >> 2);
 
 		if (sign_flag) {
-			raw = -(((~raw) & 0x3FF) + 1);
+			raw = -(((~(cmr_u32)raw) & 0x3FF) + 1);
 		}
 
 		IMX351_phase_difference[index] = (double)raw / 16;
@@ -3459,7 +3461,7 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 {
 	UNUSED(param1);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	cmr_int rtn = AFV1_SUCCESS;
+	cmr_s32 rtn = AFV1_SUCCESS;
 
 	switch (cmd) {
 	case AF_CMD_SET_AF_POS:
@@ -3593,7 +3595,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 {
 	UNUSED(param1);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
-	cmr_int rtn = AFV1_SUCCESS;
+	cmr_s32 rtn = AFV1_SUCCESS;
 	switch (cmd) {
 	case AF_CMD_GET_AF_MODE:
 		*(cmr_u32 *) param0 = af->request_mode;
@@ -4311,7 +4313,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 
 cmr_s32 sprd_afv1_ioctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *param1)
 {
-	cmr_int rtn = AFV1_SUCCESS;
+	cmr_s32 rtn = AFV1_SUCCESS;
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
 		ISP_LOGE("fail to check cxt");

@@ -138,7 +138,7 @@ static cmr_s32 af_start_notice(void *handle_af, struct afctrl_notice *in_param)
 static cmr_s32 af_lock_module(void *handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	cmr_int rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	if (NULL == cxt_ptr->af_set_cb) {
 		ISP_LOGE("fail to check param!");
@@ -172,7 +172,7 @@ static cmr_s32 af_lock_module(void *handle_af, cmr_int af_locker_type)
 static cmr_s32 af_unlock_module(void *handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
-	cmr_int rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 
 	if (NULL == cxt_ptr->af_set_cb) {
 		ISP_LOGE("fail to check param!");
@@ -804,8 +804,9 @@ cmr_int af_ctrl_ioctrl(cmr_handle handle_af, cmr_int cmd, void *in_ptr, void *ou
 	message.msg_type = AFCTRL_EVT_IOCTRL;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
-
-exit:
+	if (rtn) {
+		ISP_LOGE("fail to send msg to main thr %ld", rtn);
+	}
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
 }
