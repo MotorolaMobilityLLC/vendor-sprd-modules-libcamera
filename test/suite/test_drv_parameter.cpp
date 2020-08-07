@@ -1897,7 +1897,7 @@ static int isp_parse_config(DrvCaseComm *json2)
 			}
 			break;
 		default:
-			printf("ISP_FW: [ERROR] error type[%s] of parameter[%s]\n", ISP_Param_Map[map_idx].Type, ISP_Param_Map[map_idx].Name);
+			printf("ISP_FW: [ERROR] error type[%d] of parameter[%s]\n", ISP_Param_Map[map_idx].Type, ISP_Param_Map[map_idx].Name);
 			return 1;
 		}
 	}
@@ -1920,7 +1920,7 @@ int isp_init_config(DrvCaseComm *json2)
 		case PARAM_TYPE_STR:
 			break;
 		default:
-			printf("ISP_FW: [ERROR] error type[%s] of parameter [%s]\n", ISP_Param_Map[i].Type, ISP_Param_Map[i].Name);
+			printf("ISP_FW: [ERROR] error type[%d] of parameter [%s]\n", ISP_Param_Map[i].Type, ISP_Param_Map[i].Name);
 			return 1;
 		}
 	}

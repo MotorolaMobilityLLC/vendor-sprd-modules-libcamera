@@ -91,7 +91,7 @@ static int camt_check_json_param(DrvCaseComm *_json2)
 
 	IT_LOGD("case id= %d",_json2->getID());
 	if (_json2->m_chipID > CAMT_CHIP_MAX) {
-		IT_LOGE("fail to get invalid chipid %p", _json2->m_chipID);
+		IT_LOGE("fail to get invalid chipid %d", _json2->m_chipID);
 		return -1;
 	}
 

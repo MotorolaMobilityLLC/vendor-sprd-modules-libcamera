@@ -972,7 +972,7 @@ int dcam_read_raw_gtm_param(struct host_info_t *host_info)
 		sprintf(hist_file_name, "%s%s%s", host_info->output_file,"vector_output\/test_raw_gtm_stat_hist",".dat");
 		fp_hist = fopen(hist_file_name, "r");
 		if (!fp_hist) {
-			printf("ISP_FW: [ERROR] fail to open %s\n", fp_hist);
+			printf("ISP_FW: [ERROR] fail to open %p\n", fp_hist);
 			return 1;
 		}
 		img_id = 0;
