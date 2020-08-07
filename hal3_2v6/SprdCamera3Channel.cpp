@@ -602,7 +602,7 @@ int SprdCamera3PicChannel::channelClearInvalidQBuff(
 
     uint32_t buff_frame_number;
     camera3_stream_t *stream;
-    buffer_handle_t *buffer;
+    buffer_handle_t *buffer = NULL;
     int buff_num;
     mCamera3Stream[index]->getQBufListNum(&buff_num);
 

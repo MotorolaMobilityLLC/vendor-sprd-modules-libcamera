@@ -3041,7 +3041,7 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
             itor2 = cam_MemGpuQueue.erase(itor2);
             continue;
         }
-        HAL_LOGV("mem_type=%d mIonHeap=%p", itor2->mem_type);
+        HAL_LOGV("mem_type=%d mIonHeap", itor2->mem_type);
         itor2++;
     }
     cam_MemIonQueue.clear();
@@ -7631,7 +7631,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_FLASH_MODE:
-        if (getMultiCameraMode() == MODE_MULTI_CAMERA || 0 <= mCameraId <= 16) {
+        if (getMultiCameraMode() == MODE_MULTI_CAMERA || ((mCameraId >= 0)&&(mCameraId <= 16))) {
             int8_t flashMode = 0;
             FLASH_Tag flashInfo;
             mSetting->getFLASHTag(&flashInfo);
@@ -9024,7 +9024,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
         memGpu_queue.mGpuHeap.bufferhandle = pbuffer;
         if (type == CAMERA_VIDEO_EIS_ULTRA_WIDE) {
             memGpu_queue.mGpuHeap.private_handle = (void *)fd;
-            HAL_LOGD("fd=0x%x", fd);
+            HAL_LOGD("fd=%p", fd);
         } else
             memGpu_queue.mGpuHeap.private_handle = NULL;
         memGpu_queue.mGpuHeap.buf_size = width * height;
@@ -9422,7 +9422,7 @@ int SprdCamera3OEMIf::SetChannelHandle(void *regular_chan, void *picture_chan) {
 int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
                                        int stream_tpye) {
     uint32_t imageFormat = CAM_IMG_FMT_BAYER_MIPI_RAW;
-    int isYuvSensor = 0, i;
+    int i;
     SPRD_DEF_Tag *sprddefInfo;
     char value[PROPERTY_VALUE_MAX];
     struct img_size req_size;
@@ -9453,9 +9453,6 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
         } else if (format == HAL_PIXEL_FORMAT_RAW16) {
             mPreviewFormat = CAM_IMG_FMT_BAYER_MIPI_RAW;
         }
-        if (isYuvSensor) {
-            mPreviewFormat = CAM_IMG_FMT_YUV422P;
-        }
         break;
     case CAMERA_STREAM_TYPE_VIDEO:
         mVideoWidth = size.width;
@@ -9463,9 +9460,6 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
         if (format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
             format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
             mVideoFormat = CAM_IMG_FMT_YUV420_NV21;
-        }
-        if (isYuvSensor) {
-            mVideoFormat = CAM_IMG_FMT_YUV422P;
         }
 
         if (mVideoWidth > 0 && mVideoWidth == mCaptureWidth &&
@@ -9489,9 +9483,6 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
             format == HAL_PIXEL_FORMAT_YCrCb_420_SP) {
             mCallbackFormat = CAM_IMG_FMT_YUV420_NV21;
         }
-        if (isYuvSensor) {
-            mCallbackFormat = CAM_IMG_FMT_YUV422P;
-        }
         break;
     case CAMERA_STREAM_TYPE_YUV2:
         mYuv2Width = size.width;
@@ -9501,18 +9492,12 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
             format == HAL_PIXEL_FORMAT_YCrCb_420_SP) {
             mYuv2Format = CAM_IMG_FMT_YUV420_NV21;
         }
-        if (isYuvSensor) {
-            mYuv2Format = CAM_IMG_FMT_YUV422P;
-        }
         break;
     case CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT:
         mCaptureWidth = size.width;
         mCaptureHeight = size.height;
         if (format == HAL_PIXEL_FORMAT_BLOB) {
             mPictureFormat = CAM_IMG_FMT_YUV420_NV21;
-        }
-        if (isYuvSensor) {
-            mPictureFormat = CAM_IMG_FMT_YUV422P;
         }
 
         if (getMultiCameraMode() != MODE_TUNING) {

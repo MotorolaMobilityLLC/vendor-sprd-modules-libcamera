@@ -132,6 +132,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mHighResNonzsl = 0;
     // get property for high res
     getHighResZslSetting();
+    memset(&mStreamConfiguration, 0, sizeof(cam3_stream_configuration_t));
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -2077,6 +2078,8 @@ int SprdCamera3HWI::flush() {
     if (mOEMIf) {
         mOEMIf->setFlushFlag(1);
         mOEMIf->setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+    } else {
+        return 0;
     }
 
     {

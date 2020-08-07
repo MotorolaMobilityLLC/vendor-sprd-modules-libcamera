@@ -61,7 +61,7 @@ static SprdCamera3Factory gSprdCamera3Factory;
 
 SprdCamera3Factory::SprdCamera3Factory()
     : mUseCameraId(PrivateId), mNumberOfCameras(0), mNumOfCameras(0),
-      mWrapper(NULL) {
+      mWrapper(NULL), mCameraCallbacks(NULL){
     HAL_LOGD("E");
 
     char boot_mode[PROPERTY_VALUE_MAX] = {'\0'};
