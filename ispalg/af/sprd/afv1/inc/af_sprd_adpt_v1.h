@@ -347,7 +347,6 @@ typedef struct _af_ctrl {
 	struct afctrl_cb_ops cb_ops;
 	cmr_u8 *pdaf_rdm_otp_data;
 	cmr_u32 trigger_counter;
-	cmr_u32 cur_master_id;
 	cmr_u32 camera_id;
 	cmr_u32 sensor_role;
 	af_ctrl_br_ioctrl bridge_ctrl;

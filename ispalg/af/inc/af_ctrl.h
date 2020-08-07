@@ -226,15 +226,19 @@ extern "C" {
 	};
 
 	enum af_sync_cmd {
-		GET_AF_SYNC_INFO = 0x3000,
+		SET_AF_SYNC_INFO = 0x50,
+		GET_AF_SYNC_INFO,
 		GET_AF_STATUS_INFO,
 		SET_AF_STATUS_INFO,
+		GET_AF_MANUAL_INFO,
+		SET_AF_MANUAL_INFO,
 		AF_SYNC_MAX
 	};
 
 	enum af_role {
 		AF_ROLE_MASTER,
-		AF_ROLE_SLAVE,
+		AF_ROLE_SLAVE0,
+		AF_ROLE_SLAVE1,
 		AF_ROLE_MAX
 	};
 
@@ -562,7 +566,6 @@ extern "C" {
 	};
 
 	struct af_sync_info {
-		cmr_u32 cur_master_id;
 		cmr_u32 camera_id;
 		cmr_u32 sensor_role;
 	};
