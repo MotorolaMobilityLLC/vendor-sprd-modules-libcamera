@@ -973,7 +973,7 @@ cmr_int camera_get_cap_time(cmr_handle snp_handle) {
 cmr_int camera_check_cap_time(cmr_handle snp_handle, struct frm_info *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)snp_handle;
-    cmr_s64 frame_time =
+    cmr_u64 frame_time =
         data->sec * SEC_TO_NANOSEC + data->usec * MS_TO_NANOSEC;
 
     CMR_LOGV("time %ld, %ld", data->sec, data->usec);
@@ -1594,16 +1594,16 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
 cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                           enum preview_func_type func, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_uint oem_func;
     cmr_uint oem_cb_type;
-    CMR_MSG_INIT(message);
 
     if (!oem_handle) {
         CMR_LOGE("error handle");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_MSG_INIT(message);
 
     if (PREVIEW_FUNC_START_PREVIEW == func) {
         oem_func = CAMERA_FUNC_START_PREVIEW;
@@ -3156,14 +3156,21 @@ void camera_calibrationconfigure_save(uint32_t start_addr, uint32_t data_size) {
 void camera_calibrationconfigure_load(uint32_t *start_addr,
                                       uint32_t *data_size) {
     const char configfile[] = "/data/otpconfig.bin";
+    cmr_u32 ret=0;
 
     FILE *configfile_handle = fopen(configfile, "rb");
     if (NULL == configfile_handle) {
         CMR_LOGE("failed");
         return;
     }
-    fread(&start_addr, 1, 4, configfile_handle);
-    fread(&data_size, 1, 4, configfile_handle);
+    ret = fread(&start_addr, 1, 4, configfile_handle);
+    if (ret < 4) {
+        CMR_LOGW("read start_addr calibrationconfigure file fail, len %d", ret);
+    }
+    ret = fread(&data_size, 1, 4, configfile_handle);
+    if (ret < 4) {
+        CMR_LOGW("read data_size calibrationconfigure file fail, len %d", ret);
+    }
     fclose(configfile_handle);
     CMR_LOGI("done");
 }
@@ -5027,7 +5034,9 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
     CMR_LOGD("E");
     cxt->night_cxt.sw_handle = dlopen("libnight.so", RTLD_NOW);
     if(!cxt->night_cxt.sw_handle) {
+          ret = -CMR_CAMERA_INVALID_PARAM;
           CMR_LOGD("libnight open failed with %s",dlerror());
+          goto exit;
     } else {
         cxt->night_cxt.sw_open = dlsym(cxt->night_cxt.sw_handle, "camera_sw_open");
         cxt->night_cxt.sw_process = dlsym(cxt->night_cxt.sw_handle, "camera_sw_process");
@@ -5040,6 +5049,7 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
             !cxt->night_cxt.ipmpro_deinit || !cxt->night_cxt.ipmpro_process ) {
             CMR_LOGD("func analyzing failed with %s", dlerror());
             dlclose(cxt->night_cxt.sw_handle);
+            cxt->night_cxt.is_authorized = 0;
         } else {
             cxt->night_cxt.is_authorized = 1;
         }
@@ -5054,6 +5064,8 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
             CMR_LOGE("failed to init ipm pro %ld", ret);
         }
     }
+
+exit:
     ATRACE_END();
     CMR_LOGD("X");
     return ret;
@@ -6990,7 +7002,7 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id,
 
     /* for sharkl2 offline path */
     if (channel_id == OFFLINE_CHANNEL) {
-        camera_local_start_capture(oem_handle);
+        ret = camera_local_start_capture(oem_handle);
     }
 
     ret = cmr_grab_cap_resume(cxt->grab_cxt.grab_handle, channel_id,

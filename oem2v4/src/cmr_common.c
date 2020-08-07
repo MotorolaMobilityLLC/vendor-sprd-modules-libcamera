@@ -418,7 +418,7 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
     FILE *pf = NULL;
-    uint32_t file_len = 0;
+    cmr_s64 file_len = 0;
 
     if (NULL == data_buf)
         return 0;

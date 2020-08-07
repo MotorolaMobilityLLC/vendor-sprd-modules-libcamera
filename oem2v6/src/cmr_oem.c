@@ -1147,7 +1147,7 @@ cmr_int camera_get_cap_time(cmr_handle snp_handle) {
 cmr_int camera_check_cap_time(cmr_handle snp_handle, struct frm_info *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)snp_handle;
-    cmr_s64 frame_time =
+    cmr_u64 frame_time =
         data->sec * SEC_TO_NANOSEC + data->usec * MS_TO_NANOSEC;
 
     CMR_LOGV("time %ld, %ld", data->sec, data->usec);
@@ -1862,19 +1862,19 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
 cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                           enum preview_func_type func, void *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_uint oem_func;
     cmr_uint oem_cb_type;
     struct setting_cmd_parameter setting_param;
-    struct setting_context *setting_cxt = &cxt->setting_cxt;
-    cmr_handle send_thr_handle = cxt->prev_cb_thr_handle;
-    CMR_MSG_INIT(message);
 
     if (!oem_handle) {
         CMR_LOGE("error handle");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    cmr_handle send_thr_handle = cxt->prev_cb_thr_handle;
+    CMR_MSG_INIT(message);
 
     if (PREVIEW_FUNC_START_PREVIEW == func) {
         oem_func = CAMERA_FUNC_START_PREVIEW;
@@ -2008,7 +2008,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
         isp_cmd_parm.camera_id = cxt->camera_id;
         memcpy(&(isp_cmd_parm.af_ot_info), &(frame_param_one->at_cb_info),
                sizeof(struct auto_tracking_info));
-        camera_isp_ioctl(oem_handle, COM_ISP_SET_AUTO_TRACKING_INFO,
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_AUTO_TRACKING_INFO,
                          &isp_cmd_parm);
 
         setting_param.camera_id = cxt->camera_id;
@@ -2749,9 +2749,7 @@ cmr_int camera_open_ai_scene(struct camera_context *cxt,
                            out_ptr, &cxt->ipm_cxt.ai_scene_handle);
     }
     sem_post(&cxt->ai_scene_flag_sm);
-    CMR_LOGD("end cxt->ipm_cxt.ai_scene_handle:%x",
-             cxt->ipm_cxt.ai_scene_handle);
-
+    CMR_LOGD("X,ret=%ld", ret);
     return ret;
 }
 
@@ -3722,14 +3720,21 @@ void camera_calibrationconfigure_save(uint32_t start_addr, uint32_t data_size) {
 void camera_calibrationconfigure_load(uint32_t *start_addr,
                                       uint32_t *data_size) {
     const char configfile[] = "/data/otpconfig.bin";
+    cmr_u32 ret =0;
 
     FILE *configfile_handle = fopen(configfile, "rb");
     if (NULL == configfile_handle) {
         CMR_LOGE("failed");
         return;
     }
-    fread(&start_addr, 1, 4, configfile_handle);
-    fread(&data_size, 1, 4, configfile_handle);
+    ret = fread(&start_addr, 1, 4, configfile_handle);
+    if (ret < 4) {
+        CMR_LOGW("read start_addr calibrationconfigure file fail, len %d", ret);
+    }
+    ret = fread(&data_size, 1, 4, configfile_handle);
+    if (ret < 4) {
+        CMR_LOGW("read data_size calibrationconfigure file fail, len %d", ret);
+    }
     fclose(configfile_handle);
     CMR_LOGV("X");
 }
@@ -3997,6 +4002,7 @@ cmr_s32 camera_get_pos_info(cmr_handle oem_handle,
 
     sensor_info_ptr = &(sn_cxt->sensor_info);
     CHECK_HANDLE_VALID(sensor_info_ptr);
+    CHECK_HANDLE_VALID(sensor_info_ptr->raw_info_ptr);
     ioctrl_ptr = sensor_info_ptr->raw_info_ptr->ioctrl_ptr;
     CHECK_HANDLE_VALID(ioctrl_ptr);
 
@@ -6463,7 +6469,9 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
     CMR_LOGD("E");
     cxt->night_cxt.sw_handle = dlopen("libnight.so", RTLD_NOW);
     if (!cxt->night_cxt.sw_handle) {
+        ret = -CMR_CAMERA_INVALID_PARAM;
         CMR_LOGD("libnight open failed with %s", dlerror());
+        goto exit;
     } else {
         cxt->night_cxt.sw_open = dlsym(cxt->night_cxt.sw_handle,
                         "camera_sw_open");
@@ -6482,6 +6490,7 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
                 (!cxt->night_cxt.ipmpro_deinit) || (!cxt->night_cxt.ipmpro_process)) {
             CMR_LOGD("func analyzing failed with %s", dlerror());
             dlclose(cxt->night_cxt.sw_handle);
+            cxt->night_cxt.is_authorized = 0;
         } else {
             cxt->night_cxt.is_authorized = 1;
         }
@@ -6496,6 +6505,8 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
             CMR_LOGE("failed to init ipm pro %ld", ret);
         }
     }
+
+exit:
     ATRACE_END();
     CMR_LOGD("X");
     return ret;
@@ -6551,8 +6562,9 @@ cmr_int camera_fdr_init(cmr_handle oem_handle) {
             CMR_LOGE("failed to init ipm fdr %ld", ret);
         }
     }
-    return ret;
+
     ATRACE_END();
+    return ret;
 }
 
 
@@ -7855,10 +7867,12 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
     enc_exif_param.exif_isp_info = NULL;
     if (cxt->is_multi_mode != MODE_BOKEH) {
-        enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
-            .numerator = cxt->sn_cxt.cur_sns_ex_info.f_num;
-        enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
-            .denominator = 100;
+        if (!(enc_exif_param.exif_ptr)) {
+            enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
+                .numerator = cxt->sn_cxt.cur_sns_ex_info.f_num;
+            enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
+                .denominator = 100;
+        }
     }
 
     ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
@@ -7932,10 +7946,12 @@ cmr_int camera_start_exif_encode_simplify(cmr_handle oem_handle,
                             SETTING_GET_EXIF_INFO, &setting_param);
     enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
     enc_exif_param.exif_isp_info = NULL;
-    enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber.numerator =
-        cxt->sn_cxt.cur_sns_ex_info.f_num;
-    enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
-        .denominator = 100;
+    if (!(enc_exif_param.exif_ptr)) {
+        enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
+            .numerator = cxt->sn_cxt.cur_sns_ex_info.f_num;
+        enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
+            .denominator = 100;
+    }
 
     ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_EXIF_DEBUG_INFO, &isp_param);
     if (ret) {
@@ -9442,7 +9458,7 @@ cmr_int camera_channel_resume(cmr_handle oem_handle, cmr_uint channel_id,
 
     /* for sharkl2 offline path */
     if (channel_id == OFFLINE_CHANNEL) {
-        camera_local_start_capture(oem_handle);
+        ret = camera_local_start_capture(oem_handle);
     }
 
     ret = cmr_grab_cap_resume(cxt->grab_cxt.grab_handle, channel_id,
@@ -11964,6 +11980,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
+        break;
     case CAMERA_PARAM_SHARPNESS:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
@@ -13897,7 +13914,10 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     }
 
     case CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE: {
-        camera_set_setting(oem_handle, id, param);
+        ret = camera_set_setting(oem_handle, id, param);
+        if (ret) {
+            CMR_LOGE("failed to set super macrophoto enable %ld", ret);
+        }
         break;
     }
     default:
