@@ -527,7 +527,7 @@ struct prev_context {
     cmr_uint cap_fdr_virt_addr_array[FDR_FRM_ALLOC_CNT];
     cmr_s32 cap_fdr_fd_array[FDR_FRM_ALLOC_CNT];
     cmr_uint cap_fdr_mem_size;
-    cmr_uint cap_fdr_mem_num;
+    cmr_u32 cap_fdr_mem_num;
     cmr_int cap_fdr_mem_valid_num;
     struct buffer_cfg cap_used_fdr_buf_cfg;
 
@@ -1361,7 +1361,7 @@ cmr_int cmr_preview_get_fdr_free_buffer(cmr_handle preview_handle, cmr_u32 camer
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
     struct buffer_cfg *used_buf_cfg = NULL;
-    cmr_u8 i = 0, j = 0, k = 0;
+    cmr_u32 i = 0, j = 0, k = 0;
     cmr_u32 fd = 0;
 
     CHECK_HANDLE_VALID(handle);
@@ -2378,7 +2378,7 @@ cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data) {
         evt = (cmr_uint)inter_param->param2;
         frm_data = (struct frm_info *)inter_param->param3;
         if (handle->frame_active == 1) {
-            ret = prev_receive_data(handle, camera_id, evt, frm_data);
+            ret = prev_receive_data(handle, camera_id, evt,frm_data);
         }
         if (frm_data) {
             free(frm_data);
@@ -5793,8 +5793,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 }
             } else {
                 if (i < ZSL_FRM_ALLOC_CNT) {
-                    CMR_LOGV("%d, graphic handle:%x", i,
-                             prev_cxt->cap_zsl_dst_handle_array[i]);
+                    CMR_LOGV("%d, graphic handle:%p", i, prev_cxt->cap_zsl_dst_handle_array[i]);
                     prev_cxt->cap_zsl_mem_valid_num++;
                 }
             }
@@ -6696,8 +6695,8 @@ cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                     sensor_info->mode_info[i].image_format) {
                     if (search_height <= height && search_width <= width) {
                         if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                            if (width / max_binning_ratio >=
-                                prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
+                            if ((float)width / max_binning_ratio >=
+                                (float)prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                 /* dont choose high fps setting for no-slowmotion */
                                 ret = handle->ops.get_sensor_fps_info(
                                     handle->oem_handle, camera_id, i, &fps_info);
@@ -6874,8 +6873,8 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                         sensor_info->mode_info[i].image_format) {
                         if (search_height <= height && search_width <= width) {
                             if (cxt->is_multi_mode == MODE_MULTI_CAMERA) {
-                                if (width / max_binning_ratio >=
-                                    prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
+                                if ((float)width / max_binning_ratio >=
+                                    (float)prv_width / ISP_HW_SUPPORT_MAX_ZOOM_RATIO) {
                                     /* dont choose high fps setting for no-slowmotion */
                                     ret = handle->ops.get_sensor_fps_info(
                                         handle->oem_handle, camera_id, i, &fps_info);
@@ -7269,7 +7268,6 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
     struct img_frm *frm_ptr = NULL;
     struct img_frm *video_frm_ptr = NULL;
     cmr_s64 ae_time = 0;
-    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
 
     if (!handle || !frame_type || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p, 0x%p", handle, frame_type, info);
@@ -7277,6 +7275,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         return ret;
     }
 
+    struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
     prev_chn_id = handle->prev_cxt[camera_id].prev_channel_id;
     cap_chn_id = handle->prev_cxt[camera_id].cap_channel_id;
     prev_rot = handle->prev_cxt[camera_id].prev_param.prev_rot;
@@ -7319,7 +7318,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
 
         frame_type->width = prev_cxt->prev_param.preview_size.width;
         frame_type->height = prev_cxt->prev_param.preview_size.height;
-        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->zoom_ratio =
             prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
@@ -7334,9 +7333,9 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
         if (prev_cxt->prev_param.is_support_fd && prev_cxt->prev_param.is_fd_on &&
             ((cxt->ref_camera_id == camera_id && cxt->is_fov_fusion != 1) ||
             cxt->is_fov_fusion ==1 || cxt->is_multi_mode != MODE_MULTI_CAMERA)) {
-            /*after image processed, timestamp and zoom ratio will be needed*/
-            frm_ptr->reserved = info;
-            prev_fd_send_data(handle, camera_id, frm_ptr);
+                /*after image processed, timestamp and zoom ratio will be needed*/
+                frm_ptr->reserved = (void*)info;
+                prev_fd_send_data(handle, camera_id, frm_ptr);
         }
         if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
             prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
@@ -7348,8 +7347,8 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
                 video_frm_id = frm_id;
                 video_frm_ptr = &prev_cxt->video_frm[frm_id];
             }
-            ret = prev_3dnr_send_data(handle, camera_id, info, frame_type,
-                                      frm_ptr, video_frm_ptr);
+                ret = prev_3dnr_send_data(handle, camera_id, info, frame_type,
+                                          frm_ptr, video_frm_ptr);
         }
 
         if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1 && cxt->ref_camera_id == camera_id) {
@@ -7505,7 +7504,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         frame_type->uv_phy_addr = prev_cxt->video_frm[frm_id].addr_phy.addr_u;
         frame_type->width = prev_cxt->prev_param.video_size.width;
         frame_type->height = prev_cxt->prev_param.video_size.height;
-        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->zoom_ratio =
             prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
@@ -7585,7 +7584,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type->uv_phy_addr = prev_cxt->cap_zsl_frm[frm_id].addr_phy.addr_u;
         frame_type->width = prev_cxt->cap_zsl_frm[frm_id].size.width;
         frame_type->height = prev_cxt->cap_zsl_frm[frm_id].size.height;
-        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->format = info->fmt;
         frame_type->type = PREVIEW_ZSL_FRAME;
@@ -9090,7 +9089,7 @@ int channel0_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     frame_type.uv_phy_addr = prev_cxt->channel0.frm[0].addr_phy.addr_u;
     frame_type.width = prev_cxt->channel0.size.width;
     frame_type.height = prev_cxt->channel0.size.height;
-    frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+    frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
     frame_type.monoboottime = info->monoboottime;
     frame_type.type = CHANNEL0_FRAME;
 
@@ -9295,15 +9294,15 @@ cmr_int channel1_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->channel1.frm_reserved.buf_size = prev_cxt->channel1.buf_size;
     prev_cxt->channel1.frm_reserved.size.width = width;
     prev_cxt->channel1.frm_reserved.size.height = height;
-    prev_cxt->channel1.frm_reserved.addr_vir.addr_y =
-        prev_cxt->channel1.frm_reserved.addr_vir.addr_y;
+    //prev_cxt->channel1.frm_reserved.addr_vir.addr_y =
+        //prev_cxt->channel1.frm_reserved.addr_vir.addr_y;
     prev_cxt->channel1.frm_reserved.addr_vir.addr_u =
         prev_cxt->channel1.frm_reserved.addr_vir.addr_y + width * height;
-    prev_cxt->channel1.frm_reserved.addr_phy.addr_y =
-        prev_cxt->channel1.frm_reserved.addr_phy.addr_y;
+    //prev_cxt->channel1.frm_reserved.addr_phy.addr_y =
+        //prev_cxt->channel1.frm_reserved.addr_phy.addr_y;
     prev_cxt->channel1.frm_reserved.addr_phy.addr_u =
         prev_cxt->channel1.frm_reserved.addr_phy.addr_y + width * height;
-    prev_cxt->channel1.frm_reserved.fd = prev_cxt->channel1.frm_reserved.fd;
+    //prev_cxt->channel1.frm_reserved.fd = prev_cxt->channel1.frm_reserved.fd;
 
     if (prev_cxt->prev_param.channel1_rot_angle) {
         for (i = 0; i < CHANNEL1_BUF_CNT_ROT; i++) {
@@ -9853,7 +9852,7 @@ int channel1_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel1.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel1.size.width;
         frame_type.height = prev_cxt->channel1.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL1_FRAME;
 
@@ -9903,7 +9902,7 @@ int channel1_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel1.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel1.size.width;
         frame_type.height = prev_cxt->channel1.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL1_FRAME;
 
@@ -10137,15 +10136,15 @@ cmr_int channel2_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->channel2.frm_reserved.buf_size = prev_cxt->channel2.buf_size;
     prev_cxt->channel2.frm_reserved.size.width = width;
     prev_cxt->channel2.frm_reserved.size.height = height;
-    prev_cxt->channel2.frm_reserved.addr_vir.addr_y =
-        prev_cxt->channel2.frm_reserved.addr_vir.addr_y;
+    //prev_cxt->channel2.frm_reserved.addr_vir.addr_y =
+        //prev_cxt->channel2.frm_reserved.addr_vir.addr_y;
     prev_cxt->channel2.frm_reserved.addr_vir.addr_u =
         prev_cxt->channel2.frm_reserved.addr_vir.addr_y + width * height;
-    prev_cxt->channel2.frm_reserved.addr_phy.addr_y =
-        prev_cxt->channel2.frm_reserved.addr_phy.addr_y;
+    //prev_cxt->channel2.frm_reserved.addr_phy.addr_y =
+        //prev_cxt->channel2.frm_reserved.addr_phy.addr_y;
     prev_cxt->channel2.frm_reserved.addr_phy.addr_u =
         prev_cxt->channel2.frm_reserved.addr_phy.addr_y + width * height;
-    prev_cxt->channel2.frm_reserved.fd = prev_cxt->channel2.frm_reserved.fd;
+    //prev_cxt->channel2.frm_reserved.fd = prev_cxt->channel2.frm_reserved.fd;
 
     if (prev_cxt->prev_param.channel2_rot_angle) {
         for (i = 0; i < CHANNEL2_BUF_CNT_ROT; i++) {
@@ -10702,7 +10701,7 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel2.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel2.size.width;
         frame_type.height = prev_cxt->channel2.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL2_FRAME;
 
@@ -10766,7 +10765,7 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel2.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel2.size.width;
         frame_type.height = prev_cxt->channel2.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL2_FRAME;
 
@@ -11000,15 +10999,15 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->channel3.frm_reserved.buf_size = prev_cxt->channel3.buf_size;
     prev_cxt->channel3.frm_reserved.size.width = width;
     prev_cxt->channel3.frm_reserved.size.height = height;
-    prev_cxt->channel3.frm_reserved.addr_vir.addr_y =
-        prev_cxt->channel3.frm_reserved.addr_vir.addr_y;
+    //prev_cxt->channel3.frm_reserved.addr_vir.addr_y =
+        //prev_cxt->channel3.frm_reserved.addr_vir.addr_y;
     prev_cxt->channel3.frm_reserved.addr_vir.addr_u =
         prev_cxt->channel3.frm_reserved.addr_vir.addr_y + width * height;
-    prev_cxt->channel3.frm_reserved.addr_phy.addr_y =
-        prev_cxt->channel3.frm_reserved.addr_phy.addr_y;
+    //prev_cxt->channel3.frm_reserved.addr_phy.addr_y =
+        //prev_cxt->channel3.frm_reserved.addr_phy.addr_y;
     prev_cxt->channel3.frm_reserved.addr_phy.addr_u =
         prev_cxt->channel3.frm_reserved.addr_phy.addr_y + width * height;
-    prev_cxt->channel3.frm_reserved.fd = prev_cxt->channel3.frm_reserved.fd;
+    //prev_cxt->channel3.frm_reserved.fd = prev_cxt->channel3.frm_reserved.fd;
 
     if (prev_cxt->prev_param.channel3_rot_angle) {
         for (i = 0; i < CHANNEL3_BUF_CNT_ROT; i++) {
@@ -11558,7 +11557,7 @@ int channel3_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel3.size.width;
         frame_type.height = prev_cxt->channel3.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL3_FRAME;
 
@@ -11608,7 +11607,7 @@ int channel3_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel3.size.width;
         frame_type.height = prev_cxt->channel3.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL3_FRAME;
 
@@ -11842,15 +11841,15 @@ cmr_int channel4_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->channel4.frm_reserved.buf_size = prev_cxt->channel4.buf_size;
     prev_cxt->channel4.frm_reserved.size.width = width;
     prev_cxt->channel4.frm_reserved.size.height = height;
-    prev_cxt->channel4.frm_reserved.addr_vir.addr_y =
-        prev_cxt->channel4.frm_reserved.addr_vir.addr_y;
+    //prev_cxt->channel4.frm_reserved.addr_vir.addr_y =
+        //prev_cxt->channel4.frm_reserved.addr_vir.addr_y;
     prev_cxt->channel4.frm_reserved.addr_vir.addr_u =
         prev_cxt->channel4.frm_reserved.addr_vir.addr_y + width * height;
-    prev_cxt->channel4.frm_reserved.addr_phy.addr_y =
-        prev_cxt->channel4.frm_reserved.addr_phy.addr_y;
+    //prev_cxt->channel4.frm_reserved.addr_phy.addr_y =
+        //prev_cxt->channel4.frm_reserved.addr_phy.addr_y;
     prev_cxt->channel4.frm_reserved.addr_phy.addr_u =
         prev_cxt->channel4.frm_reserved.addr_phy.addr_y + width * height;
-    prev_cxt->channel4.frm_reserved.fd = prev_cxt->channel4.frm_reserved.fd;
+    //prev_cxt->channel4.frm_reserved.fd = prev_cxt->channel4.frm_reserved.fd;
 
     if (prev_cxt->prev_param.channel4_rot_angle) {
         for (i = 0; i < CHANNEL4_BUF_CNT_ROT; i++) {
@@ -12400,7 +12399,7 @@ int channel4_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel4.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel4.size.width;
         frame_type.height = prev_cxt->channel4.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL4_FRAME;
 
@@ -12450,7 +12449,7 @@ int channel4_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.uv_phy_addr = prev_cxt->channel4.frm[0].addr_phy.addr_u;
         frame_type.width = prev_cxt->channel4.size.width;
         frame_type.height = prev_cxt->channel4.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
         frame_type.type = CHANNEL4_FRAME;
 
@@ -13924,7 +13923,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->prev_mem_valid_num--;
 
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -13994,7 +13993,7 @@ cmr_int prev_pop_video_buffer_sw_3dnr(struct prev_handle *handle,
             frame_type.y_vir_addr = prev_cxt->video_virt_addr_array[0];
             frame_type.fd = prev_cxt->video_fd_array[0];
             frame_type.type = PREVIEW_VIDEO_CANCELED_FRAME;
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -14334,7 +14333,7 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(&prev_cxt->video_frm[valid_num - 1], sizeof(struct img_frm));
         prev_cxt->video_mem_valid_num--;
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -14570,7 +14569,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->cap_zsl_mem_valid_num--;
 
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -15807,7 +15806,7 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     private_data.bright_value = prev_cxt->ae_stab[AE_CB_BV_INDEX];
     private_data.ae_stable = prev_cxt->ae_stab[AE_CB_STABLE_INDEX];
     private_data.backlight_pro = prev_cxt->ae_stab[AE_CB_BLS_INDEX];
-    info = frm->reserved;
+    info = (struct frm_info *)frm->reserved;
     private_data.zoom_ratio = info ? info->zoom_ratio : (cmr_u32)(-1);
     memcpy(&private_data.hist, prev_cxt->hist, sizeof(private_data.hist));
 
@@ -15863,7 +15862,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     struct frm_info *info = cb_param->dst_frame.reserved;
     if (info != NULL) {
         frame_type.frame_num = info->frame_num;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type.monoboottime = info->monoboottime;
     }
     frame_type.is_update_isp = cb_param->is_plus;
@@ -16377,9 +16376,10 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
 
                   param_info.fullsize_height = sensor_info->source_height_max;
                   param_info.fullsize_width = sensor_info->source_width_max;
-                  param_info.input_height = src_img->size.height;
-                  param_info.input_width = src_img->size.width;
-
+                  if(src_img != NULL){
+                      param_info.input_height = src_img->size.height;
+                      param_info.input_width = src_img->size.width;
+                  }
                   /*caculate trim rect*/
                   if (ZOOM_INFO != setting_param.zoom_param.mode) {
                            ret = camera_get_trim_rect(&chn_param.cap_inf_cfg.cfg.src_img_rect,
@@ -16488,8 +16488,10 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
 
                   param_info.fullsize_height = sensor_info->source_height_max;
                   param_info.fullsize_width = sensor_info->source_width_max;
-                  param_info.input_height = src_img->size.height;
-                  param_info.input_width = src_img->size.width;
+                  if(src_img != NULL){
+                      param_info.input_height = src_img->size.height;
+                      param_info.input_width = src_img->size.width;
+                  }
 
                   /*caculate trim rect*/
                   if (ZOOM_INFO != setting_param.zoom_param.mode) {
@@ -16599,8 +16601,10 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
 
                   param_info.fullsize_height = sensor_info->source_height_max;
                   param_info.fullsize_width = sensor_info->source_width_max;
-                  param_info.input_height = src_img->size.height;
-                  param_info.input_width = src_img->size.width;
+                  if(src_img != NULL){
+                      param_info.input_height = src_img->size.height;
+                      param_info.input_width = src_img->size.width;
+                  }
 
                   /*caculate trim rect*/
                   if (ZOOM_INFO != setting_param.zoom_param.mode) {
@@ -16714,8 +16718,10 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
 
                   param_info.fullsize_height = sensor_info->source_height_max;
                   param_info.fullsize_width = sensor_info->source_width_max;
-                  param_info.input_height = src_img->size.height;
-                  param_info.input_width = src_img->size.width;
+                  if(src_img != NULL){
+                      param_info.input_height = src_img->size.height;
+                      param_info.input_width = src_img->size.width;
+                  }
 
                   /*caculate trim rect*/
                   if (ZOOM_INFO != setting_param.zoom_param.mode) {
@@ -16902,8 +16908,7 @@ cmr_int prev_auto_tracking_open(struct prev_handle *handle, cmr_u32 camera_id) {
                            &in_param, &out_param,
                            &prev_cxt->auto_tracking_handle);
     }
-    CMR_LOGI("end prev_cxt.auto_tracking_handle:%x",
-             prev_cxt->auto_tracking_handle);
+    CMR_LOGI("end prev_cxt.auto_tracking_handle:%p",prev_cxt->auto_tracking_handle);
 
 exit:
     ATRACE_END();
