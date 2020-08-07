@@ -37,8 +37,6 @@ int Camera3DeviceBase::close(hw_device_t *device) {
 
     camera3_device_t *cam3dev = reinterpret_cast<camera3_device_t *>(device);
     Camera3DeviceBase *dev = static_cast<Camera3DeviceBase *>(cam3dev);
-    if (!dev)
-        return -ENODEV;
 
     return dev->close();
 }
