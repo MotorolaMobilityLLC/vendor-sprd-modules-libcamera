@@ -121,8 +121,8 @@ float table_bicubic_interpolation(unsigned short *src_tab, unsigned int src_gain
 	int coef_mx_L[16] = { 1, 0, 0, 0, 0, 0, 1, 0, -3, 3, -2, -1, 2, -2, 1, 1 };
 	int coef_mx_R[16] = { 1, 0, -3, 2, 0, 0, 3, -2, 0, 1, -2, 1, 0, 0, -1, 1 };
 	float f_mx[16] = { f00, f01, fy00, fy01, f10, f11, fy10, fy11, fx00, fx01, fxy00, fxy01, fx10, fx11, fxy10, fxy11 };
-	float tmp_mx[16];
-	float a_mx[16];
+	float tmp_mx[16] = {0};
+	float a_mx[16] = {0};
 	float x_row[4] = { 1, dx, dx * dx, dx * dx * dx };
 	float y_col[4] = { 1, dy, dy * dy, dy * dy * dy };
 	float tmp_col[4];
@@ -161,6 +161,11 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 	unsigned short *src_gr = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src_gb = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src_b = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
+	memset(src_r, 0, src->gain_width * src->gain_height * sizeof(unsigned short));
+	memset(src_gr, 0, src->gain_width * src->gain_height * sizeof(unsigned short));
+	memset(src_gb, 0, src->gain_width * src->gain_height * sizeof(unsigned short));
+	memset(src_b, 0, src->gain_width * src->gain_height * sizeof(unsigned short));
+
 
 	/* old formula
 	unsigned short *src0_r = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
