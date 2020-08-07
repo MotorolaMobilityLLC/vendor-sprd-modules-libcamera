@@ -813,7 +813,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
             threednr_handle->small_width * threednr_handle->small_height;
         small_image.cpu_buffer.bufferV = small_image.cpu_buffer.bufferU;
     }
-    CMR_LOGV("Call the threednr_function().big Y: %p, small Yp."
+    CMR_LOGV("Call the threednr_function().big Y: %p, small %p."
              " ,threednr_handle->is_stop %ld",
              orig_image.bufferY, small_image.cpu_buffer.bufferY,
              threednr_handle->is_stop);

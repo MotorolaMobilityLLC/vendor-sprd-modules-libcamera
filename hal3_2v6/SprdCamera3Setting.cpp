@@ -5197,7 +5197,7 @@ int SprdCamera3Setting::updateWorkParameters(
                 max_fps_range[0] = 10;
                 max_fps_range[1] = 10;
                 break;
-            deafult:
+            default:
                 break;
             }
             if (fps_range[0] > max_fps_range[0]) {
@@ -6271,7 +6271,7 @@ int SprdCamera3Setting::setVCMDACTag(uint16_t *vcmInfo, uint8_t num) {
 
 int SprdCamera3Setting::setVCMDISTTag(VCM_DIST_TAG *vcmDist) {
     s_setting[mCameraId].vcmDist.vcm_dist_count = vcmDist->vcm_dist_count;
-    for (uint8_t i = 0; i < vcmDist->vcm_dist_count; i++) {
+    for (uint16_t i = 0; i < vcmDist->vcm_dist_count; i++) {
         s_setting[mCameraId].vcmDist.vcm_dist[i] = vcmDist->vcm_dist[i];
     }
     return 0;
@@ -6279,7 +6279,7 @@ int SprdCamera3Setting::setVCMDISTTag(VCM_DIST_TAG *vcmDist) {
 
 int SprdCamera3Setting::getVCMDISTTag(VCM_DIST_TAG *vcmDist) {
     vcmDist->vcm_dist_count = s_setting[mCameraId].vcmDist.vcm_dist_count;
-    for (uint8_t i = 0; i < vcmDist->vcm_dist_count; i++) {
+    for (uint16_t i = 0; i < vcmDist->vcm_dist_count; i++) {
         vcmDist->vcm_dist[i] = s_setting[mCameraId].vcmDist.vcm_dist[i];
     }
     return 0;

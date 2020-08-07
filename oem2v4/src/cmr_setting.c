@@ -1608,17 +1608,19 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 
     zone_buf[6] = '\0';
 
-    strcpy(
-        (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTimeOriginal,
-        (char *)zone_buf);
-    strcpy(
-        (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTimeDigitized,
-        (char *)zone_buf);
-    strcpy(
-        (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTime,
-        (char *)zone_buf);
-    CMR_LOGD("zone_buf=%s",zone_buf);
-    /*calculate zone info end*/
+    if (NULL != p_exif_info->spec_ptr) {
+        strcpy(
+            (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTimeOriginal,
+            (char *)zone_buf);
+        strcpy(
+            (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTimeDigitized,
+            (char *)zone_buf);
+        strcpy(
+            (char *)p_exif_info->spec_ptr->date_time_ptr->OffsetTime,
+            (char *)zone_buf);
+        CMR_LOGD("zone_buf=%s",zone_buf);
+        /*calculate zone info end*/
+    }
 
     /*update gps info*/
     setting_update_gps_info(cpt, parm);
@@ -2152,9 +2154,9 @@ setting_set_3dcalibration_enable(struct setting_component *cpt,
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
     hal_param->sprd_3dcalibration_enable = parm->cmd_type_value;
 
-    CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ? %d",
-             0 != init_in->setting_isp_ioctl);
     if (init_in && init_in->setting_isp_ioctl) {
+        CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ? %d",
+                 0 != init_in->setting_isp_ioctl);
         isp_param.camera_id = parm->camera_id;
         isp_param.cmd_value = parm->cmd_type_value;
         CMR_LOGD("set COM_ISP_SET_ROI_CONVERGENCE_REQ begin, ome_handle:%p",
@@ -2645,7 +2647,7 @@ static cmr_int setting_set_environment(struct setting_component *cpt,
             hal_param->hal_common.frame_rate = hal_param->range_fps.max_fps;
             setting_get_video_mode(cpt, parm);
             cmd_param.cmd_type_value = parm->preview_fps_param.video_mode;
-            setting_sn_ctrl(cpt, COM_SN_SET_VIDEO_MODE, &cmd_param);
+            ret = setting_sn_ctrl(cpt, COM_SN_SET_VIDEO_MODE, &cmd_param);
         }
     }
 

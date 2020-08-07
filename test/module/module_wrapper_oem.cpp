@@ -445,7 +445,6 @@ static int callback_preview_malloc(cmr_u32 size, cmr_u32 sum,
     return 0;
 
 mem_fail:
-    callback_previewfree(0, 0, 0, 0);
     return -1;
 }
 
@@ -695,6 +694,12 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
 
     if (CAMERA_PREVIEW == type) {
         ret = callback_preview_malloc(size, sum, phy_addr, vir_addr, fd);
+        if (ret) {
+            pthread_mutex_unlock(&previewlock);
+            CMR_LOGE("alloc_camera_mem failed");
+            callback_previewfree(0, 0, 0, 0);
+            return ret;
+        }
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
                type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
                type == CAMERA_ISP_RAWAE || type == CAMERA_ISP_BINGING4AWB ||

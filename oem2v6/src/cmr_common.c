@@ -225,7 +225,7 @@ cmr_int camera_scale_down_software(struct img_frm *src, struct img_frm *dst) {
     cmr_u32 cur_byte = 0;
     cmr_u32 ratio_w;
     cmr_u32 ratio_h;
-    uint16_t i, j;
+    cmr_u32 i, j;
     if (NULL == dst || NULL == src) {
         return -1;
     }

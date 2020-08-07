@@ -278,7 +278,7 @@ static cmr_int ai_scene_transfer_frame(cmr_handle class_handle,
     isp_cmd_parm.ai_img_param.img_buf.img_y = dst.addr_vir.addr_y;
     isp_cmd_parm.ai_img_param.img_buf.img_uv = dst.addr_vir.addr_u;
     isp_cmd_parm.ai_img_param.timestamp =
-        info->data.sec * 1000000000LL + info->data.usec * 1000;
+        info->data.sec * 1000000000LL + info->data.usec * 1000LL;
     isp_cmd_parm.ai_img_param.height = SMALL_PIC_SIZE;
     isp_cmd_parm.ai_img_param.width = SMALL_PIC_SIZE;
     isp_cmd_parm.ai_img_param.img_y_pitch = SMALL_PIC_SIZE;
