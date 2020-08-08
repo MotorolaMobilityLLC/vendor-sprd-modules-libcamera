@@ -41,6 +41,7 @@
 #include "SprdCamera3Flash.h"
 #include "hal_common/multiCamera/SprdCamera3Wrapper.h"
 #include <SingleCameraWrapper.h>
+#include <SimpleMultiCamera.h>
 #include <Configurator.h>
 #ifdef CONFIG_BOKEH_SUPPORT
 #include <BokehCamera.h>
@@ -61,9 +62,7 @@ static SprdCamera3Factory gSprdCamera3Factory;
 
 SprdCamera3Factory::SprdCamera3Factory()
     : mUseCameraId(PrivateId), mNumberOfCameras(0), mNumOfCameras(0),
-      mWrapper(NULL), mCameraCallbacks(NULL){
-    HAL_LOGD("E");
-
+      mWrapper(NULL), mCameraCallbacks(NULL), mFlashCallback(this) {
     char boot_mode[PROPERTY_VALUE_MAX] = {'\0'};
 
     property_get("ro.bootmode", boot_mode, "0");
@@ -83,8 +82,6 @@ SprdCamera3Factory::SprdCamera3Factory()
 }
 
 SprdCamera3Factory::~SprdCamera3Factory() {
-    HAL_LOGD("E");
-
     if (mWrapper) {
         delete mWrapper;
         mWrapper = NULL;
@@ -114,8 +111,7 @@ int SprdCamera3Factory::get_camera_info(int camera_id,
 int SprdCamera3Factory::set_callbacks(
     const camera_module_callbacks_t *callbacks) {
     HAL_LOGV("E");
-    gSprdCamera3Factory.mCameraCallbacks = callbacks;
-    return SprdCamera3Flash::registerCallbacks(callbacks);
+    return gSprdCamera3Factory.setCallbacks(callbacks);
 }
 
 void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t *ops) {
@@ -137,15 +133,7 @@ int SprdCamera3Factory::open_legacy(const struct hw_module_t *module,
 
 int SprdCamera3Factory::set_torch_mode(const char *camera_id, bool enabled) {
     HAL_LOGV("E");
-
-    int retval = 0;
-
-    // TODO
-
-    retval = SprdCamera3Flash::setTorchMode(camera_id, enabled);
-    HAL_LOGV("camera_id %s,enabled %d ret %d", camera_id, enabled, retval);
-
-    return retval;
+    return gSprdCamera3Factory.setTorchMode(camera_id, enabled);
 }
 
 int SprdCamera3Factory::init() {
@@ -176,6 +164,22 @@ int SprdCamera3Factory::open(const struct hw_module_t *module, const char *id,
                              struct hw_device_t **hw_device) {
     HAL_LOGV("E");
     return gSprdCamera3Factory.open_(module, id, hw_device);
+}
+
+void SprdCamera3Factory::camera_device_status_change(
+    const camera_module_callbacks_t *callbacks, int camera_id, int new_status) {
+    HAL_LOGE("flash module should not call camera_device_status_change");
+}
+
+void SprdCamera3Factory::torch_mode_status_change(
+    const camera_module_callbacks_t *callbacks, const char *camera_id,
+    int new_status) {
+    if (!callbacks)
+        return;
+
+    const flash_callback_t *cb =
+        static_cast<const flash_callback_t *>(callbacks);
+    cb->parent->torchModeStatusChange(camera_id, new_status);
 }
 
 void SprdCamera3Factory::registerCreator(string name,
@@ -268,6 +272,9 @@ int SprdCamera3Factory::init_() {
     if (mUseCameraId == PrivateId)
         mNumberOfCameras = mNumOfCameras;
 
+    if (mUseCameraId == DynamicId)
+        initializeTorchHelper();
+
     return 0;
 }
 
@@ -300,7 +307,7 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
     camera_metadata_t *staticMetadata;
     int rc;
 
-    HAL_LOGI("E, camera_id = %d", camera_id);
+    HAL_LOGD("E, camera_id = %d", camera_id);
 
     if (!mNumOfCameras || camera_id >= mNumOfCameras || !info ||
         (camera_id < 0)) {
@@ -477,17 +484,21 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
         } else if (idInt == 1) {
             idInt = 52;
         } else {
-            HAL_LOGI("unsupport camera id for tencent camera!!");
+            HAL_LOGW("unsupport camera id for tencent camera!!");
         }
     }
 #endif
 
     int cameraId = overrideCameraIdIfNeeded(idInt);
-    HAL_LOGD("open: %d", cameraId);
+    HAL_LOGI("open camera %d", cameraId);
 
     /* try dynamic ID */
-    if (mUseCameraId == DynamicId && cameraId < mNumberOfCameras)
-        return mCameras[cameraId]->openCamera(hw_device);
+    if (mUseCameraId == DynamicId && cameraId < mNumberOfCameras) {
+        int ret = mCameras[cameraId]->openCamera(hw_device);
+        if (!ret && mTorchHelper)
+            mTorchHelper->lockTorch(cameraId);
+        return ret;
+    }
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
     /* try private multi-camera */
@@ -564,10 +575,257 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     return rc;
 }
 
+int SprdCamera3Factory::setCallbacks(
+    const camera_module_callbacks_t *callbacks) {
+    if (!callbacks) {
+        HAL_LOGE("invalid param");
+        return -EINVAL;
+    }
+    mCameraCallbacks = callbacks;
+
+    if (mUseCameraId == DynamicId && mTorchHelper)
+        mTorchHelper->setCallbacks(mCameraCallbacks);
+
+    const camera_module_callbacks_t *cb = &mFlashCallback;
+    int ret = SprdCamera3Flash::registerCallbacks(cb);
+    if (ret < 0) {
+        HAL_LOGE("fail to set flash callbacks, ret %d", ret);
+        return ret;
+    }
+
+    return 0;
+}
+
+void SprdCamera3Factory::torchModeStatusChange(const char *camera_id,
+                                               int new_status) const {
+    if (mUseCameraId == PrivateId) {
+        mCameraCallbacks->torch_mode_status_change(mCameraCallbacks, camera_id,
+                                                   new_status);
+        HAL_LOGD("notify torch status for %s, new status %d", camera_id,
+                 new_status);
+    }
+}
+
+int SprdCamera3Factory::setTorchMode(const char *camera_id, bool enabled) {
+    if (!camera_id) {
+        HAL_LOGE("invalid param");
+        return -EINVAL;
+    }
+
+    HAL_LOGD("camera %s set torch %s", camera_id, enabled ? "true" : "false");
+
+    if (mUseCameraId == DynamicId && mTorchHelper) {
+        int id = atoi(camera_id);
+        if (id < 0 || id >= mNumberOfCameras) {
+            HAL_LOGE("invalid camera id %s", camera_id);
+            return -EINVAL;
+        }
+
+        return mTorchHelper->setTorchMode(id, enabled);
+    }
+
+    return SprdCamera3Flash::setTorchMode(camera_id, enabled);
+}
+
+void SprdCamera3Factory::initializeTorchHelper() {
+    mTorchHelper = make_shared<TorchHelper>();
+
+    camera_metadata_ro_entry_t entry;
+    camera_info info;
+    for (int i = 0; i < mNumberOfCameras; i++) {
+        if (getCameraInfo(i, &info) < 0) {
+            HAL_LOGW(
+                "fail to get camera info for %d, torch may not work properly",
+                i);
+            continue;
+        }
+
+        if (info.facing != CAMERA_FACING_BACK &&
+            info.facing != CAMERA_FACING_FRONT) {
+            HAL_LOGW("ignore flash for external camera %d", i);
+            continue;
+        }
+
+        if (find_camera_metadata_ro_entry(info.static_camera_characteristics,
+                                          ANDROID_FLASH_INFO_AVAILABLE,
+                                          &entry)) {
+            HAL_LOGW(
+                "fail to get flash info for %d, flash may not work properly",
+                i);
+            continue;
+        }
+
+        if (entry.count == 0) {
+            HAL_LOGW(
+                "flash info is malformed for %d, flash may not work properly",
+                i);
+            continue;
+        }
+
+        if (entry.data.u8[0] == ANDROID_FLASH_INFO_AVAILABLE_FALSE) {
+            HAL_LOGD("ignore camera %d that doesn't have a flash unit", i);
+            continue;
+        }
+
+        mTorchHelper->addTorchUser(i, info.facing == CAMERA_FACING_FRONT);
+    }
+
+    HAL_LOGI("torch status map initialized for %zu camera(s)",
+             mTorchHelper->totalSize());
+}
+
+void SprdCamera3Factory::onCameraClosed(int camera_id) {
+    HAL_LOGI("camera %d closed", camera_id);
+    if (mTorchHelper)
+        mTorchHelper->unlockTorch(camera_id);
+}
+
+void SprdCamera3Factory::TorchHelper::addTorchUser(int id, bool isFront) {
+    /* don't need mutex here */
+    map<int, int> &torchMap = isFront ? mFrontTorchStatus : mRearTorchStatus;
+
+    if (torchMap.find(id) != torchMap.cend()) {
+        HAL_LOGW("already add torch for camera %d", id);
+        return;
+    }
+
+    torchMap[id] = TORCH_MODE_STATUS_AVAILABLE_OFF;
+}
+
+int SprdCamera3Factory::TorchHelper::setTorchMode(int id, bool enabled) {
+    if (mFrontTorchStatus.find(id) != mFrontTorchStatus.cend()) {
+        return set(id, enabled, FRONT_TORCH, mFrontTorchStatus,
+                   mFrontTorchLocker);
+    } else if (mRearTorchStatus.find(id) != mRearTorchStatus.cend()) {
+        return set(id, enabled, REAR_TORCH, mRearTorchStatus, mRearTorchLocker);
+    }
+
+    HAL_LOGW("camera %d does not have a flash unit", id);
+    return -ENOSYS;
+}
+
+void SprdCamera3Factory::TorchHelper::lockTorch(int id) {
+    if (mFrontTorchStatus.find(id) != mFrontTorchStatus.cend()) {
+        lock(id, mFrontTorchStatus, mFrontTorchLocker);
+    } else if (mRearTorchStatus.find(id) != mRearTorchStatus.cend()) {
+        lock(id, mRearTorchStatus, mRearTorchLocker);
+    } else {
+        HAL_LOGW("camera %d does not have a flash unit", id);
+    }
+}
+
+void SprdCamera3Factory::TorchHelper::unlockTorch(int id) {
+    if (mFrontTorchStatus.find(id) != mFrontTorchStatus.cend()) {
+        unlock(id, mFrontTorchStatus, mFrontTorchLocker);
+    } else if (mRearTorchStatus.find(id) != mRearTorchStatus.cend()) {
+        unlock(id, mRearTorchStatus, mRearTorchLocker);
+    } else {
+        HAL_LOGW("camera %d does not have a flash unit", id);
+    }
+}
+
+int SprdCamera3Factory::TorchHelper::set(int id, bool enabled, int direction,
+                                         map<int, int> &statusMap,
+                                         vector<int> &locker) {
+    lock_guard<mutex> l(mMutex);
+
+    if (locker.size()) {
+        if (find(locker.begin(), locker.end(), id) != locker.end()) {
+            HAL_LOGW("camera %d is using flash unit", id);
+            return -EBUSY;
+        } else {
+            HAL_LOGE("flash unit is used by other camera");
+            return -EUSERS;
+        }
+    }
+
+    if (statusMap[id] == TORCH_MODE_STATUS_NOT_AVAILABLE) {
+        /* this should not happen */
+        HAL_LOGE("camera %d flash unit unavailable", id);
+        return -EINVAL;
+    }
+
+    int ret = 0;
+    string dirStr = to_string(direction);
+    string idStr = to_string(id);
+    if (enabled) {
+        if (statusMap[id] == TORCH_MODE_STATUS_AVAILABLE_ON) {
+            HAL_LOGW("camera %d is using flash unit", id);
+            return -EBUSY;
+        }
+
+        ret = SprdCamera3Flash::setTorchMode(dirStr.c_str(), enabled);
+        if (!ret) {
+            statusMap[id] = TORCH_MODE_STATUS_AVAILABLE_ON;
+            callback(idStr.c_str(), TORCH_MODE_STATUS_AVAILABLE_ON);
+        }
+    } else if (!enabled && statusMap[id] == TORCH_MODE_STATUS_AVAILABLE_ON) {
+        ret = SprdCamera3Flash::setTorchMode(dirStr.c_str(), enabled);
+        if (!ret) {
+            statusMap[id] = TORCH_MODE_STATUS_AVAILABLE_OFF;
+            callback(idStr.c_str(), TORCH_MODE_STATUS_AVAILABLE_OFF);
+        }
+    }
+
+    return ret;
+}
+
+void SprdCamera3Factory::TorchHelper::lock(int id, map<int, int> &statusMap,
+                                           vector<int> &locker) {
+    lock_guard<mutex> l(mMutex);
+
+    if (find(locker.begin(), locker.end(), id) != locker.end()) {
+        HAL_LOGW("camera %d already locked flash", id);
+        return;
+    }
+
+    locker.push_back(id);
+    for (auto &kv : statusMap) {
+        if (kv.second != TORCH_MODE_STATUS_NOT_AVAILABLE) {
+            kv.second = TORCH_MODE_STATUS_NOT_AVAILABLE;
+            callback(to_string(kv.first).c_str(),
+                     TORCH_MODE_STATUS_NOT_AVAILABLE);
+        }
+    }
+}
+
+void SprdCamera3Factory::TorchHelper::unlock(int id, map<int, int> &statusMap,
+                                             vector<int> &locker) {
+    lock_guard<mutex> l(mMutex);
+
+    auto it = find(locker.begin(), locker.end(), id);
+    if (it == locker.end()) {
+        HAL_LOGW("camera %d doesn't own flash", id);
+        return;
+    }
+
+    locker.erase(it);
+    if (!locker.size()) {
+        for (auto &kv : statusMap) {
+            if (kv.second != TORCH_MODE_STATUS_AVAILABLE_OFF) {
+                kv.second = TORCH_MODE_STATUS_AVAILABLE_OFF;
+                callback(to_string(kv.first).c_str(),
+                         TORCH_MODE_STATUS_AVAILABLE_OFF);
+            }
+        }
+    }
+}
+
+void SprdCamera3Factory::TorchHelper::callback(const char *id, int status) {
+    if (mCallbacks) {
+        HAL_LOGD("notify torch status for %s, new status %d", id, status);
+        mCallbacks->torch_mode_status_change(mCallbacks, id, status);
+    }
+}
+
 void SprdCamera3Factory::registerCameraCreators() {
     /* single camera wrapper */
     registerCreator(Configurator::kFeatureSingleCamera,
                     SingleCamera::getCreator());
+
+    /* simple logical multi-camera */
+    registerCreator(Configurator::kFeatureLogicalMultiCamera,
+                    SimpleMultiCamera::getCreator());
 
 #ifdef CONFIG_BOKEH_SUPPORT
     /* bokeh */
@@ -693,7 +951,8 @@ bool SprdCamera3Factory::tryParseCameraConfig() {
                   cfg->getType().c_str());
             return false;
         }
-        ALOGI("create camera: %s", cfg->getBrief().c_str());
+        ALOGD("create camera: %s", cfg->getBrief().c_str());
+        camera->setCameraClosedListener(this);
         mCameras.push_back(camera);
     }
 

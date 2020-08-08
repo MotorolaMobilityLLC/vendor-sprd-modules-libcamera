@@ -43,7 +43,7 @@ namespace sprdcamera {
 
 class SprdCamera3Wrapper;
 
-class SprdCamera3Factory {
+class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
   public:
     SprdCamera3Factory();
     virtual ~SprdCamera3Factory();
@@ -68,6 +68,14 @@ class SprdCamera3Factory {
     static int open(const struct hw_module_t *module, const char *id,
                     struct hw_device_t **device);
 
+    /* camera module callbacks */
+    static void
+    camera_device_status_change(const camera_module_callbacks_t *callbacks,
+                                int camera_id, int new_status);
+    static void
+    torch_mode_status_change(const camera_module_callbacks_t *callbacks,
+                             const char *camera_id, int new_status);
+
   public:
     static void registerCreator(std::string name,
                                 std::shared_ptr<ICameraCreator> creator);
@@ -84,6 +92,11 @@ class SprdCamera3Factory {
     int open_(const struct hw_module_t *module, const char *id,
               struct hw_device_t **device);
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
+    int setCallbacks(const camera_module_callbacks_t *callbacks);
+    void torchModeStatusChange(const char *camera_id, int new_status) const;
+    int setTorchMode(const char *camera_id, bool enabled);
+    void initializeTorchHelper();
+    void onCameraClosed(int camera_id);
 
   private:
     enum UseCameraId {
@@ -102,6 +115,68 @@ class SprdCamera3Factory {
     int mNumOfCameras;
     SprdCamera3Wrapper *mWrapper;
     const camera_module_callbacks_t *mCameraCallbacks;
+
+    /*
+     * TODO refine flash module
+     *
+     * In our SprdCamera3Flash design, there's only two kinds of torch: rear
+     * and front. Even the front torch is implemented by LCD light and is a
+     * private API. So we collect all cameras facing BACK here and make them
+     * mutually exclusive for torch function. This is a temporary design that
+     * should be optimized later - when we have more powerful flash module.
+     */
+    class TorchHelper {
+      public:
+        static const int REAR_TORCH = 0;
+        static const int FRONT_TORCH = 1;
+
+        void addTorchUser(int id, bool isFront = false);
+        int setTorchMode(int id, bool enabled);
+        /* camera @id locks flash unit */
+        void lockTorch(int id);
+        /* camera @id unlocks flash unit */
+        void unlockTorch(int id);
+        size_t totalSize() const {
+            return mFrontTorchStatus.size() + mRearTorchStatus.size();
+        }
+        void setCallbacks(const camera_module_callbacks_t *callbacks) {
+            mCallbacks = callbacks;
+        }
+
+      private:
+        int set(int id, bool enabled, int direction,
+                std::map<int, int> &statusMap, std::vector<int> &locker);
+        void lock(int id, std::map<int, int> &statusMap,
+                  std::vector<int> &locker);
+        void unlock(int id, std::map<int, int> &statusMap,
+                    std::vector<int> &locker);
+        void callback(const char *id, int status);
+
+        const camera_module_callbacks_t *mCallbacks;
+        std::map<int, int> mRearTorchStatus;
+        std::vector<int> mRearTorchLocker;
+        std::map<int, int> mFrontTorchStatus;
+        std::vector<int> mFrontTorchLocker;
+        std::mutex mMutex;
+    };
+    std::shared_ptr<TorchHelper> mTorchHelper;
+
+    /*
+     * callbacks for flash module
+     *
+     * don't pass callbacks to flash module since we will handle camera ID
+     * conversion int SprdCamera3Factory
+     */
+    struct flash_callback_t : public camera_module_callbacks_t {
+        SprdCamera3Factory const *parent;
+
+        flash_callback_t(SprdCamera3Factory *parent)
+            : camera_module_callbacks_t(
+                  {SprdCamera3Factory::camera_device_status_change,
+                   SprdCamera3Factory::torch_mode_status_change}),
+              parent(parent) {}
+    };
+    const flash_callback_t mFlashCallback;
 
     void registerCameraCreators();
     void registerOneCreator(std::string name,

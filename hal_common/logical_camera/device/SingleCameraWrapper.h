@@ -6,19 +6,19 @@
 
 namespace sprdcamera {
 
-class SingleCamera : public CameraDevice_3_2, public ICameraBase {
+class SingleCamera : public CameraDevice_3_2 {
   public:
     virtual ~SingleCamera();
 
     static std::shared_ptr<ICameraCreator> getCreator();
 
-    int openCamera(hw_device_t **dev) override;
-    int getCameraInfo(camera_info_t *info) override;
-
   private:
-    SingleCamera(int cameraId, int physicalId);
+    SingleCamera(int cameraId, int sensorId);
 
-    int close();
+    int getCameraInfo(camera_info_t *info) override;
+    int openCameraDevice() override;
+    int closeCameraDevice() override;
+
     int initialize(const camera3_callback_ops_t *callback_ops) override;
     int configure_streams(camera3_stream_configuration_t *stream_list) override;
     const camera_metadata_t *
@@ -26,9 +26,10 @@ class SingleCamera : public CameraDevice_3_2, public ICameraBase {
     int process_capture_request(camera3_capture_request_t *request) override;
     void dump(int fd) override;
     int flush() override;
+    int isStreamCombinationSupported(
+        const camera_stream_combination_t *streams) override;
 
-    const int mCameraId;
-    const int mPhysicalId;
+    const int mSensorId;
     camera3_device_t *mDev;
 
     class SingleCameraCreator : public ICameraCreator {

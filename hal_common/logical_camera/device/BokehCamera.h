@@ -116,17 +116,16 @@ typedef struct {
 enum intent_type { PREV_TYPE, CAP_TYPE };
 class BokehCamera : public CameraDevice_3_5,
                     SprdCamera3MultiBase,
-                    public ICameraBase,
                     public SprdCamera3FaceBeautyBase {
   public:
     virtual ~BokehCamera();
 
     static std::shared_ptr<ICameraCreator> getCreator();
 
-    int openCamera(hw_device_t **dev) override;
     int getCameraInfo(camera_info_t *info) override;
-    int isStreamCombinationSupported(
-        const camera_stream_combination_t *comb) override;
+    int openCameraDevice() override;
+    int closeCameraDevice() override;
+    int isStreamCombinationSupported(const camera_stream_combination_t *comb) override;
 
     int processCaptureRequest(camera3_capture_request_t *request);
     static void notifyMain(const struct camera3_callback_ops *ops,
@@ -139,16 +138,12 @@ class BokehCamera : public CameraDevice_3_5,
                                const camera3_capture_result_t *result);
     static void notifyAux(const struct camera3_callback_ops *ops,
                           const camera3_notify_msg_t *msg);
-    static int initialize(const struct camera3_device *device,
-                          const camera3_callback_ops_t *ops);
-    static int close(struct hw_device_t *device);
 
     static camera3_device_ops_t mCameraCaptureOps;
     static camera3_callback_ops callback_ops_main;
     static camera3_callback_ops callback_ops_aux;
 
   private:
-    uint8_t mCameraId;
     int mCameraNum;
     camera3_device_t *mBokehDev;
     char **mConflictDevices;
@@ -223,7 +218,6 @@ class BokehCamera : public CameraDevice_3_5,
 
     BokehCamera(shared_ptr<Configurator> cfg, const vector<int> &physicalIds);
 
-    int close();
     int initialize(const camera3_callback_ops_t *callback_ops) override;
     int configure_streams(camera3_stream_configuration_t *stream_list) override;
     const camera_metadata_t *

@@ -91,11 +91,10 @@ camera3_callback_ops BokehCamera::callback_ops_aux = {
 
 BokehCamera::BokehCamera(shared_ptr<Configurator> cfg,
                          const vector<int> &physicalIds)
-    : mPhysicalIds(physicalIds) {
+    : CameraDevice_3_5(cfg->getCameraId()), mPhysicalIds(physicalIds) {
     HAL_LOGI(" E");
     // m_nPhyCameras = 2; // m_nPhyCameras should always be 2 with dual camera
     // mode
-    mCameraId = (uint8_t)cfg->getCameraId();
     std::vector<int> mSensorIds = cfg->getSensorIds();
     m_nPhyCameras = mSensorIds.size(); // BokehCamera's physical camera num.
     setupPhysicalCameras(mSensorIds);
@@ -236,9 +235,7 @@ shared_ptr<ICameraCreator> BokehCamera::getCreator() {
     return shared_ptr<ICameraCreator>(new BokehCreator());
 }
 
-int BokehCamera::openCamera(hw_device_t **dev) {
-    if (!dev)
-        return -EINVAL;
+int BokehCamera::openCameraDevice() {
     int rc = NO_ERROR;
     uint8_t phyId = 0;
 
@@ -261,7 +258,7 @@ int BokehCamera::openCamera(hw_device_t **dev) {
         if (rc != NO_ERROR) {
             HAL_LOGE("failed, camera id:%d", phyId);
             delete hw;
-            close();
+            closeCameraDevice();
             return rc;
         }
 #ifdef CONFIG_BOKEH_CROP
@@ -305,8 +302,7 @@ int BokehCamera::openCamera(hw_device_t **dev) {
         mLocalBufferNumber = LOCAL_BUFFER_NUM;
     }
     HAL_LOGI("X,mLocalBufferNumber=%d", mLocalBufferNumber);
-    *dev = &common;
-    mBokehDev = reinterpret_cast<camera3_device_t *>(*dev);
+    mBokehDev = reinterpret_cast<camera3_device_t *>(&common);
     return rc;
 }
 
@@ -453,38 +449,7 @@ int BokehCamera::initialize(const camera3_callback_ops_t *callback_ops) {
     return rc;
 }
 
-int BokehCamera::close(__unused hw_device_t *hw_dev) {
-    if (hw_dev == NULL) {
-        HAL_LOGE("failed.hw_dev null");
-        return -1;
-    }
-    return mBokehCamera->close();
-}
-
-/*===========================================================================
- * FUNCTION   :initialize
- *
- * DESCRIPTION: initialize camera device
- *
- * PARAMETERS :
- *
- * RETURN     :
- *==========================================================================*/
-int BokehCamera::initialize(__unused const struct camera3_device *device,
-                            const camera3_callback_ops_t *callback_ops) {
-    int rc = NO_ERROR;
-
-    HAL_LOGI("E");
-    CHECK_CAPTURE_ERROR();
-
-    rc = mBokehCamera->initialize(callback_ops);
-
-    HAL_LOGI("X");
-
-    return rc;
-}
-
-int BokehCamera::close() {
+int BokehCamera::closeCameraDevice() {
     int rc = NO_ERROR;
     sprdcamera_physical_descriptor_t *sprdCam = NULL;
 

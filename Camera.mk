@@ -275,7 +275,9 @@ LOCAL_SRC_FILES += \
     hal_common/logical_camera/Camera3DeviceBase.cpp \
     hal_common/logical_camera/CameraDevice_3_2.cpp \
     hal_common/logical_camera/CameraDevice_3_5.cpp \
-    hal_common/logical_camera/device/SingleCameraWrapper.cpp
+    hal_common/logical_camera/device/SingleCameraWrapper.cpp \
+    hal_common/logical_camera/device/SimpleMultiCamera.cpp
+
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_SRC_FILES += \
     hal_common/logical_camera/device/BokehCamera.cpp
