@@ -129,7 +129,7 @@ static void hi846_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
-    float fps = 0.0;
+    double fps = 0.0;
     cmr_u16 frame_interval = 0x00;
 
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
@@ -154,9 +154,9 @@ static void hi846_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
               (cur_fr_len * sns_drv_cxt->trim_tab_info[mode].line_time);
     } else {
         fps = 1000000000.0 / ((shutter + dummy_line) *
-                              sns_drv_cxt->trim_tab_info[mode].line_time);
+                                sns_drv_cxt->trim_tab_info[mode].line_time);
     }
-    SENSOR_LOGI("fps = %f", fps);
+    SENSOR_LOGI("fps = %lf", fps);
 
     frame_interval = (uint16_t)(
         ((shutter + dummy_line) * sns_drv_cxt->line_time_def) / 1000000);
@@ -302,7 +302,9 @@ static cmr_int hi846_drv_init_fps_info(cmr_handle handle) {
 
 static cmr_int hi846_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
+    /*lint-save-e826*/
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
+    /*lint-restore*/
     cmr_u32 up = 0;
     cmr_u32 down = 0;
 
@@ -343,7 +345,9 @@ static cmr_int hi846_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
 
 static cmr_int hi846_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
+    /*lint-save-e826*/
     SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
+    /*lint-restore*/
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(fps_info);
     SENSOR_IC_CHECK_PTR(param);
@@ -412,8 +416,8 @@ static cmr_int hi846_drv_access_val(cmr_handle handle, cmr_uint param) {
  * please modify this function acording your spec
  *============================================================================*/
 static cmr_int hi846_drv_identify(cmr_handle handle, cmr_uint param) {
-    cmr_u16 pid_value = 0x00;
-    cmr_u16 ver_value = 0x00;
+    cmr_u32 pid_value = 0x00;
+    cmr_u32 ver_value = 0x00;
     cmr_int ret_value = SENSOR_FAIL;
 
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -451,8 +455,8 @@ static cmr_int hi846_drv_identify(cmr_handle handle, cmr_uint param) {
 static cmr_int hi846_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
     cmr_u32 prv_shutter = 0;
-    cmr_u32 prv_gain = 0;
-    cmr_u32 cap_gain = 0;
+    float prv_gain = 0.0;
+    float cap_gain = 0.0;
     cmr_u32 capture_mode = param & 0xffff;
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
@@ -485,7 +489,7 @@ static cmr_int hi846_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
     cap_gain = prv_gain;
 
-    SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
+    SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%f", cap_shutter,
                 cap_gain);
     hi846_drv_calc_exposure(handle, cap_shutter, 0, capture_mode,
                             &hi846_aec_info);
@@ -624,7 +628,7 @@ static cmr_int hi846_drv_stream_on(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int hi846_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
-    cmr_u16 value = 0;
+    cmr_u32 value = 0;
     cmr_u16 sleep_time = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
