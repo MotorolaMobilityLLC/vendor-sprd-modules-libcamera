@@ -164,7 +164,7 @@ struct FCData {
 	int gainBase;
 
 	int testIndAll;
-	int testInd;
+	uint32 testInd;
 	int isMainTab[200];
 	int ind1Tab[200];
 	int ind2Tab[200];
@@ -189,6 +189,9 @@ struct FCData {
 	struct flash_calibration_data out;
 
 };
+#include <math.h>
+#define FLOAT_PRECISION 0.0005
+#define FLOAT_EQUAL(_x, _y) ((fabs(_x - _y) < FLOAT_PRECISION) ? 1 : 0)
 
 //============================================================
 //input and output
@@ -218,7 +221,7 @@ static int get_prop_multi(const char *name, int n, int *data)
 	int dataCnt = 0;
 	ret = 0;
 	int len;
-	len = strlen(str);
+	len = (int)strlen(str);
 	for (i = 0; i < len; i++) {
 		if (state == FIND_NUM) {
 			if (str[i] == ' ' || str[i] == '\t') {
@@ -261,7 +264,7 @@ static int _aem_stat_preprocess2(cmr_u32 * src_aem_stat, float *dst_r, float *ds
 	cmr_u32 stat_blocks = aem_blk_num.w * aem_blk_num.h;
 	cmr_u32 *src_r_stat = (cmr_u32 *) src_aem_stat;
 	cmr_u32 *src_g_stat = (cmr_u32 *) src_aem_stat + stat_blocks;
-	cmr_u32 *src_b_stat = (cmr_u32 *) src_aem_stat + 2 * stat_blocks;
+	cmr_u32 *src_b_stat = (cmr_u32 *) src_aem_stat + (2 * stat_blocks);
 	//cmr_u16 *dst_r = (float*)dst_aem_stat;
 	//cmr_u16 *dst_g = (float*)dst_aem_stat + stat_blocks;
 	//cmr_u16 *dst_b = (float*)dst_aem_stat + stat_blocks * 2;
@@ -426,7 +429,7 @@ static void calRgbFrameData(int isMainFlash, float *rRaw, float *gRaw, float *bR
 static double interp(double x1, double y1, double x2, double y2, double x)
 {
 	double y;
-	if (x1 == x2)
+	if (FLOAT_EQUAL(x1, x2))
 		return (y2 + y1) / 2;
 	y = y1 + (y2 - y1) / (x2 - x1) * (x - x1);
 	return y;
@@ -531,11 +534,12 @@ static void readDebugBin2(const char *f, struct FCData *d)
 {
 	FILE *fp;
 	fp = fopen(f, "rb");
-	if(fp) {
-		int sz = fread(d, 1, sizeof(struct FCData), fp);
+	if(fp){
+		int sz = (int)fread(d, 1, sizeof(struct FCData), fp);
 		if(sz != sizeof(struct FCData))
-        	ISP_LOGE("readDebugBin2 fread faild!");
+		        ISP_LOGE("readDebugBin2 fread faild!");
 		fclose(fp);
+		fp = NULL;
 	}
 }
 
@@ -544,7 +548,7 @@ static void readFCConfig(char *f, struct FCData *d, char *fout)
 	int i;
 	FILE *fp = NULL;
 	if(f && d){
-        fp = fopen(f, "rt");
+        fp = fopen(f, "r+");
         if (fp) {
             fscanf(fp, "%d", &d->numP1_hw);
             fscanf(fp, "%d", &d->numP2_hw);
@@ -586,7 +590,7 @@ static void readFCConfig(char *f, struct FCData *d, char *fout)
         }
     }
 	if (fout != 0 && d) {
-        fp = fopen(fout, "wt");
+        fp = fopen(fout, "w+");
         if (NULL != fp) {
             fprintf(fp, "%d\n", d->numP1_hw);
             fprintf(fp, "%d\n", d->numP2_hw);
@@ -762,7 +766,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
 							  caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, 0, &rmean, &gmean, &bmean);
 				ISP_LOGD("qqfc AE frmCnt=%d sh,gain=%d %d, gmean=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
-				if ((gmean > 200 && gmean < 400) || (caliData->expTime == 0.05 * AEC_LINETIME_PRECESION && caliData->gain == 8 * 128)) {
+				if ((gmean > 200 && gmean < 400) || (FLOAT_EQUAL(caliData->expTime, (0.05 * AEC_LINETIME_PRECESION)) && caliData->gain == 8 * 128)) {
 					caliData->stateCaliFrameCntSt = frameCount + 1;
 					caliData->expTimeBase = caliData->expTime;
 					caliData->gainBase = caliData->gain;
@@ -775,15 +779,17 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						caliData->expTime *= 300 / gmean;
 						//caliData->gain = caliData->gain;
 					}
+					float gain_tmp = (float)caliData->gain;
 					if (caliData->expTime > 0.05 * AEC_LINETIME_PRECESION) {
 						float ratio = caliData->expTime / (0.05 * AEC_LINETIME_PRECESION);
 						caliData->expTime = 0.05 * AEC_LINETIME_PRECESION;
-						caliData->gain *= ratio;
+						gain_tmp *= ratio;
 					} else if (caliData->expTime < 0.001 * AEC_LINETIME_PRECESION) {
 						float ratio = caliData->expTime / (0.001 * AEC_LINETIME_PRECESION);
 						caliData->expTime = 0.001 * AEC_LINETIME_PRECESION;
-						caliData->gain *= ratio;
+						gain_tmp *= ratio;
 					}
+					caliData->gain = (int)(gain_tmp + 0.5);
 					if (caliData->gain < 128)
 						caliData->gain = 128;
 					else if (caliData->gain > 8 * 128)
@@ -793,7 +799,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 		} else if (caliState == FlashCali_cali) {
 			int frmCntState;
-			int frmCnt;
+			uint32 frmCnt;
 			frmCntState = frameCount - caliData->stateCaliFrameCntSt;
 			if (frmCntState == 0) {
 				caliData->testInd = 0;
@@ -837,19 +843,19 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 							  caliData->rBuf, caliData->gBuf, caliData->bBuf,cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, 0, &rmean, &gmean, &bmean);
 				if (gmean > 600) {
 
-					double rat = 2;
+					float rat = 2.0;
 					rat = gmean / 300.0;
-					double rat1;
-					double rat2;
-					double rat3;
+					float rat1;
+					float rat2;
+					float rat3;
 
 					if (caliData->expTime > 0.03 * AEC_LINETIME_PRECESION) {
 						rat1 = rat;
-						int expTest;
+						float expTest = 0.0;
 						expTest = caliData->expTime / rat1;
 						if (expTest < 0.03 * AEC_LINETIME_PRECESION)
 							expTest = 0.03 * AEC_LINETIME_PRECESION;
-						rat1 = (double)caliData->expTime / expTest;
+						rat1 = caliData->expTime / expTest;
 						caliData->expTime = expTest;
 					} else
 						rat1 = 1;
@@ -857,24 +863,24 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					if (caliData->gain > 128) {
 						rat2 = rat / rat1;
 						int gainTest = caliData->gain;
-						gainTest /= rat2;
+						gainTest = (int)((float)caliData->gain / rat2);
 						if (gainTest < 128)
 							gainTest = 128;
-						rat2 = (double)caliData->gain / gainTest;
+						rat2 = (float)caliData->gain / (float)gainTest;
 						caliData->gain = gainTest;
 					} else {
 						rat2 = 1;
 					}
 					{
 						rat3 = rat / rat1 / rat2;
-						int expTest;
+						float expTest = 0.0;
 						expTest = caliData->expTime / rat3;
 						if (expTest < 0.001 * AEC_LINETIME_PRECESION)
 							expTest = 0.001 * AEC_LINETIME_PRECESION;
-						rat3 = (double)caliData->expTime / expTest;
+						rat3 = caliData->expTime / expTest;
 						caliData->expTime = expTest;
 
-						if (expTest == 0.001 * AEC_LINETIME_PRECESION && caliData->gain == 128) {
+						if (FLOAT_EQUAL(expTest, 0.001 * AEC_LINETIME_PRECESION) && caliData->gain == 128) {
 							char err[] = "error: the exposure is min\n";
 #ifdef WIN32
 							printf(err);
@@ -1268,9 +1274,11 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					led_bri.index_mf1[i] = caliData->indHwM1_alg[i + 1];
 				for (i = 0; i < led_bri.levelNumber_mf2; i++)
 					led_bri.index_mf2[i] = caliData->indHwM2_alg[i + 1];
-				fwrite(&led_bri, 1, sizeof(struct flash_led_brightness), fp);
-				fclose(fp);
-
+				if(fp){
+					fwrite(&led_bri, 1, sizeof(struct flash_led_brightness), fp);
+					fclose(fp);
+					fp = NULL;
+				}
 				struct flash_g_frames gf;
 				memset(&gf, 0, sizeof(struct flash_g_frames));
 				gf.levelNumber_pf1 = led_bri.levelNumber_pf1;
@@ -1321,112 +1329,117 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #else
 				fp = fopen("/data/vendor/cameraserver/flash_g_frames.bin", "wb");
 #endif
-				fwrite(&gf, 1, sizeof(struct flash_g_frames), fp);
-				fclose(fp);
-
+				if(fp){
+					fwrite(&gf, 1, sizeof(struct flash_g_frames), fp);
+					fclose(fp);
+					fp = NULL;
+				}
 #ifdef WIN32
-				fp = fopen("d:\\temp\\flash_g_frames.txt", "wt");
+				fp = fopen("d:\\temp\\flash_g_frames.txt", "w+");
 
-				fprintf(fp, "levelNumber_pf1: %d\n", (int)gf.levelNumber_pf1);
-				fprintf(fp, "levelNumber_pf2: %d\n", (int)gf.levelNumber_pf2);
-				fprintf(fp, "levelNumber_mf1: %d\n", (int)gf.levelNumber_mf1);
-				fprintf(fp, "levelNumber_mf2: %d\n", (int)gf.levelNumber_mf2);
+				if(fp){
+					fprintf(fp, "levelNumber_pf1: %d\n", (int)gf.levelNumber_pf1);
+					fprintf(fp, "levelNumber_pf2: %d\n", (int)gf.levelNumber_pf2);
+					fprintf(fp, "levelNumber_mf1: %d\n", (int)gf.levelNumber_mf1);
+					fprintf(fp, "levelNumber_mf2: %d\n", (int)gf.levelNumber_mf2);
 
-				fprintf(fp, "index_pf1:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.index_pf1[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "index_pf2:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.index_pf2[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "index_mf1:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.index_mf1[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "index_mf2:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.index_mf2[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "shutter_off: %lf\n", (double)gf.shutter_off);
-				fprintf(fp, "shutter_pf1:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%lf\t", (double)gf.shutter_pf1[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "shutter_pf2:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%lf\t", (double)gf.shutter_pf2[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "shutter_mf1:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%lf\t", (double)gf.shutter_mf1[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "shutter_mf2:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%lf\t", (double)gf.shutter_mf2[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "gain_off: %d\n", (int)gf.gain_off);
-				fprintf(fp, "gain_pf1:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.gain_pf1[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "gain_pf2:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.gain_pf2[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "gain_mf1:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.gain_mf1[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "gain_mf2:\n");
-				for (i = 0; i < 32; i++)
-					fprintf(fp, "%d\t", (int)gf.gain_mf2[i]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "g_off:\n");
-				for (j = 0; j < 15; j++)
-					fprintf(fp, "%lf\t", (double)gf.g_off[j]);
-				fprintf(fp, "\n");
-
-				fprintf(fp, "g_pf1:\n");
-				for (i = 0; i < 32; i++) {
-					for (j = 0; j < 15; j++)
-						fprintf(fp, "%lf\t", (double)gf.g_pf1[i][j]);
+					fprintf(fp, "index_pf1:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.index_pf1[i]);
 					fprintf(fp, "\n");
-				}
 
-				fprintf(fp, "g_pf2:\n");
-				for (i = 0; i < 32; i++) {
-					for (j = 0; j < 15; j++)
-						fprintf(fp, "%lf\t", (double)gf.g_pf2[i][j]);
+					fprintf(fp, "index_pf2:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.index_pf2[i]);
 					fprintf(fp, "\n");
-				}
 
-				fprintf(fp, "g_mf1:\n");
-				for (i = 0; i < 32; i++) {
-					for (j = 0; j < 15; j++)
-						fprintf(fp, "%lf\t", (double)gf.g_mf1[i][j]);
+					fprintf(fp, "index_mf1:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.index_mf1[i]);
 					fprintf(fp, "\n");
-				}
 
-				fprintf(fp, "g_mf2:\n");
-				for (i = 0; i < 32; i++) {
-					for (j = 0; j < 15; j++)
-						fprintf(fp, "%lf\t", (double)gf.g_mf2[i][j]);
+					fprintf(fp, "index_mf2:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.index_mf2[i]);
 					fprintf(fp, "\n");
+
+					fprintf(fp, "shutter_off: %lf\n", (double)gf.shutter_off);
+					fprintf(fp, "shutter_pf1:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%lf\t", (double)gf.shutter_pf1[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "shutter_pf2:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%lf\t", (double)gf.shutter_pf2[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "shutter_mf1:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%lf\t", (double)gf.shutter_mf1[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "shutter_mf2:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%lf\t", (double)gf.shutter_mf2[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "gain_off: %d\n", (int)gf.gain_off);
+					fprintf(fp, "gain_pf1:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.gain_pf1[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "gain_pf2:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.gain_pf2[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "gain_mf1:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.gain_mf1[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "gain_mf2:\n");
+					for (i = 0; i < 32; i++)
+						fprintf(fp, "%d\t", (int)gf.gain_mf2[i]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "g_off:\n");
+					for (j = 0; j < 15; j++)
+						fprintf(fp, "%lf\t", (double)gf.g_off[j]);
+					fprintf(fp, "\n");
+
+					fprintf(fp, "g_pf1:\n");
+					for (i = 0; i < 32; i++) {
+						for (j = 0; j < 15; j++)
+							fprintf(fp, "%lf\t", (double)gf.g_pf1[i][j]);
+						fprintf(fp, "\n");
+					}
+
+					fprintf(fp, "g_pf2:\n");
+					for (i = 0; i < 32; i++) {
+						for (j = 0; j < 15; j++)
+							fprintf(fp, "%lf\t", (double)gf.g_pf2[i][j]);
+						fprintf(fp, "\n");
+					}
+
+					fprintf(fp, "g_mf1:\n");
+					for (i = 0; i < 32; i++) {
+						for (j = 0; j < 15; j++)
+							fprintf(fp, "%lf\t", (double)gf.g_mf1[i][j]);
+						fprintf(fp, "\n");
+					}
+
+					fprintf(fp, "g_mf2:\n");
+					for (i = 0; i < 32; i++) {
+						for (j = 0; j < 15; j++)
+							fprintf(fp, "%lf\t", (double)gf.g_mf2[i][j]);
+						fprintf(fp, "\n");
+					}
+					fclose(fp);
+					fp = NULL;
 				}
-				fclose(fp);
 #endif
 			}
 
@@ -1439,7 +1452,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			caliData->out.flashLevelNum1 = caliData->numM1_alg;
 			caliData->out.flashLevelNum2 = caliData->numM2_alg;
 
-			FILE *fp;
+			FILE *fp = NULL;
 
 			int propValue[10];
 			int propRet;
@@ -1456,121 +1469,127 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 			if (debug1En == 1) {
 #ifdef WIN32
-				fp = fopen("d:\\temp\\fc_frame_rgb.txt", "wt");
+				fp = fopen("d:\\temp\\fc_frame_rgb.txt", "w+");
 #else
-				fp = fopen("/data/vendor/cameraserver/fc_frame_rgb.txt", "wt");
+				fp = fopen("/data/vendor/cameraserver/fc_frame_rgb.txt", "w+");
 #endif
-				for (i = 0; i < caliData->testIndAll; i++) {
-					if (caliData->isMainTab[i] == 0)
-						fprintf(fp, "pf ");
-					else
-						fprintf(fp, "mf ");
+				if(fp){
+					for (i = 0; i < caliData->testIndAll; i++) {
+						if (caliData->isMainTab[i] == 0)
+							fprintf(fp, "pf ");
+						else
+							fprintf(fp, "mf ");
 
-					int led1;
-					int led2;
-					led1 = caliData->ind1Tab[i];
-					led2 = caliData->ind2Tab[i];
-					int led1_hw;
-					int led2_hw;
-					if (caliData->isMainTab[i] == 0) {
-						led1_hw = caliData->indHwP1_alg[led1];
-						led2_hw = caliData->indHwP2_alg[led2];
-					} else {
-						led1_hw = caliData->indHwM1_alg[led1];
-						led2_hw = caliData->indHwM1_alg[led2];
+						int led1;
+						int led2;
+						led1 = caliData->ind1Tab[i];
+						led2 = caliData->ind2Tab[i];
+						int led1_hw;
+						int led2_hw;
+						if (caliData->isMainTab[i] == 0) {
+							led1_hw = caliData->indHwP1_alg[led1];
+							led2_hw = caliData->indHwP2_alg[led2];
+						} else {
+							led1_hw = caliData->indHwM1_alg[led1];
+							led2_hw = caliData->indHwM1_alg[led2];
+						}
+						fprintf(fp, "ind1,ind2: %d\t%d\n",
+								//(int)caliData->ind1Tab[i],
+								//(int)caliData->ind2Tab[i]);
+								(int)led1_hw, (int)led2_hw);
+
+						fprintf(fp, "expBase,gainBase,exp,gain: %d\t%d\t%d\t%d\n", (int)caliData->expTimeBase, (int)caliData->gainBase, (int)caliData->expTab[i], (int)caliData->gainTab[i]);
+						int j;
+						for (j = 0; j < 15; j++)
+							fprintf(fp, "%lf\t%lf\t%lf\t\n", (double)caliData->rFrame[i][j], (double)caliData->gFrame[i][j], (double)caliData->bFrame[i][j]);
+						fprintf(fp, "============\n\n");
+
 					}
-					fprintf(fp, "ind1,ind2: %d\t%d\n",
-							//(int)caliData->ind1Tab[i],
-							//(int)caliData->ind2Tab[i]);
-							(int)led1_hw, (int)led2_hw);
-
-					fprintf(fp, "expBase,gainBase,exp,gain: %d\t%d\t%d\t%d\n", (int)caliData->expTimeBase, (int)caliData->gainBase, (int)caliData->expTab[i], (int)caliData->gainTab[i]);
-					int j;
-					for (j = 0; j < 15; j++)
-						fprintf(fp, "%lf\t%lf\t%lf\t\n", (double)caliData->rFrame[i][j], (double)caliData->gFrame[i][j], (double)caliData->bFrame[i][j]);
-					fprintf(fp, "============\n\n");
-
+					fclose(fp);
+					fp = NULL;
 				}
-				fclose(fp);
 			}
 			if (debug2En == 1) {
 #ifdef WIN32
-				fp = fopen("d:\\temp\\fc_debug.txt", "wt");
+				fp = fopen("d:\\temp\\fc_debug.txt", "w+");
 #else
-				fp = fopen("/data/vendor/cameraserver/fc_debug.txt", "wt");
+				fp = fopen("/data/vendor/cameraserver/fc_debug.txt", "w+");
 #endif
-				fprintf(fp, "\ndriver_ind\n");
-				for (i = 0; i < caliData->numP1_alg; i++)
-					fprintf(fp, "%d\t", caliData->out.driverIndexP1[i]);
-				fprintf(fp, "\n");
+				if(fp){
+					fprintf(fp, "\ndriver_ind\n");
+					for (i = 0; i < caliData->numP1_alg; i++)
+						fprintf(fp, "%d\t", caliData->out.driverIndexP1[i]);
+					fprintf(fp, "\n");
 
-				for (i = 0; i < caliData->numP2_alg; i++)
-					fprintf(fp, "%d\t", caliData->out.driverIndexP2[i]);
-				fprintf(fp, "\n");
+					for (i = 0; i < caliData->numP2_alg; i++)
+						fprintf(fp, "%d\t", caliData->out.driverIndexP2[i]);
+					fprintf(fp, "\n");
 
-				for (i = 0; i < caliData->numM1_alg; i++)
-					fprintf(fp, "%d\t", caliData->out.driverIndexM1[i]);
-				fprintf(fp, "\n");
+					for (i = 0; i < caliData->numM1_alg; i++)
+						fprintf(fp, "%d\t", caliData->out.driverIndexM1[i]);
+					fprintf(fp, "\n");
 
-				for (i = 0; i < caliData->numM2_alg; i++)
-					fprintf(fp, "%d\t", caliData->out.driverIndexM2[i]);
-				fprintf(fp, "\n");
+					for (i = 0; i < caliData->numM2_alg; i++)
+						fprintf(fp, "%d\t", caliData->out.driverIndexM2[i]);
+					fprintf(fp, "\n");
 
-				fprintf(fp, "\nmask\n");
-				for (j = 0; j < caliData->numM2_alg; j++) {
-					for (i = 0; i < caliData->numM1_alg; i++) {
-						int ind;
-						ind = j * caliData->numM1_alg + i;
-						fprintf(fp, "%d\t", (int)caliData->out.flashMask[ind]);
+					fprintf(fp, "\nmask\n");
+					for (j = 0; j < caliData->numM2_alg; j++) {
+						for (i = 0; i < caliData->numM1_alg; i++) {
+							int ind;
+							ind = j * caliData->numM1_alg + i;
+							fprintf(fp, "%d\t", (int)caliData->out.flashMask[ind]);
+						}
+						fprintf(fp, "\n");
 					}
-					fprintf(fp, "\n");
-				}
-				fprintf(fp, "\nbrightness\n");
-				for (j = 0; j < caliData->numM2_alg; j++) {
-					for (i = 0; i < caliData->numM1_alg; i++) {
-						int ind;
-						ind = j * caliData->numM1_alg + i;
-						fprintf(fp, "%d\t", (int)caliData->out.brightnessTable[ind]);
+					fprintf(fp, "\nbrightness\n");
+					for (j = 0; j < caliData->numM2_alg; j++) {
+						for (i = 0; i < caliData->numM1_alg; i++) {
+							int ind;
+							ind = j * caliData->numM1_alg + i;
+							fprintf(fp, "%d\t", (int)caliData->out.brightnessTable[ind]);
+						}
+						fprintf(fp, "\n");
 					}
-					fprintf(fp, "\n");
-				}
-				fprintf(fp, "\nr tab\n");
-				for (j = 0; j < caliData->numM2_alg; j++) {
-					for (i = 0; i < caliData->numM1_alg; i++) {
-						int ind;
-						ind = j * caliData->numM1_alg + i;
-						fprintf(fp, "%d\t", (int)caliData->out.rTable[ind]);
+					fprintf(fp, "\nr tab\n");
+					for (j = 0; j < caliData->numM2_alg; j++) {
+						for (i = 0; i < caliData->numM1_alg; i++) {
+							int ind;
+							ind = j * caliData->numM1_alg + i;
+							fprintf(fp, "%d\t", (int)caliData->out.rTable[ind]);
+						}
+						fprintf(fp, "\n");
 					}
-					fprintf(fp, "\n");
-				}
-				fprintf(fp, "\nb tab\n");
-				for (j = 0; j < caliData->numM2_alg; j++) {
-					for (i = 0; i < caliData->numM1_alg; i++) {
-						int ind;
-						ind = j * caliData->numM1_alg + i;
-						fprintf(fp, "%d\t", (int)caliData->out.bTable[ind]);
+					fprintf(fp, "\nb tab\n");
+					for (j = 0; j < caliData->numM2_alg; j++) {
+						for (i = 0; i < caliData->numM1_alg; i++) {
+							int ind;
+							ind = j * caliData->numM1_alg + i;
+							fprintf(fp, "%d\t", (int)caliData->out.bTable[ind]);
+						}
+						fprintf(fp, "\n");
 					}
-					fprintf(fp, "\n");
-				}
-				fprintf(fp, "\npre bright\n");
-				for (j = 0; j < caliData->numP2_alg; j++) {
-					for (i = 0; i < caliData->numP1_alg; i++) {
-						int ind;
-						ind = j * caliData->numP1_alg + i;
-						fprintf(fp, "%d\t", (int)caliData->out.preflashBrightness[ind]);
+					fprintf(fp, "\npre bright\n");
+					for (j = 0; j < caliData->numP2_alg; j++) {
+						for (i = 0; i < caliData->numP1_alg; i++) {
+							int ind;
+							ind = j * caliData->numP1_alg + i;
+							fprintf(fp, "%d\t", (int)caliData->out.preflashBrightness[ind]);
+						}
+						fprintf(fp, "\n");
 					}
-					fprintf(fp, "\n");
-				}
-				fprintf(fp, "\npre rtab\n");
-				for (j = 0; j < caliData->numP2_alg; j++) {
-					for (i = 0; i < caliData->numP1_alg; i++) {
-						int ind;
-						ind = j * caliData->numP1_alg + i;
-						fprintf(fp, "%d\t", (int)caliData->out.rTable_preflash[ind]);
+					fprintf(fp, "\npre rtab\n");
+					for (j = 0; j < caliData->numP2_alg; j++) {
+						for (i = 0; i < caliData->numP1_alg; i++) {
+							int ind;
+							ind = j * caliData->numP1_alg + i;
+							fprintf(fp, "%d\t", (int)caliData->out.rTable_preflash[ind]);
+						}
+						fprintf(fp, "\n");
 					}
-					fprintf(fp, "\n");
+					fclose(fp);
+					fp = NULL;
 				}
-				fclose(fp);
 			}
 
 			if (debug1En == 1) {
@@ -1579,31 +1598,37 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #else
 				fp = fopen("/data/vendor/cameraserver/fc_debug.bin", "wb");
 #endif
-				fwrite(caliData, 1, sizeof(struct FCData), fp);
-				fclose(fp);
+				if(fp){
+					fwrite(caliData, 1, sizeof(struct FCData), fp);
+					fclose(fp);
+					fp = NULL;
+				}
 
 			}
 
 			if (caliData->out.error != 0) {
 #ifdef WIN32
-				fp = fopen("d:\\temp\\fc_error.txt", "wt");
+				fp = fopen("d:\\temp\\fc_error.txt", "w+");
 #else
-				fp = fopen("/data/vendor/cameraserver/fc_error.txt", "wt");
+				fp = fopen("/data/vendor/cameraserver/fc_error.txt", "w+");
 #endif
-				if (caliData->out.error == FlashCali_too_close) {
+				if (fp && caliData->out.error == FlashCali_too_close) {
 					fprintf(fp, "error: chart to camera is to close!\n");
+					fclose(fp);
+					fp = NULL;
 				}
-
-				fclose(fp);
 			} else {
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flashcalibration.bin", "wb");
 #else
 				fp = fopen("/data/vendor/cameraserver/flashcalibration.bin", "wb");
 #endif
-				ISP_LOGD("cali out data 2,out_ctTab:%f", caliData->out.ctTab[0]);
-				fwrite(&caliData->out, 1, sizeof(struct flash_calibration_data), fp);
-				fclose(fp);
+				if(fp){
+					ISP_LOGD("cali out data 2,out_ctTab:%f", caliData->out.ctTab[0]);
+					fwrite(&caliData->out, 1, sizeof(struct flash_calibration_data), fp);
+					fclose(fp);
+					fp = NULL;
+				}
 			}
 
 			free(caliData);
@@ -1623,8 +1648,8 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			cur_status->adv_param.mode_param.mode = 3;
 			cxt->cur_status.adv_param.mode_param.value.ae_idx = 0;
 			//cxt->cur_status.adv_param.mode_param.exp_line = caliData->expTime / lineTime;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = caliData->expTime;
-			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = caliData->gain;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = (cmr_u32)caliData->expTime;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = (cmr_u32)caliData->gain;
 		}
 	}
 	frameCount++;

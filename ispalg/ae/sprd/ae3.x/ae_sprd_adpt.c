@@ -51,11 +51,9 @@ static cmr_int g_ae_perf_log_level = LEVEL_OVER_LOGD;
 extern long g_isp_log_level;
 #define LEVEL_OVER_MAX 6
 #define ISP_LOGV(format, ...)                                                  \
-	ALOGD_IF((((g_ae_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_ae_log_level!=LEVEL_OVER_MAX)), DEBUG_STR format, DEBUG_ARGS, \
-        ##__VA_ARGS__)
+	ALOGD_IF((((g_ae_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_ae_log_level!=LEVEL_OVER_MAX)), DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 #define ISP_LOG_PERF(format, ...)                                                  \
-	ALOGD_IF(g_ae_perf_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, \
-        ##__VA_ARGS__)
+	ALOGD_IF(g_ae_perf_log_level >= LEVEL_OVER_LOGV, DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
 
 #endif
 
@@ -128,8 +126,8 @@ static cmr_u32 ae_is_equal (double a, double b)
 
 static void ae_parse_isp_gain(struct ae_ctrl_cxt *cxt, cmr_u32 is_master, cmr_u32 gain, cmr_u32 *snr_gain, cmr_u32 *dcam_gain)
 {
-	float sensor_gain = 0.0;
-	float isp_gain = 0.0;
+	cmr_u32 sensor_gain = 0;
+	double isp_gain = 0.0;
 	struct sensor_info info_slave0;
 	struct sensor_info info_slave1;
 	struct sensor_info info_master;
@@ -158,7 +156,7 @@ static void ae_parse_isp_gain(struct ae_ctrl_cxt *cxt, cmr_u32 is_master, cmr_u3
 		sensor_gain = max_gain;
 		isp_gain = (double)gain / (double)max_gain;
 	} else if (gain > min_gain) {	/*gain : (sensor_min_gain, sensor_max_gain) */
-		if (0 == gain % cxt->sensor_gain_precision) {
+		if (0 == (gain % (cmr_u32)cxt->sensor_gain_precision)) {
 			sensor_gain = gain;
 			isp_gain = 1.0;
 		} else {
@@ -1240,11 +1238,11 @@ static cmr_s32 ae_adjust_exp_gain(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 					}
 				}
 				if (i > 0) {
-					dst_exp_param->exp_line = (cmr_s16) ((i * divisor_coeff) * 1.0 * AEC_LINETIME_PRECESION / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-					dst_exp_param->gain = (cmr_s16) (product / (dst_exp_param->exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time) + 0.5);
+					dst_exp_param->exp_line = (cmr_u32) ((i * divisor_coeff) * 1.0 * AEC_LINETIME_PRECESION / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+					dst_exp_param->gain = (cmr_u32) (product / (dst_exp_param->exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time) + 0.5);
 				} else {
 					dst_exp_param->gain = 128;
-					dst_exp_param->exp_line = (cmr_s16) (product / (dst_exp_param->gain * cxt->cur_status.adv_param.cur_ev_setting.line_time) + 0.5);
+					dst_exp_param->exp_line = (cmr_u32) (product / (dst_exp_param->gain * cxt->cur_status.adv_param.cur_ev_setting.line_time) + 0.5);
 				}
 			} else if (dst_exp_param->gain > max_gain) {
 				dst_exp_param->gain = max_gain;
@@ -2575,9 +2573,9 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		in->staW = cxt->cur_status.stats_data_basic.size.w;
 		in->staH = cxt->cur_status.stats_data_basic.size.h;
 		in->isFlash = 1;		/*need to check the meaning */
-		memcpy((cmr_handle *) & in->rSta[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], sizeof(in->rSta));
-		memcpy((cmr_handle *) & in->gSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + blk_num), sizeof(in->gSta));
-		memcpy((cmr_handle *) & in->bSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(in->bSta));
+		memcpy((cmr_u16 *) & in->rSta[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], sizeof(in->rSta));
+		memcpy((cmr_u16 *) & in->gSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + blk_num), sizeof(in->gSta));
+		memcpy((cmr_u16 *) & in->bSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + (2 * blk_num)), sizeof(in->bSta));
 
 		flash_pfOneIteration(cxt->flash_alg_handle, in, &out);
 
@@ -2620,9 +2618,9 @@ static cmr_s32 flash_high_flash_reestimation(struct ae_ctrl_cxt *cxt)
 	input->gGain = cxt->cur_status.awb_gain.g;
 	input->bGain = cxt->cur_status.awb_gain.b;
 	input->wb_mode = cxt->cur_status.adv_param.awb_mode;
-	memcpy((cmr_handle *) & input->rSta[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], sizeof(input->rSta));
-	memcpy((cmr_handle *) & input->gSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + blk_num), sizeof(input->gSta));
-	memcpy((cmr_handle *) & input->bSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(input->bSta));
+	memcpy((cmr_u16 *) & input->rSta[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], sizeof(input->rSta));
+	memcpy((cmr_u16 *) & input->gSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + blk_num), sizeof(input->gSta));
+	memcpy((cmr_u16 *) & input->bSta[0], ((cmr_u16 *) & cxt->aem_stat_rgb[0] + 2 * blk_num), sizeof(input->bSta));
 	flash_mfCalc(cxt->flash_alg_handle, input, output);
 	ISP_LOGD("high flash wb gain: %d, %d, %d\n", cxt->flash_main_esti_result.captureRGain, cxt->flash_main_esti_result.captureGGain, cxt->flash_main_esti_result.captureBGain);
 
@@ -3154,7 +3152,7 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_lib_calc_o
 	result->ae_output.cur_bv = alg_rt->cur_bv;
 	result->ae_output.abl_weight = alg_rt->abl_confidence;
 	result->ae_output.exposure_time = (float) cxt->cur_result.ev_setting.exp_time / AEC_LINETIME_PRECESION;
-	result->ae_output.fps = alg_rt->cur_fps;
+	result->ae_output.fps = (cmr_u32)alg_rt->cur_fps;
 	result->ae_output.face_enable = alg_rt->face_enable;
 	result->ae_output.reserved = alg_rt->privated_data;
 
@@ -3192,7 +3190,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_lib_calc_ou
 	result->ae_output.cur_bv = alg_rt->cur_bv;
 	result->ae_output.abl_weight = alg_rt->abl_confidence;
 	result->ae_output.exposure_time = cxt->cur_result.ev_setting.exp_time / AEC_LINETIME_PRECESION;
-	result->ae_output.fps = alg_rt->cur_fps;
+	result->ae_output.fps = (cmr_u32)alg_rt->cur_fps;
 	result->ae_output.face_enable = alg_rt->face_enable;
 	result->ae_output.reserved = alg_rt->privated_data;
 
@@ -4354,7 +4352,7 @@ static cmr_s32 ae_set_ev_offset(struct ae_ctrl_cxt *cxt, void *param)
 		if (ev->level < AE_LEVEL_MAX){
 			cxt->cur_status.adv_param.comp_param.mode = 1;
 			cxt->cur_status.adv_param.prof_mode = 1;
-			cxt->cur_status.adv_param.comp_param.value.ev_index = ev->level;
+			cxt->cur_status.adv_param.comp_param.value.ev_index = (cmr_s32)ev->level;
 		} else {
 			cxt->cur_status.adv_param.comp_param.mode = 0;
 			cxt->cur_status.adv_param.prof_mode = 0;
@@ -4468,7 +4466,7 @@ static void ae_set_fdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	//if (cxt->fdr_frame_cnt <= cxt->fdr_flag ) {
 	base_exposure_line = cxt->fdr_exp_line;
 	base_gain = cxt->fdr_gain;
-	down_exposure = pow(2,ev_result)* base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+	down_exposure = (cmr_u32)(pow(2,ev_result)* base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
 	ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  ev_result);
 	ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
 	ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
@@ -5174,7 +5172,7 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 	 {
 		char fname11[256];
 		char dir_str11[256] ="/data/vendor/cameraserver/";
-		snprintf(fname11, "%saem_new_binning_avg4RGB.txt",dir_str11);
+		sprintf(fname11, "%saem_new_binning_avg4RGB.txt",dir_str11);
 		FILE* fp11 = fopen(fname11, "w");
 		if (fp11){
 			for (int ii = 0; ii < 64; ii++){
@@ -5196,7 +5194,7 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 {
 		char fname22[256];
 		char dir_str22[256] ="/data/vendor/cameraserver/";
-		snprintf(fname22, "%saem_new_sum.txt",dir_str22);
+		sprintf(fname22, "%saem_new_sum.txt",dir_str22);
 		FILE* fp22 = fopen(fname22, "w");
 		if (fp22){
 			for (int ii = 0; ii < 64; ii++){
@@ -5283,7 +5281,7 @@ static void ae_binning_for_aem_stats(struct ae_ctrl_cxt *cxt, void * img_stat)
  	{
 		char fname11[256];
 		char dir_str11[256] ="/data/vendor/cameraserver/";
-		snprintf(fname11, "%saem_old_sum.txt",dir_str11);
+		sprintf(fname11, "%saem_old_sum.txt",dir_str11);
 		FILE* fp11 = fopen(fname11, "w");
 		if (fp11){
 			for (int ii = 0; ii < 64; ii++){
