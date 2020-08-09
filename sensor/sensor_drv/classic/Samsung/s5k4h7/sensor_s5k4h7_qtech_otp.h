@@ -112,13 +112,13 @@ static uint32_t s5k4h7_qtech_update_awb(cmr_handle handle, void *param_ptr) {
         G_gain = 0x0100;
 
         if (R_gain < B_gain) {
-            if (R_gain < 0x0100) {
+            if (R_gain < 0x0100 && R_gain != 0) {
                 B_gain = (0x0100 * B_gain) / R_gain;
                 G_gain = (0x0100 * G_gain) / R_gain;
                 R_gain = 0x0100;
             }
         } else {
-            if (B_gain < 0x0100) {
+            if (B_gain < 0x0100 && B_gain != 0) {
                 R_gain = (0x0100 * R_gain) / B_gain;
                 G_gain = (0x0100 * G_gain) / B_gain;
                 B_gain = 0x0100;
@@ -138,6 +138,7 @@ static uint32_t s5k4h7_qtech_update_awb(cmr_handle handle, void *param_ptr) {
         Sensor_writereg8bits(handle, 0x0214, G_gain >> 8);
         Sensor_writereg8bits(handle, 0x0215, G_gain & 0xff);
     } else {
+		rtn = SENSOR_FAIL;
         SENSOR_PRINT("X");
     }
 
@@ -163,9 +164,9 @@ static uint32_t s5k4h7_qtech_test_awb(void *param_ptr) {
 
     } else if (!strcmp(value, "test")) {
         SENSOR_PRINT("apply awb otp on test mode!");
-        otp_info->rg_ratio_typical = RG_RATIO_TYPICAL_s5k4h7_qtech * 1.5;
-        otp_info->bg_ratio_typical = BG_RATIO_TYPICAL_s5k4h7_qtech * 1.5;
-        otp_info->gbgr_ratio_typical = GBGR_RATIO_TYPICAL_s5k4h7_qtech * 1.5;
+        otp_info->rg_ratio_typical = RG_RATIO_TYPICAL_s5k4h7_qtech * 3/2;
+        otp_info->bg_ratio_typical = BG_RATIO_TYPICAL_s5k4h7_qtech * 3/2;
+        otp_info->gbgr_ratio_typical = GBGR_RATIO_TYPICAL_s5k4h7_qtech * 3/2;
         otp_info->r_typical = otp_info->g_typical;
         otp_info->g_typical = otp_info->g_typical;
         otp_info->b_typical = otp_info->g_typical;
@@ -300,10 +301,6 @@ static uint32_t s5k4h7_qtech_read_otp_info(cmr_handle handle, void *param_ptr,
             return rtn;
         }
         rtn = s5k4h7_qtech_update_lsc(handle, param_ptr);
-        if (rtn != SENSOR_SUCCESS) {
-            SENSOR_PRINT_ERR("OTP awb apply error!");
-            return rtn;
-        }
     } else {
         rtn = SENSOR_SUCCESS;
     }

@@ -132,7 +132,7 @@ static void s5k4h7_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
-    float fps = 0.0;
+    double fps = 0.0;
     cmr_u16 frame_interval = 0x00;
 
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
@@ -184,7 +184,7 @@ static void s5k4h7_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
                                  struct sensor_aec_i2c_tag *aec_info) {
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    cmr_u32 sensor_gain = 0;
+    cmr_uint sensor_gain = 0;
 
     sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
@@ -303,7 +303,9 @@ static cmr_int s5k4h7_drv_init_fps_info(cmr_handle handle) {
 
 static cmr_int s5k4h7_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
+    /*lint-save-e826*/
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
+    /*lint-restore*/
     cmr_u32 up = 0;
     cmr_u32 down = 0;
 
@@ -346,7 +348,9 @@ static cmr_int s5k4h7_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
 
 static cmr_int s5k4h7_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
+    /*lint-save-e826*/
     SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
+    /*lint-restore*/
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(fps_info);
     SENSOR_IC_CHECK_PTR(param);
@@ -498,8 +502,8 @@ static cmr_int s5k4h7_drv_identify(cmr_handle handle, cmr_uint param) {
 static cmr_int s5k4h7_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
     cmr_u32 prv_shutter = 0;
-    cmr_u32 prv_gain = 0;
-    cmr_u32 cap_gain = 0;
+    float prv_gain = 0.0;
+    float cap_gain = 0.0;
     cmr_u32 capture_mode = param & 0xffff;
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
@@ -532,7 +536,7 @@ static cmr_int s5k4h7_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
     cap_gain = prv_gain;
 
-    SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
+    SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%f", cap_shutter,
                 cap_gain);
 
     s5k4h7_drv_calc_exposure(handle, cap_shutter, 0, capture_mode,
