@@ -75,10 +75,16 @@ cmr_int isp_sim_get_no_lsc_ae_stats(struct isp_awb_statistic_info *awb_statis, c
 	while (!feof(fp)) {
 		if(EOF==fscanf(fp, "blk_id:%d ", &i)){
 			ISP_LOGD("end to file");
+			break;
 		}
-		if(EOF==fscanf(fp, "R:%d G:%d B:%d\n",
-			&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
-			ISP_LOGD("end to file");
+		if (i >= 0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
+			if(EOF==fscanf(fp, "R:%d G:%d B:%d\n",
+				&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
+				ISP_LOGD("end to file");
+				break;
+			}
+		} else {
+			ISP_LOGE("wrong iindex i: %u", i);
 		}
 	}
 
@@ -166,13 +172,19 @@ cmr_int isp_sim_get_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32 
 	while (!feof(fp)) {
 		if(EOF == fscanf(fp, "blk_id:%d ", &i)){
 			ISP_LOGD("to the end of file.");
+			break;
 		}
-		if(EOF == fscanf(fp, "R:%d G:%d B:%d\n",
-			&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
-			ISP_LOGD("to the end of file.");
+		if (i >= 0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
+			if(EOF == fscanf(fp, "R:%d G:%d B:%d\n",
+				&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
+				ISP_LOGD("to the end of file.");
+				break;
+			}
+			ISP_LOGV("blk_id:%d R:%d G:%d B:%d",
+				i, awb_statis->r_info[i], awb_statis->g_info[i], awb_statis->b_info[i]);
+		} else {
+			ISP_LOGE("wrong index i %u", i);
 		}
-		ISP_LOGV("blk_id:%d R:%d G:%d B:%d",
-			i, awb_statis->r_info[i], awb_statis->g_info[i], awb_statis->b_info[i]);
 	}
 
 	fclose(fp);
