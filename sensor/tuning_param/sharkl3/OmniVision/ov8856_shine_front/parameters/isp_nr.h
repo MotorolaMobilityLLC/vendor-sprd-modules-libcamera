@@ -193,5 +193,17 @@ static struct sensor_nr_scene_map_param s_ov8856_front_nr_scene_map_param = {{
 #include "NR/cap_1/normal/ynrs_param.h"
 #endif
 
+#ifdef _NR_CNR3_PARAM_
+#include "NR/common/normal/cnr3_param.h"
+#include "NR/prv_0/normal/cnr3_param.h"
+#include "NR/prv_1/normal/cnr3_param.h"
+#include "NR/cap_1/normal/cnr3_param.h"
+#endif
 
+#ifdef _NR_MFNR_PARAM_
+#include "NR/common/normal/mfnr_param.h"
+#include "NR/prv_0/normal/mfnr_param.h"
+#include "NR/prv_1/normal/mfnr_param.h"
+#include "NR/cap_1/normal/mfnr_param.h"
+#endif
 
