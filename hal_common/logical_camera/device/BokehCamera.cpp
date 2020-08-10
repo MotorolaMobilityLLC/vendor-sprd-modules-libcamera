@@ -106,6 +106,7 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg,
     mCallbackStreamsNum = 0;
     mPreviewStreamsNum = 0;
     mVideoStreamsNum = -1;
+    mCapFrameNumber = -1;
     mPendingRequest = 0;
     mSavedCapStreams = NULL;
     mCapFrameNumber = -1;
@@ -171,6 +172,7 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg,
     memset(&mBokehDepthBuffer, 0, sizeof(BokehDepthBuffer));
     memset(&mOtpData, 0, sizeof(OtpData));
     memset(&mbokehParm, 0, sizeof(bokeh_params));
+    memset(&mReqCapType, 0, sizeof(req_type));
 
     mLocalBufferList.clear();
     mMetadataList.clear();
@@ -184,7 +186,23 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg,
     physicIds = new uint8_t[mPhysicalIds.size() * 2];
     mConflictDevices = NULL;
     mCameraNum = 0;
-
+    mBokehDev = NULL;
+    mSnapshotMainReturn = false;
+    mSnapshotAuxReturn = false;
+    mBokehMode = 0;
+    mDoPortrait = 0;
+    mlimited_infi = 0;
+    mlimited_macro = 0;
+    maxCapWidth = DEFAULT_CAPTURE_WIDTH;
+    maxCapHeight = DEFAULT_CAPTURE_HEIGHT;
+    maxPrevWidth = DEFAULT_PREVIEW_WIDTH;
+    maxPrevHeight = DEFAULT_PREVIEW_WIDTH;
+    mVideoPrevShare = false;
+    far = 0;
+    near = 0;
+    sn_trim_flag = true;
+    trim_W = 0;
+    trim_H = 0;
     HAL_LOGI("X");
 }
 
@@ -623,6 +641,9 @@ int BokehCamera::isStreamCombinationSupported(
                 return -EINVAL;
             }
         }
+    } else {
+        HAL_LOGE("NULL stream combination");
+        return -EINVAL;
     }
 
     int rc = 0;
@@ -633,11 +654,6 @@ int BokehCamera::isStreamCombinationSupported(
     camera3_stream_t *streamBuffer = new camera3_stream_t[comb->num_streams];
     int inputStreamNum = 0, outputStreamNum = 0;
     HAL_LOGI("E");
-    if (comb == NULL) {
-        HAL_LOGE("NULL stream combination");
-        rc = -EINVAL;
-        goto exit;
-    }
     if (streamList.streams == NULL) {
         HAL_LOGD("NULL stream list");
         rc = -EINVAL;
@@ -701,14 +717,17 @@ int BokehCamera::isStreamCombinationSupported(
         }
     }
     if (outputStreamNum < 1 || inputStreamNum > 0) {
-        HAL_LOGE("without output stream configuration or have input stream configuration.");
+        HAL_LOGE("without output stream configuration or have input stream "
+                 "configuration.");
         rc = -EINVAL;
         goto exit;
     }
 exit:
     HAL_LOGI("X, rc: %d", rc);
-    delete[] streamBuffer;
-    delete[] streamList.streams;
+    if (streamBuffer)
+        delete[] streamBuffer;
+    if (streamList.streams)
+        delete[] streamList.streams;
     return rc;
 }
 
@@ -801,7 +820,7 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
         if (stream_list->streams[i]->physical_camera_id &&
             strlen(stream_list->streams[i]->physical_camera_id)) {
             HAL_LOGW("assign physical camera id %d to stream is currently not "
-                     "supported",
+                     "supported %d",
                      atoi(stream_list->streams[i]->physical_camera_id));
             return -EINVAL;
         }
@@ -1246,6 +1265,7 @@ int BokehCamera::processCaptureRequest(camera3_capture_request_t *request) {
     cmr_u16 snsW, snsH;
     req_type curReqType = {.frame_number = (int)request->frame_number,
                            .reqType = 0};
+    size_t prevReqNum = 0;
     bzero(out_streams_main,
           sizeof(camera3_stream_buffer_t) * REAL_BOKEH_MAX_NUM_STREAMS);
     bzero(out_streams_aux,
@@ -1329,6 +1349,7 @@ int BokehCamera::processCaptureRequest(camera3_capture_request_t *request) {
                    requestStreamType == PREVIEW_STREAM ||
                    (mVideoPrevShare && requestStreamType == VIDEO_STREAM)) {
             curReqType.reqType |= 1;
+            prevReqNum += 1;
             HAL_LOGD("curReqType %d %d", curReqType.frame_number,
                      curReqType.reqType);
             preview_stream = (request->output_buffers[i]).stream;
@@ -1465,9 +1486,11 @@ int BokehCamera::processCaptureRequest(camera3_capture_request_t *request) {
                 goto req_fail;
             }
             aux_buffer_index++;
-        } else if (requestStreamType == CALLBACK_STREAM ||
-                   requestStreamType == PREVIEW_STREAM ||
-                   (requestStreamType == VIDEO_STREAM && mVideoPrevShare)) {
+        } else if ((requestStreamType == CALLBACK_STREAM ||
+                    requestStreamType == PREVIEW_STREAM ||
+                    (requestStreamType == VIDEO_STREAM && mVideoPrevShare)) &&
+                   prevReqNum > 0) {
+            prevReqNum = 0;
             out_streams_main[main_buffer_index] = req->output_buffers[i];
             out_streams_main[main_buffer_index].stream =
                 &mMainStreams[mPreviewStreamsNum];
@@ -1687,14 +1710,6 @@ void BokehCamera::processCaptureResultMain(
             }
             return;
         } else {
-            if (metadata.exists(ANDROID_CONTROL_AF_STATE)) {
-                mCurAFStatus =
-                    metadata.find(ANDROID_CONTROL_AF_STATE).data.u8[0];
-            }
-            if (metadata.exists(ANDROID_CONTROL_AF_MODE)) {
-                mCurAFMode = metadata.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
-            }
-
             HAL_LOGD("send  meta, framenumber:%d", cur_frame_number);
             metadata_t.frame_number = cur_frame_number;
             metadata_t.metadata = clone_camera_metadata(result->result);
@@ -1720,12 +1735,13 @@ void BokehCamera::processCaptureResultMain(
             mThumbReq.frame_number) {
             CallBackSnapResult(CAMERA3_BUFFER_STATUS_ERROR);
         }
-        CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR);
+        CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
+                       PREV_TYPE);
 
         return;
     }
-    HAL_LOGD("mIsCapturing %d, cap_f %d, cur_f %d", mIsCapturing,
-             mCapFrameNumber, cur_frame_number);
+    HAL_LOGD("mIsCapturing %d, cap_f %d, cur_f %d, rtn %d", mIsCapturing,
+             mCapFrameNumber, cur_frame_number, mSnapshotMainReturn);
     if (mIsCapturing && (mCapFrameNumber == cur_frame_number) &&
         (currStreamType != SNAPSHOT_STREAM) &&
         (mSavedCapStreams->width == result_buffer->stream->width &&
@@ -1740,7 +1756,8 @@ void BokehCamera::processCaptureResultMain(
                 mThumbReq.frame_number) {
                 CallBackSnapResult(CAMERA3_BUFFER_STATUS_ERROR);
             }
-            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR);
+            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_ERROR,
+                           CAP_TYPE);
             return;
         }
         if (mhasCallbackStream && mThumbReq.frame_number) {
@@ -1753,6 +1770,7 @@ void BokehCamera::processCaptureResultMain(
         }
 
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
+            HAL_LOGD("save main");
             mCaptureThread->mSavedOneResultBuff =
                 result->output_buffers->buffer;
         } else {
@@ -1793,7 +1811,8 @@ void BokehCamera::processCaptureResultMain(
     } else if (currStreamType == CALLBACK_STREAM ||
                currStreamType == PREVIEW_STREAM) {
         if (!mIsSupportPBokeh) {
-            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK);
+            CallBackResult(cur_frame_number, CAMERA3_BUFFER_STATUS_OK,
+                           PREV_TYPE);
             return;
         }
         // process preview buffer
@@ -1817,7 +1836,7 @@ void BokehCamera::processCaptureResultMain(
                                        result->output_buffers->buffer,
                                        mLocalBufferNumber, mLocalBufferList);
                         CallBackResult(cur_frame_number,
-                                       CAMERA3_BUFFER_STATUS_ERROR);
+                                       CAMERA3_BUFFER_STATUS_ERROR, PREV_TYPE);
                         mNotifyListMain.erase(i++);
                         return;
                     }
@@ -1874,7 +1893,7 @@ void BokehCamera::processCaptureResultMain(
                                    mLocalBufferNumber, mLocalBufferList);
                     // if (cur_frame.frame_number > 5)
                     CallBackResult(discard_frame->frame_number,
-                                   CAMERA3_BUFFER_STATUS_ERROR);
+                                   CAMERA3_BUFFER_STATUS_ERROR, PREV_TYPE);
                     delete discard_frame;
                 }
             }
@@ -2215,19 +2234,12 @@ int BokehCamera::allocateBuff() {
     }
     count += LOCAL_PREVIEW_NUM;
 
-    if (mCaptureThread->mAbokehGallery) {
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
-        capture_num = LOCAL_CAPBUFF_NUM;
+    capture_num = LOCAL_CAPBUFF_NUM;
 #else
-        capture_num = LOCAL_CAPBUFF_NUM - 1;
+    capture_num = LOCAL_CAPBUFF_NUM - 1;
 #endif
-    } else {
-#ifdef CONFIG_BOKEH_HDR_SUPPORT
-        capture_num = LOCAL_CAPBUFF_NUM;
-#else
-        capture_num = LOCAL_CAPBUFF_NUM - 1;
-#endif
-    }
+
     HAL_LOGD("capture_num = %d", capture_num);
 
     for (j = 0; j < capture_num; j++) {
@@ -2571,7 +2583,7 @@ void BokehCamera::updateApiParams(CameraMetadata metaSettings, int type,
         mJpegOrientation; // mbokehParm.portrait_param.mobile_angle;
 
     mbokehParm.portrait_param.camera_angle =
-        SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
+        SprdCamera3Setting::s_setting[m_pPhyCamera[0].id]
             .sensorInfo.orientation;
     if (!mIsCapturing) {
         j = 0;
@@ -2633,7 +2645,7 @@ void BokehCamera::updateApiParams(CameraMetadata metaSettings, int type,
     }
     HAL_LOGD("mDoPortrait%d,numFaces=%d,mBokehMode=%d", mDoPortrait, numFaces,
              mBokehMode);
-    if (mBokehCamera->mCameraId == 0)
+    if (m_pPhyCamera[0].id == 0)
         mbokehParm.portrait_param.rear_cam_en = true;
     else
         mbokehParm.portrait_param.rear_cam_en = 0;
@@ -2962,8 +2974,9 @@ void BokehCamera::bokehFaceMakeup(buffer_handle_t *buffer_handle,
     faceInfo[2] = mFaceInfo[2] * mBokehSize.capture_w / mBokehSize.preview_w;
     faceInfo[3] = mFaceInfo[3] * mBokehSize.capture_w / mBokehSize.preview_w;
 
-    newFace.face_num = SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
-                           .faceInfo.face_num;
+    newFace.face_num =
+        SprdCamera3Setting::s_setting[mBokehCamera->m_pPhyCamera[0].id]
+            .faceInfo.face_num;
     newFace.face[0].rect[0] = faceInfo[0];
     newFace.face[0].rect[1] = faceInfo[1];
     newFace.face[0].rect[2] = faceInfo[2];
@@ -3289,7 +3302,8 @@ void BokehCamera::CallBackSnapResult(int status) {
 }
 
 void BokehCamera::CallBackResult(uint32_t frame_number,
-                                 camera3_buffer_status_t buffer_status) {
+                                 camera3_buffer_status_t buffer_status,
+                                 intent_type type) {
 
     camera3_capture_result_t result;
     List<multi_request_saved_t>::iterator itor, itor2;
@@ -3297,9 +3311,7 @@ void BokehCamera::CallBackResult(uint32_t frame_number,
     bzero(&result, sizeof(camera3_capture_result_t));
     bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
 
-    if ((frame_number != mBokehCamera->mCapFrameNumber) ||
-        (frame_number == mReqCapType.frame_number &&
-         (mReqCapType.reqType & 1) == 1)) {
+    if (type == PREV_TYPE) {
         Mutex::Autolock l(mBokehCamera->mRequestLock);
         itor = mBokehCamera->mSavedRequestList.begin();
         while (itor != mBokehCamera->mSavedRequestList.end()) {
@@ -3307,7 +3319,6 @@ void BokehCamera::CallBackResult(uint32_t frame_number,
                 CallBackMetadata(frame_number);
                 result_buffers.stream = itor->preview_stream;
                 result_buffers.buffer = itor->buffer;
-                HAL_LOGD("mVideoStreamsNum %d", mVideoStreamsNum);
                 if (mVideoStreamsNum >= 0) {
                     callbackVideoResult(frame_number, buffer_status,
                                         result_buffers.buffer);
@@ -3357,7 +3368,7 @@ void BokehCamera::CallBackResult(uint32_t frame_number,
             }
             itor2++;
         }
-    } else {
+    } else if (type == CAP_TYPE) {
         CallBackMetadata(frame_number);
         result_buffers.stream = mBokehCamera->mSavedCapStreams;
         result_buffers.buffer = mCaptureThread->mSavedCapReqStreamBuff.buffer;
@@ -3385,9 +3396,7 @@ void BokehCamera::CallBackResult(uint32_t frame_number,
         mBokehCamera->dumpFps();
     }
 
-    if ((frame_number != mBokehCamera->mCapFrameNumber) ||
-        (frame_number == mReqCapType.frame_number &&
-         (mReqCapType.reqType & 1) == 1)) {
+    if (type == PREV_TYPE) {
         Mutex::Autolock l(mBokehCamera->mPendingLock);
         mBokehCamera->mPendingRequest--;
         if (mBokehCamera->mPendingRequest < mBokehCamera->mMaxPendingCount) {
@@ -3409,7 +3418,6 @@ void BokehCamera::callbackVideoResult(uint32_t frame_number,
                                       buffer_handle_t *buffer) {
     void *prev_addr = NULL;
     void *video_addr = NULL;
-    buffer_handle_t *video_buffer;
     camera3_capture_result_t result;
     List<multi_request_saved_t>::iterator itor;
     camera3_stream_buffer_t result_buffers;
@@ -3420,18 +3428,35 @@ void BokehCamera::callbackVideoResult(uint32_t frame_number,
         if (itor->frame_number == frame_number) {
             int rc = mBokehCamera->map(buffer, &prev_addr);
             if (rc != NO_ERROR) {
-                HAL_LOGE("fail to map video buffer %d", frame_number);
+                HAL_LOGE("fail to map prev buffer %d", frame_number);
                 return;
             }
             rc = mBokehCamera->map(itor->buffer, &video_addr);
-            uint32_t buf_size =
-                mBokehStream.video_w * mBokehStream.video_h * 3 / 2;
-            memcpy(video_addr, prev_addr, buf_size);
+            if (rc != NO_ERROR) {
+                HAL_LOGE("fail to map video buffer %d", frame_number);
+                return;
+            }
+            if (mBokehStream.video_w != mBokehSize.preview_w ||
+                mBokehStream.video_h != mBokehSize.preview_h) {
+                rc = mBokehCamera->hwScale(
+                    (uint8_t *)video_addr, mBokehStream.video_w,
+                    mBokehStream.video_h, ADP_BUFFD(*(itor->buffer)),
+                    (uint8_t *)prev_addr, mBokehSize.preview_w,
+                    mBokehSize.preview_h, ADP_BUFFD(*buffer));
+                if (rc != NO_ERROR) {
+                    HAL_LOGE("fail to get video buffer %d", frame_number);
+                    return;
+                }
+            } else {
+                uint32_t buf_size =
+                    mBokehStream.video_w * mBokehStream.video_h * 3 / 2;
+                memcpy(video_addr, prev_addr, buf_size);
+            }
             mBokehCamera->unmap(buffer);
             mBokehCamera->unmap(itor->buffer);
             result_buffers.stream = itor->video_stream;
             result_buffers.buffer = itor->buffer;
-            HAL_LOGD("erase frame_number %u", frame_number);
+            HAL_LOGD("erase video frame_number %u", frame_number);
             mBokehCamera->mSavedVideoReqList.erase(itor);
             break;
         }
@@ -3479,7 +3504,7 @@ void BokehCamera::clearFrameNeverMatched(uint32_t main_frame_number,
             HAL_LOGD("clear frame main idx:%d", itor->frame_number);
             frame_num = itor->frame_number;
             mUnmatchedFrameListMain.erase(itor++);
-            CallBackResult(frame_num, CAMERA3_BUFFER_STATUS_ERROR);
+            CallBackResult(frame_num, CAMERA3_BUFFER_STATUS_ERROR, PREV_TYPE);
             continue;
         }
         itor++;
@@ -3582,7 +3607,8 @@ int BokehCamera::insertGDepthMetadata(unsigned char *result_buffer_addr,
     strcat(file2_name, "xmp_temp2.jpg");
 
     // remove previous temp file
-    remove(file2_name);
+    if (remove(file2_name) < 0)
+        HAL_LOGE("Unable to remove file: %s \n", file2_name);
 
     uint32_t para_size = 0;
     uint32_t depth_size = 0;
@@ -3949,7 +3975,8 @@ void *BokehCamera::jpeg_callback_thread_proc(void *p_data) {
 #endif
     obj->mCaptureThread->mReprocessing = false;
     obj->mIsCapturing = false;
-    obj->CallBackResult(obj->mCapFrameNumber, CAMERA3_BUFFER_STATUS_OK);
+    obj->CallBackResult(obj->mCapFrameNumber, CAMERA3_BUFFER_STATUS_OK,
+                        CAP_TYPE);
     HAL_LOGD(" X");
     return NULL;
 }
@@ -3991,14 +4018,15 @@ int BokehCamera::getStreamTypes(camera3_stream_t *new_stream) {
     CMR_LOGD("new_stream w %d, h %d", new_stream->width, new_stream->height);
     if (new_stream->stream_type == CAMERA3_STREAM_OUTPUT) {
         if (format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) // 34
-            format = HAL_PIXEL_FORMAT_YCrCb_420_SP; // 17
+            format = HAL_PIXEL_FORMAT_YCrCb_420_SP;            // 17
         HAL_LOGD("format %d, usage %d", format, new_stream->usage);
         switch (format) {
         case HAL_PIXEL_FORMAT_YCrCb_420_SP:
             if (new_stream->usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
                 HAL_LOGD("VIDEO_STREAM");
                 stream_type = VIDEO_STREAM;
-            } else if (new_stream->usage & (uint64_t)BufferUsage::CPU_READ_OFTEN) {
+            } else if (new_stream->usage &
+                       (uint64_t)BufferUsage::CPU_READ_OFTEN) {
                 HAL_LOGD("CALLBACK_STREAM");
                 stream_type = CALLBACK_STREAM;
             } else {
@@ -4047,10 +4075,8 @@ void BokehCamera::preClose(void) {
         mCaptureThread->join();
     }
     if (mPreviewMuxerThread != NULL) {
-        if (mPreviewMuxerThread
-                ->isRunning() /*&& mPreviewMuxerThread->is_inited*/) {
+        if (mPreviewMuxerThread->isRunning()) {
             mPreviewMuxerThread->requestExit();
-            // mPreviewMuxerThread->is_inited = false;
         }
         // wait threads quit to relese object
         mPreviewMuxerThread->join();
@@ -4239,8 +4265,8 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
             while (itor != mBokehCamera->mSavedRequestList.end()) {
                 frame_number = itor->frame_number;
                 itor++;
-                mBokehCamera->CallBackResult(frame_number,
-                                             CAMERA3_BUFFER_STATUS_ERROR);
+                mBokehCamera->CallBackResult(
+                    frame_number, CAMERA3_BUFFER_STATUS_ERROR, PREV_TYPE);
             }
         }
             return false;
@@ -4324,8 +4350,8 @@ bool BokehCamera::PreviewMuxerThread::threadLoop() {
                         mBokehCamera->mLocalBufferNumber,
                         mBokehCamera->mLocalBufferList);
                 }
-                mBokehCamera->CallBackResult(frame_number,
-                                             CAMERA3_BUFFER_STATUS_OK);
+                mBokehCamera->CallBackResult(
+                    frame_number, CAMERA3_BUFFER_STATUS_OK, PREV_TYPE);
             }
         } break;
         default:
@@ -4963,7 +4989,7 @@ int BokehCamera::BokehCaptureThread::saveCaptureBokehParams(
         uint32_t position_y = param.sprd.cap.sel_y;
         uint32_t param_state = param.sprd.cap.param_state;
         uint32_t rotation =
-            SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
+            SprdCamera3Setting::s_setting[mBokehCamera->m_pPhyCamera[0].id]
                 .jpgInfo.orientation;
         uint32_t bokeh_version = 0;
 #ifndef CONFIG_SUPPORT_GDEPTH
@@ -5194,7 +5220,7 @@ void BokehCamera::BokehCaptureThread::reprocessReq(
 
     if (mBokehCamera->mFlushing) {
         mBokehCamera->CallBackResult(mBokehCamera->mCapFrameNumber,
-                                     CAMERA3_BUFFER_STATUS_ERROR);
+                                     CAMERA3_BUFFER_STATUS_ERROR, CAP_TYPE);
         goto exit;
     }
     if (0 > mDevmain->hwi->process_capture_request(mDevmain->dev, &request)) {
@@ -5251,7 +5277,8 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
             if (mBokehCamera->mCapFrameNumber != -1) {
                 HAL_LOGE("error.HAL don't send capture frame");
                 mBokehCamera->CallBackResult(mBokehCamera->mCapFrameNumber,
-                                             CAMERA3_BUFFER_STATUS_ERROR);
+                                             CAMERA3_BUFFER_STATUS_ERROR,
+                                             CAP_TYPE);
             }
             memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
             memset(&mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
@@ -5305,8 +5332,9 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                         capture_msg.combo_buff.buffer1, input_buf1_addr,
                         mBokehCamera->m_pDstJpegBuffer, pic_vir_addr, NULL,
                         NULL, mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
-                        SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
-                            .jpgInfo.orientation);
+                        SprdCamera3Setting::s_setting
+                            [mBokehCamera->m_pPhyCamera[0].id]
+                                .jpgInfo.orientation);
                 mBokehCamera->unmap(mBokehCamera->m_pDstJpegBuffer);
 #else
                 mBokehCamera->m_pMainSnapBuffer =
@@ -5400,9 +5428,9 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                             mBokehCamera->m_pDstJpegBuffer, pic_vir_addr, NULL,
                             NULL,
                             mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
-                            SprdCamera3Setting::s_setting[mBokehCamera
-                                                              ->mCameraId]
-                                .jpgInfo.orientation);
+                            SprdCamera3Setting::s_setting
+                                [mBokehCamera->m_pPhyCamera[0].id]
+                                    .jpgInfo.orientation);
                     mBokehCamera->unmap(mBokehCamera->m_pDstJpegBuffer);
 #ifdef CONFIG_SUPPORT_GDEPTH
                     mBokehCamera->m_pDstGDepthOriJpegBuffer =
@@ -5421,9 +5449,9 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
                             pic_vir_addr, NULL, NULL,
                             mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
                             IMG_DATA_TYPE_YUV420,
-                            SprdCamera3Setting::s_setting[mBokehCamera
-                                                              ->mCameraId]
-                                .jpgInfo.orientation,
+                            SprdCamera3Setting::s_setting
+                                [mBokehCamera->m_pPhyCamera[0].id]
+                                    .jpgInfo.orientation,
                             0);
                     mBokehCamera->unmap(
                         mBokehCamera->m_pDstGDepthOriJpegBuffer);
@@ -5634,16 +5662,14 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
 #ifdef CONFIG_SUPPORT_GDEPTH
     memcpy(snapshot_gdepth_buffer_addr, mGDepthOutputParam.depthnorm_data,
            mBokehCamera->mBokehSize.depth_snap_size / 2);
-    mBokehCamera->mBokehSize.depth_jepg_size =
-        mBokehCamera->jpeg_encode_exif_simplify_format(
-            snapshot_gdepth_buffer, snapshot_gdepth_buffer_addr,
-            mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer,
-            mBokehCamera->mBokehDepthBuffer.snap_gdepthjpeg_buffer_addr, NULL,
-            NULL, mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi,
-            IMG_DATA_TYPE_YUV400,
-            SprdCamera3Setting::s_setting[mBokehCamera->mCameraId]
-                .jpgInfo.orientation,
-            0);
+    mBokehCamera->mBokehSize
+        .depth_jepg_size = mBokehCamera->jpeg_encode_exif_simplify_format(
+        snapshot_gdepth_buffer, snapshot_gdepth_buffer_addr,
+        mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer,
+        mBokehCamera->mBokehDepthBuffer.snap_gdepthjpeg_buffer_addr, NULL, NULL,
+        mBokehCamera->m_pPhyCamera[CAM_BOKEH_MAIN].hwi, IMG_DATA_TYPE_YUV400,
+        SprdCamera3Setting::s_setting[m_pPhyCamera[0].id].jpgInfo.orientation,
+        0);
 #endif
     mBokehCamera->mIsCapDepthFinish = true;
 

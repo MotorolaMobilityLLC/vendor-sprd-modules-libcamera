@@ -112,6 +112,8 @@ typedef struct {
     int frame_number;
     int reqType;
 } req_type;
+
+enum intent_type { PREV_TYPE, CAP_TYPE };
 class BokehCamera : public CameraDevice_3_5,
                     SprdCamera3MultiBase,
                     public ICameraBase,
@@ -123,7 +125,8 @@ class BokehCamera : public CameraDevice_3_5,
 
     int openCamera(hw_device_t **dev) override;
     int getCameraInfo(camera_info_t *info) override;
-    int isStreamCombinationSupported(const camera_stream_combination_t *comb);
+    int isStreamCombinationSupported(
+        const camera_stream_combination_t *comb) override;
 
     int processCaptureRequest(camera3_capture_request_t *request);
     static void notifyMain(const struct camera3_callback_ops *ops,
@@ -290,7 +293,6 @@ class BokehCamera : public CameraDevice_3_5,
         camera3_stream_buffer_t mSavedCapReqStreamBuff;
         camera_metadata_t *mSavedCapReqsettings;
         bool mReprocessing;
-        bokeh_cap_params_t mCapbokehParam;
         bool mAbokehGallery;
         bool mBokehResult;
         gdepth_outparam mGDepthOutputParam;
@@ -316,7 +318,6 @@ class BokehCamera : public CameraDevice_3_5,
         List<muxer_queue_msg_t> mPreviewMuxerMsgList;
         Mutex mMergequeueMutex;
         Condition mMergequeueSignal;
-        bool is_inited = false;
 
       private:
         Mutex mLock;
@@ -353,8 +354,6 @@ class BokehCamera : public CameraDevice_3_5,
     req_type mReqCapType;
     int far;
     int near;
-    int mGdepthSize;
-    camera_buffer_type_t mDepthPrevbufType;
     uint8_t mCaptureStreamsNum;
     uint8_t mCallbackStreamsNum;
     uint8_t mPreviewStreamsNum;
@@ -369,7 +368,7 @@ class BokehCamera : public CameraDevice_3_5,
     List<meta_save_t> mMetadataList;
     List<meta_req_t> mMetadataReqList;
     camera3_stream_t *mSavedCapStreams;
-    int mCapFrameNumber = -1;
+    int mCapFrameNumber;
     uint32_t mPrevFrameNumber;
     uint32_t mPrevBlurFrameNumber;
     int mLocalBufferNumber;
@@ -384,15 +383,12 @@ class BokehCamera : public CameraDevice_3_5,
     Mutex mDepthStatusLock;
     Mutex mClearBufferLock;
     BokehDepthTrigger mDepthTrigger;
-    uint8_t mCurAFStatus;
-    uint8_t mCurAFMode;
     BokehDepthBuffer mBokehDepthBuffer;
     OtpData mOtpData;
     uint64_t mReqTimestamp;
     int mLastOnlieVcm;
     int mVcmSteps;
     int mVcmStepsFixed;
-    uint64_t mCapTimestamp;
     IBokehAlgo *mBokehAlgo;
     bool mIsHdrMode;
     bool sn_trim_flag;
@@ -406,7 +402,8 @@ class BokehCamera : public CameraDevice_3_5,
     void processCaptureResultAux(const camera3_capture_result_t *result);
     const camera_metadata_t *constructDefaultRequestSettings(int type);
     void CallBackResult(uint32_t frame_number,
-                        camera3_buffer_status_t buffer_status);
+                        camera3_buffer_status_t buffer_status,
+                        intent_type type);
     void CallBackMetadata(uint32_t frame_number);
     void CallBackSnapResult(int status);
     void callbackVideoResult(uint32_t frame_number,
@@ -419,8 +416,6 @@ class BokehCamera : public CameraDevice_3_5,
     void bokehFaceMakeup(buffer_handle_t *buffer_handle, void *input_buf1_addr);
     void updateApiParams(CameraMetadata metaSettings, int type,
                          uint32_t cur_frame_number);
-    // int bokehHandle(buffer_handle_t *output_buf, buffer_handle_t *inputbuff1,
-    //                buffer_handle_t *inputbuff2, BokehCameraMode camera_mode);
     void clearFrameNeverMatched(uint32_t main_frame_number,
                                 uint32_t sub_frame_number);
 #ifdef YUV_CONVERT_TO_JPEG
