@@ -159,6 +159,7 @@ exit:
             }
             sem_destroy(&auto_tracking_handle->sem_auto_tracking);
             free(auto_tracking_handle);
+            free(a_OTSetting);
         }
     }
     CMR_LOGI("X");
@@ -301,7 +302,7 @@ static cmr_int auto_tracking_transfer_frame(cmr_handle class_handle,
         (struct class_auto_tracking *)class_handle;
     struct prev_auto_tracking_info *info = NULL;
     cmr_handle a_pScalingBuf;
-    cmr_uint scaling_addr;
+    cmr_uint scaling_addr = 0;
     cmr_s32 x_point = 0;
     cmr_s32 y_point = 0;
     cmr_s32 af_status = 0;
