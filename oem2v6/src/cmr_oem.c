@@ -7688,6 +7688,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
     cmr_s32 filter_type = 0;
     struct jpeg_context *jpeg_cxt = NULL;
     cmr_u32 watermark_flush = 0;
+    cmr_u32 facebeauty_flush = 0;
     sizeParam_t sizeparam;
     cmr_bzero(&sizeparam, sizeof(sizeparam));
 
@@ -7813,6 +7814,8 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
             if (camera_do_face_beauty_body(oem_handle, setting_cxt,
                                            &setting_param, src))
                 goto exit;
+            else
+                facebeauty_flush = 1;
         }
         /* add watermark: logo, or time */
         sizeparam.imgW = enc_src.size.width;
@@ -7822,6 +7825,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
         ret = watermark_add_yuv(oem_handle, (cmr_u8 *)enc_src.addr_vir.addr_y,
                                 &sizeparam);
         watermark_flush |= ret;
+        watermark_flush |= facebeauty_flush;
         if (watermark_flush) // for cache coherency
             cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, src);
 
