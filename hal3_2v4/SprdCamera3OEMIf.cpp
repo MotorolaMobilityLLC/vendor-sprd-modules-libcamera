@@ -4228,6 +4228,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
 #ifdef CONFIG_FACE_BEAUTY
     struct fb_beauty_face_t beauty_face;
+    memset(&beauty_face, 0, sizeof(struct fb_beauty_face_t));
     if (PREVIEW_ZSL_FRAME != frame->type && isFaceBeautyOn(sprddefInfo)) {
         faceDectect(1);
         if (isPreviewing() && frame->type == PREVIEW_FRAME) {
@@ -4508,7 +4509,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     }
 
     if (callback_stream) {
-        uint32_t pic_frame_num;
+        uint32_t pic_frame_num = 0;
         bool isJpegRequest = false;
         SprdCamera3Stream *local_pic_stream = NULL;
         SprdCamera3PicChannel *local_pic_channel =
@@ -7783,6 +7784,8 @@ cap_malloc:
                     if (buffer->share_attr_fd < 0) {
                         ALOGE("Failed to allocate page for shared attribute "
                               "region");
+                        delete buffer;
+                        buffer = NULL;
                         goto mem_fail;
                     }
                 }
