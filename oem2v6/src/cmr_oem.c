@@ -6141,7 +6141,7 @@ static cmr_int camera_init_thread_proc(struct cmr_msg *message, void *p_data) {
     case CMR_EVT_INIT:
         cxt->err_code = camera_res_init_internal((cmr_handle)cxt);
         if (cxt->err_code) {
-            camera_res_deinit_internal((cmr_handle)cxt);
+            CMR_LOGI("cb thread has deinited");
         }
         CMR_LOGI("cb thread inited");
         break;
