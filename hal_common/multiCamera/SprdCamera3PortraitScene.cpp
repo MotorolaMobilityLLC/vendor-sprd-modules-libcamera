@@ -1611,7 +1611,6 @@ int SprdCamera3PortraitScene::PreviewThread::prevMattingHandle(
     char prop_value[PROPERTY_VALUE_MAX] = {
         0,
     };
-    sp<CaptureThread> mCThread = mPbrp->mCapT;
     if (input1 != NULL) {
         HAL_LOGD("input1 is %p, input1_addr%p", input1, input1_addr);
         mPrevMaskParams.src_YUV = (unsigned char *)input1_addr;

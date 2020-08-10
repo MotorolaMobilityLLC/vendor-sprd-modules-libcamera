@@ -427,7 +427,6 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
         List<portrait_scene_queue_msg_t> mPrevPostMsgList;
         Mutex mMergequeueMutex;
         Condition mMergequeueSignal;
-        int64_t tPostStart;
 
       private:
         Mutex mLock;

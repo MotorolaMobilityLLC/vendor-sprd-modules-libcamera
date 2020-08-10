@@ -343,13 +343,13 @@ void yuv_scaler_init_frame_info(yuvscaler_param_t *pYuvScaler)
 
         if (pYuvScaler->deci_info.deci_x_en)
             new_width = new_width/pYuvScaler->deci_info.deci_x;
-        
+
         if(pYuvScaler->trim0_info.trim_en)
             new_width = pYuvScaler->trim0_info.trim_size_x;
 
         if (pYuvScaler->deci_info.deci_y_en)
             new_height = new_height/pYuvScaler->deci_info.deci_y;
-        
+
         if(pYuvScaler->trim0_info.trim_en)
             new_height = pYuvScaler->trim0_info.trim_size_y;
 
@@ -422,13 +422,13 @@ void yuv_scaler_init_frame_info(yuvscaler_param_t *pYuvScaler)
 
             //FIXME: need update the below function
             yuv_scaler_gen_scaler_coef(
-                scl_factor_in_hor, 
+                scl_factor_in_hor,
                 scl_factor_in_ver,
                 scl_factor_out_hor,
                 scl_factor_out_ver,
                 pYuvScaler->input_pixfmt,
                 pYuvScaler->output_pixfmt,
-                &tap_luma_hor, 
+                &tap_luma_hor,
                 &tap_chroma_hor,
                 &tap_luma_ver,
                 &tap_chroma_ver,
@@ -583,10 +583,10 @@ void yuv_scaler_init_slice_info(yuvscaler_param_t *frame_scaler, yuvscaler_param
     //assert(frame_scaler->input_pixfmt == YUV422);
     input_pixel_align = 2; //YUV420
     if (frame_scaler->output_pixfmt == YUV422)
-        output_pixel_align = 2; 
-    else if (frame_scaler->output_pixfmt == YUV420) 
+        output_pixel_align = 2;
+    else if (frame_scaler->output_pixfmt == YUV420)
         output_pixel_align = 4;
-    
+
     output_slice_size = 0;
     calc_scaler_output_slice_info(trim_start, trim_size, deci, scl_en, scl_factor_in, scl_factor_out, scl_tap, init_phase,
         input_slice_start, input_slice_size, output_pixel_align, &output_slice_start, &output_slice_size);
@@ -613,16 +613,16 @@ void yuv_scaler_init_slice_info(yuvscaler_param_t *frame_scaler, yuvscaler_param
         slice_scaler->scaler_info.scaler_in_height = input_slice_size/deci;
         slice_scaler->scaler_info.scaler_out_height = output_slice_size;
         slice_scaler->scaler_info.init_phase_info.scaler_init_phase[1] = init_phase;
-        
+
         //FIXME: need refer to input_pixfmt
         //luma
         calc_scaler_phase(init_phase, scl_factor_out, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][0], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][0]);
         //chroma
         if(slice_scaler->scaler_info.input_pixfmt == YUV422)
-        {           
-            if(slice_scaler->scaler_info.output_pixfmt == YUV420)          
-                calc_scaler_phase(init_phase/2, scl_factor_out/2, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);           
-            else if(slice_scaler->scaler_info.output_pixfmt == YUV422)           
+        {
+            if(slice_scaler->scaler_info.output_pixfmt == YUV420)
+                calc_scaler_phase(init_phase/2, scl_factor_out/2, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);
+            else if(slice_scaler->scaler_info.output_pixfmt == YUV422)
                 calc_scaler_phase(init_phase,   scl_factor_out,   &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);
 
         }
@@ -644,7 +644,7 @@ void yuv_scaler_init_slice_info(yuvscaler_param_t *frame_scaler, yuvscaler_param
 */
 
 /*
-void yuv_scaler_init_slice_info_v2(yuvscaler_param_t *frame_scaler, yuvscaler_param_t *slice_scaler, 
+void yuv_scaler_init_slice_info_v2(yuvscaler_param_t *frame_scaler, yuvscaler_param_t *slice_scaler,
     scaler_slice_t *slice_info, const scaler_slice_t *scaler_slice_info,
     scaler_overlap_t *scaler_overlap, uint16 ref_ox, uint16 ref_oy)
 {
@@ -807,10 +807,10 @@ void yuv_scaler_init_slice_info_v2(yuvscaler_param_t *frame_scaler, yuvscaler_pa
         calc_scaler_phase(init_phase, scl_factor_out, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][0], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][0]);
         //chroma
         if(slice_scaler->scaler_info.input_pixfmt == YUV422)
-        {           
-            if(slice_scaler->scaler_info.output_pixfmt == YUV420)          
-                calc_scaler_phase(init_phase/2, scl_factor_out/2, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);           
-            else if(slice_scaler->scaler_info.output_pixfmt == YUV422)           
+        {
+            if(slice_scaler->scaler_info.output_pixfmt == YUV420)
+                calc_scaler_phase(init_phase/2, scl_factor_out/2, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);
+            else if(slice_scaler->scaler_info.output_pixfmt == YUV422)
                 calc_scaler_phase(init_phase,   scl_factor_out,   &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);
 
         }
@@ -832,8 +832,8 @@ void yuv_scaler_init_slice_info_v2(yuvscaler_param_t *frame_scaler, yuvscaler_pa
 */
 
 void yuv_scaler_init_slice_info_v3(
-    yuvscaler_param_t    *frame_scaler, 
-    yuvscaler_param_t    *slice_scaler, 
+    yuvscaler_param_t    *frame_scaler,
+    yuvscaler_param_t    *slice_scaler,
     scaler_slice_t       *slice_info,
     const scaler_slice_t *input_slice_info,
     const scaler_slice_t *output_slice_info)
@@ -904,7 +904,7 @@ void yuv_scaler_init_slice_info_v3(
         //             output_slice_size -= ref_ox - output_slice_start;
         //             output_slice_start = ref_ox;
         //         }
-        // 
+        //
         //         calc_scaler_input_slice_info(trim_start, trim_size, deci, scl_en, scl_factor_in, scl_factor_out, scl_tap, init_phase,
         //             output_slice_start, output_slice_size, input_pixel_align, &input_slice_start, &input_slice_size, &init_phase);
 
@@ -920,12 +920,12 @@ void yuv_scaler_init_slice_info_v3(
         input_slice_end_deci   = input_slice_info->end_col/deci;
         if(frame_scaler->trim0_info.trim_en)
         {
-            slice_scaler->trim0_info.trim_start_x = (input_slice_info->start_col - start_col_org)/deci;       
+            slice_scaler->trim0_info.trim_start_x = (input_slice_info->start_col - start_col_org)/deci;
             slice_scaler->trim0_info.trim_size_x  = input_slice_end_deci - input_slice_start_deci + 1;
             slice_scaler->scaler_info.scaler_in_width  = slice_scaler->trim0_info.trim_size_x;
         }
 
-        
+
         slice_scaler->scaler_info.scaler_out_width = output_slice_size;
 
         init_phase = slice_info->init_phase_hor;
@@ -1007,7 +1007,7 @@ void yuv_scaler_init_slice_info_v3(
         //             output_slice_size -= (ref_oy - output_slice_start);
         //             output_slice_start = ref_oy;
         //         }
-        // 
+        //
         //         calc_scaler_input_slice_info(trim_start, trim_size, deci, scl_en, scl_factor_in, scl_factor_out, scl_tap, init_phase,
         //             output_slice_start, output_slice_size, input_pixel_align, &input_slice_start, &input_slice_size, &init_phase);
 
@@ -1037,10 +1037,10 @@ void yuv_scaler_init_slice_info_v3(
         calc_scaler_phase(init_phase, scl_factor_out, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][0], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][0]);
         //chroma
         if(slice_scaler->scaler_info.input_pixfmt == YUV422)
-        {           
-            if(slice_scaler->scaler_info.output_pixfmt == YUV420)          
-                calc_scaler_phase(init_phase/2, scl_factor_out/2, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);           
-            else if(slice_scaler->scaler_info.output_pixfmt == YUV422)           
+        {
+            if(slice_scaler->scaler_info.output_pixfmt == YUV420)
+                calc_scaler_phase(init_phase/2, scl_factor_out/2, &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);
+            else if(slice_scaler->scaler_info.output_pixfmt == YUV422)
                 calc_scaler_phase(init_phase,   scl_factor_out,   &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_int[1][1], &slice_scaler->scaler_info.init_phase_info.scaler_init_phase_rmd[1][1]);
 
         }
@@ -1883,7 +1883,9 @@ void convertYUV422ToYUV420(
     assert(width%2 ==0 && height%2 == 0);
 
     pConvertedData = (uint8*)malloc(width*height*3/2);
-
+    if (!pConvertedData){
+        return;
+    }
     //copy y
     memcpy(pConvertedData,pYUV422Data,width*height);
 
@@ -1918,6 +1920,9 @@ void convertYUV422PToYUV422SP(
     assert(width%2 ==0);
 
     pTempData = (uint8*)malloc(width*height);
+    if (!pTempData){
+        return;
+    }
 
     for(i=0; i<height; i++)
     {
