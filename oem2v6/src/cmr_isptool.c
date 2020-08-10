@@ -22,6 +22,7 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
     struct isp_context *isp_cxt = &cxt->isp_cxt;
     struct img_frm isp_cap_raw = param_ptr->post_proc_setting.mem[0].cap_raw;
 
+    memset(&scene_param, 0, sizeof(struct isptool_scene_param));
     cmr_sensor_update_isparm_from_file(cxt->sn_cxt.sensor_handle,
                                        cxt->camera_id);
     is_loose = cxt->sn_cxt.sensor_info.sn_interface.is_loose;
@@ -35,7 +36,6 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
                 image_info->raw_image_ptr[image_index].filename);
         }
         CMR_LOGI("parse file_name = %s", file_name);
-        memset(&scene_param, 0, sizeof(struct isptool_scene_param));
         scene_param.width = image_info->raw_image_ptr[image_index].uWidth;
         scene_param.height = image_info->raw_image_ptr[image_index].uHeight;
         scene_param.awb_gain_r = image_info->raw_image_ptr[image_index].uRGain;
