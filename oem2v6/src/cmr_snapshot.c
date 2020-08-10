@@ -665,6 +665,7 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
             (CAMERA_ISP_SIMULATION_MODE == cxt->req_param.mode)) {
             if (isp_video_get_simulation_flag()) {
                 struct img_addr jpeg_addr;
+                cmr_bzero((void *)&jpeg_addr, sizeof(jpeg_addr));
                 jpeg_addr.addr_y = mem_ptr->target_jpeg.addr_vir.addr_y;
                 if (isp_video_get_simulation_loop_count() == 1) {
                     ret = camera_local_get_isp_info(
@@ -1927,6 +1928,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
         struct img_addr jpeg_addr;
         char value[PROPERTY_VALUE_MAX];
         struct camera_context *cam_ctx = cxt->oem_handle;
+        cmr_bzero((void *)&jpeg_addr, sizeof(jpeg_addr));
         property_get("debug.camera.save.snpfile", value, "0");
         if (atoi(value) == 8 || atoi(value) == 100 || atoi(value) & (1 << 8)) {
             jpeg_addr.addr_y = enc_out_param.output_buf_virt_addr;

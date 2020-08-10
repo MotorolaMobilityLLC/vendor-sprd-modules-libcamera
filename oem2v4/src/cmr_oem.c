@@ -5361,6 +5361,7 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
                          beautyLevels.smoothLevel, beautyLevels.brightLevel,
                          beautyLevels.slimLevel, beautyLevels.largeLevel);
                 struct fb_beauty_face_t faceinfo;
+                cmr_bzero((void *)&faceinfo, sizeof(faceinfo));
                 for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
                     faceinfo.startX= (cxt->fd_face_area.face_info[i].sx * pic_width) /
                          (cxt->fd_face_area.frame_width);

@@ -617,8 +617,10 @@ void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step) {
 void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step) {
     char value[PROPERTY_VALUE_MAX];
 
-    if (step >= CMR_LAUNCH_MAX_T)
+    if (step >= CMR_LAUNCH_MAX_T) {
         CMR_LOGE("error %d", step);
+        return;
+    }
 
     property_get("persist.vendor.cam.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
@@ -666,8 +668,10 @@ void LAUNCHLOGS(enum CAMERA_LAUNCH_STEP step) {
 void LAUNCHLOGE(enum CAMERA_LAUNCH_STEP step) {
     char value[PROPERTY_VALUE_MAX];
 
-    if (step >= CMR_LAUNCH_MAX_T)
+    if (step >= CMR_LAUNCH_MAX_T) {
         CMR_LOGE("error %d", step);
+        return;
+    }
 
     property_get("persist.vendor.cam.hal.camera.launch.time", value, "false");
     if (!strcmp(value, "false")) {
