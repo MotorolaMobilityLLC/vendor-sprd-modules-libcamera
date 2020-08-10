@@ -4146,7 +4146,7 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
 #ifdef CONFIG_CAMERA_EIS
         vsOutFrame frame_out;
         frame_out.frame_data = NULL;
-        frame_out.frame_num = 0;
+        frame_out.frame_num = frame_num;
         HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
         if (sprddefInfo->sprd_eis_enabled) {
             // camera exit/switch dont need to do eis
@@ -11571,7 +11571,6 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
-    frame_in.frame_num = 0;
     frame_out.frame_data = NULL;
     EIS_CROP_Tag eiscrop_Info;
     int64_t boot_time = frame->monoboottime;
@@ -11590,6 +11589,7 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
         frame_in.timestamp = (double)boot_time / 1000000000;
         frame_in.ae_time = (double)ae_time / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
+        frame_in.frame_num = frame->frame_num;
         frame_out = processPreviewEIS(frame_in);
         HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
                  "%lf, %lf",
