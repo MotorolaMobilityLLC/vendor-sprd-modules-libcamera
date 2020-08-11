@@ -688,7 +688,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 					fclose(fp);
 				}
 				fp = fopen(file_name_r, "wb");
-				if (fp != NULL && pBufLeft_Type2 != NULL){
+				if (fp != NULL && pBufRight_Type2 != NULL){
 					fwrite((void*)pBufRight_Type2, 1, 99840, fp); //49920*2 bytes
 					fclose(fp);
 				}
