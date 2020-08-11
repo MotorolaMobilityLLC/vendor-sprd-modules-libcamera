@@ -531,7 +531,6 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
         return rtn;
     }
     // set name, if no, auto named as :cam_xxxx
-    pthread_setname_np(thread->thread_handle, thread_name);
     if (thread_name == NULL)
         snprintf(thread->name, sizeof(thread->name), "cam_%X",
                 (uint32_t)thread->thread_handle);
@@ -540,7 +539,9 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
                 (uint32_t)thread->thread_handle);
     else
         snprintf(thread->name, sizeof(thread->name), "%s", thread_name);
-    CMR_LOGV("[%p]%s size %d", thread, thread->name, (int)sizeof(thread->name));
+    CMR_LOGV("[%p]%s", thread, thread->name);
+
+    pthread_setname_np(thread->thread_handle, thread->name);
 
     message.msg_type = CMR_THREAD_INIT_EVT;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
