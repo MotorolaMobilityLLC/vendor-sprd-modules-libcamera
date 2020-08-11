@@ -6013,7 +6013,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		cxt->cur_status.effect_frm_len = cxt->exp_data.write_data.frm_len;
 		cxt->cur_status.effect_expline = cxt->exp_data.write_data.exp_line;
 		cxt->cur_status.effect_dummy = cxt->exp_data.write_data.dummy;
-		cxt->cur_status.effect_gain = cxt->exp_data.write_data.isp_gain * cxt->exp_data.actual_data.sensor_gain / 4096;
+		cxt->cur_status.effect_gain = cxt->exp_data.write_data.isp_gain * cxt->exp_data.write_data.sensor_gain / 4096;
 	}else{
 		cxt->cur_status.effect_frm_len = cxt->exp_data.actual_data.frm_len;
 		cxt->cur_status.effect_expline = cxt->exp_data.actual_data.exp_line;
