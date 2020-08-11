@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
-ifneq ($(PLATFORM_VERSION),4.4.4)
+
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
@@ -48,8 +47,10 @@ LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdfdr
 LOCAL_C_INCLUDES := \
          $(LOCAL_PATH)/inc \
          $(LOCAL_PATH)/../inc \
-         $(TOP)/system/core/include/cutils/ \
-         $(TOP)/system/core/include/
+         $(TOP)/system/core/include/cutils \
+         $(TOP)/system/core/include \
+         $(LOCAL_PATH)/../../ispalg/ae/inc \
+         $(LOCAL_PATH)/../../common/inc
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
@@ -57,9 +58,11 @@ endif
 
 ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512), )
 LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_VDSP
+LOCAL_CFLAGS += -DALIGN_INPUT_MODE=1 -DMERGE_OUTPUT_MODE=2 -DFUSION_INPUT_MODE=1
+else ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums9230), )
+LOCAL_CFLAGS += -DALIGN_INPUT_MODE=1 -DMERGE_OUTPUT_MODE=0 -DFUSION_INPUT_MODE=0
+else #roc1
+LOCAL_CFLAGS += -DALIGN_INPUT_MODE=0 -DMERGE_OUTPUT_MODE=1 -DFUSION_INPUT_MODE=1
 endif
 
 include $(BUILD_SHARED_LIBRARY)
-
-endif
-endif
