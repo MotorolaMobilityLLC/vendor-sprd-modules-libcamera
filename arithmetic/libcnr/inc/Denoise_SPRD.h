@@ -1,12 +1,13 @@
-#ifndef _DENOISE_INTERFACE_H_
-#define _DENOISE_INTERFACE_H_
+#ifndef _DENOISE_SPRD_H_
+#define _DENOISE_SPRD_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define LAYER_NUM (5)
 #define CNR_LEVEL 4
-#define LAYER_NUM 5
+
 	typedef enum
 	{
 		MODE_YNR = 1,
@@ -31,11 +32,6 @@ extern "C" {
 		int			fd;
 	} ldr_image_vdsp_t;
 
-	typedef struct ThreadSet_t {
-		unsigned int threadNum;
-		unsigned int coreBundle;
-	} ThreadSet;
-
 	typedef struct denoise_buffer_t
 	{
 		unsigned char *bufferY;
@@ -49,7 +45,7 @@ extern "C" {
 		int fd_UV;
 	} denoise_buffer_vdsp;
 
-	//YNR param
+/*****************************ynr***************************************/
 	typedef struct YNR_Parameter_t
 	{
 		unsigned char ynr_lumi_thresh[2];
@@ -68,21 +64,26 @@ extern "C" {
 		unsigned char reserved[2];		
 	} YNR_Param;
 
-	//CNR2.0param
+	typedef struct {
+		void *data;
+		int fd;
+	} sprd_ynr_buffer_vdsp;
+
+/*****************************cnr2***************************************/
 	typedef struct filter_Weights
 	{
-		unsigned char distWeight[9];   
-		unsigned char rangWeight[128]; 
-	} filterParam; 
+		unsigned char distWeight[9];   //distance weight for different scale
+		unsigned char rangWeight[128]; //range weight for different scale
+	}filterParam;
 
 	typedef struct CNR_Parameter_t
 	{
-		unsigned char filter_en[CNR_LEVEL];		
-		unsigned char rangTh[CNR_LEVEL][2];		
-		filterParam wTable[CNR_LEVEL][2];
-	} CNR_Parameter;//CNR2_Param; 
+		unsigned char filter_en[CNR_LEVEL]; //enable control of filter
+		unsigned char rangTh[CNR_LEVEL][2]; //threshold for different scale(rangTh[CNR_LEVEL][0]:U threshold, rangTh[CNR_LEVEL][1]:V threshold)
+		filterParam wTable[CNR_LEVEL][2]; //weight table(wTable[CNR_LEVEL][0]:U weight table, wTable[CNR_LEVEL][1]:V weight table) 
+	} CNR_Parameter;
 
-	//CNR3.0 param
+/*****************************cnr3***************************************/
 	typedef struct _tag_multilayer_param_t
 	{
 		unsigned char lowpass_filter_en;
@@ -101,8 +102,9 @@ extern "C" {
 	{
 		unsigned char bypass;
 		multiParam paramLayer[LAYER_NUM];
-	} cnr_param_t; //CNR3_Param;
+	} cnr_param_t;
 
+/************************common*******************************/
 	typedef struct Denoise_Parameter_t
 	{
 		YNR_Param *ynrParam; 
@@ -110,23 +112,9 @@ extern "C" {
 		cnr_param_t *cnr3Param;   //CNR3.0
 	} Denoise_Param;
 
-	/*! version information */
-	typedef struct _tag_nr_version_t
-	{
-		unsigned char		major;              /*!< API major version */
-		unsigned char		minor;              /*!< API minor version */
-		unsigned char		micro;              /*!< API micro version */
-		unsigned char		nano;               /*!< API nano version */
-		int                 bugid;              /*!< API bugid */
-		char		built_date[0x20];   /*!< API built date */
-		char		built_time[0x20];   /*!< API built time */
-		char		built_rev[0x100];	/*!< API built version, linked with vcs resivion> */
-	} nr_version_t;
-
 	void *sprd_cnr_init(int width, int height, int cnr_runversion);
 	int sprd_cnr_process(void *handle, denoise_buffer *imgBuffer, Denoise_Param *paramInfo, denoise_mode mode, int width, int height);
 	int sprd_cnr_deinit(void *handle);
-	int nr_get_version(nr_version_t * version);
 
 	void *sprd_cnr_init_vdsp(int width, int height, int cnr_runversion);
 	int sprd_cnr_process_vdsp(void *handle, denoise_buffer_vdsp *imgBuffer, Denoise_Param *paramInfo, denoise_mode mode, int width, int height);
