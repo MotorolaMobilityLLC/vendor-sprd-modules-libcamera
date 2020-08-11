@@ -3303,12 +3303,15 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 	af_input.src.w = cxt->dcam_size.w;
 	af_input.src.h = cxt->dcam_size.h;
 	af_input.is_supoprt = is_af_support;
+	cxt->af_cxt.sw_bypass = 0;
 
 	if (is_af_support) {
 		//get af tuning parameters
 		memset((void *)&output, 0, sizeof(output));
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_INIT_AF_NEW, NULL, &output);
 		if (ISP_SUCCESS == ret && NULL != output.param_data) {
+			cxt->af_cxt.sw_bypass = output.param_data[0].user_data[0];
+			ISP_LOGD("cxt->af_cxt.sw_bypass %d\n", cxt->af_cxt.sw_bypass);
 			af_input.aftuning_data = output.param_data[0].data_ptr;
 			af_input.aftuning_data_len = output.param_data[0].data_size;
 		}
@@ -5019,8 +5022,12 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	memset(&af_start_info, 0, sizeof(struct afctrl_fwstart_info));
 	af_start_info.sensor_fps.is_high_fps = in_ptr->sensor_fps.is_high_fps;
 	af_start_info.sensor_fps.high_fps_skip_num = in_ptr->sensor_fps.high_fps_skip_num;
-	if (cxt->af_cxt.handle && ((ISP_VIDEO_MODE_CONTINUE == in_ptr->mode))) {
-		if (cxt->ops.af_ops.ioctrl) {
+	if (cxt->af_cxt.handle && cxt->ops.af_ops.ioctrl) {
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
+					AF_CMD_SET_AF_BYPASS,
+					(void *)&cxt->af_cxt.sw_bypass, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to set af_bypass"));
+		if (ISP_VIDEO_MODE_CONTINUE == in_ptr->mode) {
 			af_start_info.size = in_ptr->dcam_size;
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_ISP_START_INFO, (void *)&af_start_info, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to set af_start_info"));
