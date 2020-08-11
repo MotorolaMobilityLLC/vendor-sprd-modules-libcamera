@@ -13,7 +13,10 @@ using namespace std;
 
 static const char *kPreloadLibraryOverride =
     "/data/vendor/cameraserver/preload.txt";
-static const char *kPreloadLibraries[] = {"libispalg.so", "libjpeg_hw_sprd.so"};
+static const char *kPreloadLibraries[] = {
+    "libispalg.so",
+    "libjpeg_hw_sprd.so",
+    "libnight.so"};
 
 class LibraryLoader {
   public:

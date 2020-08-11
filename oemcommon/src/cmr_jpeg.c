@@ -17,6 +17,7 @@
 #include "exif_writer.h"
 #include "cmr_jpeg.h"
 #include <dlfcn.h>
+#include <libloader.h>
 
 #ifndef LOG_TAG
 #define LOG_TAG "cmr_jpeg"
@@ -50,7 +51,11 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
     }
     codec_handle->reserved = oem_handle;
     jcxt->codec_handle = codec_handle;
+#if USE_LEGACY_DLFCN
     jcxt->mLibHandle = dlopen(libName, RTLD_NOW);
+#else
+    jcxt->mLibHandle = get_lib_handle(libName);
+#endif
 
     if (jcxt->mLibHandle == NULL) {
         CMR_LOGE("can't open lib: %s", libName);
@@ -126,7 +131,11 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         goto pass;
     }
 exit_error:
+#if USE_LEGACY_DLFCN
     dlclose(jcxt->mLibHandle);
+#else
+    put_lib_handle(jcxt->mLibHandle);
+#endif
     jcxt->mLibHandle = NULL;
 exit_error_libhandle:
     free(codec_handle);
@@ -395,7 +404,11 @@ cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle) {
         jcxt->codec_handle = NULL;
     }
     if (jcxt) {
+#if USE_LEGACY_DLFCN
         dlclose(jcxt->mLibHandle);
+#else
+        put_lib_handle(jcxt->mLibHandle);
+#endif
         jcxt->mLibHandle = NULL;
         free(jcxt);
         jcxt = NULL;

@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <dlfcn.h>
+#include <libloader.h>
 #ifdef CONFIG_CAMERA_FDR
 #include "fdr_interface.h"
 #endif
@@ -6467,7 +6468,11 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CMR_LOGD("E");
+#if USE_LEGACY_DLFCN
     cxt->night_cxt.sw_handle = dlopen("libnight.so", RTLD_NOW);
+#else
+    cxt->night_cxt.sw_handle = get_lib_handle("libnight.so");
+#endif
     if (!cxt->night_cxt.sw_handle) {
         ret = -CMR_CAMERA_INVALID_PARAM;
         CMR_LOGD("libnight open failed with %s", dlerror());
@@ -6489,7 +6494,11 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
                 (!cxt->night_cxt.sw_close) || (!cxt->night_cxt.ipmpro_init) ||
                 (!cxt->night_cxt.ipmpro_deinit) || (!cxt->night_cxt.ipmpro_process)) {
             CMR_LOGD("func analyzing failed with %s", dlerror());
+#if USE_LEGACY_DLFCN
             dlclose(cxt->night_cxt.sw_handle);
+#else
+            put_lib_handle(cxt->night_cxt.sw_handle);
+#endif
             cxt->night_cxt.is_authorized = 0;
         } else {
             cxt->night_cxt.is_authorized = 1;
@@ -6500,7 +6509,11 @@ cmr_int camera_nightpro_init(cmr_handle oem_handle) {
     if (cxt->night_cxt.is_authorized) {
         ret = cxt->night_cxt.ipmpro_init(oem_handle);
         if (ret) {
+#if USE_LEGACY_DLFCN
             dlclose(cxt->night_cxt.sw_handle);
+#else
+            put_lib_handle(cxt->night_cxt.sw_handle);
+#endif
             cxt->night_cxt.is_authorized = 0;
             CMR_LOGE("failed to init ipm pro %ld", ret);
         }
@@ -6520,7 +6533,11 @@ cmr_int camera_nightpro_deinit(cmr_handle oem_handle) {
     CMR_LOGD("D");
     if(cxt->night_cxt.ipmpro_deinit)
         cxt->night_cxt.ipmpro_deinit(oem_handle);
+#if USE_LEGACY_DLFCN
     dlclose(cxt->night_cxt.sw_handle);
+#else
+    put_lib_handle(cxt->night_cxt.sw_handle);
+#endif
     cxt->night_cxt.sw_open = NULL;
     cxt->night_cxt.sw_process = NULL;
     cxt->night_cxt.sw_close = NULL;

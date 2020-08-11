@@ -147,6 +147,9 @@ ifneq ($(filter $(strip $(PLATFORM_VERSION)),O 8.0.0 8.1.0 P 9),)
     LOCAL_SHARED_LIBRARIES += libyuv
 endif
 
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../performance
+LOCAL_SHARED_LIBRARIES += libcamperf
+
 LOCAL_CFLAGS += -D_VSP_LINUX_ -D_VSP_
 
 include $(LOCAL_PATH)/../SprdCtrl.mk
