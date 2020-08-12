@@ -135,6 +135,8 @@ struct ae_adv_param {
 	cmr_u8 reserve_case;		/*will be removed, 0: normal mode, 1: just for debug mode, and manual control the exp/gain by APP*/
 	cmr_u8 app_force_lock;
 	cmr_s16 last_target;
+	cmr_u32 face_flag;
+	cmr_u32 cur_lum;
 };
 
 struct ae_lib_calc_in {
@@ -204,6 +206,7 @@ struct ae_lib_calc_out  {
 	cmr_u32 debug_len;
 	/*privated information*/
 	cmr_u32 privated_data;
+	cmr_u32 face_flag;		/*face status flag*/
 };
 
 struct ae_alg_id_info {

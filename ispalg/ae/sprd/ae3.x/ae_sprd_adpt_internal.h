@@ -42,6 +42,8 @@ extern "C" {
 		cmr_u32 is_ev_setting;
 		cmr_u32 mode;
 		cmr_u32 target_luma;
+		cmr_u32 face_flag;
+		cmr_u32 cur_lum;
 	};
 	struct ae_ev_param {
 		cmr_s16 target_lum;
