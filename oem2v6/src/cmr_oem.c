@@ -7909,7 +7909,7 @@ cmr_int camera_start_exif_encode(cmr_handle oem_handle,
     enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
     enc_exif_param.exif_isp_info = NULL;
     if (cxt->is_multi_mode != MODE_BOKEH) {
-        if (!(enc_exif_param.exif_ptr)) {
+        if (enc_exif_param.exif_ptr != NULL) {
             enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
                 .numerator = cxt->sn_cxt.cur_sns_ex_info.f_num;
             enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
@@ -7988,7 +7988,7 @@ cmr_int camera_start_exif_encode_simplify(cmr_handle oem_handle,
                             SETTING_GET_EXIF_INFO, &setting_param);
     enc_exif_param.exif_ptr = setting_param.exif_all_info_ptr;
     enc_exif_param.exif_isp_info = NULL;
-    if (!(enc_exif_param.exif_ptr)) {
+    if (enc_exif_param.exif_ptr != NULL) {
         enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
             .numerator = cxt->sn_cxt.cur_sns_ex_info.f_num;
         enc_exif_param.exif_ptr->spec_ptr->pic_taking_cond_ptr->FNumber
