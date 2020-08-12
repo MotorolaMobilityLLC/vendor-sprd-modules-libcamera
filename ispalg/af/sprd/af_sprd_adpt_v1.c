@@ -1099,10 +1099,8 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	af_ctrl_t *af = (af_ctrl_t *) cookie;
 	ae_info_t *ae = &af->ae;
 	cmr_u32 line_time = ae->ae_report.line_time;
-	cmr_u32 frame_len = ae->ae_report.frame_line;
 	cmr_u32 dummy_line = ae->ae_report.cur_dummy;
 	cmr_u32 exp_line = ae->ae_report.cur_exp_line;
-	cmr_u32 frame_time;
 
 	rpt->bAEisConverge = ae->ae_report.is_stab;
 	rpt->AE_BV = ae->ae_report.bv;
@@ -1110,9 +1108,6 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	rpt->AE_Gain = ae->ae_report.cur_again;
 	rpt->AE_Pixel_Sum = af->Y_sum_normalize;
 
-	frame_len = (frame_len > (exp_line + dummy_line)) ? frame_len : (exp_line + dummy_line);
-	frame_time = frame_len * line_time;
-	frame_time = frame_time > 0 ? frame_time : 1;
 	rpt->cur_fps = (ae->ae_report.cur_fps) ? ae->ae_report.cur_fps : (1000000000 / MAX(1, (exp_line + dummy_line) * line_time));
 	rpt->cur_lum = ae->ae_report.cur_lum;
 	rpt->cur_index = ae->ae_report.cur_index;
@@ -1552,30 +1547,25 @@ static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
 	af_ctrl_t *af = cookie;
 	char *aft_tuning_path = "/data/vendor/cameraserver/aft_tuning.bin";
 	FILE *fp = NULL;
+	cmr_int len = 0;
 
-	if (0 == access(aft_tuning_path, R_OK)) {	// read request successs
-		cmr_int len = 0;
-
-		fp = fopen(aft_tuning_path, "rb");
-		if (NULL == fp) {
-			*is_exist = 0;
-			return 0;
-		}
-
-		fseek(fp, 0, SEEK_END);
-		len = ftell(fp);
-		if (len < 0 || (cmr_u32) len != af->trig_ops.init_out.tuning_param_len) {
-			ISP_LOGW("aft_tuning.bin len dismatch with aft_alg len %d", af->trig_ops.init_out.tuning_param_len);
-			fclose(fp);
-			*is_exist = 0;
-			return 0;
-		}
-
-		fclose(fp);
-		*is_exist = 1;
-	} else {
+	fp = fopen(aft_tuning_path, "rb");
+	if (NULL == fp) {
 		*is_exist = 0;
+		return 0;
 	}
+	fseek(fp, 0, SEEK_END);
+	len = ftell(fp);
+	if (len < 0 || (cmr_u32) len != af->trig_ops.init_out.tuning_param_len) {
+		ISP_LOGW("aft_tuning.bin len dismatch with aft_alg len %d", af->trig_ops.init_out.tuning_param_len);
+		fclose(fp);
+		*is_exist = 0;
+		return 0;
+	}
+
+	fclose(fp);
+	*is_exist = 1;
+
 	return 0;
 }
 
@@ -2393,7 +2383,7 @@ static void caf_monitor_fd(af_ctrl_t * af)
 {
 
 	struct aft_proc_calc_param *prm = &(af->prm_trigger);
-	cmr_u8 i = 0;
+	cmr_u16 i = 0;
 
 	memset(prm, 0, sizeof(struct aft_proc_calc_param));
 	prm->active_data_type = AFT_DATA_FD;
@@ -2893,7 +2883,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_info *rgb)
 
 	cmr_u32 Y_sx = 0, Y_ex = 0, Y_sy = 0, Y_ey = 0, r_sum = 0, g_sum = 0, b_sum = 0, y_sum = 0;
 	float ae_area;
-	cmr_u16 width, height, i = 0, blockw, blockh, index;
+	cmr_u32 width, height, i = 0, blockw, blockh, index;
 
 	width = af->isp_info.width;
 	height = af->isp_info.height;
@@ -2931,7 +2921,7 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_info *rgb)
 		}
 
 		ae_area = 1.0 * (Y_ex - Y_sx + 1) * (Y_ey - Y_sy + 1);
-		y_sum = (cmr_u32)(((0.299 * r_sum) + (0.587 * g_sum) + (0.114 * b_sum)) / ae_area);
+		y_sum = (cmr_u32) (((0.299 * r_sum) + (0.587 * g_sum) + (0.114 * b_sum)) / ae_area);
 		af->roi_RGBY.R_sum[i] = r_sum;
 		af->roi_RGBY.G_sum[i] = g_sum;
 		af->roi_RGBY.B_sum[i] = b_sum;
@@ -2991,7 +2981,7 @@ static cmr_s32 af_sprd_set_face_detect(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_face_info *face = (struct afctrl_face_info *)param0;
 	cmr_s32 rtn = AFV1_SUCCESS;
-	cmr_u8 i = 0;
+	cmr_u16 i = 0;
 	if (NULL != face /* && 0 != face->face_num */ ) {
 		memcpy(&af->face_info, face, sizeof(struct afctrl_face_info));
 		af->trigger_source_type |= AF_DATA_FD;
@@ -3120,7 +3110,7 @@ static cmr_s32 af_sprd_set_type1_pd_info(cmr_handle handle, void *param0)
 		raw = ((*(pIMX351Buf + i + 1) & 0x0F) << 6) | ((*(pIMX351Buf + i + 2) & 0xFC) >> 2);
 
 		if (sign_flag) {
-			raw = -(((~(cmr_u32)raw) & 0x3FF) + 1);
+			raw = -(((~(cmr_u32) raw) & 0x3FF) + 1);
 		}
 
 		IMX351_phase_difference[index] = (double)raw / 16;
@@ -3596,6 +3586,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 	UNUSED(param1);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	cmr_s32 rtn = AFV1_SUCCESS;
+
 	switch (cmd) {
 	case AF_CMD_GET_AF_MODE:
 		*(cmr_u32 *) param0 = af->request_mode;
@@ -3639,6 +3630,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 		}
 	case AF_CMD_GET_BOKEH_GOLDEN_DATA:
 		{
+			cmr_u16 i = 0;
 			struct realbokeh_golden_vcm_data *golden_data = (struct realbokeh_golden_vcm_data *)param0;
 			golden_data->golden_count = af->golden_data.golden_count;
 			golden_data->golden_macro = af->golden_data.golden_macro;
@@ -3646,7 +3638,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 			ISP_LOGD("golden_macro=%d,golden_infinity=%d,golden_count=%d", af->golden_data.golden_macro, af->golden_data.golden_infinity, af->golden_data.golden_count);
 			memcpy(&golden_data->golden_distance[0], &af->golden_data.golden_distance[0], (golden_data->golden_count) * sizeof(cmr_u16));
 			memcpy(&golden_data->golden_vcm[0], &af->golden_data.golden_vcm[0], (golden_data->golden_count) * sizeof(cmr_u16));
-			for (cmr_u8 i = 0; i < golden_data->golden_count; i++) {
+			for (i = 0; i < golden_data->golden_count; i++) {
 				ISP_LOGD("golden_distance =%d,golden_vcm = %d", golden_data->golden_distance[i], golden_data->golden_vcm[i]);
 			}
 			break;
@@ -3823,13 +3815,14 @@ cmr_s32 pd_otp_info_parser(af_ctrl_t * af, struct afctrl_init_in * in_p)
 
 static cmr_u8 set_bokeh_golden_data_info(af_ctrl_t * af, bokeh_golden_data_info * bokeh_golden_data)
 {
+	cmr_u16 i = 0;
 	af->golden_data.golden_count = bokeh_golden_data->golden_count;
 	af->golden_data.golden_macro = bokeh_golden_data->golden_macro;
 	af->golden_data.golden_infinity = bokeh_golden_data->golden_infinity;
 	ISP_LOGD("golden_macro=%d,golden_infinity=%d,golden_count=%d", af->golden_data.golden_macro, af->golden_data.golden_infinity, af->golden_data.golden_count);
 	memcpy(&af->golden_data.golden_distance[0], &bokeh_golden_data->golden_distance[0], (bokeh_golden_data->golden_count) * sizeof(cmr_u16));
 	memcpy(&af->golden_data.golden_vcm[0], &bokeh_golden_data->golden_vcm[0], (bokeh_golden_data->golden_count) * sizeof(cmr_u16));
-	for (cmr_u8 i = 0; i < af->golden_data.golden_count; i++) {
+	for (i = 0; i < af->golden_data.golden_count; i++) {
 		ISP_LOGD("golden_distance =%d,golden_vcm = %d", af->golden_data.golden_distance[i], af->golden_data.golden_vcm[i]);
 	}
 	return 0;
@@ -4100,7 +4093,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	}
 	if (take_value != NULL) {
 		property_dac = atoi(take_value);
-		take_value = strtok(NULL, ":");
 	}
 	if (af->camera_id == property_id && 0 != property_dac) {
 		lens_move_to(af, property_dac);
