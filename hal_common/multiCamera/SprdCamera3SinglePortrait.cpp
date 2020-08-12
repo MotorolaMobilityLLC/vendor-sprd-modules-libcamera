@@ -122,6 +122,10 @@ SprdCamera3SinglePortrait::SprdCamera3SinglePortrait() {
     memset(&fb_cap,0,sizeof(fb_beauty_param_t));
     mFaceBeautyFlag = false;
 #endif
+    mBlurMode = 0;
+    mFirstSprdFB = 0;
+    bzero(&beauty_image, sizeof(beauty_image));
+    bzero(&beauty_face, sizeof(beauty_face));
     m_VirtualCamera.id = CAM_BLUR_MAIN_ID;
     mStaticMetadata = NULL;
     mCaptureThread = new CaptureThread();
@@ -233,13 +237,12 @@ int SprdCamera3SinglePortrait::camera_device_open(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
-
-    HAL_LOGV("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
+    HAL_LOGV("id= %d", atoi(id));
     rc = mSinglePortrait->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGV("id= %d, rc: %d", atoi(id), rc);
 
@@ -748,8 +751,21 @@ SprdCamera3SinglePortrait::CaptureThread::CaptureThread()
       mLastFaceNum(0), mRotation(0), mLastTouchX(0),
       mLastTouchY(0), mBlurBody(true), mUpdataTouch(false), mVersion(0),
       mIsGalleryBlur(false), mIsBlurAlways(false), mOutWeightBuff(NULL),
-      mFirstSprdLightPortrait(false), mFirstSprdDfa(false), lpt_return_val(0)
+      mFirstSprdLightPortrait(false), mFirstSprdDfa(false)
+
 {
+    mFaceInfoX = 0;
+    mFaceInfoY = 0;
+    mGaussEnable = 0;
+    mAlgorithmFlag = false;
+    prev_sensor_orientation = 0;
+    lightPortraitType = 0;
+    cameraBV = 0;
+    cameraISO = 0;
+    cameraCT = 0;
+    lpt_return_val = 0;
+    bzero(&fd_score, sizeof(int32_t)*FD_SCORE_SIZE);
+    bzero(&mPreviewLptAndBeautyFaceinfo, sizeof(mPreviewLptAndBeautyFaceinfo));
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * BLUR_MAX_NUM_STREAMS);
     memset(mBlurApi, 0, sizeof(SinglePortraitAPI_t *) * BLUR_LIB_BOKEH_NUM);
@@ -1023,6 +1039,8 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
     }
     if (output != NULL) {
         destYUV = (unsigned char *)output_addr;
+    } else {
+        HAL_LOGE("Failed to get output buffer");
     }
     if (mFirstCapture) {
         mFirstCapture = false;
@@ -1080,7 +1098,6 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
     HAL_LOGD("mVersion:%d.%d capture sprd_portrait_capture_process cost %lld ms",
                 mVersion, mCaptureWeightParams.roi_type,
                 ns2ms(systemTime() - blurStart));
-
 
     mSinglePortrait->flushIonBuffer(ADP_BUFFD(*output), (void *)destYUV,
                                     ADP_BUFSIZE(*output));

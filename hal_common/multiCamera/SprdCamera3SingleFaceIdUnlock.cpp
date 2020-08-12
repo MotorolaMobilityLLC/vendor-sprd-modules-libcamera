@@ -99,7 +99,9 @@ SprdCamera3SingleFaceIdUnlock::SprdCamera3SingleFaceIdUnlock() {
     mPreviewHeight = 0;
     mUnlockPhyaddr = 0;
     mFlushing = false;
+    mCallbackOps = NULL;
     mSavedRequestList.clear();
+    bzero(&mUnlockStreams, sizeof(mUnlockStreams));
     memset(&mLocalBuffer, 0, sizeof(single_faceid_unlock_alloc_mem_t) *
                                  SINGLE_FACEID_UNLOCK_BUFFER_SUM);
     memset(&mSavedReqStreams, 0,
@@ -486,7 +488,7 @@ cmr_s32 SprdCamera3SingleFaceIdUnlock::allocateBuffer(
     new_mem->graphicBuffer = graphicBuffer;
     new_mem->phy_addr = phy_addr;
     new_mem->buf_size = buf_size;
-    HAL_LOGD("fd=%p", fd);
+    HAL_LOGD("fd=%d", fd);
     HAL_LOGD("end");
     return result;
 }
@@ -1105,6 +1107,9 @@ void SprdCamera3SingleFaceIdUnlock::processCaptureResultMain(
         } else {
             mCallbackOps->process_capture_result(mCallbackOps, result);
         }
+        return;
+    }else if (NULL == result_buffer){
+        HAL_LOGE("result_buffer=%p", result_buffer);
         return;
     }
 

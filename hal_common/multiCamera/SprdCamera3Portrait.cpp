@@ -91,6 +91,22 @@ const uint8_t kavailable_physical_ids[] = {'0', '\0', '2', '\0'};
         return -ENODEV;                                                        \
     }
 
+#define MAP_AND_CHECK_VOID(x, y)                                                    \
+    do {                                                                       \
+        if (mPortrait->map(x, y) != NO_ERROR) {                                    \
+            HAL_LOGE("faided to map buffer(0x%p)", x);                         \
+            return;                                                         \
+        }                                                                      \
+    } while (0)
+
+#define MAP_AND_CHECK_INT(x, y)                                                    \
+    do {                                                                       \
+        if (mPortrait->map(x, y) != NO_ERROR) {                                    \
+            HAL_LOGE("faided to map buffer(0x%p)", x);                         \
+            return BAD_VALUE;                                                         \
+        }                                                                      \
+    } while (0)
+
 #ifndef ABS
 #define ABS(x) (((x) > 0) ? (x) : -(x))
 #endif
@@ -178,11 +194,26 @@ SprdCamera3Portrait::SprdCamera3Portrait() {
     mAfstate = 0;
     mCameraIdMaster = CAM_PORTRAIT_MAIN_ID;
     mCameraIdSlave = CAM_DEPTH_PORTRAIT_ID;
+    mBokehMode = 0;
+    lightPortraitType = 0;
+    mDoPortrait = 0;
+    mPrevPortrait = 0;
+    mlimited_infi = 0;
+    mlimited_macro = 0;
+    far = 0;
+    near = 0;
+    mGdepthSize = 0;
+    mDepthPrevbufType = (camera_buffer_type_t)0;
+    mCurAFStatus = 0;
+    mCurAFMode = 0;
+    mCapTimestamp = 0;
+    mPortraitFlag = 0;
     mSavedRequestList.clear();
     setupPhysicalCameras();
     mCaptureThread = new BokehCaptureThread();
     mPreviewMuxerThread = new PreviewMuxerThread();
     mDepthMuxerThread = new DepthMuxerThread();
+    memset(&mFaceinfoSignSem, 0, sizeof(mFaceinfoSignSem));
     memset(&mScaleInfo, 0, sizeof(struct img_frm));
     memset(&mBokehSize, 0, sizeof(BokehSize));
     memset(mLocalBuffer, 0, sizeof(new_mem_t) * LOCAL_BUFFER_NUM);
@@ -1873,6 +1904,8 @@ SprdCamera3Portrait::BokehCaptureThread::BokehCaptureThread() {
     mBokehResult = true;
     memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     memset(&mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
+    memset(&mCapbokehParam, 0, sizeof(mCapbokehParam));
+    memset(&mGDepthOutputParam, 0, sizeof(mGDepthOutputParam));
 
     mCaptureMsgList.clear();
     HAL_LOGI(" X");
@@ -2322,12 +2355,8 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
                     mime_type = (int)SPRD_MIMETPYE_BOKEH;
                 }
             }
+            mime_type = SPRD_MIMETPYE_NONE;
 
-            if (mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE) {
-                mime_type = SPRD_MIMETPYE_NONE;
-            } else {
-                mime_type = SPRD_MIMETPYE_NONE;
-            }
             if (!mPortrait->mIsHdrMode) {
 #ifdef YUV_CONVERT_TO_JPEG
                 mPortrait->m_pDstJpegBuffer = (mPortrait->popBufferList(
@@ -4880,7 +4909,9 @@ int SprdCamera3Portrait::insertGDepthMetadata(unsigned char *result_buffer_addr,
     strcat(file2_name, "xmp_temp2.jpg");
 
     // remove previous temp file
-    remove(file2_name);
+    if (remove(file2_name) != NO_ERROR){
+        HAL_LOGE("Failed to remove file(%s)", file2_name);
+    }
 
     uint32_t para_size = 0;
     uint32_t depth_size = 0;
@@ -5174,7 +5205,7 @@ void SprdCamera3Portrait::encodeOriginalJPEGandDepth(
 
     // string encodeToBase64StringOrigJpeg;
     void *gdepth_ori_jpeg_addr = NULL;
-    mPortrait->map(mPortrait->m_pDstGDepthOriJpegBuffer, &gdepth_ori_jpeg_addr);
+    MAP_AND_CHECK_VOID(mPortrait->m_pDstGDepthOriJpegBuffer, &gdepth_ori_jpeg_addr);
     SXMPUtils::EncodeToBase64((char *)gdepth_ori_jpeg_addr,
                               mPortrait->mGDepthOriJpegSize,
                               encodeToBase64StringOrigJpeg);

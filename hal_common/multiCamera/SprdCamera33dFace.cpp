@@ -60,6 +60,9 @@ SprdCamera33dFace::SprdCamera33dFace() {
     mFrameListMainCallback.clear();
     mUnmatchedFrameListAux1.clear();
     mUnmatchedFrameListAux2.clear();
+    mPendingRequest = 0;
+    mMaxPendingCount = 0;
+    memset(&sem, 0, sizeof(sem_t));
 
     HAL_LOGI("X");
 }
@@ -780,7 +783,7 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         if (src_size <= size_left) {
             int temp_size = width * height;
             uint8_t *temp_addr = (uint8_t *)malloc(width * height);
-            memset(temp_addr, 0, sizeof(sizeof(uint8_t) * temp_size));
+            memset(temp_addr, 0, sizeof(uint8_t) * temp_size);
             raw10ToRaw8((void *)temp_addr, (void *)src_addr, src_size);
             m_3dface->Raw8Rotate((uint8_t *)dst_addr, (uint8_t *)temp_addr,
                                  width, height, angle);
@@ -823,7 +826,7 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         if (src_size <= size_left) {
             int temp_size = width * height;
             uint8_t *temp_addr = (uint8_t *)malloc(width * height);
-            memset(temp_addr, 0, sizeof(sizeof(uint8_t) * temp_size));
+            memset(temp_addr, 0, sizeof(uint8_t) * temp_size);
             raw10ToRaw8((void *)temp_addr, (void *)src_addr, src_size);
             m_3dface->Raw8Rotate((uint8_t *)dst_addr, (uint8_t *)temp_addr,
                                  width, height, angle);
@@ -880,7 +883,7 @@ int SprdCamera33dFace::MuxerThread::muxerThreeFrame(
         if (src_size <= size_left) {
             int temp_size = width * height;
             uint8_t *temp_addr = (uint8_t *)malloc(width * height);
-            memset(temp_addr, 0, sizeof(sizeof(uint8_t) * temp_size));
+            memset(temp_addr, 0, sizeof(uint8_t) * temp_size);
             raw10ToRaw8((void *)temp_addr, (void *)src_addr, src_size);
             m_3dface->Raw8Rotate((uint8_t *)dst_addr, (uint8_t *)temp_addr,
                                  width, height, angle);

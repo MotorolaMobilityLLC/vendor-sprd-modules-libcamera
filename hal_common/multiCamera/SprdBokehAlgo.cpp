@@ -656,11 +656,14 @@ void SprdBokehAlgo::loadDebugOtp() {
     } else {
 
         while (!feof(fid)) {
-            fscanf(fid, "%d\n", otp_data);
+            if (0 > fscanf(fid, "%d\n", otp_data)){
+                HAL_LOGE("Failed to load otp data");
+                goto exit;
+            }
+
             otp_data += 4;
             read_byte += 4;
         }
-        fclose(fid);
         mCalData.otp_size = read_byte;
         mCalData.otp_exist = true;
         HAL_LOGD("dualotp read_bytes=%d ", read_byte);
@@ -671,6 +674,9 @@ void SprdBokehAlgo::loadDebugOtp() {
                 HAL_LOGD("calibraion data [%d] = %d", i, mCalData.otp_data[i]);
         }
     }
+exit:
+    if(fid)
+        fclose(fid);
 }
 
 int SprdBokehAlgo::initPortraitParams(BokehSize *size,

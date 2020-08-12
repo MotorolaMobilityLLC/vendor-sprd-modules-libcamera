@@ -164,7 +164,7 @@ int SprdCamera3MultiBase::allocateOne(int w, int h, new_mem_t *new_mem,
     new_mem->width = w;
     new_mem->height = h;
     new_mem->type = (camera_buffer_type_t)type;
-    HAL_LOGD("w=%d,h=%d,mIommuEnabled=%d,phy_addr=0x%x", w, h, mIommuEnabled,
+    HAL_LOGD("w=%d,h=%d,mIommuEnabled=%d,phy_addr=0x%p", w, h, mIommuEnabled,
              new_mem->phy_addr);
 
     return NO_ERROR;
@@ -1780,7 +1780,7 @@ int SprdCamera3MultiBase::allocateBufferList(int w, int h, new_mem_t *new_mem,
     new_mem->width = w;
     new_mem->height = h;
     new_mem->type = (camera_buffer_type_t)type;
-    HAL_LOGD("w=%d,h=%d,phy_addr=0x%x",
+    HAL_LOGD("w=%d,h=%d,phy_addr=0x%p",
         w, h, new_mem->phy_addr);
   return NO_ERROR;
 }

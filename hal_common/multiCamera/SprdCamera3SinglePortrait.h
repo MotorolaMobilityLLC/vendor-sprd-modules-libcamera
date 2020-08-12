@@ -268,6 +268,8 @@ typedef enum {
     CAM_SINGLE_PORTRAIT_MODE = 1
 } CameraSinglePortraitMode;
 
+#define FD_SCORE_SIZE 10
+
 class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
   public:
     static void getCameraBlur(SprdCamera3SinglePortrait **pBlur);
@@ -459,7 +461,7 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         class_dfa dfa_cap;
         lpt_options lptOptions_prev;
         lpt_options lptOptions_cap;
-        int32_t fd_score[10];
+        int32_t fd_score[FD_SCORE_SIZE];
 
 //        unsigned short *mOutWeightMap;
 

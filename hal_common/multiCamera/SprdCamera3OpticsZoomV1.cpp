@@ -815,7 +815,7 @@ bool SprdCamera3OpticsZoomV1::TWPreviewMuxerThread::threadLoop() {
                 }
             }
 
-            if (output_buffer != NULL) {
+            if (output_buffer != NULL && preview_stream) {
 
                 {
                     if (gZoomV1->mZoomValue < gZoomV1->mZoomValueTh) {
@@ -950,6 +950,7 @@ SprdCamera3OpticsZoomV1::TWCaptureThread::TWCaptureThread() {
     mCaptureMsgList.clear();
     // mMsgList.clear();
     memset(&mSavedOneResultBuff, 0, sizeof(camera3_stream_buffer_t));
+    memset(&mSavedCapRequest, 0, sizeof(mSavedOneResultBuff));
     HAL_LOGI("X");
 }
 /*===========================================================================

@@ -95,6 +95,23 @@ const uint8_t kavailable_physical_ids[] = {'0', '\0', '2', '\0'};
         return -ENODEV;                                                        \
     }
 
+#define MAP_AND_CHECK_VOID(x, y)                                                    \
+    do {                                                                       \
+        if (mRealBokeh->map(x, y) != NO_ERROR) {                                    \
+            HAL_LOGE("faided to map buffer(0x%p)", x);                         \
+            return;                                                         \
+        }                                                                      \
+    } while (0)
+
+#define MAP_AND_CHECK_INT(x, y)                                                    \
+    do {                                                                       \
+        if (mRealBokeh->map(x, y) != NO_ERROR) {                                    \
+            HAL_LOGE("faided to map buffer(0x%p)", x);                         \
+            return BAD_VALUE;                                                         \
+        }                                                                      \
+    } while (0)
+
+
 #ifndef ABS
 #define ABS(x) (((x) > 0) ? (x) : -(x))
 #endif
@@ -182,6 +199,20 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mAfstate = 0;
     mCameraIdMaster = CAM_BOKEH_MAIN_ID;
     mCameraIdSlave = CAM_DEPTH_ID;
+    mBokehMode = 0;
+    mDoPortrait = 0;
+    mlimited_infi = 0;
+    mlimited_macro = 0;
+    far = 0;
+    near = 0;
+    mGdepthSize = 0;
+    mDepthPrevbufType = (camera_buffer_type_t)0;
+    mCurAFStatus = 0;
+    mCurAFMode = 0;
+    mCapTimestamp = 0;
+    sn_trim_flag = 0;
+    trim_W = 0;
+    trim_H = 0;
     mSavedRequestList.clear();
     setupPhysicalCameras();
     mCaptureThread = new BokehCaptureThread();
@@ -1838,6 +1869,8 @@ SprdCamera3RealBokeh::BokehCaptureThread::BokehCaptureThread() {
     mBokehResult = true;
     memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     memset(&mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
+    bzero(&mCapbokehParam, sizeof(mCapbokehParam));
+    bzero(&mGDepthOutputParam, sizeof(mGDepthOutputParam));
 
     mCaptureMsgList.clear();
     HAL_LOGI(" X");
@@ -2254,7 +2287,8 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
 #ifdef CONFIG_FACE_BEAUTY
             if (mRealBokeh->mPerfectskinlevel.smoothLevel > 0 &&
                 mRealBokeh->mFaceInfo[2] - mRealBokeh->mFaceInfo[0] > 0 &&
-                mRealBokeh->mFaceInfo[3] - mRealBokeh->mFaceInfo[1] > 0) {
+                mRealBokeh->mFaceInfo[3] - mRealBokeh->mFaceInfo[1] > 0 &&
+                capture_msg.combo_buff.buffer1) {
                 mRealBokeh->bokehFaceMakeup(capture_msg.combo_buff.buffer1,
                                             input_buf1_addr);
             }
@@ -4925,7 +4959,9 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
     strcat(file2_name, "xmp_temp2.jpg");
 
     // remove previous temp file
-    remove(file2_name);
+    if (NO_ERROR != remove(file2_name)){
+        HAL_LOGE("Failed to rm %s", file2_name);
+    }
 
     uint32_t para_size = 0;
     uint32_t depth_size = 0;
@@ -5161,7 +5197,7 @@ void SprdCamera3RealBokeh::encodeOriginalJPEGandDepth(
 
     // string encodeToBase64StringOrigJpeg;
     void *gdepth_ori_jpeg_addr = NULL;
-    mRealBokeh->map(mRealBokeh->m_pDstGDepthOriJpegBuffer,
+    MAP_AND_CHECK_VOID(mRealBokeh->m_pDstGDepthOriJpegBuffer,
                     &gdepth_ori_jpeg_addr);
     SXMPUtils::EncodeToBase64((char *)gdepth_ori_jpeg_addr,
                               mRealBokeh->mGDepthOriJpegSize,

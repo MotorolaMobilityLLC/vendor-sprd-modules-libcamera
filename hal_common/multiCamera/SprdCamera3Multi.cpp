@@ -120,6 +120,7 @@ SprdCamera3Multi::SprdCamera3Multi() {
     mSendFrameNum = -1;
     mSavedCapReqsettings = NULL;
     mIsSyncFirstFrame = false;
+    mCallbackOps = NULL;
     mMetadataList.clear();
     mLocalBufferList.clear();
     mSavedPrevRequestList.clear();
@@ -129,6 +130,7 @@ SprdCamera3Multi::SprdCamera3Multi() {
     mNotifyListAux2.clear();
     mNotifyListAux3.clear();
     mNotifyListMain.clear();
+    bzero(&mSavedSnapRequest, sizeof(mSavedSnapRequest));
     bzero(&m_pPhyCamera,
           sizeof(sprdcamera_physical_descriptor_t) * MAX_MULTI_NUM_CAMERA);
     bzero(&mHalReqConfigStreamInfo,
@@ -330,7 +332,6 @@ int SprdCamera3Multi::createHalStream(
         default:
             HAL_LOGI("unknown type %d", hal_stream->type);
             break;
-            output->max_buffers = 1;
         }
         if (hal_stream->width != 0 || hal_stream->height != 0) {
             output->width = hal_stream->width;
@@ -1948,7 +1949,7 @@ void SprdCamera3Multi::CallBackResult(uint32_t frame_number, int buffer_status,
         mSavedRequestList = &mSavedVideoRequestList;
     }
 
-    if (stream_type != SNAPSHOT_STREAM) {
+    if (stream_type != SNAPSHOT_STREAM && mSavedRequestList) {
         Mutex::Autolock l(mRequestLock);
         itor = mSavedRequestList->begin();
         while (itor != mSavedRequestList->end()) {

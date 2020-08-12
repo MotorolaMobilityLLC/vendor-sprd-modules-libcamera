@@ -61,6 +61,24 @@ static int g_yuv_frame_dump_cnt = 0;
         return -ENODEV;                                                        \
     }
 
+
+#define MAP_AND_CHECK_VOID(x, y)                                                    \
+    do {                                                                       \
+        if (map(x, y) != NO_ERROR) {                                    \
+            HAL_LOGE("faided to map buffer(0x%p)", x);                         \
+            return;                                                         \
+        }                                                                      \
+    } while (0)
+
+#define MAP_AND_CHECK_INT(x, y)                                                    \
+    do {                                                                       \
+        if (map(x, y) != NO_ERROR) {                                    \
+            HAL_LOGE("faided to map buffer(0x%p)", x);                         \
+            return BAD_VALUE;                                                         \
+        }                                                                      \
+    } while (0)
+
+
 camera3_device_ops_t SprdCamera33DFaceId::mCameraCaptureOps = {
     .initialize = SprdCamera33DFaceId::initialize,
     .configure_streams = SprdCamera33DFaceId::configure_streams,
@@ -217,13 +235,12 @@ int SprdCamera33DFaceId::camera_device_open(
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
 
-    HAL_LOGD("id=%d", atoi(id));
-
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
+    HAL_LOGD("id=%d", atoi(id));
     rc = m3DFaceId->cameraDeviceOpen(atoi(id), hw_device);
 
     HAL_LOGD("id=%d, rc: %d", atoi(id), rc);
@@ -888,7 +905,8 @@ int SprdCamera33DFaceId::configureStreams(
         HAL_LOGE("request one buf failed.");
     } else {
         void *otpAddr = NULL;
-        map(&mOtpLocalBuffer.native_handle, &otpAddr);
+        MAP_AND_CHECK_INT(&mOtpLocalBuffer.native_handle, &otpAddr);
+
         int otp_size = mOtpData.otp_size;
         memcpy(otpAddr, (void *)&otp_size, sizeof(int));
         memcpy((void *)((char *)otpAddr + sizeof(int)), mOtpData.otp_data,
@@ -1128,12 +1146,13 @@ int SprdCamera33DFaceId::processCaptureRequest(
                     .data.i64[0];
         for (j = 0; j < THREE_D_FACEID_BUFFER_SUM; j++) {
             if (get_reg_phyaddr == (uint64_t)mToFaceIDServiceBuffer[j].phy_addr) {
-                map(&mToFaceIDServiceBuffer[j].native_handle, &arrAddr);
+                MAP_AND_CHECK_INT(&mToFaceIDServiceBuffer[j].native_handle, &arrAddr);
                 memcpy(phyaddr, arrAddr, 5 * sizeof(int64_t));
                 unmap(&mToFaceIDServiceBuffer[j].native_handle);
                 break;
             }
         }
+
 
         for (i = 0; i < THREE_D_FACEID_BUFFER_SUM; i++) {
             if (phyaddr[0] == (uint64_t)mLocalBufferAuxL[i].phy_addr) {
@@ -1396,7 +1415,7 @@ void SprdCamera33DFaceId::processCaptureResultMain(
                 }
 
                 //fill mToFaceIDServiceBuffer
-                map(&toface_addr_mem->native_handle, &buffer_addr);
+                MAP_AND_CHECK_VOID(&toface_addr_mem->native_handle, &buffer_addr);
                 memcpy((void *)(char *)buffer_addr, (void*)&aux_phyaddr_L, sizeof(int64_t));
                 memcpy((void *)((char *)buffer_addr + sizeof(int64_t)), (void*)&aux_phyaddr_R, sizeof(int64_t));
                 memcpy((void *)((char *)buffer_addr + 2*sizeof(int64_t)), (void*)&main_phyaddr, sizeof(int64_t));
@@ -1404,8 +1423,8 @@ void SprdCamera33DFaceId::processCaptureResultMain(
                 unmap(&toface_addr_mem->native_handle);
 
                 int64_t phyaddr[3] = {(int64_t)toface_addr_mem->phy_addr, 0, 0};
-                HAL_LOGV("frame(%d):phyaddr 0x%lx, 0x%lx, 0x%lx", cur_frame_number,
-                     (uint64_t)main_phyaddr, (uint64_t)aux_phyaddr_L, (uint64_t)aux_phyaddr_R);
+                HAL_LOGV("frame(%d):phyaddr 0x%016lx, 0x%016lx, 0x%016lx", cur_frame_number,
+                     main_phyaddr, aux_phyaddr_L, aux_phyaddr_R);
                 metadata.update(ANDROID_SPRD_TO_FACEIDSERVICE_PHYADDR, phyaddr, 1);
             }
 
@@ -1588,8 +1607,8 @@ void SprdCamera33DFaceId::processYUVData(new_mem_t *buffer, uint32_t frame_numbe
     int src_size = 0;
 
     uint8_t *temp_addr = (uint8_t *)malloc(mPreviewWidth * mPreviewHeight * 3 / 2);
-    memset(temp_addr, 0, sizeof(mPreviewWidth * mPreviewHeight * 3 / 2));
-    map(&buffer->native_handle,&src_addr);
+    memset(temp_addr, 0, mPreviewWidth * mPreviewHeight * 3 / 2);
+    MAP_AND_CHECK_VOID(&buffer->native_handle, &src_addr);
 
     src_size = mPreviewWidth * mPreviewHeight * 3 / 2; // yuv size;
 
@@ -1626,10 +1645,9 @@ void SprdCamera33DFaceId::processRawData(new_mem_t *buffer, buffer_type_3D type,
     void * src_addr = NULL;
     char prop[PROPERTY_VALUE_MAX] = {0};
     char frame_num[PROPERTY_VALUE_MAX] = {0};
-
-    map(&buffer->native_handle,&src_addr);
+    MAP_AND_CHECK_VOID(&buffer->native_handle, &src_addr);
     uint8_t *temp_addr = (uint8_t *)malloc(mIRWidth * mIRHeight * 3 / 2);
-    memset(temp_addr, 0, sizeof(mIRWidth * mIRHeight * 3 / 2));
+    memset(temp_addr, 0, mIRWidth * mIRHeight * 3 / 2);
 
     src_size = mIRWidth * mIRHeight * 10 / 8; // raw10 size;
     convert_size = mIRWidth * mIRHeight;      // raw8 size

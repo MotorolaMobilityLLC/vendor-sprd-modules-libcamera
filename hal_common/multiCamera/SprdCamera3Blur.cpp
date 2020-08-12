@@ -139,6 +139,7 @@ SprdCamera3Blur::SprdCamera3Blur() {
     mCoverValue = 1;
     m_pPhyCamera = NULL;
     m_nPhyCameras = 0;
+    mBlurMode = 0;
     HAL_LOGI("X");
 }
 
@@ -227,12 +228,12 @@ int SprdCamera3Blur::camera_device_open(
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
 
-    HAL_LOGV("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
 
+    HAL_LOGV("id= %d", atoi(id));
     rc = mBlur->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGV("id= %d, rc: %d", atoi(id), rc);
 
@@ -760,6 +761,9 @@ SprdCamera3Blur::CaptureThread::CaptureThread()
     memset(&mIspCapture2InitParams, 0, sizeof(bokeh_micro_depth_tune_param));
 #endif
     mCaptureMsgList.clear();
+    mGaussEnable = 0;
+    mFaceInfoY = 0;
+    mFaceInfoX = 0;
 }
 
 /*===========================================================================
@@ -1197,6 +1201,8 @@ int SprdCamera3Blur::CaptureThread::capBlurHandle(buffer_handle_t *input1,
     }
     if (output != NULL) {
         destYUV = (unsigned char *)output_addr;
+    } else {
+        HAL_LOGE("Failed to get output buffer,output = %p", output);
     }
     if (mFirstCapture) {
         mFirstCapture = false;

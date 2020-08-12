@@ -99,11 +99,13 @@ SprdCamera3SingleFaceIdRegister::SprdCamera3SingleFaceIdRegister() {
     mPreviewHeight = 0;
     mRegisterPhyaddr = 0;
     mFlushing = false;
+    mCallbackOps = NULL;
     mSavedRequestList.clear();
     memset(&mLocalBuffer, 0, sizeof(single_faceid_register_alloc_mem_t) *
                                  SINGLE_FACEID_REGISTER_BUFFER_SUM);
     memset(&mSavedReqStreams, 0,
            sizeof(camera3_stream_t *) * SINGLE_FACEID_REGISTER_MAX_STREAMS);
+    bzero(&mRegisterStreams, sizeof(mRegisterStreams));
 
     HAL_LOGI("X");
 }
@@ -487,7 +489,7 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::allocateBuffer(
     new_mem->graphicBuffer = graphicBuffer;
     new_mem->phy_addr = phy_addr;
     new_mem->buf_size = buf_size;
-    HAL_LOGD("fd=%p", fd);
+    HAL_LOGD("fd=%d", fd);
     HAL_LOGD("end");
     return result;
 }
