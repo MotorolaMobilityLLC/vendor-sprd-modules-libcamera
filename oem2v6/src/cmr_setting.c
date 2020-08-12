@@ -3209,7 +3209,7 @@ static cmr_int setting_isp_flash_notify(struct setting_component *cpt,
              isp_param.flash_notice.will_capture,
              hal_param->flash_param.flash_status);
 
-    if (init_in->setting_isp_ioctl) {
+    if (init_in->setting_isp_ioctl && (FLASH_NEED_QUIT != cpt->flash_need_quit)) {
         ret = (*init_in->setting_isp_ioctl)(
             init_in->oem_handle, COM_ISP_SET_FLASH_NOTICE, &isp_param);
     }
