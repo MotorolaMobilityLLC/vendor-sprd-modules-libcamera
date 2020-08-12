@@ -94,7 +94,7 @@ int32_t cmr_scaling_down(struct img_frm *src, struct img_frm *dst) {
     cmr_u32 cur_byte = 0;
     cmr_u32 ratio_w;
     cmr_u32 ratio_h;
-    uint16_t i, j;
+    uint32_t i, j;
     if (NULL == dst || NULL == src) {
         return -1;
     }
@@ -334,7 +334,6 @@ static cmr_int cmr_scale_destory_thread(struct scale_file *file) {
 
 cmr_int cmr_scale_open(cmr_handle *scale_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    cmr_int fd = -1;
     cmr_int time_out = 3;
     struct scale_file *file = NULL;
     // struct sc_file *sca_file = NULL;
@@ -362,7 +361,7 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
     if (ret) {
         CMR_LOGE("scale error: create thread");
         ret = CMR_CAMERA_FAIL;
-        goto free_cb;
+        goto free_file;
     }
     sem_init(&file->sync_sem, 0, 0);
     pthread_mutex_init(&file->scale_mutex, NULL);
@@ -371,9 +370,6 @@ cmr_int cmr_scale_open(cmr_handle *scale_handle) {
 
     goto exit;
 
-free_cb:
-    if (0 < fd)
-        close(fd);
 free_file:
     if (file)
         free(file);
