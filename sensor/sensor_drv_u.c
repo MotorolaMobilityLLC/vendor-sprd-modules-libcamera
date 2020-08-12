@@ -52,6 +52,8 @@ static struct slotSensorInfo slot_sensor_info_list[SENSOR_ID_MAX] = {0};
 static struct phySensorInfo phy_sensor_info_list[SENSOR_ID_MAX] = {0};
 static struct logicalSensorInfo
     logical_sensor_info_list[LOGICAL_SENSOR_ID_MAX] = {0};
+static struct logicalCameraInfo
+    logical_camera_info_list[LOGICAL_SENSOR_ID_MAX] = {0};
 static struct camera_device_manager camera_dev_manger = {0};
 static struct sensor_drv_lib sensor_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct otp_drv_lib otp_lib_mngr[SENSOR_ID_MAX] = {0};
@@ -1292,12 +1294,10 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
             init_param.lane_num =
                 sensor_cxt->sensor_exp_info.sensor_interface.bus_width;
             init_param.bps_per_lane =
-                sensor_cxt->sensor_exp_info.sensor_mode_info[mode]
-                    .bps_per_lane;
+                sensor_cxt->sensor_exp_info.sensor_mode_info[mode].bps_per_lane;
             init_param.is_cphy =
-                sensor_cxt->sensor_exp_info.sensor_interface.is_cphy == 1
-                    ? 1
-                    : 0;
+                sensor_cxt->sensor_exp_info.sensor_interface.is_cphy == 1 ? 1
+                                                                          : 0;
             if (sensor_cxt->sensor_exp_info.sensor_interface.lane_switch_eb)
                 init_param.lane_seq =
                     sensor_cxt->sensor_exp_info.sensor_interface.lane_seq;
@@ -1305,7 +1305,7 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
                 init_param.lane_seq = 0x0123;
             SENSOR_LOGI("is_cphy %d %016lx", init_param.is_cphy,
                         init_param.lane_seq);
-            ret = hw_sensor_mipi_switch(sensor_cxt->hw_drv_handle,init_param);
+            ret = hw_sensor_mipi_switch(sensor_cxt->hw_drv_handle, init_param);
         }
     } else {
         ret = sensor_stream_off(sensor_cxt);
@@ -2759,7 +2759,7 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
 sensor_drv_u optimize
 ================================================================
 */
-static void sensor_drv_print_slot_list_info() {
+static void sensor_drv_print_slot_list_info(void) {
     cmr_int i = 0;
     struct slotSensorInfo *slotPtr = slot_sensor_info_list;
 
@@ -2771,8 +2771,8 @@ static void sensor_drv_print_slot_list_info() {
     }
 }
 
-static void sensor_drv_print_phy_list_info() {
-    cmr_int i = 0;
+static void sensor_drv_print_phy_list_info(void) {
+    int i = 0;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct camera_device_manager *devPtr = &camera_dev_manger;
 
@@ -2784,8 +2784,8 @@ static void sensor_drv_print_phy_list_info() {
     }
 }
 
-static void sensor_drv_print_logical_list_info() {
-    cmr_int i, j;
+static void sensor_drv_print_logical_list_info(void) {
+    int i, j;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
     struct camera_device_manager *devPtr = &camera_dev_manger;
 
@@ -2802,11 +2802,29 @@ static void sensor_drv_print_logical_list_info() {
     }
 }
 
-static cmr_int sensor_drv_sensor_info_list_init() {
+static void sensor_drv_print_logical_camera_list_info(void) {
+    int i, j;
+    struct logicalCameraInfo *logicalCamPtr = logical_camera_info_list;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+
+    for (i = 0; i < devPtr->logical_cam_num; i++) {
+        SENSOR_LOGI("logicalCameraId %d, multiCameraMode %d, sensorNum %d",
+                    (logicalCamPtr + i)->logicalCameraId,
+                    (logicalCamPtr + i)->multiCameraMode,
+                    (logicalCamPtr + i)->sensorNum);
+        for (j = 0; j < (logicalCamPtr + i)->sensorNum; j++) {
+            SENSOR_LOGI("----sensorId %d",
+                        (logicalCamPtr + i)->sensorIdGroup[j]);
+        }
+    }
+}
+
+static cmr_int sensor_drv_sensor_info_list_init(void) {
     cmr_int i = 0;
     struct slotSensorInfo *slotPtr = slot_sensor_info_list;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+    struct logicalCameraInfo *logicalCamPtr = logical_camera_info_list;
 
     for (i = 0; i < SENSOR_ID_MAX; i++) {
         // slot sensor list
@@ -2821,6 +2839,7 @@ static cmr_int sensor_drv_sensor_info_list_init() {
     for (i = 0; i < LOGICAL_SENSOR_ID_MAX; i++) {
         (logicalPtr + i)->logicalId = SENSOR_ID_INVALID;
         (logicalPtr + i)->multiCameraId = SENSOR_ID_INVALID;
+        (logicalCamPtr + i)->logicalCameraId = SENSOR_ID_INVALID;
     }
 
     return 0;
@@ -2904,11 +2923,11 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     return 0;
 }
 
-static cmr_int sensor_drv_create_logical_sensor_info(cmr_int physical_num) {
+static int sensor_drv_create_logical_sensor_info(int physical_num) {
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
     int i = 0;
-    cmr_int logical_num = 0;
+    int logical_num = 0;
     int phyId[SENSOR_ID_MAX];
 
     // single camera feature
@@ -2964,7 +2983,7 @@ static cmr_int sensor_drv_create_logical_sensor_info(cmr_int physical_num) {
     if (phyId[0] != SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID) {
         logicalPtr->logicalId = i;
         logicalPtr->multiCameraId = SPRD_PORTRAIT_ID;
-        logicalPtr->multiCameraMode = MODE_BOKEH;
+        logicalPtr->multiCameraMode = MODE_PORTRAIT;
         logicalPtr->physicalNum = 2;
         logicalPtr->phyIdGroup[0].phyId = phyId[0];
         logicalPtr->phyIdGroup[0].sensor_role = SENSOR_ROLE_DUALCAM_MASTER;
@@ -3024,9 +3043,10 @@ static cmr_int sensor_drv_create_logical_sensor_info(cmr_int physical_num) {
         i++;
     } else if (phyId[0] == SENSOR_ID_INVALID && phyId[1] != SENSOR_ID_INVALID &&
                phyId[2] != SENSOR_ID_INVALID) {
-        SENSOR_LOGD("hal multiCamera not support only W+T opticszoom temporarily, "
-                    "will not create logical info, SW %d, W %d, T %d",
-                    phyId[0], phyId[1], phyId[2]);
+        SENSOR_LOGD(
+            "hal multiCamera not support only W+T opticszoom temporarily, "
+            "will not create logical info, SW %d, W %d, T %d",
+            phyId[0], phyId[1], phyId[2]);
     } else {
         SENSOR_LOGD("sensor not support opticszoom, will not create logical "
                     "info, SW %d, W %d, T %d",
@@ -3107,6 +3127,44 @@ static cmr_int sensor_drv_create_logical_sensor_info(cmr_int physical_num) {
     logical_num = i;
 
     return logical_num;
+}
+
+static int sensor_drv_create_logical_camera_info(void) {
+    struct logicalSensorInfo *logicalSnsPtr = logical_sensor_info_list;
+    struct logicalCameraInfo *logicalCamPtr = logical_camera_info_list;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+    int logical_cam_num = 0;
+    int i = 0, j = 0, k = 0;
+
+    // single camera feature
+    for (i = 0; i < devPtr->physical_num; i++) {
+        (logicalCamPtr + i)->logicalCameraId = (logicalSnsPtr + i)->logicalId;
+        (logicalCamPtr + i)->multiCameraMode = MODE_SINGLE_CAMERA;
+        (logicalCamPtr + i)->sensorNum = 1;
+        (logicalCamPtr + i)->sensorIdGroup[0] =
+            (logicalSnsPtr + i)->phyIdGroup[0].phyId;
+        (logicalCamPtr + i)->face_type = (logicalSnsPtr + i)->face_type;
+    }
+
+    // multi camera feature bokeh & opticszoom
+    for (j = devPtr->physical_num; j < devPtr->logical_num; j++) {
+        if ((logicalSnsPtr + j)->multiCameraMode == MODE_BOKEH ||
+            (logicalSnsPtr + j)->multiCameraMode == MODE_MULTI_CAMERA) {
+            (logicalCamPtr + i)->logicalCameraId = i;
+            (logicalCamPtr + i)->multiCameraMode =
+                (logicalSnsPtr + j)->multiCameraMode;
+            (logicalCamPtr + i)->sensorNum = (logicalSnsPtr + j)->physicalNum;
+            for (k = 0; k < (logicalSnsPtr + j)->physicalNum; k++) {
+                (logicalCamPtr + i)->sensorIdGroup[k] =
+                    (logicalSnsPtr + j)->phyIdGroup[k].phyId;
+            }
+            (logicalCamPtr + i)->face_type = (logicalSnsPtr + j)->face_type;
+            i++;
+        }
+    }
+
+    logical_cam_num = i;
+    return logical_cam_num;
 }
 
 static cmr_int
@@ -3733,7 +3791,7 @@ static cmr_int sensor_drv_scan_hw(void) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct sensor_drv_context sns_cxt;
     struct sensor_drv_context *sensor_cxt = &sns_cxt;
-    cmr_u32 physical_num = 0;
+    int physical_num = 0;
     cmr_int i = 0;
     cmr_int ret = SENSOR_FAIL;
     char sensor_version_info[SENSOR_ID_MAX * 32] = {0};
@@ -3748,7 +3806,7 @@ static cmr_int sensor_drv_scan_hw(void) {
     cmr_int slot_id = 0;
     cmr_u8 sensor_count[SENSOR_ID_MAX] = {0xff};
     cmr_u8 probe_identify[SENSOR_ID_MAX] = {0};
-    cmr_u32 project_num = 0;
+    int project_num = 0;
 
     if (devPtr->hasScaned) {
         SENSOR_LOGI("driver has scaned physical number %d logical_number %d",
@@ -3859,6 +3917,7 @@ static cmr_int sensor_drv_scan_hw(void) {
 
     devPtr->logical_num =
         sensor_drv_create_logical_sensor_info(devPtr->physical_num);
+    devPtr->logical_cam_num = sensor_drv_create_logical_camera_info();
 
     devPtr->hasScaned = 1;
 
@@ -3871,6 +3930,7 @@ exit:
     sensor_drv_print_slot_list_info();
     sensor_drv_print_phy_list_info();
     sensor_drv_print_logical_list_info();
+    sensor_drv_print_logical_camera_list_info();
 
     return devPtr->physical_num;
 }
@@ -3891,12 +3951,20 @@ int sensorGetLogicalSnsNum(void) {
     return devPtr->logical_num;
 }
 
-void *sensorGetIdentifyState() {
+int sensorGetLogicalCamsNum(void) {
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+
+    sensor_drv_scan_hw();
+
+    return devPtr->logical_cam_num;
+}
+
+void *sensorGetIdentifyState(void) {
 
     return (void *)&camera_dev_manger;
 }
 
-PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id) {
+PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(int phy_id) {
 
     if (phy_id >= SENSOR_ID_MAX)
         return NULL;
@@ -3904,12 +3972,33 @@ PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id) {
     return &phy_sensor_info_list[phy_id];
 }
 
-LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id) {
+LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(int logical_id) {
 
     if (logical_id >= LOGICAL_SENSOR_ID_MAX)
         return NULL;
 
     return &logical_sensor_info_list[logical_id];
+}
+
+struct logicalCameraInfo *sensorGetLogicalCamInfo(int logical_cam_id) {
+
+    if (logical_cam_id >= LOGICAL_SENSOR_ID_MAX)
+        return NULL;
+
+    return &logical_sensor_info_list[logical_cam_id];
+}
+
+int sensorGetLogicalCameraList(struct logicalCameraInfo **logical_cam_ptr) {
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+
+    *logical_cam_ptr = &logical_camera_info_list[0];
+
+    return devPtr->logical_cam_num;
+}
+
+struct lensProperty *sensorGetlensProperty(int phy_id) {
+
+    return sensor_get_lens_property(phy_id);
 }
 
 /**
@@ -4034,8 +4123,7 @@ exit:
     return phyId;
 }
 
-LOGICAL_SENSOR_INFO_T *
-sensorGetLogicaInfo4multiCameraId(cmr_int multiCameraId) {
+LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(int multiCameraId) {
     int i = 0;
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;

@@ -762,8 +762,9 @@ struct sensor_drv_lib {
 
 struct camera_device_manager {
     cmr_u8 hasScaned;
-    cmr_int physical_num;
-    cmr_int logical_num;
+    int physical_num;
+    int logical_num;
+    int logical_cam_num;
     cmr_u8 drv_idx[SENSOR_ID_MAX];
     cmr_u8 identify_state[SENSOR_ID_MAX];
 };
@@ -814,11 +815,15 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
 int sensorGetPhysicalSnsNum(void);
 int sensorGetLogicalSnsNum(void);
-void *sensorGetIdentifyState();
-PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(cmr_int phy_id);
-LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(cmr_int logical_id);
+int sensorGetLogicalCamsNum(void);
+void *sensorGetIdentifyState(void);
+PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(int phy_id);
+LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(int logical_id);
+struct logicalCameraInfo *sensorGetLogicalCamInfo(int logical_cam_id);
+int sensorGetLogicalCameraList(struct logicalCameraInfo **logical_cam_ptr);
+struct lensProperty *sensorGetlensProperty(int phy_id);
 int sensorGetPhyId4Role(enum sensor_role role, enum face_type facing);
-LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(cmr_int multiCameraId);
+LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(int multiCameraId);
 
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param);
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
@@ -826,7 +831,6 @@ cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
 cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
                                      cmr_u16 otp_size);
 
-// utest refer
 #ifdef __cplusplus
 }
 #endif

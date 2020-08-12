@@ -74,6 +74,7 @@ include $(LOCAL_PATH)/tuning_param/Sprdroid.mk
 
 LOCAL_SRC_FILES += \
     dummy/isp_otp_calibration.c \
+    sensor_cfg.c \
     sensor_drv_u.c \
     sensor_drv_xml_parse.c
 

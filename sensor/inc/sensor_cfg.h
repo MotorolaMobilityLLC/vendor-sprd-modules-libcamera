@@ -32,4 +32,6 @@ typedef struct sensor_match_tab {
     struct sns_af_drv_cfg af_dev_info;
     otp_drv_info_t otp_drv_info;
 } SENSOR_MATCH_T;
+
+struct lensProperty *sensor_get_lens_property(int phy_id);
 #endif

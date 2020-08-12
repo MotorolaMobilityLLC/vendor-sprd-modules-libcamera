@@ -724,6 +724,33 @@ typedef struct logicalSensorInfo {
     cmr_u32 face_type;
 } LOGICAL_SENSOR_INFO_T;
 
+// characteristic group
+struct chara_group {
+    char *name;
+    char *value;
+};
+
+#define MAX_CHARA_NUM 16
+struct logicalCameraInfo {
+    int logicalCameraId;
+    int multiCameraMode;
+    int sensorNum;
+    int sensorIdGroup[SENSOR_ID_MAX];
+    struct chara_group charaGroup[MAX_CHARA_NUM];
+    cmr_u32 face_type;
+};
+
+struct lensProperty {
+    // poseRotation (x, y, z, w)
+    float poseRotation[4];
+    // poseTranslation (x, y, z), unit: meter
+    float poseTranslation[3];
+    // intrinsicCalibration [f_x, f_y, c_x, c_y, s], unit: pixel
+    float intrinsicCalibration[5];
+    // distortion [kappa_1, kappa_2, kappa_3] [kappa_4, kappa_5]
+    float distortion[5];
+};
+
 cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
                              cmr_handle *sns_ic_drv_handle);
 
