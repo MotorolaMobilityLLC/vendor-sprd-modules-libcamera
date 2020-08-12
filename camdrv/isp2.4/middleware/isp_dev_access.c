@@ -336,13 +336,13 @@ void isp_dev_irq_info_proc(cmr_handle isp_dev_handle, void *param_ptr)
 			irq_u_info->sec = irq_info->sec;
 			irq_u_info->usec = irq_info->usec;
 
-			(cxt->isp_event_cb) (ISP_CTRL_EVT_SOF, irq_u_info, (void *)cxt->evt_alg_handle);
+			(*cxt->isp_event_cb) (ISP_CTRL_EVT_SOF, irq_u_info, (void *)cxt->evt_alg_handle);
 		}
 	} else if (irq_info->irq_property == IRQ_RAW_CAP_DONE) {
 		/*notify kernel raw proc is done*/
 		isp_u_raw_proc_end(cxt->isp_driver_handle);
 		if (cxt->isp_event_cb) {
-			(cxt->isp_event_cb) (ISP_CTRL_EVT_TX, NULL, (void *)cxt->evt_alg_handle);
+			(*cxt->isp_event_cb) (ISP_CTRL_EVT_TX, NULL, (void *)cxt->evt_alg_handle);
 		}
 	} else {
 		ISP_LOGW("there is no irq_property %d", irq_info->irq_property);

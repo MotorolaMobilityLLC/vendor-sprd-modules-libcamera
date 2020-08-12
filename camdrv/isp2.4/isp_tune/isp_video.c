@@ -844,9 +844,9 @@ unsigned long get_nr_tool_flag_index(unsigned long nr_blk_id)
 		return ISP_BLK_CNR3_T;
 
 	default:
-		return NR_TOOL_FLAG_MAX;
+		return 0;
 	}
-	return NR_TOOL_FLAG_MAX;
+	return 0;
 };
 
 void *get_nr_block_level_ptr(struct denoise_param_update *base,
@@ -1068,6 +1068,8 @@ cmr_s32 isp_denoise_read(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_header_re
 		}
 	} else {
 			cmr_u32 nr_blk_id = get_nr_block_id_by_sub_type(data_head->sub_type);
+			if (nr_blk_id == ISP_BLK_TYPE_MAX)
+				return ret;
 			data_head_ptr->sub_type = data_head->sub_type;
 			src_size = nr_blk_level_size[nr_blk_id] * multi_nr_level_map_ptr->nr_level_map[nr_blk_id];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);

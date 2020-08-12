@@ -3326,7 +3326,7 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	cmr_s32 ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input;
-	struct isp_pm_ioctl_output output;
+	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data *param_data;
 	cmr_u32 i = 0;
 
