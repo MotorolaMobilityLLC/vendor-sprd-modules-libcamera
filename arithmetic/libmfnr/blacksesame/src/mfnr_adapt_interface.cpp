@@ -16,14 +16,15 @@ sprd_camalg_device_type g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
 
 int sprd_mfnr_adpt_init(void **handle, mfnr_param_info_t *param, void *tune_params)
 {
-    int retval = 0;
-    LOGI("MFNR ADAPT INIT run  handle=%x \n", *handle);
     if (!handle || !param)
     {
         LOGI("MFNR ADAPT INIT handle or param NULL! \n");
         //*handle = NULL;
         return 1;
     }
+
+    int retval = 0;
+    LOGI("MFNR ADAPT INIT run  handle=%x \n", *handle);
 
     char str_property[256];
     property_get("persist.vendor.cam.mfnr.run_type", str_property, "");
@@ -69,14 +70,16 @@ int sprd_mfnr_adpt_init(void **handle, mfnr_param_info_t *param, void *tune_para
 
 int sprd_mfnr_adpt_deinit(void** handle)
 {
-	LOGI("MFNR ADAPT DEINIT run handle=%x \n", *handle);
-    int retval = 0;
     if (!handle)
     {
         LOGI("MFNR ADAPT DEINIT handle is NULL! \n");
         return 1;
     }
-	if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU ||g_run_type == SPRD_CAMALG_RUN_TYPE_GPU)
+
+    LOGI("MFNR ADAPT DEINIT run handle=%x \n", *handle);
+    int retval = 0;
+
+    if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU ||g_run_type == SPRD_CAMALG_RUN_TYPE_GPU)
     {
 		LOGI("MFNR ADAPT DEINIT call  mfnr_deinit  \n");
         retval = mfnr_deinit(handle);
