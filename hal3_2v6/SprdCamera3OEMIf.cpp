@@ -9148,21 +9148,11 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
         type == CAMERA_CHANNEL_3_RESERVED ||
         type == CAMERA_CHANNEL_4_RESERVED) {
         if (mCommonHeapReserved == NULL) {
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
-            mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
-#else
-            /* from sharkl5pro, raw16 should be supported */
-            char prop[PROPERTY_VALUE_MAX] = {0};
-            property_get("persist.vendor.cam.res.multi.camera.fullsize", prop, "0");
-            if (atoi(prop) == 1 && mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK)) {
-                cmr_u16 picW = 0;
-                cmr_u16 picH = 0;
-                mSetting->getLargestPictureSize(sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_WIDE, SNS_FACE_BACK), &picW, &picH);
-                mLargestPictureWidth = picW;
-                mLargestPictureHeight = picH;
-            }
-            mem_size = mLargestPictureWidth * mLargestPictureHeight * 2;
-            HAL_LOGV("mLargestPictureWidth=%d, mLargestPictureHeight=%d", mLargestPictureWidth, mLargestPictureHeight);
+#if defined(CONFIG_ISP_2_3)
+        mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
+#elif defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+        mem_size = PAGE_SIZE;
+
 #endif
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
