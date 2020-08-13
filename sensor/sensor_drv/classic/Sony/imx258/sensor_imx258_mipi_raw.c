@@ -165,7 +165,7 @@ static void imx258_drv_write_gain(cmr_handle handle, double gain) {
                         (sensor_dgain >> 8) & 0xFF);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0215, sensor_dgain & 0xFF);
 
-    SENSOR_LOGD("realgain=%f,again=%d,dgain=%f", gain, sensor_again, sensor_dgain);
+    SENSOR_LOGD("realgain=%lf,again=%u,dgain=%u", gain, sensor_again, sensor_dgain);
 
     // imx258_group_hold_off(handle);
 }

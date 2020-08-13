@@ -151,7 +151,6 @@ static cmr_int s5k3p9sx04_drv_write_exp_dummy(cmr_handle handle,
                                           SENSOR_EXIF_CTRL_EXPOSURETIME,
                                           expsure_line);
     } else {
-        sns_drv_cxt->exif_info.exposure_time = expsure_line;
         sns_drv_cxt->exif_info.exposure_time = expsure_line * linetime / 1000;
     }
 
@@ -388,7 +387,7 @@ static void s5k3p9sx04_calc_gain(float gain,
     float real_gain = gain;
     float a_gain = 0;
     float d_gain = 0;
-    uint8_t i = 0;
+    uint16_t i = 0;
 
     if ((cmr_u32)real_gain <= 16 * 32) {
         a_gain = real_gain;
@@ -403,8 +402,10 @@ static void s5k3p9sx04_calc_gain(float gain,
     }
 
     aec_info->again->settings[0].reg_value = (cmr_u16)a_gain;
-    for (i = 0; i < aec_info->dgain->size; i++)
-        aec_info->dgain->settings[i].reg_value = (cmr_u16)d_gain;
+    for (i = 0; i < aec_info->dgain->size; i = i + 2){
+        aec_info->dgain->settings[i].reg_value = ((cmr_u16)d_gain >> 8) & 0xff;
+        aec_info->dgain->settings[i + 1].reg_value = (cmr_u16)d_gain & 0xff;
+    }
 }
 
 static cmr_u16 s5k3p9sx04_read_frame_length(cmr_handle handle) {
@@ -472,7 +473,8 @@ static struct sensor_i2c_reg_tab s5k3p9sx04_again_tab = {
 };
 
 static struct sensor_reg_tag s5k3p9sx04_dgain_reg[] = {
-    {0x020e, 0}, {0x0210, 0}, {0x0212, 0}, {0x0214, 0},
+    {0x020e, 0}, {0x020f, 0}, {0x0210, 0}, {0x0211, 0},
+    {0x0212, 0}, {0x0213, 0}, {0x0214, 0}, {0x0215, 0},
 };
 
 struct sensor_i2c_reg_tab s5k3p9sx04_dgain_tab = {

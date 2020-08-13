@@ -566,7 +566,7 @@ static cmr_u32 s5k5e8yx_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     s5k5e8yx_drv_write_gain(handle, cap_gain);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0104, 0x00);
 
-    SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = 0x%x",
+    SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = %f",
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
 

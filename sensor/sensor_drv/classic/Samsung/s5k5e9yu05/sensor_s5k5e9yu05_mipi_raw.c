@@ -566,7 +566,7 @@ static cmr_u32 s5k5e9yu05_drv_before_snapshot(cmr_handle handle,
     cap_shutter = s5k5e9yu05_drv_update_exposure(handle, cap_shutter, 0);
     cap_gain = gain;
     s5k5e9yu05_drv_write_gain(handle, cap_gain);
-    SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = 0x%x",
+    SENSOR_LOGI("preview_shutter = 0x%x, preview_gain = %f",
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
 
@@ -777,7 +777,7 @@ static void s5k5e9yu05_calc_gain(float gain,
     float real_gain = gain;
     float a_gain = 0;
     float d_gain = 0;
-    uint8_t i = 0;
+    uint16_t i = 0;
 
     if ((cmr_u32)real_gain <= 16 * 32) {
         a_gain = real_gain;
