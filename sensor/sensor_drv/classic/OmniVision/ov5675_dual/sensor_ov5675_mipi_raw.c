@@ -590,7 +590,7 @@ static cmr_int ov5675_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
                 sns_drv_cxt->sensor_ev_info.preview_shutter,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
 
-    SENSOR_LOGI("capture_shutter = %d, capture_gain = %f", cap_shutter,
+    SENSOR_LOGI("capture_shutter = %d, capture_gain = %d", cap_shutter,
                 cap_gain);
 
 snapshot_info:
@@ -671,7 +671,7 @@ static cmr_int ov5675_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
     real_gain = real_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : real_gain;
     real_gain = real_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
-    SENSOR_LOGD("real_gain = %f", real_gain);
+    SENSOR_LOGD("real_gain = %d", real_gain);
 
     sns_drv_cxt->sensor_ev_info.preview_gain = real_gain;
     ov5675_drv_write_gain(handle, real_gain, &ov5675_aec_info);
