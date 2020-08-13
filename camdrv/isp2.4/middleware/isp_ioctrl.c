@@ -2394,7 +2394,7 @@ exit:
 
 static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
-	cmr_u32 ret = ISP_SUCCESS;
+	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isptool_scene_param *scene_parm = NULL;
 	struct isp_pm_ioctl_input ioctl_input;

@@ -3978,7 +3978,7 @@ exit:
 
 static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 {
-	cmr_s32 ret = ISP_SUCCESS;
+	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	lsc_adv_handle_t lsc_adv_handle = cxt->lsc_cxt.handle;
 	cmr_handle pm_handle = cxt->handle_pm;
@@ -3992,6 +3992,7 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_input io_pm_input_alsc = { NULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
 	struct alsc_do_simulation do_sim;
+	struct isp_awb_statistic_info awb_stat;
 	cmr_u16 *sim_output_table = NULL;
 
 	memset(&calc_param, 0, sizeof(struct lsc_adv_calc_param));
@@ -4023,7 +4024,6 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 
 		cmr_u32 stat_w = 0;
 		cmr_u32 stat_h = 0;
-		struct isp_awb_statistic_info awb_stat;
 		struct isptool_scene_param scene_param;
 		memset(&awb_stat, 0, sizeof(awb_stat));
 
