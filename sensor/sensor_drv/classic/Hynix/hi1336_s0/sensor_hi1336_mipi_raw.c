@@ -613,13 +613,13 @@ static cmr_int hi1336_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 
     /*TODO*/
-	usleep(10 * 1000);
+	usleep(100 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b00, 0x0100);
 
     /*END*/
 
     /*delay*/
-    usleep(5 * 1000);
+    usleep(50 * 1000);
     return SENSOR_SUCCESS;
 }
 
@@ -638,18 +638,18 @@ static cmr_int hi1336_drv_stream_off(cmr_handle handle, cmr_uint param) {
                         sns_drv_cxt->line_time_def / 1000000);
 
     if (!sns_drv_cxt->is_sensor_close) {
-        usleep(5 * 1000);
+        usleep(50 * 1000);
     }
     /*TODO*/
-    usleep(5 * 1000);
-	
+    usleep(50 * 1000);
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b00, 0x0000);
 
     /*END*/
-	
+
     /*delay*/
-	usleep((delay_ms + 10) * 1000);
-	
+    usleep((delay_ms + 100) * 1000);
+
     sns_drv_cxt->is_sensor_close = 0;
     SENSOR_LOGI("X");
     return SENSOR_SUCCESS;

@@ -695,7 +695,7 @@ static cmr_int gc2375_drv_stream_on(cmr_handle handle, cmr_uint param) {
     property_get("vendor.cam.hw.framesync.on", value1, "1");
     if (!strcmp(value1, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-        gc2375_drv_set_slave_FrameSync(handle, param);
+        //gc2375_drv_set_slave_FrameSync(handle, param);
 #endif
     }
 
