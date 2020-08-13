@@ -997,7 +997,9 @@ cmr_int read_txt_file(const char *file_name, void *data) {
     }
 
     while (!feof(pf)) {
-        fscanf(pf, "%s\n", otp_data);
+        if (0 > fscanf(pf, "%s\n", otp_data)){
+            SENSOR_LOGE("Failed to scanf %s",otp_data);
+        }
         otp_data += 4;
         read_byte += 4;
     }
@@ -1273,7 +1275,7 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
                     sensor_cxt->sensor_exp_info.sensor_interface.lane_seq;
             else
                 init_param.lane_seq = 0x0123;
-            SENSOR_LOGI("is_cphy %d %lx", init_param.is_cphy,
+            SENSOR_LOGI("is_cphy %d %016lx", init_param.is_cphy,
                         init_param.lane_seq);
             ret = hw_sensor_mipi_init(sensor_cxt->hw_drv_handle, init_param);
             if (ret) {
@@ -1301,7 +1303,7 @@ LOCAL cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
                     sensor_cxt->sensor_exp_info.sensor_interface.lane_seq;
             else
                 init_param.lane_seq = 0x0123;
-            SENSOR_LOGI("is_cphy %d %lx", init_param.is_cphy,
+            SENSOR_LOGI("is_cphy %d %016lx", init_param.is_cphy,
                         init_param.lane_seq);
             ret = hw_sensor_mipi_switch(sensor_cxt->hw_drv_handle,init_param);
         }
