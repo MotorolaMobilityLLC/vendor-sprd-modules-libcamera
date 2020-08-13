@@ -387,7 +387,7 @@ static cmr_int gc5035_common_parse_awb_data(cmr_handle otp_drv_handle) {
 			OTP_LOGE("WB data checksum error, parse failed!");
 			ret = OTP_CAMERA_FAIL;
 			}
-	} else if (awb_flag & 0x0f == 0x00) {
+	} else if ((awb_flag & 0x0f) == 0x00) {
 		OTP_LOGE("wb info is empty!");
 		awb_cali_dat->rdm_info.buffer = NULL;
 		awb_cali_dat->rdm_info.size = 0;
@@ -424,7 +424,7 @@ static cmr_int gc5035_common_parse_awb_data(cmr_handle otp_drv_handle) {
 			gc5035_common_awb[0].bg_ratio = bg_typicl > 0 ? bg_typicl : gc5035_common_awb[0].bg_ratio;
 		} else
 			OTP_LOGE("golden data checksum error, parse failed!");
-	} else if (awb_flag & 0xf0 == 0x00) {
+	} else if ((awb_flag & 0xf0) == 0x00) {
 		OTP_LOGE("golden info is empty!");
 	} else {
 		OTP_LOGE("golden info is invalid!");

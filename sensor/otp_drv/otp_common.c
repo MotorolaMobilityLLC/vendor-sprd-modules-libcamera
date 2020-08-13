@@ -69,7 +69,7 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
     OTP_LOGV("E");
     CHECK_PTR((void *)otp_data);
 
-    char otp_bin_ext_path[255];
+    char otp_bin_ext_path[255] = {0};
     FILE *fp = NULL;
 
     snprintf(otp_bin_ext_path, sizeof(otp_bin_ext_path), "%s%s", otp_bin_path,
@@ -81,7 +81,6 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
         fp = fopen(otp_bin_ext_path, "wb");
         if (fp != NULL) {
             fwrite(*otp_data, 1, *otp_size, fp);
-            fclose(fp);
         } else {
             OTP_LOGE("fp is null!!,write otp bin failed");
             ret = OTP_CAMERA_FAIL;
@@ -95,6 +94,11 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
             if (fp != NULL) {
                 fseek(fp, 0L, SEEK_END);
                 *otp_size = ftell(fp); // get bin size
+                if (*otp_size < 0){
+                    OTP_LOGE("Failed to get otp size = %d", *otp_size);
+                    ret = OTP_CAMERA_FAIL;
+                    goto exit;
+                }
                 *otp_data = malloc(*otp_size);
                 if (*otp_data) {
                     while (try_time--) {
@@ -107,7 +111,6 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
                                      "match,Read:0x%x,otp_data_len:0x%lx",
                                      mRead, *otp_size);
                     }
-                    fclose(fp);
                     if ((!try_time) && (mRead != *otp_size)) {
                         free(*otp_data);
                         *otp_data = NULL;
@@ -115,7 +118,6 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
                     }
                 } else {
                     OTP_LOGE("malloc otp data buffer failed");
-                    fclose(fp);
                     ret = OTP_CAMERA_FAIL;
                 }
             } else {
@@ -132,7 +134,9 @@ cmr_int sensor_otp_rw_data_from_file(cmr_u8 cmd, char *file_name,
         ret = OTP_CAMERA_FAIL;
         break;
     }
-
+exit:
+    if (fp)
+        fclose(fp);
     OTP_LOGV("X");
     return ret;
 }
