@@ -3028,7 +3028,7 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
 
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
     struct module_info_t *module_info = &(otp_cxt->otp_module_info);
-    char value[255];
+    char value[255] = {0};
 
     _general_otp_parse_map_version(otp_drv_handle);
     if (module_info->otp_version == VER_ERROR) {
@@ -3061,6 +3061,7 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
             _general_otp_parse_wt_1v1(otp_drv_handle);
         } else {
             OTP_LOGE("illegal sensor id");
+            goto exit;
         }
     } else if (module_info->otp_version == OTP_1_0) {
         _general_otp_parse_module_data_1v0(otp_drv_handle);
@@ -3080,6 +3081,7 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
             _general_otp_parse_slave_ae_1v0(otp_drv_handle);
         } else {
             OTP_LOGE("illegal sensor id");
+            goto exit;
         }
     } else {
         if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1) {
@@ -3117,11 +3119,12 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
             _general_otp_parse_slave_ae_0v4(otp_drv_handle);
         } else {
             OTP_LOGE("illegal sensor id");
+            goto exit;
         }
     }
     /*set buffer_state to 1, means otp data saved in memory*/
     sensor_otp_set_buffer_state(otp_cxt->sensor_id, 1);
-
+exit:
     OTP_LOGV("X");
     return ret;
 }
