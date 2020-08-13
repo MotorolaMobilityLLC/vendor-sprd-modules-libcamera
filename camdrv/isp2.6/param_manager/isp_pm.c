@@ -1340,6 +1340,8 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 				search = &search_modes[2][0];
 			else if (input->mode[i] == WORKMODE_FDR)
 				search = &search_modes[3][0];
+			else
+				search = &search_modes[0][0];
 search:
 			output->mode_id[i] = ISP_MODE_ID_COMMON;
 			for (k = 0; k < max; k++) {
