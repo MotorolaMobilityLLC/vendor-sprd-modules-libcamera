@@ -81,6 +81,10 @@ static void gc02m1b_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag 
 			if (gain >= GC02M1B_AGC_Param[gain_index][0])
 				break;
 
+        if(gain_index < 0){
+            SENSOR_LOGE("Fail to get index, gain_index = %d", gain_index);
+            return;
+        }
 		aec_info->again->settings[0].reg_value = 0x00;
 		aec_info->again->settings[1].reg_value = GC02M1B_AGC_Param[gain_index][1];
 		temp_gain = gain * GC02M1B_SENSOR_DGAIN_BASE / GC02M1B_AGC_Param[gain_index][0];
@@ -89,7 +93,6 @@ static void gc02m1b_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag 
 		SENSOR_LOGI("GC02M1B_AGC_Param[gain_index][1] = 0x%x, temp_gain = 0x%x, gain = 0x%x\n",
 			GC02M1B_AGC_Param[gain_index][1], temp_gain, gain);
     }
-
 }
 
 

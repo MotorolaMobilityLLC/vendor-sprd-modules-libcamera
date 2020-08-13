@@ -80,7 +80,11 @@ static void gc5035_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag *
 	for (gain_index = E_GAIN_INDEX - 1; gain_index >= 0; gain_index--)
 		if (gain >= GC5035_AGC_Param[gain_index][0])
 			break;
-	
+
+    if(gain_index < 0){
+        SENSOR_LOGE("Fail to get index, gain_index = %d", gain_index);
+        return;
+    }
 	aec_info->again->settings[0].reg_value = 0x00;
 	aec_info->again->settings[1].reg_value = GC5035_AGC_Param[gain_index][1];
 	temp_gain = gain * Dgain_ratio / GC5035_AGC_Param[gain_index][0];
