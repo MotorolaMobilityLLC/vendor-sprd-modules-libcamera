@@ -30,6 +30,7 @@ SprdPortraitAlgo::SprdPortraitAlgo() {
     memset(&dfa_cap, 0, sizeof(class_dfa));
     memset(&lptOptions, 0, sizeof(lpt_options));
     memset(&lptOptions_cap, 0, sizeof(lpt_options));
+    memset(Fd_score, 0, sizeof(int32_t) * 10);
 #ifdef CONFIG_FACE_BEAUTY
     mFirstSprdFB = false;
     memset(&fb_prev, 0, sizeof(fb_beauty_param_t));
