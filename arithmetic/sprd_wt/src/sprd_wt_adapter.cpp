@@ -41,7 +41,11 @@ void *sprd_wt_adpt_init(void *param)
 
     if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU)
     {
-       WTprocess_Init(&handle,&input_param);
+       if(WTprocess_Init(&handle,&input_param))
+       {
+          WT_LOGI("WTprocess_Init fail.\n");
+          return NULL;
+       }
     }
 	
     return handle;
@@ -101,7 +105,7 @@ int sprd_wt_get_devicetype(enum camalg_run_type *type)
 
 int sprd_wt_set_devicetype(enum camalg_run_type type)
 {
-    if (type < SPRD_CAMALG_RUN_TYPE_CPU || type >= SPRD_CAMALG_RUN_TYPE_MAX)
+    if (type >= SPRD_CAMALG_RUN_TYPE_MAX)
         return 1;
     g_run_type = type;
 	
