@@ -1601,6 +1601,12 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
     hour = (second2 - second1)/3600;
     minute =((second2 - second1)%3600)/60;
 
+    if (hour < -12) {
+        hour += 24;
+    } else if (hour > 12) {
+        hour -= 24;
+    }
+
     if( hour >= 0 )
         sprintf(zone_buf, "+%02d:%02d", hour,minute);
     else
