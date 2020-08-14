@@ -82,8 +82,8 @@ static void gc8034_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_tag *
 				aec_info->again->settings[16].reg_value = temp_gain & 0xff;
 				for (i = 0; i < AGC_REG_NUM; i++)
 					aec_info->again->settings[i].reg_value = GC8034_AGC_Param[gain_index].agc_register[i].value[Binning_or_Fullsize];
-					break;
-		}
+				break;
+		        }
 	}
 }
 
@@ -445,7 +445,7 @@ static void gc8034_read_otp_kgroup(cmr_handle handle, cmr_u8 page, cmr_u8 addr, 
     SENSOR_IC_CHECK_HANDLE_VOID(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-	cmr_u16 i;
+	int i;
 
 	cmr_u8 regf4 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0xf4);
 
