@@ -1276,7 +1276,7 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
                 HAL_LOGD("feature support:portrait+fb");
             }
             ret = doFaceBeauty(outPortraitMask, output_buff_addr, mCaptureInitParams.width, 
-                        mCaptureInitParams.height, 1, NULL);
+                        mCaptureInitParams.height, 1, NULL, lightportrait_flag);
         }
         if(lightportrait_flag != 0) {
             if(!portrait_flag && (!facebeauty_flag)){
@@ -1287,7 +1287,8 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
             } else {
                 HAL_LOGD("feature support:facebeauty + lpt");
             }
-            ret = capLPT(output_buff_addr,mCaptureInitParams.width,mCaptureInitParams.height,outPortraitMask);
+            ret = capLPT(output_buff_addr,mCaptureInitParams.width,mCaptureInitParams.height,
+                    outPortraitMask, lightportrait_flag);
         }
         free(outPortraitMask);
         output_buff.buffer_addr = output_buff_addr;
@@ -1820,6 +1821,7 @@ void SprdCamera3SinglePortrait::CaptureThread::updateBlurWeightParams(
     if (metaSettings.exists(ANDROID_SPRD_LIGHTPORTRAITTYPE)) {
         lightPortraitType = 
             metaSettings.find(ANDROID_SPRD_LIGHTPORTRAITTYPE).data.i32[0];
+            HAL_LOGV("lightPortraitType %d",lightPortraitType);
     }
 
     mCaptureWeightParams.rotate_angle = orientation;
@@ -3580,12 +3582,12 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                                     int rc = mCaptureThread->doFaceBeauty(NULL, buffer_addr,
                                     mCaptureThread->mPreviewInitParams.width, 
                                     mCaptureThread->mPreviewInitParams.height, 
-                                    0, NULL);
+                                    0, NULL, lightportrait_flag);
                                 }
                                 if(lightportrait_flag != 0){
                                     int rc = mCaptureThread->prevLPT(buffer_addr, 
                                         mCaptureThread->mPreviewInitParams.width, 
-                                        mCaptureThread->mPreviewInitParams.height);
+                                        mCaptureThread->mPreviewInitParams.height, lightportrait_flag);
                                 }
                             }
 
@@ -3810,15 +3812,16 @@ int SprdCamera3SinglePortrait::CaptureThread::deinitLightPortrait() {
 
 typedef enum { PREVIEW = 0, CAPTURE = 1 } portrait_mode;
 
-int SprdCamera3SinglePortrait::CaptureThread::prevLPT(void *input_buff, int picWidth, int picHeight) {
+int SprdCamera3SinglePortrait::CaptureThread::prevLPT(void *input_buff,
+         int picWidth, int picHeight, int lightPortraitType) {
     int rc = NO_ERROR;
-    HAL_LOGI("prevLPT E");
+    HAL_LOGV("prevLPT E");
     /*run dfa */
-    HAL_LOGI("runDFA E");
+    HAL_LOGV("runDFA E");
     ATRACE_BEGIN("dfa");
     rc = runDFA(input_buff, picWidth, picHeight, PREVIEW);
     ATRACE_END();
-    HAL_LOGI("runDFA X");
+    HAL_LOGV("runDFA X");
     if (rc != NO_ERROR) {
         HAL_LOGE("prevLPT runDFA failed");
     }
@@ -3851,17 +3854,17 @@ int SprdCamera3SinglePortrait::CaptureThread::prevLPT(void *input_buff, int picW
     int facecount = faceDetectionInfo.face_num;
 
     /*do lpt */
-    HAL_LOGI("do_image_lpt E");
+    HAL_LOGV("do_image_lpt E");
     ATRACE_BEGIN("lpt");
     rc = do_image_lpt(&lpt_prev, facecount);
     ATRACE_END();
-    HAL_LOGI("do_image_lpt X");
+    HAL_LOGV("do_image_lpt X");
     lpt_return_val = rc;
     if (rc != NO_ERROR) {
         HAL_LOGD("do_image_lpt error %d", rc);
         rc = NO_ERROR;
     }
-    HAL_LOGI("prevLPT X");
+    HAL_LOGV("prevLPT X");
     return rc;
 }
 
@@ -4006,10 +4009,11 @@ int SprdCamera3SinglePortrait::CaptureThread:: getPortraitMask(void *output_buff
     return rc;
 }
 
-int SprdCamera3SinglePortrait::CaptureThread:: capLPT(void *output_buff, 
-        int picWidth, int picHeight, unsigned char *outPortraitMask) {
+int SprdCamera3SinglePortrait::CaptureThread:: capLPT(
+            void *output_buff, int picWidth, int picHeight,
+            unsigned char *outPortraitMask,int lightPortraitType) {
     int rc = NO_ERROR;
-    HAL_LOGD("E");
+    HAL_LOGD("E lightPortraitType %d",lightPortraitType);
     /*init handle*/
     int mobile_angle_cap = mRotation;
     lptOptions_cap.lightCursor = 5; /* Control fill light and shade ratio. Value range [0, 35]*/
@@ -4152,7 +4156,7 @@ int SprdCamera3SinglePortrait::CaptureThread::deinitFaceBeauty() {
 }
 int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, void *input_buff,
                                    int picWidth, int picHeight, int mode,
-                                   faceBeautyLevels *facebeautylevel) {
+                                   faceBeautyLevels *facebeautylevel, int lightPortraitType) {
     int rc = NO_ERROR;
     HAL_LOGV("E");
     if (mode == CAPTURE) {

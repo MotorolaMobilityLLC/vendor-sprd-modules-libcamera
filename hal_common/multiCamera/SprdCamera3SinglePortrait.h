@@ -362,17 +362,17 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         int initPortraitParams();
         int initPortraitLightParams();
         int deinitLightPortrait();
-        int prevLPT(void *input_buff, int picWidth, int picHeight);
+        int prevLPT(void *input_buff, int picWidth, int picHeight, int lightPortraitType);
         int runDFA(void *input_buff, int picWidth, int picHeight, int mode);
         int capLPT(void *output_buff, int picWidth, int picHeight,
-                             unsigned char *outPortraitMask);
+                             unsigned char *outPortraitMask, int lightPortraitType);
         int getPortraitMask(void *output_buff, void *input_buf1_addr,
                                       int vcmCurValue, unsigned char *result);
 #ifdef CONFIG_FACE_BEAUTY
         int initFaceBeautyParams();
         int deinitFaceBeauty();
         int doFaceBeauty(unsigned char *mask, void *input_buff, int picWidth, int picHeight, 
-                    int mode, faceBeautyLevels *facebeautylevel);
+                    int mode, faceBeautyLevels *facebeautylevel, int lightPortraitType);
 #endif
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
         void saveCaptureBlurParams(buffer_handle_t *result_buff,
