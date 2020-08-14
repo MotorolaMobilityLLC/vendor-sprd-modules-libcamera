@@ -331,6 +331,7 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
     bool mSnapshotResultReturn;
 #ifdef CONFIG_FACE_BEAUTY
     faceBeautyLevels fbLevels;
+    faceBeautyLevels fbLevels_cap;
     bool mFaceBeautyFlag;
     bool mFirstSprdFB;
     fb_beauty_param_t fb_prev;

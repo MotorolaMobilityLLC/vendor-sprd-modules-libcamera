@@ -118,6 +118,7 @@ SprdCamera3SinglePortrait::SprdCamera3SinglePortrait() {
            sizeof(camera3_stream_t *) * BLUR_MAX_NUM_STREAMS);
 #ifdef CONFIG_FACE_BEAUTY
     memset(&fbLevels, 0, sizeof(faceBeautyLevels));
+    memset(&fbLevels_cap, 0, sizeof(faceBeautyLevels));
     memset(&fb_prev,0,sizeof(fb_beauty_param_t));
     memset(&fb_cap,0,sizeof(fb_beauty_param_t));
     mFaceBeautyFlag = false;
@@ -1276,7 +1277,7 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
                 HAL_LOGD("feature support:portrait+fb");
             }
             ret = doFaceBeauty(outPortraitMask, output_buff_addr, mCaptureInitParams.width, 
-                        mCaptureInitParams.height, 1, NULL, lightportrait_flag);
+                        mCaptureInitParams.height, 1, &mSinglePortrait->fbLevels_cap, lightportrait_flag);
         }
         if(lightportrait_flag != 0) {
             if(!portrait_flag && (!facebeauty_flag)){
@@ -3272,7 +3273,6 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
     } else {
         mSinglePortrait->mFaceBeautyFlag = false;
     }
-
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     if (mCaptureThread->mVersion == 3 || atoi(prop) != 3) {
         if (metaSettings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
@@ -3421,7 +3421,7 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
     metadata = result->result;
     int portrait_flag = mBlurMode;
     int lightportrait_flag = mCaptureThread->lightPortraitType;
-    int facebeauty_flag = mFaceBeautyFlag;
+    int facebeauty_flag = mSinglePortrait->mFaceBeautyFlag;
 
     /* Direclty pass preview buffer and meta result for Main camera */
     if (result_buffer == NULL && result->result != NULL) {
@@ -3508,6 +3508,7 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
         currStreamType == DEFAULT_STREAM) {
         mSnapshotResultReturn = true;
         HAL_LOGD("framenumber:%d, receive yuv:%d", cur_frame_number, mReqState);
+        memcpy(&fbLevels_cap, &fbLevels, sizeof(faceBeautyLevels));
         single_portrait_queue_msg_t capture_msg;
         capture_msg.msg_type = SINGLE_PORTRAIT_MSG_DATA_PROC;
         capture_msg.combo_buff.frame_number = result->frame_number;
@@ -3581,8 +3582,8 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                                 if(facebeauty_flag){
                                     int rc = mCaptureThread->doFaceBeauty(NULL, buffer_addr,
                                     mCaptureThread->mPreviewInitParams.width, 
-                                    mCaptureThread->mPreviewInitParams.height, 
-                                    0, NULL, lightportrait_flag);
+                                    mCaptureThread->mPreviewInitParams.height,
+                                    0, &mSinglePortrait->fbLevels, lightportrait_flag);
                                 }
                                 if(lightportrait_flag != 0){
                                     int rc = mCaptureThread->prevLPT(buffer_addr, 
@@ -4160,6 +4161,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
     int rc = NO_ERROR;
     HAL_LOGV("E");
     if (mode == CAPTURE) {
+        HAL_LOGD("cap dofacebeauty E");
         int mobile_angle_cap = mRotation;
         face_beauty_set_devicetype(&mSinglePortrait->fb_cap, SPRD_CAMALG_RUN_TYPE_CPU);
         face_beauty_init(&mSinglePortrait->fb_cap, 0, 2, SHARKL5PRO);
@@ -4221,6 +4223,22 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         mSinglePortrait->beauty_image.inputImage.height = picHeight;
         mSinglePortrait->beauty_image.inputImage.stride = picWidth;
         mSinglePortrait->beauty_image.inputImage.size = picWidth * picHeight * 3 / 2;
+         // update
+        mSinglePortrait->fbLevels.blemishLevel = facebeautylevel->blemishLevel;
+        mSinglePortrait->fbLevels.smoothLevel = facebeautylevel->smoothLevel;
+        mSinglePortrait->fbLevels.skinColor = facebeautylevel->skinColor;
+        mSinglePortrait->fbLevels.skinLevel = facebeautylevel->skinLevel;
+        mSinglePortrait->fbLevels.brightLevel = facebeautylevel->brightLevel;
+        mSinglePortrait->fbLevels.lipColor = facebeautylevel->lipColor;
+        mSinglePortrait->fbLevels.lipLevel = facebeautylevel->lipLevel;
+        mSinglePortrait->fbLevels.slimLevel = facebeautylevel->slimLevel;
+        mSinglePortrait->fbLevels.largeLevel = facebeautylevel->largeLevel;
+        mSinglePortrait->fbLevels.cameraBV = lptOptions_cap.cameraBV;
+        mSinglePortrait->fbLevels.cameraISO = lptOptions_cap.cameraISO;
+        mSinglePortrait->fbLevels.cameraCT = lptOptions_cap.cameraCT;
+        HAL_LOGD("facebeautylevel %d %d %d %d %d",mSinglePortrait->fbLevels.blemishLevel,
+            mSinglePortrait->fbLevels.smoothLevel,mSinglePortrait->fbLevels.skinColor,
+            mSinglePortrait->fbLevels.skinLevel,mSinglePortrait->fbLevels.brightLevel);
         rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
                               &mSinglePortrait->beauty_image);
         rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
@@ -4238,6 +4256,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         HAL_LOGD("capture face beauty done!");
         rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_FAST_STOP_CMD, NULL);
         face_beauty_deinit(&mSinglePortrait->fb_cap);
+        HAL_LOGD("cap dofacebeauty X");
     } else {
         int index = faceDetectionInfo.face_num;
         int faceCount = faceDetectionInfo.face_num;
@@ -4263,6 +4282,21 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         mSinglePortrait->beauty_image.inputImage.height = picHeight;
         mSinglePortrait->beauty_image.inputImage.stride = picWidth;
         mSinglePortrait->beauty_image.inputImage.size = picWidth * picHeight * 3 / 2;
+
+        // update
+        mSinglePortrait->fbLevels.blemishLevel = facebeautylevel->blemishLevel;
+        mSinglePortrait->fbLevels.smoothLevel = facebeautylevel->smoothLevel;
+        mSinglePortrait->fbLevels.skinColor = facebeautylevel->skinColor;
+        mSinglePortrait->fbLevels.skinLevel = facebeautylevel->skinLevel;
+        mSinglePortrait->fbLevels.brightLevel = facebeautylevel->brightLevel;
+        mSinglePortrait->fbLevels.lipColor = facebeautylevel->lipColor;
+        mSinglePortrait->fbLevels.lipLevel = facebeautylevel->lipLevel;
+        mSinglePortrait->fbLevels.slimLevel = facebeautylevel->slimLevel;
+        mSinglePortrait->fbLevels.largeLevel = facebeautylevel->largeLevel;
+        mSinglePortrait->fbLevels.cameraBV = lptOptions_prev.cameraBV;
+        mSinglePortrait->fbLevels.cameraISO = lptOptions_prev.cameraISO;
+        mSinglePortrait->fbLevels.cameraCT = lptOptions_prev.cameraCT;
+
         rc = face_beauty_ctrl(&mSinglePortrait->fb_prev, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
                               &mSinglePortrait->beauty_image);
         rc = face_beauty_ctrl(&mSinglePortrait->fb_prev, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
