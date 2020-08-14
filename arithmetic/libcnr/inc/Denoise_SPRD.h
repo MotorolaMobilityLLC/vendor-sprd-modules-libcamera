@@ -32,6 +32,11 @@ extern "C" {
 		int			fd;
 	} ldr_image_vdsp_t;
 
+	typedef struct ThreadSet_t {
+		unsigned int threadNum;
+		unsigned int coreBundle;
+	} ThreadSet;
+	
 	typedef struct denoise_buffer_t
 	{
 		unsigned char *bufferY;
@@ -112,9 +117,23 @@ extern "C" {
 		cnr_param_t *cnr3Param;   //CNR3.0
 	} Denoise_Param;
 
+	/*! version information */
+	typedef struct _tag_nr_version_t
+	{
+		unsigned char		major;              /*!< API major version */
+		unsigned char		minor;              /*!< API minor version */
+		unsigned char		micro;              /*!< API micro version */
+		unsigned char		nano;               /*!< API nano version */
+		int                 bugid;              /*!< API bugid */
+		char		built_date[0x20];   /*!< API built date */
+		char		built_time[0x20];   /*!< API built time */
+		char		built_rev[0x100];	/*!< API built version, linked with vcs resivion> */
+	} nr_version_t;
+	
 	void *sprd_cnr_init(int width, int height, int cnr_runversion);
 	int sprd_cnr_process(void *handle, denoise_buffer *imgBuffer, Denoise_Param *paramInfo, denoise_mode mode, int width, int height);
 	int sprd_cnr_deinit(void *handle);
+	int nr_get_version(nr_version_t * version);
 
 	void *sprd_cnr_init_vdsp(int width, int height, int cnr_runversion);
 	int sprd_cnr_process_vdsp(void *handle, denoise_buffer_vdsp *imgBuffer, Denoise_Param *paramInfo, denoise_mode mode, int width, int height);
