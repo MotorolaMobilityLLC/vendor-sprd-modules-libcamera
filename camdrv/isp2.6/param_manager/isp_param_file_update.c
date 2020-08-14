@@ -1254,8 +1254,6 @@ cmr_s32 read_fix_ae3_info(FILE * fp, struct sensor_ae_tab_3_x * ae_ptr)
 			flag_end = 1;
 			break;
 		}
-		if (0 != flag_end)
-			break;
 	}
 
 exit:
@@ -1815,7 +1813,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	struct sensor_nr_scene_map_param *nr_map_ptr = PNULL;
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
-	char *filename[MAX_MODE_NUM + 1] = { PNULL };
+	char *filename[MAX_MODE_NUM] = { PNULL };
 	FILE *fp = PNULL;
 
 	version_id = sensor_raw_ptr->version_info->version_id;
@@ -1837,7 +1835,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 		return rtn;
 	}
 
-	for (i = 0; i < (MAX_MODE_NUM + 1); i++) {
+	for (i = 0; i < MAX_MODE_NUM; i++) {
 		filename[i] = (char *)malloc(256 * sizeof(char));
 		if (NULL == filename[i]) {
 			ISP_LOGE("fail to malloc mem!");
@@ -1908,18 +1906,39 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 
 	sprintf(libuse_info, "static uint32_t s_%s_libuse_info", sensor_name);
 
-	for (i = 0; i < (MAX_MODE_NUM + 1); i++) {
-		if (i < MAX_MODE_NUM) {
-			sprintf(filename[i], "%ssensor_%s_raw_param_%s.c", param_path, sensor_name, &nr_mode_name[i][0]);
-			sprintf(tune_info, "static uint8_t s_%s_tune_info_%s", sensor_name, &nr_mode_name[i][0]);
-			sprintf(note_name, "static uint8_t s_%s_%s_tool_ui_input", sensor_name, &nr_mode_name[i][0]);
-			sprintf(ae_tab, "static struct ae_table_param_2 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
-			sprintf(ae3_tab, "static struct ae_table_param_3 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
-			sprintf(awb_tab, "static struct sensor_awb_table_param s_%s_%s_awb_table_param", sensor_name, &nr_mode_name[i][0]);
-			sprintf(lsc_tab, "static struct sensor_lsc_2d_table_param s_%s_%s_lsc_2d_table_param", sensor_name, &nr_mode_name[i][0]);
-		} else {
-			sprintf(filename[i], "%ssensor_%s_raw_param_main.c", param_path, sensor_name);
+	sprintf(filename[0], "%ssensor_%s_raw_param_main.c", param_path, sensor_name);
+	fp = fopen(filename[0], "r");
+	if (NULL == fp) {
+		ISP_LOGE("fail to open file %s!\n", filename[0]);
+		rtn = 0x01;
+		goto exit;
+	}
+	ISP_LOGD("OKOK to fopen %s",filename[0]);
+
+	while (!feof(fp)) {
+		if (fgets(line_buf, 512, fp) == NULL) {
+			break;
 		}
+		if (strstr(line_buf, libuse_info) != NULL) {
+			rtn = read_libuse_info(fp, sensor_raw_ptr);
+			if (0x00 != rtn) {
+				ISP_LOGE("fail to check libuse_info!");
+				fclose(fp);
+				goto exit;
+			}
+			break;
+		}
+	}
+	fclose(fp);
+
+	for (i = 0; i < MAX_MODE_NUM; i++) {
+		sprintf(filename[i], "%ssensor_%s_raw_param_%s.c", param_path, sensor_name, &nr_mode_name[i][0]);
+		sprintf(tune_info, "static uint8_t s_%s_tune_info_%s", sensor_name, &nr_mode_name[i][0]);
+		sprintf(note_name, "static uint8_t s_%s_%s_tool_ui_input", sensor_name, &nr_mode_name[i][0]);
+		sprintf(ae_tab, "static struct ae_table_param_2 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
+		sprintf(ae3_tab, "static struct ae_table_param_3 s_%s_%s_ae_table_param", sensor_name, &nr_mode_name[i][0]);
+		sprintf(awb_tab, "static struct sensor_awb_table_param s_%s_%s_awb_table_param", sensor_name, &nr_mode_name[i][0]);
+		sprintf(lsc_tab, "static struct sensor_lsc_2d_table_param s_%s_%s_lsc_2d_table_param", sensor_name, &nr_mode_name[i][0]);
 
 		fp = fopen(filename[i], "r");
 		if (NULL == fp) {
@@ -1933,15 +1952,6 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 				break;
 			}
 
-			if (strstr(line_buf, libuse_info) != NULL) {
-				rtn = read_libuse_info(fp, sensor_raw_ptr);
-				if (0x00 != rtn) {
-					ISP_LOGE("fail to check libuse_info!");
-					fclose(fp);
-					goto exit;
-				}
-				break;
-			}
 			if (strstr(line_buf, tune_info) != NULL) {
 				rtn = read_tune_info(fp, sensor_raw_ptr->mode_ptr[i].addr, &sensor_raw_ptr->mode_ptr[i].len);
 				if (0x00 != rtn) {
@@ -2045,7 +2055,7 @@ exit:
 	if (PNULL != line_buf) {
 		free(line_buf);
 	}
-	for (i = 0; i < 14; i++) {
+	for (i = 0; i < MAX_MODE_NUM; i++) {
 		if (PNULL != filename[i]) {
 			free(filename[i]);
 		}
@@ -2069,7 +2079,12 @@ cmr_u32 isp_pm_raw_para_update_from_file(struct sensor_raw_info * raw_info_ptr, 
 
 	if (data_path && data_path[0] != 0) {
 		ISP_LOGD("tuning param data path %s\n", data_path);
-		strcpy(path, data_path);
+		if (strlen(data_path) < sizeof(path)) {
+			strcpy(path, data_path);
+		} else {
+			ISP_LOGE("error: data_path length %s is overrun 256\n", data_path);
+			strcpy(path, CAMERA_DUMP_PATH);
+		}
 	} else {
 		strcpy(path, CAMERA_DUMP_PATH);
 	}
