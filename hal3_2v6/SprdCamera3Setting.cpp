@@ -2674,7 +2674,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
         available_cam_features.size();
 
-    ALOGV("available_cam_features=%d", available_cam_features.size());
+    ALOGV("available_cam_features=%zu", available_cam_features.size());
     getCameraIPInited();
     property_set("persist.vendor.cam.ip.switch.on", "0");
     HAL_LOGI("available_cam_features=%d",

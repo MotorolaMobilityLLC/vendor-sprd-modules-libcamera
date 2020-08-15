@@ -117,6 +117,12 @@ int SprdCamera3Factory::set_callbacks(
 void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t *ops) {
     HAL_LOGV("E");
 
+    /*
+     * *** IMPORTANT ***
+     *
+     * anything related to camera_metadata_t API should not be used until
+     * vendor tags being set up
+     */
     ops->get_tag_count = SprdCamera3Setting::get_tag_count;
     ops->get_all_tags = SprdCamera3Setting::get_all_tags;
     ops->get_section_name = SprdCamera3Setting::get_section_name;
@@ -271,9 +277,6 @@ int SprdCamera3Factory::init_() {
      */
     if (mUseCameraId == PrivateId)
         mNumberOfCameras = mNumOfCameras;
-
-    if (mUseCameraId == DynamicId)
-        initializeTorchHelper();
 
     return 0;
 }
@@ -583,8 +586,8 @@ int SprdCamera3Factory::setCallbacks(
     }
     mCameraCallbacks = callbacks;
 
-    if (mUseCameraId == DynamicId && mTorchHelper)
-        mTorchHelper->setCallbacks(mCameraCallbacks);
+    if (mUseCameraId == DynamicId)
+        initializeTorchHelper(callbacks);
 
     const camera_module_callbacks_t *cb = &mFlashCallback;
     int ret = SprdCamera3Flash::registerCallbacks(cb);
@@ -627,7 +630,8 @@ int SprdCamera3Factory::setTorchMode(const char *camera_id, bool enabled) {
     return SprdCamera3Flash::setTorchMode(camera_id, enabled);
 }
 
-void SprdCamera3Factory::initializeTorchHelper() {
+void SprdCamera3Factory::initializeTorchHelper(
+    const camera_module_callbacks_t *callbacks) {
     mTorchHelper = make_shared<TorchHelper>();
 
     camera_metadata_ro_entry_t entry;
@@ -670,13 +674,14 @@ void SprdCamera3Factory::initializeTorchHelper() {
         mTorchHelper->addTorchUser(i, info.facing == CAMERA_FACING_FRONT);
     }
 
+    mTorchHelper->setCallbacks(callbacks);
     HAL_LOGI("torch status map initialized for %zu camera(s)",
              mTorchHelper->totalSize());
 }
 
 void SprdCamera3Factory::onCameraClosed(int camera_id) {
     HAL_LOGI("camera %d closed", camera_id);
-    if (mTorchHelper)
+    if (mUseCameraId == DynamicId && mTorchHelper)
         mTorchHelper->unlockTorch(camera_id);
 }
 

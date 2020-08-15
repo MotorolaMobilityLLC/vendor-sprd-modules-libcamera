@@ -95,7 +95,7 @@ class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
     int setCallbacks(const camera_module_callbacks_t *callbacks);
     void torchModeStatusChange(const char *camera_id, int new_status) const;
     int setTorchMode(const char *camera_id, bool enabled);
-    void initializeTorchHelper();
+    void initializeTorchHelper(const camera_module_callbacks_t *callbacks);
     void onCameraClosed(int camera_id);
 
   private:

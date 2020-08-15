@@ -36,6 +36,9 @@ int SimpleMultiCamera::getCameraInfo(camera_info_t *info) {
     if (!info)
         return -EINVAL;
 
+    constructCharacteristics();
+    constructConflictDevices();
+
     /* camera info follow master camera except those changed in constructor */
     SprdCamera3Setting::getCameraInfo(mMasterId, info);
     info->device_version = common.version;
@@ -98,6 +101,7 @@ SimpleMultiCamera::construct_default_request_settings(int type) {
         CameraMetadata data = clone_camera_metadata(origin);
 
         {
+            /* mActiveArrayWidth/Height is ready after getCameraInfo call */
             int32_t cropRegion[4] = {0, 0, mActiveArrayWidth,
                                      mActiveArrayHeight};
             data.update(ANDROID_SCALER_CROP_REGION, cropRegion, 4);
@@ -138,9 +142,6 @@ SimpleMultiCamera::SimpleMultiCamera(int cameraId, const vector<int> &sensorIds,
       mStaticCameraCharacteristics(nullptr), mConflictingDevicesLength(0),
       mConflictingDevices(nullptr), mActiveArrayWidth(0),
       mActiveArrayHeight(0) {
-    constructCharacteristics();
-    constructConflictDevices();
-
     ALOGI("create SimpleMultiCamera instance with camera ID %d, master sensor "
           "ID %d",
           mCameraId, mMasterId);
