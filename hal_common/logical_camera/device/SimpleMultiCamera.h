@@ -4,6 +4,20 @@
 #include <CameraDevice_3_5.h>
 #include <ICameraBase.h>
 #include <ICameraCreator.h>
+#include <utils/List.h>
+#include <utils/Mutex.h>
+
+typedef struct {
+    uint32_t frame_number;
+    CameraMetadata meta;
+} metadata_t;
+
+typedef struct {
+    int32_t x;
+    int32_t y;
+    int32_t w;
+    int32_t h;
+} img_region;
 
 namespace sprdcamera {
 
@@ -26,6 +40,12 @@ class SimpleMultiCamera : public CameraDevice_3_5 {
     int closeCameraDevice() override;
 
     virtual ~SimpleMultiCamera();
+    const camera3_callback_ops_t *mCallbackOps;
+    static camera3_callback_ops callback_ops_main;
+    static void process_capture_result(const struct camera3_callback_ops *ops,
+                                       const camera3_capture_result_t *result);
+    static void notify(const struct camera3_callback_ops *ops,
+                       const camera3_notify_msg_t *msg);
 
   private:
     SimpleMultiCamera(int cameraId, const std::vector<int> &sensorIds,
@@ -34,6 +54,13 @@ class SimpleMultiCamera : public CameraDevice_3_5 {
     void destructCharacteristics();
     void constructConflictDevices();
     void destructConflictDevices();
+    void resetRequest(camera3_capture_request_t *request);
+    img_region transferCropRegion(img_region src, float ratio);
+    img_region getImgRegion(img_region src, float ratio);
+    void setResultMetadata(CameraMetadata &curMetadata, CameraMetadata meta);
+    img_region transfer3ARegions(img_region src, img_region cropRegion,
+                                 float ratio);
+    img_region get3ARegions(img_region src, img_region cropRegion, float ratio);
 
     const std::vector<int> mSensorIds;
     const std::vector<int> mPhysicalIds;
@@ -45,6 +72,9 @@ class SimpleMultiCamera : public CameraDevice_3_5 {
     std::map<int, camera_metadata_t *> mSettingMap;
     int32_t mActiveArrayWidth;
     int32_t mActiveArrayHeight;
+    int32_t mMaxRegions[3];
+    Mutex mMetaDataLock;
+    List<metadata_t> mReqMetadataList;
 
     class SimpleMultiCameraCreator : public ICameraCreator {
         std::shared_ptr<ICameraBase>
