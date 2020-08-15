@@ -212,7 +212,7 @@ const int32_t kavailable_fps_ranges_back[] = {
     10, 10, 5, 15, 15, 15, 5, 20, 20, 20, 5, 24, 24, 24, 5, 30, 20, 30, 30, 30};
 const int32_t kavailable_fps_ranges_front[] = {5, 15, 15, 15, 5,  20, 20, 20,
                                                5, 30, 15, 30, 20, 30, 30, 30};
-const int32_t kavailable_fps_ranges_sub[] = {5, 15, 15, 15, 24, 24, 5, 30, 30, 30};
+const int32_t kavailable_fps_ranges_sub[] = {5, 15, 15, 15, 24, 24, 5, 30, 20, 30, 30, 30};
 
 const int32_t kavailable_high_speed_video_configration[] = {
     1280, 720, 30, 120, 1280, 720, 120, 120};
