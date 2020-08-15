@@ -2480,6 +2480,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	struct isp_pm_ioctl_output output;
 	struct awb_ctrl_init_param param;
 	struct ae_monitor_info info;
+	char awb_ver[PROPERTY_VALUE_MAX];
 
 	memset((void *)&input, 0, sizeof(input));
 	memset((void *)&output, 0, sizeof(output));
@@ -2509,6 +2510,17 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 
 	param.stat_img_size.w = cxt->binning_stats.binning_size.w;
 	param.stat_img_size.h = cxt->binning_stats.binning_size.h;
+	/* here can select awb3.x using tuning_param */
+	ISP_LOGI("AWB VERSION = %x", *((int *)output.param_data->data_ptr +1));
+
+	/* get awb version for HWSIM */
+	if (*((int *)output.param_data->data_ptr +1) == 0x000c0007)
+		sprintf(awb_ver, "%s\n", "awb2.x");
+	else
+		sprintf(awb_ver, "%s\n", "awb3.x");
+
+	/* ispctl_calc_awb wil use it to load diffrent lib */
+	property_set("persist.vendor.cam.isp.awb", awb_ver);
 
 	param.tuning_param = output.param_data->data_ptr;
 	param.param_size = output.param_data->data_size;
