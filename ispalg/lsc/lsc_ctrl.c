@@ -188,7 +188,7 @@ static cmr_s32 _lscctrl_create_thread(struct lsc_ctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
 
-	rtn = cmr_thread_create2(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM,
+	rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM,
             _lscctrl_ctrl_thr_proc, (void *)cxt_ptr, "lscctrl");
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");

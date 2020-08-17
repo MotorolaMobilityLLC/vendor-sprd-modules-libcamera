@@ -440,7 +440,7 @@ static cmr_int refocus_thread_create(struct class_refocus *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create2(&class_handle->thread_handle,
+        ret = cmr_thread_create(&class_handle->thread_handle,
                                 CAMERA_REFOCUS_MSG_QUEUE_SIZE,
                                 refocus_thread_proc, (void *)class_handle,
                                 "refocus");

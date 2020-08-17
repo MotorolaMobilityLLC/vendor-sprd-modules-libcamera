@@ -1633,7 +1633,7 @@ static cmr_int threednr_prevthread_create(struct class_3dnr_pre *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create2(&class_handle->threednr_prevthread,
+        ret = cmr_thread_create(&class_handle->threednr_prevthread,
                                 /*CAMERA_3DNR_MSG_QUEUE_SIZE*/ 8,
                                 threednr_process_prevthread_proc,
                                 (void *)class_handle, "threednr_prv");
@@ -1679,7 +1679,7 @@ static cmr_int threednr_thread_create(struct class_3dnr *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create2(&class_handle->threednr_thread,
+        ret = cmr_thread_create(&class_handle->threednr_thread,
                 CAMERA_3DNR_MSG_QUEUE_SIZE, threednr_process_thread_proc,
                 (void *)class_handle, "threednr");
         if (ret) {
@@ -1687,7 +1687,7 @@ static cmr_int threednr_thread_create(struct class_3dnr *class_handle) {
             ret = CMR_CAMERA_FAIL;
             return ret;
         }
-        ret = cmr_thread_create2(&class_handle->scaler_thread,
+        ret = cmr_thread_create(&class_handle->scaler_thread,
                 CAMERA_3DNR_MSG_QUEUE_SIZE, threednr_scaler_thread_proc,
                 (void *)class_handle, "scaler_3dnr");
         if (ret) {

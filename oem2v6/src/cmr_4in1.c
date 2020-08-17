@@ -291,7 +291,7 @@ static cmr_int thread_create_4in1(struct class_4in1 *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create2(&class_handle->thread_4in1,
+        ret = cmr_thread_create(&class_handle->thread_4in1,
                                 CAMERA_4IN1_MSG_QUEUE_SIZE, thread_proc_4in1,
                                 (void *)class_handle, "4in1_remosc");
         if (ret) {

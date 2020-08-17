@@ -235,7 +235,7 @@ static cmr_s32 _tof_create_thread(struct tof_ctrl_cxt *cxt_ptr)
 {
 	  cmr_int rtn = ISP_SUCCESS;
 
-	  rtn = cmr_thread_create2(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, _tof_ctrl_thr_proc, (void *)cxt_ptr, "tof");
+	  rtn = cmr_thread_create(&cxt_ptr->thr_handle, ISP_THREAD_QUEUE_NUM, _tof_ctrl_thr_proc, (void *)cxt_ptr, "tof");
 	  if (rtn) {
 		  ISP_LOGE("fail to create ctrl thread");
 		  rtn = ISP_ERROR;

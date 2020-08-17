@@ -85,15 +85,10 @@ cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle);
 cmr_int cmr_msg_queue_destroy(cmr_handle queue_handle);
 
 cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
-                     msg_process proc_cb, void *p_data);
-
-cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
                            msg_process proc_cb, void *p_data,
                            const char *thread_name);
 
 cmr_int cmr_thread_destroy(cmr_handle thread_handle);
-
-cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name);
 
 cmr_int cmr_thread_msg_send(cmr_handle thread_handle, struct cmr_msg *message);
 

@@ -415,77 +415,11 @@ static void *cmr_common_routine(void *client_data) {
 
     return NULL;
 }
-/* Fuction: cmr_thread_create
- * Suggest: please use cmr_thread_create2
- *   maybe will remove this function later, now remain this for
- *   those gerrit using but not merged
- */
-cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
-                     msg_process proc_cb, void *p_data) {
-    cmr_int rtn = CMR_MSG_SUCCESS;
-    pthread_attr_t attr;
-    struct cmr_thread *thread = NULL;
-    CMR_MSG_INIT(message);
 
-    CMR_LOGV("E");
-
-    if (!thread_handle || !queue_length || !proc_cb) {
-        return CMR_MSG_PARAM_ERR;
-    }
-
-    *thread_handle = 0;
-    thread = (struct cmr_thread *)malloc(sizeof(struct cmr_thread));
-    if (!thread) {
-        CMR_LOGE("No mem!");
-        return CMR_MSG_NO_MEM;
-    }
-    thread->magic = CMR_THREAD_MAGIC_CODE;
-    thread->p_data = p_data;
-    thread->msg_process_cb = proc_cb;
-    memset(thread->name, 0x00, sizeof(thread->name));
-    CMR_LOGV("thread 0x%p, data 0x%p", thread, p_data);
-    rtn = cmr_msg_queue_create(queue_length, &thread->queue_handle);
-    if (rtn) {
-        CMR_LOGE("No mem to create msg queue");
-        free((void *)thread);
-        thread = NULL;
-        return rtn;
-    }
-
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    rtn = pthread_create(&thread->thread_handle, &attr, cmr_common_routine,
-                         thread);
-    if (rtn) {
-        CMR_LOGE("Fail to create thread");
-        free((void *)thread->queue_handle);
-        thread->queue_handle = NULL;
-        free((void *)thread);
-        thread = NULL;
-        return rtn;
-    }
-    message.msg_type = CMR_THREAD_INIT_EVT;
-    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-    rtn = cmr_msg_post(thread->queue_handle, &message, 1);
-    if (rtn) {
-        CMR_LOGE("Fail to send INIT message to thread");
-        free((void *)thread->queue_handle);
-        thread->queue_handle = NULL;
-        free((void *)thread);
-        thread = NULL;
-        return rtn;
-    }
-
-    pthread_attr_destroy(&attr);
-    *thread_handle = (cmr_handle)thread;
-
-    CMR_LOGV("X");
-    return rtn;
-}
-/* Function: cmr_thread_create2
+/* Function: cmr_thread_create
  * recommended, simple, can print name to log
  */
-cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
+cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
                            msg_process proc_cb, void *p_data,
                            const char *thread_name) {
     cmr_int rtn = CMR_MSG_SUCCESS;
@@ -493,6 +427,7 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
     struct cmr_thread *thread = NULL;
     CMR_MSG_INIT(message);
     int i;
+    struct cmr_msg_cxt *msg_cxt = NULL;
 
     CMR_LOGV("E");
 
@@ -524,8 +459,12 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
                          thread);
     if (rtn) {
         CMR_LOGE("Fail to create thread");
-        free((void *)thread->queue_handle);
-        thread->queue_handle = NULL;
+        msg_cxt = thread->queue_handle;
+        if (msg_cxt) {
+            free(msg_cxt->msg_head);
+            free((void *)msg_cxt);
+            thread->queue_handle = NULL;
+        }
         free((void *)thread);
         thread = NULL;
         return rtn;
@@ -548,8 +487,12 @@ cmr_int cmr_thread_create2(cmr_handle *thread_handle, cmr_u32 queue_length,
     rtn = cmr_msg_post(thread->queue_handle, &message, 1);
     if (rtn) {
         CMR_LOGE("Fail to send INIT message to thread");
-        free((void *)thread->queue_handle);
-        thread->queue_handle = NULL;
+        msg_cxt = thread->queue_handle;
+        if (msg_cxt) {
+            free(msg_cxt->msg_head);
+            free((void *)msg_cxt);
+            thread->queue_handle = NULL;
+        }
         free((void *)thread);
         thread = NULL;
         return rtn;
@@ -566,7 +509,6 @@ cmr_int cmr_thread_destroy(cmr_handle thread_handle) {
     CMR_MSG_INIT(message);
     cmr_int ret = CMR_MSG_SUCCESS;
     struct cmr_thread *thread = (struct cmr_thread *)thread_handle;
-    struct cmr_msg_cxt *msg_cxt = NULL;
 
     CMR_LOGV("E");
 
@@ -609,25 +551,6 @@ cmr_int cmr_thread_msg_num(cmr_handle thread_handle, cmr_u32 *pmsg_num) {
 
     thread = (struct cmr_thread *)thread_handle;
     ret = cmr_msg_get_num(thread->queue_handle, pmsg_num);
-
-    return ret;
-}
-
-cmr_int cmr_thread_set_name(cmr_handle thread_handle, char *name) {
-    cmr_int ret = CMR_MSG_SUCCESS;
-    struct cmr_thread *thread = NULL;
-    size_t i;
-
-    if (!thread_handle || !name) {
-        return CMR_MSG_PARAM_ERR;
-    }
-
-    thread = (struct cmr_thread *)thread_handle;
-    ret = pthread_setname_np(thread->thread_handle, name);
-    // save name
-    i = strlen(name);
-    i = i < sizeof(thread->name) ? i : (sizeof(thread->name) - 1);
-    memcpy(thread->name, name, i);
 
     return ret;
 }

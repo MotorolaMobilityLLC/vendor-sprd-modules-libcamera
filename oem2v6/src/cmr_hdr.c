@@ -737,7 +737,7 @@ static cmr_int hdr_thread_create(struct class_hdr *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create2(&class_handle->hdr_thread,
+        ret = cmr_thread_create(&class_handle->hdr_thread,
                                 CAMERA_HDR_MSG_QUEUE_SIZE, hdr_thread_proc,
                                 (void *)class_handle, "hdr");
         if (ret) {

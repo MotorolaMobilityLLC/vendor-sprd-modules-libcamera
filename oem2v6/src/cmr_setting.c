@@ -4318,7 +4318,7 @@ cmr_int cmr_setting_init(struct setting_init_in *param_ptr,
     cmr_bzero(cpt, sizeof(*cpt));
 
     /*create thread */
-    ret = cmr_thread_create2(&cpt->thread_handle, SETTING_MSG_QUEUE_SIZE,
+    ret = cmr_thread_create(&cpt->thread_handle, SETTING_MSG_QUEUE_SIZE,
                             setting_thread_proc, (void *)cpt, "setting");
 
     if (CMR_MSG_SUCCESS != ret) {

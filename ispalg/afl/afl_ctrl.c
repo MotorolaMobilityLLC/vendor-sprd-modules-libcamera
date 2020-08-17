@@ -401,7 +401,7 @@ static cmr_int aflctrl_create_thread(struct isp_anti_flicker_cfg *cxt)
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	rtn = cmr_thread_create2(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
+	rtn = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
             aflctrl_ctrl_thr_proc, (void *)cxt, "aflctrl");
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread ");

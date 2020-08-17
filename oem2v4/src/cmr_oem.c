@@ -4264,7 +4264,7 @@ cmr_int camera_create_prev_thread(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    ret = cmr_thread_create2(&cxt->prev_cb_thr_handle, PREVIEW_MSG_QUEUE_SIZE,
+    ret = cmr_thread_create(&cxt->prev_cb_thr_handle, PREVIEW_MSG_QUEUE_SIZE,
                             camera_preview_cb_thread_proc, (void *)oem_handle,
                             "preview_cb");
 
@@ -4305,7 +4305,7 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    ret = cmr_thread_create2(&cxt->snp_cb_thr_handle, SNAPSHOT_MSG_QUEUE_SIZE,
+    ret = cmr_thread_create(&cxt->snp_cb_thr_handle, SNAPSHOT_MSG_QUEUE_SIZE,
                             camera_snapshot_cb_thread_proc, (void *)oem_handle,
                             "snap_cb");
 
@@ -4315,7 +4315,7 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
         goto exit;
     }
 
-    ret = cmr_thread_create2(&cxt->snp_secondary_thr_handle,
+    ret = cmr_thread_create(&cxt->snp_secondary_thr_handle,
             SNAPSHOT_MSG_QUEUE_SIZE, camera_snapshot_secondary_thread_proc,
             (void *)oem_handle, "snap_sec");
 
@@ -4324,7 +4324,7 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
         goto destroy_cb_thr;
     }
 
-    ret = cmr_thread_create2(
+    ret = cmr_thread_create(
         &cxt->snp_send_raw_image_handle, SNAPSHOT_MSG_QUEUE_SIZE,
         camera_snapshot_send_raw_thread_proc, (void *)oem_handle, "snap_raw");
 
@@ -4625,7 +4625,7 @@ static cmr_int camera_create_init_thread(cmr_handle oem_handle) {
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
     /*create thread*/
-    ret = cmr_thread_create2((cmr_handle *)&cxt->init_thread,
+    ret = cmr_thread_create((cmr_handle *)&cxt->init_thread,
                             CAMERA_OEM_MSG_QUEUE_SIZE, camera_init_thread_proc,
                             (void *)cxt, "camera_init");
     if (CMR_MSG_SUCCESS != ret) {

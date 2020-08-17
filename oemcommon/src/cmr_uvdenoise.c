@@ -510,7 +510,7 @@ static cmr_int uvde_thread_create(struct class_uvde *class_handle) {
     if (!class_handle->is_inited) {
         for (thread_id = 0; thread_id < THREAD_UVDE; thread_id++) {
             cur_handle_ptr = &uvde_handle->thread_handles[thread_id];
-            ret = cmr_thread_create2(cur_handle_ptr, CAMERA_UVDE_MSG_QUEUE_SIZE,
+            ret = cmr_thread_create(cur_handle_ptr, CAMERA_UVDE_MSG_QUEUE_SIZE,
                                     uvde_thread_proc, (void *)class_handle,
                                     "uvde");
             if (ret) {

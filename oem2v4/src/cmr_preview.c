@@ -1899,7 +1899,7 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
         sem_init(&handle->thread_cxt.prev_sync_sem, 0, 0);
         sem_init(&handle->thread_cxt.prev_recovery_sem, 0, 1);
 
-        ret = cmr_thread_create2(&handle->thread_cxt.assist_thread_handle,
+        ret = cmr_thread_create(&handle->thread_cxt.assist_thread_handle,
                                 PREV_MSG_QUEUE_SIZE, prev_assist_thread_proc,
                                 (void *)handle, "prev_assist");
         if (ret) {
@@ -1908,7 +1908,7 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
             goto end;
         }
 
-        ret = cmr_thread_create2(&handle->thread_cxt.thread_handle,
+        ret = cmr_thread_create(&handle->thread_cxt.thread_handle,
                                 PREV_MSG_QUEUE_SIZE, prev_thread_proc,
                                 (void *)handle, "prev");
         if (ret) {
@@ -1983,7 +1983,7 @@ cmr_int prev_create_cb_thread(struct prev_handle *handle) {
 
     CMR_LOGI("E");
 
-    ret = cmr_thread_create2(&handle->thread_cxt.cb_thread_handle,
+    ret = cmr_thread_create(&handle->thread_cxt.cb_thread_handle,
                             PREV_MSG_QUEUE_SIZE, prev_cb_thread_proc,
                             (void *)handle, "prev_cb");
     if (ret) {

@@ -2069,7 +2069,7 @@ cmr_int snp_create_main_thread(cmr_handle snp_handle) {
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
     ret =
-        cmr_thread_create2(&cxt->thread_cxt.main_thr_handle, SNP_MSG_QUEUE_SIZE,
+        cmr_thread_create(&cxt->thread_cxt.main_thr_handle, SNP_MSG_QUEUE_SIZE,
                           snp_main_thread_proc, (void *)snp_handle,
                           "snp_main");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.main_thr_handle);
@@ -2112,7 +2112,7 @@ cmr_int snp_create_postproc_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.post_proc_thr_handle,
+    ret = cmr_thread_create(&cxt->thread_cxt.post_proc_thr_handle,
                             SNP_MSG_QUEUE_SIZE, snp_postproc_thread_proc,
                             (void *)snp_handle, "snp_post");
 
@@ -2156,7 +2156,7 @@ cmr_int snp_create_notify_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.notify_thr_handle,
+    ret = cmr_thread_create(&cxt->thread_cxt.notify_thr_handle,
                             SNP_MSG_QUEUE_SIZE, snp_notify_thread_proc,
                             (void *)snp_handle, "snp_notify");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.notify_thr_handle);
@@ -2198,7 +2198,7 @@ cmr_int snp_create_proc_cb_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.proc_cb_thr_handle,
+    ret = cmr_thread_create(&cxt->thread_cxt.proc_cb_thr_handle,
                             SNP_MSG_QUEUE_SIZE, snp_proc_cb_thread_proc,
                             (void *)snp_handle, "snp_proc_cb");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.proc_cb_thr_handle);
@@ -2240,7 +2240,7 @@ cmr_int snp_create_secondary_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.secondary_thr_handle,
+    ret = cmr_thread_create(&cxt->thread_cxt.secondary_thr_handle,
                             SNP_MSG_QUEUE_SIZE, snp_secondary_thread_proc,
                             (void *)snp_handle, "snp_sec");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.secondary_thr_handle);
@@ -2282,7 +2282,7 @@ cmr_int snp_create_cvt_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.cvt_thr_handle, SNP_MSG_QUEUE_SIZE,
+    ret = cmr_thread_create(&cxt->thread_cxt.cvt_thr_handle, SNP_MSG_QUEUE_SIZE,
                             snp_cvt_thread_proc, (void *)snp_handle, "snp_cvt");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.cvt_thr_handle);
     if (CMR_MSG_SUCCESS != ret) {
@@ -2325,7 +2325,7 @@ cmr_int snp_create_write_exif_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.write_exif_thr_handle,
+    ret = cmr_thread_create(&cxt->thread_cxt.write_exif_thr_handle,
                             SNP_MSG_QUEUE_SIZE, snp_write_exif_thread_proc,
                             (void *)snp_handle, "snp_exif");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.write_exif_thr_handle);
@@ -2375,7 +2375,7 @@ cmr_int snp_create_redisplay_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.proc_redisplay_handle,
+    ret = cmr_thread_create(&cxt->thread_cxt.proc_redisplay_handle,
                             SNP_MSG_QUEUE_SIZE, snp_redisplay_thread_proc,
                             (void *)snp_handle, "snp_redisplay");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.proc_redisplay_handle);
@@ -2417,7 +2417,7 @@ cmr_int snp_create_thumb_thread(cmr_handle snp_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
-    ret = cmr_thread_create2(&cxt->thread_cxt.proc_thumb_handle,
+    ret = cmr_thread_create(&cxt->thread_cxt.proc_thumb_handle,
                             SNP_MSG_QUEUE_SIZE, snp_thumb_thread_proc,
                             (void *)snp_handle, "snp_thumb");
     CMR_LOGV("0x%lx", (cmr_uint)cxt->thread_cxt.proc_thumb_handle);

@@ -318,7 +318,7 @@ static cmr_int cmr_scale_create_thread(struct scale_file *file) {
     }
 
     if (!file->is_inited) {
-        ret = cmr_thread_create2(&file->scale_thread, SCALE_MSG_QUEUE_SIZE,
+        ret = cmr_thread_create(&file->scale_thread, SCALE_MSG_QUEUE_SIZE,
                                 cmr_scale_thread_proc, (void *)file, "scale");
         if (ret) {
             CMR_LOGE("create thread failed!");

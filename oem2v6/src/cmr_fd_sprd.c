@@ -672,7 +672,7 @@ static cmr_int fd_thread_create(struct class_fd *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create2(&class_handle->thread_handle,
+        ret = cmr_thread_create(&class_handle->thread_handle,
                                 CAMERA_FD_MSG_QUEUE_SIZE, fd_thread_proc,
                                 (void *)class_handle, "fd_oem");
         if (ret) {

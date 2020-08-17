@@ -3415,7 +3415,8 @@ cmr_int camera_jpeg_init_async(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
     ret = cmr_thread_create(&cxt->jpeg_async_init_handle, 10,
-            camera_jpeg_init_async_message_handler, (void *)oem_handle);
+            camera_jpeg_init_async_message_handler, (void *)oem_handle,
+            "jpeg_async");
     if (ret) {
         CMR_LOGE("fail to create jpeg async init thread, %d", ret);
         goto exit;
@@ -5647,7 +5648,7 @@ cmr_int camera_create_prev_thread(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    ret = cmr_thread_create2(&cxt->prev_cb_thr_handle, PREVIEW_MSG_QUEUE_SIZE,
+    ret = cmr_thread_create(&cxt->prev_cb_thr_handle, PREVIEW_MSG_QUEUE_SIZE,
                             camera_preview_cb_thread_proc, (void *)oem_handle,
                             "preview_cb");
 
@@ -5663,12 +5664,7 @@ cmr_int camera_create_prev_thread(cmr_handle oem_handle) {
         cxt->mflagfb = false;
     }
 #endif
-    ret = cmr_thread_set_name(cxt->prev_cb_thr_handle, "preview_cb");
-    if (CMR_MSG_SUCCESS != ret) {
-        CMR_LOGE("fail to set thr name");
-        ret = -CMR_MSG_SUCCESS;
-        goto exit;
-    }
+
 exit:
     CMR_LOGD("X,ret=%ld", ret);
     return ret;
@@ -5679,7 +5675,7 @@ cmr_int camera_create_video_thread(cmr_handle oem_handle) {
 #ifdef CONFIG_FACE_BEAUTY
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    ret = cmr_thread_create2(&cxt->video_cb_thr_handle, PREVIEW_MSG_QUEUE_SIZE,
+    ret = cmr_thread_create(&cxt->video_cb_thr_handle, PREVIEW_MSG_QUEUE_SIZE,
                             camera_video_cb_thread_proc, (void *)oem_handle,
                             "video_cb");
 
@@ -5767,7 +5763,7 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    ret = cmr_thread_create2(&cxt->snp_cb_thr_handle, SNAPSHOT_MSG_QUEUE_SIZE,
+    ret = cmr_thread_create(&cxt->snp_cb_thr_handle, SNAPSHOT_MSG_QUEUE_SIZE,
                             camera_snapshot_cb_thread_proc, (void *)oem_handle,
                             "snap_cb");
 
@@ -5777,7 +5773,7 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
         goto exit;
     }
 
-    ret = cmr_thread_create2(&cxt->snp_secondary_thr_handle,
+    ret = cmr_thread_create(&cxt->snp_secondary_thr_handle,
             SNAPSHOT_MSG_QUEUE_SIZE, camera_snapshot_secondary_thread_proc,
             (void *)oem_handle, "snap_sec");
 
@@ -5786,7 +5782,7 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
         goto destroy_cb_thr;
     }
 
-    ret = cmr_thread_create2(&cxt->snp_send_raw_image_handle,
+    ret = cmr_thread_create(&cxt->snp_send_raw_image_handle,
             SNAPSHOT_MSG_QUEUE_SIZE, camera_snapshot_send_raw_thread_proc,
             (void *)oem_handle, "snap_raw");
 
@@ -5794,7 +5790,7 @@ cmr_int camera_create_snp_thread(cmr_handle oem_handle) {
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto destroy_secondary_thr;
     }
-    ret = cmr_thread_create2(
+    ret = cmr_thread_create(
         &cxt->snp_fdr_thr_handle, SNAPSHOT_MSG_QUEUE_SIZE,
         camera_snapshot_fdr_thread_proc, (void *)oem_handle, "snap_fdr");
 
@@ -6115,7 +6111,7 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
     /*create thread*/
-    ret = cmr_thread_create2((cmr_handle *)&cxt->init_thread,
+    ret = cmr_thread_create((cmr_handle *)&cxt->init_thread,
                             CAMERA_OEM_MSG_QUEUE_SIZE, camera_init_thread_proc,
                             (void *)cxt, "res_init");
     if (CMR_MSG_SUCCESS != ret) {

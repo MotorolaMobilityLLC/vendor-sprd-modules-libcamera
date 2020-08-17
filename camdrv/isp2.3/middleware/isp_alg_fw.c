@@ -2889,7 +2889,7 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	ret = cmr_thread_create2(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
+	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
 				ispalg_thread_proc, (void *)cxt, "algfw");
 
 	if (CMR_MSG_SUCCESS != ret) {
@@ -2897,7 +2897,7 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 		ret = -ISP_ERROR;
 	}
 
-	ret = cmr_thread_create2(&cxt->thr_afhandle, ISP_THREAD_QUEUE_NUM,
+	ret = cmr_thread_create(&cxt->thr_afhandle, ISP_THREAD_QUEUE_NUM,
                 ispalg_afthread_proc, (void *)cxt, "afstats");
 
 	if (CMR_MSG_SUCCESS != ret) {

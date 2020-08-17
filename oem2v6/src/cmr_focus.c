@@ -154,7 +154,7 @@ cmr_int cmr_focus_init(struct af_init_param *parm_ptr, cmr_u32 camera_id,
     sem_init(&af_cxt->isp_af_sem, 0, 0);
 
     /*create thread*/
-    ret = cmr_thread_create2((cmr_handle *)&af_cxt->thread_handle,
+    ret = cmr_thread_create((cmr_handle *)&af_cxt->thread_handle,
                             CMR_AF_MSG_QUEUE_SIZE, af_thread_proc,
                             (void *)af_cxt, "focus_init");
 

@@ -4006,7 +4006,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	CMR_MSG_INIT(message);
 
-	ret = cmr_thread_create2(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
+	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
 			ispalg_thread_proc, (void *)cxt, "algfw");
 
 	if (CMR_MSG_SUCCESS != ret) {
@@ -4014,7 +4014,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 		return ISP_ERROR;
 	}
 
-	ret = cmr_thread_create2(&cxt->thr_afhandle,	ISP_THREAD_QUEUE_NUM,
+	ret = cmr_thread_create(&cxt->thr_afhandle,	ISP_THREAD_QUEUE_NUM,
 			ispalg_afthread_proc, (void *)cxt, "afstats");
 
 	if (CMR_MSG_SUCCESS != ret) {
@@ -4024,7 +4024,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 		return ISP_ERROR;
 	}
 
-	ret = cmr_thread_create2(&cxt->thr_aehandle,	ISP_THREAD_QUEUE_NUM,
+	ret = cmr_thread_create(&cxt->thr_aehandle,	ISP_THREAD_QUEUE_NUM,
 			ispalg_aethread_proc, (void *)cxt, "algae");
 
 	if (CMR_MSG_SUCCESS != ret) {
@@ -4036,7 +4036,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 		return ISP_ERROR;
 	}
 
-	ret = cmr_thread_create2(&cxt->thr_aihandle,
+	ret = cmr_thread_create(&cxt->thr_aihandle,
 			ISP_THREAD_QUEUE_NUM,
 			ispalg_aithread_proc, (void *)cxt, "algai");
 	if (CMR_MSG_SUCCESS != ret) {

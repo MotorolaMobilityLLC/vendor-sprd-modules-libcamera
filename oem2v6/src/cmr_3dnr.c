@@ -968,7 +968,7 @@ static cmr_int threednr_thread_create(struct class_3dnr *class_handle) {
     CHECK_HANDLE_VALID(class_handle);
 
     if (!class_handle->is_inited) {
-        ret = cmr_thread_create2(
+        ret = cmr_thread_create(
             &class_handle->threednr_thread, CAMERA_3DNR_MSG_QUEUE_SIZE,
             threednr_process_thread_proc, (void *)class_handle, "threednr");
         if (ret) {

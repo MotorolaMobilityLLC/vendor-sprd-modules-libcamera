@@ -10899,7 +10899,7 @@ int SprdCamera3OEMIf::ZSLMode_monitor_thread_init(void *p_data) {
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
 
     if (!obj->mZSLModeMonitorInited) {
-        ret = cmr_thread_create2((cmr_handle *)&obj->mZSLModeMonitorMsgQueHandle,
+        ret = cmr_thread_create((cmr_handle *)&obj->mZSLModeMonitorMsgQueHandle,
                                 ZSLMode_MONITOR_QUEUE_SIZE,
                                 ZSLMode_monitor_thread_proc, (void *)obj,
                                 (const char *)"zsl_moni");
