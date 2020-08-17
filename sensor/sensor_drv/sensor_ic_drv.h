@@ -685,7 +685,7 @@ struct sensor_ic_drv_cxt {
 typedef struct slotSensorInfo {
     int slotId;
     int sensor_index;
-    char sensor_name[SENSOR_IC_NAME_LEN];
+    char sensor_name[SENSOR_NAME_LEN];
 } SLOT_SENSOR_INFO_T;
 
 typedef struct phySensorInfo {
@@ -704,7 +704,7 @@ typedef struct phySensorInfo {
     cmr_u16 source_height_max;
     int sensor_type;
     cmr_u16 pdaf_supported;
-    char sensor_name[SENSOR_IC_NAME_LEN];
+    char sensor_name[SENSOR_NAME_LEN];
     cmr_u8 mono_sensor;
 } PHYSICAL_SENSOR_INFO_T;
 

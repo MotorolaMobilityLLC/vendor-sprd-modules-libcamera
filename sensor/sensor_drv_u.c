@@ -2810,7 +2810,7 @@ static cmr_int sensor_drv_sensor_info_list_init() {
         // slot sensor list
         (slotPtr + i)->slotId = SENSOR_ID_INVALID;
         (slotPtr + i)->sensor_index = 0xff;
-        memset((slotPtr + i)->sensor_name, 0, SENSOR_IC_NAME_LEN);
+        memset((slotPtr + i)->sensor_name, 0, SENSOR_NAME_LEN);
         // physical sensor list
         (phyPtr + i)->phyId = SENSOR_ID_INVALID;
         (phyPtr + i)->slotId = SENSOR_ID_INVALID;
@@ -3129,7 +3129,7 @@ sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt) {
         &tuning_lib_mngr[sensor_cxt->slot_id];
     sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
     param_input_t tuning_param_input;
-    char default_tuning_para_name[MAX_NAME_LEN] = {0};
+    char default_tuning_para_name[SENSOR_NAME_LEN] = {0};
 
     camera_cfg = sensor_cxt->xml_info;
     sensor_drv_xml_parse_tuning_param_info(camera_cfg);
@@ -3148,7 +3148,7 @@ sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt) {
             .size_info[0]
             .size_h = sensor_cxt->sensor_info_ptr->source_height_max;
 
-        snprintf(default_tuning_para_name, MAX_NAME_LEN, "default_id_%d",
+        snprintf(default_tuning_para_name, SENSOR_NAME_LEN, "default_id_%d",
                  sensor_cxt->slot_id);
         ret = sensor_drv_tuning_load_default_library(
             tuning_param_input, default_tuning_para_name, libTuningPtr);

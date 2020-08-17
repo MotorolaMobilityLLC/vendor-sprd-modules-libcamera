@@ -26,6 +26,8 @@
 #define AE_SCENE_NUM 8
 #define SNR_NAME_MAX_LEN 64
 #define SENSOR_PDAF_MODE 4
+#define SENSOR_NAME_LEN 32
+
 typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len,
                                    void *privdata);
 enum sns_cmd_section { CMD_SNS_OTP, CMD_SNS_IC, CMD_SNS_AF };
@@ -627,7 +629,7 @@ typedef struct {
     char sensor_type[24];
     char sensor_module_vensor[24];
     char sensor_vendor[24];
-    char sensor_name[36];
+    char sensor_name[SENSOR_NAME_LEN];
     cmr_u32 reserved[32];
 } sensor_basic_info_t;
 

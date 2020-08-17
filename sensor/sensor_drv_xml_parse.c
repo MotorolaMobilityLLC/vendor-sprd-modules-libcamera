@@ -332,7 +332,7 @@ int sensor_drv_xml_parse_camera_module_info(
     xml_camera_module_cfg_t *cfgPtr = camera_cfg->cfgPtr;
     struct xmlHashMap xml_hash_map[MAX_HASH_MAP_SIZE];
     char facing[16];
-    char sensor_role[MAX_SUPPORT_ROLE_NUM][MAX_NAME_LEN];
+    char sensor_role[MAX_SUPPORT_ROLE_NUM][SENSOR_NAME_LEN];
 
     XML_NODE_CHECK_PTR(docPtr);
     XML_NODE_CHECK_PTR(nodePtr);

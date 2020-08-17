@@ -360,7 +360,7 @@ cmr_int sensor_otp_drv_create(otp_drv_init_para_t *input_para,
     }
     memset(otp_cxt, 0, sizeof(otp_drv_cxt_t));
     if (input_para->sensor_name)
-        memcpy(otp_cxt->dev_name, input_para->sensor_name, 32);
+        memcpy(otp_cxt->dev_name, input_para->sensor_name, SENSOR_NAME_LEN);
 
     otp_cxt->compat_convert_data = malloc(sizeof(struct sensor_otp_cust_info));
     if (NULL == otp_cxt->compat_convert_data) {

@@ -45,7 +45,7 @@ namespace sprdcamera {
 
 uint8_t SprdCamera3Setting::mSensorFocusEnable[] = {0, 0, 0, 0, 0, 0};
 uint8_t SprdCamera3Setting::mSensorType[] = {0, 0, 0, 0, 0, 0};
-char SprdCamera3Setting::mSensorName[][SENSOR_IC_NAME_LEN];
+char SprdCamera3Setting::mSensorName[][SENSOR_NAME_LEN];
 uint16_t SprdCamera3Setting::mpdaf_type[] = {0, 0, 0, 0, 0, 0};
 
 /**********************Macro Define**********************/

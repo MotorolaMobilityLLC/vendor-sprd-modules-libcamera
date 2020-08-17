@@ -27,7 +27,7 @@ typedef struct sensor_match_tab {
      * and MODULE_MAX at enumeration group{@camera_vendor_name_type}
      **/
     cmr_u16 module_id;
-    char sn_name[SENSOR_IC_NAME_LEN];
+    char sn_name[SENSOR_NAME_LEN];
     SENSOR_INFO_T *sensor_info;
     struct sns_af_drv_cfg af_dev_info;
     otp_drv_info_t otp_drv_info;

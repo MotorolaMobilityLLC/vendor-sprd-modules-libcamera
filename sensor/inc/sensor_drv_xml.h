@@ -15,7 +15,6 @@
 #define XML_VCM_TAG "VCM"
 #define XML_TUNING_PARA_TAG "TuningParameter"
 
-#define MAX_NAME_LEN 36
 #define MAX_KEY_LEN 24
 #define MAX_HASH_MAP_SIZE 32
 
@@ -55,18 +54,18 @@ struct xmlHashMap {
 };
 
 typedef struct xml_camera_lens_info {
-    char lens_name[MAX_NAME_LEN];
+    char lens_name[SENSOR_NAME_LEN];
 } xml_camera_lens_info_t;
 
 struct xml_e2prom_otp_info {
-    char otp_name[MAX_NAME_LEN];
+    char otp_name[SENSOR_NAME_LEN];
     unsigned char eeprom_i2c_addr;
     enum xmlE2prom_num_t eeprom_num;
     unsigned int eeprom_size;
 };
 
 struct xml_sensor_otp_info {
-    char otp_name[MAX_NAME_LEN];
+    char otp_name[SENSOR_NAME_LEN];
 };
 
 typedef struct xml_camera_otp_info {
@@ -75,18 +74,18 @@ typedef struct xml_camera_otp_info {
 } xml_camera_otp_info_t;
 
 typedef struct xml_camera_vcm_info {
-    char af_name[MAX_NAME_LEN];
+    char af_name[SENSOR_NAME_LEN];
     unsigned char work_mode;
 } xml_camera_vcm_info_t;
 
 typedef struct xml_camera_tuning_info {
-    char tuning_para_name[MAX_NAME_LEN];
+    char tuning_para_name[SENSOR_NAME_LEN];
 } xml_camera_tuning_info_t;
 
 typedef struct xml_camera_module_cfg {
     /*+++sensor section+++*/
     unsigned char slot_id;
-    char sensor_name[MAX_NAME_LEN];
+    char sensor_name[SENSOR_NAME_LEN];
     cmr_u32 sensor_role_code;
     cmr_u32 facing;
     int orientation;

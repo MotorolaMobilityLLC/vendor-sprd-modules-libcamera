@@ -751,7 +751,7 @@ class SprdCamera3Setting {
     static uint8_t mSensorFocusEnable[CAMERA_ID_COUNT];
     static uint8_t mSensorType[CAMERA_ID_COUNT];
     static uint16_t mModuleId[CAMERA_ID_COUNT];
-    static char mSensorName[CAMERA_ID_COUNT][SENSOR_IC_NAME_LEN];
+    static char mSensorName[CAMERA_ID_COUNT][SENSOR_NAME_LEN];
     static uint16_t mpdaf_type[CAMERA_ID_COUNT];
     static int mPhysicalSensorNum;
     static int mLogicalSensorNum;
