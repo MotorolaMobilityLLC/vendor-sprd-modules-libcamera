@@ -163,21 +163,21 @@ cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void
 			bchs_updata.csa_factor_v = (dst_ptr->cur.csa_factor_v & 0xFFFF);
 
 			if (ai_status){
-				if (bchs_cur->ai_brightness.brightness_ai_adj_eb) {
+				if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
 					bchs_updata.brta_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
 					bchs_updata.brta_factor = MAX(-128, MIN(127,  bchs_updata.brta_factor));
 				}
-				if (bchs_cur->ai_contrast.contrast_adj_ai_eb) {
+				if (bchs_cur->ai_contrast.contrast_adj_ai_eb || smooth_factor) {
 					bchs_updata.cnta_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
 					bchs_updata.cnta_factor = MAX(0, MIN(255,  bchs_updata.cnta_factor));
 				}
-				if (bchs_cur->ai_hue.hue_adj_ai_eb) {
+				if (bchs_cur->ai_hue.hue_adj_ai_eb || smooth_factor) {
 					bchs_updata.hua_cos_value += bchs_cur->ai_hue.hue_cos_offset * smooth_factor / smooth_base;
 					bchs_updata.hua_sina_value += bchs_cur->ai_hue.hue_sin_offset * smooth_factor / smooth_base;
 					bchs_updata.hua_cos_value = MAX(-180, MIN(180,  bchs_updata.hua_cos_value));
 					bchs_updata.hua_sina_value = MAX(-180, MIN(180,  bchs_updata.hua_sina_value));
 				}
-				if (bchs_cur->ai_saturation.saturation_adj_ai_eb) {
+				if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
 					bchs_updata.csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
 					bchs_updata.csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
 					bchs_updata.csa_factor_u = MAX(0, MIN(255,  bchs_updata.csa_factor_u));

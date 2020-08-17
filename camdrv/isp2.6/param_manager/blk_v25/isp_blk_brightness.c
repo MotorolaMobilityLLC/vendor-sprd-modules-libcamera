@@ -82,7 +82,7 @@ cmr_s32 _pm_brightness_set_param(void *bright_param, cmr_u32 cmd, void *param_pt
 
 			bri_factor = bright_ptr->bright_tab[bright_ptr->cur_index];
 			if (ai_status){
-				if (bchs_cur->ai_brightness.brightness_ai_adj_eb) {
+				if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
 					bri_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
 					bri_factor = MAX(-128, MIN(127,  bri_factor));
 				}

@@ -73,7 +73,7 @@ cmr_s32 _pm_hue_set_param(void *hue_param, cmr_u32 cmd, void *param_ptr0, void *
 
 			theta = hue_ptr->tab[hue_ptr->cur_idx];
 			if (ai_status){
-				if (bchs_cur->ai_hue_v1.hue_adj_ai_eb) {
+				if (bchs_cur->ai_hue_v1.hue_adj_ai_eb || smooth_factor) {
 					theta += bchs_cur->ai_hue_v1.theta_offset * smooth_factor / smooth_base;
 					theta = MAX(-180, MIN(180,  theta));
 				}

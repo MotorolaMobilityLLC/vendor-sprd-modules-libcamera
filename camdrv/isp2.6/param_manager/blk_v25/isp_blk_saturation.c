@@ -125,19 +125,14 @@ cmr_s32 _pm_saturation_set_param(void *csa_param, cmr_u32 cmd, void *param_ptr0,
 			smooth_factor = cfg_data->smooth_factor;
 			smooth_base = cfg_data->smooth_base;
 			ai_status = cfg_data->ai_status;
-			if (smooth_factor == 0) {
-				if (!csa_header_ptr->is_update)
-					break;
-				smooth_factor = 1;
-				smooth_base = 1;
-			} else if (!csa_header_ptr->is_update) {
-				smooth_factor = (smooth_factor > 0) ? 1 :  -1;
-			}
+			if (smooth_factor == 0)
+				break;
+
 			if (ai_status) {
 				csa_factor_u = csa_ptr->cur.csa_factor_u;
 				csa_factor_v = csa_ptr->cur.csa_factor_v;
 
-				if (bchs_cur->ai_saturation.saturation_adj_ai_eb) {
+				if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
 					csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
 					csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
 					csa_factor_u = MAX(0, MIN(255,  csa_factor_u));
