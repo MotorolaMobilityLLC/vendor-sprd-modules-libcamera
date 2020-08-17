@@ -185,8 +185,10 @@ exit:
             codec_handle = NULL;
         }
         if (jcxt) {
-            dlclose(jcxt->mLibHandle);
-            jcxt->mLibHandle = NULL;
+            if (jcxt->mLibHandle != NULL){
+                dlclose(jcxt->mLibHandle);
+                jcxt->mLibHandle = NULL;
+            }
             free(jcxt);
             jcxt = NULL;
         }

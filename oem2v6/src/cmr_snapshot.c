@@ -628,6 +628,9 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct jpeg_enc_cb_param *enc_out_ptr = (struct jpeg_enc_cb_param *)data;
+    if (cxt == NULL){
+        return CMR_CAMERA_FAIL;
+    }
     struct cmr_cap_mem *mem_ptr =
         &cxt->req_param.post_proc_setting.mem[cxt->index];
     char value[PROPERTY_VALUE_MAX];
@@ -3944,6 +3947,9 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
 
     req_param_ptr = &cxt->req_param;
     mem_ptr = &req_param_ptr->post_proc_setting.mem[frm_id];
+    if (mem_ptr == NULL){
+        return CMR_CAMERA_FAIL;
+    }
     frame_type->buf_id = info->frame_real_id;
     if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||
         cxt->req_param.is_pipviv_mode) {
