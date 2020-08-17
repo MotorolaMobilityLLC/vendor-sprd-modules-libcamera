@@ -39,6 +39,7 @@ int yuv_scale_nv21(void *handle, const struct img_frm *src,
     unsigned int i420_src_h = 0;
     uint8_t *i420_src = NULL;
     uint8_t *i420_src_u = NULL;
+    uint8_t *i420_src_u_ptr = NULL;
     uint8_t *i420_src_v = NULL;
     uint8_t *tmp = NULL;
     unsigned int tmp_w = 0;
@@ -126,12 +127,13 @@ int yuv_scale_nv21(void *handle, const struct img_frm *src,
         i420_src_w = src->size.width;
         i420_src_h = src->size.height;
         // optimize convert
-        i420_src_u = (uint8_t *)malloc((i420_src_size + 1) >> 1);
-        if (!i420_src_u) {
+        i420_src_u_ptr = (uint8_t *)malloc((i420_src_size + 1) >> 1);
+        if (!i420_src_u_ptr) {
             CMR_LOGE("no memory for i420_src!\n");
             ret = CMR_CAMERA_NO_MEM;
             goto exit;
         }
+        i420_src_u = i420_src_u_ptr;
         i420_src_v = i420_src_u + ((i420_src_size + 1) >> 2);
         i420_src = (uint8_t *)(cmr_uint)src->addr_vir.addr_y;
         SplitUVPlane((uint8_t *)(cmr_uint)src->addr_vir.addr_u, i420_src_w,
@@ -235,8 +237,8 @@ int yuv_scale_nv21(void *handle, const struct img_frm *src,
 exit:
     if (i420_src && ((cmr_uint)i420_src != (cmr_uint)src->addr_vir.addr_y))
         free(i420_src);
-    else if (i420_src_u)
-        free(i420_src_u);
+    else if (i420_src_u_ptr)
+        free(i420_src_u_ptr);
     if (tmp)
         free(tmp);
     free(i420_dst);
