@@ -558,7 +558,7 @@ int SprdCamera3PortraitScene::CaptureThread::capMattingHandle(
     SprdCamera3HWI *hwi = mPbrp->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
 
     uint32_t orientation =
-            SprdCamera3Setting::s_setting[mPbrp->mCameraId].jpgInfo.orientation;
+        SprdCamera3Setting::s_setting[mPbrp->mCameraId].jpgInfo.orientation;
     void *orgJpegBufferAddr = NULL;
     dump_portrait_scene_t combo_buff, mask_buff;
     HAL_LOGI(" E");
@@ -656,13 +656,12 @@ void UpdateWeightParam(sprd_portrait_scene_proc_t *dst,
  *
  * RETURN     : None
  *==========================================================================*/
-int SprdCamera3PortraitScene::CaptureThread::capFuse(void* combo_buff_addr,
-                                                     void* mask_data) {
+int SprdCamera3PortraitScene::CaptureThread::capFuse(void *combo_buff_addr,
+                                                     void *mask_data) {
     int ret = NO_ERROR, isHorizon = 0, ID2index = 0;
     buffer_handle_t *const fuse_buffer =
-    &mPbrp->mLocalCapBuffer[3].native_handle;
-    buffer_handle_t *const BG_buffer =
-    &mPbrp->mLocalCapBuffer[4].native_handle;
+        &mPbrp->mLocalCapBuffer[3].native_handle;
+    buffer_handle_t *const BG_buffer = &mPbrp->mLocalCapBuffer[4].native_handle;
     void *fuse_buff_addr = NULL;
     void *BG_buff_addr = NULL;
 
@@ -680,25 +679,17 @@ int SprdCamera3PortraitScene::CaptureThread::capFuse(void* combo_buff_addr,
     Mutex::Autolock l(mPbrp->mCapBGLock);
     HAL_LOGD("succeed in reading cap BG");
     if (mPbrp->mCapBgID == BG_COLOR_RETENTION) {
-        mPbrp->mCapPostT->mCapFuseParams.fuse
-            .isColorRetention = true;
-            ID2index = 0;
+        mPbrp->mCapPostT->mCapFuseParams.fuse.isColorRetention = true;
+        ID2index = 0;
     } else {
-        mPbrp->mCapPostT->mCapFuseParams.fuse
-            .isColorRetention = false;
-        mPbrp->mCapPostT->mCapFuseParams.fuse.data =
-            (int8_t *)BG_buff_addr;
+        mPbrp->mCapPostT->mCapFuseParams.fuse.isColorRetention = false;
+        mPbrp->mCapPostT->mCapFuseParams.fuse.data = (int8_t *)BG_buff_addr;
     }
-    mPbrp->mCapPostT->mCapFuseParams.fuse.ch =
-        SPRD_PORTRAIT_SCENE_CAPTURE;
-    mPbrp->mCapPostT->mCapFuseParams.src_YUV =
-        (unsigned char *)combo_buff_addr;
-    mPbrp->mCapPostT->mCapFuseParams.dst_YUV =
-        (unsigned char *)fuse_buff_addr;
-    mPbrp->mCapPostT->mCapFuseParams.fuse.mask =
-        (uint16_t *)mask_data;
-    mPbrp->mCapPostT->mCapFuseParams.fuse.total =
-        AI_BGIMG_BUFF_NUM * 2;
+    mPbrp->mCapPostT->mCapFuseParams.fuse.ch = SPRD_PORTRAIT_SCENE_CAPTURE;
+    mPbrp->mCapPostT->mCapFuseParams.src_YUV = (unsigned char *)combo_buff_addr;
+    mPbrp->mCapPostT->mCapFuseParams.dst_YUV = (unsigned char *)fuse_buff_addr;
+    mPbrp->mCapPostT->mCapFuseParams.fuse.mask = (uint16_t *)mask_data;
+    mPbrp->mCapPostT->mCapFuseParams.fuse.total = AI_BGIMG_BUFF_NUM * 2;
     mPbrp->mCapPostT->mCapFuseParams.fuse.rotate_angle =
         mPbrp->mCapT->mCapWeightParams.rotate_angle;
 
@@ -717,37 +708,33 @@ int SprdCamera3PortraitScene::CaptureThread::capFuse(void* combo_buff_addr,
             mPbrp->mCaptureHeight;
     }
     mPbrp->mCapPostT->mCapFuseParams.fuse.index = ID2index;
-    HAL_LOGD(
-        "data=%p,isColorRetention=%d,ch=%d,src_yuv=%p,"
-        "dst_yuv=%p,total=%d,rotate_angle=%d,"
-        "fileFormat[%d]=%d,width[%d]=%d,height[%d]=%d,"
-        "index=%d",
-        mPbrp->mCapPostT->mCapFuseParams.fuse.data,
-        mPbrp->mCapPostT->mCapFuseParams.fuse.isColorRetention,
-        mPbrp->mCapPostT->mCapFuseParams.fuse.ch,
-        mPbrp->mCapPostT->mCapFuseParams.src_YUV,
-        mPbrp->mCapPostT->mCapFuseParams.dst_YUV,
-        mPbrp->mCapPostT->mCapFuseParams.fuse.total,
-        mPbrp->mCapPostT->mCapFuseParams.fuse.rotate_angle,
-        ID2index,
-        mPbrp->mCapPostT->mCapFuseParams.fuse.fileFormat[ID2index],
-        ID2index,
-        mPbrp->mCapPostT->mCapFuseParams.fuse.width[ID2index],
-        ID2index,
-        mPbrp->mCapPostT->mCapFuseParams.fuse.height[ID2index],
-        mPbrp->mCapPostT->mCapFuseParams.fuse.index);
+    HAL_LOGD("data=%p,isColorRetention=%d,ch=%d,src_yuv=%p,"
+             "dst_yuv=%p,total=%d,rotate_angle=%d,"
+             "fileFormat[%d]=%d,width[%d]=%d,height[%d]=%d,"
+             "index=%d",
+             mPbrp->mCapPostT->mCapFuseParams.fuse.data,
+             mPbrp->mCapPostT->mCapFuseParams.fuse.isColorRetention,
+             mPbrp->mCapPostT->mCapFuseParams.fuse.ch,
+             mPbrp->mCapPostT->mCapFuseParams.src_YUV,
+             mPbrp->mCapPostT->mCapFuseParams.dst_YUV,
+             mPbrp->mCapPostT->mCapFuseParams.fuse.total,
+             mPbrp->mCapPostT->mCapFuseParams.fuse.rotate_angle, ID2index,
+             mPbrp->mCapPostT->mCapFuseParams.fuse.fileFormat[ID2index],
+             ID2index, mPbrp->mCapPostT->mCapFuseParams.fuse.width[ID2index],
+             ID2index, mPbrp->mCapPostT->mCapFuseParams.fuse.height[ID2index],
+             mPbrp->mCapPostT->mCapFuseParams.fuse.index);
 
     int64_t fuseStart = systemTime();
     if (mPbrp->mIsRunAlgo) {
-        ret = sprd_portrait_scene_adpt_ctrl(
-            mCapApihandle, SPRD_PORTRAIT_SCENE_FUSE_CMD,
-            &mPbrp->mCapPostT->mCapFuseParams);
+        ret = sprd_portrait_scene_adpt_ctrl(mCapApihandle,
+                                            SPRD_PORTRAIT_SCENE_FUSE_CMD,
+                                            &mPbrp->mCapPostT->mCapFuseParams);
     }
     if (ret != 0) {
         HAL_LOGE("capture FUSE_CMD is error");
     } else {
         HAL_LOGD("capture FUSE_CMD cost %d ms",
-                    (int)ns2ms(systemTime() - fuseStart));
+                 (int)ns2ms(systemTime() - fuseStart));
     }
 
     UNMAP_AND_SET_NULL(fuse_buffer, &fuse_buff_addr);
@@ -838,10 +825,9 @@ bool SprdCamera3PortraitScene::CaptureThread::threadLoop() {
                          capture_msg.combo_buff.buffer);
 
                 // get mask
-                capMattingHandle(capture_msg.combo_buff.buffer,
-                                    combo_buff_addr, mPbrp->m_pmaskBuffer,
-                                    mask_data,
-                                    capture_msg.combo_buff.frame_number);
+                capMattingHandle(capture_msg.combo_buff.buffer, combo_buff_addr,
+                                 mPbrp->m_pmaskBuffer, mask_data,
+                                 capture_msg.combo_buff.frame_number);
                 // do fusion
                 capFuse(combo_buff_addr, mask_data);
 
@@ -1740,11 +1726,10 @@ bool SprdCamera3PortraitScene::PreviewThread::threadLoop() {
             Mutex::Autolock l(mPbrp->mPrevBGLock);
             if (!mApiSegHandle) {
                 int64_t initStart = systemTime();
-                mApiSegHandle =
-                    sprd_portrait_scene_adpt_init(&mPrevInitParams);
+                mApiSegHandle = sprd_portrait_scene_adpt_init(&mPrevInitParams);
                 if (mApiSegHandle != NULL) {
                     HAL_LOGD("prev matting init cost %d ms",
-                            (int)ns2ms(systemTime() - initStart));
+                             (int)ns2ms(systemTime() - initStart));
                 } else {
                     HAL_LOGE("Failed to init prev algo handle!");
                     return -1;
@@ -1999,10 +1984,11 @@ int SprdCamera3PortraitScene::PreviewPostThread::prevFuse(
         IMG_FILE_FORMAT_BMP;
     mPbrp->mPrevT->mPrevFuseParams.fuse.width[ID2index] = mPbrp->mBGWidth;
     mPbrp->mPrevT->mPrevFuseParams.fuse.height[ID2index] = mPbrp->mBGHeight;
-    if (mPbrp->isWechatClient){
+    if (mPbrp->isWechatClient) {
         mPbrp->mPrevT->mPrevFuseParams.fuse.width[ID2index] = DV_BG_W;
         mPbrp->mPrevT->mPrevFuseParams.fuse.height[ID2index] = DV_BG_H;
     }
+
     mPbrp->mPrevT->mPrevFuseParams.fuse.index = ID2index;
     HAL_LOGD("isColorRetention:%d;index:%d;total:%d;data:%p;width[0]"
              ":%d;"
@@ -2468,7 +2454,8 @@ int SprdCamera3PortraitScene::initialize(
     memset(mLocalCapBuffer, 0, sizeof(new_mem_t) * PBRP_LOCAL_BUFF_NUM);
     memset(&mCapT->mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     memset(&mCapT->mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
-    memset(&mPrevBgIon, 0, sizeof(sprd_camera_memory_t *) * AI_BGIMG_BUFF_NUM * 2);
+    memset(&mPrevBgIon, 0,
+           sizeof(sprd_camera_memory_t *) * AI_BGIMG_BUFF_NUM * 2);
     mCapPostT->mCallbackOps = callback_ops;
     mPrevPostT->mCallbackOps = callback_ops;
 
@@ -2476,6 +2463,8 @@ int SprdCamera3PortraitScene::initialize(
     HAL_LOGD("wechat.enable=%s", prop_value);
     if (!strcmp(prop_value, "1")) {
         mPbrp->isWechatClient = true;
+    } else {
+        mPbrp->isWechatClient = false;
     }
     mPbrp->initThread();
     HAL_LOGI("X");
@@ -2600,7 +2589,7 @@ int SprdCamera3PortraitScene::configureStreams(
                 h = 1952;
             }
 #endif
-            //buffer offset for jpg2yuv algo
+            // buffer offset for jpg2yuv algo
             if (h == 1944 && w == 2592) {
                 h16_offset = 1952 - 1944;
             }
@@ -2608,7 +2597,8 @@ int SprdCamera3PortraitScene::configureStreams(
             if ((mCaptureWidth != w && mCaptureHeight != h) ||
                 !mIsCapBuffAllocated) {
                 freeCapBuffer();
-                // buffer:[0]original yuv [1]original jpg [2]mask [3]fuse yuv [4]BG yuv
+                // buffer:[0]original yuv [1]original jpg [2]mask [3]fuse yuv
+                // [4]BG yuv
                 if (0 > allocateOne(w, h, &(mLocalCapBuffer[0]), YUV420)) {
                     HAL_LOGE("request one buf failed.");
                 }
@@ -2621,10 +2611,11 @@ int SprdCamera3PortraitScene::configureStreams(
                 if (0 > allocateOne(w, h, &(mLocalCapBuffer[3]), YUV420)) {
                     HAL_LOGE("request one buf failed.");
                 }
-                if (0 > allocateOne(w, h + h16_offset, &(mLocalCapBuffer[4]), YUV420)) {
+                if (0 > allocateOne(w, h + h16_offset, &(mLocalCapBuffer[4]),
+                                    YUV420)) {
                     HAL_LOGE("request one buf failed.");
                 }
-                mIsCapBuffAllocated=true;
+                mIsCapBuffAllocated = true;
             }
             mCaptureWidth = w;
             mCaptureHeight = h;
@@ -2674,7 +2665,6 @@ int SprdCamera3PortraitScene::configureStreams(
         } else {
             HAL_LOGD("stream_list->streams[%d],StreamType=%d", i,
                      requestStreamType);
-
         }
         mMainStreams[i] = *stream_list->streams[i];
         pMainStreams[i] = &mPbrp->mMainStreams[i];
@@ -3307,7 +3297,7 @@ int SprdCamera3PortraitScene::loadBgImageInternal(sprd_camera_memory_t *ion,
         ret = -1;
     }
 exit:
-    if(fp)
+    if (fp)
         fclose(fp);
     return ret;
 }
@@ -3365,8 +3355,7 @@ int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
     int bitMapHeader = 54;
     int bitDepth = 24;
     size_t imgSize = 0;
-    buffer_handle_t *const BG_buffer =
-    &mPbrp->mLocalCapBuffer[4].native_handle;
+    buffer_handle_t *const BG_buffer = &mPbrp->mLocalCapBuffer[4].native_handle;
     void *BG_buff_addr = NULL;
     FILE *fp = NULL;
     FILE *fp_yuv = NULL;
@@ -3376,7 +3365,7 @@ int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
     char path[255] = {0};
     char prop[255] = {0};
     new_mem_t jpg_buff;
-    memset(&jpg_buff,0,sizeof(jpg_buff));
+    memset(&jpg_buff, 0, sizeof(jpg_buff));
     switch (ch) {
     case SPRD_PORTRAIT_SCENE_VIDEO:
         for (int j = 0; j < 2; j++) {
@@ -3419,7 +3408,7 @@ int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
             loadBgImageInternal(mdebugPrev, path);
         }
         break;
-    case SPRD_PORTRAIT_SCENE_CAPTURE:{
+    case SPRD_PORTRAIT_SCENE_CAPTURE: {
         if (mCapBgID < BG_CITY) {
             goto exit;
         }
@@ -3445,11 +3434,12 @@ int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
             goto exit;
         }
         file_len = filesize(fp);
-        if (0 > allocateOne(mPbrp->mCaptureWidth, mPbrp->mCaptureHeight, &(jpg_buff), YUV420)) {
+        if (0 > allocateOne(mPbrp->mCaptureWidth, mPbrp->mCaptureHeight,
+                            &(jpg_buff), YUV420)) {
             HAL_LOGE("request one buffer failed.");
             goto exit;
         }
-        MAP_AND_CHECK(&jpg_buff.native_handle,&jpg_buff.vir_addr);
+        MAP_AND_CHECK(&jpg_buff.native_handle, &jpg_buff.vir_addr);
         if (file_len > 0) {
             fread(jpg_buff.vir_addr, file_len, 1, fp);
         } else {
@@ -3457,23 +3447,23 @@ int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
             goto exit;
         }
 
-        mPbrp->jpeg_decode_to_yuv(&jpg_buff.native_handle,jpg_buff.vir_addr,
-                                    BG_buffer,BG_buff_addr,
-                                    mPbrp->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
-    }break;
+        mPbrp->jpeg_decode_to_yuv(&jpg_buff.native_handle, jpg_buff.vir_addr,
+                                  BG_buffer, BG_buff_addr,
+                                  mPbrp->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
+    } break;
     default:
         HAL_LOGE("Failed to get correct channel");
         break;
     }
 exit:
-    if(jpg_buff.vir_addr){
-        UNMAP_AND_SET_NULL(&jpg_buff.native_handle,&jpg_buff.vir_addr);
+    if (jpg_buff.vir_addr) {
+        UNMAP_AND_SET_NULL(&jpg_buff.native_handle, &jpg_buff.vir_addr);
         mPbrp->freeOneBuffer(&jpg_buff);
     }
-    if (BG_buff_addr){
+    if (BG_buff_addr) {
         UNMAP_AND_SET_NULL(BG_buffer, &BG_buff_addr);
     }
-    if (fp){
+    if (fp) {
         fclose(fp);
     }
     return ret;
