@@ -246,10 +246,11 @@ static void  _lsc_table_scaler(unsigned short *table, unsigned int src_grid, uns
 	unsigned short dst_tab_gr[MAX_WIDTH*MAX_HEIGHT] = {0};
 	unsigned short dst_tab_gb[MAX_WIDTH*MAX_HEIGHT] = {0};
 	unsigned short dst_tab_b [MAX_WIDTH*MAX_HEIGHT] = {0};
-	unsigned short* ch_r  = table;
-	unsigned short* ch_gr = table + ((long)src_width * src_height);
-	unsigned short* ch_gb = table + ((long)src_width * src_height * 2);
-	unsigned short* ch_b  = table + ((long)src_width * src_height * 3);
+	unsigned short* ch_r  = NULL;
+	unsigned short* ch_gr = NULL;
+	unsigned short* ch_gb = NULL;
+	unsigned short* ch_b  = NULL;
+
 	if(NULL == table){
 		return;
 	}
@@ -257,6 +258,10 @@ static void  _lsc_table_scaler(unsigned short *table, unsigned int src_grid, uns
 	ISP_LOGV("src:[%d, %d, %d], dst:[%d, %d, %d]", src_grid, src_width, src_height, dst_grid, dst_width, dst_height);
 
 	//scale pre table to new gain size
+        ch_r  = table;
+	ch_gr = table + ((long)src_width * src_height);
+	ch_gb = table + ((long)src_width * src_height * 2);
+	ch_b  = table + ((long)src_width * src_height * 3);
 	memcpy(src_tab_r , ch_r , src_width * src_height * sizeof(unsigned short));
 	memcpy(src_tab_gr, ch_gr, src_width * src_height * sizeof(unsigned short));
 	memcpy(src_tab_gb, ch_gb, src_width * src_height * sizeof(unsigned short));
@@ -309,9 +314,9 @@ static cmr_int _lsc_parser_otp(struct lsc_adv_init_param *lsc_param)
 	cmr_s32 gain_w, gain_h;
 	uint16_t *lsc_table = NULL;
 	cmr_u8 *oc_otp_data = NULL;
-	cmr_u16 oc_otp_len;
-	cmr_u8 *otp_data_ptr;
-	cmr_u32 otp_data_len;
+	cmr_u16 oc_otp_len = 0;
+	cmr_u8 *otp_data_ptr = NULL;
+	cmr_u32 otp_data_len = 0;
 	cmr_u32 resolution = 0;
 	struct sensor_otp_section_info *lsc_otp_info_ptr = NULL;
 	struct sensor_otp_section_info *oc_otp_info_ptr = NULL;
