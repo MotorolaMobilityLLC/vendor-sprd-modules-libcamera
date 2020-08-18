@@ -66,18 +66,18 @@ cmr_int isp_sim_get_no_lsc_ae_stats(struct isp_awb_statistic_info *awb_statis, c
 		return ISP_ERROR;
 	}
 
-	if(EOF==fscanf(fp, "stat_w:%d\n", stat_w)){
+	if (EOF==fscanf(fp, "stat_w:%d\n", stat_w)){
                 ISP_LOGD("end to file");
 	}
-	if(EOF==fscanf(fp, "stat_h:%d\n", stat_h)){
+	if (EOF==fscanf(fp, "stat_h:%d\n", stat_h)){
 		ISP_LOGD("end to file");
 	}
 	while (!feof(fp)) {
-		if(EOF==fscanf(fp, "blk_id:%d ", &i)){
+		if (EOF==fscanf(fp, "blk_id:%d ", &i)){
 			ISP_LOGD("end to file");
 			break;
 		}
-		if (i >= 0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
+		if (i>0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
 			if(EOF==fscanf(fp, "R:%d G:%d B:%d\n",
 				&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
 				ISP_LOGD("end to file");
@@ -174,7 +174,7 @@ cmr_int isp_sim_get_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32 
 			ISP_LOGD("to the end of file.");
 			break;
 		}
-		if (i >= 0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
+		if (i>0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
 			if(EOF == fscanf(fp, "R:%d G:%d B:%d\n",
 				&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
 				ISP_LOGD("to the end of file.");
