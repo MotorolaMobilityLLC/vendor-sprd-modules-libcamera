@@ -3,6 +3,7 @@
 #include <log/log.h>
 #include <SprdCamera3HWI.h>
 #include "SingleCameraWrapper.h"
+#include "sensor_drv_u.h"
 
 using namespace sprdcamera;
 using namespace std;
@@ -47,6 +48,20 @@ int SingleCamera::getCameraInfo(camera_info_t *info) {
     if (rc < 0) {
         ALOGE("fail to get static metadata for %d", mSensorId);
         return rc;
+    }
+
+    struct lensProperty *lensProp = sensorGetlensProperty(mSensorId);
+    if (lensProp) {
+        CameraMetadata meta(staticMetadata);
+        uint8_t poseReference = ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA;
+        meta.update(ANDROID_LENS_POSE_ROTATION, lensProp->poseRotation, 4);
+        meta.update(ANDROID_LENS_POSE_TRANSLATION, lensProp->poseTranslation,
+                    3);
+        meta.update(ANDROID_LENS_INTRINSIC_CALIBRATION,
+                    lensProp->intrinsicCalibration, 5);
+        meta.update(ANDROID_LENS_DISTORTION, lensProp->distortion, 5);
+        meta.update(ANDROID_LENS_POSE_REFERENCE, &poseReference, 1);
+        meta.release();
     }
 
     SprdCamera3Setting::getCameraInfo(mSensorId, info);
