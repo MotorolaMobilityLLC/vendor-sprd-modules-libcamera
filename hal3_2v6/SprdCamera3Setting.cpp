@@ -1191,7 +1191,7 @@ int SprdCamera3Setting::coordinate_convert(int *rect_arr, int arr_size,
 
 void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area) {
     int32_t touch_point[2] = {0};
-    cmr_u16 picW, picH, snsW, snsH;
+    cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0;
     float w_ratio = 0.000f, h_ratio = 0.000f;
 
     // change area to point
@@ -1283,6 +1283,7 @@ int SprdCamera3Setting::getCameraIPInited() {
     CAMIP_INTERFACE_INIT camip_init = (CAMIP_INTERFACE_INIT)dlsym(handle, "interface_init");
     if(!camip_init) {
         HAL_LOGD("dlysm func failed");
+        dlclose(handle);
         return -1;
     }
     camip_init(&error);

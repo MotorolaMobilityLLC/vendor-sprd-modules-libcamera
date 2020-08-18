@@ -1788,7 +1788,7 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
         struct visible_region_info *info = (struct visible_region_info *)param1;
 
         if (info) {
-            uint16_t w, h;
+            uint16_t w = 0, h = 0;
 
             mSetting->getLargestSensorSize(mCameraId, &w, &h);
             info->max_size.width = w;
@@ -6316,7 +6316,7 @@ int SprdCamera3OEMIf::openCamera() {
     char value[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
     int is_raw_capture = 0;
-    cmr_u16 picW, picH, snsW, snsH;
+    cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0;
     int i = 0;
     char file_name[128];
     struct exif_info exif_info = {0, 0, {0, 0}};
@@ -7270,7 +7270,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) {
             struct img_rect zoom1 = {0, 0, 0, 0};
             struct img_rect zoom = {0, 0, 0, 0};
-            cmr_u16 picW, picH, snsW, snsH;
+            cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0;
             float w_ratio = 0.000f, h_ratio = 0.000f;
             struct cmr_focus_param focus_para;
             if (mCameraState.preview_state == SPRD_PREVIEW_IN_PROGRESS) {
