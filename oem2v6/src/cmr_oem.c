@@ -7147,8 +7147,12 @@ static int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
         if (ret == 0) {
             cmr_u8 *logo_buf =
                 (cmr_u8 *)malloc((sizeparam->logoW) * (sizeparam->logoH) * 4);
+            if (NULL == logo_buf) {
+                CMR_LOGE("No mem!");
+                return CMR_CAMERA_NO_MEM;
+            }
 
-            /* logo position: If set in camera_select_logo, remove this
+            /* in camera_select_logo, remove this
              * suggest: align 2
              */
             sizeparam->posX = 0;
@@ -7562,7 +7566,7 @@ cmr_int camera_jpeg_decode_simplify(cmr_handle oem_handle,
     src_yuvbuf_frm.addr_phy.addr_y = src_img_frm.addr_phy.addr_y;
     src_yuvbuf_frm.addr_vir.addr_y=src_img_frm.addr_vir.addr_y;
     src_yuvbuf_frm.buf_size = src_img_frm.buf_size;
-    CMR_LOGD("fd=%d,phy.addr_y=%p,vir.addr_y=%p,buf_size=%d",
+    CMR_LOGD("fd=%d, phy.addr_y=%lx, vir.addr_y=%lx, buf_size=%d",
                 src_yuvbuf_frm.fd,
                 src_yuvbuf_frm.addr_phy.addr_y,
                 src_yuvbuf_frm.addr_vir.addr_y,
@@ -7577,8 +7581,8 @@ cmr_int camera_jpeg_decode_simplify(cmr_handle oem_handle,
     dst_yuvbuf_frm.size.height = dst_img_frm.size.height;
     dst_yuvbuf_frm.data_end.y_endian = 1;
     dst_yuvbuf_frm.data_end.uv_endian = 2;
-    CMR_LOGD("fd=%d,phy.addr_y=%p,vir.add_y=%p,buf_size=%d,size.width=%d,"
-                "size.height=%d,y_endian=%d,uv_endian=%d",
+    CMR_LOGD("fd=%d, phy.addr_y=%lx, vir.add_y=%lx, buf_size=%d, size.width=%d,"
+                "size.height=%d, y_endian=%d, uv_endian=%d",
                 dst_yuvbuf_frm.fd,
                 dst_yuvbuf_frm.addr_phy.addr_y,
                 dst_yuvbuf_frm.addr_vir.addr_y,
