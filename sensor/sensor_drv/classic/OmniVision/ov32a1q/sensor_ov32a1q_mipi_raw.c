@@ -305,6 +305,36 @@ static cmr_int ov32a1q_drv_init_fps_info(cmr_handle handle) {
     return rtn;
 }
 
+static cmr_int ov32a1q_drv_init_exif_info(cmr_handle handle,
+                                          void **exif_info_in /*in*/) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+
+    *exif_info_in = NULL;
+    EXIF_SPEC_PIC_TAKING_COND_T *exif_ptr = NULL;
+    struct sensor_static_info *static_info = sns_drv_cxt->static_info;
+
+    rtn = sensor_ic_get_init_exif_info(sns_drv_cxt, &exif_ptr);
+    SENSOR_IC_CHECK_PTR(exif_ptr);
+    *exif_info_in = exif_ptr;
+
+    exif_ptr->valid.FNumber = 1;
+    exif_ptr->FNumber.numerator = static_info->f_num;
+    exif_ptr->FNumber.denominator = 100;
+    exif_ptr->valid.ApertureValue = 1;
+    exif_ptr->ApertureValue.numerator = static_info->f_num;
+    exif_ptr->ApertureValue.denominator = 100;
+    exif_ptr->valid.MaxApertureValue = 1;
+    exif_ptr->MaxApertureValue.numerator = static_info->f_num;
+    exif_ptr->MaxApertureValue.denominator = 100;
+    exif_ptr->valid.FocalLength = 1;
+    exif_ptr->FocalLength.numerator = static_info->focal_length;
+    exif_ptr->FocalLength.denominator = 100;
+
+    return rtn;
+}
+
 static cmr_int ov32a1q_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
@@ -1085,7 +1115,7 @@ ov32a1q_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
 
     /*init exif info,this will be deleted in the future*/
     ov32a1q_drv_init_fps_info(sns_drv_cxt);
-
+    ov32a1q_drv_init_exif_info(sns_drv_cxt, &sns_drv_cxt->exif_ptr);
     /*add private here*/
     return ret;
 }
