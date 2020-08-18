@@ -124,7 +124,7 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 	cmr_u32 min_gain = cxt->sensor_min_gain;
 
 	if (exp_data->lib_data.gain > max_gain) {	/*gain : (sensor max gain, ~) */
-		sensor_gain = (double)max_gain;
+		sensor_gain = max_gain;
 		isp_gain = (double)exp_data->lib_data.gain / (double)max_gain;
 	} else if (exp_data->lib_data.gain > min_gain) {	/*gain : (sensor_min_gain, sensor_max_gain) */
 		if (0 == exp_data->lib_data.gain % cxt->sensor_gain_precision) {
@@ -138,12 +138,12 @@ static cmr_s32 ae_update_exp_data(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_
 		sensor_gain = min_gain;
 		isp_gain = (double)exp_data->lib_data.gain / (double)min_gain;
 		if (isp_gain < 1.0) {
-			ISP_LOGE("check sensor_cfg.min_gain %.2f %.2f", sensor_gain, isp_gain);
+			ISP_LOGE("check sensor_cfg.min_gain %d %.2f", sensor_gain, isp_gain);
 			isp_gain = 1.0;
 		}
 	}
 	//ISP_LOGI("calc param: %f, %f, %d, sensor max gain%d\n", sensor_gain, isp_gain, (exp_data->lib_data.gain % cxt->sensor_gain_precision), max_gain);
-	exp_data->lib_data.sensor_gain = (cmr_u32)sensor_gain;
+	exp_data->lib_data.sensor_gain = sensor_gain;
 	exp_data->lib_data.isp_gain = (isp_gain * 4096.0 + 0.5);
 
 	if (is_force) {
@@ -3392,7 +3392,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 					}
 					else if(cxt->cur_status.settings.reserve_case == 3){ // shutter auto , iso fix
 						capGain = cxt->sync_cur_result.wts.cur_again;
-						capExp = (cmr_u32)((cmr_u32)cxt->flash_esti_result.captureExposure / current_status->line_time + 0.5)*cxt->flash_esti_result.captureGain/(cmr_u32)(cxt->sync_cur_result.wts.cur_again);
+						capExp = (cmr_u32)((cxt->flash_esti_result.captureExposure / current_status->line_time) * cxt->flash_esti_result.captureGain / (cxt->sync_cur_result.wts.cur_again) + 0.5);
 					}
 					else if(cxt->cur_status.settings.reserve_case == 2){ // shutter fix , iso auto
 						capExp = cxt->sync_cur_result.wts.cur_exp_line;

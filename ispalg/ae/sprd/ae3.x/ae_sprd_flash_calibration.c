@@ -843,16 +843,14 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 							  caliData->rBuf, caliData->gBuf, caliData->bBuf,cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, 0, &rmean, &gmean, &bmean);
 				if (gmean > 600) {
 
-					float rat = 2.0;
-					rat = gmean / 300.0;
+					float rat = gmean / 300.0;
 					float rat1;
 					float rat2;
 					float rat3;
 
 					if (caliData->expTime > 0.03 * AEC_LINETIME_PRECESION) {
 						rat1 = rat;
-						float expTest = 0.0;
-						expTest = caliData->expTime / rat1;
+						float expTest = caliData->expTime / rat1;
 						if (expTest < 0.03 * AEC_LINETIME_PRECESION)
 							expTest = 0.03 * AEC_LINETIME_PRECESION;
 						rat1 = caliData->expTime / expTest;
@@ -862,8 +860,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 					if (caliData->gain > 128) {
 						rat2 = rat / rat1;
-						int gainTest = caliData->gain;
-						gainTest = (int)((float)caliData->gain / rat2);
+						int gainTest = (int)((float)caliData->gain / rat2);
 						if (gainTest < 128)
 							gainTest = 128;
 						rat2 = (float)caliData->gain / (float)gainTest;
@@ -873,8 +870,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					}
 					{
 						rat3 = rat / rat1 / rat2;
-						float expTest = 0.0;
-						expTest = caliData->expTime / rat3;
+						float expTest = caliData->expTime / rat3;
 						if (expTest < 0.001 * AEC_LINETIME_PRECESION)
 							expTest = 0.001 * AEC_LINETIME_PRECESION;
 						rat3 = caliData->expTime / expTest;
@@ -1245,7 +1241,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 			caliData->out.flashMask[0] = 0;
 
 			{
-				FILE *fp;
+				FILE *fp = NULL;
 #ifdef WIN32
 				fp = fopen("d:\\temp\\flash_led_brightness.bin", "wb");
 #else
@@ -1603,9 +1599,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					fclose(fp);
 					fp = NULL;
 				}
-
 			}
-
 			if (caliData->out.error != 0) {
 #ifdef WIN32
 				fp = fopen("d:\\temp\\fc_error.txt", "w+");
@@ -1614,6 +1608,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #endif
 				if (fp && caliData->out.error == FlashCali_too_close) {
 					fprintf(fp, "error: chart to camera is to close!\n");
+					fclose(fp);
+					fp = NULL;
+				}
+				if(fp && caliData->out.error != FlashCali_too_close){
 					fclose(fp);
 					fp = NULL;
 				}

@@ -167,7 +167,7 @@ static void ae_parse_isp_gain(struct ae_ctrl_cxt *cxt, cmr_u32 is_master, cmr_u3
 		sensor_gain = min_gain;
 		isp_gain = (double)gain / (double)min_gain;
 		if (isp_gain < 1.0) {
-			ISP_LOGW("check sensor_cfg.min_gain %.2f %.2f", sensor_gain, isp_gain);
+			ISP_LOGW("check sensor_cfg.min_gain %d %.2f", sensor_gain, isp_gain);
 			isp_gain = 1.0;
 		}
 	}
@@ -3804,6 +3804,11 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	if((cxt->monitor_cfg.blk_num.w != cxt->monitor_cfg.blk_num.h) || (cxt->monitor_cfg.blk_num.w < 32) || (cxt->monitor_cfg.blk_num.w % 32)){
 		cxt->monitor_cfg.blk_num.w = 32;
 		cxt->monitor_cfg.blk_num.h = 32;
+	}
+	if((cxt->snr_info.frame_size.w <= 2328) || (cxt->snr_info.frame_size.h <= 1744)){
+		cxt->monitor_cfg.blk_num.w = 32;
+		cxt->monitor_cfg.blk_num.h = 32;
+		ISP_LOGV("AEM block set to 32*32 under 4M");
 	}
 
 	if (work_info->mode >= AE_WORK_MODE_MAX) {
