@@ -436,14 +436,16 @@ int BokehCamera::initialize(const camera3_callback_ops_t *callback_ops) {
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevmain = &m_pPhyCamera[CAM_BOKEH_MAIN];
 
-    OTP_Tag otp = SprdCamera3Setting::s_setting[0].otpInfo;
-    HAL_LOGD("dual_otp_flag %d, otp_type %d, otp_size %d", otp.dual_otp_flag,
-             otp.otp_type, otp.otp_size);
-    if (mOtpData.otp_exist == false && otp.otp_size > 0) {
+    uint8_t otpType = SprdCamera3Setting::s_setting[0].otpInfo.otp_type;
+    int otpSize = SprdCamera3Setting::s_setting[0].otpInfo.otp_size;
+    HAL_LOGD("otpType %d, otp_size %d", otpType, otpSize);
+    if (mOtpData.otp_exist == false && otpSize > 0) {
         mOtpData.otp_exist = true;
-        mOtpData.otp_type = otp.otp_type;
-        mOtpData.otp_size = otp.otp_size;
-        memcpy(mOtpData.otp_data, otp.otp_data, mOtpData.otp_size);
+        mOtpData.otp_type = otpType;
+        mOtpData.otp_size = otpSize;
+        memcpy(mOtpData.otp_data,
+               SprdCamera3Setting::s_setting[0].otpInfo.otp_data,
+               mOtpData.otp_size);
     }
     HAL_LOGI("X");
     return rc;
@@ -577,6 +579,8 @@ int BokehCamera::flush() {
     mFlushing = true;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_BOKEH_MAIN].hwi;
     rc = hwiMain->flush(m_pPhyCamera[CAM_BOKEH_MAIN].dev);
+    if (rc != 0)
+        return rc;
 
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
     rc = hwiAux->flush(m_pPhyCamera[CAM_BOKEH_DEPTH].dev);
@@ -588,56 +592,33 @@ int BokehCamera::flush() {
 
 int BokehCamera::isStreamCombinationSupported(
     const camera_stream_combination_t *comb) {
-    /*
-     * [CTS] LogicalCameraDeviceTest#testBasicLogicalPhysicalStreamCombination
-     * [CTS] LogicalCameraDeviceTest#testBasicPhysicalStreaming
-     * [CTS] NativeCameraDeviceTest#testCameraDeviceLogicalPhysicalStreaming
-     *
-     * don't support any physical stream for now
-     */
-    if (comb) {
-        for (uint32_t i = 0; i < comb->num_streams; i++) {
-            camera_stream_t *stream = &comb->streams[i];
-            if (stream->physical_camera_id &&
-                strlen(stream->physical_camera_id)) {
-                HAL_LOGW("assign physical camera id %d to stream is currently "
-                         "not supported",
-                         atoi(stream->physical_camera_id));
-                return -EINVAL;
-            }
-        }
-    } else {
+    int ret = 0;
+    HAL_LOGI("E");
+    if (!comb) {
         HAL_LOGE("NULL stream combination");
         return -EINVAL;
     }
 
-    int rc = 0;
+    if (comb->num_streams < 1 ||
+        comb->num_streams > REAL_BOKEH_MAX_NUM_STREAMS) {
+        HAL_LOGE("Bad number of streams num: %d", comb->num_streams);
+        return -EINVAL;
+    }
+    if (comb->operation_mode != 0) { // CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE
+        HAL_LOGE("error operation_mode %d", comb->operation_mode);
+        return -EINVAL;
+    }
     camera3_stream_configuration_t streamList = {
         comb->num_streams, /*streams*/ nullptr, comb->operation_mode,
         /*session_parameters*/ nullptr};
     streamList.streams = new camera3_stream_t *[comb->num_streams];
     camera3_stream_t *streamBuffer = new camera3_stream_t[comb->num_streams];
-    int inputStreamNum = 0, outputStreamNum = 0;
-    HAL_LOGI("E");
     if (streamList.streams == NULL) {
         HAL_LOGD("NULL stream list");
-        rc = -EINVAL;
+        ret = -EINVAL;
         goto exit;
     }
-    if (comb->num_streams < 1 ||
-        comb->num_streams > REAL_BOKEH_MAX_NUM_STREAMS) {
-        HAL_LOGE("Bad number of streams num: %d", comb->num_streams);
-        rc = -EINVAL;
-        goto exit;
-    }
-    if (comb->operation_mode != 0) { // CAMERA3_STREAM_CONFIGURATION_NORMAL_MODE
-        HAL_LOGE("error operation_mode %d", comb->operation_mode);
-        rc = -EINVAL;
-        goto exit;
-    }
-
     for (uint8_t i = 0; i < comb->num_streams; i++) {
-        int streamType;
         streamBuffer[i] = {comb->streams[i].stream_type,
                            comb->streams[i].width,
                            comb->streams[i].height,
@@ -650,50 +631,18 @@ int BokehCamera::isStreamCombinationSupported(
                            comb->streams[i].physical_camera_id,
                            /*reserved*/ {nullptr}};
         streamList.streams[i] = &streamBuffer[i];
-        streamType = getStreamTypes(streamList.streams[i]);
-        if (streamType == PREVIEW_STREAM) {
-            if (streamList.streams[i]->width > 1920 ||
-                streamList.streams[i]->height > 1080 ||
-                streamList.streams[i]->width < 320 ||
-                streamList.streams[i]->height < 240) {
-                HAL_LOGE("dont support prev size width %d, height %d",
-                         streamList.streams[i]->width,
-                         streamList.streams[i]->height);
-                rc = -EINVAL;
-                goto exit;
-            }
-        } else if (streamType == SNAPSHOT_STREAM) {
-            if (streamList.streams[i]->width > maxCapWidth ||
-                streamList.streams[i]->height > maxCapHeight ||
-                streamList.streams[i]->width < 320 ||
-                streamList.streams[i]->height < 240) {
-                HAL_LOGD("dont support cap size width %d, height %d",
-                         streamList.streams[i]->width,
-                         streamList.streams[i]->height);
-                rc = -EINVAL;
-                goto exit;
-            }
+        ret = validateStream(streamList.streams[i]);
+        if (ret != 0) {
+            goto exit;
         }
-        if (streamList.streams[i]->stream_type == CAMERA3_STREAM_OUTPUT) {
-            outputStreamNum++;
-        } else if (streamList.streams[i]->stream_type == CAMERA3_STREAM_INPUT) {
-            HAL_LOGD("%d, input stream", i);
-            inputStreamNum++;
-        }
-    }
-    if (outputStreamNum < 1 || inputStreamNum > 0) {
-        HAL_LOGE("without output stream configuration or have input stream "
-                 "configuration.");
-        rc = -EINVAL;
-        goto exit;
     }
 exit:
-    HAL_LOGI("X, rc: %d", rc);
+    HAL_LOGI("X, rc: %d", ret);
     if (streamBuffer)
         delete[] streamBuffer;
     if (streamList.streams)
         delete[] streamList.streams;
-    return rc;
+    return ret;
 }
 
 void BokehCamera::process_capture_result_main(
@@ -717,7 +666,6 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
     int rc = 0;
     camera3_stream_t *pmainStreams[REAL_BOKEH_MAX_NUM_STREAMS];
     camera3_stream_t *pauxStreams[REAL_BOKEH_MAX_NUM_STREAMS];
-    camera3_stream_t *newStream = NULL;
     camera3_stream_t *previewStream = NULL;
     camera3_stream_t *snapStream = NULL;
     mBokehSize.depth_prev_out_w = DEPTH_OUTPUT_WIDTH;
@@ -757,8 +705,6 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
     mBokehStream.video_h = 0;
     mVideoStreamsNum = -1;
 
-    HAL_LOGD("stream_list %p, num_streams %d", stream_list,
-             stream_list->num_streams);
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         HAL_LOGD("framework configurestreams %d, streamtype:%d, format:%d, "
                  "width:%d, "
@@ -773,21 +719,10 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
                  stream_list->streams[i]->data_space,
                  stream_list->streams[i]->rotation,
                  stream_list->streams[i]->physical_camera_id);
-
-        /*
-         * [CTS]
-         * LogicalCameraDeviceTest#testBasicLogicalPhysicalStreamCombination
-         * [CTS] LogicalCameraDeviceTest#testBasicPhysicalStreaming
-         * [CTS] NativeCameraDeviceTest#testCameraDeviceLogicalPhysicalStreaming
-         *
-         * don't support any physical stream for now
-         */
-        if (stream_list->streams[i]->physical_camera_id &&
-            strlen(stream_list->streams[i]->physical_camera_id)) {
-            HAL_LOGW("assign physical camera id %d to stream is currently not "
-                     "supported %d",
-                     atoi(stream_list->streams[i]->physical_camera_id));
-            return -EINVAL;
+        rc = validateStream(stream_list->streams[i]);
+        if (rc != 0) {
+            HAL_LOGE("dont support this stream_list");
+            return rc;
         }
     }
     for (size_t i = 0; i < stream_list->num_streams; i++) {
@@ -901,11 +836,9 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
     if (previewStream == NULL) {
         HAL_LOGD("PreviewStream index %d", mPreviewStreamsNum);
         prevStreamMalloc = true;
-        previewStream =
-            (struct camera3_stream *)malloc(sizeof(struct camera3_stream));
-        memcpy(previewStream,
-               (struct camera3_stream *)(stream_list->streams[0]),
-               sizeof(struct camera3_stream));
+        previewStream = new camera3_stream_t;
+        memcpy(previewStream, (camera3_stream_t *)(stream_list->streams[0]),
+               sizeof(camera3_stream_t));
         if (mVideoStreamsNum >= 0) {
             mVideoPrevShare = true;
             mBokehSize.preview_w = mBokehStream.video_w;
@@ -938,10 +871,9 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
     if (snapStream == NULL) {
         HAL_LOGD("CaptureStream index %d", mCaptureStreamsNum);
         snapStreamMalloc = true;
-        snapStream =
-            (struct camera3_stream *)malloc(sizeof(struct camera3_stream));
-        memcpy(snapStream, (struct camera3_stream *)(stream_list->streams[0]),
-               sizeof(struct camera3_stream));
+        snapStream = new camera3_stream_t;
+        memcpy(snapStream, (camera3_stream_t *)(stream_list->streams[0]),
+               sizeof(camera3_stream_t));
         snapStream->width = maxCapWidth;
         snapStream->height = maxCapHeight;
         mBokehSize.capture_w = snapStream->width;
@@ -1017,58 +949,18 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
     auxconfig.streams = pauxStreams;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_BOKEH_DEPTH].hwi;
     HAL_LOGD("AuxConfig Num %d", auxconfig.num_streams);
-    for (size_t i = 0; i < auxconfig.num_streams; i++) {
-        HAL_LOGD("auxconfig configurestreams %d, streamtype:%d, format:%d, "
-                 "width:%d, "
-                 "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
-                 "rotation %d",
-                 i, auxconfig.streams[i]->stream_type,
-                 auxconfig.streams[i]->format, auxconfig.streams[i]->width,
-                 auxconfig.streams[i]->height, auxconfig.streams[i]->priv,
-                 auxconfig.streams[i]->usage, auxconfig.streams[i]->max_buffers,
-                 auxconfig.streams[i]->data_space,
-                 auxconfig.streams[i]->rotation);
-    }
     rc = hwiAux->configure_streams(m_pPhyCamera[CAM_BOKEH_DEPTH].dev,
                                    &auxconfig);
     if (rc < 0) {
         HAL_LOGE("failed. configure aux streams!!");
         goto exit;
-    } else {
-        HAL_LOGD("success. configure aux streams.");
-    }
-    for (size_t i = 0; i < auxconfig.num_streams; i++) {
-        HAL_LOGD("auxconfig configurestreams %d, streamtype:%d, format:%d, "
-                 "width:%d, "
-                 "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
-                 "rotation %d",
-                 i, auxconfig.streams[i]->stream_type,
-                 auxconfig.streams[i]->format, auxconfig.streams[i]->width,
-                 auxconfig.streams[i]->height, auxconfig.streams[i]->priv,
-                 auxconfig.streams[i]->usage, auxconfig.streams[i]->max_buffers,
-                 auxconfig.streams[i]->data_space,
-                 auxconfig.streams[i]->rotation);
     }
     HAL_LOGD("MainConfig Num %d", mainconfig.num_streams);
-    for (size_t i = 0; i < mainconfig.num_streams; i++) {
-        HAL_LOGD(
-            "mainconfig configurestreams %d, streamtype:%d, format:%d, "
-            "width:%d, "
-            "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
-            "rotation %d",
-            i, mainconfig.streams[i]->stream_type,
-            mainconfig.streams[i]->format, mainconfig.streams[i]->width,
-            mainconfig.streams[i]->height, mainconfig.streams[i]->priv,
-            mainconfig.streams[i]->usage, mainconfig.streams[i]->max_buffers,
-            mainconfig.streams[i]->data_space, mainconfig.streams[i]->rotation);
-    }
     rc = hwiMain->configure_streams(m_pPhyCamera[CAM_BOKEH_MAIN].dev,
                                     &mainconfig);
     if (rc < 0) {
         HAL_LOGE("failed. configure main streams!!");
         goto exit;
-    } else {
-        HAL_LOGD("success. configure main streams.");
     }
     for (size_t i = 0; i < mainconfig.num_streams; i++) {
         HAL_LOGD(
@@ -1083,23 +975,19 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
             mainconfig.streams[i]->data_space, mainconfig.streams[i]->rotation);
     }
 
-    if (previewStream != NULL) {
-        memcpy(previewStream, &mMainStreams[mPreviewStreamsNum],
-               sizeof(camera3_stream_t));
-        HAL_LOGD("previewStream  max buffers %d", previewStream->max_buffers);
-        previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
-    }
-    if (snapStream != NULL) {
-        memcpy(snapStream, &mMainStreams[mCaptureStreamsNum],
-               sizeof(camera3_stream_t));
-        snapStream->width = mBokehSize.capture_w;
-        snapStream->height = mBokehSize.capture_h;
-    }
+    memcpy(previewStream, &mMainStreams[mPreviewStreamsNum],
+           sizeof(camera3_stream_t));
+    HAL_LOGD("previewStream  max buffers %d", previewStream->max_buffers);
+    previewStream->max_buffers += MAX_UNMATCHED_QUEUE_SIZE;
+
+    memcpy(snapStream, &mMainStreams[mCaptureStreamsNum],
+           sizeof(camera3_stream_t));
+    snapStream->width = mBokehSize.capture_w;
+    snapStream->height = mBokehSize.capture_h;
+
     mCaptureThread->run(String8::format("Bokeh-Cap").string());
     mPreviewMuxerThread->run(String8::format("Bokeh-Prev").string());
-    if (mBokehCamera->mApiVersion == BOKEH_API_MODE) {
-        mDepthMuxerThread->run(String8::format("depth-prev").string());
-    }
+    mDepthMuxerThread->run(String8::format("depth-prev").string());
 
     mbokehParm.sel_x = mBokehSize.preview_w / 2;
     mbokehParm.sel_y = mBokehSize.preview_h / 2;
@@ -1117,25 +1005,18 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
         HAL_LOGE("fail to initParam");
     }
 
-    if (mOtpData.otp_exist) {
-        char prop[PROPERTY_VALUE_MAX] = {
-            0,
-        };
-        property_get("persist.vendor.cam.pbokeh.enable", prop, "1");
-        mIsSupportPBokeh = atoi(prop);
-        HAL_LOGD("mIsSupportPBokeh prop %d", mIsSupportPBokeh);
-    } else {
-        mIsSupportPBokeh = false;
-        HAL_LOGD("mIsSupportPBokeh %d", mIsSupportPBokeh);
-    }
+    setPrevBokehSupport();
     if (mPreviewMuxerThread->isRunning()) {
         mPreviewMuxerThread->requestInit();
     }
-    HAL_LOGI("x rc%d.", rc);
+
     for (size_t i = 0; i < stream_list->num_streams; i++) {
-        if (getStreamTypes(stream_list->streams[i]) == PREVIEW_STREAM ||
-            getStreamTypes(stream_list->streams[i]) == VIDEO_STREAM)
+        int type = getStreamTypes(stream_list->streams[i]);
+        if (type == PREVIEW_STREAM || type == VIDEO_STREAM) {
             stream_list->streams[i]->max_buffers = previewStream->max_buffers;
+        } else if (type == SNAPSHOT_STREAM) {
+            stream_list->streams[i]->max_buffers = snapStream->max_buffers;
+        }
         HAL_LOGD("configurestreams %d, streamtype:%d, format:%d, width:%d, "
                  "height:%d priv %p usage 0x%x max_buffers %d, data_space %d, "
                  "rotation %d",
@@ -1147,8 +1028,6 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
                  stream_list->streams[i]->max_buffers,
                  stream_list->streams[i]->data_space,
                  stream_list->streams[i]->rotation);
-        if (stream_list->streams[i]->max_buffers <= 0)
-            stream_list->streams[i]->max_buffers = 1;
     }
     HAL_LOGI("mum_streams:%d,%d,depth_cap (%d,%d),cap (%d,%d),"
              "depth_prev (%d,%d), prev (%d,%d), video (%d, %d), "
@@ -1160,13 +1039,12 @@ int BokehCamera::configureStreams(camera3_stream_configuration_t *stream_list) {
              mBokehSize.preview_w, mBokehSize.preview_h, mBokehStream.video_w,
              mBokehStream.video_h, mIsSupportPBokeh);
 exit:
+    HAL_LOGI("X rc: %d.", rc);
     if (prevStreamMalloc) {
-        free(previewStream);
-        previewStream = NULL;
+        delete previewStream;
     }
     if (snapStreamMalloc) {
-        free(snapStream);
-        snapStream = NULL;
+        delete snapStream;
     }
     return rc;
 }
@@ -1245,12 +1123,6 @@ int BokehCamera::processCaptureRequest(camera3_capture_request_t *request) {
     metaSettingsMain = request->settings;
     metaSettingsAux = request->settings;
 
-    if (metaSettingsMain.exists(ANDROID_CONTROL_EXTENDED_SCENE_MODE)) {
-        mExtendMode = metaSettingsMain.find(ANDROID_CONTROL_EXTENDED_SCENE_MODE)
-                          .data.u8[0];
-        HAL_LOGD("request %d, extend_mode %d", request->frame_number,
-                 mExtendMode);
-    }
     saveRequest(request);
 
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
@@ -1274,25 +1146,16 @@ int BokehCamera::processCaptureRequest(camera3_capture_request_t *request) {
         metaSettingsAux.update(ANDROID_CONTROL_SCENE_MODE, &value, 1);
     }
 #endif
-    /*if (metaSettingsMain.exists(ANDROID_SPRD_APP_MODE_ID)) {
-        int32_t appMode = CAMERA_MODE_REFOCUS;
-        metaSettingsMain.update(ANDROID_SPRD_APP_MODE_ID, &appMode, 1);
-        metaSettingsAux.update(ANDROID_SPRD_APP_MODE_ID, &appMode, 1);
-        HAL_LOGD("appMode %d", appMode);
-    }*/
+
     for (size_t i = 0; i < req->num_output_buffers; i++) {
         camera3_stream_t *stream = request->output_buffers[i].stream;
         HAL_LOGD("request %d, streamType:%d, width:%d, height:%d, format:%d,"
                  "usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, "
-                 "priv:%p, phyId:%s, physcam_id %s",
+                 "priv:%p, phyId:%s, buffer: %p",
                  i, stream->stream_type, stream->width, stream->height,
                  stream->format, stream->usage, stream->max_buffers,
                  stream->data_space, stream->rotation, stream->priv,
-                 stream->physical_camera_id, request->physcam_id);
-        HAL_LOGD("idx: %d, %p", request->frame_number,
-                 request->output_buffers[i].buffer);
-    }
-    for (size_t i = 0; i < req->num_output_buffers; i++) {
+                 stream->physical_camera_id, request->output_buffers[i].buffer);
         int requestStreamType =
             getStreamTypes(request->output_buffers[i].stream);
         HAL_LOGD("streamtype:%d", requestStreamType);
@@ -1493,29 +1356,6 @@ int BokehCamera::processCaptureRequest(camera3_capture_request_t *request) {
     req_aux.num_output_buffers = aux_buffer_index;
     req_main.output_buffers = out_streams_main;
     req_aux.output_buffers = out_streams_aux;
-
-    for (size_t i = 0; i < req_main.num_output_buffers; i++) {
-        camera3_stream_t *stream = req_main.output_buffers[i].stream;
-        HAL_LOGD("main_req , output_buffer:%d, streamType:%d, width:%d, "
-                 "height:%d, format:%d,"
-                 "usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, "
-                 "priv:%p, phyId:%s",
-                 i, stream->stream_type, stream->width, stream->height,
-                 stream->format, stream->usage, stream->max_buffers,
-                 stream->data_space, stream->rotation, stream->priv,
-                 stream->physical_camera_id);
-    }
-    for (size_t i = 0; i < req_aux.num_output_buffers; i++) {
-        camera3_stream_t *stream = req_aux.output_buffers[i].stream;
-        HAL_LOGD("aux_req , output_buffer:%d, streamType:%d, width:%d, "
-                 "height:%d, format:%d,"
-                 "usage:0x%x, max_buffers:%d, data_space:%d, rotation:%d, "
-                 "priv:%p, phyId:%s",
-                 i, stream->stream_type, stream->width, stream->height,
-                 stream->format, stream->usage, stream->max_buffers,
-                 stream->data_space, stream->rotation, stream->priv,
-                 stream->physical_camera_id);
-    }
 
     if (is_captureing) {
         struct timespec t1;
@@ -1893,7 +1733,6 @@ void BokehCamera::processCaptureResultAux(
         !mSnapshotAuxReturn) {
         mSnapshotAuxReturn = true;
         Mutex::Autolock l(mDefaultStreamLock);
-        result_buffer = result->output_buffers;
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
             HAL_LOGD("save aux");
             mCaptureThread->mSavedOneResultBuff =
@@ -1920,9 +1759,6 @@ void BokehCamera::processCaptureResultAux(
                 mCaptureThread->mMergequeueSignal.signal();
             }
         }
-    } else if (mIsCapturing && currStreamType == SNAPSHOT_STREAM) {
-        HAL_LOGD("should not entry here, shutter frame:%d",
-                 result->frame_number);
     } else if (currStreamType == CALLBACK_STREAM ||
                currStreamType == PREVIEW_STREAM) {
         if (!mIsSupportPBokeh) {
@@ -2971,6 +2807,13 @@ void BokehCamera::saveRequest(camera3_capture_request_t *request) {
     memset(&curVideoRequest, 0, sizeof(multi_request_saved_t));
     memset(&curMeta, 0, sizeof(meta_req_t));
     HAL_LOGD(" E %d", request->frame_number);
+    CameraMetadata settings = clone_camera_metadata(request->settings);
+    if (settings.exists(ANDROID_CONTROL_EXTENDED_SCENE_MODE)) {
+        mExtendMode =
+            settings.find(ANDROID_CONTROL_EXTENDED_SCENE_MODE).data.u8[0];
+        HAL_LOGD("request %d, extend_mode %d", request->frame_number,
+                 mExtendMode);
+    }
     {
         Mutex::Autolock l(mMetaReqLock);
         curMeta.frame_number = request->frame_number;
@@ -3308,8 +3151,16 @@ void BokehCamera::CallBackResult(uint32_t frame_number,
                 void *addr = NULL, *addr2 = NULL;
                 uint32_t size =
                     itor2->stream->width * itor2->stream->height * 3 / 2;
-                mBokehCamera->map(itor2->buffer, &addr2);
-                mBokehCamera->map(result_buffers.buffer, &addr);
+                if (mBokehCamera->map(itor2->buffer, &addr2) != NO_ERROR) {
+                    HAL_LOGE("fail to map buffer2");
+                    return;
+                }
+                if (mBokehCamera->map(result_buffers.buffer, &addr) !=
+                    NO_ERROR) {
+                    HAL_LOGE("fail to map buffer1");
+                    mBokehCamera->unmap(itor2->buffer);
+                    return;
+                }
                 memcpy(addr2, addr, size);
                 mBokehCamera->unmap(itor2->buffer);
                 mBokehCamera->unmap(result_buffers.buffer);
@@ -3572,8 +3423,7 @@ int BokehCamera::insertGDepthMetadata(unsigned char *result_buffer_addr,
     strcat(file2_name, "xmp_temp2.jpg");
 
     // remove previous temp file
-    if (remove(file2_name) < 0)
-        HAL_LOGE("Unable to remove file: %s \n", file2_name);
+    remove(file2_name);
 
     uint32_t para_size = 0;
     uint32_t depth_size = 0;
@@ -3849,8 +3699,11 @@ void BokehCamera::encodeOriginalJPEGandDepth(
     mBokehCamera->unmap(mBokehCamera->mBokehDepthBuffer.snap_gdepthJpg_buffer);
     HAL_LOGI("encodeToBase64String = %s", encodeToBase64String->c_str());
     void *gdepth_ori_jpeg_addr = NULL;
-    mBokehCamera->map(mBokehCamera->m_pDstGDepthOriJpegBuffer,
-                      &gdepth_ori_jpeg_addr);
+    if (mBokehCamera->map(mBokehCamera->m_pDstGDepthOriJpegBuffer,
+                          &gdepth_ori_jpeg_addr) != NO_ERROR) {
+        HAL_LOGE("fail to map m_pDstGDepthOriJpegBuffer");
+        return;
+    }
     SXMPUtils::EncodeToBase64((char *)gdepth_ori_jpeg_addr,
                               mBokehCamera->mGDepthOriJpegSize,
                               encodeToBase64StringOrigJpeg);
@@ -4130,6 +3983,60 @@ bool BokehCamera::matchTwoFrame(hwi_frame_buffer_info_t result1,
         HAL_LOGD("no match for idx:%d, could not find matched frame",
                  result1.frame_number);
         return MATCH_FAILED;
+    }
+}
+
+int BokehCamera::validateStream(camera3_stream_t *stream) {
+    if (stream == NULL) {
+        HAL_LOGE("NULL stream");
+        return -EINVAL;
+    }
+    if (stream->stream_type != CAMERA3_STREAM_OUTPUT) {
+        HAL_LOGE("dont support stream_type %d", stream->stream_type);
+        return -EINVAL;
+    }
+    int type = getStreamTypes(stream);
+    uint32_t width = stream->width, height = stream->height;
+    /*
+     * [CTS] LogicalCameraDeviceTest#testBasicLogicalPhysicalStreamCombination
+     * [CTS] LogicalCameraDeviceTest#testBasicPhysicalStreaming
+     * [CTS] NativeCameraDeviceTest#testCameraDeviceLogicalPhysicalStreaming
+     *
+     * don't support any physical stream for now
+     */
+    if (stream->physical_camera_id && strlen(stream->physical_camera_id)) {
+        HAL_LOGW("assign physical camera id %d to stream is currently not "
+                 "supported",
+                 atoi(stream->physical_camera_id));
+        return -EINVAL;
+    }
+    if (type == PREVIEW_STREAM) {
+        if (width > maxPrevWidth || width < 320 || height > maxPrevHeight ||
+            height < 240) {
+            HAL_LOGE("dont support prev size (%d, %d)", width, height);
+            return -EINVAL;
+        }
+    } else if (type == SNAPSHOT_STREAM) {
+        if (width > maxCapWidth || width < 320 || height > maxCapHeight ||
+            height < 240) {
+            HAL_LOGE("dont support cap size (%d, %d)", width, height);
+            return -EINVAL;
+        }
+    }
+    return 0;
+}
+
+void BokehCamera::setPrevBokehSupport() {
+    if (mOtpData.otp_exist) {
+        char prop[PROPERTY_VALUE_MAX] = {
+            0,
+        };
+        property_get("persist.vendor.cam.pbokeh.enable", prop, "1");
+        mIsSupportPBokeh = atoi(prop);
+        HAL_LOGD("mIsSupportPBokeh prop %d", mIsSupportPBokeh);
+    } else {
+        mIsSupportPBokeh = false;
+        HAL_LOGD("mIsSupportPBokeh %d", mIsSupportPBokeh);
     }
 }
 
@@ -4846,6 +4753,7 @@ BokehCamera::BokehCaptureThread::BokehCaptureThread() {
     mBokehResult = true;
     memset(&mSavedCapRequest, 0, sizeof(camera3_capture_request_t));
     memset(&mSavedCapReqStreamBuff, 0, sizeof(camera3_stream_buffer_t));
+    memset(&mGDepthOutputParam, 0, sizeof(gdepth_outparam));
 
     mCaptureMsgList.clear();
     HAL_LOGI(" X");
@@ -5266,7 +5174,8 @@ bool BokehCamera::BokehCaptureThread::threadLoop() {
 #ifdef CONFIG_FACE_BEAUTY
             if (mBokehCamera->mPerfectskinlevel.smoothLevel > 0 &&
                 mBokehCamera->mFaceInfo[2] - mBokehCamera->mFaceInfo[0] > 0 &&
-                mBokehCamera->mFaceInfo[3] - mBokehCamera->mFaceInfo[1] > 0) {
+                mBokehCamera->mFaceInfo[3] - mBokehCamera->mFaceInfo[1] > 0 &&
+                capture_msg.combo_buff.buffer1) {
                 mBokehCamera->bokehFaceMakeup(capture_msg.combo_buff.buffer1,
                                               input_buf1_addr);
             }

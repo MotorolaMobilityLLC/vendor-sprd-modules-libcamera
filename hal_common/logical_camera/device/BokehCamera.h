@@ -125,7 +125,8 @@ class BokehCamera : public CameraDevice_3_5,
     int getCameraInfo(camera_info_t *info) override;
     int openCameraDevice() override;
     int closeCameraDevice() override;
-    int isStreamCombinationSupported(const camera_stream_combination_t *comb) override;
+    int isStreamCombinationSupported(
+        const camera_stream_combination_t *comb) override;
 
     int processCaptureRequest(camera3_capture_request_t *request);
     static void notifyMain(const struct camera3_callback_ops *ops,
@@ -422,6 +423,8 @@ class BokehCamera : public CameraDevice_3_5,
     void setPrevDepthBufferFlag(BufferFlag cur_flag, int index);
     unsigned char *getaddr(unsigned char *buffer_addr, uint32_t buffer_size);
     void setResultMetadata(CameraMetadata &metadata, uint32_t frame_number);
+    int validateStream(camera3_stream_t *stream);
+    void setPrevBokehSupport();
 };
 }
 #endif
