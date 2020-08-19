@@ -164,8 +164,8 @@ void do_dfa_image_yuv420sp(struct class_dfa *dfa, int faceCount,DFA_RESULT *dfa_
         ALOGD("SPRD_DFA: DFA_Run_YUV420SP duration is %d ms", duration);
     }
     if (retVal != 0) {
-        return;
         ALOGE("do_dfa_image_yuv420sp ERROR!, ret is %d", retVal);
+        return;
     }
 }
 
@@ -199,8 +199,8 @@ void do_dfa_image_yuv420(struct class_dfa *dfa, int faceCount, DFA_RESULT *dfa_r
         ALOGD("SPRD_DFA: DFA_Run_YUV420 duration is %d ms", duration);
      }
     if (retVal != 0) {
-        return ;
         ALOGE("do_dfa_image_yuv420 ERROR!, ret is %d", retVal);
+        return ;
     }
 }
 
@@ -232,10 +232,10 @@ void do_dfa_image_bgr(struct class_dfa *dfa, int faceCount, DFA_RESULT *dfa_resu
     property_get("ro.debuggable", debug_value, "0");
     if (!strcmp(debug_value, "1")) {
         ALOGD("SPRD_DFA: DFA_Run_BGR duration is %d ms", duration);
-     }
+    }
     if (retVal != 0) {
-        return ;
         ALOGE("do_dfa_image_bgr ERROR!, ret is %d", retVal);
+        return ;
     }
 }
 #endif
