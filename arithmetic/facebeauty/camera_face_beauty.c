@@ -406,7 +406,7 @@ void do_face_beauty(struct class_fb *faceBeauty, int faceCount) {
                 faceCount = faceCount > 0 ? faceCount : 1;
             else {
                 //no longer do face beauty after 10 frames no face.
-                faceBeauty->isFaceGot == 0;
+                faceBeauty->isFaceGot = 0;
             }
         }
         property_get("debug.camera.dump.frame", dump_value, "null");
