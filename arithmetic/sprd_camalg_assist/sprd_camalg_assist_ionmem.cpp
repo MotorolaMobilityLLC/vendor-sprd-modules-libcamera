@@ -62,7 +62,10 @@ JNIEXPORT int sprd_caa_ionmem_flush(void *h_ionmem, uint32_t size)
 	ionmem_handle_t *handle = (ionmem_handle_t *)h_ionmem;
 	size_t size_ret = 0;
 	unsigned long p_addr = 0;
-	MemIon::Get_phy_addr_from_ion(handle->fd, &p_addr, &size_ret);
+	if (MemIon::Get_phy_addr_from_ion(handle->fd, &p_addr, &size_ret)) {
+		CAA_LOGE("Get_phy_addr_from_ion failed\n");
+		return 1;
+	}
 	return MemIon::Flush_ion_buffer(handle->fd, handle->v_addr, (void *)p_addr, size);
 }
 
