@@ -151,6 +151,18 @@ SprdCamera3PortraitScene::SprdCamera3PortraitScene() {
     mstartUpdate = 0;
     mUpdataxy = 0;
     mFirstUpdateFrame = 1;
+    mFaceInfoX = 0;
+    mFaceInfoY = 0;
+    mOrientationAngle = 0;
+    mIsRunAlgo = true;
+    mBGWidth = 0;
+    mBGHeight = 0;
+    mIsCapBuffAllocated = false;
+    mSaveTime = 0;
+    mChangeBGMode = false;
+    mVideoWidth = 0;
+    mVideoHeight = 0;
+    mIsRecordMode = false;
     memset(&mCachePrevWeightParams, 0, sizeof(sprd_portrait_scene_proc_t));
     memset(&mCacheCapWeightParams, 0, sizeof(sprd_portrait_scene_proc_t));
     memset(&mMainStreams, 0, sizeof(camera3_stream_t) * PBRP_MAX_NUM_STREAMS);
@@ -272,13 +284,11 @@ int SprdCamera3PortraitScene::camera_device_open(
     __unused const struct hw_module_t *module, const char *id,
     struct hw_device_t **hw_device) {
     int rc = NO_ERROR;
-
-    HAL_LOGV("id= %d", atoi(id));
     if (!id) {
         HAL_LOGE("Invalid camera id");
         return BAD_VALUE;
     }
-
+    HAL_LOGV("id= %d", atoi(id));
     rc = mPbrp->cameraDeviceOpen(atoi(id), hw_device);
     HAL_LOGV("id= %d, rc: %d", atoi(id), rc);
 
@@ -816,11 +826,11 @@ bool SprdCamera3PortraitScene::CaptureThread::threadLoop() {
                 mPbrp->m_pmaskBuffer = &mPbrp->mLocalCapBuffer[2].native_handle;
                 MAP_AND_CHECK(mPbrp->m_pmaskBuffer, &mask_data);
                 HAL_LOGD("test handleAddr=%p,mask_data=%p,buffer "
-                         "w=%d,h=%d,should >%d Byte",
+                         "w=%d,h=%d,should be %d Byte",
                          &mPbrp->mLocalCapBuffer[2], mask_data,
                          mPbrp->mLocalCapBuffer[2].width,
                          mPbrp->mLocalCapBuffer[2].height, 512 * 512 * 2);
-                HAL_LOGD("mFlushing:%d, frame idx:%d buffer addr 0x%x",
+                HAL_LOGD("mFlushing:%d, frame idx:%d buffer addr 0x%p",
                          mPbrp->mFlushing, capture_msg.combo_buff.frame_number,
                          capture_msg.combo_buff.buffer);
 
@@ -1024,8 +1034,7 @@ int SprdCamera3PortraitScene::CaptureThread::initCapParams() {
     mCapInitParams.Scalingratio = 4;
     mCapInitParams.SmoothWinSize = 5;
     mCapInitParams.box_filter_size = 3;
-    mCapInitParams.gau_min_slope = mCapInitParams.gau_min_slope =
-        (float)(10) / 10000;
+    mCapInitParams.gau_min_slope = (float)(10) / 10000;
     mCapInitParams.gau_max_slope = (float)(50) / 10000;
     mCapInitParams.gau_Findex2Gamma_AdjustRatio = (float)(20000) / 10000;
     mCapInitParams.gau_box_filter_size = 11;
@@ -2409,7 +2418,6 @@ int SprdCamera3PortraitScene::initialize(
     mBgID = BG_OFF;
     mCacheBgID = BG_OFF;
     mIsRecordMode = false;
-    mPbrp->mPrevBuffReady = false;
     HAL_LOGD("mIsRecordMode SET 0");
     m_pOrgJpegBuffer = NULL;
     mFlushing = false;
@@ -2685,7 +2693,6 @@ int SprdCamera3PortraitScene::configureStreams(
             HAL_LOGE("failed to load prev bgimage.");
             return -1;
         }
-        mPbrp->mPrevBuffReady = true;
         mainconfig = *stream_list;
         mainconfig.num_streams = stream_list->num_streams + addStreamNum;
         mainconfig.streams = pMainStreams;
@@ -2778,7 +2785,7 @@ int SprdCamera3PortraitScene::processCaptureRequest(
                 mChangeBGMode = true;
                 mCacheBgID = BG_CITY;
                 mPbrp->mSaveTime = systemTime();
-                HAL_LOGD("start changing,mCacheBgID=%d,time=%d", mCacheBgID,
+                HAL_LOGD("start changing,mCacheBgID=%d,time=%lld", mCacheBgID,
                          mPbrp->mSaveTime);
             } else {
                 mChangeBGMode = false;
@@ -3098,11 +3105,7 @@ int SprdCamera3PortraitScene::_flush(const struct camera3_device *device) {
         }
         mPrevT->join();
     }
-    if (mPbrp->mPrevT->mApiSegHandle) {
-        sprd_portrait_scene_adpt_deinit(mPbrp->mPrevT->mApiSegHandle,
-                                        SPRD_PORTRAIT_SCENE_PREVIEW);
-        mPbrp->mPrevT->mApiSegHandle = NULL;
-    }
+
     if (mPrevPostT != NULL) {
         if (mPrevPostT->isRunning()) {
             HAL_LOGI("prev post thread request exit");
@@ -3110,7 +3113,6 @@ int SprdCamera3PortraitScene::_flush(const struct camera3_device *device) {
         }
         mPrevPostT->join();
     }
-
     if (mCapT != NULL) {
         if (mCapT->isRunning()) {
             HAL_LOGI("cap thread request exit");
@@ -3132,6 +3134,11 @@ int SprdCamera3PortraitScene::_flush(const struct camera3_device *device) {
     if (2 == m_nPhyCameras) {
         SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
         rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_AUX].dev);
+    }
+    if (mPbrp->mPrevT->mApiSegHandle) {
+        sprd_portrait_scene_adpt_deinit(mPbrp->mPrevT->mApiSegHandle,
+                                        SPRD_PORTRAIT_SCENE_PREVIEW);
+        mPbrp->mPrevT->mApiSegHandle = NULL;
     }
     HAL_LOGI("X");
 
@@ -3214,7 +3221,6 @@ void SprdCamera3PortraitScene::freePrevBuffer() {
         mPbrp->freeIonMem(mPrevMaskBuffArr[k]);
     }
     mPrevMaskBuffList.clear();
-    mPbrp->mPrevBuffReady = false;
     if (mdebugPrev)
         mPbrp->freeIonMem(mdebugPrev);
 
@@ -3273,7 +3279,7 @@ mem_fail:
 int SprdCamera3PortraitScene::loadBgImageInternal(sprd_camera_memory_t *ion,
                                                   char *path) {
     int ret = 0;
-    uint32_t file_len = 0;
+    int file_len = 0;
     FILE *fp = NULL;
     int fileHeader = 54;
 
@@ -3284,10 +3290,16 @@ int SprdCamera3PortraitScene::loadBgImageInternal(sprd_camera_memory_t *ion,
         ret = -1;
         goto exit;
     }
-    fseek(fp, 0, SEEK_END);
-    file_len = ftell(fp);
-    fseek(fp, fileHeader, SEEK_SET);
+    if (NO_ERROR != (ret = fseek(fp, 0, SEEK_END))) {
+        HAL_LOGE("error code =%d", ret);
+        return ret;
+    }
 
+    file_len = ftell(fp);
+    if (NO_ERROR != (ret = fseek(fp, fileHeader, SEEK_SET))) {
+        HAL_LOGE("error code =%d", ret);
+        return ret;
+    }
     if (ion->phys_size >= file_len - fileHeader && file_len > 0) {
         file_len = fread(ion->data, 1, file_len - fileHeader, fp);
     } else {
@@ -3302,50 +3314,22 @@ exit:
     return ret;
 }
 
-void writeBMP(int X_bitmap, int Y_bitmap, char *path, void *BMP_buff) {
-    BM_header BH;
-    FILE *fp_bitmap = NULL;
-    DWORD im_loc_bytes = 0;
-    BYTE i = 0;
-    BYTE zero_byte = 0;
-    int size = X_bitmap * Y_bitmap * 3;
-    HAL_LOGD("write1");
-    fp_bitmap = fopen(path, "wb");
-    HAL_LOGD("write2");
-    BH.BMP_id = 'M' * 256 + 'B';
-    fwrite(&BH.BMP_id, 2, 1, fp_bitmap);
-    BH.size = 54 + Y_bitmap * X_bitmap * 3;
-    fwrite(&BH.size, 4, 1, fp_bitmap);
-    BH.zero_res = 0;
-    fwrite(&BH.zero_res, 4, 1, fp_bitmap);
-    BH.offbits = 54;
-    fwrite(&BH.offbits, 4, 1, fp_bitmap);
-    BH.biSize = 0x28;
-    fwrite(&BH.biSize, 4, 1, fp_bitmap);
-    BH.Width = X_bitmap;
-    fwrite(&BH.Width, 4, 1, fp_bitmap);
-    BH.Height = Y_bitmap;
-    fwrite(&BH.Height, 4, 1, fp_bitmap);
-    BH.biPlanes = 1;
-    fwrite(&BH.biPlanes, 2, 1, fp_bitmap);
-    BH.biBitCount = 24;
-    fwrite(&BH.biBitCount, 2, 1, fp_bitmap);
-    BH.biCompression = 0;
-    fwrite(&BH.biCompression, 4, 1, fp_bitmap);
-    BH.biSizeImage = 0;
-    fwrite(&BH.biSizeImage, 4, 1, fp_bitmap);
-    BH.biXPelsPerMeter = 0xB40;
-    fwrite(&BH.biXPelsPerMeter, 4, 1, fp_bitmap);
-    BH.biYPelsPerMeter = 0xB40;
-    fwrite(&BH.biYPelsPerMeter, 4, 1, fp_bitmap);
-    BH.biClrUsed = 0;
-    fwrite(&BH.biClrUsed, 4, 1, fp_bitmap);
-    BH.biClrImportant = 0;
-    fwrite(&BH.biClrImportant, 4, 1, fp_bitmap);
-    HAL_LOGD("write3");
-    fwrite(BMP_buff, size, 1, fp_bitmap);
-    HAL_LOGD("write4");
-    fclose(fp_bitmap);
+int SprdCamera3PortraitScene::filesize(FILE *fp) {
+    int pos = 0;
+    int ret = 0;
+    unsigned int pos_cur = 0;
+    pos_cur = ftell(fp);
+    if (NO_ERROR != (ret = fseek(fp, 0, SEEK_END))) {
+        HAL_LOGE("error code =%d", ret);
+        return ret;
+    }
+    pos = ftell(fp);
+
+    if (NO_ERROR != (ret = fseek(fp, pos_cur, SEEK_SET))) {
+        HAL_LOGE("error code =%d", ret);
+        return ret;
+    }
+    return pos;
 }
 
 int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
@@ -3425,7 +3409,7 @@ int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
         sprintf(temStr, "%d", mCapBgID);
         strcat(path, temStr);
         strcat(path, ".jpg");
-        uint32_t file_len = 0;
+        int file_len = 0;
 
         fp = fopen(path, "rb");
         if (!fp) {
@@ -3497,7 +3481,8 @@ bool SprdCamera3PortraitScene::search_restlist(
     while (i != list.end()) {
         if (i->combo_buff.frame_number == frame_num) {
             ret = true;
-            HAL_LOGV("search_from_reqlist find frame number%d from list");
+            HAL_LOGV("search_from_reqlist find frame number%d from list",
+                     frame_num);
             break;
         }
         i++;
@@ -3558,7 +3543,7 @@ void SprdCamera3PortraitScene::saveRequest(camera3_capture_request_t *request,
             currRequest.settings = clone_camera_metadata(settings);
             currRequest.frame_number = request->frame_number;
             currRequest.buffer = request->output_buffers[i].buffer;
-            HAL_LOGD("enqreq combo_buff.buffer 0x%x", currRequest.buffer);
+            HAL_LOGD("enqreq combo_buff.buffer 0x%p", currRequest.buffer);
             currRequest.stream = request->output_buffers[i].stream;
             currRequest.input_buffer = request->input_buffer;
             mCapSavedReqList.push_back(currRequest);
@@ -4682,29 +4667,6 @@ void SprdCamera3PortraitScene::updateWeightParams(CameraMetadata metaSettings,
                     mCachePrevWeightParams.sel_y =
                         ABS(mFaceInfo[3] + mFaceInfo[1]) / 2;
                 }
-            }
-        } else {
-            if (mUpdataTouch) {
-                int i = 0;
-                int32_t x = mLastTouchX * mPrevT->mPrevInitParams.width / origW;
-                int32_t y =
-                    mLastTouchY * mPrevT->mPrevInitParams.height / origH;
-                for (i = 0; i < mCachePrevWeightParams.valid_roi; i++) {
-                    if (x > mCachePrevWeightParams.x1[i] &&
-                        x < mCachePrevWeightParams.x2[i] &&
-                        y > mCachePrevWeightParams.y1[i] &&
-                        y < mCachePrevWeightParams.y2[i]) {
-                        mBlurBody = true;
-                        break;
-                    } else {
-                        mBlurBody = false;
-                    }
-                }
-                mCachePrevWeightParams.sel_x =
-                    mLastTouchX * mPrevT->mPrevInitParams.width / origW;
-                mCachePrevWeightParams.sel_y =
-                    mLastTouchY * mPrevT->mPrevInitParams.height / origH;
-                mUpdataTouch = false;
             }
         }
     }

@@ -139,13 +139,13 @@ typedef struct {
     void *apihandle;
     portraitSceneMsgType msg_type;
     portrait_scene_buffer_combination_t combo_buff;
-    uint16_t* mask;
+    uint16_t *mask;
 } portrait_scene_queue_msg_t;
 
-typedef struct{
-  int64_t time;
-  uint32_t idx;
-}portrait_time_t;
+typedef struct {
+    int64_t time;
+    uint32_t idx;
+} portrait_time_t;
 
 class SprdCamera3PortraitScene : SprdCamera3MultiBase,
                                  SprdCamera3FaceBeautyBase {
@@ -188,9 +188,10 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
                             camera3_buffer_status_t buffer_status);
     bool checkIsVideo();
     bool Copy2Video(portrait_scene_queue_msg_t *prev_msg);
-    void printUseTime(uint32_t frame_num,char* tag);
+    void printUseTime(uint32_t frame_num, char *tag);
     Mutex mWeightLock;
     Mutex mTimeLock;
+
   private:
     /*common*/
     sprdcamera_physical_descriptor_t *m_pPhyCamera;
@@ -221,8 +222,6 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     bool mFirstSprdFB;
     fb_beauty_param_t fb_prev;
     fb_beauty_param_t fb_cap;
-    fbBeautyFacetT beauty_face;
-    fb_beauty_image_t beauty_image;
 #endif
     List<portrait_time_t> mUseTime;
     bool isWechatClient;
@@ -244,10 +243,9 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     sprd_portrait_scene_proc_t mCachePrevWeightParams;
     int mBGWidth;
     int mBGHeight;
-    bool mPrevBuffReady;
     int mPreviewStreamsNum;
     List<request_saved_msg_t> mPrevSavedReqList;
-    List<uint16_t*> mPrevMaskBuffList;
+    List<uint16_t *> mPrevMaskBuffList;
     sprd_camera_memory_t *mPrevMaskBuffArr[PBRP_PREV_TMP_BUFF_NUM];
     sprd_camera_memory_t *mdebugPrev;
     bool mdebugPrevSwitch;
@@ -259,10 +257,10 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     int mCaptureWidth;
     int mCaptureHeight;
     /*0 used to pass to driver to get first yuv,
-    * 1 used to save org jpeg
-    * 2 used to save mask yuv data
-    * 3 used to save fuse output yuv data
-    */
+     * 1 used to save org jpeg
+     * 2 used to save mask yuv data
+     * 3 used to save fuse output yuv data
+     */
     new_mem_t mLocalCapBuffer[PBRP_LOCAL_BUFF_NUM];
     bool mIsCapBuffAllocated;
     // capture have two stream, mCaptureStreamsNum-1 is org capture,
@@ -280,9 +278,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     bool mChangeBGMode;
     int mVideoWidth;
     int mVideoHeight;
-    int mVideoStreamsNum;
     bool mIsRecordMode;
-    sprd_camera_memory_t *mRecordTmpIon[2];
     List<request_saved_msg_t> mVidSavedReqList;
 
     int getCameraInfo(int blur_camera_id, struct camera_info *info);
@@ -316,6 +312,8 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     void EnQResultMsg(camera3_capture_result_t *result);
     int setupPhysicalCameras();
     bool clearVideoRequst();
+    int filesize(FILE *fp);
+
   public:
     SprdCamera3PortraitScene();
     virtual ~SprdCamera3PortraitScene();
@@ -328,15 +326,14 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
         virtual void requestExit();
         int initCapParams();
         void initCapWeightParams();
-        int saveCaptureParams(buffer_handle_t *result_buff,
-                               uint32_t jpeg_size);
+        int saveCaptureParams(buffer_handle_t *result_buff, uint32_t jpeg_size);
         void dumpPbrpImg(dump_portrait_scene_type type,
                          dump_portrait_scene_t *dump_buffs);
         int capMattingHandle(buffer_handle_t *combo_buffer,
                              void *combo_buff_addr, buffer_handle_t *maskBuffer,
                              void *mask_data, uint32_t combo_frm_num);
         bool capReadHandle(portrait_scene_queue_msg_t *post_msg);
-        int capFuse(void* combo_buff_addr, void* mask_data);
+        int capFuse(void *combo_buff_addr, void *mask_data);
         // This queue stores matched buffer as frame_matched_info_t
         List<portrait_scene_queue_msg_t> mCapMsgList;
         Mutex mMergequeueMutex;
@@ -417,8 +414,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
       public:
         PreviewPostThread();
         ~PreviewPostThread();
-        int prevFuse(portrait_scene_queue_msg_t* muxer_msg,
-                      void *buffer_addr);
+        int prevFuse(portrait_scene_queue_msg_t *muxer_msg, void *buffer_addr);
         virtual bool threadLoop();
         virtual void requestExit();
         virtual void requestInit();
@@ -434,6 +430,6 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     };
     sp<PreviewPostThread> mPrevPostT;
 };
-};
+}; // namespace sprdcamera
 
 #endif /* SPRDCAMERAMU*/
