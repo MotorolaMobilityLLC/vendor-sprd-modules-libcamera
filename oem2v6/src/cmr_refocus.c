@@ -348,6 +348,8 @@ static cmr_int refocus_start(cmr_handle class_handle,
 
     ret = cmr_thread_msg_send(refocus_handle->thread_handle, &message);
     if (ret) {
+        free(message.data);
+        message.data = NULL;
         CMR_LOGE("send msg fail");
         ret = CMR_CAMERA_FAIL;
     }

@@ -3879,6 +3879,8 @@ cmr_int snp_send_msg_write_exif_thr(cmr_handle snp_handle, cmr_int evt,
     ret = cmr_thread_msg_send(cxt->thread_cxt.write_exif_thr_handle, &message);
     if (ret) {
         CMR_LOGE("failed to send msg to write thr %ld", ret);
+	free(message.data);
+	message.data = NULL;
     }
     CMR_LOGV("done %ld", ret);
     sem_post(&cxt->thread_cxt.writte_exif_access_sm);
@@ -3906,6 +3908,8 @@ cmr_int snp_send_msg_redisplay_thr(cmr_handle snp_handle, cmr_int evt,
     ret = cmr_thread_msg_send(cxt->thread_cxt.proc_redisplay_handle, &message);
     if (ret) {
         CMR_LOGE("failed to send msg to redisplay thr %ld", ret);
+	free(message.data);
+	message.data = NULL;
     }
     CMR_LOGV("X, ret=%ld", ret);
     return ret;
@@ -3930,6 +3934,8 @@ cmr_int snp_send_msg_thumb_thr(cmr_handle snp_handle, cmr_int evt, void *data) {
     ret = cmr_thread_msg_send(cxt->thread_cxt.proc_thumb_handle, &message);
     if (ret) {
         CMR_LOGE("failed to send msg to thumb thr %ld", ret);
+	free(message.data);
+	message.data = NULL;
     }
     CMR_LOGV("X, ret=%ld", ret);
     return ret;
@@ -5337,6 +5343,10 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
     ret = cmr_thread_msg_send(send_thr_handle, &message);
     if (ret) {
         CMR_LOGE("failed to send stop msg to main thr %ld", ret);
+	if (message.alloc_flag) {
+		free(message.data);
+		message.data = NULL;
+	}
         goto exit;
     }
 

@@ -733,6 +733,10 @@ cmr_int afl_ctrl_process(cmr_handle isp_afl_handle, struct afl_proc_in *in_ptr, 
 	message.msg_type = AFLCTRL_EVT_PROCESS;
 	message.sync_flag = CMR_MSG_SYNC_NONE;
 	rtn = cmr_thread_msg_send(cxt->thr_handle, &message);
+	if (rtn) {
+		free(message.data);
+		message.data = NULL;
+	}
 
 exit:
 	ISP_LOGV("done %ld", rtn);

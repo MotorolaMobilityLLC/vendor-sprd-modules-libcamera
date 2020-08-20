@@ -6926,6 +6926,10 @@ cmr_int isp_alg_fw_ioctl(cmr_handle isp_alg_handle, enum isp_ctrl_cmd io_cmd, vo
 		ISP_LOGD("cam%ld send AI cmd %d, %d, data %p, val %d\n",
 				cxt->camera_id, message.msg_type, cmd, msg_data, *msg_data);
 		ret = cmr_thread_msg_send(cxt->thr_aihandle, &message);
+		if (ret) {
+			free(message.data);
+			message.data = NULL;
+		}
 		return ret;
 	}
 

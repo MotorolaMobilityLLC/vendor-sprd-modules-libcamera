@@ -714,6 +714,8 @@ cmr_int cmr_sensor_ioctl(cmr_handle sensor_handle, cmr_u32 sensor_id,
 
     ret = cmr_thread_msg_send(handle->thread_cxt.thread_handle, &message);
     if (ret) {
+	free(message.data);
+	message.data = NULL;
         CMR_LOGE("send msg failed!");
         return CMR_CAMERA_FAIL;
     }
