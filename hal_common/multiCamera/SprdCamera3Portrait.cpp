@@ -1078,6 +1078,8 @@ int SprdCamera3Portrait::getCameraInfo(int id, struct camera_info *info) {
     };
     int32_t jpeg_stream_size = 0;
     struct logicalSensorInfo *logicalPtr = NULL;
+    struct camera_info info_slave;
+    memset(&info_slave, 0 ,sizeof(camera_info));
 
     HAL_LOGI("E, camera_id = %d", camera_id);
     if (mStaticMetadata)
@@ -1097,6 +1099,8 @@ int SprdCamera3Portrait::getCameraInfo(int id, struct camera_info *info) {
     }
 
     m_VirtualCamera.id = mPortrait->mCameraIdMaster;
+    SprdCamera3Setting::getCameraInfo(mPortrait->mCameraIdSlave, &info_slave);
+    HAL_LOGI("info_slave.resource_cost %d",info_slave.resource_cost);
     camera_id = (int)m_VirtualCamera.id;
     SprdCamera3Setting::initDefaultParameters(camera_id);
     rc = SprdCamera3Setting::getStaticMetadata(camera_id, &mStaticMetadata);
@@ -1132,6 +1136,11 @@ int SprdCamera3Portrait::getCameraInfo(int id, struct camera_info *info) {
         CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
+    info->resource_cost += info_slave.resource_cost;
+    if(info->resource_cost > 100){
+        info->resource_cost = 100;
+        HAL_LOGE("resource_cost > 100");
+    }
     HAL_LOGI("X rc=%d", rc);
 
     return rc;
