@@ -587,10 +587,8 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         break;
 
     case SETTING_GENERAL_EXPOSURE_COMPENSATION:
-        if (setting_is_active(cpt)) {
-            if (setting_is_rawrgb_format(cpt, parm)) {
-                ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
-            }
+        if (setting_is_rawrgb_format(cpt, parm)) {
+            ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         }
         hal_param->hal_common.ae_compensation_param =
             parm->ae_compensation_param;
