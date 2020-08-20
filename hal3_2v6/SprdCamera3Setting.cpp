@@ -1986,6 +1986,366 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     return 0;
 }
 
+/*
+    for sprd camera feature init
+*/
+void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
+
+    Vector<uint8_t> available_cam_features;
+    char prop[PROPERTY_VALUE_MAX];
+    uint32_t dualPropSupport = 0;
+    bool hasRealCameraUnuseful = false;
+    bool hasFrontCameraUnuseful = false;
+    int i = 0;
+    int pdaf_type = 0;
+    char value[PROPERTY_VALUE_MAX];
+    struct phySensorInfo *phyPtr = NULL;
+
+    for (int i = 0; i < mPhysicalSensorNum; i++) {
+        if (camera_identify_state[1] == IDENTIFY_STATUS_NOT_PRESENT) {
+            hasFrontCameraUnuseful = true;
+        }
+        if (i != 1 && camera_identify_state[i] == IDENTIFY_STATUS_NOT_PRESENT) {
+            hasRealCameraUnuseful = true;
+        }
+        HAL_LOGV("camera_identify_state[%d]=%d, hasRealCameraUnuseful=%d, "
+                 "hasFrontCameraUnuseful=%d",
+                 i, camera_identify_state[i], hasRealCameraUnuseful,
+                 hasFrontCameraUnuseful);
+    }
+
+    // 0 facebeauty version
+    property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
+    available_cam_features.add(atoi(prop));
+
+    if (/* mSensorType[cameraId] != FOURINONESENSOR && */
+        mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
+        dualPropSupport = 1;
+    }
+
+    // 1 back blur or bokeh version
+    property_get("persist.vendor.cam.ba.blur.version", prop, "0");
+    if (!dualPropSupport || hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else if (atoi(prop) == 1) {
+        available_cam_features.add(0);
+    } else if (atoi(prop) == 6) {
+#ifdef CONFIG_BOKEH_HDR_SUPPORT
+        available_cam_features.add(9);
+#else
+        if (sensorGetLogicaInfo4multiCameraId(SPRD_BLUR_ID)) {
+            available_cam_features.add(6);
+        } else {
+            available_cam_features.add(0);
+        }
+#endif
+    } else {
+        available_cam_features.add(0);
+    }
+
+    // 2 front blur version
+    property_get("persist.vendor.cam.fr.blur.version", prop, "0");
+    available_cam_features.add(0);
+
+    // 3 blur cover id
+    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
+    available_cam_features.add(atoi(prop));
+
+    // 4 front flash type
+    for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
+        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
+            available_cam_features.add(atoi(front_flash[i].type_id));
+            break;
+        }
+    }
+
+    // 5 wide and tele enable
+    property_get("persist.vendor.cam.wt.enable", prop, "0");
+    if (!dualPropSupport) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
+
+    // 6 auto tracking enable
+    property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
+    pdaf_type = mpdaf_type[cameraId];
+    if (cameraId == 0) {
+        /* dual pd sensor default open 4d auto tracking */
+        if (property_get_bool("persist.vendor.cam.auto.tracking.enable", 0) ||
+            pdaf_type == DUAL_PD) {
+            available_cam_features.add(1);
+        } else
+            available_cam_features.add(0);
+    } else {
+        available_cam_features.add(0);
+    }
+
+    // 7 back ultra wide enable
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else if (sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE,
+                                   SNS_FACE_BACK) != SENSOR_ID_INVALID) {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.warp",
+                               "persist.vendor.cam.ultra.wide.enable"));
+    } else {
+        available_cam_features.add(0);
+    }
+
+    // 8 bokeh gdepth enable
+#ifdef CONFIG_SUPPORT_GDEPTH
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
+
+    // 9 back portrait mode
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.dual.portrait",
+                               "persist.vendor.cam.ba.portrait.enable"));
+    }
+#else
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+                               "persist.vendor.cam.ba.portrait.enable"));
+    }
+#endif
+
+    // 10 front portrait mode
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
+                           "persist.vendor.cam.fr.portrait.enable"));
+
+    // 11 montion photo enable
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        available_cam_features.add(0);
+    } else {
+#ifdef CONFIG_CAMERA_MOTION_PHONE
+        available_cam_features.add(1);
+#else
+        available_cam_features.add(0);
+#endif
+    }
+
+    // 12 default quarter size
+#ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
+    available_cam_features.add(0);
+#else
+    available_cam_features.add(0);
+#endif
+
+    // 13 multi camera superwide & wide & tele
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
+                               "persist.vendor.cam.multi.camera.enable"));
+    }
+
+    // 14 camera back high resolution definition mode
+    property_get("persist.vendor.cam.back.high.resolution.mode", prop, "NULL");
+    if (camera_identify_state[0] == IDENTIFY_STATUS_NOT_PRESENT) {
+        available_cam_features.add(0);
+    } else {
+        if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
+            phyPtr = sensorGetPhysicalSnsInfo(0); // camera id == 0
+            i = 0;
+            if (phyPtr->sensor_type == FOURINONE_SW ||
+                phyPtr->sensor_type == FOURINONE_HW)
+                i = 1;
+            HAL_LOGI("Auto set rear camera high resolution %d", i);
+        } else {
+            i = atoi(prop);
+        }
+        available_cam_features.add(!!i);
+    }
+
+    // 15 camera hdr_zsl
+    property_get("persist.vendor.cam.hdr.zsl", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 16 MMI opticszoom calibration mode: 1-SW+W, 2-W+T, 3-SW+W+T
+    property_get("persist.vendor.cam.opticszoom.cali.mode", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 17 camera infrared
+    property_get("persist.vendor.cam.infrared.enable", prop, "0");
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
+
+    // 18 camera macrophoto
+    property_get("persist.vendor.cam.macrophoto.enable", prop, "0");
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
+
+    // 19 camera macrovideo
+    property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(atoi(prop));
+    }
+
+    // 20 camera front high resolution definition mode
+    property_get("persist.vendor.cam.front.high.resolution.mode", prop, "NULL");
+    if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
+        phyPtr = sensorGetPhysicalSnsInfo(1); // front camera id == 1
+        i = 0;
+        if (phyPtr->sensor_type == FOURINONE_SW ||
+            phyPtr->sensor_type == FOURINONE_HW)
+            i = 1;
+        HAL_LOGI("Auto set front camera high resolution %d", i);
+    } else {
+        i = atoi(prop);
+    }
+    available_cam_features.add(!!i);
+
+    // 21 stl3denable
+    if (sensorGetLogicaInfo4multiCameraId(SPRD_3D_FACE_ID)) {
+        available_cam_features.add(1);
+    } else {
+        available_cam_features.add(0);
+    }
+    // 22 video face beauty T618
+    property_get("ro.boot.auto.efuse", prop, "T618");
+    if (!strcmp("T618", prop)) {
+        available_cam_features.add(
+          resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
+                           "persist.vendor.cam.video.face.beauty.enable"));
+    } else {
+        //T610
+        property_set("persist.vendor.cam.ip.video.beauty","2");
+        available_cam_features.add(0);
+    }
+    // 23 fov fusion
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
+                               "persist.vendor.cam.fov.fusion.enable"));
+    }
+
+    // 24 nightshot pro
+    available_cam_features.add(resetFeatureStatus(
+        "persist.vendor.cam.ip.night", "persist.vendor.cam.night.pro.enable"));
+
+// 25 camera lightportrait_ba
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.light.dual.portrait",
+                               "persist.vendor.cam.lightportrait.ba.enable"));
+    }
+#else
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
+                               "persist.vendor.cam.lightportrait.ba.enable"));
+    }
+#endif
+
+    // 26 camera lightportrait_fr
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
+                           "persist.vendor.cam.lightportrait.fr.enable"));
+
+    // 27 FDR
+    available_cam_features.add(resetFeatureStatus(
+        "persist.vendor.cam.ip.fdr", "persist.vendor.cam.fdr.enable"));
+
+    // 28 dual view video
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.dualview.pro",
+                               "persist.vendor.cam.dual.view.video.enable"));
+    }
+
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    // 29 portrait scene mode
+    HAL_LOGD("pbrb_enable=%d", atoi(prop));
+    property_get("persist.vendor.cam.wechat.portrait.scene.enable", prop, "2");
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        if (atoi(prop) == 0) {
+            property_set("persist.vendor.cam.wechat.portrait.scene.enable", "1");
+            property_set("persist.vendor.cam.ip.wechat.back.replace", "0");
+            property_get("ro.boot.auto.efuse", prop, "0");
+            if (strcmp(prop,"T618")){
+                property_set("persist.vendor.cam.wechat.portrait.scene.enable", "2");
+                property_set("persist.vendor.cam.ip.wechat.back.replace", "2");
+            }
+        }
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
+                               "persist.vendor.cam.portrait.scene.enable"));
+    }
+#else
+    available_cam_features.add(0);
+#endif
+
+    // 30 higher micro photo
+    if (hasRealCameraUnuseful == true) {
+        available_cam_features.add(0);
+    } else {
+        available_cam_features.add(
+            resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
+                               "persist.vendor.cam.higher.macrophoto.enable"));
+    }
+
+    // 31 eis_pro video
+    available_cam_features.add(
+        resetFeatureStatus("persist.vendor.cam.ip.eis.pro",
+                           "persist.vendor.cam.dv.ba.eispro.enable"));
+
+    // 32 portrait mutex lpt
+    HAL_LOGD("PLATFORM_ID %x",PLATFORM_ID);
+    if(PLATFORM_ID == LOCAL_PLATFORM_ID_SHARKL5P){
+        available_cam_features.add(1);
+    } else {
+        available_cam_features.add(0);
+    }
+
+    // 33 video face detect support default
+    available_cam_features.add(1);
+
+    memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
+           &(available_cam_features[0]),
+           available_cam_features.size() * sizeof(uint8_t));
+    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
+        available_cam_features.size();
+
+    ALOGV("available_cam_features=%d", available_cam_features.size());
+
+    property_set("persist.vendor.cam.ip.switch.on", "0");
+    HAL_LOGI("available_cam_features=%d",
+             s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
+
+}
+
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
@@ -2326,316 +2686,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
              mpdaf_type[cameraId]);
     s_setting[cameraId].sprddefInfo.availabe_sensor_type =
         mSensorType[cameraId];
-
     // for sprd camera features
-    Vector<uint8_t> available_cam_features;
-    char prop[PROPERTY_VALUE_MAX];
-    uint32_t dualPropSupport = 0;
-    bool hasRealCameraUnuseful = false;
-    bool hasFrontCameraUnuseful = false;
-
-    for (int i = 0; i < mPhysicalSensorNum; i++) {
-        if (camera_identify_state[1] == IDENTIFY_STATUS_NOT_PRESENT) {
-            hasFrontCameraUnuseful = true;
-        }
-        if (i != 1 && camera_identify_state[i] == IDENTIFY_STATUS_NOT_PRESENT) {
-            hasRealCameraUnuseful = true;
-        }
-        HAL_LOGV("camera_identify_state[%d]=%d, hasRealCameraUnuseful=%d, "
-                 "hasFrontCameraUnuseful=%d",
-                 i, camera_identify_state[i], hasRealCameraUnuseful,
-                 hasFrontCameraUnuseful);
-    }
-
-    // 0 facebeauty version
-    property_get("persist.vendor.cam.facebeauty.corp", prop, "1");
-    available_cam_features.add(atoi(prop));
-
-    if (/* mSensorType[cameraId] != FOURINONESENSOR && */
-        mSensorType[cameraId] != YUVSENSOR && mPhysicalSensorNum != 1) {
-        dualPropSupport = 1;
-    }
-
-    // 1 back blur or bokeh version
-    property_get("persist.vendor.cam.ba.blur.version", prop, "0");
-    if (!dualPropSupport) {
-        available_cam_features.add(0);
-    } else if (atoi(prop) == 1) {
-        available_cam_features.add(0);
-    } else if (atoi(prop) == 6) {
-#ifdef CONFIG_BOKEH_HDR_SUPPORT
-        available_cam_features.add(9);
-#else
-        if (sensorGetLogicaInfo4multiCameraId(SPRD_BLUR_ID)) {
-            available_cam_features.add(6);
-        } else {
-            available_cam_features.add(0);
-        }
-#endif
-    } else {
-        available_cam_features.add(0);
-    }
-
-    // 2 front blur version
-    property_get("persist.vendor.cam.fr.blur.version", prop, "0");
-    available_cam_features.add(0);
-
-    // 3 blur cover id
-    property_get("persist.vendor.cam.blur.cov.id", prop, "3");
-    available_cam_features.add(atoi(prop));
-
-    // 4 front flash type
-    for (i = 0; i < (int)ARRAY_SIZE(front_flash); i++) {
-        if (!strcmp(FRONT_CAMERA_FLASH_TYPE, front_flash[i].type_name)) {
-            available_cam_features.add(atoi(front_flash[i].type_id));
-            break;
-        }
-    }
-
-    // 5 wide and tele enable
-    property_get("persist.vendor.cam.wt.enable", prop, "0");
-    if (!dualPropSupport) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(atoi(prop));
-    }
-
-    // 6 auto tracking enable
-    property_get("persist.vendor.cam.auto.tracking.enable", prop, "0");
-    pdaf_type = mpdaf_type[cameraId];
-    if (cameraId == 0) {
-        /* dual pd sensor default open 4d auto tracking */
-        if (property_get_bool("persist.vendor.cam.auto.tracking.enable", 0) ||
-            pdaf_type == DUAL_PD) {
-            available_cam_features.add(1);
-        } else
-            available_cam_features.add(0);
-    } else {
-        available_cam_features.add(0);
-    }
-
-    // 7 back ultra wide enable
-    if (sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE,
-                                   SNS_FACE_BACK) != SENSOR_ID_INVALID) {
-        available_cam_features.add(
-            resetFeatureStatus("persist.vendor.cam.ip.warp",
-                               "persist.vendor.cam.ultra.wide.enable"));
-    } else {
-        available_cam_features.add(0);
-    }
-
-    // 8 bokeh gdepth enable
-#ifdef CONFIG_SUPPORT_GDEPTH
-    available_cam_features.add(1);
-#else
-    available_cam_features.add(0);
-#endif
-
-    // 9 back portrait mode
-#ifdef CONFIG_PORTRAIT_SUPPORT
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.dual.portrait",
-                           "persist.vendor.cam.ba.portrait.enable"));
-#else
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
-                           "persist.vendor.cam.ba.portrait.enable"));
-#endif
-
-    // 10 front portrait mode
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
-                           "persist.vendor.cam.fr.portrait.enable"));
-
-    // 11 montion photo enable
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        available_cam_features.add(0);
-    } else {
-#ifdef CONFIG_CAMERA_MOTION_PHONE
-        available_cam_features.add(1);
-#else
-        available_cam_features.add(0);
-#endif
-    }
-
-    // 12 default quarter size
-#ifdef CONFIG_DEFAULT_CAPTURE_SIZE_8M
-    available_cam_features.add(0);
-#else
-    available_cam_features.add(0);
-#endif
-
-    // 13 multi camera superwide & wide & tele
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
-                           "persist.vendor.cam.multi.camera.enable"));
-
-    // 14 camera back high resolution definition mode
-    property_get("persist.vendor.cam.back.high.resolution.mode", prop, "NULL");
-    if (camera_identify_state[0] == IDENTIFY_STATUS_NOT_PRESENT) {
-        available_cam_features.add(0);
-    } else {
-        if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
-            phyPtr = sensorGetPhysicalSnsInfo(0); // camera id == 0
-            i = 0;
-            if (phyPtr->sensor_type == FOURINONE_SW ||
-                phyPtr->sensor_type == FOURINONE_HW)
-                i = 1;
-            HAL_LOGI("Auto set rear camera high resolution %d", i);
-        } else {
-            i = atoi(prop);
-        }
-        available_cam_features.add(!!i);
-    }
-
-    // 15 camera hdr_zsl
-    property_get("persist.vendor.cam.hdr.zsl", prop, "0");
-    available_cam_features.add(atoi(prop));
-
-    // 16 MMI opticszoom calibration mode: 1-SW+W, 2-W+T, 3-SW+W+T
-    property_get("persist.vendor.cam.opticszoom.cali.mode", prop, "0");
-    available_cam_features.add(atoi(prop));
-
-    // 17 camera infrared
-    property_get("persist.vendor.cam.infrared.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
-
-    // 18 camera macrophoto
-    property_get("persist.vendor.cam.macrophoto.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
-
-    // 19 camera macrovideo
-    property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
-
-    // 20 camera front high resolution definition mode
-    property_get("persist.vendor.cam.front.high.resolution.mode", prop, "NULL");
-    if (strcmp(prop, "NULL") == 0) {          /* auto, if not set */
-        phyPtr = sensorGetPhysicalSnsInfo(1); // front camera id == 1
-        i = 0;
-        if (phyPtr->sensor_type == FOURINONE_SW ||
-            phyPtr->sensor_type == FOURINONE_HW)
-            i = 1;
-        HAL_LOGI("Auto set front camera high resolution %d", i);
-    } else {
-        i = atoi(prop);
-    }
-    available_cam_features.add(!!i);
-
-    // 21 stl3denable
-    if (sensorGetLogicaInfo4multiCameraId(SPRD_3D_FACE_ID)) {
-        available_cam_features.add(1);
-    } else {
-        available_cam_features.add(0);
-    }
-
-    // 22 video face beauty T618
-    property_get("ro.boot.auto.efuse", prop, "T618");
-    if (!strcmp("T618", prop)) {
-        available_cam_features.add(
-          resetFeatureStatus("persist.vendor.cam.ip.video.beauty",
-                           "persist.vendor.cam.video.face.beauty.enable"));
-    } else {
-        //T610
-        property_set("persist.vendor.cam.ip.video.beauty","2");
-        available_cam_features.add(0);
-    }
-
-    // 23 fov fusion
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
-                           "persist.vendor.cam.fov.fusion.enable"));
-
-    // 24 nightshot pro
-    available_cam_features.add(resetFeatureStatus(
-        "persist.vendor.cam.ip.night", "persist.vendor.cam.night.pro.enable"));
-
-    // 25 camera lightportrait_ba
-#ifdef CONFIG_PORTRAIT_SUPPORT
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.light.dual.portrait",
-                           "persist.vendor.cam.lightportrait.ba.enable"));
-#else
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
-                           "persist.vendor.cam.lightportrait.ba.enable"));
-#endif
-
-    // 26 camera lightportrait_fr
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
-                           "persist.vendor.cam.lightportrait.fr.enable"));
-
-    // 27 FDR
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.fdr",
-                           "persist.vendor.cam.fdr.enable"));
-
-    // 28 dual view video
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.dualview.pro",
-                           "persist.vendor.cam.dual.view.video.enable"));
-
-    // 29 portrait scene mode
-#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
-    char strRunType[PROPERTY_VALUE_MAX];
-    char debugSwitch[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
-    property_get("ro.boot.lwfq.type", strRunType , "-1");
-    property_get("persist.vendor.cam.portrait.scene.debug", debugSwitch , "0");
-    if (atoi(debugSwitch) != 0){
-        available_cam_features.add(1);
-        HAL_LOGD("portraitscene on");
-    } else {
-        if (!strcmp("1", strRunType)) {
-            property_set("persist.vendor.cam.ip.portrait.back.replace","2");
-            property_set("persist.vendor.cam.portrait.scene.enable","2");
-        } else if(atoi(prop) == 0){
-            property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
-            property_set("persist.vendor.cam.ip.wechat.back.replace","0");
-        }
-
-        available_cam_features.add(
-            resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
-                               "persist.vendor.cam.portrait.scene.enable"));
-    }
-#else
-    available_cam_features.add(0);
-#endif
-
-    // 30 higher micro photo
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
-                           "persist.vendor.cam.higher.macrophoto.enable"));
-
-    // 31 eis_pro video
-    available_cam_features.add(
-        resetFeatureStatus("persist.vendor.cam.ip.eis.pro",
-                           "persist.vendor.cam.dv.ba.eispro.enable"));
-
-    // 32 portrait mutex lpt
-    HAL_LOGD("PLATFORM_ID %x",PLATFORM_ID);
-    if(PLATFORM_ID == LOCAL_PLATFORM_ID_SHARKL5P){
-        available_cam_features.add(1);
-    } else {
-        available_cam_features.add(0);
-    }
-
-    // 33 video face detect support default
-    available_cam_features.add(1);
-
-    memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
-           &(available_cam_features[0]),
-           available_cam_features.size() * sizeof(uint8_t));
-    s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size =
-        available_cam_features.size();
-
-    ALOGV("available_cam_features=%zu", available_cam_features.size());
-    getCameraIPInited();
-    property_set("persist.vendor.cam.ip.switch.on", "0");
-    HAL_LOGI("available_cam_features=%d",
-             s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
+    initCameraIpFeature(cameraId);
 
     return ret;
 }

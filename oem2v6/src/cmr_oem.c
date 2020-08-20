@@ -229,6 +229,8 @@ camera_preview_face_beauty_handle(void *data,
 static cmr_int
 camera_video_face_beauty_handle(void *data,
                                 struct camera_frame_type *video_frame);
+static void camera_frame_facebeauty(void *data, struct camera_frame_type *frame,
+                            struct faceBeautyLevels *beautyLevels, char *value);
 static cmr_int is_video_face_beauty_on(void *data);
 static cmr_int camera_get_logo_data(unsigned char *logo, int Width, int Height);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
@@ -5210,18 +5212,139 @@ exit:
 #endif
 }
 
-cmr_int
-camera_preview_face_beauty_handle(void *data,
+/*
+    when video face beauty enable,do the preview and video frame face beauty.
+    parameters:
+    name is preview or video
+*/
+#ifdef CONFIG_FACE_BEAUTY
+void camera_frame_facebeauty(void *data, struct camera_frame_type *frame,
+                            struct faceBeautyLevels *beautyLevels, char *name) {
+    struct camera_context *cxt = (struct camera_context *)data;
+    fb_beauty_image_t beauty_image;
+    fbBeautyFacetT beauty_face;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    int facecount = cxt->fd_face_area.face_num;
+
+    for (int i = 0; i < facecount; i++) {
+         beauty_face.idx = i;
+         beauty_face.startX =
+                     (cxt->fd_face_area.face_info[i].sx * frame->width) /
+                     (cxt->fd_face_area.frame_width);
+         beauty_face.startY =
+                     (cxt->fd_face_area.face_info[i].sy * frame->height) /
+                     (cxt->fd_face_area.frame_height);
+         beauty_face.endX =
+                     (cxt->fd_face_area.face_info[i].ex * frame->width) /
+                     (cxt->fd_face_area.frame_width);
+         beauty_face.endY =
+                     (cxt->fd_face_area.face_info[i].ey * frame->height) /
+                     (cxt->fd_face_area.frame_height);
+         beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
+         beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+         if (!strcmp(name, "prev")) {
+             ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
+                                    FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                                    (void *)&beauty_face);
+         } else {
+            ret = face_beauty_ctrl(&(cxt->video_face_beauty),
+                                   FB_BEAUTY_CONSTRUCT_FACE_CMD,
+                                   (void *)&beauty_face);
+         }
+    }
+
+    if (!(cxt->mflagfb) && !strcmp(name, "prev")) {
+        face_beauty_set_devicetype(&(cxt->prev_face_beauty),
+                                   SPRD_CAMALG_RUN_TYPE_CPU);
+        fb_chipinfo chipinfo = SHARKLE;
+#if defined(CONFIG_ISP_2_3)
+        chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+        chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+        chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+        chipinfo = SHARKL5;
+#elif defined(CONFIG_ISP_2_7)
+        chipinfo = SHARKL5PRO;
+#endif
+        face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
+        if (cxt->prev_face_beauty.hSprdFB != NULL)
+            cxt->mflagfb = true;
+    }
+
+    if (!(cxt->mvideofb) && !strcmp(name, "video")) {
+        face_beauty_set_devicetype(&(cxt->video_face_beauty),
+                                   SPRD_CAMALG_RUN_TYPE_VDSP);
+        fb_chipinfo chipinfo = SHARKLE;
+#if defined(CONFIG_ISP_2_3)
+        chipinfo = SHARKLE;
+#elif defined(CONFIG_ISP_2_4)
+        chipinfo = PIKE2;
+#elif defined(CONFIG_ISP_2_5)
+        chipinfo = SHARKL3;
+#elif defined(CONFIG_ISP_2_6)
+        chipinfo = SHARKL5;
+#elif defined(CONFIG_ISP_2_7)
+        chipinfo = SHARKL5PRO;
+#endif
+
+        face_beauty_init(&(cxt->video_face_beauty), 1, 2, chipinfo);
+        if (cxt->video_face_beauty.hSprdFB != NULL) {
+            cxt->mvideofb = true;
+        }
+    }
+
+    camera_invalidate_buf(data, frame->fd,
+                          frame->width * frame->height * 3 / 2,
+                          0, frame->y_vir_addr);
+    beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
+    beauty_image.inputImage.addr[0] = (void *)frame->y_vir_addr;
+    beauty_image.inputImage.addr[1] = (void *)frame->uv_vir_addr;
+    beauty_image.inputImage.addr[2] = (void *)frame->uv_vir_addr;
+    beauty_image.inputImage.ion_fd = frame->fd;
+    beauty_image.inputImage.offset[0] = 0;
+    beauty_image.inputImage.offset[1] = frame->width * frame->height;
+    beauty_image.inputImage.width = frame->width;
+    beauty_image.inputImage.height = frame->height;
+    beauty_image.inputImage.stride = frame->width;
+    beauty_image.inputImage.size = frame->width * frame->height * 3 / 2;
+    if (!strcmp(name, "prev")) {
+        ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
+                               FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                               (void *)&beauty_image);
+        ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
+                               FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                               beautyLevels);
+        ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_PROCESS_CMD,
+                               (void *)&facecount);
+     } else {
+        ret = face_beauty_ctrl(&(cxt->video_face_beauty),
+                               FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
+                               (void *)&beauty_image);
+        ret = face_beauty_ctrl(&(cxt->video_face_beauty),
+                               FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
+                               beautyLevels);
+        ret = face_beauty_ctrl(&(cxt->video_face_beauty), FB_BEAUTY_PROCESS_CMD,
+                               (void *)&facecount);
+    }
+    camera_flush_buf(data, frame->fd,
+                               frame->width * frame->height * 3 / 2, 0,
+                               frame->y_vir_addr);
+}
+#endif
+
+/*
+    when video face beauty enable,the preview frame is handled.
+*/
+cmr_int camera_preview_face_beauty_handle(void *data,
                                   struct camera_frame_type *preview_frame) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 #ifdef CONFIG_FACE_BEAUTY
     struct camera_context *cxt = (struct camera_context *)data;
 
-    int sx, sy, ex, ey, angle, pose;
     int face_beauty_on = 0;
     int facecount = cxt->fd_face_area.face_num;
-    fbBeautyFacetT beauty_face;
-    fb_beauty_image_t beauty_image;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
     struct faceBeautyLevels beautyLevels;
@@ -5236,14 +5359,14 @@ camera_preview_face_beauty_handle(void *data,
         CMR_LOGE("failed to get perfect skinlevel %ld", ret);
         goto exit;
     }
-
+    ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_COL_TEM, &isp_param);
+    ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_SENS, &isp_param);
     ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
     if (ret) {
         CMR_LOGE("failed to get camera BV %ld", ret);
         goto exit;
     }
 
-    beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
     beautyLevels.blemishLevel =
         (unsigned char)setting_param.fb_param.blemishLevel;
     beautyLevels.smoothLevel =
@@ -5256,6 +5379,10 @@ camera_preview_face_beauty_handle(void *data,
     beautyLevels.lipLevel = (unsigned char)setting_param.fb_param.lipLevel;
     beautyLevels.slimLevel = (unsigned char)setting_param.fb_param.slimLevel;
     beautyLevels.largeLevel = (unsigned char)setting_param.fb_param.largeLevel;
+    beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
+    beautyLevels.cameraCT = (int)isp_param.isp_cur_ct;
+    beautyLevels.cameraISO = (int)isp_param.isp_cur_iso;
+    beautyLevels.cameraWork = (int)cxt->camera_id;
 
     face_beauty_on = beautyLevels.blemishLevel || beautyLevels.smoothLevel ||
                      beautyLevels.skinColor || beautyLevels.skinLevel ||
@@ -5265,106 +5392,35 @@ camera_preview_face_beauty_handle(void *data,
     CMR_LOGV(" face_beauty_on %d facecount %d", face_beauty_on, facecount);
 
     if (face_beauty_on &&
-        (PREVIEWING == cmr_preview_get_status(cxt->prev_cxt.preview_handle,
-                                              cxt->camera_id))) {
-        if (preview_frame->type == PREVIEW_FRAME) {
-            if (facecount > 0) {
-                for (int i = 0; i < facecount; i++) {
-                    beauty_face.idx = i;
-                    beauty_face.startX = (cxt->fd_face_area.face_info[i].sx *
-                                          preview_frame->width) /
-                                         (cxt->fd_face_area.frame_width);
-                    beauty_face.startY = (cxt->fd_face_area.face_info[i].sy *
-                                          preview_frame->height) /
-                                         (cxt->fd_face_area.frame_height);
-                    beauty_face.endX = (cxt->fd_face_area.face_info[i].ex *
-                                        preview_frame->width) /
-                                       (cxt->fd_face_area.frame_width);
-                    beauty_face.endY = (cxt->fd_face_area.face_info[i].ey *
-                                        preview_frame->height) /
-                                       (cxt->fd_face_area.frame_height);
-                    beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
-                    beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
-                    ret = face_beauty_ctrl(&(cxt->prev_face_beauty),
-                                           FB_BEAUTY_CONSTRUCT_FACE_CMD,
-                                           (void *)&beauty_face);
-                }
-            }
-
-            if (!(cxt->mflagfb)) {
-#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
-                face_beauty_set_devicetype(&(cxt->prev_face_beauty),
-                                           SPRD_CAMALG_RUN_TYPE_CPU);
-#else
-                face_beauty_set_devicetype(&(cxt->prev_face_beauty),
-                                           SPRD_CAMALG_RUN_TYPE_CPU);
-#endif
-             fb_chipinfo chipinfo = SHARKLE;
-#if defined(CONFIG_ISP_2_3)
-             chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-             chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-             chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-             chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-             chipinfo = SHARKL5PRO;
-#endif
-         face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
-             if (cxt->prev_face_beauty.hSprdFB != NULL)
-                 cxt->mflagfb = true;
-         }
-
-         camera_invalidate_buf(data, preview_frame->fd, preview_frame->width *
-                          preview_frame->height * 3 / 2, 0, preview_frame->y_vir_addr);
-         beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
-         beauty_image.inputImage.addr[0] = (void *)preview_frame->y_vir_addr;
-         beauty_image.inputImage.addr[1] = (void *)preview_frame->uv_vir_addr;
-         beauty_image.inputImage.addr[2] = (void *)preview_frame->uv_vir_addr;
-         beauty_image.inputImage.ion_fd = preview_frame->fd;
-         beauty_image.inputImage.offset[0] = 0;
-         beauty_image.inputImage.offset[1] =
-                 preview_frame->width * preview_frame->height;
-         beauty_image.inputImage.width = preview_frame->width;
-         beauty_image.inputImage.height = preview_frame->height;
-         beauty_image.inputImage.stride = preview_frame->width;
-         beauty_image.inputImage.size =
-                 preview_frame->width * preview_frame->height * 3 / 2;
-
-         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
-                               (void *)&beauty_image);
-         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
-                               (void *)&beautyLevels);
-         ret = face_beauty_ctrl(&(cxt->prev_face_beauty), FB_BEAUTY_PROCESS_CMD,
-                               (void *)&facecount);
-         camera_flush_buf(data, preview_frame->fd, preview_frame->width *
-                  preview_frame->height * 3 / 2, 0, preview_frame->y_vir_addr);
-         }
-       }else{
-          if (cxt->mflagfb) {
-              cxt->mflagfb = false;
-              ret = face_beauty_ctrl(&cxt->prev_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
-              face_beauty_deinit(&cxt->prev_face_beauty);
-           }
-      }
+       (PREVIEWING == cmr_preview_get_status(cxt->prev_cxt.preview_handle,
+        cxt->camera_id)) && (preview_frame->type == PREVIEW_FRAME)) {
+        char value[6] = "prev";
+        camera_frame_facebeauty(data, preview_frame, &beautyLevels, value);
+    } else {
+        if (cxt->mflagfb) {
+            cxt->mflagfb = false;
+            ret = face_beauty_ctrl(&cxt->prev_face_beauty,
+                                   FB_BEAUTY_FAST_STOP_CMD,NULL);
+            face_beauty_deinit(&cxt->prev_face_beauty);
+        }
+    }
 exit:
     CMR_LOGV("X,ret=%ld", ret);
 #endif
     return ret;
 }
 
+/*
+    when video face beauty enable,the video frame is handled.
+*/
 cmr_int camera_video_face_beauty_handle(void *data,
                                         struct camera_frame_type *video_frame) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 #ifdef CONFIG_FACE_BEAUTY
     struct camera_context *cxt = (struct camera_context *)data;
 
-    int sx, sy, ex, ey, angle, pose;
     int face_beauty_on = 0;
     int facecount = cxt->fd_face_area.face_num;
-    fbBeautyFacetT beauty_face;
-    fb_beauty_image_t beauty_image;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
     struct faceBeautyLevels beautyLevels;
@@ -5379,14 +5435,14 @@ cmr_int camera_video_face_beauty_handle(void *data,
         CMR_LOGE("failed to get perfect skinlevel %ld", ret);
         goto exit;
     }
-
+    ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_COL_TEM, &isp_param);
+    ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_SENS, &isp_param);
     ret = camera_isp_ioctl(data, COM_ISP_GET_CUR_ADGAIN_EXP, &isp_param);
     if (ret) {
         CMR_LOGE("failed to get camera BV %ld", ret);
         goto exit;
     }
 
-    beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
     beautyLevels.blemishLevel =
         (unsigned char)setting_param.fb_param.blemishLevel;
     beautyLevels.smoothLevel =
@@ -5399,101 +5455,30 @@ cmr_int camera_video_face_beauty_handle(void *data,
     beautyLevels.lipLevel = (unsigned char)setting_param.fb_param.lipLevel;
     beautyLevels.slimLevel = (unsigned char)setting_param.fb_param.slimLevel;
     beautyLevels.largeLevel = (unsigned char)setting_param.fb_param.largeLevel;
+    beautyLevels.cameraBV = (int)isp_param.isp_adgain.bv;
+    beautyLevels.cameraCT = (int)isp_param.isp_cur_ct;
+    beautyLevels.cameraISO = (int)isp_param.isp_cur_iso;
+    beautyLevels.cameraWork = (int)cxt->camera_id;
 
     face_beauty_on = beautyLevels.blemishLevel || beautyLevels.smoothLevel ||
                      beautyLevels.skinColor || beautyLevels.skinLevel ||
                      beautyLevels.brightLevel || beautyLevels.lipColor ||
                      beautyLevels.lipLevel || beautyLevels.slimLevel ||
                      beautyLevels.largeLevel;
-    CMR_LOGV(" face_beauty_on %d", face_beauty_on);
+    CMR_LOGV(" face_beauty_on %d,facecount %d", face_beauty_on, facecount);
 
     if (face_beauty_on && (cxt->start_video_face_beauty)) {
-        if (facecount > 0) {
-            for (int i = 0; i < facecount; i++) {
-                beauty_face.idx = i;
-                beauty_face.startX =
-                    (cxt->fd_face_area.face_info[i].sx * video_frame->width) /
-                    (cxt->fd_face_area.frame_width);
-                beauty_face.startY =
-                    (cxt->fd_face_area.face_info[i].sy * video_frame->height) /
-                    (cxt->fd_face_area.frame_height);
-                beauty_face.endX =
-                    (cxt->fd_face_area.face_info[i].ex * video_frame->width) /
-                    (cxt->fd_face_area.frame_width);
-                beauty_face.endY =
-                    (cxt->fd_face_area.face_info[i].ey * video_frame->height) /
-                    (cxt->fd_face_area.frame_height);
-                beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
-                beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
-                ret = face_beauty_ctrl(&(cxt->video_face_beauty),
-                                       FB_BEAUTY_CONSTRUCT_FACE_CMD,
-                                       (void *)&beauty_face);
-            }
+        char value[6] = "video";
+        camera_frame_facebeauty(data, video_frame, &beautyLevels, value);
+    } else {
+        if (cxt->mvideofb) {
+            cxt->mvideofb = false;
+            cxt->start_video_face_beauty = false;
+            ret = face_beauty_ctrl(&cxt->video_face_beauty,
+                                   FB_BEAUTY_FAST_STOP_CMD,NULL);
+            face_beauty_deinit(&cxt->video_face_beauty);
         }
-
-        if (!(cxt->mvideofb)) {
-#ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
-            face_beauty_set_devicetype(&(cxt->video_face_beauty),
-                                       SPRD_CAMALG_RUN_TYPE_VDSP);
-#else
-            face_beauty_set_devicetype(&(cxt->video_face_beauty),
-                                       SPRD_CAMALG_RUN_TYPE_CPU);
-#endif
-
-            fb_chipinfo chipinfo = SHARKLE;
-#if defined(CONFIG_ISP_2_3)
-            chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-            chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-            chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-            chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-            chipinfo = SHARKL5PRO;
-#endif
-            face_beauty_init(&(cxt->video_face_beauty), 1, 2, chipinfo);
-            if (cxt->video_face_beauty.hSprdFB != NULL) {
-                cxt->mvideofb = true;
-            }
-        }
-
-        camera_invalidate_buf(data, video_frame->fd,
-                              video_frame->width * video_frame->height * 3 / 2,
-                              0, video_frame->y_vir_addr);
-        beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
-        beauty_image.inputImage.addr[0] = (void *)video_frame->y_vir_addr;
-        beauty_image.inputImage.addr[1] = (void *)video_frame->uv_vir_addr;
-        beauty_image.inputImage.addr[2] = (void *)video_frame->uv_vir_addr;
-        beauty_image.inputImage.ion_fd = video_frame->fd;
-        beauty_image.inputImage.offset[0] = 0;
-        beauty_image.inputImage.offset[1] =
-            video_frame->width * video_frame->height;
-        beauty_image.inputImage.width = video_frame->width;
-        beauty_image.inputImage.height = video_frame->height;
-        beauty_image.inputImage.stride = video_frame->width;
-        beauty_image.inputImage.size =
-            video_frame->width * video_frame->height * 3 / 2;
-
-        ret = face_beauty_ctrl(&(cxt->video_face_beauty),
-                               FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
-                               (void *)&beauty_image);
-        ret = face_beauty_ctrl(&(cxt->video_face_beauty),
-                               FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
-                               (void *)&beautyLevels);
-        ret = face_beauty_ctrl(&(cxt->video_face_beauty), FB_BEAUTY_PROCESS_CMD,
-                               (void *)&facecount);
-        camera_flush_buf(data, video_frame->fd,
-                         video_frame->width * video_frame->height * 3 / 2, 0, 
-                         video_frame->y_vir_addr);
-     }else{
-         if (cxt->mvideofb) {
-             cxt->mvideofb = false;
-             cxt->start_video_face_beauty = false;
-             ret = face_beauty_ctrl(&cxt->video_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
-             face_beauty_deinit(&cxt->video_face_beauty);
-        }
-     }
+    }
 exit:
     CMR_LOGV("X,ret=%ld", ret);
 #endif

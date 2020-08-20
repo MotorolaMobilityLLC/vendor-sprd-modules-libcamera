@@ -791,6 +791,7 @@ class SprdCamera3Setting {
                                                CameraMetadata &staticInfo);
     //
     static int initStaticParameters(int32_t cameraId);
+    static void initCameraIpFeature(int32_t cameraId);
     static int initStaticMetadata(int32_t cameraId,
                                   camera_metadata_t **static_metadata);
     static void convertToRegions(int32_t *rect, int32_t *region, int weight);

@@ -918,8 +918,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #ifdef CONFIG_FACE_BEAUTY
     struct fb_beauty_param face_beauty;
     bool mflagfb;
-    struct fb_beauty_param cb_face_beauty;
-    bool mcbflagfb;
 #endif
     // for third part app face beauty in camera hal, for example, weixin
     // videocall

@@ -513,8 +513,6 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 #ifdef CONFIG_FACE_BEAUTY
     memset(&face_beauty, 0, sizeof(face_beauty));
     mflagfb = false;
-    memset(&cb_face_beauty, 0, sizeof(cb_face_beauty));
-    mcbflagfb = false;
 #endif
 
     mFrontFlash = (char *)malloc(10 * sizeof(char));
@@ -720,11 +718,6 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
         mflagfb = false;
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
         face_beauty_deinit(&face_beauty);
-    }
-    if (mcbflagfb) {
-        mcbflagfb = false;
-        ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
-        face_beauty_deinit(&cb_face_beauty);
     }
 #endif
 
@@ -3420,11 +3413,6 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         mflagfb = false;
         ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
         face_beauty_deinit(&face_beauty);
-    }
-    if (mcbflagfb) {
-        mcbflagfb = false;
-        ret = face_beauty_ctrl(&cb_face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
-        face_beauty_deinit(&cb_face_beauty);
     }
 #endif
     // used for single camera need raw stream
