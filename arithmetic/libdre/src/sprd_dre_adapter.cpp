@@ -85,9 +85,9 @@ int sprd_dre_get_devicetype(enum camalg_run_type *type)
 
 int sprd_dre_set_devicetype(enum camalg_run_type type)
 {
-    if (type < SPRD_CAMALG_RUN_TYPE_CPU || type >= SPRD_CAMALG_RUN_TYPE_MAX)
-        return 1;
-    g_run_type = type;
-
-    return 0;
+    if (type >= SPRD_CAMALG_RUN_TYPE_CPU && type < SPRD_CAMALG_RUN_TYPE_MAX){
+        g_run_type = type;
+        return 0;
+    }
+    return 1;
 }
