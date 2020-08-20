@@ -11,6 +11,7 @@ void __cppassert (const char *function, const char *file, unsigned int line,
 		const char *assertion)
 {
 	printf("ASSERT: %s %s <%d> : %s\n", file, function, line, assertion);
+	while(1);
 }
 #endif
 

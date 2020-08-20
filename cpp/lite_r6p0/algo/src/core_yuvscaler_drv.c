@@ -1353,7 +1353,7 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
     int16   UV_ver_filter[COUNT]    = {0},  UV_ver_filter_len[100] = {0};
 
     int16   pos_start   ;
-    int16   tmpi, tmp_S ;
+    int16   tmpi, tmp_S, tmp_bit ;
     int16   tmpval      ;
 
     //pc
@@ -1392,21 +1392,16 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
         {
             tmpval = cong_Ycom_hor[i][j];
 
-            if(tmpval > 255)        //adjust
+            if(tmpval <= 255)
+                continue;
+            tmpi = tmpval - 255 ;
+            cong_Ycom_hor[i][j] = 255 ;
+            tmp_S = abs(tmpi);
+            tmp_bit = ((tmp_S & 1) == 1) ? 1 : 0;
+            cong_Ycom_hor[i][j + 1] = cong_Ycom_hor[i][j + 1] + (tmpi + tmp_bit) / 2 ;
+            if (j >= 1)
             {
-                tmpi = tmpval - 255 ;
-                cong_Ycom_hor[i][j] = 255 ;
-                tmp_S = abs(tmpi);
-                if ((tmp_S & 1) == 1)  // ilen is odd
-                {
-                    cong_Ycom_hor[i][j + 1] = cong_Ycom_hor[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_Ycom_hor[i][j - 1] = cong_Ycom_hor[i][j - 1] + (tmpi - 1) / 2 ;
-                }
-                else  // ilen is even
-                {
-                    cong_Ycom_hor[i][j + 1] = cong_Ycom_hor[i][j + 1] + (tmpi ) / 2 ;
-                    cong_Ycom_hor[i][j - 1] = cong_Ycom_hor[i][j - 1] + (tmpi ) / 2 ;
-                }
+                  cong_Ycom_hor[i][j - 1] = cong_Ycom_hor[i][j - 1] + (tmpi - tmp_bit) / 2 ;
             }
         }
     }
@@ -1430,21 +1425,16 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
         {
             tmpval = cong_UVcom_hor[i][j];
 
-            if(tmpval > 255)        //adjust
+            if(tmpval <= 255)
+                continue;
+            tmpi = tmpval - 255 ;
+            cong_UVcom_hor[i][j] = 255 ;
+            tmp_S = abs(tmpi);
+            tmp_bit = ((tmp_S & 1) == 1) ? 1 : 0;
+            cong_UVcom_hor[i][j + 1] = cong_UVcom_hor[i][j + 1] + (tmpi + tmp_bit) / 2 ;
+            if(j >= 1)
             {
-                tmpi = tmpval - 255 ;
-                cong_UVcom_hor[i][j] = 255 ;
-                tmp_S = abs(tmpi);
-                if ((tmp_S & 1) == 1)  // ilen is odd
-                {
-                    cong_UVcom_hor[i][j + 1] = cong_UVcom_hor[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_UVcom_hor[i][j - 1] = cong_UVcom_hor[i][j - 1] + (tmpi - 1) / 2 ;
-                }
-                else
-                {
-                    cong_UVcom_hor[i][j + 1] = cong_UVcom_hor[i][j + 1] + (tmpi ) / 2 ;
-                    cong_UVcom_hor[i][j - 1] = cong_UVcom_hor[i][j - 1] + (tmpi ) / 2 ;
-                }
+                  cong_UVcom_hor[i][j - 1] = cong_UVcom_hor[i][j - 1] + (tmpi - tmp_bit) / 2 ;
             }
         }
     }
@@ -1496,21 +1486,16 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
         {
             tmpval = cong_Ycom_ver[i][j];
 
-            if(tmpval > 255)
+            if(tmpval <= 255)
+                continue;
+            tmpi = tmpval - 255 ;
+            cong_Ycom_ver[i][j] = 255 ;
+            tmp_S = abs(tmpi);
+            tmp_bit = ((tmp_S & 1) == 1) ? 1 : 0;
+            cong_Ycom_ver[i][j + 1] = cong_Ycom_ver[i][j + 1] + (tmpi + tmp_bit) / 2 ;
+            if (j >= 1)
             {
-                tmpi = tmpval - 255 ;
-                cong_Ycom_ver[i][j] = 255 ;
-                tmp_S = abs(tmpi);
-                if ((tmp_S & 1) == 1)  // ilen is odd
-                {
-                    cong_Ycom_ver[i][j + 1] = cong_Ycom_ver[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_Ycom_ver[i][j - 1] = cong_Ycom_ver[i][j - 1] + (tmpi - 1) / 2 ;
-                }
-                else  // ilen is even
-                {
-                    cong_Ycom_ver[i][j + 1] = cong_Ycom_ver[i][j + 1] + (tmpi ) / 2 ;
-                    cong_Ycom_ver[i][j - 1] = cong_Ycom_ver[i][j - 1] + (tmpi ) / 2 ;
-                }
+                  cong_Ycom_ver[i][j - 1] = cong_Ycom_ver[i][j - 1] + (tmpi - tmp_bit) / 2 ;
             }
         }
     }
@@ -1558,21 +1543,16 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
         {
             tmpval = cong_UVcom_ver[i][j];
 
-            if(tmpval > 255)
+            if(tmpval <= 255)
+                continue;
+            tmpi = tmpval - 255 ;
+            cong_UVcom_ver[i][j] = 255 ;
+            tmp_S = abs(tmpi);
+            tmp_bit = ((tmp_S & 1) == 1) ? 1 : 0;
+            cong_UVcom_ver[i][j + 1] = cong_UVcom_ver[i][j + 1] + (tmpi + tmp_bit) / 2 ;
+            if(j >= 1)
             {
-                tmpi = tmpval - 255 ;
-                cong_UVcom_ver[i][j] = 255 ;
-                tmp_S = abs(tmpi);
-                if ((tmp_S & 1) == 1)  // ilen is odd
-                {
-                    cong_UVcom_ver[i][j + 1] = cong_UVcom_ver[i][j + 1] + (tmpi + 1) / 2 ;
-                    cong_UVcom_ver[i][j - 1] = cong_UVcom_ver[i][j - 1] + (tmpi - 1) / 2 ;
-                }
-                else  // ilen is even
-                {
-                    cong_UVcom_ver[i][j + 1] = cong_UVcom_ver[i][j + 1] + (tmpi ) / 2 ;
-                    cong_UVcom_ver[i][j - 1] = cong_UVcom_ver[i][j - 1] + (tmpi ) / 2 ;
-                }
+                  cong_UVcom_ver[i][j - 1] = cong_UVcom_ver[i][j - 1] + (tmpi - tmp_bit) / 2 ;
             }
         }
     }
@@ -1677,7 +1657,7 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
                 }
                 else
                 {
-                    if(l >= D_ver_bak - 1)
+                    if(l >= D_ver_bak_uv - 1)
                     {
                         cong_UVcom_ver[8][spec_tap + 2] += cong_UVcom_ver[phase][j+chroma_ver_tap/2-1];
                     }
