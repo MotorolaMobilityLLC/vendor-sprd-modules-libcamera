@@ -1081,8 +1081,10 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 		ISP_LOGV("mode[%d]: param modify_time :%d", i, src_mod_ptr->reserved[0]);
 
 		if (PNULL != cxt_ptr->merged_mode_array[i]) {
+			pthread_mutex_lock(&cxt_ptr->pm_mutex);
 			free(cxt_ptr->merged_mode_array[i]);
 			cxt_ptr->merged_mode_array[i] = PNULL;
+			pthread_mutex_unlock(&cxt_ptr->pm_mutex);
 		}
 
 		cxt_ptr->merged_mode_array[i] = (struct isp_pm_mode_param *)malloc(sizeof(struct isp_pm_mode_param));
