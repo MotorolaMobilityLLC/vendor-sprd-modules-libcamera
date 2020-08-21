@@ -7515,8 +7515,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
 
     case ANDROID_CONTROL_AE_MODE:
-        if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-            mCameraId == 1 || mCameraId == 4 || mCameraId == 3 ||
+        if (getMultiCameraMode() == MODE_MULTI_CAMERA || (mCameraId >= 0 &&
+            mCameraId <= 4 && mCameraId != 2) ||
             (mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK) &&
              getMultiCameraMode() != MODE_BOKEH &&
              getMultiCameraMode() != MODE_3D_CALIBRATION &&

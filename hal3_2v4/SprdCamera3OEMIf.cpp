@@ -4381,8 +4381,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGD("prev:fd=%d, vir=0x%lx, num=%d, time=%lld", frame->fd,
                  buff_vir, frame_num, buffer_timestamp);
         if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
-            if ((frame_num > mStartFrameNum) &&
-                (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
+            if (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT) {
                 if (getMultiCameraMode() == MODE_BLUR ||
                     getMultiCameraMode() == MODE_BOKEH ||
                     getMultiCameraMode() == MODE_SOFY_OPTICAL_ZOOM ||
