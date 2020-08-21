@@ -2248,7 +2248,75 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
     capture_queue_msg_t_bokeh capture_msg;
     int rc = 0;
     int mime_type = 0;
+    void *input_buf1_addr = NULL;
 
+    auto EndProcess = [&]()->void{
+        if (mBokehResult == false) {
+            mime_type = 0;
+        } else if (mAbokehGallery) {
+            if (mRealBokeh->mIsHdrMode) {
+                mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BOKEH_HDR;
+            } else {
+                mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BOKEH;
+            }
+        } else {
+            if (mRealBokeh->mIsHdrMode) {
+                mime_type = (int)SPRD_MIMETPYE_BOKEH_HDR;
+            } else {
+                mime_type = (int)SPRD_MIMETPYE_BOKEH;
+            }
+        }
+        if (mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE) {
+            mime_type = SPRD_MIMETPYE_NONE;
+        }
+        if (!mRealBokeh->mIsHdrMode) {
+#ifdef YUV_CONVERT_TO_JPEG
+            mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
+                mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
+            if (mBokehResult) {
+                rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
+                                     &pic_vir_addr);
+                if (rc != NO_ERROR) {
+                    HAL_LOGE("fail to map jpeg buffer");
+                }
+
+                mRealBokeh->mOrigJpegSize =
+                    mRealBokeh->jpeg_encode_exif_simplify(
+                        capture_msg.combo_buff.buffer1, input_buf1_addr,
+                        mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL,
+                        NULL,
+                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                        SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                            .jpgInfo.orientation);
+                mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
+#ifdef CONFIG_SUPPORT_GDEPTH
+                mRealBokeh->m_pDstGDepthOriJpegBuffer =
+                    (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
+                                               SNAPSHOT_MAIN_BUFFER));
+                rc = mRealBokeh->map(mRealBokeh->m_pDstGDepthOriJpegBuffer,
+                                     &pic_vir_addr);
+                if (rc != NO_ERROR) {
+                    HAL_LOGE("fail to map GDepth jpeg buffer");
+                }
+                mRealBokeh->mGDepthOriJpegSize =
+                    mRealBokeh->jpeg_encode_exif_simplify_format(
+                        capture_msg.combo_buff.buffer1, input_buf1_addr,
+                        mRealBokeh->m_pDstGDepthOriJpegBuffer, pic_vir_addr,
+                        NULL, NULL,
+                        mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
+                        IMG_DATA_TYPE_YUV420,
+                        SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+                            .jpgInfo.orientation,
+                        0);
+                mRealBokeh->unmap(mRealBokeh->m_pDstGDepthOriJpegBuffer);
+#endif
+            }
+#else
+            mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
+#endif
+        }
+        mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
+    };
     while (!mCaptureMsgList.empty()) {
         {
             Mutex::Autolock l(mMergequeueMutex);
@@ -2286,7 +2354,6 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             return false;
         }
         case BOKEH_MSG_DATA_PROC: {
-            void *input_buf1_addr = NULL;
             rc = mRealBokeh->map(capture_msg.combo_buff.buffer1,
                                  &input_buf1_addr);
             if (rc != NO_ERROR) {
@@ -2410,72 +2477,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     }
                 }
             }
-            if (mBokehResult == false) {
-                mime_type = 0;
-            } else if (mAbokehGallery) {
-                if (mRealBokeh->mIsHdrMode) {
-                    mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BOKEH_HDR;
-                } else {
-                    mime_type = (1 << 8) | (int)SPRD_MIMETPYE_BOKEH;
-                }
-            } else {
-                if (mRealBokeh->mIsHdrMode) {
-                    mime_type = (int)SPRD_MIMETPYE_BOKEH_HDR;
-                } else {
-                    mime_type = (int)SPRD_MIMETPYE_BOKEH;
-                }
-            }
-            if (mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE) {
-                mime_type = SPRD_MIMETPYE_NONE;
-            }
-            if (!mRealBokeh->mIsHdrMode) {
-#ifdef YUV_CONVERT_TO_JPEG
-                mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
-                    mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
-                if (mBokehResult) {
-                    rc = mRealBokeh->map(mRealBokeh->m_pDstJpegBuffer,
-                                         &pic_vir_addr);
-                    if (rc != NO_ERROR) {
-                        HAL_LOGE("fail to map jpeg buffer");
-                    }
-
-                    mRealBokeh->mOrigJpegSize =
-                        mRealBokeh->jpeg_encode_exif_simplify(
-                            capture_msg.combo_buff.buffer1, input_buf1_addr,
-                            mRealBokeh->m_pDstJpegBuffer, pic_vir_addr, NULL,
-                            NULL,
-                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
-                            SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
-                                .jpgInfo.orientation);
-                    mRealBokeh->unmap(mRealBokeh->m_pDstJpegBuffer);
-#ifdef CONFIG_SUPPORT_GDEPTH
-                    mRealBokeh->m_pDstGDepthOriJpegBuffer =
-                        (mRealBokeh->popBufferList(mRealBokeh->mLocalBufferList,
-                                                   SNAPSHOT_MAIN_BUFFER));
-                    rc = mRealBokeh->map(mRealBokeh->m_pDstGDepthOriJpegBuffer,
-                                         &pic_vir_addr);
-                    if (rc != NO_ERROR) {
-                        HAL_LOGE("fail to map GDepth jpeg buffer");
-                    }
-                    mRealBokeh->mGDepthOriJpegSize =
-                        mRealBokeh->jpeg_encode_exif_simplify_format(
-                            capture_msg.combo_buff.buffer1, input_buf1_addr,
-                            mRealBokeh->m_pDstGDepthOriJpegBuffer, pic_vir_addr,
-                            NULL, NULL,
-                            mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi,
-                            IMG_DATA_TYPE_YUV420,
-                            SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
-                                .jpgInfo.orientation,
-                            0);
-                    mRealBokeh->unmap(mRealBokeh->m_pDstGDepthOriJpegBuffer);
-#endif
-                }
-#else
-                mRealBokeh->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
-#endif
-            }
-
-            mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
+            EndProcess();
             if (!mRealBokeh->mFlushing)
                 mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                              &mime_type, NULL);
@@ -4963,6 +4965,9 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
     int rc = 0;
     FILE *fp = NULL;
     char file2_name[256] = {0};
+    SXMPMeta meta;
+    string encodeToBase64String;
+    string encodeToBase64StringOrigJpeg;
 
     strcpy(file2_name, CAMERA_DUMP_PATH);
     strcat(file2_name, "xmp_temp2.jpg");
@@ -4984,6 +4989,113 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
 #endif
     uint32_t use_size = para_size + depth_yuv_normalize_size + depth_size +
                         mRealBokeh->mOrigJpegSize + jpeg_size + xmp_size;
+    auto ProcessXmlData = [&]()->void{
+        bool exists;
+        // Set gCamera property ++++++
+        string simpleValue;
+        exists = meta.GetProperty(gCameraURI, "SpecialTypeID", &simpleValue,
+                                  NULL);
+        if (exists) {
+            HAL_LOGI("SpecialTypeID = %s", simpleValue.c_str());
+        } else {
+            meta.SetProperty(gCameraURI, "SpecialTypeID",
+                             "BOKEH_PHOTO_TYPE", 0);
+        }
+        HAL_LOGI("SpecialTypeID");
+        // Set gCamera property ------
+
+        // Set gDepth property ++++++
+        string formatValue;
+        exists = meta.GetProperty(gDepthURI, "Format", &formatValue, NULL);
+        if (exists) {
+            HAL_LOGI("Format = %s", formatValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Format", "RangeInverse", 0);
+        }
+        HAL_LOGI("Format");
+
+        double nearValueD = 0.0f;
+        exists =
+            meta.GetProperty_Float(gDepthURI, "Near", &nearValueD, NULL);
+        if (exists) {
+            HAL_LOGI("Near = %f", nearValueD);
+        } else {
+            meta.SetProperty_Float(gDepthURI, "Near", mRealBokeh->near, 0);
+        }
+        HAL_LOGI("Near1 %u ", mRealBokeh->near);
+
+        double farValueD = 0.0f;
+        exists = meta.GetProperty_Float(gDepthURI, "Far", &farValueD, NULL);
+        if (exists) {
+            HAL_LOGI("Far = %f", farValueD);
+        } else {
+            meta.SetProperty_Float(gDepthURI, "Far", mRealBokeh->far, 0);
+        }
+        HAL_LOGI("Far1 %u ", mRealBokeh->far);
+
+        string depthMimeValue;
+        exists = meta.GetProperty(gDepthURI, "Mime", &depthMimeValue, NULL);
+        if (exists) {
+            HAL_LOGI("depth:Mime = %s", depthMimeValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Mime", "image/jpeg", 0);
+        }
+        HAL_LOGI("depth:Mime");
+
+        string depthDataValue;
+        exists = meta.GetProperty(gDepthURI, "Data", &depthDataValue, NULL);
+        if (exists) {
+            HAL_LOGI("depth:Data = %s", depthDataValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Data",
+                             encodeToBase64String.c_str(), 0);
+        }
+        HAL_LOGI("depth:Data %s", encodeToBase64String.c_str());
+
+        XMP_Int32 imageWidthValue = 0;
+        exists = meta.GetProperty_Int(gDepthURI, "ImageWidth",
+                                      &imageWidthValue, NULL);
+        if (exists) {
+            HAL_LOGI("ImageWidth = %d", imageWidthValue);
+        } else {
+            meta.SetProperty_Int(gDepthURI, "ImageWidth",
+                                 mBokehSize.callback_w, 0);
+        }
+        HAL_LOGI("ImageWidth %d ", mBokehSize.callback_w);
+
+        XMP_Int32 imageHeightValue = 0;
+        exists = meta.GetProperty_Int(gDepthURI, "ImageHeight",
+                                      &imageHeightValue, NULL);
+        if (exists) {
+            HAL_LOGI("ImageHeight = %d", imageHeightValue);
+        } else {
+            meta.SetProperty_Int(gDepthURI, "ImageHeight",
+                                 mBokehSize.callback_h, 0);
+        }
+        HAL_LOGI("ImageHeight %d ", mBokehSize.callback_h);
+        // Set gDepth property ------
+
+        // Set gImage property ++++++
+        string imageMimeValue;
+        exists = meta.GetProperty(gImageURI, "Mime", &imageMimeValue, NULL);
+        if (exists) {
+            HAL_LOGI("image:Mime = %s", imageMimeValue.c_str());
+        } else {
+            meta.SetProperty(gImageURI, "Mime", "image/jpeg", 0);
+        }
+        HAL_LOGI("image:Mime");
+
+        string imageDataValue;
+        exists = meta.GetProperty(gImageURI, "Data", &imageDataValue, NULL);
+        if (exists) {
+            HAL_LOGI("image:Data = %s", imageDataValue.c_str());
+        } else {
+            meta.SetProperty(gImageURI, "Data",
+                             encodeToBase64StringOrigJpeg.c_str(), 0);
+        }
+        HAL_LOGI("image:Data %s", encodeToBase64StringOrigJpeg.c_str());
+
+    };
 
     // xmp_temp2.jpg is for XMP to process
     fp = fopen(file2_name, "wb");
@@ -4994,8 +5106,6 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
     fwrite((void *)result_buffer_addr, 1, use_size, fp);
     fclose(fp);
 
-    string encodeToBase64String;
-    string encodeToBase64StringOrigJpeg;
     encodeOriginalJPEGandDepth(&encodeToBase64String,
                                &encodeToBase64StringOrigJpeg);
 
@@ -5024,114 +5134,9 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
             SXMPMeta::RegisterNamespace(gDepthURI, gDepthPrefix, NULL);
             SXMPMeta::RegisterNamespace(gImageURI, gImagePrefix, NULL);
 
-            SXMPMeta meta;
             xmpFile.GetXMP(&meta);
 
-            bool exists;
-            // Set gCamera property ++++++
-            string simpleValue;
-            exists = meta.GetProperty(gCameraURI, "SpecialTypeID", &simpleValue,
-                                      NULL);
-            if (exists) {
-                HAL_LOGI("SpecialTypeID = %s", simpleValue.c_str());
-            } else {
-                meta.SetProperty(gCameraURI, "SpecialTypeID",
-                                 "BOKEH_PHOTO_TYPE", 0);
-            }
-            HAL_LOGI("SpecialTypeID");
-            // Set gCamera property ------
-
-            // Set gDepth property ++++++
-            string formatValue;
-            exists = meta.GetProperty(gDepthURI, "Format", &formatValue, NULL);
-            if (exists) {
-                HAL_LOGI("Format = %s", formatValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Format", "RangeInverse", 0);
-            }
-            HAL_LOGI("Format");
-
-            double nearValueD = 0.0f;
-            exists =
-                meta.GetProperty_Float(gDepthURI, "Near", &nearValueD, NULL);
-            if (exists) {
-                HAL_LOGI("Near = %f", nearValueD);
-            } else {
-                meta.SetProperty_Float(gDepthURI, "Near", mRealBokeh->near, 0);
-            }
-            HAL_LOGI("Near1 %u ", mRealBokeh->near);
-
-            double farValueD = 0.0f;
-            exists = meta.GetProperty_Float(gDepthURI, "Far", &farValueD, NULL);
-            if (exists) {
-                HAL_LOGI("Far = %f", farValueD);
-            } else {
-                meta.SetProperty_Float(gDepthURI, "Far", mRealBokeh->far, 0);
-            }
-            HAL_LOGI("Far1 %u ", mRealBokeh->far);
-
-            string depthMimeValue;
-            exists = meta.GetProperty(gDepthURI, "Mime", &depthMimeValue, NULL);
-            if (exists) {
-                HAL_LOGI("depth:Mime = %s", depthMimeValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Mime", "image/jpeg", 0);
-            }
-            HAL_LOGI("depth:Mime");
-
-            string depthDataValue;
-            exists = meta.GetProperty(gDepthURI, "Data", &depthDataValue, NULL);
-            if (exists) {
-                HAL_LOGI("depth:Data = %s", depthDataValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Data",
-                                 encodeToBase64String.c_str(), 0);
-            }
-            HAL_LOGI("depth:Data %s", encodeToBase64String.c_str());
-
-            XMP_Int32 imageWidthValue = 0;
-            exists = meta.GetProperty_Int(gDepthURI, "ImageWidth",
-                                          &imageWidthValue, NULL);
-            if (exists) {
-                HAL_LOGI("ImageWidth = %d", imageWidthValue);
-            } else {
-                meta.SetProperty_Int(gDepthURI, "ImageWidth",
-                                     mBokehSize.callback_w, 0);
-            }
-            HAL_LOGI("ImageWidth %d ", mBokehSize.callback_w);
-
-            XMP_Int32 imageHeightValue = 0;
-            exists = meta.GetProperty_Int(gDepthURI, "ImageHeight",
-                                          &imageHeightValue, NULL);
-            if (exists) {
-                HAL_LOGI("ImageHeight = %d", imageHeightValue);
-            } else {
-                meta.SetProperty_Int(gDepthURI, "ImageHeight",
-                                     mBokehSize.callback_h, 0);
-            }
-            HAL_LOGI("ImageHeight %d ", mBokehSize.callback_h);
-            // Set gDepth property ------
-
-            // Set gImage property ++++++
-            string imageMimeValue;
-            exists = meta.GetProperty(gImageURI, "Mime", &imageMimeValue, NULL);
-            if (exists) {
-                HAL_LOGI("image:Mime = %s", imageMimeValue.c_str());
-            } else {
-                meta.SetProperty(gImageURI, "Mime", "image/jpeg", 0);
-            }
-            HAL_LOGI("image:Mime");
-
-            string imageDataValue;
-            exists = meta.GetProperty(gImageURI, "Data", &imageDataValue, NULL);
-            if (exists) {
-                HAL_LOGI("image:Data = %s", imageDataValue.c_str());
-            } else {
-                meta.SetProperty(gImageURI, "Data",
-                                 encodeToBase64StringOrigJpeg.c_str(), 0);
-            }
-            HAL_LOGI("image:Data %s", encodeToBase64StringOrigJpeg.c_str());
-
+            ProcessXmlData();
             // Set gImage property ------
 
             string standardXMP;

@@ -980,6 +980,69 @@ int SprdCamera3DualFaceId::processCaptureRequest(
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
 
+    auto metaProcess = [&]()->void{
+        tagCnt = metaSettingsMain.entryCount();
+        if (0 != tagCnt) {
+            if (metaSettingsMain.exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
+                uint8_t sprdBurstModeEnabled = 0;
+                metaSettingsMain.update(ANDROID_SPRD_BURSTMODE_ENABLED,
+                                        &sprdBurstModeEnabled, 1);
+                metaSettingsAux.update(ANDROID_SPRD_BURSTMODE_ENABLED,
+                                       &sprdBurstModeEnabled, 1);
+            }
+            if (metaSettingsMain.exists(ANDROID_SPRD_ZSL_ENABLED)) {
+                uint8_t sprdZslEnabled = 0;
+                metaSettingsMain.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled,
+                                        1);
+                metaSettingsAux.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled,
+                                       1);
+            }
+            if (metaSettingsMain.exists(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE)) {
+                uint8_t sprdFaceAttributesEnabled = 0;
+                metaSettingsMain.update(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE, &sprdFaceAttributesEnabled,
+                                        1);
+                metaSettingsAux.update(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE, &sprdFaceAttributesEnabled,
+                                       1);
+            }
+            if (metaSettingsMain.exists(ANDROID_SPRD_SMILE_CAPTURE_ENABLE)) {
+                uint8_t sprdSmileCaptureEnabled = 0;
+                metaSettingsMain.update(ANDROID_SPRD_SMILE_CAPTURE_ENABLE, &sprdSmileCaptureEnabled,
+                                        1);
+                metaSettingsAux.update(ANDROID_SPRD_SMILE_CAPTURE_ENABLE, &sprdSmileCaptureEnabled,
+                                       1);
+            }
+            // get phy addr from faceidservice
+            if (metaSettingsMain.exists(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)) {
+                get_reg_phyaddr =
+                    (uint64_t)
+                        metaSettingsMain.find(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)
+                            .data.i64[0];
+                for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
+                    if (get_reg_phyaddr == (uint64_t)mLocalBufferMain[i].phy_addr) {
+                        // get phy addr
+                        HAL_LOGD("frame:%d,main get phy addr from faceidservice,0x%016lx",
+                                 request->frame_number, get_reg_phyaddr);
+                        mLocalBufferMain[i].type = (camera_buffer_type_t)MAIN_BUFFER;
+                        mLocalBufferListMain.push_back(&mLocalBufferMain[i]);
+                    }
+                }
+                get_reg_phyaddr =
+                    (uint64_t)
+                        metaSettingsMain.find(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)
+                            .data.i64[1];
+                for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
+                    if (get_reg_phyaddr == (uint64_t)mLocalBufferAux[i].phy_addr) {
+                        // get phy addr
+                        HAL_LOGD("frame:%d,sub get phy addr from faceidservice,0x%016lx",
+                                 request->frame_number, get_reg_phyaddr);
+                        mLocalBufferAux[i].type = (camera_buffer_type_t)AUX_BUFFER;
+                        mLocalBufferListAux.push_back(&mLocalBufferAux[i]);
+                    }
+                }
+            }
+        }
+    };
+
     metaSettingsMain = request->settings;
     metaSettingsAux = request->settings;
 
@@ -999,67 +1062,7 @@ int SprdCamera3DualFaceId::processCaptureRequest(
             preview_stream = (req->output_buffers[i]).stream;
         }
     }
-
-    tagCnt = metaSettingsMain.entryCount();
-    if (0 != tagCnt) {
-        if (metaSettingsMain.exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
-            uint8_t sprdBurstModeEnabled = 0;
-            metaSettingsMain.update(ANDROID_SPRD_BURSTMODE_ENABLED,
-                                    &sprdBurstModeEnabled, 1);
-            metaSettingsAux.update(ANDROID_SPRD_BURSTMODE_ENABLED,
-                                   &sprdBurstModeEnabled, 1);
-        }
-        if (metaSettingsMain.exists(ANDROID_SPRD_ZSL_ENABLED)) {
-            uint8_t sprdZslEnabled = 0;
-            metaSettingsMain.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled,
-                                    1);
-            metaSettingsAux.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled,
-                                   1);
-        }
-        if (metaSettingsMain.exists(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE)) {
-            uint8_t sprdFaceAttributesEnabled = 0;
-            metaSettingsMain.update(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE, &sprdFaceAttributesEnabled,
-                                    1);
-            metaSettingsAux.update(ANDROID_SPRD_FACE_ATTRIBUTES_ENABLE, &sprdFaceAttributesEnabled,
-                                   1);
-        }
-	if (metaSettingsMain.exists(ANDROID_SPRD_SMILE_CAPTURE_ENABLE)) {
-            uint8_t sprdSmileCaptureEnabled = 0;
-            metaSettingsMain.update(ANDROID_SPRD_SMILE_CAPTURE_ENABLE, &sprdSmileCaptureEnabled,
-                                    1);
-            metaSettingsAux.update(ANDROID_SPRD_SMILE_CAPTURE_ENABLE, &sprdSmileCaptureEnabled,
-                                   1);
-        }
-    }
-    // get phy addr from faceidservice
-    if (metaSettingsMain.exists(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)) {
-        get_reg_phyaddr =
-            (uint64_t)
-                metaSettingsMain.find(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)
-                    .data.i64[0];
-        for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
-            if (get_reg_phyaddr == (uint64_t)mLocalBufferMain[i].phy_addr) {
-                // get phy addr
-                HAL_LOGD("frame:%d,main get phy addr from faceidservice,0x%016lx",
-                         request->frame_number, get_reg_phyaddr);
-                mLocalBufferMain[i].type = (camera_buffer_type_t)MAIN_BUFFER;
-                mLocalBufferListMain.push_back(&mLocalBufferMain[i]);
-            }
-        }
-        get_reg_phyaddr =
-            (uint64_t)
-                metaSettingsMain.find(ANDROID_SPRD_FROM_FACEIDSERVICE_PHYADDR)
-                    .data.i64[1];
-        for (i = 0; i < DUAL_FACEID_BUFFER_SUM; i++) {
-            if (get_reg_phyaddr == (uint64_t)mLocalBufferAux[i].phy_addr) {
-                // get phy addr
-                HAL_LOGD("frame:%d,sub get phy addr from faceidservice,0x%016lx",
-                         request->frame_number, get_reg_phyaddr);
-                mLocalBufferAux[i].type = (camera_buffer_type_t)AUX_BUFFER;
-                mLocalBufferListAux.push_back(&mLocalBufferAux[i]);
-            }
-        }
-    }
+    metaProcess();
     req_main = *req;
     req_aux = *req;
     req_main.settings = metaSettingsMain.release();

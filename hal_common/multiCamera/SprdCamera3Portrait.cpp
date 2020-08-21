@@ -2552,8 +2552,8 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
     }
     sem_wait(&mPortrait->mFaceinfoSignSem);
     mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                (void *)mPortrait->mScaleInfo.addr_vir.addr_y, 
-                output_buf_addr, input_buf1_addr, 
+                (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                output_buf_addr, input_buf1_addr,
                 mPortrait->mVcmStepsFixed, outPortraitMask);
     if(!outPortraitMask) {
         HAL_LOGE("no thing!");
@@ -4913,6 +4913,9 @@ int SprdCamera3Portrait::insertGDepthMetadata(unsigned char *result_buffer_addr,
     int rc = 0;
     FILE *fp = NULL;
     char file2_name[256] = {0};
+    SXMPMeta meta;
+    string encodeToBase64String;
+    string encodeToBase64StringOrigJpeg;
 
     strcpy(file2_name, CAMERA_DUMP_PATH);
     strcat(file2_name, "xmp_temp2.jpg");
@@ -4934,7 +4937,151 @@ int SprdCamera3Portrait::insertGDepthMetadata(unsigned char *result_buffer_addr,
 #endif
     uint32_t use_size = para_size + depth_yuv_normalize_size + depth_size +
                         mPortrait->mOrigJpegSize + jpeg_size + xmp_size;
+    auto ProcessXmlData = [&]()->void{
+        string simpleValue;
+        if (meta.GetProperty(gCameraURI, "SpecialTypeID", &simpleValue,
+                                  NULL)) {
+            HAL_LOGI("SpecialTypeID = %s", simpleValue.c_str());
+        } else {
+            meta.SetProperty(gCameraURI, "SpecialTypeID",
+                             "BOKEH_PHOTO_TYPE", 0);
+        }
+        HAL_LOGI("SpecialTypeID");
+        // Set gCamera property ------
 
+        // Set gDepth property ++++++
+        string formatValue;
+        if (meta.GetProperty(gDepthURI, "Format", &formatValue, NULL)) {
+            HAL_LOGI("Format = %s", formatValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Format", "RangeLinear", 0);
+        }
+        HAL_LOGI("Format");
+
+        double nearValueD = 0.0f;
+        if (meta.GetProperty_Float(gDepthURI, "Near", &nearValueD, NULL)) {
+            HAL_LOGI("Near = %f", nearValueD);
+        } else {
+            meta.SetProperty_Float(gDepthURI, "Near", mPortrait->near, 0);
+        }
+        HAL_LOGI("Near1 %u ", mPortrait->near);
+
+        double farValueD = 0.0f;
+        if (meta.GetProperty_Float(gDepthURI, "Far", &farValueD, NULL)) {
+            HAL_LOGI("Far = %f", farValueD);
+        } else {
+            meta.SetProperty_Float(gDepthURI, "Far", mPortrait->far, 0);
+        }
+        HAL_LOGI("Far1 %u ", mPortrait->far);
+
+        string depthMimeValue;
+        if (meta.GetProperty(gDepthURI, "Mime", &depthMimeValue, NULL)) {
+            HAL_LOGI("depth:Mime = %s", depthMimeValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Mime", "image/jpeg", 0);
+        }
+        HAL_LOGI("depth:Mime");
+
+        string depthDataValue;
+        if (meta.GetProperty(gDepthURI, "Data", &depthDataValue, NULL)) {
+            HAL_LOGI("depth:Data = %s", depthDataValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Data",
+                             encodeToBase64String.c_str(), 0);
+        }
+        HAL_LOGI("depth:Data %s", encodeToBase64String.c_str());
+
+        string unitsValue;
+        if (meta.GetProperty(gDepthURI, "Units", &unitsValue, NULL)) {
+            HAL_LOGI("Units = %s", unitsValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Units", "m", 0);
+        }
+        HAL_LOGI("Units");
+
+        string measureTypeValue;
+        if (meta.GetProperty(gDepthURI, "MeasureType",
+                             &measureTypeValue, NULL)) {
+            HAL_LOGI("MeasureType = %s", measureTypeValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "MeasureType", "OpticalAxis", 0);
+        }
+        HAL_LOGI("MeasureType");
+
+        string confidenceMimeValue;
+        if (meta.GetProperty(gDepthURI, "ConfidenceMime",
+                             &confidenceMimeValue, NULL)) {
+            HAL_LOGI("ConfidenceMime = %s", confidenceMimeValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "ConfidenceMime", "image/jpeg", 0);
+        }
+        HAL_LOGI("ConfidenceMime");
+
+        string manufacturerValue;
+        if (meta.GetProperty(gDepthURI, "Manufacturer",
+                             &manufacturerValue, NULL)) {
+            HAL_LOGI("Manufacturer = %s", manufacturerValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Manufacturer", "UNISOC", 0);
+        }
+        HAL_LOGI("Manufacturer");
+
+        string modelValue;
+        if (meta.GetProperty(gDepthURI, "Model", &modelValue, NULL)) {
+            HAL_LOGI("Model = %s", modelValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Model", "SharkLE", 0);
+        }
+        HAL_LOGI("Model");
+
+        string softwareValue;
+        if (meta.GetProperty(gDepthURI, "Software", &softwareValue, NULL)) {
+            HAL_LOGI("Software = %s", softwareValue.c_str());
+        } else {
+            meta.SetProperty(gDepthURI, "Software", "ALgo", 0);
+        }
+        HAL_LOGI("Software");
+
+        XMP_Int32 imageWidthValue = 0;
+        if (meta.GetProperty_Int(gDepthURI, "ImageWidth",
+                                &imageWidthValue, NULL)) {
+            HAL_LOGI("ImageWidth = %d", imageWidthValue);
+        } else {
+            meta.SetProperty_Int(gDepthURI, "ImageWidth",
+                                 mBokehSize.callback_w, 0);
+        }
+        HAL_LOGI("ImageWidth %d ", mBokehSize.callback_w);
+
+        XMP_Int32 imageHeightValue = 0;
+        if (meta.GetProperty_Int(gDepthURI, "ImageHeight",
+            &imageHeightValue, NULL)) {
+            HAL_LOGI("ImageHeight = %d", imageHeightValue);
+        } else {
+            meta.SetProperty_Int(gDepthURI, "ImageHeight",
+                                 mBokehSize.callback_h, 0);
+        }
+        HAL_LOGI("ImageHeight %d ", mBokehSize.callback_h);
+        // Set gDepth property ------
+
+        // Set gImage property ++++++
+        string imageMimeValue;
+        if (meta.GetProperty(gImageURI, "Mime", &imageMimeValue, NULL)) {
+            HAL_LOGI("image:Mime = %s", imageMimeValue.c_str());
+        } else {
+            meta.SetProperty(gImageURI, "Mime", "image/jpeg", 0);
+        }
+        HAL_LOGI("image:Mime");
+
+        string imageDataValue;
+        if (meta.GetProperty(gImageURI, "Data", &imageDataValue, NULL)) {
+            HAL_LOGI("image:Data = %s", imageDataValue.c_str());
+        } else {
+            meta.SetProperty(gImageURI, "Data",
+                             encodeToBase64StringOrigJpeg.c_str(), 0);
+        }
+        // Set gCamera property ++++++
+        HAL_LOGI("image:Data %s", encodeToBase64StringOrigJpeg.c_str());
+    };
     // xmp_temp2.jpg is for XMP to process
     fp = fopen(file2_name, "wb");
     if (fp == NULL) {
@@ -4944,8 +5091,6 @@ int SprdCamera3Portrait::insertGDepthMetadata(unsigned char *result_buffer_addr,
     fwrite((void *)result_buffer_addr, 1, use_size, fp);
     fclose(fp);
 
-    string encodeToBase64String;
-    string encodeToBase64StringOrigJpeg;
     encodeOriginalJPEGandDepth(&encodeToBase64String,
                                &encodeToBase64StringOrigJpeg);
 
@@ -4974,172 +5119,9 @@ int SprdCamera3Portrait::insertGDepthMetadata(unsigned char *result_buffer_addr,
             SXMPMeta::RegisterNamespace(gDepthURI, gDepthPrefix, NULL);
             SXMPMeta::RegisterNamespace(gImageURI, gImagePrefix, NULL);
 
-            SXMPMeta meta;
             xmpFile.GetXMP(&meta);
 
-            bool exists;
-            // Set gCamera property ++++++
-            string simpleValue;
-            exists = meta.GetProperty(gCameraURI, "SpecialTypeID", &simpleValue,
-                                      NULL);
-            if (exists) {
-                HAL_LOGI("SpecialTypeID = %s", simpleValue.c_str());
-            } else {
-                meta.SetProperty(gCameraURI, "SpecialTypeID",
-                                 "BOKEH_PHOTO_TYPE", 0);
-            }
-            HAL_LOGI("SpecialTypeID");
-            // Set gCamera property ------
-
-            // Set gDepth property ++++++
-            string formatValue;
-            exists = meta.GetProperty(gDepthURI, "Format", &formatValue, NULL);
-            if (exists) {
-                HAL_LOGI("Format = %s", formatValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Format", "RangeLinear", 0);
-            }
-            HAL_LOGI("Format");
-
-            double nearValueD = 0.0f;
-            exists =
-                meta.GetProperty_Float(gDepthURI, "Near", &nearValueD, NULL);
-            if (exists) {
-                HAL_LOGI("Near = %f", nearValueD);
-            } else {
-                meta.SetProperty_Float(gDepthURI, "Near", mPortrait->near, 0);
-            }
-            HAL_LOGI("Near1 %u ", mPortrait->near);
-
-            double farValueD = 0.0f;
-            exists = meta.GetProperty_Float(gDepthURI, "Far", &farValueD, NULL);
-            if (exists) {
-                HAL_LOGI("Far = %f", farValueD);
-            } else {
-                meta.SetProperty_Float(gDepthURI, "Far", mPortrait->far, 0);
-            }
-            HAL_LOGI("Far1 %u ", mPortrait->far);
-
-            string depthMimeValue;
-            exists = meta.GetProperty(gDepthURI, "Mime", &depthMimeValue, NULL);
-            if (exists) {
-                HAL_LOGI("depth:Mime = %s", depthMimeValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Mime", "image/jpeg", 0);
-            }
-            HAL_LOGI("depth:Mime");
-
-            string depthDataValue;
-            exists = meta.GetProperty(gDepthURI, "Data", &depthDataValue, NULL);
-            if (exists) {
-                HAL_LOGI("depth:Data = %s", depthDataValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Data",
-                                 encodeToBase64String.c_str(), 0);
-            }
-            HAL_LOGI("depth:Data %s", encodeToBase64String.c_str());
-
-            string unitsValue;
-            exists = meta.GetProperty(gDepthURI, "Units", &unitsValue, NULL);
-            if (exists) {
-                HAL_LOGI("Units = %s", unitsValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Units", "m", 0);
-            }
-            HAL_LOGI("Units");
-
-            string measureTypeValue;
-            exists = meta.GetProperty(gDepthURI, "MeasureType",
-                                      &measureTypeValue, NULL);
-            if (exists) {
-                HAL_LOGI("MeasureType = %s", measureTypeValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "MeasureType", "OpticalAxis", 0);
-            }
-            HAL_LOGI("MeasureType");
-
-            string confidenceMimeValue;
-            exists = meta.GetProperty(gDepthURI, "ConfidenceMime",
-                                      &confidenceMimeValue, NULL);
-            if (exists) {
-                HAL_LOGI("ConfidenceMime = %s", confidenceMimeValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "ConfidenceMime", "image/jpeg", 0);
-            }
-            HAL_LOGI("ConfidenceMime");
-
-            string manufacturerValue;
-            exists = meta.GetProperty(gDepthURI, "Manufacturer",
-                                      &manufacturerValue, NULL);
-            if (exists) {
-                HAL_LOGI("Manufacturer = %s", manufacturerValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Manufacturer", "UNISOC", 0);
-            }
-            HAL_LOGI("Manufacturer");
-
-            string modelValue;
-            exists = meta.GetProperty(gDepthURI, "Model", &modelValue, NULL);
-            if (exists) {
-                HAL_LOGI("Model = %s", modelValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Model", "SharkLE", 0);
-            }
-            HAL_LOGI("Model");
-
-            string softwareValue;
-            exists =
-                meta.GetProperty(gDepthURI, "Software", &softwareValue, NULL);
-            if (exists) {
-                HAL_LOGI("Software = %s", softwareValue.c_str());
-            } else {
-                meta.SetProperty(gDepthURI, "Software", "ALgo", 0);
-            }
-            HAL_LOGI("Software");
-
-            XMP_Int32 imageWidthValue = 0;
-            exists = meta.GetProperty_Int(gDepthURI, "ImageWidth",
-                                          &imageWidthValue, NULL);
-            if (exists) {
-                HAL_LOGI("ImageWidth = %d", imageWidthValue);
-            } else {
-                meta.SetProperty_Int(gDepthURI, "ImageWidth",
-                                     mBokehSize.callback_w, 0);
-            }
-            HAL_LOGI("ImageWidth %d ", mBokehSize.callback_w);
-
-            XMP_Int32 imageHeightValue = 0;
-            exists = meta.GetProperty_Int(gDepthURI, "ImageHeight",
-                                          &imageHeightValue, NULL);
-            if (exists) {
-                HAL_LOGI("ImageHeight = %d", imageHeightValue);
-            } else {
-                meta.SetProperty_Int(gDepthURI, "ImageHeight",
-                                     mBokehSize.callback_h, 0);
-            }
-            HAL_LOGI("ImageHeight %d ", mBokehSize.callback_h);
-            // Set gDepth property ------
-
-            // Set gImage property ++++++
-            string imageMimeValue;
-            exists = meta.GetProperty(gImageURI, "Mime", &imageMimeValue, NULL);
-            if (exists) {
-                HAL_LOGI("image:Mime = %s", imageMimeValue.c_str());
-            } else {
-                meta.SetProperty(gImageURI, "Mime", "image/jpeg", 0);
-            }
-            HAL_LOGI("image:Mime");
-
-            string imageDataValue;
-            exists = meta.GetProperty(gImageURI, "Data", &imageDataValue, NULL);
-            if (exists) {
-                HAL_LOGI("image:Data = %s", imageDataValue.c_str());
-            } else {
-                meta.SetProperty(gImageURI, "Data",
-                                 encodeToBase64StringOrigJpeg.c_str(), 0);
-            }
-            HAL_LOGI("image:Data %s", encodeToBase64StringOrigJpeg.c_str());
-
+            ProcessXmlData();
             // Set gImage property ------
 
             string standardXMP;

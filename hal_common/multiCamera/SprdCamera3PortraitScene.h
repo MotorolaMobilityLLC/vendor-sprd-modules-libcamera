@@ -226,8 +226,7 @@ class SprdCamera3PortraitScene : SprdCamera3MultiBase,
     List<portrait_time_t> mUseTime;
     bool isWechatClient;
     int mCircleSizeScale;
-    uint8_t mLastFaceNum;
-    uint8_t mSkipFaceNum;
+    uint8_t mFaceNum;
     int32_t mLastTouchX;
     int32_t mLastTouchY;
     bool mBlurBody;
