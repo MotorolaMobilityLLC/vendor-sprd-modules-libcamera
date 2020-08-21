@@ -168,7 +168,7 @@ static uint32_t s5k4h7_qtech_test_awb(void *param_ptr) {
         otp_info->bg_ratio_typical = BG_RATIO_TYPICAL_s5k4h7_qtech * 3/2;
         otp_info->gbgr_ratio_typical = GBGR_RATIO_TYPICAL_s5k4h7_qtech * 3/2;
         otp_info->r_typical = otp_info->g_typical;
-        otp_info->g_typical = otp_info->g_typical;
+        //otp_info->g_typical = otp_info->g_typical;
         otp_info->b_typical = otp_info->g_typical;
 
     } else {
