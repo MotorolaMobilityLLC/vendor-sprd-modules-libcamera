@@ -390,7 +390,7 @@ void SimpleMultiCamera::destructConflictDevices() {
     for (size_t i = 0; i < mConflictingDevicesLength; i++) {
         /* to avoid null pointer in case constructing failed */
         if (mConflictingDevices[i])
-            delete[] mConflictingDevices;
+            delete[] mConflictingDevices[i];
     }
 
     delete[] mConflictingDevices;
