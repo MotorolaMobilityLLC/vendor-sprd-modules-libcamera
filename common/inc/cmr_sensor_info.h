@@ -475,6 +475,38 @@ enum sensor_pdaf_mode {
     SENSOR_PDAF_MODE_ENABLE
 };
 
+enum pdaf_block_structure {
+    LINED_UP = 0,
+    CROSS_PATTERN
+};
+
+enum pdaf_data_format {
+    NORMAL_CONVERTOR = 0,
+    CONVERTOR_FOR_IMX258,
+};
+struct pdaf_coordinate_tab {
+    cmr_int number;
+    cmr_int pos_info[32];
+};
+
+struct pdaf_block_descriptor {
+    cmr_int block_width;
+    cmr_int block_height;
+    cmr_int *coordinate_tab;
+    cmr_int line_width;
+    enum pdaf_block_structure block_pattern;
+    struct pdaf_coordinate_tab *pd_line_coordinate;
+    enum pdaf_data_format is_special_format;
+};
+
+struct pdaf_buffer_handle {
+    void *left_buffer;
+    void *right_buffer;
+    void *left_output;
+    void *right_output;
+    cmr_int roi_pixel_numb;
+};
+
 struct sensor_pdaf_info {
     cmr_u16 pd_offset_x;
     cmr_u16 pd_offset_y;
@@ -501,6 +533,8 @@ struct sensor_pdaf_info {
     cmr_u32 sns_orientation; // 0: Normal, 1:Mirror+Flip
     cmr_u32 *sns_mode;       // sensor mode for pd
     struct pd_vch2_info vch2_info;
+    struct pdaf_block_descriptor *descriptor;
+    cmr_int (*pdaf_format_converter)(void *buffer_handle);
 };
 
 struct sensor_ebd_data_info {

@@ -922,6 +922,20 @@ static const cmr_u32 pd_sns_mode[] = {
     SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_DISABLE,
     SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_ENABLE
 };
+static const cmr_int imx258_pd_coordinate_tab[] = {0, 1, 1, 0};
+
+struct pdaf_block_descriptor imx258_pd_seprator_helper = {
+    .block_width = 2,
+    .block_height = 4,
+    .coordinate_tab = imx258_pd_coordinate_tab,
+    .line_width = 2,
+    .block_pattern = LINED_UP,
+    .pd_line_coordinate = NULL,
+    .is_special_format = CONVERTOR_FOR_IMX258,
+};
+
+cmr_int imx258_drv_pdaf_data_process(void *buffer_handle);
+
 static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
@@ -1000,7 +1014,20 @@ static cmr_int imx258_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->vch2_info.vch2_data_type = 0x2f;
     pdaf_info->vch2_info.vch2_mode = 0x01;
     pdaf_info->sns_mode = pd_sns_mode;
+    pdaf_info->descriptor = &imx258_pd_seprator_helper;
+    pdaf_info->pdaf_format_converter = imx258_drv_pdaf_data_process;
     return rtn;
+}
+
+cmr_int imx258_drv_pdaf_data_process(void *buffer_handle) {
+    if(!buffer_handle)
+        return SENSOR_FAIL;
+    struct sensor_pdaf_info pdaf_info;
+    imx258_drv_get_pdaf_info(NULL, (cmr_u32 *)(&pdaf_info));
+    sensor_pdaf_format_convertor(buffer_handle,
+                                 s_imx258_static_info[0].static_info.pdaf_supported,
+                                 (cmr_u32 *)(&pdaf_info));
+    return SENSOR_SUCCESS;
 }
 
 static cmr_int imx258_drv_access_val(cmr_handle handle, cmr_uint param) {
