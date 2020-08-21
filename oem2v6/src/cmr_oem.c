@@ -31,6 +31,7 @@
 #include <time.h>
 #include <dlfcn.h>
 #include <libloader.h>
+
 #ifdef CONFIG_CAMERA_FDR
 #include "fdr_interface.h"
 #endif
@@ -1847,17 +1848,11 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
     cmr_uint oem_func;
     cmr_uint oem_cb_type;
     struct setting_cmd_parameter setting_param;
-
-    if (!oem_handle) {
-        CMR_LOGE("error handle");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
+    CHECK_HANDLE_VALID(oem_handle);
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     cmr_handle send_thr_handle = cxt->prev_cb_thr_handle;
     CMR_MSG_INIT(message);
-
     if (PREVIEW_FUNC_START_PREVIEW == func) {
         oem_func = CAMERA_FUNC_START_PREVIEW;
     } else if (PREVIEW_FUNC_STOP_PREVIEW == func) {
@@ -1998,8 +1993,6 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                 SETTING_SET_SPRD_AUTOCHASING_STATUS,
                                 &setting_param);
-        if (ret)
-            CMR_LOGD("SET AUTO TRACKING STATUS ERROR");
         break;
 
     default:
@@ -2007,6 +2000,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
         ret = -CMR_CAMERA_NO_SUPPORT;
     }
     if (ret) {
+        CMR_LOGE("CAMERA_EVT_CB_AUTO_TRACKING ERROR");
         goto exit;
     }
 
@@ -13949,9 +13943,6 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         }
         ret = camera_set_setting(oem_handle, CAMERA_PARAM_REPROCESS_ZOOM_RATIO,
                                  (cmr_uint)zoom_reprocess);
-        if (ret) {
-            CMR_LOGE("failed to set camera setting of reprocess zoom %ld", ret);
-        }
         if (zoom_factor_changed) {
             ret = cmr_set_zoom_factor_to_isp(oem_handle,
                                              &zoom_param->zoom_info.zoom_ratio);

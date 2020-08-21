@@ -497,6 +497,8 @@ static cmr_int prev_alloc_video_buf(struct prev_handle *handle,
 static cmr_int prev_free_video_buf(struct prev_handle *handle,
                                    cmr_u32 camera_id, cmr_u32 is_restart);
 
+static bool isformat420(struct prev_context * prev_cxt);
+
 static cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                                   cmr_u32 is_restart,
                                   struct buffer_cfg *buffer);
@@ -4834,6 +4836,15 @@ cmr_int prev_free_video_buf(struct prev_handle *handle, cmr_u32 camera_id,
     return ret;
 }
 
+bool isformat420(struct prev_context *prev_cxt){
+    if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
+        IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt){
+        return true;
+    } else {
+        return false;
+    }
+}
+
 cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                            cmr_u32 is_restart, struct buffer_cfg *buffer) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -4946,13 +4957,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->cap_phys_addr_array, prev_cxt->cap_virt_addr_array,
                 prev_cxt->cap_fd_array);
         }
-#if 0 // for coverity 181595
-        for (i = 1; i < CMR_CAPTURE_MEM_SUM; i++) {
-            prev_cxt->cap_phys_addr_array[i] = prev_cxt->cap_phys_addr_array[0];
-            prev_cxt->cap_virt_addr_array[i] = prev_cxt->cap_virt_addr_array[0];
-            prev_cxt->cap_fd_array[i] = prev_cxt->cap_fd_array[0];
-        }
-#endif
         CMR_LOGD("virt_addr 0x%lx, fd 0x%x", prev_cxt->cap_virt_addr_array[0],
                  prev_cxt->cap_fd_array[0]);
 
@@ -4968,9 +4972,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         if ((FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl) &&
-            (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-             IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-            is_normal_cap) {
+            isformat420(prev_cxt) && is_normal_cap) {
             if (ZOOM_POST_PROCESS == zoom_post_proc ||
                 ZOOM_POST_PROCESS_WITH_TRIM == zoom_post_proc) {
                 cmr_u32 buf_size = prev_cxt->cap_org_size.width *
@@ -5001,9 +5003,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 }
             }
         } else if ((FRAME_3DNR_PROC == prev_cxt->prev_param.frame_ctrl) &&
-                   (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-                    IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-                   is_normal_cap) {
+            isformat420(prev_cxt) && is_normal_cap) {
             // alloc buffer for 3dnr YUV
             if (((real_width * 10) / real_height) <= 13) {
                 prev_cxt->threednr_cap_smallwidth = CMR_3DNR_4_3_SMALL_WIDTH;
@@ -5061,9 +5061,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
 #ifdef CONFIG_MULTI_CAP_MEM
-        if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-             IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-            is_normal_cap) {
+        if (isformat420(prev_cxt) && is_normal_cap) {
             mem_ops->alloc_mem(CAMERA_SNAPSHOT_PATH, handle->oem_handle,
                                &channel_buffer_size, &cap_sum,
                                prev_cxt->cap_phys_addr_path_array,
@@ -5193,8 +5191,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
             u_addr_vir = y_addr_vir;
             frame_size = CMR_JPEG_SZIE(prev_cxt->actual_pic_size.width,
                                        prev_cxt->actual_pic_size.height);
-        } else if (IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-                   IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) {
+        } else if (isformat420(prev_cxt)) {
             if (is_normal_cap) {
                 if ((IMG_ANGLE_0 != prev_cxt->prev_param.cap_rot) ||
                     (prev_cxt->prev_param.is_cfg_rot_cap &&
@@ -5307,9 +5304,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         buffer->fd[i] = prev_cxt->cap_frm[i].fd;
 
 #ifdef CONFIG_MULTI_CAP_MEM
-        if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-             IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-            is_normal_cap /* && i > 0*/) {
+        if (isformat420(prev_cxt) && is_normal_cap /* && i > 0*/) {
             /*prev_cxt->cap_frm[i].addr_phy.addr_y =
             prev_cxt->cap_phys_addr_path_array[i];
             prev_cxt->cap_frm[i].addr_phy.addr_u =
@@ -5339,10 +5334,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     buffer->length = frame_size;
     if (FRAME_HDR_PROC == prev_cxt->prev_param.frame_ctrl) {
         for (i = 1; i < HDR_CAP_NUM; i++) {
-            if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-                 IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-                is_normal_cap) {
-
+            if (isformat420(prev_cxt) && is_normal_cap) {
                 if (ZOOM_POST_PROCESS == zoom_post_proc ||
                     ZOOM_POST_PROCESS_WITH_TRIM == zoom_post_proc) {
                     cmr_u32 buf_size = prev_cxt->cap_org_size.width *
@@ -5371,9 +5363,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         buffer->count = HDR_CAP_NUM;
     } else if (FRAME_3DNR_PROC == prev_cxt->prev_param.frame_ctrl) {
         for (i = 1; i < CAP_3DNR_NUM; i++) {
-            if ((IMG_DATA_TYPE_YUV420 == prev_cxt->cap_org_fmt ||
-                 IMG_DATA_TYPE_YVU420 == prev_cxt->cap_org_fmt) &&
-                is_normal_cap) {
+            if (isformat420(prev_cxt) && is_normal_cap) {
                 buffer->addr[i].addr_y =
                     prev_cxt->cap_3dnr_phys_addr_path_array[i - 1];
                 buffer->addr[i].addr_u = buffer->addr[i].addr_y + channel_size;
