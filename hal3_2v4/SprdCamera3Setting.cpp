@@ -37,6 +37,7 @@
 //#include "SprdCameraHardwareConfig2.h"
 #include "inc/SprdCamera3Config.h"
 #include <dlfcn.h>
+#include <map>
 using namespace android;
 
 namespace sprdcamera {
@@ -140,6 +141,9 @@ static drv_fov_info sensor_fov[CAMERA_ID_COUNT] = {
 static front_flash_type front_flash[] = {
     {"2", "lcd"}, {"1", "led"}, {"2", "flash"}, {"1", "none"},
 };
+
+static bool isBlobOrRaw16(int j, int32_t *scaler_formats);
+
 
 #if 0
 const sensor_fov_tab_t back_sensor_fov_tab[] = {
@@ -1232,6 +1236,12 @@ int SprdCamera3Setting::initDefaultParameters(int32_t cameraId) {
     return ret;
 }
 
+static bool isBlobOrRaw16(int j , int32_t *scaler_formats){
+    bool ispixel = ((scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB) ||
+                    (scaler_formats[j] == HAL_PIXEL_FORMAT_RAW16));
+    return ispixel;
+}
+
 int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     int ret = NO_ERROR;
     SprdCamera3DefaultInfo *default_info = &camera3_default_info;
@@ -1391,33 +1401,33 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
                 if (scaler_formats[j] == HAL_PIXEL_FORMAT_YCbCr_420_888) {
                     if (stream_info[i].stream_sizes_tbl.width ==
-                            largest_picture_size[cameraId].width &&
-                        ((stream_info[i].stream_sizes_tbl.width == 4160) ||
-                         (stream_info[i].stream_sizes_tbl.width == 4608))) {
-                        HAL_LOGD("YUV %d*%d output in ~100ms"
-                                 "offline so change min frame duration",
-                                 stream_info[i].stream_sizes_tbl.width,
-                                 stream_info[i].stream_sizes_tbl.height);
-                        available_min_durations.add(100000000L);
-                    } else if (stream_info[i].stream_sizes_tbl.width ==
-                                   largest_picture_size[cameraId].width &&
-                               stream_info[i].stream_sizes_tbl.width == 3264) {
-                        HAL_LOGD("YUV 3264*2448 output in ~66ms"
-                                 "offline so change min frame duration");
-                        available_min_durations.add(66666670L);
-                    } else if (stream_info[i].stream_sizes_tbl.width ==
-                                   largest_picture_size[cameraId].width &&
-                               stream_info[i].stream_sizes_tbl.width == 2592) {
-                        HAL_LOGD("YUV 2592*1944 output in ~66ms"
-                                 "offline so change min frame duration");
-                        available_min_durations.add(66666670L);
-                    } else {
-                        available_min_durations.add(
+                            largest_picture_size[cameraId].width){
+                        if ((stream_info[i].stream_sizes_tbl.width == 4160) ||
+                             (stream_info[i].stream_sizes_tbl.width == 4608)) {
+                            HAL_LOGD("YUV %d*%d output in ~100ms"
+                                     "offline so change min frame duration",
+                                     stream_info[i].stream_sizes_tbl.width,
+                                     stream_info[i].stream_sizes_tbl.height);
+                            available_min_durations.add(100000000L);
+                        } else if (stream_info[i].stream_sizes_tbl.width == 3264) {
+                            HAL_LOGD("YUV 3264*2448 output in ~66ms"
+                                     "offline so change min frame duration");
+                            available_min_durations.add(66666670L);
+                        } else if (stream_info[i].stream_sizes_tbl.width == 2592) {
+                            HAL_LOGD("YUV 2592*1944 output in ~66ms"
+                                     "offline so change min frame duration");
+                            available_min_durations.add(66666670L);
+                        } else {
+                            available_min_durations.add(
                             stream_info[i].stream_min_duration);
-                    }
-                } else
-                    available_min_durations.add(
+                        }
+                    }else{
+                        available_min_durations.add(
                         stream_info[i].stream_min_duration);
+                    }
+                } else{
+                    available_min_durations.add(stream_info[i].stream_min_duration);
+                }
 
                 if ((scaler_formats[j] ==
                          HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED ||
@@ -1445,8 +1455,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                  stream_info[i].stream_sizes_tbl.height <= largest_sensor_h) ||
                 (stream_info[i].stream_sizes_tbl.width == 480 &&
                  stream_info[i].stream_sizes_tbl.height == 640)) {
-                if (scaler_formats[j] == HAL_PIXEL_FORMAT_BLOB ||
-                    scaler_formats[j] == HAL_PIXEL_FORMAT_RAW16) {
+                if (isBlobOrRaw16(j,scaler_formats)) {
                     available_stall_durations.add(scaler_formats[j]);
                     available_stall_durations.add(
                         stream_info[i].stream_sizes_tbl.width);
@@ -1569,7 +1578,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].controlInfo.am_available_modes,
            camera3_default_info.common.availableAmModes,
            sizeof(camera3_default_info.common.availableAmModes));
-    if (cameraId == 0 || cameraId == 1)
+    if (cameraId <= 1)
         memcpy(s_setting[cameraId].sprddefInfo.availabe_slow_motion,
                camera3_default_info.common.availableSlowMotion,
                sizeof(camera3_default_info.common.availableSlowMotion));
@@ -1577,14 +1586,13 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     s_setting[cameraId].quirksInfo.use_parital_result = 1;
 
     // lens
-    if (cameraInfo.facing == CAMERA_FACING_BACK) {
-        s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_BACK;
-    } else if (cameraInfo.facing == CAMERA_FACING_FRONT) {
-        s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_FRONT;
-    } else if (cameraInfo.facing == CAMERA_FACING_EXTERNAL) {
-        s_setting[cameraId].lensInfo.facing = ANDROID_LENS_FACING_EXTERNAL;
-    } else {
+    if (cameraInfo.facing == -1) {
         s_setting[cameraId].lensInfo.facing = 0xff;
+    } else {
+        std::map<int,int> map_tag = {{CAMERA_FACING_BACK,ANDROID_LENS_FACING_BACK},
+                                      {CAMERA_FACING_FRONT,ANDROID_LENS_FACING_FRONT},
+                                       {CAMERA_FACING_EXTERNAL,ANDROID_LENS_FACING_EXTERNAL}};
+        s_setting[cameraId].lensInfo.facing = map_tag[cameraInfo.facing];
     }
 
     // lens shading
@@ -1774,9 +1782,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     // 1 back blur or bokeh version
     available_cam_features.add(atoi(prop));
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
-    if (atoi(prop) == 1 || hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else if (atoi(prop) == 6) {
+    if (hasRealCameraUnuseful == false && atoi(prop) == 6){
 #ifdef CONFIG_BOKEH_HDR_SUPPORT
         available_cam_features.add(9);
 #else
