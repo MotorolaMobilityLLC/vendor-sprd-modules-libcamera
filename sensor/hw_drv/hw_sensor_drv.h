@@ -35,6 +35,12 @@ typedef struct sensor_version_info VERSION_INFO_T;
 #define SENSOR_I2C_REG_16BIT (0x01 << 1)
 #define SENSOR_I2C_CUSTOM (0x01 << 2)
 
+/*I2C BURST MODE*/
+#define SENSOR_I2C_SINGLE 0
+#define SENSOR_I2C_BURST_SAMSUNG 1
+#define SENSOR_I2C_BURST_REG16_VAL8 2
+#define SENSOR_I2C_BURST_REG16_VAL16 3
+
 /*I2C ACK/STOP BIT count*/
 #define SNESOR_I2C_ACK_BIT (0x00 << 3)
 #define SNESOR_I2C_NOACK_BIT (0x00 << 3)
@@ -162,6 +168,7 @@ struct hw_drv_init_para {
 
 struct hw_drv_cfg_param {
     cmr_u8 i2c_bus_config;
+    cmr_u8 i2c_burst_mode;
     /*add some items*/
 };
 

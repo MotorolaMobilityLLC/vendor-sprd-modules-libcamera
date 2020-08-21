@@ -457,6 +457,8 @@ struct module_cfg_info {
     cmr_u8 major_i2c_addr;
     cmr_u8 minor_i2c_addr;
 
+    cmr_u8 i2c_burst_mode;
+
     cmr_u8 reg_addr_value_bits;
 
     /* voltage of avdd */

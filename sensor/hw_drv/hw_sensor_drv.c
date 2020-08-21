@@ -25,6 +25,7 @@ struct hw_drv_cxt {
     /*sensor module handle,will be deleted later*/
     cmr_handle caller_handle; /**/
     /**/
+    cmr_u8 i2c_burst_mode;
 };
 
 static cmr_int _hw_sensor_dev_init(cmr_handle hw_handle, cmr_u32 sensor_id) {
@@ -102,6 +103,7 @@ cmr_int hw_sensor_drv_cfg(cmr_handle hw_handle,
     CHECK_HANDLE(hw_handle);
     struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt *)hw_handle;
     hw_drv_cxt->i2c_bus_config = input_ptr->i2c_bus_config;
+    hw_drv_cxt->i2c_burst_mode = input_ptr->i2c_burst_mode;
     /*add other info if you need*/
     return ret;
 }
@@ -1000,12 +1002,13 @@ hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
     CHECK_HANDLE(hw_handle);
     CHECK_PTR(sensor_reg_tab_info_ptr);
     struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt *)hw_handle;
-    HW_LOGV("E");
+    HW_LOGI("E:burst_mode %d, sensor_id %d", hw_drv_cxt->i2c_burst_mode,
+        hw_drv_cxt->sensor_id);
 
     SENSOR_REG_TAB_T regTab;
     regTab.reg_count = sensor_reg_tab_info_ptr->reg_count;
     regTab.reg_bits = hw_drv_cxt->i2c_bus_config;
-    regTab.burst_mode = 0;
+    regTab.burst_mode = hw_drv_cxt->i2c_burst_mode;
     regTab.sensor_reg_tab_ptr = sensor_reg_tab_info_ptr->sensor_reg_tab_ptr;
 
     ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
@@ -1018,10 +1021,8 @@ hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
             sensor_reg_tab_info_ptr->sensor_ext_reg_tab_ptr;
         ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
     }
-    HW_LOGI("reg_count %d, senosr_id: %d", sensor_reg_tab_info_ptr->reg_count,
+    HW_LOGI("X:reg_count %d, sensor_id %d", sensor_reg_tab_info_ptr->reg_count,
             hw_drv_cxt->sensor_id);
-
-    HW_LOGV("X");
 
     ATRACE_END();
     return ret;

@@ -214,7 +214,7 @@ static void gc02m1b_drv_calc_gain(cmr_handle handle,cmr_uint isp_gain, struct se
  * sensor power on
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int gc02m1b_drv_power_on(cmr_handle handle, cmr_uint power_on) 
+static cmr_int gc02m1b_drv_power_on(cmr_handle handle, cmr_uint power_on)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -224,37 +224,32 @@ static cmr_int gc02m1b_drv_power_on(cmr_handle handle, cmr_uint power_on)
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
     BOOLEAN power_down = g_gc02m1b_mipi_raw_info.power_down_level;
-    BOOLEAN reset_level = g_gc02m1b_mipi_raw_info.reset_pulse_level;	
-	
-    if (SENSOR_TRUE == power_on) 
-	{
+    BOOLEAN reset_level = g_gc02m1b_mipi_raw_info.reset_pulse_level;
+
+    if (SENSOR_TRUE == power_on) {
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
-        usleep(12 * 1000);		
-		hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
-		usleep(1 * 1000);		
+        usleep(1 * 1000);
+
+        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);	
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
-        usleep(1 * 1000);		
+        usleep(1 * 1000);	
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
-        usleep(1 * 1000);		
-        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-        usleep(10 * 1000);		
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
-        usleep(1 * 1000);		
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(6 * 1000);
-    }
-	else 
-	{
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        usleep(200);		
-        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
-		hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
+        usleep(1 * 1000);	
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
+        usleep(2 * 1000);
+    } else {
         usleep(500);
+        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
+        hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
+        hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
+        usleep(200);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -670,14 +665,10 @@ static cmr_int gc02m1b_drv_stream_on(cmr_handle handle, cmr_uint param)
     }
 #endif
 
-	usleep(100 * 1000);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3e, 0x90);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3e, 0x90);
 
-	/*delay*/
-	usleep(20 * 1000);
-
-	return SENSOR_SUCCESS;
+    return SENSOR_SUCCESS;
 }
 
 /*==============================================================================
@@ -687,25 +678,24 @@ static cmr_int gc02m1b_drv_stream_on(cmr_handle handle, cmr_uint param)
  *============================================================================*/
 static cmr_int gc02m1b_drv_stream_off(cmr_handle handle, cmr_uint param)
 {
-	SENSOR_LOGI("E");
-	
+    SENSOR_LOGI("E");
+
     SENSOR_IC_CHECK_HANDLE(handle);
+    cmr_u16 sleep_time = 0;
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3e, 0x00);
+
     if (!sns_drv_cxt->is_sensor_close) {
-        usleep(5 * 1000);
+        sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                    sns_drv_cxt->line_time_def / 1000000) + 10;
+        usleep(sleep_time * 1000);
+        SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
     }
-
-  	usleep(20 * 1000);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3e, 0x00);
-
- 	/*delay*/
-	usleep(100*1000);
-	
     sns_drv_cxt->is_sensor_close = 0;
+
     SENSOR_LOGI("X");
-	
     return SENSOR_SUCCESS;
 }
 
@@ -723,7 +713,8 @@ static cmr_int gc02m1b_drv_handle_create(struct sensor_ic_drv_init_para *init_pa
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
-	
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
+
 	//gc02m1b_drv_write_frame_length(sns_drv_cxt, &gc02m1b_aec_info, sns_drv_cxt->sensor_ev_info.preview_framelength);
 	gc02m1b_drv_write_gain(sns_drv_cxt, &gc02m1b_aec_info, sns_drv_cxt->sensor_ev_info.preview_gain);
 	gc02m1b_drv_write_shutter(sns_drv_cxt, &gc02m1b_aec_info, sns_drv_cxt->sensor_ev_info.preview_shutter);

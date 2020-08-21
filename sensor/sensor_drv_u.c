@@ -3319,6 +3319,7 @@ static cmr_int sensor_drv_ic_identify(struct sensor_drv_context *sensor_cxt,
     do {
         if (sns_ops && sns_ops->identify) {
             hw_drv_cfg.i2c_bus_config = mod_cfg_info->reg_addr_value_bits;
+            hw_drv_cfg.i2c_burst_mode = mod_cfg_info->i2c_burst_mode;
             hw_sensor_drv_cfg(sensor_cxt->hw_drv_handle, &hw_drv_cfg);
             sensor_set_id(sensor_cxt, sensor_id);
             sensor_i2c_init(sensor_cxt, sensor_id);

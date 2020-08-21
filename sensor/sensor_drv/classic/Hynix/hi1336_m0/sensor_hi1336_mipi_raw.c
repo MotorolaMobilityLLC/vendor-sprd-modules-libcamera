@@ -216,19 +216,17 @@ static cmr_int hi1336_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
+        usleep(1 * 1000);
 
-        usleep(10 * 1000);
         hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
-
-        usleep(10 * 1000);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
-		hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
+        hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
+        usleep(1 * 1000);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
-        usleep(5 * 1000);
-
+        usleep(2 * 1000);
     } else {
         usleep(500);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
@@ -637,14 +635,8 @@ static cmr_int hi1336_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 #endif
 
-    /*TODO*/
-	usleep(100 * 1000);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b00, 0x0100);
 
-    /*END*/
-
-    /*delay*/
-    usleep(50 * 1000);
     return SENSOR_SUCCESS;
 }
 
@@ -657,25 +649,19 @@ static cmr_int hi1336_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
 
     SENSOR_IC_CHECK_HANDLE(handle);
+    cmr_u16 sleep_time = 0;
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    cmr_u16 delay_ms = (sns_drv_cxt->sensor_ev_info.preview_shutter *
-                        sns_drv_cxt->line_time_def / 1000000);
-
-    if (!sns_drv_cxt->is_sensor_close) {
-        usleep(50 * 1000);
-    }
-    /*TODO*/
-    usleep(50 * 1000);
-	
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b00, 0x0000);
 
-    /*END*/
-	
-    /*delay*/
-	usleep((delay_ms + 100) * 1000);
-	
+    if (!sns_drv_cxt->is_sensor_close) {
+        sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                    sns_drv_cxt->line_time_def / 1000000) + 10;
+        usleep(sleep_time * 1000);
+        SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+    }
     sns_drv_cxt->is_sensor_close = 0;
+
     SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
 }
@@ -696,6 +682,7 @@ hi1336_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+    sns_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
 
     sensor_ic_set_match_module_info(sns_drv_cxt,
                                     ARRAY_SIZE(s_hi1336_module_info_tab),
