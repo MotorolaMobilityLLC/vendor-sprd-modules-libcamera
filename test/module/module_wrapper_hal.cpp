@@ -2556,9 +2556,6 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
     int g_camera_id = _json2->m_cameraID;
     status = native_camera.transferMetaData(_json2);
 
-    if (status != 0) {
-        return -1;
-    }
     ALOGI("metacount =%d", metacount);
 
     //if (_json2->getID() == 0 && !g_first_open) {
