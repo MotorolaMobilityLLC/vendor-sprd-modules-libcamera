@@ -1495,6 +1495,24 @@ static cmr_int setting_update_gps_info(struct setting_component *cpt,
     return ret;
 }
 
+
+static cmr_int setting_picture_size_algin(cmr_u32 is_raw_capture,
+                                struct img_size *image_size) {
+    cmr_int ret = 0;
+
+    if (is_raw_capture == 0) {
+        if (image_size->height == 1952 && image_size->width == 2592) {
+            image_size->height = 1944;
+        } else if (image_size->height == 1840 && image_size->width == 3264) {
+            image_size->height = 1836;
+        } else if (image_size->height == 368 && image_size->width == 640) {
+            image_size->height = 360;
+        }
+    }
+
+    return ret;
+}
+
 static cmr_int setting_get_exif_info(struct setting_component *cpt,
                                      struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -1559,29 +1577,8 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
 
         // workaround jpeg cant handle 16-noalign issue, when jpeg fix this
         // issue, we will remove these code
-        if (is_raw_capture == 0) {
-            if (exif_unit->picture_size.height == 1952 &&
-                exif_unit->picture_size.width == 2592) {
-                exif_unit->picture_size.height = 1944;
-            } else if (exif_unit->picture_size.height == 1840 &&
-                       exif_unit->picture_size.width == 3264) {
-                exif_unit->picture_size.height = 1836;
-            } else if (exif_unit->picture_size.height == 368 &&
-                       exif_unit->picture_size.width == 640) {
-                exif_unit->picture_size.height = 360;
-            }
-
-            if (exif_unit->actual_picture_size.height == 1952 &&
-                exif_unit->actual_picture_size.width == 2592) {
-                exif_unit->actual_picture_size.height = 1944;
-            } else if (exif_unit->actual_picture_size.height == 1840 &&
-                       exif_unit->actual_picture_size.width == 3264) {
-                exif_unit->actual_picture_size.height = 1836;
-            } else if (exif_unit->actual_picture_size.height == 368 &&
-                       exif_unit->actual_picture_size.width == 640) {
-                exif_unit->actual_picture_size.height = 360;
-            }
-        }
+        setting_picture_size_algin(is_raw_capture, &exif_unit->actual_picture_size);
+        setting_picture_size_algin(is_raw_capture, &exif_unit->picture_size);
     }
 
     time(&timep);
@@ -3033,8 +3030,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 hal_param->flash_param.has_preflashed = 0;
                 setting_isp_flash_notify(cpt, parm, ISP_FLASH_MAIN_AFTER);
             }
-            if (hal_param->flash_param.set_flash_mode_off_after_close_flash ==
-                1) {
+            if (hal_param->flash_param.set_flash_mode_off_after_close_flash == 1) {
                 CMR_LOGD("set flash mode off after close flash");
                 hal_param->flash_param.set_flash_mode_off_after_close_flash = 0;
                 hal_param->flash_param.has_preflashed = 0;

@@ -814,62 +814,6 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
         CMR_LOGD("don't support");
         goto exit;
     }
-#if 0
-	if (!cxt->err_code) {
-		if (cxt->ops.start_exif_encode) {
-			cmr_u32 index = cxt->index;
-			struct camera_jpeg_param   enc_param;
-			struct snp_exif_param *exif_in_ptr = &cxt->chn_param.exif_in[index];
-			struct jpeg_wexif_cb_param  enc_out_param;
-			exif_in_ptr->big_pic_stream_src.buf_size = cxt->jpeg_stream_size;
-			exif_in_ptr->thumb_stream_src.buf_size = cxt->thumb_stream_size;
-			camera_take_snapshot_step(CMR_STEP_WR_EXIF_S);
-			ret = cxt->ops.start_exif_encode(cxt->oem_handle, snp_handle, &exif_in_ptr->big_pic_stream_src,
-											&exif_in_ptr->thumb_stream_src, NULL, &exif_in_ptr->dst, &enc_out_param);
-			camera_take_snapshot_step(CMR_STEP_WR_EXIF_E);
-			if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
-				CMR_LOGD("snp has been cancel");
-				ret = CMR_CAMERA_NORNAL_EXIT;
-				goto exit;
-			}
-			enc_param.need_free = 0;
-			enc_param.index = index;
-			enc_param.outPtr = (void*)enc_out_param.output_buf_virt_addr;
-			enc_param.size = enc_out_param.output_buf_size;
-			CMR_LOGD("need free %d stream %d cap cnt %d total num %d", enc_param.need_free, enc_param.size,
-					cxt->cap_cnt, cxt->req_param.total_num);
-			if (cxt->cap_cnt == cxt->req_param.total_num) {
-				enc_param.need_free = 1;
-			}
-			camera_take_snapshot_step(CMR_STEP_CALL_BACK);
-			camera_snapshot_step_statisic();
-			snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_ENCODE_PICTURE, SNAPSHOT_EXIT_CB_DONE, (void*)&enc_param, sizeof(struct camera_jpeg_param));
-			if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
-				CMR_LOGD("snp has been cancel");
-				ret = CMR_CAMERA_NORNAL_EXIT;
-				goto exit;
-			}
-#ifdef TEST_MEM_DATA
-{
-		struct img_addr jpeg_addr;
-		jpeg_addr.addr_y = enc_out_param.output_buf_virt_addr;
-		camera_save_to_file(SNP_JPEG_STREAM+cxt->cap_cnt, IMG_DATA_TYPE_JPEG,
-							cxt->req_param.post_proc_setting.actual_snp_size.width,
-							cxt->req_param.post_proc_setting.actual_snp_size.height,
-							&jpeg_addr);
-}
-#endif
-		} else {
-			CMR_LOGE("err, start enc func is null");
-			ret = CMR_CAMERA_FAIL;
-		}
-		if (!ret) {
-			snp_post_proc_done(snp_handle);
-		}
-	} else {
-		ret = cxt->err_code;
-	}
-#endif
 exit:
     CMR_LOGD("done %ld", ret);
     if (ret) {
