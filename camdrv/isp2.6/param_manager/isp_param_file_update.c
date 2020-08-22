@@ -632,8 +632,6 @@ cmr_s32 read_fix_ae_info(FILE * fp, struct sensor_ae_tab * ae_ptr)
 						flag_end = 1;
 					break;
 		}
-		if (0 != flag_end)
-			break;
 	}
 
 exit:
