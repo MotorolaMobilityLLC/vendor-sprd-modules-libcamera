@@ -2753,11 +2753,11 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 			rtn = ae_stats_data_preprocess((cmr_u32 *) & cxt->sync_aem[0], (cmr_u16 *) & cxt->aem_stat_rgb[0], cxt->monitor_cfg.blk_size, cxt->cur_status.stats_data_basic.size, current_status->stats_data_basic.shift);
 		}
 
-		if ((FLASH_PRE_BEFORE == current_status->adv_param.flash) && !cxt->send_once[0]) {
+		else if ((FLASH_PRE_BEFORE == current_status->adv_param.flash) && !cxt->send_once[0]) {
 			rtn = flash_pre_start(cxt);
 		}
 
-		if (FLASH_PRE == current_status->adv_param.flash) {
+		else if (FLASH_PRE == current_status->adv_param.flash) {
 			rtn = flash_estimation(cxt);
 		}
 	}
