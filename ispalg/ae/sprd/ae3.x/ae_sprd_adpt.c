@@ -2999,9 +2999,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGD("ae_flash1_status shake_6");
 			cxt->cur_status.adv_param.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
-			if (0 != cxt->flash_ver) {
-				flash_finish(cxt);
-			}
+			flash_finish(cxt);
 		}
 	}
 
