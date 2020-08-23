@@ -1416,6 +1416,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     struct img_addr isp_raw_buff;
     cmr_u32 small_w, small_h;
     cmr_u32 index = frm_ptr->frame_id - frm_ptr->base;
+    bool flag_loose = false;
     char value[PROPERTY_VALUE_MAX];
     cmr_u32 loose_flag = snp_cxt->sensor_info.sn_interface.is_loose;
     void *buff_for14bit = NULL;
@@ -1435,8 +1436,9 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     isp_in_param = chn_param_ptr->isp_proc_in[index];
     chn_param_ptr->isp_process[index].slice_num = 1;
 
+    flag_loose = (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10);
     isp_in_param.src_frame = mem_ptr->cap_raw;
-    if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
+    if (flag_loose) {
         isp_in_param.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
     } else {
         isp_in_param.src_frame.fmt = ISP_DATA_CSI2_RAW10;
@@ -1451,7 +1453,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
 
     CMR_LOGI("is_4in1_frame: %d", frm_ptr->is_4in1_frame);
     if (frm_ptr->is_4in1_frame) {
-        if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
+        if (flag_loose) {
             isp_in_param.src_frame.buf_size =
             mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2;
 
@@ -1507,7 +1509,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         raw_pixel_width = snp_cxt->sensor_info.sn_interface.pixel_width;
         if (raw_pixel_width < SENSOR_DEFAULT_PIX_WIDTH)
             raw_pixel_width = SENSOR_DEFAULT_PIX_WIDTH;
-        if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
+        if (flag_loose) {
             isp_in_param.src_frame.fmt = ISP_DATA_NORMAL_RAW10;
             raw_format = 0x04;
         } else {
@@ -1516,7 +1518,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         }
         CMR_LOGI("fetch_pitch raw buf size, %d", mem_ptr->cap_raw.buf_size);
         if (frm_ptr->is_4in1_frame) {
-            if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
+            if (flag_loose) {
                 buff_forisp14bit =
                     malloc(mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 2);
                 isp_raw_buff.addr_y = (cmr_uint)buff_forisp14bit;
@@ -1547,7 +1549,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
     if (isp_video_get_raw_images_info()) {
         if (CAMERA_ISP_TUNING_MODE == snp_cxt->req_param.mode) {
             if (frm_ptr->is_4in1_frame) {
-                if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10) {
+                if (flag_loose) {
                     /*
                     dump mipi raw remosaic before
                     snp_cxt->ops.dump_image_with_3a_info(
@@ -1590,7 +1592,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                 }
 
             } else {
-                if (loose_flag == ISP_RAW_HALF14 || loose_flag == ISP_RAW_HALF10){
+                if (flag_loose){
                     CMR_LOGD("dump raw14bit tuning mode");
                     snp_cxt->ops.dump_image_with_3a_info(
                         snp_cxt->oem_handle, CAM_IMG_FMT_RAW14BIT,
@@ -3967,6 +3969,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct snapshot_param *req_param_ptr;
     struct cmr_cap_mem *mem_ptr;
+    bool select_mode = false;
     cmr_u32 frm_id = info->frame_id - info->base;
     char value[PROPERTY_VALUE_MAX];
 
@@ -3976,8 +3979,9 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
         return CMR_CAMERA_FAIL;
     }
     frame_type->buf_id = info->frame_real_id;
-    if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||
-        cxt->req_param.is_pipviv_mode) {
+    select_mode = (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||
+        cxt->req_param.is_pipviv_mode);
+    if (select_mode) {
         frame_type->width =
             req_param_ptr->post_proc_setting.dealign_actual_snp_size.width;
         frame_type->height =
@@ -4046,8 +4050,7 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
                    frame_type->width * frame_type->height * 3 / 2);
     }
 
-    if (cxt->req_param.lls_shot_mode || cxt->req_param.is_vendor_hdr ||
-        cxt->req_param.is_pipviv_mode) {
+    if (select_mode) {
         CMR_LOGD(
             "vendor capture cap_cnt = %d, total_num = %d, is_pipviv_mode %d",
             cxt->cap_cnt, cxt->req_param.total_num,

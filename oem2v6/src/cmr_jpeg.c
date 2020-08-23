@@ -24,6 +24,7 @@
 cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
                       jpg_evt_cb_ptr adp_event_cb) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    bool jpeg_failed = false;
     struct jpeg_codec_caller_handle *codec_handle = NULL;
     struct jpeg_lib_cxt *jcxt = NULL;
     const char libName[] = "libjpeg_hw_sprd.so";
@@ -64,112 +65,31 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
     CMR_LOGI(" open lib: %s", libName);
 
     jcxt->ops.jpeg_init = dlsym(jcxt->mLibHandle, "sprd_jpeg_init");
-    if (jcxt->ops.jpeg_init == NULL) {
-        CMR_LOGE("Can't find jpeg_init in %s", libName);
-#if USE_LEGACY_DLFCN
-        dlclose(jcxt->mLibHandle);
-#else
-        put_lib_handle(jcxt->mLibHandle);
-#endif
-        jcxt->mLibHandle = NULL;
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit;
-    }
-
     jcxt->ops.jpeg_encode = dlsym(jcxt->mLibHandle, "sprd_jpg_encode");
-    if (jcxt->ops.jpeg_encode == NULL) {
-        CMR_LOGE("Can't find jpeg_enc_start in %s", libName);
-#if USE_LEGACY_DLFCN
-        dlclose(jcxt->mLibHandle);
-#else
-        put_lib_handle(jcxt->mLibHandle);
-#endif
-        jcxt->mLibHandle = NULL;
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit;
-    }
-
     jcxt->ops.jpeg_decode = dlsym(jcxt->mLibHandle, "sprd_jpg_decode");
-    if (jcxt->ops.jpeg_decode == NULL) {
-        CMR_LOGE("Can't find jpeg_dec_start in %s", libName);
-#if USE_LEGACY_DLFCN
-        dlclose(jcxt->mLibHandle);
-#else
-        put_lib_handle(jcxt->mLibHandle);
-#endif
-        jcxt->mLibHandle = NULL;
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit;
-    }
-
     jcxt->ops.jpeg_stop = dlsym(jcxt->mLibHandle, "sprd_stop_codec");
-    if (jcxt->ops.jpeg_stop == NULL) {
-        CMR_LOGE("Can't find jpeg_stop in %s", libName);
-#if USE_LEGACY_DLFCN
-        dlclose(jcxt->mLibHandle);
-#else
-        put_lib_handle(jcxt->mLibHandle);
-#endif
-        jcxt->mLibHandle = NULL;
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit;
-    }
-
     jcxt->ops.jpeg_deinit = dlsym(jcxt->mLibHandle, "sprd_jpeg_deinit");
-    if (jcxt->ops.jpeg_deinit == NULL) {
-        CMR_LOGE("Can't find jpeg_deinit in %s", libName);
-#if USE_LEGACY_DLFCN
-        dlclose(jcxt->mLibHandle);
-#else
-        put_lib_handle(jcxt->mLibHandle);
-#endif
-        jcxt->mLibHandle = NULL;
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit;
-    }
-
     jcxt->ops.jpeg_get_iommu_status =
         dlsym(jcxt->mLibHandle, "sprd_jpg_get_Iommu_status");
-    if (jcxt->ops.jpeg_get_iommu_status == NULL) {
-        CMR_LOGE("Can't find jpeg_get_Iommu_status in %s", libName);
-#if USE_LEGACY_DLFCN
-        dlclose(jcxt->mLibHandle);
-#else
-        put_lib_handle(jcxt->mLibHandle);
-#endif
-        jcxt->mLibHandle = NULL;
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit;
-    }
-
     jcxt->ops.jpeg_dec_get_resolution =
         dlsym(jcxt->mLibHandle, "sprd_jpg_dec_get_resolution");
-    if (jcxt->ops.jpeg_dec_get_resolution == NULL) {
-        CMR_LOGE("Can't find jpeg_dec_get_resolution in %s", libName);
-#if USE_LEGACY_DLFCN
-        dlclose(jcxt->mLibHandle);
-#else
-        put_lib_handle(jcxt->mLibHandle);
-#endif
-        jcxt->mLibHandle = NULL;
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit;
-    }
-
     jcxt->ops.jpeg_set_resolution =
         dlsym(jcxt->mLibHandle, "sprd_jpg_set_resolution");
-    if (jcxt->ops.jpeg_set_resolution == NULL) {
-        CMR_LOGE("Can't find sprd_jpg_set_resolution in %s", libName);
+    jpeg_failed = (jcxt->ops.jpeg_init == NULL || jcxt->ops.jpeg_encode == NULL ||
+                jcxt->ops.jpeg_decode == NULL || jcxt->ops.jpeg_stop == NULL ||
+                jcxt->ops.jpeg_deinit == NULL || jcxt->ops.jpeg_get_iommu_status == NULL ||
+                jcxt->ops.jpeg_dec_get_resolution == NULL || jcxt->ops.jpeg_set_resolution == NULL);
+    if(jpeg_failed) {
 #if USE_LEGACY_DLFCN
         dlclose(jcxt->mLibHandle);
 #else
         put_lib_handle(jcxt->mLibHandle);
 #endif
+        CMR_LOGE("Can't find jpeg_xxx");
         jcxt->mLibHandle = NULL;
         ret = -CMR_CAMERA_NO_SUPPORT;
         goto exit;
     }
-
     ret = jcxt->ops.jpeg_init(codec_handle, adp_event_cb);
     if (ret) {
         CMR_LOGE("jpeg init fail");
