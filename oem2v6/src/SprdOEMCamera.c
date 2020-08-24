@@ -1029,216 +1029,256 @@ cmr_int camera_stop_capture(cmr_handle camera_handle) {
 exit:
     return ret;
 }
+/*  reduce Cyclomatic Complexity for camera_ioctrl
+ *  switch/case --> table
+ */
+typedef cmr_int (*camera_ioctrl_func)(cmr_handle handle, void *param);
+
+static cmr_int ioctrl_multi_cameramode(cmr_handle handle, void *param) {
+
+    multiCameraMode *camera_mode = (multiCameraMode *)param;
+    CMR_LOGD("camera_mode %d", *camera_mode);
+    camera_set_mem_multimode(*camera_mode);
+    camera_set_oem_multimode(*camera_mode);
+
+    return 0;
+}
+static cmr_int ioctrl_camera_stream_ctrl(cmr_handle handle, void *param) {
+    int ret;
+
+    CMR_LOGD("force sensor stream on %u", *(uint32_t *)param);
+    ret = camera_stream_ctrl(handle, *(uint32_t *)param);
+
+    return ret;
+}
+
+static cmr_int ioctrl_set_af_pos(cmr_handle handle, void *param) {
+
+    return cmr_set_af_pos(handle, *(uint32_t *)param);
+}
+
+static cmr_int ioctrl_set_3a_bypass(cmr_handle handle, void *param) {
+    return cmr_set_3a_bypass(handle, *(uint32_t *)param);
+}
+static cmr_int ioctrl_set_3dnr_video(cmr_handle handle, void *param) {
+    return camera_set_3dnr_video(handle, *(cmr_uint *)param);
+}
+static cmr_int ioctrl_set_ultra_wide_mode(cmr_handle handle, void *param) {
+    return camera_set_ultra_wide_mode(handle, *(cmr_uint *)param);
+}
+static cmr_int ioctrl_set_fov_fusion_mode(cmr_handle handle, void *param) {
+    return camera_set_fov_fusion_mode(handle, *(cmr_uint *)param);
+}
+static cmr_int ioctrl_set_mult_camera_id(cmr_handle handle, void *param) {
+    return camera_set_multi_camera_id(handle, *(cmr_uint *)param);
+}
+static cmr_int ioctrl_set_snapshot_timestamp(cmr_handle handle, void *param) {
+    return cmr_set_snapshot_timestamp(handle, *(int64_t *)param);
+}
+static cmr_int ioctrl_img_debug(cmr_handle handle, void *param) {
+    return cmr_img_debug(param, NULL);
+}
+static cmr_int ioctrl_local_start_scale(cmr_handle handle, void *param) {
+    return camera_local_start_scale(handle, (struct img_frm **)param);
+}
+static cmr_int ioctrl_set_master_id(cmr_handle handle, void *param) {
+    int8_t *master_id = (int8_t *)param;
+
+    CMR_LOGV("master id %d", *master_id);
+    camera_set_oem_masterid(*master_id);
+    return 0;
+}
+static cmr_int ioctrl_set_cam_security(cmr_handle handle, void *param) {
+    struct sprd_cam_sec_cfg *sec_cfg = (struct sprd_cam_sec_cfg *)param;
+
+    CMR_LOGI("security mode = %d, work mode = %d", sec_cfg->camsec_mode,
+            sec_cfg->work_mode);
+    camera_set_security(handle, sec_cfg);
+    return 0;
+}
+static cmr_int ioctrl_get_vcm_range(cmr_handle handle, void *param) {
+    struct camera_context *cxt = (struct camera_context *)handle;
+
+    return cmr_get_vcm_range(handle, cxt->camera_id,
+                             (struct vcm_range_info *)param);
+}
+static cmr_int ioctrl_get_ae_fps_range(cmr_handle handle, void *param) {
+    struct camera_context *cxt = (struct camera_context *)handle;
+
+    return cmr_get_ae_fps_range(handle, cxt->camera_id,
+                                (struct ae_fps_range_info *)param);
+}
+static cmr_int ioctrl_set_vcm_disc(cmr_handle handle, void *param) {
+    struct camera_context *cxt = (struct camera_context *)handle;
+
+    return cmr_set_vcm_disc(handle, cxt->camera_id,
+                            (struct vcm_disc_info *)param);
+}
+static cmr_int ioctrl_set_hdr_disable(cmr_handle handle, void *param) {
+    return camera_set_hdr_disable(handle, *(cmr_u32 *)param);
+}
+static cmr_int ioctrl_get_reboke_data(cmr_handle handle, void *param) {
+    cmr_int ret;
+
+    ret = cmr_get_reboke_data(handle, (struct af_relbokeh_oem_data *)param);
+    if (ret) {
+        ret = -CMR_CAMERA_FAIL;
+        CMR_LOGE("failed to get af_relbokeh_oem_data %ld", ret);
+    }
+   return ret;
+}
+static cmr_int ioctrl_sensor_get_stream_status(cmr_handle handle, void *param) {
+    struct camera_context *cxt = (struct camera_context *)handle;
+    cmr_int ret;
+
+    ret = cmr_sensor_get_stream_status(cxt->sn_cxt.sensor_handle, cxt->camera_id);
+    *((int *)param) = (int)ret;
+
+    return 0;
+}
+static cmr_int ioctrl_set_high_res_mode(cmr_handle handle, void *param) {
+    return camera_set_high_res_mode(handle, *(cmr_uint *)param);
+}
+static cmr_int ioctrl_local_get_cover(cmr_handle handle, void *param) {
+        return camera_local_get_cover(handle, (struct dual_sensor_luma_info *)param);
+}
+static cmr_int ioctrl_get_isp_af_fullscan(cmr_handle handle, void *param) {
+        return cmr_get_isp_af_fullscan(handle, (struct isp_af_fullscan_info *)param);
+}
+static cmr_int ioctrl_get_ae_fps(cmr_handle handle, void *param) {
+        return cmr_get_ae_fps(handle, (cmr_u32 *)param);
+}
+static cmr_int ioctrl_local_get_sensor_format(cmr_handle handle, void *param) {
+        return camera_local_get_sensor_format(handle, (cmr_u32 *)param);
+}
+static cmr_int ioctrl_set_thumb_yuv_proc(cmr_handle handle, void *param) {
+        return camera_set_thumb_yuv_proc(handle, (struct snp_thumb_yuv_param *)param);
+}
+static cmr_int ioctrl_jpeg_encode_exif_simplify(cmr_handle handle, void *param) {
+        return camera_jpeg_encode_exif_simplify(handle, (struct enc_exif_param *)param);
+}
+static cmr_int ioctrl_local_set_capture_fb(cmr_handle handle, void *param) {
+        return camera_local_set_capture_fb(handle, (cmr_u32 *)param);
+}
+static cmr_int ioctrl_get_blur_covered_type(cmr_handle handle, void *param) {
+        return camera_get_blur_covered_type(handle, (cmr_s32 *)param);
+}
+static cmr_int ioctrl_get_grab_capability(cmr_handle handle, void *param) {
+        return camera_get_grab_capability(handle, (struct cmr_path_capability *)param);
+}
+static cmr_int ioctrl_local_start_rotate(cmr_handle handle, void *param) {
+        return camera_local_start_rotate(handle, (struct rotate_param *)param);
+}
+static cmr_int ioctrl_local_set_ref_camera_id(cmr_handle handle, void *param) {
+        return camera_local_set_ref_camera_id(handle, (cmr_u32 *)param);
+}
+static cmr_int ioctrl_local_set_visible_region(cmr_handle handle, void *param) {
+        return camera_local_set_visible_region(handle, (struct visible_region_info *)param);
+}
+static cmr_int ioctrl_local_set_global_zoom_ratio(cmr_handle handle, void *param) {
+        return camera_local_set_global_zoom_ratio(handle, (float *)param);
+}
+static cmr_int ioctrl_get_bokeh_sn_trim(cmr_handle handle, void *param) {
+        return cmr_get_bokeh_sn_trim(handle, (struct sprd_img_path_rect *)param);
+}
+static cmr_int ioctrl_get_af_support(cmr_handle handle, void *param) {
+        return camera_get_af_support(handle, (cmr_u16 *)param);
+}
+static cmr_int ioctrl_get_4in1_info(cmr_handle handle, void *param) {
+        return camera_get_4in1_info(handle, (struct fin1_info *)param);
+}
+static cmr_int ioctrl_local_cap_state(cmr_handle handle, void *param) {
+        return camera_local_cap_state(handle, (bool *)param);
+}
+static cmr_int ioctrl_get_fb_param(cmr_handle handle, void *param) {
+        return camera_get_fb_param(handle, (struct isp_fb_param_info *)param);
+}
+static cmr_int ioctrl_get_bv_info(cmr_handle handle, void *param) {
+        return camera_get_bv_info(handle, (cmr_u32 *)param);
+}
+static cmr_int ioctrl_get_ct_info(cmr_handle handle, void *param) {
+        return camera_get_ct_info(handle, (cmr_u32 *)param);
+}
+static cmr_int ioctrl_get_iso_info(cmr_handle handle, void *param) {
+        return camera_get_iso_info(handle, (cmr_u32 *)param);
+}
+static cmr_int ioctrl_yuv_do_face_beauty_simplify(cmr_handle handle, void *param) {
+        return camera_yuv_do_face_beauty_simplify(handle, (struct img_frm *)param);
+}
+static cmr_int ioctrl_jpeg_decode_simplify(cmr_handle handle, void *param) {
+        return camera_jpeg_decode_simplify(handle, (struct enc_exif_param *)param);
+}
+const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
+    [CAMERA_IOCTRL_SET_MULTI_CAMERAMODE] = ioctrl_multi_cameramode,
+    [CAMERA_IOCTRL_GET_SENSOR_LUMA]      = ioctrl_local_get_cover,
+    [CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL] = ioctrl_camera_stream_ctrl,
+    [CAMERA_IOCTRL_GET_FULLSCAN_INFO]    = ioctrl_get_isp_af_fullscan,
+    [CAMERA_IOCTRL_SET_AF_POS]           = ioctrl_set_af_pos,
+    [CAMERA_IOCTRL_SET_3A_BYPASS]        = ioctrl_set_3a_bypass,
+    [CAMERA_IOCTRL_GET_AE_FPS]           = ioctrl_get_ae_fps,
+    [CAMERA_IOCTRL_3DNR_VIDEOMODE]       = ioctrl_set_3dnr_video,
+    [CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP] = ioctrl_set_snapshot_timestamp,
+    [CAMERA_IOCTRL_GET_MICRODEPTH_PARAM] = cmr_get_microdepth_param,
+    [CAMERA_IOCTRL_SET_MICRODEPTH_DEBUG_INFO] = cmr_set_microdepth_debug_info,
+    [CAMERA_IOCTRL_GET_SENSOR_FORMAT]    = ioctrl_local_get_sensor_format,
+    [CAMERA_IOCTRL_THUMB_YUV_PROC]       = ioctrl_set_thumb_yuv_proc,
+    [CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC]= ioctrl_jpeg_encode_exif_simplify,
+    [CAMERA_IOCTRL_SET_MIME_TYPE]        = NULL,
+    [CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY] = ioctrl_local_set_capture_fb,
+    [CAMERA_IOCTRL_GET_BLUR_COVERED]     = ioctrl_get_blur_covered_type,
+    [CAMERA_IOCTRL_DEBUG_IMG]            = ioctrl_img_debug,
+    [CAMERA_IOCTRL_GET_GRAB_CAPABILITY]  = ioctrl_get_grab_capability,
+    [CAMERA_IOCTRL_GET_SG]               = NULL,
+    [CAMERA_IOCTRL_MAP_IOMMU_BUF]        = NULL,
+    [CAMERA_IOCTRL_UNMAP_IOMMU_BUF]      = NULL,
+    [CAMERA_IOCTRL_GET_IOMMU_AVAILABLE]  = NULL,
+    [CAMERA_IOCTRL_START_SCALE]          = ioctrl_local_start_scale,
+    [CAMERA_IOCTRL_CB_FACE_DETECT]       = NULL,
+    [CAMERA_IOCTRL_ROTATE]               = ioctrl_local_start_rotate,
+    [CAMERA_IOCTRL_SET_MASTER_ID]        = ioctrl_set_master_id,
+    [CAMERA_IOCTRL_SET_REF_CAMERA_ID]    = ioctrl_local_set_ref_camera_id,
+    [CAMERA_IOCTRL_SET_VISIBLE_REGION]   = ioctrl_local_set_visible_region,
+    [CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO]= ioctrl_local_set_global_zoom_ratio,
+    [CAMERA_IOCTRL_SET_BOKEH_SCALE_INFO] = NULL,
+    [CAMERA_IOCTRL_SET_TRIM_INFO]        = NULL,
+    [CAMERA_IOCTRL_SET_CAM_SECURITY]     = ioctrl_set_cam_security,
+    [CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO] = ioctrl_get_vcm_range,
+    [CAMERA_IOCTRL_SET_HDR_DISABLE]      = ioctrl_set_hdr_disable,
+    [CAMERA_IOCTRL_SET_VCM_DISC]         = ioctrl_set_vcm_disc,
+    [CAMERA_IOCTRL_ULTRA_WIDE_MODE]      = ioctrl_set_ultra_wide_mode,
+    [CAMERA_IOCTRL_GET_REBOKE_DATA]      = ioctrl_get_reboke_data,
+    [CAMERA_TOCTRL_GET_BOKEH_SN_TRIM]    = ioctrl_get_bokeh_sn_trim,
+    [CAMERA_TOCTRL_GET_AF_SUPPORT]       = ioctrl_get_af_support,
+    [CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO]= ioctrl_get_ae_fps_range,
+    [CAMERA_TOCTRL_SET_HIGH_RES_MODE]    = ioctrl_set_high_res_mode,
+    [CAMERA_TOCTRL_GET_4IN1_INFO]        = ioctrl_get_4in1_info,
+    [CAMERA_IOCTRL_SET_CAP_STATE]        = ioctrl_local_cap_state,
+    [CAMERA_IOCTRL_GET_FB_PARAM]         = ioctrl_get_fb_param,
+    [CAMERA_IOCTRL_GET_BV]               = ioctrl_get_bv_info,
+    [CAMERA_TOCTRL_GET_SN_STREAM_STATUS] = ioctrl_sensor_get_stream_status,
+    [CAMERA_IOCTRL_GET_CT]               = ioctrl_get_ct_info,
+    [CAMERA_IOCTRL_GET_ISO]              = ioctrl_get_iso_info,
+    [CAMERA_IOCTRL_FOV_FUSION_MODE]      = ioctrl_set_fov_fusion_mode,
+    [CAMERA_IOCTRL_DO_FACE_BEAUTY]       = ioctrl_yuv_do_face_beauty_simplify,
+    [CAMERA_IOCTRL_SET_LPT_TYPE]         = NULL,
+    [CAMERA_IOCTRL_MULTI_CAMERA_ID]      = ioctrl_set_mult_camera_id,
+    [CAMERA_IOCTRL_JPEG_DECODE_PROC]     = ioctrl_jpeg_decode_simplify,
+};
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
-    cmr_int ret = 0;
+    cmr_int ret = CMR_CAMERA_FAIL;
 
-    switch (cmd) {
-    case CAMERA_IOCTRL_SET_MULTI_CAMERAMODE: {
-        multiCameraMode *camera_mode = (multiCameraMode *)param;
-        CMR_LOGD("camera_mode %d", *camera_mode);
-        camera_set_mem_multimode(*camera_mode);
-        camera_set_oem_multimode(*camera_mode);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_SENSOR_LUMA: {
-        ret = camera_local_get_cover(handle,
-                                     (struct dual_sensor_luma_info *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL:
-        CMR_LOGD("force sensor stream on %u", *(uint32_t *)param);
-        ret = camera_stream_ctrl(handle, *(uint32_t *)param);
-        break;
-    case CAMERA_IOCTRL_GET_FULLSCAN_INFO: {
-        ret = cmr_get_isp_af_fullscan(handle,
-                                      (struct isp_af_fullscan_info *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_AF_POS: {
-        ret = cmr_set_af_pos(handle, *(uint32_t *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_3A_BYPASS: {
-        ret = cmr_set_3a_bypass(handle, *(uint32_t *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_AE_FPS: {
-        ret = cmr_get_ae_fps(handle, (cmr_u32 *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_3DNR_VIDEOMODE: {
-        ret = camera_set_3dnr_video(handle, *(cmr_uint *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_ULTRA_WIDE_MODE: {
-        ret = camera_set_ultra_wide_mode(handle, *(cmr_uint *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_FOV_FUSION_MODE: {
-        ret = camera_set_fov_fusion_mode(handle, *(cmr_uint *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_MULTI_CAMERA_ID: {
-        ret = camera_set_multi_camera_id(handle, *(cmr_uint *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP: {
-        ret = cmr_set_snapshot_timestamp(handle, *(int64_t *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_MICRODEPTH_PARAM: {
-        ret = cmr_get_microdepth_param(handle, param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_MICRODEPTH_DEBUG_INFO: {
-        ret = cmr_set_microdepth_debug_info(handle, param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_SENSOR_FORMAT: {
-        ret = camera_local_get_sensor_format(handle, (cmr_u32 *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY: {
-        ret = camera_local_set_capture_fb(handle, (cmr_u32 *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_DEBUG_IMG: {
-        ret = cmr_img_debug(param, NULL);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_GRAB_CAPABILITY:
-        ret = camera_get_grab_capability(handle,
-                                         (struct cmr_path_capability *)param);
-        break;
-    case CAMERA_IOCTRL_START_SCALE:
-        camera_local_start_scale(handle, (struct img_frm **)param);
-        break;
-    case CAMERA_IOCTRL_ROTATE: {
-        camera_local_start_rotate(handle, (struct rotate_param *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_MASTER_ID: {
-        int8_t *master_id = (int8_t *)param;
-        CMR_LOGV("master id %d", *master_id);
-        camera_set_oem_masterid(*master_id);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_REF_CAMERA_ID:
-        camera_local_set_ref_camera_id(handle, (cmr_u32 *)param);
-        break;
-    case CAMERA_IOCTRL_SET_VISIBLE_REGION:
-        camera_local_set_visible_region(handle, (struct visible_region_info *)param);
-        break;
-    case CAMERA_IOCTRL_SET_GLOBAL_ZOOM_RATIO:
-        camera_local_set_global_zoom_ratio(handle, (float *)param);
-        break;
-    case CAMERA_IOCTRL_SET_CAP_STATE:
-        camera_local_cap_state(handle, (bool *)param);
-        break;
-    case CAMERA_IOCTRL_THUMB_YUV_PROC: {
-        ret = camera_set_thumb_yuv_proc(handle,
-                                        (struct snp_thumb_yuv_param *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_JPEG_ENCODE_EXIF_PROC: {
-        ret = camera_jpeg_encode_exif_simplify(handle,
-                                               (struct enc_exif_param *)param);
-        break;
-    }
-	case CAMERA_IOCTRL_JPEG_DECODE_PROC: {
-        ret = camera_jpeg_decode_simplify(handle,
-                                               (struct enc_exif_param *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_BLUR_COVERED: {
-        ret = camera_get_blur_covered_type(handle, (cmr_s32 *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_CAM_SECURITY: {
-        struct sprd_cam_sec_cfg *sec_cfg = (struct sprd_cam_sec_cfg *)param;
-        CMR_LOGI("security mode = %d, work mode = %d", sec_cfg->camsec_mode,
-                 sec_cfg->work_mode);
-        camera_set_security(handle, sec_cfg);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_CALIBRATION_VCMINFO: {
-        struct camera_context *cxt = (struct camera_context *)handle;
-        ret = cmr_get_vcm_range(handle, cxt->camera_id,
-                                (struct vcm_range_info *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_AE_FPS_RANGE_INFO: {
-        struct camera_context *cxt = (struct camera_context *)handle;
-        ret = cmr_get_ae_fps_range(handle, cxt->camera_id,
-                                   (struct ae_fps_range_info *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_VCM_DISC: {
-        struct camera_context *cxt = (struct camera_context *)handle;
-        ret = cmr_set_vcm_disc(handle, cxt->camera_id,
-                               (struct vcm_disc_info *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_SET_HDR_DISABLE: {
-        ret = camera_set_hdr_disable(handle, *(cmr_u32 *)param);
-        break;
+    if (cmd >= CAMERA_IOCTRL_CMD_MAX || cmd < 0) {
+        CMR_LOGE("cmd %d not support", cmd);
+        return ret;
     }
 
-    case CAMERA_IOCTRL_GET_REBOKE_DATA: {
-        ret = cmr_get_reboke_data(handle, (struct af_relbokeh_oem_data *)param);
-        if (ret) {
-            ret = -CMR_CAMERA_FAIL;
-            CMR_LOGE("failed to get af_relbokeh_oem_data %ld", ret);
-        }
-        break;
+    if (tb_ioctrl_func[cmd] == NULL) {
+        CMR_LOGE("cmd %d not support", cmd);
+//        return ret;
+        return 0; /* return 0 as before switch:default return 0 */
     }
-    case CAMERA_TOCTRL_GET_BOKEH_SN_TRIM: {
-        ret = cmr_get_bokeh_sn_trim(handle, (struct sprd_img_path_rect *)param);
-        break;
-    }
-    case CAMERA_TOCTRL_GET_AF_SUPPORT: {
-        ret = camera_get_af_support(handle, (cmr_u16 *)param);
-        break;
-    }
-    case CAMERA_TOCTRL_GET_4IN1_INFO: {
-        ret = camera_get_4in1_info(handle, (struct fin1_info *)param);
-        break;
-    }
-    case CAMERA_TOCTRL_GET_SN_STREAM_STATUS: {
-        struct camera_context *cxt = (struct camera_context *)handle;
-
-        ret = cmr_sensor_get_stream_status(cxt->sn_cxt.sensor_handle, cxt->camera_id);
-        *((int *)param) = (int)ret;
-        break;
-    }
-    case CAMERA_TOCTRL_SET_HIGH_RES_MODE: {
-        ret = camera_set_high_res_mode(handle, *(cmr_uint *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_BV: {
-        ret = camera_get_bv_info(handle,(cmr_u32 *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_FB_PARAM: {
-        ret = camera_get_fb_param(handle, (struct isp_fb_param_info *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_CT: {
-        ret = camera_get_ct_info(handle,(cmr_u32 *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_GET_ISO: {
-        ret = camera_get_iso_info(handle,(cmr_u32 *)param);
-        break;
-    }
-    case CAMERA_IOCTRL_DO_FACE_BEAUTY: {
-        ret = camera_yuv_do_face_beauty_simplify(handle,(struct img_frm*)param);
-        break;
-    }   
-    default:
-        break;
-    }
+    ret = tb_ioctrl_func[cmd](handle, param);
 
     return ret;
 }
