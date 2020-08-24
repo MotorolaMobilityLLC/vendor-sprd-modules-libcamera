@@ -9447,6 +9447,8 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
 
     CMR_LOGI("E");
 
+    cmr_preview_wait_recovery(cxt->prev_cxt.preview_handle, cxt->camera_id);
+
     if (PREVIEWING !=
         cmr_preview_get_status(cxt->prev_cxt.preview_handle, cxt->camera_id)) {
         CMR_LOGI("don't previewing");
