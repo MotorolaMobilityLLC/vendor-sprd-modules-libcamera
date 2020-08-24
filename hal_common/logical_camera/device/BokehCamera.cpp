@@ -50,7 +50,7 @@ using namespace std;
 #define MASTER_ID 0
 #define EXTEND_MODE_NUM 2
 #define STREAM_NUM 5
-BokehCamera *mBokehCamera;
+BokehCamera *mBokehCamera = NULL;
 
 const uint8_t kavailableExtendedSceneModes[] = {
     ANDROID_CONTROL_EXTENDED_SCENE_MODE_DISABLED,
