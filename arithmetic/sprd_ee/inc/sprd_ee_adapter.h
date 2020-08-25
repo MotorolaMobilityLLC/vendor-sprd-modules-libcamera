@@ -1,5 +1,5 @@
-#ifndef __SPRD_YUV_DENOISE_ADAPTER_HEADER_H__
-#define __SPRD_YUV_DENOISE_ADAPTER_HEADER_H__
+#ifndef __SPRD_EE_ADAPTER_H__
+#define __SPRD_EE_ADAPTER_H__
 
 #include "sprd_camalg_adapter.h"
 
@@ -15,6 +15,7 @@ extern "C" {
 		SPRD_EE_PROCESS_CMD,
 		SPRD_EE_MAX_CMD
 	} sprd_ee_cmd_t;
+
 
 	typedef struct {
 		void *ctx;
@@ -32,6 +33,7 @@ extern "C" {
 		int height;				/*image height*/
 		int crop_width;				/*image crop width*/
 		int crop_height;			/*image crop height*/
+		void *ae_param; /*param structure pointer from ae*/
 	} sprd_ee_param_t;
 
 	/*

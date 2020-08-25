@@ -4,6 +4,9 @@
 #include <string.h>
 #include "ee_sprd.h"
 
+#include "cmr_types.h"
+#include "ae_ctrl_common.h"
+
 #ifdef DEFAULT_RUNTYPE_VDSP
 static enum camalg_run_type g_run_type = SPRD_CAMALG_RUN_TYPE_VDSP;
 #else
@@ -106,6 +109,16 @@ int sprd_ee_adpt_ctrl(sprd_ee_cmd_t cmd, void *param)
 			tuningParam.crop_width=ee_param->crop_width;
 			tuningParam.crop_height=ee_param->crop_height;
 			tuningParam.scene_map_buffer=ee_param->scene_map_buffer;
+			if(0 != ee_param->ae_param)
+			{
+				struct ae_callback_param *p = (struct ae_callback_param*)(ee_param->ae_param);
+				tuningParam.face_stable = p->face_stable;
+				tuningParam.face_num = (unsigned short)(p->face_num);
+			} else {
+				tuningParam.face_stable = 0;
+				tuningParam.face_num = 0;
+				EE_LOGW("ee_param == NULL, face info set to 0\n");
+			}
 
 			if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU)
 			{
