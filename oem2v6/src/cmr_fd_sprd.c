@@ -1073,6 +1073,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
         /* enlarge face size a little.
         !TODO: maybe it is also necessary to adjust the face center
         */
+        /*
         {
             cmr_int delta = info.width / 20;
             sx -= delta;
@@ -1080,7 +1081,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
             ex += delta;
             ey += delta;
         }
-
+        */
         face_ptr = &(o_face_area->range[valid_count]);
         valid_count++;
 
