@@ -854,6 +854,7 @@ void SprdCamera3OEMIf::initialize() {
     mIsSlowmotion = false;
     mFlush = 0;
     mVideoAFBCFlag = 0;
+    mFlagHdr = false;
 #ifdef CONFIG_FACE_BEAUTY
     mflagfb = false;
 #endif
@@ -5679,10 +5680,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
             goto exit;
         }
 
-        CONTROL_Tag controlInfo;
-        mSetting->getCONTROLTag(&controlInfo);
-
-        if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+        if (mFlagHdr) {
             for (i = 0; i < (cmr_int)mZslNum; i++) {
                 for (int j = 0; j < 3; j++) {
                     if (mZslHeapArray[i]->fd == hdr_fd[j]) {
@@ -5692,6 +5690,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                     }
                 }
             }
+            mFlagHdr = false;
         } else if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
             for (i = 0; i < (cmr_int)mZslNum; i++) {
@@ -10649,9 +10648,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
                 continue;
         }
         // for zsl hdr
-        int8_t drvSceneMode = 0;
-        mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
-        if (drvSceneMode == CAMERA_SCENE_MODE_HDR) {
+        if (mFlagHdr) {
              ret = SnapshotZslHdr(obj, &zsl_frame,
                      &src_alg_buf, &dst_alg_buf, buf_cnt);
              if (ret)
@@ -10826,6 +10823,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
         mZslMaxFrameNum = 3;
+        obj->mFlagHdr = true;
     } else if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                 mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) &&
                mRecordingMode == false) {

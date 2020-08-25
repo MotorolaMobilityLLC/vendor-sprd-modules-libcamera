@@ -638,6 +638,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int32_t mZslNum;
     Mutex mZslBufLock;
     // zsl end
+    bool mFlagHdr;
 
     void setAfState(enum afTransitionCause cause);
     int32_t mLastAfMode;
