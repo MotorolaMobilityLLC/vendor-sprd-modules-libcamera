@@ -82,7 +82,7 @@ struct ae_lib_init_out {
 	cmr_u8 lock;				/* default: 0-unlock, 0:unlock 1:lock */
 	/*AE profession Setting*/
 	cmr_u8 metering_mode;	/*default: center metering; the metering mode*/
-	cmr_u8 iso;				/*iso auto*/
+	cmr_u32 iso;				/*iso auto*/
 	cmr_u8 flicker;			/* 50hz 0 60hz 1 */
 	cmr_u8 scene_mode;		/* default: normal: spano sports night */
 	cmr_u8 ae_mode;			/*ae mode
@@ -122,7 +122,8 @@ struct ae_adv_param {
 
 	/*AE profession Setting*/
 	cmr_u8 metering_mode;	/*the metering mode*/
-	cmr_u8 iso;
+	cmr_u32 iso;
+	cmr_u8 iso_data_type;
 	cmr_u8 flicker;			/* 50hz 0 60hz 1 */
 	cmr_u8 scene_mode;		/* pano sports night */
 	cmr_u8 is_faceID;
