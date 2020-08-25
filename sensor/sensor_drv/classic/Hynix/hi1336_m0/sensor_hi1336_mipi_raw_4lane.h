@@ -1421,7 +1421,7 @@ static SENSOR_STATIC_INFO_T s_hi1336_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{4.659f, 3.494f}, 3.402f}}}
+                     .fov_info = {{4.659f, 3.494f}, 3.699f}}}
     /*If there are multiple modules,please add here*/
 };
 
