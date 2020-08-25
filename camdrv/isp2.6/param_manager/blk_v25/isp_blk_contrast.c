@@ -71,23 +71,40 @@ cmr_s32 _pm_contrast_set_param(void *contrast_param, cmr_u32 cmd, void *param_pt
 			struct isp_ai_update_param *cfg_data;
 			struct isp_ai_bchs_param *bchs_cur;
 			cmr_s32 contrast_factor;
+			cmr_u32 ai_scene = 0;
+			cmr_u32 count = 0;
 
 			cfg_data = (struct isp_ai_update_param *)param_ptr0;
 			bchs_cur = (struct isp_ai_bchs_param *)cfg_data->param_ptr;
 			smooth_factor = cfg_data->smooth_factor;
 			smooth_base = cfg_data->smooth_base;
 			ai_status = cfg_data->ai_status;
+			ai_scene = cfg_data->ai_scene;
+			count = cfg_data->count;
 			if (smooth_factor == 0)
 				break;
 
-			contrast_factor = contrast_ptr->tab[contrast_ptr->cur_index];
 			if (ai_status){
-				if (bchs_cur->ai_contrast.contrast_adj_ai_eb || smooth_factor) {
-					contrast_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
-					contrast_factor = MAX(0, MIN(255,  contrast_factor));
+				if (!ai_scene){
+					contrast_factor = contrast_ptr->cur.factor;
+					if (bchs_cur->ai_contrast.contrast_adj_ai_eb || smooth_factor) {
+						contrast_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
+						contrast_factor = MAX(0, MIN(255,  contrast_factor));
+						if ((contrast_factor < contrast_ptr->tab[contrast_ptr->cur_index]) || (count == smooth_base))
+							contrast_factor = contrast_ptr->tab[contrast_ptr->cur_index];
+					}
+					contrast_ptr->cur.factor = contrast_factor;
+				} else {
+					contrast_factor = contrast_ptr->tab[contrast_ptr->cur_index];
+					if (bchs_cur->ai_contrast.contrast_adj_ai_eb || smooth_factor) {
+						contrast_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
+						contrast_factor = MAX(0, MIN(255,  contrast_factor));
+					}
+					contrast_ptr->cur.factor = contrast_factor;
 				}
+			}else {
+				contrast_ptr->cur.factor = contrast_ptr->tab[contrast_ptr->cur_index];
 			}
-			contrast_ptr->cur.factor = contrast_factor;
 			contrast_header_ptr->is_update = ISP_ONE;
 		}
 		break;

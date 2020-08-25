@@ -989,6 +989,8 @@ struct isp_ai_param {
 
 struct isp_ai_update_param {
 	cmr_s16 ai_status;
+	cmr_u32 ai_scene;
+	cmr_u32 count;
 	cmr_s16 smooth_factor;
 	cmr_s16 smooth_base;
 	void *param_ptr;

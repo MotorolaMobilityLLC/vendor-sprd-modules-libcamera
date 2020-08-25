@@ -71,23 +71,40 @@ cmr_s32 _pm_brightness_set_param(void *bright_param, cmr_u32 cmd, void *param_pt
 			struct isp_ai_update_param *cfg_data;
 			struct isp_ai_bchs_param *bchs_cur;
 			cmr_s32 bri_factor;
+			cmr_u32 ai_scene = 0;
+			cmr_u32 count =0;
 
 			cfg_data = (struct isp_ai_update_param *)param_ptr0;
 			bchs_cur = (struct isp_ai_bchs_param *)cfg_data->param_ptr;
 			smooth_factor = cfg_data->smooth_factor;
 			smooth_base = cfg_data->smooth_base;
 			ai_status = cfg_data->ai_status;
+			ai_scene = cfg_data->ai_scene;
+			count = cfg_data->count;
 			if (smooth_factor == 0)
 				break;
 
-			bri_factor = bright_ptr->bright_tab[bright_ptr->cur_index];
 			if (ai_status){
-				if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
-					bri_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
-					bri_factor = MAX(-128, MIN(127,  bri_factor));
+				if (!ai_scene){
+					bri_factor = bright_ptr->cur.factor;
+					if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
+						bri_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
+						bri_factor = MAX(-128, MIN(127,  bri_factor));
+						if ((bri_factor < bright_ptr->bright_tab[bright_ptr->cur_index]) || (count == smooth_base))
+							bri_factor = bright_ptr->bright_tab[bright_ptr->cur_index];
+					}
+					bright_ptr->cur.factor = bri_factor;
+				} else {
+					bri_factor = bright_ptr->bright_tab[bright_ptr->cur_index];
+					if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
+						bri_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
+						bri_factor = MAX(-128, MIN(127,  bri_factor));
+					}
+					bright_ptr->cur.factor = bri_factor;
 				}
+			} else {
+				bright_ptr->cur.factor = bright_ptr->bright_tab[bright_ptr->cur_index];
 			}
-			bright_ptr->cur.factor = bri_factor;
 			bright_header_ptr->is_update = ISP_ONE;
 		}
 		break;

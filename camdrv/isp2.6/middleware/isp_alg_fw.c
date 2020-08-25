@@ -1973,8 +1973,11 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 	} else {
 		ai_update_data.smooth_factor = (cmr_s16)smooth_ratio - cxt->smooth_ratio + 1;
 		ai_update_data.smooth_base = (cmr_s16)smooth_ratio;
-		if (!cxt->ai_scene_flag)
-			ai_update_data.smooth_factor = 0 - ai_update_data.smooth_factor;
+		ai_update_data.ai_scene = cxt->ai_scene_flag;
+		if (!cxt->ai_scene_flag){
+			ai_update_data.count = ai_update_data.smooth_factor;
+			ai_update_data.smooth_factor = -1;
+		}
 	}
 
 	for (i = 0; i < num; i++) {
