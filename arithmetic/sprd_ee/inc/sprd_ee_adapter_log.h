@@ -1,5 +1,5 @@
-#ifndef __SPRD_YUV_DENOISE_ADAPTER_LOG_H__
-#define __SPRD_YUV_DENOISE_ADAPTER_LOG_H__
+#ifndef __SPRD_EE_ADAPTER_LOG_H__
+#define __SPRD_EE_ADAPTER_LOG_H__
 
 #include <utils/Log.h>
 

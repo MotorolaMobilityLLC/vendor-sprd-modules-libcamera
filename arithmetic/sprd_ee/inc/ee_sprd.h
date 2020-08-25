@@ -1,5 +1,5 @@
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#ifndef __EE_SPRD_H__
+#define __EE_SPRD_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,6 +21,8 @@ extern "C" {
 		int crop_width;			/*image crop width*/
 		int crop_height;		/*image crop height*/
 		void *scene_map_buffer;		/*scene map buffer*/
+		unsigned int face_stable; //new, whether contain face
+		unsigned short face_num;//new, count of face
 	} sprd_ee_tuning_param;
 
 	/****** cpu interface ******/
