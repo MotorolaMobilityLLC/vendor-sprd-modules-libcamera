@@ -148,7 +148,7 @@ typedef enum {
 	SHARKL5_LTM,
 	SHARKL5_3DNR = 0x43,
 	SHARKL5_NLM = 0x44,
-	SHARKL5_SW3DNR = 0x45,
+	MFNR = 0x45,
 	SHARKL5_CNR20 = 0x46,
 	SHARKL5_IIRCNR = 0x47,
 	SHARKL5_NOISEFILTER = 0x48,
@@ -162,8 +162,9 @@ typedef enum {
 	SHARKL5_PRO_VST = 0x50,
 	SHARKL5_PRO_IVST = 0x51,
 	CNR30 = 0x52,
-	MFNR = 0x53,
+	SHARKL5_PRO_MFNR = 0x53,
 	POST_EE = 0x54,
+	SW3DNR= 0x56,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -707,7 +708,7 @@ cmr_s32 isp_denoise_write_v25(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_CNR3_T] = 1;
 			break;
 		}
-	case SHARKL5_SW3DNR:
+	case MFNR:
 		{
 			static cmr_u32 mfnr_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -962,9 +963,9 @@ cmr_s32 isp_denoise_read_v25(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr3_level_ptr + offset_units * src_size;
 			break;
 		}
-	case SHARKL5_SW3DNR:
+	case MFNR:
 		{
-			data_head_ptr->sub_type = SHARKL5_SW3DNR;
+			data_head_ptr->sub_type = MFNR;
 			src_size = sizeof(struct sensor_mfnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_MFNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.mfnr_level_ptr + offset_units * src_size;
@@ -1160,7 +1161,7 @@ cmr_s32 isp_denoise_write_v26(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flags[ISP_BLK_3DNR_T] = 1;
 			break;
 		}
-	case SHARKL5_SW3DNR:
+	case SW3DNR:
 		{
 			static cmr_u32 sw3dnr_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -1503,9 +1504,9 @@ cmr_s32 isp_denoise_read_v26(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_level_ptr + offset_units * src_size;
 			break;
 		}
-	case SHARKL5_SW3DNR:
+	case SW3DNR:
 		{
-			data_head_ptr->sub_type = SHARKL5_SW3DNR;
+			data_head_ptr->sub_type = SW3DNR;
 			src_size = sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.sw3dnr_level_ptr + offset_units * src_size;
@@ -1765,7 +1766,7 @@ cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flags[ISP_BLK_3DNR_T] = 1;
 			break;
 		}
-	case SHARKL5_SW3DNR:
+	case SW3DNR:
 		{
 			static cmr_u32 sw3dnr_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -1945,7 +1946,7 @@ cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_CNR3_T] = 1;
 			break;
 		}
-	case MFNR:
+	case SHARKL5_PRO_MFNR:
 		{
 			static cmr_u32 mfnr_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -2116,9 +2117,9 @@ cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.dnr_level_ptr + offset_units * src_size;
 			break;
 		}
-	case SHARKL5_SW3DNR:
+	case SW3DNR:
 		{
-			data_head_ptr->sub_type = SHARKL5_SW3DNR;
+			data_head_ptr->sub_type = SW3DNR;
 			src_size = sizeof(struct sensor_sw3dnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_SW3DNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.sw3dnr_level_ptr + offset_units * src_size;
@@ -2260,9 +2261,9 @@ cmr_s32 isp_denoise_read_v27(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr3_level_ptr + offset_units * src_size;
 			break;
 		}
-	case MFNR:
+	case SHARKL5_PRO_MFNR:
 		{
-			data_head_ptr->sub_type = MFNR;
+			data_head_ptr->sub_type = SHARKL5_PRO_MFNR;
 			src_size = sizeof(struct sensor_mfnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_MFNR_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.mfnr_level_ptr + offset_units * src_size;
