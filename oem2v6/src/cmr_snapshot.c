@@ -4311,8 +4311,8 @@ static cmr_int snp_ipm_process(cmr_handle snp_handle, void *data) {
 
     struct img_frm *src = NULL;
 
-    snp_set_status(snp_handle, IPM_WORKING);
     sem_wait(&snap_cxt->ipm_sync_sm);
+    snp_set_status(snp_handle, IPM_WORKING);
 
     src = &chn_param_ptr->ipm[index].src;
 
