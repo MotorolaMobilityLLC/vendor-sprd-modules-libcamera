@@ -4050,6 +4050,57 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 	return rtn;
 }
 
+cmr_u32 getf_orientation(cmr_s32 roll_angle)
+{
+
+	cmr_u32 f_orientation;
+	if (roll_angle >= -45 && roll_angle <= 45) {
+		f_orientation = FACE_UP;
+		ISP_LOGI(" FACE_UP");
+	}
+	if (roll_angle > 45 && roll_angle < 135) {
+
+		f_orientation = FACE_RIGHT;
+		ISP_LOGI(" FACE_RIGHT");
+	}
+	if (roll_angle > -135 && roll_angle < -45) {
+
+		f_orientation = FACE_LEFT;
+		ISP_LOGI(" FACE_LEFT");
+	}
+	if ((roll_angle >= -180 && roll_angle <= -135) || (roll_angle >= 135 && roll_angle <= 180)) {
+
+		f_orientation = FACE_DOWN;
+		ISP_LOGI(" FACE_DOWN");
+	}
+	if (roll_angle < -180 || roll_angle > 180) {
+
+		f_orientation = FACE_NONE;
+		ISP_LOGI(" FACE_NONE");
+	}
+	return f_orientation;
+}
+
+cmr_s32 getface_info(struct afctrl_face_info * face_info, cmr_u32 * max_area, cmr_u16 * max_index)
+{
+	cmr_u32 area = 0;
+	cmr_u16 i = 0;
+	for (i = 0; i < face_info->face_num; i++) {
+		if (face_info->face_info[i].sx <= face_info->frame_width
+		    && face_info->face_info[i].ex <= face_info->frame_width
+		    && face_info->face_info[i].sy <= face_info->frame_height && face_info->face_info[i].ey <= face_info->frame_height) {
+			area = ABS(face_info->face_info[i].ex - face_info->face_info[i].sx) * ABS(face_info->face_info[i].ey - face_info->face_info[i].sy);
+
+			if (*max_area < area) {
+				*max_index = i;
+				*max_area = area;
+			}
+		}
+
+	}
+	return 0;
+}
+
 cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 {
 	char value[PROPERTY_VALUE_MAX] = { '\0' };
@@ -4069,14 +4120,13 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	struct aft_proc_result sync_result;
 	struct af_sync_info af_sync;
 	cmr_u32 pd_workable = 0;
-	cmr_u16 i = 0, max_index = 0;
-	cmr_u32 max_area = 0, area = 0;
 
+	cmr_u32 max_area = 0;
+	cmr_u16 max_index = 0;
 	memset(&status_info, 0, sizeof(struct af_status_info));
 	memset(&status_master, 0, sizeof(struct af_status_info));
 	memset(&sync_result, 0, sizeof(struct aft_proc_result));
 	memset(&af_sync, 0, sizeof(struct af_sync_info));
-
 	rtn = _check_handle(handle);
 	if (AFV1_SUCCESS != rtn) {
 		ISP_LOGE("fail to check handle");
@@ -4097,6 +4147,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	if (take_value != NULL) {
 		property_dac = atoi(take_value);
 	}
+
 	if (af->camera_id == property_id && 0 != property_dac) {
 		lens_move_to(af, property_dac);
 		return 0;
@@ -4175,26 +4226,16 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 					} else {
 						sync_result.is_caf_trig = AFT_TRIG_CB;
 					}
+
 					sync_result.is_cancel_caf = AFT_CANC_NONE;
 					sync_result.is_need_rough_search = 0;
 					caf_start(af, &sync_result);
 					af->focus_state = AF_SEARCHING;
 				} else if (af->face_info.face_num != 0) {
-					for (i = 0; i < af->face_info.face_num; i++) {
-						if (af->face_info.face_info[i].sx <= af->face_info.frame_width && af->face_info.face_info[i].ex <= af->face_info.frame_width &&
-						    af->face_info.face_info[i].sy <= af->face_info.frame_height && af->face_info.face_info[i].ey <= af->face_info.frame_height) {
-							area =
-							    ABS(af->face_info.face_info[i].ex - af->face_info.face_info[i].sx) * ABS(af->face_info.face_info[i].ey -
-																     af->face_info.face_info[i].sy);
-							if (max_area < area) {
-								max_index = i;
-								max_area = area;
-							}
-						}
-					}
+
+					getface_info(&af->face_info, &max_area, &max_index);
 					if (max_index == af->face_info.face_num || 0 == max_area)
 						return rtn;
-
 					af->win.win_num = 1;
 					af->win.face[0].sx = af->face_info.face_info[max_index].sx;
 					af->win.face[0].ex = af->face_info.face_info[max_index].ex;
@@ -4203,19 +4244,8 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 					af->win.face[0].roll_angle = af->face_info.face_info[max_index].angle;
 					af->roll_angle = af->win.face[0].roll_angle;
 
-					if (af->roll_angle >= -180 && af->roll_angle <= 180) {
-						if (af->roll_angle >= -45 && af->roll_angle <= 45) {
-							af->f_orientation = FACE_UP;
-						} else if ((af->roll_angle >= -180 && af->roll_angle <= -135) || (af->roll_angle >= 135 && af->roll_angle <= 180)) {
-							af->f_orientation = FACE_DOWN;
-						} else if (af->roll_angle > -135 && af->roll_angle < -45) {
-							af->f_orientation = FACE_LEFT;
-						} else if (af->roll_angle > 45 && af->roll_angle < 135) {
-							af->f_orientation = FACE_RIGHT;
-						}
-					} else {
-						af->f_orientation = FACE_NONE;
-					}
+					af->f_orientation = getf_orientation(af->roll_angle);
+
 					af->pre_state = af->state;
 					af->state = STATE_FAF;
 					faf_start(af, &af->win);
@@ -4231,6 +4261,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		} else if ((AF_STOPPED == status_master.af_status || AF_STOPPED_INNER == status_master.af_status || AF_IDLE == status_master.af_status)
 			   && (AF_IDLE == af->focus_state || AF_STOPPED == af->focus_state)) {
 			af->slave_focus_cnt = 0;
+
 		} else if ((AF_STOPPED == status_master.af_status || AF_STOPPED_INNER == status_master.af_status)
 			   && AF_SEARCHING == af->focus_state) {
 			af->slave_focus_cnt = 0;
@@ -4258,23 +4289,10 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 						} else {
 							af_stop_search(af);
 							af->af_ops.calc(af->af_alg_cxt);
-							for (i = 0; i < af->face_info.face_num; i++) {
-								if (af->face_info.face_info[i].sx <= af->face_info.frame_width
-								    && af->face_info.face_info[i].ex <= af->face_info.frame_width
-								    && af->face_info.face_info[i].sy <= af->face_info.frame_height
-								    && af->face_info.face_info[i].ey <= af->face_info.frame_height) {
-									area =
-									    ABS(af->face_info.face_info[i].ex - af->face_info.face_info[i].sx) * ABS(af->face_info.face_info[i].ey -
-																		     af->face_info.face_info[i].sy);
-									if (max_area < area) {
-										max_index = i;
-										max_area = area;
-									}
-								}
-							}
+
+							getface_info(&af->face_info, &max_area, &max_index);
 							if (max_index == af->face_info.face_num || 0 == max_area)
 								return rtn;
-
 							af->win.win_num = 1;
 							af->win.face[0].sx = af->face_info.face_info[max_index].sx;
 							af->win.face[0].ex = af->face_info.face_info[max_index].ex;
@@ -4283,19 +4301,9 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 							af->win.face[0].roll_angle = af->face_info.face_info[max_index].angle;
 
 							af->roll_angle = af->win.face[0].roll_angle;
-							if (af->roll_angle >= -180 && af->roll_angle <= 180) {
-								if (af->roll_angle >= -45 && af->roll_angle <= 45) {
-									af->f_orientation = FACE_UP;
-								} else if ((af->roll_angle >= -180 && af->roll_angle <= -135) || (af->roll_angle >= 135 && af->roll_angle <= 180)) {
-									af->f_orientation = FACE_DOWN;
-								} else if (af->roll_angle > -135 && af->roll_angle < -45) {
-									af->f_orientation = FACE_LEFT;
-								} else if (af->roll_angle > 45 && af->roll_angle < 135) {
-									af->f_orientation = FACE_RIGHT;
-								}
-							} else {
-								af->f_orientation = FACE_NONE;
-							}
+
+							af->f_orientation = getf_orientation(af->roll_angle);
+
 							af->pre_state = af->state;
 							af->state = STATE_FAF;
 							faf_start(af, &af->win);
@@ -4326,8 +4334,6 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 		case STATE_RECORD_CAF:
 			if (AF_SEARCHING == af->focus_state) {
 				af_process_frame(af);
-			} else {
-				//af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_PRE_TRIGGER_DATA, NULL);
 			}
 			break;
 		case STATE_ENGINEER:
