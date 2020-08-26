@@ -4222,6 +4222,9 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         if (ret) {
             CMR_LOGE("post proc failed");
         }
+        /* if encoding, need wait encode end, or memory be freed when using */
+        cmr_snpshot_encode_semaphore(cxt->snp_cxt.snapshot_handle, 1);
+        cmr_snpshot_encode_semaphore(cxt->snp_cxt.snapshot_handle, 0);
         prev_free_cap_buf(handle, camera_id, is_restart);
     }
 

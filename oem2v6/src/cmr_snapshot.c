@@ -911,6 +911,23 @@ cmr_int snp_save_yuv_for_macro(cmr_handle snp_handle, struct snp_jpeg_param *jpe
     return ret;
 }
 #endif
+/* For: not free when encoding
+ * wait:0~post,1~waitv
+ * return: 0: ok, -1: fail
+ */
+cmr_int cmr_snpshot_encode_semaphore(cmr_handle snp_handle, int wait)
+{
+    struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
+
+    if (snp_cxt->is_inited == 0)
+        return -1;
+    if (wait) {
+        sem_wait(&snp_cxt->pre_start_encode_sync_sm);
+    } else {
+        sem_post(&snp_cxt->pre_start_encode_sync_sm);
+    }
+    return 0;
+}
 
 cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
     ATRACE_BEGIN(__FUNCTION__);

@@ -255,7 +255,7 @@ cmr_int zsl_snp_update_post_proc_param(cmr_handle snp_handle,
                                        struct img_frm *img_frame);
 cmr_int cmr_snapshot_thumb_yuv_proc(cmr_handle snp_handle,
                                     struct snp_thumb_yuv_param *thumb_parm);
-
+cmr_int cmr_snpshot_encode_semaphore(cmr_handle snp_handle, int wait); //wait:0~post,1~wait
 #ifdef __cplusplus
 }
 #endif
