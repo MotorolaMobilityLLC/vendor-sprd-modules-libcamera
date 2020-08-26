@@ -2182,7 +2182,7 @@
 	/*edge_smooth_mode*/
 	0x01,
 	/*bypass*/
-	0x00,
+	0x01,
 }
 ,
 /*param5.&BasePoint=1&*/

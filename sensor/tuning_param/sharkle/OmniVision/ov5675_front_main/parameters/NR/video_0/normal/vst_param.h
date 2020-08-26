@@ -290,7 +290,7 @@
 	}
 }
 ,
-/*param4.*/
+/*param4.&BasePoint=1&*/
 /*sensor_vst_level*/
 {
 	/*vst_param*/
