@@ -4171,6 +4171,42 @@ bypass_rec:
     return ret;
 }
 
+int SprdCamera3OEMIf::getAppSceneLevel(int appmodeId) {
+     int level = 0;
+     if(appmodeId == CAMERA_MODE_PANORAMA ||
+         appmodeId == CAMERA_MODE_3DNR_PHOTO ||
+         appmodeId == CAMERA_MODE_FILTER ||
+         appmodeId == -1) {
+         level = CAM_PERFORMANCE_LEVEL_4;
+     }else if (appmodeId == CAMERA_MODE_CONTINUE ||
+         appmodeId == CAMERA_MODE_FOV_FUSION_MODE) {
+         level = CAM_PERFORMANCE_LEVEL_6;
+     }
+     return level;
+}
+
+void SprdCamera3OEMIf::adjustPreviewPerformance(uint32_t frame_num,
+                                                const SPRD_DEF_Tag *sprddefInfo) {
+    if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
+            if ((int)(frame_num - mStartFrameNum) > CAM_POWERHINT_WAIT_COUNT) {
+                if (getMultiCameraMode() == MODE_BLUR ||
+                    getMultiCameraMode() == MODE_BOKEH ||
+                    getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_4 ||
+                    (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+                } else if (getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_6 ||
+                           sprddefInfo->slowmotion > 1) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
+                } else if (mRecordingMode == true) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
+                } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
+                }
+                mIsPowerhintWait = 0;
+            }
+    }
+}
+
 /* return: 0~success, 1:fail(as before goto exit) */
 int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
                             int64_t &buffer_timestamp ) {
@@ -4224,29 +4260,8 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
                 mlogInfo->fps = 1000 / tmp64;
         }
     }
-    if (!isCapturing() && mIsPowerhintWait && !mIsAutoFocus) {
-        if ((frame_num > mStartFrameNum) &&
-            (frame_num - mStartFrameNum > CAM_POWERHINT_WAIT_COUNT)) {
-            if (getMultiCameraMode() == MODE_BLUR ||
-                getMultiCameraMode() == MODE_BOKEH ||
-                mSprdAppmodeId == CAMERA_MODE_PANORAMA ||
-                mSprdAppmodeId == CAMERA_MODE_3DNR_PHOTO ||
-                mSprdAppmodeId == CAMERA_MODE_FILTER ||
-                mSprdAppmodeId == -1 ||
-                (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
-                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
-            } else if (mSprdAppmodeId == CAMERA_MODE_CONTINUE ||
-                mSprdAppmodeId == CAMERA_MODE_FOV_FUSION_MODE ||
-                       sprddefInfo->slowmotion > 1) {
-                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
-            } else if (mRecordingMode == true) {
-                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
-            } else if (getMultiCameraMode() != MODE_SINGLE_FACEID_UNLOCK) {
-                setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
-            }
-            mIsPowerhintWait = 0;
-        }
-    }
+
+    adjustPreviewPerformance(frame_num, sprddefInfo);
 
     if (frame->type == PREVIEW_FRAME) {
 #ifdef CONFIG_CAMERA_EIS

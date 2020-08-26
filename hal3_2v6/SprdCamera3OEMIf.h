@@ -427,10 +427,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void doFaceMakeup(struct camera_frame_type *frame);
     int getCameraTemp();
     void adjustFpsByTemp();
+    void adjustPreviewPerformance(uint32_t frame_num, const SPRD_DEF_Tag *sprddefInfo);
     int gatherInfoForMlog();
     int getInfoForMlog(const char *file_name, struct mlog_infotag *mlog_info);
     int getCalibrationInfo(struct mlog_infotag *mlog_info);
     int getAeInfo(struct mlog_infotag *mlog_info);
+    int getAppSceneLevel(int appmodeId);
     int saveMlogInfo();
     /* Cyclomatic complexity sub functions */
     void PreviewFrameUpdateMlogInfo(void);
