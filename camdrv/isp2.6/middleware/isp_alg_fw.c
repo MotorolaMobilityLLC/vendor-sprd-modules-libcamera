@@ -2076,58 +2076,31 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 	return ret;
 }
 
-static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
+enum isp_pm_cmd ispalg_get_param_type(cmr_u32 cfg_type)
 {
-	cmr_s32 ret = ISP_SUCCESS;
+	if (cfg_type == PARAM_CFG_START){
+		return ISP_PM_CMD_GET_ISP_ALL_SETTING;
+	}
+	else if (cfg_type == PARAM_CFG_DEFAULT){
+		return ISP_PM_CMD_GET_ISP_SETTING;
+	}
+	else{
+		return ISP_PM_CMD_GET_ISP_FDR_ALL_SETTING;
+	}
+}
+
+static void ispalg_cfg_prv_param(cmr_handle isp_alg_handle,
+		struct isp_pm_param_data *param_data, cmr_u32 param_num,
+		cmr_u32 gtm_ltm_on, cmr_u32 scene_id, cmr_u32 start, int dump_lsc)
+{
 	cmr_u32 i = 0;
-	cmr_u32 scene_id, start;
-	cmr_u32 gtm_ltm_on = 0, work_mode;
 	struct dcam_dev_lsc_info *lsc = NULL;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_pm_setting_params output;
-	struct isp_pm_param_data *param_data;
 	struct isp_u_blocks_info sub_block_info;
-	char value[PROPERTY_VALUE_MAX] = { 0x00 };
-	int dump_lsc;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	property_get("debug.vendor.cam.pm.lsc.dump", value, "0");
-	dump_lsc = !!atoi(value);
-
-	pthread_mutex_lock(&cxt->pm_getting_lock);
-
-	memset((void *)&output, 0x00, sizeof(struct isp_pm_setting_params));
 	memset((void *)&sub_block_info, 0x00, sizeof(sub_block_info));
 
-	if (cfg_type < PARAM_CFG_FDRL)
-		ispalg_ai_pro_param_compatible((cmr_handle) cxt);
-
-	if (cfg_type == PARAM_CFG_START)
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, NULL, &output);
-	else if (cfg_type == PARAM_CFG_DEFAULT)
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, NULL, &output);
-	else
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_FDR_ALL_SETTING, NULL, &output);
-
-	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
-
-	/* lock pm to avoid parameter is updated by algo while driver reading */
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_LOCK, NULL, NULL);
-
-	/* work_mode: 1 - capture only, 0 - auto/preview */
-	if ((cfg_type == PARAM_CFG_FDRL) || (cfg_type == PARAM_CFG_FDRH)) {
-		gtm_ltm_on = 0;
-		work_mode = 1;
-		scene_id = (cfg_type == PARAM_CFG_FDRL) ? PM_SCENE_FDRL : PM_SCENE_FDRH;
-		ISP_LOGD("cam%ld cfg FDR param %d\n", cxt->camera_id, cfg_type);
-	} else {
-		gtm_ltm_on = cxt->gtm_ltm_on;
-		work_mode = cxt->work_mode;
-		scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
-	}
-	start = (cfg_type == PARAM_CFG_START) ?  1 : 0;
-
-	param_data = output.prv_param_data;
-	for (i = 0; i < output.prv_param_num; i++) {
+	for (i = 0; i < param_num; i++) {
 		if ((gtm_ltm_on == 0) && (param_data->id == ISP_BLK_RAW_GTM ||
 			(param_data->id == ISP_BLK_RGB_LTM) || (param_data->id == ISP_BLK_YUV_LTM))) {
 			param_data++;
@@ -2148,10 +2121,19 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
 		ISP_LOGV("cfg block %x for prev.\n", param_data->id);
 		param_data++;
 	}
+}
 
-	if ((work_mode == 0) && cxt->zsl_flag) {
-		param_data = output.cap_param_data;
-		for (i = 0; i < output.cap_param_num; i++) {
+static void ispalg_cfg_cap_param(cmr_handle isp_alg_handle,
+		struct isp_pm_param_data *param_data, cmr_u32 param_num,
+		cmr_u32 start, int dump_lsc)
+{
+	cmr_u32 i = 0;
+	struct isp_u_blocks_info sub_block_info;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	memset((void *)&sub_block_info, 0x00, sizeof(sub_block_info));
+
+	for (i = 0; i < param_num; i++) {
 			if ((cxt->gtm_ltm_on == 0) &&
 				(param_data->id == ISP_BLK_RAW_GTM || param_data->id == ISP_BLK_RGB_LTM)) {
 				param_data++;
@@ -2169,6 +2151,62 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
 			}
 			param_data++;
 		}
+}
+
+static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
+{
+	cmr_s32 ret = ISP_SUCCESS;
+	cmr_u32 scene_id, start;
+	cmr_u32 gtm_ltm_on = 0, work_mode;
+	cmr_u32 param_num = 0;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_pm_setting_params output;
+	struct isp_pm_param_data *param_data;
+	struct isp_u_blocks_info sub_block_info;
+	enum isp_pm_cmd cmd = 0;
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+	int dump_lsc;
+
+	property_get("debug.vendor.cam.pm.lsc.dump", value, "0");
+	dump_lsc = !!atoi(value);
+
+	pthread_mutex_lock(&cxt->pm_getting_lock);
+
+	memset((void *)&output, 0x00, sizeof(struct isp_pm_setting_params));
+
+	if (cfg_type < PARAM_CFG_FDRL)
+		ispalg_ai_pro_param_compatible((cmr_handle) cxt);
+
+	cmd = ispalg_get_param_type(cfg_type);
+	ret = isp_pm_ioctl(cxt->handle_pm, cmd, NULL, &output);
+
+
+	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
+
+	/* lock pm to avoid parameter is updated by algo while driver reading */
+	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_LOCK, NULL, NULL);
+
+	/* work_mode: 1 - capture only, 0 - auto/preview */
+	if ((cfg_type == PARAM_CFG_FDRL) || (cfg_type == PARAM_CFG_FDRH)) {
+		gtm_ltm_on = 0;
+		work_mode = 1;
+		scene_id = (cfg_type == PARAM_CFG_FDRL) ? PM_SCENE_FDRL : PM_SCENE_FDRH;
+		ISP_LOGD("cam%ld cfg FDR param %d\n", cxt->camera_id, cfg_type);
+	} else {
+		gtm_ltm_on = cxt->gtm_ltm_on;
+		work_mode = cxt->work_mode;
+		scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
+	}
+	start = (cfg_type == PARAM_CFG_START) ?  1 : 0;
+
+	param_data = output.prv_param_data;
+	param_num = output.prv_param_num;
+	ispalg_cfg_prv_param((cmr_handle) cxt, param_data, param_num, gtm_ltm_on, scene_id, start, dump_lsc);
+
+	if ((work_mode == 0) && cxt->zsl_flag) {
+		param_data = output.cap_param_data;
+		param_num = output.prv_param_num;
+		ispalg_cfg_cap_param((cmr_handle) cxt, param_data, param_num, start, dump_lsc);
 	}
 
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_UNLOCK, NULL, NULL);
