@@ -26,10 +26,13 @@
 #include "dlfcn.h"
 #include "pd_algo.h"
 #include "cmr_common.h"
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
+#include <cutils/trace.h>
 
 static cmr_s32 PD_FRAME_ID = 0;
 static cmr_s32 g_getype2 = 0;
 static cmr_s32 g_getdual = 0;
+static cmr_s32 skip_fr = 0;
 
 struct sprd_pdaf_context {
 	cmr_u32 camera_id;
@@ -42,9 +45,11 @@ struct sprd_pdaf_context {
 	cmr_u8 pd_enable;
 	cmr_handle caller_handle;
 	isp_pdaf_cb pdaf_set_cb;
-	 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
+	cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
 	void *caller;
 	PD_GlobalSetting pd_gobal_setting;
+	struct pdaf_raw_buffer_info pd_buff_info;
+	struct sensor_setting pd_sensor_setting;
 	struct pdaf_ppi_info ppi_info;
 	struct pdaf_roi_info roi_info;
 	struct sprd_pdaf_report_t report_data;
@@ -54,22 +59,21 @@ struct sprd_pdaf_context {
 	struct afctrl_ot_info ot_info;
 	cmr_u32 pdaf_type;
 	void *af_addr;// afm statis
+	void *pdalgo_handle;
 	cmr_u32 af_addr_len;// afm statis buffer length
-	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
-	 cmr_u32(*pdaf_set_cfg_parm) (void *handle, struct isp_dev_pdaf_info * in_parm);
-	 cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
-	 cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
-	 cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	cmr_u32(*pdaf_set_cfg_parm) (void *handle, struct isp_dev_pdaf_info * in_parm);
+	cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
+	cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
+	cmr_int(*pd_buffer_format_convert) (void *handle);
 };
 
 #define PDAF_PATTERN_COUNT	 8
 #define PDAF_FULL_NUM_IMX258 49920
 #define PDAF_FULL_NUM_IMX362 1524096 //4032*756/2
 #define PDAF_FULL_NUM_IMX362_SIZE 3810240  //4032*756*5/4
-
 
 struct isp_dev_pdaf_info pdafTestCase[] = {
 	//bypass,  corrector_bypass      phase_map_corr_en; block_size; grid_mode;win;block;gain_upperbound;phase_txt_smooth;phase_gfilter;phase_flat_smoother;
@@ -119,35 +123,6 @@ struct isp_dev_pdaf_info *ispGetPdafTestCase(cmr_u32 index)
 	return &pdafTestCase[index];
 }
 
-cmr_int _ispSetPdafParam(void *param, cmr_u32 index)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_s32 i = 0;
-	struct isp_dev_pdaf_info *pdaf_info_ptr = (struct isp_dev_pdaf_info *)param;
-	struct isp_dev_pdaf_info *pdafTestCase_ptr = ispGetPdafTestCase(index);
-
-	pdaf_info_ptr->bypass = 0;
-	pdaf_info_ptr->block_size = pdafTestCase_ptr->block_size;
-	pdaf_info_ptr->win = pdafTestCase_ptr->win;
-	pdaf_info_ptr->mode_sel = pdafTestCase_ptr->mode_sel;
-	pdaf_info_ptr->skip_num = pdafTestCase_ptr->skip_num;
-
-	for (i = 0; i < 64; i++) {
-		pdaf_info_ptr->pattern_pixel_is_right[i] = pdafTestCase_ptr->pattern_pixel_is_right[i];
-		pdaf_info_ptr->pattern_pixel_row[i] = pdafTestCase_ptr->pattern_pixel_row[i];
-		pdaf_info_ptr->pattern_pixel_col[i] = pdafTestCase_ptr->pattern_pixel_col[i];
-	}
-
-	return rtn;
-}
-
-cmr_int isp_get_pdaf_default_param(struct isp_dev_pdaf_info * pdaf_param)
-{
-	cmr_s32 rtn = ISP_SUCCESS;
-	_ispSetPdafParam(pdaf_param, 0);
-
-	return rtn;
-}
 
 static cmr_int pdaf_setup(cmr_handle pdaf)
 {
@@ -161,17 +136,12 @@ static cmr_int pdaf_setup(cmr_handle pdaf)
 	   memset(&pdaf_param, 0x00, sizeof(pdaf_param));
 	   rtn = isp_get_pdaf_default_param(&pdaf_param);
 	   cxt->pdaf_set_cfg_parm(cxt->caller, &pdaf_param); */
-	if (cxt->pdaf_set_bypass) {
-		cxt->pdaf_set_bypass(cxt->caller, 0);
-	}
+
 	if (cxt->pdaf_set_work_mode) {
 		cxt->pdaf_set_work_mode(cxt->caller, 1);
 	}
 	if (cxt->pdaf_set_skip_num) {
 		cxt->pdaf_set_skip_num(cxt->caller, 0);
-	}
-	if (cxt->pdaf_set_ppi_info) {
-		cxt->pdaf_set_ppi_info(cxt->caller, &(cxt->ppi_info));
 	}
 	if (cxt->pdaf_set_roi) {
 		cxt->pdaf_set_roi(cxt->caller, &(cxt->roi_info));
@@ -212,7 +182,7 @@ cmr_s32 pdaf_otp_info_parser(struct pdaf_ctrl_init_in * in_p)
 	if (NULL != pdaf_otp_info_ptr && NULL != module_info_ptr) {
 		cmr_u8 *module_info = (cmr_u8 *) module_info_ptr->rdm_info.data_addr;
 
-		if (NULL != module_info) {
+		if (NULL != module_info && NULL != pdaf_otp_info_ptr->rdm_info.data_addr) {
 			if ((module_info[4] == 0 && module_info[5] == 1)
 				|| (module_info[4] == 0 && module_info[5] == 2)
 				|| (module_info[4] == 0 && module_info[5] == 3)
@@ -254,8 +224,9 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct sprd_pdaf_context *cxt = NULL;
 	struct isp_alg_fw_context *isp_ctx = NULL;
 	cmr_u16 i;
+	cmr_s32 res_w, res_h, res_pd_w, res_pd_h;
 	cmr_u32 base_w = 512, base_h = 384;
-	cmr_s32 offset_w = 0, offset_h = 0, temp_win_start_x = 0, temp_win_start_y = 0;
+	cmr_s32  temp_win_start_x = 0, temp_win_start_y = 0;
 	UNUSED(out);
 
 	if (!in_p) {
@@ -307,14 +278,13 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->pdaf_set_pdinfo_to_af = in_p->pdaf_set_pdinfo_to_af;
 	cxt->pdaf_set_cfg_parm = in_p->pdaf_set_cfg_param;
-	cxt->pdaf_set_bypass = in_p->pdaf_set_bypass;
 	cxt->pdaf_set_work_mode = in_p->pdaf_set_work_mode;
 	cxt->pdaf_set_skip_num = in_p->pdaf_set_skip_num;
-	cxt->pdaf_set_ppi_info = in_p->pdaf_set_ppi_info;
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
 	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
 	cxt->af_type = PASSIVE;
 	cxt->pdaf_type = in_p->pdaf_support;
+	cxt->pd_buffer_format_convert = in_p->pd_info->pdaf_format_converter;
 	/*TBD dSensorID 0:Imx258 Type3 1:OV13855 2:3L8 3:IMX258 Type2 4:IMX362 Dual PD 5:OV12A10*/
 	if (SENSOR_VENDOR_IMX258_TYPE3 == in_p->pd_info->vendor_type) {
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_0;
@@ -331,8 +301,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	} else if (SENSOR_VENDOR_OV16885 == in_p->pd_info->vendor_type) {
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_6;
 	} else {
-		ISP_LOGE("fail to support the sensor:%d\n", in_p->pd_info->vendor_type);
-		goto exit;
+		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_1024;
 	}
 
 	ISP_LOGV("PDALGO Init. Sensor Mode[%d] ", cxt->pd_gobal_setting.dSensorMode);
@@ -340,8 +309,6 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.dImageW = in_p->sensor_max_size.w;
 	cxt->pd_gobal_setting.dImageH = in_p->sensor_max_size.h;
 	cxt->pd_gobal_setting.OTPBuffer = in_p->pdaf_otp.otp_data;
-	cxt->pd_gobal_setting.dAreaW = (in_p->pd_info->pd_end_x - in_p->pd_info->pd_offset_x);
-	cxt->pd_gobal_setting.dAreaH = (in_p->pd_info->pd_end_y - in_p->pd_info->pd_offset_y);
 	cxt->pd_gobal_setting.dCalibration = 1;
 	cxt->pd_gobal_setting.dOVSpeedup = 1;
 	//0: Normal, 1:Mirror+Flip
@@ -354,6 +321,11 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.pd_pair_h = in_p->pd_info->pd_density_y;
 	cxt->pd_gobal_setting.pd_pairs_num_unit = in_p->pd_info->pd_pos_size;
 
+	cxt->pd_sensor_setting.dBeginX_orig = in_p->pd_info->pd_offset_x;
+	cxt->pd_sensor_setting.dBeginY_orig = in_p->pd_info->pd_offset_y;
+	cxt->pd_sensor_setting.dAreaW_orig = (in_p->pd_info->pd_end_x - in_p->pd_info->pd_offset_x);
+	cxt->pd_sensor_setting.dAreaH_orig = (in_p->pd_info->pd_end_y - in_p->pd_info->pd_offset_y);
+
 	if((in_p->pd_info->pd_pos_size * 2) > PD_PIXEL_PAIRS_NUM){
 		ISP_LOGE("Pd pixels number greater than Array Size!");
 		goto exit;
@@ -364,37 +336,33 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		cxt->pd_gobal_setting.pd_pos_col[i] = in_p->pd_info->pd_pos_col[i];
 	}
 
-	if(cxt->pd_gobal_setting.dAreaW < ROI_Width * 2 || cxt->pd_gobal_setting.dAreaH < ROI_Height * 2){
-		base_w = (cxt->pd_gobal_setting.dAreaW / cxt->pd_gobal_setting.pd_unit_w / 8) * cxt->pd_gobal_setting.pd_unit_w;
-		base_h = (cxt->pd_gobal_setting.dAreaH / cxt->pd_gobal_setting.pd_unit_h / 8) * cxt->pd_gobal_setting.pd_unit_h;
-	}
-
 	cxt->pd_gobal_setting.dBeginX = in_p->pd_info->pd_offset_x;
 	cxt->pd_gobal_setting.dBeginY = in_p->pd_info->pd_offset_y;
+
+
+	//step1: calculate the size of each block in 8*8. If pd_area can cover 512*384, the block size is set to 512*384; otherwise, adjust the block size
+	if (cxt->pd_sensor_setting.dAreaW_orig < base_w * 8)
+	{
+		base_w = (cxt->pd_sensor_setting.dAreaW_orig / 8 / cxt->pd_gobal_setting.pd_unit_w) * cxt->pd_gobal_setting.pd_unit_w;
+	}
+	if (cxt->pd_sensor_setting.dAreaH_orig < base_h * 8)
+	{
+		base_h = (cxt->pd_sensor_setting.dAreaH_orig / 8 / cxt->pd_gobal_setting.pd_unit_h) * cxt->pd_gobal_setting.pd_unit_h;
+	}
+
+	//step2:calculate the starting coordinates of pd_are required by the algorithm library
+	res_w = (cxt->pd_sensor_setting.dAreaW_orig - base_w * 8) / 2 ;
+	res_pd_w = cxt->pd_gobal_setting.pd_unit_w * (res_w / cxt->pd_gobal_setting.pd_unit_w);
+	cxt->pd_gobal_setting.dBeginX = cxt->pd_sensor_setting.dBeginX_orig + res_pd_w;
+	res_h = (cxt->pd_sensor_setting.dAreaH_orig - base_h * 8) / 2 ;
+	res_pd_h = cxt->pd_gobal_setting.pd_unit_h * (res_h / cxt->pd_gobal_setting.pd_unit_h);
+	cxt->pd_gobal_setting.dBeginY = cxt->pd_sensor_setting.dBeginY_orig + res_pd_h;
+
+	//step3:calculate the starting coordinates of ROI_are
 	temp_win_start_x = cxt->pd_gobal_setting.dBeginX + 2 * base_w;
 	temp_win_start_y = cxt->pd_gobal_setting.dBeginY + 2 * base_h;
-	offset_w = cxt->pd_gobal_setting.dAreaW - 8 * base_w;
-	offset_h = cxt->pd_gobal_setting.dAreaH - 8 * base_h;
 
-	if((offset_w / cxt->pd_gobal_setting.pd_unit_w) > 1){
-		if(0 == (offset_w / cxt->pd_gobal_setting.pd_unit_w) % 2){
-			cxt->pd_gobal_setting.dBeginX += (offset_w / 2);
-			temp_win_start_x += (offset_w / 2);
-		} else {
-			cxt->pd_gobal_setting.dBeginX += ((offset_w - cxt->pd_gobal_setting.pd_unit_w) / 2);
-			temp_win_start_x += ((offset_w - cxt->pd_gobal_setting.pd_unit_w) / 2);
-		}
-	}
 
-	if((offset_h / cxt->pd_gobal_setting.pd_unit_h) > 1){
-		if(0 == (offset_h / cxt->pd_gobal_setting.pd_unit_h) % 2){
-			cxt->pd_gobal_setting.dBeginY += (offset_h / 2);
-			temp_win_start_y += (offset_h / 2);
-		} else {
-			cxt->pd_gobal_setting.dBeginY += ((offset_h - cxt->pd_gobal_setting.pd_unit_h) / 2);
-			temp_win_start_y += ((offset_h - cxt->pd_gobal_setting.pd_unit_h) / 2);
-		}
-	}
 	cxt->pd_gobal_setting.dAreaW = 8 * base_w;
 	cxt->pd_gobal_setting.dAreaH = 8 * base_h;
 	ISP_LOGI("ROI_start_coor(%d, %d) ROI_WH(%d, %d) PD_area_begin_coor(%d, %d) PD_area_WH(%d, %d)", temp_win_start_x, temp_win_start_y,
@@ -437,6 +405,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	}
 	char prop[256];
 	char prop1[256];
+	char prop2[256];
 
 	property_get("debug.isp.pdaf.getype2", prop, "0");
 	g_getype2 = atoi(prop);
@@ -444,18 +413,22 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	property_get("debug.isp.pdaf.getdual", prop1, "0");
 	g_getdual = atoi(prop1);
 
+	property_get("debug.isp.pdaf.skipframenum", prop2, "30");
+	skip_fr = atoi(prop2);
+
 	if(cxt->pd_gobal_setting.dSensorMode ==SENSOR_ID_5){
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_1;
-		ret = PD_Init((void *)&cxt->pd_gobal_setting);
+		cxt->pdalgo_handle = PD_Init((void *)&cxt->pd_gobal_setting);
 		cxt->pd_gobal_setting.dSensorMode = SENSOR_ID_5;
 	}
 	else{
-		ret = PD_Init((void *)&cxt->pd_gobal_setting);
+		ISP_LOGE("is going to do pd_init");
+		cxt->pdalgo_handle = PD_Init((void *)&cxt->pd_gobal_setting);
 	}
 
 	//ret = PD_Init((void *)&cxt->pd_gobal_setting);
 
-	if (ret) {
+	if (cxt->pdalgo_handle == NULL) {
 		ISP_LOGE("fail to init lib %ld", ret);
 		goto exit;
 	}
@@ -484,7 +457,7 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 		if(NULL != cxt->af_addr)// free afm statis buffer
 			free(cxt->af_addr);
 
-		ret = (cmr_s32) PD_Uninit();
+		ret = (cmr_s32) PD_Uninit(cxt->pdalgo_handle);
 		memset(cxt, 0x00, sizeof(*cxt));
 		free(cxt);
 		cxt = NULL;
@@ -514,18 +487,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	cmr_s32 *pPD_left_reorder = NULL;
 	cmr_s32 *pPD_right_reorder = NULL;
 
-	//For IMX258 Type2
-	cmr_u16 *pBufLeft_Type2 = NULL;
-	cmr_u16 *pBufRight_Type2 = NULL;
-	cmr_u16 *pBufLeft_Type2_ROI = NULL;
-	cmr_u16 *pBufRight_Type2_ROI = NULL;
-	cmr_s32 ROI_Start = 0;
-	cmr_s32 dummy = 80;
-	cmr_s32 offset = 80*5;
-	cmr_s32 index = 0;
-
-	cmr_s32 i=0;
-	cmr_s32 j=0;
 	cmr_s32 area_index;
 	cmr_s32 pixel_num_x = 0;
 	cmr_s32 pixel_num_y = 0;
@@ -535,6 +496,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	void *pInPhaseBuf_right = NULL;
 	cmr_u16 *pInPhaseBuf_Type2 = NULL;
 	cmr_u8 * pInPhaseBuf_Dual_PD = NULL;
+	cmr_u16 *pLeftBuf = NULL, *pRightBuf = NULL, *pRight_input_Buf = NULL;
 
 	UNUSED(out);
 	if (!in) {
@@ -548,17 +510,18 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	memset(&pd_calc_result, 0, sizeof(pd_calc_result));
 	cxt->is_busy = 1;
 
-	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_3){
+	if (cxt->pdaf_type == 2){
 		pInPhaseBuf_Type2 = (cmr_u16 *) (cmr_uint)(proc_in->u_addr);
-		ISP_LOGV("pInPhaseBuf_Type2 = %p", pInPhaseBuf_Type2);
+		ISP_LOGV("pInPhaseBuf_Type2 = %p", pInPhaseBuf_Type2);      //type2
 	}
 	else if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4){
 		pInPhaseBuf_Dual_PD = (cmr_u8 *) (cmr_uint)(proc_in->u_addr);
-		ISP_LOGV("pInPhaseBuf_Dual_PD = %p", pInPhaseBuf_Dual_PD);
-	}else{
+		ISP_LOGV("pInPhaseBuf_Dual_PD = %p", pInPhaseBuf_Dual_PD);  //dual pd
+	}
+	else {
 		pInPhaseBuf_left = (cmr_s32 *) (cmr_uint)(proc_in->u_addr);
 		pInPhaseBuf_right = (cmr_s32 *) (cmr_uint)(proc_in->u_addr_right);
-		ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);
+		ISP_LOGV("pInPhaseBuf_left = %p", pInPhaseBuf_left);       //type3
 	}
 
 
@@ -567,13 +530,16 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	dRectW = cxt->roi_info.win.end_x - cxt->roi_info.win.start_x;
 	dRectH = cxt->roi_info.win.end_y - cxt->roi_info.win.start_y;
 
-	pixel_num_x = dRectW / cxt->pd_gobal_setting.pd_pair_w;
-	pixel_num_y = dRectH / cxt->pd_gobal_setting.pd_pair_h;
-	pixel_num = pixel_num_x * pixel_num_y;
+
+	if(0 != cxt->pd_gobal_setting.pd_pair_w && 0 != cxt->pd_gobal_setting.pd_pair_h){
+		pixel_num_x = dRectW / cxt->pd_gobal_setting.pd_pair_w;
+		pixel_num_y = dRectH / cxt->pd_gobal_setting.pd_pair_h;
+		pixel_num = pixel_num_x * pixel_num_y;
+	}
 
 	property_get("debug.camera.dump.pdaf.raw",(char *)value,"0");
-	if(atoi(value)) {
-		if((PD_FRAME_ID % 30) ==0){
+	if(atoi(value) && 3 == cxt->pdaf_type) {
+		if((PD_FRAME_ID % skip_fr) ==0){
 			//#define MLOG_BUF_SIZE 1024
 			#define MLOG_FILE_NAME_SIZE 200
 			char file_name_r[MLOG_FILE_NAME_SIZE] = {0};
@@ -611,106 +577,97 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	ISP_LOGV("PDALGO Converter. Sensor[%d] Mode[%d]", cxt->pd_gobal_setting.dSensorSetting, cxt->pd_gobal_setting.dSensorMode);
 
-	pPD_left  = (cmr_s32 *)malloc(pixel_num*  (cmr_s32) sizeof(cmr_s32));
-	pPD_right = (cmr_s32 *)malloc(pixel_num*  (cmr_s32) sizeof(cmr_s32));
-	pPD_left_reorder  = (cmr_s32 *)malloc(pixel_num * (cmr_s32) sizeof(cmr_s32));
-	pPD_right_reorder = (cmr_s32 *)malloc(pixel_num* (cmr_s32) sizeof(cmr_s32));
+	pPD_left  = (cmr_s32 *)malloc(pixel_num* (cmr_s32)sizeof(cmr_s32));
+	pPD_right = (cmr_s32 *)malloc(pixel_num* (cmr_s32)sizeof(cmr_s32));
+	pPD_left_reorder  = (cmr_s32 *)malloc(pixel_num* (cmr_s32)sizeof(cmr_s32));
+	pPD_right_reorder = (cmr_s32 *)malloc(pixel_num* (cmr_s32)sizeof(cmr_s32));
 
-	//For IMX258 Type2
-	pBufLeft_Type2 = (cmr_u16 *)malloc(PDAF_FULL_NUM_IMX258*sizeof(cmr_u16));
-	pBufRight_Type2 = (cmr_u16 *)malloc(PDAF_FULL_NUM_IMX258*sizeof(cmr_u16));
-	pBufLeft_Type2_ROI = (cmr_u16 *)malloc(12288*sizeof(cmr_u16));
-	pBufRight_Type2_ROI = (cmr_u16 *)malloc(12288*sizeof(cmr_u16));
+	ATRACE_BEGIN("PDAlgo_Calc_process_convert");
 
-	if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_3) {
-		dummy = 80;
-		offset = 80*5;
-		index = 0;
-		if(cxt->pd_gobal_setting.dSensorSetting == 1){ //Mirror+Flip
-			for(i=0;i<153600;i=i+1600){
-				for(j=0;j<260;j++){
-					*(pBufRight_Type2+index+j) = *(pInPhaseBuf_Type2+i+dummy+j);
-					*(pBufLeft_Type2+index+j) = *(pInPhaseBuf_Type2+i+offset+j);
-				}
-				index = index+ 260;
+	if (cxt->pdaf_type == 2){
+		cmr_s32 BlockWidth = cxt->pd_gobal_setting.pd_unit_w;
+		cmr_s32 BlockHeight = cxt->pd_gobal_setting.pd_unit_h;
+		cmr_s32 start_x = cxt->pd_sensor_setting.dBeginX_orig;
+		cmr_s32 start_y = cxt->pd_sensor_setting.dBeginY_orig;
+		cmr_s32 Block_num_x = cxt->pd_sensor_setting.dAreaW_orig / BlockWidth;
+		cmr_s32 Block_num_y = cxt->pd_sensor_setting.dAreaH_orig / BlockHeight;
+		cmr_s32 pd_pixels_num = Block_num_x * Block_num_y * cxt->pd_gobal_setting.pd_pairs_num_unit;
 
-				for(j=0;j<260;j++){
-					*(pBufLeft_Type2+index+j) = *(pInPhaseBuf_Type2+i+800+dummy+j);
-					*(pBufRight_Type2+index+j) = *(pInPhaseBuf_Type2+i+800+offset+j);
-				}
-				index = index+ 260;
-			}
-		}
-		else{ //Normal
-			for(i=0;i<153600;i=i+1600){
-				for(j=0;j<260;j++){
-					*(pBufLeft_Type2+index+j) = *(pInPhaseBuf_Type2+i+dummy+j);
-					*(pBufRight_Type2+index+j) = *(pInPhaseBuf_Type2+i+offset+j);
-				}
-				index = index+ 260;
+		cmr_s32 data_flow_w = Block_num_x * (BlockWidth / cxt->pd_gobal_setting.pd_pair_w);
+		cmr_s32 data_flow_h = Block_num_y * (BlockHeight / cxt->pd_gobal_setting.pd_pair_h);
+		cmr_s32 data_flow_roi_startX = (dRectX - start_x) / cxt->pd_gobal_setting.pd_pair_w;
+		cmr_s32 data_flow_roi_startY = ((dRectY - start_y) / cxt->pd_gobal_setting.pd_pair_h);
+		cmr_s32 data_flow_roi_width = dRectW  / cxt->pd_gobal_setting.pd_pair_w;
+		cmr_s32 data_flow_roi_height = dRectH /  cxt->pd_gobal_setting.pd_pair_h;
 
-				for(j=0;j<260;j++){
-					*(pBufRight_Type2+index+j) = *(pInPhaseBuf_Type2+i+800+dummy+j);
-					*(pBufLeft_Type2+index+j) = *(pInPhaseBuf_Type2+i+800+offset+j);
-				}
-				index = index+ 260;
-			}
-		}
+		cmr_s32 i, k, start_index = 0;
 
-		//Crop ROI
-		ROI_Start = 48*260+64;
-		for(i=0;i<96;i++){
-			for(j=0;j<128;j++){
-				*(pPD_left+i*128+j) = *(pBufLeft_Type2 + ((cmr_s32) ROI_Start + i*260+j));
-				*(pPD_right+i*128+j) = *(pBufRight_Type2 +  ((cmr_s32)ROI_Start + i*260+j));
-				*(pBufLeft_Type2_ROI+i*128+j) = *(pBufLeft_Type2 + ((cmr_s32)ROI_Start + i*260+j));
-				*(pBufRight_Type2_ROI+i*128+j) = *(pBufRight_Type2 + ((cmr_s32)ROI_Start + i*260+j));
+		pLeftBuf = (void *)malloc(sizeof(cmr_u32) * pd_pixels_num);
+		pRightBuf = (void *)malloc(sizeof(cmr_u32) * pd_pixels_num);
+		pRight_input_Buf = (void *)malloc(sizeof(cmr_u32) * pd_pixels_num * 2);
+		memset(pLeftBuf, 0, sizeof(cmr_u32) * pd_pixels_num);
+		memset(pRightBuf, 0, sizeof(cmr_u32) * pd_pixels_num);
+		memset(pRight_input_Buf, 0, sizeof(cmr_u32) * pd_pixels_num * 2);
+
+		cxt->pd_buff_info.left_buffer = (void *)pInPhaseBuf_Type2;
+		cxt->pd_buff_info.right_buffer = (void *)pRight_input_Buf;
+		cxt->pd_buff_info.left_output = (void *)pLeftBuf;
+		cxt->pd_buff_info.right_output = (void *)pRightBuf;
+		
+		ISP_LOGI("the buffer addr is in_left->[%p],in_right->[%p]; out_left->[%p]; out_right->[%p]", cxt->pd_buff_info.left_buffer, cxt->pd_buff_info.right_buffer, cxt->pd_buff_info.left_output,cxt->pd_buff_info.right_output);
+		ret = cxt->pd_buffer_format_convert((void *)(&cxt->pd_buff_info));
+
+		start_index = (data_flow_roi_startY * data_flow_w) + data_flow_roi_startX ; //ROI area start offset
+		for(i = 0; i < data_flow_roi_height ; i++){
+			for(k = 0; k < data_flow_roi_width; k++){
+				pPD_left[k + i * data_flow_roi_width] = (cmr_s32)pLeftBuf[start_index + k + i * data_flow_w];
+				pPD_right[k + i * data_flow_roi_width] = (cmr_s32)pRightBuf[start_index + k + i * data_flow_w];
 			}
 		}
 
-		//Dump Left/Right Buffer [adb shell setprop debug.isp.pdaf.getype2 1]
-		if(g_getype2 == 1) {
-			if((PD_FRAME_ID % 40) ==0){
-				char file_name_l[200] = {0};
-				char file_name_r[200] = {0};
-				char file_name_l_ROI[200] = {0};
-				char file_name_r_ROI[200] = {0};
+		ISP_LOGV("SensorID[%d] Block[%d] PDStart_coor[%d, %d] Block_numWH[%d, %d]", cxt->pd_gobal_setting.dSensorMode, BlockWidth, start_x, start_y, Block_num_x, Block_num_y);
+		ISP_LOGV("Data_flow: WH[%d, %d] Roi_startXY[%d, %d] Roi_WH[%d, %d] ROI_StartIndex[%d]", data_flow_w, data_flow_h, data_flow_roi_startX, data_flow_roi_startY,
+				data_flow_roi_width, data_flow_roi_height, start_index);
 
-				FILE *fp = NULL;
-				sprintf(file_name_l, CAMERA_DATA_FILE"/Type2BufferL_%d.raw", PD_FRAME_ID);
-				sprintf(file_name_r, CAMERA_DATA_FILE"/Type2BufferR_%d.raw", PD_FRAME_ID);
-				sprintf(file_name_l_ROI, CAMERA_DATA_FILE"/Type2BufferL_ROI_%d.raw", PD_FRAME_ID);
-				sprintf(file_name_r_ROI, CAMERA_DATA_FILE"/Type2BufferR_ROI_%d.raw", PD_FRAME_ID);
+		if(g_getype2 == 1 && 0 == PD_FRAME_ID % skip_fr){
+			//dump sensor pdaf raw
+			char file_name[200] = {0};
+			FILE *fp = NULL;
+			sprintf(file_name, CAMERA_DATA_FILE"/SensorRaw%d_%dX%d_%d.mipi_raw", cxt->pd_gobal_setting.dSensorMode, data_flow_w, data_flow_h, PD_FRAME_ID);
+ 			fp = fopen(file_name, "wb");
+ 			fwrite((void*)pInPhaseBuf_Type2, 1, ((data_flow_w * data_flow_h * 2) / 4 * 5), fp);
+ 			fclose(fp);
+  			fp = NULL;
+			//dump pdaf mipi_raw to left_raw
+			sprintf(file_name, CAMERA_DATA_FILE"/Left_Raw_%dX%d_%d.raw", data_flow_w, data_flow_h , PD_FRAME_ID);
+			fp = fopen(file_name, "wb");
+			fwrite((void*)pLeftBuf, sizeof(cmr_u32), data_flow_w * data_flow_h, fp);
+			fclose(fp);
+			fp = NULL;
+			//dump pdaf mipi_raw to right_raw
+			sprintf(file_name, CAMERA_DATA_FILE"/Right_Raw_%dX%d_%d.raw", data_flow_w, data_flow_h, PD_FRAME_ID);
+			fp = fopen(file_name, "wb");
+			fwrite((void*)pRightBuf, sizeof(cmr_u32), data_flow_w * data_flow_h, fp);
+			fclose(fp);
+			fp = NULL;
 
-				fp = fopen(file_name_l, "wb");
-				if (fp != NULL && pBufLeft_Type2 != NULL){
-					fwrite((void*)pBufLeft_Type2, 1, 99840, fp); //49920*2 bytes
-					fclose(fp);
-				}
-				fp = fopen(file_name_r, "wb");
-				if (fp != NULL && pBufRight_Type2 != NULL){
-					fwrite((void*)pBufRight_Type2, 1, 99840, fp); //49920*2 bytes
-					fclose(fp);
-				}
-				fp = fopen(file_name_l_ROI, "wb");
-				if (fp != NULL && pBufLeft_Type2_ROI != NULL){
-					fwrite((void*)pBufLeft_Type2_ROI, 1, 24576, fp); //12288*2 bytes
-					fclose(fp);
-				}
-				fp = fopen(file_name_r_ROI, "wb");
-				if (fp != NULL && pBufRight_Type2_ROI != NULL){
-					fwrite((void*)pBufRight_Type2_ROI, 1, 24576, fp); //12288*2 bytes
-					fclose(fp);
-				}
+			//dump left_raw to ROI_raw (4bytes)
+			sprintf(file_name, CAMERA_DATA_FILE"/Roi_Left_%dX%d_%d.raw", data_flow_roi_width, data_flow_roi_height, PD_FRAME_ID);
+			fp = fopen(file_name, "wb");
+			fwrite((void*)pPD_left, sizeof(cmr_u32), data_flow_roi_width * data_flow_roi_height , fp);
+			fclose(fp);
+			fp = NULL;
 
-				fp = NULL;
-			}
-			PD_FRAME_ID++;
+			sprintf(file_name, CAMERA_DATA_FILE"/Roi_Right_%dX%d_%d.raw", data_flow_roi_width, data_flow_roi_height , PD_FRAME_ID);
+			fp = fopen(file_name, "wb");
+			fwrite((void*)pPD_right, sizeof(cmr_u32), data_flow_roi_width * data_flow_roi_height , fp);
+			fclose(fp);
+			fp = NULL;
 		}
+		PD_FRAME_ID++;
 	}
-
 	//For IMX362 Dual PD Mode4
-	if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_4) {
+	if(cxt->pd_gobal_setting.dSensorMode==SENSOR_ID_4 && 4 == cxt->pdaf_type) {
 #if(0)
 		ISP_LOGI("PDALGO Dual PD Parser S: SensorID[%d]", cxt->pd_gobal_setting.dSensorMode);
 
@@ -736,7 +693,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 #endif
 		//Dump Left/Right Dual PD Buffer [adb shell setprop debug.isp.pdaf.getdual 1]
 		if(g_getdual == 1) {
-			if((PD_FRAME_ID % 30) ==0){
+			if((PD_FRAME_ID % skip_fr) ==0){
 				char file_name_dual_l[200] = {0};
 				char file_name_dual_r[200] = {0};
 				cmr_u8 temp[5] = {0};
@@ -763,28 +720,26 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 					dual_right0 = ((temp[1] << 2) | ((temp[4] & 0x0c) >> 2));
 					dual_right1 = ((temp[3] << 2) | ((temp[4] & 0xc0) >> 6));
-
-					if (fpL !=NULL){
+					if(fpL != NULL){
 						fwrite(&dual_left0, sizeof(cmr_s16), 1, fpL);
 					}
-					if ( fpL !=NULL){
+					if(fpL != NULL){
 						fwrite(&dual_left1, sizeof(cmr_s16), 1, fpL);
 					}
-					if (fpR !=NULL){
+					if(fpR != NULL){
 						fwrite(&dual_right0, sizeof(cmr_s16), 1, fpR);
 					}
-					if (fpR !=NULL){
+					if(fpR != NULL){
 						fwrite(&dual_right1, sizeof(cmr_s16), 1, fpR);
 					}
 					dual_index = dual_index + 5;
 				}
-				if(fpL !=NULL){
+				if(fpL != NULL){
 					fclose(fpL);
 				}
-				if(fpR !=NULL){
+				if(fpR != NULL){
 					fclose(fpR);
 				}
-
 				DualTempBuf = NULL;
 				fpL = NULL;
 				fpR = NULL;
@@ -793,35 +748,41 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		}
 	}
 
-	if( (cxt->pd_gobal_setting.dSensorMode != SENSOR_ID_3) && (cxt->pd_gobal_setting.dSensorMode != SENSOR_ID_4)) {
-	  ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, pixel_num, pixel_num);
+	ATRACE_BEGIN("PDAlgo_Calc_process_convert type3");
+	if(3 == cxt->pdaf_type) {
+		// cxt->pd_buff_info.left_buffer = (void *)pInPhaseBuf_left;
+		// cxt->pd_buff_info.right_buffer = (void *)pInPhaseBuf_right;
+		// cxt->pd_buff_info.left_output = (void *)pPD_left;
+		// cxt->pd_buff_info.right_output = (void *)pPD_right;
+		// cxt->pd_buff_info.roi_pixel_numb = pixel_num;
+		// ret = cxt->pd_buffer_format_convert((void *)(&cxt->pd_buff_info));
+		ret = PD_PhaseFormatConverter((cmr_u8 *)pInPhaseBuf_left, (cmr_u8 *)pInPhaseBuf_right, pPD_left, pPD_right, pixel_num, pixel_num);
 	}
 	else{
 		ISP_LOGV("PDALGO No need Converter. SensorID[%d]", cxt->pd_gobal_setting.dSensorMode);
 	}
-
+	ATRACE_END();
 	pPD_left_final = pPD_left;
 	pPD_right_final = pPD_right;
 
 	//Phase Pixel Reorder: for 3L8
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_2) {
-		dBuf_width = dRectW / SENSOR_ID_2_BLOCK_W * 4;
-		dBuf_height = dRectH / SENSOR_ID_2_BLOCK_H * 4;
+		dBuf_width = dRectW / cxt->pd_gobal_setting.pd_unit_w * 4;
+		dBuf_height = dRectH / cxt->pd_gobal_setting.pd_unit_h * 4;
 		ISP_LOGI("PDALGO Reorder Buf. W[%d] H[%d]", dBuf_width, dBuf_height);
 		ret = PD_PhasePixelReorder(pPD_left_final, pPD_right_final, pPD_left_reorder, pPD_right_reorder, dBuf_width, dBuf_height);
 	}
-
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4) {
 		switch(cxt->af_type) {
 		case MULTIZONE:
 			for (area_index = 0; area_index < cxt->af_roi.ROI_Size; area_index++) {
-				ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, cxt->af_roi.ROI_info[area_index].Center_X, cxt->af_roi.ROI_info[area_index].Center_Y,
+				ret = PD_DoPoint2(cxt->pdalgo_handle,(void *)pInPhaseBuf_Dual_PD, cxt->af_roi.ROI_info[area_index].Center_X, cxt->af_roi.ROI_info[area_index].Center_Y,
 				 cxt->af_roi.ROI_info[area_index].sWidth, cxt->af_roi.ROI_info[area_index].sHeight);
 				if (ret) {
 					ISP_LOGE("fail to do algo.");
 					goto exit;
 				}
-				ret = PD_GetResult(&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
+				ret = PD_GetResult(cxt->pdalgo_handle,&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
 				if (ret) {
 					ISP_LOGE("fail to get pd_result.");
 					goto exit;
@@ -831,15 +792,15 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		case ACTIVE:
 			if(1 == cxt->ot_switch) {
 				ISP_LOGI("center x,y (%d,%d)", cxt->ot_info.centorX, cxt->ot_info.centorY);
-				ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, cxt->ot_info.centorX, cxt->ot_info.centorY, 480, 480);
+				ret = PD_DoPoint2(cxt->pdalgo_handle,(void *)pInPhaseBuf_Dual_PD, cxt->ot_info.centorX, cxt->ot_info.centorY, 480, 480);
 			} else {
-				ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, ((cxt->touch_area.sx + cxt->touch_area.ex)>>2)<<1, ((cxt->touch_area.sy + cxt->touch_area.ey)>>2)<<1,
+				ret = PD_DoPoint2(cxt->pdalgo_handle,(void *)pInPhaseBuf_Dual_PD, ((cxt->touch_area.sx + cxt->touch_area.ex)>>2)<<1, ((cxt->touch_area.sy + cxt->touch_area.ey)>>2)<<1,
 					 480, 480);
 			}
 		break;
 		case PASSIVE:
 		default:
-			ret = PD_DoPoint2((void *)pInPhaseBuf_Dual_PD, 2016, 1512, 512, 384);
+			ret = PD_DoPoint2(cxt->pdalgo_handle,(void *)pInPhaseBuf_Dual_PD, 2016, 1512, 512, 384);
 		break;
 		}
 		if (ret) {
@@ -850,9 +811,11 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	else {
 		for (area_index = 0; area_index < 1; area_index++) {
 			if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_2) {
-				ret = PD_DoType2((void *)pPD_left_reorder, (void *)pPD_right_reorder, dRectX, dRectY, dRectW, dRectH, area_index);
+				ret = PD_DoType2(cxt->pdalgo_handle,(void *)pPD_left_reorder, (void *)pPD_right_reorder, dRectX, dRectY, dRectW, dRectH, area_index);
 			} else {
-				ret = PD_DoType2((void *)pPD_left_final, (void *)pPD_right_final, dRectX, dRectY, dRectW, dRectH, area_index);
+				ATRACE_BEGIN("PDAlgo_Calc_DoType2");
+				ret = PD_DoType2(cxt->pdalgo_handle,(void *)pPD_left_final, (void *)pPD_right_final, dRectX, dRectY, dRectW, dRectH, area_index);
+				ATRACE_END();
 			}
 
 			if (ret) {
@@ -861,7 +824,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			}
 		}
 		for (area_index = 0; area_index < 1; area_index++) {
-			ret = PD_GetResult(&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
+			ret = PD_GetResult(cxt->pdalgo_handle,&pd_calc_result.pdConf[area_index], &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[area_index], area_index);
 			if (ret) {
 				ISP_LOGE("fail to do get pd_result.");
 				goto exit;
@@ -869,7 +832,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		}
 	}
 	if(MULTIZONE != cxt->af_type) {// normal way for PASSIVE and ACTIVE mode
-		ret = PD_GetResult(&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 0);
+		ret = PD_GetResult(cxt->pdalgo_handle,&pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4], &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 0);
 		if (ret) {
 			ISP_LOGE("fail to do get pd_result.");
 			goto exit;
@@ -897,14 +860,37 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
   exit:
 	cxt->is_busy = 0;
 
-	free(pPD_left);
-	free(pPD_right);
-	free(pPD_left_reorder);
-	free(pPD_right_reorder);
-	free(pBufLeft_Type2);
-	free(pBufRight_Type2);
-	free(pBufLeft_Type2_ROI);
-	free(pBufRight_Type2_ROI);
+	if(pPD_left != NULL){
+		free(pPD_left);
+		pPD_left = NULL;
+	}
+	if(pPD_right != NULL){
+		free(pPD_right);
+		pPD_right = NULL;
+	}
+	if(pPD_left_reorder != NULL){
+		free(pPD_left_reorder);
+		pPD_left_reorder = NULL;
+	}
+	if(pPD_right_reorder != NULL){
+		free(pPD_right_reorder);
+		pPD_right_reorder = NULL;
+	}
+	if(cxt->pd_buff_info.left_buffer != NULL){
+		cxt->pd_buff_info.left_buffer = NULL;
+	}
+	if(pLeftBuf != NULL){
+		free(pLeftBuf);
+		pLeftBuf = NULL;
+	}
+	if(pRightBuf != NULL){
+		free(pRightBuf);
+		pRightBuf = NULL;
+	}
+	if(pRight_input_Buf != NULL){
+		free(pRight_input_Buf);
+		pRight_input_Buf = NULL;
+	}
 
 	return ret;
 }
@@ -934,13 +920,9 @@ static cmr_s32 pdafsprd_adpt_get_busy(cmr_handle adpt_handle, struct pdaf_ctrl_p
 static cmr_s32 pdafsprd_adpt_disable_pdaf(cmr_handle adpt_handle, struct pdaf_ctrl_param_in *in)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
 	UNUSED(in);
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
-	if (cxt->pdaf_set_bypass) {
-		cxt->pdaf_set_bypass(cxt->caller, 1);
-	}
 	return ret;
 }
 

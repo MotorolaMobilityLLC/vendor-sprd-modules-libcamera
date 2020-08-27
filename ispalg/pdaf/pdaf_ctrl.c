@@ -79,16 +79,6 @@ static cmr_u32 pdaf_set_cfg_param(void *handle, struct isp_dev_pdaf_info *in_par
 	return ISP_SUCCESS;
 }
 
-static cmr_u32 pdaf_set_bypass(void *handle, cmr_u32 in_param)
-{
-	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
-
-	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_BYPASS, &in_param, NULL);
-	}
-
-	return ISP_SUCCESS;
-}
 
 static cmr_u32 pdaf_set_work_mode(void *handle, cmr_u32 in_param)
 {
@@ -112,16 +102,6 @@ static cmr_u32 pdaf_set_skip_num(void *handle, cmr_u32 in_param)
 	return ISP_SUCCESS;
 }
 
-static cmr_u32 pdaf_set_ppi_info(void *handle, struct pdaf_ppi_info *in_param)
-{
-	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
-
-	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_PPI_INFO, in_param, NULL);
-	}
-
-	return ISP_SUCCESS;
-}
 
 static cmr_u32 pdaf_set_roi(void *handle, struct pdaf_roi_info *in_param)
 {
@@ -289,6 +269,7 @@ static cmr_int pdafctrl_create_thread(cmr_handle handle)
 		ret = ISP_ERROR;
 		goto exit;
 	}
+
   exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;
@@ -355,10 +336,8 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 
 	in->pdaf_set_pdinfo_to_af = pdaf_set_pdinfo_to_af;
 	in->pdaf_set_cfg_param = pdaf_set_cfg_param;
-	in->pdaf_set_bypass = pdaf_set_bypass;
 	in->pdaf_set_work_mode = pdaf_set_work_mode;
 	in->pdaf_set_skip_num = pdaf_set_skip_num;
-	in->pdaf_set_ppi_info = pdaf_set_ppi_info;
 	in->pdaf_set_roi = pdaf_set_roi;
 	in->pdaf_set_extractor_bypass = pdaf_set_extractor_bypass;
 
@@ -511,7 +490,7 @@ cmr_int pdaf_ctrl_ioctrl(cmr_handle handle, cmr_int cmd, struct pdaf_ctrl_param_
 	CMR_MSG_INIT(message);
 
 	if (!cxt) {
-		ISP_LOGI("sensor don't support PDAF");
+		ISP_LOGV("sensor don't support PDAF");
 		goto exit;
 	}
 

@@ -68,12 +68,9 @@ struct pdaf_ctrl_otp_info_t {
 };
 
 struct pdaf_ctrl_process_in {
-	cmr_u8 bit;
-	cmr_u16 dcurrentVCM;
-	cmr_s32 dBv;
 	cmr_uint u_addr;
 	cmr_uint u_addr_right;
-	//struct pd_raw_info pd_raw;
+	cmr_uint datasize;
 };
 
 struct pdaf_ctrl_process_out {
@@ -138,10 +135,8 @@ struct pdaf_ctrl_init_in {
 	cmr_handle handle_pm;
 	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
 	 cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info * pd_info);
-	 cmr_u32(*pdaf_set_bypass) (void *handle, cmr_u32 in_parm);
 	 cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
 	 cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_ppi_info) (void *handle, struct pdaf_ppi_info * in_parm);
 	 cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
 	 cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 	struct sensor_otp_cust_info *otp_info_ptr;

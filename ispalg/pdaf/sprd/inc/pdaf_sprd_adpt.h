@@ -51,7 +51,6 @@
 #define ROI_Y_5 768
 #define ROI_X_6 1312
 #define ROI_Y_6 976
-
 #define ROI_Width 2048
 #define ROI_Height 1536
 #define SENSOR_ID_0 0 //IMX258 Type3
@@ -61,7 +60,7 @@
 #define SENSOR_ID_4 4 //IMX362 Dual PD
 #define SENSOR_ID_5 5 //OV12A10
 #define SENSOR_ID_6 6 //OV16885
-
+#define SENSOR_ID_1024 1024 //other
 #define SENSOR_ID_2_BLOCK_W 64
 #define SENSOR_ID_2_BLOCK_H 64
 #define PD_REG_OUT_SIZE	352
@@ -93,9 +92,7 @@ typedef struct {
 	/*sensor information */
 	SensorInfo tSensorInfo;
 	cmr_s32 dcurrentVCM;
-	// BV value
 	float dBv;
-	// black offset
 	cmr_s32 dBlackOffset;
 	cmr_u8 ucPrecision;
 } PDInReg;
@@ -113,5 +110,22 @@ struct sprd_pdaf_report_t {
 	float pd_value;
 	cmr_u32 pd_reg_size;
 };
+
+struct pdaf_raw_buffer_info {
+	void *left_buffer;
+	void *right_buffer;
+	void *left_output;
+	void *right_output;
+	cmr_int roi_pixel_numb;
+};
+
+struct sensor_setting
+{
+	cmr_s32 dBeginX_orig;		//original pd area begin x
+	cmr_s32 dBeginY_orig;
+	cmr_s32 dAreaW_orig;		//original pd area width
+	cmr_s32 dAreaH_orig;
+};
+
 
 #endif

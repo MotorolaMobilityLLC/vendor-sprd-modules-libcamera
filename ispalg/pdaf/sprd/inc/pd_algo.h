@@ -8,6 +8,12 @@
 
 #if defined __GNUC__
 #define PDAF_DECL __attribute__((visibility("default")))
+#elif (defined (WIN32) || defined (WIN64))
+#if defined (PD_ALGO_EXPORTS)
+#define PDAF_DECL __declspec( dllexport )
+#else
+#define PDAF_DECL __declspec( dllimport )
+#endif
 #else
 #define PDAF_DECL
 #endif
@@ -18,7 +24,6 @@
 #include "cmr_types.h"
 //#include <isp_type.h>
 
-#define PD_PIXEL_NUM (24576)
 #define PD_AREA_NUMBER (4)
 #define PD_PIXEL_ALIGN_X (16)
 #define PD_PIXEL_ALIGN_Y (32)
@@ -63,17 +68,13 @@ typedef struct {
 
 typedef void (*PDCALLBACK) (unsigned char *);
 
-PDAF_DECL cmr_s32 PD_Init(PD_GlobalSetting *a_pdGSetting);
-PDAF_DECL cmr_s32 PD_Do(cmr_u8 *raw, cmr_u8 *y, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
-PDAF_DECL cmr_s32 PD_DoType2(void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
-PDAF_DECL cmr_s32 PD_DoPoint2(void *a_pInPhaseBuf, cmr_s32 x_point, cmr_s32 y_point, cmr_s32 area_w, cmr_s32 area_h);
-PDAF_DECL cmr_s32 PD_SetCurVCM(cmr_s32 CurVCM);
-PDAF_DECL cmr_s32 PD_GetResult(cmr_s32 *a_pdConf, double *a_pdPhaseDiff, cmr_s32 *a_pdFrameID, cmr_s32 *a_pdDCCGain, cmr_s32 a_dArea);
-PDAF_DECL cmr_s32 PD_Uninit();
+PDAF_DECL void * PD_Init(PD_GlobalSetting *a_pdGSetting);
+PDAF_DECL cmr_s32 PD_DoType2(void *handle, void *a_pInPhaseBuf_left, void *a_pInPhaseBuf_right, cmr_s32 a_dRectX, cmr_s32 a_dRectY, cmr_s32 a_dRectW, cmr_s32 a_dRectH, cmr_s32 a_dArea);
+PDAF_DECL cmr_s32 PD_DoPoint2(void *handle, void *a_pInPhaseBuf, cmr_s32 x_point, cmr_s32 y_point, cmr_s32 area_w, cmr_s32 area_h);
+PDAF_DECL cmr_s32 PD_GetResult(void *handle, cmr_s32 *a_pdConf, double *a_pdPhaseDiff, cmr_s32 *a_pdFrameID, cmr_s32 *a_pdDCCGain, cmr_s32 a_dArea);
+PDAF_DECL cmr_s32 PD_Uninit(void *handle);
 PDAF_DECL cmr_s32 PD_PhaseFormatConverter(cmr_u8 *left_in, cmr_u8 *right_in, cmr_s32 *left_out, cmr_s32 *right_out, cmr_s32 a_dNumL, cmr_s32 a_dNumR);
 PDAF_DECL cmr_s32 PD_PhasePixelReorder(cmr_s32 *pBuf_pd_l, cmr_s32 *pBuf_pd_r, cmr_s32 *pPd_left_reorder, cmr_s32 *pPd_right_reorder, cmr_s32 buf_width, cmr_s32 buf_height);
-
-PDAF_DECL void FreeBuffer(cmr_u8 *raw);
 
 #ifdef __cplusplus
 }
