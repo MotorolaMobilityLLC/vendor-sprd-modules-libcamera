@@ -758,6 +758,8 @@ SprdCamera3SinglePortrait::CaptureThread::CaptureThread()
     mFaceInfoX = 0;
     mFaceInfoY = 0;
     mGaussEnable = 0;
+    lpt_cap_type = 0;
+    fb_cap_type = 0;
     mAlgorithmFlag = false;
     prev_sensor_orientation = 0;
     lightPortraitType = 0;
@@ -1213,8 +1215,10 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
     void *nearJpegBufferAddr = NULL;
     unsigned char *outPortraitMask = NULL;
     int portrait_flag = mSinglePortrait->mBlurMode;
-    int lightportrait_flag = lightPortraitType;
-    int facebeauty_flag = mSinglePortrait->mFaceBeautyFlag;
+    int lightportrait_flag = lpt_cap_type;
+    int facebeauty_flag = fb_cap_type;
+    HAL_LOGD("portrait_flag:%d,lpt_flag:%d,facebeauty_flag:%d",portrait_flag,
+        lightportrait_flag, facebeauty_flag);
     dump_single_portrait_t combo_buff, output_buff;
     dump_single_portrait_t *dump_buffs[DUMP_SINGLE_PORTRAIT_TYPE_MAX];
     memset(&combo_buff, 0, sizeof(dump_single_portrait_t));
@@ -1819,11 +1823,6 @@ void SprdCamera3SinglePortrait::CaptureThread::updateBlurWeightParams(
     for(int i = 0;i < faceDetectionInfo.face_num;i++){
         *(fd_score+i) = SprdCamera3Setting::s_setting[mSinglePortrait->mCameraId].fd_score[i];
     }
-    if (metaSettings.exists(ANDROID_SPRD_LIGHTPORTRAITTYPE)) {
-        lightPortraitType = 
-            metaSettings.find(ANDROID_SPRD_LIGHTPORTRAITTYPE).data.i32[0];
-            HAL_LOGV("lightPortraitType %d",lightPortraitType);
-    }
 
     mCaptureWeightParams.rotate_angle = orientation;
     if (origW == 0 || origH == 0) {
@@ -1831,6 +1830,11 @@ void SprdCamera3SinglePortrait::CaptureThread::updateBlurWeightParams(
     }
     // always get f_num and orientattion in request
     if (type == 0) {
+        if (metaSettings.exists(ANDROID_SPRD_LIGHTPORTRAITTYPE)) {
+            lightPortraitType = 
+                metaSettings.find(ANDROID_SPRD_LIGHTPORTRAITTYPE).data.i32[0];
+                HAL_LOGD("lightPortraitType %d",lightPortraitType);
+        }
         if (metaSettings.exists(ANDROID_SPRD_BLUR_F_NUMBER)) {
             int fnum =
                 metaSettings.find(ANDROID_SPRD_BLUR_F_NUMBER).data.i32[0];
@@ -3308,9 +3312,15 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
             req->output_buffers[i].stream->reserved[0] = NULL;
             mSavedReqStreams[mCaptureThread->mCaptureStreamsNum - 1] =
                 req->output_buffers[i].stream;
-
-            HAL_LOGD("mFlushing:%d,frame_number:%d", mFlushing,
-                     request->frame_number);
+            HAL_LOGD("mFlushing:%d,frame_number:%d,mFaceBeautyFlag:%d", 
+                mFlushing, request->frame_number,mSinglePortrait->mFaceBeautyFlag);
+            if (metaSettings.exists(ANDROID_SPRD_LIGHTPORTRAITTYPE)) {
+                mCaptureThread->lpt_cap_type = 
+                    metaSettings.find(ANDROID_SPRD_LIGHTPORTRAITTYPE).data.i32[0];
+                    HAL_LOGD("lightPortraitType %d", mCaptureThread->lpt_cap_type);
+            }
+            mCaptureThread->fb_cap_type = mSinglePortrait->mFaceBeautyFlag;
+            memcpy(&mSinglePortrait->fbLevels_cap, &mSinglePortrait->fbLevels, sizeof(faceBeautyLevels));
             if (!mFlushing && mCoverValue == 1 && 
                 (mBlurMode || mCaptureThread->lightPortraitType != 0 || 
                 mSinglePortrait->mFaceBeautyFlag) && 
@@ -3508,7 +3518,6 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
         currStreamType == DEFAULT_STREAM) {
         mSnapshotResultReturn = true;
         HAL_LOGD("framenumber:%d, receive yuv:%d", cur_frame_number, mReqState);
-        memcpy(&fbLevels_cap, &fbLevels, sizeof(faceBeautyLevels));
         single_portrait_queue_msg_t capture_msg;
         capture_msg.msg_type = SINGLE_PORTRAIT_MSG_DATA_PROC;
         capture_msg.combo_buff.frame_number = result->frame_number;

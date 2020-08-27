@@ -426,6 +426,8 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         unsigned int mWeightWidth;
         unsigned int mWeightHeight;
         uint8_t mLastFaceNum;
+        int lpt_cap_type;
+        int fb_cap_type;
         int mGaussEnable; // when back blur only have blur 1.0 and 1.2
         unsigned short mWinPeakPos[BLUR_AF_WINDOW_NUM];
         preview_single_portrait_init_params_t mPreviewInitParams;
