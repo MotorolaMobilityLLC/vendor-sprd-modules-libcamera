@@ -147,7 +147,7 @@ class SprdCamera3HWI {
   public:
     SprdCamera3Setting *mSetting;
     uint32_t mFrameNum;
-
+    bool mRegularChannelStarted;
   private:
     typedef struct {
         uint8_t af_trigger;
@@ -219,7 +219,8 @@ class SprdCamera3HWI {
     SprdCamera3PicChannel *mPicChan;
     bool mPictureRequest;
     uint8_t mBurstCapCnt;
-
+    bool preview_stream_flag;
+    bool callback_stream_flag;
     SprdCamera3RegularChannel *mCallbackChan;
 
     uint8_t mOldCapIntent;

@@ -389,6 +389,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mRawWidth = 0;
     mRawHeight = 0;
     mRegularChan = NULL;
+    mNeedYUVdata = false;
 
     jpeg_gps_location = false;
     mParaDCDVMode = CAMERA_PREVIEW_FORMAT_DC;
@@ -3367,6 +3368,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     } else if (getMultiCameraMode() == MODE_BLUR ||
                getMultiCameraMode() == MODE_SBS) {
         mSprdZslEnabled = true;
+    } else if (force_zsl == true) {
+       mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
     }
@@ -4402,7 +4405,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         }
 
         if (frame->type == PREVIEW_FRAME && frame_num >= mPreviewFrameNum &&
-            (frame_num > mPictureFrameNum || frame_num == 0)) {
+            (frame_num > mPictureFrameNum || frame_num == 0 || force_zsl == true)) {
             if (mVideoWidth > mCaptureWidth && mVideoHeight > mCaptureHeight) {
                 if (mVideoShotFlag)
                     PushVideoSnapShotbuff(frame_num,
@@ -4586,18 +4589,43 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
             HAL_LOGD("zsl buff fd=0x%x, frame type=%ld", frame->fd,
                      frame->type);
-            pushZslFrame(frame);
+            if (!mNeedYUVdata) {
+                pushZslFrame(frame);
 
-            if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
-                struct camera_frame_type zsl_frame;
-                zsl_frame = popZslFrame();
-                if (zsl_frame.y_vir_addr != 0) {
-                    mHalOem->ops->camera_set_zsl_buffer(
-                        mCameraHandle, zsl_frame.y_phy_addr,
-                        zsl_frame.y_vir_addr, zsl_frame.fd);
+                if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
+                    struct camera_frame_type zsl_frame;
+                    zsl_frame = popZslFrame();
+                    if (zsl_frame.y_vir_addr != 0) {
+                        mHalOem->ops->camera_set_zsl_buffer(
+                            mCameraHandle, zsl_frame.y_phy_addr,
+                            zsl_frame.y_vir_addr, zsl_frame.fd);
+                    }
+                }
+            } else {
+                SprdCamera3PicChannel *local_pic_channel =
+                    reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+                SprdCamera3Stream *local_pic_stream = NULL;
+                cmr_uint addr_vir = 0;
+                uint32_t frame_num = 0;
+                HAL_LOGD("local_pic_channel %p", local_pic_channel);
+                if (local_pic_channel) {
+                local_pic_channel->getStream(CAMERA_STREAM_TYPE_PICTURE_CALLBACK, &local_pic_stream);
+                if (local_pic_stream) {
+                    ret = local_pic_stream->getQBuffFirstVir(&addr_vir);
+                    local_pic_stream->getQBuffFirstNum(&frame_num);
+                    HAL_LOGD("pic_callback_addr_vir = 0x%lx, frame_num = %d", addr_vir,
+                        frame_num);
+                    if (ret == NO_ERROR && addr_vir != (cmr_uint)NULL) {
+                        memcpy((char *)addr_vir, (char *)frame->y_vir_addr, frame->width * frame->height *3/2);
+                        local_pic_channel->channelCbRoutine(
+                            frame_num, buffer_timestamp, CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
+
+                        if (frame_num > mPictureFrameNum)
+                            mPictureFrameNum = frame_num;
+                    }
                 }
             }
-
+            }
             ATRACE_END();
         } else if (PREVIEW_ZSL_CANCELED_FRAME == frame->type) {
             if (!isCapturing() || !need_pause) {
@@ -9861,7 +9889,8 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
     case CMR_EVT_ZSL_MON_SNP:
         if (!(obj->zslTakePictureL())) {
             obj->mZslShotPushFlag = 1;
-            obj->snapshotZsl(p_data);
+            if (obj->mNeedYUVdata)break;
+                obj->snapshotZsl(p_data);
         } else {
             obj->mZslShotPushFlag = 0;
         }
@@ -10157,6 +10186,10 @@ int SprdCamera3OEMIf::log_monitor_thread_deinit() {
         mLogHandle = 0;
     }
     return ret;
+}
+
+void SprdCamera3OEMIf::SetCallbackDataFlag(bool  flag) {
+    mNeedYUVdata = flag;
 }
 
 #ifdef CONFIG_CAMERA_EIS
