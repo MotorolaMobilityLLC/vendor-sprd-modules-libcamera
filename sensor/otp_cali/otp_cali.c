@@ -70,6 +70,10 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
         OtpDataPath = OTP_CALI_OZ2_PATH;
         OtpBkDataPath = OTPBK_CALI_OZ2_PATH;
         break;
+    case CALIBRATION_FLAG_BOKEH_GLD:
+        OtpDataPath = OTP_CALI_BOKEH_GLD_PATH;
+        OtpBkDataPath = NULL;
+        break;
     default:
         SENSOR_LOGE("Invalid cali data type:%d", dual_flag);
         return 0;

@@ -32,6 +32,7 @@ enum calibration_flag {
     CALIBRATION_FLAG_3D_STL,
     CALIBRATION_FLAG_OZ1,
     CALIBRATION_FLAG_OZ2,
+    CALIBRATION_FLAG_BOKEH_GLD,
     CALIBRATION_FLAG_MAX
 };
 
@@ -54,6 +55,8 @@ enum calibration_flag {
 
 #define OTP_CALI_OZ2_PATH "/data/vendor/local/otpdata/otp_cali_oz2.bin"
 #define OTPBK_CALI_OZ2_PATH "/mnt/vendor/productinfo/otpdata/otpbk_cali_oz2.bin"
+
+#define OTP_CALI_BOKEH_GLD_PATH "/vendor/etc/otpdata/otp_cali_bokeh_gld.bin"
 
 cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag);
 cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,

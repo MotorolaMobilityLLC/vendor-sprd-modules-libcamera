@@ -393,6 +393,7 @@ bool SprdCamera3Factory::is_single_expose(int cameraId) {
     }
 
     if ((SPRD_REFOCUS_ID == cameraId) || (SPRD_3D_CALIBRATION_ID == cameraId) ||
+        (SPRD_BOKEH_CALI_GOLDEN_ID == cameraId) ||
         (SPRD_ULTRA_WIDE_ID == cameraId) ||
         (SPRD_BACK_HIGH_RESOLUTION_ID == cameraId) ||
         (SPRD_FRONT_HIGH_RES == cameraId) ||
@@ -412,7 +413,8 @@ int SprdCamera3Factory::multi_id_to_phyid(int cameraId) {
     } else if (SPRD_REFOCUS_ID == cameraId ||
                SPRD_BACK_HIGH_RESOLUTION_ID == cameraId) {
         return 0;
-    } else if (SPRD_3D_CALIBRATION_ID == cameraId) {
+    } else if (SPRD_3D_CALIBRATION_ID == cameraId ||
+                 SPRD_BOKEH_CALI_GOLDEN_ID == cameraId) {
         property_get("persist.vendor.cam.ba.blur.version", prop, "0");
         if (6 == atoi(prop)) {
             return 0;
@@ -559,6 +561,10 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     HAL_LOGD("SPRD Camera Hal, camera_id=%d", camera_id);
     if (SPRD_3D_CALIBRATION_ID == camera_id) {
         hw->setMultiCameraMode(MODE_3D_CALIBRATION);
+        property_set("vendor.cam.dualmode", "high_mode");
+    }
+    if (SPRD_BOKEH_CALI_GOLDEN_ID == camera_id) {
+        hw->setMultiCameraMode(MODE_BOKEH_CALI_GOLDEN);
         property_set("vendor.cam.dualmode", "high_mode");
     }
     if (SPRD_OPTICSZOOM_W_ID == camera_id) {

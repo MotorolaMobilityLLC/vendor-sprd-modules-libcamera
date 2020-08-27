@@ -6595,6 +6595,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         cxt->is_multi_mode == MODE_3D_CAPTURE ||
         cxt->is_multi_mode == MODE_3D_VIDEO ||
         cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+                cxt->is_multi_mode == MODE_BOKEH_CALI_GOLDEN ||
         cxt->is_multi_mode == MODE_3D_PREVIEW ||
         cxt->is_multi_mode == MODE_TUNING) {
         dvfs_param.cam_mode = 1;

@@ -1347,6 +1347,7 @@ status_t SprdCamera3OEMIf::faceDectect_enable(bool enable) {
 
     if ((mMultiCameraMode == MODE_BOKEH && mCameraId == 2) ||
         mMultiCameraMode == MODE_3D_CALIBRATION ||
+        mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN ||
         (mMultiCameraMode == MODE_TUNING && mCameraId == 2)) {
         return ret;
     }
@@ -2045,6 +2046,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
     if (getMultiCameraMode() != MODE_BLUR &&
         getMultiCameraMode() != MODE_BOKEH &&
         getMultiCameraMode() != MODE_3D_CALIBRATION &&
+        getMultiCameraMode() != MODE_BOKEH_CALI_GOLDEN &&
         getMultiCameraMode() != MODE_MULTI_CAMERA) {
         callbackSize.width = mCallbackWidth;
         callbackSize.height = mCallbackHeight;
@@ -2074,7 +2076,8 @@ int SprdCamera3OEMIf::setPreviewParams() {
         captureSize.height = mCaptureHeight;
     }
 
-    if (getMultiCameraMode() == MODE_3D_CALIBRATION) {
+    if (getMultiCameraMode() == MODE_3D_CALIBRATION ||
+        getMultiCameraMode() == MODE_BOKEH_CALI_GOLDEN) {
         captureSize.width = mCallbackWidth;
         captureSize.height = mCallbackHeight;
         mPictureFormat = mCallbackFormat;
@@ -2309,6 +2312,7 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         // TBD: check why 20fps, not 30fps
         if ((mMultiCameraMode == MODE_BOKEH && mSprdAppmodeId != -1) ||
             mMultiCameraMode == MODE_3D_CALIBRATION ||
+            mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN ||
             mMultiCameraMode == MODE_REFOCUS ||
             mMultiCameraMode == MODE_RANGE_FINDER ||
             mMultiCameraMode == MODE_TUNING ||
@@ -3225,7 +3229,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = true;
     } else if (getMultiCameraMode() == MODE_BLUR ||
                getMultiCameraMode() == MODE_BOKEH ||
-               getMultiCameraMode() == MODE_3D_CALIBRATION) {
+               getMultiCameraMode() == MODE_3D_CALIBRATION ||
+               getMultiCameraMode() == MODE_BOKEH_CALI_GOLDEN) {
         mSprdZslEnabled = true;
     } else {
         mSprdZslEnabled = false;
@@ -3312,7 +3317,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mIspToolStart = false;
     }
     if ((getMultiCameraMode() == MODE_BOKEH ||
-         getMultiCameraMode() == MODE_3D_CALIBRATION) &&
+         getMultiCameraMode() == MODE_3D_CALIBRATION ||
+         getMultiCameraMode() == MODE_BOKEH_CALI_GOLDEN) &&
         mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK)) {
         setCameraConvertCropRegion();
         property_get("persist.vendor.cam.focus.distance", prop, "0");
@@ -3926,7 +3932,8 @@ void SprdCamera3OEMIf::PreviewFrameUpdateMlogInfo(void) {
         mSetting->setVCMDACTag(range.vcm_dac, range.total_seg);
         mSprdFullscanEnabled = 0;
         if (mIsMlogMode && (getMultiCameraMode() == MODE_BOKEH ||
-           getMultiCameraMode() == MODE_3D_CALIBRATION) && range.total_seg) {
+           getMultiCameraMode() == MODE_3D_CALIBRATION ||
+           getMultiCameraMode() == MODE_BOKEH_CALI_GOLDEN) && range.total_seg) {
             mlogInfo->vcm_dac = range.vcm_dac[range.total_seg - 1];
             mlogInfo->vcm_num = range.total_seg;
             HAL_LOGV("vcm dac %d num %d",mlogInfo->vcm_dac, mlogInfo->vcm_num);
@@ -6411,7 +6418,8 @@ int SprdCamera3OEMIf::openCamera() {
     mSetting->setLENSTag(lensInfo);
     HAL_LOGV("lensInfo.aperture %f", lensInfo.aperture);
 
-    if (MODE_3D_CALIBRATION == mMultiCameraMode) {
+    if (MODE_3D_CALIBRATION == mMultiCameraMode ||
+        MODE_BOKEH_CALI_GOLDEN == mMultiCameraMode) {
         mSprdRefocusEnabled = true;
         HAL_LOGD("mSprdRefocusEnabled %d", mSprdRefocusEnabled);
     }
@@ -6429,7 +6437,8 @@ int SprdCamera3OEMIf::openCamera() {
           mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_TELE, SNS_FACE_BACK))) ||
         (mMultiCameraMode == MODE_3D_FACEID_REGISTER ||
          mMultiCameraMode == MODE_3D_FACEID_UNLOCK) ||
-         mMultiCameraMode == MODE_3D_FACE) {
+         mMultiCameraMode == MODE_3D_FACE ||
+         mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN) {
         cmr_u8 dual_flag = 0;
         if ((mMultiCameraMode == MODE_BOKEH ||
              mMultiCameraMode == MODE_3D_CALIBRATION ||
@@ -6450,6 +6459,8 @@ int SprdCamera3OEMIf::openCamera() {
                  mMultiCameraMode == MODE_3D_FACEID_UNLOCK ||
                  mMultiCameraMode == MODE_3D_FACE)
             dual_flag = 4;
+        else if (mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN)
+            dual_flag = 7;
         else
             dual_flag = 0;
         OTP_Tag otpInfo;
@@ -6478,7 +6489,7 @@ int SprdCamera3OEMIf::openCamera() {
                      mCameraId);
         }
 
-        {
+        do {
             bzero(file_name, sizeof(file_name));
             strcpy(file_name, CAMERA_DUMP_PATH);
             if (dual_flag == 1)
@@ -6491,6 +6502,8 @@ int SprdCamera3OEMIf::openCamera() {
                 strcat(file_name, "otp_manual_oz2.txt");
             else if (dual_flag == 4)
                 strcat(file_name, "otp_manual_slt3d.txt");
+            else
+                break;
 
             FILE *fid = fopen(file_name, "rb");
             if (NULL == fid) {
@@ -6520,7 +6533,7 @@ int SprdCamera3OEMIf::openCamera() {
                     otpInfo.dual_otp_flag = dual_flag;
                 }
             }
-        }
+        } while (0);
 
         HAL_LOGI("dual_flag %d, dual_otp size %d", otpInfo.dual_otp_flag,
                  otp_info.dual_otp.data_3d.size);
@@ -6660,7 +6673,8 @@ int SprdCamera3OEMIf::saveMlogInfo()
 
     bzero(tmp_buf, sizeof(tmp_buf));
     if ((getMultiCameraMode() == MODE_BOKEH ||
-         getMultiCameraMode() == MODE_3D_CALIBRATION)) {
+         getMultiCameraMode() == MODE_3D_CALIBRATION ||
+         getMultiCameraMode() == MODE_BOKEH_CALI_GOLDEN)) {
         prev_DT = abs(mlog_info[0].prev_timestamp - mlog_info[2].prev_timestamp);
         cap_DT = abs(mlog_info[0].cap_timestamp - mlog_info[2].cap_timestamp);
     }
@@ -6918,7 +6932,8 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
             mCameraId, cropRegion.start_x, cropRegion.start_y,
             cropRegion.width, cropRegion.height);
     if ((getMultiCameraMode() == MODE_BOKEH ||
-         getMultiCameraMode() == MODE_3D_CALIBRATION) &&
+         getMultiCameraMode() == MODE_3D_CALIBRATION ||
+         getMultiCameraMode() == MODE_BOKEH_CALI_GOLDEN) &&
         mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK)) {
         mSetting->getLargestSensorSize(mCameraId, &sensorOrgW, &sensorOrgH);
         cal_spw_size(sensorOrgW, sensorOrgH, &(cropRegion.width),
@@ -7452,12 +7467,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
         HAL_LOGD("ANDROID_CONTROL_AF_MODE");
 
-        if (mMultiCameraMode == MODE_3D_CALIBRATION &&
+        if ((mMultiCameraMode == MODE_3D_CALIBRATION ||
+            mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN)&&
             AfMode == CAMERA_FOCUS_MODE_MANUAL) {
             AfMode = CAMERA_FOCUS_MODE_INFINITY;
         }
         if ((mMultiCameraMode == MODE_BOKEH ||
-             mMultiCameraMode == MODE_3D_CALIBRATION) &&
+             mMultiCameraMode == MODE_3D_CALIBRATION ||
+             mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN) &&
             mCameraId == 2) {
             AfMode = CAMERA_FOCUS_MODE_INFINITY;
         }
@@ -7522,6 +7539,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             (mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK) &&
              getMultiCameraMode() != MODE_BOKEH &&
              getMultiCameraMode() != MODE_3D_CALIBRATION &&
+             getMultiCameraMode() != MODE_BOKEH_CALI_GOLDEN &&
              getMultiCameraMode() != MODE_PORTRAIT)) {
             int8_t drvAeMode;
             mSetting->androidAeModeToDrvAeMode(controlInfo.ae_mode, &drvAeMode);
@@ -9667,6 +9685,7 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
         if (getMultiCameraMode() != MODE_BLUR &&
             getMultiCameraMode() != MODE_BOKEH &&
             getMultiCameraMode() != MODE_3D_CALIBRATION &&
+            getMultiCameraMode() != MODE_BOKEH_CALI_GOLDEN &&
             getMultiCameraMode() != MODE_MULTI_CAMERA) {
             mHalOem->ops->queue_buffer(mCameraHandle, buffer,
                                        SPRD_CAM_STREAM_CALLBACK);
@@ -10508,7 +10527,8 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
         }
 
         if (mMultiCameraMode == MODE_BOKEH ||
-            mMultiCameraMode == MODE_3D_CALIBRATION) {
+            mMultiCameraMode == MODE_3D_CALIBRATION ||
+            mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN) {
             if (mIsMlogMode) {
                 MLOG_Tag *mlogInfo;
 

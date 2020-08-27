@@ -1346,6 +1346,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             if (mMultiCameraMode == MODE_BLUR ||
                 mMultiCameraMode == MODE_3D_CAPTURE ||
                 mMultiCameraMode == MODE_3D_CALIBRATION ||
+                mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN ||
                 mMultiCameraMode == MODE_BOKEH ||
                 mMultiCameraMode == MODE_MULTI_CAMERA) {
                 if (streamType[0] == CAMERA_STREAM_TYPE_CALLBACK ||
@@ -1421,7 +1422,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         if (mStreamConfiguration.num_streams == 2 &&
             mStreamConfiguration.preview.status == CONFIGURED &&
             mStreamConfiguration.yuvcallback.status == CONFIGURED &&
-            mMultiCameraMode == MODE_3D_CALIBRATION) {
+            (mMultiCameraMode == MODE_3D_CALIBRATION ||
+            mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN)) {
             if (mOldCapIntent == SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE) {
                 if (mOEMIf->isYuvSensor() == 0)
                     mOEMIf->setStreamOnWithZsl();
@@ -2333,7 +2335,8 @@ int SprdCamera3HWI::close_camera_device(struct hw_device_t *device) {
     if (mCameraSessionActive > 0)
         mCameraSessionActive--;
 
-    if(MODE_3D_CALIBRATION == mMultiCameraMode) {
+    if(MODE_3D_CALIBRATION == mMultiCameraMode ||
+        MODE_BOKEH_CALI_GOLDEN == mMultiCameraMode) {
         property_set("vendor.cam.dualmode", "");
     }
     if (mCameraSessionActive == 0) {

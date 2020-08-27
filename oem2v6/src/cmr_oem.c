@@ -4160,6 +4160,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     if (cxt->is_multi_mode == MODE_3D_CAPTURE ||
         cxt->is_multi_mode == MODE_3D_VIDEO ||
         cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+        cxt->is_multi_mode == MODE_BOKEH_CALI_GOLDEN ||
         cxt->is_multi_mode == MODE_3D_PREVIEW ||
         cxt->is_multi_mode == MODE_TUNING ||
         cxt->is_multi_mode == MODE_DUAL_FACEID_UNLOCK ||
@@ -8538,6 +8539,7 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         cxt->is_multi_mode == MODE_3D_CAPTURE ||
         cxt->is_multi_mode == MODE_3D_VIDEO ||
         cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+        cxt->is_multi_mode == MODE_BOKEH_CALI_GOLDEN ||
         cxt->is_multi_mode == MODE_3D_PREVIEW ||
         cxt->is_multi_mode == MODE_TUNING) {
         param_ptr->cap_inf_cfg.cfg.dual_cam = 1;
@@ -14537,7 +14539,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.type = DCAM_CAPTURE_START_3DNR;
         capture_param.cap_scene = CAPTURE_HW3DNR;
     } else if (cxt->is_multi_mode == MODE_BOKEH ||
-               cxt->is_multi_mode == MODE_3D_CALIBRATION) {
+               cxt->is_multi_mode == MODE_3D_CALIBRATION ||
+               cxt->is_multi_mode == MODE_BOKEH_CALI_GOLDEN) {
         if (cxt->is_yuv_callback_mode || cxt->is_3dcalibration_mode) {
             capture_param.type = DCAM_CAPTURE_START_WITH_TIMESTAMP;
             capture_param.timestamp = snp_cxt->cap_need_time_stamp;
