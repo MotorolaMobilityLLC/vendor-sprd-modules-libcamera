@@ -23,6 +23,65 @@
 #define LOG_TAG "cmr_jpeg"
 #endif
 
+int jpeg_init_check(struct jpeg_lib_cxt *jcxt, const char libName[]) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    jcxt->ops.jpeg_init = dlsym(jcxt->mLibHandle, "sprd_jpeg_init");
+    if (jcxt->ops.jpeg_init == NULL) {
+        CMR_LOGE("Can't find jpeg_init in %s", libName);
+        goto exit_error;
+    }
+
+    jcxt->ops.jpeg_encode = dlsym(jcxt->mLibHandle, "sprd_jpg_encode");
+    if (jcxt->ops.jpeg_encode == NULL) {
+        CMR_LOGE("Can't find jpeg_enc_start in %s", libName);
+        goto exit_error;
+    }
+
+    jcxt->ops.jpeg_decode = dlsym(jcxt->mLibHandle, "sprd_jpg_decode");
+    if (jcxt->ops.jpeg_decode == NULL) {
+        CMR_LOGE("Can't find jpeg_dec_start in %s", libName);
+        goto exit_error;
+    }
+
+    jcxt->ops.jpeg_stop = dlsym(jcxt->mLibHandle, "sprd_stop_codec");
+    if (jcxt->ops.jpeg_stop == NULL) {
+        CMR_LOGE("Can't find jpeg_stop in %s", libName);
+        goto exit_error;
+    }
+
+    jcxt->ops.jpeg_deinit = dlsym(jcxt->mLibHandle, "sprd_jpeg_deinit");
+    if (jcxt->ops.jpeg_deinit == NULL) {
+        CMR_LOGE("Can't find jpeg_deinit in %s", libName);
+        goto exit_error;
+    }
+
+    jcxt->ops.jpeg_get_iommu_status =
+        dlsym(jcxt->mLibHandle, "sprd_jpg_get_Iommu_status");
+    if (jcxt->ops.jpeg_get_iommu_status == NULL) {
+        CMR_LOGE("Can't find jpeg_get_Iommu_status in %s", libName);
+        goto exit_error;
+    }
+
+    jcxt->ops.jpeg_dec_get_resolution =
+        dlsym(jcxt->mLibHandle, "sprd_jpg_dec_get_resolution");
+    if (jcxt->ops.jpeg_dec_get_resolution == NULL) {
+        CMR_LOGE("Can't find jpeg_dec_get_resolution in %s", libName);
+        goto exit_error;
+    }
+
+    jcxt->ops.jpeg_set_resolution =
+        dlsym(jcxt->mLibHandle, "sprd_jpg_set_resolution");
+    if (jcxt->ops.jpeg_set_resolution == NULL) {
+        CMR_LOGE("Can't find sprd_jpg_set_resolution in %s", libName);
+        goto exit_error;
+    }
+    return ret;
+exit_error:
+    return CMR_CAMERA_NO_SUPPORT;
+}
+
+
 cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
                       jpg_evt_cb_ptr adp_event_cb) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -64,62 +123,8 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
     } else
         CMR_LOGI(" open lib: %s \n", libName);
 
-    jcxt->ops.jpeg_init = dlsym(jcxt->mLibHandle, "sprd_jpeg_init");
-    if (jcxt->ops.jpeg_init == NULL) {
-        CMR_LOGE("Can't find jpeg_init in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit_error;
-    }
-
-    jcxt->ops.jpeg_encode = dlsym(jcxt->mLibHandle, "sprd_jpg_encode");
-    if (jcxt->ops.jpeg_encode == NULL) {
-        CMR_LOGE("Can't find jpeg_enc_start in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit_error;
-    }
-
-    jcxt->ops.jpeg_decode = dlsym(jcxt->mLibHandle, "sprd_jpg_decode");
-    if (jcxt->ops.jpeg_decode == NULL) {
-        CMR_LOGE("Can't find jpeg_dec_start in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit_error;
-    }
-
-    jcxt->ops.jpeg_stop = dlsym(jcxt->mLibHandle, "sprd_stop_codec");
-    if (jcxt->ops.jpeg_stop == NULL) {
-        CMR_LOGE("Can't find jpeg_stop in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit_error;
-    }
-
-    jcxt->ops.jpeg_deinit = dlsym(jcxt->mLibHandle, "sprd_jpeg_deinit");
-    if (jcxt->ops.jpeg_deinit == NULL) {
-        CMR_LOGE("Can't find jpeg_deinit in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit_error;
-    }
-
-    jcxt->ops.jpeg_get_iommu_status =
-        dlsym(jcxt->mLibHandle, "sprd_jpg_get_Iommu_status");
-    if (jcxt->ops.jpeg_get_iommu_status == NULL) {
-        CMR_LOGE("Can't find jpeg_get_Iommu_status in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit_error;
-    }
-
-    jcxt->ops.jpeg_dec_get_resolution =
-        dlsym(jcxt->mLibHandle, "sprd_jpg_dec_get_resolution");
-    if (jcxt->ops.jpeg_dec_get_resolution == NULL) {
-        CMR_LOGE("Can't find jpeg_dec_get_resolution in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
-        goto exit_error;
-    }
-
-    jcxt->ops.jpeg_set_resolution =
-        dlsym(jcxt->mLibHandle, "sprd_jpg_set_resolution");
-    if (jcxt->ops.jpeg_set_resolution == NULL) {
-        CMR_LOGE("Can't find sprd_jpg_set_resolution in %s", libName);
-        ret = -CMR_CAMERA_NO_SUPPORT;
+    ret = jpeg_init_check(jcxt, libName);
+    if (ret == CMR_CAMERA_NO_SUPPORT) {
         goto exit_error;
     }
 
