@@ -1873,7 +1873,12 @@ queue_preview_smallbufer(struct preview_smallbuf_queue *psmall_buf_queue,
     CMR_LOGV("add new node:%p , smallbffqueue:%p", pnewnode, psmall_buf_queue);
     pthread_mutex_lock(&psmall_buf_queue->mutex);
     if ((NULL == pnewnode) || (NULL == pnode)) {
-        CMR_LOGE("alloc pnewnode failed");
+        if (NULL != pnewnode) {
+            CMR_LOGE("release pnewnode");
+            free(pnewnode);
+        } else {
+            CMR_LOGE("alloc pnewnode failed");
+        }
         pthread_mutex_unlock(&psmall_buf_queue->mutex);
         return -1;
     }
