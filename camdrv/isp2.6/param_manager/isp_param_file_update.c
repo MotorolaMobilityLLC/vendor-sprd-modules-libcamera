@@ -222,6 +222,43 @@ cmr_s32 read_nr_scene_map_info(FILE * fp, cmr_u32 * data_ptr)
 	return rtn;
 }
 
+cmr_s32 read_note_name(FILE * fp, cmr_u8 * data_ptr, cmr_u32 * data_len)
+{
+	cmr_s32 rtn = 0x00;
+
+	cmr_u8 *param_buf = data_ptr;
+	char line_buff[256];
+	cmr_s32 i;
+
+	while (!feof(fp)) {
+		cmr_u32 c[16];
+		cmr_s32 n = 0;
+		if (fgets(line_buff, 256, fp) == NULL) {
+			break;
+		}
+		if (strstr(line_buff, "{") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "/*") != NULL) {
+			continue;
+		}
+
+		if (strstr(line_buff, "};") != NULL) {
+			break;
+		}
+
+		n = sscanf(line_buff, "%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x",
+				&c[0], &c[1], &c[2], &c[3], &c[4], &c[5], &c[6], &c[7], &c[8], &c[9], &c[10],
+				&c[11], &c[12], &c[13], &c[14], &c[15]);
+		for (i = 0; i < n; i++) {
+			*param_buf++ = (cmr_u8) c[i];
+		}
+	}
+	*data_len = (cmr_int) param_buf - (cmr_int) (data_ptr);
+	return rtn;
+}
+
 cmr_s32 read_tune_info(FILE * fp, cmr_u8 * data_ptr, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
@@ -2036,8 +2073,13 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 				}
 			}
 			if (strstr(line_buf, note_name) != NULL) {
-				ISP_LOGE("fail to update file _tool_ui_input");
-				break;
+				rtn = read_note_name(fp, sensor_raw_ptr->note_ptr[i].note, &sensor_raw_ptr->note_ptr[i].node_len);
+				if (0x00 != rtn) {
+					ISP_LOGE("fail to read_tune_info!");
+					fclose(fp);
+					goto exit;
+				}
+				continue;
 			}
 		}
 		fclose(fp);
