@@ -919,6 +919,8 @@ cmr_int cmr_snpshot_encode_semaphore(cmr_handle snp_handle, int wait)
 {
     struct snp_context *snp_cxt = (struct snp_context *)snp_handle;
 
+    if (!snp_cxt)
+        return -1;
     if (snp_cxt->is_inited == 0)
         return -1;
     if (wait) {
