@@ -1371,6 +1371,27 @@ static size_t copy_log(void *dst, const void *log, size_t size, const char *begi
 	return off;
 }
 
+static cmr_int ispctl_malloc_size(cmr_handle isp_alg_handle,cmr_u32 total_size)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ae_cxt.log_alc_size < total_size) {
+		if (cxt->ae_cxt.log_alc != NULL) {
+			free(cxt->ae_cxt.log_alc);
+			cxt->ae_cxt.log_alc = NULL;
+		}
+		cxt->ae_cxt.log_alc = malloc(total_size);
+		if (cxt->ae_cxt.log_alc == NULL) {
+			cxt->ae_cxt.log_alc_size = 0;
+			ret = ISP_ERROR;
+			return ret;
+		}
+		cxt->ae_cxt.log_alc_size = total_size;
+	}
+	return ret;
+}
+
 static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1391,17 +1412,9 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 	if (cxt->awb_cxt.alc_awb) {
 		total_size = cxt->awb_cxt.log_alc_awb_size + cxt->awb_cxt.log_alc_lsc_size;
 
-		if (cxt->ae_cxt.log_alc_size < total_size) {
-			if (cxt->ae_cxt.log_alc != NULL) {
-				free(cxt->ae_cxt.log_alc);
-				cxt->ae_cxt.log_alc = NULL;
-			}
-			cxt->ae_cxt.log_alc = malloc(total_size);
-			if (cxt->ae_cxt.log_alc == NULL) {
-				cxt->ae_cxt.log_alc_size = 0;
-				return ISP_ERROR;
-			}
-			cxt->ae_cxt.log_alc_size = total_size;
+		ret = ispctl_malloc_size((cmr_handle) cxt, total_size);
+		if (ISP_SUCCESS != ret){
+			return ISP_ERROR;
 		}
 
 		if (cxt->awb_cxt.log_alc_awb != NULL) {
