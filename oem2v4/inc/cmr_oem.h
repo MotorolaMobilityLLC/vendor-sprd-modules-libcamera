@@ -52,6 +52,8 @@ extern "C" {
 #define MIRROR_FLIP_ROTATION_BY_JPEG 1
 //#define MIRROR_FLIP_BY_ISP                         1
 
+#define SNS_INTERPOL_ONLINE_MAX_SIZE (1920 * 1088)
+
 struct grab_context {
     cmr_handle grab_handle;
     /*	struct process_status    proc_status;*/

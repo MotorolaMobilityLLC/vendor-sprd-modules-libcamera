@@ -277,6 +277,8 @@ struct prev_context {
     cmr_uint cap_zsl_restart_skip_en;
     cmr_uint cap_zsl_frm_cnt;
     struct img_frm cap_zsl_frm[ZSL_FRM_CNT];
+    struct img_frm cap_zsl_offline_frm[ZSL_FRM_CNT];
+    struct img_frm cap_zsl_offline_frm_backup[ZSL_FRM_CNT];
     struct img_frm cap_zsl_reserved_frm;
     cmr_uint cap_zsl_rot_index;
     cmr_uint cap_zsl_rot_frm_is_lock[ZSL_ROT_FRM_CNT];
@@ -285,6 +287,11 @@ struct prev_context {
     cmr_uint cap_zsl_phys_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
     cmr_uint cap_zsl_virt_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
     cmr_s32 cap_zsl_fd_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+
+    cmr_uint cap_zsl_offline_phys_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+    cmr_uint cap_zsl_offline_virt_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+    cmr_s32 cap_zsl_offline_fd_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+
     cmr_uint cap_zsl_reserved_phys_addr;
     cmr_uint cap_zsl_reserved_virt_addr;
     cmr_s32 cap_zsl_reserved_fd;
@@ -292,6 +299,8 @@ struct prev_context {
     cmr_uint cap_zsl_mem_size;
     cmr_uint cap_zsl_mem_num;
     cmr_int cap_zsl_mem_valid_num;
+    cmr_int cap_zsl_offline_mem_valid_num;
+    cmr_int cap_zsl_offline_buf_num;
 
     cmr_uint is_reprocessing;
 
@@ -3178,9 +3187,9 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGV("frame_id=0x%x, frame_real_id=%d, channel_id=%d, fd=0x%x",
+    CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d, fd=0x%x",
              data->frame_id, data->frame_real_id, data->channel_id, data->fd);
-    CMR_LOGV("cap_zsl_frm_cnt %ld", prev_cxt->cap_zsl_frm_cnt);
+    CMR_LOGD("cap_zsl_frm_cnt %ld", prev_cxt->cap_zsl_frm_cnt);
     if (0 == prev_cxt->cap_zsl_frm_cnt) {
         /*response*/
         cb_data_info.cb_type = PREVIEW_RSP_CB_SUCCESS;
@@ -5717,6 +5726,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     }
     if (!is_restart) {
         prev_cxt->cap_zsl_mem_valid_num = 0;
+        prev_cxt->cap_zsl_offline_mem_valid_num = 0;
         mem_ops->alloc_mem(CAMERA_SNAPSHOT_ZSL, handle->oem_handle,
                            (cmr_u32 *)&prev_cxt->cap_zsl_mem_size,
                            (cmr_u32 *)&prev_cxt->cap_zsl_mem_num,
@@ -5740,6 +5750,13 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 }
             } else {
                 if (i < ZSL_FRM_ALLOC_CNT) {
+                    /*arrange offline zsl buffer*/
+                    prev_cxt->cap_zsl_offline_phys_addr_array[i] =
+                                    prev_cxt->cap_zsl_phys_addr_array[i];
+                    prev_cxt->cap_zsl_offline_virt_addr_array[i] =
+                                    prev_cxt->cap_zsl_virt_addr_array[i];
+                    prev_cxt->cap_zsl_offline_fd_array[i] =
+                                    prev_cxt->cap_zsl_fd_array[i];
                     prev_cxt->cap_zsl_mem_valid_num++;
                 }
             }
@@ -5758,7 +5775,7 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     buffer->count = prev_cxt->cap_zsl_mem_valid_num;
     buffer->length = frame_size;
     buffer->flag = BUF_FLAG_INIT;
-
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     for (i = 0; i < (cmr_u32)prev_cxt->cap_zsl_mem_valid_num; i++) {
         prev_cxt->cap_zsl_frm[i].buf_size = frame_size;
         prev_cxt->cap_zsl_frm[i].addr_vir.addr_y =
@@ -5780,6 +5797,121 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         buffer->addr_vir[i].addr_u = prev_cxt->cap_zsl_frm[i].addr_vir.addr_u;
         buffer->fd[i] = prev_cxt->cap_zsl_frm[i].fd;
     }
+#else
+
+    if (prev_cxt->prev_param.sprd_zsl_enabled) {
+        for (i = 0; i < (cmr_u32)prev_cxt->cap_zsl_mem_valid_num; i++) {
+            prev_cxt->cap_zsl_frm[i].buf_size = frame_size;
+            prev_cxt->cap_zsl_frm[i].addr_vir.addr_y =
+                prev_cxt->cap_zsl_virt_addr_array[i];
+            prev_cxt->cap_zsl_frm[i].addr_vir.addr_u =
+                prev_cxt->cap_zsl_frm[i].addr_vir.addr_y + buffer_size;
+            prev_cxt->cap_zsl_frm[i].addr_phy.addr_y =
+                prev_cxt->cap_zsl_phys_addr_array[i];
+            prev_cxt->cap_zsl_frm[i].addr_phy.addr_u =
+                prev_cxt->cap_zsl_frm[i].addr_phy.addr_y + buffer_size;
+            prev_cxt->cap_zsl_frm[i].fd = prev_cxt->cap_zsl_fd_array[i];
+            prev_cxt->cap_zsl_frm[i].fmt = prev_cxt->cap_org_fmt;
+            prev_cxt->cap_zsl_frm[i].size.width = width;
+            prev_cxt->cap_zsl_frm[i].size.height = height;
+
+            buffer->addr[i].addr_y = prev_cxt->cap_zsl_frm[i].addr_phy.addr_y;
+            buffer->addr[i].addr_u = prev_cxt->cap_zsl_frm[i].addr_phy.addr_u;
+            buffer->addr_vir[i].addr_y = prev_cxt->cap_zsl_frm[i].addr_vir.addr_y;
+            buffer->addr_vir[i].addr_u = prev_cxt->cap_zsl_frm[i].addr_vir.addr_u;
+            buffer->fd[i] = prev_cxt->cap_zsl_frm[i].fd;
+        }
+        goto exit;
+    }
+
+    prev_cxt->cap_zsl_offline_mem_valid_num = prev_cxt->cap_zsl_mem_valid_num;
+    prev_cxt->cap_zsl_offline_buf_num = prev_cxt->cap_zsl_offline_mem_valid_num;
+    if (width * height > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+        for (i = 0; i < (cmr_u32)prev_cxt->cap_zsl_offline_mem_valid_num; i++) {
+            prev_cxt->cap_zsl_offline_frm[i].buf_size = frame_size;
+            prev_cxt->cap_zsl_offline_frm[i].addr_vir.addr_y =
+                prev_cxt->cap_zsl_virt_addr_array[i];
+            prev_cxt->cap_zsl_offline_frm[i].addr_vir.addr_u =
+                prev_cxt->cap_zsl_offline_frm[i].addr_vir.addr_y + buffer_size;
+            prev_cxt->cap_zsl_offline_frm[i].addr_phy.addr_y =
+                prev_cxt->cap_zsl_phys_addr_array[i];
+            prev_cxt->cap_zsl_offline_frm[i].addr_phy.addr_u =
+                prev_cxt->cap_zsl_offline_frm[i].addr_phy.addr_y + buffer_size;
+            prev_cxt->cap_zsl_offline_frm[i].fd = prev_cxt->cap_zsl_fd_array[i];
+            prev_cxt->cap_zsl_offline_frm[i].fmt = prev_cxt->cap_org_fmt;
+            prev_cxt->cap_zsl_offline_frm[i].size.width = width;
+            prev_cxt->cap_zsl_offline_frm[i].size.height = height;
+
+            buffer->addr[i].addr_y = prev_cxt->cap_zsl_offline_frm[i].addr_phy.addr_y;
+            buffer->addr[i].addr_u = prev_cxt->cap_zsl_offline_frm[i].addr_phy.addr_u;
+            buffer->addr_vir[i].addr_y = prev_cxt->cap_zsl_offline_frm[i].addr_vir.addr_y;
+            buffer->addr_vir[i].addr_u = prev_cxt->cap_zsl_offline_frm[i].addr_vir.addr_u;
+            buffer->fd[i] = prev_cxt->cap_zsl_offline_frm[i].fd;
+
+            /*backup queue for path0 offline*/
+            prev_cxt->cap_zsl_offline_frm_backup[i].buf_size = frame_size;
+            prev_cxt->cap_zsl_offline_frm_backup[i].addr_vir.addr_y =
+                prev_cxt->cap_zsl_virt_addr_array[i];
+            prev_cxt->cap_zsl_offline_frm_backup[i].addr_vir.addr_u =
+                prev_cxt->cap_zsl_offline_frm_backup[i].addr_vir.addr_y + buffer_size;
+            prev_cxt->cap_zsl_offline_frm_backup[i].addr_phy.addr_y =
+                prev_cxt->cap_zsl_phys_addr_array[i];
+            prev_cxt->cap_zsl_offline_frm_backup[i].addr_phy.addr_u =
+                prev_cxt->cap_zsl_offline_frm_backup[i].addr_phy.addr_y + buffer_size;
+            prev_cxt->cap_zsl_offline_frm_backup[i].fd = prev_cxt->cap_zsl_fd_array[i];
+            prev_cxt->cap_zsl_offline_frm_backup[i].fmt = prev_cxt->cap_org_fmt;
+            prev_cxt->cap_zsl_offline_frm_backup[i].size.width = width;
+            prev_cxt->cap_zsl_offline_frm_backup[i].size.height = height;
+        }
+
+        for (i = 0; i < (cmr_u32)prev_cxt->cap_zsl_mem_valid_num; i++) {
+            prev_cxt->cap_zsl_frm[i].buf_size = frame_size;
+            prev_cxt->cap_zsl_frm[i].addr_vir.addr_y =
+                prev_cxt->cap_zsl_virt_addr_array[i];
+            prev_cxt->cap_zsl_frm[i].addr_vir.addr_u =
+                prev_cxt->cap_zsl_frm[i].addr_vir.addr_y + buffer_size;
+            prev_cxt->cap_zsl_frm[i].addr_phy.addr_y =
+                prev_cxt->cap_zsl_phys_addr_array[i];
+            prev_cxt->cap_zsl_frm[i].addr_phy.addr_u =
+                prev_cxt->cap_zsl_frm[i].addr_phy.addr_y + buffer_size;
+            prev_cxt->cap_zsl_frm[i].fd = prev_cxt->cap_zsl_fd_array[i];
+            prev_cxt->cap_zsl_frm[i].fmt = prev_cxt->cap_org_fmt;
+            prev_cxt->cap_zsl_frm[i].size.width = width;
+            prev_cxt->cap_zsl_frm[i].size.height = height;
+
+            buffer->addr[i].addr_y = prev_cxt->cap_zsl_frm[i].addr_phy.addr_y;
+            buffer->addr[i].addr_u = prev_cxt->cap_zsl_frm[i].addr_phy.addr_u;
+            buffer->addr_vir[i].addr_y = prev_cxt->cap_zsl_frm[i].addr_vir.addr_y;
+            buffer->addr_vir[i].addr_u = prev_cxt->cap_zsl_frm[i].addr_vir.addr_u;
+            buffer->fd[i] = prev_cxt->cap_zsl_frm[i].fd;
+        }
+
+        prev_cxt->cap_zsl_mem_valid_num = 0;
+
+    } else {
+        for (i = 0; i < (cmr_u32)prev_cxt->cap_zsl_mem_valid_num; i++) {
+            prev_cxt->cap_zsl_frm[i].buf_size = frame_size;
+            prev_cxt->cap_zsl_frm[i].addr_vir.addr_y =
+                prev_cxt->cap_zsl_virt_addr_array[i];
+            prev_cxt->cap_zsl_frm[i].addr_vir.addr_u =
+                prev_cxt->cap_zsl_frm[i].addr_vir.addr_y + buffer_size;
+            prev_cxt->cap_zsl_frm[i].addr_phy.addr_y =
+                prev_cxt->cap_zsl_phys_addr_array[i];
+            prev_cxt->cap_zsl_frm[i].addr_phy.addr_u =
+                prev_cxt->cap_zsl_frm[i].addr_phy.addr_y + buffer_size;
+            prev_cxt->cap_zsl_frm[i].fd = prev_cxt->cap_zsl_fd_array[i];
+            prev_cxt->cap_zsl_frm[i].fmt = prev_cxt->cap_org_fmt;
+            prev_cxt->cap_zsl_frm[i].size.width = width;
+            prev_cxt->cap_zsl_frm[i].size.height = height;
+
+            buffer->addr[i].addr_y = prev_cxt->cap_zsl_frm[i].addr_phy.addr_y;
+            buffer->addr[i].addr_u = prev_cxt->cap_zsl_frm[i].addr_phy.addr_u;
+            buffer->addr_vir[i].addr_y = prev_cxt->cap_zsl_frm[i].addr_vir.addr_y;
+            buffer->addr_vir[i].addr_u = prev_cxt->cap_zsl_frm[i].addr_vir.addr_u;
+            buffer->fd[i] = prev_cxt->cap_zsl_frm[i].fd;
+        }
+    }
+#endif
     /*prev_cxt->cap_zsl_reserved_frm.buf_size        = frame_size;
     prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y =
     prev_cxt->cap_zsl_reserved_virt_addr;
@@ -5793,7 +5925,9 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->cap_zsl_reserved_frm.size.width      = width;
     prev_cxt->cap_zsl_reserved_frm.size.height     = height;*/
 
+exit:
     prev_cxt->cap_zsl_frm[i].addr_phy.addr_v = 0;
+    prev_cxt->cap_zsl_offline_frm[i].addr_phy.addr_v = 0;
     // prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_v = 0;
 
     if (prev_cxt->prev_param.cap_rot) {
@@ -5853,6 +5987,10 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(prev_cxt->cap_zsl_fd_array,
                   (ZSL_FRM_CNT + ZSL_ROT_FRM_CNT) * sizeof(cmr_s32));
         cmr_bzero(&prev_cxt->cap_zsl_frm[0],
+                  sizeof(struct img_frm) * ZSL_FRM_CNT);
+        cmr_bzero(&prev_cxt->cap_zsl_offline_frm[0],
+                  sizeof(struct img_frm) * ZSL_FRM_CNT);
+        cmr_bzero(&prev_cxt->cap_zsl_offline_frm_backup[0],
                   sizeof(struct img_frm) * ZSL_FRM_CNT);
         prev_cxt->cap_zsl_reserved_phys_addr = 0;
         prev_cxt->cap_zsl_reserved_virt_addr = 0;
@@ -6850,7 +6988,7 @@ cmr_int prev_zsl_get_frm_index(struct img_frm *frame, struct frm_info *data) {
             break;
         }
     }
-    CMR_LOGV("frm id %ld", i);
+    CMR_LOGD("frm id %ld", i);
 
     return i;
 }
@@ -7215,9 +7353,43 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
             info->uaddr_vir = prev_cxt->cap_zsl_frm[0].addr_vir.addr_u;
             info->vaddr_vir = prev_cxt->cap_zsl_frm[0].addr_vir.addr_v;
         }
+
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
         frm_id = prev_zsl_get_frm_index(prev_cxt->cap_zsl_frm, info);
         frm_ptr = &prev_cxt->cap_zsl_frm[frm_id];
+#else
 
+    if (prev_cxt->prev_param.sprd_zsl_enabled) {
+        frm_id = prev_zsl_get_frm_index(prev_cxt->cap_zsl_frm, info);
+        frm_ptr = &prev_cxt->cap_zsl_frm[frm_id];
+    } else {
+
+        if (prev_cxt->cap_sn_size.width * prev_cxt->cap_sn_size.height <
+            prev_cxt->actual_pic_size.width * prev_cxt->actual_pic_size.height) {
+            frm_id = prev_zsl_get_frm_index(prev_cxt->cap_zsl_frm, info);
+        } else if (prev_cxt->cap_sn_size.width *
+                prev_cxt->cap_sn_size.height > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+            CMR_LOGD("info->fd 0x%x, cap_zsl_offline_frm->fd 0x%x, 0x%x, 0x%x",
+                info->fd, prev_cxt->cap_zsl_offline_frm[0].fd,
+                prev_cxt->cap_zsl_offline_frm[1].fd,
+                prev_cxt->cap_zsl_offline_frm[2].fd);
+            //frm_id = prev_zsl_get_frm_index(prev_cxt->cap_zsl_offline_frm, info);
+            frm_id = 0;
+        }
+
+        if (frm_id >= ZSL_FRM_CNT) {
+            CMR_LOGE("zsl buffer index error info fd 0x%x, frm_Id %d", info->fd, frm_id);
+            for(cmr_int i = 0; i < 8; i++) {
+                CMR_LOGD("cap_zsl_offline_frm[%d] = 0x%x ", 
+                    i, prev_cxt->cap_zsl_offline_frm[i].fd);
+            }
+        } else {
+            frm_ptr = &prev_cxt->cap_zsl_frm[frm_id];
+        }
+    }
+#endif
+
+        CMR_LOGD("frm_id %d frame fd 0x%x", frm_id, prev_cxt->cap_zsl_frm[frm_id].fd);
         frame_type->buf_id = frm_id;
         frame_type->order_buf_id = frm_id;
         frame_type->y_vir_addr = prev_cxt->cap_zsl_frm[frm_id].addr_vir.addr_y;
@@ -7230,7 +7402,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
         frame_type->monoboottime = info->monoboottime;
         frame_type->type = PREVIEW_ZSL_FRAME;
-        CMR_LOGV("timestamp=%lld, width=%d, height=%d, fd=0x%x",
+        CMR_LOGD("timestamp=%lld, width=%d, height=%d, fd=0x%x",
                  frame_type->timestamp, frame_type->width, frame_type->height,
                  frame_type->fd);
         if (prev_cxt->prev_param.is_support_fd &&
@@ -10674,7 +10846,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
-    cmr_int valid_num = 0;
+    cmr_int valid_num = 0, valid_offline_num = 0;
     cmr_u32 width, height, buffer_size, frame_size;
     struct buffer_cfg buf_cfg, res_cfg;
     cmr_uint rot_index = 0;
@@ -10706,6 +10878,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             return ret;
         }
         valid_num = prev_cxt->cap_zsl_mem_valid_num;
+        valid_offline_num = prev_cxt->cap_zsl_offline_mem_valid_num;
         if (ZOOM_POST_PROCESS == zoom_post_proc) {
             width = prev_cxt->cap_sn_size.width;
             height = prev_cxt->cap_sn_size.height;
@@ -10723,8 +10896,8 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         }
         buffer_size = width * height;
         frame_size = prev_cxt->cap_zsl_mem_size;
-        CMR_LOGV("zsl frame size %dx%d src_phy 0x%x src_vir 0x%x", width,
-                 height, src_phy_addr, src_vir_addr);
+        CMR_LOGD("zsl frame size %dx%d src_phy 0x%x fd 0x%x valid_num %d", width,
+                 height, src_phy_addr, fd, valid_num);
         prev_cxt->cap_zsl_fd_array[valid_num] = fd;
         prev_cxt->cap_zsl_phys_addr_array[valid_num] = src_phy_addr;
         prev_cxt->cap_zsl_virt_addr_array[valid_num] = src_vir_addr;
@@ -10743,6 +10916,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->cap_zsl_frm[valid_num].size.width = width;
         prev_cxt->cap_zsl_frm[valid_num].size.height = height;
         prev_cxt->cap_zsl_mem_valid_num++;
+        prev_cxt->cap_zsl_offline_mem_valid_num++;
 
         buf_cfg.channel_id = prev_cxt->cap_channel_id;
         buf_cfg.base_id = CMR_CAP1_ID_BASE;
@@ -10776,43 +10950,61 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                 goto exit;
             }
         } else {
-
             if (ZOOM_POST_PROCESS == zoom_post_proc &&
                 (prev_cxt->prev_param.preview_eb &&
                  prev_cxt->prev_param.snapshot_eb &&
                  !prev_cxt->prev_param.sprd_zsl_enabled) &&
-                (width * height < prev_cxt->actual_pic_size.width *
-                                      prev_cxt->actual_pic_size.height)) {
+                ((width * height < prev_cxt->actual_pic_size.width *
+                                      prev_cxt->actual_pic_size.height) ||
+                                      width * height > SNS_INTERPOL_ONLINE_MAX_SIZE)) {
                 /* 5M interpolation 8M, callback zsl path need do scale up,
                     for cts testAllOutputYUVResolutions */
-                cmr_int yframe_size = prev_cxt->actual_pic_size.width *
-                                      prev_cxt->actual_pic_size.height;
-                cmr_int offset_y = (prev_cxt->actual_pic_size.width *
-                                    prev_cxt->actual_pic_size.height) -
-                                   (prev_cxt->cap_sn_size.width *
-                                    prev_cxt->cap_sn_size.height);
-                cmr_int offset_uv = offset_y / 2;
 
-                offset_y = (offset_y + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-                offset_y -= PAGE_SIZE;
-                offset_uv = (offset_uv + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-                offset_uv -= PAGE_SIZE;
+                if (width * height < prev_cxt->actual_pic_size.width) {
+                    cmr_int yframe_size = prev_cxt->actual_pic_size.width *
+                                          prev_cxt->actual_pic_size.height;
+                    cmr_int offset_y = (prev_cxt->actual_pic_size.width *
+                                        prev_cxt->actual_pic_size.height) -
+                                       (prev_cxt->cap_sn_size.width *
+                                        prev_cxt->cap_sn_size.height);
+                    cmr_int offset_uv = offset_y / 2;
 
-                CMR_LOGV("cb sn_size %dx%d, actual_pic_size %dx%d,"
-                         "need scale, offset_y 0x%x offset_uv 0x%x",
-                         width, height, prev_cxt->actual_pic_size.width,
-                         prev_cxt->actual_pic_size.height, offset_y, offset_uv);
-                buf_cfg.addr[0].addr_y =
-                    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + offset_y;
-                buf_cfg.addr[0].addr_u =
-                    prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y +
-                    yframe_size + offset_uv;
-                buf_cfg.addr_vir[0].addr_y =
-                    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y + offset_y;
-                buf_cfg.addr_vir[0].addr_u =
-                    prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y +
-                    yframe_size + offset_uv;
-                buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
+                    offset_y = (offset_y + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+                    offset_y -= PAGE_SIZE;
+                    offset_uv = (offset_uv + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+                    offset_uv -= PAGE_SIZE;
+
+                    CMR_LOGD("cb sn_size %dx%d, actual_pic_size %dx%d,"
+                             "need scale, offset_y 0x%x offset_uv 0x%x",
+                             width, height, prev_cxt->actual_pic_size.width,
+                             prev_cxt->actual_pic_size.height, offset_y, offset_uv);
+                    buf_cfg.addr[0].addr_y =
+                        prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y + offset_y;
+                    buf_cfg.addr[0].addr_u =
+                        prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y +
+                        yframe_size + offset_uv;
+                    buf_cfg.addr_vir[0].addr_y =
+                        prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y + offset_y;
+                    buf_cfg.addr_vir[0].addr_u =
+                        prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_y +
+                        yframe_size + offset_uv;
+                    buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
+               } else if (width * height > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+                    cmr_int index = prev_cxt->cap_zsl_frm_cnt %
+                        prev_cxt->cap_zsl_offline_buf_num;
+                    buf_cfg.addr[0].addr_y =
+                        prev_cxt->cap_zsl_offline_frm_backup[index].addr_phy.addr_y;
+                    buf_cfg.addr[0].addr_u =
+                        prev_cxt->cap_zsl_offline_frm_backup[index].addr_phy.addr_u;
+                    buf_cfg.addr_vir[0].addr_y =
+                        prev_cxt->cap_zsl_offline_frm_backup[index].addr_vir.addr_y;
+                    buf_cfg.addr_vir[0].addr_u =
+                        prev_cxt->cap_zsl_offline_frm_backup[index].addr_vir.addr_u;
+                    buf_cfg.fd[0] = prev_cxt->cap_zsl_offline_frm_backup[index].fd;
+
+                    prev_cxt->cap_zsl_offline_frm[valid_offline_num] =
+                        prev_cxt->cap_zsl_offline_frm_backup[index];
+                }
             } else {
                 buf_cfg.addr[0].addr_y =
                     prev_cxt->cap_zsl_frm[valid_num].addr_phy.addr_y;
@@ -10824,6 +11016,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                     prev_cxt->cap_zsl_frm[valid_num].addr_vir.addr_u;
                 buf_cfg.fd[0] = prev_cxt->cap_zsl_frm[valid_num].fd;
             }
+
         }
 
         ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
@@ -10871,6 +11064,11 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     struct prev_context *prev_cxt = NULL;
     cmr_int valid_num = 0;
     cmr_u32 i;
+    cmr_uint temp_vir = 0, temp_phy = 0;
+    cmr_s32 temp_fd = 0;
+    struct img_frm temp_img;
+    struct frm_info *frame = NULL;
+    cmr_int zsl_offline_buf_num = 0;
     struct camera_frame_type frame_type;
     struct prev_cb_info cb_data_info;
     cmr_int zoom_post_proc = 0;
@@ -10885,110 +11083,20 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
     prev_cxt = &handle->prev_cxt[camera_id];
     valid_num = prev_cxt->cap_zsl_mem_valid_num;
+    zsl_offline_buf_num = prev_cxt->cap_zsl_offline_mem_valid_num;
 
-    if (valid_num > ZSL_FRM_CNT || valid_num <= 0) {
+    if (valid_num > ZSL_FRM_CNT || valid_num < 0) {
         CMR_LOGE("wrong valid_num %ld", valid_num);
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     if ((prev_cxt->cap_zsl_frm[0].fd == (cmr_s32)data->fd) && valid_num > 0) {
+
         frame_type.y_phy_addr = prev_cxt->cap_zsl_phys_addr_array[0];
         frame_type.y_vir_addr = prev_cxt->cap_zsl_virt_addr_array[0];
         frame_type.fd = prev_cxt->cap_zsl_fd_array[0];
         frame_type.type = PREVIEW_ZSL_CANCELED_FRAME;
-        prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
-        if (ZOOM_POST_PROCESS == zoom_post_proc &&
-            (prev_cxt->prev_param.preview_eb &&
-            prev_cxt->prev_param.snapshot_eb &&
-            !prev_cxt->prev_param.sprd_zsl_enabled) &&
-            (prev_cxt->cap_sn_size.width * prev_cxt->cap_sn_size.height <
-            prev_cxt->actual_pic_size.width *
-            prev_cxt->actual_pic_size.height)) {
-            /* 5M interpolation 8M, callback zsl path need do scale up,
-                for cts testAllOutputYUVResolutions */
-            struct img_frm zsl_src, zsl_dst;
-            struct cmr_op_mean mean;
-            cmr_int yframe_size = prev_cxt->actual_pic_size.width *
-                prev_cxt->actual_pic_size.height;
-            cmr_int offset_y = (prev_cxt->actual_pic_size.width *
-                prev_cxt->actual_pic_size.height) - (prev_cxt->cap_sn_size.width *
-                prev_cxt->cap_sn_size.height);
-            cmr_int offset_uv = offset_y / 2;
-
-            offset_y = (offset_y + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-            offset_y -= PAGE_SIZE;
-            offset_uv = (offset_uv + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-            offset_uv -= PAGE_SIZE;
-
-            memcpy(&zsl_src, &prev_cxt->cap_zsl_frm[0], sizeof(struct img_frm));
-            zsl_src.addr_phy.addr_y =prev_cxt->cap_zsl_frm[0].addr_phy.addr_y + offset_y;
-            zsl_src.addr_phy.addr_u =
-                prev_cxt->cap_zsl_frm[0].addr_phy.addr_y + yframe_size + offset_uv;
-            zsl_src.addr_vir.addr_y =
-                prev_cxt->cap_zsl_frm[0].addr_vir.addr_y + offset_y;
-            zsl_src.addr_vir.addr_u =
-                prev_cxt->cap_zsl_frm[0].addr_vir.addr_y + yframe_size + offset_uv;
-            zsl_src.size.width = prev_cxt->cap_sn_size.width;
-            zsl_src.size.height = prev_cxt->cap_sn_size.height;
-            zsl_src.rect.start_x = 0;
-            zsl_src.rect.start_y = 0;
-            zsl_src.rect.width = zsl_src.size.width;
-            zsl_src.rect.height = zsl_src.size.height;
-            zsl_src.data_end = prev_cxt->cap_data_endian;
-            memcpy(&zsl_dst, &prev_cxt->cap_zsl_frm[0], sizeof(struct img_frm));
-            zsl_dst.addr_phy.addr_u = zsl_dst.addr_phy.addr_y + yframe_size;
-            zsl_dst.addr_vir.addr_u = zsl_dst.addr_vir.addr_y + yframe_size;
-            zsl_dst.size.width = prev_cxt->actual_pic_size.width;
-            zsl_dst.size.height = prev_cxt->actual_pic_size.height;
-            zsl_dst.buf_size = (prev_cxt->actual_pic_size.width *
-                prev_cxt->actual_pic_size.height) * 3 / 2;
-            zsl_dst.rect.start_x = 0;
-            zsl_dst.rect.start_y = 0;
-            zsl_dst.rect.width = zsl_dst.size.width;
-            zsl_dst.rect.height = zsl_dst.size.height;
-            zsl_dst.data_end = prev_cxt->cap_data_endian;
-            CMR_LOGV("zsl src %dx%d offset_y 0x%x offset_uv 0x%x",
-                zsl_src.size.width, zsl_src.size.height, offset_y, offset_uv);
-            mean.is_sync = 1;
-            mean.slice_height = zsl_src.size.height;
-
-            ret = handle->ops.start_scale(handle->oem_handle, (cmr_handle)handle,
-                            &zsl_src, &zsl_dst, &mean);
-            if (ret) {
-                CMR_LOGE("zsl scale failed");
-            }
-
-            CMR_LOGV("src fd 0x%x yaddr 0x%x uvaddr 0x%x"
-                "dst fd 0x%x yaddr 0x%x uvaddr 0x%x",
-                zsl_src.fd, zsl_src.addr_phy.addr_y,zsl_src.addr_phy.addr_u,
-                zsl_dst.fd, zsl_dst.addr_phy.addr_y, zsl_dst.addr_phy.addr_u);
-            CMR_LOGV("src fd 0x%x yaddr_v 0x%x uvaddr_v 0x%x"
-                "dst fd 0x%x yadd_v 0x%x uvaddr_v 0x%x",
-                zsl_src.fd, zsl_src.addr_vir.addr_y, zsl_src.addr_vir.addr_u,
-                zsl_dst.fd, zsl_dst.addr_vir.addr_y, zsl_dst.addr_vir.addr_u);
-            char value[PROPERTY_VALUE_MAX];
-            property_get("debug.camera.dump.frame", value, "null");
-            if (!strcmp(value, "zsl_scale")) {
-                if (g_zsl_frame_dump_cnt < 1000) {
-                    g_zsl_frame_dump_cnt++;
-                    if (g_zsl_frame_dump_cnt % 20 == 0) {
-                        /* camera_save_yuv_to_file(
-                            g_zsl_frame_dump_cnt, IMG_DATA_TYPE_YUV420,
-                            zsl_src.size.width, zsl_src.size.height,
-                            &zsl_src.addr_vir);
-
-                        ret = handle->ops.start_scale(handle->oem_handle, (cmr_handle)handle,
-                            &zsl_src, &zsl_dst, &mean); */
-
-                        camera_save_yuv_to_file(
-                            g_zsl_frame_dump_cnt, IMG_DATA_TYPE_YUV420,
-                            zsl_dst.size.width, zsl_dst.size.height,
-                            &zsl_dst.addr_vir);
-                    }
-                }
-            }
-
-        }
 
         for (i = 0; i < (cmr_u32)valid_num - 1; i++) {
             prev_cxt->cap_zsl_phys_addr_array[i] =
@@ -10999,12 +11107,15 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             memcpy(&prev_cxt->cap_zsl_frm[i], &prev_cxt->cap_zsl_frm[i + 1],
                    sizeof(struct img_frm));
         }
+
         prev_cxt->cap_zsl_phys_addr_array[valid_num - 1] = 0;
         prev_cxt->cap_zsl_virt_addr_array[valid_num - 1] = 0;
         prev_cxt->cap_zsl_fd_array[valid_num - 1] = 0;
         cmr_bzero(&prev_cxt->cap_zsl_frm[valid_num - 1],
                   sizeof(struct img_frm));
+
         prev_cxt->cap_zsl_mem_valid_num--;
+
         if (is_to_hal) {
             frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
             frame_type.monoboottime = data->monoboottime;
@@ -11019,6 +11130,320 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                  data->fd, prev_cxt->cap_zsl_frm[0].fd, valid_num);
         return CMR_CAMERA_INVALID_FRAME;
     }
+#else
+    CMR_LOGD("prev_cxt->cap_zsl_offline_frm[0].fd %x, data->fd %x valid_num %d",
+            prev_cxt->cap_zsl_offline_frm[0].fd, data->fd, valid_num);
+
+    if (prev_cxt->prev_param.sprd_zsl_enabled) {
+        if ((prev_cxt->cap_zsl_frm[0].fd == (cmr_s32)data->fd) && valid_num > 0) {
+
+            frame_type.y_phy_addr = prev_cxt->cap_zsl_phys_addr_array[0];
+            frame_type.y_vir_addr = prev_cxt->cap_zsl_virt_addr_array[0];
+            frame_type.fd = prev_cxt->cap_zsl_fd_array[0];
+            frame_type.type = PREVIEW_ZSL_CANCELED_FRAME;
+
+            for (i = 0; i < (cmr_u32)valid_num - 1; i++) {
+                prev_cxt->cap_zsl_phys_addr_array[i] =
+                    prev_cxt->cap_zsl_phys_addr_array[i + 1];
+                prev_cxt->cap_zsl_virt_addr_array[i] =
+                    prev_cxt->cap_zsl_virt_addr_array[i + 1];
+                prev_cxt->cap_zsl_fd_array[i] = prev_cxt->cap_zsl_fd_array[i + 1];
+                memcpy(&prev_cxt->cap_zsl_frm[i], &prev_cxt->cap_zsl_frm[i + 1],
+                       sizeof(struct img_frm));
+            }
+
+            prev_cxt->cap_zsl_phys_addr_array[valid_num - 1] = 0;
+            prev_cxt->cap_zsl_virt_addr_array[valid_num - 1] = 0;
+            prev_cxt->cap_zsl_fd_array[valid_num - 1] = 0;
+            cmr_bzero(&prev_cxt->cap_zsl_frm[valid_num - 1],
+                      sizeof(struct img_frm));
+
+            prev_cxt->cap_zsl_mem_valid_num--;
+
+            if (is_to_hal) {
+                frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+                frame_type.monoboottime = data->monoboottime;
+                cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
+                cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+                cb_data_info.frame_data = &frame_type;
+                prev_cb_start(handle, &cb_data_info);
+            }
+        } else {
+            CMR_LOGE("got wrong buf: data->fd=0x%x, cap_zsl_frm[0].fd=0x%x, "
+                     "valid_num=%ld",
+                     data->fd, prev_cxt->cap_zsl_frm[0].fd, valid_num);
+            return CMR_CAMERA_INVALID_FRAME;
+        }
+
+        goto exit;
+    }
+
+    if (((prev_cxt->cap_zsl_offline_frm[0].fd == (cmr_s32)data->fd) &&
+        zsl_offline_buf_num > 0) ||
+        ((prev_cxt->cap_zsl_frm[0].fd == (cmr_s32)data->fd) && valid_num > 0)) {
+
+        if (zsl_offline_buf_num > 0 && valid_num <= 0) {
+            /*Has no callback zsl buffer*/
+            for (i = 0; i < (cmr_u32)zsl_offline_buf_num - 1; i++) {
+                prev_cxt->cap_zsl_offline_phys_addr_array[i] =
+                    prev_cxt->cap_zsl_offline_phys_addr_array[i + 1];
+                prev_cxt->cap_zsl_offline_virt_addr_array[i] =
+                    prev_cxt->cap_zsl_offline_virt_addr_array[i + 1];
+                prev_cxt->cap_zsl_offline_fd_array[i] = prev_cxt->cap_zsl_offline_fd_array[i + 1];
+                memcpy(&prev_cxt->cap_zsl_offline_frm[i], &prev_cxt->cap_zsl_offline_frm[i + 1],
+                   sizeof(struct img_frm));
+            }
+
+            CMR_LOGD("no zsl buf:zsl_offline_buf_num %d cap_zsl_offline_frm fd 0x%x, 0x%x, 0x%x",
+                zsl_offline_buf_num,
+                prev_cxt->cap_zsl_offline_frm[0].fd,
+                prev_cxt->cap_zsl_offline_frm[1].fd,
+                prev_cxt->cap_zsl_offline_frm[2].fd);
+
+            prev_cxt->cap_zsl_offline_phys_addr_array[zsl_offline_buf_num - 1] = 0;
+            prev_cxt->cap_zsl_offline_virt_addr_array[zsl_offline_buf_num - 1] = 0;
+            prev_cxt->cap_zsl_offline_fd_array[zsl_offline_buf_num - 1] = 0;
+            cmr_bzero(&prev_cxt->cap_zsl_offline_frm[zsl_offline_buf_num - 1],
+              sizeof(struct img_frm));
+
+            prev_cxt->cap_zsl_offline_mem_valid_num--;
+
+            goto exit;
+        }
+
+        frame_type.y_phy_addr = prev_cxt->cap_zsl_phys_addr_array[0];
+        frame_type.y_vir_addr = prev_cxt->cap_zsl_virt_addr_array[0];
+        frame_type.fd = prev_cxt->cap_zsl_fd_array[0];
+        frame_type.type = PREVIEW_ZSL_CANCELED_FRAME;
+        prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
+        if (ZOOM_POST_PROCESS == zoom_post_proc &&
+            prev_cxt->prev_param.preview_eb &&
+            prev_cxt->prev_param.snapshot_eb &&
+            !prev_cxt->prev_param.sprd_zsl_enabled) {
+
+            if (prev_cxt->cap_sn_size.width * prev_cxt->cap_sn_size.height <
+                prev_cxt->actual_pic_size.width * prev_cxt->actual_pic_size.height) {
+                /* 5M interpolation 8M, callback zsl path need do scale up,
+                    for cts testAllOutputYUVResolutions */
+                struct img_frm zsl_src, zsl_dst;
+                struct cmr_op_mean mean;
+                cmr_int yframe_size = prev_cxt->actual_pic_size.width *
+                    prev_cxt->actual_pic_size.height;
+                cmr_int offset_y = (prev_cxt->actual_pic_size.width *
+                    prev_cxt->actual_pic_size.height) - (prev_cxt->cap_sn_size.width *
+                    prev_cxt->cap_sn_size.height);
+                cmr_int offset_uv = offset_y / 2;
+
+                offset_y = (offset_y + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+                offset_y -= PAGE_SIZE;
+                offset_uv = (offset_uv + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+                offset_uv -= PAGE_SIZE;
+
+                memcpy(&zsl_src, &prev_cxt->cap_zsl_frm[0], sizeof(struct img_frm));
+                zsl_src.addr_phy.addr_y =prev_cxt->cap_zsl_frm[0].addr_phy.addr_y + offset_y;
+                zsl_src.addr_phy.addr_u =
+                    prev_cxt->cap_zsl_frm[0].addr_phy.addr_y + yframe_size + offset_uv;
+                zsl_src.addr_vir.addr_y =
+                    prev_cxt->cap_zsl_frm[0].addr_vir.addr_y + offset_y;
+                zsl_src.addr_vir.addr_u =
+                    prev_cxt->cap_zsl_frm[0].addr_vir.addr_y + yframe_size + offset_uv;
+                zsl_src.size.width = prev_cxt->cap_sn_size.width;
+                zsl_src.size.height = prev_cxt->cap_sn_size.height;
+                zsl_src.rect.start_x = 0;
+                zsl_src.rect.start_y = 0;
+                zsl_src.rect.width = zsl_src.size.width;
+                zsl_src.rect.height = zsl_src.size.height;
+                zsl_src.data_end = prev_cxt->cap_data_endian;
+                memcpy(&zsl_dst, &prev_cxt->cap_zsl_frm[0], sizeof(struct img_frm));
+                zsl_dst.addr_phy.addr_u = zsl_dst.addr_phy.addr_y + yframe_size;
+                zsl_dst.addr_vir.addr_u = zsl_dst.addr_vir.addr_y + yframe_size;
+                zsl_dst.size.width = prev_cxt->actual_pic_size.width;
+                zsl_dst.size.height = prev_cxt->actual_pic_size.height;
+                zsl_dst.buf_size = (prev_cxt->actual_pic_size.width *
+                    prev_cxt->actual_pic_size.height) * 3 / 2;
+                zsl_dst.rect.start_x = 0;
+                zsl_dst.rect.start_y = 0;
+                zsl_dst.rect.width = zsl_dst.size.width;
+                zsl_dst.rect.height = zsl_dst.size.height;
+                zsl_dst.data_end = prev_cxt->cap_data_endian;
+                CMR_LOGV("zsl src %dx%d offset_y 0x%x offset_uv 0x%x",
+                    zsl_src.size.width, zsl_src.size.height, offset_y, offset_uv);
+                mean.is_sync = 1;
+                mean.slice_height = zsl_src.size.height;
+
+                ret = handle->ops.start_scale(handle->oem_handle, (cmr_handle)handle,
+                                &zsl_src, &zsl_dst, &mean);
+                if (ret) {
+                    CMR_LOGE("zsl scale failed");
+                }
+
+                CMR_LOGV("src fd 0x%x yaddr 0x%x uvaddr 0x%x"
+                    "dst fd 0x%x yaddr 0x%x uvaddr 0x%x",
+                    zsl_src.fd, zsl_src.addr_phy.addr_y,zsl_src.addr_phy.addr_u,
+                    zsl_dst.fd, zsl_dst.addr_phy.addr_y, zsl_dst.addr_phy.addr_u);
+                CMR_LOGV("src fd 0x%x yaddr_v 0x%x uvaddr_v 0x%x"
+                    "dst fd 0x%x yadd_v 0x%x uvaddr_v 0x%x",
+                    zsl_src.fd, zsl_src.addr_vir.addr_y, zsl_src.addr_vir.addr_u,
+                    zsl_dst.fd, zsl_dst.addr_vir.addr_y, zsl_dst.addr_vir.addr_u);
+                char value[PROPERTY_VALUE_MAX];
+                property_get("debug.camera.dump.frame", value, "null");
+                if (!strcmp(value, "zsl_scale")) {
+                    if (g_zsl_frame_dump_cnt < 1000) {
+                        g_zsl_frame_dump_cnt++;
+                        if (g_zsl_frame_dump_cnt % 20 == 0) {
+                            /* camera_save_yuv_to_file(
+                                g_zsl_frame_dump_cnt, IMG_DATA_TYPE_YUV420,
+                                zsl_src.size.width, zsl_src.size.height,
+                                &zsl_src.addr_vir);
+
+                            ret = handle->ops.start_scale(handle->oem_handle, (cmr_handle)handle,
+                                &zsl_src, &zsl_dst, &mean); */
+
+                            camera_save_yuv_to_file(
+                                g_zsl_frame_dump_cnt, IMG_DATA_TYPE_YUV420,
+                                zsl_dst.size.width, zsl_dst.size.height,
+                                &zsl_dst.addr_vir);
+                        }
+                    }
+                }
+
+            } else if (prev_cxt->cap_sn_size.width * 
+                prev_cxt->cap_sn_size.height > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+                /* pike2 offline mode, callback zsl path need do scale down,
+                    for cts testAllOutputYUVResolutions */
+                struct img_frm zsl_src, zsl_dst;
+                struct cmr_op_mean mean;
+                cmr_int yframe_size = prev_cxt->actual_pic_size.width *
+                    prev_cxt->actual_pic_size.height;
+                cmr_int yframe_offline_size = prev_cxt->cap_sn_size.width *
+                    prev_cxt->cap_sn_size.height;
+
+                memcpy(&zsl_src, &prev_cxt->cap_zsl_offline_frm[0], sizeof(struct img_frm));
+                zsl_src.addr_phy.addr_y =prev_cxt->cap_zsl_offline_frm[0].addr_phy.addr_y;
+                zsl_src.addr_phy.addr_u =
+                    prev_cxt->cap_zsl_offline_frm[0].addr_phy.addr_y + yframe_offline_size;
+                zsl_src.addr_vir.addr_y =
+                    prev_cxt->cap_zsl_offline_frm[0].addr_vir.addr_y;
+                zsl_src.addr_vir.addr_u =
+                    prev_cxt->cap_zsl_offline_frm[0].addr_vir.addr_y + yframe_offline_size;
+                zsl_src.size.width = prev_cxt->cap_sn_size.width;
+                zsl_src.size.height = prev_cxt->cap_sn_size.height;
+                zsl_src.rect.start_x = 0;
+                zsl_src.rect.start_y = 0;
+                zsl_src.rect.width = zsl_src.size.width;
+                zsl_src.rect.height = zsl_src.size.height;
+                zsl_src.data_end = prev_cxt->cap_data_endian;
+                memcpy(&zsl_dst, &prev_cxt->cap_zsl_frm[0], sizeof(struct img_frm));
+                zsl_dst.addr_phy.addr_u = zsl_dst.addr_phy.addr_y + yframe_size;
+                zsl_dst.addr_vir.addr_u = zsl_dst.addr_vir.addr_y + yframe_size;
+                zsl_dst.size.width = prev_cxt->actual_pic_size.width;
+                zsl_dst.size.height = prev_cxt->actual_pic_size.height;
+                zsl_dst.buf_size = (prev_cxt->actual_pic_size.width *
+                    prev_cxt->actual_pic_size.height) * 3 / 2;
+                zsl_dst.rect.start_x = 0;
+                zsl_dst.rect.start_y = 0;
+                zsl_dst.rect.width = zsl_dst.size.width;
+                zsl_dst.rect.height = zsl_dst.size.height;
+                zsl_dst.data_end = prev_cxt->cap_data_endian;
+                CMR_LOGD("zsl src %dx%d",
+                    zsl_src.size.width, zsl_src.size.height);
+                mean.is_sync = 1;
+                mean.slice_height = zsl_src.size.height;
+
+                ret = handle->ops.start_scale(handle->oem_handle, (cmr_handle)handle,
+                                &zsl_src, &zsl_dst, &mean);
+                if (ret) {
+                    CMR_LOGE("zsl scale failed");
+                }
+
+                CMR_LOGD("src fd 0x%x yaddr 0x%x uvaddr 0x%x"
+                    "dst fd 0x%x yaddr 0x%x uvaddr 0x%x",
+                    zsl_src.fd, zsl_src.addr_phy.addr_y,zsl_src.addr_phy.addr_u,
+                    zsl_dst.fd, zsl_dst.addr_phy.addr_y, zsl_dst.addr_phy.addr_u);
+                CMR_LOGD("src fd 0x%x yaddr_v 0x%x uvaddr_v 0x%x"
+                    "dst fd 0x%x yadd_v 0x%x uvaddr_v 0x%x",
+                    zsl_src.fd, zsl_src.addr_vir.addr_y, zsl_src.addr_vir.addr_u,
+                    zsl_dst.fd, zsl_dst.addr_vir.addr_y, zsl_dst.addr_vir.addr_u);
+                char value[PROPERTY_VALUE_MAX];
+                property_get("debug.camera.dump.frame", value, "null");
+                if (!strcmp(value, "zsl_scale")) {
+                    if (g_zsl_frame_dump_cnt < 1000) {
+                        g_zsl_frame_dump_cnt++;
+                        if (g_zsl_frame_dump_cnt % 20 == 0) {
+                            /* camera_save_yuv_to_file(
+                                g_zsl_frame_dump_cnt, IMG_DATA_TYPE_YUV420,
+                                zsl_src.size.width, zsl_src.size.height,
+                                &zsl_src.addr_vir);
+
+                            ret = handle->ops.start_scale(handle->oem_handle, (cmr_handle)handle,
+                                &zsl_src, &zsl_dst, &mean); */
+
+                            camera_save_yuv_to_file(
+                                g_zsl_frame_dump_cnt, IMG_DATA_TYPE_YUV420,
+                                zsl_dst.size.width, zsl_dst.size.height,
+                                &zsl_dst.addr_vir);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        for (i = 0; i < (cmr_u32)valid_num - 1; i++) {
+            prev_cxt->cap_zsl_phys_addr_array[i] =
+                prev_cxt->cap_zsl_phys_addr_array[i + 1];
+            prev_cxt->cap_zsl_virt_addr_array[i] =
+                prev_cxt->cap_zsl_virt_addr_array[i + 1];
+            prev_cxt->cap_zsl_fd_array[i] = prev_cxt->cap_zsl_fd_array[i + 1];
+            memcpy(&prev_cxt->cap_zsl_frm[i], &prev_cxt->cap_zsl_frm[i + 1],
+                   sizeof(struct img_frm));
+        }
+
+        for (i = 0; i < (cmr_u32)zsl_offline_buf_num - 1; i++) {
+            prev_cxt->cap_zsl_offline_phys_addr_array[i] =
+                prev_cxt->cap_zsl_offline_phys_addr_array[i + 1];
+            prev_cxt->cap_zsl_offline_virt_addr_array[i] =
+                prev_cxt->cap_zsl_offline_virt_addr_array[i + 1];
+            prev_cxt->cap_zsl_offline_fd_array[i] = prev_cxt->cap_zsl_offline_fd_array[i + 1];
+            memcpy(&prev_cxt->cap_zsl_offline_frm[i], &prev_cxt->cap_zsl_offline_frm[i + 1],
+               sizeof(struct img_frm));
+        }
+
+        CMR_LOGD("zsl_offline_buf_num %d cap_zsl_offline_frm fd 0x%x, 0x%x, 0x%x",
+            zsl_offline_buf_num,
+            prev_cxt->cap_zsl_offline_frm[0].fd,
+            prev_cxt->cap_zsl_offline_frm[1].fd,
+            prev_cxt->cap_zsl_offline_frm[2].fd);
+
+        prev_cxt->cap_zsl_phys_addr_array[valid_num - 1] = 0;
+        prev_cxt->cap_zsl_virt_addr_array[valid_num - 1] = 0;
+        prev_cxt->cap_zsl_fd_array[valid_num - 1] = 0;
+        cmr_bzero(&prev_cxt->cap_zsl_frm[valid_num - 1],
+                  sizeof(struct img_frm));
+
+        prev_cxt->cap_zsl_offline_phys_addr_array[zsl_offline_buf_num - 1] = 0;
+        prev_cxt->cap_zsl_offline_virt_addr_array[zsl_offline_buf_num - 1] = 0;
+        prev_cxt->cap_zsl_offline_fd_array[zsl_offline_buf_num - 1] = 0;
+        cmr_bzero(&prev_cxt->cap_zsl_offline_frm[zsl_offline_buf_num - 1],
+          sizeof(struct img_frm));
+
+        prev_cxt->cap_zsl_mem_valid_num--;
+        prev_cxt->cap_zsl_offline_mem_valid_num--;
+        if (is_to_hal) {
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.monoboottime = data->monoboottime;
+            cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
+            cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
+            cb_data_info.frame_data = &frame_type;
+            prev_cb_start(handle, &cb_data_info);
+        }
+    } else {
+        CMR_LOGE("got wrong buf: data->fd=0x%x, cap_zsl_frm[0].fd=0x%x, "
+                 "valid_num=%ld",
+                 data->fd, prev_cxt->cap_zsl_frm[0].fd, valid_num);
+        return CMR_CAMERA_INVALID_FRAME;
+    }
+#endif
 
 exit:
     CMR_LOGD("fd=0x%x, chn_id=0x%x, valid_num=%ld, cam_id = %ld", data->fd,
@@ -11698,6 +12123,7 @@ cmr_int prev_pause_cap_channel(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
         prev_cxt->cap_zsl_mem_valid_num = 0;
+        prev_cxt->cap_zsl_offline_mem_valid_num = 0;
     }
 
 exit:

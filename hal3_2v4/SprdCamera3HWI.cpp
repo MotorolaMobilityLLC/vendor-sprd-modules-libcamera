@@ -1616,6 +1616,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     }
                 }
             }
+
         }
         pendingRequest.receive_req_max = receive_req_max;
 

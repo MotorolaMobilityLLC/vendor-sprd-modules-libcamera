@@ -3933,8 +3933,19 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
     in_param.reg_cb = camera_ipm_cb;
 
     if (1 == camera_get_hdr_flag(cxt)) {
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;
         in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+#else
+        if (cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height
+            > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+            in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+            in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+        } else {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        }
+#endif
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.adgain_valid_frame_num =
@@ -3968,8 +3979,23 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
 
     if (1 == camera_get_sw_3dnr_flag(cxt) && 1 != cxt->is_3dnr_video) {
         struct isp_adgain_exp_info adgain_exp_info;
+
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;
         in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        CMR_LOGE("auto detect true");
+#else
+        CMR_LOGE("auto detect false");
+        if (cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height
+            > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+            in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+            in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+            CMR_LOGE("wxd %d %d ", in_param.frame_size.width, in_param.frame_size.height);
+        } else {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        }
+#endif
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.reg_cb = camera_ipm_cb;
@@ -3999,8 +4025,19 @@ cmr_int camera_ipm_open_module(cmr_handle oem_handle) {
     }
 
     if (camera_get_cnr_flag(oem_handle) && !cxt->ipm_cxt.cnr_inited) {
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;
         in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+#else
+        if (cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height
+            > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+            in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+            in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+        } else {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        }
+#endif
         ret = camera_open_cnr(cxt, &in_param, NULL);
         if (ret) {
             CMR_LOGE("failed to open cnr %ld", ret);
@@ -8844,6 +8881,19 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     if (camera_get_filter_flag(cxt) && !cxt->ipm_cxt.filter_inited) {
         struct ipm_open_in in_param;
         struct ipm_open_out out_param;
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+        in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+        in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+#else
+        if (cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height
+            > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+            in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+            in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+        } else {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        }
+#endif
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;
         in_param.frame_size.height = cxt->snp_cxt.request_size.height;
         in_param.frame_rect.start_x = 0;

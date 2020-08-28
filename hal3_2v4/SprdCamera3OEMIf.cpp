@@ -464,7 +464,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     mSprdZslEnabled = false;
     mZslMaxFrameNum = 1;
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     mZslNum = 2;
+#else
+    mZslNum = 3;
+#endif
     mZslShotPushFlag = 0;
     mZslChannelStatus = 1;
     mZSLQueue.clear();
@@ -7254,7 +7258,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
                                          cmr_s32 *fd) {
     sprd_camera_memory_t *memory = NULL;
     cmr_int i = 0;
-
+    bool need_offline_mode = false;
     SPRD_DEF_Tag sprddefInfo;
     int BufferCount = kZslBufferCount;
 
@@ -7279,7 +7283,13 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
         return BAD_VALUE;
     }
 
-    if (mSprdZslEnabled == true) {
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    if (size > SNS_INTERPOL_ONLINE_MAX_SIZE && !mSprdZslEnabled) {
+        need_offline_mode = true;
+    }
+#endif
+
+    if (mSprdZslEnabled == true || need_offline_mode == true) {
         releaseZSLQueue();
         for (i = 0; i < (cmr_int)mZslNum; i++) {
             if (mZslHeapArray[i] == NULL) {
