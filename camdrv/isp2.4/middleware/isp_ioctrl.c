@@ -2222,6 +2222,7 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 	void *awb_handle = NULL;
 	char awb_ver[PROPERTY_VALUE_MAX] = {0};
 	int i = 0;
+	int is_awb2 = 0;
 
 	memset(&init_param, 0, sizeof(init_param));
 	memset(&calc_param, 0, sizeof(calc_param));
@@ -2234,8 +2235,9 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 
 	property_get("persist.vendor.cam.isp.awb", awb_ver, "awb2.x");
 
-	ISP_LOGI("awb version %s", awb_ver);
-	if (!strncmp(awb_ver, "awb2.x", 6)) {
+	is_awb2 = !strncmp(awb_ver, "awb2.x", 6);
+	ISP_LOGI("awb version %s, is_awb2 %d", awb_ver, is_awb2);
+	if (is_awb2) {
 		lib_handle = dlopen("libawb1.so", RTLD_NOW);
 		if (!lib_handle) {
 			ISP_LOGE("fail to dlopen awb lib");
@@ -2378,9 +2380,9 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		cxt->awb_cxt.log_awb_size = calc_result.log_size;
 	}
 
-	if (!strcmp(awb_ver, "awb2.x"))
+	if (is_awb2)
 		lib_ops.awb_deinit_v1(awb_handle);
-	else if (!strcmp(awb_ver, "awb3.x"))
+	else
 		lib_ops.awb_deinit_v3(awb_handle);
 	ret = ISP_SUCCESS;
 load_error:
