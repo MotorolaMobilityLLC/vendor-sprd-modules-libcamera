@@ -4786,19 +4786,21 @@ static cmr_s32 ae_set_hdr_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->hdr_flag = 3;
 			cxt->hdr_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
 			cxt->hdr_gain = cxt->sync_cur_result.ev_setting.ae_gain;
+			cxt->cur_status.adv_param.is_snapshot = 1;
 			ae_set_force_pause(cxt, 1, 12);
 		} else {
 			ae_set_force_pause(cxt, 0, 13);
 			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 			cxt->cur_status.adv_param.prof_mode = 0;
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+			cxt->cur_status.adv_param.is_snapshot = 0;
 		}
-		ISP_LOGD("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d",
+		ISP_LOGD("AE_SET_HDR: hdr_enable %d, hdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d, is_snapshot: %d\n",
 			cxt->hdr_enable,
 			cxt->hdr_cb_cnt,
 			cxt->hdr_exp_line,
 			cxt->hdr_gain,
-			cxt->cur_status.adv_param.lock);
+			cxt->cur_status.adv_param.lock, cxt->cur_status.adv_param.is_snapshot);
 	}
 
 	return AE_SUCCESS;
