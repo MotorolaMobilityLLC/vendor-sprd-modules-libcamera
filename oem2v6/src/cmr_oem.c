@@ -6108,6 +6108,7 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
     sem_init(&cxt->share_path_sm, 0, 0);
     sem_init(&cxt->access_sm, 0, 1);
     sem_init(&cxt->sbs_sync_sm, 0, 0);
+    sem_init(&cxt->snapshot_sm, 0, 1);
 
     cxt->err_code = CMR_CAMERA_SUCCESS;
     /*create thread*/
@@ -6198,6 +6199,7 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     sem_destroy(&cxt->access_sm);
     // for sbs mode capture
     sem_destroy(&cxt->sbs_sync_sm);
+    sem_destroy(&cxt->snapshot_sm);
 
     CMR_LOGD("X");
     ATRACE_END();
@@ -12943,6 +12945,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     sprintf(datetime, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
 	            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
 
+    sem_wait(&cxt->snapshot_sm);
+
     if (!oem_handle) {
         CMR_LOGE("error handle");
         goto exit;
@@ -13168,6 +13172,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
 exit:
     CMR_LOGV("X, ret=%ld", ret);
+    sem_post(&cxt->snapshot_sm);
     ATRACE_END();
     return ret;
 }
@@ -13180,6 +13185,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
 
+    sem_wait(&cxt->snapshot_sm);
     if (cxt->remosaic_type == 1)
         camera_close_4in1(oem_handle);
     if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
@@ -13294,6 +13300,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
 exit:
     CMR_LOGV("X, ret=%ld", ret);
     ATRACE_END();
+    sem_post(&cxt->snapshot_sm);
     return ret;
 }
 
