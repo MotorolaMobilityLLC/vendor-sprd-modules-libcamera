@@ -1054,12 +1054,12 @@ static cmr_int ov32a1q_drv_stream_off(cmr_handle handle, cmr_uint param) {
     value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
     if (value != 0x00) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
-        if (!sns_drv_cxt->is_sensor_close) {
+//        if (!sns_drv_cxt->is_sensor_close) {
             sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
                         sns_drv_cxt->line_time_def / 1000000) + 10;
             usleep(sleep_time * 1000);
             SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
-        }
+//        }
     } else {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
     }
