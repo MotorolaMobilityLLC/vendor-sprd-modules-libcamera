@@ -282,6 +282,7 @@ static void minicamera_cb(enum camera_cb_type cb, const void *client_data,
 
     if (oem_dev == NULL || oem_dev->ops == NULL) {
         CMR_LOGE("oem_dev is null");
+        pthread_mutex_unlock(&previewlock);
         return;
     }
 
@@ -436,7 +437,6 @@ static int callback_preview_malloc(cmr_u32 size, cmr_u32 sum,
     return 0;
 
 mem_fail:
-    callback_previewfree(0, 0, 0, 0);
     return -1;
 }
 
@@ -686,6 +686,8 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
 
     if (CAMERA_PREVIEW == type) {
         ret = callback_preview_malloc(size, sum, phy_addr, vir_addr, fd);
+        if (ret)
+           goto exit;
     } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
                type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
                type == CAMERA_ISP_RAWAE || type == CAMERA_ISP_BINGING4AWB ||
@@ -697,6 +699,10 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
 
     previewvalid = 1;
     pthread_mutex_unlock(&previewlock);
+    return ret;
+exit:
+    pthread_mutex_unlock(&previewlock);
+    callback_previewfree(0, 0, 0, 0);
     return ret;
 }
 
