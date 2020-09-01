@@ -37,6 +37,8 @@
 #include "sprd_depth_configurable_param_sbs.h"
 #include "tof_ctrl.h"
 #include "isp_simulation.h"
+#include <libloader.h>
+
 
 static struct soft_isp_block_param isp_block_param;
 static struct soft_isp_block_param *global_isp_block_param;
@@ -3123,7 +3125,11 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)adpt_handle;
 
 	ISP_CHECK_HANDLE_VALID(adpt_handle);
+#if USE_LEGACY_DLFCN
 	cxt->ispalg_lib_handle = dlopen(LIBCAM_ALG_PATH, RTLD_NOW);
+#else
+	cxt->ispalg_lib_handle = get_lib_handle(LIBCAM_ALG_PATH);
+#endif
 	if (!cxt->ispalg_lib_handle) {
 		ISP_LOGE("fail to dlopen");
 		goto error_dlopen;
@@ -3314,7 +3320,11 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 
 	return 0;
 error_dlsym:
+#if USE_LEGACY_DLFCN
 	dlclose(cxt->ispalg_lib_handle);
+#else
+	put_lib_handle(cxt->ispalg_lib_handle);
+#endif
 	cxt->ispalg_lib_handle = NULL;
 error_dlopen:
 
@@ -4707,7 +4717,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	}
 
 	if (cxt->ispalg_lib_handle) {
+#if USE_LEGACY_DLFCN
 		dlclose(cxt->ispalg_lib_handle);
+#else
+		put_lib_handle(cxt->ispalg_lib_handle);
+#endif
 		cxt->ispalg_lib_handle = NULL;
 	}
 	if (cxt->is_multi_mode == ISP_DUAL_SBS && !cxt->is_master)
