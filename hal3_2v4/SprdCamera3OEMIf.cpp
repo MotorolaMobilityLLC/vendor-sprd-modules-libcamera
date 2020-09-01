@@ -6717,6 +6717,17 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSprdZslEnabled = false;
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED, 0);
         }
+
+        if (sprddefInfo.sprd_zsl_enabled == 1) {
+            if (mRecordingMode == false) {
+                mSprdZslEnabled = true;
+            } else if (mSprdRefocusEnabled == true && mRawHeight != 0 &&
+                       mRawWidth != 0) {
+                mSprdZslEnabled = true;
+            }
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
+                     (cmr_uint)mSprdZslEnabled);
+        }
     } break;
 
     case ANDROID_SPRD_SLOW_MOTION: {
