@@ -10675,7 +10675,7 @@ exit:
 void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
-    uint32_t ret = 0;
+    uint32_t ret = 0, count1 = 0, clear_af_trigger = 0;
     int64_t tmp1, tmp2;
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -10730,7 +10730,26 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (isCapturing()) {
         WaitForCaptureDone();
     }
-
+    if(controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED &&
+	sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
+	(controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
+	controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH)) {
+		controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
+		mSetting->setCONTROLTag(&controlInfo);
+		SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+		mSetting->getCONTROLTag(&controlInfo);
+		HAL_LOGV("af_state =%d",controlInfo.af_state);
+		while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
+			if (count1 > 2500) {
+				HAL_LOGD("wait for preflash timeout 2.5s");
+				break;
+			}
+			mSetting->getCONTROLTag(&controlInfo);
+			usleep(1000); //1ms
+			count1 ++;
+		}
+		clear_af_trigger = 1;
+    }
     if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
         isFrontLcd || isFrontFlash || mCameraId == 4) {
         obj->mHalOem->ops->camera_start_preflash(obj->mCameraHandle);
@@ -10871,7 +10890,13 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     snapshotZsl(p_data);
 
+
 exit:
+    if(clear_af_trigger){
+	controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
+	mSetting->setCONTROLTag(&controlInfo);
+	SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+    }
     HAL_LOGD("X");
 }
 
