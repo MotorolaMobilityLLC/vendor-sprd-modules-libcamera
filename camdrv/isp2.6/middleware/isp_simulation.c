@@ -67,7 +67,7 @@ cmr_int isp_sim_get_no_lsc_ae_stats(struct isp_awb_statistic_info *awb_statis, c
 	}
 
 	if (EOF==fscanf(fp, "stat_w:%d\n", stat_w)){
-                ISP_LOGD("end to file");
+		ISP_LOGD("end to file");
 	}
 	if (EOF==fscanf(fp, "stat_h:%d\n", stat_h)){
 		ISP_LOGD("end to file");
@@ -77,7 +77,7 @@ cmr_int isp_sim_get_no_lsc_ae_stats(struct isp_awb_statistic_info *awb_statis, c
 			ISP_LOGD("end to file");
 			break;
 		}
-		if (i>0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
+		if (i < (sizeof(awb_statis->r_info)/sizeof(cmr_u32))) {
 			if(EOF==fscanf(fp, "R:%d G:%d B:%d\n",
 				&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
 				ISP_LOGD("end to file");
@@ -87,7 +87,6 @@ cmr_int isp_sim_get_no_lsc_ae_stats(struct isp_awb_statistic_info *awb_statis, c
 			ISP_LOGE("wrong iindex i: %u", i);
 		}
 	}
-
 	fclose(fp);
 
 	return ret;
@@ -123,7 +122,7 @@ cmr_int isp_sim_save_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32
 
 	fprintf(fp, "stat_w:%d\n", stat_w);
 	fprintf(fp, "stat_h:%d\n", stat_h);
-	for (i=0; i < stat_w*stat_h; i++) {
+	for (i = 0; i < stat_w*stat_h; i++) {
 		fprintf(fp, "blk_id:%d R:%d G:%d B:%d\n",
 			i, awb_statis->r_info[i], awb_statis->g_info[i], awb_statis->b_info[i]);
 	}
@@ -174,9 +173,9 @@ cmr_int isp_sim_get_ae_stats(struct isp_awb_statistic_info *awb_statis, cmr_u32 
 			ISP_LOGD("to the end of file.");
 			break;
 		}
-		if (i>0 && i < sizeof(awb_statis->r_info)/sizeof(cmr_u32)) {
-			if(EOF == fscanf(fp, "R:%d G:%d B:%d\n",
-				&awb_statis->r_info[i], &awb_statis->g_info[i], &awb_statis->b_info[i])){
+		if (i < (sizeof(awb_statis->r_info)/sizeof(cmr_u32))) {
+			if(EOF == fscanf(fp, "R:%d G:%d B:%d\n", &awb_statis->r_info[i],
+				&awb_statis->g_info[i], &awb_statis->b_info[i])) {
 				ISP_LOGD("to the end of file.");
 				break;
 			}

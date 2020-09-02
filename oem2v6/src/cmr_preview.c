@@ -5079,7 +5079,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size,
                                                 prev_cxt->sensor_info.sn_interface.is_loose);
     } else {
-        if (is_raw_capture == 1) {
+        if (is_raw_capture == 1 || isp_video_get_simulation_flag()) {
             ret = camera_get_raw_postproc_capture_size(camera_id, &total_mem_size,
                                                  prev_cxt->sensor_info.sn_interface.is_loose);
         } else {
@@ -7349,8 +7349,8 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
                 video_frm_id = frm_id;
                 video_frm_ptr = &prev_cxt->video_frm[frm_id];
             }
-                ret = prev_3dnr_send_data(handle, camera_id, info, frame_type,
-                                          frm_ptr, video_frm_ptr);
+            ret = prev_3dnr_send_data(handle, camera_id, info,
+                    frame_type, frm_ptr, video_frm_ptr);
         }
 
         if (cxt->ipm_cxt.ai_scene_inited && cxt->ai_scene_enable == 1 && cxt->ref_camera_id == camera_id) {
@@ -16430,12 +16430,13 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                   param_info.crop_height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
                   param_info.crop_width = chn_param.cap_inf_cfg.cfg.src_img_rect.width;
 
-                  CMR_LOGD("prev ultrawid set ratio=%f, fullsize_height=%d"
-                      ", fullsize_width=%d, input_height=%d, input_width=%d",
-                      ", crop_x=%d, crop_y=%d, crop_width=%d, crop_height=%d",
+                  CMR_LOGD("prev ultrawid set ratio=%f, fullsize_height=%d, "
+                      "fullsize_width=%d, input_height=%d, input_width=%d, "
+                      "crop_x=%d, crop_y=%d, crop_width=%d, crop_height=%d",
                       param_info.zoomRatio, param_info.fullsize_height,
-                      param_info.fullsize_width, param_info.input_height, param_info.input_width,
-                      param_info.crop_x,param_info.crop_y,param_info.crop_width,param_info.crop_height);
+                      param_info.fullsize_width, param_info.input_height,
+                      param_info.input_width, param_info.crop_x, param_info.crop_y,
+                      param_info.crop_width, param_info.crop_height);
                   cxt->zoom_ratio = param_info.zoomRatio;
                   if (handle->ops.isp_ioctl) {
                            struct common_isp_cmd_param param;
