@@ -1935,14 +1935,12 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 
 	ISP_LOGD("sensor_name %s, param version 0x%x\n", sensor_name, version_id);
 
-	if ((version_id & PM_VER_CHIP_MASK) >= PM_CHIP_VER_V27)
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_VER_SW_V27))
+		is_ae3x = 0;
+	else
 		is_ae3x = 1;
-	else if ((version_id & PM_VER_CHIP_MASK) == PM_CHIP_VER_V26 &&
-			(version_id & PM_VER_SW_MASK) == 0x000E)
-		is_ae3x = 1;
-	else if ((version_id & PM_VER_CHIP_MASK) == PM_CHIP_VER_V25 &&
-			(version_id & PM_VER_SW_MASK) == 0x000A)
-		is_ae3x = 1;
+	ISP_LOGD("ae version %d\n", is_ae3x);
 
 #ifdef CONFIG_ISP_2_6
 	pm_cxt_ptr->param_search_list = input->sensor_raw_info_ptr->param_list_info.list_ptr;

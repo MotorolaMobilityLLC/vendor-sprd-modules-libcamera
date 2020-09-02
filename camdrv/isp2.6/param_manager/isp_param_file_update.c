@@ -1852,17 +1852,13 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 	FILE *fp = PNULL;
 
 	version_id = sensor_raw_ptr->version_info->version_id;
-	if ((version_id & PM_VER_CHIP_MASK) >= PM_CHIP_VER_V27)
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_VER_SW_V27))
+		is_ae3x = 0;
+	else
 		is_ae3x = 1;
-	else if ((version_id & PM_VER_CHIP_MASK) == PM_CHIP_VER_V26 &&
-			(version_id & PM_VER_SW_MASK) == 0x000E)
-		is_ae3x = 1;
-	else if ((version_id & PM_VER_CHIP_MASK) == PM_CHIP_VER_V25 &&
-			(version_id & PM_VER_SW_MASK) == 0x000A)
-		is_ae3x = 1;
+	ISP_LOGD("ae version %d\n", is_ae3x);
 
-	if (is_ae3x)
-		ISP_LOGD("is ae3.0\n");
 
 	if (NULL == line_buf) {
 		ISP_LOGE("fail to malloc mem!");

@@ -40,6 +40,12 @@ enum {
 	PM_CHIP_VER_V27 = 0x000B0000,
 };
 
+enum {
+	PM_VER_SW_V25 = 0x00000007,
+	PM_VER_SW_V26 = 0x00000008,
+	PM_VER_SW_V27 = 0x00000009,
+};
+
 #ifndef MAX
 #define MAX(a, b) ((a > b) ? a : b)
 #endif
