@@ -137,6 +137,7 @@ struct ae_adv_param {
 	cmr_u8 app_force_lock;
 	cmr_s16 last_target;
 	cmr_u32 face_flag;
+	cmr_u8 special_fps_mode;
 	cmr_u32 cur_lum;
 };
 
