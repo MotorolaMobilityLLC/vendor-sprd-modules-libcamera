@@ -10760,29 +10760,23 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
                  (int32_t)(lensInfo.focal_length * 1000));
     }
 
+    mCNRMode = 0;
     char value[PROPERTY_VALUE_MAX];
-    if ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
+    property_get("persist.vendor.cam.cnr.mode", value, "0");
+    if (atoi(value)) {
+        mCNRMode = 1;
+    }
+
+    if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
         (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
         (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode) &&
         (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
-        (mSprdAppmodeId != -1) &&
-        (false == mRecordingMode)) {
-        property_get("persist.vendor.cam.cnr.mode", value, "0");
-        if (atoi(value)) {
-            mCNRMode = 1;
-        }
-    } else {
+        (mSprdAppmodeId != -1) && (false == mRecordingMode)) ||
+        ((getMultiCameraMode() == MODE_BLUR) && lightportrait_type != 0))){
         mCNRMode = 0;
     }
-    if (getMultiCameraMode() == MODE_BLUR) {
-        property_get("persist.vendor.cam.cnr.mode", value, "0");
-        if (atoi(value)) {
-            mCNRMode = 1;
-        }
-        if(lightportrait_type != 0)
-            mCNRMode = 0;
-    }
     HAL_LOGD("lightportrait_type = %d, mCNRMode = %d", lightportrait_type, mCNRMode);
+
     int8_t drvSceneMode;
     mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
     if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
