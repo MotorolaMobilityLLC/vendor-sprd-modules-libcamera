@@ -805,6 +805,7 @@ cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info);
 cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle);
 cmr_u32 camera_get_ee_flag(cmr_handle oem_handle);
+cmr_u32 camera_get_watermark_flag(cmr_handle oem_handle);
 cmr_u32 camera_get_fdr_flag(struct camera_context *cxt);
 void camera_grab_handle(cmr_int evt, void *data, void *privdata);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);
