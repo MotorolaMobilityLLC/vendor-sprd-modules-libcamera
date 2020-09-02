@@ -72,6 +72,7 @@ LOCAL_C_INCLUDES := \
     $(TOP)/hardware/interfaces/camera/common/1.0/default/include \
     $(TOP)/system/memory/libion/kernel-headers \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
+    $(TOP)/vendor/sprd/modules/enhance/include \
     $(LOCAL_PATH)/kernel_module/interface
 
 LOCAL_C_INCLUDES += \

@@ -28,6 +28,7 @@ $(foreach item,$(sensor_macro), $(eval LOCAL_CFLAGS += -D$(shell echo $(item))))
 ifeq ($(strip $(OEM_DIR)),oem2v6)
 LOCAL_C_INCLUDES += \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
+    $(TOP)/vendor/sprd/modules/enhance/include \
     $(LOCAL_PATH)/inc \
     $(LOCAL_PATH)/../common/inc \
     $(LOCAL_PATH)/../jpeg \
