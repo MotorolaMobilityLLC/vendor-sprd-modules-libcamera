@@ -10838,7 +10838,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
         mZslMaxFrameNum = 3;
-        obj->mFlagHdr = true;
+        (drvSceneMode == CAMERA_SCENE_MODE_FDR)?
+            (obj->mFlagHdr = false):(obj->mFlagHdr = true);
     } else if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                 mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) &&
                mRecordingMode == false) {
