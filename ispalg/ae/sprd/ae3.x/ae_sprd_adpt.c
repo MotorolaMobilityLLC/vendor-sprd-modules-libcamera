@@ -3680,6 +3680,33 @@ static void ae_read_exp_gain_param(struct ae_ctrl_cxt *cxt, struct ae_exposure_p
 
 }
 
+static void ae_set_app_mode_for_face_start(struct ae_ctrl_cxt *cxt)
+{
+	if(CAMERA_MODE_AUTO_PHOTO == cxt->app_mode || CAMERA_MODE_MANUAL == cxt->app_mode|| \
+			CAMERA_MODE_CONTINUE == cxt->app_mode || CAMERA_MODE_REFOCUS == cxt->app_mode|| \
+			CAMERA_MODE_NIGHT_PHOTO == cxt->app_mode || CAMERA_MODE_PORTRAIT_PHOTO == cxt->app_mode)
+	{
+		cxt->cur_status.adv_param.face_flag = s_bakup_exp_param[cxt->camera_id].face_flag;
+		cxt->cur_status.adv_param.cur_lum = s_bakup_exp_param[cxt->camera_id].cur_lum;
+		ISP_LOGD("ae_set_app_mode_for_face_start:face_flag %d\n",cxt->cur_status.adv_param.face_flag);
+	}else{
+		cxt->cur_status.adv_param.face_flag =  0;
+	}
+}
+
+static void ae_set_app_mode_for_face_stop(struct ae_ctrl_cxt *cxt)
+{
+	if(CAMERA_MODE_AUTO_PHOTO == cxt->app_mode || CAMERA_MODE_MANUAL == cxt->app_mode|| \
+					CAMERA_MODE_CONTINUE == cxt->app_mode || CAMERA_MODE_REFOCUS == cxt->app_mode|| \
+					CAMERA_MODE_NIGHT_PHOTO == cxt->app_mode || CAMERA_MODE_PORTRAIT_PHOTO == cxt->app_mode){
+			cxt->last_exp_param.face_flag = cxt->sync_cur_result.face_flag;
+			cxt->last_exp_param.cur_lum = cxt->sync_cur_result.cur_lum;
+			ISP_LOGD("ae_set_app_mode_for_face_stop:face_flag %d\n",cxt->last_exp_param.face_flag);
+		}
+
+}
+
+
 static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 {
 	if (0 == cxt->is_snapshot) {
@@ -3726,12 +3753,9 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			ISP_LOGD("GET_SYNC_SLAVE_SYNC_OUTPUT:exp_line:%d, dummy:%d, gain:%d", cxt->last_exp_param.exp_line, cxt->last_exp_param.dummy, cxt->last_exp_param.gain);
 		}
 
-		if(CAMERA_MODE_AUTO_PHOTO == cxt->app_mode || CAMERA_MODE_MANUAL == cxt->app_mode|| \
-					CAMERA_MODE_CONTINUE == cxt->app_mode || CAMERA_MODE_REFOCUS == cxt->app_mode|| \
-					CAMERA_MODE_NIGHT_PHOTO == cxt->app_mode || CAMERA_MODE_PORTRAIT_PHOTO == cxt->app_mode){
-			cxt->last_exp_param.face_flag = cxt->sync_cur_result.face_flag;
-			cxt->last_exp_param.cur_lum = cxt->sync_cur_result.cur_lum;
-		}
+
+		ISP_LOGD("FACE_FLAG:%d\n",cxt->sync_cur_result.face_flag);
+		ae_set_app_mode_for_face_stop(cxt);
 
 		if(CAMERA_MODE_MANUAL != cxt->app_mode)
 			s_bakup_exp_param[cxt->camera_id] = cxt->last_exp_param;
@@ -4130,15 +4154,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	}
 	
 	cxt->cur_status.adv_param.last_target = src_exp.target_luma;
-	if(CAMERA_MODE_AUTO_PHOTO == cxt->app_mode || CAMERA_MODE_MANUAL == cxt->app_mode|| \
-			CAMERA_MODE_CONTINUE == cxt->app_mode || CAMERA_MODE_REFOCUS == cxt->app_mode|| \
-			CAMERA_MODE_NIGHT_PHOTO == cxt->app_mode || CAMERA_MODE_PORTRAIT_PHOTO == cxt->app_mode)
-	{
-		cxt->cur_status.adv_param.face_flag = s_bakup_exp_param[cxt->camera_id].face_flag;
-		cxt->cur_status.adv_param.cur_lum = s_bakup_exp_param[cxt->camera_id].cur_lum;
-	}else{
-		cxt->cur_status.adv_param.face_flag =  0;
-	}
+
+	ae_set_app_mode_for_face_start(cxt);
 
 	if (((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode))) || (CAMERA_MODE_MANUAL == cxt->app_mode)) {
 		dst_exp.exp_time = src_exp.exp_time;
