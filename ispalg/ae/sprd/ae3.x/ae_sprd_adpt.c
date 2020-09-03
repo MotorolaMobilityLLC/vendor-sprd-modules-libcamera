@@ -2999,7 +2999,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGD("ae_flash1_status shake_6");
 			cxt->cur_status.adv_param.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
-			flash_finish(cxt);
+		        flash_finish(cxt);
 		}
 	}
 
@@ -6792,8 +6792,10 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	if (NULL == cxt) {
 		rtn = AE_ALLOC_ERROR;
 		ISP_LOGE("fail to calloc");
-		goto ae_sprd_init_err_exit;
-	}
+	    	ISP_LOGE("fail to init ae %d", rtn);
+	    	return NULL;
+
+    }
 	memset(&misc_init_in, 0, sizeof(misc_init_in));
 	memset(&misc_init_out, 0, sizeof(misc_init_out));
 
@@ -6877,15 +6879,19 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 		}
 	}
 
-	if (0 == cxt->camera_id) {
-		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_REAR&0xff)<<16);
-	}else if (1 == cxt->camera_id)  {
+	bool flag_camera_id;
+	flag_camera_id=(0 == cxt->camera_id||2 == cxt->camera_id||3 == cxt->camera_id);
+	if (flag_camera_id) {
+
+        	misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_REAR&0xff)<<16);
+    	}
+	else if (1 == cxt->camera_id)  {
 		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_FRONT& 0xff)<<16);
-	} else if (2 == cxt->camera_id) {
-		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_REAR&0xff)<<16);
-	} else if (3 == cxt->camera_id) {
-		misc_init_in.cam_id = misc_init_in.cam_id | ((AE_CAM_REAR&0xff)<<16);
-	}
+    	}
+
+
+
+
 	#if 0 //misc_init_in.cam_id NO change appers
 	if (init_param->is_multi_mode) {
 		if (0 == init_param->is_master) {
@@ -6907,15 +6913,15 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 		if (1 == atoi(prop_str)) {
 			FILE* pf  = NULL;
 			char file_name[128] = {0};
-			if (0 == cxt->camera_id) {/*rear camera*/
-				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_b.bin");/*get the rear camera ae tune param bin*/
-			} else if (1 == cxt->camera_id) {
-				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_f.bin");/*get the front camera ae tune param bin*/
-			} else if (2 == cxt->camera_id) {
-				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_b_s0.bin");/*get the rear slave0 camera ae tune param bin*/
-			} else if (3 == cxt->camera_id) {
-				sprintf(file_name, "%s", "data/vendor/cameraserver/ae_common_b_s1.bin");/*get the rear slave1 camera ae tune param bin*/
-			}
+
+
+			char filenamechar_append[][50] = {"data/vendor/cameraserver/ae_common_b.bin","data/vendor/cameraserver/ae_common_f.bin","data/vendor/cameraserver/ae_common_b_s0.bin","data/vendor/cameraserver/ae_common_b_s1.bin"};
+            		bool flag2_camera_id;
+			flag2_camera_id=(0 == cxt->camera_id||1 == cxt->camera_id||2 == cxt->camera_id||3 == cxt->camera_id);
+            		if (flag2_camera_id){
+                		sprintf(file_name, "%s", filenamechar_append[cxt->camera_id]);
+	     		}
+
 			pf = fopen(file_name, "rb");
 			ISP_LOGD("cam id:%d, tune bin: %s, pf: %p\n", cxt->camera_id, file_name, pf);
 			if (pf) {

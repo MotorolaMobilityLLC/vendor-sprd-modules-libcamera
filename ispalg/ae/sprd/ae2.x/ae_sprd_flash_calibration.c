@@ -768,18 +768,21 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0], caliData->rBuf, caliData->gBuf, caliData->bBuf, cxt->cur_status.win_size,
 				        cxt->cur_status.win_num, current_status->monitor_shift, &rmean, &gmean, &bmean);
 				ISP_LOGD("qqfc AE frmCnt=%d sh,gain=%d %d, gmean=%f", (int)frameCount, (int)caliData->expTime, (int)caliData->gain, gmean);
-				if ((gmean > 200 && gmean < 400) || (FLOAT_EQUAL(caliData->expTime, (0.05 * AEC_LINETIME_PRECESION)) && caliData->gain == 8 * 128)) {
+
+				bool flagcaliData;
+				flagcaliData=(gmean > 200 && gmean < 400) || (FLOAT_EQUAL(caliData->expTime, (0.05 * AEC_LINETIME_PRECESION)) && caliData->gain == 8 * 128);
+
+
+
+				if (flagcaliData) {
 					caliData->stateCaliFrameCntSt = frameCount + 1;
 					caliData->expTimeBase = caliData->expTime;
 					caliData->gainBase = caliData->gain;
 					caliState = FlashCali_cali;
 				} else {
 					float gain_tmp = (float)caliData->gain;
-					if (gmean < 10) {
-						caliData->expTime *= 25;
-					} else {
-						caliData->expTime *= 300 / gmean;
-					}
+					caliData->expTime=(gmean < 10) ? (caliData->expTime*25) : (caliData->expTime*300 / gmean);
+
 					if (caliData->expTime > 0.05 * AEC_LINETIME_PRECESION) {
 						float ratio = caliData->expTime / (0.05 * AEC_LINETIME_PRECESION);
 						caliData->expTime = 0.05 * AEC_LINETIME_PRECESION;
@@ -795,6 +798,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					else if (caliData->gain > 8 * 128)
 						caliData->gain = 8 * 128;
 				}
+
 			}
 
 		} else if (caliState == FlashCali_cali) {
@@ -979,7 +983,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				r = caliData->rData[i] * rat - rbase;
 				g = caliData->gData[i] * rat - gbase;
 				b = caliData->bData[i] * rat - bbase;
-				if (r < 0 || g < 0 || b < 0) {
+
+				bool flagrgb;
+				flagrgb=(r < 0 || g < 0 || b < 0);
+				if (flagrgb) {
 					r = 0;
 					g = 0;
 					b = 0;
@@ -1077,10 +1084,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 			//float rgtab[20];
 			//float cttab[20];
-			for (i = 0; i < 20; i++) {
+			//for (i = 0; i < 20; i++) {
 				//rgtab[i] = cxt->ctTabRg[i];
 				//cttab[i] = cxt->ctTab[i];
-			}
+			//}
 
 			//--------------------------
 			//--------------------------
@@ -1206,7 +1213,12 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						r = rTab1Main[i] + rTab2Main[j];
 						g = gTab1Main[i] + gTab2Main[j];
 						b = bTab1Main[i] + bTab2Main[j];
-						if (r > 0 && g > 0 && b > 0) {
+
+						bool rgbflag;
+						rgbflag=(r > 0 && g > 0 && b > 0);
+
+						if (rgbflag) {
+
 							caliData->out.rTable[ind] = ae_round(1024 * g / r);
 							caliData->out.bTable[ind] = ae_round(1024 * g / b);
 						} else {
@@ -1473,11 +1485,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 #endif
 				if(fp){
 					for (i = 0; i < caliData->testIndAll; i++) {
-						if (caliData->isMainTab[i] == 0)
-							fprintf(fp, "pf ");
-						else
-							fprintf(fp, "mf ");
-
+						char pfmf[][4]={"pf ","mf "};
+						int index_pfmf;
+						index_pfmf=(caliData->isMainTab[i] == 0) ? 0 : 1;
+						fprintf(fp, "%s",pfmf[index_pfmf]);
 						int led1;
 						int led2;
 						led1 = caliData->ind1Tab[i];

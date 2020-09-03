@@ -2103,15 +2103,16 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 			rtn = ae_unpack_tunning_param(init_param->param[i].param, init_param->param[i].size, &cxt->tuning_param[i]);
 			memcpy(&cxt->tuning_param[i].backup_ae_table, &cxt->tuning_param[i].ae_table, AE_FLICKER_NUM * AE_ISO_NUM_NEW * sizeof(struct ae_exp_gain_table));
 
-			if (AE_SUCCESS == rtn)
-				cxt->tuning_param_enable[i] = 1;
-			else
-				cxt->tuning_param_enable[i] = 0;
+
+
+
+			cxt->tuning_param_enable[i]=(AE_SUCCESS == rtn)? 1:0;
 		}
 
 		for (j = 0; j < AE_SCENE_NUM; ++j) {
 			memcpy(&cxt->back_scene_mode_ae_table[j][AE_FLICKER_50HZ], &cxt->tuning_param[0].scene_info[j].ae_table[AE_FLICKER_50HZ], AE_FLICKER_NUM * sizeof(struct ae_exp_gain_table));
 		}
+
 
 		for (i = 0; i < init_param->dflash_num && i < AE_MAX_PARAM_NUM; ++i) {
 			cmr_u32 size = (init_param->flash_tuning[i].size > sizeof(struct flash_tune_param)) ? sizeof(struct flash_tune_param) : init_param->flash_tuning[i].size;
@@ -2151,13 +2152,17 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 		sensor_info.line_time = work_param->resolution_info.line_time;
 		sensor_info.frm_len_def = AEC_LINETIME_PRECESION / (1.0 * init_param->resolution_info.snr_setting_max_fps * work_param->resolution_info.line_time);
 
+		bool is_multi_mode_flag;
+		is_multi_mode_flag=(init_param->is_multi_mode == ISP_ALG_DUAL_C_C
+				||init_param->is_multi_mode ==ISP_ALG_DUAL_W_T
+				||init_param->is_multi_mode ==ISP_ALG_DUAL_C_M);
+
 		if (init_param->is_multi_mode == ISP_ALG_DUAL_SBS) {
 			rtn = cxt->ptr_isp_br_ioctrl(init_param->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, SET_MODULE_INFO, &sensor_info, NULL);
-		} else if(init_param->is_multi_mode == ISP_ALG_DUAL_C_C
-				||init_param->is_multi_mode ==ISP_ALG_DUAL_W_T
-				||init_param->is_multi_mode ==ISP_ALG_DUAL_C_M) {
+		} else if(is_multi_mode_flag) {
 			rtn = cxt->ptr_isp_br_ioctrl(init_param->is_master ? CAM_SENSOR_MASTER : CAM_SENSOR_SLAVE0, SET_MODULE_INFO, &sensor_info, NULL);
 		}
+
 	}
 
 	if(0 == init_param->monitor_win_num.w) {
@@ -2204,27 +2209,19 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	cxt->exp_skip_num = cxt->cur_param->sensor_cfg.exp_skip_num;
 	cxt->gain_skip_num = cxt->cur_param->sensor_cfg.gain_skip_num;
 	cxt->sensor_gain_precision = cxt->cur_param->sensor_cfg.gain_precision;
-	if (0 == cxt->cur_param->sensor_cfg.max_gain) {
-		cxt->sensor_max_gain = 16 * 128;
-	} else {
-		cxt->sensor_max_gain = cxt->cur_param->sensor_cfg.max_gain;
-	}
+
+	cxt->sensor_max_gain =(0 == cxt->cur_param->sensor_cfg.max_gain)? (16 * 128) : cxt->cur_param->sensor_cfg.max_gain;
+
 
 	if (0 == cxt->sensor_gain_precision) {
 		cxt->sensor_gain_precision = 1;
 	}
+	cxt->sensor_min_gain =(0 == cxt->cur_param->sensor_cfg.min_gain)? (1 * 128) : cxt->cur_param->sensor_cfg.min_gain;
 
-	if (0 == cxt->cur_param->sensor_cfg.min_gain) {
-		cxt->sensor_min_gain = 1 * 128;
-	} else {
-		cxt->sensor_min_gain = cxt->cur_param->sensor_cfg.min_gain;
-	}
 
-	if (0 == cxt->cur_param->sensor_cfg.min_exp_line) {
-		cxt->min_exp_line = 4;
-	} else {
-		cxt->min_exp_line = cxt->cur_param->sensor_cfg.min_exp_line;
-	}
+
+	cxt->min_exp_line=(0 == cxt->cur_param->sensor_cfg.min_exp_line)? 4 : cxt->cur_param->sensor_cfg.min_exp_line;
+
 	cxt->mod_update_list.is_scene = 1;	/*force update scene mode parameters */
 	cxt->sync_cur_status.settings.scene_mode = AE_SCENE_NORMAL;
 	cxt->cur_status.log_level = g_isp_log_level;
@@ -2320,11 +2317,16 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 	}
 	/* to keep the camera can work well when the touch ae setting is zero or NULL in the tuning file */
 	cxt->cur_status.settings.touch_tuning_enable = cxt->cur_param->touch_info.enable;
-	if ((1 == cxt->cur_param->touch_info.enable)	//for debug, if release, we need to change 0 to 1
+
+
+	bool cur_param_flag;
+	cur_param_flag=(1 == cxt->cur_param->touch_info.enable)	//for debug, if release, we need to change 0 to 1
 		&& ((0 == cxt->cur_param->touch_info.touch_tuning_win.w)
 			|| (0 == cxt->cur_param->touch_info.touch_tuning_win.h)
 			|| ((0 == cxt->cur_param->touch_info.win1_weight)
-				&& (0 == cxt->cur_param->touch_info.win2_weight)))) {
+				&& (0 == cxt->cur_param->touch_info.win2_weight)));
+
+	if (cur_param_flag) {
 		cxt->cur_status.touch_tuning_win.w = cxt->snr_info.frame_size.w / 10;
 		cxt->cur_status.touch_tuning_win.h = cxt->snr_info.frame_size.h / 10;
 		cxt->cur_status.win1_weight = 4;
@@ -2334,6 +2336,9 @@ static cmr_s32 ae_set_ae_param(struct ae_ctrl_cxt *cxt, struct ae_init_in *init_
 		cxt->cur_status.win1_weight = cxt->cur_param->touch_info.win1_weight;
 		cxt->cur_status.win2_weight = cxt->cur_param->touch_info.win2_weight;
 	}
+
+
+
 	/* fd-ae param */
 	//_fdae_init(cxt);
 
@@ -6242,7 +6247,10 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 #endif
 
 	static int ae_dynamic_sync = 0;
-	if((cxt->is_multi_mode) && (cxt->is_master == 1) && (cxt->ae_sync_param.mode == 1)) {
+	bool is_multi_mode_flag1;
+	is_multi_mode_flag1=(cxt->is_multi_mode) && (cxt->is_master == 1) && (cxt->ae_sync_param.mode == 1);
+
+	if(is_multi_mode_flag1) {
 		ae_dynamic_sync = 1;
 	}
 
@@ -6319,8 +6327,11 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	   due to set_scene_mode just be called in ae_sprd_calculation,
 	   and the prv_status just save the normal scene status
 	 */
-	if ((AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) &&
-		(cxt->sync_cur_status.settings.exp_line || cxt->sync_cur_status.settings.gain)) {
+
+	bool settings_flag;
+	settings_flag=(AE_SCENE_NORMAL == cxt->sync_cur_status.settings.scene_mode) &&
+		(cxt->sync_cur_status.settings.exp_line || cxt->sync_cur_status.settings.gain);
+	if (settings_flag) {
 		cxt->prv_status = cxt->sync_cur_status;
 		cxt->prv_status.settings.scene_mode = AE_SCENE_NORMAL;
 	}
@@ -6336,24 +6347,14 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 
 	// END
-	if (1 == cxt->mod_update_list.is_miso) {
-		cxt->cur_status.settings.iso_manual_status = 1;
-	} else {
-		cxt->cur_status.settings.iso_manual_status = 0;
-	}
+	cxt->cur_status.settings.iso_manual_status =(1 == cxt->mod_update_list.is_miso) ? 1 : 0 ;
 	cxt->mod_update_list.is_miso = 0;
+	cxt->cur_status.settings.ev_manual_status =(1 == cxt->mod_update_list.is_mev) ? 1 : 0 ;
 
-	if (1 == cxt->mod_update_list.is_mev) {
-		cxt->cur_status.settings.ev_manual_status = 1;
-	} else {
-		cxt->cur_status.settings.ev_manual_status = 0;
-	}
 
 	if(cxt->ebd_support) {
-		if((1.0 * backup_expgain / effect_ebd_expgain >= 0.97) && (1.0 * backup_expgain / effect_ebd_expgain <= 1.03))
-			cxt->ebd_stable_flag = 1;
-		else
-			cxt->ebd_stable_flag = 0;
+		cxt->ebd_stable_flag =(1.0 * backup_expgain / effect_ebd_expgain >= 0.97) && (1.0 * backup_expgain / effect_ebd_expgain <= 1.03) ? 1 : 0 ;
+
 		ISP_LOGE("ebd: stable_flag %d", cxt->ebd_stable_flag);
 	}
 
