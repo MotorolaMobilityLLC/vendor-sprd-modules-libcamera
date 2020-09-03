@@ -161,6 +161,11 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 	unsigned short *src_gr = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src_gb = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
 	unsigned short *src_b = (unsigned short *)malloc(src->gain_width * src->gain_height * sizeof(unsigned short));
+
+       if (NULL == src_r || NULL == src_gr || NULL == src_gb || NULL == src_b){
+		return -1;
+	}
+
 	memset(src_r, 0, src->gain_width * src->gain_height * sizeof(unsigned short));
 	memset(src_gr, 0, src->gain_width * src->gain_height * sizeof(unsigned short));
 	memset(src_gb, 0, src->gain_width * src->gain_height * sizeof(unsigned short));
