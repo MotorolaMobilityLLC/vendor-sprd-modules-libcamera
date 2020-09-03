@@ -25,12 +25,12 @@
 	ALOGD(DEFAULT_LOG_DEBUG format, DEFAULT_ARGS,##__VA_ARGS__)
 
 
-void *default_tuning_param_get_ptr(param_input_t default_param_input) {
+void *default_tuning_param_get_ptr(param_input_t *default_param_input) {
 
 	struct sensor_raw_info *default_param_mipi_raw_info_ptr = &s_default_param_mipi_raw_info ;
 
 //***************************Modify sensor_name***************************
-	cmr_u32 *get_sensor_name = default_param_input.module_cfg.sensor_basic_info.sensor_name;
+	cmr_u32 *get_sensor_name = default_param_input->module_cfg.sensor_basic_info.sensor_name;
 	cmr_s8 *sensor_name;
 
 	sensor_name = default_param_mipi_raw_info_ptr->version_info->sensor_ver_name.sensor_name;
@@ -41,18 +41,18 @@ void *default_tuning_param_get_ptr(param_input_t default_param_input) {
 	DEFAULT_LOGD("return_tuning_name %s\n", sensor_name);
 //***************************Modify size************************************
 	cmr_u8 *temp_point;
-	DEFAULT_LOGD(" w*h=0x%x,=0x%x\n",default_param_input.module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_w,\
-	default_param_input.module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_h);
+	DEFAULT_LOGD(" w*h=0x%x,=0x%x\n",default_param_input->module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_w,\
+	default_param_input->module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_h);
 			/***********common**************/
 			temp_point = default_param_mipi_raw_info_ptr->mode_ptr[0].addr;
 
 			DEFAULT_LOGD("before_modify_w*h =0x%x,=0x%x,=0x%x,=0x%x\n",*(temp_point+24),*(temp_point+25),*(temp_point+28),*(temp_point+29));
 			temp_point = default_param_mipi_raw_info_ptr->mode_ptr[0].addr;
 
-			*(temp_point+24) = default_param_input.module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_w&0xff;	 //weight_low
-			*(temp_point+25) = default_param_input.module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_w>>8; 		 //weight_high
-			*(temp_point+28) = default_param_input.module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_h&0xff;		 //height_low
-			*(temp_point+29) = default_param_input.module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_h>>8; 		 //height_high
+			*(temp_point+24) = default_param_input->module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_w&0xff;	 //weight_low
+			*(temp_point+25) = default_param_input->module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_w>>8; 		 //weight_high
+			*(temp_point+28) = default_param_input->module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_h&0xff;		 //height_low
+			*(temp_point+29) = default_param_input->module_cfg.sensor_cfg.sensor_settings_info.size_info[0].size_h>>8; 		 //height_high
 			temp_point = default_param_mipi_raw_info_ptr->mode_ptr[0].addr;
 			DEFAULT_LOGD("after_modify_w*h =0x%x,=0x%x,=0x%x,=0x%x\n",*(temp_point+24),*(temp_point+25),*(temp_point+28),*(temp_point+29));
 

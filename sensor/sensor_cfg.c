@@ -183,22 +183,26 @@ struct lensProperty *sensor_get_lens_property(int phy_id) {
 
     SENSOR_LOGV("phy_id %d, sensor_name %s", phy_id,
                 (phyPtr + phy_id)->sensor_name);
-    SENSOR_LOGV("poseRotation(x, y, z, w) = (%f, %f, %f, %f)",
-                lenPtr->poseRotation[0], lenPtr->poseRotation[1],
-                lenPtr->poseRotation[2], lenPtr->poseRotation[3]);
-    SENSOR_LOGV("poseTranslation(x, y, z) = (%f, %f, %f)",
-                lenPtr->poseTranslation[0], lenPtr->poseTranslation[1],
-                lenPtr->poseTranslation[2]);
-    SENSOR_LOGV(
-        "intrinsicCalibration[f_x, f_y, c_x, c_y, s]= [%f, %f, %f, %f, %f]",
-        lenPtr->intrinsicCalibration[0], lenPtr->intrinsicCalibration[1],
-        lenPtr->intrinsicCalibration[2], lenPtr->intrinsicCalibration[3],
-        lenPtr->intrinsicCalibration[4]);
-    SENSOR_LOGV("distortion[kappa_1, kappa_2, kappa_3] [kappa_4, kappa_5] = "
-                "[%f, %f, %f] [%f, %f]",
-                lenPtr->distortion[0], lenPtr->distortion[1],
-                lenPtr->distortion[2], lenPtr->distortion[3],
-                lenPtr->distortion[4]);
+    if (lenPtr) {
+        SENSOR_LOGV("poseRotation(x, y, z, w) = (%f, %f, %f, %f)",
+                    lenPtr->poseRotation[0], lenPtr->poseRotation[1],
+                    lenPtr->poseRotation[2], lenPtr->poseRotation[3]);
+        SENSOR_LOGV("poseTranslation(x, y, z) = (%f, %f, %f)",
+                    lenPtr->poseTranslation[0], lenPtr->poseTranslation[1],
+                    lenPtr->poseTranslation[2]);
+        SENSOR_LOGV(
+            "intrinsicCalibration[f_x, f_y, c_x, c_y, s]= [%f, %f, %f, %f, %f]",
+            lenPtr->intrinsicCalibration[0], lenPtr->intrinsicCalibration[1],
+            lenPtr->intrinsicCalibration[2], lenPtr->intrinsicCalibration[3],
+            lenPtr->intrinsicCalibration[4]);
+        SENSOR_LOGV(
+            "distortion[kappa_1, kappa_2, kappa_3] [kappa_4, kappa_5] = "
+            "[%f, %f, %f] [%f, %f]",
+            lenPtr->distortion[0], lenPtr->distortion[1], lenPtr->distortion[2],
+            lenPtr->distortion[3], lenPtr->distortion[4]);
+    } else {
+        SENSOR_LOGI("lenPtr is null");
+    }
 
     return lenPtr;
 }

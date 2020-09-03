@@ -79,7 +79,7 @@ static cmr_int sensor_drv_vcm_unload_library(struct vcm_drv_lib *libPtr);
 static cmr_int sensor_drv_tuning_load_library(const char *name,
                                               struct tuning_param_lib *libPtr);
 static cmr_int
-sensor_drv_tuning_load_default_library(param_input_t param_input,
+sensor_drv_tuning_load_default_library(param_input_t *param_input_ptr,
                                        const char *name,
                                        struct tuning_param_lib *libPtr);
 static cmr_int
@@ -119,7 +119,7 @@ static cmr_int sensor_stream_ctrl(struct sensor_drv_context *sensor_cxt,
 
 static cmr_int sensor_init_defaul_exif(struct sensor_drv_context *sensor_cxt);
 
-static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id);
+static void sensor_rid_save_sensor_info(char *sensor_info, cmr_u32 slot_id);
 
 static cmr_int sensor_hw_read_i2c(cmr_handle sns_module_handle,
                                   cmr_u16 slave_addr, cmr_u8 *cmd,
@@ -626,7 +626,7 @@ static cmr_int sensor_get_module_cfg_info(struct sensor_drv_context *sensor_cxt,
     SENSOR_LOGI("p1:%p,p2:%p", module_info, mod_cfg_tab);
 
     if (mod_cfg_tab && module_info) {
-        SENSOR_LOGI("tab_size:%d,%d,%d", tab_size, sizeof(mod_cfg_tab),
+        SENSOR_LOGI("tab_size:%d,%ld,%ld", tab_size, sizeof(mod_cfg_tab),
                     sizeof(mod_cfg_tab[0]));
         // tab_size = 3;
         for (i = 0; i < tab_size; i++) {
@@ -1224,7 +1224,7 @@ cmr_int sensor_stream_on(struct sensor_drv_context *sensor_cxt) {
             ret = property_set("persist.vendor.cam.sensor.info", value1);
         }
     }
-    SENSOR_LOGI("X %d", ret);
+    SENSOR_LOGI("X %ld", ret);
     ATRACE_END();
     return err;
 }
@@ -2036,7 +2036,7 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
 
 #include <cutils/properties.h>
 
-static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id) {
+static void sensor_rid_save_sensor_info(char *sensor_info, cmr_u32 slot_id) {
     const char *const sensorInterface0 =
         "/sys/devices/virtual/misc/sprd_sensor/camera_sensor_name";
     char sensor_info_with_slot_id[256];
@@ -2062,7 +2062,7 @@ static void sensor_rid_save_sensor_info(char *sensor_info, cmr_int slot_id) {
     close(fd);
     SENSOR_LOGI("slot id is %d", slot_id);
     if (strlen(sensor_info) < sizeof(sensor_info_with_slot_id)) {
-        sprintf(sensor_info_with_slot_id, "<slot:%ld>\n%s", slot_id,
+        sprintf(sensor_info_with_slot_id, "<slot:%d>\n%s", slot_id,
                 sensor_info);
         property_set("vendor.cam.sensor.slot.info", sensor_info_with_slot_id);
     }
@@ -3211,7 +3211,7 @@ sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt) {
         snprintf(default_tuning_para_name, SENSOR_NAME_LEN, "default_id_%d",
                  sensor_cxt->slot_id);
         ret = sensor_drv_tuning_load_default_library(
-            tuning_param_input, default_tuning_para_name, libTuningPtr);
+            &tuning_param_input, default_tuning_para_name, libTuningPtr);
     } else {
         ret = sensor_drv_tuning_load_library(
             camera_cfg->cfgPtr->tuning_info.tuning_para_name, libTuningPtr);
@@ -3332,11 +3332,11 @@ sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
             (cmr_u64)((cmr_uint)sensor_cxt->sensor_info_ptr->source_width_max *
                       (cmr_uint)sensor_cxt->sensor_info_ptr->source_height_max);
         if (sensor_size >= 1000000) {
-            sprintf(buffer, "%s %ldM \n",
+            sprintf(buffer, "%s %dM \n",
                     sensor_cxt->sensor_info_ptr->sensor_version_info,
                     (cmr_u32)((float)sensor_size / 1000000.0 + 0.2));
         } else {
-            sprintf(buffer, "%s 0.%ldM \n",
+            sprintf(buffer, "%s 0.%dM \n",
                     sensor_cxt->sensor_info_ptr->sensor_version_info,
                     (cmr_u32)(sensor_size / 100000));
         }
@@ -3609,13 +3609,13 @@ exit:
 }
 
 static cmr_int
-sensor_drv_tuning_load_default_library(param_input_t param_input,
+sensor_drv_tuning_load_default_library(param_input_t *param_input_ptr,
                                        const char *name,
                                        struct tuning_param_lib *libPtr) {
     cmr_int ret = SENSOR_FAIL;
     char libso_name[SENSOR_LIB_NAME_LEN] = {0};
 
-    void *(*default_tuning_param_get_ptr)(param_input_t tuning_param_input) =
+    void *(*default_tuning_param_get_ptr)(param_input_t *tuning_param_input) =
         NULL;
     int32_t bytes = 0;
 
@@ -3641,7 +3641,7 @@ sensor_drv_tuning_load_default_library(param_input_t param_input,
         goto exit;
     }
     libPtr->raw_info_ptr =
-        (struct sensor_raw_info *)default_tuning_param_get_ptr(param_input);
+        (struct sensor_raw_info *)default_tuning_param_get_ptr(param_input_ptr);
     if (!libPtr->raw_info_ptr) {
         SENSOR_LOGE("load tuning_info_ptr failed");
         dlclose(libPtr->tuning_lib_handle);
@@ -3800,10 +3800,10 @@ static cmr_int sensor_drv_scan_hw(void) {
     xmlDocPtr docPtr = NULL;
     xmlNodePtr rootPtr = NULL;
     xmlNodePtr nodePtr = NULL;
-    cmr_int module_cfg_num = 0;
+    int module_cfg_num = 0;
     xml_camera_module_cfg_t module_cfg;
     struct xml_camera_cfg_info camera_cfg_info;
-    cmr_int slot_id = 0;
+    cmr_u32 slot_id = 0;
     cmr_u8 sensor_count[SENSOR_ID_MAX] = {0xff};
     cmr_u8 probe_identify[SENSOR_ID_MAX] = {0};
     int project_num = 0;
@@ -3951,7 +3951,7 @@ int sensorGetLogicalSnsNum(void) {
     return devPtr->logical_num;
 }
 
-int sensorGetLogicalCamsNum(void) {
+int sensorGetLogicalCamNum(void) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
 
     sensor_drv_scan_hw();

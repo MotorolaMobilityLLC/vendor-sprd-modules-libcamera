@@ -722,7 +722,7 @@ struct sensor_drv_context {
     cmr_int fd_sensor; /*sensor device id, used when sensor dev alive*/
     cmr_u32 is_calibration;
     cmr_u32 stream_on;
-    cmr_int slot_id;
+    cmr_u32 slot_id;
     cmr_u8 has_register;
 
     SENSOR_INFO_T *sensor_info_ptr;
@@ -815,7 +815,7 @@ SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
 int sensorGetPhysicalSnsNum(void);
 int sensorGetLogicalSnsNum(void);
-int sensorGetLogicalCamsNum(void);
+int sensorGetLogicalCamNum(void);
 void *sensorGetIdentifyState(void);
 PHYSICAL_SENSOR_INFO_T *sensorGetPhysicalSnsInfo(int phy_id);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicalSnsInfo(int logical_id);

@@ -26,7 +26,7 @@ static cmr_u8 check_checksum(cmr_u8 *buf, cmr_u16 size, cmr_u16 checksum) {
     cmr_u16 crc;
 
     crc = calc_checksum(buf, size);
-    SENSOR_LOGI("crc = 0x%x, checksum=0x%x", crc, checksum);
+    SENSOR_LOGD("crc = 0x%x, checksum=0x%x", crc, checksum);
     if (crc == checksum) {
         return 1;
     }
@@ -43,7 +43,7 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
     char *OtpBkDataPath = NULL;
     cmr_u8 header[CALI_OTP_HEAD_SIZE] = {0};
     otp_header_t *header_ptr = (otp_header_t *)header;
-    SENSOR_LOGI("E");
+    SENSOR_LOGD("E");
 
     switch (dual_flag) {
     case CALIBRATION_FLAG_BOKEH:
@@ -107,12 +107,12 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
 
             fclose(fileHandle);
         } else {
-            SENSOR_LOGI(" %s file dosen't exist!", OtpDataPath);
+            SENSOR_LOGI("%s file dosen't exist!", OtpDataPath);
             break;
         }
 
         if (check_checksum(buf, header_ptr->len, header_ptr->checksum)) {
-            SENSOR_LOGI("read %s success!", OtpDataPath);
+            SENSOR_LOGI("read %s success", OtpDataPath);
             if (header_ptr->has_calibration) {
                 return header_ptr->len;
             }
@@ -151,7 +151,7 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
 
             fclose(fileHandle);
         } else {
-            SENSOR_LOGI(" %s file dosen't exist!", OtpBkDataPath);
+            SENSOR_LOGI("%s file dosen't exist!", OtpBkDataPath);
             break;
         }
 
@@ -171,7 +171,7 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
             }
 
             ret = remove(OtpDataPath);
-            SENSOR_LOGI("remove file:%s, ret:%d", OtpDataPath, ret);
+            SENSOR_LOGD("remove file:%s, ret:%d", OtpDataPath, ret);
             fileHandle = fopen(OtpDataPath, "w+");
 
             if (fileHandle != NULL) {
@@ -183,7 +183,7 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
                                 OtpDataPath);
                 } else {
                     ret = 1;
-                    SENSOR_LOGI("%s:write origin header success!", OtpDataPath);
+                    SENSOR_LOGI("%s:write origin header success", OtpDataPath);
                 }
 
                 if (ret &&
@@ -210,10 +210,10 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
                 SENSOR_LOGI("%s:image write finished, ret:%d", OtpDataPath,
                             ret);
             } else {
-                SENSOR_LOGI("open file %s failed!", OtpDataPath);
+                SENSOR_LOGE("open file %s failed!", OtpDataPath);
             }
 
-            SENSOR_LOGI("%s read success!", OtpBkDataPath);
+            SENSOR_LOGI("%s read success", OtpBkDataPath);
 
             if (header_ptr->has_calibration) {
                 return header_ptr->len;
@@ -238,7 +238,7 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
     char *OtpBkDataPath = NULL;
     cmr_u8 header_buf[CALI_OTP_HEAD_SIZE] = {0};
     otp_header_t *header_ptr = header_buf;
-    SENSOR_LOGI("E");
+    SENSOR_LOGD("E");
 
     switch (dual_flag) {
     case CALIBRATION_FLAG_BOKEH:
@@ -292,7 +292,7 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
 
     if (ret != 0) {
         ret = remove(OtpBkDataPath);
-        SENSOR_LOGI("remove file:%s", OtpBkDataPath);
+        SENSOR_LOGD("remove file:%s", OtpBkDataPath);
         fileProductinfoHandle = fopen(OtpBkDataPath, "w+");
     }
 
@@ -301,16 +301,16 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
                                          CALI_OTP_HEAD_SIZE,
                                          fileProductinfoHandle)) {
             ret = 0;
-            SENSOR_LOGE("%s :backup image header write fail!", OtpBkDataPath);
+            SENSOR_LOGE("%s:backup image header write fail!", OtpBkDataPath);
         } else {
             ret = 1;
-            SENSOR_LOGI("%s: backup image header write success!",
+            SENSOR_LOGI("%s:backup image header write success",
                         OtpBkDataPath);
         }
 
         if (ret && (otp_size == fwrite(buf, sizeof(char), otp_size,
                                        fileProductinfoHandle))) {
-            SENSOR_LOGI("%s:backup image write success!", OtpBkDataPath);
+            SENSOR_LOGI("%s:backup image write success", OtpBkDataPath);
             ret = 1;
         } else {
             SENSOR_LOGE("%s:backup image write failed!", OtpBkDataPath);
@@ -326,13 +326,13 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
                 fsync(fd);
                 ret = 1;
             } else {
-                SENSOR_LOGI("fileno() =%s", OtpBkDataPath);
+                SENSOR_LOGI("fileno() = %s", OtpBkDataPath);
                 ret = 0;
             }
         }
 
         fclose(fileProductinfoHandle);
-        SENSOR_LOGI("%s:image write finished!", OtpBkDataPath);
+        SENSOR_LOGI("%s:image write finished", OtpBkDataPath);
     } else {
         ret = 0;
         SENSOR_LOGE("%s:open backup file failed!", OtpBkDataPath);
@@ -352,12 +352,12 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
 
     if (ret != 0) {
         ret = remove(OtpDataPath);
-        SENSOR_LOGI("remove file:%s", OtpDataPath);
+        SENSOR_LOGD("remove file:%s", OtpDataPath);
         fileVendorHandle = fopen(OtpDataPath, "w+");
     }
 
     if (fileVendorHandle != NULL) {
-        SENSOR_LOGI("open %s success!", OtpDataPath);
+        SENSOR_LOGI("open %s success", OtpDataPath);
         if (CALI_OTP_HEAD_SIZE != fwrite(header_buf, sizeof(char),
                                          CALI_OTP_HEAD_SIZE,
                                          fileVendorHandle)) {
@@ -365,12 +365,12 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
             SENSOR_LOGE("%s:origin image header write fail!", OtpDataPath);
         } else {
             ret = 1;
-            SENSOR_LOGI("%s:origin image header write success!", OtpDataPath);
+            SENSOR_LOGI("%s:origin image header write success", OtpDataPath);
         }
 
         if (ret && (otp_size ==
                     fwrite(buf, sizeof(char), otp_size, fileVendorHandle))) {
-            SENSOR_LOGI("%s:origin image write success!", OtpDataPath);
+            SENSOR_LOGI("%s:origin image write success", OtpDataPath);
             ret = 1;
         } else {
             SENSOR_LOGE("%s:origin image write fail!", OtpDataPath);
@@ -378,7 +378,7 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
         }
 
         if (ret) {
-            SENSOR_LOGI("fflush =%s", OtpDataPath);
+            SENSOR_LOGI("fflush = %s", OtpDataPath);
             fflush(fileVendorHandle);
             fd = fileno(fileVendorHandle);
 
@@ -386,13 +386,13 @@ cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
                 fsync(fd);
                 ret = 1;
             } else {
-                SENSOR_LOGI("fileno() =%s", OtpDataPath);
+                SENSOR_LOGI("fileno() = %s", OtpDataPath);
                 ret = 0;
             }
         }
 
         fclose(fileVendorHandle);
-        SENSOR_LOGI("%s:image write finished!", OtpDataPath);
+        SENSOR_LOGI("%s:image write finished", OtpDataPath);
     } else {
         SENSOR_LOGE("open:%s failed!", OtpDataPath);
         ret = 0;
