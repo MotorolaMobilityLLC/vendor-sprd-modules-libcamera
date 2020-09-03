@@ -12158,11 +12158,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                 if(cxt->snp_cxt.fdr_tuning_param.param_ptr == NULL) {
                     CMR_LOGD("Init fdr parameters");
                     ret = isp_ioctl (cxt->isp_cxt.isp_handle, ISP_CTRL_INIT_FDR, &cxt->snp_cxt.fdr_tuning_param);
-                    if (ret) {
-                        CMR_LOGE("Init fdr param failed");
-                    } else {
-                        CMR_LOGD("get fdr test tuning param:0x%x", cxt->snp_cxt.fdr_tuning_param.param_ptr);
-                    }
+                    CMR_LOGD("get fdr test tuning param:0x%x ret =%d", cxt->snp_cxt.fdr_tuning_param.param_ptr,ret);
                 }
                 camera_set_fdr_flag(cxt, 1);
                 cmr_preview_realloc_buffer_for_fdr(cxt->prev_cxt.preview_handle, cxt->camera_id);
