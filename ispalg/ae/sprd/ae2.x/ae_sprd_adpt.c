@@ -4537,6 +4537,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			s_ae_manual[cxt->camera_id].target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
 			s_ae_manual[cxt->camera_id].table_idx = cxt->mode_switch[cxt->app_mode].table_idx;
 			s_ae_manual[cxt->camera_id].manual_level = cxt->manual_level;
+			/*
 			if(cxt->manual_exp_time){
 				s_ae_manual[cxt->camera_id].exp_line = cxt->manual_exp_time /cxt->last_exp_param.line_time;
 				s_ae_manual[cxt->camera_id].exp_time = cxt->manual_exp_time;
@@ -4544,6 +4545,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			if(cxt->manual_iso_value){
 				s_ae_manual[cxt->camera_id].gain = cxt->manual_iso_value;
 			}
+			*/
 			ISP_LOGD("WRITE: %d,%d,%d",s_ae_manual[cxt->camera_id].exp_line,s_ae_manual[cxt->camera_id].exp_time,s_ae_manual[cxt->camera_id].gain);
 		}
 

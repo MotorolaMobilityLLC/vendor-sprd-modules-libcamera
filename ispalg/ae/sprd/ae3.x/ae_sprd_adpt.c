@@ -3763,6 +3763,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			s_ae_manual[cxt->camera_id].table_idx = cxt->last_exp_param.cur_index;
 			s_ae_manual[cxt->camera_id].manual_level = cxt->manual_level;
 			s_ae_manual[cxt->camera_id].target_luma = cxt->last_exp_param.target_luma;
+			/*
 			if(cxt->manual_exp_time){
 				s_ae_manual[cxt->camera_id].exp_line = cxt->manual_exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time;
 				s_ae_manual[cxt->camera_id].exp_time = cxt->manual_exp_time;
@@ -3770,6 +3771,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			if(cxt->manual_iso_value){
 				s_ae_manual[cxt->camera_id].gain = cxt->manual_iso_value;
 			}
+			*/
 			ISP_LOGD("WRITE: %d,%d,%d",s_ae_manual[cxt->camera_id].exp_line,s_ae_manual[cxt->camera_id].exp_time,s_ae_manual[cxt->camera_id].gain);
 		}
 
