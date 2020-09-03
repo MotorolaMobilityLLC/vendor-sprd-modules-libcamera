@@ -1898,6 +1898,8 @@ static int isp_parse_config(DrvCaseComm *json2)
 			break;
 		default:
 			printf("ISP_FW: [ERROR] error type[%d] of parameter[%s]\n", ISP_Param_Map[map_idx].Type, ISP_Param_Map[map_idx].Name);
+			fclose(pf);
+			pf = NULL;
 			return 1;
 		}
 	}

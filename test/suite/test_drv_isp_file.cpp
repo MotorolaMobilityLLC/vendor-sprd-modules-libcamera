@@ -869,6 +869,8 @@ int isp_read_ltm_map_param(struct host_info_t *host_info)
 				}
 				if (NULL == (fp_stat = fopen(stat_file_name, "r"))) {
 					printf("ISP_FW: [ERROR] fail to open %s\n", temp);
+					fclose(fp);
+					fp = NULL;
 					return 1;
 				}
 
@@ -945,6 +947,8 @@ int dcam_read_raw_gtm_param(struct host_info_t *host_info)
 		}
 		if (NULL == (fp_stat = fopen(strcat(txtpath, stat_file_name), "r"))) {
 			printf("ISP_FW: [ERROR] fail to open %s\n", temp);
+			fclose(fp);
+			fp = NULL;
 			return 1;
 		}
 
