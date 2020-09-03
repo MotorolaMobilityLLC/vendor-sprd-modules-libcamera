@@ -797,7 +797,7 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
     List<hwi_frame_buffer_info_t>::iterator itor2;
 
     if (list.empty()) {
-        HAL_LOGE("match failed for idx:%d, unmatched queue is empty",
+        HAL_LOGD("match failed for idx:%d, unmatched queue is empty",
                  result1.frame_number);
         return MATCH_FAILED;
     } else {

@@ -67,7 +67,7 @@ exit:
 }
 
 SprdCamera3MultiCamera::~SprdCamera3MultiCamera() {
-    if (mAuthorized)
+    if (mHandle)
         dlclose(mHandle);
 
     ALOGI("destroy wrapper");
