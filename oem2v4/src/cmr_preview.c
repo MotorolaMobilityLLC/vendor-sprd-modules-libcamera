@@ -3897,6 +3897,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 tool_eb = 0;
     cmr_u32 channel_bits = 0;
     cmr_uint skip_num = 0;
+    cmr_u32 prev_chb = 0;
+    cmr_u32 snap_chb = 0;
     struct video_start_param video_param;
     struct sensor_mode_info *sensor_mode_info = NULL;
     cmr_uint old_prev_status;
@@ -3913,7 +3915,6 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-
     preview_enable = prev_cxt->prev_param.preview_eb;
     snapshot_enable = prev_cxt->prev_param.snapshot_eb;
     video_enable = prev_cxt->prev_param.video_eb;
@@ -3933,14 +3934,14 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         sem_post(&handle->thread_cxt.prev_recovery_sem);
     }
 
-    if (preview_enable && snapshot_enable) {
-        channel_bits =
-            (1 << prev_cxt->prev_channel_id) | (1 << prev_cxt->cap_channel_id);
-    } else if (preview_enable) {
-        channel_bits = 1 << prev_cxt->prev_channel_id;
-    } else if (snapshot_enable) {
-        channel_bits = 1 << prev_cxt->cap_channel_id;
-    } else {
+    if (preview_enable) {
+        prev_chb = 1 << prev_cxt->prev_channel_id;
+    }
+    if (snapshot_enable) {
+        snap_chb = 1 << prev_cxt->cap_channel_id;
+    }
+    channel_bits = (prev_chb) | (snap_chb);
+    if (channel_bits == 0) {
         CMR_LOGE("invalid param");
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
