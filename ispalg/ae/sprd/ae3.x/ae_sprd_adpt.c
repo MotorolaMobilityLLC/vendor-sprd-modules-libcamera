@@ -3984,10 +3984,15 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		cxt->cur_status.adv_param.comp_param.value.ev_index = 0;			//(AE_EV_MOD_OFFSET): EV setting in professial mode
 	}
 
+	if(CAMERA_MODE_TIMELAPSE == cxt->app_mode)
+		cxt->cur_status.adv_param.special_fps_mode = 1;
+	else
+		cxt->cur_status.adv_param.special_fps_mode = 0;
+
 	scene_param_in.scene_mod = cxt->cur_status.adv_param.scene_mode;
 	scene_param_in.iso_mod = cxt->cur_status.adv_param.iso;
 	scene_param_in.flicker_mod = cxt->cur_status.adv_param.flicker;
-	
+
 	ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
 	ae_target_lum = cxt->ae_tbl_param.target_lum;
 	cxt->cur_param_target_lum = cxt->ae_tbl_param.target_lum;
