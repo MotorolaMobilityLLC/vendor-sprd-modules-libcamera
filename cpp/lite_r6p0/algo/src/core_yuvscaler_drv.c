@@ -1447,6 +1447,10 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
     ///------------vertical scaling coef-------------
 
     luma_ver_tap   = ((uint8)(iD_ver / iI_ver)) * 2;
+    if (i_pixfmt == YUV420)
+        iD_ver /= 2;
+    if (i_pixfmt == YUV420 && o_pixfmt == YUV420)
+        iI_ver /= 2;
     chroma_ver_tap = ((uint8)(iD_ver / iI_ver)) * 2;
     if(i_pixfmt == YUV420 && o_pixfmt == YUV422)
     {
@@ -1504,7 +1508,6 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
     //chroma_ver_tap = ((uint8)(iD_ver / iI_ver)) * 2;
     if(i_pixfmt == YUV422 && o_pixfmt == YUV420)
     {
-        I_ver_bak_uv /= 2;
         chroma_ver_tap *=2;
         chroma_ver_maxtap = 16;
     }
@@ -1513,9 +1516,10 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
 
     *chroma_tap_ver = (uint8) chroma_ver_tap;
 
-    if(YUV420 == i_pixfmt)
+    if (YUV420 == i_pixfmt)
         D_ver_bak_uv /= 2;
-
+    if (o_pixfmt == YUV420)
+        I_ver_bak_uv /= 2;
     //if(1 == scaling2yuv420)
     //{
     //  fD_ver = D_ver_bak_uv   ;
