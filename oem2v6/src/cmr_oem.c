@@ -12688,7 +12688,8 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         CMR_LOGE("failed to get app mode %ld", ret);
         goto exit;
     }
-    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
+    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
+        setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE) {
         isp_param.cmd_value = 1;
     } else {
         isp_param.cmd_value = 0;
