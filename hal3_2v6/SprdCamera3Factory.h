@@ -82,6 +82,7 @@ class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
 
   private:
     int getNumberOfCameras();
+    int getDynamicCameraIdInfo(int camera_id, struct camera_info *info);
     int getCameraInfo(int camera_id, struct camera_info *info);
     int init_();
     int overrideCameraIdIfNeeded(int cameraId);

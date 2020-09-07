@@ -198,6 +198,34 @@ int SprdCamera3Factory::getNumberOfCameras() {
     return mNumberOfCameras;
 }
 
+int SprdCamera3Factory::getDynamicCameraIdInfo(int camera_id, struct camera_info *info) {
+    if (!info) {
+        HAL_LOGE("invalid param info");
+        return -EINVAL;
+    }
+
+    int ret = mCameras[camera_id]->getCameraInfo(info);
+    if (ret < 0)
+        return ret;
+
+    if (mConflictingDevices.find(camera_id) == mConflictingDevices.cend()) {
+        for (size_t i = 0; i < info->conflicting_devices_length; i++)
+            mConflictingCameraIds[camera_id].insert(
+                atoi(info->conflicting_devices[i]));
+
+        mConflictingDevices[camera_id] = allocateConflictingDevices(
+            vector<int>(mConflictingCameraIds[camera_id].begin(),
+                        mConflictingCameraIds[camera_id].end()));
+        mConflictingDevicesCount[camera_id] = mConflictingCameraIds[camera_id].size();
+    }
+
+    /* append conflicting devices due to sharing sensor */
+    info->conflicting_devices_length = mConflictingDevicesCount[camera_id];
+    info->conflicting_devices = mConflictingDevices[camera_id];
+
+    return 0;
+}
+
 int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
     if (!info) {
         HAL_LOGE("invalid param info");
@@ -214,26 +242,7 @@ int SprdCamera3Factory::getCameraInfo(int camera_id, struct camera_info *info) {
 
     /* try dynamic ID */
     if (mUseCameraId == DynamicId && id < mNumberOfCameras) {
-        int ret = mCameras[id]->getCameraInfo(info);
-        if (ret < 0)
-            return ret;
-
-        if (mConflictingDevices.find(id) == mConflictingDevices.cend()) {
-            for (size_t i = 0; i < info->conflicting_devices_length; i++)
-                mConflictingCameraIds[id].insert(
-                    atoi(info->conflicting_devices[i]));
-
-            mConflictingDevices[id] = allocateConflictingDevices(
-                vector<int>(mConflictingCameraIds[id].begin(),
-                            mConflictingCameraIds[id].end()));
-            mConflictingDevicesCount[id] = mConflictingCameraIds[id].size();
-        }
-
-        /* append conflicting devices due to sharing sensor */
-        info->conflicting_devices_length = mConflictingDevicesCount[id];
-        info->conflicting_devices = mConflictingDevices[id];
-
-        return 0;
+        return getDynamicCameraIdInfo(id, info);
     }
 
 #ifdef CONFIG_MULTICAMERA_SUPPORT
