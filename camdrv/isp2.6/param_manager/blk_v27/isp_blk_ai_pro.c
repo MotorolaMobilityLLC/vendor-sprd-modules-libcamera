@@ -197,12 +197,18 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 					src1[1]= (void *)&dst_ptr->isp_ai_bchs[ai_scene].ai_brightness.brightness_adj_factor_offset[bv_value->value[1]];
 					isp_interp_data((void *)dst1, src1 , weight , data_num , ISP_INTERP_UINT16);
 				}
+				if (ai_scene && (!dst_ptr->bchs_cur.ai_brightness.brightness_ai_adj_eb)){
+					dst_ptr->bchs_cur.ai_brightness.brightness_adj_factor_offset = 0;
+				}
 
 				if (dst_ptr->bchs_cur.ai_contrast.contrast_adj_ai_eb){
 					dst2 = &dst_ptr->bchs_cur.ai_contrast.contrast_adj_factor_offset;
 					src2[0]= (void *)&dst_ptr->isp_ai_bchs[ai_scene].ai_contrast.contrast_adj_factor_offset[bv_value->value[0]];
 					src2[1]= (void *)&dst_ptr->isp_ai_bchs[ai_scene].ai_contrast.contrast_adj_factor_offset[bv_value->value[1]];
 					isp_interp_data((void *)dst2, src2 , weight , data_num , ISP_INTERP_UINT16);
+				}
+				if (ai_scene && (!dst_ptr->bchs_cur.ai_contrast.contrast_adj_ai_eb)){
+					dst_ptr->bchs_cur.ai_contrast.contrast_adj_factor_offset = 0;
 				}
 
 				if (dst_ptr->bchs_cur.ai_hue.hue_adj_ai_eb) {
@@ -216,6 +222,10 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 					src4[1]= (void *)&dst_ptr->isp_ai_bchs[ai_scene].ai_hue.hue_sin_offset[bv_value->value[1]];
 					isp_interp_data((void *)dst4, src4 , weight , data_num , ISP_INTERP_UINT16);
 				}
+				if (ai_scene && (!dst_ptr->bchs_cur.ai_hue.hue_adj_ai_eb)){
+					dst_ptr->bchs_cur.ai_hue.hue_cos_offset = 0;
+					dst_ptr->bchs_cur.ai_hue.hue_sin_offset = 0;
+				}
 
 				if (dst_ptr->bchs_cur.ai_saturation.saturation_adj_ai_eb) {
 					dst5 = &dst_ptr->bchs_cur.ai_saturation.saturation_adj_factor_u_offset;
@@ -227,6 +237,10 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 					src6[0]= (void *)&dst_ptr->isp_ai_bchs[ai_scene].ai_saturation.saturation_adj_factor_v_offset[bv_value->value[0]];
 					src6[1]= (void *)&dst_ptr->isp_ai_bchs[ai_scene].ai_saturation.saturation_adj_factor_v_offset[bv_value->value[1]];
 					isp_interp_data((void *)dst6, src6 , weight , data_num , ISP_INTERP_UINT16);
+				}
+				if (ai_scene && (!dst_ptr->bchs_cur.ai_saturation.saturation_adj_ai_eb)){
+					dst_ptr->bchs_cur.ai_saturation.saturation_adj_factor_u_offset = 0;
+					dst_ptr->bchs_cur.ai_saturation.saturation_adj_factor_v_offset = 0;
 				}
 
 				ISP_LOGV("hue_cos_offset %d ,hue_sin_offset %d, saturation_adj_factor_u_offset %d,%d,b %d, c %d\n",

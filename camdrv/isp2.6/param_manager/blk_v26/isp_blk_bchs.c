@@ -16,6 +16,108 @@
 #define LOG_TAG "isp_blk_bchs"
 #include "isp_blocks_cfg.h"
 
+static cmr_s32 _pm_b_updata_param(struct isp_bchs_ai_info *bchs_updata,
+	struct isp_ai_bchs_param *bchs_cur, struct isp_ai_update_param *cfg_data, struct isp_bchs_param *dst_ptr)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 ai_scene = 0, count = 0;
+	cmr_s16 smooth_factor = 0, smooth_base = 0;
+
+	smooth_factor = cfg_data->smooth_factor;
+	smooth_base = cfg_data->smooth_base;
+	count = cfg_data->count;
+	ai_scene = cfg_data->ai_scene;
+
+	if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
+		bchs_updata->brta_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
+		bchs_updata->brta_factor = MAX(-128, MIN(127,  bchs_updata->brta_factor));
+		if (!ai_scene && ((bchs_updata->brta_factor < dst_ptr->brigntness.bright_tab[dst_ptr->brigntness.cur_index]) || (count == smooth_base)))
+			bchs_updata->brta_factor = dst_ptr->brigntness.bright_tab[dst_ptr->brigntness.cur_index];
+	}
+	dst_ptr->cur.brta_factor = bchs_updata->brta_factor;
+
+	return rtn;
+}
+
+static cmr_s32 _pm_c_updata_param(struct isp_bchs_ai_info *bchs_updata,
+	struct isp_ai_bchs_param *bchs_cur, struct isp_ai_update_param *cfg_data, struct isp_bchs_param *dst_ptr)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 ai_scene = 0, count = 0;
+	cmr_s16 smooth_factor = 0, smooth_base = 0;
+
+	smooth_factor = cfg_data->smooth_factor;
+	smooth_base = cfg_data->smooth_base;
+	count = cfg_data->count;
+	ai_scene = cfg_data->ai_scene;
+
+	if (bchs_cur->ai_contrast.contrast_adj_ai_eb || smooth_factor) {
+		bchs_updata->cnta_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
+		bchs_updata->cnta_factor = MAX(0, MIN(255,  bchs_updata->cnta_factor));
+		if (!ai_scene && ((bchs_updata->cnta_factor < dst_ptr->contrast.tab[dst_ptr->contrast.cur_index]) || (count == smooth_base)))
+			bchs_updata->cnta_factor = dst_ptr->contrast.tab[dst_ptr->contrast.cur_index];
+	}
+	dst_ptr->cur.cnta_factor = bchs_updata->cnta_factor;
+
+	return rtn;
+}
+
+static cmr_s32 _pm_h_updata_param(struct isp_bchs_ai_info *bchs_updata,
+	struct isp_ai_bchs_param *bchs_cur, struct isp_ai_update_param *cfg_data, struct isp_bchs_param *dst_ptr)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 ai_scene = 0, count = 0;
+	cmr_s16 smooth_factor = 0, smooth_base = 0;
+
+	smooth_factor = cfg_data->smooth_factor;
+	smooth_base = cfg_data->smooth_base;
+	count = cfg_data->count;
+	ai_scene = cfg_data->ai_scene;
+
+	if (bchs_cur->ai_hue.hue_adj_ai_eb || smooth_factor) {
+		bchs_updata->hua_cos_value += bchs_cur->ai_hue.hue_cos_offset * smooth_factor / smooth_base;
+		bchs_updata->hua_sina_value += bchs_cur->ai_hue.hue_sin_offset * smooth_factor / smooth_base;
+		bchs_updata->hua_cos_value = MAX(-180, MIN(180,  bchs_updata->hua_cos_value));
+		bchs_updata->hua_sina_value = MAX(-180, MIN(180,  bchs_updata->hua_sina_value));
+		if (!ai_scene && ((bchs_updata->hua_cos_value < dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx]) || (count == smooth_base)))
+			bchs_updata->hua_cos_value = dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx];
+		if (!ai_scene && ((bchs_updata->hua_cos_value < dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx]) || (count == smooth_base)))
+			bchs_updata->hua_sina_value = dst_ptr->hue.tab_sin[dst_ptr->hue.cur_idx];
+	}
+	dst_ptr->cur.hua_cos_value = bchs_updata->hua_cos_value;
+	dst_ptr->cur.hua_sina_value = bchs_updata->hua_sina_value;
+
+	return rtn;
+}
+
+static cmr_s32 _pm_s_updata_param(struct isp_bchs_ai_info *bchs_updata,
+	struct isp_ai_bchs_param *bchs_cur, struct isp_ai_update_param *cfg_data, struct isp_bchs_param *dst_ptr)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 ai_scene = 0, count = 0;
+	cmr_s16 smooth_factor = 0, smooth_base = 0;
+
+	smooth_factor = cfg_data->smooth_factor;
+	smooth_base = cfg_data->smooth_base;
+	count = cfg_data->count;
+	ai_scene = cfg_data->ai_scene;
+
+	if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
+		bchs_updata->csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
+		bchs_updata->csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
+		bchs_updata->csa_factor_u = MAX(0, MIN(255,  bchs_updata->csa_factor_u));
+		bchs_updata->csa_factor_v = MAX(0, MIN(255,  bchs_updata->csa_factor_v));
+		if (!ai_scene && ((bchs_updata->csa_factor_u < dst_ptr->saturation.tab[0][dst_ptr->saturation.cur_u_idx]) || (count == smooth_base)))
+			bchs_updata->csa_factor_u = dst_ptr->saturation.tab[0][dst_ptr->saturation.cur_u_idx];
+		if (!ai_scene && ((bchs_updata->csa_factor_v < dst_ptr->saturation.tab[1][dst_ptr->saturation.cur_v_idx]) || (count == smooth_base)))
+			bchs_updata->csa_factor_v = dst_ptr->saturation.tab[1][dst_ptr->saturation.cur_v_idx];
+	}
+	dst_ptr->cur.csa_factor_u = bchs_updata->csa_factor_u;
+	dst_ptr->cur.csa_factor_v = bchs_updata->csa_factor_v;
+
+	return rtn;
+}
+
 cmr_s32 _pm_bchs_init(void *dst_bchs_param, void *src_bchs_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -135,19 +237,16 @@ cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void
 
 	case ISP_PM_BLK_AI_SCENE_UPDATE_BCHS:
 		{
-			cmr_s16 smooth_factor, smooth_base, ai_status;
+			cmr_s16 smooth_factor, ai_status;
 			struct isp_ai_update_param *cfg_data;
 			struct isp_ai_bchs_param *bchs_cur;
 			struct isp_bchs_ai_info bchs_updata;
 			cmr_u32 ai_scene = 0;
-			cmr_u32 count = 0;
 
 			cfg_data = (struct isp_ai_update_param *)param_ptr0;
 			bchs_cur = (struct isp_ai_bchs_param *)cfg_data->param_ptr;
 			smooth_factor = cfg_data->smooth_factor;
-			smooth_base = cfg_data->smooth_base;
 			ai_status = cfg_data->ai_status;
-			count = cfg_data->count;
 			ai_scene = cfg_data->ai_scene;
 			if (smooth_factor == 0)
 				break;
@@ -161,45 +260,10 @@ cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void
 					bchs_updata.csa_factor_u = dst_ptr->cur.csa_factor_u;
 					bchs_updata.csa_factor_v = dst_ptr->cur.csa_factor_v;
 
-					if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
-						bchs_updata.brta_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
-						bchs_updata.brta_factor = MAX(-128, MIN(127,  bchs_updata.brta_factor));
-						if ((bchs_updata.brta_factor < dst_ptr->brigntness.bright_tab[dst_ptr->brigntness.cur_index]) || (count == smooth_base))
-							bchs_updata.brta_factor = dst_ptr->brigntness.bright_tab[dst_ptr->brigntness.cur_index];
-					}
-					if (bchs_cur->ai_contrast.contrast_adj_ai_eb || smooth_factor) {
-						bchs_updata.cnta_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
-						bchs_updata.cnta_factor = MAX(0, MIN(255,  bchs_updata.cnta_factor));
-						if ((bchs_updata.cnta_factor < dst_ptr->contrast.tab[dst_ptr->contrast.cur_index]) || (count == smooth_base))
-							bchs_updata.cnta_factor = dst_ptr->contrast.tab[dst_ptr->contrast.cur_index];
-					}
-					if (bchs_cur->ai_hue.hue_adj_ai_eb || smooth_factor) {
-						bchs_updata.hua_cos_value += bchs_cur->ai_hue.hue_cos_offset * smooth_factor / smooth_base;
-						bchs_updata.hua_sina_value += bchs_cur->ai_hue.hue_sin_offset * smooth_factor / smooth_base;
-						bchs_updata.hua_cos_value = MAX(-180, MIN(180,  bchs_updata.hua_cos_value));
-						bchs_updata.hua_sina_value = MAX(-180, MIN(180,  bchs_updata.hua_sina_value));
-						if ((bchs_updata.hua_cos_value < dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx]) || (count == smooth_base))
-							bchs_updata.hua_cos_value = dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx];
-						if ((bchs_updata.hua_cos_value < dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx]) || (count == smooth_base))
-							bchs_updata.hua_sina_value = dst_ptr->hue.tab_sin[dst_ptr->hue.cur_idx];
-					}
-					if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
-						bchs_updata.csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
-						bchs_updata.csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
-						bchs_updata.csa_factor_u = MAX(0, MIN(255,  bchs_updata.csa_factor_u));
-						bchs_updata.csa_factor_v = MAX(0, MIN(255,  bchs_updata.csa_factor_v));
-						if ((bchs_updata.csa_factor_u < dst_ptr->saturation.tab[0][dst_ptr->saturation.cur_u_idx]) || (count == smooth_base))
-							bchs_updata.csa_factor_u = dst_ptr->saturation.tab[0][dst_ptr->saturation.cur_u_idx];
-						if ((bchs_updata.csa_factor_v < dst_ptr->saturation.tab[1][dst_ptr->saturation.cur_v_idx]) || (count == smooth_base))
-							bchs_updata.csa_factor_v = dst_ptr->saturation.tab[1][dst_ptr->saturation.cur_v_idx];
-					}
-					dst_ptr->cur.brta_factor = bchs_updata.brta_factor;
-					dst_ptr->cur.cnta_factor = bchs_updata.cnta_factor;
-					dst_ptr->cur.hua_cos_value = bchs_updata.hua_cos_value;
-					dst_ptr->cur.hua_sina_value = bchs_updata.hua_sina_value;
-					dst_ptr->cur.csa_factor_u = bchs_updata.csa_factor_u;
-					dst_ptr->cur.csa_factor_v = bchs_updata.csa_factor_v;
-
+					_pm_b_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
+					_pm_c_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
+					_pm_h_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
+					_pm_s_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
 				}else {
 					dst_ptr->cur.brta_factor = dst_ptr->brigntness.bright_tab[dst_ptr->brigntness.cur_index];
 					dst_ptr->cur.cnta_factor = dst_ptr->contrast.tab[dst_ptr->contrast.cur_index];
@@ -215,32 +279,10 @@ cmr_s32 _pm_bchs_set_param(void *bchs_param, cmr_u32 cmd, void *param_ptr0, void
 					bchs_updata.csa_factor_u = (dst_ptr->cur.csa_factor_u & 0xFFFF);
 					bchs_updata.csa_factor_v = (dst_ptr->cur.csa_factor_v & 0xFFFF);
 
-					if (bchs_cur->ai_brightness.brightness_ai_adj_eb || smooth_factor) {
-						bchs_updata.brta_factor += bchs_cur->ai_brightness.brightness_adj_factor_offset * smooth_factor / smooth_base;
-						bchs_updata.brta_factor = MAX(-128, MIN(127,  bchs_updata.brta_factor));
-					}
-					if (bchs_cur->ai_contrast.contrast_adj_ai_eb || smooth_factor) {
-						bchs_updata.cnta_factor += bchs_cur->ai_contrast.contrast_adj_factor_offset * smooth_factor / smooth_base;
-						bchs_updata.cnta_factor = MAX(0, MIN(255,  bchs_updata.cnta_factor));
-					}
-					if (bchs_cur->ai_hue.hue_adj_ai_eb || smooth_factor) {
-						bchs_updata.hua_cos_value += bchs_cur->ai_hue.hue_cos_offset * smooth_factor / smooth_base;
-						bchs_updata.hua_sina_value += bchs_cur->ai_hue.hue_sin_offset * smooth_factor / smooth_base;
-						bchs_updata.hua_cos_value = MAX(-180, MIN(180,  bchs_updata.hua_cos_value));
-						bchs_updata.hua_sina_value = MAX(-180, MIN(180,  bchs_updata.hua_sina_value));
-					}
-					if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
-						bchs_updata.csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
-						bchs_updata.csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
-						bchs_updata.csa_factor_u = MAX(0, MIN(255,  bchs_updata.csa_factor_u));
-						bchs_updata.csa_factor_v = MAX(0, MIN(255,  bchs_updata.csa_factor_v));
-					}
-					dst_ptr->cur.brta_factor = bchs_updata.brta_factor;
-					dst_ptr->cur.cnta_factor = bchs_updata.cnta_factor;
-					dst_ptr->cur.hua_cos_value = bchs_updata.hua_cos_value;
-					dst_ptr->cur.hua_sina_value = bchs_updata.hua_sina_value;
-					dst_ptr->cur.csa_factor_u = bchs_updata.csa_factor_u;
-					dst_ptr->cur.csa_factor_v = bchs_updata.csa_factor_v;
+					_pm_b_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
+					_pm_c_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
+					_pm_h_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
+					_pm_s_updata_param(&bchs_updata, bchs_cur, cfg_data, dst_ptr);
 				}
 			} else {
 					dst_ptr->cur.brta_factor = dst_ptr->brigntness.bright_tab[dst_ptr->brigntness.cur_index];

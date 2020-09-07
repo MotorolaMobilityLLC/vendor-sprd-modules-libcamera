@@ -16,6 +16,38 @@
 #define LOG_TAG "isp_blk_saturation"
 #include "isp_blocks_cfg.h"
 
+static cmr_s32 _pm_saturation_updata_param(cmr_s32 csa_factor_u, cmr_s32 csa_factor_v,
+	struct isp_ai_bchs_param *bchs_cur, struct isp_ai_update_param *cfg_data, struct isp_chrom_saturation_param *csa_ptr)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_s16 smooth_factor = 0;
+	cmr_s16 smooth_base;
+	cmr_u32 ai_scene = 0;
+	cmr_u32 count = 0;
+
+	smooth_factor = cfg_data->smooth_factor;
+	smooth_base = cfg_data->smooth_base;
+	count = cfg_data->count;
+	ai_scene = cfg_data->ai_scene;
+
+	if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
+		csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
+		csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
+		csa_factor_u = MAX(0, MIN(255,  csa_factor_u));
+		csa_factor_v = MAX(0, MIN(255,  csa_factor_v));
+		if (!ai_scene && ((csa_factor_u < csa_ptr->tab[0][csa_ptr->cur_u_idx]) || (count == smooth_base)))
+			csa_factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
+		if (!ai_scene && ((csa_factor_v < csa_ptr->tab[1][csa_ptr->cur_v_idx]) || (count == smooth_base)))
+			csa_factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
+	}
+
+	csa_ptr->cur.csa_factor_u = csa_factor_u;
+	csa_ptr->cur.csa_factor_v = csa_factor_v;
+
+	return rtn;
+}
+
+
 cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *param1, void *param_ptr2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
@@ -136,29 +168,11 @@ cmr_s32 _pm_saturation_set_param(void *csa_param, cmr_u32 cmd, void *param_ptr0,
 				if (!ai_scene){
 					csa_factor_u = csa_ptr->cur.csa_factor_u;
 					csa_factor_v = csa_ptr->cur.csa_factor_v;
-					if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
-						csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
-						csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
-						csa_factor_u = MAX(0, MIN(255,  csa_factor_u));
-						csa_factor_v = MAX(0, MIN(255,  csa_factor_v));
-						if ((csa_factor_u < csa_ptr->tab[0][csa_ptr->cur_u_idx]) || (count == smooth_base))
-							csa_factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
-						if ((csa_factor_v < csa_ptr->tab[1][csa_ptr->cur_u_idx]) || (count == smooth_base))
-							csa_factor_v = csa_ptr->tab[1][csa_ptr->cur_u_idx];
-					}
-					csa_ptr->cur.csa_factor_u = csa_factor_u;
-					csa_ptr->cur.csa_factor_v = csa_factor_v;
+					_pm_saturation_updata_param(csa_factor_u, csa_factor_v, bchs_cur, cfg_data, csa_ptr);
 				} else {
 					csa_factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
 					csa_factor_v = csa_ptr->tab[1][csa_ptr->cur_v_idx];
-					if (bchs_cur->ai_saturation.saturation_adj_ai_eb || smooth_factor) {
-						csa_factor_u += bchs_cur->ai_saturation.saturation_adj_factor_u_offset * smooth_factor / smooth_base;
-						csa_factor_v += bchs_cur->ai_saturation.saturation_adj_factor_v_offset * smooth_factor / smooth_base;
-						csa_factor_u = MAX(0, MIN(255,  csa_factor_u));
-						csa_factor_v = MAX(0, MIN(255,  csa_factor_v));
-					}
-					csa_ptr->cur.csa_factor_u = csa_factor_u;
-					csa_ptr->cur.csa_factor_v = csa_factor_v;
+					_pm_saturation_updata_param(csa_factor_u, csa_factor_v, bchs_cur, cfg_data, csa_ptr);
 				}
 			} else {
 				csa_ptr->cur.csa_factor_u = csa_ptr->tab[0][csa_ptr->cur_u_idx];
