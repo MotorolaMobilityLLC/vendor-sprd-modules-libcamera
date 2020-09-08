@@ -2510,10 +2510,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
                 characteristicsInfo.find(
                                        ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE)
                     .data.f[0];
-            if (lensFocusDistance > 0)
-                hasFocuser = true;
-            else
-                hasFocuser = false;
+            hasFocuser = (lensFocusDistance > 0);
         } else {
             hasFocuser = true;
         }
