@@ -3280,7 +3280,131 @@ exit:
 
     return ret;
 }
+/* Reduce Cyclomatic Complexity for prev_zsl_frame_handle */
+static int prev_zsl_frame_handle_wide(struct prev_handle *handle,
+                                      cmr_u32 camera_id, struct frm_info *data,
+                                      struct prev_cb_info *cb_info_p,
+                                      struct camera_frame_type *frame_type) {
 
+    int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    cmr_u32 is_fdr = 0;
+    cmr_uint ultra_wide_index;
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    ret = prev_get_src_ultra_wide_buffer(prev_cxt, data, &ultra_wide_index);
+    if (ret) {
+        CMR_LOGE("zsl get src ultra_wide buffer failed");
+        return ret;
+    }
+    if (prev_cxt->cap_zsl_mem_valid_num > 0) {
+        ret = prev_ultra_wide_send_data(handle, camera_id, data);
+        if (ret) {
+            CMR_LOGE("ultra_wide failed, skip this frm");
+            ret = CMR_CAMERA_SUCCESS;
+            goto exit;
+        }
+        CMR_LOGV("ultra wide done");
+
+        ret = prev_construct_zsl_frame(handle, camera_id, data, frame_type);
+        if (ret) {
+            CMR_LOGE("construct frm 0x%x err", data->frame_id);
+            goto exit;
+        }
+
+        if (handle->ops.get_fdr_enable) {
+            CMR_LOGV("get fdr flag handle");
+            ret = handle->ops.get_fdr_enable(handle->oem_handle, &is_fdr);
+        } else {
+            CMR_LOGE("get fdr flag handle failed");
+        }
+        CMR_LOGD("fdr skip pop zsl buffer, and set ultra wide flag,is_fdr:%d",
+                 is_fdr);
+        if (!is_fdr) {
+            ret = prev_set_ultra_wide_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
+                                                  ultra_wide_index, 0);
+            if (ret) {
+                CMR_LOGE("prev_set_ultra_wide_buffer_flag failed");
+                goto exit;
+            }
+            ret = prev_pop_zsl_buffer(handle, camera_id, data, 0);
+            if (ret) {
+                CMR_LOGE("pop frm 0x%x err", data->channel_id);
+                goto exit;
+            }
+        }
+        cb_info_p->cb_type = PREVIEW_EVT_CB_FRAME;
+        cb_info_p->func_type = PREVIEW_FUNC_START_PREVIEW;
+        cb_info_p->frame_data = frame_type;
+        prev_cb_start(handle, cb_info_p);
+    } else {
+        CMR_LOGW("no available buf, drop! channel_id 0x%x", data->channel_id);
+        ret = prev_set_ultra_wide_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
+                                              ultra_wide_index, 0);
+        if (ret) {
+            CMR_LOGE("prev_set_ultra_wide_buffer_flag failed");
+            goto exit;
+        }
+    }
+
+exit:
+    return ret;
+}
+
+static int prev_zsl_frame_hangle_rot(struct prev_handle *handle,
+                                     cmr_u32 camera_id, struct frm_info *data,
+                                     struct prev_cb_info *cb_info_p,
+                                     struct camera_frame_type *frame_type) {
+
+    int ret = CMR_CAMERA_SUCCESS;
+    struct prev_context *prev_cxt = NULL;
+    cmr_uint rot_index;
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    ret = prev_get_src_rot_buffer(prev_cxt, data, &rot_index);
+    if (ret) {
+        CMR_LOGE("get src rot buffer failed");
+        return ret;
+    }
+    if (prev_cxt->cap_zsl_mem_valid_num > 0) {
+        ret = prev_start_rotate(handle, camera_id, data);
+        if (ret) {
+            CMR_LOGE("rot failed, skip this frm");
+            ret = CMR_CAMERA_SUCCESS;
+            goto exit;
+        }
+        ret = prev_construct_zsl_frame(handle, camera_id, data, frame_type);
+        if (ret) {
+            CMR_LOGE("construct frm 0x%x err", data->frame_id);
+            goto exit;
+        }
+        ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL, rot_index,
+                                       0);
+        if (ret) {
+            CMR_LOGE("prev_set_rot_buffer_flag failed");
+            goto exit;
+        }
+        ret = prev_pop_zsl_buffer(handle, camera_id, data, 0);
+        if (ret) {
+            CMR_LOGE("pop frm 0x%x err", data->channel_id);
+            goto exit;
+        }
+        cb_info_p->cb_type = PREVIEW_EVT_CB_FRAME;
+        cb_info_p->func_type = PREVIEW_FUNC_START_PREVIEW;
+        cb_info_p->frame_data = frame_type;
+        prev_cb_start(handle, cb_info_p);
+    } else {
+        CMR_LOGW("no available buf, drop! channel_id 0x%x", data->channel_id);
+        ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL, rot_index,
+                                       0);
+        if (ret) {
+            CMR_LOGE("prev_set_rot_buffer_flag failed");
+            goto exit;
+        }
+    }
+exit:
+    return ret;
+}
 cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
                               struct frm_info *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -3325,74 +3449,11 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
     prev_cxt->cap_zsl_frm_cnt++;
 
-    if (IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
-        ret = prev_get_src_rot_buffer(prev_cxt, data, &rot_index);
-        if (ret) {
-            CMR_LOGE("get src rot buffer failed");
-            return ret;
-        }
-    }
-
+    CMR_LOGV("fdr is_ultra_wide:%d, cap_rot:%d",
+             prev_cxt->prev_param.is_ultra_wide, prev_cxt->prev_param.cap_rot);
     if (prev_cxt->prev_param.is_ultra_wide) {
-        ret = prev_get_src_ultra_wide_buffer(prev_cxt, data, &ultra_wide_index);
-        if (ret) {
-            CMR_LOGE("zsl get src ultra_wide buffer failed");
-            return ret;
-        }
-    }
-
-    CMR_LOGV("fdr is_ultra_wide:%d, cap_rot:%d", prev_cxt->prev_param.is_ultra_wide, prev_cxt->prev_param.cap_rot);
-    if (prev_cxt->prev_param.is_ultra_wide) {
-        if (prev_cxt->cap_zsl_mem_valid_num > 0) {
-            ret = prev_ultra_wide_send_data(handle, camera_id, data);
-            if (ret) {
-                CMR_LOGE("ultra_wide failed, skip this frm");
-                ret = CMR_CAMERA_SUCCESS;
-                goto exit;
-            }
-            CMR_LOGV("ultra wide done");
-
-            ret =
-                prev_construct_zsl_frame(handle, camera_id, data, &frame_type);
-            if (ret) {
-                CMR_LOGE("construct frm 0x%x err", data->frame_id);
-                goto exit;
-            }
-
-            if (handle->ops.get_fdr_enable) {
-                CMR_LOGV("get fdr flag handle");
-                ret = handle->ops.get_fdr_enable(handle->oem_handle, &is_fdr);
-            } else {
-                CMR_LOGE("get fdr flag handle failed");
-            }
-            CMR_LOGD("fdr skip pop zsl buffer, and set ultra wide flag,is_fdr:%d",  is_fdr);
-            if (!is_fdr) {
-                ret = prev_set_ultra_wide_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
-                                                  ultra_wide_index, 0);
-                if (ret) {
-                    CMR_LOGE("prev_set_ultra_wide_buffer_flag failed");
-                    goto exit;
-                }
-                ret = prev_pop_zsl_buffer(handle, camera_id, data, 0);
-                if (ret) {
-                    CMR_LOGE("pop frm 0x%x err", data->channel_id);
-                    goto exit;
-                }
-            }
-            cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
-            cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
-            cb_data_info.frame_data = &frame_type;
-            prev_cb_start(handle, &cb_data_info);
-        } else {
-            CMR_LOGW("no available buf, drop! channel_id 0x%x",
-                     data->channel_id);
-            ret = prev_set_ultra_wide_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
-                                                  ultra_wide_index, 0);
-            if (ret) {
-                CMR_LOGE("prev_set_ultra_wide_buffer_flag failed");
-                goto exit;
-            }
-        }
+        ret = prev_zsl_frame_handle_wide(handle, camera_id, data, &cb_data_info,
+                                         &frame_type);
     } else if (IMG_ANGLE_0 == prev_cxt->prev_param.cap_rot) {
 
         ret = prev_construct_zsl_frame(handle, camera_id, data, &frame_type);
@@ -3422,44 +3483,8 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         cb_data_info.frame_data = &frame_type;
         prev_cb_start(handle, &cb_data_info);
     } else {
-        if (prev_cxt->cap_zsl_mem_valid_num > 0) {
-            ret = prev_start_rotate(handle, camera_id, data);
-            if (ret) {
-                CMR_LOGE("rot failed, skip this frm");
-                ret = CMR_CAMERA_SUCCESS;
-                goto exit;
-            }
-            ret =
-                prev_construct_zsl_frame(handle, camera_id, data, &frame_type);
-            if (ret) {
-                CMR_LOGE("construct frm 0x%x err", data->frame_id);
-                goto exit;
-            }
-            ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
-                                           rot_index, 0);
-            if (ret) {
-                CMR_LOGE("prev_set_rot_buffer_flag failed");
-                goto exit;
-            }
-            ret = prev_pop_zsl_buffer(handle, camera_id, data, 0);
-            if (ret) {
-                CMR_LOGE("pop frm 0x%x err", data->channel_id);
-                goto exit;
-            }
-            cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
-            cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
-            cb_data_info.frame_data = &frame_type;
-            prev_cb_start(handle, &cb_data_info);
-        } else {
-            CMR_LOGW("no available buf, drop! channel_id 0x%x",
-                     data->channel_id);
-            ret = prev_set_rot_buffer_flag(prev_cxt, CAMERA_SNAPSHOT_ZSL,
-                                           rot_index, 0);
-            if (ret) {
-                CMR_LOGE("prev_set_rot_buffer_flag failed");
-                goto exit;
-            }
-        }
+        ret = prev_zsl_frame_hangle_rot(handle, camera_id, data, &cb_data_info,
+                                        &frame_type);
     }
 exit:
     if (ret) {
