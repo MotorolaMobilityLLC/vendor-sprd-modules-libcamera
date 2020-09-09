@@ -12440,8 +12440,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         setting_param.camera_id = cxt->camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
-        if(ret)
-                CMR_LOGE("failed to get app mode");
+
         if((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO)
                  && cxt->night_cxt.is_authorized) {
                 ret = cxt->night_cxt.sw_close(cxt);
@@ -12501,22 +12500,19 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         if (ret) {
             CMR_LOGE("failed to close hdr");
         }
+
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_CLEAR_HDR, &setting_param);
-        if (ret) {
-            CMR_LOGE("failed to clear hdr sem");
-        }
     }
+
     if (camera_get_fdr_flag(cxt) && cxt->cam_core_cxt.is_authorized) {
         ret = cxt->cam_core_cxt.sw_close(cxt);
-        if(ret) {
-           CMR_LOGE("failed to close fdr");
+        if (ret) {
+            CMR_LOGE("failed to close fdr");
         }
+
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_CLEAR_FDR, &setting_param);
-        if (ret) {
-            CMR_LOGE("failed to clera fdr sem");
-        }
     }
 
     cxt->snp_cxt.status = IDLE;
@@ -12540,7 +12536,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
                       CAMERA_PARAM_CAPTURE_SIZE, &setting_param);
 
 exit:
-    CMR_LOGV("X, ret=%ld", ret);
+    CMR_LOGD("X, ret=%ld", ret);
     ATRACE_END();
     sem_post(&cxt->snapshot_sm);
     return ret;
