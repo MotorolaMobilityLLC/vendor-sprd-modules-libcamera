@@ -256,6 +256,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 #define PIXEL_OFFSET 100
+#define MIN_ROI_SIZE 40
 	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face roi settings
 		// crop enable
 		cmr_u32 crop_eb = 1;
@@ -285,8 +286,43 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 			win_num.y = 3;
 		}
 
-		win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
-		win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
+		if (win[9].start_x > PIXEL_OFFSET) {
+			win[9].start_x = win[9].start_x - PIXEL_OFFSET;
+			win[9].end_x = win[9].end_x > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x;
+		} else {
+			win[9].start_x = 10;
+			win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
+		}
+
+		if (win[9].end_x - win[9].start_x < win_num.x * MIN_ROI_SIZE + PIXEL_OFFSET) {
+			ISP_LOGI("s.x: %d,e.x: %d", win[9].start_x, win[9].end_x);
+			cmr_u32 center_x = (win[9].start_x + win[9].end_x) >> 1;
+			if (center_x < win_num.x * (MIN_ROI_SIZE >> 1) + PIXEL_OFFSET) {
+				win[9].start_x = 10;
+				win[9].end_x = win[9].start_x + win_num.x * MIN_ROI_SIZE + PIXEL_OFFSET;
+			} else if (center_x + win_num.x * (MIN_ROI_SIZE >> 1) > af->isp_info.width) {
+				win[9].end_x = af->isp_info.width - 10;
+				win[9].start_x = win[9].end_x - win_num.x * MIN_ROI_SIZE - PIXEL_OFFSET;
+			} else {
+				win[9].end_x = center_x + win_num.x * (MIN_ROI_SIZE >> 1);
+				win[9].start_x = center_x - win_num.x * (MIN_ROI_SIZE >> 1) - PIXEL_OFFSET;
+			}
+			ISP_LOGI("s.x: %d,e.x: %d", win[9].start_x, win[9].end_x);
+		}
+
+		if (win[9].end_y - win[9].start_y < win_num.y * MIN_ROI_SIZE + 8) {
+			ISP_LOGI("s.y: %d,e.y: %d", win[9].start_y, win[9].end_y);
+			cmr_u32 center_y = (win[9].start_y + win[9].end_y) >> 1;
+			if (center_y < win_num.y * (MIN_ROI_SIZE >> 1) + 4) {
+				win[9].end_y = win[9].start_y + win_num.x * MIN_ROI_SIZE + 8;
+			} else if (center_y + win_num.y * (MIN_ROI_SIZE >> 1) + 4 > af->isp_info.height) {
+				win[9].start_y = win[9].end_y - win_num.y * MIN_ROI_SIZE - 8;
+			} else {
+				win[9].end_y = center_y + win_num.y * (MIN_ROI_SIZE >> 1) + 4;
+				win[9].start_y = center_y - win_num.y * (MIN_ROI_SIZE >> 1) - 4;
+			}
+			ISP_LOGI("s.y: %d,e.y: %d", win[9].start_y, win[9].end_y);
+		}
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 		if (win[9].end_x - win[9].start_x > 2336) {
 			cmr_u32 center_x = (win[9].start_x + win[9].end_x) >> 1;
@@ -329,7 +365,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 		// the first roi in crop size
 		winparam.win_rect.x = PIXEL_OFFSET;
 		winparam.win_rect.y = 4;
-		winparam.win_rect.w = (win[9].end_x - win[9].start_x - 2 * PIXEL_OFFSET) / win_num.x;
+		winparam.win_rect.w = (win[9].end_x - win[9].start_x - PIXEL_OFFSET) / win_num.x;
 		winparam.win_rect.h = (win[9].end_y - win[9].start_y - 8) / win_num.y;
 		winparam.win_rect.w = (winparam.win_rect.w >> 1) << 1;
 		winparam.win_rect.h = (winparam.win_rect.h >> 1) << 1;
