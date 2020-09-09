@@ -660,6 +660,27 @@ mem_fail:
     return -1;
 }
 
+static cmr_int callback_type_malloc(enum camera_mem_cb_type type, cmr_u32 size,
+                               cmr_u32 sum, cmr_uint *phy_addr,
+                               cmr_uint *vir_addr, cmr_s32 *fd) {
+    cmr_int ret = 0;
+
+    if (CAMERA_PREVIEW == type) {
+        ret = callback_preview_malloc(size, sum, phy_addr, vir_addr, fd);
+        if (ret)
+           return ret;
+    } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
+               type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
+               type == CAMERA_ISP_RAWAE || type == CAMERA_ISP_BINGING4AWB ||
+               type == CAMERA_ISP_ANTI_FLICKER) {
+        ret = callback_other_malloc(type, size, sum, phy_addr, vir_addr, fd);
+    } else {
+        CMR_LOGE("type ignore: %d, do nothing", type);
+    }
+
+    return ret;
+}
+
 static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
                                cmr_u32 *sum_ptr, cmr_uint *phy_addr,
                                cmr_uint *vir_addr, cmr_s32 *fd,
@@ -683,19 +704,9 @@ static cmr_int callback_malloc(enum camera_mem_cb_type type, cmr_u32 *size_ptr,
 
     size = *size_ptr;
     sum = *sum_ptr;
-
-    if (CAMERA_PREVIEW == type) {
-        ret = callback_preview_malloc(size, sum, phy_addr, vir_addr, fd);
-        if (ret)
-           goto exit;
-    } else if (type == CAMERA_PREVIEW_RESERVED || type == CAMERA_ISP_LSC ||
-               type == CAMERA_ISP_FIRMWARE || type == CAMERA_ISP_STATIS ||
-               type == CAMERA_ISP_RAWAE || type == CAMERA_ISP_BINGING4AWB ||
-               type == CAMERA_ISP_ANTI_FLICKER) {
-        ret = callback_other_malloc(type, size, sum, phy_addr, vir_addr, fd);
-    } else {
-        CMR_LOGE("type ignore: %d, do nothing", type);
-    }
+    ret = callback_type_malloc(type, size, sum, phy_addr, vir_addr, fd);
+    if (ret)
+        goto exit;
 
     previewvalid = 1;
     pthread_mutex_unlock(&previewlock);
