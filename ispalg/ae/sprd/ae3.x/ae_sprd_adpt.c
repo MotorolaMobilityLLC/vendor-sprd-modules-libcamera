@@ -2845,10 +2845,52 @@ static cmr_s32 sensor_param_updating_interface(struct ae_ctrl_cxt *cxt)
 	return rtn;
 }
 
+static void ae_3dnr_auto(struct ae_ctrl_cxt *cxt)
+{
+	cmr_int cb_type;
+	cmr_u32 is_update = 0, is_en = 0;
+	if (cxt->sync_cur_result.cur_bv < cxt->threednr_thrd.thd_down) {
+		is_update = 1;
+		is_en = 1;
+		cxt->threednr_mode_flag = 1;
+	}else if (cxt->sync_cur_result.cur_bv > cxt->threednr_thrd.thd_up) {
+		is_update = 1;
+		is_en = 0;
+		cxt->threednr_mode_flag = 0;
+	}
+	if (is_update) {
+		cb_type = AE_CB_3DNR_NOTIFY;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &is_en);
+		ISP_LOGV("auto-3dnr: bv: %d,[%d, %d], 3dnr: %d",
+		cxt->sync_cur_result.cur_bv,cxt->threednr_thrd.thd_down,cxt->threednr_thrd.thd_up, is_en);
+	}
+}
+
+static void ae_front_flash(struct ae_ctrl_cxt *cxt)
+{
+	cmr_int cb_type;
+	cmr_s32 led_eb;
+	if ((cxt->sync_cur_result.cur_bv <= cxt->flash_thrd.thd_down) && cxt->led_state == 0) {
+		led_eb = 1;
+		cxt->led_state = 1;
+		cb_type = AE_CB_LED_NOTIFY;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
+		ISP_LOGV("ae_flash1_callback do-led-open!\r\n");
+		ISP_LOGV("camera_id %d, flash_status %d, cur_bv %d, led_open_thr %d, led_state %d",
+		cxt->camera_id, cxt->cur_status.adv_param.flash, cxt->sync_cur_result.cur_bv, cxt->flash_thrd.thd_down, cxt->led_state);
+	}else if ((cxt->sync_cur_result.cur_bv >= cxt->flash_thrd.thd_up) && cxt->led_state == 1) {
+		led_eb = 0;
+		cxt->led_state = 0;
+		cb_type = AE_CB_LED_NOTIFY;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
+		ISP_LOGV("ae_flash1_callback do-led-close!\r\n");
+		ISP_LOGV("camera_id %d, flash_status %d, cur_bv %d, led_close_thr %d, led_state %d",
+		cxt->camera_id, cxt->cur_status.adv_param.flash, cxt->sync_cur_result.cur_bv, cxt->flash_thrd.thd_up, cxt->led_state);
+	}
+}
 static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 {
 	cmr_s32 rtn = AE_SUCCESS;
-	cmr_s32 led_eb;
 	cmr_s32 flash_fired;
 	cmr_int cb_type;
 	cmr_s32 main_flash_counts = 0;
@@ -2875,7 +2917,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			}
 		}
 
-		if (FLASH_PRE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE == current_status->adv_param.flash) {
+		else if (FLASH_PRE_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE == current_status->adv_param.flash) {
 			ISP_LOGD("ae_flash1_status shake_2 %d %d  estimate_delay %d, flash_status:%d", cxt->cur_result.stable, cxt->cur_result.cur_lum, cxt->flash_timing_param.estimate_delay, cxt->cur_result.flash_status);
 			cxt->send_once[3]++;	//prevent flash_pfOneIteration time out
 			if (cxt->flash_esti_result.isEnd || cxt->send_once[3] > AE_FLASH_CALC_TIMES) {
@@ -2891,7 +2933,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			cxt->send_once[0] = 0;
 		}
 
-		if (FLASH_PRE_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_AFTER == current_status->adv_param.flash) {
+		else if (FLASH_PRE_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_PRE_AFTER == current_status->adv_param.flash) {
 			cxt->cur_status.adv_param.flash = FLASH_NONE;	/*flash status reset */
 			cxt->send_once[0] = cxt->send_once[1] = cxt->send_once[2] = cxt->send_once[3] = cxt->send_once[4] = 0;
 			if ((0 != cxt->flash_ver) && (0 == cxt->exposure_compensation.ae_compensation_flag)) {
@@ -3005,25 +3047,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 
 	/* for front flash algorithm (LED+LCD) */
 	if (cxt->camera_id == 1 && cxt->cur_status.adv_param.flash == FLASH_LED_AUTO) {
-		if ((cxt->sync_cur_result.cur_bv <= cxt->flash_thrd.thd_down) && cxt->led_state == 0) {
-			led_eb = 1;
-			cxt->led_state = 1;
-			cb_type = AE_CB_LED_NOTIFY;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
-			ISP_LOGV("ae_flash1_callback do-led-open!\r\n");
-			ISP_LOGV("camera_id %d, flash_status %d, cur_bv %d, led_open_thr %d, led_state %d",
-					 cxt->camera_id, cxt->cur_status.adv_param.flash, cxt->sync_cur_result.cur_bv, cxt->flash_thrd.thd_down, cxt->led_state);
-		}
-
-		if ((cxt->sync_cur_result.cur_bv >= cxt->flash_thrd.thd_up) && cxt->led_state == 1) {
-			led_eb = 0;
-			cxt->led_state = 0;
-			cb_type = AE_CB_LED_NOTIFY;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &led_eb);
-			ISP_LOGV("ae_flash1_callback do-led-close!\r\n");
-			ISP_LOGV("camera_id %d, flash_status %d, cur_bv %d, led_close_thr %d, led_state %d",
-					 cxt->camera_id, cxt->cur_status.adv_param.flash, cxt->sync_cur_result.cur_bv, cxt->flash_thrd.thd_up, cxt->led_state);
-		}
+		ae_front_flash(cxt);
 	}
 
 	/* notify APP if need autofocus or not, just in flash auto mode */
@@ -3040,7 +3064,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 			ISP_LOGV("flash will fire!\r\n");
 		}
 
-		if ((cxt->sync_cur_result.cur_bv > cxt->flash_thrd.thd_up) && (cxt->flash_fired == 1)) {
+		else if ((cxt->sync_cur_result.cur_bv > cxt->flash_thrd.thd_up) && (cxt->flash_fired == 1)) {
 			if (cxt->delay_cnt == cxt->flash_timing_param.main_capture_delay) {
 				flash_fired = 0;
 				cxt->flash_fired = 0;
@@ -3053,26 +3077,13 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	}
 
 	if (AE_3DNR_AUTO == cxt->threednr_mode) {
-		cmr_u32 is_update = 0, is_en = 0;
-		if (cxt->sync_cur_result.cur_bv < cxt->threednr_thrd.thd_down) {
-			is_update = 1;
-			is_en = 1;
-			cxt->threednr_mode_flag = 1;
-		}else if (cxt->sync_cur_result.cur_bv > cxt->threednr_thrd.thd_up) {
-			is_update = 1;
-			is_en = 0;
-			cxt->threednr_mode_flag = 0;
-		}
-		if (is_update) {
-			cb_type = AE_CB_3DNR_NOTIFY;
-			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &is_en);
-			ISP_LOGV("auto-3dnr: bv: %d,[%d, %d], 3dnr: %d",
-				cxt->sync_cur_result.cur_bv,cxt->threednr_thrd.thd_down,cxt->threednr_thrd.thd_up, is_en);
-		}
+		ae_3dnr_auto(cxt);
 	}
 
 	return AE_SUCCESS;
 }
+
+
 
 static cmr_s32 ae_get_debug_info(struct ae_ctrl_cxt *cxt, cmr_handle result)
 {
@@ -3595,7 +3606,7 @@ static void ae_save_exp_gain_param(struct ae_ctrl_cxt *cxt, struct ae_exposure_p
 				for (i = 0; i < num; ++i) {
 					ISP_LOGV("write_manual:[%d]: %d, %d, %d, %d\n", i, ae_manual_param[i].exp_line, ae_manual_param[i].exp_time, ae_manual_param[i].dummy, ae_manual_param[i].gain);
 				}
-					ISP_LOGV("save_exp_gain from:%s, camera_id[%d]: \n", file_name, cxt->camera_id);
+				ISP_LOGV("save_exp_gain from:%s, camera_id[%d]: \n", file_name, cxt->camera_id);
 				fwrite((char *)ae_manual_param, 1, num * sizeof(struct ae_exposure_param_switch_m), pf);
 				fclose(pf);
 				pf = NULL;
