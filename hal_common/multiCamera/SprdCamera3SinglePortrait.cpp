@@ -3455,7 +3455,7 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
         if (mReqState == PREVIEW_REQUEST_STATE) {
             int32_t sprd3BlurCapVersion = SINGLE_PORTRAIT_CAP_NOAI;
             metadata.update(ANDROID_SPRD_BLUR_CAPVERSION, &sprd3BlurCapVersion,
-                            4);
+                            1);
         }
 
         if (mReqState != PREVIEW_REQUEST_STATE) {
@@ -3465,15 +3465,15 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                 mCaptureThread->updateBlurWeightParams(metadata, 1);
             }
             if (mCaptureThread->mCaptureWeightParams.roi_type == 2 &&
-                mCaptureThread->mCaptureWeightParams.valid_roi > 0 && 
+                mCaptureThread->mCaptureWeightParams.valid_roi > 0 &&
                 (portrait_flag || lightportrait_flag != 0 || facebeauty_flag)) {
                 int32_t sprd3BlurCapVersion = SINGLE_PORTRAIT_CAP_AI;
                 metadata.update(ANDROID_SPRD_BLUR_CAPVERSION,
-                                &sprd3BlurCapVersion, 4);
+                                &sprd3BlurCapVersion, 1);
             } else {
                 int32_t sprd3BlurCapVersion = SINGLE_PORTRAIT_CAP_NOAI;
                 metadata.update(ANDROID_SPRD_BLUR_CAPVERSION,
-                                &sprd3BlurCapVersion, 4);
+                                &sprd3BlurCapVersion, 1);
             }
 
         } else {
@@ -3483,7 +3483,7 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                 SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
                 mCoverValue = getCoveredValue(metadata, hwiSub, hwiMain,
                                               m_pPhyCamera[CAM_TYPE_AUX].id);
-            } else { 
+            } else {
                 char prop[PROPERTY_VALUE_MAX] = {
                     0,
                 };
@@ -3491,7 +3491,6 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                 if (mCaptureThread->mVersion == 3) {
                     mCoverValue = atoi(prop);
                 }
-                
             }
         }
         metadata.update(ANDROID_SPRD_LIGHTPORTRAITTIPS, &mCaptureThread->lpt_return_val, 1);
