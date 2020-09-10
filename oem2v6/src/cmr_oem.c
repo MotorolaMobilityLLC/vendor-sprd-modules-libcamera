@@ -7717,6 +7717,15 @@ cmr_int camera_set_fov_fusion_mode(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_set_fov_fusion_app_ratio(cmr_handle oem_handle,
+                                   float app_ratio) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->app_ratio = app_ratio;
+    CMR_LOGI("app_ratio %f", cxt->app_ratio);
+    return ret;
+}
+
 cmr_int camera_set_multi_camera_id(cmr_handle oem_handle,
                                    cmr_uint is_multi_camera_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;

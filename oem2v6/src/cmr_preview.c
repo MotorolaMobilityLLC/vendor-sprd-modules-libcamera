@@ -8115,7 +8115,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
     sensor_mode_info = &sensor_info->mode_info[chn_param.sensor_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
 
-    //	cmr_bzero(prev_cxt->prev_rot_frm_is_lock, PREV_ROT_FRM_CNT *
+    // cmr_bzero(prev_cxt->prev_rot_frm_is_lock, PREV_ROT_FRM_CNT *
     // sizeof(cmr_uint));
     prev_cxt->prev_rot_index = 0;
     prev_cxt->skip_mode = IMG_SKIP_SW_KER;
@@ -8170,7 +8170,8 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
                                    &chn_param.cap_inf_cfg.cfg.dst_img_size);
     } else {
         float aspect_ratio = 1.0 * prev_cxt->actual_prev_size.width /
-                             prev_cxt->actual_prev_size.height;
+                    prev_cxt->actual_prev_size.height;
+        CMR_LOGD("preview aspect_ratio %f", aspect_ratio);
         if (zoom_param->zoom_info.crop_region.width > 0 && PLATFORM_ID == 0x0401) {
             chn_param.cap_inf_cfg.cfg.src_img_rect = camera_apply_rect_and_ratio(
                     zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
@@ -8184,6 +8185,7 @@ cmr_int prev_set_prev_param_lightly(struct prev_handle *handle,
                     prev_cxt->prev_param.prev_rot);
         }
     }
+
     if (ret) {
         CMR_LOGE("prev get trim failed");
         ret = CMR_CAMERA_FAIL;
@@ -13276,8 +13278,8 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         break;
     }
 
-    CMR_LOGD("sn_image_format %d, dst_img_fmt %d"
-             ", cap_org_fmt %ld, cap_zoom_mode %ld",
+    CMR_LOGD("sn_image_format %d, dst_img_fmt %d,"
+             "cap_org_fmt %ld, cap_zoom_mode %ld",
              sn_mode_info->image_format, img_cap->dst_img_fmt,
              prev_cxt->cap_org_fmt, prev_cxt->cap_zoom_mode);
 
@@ -13295,16 +13297,35 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
 
     trim_sz.width = sn_mode_info->scaler_trim.width;
     trim_sz.height = sn_mode_info->scaler_trim.height;
+
     /*caculate trim rect*/
     if (ZOOM_INFO != zoom_param->mode) {
         ret = camera_get_trim_rect(&img_cap->src_img_rect,
                                    zoom_param->zoom_level, &trim_sz);
     } else {
         float aspect_ratio = 1.0 * cap_size->width / cap_size->height;
-        ret = camera_get_trim_rect2(
-            &img_cap->src_img_rect, zoom_param->zoom_info.capture_aspect_ratio,
-            aspect_ratio, sn_mode_info->scaler_trim.width,
-            sn_mode_info->scaler_trim.height, prev_cxt->prev_param.cap_rot);
+        CMR_LOGD("aspect_ratio %f, is_fov_fusion %d, app_ratio %f",
+            aspect_ratio, cxt->is_fov_fusion, cxt->app_ratio);
+        if (PLATFORM_ID == 0x0401) {
+            if (zoom_param->zoom_info.crop_region.width == 0 ||
+                (cxt->is_fov_fusion == 1 && cxt->app_ratio < 2.0)) {
+                CMR_LOGD("camera_get_trim_rect2");
+                ret = camera_get_trim_rect2(
+                            &img_cap->src_img_rect, zoom_param->zoom_info.capture_aspect_ratio,
+                            aspect_ratio, sn_mode_info->scaler_trim.width,
+                            sn_mode_info->scaler_trim.height, prev_cxt->prev_param.cap_rot);
+            } else {
+                CMR_LOGD("camera_apply_rect_and_ratio");
+                img_cap->src_img_rect = camera_apply_rect_and_ratio(
+                            zoom_param->zoom_info.pixel_size, zoom_param->zoom_info.crop_region,
+                            img_cap->src_img_rect, aspect_ratio);
+            }
+        } else {
+            ret = camera_get_trim_rect2(
+                        &img_cap->src_img_rect, zoom_param->zoom_info.capture_aspect_ratio,
+                        aspect_ratio, sn_mode_info->scaler_trim.width,
+                        sn_mode_info->scaler_trim.height, prev_cxt->prev_param.cap_rot);
+        }
     }
 
     if (ret) {

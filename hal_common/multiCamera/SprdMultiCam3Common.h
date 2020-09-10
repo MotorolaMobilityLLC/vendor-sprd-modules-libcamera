@@ -305,11 +305,10 @@ typedef struct {
     const camera3_stream_buffer_t *input_buffer;
     camera3_stream_t *stream;
     buffer_handle_t *buffer1; // main sensor
-    int status1;
     buffer_handle_t *buffer2; // aux sensor
-
     buffer_handle_t *buffer3; // aux2 sensor
     buffer_handle_t *buffer4; // main sensor capture
+    int status1;
     int status2;
     int vcmSteps;
 } frame_matched_info_t;
