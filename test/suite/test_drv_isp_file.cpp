@@ -278,8 +278,6 @@ int dcam_read_ppe_param(struct host_info_t *host_info)
 	pf = NULL;
 
 	if (1 == host_info->isp_param.ppe_info.ppe_phase_map_corr_en) {
-		int block_width = host_info->isp_param.ppe_info.ppe_block_end_col - host_info->isp_param.ppe_info.ppe_block_start_col;
-		int ppe_grid = host_info->isp_param.ppe_info.ppe_gain_map_grid ? 64 : 32;
 		int grid = 128;//(block_width + ppe_grid - 1) / ppe_grid + 1;
 		int *table = new int[grid];
 		int	itemvalue;
@@ -292,7 +290,7 @@ int dcam_read_ppe_param(struct host_info_t *host_info)
 				printf("ISP_FW: open %s failed\n", gain_map[map_id]);
 				return 1;
 			}
-			uint32 grid_size;
+			int grid_size;
 			for (int i = 0; i < grid && !feof(pf); i++) {
 				fscanf(pf, "%d", &itemvalue);
 				*(table + i) = itemvalue;
@@ -446,7 +444,7 @@ int isp_read_nlm_param(struct host_info_t *host_info)
 		}
 		else
 		{
-			printf("ISP_FW : fail to open %s\n", host_info->isp_param.nlm_info.nlm_weight_filename);
+			printf("ISP_FW : fail to open %s\n", host_info->isp_param.nlm_info.nlm_weight_filename[j]);
 			return 1;
 		}
 
@@ -652,7 +650,7 @@ int dcam_read_lens_param(struct host_info_t *host_info)
 	uint16 grid_y = (image_height / 2 % len_grid) ? (image_height / 2 / len_grid + 2) : (image_height / 2 / len_grid + 1);
 	grid_x += 2;
 	grid_y += 2;
-	uint32 buffer_size = 4 * grid_x * grid_y * sizeof(uint16);
+	uint32 buffer_size = (uint32) (4 * grid_x * grid_y * sizeof(uint16));
 	host_info->isp_param.dcam_lsc_info.buffer_size_bytes = buffer_size;
 
 	uint32 i_current = host_info->current_img;
@@ -752,10 +750,12 @@ int dcam_read_lens_param(struct host_info_t *host_info)
 			pBuf16gr = pBuf16_r1c1;
 			pBuf16r = pBuf16_r1c0;
 			break;
+		default:
+			break;
 		}
 
 		uint16 *pBuf_grid_table = (uint16 *)malloc(buffer_size);
-		for(int i = 0; i < grid_x * grid_y ;i++){
+		for(i = 0; i < grid_x * grid_y ;i++){
 			*(pBuf_grid_table+4*i) = *(pBuf16b+i) ;
 			*(pBuf_grid_table+4*i+1) = *(pBuf16gb +i) ;
 			*(pBuf_grid_table+4*i+2) = *(pBuf16gr +i);
@@ -763,6 +763,7 @@ int dcam_read_lens_param(struct host_info_t *host_info)
 		}
 
 		free(pBuf16);
+		free(pBuf_grid_table);
 		fclose(pR0C0);
 		fclose(pR0C1);
 		fclose(pR1C0);
@@ -848,6 +849,7 @@ int isp_read_ltm_map_param(struct host_info_t *host_info)
 				fscanf(fp,"tile_num_x = %d\n", &tile_num_x);
 				fscanf(fp,"tile_num_y = %d", &tile_num_y);
 			}
+			fclose(fp);
 			host_info->isp_param.ltm_map_info[ltm_id].tile_num_x_stat = tile_num_x;
 			host_info->isp_param.ltm_map_info[ltm_id].tile_num_y_stat = tile_num_y;
 
@@ -862,7 +864,8 @@ int isp_read_ltm_map_param(struct host_info_t *host_info)
 					continue;
 				strcpy(stat_file_name, temp);
 				strcpy(base, host_info->isp_param.ltm_map_info[ltm_id].stat_file);
-				if (p = strrchr(base, '\\')) {
+				p = strrchr(base, '\\');
+				if (p) {
 					*(p+1) = '\0';
 					strcat(base, temp);
 					strcpy(stat_file_name, base);
@@ -973,7 +976,7 @@ int dcam_read_raw_gtm_param(struct host_info_t *host_info)
 	}
 	//read hist file
 	if((1 == isp_param_ptr->general_info.general_vector_rtl_level)&&(gtm_stat_en)){
-		sprintf(hist_file_name, "%s%s%s", host_info->output_file,"vector_output\/test_raw_gtm_stat_hist",".dat");
+		sprintf(hist_file_name, "%s%s%s", host_info->output_file,"vector_output test_raw_gtm_stat_hist",".dat");
 		fp_hist = fopen(hist_file_name, "r");
 		if (!fp_hist) {
 			printf("ISP_FW: [ERROR] fail to open %p\n", fp_hist);
