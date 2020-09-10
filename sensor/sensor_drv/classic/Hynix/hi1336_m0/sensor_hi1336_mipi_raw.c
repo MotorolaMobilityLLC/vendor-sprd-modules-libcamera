@@ -629,8 +629,8 @@ static cmr_int hi1336_drv_stream_on(cmr_handle handle, cmr_uint param) {
     property_get("vendor.cam.hw.framesync.on", value1, "1");
     if (!strcmp(value1, "1")) {
         if (MODE_BOKEH == sns_drv_cxt->is_multi_mode) {
-            hi1336_drv_set_master_FrameSync(handle, param);
-            //hi1336_drv_set_slave_FrameSync(handle, param);
+            //hi1336_drv_set_master_FrameSync(handle, param);
+            hi1336_drv_set_slave_FrameSync(handle, param);
         }
     }
 #endif

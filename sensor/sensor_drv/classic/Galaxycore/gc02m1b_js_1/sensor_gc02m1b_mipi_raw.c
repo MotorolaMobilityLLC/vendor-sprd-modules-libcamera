@@ -605,6 +605,7 @@ static cmr_int gc02m1b_drv_read_aec_info(cmr_handle handle, cmr_uint param)
 static cmr_int gc02m1b_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
+    cmr_u16 sleep_time = 0;
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E");
@@ -619,6 +620,11 @@ static cmr_int gc02m1b_drv_set_slave_FrameSync(cmr_handle handle, cmr_uint param
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x8b, 0x12);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7f, 0x09);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
+
+    sleep_time = 3 * (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                 sns_drv_cxt->line_time_def / 1000000) + 10;
+    usleep(sleep_time * 1000);
+    SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
 
     return SENSOR_SUCCESS;
 }
@@ -659,8 +665,8 @@ static cmr_int gc02m1b_drv_stream_on(cmr_handle handle, cmr_uint param)
     property_get("vendor.cam.hw.framesync.on", value1, "1");
     if (!strcmp(value1, "1")) {
         if (MODE_BOKEH == sns_drv_cxt->is_multi_mode) {
-            gc02m1b_drv_set_slave_FrameSync(handle, param);
-            //gc02m1b_drv_set_master_FrameSync(handle, param);
+            //gc02m1b_drv_set_slave_FrameSync(handle, param);
+            gc02m1b_drv_set_master_FrameSync(handle, param);
         }
     }
 #endif
