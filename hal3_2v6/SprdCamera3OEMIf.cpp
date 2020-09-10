@@ -4147,7 +4147,7 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
                 channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000,
                                                 CAMERA_STREAM_TYPE_VIDEO);
             }
-            HAL_LOGV("video callback frame vir address=0x%lx,frame_num=%d",
+            HAL_LOGV("video callback frame vir address=0x%p,frame_num=%d",
                       frame_out.frame_data, frame_out.frame_num);
             goto bypass_rec;
         }
@@ -5971,7 +5971,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         if (NULL != parm4) {
             ae_info = (cmr_u32 *)parm4;
             ae_stab = ae_info[AE_CB_STABLE_INDEX];
-            HAL_LOGV("ae_info = %d, ae_stab = %d", ae_info, ae_stab);
+            HAL_LOGV("ae_info = %p, ae_stab = %d", ae_info, ae_stab);
         }
 
         if (ae_stab) {
@@ -8327,7 +8327,7 @@ int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
             mZslGraphicsHandle[i].graphicBuffer = NULL;
             mTotalGpuSize = mTotalGpuSize - mZslGraphicsHandle[i].buf_size;
         }
-        HAL_LOGD("graphicBuffer_handle 0x%lx",
+        HAL_LOGD("graphicBuffer_handle 0x%p",
                  mZslGraphicsHandle[i].graphicBuffer_handle);
         mZslGraphicsHandle[i].graphicBuffer_handle = NULL;
         mZslGraphicsHandle[i].native_handle = NULL;
@@ -8395,7 +8395,7 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
             mZslGraphicsHandle[i].native_handle = nativeHandle;
             mZslGraphicsHandle[i].buf_size = mCaptureWidth * mCaptureHeight;
-            HAL_LOGD("graphicBuffer_handle 0x%lx",
+            HAL_LOGD("graphicBuffer_handle 0x%",
                      mZslGraphicsHandle[i].graphicBuffer_handle);
         }
         *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
@@ -11671,7 +11671,7 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
         frame_in.ae_time = (double)ae_time / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
         frame_in.frame_num = frame_num;
-        HAL_LOGV("video frame in vir address=0x%lx,frame_num=%d",frame_in.frame_data,
+        HAL_LOGV("video frame in vir address=0x%p,frame_num=%d",frame_in.frame_data,
                  frame_in.frame_num);
         frame_out = processVideoEIS(frame_in);
         if (frame_out.frame_data)
@@ -11689,7 +11689,7 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
         char *eis_buff = (char *)(frame_out.frame_data) +
                          frame->width * frame->height * 3 / 2;
         double *warp_buff = (double *)eis_buff;
-        HAL_LOGV("video vir address 0x%lx,warp address %p",
+        HAL_LOGV("video vir address 0x%p,warp address %p",
                  frame_out.frame_data, warp_buff);
         if (warp_buff) {
             *warp_buff++ = 16171225;

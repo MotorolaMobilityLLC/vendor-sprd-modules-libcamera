@@ -1203,8 +1203,10 @@ void SprdCamera3Setting::autotrackingCoordinateConvert(int32_t *area) {
     HAL_LOGD("picture size = %d x %d, sensor size = %d x %d,", picW, picH, snsW,
              snsH);
     // Do coordinate transition
-    w_ratio = (float)snsW / (float)picW;
-    h_ratio = (float)snsH / (float)picH;
+    if (picW && picH) {
+        w_ratio = (float)snsW / (float)picW;
+        h_ratio = (float)snsH / (float)picH;
+    }
     HAL_LOGD("w_ratio = %f, h_ratio = %f", w_ratio, h_ratio);
     touch_point[0] *= w_ratio;
     touch_point[1] *= h_ratio;

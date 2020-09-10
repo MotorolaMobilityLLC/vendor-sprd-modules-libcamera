@@ -79,6 +79,8 @@ SprdCamera3Flash::SprdCamera3Flash() : m_callbacks(NULL) {
     HAL_LOGV("%s : In", __func__);
     memset(&m_flashOn, 0, sizeof(m_flashOn));
     memset(&m_cameraOpen, 0, sizeof(m_cameraOpen));
+    memset(&m_flashFds, 0, sizeof(m_flashFds));
+    memset(&m_flashLastStat, 0, sizeof(m_flashLastStat));
 }
 /*===========================================================================
 * FUNCTION    : ~SprdCameraFlash
