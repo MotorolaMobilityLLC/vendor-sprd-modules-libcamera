@@ -6389,7 +6389,7 @@ cmr_int camera_fdr_init(cmr_handle oem_handle) {
         cxt->cam_core_cxt.ipmcore_init = dlsym(cxt->cam_core_cxt.sw_handle, "camera_ipm_fdr_init");
         cxt->cam_core_cxt.ipmcore_deinit = dlsym(cxt->cam_core_cxt.sw_handle, "camera_ipm_fdr_deinit");
         cxt->cam_core_cxt.ipmcore_process = dlsym(cxt->cam_core_cxt.sw_handle, "camera_ipm_fdr_process");
-        if (!cxt->cam_core_cxt.sw_open || !cxt->cam_core_cxt.sw_open ||
+        if (!cxt->cam_core_cxt.sw_open || !cxt->cam_core_cxt.sw_process ||
             !cxt->cam_core_cxt.sw_close || !cxt->cam_core_cxt.ipmcore_init ||
             !cxt->cam_core_cxt.ipmcore_deinit || !cxt->cam_core_cxt.ipmcore_process ) {
             CMR_LOGD("func analyzing failed with %s", dlerror());
