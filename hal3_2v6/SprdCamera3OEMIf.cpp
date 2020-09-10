@@ -8815,8 +8815,6 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
                     if (buffer->share_attr_fd < 0) {
                         ALOGE("Failed to allocate page for shared attribute "
                               "region");
-                        delete buffer;
-                        buffer = NULL;
                         goto mem_fail;
                     }
                 }
@@ -8902,6 +8900,10 @@ int SprdCamera3OEMIf::Callback_Sw3DNRCapturePathMalloc(
 
 mem_fail:
     Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
+    if (buffer != NULL) {
+        delete buffer;
+        buffer = NULL;
+    }
     return -1;
 #else
     return 0;
