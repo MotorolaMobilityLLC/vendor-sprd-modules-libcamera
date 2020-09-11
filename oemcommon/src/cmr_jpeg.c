@@ -318,12 +318,20 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr,
     input_param.temp_exif_isp_buf_size = 4 * 1024;
     input_param.temp_exif_isp_buf_ptr =
         (uint8_t *)malloc(input_param.temp_exif_isp_buf_size);
+    if(PNULL == input_param.temp_exif_isp_buf_ptr){
+        free(input_param.temp_buf_ptr);
+        input_param.temp_buf_ptr = NULL;
+        return JPEG_CODEC_NO_MEM;
+    }
     input_param.temp_exif_isp_dbg_buf_size = 4 * 1024;
     input_param.temp_exif_isp_dbg_buf_ptr =
         (uint8_t *)malloc(input_param.temp_exif_isp_dbg_buf_size);
     input_param.wrtie_file_func = NULL;
-    if (PNULL == input_param.temp_exif_isp_buf_ptr) {
+    if (PNULL == input_param.temp_exif_isp_dbg_buf_ptr) {
         free(input_param.temp_buf_ptr);
+        input_param.temp_buf_ptr = NULL;
+        free(input_param.temp_exif_isp_buf_ptr);
+        input_param.temp_exif_isp_buf_ptr = NULL;
         return JPEG_CODEC_NO_MEM;
     }
 

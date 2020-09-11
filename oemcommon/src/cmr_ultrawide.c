@@ -274,9 +274,10 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
     } else {
         cmr_u8 *otp_data = (cmr_u8 *)otp_info;
         while (!feof(fid)) {
-            fscanf(fid, "%d\n", otp_data);
-            otp_data += 4;
-            read_byte += 4;
+            if (fscanf(fid, "%d\n", otp_data) != EOF) {
+                otp_data += 4;
+                read_byte += 4;
+            }
         }
         fclose(fid);
         CMR_LOGD("otp_manual_spw.txt read_bytes = %d", read_byte);
@@ -291,7 +292,7 @@ static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
         if (otpdata.dual_otp.data_3d.size > 0) {
             otp_size = otpdata.dual_otp.data_3d.size;
             memcpy(otp_info, (cmr_u8 *)otpdata.dual_otp.data_3d.data_ptr,
-                   otpdata.dual_otp.data_3d.size);
+                    otpdata.dual_otp.data_3d.size);
         }
     }
     handle->warp_param.otp_buf = otp_info;

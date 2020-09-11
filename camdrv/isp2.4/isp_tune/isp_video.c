@@ -643,11 +643,16 @@ static cmr_s32 handle_img_data_asic(cmr_u32 format, cmr_u32 width, cmr_u32 heigh
 		return 0;
 	}
 
-	fwrite(ch0_ptr, 1, ch0_len, fp);
+	if(ch0_ptr != NULL){
+		fwrite(ch0_ptr, 1, ch0_len, fp);;
+	}
+	if(ch1_ptr != NULL){
+		fwrite(ch1_ptr, 1, ch1_len, fp);
+	}
+	if(ch2_ptr != NULL){
+		fwrite(ch2_ptr, 1, ch2_len, fp);
+	}
 
-	fwrite(ch1_ptr, 1, ch1_len, fp);
-
-	fwrite(ch2_ptr, 1, ch2_len, fp);
 	fclose(fp);
 	ISP_LOGV("writing one pic succeeds");
 	return 0;

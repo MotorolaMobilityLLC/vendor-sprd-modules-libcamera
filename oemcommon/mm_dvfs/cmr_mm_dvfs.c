@@ -419,7 +419,7 @@ cmr_int cmr_set_mm_dvfs_param(cmr_handle oem_handle,
     p_dvfs = (struct class_mm_dvfs *)(cxt->mm_dvfs_cxt.mm_dvfs_handle);
     CHECK_HANDLE_VALID(p_dvfs);
 
-    if ((!p_dvfs && (mm_dvfs_instance != p_dvfs))||(mm_dvfs_instance == NULL)) {
+    if (mm_dvfs_instance == NULL) {
         CMR_LOGE("invalid mm_dvfs_handle");
         return -1;
     }

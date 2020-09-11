@@ -324,7 +324,7 @@ static cmr_int snp_take_picture_done(cmr_handle snp_handle,
 static cmr_int snp_yuv_callback_take_picture_done(
     cmr_handle snp_handle,
     struct frm_info *data); /**modified for 3d calibration*/
-static cmr_int snp_thumbnail(cmr_handle snp_handle, struct frm_info *data);
+static cmr_int snp_thumbnail(cmr_handle snp_handle, void *data);
 static cmr_int camera_set_frame_type(cmr_handle snp_handle,
                                      struct camera_frame_type *frame_type,
                                      struct frm_info *info);
@@ -421,6 +421,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)p_data;
     struct buffer_cfg buf_cfg;
+    struct frm_info frame = *(struct frm_info *)message->data;
 
     if (!message || !p_data) {
         CMR_LOGE("param error");
@@ -434,7 +435,7 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
         goto exit;
     }
     CMR_LOGD("message.msg_type 0x%x, data 0x%lx, fd 0x%x", message->msg_type,
-             (cmr_uint)message->data, ((struct frm_info *)message->data)->fd);
+             (cmr_uint)message->data, frame.fd);
     switch (message->msg_type) {
     case SNP_EVT_POSTPROC_INIT:
         break;
@@ -443,7 +444,6 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
         break;
     case SNP_EVT_POSTPROC_FREE_FRM:
         if (cxt->ops.channel_buff_cfg) {
-            struct frm_info frame = *(struct frm_info *)message->data;
             cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
             buf_cfg.channel_id = frame.channel_id;
             buf_cfg.base_id = CMR_BASE_ID(frame.frame_id);
@@ -3980,9 +3980,12 @@ cmr_int camera_set_frame_type(cmr_handle snp_handle,
     cmr_u32 frm_id = info->frame_id - info->base;
     char value[PROPERTY_VALUE_MAX];
 
+    if(cxt == NULL) {
+        return CMR_CAMERA_FAIL;
+    }
     req_param_ptr = &cxt->req_param;
     mem_ptr = &req_param_ptr->post_proc_setting.mem[frm_id];
-    if (mem_ptr == NULL){
+    if (mem_ptr == NULL) {
         return CMR_CAMERA_FAIL;
     }
     frame_type->buf_id = info->frame_real_id;
@@ -4285,7 +4288,7 @@ exit:
     return ret;
 }
 
-cmr_int snp_thumbnail(cmr_handle snp_handle, struct frm_info *data) {
+cmr_int snp_thumbnail(cmr_handle snp_handle, void *data) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;

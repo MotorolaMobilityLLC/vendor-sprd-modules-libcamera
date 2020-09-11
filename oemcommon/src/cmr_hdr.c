@@ -922,7 +922,7 @@ static cmr_int hdr_sprd_version_process(struct class_hdr *hdr_handle,
     input_img[1].height = height;
     input_img[1].stride = width;
     out_img = hdr_handle->alloc_addr[0];
-    CMR_LOGI("addr: 0x%lx, 0x%lx, ev: %f, %f", input_img[0].data,
+    CMR_LOGI("addr: %p, %p, ev: %f, %f", input_img[0].data,
              input_img[1].data, input_img[0].ev, input_img[1].ev);
     ret = sprd_hdr_process(hdr_handle->lib_cxt.lib_handle, &input_img[0],
                            out_img);

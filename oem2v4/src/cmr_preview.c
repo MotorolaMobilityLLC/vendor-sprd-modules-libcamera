@@ -2636,7 +2636,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
             frame_type.type = PREVIEW_FRAME;
             frame_type.timestamp =
                 prev_cxt->preview_bakcup_data->sec * 1000000000LL +
-                prev_cxt->preview_bakcup_data->usec * 1000;
+                prev_cxt->preview_bakcup_data->usec * 1000LL;
             frame_type.monoboottime =
                 prev_cxt->preview_bakcup_data->monoboottime;
 
@@ -2765,7 +2765,7 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle,
     cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    prev_cxt->depthmap_timestamp = data->sec * 1000000000LL + data->usec * 1000;
+    prev_cxt->depthmap_timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
     prev_cxt->depthmap_frm_id =
         prev_get_frm_index(prev_cxt->depthmap_frm, data);
     prev_cxt->depthmap_cnt++;
@@ -2850,7 +2850,7 @@ cmr_int prev_depthmap_frame_handle(struct prev_handle *handle,
                 frame_type.type = PREVIEW_FRAME;
                 frame_type.timestamp =
                     prev_cxt->preview_bakcup_data->sec * 1000000000LL +
-                    prev_cxt->preview_bakcup_data->usec * 1000;
+                    prev_cxt->preview_bakcup_data->usec * 1000LL;
                 frame_type.monoboottime =
                     prev_cxt->preview_bakcup_data->monoboottime;
 
@@ -3927,8 +3927,11 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         return ret;
     }
 
-    if(0 == is_restart)
+    if(0 == is_restart){
+        sem_wait(&handle->thread_cxt.prev_recovery_sem);
         prev_cxt->recovery_en = 1;
+        sem_post(&handle->thread_cxt.prev_recovery_sem);
+    }
 
     if (preview_enable && snapshot_enable) {
         channel_bits =
@@ -7155,7 +7158,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
 
         frame_type->width = prev_cxt->prev_param.preview_size.width;
         frame_type->height = prev_cxt->prev_param.preview_size.height;
-        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->zoom_ratio =
             prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
@@ -7286,7 +7289,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         frame_type->uv_phy_addr = prev_cxt->video_frm[frm_id].addr_phy.addr_u;
         frame_type->width = prev_cxt->prev_param.video_size.width;
         frame_type->height = prev_cxt->prev_param.video_size.height;
-        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->zoom_ratio =
             prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
@@ -7399,7 +7402,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type->uv_phy_addr = prev_cxt->cap_zsl_frm[frm_id].addr_phy.addr_u;
         frame_type->width = prev_cxt->cap_zsl_frm[frm_id].size.width;
         frame_type->height = prev_cxt->cap_zsl_frm[frm_id].size.height;
-        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->type = PREVIEW_ZSL_FRAME;
         CMR_LOGD("timestamp=%lld, width=%d, height=%d, fd=0x%x",
@@ -10247,7 +10250,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(&prev_cxt->prev_frm[valid_num - 1], sizeof(struct img_frm));
         prev_cxt->prev_mem_valid_num--;
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -10747,7 +10750,7 @@ cmr_int prev_pop_video_buffer_sw_3dnr(struct prev_handle *handle,
         cmr_bzero(&prev_cxt->video_frm[valid_num - 1], sizeof(struct img_frm));
         prev_cxt->video_mem_valid_num--;
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -10817,7 +10820,7 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(&prev_cxt->video_frm[valid_num - 1], sizeof(struct img_frm));
         prev_cxt->video_mem_valid_num--;
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -11430,7 +11433,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->cap_zsl_mem_valid_num--;
         prev_cxt->cap_zsl_offline_mem_valid_num--;
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
@@ -12956,7 +12959,7 @@ cmr_int prev_depthmap_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     frame_type.fd = prev_cxt->preview_bakcup_data->fd;
     frame_type.type = PREVIEW_FRAME;
     frame_type.timestamp = prev_cxt->preview_bakcup_data->sec * 1000000000LL +
-                           prev_cxt->preview_bakcup_data->usec * 1000;
+                           prev_cxt->preview_bakcup_data->usec * 1000LL;
     frame_type.monoboottime = prev_cxt->preview_bakcup_data->monoboottime;
 
     /*notify refoucs info directly*/
@@ -13263,7 +13266,7 @@ cmr_int threednr_sw_prev_callback_process(struct ipm_frame_out *cb_param) {
         return CMR_CAMERA_SUCCESS;
     }
     if (IMG_ANGLE_0 != prev_cxt->prev_param.prev_rot) {
-        cmr_uint rot_index;
+        cmr_uint rot_index = 0;
         ret =
             prev_get_src_rot_buffer(prev_cxt, &threednr_info->data, &rot_index);
         CMR_LOGD("rot_index %ld", rot_index);

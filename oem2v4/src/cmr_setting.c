@@ -1186,7 +1186,9 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
         }
         /*update zoom unit after processed or not*/
         if (parm->zoom_param.update_sync) {
+            pthread_mutex_lock(&cpt->status_lock);
             hal_param->zoom_value = zoom_param;
+            pthread_mutex_unlock(&cpt->status_lock);
         } else {
             pthread_mutex_lock(&cpt->status_lock);
             hal_param->zoom_value = zoom_param;
@@ -1368,7 +1370,7 @@ static cmr_int setting_update_gps_info(struct setting_component *cpt,
     uint32_t longitude_mm_denominator = 0;
     uint32_t longitude_ss_numerator = 0;
     uint32_t longitude_ss_denominator = 0;
-    char gps_date_buf[12] = {0};
+    char gps_date_buf[11] = {0};
     time_t timep;
     struct tm *p;
     char *gps_date;
