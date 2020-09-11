@@ -61,7 +61,7 @@
 #define OEM_RESTART_SUM 2
 #define POWER2(x) (1 << (x))
 #define ONE_HUNDRED 100
-#define MS_TO_NANOSEC 1000
+#define MS_TO_NANOSEC 1000LL
 #define SEC_TO_NANOSEC 1000000000LL
 #define BUF_BLOCK_SIZE (1024 * 1024)
 #define PICTURE_W 5664
@@ -6155,8 +6155,12 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     }
 
     if (cxt->init_thread) {
-        cmr_thread_destroy(cxt->init_thread);
-        cxt->init_thread = 0;
+        ret = cmr_thread_destroy(cxt->init_thread);
+        if (!ret) {
+            cxt->init_thread = (cmr_handle)0;
+        } else {
+            CMR_LOGE("failed to destroy init thr %ld", ret);
+        }
     }
 
 #ifdef OEM_HANDLE_HDR

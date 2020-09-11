@@ -1742,11 +1742,6 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
         p_exif_info->primary.basic.ImageLength =
             exif_unit->actual_picture_size.height;
     }
-    CMR_LOGD("EXIF width=%d, height=%d, SPECEXIF width:%d, height:%d \n",
-             p_exif_info->primary.basic.ImageWidth,
-             p_exif_info->primary.basic.ImageLength,
-             p_exif_info->spec_ptr->basic.PixelXDimension,
-             p_exif_info->spec_ptr->basic.PixelYDimension);
 
     if (NULL != p_exif_info->primary.data_struct_ptr) {
 #ifdef MIRROR_FLIP_ROTATION_BY_JPEG
@@ -1832,6 +1827,12 @@ static cmr_int setting_get_exif_info(struct setting_component *cpt,
             CMR_LOGV("set DateTimeOriginal.");
         }
     }
+
+    CMR_LOGD("EXIF width=%d, height=%d, SPECEXIF width:%d, height:%d \n",
+             p_exif_info->primary.basic.ImageWidth,
+             p_exif_info->primary.basic.ImageLength,
+             p_exif_info->spec_ptr->basic.PixelXDimension,
+             p_exif_info->spec_ptr->basic.PixelYDimension);
 
     parm->exif_all_info_ptr = p_exif_info;
 
@@ -4397,8 +4398,12 @@ cmr_int cmr_setting_deinit(cmr_handle setting_handle) {
     }
 
     if (cpt->thread_handle) {
-        cmr_thread_destroy(cpt->thread_handle);
-        cpt->thread_handle = 0;
+        ret = cmr_thread_destroy(cpt->thread_handle);
+        if (!ret) {
+            cpt->thread_handle = (cmr_handle)0;
+        } else {
+            CMR_LOGE("failed to destroy thr %ld", ret);
+        }
     }
 
     sem_destroy(&cpt->isp_sem);

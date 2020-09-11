@@ -3798,8 +3798,12 @@ cmr_int cmr_setting_deinit(cmr_handle setting_handle) {
     }
 
     if (cpt->thread_handle) {
-        cmr_thread_destroy(cpt->thread_handle);
-        cpt->thread_handle = 0;
+        ret = cmr_thread_destroy(cpt->thread_handle);
+        if (!ret) {
+            cpt->thread_handle = (cmr_handle)0;
+        } else {
+            CMR_LOGE("failed to destroy thr %ld", ret);
+        }
     }
 
     sem_destroy(&cpt->isp_sem);
