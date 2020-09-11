@@ -148,8 +148,6 @@ static cmr_s32 ispctl_set_awb_flash_gain(cmr_handle isp_alg_handle)
 		flash_awb.flash_ratio.b = flash_wb_gain.b;
 	}
 
-	if (cxt->ops.awb_ops.ioctrl)
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_FLASHING, (void *)&flash_awb, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to set awb flash gain"));
 
 	ret = ispctl_set_awb_gain(cxt);

@@ -2610,11 +2610,6 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		rtn = _awb_set_scene_info(cxt, in);
 		break;
 
-	case AWB_CTRL_CMD_FLASHING:
-		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASHING");
-		//rtn = _awb_set_flash_gain(cxt, in);
-		break;
-
 	case AWB_CTRL_CMD_FLASH_OPEN_M:
 		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASH_OPEN_M");
 		cxt->flash_info.flash_mode = AWB_CTRL_FLASH_MAIN;
@@ -2786,11 +2781,6 @@ cmr_s32 awb_sprd_ctrl_ioctrl_v3(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case AWB_CTRL_CMD_SET_SCENE_INFO:
 		rtn = _awb_set_scene_info_v3(cxt, in);
-		break;
-
-	case AWB_CTRL_CMD_FLASHING:
-		ISP_LOGV("FLASH_TAG: AWB_CTRL_CMD_FLASHING");
-		//rtn = _awb_set_flash_gain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_FLASH_OPEN_M:
