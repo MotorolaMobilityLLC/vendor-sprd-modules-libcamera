@@ -6873,7 +6873,8 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	cxt->manual_level = AE_MANUAL_EV_INIT;
 	cxt->debug_enable = ae_is_mlog(cxt);
 
-	ae_load_fdr_lib(cxt);
+	if (cxt->fdr_tuning_param)
+		ae_load_fdr_lib(cxt);
 
 	ISP_LOGD("camera_id: %d, is master: %d, is_multi_mode: %d, sensor_role:%d", cxt->camera_id, init_param->is_master, init_param->is_multi_mode, cxt->sensor_role);
 	if((cxt->sensor_role == CAM_SENSOR_MASTER) && (init_param->is_multi_mode)) {//dual camera && master sensor
