@@ -79,6 +79,7 @@ class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
   public:
     static void registerCreator(std::string name,
                                 std::shared_ptr<ICameraCreator> creator);
+    void onCameraClosed(int camera_id);
 
   private:
     int getNumberOfCameras();
@@ -97,7 +98,6 @@ class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
     void torchModeStatusChange(const char *camera_id, int new_status) const;
     int setTorchMode(const char *camera_id, bool enabled);
     void initializeTorchHelper(const camera_module_callbacks_t *callbacks);
-    void onCameraClosed(int camera_id);
 
   private:
     enum UseCameraId {

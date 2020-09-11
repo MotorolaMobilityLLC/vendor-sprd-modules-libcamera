@@ -12,6 +12,7 @@ class Camera3DeviceBase : public camera3_device_t, public camera3_device_ops_t {
     Camera3DeviceBase();
     virtual ~Camera3DeviceBase();
 
+  private:
     /* hw_device_t methods */
     virtual int close() = 0;
 

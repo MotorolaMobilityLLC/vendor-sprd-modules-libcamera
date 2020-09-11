@@ -10,6 +10,17 @@ namespace sprdcamera {
  * A camera 3.2 device
  */
 class CameraDevice_3_2 : public Camera3DeviceBase, public ICameraBase {
+  public:
+    int openCamera(hw_device_t **dev) final;
+
+    int getPhysicalCameraInfoForId(int id,
+                                   camera_metadata_t **static_metadata) final {
+        return -EINVAL;
+    }
+
+    void
+    setCameraClosedListener(ICameraBase::CameraClosedListener *listener) final;
+
   protected:
     CameraDevice_3_2(int cameraId);
     virtual ~CameraDevice_3_2();
@@ -17,15 +28,11 @@ class CameraDevice_3_2 : public Camera3DeviceBase, public ICameraBase {
     const int mCameraId;
 
   private:
-    int openCamera(hw_device_t **dev) final;
-    int close() final;
-    void
-    setCameraClosedListener(ICameraBase::CameraClosedListener *listener) final;
-
     virtual int openCameraDevice() = 0;
+
     virtual int closeCameraDevice() = 0;
 
-    ICameraBase::CameraClosedListener *mListener;
+    int close() final;
 
     /* filter out unavailable functions */
     int register_stream_buffers(const camera3_stream_buffer_set_t *) final {
@@ -41,9 +48,6 @@ class CameraDevice_3_2 : public Camera3DeviceBase, public ICameraBase {
         return -ENODEV;
     }
 
-    int getPhysicalCameraInfoForId(int id,
-                                   camera_metadata_t **static_metadata) final {
-        return -EINVAL;
-    }
+    ICameraBase::CameraClosedListener *mListener;
 };
 }
