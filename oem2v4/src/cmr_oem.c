@@ -470,10 +470,12 @@ cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
         return -EINVAL;
     }
 
-    if (read(fd, buffer, sizeof(buffer)) <= 0) {
+    ret = read(fd, buffer, sizeof(buffer));
+    if (ret <= 0) {
         CMR_LOGE("read failed\n");
         ret = -EINVAL;
     }
+
     CMR_LOGI("buffer %s", buffer);
 
     close(fd);
@@ -1184,7 +1186,7 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata) {
             }
             if (setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) {
                 src_sw_algorithm_buf.reserved = threednr_handle;
-                ret == cxt->night_cxt.sw_process((cmr_handle *)privdata,
+                ret = cxt->night_cxt.sw_process((cmr_handle *)privdata,
                                                 &src_sw_algorithm_buf, &dst_sw_algorithm_buf);
             } else {
                 ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
@@ -5104,6 +5106,7 @@ cmr_int camera_jpeg_encode_exif_simplify(cmr_handle oem_handle,
     cmr_u32 SUPER_FINE = 95;
     cmr_u32 FINE = 80;
     cmr_u32 NORMAL = 70;
+    cmr_bzero(&enc_cb_param, sizeof(enc_cb_param));
 
     if (!oem_handle || !src.addr_vir.addr_y || !pic_enc.addr_vir.addr_y) {
         CMR_LOGE("in parm error");
@@ -7242,6 +7245,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         break;
     case SETTING_IO_CTRL_FLASH: {
         struct grab_flash_opt flash_opt;
+        cmr_bzero(&flash_opt, sizeof(flash_opt));
 
         if (FLASH_OPEN == param_ptr->cmd_value ||
             FLASH_HIGH_LIGHT == param_ptr->cmd_value ||
@@ -9323,6 +9327,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         CMR_LOGI("auto hdr=%lu", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
+        break;
     case CAMERA_PARAM_SET_DEVICE_ORIENTATION:
         setting_param.cmd_type_value = param;
         CMR_LOGD("frame_num %u", param);
@@ -10570,7 +10575,9 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                 CMR_LOGE("failed to set zoom factor to isp  %ld", ret);
             }
         }
-        cxt->zoom_ratio = zoom_param->zoom_info.zoom_ratio;
+        if (zoom_param != NULL) {
+            cxt->zoom_ratio = zoom_param->zoom_info.zoom_ratio;
+        }
         break;
     }
     case CAMERA_PARAM_ISO:
@@ -11904,7 +11911,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     struct setting_cmd_parameter setting_param;
     cmr_uint is_filter;
     CMR_LOGD("E");
-    CMR_LOGI("camera_ipm_process fd =%p",img_frame->fd);
+    CMR_LOGI("camera_ipm_process fd =%d",img_frame->fd);
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
