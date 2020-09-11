@@ -1003,6 +1003,7 @@ static cmr_int prev_capture_zoom_post_cap(struct prev_handle *handle,
                                           cmr_int *flag, cmr_u32 camera_id);
 cmr_int prev_get_frm_index(struct img_frm *frame, struct frm_info *data);
 cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id);
+static cmr_int camera_get_mem_size(cmr_handle preview_handle, cmr_u32 camera_id);
 
 /**************************FUNCTION
  * ***************************************************************************/
@@ -5027,8 +5028,8 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    cmr_u32 total_mem_size = 0;
     cmr_u32 i = 0;
+    cmr_u32 total_mem_size = 0;
     cmr_u32 mem_size, buffer_size, frame_size, y_addr, u_addr = 0;
     cmr_s32 fd = 0;
     cmr_uint y_addr_vir, u_addr_vir = 0;
@@ -5044,11 +5045,9 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 sum = 0;
     cmr_u32 is_normal_cap = 0;
     cmr_int zoom_post_proc = 0;
-    cmr_u32 channel_size = 0;
     cmr_u32 channel_buffer_size = 0;
     cmr_u32 cap_sum = 0;
     int32_t buffer_id = 0;
-    cmr_u32 is_raw_capture = 0;
     cmr_int is_need_scaling = 1;
     cmr_u32 hdr_cap_sum = HDR_CAP_NUM - 1;
     cmr_u32 super_macro_size = 0;
@@ -5060,12 +5059,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if (!strcmp(value, "raw")) {
-        is_raw_capture = 1;
-    }
-
     sum = 1;
     cap_sum = CMR_CAPTURE_MEM_SUM;
     CMR_LOGD("camera_id %d, is_restart %d", camera_id, is_restart);
@@ -5074,16 +5067,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     cap_max_size = &prev_cxt->max_size;
     sensor_mode = &prev_cxt->sensor_info.mode_info[prev_cxt->cap_mode];
     zoom_param = &prev_cxt->prev_param.zoom_setting;
-
-    prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
-    if (ZOOM_POST_PROCESS == zoom_post_proc ||
-        ZOOM_POST_PROCESS_WITH_TRIM == zoom_post_proc) {
-        channel_size = prev_cxt->max_size.width * prev_cxt->max_size.height;
-    } else {
-        channel_size =
-            prev_cxt->actual_pic_size.width * prev_cxt->actual_pic_size.height;
-    }
-    channel_buffer_size = channel_size * 3 / 2;
 
     if (!prev_cxt->prev_param.preview_eb && prev_cxt->prev_param.snapshot_eb) {
         is_normal_cap = 1;
@@ -5097,23 +5080,12 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     is_need_scaling = prev_is_need_scaling(handle, camera_id);
-    /*caculate memory size for capture*/
     CMR_LOGD("capture format: %d", prev_cxt->cap_org_fmt);
-    if (check_software_remosaic(prev_cxt) &&
-        CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
-        ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size,
-                                                prev_cxt->sensor_info.sn_interface.is_loose);
-    } else {
-        if (is_raw_capture == 1 || isp_video_get_simulation_flag()) {
-            ret = camera_get_raw_postproc_capture_size(camera_id, &total_mem_size,
-                                                 prev_cxt->sensor_info.sn_interface.is_loose);
-        } else {
-            ret = camera_get_postproc_capture_size(camera_id, &total_mem_size, channel_size);
-        }
-    }
-    if (ret) {
-        CMR_LOGE("get mem size err");
-        return CMR_CAMERA_FAIL;
+    /*caculate memory size for capture*/
+    total_mem_size = camera_get_mem_size(handle, camera_id);
+    if (total_mem_size == 0) {
+        CMR_LOGE("get total mem size fail!");
+        return CMR_CAMERA_NO_MEM;
     }
     sum = 1;
     /*alloc capture buffer*/
@@ -5122,7 +5094,6 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                  mem_ops->free_mem);
         return CMR_CAMERA_INVALID_PARAM;
     }
-
     if (!is_restart) {
         mem_ops->alloc_mem(CAMERA_SNAPSHOT, handle->oem_handle, &total_mem_size,
                            &sum, prev_cxt->cap_phys_addr_array,
@@ -5161,7 +5132,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                            prev_cxt->super_fd_array);
 
         CMR_LOGV("super mem size 0x%x, addr 0x%x", super_macro_size,
-			prev_cxt->super_virt_addr_array[0]);
+            prev_cxt->super_virt_addr_array[0]);
     }
 #endif
 
@@ -5193,8 +5164,7 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->cap_org_fmt, &prev_cxt->cap_org_size,
                 &prev_cxt->prev_param.thumb_size, &prev_cxt->cap_mem[i],
                 &prev_cxt->sensor_info,
-                ret,
-                is_need_scaling, 1, buf_4in1_flag);
+                ret, is_need_scaling, 1, buf_4in1_flag);
     }
 
 #ifdef SUPER_MACRO
@@ -17283,6 +17253,51 @@ cmr_int prev_is_need_scaling(cmr_handle preview_handle, cmr_u32 camera_id) {
              prev_cxt->actual_pic_size.height, is_raw_capture, is_need_scaling);
 
     return is_need_scaling;
+}
+
+cmr_int camera_get_mem_size(cmr_handle preview_handle, cmr_u32 camera_id) {
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = NULL;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 is_raw_capture = 0;
+    cmr_u32 total_mem_size = 0;
+    cmr_u32 channel_size = 0;
+    cmr_int zoom_post_proc = 0;
+    char value[PROPERTY_VALUE_MAX];
+    prev_cxt = &handle->prev_cxt[camera_id];
+
+    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+    if (!strcmp(value, "raw")) {
+        is_raw_capture = 1;
+    }
+
+    prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
+    if (ZOOM_POST_PROCESS == zoom_post_proc ||
+        ZOOM_POST_PROCESS_WITH_TRIM == zoom_post_proc) {
+        channel_size = prev_cxt->max_size.width * prev_cxt->max_size.height;
+    } else {
+        channel_size =
+            prev_cxt->actual_pic_size.width * prev_cxt->actual_pic_size.height;
+    }
+
+    if (check_software_remosaic(prev_cxt) &&
+        CAM_IMG_FMT_BAYER_MIPI_RAW == prev_cxt->cap_org_fmt) {
+        ret = camera_get_4in1_postproc_capture_size(camera_id, &total_mem_size,
+                                                prev_cxt->sensor_info.sn_interface.is_loose);
+    } else {
+        if (is_raw_capture == 1 || isp_video_get_simulation_flag()) {
+            ret = camera_get_raw_postproc_capture_size(camera_id, &total_mem_size,
+                                                 prev_cxt->sensor_info.sn_interface.is_loose);
+        } else {
+            ret = camera_get_postproc_capture_size(camera_id, &total_mem_size, channel_size);
+        }
+    }
+    if (ret) {
+        CMR_LOGE("get mem size err");
+        return 0;
+    }
+    CMR_LOGD("cap mem size 0x%x", total_mem_size);
+    return total_mem_size;
 }
 
 cmr_int
