@@ -172,16 +172,19 @@ static void _lsc_get_otp_size_info(cmr_s32 full_img_width, cmr_s32 full_img_heig
 	*lsc_otp_width = 0;
 	*lsc_otp_height = 0;
 
-	*lsc_otp_width = (int)(full_img_width / (2 * lsc_otp_grid)) + 1;
-	*lsc_otp_height = (int)(full_img_height / (2 * lsc_otp_grid)) + 1;
+        if (0 != lsc_otp_grid) {
+                *lsc_otp_width = (int)(full_img_width / (2 * lsc_otp_grid)) + 1;
+	        *lsc_otp_height = (int)(full_img_height / (2 * lsc_otp_grid)) + 1;
 
-	if (full_img_width % (2 * lsc_otp_grid) != 0) {
-		*lsc_otp_width += 1;
+                if (full_img_width % (2 * lsc_otp_grid) != 0) {
+		        *lsc_otp_width += 1;
+	        }
+
+	        if (full_img_height % (2 * lsc_otp_grid) != 0) {
+		        *lsc_otp_height += 1;
+	        }
 	}
 
-	if (full_img_height % (2 * lsc_otp_grid) != 0) {
-		*lsc_otp_height += 1;
-	}
 }
 
 static void _lsc_chnl_linear_scaler(unsigned short* src_tab, int src_grid, int src_width, int src_height, unsigned short* dst_tab, int dst_grid, int dst_width, int dst_height)
@@ -286,13 +289,17 @@ static void  _lsc_table_scaler(unsigned short *table, unsigned int src_grid, uns
 static cmr_s32 _lsc_calculate_otplen_chn(cmr_u32 full_width , cmr_u32 full_height , cmr_u32 lsc_grid)
 {
 	cmr_u32 half_width, half_height , lsc_otp_width , lsc_otp_height;
-	cmr_s32 otp_len_chn;
+	cmr_s32 otp_len_chn = 0;
 	half_width = full_width / 2;
 	half_height = full_height / 2;
-	lsc_otp_width = ((half_width % lsc_grid) > 0) ? (half_width / lsc_grid + 2) : (half_width / lsc_grid + 1);
-	lsc_otp_height = ((half_height % lsc_grid) > 0) ? (half_height / lsc_grid + 2) : (half_height / lsc_grid + 1);
-	otp_len_chn = ((lsc_otp_width * lsc_otp_height) * 14 % 8) ? (((lsc_otp_width * lsc_otp_height) * 14 / 8)+1) : ((lsc_otp_width * lsc_otp_height) * 14 / 8);
-	otp_len_chn = (otp_len_chn % 2) ? (otp_len_chn + 1) : (otp_len_chn);
+
+        if (0 != lsc_grid) {
+                lsc_otp_width = ((half_width % lsc_grid) > 0) ? (half_width / lsc_grid + 2) : (half_width / lsc_grid + 1);
+	        lsc_otp_height = ((half_height % lsc_grid) > 0) ? (half_height / lsc_grid + 2) : (half_height / lsc_grid + 1);
+	        otp_len_chn = ((lsc_otp_width * lsc_otp_height) * 14 % 8) ? (((lsc_otp_width * lsc_otp_height) * 14 / 8)+1) : ((lsc_otp_width * lsc_otp_height) * 14 / 8);
+	        otp_len_chn = (otp_len_chn % 2) ? (otp_len_chn + 1) : (otp_len_chn);
+	}
+
 	return otp_len_chn;
 }
 

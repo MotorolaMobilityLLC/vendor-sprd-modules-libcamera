@@ -441,16 +441,19 @@ static void lsc_get_otp_size_info(cmr_s32 img_width, cmr_s32 img_height, cmr_s32
 	*lsc_otp_width = 0;
 	*lsc_otp_height = 0;
 
-	*lsc_otp_width = (int)(img_width / (2 * grid)) + 1;
-	*lsc_otp_height = (int)(img_height / (2 * grid)) + 1;
+        if (0 != grid) {
+                *lsc_otp_width = (int)(img_width / (2 * grid)) + 1;
+	        *lsc_otp_height = (int)(img_height / (2 * grid)) + 1;
 
-	if (img_width % (2 * grid) != 0) {
-		*lsc_otp_width += 1;
+                if (img_width % (2 * grid) != 0) {
+		        *lsc_otp_width += 1;
+	        }
+
+                if (img_height % (2 * grid) != 0) {
+		        *lsc_otp_height += 1;
+	        }
 	}
 
-	if (img_height % (2 * grid) != 0) {
-		*lsc_otp_height += 1;
-	}
 }
 
 static void lsc_scale_bilinear_short(cmr_u16 * src_buf, int src_width, int src_height, cmr_u16 * dst_buf, int dst_width, int dst_height)
@@ -868,13 +871,17 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 static cmr_s32 lsc_calculate_otplen_chn(cmr_u32 full_width, cmr_u32 full_height, cmr_u32 lsc_grid)
 {
 	cmr_u32 half_width, half_height, lsc_width, lsc_height;
-	cmr_s32 otp_len_chn;
+	cmr_s32 otp_len_chn = 0;
 	half_width = full_width / 2;
 	half_height = full_height / 2;
-	lsc_width = ((half_width % lsc_grid) > 0) ? (half_width / lsc_grid + 2) : (half_width / lsc_grid + 1);
-	lsc_height = ((half_height % lsc_grid) > 0) ? (half_height / lsc_grid + 2) : (half_height / lsc_grid + 1);
-	otp_len_chn = ((lsc_width * lsc_height) * 14 % 8) ? (((lsc_width * lsc_height) * 14 / 8) + 1) : ((lsc_width * lsc_height) * 14 / 8);
-	otp_len_chn = (otp_len_chn % 2) ? (otp_len_chn + 1) : (otp_len_chn);
+
+        if (0 != lsc_grid) {
+                lsc_width = ((half_width % lsc_grid) > 0) ? (half_width / lsc_grid + 2) : (half_width / lsc_grid + 1);
+	        lsc_height = ((half_height % lsc_grid) > 0) ? (half_height / lsc_grid + 2) : (half_height / lsc_grid + 1);
+	        otp_len_chn = ((lsc_width * lsc_height) * 14 % 8) ? (((lsc_width * lsc_height) * 14 / 8) + 1) : ((lsc_width * lsc_height) * 14 / 8);
+	        otp_len_chn = (otp_len_chn % 2) ? (otp_len_chn + 1) : (otp_len_chn);
+	}
+
 	return otp_len_chn;
 }
 
@@ -1938,8 +1945,8 @@ static int lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id,
 	struct lsc_last_info full_cxt[MAX_CAMERA_ID * 3];
 	char *ptr = (char *)full_cxt;
 	int num_read = 0;
-	int width = cxt->gain_width;
-	int height = cxt->gain_height;
+	unsigned int width = 0;
+	unsigned int height = 0;
 
 	fp = fopen(CAMERA_DATA_FILE "/lsc.file", "rb");
 
@@ -1953,10 +1960,17 @@ static int lsc_read_last_info(struct lsc_last_info *cxt, unsigned int camera_id,
 		fclose(fp);
 		fp = NULL;
 
-		width = cxt->gain_width;
-		height = cxt->gain_height;
-		ISP_LOGD("camera_id:%d, bv:%d, bv_gain:%d, table_rgb[%d,%d,%d,%d], table_size[%d,%d]", camera_id, cxt->bv, cxt->bv_gain, cxt->table[0*width*height],
-			cxt->table[1*width*height], cxt->table[2*width*height], cxt->table[3*width*height], cxt->gain_width, cxt->gain_height);
+		if (cxt->gain_width <= 32 && cxt->gain_height <= 32) {
+			width = cxt->gain_width;
+		        height = cxt->gain_height;
+		} else {
+		        cxt->gain_width = 0;
+		        cxt->gain_height = 0;
+		}
+
+		ISP_LOGD("camera_id:%d, bv:%d, bv_gain:%d, table_rgb[%d,%d,%d,%d], table_size[%d,%d]", camera_id, cxt->bv, cxt->bv_gain, cxt->table[0 * width * height],
+			cxt->table[1 * width * height], cxt->table[2 * width * height], cxt->table[3 * width * height], cxt->gain_width, cxt->gain_height);
+
 	}
 
 	return num_read;
