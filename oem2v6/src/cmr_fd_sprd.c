@@ -1660,7 +1660,7 @@ void fd_face_attribute_detect(struct class_fd *class_handle) {
         if (sprd_fd_api == SPRD_API_MODE_V2) {
             FAR_OPTION_V2 opt_v2;
             FAR_InitOption(&opt_v2);
-            opt_v2.trackInterval = 8;
+            opt_v2.trackInterval = 16;
             int threadNum = FD_THREAD_NUM;
             opt_v2.workMode = FAR_WORKMODE_MOVIE;
             opt_v2.maxFaceNum = FD_MAX_CNN_FACE_NUM;
