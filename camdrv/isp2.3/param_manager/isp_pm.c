@@ -1942,8 +1942,10 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 						if (ops != PNULL && ops->get) {
 							ops->get(blk_ptr, ISP_PM_BLK_ISP_SETTING, out_param_ptr, &blk_header_ptr->is_update);
 							out_param_ptr->mod_id = mode_id;
-							out_param_ptr++;
-							counts++;
+							if (out_param_ptr->data_ptr != NULL){
+								out_param_ptr++;
+								counts++;
+							}
 						}
 					}
 				} else {
