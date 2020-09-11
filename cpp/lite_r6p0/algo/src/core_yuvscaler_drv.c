@@ -1907,7 +1907,7 @@ void convertYUV422PToYUV422SP(
     if (!pTempData){
         return;
     }
-
+    memset(pTempData,0,width*height);
     for(i=0; i<height; i++)
     {
         for(j=0; j<width/2; j++)
@@ -1937,7 +1937,10 @@ void convertYUV420PToYUV420SP(
     assert(width%2 ==0 && height%2 == 0);
 
     pTempData = (uint8*)malloc(width*height/2);
-
+    if (!pTempData){
+        return;
+    }
+    memset(pTempData,0,width*height/2);
     //copy y
     for(i=0; i<height/2; i++)
     {
