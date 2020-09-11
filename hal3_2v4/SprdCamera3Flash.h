@@ -64,9 +64,7 @@ class SprdCamera3Flash {
     SprdCamera3Flash(const SprdCamera3Flash &);
     SprdCamera3Flash &operator=(const SprdCamera3Flash &);
     const camera_module_callbacks_t *m_callbacks;
-    int32_t m_flashFds[SPRD_CAMERA_MAX_NUM_SENSORS];
     bool m_flashOn[SPRD_CAMERA_MAX_NUM_SENSORS];
-    bool m_flashLastStat[SPRD_CAMERA_MAX_NUM_SENSORS];
     bool m_cameraOpen[SPRD_CAMERA_MAX_NUM_SENSORS];
     static SprdCamera3Flash *_instance;
 };

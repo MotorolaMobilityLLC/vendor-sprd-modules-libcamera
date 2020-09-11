@@ -1503,11 +1503,14 @@ void SprdCamera3OEMIf::GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y) {
 }
 
 cmr_s32 SprdCamera3OEMIf::ispSwCheckBuf(cmr_uint *param_ptr) {
+
+    cmr_s32 ret = 0;
     HAL_LOGD("E");
 
-    return mHalOem->ops->camera_isp_sw_check_buf(mCameraHandle, param_ptr);
+    ret = mHalOem->ops->camera_isp_sw_check_buf(mCameraHandle, param_ptr);
 
     HAL_LOGD("X");
+    return ret;
 }
 
 void SprdCamera3OEMIf::ispSwProc(struct soft_isp_frm_param *param_ptr) {
@@ -5087,7 +5090,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     cmr_uint pic_addr_vir = 0x0;
     SprdCamera3Stream *pic_stream = NULL;
     int ret;
-    uint32_t heap_size;
+    uint32_t heap_size = 0;
     SprdCamera3PicChannel *picChannel =
         reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
     uint32_t frame_num = 0;
@@ -5840,7 +5843,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         if (parm4 != NULL) {
             ae_info = (cmr_u32 *)parm4;
             ae_stab = ae_info[AE_CB_STABLE_INDEX];
-            HAL_LOGV("ae_info = 0x%x, ae_stab = %d", ae_info, ae_stab);
+            HAL_LOGV("ae_info = %p, ae_stab = %d", ae_info, ae_stab);
         }
         if (ae_stab == 1 && controlInfo.ae_lock &&
             controlInfo.ae_comp_effect_frames_cnt != 0) {
@@ -6632,7 +6635,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_FLASH_MODE:
         if (mCameraId == 0 || mCameraId == 1) {
-            int8_t flashMode;
+            int8_t flashMode = CAMERA_FLASH_MODE_OFF;
             FLASH_Tag flashInfo;
             mSetting->getFLASHTag(&flashInfo);
             mSetting->androidFlashModeToDrvFlashMode(flashInfo.mode,
@@ -7924,6 +7927,11 @@ cap_malloc:
     return 0;
 
 mem_fail:
+    if(buffer != NULL)
+    {
+         delete buffer;
+         buffer = NULL;
+    }
     mCapBufLock.unlock();
     Callback_Sw3DNRCaptureFree(0, 0, 0, 0);
     return -1;
@@ -9746,7 +9754,10 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
 
     if (mZslPopFlag == 0 && mVideoWidth != 0 && mVideoHeight != 0) {
-        mZslShotWait.waitRelative(mZslPopLock, ZSL_FRAME_TIMEOUT);
+        if(mZslShotWait.waitRelative(mZslPopLock, ZSL_FRAME_TIMEOUT))
+        {
+            HAL_LOGE("wait zsl frame timeout");
+        }
         mZslPopLock.unlock();
     }
     mZslPopFlag = 0;

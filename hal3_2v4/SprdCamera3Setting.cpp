@@ -1064,6 +1064,7 @@ int SprdCamera3Setting::getCameraIPInited() {
     CAMIP_INTERFACE_INIT camip_init = (CAMIP_INTERFACE_INIT)dlsym(handle, "interface_init");
     if(!camip_init) {
         HAL_LOGD("dlysm func failed");
+        dlclose(handle);
         return -1;
     }
     camip_init(&error);
@@ -4720,8 +4721,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SPRD_AE_INFO,
                        s_setting[mCameraId].sprddefInfo.ae_info,
                        AE_CB_MAX_INDEX - 1);
-    HAL_LOGV("sprddefInfo.ae_info = 0x%x",
-             s_setting[mCameraId].sprddefInfo.ae_info);
     camMetadata.update(ANDROID_CONTROL_AE_LOCK,
                        &(s_setting[mCameraId].controlInfo.ae_lock), 1);
 
