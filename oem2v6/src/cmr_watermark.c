@@ -6,11 +6,13 @@
  * 2: Update some setting about function:
  *    camera_select_logo, camera_select_time_file
  */
-#define LOG_TAG "watermark"
+#define LOG_TAG "cmr_watermark"
 #include "cmr_oem.h"
 #include "cmr_watermark.h"
 #include "math.h"
 
+/* max number of char of timestamp */
+#define TIMESTAMP_CHAR_MAX (20)
 /* watermark source file path */
 #define CAMERA_LOGO_PATH "/vendor/logo/"
 
@@ -276,7 +278,8 @@ int sprd_fusion_yuv420_semiplanar(unsigned char *img, unsigned char *logo,
         return -1;
     }
     imgY = img + posY * imgW + posX;
-    imgUV = img + imgSize + posY / 2 * imgW + posX;
+    /* If posX is Odd, need align to 2 */
+    imgUV = img + imgSize + posY / 2 * imgW + (posX & (~0x1));
     logoY = logo;
     logoUV = logoY + logoSize;
 
@@ -497,33 +500,92 @@ cmr_int camera_get_logo_data(cmr_u8 *logo, int Width, int Height) {
 
     return -ENOENT;
 }
+/* combine image as:2019-10-10 10:37:45 with src
+ * input: time source(yuv)
+ * output: timestamp image as 2019-10-10 10:37:45, vertical
+ * return: how many char
+ */
+cmr_int combine_time_watermark(cmr_u8 *pnum, cmr_u8 *ptext, int subnum_len,
+                            const int subnum_total)
+{
+    cmr_s32 rtn = 0;
+    time_t timep;
+    struct tm *p;
+    char time_text[TIMESTAMP_CHAR_MAX]; /* total = 19,string as:"2019-11-04 13:30:50" */
+    cmr_u8 *pdst, *psrc, *puvs;
+    cmr_u32 i, j;
+
+    /* get time */
+    time(&timep);
+    p = localtime(&timep);
+    if (!p) {
+        CMR_LOGE("get time fail");
+        return 0;
+    }
+    /* sizeof time_text should large than the string lenght */
+    sprintf(time_text, "%04d-%02d-%02d %02d:%02d:%02d", (1900 + p->tm_year),
+            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+    CMR_LOGV("Time watermark: %s", time_text);
+    /* copy y */
+    pdst = ptext;
+    for (i = 0; i < sizeof(time_text); i++) {
+        if ((time_text[i] == '\0') || (i >= TIMESTAMP_CHAR_MAX))
+            break;
+        if (time_text[i] == '-')
+            j = 10;
+        else if (time_text[i] == ':')
+            j = 11;
+        else if (time_text[i] >= '0' && time_text[i] <= '9')
+            j = time_text[i] - '0';
+        else
+            j = 12;
+        psrc = pnum + subnum_len * j;
+        memcpy(pdst, psrc, subnum_len);
+        pdst += subnum_len;
+    }
+    /* copy uv:420 */
+    puvs = pnum + subnum_len * subnum_total;
+    for (i = 0; i < sizeof(time_text); i++) {
+        if ((time_text[i] == '\0') || (i >= TIMESTAMP_CHAR_MAX))
+            break;
+        if (time_text[i] == '-')
+            j = 10;
+        else if (time_text[i] == ':')
+            j = 11;
+        else if (time_text[i] >= '0' && time_text[i] <= '9')
+            j = time_text[i] - '0';
+        else
+            j = 12;
+        psrc = puvs + subnum_len / 2 * j;
+        memcpy(pdst, psrc, subnum_len / 2);
+        pdst += (subnum_len / 2);
+    }
+    rtn = i;
+
+    return rtn;
+}
 
 /* for time watermark
-   * source: yuv file,"0123456789-: ",last one is space
-   * Input: width, height ---- size of capture image
-   * Output: yuv data as text:2019-10-10 10:37:45
-   *        width, height --- size of yuv data(timestamp)
-   * return: 0:seccuss,other:fail;
-   */
+ * source: yuv file,"0123456789-: ",last one is space
+ * Input: width, height ---- size of capture image
+ * Output: yuv data as text:2019-10-10 10:37:45
+ *        width, height --- size of yuv data(timestamp)
+ * return: 0:seccuss,other:fail;
+ */
 cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
     cmr_s32 rtn = -1;
-    const cmr_u8 TEST_SIZE = 20;
-    char tmp_name[128];
+    char tmp_name[256];
     /* info of source file for number */
     const char *file_name;       /* source file for number:0123456789-:  */
     const int subnum_total = 13; /* 0--9,-,:, (space), total = 13 */
-    int subnum_width = 72;       /* sub number width:align 2 */
-    int subnum_height = 36;      /* sub number height:align 2 */
+    int subnum_width;            /* sub number width:align 2 */
+    int subnum_height;           /* sub number height:align 2 */
     int subnum_len;              /* sub number pixels,y data size */
     int src_filelen;             /* size for alloc buf for time.yuv */
     cmr_u8 *pnum = NULL, *ptext = NULL, *ptextout = NULL;
-    time_t timep;
-    struct tm *p;
-    char time_text[TEST_SIZE]; /* total = 19,string as:"2019-11-04 13:30:50" */
-    cmr_u32 i, j;
-    cmr_u8 *pdst, *psrc, *puvs;
     int dst_width, dst_height;
     struct time_src_tag time_info;
+    cmr_u32 j;
 
     time_info.img_width = *width;
     time_info.img_height = *height;
@@ -547,6 +609,11 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
         goto exit;
     }
     strcpy(tmp_name, CAMERA_LOGO_PATH);
+    if (strlen(tmp_name) + strlen(file_name) >= sizeof(tmp_name)) {
+        rtn = -1;
+        CMR_LOGE("File name too long");
+        goto exit;
+    }
     strcat(tmp_name, file_name);
     FILE *fp = fopen(tmp_name, "rb");
     if (fp == NULL) {
@@ -562,62 +629,26 @@ cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
         goto exit;
     }
     /* for text of time */
-    ptext = (cmr_u8 *)malloc(subnum_len * (sizeof(time_text)) * 3 / 2);
+    ptext = (cmr_u8 *)malloc(subnum_len * TIMESTAMP_CHAR_MAX * 3 / 2);
     if (!ptext) {
         rtn = -ENOMEM;
         goto exit;
     }
-    ptextout = (cmr_u8 *)malloc(subnum_len * (sizeof(time_text)) * 3 / 2);
+    j = combine_time_watermark(pnum, ptext, subnum_len, subnum_total);
+    if (j == 0) {
+        CMR_LOGE("combine fail");
+        goto exit;
+    }
+    free(pnum);
+    pnum = NULL;
+    dst_width = subnum_width;
+    dst_height = subnum_height * j;
+    /* rotation 90 anticlockwise */
+    ptextout = (cmr_u8 *)malloc(subnum_len * TIMESTAMP_CHAR_MAX * 3 / 2);
     if (!ptextout) {
         rtn = -ENOMEM;
         goto exit;
     }
-    /* get time */
-    time(&timep);
-    p = localtime(&timep);
-    /* sizeof time_text should large than the string lenght */
-    sprintf(time_text, "%04d-%02d-%02d %02d:%02d:%02d", (1900 + p->tm_year),
-            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
-    CMR_LOGV("Time watermark: %s", time_text);
-    /* copy y */
-    pdst = ptext;
-    for (i = 0; i < sizeof(time_text); i++) {
-        if ((time_text[i] == '\0') || (i >= TEST_SIZE))
-            break;
-        if (time_text[i] == '-')
-            j = 10;
-        else if (time_text[i] == ':')
-            j = 11;
-        else if (time_text[i] >= '0' && time_text[i] <= '9')
-            j = time_text[i] - '0';
-        else
-            j = 12;
-        psrc = pnum + subnum_len * j;
-        memcpy(pdst, psrc, subnum_len);
-        pdst += subnum_len;
-    }
-    /* copy uv:420 */
-    puvs = pnum + subnum_len * subnum_total;
-    for (i = 0; i < sizeof(time_text); i++) {
-        if ((time_text[i] == '\0') || (i >= TEST_SIZE))
-            break;
-        if (time_text[i] == '-')
-            j = 10;
-        else if (time_text[i] == ':')
-            j = 11;
-        else if (time_text[i] >= '0' && time_text[i] <= '9')
-            j = time_text[i] - '0';
-        else
-            j = 12;
-        psrc = puvs + subnum_len / 2 * j;
-        memcpy(pdst, psrc, subnum_len / 2);
-        pdst += (subnum_len / 2);
-    }
-    free(pnum);
-    pnum = NULL;
-    /* rotation 90 anticlockwise */
-    dst_width = subnum_width;
-    dst_height = subnum_height * i;
     ImageRotateYuv420(ptext, ptextout, &dst_width, &dst_height, 90);
     free(ptext);
     ptext = NULL;

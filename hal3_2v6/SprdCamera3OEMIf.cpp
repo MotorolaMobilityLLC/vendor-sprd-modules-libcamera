@@ -4084,7 +4084,6 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
 
     ret = rec_stream->getQBufNumForVir(buff_vir, &frame_num);
     if (ret) {
-        HAL_LOGE("GetQBuffer fail %d", ret);
         return 0;
     }
 
@@ -4099,8 +4098,7 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
             mVideoHeight <= mCaptureHeight) {
             HAL_LOGD("mDualVideoMode %d, mVideoShotFlag %d mDualVideoShotFlag %d",
                     mDualVideoMode, mVideoShotFlag, mDualVideoShotFlag);
-            HAL_LOGD("frame_num %d mVideoSnapshotFrameNum %d",
-                    frame_num, mVideoSnapshotFrameNum);
+            HAL_LOGD("mVideoSnapshotFrameNum %d", mVideoSnapshotFrameNum);
             if (mDualVideoMode) {
                 if (mVideoShotFlag && mDualVideoShotFlag &&
                     (frame_num >= mVideoSnapshotFrameNum))
@@ -4218,7 +4216,6 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
 
     ret = pre_stream->getQBufNumForVir(buff_vir, &frame_num);
     if (ret) {
-        HAL_LOGE("GetQBuffer fail %d", ret);
         pre_stream = NULL;
         ret = 0;
         goto bypass_pre;
