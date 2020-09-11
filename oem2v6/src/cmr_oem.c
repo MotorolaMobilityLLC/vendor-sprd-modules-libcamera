@@ -14368,7 +14368,8 @@ cmr_int camera_fdr_get_frame_cnt(cmr_handle oem_handle, int *total_frame_num, in
 if (1) {
     char total_frm[PROPERTY_VALUE_MAX];
     char ref_frm[PROPERTY_VALUE_MAX];
-	int val0, val1;
+    int val0 = 0;
+    int val1 = 0;
     property_get("debug.cam.fdr.total", total_frm, "0");
     property_get("debug.cam.fdr.ref", ref_frm, "0");
 	val0 = atoi(total_frm);
