@@ -195,14 +195,24 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	cmr_u32 fm=0;
 	#endif
 
-	if (!cxt || !in_ptr) {
+	if (!cxt) {
 		ISP_LOGE("fail to check param is NULL!");
 		goto exit;
+	} else {
+		ISP_LOGV("check param success");
+	}
+	if (!in_ptr) {
+		ISP_LOGE("fail to check param is NULL!");
+	} else {
+		ISP_LOGV("check param success");
 	}
 
 	afl_stat = malloc(in_ptr->private_len);
-	memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
-
+	if(!afl_stat) {
+		ISP_LOGE("malloc fail!");
+	} else {
+		memcpy(afl_stat, in_ptr->private_data, in_ptr->private_len);
+	}
 	ae_stat_ptr = (cmr_u32 *)malloc(3*1024*sizeof(cmr_u32));
 	if (!ae_stat_ptr) {
 		ISP_LOGE("fail to malloc ae_stat_ptr!");
@@ -443,7 +453,7 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 	rtn = AFL_CreateHandle(&cxt->afl_handle);
 	if (rtn) {
 		ISP_LOGE("fail to create afl handle");
-		return ISP_ERROR;
+		goto exit;
 	}
 	cxt->bypass = 0;
 	cxt->skip_frame_num = 1;

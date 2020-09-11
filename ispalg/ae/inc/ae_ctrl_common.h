@@ -123,6 +123,7 @@ struct ae_lib_calc_out_3_x {		//	ae_lib_calc_out
 	cmr_u32 debug_len;
 	/*privated information*/
 	cmr_u32 privated_data;
+	cmr_u32 face_flag;		/*face status flag*/
 
 };
 #if 0
