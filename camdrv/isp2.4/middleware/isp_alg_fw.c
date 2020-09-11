@@ -1037,7 +1037,8 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle, void *data)
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to get ISP_PM_CMD_GET_ISP_SETTING"));
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		if (ISP_BLK_AE_NEW == param_data->id) {
@@ -1104,7 +1105,8 @@ static cmr_int ispalg_handle_sw_isp_aem(cmr_handle isp_alg_handle, cmr_int type)
 	isp_block_param->gamma_update = 0;
 	isp_block_param->rgb2y_update = 0;
 
-	isp_pm_ioctl(cxt->handle_pm, type, &input, &output);
+	ret = isp_pm_ioctl(cxt->handle_pm, type, &input, &output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to get param"));
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		memset(block_tag, 0, 32);
@@ -3357,7 +3359,8 @@ static cmr_s32 ispalg_cfg(cmr_handle isp_alg_handle)
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_CFG_START, NULL, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to do cfg start"));
 
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to get isp block settings"));
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		isp_dev_cfg_block(cxt->dev_access_handle, param_data->data_ptr, param_data->id);

@@ -2308,6 +2308,7 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 		switch (header->block_id) {
 		case ISP_BLK_BDN:
 			update_param->bdn_level_ptr = (struct sensor_bdn_level *)fix_data_ptr->nr.nr_set_group.bdn;
+			break;
 #ifdef NOT_EXIST_IN_ISP2_0
 		case ISP_BLK_PDAF_CORRECT:
 			update_param->pdaf_correction_level_ptr = (struct sensor_pdaf_correction_level *)fix_data_ptr->nr.nr_set_group.pdaf_correct;
@@ -2364,6 +2365,7 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 #endif
 		case ISP_BLK_UV_PREFILTER:
 			update_param->prfy_level_ptr = (struct sensor_prfy_level *)fix_data_ptr->nr.nr_set_group.prfy;
+			break;
 		case ISP_BLK_UV_CDN:
 			update_param->uv_cdn_level_ptr = (struct sensor_uv_cdn_level *)fix_data_ptr->nr.nr_set_group.uv_cdn;
 			break;
@@ -3153,8 +3155,8 @@ static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 
 	if(blk_ynr != 1){
-		return ret;
 		ISP_LOGI("don't have ynr param");
+		return ret;
 	}
 
 	memset(&param_data, 0, sizeof(param_data));
