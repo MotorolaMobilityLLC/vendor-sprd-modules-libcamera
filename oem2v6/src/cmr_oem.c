@@ -5813,7 +5813,7 @@ cmr_int camera_destroy_snp_thread(cmr_handle oem_handle) {
         if (!ret) {
             cxt->snp_cb_thr_handle = (cmr_handle)0;
         } else {
-            CMR_LOGE("failed to destroy snp thr %ld", ret);
+            CMR_LOGE("failed to destroy snp cb thr %ld", ret);
         }
     }
     if (cxt->snp_secondary_thr_handle) {
@@ -5821,7 +5821,7 @@ cmr_int camera_destroy_snp_thread(cmr_handle oem_handle) {
         if (!ret) {
             cxt->snp_secondary_thr_handle = (cmr_handle)0;
         } else {
-            CMR_LOGE("failed to destroy snp thr %ld", ret);
+            CMR_LOGE("failed to destroy snp secondary thr %ld", ret);
         }
     }
     if (cxt->snp_send_raw_image_handle) {
@@ -5829,14 +5829,14 @@ cmr_int camera_destroy_snp_thread(cmr_handle oem_handle) {
         if (!ret) {
             cxt->snp_send_raw_image_handle = (cmr_handle)0;
         } else {
-            CMR_LOGE("failed to destroy snp thr %ld", ret);
+            CMR_LOGE("failed to destroy snp raw thr %ld", ret);
         }
     }
     if (cxt->snp_fdr_thr_handle) {
         ret = cmr_thread_destroy(cxt->snp_fdr_thr_handle);
         cxt->snp_fdr_thr_handle = (cmr_handle)0;
-        if (!ret) {
-            CMR_LOGE("failed to destroy snp thr %ld", ret);
+        if (ret) {
+            CMR_LOGE("failed to destroy snp fdr thr %ld", ret);
         }
     }
 exit:

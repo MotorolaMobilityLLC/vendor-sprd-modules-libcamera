@@ -22,7 +22,7 @@ endif
 LOCAL_HEADER_LIBRARIES += liblog_headers
 LOCAL_HEADER_LIBRARIES += libutils_headers
 
-LOCAL_SHARED_LIBRARIES := liblog libcutils
+LOCAL_SHARED_LIBRARIES := liblog libcutils libutils
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

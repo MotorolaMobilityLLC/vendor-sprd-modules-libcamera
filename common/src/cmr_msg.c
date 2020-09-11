@@ -16,13 +16,19 @@
 #define LOG_TAG "cmr_msg"
 
 #include <stdlib.h>
+#include <utils/Timers.h>
 #include "cmr_msg.h"
 #include "cmr_log.h"
 
 #define CMR_MSG_MAGIC_CODE 0xEFFEA55A
-#define CMR_MSG_WAIT_TIME 1000 // wait for 1 ms
 #define CMR_MSG_POLLING_PERIOD 200000000
 #define CMR_THREAD_MAGIC_CODE 0x5AA5FEEF
+// response time, LOG when more than 100 ms
+#define CMR_MSG_RESPONSE_TIME (100 * 1000000)
+#define LOG_MASK_EXP 3
+#define CMR_MSG_RESPONSE_LOG_MASK  ((1 << LOG_MASK_EXP) - 1)
+//#define CMR_MSG_RESPONSE_MIN  3
+//#define CMR_MSG_RESPONSE_MAX 50
 
 #define MSG_CHECK_MSG_MAGIC(handle)                                            \
     do {                                                                       \
@@ -35,18 +41,21 @@ struct cmr_msg_in {
     struct cmr_msg msg;
     sem_t sem;
     cmr_u32 sync_f;
+    cmr_s64 timestamp;
 };
-
 struct cmr_msg_cxt {
+    cmr_handle thread_handle;
     pthread_mutex_t mutex;
     sem_t msg_sem;
-    cmr_u32 msg_count;
+    cmr_u32 msg_count; // means queue length
     cmr_u32 msg_number;
     cmr_u32 msg_magic;
     struct cmr_msg_in *msg_head;
     struct cmr_msg_in *msg_write;
     struct cmr_msg_in *msg_read;
     cmr_u8 will_destroy_msg_queue_flag;
+    cmr_u32 log_response; // reponse slowly, log once per 8(CMR_MSG_RESPONSE_LOG_MASK)
+    cmr_u32 msg_got; // how many messages have been got
 };
 
 struct cmr_thread {
@@ -92,6 +101,8 @@ cmr_int cmr_msg_queue_create(cmr_u32 count, cmr_handle *queue_handle) {
     msg_cxt->msg_number = 0;
     msg_cxt->msg_read = msg_cxt->msg_head;
     msg_cxt->msg_write = msg_cxt->msg_head;
+    msg_cxt->msg_got = 0;
+    msg_cxt->log_response = 0;
     pthread_mutex_init(&msg_cxt->mutex, NULL);
     sem_init(&msg_cxt->msg_sem, 0, 0);
     msg_cur = msg_cxt->msg_head;
@@ -110,6 +121,9 @@ cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message,
                     cmr_u32 log_level) {
     struct cmr_msg_cxt *msg_cxt = (struct cmr_msg_cxt *)queue_handle;
     struct cmr_msg_in *msg_cur = NULL;
+    cmr_s64 timediff = 0, timediff_last = 0;
+    int flag_log_response = 0;
+    struct cmr_msg_in *msg_last = NULL;
 
     if (0 == queue_handle || NULL == message) {
         return -CMR_MSG_PARAM_ERR;
@@ -128,7 +142,13 @@ cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message,
     } else {
         if (msg_cxt->msg_read != msg_cxt->msg_write) {
             msg_cur = msg_cxt->msg_read;
-
+            /* checkout the time from last msg post to get */
+            msg_last = (msg_cxt->msg_write - 1);
+            if (msg_last < msg_cxt->msg_head)
+                msg_last = msg_cxt->msg_head + (msg_cxt->msg_count - 1);
+            timediff = systemTime(CLOCK_MONOTONIC); // get current time
+            timediff_last = timediff - msg_last->timestamp;
+            /* check end */
             memcpy((void *)message, (void *)&msg_cur->msg,
                    sizeof(struct cmr_msg));
             message->cmr_priv = msg_cur;
@@ -140,10 +160,41 @@ cmr_int cmr_msg_get(cmr_handle queue_handle, struct cmr_msg *message,
             }
 
             msg_cxt->msg_number--;
+            msg_cxt->msg_got++;
+            /* Check response time */
+            timediff = timediff - msg_cur->timestamp;
+            if (timediff > CMR_MSG_RESPONSE_TIME ||
+                timediff_last > CMR_MSG_RESPONSE_TIME) {
+                msg_cxt->log_response++;
+                flag_log_response = 1;
+                /* (sn_ctrl)first msg spend more time when switch mode, need skip
+                 * TODO:(refine later)
+                 *   way1: limited, output log less 100 times
+                 *   way2: output log once every CMR_MSG_RESPONSE_LOG
+                 */
+                if (msg_cxt->log_response & CMR_MSG_RESPONSE_LOG_MASK)
+                    flag_log_response = 0;
+            }
         }
     }
 
     pthread_mutex_unlock(&msg_cxt->mutex);
+    if (flag_log_response) { //print log of response slowly
+        struct cmr_thread *thread = msg_cxt->thread_handle;
+
+        if (!thread)
+            CMR_LOGI("queue %p,[%u, %u]msg-response %uMS, last-post %uMS",
+                     queue_handle, msg_cxt->msg_got, msg_cxt->log_response,
+                     (cmr_u32)(timediff/1000000),
+                     (cmr_u32)(timediff_last/1000000));
+        else
+            CMR_LOGI("thread[%s],[%u, %u]msg-response %uMS, last-post %uMS",
+                     thread->name, msg_cxt->msg_got, msg_cxt->log_response,
+                     (cmr_u32)(timediff/1000000),
+                     (cmr_u32)(timediff_last/1000000));
+        CMR_LOGI("msg type 0x%x num %d cnt %d",
+                 message->msg_type, msg_cxt->msg_number, msg_cxt->msg_count);
+    }
     /*	CMR_LOGD("msg_cur 0x%lx", (cmr_uint)msg_cur);*/
 
     if (NULL != msg_cur) {
@@ -210,6 +261,7 @@ cmr_int cmr_msg_timedget(cmr_handle queue_handle, struct cmr_msg *message) {
             }
         }
         msg_cxt->msg_number--;
+        msg_cxt->msg_got++;
     }
 
     pthread_mutex_unlock(&msg_cxt->mutex);
@@ -245,6 +297,7 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
     struct cmr_msg_cxt *msg_cxt = (struct cmr_msg_cxt *)queue_handle;
     struct cmr_msg_in *ori_node;
     struct cmr_msg_in *msg_cur = NULL;
+    struct cmr_thread *thread;
     cmr_int rtn = CMR_MSG_SUCCESS;
     cmr_int reserved_msg_entry;
 
@@ -277,12 +330,19 @@ cmr_int cmr_msg_post(cmr_handle queue_handle, struct cmr_msg *message,
         reserved_msg_entry = 1;
     }
     if ((msg_cxt->msg_number + reserved_msg_entry) >= msg_cxt->msg_count) {
+        thread = msg_cxt->thread_handle;
         pthread_mutex_unlock(&msg_cxt->mutex);
-        CMR_LOGE("MSG Overflow queue_handle = %p, msg type = 0x%x",
-                 queue_handle, message->msg_type);
+        if (!thread) {
+            CMR_LOGE("MSG Overflow handle = %p, type = 0x%x",
+                     queue_handle, message->msg_type);
+            return CMR_MSG_OVERFLOW;
+        }
+        CMR_LOGE("thread[%s], MSG Overflow handle = %p, type = 0x%x",
+                 thread->name, queue_handle, message->msg_type);
         return CMR_MSG_OVERFLOW;
     } else {
         msg_cur = msg_cxt->msg_write;
+        msg_cur->timestamp = systemTime(CLOCK_MONOTONIC);
         msg_cur->sync_f = message->sync_flag;
         memcpy((void *)&msg_cur->msg, (void *)message, sizeof(struct cmr_msg));
         msg_cxt->msg_write++;
@@ -469,6 +529,9 @@ cmr_int cmr_thread_create(cmr_handle *thread_handle, cmr_u32 queue_length,
         thread = NULL;
         return rtn;
     }
+    // set queue_handle->thread
+    msg_cxt = thread->queue_handle;
+    msg_cxt->thread_handle = thread;
     // set name, if no, auto named as :cam_xxxx
     if (thread_name == NULL)
         snprintf(thread->name, sizeof(thread->name), "cam_%X",
@@ -515,9 +578,8 @@ cmr_int cmr_thread_destroy(cmr_handle thread_handle) {
     message.msg_type = CMR_THREAD_EXIT_EVT;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     ret = cmr_thread_msg_send(thread_handle, &message);
-    if (ret) {
-        CMR_LOGE("failed sending CMR_THREAD_EXIT_EVT!!! ");
-    }
+    if (ret)
+        CMR_LOGW("failed sending CMR_THREAD_EXIT_EVT!!! ");
     if (thread_handle) {
         cmr_msg_queue_destroy(thread->queue_handle);
         free(thread_handle);
