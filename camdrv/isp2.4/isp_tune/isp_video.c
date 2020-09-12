@@ -1103,6 +1103,7 @@ cmr_s32 isp_dump_reg(cmr_handle handler, cmr_u8 * tx_buf, cmr_u32 len)
 	cmr_u32 num, i;
 	cmr_u32 tail_len;
 
+	memset(&param_info, 0, sizeof(struct isp_info) );
 	if (NULL == tx_buf || NULL == handler) {
 		ISP_LOGE("fail to check param");
 		return ISP_PARAM_ERROR;
@@ -2808,7 +2809,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	case CMD_SFT_GET_POS:
 		{
 			ISP_LOGV("get pos");
-			cmr_u32 pos;
+			cmr_u32 pos = 0;
 			ret = isp_ioctl(isp_handler, ISP_CTRL_GET_AF_POS, &pos);
 			if (!ret) {
 				rsp_len += ispvideo_SetreTurnValue((cmr_u8 *) & eng_rsp_diag[rsp_len], ISP_CMD_SUCCESS);
@@ -3599,6 +3600,7 @@ static cmr_s32 handle_isp_data(cmr_u8 * buf, cmr_u32 len)
 	case CMD_WRTIE_SCENE_PARAM:
 		{
 			struct isptool_scene_param scene_info;
+			memset(&scene_info, 0, sizeof(struct isptool_scene_param));
 			ret = ispvideo_GetSceneInfo(buf, &scene_info);
 
 			if (0x00 == ret) {
@@ -3771,9 +3773,9 @@ void send_img_data(cmr_u32 format, cmr_u32 width, cmr_u32 height, char *imgptr, 
 		pthread_mutex_lock(&ispstream_lock);
 
 		char *img_ptr = (char *)preview_buf_ptr;
-		cmr_s32 img_len;
-		cmr_u32 img_w;
-		cmr_u32 img_h;
+		cmr_s32 img_len = 0;
+		cmr_u32 img_w = 0;
+		cmr_u32 img_h = 0;
 		/* if preview size more than vga that is subsample to less than vga for preview frame ratio */
 		ispvideo_Scale(format, width, height, imgptr, imagelen, &img_w, &img_h, &img_ptr, &img_len);
 
