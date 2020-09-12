@@ -1312,6 +1312,56 @@ void   WriteScalarCoef(int16 scale_coef[8][32],
     }
 }
 
+void OutScalarCoef_Y_h(scaler_coef_info_t *scaler_coef_t,
+	     int16   cong_Y_hor[8][32])
+{
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            scaler_coef_t->y_hor_coef[i][j] = cong_Y_hor[i][j];
+        }
+    }
+}
+
+void OutScalarCoef_UV_h(scaler_coef_info_t *scaler_coef_t,
+	     int16   cong_UV_hor[8][32])
+{
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            scaler_coef_t->c_hor_coef[i][j] = cong_UV_hor[i][j];
+        }
+    }
+}
+
+void OutScalarCoef_Y_v(scaler_coef_info_t *scaler_coef_t,
+	     int16   cong_Y_ver[9][32])
+{
+    for (int i = 0; i < 9; i++)
+    {
+        for (int j = 0; j < 16 ; j++)
+        {
+            //          scaler_coef->y_ver_down_coef[i][j] = cong_Ycom_ver[i][j];
+            scaler_coef_t->y_ver_coef[i][j] = cong_Y_ver[i][j];
+        }
+    }
+}
+
+void OutScalarCoef_UV_v(scaler_coef_info_t *scaler_coef_t,
+	     int16   cong_UV_ver[9][32])
+{
+    for (int i = 0; i < 9; i++)
+    {
+        for (int j = 0; j < 16; j++)
+        {
+            //          scaler_coef->c_ver_down_coef[i][j] = cong_UVcom_ver[i][j];
+            scaler_coef_t->c_ver_coef[i][j] = cong_UV_ver[i][j];
+        }
+    }
+}
+
 void     yuv_scaler_gen_scaler_coef(int16   i_w,                                   // file write deleted   xing.huo  2015.5.13
     int16   i_h,
     int16   o_w,
@@ -1674,41 +1724,10 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
     //////////////////////////////////////////////////////////////////////////
     //.............out ...............//
 
-    for (i = 0; i < 8; i++)
-    {
-        for (j = 0; j < 8; j++)
-        {
-            scaler_coef->y_hor_coef[i][j] = cong_Ycom_hor[i][j];
-        }
-    }
-
-    for (i = 0; i < 8; i++)
-    {
-        for (j = 0; j < 4; j++)
-        {
-            scaler_coef->c_hor_coef[i][j] = cong_UVcom_hor[i][j];
-        }
-    }
-
-    for (i = 0; i < 9; i++)
-    {
-        for (j = 0; j < 16 ; j++)
-        {
-            //          scaler_coef->y_ver_down_coef[i][j] = cong_Ycom_ver[i][j];
-            scaler_coef->y_ver_coef[i][j] = cong_Ycom_ver[i][j];
-        }
-    }
-
-
-    for (i = 0; i < 9; i++)
-    {
-        for (j = 0; j < 16; j++)
-        {
-            //          scaler_coef->c_ver_down_coef[i][j] = cong_UVcom_ver[i][j];
-            scaler_coef->c_ver_coef[i][j] = cong_UVcom_ver[i][j];
-        }
-    }
-
+    OutScalarCoef_Y_h(scaler_coef, cong_Ycom_hor);
+    OutScalarCoef_UV_h(scaler_coef, cong_UVcom_hor);
+    OutScalarCoef_Y_v(scaler_coef, cong_Ycom_ver);
+    OutScalarCoef_UV_h(scaler_coef, cong_UVcom_ver);
 }
 
 
