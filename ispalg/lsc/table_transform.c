@@ -148,6 +148,23 @@ static void free_set_null(void *handle)
 	}
 }
 
+/*is_true_lsc_crop: in order to reduce the number of CNN*/
+static int is_true_lsc_crop(unsigned int crop_start_x, unsigned int crop_start_y, unsigned int crop_width, unsigned int crop_height, unsigned int src_img_width, unsigned int src_img_height, unsigned int src_grid, unsigned int src_gain_width, unsigned int src_gain_height, unsigned int  dst_gain_width, unsigned int dst_gain_height, unsigned int dst_grid)
+{
+       int flag = 0;
+       if (crop_start_x > src_img_width
+	    || crop_start_y > src_img_height
+	    || crop_start_x + crop_width > src_img_width
+	    || crop_start_y + crop_height > src_img_height
+	    || crop_start_x < dst_grid * 2
+	    || crop_start_y < dst_grid * 2
+	    || crop_start_x + (dst_gain_width - 2) * dst_grid * 2 > (src_gain_width - 3) * src_grid * 2
+	    || crop_start_y + (dst_gain_height - 2) * dst_grid * 2 > (src_gain_height - 3) * src_grid * 2) {
+
+	    flag = 1;
+       }
+	return flag;
+}
 ////////////////////////////// lsc_table_transform main //////////////////////////////
 
 int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_transf_info *dst, enum lsc_transform_action action, void *action_info, unsigned int input_pattern, unsigned int output_pattern)
@@ -205,6 +222,7 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 	float dx = 0.0;				// distence to left     , where total length normalize to 1
 	float dy = 0.0;				// distence to bottem   , where total length normalize to 1
 	unsigned int j, i;
+	int temp = 0;
 	switch (action) {
 
 	case LSC_BINNING:
@@ -251,14 +269,8 @@ int lsc_table_transform(struct lsc_table_transf_info *src, struct lsc_table_tran
 		crop = (struct crop_info *)action_info;
 		ISP_LOGV("crop_info[%d,%d,%d,%d]", crop->start_x, crop->start_y, crop->width, crop->height);
 
-		if (crop->start_x > src->img_width
-			|| crop->start_y > src->img_height
-			|| crop->start_x + crop->width > src->img_width
-			|| crop->start_y + crop->height > src->img_height
-			|| crop->start_x < dst->grid * 2
-			|| crop->start_y < dst->grid * 2
-			|| crop->start_x + (dst->gain_width - 2) * dst->grid * 2 > (src->gain_width - 3) * src->grid * 2
-			|| crop->start_y + (dst->gain_height - 2) * dst->grid * 2 > (src->gain_height - 3) * src->grid * 2) {
+               temp = is_true_lsc_crop(crop->start_x, crop->start_y, crop->width, crop->height, src->img_width, src->img_height, src->grid, src->gain_width, src->gain_height, dst->gain_width, dst->gain_height, dst->grid);
+		if ( temp == 1) {
 			memcpy(dst->tab, dst->pm_tab0, dst->gain_width * dst->gain_height * 4 * sizeof(unsigned short));
 			ISP_LOGE("do LSC_CROP error, output default dnp table");
 			goto exit;
