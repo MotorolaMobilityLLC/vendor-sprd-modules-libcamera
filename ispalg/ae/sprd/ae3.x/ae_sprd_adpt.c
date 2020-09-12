@@ -112,6 +112,12 @@ static cmr_s32 ae_round(float a);
 static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_handle result);
 static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param, cmr_handle result);
 static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_exp_compensation *exp_comp);
+static cmr_s32 ae_abtain_or_flag(bool flag1,bool flag2,bool flag3);
+static cmr_s32 ae_abtain_or_and_flag(bool flag1,bool flag2,bool flag3);
+static cmr_s32 ae_abtain_and_or_flag(bool flag1,bool flag2,bool flag3);
+static cmr_s32 ae_abtain_2or_flag(bool flag1,bool flag2);
+static cmr_s32 ae_abtain_2and_flag(bool flag1,bool flag2);
+
 /**---------------------------------------------------------------------------*
 ** 				Local Function Prototypes				*
 **---------------------------------------------------------------------------*/
@@ -3871,11 +3877,22 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->is_snapshot = work_info->is_snapshot;
 	cxt->snr_info = work_info->resolution_info;
 
-	if((cxt->monitor_cfg.blk_num.w != cxt->monitor_cfg.blk_num.h) || (cxt->monitor_cfg.blk_num.w < 32) || (cxt->monitor_cfg.blk_num.w % 32)){
+	bool monitor_cfg_blk_num_32_flag;
+	bool monitor_cfg_blk_wh_flag = (cxt->monitor_cfg.blk_num.w != cxt->monitor_cfg.blk_num.h);
+	bool monitor_cfg_blk_wh32_flag1 = (cxt->monitor_cfg.blk_num.w < 32);
+	bool monitor_cfg_blk_wh32_flag2 = (cxt->monitor_cfg.blk_num.w % 32);
+	monitor_cfg_blk_num_32_flag = ae_abtain_or_flag(monitor_cfg_blk_wh_flag,monitor_cfg_blk_wh32_flag1,monitor_cfg_blk_wh32_flag2);
+
+	if(monitor_cfg_blk_num_32_flag){
 		cxt->monitor_cfg.blk_num.w = 32;
 		cxt->monitor_cfg.blk_num.h = 32;
 	}
-	if((cxt->snr_info.frame_size.w <= 2328) || (cxt->snr_info.frame_size.h <= 1744)){
+	bool snr_info_frame_size_flag;
+	bool snr_info_frame_sizew_flag = (cxt->snr_info.frame_size.w <= 2328);
+	bool snr_info_frame_sizeh_flag = (cxt->snr_info.frame_size.h <= 1744);
+	snr_info_frame_size_flag = ae_abtain_2or_flag(snr_info_frame_sizew_flag,snr_info_frame_sizeh_flag);
+
+	if(snr_info_frame_size_flag){
 		cxt->monitor_cfg.blk_num.w = 32;
 		cxt->monitor_cfg.blk_num.h = 32;
 		ISP_LOGV("AEM block set to 32*32 under 4M");
@@ -3886,10 +3903,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		work_info->mode = AE_WORK_MODE_COMMON;
 	}
 
-	if (1 == work_info->dv_mode)
-		cxt->cur_status.adv_param.work_mode = AE_WORK_MODE_VIDEO;//ok
-	else
-		cxt->cur_status.adv_param.work_mode = AE_WORK_MODE_COMMON;//ok
+
+	cxt->cur_status.adv_param.work_mode = (1 == work_info->dv_mode) ? AE_WORK_MODE_VIDEO : AE_WORK_MODE_COMMON;
 
 	memset(&cxt->ctTab[0], 0, sizeof(cxt->ctTab));
 	memset(&cxt->ctTabRg[0], 0, sizeof(cxt->ctTabRg));
@@ -3941,12 +3956,20 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		sensor_info.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 		sensor_info.frm_len_def = (cmr_u32)(AEC_LINETIME_PRECESION / (1.0 * work_info->resolution_info.snr_setting_max_fps * cxt->cur_status.adv_param.cur_ev_setting.line_time));
 
-		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-			rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_MODULE_INFO, &sensor_info, NULL);
-		} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-			rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_MODULE_INFO, &sensor_info, NULL);
-		} else if (CAM_SENSOR_SLAVE1 == cxt->sensor_role) {
-			rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_MODULE_INFO, &sensor_info, NULL);
+		bool flag_CAM_SENSOR1;
+		bool flag_CAM_SENSOR2;
+		bool flag_CAM_SENSOR3;
+		bool flag_CAM_MODE;
+
+
+		flag_CAM_SENSOR1 = (CAM_SENSOR_MASTER == cxt->sensor_role);
+		flag_CAM_SENSOR2 = (CAM_SENSOR_SLAVE0 == cxt->sensor_role);
+		flag_CAM_SENSOR3 = (CAM_SENSOR_SLAVE1 == cxt->sensor_role);
+		flag_CAM_MODE = ae_abtain_or_flag(flag_CAM_SENSOR1,flag_CAM_SENSOR2,flag_CAM_SENSOR3);
+
+		if (flag_CAM_MODE) {
+			rtn = cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_MODULE_INFO, &sensor_info, NULL);
+
 		}
 	}
 	cxt->start_id = AE_START_ID;
@@ -3995,7 +4018,13 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->cur_status.bhist_size.end_x = cxt->bhist_cfg.hist_rect.end_x;
 	cxt->cur_status.bhist_size.end_y = cxt->bhist_cfg.hist_rect.end_y;
 
-	if (cxt->is_multi_mode == ISP_ALG_DUAL_C_C || cxt->is_multi_mode ==ISP_ALG_DUAL_W_T || cxt->is_multi_mode ==ISP_ALG_DUAL_C_M) {
+	bool is_multi_mode_cwc_flag;
+	bool is_multi_mode_dual_cc_flag = (cxt->is_multi_mode == ISP_ALG_DUAL_C_C);
+	bool is_multi_mode_dual_wt_flag = (cxt->is_multi_mode ==ISP_ALG_DUAL_W_T);
+	bool is_multi_mode_dual_cm_flag = (cxt->is_multi_mode ==ISP_ALG_DUAL_C_M);
+	is_multi_mode_cwc_flag = ae_abtain_or_flag(is_multi_mode_dual_cc_flag,is_multi_mode_dual_wt_flag,is_multi_mode_dual_cm_flag);
+
+	if (is_multi_mode_cwc_flag) {
 		if((CAM_SENSOR_SLAVE0 == cxt->sensor_role) && cxt->is_multi_mode){
 			struct aem_info slave_aem_info;
 			slave_aem_info.aem_stat_blk_pixels = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h;
@@ -4068,6 +4097,13 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			if(0 == cur_sensitivity)
 				cur_sensitivity = last_sensitivity;
 
+			bool sync_cur_result_cur_bv_flag1 = (cxt->sync_cur_result.cur_bv < cxt->flash_thrd.thd_down);
+			bool sync_cur_result_cur_bv_flag2 = (cxt->app_mode == last_app_mode);
+			bool sync_cur_and_app_mode_flag;
+			sync_cur_and_app_mode_flag = ae_abtain_2or_flag(sync_cur_result_cur_bv_flag1,sync_cur_result_cur_bv_flag2);
+			bool mode_swith_gain_flag = (0 != cxt->mode_switch[cxt->app_mode].gain);
+			bool sync_cur_result_cur_bv_flagall;
+			sync_cur_result_cur_bv_flagall = ae_abtain_2and_flag(sync_cur_and_app_mode_flag,mode_swith_gain_flag);
 			if((CAMERA_MODE_MANUAL == cxt->app_mode) && (0 != s_ae_manual[cxt->camera_id].gain)){
 				src_exp.target_offset = s_ae_manual[cxt->camera_id].target_offset;
 				src_exp.exp_line = s_ae_manual[cxt->camera_id].exp_line;
@@ -4080,7 +4116,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				src_exp.target_luma = s_ae_manual[cxt->camera_id].target_luma;
 				cxt->manual_level = s_ae_manual[cxt->camera_id].manual_level;
 			}
-			else if(((cxt->sync_cur_result.cur_bv < cxt->flash_thrd.thd_down) || (cxt->app_mode == last_app_mode)) && (0 != cxt->mode_switch[cxt->app_mode].gain)){
+			else if(sync_cur_result_cur_bv_flagall){
 				src_exp.target_offset = cxt->mode_switch[cxt->app_mode].target_offset;
 				src_exp.exp_line = cxt->mode_switch[cxt->app_mode].exp_line;
 				src_exp.gain = cxt->mode_switch[cxt->app_mode].gain;
@@ -4229,9 +4265,14 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
 
 	/*it is normal capture, not in flash mode */
-	if ((1 == cxt->last_enable)
-		&& ((FLASH_NONE == cxt->cur_status.adv_param.flash)
-			|| (FLASH_LED_OFF == cxt->cur_status.adv_param.flash))) {
+
+	bool FLASH_LED_OFF_flag = (FLASH_LED_OFF == cxt->cur_status.adv_param.flash);
+	bool FLASH_NONE_flag = (FLASH_NONE == cxt->cur_status.adv_param.flash);
+	bool FLASH_LED_OFF_OR_NONE_flag = ae_abtain_2or_flag(FLASH_NONE_flag,FLASH_LED_OFF_flag);
+	bool cur_last_enable_flag = (1 == cxt->last_enable);
+	bool cur_last_enable_and_flash_none_flag = ae_abtain_2and_flag(cur_last_enable_flag,FLASH_LED_OFF_OR_NONE_flag);
+
+	if (cur_last_enable_and_flash_none_flag) {
 		if (0 == work_info->is_snapshot) {
 			//cxt->last_enable = 0;
 			cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->sync_cur_result.ev_setting.exp_line;
@@ -6987,4 +7028,37 @@ struct adpt_ops_type ae_sprd_adpt_ops_ver1 = {
 	.adpt_process = ae_sprd_calculation_v1,
 	.adpt_ioctrl = ae_sprd_io_ctrl_v1,
 };
+
+static cmr_s32 ae_abtain_or_flag(bool flag1,bool flag2,bool flag3){
+	bool out_or_flag;
+	out_or_flag = flag1 || flag2 || flag3;
+	return out_or_flag;
+
+}
+static cmr_s32 ae_abtain_or_and_flag(bool flag1,bool flag2,bool flag3){
+	bool out_or_and_flag;
+	out_or_and_flag = flag1 || (flag2 && flag3);
+	return out_or_and_flag;
+
+}
+static cmr_s32 ae_abtain_and_or_flag(bool flag1,bool flag2,bool flag3){
+	bool out_and_or_flag;
+	out_and_or_flag = (flag1 && flag2) || flag3;
+	return out_and_or_flag;
+
+}
+
+static cmr_s32 ae_abtain_2or_flag(bool flag1,bool flag2){
+	bool out_2or_flag;
+	out_2or_flag = flag1 || flag2 ;
+	return out_2or_flag;
+
+}
+static cmr_s32 ae_abtain_2and_flag(bool flag1,bool flag2){
+	bool out_2and_flag;
+	out_2and_flag = flag1 && flag2 ;
+	return out_2and_flag;
+
+}
+
 
