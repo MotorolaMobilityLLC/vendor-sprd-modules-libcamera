@@ -899,38 +899,8 @@ exit:
 
 int SprdCamera3OEMIf::zslTakePictureL() {
     int64_t tmp1, tmp2;
-    uint32_t count1 = 0, clear_af_trigger = 0;
     int rc = 0;
-    SPRD_DEF_Tag sprddefInfo;
-    mSetting->getSPRDDEFTag(&sprddefInfo);
-    CONTROL_Tag controlInfo;
-    mSetting->getCONTROLTag(&controlInfo);
-
     HAL_LOGI("E");
-    if(sprddefInfo.is_takepicture_with_flash == 1 &&
-        SprdCamera3Setting::mSensorFocusEnable[mCameraId]
-        && sprddefInfo.sprd_appmode_id >= 0) {
-        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
-        mSetting->setCONTROLTag(&controlInfo);
-        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
-        mSetting->getCONTROLTag(&controlInfo);
-        HAL_LOGV("af_state =%d",controlInfo.af_state);
-        while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-                if (count1 > 2500) {
-                        HAL_LOGD("wait for preflash timeout 2.5s");
-                        break;
-                }
-                mSetting->getCONTROLTag(&controlInfo);
-                usleep(1000); //1ms
-                count1 ++;
-        }
-        clear_af_trigger = 1;
-    }
-    if(clear_af_trigger) {
-        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
-        mSetting->setCONTROLTag(&controlInfo);
-        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
-    }
 
     Mutex::Autolock l(&mLock);
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
@@ -995,7 +965,6 @@ int SprdCamera3OEMIf::zslTakePictureL() {
 #endif
 
 exit:
-
     HAL_LOGD("mFlashCaptureFlag=%d, thumb=%dx%d, mZslShotPushFlag=%d",
              mFlashCaptureFlag, jpgInfo.thumbnail_size[0],
              jpgInfo.thumbnail_size[1], mZslShotPushFlag);
