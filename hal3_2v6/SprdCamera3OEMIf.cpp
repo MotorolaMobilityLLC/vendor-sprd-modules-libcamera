@@ -6342,8 +6342,8 @@ int SprdCamera3OEMIf::openCamera() {
 
     if (mCameraId >= CAMERA_ID_COUNT) {
         // for coverity, normally can't run to here
-        HAL_LOGW("camera id error,set to 0, mCameraId=%d", mCameraId);
-        mCameraId = 0;
+        HAL_LOGW("hal_err: camera id error,set to 0, mCameraId=%d", mCameraId);
+        return UNKNOWN_ERROR;
     }
     mIsMlogMode = 0; //default disable
     property_get("persist.vendor.cam.mlog.mode.enable", value, "false");

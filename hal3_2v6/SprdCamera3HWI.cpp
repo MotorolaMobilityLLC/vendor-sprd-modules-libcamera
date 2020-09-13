@@ -307,6 +307,10 @@ int SprdCamera3HWI::openCamera() {
     int ret = NO_ERROR;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
+    if (mCameraId >= CAMERA_ID_COUNT) {
+        HAL_LOGE("hal_err: mCameraId is invalid");
+        return UNKNOWN_ERROR;
+    }
 
     if (mOEMIf) {
         HAL_LOGE("Failure: Camera already opened");
