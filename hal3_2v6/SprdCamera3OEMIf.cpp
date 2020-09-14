@@ -3385,18 +3385,6 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
 
-    if (SPRD_FOCUS_IN_PROGRESS == mCameraState.focus_state) {
-        Mutex::Autolock stateLock(&mStateLock);
-        while (SPRD_IDLE != mCameraState.focus_state) {
-            HAL_LOGD("waiting for SPRD_IDLE");
-            if (mStateWait.waitRelative(mStateLock, DO_AF_TIMEOUT)) {
-                HAL_LOGE("timeout");
-                break;
-            }
-            HAL_LOGD("focus state: SPRD_IDLE");
-        }
-    }
-
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_stop_preview(mCameraHandle)) {
         setCameraState(SPRD_ERROR, STATE_PREVIEW);
