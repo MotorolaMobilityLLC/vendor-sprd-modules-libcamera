@@ -1494,7 +1494,8 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	}
 
 	input.param_data_ptr = input_param;
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_SETTING, &input, &output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_ISP_SETTING"));
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		sub_block_info.block_info = param_data->data_ptr;
@@ -1757,12 +1758,13 @@ cmr_int ispalg_write_exp_gain(cmr_handle isp_alg_handle, struct sensor_ex_exposu
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	if (cxt->ioctrl_ptr->set_gain)
+	if (cxt->ioctrl_ptr->set_gain){
 		ret = cxt->ioctrl_ptr->set_gain(cxt->ioctrl_ptr->caller_handler, gain);
 		if (ret) {
 			ISP_LOGE("fail to write gain");
 			return ret;
 		}
+	}
 
 	if (cxt->ioctrl_ptr->ex_set_exposure) {
 		ret = cxt->ioctrl_ptr->ex_set_exposure(cxt->ioctrl_ptr->caller_handler, (cmr_uint)&exp);
@@ -1951,7 +1953,8 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 			0, 0);
 	io_pm_input.param_num = 1;
 	io_pm_input.param_data_ptr = &pm_param;
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
 
 	if (io_pm_output.param_data != NULL) {
 		cmr_u16 *cmc_info = io_pm_output.param_data->data_ptr;
@@ -1974,7 +1977,8 @@ cmr_int ispalg_awb_pre_process(cmr_handle isp_alg_handle,
 			0, 0);
 	io_pm_input.param_num = 1;
 	io_pm_input.param_data_ptr = &pm_param;
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &io_pm_input, &io_pm_output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
 
 	if (io_pm_output.param_data != NULL) {
 		struct isp_dev_gamma_info *gamma_info = io_pm_output.param_data->data_ptr;
@@ -4149,7 +4153,8 @@ static cmr_int ispalg_cfg(cmr_handle isp_alg_handle)
 	}
 
 	input.param_data_ptr = input_param;
-	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ISP_ALL_SETTING, &input, &output);
+	ISP_RETURN_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_ISP_ALL_SETTING"));
 	param_data = output.param_data;
 	for (i = 0; i < output.param_num; i++) {
 		sub_block_info.block_info = param_data->data_ptr;
@@ -4915,10 +4920,14 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	case 0:		/*preview */
 		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_PRV_MODEID_BY_RESOLUTION, in_ptr, &mode);
 		if (cxt->zsl_flag) {
-			isp_pm_ioctl(cxt->handle_pm,
+			ret = isp_pm_ioctl(cxt->handle_pm,
 				     ISP_PM_CMD_GET_CAP_MODEID_BY_RESOLUTION,
 				     in_ptr,
 				     &cxt->mode_id[ISP_MODE_CAP]);
+			if (ISP_SUCCESS != ret) {
+				ISP_LOGE("fail to get mode id");
+				return ret;
+			}
 			mode_num = ISP_MODE_MAX;
 		}
 		break;

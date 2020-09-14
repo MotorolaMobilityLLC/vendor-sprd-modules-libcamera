@@ -853,12 +853,12 @@ cmr_s32 read_fix_ae3x_info(FILE * fp, struct sensor_ae_tab_3_x * ae_ptr)
 			}
 		}
 		if (strstr(line_buf, "ae_tab_reserved") != NULL) {
-					rtn = read_ae3x_reserve(fp, &ae_ptr->ae_reserve);
-					if (0x00 != rtn) {
-						goto exit;
-					}
-						flag_end = 1;
-					break;
+			rtn = read_ae3x_reserve(fp, &ae_ptr->ae_reserve);
+			if (0x00 != rtn) {
+				goto exit;
+			}
+			flag_end = 1;
+			break;
 		}
 		if (0 != flag_end)
 			break;
@@ -1599,7 +1599,7 @@ cmr_s32 update_param(struct sensor_raw_info * sensor_raw_ptr, const char *sensor
 
 
 	version_id = sensor_raw_ptr->version_info->version_id;
-	if ((version_id & PM_VER_CHIP_MASK) == 0x0007000 &&(version_id & PM_VER_SW_MASK) == 0x000B){
+	if (((version_id & PM_VER_CHIP_MASK) == 0x0007000) && ((version_id & PM_VER_SW_MASK) == 0x000B)){
 		is_ae3x = 1;
 		ISP_LOGD("is ae3.0\n");
 	}

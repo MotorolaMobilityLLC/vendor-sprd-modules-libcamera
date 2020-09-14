@@ -2066,8 +2066,8 @@ static cmr_int ispctl_get_ynrs_param(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 
 	if (blk_ynr != 1){
-		return ret;
 		ISP_LOGV("do not have to do ynrs");
+		return ret;
 	}
 
 	memset(&param_data, 0, sizeof(param_data));
