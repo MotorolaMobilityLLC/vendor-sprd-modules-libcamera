@@ -1,4 +1,4 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000A000E*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_level*/
@@ -6380,7 +6380,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x24,
+						0x40,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
