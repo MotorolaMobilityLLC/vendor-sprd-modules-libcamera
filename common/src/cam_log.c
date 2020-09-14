@@ -30,7 +30,7 @@ const int LOG_PRI_I = '3';
 const int LOG_PRI_D = '4';
 const int LOG_PRI_V = '5';
 
-char g_log_level[LOG_MODULE_MAX] = {'3', '3', '3', '3', '3', '3'};
+char g_log_level[LOG_MODULE_MAX] = {'4', '4', '4', '4', '4', '4'};
 char g_log_module_setting[LOG_MODULE_MAX] = {'0', '0', '0', '0', '0', '0'};
 char g_log_func_setting[LOG_FUNC_MAX] = {'0', '0', '0', '0'};
 

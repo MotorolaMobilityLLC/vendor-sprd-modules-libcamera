@@ -10114,8 +10114,8 @@ void SprdCamera3OEMIf::log_monitor_test() {
 void *SprdCamera3OEMIf::log_monitor_thread_proc(void *p_data){
       char prop[PROPERTY_VALUE_MAX];
       char version[PROPERTY_VALUE_MAX];
+      char loglevel_stat[LOG_MODULE_MAX+1];
       int num = 0;
-      int val = 0;
       struct timespec ts;
       SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
 
@@ -10131,15 +10131,10 @@ void *SprdCamera3OEMIf::log_monitor_thread_proc(void *p_data){
       *prop[5]:arithmetic,ARITH_LOGX/F_ARITH_LOGX
      */
       property_get("persist.vendor.cam.mlog.on_off", prop, "000000");
-      if (strcmp(prop, "000000")) {
-         for (num = 0 ;num < LOG_MODULE_MAX; num++) {
-             if (prop[num] == LOG_STATUS_EN || prop[num] == LOG_STATUS_DIS) {
-                g_log_module_setting[num] = prop[num];
-             }
-         }
-      }else if (strcmp(g_log_module_setting, "000000")){
-         for (num = 0 ;num < LOG_MODULE_MAX; num++) {
-              g_log_module_setting[num] = LOG_STATUS_EN;
+      for (num = 0 ;num < LOG_MODULE_MAX; num++) {
+         if ((prop[num] != g_log_module_setting[num]) &&
+              ((prop[num] == LOG_STATUS_EN) || (prop[num] == LOG_STATUS_DIS))) {
+             g_log_module_setting[num] = prop[num];
          }
       }
      /*
@@ -10149,16 +10144,11 @@ void *SprdCamera3OEMIf::log_monitor_thread_proc(void *p_data){
       *prop[3]:AWBC
      */
       property_get("persist.vendor.cam.flog.on_off", prop, "0000");
-      if (strcmp(prop, "0000")) {
-         for (num = 0; num < LOG_FUNC_MAX; num++) {
-            if (prop[num] == LOG_STATUS_EN || prop[num] == LOG_STATUS_DIS) {
+      for (num = 0; num < LOG_FUNC_MAX; num++) {
+           if ((prop[num] != g_log_func_setting[num]) &&
+               ((prop[num] == LOG_STATUS_EN) || (prop[num] == LOG_STATUS_DIS))) {
                 g_log_func_setting[num] = prop[num];
-            }
-        }
-      }else if (strcmp(g_log_func_setting, "0000")) {
-         for (num = 0; num < LOG_FUNC_MAX; num++) {
-               g_log_func_setting[num] = LOG_STATUS_EN;
-         }
+           }
       }
      /*
       *prop[0]:hal,HAL_LOGX/F_HAL_LOGX,
@@ -10170,32 +10160,14 @@ void *SprdCamera3OEMIf::log_monitor_thread_proc(void *p_data){
      */
       // user verson camera logI
      property_get("ro.debuggable", version, "1");
-     if (!strcmp(version, "0")) {
-         property_get("persist.vendor.cam.mlog.loglevel", prop, "333333");
-         if (strcmp(prop, "333333")) {
-            for (num = 0; num < LOG_MODULE_MAX; num++) {
-                if (prop[num] >= LOG_PRI_E && prop[num] <= LOG_PRI_V) {
-                    g_log_level[num] = prop[num];
-                }
-            }
-         }else if (strcmp(g_log_level, "333333")) {
-            for (num = 0; num < LOG_MODULE_MAX; num++) {
-                 g_log_level[num] = LOG_PRI_I;
-            }
+     strcmp(version, "0") ? strncpy(loglevel_stat, "444444", LOG_MODULE_MAX+1)
+                           : strncpy(loglevel_stat, "333333", LOG_MODULE_MAX+1);
+     property_get("persist.vendor.cam.mlog.loglevel", prop, loglevel_stat);
+     for (num = 0; num < LOG_MODULE_MAX; num++) {
+         if ((prop[num] != g_log_level[num]) &&
+             (prop[num] >= LOG_PRI_E) && (prop[num] <= LOG_PRI_V)) {
+             g_log_level[num] = prop[num];
          }
-     }else {
-        property_get("persist.vendor.cam.mlog.loglevel", prop, "444444");
-        if (strcmp(prop, "444444")) {
-            for (num = 0; num < LOG_MODULE_MAX; num++) {
-                if (prop[num] >= LOG_PRI_E && prop[num] <= LOG_PRI_V) {
-                    g_log_level[num] = prop[num];
-                }
-            }
-        }else if (strcmp(g_log_level, "444444")) {
-           for (num = 0; num < LOG_MODULE_MAX; num++) {
-                g_log_level[num] = LOG_PRI_D;
-           }
-        }
      }
 
      obj->log_monitor_test();
