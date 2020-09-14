@@ -296,7 +296,7 @@ extern "C" {
 		 */
 		struct ae_alg_calc_result cur_result;
 		struct ae_alg_calc_result sync_cur_result;
-		struct ae_calc_results_2_x calc_results;	/*ae current calculation results, and it is just for other algorithm block */
+		struct ae_calc_results calc_results;	/*ae current calculation results, and it is just for other algorithm block */
 		/*
 		 * AE write/effective E&G queue
 		 */

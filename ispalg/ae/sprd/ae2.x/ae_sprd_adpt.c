@@ -3873,7 +3873,7 @@ static cmr_s32 ae_get_debug_info_for_display(struct ae_ctrl_cxt *cxt, cmr_handle
 	return rtn;
 }
 
-static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_result *alg_rt, struct ae_calc_results_2_x *result)
+static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_result *alg_rt, struct ae_calc_results *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_u32 i = 0x00;
@@ -3912,7 +3912,7 @@ static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_r
 	return rtn;
 }
 
-static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_result *alg_rt, struct ae_ctrl_callback_in *result)
+static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_result *alg_rt, struct ae_calc_results *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_u32 i = 0x00;
@@ -3931,6 +3931,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_alg_calc_re
 	result->ae_output.exposure_time = cxt->cur_result.wts.exposure_time / AEC_LINETIME_PRECESION;
 	result->ae_output.fps = alg_rt->wts.cur_fps;
 	result->ae_output.abl_weight = alg_rt->abl_weighting;
+	result->ae_output.face_lum = alg_rt->face_lum;
 	result->ae_output.reserved = alg_rt->privated_data;
 
 	result->is_skip_cur_frame = 0;
@@ -5934,7 +5935,7 @@ static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 		return rtn;
 	}
 	calc_result->is_skip_cur_frame = cxt->calc_results.is_skip_cur_frame;
-	memcpy(&calc_result->ae_result_2_x, &cxt->calc_results.ae_result, sizeof(struct ae_lib_calc_out_2_x));
+	//memcpy(&calc_result->ae_result_2_x, &cxt->calc_results.ae_result, sizeof(struct ae_lib_calc_out_2_x));
 	memcpy(&calc_result->ae_output, &cxt->calc_results.ae_output, sizeof(struct ae_calc_out));
 	memcpy(&calc_result->ae_ev, &cxt->calc_results.ae_ev, sizeof(struct ae_get_ev));
 	memcpy(&calc_result->monitor_info, &cxt->calc_results.monitor_info, sizeof(struct ae_monitor_info));
@@ -6007,8 +6008,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	struct ae_misc_calc_in misc_calc_in = { 0 };
 	struct ae_misc_calc_out misc_calc_out = { 0 };
 	struct ae_calc_in *calc_in = NULL;
-	struct ae_calc_results_2_x *cur_calc_result = NULL;
-	struct ae_ctrl_callback_in callback_in;
+	struct ae_calc_results *cur_calc_result = NULL;
 	cmr_s32 backup_expline = 0;
 	cmr_s32 backup_gain = 0;
 	cmr_s32 backup_expgain = 0;
@@ -6137,7 +6137,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 
 	rtn = ae_touch_ae_process(cxt, &cxt->cur_result);
 	memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
-	memcpy(&cur_calc_result->ae_result, current_result, sizeof(struct ae_alg_calc_result));
+	//memcpy(&cur_calc_result->ae_result, current_result, sizeof(struct ae_alg_calc_result));
 	ae_make_calc_result(cxt, current_result, cur_calc_result);
 
 	/*just for debug: reset the status */
@@ -6159,12 +6159,12 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	if (cxt->isp_ops.callback) {
 		cb_type = AE_CB_STAB_NOTIFY;
 		cxt->ae_cb_result[AE_CB_RESULT_STAB] = cur_calc_result->ae_output.is_stab;
-		cxt->ae_cb_result[AE_CB_RESULT_BLS_VALUE] = cur_calc_result->ae_result.abl_weighting;
+		cxt->ae_cb_result[AE_CB_RESULT_BLS_VALUE] = cur_calc_result->ae_output.abl_weight;
 		cxt->ae_cb_result[AE_CB_RESULT_BV_VALUE] = cur_calc_result->ae_output.cur_bv;
-		cxt->ae_cb_result[AE_CB_RESULT_FACA_LUM] = cur_calc_result->ae_result.face_lum;
+		cxt->ae_cb_result[AE_CB_RESULT_FACA_LUM] = cur_calc_result->ae_output.face_lum;
 
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cxt->ae_cb_result);
-		ISP_LOGV("normal notify stable_flag %d face_lum:%d", cur_calc_result->ae_output.is_stab,cur_calc_result->ae_result.face_lum);
+		ISP_LOGV("normal notify stable_flag %d face_lum:%d", cur_calc_result->ae_output.is_stab,cur_calc_result->ae_output.face_lum);
 	}
 
 
@@ -6172,10 +6172,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		ae_save_to_mlog_file(cxt, &misc_calc_out);
 	}
 
-	if (cxt->isp_ops.callback) {
-		ae_make_isp_result(cxt, current_result, &callback_in);
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_PROCESS_OUT, &callback_in);
-	}
 	cxt->cur_status.frame_id++;
 
 	return rtn;
@@ -6186,7 +6182,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cmr_s32 rtn = AE_ERROR;
 	cmr_int cb_type;
 	cmr_s32 stop_skip_en;
-	//cmr_u32 stat_chnl_len = 0;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_alg_calc_param *current_status = NULL;
 	struct ae_alg_calc_result *current_result = NULL;
@@ -6194,8 +6189,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	struct ae_misc_calc_in misc_calc_in = { 0 };
 	struct ae_misc_calc_out misc_calc_out = { 0 };
 	struct ae_calc_in *calc_in = NULL;
-	struct ae_calc_results_2_x *cur_calc_result = NULL;
-	struct ae_ctrl_callback_in callback_in;
+	struct ae_calc_results *cur_calc_result = NULL;
 	cmr_s32 backup_expline = 0;
 	cmr_s32 backup_gain = 0;
 	cmr_s32 backup_expgain = 0;
@@ -6229,7 +6223,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 
 	calc_in = (struct ae_calc_in *)param;
 
-	// acc_info_print(cxt);
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
@@ -6240,17 +6233,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	//memcpy(cxt->sync_aem, calc_in->stat_img, 3 * 1024 * sizeof(cmr_u32));
 	down_size_for_ae_stat(cxt, calc_in->stat_img);
 	cxt->cur_status.stat_img = cxt->sync_aem;
-#if 0
-	stat_chnl_len = calc_in->binning_stat_info.binning_size.w * calc_in->binning_stat_info.binning_size.h;
-	memcpy(&cxt->sync_binning_stats_data[0], calc_in->binning_stat_info.r_info, stat_chnl_len * sizeof(cmr_u16));
-	memcpy(&cxt->sync_binning_stats_data[stat_chnl_len], calc_in->binning_stat_info.g_info, stat_chnl_len * sizeof(cmr_u16));
-	memcpy(&cxt->sync_binning_stats_data[2 * stat_chnl_len], calc_in->binning_stat_info.b_info, stat_chnl_len * sizeof(cmr_u16));
-	cxt->binning_stat_size.w = calc_in->binning_stat_info.binning_size.w;
-	cxt->binning_stat_size.h = calc_in->binning_stat_info.binning_size.h;
-	cxt->cur_status.binning_stat_data = &cxt->sync_binning_stats_data[0];
-	cxt->cur_status.binnig_stat_size.w = calc_in->binning_stat_info.binning_size.w;
-	cxt->cur_status.binnig_stat_size.h = calc_in->binning_stat_info.binning_size.h;
-#endif
 
 	static int ae_dynamic_sync = 0;
 	bool is_multi_mode_flag1;
@@ -6521,7 +6503,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 /***********************************************************/
 /*update parameters to sensor*/
 	ISP_LOGV("ae_calculation, cameraId:%d, is_multi_mode:%d, is_master:%d", cxt->camera_id, cxt->is_multi_mode, cxt->is_master);
-	memcpy(&cur_calc_result->ae_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
+	//memcpy(&cur_calc_result->ae_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 	ae_make_calc_result(cxt, &cxt->cur_result, cur_calc_result);
 	cxt->exp_data.lib_data.exp_line = cxt->cur_result.wts.cur_exp_line;
 	cxt->exp_data.lib_data.exp_time = cxt->cur_result.wts.exposure_time;
@@ -6602,12 +6584,12 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	if (cxt->isp_ops.callback) {
 		cb_type = AE_CB_STAB_NOTIFY;
 		cxt->ae_cb_result[AE_CB_RESULT_STAB] = cur_calc_result->ae_output.is_stab;
-		cxt->ae_cb_result[AE_CB_RESULT_BLS_VALUE] = cur_calc_result->ae_result.abl_weighting;
+		cxt->ae_cb_result[AE_CB_RESULT_BLS_VALUE] = cur_calc_result->ae_output.abl_weight;
 		cxt->ae_cb_result[AE_CB_RESULT_BV_VALUE] = cur_calc_result->ae_output.cur_bv;
-		cxt->ae_cb_result[AE_CB_RESULT_FACA_LUM] = cur_calc_result->ae_result.face_lum;
+		cxt->ae_cb_result[AE_CB_RESULT_FACA_LUM] = cur_calc_result->ae_output.face_lum;
 
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &cxt->ae_cb_result);
-		ISP_LOGV("normal notify stable_flag %d face_lum:%d", cur_calc_result->ae_output.is_stab,cur_calc_result->ae_result.face_lum);
+		ISP_LOGV("normal notify stable_flag %d face_lum:%d", cur_calc_result->ae_output.is_stab,cur_calc_result->ae_output.face_lum);
 	}
 
 /***********************************************************/
@@ -6615,11 +6597,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 	pthread_mutex_unlock(&cxt->data_sync_lock);
 
-
-	if (cxt->isp_ops.callback) {
-		ae_make_isp_result(cxt, current_result, &callback_in);
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_PROCESS_OUT, &callback_in);
-	}
 /***********************************************************/
 /*display the AE running status*/
 	if (1 == cxt->debug_enable) {

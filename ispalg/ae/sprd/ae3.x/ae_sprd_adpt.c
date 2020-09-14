@@ -87,6 +87,7 @@ const char AE_MAGIC_TAG_3_x[] = "ae_debug_info";
 #define FLASHMAIN_MAXCAP_50HZ 50000000
 #define FLASHMAIN_MINCAP 10000000
 #define BLK_NUM_W_ALG 32
+#define DEBUG_EN 0
 /**************************************************************************/
 
 #define AE_PRINT_TIME \
@@ -3146,17 +3147,17 @@ static cmr_s32 ae_get_debug_info_for_display(struct ae_ctrl_cxt *cxt, cmr_handle
 	return rtn;
 }
 
-static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_lib_calc_out *alg_rt, struct ae_calc_results_3_x *result)
+static cmr_s32 ae_make_calc_result(struct ae_ctrl_cxt *cxt, struct ae_lib_calc_out *alg_rt, struct ae_calc_results *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_u32 i = 0x00;
-	//struct  ae_ev_param_table ev_table;
 
 	result->ae_output.cur_lum = alg_rt->cur_lum;
 	result->ae_output.cur_again = alg_rt->ev_setting.ae_gain;
 	result->ae_output.cur_exp_line = alg_rt->ev_setting.exp_line;
 	result->ae_output.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 	result->ae_output.is_stab = alg_rt->stable;
+	result->ae_output.near_stab = alg_rt->near_stable;
 	result->ae_output.target_lum = alg_rt->target_lum;
 	result->ae_output.face_stable = alg_rt->face_stable;
 	result->ae_output.cur_bv = alg_rt->cur_bv;
@@ -3193,6 +3194,7 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_lib_calc_ou
 	result->ae_output.cur_exp_line = alg_rt->ev_setting.exp_line;
 	result->ae_output.line_time = cxt->cur_status.adv_param.cur_ev_setting.line_time;
 	result->ae_output.is_stab = alg_rt->stable;
+	result->ae_output.near_stab = alg_rt->near_stable;
 	result->ae_output.target_lum = alg_rt->target_lum;
 	//result->ae_output.target_lum_ori = alg_rt->target_lum_ori;
 	//result->ae_output.flag4idx = alg_rt->flag4idx;
@@ -4208,6 +4210,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->sync_cur_result.ev_setting.ae_idx = cxt->cur_result.ev_setting.ae_idx;
 	cxt->sync_cur_result.stable = cxt->cur_result.stable;
 	cxt->sync_cur_result.ev_setting.frm_len = cxt->cur_result.ev_setting.frm_len;
+	cxt->sync_cur_result.target_lum = cxt->cur_status.adv_param.last_target;
 
 	cxt->effect_index_index = 0;
 
@@ -5124,7 +5127,7 @@ static cmr_s32 ae_get_calc_reuslts(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	}
 
 	calc_result->is_skip_cur_frame = cxt->calc_results.is_skip_cur_frame;
-	memcpy(&calc_result->ae_result_3_x, &cxt->calc_results.ae_result, sizeof(struct ae_lib_calc_out_3_x));
+	//memcpy(&calc_result->ae_result_3_x, &cxt->calc_results.ae_result, sizeof(struct ae_lib_calc_out_3_x));
 	memcpy(&calc_result->ae_output, &cxt->calc_results.ae_output, sizeof(struct ae_calc_out));
 	memcpy(&calc_result->ae_ev, &cxt->calc_results.ae_ev, sizeof(struct ae_get_ev));
 	memcpy(&calc_result->monitor_info, &cxt->calc_results.monitor_info, sizeof(struct ae_monitor_info));
@@ -5405,15 +5408,13 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 {
 	cmr_s32 rtn = AE_ERROR;
 	cmr_int cb_type;
-	//cmr_u32 stat_chnl_len = 0;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_lib_calc_in *current_status;
 	struct ae_lib_calc_out *current_result;
 	struct ae_lib_calc_in *misc_calc_in = NULL;
 	struct ae_lib_calc_out *misc_calc_out = NULL;
 	struct ae_calc_in *calc_in = NULL;
-	struct ae_calc_results_3_x *cur_calc_result = NULL;
-	struct ae_ctrl_callback_in callback_in;
+	struct ae_calc_results *cur_calc_result = NULL;
 	cmr_s32 backup_expline = 0;
 	cmr_s32 backup_gain = 0;
 	cmr_s32 backup_expgain = 0;
@@ -5440,7 +5441,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 
 	calc_in = (struct ae_calc_in *)param;
 	aem_type = cxt->monitor_cfg.data_type;
-	// acc_info_print(cxt);
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
@@ -5515,7 +5515,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	ISP_LOGV("SYSTEM_TEST -ae	%dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
 
 	memcpy(current_result, &cxt->cur_result, sizeof(struct ae_lib_calc_out));
-	memcpy(&cur_calc_result->ae_result, current_result, sizeof(struct ae_lib_calc_out));
 	ae_make_calc_result(cxt, current_result, cur_calc_result);
 
 	/*just for debug: reset the status */
@@ -5547,10 +5546,6 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 		ae_save_to_mlog_file(cxt, misc_calc_out);
 	}
 
-	if (cxt->isp_ops.callback) {
-		ae_make_isp_result(cxt, current_result, &callback_in);
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_PROCESS_OUT, &callback_in);
-	}
 	cxt->cur_status.frm_id++;
 
   ERROR_EXIT:
@@ -5660,23 +5655,19 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 {
 	cmr_s32 rtn = AE_ERROR;
 	cmr_int cb_type;
-	//cmr_s32 stop_skip_en;
-	//cmr_u32 stat_chnl_len = 0;
 	struct ae_ctrl_cxt *cxt = NULL;
 	struct ae_lib_calc_in *current_status = NULL;
 	struct ae_lib_calc_out *current_result = NULL;
 	struct ae_lib_calc_in *misc_calc_in = NULL;
 	struct ae_lib_calc_out *misc_calc_out = NULL;
 	struct ae_calc_in *calc_in = NULL;
-	struct ae_calc_results_3_x *cur_calc_result = NULL;
-	struct ae_ctrl_callback_in callback_in;
+	struct ae_calc_results *cur_calc_result = NULL;
 	cmr_s32 backup_expline = 0;
 	cmr_s32 backup_gain = 0;
 	cmr_s32 backup_expgain = 0;
 	cmr_s32 effect_ebd_expgain = 0;
 	UNUSED(result);
 	cmr_s32 aem_type = 0;
-	//cmr_s16 bv = 0;
 	cmr_u32 sensor_num = 0;//aem static data ready sensor num
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	struct _tag_hdr_detect_t hdr_param;
@@ -5686,18 +5677,19 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 #endif
 	struct ae_sync_data aem_sync_info = {0};
 	struct ae_ctrl_visible_region_info zoom_roi = {0};
-	struct ae_ctrl_visible_region_info ae_debug_zoom_roi[3] = {{0},{0},{0}};
 	struct ae_ctrl_win_info ae_win_info = {0};
 	struct ae_ctrl_hist_win_info hist_win_info = {0};
-	struct ae_ctrl_hist_win_info ae_debug_hist_win_info[3] = {{0},{0},{0}};
 	float zoom_ratio = 0;
 
+#if DEBUG_EN
 	cmr_u32 ae_debug_framId[3] = {0};
 	cmr_u32 i,j,k = 0;
 	struct isp_hist_statistic_info ae_debug_m_get_bayerhist_stats[3];
 	struct isp_hist_statistic_info ae_debug_s0_get_bayerhist_stats[3];
 	struct isp_hist_statistic_info ae_debug_s1_get_bayerhist_stats[3];
-
+	struct ae_ctrl_visible_region_info ae_debug_zoom_roi[3] = {{0},{0},{0}};
+	struct ae_ctrl_hist_win_info ae_debug_hist_win_info[3] = {{0},{0},{0}};
+#endif
 	if (NULL == param) {
 		ISP_LOGE("fail to get param, in %p", param);
 		return AE_PARAM_NULL;
@@ -5720,7 +5712,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 
 	aem_type = cxt->monitor_cfg.data_type;
 	ISP_LOGV("is_multi_mode:%d, cameraId:%d, sensor_role:%d, aem type is:%d",cxt->is_multi_mode, cxt->camera_id, cxt->sensor_role, aem_type);
-	// acc_info_print(cxt);
 	cxt->cur_status.awb_gain.b = calc_in->awb_gain_b;
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
@@ -5738,21 +5729,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	/*send multi_mode to lib*/
 	cxt->cur_status.is_multi_mode = cxt->is_multi_mode;
 
-	/*set frame id to bridge*/
-	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
-		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
-	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
-	} else {
-		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
-	}
-
-	/*get frame id for ae debug*/
-	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_FRAME_ID, NULL, &ae_debug_framId[0]);
-	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_FRAME_ID, NULL, &ae_debug_framId[1]);
-	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_FRAME_ID, NULL, &ae_debug_framId[2]);
-	ISP_LOGV("ae_debug, frameId, m:%d, s0:%d, s1:%d", ae_debug_framId[0], ae_debug_framId[1], ae_debug_framId[2]);
-
 	/*get bayserhist stat*/
 	memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &calc_in->bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
 	memcpy(&cxt->cur_status.adv_param.bhist_data[1].hist_data, &calc_in->bayerhist_stats[1].value, 256 * sizeof(cmr_u32));
@@ -5761,18 +5737,29 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.adv_param.bhist_data[1].hist_bin = calc_in->bayerhist_stats[1].bin;
 	cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
 
+#if DEBUG_EN
+	/*set frame id to bridge*/
 	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_HIST_STATS, calc_in->bayerhist_stats, NULL);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
 	} else if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_HIST_STATS, calc_in->bayerhist_stats, NULL);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
 	} else {
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_HIST_STATS, calc_in->bayerhist_stats, NULL);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, SET_FRAME_ID, &cxt->cur_status.frm_id, NULL);
 	}
 
 	/*add hist stat info to ae debug info*/
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_STATS, NULL, ae_debug_m_get_bayerhist_stats);
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_HIST_STATS, NULL, ae_debug_s0_get_bayerhist_stats);
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_HIST_STATS, NULL, ae_debug_s1_get_bayerhist_stats);
+
+	/*get frame id for ae debug*/
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_FRAME_ID, NULL, &ae_debug_framId[0]);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_FRAME_ID, NULL, &ae_debug_framId[1]);
+	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE1, GET_FRAME_ID, NULL, &ae_debug_framId[2]);
+	ISP_LOGV("ae_debug, frameId, m:%d, s0:%d, s1:%d", ae_debug_framId[0], ae_debug_framId[1], ae_debug_framId[2]);
 
 	for (k = 0; k <3 ; k++) {
 		memcpy(&cxt->cur_status.debug_info.hist_info[0].hist_data[k].hist_data, &ae_debug_m_get_bayerhist_stats[k].value, 256 * sizeof(cmr_u32));
@@ -5788,7 +5775,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		memcpy(&cxt->cur_status.debug_info.hist_info[2].hist_data[k].hist_data, &ae_debug_s1_get_bayerhist_stats[k].value, 256 * sizeof(cmr_u32));
 		cxt->cur_status.debug_info.hist_info[2].hist_data[k].hist_bin = ae_debug_s1_get_bayerhist_stats[k].bin;
 	}
-
+#endif
 	/*get hist roi info*/
 	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_PARAM, NULL, &hist_win_info);
@@ -5809,6 +5796,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->sensor_role, cxt->camera_id, cxt->cur_status.adv_param.hist_roi.idx, cxt->cur_status.adv_param.hist_roi.sec, cxt->cur_status.adv_param.hist_roi.usec, \
 	cxt->cur_status.adv_param.hist_roi.start_x, hist_win_info.start_y, cxt->cur_status.adv_param.hist_roi.end_x, cxt->cur_status.adv_param.hist_roi.end_y);
 
+#if DEBUG_EN
 	/*add hist roi info to ae debug info*/
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_HIST_PARAM, NULL, &ae_debug_hist_win_info[0]);
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_HIST_PARAM, NULL, &ae_debug_hist_win_info[1]);
@@ -5829,6 +5817,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		cxt->cur_status.debug_info.hist_info[j].hist_roi.start_x, cxt->cur_status.debug_info.hist_info[j].hist_roi.start_y, \
 		cxt->cur_status.debug_info.hist_info[j].hist_roi.end_x, cxt->cur_status.debug_info.hist_info[j].hist_roi.end_y);
 	}
+#endif
 
 	/*get aem roi info*/
 	if (CAM_SENSOR_MASTER == cxt->sensor_role) {
@@ -5870,7 +5859,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		cxt->cur_status.zoom_roi.start_y = zoom_roi.region.start_y;
 		cxt->cur_status.zoom_roi.end_x = zoom_roi.region.start_x + zoom_roi.region.width;
 		cxt->cur_status.zoom_roi.end_y = zoom_roi.region.start_y + zoom_roi.region.height;
-
+#if DEBUG_EN
 		/*add zoom roi info to ae debug info*/
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_AE_VISIBLE_REGION, NULL, &ae_debug_zoom_roi[0]);
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_AE_VISIBLE_REGION, NULL, &ae_debug_zoom_roi[1]);
@@ -5889,7 +5878,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			ISP_LOGV("ae_debug, touch info, i:%d, frameId:%d, start_x:%d, start_y:%d, width:%d, height:%d", i, cxt->cur_status.debug_info.touch_info[i].frame_id,\
 			cxt->cur_status.debug_info.touch_info[i].touch_roi.x, cxt->cur_status.debug_info.touch_info[i].touch_roi.y, cxt->cur_status.debug_info.touch_info[i].touch_roi.w, cxt->cur_status.debug_info.touch_info[i].touch_roi.h);
 		}
-
+#endif
 		/*get zoom ratio*/
 		if (CAM_SENSOR_MASTER == cxt->sensor_role) {
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_GLOBAL_ZOOM_RATIO, NULL, &zoom_ratio);
@@ -6006,8 +5995,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 #endif
 
-	ae_set_fdr_detect(cxt,param);
-
+	if(cxt->fdr_tuning_param)
+		ae_set_fdr_detect(cxt,param);
 	if (cxt->ev_adj_enable)
 		ae_set_ev_adjust_ctrl(cxt, param);
 	if (cxt->fdr_enable)
@@ -6044,20 +6033,17 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 	ISP_LOGV("misc_calc_out: cameraId:%d, ae_idx:%d, ae_gain:%d, exp_time:%d", cxt->camera_id, cxt->cur_result.ev_setting.ae_idx, cxt->cur_result.ev_setting.ae_gain, cxt->cur_result.ev_setting.exp_time);
 
-	ae_set_zoom_win_info(cxt);
-
-	ae_set_bayer_hist(cxt, &cxt->cur_result.adjust_hist_roi);
-
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
 	ISP_LOG_PERF("SYSTEM_TEST -ae_test	 %dus ", (cmr_s32)((ae_time1 - ae_time0) / 1000));
-
 	if (rtn) {
 		ISP_LOGE("fail to calc ae misc");
 		rtn = AE_ERROR;
 		goto ae_calculation_error_exit;
 	}
+	ae_set_zoom_win_info(cxt);
+	ae_set_bayer_hist(cxt, &cxt->cur_result.adjust_hist_roi);
 
 	memset((cmr_handle) & cxt->cur_status.adv_param.face_data, 0, sizeof(struct ae_face_param));
 
@@ -6067,19 +6053,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 	rtn = ae_post_process(cxt);
 
-/***********************************************************/
-/*update parameters to sensor*/
-	#if 0
-	if (cxt->is_multi_mode == ISP_ALG_DUAL_C_C || cxt->is_multi_mode ==ISP_ALG_DUAL_W_T || cxt->is_multi_mode ==ISP_ALG_DUAL_C_M) 
-	{
-		if (CAM_SENSOR_SLAVE0 == cxt->sensor_role) {
-			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_MATCH_BV_DATA, NULL, &bv);
-			cxt->cur_result.cur_bv = bv;
-		}
-	}
-	#endif
-
-	memcpy(&cur_calc_result->ae_result, &cxt->cur_result, sizeof(struct ae_lib_calc_out));
 	ae_make_calc_result(cxt, &cxt->cur_result, cur_calc_result);
 	cxt->exp_data.lib_data.exp_line = cxt->cur_result.ev_setting.exp_line;
 	cxt->exp_data.lib_data.exp_time = cxt->cur_result.ev_setting.exp_time;
@@ -6154,11 +6127,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	memcpy(current_result, &cxt->cur_result, sizeof(struct ae_lib_calc_out));
 	pthread_mutex_unlock(&cxt->data_sync_lock);
 
-
-	if (cxt->isp_ops.callback) {
-		ae_make_isp_result(cxt, current_result, &callback_in);
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_PROCESS_OUT, &callback_in);
-	}
 /***********************************************************/
 /*display the AE running status*/
 	if (1 == cxt->debug_enable) {

@@ -18,7 +18,7 @@
 #define _AE_CTRL_TYPES_H_
 
 #include "ae_correction.h"
-#include "ae_ctrl_common.h"
+//#include "ae_ctrl_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -649,6 +649,7 @@ extern "C" {
 		struct ae_ctrl_alc_log log_ae;
 		cmr_u32 fps;
 		cmr_u32 face_enable;
+		cmr_u32 face_lum;
 		cmr_u32 reserved;
 	};
 
@@ -659,92 +660,6 @@ extern "C" {
 
 	struct ae_calc_results {
 		cmr_u32 is_skip_cur_frame;
-		struct ae_lib_calc_out_2_x ae_result_2_x; /*2.x*/
-		struct ae_lib_calc_out_3_x ae_result_3_x; /*3.x*/
-		struct ae_calc_out ae_output;
-		struct ae_get_ev ae_ev;
-		struct ae_monitor_info monitor_info;
-		struct ae_flash_param flash_param;
-	};
-
-	struct ae_calc_results_3_x {
-		cmr_u32 is_skip_cur_frame;
-		struct ae_lib_calc_out_3_x ae_result; /*3.x*/
-		struct ae_calc_out ae_output;
-		struct ae_get_ev ae_ev;
-		struct ae_monitor_info monitor_info;
-		struct ae_flash_param flash_param;
-	};
-
-	struct ae1_senseor_out_2_x {
-		cmr_s8 stable;
-		cmr_s8 f_stable;
-		cmr_u8 near_stable;
-		cmr_s16 cur_index;			/*the current index of ae table in ae now: 1~1024 */
-		cmr_u32 exposure_time;		/*exposure time, unit: 0.1us */
-		float cur_fps;				/*current fps:1~120 */
-		cmr_u16 cur_exp_line;		/*current exposure line: the value is related to the resolution */
-		cmr_u16 cur_dummy;			/*dummy line: the value is related to the resolution & fps */
-		cmr_s16 cur_again;			/*current analog gain */
-		cmr_s16 cur_dgain;			/*current digital gain */
-		cmr_s32 cur_bv;
-		cmr_u32 frm_len;
-		cmr_u32 frm_len_def;
-		cmr_u8 binning_mode;
-	};
-
-	#if 0
-	struct ae_alg_calc_result_2_x {
-		cmr_u32 version;			/*version No. for this structure */
-		cmr_s16 cur_lum;			/*the lum of image:0 ~255 */
-		cmr_s16 cur_lum_avg;		/*the lum without weight of image:0 ~255*/
-		cmr_s16 target_lum;			/*the ae target lum: 0 ~255 */
-		cmr_s16 target_range_in;		/*ae target lum stable zone: 0~255 */
-		cmr_s16 target_range_out;
-		cmr_s16 target_zone;		/*ae target lum stable zone: 0~255 */
-		cmr_s16 target_lum_ori;		/*the ae target lum(original): 0 ~255 */
-		cmr_s16 target_zone_ori;	/*the ae target lum stable zone(original):0~255 */
-		cmr_u32 frame_id;
-		cmr_s16 cur_bv;				/*bv parameter */
-		cmr_s16 cur_bv_nonmatch;
-		cmr_s16 *histogram;			/*luma histogram of current frame */
-		//for flash
-		cmr_s32 flash_effect;
-		cmr_s8 flash_status;
-		cmr_s16 mflash_exp_line;
-		cmr_s16 mflash_dummy;
-		cmr_s16 mflash_gain;
-		//for touch
-		cmr_s8 tcAE_status;
-		cmr_s8 tcRls_flag;
-		//for face debug
-		cmr_u32 face_lum;
-		void *pmulaes;
-		void *pflat;
-		void *pregion;
-		void *pai;
-		void *pabl;
-		void *ppcp;
-		void *phm;
-		void *pns;
-		void *ptc;					/*Bethany add touch info to debug info */
-		void *pface_ae;
-		struct ae1_senseor_out_2_x wts;
-		cmr_handle log;
-		cmr_u32 flag4idx;
-		cmr_u32 face_stable;
-		cmr_u32 face_enable;
-		cmr_u32 face_trigger;
-		cmr_u32 target_offset;
-		cmr_u32 privated_data;
-		cmr_u32 abl_weighting;
-		cmr_s32 evd_value;
-	};
-	#endif
-
-	struct ae_calc_results_2_x {
-		cmr_u32 is_skip_cur_frame;
-		struct ae_lib_calc_out_2_x ae_result;
 		struct ae_calc_out ae_output;
 		struct ae_get_ev ae_ev;
 		struct ae_monitor_info monitor_info;

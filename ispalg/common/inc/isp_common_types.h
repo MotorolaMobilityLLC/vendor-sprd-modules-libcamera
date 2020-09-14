@@ -58,9 +58,6 @@ struct ae_ctrl_flash_param {
 
 struct ae_ctrl_callback_in {
 	cmr_u32 is_skip_cur_frame;
-	struct ae_lib_calc_out_2_x ae_result_2_x;/*2.x*/
-	struct ae_lib_calc_out_3_x ae_result_3_x; /*3.x*/
-	struct ae_lib_calc_out_common ae_result;/*2.x and 3.x*/
 	struct ae_calc_out ae_output;
 	struct ae_get_ev ae_ev;
 	struct ae_monitor_info monitor_info;
