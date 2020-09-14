@@ -56,6 +56,18 @@
 #define PM_VER_SW_MASK (0x0000FFFF)
 
 enum {
+	PM_CHIP_VER_V25 = 0x00090000,
+	PM_CHIP_VER_V26 = 0x000A0000,
+	PM_CHIP_VER_V27 = 0x000B0000,
+};
+
+enum {
+	PM_SW_VER_V25 = 0x00000007,
+	PM_SW_VER_V26 = 0x00000008,
+	PM_SW_VER_V27 = 0x00000009,
+};
+
+enum {
 	CMD_START_PREVIEW = 1,
 	CMD_STOP_PREVIEW,
 	CMD_READ_ISP_PARAM,
@@ -3262,15 +3274,17 @@ cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, c
 	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
 	cmr_u8 iso = sub_type & 0x0f;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (NULL != data_len) {
@@ -3297,15 +3311,17 @@ cmr_s32 get_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 
 	cmr_u8 flicker = (sub_type >> 4) & 0x0f;
 	cmr_u8 iso = sub_type & 0x0f;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (NULL != data_addr) {
@@ -3409,15 +3425,17 @@ cmr_s32 get_ae_weight_param_length(struct sensor_raw_fix_info * sensor_raw_fix, 
 	cmr_s32 rtn = 0x00;
 	cmr_u16 weight = sub_type;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (is_compat_ae3) {
@@ -3434,15 +3452,17 @@ cmr_s32 get_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 	cmr_s32 rtn = 0x00;
 	cmr_u16 weight = sub_type;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (NULL != data_addr) {
@@ -3461,15 +3481,17 @@ cmr_s32 get_ae_scene_param_length(struct sensor_raw_fix_info * sensor_raw_fix, c
 	cmr_u8 scene = (sub_type >> 4) & 0x0f;
 	cmr_u8 flicker = sub_type & 0x0f;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (NULL != data_len) {
@@ -3498,15 +3520,17 @@ cmr_s32 get_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 
 	cmr_u8 scene = (sub_type >> 4) & 0x0f;
 	cmr_u8 flicker = sub_type & 0x0f;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (NULL != data_addr && flicker < 2) {
@@ -3654,6 +3678,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	cmr_u32 *data_addr = NULL;
 	cmr_u8 mode_id = 0;
 	cmr_u8 is_compat_ae3 = 0;
+	cmr_u32 version_id = 0;
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
 	struct isp_mode_param_info mode_param_info;
 	struct sensor_raw_note_info sensor_note_param;
@@ -3661,14 +3686,14 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	memset(&sensor_note_param, 0, sizeof(struct sensor_raw_note_info));
 
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
-
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (0xff == read_cmd->isp_mode) {
@@ -4014,15 +4039,17 @@ cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 	cmr_u8 iso = sub_type & 0x0f;
 	cmr_u32 offset_tmp = 0;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
@@ -4108,8 +4135,7 @@ cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u1
 	cmr_u8 weight = sub_type;
 	cmr_u32 offset_tmp = 0;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
 		ISP_LOGE("fail to check param");
@@ -4117,12 +4143,15 @@ cmr_s32 down_ae_weight_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u1
 		return rtn;
 	}
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (is_compat_ae3)
@@ -4153,8 +4182,7 @@ cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 	cmr_u8 flicker = sub_type & 0x0f;
 	cmr_u32 offset_tmp = 0;
 	cmr_u8 is_compat_ae3 = 0;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
 	if (NULL == sensor_raw_fix || NULL == data_addr) {
 		ISP_LOGE("fail to check param");
@@ -4162,12 +4190,15 @@ cmr_s32 down_ae_scene_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16
 		return rtn;
 	}
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (is_compat_ae3) {
@@ -4249,6 +4280,7 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	static cmr_u32 buf_len = 0;
 	cmr_u32 data_len = 0;
 	cmr_u8 is_compat_ae3 = 0;
+	cmr_u32 version_id = 0;
 	cmr_u8 mode_id = write_cmd->isp_mode;
 	struct sensor_raw_fix_info *sensor_raw_fix = NULL;
 	struct isp_mode_param_info mode_param_info;
@@ -4260,14 +4292,14 @@ cmr_s32 down_isp_param(cmr_handle isp_handler, struct isp_data_header_normal * w
 	cmr_u32 len_data_header = sizeof(struct isp_data_header_normal);
 
 	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
-
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (MAX_MODE_NUM > mode_id) {
@@ -4728,15 +4760,17 @@ cmr_s32 check_cmd_valid(struct isp_check_cmd_valid * cmd, struct msg_head_tag * 
 	struct isp_data_header_normal data_header;
 	struct msg_head_tag msg_tag;
 	cmr_u32 iso_max = ISP_ISO_NUM_MAX, weight_max = ISP_AE_WEIGHT_TYPE_MAX;
-	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
-	struct sensor_raw_info *sensor_raw_info_ptr = (struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	cmr_u32 version_id = 0;
 
-	if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_CHIP_MASK) >= 0x000b)
-		is_compat_ae3 = 1;
-	else if ((sensor_raw_info_ptr->version_info->version_id & PM_VER_SW_MASK) > 0x0009)
-		is_compat_ae3 = 1;
-	else
+	SENSOR_EXP_INFO_T_PTR sensor_info_ptr = Sensor_GetInfo();
+	struct sensor_raw_info *sensor_raw_info_ptr =
+		(struct sensor_raw_info *)sensor_info_ptr->raw_info_ptr;
+	version_id = sensor_raw_info_ptr->version_info->version_id;
+	if (((version_id & PM_VER_CHIP_MASK) < PM_CHIP_VER_V27) &&
+			((version_id & PM_VER_SW_MASK) < PM_SW_VER_V27))
 		is_compat_ae3 = 0;
+	else
+		is_compat_ae3 = 1;
 	ISP_LOGD("is_compat_ae3 %d", is_compat_ae3);
 
 	if (is_compat_ae3) {
