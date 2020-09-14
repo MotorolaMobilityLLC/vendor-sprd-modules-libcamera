@@ -289,7 +289,7 @@ static cmr_int pdafctrl_destroy_thread(cmr_handle handle)
 		}
 		pdaf_thread_cxt->ctrl_thr_handle = NULL;
 	}
-  exit:
+
 	ISP_LOGI("done %ld", ret);
 	return ret;
 }
@@ -386,7 +386,7 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 		ISP_LOGE("fail to init adapter layer ret = %ld", ret);
 		goto error_adpt_init;
 	}
-  sucess_exit:
+
 	ISP_LOGI("done ret=%ld", ret);
 	*handle = (cmr_handle) cxt;
 	return ret;
