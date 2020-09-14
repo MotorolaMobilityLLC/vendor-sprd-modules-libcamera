@@ -17,7 +17,7 @@
 
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312 sp7731e),)
 LOCAL_PATH := $(call my-dir)
-include $(LOCAL_PATH)/cnr3/Android.mk
+include $(call all-makefiles-under,$(LOCAL_PATH))
 else
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CNR_CAPTURE)),true)
@@ -76,6 +76,4 @@ include $(BUILD_SHARED_LIBRARY)
 endif
 endif
 
-include $(CLEAR_VARS)
-include $(LOCAL_PATH)/../tests/Android.mk
 

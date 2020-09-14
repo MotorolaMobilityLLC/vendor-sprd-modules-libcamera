@@ -1,0 +1,7 @@
+{
+  "presubmit": [
+    {
+      "name": "sprd_cnr_adpt_native_tests"
+    }
+  ]
+}
