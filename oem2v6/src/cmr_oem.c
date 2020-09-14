@@ -12279,12 +12279,12 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     sprintf(datetime, "%04d%02d%02d%02d%02d%02d", (1900 + p->tm_year),
 	            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
 
-    sem_wait(&cxt->snapshot_sm);
-
     if (!oem_handle) {
         CMR_LOGE("error handle");
         goto exit;
     }
+
+    sem_wait(&cxt->snapshot_sm);
 
     ret = camera_jpeg_init_wait(oem_handle);
     if (ret < 0)
