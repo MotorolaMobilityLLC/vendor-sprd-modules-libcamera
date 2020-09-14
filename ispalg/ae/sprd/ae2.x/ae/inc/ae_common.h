@@ -205,13 +205,6 @@ enum ae_binning_mode {
 	AE_BNNG_MOD_SUM,
 };
 
-#if 0 /*lyc*/
-struct ae_ct_table {
-	cmr_s32 ct[20];
-	float rg[20];
-};
-#endif
-
 struct ae_weight_value {
 	cmr_s16 value[2];
 	cmr_s16 weight[2];
@@ -387,15 +380,6 @@ enum ae_environ_mod {
 	ae_environ_num,
 };
 
-#if 0 /*lyc*/
-enum {
-	AE_3DNR_ON,
-	AE_3DNR_OFF,
-	AE_3DNR_AUTO,
-	AE_3DNR_MAX,
-};
-#endif
-
 #ifndef FD_AE_PARAM_DEF
 #define FD_AE_PARAM_DEF
 struct ae1_face {
@@ -443,13 +427,6 @@ struct ae_exp_gain_delay_info {
 	cmr_u8 valid_exp_num;
 	cmr_u8 valid_gain_num;
 };
-
-#if 0 /*lyc*/
-struct ae_set_fps {
-	cmr_u32 min_fps;			// min fps
-	cmr_u32 max_fps;			// fix fps flag
-};
-#endif
 
 struct ae_flash_ctrl {
 	cmr_u32 enable;
@@ -523,7 +500,7 @@ struct ae_settings {
 	cmr_s8 flash;				/*flash */
 	cmr_s16 flash_ration;		/* mainflash : preflash -> 1x = 32 */
 	cmr_s16 flash_target;
-	cmr_s8 iso;
+	cmr_u32 iso;
 	cmr_s8 touch_scrn_status;	//touch screen,1: touch;0:no touch
 	cmr_s8 touch_tuning_enable;	//for touch ae
 	cmr_s8 ev_index;			/* not real value , just index !! */
@@ -540,6 +517,7 @@ struct ae_settings {
                                                                 2 Shutter priority: shutter fix, ISO auto
                                                                 3 ISO priority: ISO fix, shutter fix.*/
 	cmr_u32 iso_special_mode;
+	cmr_u8 iso_data_type;								
 	cmr_u32 iso_manual_status;	/*iso manual setting */
 	cmr_u32 ev_manual_status;	/*ev manual setting */
 	cmr_u8 *reserve_info;		/* reserve for future */
