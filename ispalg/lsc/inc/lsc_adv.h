@@ -392,6 +392,12 @@ struct lsc_monitor_info {
 	struct lsc_trim trim;
 };
 
+struct lsc_ctrl_msg {
+	cmr_int cmd;
+	cmr_handle in;
+	cmr_handle out;
+};
+
 /**---------------------------------------------------------------------------*
 **					Data Prototype				**
 **----------------------------------------------------------------------------*/

@@ -84,6 +84,26 @@ exit:
 	return rtn;
 }
 
+static cmr_s32 _lscctrl_ioctrl(struct lsc_ctrl_cxt *cxt_ptr, enum alsc_io_ctrl_cmd cmd, void *in_ptr, void *out_ptr)
+{
+	cmr_int rtn = LSC_SUCCESS;
+	struct lsc_ctrl_work_lib *lib_ptr = NULL;
+
+	if (!cxt_ptr) {
+		ISP_LOGE("fail to check param,param is NULL!");
+		goto exit;
+	}
+	lib_ptr = &cxt_ptr->work_lib;
+	if (lib_ptr->adpt_ops->adpt_ioctrl) {
+		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
+	} else {
+		ISP_LOGI("ioctrl fun is NULL");
+	}
+exit:
+	ISP_LOGV("cmd = %x, done %ld", cmd, rtn);
+	return rtn;
+}
+
 static cmr_s32 _lscctrl_process(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_calc_param *in_ptr, struct lsc_adv_calc_result *out_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
@@ -127,6 +147,7 @@ static cmr_int _lscctrl_ctrl_thr_proc(struct cmr_msg *message, void *p_data)
 		rtn = _lscctrl_deinit_adpt(handle);
 		break;
 	case LSCCTRL_EVT_IOCTRL:
+		rtn = _lscctrl_ioctrl(handle, ((struct lsc_ctrl_msg *)message->data)->cmd, ((struct lsc_ctrl_msg *)message->data)->in, ((struct lsc_ctrl_msg *)message->data)->out);
 		break;
 	case LSCCTRL_EVT_PROCESS:	// ISP_PROC_LSC_CALC
 		rtn = _lscctrl_process(handle, (struct lsc_adv_calc_param *)message->data, &handle->proc_out);
@@ -329,7 +350,7 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *
 {
 	cmr_int rtn = LSC_SUCCESS;
 	struct lsc_ctrl_cxt *cxt_ptr = (struct lsc_ctrl_cxt *)handle_lsc;
-	struct lsc_ctrl_work_lib *lib_ptr = NULL;
+	struct lsc_ctrl_msg msg;
 
 	if (!handle_lsc) {
 		ISP_LOGE("fail to check param, param is NULL!");
@@ -337,12 +358,24 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *
 		goto exit;
 	}
 
-	lib_ptr = &cxt_ptr->work_lib;
-	if (lib_ptr->adpt_ops->adpt_ioctrl) {
-		rtn = lib_ptr->adpt_ops->adpt_ioctrl(lib_ptr->lib_handle, cmd, in_ptr, out_ptr);
+	CMR_MSG_INIT(message);
+	if ((ALSC_FW_START == cmd) || (ALSC_FW_PROC_START == cmd)) {
+		msg.cmd = cmd;
+		msg.in = in_ptr;
+		msg.out = out_ptr;
+		message.msg_type = LSCCTRL_EVT_IOCTRL;
+		message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+		message.alloc_flag = 0;
+		message.data = &msg;
+		rtn = cmr_thread_msg_send(cxt_ptr->thr_handle, &message);
+		if (rtn) {
+			ISP_LOGE("failed to send msg to lsc thr %ld", rtn);
+			goto exit;
+		}
 	} else {
-		ISP_LOGI("ioctrl fun is NULL");
+		_lscctrl_ioctrl(cxt_ptr, cmd, in_ptr, out_ptr);
 	}
+
 exit:
 	ISP_LOGV("cmd = %d,done %ld", cmd, rtn);
 	return rtn;
