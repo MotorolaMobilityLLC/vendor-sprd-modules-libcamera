@@ -6194,11 +6194,44 @@ cmr_int ispalg_calc_stats_size(cmr_handle isp_alg_handle)
 	return 0;
 }
 
+static cmr_int pdaf_type3_cfg(struct isp_alg_fw_context *cxt, struct sensor_pdaf_info *pdaf_info)
+{
+        cmr_int i = 0, ret = 0;
+        struct pdaf_ppi_info ppi_info;
+	memset(&ppi_info, 0, sizeof(struct pdaf_ppi_info));
+
+	if (cxt->ops.pdaf_ops.ioctrl) {
+		ISP_LOGI("open pdaf type 3");
+		ret = cxt->ops.pdaf_ops.ioctrl(
+				cxt->pdaf_cxt.handle,
+				PDAF_CTRL_CMD_SET_PARAM,
+				NULL, NULL);
+		ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf"));
+	}
+
+	ppi_info.block.start_x = pdaf_info->pd_offset_x;
+	ppi_info.block.end_x = pdaf_info->pd_end_x;
+	ppi_info.block.start_y = pdaf_info->pd_offset_y;
+	ppi_info.block.end_y = pdaf_info->pd_end_y;
+	ppi_info.block_size.height = pdaf_info->pd_block_h;
+	ppi_info.block_size.width = pdaf_info->pd_block_w;
+	ppi_info.pd_pos_size = pdaf_info->pd_pos_size;
+	ppi_info.bypass = 0;
+
+	for (i = 0; i < pdaf_info->pd_pos_size * 2; i++) {
+		ppi_info.pattern_pixel_is_right[i] = pdaf_info->pd_is_right[i];
+		ppi_info.pattern_pixel_row[i] = pdaf_info->pd_pos_row[i];
+		ppi_info.pattern_pixel_col[i] = pdaf_info->pd_pos_col[i];
+	}
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &ppi_info, NULL);
+	ISP_RETURN_IF_FAIL(ret, ("fail to cfg ppi_info"));
+        return ret;
+}
+
 cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_int isp_pdaf_type = 0;
-	cmr_int i = 0;
 	cmr_u32 sn_mode = 0;
 	cmr_u32 pdaf_bypass = 0;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
@@ -6209,7 +6242,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct sensor_pdaf_info *pdaf_info = NULL;
 	struct pm_workmode_input  pm_input;
 	struct pm_workmode_output pm_output;
-	struct pdaf_ppi_info ppi_info;
+
 
 	if (!isp_alg_handle || !in_ptr) {
 		ISP_LOGE("fail to get valid ptr.");
@@ -6336,20 +6369,6 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	ISP_LOGI("pdaf_support = %d, pdaf_enable = %d, is_multi_mode = %d",
 			cxt->pdaf_cxt.pdaf_support, in_ptr->pdaf_enable, cxt->is_multi_mode);
-	if(cxt->pdaf_cxt.pdaf_support > 0 && in_ptr->pdaf_enable )
-	        isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, &pdaf_bypass, NULL);
-
-	if (SENSOR_PDAF_TYPE3_ENABLE == cxt->pdaf_cxt.pdaf_support
-		&& in_ptr->pdaf_enable) {
-		if (cxt->ops.pdaf_ops.ioctrl) {
-			ISP_LOGI("open pdaf type 3");
-			ret = cxt->ops.pdaf_ops.ioctrl(
-					cxt->pdaf_cxt.handle,
-					PDAF_CTRL_CMD_SET_PARAM,
-					NULL, NULL);
-			ISP_RETURN_IF_FAIL(ret, ("fail to cfg pdaf"));
-		}
-	}
 
 	property_get("debug.camera.pdaf.type1.supprot", (char *)value, "0");
 	sn_mode = in_ptr->resolution_info.size_index;
@@ -6368,6 +6387,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	/* start config PDAF information */
 	if (in_ptr->pdaf_enable && pdaf_info) {
+		isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, &pdaf_bypass, NULL);
 		switch (cxt->pdaf_cxt.pdaf_support){
 		case SENSOR_PDAF_TYPE1_ENABLE:
 			if (pdaf_info->sns_mode &&
@@ -6386,22 +6406,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		case SENSOR_PDAF_TYPE3_ENABLE:
 			isp_pdaf_type = ISP_DEV_SET_PDAF_TYPE3_CFG;
 			/* config pdaf block: ROI, coordinate, window */
-			ppi_info.block.start_x = pdaf_info->pd_offset_x;
-			ppi_info.block.end_x = pdaf_info->pd_end_x;
-			ppi_info.block.start_y = pdaf_info->pd_offset_y;
-			ppi_info.block.end_y = pdaf_info->pd_end_y;
-			ppi_info.block_size.height = pdaf_info->pd_block_h;
-			ppi_info.block_size.width = pdaf_info->pd_block_w;
-			ppi_info.pd_pos_size = pdaf_info->pd_pos_size;
-
-			for (i = 0; i < pdaf_info->pd_pos_size * 2; i++) {
-				ppi_info.pattern_pixel_is_right[i] = pdaf_info->pd_is_right[i];
-				ppi_info.pattern_pixel_row[i] = pdaf_info->pd_pos_row[i];
-				ppi_info.pattern_pixel_col[i] = pdaf_info->pd_pos_col[i];
-			}
-			isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &ppi_info, NULL);
+			ret = pdaf_type3_cfg(cxt, pdaf_info);
+                        ISP_RETURN_IF_FAIL(ret, ("fail to cfg PDAF_TYPE3_CFG"));
 			cxt->stats_mem_info.buf_info[STATIS_PDAF].size = pdaf_info->pd_data_size;
 			cxt->stats_mem_info.buf_info[STATIS_PDAF].num = STATIS_PDAF_BUF_NUM;
+
 			break;
 		case SENSOR_DUAL_PDAF_ENABLE:
 			isp_pdaf_type = ISP_DEV_SET_DUAL_PDAF_CFG;
