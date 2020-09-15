@@ -1483,7 +1483,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	_awb_parser_otp_info(param);
 	pthread_mutex_init(&cxt->status_lock, NULL);
 
-	if((param->stat_img_size_ae.w != param->stat_img_size_ae.h) || (param->stat_img_size_ae.w < 32) || (param->stat_img_size_ae.w % 32)){	
+	if((param->stat_img_size_ae.w != param->stat_img_size_ae.h) || (param->stat_img_size_ae.w < 32) || (param->stat_img_size_ae.w % 32)){
 		param->stat_img_size_ae.w = 32;
 		param->stat_img_size_ae.h = 32;
 	}
@@ -1533,7 +1533,13 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		cxt->awb_init_param.tuning_param.smooth_buffer_num = 8;
 	}
 	struct awb_rgb_gain awb_gain;
-	cxt->alg_handle = cxt->lib_ops.awb_init_v1(&cxt->awb_init_param, &awb_gain);
+	if(cxt->lib_ops.awb_init_v1 != NULL){
+		cxt->alg_handle = cxt->lib_ops.awb_init_v1(&cxt->awb_init_param, &awb_gain);
+	}
+	else{
+		ISP_LOGE("fail to awb_init");
+		goto ERROR_EXIT;
+        }
 
 	cmr_u32 smooth_buffer_num = cxt->awb_init_param.tuning_param.smooth_buffer_num;
 	_init_gain_queue(&cxt->gain_queue, smooth_buffer_num);
@@ -1665,7 +1671,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	pthread_mutex_init(&cxt->status_lock, NULL);
 	ISP_LOGI("create the lock thread for awb success!");
 
-	if((param->stat_img_size_ae.w != param->stat_img_size_ae.h) || (param->stat_img_size_ae.w < 32) || (param->stat_img_size_ae.w % 32)){	
+	if((param->stat_img_size_ae.w != param->stat_img_size_ae.h) || (param->stat_img_size_ae.w < 32) || (param->stat_img_size_ae.w % 32)){
 		param->stat_img_size_ae.w = 32;
 		param->stat_img_size_ae.h = 32;
 	}
@@ -1693,7 +1699,13 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 
 	struct awb_rgb_gain_3_0 awb_gain_v3;
 	ISP_LOGV("start the awb_init() in the awblib");
-	cxt->alg_handle = cxt->lib_ops.awb_init_v3(&cxt->awb_init_param_v3, &awb_gain_v3);
+	if(cxt->lib_ops.awb_init_v3 != NULL){
+		cxt->alg_handle = cxt->lib_ops.awb_init_v3(&cxt->awb_init_param_v3, &awb_gain_v3);
+	}
+	else{
+		ISP_LOGE("fail to awb_init");
+		goto ERROR_EXIT;
+        }
 
 	result->gain.r = awb_gain_v3.r_gain;
 	result->gain.g = awb_gain_v3.g_gain;
@@ -2245,8 +2257,10 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	}
 	*/
 	//set gain by isp_bridge
+	if (cxt->ptr_isp_br_ioctrl != NULL) {
 	cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_GAIN_AWB_DATA, &result.gain, NULL);
 	cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_MATCH_AWB_DATA, &result.ct , NULL);
+	}
 
 	pthread_mutex_lock(&cxt->status_lock);
 
@@ -2518,8 +2532,10 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 	}
 	*/
 	//set gain by isp_bridge
+	if (cxt->ptr_isp_br_ioctrl != NULL) {
 	cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_GAIN_AWB_DATA, &result.gain, NULL);
 	cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type , SET_MATCH_AWB_DATA, &result.ct , NULL);
+	}
 
 	pthread_mutex_lock(&cxt->status_lock);
 
@@ -2694,7 +2710,7 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_GET_CT_TABLE20:
 		rtn = _awb_get_flash_ct_table(cxt, out);
 		break;
-		
+
 	case AWB_CTRL_CMD_GET_OTP_INFO:
 		rtn = _awb_get_otp_info(cxt, out);
 		break;
