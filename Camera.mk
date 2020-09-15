@@ -136,6 +136,7 @@ LOCAL_SHARED_LIBRARIES := liblog libxml2
 LOCAL_HEADER_LIBRARIES += libjsoncpp_headers
 LOCAL_SHARED_LIBRARIES += libjsoncpp
 
+
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_SHARED_LIBRARIES += libsensorndkbridge
 endif
@@ -299,6 +300,11 @@ LOCAL_SRC_FILES += \
 endif
 
 LOCAL_SHARED_LIBRARIES += libcamperf
+
+ifeq ($(strip $(CONFIG_DEBUG_MALLOC)),true)
+LOCAL_STATIC_LIBRARIES += libc_malloc_debug_backtrace
+LOCAL_CFLAGS += -DDEBUG_MALLOC_ON
+endif
 
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
