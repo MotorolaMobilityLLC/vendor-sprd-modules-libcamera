@@ -624,6 +624,7 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id,
     switch (id) {
     case CAMERA_PARAM_FOCUS_RECT:
         if (param != NULL) {
+            int focus_size;
             struct cmr_focus_param temp = *(struct cmr_focus_param *)param;
 
             for (loop = 0; loop < temp.zone_cnt; loop++)
@@ -632,8 +633,9 @@ cmr_int cmr_focus_set_param(cmr_handle af_handle, cmr_u32 came_id,
                          temp.zone[loop].start_y, temp.zone[loop].width,
                          temp.zone[loop].height);
 
-            cmr_copy((void *)&af_cxt->focus_zone_param[0], param,
-                     CAMERA_FOCUS_RECT_PARAM_LEN);
+            focus_size = (sizeof(struct cmr_focus_param) > CAMERA_FOCUS_RECT_PARAM_LEN)
+                ? CAMERA_FOCUS_RECT_PARAM_LEN : sizeof(struct cmr_focus_param);
+            cmr_copy((void *)&af_cxt->focus_zone_param[0], param, focus_size);
         }
         break;
     case CAMERA_PARAM_AF_MODE:

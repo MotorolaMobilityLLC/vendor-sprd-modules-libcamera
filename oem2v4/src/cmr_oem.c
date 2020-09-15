@@ -476,7 +476,7 @@ cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
         ret = -EINVAL;
     }
 
-    CMR_LOGI("buffer %s", buffer);
+    CMR_LOGV("buffer %s", buffer);
 
     close(fd);
     *value = atoi(buffer);

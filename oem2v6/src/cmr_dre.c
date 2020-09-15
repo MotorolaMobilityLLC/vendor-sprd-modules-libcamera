@@ -115,12 +115,12 @@ static cmr_int dre_close(cmr_handle class_handle) {
         if (ret) {
             CMR_LOGE("failed to deinit");
         }
+        dre_handle->is_inited = 0;
         sem_post(&dre_handle->sem);
         sem_destroy(&dre_handle->sem);
     }
     CMR_LOGD("deinit success");
 
-    dre_handle->is_inited = 0;
     free(dre_handle);
     class_handle = NULL;
 
@@ -144,10 +144,11 @@ static cmr_int dre_transfer_frame(cmr_handle class_handle,
         return CMR_CAMERA_INVALID_PARAM;
     }
     CMR_LOGI("E ");
-    if (!dre_handle->is_inited) {
-        return ret;
-    }
     sem_wait(&dre_handle->sem);
+    if (!dre_handle->is_inited) {
+        CMR_LOGE("failed to start dre transfer frame");
+        goto exit;
+    }
 
     addr = &in->src_frame.addr_vir;
     width = in->src_frame.size.width;

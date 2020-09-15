@@ -807,7 +807,7 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
                 (int64_t)result1.timestamp - (int64_t)itor2->timestamp;
             if (ns2ms(abs((cmr_s32)diff)) < mMatchTimeThreshold) {
                 *result2 = *itor2;
-                list.erase(itor2);
+                list.erase(itor2++);
                 HAL_LOGD("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
                          result1.frame_number, itor2->frame_number, diff,
                          result1.timestamp, itor2->timestamp);
@@ -850,8 +850,8 @@ bool SprdCamera3MultiBase::matchThreeFrame(hwi_frame_buffer_info_t result1,
                         (int64_t)result1.timestamp - (int64_t)itor3->timestamp;
                     if (ns2ms(abs((cmr_s32)diff2)) < mMatchTimeThreshold) {
                         *result3 = *itor3;
-                        list3.erase(itor3);
-                        list2.erase(itor2);
+                        list3.erase(itor3++);
+                        list2.erase(itor2++);
                         HAL_LOGD("[%d:match:%d],diff2=%llu T1:%llu,T2:%llu",
                                  result1.frame_number, itor3->frame_number,
                                  diff2, result1.timestamp, itor3->timestamp);
@@ -876,7 +876,7 @@ hwi_frame_buffer_info_t *SprdCamera3MultiBase::pushToUnmatchedQueue(
         pushout = new hwi_frame_buffer_info_t;
         List<hwi_frame_buffer_info_t>::iterator i = queue.begin();
         *pushout = *i;
-        queue.erase(i);
+        queue.erase(i++);
     }
     queue.push_back(new_buffer_info);
 
@@ -890,7 +890,7 @@ SprdCamera3MultiBase::pushToQueue(hwi_frame_buffer_info_t new_buffer_info,
         pushout = new hwi_frame_buffer_info_t;
         List<hwi_frame_buffer_info_t>::iterator i = queue->begin();
         *pushout = *i;
-        queue->erase(i);
+        queue->erase(i++);
     }
     queue->push_back(new_buffer_info);
 
