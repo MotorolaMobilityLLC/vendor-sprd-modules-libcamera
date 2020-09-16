@@ -1727,7 +1727,7 @@ void     yuv_scaler_gen_scaler_coef(int16   i_w,                                
     OutScalarCoef_Y_h(scaler_coef, cong_Ycom_hor);
     OutScalarCoef_UV_h(scaler_coef, cong_UVcom_hor);
     OutScalarCoef_Y_v(scaler_coef, cong_Ycom_ver);
-    OutScalarCoef_UV_h(scaler_coef, cong_UVcom_ver);
+    OutScalarCoef_UV_v(scaler_coef, cong_UVcom_ver);
 }
 
 
