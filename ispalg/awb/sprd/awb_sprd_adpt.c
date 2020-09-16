@@ -545,7 +545,10 @@ static cmr_u32 _awb_read_file_for_init(struct awb_ctrl_cxt *cxt, void * param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	int * app_mode = (int*)param;
-	cxt->app_mode = *app_mode;
+	if((*app_mode)!=1)
+		cxt->app_mode = 0;
+	else
+		cxt->app_mode = 1;
 	ISP_LOGV("the current app_mode = %d",cxt->app_mode);
 	if(cxt->init_status == 1) {
 		_awb_read_gain(&(cxt->s_save_awb_param), cxt);
