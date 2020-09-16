@@ -576,9 +576,10 @@ void SprdCamera33dFace::MuxerThread::requestExit() {
  * RETURN     :
  *==========================================================================*/
 void SprdCamera33dFace::MuxerThread::waitMsgAvailable() {
+    int rc = NO_ERROR;
     while (mMsgList.empty()) {
         Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, THREAD_TIMEOUT);
+        CHECK_WAIT_ERROR(mMergequeueMutex,THREAD_TIMEOUT,mMergequeueSignal);
     }
 }
 

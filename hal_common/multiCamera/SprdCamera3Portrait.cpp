@@ -1642,11 +1642,11 @@ void SprdCamera3Portrait::PreviewMuxerThread::requestExit() {
  * RETURN     :
  *==========================================================================*/
 void SprdCamera3Portrait::PreviewMuxerThread::waitMsgAvailable() {
+    int rc = NO_ERROR;
     while (mPreviewMuxerMsgList.empty()) {
         {
             Mutex::Autolock l(mMergequeueMutex);
-            mMergequeueSignal.waitRelative(mMergequeueMutex,
-                                           BOKEH_THREAD_TIMEOUT);
+            CHECK_WAIT_ERROR(mMergequeueMutex,BOKEH_THREAD_TIMEOUT,mMergequeueSignal);
         }
         struct timespec t1;
         clock_gettime(CLOCK_BOOTTIME, &t1);
@@ -1877,10 +1877,10 @@ void SprdCamera3Portrait::DepthMuxerThread::requestExit() {
  * RETURN     :
  *==========================================================================*/
 void SprdCamera3Portrait::DepthMuxerThread::waitMsgAvailable() {
+    int rc = NO_ERROR;
     while (mDepthMuxerMsgList.empty()) {
         Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex,
-                                       BOKEH_THREAD_TIMEOUT * 2);
+        CHECK_WAIT_ERROR(mMergequeueMutex,BOKEH_THREAD_TIMEOUT * 2,mMergequeueSignal);
     }
 }
 
@@ -2457,9 +2457,10 @@ void SprdCamera3Portrait::BokehCaptureThread::requestExit() {
  *==========================================================================*/
 void SprdCamera3Portrait::BokehCaptureThread::waitMsgAvailable() {
     // TODO:what to do for timeout
+    int rc = NO_ERROR;
     while (mCaptureMsgList.empty() || mPortrait->mHdrSkipBlur) {
         Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, BOKEH_THREAD_TIMEOUT);
+        CHECK_WAIT_ERROR(mMergequeueMutex,BOKEH_THREAD_TIMEOUT,mMergequeueSignal);
     }
 }
 
@@ -3843,7 +3844,7 @@ int SprdCamera3Portrait::processCaptureRequest(
             HAL_LOGV("mPendingRequest=%d, mMaxPendingCount=%d", mPendingRequest,
                      mMaxPendingCount);
             while (mPendingRequest >= mMaxPendingCount) {
-                mRequestSignal.waitRelative(mPendingLock, PENDINGTIME);
+                CHECK_WAIT_ERROR(mPendingLock,PENDINGTIME,mRequestSignal);
                 if (pendingCount > (PENDINGTIMEOUT / PENDINGTIME)) {
                     HAL_LOGD("m_PendingRequest=%d", mPendingRequest);
                     rc = -ENODEV;

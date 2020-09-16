@@ -929,9 +929,10 @@ void SprdCamera3OpticsZoomV1::TWPreviewMuxerThread::requestExit() {
  * RETURN     :
  *==========================================================================*/
 void SprdCamera3OpticsZoomV1::TWPreviewMuxerThread::waitMsgAvailable() {
+    int rc = NO_ERROR;
     while (mPreviewMuxerMsgList.empty()) {
         Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, THREAD_TIMEOUT);
+        CHECK_WAIT_ERROR(mMergequeueMutex,THREAD_TIMEOUT,mMergequeueSignal);
     }
 }
 /*===========================================================================
@@ -1115,9 +1116,10 @@ void SprdCamera3OpticsZoomV1::TWCaptureThread::requestExit() {
  * RETURN     :
  *==========================================================================*/
 void SprdCamera3OpticsZoomV1::TWCaptureThread::waitMsgAvailable() {
+    int rc = NO_ERROR;
     while (mCaptureMsgList.empty()) {
         Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, THREAD_TIMEOUT);
+        CHECK_WAIT_ERROR(mMergequeueMutex,THREAD_TIMEOUT,mMergequeueSignal);
     }
 }
 /*===========================================================================

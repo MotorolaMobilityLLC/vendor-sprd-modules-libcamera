@@ -70,6 +70,14 @@ namespace sprdcamera {
 #undef MAX_MULTI_NUM_BUFFER
 #define MAX_MULTI_NUM_BUFFER 4
 
+#define CHECK_WAIT_ERROR(x,y,z)                                                         \
+do{                                                                                     \
+    rc = z.waitRelative(x,y);                                                           \
+    if(rc != NO_ERROR)                                                                  \
+    {                                                                                   \
+        HAL_LOGE("Error waiting");                                                      \
+    }                                                                                   \
+}while(0)
 typedef signed int MInt32;
 typedef unsigned int MUInt32;
 typedef enum { STATE_NOT_READY, STATE_IDLE, STATE_BUSY } currentStatus;
