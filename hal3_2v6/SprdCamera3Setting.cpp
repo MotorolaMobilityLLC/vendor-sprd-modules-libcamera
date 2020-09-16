@@ -2027,7 +2027,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
     // 1 back blur or bokeh version
     property_get("persist.vendor.cam.ba.blur.version", prop, "0");
-    if (!dualPropSupport || hasRealCameraUnuseful == true) {
+    if (!dualPropSupport) {
         available_cam_features.add(0);
     } else if (atoi(prop) == 1) {
         available_cam_features.add(0);
@@ -2084,9 +2084,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     }
 
     // 7 back ultra wide enable
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else if (sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE,
+    if (sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE,
                                    SNS_FACE_BACK) != SENSOR_ID_INVALID) {
         available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.warp",
@@ -2104,21 +2102,13 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
     // 9 back portrait mode
 #ifdef CONFIG_PORTRAIT_SUPPORT
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.dual.portrait",
                                "persist.vendor.cam.ba.portrait.enable"));
-    }
 #else
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.single.portrait",
                                "persist.vendor.cam.ba.portrait.enable"));
-    }
 #endif
 
     // 10 front portrait mode
@@ -2146,13 +2136,9 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 #endif
 
     // 13 multi camera superwide & wide & tele
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.OpticsZoom",
                                "persist.vendor.cam.multi.camera.enable"));
-    }
 
     // 14 camera back high resolution definition mode
     property_get("persist.vendor.cam.back.high.resolution.mode", prop, "NULL");
@@ -2182,27 +2168,15 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
     // 17 camera infrared
     property_get("persist.vendor.cam.infrared.enable", prop, "0");
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(atoi(prop));
-    }
+    available_cam_features.add(atoi(prop));
 
     // 18 camera macrophoto
     property_get("persist.vendor.cam.macrophoto.enable", prop, "0");
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(atoi(prop));
-    }
+    available_cam_features.add(atoi(prop));
 
     // 19 camera macrovideo
     property_get("persist.vendor.cam.macrovideo.enable", prop, "0");
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(atoi(prop));
-    }
+    available_cam_features.add(atoi(prop));
 
     // 20 camera front high resolution definition mode
     property_get("persist.vendor.cam.front.high.resolution.mode", prop, "NULL");
@@ -2236,35 +2210,22 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
         available_cam_features.add(0);
     }
     // 23 fov fusion
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.wtfusion.pro",
                                "persist.vendor.cam.fov.fusion.enable"));
-    }
-
     // 24 nightshot pro
     available_cam_features.add(resetFeatureStatus(
         "persist.vendor.cam.ip.night", "persist.vendor.cam.night.pro.enable"));
 
 // 25 camera lightportrait_ba
 #ifdef CONFIG_PORTRAIT_SUPPORT
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.light.dual.portrait",
                                "persist.vendor.cam.lightportrait.ba.enable"));
-    }
 #else
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.light.single.portrait",
                                "persist.vendor.cam.lightportrait.ba.enable"));
-    }
 #endif
 
     // 26 camera lightportrait_fr
@@ -2277,30 +2238,29 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
         "persist.vendor.cam.ip.fdr", "persist.vendor.cam.fdr.enable"));
 
     // 28 dual view video
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.dualview.pro",
                                "persist.vendor.cam.dual.view.video.enable"));
-    }
 
-#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
     // 29 portrait scene mode
-    HAL_LOGD("pbrb_enable=%d", atoi(prop));
-    property_get("persist.vendor.cam.wechat.portrait.scene.enable", prop, "2");
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    char strRunType[PROPERTY_VALUE_MAX];
+    char debugSwitch[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
+    property_get("ro.boot.lwfq.type", strRunType , "-1");
+    property_get("persist.vendor.cam.portrait.scene.debug", debugSwitch , "0");
+    if (atoi(debugSwitch) != 0){
+        available_cam_features.add(1);
+        HAL_LOGD("portraitscene on");
     } else {
-        if (atoi(prop) == 0) {
-            property_set("persist.vendor.cam.wechat.portrait.scene.enable", "1");
-            property_set("persist.vendor.cam.ip.wechat.back.replace", "0");
-            property_get("ro.boot.auto.efuse", prop, "0");
-            if (strcmp(prop,"T618")){
-                property_set("persist.vendor.cam.wechat.portrait.scene.enable", "2");
-                property_set("persist.vendor.cam.ip.wechat.back.replace", "2");
-            }
+        if (!strcmp("1", strRunType)) {
+            property_set("persist.vendor.cam.ip.portrait.back.replace","2");
+            property_set("persist.vendor.cam.portrait.scene.enable","2");
+        } else if(atoi(prop) == 0){
+            property_set("persist.vendor.cam.wechat.portrait.scene.enable","1");
+            property_set("persist.vendor.cam.ip.wechat.back.replace","0");
         }
+
         available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.portrait.back.replace",
                                "persist.vendor.cam.portrait.scene.enable"));
@@ -2310,13 +2270,9 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 #endif
 
     // 30 higher micro photo
-    if (hasRealCameraUnuseful == true) {
-        available_cam_features.add(0);
-    } else {
-        available_cam_features.add(
+    available_cam_features.add(
             resetFeatureStatus("persist.vendor.cam.ip.macro.photo",
                                "persist.vendor.cam.higher.macrophoto.enable"));
-    }
 
     // 31 eis_pro video
     available_cam_features.add(
@@ -2341,7 +2297,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
         available_cam_features.size();
 
     ALOGV("available_cam_features=%d", available_cam_features.size());
-
+    getCameraIPInited();
     property_set("persist.vendor.cam.ip.switch.on", "0");
     HAL_LOGI("available_cam_features=%d",
              s_setting[cameraId].sprddefInfo.sprd_cam_feature_list_size);
