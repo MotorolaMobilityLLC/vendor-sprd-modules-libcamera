@@ -65,7 +65,15 @@ LOCAL_SRC_FILES := $(call all-cpp-files-under,.)
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := CameraIT
 
-# add IT file to unisoc units tool
-
 
 include $(BUILD_EXECUTABLE)
+
+# Add Camera IT to UNISOC Test Suite (UNITS)
+include $(CLEAR_VARS)
+LOCAL_MODULE := CameraIT.config
+LOCAL_MODULE_CLASS := DATA
+LOCAL_MODULE_TAGS := optional
+LOCAL_PREBUILT_MODULE_FILE := $(LOCAL_PATH)/CameraIT.xml
+LOCAL_MODULE_PATH := $(TARGET_OUT_TESTCASES)/CameraIT
+LOCAL_COMPATIBILITY_SUITE := units
+include $(BUILD_PREBUILT)

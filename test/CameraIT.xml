@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2020 UNISOC
+     This XML is for UNISOC Test Suite (UNITS).
+-->
+<configuration description="CemeraIT test">
+    <option name="test-tag" value="CameraIT_tests" />
+    <test class="com.android.camerait.tests.UnisocCameraIntegrationTests" >
+        <option name="test-command" value="cd /vendor/bin/ &amp;&amp; ./CameraIT json1_default all" />
+    </test>
+    <result_reporter class="com.android.tradefed.result.ConsoleResultReporter" />
+    <result_reporter class="com.android.tradefed.result.XmlResultReporter" />
+</configuration>
+

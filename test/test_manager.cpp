@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
         }
     }
 exit:
-    IT_LOGI("Results summary for test-tag 'cameraIT': %d Tests [%d Passed %d Failed]",
+    IT_LOGI("Results summary for 'cameraIT': %d Tests [%d Passed %d Failed]",
             p_TestManager->m_PassedNum+p_TestManager->m_FailedNum,
             p_TestManager->m_PassedNum,p_TestManager->m_FailedNum);
 
