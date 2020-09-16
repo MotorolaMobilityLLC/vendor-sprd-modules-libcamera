@@ -3502,7 +3502,10 @@ void SprdCamera3Blur::CaptureThread::waitMsgAvailable() {
     // TODO:what to do for timeout
     while (mCaptureMsgList.empty()) {
         Mutex::Autolock l(mMergequeueMutex);
-        mMergequeueSignal.waitRelative(mMergequeueMutex, BLUR_THREAD_TIMEOUT);
+
+        if(mMergequeueSignal.waitRelative(mMergequeueMutex, BLUR_THREAD_TIMEOUT)) {
+             HAL_LOGD("Operation timed out");
+        }
     }
 }
 
