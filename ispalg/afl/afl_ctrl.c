@@ -176,7 +176,6 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	cmr_u32 i = 0;
 	cmr_u32 flag = 0;
 	cmr_s32 *addr = NULL;
-	cmr_s32 *addr_region = NULL;
 	cmr_u32 normal_50hz_thrd = 0;
 	cmr_u32 lowlight_50hz_thrd = 0;
 	cmr_u32 normal_60hz_thrd = 0;
@@ -186,17 +185,13 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	struct afl_ev_setting_t ev_setting = {0};
 
 	#define AFL_BATCH_SIZE_GLB ((80)*24)
-	#define AFL_BATCH_SIZE_REGION (482*24)
 	#define AFL_GLB_ROW (80)
 	#define AFL_RIG_ROW (481)
 
 	#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	char data[16];
-        cmr_u32 j = 0;
 	cmr_s32 *out = NULL;
-	cmr_s32 *out_region = NULL;
 	cmr_u32 k=0;
-	cmr_u32 m = 0;
 	cmr_u32 fm=0;
 	#endif
 
@@ -242,7 +237,6 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	}
 
 	addr = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr;
-	addr_region = (cmr_s32 *) (cmr_uint) in_ptr->vir_addr_region;
 
 #if defined(CONFIG_ISP_2_5)
 	cmr_s32 afl_stat_tmp[2] = { 0 };
@@ -274,53 +268,6 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 		}
 	}
 	addr = out;
-	
-	/*parsing raw afl data (afl region data)*/
-	out_region = (cmr_s32 *)malloc(AFL_BATCH_SIZE_REGION*cxt->frame_num);
-	int tmp[8];
-	if(out_region == NULL) {
-		ISP_LOGE("fail to malloc afl output buffer");
-		rtn = ISP_ERROR;
-		goto exit;
-	}
-	for (fm = 0; fm < cxt->frame_num; fm++) {
-		for(i = 0; i< (AFL_RIG_ROW + 1); i++) {
-			if (i< (AFL_RIG_ROW - 1)) {
-				//128bit/16byte in one line, and "addr" is 32bit ptr 
-				memcpy(data, addr_region + AFL_RIG_ROW * 16/4 * fm + i * 16/4, 16);
-				tmp[0] = ((data[1] & 0x7f) <<8) | (data[0] & 0xff);
-				tmp[1] = ((data[3] & 0x3f) <<9) | ((data[2] & 0xff) <<1) | ((data[1] >>7) & 1);
-				out_region[m++] = (tmp[1] <<16) | tmp[0];
-
-				tmp[2] = ((data[5] & 0x1f) <<10) | ((data[4] & 0xff) <<2) | ((data[3] >> 6) & 0x3);
-				tmp[3] = ((data[7] & 0xf)  <<11) | ((data[6] & 0xff) <<3) | ((data[5] >>5) & 0x7);
-				out_region[m++] = (tmp[3] << 16) | tmp[2];
-
-				tmp[4] = ((data[9] & 0x7)  <<12) | ((data[8] & 0xff)  <<4) | ((data[7] >>4) & 0xf);
-				tmp[5] = ((data[11] & 0x3) <<13) | ((data[10] & 0xff) <<5) | ((data[9] >>3) & 0x1f);
-				out_region[m++] = (tmp[5] <<16) | tmp[4];
-
-				tmp[6] = ((data[13] & 0x1) <<14) | ((data[12] & 0xff) <<6) | ((data[11] >>2) & 0x3f);
-				tmp[7] = ((data[14] & 0xff) <<7) | ((data[13] >> 1) & 0x7f);
-				out_region[m++] = (tmp[7] <<16) | tmp[6];
-			} else if (i == (AFL_RIG_ROW - 1)) {
-				memcpy(data, addr_region + AFL_RIG_ROW * 16/4 * fm + i * 16/4, 16);
-				tmp[0] = ((data[2] & 0xff) <<16) | ((data[1] & 0xff) <<8) | (data[0] & 0xff);
-				tmp[1] = ((data[5] & 0xff) <<16) | ((data[4] & 0xff) <<8) | (data[3] & 0xff);
-				tmp[2] = ((data[8] & 0xff) <<16) | ((data[7] & 0xff) <<8) | (data[6] & 0xff);
-				tmp[3] = ((data[11] & 0xff) <<16) | ((data[10] & 0xff) <<8) | (data[9] & 0xff);
-			} else if (i == AFL_RIG_ROW){
-				tmp[4] = ((data[2] & 0xff) <<16) | ((data[1] & 0xff) <<8) | (data[0] & 0xff);
-				tmp[5] = ((data[5] & 0xff) <<16) | ((data[4] & 0xff) <<8) | (data[3] & 0xff);
-				tmp[6] = ((data[8] & 0xff) <<16) | ((data[7] & 0xff) <<8) | (data[6] & 0xff);
-				tmp[7] = ((data[11] & 0xff) <<16) | ((data[10] & 0xff) <<8) | (data[9] & 0xff);
-				for (j = 0; j <8; j++) {
-					out_region[m+j] = (tmp[j] & 0xfff) | (((tmp[j] >> 12) & 0xfff) <<16);
-				}
-			}
-		}
-	}
-	addr_region = out_region;
 #endif
 
 	if (1 == in_ptr->pm_param_num) {
@@ -379,10 +326,10 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 
 		for (i = 0; i < cxt->frame_num; i++) {
 			if (ev_setting.cur_flicker) {
-				flag = AFL_Process(cxt->afl_handle, addr, addr_region, 0, thr, (cmr_s32 *)ae_stat_ptr, ev_setting);
+				flag = AFL_Process(cxt->afl_handle, addr, 0, thr, (cmr_s32 *)ae_stat_ptr, ev_setting);
 				ISP_LOGV("flag %d 60Hz, max_fps:%d, app_mode:%d, cameraId:%d", flag, ev_setting.max_fps, ev_setting.app_mode, ev_setting.cameraId);
 			} else {
-				flag = AFL_Process(cxt->afl_handle, addr, addr_region, 1, thr, (cmr_s32 *)ae_stat_ptr, ev_setting);
+				flag = AFL_Process(cxt->afl_handle, addr, 1, thr, (cmr_s32 *)ae_stat_ptr, ev_setting);
 				ISP_LOGV("flag %d 50HZ, max_fps:%d, app_mode:%d, cameraId:%d", flag, ev_setting.max_fps, ev_setting.app_mode, ev_setting.cameraId);
 			}
 			if (flag)
@@ -427,8 +374,6 @@ exit:
 #if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	if (out)
 		free(out);
-	if (out_region)
-		free(out_region);
 #endif
 	ISP_LOGV("done %ld", rtn);
 	return rtn;
@@ -519,7 +464,6 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 	cxt->start_col = 0;
 	cxt->end_col = input_ptr->size.w - 1;
 	cxt->vir_addr = (cmr_int) input_ptr->vir_addr;
-	cxt->vir_addr_region = (cmr_int) input_ptr->vir_addr_region;
 	cxt->afl_set_cb = input_ptr->afl_set_cb;
 	cxt->caller_handle = input_ptr->caller_handle;
 	cxt->version = input_ptr->version;

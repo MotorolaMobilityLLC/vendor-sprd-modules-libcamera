@@ -53,7 +53,7 @@ extern "C" {
 int AFL_GetVersion(struct afl_version_t *o_version);
 int AFL_CreateHandle(afl_handle_t *handle);
 int AFL_DeleteHandle(afl_handle_t *handle);
-int AFL_Process(afl_handle_t handle, int *debug_sat_img_H_scaling, int *debug_sat_img_H_scaling_region, int exposure_time, cmr_s32 *thr, int *window, struct afl_ev_setting_t ev_setting);
+int AFL_Process(afl_handle_t handle, int *debug_sat_img_H_scaling, int exposure_time, cmr_s32 *thr, int *window, struct afl_ev_setting_t ev_setting);
 
 #ifdef __cplusplus
 }

@@ -245,7 +245,6 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_u32 cam_4in1_mode;
 		cmr_u32 max_fps;
 		cmr_u32 camera_id;
-		cmr_uint vir_addr_region;
 	};
 
 	struct isp_antiflicker_param {
