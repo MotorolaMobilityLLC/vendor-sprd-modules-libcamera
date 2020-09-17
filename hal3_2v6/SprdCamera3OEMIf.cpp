@@ -2304,34 +2304,7 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
         fps_param.video_mode = 0;
-
-        char fps_prop[PROPERTY_VALUE_MAX];
-        property_get("ro.vendor.camera.dualcamera_fps", fps_prop, "19");
-
-        // TBD: check why 20fps, not 30fps
-        if ((mMultiCameraMode == MODE_BOKEH && mSprdAppmodeId != -1) ||
-            mMultiCameraMode == MODE_3D_CALIBRATION ||
-            mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN ||
-            mMultiCameraMode == MODE_REFOCUS ||
-            mMultiCameraMode == MODE_RANGE_FINDER ||
-            mMultiCameraMode == MODE_TUNING ||
-            mMultiCameraMode == MODE_DUAL_FACEID_REGISTER ||
-            mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) {
-            fps_param.min_fps = atoi(fps_prop);
-            fps_param.max_fps = atoi(fps_prop);
-        }
-
-        // to set preview fps by setprop
-        char prop[PROPERTY_VALUE_MAX];
-        int val_max = 0;
-        int val_min = 0;
-        property_get("persist.vendor.cam.preview.fps", prop, "0");
-        if (atoi(prop) != 0) {
-            val_min = atoi(prop) % 100;
-            val_max = atoi(prop) / 100;
-            fps_param.min_fps = val_min > 5 ? val_min : 5;
-            fps_param.max_fps = val_max;
-        }
+        setCamPreviewFps(fps_param);
     }
 
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, (cmr_uint)mIsSlowmotion);
@@ -2341,6 +2314,35 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
     HAL_LOGD("camera id= %d, min_fps=%ld, max_fps=%ld, video_mode=%ld, mIsSlowmotion:%d",
              mCameraId, fps_param.min_fps, fps_param.max_fps,
              fps_param.video_mode, mIsSlowmotion);
+}
+
+void SprdCamera3OEMIf::setCamPreviewFps(struct cmr_range_fps_param &fps_param) {
+    char fps_prop[PROPERTY_VALUE_MAX];
+    property_get("ro.vendor.camera.dualcamera_fps", fps_prop, "19");
+
+    // TBD: check why 20fps, not 30fp
+    if ((mMultiCameraMode == MODE_BOKEH && mSprdAppmodeId != -1) ||
+        mMultiCameraMode == MODE_3D_CALIBRATION ||
+        mMultiCameraMode == MODE_REFOCUS ||
+        mMultiCameraMode == MODE_RANGE_FINDER ||
+        mMultiCameraMode == MODE_TUNING ||
+        mMultiCameraMode == MODE_DUAL_FACEID_REGISTER ||
+        mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) {
+        fps_param.min_fps = atoi(fps_prop);
+        fps_param.max_fps = atoi(fps_prop);
+    }
+
+    // to set preview fps by setprop
+    char prop[PROPERTY_VALUE_MAX];
+    int val_max = 0;
+    int val_min = 0;
+    property_get("persist.vendor.cam.preview.fps", prop, "0");
+    if (atoi(prop) != 0) {
+        val_min = atoi(prop) % 100;
+        val_max = atoi(prop) / 100;
+        fps_param.min_fps = val_min > 5 ? val_min : 5;
+        fps_param.max_fps = val_max;
+    }
 }
 
 void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {

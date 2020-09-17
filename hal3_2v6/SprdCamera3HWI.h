@@ -135,6 +135,7 @@ class SprdCamera3HWI {
     int resetVariablesToDefault();
     void getHighResZslSetting(void);
     void checkHighResZslSetting(uint32_t *ambient_highlight);
+    uint8_t getReqCapureIntent(uint8_t capIntent);
   public:
     SprdCamera3Setting *mSetting;
     uint32_t mFrameNum;

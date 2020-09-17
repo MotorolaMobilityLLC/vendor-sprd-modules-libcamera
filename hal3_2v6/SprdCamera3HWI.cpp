@@ -1173,6 +1173,48 @@ void SprdCamera3HWI::checkHighResZslSetting(uint32_t *ambient_highlight) {
             *ambient_highlight = 1;
 }
 
+uint8_t SprdCamera3HWI::getReqCapureIntent(uint8_t capIntent) {
+    uint8_t captureIntent = capIntent;
+    // for cts:
+    // testMandatoryOutputCombinations, testSingleCapture
+    if (mStreamConfiguration.num_streams == 1 &&
+        mStreamConfiguration.snapshot.status == CONFIGURED) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
+    } else if (mStreamConfiguration.num_streams == 1 &&
+               mStreamConfiguration.preview.status == CONFIGURED) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+    } else if (mStreamConfiguration.num_streams == 1 &&
+               mStreamConfiguration.yuvcallback.status == CONFIGURED) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+    } else if (mStreamConfiguration.num_streams == 2 &&
+               mStreamConfiguration.preview.status == CONFIGURED &&
+               mStreamConfiguration.yuvcallback.status == CONFIGURED) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+    } else if (mStreamConfiguration.num_streams == 2 &&
+               mStreamConfiguration.preview.status == CONFIGURED &&
+               mStreamConfiguration.snapshot.status == CONFIGURED &&
+               captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) {
+        //keep original captureIntent for sharkle
+#ifndef CONFIG_ISP_2_3
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+#endif
+    } else if (mStreamConfiguration.num_streams == 3 &&
+               mStreamConfiguration.preview.status == CONFIGURED &&
+               mStreamConfiguration.yuvcallback.status == CONFIGURED &&
+               mStreamConfiguration.snapshot.status == CONFIGURED) {
+        if(!mOEMIf->isYuvSensor()) {
+            captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
+        }
+    } else if (mStreamConfiguration.num_streams == 3 &&
+               mStreamConfiguration.preview.status == CONFIGURED &&
+               mStreamConfiguration.video.status == CONFIGURED &&
+               mStreamConfiguration.snapshot.status == CONFIGURED &&
+               captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
+        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
+    }
+    return captureIntent;
+}
+
 int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     ATRACE_CALL();
 
@@ -1243,45 +1285,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->setJpegOrientation(jpegOrientation);
         }
     }
-    // for cts:
-    // testMandatoryOutputCombinations, testSingleCapture
-    if (mStreamConfiguration.num_streams == 1 &&
-        mStreamConfiguration.snapshot.status == CONFIGURED) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
-    } else if (mStreamConfiguration.num_streams == 1 &&
-               mStreamConfiguration.preview.status == CONFIGURED) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
-    } else if (mStreamConfiguration.num_streams == 1 &&
-               mStreamConfiguration.yuvcallback.status == CONFIGURED) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
-    } else if (mStreamConfiguration.num_streams == 2 &&
-               mStreamConfiguration.preview.status == CONFIGURED &&
-               mStreamConfiguration.yuvcallback.status == CONFIGURED) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
-    } else if (mStreamConfiguration.num_streams == 2 &&
-               mStreamConfiguration.preview.status == CONFIGURED &&
-               mStreamConfiguration.snapshot.status == CONFIGURED &&
-               captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD) {
-        //keep original captureIntent for sharkle
-#ifndef CONFIG_ISP_2_3
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
-#endif
-    } else if (mStreamConfiguration.num_streams == 3 &&
-               mStreamConfiguration.preview.status == CONFIGURED &&
-               mStreamConfiguration.yuvcallback.status == CONFIGURED &&
-               mStreamConfiguration.snapshot.status == CONFIGURED) {
-
-        if(!mOEMIf->isYuvSensor()) {
-            captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW;
-        }
-
-    } else if (mStreamConfiguration.num_streams == 3 &&
-               mStreamConfiguration.preview.status == CONFIGURED &&
-               mStreamConfiguration.video.status == CONFIGURED &&
-               mStreamConfiguration.snapshot.status == CONFIGURED &&
-               captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
-    }
+    captureIntent = getReqCapureIntent(captureIntent);
 
 	HAL_LOGV("captureIntent %d ,num_streams = %d, prv status %d, snap status %d, vid status %d, yuvcallbackk status %d",
 			captureIntent,

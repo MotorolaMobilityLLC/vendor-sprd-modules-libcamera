@@ -536,6 +536,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void deinitCapture(bool isPreAllocCapMem);
     int setPreviewParams();
     void setPreviewFps(bool isRecordMode);
+    void setCamPreviewFps(struct cmr_range_fps_param &fps_param);
     int setSnapshotParams();
     bool returnPreviewFrame(struct camera_frame_type *frame);
     bool isJpegWithPreview();
