@@ -908,8 +908,9 @@ int SprdCamera3HWI::configureStreams(
 
 #if defined(CONFIG_ISP_2_3)
     mOEMIf->setOriginalPictureSize(capture_size.width,capture_size.height);
-   //do aligment for sharkle due to hardware diff
-    if (capture_size.height % 16 != 0) {
+    // do aligment for sharkle due to hardware diff
+
+    if (capture_size.height % 16 != 0 && video_size.width != capture_size.width) {
             capture_size.height = capture_size.height + 16 - capture_size.height % 16;
     }
 #endif
@@ -1737,6 +1738,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mOEMIf->setCaptureReprocessMode(true, stream->width,
                                             stream->height);
         }
+
         ret = mRegularChan->setInputBuff(input->buffer);
         if (ret) {
             HAL_LOGE("setInputBuff failed %p (%d)", input->buffer, frameNumber);
