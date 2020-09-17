@@ -2093,7 +2093,7 @@ start_parse:
 
 				if (is_ae3x) {
 					ISP_LOGD("is ae3x,  datap %p, data size = %d + %d + %d\n",
-						fix_ae_datap, src_header[j].size, ae_end_len, ae_end_len);
+						fix_ae_datap, src_header[j].size, add_ae_len, ae_end_len);
 					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len),
 						fix_ae_datap, add_ae_len);
 					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len + add_ae_len),

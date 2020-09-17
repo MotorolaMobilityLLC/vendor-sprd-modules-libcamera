@@ -31,10 +31,6 @@
 #define ISP_PM_BUF_NUM     10
 #define ISP_PM_MAGIC_FLAG  0xFFEE5511
 
-#define AE_TUNNING_RESULT_BLOCK1 "/data/vendor/cameraserver/result_common_block1.bin"//feifan
-#define AE_TUNNING_RESULT_BLOCK2 "/data/vendor/cameraserver/result_common_block2.bin"//feifan
-#define AE_TUNNING_RESULT_FIX "/data/vendor/cameraserver/result_common_fix.bin"//feifan
-
 char nr_param_name[ISP_BLK_TYPE_MAX][32] = {
 	"pre_wavelet",
 	"bpc",
@@ -656,8 +652,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	cmr_u32 add_ae_len = 0, ae_end_len = 16,add_awb_len = 0, add_lnc_len = 0;
 	cmr_u32 extend_offset = 0;
 	cmr_u32 version_id = 0;
-	cmr_u32 is_ae3x = 0;	
-	FILE *pf = NULL;
+	cmr_u32 is_ae3x = 0;
 
 	struct sensor_raw_fix_info *fix_data_ptr = PNULL;
 	struct sensor_nr_fix_info *nr_fix_ptr = PNULL;
@@ -788,44 +783,21 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 
 			switch (src_header[j].block_id) {
 			case ISP_BLK_AE_NEW:{
-					pf = fopen(AE_TUNNING_RESULT_BLOCK1, "wb");
-				if (pf) {
-					if(dst_data_ptr){
-						fwrite(dst_data_ptr, 325112, 1, pf);
-					}
-					fclose(pf);
-				}
-				
-				
-				pf = fopen(AE_TUNNING_RESULT_FIX, "wb");
-				if (pf) {
-					//if(fix_data_ptr->ae3x.ae_param.ae){
-						fwrite(fix_data_ptr->ae3x.ae_param.ae, add_ae_len, 1, pf);
-					//}
-					fclose(pf);
-				}
-				
-					extend_offset += add_ae_len;
-					dst_header[j].size = src_header[j].size + add_ae_len;
+				extend_offset += add_ae_len;
+				dst_header[j].size = src_header[j].size + add_ae_len;
 
-					if(is_ae3x){
-						ISP_LOGD("is ae3x,  datap %p, data size = %d + %d + %d\n",fix_ae_datap, src_header[j].size, ae_end_len, ae_end_len);
-						memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len),fix_ae_datap, add_ae_len);
-						memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len + add_ae_len),(void *)(src_data_ptr + src_header[j].size - ae_end_len),ae_end_len);						
-					}else{
-						memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001)), (void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
-						memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001) + add_ae_len),
-					     	  (void *)(src_data_ptr + sizeof(struct ae_param_tmp_001)), (src_header[j].size - sizeof(struct ae_param_tmp_001)));
-						}
-					
-					if (pf) {
-					if(dst_data_ptr){
-						fwrite(dst_data_ptr, 325112, 1, pf);
-					}
-					fclose(pf);
-				}
+				if(is_ae3x) {
+					ISP_LOGD("is ae3x,  datap %p, data size = %d + %d + %d\n",
+						fix_ae_datap, src_header[j].size, add_ae_len, ae_end_len);
+					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len),fix_ae_datap, add_ae_len);
+					memcpy((void *)(dst_data_ptr + src_header[j].size - ae_end_len + add_ae_len),(void *)(src_data_ptr + src_header[j].size - ae_end_len),ae_end_len);
+				} else {
+					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001)), (void *)(fix_data_ptr->ae.ae_param.ae), add_ae_len);
+					memcpy((void *)(dst_data_ptr + sizeof(struct ae_param_tmp_001) + add_ae_len),
+						(void *)(src_data_ptr + sizeof(struct ae_param_tmp_001)), (src_header[j].size - sizeof(struct ae_param_tmp_001)));
 				}
 				break;
+			}
 			case ISP_BLK_2D_LSC:{
 					extend_offset += add_lnc_len;
 					dst_header[j].size = src_header[j].size + add_lnc_len;
