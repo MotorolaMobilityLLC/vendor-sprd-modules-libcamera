@@ -161,6 +161,7 @@ FBAPI(int) FB_FaceBeauty_YUV420SP(FB_BEAUTY_HANDLE hFB,
                                   FB_PORTRAITMASK *imageMask);
 
 
+
 #ifdef  __cplusplus
 }
 #endif
