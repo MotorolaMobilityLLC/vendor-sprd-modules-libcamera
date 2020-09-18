@@ -1722,6 +1722,7 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
         float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
               zoomHeight = 0;
         struct sprd_img_rect scalerCrop;
+        cmr_bzero(&scalerCrop, sizeof(scalerCrop));
         CMR_LOGV("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
                  frame_param->width, frame_param->height, sx, sy, ex, ey);
         {
@@ -1752,9 +1753,11 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
                     src.width = face_area->frame_width;
                     src.height = face_area->frame_height;
 
-                    dst = camera_apply_rect_and_ratio(
+                    if (src.height != 0) {
+                        dst = camera_apply_rect_and_ratio(
                         info->pixel_size, info->crop_region, src,
                         (float)src.width / (float)src.height);
+                    }
 
                     CMR_LOGV("fix rect from %u %u %u %u to %u %u %u %u",
                              scalerCrop.x, scalerCrop.y, scalerCrop.w,
