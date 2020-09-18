@@ -3290,7 +3290,7 @@ static int prev_zsl_frame_handle_wide(struct prev_handle *handle,
     int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
     cmr_u32 is_fdr = 0;
-    cmr_uint ultra_wide_index;
+    cmr_uint ultra_wide_index = 0;
 
     prev_cxt = &handle->prev_cxt[camera_id];
     ret = prev_get_src_ultra_wide_buffer(prev_cxt, data, &ultra_wide_index);
@@ -3359,7 +3359,7 @@ static int prev_zsl_frame_hangle_rot(struct prev_handle *handle,
 
     int ret = CMR_CAMERA_SUCCESS;
     struct prev_context *prev_cxt = NULL;
-    cmr_uint rot_index;
+    cmr_uint rot_index = 0;
 
     prev_cxt = &handle->prev_cxt[camera_id];
     ret = prev_get_src_rot_buffer(prev_cxt, data, &rot_index);
