@@ -1853,7 +1853,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 notify_msg.message.shutter.timestamp = capture_time;
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->bNotified = true;
-                HAL_LOGD("drop msg frame_num = %d, timestamp = %" PRId64,
+                HAL_LOGD("drop msg frame_num = %d, timestamp = 0x%llx",
                          i->frame_number, capture_time);
 
                 SENSOR_Tag sensorInfo;
@@ -1911,8 +1911,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 notify_msg.message.shutter.timestamp = capture_time;
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->bNotified = true;
-                HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = %" PRId64,
-                         mCameraId, i->frame_number, notify_msg.message.shutter.timestamp);
+                HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = 0x%llx",
+                         mCameraId, i->frame_number,
+                         notify_msg.message.shutter.timestamp);
 
                 SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;

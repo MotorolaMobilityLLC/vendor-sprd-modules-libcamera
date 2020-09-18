@@ -995,8 +995,9 @@ cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
               buf_cfg->start_buf_id,
               buf_cfg->monoboottime);
         for (i = 0; i< 6; i++) {
-            CMR_LOGD("for transfer, chn_id=%d, i=%d, fd=%d addr:0x%lx, 0x%lx, 0x%lx, addr_vir:0x%lx, 0x%lx, 0x%lx",
-                 buf_cfg->channel_id, i, buf_cfg->fd[i],
+            CMR_LOGD("for transfer, chn_id=%d, i=%d, fd=0x%x addr:"
+                     "0x%lx, 0x%lx, 0x%lx, addr_vir:0x%lx, 0x%lx, 0x%lx",
+                 buf_cfg->channel_id, i, (cmr_u32)buf_cfg->fd[i],
                  buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
                  buf_cfg->addr[i].addr_v,
                  buf_cfg->addr_vir[i].addr_y, buf_cfg->addr_vir[i].addr_u,

@@ -4091,10 +4091,10 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
 
 
     ATRACE_BEGIN("video_frame");
-    HAL_LOGD("record:mCameraId=%d,fd=0x%x,vir=0x%lx,num=%d,time=%" PRId64
-             ",rec=%" PRId64,
-             mCameraId, frame->fd, buff_vir, frame_num,
+    HAL_LOGD("mCameraId=%d,fd=0x%x,vir=0x%lx,num=%d,time=0x%llx,rec=0x%llx",
+             mCameraId, (cmr_u32)frame->fd, buff_vir, frame_num,
              buffer_timestamp, mSlowPara.rec_timestamp);
+
     if (frame->type == PREVIEW_VIDEO_FRAME) {
         if (mVideoWidth <= mCaptureWidth &&
             mVideoHeight <= mCaptureHeight) {
@@ -4223,9 +4223,9 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
         goto bypass_pre;
     }
     ATRACE_BEGIN("preview_frame");
-    HAL_LOGD("mCameraId=%d, prev:fd=%d, vir=0x%lx, num=%d, width=%d, "
-             "height=%d, time=%" PRId64,
-             mCameraId, frame->fd, buff_vir, frame_num, frame->width,
+    HAL_LOGD("mCameraId=%d, prev:fd=0x%x, vir=0x%lx, num=%d, width=%d, "
+             "height=%d, time=0x%llx",
+             mCameraId, (cmr_u32)frame->fd, buff_vir, frame_num, frame->width,
              frame->height, buffer_timestamp);
 
     if (mIsMlogMode) {
@@ -4351,9 +4351,9 @@ int SprdCamera3OEMIf::PreviewFrameCallbackStream(struct camera_frame_type *frame
 
     ATRACE_BEGIN("callback_frame");
 
-    HAL_LOGD("callback fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
-             ", frame type = %ld",
-             frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
+    HAL_LOGD("fd=0x%x, vir=0x%lx, frame_num %d, time 0x%llx, frame type = %ld",
+             (cmr_u32)frame->fd, buff_vir, frame_num, buffer_timestamp,
+             frame->type);
 
     if (isFaceBeautyOn(sprddefInfo) && (mCameraId == 1)
 		&& (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)){
@@ -4414,9 +4414,10 @@ int SprdCamera3OEMIf::PreviewFrameYuv2Stream(struct camera_frame_type *frame,
         goto bypass_yuv2;
     }
 
-    HAL_LOGD("yuv2 fd=0x%x, vir=0x%lx, frame_num %d, time %" PRId64
-             ", frame type = %ld",
-             frame->fd, buff_vir, frame_num, buffer_timestamp, frame->type);
+    HAL_LOGD("fd=0x%x, vir=0x%lx, frame_num %d, time 0x%llx, frame type %ld",
+             (cmr_u32)frame->fd, buff_vir, frame_num, buffer_timestamp,
+             frame->type);
+
     channel->channelCbRoutine(frame_num, buffer_timestamp,
                               CAMERA_STREAM_TYPE_YUV2);
 bypass_yuv2:
@@ -4682,7 +4683,7 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
     pre_stream->getQBuffFirstFd(&ion_fd);
 
     if (addr_vir == 0 || ion_fd == 0) {
-        HAL_LOGW("addr_vir=%ld, ion_fd=%d", addr_vir, ion_fd);
+        HAL_LOGW("addr_vir=%ld, ion_fd=0x%x", addr_vir, ion_fd);
         goto exit;
     }
 
@@ -4828,7 +4829,7 @@ bool SprdCamera3OEMIf::returnYuvCallbackFrame(struct camera_frame_type *frame) {
     callback_stream->getQBuffFirstFd(&ion_fd);
 
     if (addr_vir == 0 || ion_fd == 0) {
-        HAL_LOGW("addr_vir=%ld, ion_fd=%d", addr_vir, ion_fd);
+        HAL_LOGW("addr_vir=%ld, ion_fd=0x%x", addr_vir, (cmr_u32)ion_fd);
         goto exit;
     }
 
@@ -9070,7 +9071,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
         memGpu_queue.mGpuHeap.bufferhandle = pbuffer;
         if (type == CAMERA_VIDEO_EIS_ULTRA_WIDE) {
             memGpu_queue.mGpuHeap.private_handle = (void *)fd;
-            HAL_LOGD("fd=%p", fd);
+            HAL_LOGD("fd=0x%x", (cmr_u32)fd[i]);
         } else
             memGpu_queue.mGpuHeap.private_handle = NULL;
         memGpu_queue.mGpuHeap.buf_size = width * height;

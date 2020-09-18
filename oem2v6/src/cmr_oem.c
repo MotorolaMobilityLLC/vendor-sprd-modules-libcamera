@@ -492,8 +492,8 @@ cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
     if (!oem_handle || !vir_addr || !fd) {
-        CMR_LOGE("error param mem_type=0x%x,oem_handle=%p,fd=%p,vir_addr=%p",
-                 mem_type, oem_handle, fd, vir_addr);
+        CMR_LOGE("error param mem_type=0x%x,oem_handle=%p,fd=0x%x,vir_addr=%p",
+                 mem_type, oem_handle, (cmr_u32)fd, vir_addr);
         return -CMR_CAMERA_INVALID_PARAM;
     }
     CMR_LOGD("mem_type=%d sum=%d", mem_type, sum);
@@ -6919,11 +6919,11 @@ cmr_int camera_jpeg_decode_simplify(cmr_handle oem_handle,
     src_yuvbuf_frm.addr_phy.addr_y = src_img_frm.addr_phy.addr_y;
     src_yuvbuf_frm.addr_vir.addr_y=src_img_frm.addr_vir.addr_y;
     src_yuvbuf_frm.buf_size = src_img_frm.buf_size;
-    CMR_LOGD("fd=%d, phy.addr_y=%lx, vir.addr_y=%lx, buf_size=%d",
-                src_yuvbuf_frm.fd,
-                src_yuvbuf_frm.addr_phy.addr_y,
-                src_yuvbuf_frm.addr_vir.addr_y,
-                src_yuvbuf_frm.buf_size);
+    CMR_LOGD("fd=0x%x, phy.addr_y=%lx, vir.addr_y=%lx, buf_size=%d",
+             (cmr_u32)src_yuvbuf_frm.fd,
+             src_yuvbuf_frm.addr_phy.addr_y,
+             src_yuvbuf_frm.addr_vir.addr_y,
+             src_yuvbuf_frm.buf_size);
 
 
     dst_yuvbuf_frm.fd = dst_img_frm.fd;
@@ -6934,16 +6934,16 @@ cmr_int camera_jpeg_decode_simplify(cmr_handle oem_handle,
     dst_yuvbuf_frm.size.height = dst_img_frm.size.height;
     dst_yuvbuf_frm.data_end.y_endian = 1;
     dst_yuvbuf_frm.data_end.uv_endian = 2;
-    CMR_LOGD("fd=%d, phy.addr_y=%lx, vir.add_y=%lx, buf_size=%d, size.width=%d,"
-                "size.height=%d, y_endian=%d, uv_endian=%d",
-                dst_yuvbuf_frm.fd,
-                dst_yuvbuf_frm.addr_phy.addr_y,
-                dst_yuvbuf_frm.addr_vir.addr_y,
-                dst_yuvbuf_frm.buf_size,
-                dst_yuvbuf_frm.size.width,
-                dst_yuvbuf_frm.size.height,
-                dst_yuvbuf_frm.data_end.y_endian,
-                dst_yuvbuf_frm.data_end.uv_endian);
+    CMR_LOGD("fd=0x%x, phy.addr_y=%lx, vir.add_y=%lx, buf_size=%d, size.width=%d,"
+             "size.height=%d, y_endian=%d, uv_endian=%d",
+             (cmr_u32)dst_yuvbuf_frm.fd,
+             dst_yuvbuf_frm.addr_phy.addr_y,
+             dst_yuvbuf_frm.addr_vir.addr_y,
+             dst_yuvbuf_frm.buf_size,
+             dst_yuvbuf_frm.size.width,
+             dst_yuvbuf_frm.size.height,
+             dst_yuvbuf_frm.data_end.y_endian,
+             dst_yuvbuf_frm.data_end.uv_endian);
 
     ret = jcxt->ops.jpeg_decode(jcxt->codec_handle, &src_yuvbuf_frm, &dst_yuvbuf_frm, &mean);
     if (ret) {
@@ -15323,8 +15323,9 @@ cmr_int camera_fdr_handle(void *data, void *privdata) {
     struct img_size pic_size;
     cmr_handle oem_handle = (cmr_handle)cxt;
 
-    CMR_LOGD("channel_id:%d, fd=%d w=%d, h=%d addr: 0x%lx, vir_addr: 0x%lx",
-        frame->channel_id, frame->fd, frame->length, frame->height, frame->yaddr, frame->yaddr_vir);
+    CMR_LOGD("channel_id:%d, fd=0x%xd w=%d, h=%d addr: 0x%lx, vir_addr: 0x%lx",
+             frame->channel_id, (cmr_u32)frame->fd, frame->length,
+             frame->height, frame->yaddr, frame->yaddr_vir);
 
     bzero(&src_param, sizeof(struct img_frm));
     bzero(&dst_param, sizeof(struct img_frm));

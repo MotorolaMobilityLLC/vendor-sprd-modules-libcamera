@@ -396,7 +396,7 @@ cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
     if (!oem_handle || !vir_addr || !fd) {
-        CMR_LOGE("error param mem_type=0x%x,oem_handle=%p,fd=%p,vir_addr=%p",
+        CMR_LOGE("error param mem_type=0x%x,oem_handle=%p,fd=0x%x,vir_addr=%p",
                  mem_type, oem_handle, fd, vir_addr);
         return -CMR_CAMERA_INVALID_PARAM;
     }
