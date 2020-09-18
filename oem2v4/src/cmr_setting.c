@@ -1186,9 +1186,7 @@ static cmr_int setting_process_zoom(struct setting_component *cpt,
         }
         /*update zoom unit after processed or not*/
         if (parm->zoom_param.update_sync) {
-            pthread_mutex_lock(&cpt->status_lock);
             hal_param->zoom_value = zoom_param;
-            pthread_mutex_unlock(&cpt->status_lock);
         } else {
             pthread_mutex_lock(&cpt->status_lock);
             hal_param->zoom_value = zoom_param;
