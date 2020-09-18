@@ -876,64 +876,9 @@ bool SprdCamera3Factory::tryParseCameraConfig() {
         return false;
 
     map<int, int> singleCameras;
-    int expectedId = 0;
 
-    /* check configs */
-    for (auto cfg : configs) {
-        /* check if camera id is continuously increasing from 0 */
-        int cameraId = cfg->getCameraId();
-        if (cameraId != expectedId++) {
-            ALOGE("invalid camera id %d, abort", cameraId);
-            return false;
-        }
-
-        /* check if creator of this type exists */
-        string type = cfg->getType();
-        if (mCreators.find(type) == mCreators.cend()) {
-            ALOGE("unrecognized camera '%s', abort", type.c_str());
-            return false;
-        }
-
-        /* check sensor id count */
-        auto sensorIds = cfg->getSensorIds();
-        if (!sensorIds.size() || (type == Configurator::kFeatureSingleCamera &&
-                                  sensorIds.size() > 1)) {
-            ALOGE("invalid sensor count %zu as '%s', abort", sensorIds.size(),
-                  type.c_str());
-            return false;
-        }
-
-        /* check if sensor id is valid */
-        bool valid = true;
-        int invalidId = -1;
-        for (auto id : sensorIds) {
-            if (!validateSensorId(id)) {
-                invalidId = id;
-                valid = false;
-                break;
-            }
-        }
-        if (!valid) {
-            ALOGE("invalid sensor id %d, abort", invalidId);
-            return false;
-        }
-
-        /*
-         * record physical camera ID
-         *
-         * For now, we don't allow multiple single camera being backed up by
-         * same physical camera, UNLESS it's hidden
-         */
-        if (type == Configurator::kFeatureSingleCamera) {
-            if (singleCameras.find(sensorIds[0]) != singleCameras.cend()) {
-                ALOGE("multiple single camera (%d and %d) backed up by same "
-                      "physical camera (%d) is not allowed for now, abort",
-                      singleCameras[sensorIds[0]], cameraId, sensorIds[0]);
-                return false;
-            }
-            singleCameras[sensorIds[0]] = cameraId;
-        }
-    }
+if (!checkCameraConfig(configs, singleCameras))
+        return false;
 
     /* assign physical camera IDs */
     size_t count = configs.size();
@@ -999,6 +944,71 @@ bool SprdCamera3Factory::tryParseCameraConfig() {
     mNumberOfCameras = count;
     ALOGI("dynamic camera id is ready, %d visible, %zu hidden",
           mNumberOfCameras, mCameras.size() - mNumberOfCameras);
+
+    return true;
+}
+
+bool SprdCamera3Factory::checkCameraConfig(
+    const vector<shared_ptr<Configurator>> &configs,
+    map<int, int> &singleCameras) {
+    int expectedId = 0;
+
+    /* check configs */
+    for (auto cfg : configs) {
+        /* check if camera id is continuously increasing from 0 */
+        int cameraId = cfg->getCameraId();
+        if (cameraId != expectedId++) {
+            ALOGE("invalid camera id %d, abort", cameraId);
+            return false;
+        }
+
+        /* check if creator of this type exists */
+        string type = cfg->getType();
+        if (mCreators.find(type) == mCreators.cend()) {
+            ALOGE("unrecognized camera '%s', abort", type.c_str());
+            return false;
+        }
+
+        /* check sensor id count */
+        auto sensorIds = cfg->getSensorIds();
+        if (!sensorIds.size() || (type == Configurator::kFeatureSingleCamera &&
+                                  sensorIds.size() > 1)) {
+            ALOGE("invalid sensor count %zu as '%s', abort", sensorIds.size(),
+                  type.c_str());
+            return false;
+        }
+
+        /* check if sensor id is valid */
+        bool valid = true;
+        int invalidId = -1;
+        for (auto id : sensorIds) {
+            if (!validateSensorId(id)) {
+                invalidId = id;
+                valid = false;
+                break;
+            }
+        }
+        if (!valid) {
+            ALOGE("invalid sensor id %d, abort", invalidId);
+            return false;
+        }
+
+        /*
+         * record physical camera ID
+         *
+         * For now, we don't allow multiple single camera being backed up by
+         * same physical camera, UNLESS it's hidden
+         */
+        if (type == Configurator::kFeatureSingleCamera) {
+            if (singleCameras.find(sensorIds[0]) != singleCameras.cend()) {
+                ALOGE("multiple single camera (%d and %d) backed up by same "
+                      "physical camera (%d) is not allowed for now, abort",
+                      singleCameras[sensorIds[0]], cameraId, sensorIds[0]);
+                return false;
+            }
+            singleCameras[sensorIds[0]] = cameraId;
+        }
+    }
 
     return true;
 }

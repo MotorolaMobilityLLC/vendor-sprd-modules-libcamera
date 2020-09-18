@@ -183,6 +183,8 @@ class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
     void registerOneCreator(std::string name,
                             std::shared_ptr<ICameraCreator> creator);
     bool tryParseCameraConfig();
+    bool checkCameraConfig(const std::vector<std::shared_ptr<Configurator>> &configs,
+                      std::map<int, int> &singleCameras);
     bool validateSensorId(int id);
     int getPhysicalCameraInfo(int id, camera_metadata_t **static_metadata);
     int
