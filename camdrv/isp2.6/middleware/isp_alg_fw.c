@@ -5003,6 +5003,31 @@ static cmr_u32 ispalg_deinit(cmr_handle isp_alg_handle)
 	return ISP_SUCCESS;
 }
 
+static int ispalg_af_ops_library(struct isp_alg_fw_context *cxt)
+{
+	cxt->ops.af_ops.init = dlsym(cxt->ispalg_lib_handle, "af_ctrl_init");
+	if (!cxt->ops.af_ops.init) {
+		ISP_LOGE("fail to dlsym af_ops.init");
+		return -1;
+	}
+	cxt->ops.af_ops.deinit = dlsym(cxt->ispalg_lib_handle, "af_ctrl_deinit");
+	if (!cxt->ops.af_ops.deinit) {
+		ISP_LOGE("fail to dlsym af_ops.deinit");
+		return -1;
+	}
+	cxt->ops.af_ops.process = dlsym(cxt->ispalg_lib_handle, "af_ctrl_process");
+	if (!cxt->ops.af_ops.process) {
+		ISP_LOGE("fail to dlsym af_ops.process");
+		return -1;
+	}
+	cxt->ops.af_ops.ioctrl = dlsym(cxt->ispalg_lib_handle, "af_ctrl_ioctrl");
+	if (!cxt->ops.af_ops.ioctrl) {
+		ISP_LOGE("fail to dlsym af_ops.ioctrl");
+		return -1;
+	}
+	return 0;
+}
+
 static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5020,26 +5045,10 @@ static cmr_int ispalg_load_library(cmr_handle adpt_handle)
 		goto error_dlopen;
 	}
 
-	cxt->ops.af_ops.init = dlsym(cxt->ispalg_lib_handle, "af_ctrl_init");
-	if (!cxt->ops.af_ops.init) {
-		ISP_LOGE("fail to dlsym af_ops.init");
+	int af_ops;
+	af_ops = ispalg_af_ops_library(cxt);
+	if(af_ops == -1)
 		goto error_dlsym;
-	}
-	cxt->ops.af_ops.deinit = dlsym(cxt->ispalg_lib_handle, "af_ctrl_deinit");
-	if (!cxt->ops.af_ops.deinit) {
-		ISP_LOGE("fail to dlsym af_ops.deinit");
-		goto error_dlsym;
-	}
-	cxt->ops.af_ops.process = dlsym(cxt->ispalg_lib_handle, "af_ctrl_process");
-	if (!cxt->ops.af_ops.process) {
-		ISP_LOGE("fail to dlsym af_ops.process");
-		goto error_dlsym;
-	}
-	cxt->ops.af_ops.ioctrl = dlsym(cxt->ispalg_lib_handle, "af_ctrl_ioctrl");
-	if (!cxt->ops.af_ops.ioctrl) {
-		ISP_LOGE("fail to dlsym af_ops.ioctrl");
-		goto error_dlsym;
-	}
 
 	cxt->ops.afl_ops.init = dlsym(cxt->ispalg_lib_handle, "afl_ctrl_init");
 	if (!cxt->ops.afl_ops.init) {
