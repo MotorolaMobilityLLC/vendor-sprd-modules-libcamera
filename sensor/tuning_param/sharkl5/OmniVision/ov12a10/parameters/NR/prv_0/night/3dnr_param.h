@@ -1,4 +1,4 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000A000E*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_3dnr_level*/
@@ -144,7 +144,7 @@
 		/*bypass*/
 		0x00,
 		/*sub_me_bypass*/
-		0x00,
+		0x01,
 		/*project_mode*/
 		0x00,
 		/*channel_sel*/

@@ -718,9 +718,9 @@
 	/*uvdiv_chroma*/
 	{
 		/*chroma_max_h*/
-		0x14,
+		0x7F,
 		/*chroma_max_l*/
-		0x0A,
+		0x7F,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -729,9 +729,9 @@
 	/*u_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0x00,
+		0x7F,
 		/*uvdiv_th_h*/
-		0x00,
+		0x7F,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -740,9 +740,9 @@
 	/*u_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0x00,
+		0x7F,
 		/*uvdiv_th_h*/
-		0x00,
+		0x7F,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -751,9 +751,9 @@
 	/*v_th_0*/
 	{
 		/*uvdiv_th_l*/
-		0x00,
+		0x7F,
 		/*uvdiv_th_h*/
-		0x00,
+		0x7F,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -762,9 +762,9 @@
 	/*v_th_1*/
 	{
 		/*uvdiv_th_l*/
-		0x00,
+		0x7F,
 		/*uvdiv_th_h*/
-		0x00,
+		0x7F,
 		/*reserved*/
 		{
 			0x00,0x00/*0-1*/
@@ -777,13 +777,13 @@
 		/*luma_ratio*/
 		0x40,
 		/*ratio_0*/
-		0x30,
-		/*ratio_1*/
-		0x38,
-		/*ratio_uv_min*/
-		0x30,
-		/*ratio_y_min0*/
 		0x40,
+		/*ratio_1*/
+		0x40,
+		/*ratio_uv_min*/
+		0x3C,
+		/*ratio_y_min0*/
+		0x3C,
 		/*ratio_y_min1*/
 		0x00,
 		/*reserved*/
@@ -797,7 +797,7 @@
 	/*y_th_h_len*/
 	0x06,
 	/*bypass*/
-	0x01,
+	0x00,
 }
 ,
 /*param8.&BasePoint=1&*/
