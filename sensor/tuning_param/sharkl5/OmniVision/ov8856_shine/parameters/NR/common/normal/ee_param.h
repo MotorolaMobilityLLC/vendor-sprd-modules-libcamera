@@ -79,11 +79,11 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x20,
+			0x18,
 			/*ee_r2_cfg*/
-			0x20,
+			0x10,
 			/*ee_r3_cfg*/
-			0x20,
+			0x0C,
 			/*reserved*/
 			0x00,
 
@@ -106,11 +106,11 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x18,
+			0x10,
 			/*ee_r2_cfg*/
-			0x18,
+			0x0C,
 			/*ee_r3_cfg*/
-			0x18,
+			0x0C,
 			/*reserved*/
 			0x00,
 
@@ -127,9 +127,9 @@
 				/*ee_t2_cfg*/
 				0x0028,
 				/*ee_t3_cfg*/
-				0x002E,
+				0x0032,
 				/*ee_t4_cfg*/
-				0x006E,
+				0x0072,
 
 			},
 			/*r_cfg*/
@@ -150,9 +150,9 @@
 			/*ee_c1_cfg*/
 			0x05,
 			/*ee_c2_cfg*/
-			0x14,
-			/*ee_c3_cfg*/
 			0x1E,
+			/*ee_c3_cfg*/
+			0x23,
 			/*reserved*/
 			0x00,
 
@@ -166,9 +166,9 @@
 				/*ee_t2_cfg*/
 				0x0028,
 				/*ee_t3_cfg*/
-				0x002E,
+				0x0032,
 				/*ee_t4_cfg*/
-				0x006E,
+				0x0072,
 
 			},
 			/*r_cfg*/
@@ -189,9 +189,9 @@
 			/*ee_c1_cfg*/
 			0xFB,
 			/*ee_c2_cfg*/
-			0xEC,
-			/*ee_c3_cfg*/
 			0xE2,
+			/*ee_c3_cfg*/
+			0xDD,
 			/*reserved*/
 			0x00,
 
@@ -635,11 +635,11 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x08,
+			0x18,
 			/*ee_r2_cfg*/
 			0x10,
 			/*ee_r3_cfg*/
-			0x12,
+			0x0C,
 			/*reserved*/
 			0x00,
 
@@ -662,11 +662,11 @@
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
-			0x18,
-			/*ee_r2_cfg*/
 			0x10,
+			/*ee_r2_cfg*/
+			0x0C,
 			/*ee_r3_cfg*/
-			0x0A,
+			0x0C,
 			/*reserved*/
 			0x00,
 
@@ -683,9 +683,9 @@
 				/*ee_t2_cfg*/
 				0x0028,
 				/*ee_t3_cfg*/
-				0x002E,
+				0x0032,
 				/*ee_t4_cfg*/
-				0x006E,
+				0x0072,
 
 			},
 			/*r_cfg*/
@@ -706,9 +706,9 @@
 			/*ee_c1_cfg*/
 			0x05,
 			/*ee_c2_cfg*/
-			0x14,
-			/*ee_c3_cfg*/
 			0x1E,
+			/*ee_c3_cfg*/
+			0x23,
 			/*reserved*/
 			0x00,
 
@@ -722,9 +722,9 @@
 				/*ee_t2_cfg*/
 				0x0028,
 				/*ee_t3_cfg*/
-				0x002E,
+				0x0032,
 				/*ee_t4_cfg*/
-				0x006E,
+				0x0072,
 
 			},
 			/*r_cfg*/
@@ -745,9 +745,9 @@
 			/*ee_c1_cfg*/
 			0xFB,
 			/*ee_c2_cfg*/
-			0xEC,
-			/*ee_c3_cfg*/
 			0xE2,
+			/*ee_c3_cfg*/
+			0xDD,
 			/*reserved*/
 			0x00,
 
@@ -5141,9 +5141,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x14,
+				0x0F,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x14,
 				/*reserved*/
 				0x00,
 
@@ -5180,9 +5180,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x14,
+				0x0F,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x14,
 				/*reserved*/
 				0x00,
 
@@ -5436,7 +5436,7 @@
 		/*ee_old_gradient_en*/
 		0x0001,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -5697,9 +5697,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x14,
+				0x0F,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x14,
 				/*reserved*/
 				0x00,
 
@@ -5736,9 +5736,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x14,
+				0x0F,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x14,
 				/*reserved*/
 				0x00,
 
@@ -5992,7 +5992,7 @@
 		/*ee_old_gradient_en*/
 		0x0001,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -6253,9 +6253,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x19,
+				0x0A,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x0F,
 				/*reserved*/
 				0x00,
 
@@ -6292,9 +6292,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x19,
+				0x0A,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x0F,
 				/*reserved*/
 				0x00,
 
@@ -6548,7 +6548,7 @@
 		/*ee_old_gradient_en*/
 		0x0001,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
@@ -6809,9 +6809,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x19,
+				0x0A,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x0F,
 				/*reserved*/
 				0x00,
 
@@ -6848,9 +6848,9 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
-				0x19,
+				0x0A,
 				/*ee_r3_cfg*/
-				0x1E,
+				0x0F,
 				/*reserved*/
 				0x00,
 
@@ -7104,7 +7104,7 @@
 		/*ee_old_gradient_en*/
 		0x0001,
 		/*ee_new_pyramid_en*/
-		0x0001,
+		0x0000,
 		/*ee_ratio_old_gradient*/
 		0x0020,
 		/*ee_ratio_new_pyramid*/
