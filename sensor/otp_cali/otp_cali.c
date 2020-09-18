@@ -83,6 +83,10 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
     memset(buf, 0xFF, SPRD_DUAL_OTP_SIZE);
     memset(header, 0x00, CALI_OTP_HEAD_SIZE);
     do {
+        if (NULL == OtpDataPath) {
+            SENSOR_LOGE("OtpDataPath is NULL !");
+            break;
+        }
         if (access(OtpDataPath, F_OK) == 0) {
             fileHandle = fopen(OtpDataPath, "r");
             if (NULL == fileHandle) {
@@ -126,6 +130,10 @@ cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag) {
     memset(buf, 0xFF, SPRD_DUAL_OTP_SIZE);
     memset(header, 0x00, CALI_OTP_HEAD_SIZE);
     do {
+        if (NULL == OtpBkDataPath) {
+            SENSOR_LOGE("OtpBkDataPath is NULL !");
+            break;
+        }
         if (access(OtpBkDataPath, F_OK) == 0) {
             fileHandle = fopen(OtpBkDataPath, "r");
 
