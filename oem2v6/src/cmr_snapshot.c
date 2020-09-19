@@ -1007,7 +1007,8 @@ cmr_int snp_start_encode(cmr_handle snp_handle, void *data) {
 
     if ((!snp_cxt->req_param.is_video_snapshot) &&
         (!snp_cxt->req_param.is_zsl_snapshot) &&
-        (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE)) {
+        (snp_cxt->req_param.mode != CAMERA_ISP_TUNING_MODE) &&
+        (snp_cxt->req_param.mode != CAMERA_ISP_SIMULATION_MODE)) {
         snp_img_padding(&jpeg_in_ptr->src, &jpeg_in_ptr->dst, NULL);
     }
 
