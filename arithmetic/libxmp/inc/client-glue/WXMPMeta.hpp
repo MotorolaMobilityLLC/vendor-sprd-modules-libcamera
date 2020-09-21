@@ -20,12 +20,14 @@ extern "C" {
 static XMP_Bool WrapErrorNotify ( XMPMeta_ErrorCallbackProc proc, void * context,
 							  XMP_ErrorSeverity severity, XMP_Int32 cause, XMP_StringPtr message )
 {
-	bool ok;
-	try {
+	bool ok = false;
+/*	try {
 		ok = (*proc) ( context, severity, cause, message );
 	} catch ( ... ) {
 		ok = false;
-	}
+	}*/
+        ok = (*proc) ( context, severity, cause, message );
+
 	return ConvertBoolToXMP_Bool( ok );
 }
 

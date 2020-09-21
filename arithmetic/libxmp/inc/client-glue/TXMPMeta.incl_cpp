@@ -64,12 +64,18 @@ static XMP_Status TextOutputProcWrapper ( void *        refCon,
                                           XMP_StringPtr buffer,
                                           XMP_StringLen bufferSize )
 {
-	try {	// Don't let client callback exceptions propagate across DLL boundaries.
+	/*try {	// Don't let client callback exceptions propagate across DLL boundaries.
 		TOPW_Info * info = (TOPW_Info*)refCon;
 		return info->clientProc ( info->clientRefCon, buffer, bufferSize );
 	} catch ( ... ) {
 		return -1;
-	}
+	}*/
+
+	TOPW_Info * info = (TOPW_Info*)refCon;
+        if(info && info->clientProc)
+	        return info->clientProc ( info->clientRefCon, buffer, bufferSize );
+        else
+                return -1;
 }
 
 // =================================================================================================
@@ -222,13 +228,14 @@ TXMPMeta ( XMP_StringPtr buffer,
 		XMPeek* xmPtr = (XMPeek*)this->xmpRef;
 		printf ( "Parse construct TXMPMeta @ %.8X, ref = %.8X, count = %d\n", this, xmPtr, xmPtr->clientRefs );
 	#endif
-	try {
+/*	try {
 		this->ParseFromBuffer ( buffer, xmpSize );
 	} catch ( ... ) {
 		WXMPMeta_DecrementRefCount_1 ( this->xmpRef );
 		this->xmpRef = 0;
 		throw;
-	}
+	}*/
+        this->ParseFromBuffer ( buffer, xmpSize );
 }
 
 // -------------------------------------------------------------------------------------------------

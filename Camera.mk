@@ -37,7 +37,7 @@ else
 $(warning "Old CPP version")
 endif
 
-LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format -DXMP_UNIXBuild -DUNIX_ENV -fexceptions
+LOCAL_CFLAGS += -fno-strict-aliasing -D_VSP_ -DJPEG_ENC -D_VSP_LINUX_ -DCHIP_ENDIAN_LITTLE -Wno-unused-parameter -Werror -Wno-error=format -DXMP_UNIXBuild -DUNIX_ENV
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_CFLAGS += -DCONFIG_SPRD_ANDROID_8

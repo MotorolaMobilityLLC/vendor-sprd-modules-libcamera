@@ -193,7 +193,7 @@ TXMPFiles ( XMP_StringPtr  filePath,
 		printf ( "File construct TXMPFiles @ %.8X, ref = %.8X, count = %d\n", this, xfPtr, xfPtr->clientRefs );
 	#endif
 	bool ok = this->OpenFile ( filePath, format, openFlags );
-	if ( ! ok ) throw XMP_Error ( kXMPErr_NoFileHandler, "OpenFile returned false" );
+	if ( ! ok ) XMP_Error ( kXMPErr_NoFileHandler, "OpenFile returned false" );
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -208,7 +208,7 @@ TXMPFiles ( const tStringObj & filePath,
 		printf ( "File construct TXMPFiles @ %.8X, ref = %.8X, count = %d\n", this, xfPtr, xfPtr->clientRefs );
 	#endif
 	bool ok = this->OpenFile ( filePath.c_str(), format, openFlags );
-	if ( ! ok ) throw XMP_Error ( kXMPErr_NoFileHandler, "OpenFile returned false" );
+	if ( ! ok )  XMP_Error ( kXMPErr_NoFileHandler, "OpenFile returned false" );
 }
 
 // -------------------------------------------------------------------------------------------------

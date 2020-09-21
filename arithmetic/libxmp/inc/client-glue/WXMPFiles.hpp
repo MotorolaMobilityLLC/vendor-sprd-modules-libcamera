@@ -39,12 +39,14 @@ extern "C" {
 static XMP_Bool WrapProgressReport ( XMP_ProgressReportProc proc, void * context,
 								 float elapsedTime, float fractionDone, float secondsToGo )
 {
-	bool ok;
-	try {
+	bool ok = false;
+/*	try {
 		ok = (*proc) ( context, elapsedTime, fractionDone, secondsToGo );
 	} catch ( ... ) {
 		ok = false;
-	}
+	}*/
+        ok = (*proc) ( context, elapsedTime, fractionDone, secondsToGo );
+
 	return ConvertBoolToXMP_Bool( ok );
 }
 
@@ -53,12 +55,14 @@ static XMP_Bool WrapProgressReport ( XMP_ProgressReportProc proc, void * context
 static XMP_Bool WrapFilesErrorNotify ( XMPFiles_ErrorCallbackProc proc, void * context,
 	XMP_StringPtr filePath, XMP_ErrorSeverity severity, XMP_Int32 cause, XMP_StringPtr message )
 {
-	bool ok;
-	try {
+	bool ok = false;
+/*	try {
 		ok = (*proc) ( context, filePath, severity, cause, message );
 	} catch ( ... ) {
 		ok = false;
-	}
+	}*/
+        ok = (*proc) ( context, filePath, severity, cause, message );
+
 	return ConvertBoolToXMP_Bool( ok );
 }
 

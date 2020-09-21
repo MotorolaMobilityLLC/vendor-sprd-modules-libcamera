@@ -383,7 +383,7 @@ SeparateArrayItems ( TXMPMeta<tStringObj> * xmpObj,
 					 XMP_OptionBits options,
 					 XMP_StringPtr	catedStr )
 {
-	if ( xmpObj == 0 ) throw XMP_Error ( kXMPErr_BadParam, "Null output SXMPMeta pointer" );
+	if ( xmpObj == 0 ) XMP_Error ( kXMPErr_BadParam, "Null output SXMPMeta pointer" );
 	WrapCheckVoid ( zXMPUtils_SeparateArrayItems_1 ( xmpObj->GetInternalRef(), schemaNS, arrayName, options, catedStr ) );
 }
 
@@ -406,7 +406,7 @@ ApplyTemplate ( TXMPMeta<tStringObj> *       workingXMP,
 				const TXMPMeta<tStringObj> & templateXMP,
 				XMP_OptionBits               actions )
 {
-	if ( workingXMP == 0 ) throw XMP_Error ( kXMPErr_BadParam, "Null working SXMPMeta pointer" );
+	if ( workingXMP == 0 ) XMP_Error ( kXMPErr_BadParam, "Null working SXMPMeta pointer" );
 	WrapCheckVoid ( zXMPUtils_ApplyTemplate_1 ( workingXMP->GetInternalRef(), templateXMP.GetInternalRef(), actions ) );
 }
 
@@ -418,7 +418,7 @@ RemoveProperties ( TXMPMeta<tStringObj> * xmpObj,
 				   XMP_StringPtr  propName /* = 0 */,
 				   XMP_OptionBits options /* = 0 */ )
 {
-	if ( xmpObj == 0 ) throw XMP_Error ( kXMPErr_BadParam, "Null output SXMPMeta pointer" );
+	if ( xmpObj == 0 ) XMP_Error ( kXMPErr_BadParam, "Null output SXMPMeta pointer" );
 	WrapCheckVoid ( zXMPUtils_RemoveProperties_1 ( xmpObj->GetInternalRef(), schemaNS, propName, options ) );
 }
 
@@ -435,7 +435,7 @@ DuplicateSubtree ( const TXMPMeta<tStringObj> & source,
 				   XMP_StringPtr  destRoot /* = 0 */,
 				   XMP_OptionBits options /* = 0 */ )
 {
-	if ( dest == 0 ) throw XMP_Error ( kXMPErr_BadParam, "Null output SXMPMeta pointer" );
+	if ( dest == 0 ) XMP_Error ( kXMPErr_BadParam, "Null output SXMPMeta pointer" );
 	WrapCheckVoid ( zXMPUtils_DuplicateSubtree_1 ( source.GetInternalRef(), dest->GetInternalRef(),
 												   sourceNS, sourceRoot, destNS, destRoot, options ) );
 }

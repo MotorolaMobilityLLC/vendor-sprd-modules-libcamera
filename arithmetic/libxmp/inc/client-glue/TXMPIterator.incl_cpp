@@ -124,7 +124,7 @@ operator= ( const TXMPIterator<tStringObj> & rhs )
 XMP_CTorDTorIntro(TXMPIterator)::
 TXMPIterator() : iterRef(0)
 {
-	throw XMP_Error ( kXMPErr_Unavailable, "No default construction for XMP iterators" );
+	XMP_Error ( kXMPErr_Unavailable, "No default construction for XMP iterators" );
 	#if XMP_TraceCTorDTor
 		XIPeek* xiPtr = (XIPeek*)this->iterRef;
 		printf ( "Default construct TXMPIterator @ %.8X, ref = %.8X, count = %d\n", this, xiPtr, xiPtr->clientRefs );

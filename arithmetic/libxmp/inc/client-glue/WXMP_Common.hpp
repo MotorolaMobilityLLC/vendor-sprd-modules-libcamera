@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 #define PropagateException(res)	\
-	if ( res.errMessage != 0 ) throw XMP_Error ( res.int32Result, res.errMessage );
+	if ( res.errMessage != 0 ) XMP_Error ( res.int32Result, res.errMessage );
 
 #ifndef XMP_TraceClientCalls
 	#define XMP_TraceClientCalls		0
