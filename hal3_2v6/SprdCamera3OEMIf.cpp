@@ -8379,7 +8379,7 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
             mZslGraphicsHandle[i].native_handle = nativeHandle;
             mZslGraphicsHandle[i].buf_size = mCaptureWidth * mCaptureHeight;
-            HAL_LOGD("graphicBuffer_handle 0x%",
+            HAL_LOGD("graphicBuffer_handle 0x%p",
                      mZslGraphicsHandle[i].graphicBuffer_handle);
         }
         *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
