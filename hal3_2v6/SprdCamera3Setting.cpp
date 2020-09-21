@@ -2198,6 +2198,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     } else {
         available_cam_features.add(0);
     }
+
     // 22 video face beauty T618
     property_get("ro.boot.auto.efuse", prop, "T618");
     if (!strcmp("T618", prop)) {
@@ -2644,8 +2645,6 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
              mpdaf_type[cameraId]);
     s_setting[cameraId].sprddefInfo.availabe_sensor_type =
         mSensorType[cameraId];
-    // for sprd camera features
-    initCameraIpFeature(cameraId);
 
     return ret;
 }
@@ -3129,6 +3128,8 @@ int SprdCamera3Setting::getStaticMetadata(int32_t cameraId,
 
     if (NULL == mStaticMetadata[cameraId]) {
         initStaticParameters(cameraId);
+        //for sprd camera features
+        initCameraIpFeature(cameraId);
         initStaticMetadata(cameraId, &mStaticMetadata[cameraId]);
         mStaticInfo[cameraId] = mStaticMetadata[cameraId];
     }
