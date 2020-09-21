@@ -489,18 +489,7 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
 
 #ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
     /* only available when enabled by IP control */
-    char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.ip.wechat.back.replace", value, "0");
-    if (!strcmp(value, "1")) {
-        HAL_LOGD("com.tencent.mm call camera, use camera pbrp");
-        if (idInt == 0) {
-            idInt = 53;
-        } else if (idInt == 1) {
-            idInt = 52;
-        } else {
-            HAL_LOGW("unsupport camera id for tencent camera!!");
-        }
-    }
+    idInt = idCheck(idInt);
 #endif
 
     int cameraId = overrideCameraIdIfNeeded(idInt);
@@ -535,6 +524,22 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
 
     /* then try single camera */
     return cameraDeviceOpen(cameraId, hw_device);
+}
+
+int SprdCamera3Factory::idCheck(int idInt) {
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.ip.wechat.back.replace", value, "0");
+    if (!strcmp(value, "1")) {
+        HAL_LOGD("com.tencent.mm call camera, use camera pbrp");
+        if (idInt == 0) {
+            return 53;
+        } else if (idInt == 1) {
+            return 52;
+        } else {
+            HAL_LOGW("unsupport camera id for tencent camera!!");
+        }
+    }
+    return idInt;
 }
 
 int SprdCamera3Factory::cameraDeviceOpen(int camera_id,

@@ -93,6 +93,7 @@ class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
     int getSingleCameraInfoChecked(int cameraId, struct camera_info *info);
     int open_(const struct hw_module_t *module, const char *id,
               struct hw_device_t **device);
+    int idCheck(int idInt);
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setCallbacks(const camera_module_callbacks_t *callbacks);
     void torchModeStatusChange(const char *camera_id, int new_status) const;
