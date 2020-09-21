@@ -266,9 +266,10 @@ static cmr_int fd_close(cmr_handle class_handle) {
     }
 
     if (fd_handle->thread_handle) {
-        cmr_thread_destroy(fd_handle->thread_handle);
-        fd_handle->thread_handle = 0;
-        fd_handle->is_inited = 0;
+        if(cmr_thread_destroy(fd_handle->thread_handle) == 0){
+            fd_handle->thread_handle = 0;
+            fd_handle->is_inited = 0;
+        }
     }
 
     if (fd_handle->alloc_addr) {
