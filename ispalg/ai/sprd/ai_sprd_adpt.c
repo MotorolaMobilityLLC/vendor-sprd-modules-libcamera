@@ -355,17 +355,18 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 			case AI_FLASH_MAIN_BEFORE:
 			case AI_FLASH_MAIN_LIGHTING:
 				cxt->flash_enable = 1;
+				ISP_LOGI("flash_enable flag is: %d", cxt->flash_enable);
 				break;
 
 			case AI_FLASH_MAIN_AFTER:
 			case AI_FLASH_PRE_AFTER:
 				cxt->flash_enable = 0;
+				ISP_LOGI("flash_enable flag is: %d", cxt->flash_enable);
 				break;
 
 			default:
 				break;
 
-			ISP_LOGI("flash_enable flag is: %d", cxt->flash_enable);
 		}
 		break;
 	case AI_SET_AE_PARAM:
