@@ -374,6 +374,8 @@ struct sensor_ic_drv_init_para {
     cmr_handle caller_handle;
     cmr_u8 sensor_id;
 
+    cmr_u32 is_HD_mode;
+
     /*current module vendor id*/
     cmr_u16 module_id;
 
@@ -609,6 +611,8 @@ struct sensor_ic_drv_cxt {
     /*module context*/
     cmr_handle caller_handle;
     cmr_u8 is_sensor_close;
+
+    cmr_u32 is_HD_mode;
 
     /*multi camera mode flag*/
     cmr_int is_multi_mode;

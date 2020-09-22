@@ -748,6 +748,7 @@ struct sensor_drv_context {
     cmr_handle af_drv_handle;
     cmr_handle sns_ic_drv_handle;
     cmr_u8 mono_sensor;
+    cmr_u32 is_HD_mode;
 };
 
 struct tuning_param_lib {
@@ -832,6 +833,7 @@ cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
                                      cmr_u16 otp_size);
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
+cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
 
 #ifdef __cplusplus
 }

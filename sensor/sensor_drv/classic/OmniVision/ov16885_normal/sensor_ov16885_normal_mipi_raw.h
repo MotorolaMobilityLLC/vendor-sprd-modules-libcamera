@@ -3002,6 +3002,8 @@ static struct sensor_module_info s_ov16885_normal_module_info_tab[VENDOR_NUM] = 
          .major_i2c_addr = I2C_SLAVE_ADDR >> 1,
          .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
+         .i2c_burst_mode = SENSOR_I2C_BURST_REG16_VAL8,
+
          .reg_addr_value_bits = SENSOR_I2C_REG_16BIT | SENSOR_I2C_VAL_8BIT |
                                 SENSOR_I2C_FREQ_400,
 

@@ -33,6 +33,7 @@ cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
             init_param->ops_cb.set_mode_wait_done;
         sns_drv_cxt->ops_cb.get_mode = init_param->ops_cb.get_mode;
         sns_drv_cxt->exif_malloc = 0;
+        sns_drv_cxt->is_HD_mode = init_param->is_HD_mode;
 
         *sns_ic_drv_handle = (cmr_handle)sns_drv_cxt;
     }

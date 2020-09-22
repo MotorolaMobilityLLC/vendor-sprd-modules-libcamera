@@ -63,6 +63,8 @@ static struct tuning_param_lib tuning_lib_mngr[SENSOR_ID_MAX] = {0};
 static SENSOR_MATCH_T sensor_cfg_tab[SENSOR_ID_MAX] = {0};
 static struct xml_camera_cfg_info xml_cfg_tab[SENSOR_ID_MAX] = {0};
 
+static cmr_u32 sensor_is_HD_mode = 0;
+
 /**---------------------------------------------------------------------------*
  **                         Local Functions                                   *
  **---------------------------------------------------------------------------*/
@@ -856,6 +858,7 @@ cmr_int sensor_context_init(struct sensor_drv_context *sensor_cxt,
         sensor_init_defaul_exif(sensor_cxt);
     }
 
+    sensor_cxt->is_HD_mode = sensor_is_HD_mode;
     sensor_cxt->sensor_index = &devPtr->drv_idx[sensor_id];
     sensor_cxt->xml_info = &xml_cfg_tab[sensor_id];
     sensor_cxt->current_module = &sensor_cfg_tab[sensor_id];
@@ -2314,6 +2317,7 @@ static cmr_int sensor_ic_create(struct sensor_drv_context *sensor_cxt,
         sns_init_para.module_id =
             ((SENSOR_MATCH_T *)sensor_cxt->current_module)->module_id;
         sns_init_para.sensor_id = sensor_id;
+        sns_init_para.is_HD_mode = sensor_cxt->is_HD_mode;
         sns_init_para.ops_cb.set_mode = sensor_set_mode_common;
         sns_init_para.ops_cb.get_mode = sensor_get_mode_common;
         sns_init_para.ops_cb.set_exif_info = sensor_set_exif_common;
@@ -4221,4 +4225,12 @@ cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
         SENSOR_LOGE("write calibration otp data failed!");
         return SENSOR_FAIL;
     }
+}
+
+cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) {
+    int ret = SENSOR_SUCCESS;
+
+    sensor_is_HD_mode = is_HD_mode;
+    SENSOR_LOGI("is_HD_mode:%d", is_HD_mode);
+    return ret;
 }

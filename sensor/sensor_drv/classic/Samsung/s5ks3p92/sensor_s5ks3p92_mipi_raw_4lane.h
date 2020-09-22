@@ -136,6 +136,7 @@ static const SENSOR_REG_T s5ks3p92_init_setting[] = {
   {0x6214, 0x7970},
   {0x6218, 0x7150},
   {0x0A02, 0x007E},//Swpage	// TnP
+  {0x6004, 0x0001},
   {0x6028, 0x2000},
   {0x602A, 0x3F4C},
   {0x6F12, 0x0000},
@@ -1536,6 +1537,7 @@ static const SENSOR_REG_T s5ks3p92_init_setting[] = {
   {0x6F12, 0xC0F2},
   {0x6F12, 0x000C},
   {0x6F12, 0x6047},
+  {0x6004, 0x0002},
 	// Global
   {0x6028, 0x2000},
   {0x602A, 0x16F0},
@@ -2223,8 +2225,10 @@ static SENSOR_MODE_FPS_INFO_T s_s5ks3p92_mode_fps_info[VENDOR_NUM] = {
 
 static struct sensor_module_info s_s5ks3p92_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
-     .module_info = {.major_i2c_addr = 0x20 >> 1,
-                     .minor_i2c_addr = 0x5a >> 1,
+     .module_info = {.major_i2c_addr = 0x5a >> 1,
+                     .minor_i2c_addr = 0x20 >> 1,
+
+                     .i2c_burst_mode = SENSOR_I2C_BURST_SAMSUNG,
 
                      .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
                                             SENSOR_I2C_VAL_16BIT |

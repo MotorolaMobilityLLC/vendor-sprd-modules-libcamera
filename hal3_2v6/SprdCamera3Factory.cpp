@@ -506,6 +506,13 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
     int cameraId = overrideCameraIdIfNeeded(idInt);
     HAL_LOGI("open camera %d", cameraId);
 
+    if (SPRD_FRONT_HIGH_RES == cameraId ||
+        SPRD_BACK_HIGH_RESOLUTION_ID == cameraId) {
+        sensor_set_HD_mode(1);
+    } else {
+        sensor_set_HD_mode(0);
+    }
+
     /* try dynamic ID */
     if (mUseCameraId == DynamicId && cameraId < mNumberOfCameras) {
         int ret = mCameras[cameraId]->openCamera(hw_device);
