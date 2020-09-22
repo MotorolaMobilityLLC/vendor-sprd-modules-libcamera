@@ -72,6 +72,13 @@ SprdCamera3SinglePortrait *mSinglePortrait = NULL;
          FACE_EFFECT_FACTOR)
 #endif
 
+#define __CHECK_RC__(rc)                                                       \
+    do {                                                                       \
+        if (rc != NO_ERROR) {                                                  \
+          return rc;                                                           \
+        }                                                                      \
+    }while(0)
+
 #define MAX_UPDATE_TIME 3000
 #define Mask_DepthW 800
 #define Mask_DepthH 600
@@ -3244,11 +3251,44 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
     int fb_on = 0;
     char prop[PROPERTY_VALUE_MAX] = {0};
 
+    auto getFbValue = [&]()->void{
+        if (metaSettings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
+            mSinglePortrait->fbLevels.blemishLevel =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
+            mSinglePortrait->fbLevels.smoothLevel =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[1];
+            mSinglePortrait->fbLevels.skinColor =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[2];
+            mSinglePortrait->fbLevels.skinLevel =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[3];
+            mSinglePortrait->fbLevels.brightLevel =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[4];
+            mSinglePortrait->fbLevels.lipColor =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[5];
+            mSinglePortrait->fbLevels.lipLevel =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[6];
+            mSinglePortrait->fbLevels.slimLevel =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[7];
+            mSinglePortrait->fbLevels.largeLevel =
+                metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[8];
+        }
+        if(mSinglePortrait->fbLevels.blemishLevel != 0 || mSinglePortrait->fbLevels.smoothLevel != 0 ||
+            mSinglePortrait->fbLevels.skinColor != 0 || mSinglePortrait->fbLevels.skinLevel != 0 ||
+            mSinglePortrait->fbLevels.brightLevel != 0 || mSinglePortrait->fbLevels.lipColor != 0 ||
+            mSinglePortrait->fbLevels.lipLevel != 0 || mSinglePortrait->fbLevels.slimLevel != 0 ||
+            mSinglePortrait->fbLevels.largeLevel!= 0 ) {
+            mSinglePortrait->mFaceBeautyFlag = true;
+        } else {
+            mSinglePortrait->mFaceBeautyFlag = false;
+        }
+        HAL_LOGV("get_facebeautylevel %d %d %d %d %d",mSinglePortrait->fbLevels.blemishLevel,
+            mSinglePortrait->fbLevels.smoothLevel,mSinglePortrait->fbLevels.skinColor,
+            mSinglePortrait->fbLevels.skinLevel,mSinglePortrait->fbLevels.brightLevel);
+    };
+
     memset(&req_main, 0x00, sizeof(camera3_capture_request_t));
     rc = validateCaptureRequest(req);
-    if (rc != NO_ERROR) {
-        return rc;
-    }
+    __CHECK_RC__(rc);
     metaSettings = request->settings;
     saveRequest(req);
 
@@ -3267,39 +3307,7 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
         metaSettings.update(ANDROID_SPRD_ZSL_ENABLED, &sprdZslEnabled, 1);
     }
     /* save Perfectskinlevel */
-    if (metaSettings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
-        mSinglePortrait->fbLevels.blemishLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[0];
-        mSinglePortrait->fbLevels.smoothLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[1];
-        mSinglePortrait->fbLevels.skinColor =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[2];
-        mSinglePortrait->fbLevels.skinLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[3];
-        mSinglePortrait->fbLevels.brightLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[4];
-        mSinglePortrait->fbLevels.lipColor =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[5];
-        mSinglePortrait->fbLevels.lipLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[6];
-        mSinglePortrait->fbLevels.slimLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[7];
-        mSinglePortrait->fbLevels.largeLevel =
-            metaSettings.find(ANDROID_SPRD_UCAM_SKIN_LEVEL).data.i32[8];
-    }
-    if(mSinglePortrait->fbLevels.blemishLevel != 0 || mSinglePortrait->fbLevels.smoothLevel != 0 || 
-        mSinglePortrait->fbLevels.skinColor != 0 || mSinglePortrait->fbLevels.skinLevel != 0 || 
-        mSinglePortrait->fbLevels.brightLevel != 0 || mSinglePortrait->fbLevels.lipColor != 0 || 
-        mSinglePortrait->fbLevels.lipLevel != 0 || mSinglePortrait->fbLevels.slimLevel != 0 || 
-        mSinglePortrait->fbLevels.largeLevel!= 0 ) {
-        mSinglePortrait->mFaceBeautyFlag = true;
-    } else {
-        mSinglePortrait->mFaceBeautyFlag = false;
-    }
-     HAL_LOGV("get_facebeautylevel %d %d %d %d %d",mSinglePortrait->fbLevels.blemishLevel,
-            mSinglePortrait->fbLevels.smoothLevel,mSinglePortrait->fbLevels.skinColor,
-            mSinglePortrait->fbLevels.skinLevel,mSinglePortrait->fbLevels.brightLevel);
-
+    getFbValue();
     property_get("persist.vendor.cam.blur.cov.id", prop, "3");
     if (mCaptureThread->mVersion == 3 || atoi(prop) != 3) {
         if (metaSettings.exists(ANDROID_CONTROL_AE_TARGET_FPS_RANGE)) {
