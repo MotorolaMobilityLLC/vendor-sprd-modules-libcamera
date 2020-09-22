@@ -1633,6 +1633,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
         if (param) {
             struct camera_frame_type *frame_param =
                 (struct camera_frame_type *)param;
+            struct setting_context *setting_cxt = &cxt->setting_cxt;
             struct isp_face_area face_area;
             int32_t sx = 0;
             int32_t sy = 0;
@@ -1701,18 +1702,95 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 cxt->fd_face_area.face_info[i].pose =
                     frame_param->face_info[i].pose;
 
-                face_area.face_info[i].sx = 1.0 * sx *
-                                            (float)face_area.frame_width /
-                                            (float)frame_param->width;
-                face_area.face_info[i].sy = 1.0 * sy *
-                                            (float)face_area.frame_height /
-                                            (float)frame_param->height;
-                face_area.face_info[i].ex = 1.0 * ex *
-                                            (float)face_area.frame_width /
-                                            (float)frame_param->width;
-                face_area.face_info[i].ey = 1.0 * ey *
-                                            (float)face_area.frame_height /
-                                            (float)frame_param->height;
+                float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+                      zoomHeight = 0;
+                struct sprd_img_rect scalerCrop;
+                CMR_LOGV("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
+                         frame_param->width, frame_param->height, sx, sy, ex, ey);
+                {
+                    /* for crop region center not at sensor center */
+                    struct setting_cmd_parameter setting_param;
+                    int ret = 0, tag;
+
+                    cmr_bzero(&setting_param, sizeof(setting_param));
+                    setting_param.camera_id = cxt->camera_id;
+                    tag = SETTING_GET_ZOOM_PARAM;
+                    ret = cmr_setting_ioctl(setting_cxt->setting_handle, tag,
+                                            &setting_param);
+                    if (ret) {
+                        CMR_LOGW("failed to get zoom param %ld", ret);
+                    } else {
+                        struct zoom_info *info = &setting_param.zoom_param.zoom_info;
+                        struct img_rect *rect = &info->crop_region;
+
+                        /* hal_param is bzero-ed on init, this check should be enough...
+                         */
+                        if (rect->start_x || rect->start_y || rect->width ||
+                            rect->height) {
+                            struct img_rect src, dst;
+
+                            src.start_x = 0;
+                            src.start_y = 0;
+                            src.width = face_area.frame_width;
+                            src.height = face_area.frame_height;
+
+                            dst = camera_apply_rect_and_ratio(
+                                info->pixel_size, info->crop_region, src,
+                                (float)src.width / (float)src.height);
+
+                            CMR_LOGV("fix rect from %u %u %u %u to %u %u %u %u",
+                                     scalerCrop.x, scalerCrop.y, scalerCrop.w,
+                                     scalerCrop.h, dst.start_x, dst.start_y, dst.width,
+                                     dst.height);
+
+                            scalerCrop.x = dst.start_x;
+                            scalerCrop.y = dst.start_y;
+                            scalerCrop.w = dst.width;
+                            scalerCrop.h = dst.height;
+                        }
+                    }
+                }
+                CMR_LOGD("scalerCrop x =%d ,y =%d, w = %d , h =%d",scalerCrop.x, scalerCrop.y,scalerCrop.w,scalerCrop.h );
+
+                if (scalerCrop.x != 0 && scalerCrop.h != 0) {
+                   float previewAspect = (float)frame_param->width / frame_param->height;
+                   float cropAspect = (float)scalerCrop.w / scalerCrop.h;
+                   if (previewAspect > cropAspect) {
+                      width = scalerCrop.w;
+                      height = cropAspect * scalerCrop.h / previewAspect;
+                      left = scalerCrop.x;
+                      top = scalerCrop.y+ (scalerCrop.h - height) / 2;
+                   } else {
+                        width = previewAspect * scalerCrop.w / cropAspect;
+                        height = scalerCrop.h;
+                        left = scalerCrop.x+ (scalerCrop.w - width) / 2;
+                        top = scalerCrop.y;
+                        }
+                    zoomWidth = width / (float)frame_param->width;
+                    zoomHeight = height / (float)frame_param->height;
+                    face_area.face_info[i].sx = (cmr_u32)((float)sx * zoomWidth + left);
+                    face_area.face_info[i].sy = (cmr_u32)((float)sy * zoomHeight + top);
+                    face_area.face_info[i].ex = (cmr_u32)((float)ex * zoomWidth + left);
+                    face_area.face_info[i].ey = (cmr_u32)((float)ey * zoomHeight + top);
+                    CMR_LOGD("zoomX Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d)", face_area.face_info[i].sx,
+                             face_area.face_info[i].sy, face_area.face_info[i].ex, face_area.face_info[i].ey);
+                } else {
+                    face_area.face_info[i].sx = 1.0 * sx *
+                                                (float)face_area.frame_width /
+                                                (float)frame_param->width;
+                    face_area.face_info[i].sy = 1.0 * sy *
+                                                (float)face_area.frame_height /
+                                                (float)frame_param->height;
+                    face_area.face_info[i].ex = 1.0 * ex *
+                                                (float)face_area.frame_width /
+                                                (float)frame_param->width;
+                    face_area.face_info[i].ey = 1.0 * ey *
+                                                (float)face_area.frame_height /
+                                                (float)frame_param->height;
+                    CMR_LOGD("1.0X Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d)", face_area.face_info[i].sx,
+                            face_area.face_info[i].sy, face_area.face_info[i].ex, face_area.face_info[i].ey);
+            }
+
                 face_area.face_info[i].brightness =
                     frame_param->face_info[i].brightness;
                 face_area.face_info[i].angle = frame_param->face_info[i].angle;

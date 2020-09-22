@@ -6215,6 +6215,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(bool update_sync) {
     mZoomInfo.zoom_info.prev_aspect_ratio = prevAspectRatio;
     mZoomInfo.zoom_info.video_aspect_ratio = videoAspectRatio;
     mZoomInfo.zoom_info.capture_aspect_ratio = capAspectRatio;
+    mZoomInfo.zoom_info.pixel_size.width = sensorOrgW;
+    mZoomInfo.zoom_info.pixel_size.height = sensorOrgH;
+    mZoomInfo.zoom_info.crop_region = cropRegion;
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZOOM, (cmr_uint)&mZoomInfo);
 
     HAL_LOGD(
