@@ -1896,7 +1896,7 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
                 } else if (scaler_formats[j] ==
                                HAL_PIXEL_FORMAT_YCbCr_420_888 &&
                            (p_stream_info[i].stream_sizes_tbl.width *
-                                p_stream_info[i].stream_sizes_tbl.height >
+                                p_stream_info[i].stream_sizes_tbl.height >=
                             12000000)) {
                     stream_min_duration = 50000000L;
                 } else {
