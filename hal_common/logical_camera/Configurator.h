@@ -13,7 +13,9 @@ class Configurator {
     static const char *kFeatureBokehCamera;
     static const char *kFeatureLogicalMultiCamera;
 
-    static std::vector<std::shared_ptr<Configurator>> getConfigurators();
+    using CfgList = std::vector<std::shared_ptr<Configurator>>;
+
+    static CfgList getConfigurators();
     static std::shared_ptr<Configurator>
     createInstance(int cameraId, const std::string &type,
                    const std::vector<int> &sensorIds,
@@ -38,8 +40,8 @@ class Configurator {
     std::shared_ptr<Configurator> clone() const;
 
   private:
-    static std::vector<std::shared_ptr<Configurator>>
-    parseFromFile(std::string filename);
+    static bool parseFromFile(CfgList &result);
+    static bool parseFromSensor(CfgList &result);
     static std::shared_ptr<Configurator>
     createInstance(const Json::Value &value);
 

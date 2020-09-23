@@ -2,7 +2,9 @@
 
 #include <fstream>
 #include <sstream>
+#include <cutils/properties.h>
 #include <log/log_main.h>
+#include <sensor_drv_u.h>
 #include <SprdCamera3Factory.h>
 
 #include "Configurator.h"
@@ -17,15 +19,28 @@ const char *Configurator::kFeatureLogicalMultiCamera = "multi-camera";
 
 static string kCameraConfig = "/vendor/etc/camera.config";
 
-vector<shared_ptr<Configurator>> Configurator::getConfigurators() {
-    // TODO try get Configurator from sensor first
+Configurator::CfgList Configurator::getConfigurators() {
+    CfgList result;
 
-    return parseFromFile(kCameraConfig);
+    /* try get camera config from sensor module */
+    if (property_get_bool("persist.vendor.cam.dynamic_id.enable", 0)) {
+        if (parseFromSensor(result)) {
+            ALOGD("parsed %zu camera(s) from sensor", result.size());
+            return result;
+        }
+    }
+
+    /* try get camera config from config file */
+    if (parseFromFile(result)) {
+        ALOGD("parsed %zu camera(s) from file", result.size());
+        return result;
+    }
+
+    return CfgList();
 }
 
-vector<shared_ptr<Configurator>> Configurator::parseFromFile(string filename) {
-    vector<shared_ptr<Configurator>> configs;
-    ifstream is(filename);
+bool Configurator::parseFromFile(CfgList &result) {
+    ifstream is(kCameraConfig);
     Json::Reader reader;
     Json::Value root;
 
@@ -33,17 +48,56 @@ vector<shared_ptr<Configurator>> Configurator::parseFromFile(string filename) {
         for (auto &camera : root) {
             auto c = createInstance(camera);
             if (c)
-                configs.push_back(c);
+                result.push_back(c);
         }
-
-        ALOGD("finish parsing %zu camera(s)", configs.size());
     } else {
-        ALOGE("fail to parse '%s'", filename.c_str());
+        ALOGE("fail to parse '%s'", kCameraConfig.c_str());
     }
 
     is.close();
 
-    return configs;
+    return result.size();
+}
+
+bool Configurator::parseFromSensor(CfgList &result) {
+    static const map<int, string> sTypeMapper = {
+        pair<int, string>(MODE_BOKEH /* 12 */, kFeatureBokehCamera),
+        pair<int, string>(MODE_MULTI_CAMERA /* 21 */, kFeatureSmoothZoom)};
+
+    logicalCameraInfo *info = nullptr;
+    int count = 0;
+
+    count = sensorGetLogicalCameraList(&info);
+    if (count <= 0)
+        return false;
+
+    for (int i = 0; i < count; i++) {
+        if (info[i].logicalCameraId < 0) {
+            ALOGE("invalid id %d from sensor module", info[i].logicalCameraId);
+            result.clear();
+            return false;
+        }
+
+        if (info[i].sensorNum < 1 ||
+            (info[i].sensorNum > 1 &&
+             sTypeMapper.find(info[i].multiCameraMode) == sTypeMapper.cend())) {
+            ALOGE("invalid sensor num %d with multi-camera mode %d for camera "
+                  "id %d",
+                  info[i].sensorNum, info[i].multiCameraMode,
+                  info[i].logicalCameraId);
+            result.clear();
+            return false;
+        }
+
+        result.push_back(make_shared<Configurator>(
+            info[i].logicalCameraId,
+            info[i].sensorNum == 1 ? kFeatureSingleCamera
+                                   : sTypeMapper.at(info[i].multiCameraMode),
+            vector<int>(info[i].sensorIdGroup,
+                        info[i].sensorIdGroup + info[i].sensorNum)));
+    }
+
+    return result.size();
 }
 
 shared_ptr<Configurator>
@@ -79,7 +133,6 @@ Configurator::createInstance(const Json::Value &value) {
           config->getType().c_str(), config->getCameraId(),
           config->getSensorIdsAsString().c_str());
 
-    // TODO feature is k-v pair for now, change code below if impl changed
     if (!feature.isNull()) {
         auto member = feature.getMemberNames();
         for (auto &k : member) {
