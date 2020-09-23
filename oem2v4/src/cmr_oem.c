@@ -9820,6 +9820,14 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         }
     }
 
+    if (cxt->ipm_cxt.cnr_inited) {
+        ret = camera_close_cnr(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close cnr");
+        }
+        cxt->ipm_cxt.cnr_inited = 0;
+    }
+
     ret = cmr_snapshot_stop(cxt->snp_cxt.snapshot_handle);
     if (ret) {
         CMR_LOGE("failed to stop snp %ld", ret);
