@@ -140,7 +140,8 @@ else
 LOCAL_SHARED_LIBRARIES += libspafv1
 endif
 
-
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../performance
+LOCAL_SHARED_LIBRARIES += libcamperf
 
 include $(BUILD_SHARED_LIBRARY)
 

@@ -28,6 +28,7 @@
 #include <math.h>
 #include "isp_awb_queue.h"
 #include "isp_debug.h"
+#include <libloader.h>
 
 #include <utils/Timers.h>
 
@@ -1097,7 +1098,11 @@ static cmr_u32 awbsprd_unload_lib(struct awb_ctrl_cxt *cxt)
 	}
 
 	if (cxt->lib_handle) {
+#if 0
 		dlclose(cxt->lib_handle);
+#else
+		put_lib_handle(cxt->lib_handle);
+#endif
 		cxt->lib_handle = NULL;
 	}
 
@@ -1126,13 +1131,17 @@ static cmr_u32 awbsprd_load_lib(struct awb_ctrl_cxt *cxt)
 		goto exit;
 	}
 	ISP_LOGI("awb lib v_count:%d, version_id:%d, version_name:%s", v_count, v_id, libawb_path[v_id]);
-
+#if 0
 	cxt->lib_handle = dlopen(libawb_path[v_id], RTLD_NOW);
+#else
+	cxt->lib_handle = get_lib_handle(libawb_path[v_id]);
+#endif
 	if (!cxt->lib_handle) {
 		ISP_LOGE("fail to dlopen awb lib");
 		rtn = AWB_CTRL_ERROR;
 		goto exit;
 	}
+	ISP_LOGI("dlopen awb lib successful");
 	//awblib 2.x
 	if(v_id == 1) {
 		ISP_LOGV("[AWB] version is isp2.x awblib1.so");
@@ -1173,7 +1182,7 @@ static cmr_u32 awbsprd_load_lib(struct awb_ctrl_cxt *cxt)
 	}
 	//awblib 3.x
 	else if(v_id == 0) {
-		ISP_LOGV("[AWB] version is isp3.x awblib.so");
+		ISP_LOGI("[AWB] version is isp3.x awblib.so");
 		cxt->lib_ops.awb_init_v3 = dlsym(cxt->lib_handle, "awb_init");
 		if (!cxt->lib_ops.awb_init_v3) {
 			ISP_LOGE("fail to dlsym awb_init");
