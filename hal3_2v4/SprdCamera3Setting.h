@@ -648,6 +648,7 @@ class SprdCamera3Setting {
 
     static int setDefaultParaInfo(int32_t cameraId);
     static bool getLcdSize(uint32_t *width, uint32_t *height);
+    static void initCameraIpFeature(int32_t cameraId);
     static int initStaticParameters(int32_t cameraId);
     static int initStaticMetadata(int32_t cameraId,
                                   camera_metadata_t **static_metadata);
