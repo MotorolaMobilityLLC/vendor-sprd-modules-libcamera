@@ -16,6 +16,7 @@ typedef struct {
     int posY;
     int isMirror; /* !0: mirror */
     int angle;    /* angle,use:[0,90,180,270] */
+    char *filename;
 } sizeParam_t;
 
 int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
