@@ -1031,7 +1031,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     int ret = 0;
 
     if (cameraId < 0 || cameraId >= CAMERA_ID_COUNT) {
-        HAL_LOGE("invalid camera id %d", cameraId);
+        HAL_LOGE("invalid cameraId %d", cameraId);
         return -EINVAL;
     }
 
@@ -1043,11 +1043,6 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
         setLargestSensorSize(cameraId, default_sensor_max_sizes[cameraId].width,
                              default_sensor_max_sizes[cameraId].height);
         return 0;
-    }
-
-    if (cameraId < 0 || cameraId >= CAMERA_ID_COUNT) {
-        HAL_LOGE("illegal cameraId %d", cameraId);
-        return -1;
     }
 
     if (alreadyGetSensorStaticInfo[cameraId] == 1) {

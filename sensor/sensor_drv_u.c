@@ -3989,7 +3989,7 @@ struct logicalCameraInfo *sensorGetLogicalCamInfo(int logical_cam_id) {
     if (logical_cam_id >= LOGICAL_SENSOR_ID_MAX)
         return NULL;
 
-    return &logical_sensor_info_list[logical_cam_id];
+    return &logical_camera_info_list[logical_cam_id];
 }
 
 int sensorGetLogicalCameraList(struct logicalCameraInfo **logical_cam_ptr) {
