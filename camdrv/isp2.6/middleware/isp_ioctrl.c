@@ -1671,9 +1671,10 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 					AWB_CTRL_CMD_RESULT_INFO, (void *)&awb_output, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
 		}
-		cxt->awb_cxt.log_awb = awb_output.log_awb.log;
-		cxt->awb_cxt.log_awb_size = awb_output.log_awb.size;
-
+		if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
+			cxt->awb_cxt.log_awb = awb_output.log_awb.log;
+			cxt->awb_cxt.log_awb_size = awb_output.log_awb.size;
+		}
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
 		    + calc_log_size(cxt->ae_cxt.log_ae, cxt->ae_cxt.log_ae_size, AE_START, AE_END)
 		    + calc_log_size(cxt->af_cxt.log_af, cxt->af_cxt.log_af_size, AF_START, AF_END)
