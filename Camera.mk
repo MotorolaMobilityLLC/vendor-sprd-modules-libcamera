@@ -303,6 +303,9 @@ LOCAL_SHARED_LIBRARIES += libcamperf
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ASAN_MEM_DETECT)),true)
+LOCAL_SANITIZE := address
+endif
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

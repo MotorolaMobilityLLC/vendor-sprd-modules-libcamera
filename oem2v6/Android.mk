@@ -181,6 +181,9 @@ include $(LOCAL_PATH)/../SprdCtrl.mk
 
 LOCAL_MODULE := libcamoem
 LOCAL_MODULE_TAGS := optional
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ASAN_MEM_DETECT)),true)
+LOCAL_SANITIZE := address
+endif
 
 LOCAL_SHARED_LIBRARIES += libutils libcutils libcamsensor libcamcommon libhardware libxml2
 LOCAL_SHARED_LIBRARIES += libcamdrv

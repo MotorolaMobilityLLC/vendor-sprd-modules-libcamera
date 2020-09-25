@@ -14,8 +14,10 @@ LOCAL_C_INCLUDES += \
 LOCAL_SRC_FILES += $(shell find $(LOCAL_PATH) -name '*.c' | sed s:^$(LOCAL_PATH)/::g )
 
 LOCAL_MODULE := libcamcommon
-
 LOCAL_MODULE_TAGS := optional
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ASAN_MEM_DETECT)),true)
+LOCAL_SANITIZE := address
+endif
 
 LOCAL_HEADER_LIBRARIES += liblog_headers
 LOCAL_HEADER_LIBRARIES += libutils_headers

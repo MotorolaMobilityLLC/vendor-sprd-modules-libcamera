@@ -101,8 +101,10 @@ LOCAL_SRC_FILES += al3200/al3200.c
 endif
 
 LOCAL_MODULE := libcamsensor
-
 LOCAL_MODULE_TAGS := optional
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ASAN_MEM_DETECT)),true)
+LOCAL_SANITIZE := address
+endif
 
 LOCAL_HEADER_LIBRARIES += libutils_headers
 
