@@ -230,6 +230,7 @@ struct snp_context {
     sem_t redisplay_sm;
     sem_t writer_exif_sm;
     sem_t pre_start_encode_sync_sm;
+    sem_t scaler_start_sm;
     struct snp_cvt_context cvt;
 };
 /********************************* internal data type
@@ -1265,6 +1266,7 @@ cmr_int snp_start_scale(cmr_handle snp_handle, void *data) {
         goto exit;
     }
 
+    sem_wait(&snp_cxt->scaler_start_sm);
     camera_take_snapshot_step(CMR_STEP_SC_S);
 
     src = chn_param_ptr->scale[index].src_img;
@@ -1273,8 +1275,11 @@ cmr_int snp_start_scale(cmr_handle snp_handle, void *data) {
     mean.is_sync = 0;
     src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
     dst.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
+
     ret = snp_cxt->ops.start_scale(snp_cxt->oem_handle, snp_handle, &src, &dst,
                                    &mean);
+    sem_post(&snp_cxt->scaler_start_sm);
+
     if (ret) {
         CMR_LOGE("snp_cxt->ops.start_scale failed");
     }
@@ -2588,6 +2593,7 @@ void snp_local_init(cmr_handle snp_handle) {
     sem_init(&cxt->writer_exif_sm, 0, 0);
     sem_init(&cxt->ipm_sync_sm, 0, 1);
     sem_init(&cxt->pre_start_encode_sync_sm, 0, 1);
+    sem_init(&cxt->scaler_start_sm, 0, 1);
 }
 
 void snp_local_deinit(cmr_handle snp_handle) {
@@ -2604,6 +2610,7 @@ void snp_local_deinit(cmr_handle snp_handle) {
     sem_destroy(&cxt->writer_exif_sm);
     sem_destroy(&cxt->ipm_sync_sm);
     sem_destroy(&cxt->pre_start_encode_sync_sm);
+    sem_destroy(&cxt->scaler_start_sm);
     cxt->is_inited = 0;
 }
 
@@ -3756,6 +3763,9 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
             }
         }
         if (POST_PROCESSING == snp_get_status(snp_handle)) {
+            sem_wait(&cxt->scaler_start_sm);
+            sem_post(&cxt->scaler_start_sm);
+
             sem_wait(&cxt->pre_start_encode_sync_sm);
             sem_post(&cxt->pre_start_encode_sync_sm);
         }
