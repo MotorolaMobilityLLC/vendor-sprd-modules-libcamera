@@ -72,11 +72,7 @@ namespace sprdcamera {
 
 #define CHECK_WAIT_ERROR(x,y,z)                                                         \
 do{                                                                                     \
-    rc = z.waitRelative(x,y);                                                           \
-    if(rc != NO_ERROR)                                                                  \
-    {                                                                                   \
-        HAL_LOGE("Error waiting");                                                      \
-    }                                                                                   \
+    int return_value = z.waitRelative(x,y);                                                           \
 }while(0)
 typedef signed int MInt32;
 typedef unsigned int MUInt32;
