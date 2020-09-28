@@ -91,7 +91,6 @@ struct isp_block_operations s_ydelay_ops = { _pm_ydelay_init, _pm_ydelay_set_par
 struct isp_block_operations s_iircnr_iir_ops = { _pm_iircnr_iir_init, _pm_iircnr_iir_set_param, _pm_iircnr_iir_get_param, PNULL, PNULL };
 struct isp_block_operations s_iircnr_yrandom_ops = { _pm_iircnr_yrandom_init, _pm_iircnr_yrandom_set_param, _pm_iircnr_yrandom_get_param, PNULL, PNULL };
 struct isp_block_operations s_uvdiv_ops = { _pm_uv_div_init, _pm_uv_div_set_param, _pm_uv_div_get_param, PNULL, PNULL };
-struct isp_block_operations s_smart_ops = { _pm_smart_init, _pm_smart_set_param, _pm_smart_get_param, PNULL, PNULL };
 struct isp_block_operations s_aft_ops = { _pm_aft_init, _pm_aft_set_param, _pm_aft_get_param, PNULL, PNULL };
 struct isp_block_operations s_awb_new_ops = { _pm_awb_new_init, _pm_awb_new_set_param, _pm_awb_new_get_param, PNULL, PNULL };
 #ifdef NOT_EXIST_IN_ISP2_0
@@ -159,7 +158,6 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_IIRCNR_IIR, array_offset(struct isp_context, iircnr_iir), sizeof(struct isp_iircnr_iir_param), &s_iircnr_iir_ops},
 	{ISP_BLK_IIRCNR_YRANDOM, array_offset(struct isp_context, iircnr_yrandom), sizeof(struct isp_iircnr_yrandom_param), &s_iircnr_yrandom_ops},
 	{ISP_BLK_UVDIV, array_offset(struct isp_context, uv_div), sizeof(struct isp_cce_uvdiv_param), &s_uvdiv_ops},
-	{ISP_BLK_SMART, array_offset(struct isp_context, smart), sizeof(struct isp_smart_param), &s_smart_ops},
 #ifdef NOT_EXIST_IN_ISP2_0
 	{ISP_BLK_3DNR_CAP, array_offset(struct isp_context, nr_3d_cap), sizeof(struct isp_3d_nr_cap_param), &s_3d_nr_cap_ops},
 	{ISP_BLK_3DNR_PRE, array_offset(struct isp_context, nr_3d_pre), sizeof(struct isp_3d_nr_pre_param), &s_3d_nr_pre_ops},

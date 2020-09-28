@@ -877,7 +877,6 @@ struct isp_context {
 //      struct isp_awb_param awb;
 	struct isp_ae_param ae;
 	struct isp_af_param af;
-	struct isp_smart_param smart;
 	struct isp_sft_af_param sft_af;
 	struct isp_aft_param aft;
 	struct isp_alsc_param alsc;
@@ -1207,10 +1206,6 @@ cmr_s32 _pm_csc_get_param(void *csc_param, cmr_u32 cmd, void *rtn_param0, void *
 cmr_s32 _pm_rgb_afm_init(void *dst_afm_param, void *src_afm_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_rgb_afm_set_param(void *afm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_rgb_afm_get_param(void *afm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-
-cmr_s32 _pm_smart_init(void *dst_smart_param, void *src_smart_param, void *param1, void *param_ptr2);
-cmr_s32 _pm_smart_set_param(void *smart_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
-cmr_s32 _pm_smart_get_param(void *smart_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_aft_init(void *dst_aft_param, void *src_aft_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_aft_set_param(void *aft_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
