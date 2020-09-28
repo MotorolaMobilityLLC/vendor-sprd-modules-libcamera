@@ -132,12 +132,12 @@ static cmr_int cnr_close(cmr_handle class_handle) {
         if (ret) {
             CMR_LOGE("failed to deinit");
         }
+        cnr_handle->is_inited = 0;
         sem_post(&cnr_handle->sem);
         sem_destroy(&cnr_handle->sem);
     }
     CMR_LOGD("deinit success");
 
-    cnr_handle->is_inited = 0;
     free(cnr_handle);
     class_handle = NULL;
 
@@ -175,9 +175,6 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    if (!cnr_handle->is_inited) {
-        return ret;
-    }
 
     cxt = (struct camera_context *)in->private_data;
     denoise_mode mode = cxt->nr_flag;
@@ -195,6 +192,10 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     }
 
     sem_wait(&cnr_handle->sem);
+    if (!cnr_handle->is_inited) {
+        CMR_LOGE("failed to transfer frame %ld",ret);
+        goto exit;
+    }
     imgBuffer.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
     imgBuffer.bufferUV = (unsigned char *)in->src_frame.addr_vir.addr_u;
 
