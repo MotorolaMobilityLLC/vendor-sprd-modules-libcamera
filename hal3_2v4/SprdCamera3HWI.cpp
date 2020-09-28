@@ -1137,8 +1137,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     bool mRegRequest;
     bool need_apply_settings = 1;
     bool has_callback = false;
-    mOEMIf->force_zsl = false;
-    mOEMIf->SetCallbackDataFlag(false);
     bool itsMode = false;
     ret = validateCaptureRequest(request);
     if (ret) {
@@ -1440,10 +1438,9 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     } else {
                         if(!itsMode) {
                             mOEMIf->setCapturePara(
-                                CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT,
-                                    frameNumber);
-                                mPictureRequest = true;
-                                mOEMIf->mBurstCapture = true;
+                                CAMERA_CAPTURE_MODE_CONTINUE_NON_ZSL_SNAPSHOT, frameNumber);
+                            mPictureRequest = true;
+                            mOEMIf->mBurstCapture = true;
                         }
                     }
                 }
@@ -1489,22 +1486,6 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                         }
                         HAL_LOGD("callback stream request");
                     } else {
-                        cam_dimension_t mPictureSize = {0,0};
-                        cam_dimension_t mPreSize = {0,0};
-                        mSetting->getPictureSize(&mPictureSize);
-                        mSetting->getPreviewSize(&mPreSize);
-                        if ((mPictureSize.height == 0 || mPictureSize.width == 0) &&
-                            request->num_output_buffers == 2 &&
-                            preview_stream_flag && callback_stream_flag &&
-                            capturePara.cap_intent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE &&
-                            mOEMIf->GetCameraStatus(CAMERA_STATUS_PREVIEW) == CAMERA_PREVIEW_IDLE) {
-                            mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_ZSL_SNAPSHOT,
-                                               frameNumber);
-                            mOEMIf->SetCallbackDataFlag(true);
-                            mFirstRegularRequest = true;
-                            mOEMIf->force_zsl = true;
-                        }
-
                         ret = mPicChan->request(stream, output.buffer,
                                                 frameNumber);
                     }

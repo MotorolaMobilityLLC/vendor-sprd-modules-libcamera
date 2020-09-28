@@ -267,7 +267,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void matchZSLQueue(ZslBufferQueue *frame);
     void setMultiCameraMode(multiCameraMode mode);
     void setMasterId(uint8_t masterId);
-    void SetCallbackDataFlag(bool flag);
 
     void log_monitor_test(void);
     static void *log_monitor_thread_proc(void *p_data);
@@ -308,8 +307,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool clearPrevStream;
     bool mBurstCapture;
     uint32_t mTakePicNum;
-    bool mNeedYUVdata;
-    bool force_zsl;
 
   private:
     inline void print_time();
