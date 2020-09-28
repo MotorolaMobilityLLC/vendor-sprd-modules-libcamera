@@ -2089,9 +2089,7 @@ int SprdCamera3HWI::flush() {
     // for performance tuning: close camera
     mOEMIf->setSensorCloseFlag();
 
-    if (mMetadataChannel) {
-        mMetadataChannel->stop(mFrameNum);
-    }
+
     if (mRegularChan) {
         mRegularChan->stop(mFrameNum);
         mRegularChan->channelClearAllQBuff(timestamp,
@@ -2108,6 +2106,9 @@ int SprdCamera3HWI::flush() {
                                        CAMERA_STREAM_TYPE_PICTURE_CALLBACK);
         mPicChan->channelClearAllQBuff(timestamp,
                                        CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+    }
+    if (mMetadataChannel) {
+        mMetadataChannel->stop(mFrameNum);
     }
 
     for (List<iommu_buf_map>::iterator i = mIommuBufMapList.begin();
