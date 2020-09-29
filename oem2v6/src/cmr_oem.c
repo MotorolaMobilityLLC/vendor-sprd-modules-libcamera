@@ -3445,15 +3445,19 @@ cmr_int camera_jpeg_init_wait(cmr_handle oem_handle) {
     int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
 
-    CMR_MSG_INIT(message);
-    message.msg_type = CMR_EVT_WAIT;
-    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
-    ret = cmr_thread_msg_send(cxt->jpeg_async_init_handle, &message);
-    if (ret) {
-        CMR_LOGE("fail to send wait message to jpeg async init thread, %d", ret);
-        goto exit;
+    if (cxt->jpeg_async_init_handle != NULL) {
+        CMR_MSG_INIT(message);
+        message.msg_type = CMR_EVT_WAIT;
+        message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+        ret = cmr_thread_msg_send(cxt->jpeg_async_init_handle, &message);
+        if (ret) {
+            CMR_LOGE("fail to send wait message to jpeg async init thread, %d", ret);
+            goto exit;
+        }
+        CMR_LOGI("send wait message to jpeg async init thread");
+    } else {
+        ret = CMR_CAMERA_INVALID_PARAM;
     }
-    CMR_LOGI("send wait message to jpeg async init thread");
 
 exit:
     ATRACE_END();
@@ -12290,8 +12294,10 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     sem_wait(&cxt->snapshot_sm);
 
     ret = camera_jpeg_init_wait(oem_handle);
-    if (ret < 0)
+    if (ret) {
+        CMR_LOGD("jpeg_async_init_handle already release!");
         goto exit;
+    }
 
     camera_take_snapshot_step(CMR_STEP_TAKE_PIC);
     prev_cxt = &cxt->prev_cxt;
