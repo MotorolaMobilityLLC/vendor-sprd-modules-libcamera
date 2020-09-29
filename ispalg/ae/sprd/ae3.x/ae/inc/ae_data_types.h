@@ -116,7 +116,7 @@ enum ae_scene_mode {
 	AE_SCENE_NIGHT,
 	AE_SCENE_SPORT,
 	AE_SCENE_PORTRAIT,
-	AE_SCENE_LANDSPACE,
+	AE_SCENE_FDR,
 	AE_SCENE_FACEID,
 	AE_SCENE_PANORAMA,
 	AE_SCENE_VIDEO,
@@ -414,7 +414,7 @@ struct ae_monitor_cfg {
 	cmr_u8 monitor_shift;		//for ae monitor data overflow
 	cmr_u16 oe_thrd;
 	cmr_u16 ue_thrd;
-	cmr_u32 data_type;//
+	cmr_u32 data_type;
 };
 
 struct ae_monitor_item_data_type {
@@ -475,6 +475,7 @@ struct ae_face_data_type {
 };
 
 struct ae_ev_setting_param {
+	cmr_u32 cam_id;
 	cmr_u32 ae_idx;
 	cmr_u32 exp_time;
 	cmr_u32 line_time;
@@ -497,7 +498,7 @@ struct ae_face_param {
 };
 
 struct ae_mode_param {
-	/*0:	 all auto mode; 
+	/*  0: all auto mode; 
 	    1: shutter fix, iso auto;
 	    2: shutter auto, iso fix;
 	    3: manual mode 0 in exp/gain type;
@@ -507,7 +508,7 @@ struct ae_mode_param {
 	enum ae_mode_type mode;
 	union {
 		cmr_u32 exp_gain[2];            /* 0: exp_time; 1: gain or ISO value*/
-		cmr_u32 ae_idx;                    /* set ae-table-index */		
+		cmr_u32 ae_idx;                 /* set ae-table-index */		
 	} value;
 };
 
@@ -547,6 +548,14 @@ struct ae_rgbgamma_curve {
 
 struct ae_ygamma_curve {
 	struct ae_sample points_y[SENSOR_GAMMA_POINT_NUM];/*gamma curve for y channel*/
+};
+
+struct ae_gamma_param{
+	cmr_u32 type;/*0: full rgb gamma; 1: ygamma*/
+	union {
+		struct ae_rgbgamma_curve rgb_gamma;
+		struct ae_ygamma_curve ygamma; 
+	}data;
 };
 
 struct ae_compensation_param {
