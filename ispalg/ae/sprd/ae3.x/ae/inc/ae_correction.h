@@ -283,6 +283,7 @@ struct ae_lib_frm_sync_in{//ae_dynamic_sync struct
 
 struct ae_lib_frm_sync_out {
 	cmr_u32 num;
+	cmr_u32 sync_stable;
 	struct ae_ev_setting_param ev_setting[4];/*it follow the input's order*/
 };
 
