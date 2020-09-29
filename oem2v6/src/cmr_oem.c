@@ -2895,6 +2895,9 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
             (setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE)) &&
               (1 == camera_get_fdr_flag(cxt)) && cxt->cam_core_cxt.is_authorized) {
                 ret = cxt->cam_core_cxt.sw_close(cxt);
+                if (ret) {
+                    CMR_LOGE("fdr close failed");
+                }
             }
             CMR_LOGD("jpeg enc done");
             break;
@@ -4697,7 +4700,8 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         }
         return ret;
     }
-
+    CMR_LOGD("cmd_type_value %d, fdr authorized %d",
+             setting_param.cmd_type_value, cxt->cam_core_cxt.is_authorized);
     if (((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) ||
         (setting_param.cmd_type_value == CAMERA_MODE_AUDIO_PICTURE) ||
          (setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE)) &&
@@ -12617,6 +12621,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         if (ret) {
             CMR_LOGE("failed to close fdr");
         }
+        cxt->cam_core_cxt.is_authorized = 0;
+        camera_fdr_deinit(oem_handle);
 
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_CLEAR_FDR, &setting_param);
@@ -15396,6 +15402,11 @@ cmr_int camera_fdr_handle(void *data, void *privdata) {
         ret = cxt->cam_core_cxt.sw_process(oem_handle, &src_param, &dst_param);
         if (ret) {
             CMR_LOGE("fdr raw process, frame transform error!");
+            ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
+            if (ret) {
+                CMR_LOGE("cmr_grab_stop_capture failed");
+                goto exit;
+            }
         }
     }
 
