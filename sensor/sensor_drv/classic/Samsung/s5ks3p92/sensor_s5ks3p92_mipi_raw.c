@@ -996,7 +996,11 @@ s5ks3p92_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
   /*init exif info,this will be deleted in the future*/
   s5ks3p92_drv_init_fps_info(sns_drv_cxt);
 
-  if ((1 == sns_drv_cxt->is_HD_mode) && (!s5k3p9_4in1_is_init)) {
+  char value[PROPERTY_VALUE_MAX];
+  property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+
+  if (((1 == sns_drv_cxt->is_HD_mode) || (!strcmp(value, "true")))
+      && (!s5k3p9_4in1_is_init)) {
       s5k3p9sp04_drv_4in1_init(sns_drv_cxt, 0);
       s5k3p9_4in1_is_init++;
   }
