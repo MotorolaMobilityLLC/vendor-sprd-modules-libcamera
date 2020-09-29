@@ -550,6 +550,7 @@ struct prev_context {
     cmr_handle auto_tracking_handle;
     cmr_uint recovery_status;
     cmr_uint recovery_cnt;
+    cmr_uint recovery_en;
     cmr_uint isp_status;
     struct sensor_exp_info sensor_info;
     cmr_uint ae_time;
@@ -583,6 +584,7 @@ struct prev_thread_cxt {
     cmr_uint is_inited;
     cmr_handle thread_handle;
     sem_t prev_sync_sem;
+    sem_t prev_recovery_sem;
     pthread_mutex_t prev_mutex;
     pthread_mutex_t prev_stop_mutex;
     /*callback thread*/
@@ -1275,6 +1277,21 @@ cmr_int cmr_preview_get_status(cmr_handle preview_handle, cmr_u32 camera_id) {
 
     /*CMR_LOGD("prev_status %ld", prev_cxt->prev_status); */
     return (cmr_int)prev_cxt->prev_status;
+}
+
+void cmr_preview_wait_recovery(cmr_handle preview_handle, cmr_u32 camera_id){
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    struct prev_context *prev_cxt = NULL;
+
+    if (!handle || (camera_id >= CAMERA_ID_MAX)) {
+        CMR_LOGE("invalid param, handle %p, camera_id %d", handle, camera_id);
+        return;
+    }
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+    sem_wait(&handle->thread_cxt.prev_recovery_sem);
+    prev_cxt->recovery_en = 0;
+    sem_post(&handle->thread_cxt.prev_recovery_sem);
 }
 
 cmr_int cmr_preview_get_prev_rect(cmr_handle preview_handle, cmr_u32 camera_id,
@@ -2172,6 +2189,7 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
         pthread_mutex_init(&handle->thread_cxt.prev_mutex, NULL);
         pthread_mutex_init(&handle->thread_cxt.prev_stop_mutex, NULL);
         sem_init(&handle->thread_cxt.prev_sync_sem, 0, 0);
+        sem_init(&handle->thread_cxt.prev_recovery_sem, 0, 1);
 
         ret = cmr_thread_create(&handle->thread_cxt.assist_thread_handle,
                                 PREV_MSG_QUEUE_SIZE, prev_assist_thread_proc,
@@ -2206,6 +2224,7 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
 end:
     if (ret) {
         sem_destroy(&handle->thread_cxt.prev_sync_sem);
+        sem_destroy(&handle->thread_cxt.prev_recovery_sem);
         pthread_mutex_destroy(&handle->thread_cxt.prev_mutex);
         pthread_mutex_destroy(&handle->thread_cxt.prev_stop_mutex);
         handle->thread_cxt.is_inited = 0;
@@ -2240,6 +2259,7 @@ cmr_int prev_destroy_thread(struct prev_handle *handle) {
         handle->thread_cxt.assist_thread_handle = 0;
 
         sem_destroy(&handle->thread_cxt.prev_sync_sem);
+        sem_destroy(&handle->thread_cxt.prev_recovery_sem);
         pthread_mutex_destroy(&handle->thread_cxt.prev_mutex);
         pthread_mutex_destroy(&handle->thread_cxt.prev_stop_mutex);
         handle->thread_cxt.is_inited = 0;
@@ -3598,6 +3618,12 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
+    sem_wait(&handle->thread_cxt.prev_recovery_sem);
+    if(prev_cxt->recovery_en == 0) {
+        CMR_LOGW("exit recovery");
+        goto exit;
+    }
+
     CMR_LOGD("prev_status %ld, preview_eb %d, snapshot_eb %d",
              prev_cxt->prev_status, prev_cxt->prev_param.preview_eb,
              prev_cxt->prev_param.snapshot_eb);
@@ -3660,6 +3686,7 @@ cmr_int prev_error_handle(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
 exit:
+    sem_post(&handle->thread_cxt.prev_recovery_sem);
     return 0;
 }
 
@@ -3878,6 +3905,9 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGE("is previewing now, do nothing");
         return ret;
     }
+
+    if(0 == is_restart)
+        prev_cxt->recovery_en = 1;
 
     if (preview_enable)
         channel_bits |= 1 << prev_cxt->prev_channel_id;

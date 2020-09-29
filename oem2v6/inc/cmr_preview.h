@@ -323,6 +323,8 @@ cmr_int cmr_preview_cancel_snapshot(cmr_handle preview_handle,
 
 cmr_int cmr_preview_get_status(cmr_handle preview_handle, cmr_u32 camera_id);
 
+void cmr_preview_wait_recovery(cmr_handle preview_handle, cmr_u32 camera_id);
+
 cmr_int cmr_preview_get_prev_rect(cmr_handle preview_handle, cmr_u32 camera_id,
                                   struct img_rect *rect);
 
