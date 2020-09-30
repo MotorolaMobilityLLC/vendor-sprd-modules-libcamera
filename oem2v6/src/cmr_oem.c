@@ -3740,7 +3740,7 @@ cmr_int camera_get_otpinfo(cmr_handle oem_handle, cmr_u8 dual_flag,
         goto exit;
     }
 
-    ret = sensor_read_calibration_otp(dual_flag, otp_data);
+    ret = sensor_read_calibration_otp(dual_flag, otp_data, cxt->camera_id);
     if (CMR_CAMERA_SUCCESS == ret) {
         CMR_LOGD("dual_otp data from bin file");
     } else {

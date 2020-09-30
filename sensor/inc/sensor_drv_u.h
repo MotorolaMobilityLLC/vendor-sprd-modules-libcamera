@@ -828,7 +828,8 @@ LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(int multiCameraId);
 
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param);
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
-                                    struct sensor_otp_cust_info *otp_data);
+                                    struct sensor_otp_cust_info *otp_data,
+                                    cmr_u32 camera_id);
 cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
                                      cmr_u16 otp_size);
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,

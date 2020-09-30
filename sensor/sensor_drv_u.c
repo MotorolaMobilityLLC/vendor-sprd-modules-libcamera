@@ -64,6 +64,7 @@ static SENSOR_MATCH_T sensor_cfg_tab[SENSOR_ID_MAX] = {0};
 static struct xml_camera_cfg_info xml_cfg_tab[SENSOR_ID_MAX] = {0};
 
 static cmr_u32 sensor_is_HD_mode = 0;
+static cmr_u8 otpdata[SENSOR_ID_MAX][SPRD_DUAL_OTP_SIZE] = {0};
 
 /**---------------------------------------------------------------------------*
  **                         Local Functions                                   *
@@ -4188,19 +4189,20 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
 }
 
 cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
-                                    struct sensor_otp_cust_info *otp_data) {
-    cmr_u8 otpdata[SPRD_DUAL_OTP_SIZE] = {0};
+                                    struct sensor_otp_cust_info *otp_data,
+                                    cmr_u32 camera_id) {
+
     cmr_u16 otpsize = 0;
     SENSOR_LOGI("E");
 
     pthread_mutex_lock(&cali_otp_mutex);
-    otpsize = read_calibration_otp_from_file(otpdata, dual_flag);
+    otpsize = read_calibration_otp_from_file(otpdata[camera_id], dual_flag);
     pthread_mutex_unlock(&cali_otp_mutex);
     if (otpsize > 0) {
-        otp_data->total_otp.data_ptr = otpdata;
+        otp_data->total_otp.data_ptr = otpdata[camera_id];
         otp_data->total_otp.size = otpsize;
         otp_data->dual_otp.dual_flag = dual_flag;
-        otp_data->dual_otp.data_3d.data_ptr = otpdata;
+        otp_data->dual_otp.data_3d.data_ptr = otpdata[camera_id];
         otp_data->dual_otp.data_3d.size = otpsize;
         SENSOR_LOGI("read calibration otp data success, size :%d", otpsize);
         return SENSOR_SUCCESS;
