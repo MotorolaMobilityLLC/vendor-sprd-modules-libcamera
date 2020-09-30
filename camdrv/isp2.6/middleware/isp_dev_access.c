@@ -159,7 +159,7 @@ cmr_int isp_dev_prepare_buf(cmr_handle isp_dev_handle, struct isp_mem_info *in_p
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 i, j;
 	cmr_u32 alloc_type, offset, total = 0;
-	cmr_uint kaddr[2] = { 0, 0 };
+	cmr_uint kaddr[6] = { 0};
 	struct isp_statis_buf_input statis_buf;
 	struct isp_dev_access_context *cxt = (struct isp_dev_access_context *)isp_dev_handle;
 	struct isp_stats_alloc_info *buf_info;
