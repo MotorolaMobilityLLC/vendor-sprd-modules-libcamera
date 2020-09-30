@@ -25,7 +25,50 @@
 					]
 				}
 			]
-			
+		},
+		{
+			"ID":2,
+			"README":"example for professional capture ",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[0,3,5,6]}
+					]
+				}
+			]
+		},
+		{
+			"ID":3,
+			"README":"example for video ",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[0,3,7]}
+					]
+				}
+			]
+		},
+		{
+			"ID":4,
+			"README":"example for portrait ",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[8,9,10]}
+					]
+				}
+			]
+		},
+		{
+			"ID":13,
+			"README":"example for portrait 美颜，光效，人脸检测",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[8,10,26]}
+					]
+				}
+			]
 		}
 	]
 }
