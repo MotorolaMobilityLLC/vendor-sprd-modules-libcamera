@@ -523,10 +523,10 @@ static void _awb_read_gain(struct awb_save_gain *cxt, struct awb_ctrl_cxt *cxt_t
 			memset((void *)cxt, 0, sizeof(struct awb_save_gain));
 			count = fread((char *)cxt, 1, sizeof(struct awb_save_gain), fp);
 			if(count < (sizeof(struct awb_save_gain)))
-				ISP_LOGV("_awb_read_gain:fread count error!");
+				ISP_LOGE("_awb_read_gain:fread count error!");
 			fclose(fp);
 			fp = NULL;
-			ISP_LOGV("read_gain from:%s, camera_id[%d]: %d, %d, %d, %d\n", file_name, cxt_tmp->camera_id, cxt->r, cxt->g, cxt->b, cxt->ct);
+			ISP_LOGE("read_gain from:%s, camera_id[%d]: %d, %d, %d, %d\n", file_name, cxt_tmp->camera_id, cxt->r, cxt->g, cxt->b, cxt->ct);
 		}
 	} else {
 		sprintf(file_name, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_MEDIA, cxt_tmp->camera_id, cxt_tmp->app_mode);
@@ -535,10 +535,10 @@ static void _awb_read_gain(struct awb_save_gain *cxt, struct awb_ctrl_cxt *cxt_t
 			memset((void *)cxt, 0, sizeof(struct awb_save_gain));
 			count = fread((char *)cxt, 1, sizeof(struct awb_save_gain), fp);
 			if(count < (sizeof(struct awb_save_gain)))
-				ISP_LOGV("_awb_read_gain:fread count error!");
+				ISP_LOGE("_awb_read_gain:fread count error!");
 			fclose(fp);
 			fp = NULL;
-			ISP_LOGV("read_gain from:%s, camera_id[%d]: %d, %d, %d, %d\n", file_name, cxt_tmp->camera_id, cxt->r, cxt->g, cxt->b, cxt->ct);
+			ISP_LOGE("read_gain from:%s, camera_id[%d]: %d, %d, %d, %d\n", file_name, cxt_tmp->camera_id, cxt->r, cxt->g, cxt->b, cxt->ct);
 		}
 	}
 }
@@ -1584,6 +1584,15 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		rtn = cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, SET_OTP_AWB, &otp_info, NULL);
 	}
 #endif
+	cxt->app_mode = 0;
+	_awb_read_gain(&(cxt->s_save_awb_param), cxt);
+
+	if (0 != cxt->s_save_awb_param.r && 0 != cxt->s_save_awb_param.g && 0 != cxt->s_save_awb_param.b) {
+		cxt->output_gain.r = cxt->s_save_awb_param.r;
+		cxt->output_gain.g = cxt->s_save_awb_param.g;
+		cxt->output_gain.b = cxt->s_save_awb_param.b;
+		cxt->output_ct = cxt->s_save_awb_param.ct;
+	}
 
 	//init recover_gain & awb result gain
 	cxt->recover_gain.r = cxt->output_gain.r;
@@ -1757,6 +1766,15 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	}
 	ISP_LOGI("end the isp_br_ioctrl()");
 #endif
+	cxt->app_mode = 0;
+	_awb_read_gain(&(cxt->s_save_awb_param), cxt);
+
+	if (0 != cxt->s_save_awb_param.r && 0 != cxt->s_save_awb_param.g && 0 != cxt->s_save_awb_param.b) {
+		cxt->output_gain.r = cxt->s_save_awb_param.r;
+		cxt->output_gain.g = cxt->s_save_awb_param.g;
+		cxt->output_gain.b = cxt->s_save_awb_param.b;
+		cxt->output_ct = cxt->s_save_awb_param.ct;
+	}
 
 	//init recover_gain & awb result gain
 	cxt->recover_gain.r = cxt->output_gain.r;
