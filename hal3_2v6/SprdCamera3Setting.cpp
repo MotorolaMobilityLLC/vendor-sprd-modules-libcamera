@@ -4841,9 +4841,12 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
         valueI64 =
             frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.exposure_time,
-                         valueI64, ANDROID_SENSOR_EXPOSURE_TIME, 1)
-        HAL_LOGV("sensor exposure_time is %" PRId64, valueI64);
+        //GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.exposure_time,
+                        // valueI64, ANDROID_SENSOR_EXPOSURE_TIME, 1)
+        HAL_LOGD("sensor exposure_time is %" PRId64, valueI64);
+
+        s_setting[mCameraId].sensorInfo.exposure_time = valueI64;
+        pushAndroidParaTag(ANDROID_SENSOR_EXPOSURE_TIME);
     }
 
     if (frame_settings.exists(ANDROID_SENSOR_FRAME_DURATION)) {
