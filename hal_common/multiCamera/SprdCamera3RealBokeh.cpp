@@ -2000,7 +2000,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
         uint32_t decrypt_mode = 0;
 #endif
 
-        unsigned char bokeh_flag[] = {'B', 'O', 'K', 'E'};
+        unsigned char bokeh_flag[5] = {'B', 'O', 'K', 'E'};
         depth_size = mRealBokeh->mBokehSize.depth_snap_size;
         unsigned char *p[] = {
             (unsigned char *)&decrypt_mode,
