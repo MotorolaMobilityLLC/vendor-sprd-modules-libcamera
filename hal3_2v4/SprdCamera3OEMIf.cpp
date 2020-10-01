@@ -907,6 +907,7 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     mSetting->getCONTROLTag(&controlInfo);
 
     HAL_LOGI("E");
+    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if(sprddefInfo.is_takepicture_with_flash == 1 &&
         SprdCamera3Setting::mSensorFocusEnable[mCameraId]
         && sprddefInfo.sprd_appmode_id >= 0) {
@@ -923,8 +924,8 @@ int SprdCamera3OEMIf::zslTakePictureL() {
                 if (mZslCaptureExitLoop == true)
                 {
                         HAL_LOGD("close camera");
+                        setCameraState(SPRD_IDLE, STATE_CAPTURE);
                         return rc;
-
                 }
                 mSetting->getCONTROLTag(&controlInfo);
                 usleep(1000); //1ms
@@ -939,7 +940,6 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     }
 
     Mutex::Autolock l(&mLock);
-    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (isPreviewing()) {
         if (mCameraId == 0 ||
             !(strcmp(mFrontFlash, "lcd") &
