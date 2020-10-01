@@ -4521,53 +4521,56 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
 
     // face beauty
 #ifdef CONFIG_FACE_BEAUTY
-    struct faceBeautyLevels beautyLevels;
-    //preview
-    if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
-        isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)
-        && (getMultiCameraMode() != MODE_BOKEH)
-        && (getMultiCameraMode() != MODE_BLUR)) {
+    if (mFlush == 0) {
+        struct faceBeautyLevels beautyLevels;
+        //preview
+        if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
+            isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)
+            && (getMultiCameraMode() != MODE_BOKEH)
+            && (getMultiCameraMode() != MODE_BLUR)) {
 
-        beautyLevels.blemishLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[0];
-        beautyLevels.smoothLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[1];
-        beautyLevels.skinColor =
-            (unsigned char)sprddefInfo->perfect_skin_level[2];
-        beautyLevels.skinLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[3];
-        beautyLevels.brightLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[4];
-        beautyLevels.lipColor =
-            (unsigned char)sprddefInfo->perfect_skin_level[5];
-        beautyLevels.lipLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[6];
-        beautyLevels.slimLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[7];
-        beautyLevels.largeLevel =
-            (unsigned char)sprddefInfo->perfect_skin_level[8];
-        PreviewFrameFaceBeauty(frame, &beautyLevels);
-    } else if (mChannel2FaceBeautyFlag == 1 && frame->type == CHANNEL2_FRAME){
+            beautyLevels.blemishLevel =
+                (unsigned char)sprddefInfo->perfect_skin_level[0];
+            beautyLevels.smoothLevel =
+                (unsigned char)sprddefInfo->perfect_skin_level[1];
+            beautyLevels.skinColor =
+                (unsigned char)sprddefInfo->perfect_skin_level[2];
+            beautyLevels.skinLevel =
+                (unsigned char)sprddefInfo->perfect_skin_level[3];
+            beautyLevels.brightLevel =
+                (unsigned char)sprddefInfo->perfect_skin_level[4];
+            beautyLevels.lipColor =
+                (unsigned char)sprddefInfo->perfect_skin_level[5];
+            beautyLevels.lipLevel =
+                (unsigned char)sprddefInfo->perfect_skin_level[6];
+            beautyLevels.slimLevel =
+                (unsigned char)sprddefInfo->perfect_skin_level[7];
+            beautyLevels.largeLevel =
+                (unsigned char)sprddefInfo->perfect_skin_level[8];
+            PreviewFrameFaceBeauty(frame, &beautyLevels);
+        } else if (mChannel2FaceBeautyFlag == 1 &&
+            frame->type == CHANNEL2_FRAME){
 
-        // defalt beautyLevels for third app like wechat
-        beautyLevels.blemishLevel = 0;
-        beautyLevels.smoothLevel = 6;
-        beautyLevels.skinColor = 0;
-        beautyLevels.skinLevel = 0;
-        beautyLevels.brightLevel = 6;
-        beautyLevels.lipColor = 0;
-        beautyLevels.lipLevel = 0;
-        beautyLevels.slimLevel = 2;
-        beautyLevels.largeLevel = 2;
-        PreviewFrameFaceBeauty(frame, &beautyLevels);
-    } else {
-        if (frame->type != PREVIEW_ZSL_FRAME &&
-            frame->type != PREVIEW_CANCELED_FRAME &&
-            frame->type != CHANNEL2_FRAME &&
-            frame->type != PREVIEW_VIDEO_FRAME && mflagfb) {
-            mflagfb = false;
-            ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
-            face_beauty_deinit(&face_beauty);
+            // defalt beautyLevels for third app like wechat
+            beautyLevels.blemishLevel = 0;
+            beautyLevels.smoothLevel = 6;
+            beautyLevels.skinColor = 0;
+            beautyLevels.skinLevel = 0;
+            beautyLevels.brightLevel = 6;
+            beautyLevels.lipColor = 0;
+            beautyLevels.lipLevel = 0;
+            beautyLevels.slimLevel = 2;
+            beautyLevels.largeLevel = 2;
+            PreviewFrameFaceBeauty(frame, &beautyLevels);
+        } else {
+            if (frame->type != PREVIEW_ZSL_FRAME &&
+                frame->type != PREVIEW_CANCELED_FRAME &&
+                frame->type != CHANNEL2_FRAME &&
+                frame->type != PREVIEW_VIDEO_FRAME && mflagfb) {
+                mflagfb = false;
+                ret = face_beauty_ctrl(&face_beauty, FB_BEAUTY_FAST_STOP_CMD,NULL);
+                face_beauty_deinit(&face_beauty);
+            }
         }
     }
 #endif
