@@ -58,7 +58,7 @@ namespace sprdcamera {
 #endif
 
 #define BOKEH_REFOCUS_COMMON_XMP_SIZE 0 //(64 * 1024)
-
+#define SHARKL5 0x0400
 #define DEPTH_OUTPUT_WIDTH (400)       //(160)
 #define DEPTH_OUTPUT_HEIGHT (300)      //(120)
 #define DEPTH_SNAP_OUTPUT_WIDTH (800)  //(324)
@@ -4825,11 +4825,18 @@ int SprdCamera3RealBokeh::_flush(const struct camera3_device *device) {
     Mutex::Autolock l(mFlushLock);
     Mutex::Autolock jcl(mJpegCallbackLock);
     mFlushing = true;
-    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-    rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
+    if(PLATFORM_ID != SHARKL5){
+        SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
+        rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
 
-    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
-    rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
+        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+        rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
+    } else {
+        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+        rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
+        SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
+        rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
+    }
 
     preClose();
 
