@@ -870,11 +870,10 @@ static void notify_stop(af_ctrl_t * af, cmr_s32 win_num, cmr_u32 focus_type)
 	}
 	ISP_LOGV(". %s ", (win_num) ? "Suc" : "Fail");
 
-	ISP_LOGI("af->focus_state %d", af->focus_state);
-	if (AF_STOPPED != af->focus_state) {
-		ISP_LOGI("notify to uplayer");
-		af->cb_ops.end_notice(af->caller, &af_result);
-	}
+	ISP_LOGI("notify to uplayer : af->focus_state %d", af->focus_state);
+
+	af->cb_ops.end_notice(af->caller, &af_result);
+
 #ifdef Enable_mlog_AFtime
 
 	af->AFtime.system_time1_1 = systemTime(CLOCK_MONOTONIC);
