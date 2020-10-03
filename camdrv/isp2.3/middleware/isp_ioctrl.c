@@ -2979,11 +2979,6 @@ static cmr_int ispctl_set_aux_sensor_info(cmr_handle isp_alg_handle, void *param
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	if (0 != cxt->commn_cxt.aux_sensor_skip_num++ % 3)
-		goto exit;
-	if (3 <= cxt->commn_cxt.aux_sensor_skip_num)
-		cxt->commn_cxt.aux_sensor_skip_num = 0;
-
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_UPDATE_AUX_SENSOR, (void *)param_ptr, NULL);
 

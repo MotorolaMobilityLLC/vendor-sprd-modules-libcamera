@@ -63,7 +63,6 @@ struct commn_info_t {
 	struct isp_ops ops;
 	struct isp_drv_interface_param interface_param;
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
-	cmr_u32 aux_sensor_skip_num;
 	cmr_u32 ebd_support;
 };
 
