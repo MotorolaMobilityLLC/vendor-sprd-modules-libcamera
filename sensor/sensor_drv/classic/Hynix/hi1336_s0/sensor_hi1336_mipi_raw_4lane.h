@@ -91,10 +91,10 @@
 #define SNAPSHOT_FRAME_LENGTH 3328
 
 /* please ref your spec */
-#define FRAME_OFFSET 6
+#define FRAME_OFFSET 4
 #define SENSOR_MAX_GAIN 0x100    //x16
 #define SENSOR_BASE_GAIN 0x10    //x1
-#define SENSOR_MIN_SHUTTER 6
+#define SENSOR_MIN_SHUTTER 4
 
 /* please ref your spec
  * 1 : average binning

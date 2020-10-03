@@ -162,10 +162,9 @@ static void hi1336_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
         "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
         mode, shutter, dummy_line, frame_interval);
 
-    if (dest_fr_len != cur_fr_len) {
-        sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
-        hi1336_drv_write_frame_length(handle, aec_info, dest_fr_len);
-    }
+    sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
+    hi1336_drv_write_frame_length(handle, aec_info, dest_fr_len);
+
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
     hi1336_drv_write_shutter(handle, aec_info, shutter);
 
@@ -182,7 +181,7 @@ static void hi1336_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 sensor_gain = 0;
 
-    sensor_gain = isp_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : isp_gain;
+    sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
     if (SENSOR_MAX_GAIN < sensor_gain)
         sensor_gain = SENSOR_MAX_GAIN;
