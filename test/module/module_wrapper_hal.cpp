@@ -79,6 +79,7 @@
 #include "gralloc_public.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <signal.h>
 #define THIS_MODULE_NAME "hal"
 using namespace ::android::hardware::camera::device;
 using ::android::hardware::Return;
@@ -247,6 +248,47 @@ uint32_t previewStreamID = -1;
 uint32_t snapshotStreamID = -1;
 uint32_t callbackStreamID = -1;
 uint32_t videoStreamID = -1;
+
+static long find_pid_by_name( char* pidName)
+{
+    DIR *dir;
+    struct dirent *next;
+    int i=0;
+    long pid = 0;
+    dir = opendir("/proc");
+    if (!dir)
+    {
+        ALOGE("can not open proc");
+    }
+    while ((next = readdir(dir)) != NULL) {
+        FILE *status;
+        char filename[50];
+        char buffer[50];
+        char name[50];
+
+        if (strcmp(next->d_name, "..") == 0)
+            continue;
+
+        if (!isdigit(*next->d_name))
+            continue;
+        sprintf(filename, "/proc/%s/status", next->d_name);
+        if (! (status = fopen(filename, "r")) ) {
+            continue;
+        }
+        if (fgets(buffer, 50-1, status) == NULL) {
+            fclose(status);
+            continue;
+        }
+        fclose(status);
+        sscanf(buffer, "%*s %s", name);
+        if (strcmp(name, pidName) == 0) {
+            ALOGE("find pid ,%s",name);
+            pid = atoi(next->d_name);
+        }
+    }
+
+    return pid;
+}
 static void pushBufferList(new_mem_t *localbuffer, buffer_handle_t *backbuf,
                            int localbuffer_num,
                            android::List<new_mem_t *> &list) {
@@ -2487,6 +2529,11 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         }
     }
     g_need_exit = true;
+    char pid_name[50] = "cameraserver";
+    long pid ;
+    pid = find_pid_by_name(pid_name);
+    kill( pid,SIGKILL );
+    ALOGE("pid =%d",pid);
     return 0;
 }
 
