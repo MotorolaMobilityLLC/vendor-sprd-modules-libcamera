@@ -3385,6 +3385,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     }
 
     setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
+    ret = mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
 
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_stop_preview(mCameraHandle)) {
