@@ -10986,6 +10986,7 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
         HAL_LOGD("zsl thread msg init");
         break;
     case CMR_EVT_ZSL_MON_SNP:
+        if (mZslCaptureExitLoop == true) break;
         obj->mZslShotPushFlag = 1;
         obj->processZslSnapshot(p_data);
         break;
