@@ -1705,6 +1705,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
                       zoomHeight = 0;
                 struct sprd_img_rect scalerCrop;
+                cmr_bzero(&scalerCrop, sizeof(struct sprd_img_rect));
                 CMR_LOGV("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d",
                          frame_param->width, frame_param->height, sx, sy, ex, ey);
                 {
