@@ -1020,17 +1020,21 @@ void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int
 		fp = fopen(file_name, "wb");
 		if (fp != NULL && left_raw != NULL){
 			fwrite((void *)left_raw, sizeof(cmr_u32), pixelnum_x * pixelnum_y, fp);
-			fclose(fp);
 		}
-		fp = NULL;
+		if (fp != NULL){
+			fclose(fp);
+			fp = NULL;
+		}
 		//dump complete pd right_raw
 		sprintf(file_name, CAMERA_DATA_FILE "/Right_Raw_%dX%d_%d.raw", pixelnum_x, pixelnum_y, PD_FRAME_ID);
 		fp = fopen(file_name, "wb");
 		if (fp != NULL && right_raw != NULL){
 			fwrite((void *)right_raw, sizeof(cmr_u32), pixelnum_x * pixelnum_y, fp);
-			fclose(fp);
 		}
-		fp = NULL;
+		if (fp != NULL){
+			fclose(fp);
+			fp = NULL;
+		}
 	}
 
 	if (pdaf_type == 3 && (PD_FRAME_ID % skip_fr) == 0) {
