@@ -13425,6 +13425,13 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         img_cap->dst_img_size.height /= 2;
     }
 
+/*L5 pro front picture size from 4M to 16M*/
+#ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
+    if (cxt->zsl_enabled == 1 && cxt->camera_id == 1 && cxt->is_support_front_16M == 1) {
+        img_cap->dst_img_size.width /= 2;
+        img_cap->dst_img_size.height /= 2;
+    }
+#endif
 
     /*save original cap size*/
     if (prev_cxt->prev_param.video_snapshot_type == VIDEO_SNAPSHOT_VIDEO) {

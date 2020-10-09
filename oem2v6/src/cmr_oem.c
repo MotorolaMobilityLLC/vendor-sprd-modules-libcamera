@@ -8599,6 +8599,19 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
             CMR_LOGE("failed to cap cfg %ld", ret);
         }
     }
+
+#ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
+    if (cxt->camera_id == 1) {
+        if (setting_param.cmd_type_value == CAMERA_MODE_PORTRAIT_PHOTO ||
+             setting_param.cmd_type_value == CAMERA_MODE_HIGH_RES_PHOTO) {
+            // for L5Pro front picture size from 4M to 16M
+            cxt->is_support_front_16M = 0;
+        } else {
+            cxt->is_support_front_16M = 1;
+        }
+    }
+#endif
+
 #ifdef CONFIG_SUPPROT_AUTO_3DNR_IN_HIGH_RES
     if (setting_param.cmd_type_value == CAMERA_MODE_HIGH_RES_PHOTO) {
         // auto 3dnr available in high_res mode

@@ -795,6 +795,15 @@ const uint8_t kavailable_capabilities[] = {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME
 };
 
+//L5 Pro front picture size from 4M to 16M
+const uint8_t kavailable_capabilities_without_burst[] = {
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
+#ifdef HIGH_SPEED_VIDEO
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO,
+#endif
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME
+};
+
 const uint8_t kavailable_noise_reduction_modes[] = {
     ANDROID_NOISE_REDUCTION_MODE_OFF, ANDROID_NOISE_REDUCTION_MODE_FAST,
     ANDROID_NOISE_REDUCTION_MODE_HIGH_QUALITY};
@@ -1019,10 +1028,21 @@ int SprdCamera3Setting::getLargestPictureSize(int32_t cameraId, cmr_u16 *width,
         return -EINVAL;
     }
 
+#ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
+    if (cameraId ==1) {
+        *width = default_sensor_max_sizes[cameraId].width;
+        *height = default_sensor_max_sizes[cameraId].height;
+    } else {
+        *width = largest_picture_size[cameraId].stream_sizes_tbl.width;
+        *height = largest_picture_size[cameraId].stream_sizes_tbl.height;
+    }
+#else
     *width = largest_picture_size[cameraId].stream_sizes_tbl.width;
     *height = largest_picture_size[cameraId].stream_sizes_tbl.height;
-    HAL_LOGD("camId=%d, max_width=%d, max_height=%d", cameraId, *width,
-             *height);
+#endif
+
+    HAL_LOGD("camId=%d, max_width=%d, max_height=%d", cameraId, *width, *height);
+
     return 0;
 }
 
@@ -1558,6 +1578,14 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
         largest_picture_size[cameraId].stream_sizes_tbl.width;
     ptr_sns_inf_tag->active_array_size[3] =
         largest_picture_size[cameraId].stream_sizes_tbl.height;
+
+#ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
+    if(cameraId == 1) {
+        ptr_sns_inf_tag->active_array_size[2] = default_sensor_max_sizes[cameraId].width;
+        ptr_sns_inf_tag->active_array_size[3] = default_sensor_max_sizes[cameraId].height;
+     }
+#endif
+
     // android.sensor.info.physicalSize,
     memcpy(ptr_sns_inf_tag->physical_size,
            camera3_default_info.common.sensor_physical_size,
@@ -1568,6 +1596,14 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
         largest_picture_size[cameraId].stream_sizes_tbl.width;
     ptr_sns_inf_tag->pixer_array_size[1] =
         largest_picture_size[cameraId].stream_sizes_tbl.height;
+
+#ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
+    if(cameraId == 1) {
+        ptr_sns_inf_tag->pixer_array_size[0] = default_sensor_max_sizes[cameraId].width;
+        ptr_sns_inf_tag->pixer_array_size[1] = default_sensor_max_sizes[cameraId].height;
+    }
+#endif
+
     // exposureTimeRange.
     memcpy(ptr_sns_inf_tag->exposupre_time_range,
            camera3_default_info.common.exposure_time_range,
@@ -1829,6 +1865,26 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
         p_stream_info = p_stream_info + i;
         stream_sizes_tbl_cnt -= i;
     }
+
+#ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
+    if(cameraId == 1) {
+        available_stream_configs.add(scaler_formats[1]);
+        available_stream_configs.add(default_sensor_max_sizes[cameraId].width);
+        available_stream_configs.add(default_sensor_max_sizes[cameraId].height);
+        available_stream_configs.add(
+            ANDROID_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT);
+
+        available_min_durations.add(scaler_formats[1]);
+        available_min_durations.add(default_sensor_max_sizes[cameraId].width);
+        available_min_durations.add(default_sensor_max_sizes[cameraId].height);
+        available_min_durations.add(33331760L);
+
+        available_stall_durations.add(scaler_formats[1]);
+        available_stall_durations.add(default_sensor_max_sizes[cameraId].width);
+        available_stall_durations.add(default_sensor_max_sizes[cameraId].height);
+        available_stall_durations.add(33331760L);
+    }
+#endif
 
     for (size_t j = 0; j < scaler_formats_count; j++) {
         for (size_t i = 0; i < stream_sizes_tbl_cnt; i++) {
@@ -2522,14 +2578,31 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
     memcpy(s_setting[cameraId].requestInfo.available_result_keys,
            kavailable_result_keys, sizeof(kavailable_result_keys));
+
+#ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
+    if(cameraId == 1) {
+       HAL_LOGI("not support burst test");
+       memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+            kavailable_capabilities_without_burst, sizeof(kavailable_capabilities_without_burst));
+     } else {
+        if (phyPtr->mono_sensor == 1) {
+            memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+                   kavailable_capabilities, sizeof(kavailable_capabilities));
+        } else {
+            memcpy(s_setting[cameraId].requestInfo.available_capabilites,
+                   kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+        }
+    }
+#else
     if (phyPtr->mono_sensor == 1) {
         memcpy(s_setting[cameraId].requestInfo.available_capabilites,
                kavailable_capabilities, sizeof(kavailable_capabilities));
     } else {
         memcpy(s_setting[cameraId].requestInfo.available_capabilites,
-               kavailable_capabilities,
-               (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+               kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
     }
+#endif
+
     s_setting[cameraId].requestInfo.partial_result_count = 1;
     s_setting[cameraId].requestInfo.pipeline_max_depth = 8;
 

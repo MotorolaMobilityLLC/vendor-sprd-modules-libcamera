@@ -6935,6 +6935,7 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         cropRegion.start_x = (sensorOrgW - cropRegion.width) >> 1;
         cropRegion.start_y = (sensorOrgH - cropRegion.height) >> 1;
     }
+
     if (getMultiCameraMode() == MODE_MULTI_CAMERA) {
         mSetting->getLargestSensorSize(mCameraId, &sensorOrgW, &sensorOrgH);
     } else {

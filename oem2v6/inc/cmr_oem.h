@@ -533,6 +533,7 @@ struct camera_context {
     cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
     cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
     cmr_uint is_high_res_mode;
+    cmr_uint is_support_front_16M; /*for l5 pro front picture size from 4M to 16M*/
     /*for ynr room ratio*/
     float zoom_ratio;
     jpg_encode_status jpg_encode;
