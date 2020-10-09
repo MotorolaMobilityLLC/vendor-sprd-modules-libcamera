@@ -106,7 +106,7 @@ static cmr_int s5k3p9sx04_drv_identify(cmr_handle handle, cmr_int param) {
 }
 
 static cmr_int s5k3p9sx04_drv_write_exp_dummy(cmr_handle handle,
-                                              cmr_u16 expsure_line,
+                                              cmr_u16 expsure_line,cmr_u32 exp_time,
                                               cmr_u16 dummy_line,
                                               cmr_u16 size_index) {
     cmr_int ret_value = SENSOR_SUCCESS;
@@ -146,10 +146,11 @@ static cmr_int s5k3p9sx04_drv_write_exp_dummy(cmr_handle handle,
 
     sns_drv_cxt->exp_line = expsure_line;
     linetime = sns_drv_cxt->trim_tab_info[size_index].line_time;
+    sns_drv_cxt->sensor_ev_info.preview_exptime= exp_time;
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
-                                          expsure_line);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME,
+                                          exp_time);
     } else {
         sns_drv_cxt->exif_info.exposure_time = expsure_line * linetime / 1000;
     }
@@ -164,16 +165,17 @@ static cmr_int s5k3p9sx04_drv_write_exposure(cmr_handle handle, cmr_int param) {
     cmr_u32 size_index = 0x00;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u32 exp_time = sns_drv_cxt->exp_time;
 
     expsure_line = param & 0xffff;
     dummy_line = (param >> 0x10) & 0x0fff;
     size_index = (param >> 0x1c) & 0x0f;
 
-    SENSOR_LOGI("write_exposure line:%d, dummy:%d, size_index:%d", expsure_line,
+    SENSOR_LOGI("write_exposure line:%d, new exp_time:%d,dummy:%d, size_index:%d", expsure_line,exp_time,
                 dummy_line, size_index);
 
-    ret_value = s5k3p9sx04_drv_write_exp_dummy(handle, expsure_line, dummy_line,
-                                               size_index);
+    ret_value = s5k3p9sx04_drv_write_exp_dummy(handle, expsure_line, exp_time,
+    dummy_line,size_index);
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = sns_drv_cxt->exp_line;
 
@@ -186,6 +188,7 @@ static cmr_int s5k3p9sx04_drv_ex_write_exposure(cmr_handle handle,
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 size_index = 0x00;
+    cmr_u32 exp_time = 0x00;
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
 
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -195,8 +198,9 @@ static cmr_int s5k3p9sx04_drv_ex_write_exposure(cmr_handle handle,
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     size_index = ex->size_index;
+    exp_time = ex ->exp_time ;
 
-    ret = s5k3p9sx04_drv_write_exp_dummy(handle, exposure_line, dummy_line,
+    ret = s5k3p9sx04_drv_write_exp_dummy(handle, exposure_line, exp_time,dummy_line,
                                          size_index);
 
     sns_drv_cxt->sensor_ev_info.preview_shutter = sns_drv_cxt->exp_line;
@@ -289,6 +293,8 @@ static cmr_int s5k3p9sx04_drv_before_snapshot(cmr_handle handle,
     cmr_u32 capture_mode = param & 0xffff;
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
     cmr_u16 exposure_line = 0;
+    cmr_u32 cap_exptime = 0;
+    cmr_u32 prv_exptime = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -307,18 +313,21 @@ static cmr_int s5k3p9sx04_drv_before_snapshot(cmr_handle handle,
 
     if (preview_mode == capture_mode) {
         SENSOR_LOGI("prv mode equal to capmode");
+        cap_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
         goto CFG_INFO;
     }
 
     preview_exposure = sns_drv_cxt->sensor_ev_info.preview_shutter;
+    prv_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
     gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
     capture_exposure = preview_exposure * prv_linetime / cap_linetime;
+    cap_exptime = prv_exptime;
 
     SENSOR_LOGI("prev_exp=%d,cap_exp=%d,gain=%d", preview_exposure,
                 capture_exposure, gain);
 
-    s5k3p9sx04_drv_write_exp_dummy(handle, capture_exposure, 0, capture_mode);
+    s5k3p9sx04_drv_write_exp_dummy(handle, capture_exposure,cap_exptime, 0, capture_mode);
     s5k3p9sx04_drv_update_gain(handle, gain);
 
 CFG_INFO:
@@ -326,8 +335,8 @@ CFG_INFO:
 
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
-                                          exposure_line);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME,
+                                          cap_exptime);
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
                                           SENSOR_EXIF_CTRL_APERTUREVALUE, 20);
         sns_drv_cxt->ops_cb.set_exif_info(
@@ -513,6 +522,7 @@ static cmr_int s5k3p9sx04_read_aec_info(cmr_handle handle, void *param) {
     float real_gain = 0;
     cmr_u32 gain = 0;
     cmr_u16 frame_interval = 0x00;
+    cmr_u32 exp_time = 0x00;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -522,6 +532,7 @@ static cmr_int s5k3p9sx04_read_aec_info(cmr_handle handle, void *param) {
     exposure_line = info->exp.exposure;
     dummy_line = info->exp.dummy;
     mode = info->exp.size_index;
+    exp_time = info->exp.exp_time;
 
     frame_interval = (cmr_u16)(
         ((exposure_line + dummy_line) * (trim_info[mode].line_time)) / 1000000);
@@ -731,6 +742,7 @@ s5k3p9sx04_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
         return ret;
     }
     sns_drv_cxt = *sns_ic_drv_handle;
+    sns_drv_cxt->exp_time = (PREVIEW_FRAME_LENGTH - FRAME_OFFSET) * PREVIEW_LINE_TIME;
 
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(MODULE_INFO),
                                     MODULE_INFO);
