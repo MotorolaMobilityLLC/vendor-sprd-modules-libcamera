@@ -393,6 +393,7 @@ extern "C" {
 		cmr_u32 is_multi_mode;
 		cmr_u8 sensor_role;
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
+		cmr_u32 sync_stable;
 		/*
 		 * for binning facter = 2
 		 */

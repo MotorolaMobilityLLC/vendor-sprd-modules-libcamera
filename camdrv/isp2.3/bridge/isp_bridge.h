@@ -47,6 +47,8 @@ enum isp_br_ioctl_cmd {
 	SET_AE_WINDOW_RECT,
 	SET_AE_WIN,
 	GET_AE_WIN,
+	SET_Y_HIST_PARAM,
+	GET_Y_HIST_PARAM,
 
 	// AWB
 	SET_MATCH_AWB_DATA,
@@ -260,6 +262,7 @@ struct match_data_param {
 	struct af_status_info af_info[SENSOR_NUM_MAX];
 	struct af_manual_info af_manual[SENSOR_NUM_MAX];
 	cmr_u16 bv[SENSOR_NUM_MAX];
+	struct isp_hist_statistic_info y_hist[SENSOR_NUM_MAX];
 };
 
 cmr_handle isp_br_get_slv_3a_handle(cmr_u32 camera_id);

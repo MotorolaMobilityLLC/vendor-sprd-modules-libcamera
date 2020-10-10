@@ -273,6 +273,7 @@ struct ae_frm_sync_param {
 	struct ae_ev_setting_param effect_param;
 	/*the EV setting, that come from the ae lib*/
 	struct ae_ev_setting_param ev_setting;
+	cmr_u32 hist_data[AEC_HIST_BIN_MAX];
 };
 
 struct ae_lib_frm_sync_in{//ae_dynamic_sync struct

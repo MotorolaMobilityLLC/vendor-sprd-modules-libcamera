@@ -878,6 +878,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 	struct ae_match_stats_data stats_data_master = {0};
 	struct ae_match_stats_data stats_data_slave[2] = {{0},{0}};
 	struct aem_info slave_aem_info[2] = {{0},{0}};
+	struct isp_hist_statistic_info y_hist_data[2] = {{0},{0}};
 
 	memset(master_ae_sync_info_ptr,0,sizeof(struct ae_frm_sync_param));
 	memset(slave0_ae_sync_info_ptr,0,sizeof(struct ae_frm_sync_param));
@@ -896,6 +897,9 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_STAT_AWB_DATA_AE, NULL, &cxt->slave0_aem_stat);
 
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_LIB_OUTPUT, NULL, &ae_slave_lib_output);
+
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER, GET_Y_HIST_PARAM, NULL, &y_hist_data[0]);
+		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_Y_HIST_PARAM, NULL, &y_hist_data[1]);
 
 		stats_data_master.len = sizeof(master_ae_sync_info_ptr->aem);
 		stats_data_master.stats_data = &master_ae_sync_info_ptr->aem[0];
@@ -937,6 +941,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		memcpy(&master_ae_sync_info_ptr->img_size,&sync_info_master.sensor_size, sizeof(struct ae_size));
 		memcpy(&master_ae_sync_info_ptr->aem_roi_rect, &sync_info_master.target_rect, sizeof(struct ae_rect));
 		memcpy(&master_ae_sync_info_ptr->block_rect, &sync_info_master.block_rect, sizeof(struct isp_rect));
+		memcpy(master_ae_sync_info_ptr->hist_data, y_hist_data[0].value, AEC_HIST_BIN_MAX*sizeof(cmr_u32));
 		master_ae_sync_info_ptr->is_benchmark = sync_info_master.ref_camera_id;
 		master_ae_sync_info_ptr->blks_num.w = BLK_NUM_W_ALG;
 		master_ae_sync_info_ptr->blks_num.h = BLK_NUM_W_ALG;
@@ -958,6 +963,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		memcpy(&slave0_ae_sync_info_ptr->img_size,&sync_info_slave[0].sensor_size, sizeof(struct ae_size));
 		memcpy(&slave0_ae_sync_info_ptr->aem_roi_rect, &sync_info_slave[0].target_rect, sizeof(struct ae_rect));
 		memcpy(&slave0_ae_sync_info_ptr->block_rect, &sync_info_slave[0].block_rect, sizeof(struct isp_rect));
+		memcpy(slave0_ae_sync_info_ptr->hist_data, y_hist_data[1].value, AEC_HIST_BIN_MAX*sizeof(cmr_u32));
 		slave0_ae_sync_info_ptr->is_benchmark = sync_info_slave[0].ref_camera_id;
 		slave0_ae_sync_info_ptr->blks_num.w = BLK_NUM_W_ALG;
 		slave0_ae_sync_info_ptr->blks_num.h = BLK_NUM_W_ALG;
@@ -987,6 +993,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 		}
 
 		ae_lib_frame_sync_calculation(cxt->misc_handle, &in_param, &out_param_lib);
+		cxt->sync_stable = out_param_lib.sync_stable;
 
 		for(int i = 0; i < in_param.num; i++) {
 			ISP_LOGV("sync:sensor:%d, lib out ae_gain:%d, exp_time:%d, exp_line:%d,line_time:%d",
@@ -5777,6 +5784,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.adv_param.bhist_data[0].hist_bin = calc_in->bayerhist_stats[0].bin;
 	cxt->cur_status.adv_param.bhist_data[1].hist_bin = calc_in->bayerhist_stats[1].bin;
 	cxt->cur_status.adv_param.bhist_data[2].hist_bin = calc_in->bayerhist_stats[2].bin;
+	/* set y hist stat to bridge for every sensor*/
+	cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_Y_HIST_PARAM, &calc_in->hist_stats, NULL);
 
 #if DEBUG_EN
 	/*set frame id to bridge*/
@@ -6118,12 +6127,13 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			} else {
 				rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 			}
+			cur_calc_result->ae_output.is_stab = cxt->sync_stable ? 1 : 0;
 		} else {
 			/*save slave lib output to bridge*/
 			struct ae_lib_output_data ae_lib_output = {0};
 			ae_lib_output.dummy = cxt->exp_data.lib_data.dummy;
 			ae_lib_output.exp_line = cxt->exp_data.lib_data.exp_line;
-			ae_lib_output.exp_time = cxt->exp_data.lib_data.exp_time;	
+			ae_lib_output.exp_time = cxt->exp_data.lib_data.exp_time;
 			ae_lib_output.gain = cxt->exp_data.lib_data.gain;
 			ae_lib_output.line_time = cxt->exp_data.lib_data.line_time;
 			ae_lib_output.frm_len = cxt->exp_data.lib_data.frm_len;

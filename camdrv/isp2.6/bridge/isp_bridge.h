@@ -44,6 +44,8 @@ enum isp_br_ioctl_cmd {
 	SET_AE_WINDOW_RECT,
 	SET_AE_WIN,
 	GET_AE_WIN,
+	SET_Y_HIST_PARAM,
+	GET_Y_HIST_PARAM,
 
 	// AWB
 	SET_MATCH_AWB_DATA,

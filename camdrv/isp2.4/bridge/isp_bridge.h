@@ -18,6 +18,7 @@
 
 #include "isp_type.h"
 #include "cmr_sensor_info.h"
+#include "isp_com.h"
 
 #define SENSOR_NUM_MAX 4
 
@@ -44,6 +45,8 @@ enum isp_br_ioctl_cmd {
 	SET_AE_WINDOW_RECT,
 	SET_AE_WIN,
 	GET_AE_WIN,
+	SET_Y_HIST_PARAM,
+	GET_Y_HIST_PARAM,
 
 	// AWB
 	SET_STAT_AWB_DATA,
@@ -220,6 +223,7 @@ struct match_data_param {
 	struct awb_stat_data awb_stat[SENSOR_NUM_MAX];
 	struct awb_gain_data awb_gain;
 	cmr_u16 bv;
+	struct isp_hist_statistic_info y_hist[SENSOR_NUM_MAX];
 };
 
 struct hist_match_stats_data {
