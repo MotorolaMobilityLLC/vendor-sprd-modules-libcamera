@@ -701,6 +701,8 @@ static cmr_int ispalg_af_mode_convert(struct isp_af_notice *isp_af)
 static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
+	cmr_u16 val = 0;
+	cmr_u32 pos = 0;
 	cmr_u32 i;
 	cmr_u32 param_num = 0;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -726,8 +728,10 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case AF_CB_CMD_SET_MOTOR_POS:
+		val = *(cmr_u16 *)param0;
+		pos = (cmr_u32)val;
 		if (cxt->ioctrl_ptr->set_pos) {
-			ret = cxt->ioctrl_ptr->set_pos(cxt->ioctrl_ptr->caller_handler, *(cmr_u32 *) param0);
+			ret = cxt->ioctrl_ptr->set_pos(cxt->ioctrl_ptr->caller_handler, pos);
 		}
 		break;
 	case AF_CB_CMD_GET_LENS_OTP:
