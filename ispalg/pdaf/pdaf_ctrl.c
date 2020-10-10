@@ -103,7 +103,7 @@ static cmr_u32 pdaf_set_skip_num(void *handle, cmr_u32 in_param)
 }
 
 
-static cmr_u32 pdaf_set_roi(void *handle, struct pdaf_roi_info *in_param)
+static cmr_u32 pdaf_set_roi(void *handle, struct pd_roi_info *in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
@@ -335,7 +335,6 @@ cmr_int pdaf_ctrl_init(struct pdaf_ctrl_init_in * in, struct pdaf_ctrl_init_out 
 	}
 
 	in->pdaf_set_pdinfo_to_af = pdaf_set_pdinfo_to_af;
-	in->pdaf_set_cfg_param = pdaf_set_cfg_param;
 	in->pdaf_set_work_mode = pdaf_set_work_mode;
 	in->pdaf_set_skip_num = pdaf_set_skip_num;
 	in->pdaf_set_roi = pdaf_set_roi;

@@ -66,6 +66,18 @@
 #define PD_REG_OUT_SIZE	352
 #define PD_OTP_PACK_SIZE	550
 
+struct pd_roi_coord {
+	cmr_u32 start_x;
+	cmr_u32 start_y;
+	cmr_u32 end_x;
+	cmr_u32 end_y;
+};
+
+struct pd_roi_info {
+	struct pd_roi_coord win;
+	cmr_u32 phase_data_write_num;
+};
+
 typedef struct {
 	short int m_wLeft;
 	short int m_wTop;

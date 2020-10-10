@@ -48,8 +48,7 @@ struct sprd_pdaf_context {
 	PD_GlobalSetting pd_gobal_setting;
 	struct pdaf_raw_buffer_info pd_buff_info;
 	struct sensor_setting pd_sensor_setting;
-	struct pdaf_ppi_info ppi_info;
-	struct pdaf_roi_info roi_info;
+	struct pd_roi_info roi_info;
 	struct sprd_pdaf_report_t report_data;
 	struct af_win_rect touch_area;
 	struct SetPD_ROI_param af_roi;
@@ -60,10 +59,9 @@ struct sprd_pdaf_context {
 	void *pdalgo_handle;
 	cmr_u32 af_addr_len;	// afm statis buffer length
 	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
-	 cmr_u32(*pdaf_set_cfg_parm) (void *handle, struct isp_dev_pdaf_info * in_parm);
 	 cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
 	 cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_roi) (void *handle, struct pdaf_roi_info * in_parm);
+	 cmr_u32(*pdaf_set_roi) (void *handle, struct pd_roi_info * in_parm);
 	 cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 	 cmr_int(*pd_buffer_format_convert) (void *handle);
 	cmr_s32 *pPD_left;
@@ -76,60 +74,10 @@ struct sprd_pdaf_context {
 
 };
 
-#define PDAF_PATTERN_COUNT	 8
-#define PDAF_FULL_NUM_IMX258 49920
 #define PDAF_FULL_NUM_IMX362 1524096	//4032*756/2
 #define PDAF_FULL_NUM_IMX362_SIZE 3810240	//4032*756*5/4
 
 void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int pixelnum_x, int pixelnum_y);
-
-struct isp_dev_pdaf_info pdafTestCase[] = {
-	//bypass,  corrector_bypass      phase_map_corr_en; block_size; grid_mode;win;block;gain_upperbound;phase_txt_smooth;phase_gfilter;phase_flat_smoother;
-	//hot_pixel_th[3]dead_pixel_th[3];flat_th;edge_ratio_hv;edge_ratio_rd;edge_ratio_hv_rd;phase_left_addr;phase_right_addr;phase_pitch;
-	//pattern_pixel_is_right[64];
-	//pattern_pixel_row[64];
-	//pattern_pixel_col[64];
-	//gain_ori_left[2];gain_ori_right[2];extractor_bypass;mode_sel;skip_num; phase_data_dword_num;
-	//pdaf_blc_r;pdaf_blc_b;pdaf_blc_gr;pdaf_blc_gb;phase_cfg_rdy;phase_skip_num_clr;
-	{
-	 0, 0, 1, {2, 2}, 1, {1048, 792, 1048 + 2048, 792 + 1536}, {24, 24, 4208 - 24, 3120 - 24},
-	 {600, 800, 200, 400}, 1, 1, 0,
-	 {0, 1, 2}, {255, 511, 765}, 765, 127, 0, 510,
-	 0x86000000, 0x86800000,
-	 0,
-	 {0, 0, 1, 1, 1, 1, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,},
-	 {5, 5, 8, 8, 21, 21, 24, 24,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,},
-	 {2, 18, 1, 17, 10, 26, 9, 25,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,
-	  0, 0, 0, 0, 0, 0, 0, 0,},
-	 {2172, 16332}, {8087, 15728}, 0, 1, 0, 0xB,
-	 {511, 1023, 127, 255}, {0, 0}, {0, 0}
-	 },
-};
-
-struct isp_dev_pdaf_info *ispGetPdafTestCase(cmr_u32 index)
-{
-	return &pdafTestCase[index];
-}
 
 static cmr_int pdaf_setup(cmr_handle pdaf)
 {
@@ -137,12 +85,6 @@ static cmr_int pdaf_setup(cmr_handle pdaf)
 
 	ISP_CHECK_HANDLE_VALID(pdaf);
 	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)pdaf;
-	/* user for debug */
-	/*struct isp_dev_pdaf_info pdaf_param;
-
-	   memset(&pdaf_param, 0x00, sizeof(pdaf_param));
-	   rtn = isp_get_pdaf_default_param(&pdaf_param);
-	   cxt->pdaf_set_cfg_parm(cxt->caller, &pdaf_param); */
 
 	if (cxt->pdaf_set_work_mode) {
 		cxt->pdaf_set_work_mode(cxt->caller, 1);
@@ -289,7 +231,6 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->caller = in_p->caller;
 	cxt->caller_handle = in_p->caller_handle;
 	cxt->pdaf_set_pdinfo_to_af = in_p->pdaf_set_pdinfo_to_af;
-	cxt->pdaf_set_cfg_parm = in_p->pdaf_set_cfg_param;
 	cxt->pdaf_set_work_mode = in_p->pdaf_set_work_mode;
 	cxt->pdaf_set_skip_num = in_p->pdaf_set_skip_num;
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
@@ -376,26 +317,13 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 		 temp_win_start_x, temp_win_start_y, (4 * base_w), (4 * base_h), cxt->pd_gobal_setting.dBeginX,
 		 cxt->pd_gobal_setting.dBeginY, cxt->pd_gobal_setting.dAreaW, cxt->pd_gobal_setting.dAreaH);
 
-	cxt->ppi_info.block_size.height = in_p->pd_info->pd_block_h;
-	cxt->ppi_info.block_size.width = in_p->pd_info->pd_block_w;
-	for (i = 0; i < in_p->pd_info->pd_pos_size * 2; i++) {
-		cxt->ppi_info.pattern_pixel_is_right[i] = in_p->pd_info->pd_is_right[i];
-		cxt->ppi_info.pattern_pixel_row[i] = in_p->pd_info->pd_pos_row[i];
-		cxt->ppi_info.pattern_pixel_col[i] = in_p->pd_info->pd_pos_col[i];
-	}
-
-	cxt->ppi_info.block.start_x = in_p->pd_info->pd_offset_x;
-	cxt->ppi_info.block.end_x = in_p->pd_info->pd_end_x;
-	cxt->ppi_info.block.start_y = in_p->pd_info->pd_offset_y;
-	cxt->ppi_info.block.end_y = in_p->pd_info->pd_end_y;
-
 	cxt->roi_info.win.start_x = temp_win_start_x;
 	cxt->roi_info.win.start_y = temp_win_start_y;
 	cxt->roi_info.win.end_x = cxt->roi_info.win.start_x + 4 * base_w;
 	cxt->roi_info.win.end_y = cxt->roi_info.win.start_y + 4 * base_h;
 
-	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x) / (8 << cxt->ppi_info.block_size.width);
-	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y) / (8 << cxt->ppi_info.block_size.height);
+	cmr_s32 block_num_x = (cxt->roi_info.win.end_x - cxt->roi_info.win.start_x) / (8 << in_p->pd_info->pd_block_w);
+	cmr_s32 block_num_y = (cxt->roi_info.win.end_y - cxt->roi_info.win.start_y) / (8 << in_p->pd_info->pd_block_h);
 	cmr_u32 phasepixel_total_num = block_num_x * block_num_y * in_p->pd_info->pd_pos_size;
 	cxt->roi_info.phase_data_write_num = (phasepixel_total_num + 5) / 6;
 
@@ -681,12 +609,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 
 	ATRACE_BEGIN("PDAlgo_Calc_process_convert type3");
 	if (3 == cxt->pdaf_type) {
-		// cxt->pd_buff_info.left_buffer = (void *)pInPhaseBuf_left;
-		// cxt->pd_buff_info.right_buffer = (void *)pInPhaseBuf_right;
-		// cxt->pd_buff_info.left_output = (void *)pPD_left;
-		// cxt->pd_buff_info.right_output = (void *)pPD_right;
-		// cxt->pd_buff_info.roi_pixel_numb = pixel_num;
-		// ret = cxt->pd_buffer_format_convert((void *)(&cxt->pd_buff_info));
 		ret = PD_PhaseFormatConverter((cmr_u8 *) pInPhaseBuf_left, (cmr_u8 *) pInPhaseBuf_right, cxt->pPD_left, cxt->pPD_right, pixel_num, pixel_num);
 		if (g_dumpraw == 1){
 			dump_raw(cxt->pdaf_type, pInPhaseBuf_left, pInPhaseBuf_right, NULL, pixel_num_x, pixel_num_y);
