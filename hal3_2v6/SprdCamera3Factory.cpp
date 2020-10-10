@@ -440,14 +440,16 @@ int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,
     struct camera_device_manager *devPtr = NULL;
     int rc;
 
-    devPtr = (struct camera_device_manager *)
-        SprdCamera3Setting::getCameraIdentifyState();
-    for (int m = 0; m < mNumOfCameras; m++) {
-        HAL_LOGV("factory identify_state[%d]=%d", m, devPtr->identify_state[m]);
-        if (gSprdCamera3Factory.mCameraCallbacks != NULL) {
-            gSprdCamera3Factory.mCameraCallbacks->camera_device_status_change(
-                gSprdCamera3Factory.mCameraCallbacks, m,
-                devPtr->identify_state[m]);
+    if (mUseCameraId == PrivateId) {
+        devPtr = (struct camera_device_manager *)
+            SprdCamera3Setting::getCameraIdentifyState();
+        for (int m = 0; m < mNumOfCameras; m++) {
+            HAL_LOGV("factory identify_state[%d]=%d", m, devPtr->identify_state[m]);
+            if (gSprdCamera3Factory.mCameraCallbacks != NULL) {
+                gSprdCamera3Factory.mCameraCallbacks->camera_device_status_change(
+                    gSprdCamera3Factory.mCameraCallbacks, m,
+                    devPtr->identify_state[m]);
+            }
         }
     }
 
@@ -487,10 +489,7 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
         return -EINVAL;
     }
 
-#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
-    /* only available when enabled by IP control */
     idInt = idCheck(idInt);
-#endif
 
     int cameraId = overrideCameraIdIfNeeded(idInt);
     HAL_LOGI("open camera %d", cameraId);
@@ -527,6 +526,8 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
 }
 
 int SprdCamera3Factory::idCheck(int idInt) {
+#ifdef CONFIG_PORTRAIT_SCENE_SUPPORT
+    /* only available when enabled by IP control */
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.ip.wechat.back.replace", value, "0");
     if (!strcmp(value, "1")) {
@@ -539,6 +540,7 @@ int SprdCamera3Factory::idCheck(int idInt) {
             HAL_LOGW("unsupport camera id for tencent camera!!");
         }
     }
+#endif
     return idInt;
 }
 

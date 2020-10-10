@@ -52,7 +52,7 @@ int SingleCamera::getCameraInfo(camera_info_t *info) {
 
     struct lensProperty *lensProp = sensorGetlensProperty(mSensorId);
     if (lensProp) {
-        CameraMetadata meta(staticMetadata);
+        CameraMetadata meta(clone_camera_metadata(staticMetadata));
         uint8_t poseReference = ANDROID_LENS_POSE_REFERENCE_PRIMARY_CAMERA;
         meta.update(ANDROID_LENS_POSE_ROTATION, lensProp->poseRotation, 4);
         meta.update(ANDROID_LENS_POSE_TRANSLATION, lensProp->poseTranslation,
@@ -61,7 +61,7 @@ int SingleCamera::getCameraInfo(camera_info_t *info) {
                     lensProp->intrinsicCalibration, 5);
         meta.update(ANDROID_LENS_DISTORTION, lensProp->distortion, 5);
         meta.update(ANDROID_LENS_POSE_REFERENCE, &poseReference, 1);
-        meta.release();
+        staticMetadata = meta.release();
     }
 
     SprdCamera3Setting::getCameraInfo(mSensorId, info);
