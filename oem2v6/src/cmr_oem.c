@@ -2882,7 +2882,8 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
             if (ret)
                 CMR_LOGE("failed to get app mode");
             if ((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) &&
-                cxt->night_cxt.is_authorized) {
+                cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
+                cxt->night_cxt.mfnr_on_off = 0;
                 ret = cxt->night_cxt.sw_close(cxt);
             } else if (1 == camera_get_hdr_flag(cxt)) {
                 ret = camera_close_hdr(cxt);
@@ -4690,6 +4691,7 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
     if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) {
           if (cxt->night_cxt.is_authorized) {
             ret = cxt->night_cxt.sw_open(cxt);
+            cxt->night_cxt.mfnr_on_off = 1;
             if (ret)
                 CMR_LOGE("failed to open sw %ld", ret);
         }
@@ -4885,12 +4887,13 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
                             &setting_param);
     if (ret)
         CMR_LOGE("failed to get app mode");
-    if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) {
-        if (cxt->night_cxt.is_authorized) {
-            ret = cxt->night_cxt.ipmpro_process(oem_handle, data);
-            if(ret) {
-                CMR_LOGE("failed to process ipmpro %ld",ret);
-            }
+    if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO &&
+        cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
+        cxt->night_cxt.mfnr_on_off = 0;
+        ret = cxt->night_cxt.sw_close(cxt);
+        ret = cxt->night_cxt.ipmpro_process(oem_handle, data);
+        if(ret) {
+            CMR_LOGE("failed to process ipmpro %ld",ret);
         }
         goto exit;
     }
@@ -12545,7 +12548,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
                             &setting_param);
 
         if((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO)
-                 && cxt->night_cxt.is_authorized) {
+                 && cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
+                cxt->night_cxt.mfnr_on_off = 0;
                 ret = cxt->night_cxt.sw_close(cxt);
         } else{
              ret = camera_close_3dnr(cxt);

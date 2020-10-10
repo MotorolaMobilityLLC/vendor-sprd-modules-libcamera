@@ -167,6 +167,7 @@ struct ipm_pro_context {
 };
 struct nightpro_context {
     cmr_uint is_authorized;
+    cmr_uint mfnr_on_off;
     void *sw_handle;
     int (*sw_open)(cmr_handle oem_handle);
     int (*sw_process)(cmr_handle oem_handle,
