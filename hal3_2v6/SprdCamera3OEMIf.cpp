@@ -4158,9 +4158,10 @@ int SprdCamera3OEMIf::getAppSceneLevel(int appmodeId) {
      int level = 0;
      if(appmodeId == CAMERA_MODE_PANORAMA ||
          appmodeId == CAMERA_MODE_3DNR_PHOTO ||
-         appmodeId == CAMERA_MODE_FILTER ||
-         appmodeId == -1) {
+         appmodeId == CAMERA_MODE_FILTER) {
          level = CAM_PERFORMANCE_LEVEL_4;
+     }else if (appmodeId == -1) {
+         level = CAM_PERFORMANCE_LEVEL_5;
      }else if (appmodeId == CAMERA_MODE_CONTINUE ||
          appmodeId == CAMERA_MODE_FOV_FUSION_MODE) {
          level = CAM_PERFORMANCE_LEVEL_6;
@@ -4177,6 +4178,8 @@ void SprdCamera3OEMIf::adjustPreviewPerformance(uint32_t frame_num,
                     getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_4 ||
                     (mRecordingMode && !mVideoWidth && !mVideoHeight)) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_4);
+                } else if (getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_5) {
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_5);
                 } else if (getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_6 ||
                            sprddefInfo->slowmotion > 1) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);

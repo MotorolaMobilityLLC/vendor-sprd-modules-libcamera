@@ -52,6 +52,7 @@ namespace sprdcamera {
 typedef enum CURRENT_POWER_HINT {
     CAM_POWER_NORMAL,
     CAM_POWER_PERFORMACE_ON,
+    CAM_POWER_SLIGHT_PERFORMACE,
     CAM_POWER_LOWPOWER_ON
 } power_hint_state_type_t;
 
@@ -98,6 +99,7 @@ class SprdCameraSystemPerformance {
     ::android::sp<::android::PowerHALManager> mPowerManager;
     ::android::sp<::android::PowerHintScene> mSceneLowPower;
     ::android::sp<::android::PowerHintScene> mScenePerformance;
+    ::android::sp<::android::PowerHintScene> mSceneSlightPerformance;
 
     void acquirePowerHint(::android::sp<::android::PowerHintScene> mScene);
     void releasePowerHint(::android::sp<::android::PowerHintScene> mScene);

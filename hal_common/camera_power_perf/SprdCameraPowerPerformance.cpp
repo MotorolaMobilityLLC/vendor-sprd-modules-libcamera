@@ -59,6 +59,7 @@ SprdCameraSystemPerformance::SprdCameraSystemPerformance() {
     mPowerManager = NULL;
     mSceneLowPower = NULL;
     mScenePerformance = NULL;
+    mSceneSlightPerformance = NULL;
 #endif
 
     initPowerHint();
@@ -120,6 +121,9 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
         changeDfsPolicy(CAM_VERYHIGH);
         break;
     case CAM_PERFORMANCE_LEVEL_5:
+        setPowerHint(CAM_POWER_SLIGHT_PERFORMACE);
+        changeDfsPolicy(CAM_NORMAL);
+        break;
     case CAM_PERFORMANCE_LEVEL_4:
         setPowerHint(CAM_POWER_NORMAL);
         changeDfsPolicy(CAM_NORMAL);
@@ -148,6 +152,8 @@ void SprdCameraSystemPerformance::setCamPreformaceScene(
         setPowerHint(CAM_POWER_PERFORMACE_ON);
         break;
     case CAM_PERFORMANCE_LEVEL_5:
+        setPowerHint(CAM_POWER_SLIGHT_PERFORMACE);
+        break;
     case CAM_PERFORMANCE_LEVEL_4:
         setPowerHint(CAM_POWER_NORMAL);
         break;
@@ -176,7 +182,8 @@ void SprdCameraSystemPerformance::initPowerHint() {
                 "camera", 0, "camera_lowpower");
             mScenePerformance =
                 mPowerManager->createPowerHintScene("camera", 0, "camera_perf");
-
+            mSceneSlightPerformance =
+                mPowerManager->createPowerHintScene("camera", 0, "camera_lowpower_1");
             mPowermanageInited = true;
             mCurrentPowerHint = CAM_POWER_NORMAL;
 
@@ -198,6 +205,8 @@ void SprdCameraSystemPerformance::deinitPowerHint() {
             mSceneLowPower.clear();
         if (mScenePerformance != NULL)
             mScenePerformance.clear();
+        if (mSceneSlightPerformance !=NULL)
+            mSceneSlightPerformance.clear();
 #endif
         mPowermanageInited = false;
 
@@ -224,6 +233,9 @@ void SprdCameraSystemPerformance::setPowerHint(
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             acquirePowerHint(mSceneLowPower);
             mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
+        } else if (powerhint_id == CAM_POWER_SLIGHT_PERFORMACE) {
+            acquirePowerHint(mSceneSlightPerformance);
+            mCurrentPowerHint = CAM_POWER_SLIGHT_PERFORMACE;
         } else if (powerhint_id == CAM_POWER_NORMAL) {
             HAL_LOGD("current power state is already CAM_POWER_NORMAL,"
                      "state are both 0, just return");
@@ -235,6 +247,10 @@ void SprdCameraSystemPerformance::setPowerHint(
             HAL_LOGD("current power state is already CAM_POWER_PERFORMACE_ON,"
                      "state are both 1, just return");
             goto exit;
+        } else if (powerhint_id == CAM_POWER_SLIGHT_PERFORMACE) {
+            releasePowerHint(mScenePerformance);
+            acquirePowerHint(mSceneSlightPerformance);
+            mCurrentPowerHint = CAM_POWER_SLIGHT_PERFORMACE;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             releasePowerHint(mScenePerformance);
             acquirePowerHint(mSceneLowPower);
@@ -246,12 +262,34 @@ void SprdCameraSystemPerformance::setPowerHint(
             mCurrentPowerHint = CAM_POWER_NORMAL;
         }
         break;
+    case CAM_POWER_SLIGHT_PERFORMACE:
+        if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
+            releasePowerHint(mSceneSlightPerformance);
+            acquirePowerHint(mScenePerformance);
+            mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
+        }else if (powerhint_id == CAM_POWER_SLIGHT_PERFORMACE) {
+            HAL_LOGD("current power state is already CAM_POWER_SLIGHT_PERFORMACE,"
+                     "just return");
+            goto exit;
+        }else if (powerhint_id == CAM_POWER_NORMAL) {
+            releasePowerHint(mSceneSlightPerformance);
+            mCurrentPowerHint = CAM_POWER_NORMAL;
+        }else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
+            releasePowerHint(mSceneSlightPerformance);
+            acquirePowerHint(mSceneLowPower);
+            mCurrentPowerHint = CAM_POWER_LOWPOWER_ON;
+        }
+        break;
     case CAM_POWER_LOWPOWER_ON:
         if (powerhint_id == CAM_POWER_PERFORMACE_ON) {
             // thermalEnabled(false);
             releasePowerHint(mSceneLowPower);
             acquirePowerHint(mScenePerformance);
             mCurrentPowerHint = CAM_POWER_PERFORMACE_ON;
+        } else if (powerhint_id == CAM_POWER_SLIGHT_PERFORMACE) {
+            releasePowerHint(mSceneLowPower);
+            acquirePowerHint(mSceneSlightPerformance);
+            mCurrentPowerHint = CAM_POWER_SLIGHT_PERFORMACE;
         } else if (powerhint_id == CAM_POWER_LOWPOWER_ON) {
             HAL_LOGD("current power state is already CAM_POWER_LOWPOWER_ON,"
                      "state are both 0, just return");
