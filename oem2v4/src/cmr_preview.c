@@ -11121,7 +11121,7 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->cap_zsl_mem_valid_num--;
 
         if (is_to_hal) {
-            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000;
+            frame_type.timestamp = data->sec * 1000000000LL + data->usec * 1000LL;
             frame_type.monoboottime = data->monoboottime;
             cb_data_info.cb_type = PREVIEW_EVT_CB_FRAME;
             cb_data_info.func_type = PREVIEW_FUNC_START_PREVIEW;
