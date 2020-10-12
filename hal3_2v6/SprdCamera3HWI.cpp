@@ -42,6 +42,7 @@
 #include "SprdCamera3HWI.h"
 #include <sprd_ion.h>
 #include <gralloc_public.h>
+#include <hardware/gralloc1.h>
 #include <android/hardware/graphics/common/1.0/types.h>
 #include <sstream>
 #include <fstream>
@@ -785,8 +786,25 @@ int SprdCamera3HWI::configureStreams(
             newStream->usage |= GRALLOC_USAGE_VIDEO_BUFFER;
         }
 
+        /* T61x, need set GRALLOC1_PRODUCER_USAGE_PRIVATE_17
+         * After graphic update(use gralloc1.h), usage is uint64
+         * but usage in newStream is uint32, so use reserved[1]
+         * to transfer high uint32(reserved[0] used by eis)
+         */
+        if (stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
+            char val[PROPERTY_VALUE_MAX] = {0};
+            unsigned long t;
+
+            property_get("ro.boot.auto.efuse", value, "");
+            if (!memcmp(value, "T618", 4) || !memcmp(value, "T610", 4)) {
+                t = (GRALLOC1_PRODUCER_USAGE_PRIVATE_17) >> 32;
+                t |= (unsigned long)newStream->reserved[1];
+                newStream->reserved[1] = (void *)t;
+                HAL_LOGD("usage %p", newStream->reserved[1]);
+            }
+        }
         HAL_LOGD(":hal3: stream %d: stream_type=%d, chn_type=%d, w=%d, h=%d, "
-                 "format=%d usage=%d",
+                 "format=%d usage=0x%x",
                  i, stream_type, channel_type, newStream->width,
                  newStream->height, newStream->format,newStream->usage);
 
