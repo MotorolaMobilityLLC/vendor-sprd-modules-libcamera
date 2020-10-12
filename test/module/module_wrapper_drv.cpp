@@ -60,23 +60,51 @@ static int camt_read_file(char *file_name, unsigned int size, unsigned long addr
 
 	ret = fread((void *)addr, 1, size, fp);
 	fclose(fp);
+	fp = NULL;
 	return ret;
 }
 
-static int camt_write_file(char *file_name, unsigned int size, unsigned long addr)
+static int camt_write_file(char *file_name, unsigned int chipid, unsigned int width, unsigned int height, struct img_store_addr addr, int index)
 {
 	int ret = 0;
 	FILE *fp = NULL;
+	char temp[5];
 
-	IT_LOGD("file_name:%s size %d vir_addr %ld", file_name, size, addr);
-	fp = fopen(file_name, "wb");
-	if (NULL == fp) {
-		IT_LOGD("can not open file: %s \n", file_name);
-		return -1;
+	if (chipid == CAMT_CHIP_ISP0 || chipid == CAMT_CHIP_ISP1) {
+		IT_LOGD("file_name:%s size %d vir_addr %ld_isp", file_name, width * height, addr);
+		strcat(file_name, "_yuv_");
+		sprintf(temp, "%d", index);
+		strcat(file_name, temp);
+		strcat(file_name, ".y");
+		fp = fopen(file_name, "wb");
+		if (NULL == fp) {
+			IT_LOGD("can not open file: %s \n", file_name);
+			return -1;
+		}
+		ret = fwrite((void *)addr.addr_ch0, 1, width * height , fp);
+		fclose(fp);
+		fp = NULL;
+		strcat(file_name, "uv");
+		fp = fopen(file_name, "wb");
+		if (fp == NULL) {
+			IT_LOGD("can not open file: %s \n", file_name);
+			return -1;
+		}
+		ret = fwrite((void *)addr.addr_ch1, 1, width * height / 2, fp);
+		fclose(fp);
+		fp = NULL;
+	} else if (CAMT_CHIP_DCAM0 <= chipid && chipid <= CAMT_CHIP_DCAM_LITE1) {
+		IT_LOGD("file_name:%s size %d vir_addr %ld_dcam", file_name, width * height, addr);
+		strcat(file_name,".mipi_raw");
+		fp = fopen(file_name, "wb");
+		if (fp == NULL) {
+			IT_LOGD("can not open file: %s \n", file_name);
+			return -1;
+		}
+		ret = fwrite((void *)addr.addr_ch0, 1, width * height, fp);
+		fclose(fp);
+		fp = NULL;
 	}
-
-	ret = fwrite((void *)addr, 1, size, fp);
-	fclose(fp);
 	return ret;
 }
 
@@ -146,6 +174,7 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	unsigned long vir_addr_out[DRV_PATH_NUM];
 	char output_file[DRV_PATH_NUM][256];
 	char tmp_str[10];
+	struct img_store_addr store_addr_out[DRV_PATH_NUM];
 
 	memset(output_file, '\0', sizeof(output_file));
 	memset(tmp_str, '\0', 10);
@@ -169,14 +198,12 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 		strcat(output_file[i], "output_");
 		sprintf(tmp_str, "%d_%d", _json2->m_caseID,_json2->m_pathID[i]);
 		strcat(output_file[i], tmp_str);
-		strcat(output_file[i], ".raw");
 	}
 
 	param = &_json2->g_host_info->isp_param;
 	cxt.info.chip = (enum camt_chip)_json2->m_chipID;
 	for(i = 0; i < _json2->m_pathID.size(); i++)
 		cxt.info.path_id[i] = _json2->m_pathID[i];
-
 	cxt.info.test_mode = _json2->m_testMode;
 	cxt.info.bayer_mode = param->general_info.general_image_bayer_mode;
 	cxt.info.input_size.w = param->general_info.general_image_width;
@@ -240,8 +267,20 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 		goto start_fail;
 	}
 
-	for(i = 0; i < DRV_PATH_NUM; i++)
-		ret = camt_write_file(output_file[i], size, vir_addr_out[i]);
+	for(i = 0; i < DRV_PATH_NUM; i++) {
+		if (cxt.info.chip == CAMT_CHIP_ISP0 || cxt.info.chip == CAMT_CHIP_ISP1) {
+			store_addr_out[i].addr_ch0 = vir_addr_out[i];
+			store_addr_out[i].addr_ch1 = vir_addr_out[i] + size / 2;
+			IT_LOGD("isp_module");
+		} else if (CAMT_CHIP_DCAM0 <= cxt.info.chip && cxt.info.chip <= CAMT_CHIP_DCAM_LITE1) {
+			store_addr_out[i].addr_ch0 = vir_addr_out[i];
+			IT_LOGD("dcam_module");
+		} else {
+			IT_LOGD("error set ChipID,Please Check it!!!");
+			return IT_ERR;
+		}
+		ret = camt_write_file(output_file[i], cxt.info.chip, cxt.info.input_size.w, cxt.info.input_size.h, store_addr_out[i], i);
+	}
 
 	if (ret < 0) {
 		IT_LOGE("failed to write output file");
