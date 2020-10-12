@@ -286,7 +286,7 @@ static long find_pid_by_name( char* pidName)
             pid = atoi(next->d_name);
         }
     }
-
+    closedir(dir);
     return pid;
 }
 static void pushBufferList(new_mem_t *localbuffer, buffer_handle_t *backbuf,
