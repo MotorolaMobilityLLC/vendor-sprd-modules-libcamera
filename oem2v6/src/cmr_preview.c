@@ -7388,13 +7388,17 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
             prev_auto_tracking_send_data(handle, camera_id, frm_ptr, info);
         }
 
-    if (camera_id == 0) {
-        char value0[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.preview.dump.count0", value0, "null");
-        cmr_uint dump_num = atoi(value0);
-        if (strcmp(value0, "null")) {
+        char value[PROPERTY_VALUE_MAX];
+        property_get("debug.camera.preview.dump.count", value, "null");
+        cmr_uint dump_num = atoi(value);
+        if (strcmp(value, "null")) {
             if (g_preview_frame_dump_cnt < dump_num) {
-                dump_image("prev_construct_frame_id0", CAM_IMG_FMT_YUV420_NV21,
+                char tag_name[30]={0};
+                char cameraId[2] ={0};
+                strcpy(tag_name, "prev_construct_frame_id");
+                sprintf(cameraId, "%d", camera_id);
+                strcat(tag_name, cameraId);
+                dump_image(tag_name, CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
                            &prev_cxt->prev_frm[frm_id].addr_vir,
@@ -7402,55 +7406,6 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
                 g_preview_frame_dump_cnt++;
             }
         }
-    }
-
-    if (camera_id == 1) {
-        char value1[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.preview.dump.count1", value1, "null");
-        cmr_uint dump_num = atoi(value1);
-        if (strcmp(value1, "null")) {
-            if (g_preview_frame_dump_cnt < dump_num) {
-                dump_image("prev_construct_frame_id1", CAM_IMG_FMT_YUV420_NV21,
-                           frame_type->width, frame_type->height,
-                           prev_cxt->prev_frm_cnt,
-                           &prev_cxt->prev_frm[frm_id].addr_vir,
-                           frame_type->width * frame_type->height * 3 / 2);
-                g_preview_frame_dump_cnt++;
-            }
-        }
-    }
-
-    if (camera_id == 2) {
-        char value2[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.preview.dump.count2", value2, "null");
-        cmr_uint dump_num = atoi(value2);
-        if (strcmp(value2, "null")) {
-            if (g_preview_frame_dump_cnt < dump_num) {
-                dump_image("prev_construct_frame_id2", CAM_IMG_FMT_YUV420_NV21,
-                           frame_type->width, frame_type->height,
-                           prev_cxt->prev_frm_cnt,
-                           &prev_cxt->prev_frm[frm_id].addr_vir,
-                           frame_type->width * frame_type->height * 3 / 2);
-                g_preview_frame_dump_cnt++;
-            }
-        }
-    }
-
-    if (camera_id == 3) {
-        char value3[PROPERTY_VALUE_MAX];
-        property_get("debug.camera.preview.dump.count3", value3, "null");
-        cmr_uint dump_num = atoi(value3);
-        if (strcmp(value3, "null")) {
-            if (g_preview_frame_dump_cnt < dump_num) {
-                dump_image("prev_construct_frame_id3", CAM_IMG_FMT_YUV420_NV21,
-                           frame_type->width, frame_type->height,
-                           prev_cxt->prev_frm_cnt,
-                           &prev_cxt->prev_frm[frm_id].addr_vir,
-                           frame_type->width * frame_type->height * 3 / 2);
-                g_preview_frame_dump_cnt++;
-            }
-        }
-    }
 
 #ifdef CONFIG_Y_IMG_TO_ISP
         prev_y_info_copy_to_isp(handle, camera_id, info);
@@ -7540,20 +7495,24 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         CMR_LOGV("ae_time: %" PRId64 ", zoom_ratio: %f", frame_type->ae_time,
                  frame_type->zoom_ratio);
         frame_type->type = PREVIEW_VIDEO_FRAME;
-if (camera_id == 2) {
+
         char value[PROPERTY_VALUE_MAX];
         property_get("debug.camera.video.dump.count", value, "null");
         cmr_uint dump_num = atoi(value);
         if (strcmp(value, "null")) {
             if (g_video_frame_dump_cnt < dump_num) {
-                dump_image("prev_construct_video_frame",
+                char tag_name[30]={0};
+                char cameraId[2] ={0};
+                strcpy(tag_name, "prev_construct_video_frame");
+                sprintf(cameraId, "%d", camera_id);
+                strcat(tag_name, cameraId);
+                dump_image(tag_name,
                            CAM_IMG_FMT_YUV420_NV21, frame_type->width,
                            frame_type->height, prev_cxt->prev_frm_cnt,
                            &prev_cxt->video_frm[frm_id].addr_vir,
                            frame_type->width * frame_type->height * 3 / 2);
                 g_video_frame_dump_cnt++;
             }
-        }
         }
     } else {
         CMR_LOGE("ignored, channel id %d, frame id %d", info->channel_id,
@@ -7625,7 +7584,12 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_uint dump_num = atoi(value);
         if (strcmp(value, "null")) {
             if (g_zsl_frame_dump_cnt < dump_num) {
-                dump_image("prev_construct_zsl_frame", CAM_IMG_FMT_YUV420_NV21,
+                char tag_name[30]={0};
+                char cameraId[2] ={0};
+                strcpy(tag_name, "prev_construct_zsl_frame");
+                sprintf(cameraId, "%d", camera_id);
+                strcat(tag_name, cameraId);
+                dump_image(tag_name, CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
                            prev_cxt->prev_frm_cnt,
                            &prev_cxt->cap_zsl_frm[frm_id].addr_vir,
@@ -10740,7 +10704,12 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_uint dump_num = atoi(value);
         if (strcmp(value, "null")) {
             if (g_channel2_frame_dump_cnt < dump_num) {
-                dump_image("dump_channel2_frame", CAM_IMG_FMT_YUV420_NV21,
+                char tag_name[30]={0};
+                char cameraId[2] ={0};
+                strcpy(tag_name, "dump_channel2_frame");
+                sprintf(cameraId, "%d", camera_id);
+                strcat(tag_name, cameraId);
+                dump_image(tag_name, CAM_IMG_FMT_YUV420_NV21,
                            frame_type.width, frame_type.height,
                            prev_cxt->channel2.frm_cnt,
                            &prev_cxt->channel2.frm[0].addr_vir,
