@@ -58,7 +58,6 @@ namespace sprdcamera {
 #endif
 
 #define BOKEH_REFOCUS_COMMON_XMP_SIZE 0 //(64 * 1024)
-#define SHARKL5 0x0400
 #define DEPTH_OUTPUT_WIDTH (400)       //(160)
 #define DEPTH_OUTPUT_HEIGHT (300)      //(120)
 #define DEPTH_SNAP_OUTPUT_WIDTH (800)  //(324)
@@ -1350,6 +1349,11 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
             }
 
             if (output_buffer != NULL) {
+                if(mRealBokeh->mflushflag){
+                    sem_post(&mRealBokeh->mflushvalue);
+                    mRealBokeh->mflushflag = false;
+                }
+
                 bool isDoDepth = false;
                 void *output_buf_addr = NULL;
                 void *input_buf1_addr = NULL;
@@ -3131,9 +3135,12 @@ int SprdCamera3RealBokeh::flush(const struct camera3_device *device) {
 
     HAL_LOGI(" E");
     CHECK_CAPTURE_ERROR();
-
+    mRealBokeh->mTimeoutFlush.tv_sec += PENDINGTIMEOUT/1000000000;
+    if(!mRealBokeh->mFlushing && mRealBokeh->is_caprequest){
+        sem_timedwait(&mRealBokeh->mflushvalue, &mRealBokeh->mTimeoutFlush);
+        sem_destroy(&mRealBokeh->mflushvalue);
+    }
     rc = mRealBokeh->_flush(device);
-
     HAL_LOGI(" X");
 
     return rc;
@@ -3174,6 +3181,7 @@ int SprdCamera3RealBokeh::initialize(
     mPrevFrameNotifyList.clear();
     mOtpData.otp_exist = false;
     mVcmSteps = 0;
+    is_caprequest = false;
     mOtpData.otp_size = 0;
     mOtpData.otp_type = 0;
     mJpegOrientation = 0;
@@ -3191,6 +3199,7 @@ int SprdCamera3RealBokeh::initialize(
     mlimited_infi = 0;
     mlimited_macro = 0;
     memset(&mbokehParm, 0, sizeof(bokeh_params));
+    memset(&mTimeoutFlush, 0, sizeof(timespec));
 
     sprdcamera_physical_descriptor_t sprdCam =
         m_pPhyCamera[CAM_TYPE_BOKEH_MAIN];
@@ -3227,7 +3236,6 @@ int SprdCamera3RealBokeh::initialize(
 
     mCaptureThread->mCallbackOps = callback_ops;
     mCaptureThread->mDevmain = &m_pPhyCamera[CAM_TYPE_BOKEH_MAIN];
-
     HAL_LOGI("X");
     return rc;
 }
@@ -3268,6 +3276,8 @@ int SprdCamera3RealBokeh::configureStreams(
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
     sn_trim_flag = true;
+    sem_init(&mRealBokeh->mflushvalue, 0, 0);
+    mflushflag = true;
     struct af_relbokeh_oem_data af_relbokeh_info;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
@@ -3282,6 +3292,7 @@ int SprdCamera3RealBokeh::configureStreams(
     memset(pauxStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     bzero(&af_relbokeh_info, sizeof(struct af_relbokeh_oem_data));
+    clock_gettime(CLOCK_REALTIME, &mTimeoutFlush);
 
     Mutex::Autolock l(mLock);
 
@@ -3611,6 +3622,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
     camera3_stream_buffer_t out_streams_main[REAL_BOKEH_MAX_NUM_STREAMS];
     camera3_stream_buffer_t out_streams_aux[REAL_BOKEH_MAX_NUM_STREAMS];
     bool is_captureing = false;
+    is_caprequest = true;
     uint32_t tagCnt = 0;
     camera3_stream_t *preview_stream = NULL;
     char value[PROPERTY_VALUE_MAX] = {
@@ -4825,18 +4837,11 @@ int SprdCamera3RealBokeh::_flush(const struct camera3_device *device) {
     Mutex::Autolock l(mFlushLock);
     Mutex::Autolock jcl(mJpegCallbackLock);
     mFlushing = true;
-    if(PLATFORM_ID != SHARKL5){
-        SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-        rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
+    rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
 
-        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
-        rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
-    } else {
-        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
-        rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
-        SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
-        rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].dev);
-    }
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_DEPTH].hwi;
+    rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_DEPTH].dev);
 
     preClose();
 

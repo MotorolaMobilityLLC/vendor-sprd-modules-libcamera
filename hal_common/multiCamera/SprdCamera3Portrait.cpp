@@ -55,7 +55,6 @@ namespace sprdcamera {
 #endif
 
 #define BOKEH_REFOCUS_COMMON_XMP_SIZE 0 //(64 * 1024)
-#define SHARKL5 0x0400
 #define DEPTH_OUTPUT_WIDTH (400)       //(160)
 #define DEPTH_OUTPUT_HEIGHT (300)      //(120)
 #define DEPTH_SNAP_OUTPUT_WIDTH (800)  //(324)
@@ -1329,6 +1328,10 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
             mFaceBeautyFlag = mPortrait->mFaceBeautyFlag;
 
             if (output_buffer != NULL) {
+                if(mPortrait->mflushflag){
+                    sem_post(&mPortrait->mflushvalue);
+                    mPortrait->mflushflag = false;
+                }
                 bool isDoDepth = false;
                 void *output_buf_addr = NULL;
                 void *input_buf1_addr = NULL;
@@ -3027,11 +3030,14 @@ void SprdCamera3Portrait::dump(const struct camera3_device *device, int fd) {
 int SprdCamera3Portrait::flush(const struct camera3_device *device) {
     int rc = 0;
 
-    HAL_LOGI(" E");
+    HAL_LOGI(" E ");
     CHECK_CAPTURE_ERROR();
-
+    mPortrait->mTimeoutFlush.tv_sec += PENDINGTIMEOUT/1000000000;
+    if(!mPortrait->mFlushing && mPortrait->is_caprequest){
+        sem_timedwait(&mPortrait->mflushvalue, &mPortrait->mTimeoutFlush);
+        sem_destroy(&mPortrait->mflushvalue);
+    }
     rc = mPortrait->_flush(device);
-
     HAL_LOGI(" X");
 
     return rc;
@@ -3073,6 +3079,7 @@ int SprdCamera3Portrait::initialize(
     mOtpData.otp_exist = false;
     mPortraitFlag = false;
     mVcmSteps = 0;
+    is_caprequest = false;
     mOtpData.otp_size = 0;
     mOtpData.otp_type = 0;
     mJpegOrientation = 0;
@@ -3090,6 +3097,7 @@ int SprdCamera3Portrait::initialize(
     mlimited_infi = 0;
     mlimited_macro = 0;
     memset(&mbokehParm, 0, sizeof(bokeh_params));
+    memset(&mTimeoutFlush, 0, sizeof(timespec));
 
     sprdcamera_physical_descriptor_t sprdCam =
         m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN];
@@ -3178,11 +3186,14 @@ int SprdCamera3Portrait::configureStreams(
     mPrevPortrait = false;
     mbokehParm.f_number = 0;
     sem_init(&mFaceinfoSignSem, 0, 0);
+    sem_init(&mPortrait->mflushvalue, 0, 0);
+    mflushflag = true;
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * PORTRAIT__MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
            sizeof(camera3_stream_t *) * PORTRAIT__MAX_NUM_STREAMS);
     bzero(&af_relbokeh_info, sizeof(struct af_relbokeh_oem_data));
+    clock_gettime(CLOCK_REALTIME, &mTimeoutFlush);
 
     Mutex::Autolock l(mLock);
 
@@ -3531,6 +3542,7 @@ int SprdCamera3Portrait::processCaptureRequest(
     camera3_stream_buffer_t out_streams_main[PORTRAIT__MAX_NUM_STREAMS];
     camera3_stream_buffer_t out_streams_aux[PORTRAIT__MAX_NUM_STREAMS];
     bool is_captureing = false;
+    is_caprequest = true;
     uint32_t tagCnt = 0;
     camera3_stream_t *preview_stream = NULL;
     char value[PROPERTY_VALUE_MAX] = {
@@ -4747,19 +4759,11 @@ int SprdCamera3Portrait::_flush(const struct camera3_device *device) {
     Mutex::Autolock jcl(mJpegCallbackLock);
     mFlushing = true;
     sem_destroy(&mFaceinfoSignSem);
-    if(PLATFORM_ID != SHARKL5){
-        SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi;
-        rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].dev);
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi;
+    rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].dev);
 
-        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].hwi;
-        rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].dev);
-    } else {
-        SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].hwi;
-        rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].dev);
-        SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi;
-        rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].dev);
-    }
-
+    SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].hwi;
+    rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].dev);
 
     preClose();
     if (mBokehAlgo) {

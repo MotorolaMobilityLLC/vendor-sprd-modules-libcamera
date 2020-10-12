@@ -189,6 +189,10 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     Mutex mNotifyLockAux;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListAux;
+    sem_t mflushvalue;
+    bool mflushflag;
+    bool is_caprequest;
+    struct timespec mTimeoutFlush;
     bool mIsCapturing;
     bool mSnapshotResultReturn;
     bool mIsCapDepthFinish;
