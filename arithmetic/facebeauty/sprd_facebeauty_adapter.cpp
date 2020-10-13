@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <utils/Log.h>
 #include "sprd_facebeauty_adapter.h"
+#include "version.h"
 #include <time.h>
 #define NUM_LEVELS 11
 #define NUM_TYPES 3
@@ -16,7 +17,10 @@ struct facebeauty_param_t fbPrevParam;
 struct facebeauty_param_t fbCapParam;
 unsigned char lightPortraitType = 0;
 fb_beauty_mask_t *fbMaskT = NULL;
-
+const char *GetVersion(){
+    static const char *ver = "CAM_ADAP_BEAUTY_LIBVER[" BEAUTY_ADA_VERSION "]";
+    return ver;
+}
 void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum, fb_chipinfo chipinfo)
 {
     if (!faceBeauty) {
@@ -40,7 +44,7 @@ void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum
         faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
     else if (!(strcmp("vdsp", strRunType)) && (workMode == 1))//Only movie mode run on VDSP.
         faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_VDSP;
-    ALOGD("init_fb_handle to CreateBeautyHandle. runType:%d", faceBeauty->runType);
+    ALOGD("init_fb_handle to CreateBeautyHandle. runType:%d version=%s",faceBeauty->runType,GetVersion());
 
     property_get("persist.vendor.cam.facebeauty.corp", faceBeauty->sprdAlgorithm, "1");
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
@@ -92,6 +96,7 @@ void face_beauty_deinit(fb_beauty_param_t *faceBeauty)
                 FB_DeleteBeautyHandle_VDSP(&(faceBeauty->hSprdFB));
                 faceBeauty->hSprdFB = NULL;
             }
+            memset(faceBeauty->fb_face,0,sizeof(faceBeauty->fb_face));//bug1423342
         }
         faceBeauty->noFaceFrmCnt = 0;
         ALOGD("face_beauty_deinit end!");
@@ -402,21 +407,6 @@ void do_face_beauty(fb_beauty_param_t *faceBeauty, int faceCount) {
     if (!strcmp(faceBeauty->sprdAlgorithm, "2")) {
         clock_gettime(CLOCK_BOOTTIME, &start_time);
 
-        /*wait first face frame*/
-        if (0 == faceBeauty->isFaceGot && faceCount > 0) {
-            faceBeauty->isFaceGot = 1;
-        }
-        if (faceBeauty->isFaceGot == 1) {
-            if (faceCount == 0) {
-                if (faceBeauty->noFaceFrmCnt < 100)
-                    faceBeauty->noFaceFrmCnt++;
-            } else
-                faceBeauty->noFaceFrmCnt = 0;
-
-            /*from face to no face.remain 10 frames to do face beauty*/
-            if (faceBeauty->noFaceFrmCnt < 10)
-                faceCount = faceCount > 0 ? faceCount : 1;
-        }
         property_get("debug.camera.dump.frame", value, "null");
         if (!strcmp(value, "fb")) {
             save_yuv_data(dumpFrameCount, faceBeauty->fb_image.width,
