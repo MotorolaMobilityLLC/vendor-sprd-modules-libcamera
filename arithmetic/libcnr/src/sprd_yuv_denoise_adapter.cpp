@@ -108,8 +108,8 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
 	if(paramInfo.cnr3Param != NULL)
 	{
 		for (i = 0; i < LAYER_NUM; i++) {
-			paramInfo.cnr3Param->paramLayer[i].imgCenterX = denoise_param->width/pow(2, (i+1));
-			paramInfo.cnr3Param->paramLayer[i].imgCenterY = denoise_param->height/pow(2, (i+1));
+			paramInfo.cnr3Param->paramLayer[i].imgCenterX = (denoise_param->width>>1)/pow(2, (i+1));
+			paramInfo.cnr3Param->paramLayer[i].imgCenterY = (denoise_param->height>>1)/pow(2, (i+1));
 			max_radius = (denoise_param->width + denoise_param->height)/pow(2, (i+1));
 			DENOISE_LOGD("CNR3 : input yuv width =%d,height =%d,base radius=%d,ration_base=%d,zoom_ration=%f",denoise_param->width,denoise_param->height,
 				 paramInfo.cnr3Param->paramLayer[i].baseRadius,denoise_param->cnr_ration_base,denoise_param->zoom_ratio);
