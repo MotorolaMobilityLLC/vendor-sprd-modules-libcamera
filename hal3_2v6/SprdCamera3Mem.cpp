@@ -372,6 +372,7 @@ int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
     int width = ADP_WIDTH(*buffer_handle);
     int height = ADP_HEIGHT(*buffer_handle);
     int format = ADP_FORMAT(*buffer_handle);
+    int stride = ADP_STRIDE(*buffer_handle);
     android_ycbcr ycbcr;
     Rect bounds(width, height);
     void *vaddr = NULL;
@@ -384,7 +385,7 @@ int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
 
     mem_info->pbuffer = new GraphicBuffer(
         native_handle, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, width,
-        height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, width);
+        height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, stride);
     if (mem_info->pbuffer == NULL) {
         HAL_LOGE("alloc fail");
         return -ENOMEM;
