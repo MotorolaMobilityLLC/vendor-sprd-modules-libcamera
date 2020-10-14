@@ -3810,12 +3810,6 @@ cmr_int snp_checkout_exit(cmr_handle snp_handle) {
                 CMR_LOGD("post ipm sm");
             }
         }
-
-        if (POST_PROCESSING == snp_get_status(snp_handle)) {
-            sem_wait(&cxt->sync_encode);
-            sem_post(&cxt->sync_encode);
-        }
-
         if (CODEC_WORKING == snp_get_status(snp_handle)) {
             if (cxt->ops.stop_codec) {
                 sem_post(&cxt->jpeg_sync_sm);
