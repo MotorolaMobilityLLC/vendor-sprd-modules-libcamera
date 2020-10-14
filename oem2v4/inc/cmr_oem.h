@@ -389,6 +389,7 @@ struct camera_context {
     bool night_flag;
     cmr_u8 nightscepro_flag;
     struct nightpro_context night_cxt;
+    bool snp_cancel;
 };
 
 struct prev_threednr_info {

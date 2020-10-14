@@ -9487,6 +9487,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     phyPtr = sensorGetPhysicalSnsInfo(camera_id);
     cxt->facing = phyPtr->face_type;
     cxt->isp_pm_initing = false;
+    cxt->snp_cancel = false;
     pthread_mutex_init(&cxt->isp_pm_mutex, NULL);
     pthread_cond_init(&cxt->isp_pm_cond, NULL);
 
@@ -9540,6 +9541,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
 
     cxt->setting_cxt.is_active = 1;
+	cxt->snp_cancel = false;
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                             SETTING_SET_ENVIRONMENT, &setting_param);
@@ -9713,6 +9715,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
 
     sem_wait(&cxt->snapshot_sm);
+    if (cxt->snp_cancel && (mode == CAMERA_ZSL_MODE)){
+        CMR_LOGD("cancel picture has already happen , just return");
+        ret = CMR_CAMERA_NORNAL_EXIT;
+        goto exit;
+    }
     if (CAMERA_ZSL_MODE != mode) {
         ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
         if (ret) {
@@ -9866,6 +9873,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
 
 exit:
+    cxt->snp_cancel = false;
     sem_post(&cxt->snapshot_sm);
     CMR_LOGV("done %ld", ret);
     ATRACE_END();
@@ -9880,6 +9888,8 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     struct setting_cmd_parameter setting_param;
     memset(&setting_param, 0, sizeof(setting_param));
     sem_wait(&cxt->snapshot_sm);
+    if (cxt->snp_cxt.snp_mode == CAMERA_ZSL_MODE)
+        cxt->snp_cancel = true;
     if (1 == camera_get_3dnr_flag(cxt)) {
 #ifdef OEM_HANDLE_3DNR
         if (0 != cxt->ipm_cxt.frm_num) {
