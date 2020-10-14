@@ -126,8 +126,8 @@ struct sprd_pdaf_report_t {
 struct pdaf_raw_buffer_info {
 	void *left_buffer;
 	void *right_buffer;
-	void *left_output;
-	void *right_output;
+	cmr_s16 *left_output;
+	cmr_s16 *right_output;
 	cmr_int roi_pixel_numb;
 };
 

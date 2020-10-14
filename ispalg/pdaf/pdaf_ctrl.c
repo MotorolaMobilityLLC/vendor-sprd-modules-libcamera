@@ -466,7 +466,7 @@ cmr_int pdaf_ctrl_process(cmr_handle handle, struct pdaf_ctrl_process_in * in, s
 	memcpy(message.data, in, sizeof(*in));
 	message.alloc_flag = 1;
 	message.msg_type = PDAFCTRL_EVT_PROCESS;
-	message.sync_flag = CMR_MSG_SYNC_NONE;
+	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	ret = cmr_thread_msg_send(cxt->thread_cxt.ctrl_thr_handle, &message);
 	if (ret) {
 		ISP_LOGE("fail to send msg to main thr %ld", ret);
