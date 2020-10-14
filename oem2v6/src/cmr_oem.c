@@ -908,8 +908,8 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 
     camera_local_normal_snapshot_need_pause(oem_handle, &need_pause);
     chn_bit = 1 << frm_ptr->channel_id;
-    CMR_LOGV("chn_id=%d,pre_chn_id=%d,snp_chn_id=%d,total=%d,zsl_frame %d",
-        frm_ptr->channel_id, cxt->prev_cxt.preview_channel_id,
+    CMR_LOGV("camera_id=%d,chn_id=%d,pre_chn_id=%d,video_chn_id=%d,snp_chn_id=%d,total=%d,zsl_frame %d",
+        cxt->camera_id,frm_ptr->channel_id, cxt->prev_cxt.preview_channel_id, cxt->prev_cxt.video_channel_id,
         cxt->snp_cxt.channel_id, cxt->snp_cxt.total_num,
         cxt->snp_cxt.zsl_frame);
 

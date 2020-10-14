@@ -590,6 +590,7 @@ struct prev_thread_cxt {
     /*callback thread*/
     cmr_handle cb_thread_handle;
     cmr_handle assist_thread_handle;
+    cmr_handle video_thread_handle;
 };
 
 struct prev_handle {
@@ -628,6 +629,8 @@ static cmr_int prev_create_cb_thread(struct prev_handle *handle);
 static cmr_int prev_destroy_cb_thread(struct prev_handle *handle);
 
 static cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data);
+
+static cmr_int prev_video_thread_proc(struct cmr_msg *message, void *p_data);
 
 static cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data);
 
@@ -1558,11 +1561,22 @@ cmr_int cmr_preview_receive_data(cmr_handle preview_handle, cmr_u32 camera_id,
     message.sync_flag = CMR_MSG_SYNC_NONE;
     message.data = (void *)inter_param;
     message.alloc_flag = 1;
-    ret =
-        cmr_thread_msg_send(handle->thread_cxt.assist_thread_handle, &message);
-    if (ret) {
-        CMR_LOGE("send msg failed!");
-        goto exit;
+
+    if(handle->prev_cxt[camera_id].video_channel_id == frm_data->channel_id &&
+        handle->prev_cxt[camera_id].prev_param.is_ultra_wide){
+        ret =
+            cmr_thread_msg_send(handle->thread_cxt.video_thread_handle, &message);
+        if (ret) {
+            CMR_LOGE("send msg failed!");
+            goto exit;
+        }
+    }else{
+        ret =
+            cmr_thread_msg_send(handle->thread_cxt.assist_thread_handle, &message);
+        if (ret) {
+            CMR_LOGE("send msg failed!");
+            goto exit;
+        }
     }
 
 exit:
@@ -2619,6 +2633,45 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data) {
     return ret;
 }
 
+cmr_int prev_video_thread_proc(struct cmr_msg *message, void *p_data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 msg_type = 0;
+    cmr_uint evt = 0;
+    cmr_u32 camera_id = CAMERA_ID_MAX;
+    struct internal_param *inter_param = NULL;
+    struct frm_info *frm_data = NULL;
+    struct prev_handle *handle = (struct prev_handle *)p_data;
+
+    if (!message || !p_data) {
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    msg_type = (cmr_u32)message->msg_type;
+    // CMR_LOGD("msg_type 0x%x", msg_type);
+
+    switch (msg_type) {
+    case PREV_EVT_RECEIVE_DATA:
+        inter_param = (struct internal_param *)message->data;
+        camera_id = (cmr_u32)((cmr_uint)inter_param->param1);
+        evt = (cmr_uint)inter_param->param2;
+        frm_data = (struct frm_info *)inter_param->param3;
+        if (handle->frame_active == 1) {
+            ret = prev_receive_data(handle, camera_id, evt,frm_data);
+        }
+        if (frm_data) {
+            free(frm_data);
+            frm_data = NULL;
+        }
+        break;
+
+    default:
+        CMR_LOGE("unknown message");
+        break;
+    }
+
+    return ret;
+}
+
 static cmr_int prev_cb_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 msg_type = 0;
@@ -2795,6 +2848,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 preview_enable = 0;
+    cmr_u32 video_fmt = 0;
     cmr_u32 snapshot_enable = 0;
     cmr_u32 video_enable = 0;
     cmr_u32 channel4_eb = 0, channel3_eb = 0, channel2_eb = 0, channel1_eb = 0,
@@ -2811,6 +2865,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 
     prev_cxt = &handle->prev_cxt[camera_id];
     preview_enable = prev_cxt->prev_param.preview_eb;
+    video_fmt = prev_cxt->prev_param.video_fmt;
     snapshot_enable = prev_cxt->prev_param.snapshot_eb;
     video_enable = prev_cxt->prev_param.video_eb;
     channel0_eb = prev_cxt->prev_param.channel0_eb;
@@ -2819,9 +2874,9 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     channel3_eb = prev_cxt->prev_param.channel3_eb;
     channel4_eb = prev_cxt->prev_param.channel4_eb;
 
-    CMR_LOGV("preview_enable %d, snapshot_enable %d, channel_id %d, "
+    CMR_LOGV("preview_enable %d, video_frm %d, snapshot_enable %d, channel_id %d, "
              "prev_channel_id %ld, cap_channel_id %ld",
-             preview_enable, snapshot_enable, data->channel_id,
+             preview_enable, video_fmt, snapshot_enable, data->channel_id,
              prev_cxt->prev_channel_id, prev_cxt->cap_channel_id);
 
     if (preview_enable && (data->channel_id == prev_cxt->prev_channel_id)) {
@@ -2990,9 +3045,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 
     if (prev_cxt->prev_param.is_ultra_wide) {
         if (prev_cxt->prev_mem_valid_num > 0) {
-            pthread_mutex_lock(&handle->thread_cxt.prev_mutex);
             ret = prev_ultra_wide_send_data(handle, camera_id, data);
-            pthread_mutex_unlock(&handle->thread_cxt.prev_mutex);
 
             if (ret) {
                 CMR_LOGE("ultra_wide failed, skip this frm");
@@ -3181,9 +3234,7 @@ cmr_int prev_video_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 
     if (prev_cxt->prev_param.is_ultra_wide) {
         if (prev_cxt->video_mem_valid_num > 0) {
-            pthread_mutex_lock(&handle->thread_cxt.prev_mutex);
             ret = prev_ultra_wide_send_data(handle, camera_id, data);
-            pthread_mutex_unlock(&handle->thread_cxt.prev_mutex);
 
             if (ret) {
                 CMR_LOGE("ultra_wide failed, skip this frm");
@@ -4043,6 +4094,15 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     if (video_enable) {
         /*init ultra_wide*/
         if (prev_cxt->prev_param.is_ultra_wide) {
+            /*create video thread*/
+            ret = cmr_thread_create(&handle->thread_cxt.video_thread_handle,
+                                    PREV_MSG_QUEUE_SIZE, prev_video_thread_proc,
+                                    (void *)handle, "video");
+            if (ret) {
+                CMR_LOGE("send msg failed!");
+                ret = CMR_CAMERA_FAIL;
+                goto exit;
+            }
             prev_ultra_wide_open(handle, camera_id);
         }
     }
@@ -4213,6 +4273,10 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         /*deinit ultra_wide*/
         if (prev_cxt->prev_param.is_ultra_wide) {
             prev_ultra_wide_close(handle, camera_id);
+            /*destory video thread*/
+            ret = cmr_thread_destroy(handle->thread_cxt.video_thread_handle);
+            handle->thread_cxt.video_thread_handle= 0;
+            CMR_LOGI("destory video thread");
         }
     }
 
@@ -16853,7 +16917,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                 ipm_in_param.dst_frame.reserved = dst_buffer_handle;
                 ipm_in_param.private_data = (void *)&param_info;
             }
-            sem_wait(&prev_cxt->ultra_video);
+            //sem_wait(&prev_cxt->ultra_video);
             if (src_buffer_handle != NULL && dst_buffer_handle != NULL) {
                 ret =
                     ipm_transfer_frame(ultra_wide_handle, &ipm_in_param, NULL);
@@ -16861,7 +16925,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
             if (prev_cxt->prev_param.sprd_eis_enabled == 1 && frame_type == PREVIEW_VIDEO_FRAME) {
                 memcpy((void *)dst_img->addr_vir.addr_y, (void*)dst_eis_img->addr_vir.addr_y, prev_cxt->eis_video_mem_size);
             }
-            sem_post(&prev_cxt->ultra_video);
+            //sem_post(&prev_cxt->ultra_video);
             handle->ops.release_buff_handle(handle->oem_handle, frame_type,
                                             &buf_info);
         }
