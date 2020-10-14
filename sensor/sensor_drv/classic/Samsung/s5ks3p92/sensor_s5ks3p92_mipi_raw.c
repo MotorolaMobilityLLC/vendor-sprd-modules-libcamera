@@ -900,6 +900,12 @@ static cmr_int s5ks3p92_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
   SENSOR_LOGI("E");
 
+    char value2[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.colorbar", value2, "0");
+    if (!strcmp(value2, "1")) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0600, 0x02);
+    }
+
     char value1[PROPERTY_VALUE_MAX];
     property_get("vendor.cam.hw.framesync.on", value1, "1");
     if (!strcmp(value1, "1")) {
