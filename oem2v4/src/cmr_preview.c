@@ -77,6 +77,10 @@
 #define PREV_EVT_CB_EXIT (PREV_EVT_BASE + 0x13)
 #define PREV_EVT_ASSIST_START (PREV_EVT_BASE + 0x14)
 #define PREV_EVT_ASSIST_STOP (PREV_EVT_BASE + 0x15)
+#define PREV_EVT_OFFLINE_START (PREV_EVT_BASE + 0x16)
+#define PREV_EVT_OFFLINE_ZSL (PREV_EVT_BASE + 0x17)
+#define PREV_EVT_OFFLINE_SET_ZSL (PREV_EVT_BASE + 0x18)
+#define PREV_EVT_OFFLINE_STOP (PREV_EVT_BASE + 0x19)
 
 #define ALIGN_16_PIXEL(x) (((x) + 15) & (~15))
 
@@ -384,6 +388,10 @@ struct prev_thread_cxt {
     /*callback thread*/
     cmr_handle cb_thread_handle;
     cmr_handle assist_thread_handle;
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+
+    cmr_handle offline_thread_handle;
+#endif
     /*for sw 3dnr*/
     cmr_handle threednr_thread_handle;
 };
@@ -398,6 +406,9 @@ struct prev_handle {
     struct prev_thread_cxt thread_cxt;
     struct prev_context prev_cxt[CAMERA_ID_MAX];
     cmr_uint frame_active;
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    cmr_uint offline_frame_active;
+#endif
 };
 
 struct prev_cb_info {
@@ -428,6 +439,8 @@ static cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data);
 static cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data);
 
 static cmr_int prev_cb_thread_proc(struct cmr_msg *message, void *p_data);
+
+static cmr_int prev_offline_thread_proc(struct cmr_msg *message, void *p_data);
 
 static cmr_int prev_cb_start(struct prev_handle *handle,
                              struct prev_cb_info *cb_info);
@@ -747,6 +760,9 @@ static cmr_int prev_pop_video_buffer_sw_3dnr(struct prev_handle *handle,
 static cmr_int prev_set_zsl_buffer(struct prev_handle *handle,
                                    cmr_u32 camera_id, cmr_uint src_phy_addr,
                                    cmr_uint src_vir_addr, cmr_s32 fd);
+static cmr_int prev_offline_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
+                            cmr_uint src_phy_addr, cmr_uint src_vir_addr,
+                            cmr_s32 fd);
 
 static cmr_int prev_pop_zsl_buffer(struct prev_handle *handle,
                                    cmr_u32 camera_id, struct frm_info *data,
@@ -957,6 +973,16 @@ cmr_int cmr_preview_start(cmr_handle preview_handle, cmr_u32 camera_id) {
         return CMR_CAMERA_FAIL;
     }
 
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    message.msg_type = PREV_EVT_OFFLINE_START;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    ret =
+        cmr_thread_msg_send(handle->thread_cxt.offline_thread_handle, &message);
+    if (ret) {
+        CMR_LOGE("send msg failed!");
+        return CMR_CAMERA_FAIL;
+    }
+#endif
     CMR_LOGD("X");
     ATRACE_END();
     return ret;
@@ -988,6 +1014,17 @@ cmr_int cmr_preview_stop(cmr_handle preview_handle, cmr_u32 camera_id) {
         CMR_LOGE("send msg failed!");
         return CMR_CAMERA_FAIL;
     }
+
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    message.msg_type = PREV_EVT_OFFLINE_STOP;
+    message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+    ret =
+        cmr_thread_msg_send(handle->thread_cxt.offline_thread_handle, &message);
+    if (ret) {
+        CMR_LOGE("send msg failed!");
+        return CMR_CAMERA_FAIL;
+    }
+#endif
 
     CMR_LOGD("X");
     return ret;
@@ -1928,6 +1965,17 @@ cmr_int prev_create_thread(struct prev_handle *handle) {
             goto end;
         }
 
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+        ret = cmr_thread_create(&handle->thread_cxt.offline_thread_handle,
+                                PREV_MSG_QUEUE_SIZE, prev_offline_thread_proc,
+                                (void *)handle, "prev_zsl_offline");
+        if (ret) {
+            CMR_LOGE("send msg failed!");
+            ret = CMR_CAMERA_FAIL;
+            goto end;
+        }
+#endif
+
         handle->thread_cxt.is_inited = 1;
 
         message.msg_type = PREV_EVT_INIT;
@@ -1975,6 +2023,12 @@ cmr_int prev_destroy_thread(struct prev_handle *handle) {
         CMR_LOGI("destory prev assist thread");
         ret = cmr_thread_destroy(handle->thread_cxt.assist_thread_handle);
         handle->thread_cxt.assist_thread_handle = 0;
+
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+        CMR_LOGI("destory prev offline thread");
+        ret = cmr_thread_destroy(handle->thread_cxt.offline_thread_handle);
+        handle->thread_cxt.offline_thread_handle = 0;
+#endif
 
         sem_destroy(&handle->thread_cxt.prev_sync_sem);
         sem_destroy(&handle->thread_cxt.prev_recovery_sem);
@@ -2116,8 +2170,13 @@ cmr_int prev_assist_thread_proc(struct cmr_msg *message, void *p_data) {
         src_vir_addr = (cmr_uint)inter_param->param3;
         fd = (cmr_s32)(unsigned long)inter_param->param4;
 
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
         ret = prev_set_zsl_buffer(handle, camera_id, src_phy_addr, src_vir_addr,
                                   fd);
+#else
+        ret = prev_offline_set_zsl_buffer(handle, camera_id, src_phy_addr, src_vir_addr,
+                                  fd);
+#endif
         break;
 
     case PREV_EVT_SET_PDAF_BUFFER:
@@ -2275,6 +2334,68 @@ cmr_int prev_thread_proc(struct cmr_msg *message, void *p_data) {
     return ret;
 }
 
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+
+static cmr_int prev_offline_thread_proc(struct cmr_msg *message, void *p_data) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 msg_type = 0;
+
+    cmr_u32 camera_id = CAMERA_ID_MAX;
+    struct internal_param *inter_param = NULL;
+    struct frm_info *data;
+    struct prev_handle *handle = (struct prev_handle *)p_data;
+    cmr_uint src_phy_addr, src_vir_addr;
+    cmr_s32 fd;
+
+    if (!message) {
+        CMR_LOGD("no message,check");
+        return CMR_CAMERA_INVALID_PARAM;
+    }
+
+    msg_type = (cmr_u32)message->msg_type;
+
+    switch (msg_type) {
+    case PREV_EVT_OFFLINE_START:
+        handle->offline_frame_active = 1;
+        break;
+    case PREV_EVT_OFFLINE_ZSL:
+        inter_param = (struct internal_param *)message->data;
+        camera_id = (cmr_u32)((unsigned long)inter_param->param1);
+        data = (struct frm_info *)inter_param->param3;
+        CMR_LOGV("PREV_EVT_OFFLINE_ZSL data->fd %x,", data->fd);
+        if (1 == handle->offline_frame_active) {
+            ret = prev_zsl_frame_handle(handle, camera_id, data);
+        }
+        if (data) {
+            free(data);
+            data = NULL;
+        }
+
+        break;
+    case PREV_EVT_OFFLINE_SET_ZSL:
+        inter_param = (struct internal_param *)message->data;
+        camera_id = (cmr_u32)((cmr_uint)inter_param->param1);
+        src_phy_addr = (cmr_uint)inter_param->param2;
+        src_vir_addr = (cmr_uint)inter_param->param3;
+        fd = (cmr_s32)(unsigned long)inter_param->param4;
+        if (1 == handle->offline_frame_active) {
+            ret = prev_set_zsl_buffer(handle, camera_id, src_phy_addr, src_vir_addr,
+                                      fd);
+        }
+        break;
+
+    case PREV_EVT_OFFLINE_STOP:
+        CMR_LOGD("PREV_EVT_OFFLINE_ZSL exit");
+        handle->offline_frame_active = 0;
+        break;
+
+    default:
+        break;
+    }
+
+    return ret;
+}
+#endif
 static cmr_int prev_cb_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 msg_type = 0;
@@ -2457,6 +2578,12 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 pdaf_eb = 0;
     struct prev_context *prev_cxt = NULL;
     struct camera_context *cxt = NULL;
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+    struct internal_param *inter_param = NULL;
+    struct frm_info *frm_data = NULL;
+
+    CMR_MSG_INIT(message);
+#endif
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -2477,7 +2604,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_SUCCESS;
     }
 
-    CMR_LOGV("preview_enable %d, snapshot_enable %d, channel_id %d, "
+    CMR_LOGD("preview_enable %d, snapshot_enable %d, channel_id %d, "
              "prev_channel_id %ld, cap_channel_id %ld",
              preview_enable, snapshot_enable, data->channel_id,
              prev_cxt->prev_channel_id, prev_cxt->cap_channel_id);
@@ -2505,7 +2632,44 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
                 CMR_LOGV("sbs mode, zsl raw frame");
                 ret = prev_dp_frame_handle(handle, camera_id, data);
             } else {
+#ifdef CONFIG_CAMERA_AUTO_DETECT_SENSOR
                 ret = prev_zsl_frame_handle(handle, camera_id, data);
+
+#else
+                CMR_LOGD("offline proc prev_zsl_frame_handle,data->fd %x,", data->fd);
+
+                /*copy the frame info*/
+                if (data) {
+                    frm_data = (struct frm_info *)malloc(sizeof(struct frm_info));
+                    if (!frm_data) {
+                        CMR_LOGE("alloc frm mem failed!");
+                        ret = CMR_CAMERA_NO_MEM;
+                        goto exit;
+                    }
+                    cmr_copy(frm_data, data, sizeof(struct frm_info));
+                }
+                inter_param =
+                    (struct internal_param *)malloc(sizeof(struct internal_param));
+                if (!inter_param) {
+                    CMR_LOGE("No mem!");
+                    ret = CMR_CAMERA_NO_MEM;
+                    goto exit;
+                }
+
+                inter_param->param1 = (void *)((unsigned long)camera_id);
+                inter_param->param2 = (void *)handle;
+                inter_param->param3 = (void *)frm_data;
+
+                message.msg_type = PREV_EVT_OFFLINE_ZSL;
+                message.sync_flag = CMR_MSG_SYNC_NONE;
+                message.data = (void *)inter_param;
+                message.alloc_flag = 1;
+                ret = cmr_thread_msg_send(handle->thread_cxt.offline_thread_handle, &message);
+                if (ret) {
+                    CMR_LOGE("send msg failed!");
+                    goto exit;
+                }
+#endif
             }
         } else {
             ret = prev_capture_frame_handle(handle, camera_id, data);
@@ -2518,6 +2682,19 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->recovery_status = PREV_RECOVERY_IDLE;
     }
 
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+exit:
+
+    if (ret) {
+        if (frm_data) {
+            free(frm_data);
+        }
+
+        if (inter_param) {
+            free(inter_param);
+        }
+    }
+#endif
     ATRACE_END();
     return ret;
 }
@@ -3187,8 +3364,8 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_PARAM;
     }
 
-    CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d, fd=0x%x",
-             data->frame_id, data->frame_real_id, data->channel_id, data->fd);
+    CMR_LOGD("frame_id=0x%x, frame_real_id=%d, channel_id=%d, fd=0x%x   prev_cxt-> %x ",
+             data->frame_id, data->frame_real_id, data->channel_id, data->fd, prev_cxt->cap_zsl_frm[0].fd);
     CMR_LOGD("cap_zsl_frm_cnt %ld", prev_cxt->cap_zsl_frm_cnt);
     if (0 == prev_cxt->cap_zsl_frm_cnt) {
         /*response*/
@@ -3210,6 +3387,7 @@ cmr_int prev_zsl_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     if (IMG_ANGLE_0 == prev_cxt->prev_param.cap_rot) {
 
         ret = prev_construct_zsl_frame(handle, camera_id, data, &frame_type);
+
         if (ret) {
             CMR_LOGE("construct frm err");
             goto exit;
@@ -7347,6 +7525,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
     prev_rot = handle->prev_cxt[camera_id].prev_param.cap_rot;
     prev_cxt = &handle->prev_cxt[camera_id];
     prev_capture_zoom_post_cap(handle, &zoom_post_proc, camera_id);
+
     if (cap_chn_id == info->channel_id) {
         if (prev_rot) {
             info->fd = prev_cxt->cap_zsl_frm[0].fd;
@@ -7380,6 +7559,9 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
             //frm_id = prev_zsl_get_frm_index(prev_cxt->cap_zsl_offline_frm, info);
             frm_id = 0;
         }
+        CMR_LOGV("cap_sn_size.width= %d height = %d actual_pic_size width = %d height = %d",
+            prev_cxt->cap_sn_size.width, prev_cxt->cap_sn_size.height,prev_cxt->actual_pic_size.width,
+            prev_cxt->actual_pic_size.height);
 
         if (frm_id >= ZSL_FRM_CNT) {
             CMR_LOGE("zsl buffer index error info fd 0x%x, frm_Id %d", info->fd, frm_id);
@@ -10963,6 +11145,10 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                                       width * height > SNS_INTERPOL_ONLINE_MAX_SIZE)) {
                 /* 5M interpolation 8M, callback zsl path need do scale up,
                     for cts testAllOutputYUVResolutions */
+                    CMR_LOGD("cb sn_size %dx%d, actual_pic_size %dx%d,"
+                                                 "need scale",
+                                                 width, height, prev_cxt->actual_pic_size.width,
+                                                 prev_cxt->actual_pic_size.height);
 
                 if (width * height < prev_cxt->actual_pic_size.width) {
                     cmr_int yframe_size = prev_cxt->actual_pic_size.width *
@@ -11045,6 +11231,7 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
         res_cfg.fd[0] = prev_cxt->cap_zsl_reserved_frm.fd;
         ret = handle->ops.channel_buff_cfg(handle->oem_handle, &res_cfg);
+
         if (ret) {
             CMR_LOGE("channel buff config failed");
             ret = CMR_CAMERA_FAIL;
@@ -11059,6 +11246,64 @@ exit:
     ATRACE_END();
     return ret;
 }
+
+#ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
+cmr_int prev_offline_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
+                            cmr_uint src_phy_addr, cmr_uint src_vir_addr,
+                            cmr_s32 fd) {
+
+    ATRACE_BEGIN(__FUNCTION__);
+
+    CMR_MSG_INIT(message);
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct internal_param *inter_param = NULL;
+
+    CHECK_HANDLE_VALID(handle);
+    CHECK_CAMERA_ID(camera_id);
+
+    CMR_LOGD("prev_offline_set_zsl_buffer in");
+
+    /*deliver the zoom param via internal msg*/
+    inter_param =
+        (struct internal_param *)malloc(sizeof(struct internal_param));
+    if (!inter_param) {
+        CMR_LOGE("No mem!");
+        ret = CMR_CAMERA_NO_MEM;
+        goto exit;
+    }
+
+    cmr_bzero(inter_param, sizeof(struct internal_param));
+    inter_param->param1 = (void *)((unsigned long)camera_id);
+    inter_param->param2 = (void *)src_phy_addr;
+    inter_param->param3 = (void *)src_vir_addr;
+    inter_param->param4 = (void *)(unsigned long)fd;
+
+    message.msg_type = PREV_EVT_OFFLINE_SET_ZSL;
+    message.sync_flag = CMR_MSG_SYNC_NONE;
+    message.data = (void *)inter_param;
+    message.alloc_flag = 1;
+    ret =
+        cmr_thread_msg_send(handle->thread_cxt.offline_thread_handle, &message);
+    if (ret) {
+        CMR_LOGE("send msg failed!");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+exit:
+    if (ret) {
+        if (inter_param) {
+            free(inter_param);
+        }
+    }
+
+    CMR_LOGV("out");
+
+    ATRACE_END();
+    return ret;
+
+}
+#endif
 
 cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                             struct frm_info *data, cmr_u32 is_to_hal) {
@@ -11135,8 +11380,8 @@ cmr_int prev_pop_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         return CMR_CAMERA_INVALID_FRAME;
     }
 #else
-    CMR_LOGD("prev_cxt->cap_zsl_offline_frm[0].fd %x, data->fd %x valid_num %d",
-            prev_cxt->cap_zsl_offline_frm[0].fd, data->fd, valid_num);
+    CMR_LOGD("prev_cxt->cap_zsl_offline_frm[0].fd %x, data->fd %x valid_num %d, prev_cxt->cap_zsl_frm[0].fd %x",
+            prev_cxt->cap_zsl_offline_frm[0].fd, data->fd, valid_num, prev_cxt->cap_zsl_frm[0].fd);
 
     if (prev_cxt->prev_param.sprd_zsl_enabled) {
         if ((prev_cxt->cap_zsl_frm[0].fd == (cmr_s32)data->fd) && valid_num > 0) {
