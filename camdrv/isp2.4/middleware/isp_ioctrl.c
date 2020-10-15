@@ -1410,19 +1410,86 @@ static cmr_int ispctl_ae_measure_lum(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
+{
+	cmr_u32 convert_scene_flag = 0;
+	switch (scene_flag) {
+	case ISP_AUTO:
+		convert_scene_flag = AE_SCENE_NORMAL;
+		break;
+	case ISP_NIGHT:
+		convert_scene_flag =  AE_SCENE_NIGHT;
+		break;
+	case ISP_SPORT:
+		convert_scene_flag = AE_SCENE_SPORT;
+		break;
+	case ISP_PORTRAIT:
+		convert_scene_flag = AE_SCENE_PORTRAIT;
+		break;
+	case ISP_PANORAMA:
+		convert_scene_flag =  AE_SCENE_PANORAMA;
+		break;
+	case ISP_VIDEO:
+		convert_scene_flag =  AE_SCENE_VIDEO;
+		break;
+	case ISP_VIDEO_EIS:
+		convert_scene_flag =  AE_SCENE_VIDEO_EIS;
+		break;
+	default:
+		convert_scene_flag = AE_SCENE_NORMAL;
+		break;
+	}
+	return convert_scene_flag;
+}
+
+static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
+{
+	cmr_u32 convert_scene_flag = 0;
+	switch (scene_flag) {
+	case ISP_AUTO:
+		convert_scene_flag = ISP_SCENEMODE_AUTO;
+		break;
+	case ISP_NIGHT:
+		convert_scene_flag = ISP_SCENEMODE_NIGHT;
+		break;
+	case ISP_SPORT:
+		convert_scene_flag = ISP_SCENEMODE_SPORT;
+		break;
+	case ISP_PORTRAIT:
+		convert_scene_flag = ISP_SCENEMODE_PORTRAIT;
+		break;
+	case ISP_LANDSCAPE:
+		convert_scene_flag = ISP_SCENEMODE_LANDSCAPE;
+		break;
+	case ISP_PANORAMA:
+		convert_scene_flag = ISP_SCENEMODE_PANORAMA;
+		break;
+	case ISP_HDR:
+		convert_scene_flag = ISP_SCENEMODE_HDR;
+		break;
+	default:
+		convert_scene_flag = ISP_SCENEMODE_AUTO;
+		break;
+	}
+	return convert_scene_flag;
+}
+
 static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_scene set_scene = { 0 };
+	cmr_u32 scene_flag = 0;
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
-	set_scene.mode = *(cmr_u32 *) param_ptr;
-	cxt->commn_cxt.scene_flag = set_scene.mode;
+	scene_flag = *(cmr_u32 *) param_ptr;
+	set_scene.mode = convert_scene_flag_for_ae(scene_flag);
+	cxt->commn_cxt.nr_scene_flag = convert_scene_flag_for_nr(scene_flag);
+	ISP_LOGD("set_scene_mode (nr %d ae %d)", cxt->commn_cxt.nr_scene_flag, set_scene.mode);
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SCENE_MODE, &set_scene, NULL);
 

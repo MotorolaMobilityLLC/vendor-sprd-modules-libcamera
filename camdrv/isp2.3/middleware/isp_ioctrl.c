@@ -1542,6 +1542,9 @@ static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
 	case ISP_PORTRAIT:
 		convert_scene_flag = AE_SCENE_PORTRAIT;
 		break;
+	case ISP_FDR:
+		convert_scene_flag = AE_SCENE_FDR;
+		break;
 	case ISP_PANORAMA:
 		convert_scene_flag =  AE_SCENE_PANORAMA;
 		break;
@@ -1579,6 +1582,9 @@ static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
 		break;
 	case ISP_PANORAMA:
 		convert_scene_flag = ISP_SCENEMODE_PANORAMA;
+		break;
+	case ISP_HDR:
+		convert_scene_flag = ISP_SCENEMODE_HDR;
 		break;
 	default:
 		convert_scene_flag = ISP_SCENEMODE_AUTO;

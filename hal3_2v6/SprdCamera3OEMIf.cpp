@@ -10831,6 +10831,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
     uint32_t ret = 0, count1 = 0, clear_af_trigger = 0;
+    int8_t drvSceneMode = 0;
     int64_t tmp1, tmp2;
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -10902,31 +10903,30 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
-    if(controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED &&
-	sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
-	(controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
-	controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
-	(!been_preflash)) {
-		controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
-		mSetting->setCONTROLTag(&controlInfo);
-		SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
-		mSetting->getCONTROLTag(&controlInfo);
-		HAL_LOGV("af_state =%d",controlInfo.af_state);
-		while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-			if (count1 > 2800) {
-				HAL_LOGD("wait for preflash timeout 2.8s");
-				break;
-			}
-                        if (mZslCaptureExitLoop == true)
-			{
-                                HAL_LOGD("close camera");
-                                break;
-			}
-			mSetting->getCONTROLTag(&controlInfo);
-			usleep(1000); //1ms
-			count1 ++;
-		}
-		clear_af_trigger = 1;
+    if (controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED &&
+        sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
+        (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
+        controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
+        (!been_preflash)) {
+        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
+        mSetting->setCONTROLTag(&controlInfo);
+        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+        mSetting->getCONTROLTag(&controlInfo);
+        HAL_LOGV("af_state =%d",controlInfo.af_state);
+        while (controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
+            if (count1 > 2800) {
+                HAL_LOGD("wait for preflash timeout 2.8s");
+                break;
+            }
+            if (mZslCaptureExitLoop == true) {
+                HAL_LOGD("close camera");
+                break;
+            }
+            mSetting->getCONTROLTag(&controlInfo);
+            usleep(1000); //1ms
+            count1 ++;
+        }
+        clear_af_trigger = 1;
     }
 
     if(mZslCaptureExitLoop == true) {
@@ -10950,39 +10950,12 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         SET_PARM(obj->mHalOem, obj->mCameraHandle, CAMERA_PARAM_FOCAL_LENGTH,
                  (int32_t)(lensInfo.focal_length * 1000));
     }
+    //control cnr enable
+    Set_cnr_mode();
 
-    mCNRMode = 0;
     char value[PROPERTY_VALUE_MAX];
-    property_get("persist.vendor.cam.cnr.mode", value, "0");
-    if (atoi(value)) {
-        mCNRMode = 1;
-    }
-
-    if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
-        (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
-        (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode) &&
-        (ANDROID_CONTROL_SCENE_MODE_HDR != controlInfo.scene_mode) &&
-        (mSprdAppmodeId != -1) && (false == mRecordingMode)) ||
-        ((getMultiCameraMode() == MODE_BLUR) && lightportrait_type != 0))){
-        mCNRMode = 0;
-    }
-    HAL_LOGD("lightportrait_type = %d, mCNRMode = %d", lightportrait_type, mCNRMode);
-
-    if (mIsFDRCapture) {
-        mEEMode = 1;
-    }
-
-    if (mIsFDRCapture) {
-        //close cnr temporarily in FDR capture
-        property_get("persist.vendor.cam.cnr.mode", value, "0");
-        if (atoi(value)) {
-            mCNRMode = 1;
-            HAL_LOGD("fdr mode, set cnr mode to 1");
-        }
-    }
-    HAL_LOGD("mCNRMode = %d", mCNRMode);
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
-    if(mIsFDRCapture) {
+    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
+    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
        property_get("persist.vendor.cam.fdr.enable", value, "0");
        if (atoi(value)) {
             mEEMode = 1;
@@ -11082,14 +11055,47 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     snapshotZsl(p_data);
 
-
 exit:
-    if(clear_af_trigger){
-	controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
-	mSetting->setCONTROLTag(&controlInfo);
-	SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+    if(clear_af_trigger) {
+        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
+        mSetting->setCONTROLTag(&controlInfo);
+        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
     }
     HAL_LOGD("X");
+}
+
+void SprdCamera3OEMIf::Set_cnr_mode() {
+    int8_t drvSceneMode = 0;;
+    CONTROL_Tag controlInfo;
+    mSetting->getCONTROLTag(&controlInfo);
+    char value[PROPERTY_VALUE_MAX];
+    if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
+        (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
+        (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode) &&
+        (mSprdAppmodeId != -1) && (false == mRecordingMode)) ||
+        ((getMultiCameraMode() == MODE_BLUR) && lightportrait_type != 0))) {
+        mCNRMode = 0;
+    } else {
+        mCNRMode = 1;
+    } if (ANDROID_CONTROL_SCENE_MODE_HDR == controlInfo.scene_mode) {
+        property_get("persist.vendor.cam.hdr.cnr.mode", value, "0");
+        if (atoi(value)) {
+            mCNRMode = 1;
+        } else
+            mCNRMode = 0;
+    }
+
+    char value1[PROPERTY_VALUE_MAX];
+    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
+    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+        property_get("persist.vendor.cam.cnr.mode", value1, "0");
+        if (atoi(value1)) {
+            mCNRMode = 1;
+            HAL_LOGD("fdr mode, set cnr mode to 1");
+        }
+    }
+    HAL_LOGD("lightportrait_type = %d, mCNRMode = %d", lightportrait_type, mCNRMode);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
 }
 
 int SprdCamera3OEMIf::ZSLMode_monitor_thread_init(void *p_data) {

@@ -192,6 +192,8 @@ enum isp_ae_mode {
 	ISP_FACEID,
 	ISP_PANORAMA,
 	ISP_VIDEO,
+	ISP_VIDEO_EIS,
+	ISP_HDR,
 	ISP_AE_MODE_MAX
 };
 

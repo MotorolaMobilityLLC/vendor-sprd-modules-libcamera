@@ -622,6 +622,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void releaseZSLQueue();
     void setZslBuffers();
     void snapshotZsl(void *p_data);
+    void Set_cnr_mode();
     void processZslSnapshot(void *p_data);
     void skipZslFrameForFlashCapture();
     uint32_t getZslBufferIDForFd(cmr_s32 fd);

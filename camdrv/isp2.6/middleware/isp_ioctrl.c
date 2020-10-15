@@ -2079,6 +2079,9 @@ static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
 	case ISP_PANORAMA:
 		convert_scene_flag = ISP_SCENEMODE_PANORAMA;
 		break;
+	case ISP_HDR:
+		convert_scene_flag = ISP_SCENEMODE_HDR;
+		break;
 	default:
 		convert_scene_flag = ISP_SCENEMODE_AUTO;
 		break;

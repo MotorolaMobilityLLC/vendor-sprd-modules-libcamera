@@ -143,7 +143,8 @@ typedef enum {
 	SPORT,
 	PORTRAIT,
 	LANDSPACE,
-	PANORAMA,		//0x05
+	PANORAMA,//0x05
+	HDR,
 	USER0,
 	USER1,
 	USER2,
@@ -153,7 +154,6 @@ typedef enum {
 	USER6,
 	USER7,
 	USER8,
-	USER9,
 	SCENE_MODE_MAX
 } DENOISE_SCENE_NAME;
 

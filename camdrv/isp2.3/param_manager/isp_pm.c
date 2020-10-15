@@ -86,6 +86,7 @@ char nr_scene_name[MAX_SCENEMODE_NUM][16] = {
 	"portrait",
 	"landscape",
 	"panorama",
+	"hdr",
 };
 
 struct isp_pm_buffer {
