@@ -3902,8 +3902,11 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
         return ret;
     }
 
-    if(0 == is_restart)
+    if(0 == is_restart) {
+        sem_wait(&handle->thread_cxt.prev_recovery_sem);
         prev_cxt->recovery_en = 1;
+        sem_post(&handle->thread_cxt.prev_recovery_sem);
+    }
 
     if (preview_enable)
         channel_bits |= 1 << prev_cxt->prev_channel_id;
