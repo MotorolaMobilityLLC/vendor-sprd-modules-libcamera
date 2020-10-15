@@ -807,10 +807,10 @@ bool SprdCamera3MultiBase::matchTwoFrame(hwi_frame_buffer_info_t result1,
                 (int64_t)result1.timestamp - (int64_t)itor2->timestamp;
             if (ns2ms(abs((cmr_s32)diff)) < mMatchTimeThreshold) {
                 *result2 = *itor2;
-                list.erase(itor2++);
                 HAL_LOGD("[%d:match:%d],diff=%llu T1:%llu,T2:%llu",
                          result1.frame_number, itor2->frame_number, diff,
                          result1.timestamp, itor2->timestamp);
+                list.erase(itor2++);
                 return MATCH_SUCCESS;
             }
             itor2++;

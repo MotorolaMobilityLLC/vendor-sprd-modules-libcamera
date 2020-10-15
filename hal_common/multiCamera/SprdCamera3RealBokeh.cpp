@@ -4981,7 +4981,7 @@ int SprdCamera3RealBokeh::insertGDepthMetadata(
 
     // remove previous temp file
     if (NO_ERROR != remove(file2_name)){
-        HAL_LOGE("Failed to rm %s", file2_name);
+        HAL_LOGI("Failed to rm %s", file2_name);
     }
 
     uint32_t para_size = 0;

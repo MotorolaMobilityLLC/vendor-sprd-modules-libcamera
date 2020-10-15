@@ -406,7 +406,7 @@ int SprdCamera3Wrapper::getCameraInfo(__unused int camera_id,
 #endif
 
     default:
-        HAL_LOGE("cameraId:%d not supported yet!", camera_id);
+        HAL_LOGI("cameraId:%d not supported yet!", camera_id);
         return -EINVAL;
     }
     return rc;
