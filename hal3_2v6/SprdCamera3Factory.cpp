@@ -133,7 +133,7 @@ void SprdCamera3Factory::get_vendor_tag_ops(vendor_tag_ops_t *ops) {
 int SprdCamera3Factory::open_legacy(const struct hw_module_t *module,
                                     const char *id, uint32_t halVersion,
                                     struct hw_device_t **device) {
-    HAL_LOGE("unsupported method");
+    HAL_LOGW("unsupported method");
     return -ENOSYS;
 }
 

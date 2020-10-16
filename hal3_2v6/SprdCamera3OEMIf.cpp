@@ -3611,7 +3611,7 @@ int SprdCamera3OEMIf::CameraConvertRegionFromFramework(int32_t *cropRegion) {
     fdWid = cropRegion[2] - cropRegion[0];
     fdHeight = cropRegion[3] - cropRegion[1];
     if (fdWid == 0 || fdHeight == 0) {
-        HAL_LOGE("parameters error.");
+        HAL_LOGW("parameters error.");
         return 1;
     }
     mSetting->getSCALERTag(&scaleInfo);

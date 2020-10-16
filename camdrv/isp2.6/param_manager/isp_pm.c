@@ -1685,7 +1685,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 				(struct isp_pm_ioctl_input *)in_ptr, param_data_ptr,
 				&param_counts, &blk_idx, set_id);
 		if (ISP_SUCCESS != rtn || blk_idx == ISP_TUNE_BLOCK_MAX) {
-			ISP_LOGE("fail to do isp_pm_get_single_block_param, %d %d",
+			ISP_LOGW("fail to do isp_pm_get_single_block_param, %d %d",
 				 rtn, blk_idx);
 			rtn = ISP_ERROR;
 			return rtn;
@@ -1948,13 +1948,13 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 #endif
 
 	if (pm_cxt_ptr->param_search_list == PNULL || pm_cxt_ptr->param_search_list_size == 0) {
-		ISP_LOGE("specified pm searching list. %p, %d\n",
+		ISP_LOGW("specified pm searching list. %p, %d\n",
 			pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
 		pm_cxt_ptr->param_search_list = PNULL;
 		pm_cxt_ptr->param_search_list_size = 0;
 		goto start_parse;
 	} else {
-		ISP_LOGD("specified pm searching list. %p, %d\n",
+		ISP_LOGW("specified pm searching list. %p, %d\n",
 			pm_cxt_ptr->param_search_list, pm_cxt_ptr->param_search_list_size);
 		goto start_parse;
 	}

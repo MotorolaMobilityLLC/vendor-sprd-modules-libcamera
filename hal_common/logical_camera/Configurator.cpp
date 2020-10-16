@@ -51,7 +51,7 @@ bool Configurator::parseFromFile(CfgList &result) {
                 result.push_back(c);
         }
     } else {
-        ALOGE("fail to parse '%s'", kCameraConfig.c_str());
+        ALOGW("fail to parse '%s'", kCameraConfig.c_str());
     }
 
     is.close();

@@ -11102,7 +11102,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     if (ptr_flag) {
         ret = isp_ioctl(isp_cxt->isp_handle, isp_cmd, isp_param_ptr);
         if (ret) {
-            CMR_LOGE("failed isp ioctl %ld", ret);
+            CMR_LOGW("failed isp ioctl %ld", ret);
         }
         CMR_LOGV("done %ld and direct return", ret);
         return ret;
@@ -11111,7 +11111,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     if (set_isp_flag) {
         ret = isp_ioctl(isp_cxt->isp_handle, isp_cmd, (void *)&isp_param);
         if (ret) {
-            CMR_LOGE("failed isp ioctl %ld", ret);
+            CMR_LOGW("failed isp ioctl %ld", ret);
         } else {
             if (COM_ISP_SET_ISO == cmd_type) {
                 if (0 == param_ptr->cmd_value) {
