@@ -122,9 +122,9 @@ LOCAL_SHARED_LIBRARIES += libae libae3.x libflash libhdr
 LOCAL_SHARED_LIBRARIES += libawb libawb1
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
-LOCAL_SHARED_LIBRARIES += libalsc
+LOCAL_SHARED_LIBRARIES += libalsc3.2
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
-LOCAL_SHARED_LIBRARIES += libalsc
+LOCAL_SHARED_LIBRARIES += libalsc3.2
 else
 LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc
 endif

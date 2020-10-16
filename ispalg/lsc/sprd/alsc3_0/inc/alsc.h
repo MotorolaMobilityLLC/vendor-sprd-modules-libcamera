@@ -22,6 +22,12 @@ enum {
 	LSC_CMD_GET_DEBUG_INFO = 1,
 	LSC_CMD_GET_OTP_STD_TABLE = 2,
 	LSC_CMD_OTP_CONVERT_TABLE = 3,
+	LSC_CMD_GENERATE_FLASH_Y_GAIN = 4,
+	LSC_CMD_GET_BG_RG_GRADIENT = 5,
+	LSC_CMD_GET_ALSC_LIB_VERSION = 6,   //7~10 for both alsc3.0 and alsc3.2
+										//11~15 for alsc3.0 only
+	LSC_CMD_GET_LSC_VERSION = 16,       //16~ for alsc3.2 only
+	LSC_CMD_GET_CALCULATION_FREQ = 17,
 	LSC_CMD_MAX
 };
 
@@ -30,6 +36,16 @@ struct lsc_otp_convert_param{
 	int gain_height;
 	int grid;
 	unsigned short *lsc_table[9];
+	int gridy;
+	int gridx;
+};
+
+struct lsc_flash_y_gain_param{
+	unsigned int gain_width;
+	unsigned int gain_height;
+	unsigned int percent;
+	unsigned int shift_x;
+	unsigned int shift_y;
 };
 
 struct lsc_sprd_init_in {
@@ -54,15 +70,20 @@ struct lsc_sprd_init_in {
 	unsigned int lsc_otp_raw_height;
 	unsigned short *lsc_otp_table_addr;
 
-	unsigned int lsc_otp_oc_en;
-	unsigned int lsc_otp_oc_r_x;
-	unsigned int lsc_otp_oc_r_y;
-	unsigned int lsc_otp_oc_gr_x;
-	unsigned int lsc_otp_oc_gr_y;
-	unsigned int lsc_otp_oc_gb_x;
-	unsigned int lsc_otp_oc_gb_y;
-	unsigned int lsc_otp_oc_b_x;
-	unsigned int lsc_otp_oc_b_y;
+	unsigned int gridx;
+	unsigned int gridy;
+
+	unsigned int rg_gradient[9];
+	unsigned int bg_gradient[9];
+
+	int stat_inverse;
+
+	unsigned int reserved[32];
+};
+
+struct lsc_sprd_init_out{
+	unsigned short *lsc_otp_std_tab[9];  //lsc tables after otp convert
+	unsigned short *lsc_buffer;
 };
 
 struct statistic_raw {
@@ -84,6 +105,14 @@ struct lsc_sprd_calc_in {
 	unsigned short *lsc_tab[8];
 
 	unsigned short last_lsc_table[MAX_WIDTH*MAX_HEIGHT*4];
+	unsigned int main_flash_mode;
+	float captureFlashEnvRatio;
+	float captureFlash1ofAllRatio;
+	unsigned short *preflash_guessing_mainflash_output_table;
+	int ct;
+	int gridx;
+	int gridy;
+	unsigned int reserved[8];
 };
 
 struct lsc_sprd_calc_out {
@@ -102,8 +131,6 @@ struct lsc_post_shading_param {
 	int bv_gain;
 	int flash_mode;
 	int pre_flash_mode;
-	int LSC_SPD_VERSION;
-	void *tuning_param;
 };
 
 struct addr_info {
@@ -111,15 +138,27 @@ struct addr_info {
 	int size;
 };
 
+struct lsc_rg_bg_calc_param{
+	unsigned int *stat_r;
+	unsigned int *stat_gr;
+	unsigned int *stat_gb;
+	unsigned int *stat_b;
+	unsigned int w;
+	unsigned int h;
+	unsigned int rg_gradient;
+	unsigned int bg_gradient;
+};
+
 /**---------------------------------------------------------------------------*
 **					Data Prototype				**
 **----------------------------------------------------------------------------*/
 // API
-void * alsc_init(struct lsc_sprd_init_in *param);
+#ifdef WIN32
+void * alsc_init(struct lsc_sprd_init_in *in_param, struct lsc_sprd_init_out *out_param);
 int alsc_calculation(void * handle, struct lsc_sprd_calc_in *param, struct lsc_sprd_calc_out *result);
 int alsc_ioctrl(void * handle, int cmd, void *in_param, void *out_param);
 int alsc_deinit(void * handle);
-
+#endif
 /**----------------------------------------------------------------------------*
 **					Compiler Flag				**
 **----------------------------------------------------------------------------*/

@@ -92,9 +92,9 @@ struct alsc_simulation_info {
 
 struct lsc_lib_ops {
 	cmr_s32(*alsc_calc) (void *handle, struct lsc_sprd_calc_in * param, struct lsc_sprd_calc_out * adv_calc_result);
-	void *(*alsc_init) (struct lsc_sprd_init_in * param);
-	 cmr_s32(*alsc_deinit) (void *handle);
-	 cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
+	void *(*alsc_init) (struct lsc_sprd_init_in * in_param, struct lsc_sprd_init_out * out_param);
+	cmr_s32(*alsc_deinit) (void *handle);
+	cmr_s32(*alsc_io_ctrl) (void *handler, enum alsc_io_ctrl_cmd cmd, void *in_param, void *out_param);
 };
 
 struct post_shading_gain_param {
@@ -214,6 +214,7 @@ struct lsc_sprd_ctrl_context {
 	cmr_u32 flash_center_shiftx;
 	cmr_u32 flash_center_shifty;
 	cmr_u32 stats_inverse;
+	cmr_u32 lsc_debug_info_size;
 };
 
 struct lsc_param {

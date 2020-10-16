@@ -15,7 +15,7 @@
 #
 LOCAL_PATH := $(call my-dir)
 
-### for libalsc.so
+### for libalsc3.2.so
 include $(CLEAR_VARS)
 
 LIB_PATH_32 := armeabi-v7a
@@ -25,7 +25,7 @@ ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-LOCAL_MODULE := libalsc
+LOCAL_MODULE := libalsc3.2
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both

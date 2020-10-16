@@ -285,6 +285,8 @@ struct lsc_adv_init_param {
 
 	void *tune_param_ptr;
 	cmr_u16 *lsc_tab_address[9];	// the copy of table in parameter file
+	cmr_u32 rg_gradient[9];
+	cmr_u32 bg_gradient[9];
 	struct lsc2_tune_param lsc2_tune_param;	// HLSC_V2.0 tuning structure
 
 	/* no use in lsc_adv2 */
