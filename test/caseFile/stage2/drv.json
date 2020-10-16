@@ -14,10 +14,18 @@
 			"CaseID" : 1,
 			"ChipID" : 5,
 			"PathID" : [0,1],
-			"TestMode" : 1,
+			"TestMode" : 0,
 			"ParmPath" : "/data/vendor/cameraserver/testisp/",
 			"ImagePath" : "/data/vendor/cameraserver/testimage/input_1.raw"
-		}
+		},
 
+		{
+			"CaseID" : 2,
+			"ChipID" : 5,
+			"PathID" : [0,1],
+			"TestMode" : 1,
+			"ParmPath" : "/data/vendor/cameraserver/testisp/",
+			"ImagePath" : "/data/vendor/cameraserver/testimage/input_2.raw"
+		}
 	]
 }
