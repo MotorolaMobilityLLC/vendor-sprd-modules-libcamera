@@ -5,4 +5,5 @@ PRODUCT_PACKAGES += libvcm_dw9714p \
                     libvcm_dw9800 \
                     libvcm_dw9714 \
                     libvcm_dw9718s \
-                    libvcm_zc524
+                    libvcm_zc524 \
+                    libvcm_lc898219
