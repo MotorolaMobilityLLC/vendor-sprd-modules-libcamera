@@ -880,7 +880,7 @@ static cmr_int ispalg_ai_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	}
 	case AI_CB_FOR_AE: {
 		struct ai_scene_detect_info scene_info = *(struct ai_scene_detect_info *) data;
-		if (cxt->is_ai_scene_pro)
+		if (scene_info.cur_scene_id == AI_SCENE_NIGHT)
 			scene_info.cur_scene_id = AI_SCENE_DEFAULT;
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SCENE_INFO, &scene_info, NULL);
