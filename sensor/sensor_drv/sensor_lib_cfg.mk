@@ -29,11 +29,11 @@ PRODUCT_PACKAGES += libsensor_imx351 \
     libsensor_s5k3l6xx03 \
     libsensor_s5k4h7 \
     libsensor_gc5035 \
-	libsensor_s5k3l6 \
-	libsensor_gc2375h \
-	libsensor_hi846_wide \
-	libsensor_hi846 \
-	libsensor_ov2680 \
+    libsensor_s5k3l6 \
+    libsensor_gc2375h \
+    libsensor_hi846_wide \
+    libsensor_hi846 \
+    libsensor_ov2680 \
     libsensor_gc2375_js_2 \
     libsensor_gc2385_wj_1 \
     libsensor_hi846_gj_1 \
@@ -44,4 +44,10 @@ PRODUCT_PACKAGES += libsensor_imx351 \
     libsensor_ov13853_s1 \
     libsensor_gc8034_gj_2 \
     libsensor_gc2375_wj_2 \
-    libsensor_ov12a10
+    libsensor_ov12a10 \
+    libsensor_ov08a10 \
+    libsensor_ov8856_front \
+    libsensor_ov8856_back \
+    libsensor_imx616 \
+    libsensor_ov02a10 \
+    libsensor_s5kgw1sp03
