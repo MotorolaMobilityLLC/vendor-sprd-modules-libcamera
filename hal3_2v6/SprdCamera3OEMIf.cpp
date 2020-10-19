@@ -6941,6 +6941,12 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         mSetting->getLargestPictureSize(mCameraId, &sensorOrgW, &sensorOrgH);
     }
 
+    if (cropRegion.start_x + cropRegion.width > sensorOrgW ||
+        cropRegion.start_y + cropRegion.height > sensorOrgH) {
+        HAL_LOGE("mCameraId=%d crop region out-of-bounds", mCameraId);
+        return BAD_VALUE;
+    }
+
     if (mIsMlogMode) {
        MLOG_Tag *mlogInfo;
        mSetting->getMLOGTag(&mlogInfo);
