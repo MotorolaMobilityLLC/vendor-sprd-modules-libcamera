@@ -213,6 +213,86 @@ static void ov08a10_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
   ov08a10_drv_write_gain(handle, aec_info, sensor_gain);
 }
 
+static const cmr_u16 ov08a10_normal_pd_is_right[] = {1, 0, 1, 0};
+
+static const cmr_u16 ov08a10_normal_pd_col[] = {14, 14, 6, 6};
+
+static const cmr_u16 ov08a10_normal_pd_row[] = {2, 6, 10, 14};
+
+static const struct pd_pos_info _ov08a10_normal_pd_pos_l[] = {
+    {14, 6}, {6, 10},
+};
+
+static const struct pd_pos_info _ov08a10_normal_pd_pos_r[] = {
+    {14, 2}, {6, 14},
+};
+static const cmr_u32 pd_sns_mode[] = {
+    SENSOR_PDAF_MODE_DISABLE, SENSOR_PDAF_MODE_DISABLE,
+    SENSOR_PDAF_MODE_ENABLE, SENSOR_PDAF_MODE_ENABLE
+};
+
+static cmr_int ov08a10_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param)
+{
+    cmr_int rtn = SENSOR_SUCCESS;
+    struct sensor_pdaf_info *pdaf_info = NULL;
+    SENSOR_IC_CHECK_PTR(param);
+    cmr_u16 i = 0;
+    cmr_u16 pd_pos_row_size = 0;
+    cmr_u16 pd_pos_col_size = 0;
+    cmr_u16 pd_pos_is_right_size = 0;
+
+    pdaf_info = (struct sensor_pdaf_info *)param;
+    pd_pos_is_right_size = NUMBER_OF_ARRAY(ov08a10_normal_pd_is_right);
+    pd_pos_row_size = NUMBER_OF_ARRAY(ov08a10_normal_pd_row);
+    pd_pos_col_size = NUMBER_OF_ARRAY(ov08a10_normal_pd_col);
+    if ((pd_pos_row_size != pd_pos_col_size) ||
+        (pd_pos_row_size != pd_pos_is_right_size) ||
+        (pd_pos_is_right_size != pd_pos_col_size)) {
+        SENSOR_LOGE("pd_pos_row size and pd_pos_is_right size are not match");
+        return SENSOR_FAIL;
+    }
+
+    pdaf_info->pd_offset_x = 0;
+    pdaf_info->pd_offset_y = 8;
+    pdaf_info->pd_end_x = 3264;
+    pdaf_info->pd_end_y = 2440;
+    pdaf_info->pd_block_w = 1;
+    pdaf_info->pd_block_h = 1;
+    pdaf_info->pd_block_num_x = 204;
+    pdaf_info->pd_block_num_y = 152;
+    pdaf_info->pd_is_right = (cmr_u16 *)ov08a10_normal_pd_is_right;
+    pdaf_info->pd_pos_row = (cmr_u16 *)ov08a10_normal_pd_row;
+    pdaf_info->pd_pos_col = (cmr_u16 *)ov08a10_normal_pd_col;
+    cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_ov08a10_normal_pd_pos_r);
+    cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_ov08a10_normal_pd_pos_l);
+
+    if (pd_pos_r_size != pd_pos_l_size) {
+        SENSOR_LOGE("pd_pos_r size not match pd_pos_l");
+        return -1;
+    }
+    pdaf_info->pd_pitch_x = 16;
+    pdaf_info->pd_pitch_y = 16;
+    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 8;
+    pdaf_info->pd_pos_size = pd_pos_r_size;
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)_ov08a10_normal_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)_ov08a10_normal_pd_pos_l;
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y
+				* pd_pos_is_right_size * 5;
+    pdaf_info->sns_orientation = 0; /*1: mirror+flip; 0: normal*/
+    pdaf_info->sns_mode = pd_sns_mode;
+//#ifdef ov08a10_PDAF_USE_VC
+    pdaf_info->vch2_info.bypass = 0;
+    pdaf_info->vch2_info.vch2_vc = 0;
+    pdaf_info->vch2_info.vch2_data_type = 0x2b;
+    pdaf_info->vch2_info.vch2_mode = 0x03;
+//#endif
+//#ifdef ov08a10_PDAF_USE_DT
+//	pdaf_info->type2_info.data_type = 0x2b;
+//#endif
+    return rtn;
+}
+
 /*==============================================================================
  * Description:
  * sensor power on
@@ -402,7 +482,7 @@ static cmr_int ov08a10_drv_access_val(cmr_handle handle, cmr_uint param) {
     ret = ov08a10_drv_get_fps_info(handle, param_ptr->pval);
     break;
   case SENSOR_VAL_TYPE_GET_PDAF_INFO://18
-    // ret = ov08a10_drv_get_pdaf_info(handle, param_ptr->pval);
+    ret = ov08a10_drv_get_pdaf_info(handle, param_ptr->pval);
     break;
   case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG://19
     ret = sns_drv_cxt->is_sensor_close = 1;
