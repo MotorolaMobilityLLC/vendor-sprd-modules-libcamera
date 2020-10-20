@@ -5171,7 +5171,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     if (!strcmp(value, "1")) {
         // add isp debug info for userdebug version
         ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &ispInfoAddr,
-                                                &ispInfoSize);
+                                                &ispInfoSize, -1);
         if (ret == 0 && ispInfoSize > 0) {
             HAL_LOGV("ispInfoSize=%d, encInfo->size=%d, maxJpegSize=%d",
                      ispInfoSize, encInfo->size, maxJpegSize);

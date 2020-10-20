@@ -836,10 +836,10 @@ cmr_int camera_get_isp_handle(cmr_handle camera_handle,
     return ret;
 }
 
-cmr_int camera_get_isp_info(cmr_handle camera_handle, void **addr, int *size) {
+cmr_int camera_get_isp_info(cmr_handle camera_handle, void **addr, int *size, cmr_s32 frame_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    ret = camera_local_get_isp_info(camera_handle, addr, size);
+    ret = camera_local_get_isp_info(camera_handle, addr, size, frame_id);
 
     return ret;
 }

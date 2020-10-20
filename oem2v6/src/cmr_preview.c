@@ -7345,6 +7345,7 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
 
         frame_type->width = prev_cxt->prev_param.preview_size.width;
         frame_type->height = prev_cxt->prev_param.preview_size.height;
+        frame_type->frame_num = info->frame_real_id;
         frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->zoom_ratio =
@@ -7488,6 +7489,7 @@ cmr_int prev_construct_video_frame(struct prev_handle *handle,
         frame_type->height = prev_cxt->prev_param.video_size.height;
         frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
+        frame_type->frame_num = info->frame_real_id;
         frame_type->zoom_ratio =
             prev_cxt->prev_param.zoom_setting.zoom_info.zoom_ratio;
         frame_type->ae_time = ae_time;
@@ -7573,10 +7575,11 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
         frame_type->monoboottime = info->monoboottime;
         frame_type->format = info->fmt;
+        frame_type->frame_num = info->frame_real_id;
         frame_type->type = PREVIEW_ZSL_FRAME;
-        CMR_LOGV("timestamp=%" PRId64 ", width=%d, height=%d, fd=0x%x",
+        CMR_LOGV("timestamp=%" PRId64 ", width=%d, height=%d, fd=0x%x, frame_id %d",
                  frame_type->timestamp, frame_type->width, frame_type->height,
-                 frame_type->fd);
+                 frame_type->fd, frame_type->frame_num);
 
         char value[PROPERTY_VALUE_MAX];
         property_get("debug.camera.zsl.dump.count", value, "null");
@@ -13926,6 +13929,7 @@ cmr_int prev_pop_preview_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.y_phy_addr = prev_cxt->prev_frm[0].addr_phy.addr_y;
         frame_type.y_vir_addr = prev_cxt->prev_frm[0].addr_vir.addr_y;
         frame_type.fd = prev_cxt->prev_frm[0].fd;
+        frame_type.frame_num = data->frame_real_id;
         frame_type.type = PREVIEW_CANCELED_FRAME;
 
         CMR_LOGV("fd addr 0x%x addr 0x%lx", frame_type.fd,
@@ -14343,6 +14347,7 @@ cmr_int prev_pop_video_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type.y_vir_addr = prev_cxt->video_virt_addr_array[0];
         frame_type.fd = prev_cxt->video_fd_array[0];
         frame_type.type = PREVIEW_VIDEO_CANCELED_FRAME;
+        frame_type.frame_num = data->frame_real_id;
 
         for (i = 0; i < (cmr_u32)valid_num - 1; i++) {
             prev_cxt->video_phys_addr_array[i] =

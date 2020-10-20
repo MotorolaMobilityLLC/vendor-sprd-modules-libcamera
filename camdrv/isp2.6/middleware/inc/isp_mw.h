@@ -879,6 +879,7 @@ struct isp_snp_ae_param {   // param OEM sent to ISP
 struct isp_info {
 	void *addr;
 	cmr_s32 size;
+	cmr_s32 frame_id;
 };
 
 struct isp_blkpm_t {

@@ -9592,7 +9592,7 @@ cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm) {
 }
 
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
-                                  int *size) {
+                                  int *size, cmr_s32 frame_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct isp_context *isp_cxt = &cxt->isp_cxt;
@@ -9602,10 +9602,11 @@ cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
         CMR_LOGE("err,invlid param");
         return CMR_CAMERA_INVALID_PARAM;
     }
-    *addr = 0;
+
+    *addr = NULL;
     *size = 0;
     cmr_bzero(&isp_info, sizeof(isp_info));
-
+    isp_info.frame_id = frame_id;
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == cxt->sn_cxt.sensor_info.image_format) {
         ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_GET_INFO,
                         (void *)&isp_info);

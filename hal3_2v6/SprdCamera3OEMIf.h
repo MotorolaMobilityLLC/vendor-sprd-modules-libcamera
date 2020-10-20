@@ -326,7 +326,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setSprdCameraLowpower(int flag);
     int setSensorStream(uint32_t on_off);
     int setCameraClearQBuff();
-    void getIspDebugInfo(void **addr, int *size);
     int autoFocusToFaceFocus();
     void getDualOtpData(void **addr, int *size, int *read);
     void getOnlineBuffer(void *cali_info);
@@ -944,6 +943,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_u32 mVideoAFBCFlag;
 
     bool mIsJpegWithBigSizePreview;
+
+    List<ZslBufferQueue> mJpegDebugQ;
+    Mutex mJpegDebugQLock;
 
     static std::atomic_int s_mLogState; //0:thread exit, 1:init
     static std::atomic_int s_mLogMonitor; // 1~x:count

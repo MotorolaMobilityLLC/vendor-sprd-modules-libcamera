@@ -680,7 +680,7 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
                 jpeg_addr.addr_y = mem_ptr->target_jpeg.addr_vir.addr_y;
                 if (isp_video_get_simulation_loop_count() == 1) {
                     ret = camera_local_get_isp_info(
-                        cxt->oem_handle, &isp_info_addr, &isp_info_size);
+                        cxt->oem_handle, &isp_info_addr, &isp_info_size, -1);
                     if (ret == 0 && isp_info_size > 0) {
                         memcpy(((char *)jpeg_addr.addr_y +
                                 enc_out_ptr->stream_size),
@@ -5344,7 +5344,7 @@ cmr_int cmr_snapshot_receive_data(cmr_handle snapshot_handle, cmr_int evt,
     CMR_MSG_INIT(message);
     CHECK_HANDLE_VALID(snapshot_handle);
 
-    CMR_LOGD("evt %ld", evt);
+    CMR_LOGD("evt 0x%lx", evt);
     if ((evt >= SNPASHOT_EVT_MAX) || !data) {
         CMR_LOGE("err param %ld %p", evt, data);
         ret = -CMR_CAMERA_INVALID_PARAM;

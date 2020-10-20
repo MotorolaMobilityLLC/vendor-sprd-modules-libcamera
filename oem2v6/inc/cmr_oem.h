@@ -649,7 +649,7 @@ cmr_int camera_local_normal_snapshot_need_pause(cmr_handle oem_handle,
                                                 cmr_int *flag);
 void camera_calibrationconfigure_save(uint32_t start_addr, uint32_t data_size);
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
-                                  int *size);
+                                  int *size, cmr_s32 frame_id);
 
 void camera_local_start_burst_notice(cmr_handle oem_handle);
 void camera_local_end_burst_notice(cmr_handle oem_handle);

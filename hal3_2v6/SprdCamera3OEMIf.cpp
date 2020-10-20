@@ -247,6 +247,7 @@ enum cmr_flash_lcd_mode {
 
 #define MULTI_THREE_SECTION 3
 /**********************Static Members**********************/
+static int s_dbg_ver;
 static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
 static int s_use_time = 0;
@@ -261,7 +262,6 @@ multiCameraMode SprdCamera3OEMIf::mMultiCameraMode = MODE_SINGLE_CAMERA;
 std::atomic_int SprdCamera3OEMIf::s_mLogState = 0;
 std::atomic_int SprdCamera3OEMIf::s_mLogMonitor = 1;
 sem_t SprdCamera3OEMIf::s_mLogMonitorSem;
-
 
 struct stateMachine aeStateMachine[] = {
     {ANDROID_CONTROL_AE_STATE_INACTIVE, AE_START,
@@ -812,6 +812,7 @@ void SprdCamera3OEMIf::closeCamera() {
     ZSLMode_monitor_thread_deinit((void *)this);
     log_monitor_thread_deinit();
 
+    mJpegDebugQ.clear();
     mReleaseFLag = true;
     HAL_LOGI(":hal3: X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
               mCameraId, mTotalIonSize, mTotalGpuSize);
@@ -1697,21 +1698,6 @@ void SprdCamera3OEMIf::getOnlineBuffer(void *cali_info) {
         mHalOem->ops->camera_get_online_buffer(mCameraHandle, cali_info);
     */
     // HAL_LOGD("online buffer addr %p", cali_info);
-    return;
-}
-
-void SprdCamera3OEMIf::getIspDebugInfo(void **addr, int *size) {
-
-    void *ispInioAddr = NULL;
-    int ispInfoSize = 0;
-
-    mHalOem->ops->camera_get_isp_info(mCameraHandle, &ispInioAddr,
-                                      &ispInfoSize);
-
-    *addr = ispInioAddr;
-    *size = ispInfoSize;
-    HAL_LOGD("ISP INFO:addr 0x%p, size = %d", *addr, *size);
-
     return;
 }
 
@@ -3333,6 +3319,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     setAeState(AE_START);
     setAwbState(AWB_START);
+    mJpegDebugQ.clear();
 
     /*
     qFirstBuffer(CAMERA_STREAM_TYPE_PREVIEW);
@@ -4074,6 +4061,7 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
     SprdCamera3RegularChannel *channel;
     cmr_uint rec_addr_vir = 0;
     uint32_t frame_num = 0;
+    uint32_t matched = 0;
     SprdCamera3Stream *rec_stream = NULL;
     cmr_uint buff_vir = (cmr_uint)(frame->y_vir_addr);
     const SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -4103,15 +4091,25 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
             HAL_LOGD("mDualVideoMode %d, mVideoShotFlag %d mDualVideoShotFlag %d",
                     mDualVideoMode, mVideoShotFlag, mDualVideoShotFlag);
             HAL_LOGD("mVideoSnapshotFrameNum %d", mVideoSnapshotFrameNum);
-            if (mDualVideoMode) {
-                if (mVideoShotFlag && mDualVideoShotFlag &&
-                    (frame_num >= mVideoSnapshotFrameNum))
-                    PushVideoSnapShotbuff(frame_num,
-                                          CAMERA_STREAM_TYPE_VIDEO);
-            } else {
-                if (mVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))
-                    PushVideoSnapShotbuff(frame_num,
-                                          CAMERA_STREAM_TYPE_VIDEO);
+
+            matched = (mDualVideoMode &&
+                        (mVideoShotFlag && mDualVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))) ? 1 : 0;
+            matched |= (!mDualVideoMode &&
+                        (mVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))) ? 1 : 0;
+
+            if (matched) {
+                PushVideoSnapShotbuff(frame_num, CAMERA_STREAM_TYPE_VIDEO);
+
+                if (s_dbg_ver) {
+                    Mutex::Autolock l(&mJpegDebugQLock);
+                    ZslBufferQueue node;
+                    frame->buf_id = frame_num;
+                    node.frame = *frame;
+                    node.heap_array = NULL;
+                    mJpegDebugQ.push_back(node);
+                    HAL_LOGD("Cam%d JpegQueue video fd 0x%x,  frame_id %d, frame_num %d\n",
+						mCameraId, frame->fd, frame->frame_num, frame_num);
+		}
             }
         }
 
@@ -4447,7 +4445,7 @@ int SprdCamera3OEMIf::PreviewFrameZslStream(struct camera_frame_type *frame,
     if (PREVIEW_ZSL_FRAME == frame->type) {
         ATRACE_BEGIN("zsl_frame");
 
-        HAL_LOGD("zsl buff fd=0x%x, frame type=%ld", frame->fd,
+        HAL_LOGD("zsl buff fd=0x%x, frame_id %d frame type=%ld", frame->fd,frame->frame_num,
                  frame->type);
         pushZslFrame(frame);
 
@@ -5214,16 +5212,29 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
     maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
+    maxJpegSize = ((uint32_t)maxJpegSize > heap_size) ? heap_size : maxJpegSize;
 
-    if ((uint32_t)maxJpegSize > heap_size) {
-        maxJpegSize = heap_size;
-    }
+    if (s_dbg_ver) {
+        Mutex::Autolock l(&mJpegDebugQLock);
+        List<ZslBufferQueue>::iterator itor;
+        ZslBufferQueue node;
+        camera_frame_type *frame;
+        cmr_s32 frame_id = -1;
 
-    property_get("ro.debuggable", value, "0");
-    if (!strcmp(value, "1")) {
+        HAL_LOGD("Cam%d JpegQueue size %d\n", mCameraId, mJpegDebugQ.size());
+        if (mJpegDebugQ.size() > 0) {
+            itor = mJpegDebugQ.begin()++;
+            node = static_cast<ZslBufferQueue>(*itor);
+            frame = &node.frame;
+            mJpegDebugQ.erase(itor);
+            HAL_LOGD("Cam%d JpegQueue pop fd 0x%x,  frame_id %d, frame_num %d\n",
+                        mCameraId, frame->fd, frame->frame_num, frame->buf_id);
+            frame_id = (cmr_s32)frame->frame_num;
+	}
+
         // add isp debug info for userdebug version
         ret = mHalOem->ops->camera_get_isp_info(mCameraHandle, &ispInfoAddr,
-                                                &ispInfoSize);
+                                                &ispInfoSize, frame_id);
         if (ret == 0 && ispInfoSize > 0) {
             HAL_LOGV("ispInfoSize=%d, encInfo->size=%d, maxJpegSize=%d",
                      ispInfoSize, encInfo->size, maxJpegSize);
@@ -5779,8 +5790,9 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
                 HAL_LOGW("zsl lost a buffer, this should not happen");
                 goto handle_encode_exit;
             }
-            HAL_LOGD("zsl_frame->fd=0x%x", zsl_frame->fd);
             buf_id = getZslBufferIDForFd(zsl_frame->fd);
+            HAL_LOGD("zsl_frame->fd=0x%x,  frame_id %d, buf_id 0x%x\n",
+				zsl_frame->fd, zsl_frame->frame_num, buf_id);
             if (buf_id != 0xFFFFFFFF) {
                 if(mSprdAppmodeId == CAMERA_MODE_AUDIO_PICTURE &&
                         drvSceneMode == CAMERA_SCENE_MODE_FDR) {
@@ -6620,6 +6632,9 @@ int SprdCamera3OEMIf::openCamera() {
 #if defined(CONFIG_CAMERA_FACE_DETECT)
     faceDectect_enable(1);
 #endif
+
+    property_get("ro.debuggable", value, "0");
+    s_dbg_ver = !!atoi(value);
 
 exit:
     HAL_LOGI(":hal3: X");
@@ -10377,6 +10392,16 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
     src_alg_buf->y_vir_addr = zsl_frame->y_vir_addr;
     src_alg_buf->y_phy_addr = zsl_frame->y_phy_addr;
 
+    if (buf_cnt == 3 && s_dbg_ver) {
+        Mutex::Autolock l(&mJpegDebugQLock);
+        ZslBufferQueue node;
+        node.frame = *zsl_frame;
+        node.heap_array = NULL;
+        mJpegDebugQ.push_back(node);
+        HAL_LOGD("Cam%d JpegQueue 3dnr fd 0x%x,  frame_id %d\n",
+			mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+    }
+
     // dst_alg_buf use first intput frame for now
     if (buf_cnt == 0) {
         dst_alg_buf->height = zsl_frame->height;
@@ -10421,7 +10446,7 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
                       struct image_sw_algorithm_buf *dst_alg_buf,
                       uint32_t &buf_cnt) {
     int ret = 0;
-    cmr_u32 value = 0;
+    cmr_u32 value = 0, is_slave = 0;
 
     HAL_LOGI("E");
     if (zsl_frame->monoboottime < mZslSnapshotTime) {
@@ -10437,6 +10462,17 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
     src_alg_buf->format = zsl_frame->format;
     src_alg_buf->y_vir_addr = zsl_frame->y_vir_addr;
     src_alg_buf->y_phy_addr = zsl_frame->y_phy_addr;
+
+    is_slave = (mMultiCameraMode == MODE_BOKEH && (mCameraId != (int32_t)mMasterId)) ? 1 : 0;
+    if (s_dbg_ver && (buf_cnt == 1) && !is_slave) {
+        Mutex::Autolock l(&mJpegDebugQLock);
+        ZslBufferQueue node;
+        node.frame = *zsl_frame;
+        node.heap_array = NULL;
+        mJpegDebugQ.push_back(node);
+        HAL_LOGD("Cam%d JpegQueue hdr fd 0x%x,  frame_id %d\n",
+			mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+    }
 
     if (buf_cnt == 0) {
         dst_alg_buf->height = zsl_frame->height;
@@ -10454,7 +10490,6 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
         if (buf_cnt == (uint32_t)atoi(prop)) {
             if (mIsStoppingPreview == 1) {
                 HAL_LOGD("preview is stoped");
-//                goto exit;
                 return -1;
             }
 
@@ -10467,11 +10502,9 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
             mHalOem->ops->camera_set_zsl_snapshot_buffer(
                 obj->mCameraHandle, zsl_frame->y_phy_addr,
                 zsl_frame->y_vir_addr, zsl_frame->fd);
-//            break;
             return -1;
         }
         if (mCameraId == 2) {
-//            continue;
             return 0;
         }
     }
@@ -10490,10 +10523,8 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
             HAL_LOGE("camera_stop_capture failed");
         }
         obj->mFlagOffLineZslStart = 0;
-//        break;
         return -1;
     }
-//    continue;
     return 0;
 }
 
@@ -10507,17 +10538,19 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
     int64_t diff_ms = 0;
     SPRD_DEF_Tag *sprddefInfo;
 
-    HAL_LOGI("E");
+    HAL_LOGI("E. zsl buff fd=0x%x, frame_id %d frame type=%ld",
+        zsl_frame->fd, zsl_frame->frame_num, zsl_frame->type);
+
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
             char prop[PROPERTY_VALUE_MAX];
             uint32_t ae_fps = 30;
-            uint32_t delay_time = 200;
+            uint32_t delay_time, is_slave = 0;
 
             property_get("persist.vendor.cam.blur3.zsl.time", prop, "200");
-            if (atoi(prop) != 0) {
-                delay_time = atoi(prop);
-            }
+            delay_time = atoi(prop);
+            delay_time = (delay_time == 0) ? 200 : delay_time;
+
             HAL_LOGV("delay_time=%d,ae_fps=%d", delay_time, ae_fps);
             if (mZslSnapshotTime > zsl_frame->monoboottime ||
                 ((mZslSnapshotTime < zsl_frame->monoboottime) &&
@@ -10526,15 +10559,24 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame->y_phy_addr,
                     zsl_frame->y_vir_addr, zsl_frame->fd);
-//                continue;
                 return 0;
             }
+
+	    is_slave = (mCameraId != (int32_t)mMasterId) ? 1 : 0;
+	    if (s_dbg_ver && !is_slave) {
+	        Mutex::Autolock l(&mJpegDebugQLock);
+	        ZslBufferQueue node;
+	        node.frame = *zsl_frame;
+               node.heap_array = NULL;
+	        mJpegDebugQ.push_back(node);
+	        HAL_LOGD("Cam%d JpegQueue blur fd 0x%x,  frame_id %d\n",
+				mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+	    }
 
             HAL_LOGD("blur fd=0x%x", zsl_frame->fd);
             mHalOem->ops->camera_set_zsl_snapshot_buffer(
                 obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
                 zsl_frame->fd);
-//            break;
             return -1;
         }
 
@@ -10557,10 +10599,20 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 HAL_LOGV("diff_ms=%" PRId64,
                          (zsl_frame->monoboottime - obj->mLatestFocusDoneTime) /
                              1000000);
+
+	    if (s_dbg_ver && (mCameraId == mMasterId)) {
+	        Mutex::Autolock l(&mJpegDebugQLock);
+	        ZslBufferQueue node;
+	        node.frame = *zsl_frame;
+               node.heap_array = NULL;
+	        mJpegDebugQ.push_back(node);
+	        HAL_LOGD("Cam%d JpegQueue BOKEH fd 0x%x,  frame_id %d\n",
+				mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+	    }
+
             mHalOem->ops->camera_set_zsl_snapshot_buffer(
                 obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
                 zsl_frame->fd);
-//            break;
             return -1;
         }
 
@@ -10574,7 +10626,6 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 mHalOem->ops->camera_set_zsl_buffer(
                     obj->mCameraHandle, zsl_frame->y_phy_addr,
                     zsl_frame->y_vir_addr, zsl_frame->fd);
-//                continue;
                 return 0;
             }
         }
@@ -10587,18 +10638,23 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             mHalOem->ops->camera_set_zsl_buffer(
                 obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
                 zsl_frame->fd);
-//            continue;
             return 0;
         }
 
-        // for debug
-        // diff_ms = (zsl_frame->monoboottime - mZslSnapshotTime) / 1000000;
-        // HAL_LOGD("diff_ms=%" PRId64, diff_ms);
+        if (s_dbg_ver) {
+            Mutex::Autolock l(&mJpegDebugQLock);
+            ZslBufferQueue node;
+            node.frame = *zsl_frame;
+            node.heap_array = NULL;
+            mJpegDebugQ.push_back(node);
+            HAL_LOGD("Cam%d JpegQueue other fd 0x%x,  frame_id %d\n",
+                        mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+        }
+
         HAL_LOGD("fd=0x%x", zsl_frame->fd);
         mHalOem->ops->camera_set_zsl_snapshot_buffer(
             obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
             zsl_frame->fd);
-//        break;
         return -1;
 }
 
@@ -10645,6 +10701,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             break;
         }
         zsl_frame = obj->popZslFrame();
+
         if (zsl_frame.y_vir_addr == 0) {
             HAL_LOGD("wait for correct zsl frame");
             sleep_rtn = usleep(20 * 1000);
@@ -10657,6 +10714,7 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             HAL_LOGD("mFlush=%d", mFlush);
             goto exit;
         }
+        HAL_LOGD("pop frame fd %d frame_id %d, addr %x\n", zsl_frame.fd, zsl_frame.frame_num, zsl_frame.y_vir_addr);
 
         /* for sharkle auto3dnr skip frame*/
         if (mZslSnapshotTime > zsl_frame.monoboottime &&
@@ -10693,10 +10751,6 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
         //other
         ret = SnapshotZslOther(obj, &zsl_frame);
-//        if (ret)
-//             break;
-//        else
-//             continue;
     } while (ret == 0);
 
 exit:

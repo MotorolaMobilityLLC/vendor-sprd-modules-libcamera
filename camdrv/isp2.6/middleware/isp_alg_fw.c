@@ -47,6 +47,8 @@
 #define CMC10(n) (((n)>>13)?((n)-(1<<14)):(n))
 #define MIN_FRAME_INTERVAL_MS  (10)
 
+#define DBGINFO_QLEN (1 << 6)
+#define DBGINFO_IDMASK (DBGINFO_QLEN - 1)
 
 enum {
 	FW_INIT_GOING = 0,
@@ -78,7 +80,7 @@ enum {
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
 static isp_lsc_cb s_lsc_set_cb; /* workaround for sharkl3 compiling*/
-
+static int s_dbg_ver;
 
 struct BITMAPFILEHEADER {
 	unsigned short bfType;
@@ -354,7 +356,21 @@ struct ispalg_lib_ops {
 	struct ispalg_ai_ctrl_ops ai_ops;
 };
 
+struct debuginfo_message{
+	cmr_u8 *msg_log;
+	cmr_u32 msg_size;
+	cmr_u32 buf_size;
+	cmr_s32 frame_id;
+};
+
+struct debuginfo_queue{
+	struct debuginfo_message *head;
+	cmr_u32 cur;
+	cmr_u32 total_num;
+};
+
 struct isp_alg_fw_context {
+	cmr_u32 frame_id_sof;
 	cmr_int camera_id;
 	void *init_cxt;
 	cmr_u8 init_status;
@@ -440,6 +456,15 @@ struct isp_alg_fw_context {
 	cmr_u16 smooth_ratio;
 	cmr_u32 is_ai_scene_pro;
 	cmr_u16 app_mode;
+
+	pthread_mutex_t debuginfo_queue_lock;
+	struct debuginfo_queue ae_queue;
+	struct debuginfo_queue alsc_queue;
+	struct debuginfo_queue ai_queue;
+	struct debuginfo_queue awb_queue;
+	struct debuginfo_queue af_queue;
+	struct debuginfo_queue aft_queue;
+	struct debuginfo_queue smart_queue;
 };
 
 struct fw_init_local {
@@ -2245,6 +2270,9 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	struct isp_af_ts af_ts;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 tmp = 0;
+	struct debuginfo_message ae_msg = { NULL, 0, 0, 0 };
+	struct debuginfo_message ai_msg = { NULL, 0, 0, 0 };
+	struct debuginfo_message alsc_msg = { NULL, 0, 0, 0 };
 
 	if (cxt->ops.af_ops.ioctrl) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_SYSTEM_TIME, &sec, &usec);
@@ -2253,6 +2281,40 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle,
 					AF_CMD_SET_DCAM_TIMESTAMP, (void *)(&af_ts), NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set AF_CMD_SET_DCAM_TIMESTAMP"));
+	}
+
+	/* should not update info during FDR post-process for long delay */
+	if (s_dbg_ver && (cxt->frame_id_sof > 0) && (cxt->fdr_cxt.fdr_start != FDR_STATUS_PROC)) {
+		if (ISP_SUCCESS != ispctl_get_ae_debug_info(cxt)) {
+			ISP_LOGE("fail to get ae debug info");
+		}
+		ae_msg.msg_log = cxt->ae_cxt.log_ae;
+		ae_msg.msg_size = cxt->ae_cxt.log_ae_size;
+		ae_msg.frame_id = cxt->frame_id_sof - 1;
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->ae_queue, &ae_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+
+		if (ISP_SUCCESS != ispctl_get_ai_debug_info(cxt)) {
+			ISP_LOGE("fail to get ai debug info");
+		}
+		ai_msg.msg_log = cxt->ai_cxt.log_ai;
+		ai_msg.msg_size = cxt->ai_cxt.log_ai_size;
+		ai_msg.frame_id = cxt->frame_id_sof - 1;
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->ai_queue, &ai_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+
+		if (ISP_SUCCESS != ispctl_get_alsc_debug_info(cxt)) {
+			ISP_LOGE("fail to get alsc debug info");
+		}
+		alsc_msg.msg_log = cxt->lsc_cxt.log_lsc;
+		alsc_msg.msg_size = cxt->lsc_cxt.log_lsc_size;
+		alsc_msg.frame_id = cxt->frame_id_sof - 1;
+
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->alsc_queue, &alsc_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 	}
 
 	/* set ambient_highlight here, if need please get from cxt */
@@ -3158,6 +3220,7 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 	nsecs_t time_end = 0;
 	struct awb_ctrl_calc_param param;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct debuginfo_message awb_msg = { NULL, 0, 0, 0 };
 
 	memset((void *)&param, 0, sizeof(param));
 
@@ -3175,6 +3238,15 @@ cmr_int ispalg_start_awb_process(cmr_handle isp_alg_handle,
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 				AWB_CTRL_CMD_RESULT_INFO, (void *)awb_output, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
+	}
+
+	if (s_dbg_ver && (cxt->frame_id_sof > 0) && (cxt->fdr_cxt.fdr_start != FDR_STATUS_PROC)) {
+		awb_msg.msg_log = awb_output->log_awb.log;
+		awb_msg.msg_size = awb_output->log_awb.size;
+		awb_msg.frame_id = cxt->frame_id_sof - 1;
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->awb_queue, &awb_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 	}
 
 	ret = ispalg_awb_post_process((cmr_handle) cxt, awb_output);
@@ -3271,6 +3343,17 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			cxt->curr_bv = ae_in->ae_output.cur_bv;
 			cxt->smart_cxt.log_smart = smart_proc_in.log;
 			cxt->smart_cxt.log_smart_size = smart_proc_in.size;
+
+			if (s_dbg_ver && (cxt->fdr_cxt.fdr_start != FDR_STATUS_PROC)) {
+				struct debuginfo_message smart_msg = { NULL, 0, 0, 0 };
+				smart_msg.msg_log = smart_proc_in.log;
+				smart_msg.msg_size = smart_proc_in.size;
+				smart_msg.frame_id = cxt->frame_id_sof;
+
+				pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+				debuginfo_eq(&cxt->smart_queue, &smart_msg);
+				pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+			}
 		}
 
 		if (!cxt->lsc_cxt.sw_bypass && cxt->lsc_cxt.use_lscm) {
@@ -3872,7 +3955,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 	}
 	case ISP_EVT_SOF: {
 		struct sprd_irq_info *irq_info = (struct sprd_irq_info *)message->data;
-
+		cxt->frame_id_sof = irq_info->frame_id;
 		ISP_LOGV("sof no.%d, timestamp %03d.%06d\n", irq_info->frame_id, irq_info->sec, irq_info->usec);
 
 		if (cxt->fw_started == 0) {
@@ -5672,12 +5755,44 @@ static void * isp_alg_fw_init_async(void *data)
 	}
 	isp_dev_access_evt_reg(cxt->dev_access_handle, ispalg_dev_evt_msg, (cmr_handle) cxt);
 
+	pthread_mutex_init(&cxt->debuginfo_queue_lock, NULL);
+	if (s_dbg_ver) {
+		debuginfo_q_alloc(&cxt->ae_queue);
+		debuginfo_q_alloc(&cxt->alsc_queue);
+		debuginfo_q_alloc(&cxt->ai_queue);
+		debuginfo_q_alloc(&cxt->awb_queue);
+		debuginfo_q_alloc(&cxt->af_queue);
+		debuginfo_q_alloc(&cxt->aft_queue);
+		debuginfo_q_alloc(&cxt->smart_queue);
+	}
+
 	ISP_LOGD("cam%ld wait isp alg\n", cxt->camera_id);
 
 	/* sync with ispalg all done */
 	ispalg_init_async_done(init_cxt);
 
 	ISP_LOGD("cam%ld wait isp alg done\n", cxt->camera_id);
+
+	if(s_dbg_ver) {
+		struct debuginfo_message af_msg = { NULL, 0, 0, 0 };
+		struct debuginfo_message aft_msg = { NULL, 0, 0, 0 };
+
+		af_msg.msg_log = cxt->af_cxt.log_af;
+		af_msg.msg_size = cxt->af_cxt.log_af_size;
+		af_msg.frame_id = 0;
+		ISP_LOGD("cam%ld, af log %p, %d\n", cxt->camera_id, af_msg.msg_log, af_msg.msg_size);
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->af_queue, &af_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+
+		aft_msg.msg_log = cxt->aft_cxt.log_aft;
+		aft_msg.msg_size = cxt->aft_cxt.log_aft_size;
+		aft_msg.frame_id = 0;
+		ISP_LOGD("cam%ld, aft log %p, %d\n", cxt->camera_id, aft_msg.msg_log, aft_msg.msg_size);
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->aft_queue, &aft_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+	}
 
 	cxt->init_status = FW_INIT_DONE;
 	ISP_LOGI("cam%ld done, alg enable %d, init %d\n", cxt->camera_id, cxt->alg_enable, cxt->init_status);
@@ -7147,6 +7262,9 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 		return 0;
 	}
 
+	property_get("ro.debuggable", value, "0");
+	s_dbg_ver = !!atoi(value);
+
 	cxt->save_data = 0;
 	property_get("persist.vendor.cam.all_data.mode", value, "0");
 	if (!strcmp(value, "cap_all"))
@@ -7269,6 +7387,15 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		cxt->ispalg_lib_handle = NULL;
 	}
 	isp_dev_free_buf(cxt->dev_access_handle, &cxt->stats_mem_info);
+
+	debuginfo_q_free(&cxt->ae_queue);
+	debuginfo_q_free(&cxt->alsc_queue);
+	debuginfo_q_free(&cxt->ai_queue);
+	debuginfo_q_free(&cxt->awb_queue);
+	debuginfo_q_free(&cxt->af_queue);
+	debuginfo_q_free(&cxt->aft_queue);
+	debuginfo_q_free(&cxt->smart_queue);
+	pthread_mutex_destroy(&cxt->debuginfo_queue_lock);
 
 	if (cxt->ae_cxt.log_alc) {
 		free(cxt->ae_cxt.log_alc);
