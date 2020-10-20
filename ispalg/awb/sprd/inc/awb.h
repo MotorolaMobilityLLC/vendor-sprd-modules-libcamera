@@ -6,8 +6,15 @@
 #else
 #include <linux/types.h>
 #include <sys/types.h>
+
+#include <stdint.h> 
+
+
+#if 0
 #include <android/log.h>
 #endif
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -482,6 +489,7 @@ extern "C" {
 	void *awb_init_v1(struct awb_init_param *init_param, struct awb_rgb_gain *gain);
 	cmr_s32 awb_calc_v1(void *awb_handle, struct awb_calc_param *calc_param, struct awb_calc_result *calc_result);
 	cmr_s32 awb_ioctrl_v1(void *awb_handle, cmr_s32 cmd, void *param);
+	void *awb_debug_get_lib_version1(void);
 	cmr_s32 awb_deinit_v1(void *awb_handle);
 	cmr_s32 awb_sync_gain(struct awb_sync_info *sync_info, cmr_u32 gain_r_master, cmr_u32 gain_g_master, cmr_u32 gain_b_master, cmr_u32 * gain_r_slave, cmr_u32 * gain_g_slave, cmr_u32 * gain_b_slave);
 #endif
