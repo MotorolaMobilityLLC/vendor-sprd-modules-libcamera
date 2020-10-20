@@ -141,7 +141,7 @@ cmr_int camera_is_vendor_hdr(cmr_handle camera_handle);
 
 void camera_set_lls_shot_mode(cmr_handle camera_handle, cmr_u32 is_enable);
 cmr_int camera_get_lls_shot_mode(cmr_handle camera_handle);
-cmr_int camera_get_isp_info(cmr_handle camera_handle, void **addr, int *size);
+cmr_int camera_get_isp_info(cmr_handle camera_handle, void **addr, int *size, cmr_s32 frame_id);
 
 void camera_start_burst_notice(cmr_handle camera_handle);
 void camera_end_burst_notice(cmr_handle camera_handle);

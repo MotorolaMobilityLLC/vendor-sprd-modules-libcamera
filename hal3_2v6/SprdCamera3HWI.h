@@ -113,7 +113,6 @@ class SprdCamera3HWI {
     int setCameraClearQBuff();
     void getDualOtpData(void **addr, int *size, int *read);
     void getOnlineBuffer(void *cali_info);
-    void getIspDebugInfo(void **addr, int *size);
     void setUltraWideMode(unsigned int on_off);
     void setFovFusionMode(unsigned int on_off);
     void setMultiCameraId(uint32_t multi_camera_id);

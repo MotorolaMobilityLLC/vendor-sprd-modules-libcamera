@@ -24,7 +24,7 @@
 #define VIDEO_GAMMA_INDEX                    (8)
 
 #define COPY_LOG(l, L) \
-{size_t len = copy_log(cxt->commn_cxt.log_isp + off, cxt->l##_cxt.log_##l, cxt->l##_cxt.log_##l##_size, L##_START, L##_END); \
+{size_t len = copy_log(cxt->commn_cxt.log_isp + off, current_##l##_msg->msg_log, current_##l##_msg->msg_size, L##_START, L##_END); \
 if (len) {log.l##_off = off; off += len; log.l##_len = len;} else {log.l##_off = 0;}}
 
 typedef cmr_int(*isp_io_fun) (cmr_handle isp_alg_handle, void *param_ptr);
@@ -440,6 +440,124 @@ static cmr_u32 get_cnr_blkid (void)
 
 static denoise_param_read_t s_adapt_ioctl_nr_read;
 #endif
+
+
+/* for error resilliance */
+static struct debuginfo_message s_msg;
+
+cmr_int debuginfo_q_alloc(struct debuginfo_queue *debuginfo_q)
+{
+	int size = sizeof(struct debuginfo_message) * DBGINFO_QLEN;
+
+	memset((char *)debuginfo_q, 0, sizeof(struct debuginfo_queue));
+	debuginfo_q->head = malloc(size);
+	if (debuginfo_q->head == NULL) {
+		ISP_LOGE("fail to alloc debuginfo q mem\n");
+		return ISP_ALLOC_ERROR;
+	}
+
+	memset(debuginfo_q->head, 0, size);
+	debuginfo_q->total_num = DBGINFO_QLEN;
+
+	return ISP_SUCCESS;
+}
+
+cmr_int debuginfo_q_free(struct debuginfo_queue *debuginfo_q)
+{
+	cmr_u32 i;
+	struct debuginfo_message *msg_cur;
+
+	msg_cur = debuginfo_q->head;
+	for (i  =0; i < debuginfo_q->total_num && msg_cur; i++, msg_cur++) {
+		if (msg_cur->msg_log)
+			free(msg_cur->msg_log);
+		msg_cur->msg_log = NULL;
+		msg_cur->msg_size = 0;
+		msg_cur->buf_size = 0;
+	}
+
+	if (debuginfo_q->head != NULL) {
+		free(debuginfo_q->head);
+		debuginfo_q->head = NULL;
+	}
+	debuginfo_q->total_num = 0;
+	debuginfo_q->cur = 0;
+
+	return ISP_SUCCESS;
+}
+
+cmr_int debuginfo_eq(struct debuginfo_queue *debuginfo_q, struct debuginfo_message *debuginfo_msg)
+{
+	struct debuginfo_message *msg_cur;
+
+	if (debuginfo_q->head == NULL || debuginfo_msg == NULL) {
+		ISP_LOGD("fail to get debuginfo_q %p, msg %p\n", debuginfo_q->head, debuginfo_msg);
+		return ISP_ERROR;
+	}
+
+	if (debuginfo_msg->msg_log == NULL || debuginfo_msg->msg_size == 0) {
+		ISP_LOGV("no valid log data\n");
+		return ISP_SUCCESS;
+	}
+
+	msg_cur = debuginfo_q->head + debuginfo_q->cur;
+	if (msg_cur->buf_size < debuginfo_msg->msg_size) {
+		if (msg_cur->msg_log) {
+			free(msg_cur->msg_log);
+			msg_cur->msg_log = NULL;
+		}
+		msg_cur->msg_log = malloc(debuginfo_msg->msg_size);
+		if (msg_cur->msg_log == NULL) {
+			ISP_LOGD("fail to malloc msg log buffer\n");
+			return ISP_ALLOC_ERROR;
+		}
+		ISP_LOGV("remalloc log buf size %d, new size %d\n", msg_cur->buf_size, debuginfo_msg->msg_size);
+		msg_cur->buf_size = debuginfo_msg->msg_size;
+	}
+
+	memcpy(msg_cur->msg_log, debuginfo_msg->msg_log, debuginfo_msg->msg_size);
+	msg_cur->msg_size = debuginfo_msg->msg_size;
+	msg_cur->frame_id = debuginfo_msg->frame_id;
+	debuginfo_q->cur++;
+	debuginfo_q->cur &= DBGINFO_IDMASK;
+
+	return ISP_SUCCESS;
+}
+
+struct debuginfo_message *msg_get(struct debuginfo_queue *debuginfo_q, cmr_s32 snapshot_id)
+{
+	struct debuginfo_message *msg_ret = NULL, *msg_cur = NULL;
+	cmr_u32 i, prev_idx;
+	cmr_s32 diff, min_diff = (1 << 30);
+
+	if (debuginfo_q->head == NULL)
+		return &s_msg;
+
+	prev_idx = (debuginfo_q->cur - 1) & DBGINFO_IDMASK;
+	msg_ret = debuginfo_q->head + prev_idx;
+
+	if (snapshot_id < 0) {
+		ISP_LOGD("get last msg %p, frame_id %d\n", msg_ret->msg_log, msg_ret->frame_id);
+		return msg_ret;
+	}
+
+	for (i = 0; i < debuginfo_q->total_num; i++) {
+		msg_cur = debuginfo_q->head + prev_idx;
+		if (msg_cur->msg_log && (msg_cur->frame_id == snapshot_id))
+			return msg_cur;
+
+		diff = msg_cur->frame_id - snapshot_id;
+		diff = (diff > 0) ?  diff : (0 - diff);
+		if (diff < min_diff && msg_cur->msg_log) {
+			msg_ret = msg_cur;
+			min_diff = diff;
+		}
+
+		prev_idx--;
+		prev_idx &= DBGINFO_IDMASK;
+	}
+	return msg_ret;
+}
 
 static cmr_s32 ispctl_set_awb_gain(cmr_handle isp_alg_handle)
 {
@@ -1621,17 +1739,26 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_info *info_ptr = param_ptr;
-	struct awb_ctrl_calc_result awb_output;
 	cmr_u32 total_size = 0;
 	cmr_u32 mem_offset = 0;
+	cmr_s32 frame_id;
 	struct sprd_isp_debug_info *p;
 	struct _isp_log_info log;
 	size_t off;
+	struct debuginfo_message *current_lsc_msg = NULL;
+	struct debuginfo_message *current_ai_msg = NULL;
+	struct debuginfo_message *current_awb_msg = NULL;
+	struct debuginfo_message *current_af_msg = NULL;
+	struct debuginfo_message *current_aft_msg = NULL;
+	struct debuginfo_message *current_smart_msg = NULL;
+	struct debuginfo_message *current_ae_msg = NULL;
 
 	if (NULL == info_ptr) {
 		ISP_LOGE("fail to get valid param ");
 		return ISP_PARAM_NULL;
 	}
+	frame_id = info_ptr->frame_id;
+	info_ptr->size = 0;
 
 	if (cxt->awb_cxt.alc_awb) {
 		total_size = cxt->awb_cxt.log_alc_awb_size + cxt->awb_cxt.log_alc_lsc_size;
@@ -1653,37 +1780,35 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		info_ptr->addr = cxt->ae_cxt.log_alc;
 		info_ptr->size = cxt->ae_cxt.log_alc_size;
 	} else {
-		if (ISP_SUCCESS != ispctl_get_ae_debug_info(cxt)) {
-			ISP_LOGE("fail to get ae debug info");
-		}
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
 
-		if (ISP_SUCCESS != ispctl_get_alsc_debug_info(cxt)) {
-			ISP_LOGE("fail to get alsc debug info");
-		}
+		current_af_msg = msg_get(&cxt->af_queue, frame_id);
+		current_aft_msg = msg_get(&cxt->aft_queue, frame_id);
+		current_awb_msg = msg_get(&cxt->awb_queue, frame_id);
+		current_lsc_msg = msg_get(&cxt->alsc_queue, frame_id);
+		current_smart_msg = msg_get(&cxt->smart_queue, frame_id);
+		current_ai_msg = msg_get(&cxt->ai_queue, frame_id);
+		current_ae_msg = msg_get(&cxt->ae_queue, frame_id);
 
-		if (ISP_SUCCESS != ispctl_get_ai_debug_info(cxt)) {
-			ISP_LOGE("fail to get ai debug info");
-		}
+		ISP_LOGD("frame_id_sof  %d,  input frame id %d", cxt->frame_id_sof, frame_id);
+		ISP_LOGV("af_msg  %p, %d, %d", current_af_msg->msg_log, current_af_msg->msg_size, current_af_msg->frame_id);
+		ISP_LOGV("aft_msg  %p,%d, %d", current_aft_msg->msg_log, current_aft_msg->msg_size, current_aft_msg->frame_id);
+		ISP_LOGV("awb_msg  %p, %d, %d", current_awb_msg->msg_log, current_awb_msg->msg_size, current_awb_msg->frame_id);
+		ISP_LOGV("alsc_msg  %p,%d, %d", current_lsc_msg->msg_log, current_lsc_msg->msg_size, current_lsc_msg->frame_id);
+		ISP_LOGV("smart_msg  %p, %d, %d", current_smart_msg->msg_log, current_smart_msg->msg_size, current_smart_msg->frame_id);
+		ISP_LOGV("ai_msg   %p,%d, %d", current_ai_msg->msg_log, current_ai_msg->msg_size,current_ai_msg->frame_id);
+		ISP_LOGV("ae_msg  %p,%d, %d", current_ae_msg->msg_log, current_ae_msg->msg_size,current_ae_msg->frame_id);
 
-		memset(&awb_output, 0, sizeof(awb_output));
-		if (cxt->ops.awb_ops.ioctrl) {
-			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
-					AWB_CTRL_CMD_RESULT_INFO, (void *)&awb_output, NULL);
-			ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
-		}
-		if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
-			cxt->awb_cxt.log_awb = awb_output.log_awb.log;
-			cxt->awb_cxt.log_awb_size = awb_output.log_awb.size;
-		}
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
-		    + calc_log_size(cxt->ae_cxt.log_ae, cxt->ae_cxt.log_ae_size, AE_START, AE_END)
-		    + calc_log_size(cxt->af_cxt.log_af, cxt->af_cxt.log_af_size, AF_START, AF_END)
-		    + calc_log_size(cxt->aft_cxt.log_aft, cxt->aft_cxt.log_aft_size, AFT_START, AFT_END)
-		    + calc_log_size(cxt->awb_cxt.log_awb, cxt->awb_cxt.log_awb_size, AWB_START, AWB_END)
-		    + calc_log_size(cxt->lsc_cxt.log_lsc, cxt->lsc_cxt.log_lsc_size, LSC_START, LSC_END)
-		    + calc_log_size(cxt->smart_cxt.log_smart, cxt->smart_cxt.log_smart_size, SMART_START, SMART_END)
-		    + calc_log_size(cxt->ai_cxt.log_ai, cxt->ai_cxt.log_ai_size, AI_START, AI_END)
+		    + calc_log_size(current_af_msg->msg_log, current_af_msg->msg_size, AF_START, AF_END)
+		    + calc_log_size(current_aft_msg->msg_log, current_aft_msg->msg_size, AFT_START, AFT_END)
+		    + calc_log_size(current_awb_msg->msg_log, current_awb_msg->msg_size, AWB_START, AWB_END)
+		    + calc_log_size(current_lsc_msg->msg_log, current_lsc_msg->msg_size, LSC_START, LSC_END)
+		    + calc_log_size(current_smart_msg->msg_log, current_smart_msg->msg_size, SMART_START, SMART_END)
+		    + calc_log_size(current_ai_msg->msg_log, current_ai_msg->msg_size, AI_START, AI_END)
+		    + calc_log_size(current_ae_msg->msg_log, current_ae_msg->msg_size, AE_START, AE_END)
 		    + sizeof(cmr_u32);
+	      ISP_LOGV("total_size  %d", total_size);
 
 		if (cxt->otp_data != NULL) {
 			total_size += calc_log_size(cxt->otp_data->total_otp.data_ptr,
@@ -1697,6 +1822,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 			}
 			cxt->commn_cxt.log_isp = malloc(total_size);
 			if (cxt->commn_cxt.log_isp == NULL) {
+				pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 				ISP_LOGE("fail to malloc %d", total_size);
 				cxt->commn_cxt.log_isp_size = 0;
 				info_ptr->addr = 0;
@@ -1717,16 +1843,15 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		log.ver = 0;
 
 		off = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t);
-		//if (cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE) {
 		COPY_LOG(ae, AE);
 		COPY_LOG(af, AF);
-		//}
 		COPY_LOG(aft, AFT);
 		COPY_LOG(awb, AWB);
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
 		COPY_LOG(ai, AI);
 
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 
 		if (cxt->otp_data != NULL) {
 			size_t len = copy_log(cxt->commn_cxt.log_isp + off,
@@ -3108,9 +3233,14 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 
 	ISP_LOGD("end");
 
-	/*for debug info*/
-	if (cxt != NULL) {
-            cxt->awb_cxt.log_awb = awb_log_buff;
+	if (s_dbg_ver) {
+		struct debuginfo_message awb_msg = { NULL, 0, 0, 0 };
+		awb_msg.msg_log = awb_log_buff;
+		awb_msg.msg_size = cxt->awb_cxt.log_awb_size;
+		awb_msg.frame_id = cxt->frame_id_sof;
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->awb_queue, &awb_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 	}
 
 	if (!strcmp(awb_ver, "awb2.x"))
@@ -3297,7 +3427,16 @@ label_set_awb:
 
 	cxt->smart_cxt.log_smart = smart_proc_in.log;
 	cxt->smart_cxt.log_smart_size = smart_proc_in.size;
+	if (s_dbg_ver) {
+		struct debuginfo_message smart_msg = { NULL, 0, 0, 0 };
 
+		smart_msg.msg_log = smart_proc_in.log;
+		smart_msg.msg_size = smart_proc_in.size;
+		smart_msg.frame_id = cxt->frame_id_sof;
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->smart_queue, &smart_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+	}
 	return ret;
 }
 

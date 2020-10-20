@@ -2718,17 +2718,4 @@ void SprdCamera3HWI::getOnlineBuffer(void *cali_info) {
     return;
 }
 
-void SprdCamera3HWI::getIspDebugInfo(void **addr, int *size) {
-    void *ispInioAddr = NULL;
-    int ispInfoSize = 0;
-
-    mOEMIf->getIspDebugInfo(&ispInioAddr, &ispInfoSize);
-
-    *addr = ispInioAddr;
-    *size = ispInfoSize;
-    HAL_LOGD("ISP INFO:addr 0x%p, size = %d", *addr, *size);
-
-    return;
-}
-
 }; // end namespace sprdcamera
