@@ -130,6 +130,7 @@ class SprdCamera3HWI {
     int setCameraClearQBuff();
     int getTuningParam(struct tuning_param_info *tuning_info);
     void getDualOtpData(void **addr, int *size, int *read);
+    static void dumpMemoryAddresses(size_t limit);
 
   private:
     int openCamera();
