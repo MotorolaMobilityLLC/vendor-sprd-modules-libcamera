@@ -495,16 +495,19 @@ static int _awb_save_gain_tofile(struct awb_ctrl_cxt *cxt)
 		cxt->recover_gain.g = cxt->gain_to_save_auto.g;
 		cxt->recover_gain.b = cxt->gain_to_save_auto.b;
 		cxt->recover_ct		= cxt->ct_auto_to_save;
+
 		cxt->s_save_awb_param.r = cxt->recover_gain.r;
 		cxt->s_save_awb_param.g = cxt->recover_gain.g;
 		cxt->s_save_awb_param.b = cxt->recover_gain.b;
 		cxt->s_save_awb_param.ct = cxt->recover_ct;
 		_awb_save_gain(&(cxt->s_save_awb_param), cxt, AUTO_MODE);
-		cxt->s_save_awb_param.r = cxt->gain_to_save_manual.r;
-		cxt->s_save_awb_param.g = cxt->gain_to_save_manual.g;
-		cxt->s_save_awb_param.b = cxt->gain_to_save_manual.b;
-		cxt->s_save_awb_param.ct = cxt->ct_manual_to_save;
-		_awb_save_gain(&(cxt->s_save_awb_param), cxt, MANUAL_MODE);
+		if(cxt->app_mode == 1 ){
+			cxt->s_save_awb_param.r = cxt->gain_to_save_manual.r;
+			cxt->s_save_awb_param.g = cxt->gain_to_save_manual.g;
+			cxt->s_save_awb_param.b = cxt->gain_to_save_manual.b;
+			cxt->s_save_awb_param.ct = cxt->ct_manual_to_save;
+			_awb_save_gain(&(cxt->s_save_awb_param), cxt, MANUAL_MODE);
+		}
 	}
 	return rtn;
 }
@@ -546,28 +549,26 @@ static cmr_u32 _awb_read_file_for_init(struct awb_ctrl_cxt *cxt, void * param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	int * app_mode = (int*)param;
-	if((*app_mode)!=1)
-		cxt->app_mode = 0;
-	else
+	if((*app_mode) == 1)
 		cxt->app_mode = 1;
+	else
+		cxt->app_mode = 0;
 	ISP_LOGV("the current app_mode = %d",cxt->app_mode);
-	if(cxt->init_status == 1) {
-		_awb_read_gain(&(cxt->s_save_awb_param), cxt);
-		if (0 != cxt->s_save_awb_param.r && 0 != cxt->s_save_awb_param.g && 0 != cxt->s_save_awb_param.b) {
-			cxt->output_gain.r = cxt->s_save_awb_param.r;
-			cxt->output_gain.g = cxt->s_save_awb_param.g;
-			cxt->output_gain.b = cxt->s_save_awb_param.b;
-			cxt->output_ct = cxt->s_save_awb_param.ct;
-			cxt->awb_result.gain.r = cxt->s_save_awb_param.r;
-			cxt->awb_result.gain.b = cxt->s_save_awb_param.g;
-			cxt->awb_result.gain.g = cxt->s_save_awb_param.b;
-			cxt->awb_result.ct = cxt->s_save_awb_param.ct;
-			cxt->cur_gain.r = cxt->s_save_awb_param.r;
-			cxt->cur_gain.g = cxt->s_save_awb_param.g;
-			cxt->cur_gain.b = cxt->s_save_awb_param.b;
-			cxt->cur_ct = cxt->s_save_awb_param.ct;
-		}
-		cxt->init_status = 0;
+
+	_awb_read_gain(&(cxt->s_save_awb_param), cxt);
+	if (0 != cxt->s_save_awb_param.r && 0 != cxt->s_save_awb_param.g && 0 != cxt->s_save_awb_param.b) {
+		cxt->output_gain.r = cxt->s_save_awb_param.r;
+		cxt->output_gain.g = cxt->s_save_awb_param.g;
+		cxt->output_gain.b = cxt->s_save_awb_param.b;
+		cxt->output_ct = cxt->s_save_awb_param.ct;
+		cxt->awb_result.gain.r = cxt->s_save_awb_param.r;
+		cxt->awb_result.gain.b = cxt->s_save_awb_param.g;
+		cxt->awb_result.gain.g = cxt->s_save_awb_param.b;
+		cxt->awb_result.ct = cxt->s_save_awb_param.ct;
+		cxt->cur_gain.r = cxt->s_save_awb_param.r;
+		cxt->cur_gain.g = cxt->s_save_awb_param.g;
+		cxt->cur_gain.b = cxt->s_save_awb_param.b;
+		cxt->cur_ct = cxt->s_save_awb_param.ct;
 	}
 	return rtn;
 }
@@ -1826,9 +1827,6 @@ cmr_s32 awb_sprd_ctrl_deinit(void *handle, void *in, void *out)
 		goto EXIT;
 	}
 
-	//save recover gain
-	ISP_LOGV("awb_sprd_ctrl_deinit before _awb_save_gain_tofile");
-	_awb_save_gain_tofile(cxt);
 	_deinit_gain_queue(&cxt->gain_queue);
 
 	pthread_mutex_destroy(&cxt->status_lock);
@@ -1870,9 +1868,7 @@ cmr_s32 awb_sprd_ctrl_deinit_v3(void *handle, void *in, void *out)
 		goto EXIT;
 	}
 
-	//save recover gain
-	ISP_LOGV("awb_sprd_ctrl_deinit before _awb_save_gain_tofile");
-	_awb_save_gain_tofile(cxt);
+
 	_deinit_gain_queue(&cxt->gain_queue);
 
 	pthread_mutex_destroy(&cxt->status_lock);
@@ -2735,6 +2731,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		{
 			rtn = _awb_set_recgain(cxt, in);
 		}
+
+		//save recover gain
+		ISP_LOGV("_awb_save_gain_tofile");
+		_awb_save_gain_tofile(cxt);
 		break;
 
 	case AWB_CTRL_CMD_GET_CT_TABLE20:
@@ -2908,6 +2908,10 @@ cmr_s32 awb_sprd_ctrl_ioctrl_v3(void *handle, cmr_s32 cmd, void *in, void *out)
 		{
 			rtn = _awb_set_recgain(cxt, in);
 		}
+
+		//save recover gain
+		ISP_LOGV("_awb_save_gain_tofile");
+		_awb_save_gain_tofile(cxt);
 		break;
 
 	case AWB_CTRL_CMD_GET_CT_TABLE20:
