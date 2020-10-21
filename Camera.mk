@@ -306,6 +306,11 @@ LOCAL_STATIC_LIBRARIES += libc_malloc_debug_backtrace
 LOCAL_CFLAGS += -DDEBUG_MALLOC_ON
 endif
 
+ifeq ($(strip $(CONFIG_DEBUG_MALLOC_64)),true)
+LOCAL_STATIC_LIBRARIES += libc_malloc_debug_backtrace
+LOCAL_CFLAGS += -DDEBUG_MALLOC_ON_64
+endif
+
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional

@@ -48,6 +48,7 @@
 #include <fstream>
 #include <iostream>
 
+
 // Figure out the abi based on defined macros.
 #if defined(__arm__)
 #define ABI_STRING "arm"
@@ -65,10 +66,15 @@
 #error "Unsupported ABI"
 #endif
 extern std::string backtrace_string(const uintptr_t* frames, size_t frame_count);
+#ifdef DEBUG_MALLOC_ON_64
+extern "C" bool android_mallopt(int opcode, void* arg, size_t arg_size);
+#endif
+
+#ifdef DDEBUG_MALLOC_ON
 extern "C" void get_malloc_leak_info(uint8_t** info, size_t* overall_size, size_t* info_size,
                                        size_t* total_memory, size_t* backtrace_size);
 extern "C" void free_malloc_leak_info(uint8_t* info);
-
+#endif
 using android::hardware::graphics::common::V1_0::BufferUsage;
 
 extern "C" {
@@ -2135,7 +2141,7 @@ void SprdCamera3HWI::getMetadataVendorTagOps(vendor_tag_query_ops_t *ops) {
 }
 
 void SprdCamera3HWI::dump(int /*fd */) {
-#ifdef DEBUG_MALLOC_ON
+#if defined (DEBUG_MALLOC_ON) || defined (DEBUG_MALLOC_ON_64)
     HAL_LOGD("%s: + SprdCamera3HWI::dump log 1 ", __FUNCTION__);
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.memleak.dump.count", value, "0");
@@ -2148,11 +2154,79 @@ void SprdCamera3HWI::dump(int /*fd */) {
     }
     HAL_LOGD("SprdCamera3HWI::dump");
 #endif
-
     return;
 }
 
-#ifdef DEBUG_MALLOC_ON
+#ifdef DEBUG_MALLOC_ON_64
+void SprdCamera3HWI::dumpMemoryAddresses(size_t limit){
+    HAL_LOGD("+ %s: limit = %d", __FUNCTION__,limit);
+    android_mallopt_leak_info_t leak_info;
+    size_t count;
+    size_t dump_size = 0;
+    char value[PROPERTY_VALUE_MAX];
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+
+    property_get("persist.vendor.cam.memleak.dump.size", value, "0");
+    dump_size = (size_t)atoi(value);
+
+     if (!android_mallopt(M_GET_MALLOC_LEAK_INFO, &leak_info, sizeof(leak_info))) {
+        HAL_LOGD("get malloc leak info fail\n");
+        return ;
+    }
+    if (leak_info.buffer == nullptr || leak_info.overall_size == 0 || leak_info.info_size == 0
+            || (count = leak_info.overall_size / leak_info.info_size) == 0) {
+        HAL_LOGD("no malloc info, libc.debug.malloc.program property should be set");
+        return ;
+    }
+
+    std::ostringstream oss;
+
+    oss << leak_info.total_memory << " bytes in " << count << " allocations\n";
+    HAL_LOGD("totalMemory %u count %u %u", (unsigned int)leak_info.total_memory, (unsigned int)count, (unsigned int)dump_size);
+    oss << "  ABI: '" ABI_STRING "'" << "\n\n";
+
+    if (count > limit) count = limit;
+    // The memory is sorted based on total size which is useful for finding
+    // worst memory offenders. For diffs, sometimes it is preferable to sort
+    // based on the backtrace.
+    for (size_t i = 0; i < count; i++) {
+        struct AllocEntry {
+            size_t size;  // bit 31 is set if this is zygote allocated memory
+            size_t allocations;
+            uintptr_t backtrace[];
+        };
+
+        const AllocEntry * const e = (AllocEntry *)(leak_info.buffer + i * leak_info.info_size);
+
+    if (dump_size == 0 || dump_size == e->size) {
+        oss << (e->size * e->allocations)
+            << " bytes ( " << e->size << " bytes * " << e->allocations << " allocations )\n";
+            oss << backtrace_string(e->backtrace, leak_info.backtrace_size) << "\n";
+    }
+    }
+    oss << "\n";
+    android_mallopt(M_FREE_MALLOC_LEAK_INFO, &leak_info, sizeof(leak_info));
+    char name_buf[128];
+    sprintf(name_buf, "/data/vendor/cameraserver/CamProvider_%02d%02d%02d%02d.txt", p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+    std::ofstream file_out(name_buf);
+    if (! file_out.is_open())  {
+       ALOGE("- %s: file_out not open ", __FUNCTION__);
+       return ;
+    }
+    file_out << "========================= + Provider@2.4-service ============================================\n" ;
+    std::string str = oss.str();
+    file_out << str;
+    file_out << "========================= - Provider@2.4-service ============================================\n" ;
+    file_out.close();
+    HAL_LOGD("- %s: dump OK ", __FUNCTION__);
+    return ;
+}
+#endif
+
+#ifdef CONFIG_DEBUG_MALLOC
 void SprdCamera3HWI::dumpMemoryAddresses(size_t limit) {
     HAL_LOGD("%s: limit = %d", __FUNCTION__,limit);
 
