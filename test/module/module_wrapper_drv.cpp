@@ -71,7 +71,7 @@ static int camt_write_file(char *file_name, unsigned int chipid, unsigned int wi
 	char temp[5];
 
 	if (chipid == CAMT_CHIP_ISP0 || chipid == CAMT_CHIP_ISP1) {
-		IT_LOGD("file_name:%s size %d vir_addr %ld_isp", file_name, width * height, addr);
+		IT_LOGD("file_name:%s size %d vir_addr %ld_isp", file_name, width * height, addr.addr_ch0);
 		strcat(file_name, "_yuv_");
 		sprintf(temp, "%d", index);
 		strcat(file_name, temp);
@@ -94,7 +94,7 @@ static int camt_write_file(char *file_name, unsigned int chipid, unsigned int wi
 		fclose(fp);
 		fp = NULL;
 	} else if (CAMT_CHIP_DCAM0 <= chipid && chipid <= CAMT_CHIP_DCAM_LITE1) {
-		IT_LOGD("file_name:%s size %d vir_addr %ld_dcam", file_name, width * height, addr);
+		IT_LOGD("file_name:%s size %d vir_addr %ld_dcam", file_name, width * height, addr.addr_ch0);
 		strcat(file_name,".mipi_raw");
 		fp = fopen(file_name, "wb");
 		if (fp == NULL) {
@@ -174,7 +174,7 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	unsigned long vir_addr_out[DRV_PATH_NUM];
 	char output_file[DRV_PATH_NUM][256];
 	char tmp_str[10];
-	struct img_store_addr store_addr_out[DRV_PATH_NUM];
+	struct img_store_addr store_addr_out[DRV_PATH_NUM] = {0};
 
 	memset(output_file, '\0', sizeof(output_file));
 	memset(tmp_str, '\0', 10);
