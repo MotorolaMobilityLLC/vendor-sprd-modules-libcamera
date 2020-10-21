@@ -80,55 +80,75 @@ static cmr_int s5kgw1sp03_drv_init_fps_info(cmr_handle handle) {
  */
 
 static const cmr_u16 s5kgw1sp03_pd_is_right[] = {
-    0, 0,
-    1, 1,
-    1, 1,
-    0, 0,
-    1, 1,
-    0, 0,
-    0, 0,
-    1, 1,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0
 };
 
 static const cmr_u16 s5kgw1sp03_pd_row[] = {
-    1, 1,
-    5, 5,
-    9, 9,
-    13, 13,
-    17, 17,
-    21, 21,
-    25, 25,
-    29, 29,
+    0, 0, 0, 0,
+    3, 3, 3, 3,
+    4, 4, 4, 4,
+    7, 7, 7, 7,
+    8, 8, 8, 8,
+    11, 11, 11, 11,
+    12, 12, 12, 12,
+    15, 15, 15, 15,
 };
 
 static const cmr_u16 s5kgw1sp03_pd_col[] = {
-    2, 18,
-    2, 18,
-    14, 30,
-    14, 30,
-    2, 18,
-    2, 18,
-    14, 30,
-    14, 30,
+    2, 3, 10, 11,
+    0, 1, 8, 9,
+    4, 5, 12, 13,
+    6, 7, 14, 15,
+    2, 3, 10, 11,
+    0, 1, 8, 9,
+    4, 5, 12, 13,
+    6, 7, 14, 15
 };
 
-
-static const struct pd_pos_info _s5kgw1sp03_pd_pos_l[] = {
-    {2, 1}, {18, 1},
-    {14, 13}, {30, 13},
-    {2, 21}, {18, 21},
-    {14, 25}, {30, 25},
+static const struct pd_pos_info s5kgw1sp03_pd_pos_l[] = {
+    {3, 0}, {11, 0},
+    {1, 3}, {9, 3},
+    {5, 4}, {13, 4},
+    {7, 7}, {15, 7},
+    {3, 8}, {11, 8},
+    {1, 11}, {9, 11},
+    {5, 12}, {13, 12},
+    {7, 15}, {15, 15}
 };
 
-static const struct pd_pos_info _s5kgw1sp03_pd_pos_r[] = {
-    {2, 5}, {18, 5},
-    {14, 9}, {30, 9},
-    {2, 17}, {18, 17},
-    {14, 29}, {30, 29},
-};
-/*
+static const struct pd_pos_info s5kgw1sp03_pd_pos_r[] = {
+    {2, 0}, {10, 0},
+    {0, 3}, {8, 3},
+    {4, 4}, {12, 4},
+    {6, 7}, {14, 7},
+    {2, 8}, {10, 8},
+    {0, 11}, {8, 11},
+    {4, 12}, {12, 12},
+    {6, 15}, {14, 15}
+  };
+
+static const cmr_u32 pd_sns_mode[] = {0, 0, 1, 1};
 
 struct pdaf_coordinate_tab s5kgw1sp03_pd_coordinate_table[] = {
+    {.number = 4,
+     .pos_info = {0, 1, 0, 1},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
     {.number = 4,
      .pos_info = {1, 0, 1, 0},
     },
@@ -143,92 +163,77 @@ struct pdaf_coordinate_tab s5kgw1sp03_pd_coordinate_table[] = {
     }
 };
 
-static const cmr_int s5kgw1sp03_pd_coordinate_tab[] = { 1, 0, 0, 1, 0, 1, 1, 0};
-
 struct pdaf_block_descriptor s5kgw1sp03_pd_seprator_helper = {
     .block_width = 4,
     .block_height = 8,
-    .coordinate_tab = s5kgw1sp03_pd_coordinate_tab,
+    .coordinate_tab = NULL,
     .line_width = 4,
-    .block_pattern = LINED_UP,
-    .pd_line_coordinate = NULL,
+    .block_pattern = CROSS_PATTERN,
+    .pd_line_coordinate = s5kgw1sp03_pd_coordinate_table,
 };
-*/
-static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
 
 cmr_int s5kgw1sp03_drv_pdaf_data_process(void *buffer_handle);
 
 static cmr_int s5kgw1sp03_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
-    struct sensor_pdaf_info *pdaf_info = (struct sensor_pdaf_info *)param;
-    cmr_int ret = SENSOR_SUCCESS;
-    cmr_u16 pd_pos_is_right_size = 0;
+    cmr_int rtn = SENSOR_SUCCESS;
+    struct sensor_pdaf_info *pdaf_info = NULL;
+    SENSOR_IC_CHECK_PTR(param);
+    cmr_u16 i = 0;
     cmr_u16 pd_pos_row_size = 0;
     cmr_u16 pd_pos_col_size = 0;
-    cmr_u16 pd_pos_r_size = 0;
-    cmr_u16 pd_pos_l_size = 0;
+    cmr_u16 pd_pos_is_right_size = 0;
 
-    SENSOR_LOGD("E");
+    SENSOR_PRINT_ERR("E\n");
 
+    pdaf_info = (struct sensor_pdaf_info *)param;
     pd_pos_is_right_size = NUMBER_OF_ARRAY(s5kgw1sp03_pd_is_right);
     pd_pos_row_size = NUMBER_OF_ARRAY(s5kgw1sp03_pd_row);
     pd_pos_col_size = NUMBER_OF_ARRAY(s5kgw1sp03_pd_col);
     if ((pd_pos_row_size != pd_pos_col_size) ||
         (pd_pos_row_size != pd_pos_is_right_size) ||
         (pd_pos_is_right_size != pd_pos_col_size)) {
-        SENSOR_LOGE("pd_pos_row size and pd_pos_is_right size are not matched");
+        SENSOR_LOGE("pd_pos_row size and pd_pos_is_right size are not match");
         return SENSOR_FAIL;
     }
-
-    pd_pos_r_size = NUMBER_OF_ARRAY(_s5kgw1sp03_pd_pos_r);
-    pd_pos_l_size = NUMBER_OF_ARRAY(_s5kgw1sp03_pd_pos_l);
-    if (pd_pos_r_size != pd_pos_l_size) {
-        SENSOR_LOGE("pd_pos_r_size does not match pd_pos_l_size");
-        return SENSOR_FAIL;
-    }
-
-    pdaf_info->pd_offset_x = 16;
-    pdaf_info->pd_offset_y = 28;
-    pdaf_info->pd_end_x = 3984;
-    pdaf_info->pd_end_y = 2972;
-    pdaf_info->pd_block_num_x = 124;
-    pdaf_info->pd_block_num_y = 92;
 
     pdaf_info->pd_is_right = (cmr_u16 *)s5kgw1sp03_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)s5kgw1sp03_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)s5kgw1sp03_pd_col;
-    pdaf_info->pd_pos_r = (struct pd_pos_info *)_s5kgw1sp03_pd_pos_r;
-    pdaf_info->pd_pos_l = (struct pd_pos_info *)_s5kgw1sp03_pd_pos_l;
-    pdaf_info->pd_pos_size = pd_pos_r_size;
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)s5kgw1sp03_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)s5kgw1sp03_pd_pos_l;
+    pdaf_info->pd_pos_size = NUMBER_OF_ARRAY(s5kgw1sp03_pd_pos_r);
+    pdaf_info->pd_offset_x = 0;
+    pdaf_info->pd_offset_y = 0;
+    pdaf_info->pd_end_x = 4608;
+    pdaf_info->pd_end_y = 3456;
+    pdaf_info->pd_block_w = 1;
+    pdaf_info->pd_block_h = 1;
+    pdaf_info->pd_block_num_x = 288;
+    pdaf_info->pd_block_num_y = 216;
+    pdaf_info->pd_density_x = 8;
+    pdaf_info->pd_density_y = 2;
+    pdaf_info->pd_pitch_x = 216;
+    pdaf_info->pd_pitch_y = 288;
 
-    pdaf_info->pd_block_w = 2;
-    pdaf_info->pd_block_h = 2;
-    pdaf_info->pd_pitch_x = 32;
-    pdaf_info->pd_pitch_y = 32;
-    pdaf_info->pd_density_x = 16;
-    pdaf_info->pd_density_y = 8;
-
-//    pdaf_info->vendor_type = SENSOR_VENDOR_s5kgw1sp03;
-    pdaf_info->sns_orientation = 0;
-    pdaf_info->sns_mode = pd_sns_mode;
     pdaf_info->vch2_info.bypass = 0;
     pdaf_info->vch2_info.vch2_vc = 0;
-    pdaf_info->vch2_info.vch2_data_type = 0x30;
-    pdaf_info->vch2_info.vch2_mode = 0x03;  //data tpye
-/*    pdaf_info->descriptor = &s5kgw1sp03_pd_seprator_helper;
-    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x *
-                              pdaf_info->pd_block_num_y *
-                              NUMBER_OF_ARRAY(s5kgw1sp03_pd_is_right) * 5;
-    pdaf_info->pdaf_format_converter = s5kgw1sp03_drv_pdaf_data_process;*/
-    return SENSOR_SUCCESS;
+    pdaf_info->vch2_info.vch2_data_type = 0x2b;
+    pdaf_info->vch2_info.vch2_mode = 0x03;
+    pdaf_info->sns_mode = pd_sns_mode;
+    pdaf_info->descriptor = &s5kgw1sp03_pd_seprator_helper;
+    pdaf_info->pdaf_format_converter = s5kgw1sp03_drv_pdaf_data_process;
+    pdaf_info->sns_orientation = 0; /*1: mirror+flip; 0: normal*/
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y
+				* pd_pos_is_right_size * 5;
+    return rtn;
 }
+
 cmr_int s5kgw1sp03_drv_pdaf_data_process(void *buffer_handle) {
     if(!buffer_handle)
         return SENSOR_FAIL;
     struct sensor_pdaf_info pdaf_info;
     s5kgw1sp03_drv_get_pdaf_info(NULL, (cmr_u32 *)(&pdaf_info));
-/*    sensor_pdaf_format_convertor(buffer_handle,
-                                 s_s5kgw1sp03_static_info[0].static_info.pdaf_supported,
-                                 (cmr_u32 *)(&pdaf_info));*/
+    sensor_pdaf_format_convertor(buffer_handle, s_s5kgw1sp03_static_info[0].static_info.pdaf_supported, (cmr_u32 *)(&pdaf_info));
     return SENSOR_SUCCESS;
 }
 
@@ -271,7 +276,15 @@ static cmr_int s5kgw1sp03_drv_write_exp_dummy(cmr_handle handle,
     if (expsure_line < 3) {
         expsure_line = 3;
     }
+    do {
+        char value[PROPERTY_VALUE_MAX];
 
+        property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+        if ((!strcmp(value, "raw")) || size_index == 3) {
+            expsure_line /= BINNING_FACTOR;
+	    SENSOR_LOGI("INTO binning factor recalc with shutter = %d", expsure_line);
+        }
+    } while (0);
     frame_len = expsure_line + dummy_line;
     frame_len = (frame_len > (uint32_t)(expsure_line + 5))
                     ? frame_len
@@ -305,7 +318,6 @@ static cmr_int s5kgw1sp03_drv_write_exp_dummy(cmr_handle handle,
 
     return ret_value;
 }
-
 static cmr_int s5kgw1sp03_drv_write_exposure(cmr_handle handle, cmr_int param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u32 expsure_line = 0x00;
@@ -586,7 +598,14 @@ static cmr_u16 s5kgw1sp03_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     fr_len = sns_drv_cxt->frame_length_def;
+    do {
+        char value[PROPERTY_VALUE_MAX];
 
+        property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+        if ((!strcmp(value, "raw")) && mode == 3) {
+            shutter /= BINNING_FACTOR;
+        }
+    } while (0);
     dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
     dest_fr_len =
         ((shutter + dummy_line) > fr_len) ? (shutter + dummy_line) : fr_len;

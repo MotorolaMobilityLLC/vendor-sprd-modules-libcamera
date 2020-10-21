@@ -252,7 +252,7 @@ cmr_int sensor_pdaf_buffer_block_seprator(struct pdaf_block_descriptor *descript
     SENSOR_PDAF_INIT_INT(output_line, left_line, right_line);
     block_height = descriptor->block_height;
     line_width = roi_param->pd_area_width;
-    line_height = roi_param->pd_area_height * 2;
+    line_height = roi_param->pd_area_height;
     input = pdaf_buffer->right_buffer;
     output_line_width = line_width / 2;
 

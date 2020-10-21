@@ -24,6 +24,7 @@
 #include "sensor_raw.h"
 //#include "parameters/sensor_s5kgw1sp03_raw_param_main.c"
 
+#define BINNING_FACTOR 4
 #define VENDOR_NUM 1
 #define s5kgw1sp03_I2C_ADDR_W 0x5a
 #define s5kgw1sp03_I2C_ADDR_R 0x5a
@@ -3874,7 +3875,7 @@ static SENSOR_STATIC_INFO_T s_s5kgw1sp03_static_info[VENDOR_NUM] = {
                      .max_adgain = 16,
                      .ois_supported = 0,
 
-                     .pdaf_supported = 0,
+                     .pdaf_supported = 3,
 
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
