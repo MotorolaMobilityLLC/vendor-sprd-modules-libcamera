@@ -299,7 +299,7 @@ static cmr_int s5kgw1sp03_drv_write_exp_dummy(cmr_handle handle,
                                           SENSOR_EXIF_CTRL_EXPOSURETIME,
                                           expsure_line);
     } else {
-        sns_drv_cxt->exif_info.exposure_time = expsure_line;
+        /*sns_drv_cxt->exif_info.exposure_time = expsure_line;*/
         sns_drv_cxt->exif_info.exposure_time = expsure_line * linetime / 1000;
     }
 
@@ -542,7 +542,7 @@ static void s5kgw1sp03_calc_gain(float gain,
     float real_gain = gain;
     float a_gain = 0;
     float d_gain = 0;
-    uint8_t i = 0;
+    uint16_t i = 0;
 
     if ((cmr_u32)real_gain <= 16 * 32) {
         a_gain = real_gain;
@@ -683,7 +683,7 @@ static cmr_int s5kgw1sp03_drv_set_slave_FrameSync(cmr_handle handle,
 static cmr_int s5kgw1sp03_drv_set_xtalk_data(cmr_handle handle, cmr_uint param){
 	struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 //	cmr_u8 *param_ptr = (cmr_u8 *)param;
-	cmr_u8 param_ptr[0x1000] = {0x00};
+	cmr_u8 param_ptr[0x2000] = {0x00};
 
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x6028, 0x2000);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x602a, 0x1440);//0x4fb0);
@@ -696,7 +696,7 @@ static cmr_int s5kgw1sp03_drv_set_xtalk_data(cmr_handle handle, cmr_uint param){
 //	hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0a02, 0x1f);
 #if 1
 	hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xa2 >> 1, param_ptr,
-				0x1000 << 16 | SENSOR_I2C_REG_16BIT);
+				0x2000 << 16 | SENSOR_I2C_REG_16BIT);
 	for (int i = 0; i < 1744; i++)
 		  hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0a04 + i, *(param_ptr + 0x0a55 + i));//*(xtalk_data.data_addr + i));
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0a00, 0x8300);
@@ -819,9 +819,8 @@ static cmr_int s5kgw1sp03_drv_power_on(cmr_handle handle, cmr_int power_on) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
 
-    if(!module_info) {
-        SENSOR_LOGD("not valid handle");
-    }
+    SENSOR_IC_CHECK_PTR(module_info);
+
     SENSOR_AVDD_VAL_E dvdd_val = module_info->dvdd_val;
     SENSOR_AVDD_VAL_E avdd_val = module_info->avdd_val;
     SENSOR_AVDD_VAL_E iovdd_val = module_info->iovdd_val;
