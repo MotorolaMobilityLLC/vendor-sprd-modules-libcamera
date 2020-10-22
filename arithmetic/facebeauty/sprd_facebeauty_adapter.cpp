@@ -38,7 +38,7 @@ void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum
     property_get("ro.boot.lwfq.type", strRunType , "-1");
     if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_VDSP && strcmp("0", strRunType))
         faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
-
+    lightPortraitType = 0;
     property_get("persist.vendor.cam.fb.run_type", strRunType , "");
     if (!(strcmp("cpu", strRunType)))
         faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
@@ -428,6 +428,7 @@ void do_face_beauty(fb_beauty_param_t *faceBeauty, int faceCount) {
             memcpy(faceInfo, faceBeauty->fb_face, faceCount*sizeof(FB_FACEINFO));
 
             if (lightPortraitType >= 5 && faceBeauty->fb_mode == FB_WORKMODE_STILL && faceBeauty->fb_option.slimFaceLevel > 0) {
+                ALOGD("lightPortraitType=%d slimFaceLevel=%d",lightPortraitType,faceBeauty->fb_option.slimFaceLevel);
                 retVal =
                     FB_FaceBeauty_YUV420SP(faceBeauty->hSprdFB, &inputImage,
                                           &option, faceInfo, faceCount,&(fbMaskT->fb_mask));
@@ -551,12 +552,15 @@ int face_beauty_ctrl(fb_beauty_param_t *faceBeauty, fb_beauty_cmd_t cmd, void *p
         construct_fb_level(faceBeauty, beautyLevels);
         break;
     }
-    case FB_BEAUTY_PROCESS_CMD: {
-        //int faceCount = *(int *)param;
-        //lightPortraitType = *((char *)param + sizeof(int));
+    case FB_BEAUTY_LPT_PROCESS_CMD: {
         fb_beauty_lptparam_t *lptParam = (fb_beauty_lptparam_t *)param;
         int faceCount = lptParam->faceCount;
         lightPortraitType = lptParam->lightPortraitType;
+        do_face_beauty(faceBeauty, faceCount);
+        break;
+    }
+    case FB_BEAUTY_PROCESS_CMD: {
+        int faceCount = *(int*)param;
         do_face_beauty(faceBeauty, faceCount);
         break;
     }
