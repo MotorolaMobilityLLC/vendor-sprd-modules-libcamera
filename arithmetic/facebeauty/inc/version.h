@@ -12,9 +12,9 @@
 /* increased along with each big update, e.g. for function extension*/
 #define BEAUTY_ADA_VERSION_MINOR      0
 /* increased alone with each small update, e.g. for bug fix or optimization */
-#define BEAUTY_ADA_VERSION_MICRO      0
+#define BEAUTY_ADA_VERSION_MICRO      1
 /* increased along with each tiny update */
-#define BEAUTY_ADA_VERSION_NANO       1
+#define BEAUTY_ADA_VERSION_NANO       0
 
 #define BEAUTY_ADA_VERSION            API_VERSION(BEAUTY_ADA_VERSION_MAJOR,BEAUTY_ADA_VERSION_MINOR,BEAUTY_ADA_VERSION_MICRO,BEAUTY_ADA_VERSION_NANO)
 
