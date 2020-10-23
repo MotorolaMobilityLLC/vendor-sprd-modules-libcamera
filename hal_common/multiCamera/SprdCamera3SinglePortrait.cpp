@@ -4284,7 +4284,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         fb_beauty_lptparam_t lpt_param;
         lpt_param.faceCount = faceDetectionInfo.face_num;
         lpt_param.lightPortraitType = lightPortraitType;
-        rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_PROCESS_CMD, &(lpt_param));
+        rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_LPT_PROCESS_CMD, &(lpt_param));
 
         HAL_LOGD("capture face beauty done!");
         rc = face_beauty_ctrl(&mSinglePortrait->fb_cap, FB_BEAUTY_FAST_STOP_CMD, NULL);
@@ -4330,7 +4330,7 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         fb_beauty_lptparam_t lpt_param;
         lpt_param.faceCount = faceCount;
         lpt_param.lightPortraitType = lightPortraitType;
-        rc = face_beauty_ctrl(&mSinglePortrait->fb_prev, FB_BEAUTY_PROCESS_CMD, &(lpt_param));
+        rc = face_beauty_ctrl(&mSinglePortrait->fb_prev, FB_BEAUTY_LPT_PROCESS_CMD, &(lpt_param));
         property_get("persist.vendor.prev.dump", prop, "0");
         if (!strcmp(prop, "prev")) {
             mSinglePortrait->dumpData(
