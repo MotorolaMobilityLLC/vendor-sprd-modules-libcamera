@@ -186,6 +186,8 @@ typedef struct {
     uint32_t heapNum;
 } camera_oem_buff_info_t;
 
+#define PREFLASH_INTERVAL_TIME 3
+
 #define MAX_GRAPHIC_BUF_NUM 20
 #define MAX_SUB_RAWHEAP_NUM 10
 #define MAX_LOOP_COLOR_COUNT 3

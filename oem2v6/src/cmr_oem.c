@@ -9592,6 +9592,21 @@ cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm) {
     return out_param;
 }
 
+cmr_int camera_local_get_last_preflash_time(cmr_handle oem_handle, cmr_s64 *time){
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_cmd_parameter setting_param;
+    cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
+
+    setting_param.camera_id = cxt->camera_id;
+    //setting_param.setting_flash_status = SETTING_AF_FLASH_PRE_LIGHTING;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_LAST_PREFLASH_TIME,
+                            &setting_param);
+    *time = setting_param.last_preflash_time;
+
+    return ret;
+}
+
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
                                   int *size, cmr_s32 frame_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;

@@ -835,6 +835,15 @@ cmr_int camera_get_isp_handle(cmr_handle camera_handle,
     return ret;
 }
 
+
+cmr_int camera_get_last_preflash_time(cmr_handle camera_handle, cmr_s64 *time) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    ret = camera_local_get_last_preflash_time(camera_handle, time);
+
+    return ret;
+}
+
 cmr_int camera_get_isp_info(cmr_handle camera_handle, void **addr, int *size, cmr_s32 frame_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     UNUSED(frame_id);
@@ -1300,7 +1309,7 @@ static oem_ops_t oem_module_ops = {
     camera_set_zsl_snapshot_buffer, camera_zsl_snapshot_need_pause,
     camera_get_isp_handle, camera_lls_enable, camera_is_lls_enabled,
     camera_vendor_hdr_enable, camera_is_vendor_hdr, camera_set_lls_shot_mode,
-    camera_get_lls_shot_mode, camera_get_isp_info, camera_start_burst_notice,
+    camera_get_lls_shot_mode, camera_get_last_preflash_time, camera_get_isp_info, camera_start_burst_notice,
     camera_end_burst_notice, camera_transfer_caf_to_af,
     camera_transfer_af_to_caf, dump_jpeg_file, camera_get_gain_thrs,
     camera_set_sensor_info_to_af, camera_get_sensor_max_fps,

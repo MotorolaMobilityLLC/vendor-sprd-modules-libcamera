@@ -904,20 +904,36 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     mSetting->getSPRDDEFTag(&sprddefInfo);
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
-
+    cmr_uint been_preflash = 0;
+    cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
     HAL_LOGI("E");
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+
+    if (mCameraId != 1){
+        mHalOem->ops->camera_get_last_preflash_time(mCameraHandle, &last_preflash_time);
+        now_time = systemTime(CLOCK_MONOTONIC);
+        HAL_LOGD("lst_preflash_time = %" PRId64 ", now_time=%" PRId64,
+             last_preflash_time, now_time);
+        if (now_time > last_preflash_time) {
+            diff = (now_time - last_preflash_time) / 1000000000;
+            if (diff < PREFLASH_INTERVAL_TIME) {
+                HAL_LOGD("last preflash < 3s, no need do preflash again.");
+                been_preflash = 1;
+            }
+        }
+    }
+
     if(sprddefInfo.is_takepicture_with_flash == 1 &&
         SprdCamera3Setting::mSensorFocusEnable[mCameraId]
-        && sprddefInfo.sprd_appmode_id >= 0) {
+        && sprddefInfo.sprd_appmode_id >= 0  && (!been_preflash)) {
         controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
         mSetting->setCONTROLTag(&controlInfo);
         SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
         mSetting->getCONTROLTag(&controlInfo);
         HAL_LOGV("af_state =%d",controlInfo.af_state);
         while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-                if (count1 > 2500) {
-                        HAL_LOGD("wait for preflash timeout 2.5s");
+                if (count1 > 2800) {
+                        HAL_LOGD("wait for preflash timeout 2.8s");
                         break;
                 }
                 if (mZslCaptureExitLoop == true)

@@ -77,6 +77,7 @@ enum setting_cmd_type {
     SETTING_GET_FILTER_TEYP,
     SETTING_GET_APPMODE,
     SETTING_SET_EXIF_EXPOSURE_TIME,
+    SETTING_GET_LAST_PREFLASH_TIME,
     SETTING_TYPE_MAX
 };
 
@@ -121,6 +122,7 @@ struct setting_cmd_parameter {
         struct cmr_range_fps_param range_fps;
         struct touch_coordinate touch_param;
         struct cmr_ae_compensation_param ae_compensation_param;
+        cmr_s64 last_preflash_time;
     };
 };
 
