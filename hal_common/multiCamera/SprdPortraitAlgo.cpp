@@ -1328,7 +1328,7 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
         fb_beauty_lptparam_t lpt_param;
         lpt_param.faceCount = mPortraitCapParam.portrait_param.face_num;
         lpt_param.lightPortraitType = lptOptions_cap.lightPortraitType;
-        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_PROCESS_CMD, &(lpt_param));
+        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_LPT_PROCESS_CMD, &(lpt_param));
 
         HAL_LOGD("capture face beauty done!");
         rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_FAST_STOP_CMD, NULL);
@@ -1418,7 +1418,7 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
         fb_beauty_lptparam_t lpt_param;
         lpt_param.faceCount = mPreviewbokehParam.depth_param.portrait_param.face_num;
         lpt_param.lightPortraitType = lptOptions.lightPortraitType;
-        rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_PROCESS_CMD, &(lpt_param));
+        rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_LPT_PROCESS_CMD, &(lpt_param));
     }
     HAL_LOGV("X");
     return rc;
