@@ -30,6 +30,7 @@
 #include "module_wrapper_base.h"
 #define LOG_TAG "IT-moduleBase"
 map<string,vector<resultData_t>*> gMap_Result;
+map<string, g_time_t> g_time;
 
 ModuleWrapperBase::ModuleWrapperBase()
 {

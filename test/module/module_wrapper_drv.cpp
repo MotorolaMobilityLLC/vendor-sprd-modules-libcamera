@@ -39,7 +39,6 @@
 #define THIS_MODULE_NAME "drv"
 #define CAMT_DEV_NAME "/dev/sprd_image"
 #define CAMT_OUT_PATH "/data/vendor/cameraserver/testimage/"
-extern map<string,vector<resultData_t>*> gMap_Result;
 
 struct camt_drv_context {
 	int fd;

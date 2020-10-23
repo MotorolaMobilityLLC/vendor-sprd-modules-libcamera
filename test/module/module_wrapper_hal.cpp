@@ -82,53 +82,53 @@
 #include <signal.h>
 #define THIS_MODULE_NAME "hal"
 using namespace ::android::hardware::camera::device;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
+using ::android::GraphicBuffer;
+using ::android::sp;
+using ::android::wp;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using ::android::sp;
-using ::android::wp;
-using ::android::GraphicBuffer;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 // using ::android::IGraphicBufferProducer;
 // using ::android::IGraphicBufferConsumer;
 // using ::android::Surface;
-using ::android::hardware::graphics::common::V1_0::PixelFormat;
-using ::android::hardware::camera::common::V1_0::Status;
+using android::status_t;
+using ::android::hardware::kSynchronizedReadWrite;
+using ::android::hardware::MessageQueue;
 using ::android::hardware::camera::common::V1_0::CameraDeviceStatus;
+using ::android::hardware::camera::common::V1_0::Status;
 using ::android::hardware::camera::common::V1_0::TorchMode;
 using ::android::hardware::camera::common::V1_0::TorchModeStatus;
+using ::android::hardware::camera::common::V1_0::helper::CameraModule;
 using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
 using ::android::hardware::camera::common::V1_0::helper::Size;
-using ::android::hardware::camera::provider::V2_4::ICameraProvider;
-using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
-using ::android::hardware::camera::device::V3_2::ICameraDevice;
-using ::android::hardware::camera::device::V3_2::BufferCache;
-using ::android::hardware::camera::device::V3_2::CaptureRequest;
-using ::android::hardware::camera::device::V3_2::CaptureResult;
-using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
-using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
-using ::android::hardware::camera::device::V3_2::NotifyMsg;
-using ::android::hardware::camera::device::V3_2::RequestTemplate;
-using ::android::hardware::camera::device::V3_2::StreamType;
-using ::android::hardware::camera::device::V3_2::StreamRotation;
-using ::android::hardware::camera::device::V3_2::StreamConfiguration;
-using ::android::hardware::camera::device::V3_2::StreamConfigurationMode;
-using ::android::hardware::camera::device::V3_2::CameraMetadata;
-using ::android::hardware::camera::device::V3_2::HalStreamConfiguration;
-using ::android::hardware::camera::device::V3_2::BufferStatus;
-using ::android::hardware::camera::device::V3_2::StreamBuffer;
-using ::android::hardware::camera::device::V3_2::MsgType;
-using ::android::hardware::camera::device::V3_2::ErrorCode;
-using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
-using ::android::hardware::camera::device::V1_0::DataCallbackMsg;
-using ::android::hardware::MessageQueue;
-using ::android::hardware::kSynchronizedReadWrite;
-using ::android::hardware::camera::common::V1_0::helper::CameraModule;
 using ::android::hardware::camera::common::V1_0::helper::VendorTagDescriptor;
 using ::android::hardware::camera::common::V1_0::helper::
     VendorTagDescriptorCache;
-using android::status_t;
+using ::android::hardware::camera::device::V1_0::DataCallbackMsg;
+using ::android::hardware::camera::device::V1_0::NotifyCallbackMsg;
+using ::android::hardware::camera::device::V3_2::BufferCache;
+using ::android::hardware::camera::device::V3_2::BufferStatus;
+using ::android::hardware::camera::device::V3_2::CameraMetadata;
+using ::android::hardware::camera::device::V3_2::CaptureRequest;
+using ::android::hardware::camera::device::V3_2::CaptureResult;
+using ::android::hardware::camera::device::V3_2::ErrorCode;
+using ::android::hardware::camera::device::V3_2::HalStreamConfiguration;
+using ::android::hardware::camera::device::V3_2::ICameraDevice;
+using ::android::hardware::camera::device::V3_2::ICameraDeviceCallback;
+using ::android::hardware::camera::device::V3_2::ICameraDeviceSession;
+using ::android::hardware::camera::device::V3_2::MsgType;
+using ::android::hardware::camera::device::V3_2::NotifyMsg;
+using ::android::hardware::camera::device::V3_2::RequestTemplate;
+using ::android::hardware::camera::device::V3_2::StreamBuffer;
+using ::android::hardware::camera::device::V3_2::StreamConfiguration;
+using ::android::hardware::camera::device::V3_2::StreamConfigurationMode;
+using ::android::hardware::camera::device::V3_2::StreamRotation;
+using ::android::hardware::camera::device::V3_2::StreamType;
+using ::android::hardware::camera::provider::V2_4::ICameraProvider;
+using ::android::hardware::camera::provider::V2_4::ICameraProviderCallback;
+using ::android::hardware::graphics::common::V1_0::PixelFormat;
 
 using ResultMetadataQueue = MessageQueue<uint8_t, kSynchronizedReadWrite>;
 using ::android::hidl::manager::V1_0::IServiceManager;
@@ -173,6 +173,7 @@ struct AvailableStream {
     int32_t height;
     int32_t format;
 };
+
 camera_metadata_entry updatemeta[5];
 int metacount = 0;
 typedef struct {
@@ -229,12 +230,12 @@ typedef struct {
 hal_mem_info_t memory_gloable;    // snapshot memory map
 static new_mem_t snapshot_buffer; // snapshot memory
 static sp<ICameraDeviceSession> g_session;
-static int capture_flag = false;     // flag to  start capture
-static int capture_frame = -10;      // reocording capture frame
+static int capture_flag = false; // flag to  start capture
+static int capture_frame = -10;  // reocording capture frame
 static int max_buffers = 4;
 static streamconfig *g_streamConfig; // stream config
 int g_stream_count = 0;
-static bool volatile  g_result[CAMERA_TEST_MAX] = {false}; // result struct
+static bool volatile g_result[CAMERA_TEST_MAX] = {false}; // result struct
 
 new_mem_t mLocalBuffer[20];
 new_mem_t mCallbackBuffer[20];
@@ -249,15 +250,13 @@ uint32_t snapshotStreamID = -1;
 uint32_t callbackStreamID = -1;
 uint32_t videoStreamID = -1;
 
-static long find_pid_by_name( char* pidName)
-{
+static long find_pid_by_name(char *pidName) {
     DIR *dir;
     struct dirent *next;
-    int i=0;
+    int i = 0;
     long pid = 0;
     dir = opendir("/proc");
-    if (!dir)
-    {
+    if (!dir) {
         ALOGE("can not open proc");
     }
     while ((next = readdir(dir)) != NULL) {
@@ -272,23 +271,24 @@ static long find_pid_by_name( char* pidName)
         if (!isdigit(*next->d_name))
             continue;
         sprintf(filename, "/proc/%s/status", next->d_name);
-        if (! (status = fopen(filename, "r")) ) {
+        if (!(status = fopen(filename, "r"))) {
             continue;
         }
-        if (fgets(buffer, 50-1, status) == NULL) {
+        if (fgets(buffer, 50 - 1, status) == NULL) {
             fclose(status);
             continue;
         }
         fclose(status);
         sscanf(buffer, "%*s %s", name);
         if (strcmp(name, pidName) == 0) {
-            ALOGE("find pid ,%s",name);
+            ALOGE("find pid ,%s", name);
             pid = atoi(next->d_name);
         }
     }
     closedir(dir);
     return pid;
 }
+
 static void pushBufferList(new_mem_t *localbuffer, buffer_handle_t *backbuf,
                            int localbuffer_num,
                            android::List<new_mem_t *> &list) {
@@ -313,7 +313,7 @@ static void pushBufferList(new_mem_t *localbuffer, buffer_handle_t *backbuf,
     }
     return;
 }
-extern map<string, vector<resultData_t> *> gMap_Result;
+
 namespace {
 // "device@<version>/legacy/<id>"
 const char *kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/%s/(.+)";
@@ -434,7 +434,7 @@ bool parseProviderName(const std::string &name, std::string *type /*out*/,
 
     return true;
 }
-}
+} // namespace
 
 class NativeCameraHidl {
     hidl_vec<hidl_string> getCameraDeviceNames(int g_camera_id,
@@ -1013,8 +1013,8 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
 // ALOGI("debug_zy :%s\uff0c%d,version:%d,partialResult:%d",
 // __FUNCTION__,__LINE__,(*outputBuffers[0].buffer)->version,results.partialResult);
 #if 1 // ok
-        // if (results.partialResult == 0 && (results.frameNumber ==
-        // capture_frame )) {
+      // if (results.partialResult == 0 && (results.frameNumber ==
+      // capture_frame )) {
         if (results.partialResult == 0 &&
             (results.frameNumber == capture_frame)) {
             android::GraphicBufferMapper &mapper =
@@ -1043,10 +1043,11 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
                     FILE *fp = fopen(filename, "w+");
                     if (fp) {
                         // int ret =  fwrite(dst, 1, 1440 * 1080 * 3 / 2, fp);
-                        int ret = fwrite(
-                            dst, 1, g_streamConfig[snapshotStreamID].width *
-                                        g_streamConfig[snapshotStreamID].height,
-                            fp);
+                        int ret =
+                            fwrite(dst, 1,
+                                   g_streamConfig[snapshotStreamID].width *
+                                       g_streamConfig[snapshotStreamID].height,
+                                   fp);
                         ALOGE("write ret = %d", ret);
                         fclose(fp);
                     } else {
@@ -1304,13 +1305,14 @@ void NativeCameraHidl::configureAvailableStream(
     castSession(*session, deviceVersion, &session3_3, &session3_4);
 
     camera_metadata_t *staticMeta;
-    ret = device3_x->getCameraCharacteristics([&](
-        Status s,
-        android::hardware::camera::device::V3_2::CameraMetadata metadata) {
-        ALOGI("%s,%d,s: %d", __FUNCTION__, __LINE__, static_cast<uint32_t>(s));
-        staticMeta = clone_camera_metadata(
-            reinterpret_cast<const camera_metadata_t *>(metadata.data()));
-    });
+    ret = device3_x->getCameraCharacteristics(
+        [&](Status s,
+            android::hardware::camera::device::V3_2::CameraMetadata metadata) {
+            ALOGI("%s,%d,s: %d", __FUNCTION__, __LINE__,
+                  static_cast<uint32_t>(s));
+            staticMeta = clone_camera_metadata(
+                reinterpret_cast<const camera_metadata_t *>(metadata.data()));
+        });
 
     camera_metadata_ro_entry entry;
     auto status = find_camera_metadata_ro_entry(
@@ -1355,8 +1357,8 @@ void NativeCameraHidl::configureAvailableStream(
             AvailableStream videoThreshold = {
                 g_streamConfig[i].width, g_streamConfig[i].height,
                 static_cast<int32_t>(g_streamConfig[i].pixel)};
-            auto rc1 = getAvailableOutputStreams(
-                staticMeta, outputVideoStreams, &videoThreshold);
+            auto rc1 = getAvailableOutputStreams(staticMeta, outputVideoStreams,
+                                                 &videoThreshold);
             ALOGI("%s,%d,rc: %d", __FUNCTION__, __LINE__,
                   static_cast<uint32_t>(rc));
             videoStreamNeed = true;
@@ -1371,12 +1373,15 @@ void NativeCameraHidl::configureAvailableStream(
     ALOGI("g_stream_count = %d", g_stream_count);
     ::android::hardware::hidl_vec<V3_2::Stream> streams3_2(g_stream_count);
     stream3_2 = {
-        streamIndex, StreamType::OUTPUT,
+        streamIndex,
+        StreamType::OUTPUT,
         static_cast<uint32_t>(outputPreviewStreams[0].width),
         static_cast<uint32_t>(outputPreviewStreams[0].height),
         static_cast<android::hardware::graphics::common::V1_0::PixelFormat>(
             outputPreviewStreams[0].format),
-        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER, 0, StreamRotation::ROTATION_0};
+        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
+        0,
+        StreamRotation::ROTATION_0};
     streams3_2[streamIndex] = stream3_2; // preview stream
     streamIndex++;
     streamlist.push_back(CAMERA_STREAM_TYPE_PREVIEW);
@@ -1402,15 +1407,14 @@ void NativeCameraHidl::configureAvailableStream(
 
     if (videoStreamNeed) {
         V3_2::Stream stream3_2_3; // capture stream configure
-        stream3_2_3 = {
-            streamIndex,
-            StreamType::OUTPUT,
-            static_cast<uint32_t>(outputVideoStreams[0].width),
-            static_cast<uint32_t>(outputVideoStreams[0].height),
-            static_cast<PixelFormat>(outputVideoStreams[0].format),
-            GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
-            0,
-            StreamRotation::ROTATION_0};
+        stream3_2_3 = {streamIndex,
+                       StreamType::OUTPUT,
+                       static_cast<uint32_t>(outputVideoStreams[0].width),
+                       static_cast<uint32_t>(outputVideoStreams[0].height),
+                       static_cast<PixelFormat>(outputVideoStreams[0].format),
+                       GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
+                       0,
+                       StreamRotation::ROTATION_0};
         //::android::hardware::hidl_vec<V3_2::Stream> streams3_2 =
         //{stream3_2,stream3_2_1};
         streams3_2[streamIndex] = stream3_2_3; // captrue stream
@@ -1914,13 +1918,15 @@ NativeCameraHidl::updatemetedata_v2(camera_metadata_t *metaBuffer,
                                                  &entry);
             switch (meta_entry[i].type)
             case 1:
-            if (res == -1) {
-                res = add_camera_metadata_entry(metaBuffer, meta_entry[i].tag,
-                                                data, meta_entry[i].count);
-            } else if (res == android::OK) {
-                res = update_camera_metadata_entry(
-                    metaBuffer, entry.index, data, meta_entry[i].count, NULL);
-            }
+                if (res == -1) {
+                    res =
+                        add_camera_metadata_entry(metaBuffer, meta_entry[i].tag,
+                                                  data, meta_entry[i].count);
+                } else if (res == android::OK) {
+                    res = update_camera_metadata_entry(
+                        metaBuffer, entry.index, data, meta_entry[i].count,
+                        NULL);
+                }
             requestmeta = metaBuffer;
         } else {
             ALOGE("enter <=  VENDOR_SECTION_START");
@@ -2017,7 +2023,10 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         if (g_streamConfig[i].stream_type == CAMERA_STREAM_TYPE_VIDEO) {
             videoStreamID = i;
         }
-        ALOGI("previewStreamID=%d,snapshotStreamID=%d,callbackStreamID=%d,videoStreamID=%d",previewStreamID,snapshotStreamID,callbackStreamID,videoStreamID);
+        ALOGI("previewStreamID=%d,snapshotStreamID=%d,callbackStreamID=%d,"
+              "videoStreamID=%d",
+              previewStreamID, snapshotStreamID, callbackStreamID,
+              videoStreamID);
     }
 
     if (!previewStreamFound) {
@@ -2041,10 +2050,11 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         sp<ICameraDeviceSession> session;
         bool supportsPartialResults = false;
         uint32_t partialResultCount = 0;
-        configureAvailableStream(
+        PERFORMANCE_MONITOR("configureAvailableStream",
+                             configureAvailableStream(
             name, deviceVersion, mProvider, &previewThreshold, &session /*out*/,
             &previewStream /*out*/, &halStreamConfig /*out*/,
-            &supportsPartialResults /*out*/, &partialResultCount /*out*/);
+            &supportsPartialResults /*out*/, &partialResultCount /*out*/));
         std::shared_ptr<ResultMetadataQueue> resultQueue;
         auto resultQueueRet = session->getCaptureResultMetadataQueue(
             [&resultQueue](const auto &descriptor) {
@@ -2530,19 +2540,18 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
     }
     g_need_exit = true;
     char pid_name[50] = "cameraserver";
-    long pid ;
+    long pid;
     pid = find_pid_by_name(pid_name);
-    kill( pid,SIGKILL );
-    ALOGE("pid =%d",pid);
+    kill(pid, SIGKILL);
+    ALOGE("pid =%d", pid);
     return 0;
 }
 
-int NativeCameraHidl::freeAllBuffers() //create preview running thread
+int NativeCameraHidl::freeAllBuffers() // create preview running thread
 {
     int ret = 0;
     /*free preview buffer*/
-    for(int i = 0; i < max_buffers+1 ; i ++)
-    {
+    for (int i = 0; i < max_buffers + 1; i++) {
         freeOneBuffer(&mLocalBuffer[i]);
         freeOneBuffer(&mCallbackBuffer[i]);
         freeOneBuffer(&mVideoBuffer[i]);
@@ -2605,11 +2614,14 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
 
     ALOGI("metacount =%d", metacount);
 
-    //if (_json2->getID() == 0 && !g_first_open) {
-    if (strcmp(_json2->m_funcName.c_str(),"opencamera")== 0 && !g_first_open) {
+    // if (_json2->getID() == 0 && !g_first_open) {
+    if (strcmp(_json2->m_funcName.c_str(), "opencamera") == 0 &&
+        !g_first_open) {
         native_camera.SetupSprdTags();
-        status = native_camera.nativecamerainit(g_rotate, mirror);
-        native_camera.openNativeCamera(g_camera_id);
+        PERFORMANCE_MONITOR("nativecamerainit",
+                             status = native_camera.nativecamerainit(g_rotate, mirror));
+        PERFORMANCE_MONITOR("openNativeCamera",
+                             native_camera.openNativeCamera(g_camera_id));
         g_first_open = true;
         resultData_t openResult;
         openResult.available = 1;
@@ -2618,7 +2630,8 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         pVec_Result->push_back(openResult);
     }
 
-    if (strcmp(_json2->m_funcName.c_str(),"startpreview")== 0 && !g_first_preview) {
+    if (strcmp(_json2->m_funcName.c_str(), "startpreview") == 0 &&
+        !g_first_preview) {
         g_stream_count = 0;
         g_streamConfig = (streamconfig *)malloc(8 * sizeof(streamconfig));
         for (auto &stream : _json2->m_StreamArr) {
@@ -2641,7 +2654,8 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         g_first_preview = true;
         while (!g_need_exit) // result check
         {
-            if ((g_result[CAMERA_START_PREVIEW] && strcmp(_json2->m_funcName.c_str(),"startpreview")== 0)) {
+            if ((g_result[CAMERA_START_PREVIEW] &&
+                 strcmp(_json2->m_funcName.c_str(), "startpreview") == 0)) {
                 D("start preview success ,return");
                 break;
             }
@@ -2655,11 +2669,12 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         pVec_Result->push_back(previewResult);
     }
 
-    if (strcmp(_json2->m_funcName.c_str(),"takesnapshot")== 0) {
+    if (strcmp(_json2->m_funcName.c_str(), "takesnapshot") == 0) {
         capture_flag = true;
         while (!g_need_exit) // result check
         {
-            if ((g_result[CAMERA_TAKE_PIC] && strcmp(_json2->m_funcName.c_str(),"takesnapshot")== 0)) {
+            if ((g_result[CAMERA_TAKE_PIC] &&
+                 strcmp(_json2->m_funcName.c_str(), "takesnapshot") == 0)) {
                 D("take pic success ,return");
                 break;
             }
@@ -2672,7 +2687,7 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         pVec_Result->push_back(snapshotResult);
     }
 
-    if (strcmp(_json2->m_funcName.c_str(),"closecamera")== 0) {
+    if (strcmp(_json2->m_funcName.c_str(), "closecamera") == 0) {
         // close camera
         native_camera.previewstop = 1;
         ALOGI("stop preview and closecamera");
@@ -2690,13 +2705,13 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         g_first_preview = false;
         g_need_exit = false;
         native_camera.streamlist.clear();
-        for(int i = 0; i< CAMERA_TEST_MAX; i++)
-        {
+        for (int i = 0; i < CAMERA_TEST_MAX; i++) {
             g_result[i] = false;
         }
 
         resultData CloseResult;
-        native_camera.freeAllBuffers();
+        PERFORMANCE_MONITOR("freeAllBuffers",
+                             native_camera.freeAllBuffers());
         CloseResult.available = 1;
         CloseResult.funcID = _json2->getID();
         CloseResult.funcName = _json2->m_funcName;

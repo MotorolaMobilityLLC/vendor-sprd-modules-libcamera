@@ -23,17 +23,30 @@ class DrvCaseComm : public IParseJson {
         m_jsonMethodMap["TestMode"] = &DrvCaseComm::Set_TestMode;
         m_jsonMethodMap["ParmPath"] = &DrvCaseComm::Set_ParmPath;
         m_jsonMethodMap["ImagePath"] = &DrvCaseComm::Set_ImagePath;
+        m_jsonChipIDMap.insert({"chip_dcam0",0});
+        m_jsonChipIDMap.insert({"chip_dcam1",1});
+        m_jsonChipIDMap.insert({"chip_dcam2",2});
+        m_jsonChipIDMap.insert({"chip_dcam_lite0",3});
+        m_jsonChipIDMap.insert({"chip_dcam_lite1",4});
+        m_jsonChipIDMap.insert({"chip_isp0",5});
+        m_jsonChipIDMap.insert({"chip_isp1",6});
     }
 
     virtual ~DrvCaseComm() {}
     typedef void (DrvCaseComm::*casecommFunc)(string key, void *value);
     typedef map<string, casecommFunc> JsonMethodMap;
     JsonMethodMap m_jsonMethodMap;
+    map<string, uint32_t> m_jsonChipIDMap;
     void Set_ID(string strKey, void *value) {
         this->m_caseID = *(static_cast<uint32_t *>(value));
     }
     void Set_ChipID(string strKey, void *value) {
-        this->m_chipID = *(static_cast<uint32_t *>(value));
+        const char *tmp = (static_cast<const char *>(value));
+        if(m_jsonChipIDMap.find(tmp) != m_jsonChipIDMap.end()) {
+            m_caseID = m_jsonChipIDMap[tmp];
+        } else {
+            IT_LOGE("ERR stream type info");
+        }
     }
     void Set_PathID(string strKey, void *value) {
         this->m_pathID.push_back(*(static_cast<uint32_t *>(value)));
@@ -57,35 +70,32 @@ class DrvCaseComm : public IParseJson {
             (this->*m_jsonMethodMap[strNode])(strNode, (void *)value.c_str());
         }
     }
-    virtual uint32_t getID(){
-        return m_caseID;
-    }
+    virtual uint32_t getID() { return m_caseID; }
 };
 
 class CameraDrvIT : public IParseJson {
-public:
-	std::vector<DrvCaseComm *> m_casecommArr;
+  public:
+    std::vector<DrvCaseComm *> m_casecommArr;
 
-	virtual IParseJson *CreateJsonItem(string strKey) {
-	if (strKey == "drvCaseLists") {
-		DrvCaseComm *pcasecommItem = new DrvCaseComm;
-		m_casecommArr.push_back(pcasecommItem);
-		return pcasecommItem;
-	}
-	return this;
-}
+    virtual IParseJson *CreateJsonItem(string strKey) {
+        if (strKey == "drvCaseLists") {
+            DrvCaseComm *pcasecommItem = new DrvCaseComm;
+            m_casecommArr.push_back(pcasecommItem);
+            return pcasecommItem;
+        }
+        return this;
+    }
 
-	virtual IParseJson *getCaseAt(uint32_t caseid){
-		std::vector<DrvCaseComm*>::iterator itor=m_casecommArr.begin();
-		while(itor != m_casecommArr.end()){
-			if ((*itor)->m_caseID == caseid){
-				return *itor;
-			}
-			itor++;
-		}
-		return NULL;
-	}
-
+    virtual IParseJson *getCaseAt(uint32_t caseid) {
+        std::vector<DrvCaseComm *>::iterator itor = m_casecommArr.begin();
+        while (itor != m_casecommArr.end()) {
+            if ((*itor)->m_caseID == caseid) {
+                return *itor;
+            }
+            itor++;
+        }
+        return NULL;
+    }
 };
 
 #endif

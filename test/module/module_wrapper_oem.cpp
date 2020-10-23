@@ -36,7 +36,7 @@
 #include "sensor_drv_u.h"
 #include "module_wrapper_oem.h"
 #define LOG_TAG "IT-moduleOem"
-extern map<string, vector<resultData_t> *> gMap_Result;
+
 using namespace android;
 #define THIS_MODULE_NAME "oem"
 #define MINICAMERA_WIDTH_MAX 4640

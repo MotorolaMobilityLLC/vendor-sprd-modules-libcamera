@@ -12,13 +12,11 @@
 			"CaseID" : 1,
 			"Priority": 1,
 			"FuncName" : "startpreview",
-			"CameraID" : 0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"StreamList" : [
-  				{"type" : 1, "width" : 1440,"height" : 1080, "format": 34,"usage" : 4},
-				{"type" : 6, "width" : 3264,"height" : 2448, "format": 33,"usage" : 4},
-			    {"type" : 2, "width" : 1440,"height" : 1080, "format": 34,"usage" : 65536}
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 4},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : 4},
+			    {"type" : "video_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 65536}
 			],
 			"Metadata" : [
 								{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -31,9 +29,7 @@
 			"CaseID" : 2,
 			"Priority": 5,
 			"FuncName" : "takesnapshot",
-			"CameraID" : 0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"Metadata" : [
                                 {"tagName": "android.jpeg.orientation", "tagVal" : 90},
 								{"tagName": "android.control.captureIntent", "tagVal" : 2}
@@ -42,19 +38,16 @@
 		{
 			"CaseID" : 3,
 			"Priority": 5,
-			"FuncName" : "closecamera",
-			"CameraID" : 0
+			"FuncName" : "closecamera"
 		},
 		{
 			"CaseID" : 4,
 			"Priority": 1,
 			"FuncName" : "startpreview",
-			"CameraID" : 0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"StreamList" : [
-  				{"type" : 1, "width" : 1440,"height" : 1080, "format": 34,"usage" : 4},
-				{"type" : 6, "width" : 3264,"height" : 2448, "format": 33,"usage" : 4}
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 4},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : 4}
 			],
 			"Metadata" : [
 								{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -67,13 +60,11 @@
 			"CaseID" : 5,
 			"Priority": 1,
 			"FuncName" : "startpreview",
-			"CameraID" :0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : 1, "width" : 1440,"height" : 1080, "format": 34,"usage" : 536873219},
-				{"type" : 3, "width" : 3264,"height" : 2448, "format": 35,"usage" : 3},
-				{"type" : 6, "width" : 3264,"height" : 2448, "format": 33,"usage" : 3}
+				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
+				{"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : 3},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : 3}
 			],
 			"Metadata" : [
 						{"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,3264,2448]},
@@ -84,9 +75,7 @@
 			"CaseID" : 6,
 			"Priority": 3,
 			"FuncName" : "takesnapshot",
-			"CameraID" : 0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"Metadata" : [
 						{"tagName": "android.control.captureIntent", "tagVal" : 1},
 						{"tagName": "android.control.afTrigger", "tagVal" : 2},
@@ -98,14 +87,12 @@
 			"CaseID" : 7,
 			"Priority": 4,
 			"FuncName" : "startpreview",
-			"CameraID" :0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : 1, "width" : 1920,"height" : 1080, "format": 34,"usage" : 536873219},
-				{"type" : 2, "width" : 1920,"height" : 1080, "format": 34,"usage" : 65539},
-				{"type" : 3, "width" : 1920,"height" : 1080, "format": 35,"usage" : 3},
-				{"type" : 6, "width" : 1920,"height" : 1080, "format": 33,"usage" : 3}
+				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
+				{"type" : "video_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 65539},
+				{"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : 3},
+				{"type" : "picture_stream", "width" : 1920,"height" : 1080, "format": "BLOB","usage" : 3}
 			],
 			"Metadata" : [
 						{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -127,12 +114,10 @@
 			"CaseID" : 9,
 			"Priority": 4,
 			"FuncName" : "startpreview",
-			"CameraID" :0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : 1, "width" : 960,"height" : 720, "format": 34,"usage" : 536873219},
-				{"type" : 6, "width" : 2592,"height" : 1944, "format": 33,"usage" : 3}
+				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
+				{"type" : "picture_stream", "width" : 2592,"height" : 1944, "format": "BLOB","usage" : 3}
 			],
 			"Metadata" : [
 						{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -144,19 +129,16 @@
 		{
 			"CaseID" : 10,
 			"Priority": 5,
-			"FuncName" : "closecamera",
-			"CameraID" : 1
+			"FuncName" : "closecamera"
 		},
 		{
 			"CaseID" : 26,
 			"Priority": 4,
 			"FuncName" : "startpreview",
-			"CameraID" :0,
-			"FrameNum" : 5,
-			"Time" : 0,
+			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : 1, "width" : 960,"height" : 720, "format": 34,"usage" : 536873219},
-				{"type" : 6, "width" : 2592,"height" : 1944, "format": 33,"usage" : 3}
+				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
+				{"type" : "picture_stream", "width" : 2592,"height" : 1944, "format": "BLOB","usage" : 3}
 			],
 			"Metadata" : [
 						{"tagName": "sprd3auto3dnrEnabled", "tagVal" : 1},

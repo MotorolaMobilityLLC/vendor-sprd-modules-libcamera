@@ -3,7 +3,7 @@
 	[
 		{
 			"CaseID" : 0,
-			"ChipID" : 0,
+			"ChipID" : "chip_dcam0",
 			"PathID" :[1,0],
 			"TestMode" : 1,
 			"ParmPath" : "/data/vendor/cameraserver/testdcam/",
@@ -12,7 +12,7 @@
 
 		{
 			"CaseID" : 1,
-			"ChipID" : 5,
+			"ChipID" : "chip_isp0",
 			"PathID" : [0,1],
 			"TestMode" : 0,
 			"ParmPath" : "/data/vendor/cameraserver/testisp/",
@@ -21,7 +21,7 @@
 
 		{
 			"CaseID" : 2,
-			"ChipID" : 5,
+			"ChipID" : "chip_isp0",
 			"PathID" : [0,1],
 			"TestMode" : 1,
 			"ParmPath" : "/data/vendor/cameraserver/testisp/",

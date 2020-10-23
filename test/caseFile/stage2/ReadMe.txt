@@ -5,7 +5,44 @@
 "CaseID" : 0,
 /* 为所测试的case id */
 
-"ChipID" : 0,
+"type"  :   "default_stream",
+            "preview_stream",
+            "video_stream",
+            "callback_stream",
+            "yuv2_stream",
+            "zsl_prev_stream",
+            "picture_stream"
+/* 为所测试的streamlist中的type类型，参见test/module/module_wrapper_hal.cpp中的camera_stream_type_t */
+
+“format”:   "RGBA_8888"//1
+            "RGBX_8888"//2
+            “RGB_888"//3
+            "RGB_565"//4
+            "BGRA_8888"//5
+            "YCBCR_422_SP"//16
+            "YCRCB_420_SP"//17
+            "YCBCR_422_I"//20
+            "RGBA_FP16"//22
+            "RAW16"//32
+            "BLOB"//33
+            "IMPLEMENTATION_DEFINED"//34
+            "YCBCR_420_888"//35
+            "RAW_OPAQUE"//36
+            "RAW10"//37
+            "RAW12"//38
+            "RGBA_1010102"//43
+            "Y8"//538982489
+            "Y16"//540422489
+            "YV12"//842094169
+/* 为所测试的streamlist中的format类型，参见hardware/interfaces/graphics/common/1.0/types.hal中的PixelFormat */
+
+"ChipID" : 	"chip_dcam0",
+            "chip_dcam1",
+            "chip_dcam2",
+            "chip_dcam_lite0",
+            "chip_dcam_lite1",
+            "chip_isp0",
+            "chip_isp1"
 /* 为所测试的chip id，需要与测试代码头文件定义匹配，参见sprd_cam_test.h */
 
 "PathID" : 1,
