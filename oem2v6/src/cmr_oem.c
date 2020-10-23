@@ -661,6 +661,7 @@ cmr_int camera_front_lcd_enhance_module_init(cmr_handle oem_handle) {
 cmr_int camera_front_lcd_enhance_module_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_u8 flip = 0;
+    const char *brightness = "/sys/class/backlight/sprd_backlight/brightness";
     const char *refresh = "/sys/class/display/dispc0/refresh";
     const char *disable_flip = "/sys/class/display/dispc0/disable_flip";
 
@@ -673,6 +674,7 @@ cmr_int camera_front_lcd_enhance_module_deinit(cmr_handle oem_handle) {
     CMR_LOGI("disable_flip %d", flip);
 
     if (flip) {
+        camera_write_sysfs_file(brightness, cxt->backup_brightness);
         camera_write_sysfs_file(refresh, 0x01);
         cxt->color_temp = 0;
         camera_front_lcd_set_color_temperature(cxt);
@@ -745,7 +747,7 @@ cmr_int camera_front_lcd_flash_callback(struct camera_context *cxt,
     case FLASH_CLOSE_AFTER_OPEN:
 
         camera_read_sysfs_file(disable_flip, &flip);
-        CMR_LOGI("disable_flip %d", flip);
+        CMR_LOGI("lcd_flash_highlight %d, disable_flip %d", cxt->lcd_flash_highlight, flip);
 
         if (cxt->lcd_flash_highlight && flip) {
             camera_write_sysfs_file(brightness, cxt->backup_brightness);
@@ -9589,6 +9591,21 @@ cmr_int camera_isp_ev_switch(struct common_isp_cmd_param *parm) {
         break;
     }
     return out_param;
+}
+
+cmr_int camera_local_get_last_preflash_time(cmr_handle oem_handle, cmr_s64 *time){
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_cmd_parameter setting_param;
+    cmr_bzero(&setting_param, sizeof(struct setting_cmd_parameter));
+
+    setting_param.camera_id = cxt->camera_id;
+    //setting_param.setting_flash_status = SETTING_AF_FLASH_PRE_LIGHTING;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_LAST_PREFLASH_TIME,
+                            &setting_param);
+    *time = setting_param.last_preflash_time;
+
+    return ret;
 }
 
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,

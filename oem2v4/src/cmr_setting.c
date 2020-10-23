@@ -2734,8 +2734,8 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
     shot_num = hal_param->shot_num;
     pre_flash_status = hal_param->flash_param.has_preflashed;
 
-    CMR_LOGD("flash_mode=%ld, flash_status=%ld, capture_mode=%d, shot_num=%ld",
-             flash_mode, flash_status, capture_mode, shot_num);
+    CMR_LOGD("flash_mode=%ld, flash_status=%ld, capture_mode=%d, shot_num=%ld,"
+                " pre_flash_status=%ld", flash_mode, flash_status, capture_mode, shot_num, pre_flash_status);
 
     if (CAMERA_FLASH_MODE_TORCH != flash_mode && flash_status &&
         (parm->ctrl_flash.flash_type != FLASH_HIGH_LIGHT ||
@@ -2868,6 +2868,15 @@ static cmr_int setting_set_flashdevice(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_get_last_preflash_time(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->last_preflash_time = hal_param->flash_param.last_preflash_time;
+
+    return ret;
+}
+
 static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                                   struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2926,6 +2935,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                                              ISP_FLASH_MAIN_LIGHTING);
                     setting_isp_wait_notice(cpt);
                     CMR_LOGD("high flash Will do-capture");
+                    hal_param->flash_param.last_preflash_time = 0;
                     break;
                 case FLASH_AF_DONE:
                     CMR_LOGD("pre flash AF DONE");
@@ -3697,6 +3707,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_SPRD_ENABLE_CNR, setting_set_cnrmode);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_GET_SENSOR_ORIENTATION,
                              setting_get_sensor_orientation);
+    cmr_add_cmd_fun_to_table(SETTING_GET_LAST_PREFLASH_TIME,
+                             setting_get_last_preflash_time);
     setting_parms_inited = 1;
     return 0;
 }

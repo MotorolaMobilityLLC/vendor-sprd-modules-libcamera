@@ -2029,6 +2029,16 @@ setting_get_smile_capture(struct setting_component *cpt,
 }
 
 static cmr_int
+setting_get_last_preflash_time(struct setting_component *cpt,
+                                   struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    parm->last_preflash_time = hal_param->flash_param.last_preflash_time;
+
+    return ret;
+}
+
+static cmr_int
 setting_set_smile_capture(struct setting_component *cpt,
                                    struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -3306,7 +3316,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                 }
 
                 setting_set_flashdevice(cpt, parm, ctrl_flash_status);
-		hal_param->flash_param.last_preflash_time =
+                hal_param->flash_param.last_preflash_time =
                     systemTime(CLOCK_MONOTONIC);
                 hal_param->flash_param.flash_status = setting_flash_status;
                 time1 = systemTime(CLOCK_MONOTONIC);
@@ -4291,6 +4301,8 @@ static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
                              setting_set_smile_capture,
     [SETTING_GET_SPRD_SMILE_CAPTURE_ENABLED] =
                              setting_get_smile_capture,
+    [SETTING_GET_LAST_PREFLASH_TIME] =
+                             setting_get_last_preflash_time,
 };
 
 setting_ioctl_fun_ptr cmr_get_cmd_fun_from_table(cmr_uint cmd) {

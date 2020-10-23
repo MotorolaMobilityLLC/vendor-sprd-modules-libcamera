@@ -648,6 +648,9 @@ cmr_int camera_local_zsl_snapshot_need_pause(cmr_handle oem_handle,
 cmr_int camera_local_normal_snapshot_need_pause(cmr_handle oem_handle,
                                                 cmr_int *flag);
 void camera_calibrationconfigure_save(uint32_t start_addr, uint32_t data_size);
+
+cmr_int camera_local_get_last_preflash_time(cmr_handle oem_handle, cmr_s64 *time);
+
 cmr_int camera_local_get_isp_info(cmr_handle oem_handle, void **addr,
                                   int *size, cmr_s32 frame_id);
 

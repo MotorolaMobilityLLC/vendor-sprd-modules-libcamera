@@ -103,6 +103,7 @@ enum setting_cmd_type {
     SETTING_GET_FDR,
     SETTING_GET_EE,
     SETTING_GET_SPRD_SMILE_CAPTURE_ENABLED,
+    SETTING_GET_LAST_PREFLASH_TIME,
     SETTING_TYPE_MAX
 };
 
@@ -153,6 +154,7 @@ struct setting_cmd_parameter {
         struct cmr_range_fps_param range_fps;
         struct touch_coordinate touch_param;
         struct img_size originalPictureSize;
+        cmr_s64 last_preflash_time;
     };
 };
 

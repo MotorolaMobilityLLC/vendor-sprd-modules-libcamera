@@ -10767,6 +10767,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
+    cmr_uint been_preflash = 0;
+    cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
 
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
     bool isFrontLcd =
@@ -10816,18 +10818,34 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (isCapturing()) {
         WaitForCaptureDone();
     }
+
+    if (mCameraId != 1){
+        mHalOem->ops->camera_get_last_preflash_time(mCameraHandle, &last_preflash_time);
+        now_time = systemTime(CLOCK_MONOTONIC);
+        HAL_LOGD("lst_preflash_time = %" PRId64 ", now_time=%" PRId64,
+             last_preflash_time, now_time);
+        if (now_time > last_preflash_time) {
+            diff = (now_time - last_preflash_time) / 1000000000;
+            if (diff < PREFLASH_INTERVAL_TIME) {
+                HAL_LOGD("last preflash < 3s, no need do preflash again.");
+                been_preflash = 1;
+            }
+        }
+    }
+
     if(controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED &&
 	sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
 	(controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
-	controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH)) {
+	controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
+	(!been_preflash)) {
 		controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
 		mSetting->setCONTROLTag(&controlInfo);
 		SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
 		mSetting->getCONTROLTag(&controlInfo);
 		HAL_LOGV("af_state =%d",controlInfo.af_state);
 		while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-			if (count1 > 2500) {
-				HAL_LOGD("wait for preflash timeout 2.5s");
+			if (count1 > 2800) {
+				HAL_LOGD("wait for preflash timeout 2.8s");
 				break;
 			}
                         if (mZslCaptureExitLoop == true)
@@ -10844,8 +10862,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (mZslCaptureExitLoop == true)
 	goto exit;
 
-    if (getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
-        isFrontLcd || isFrontFlash || mCameraId == 4) {
+    if ((getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
+        isFrontLcd || isFrontFlash || mCameraId == 4) && (!been_preflash)) {
         obj->mHalOem->ops->camera_start_preflash(obj->mCameraHandle);
     }
     obj->mHalOem->ops->camera_snapshot_is_need_flash(

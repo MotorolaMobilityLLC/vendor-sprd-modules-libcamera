@@ -139,6 +139,8 @@ typedef struct {
     size_t size;
 } iommu_map_buf;
 
+#define PREFLASH_INTERVAL_TIME 3
+
 #define BUF_MAPED 0xff
 #define BUF_UNMAP 0
 
