@@ -791,7 +791,8 @@ int SprdCamera3HWI::configureStreams(
          * but usage in newStream is uint32, so use reserved[1]
          * to transfer high uint32(reserved[0] used by eis)
          */
-        if (stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
+        if (stream_type == CAMERA_STREAM_TYPE_PREVIEW
+             || stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
             char val[PROPERTY_VALUE_MAX] = {0};
             unsigned long t;
 
