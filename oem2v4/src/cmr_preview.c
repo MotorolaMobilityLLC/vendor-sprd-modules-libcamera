@@ -2576,12 +2576,14 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 video_enable = 0;
     cmr_u32 refocus_eb;
     cmr_u32 pdaf_eb = 0;
+    cmr_u32 i;
+    cmr_int valid_num = 0;
     struct prev_context *prev_cxt = NULL;
     struct camera_context *cxt = NULL;
+    struct camera_frame_type frame_type;
 #ifndef CONFIG_CAMERA_AUTO_DETECT_SENSOR
     struct internal_param *inter_param = NULL;
     struct frm_info *frm_data = NULL;
-
     CMR_MSG_INIT(message);
 #endif
 
@@ -2591,7 +2593,7 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGE("frm data is null");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
+    cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
     cxt = (struct camera_context *)handle->oem_handle;
     prev_cxt = &handle->prev_cxt[camera_id];
     preview_enable = prev_cxt->prev_param.preview_eb;
@@ -2599,8 +2601,33 @@ cmr_int prev_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
     video_enable = prev_cxt->prev_param.video_eb;
     refocus_eb = prev_cxt->prev_param.refocus_eb;
     pdaf_eb = prev_cxt->prev_param.pdaf_eb;
+    valid_num = prev_cxt->cap_zsl_mem_valid_num;
     if (prev_cxt->channel_start_sec > data->sec || (prev_cxt->channel_start_sec == data->sec && prev_cxt->channel_start_usec >= data->usec)) {
         CMR_LOGE("invalid frm!");
+        if (prev_cxt->is_zsl_frm){
+            frame_type.y_phy_addr = prev_cxt->cap_zsl_phys_addr_array[0];
+            frame_type.y_vir_addr = prev_cxt->cap_zsl_virt_addr_array[0];
+            frame_type.fd = prev_cxt->cap_zsl_fd_array[0];
+            frame_type.type = PREVIEW_ZSL_CANCELED_FRAME;
+
+            for (i = 0; i < (cmr_u32)valid_num - 1; i++) {
+                 prev_cxt->cap_zsl_phys_addr_array[i] =
+                 prev_cxt->cap_zsl_phys_addr_array[i + 1];
+                 prev_cxt->cap_zsl_virt_addr_array[i] =
+                 prev_cxt->cap_zsl_virt_addr_array[i + 1];
+                 prev_cxt->cap_zsl_fd_array[i] = prev_cxt->cap_zsl_fd_array[i + 1];
+                 memcpy(&prev_cxt->cap_zsl_frm[i], &prev_cxt->cap_zsl_frm[i + 1],
+                        sizeof(struct img_frm));
+            }
+
+            prev_cxt->cap_zsl_phys_addr_array[valid_num - 1] = 0;
+            prev_cxt->cap_zsl_virt_addr_array[valid_num - 1] = 0;
+            prev_cxt->cap_zsl_fd_array[valid_num - 1] = 0;
+            cmr_bzero(&prev_cxt->cap_zsl_frm[valid_num - 1],
+                      sizeof(struct img_frm));
+            prev_cxt->cap_zsl_mem_valid_num--;
+            prev_set_zsl_buffer(handle, camera_id, frame_type.y_phy_addr, frame_type.y_vir_addr,frame_type.fd);
+        }
         return CMR_CAMERA_SUCCESS;
     }
 
