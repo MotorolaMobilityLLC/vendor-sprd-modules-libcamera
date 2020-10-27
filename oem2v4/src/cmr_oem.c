@@ -9541,7 +9541,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
 
     cxt->setting_cxt.is_active = 1;
-	cxt->snp_cancel = false;
+    cxt->snp_cancel = false;
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                             SETTING_SET_ENVIRONMENT, &setting_param);
@@ -9580,6 +9580,8 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     struct common_isp_cmd_param param;
 
     CMR_LOGI("E");
+    if (cxt->snp_cxt.snp_mode == CAMERA_ZSL_MODE)
+        cxt->snp_cancel = true;
 
     cmr_preview_wait_recovery(cxt->prev_cxt.preview_handle, cxt->camera_id);
 
