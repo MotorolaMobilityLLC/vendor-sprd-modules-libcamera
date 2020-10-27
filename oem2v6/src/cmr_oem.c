@@ -6219,6 +6219,7 @@ cmr_int camera_init_internal(cmr_handle oem_handle, cmr_uint is_autotest) {
     }
     pthread_mutex_unlock(&close_mutex);
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->snp_cancel = false;
 
     CMR_LOGD("E");
 
@@ -12314,7 +12315,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
 
     sem_wait(&cxt->snapshot_sm);
-
+    cxt->snp_cancel = false;
     ret = camera_jpeg_init_wait(oem_handle);
     if (ret) {
         CMR_LOGD("jpeg_async_init_handle already release!");
@@ -12551,6 +12552,7 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     memset(&setting_param, 0, sizeof(setting_param));
 
     sem_wait(&cxt->snapshot_sm);
+    cxt->snp_cancel = true;
     if (cxt->remosaic_type == 1)
         camera_close_4in1(oem_handle);
     if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||

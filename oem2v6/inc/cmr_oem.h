@@ -538,6 +538,7 @@ struct camera_context {
     float zoom_ratio;
     jpg_encode_status jpg_encode;
     cmr_u8 nightscepro_flag;
+    bool snp_cancel;
 };
 
 struct prev_ai_scene_info {

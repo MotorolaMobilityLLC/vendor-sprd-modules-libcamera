@@ -4368,11 +4368,12 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
     cmr_uint cnr_type;
     char value[PROPERTY_VALUE_MAX];
 
-    if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)) {
+    if (CMR_CAMERA_NORNAL_EXIT == snp_checkout_exit(snp_handle)||cam_cxt->snp_cancel) {
         CMR_LOGD("post proc has been cancel");
         ret = CMR_CAMERA_NORNAL_EXIT;
         goto exit;
     }
+
 
     cxt->cap_cnt++;
 
@@ -5407,7 +5408,6 @@ cmr_int cmr_snapshot_stop(cmr_handle snapshot_handle) {
     CMR_MSG_INIT(message);
 
     CHECK_HANDLE_VALID(snapshot_handle);
-
     snp_set_request(snapshot_handle, TAKE_PICTURE_NO);
     message.msg_type = SNP_EVT_MAIN_STOP;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
