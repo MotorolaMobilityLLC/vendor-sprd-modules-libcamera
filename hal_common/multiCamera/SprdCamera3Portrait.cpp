@@ -1335,8 +1335,7 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                 if (mPortrait->mApiVersion == SPRD_API_PORTRAIT_MODE &&
                     ((mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE) ||
                      (mFaceBeautyFlag) || (lightPortraitType != 0))) {
-                    if (mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE &&
-                        mPortrait->mPrevPortrait) {
+                    if (mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE) {
                         rc = sprdBokehPreviewHandle(
                             output_buffer, muxer_msg.combo_frame.buffer1);
                         if (rc != NO_ERROR) {
@@ -1348,19 +1347,6 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
                             mPortrait->mPortraitFlag) {
                             isDoDepth = sprdDepthHandle(&muxer_msg);
                         }
-                    } else if (mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE &&
-                               !mPortrait->mPrevPortrait) {
-                        rc = mPortrait->map(output_buffer, &output_buf_addr);
-                        rc = mPortrait->map(muxer_msg.combo_frame.buffer1,
-                                            &input_buf1_addr);
-                        memcpy(output_buf_addr, input_buf1_addr,
-                               ADP_BUFSIZE(*muxer_msg.combo_frame.buffer1));
-                        mPortrait->flushIonBuffer(ADP_BUFFD(*output_buffer),
-                                                  output_buf_addr,
-                                                  ADP_BUFSIZE(*output_buffer));
-                        mPortrait->unmap(muxer_msg.combo_frame.buffer1);
-                        mPortrait->unmap(output_buffer);
-                        rc = NO_ERROR;
                     }
                     rc = mPortrait->map(output_buffer, &output_buf_addr);
                     if (mFaceBeautyFlag) {
@@ -2331,7 +2317,7 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
                 HAL_LOGD(
                     "mPortrait->mPortraitFlag %d mPortrait->mDoPortrait %d",
                     mPortrait->mPortraitFlag, mPortrait->mDoPortrait);
-                if (mPortrait->mDoPortrait &&
+                if (/* mPortrait->mDoPortrait &&*/
                     ((mPortrait->lightPortraitType != 0) ||
                      (mPortrait->mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE) ||
                      (mPortrait->mFaceBeautyFlag))) {
@@ -2880,6 +2866,17 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
                 HAL_LOGD("sel_x %d ,sel_y %d", x, y);
             }
         }
+        if (mPrevPortrait) {
+            int x = face_rect[max_index].left +
+                    (face_rect[max_index].right - face_rect[max_index].left) / 2;
+            int y = face_rect[max_index].top +
+                    (face_rect[max_index].bottom - face_rect[max_index].top) / 2;
+
+            mbokehParm.sel_x = x * mBokehSize.preview_w / origW;
+            mbokehParm.sel_y = y * mBokehSize.preview_h / origH;
+            HAL_LOGD("update sel_x %d ,sel_y %d", mbokehParm.sel_x,
+                    mbokehParm.sel_y);
+        }
         mbokehParm.cur_frame_number = cur_frame_number;
         mCapFaceInfoList.push_back(mbokehParm);
         if (mSnapshotResultReturn && type == 1) {
@@ -2940,17 +2937,6 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
             metaSettings.find(ANDROID_STATISTICS_FACE_RECTANGLES).data.i32[3];
     }
 #endif
-    if (mPrevPortrait) {
-        int x = face_rect[max_index].left +
-                (face_rect[max_index].right - face_rect[max_index].left) / 2;
-        int y = face_rect[max_index].top +
-                (face_rect[max_index].bottom - face_rect[max_index].top) / 2;
-
-        mbokehParm.sel_x = x * mBokehSize.preview_w / origW;
-        mbokehParm.sel_y = y * mBokehSize.preview_h / origH;
-        HAL_LOGD("update sel_x %d ,sel_y %d", mbokehParm.sel_x,
-                 mbokehParm.sel_y);
-    }
 
     if (isUpdate) {
         mBokehAlgo->setBokenParam((void *)&mbokehParm);

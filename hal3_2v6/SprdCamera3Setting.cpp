@@ -2347,6 +2347,22 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     // 33 video face detect support default
     available_cam_features.add(1);
 
+    // 34 portrait.bokeh
+#ifdef CONFIG_PORTRAIT_SUPPORT
+    char prop2[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.ba.portrait.enable",prop, "2");
+    property_get("persist.vendor.cam.ip.switch.on", prop2, "0");
+    if((atoi(prop) == 1) || (atoi(prop2) == 1)){
+        property_set("persist.vendor.cam.portrait.ai.bokeh", "1");
+    } else{
+        property_set("persist.vendor.cam.portrait.ai.bokeh", "0");
+    }
+#else
+    property_set("persist.vendor.cam.portrait.ai.bokeh", "0");
+#endif
+    property_get("persist.vendor.cam.portrait.ai.bokeh", prop, "0");
+    available_cam_features.add(atoi(prop));
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));

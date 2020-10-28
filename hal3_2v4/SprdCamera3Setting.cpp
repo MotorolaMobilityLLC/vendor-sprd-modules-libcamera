@@ -1521,6 +1521,9 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     property_get("persist.vendor.cam.video.fd.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
+    // 34 portrait.bokeh
+    available_cam_features.add(0);
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
