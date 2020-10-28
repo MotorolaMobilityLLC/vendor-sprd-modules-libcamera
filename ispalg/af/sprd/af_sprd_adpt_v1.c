@@ -2796,84 +2796,6 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 	return AFV1_SUCCESS;
 }
 
-static void ae_calibration(af_ctrl_t * af, struct af_img_blk_statistic *rgb)
-{
-	cmr_u32 i, j, r_sum[9], g_sum[9], b_sum[9];
-
-	memset(r_sum, 0, sizeof(r_sum));
-	memset(g_sum, 0, sizeof(g_sum));
-	memset(b_sum, 0, sizeof(b_sum));
-
-	for (i = 0; i < 32; i++) {
-		for (j = 0; j < 32; j++) {
-			r_sum[(i / 11) * 3 + j / 11] += rgb->r_info[i * 32 + j] / af->ae.win_size;
-			g_sum[(i / 11) * 3 + j / 11] += rgb->g_info[i * 32 + j] / af->ae.win_size;
-			b_sum[(i / 11) * 3 + j / 11] += rgb->b_info[i * 32 + j] / af->ae.win_size;
-		}
-	}
-	af->ae_cali_data.r_avg[0] = r_sum[0] / 121;
-	af->ae_cali_data.r_avg_all = af->ae_cali_data.r_avg[0];
-	af->ae_cali_data.r_avg[1] = r_sum[1] / 121;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[1];
-	af->ae_cali_data.r_avg[2] = r_sum[2] / 110;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[2];
-	af->ae_cali_data.r_avg[3] = r_sum[3] / 121;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[3];
-	af->ae_cali_data.r_avg[4] = r_sum[4] / 121;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[4];
-	af->ae_cali_data.r_avg[5] = r_sum[5] / 110;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[5];
-	af->ae_cali_data.r_avg[6] = r_sum[6] / 110;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[6];
-	af->ae_cali_data.r_avg[7] = r_sum[7] / 110;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[7];
-	af->ae_cali_data.r_avg[8] = r_sum[8] / 100;
-	af->ae_cali_data.r_avg_all += af->ae_cali_data.r_avg[8];
-	af->ae_cali_data.r_avg_all /= 9;
-
-	af->ae_cali_data.g_avg[0] = g_sum[0] / 121;
-	af->ae_cali_data.g_avg_all = af->ae_cali_data.g_avg[0];
-	af->ae_cali_data.g_avg[1] = g_sum[1] / 121;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[1];
-	af->ae_cali_data.g_avg[2] = g_sum[2] / 110;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[2];
-	af->ae_cali_data.g_avg[3] = g_sum[3] / 121;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[3];
-	af->ae_cali_data.g_avg[4] = g_sum[4] / 121;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[4];
-	af->ae_cali_data.g_avg[5] = g_sum[5] / 110;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[5];
-	af->ae_cali_data.g_avg[6] = g_sum[6] / 110;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[6];
-	af->ae_cali_data.g_avg[7] = g_sum[7] / 110;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[7];
-	af->ae_cali_data.g_avg[8] = g_sum[8] / 100;
-	af->ae_cali_data.g_avg_all += af->ae_cali_data.g_avg[8];
-	af->ae_cali_data.g_avg_all /= 9;
-
-	af->ae_cali_data.b_avg[0] = b_sum[0] / 121;
-	af->ae_cali_data.b_avg_all = af->ae_cali_data.b_avg[0];
-	af->ae_cali_data.b_avg[1] = b_sum[1] / 121;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[1];
-	af->ae_cali_data.b_avg[2] = b_sum[2] / 110;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[2];
-	af->ae_cali_data.b_avg[3] = b_sum[3] / 121;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[3];
-	af->ae_cali_data.b_avg[4] = b_sum[4] / 121;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[4];
-	af->ae_cali_data.b_avg[5] = b_sum[5] / 110;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[5];
-	af->ae_cali_data.b_avg[6] = b_sum[6] / 110;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[6];
-	af->ae_cali_data.b_avg[7] = b_sum[7] / 110;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[7];
-	af->ae_cali_data.b_avg[8] = b_sum[8] / 100;
-	af->ae_cali_data.b_avg_all += af->ae_cali_data.b_avg[8];
-	af->ae_cali_data.b_avg_all /= 9;
-
-	ISP_LOGV("(r,g,b) in block4 is (%d,%d,%d)", af->ae_cali_data.r_avg[4], af->ae_cali_data.g_avg[4], af->ae_cali_data.b_avg[4]);
-}
-
 static void scl_for_ae_stat(struct af_img_blk_info *rgb, isp_awb_statistic_hist_info_t * dst_data)
 {
 	cmr_u32 i, j, ii, jj;
@@ -2976,11 +2898,6 @@ static void set_af_RGBY(af_ctrl_t * af, struct af_img_blk_info *rgb)
 			af->Y_sum_normalize = af->roi_RGBY.Y_sum[af->roi.num - 1];
 			break;
 		}
-	}
-
-	property_get("vendor.cam.af_mode", af->AF_MODE, "none");
-	if (0 != strcmp(af->AF_MODE, "none")) {	// test mode only
-		ae_calibration(af, (struct af_img_blk_statistic *)rgb->data);
 	}
 
 }
@@ -4089,7 +4006,7 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 cmr_u32 getf_orientation(cmr_s32 roll_angle)
 {
 
-	cmr_u32 f_orientation;
+	cmr_u32 f_orientation = 0;
 	if (roll_angle >= -45 && roll_angle <= 45) {
 		f_orientation = FACE_UP;
 		ISP_LOGI(" FACE_UP");
