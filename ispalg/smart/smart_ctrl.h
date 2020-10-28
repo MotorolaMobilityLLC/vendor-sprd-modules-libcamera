@@ -126,7 +126,7 @@ extern "C" {
 		cmr_handle caller_handle;
 		isp_smart_cb smart_set_cb;
 		struct smart_tuning_param tuning_param[SMART_MAX_WORK_MODE];
-		cmr_u32 camera_id;
+		cmr_int camera_id;
 		void *atm_info;
 		cmr_u32 atm_size;
 	};
