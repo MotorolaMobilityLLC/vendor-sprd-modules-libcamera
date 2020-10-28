@@ -4142,17 +4142,18 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				if(ae_target_lum && (ISP_ALG_SINGLE == cxt->is_multi_mode)){
 					ISP_LOGD("1. exp_line=%d  gain=%d",src_exp.exp_line, src_exp.gain);
 					cmr_u32 tmp_gain = 0;
+					cmr_u32 tmp_exptime = 0;
 					cxt->last_cur_lum = cxt->last_cur_lum ? cxt->last_cur_lum : 1;
-					tmp_gain = (cmr_u32) (1.0 * src_exp.gain * ae_target_lum * cur_sensitivity / cxt->last_cur_lum / last_sensitivity + 0.5);
-					if(tmp_gain > cxt->ae_tbl_param.max_gain){
-						tmp_gain = cxt->ae_tbl_param.max_gain;
-						src_exp.exp_line = src_exp.exp_line * ae_target_lum * src_exp.gain / (tmp_gain * cxt->last_cur_lum);
-						max_expl = (cmr_u32) (1.0 * cxt->ae_tbl_param.max_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-						if(src_exp.exp_line > max_expl)
-							src_exp.exp_line = max_expl;
-						src_exp.exp_time = src_exp.exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+					tmp_exptime = (cmr_u32)(1.0 * src_exp.exp_time * ae_target_lum * cur_sensitivity / cxt->last_cur_lum / last_sensitivity + 0.5);
+					if(tmp_exptime > cxt->ae_tbl_param.max_exp){
+						tmp_exptime = cxt->ae_tbl_param.max_exp;
 					}
+					tmp_gain = (cmr_u32)(1.0 * src_exp.gain * ae_target_lum * src_exp.exp_time / (tmp_exptime * cxt->last_cur_lum));
+					if(tmp_gain > cxt->ae_tbl_param.max_gain)
+						tmp_gain = cxt->ae_tbl_param.max_gain;
+					src_exp.exp_line = (cmr_u32)(1.0 * tmp_exptime / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 					src_exp.gain = tmp_gain;
+					src_exp.exp_time = tmp_exptime;
 					ISP_LOGD("2. exp_line=%d  gain=%d tar_lum=(%d %d) sensitivity(%d %d)",src_exp.exp_line, src_exp.gain, cxt->last_cur_lum, ae_target_lum,last_sensitivity,cur_sensitivity);
 				}
 			}
