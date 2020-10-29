@@ -2689,6 +2689,24 @@ static cmr_int ispctl_set_af_pos(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_multi_switch_info(cmr_handle isp_alg_handle, void *param_ptr)
+ {
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->ops.af_ops.ioctrl)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, LSC_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
+
+	return ret;
+}
+
+
 static cmr_int ispctl_set_af_ot_switch(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5440,6 +5458,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_FB_CAP_PARAM, ispctl_get_fb_cap_param},
 	{ISP_CTRL_GET_MFNR_PARAM, ispctl_get_mfnr_param},
 	{ISP_CTRL_GET_DRE_PRO_PARAM, ispctl_get_dre_pro_param},
+	{ISP_CTRL_SET_MULTI_SWITCH_INFO, ispctl_set_multi_switch_info},
 	{ISP_CTRL_MAX, NULL}
 };
 

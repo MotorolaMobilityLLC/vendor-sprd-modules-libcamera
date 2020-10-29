@@ -73,6 +73,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		ISP_ALG_DUAL_W_T,
 		ISP_ALG_DUAL_C_M,
 		ISP_ALG_TRIBLE_W_T_UW,
+		ISP_ALG_TRIBLE_W_T_UW_SYNC,
 		ISP_ALG_CAMERA_MAX
 	};
 

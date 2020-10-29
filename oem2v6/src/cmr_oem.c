@@ -2624,6 +2624,12 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
+    case ISP_AE_SYNC_STATUS_CALLBACK:
+        oem_cb = CAMERA_EVT_CB_AE_SYNC;
+        CMR_LOGD("ae sync stable:%d", *(cmr_u8 *)data);
+        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
+                       data);
+        break;
     case ISP_AI_SCENE_TYPE_CALLBACK:
         oem_cb = CAMERA_EVT_CB_AI_SCENE;
         CMR_LOGV("isp ai scene type:%u", *(cmr_u8 *)data);
@@ -8682,7 +8688,9 @@ cmr_int camera_set_sync_state(cmr_handle oem_handle,
                                    SyncState *mSyncState) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-   CMR_LOGI("mRefId %d mNestId %d mSyncFlag %d",mSyncState->mRefId,mSyncState->mNestId,mSyncState->mSyncFlag);
+    CMR_LOGI("mRefId %d mNestId %d mSyncFlag %d",mSyncState->mRefId,mSyncState->mNestId,mSyncState->mSyncFlag);
+    ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_MULTI_SWITCH_INFO,
+                    mSyncState);
     return ret;
 }
 

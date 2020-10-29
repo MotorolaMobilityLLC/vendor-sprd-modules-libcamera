@@ -878,6 +878,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_EV_EFFECT_CALLBACK;
 		break;
 #endif
+	case AE_CB_SYNC_STABLE:
+		cmd = ISP_AE_SYNC_STATUS_CALLBACK;
+		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
 		break;
@@ -4478,14 +4481,19 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		ae_input.is_multi_mode = ISP_ALG_DUAL_W_T;
 		break;
 	case ISP_WIDETELEULTRAWIDE:
+#ifdef CONFIG_ISP_2_8
+		ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
+#else
 		ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
+#endif
 		break;
 	default:
 		ae_input.is_multi_mode = ISP_ALG_SINGLE;
 		break;
 	}
 
-	if (ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
+	if (ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW ||
+		ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
 		char value[PROPERTY_VALUE_MAX] = { 0x00 };
 		property_get("persist.vendor.cam.debug.ae_sync", value, "1");
 
@@ -4601,7 +4609,11 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 		param.is_multi_mode = ISP_ALG_DUAL_W_T;
 		break;
 	case ISP_WIDETELEULTRAWIDE:
+#ifdef CONFIG_ISP_2_8
+		param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
+#else
 		param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
+#endif
 		break;
 	default:
 		param.is_multi_mode = ISP_ALG_SINGLE;
@@ -4780,7 +4792,11 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		af_input.is_multi_mode = AF_ALG_BLUR_PORTRAIT;
 		break;
 	case ISP_WIDETELEULTRAWIDE:
+#ifdef CONFIG_ISP_2_8
+		af_input.is_multi_mode = AF_ALG_TRIBLE_MT_SMOOTH;
+#else
 		af_input.is_multi_mode = AF_ALG_TRIBLE_W_T_UW;
+#endif
 		break;
 	default:
 		af_input.is_multi_mode = AF_ALG_SINGLE;
