@@ -17377,8 +17377,12 @@ cmr_int camera_get_mem_size(cmr_handle preview_handle, cmr_u32 camera_id) {
         if (is_raw_capture == 1 || isp_video_get_simulation_flag()) {
             ret = camera_get_raw_postproc_capture_size(camera_id, &total_mem_size,
                                                  prev_cxt->sensor_info.sn_interface.is_loose);
+	    if (prev_cxt->cap_org_fmt == CAM_IMG_FMT_BAYER_MIPI_RAW && prev_cxt->cap_org_size.width >= 9216)
+			total_mem_size += prev_cxt->cap_org_size.width * prev_cxt->cap_org_size.height;
         } else {
             ret = camera_get_postproc_capture_size(camera_id, &total_mem_size, channel_size);
+	    if (prev_cxt->cap_org_fmt == CAM_IMG_FMT_BAYER_MIPI_RAW && prev_cxt->cap_org_size.width >= 9216)
+			total_mem_size += prev_cxt->cap_org_size.width * prev_cxt->cap_org_size.height;
         }
     }
     if (ret) {
