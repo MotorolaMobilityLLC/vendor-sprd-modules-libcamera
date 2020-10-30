@@ -6592,12 +6592,10 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		ISP_LOGV("normal notify stable_flag %d face_lum:%d", cur_calc_result->ae_output.is_stab,cur_calc_result->ae_output.face_lum);
 	}
 
-/***********************************************************/
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	memcpy(current_result, &cxt->cur_result, sizeof(struct ae_alg_calc_result));
 	pthread_mutex_unlock(&cxt->data_sync_lock);
 
-/***********************************************************/
 /*display the AE running status*/
 	if (1 == cxt->debug_enable) {
 		ae_save_to_mlog_file(cxt, &misc_calc_out);
