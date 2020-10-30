@@ -502,6 +502,7 @@ const struct img_size default_sensor_max_sizes[CAMERA_ID_COUNT] = {
 // initStaticParametersforScalerInfo may be change min_duration and
 // stall_duration
 const cam_stream_info_t stream_info[] = {
+    {{9216, 6912}, 41666666L, 41666666L}, /* 64M */
     {{6528, 4896}, 41666666L, 41666666L},
     {{5312, 3984}, 41666666L, 41666666L},
     {{5312, 2988}, 41666666L, 41666666L},
@@ -971,6 +972,9 @@ int SprdCamera3Setting::getJpegStreamSize(int32_t cameraId, cmr_u16 width,
     } else if (width * height <= 6528 * 4896) {
         // 32M
         jpeg_stream_size = (6528 * 4896 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
+    } else if(width*height <= 9216 * 6912) {
+	// 64M
+        jpeg_stream_size = (9216 * 6912 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     } else {
         jpeg_stream_size = (5312 * 3984 * 3 / 2 + sizeof(camera3_jpeg_blob_t));
     }
@@ -1708,6 +1712,7 @@ int SprdCamera3Setting::getHighResCapSize(int32_t cameraId,
          * property string, capture size, preview size, 0,0
          * last img_size must be{0, 0}
          */
+        {"64M", {{9216, 6912}, {1440, 1080}, {0, 0}}}, /* 64M */
         {"48M", {{8000, 6000}, {1440, 1080}, {0, 0}}}, /* 48M */
         {"32M", {{6528, 4896}, {1440, 1080}, {0, 0}}}, /* 32M */
         {"24M", {{5664, 4248}, {1440, 1080}, {0, 0}}}, /* 24M */

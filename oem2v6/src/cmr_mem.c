@@ -244,13 +244,15 @@ int camera_get_raw_postproc_capture_size(cmr_u32 camera_id, cmr_u32 *pp_cap_size
     *pp_cap_size = 3 * max_w * max_h + 3 * thumb_w * thumb_h + redundance_size;
 #ifndef CONFIG_ISP_2_3
     // for raw capture
-    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-    if ((!strcmp(value, "raw"))||isp_video_get_simulation_flag()) {
-        if (is_loose == ISP_RAW_HALF14 || is_loose == ISP_RAW_HALF10) {
-            *pp_cap_size += 5 * max_w * max_h / 2;
-        } else {
-            *pp_cap_size += 3 * max_w * max_h / 2;
-        }
+    if (max_w < 9216) {
+	    property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+	    if ((!strcmp(value, "raw"))||isp_video_get_simulation_flag()) {
+	        if (is_loose == ISP_RAW_HALF14 || is_loose == ISP_RAW_HALF10) {
+	            *pp_cap_size += 5 * max_w * max_h / 2;
+	        } else {
+	            *pp_cap_size += 3 * max_w * max_h / 2;
+	        }
+	    }
     }
 #endif
     // the above is default configuration, for some special case, you can change

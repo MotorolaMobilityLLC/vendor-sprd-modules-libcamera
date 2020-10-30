@@ -192,6 +192,7 @@ enum camera_module_id {
     /*add camera vendor name index here*/
 
     MODULE_MAX, /*NOTE:This used to be the last line*/
+    MODULE_OPTICSZOOM_WIDE_BACK = 0x210,
 };
 
 typedef enum {
