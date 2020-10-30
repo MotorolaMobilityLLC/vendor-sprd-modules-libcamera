@@ -250,7 +250,6 @@ struct isp_alg_fw_context {
 	cmr_int camera_id;
 	cmr_u8 alg_enable;
 	cmr_u8 aem_is_update;
-	cmr_u8 binning_is_update; /* check for bin statis */
 	cmr_u8 fw_started;
 	pthread_mutex_t fw_started_lock;
 	struct isp_hist_statistic_info hist_stats;
@@ -2344,13 +2343,6 @@ static cmr_int ispalg_awb_process(cmr_handle isp_alg_handle)
 		goto exit;
 	}
 
-	if (cxt->awb_cxt.binning_support) {
-		if (0 == cxt->binning_is_update) {
-			ISP_LOGV("binning is not update");
-			goto exit;
-		}
-	}
-
 	if (cxt->awb_cxt.sw_bypass)
 		goto exit;
 
@@ -2722,23 +2714,19 @@ static cmr_int ispalg_binning_stats_parser(cmr_handle isp_alg_handle, void *data
 		break;
 	}
 
-	ispalg_binning_data_cvt(bayermode,
-				cxt->binning_cxt.binnig_w,
-				cxt->binning_cxt.binnig_h,
-				cxt->binning_cxt.binning_img_data,
-				&cxt->binning_cxt.binning_stats);
+	if (sum != 0)
+		ispalg_binning_data_cvt(bayermode,
+					cxt->binning_cxt.binnig_w,
+					cxt->binning_cxt.binnig_h,
+					cxt->binning_cxt.binning_img_data,
+					&cxt->binning_cxt.binning_stats);
+	else
+		ISP_LOGE("fail to parse the binning stats info");
 
 	ISP_LOGV("binning_stats_size=(%d, %d), statis sum 0x%x\n",
 		 cxt->binning_cxt.binning_stats.binning_size.w,
 		 cxt->binning_cxt.binning_stats.binning_size.h,
 		 sum);
-
-	if (sum != 0) {
-		cxt->binning_is_update = 1;
-	} else {
-		cxt->binning_is_update = 0;
-		ISP_LOGE("fail to parse the binning stats info");
-	}
 
 exit:
 	ret = ispalg_set_stats_buffer(cxt, statis_info, ISP_BINNING_BLOCK);
@@ -2746,8 +2734,6 @@ exit:
 		ISP_LOGE("fail to set statis buf");
 	}
 
-	ISP_LOGV("done %ld, binning_is_update %d",
-		ret, cxt->binning_is_update);
 	return ret;
 }
 
@@ -2856,7 +2842,6 @@ cmr_int ispalg_thread_proc(struct cmr_msg *message, void *p_data)
 		if (ret)
 			ISP_LOGE("fail to start awb process");
 		cxt->aem_is_update = 0;
-		cxt->binning_is_update = 0;
 		ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
 		break;
 	case ISP_PROC_AFL_DONE:
@@ -4394,7 +4379,6 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	memset(&result, 0, sizeof(result));
 	/*update aem information */
 	cxt->aem_is_update = 0;
-	cxt->binning_is_update = 0;
 
 	/*update awb gain */
 	if (cxt->ops.awb_ops.ioctrl) {
