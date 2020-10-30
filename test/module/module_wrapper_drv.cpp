@@ -155,6 +155,7 @@ int ModuleWrapperDRV::TearDown()
     return ret;
 }
 
+
 int ModuleWrapperDRV::Run(IParseJson *Json2)
 {
 	int ret = IT_OK;
@@ -162,9 +163,8 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	struct camt_drv_context cxt;
 	DrvCaseComm *_json2=(DrvCaseComm *)Json2;
 	ISP_PARAM_T *param = NULL;
-	struct test_camera_mem_type_stat type;
+	/*struct test_camera_mem_type_stat type;*/
 	unsigned int size, sum_in, sum_out;
-	Test_Mem_alloc *pMemAlloc = new Test_Mem_alloc();
 	int mfd_in;
 	unsigned long phy_addr_in;
 	unsigned long vir_addr_in;
@@ -174,10 +174,21 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	char output_file[DRV_PATH_NUM][256];
 	char tmp_str[10];
 	struct img_store_addr store_addr_out[DRV_PATH_NUM] = {0};
+	ion_info_t ion_in;
+	ion_info_t ion_out;
+	vector<ion_info_t> ion_config_in;
+	vector<ion_info_t> ion_config_out;
+	new_ion_mem_t ion_buffer_in;
+	new_ion_mem_t ion_buffer_out[DRV_PATH_NUM];
+	int tag_in = 1;
+	int tag_out = 3;
+	bufferData buf_data_in;
+	bufferData buf_data_out[DRV_PATH_NUM];
 
 	memset(output_file, '\0', sizeof(output_file));
 	memset(tmp_str, '\0', 10);
 	memset(&cxt, 0, sizeof(cxt));
+
 	/* open camera device */
 	cxt.fd = open(CAMT_DEV_NAME, O_RDWR, 0);
 	if (cxt.fd == -1) {
@@ -202,7 +213,7 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	param = &_json2->g_host_info->isp_param;
 	cxt.info.chip = (enum camt_chip)_json2->m_chipID;
 	for(i = 0; i < _json2->m_pathID.size(); i++)
-		cxt.info.path_id[i] = _json2->m_pathID[i];
+	cxt.info.path_id[i] = _json2->m_pathID[i];
 	cxt.info.test_mode = _json2->m_testMode;
 	cxt.info.bayer_mode = param->general_info.general_image_bayer_mode;
 	cxt.info.input_size.w = param->general_info.general_image_width;
@@ -223,6 +234,45 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 		cxt.info.crop_rect.w, cxt.info.crop_rect.h, cxt.info.output_size.w,
 		cxt.info.output_size.h);
 
+	/* malloc buffer, get frame */
+	/* alloc buf size should sync with format
+	* now just *2 for current use
+	*/
+	size = cxt.info.input_size.w * cxt.info.input_size.h * 2;
+	IT_LOGD("size: %d", size);
+	sum_in = sizeof(mfd_in) / sizeof(int);
+	ion_in.buf_size = size;
+	ion_in.num_bufs = sum_in;
+	ion_in.is_cache = false;
+	ion_in.tag = tag_in;
+	ion_config_in.push_back(ion_in);
+
+	sum_out = sizeof(mfd_out) / sizeof(int);
+	ion_out.buf_size = size;
+	ion_out.num_bufs = sum_out;
+	ion_out.is_cache = false;
+	ion_out.tag = tag_out;
+	ion_config_out.push_back(ion_out);
+
+	TestMemPool *pMemAlloc_in = new TestMemPool(ion_config_in);
+	TestMemPool *pMemAlloc_out = new TestMemPool(ion_config_out);
+
+	buf_data_in = pMemAlloc_in->popBufferList(tag_in);
+	ion_buffer_in.virs_addr = buf_data_in.ion_buffer->virs_addr;
+	phy_addr_in = ion_buffer_in.phys_addr;
+	vir_addr_in = (unsigned long)(ion_buffer_in.virs_addr);
+	mfd_in = ion_buffer_in.fd;
+
+	IT_LOGD("mfd_in: %d", mfd_in);
+	for(i = 0; i < DRV_PATH_NUM; i++){
+	    buf_data_out[i] = pMemAlloc_out->popBufferList(tag_out);
+		ion_buffer_out[i].virs_addr = buf_data_out[i].ion_buffer->virs_addr;
+        phy_addr_out[i] = ion_buffer_out[i].phys_addr;
+		vir_addr_out[i] = (unsigned long)(ion_buffer_out[i].virs_addr);
+		mfd_out[i] = ion_buffer_out[i].fd;
+		IT_LOGD("mfd_out[%d]: %d", i, mfd_out[i]);
+	}
+
 	/* camt init */
 	cxt.info.cmd = CAMT_CMD_INIT;
 	ret = ioctl(cxt.fd, SPRD_IMG_IO_CAM_TEST, &cxt.info);
@@ -230,24 +280,6 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 		IT_LOGE("failed to init cam drv test");
 		goto exit;
 	}
-
-	/* malloc buffer, get frame */
-	type.is_cache = false;
-	type.mem_type = TEST_CAMERA_CAPTURE;
-	/* alloc buf size should sync with format
-	* now just *2 for current use
-	*/
-	size = cxt.info.input_size.w * cxt.info.input_size.h * 2;
-	sum_in = sizeof(mfd_in) / sizeof(int) ;
-	sum_out = sizeof(mfd_out) / sizeof(int);
-	pMemAlloc->Test_Callback_IonMalloc(type, &size, &sum_in,
-		&phy_addr_in, &vir_addr_in, &mfd_in, NULL);
-	pMemAlloc->Test_Callback_IonMalloc(type, &size, &sum_out,
-		&phy_addr_out[0], &vir_addr_out[0], &mfd_out[0], NULL);
-
-	IT_LOGD("mfd_in: %d", mfd_in);
-	for(i = 0; i < DRV_PATH_NUM; i++)
-		IT_LOGD("mfd_out[%d]: %d", i, mfd_out[i]);
 
 	ret = camt_read_file(_json2->m_imageName.data(), size, vir_addr_in);
 	if (ret < 0) {
@@ -292,9 +324,8 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 		IT_LOGE("failed to stop cam drv test");
 
 start_fail:
-	pMemAlloc->Test_Callback_Free(type, &phy_addr_in, &vir_addr_in, &mfd_in, sum_in, NULL);
-	pMemAlloc->Test_Callback_Free(type, &phy_addr_out[0], &vir_addr_out[0], &mfd_out[0], sum_out, NULL);
-	delete pMemAlloc;
+	delete pMemAlloc_in;
+	delete pMemAlloc_out;
 	cxt.info.cmd = CAMT_CMD_DEINIT;
 	ioctl(cxt.fd, SPRD_IMG_IO_CAM_TEST, &cxt.info);
 	ret = close(cxt.fd);
