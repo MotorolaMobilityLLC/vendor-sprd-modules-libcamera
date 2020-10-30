@@ -129,6 +129,17 @@ extern "C" {
 		cmr_s8 auto_hdr_enable;
 	};
 
+	struct fdr_AE_exif_t {
+		int camera_id;
+		int face_stable;
+		int fdr_scene_num;
+		int sceneChosen;
+		int prop_dark;
+		int prop_bright;
+		int ev_pre;
+		int ev_final;
+	};
+
 	struct fdr_stat_t {
 		cmr_u32 *hist256;      /*!< histogram buffer pointer */
 		cmr_s8 *img;           /*!< gray image buffer pointer */
@@ -142,12 +153,27 @@ extern "C" {
 		cmr_u32 camera_id;
 	} ;
 
+	struct fdr_det_param_in_t {
+		void *tuning_param;
+		struct fdr_stat_t stat;
+	};
+
+	struct fdr_det_param_out_t {
+		float ev;
+		int sensor_gain_underexp;
+		int cur_bv_underexp;
+		cmr_u32 exp_line_underexp;
+		cmr_u32 total_gain_underexp;
+		cmr_u32 exp_time_underexp;
+		struct fdr_AE_exif_t fdr_AE_exif;
+	};
+
 	struct fdr_det_status_t{
 		int smooth_flag;
 		int frameID;
 	} ;
 	struct fdr_lib_ops{
-		cmr_s32 (*fdr_scndet)(void *fdr_tuning_param, struct fdr_stat_t *stat, float *ev,struct fdr_det_status_t *det_status);
+		cmr_s32 (*fdr_scndet)(struct fdr_det_param_in_t *param_in, struct fdr_det_param_out_t *param_out, struct fdr_det_status_t *det_status);
 	};
 
 /**************************************************************************/
@@ -376,6 +402,9 @@ extern "C" {
 		struct fdr_det_status_t fdr_det_status;
 		struct fdr_lib_ops fdr_ops;
 		void *fdr_tuning_param;
+		struct fdr_AE_exif_t fdr_exif;
+		struct fdr_det_param_out_t fdr_param;
+		struct ae_callback_param cb_param;
 
 		cmr_s8 threednr_mode_flag;
 		/*

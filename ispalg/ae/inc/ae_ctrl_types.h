@@ -18,7 +18,7 @@
 #define _AE_CTRL_TYPES_H_
 
 #include "ae_correction.h"
-//#include "ae_ctrl_common.h"
+#include "ae_ctrl_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -189,6 +189,7 @@ extern "C" {
 		AE_CB_3DNR_NOTIFY,
 		AE_CB_FDR_START,
 		AE_CB_FDR_STATUS,
+		AE_CB_PROCESS_RESULT,
 		AE_CB_MAX
 	};
 	enum ae_cb_result_notify_hal {
