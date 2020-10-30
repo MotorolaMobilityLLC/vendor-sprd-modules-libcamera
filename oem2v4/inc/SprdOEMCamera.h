@@ -38,6 +38,8 @@ cmr_int camera_release_frame(cmr_handle camera_handle, enum camera_data data,
 cmr_int camera_set_param(cmr_handle camera_handle, enum camera_param_type id,
                          cmr_uint param);
 
+cmr_int camera_set_recovery_status(cmr_handle camera_handle);
+
 cmr_int camera_start_preview(cmr_handle camera_handle,
                              enum takepicture_mode mode);
 

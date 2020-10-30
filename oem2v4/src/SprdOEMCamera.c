@@ -117,6 +117,11 @@ exit:
     return ret;
 }
 
+cmr_int camera_set_recovery_status(cmr_handle camera_handle) {
+    camera_set_wait_recovery(camera_handle);
+    return 0;
+}
+
 cmr_int camera_start_preview(cmr_handle camera_handle,
                              enum takepicture_mode mode) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1277,9 +1282,9 @@ cmr_int camera_set_gpu_mem_ops(cmr_handle camera_handle, void *cb_of_malloc,
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
-    camera_cancel_autofocus, camera_cancel_takepicture,
+    camera_cancel_autofocus, camera_cancel_takepicture, camera_set_recovery_status,
     // camera_safe_scale_th,
-    NULL, camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
+    camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
     camera_get_redisplay_data, camera_is_change_size,
     NULL, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,

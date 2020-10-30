@@ -9569,6 +9569,12 @@ exit:
     return ret;
 }
 
+cmr_int camera_set_wait_recovery(cmr_handle oem_handle) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cmr_preview_wait_recovery(cxt->prev_cxt.preview_handle, cxt->camera_id);
+    return 0;
+}
+
 cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 

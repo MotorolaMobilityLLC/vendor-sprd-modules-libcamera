@@ -3537,6 +3537,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     if (!isPreviewing()) {
         HAL_LOGD("Preview not in progress! stopPreviewInternal X");
+        mHalOem->ops->camera_set_recovery_status(mCameraHandle);
         return;
     }
 

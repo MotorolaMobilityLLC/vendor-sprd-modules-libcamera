@@ -2231,7 +2231,9 @@ typedef struct oem_ops {
 
     cmr_int (*camera_cancel_takepicture)(cmr_handle camera_handle);
 
-    uint32_t (*camera_safe_scale_th)(void);
+    cmr_int (*camera_set_recovery_status)(cmr_handle camera_handle);
+
+    //uint32_t (*camera_safe_scale_th)(void);
 
     cmr_int (*camera_take_picture)(cmr_handle camera_handle,
                                    enum takepicture_mode cap_mode);

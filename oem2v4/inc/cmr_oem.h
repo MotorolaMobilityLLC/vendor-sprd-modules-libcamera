@@ -414,6 +414,9 @@ cmr_int camera_local_fd_start(cmr_handle oem_handle);
 cmr_int camera_local_start_preview(cmr_handle oem_handle,
                                    enum takepicture_mode mode,
                                    cmr_uint is_snapshot);
+
+cmr_int camera_set_wait_recovery(cmr_handle oem_handle);
+
 cmr_int camera_local_stop_preview(cmr_handle oem_handle);
 
 cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
