@@ -5328,6 +5328,19 @@ exit:
     HAL_LOGV("X");
 }
 
+void SprdCamera3OEMIf::unmapInputBuffer() {
+    HAL_LOGD("unmapInputBuffer: E");
+    if (mSprdReprocessing) {
+        SprdCamera3RegularChannel *channel =
+            reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+        HAL_LOGD("jpeg encode done, reprocessing end");
+        setCaptureReprocessMode(false, mCallbackWidth, mCallbackHeight);
+        channel->releaseInputBuff();
+    }
+    HAL_LOGD("unmapInputBuffer: X");
+    return;
+}
+
 void SprdCamera3OEMIf::receiveJpegPictureError(void) {
     print_time();
     Mutex::Autolock cbLock(&mCaptureCbLock);
