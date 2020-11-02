@@ -2252,6 +2252,9 @@ int SprdCamera3HWI::flush() {
         mPicChan->stop(mFrameNum);
     }
 
+    //for multicamera freeBufferList
+    mOEMIf->unmapInputBuffer();
+
     {
         Mutex::Autolock l(&mLock);
         HAL_LOGI(":hal3: clear all buffers");

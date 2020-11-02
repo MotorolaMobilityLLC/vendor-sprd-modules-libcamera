@@ -352,6 +352,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void matchZSLQueue(ZslBufferQueue *frame);
     void setMultiCameraMode(multiCameraMode mode);
     void setMasterId(uint8_t masterId);
+    void unmapInputBuffer(void);
 #ifdef CONFIG_CAMERA_EIS
     virtual void EisPreview_init();
     virtual void EisVideo_init();
