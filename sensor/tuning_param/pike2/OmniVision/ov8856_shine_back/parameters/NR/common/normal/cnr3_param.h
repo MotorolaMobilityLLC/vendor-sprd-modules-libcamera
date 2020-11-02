@@ -1,10 +1,10 @@
-/*versionid=0x00080006*/
+/*versionid=0x0008000C*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl3_sensor_cnr3_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*reserved0*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -221,7 +221,7 @@
 /*sharkl3_sensor_cnr3_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*reserved0*/
 	{
 		0x00,0x00,0x00/*0-2*/
