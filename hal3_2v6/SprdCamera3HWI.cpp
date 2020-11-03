@@ -605,6 +605,25 @@ int32_t SprdCamera3HWI::checkStreamSizeAndFormat(camera3_stream_t *new_stream) {
     return BAD_VALUE;
 }
 
+static void set_usage_for_preview(camera3_stream_t *newStream)
+{
+    char value[PROPERTY_VALUE_MAX] = {0};
+    unsigned long t;
+
+    newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
+
+    property_get("ro.boot.auto.efuse", value, "");
+    if (!memcmp(value, "T618", 4) || !memcmp(value, "T610", 4)) {
+        t = (GRALLOC1_PRODUCER_USAGE_PRIVATE_17) >> 32;
+        t |= (unsigned long)newStream->reserved[1];
+        newStream->reserved[1] = (void *)t;
+    } else {
+        newStream->usage |= GRALLOC_USAGE_PRIVATE_1;
+    }
+    HAL_LOGD("usage reserved[1] %p, usage 0x%x", newStream->reserved[1],
+            newStream->usage);
+}
+
 int SprdCamera3HWI::configureStreams(
     camera3_stream_configuration_t *streamList) {
     ATRACE_CALL();
@@ -731,15 +750,13 @@ int SprdCamera3HWI::configureStreams(
                 } else if (alreadyHasPreviewStream == 0) {
                     stream_type = CAMERA_STREAM_TYPE_PREVIEW;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
-                    newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
-                    newStream->usage |= GRALLOC_USAGE_PRIVATE_1;
-                    // for two HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED steam
+                    set_usage_for_preview(newStream);
+                   // for two HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED steam
                     alreadyHasPreviewStream = 1;
                 } else {
                     stream_type = CAMERA_STREAM_TYPE_CALLBACK;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
-                    newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
-                    newStream->usage |= GRALLOC_USAGE_PRIVATE_1;
+                    set_usage_for_preview(newStream);
                 }
                 break;
 
@@ -790,7 +807,7 @@ int SprdCamera3HWI::configureStreams(
          * After graphic update(use gralloc1.h), usage is uint64
          * but usage in newStream is uint32, so use reserved[1]
          * to transfer high uint32(reserved[0] used by eis)
-         */
+         *
         if (stream_type == CAMERA_STREAM_TYPE_PREVIEW
              || stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
             char val[PROPERTY_VALUE_MAX] = {0};
@@ -803,7 +820,7 @@ int SprdCamera3HWI::configureStreams(
                 newStream->reserved[1] = (void *)t;
                 HAL_LOGD("usage %p", newStream->reserved[1]);
             }
-        }
+        }*/
         HAL_LOGD(":hal3: stream %d: stream_type=%d, chn_type=%d, w=%d, h=%d, "
                  "format=%d usage=0x%x",
                  i, stream_type, channel_type, newStream->width,
