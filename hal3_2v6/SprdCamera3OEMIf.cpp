@@ -10872,8 +10872,11 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 		}
 		clear_af_trigger = 1;
     }
-    if (mZslCaptureExitLoop == true)
-	goto exit;
+
+    if(mZslCaptureExitLoop == true) {
+       HAL_LOGE("deinit capture");
+       goto exit;
+    }
 
     if ((getMultiCameraMode() == MODE_MULTI_CAMERA || mCameraId == 0 ||
         isFrontLcd || isFrontFlash || mCameraId == 4) && (!been_preflash)) {
@@ -10993,6 +10996,12 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
             }
         }
     }
+
+    if(mZslCaptureExitLoop == true) {
+       HAL_LOGE("deinit capture");
+       goto exit;
+    }
+
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     ret = obj->mHalOem->ops->camera_take_picture(obj->mCameraHandle,
                                                  obj->mCaptureMode);
