@@ -5013,14 +5013,6 @@ int SprdCamera3Setting::updateWorkParameters(
                      s_setting[mCameraId].jpgInfo.gps_coordinates[i]);
         }
         pushAndroidParaTag(ANDROID_JPEG_GPS_COORDINATES);
-    } else if ((s_setting[mCameraId].controlInfo.capture_intent ==
-                ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) ||
-               (s_setting[mCameraId].controlInfo.capture_intent ==
-                ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT)) {
-        size_t num_elements = 3;
-        for (size_t i = 0; i < num_elements; i++) {
-            s_setting[mCameraId].jpgInfo.gps_coordinates[i] = 0;
-        }
     }
 
     if (frame_settings.exists(ANDROID_JPEG_GPS_PROCESSING_METHOD)) {
@@ -6282,6 +6274,17 @@ int SprdCamera3Setting::setJPEGTag(JPEG_Tag jpgInfo) {
 int SprdCamera3Setting::getJPEGTag(JPEG_Tag *jpgInfo) {
     *jpgInfo = s_setting[mCameraId].jpgInfo;
     return 0;
+}
+
+void SprdCamera3Setting::clearGpsInfo(){
+
+    size_t num_elements = 3;
+    for (size_t i = 0; i < num_elements; i++) {
+        s_setting[mCameraId].jpgInfo.gps_coordinates[i] = 0;
+        HAL_LOGV("GPS coordinates %lf",
+                 s_setting[mCameraId].jpgInfo.gps_coordinates[i]);
+    }
+
 }
 
 int SprdCamera3Setting::setLENSINFOTag(LENS_INFO_Tag lens_InfoInfo) {

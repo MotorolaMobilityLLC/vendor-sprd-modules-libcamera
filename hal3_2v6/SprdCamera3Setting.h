@@ -600,6 +600,7 @@ class SprdCamera3Setting {
     int popAndroidParaTag();
     int popSprdParaTag();
     void releaseAndroidParaTag();
+    void clearGpsInfo();
 
     int setPreviewSize(struct img_size size);
     int getPreviewSize(struct img_size *size);

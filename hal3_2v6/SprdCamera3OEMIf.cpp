@@ -5301,6 +5301,12 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         }
     }
 
+    if (!jpeg_gps_location) {
+
+        mSetting->clearGpsInfo();
+
+    }
+
     if (encInfo->need_free) {
         if (!iSZslMode()) {
             deinitCapture(mIsPreAllocCapMem);
@@ -5585,6 +5591,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                      (cmr_uint)&pt);
 
             jpeg_gps_location = false;
+
         }
         break;
     }
