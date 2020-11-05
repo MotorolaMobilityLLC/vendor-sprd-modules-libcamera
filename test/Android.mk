@@ -64,7 +64,7 @@ LOCAL_SRC_FILES := $(call all-cpp-files-under,.)
 
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := CameraIT
-
+LOCAL_32_BIT_ONLY := true
 
 include $(BUILD_EXECUTABLE)
 

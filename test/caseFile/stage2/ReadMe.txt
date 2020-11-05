@@ -1,5 +1,6 @@
 1, hal.json文件为hal分层测试的输入参数文件；
 2，drv.json文件为drv分层测试的输出参数文件；
+3，oem.json文件为oem分层测试的输入参数文件；
 
 其中:
 "CaseID" : 0,
@@ -72,3 +73,12 @@
 
 testdcam文件夹中为dcam对应的drv需要测试的参数文件；
 testisp文件夹中为isp对应的drv需要测试的参数文件；
+
+****************************************************************
+对于oem.json文件:
+
+"DumpNum" : 3,
+/* 为测试输出接口的dump图数量,默认为0 */
+/* 对于startpreview, DumpNum为预览帧的dump数量*/
+/* 对于zslsnapshot & nozslsnapshot, DumpNum(0或者>0)为拍照的dump开关*/
+

@@ -1,0 +1,47 @@
+{
+	"oemCaseLists" :
+	[
+		{
+			"CaseID" : 0,
+			"README":"CameraID can be changed for other case to test any mode",
+			"Priority": 0,
+			"FuncName" : "opencamera",
+			"CameraID" : 0
+		},
+		{
+			"CaseID" : 1,
+			"Priority": 5,
+			"FuncName" : "closecamera"
+		},
+		{
+			"CaseID" : 2,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"DumpNum" : 0,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 640,"height" : 480, "fps" : 30},
+				{"type" : "zsl_prev_stream", "width" : 1024,"height" : 768}
+			]
+		},
+		{
+			"CaseID" : 3,
+			"Priority": 3,
+			"FuncName" : "stoppreview"
+		},
+		{
+			"CaseID" : 4,
+			"Priority": 2,
+			"FuncName" : "zslsnapshot",
+			"DumpNum" : 0
+		},
+		{
+			"CaseID" : 5,
+			"Priority": 4,
+			"FuncName" : "nozslsnapshot",
+			"DumpNum" : 0,
+			"StreamList" : [
+  				{"type" : "picture_stream", "width" : 3264,"height" : 2448}
+			]
+		}
+	]
+}

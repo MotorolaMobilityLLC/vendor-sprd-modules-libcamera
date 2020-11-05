@@ -190,6 +190,17 @@
 					]
 				}
 			]
+		},
+		{
+			"ID":100,
+			"README":"example for OEM startpreview and zsl&&nozsl snapshot",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"OEM","mcaseid":[0,2,4,3,5,1]}
+					]
+				}
+			]
 		}
 	]
 }

@@ -7,6 +7,7 @@
 #include "json1case.h"
 #include "json2hal.h"
 #include "json2drv.h"
+#include "json2oem.h"
 
 class SuiteBase// : public TestSuiteManager
 {

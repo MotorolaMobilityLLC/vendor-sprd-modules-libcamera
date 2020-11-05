@@ -54,7 +54,6 @@ void IParseJson::PrintValueTree(Json::Value &value, IParseJson *pParent,
 }
 
 BOOL IParseJson::ParseJson(const std::string &json) {
-
     Json::Features features;
     Json::Reader reader(features);
     Json::Value root;

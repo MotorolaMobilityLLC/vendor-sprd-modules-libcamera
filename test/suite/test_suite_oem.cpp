@@ -27,13 +27,18 @@
  *
  */
 #include "test_suite_oem.h"
+#include <string.h>
+#include<stdio.h>
+#include<stdlib.h>
 #define LOG_TAG "IT-suiteOem"
 #define THIS_MODULE_NAME "oem"
+#define JSON_PATH "./oem.json"
 
 TestSuiteOEM::TestSuiteOEM()
 {
-    IT_LOGD("");
+    m_isParsed = false;
     m_Module=GetModuleWrapper(string(THIS_MODULE_NAME));
+    m_json2 = new CameraOemIT;
 }
 
 TestSuiteOEM::~TestSuiteOEM()
@@ -64,15 +69,69 @@ int TestSuiteOEM::ControlEmulator(IT_SWITCH_T status)
 
 int TestSuiteOEM::Run(IParseJson *Json2)
 {
-    int ret=IT_OK;
-    IT_LOGD("");
-    m_Module->Run(Json2);
+    int ret = -IT_ERR;
+    if (m_Module)
+        ret = m_Module->Run(Json2);
     return ret;
 }
 
-int TestSuiteOEM::ParseSecJson(int caseid, vector<IParseJson*>* pVec_TotalCase)
-{
-    int ret=IT_OK;
-    IT_LOGD("");
+int TestSuiteOEM::ParseSecJson(caseid *caseid,
+                                     vector<IParseJson*>* pVec_TotalCase) {
+    int ret = IT_OK;
+    if (!m_isParsed) {
+        string path = JSON_PATH;
+        string input = m_json2->readInputTestFile(path.data());
+        if (input.empty()) {
+            IT_LOGD("Failed to read input or empty input: %s", path.data());
+            return IT_FILE_EMPTY;
+        }
+        int exitCode = m_json2->ParseJson(input);
+        std::vector<OemCaseComm *>::iterator i;
+
+        /*debug: display json2 info */
+        IT_LOGD("print oem case info");
+        for (i = m_json2->m_casecommArr.begin();
+             i != m_json2->m_casecommArr.end(); i++) {
+            IT_LOGD("*********************************");
+            IT_LOGD("case2ID:%d", (*i)->m_caseID);
+            IT_LOGD("m_Priority:%d", (*i)->m_Priority);
+            IT_LOGD("StreamSize:%d", (*i)->m_StreamArr.size());
+            IT_LOGD("MetadataSize:%d", (*i)->m_MetadataArr.size());
+            std::vector<oem_Metadata *>::iterator itor2 =
+                (*i)->m_MetadataArr.begin();
+            while (itor2 != (*i)->m_MetadataArr.end()) {
+                IT_LOGD("Metadata tag:%s", (*itor2)->m_tagName.data());
+                std::vector<oem_Val>::iterator itor3 =
+                    (*itor2)->mVec_tagVal.begin();
+                /* i32 example */
+                /*IT_LOGD("tagVal:%d",itor3->i32);itor3++;
+                if (itor3!=(*itor2)->mVec_tagVal.end()){
+                    IT_LOGD("tagVal:%d",itor3->i32);
+                }*/
+                itor2++;
+            }
+        }
+        IT_LOGD("*********************************");
+        m_isParsed = true;
+    }
+    IParseJson *caseData = m_json2->getCaseAt(caseid->getID());
+    std::vector<OemCaseComm *>::iterator itor = m_json2->m_casecommArr.begin();
+    while (itor != m_json2->m_casecommArr.end()) {
+        if ((*itor)->m_caseID == caseid->getID()) {
+            if (caseData) {
+                caseData->m_thisCasePriority = (*itor)->m_Priority;
+            }
+            break;
+        }
+        itor++;
+    }
+
+    if (caseData) {
+        caseData->m_thisModuleName = THIS_MODULE_NAME;
+        pVec_TotalCase->push_back(caseData);
+    } else {
+        IT_LOGE("Failed to find this case ID:%d", caseid->getID());
+        ret = -IT_ERR;
+    }
     return ret;
 }
