@@ -496,6 +496,7 @@ extern "C" {
 		cmr_u32 *master_aem_stat;
 		cmr_u32 *slave0_aem_stat;
 		cmr_u32 *slave1_aem_stat;
+		struct ae_set_sync_state sync_state;
 
 		cmr_u32 *tune_buf;
 		struct ae_frm_sync_param sync_param[4];

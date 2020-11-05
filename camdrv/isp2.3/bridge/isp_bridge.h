@@ -59,6 +59,8 @@ enum isp_br_ioctl_cmd {
 	GET_GAIN_AWB_DATA,
 	SET_FOV_DATA,
 	GET_FOV_DATA,
+	SET_MASTER_AWB_DATA,
+	GET_MASTER_AWB_DATA,
 
 	// HIST
 	SET_HIST_WIN,
@@ -108,6 +110,8 @@ enum isp_br_ioctl_cmd {
 
 	SET_SYNC_SLAVE_SYNC_OUTPUT,
 	GET_SYNC_SLAVE_SYNC_OUTPUT,
+	SET_SYNC_SLAVE_AEM_INFO,
+	GET_SYNC_SLAVE_AEM_INFO,
 };
 
 struct awb_gain_data {

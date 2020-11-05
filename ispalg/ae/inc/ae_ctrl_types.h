@@ -113,6 +113,7 @@ extern "C" {
 		AE_FDR_START,
 		AE_SET_AUTO_FDR,
 		AE_SET_PROF_MODE,
+		AE_SET_MULTI_SWITCH_INFO,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly
@@ -192,6 +193,7 @@ extern "C" {
 		AE_CB_FDR_START,
 		AE_CB_FDR_STATUS,
 		AE_CB_PROCESS_RESULT,
+		AE_CB_SYNC_STABLE,
 		AE_CB_MAX
 	};
 	enum ae_cb_result_notify_hal {
@@ -485,6 +487,12 @@ extern "C" {
 		struct ae_trim trim;
 		struct ae_rgb_l high_region_thrd;
 		struct ae_rgb_l low_region_thrd;
+	};
+
+	struct ae_set_sync_state {
+		cmr_u8 ref_id;
+		cmr_u8 next_id;
+		bool sync_flag;
 	};
 
 	struct ae_isp_ctrl_ops {

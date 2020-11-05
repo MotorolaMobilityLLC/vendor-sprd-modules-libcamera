@@ -987,6 +987,22 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sem_post(&cxt->ae_sm);
 		break;
 
+	case SET_SYNC_SLAVE_AEM_INFO:
+
+		sem_wait(&cxt->ae_sm);
+		if (in && data->ae.stats_data.stats_data)
+			memcpy(data->ae.stats_data.stats_data, in, ISP_BLK_NUM_TO_SIZE(32*32));
+		sem_post(&cxt->ae_sm);
+		break;
+
+	case GET_SYNC_SLAVE_AEM_INFO:
+
+		sem_wait(&cxt->ae_sm);
+		if (out && data->ae.stats_data.stats_data)
+			memcpy(out, data->ae.stats_data.stats_data, ISP_BLK_NUM_TO_SIZE(32*32));
+		sem_post(&cxt->ae_sm);
+		break;
+
 	case SET_FRAME_ID:
 		{
 			if (in) {
