@@ -5333,7 +5333,7 @@ void SprdCamera3OEMIf::unmapInputBuffer() {
     if (mSprdReprocessing) {
         SprdCamera3RegularChannel *channel =
             reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
-        HAL_LOGD("jpeg encode done, reprocessing end");
+        HAL_LOGD("stop reprocess jpeg encode,unmap InputBuff");
         setCaptureReprocessMode(false, mCallbackWidth, mCallbackHeight);
         channel->releaseInputBuff();
     }

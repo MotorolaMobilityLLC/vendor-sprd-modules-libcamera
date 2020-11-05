@@ -2245,15 +2245,15 @@ int SprdCamera3HWI::flush() {
     // for performance: dont delay for dc/dv switch or front/back switch
     mOEMIf->setSensorCloseFlag();
 
-    //for multicamera freeBufferList
-    mOEMIf->unmapInputBuffer();
-
     if (mRegularChan) {
         mRegularChan->stop(mFrameNum);
     }
     if (mPicChan) {
         mPicChan->stop(mFrameNum);
     }
+
+    //for multicamera freeBufferList
+    mOEMIf->unmapInputBuffer();
 
     {
         Mutex::Autolock l(&mLock);
