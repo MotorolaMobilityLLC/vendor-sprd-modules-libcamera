@@ -4105,7 +4105,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				cur_sensitivity = last_sensitivity;
 
 			bool sync_cur_result_cur_bv_flag1 = (cxt->sync_cur_result.cur_bv < cxt->flash_thrd.thd_down);
-			bool sync_cur_result_cur_bv_flag2 = (cxt->app_mode == last_app_mode);
+			bool sync_cur_result_cur_bv_flag2 = (cxt->app_mode == last_app_mode)||(cxt->mode_switch[cxt->app_mode].gain);
 			bool sync_cur_and_app_mode_flag;
 			sync_cur_and_app_mode_flag = ae_abtain_2or_flag(sync_cur_result_cur_bv_flag1,sync_cur_result_cur_bv_flag2);
 			bool mode_swith_gain_flag = (0 != cxt->mode_switch[cxt->app_mode].gain);
@@ -4133,6 +4133,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				src_exp.frm_len = cxt->mode_switch[cxt->app_mode].frm_len;
 				src_exp.frm_len_def = cxt->mode_switch[cxt->app_mode].frm_len_def;
 				src_exp.target_luma =  cxt->mode_switch[cxt->app_mode].tarlum;
+
 			}
 			else {
 				if(cxt->app_mode_tarlum[cxt->app_mode])
@@ -4158,12 +4159,14 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				}
 			}
 
-			if (cxt->cur_status.adv_param.cur_ev_setting.line_time != cxt->last_exp_param.line_time){
-				src_exp.exp_line = (cmr_u32) (1.0 * cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-				if (cxt->min_exp_line > src_exp.exp_line) {
-					src_exp.exp_line = cxt->min_exp_line;
-				}
-				src_exp.exp_time = src_exp.exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			if (0 == (cxt->mode_switch[cxt->app_mode].gain)){
+					if (cxt->cur_status.adv_param.cur_ev_setting.line_time != cxt->last_exp_param.line_time){
+						src_exp.exp_line = (cmr_u32) (1.0 * cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+						if (cxt->min_exp_line > src_exp.exp_line) {
+							src_exp.exp_line = cxt->min_exp_line;
+						}
+						src_exp.exp_time = src_exp.exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+					}
 			}
 		}
 	} else {
@@ -4209,12 +4212,12 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			ISP_LOGD("def expl=%d, gain=%d",src_exp.exp_line,src_exp.gain);
 		}
 	}
-	
+
 	cxt->cur_status.adv_param.last_target = src_exp.target_luma;
 
 	ae_set_app_mode_for_face_start(cxt);
 
-	if (((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode))) || (CAMERA_MODE_MANUAL == cxt->app_mode)) {
+	if (((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode)||(cxt->mode_switch[cxt->app_mode].gain))) || (CAMERA_MODE_MANUAL == cxt->app_mode)) {
 		dst_exp.exp_time = src_exp.exp_time;
 		dst_exp.exp_line = src_exp.exp_line;
 		dst_exp.gain = src_exp.gain;
