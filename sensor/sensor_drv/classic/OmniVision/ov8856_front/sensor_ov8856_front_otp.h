@@ -192,8 +192,11 @@ static uint32_t ov8856_read_otp_info(cmr_handle handle, void *param_ptr) {
 
     property_get("debug.camera.save.otp.raw.data", value, "0");
     if (atoi(value) == 1) {
-        FILE *fd =
-            fopen("/data/vendor/cameraserver/ov8856.otp.dump.bin", "wb+");
+        FILE *fd = NULL;
+        if ((fd = fopen("/data/vendor/cameraserver/ov8856.otp.dump.bin", "wb+")) == NULL) {
+            SENSOR_LOGI("otp file:ov8856.otp.dump.bin not exist");
+            return rtn;
+        }
         for (i = 0x7010; i <= 0x720a; i++) {
             cmr_u8 low_val = hw_sensor_read_reg(sns_drv_cxt->hw_handle, i);
             fwrite((char *)&low_val, 1, 1, fd);
