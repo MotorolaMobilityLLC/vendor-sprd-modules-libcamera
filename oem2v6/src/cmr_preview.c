@@ -1231,6 +1231,17 @@ cmr_int cmr_preview_stop(cmr_handle preview_handle, cmr_u32 camera_id) {
         return CMR_CAMERA_FAIL;
     }
 
+    if (handle->thread_cxt.video_thread_handle != NULL) {
+        message.msg_type = PREV_EVT_ASSIST_STOP;
+        message.sync_flag = CMR_MSG_SYNC_PROCESSED;
+        ret =
+            cmr_thread_msg_send(handle->thread_cxt.video_thread_handle, &message);
+        if (ret) {
+            CMR_LOGE("send msg failed!");
+            return CMR_CAMERA_FAIL;
+        }
+    }
+
     message.msg_type = PREV_EVT_STOP;
     message.sync_flag = CMR_MSG_SYNC_PROCESSED;
     message.data = (void *)((unsigned long)camera_id);
@@ -2662,6 +2673,10 @@ cmr_int prev_video_thread_proc(struct cmr_msg *message, void *p_data) {
             free(frm_data);
             frm_data = NULL;
         }
+        break;
+
+    case PREV_EVT_ASSIST_STOP:
+        CMR_LOGD("sync stop video");
         break;
 
     default:
