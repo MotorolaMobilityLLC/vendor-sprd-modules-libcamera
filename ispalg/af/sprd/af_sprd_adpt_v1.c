@@ -102,7 +102,7 @@ static const char *focus_state_str[] = {
 
 static char AFlog_buffer[2048] = { 0 };
 
-#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7)
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7) && !defined(CONFIG_ISP_2_8)
 static struct af_iir_nr_info_u af_iir_nr[3] = {
 	{			// weak
 	 .iir_nr_en = 1,
@@ -213,13 +213,13 @@ static void afm_disable(af_ctrl_t * af)
 
 static void afm_setup(af_ctrl_t * af)
 {
-#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7)
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7) && !defined(CONFIG_ISP_2_8)
 	struct af_enhanced_module_info_u afm_enhanced_module;
 #endif
 	cmr_u32 mode = 1;
 
 	af->cb_ops.af_monitor_mode(af->caller, (void *)&mode);
-#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7)
+#if !defined(CONFIG_ISP_2_5) && !defined(CONFIG_ISP_2_6) && !defined(CONFIG_ISP_2_7) && !defined(CONFIG_ISP_2_8)
 	af->cb_ops.af_monitor_iir_nr_cfg(af->caller, (void *)&(af_iir_nr[af->afm_tuning.iir_level]));
 
 	memcpy(&(afm_enhanced_module), &af_enhanced_module, sizeof(struct af_enhanced_module_info_u));
@@ -254,7 +254,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 	}
 	ISP_LOGI("camera_id %d", af->camera_id);
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 #define PIXEL_OFFSET 100
 #define MIN_ROI_SIZE 40
 	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face roi settings
@@ -476,14 +476,14 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 	property_get("debug.isp.af.fvlog", prop, "0");
 	val = atoi(prop);
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 
 #if defined(CONFIG_ISP_2_5)
 #define FV0_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 4)
 #define FV1_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01) + 2)
 #endif
 
-#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 #define FV0_INDEX(block) ((block) * 3)
 #define FV1_INDEX(block) (((block) * 3) + 1)
 #endif
@@ -3829,7 +3829,7 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->isp_info.width = init_param->src.w;
 	af->isp_info.height = init_param->src.h;
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 	// sharkl3 & later arch with many rois
 	af->isp_info.win_num = 10;	// keep invariant as original
 #else
