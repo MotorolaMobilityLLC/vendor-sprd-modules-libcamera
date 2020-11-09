@@ -183,6 +183,18 @@ exit:
 	return rtn;
 }
 
+static void _lsc_get_version_id(struct lsc_adv_init_param *handle){
+
+	unsigned int * tune_param = (unsigned int *)handle->tune_param_ptr;
+	unsigned int version_id = 0;
+
+	version_id = *(tune_param + 2);
+
+	if(version_id==0x00030200){
+		handle->lib_param.version_id = 1;
+	}
+}
+
 static cmr_s32 _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_init_param *in_ptr)
 {
 	cmr_int rtn = LSC_SUCCESS;
@@ -191,6 +203,9 @@ static cmr_s32 _lscctrl_init_adpt(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_i
 		ISP_LOGE("fail to check param, param is NULL!");
 		goto exit;
 	}
+
+	/*get version id*/
+	_lsc_get_version_id(in_ptr);
 
 	/* find vendor adpter */
 	rtn = adpt_get_ops(ADPT_LIB_LSC, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);

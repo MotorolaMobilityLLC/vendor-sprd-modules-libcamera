@@ -1296,8 +1296,8 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	sprd_init_param->is_planar = cxt->is_planar;
 	for (i = 0; i < 9; i++) {
 		sprd_init_param->lsc_tab_address[i] = cxt->std_init_lsc_table_param_buffer[i];	// the address of table parameter
-		sprd_init_param->rg_gradient[i] = 0;
-		sprd_init_param->bg_gradient[i] = 0;
+		sprd_init_param->rg_gradient[i] = init_param->rg_gradient[i];
+		sprd_init_param->bg_gradient[i] = init_param->bg_gradient[i];
 	}
 	sprd_init_param->tune_param_ptr =  init_param->tune_param_ptr;
 	sprd_init_param->lsc_otp_table_en =  init_param->lsc_otp_table_en;
@@ -2629,7 +2629,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		ISP_LOGD("FW_START, new tab0 address=%p, lsc table[%d,%d,%d], image_size[%d,%d]", fwstart_info->lsc_tab_address_new[0],
 			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new, fwstart_info->img_width_new, fwstart_info->img_height_new);
 
-#ifdef CONFIG_ISP_2_7
+#if ((defined CONFIG_ISP_2_7)||(defined CONFIG_ISP_2_8))
 		lsc_sprd_set_monitor(fwstart_info, cxt->lscm_info);
 		lsc_set_monitor(cxt->ctrl_handle, cxt->lscm_info);
 #endif
