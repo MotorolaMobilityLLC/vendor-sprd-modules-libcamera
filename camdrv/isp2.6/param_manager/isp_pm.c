@@ -222,7 +222,7 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_CNR3,			ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
 };
 
-#elif defined CONFIG_ISP_2_7 /* for SharkL5Pro */
+#else
 
 static struct blk_info blocks_array[] = {
 	/* DCAM blocks */

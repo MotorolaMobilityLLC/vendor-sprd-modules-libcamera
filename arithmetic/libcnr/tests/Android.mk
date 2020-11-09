@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312 sp7731e),)
 LOCAL_PATH := $(call my-dir)
 
 #gtest cnr apt
@@ -29,4 +30,4 @@ LOCAL_COMPATIBILITY_SUITE := general-tests units
 
 LOCAL_PROPRIETARY_MODULE := true
 include $(BUILD_NATIVE_TEST)
-
+endif

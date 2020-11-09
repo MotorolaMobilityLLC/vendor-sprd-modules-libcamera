@@ -4357,7 +4357,7 @@ int SprdCamera3OEMIf::PreviewFrameCallbackStream(struct camera_frame_type *frame
     HAL_LOGD("fd=0x%x, vir=0x%lx, frame_num %d, time 0x%llx, frame type = %ld",
              (cmr_u32)frame->fd, buff_vir, frame_num, buffer_timestamp,
              frame->type);
-
+#ifdef CONFIG_FACE_BEAUTY
     if (isFaceBeautyOn(sprddefInfo) && (mCameraId == 1)
 		&& (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)){
           struct faceBeautyLevels beautyLevels;
@@ -4382,7 +4382,7 @@ int SprdCamera3OEMIf::PreviewFrameCallbackStream(struct camera_frame_type *frame
             (unsigned char)sprddefInfo->perfect_skin_level[8];
           PreviewFrameFaceBeauty(frame, &beautyLevels);
       }
-
+#endif
     channel->channelCbRoutine(frame_num, buffer_timestamp,
                               CAMERA_STREAM_TYPE_CALLBACK);
 
@@ -9242,7 +9242,7 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
         if (mCommonHeapReserved == NULL) {
 #if defined(CONFIG_ISP_2_3)
         mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
-#elif defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#elif defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
         mem_size = PAGE_SIZE;
 
 #endif

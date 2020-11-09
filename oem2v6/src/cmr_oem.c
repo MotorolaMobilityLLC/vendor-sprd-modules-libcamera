@@ -215,8 +215,10 @@ camera_preview_face_beauty_handle(void *data,
 static cmr_int
 camera_video_face_beauty_handle(void *data,
                                 struct camera_frame_type *video_frame);
+#ifdef CONFIG_FACE_BEAUTY
 static void camera_frame_facebeauty(void *data, struct camera_frame_type *frame,
                             struct faceBeautyLevels *beautyLevels, char *value);
+#endif
 static cmr_int is_video_face_beauty_on(void *data);
 static cmr_int camera_get_logo_data(unsigned char *logo, int Width, int Height);
 static cmr_int camera_start_decode(cmr_handle oem_handle,
@@ -8052,7 +8054,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
         }
 
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) ||                      \
-    defined(CONFIG_ISP_2_7)
+    defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
         if (isp_video_get_simulation_flag())
             in_param.hwsim_4in1_width =
                 cxt->sn_cxt.info_4in1.limited_4in1_width;
@@ -9215,9 +9217,9 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
             camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
         } else {
 
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
-    defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_5) ||                      \
-    defined(CONFIG_ISP_2_7)
+#if defined (CONFIG_ISP_2_3) || defined (CONFIG_ISP_2_4) ||                      \
+    defined (CONFIG_ISP_2_6) || defined (CONFIG_ISP_2_5) ||                      \
+    defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
             if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN ||
                 param_ptr->cmd_value == FLASH_OPEN) {
                 cmr_u32 flash_capture_skip_num = 0;
@@ -9661,7 +9663,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 
     struct isp_3dnr_ctrl_param param_3dnr;
     struct isp_exp_compensation ae_compensation;
-#ifdef CONFIG_ISP_2_7
+#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
     struct isp_gtm_switch_param gtm_switch;
 #endif
 
@@ -9941,7 +9943,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&snp_ae_param;
         break;
 
-#ifdef CONFIG_ISP_2_7
+#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
     case COM_ISP_SET_GTM_ONFF:
         isp_cmd = ISP_CTRL_SET_GTM_ONFF;
         gtm_switch.enable = param_ptr->cmd_value;
@@ -10202,7 +10204,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->cmd_value;
         break;
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) ||                      \
-    defined(CONFIG_ISP_2_7)
+    defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
     case COM_ISP_SET_AUTO_TRACKING_ENABLE:
         CMR_LOGD("set auto tracking enable %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_AF_OT_SWITH;
@@ -11274,7 +11276,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     out_ptr->ee_flag = camera_get_ee_flag(oem_handle);
     cxt->ee_flag = out_ptr->ee_flag;
 
-#ifdef CONFIG_ISP_2_7
+#if defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
     ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_GTM_STATUS, &gtm_on);
     if (ret) {
         CMR_LOGE("failed isp ioctl %ld", ret);
@@ -12058,7 +12060,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     if (ret) {
         CMR_LOGE("failed to start prev %ld", ret);
     }
-#ifdef CONFIG_ISP_2_7
+#if defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,

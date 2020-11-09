@@ -35,6 +35,8 @@ else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
 ISP_DIR := ../camdrv/isp2.6
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
 ISP_DIR := ../camdrv/isp2.6
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.8)
+ISP_DIR := ../camdrv/isp2.6
 endif
 
 
@@ -121,7 +123,9 @@ LOCAL_SHARED_LIBRARIES += libdeflicker
 LOCAL_SHARED_LIBRARIES += libae libae3.x libflash libhdr
 LOCAL_SHARED_LIBRARIES += libawb libawb1
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.8)
+LOCAL_SHARED_LIBRARIES += libalsc3.2
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
 LOCAL_SHARED_LIBRARIES += libalsc3.2
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
 LOCAL_SHARED_LIBRARIES += libalsc3.2

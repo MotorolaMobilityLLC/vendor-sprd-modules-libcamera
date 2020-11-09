@@ -72,6 +72,32 @@ LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
 	blk_v26/isp_blk_cnr3.c \
 	blk_v26/isp_blk_dre_pro.c
 LOCAL_SRC_FILES += $(call all-c-files-under, blk_v27)
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.8)
+LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
+	blk_v26/isp_blk_bchs.c \
+	blk_v26/isp_blk_bpc.c \
+	blk_v26/isp_blk_cnr2.c \
+	blk_v26/isp_blk_edge.c \
+	blk_v26/isp_blk_nlm.c \
+	blk_v26/isp_blk_posterize.c \
+	blk_v26/isp_blk_sw3dnr.c \
+	blk_v26/isp_blk_uv_div.c \
+	blk_v26/isp_blk_ynr.c \
+	blk_v26/isp_blk_ynrs.c \
+	blk_v26/isp_blk_yuv_noisefilter.c \
+	blk_v26/isp_blk_mfnr.c \
+	blk_v26/isp_blk_cnr3.c \
+	blk_v26/isp_blk_dre_pro.c\
+	blk_v27/isp_blk_ai_pro.c\
+	blk_v27/isp_blk_dre.c\
+	blk_v27/isp_blk_fb.c\
+	blk_v27/isp_blk_hsv.c\
+	blk_v27/isp_blk_imblance.c\
+	blk_v27/isp_blk_ppe.c\
+	blk_v27/isp_blk_raw_gtm.c\
+	blk_v27/isp_blk_rgb_ltm.c\
+	blk_v27/isp_blk_yuv_ltm.c\
+	blk_v27/isp_blk_yuv_ygamma.c
 endif
 
 include $(LOCAL_PATH)/../../../SprdCtrl.mk

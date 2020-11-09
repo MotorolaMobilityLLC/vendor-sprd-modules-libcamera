@@ -15,7 +15,7 @@
 #
 
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)), $(filter $(TARGET_BOARD_CAMERA_ISP_VERSION), 2.5 2.6 2.7))
+ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)), $(filter $(TARGET_BOARD_CAMERA_ISP_VERSION), 2.5 2.6 2.7 2.8))
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)

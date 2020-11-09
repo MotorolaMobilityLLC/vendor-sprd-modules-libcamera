@@ -1643,7 +1643,7 @@ cmr_s32 isp_denoise_read_v26(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 static isp_denoise_write_t s_adapt_isp_denoise_write = isp_denoise_write_v26;
 static isp_denoise_read_t s_adapt_isp_denoise_read = isp_denoise_read_v26;
 
-#elif defined CONFIG_ISP_2_7
+#elif defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
 cmr_s32 isp_denoise_write_v27(cmr_u8 * data_buf, cmr_u32 * data_size)
 {
 	cmr_s32 ret = ISP_SUCCESS;
@@ -3088,7 +3088,7 @@ cmr_s32 send_libuse_info_param(struct isp_data_header_read * read_cmd, struct ms
 	return rtn;
 }
 
-#ifdef CONFIG_ISP_2_7
+#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
 cmr_s32 get_ae_table_param_length(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u32 * data_len)
 {
 	cmr_s32 rtn = 0x00;
@@ -3915,7 +3915,7 @@ cmr_s32 send_isp_param(struct isp_data_header_read * read_cmd, struct msg_head_t
 	return rtn;
 }
 
-#ifdef CONFIG_ISP_2_7
+#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
 cmr_s32 down_ae_table_param(struct sensor_raw_fix_info * sensor_raw_fix, cmr_u16 sub_type, cmr_u8 * data_addr)
 {
 	cmr_s32 rtn = 0x00;
