@@ -57,7 +57,7 @@ static cmr_s32 ae_set_exposure(cmr_handle handler, struct ae_exposure *in_param)
 
 static cmr_s32 ae_set_blk_num(cmr_handle handler, struct ae_size *blk_num)
 {
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 	if (cxt_ptr->ae_set_cb) {
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_SET_BLK_NUM, blk_num, NULL);
@@ -93,7 +93,7 @@ static cmr_int ae_write_multi_ae(cmr_handle handler, cmr_handle dualsnyc_ptr)
 
 static cmr_int ae_bokeh_hdr_cb(cmr_handle handler, cmr_handle in_param)
 {
-#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 	struct aectrl_cxt *cxt_ptr = (struct aectrl_cxt *)handler;
 	if (cxt_ptr->ae_set_cb) {
 		cxt_ptr->ae_set_cb(cxt_ptr->caller_handle, ISP_AE_HDR_BOKEH, in_param, NULL);

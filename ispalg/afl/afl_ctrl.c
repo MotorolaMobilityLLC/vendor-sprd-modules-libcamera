@@ -190,7 +190,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	#define AFL_GLB_ROW (80)
 	#define AFL_RIG_ROW (481)
 
-	#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+	#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)|| defined(CONFIG_ISP_2_8)
 	char data[16];
 	cmr_u32 j = 0;
 	cmr_s32 *out = NULL;
@@ -254,7 +254,7 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	}
 #endif
 
-#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 	/* parsing raw afl data (afl global data)*/
 	out = (cmr_s32 *)malloc(AFL_BATCH_SIZE_GLB*cxt->frame_num);
 	if(out==NULL){
@@ -424,7 +424,7 @@ exit:
 	if(ae_stat_ptr)
 		free(ae_stat_ptr);
 
-#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 	if (out)
 		free(out);
 	if (out_region)
@@ -576,7 +576,7 @@ cmr_int aflnew_ctrl_cfg(isp_handle isp_afl_handle)
 	cxt->start_col = 0;
 	cxt->end_col = (cmr_u32)cxt->width;
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
 	afl_info_v3.bayer2y_chanel = 0;
 	afl_info_v3.bayer2y_mode = 2;
 #endif
