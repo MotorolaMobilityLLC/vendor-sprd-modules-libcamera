@@ -42,7 +42,7 @@ LOCAL_SRC_FILES := src/sprd_fdr_adapter.cpp
 LOCAL_MODULE := libsprdfdradapter
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
-LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdfdr
+LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdfdr libsprdcamalgassist
 
 LOCAL_C_INCLUDES := \
          $(LOCAL_PATH)/inc \
@@ -50,7 +50,8 @@ LOCAL_C_INCLUDES := \
          $(TOP)/system/core/include/cutils \
          $(TOP)/system/core/include \
          $(LOCAL_PATH)/../../ispalg/ae/inc \
-         $(LOCAL_PATH)/../../common/inc
+         $(LOCAL_PATH)/../../common/inc \
+         $(LOCAL_PATH)/../sprd_camalg_assist
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

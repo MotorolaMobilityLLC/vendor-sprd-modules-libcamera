@@ -4,6 +4,10 @@
 #include "sprd_camalg_assist_common.h"
 #include "sprd_camalg_assist.h"
 
+#ifdef VDSP_CADENCE
+#include "vdsp_interface.h"
+#endif
+
 JNIEXPORT int sprd_caa_vdsp_open(void **h_vdsp)
 {
 #ifdef VDSP_CEVA
@@ -67,6 +71,15 @@ JNIEXPORT int sprd_caa_vdsp_maxfreq_unlock(void *h_vdsp)
 {
 #ifdef VDSP_CADENCE
 	return cadence_vdsp_maxfreq_unlock(h_vdsp);
+#else
+    return 0;
+#endif
+}
+
+JNIEXPORT int sprd_caa_vdsp_check_supported()
+{
+#ifdef VDSP_CADENCE
+    return sprd_vdsp_check_supported();
 #else
     return 0;
 #endif
