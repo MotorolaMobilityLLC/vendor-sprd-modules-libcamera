@@ -2594,6 +2594,10 @@ void SprdCamera3HWI::setAeLockUnLock() {
     mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_LOCK);
 }
 
+void SprdCamera3HWI::setAeRegion() {
+    mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_REGIONS);
+}
+
 void SprdCamera3HWI::setRefCameraId(uint32_t camera_id) {
     HAL_LOGD("set reference camera id %u", camera_id);
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_REF_CAMERA_ID, &camera_id, NULL);
