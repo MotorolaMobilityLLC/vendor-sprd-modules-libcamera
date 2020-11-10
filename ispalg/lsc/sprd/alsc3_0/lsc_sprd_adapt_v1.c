@@ -25,10 +25,13 @@
 #include <utils/Timers.h>
 #include <sys/stat.h>
 #include <math.h>
+#include "cmr_common.h"
 
 #define MAX_CAMERA_ID  6
 
 #define DEFAULT_TAB_INDEX 2
+
+cmr_u16 lock =0;
 
 cmr_u32 proc_start_gain_w = 0;	// SBS master gain width
 cmr_u32 proc_start_gain_h = 0;	// SBS master gain height
@@ -2223,6 +2226,137 @@ static void alsc_do_simulation(void *handle,void *in)
 
 }
 
+static void lsc_multi_camera_sync(struct lsc_sprd_ctrl_context *cxt){
+	cmr_u32 i;
+	cmr_u32 pre_width = proc_start_gain_w;
+	cmr_u32 pre_height = proc_start_gain_h;
+	cmr_u32 pre_pattern = proc_start_gain_pattern;
+	cmr_u16 lsc_pre_result_scale_table[32 * 32 * 4] = { 0 };
+	cmr_u16 lsc_pre_pm0_scale_table[32 * 32 * 4] = { 0 };
+
+	cmr_u32 new_width = cxt->gain_width;
+	cmr_u32 new_height = cxt->gain_height;
+	cmr_u32 new_pattern = cxt->output_gain_pattern;
+	cmr_u16 *lsc_result_sync_new = cxt->lsc_buffer;
+	cmr_u32 channel_gain_num = new_height * new_width;
+
+	cmr_u16 pre_pm0_r_tab[32 * 32] = { 0 };
+	cmr_u16 pre_pm0_gr_tab[32 * 32] = { 0 };
+	cmr_u16 pre_pm0_gb_tab[32 * 32] = { 0 };
+	cmr_u16 pre_pm0_b_tab[32 * 32] = { 0 };
+	cmr_u16 pre_out_r[32 * 32] = { 0 };
+	cmr_u16 pre_out_gr[32 * 32] = { 0 };
+	cmr_u16 pre_out_gb[32 * 32] = { 0 };
+	cmr_u16 pre_out_b[32 * 32] = { 0 };
+
+	cmr_u16 new_pm0_r_tab[32 * 32] = { 0 };
+	cmr_u16 new_pm0_gr_tab[32 * 32] = { 0 };
+	cmr_u16 new_pm0_gb_tab[32 * 32] = { 0 };
+	cmr_u16 new_pm0_b_tab[32 * 32] = { 0 };
+	cmr_u16 new_out_r[32 * 32] = { 0 };
+	cmr_u16 new_out_gr[32 * 32] = { 0 };
+	cmr_u16 new_out_gb[32 * 32] = { 0 };
+	cmr_u16 new_out_b[32 * 32] = { 0 };
+
+	float gain_ratio_g[32 * 32] = { 0 };
+	float gain_ratio_pre_rgbg[32 * 32] = { 0 };
+	float gain_ratio_new_rgbg[32 * 32] = { 0 };
+	float ratio_rgbg[32 * 32] = { 0 };
+	float gain_ratio_input_rgbg[32 * 32] = { 0 };
+	float gain_ratio_output_rgbg[32 * 32] = { 0 };
+
+	cmr_u8 off_gr = 0, off_r = 1, off_b = 2, off_gb = 3;
+	cmr_u32 gr_chnl_off, r_chnl_off, b_chnl_off, gb_chnl_off;
+
+
+	if (cxt->lsc_buffer == NULL || cxt->lsc_pm0 == NULL) {
+		ISP_LOGV("Sync start fail, lsc_buffer %p, lsc_pm0 %p, camera id=%d", cxt->lsc_buffer, cxt->lsc_pm0,cxt->camera_id);
+		return;
+	}
+	if(pre_height == 0||pre_width == 0){
+		ISP_LOGD("gain width or gain height is 0,sync return,camera id =%d",cxt->camera_id );
+		return;
+	}
+
+	lsc_table_linear_scaler(proc_start_output_table,pre_width,pre_height,lsc_pre_result_scale_table,new_width,new_height,cxt->is_planar);
+	lsc_table_linear_scaler(proc_start_param_table,pre_width,pre_height,lsc_pre_pm0_scale_table,new_width,new_height,cxt->is_planar);
+
+	if(cxt->is_planar == 1){
+		lsc_planar_to_channel(new_width, new_height, pre_pattern, pre_pm0_r_tab, pre_pm0_gr_tab, pre_pm0_gb_tab, pre_pm0_b_tab, lsc_pre_pm0_scale_table);
+		lsc_planar_to_channel(new_width, new_height, pre_pattern, pre_out_r, pre_out_gr, pre_out_gb, pre_out_b, lsc_pre_result_scale_table);
+		lsc_planar_to_channel(new_width, new_height, new_pattern, new_pm0_r_tab, new_pm0_gr_tab, new_pm0_gb_tab, new_pm0_b_tab, cxt->std_lsc_table_param_buffer[0]);
+	}else{
+		lsc_interlace_to_channel(new_width, new_height, pre_pattern, pre_pm0_r_tab, pre_pm0_gr_tab, pre_pm0_gb_tab, pre_pm0_b_tab, lsc_pre_pm0_scale_table);
+		lsc_interlace_to_channel(new_width, new_height, pre_pattern, pre_out_r, pre_out_gr, pre_out_gb, pre_out_b, lsc_pre_result_scale_table);
+		lsc_interlace_to_channel(new_width, new_height, new_pattern, new_pm0_r_tab, new_pm0_gr_tab, new_pm0_gb_tab, new_pm0_b_tab, cxt->std_lsc_table_param_buffer[0]);
+	}
+
+	ISP_LOGD("pre_pm0_tab(gr_r_b_gb) = [%d, %d, %d, %d]",pre_pm0_gr_tab[0],pre_pm0_r_tab[0],pre_pm0_b_tab[0],pre_pm0_gb_tab[0]);
+	ISP_LOGD("new_pm0_tab(gr_r_b_gb) = [%d, %d, %d, %d]",new_pm0_gr_tab[0],new_pm0_r_tab[0],new_pm0_b_tab[0],new_pm0_gb_tab[0]);
+
+	/* new_out_gr & new_out_gb */
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_g[i] = (float)(new_pm0_gb_tab[i] + new_pm0_gr_tab[i]) / (float)(pre_pm0_gb_tab[i] + pre_pm0_gr_tab[i]);
+	for(i = 0; i<channel_gain_num; i++){
+		new_out_gb[i] = (unsigned short)(pre_out_gb[i] * gain_ratio_g[i]);
+		new_out_gr[i] = (unsigned short)(pre_out_gr[i] * gain_ratio_g[i]);
+	}
+
+	/* new_out_r */
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_new_rgbg[i] = (float)(new_pm0_r_tab[i] + new_pm0_r_tab[i]) / (float)(new_pm0_gb_tab[i] + new_pm0_gr_tab[i]);
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_pre_rgbg[i] = (float)(pre_pm0_r_tab[i] + pre_pm0_r_tab[i]) / (float)(pre_pm0_gb_tab[i] + pre_pm0_gr_tab[i]);
+	for(i = 0; i<channel_gain_num; i++)
+		ratio_rgbg[i] = gain_ratio_new_rgbg[i] / gain_ratio_pre_rgbg[i];
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_input_rgbg[i] = (float)(pre_out_r[i] + pre_out_r[i]) / (float)(pre_out_gr[i] + pre_out_gb[i]);
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_output_rgbg[i] = gain_ratio_input_rgbg[i] * ratio_rgbg[i];
+	for(i = 0; i<channel_gain_num; i++)
+		new_out_r[i] = (unsigned short)((pre_out_gr[i] + pre_out_gb[i])*gain_ratio_g[i]/2.0f * gain_ratio_output_rgbg[i] + 0.5f);
+
+	/* new_out_b */
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_new_rgbg[i] = (float)(new_pm0_b_tab[i] + new_pm0_b_tab[i]) / (float)(new_pm0_gb_tab[i] + new_pm0_gr_tab[i]);
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_pre_rgbg[i] = (float)(pre_pm0_b_tab[i] + pre_pm0_b_tab[i]) / (float)(pre_pm0_gb_tab[i] + pre_pm0_gr_tab[i]);
+	for(i = 0; i<channel_gain_num; i++)
+		ratio_rgbg[i] = gain_ratio_new_rgbg[i] / gain_ratio_pre_rgbg[i];
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_input_rgbg[i] = (float)(pre_out_b[i] + pre_out_b[i]) / (float)(pre_out_gr[i] + pre_out_gb[i]);
+	for(i = 0; i<channel_gain_num; i++)
+		gain_ratio_output_rgbg[i] = gain_ratio_input_rgbg[i] * ratio_rgbg[i];
+	for(i = 0; i<channel_gain_num; i++)
+		new_out_b[i] = (unsigned short)((pre_out_gr[i] + pre_out_gb[i])*gain_ratio_g[i]/2.0f * gain_ratio_output_rgbg[i] + 0.5f);
+
+	ISP_LOGD("pre_in_tab(gr_r_b_gb) = [%d, %d, %d, %d]",pre_out_gr[0],pre_out_r[0],pre_out_b[0],pre_out_gb[0]);
+	ISP_LOGD("new_out_tab(gr_r_b_gb) = [%d, %d, %d, %d]",new_out_gr[0],new_out_r[0],new_out_b[0],new_out_gb[0]);
+
+	lsc_get_channel_index(new_pattern, &off_gr, &off_r, &off_b, &off_gb);
+	gr_chnl_off = off_gr * new_width * new_height;
+	r_chnl_off = off_r * new_width * new_height;
+	b_chnl_off = off_b * new_width * new_height;
+	gb_chnl_off = off_gb * new_width * new_height;
+
+	if (cxt->is_planar == 0) {
+		for (i = 0; i < new_width * new_height; i++) {
+			lsc_result_sync_new[4 * i + off_gr] = RANGE(new_out_gr[i], 1024, 16383);
+			lsc_result_sync_new[4 * i + off_r] = RANGE(new_out_r[i], 1024, 16383);
+			lsc_result_sync_new[4 * i + off_b] = RANGE(new_out_b[i], 1024, 16383);
+			lsc_result_sync_new[4 * i + off_gb] = RANGE(new_out_gb[i], 1024, 16383);
+		}
+	} else {
+		for (i = 0; i < new_width * new_height; i++) {
+			lsc_result_sync_new[i + gr_chnl_off] = RANGE(new_out_gr[i], 1024, 16383);
+			lsc_result_sync_new[i + r_chnl_off] = RANGE(new_out_r[i], 1024, 16383);
+			lsc_result_sync_new[i + b_chnl_off] = RANGE(new_out_b[i], 1024, 16383);
+			lsc_result_sync_new[i + gb_chnl_off] = RANGE(new_out_gb[i], 1024, 16383);
+		}
+	}
+	ISP_LOGD("Sync end,camra id =%d",cxt->camera_id );
+}
+
 static void *lsc_sprd_init(void *in, void *out)
 {
 	cmr_s32 rtn = LSC_SUCCESS;
@@ -2492,14 +2626,39 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		alg_in = lsc_get_alg_in_flag(cxt, &IIR_weight);
 	}
 
-	if (cxt->cmd_alsc_bypass ||  cxt->alg_bypass) {
-		alg_in = 0;
-	}
-
 	debug_index[0] = 0 * gain_width * gain_height;
 	debug_index[1] = 1 * gain_width * gain_height;
 	debug_index[2] = 2 * gain_width * gain_height;
 	debug_index[3] = 3 * gain_width * gain_height;
+
+
+	if(cxt->camera_id != cxt->ref_camera_id && cxt->sync_flag == 0){
+		if(lock==1){
+			ISP_LOGD("Sync return,lock stat=%d,camra id =%d",lock,cxt->camera_id );
+		}else{
+			lsc_multi_camera_sync(cxt);
+			ISP_LOGD("lsc multi shift, camera_id=%d, frame_count=%d, ref_camera_id=%d, final output cxt->lsc_buffer[%d,%d,%d,%d]",
+				cxt->camera_id,cxt->frame_count,cxt->ref_camera_id,cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
+		}
+		goto lsc_calc_exit;
+	}else if(cxt->camera_id != cxt->ref_camera_id && cxt->sync_flag == 1 && cxt->sync_count > 0){
+		if(lock==1){
+			ISP_LOGD("Sync return,lock stat=%d,camra id =%d",lock,cxt->camera_id );
+		}else{
+			lsc_multi_camera_sync(cxt);
+			memcpy(cxt->last_lsc_table, cxt->lsc_buffer, gain_width * gain_height * 4 * sizeof(cmr_u16));
+			cxt->sync_count--;
+			ISP_LOGD("lsc multi shift, camera_id=%d, frame_count=%d, ref_camera_id=%d, final output cxt->lsc_buffer[%d,%d,%d,%d]",
+				cxt->camera_id,cxt->frame_count,cxt->ref_camera_id,cxt->lsc_buffer[debug_index[0]], cxt->lsc_buffer[debug_index[1]], cxt->lsc_buffer[debug_index[2]], cxt->lsc_buffer[debug_index[3]]);
+		}
+	}
+	if(cxt->sync_flag == 1){
+		alg_in = 1;
+	}
+
+	if (cxt->cmd_alsc_bypass ||  cxt->alg_bypass) {
+		alg_in = 0;
+	}
 
 	// cmd set lsc output
 	if (cxt->cmd_alsc_table_pattern) {
@@ -2568,6 +2727,16 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		lsc_sprd_do_postgain(cxt, cxt->last_lsc_table, gain_width, gain_height, param->bv, param->bv_gain, cxt->flash_mode, cxt->pre_flash_mode, cxt->output_lsc_table);
 		memcpy(cxt->lsc_buffer, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
 
+		if(lock == 0){
+			lock = 1;
+			ISP_LOGD("sync table, camera id =%d ", cxt->camera_id);
+			proc_start_gain_w = cxt->gain_width;
+			proc_start_gain_h = cxt->gain_height;
+			proc_start_gain_pattern = cxt->output_gain_pattern;
+			memcpy(proc_start_output_table, cxt->output_lsc_table, gain_width * gain_height * 4 * sizeof(unsigned short));
+			memcpy(proc_start_param_table, cxt->std_lsc_table_param_buffer[0], gain_width * gain_height * 4 * sizeof(unsigned short));
+			lock = 0;
+		}
 		cxt->alg_count++;
 	}
 	// alsc_calc --
@@ -2615,6 +2784,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	struct alsc_fwprocstart_info *fwprocstart_info = NULL;
 	struct lsc_last_info *lsc_last_info = (struct lsc_last_info *)cxt->lsc_last_info;
 	struct lsc_flash_proc_param *flash_param = (struct lsc_flash_proc_param *)cxt->lsc_flash_proc_param;
+	SyncState *mult_camera_shift_param =NULL;
 	//cmr_u16 *pm0_new = NULL;
 	cmr_u8 is_gr, is_gb, is_r, is_b;
 	cmr_u32 table_flag = 0;
@@ -3126,6 +3296,21 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 	case ALSC_DO_SIMULATION:
 		alsc_do_simulation(handle,in);
+		break;
+
+	case LSC_SET_MULTI_SWITCH_INFO:
+		if (!in) {
+			ISP_LOGE("fail to check param, SyncState is NULL!");
+			return LSC_ERROR;
+		}
+		mult_camera_shift_param = (SyncState *)in;
+		cxt->ref_camera_id = mult_camera_shift_param->mRefId;
+		cxt->next_camera_id = mult_camera_shift_param->mNestId;
+		cxt->sync_flag = mult_camera_shift_param->mSyncFlag;
+		if(cxt->sync_flag == 1){
+			cxt->sync_count = 1;
+		}
+		ISP_LOGD("ref_camera_id=%d, next_camera_id=%d, sync_flag=%d",cxt->ref_camera_id,cxt->next_camera_id,cxt->sync_flag);
 		break;
 
 	default:

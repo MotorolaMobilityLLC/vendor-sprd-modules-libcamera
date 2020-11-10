@@ -64,6 +64,7 @@ enum alsc_io_ctrl_cmd {
 	ALSC_GET_UPDATE_INFO = 17,
 	ALSC_UNLOCK_UPDATE_FLAG = 18,
 	ALSC_DO_SIMULATION = 19,
+	LSC_SET_MULTI_SWITCH_INFO = 20,
 };
 
 struct tg_alsc_debug_info {

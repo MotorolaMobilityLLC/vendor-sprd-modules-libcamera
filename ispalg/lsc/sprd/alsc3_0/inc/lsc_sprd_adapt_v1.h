@@ -215,6 +215,10 @@ struct lsc_sprd_ctrl_context {
 	cmr_u32 flash_center_shifty;
 	cmr_u32 stats_inverse;
 	cmr_u32 lsc_debug_info_size;
+	cmr_u16 ref_camera_id;
+	cmr_u16 next_camera_id;
+	cmr_u16 sync_flag;
+	cmr_u16 sync_count;
 };
 
 struct lsc_param {
