@@ -7,6 +7,7 @@
 #include <utils/Log.h>
 #include "cmr_types.h"
 #include "ae_ctrl_common.h"
+#include "sprd_camalg_assist.h"
 
 #define LOG_TAG "sprd_fdr_adapter"
 #define ADAPTER_LOGE(format,...) ALOGE(format, ##__VA_ARGS__)
@@ -29,8 +30,7 @@ int sprd_fdr_adapter_open(void **ctx, fdr_open_param *param)
     if (!strcmp("1", strProp))
         param->merge_param.merge_mode = 1;
 
-    property_get("ro.boot.lwfq.type", strProp , "-1");
-    if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP && strcmp("0", strProp))
+    if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP && !sprd_caa_vdsp_check_supported())
         g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
     property_get("persist.vendor.cam.fdr.run_type", strProp , "");
     if (!strcmp("cpu", strProp))

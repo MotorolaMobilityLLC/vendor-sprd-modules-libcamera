@@ -17,6 +17,9 @@ typedef struct {
 /************************
  * vdsp
  ***********************/
+//check vdsp is supported
+int sprd_caa_vdsp_check_supported();
+
 //初始化vdsp，获取vdsp handle
 int sprd_caa_vdsp_open(void **h_vdsp);
 
@@ -85,6 +88,7 @@ void IPCThreadState_stopProcess(bool immediate);
  ***********************/
 #define FORMAT_RGB_888        0
 #define FORMAT_YCRCB_420_SP   1//NV21
+#define FORMAT_RGBA_8888      2
 
 //分配GraphicBuffer，返回h_graphic_buffer
 void *GraphicBuffer_new(uint32_t width, uint32_t height, int format);

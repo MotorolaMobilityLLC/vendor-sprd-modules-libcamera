@@ -13,6 +13,7 @@ typedef enum camalg_run_type {
     SPRD_CAMALG_RUN_TYPE_CPU = 0,
     SPRD_CAMALG_RUN_TYPE_GPU,
     SPRD_CAMALG_RUN_TYPE_VDSP,
+    SPRD_CAMALG_RUN_TYPE_NPU,
     SPRD_CAMALG_RUN_TYPE_MAX
 } sprd_camalg_device_type;
 

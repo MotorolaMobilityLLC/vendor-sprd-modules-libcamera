@@ -17,6 +17,8 @@ JNIEXPORT void *GraphicBuffer_new(uint32_t width, uint32_t height, int format)
         gformat = HAL_PIXEL_FORMAT_RGB_888;
     else if (FORMAT_YCRCB_420_SP == format)
         gformat = HAL_PIXEL_FORMAT_YCRCB_420_SP;
+    else if (FORMAT_RGBA_8888 == format)
+        gformat = HAL_PIXEL_FORMAT_RGBA_8888;
     else {
         CAA_LOGE("unsupport format");
         return NULL;
