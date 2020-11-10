@@ -103,6 +103,7 @@ class SprdCamera3HWI {
     void setMasterId(uint8_t masterId);
     void setRefCameraId(uint32_t camera_id);
     void setAeLockUnLock();
+    void setAeRegion();
     void setVisibleRegion(uint32_t serial, int32_t region[4]);
     void setGlobalZoomRatio(float ratio);
     void setCapState(bool flag);

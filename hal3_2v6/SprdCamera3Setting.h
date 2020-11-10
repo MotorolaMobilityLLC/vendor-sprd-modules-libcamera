@@ -551,6 +551,7 @@ class SprdCamera3Setting {
     virtual ~SprdCamera3Setting();
 
     static int getSensorStaticInfo(int32_t cameraId);
+    static int checkROIValid(int32_t *roi_area, int32_t *crop_area);
     static int getLargestSensorSize(int32_t cameraId, cmr_u16 *width,
                                     cmr_u16 *height);
     static int setLargestSensorSize(int32_t cameraId, cmr_u16 width,
@@ -796,7 +797,6 @@ class SprdCamera3Setting {
     static int initStaticMetadata(int32_t cameraId,
                                   camera_metadata_t **static_metadata);
     static void convertToRegions(int32_t *rect, int32_t *region, int weight);
-    static int checkROIValid(int32_t *roi_area, int32_t *crop_area);
     static int checkTouchAreaUpdate(int32_t *am_area, int32_t *touch_area);
     void coordinate_struct_convert(int *rect_arr, int arr_size);
     int coordinate_convert(int *rect_arr, int arr_size, int angle,
