@@ -8,6 +8,7 @@
 #include "sprd_facebeauty_adapter.h"
 #include "version.h"
 #include <time.h>
+#include "sprd_camalg_assist.h"
 #define NUM_LEVELS 11
 #define NUM_TYPES 3
 #define CLIP(x, lo, hi) (((x) == (lo)) ? (lo) : ((x) > (hi)) ? (hi) : (x))
@@ -35,8 +36,7 @@ void face_beauty_init(fb_beauty_param_t *faceBeauty, int workMode, int threadNum
     }
 
     char strRunType[256];
-    property_get("ro.boot.lwfq.type", strRunType , "-1");
-    if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_VDSP && strcmp("0", strRunType))
+    if (faceBeauty->runType == SPRD_CAMALG_RUN_TYPE_VDSP && !sprd_caa_vdsp_check_supported())
         faceBeauty->runType = SPRD_CAMALG_RUN_TYPE_CPU;
     lightPortraitType = 0;
     property_get("persist.vendor.cam.fb.run_type", strRunType , "");
