@@ -2,6 +2,7 @@
 #include "sprd_hdr_adapter_log.h"
 #include "properties.h"
 #include <string.h>
+#include "sprd_camalg_assist.h"
 
 #ifdef CONFIG_SPRD_HDR_LIB
 #include "HDR_SPRD.h"
@@ -30,9 +31,7 @@ void *sprd_hdr_adpt_init(int max_width, int max_height, void *param)
 	cfg.img_stride = max_width;
 
     char strRunType[256];
-
-    property_get("ro.boot.lwfq.type", strRunType , "-1");
-    if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP && strcmp("0", strRunType))
+    if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP && !sprd_caa_vdsp_check_supported())
         g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
 
     property_get("persist.vendor.cam.hdr2.run_type", strRunType , "");

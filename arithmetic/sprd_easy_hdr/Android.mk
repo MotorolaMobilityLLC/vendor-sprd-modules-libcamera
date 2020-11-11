@@ -101,14 +101,15 @@ LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 else ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB_VERSION_2
-LOCAL_SHARED_LIBRARIES += libsprdhdr
+LOCAL_SHARED_LIBRARIES += libsprdhdr libsprdcamalgassist
 endif
 
 LOCAL_C_INCLUDES := \
-         $(LOCAL_PATH)/inc \
-		 $(LOCAL_PATH)/../inc \
-         $(TOP)/system/core/include/cutils/ \
-         $(TOP)/system/core/include/
+        $(LOCAL_PATH)/inc \
+        $(LOCAL_PATH)/../inc \
+        $(TOP)/system/core/include/cutils \
+        $(TOP)/system/core/include \
+        $(LOCAL_PATH)/../sprd_camalg_assist
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
