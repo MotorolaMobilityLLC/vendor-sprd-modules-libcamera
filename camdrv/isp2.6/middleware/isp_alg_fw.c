@@ -4523,7 +4523,7 @@ static cmr_int ispalg_smart_init(struct isp_alg_fw_context *cxt)
 	}
 	smart_init_param.caller_handle = (cmr_handle)cxt;
 	smart_init_param.smart_set_cb = ispalg_smart_set_cb;
-
+	smart_init_param.camera_id = cxt->camera_id;
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_ATM_PARAM, NULL, &pm_output);
 	if (ISP_SUCCESS != ret || pm_output.param_num != 1) {
 		ISP_LOGW("warn: no atm param. ret %ld, num %d\n", ret, pm_output.param_num);

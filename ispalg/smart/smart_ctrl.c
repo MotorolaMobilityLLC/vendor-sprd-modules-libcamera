@@ -175,9 +175,10 @@ static cmr_s32 smart_ctl_save_stash(struct smart_context *cxt, void *in_param)
 	}
 
 	memset((cmr_s32*)smart_stash_s, 0, sizeof(smart_stash_s));
-
+	char file_name[1024];
 	FILE* fp = NULL;
-	fp = fopen(SMART_STASH_FILE, "rb");
+	snprintf(file_name, sizeof(file_name),"%scamera_%d_smart.file", SMART_STASH_FILE, smart_camera_id);
+	fp = fopen(file_name, "rb");
 	if (fp) {
 		ISP_LOGD("read smart  file");
 		count = fread((cmr_s32*)smart_stash_s,1,sizeof(smart_stash_s), fp);
@@ -197,7 +198,7 @@ SAVE_BIN:
 	smart_stash_s[smart_camera_id][1] =cxt->smart_stash_param.bv_gain;
 	smart_stash_s[smart_camera_id][2] =cxt->smart_stash_param.ct;
 
-	fp = fopen(SMART_STASH_FILE, "wb");
+	fp = fopen(file_name, "wb");
 	if (fp) {
 		fwrite((cmr_s32*)smart_stash_s,1,sizeof(smart_stash_s), fp);
 		fclose(fp);
@@ -238,8 +239,10 @@ static cmr_s32 smart_ctl_apply_stash(struct smart_context *cxt, void *in_param)
 		goto ERROR_EXIT;
 	}
 
+	char file_name[1024];
 	FILE* fp = NULL;
-	fp = fopen(SMART_STASH_FILE, "rb");
+	snprintf(file_name, sizeof(file_name),"%scamera_%d_smart.file", SMART_STASH_FILE, smart_camera_id);
+	fp = fopen(file_name, "rb");
 	if (fp) {
 		memset((void*)smart_stash_r, 0, sizeof(smart_stash_r));
 		count = fread((cmr_s32*)smart_stash_r,1,sizeof(smart_stash_r), fp);
@@ -1021,16 +1024,17 @@ static const char *smart_ctl_find_block_name(cmr_u32 smart_id)
 	return s_smart_block_name[smart_id_tmp];
 }
 
-static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_calc_param *calc_param, struct smart_calc_result *result, char *debug_buf,smart_gamma_debuginfo *smt_dbg )
+static void smart_ctl_print_debug_file(smart_handle_t handle,debug_handle_t debug_file, struct smart_calc_param *calc_param, struct smart_calc_result *result, char *debug_buf,smart_gamma_debuginfo *smt_dbg )
 {
 	struct smart_block_result *blk = NULL;
 	struct smart_component_result *comp = NULL;
 	struct isp_weight_value *weight_value = NULL;
+	struct smart_context *cxt = NULL;
 	cmr_u32 i = 0, j = 0;
 	const char *block_name = NULL;
 	cmr_s32 rtn = ISP_SUCCESS;
 	char value[PROPERTY_VALUE_MAX] = { 0 };
-
+	cxt = (struct smart_context *)handle;
 	property_get("persist.vendor.cam.isp.smartdebug", value, "0");
 
 	if (!strcmp(value, "0"))
@@ -1056,21 +1060,21 @@ static void smart_ctl_print_debug_file(debug_handle_t debug_file, struct smart_c
 
 			switch (comp->y_type) {
 			case ISP_SMART_Y_TYPE_VALUE:
-				sprintf(debug_buf, "%s: [%d]:val=%d", block_name, j, comp->fix_data[0]);
+				snprintf(debug_buf,sizeof(cxt->debug_buf), "%s: [%d]:val=%d", block_name, j, comp->fix_data[0]);
 				break;
 
 			case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
 				weight_value = (struct isp_weight_value *)comp->fix_data;
 
 				if (comp->x_type == ISP_SMART_X_TYPE_BV_CT) {
-					sprintf(debug_buf, "%s, [%d]:val=(%d, %d), w=(%d, %d) %d(%d, %d):(%d, %d) %d(%d, %d):(%d, %d)", block_name, j,
+					snprintf(debug_buf, sizeof(cxt->debug_buf),"%s, [%d]:val=(%d, %d), w=(%d, %d) %d(%d, %d):(%d, %d) %d(%d, %d):(%d, %d)", block_name, j,
 						weight_value[0].value[0], weight_value[0].value[1],
 						weight_value[0].weight[0], weight_value[0].weight[1],
 						weight_value[0].value[0], weight_value[1].value[0], weight_value[1].value[1], weight_value[1].weight[0], weight_value[1].weight[1],
 						weight_value[0].value[1], weight_value[2].value[0], weight_value[2].value[1], weight_value[2].weight[0], weight_value[2].weight[1]
 					    );
 				} else {
-					sprintf(debug_buf, "%s, [%d]:val=(%d, %d), w=(%d, %d) ", block_name, j,
+					snprintf(debug_buf, sizeof(cxt->debug_buf),"%s, [%d]:val=(%d, %d), w=(%d, %d) ", block_name, j,
 						weight_value[0].value[0], weight_value[0].value[1], weight_value[0].weight[0], weight_value[0].weight[1]
 					    );
 				}
@@ -1605,9 +1609,9 @@ cmr_int _smart_gamma(struct smart_proc_input *inptr,
 
 		rtn = isp_interp_data(dst_r, src_r, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 
-		rtn = isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+		rtn |= isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 
-		rtn = isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+		rtn |= isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 		if (abl_weighting > 0) {
 			gamc_value.weight[0] = (((abl_weighting) * SMART_WEIGHT_UNIT/100)/(SMART_WEIGHT_UNIT / 16)) * (SMART_WEIGHT_UNIT / 16);
 			gamc_value.weight[1] = SMART_WEIGHT_UNIT - gamc_value.weight[0];
@@ -1620,12 +1624,12 @@ cmr_int _smart_gamma(struct smart_proc_input *inptr,
 			src_g[0] = &gamma_curve[2].points_g[0].x;
 			src_g[1] = &tmp_dst.points_g[0].x;
 			dst_g = &gamma_info->points_g;
-			rtn = isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+			rtn |= isp_interp_data(dst_g, src_g, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 
 			src_b[0] = &gamma_curve[2].points_b[0].x;
 			src_b[1] = &tmp_dst.points_b[0].x;
 			dst_b = &gamma_info->points_b;
-			rtn = isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
+			rtn |= isp_interp_data(dst_b, src_b, gamc_value.weight, SENSOR_GAMMA_POINT_NUM * 2, ISP_INTERP_UINT16);
 
 			ISP_LOGV("ABL gamma %d %d\n",gamc_value.weight[0],gamc_value.weight[1]);
 		} else {
@@ -1809,7 +1813,7 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 	}
 	ISP_LOGV("bv=%d, ct=%d, flash=%d", param->bv, param->ct, flash_mode);
 	smart_ctl_print_smart_result(cxt->flash_mode, result);
-	smart_ctl_print_debug_file(cxt->debug_file, param, result, (char *)cxt->debug_buf,&(cxt->smt_dbginfo.smt_gma));
+	smart_ctl_print_debug_file(handle,cxt->debug_file, param, result, (char *)cxt->debug_buf,&(cxt->smt_dbginfo.smt_gma));
 	for (i = 0; i < result->counts; i++) {
 		blk = &result->block_result[i];
 		if (blk->smart_id > 8) {
