@@ -843,8 +843,8 @@ static cmr_int imx616_drv_stream_on(cmr_handle handle, cmr_uint param) {
     /*TODO*/
     cmr_uint sensor_mode = 0;
     sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
-    if (sensor_mode > 2)
-		imx616_drv_set_xtalk_data(handle, param);
+ //   if (sensor_mode > 2)
+//		imx616_drv_set_xtalk_data(handle, param);
 
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 

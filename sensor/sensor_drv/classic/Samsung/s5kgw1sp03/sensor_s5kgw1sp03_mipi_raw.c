@@ -831,9 +831,10 @@ static cmr_int s5kgw1sp03_drv_power_on(cmr_handle handle, cmr_int power_on) {
     if (SENSOR_TRUE == power_on) {
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
-        hw_sensor_set_voltage(sns_drv_cxt->hw_handle, dvdd_val, avdd_val,
-                              iovdd_val);
         usleep(1 * 1000);
+        hw_sensor_set_iovdd_val(sns_drv_cxt->hw_handle, iovdd_val);
+        hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, avdd_val);
+        hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         usleep(1 * 1000);
