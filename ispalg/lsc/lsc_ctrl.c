@@ -359,7 +359,7 @@ cmr_int lsc_ctrl_ioctrl(cmr_handle handle_lsc, cmr_s32 cmd, void *in_ptr, void *
 	}
 
 	CMR_MSG_INIT(message);
-	if ((ALSC_FW_START == cmd) || (ALSC_FW_PROC_START == cmd)) {
+	if ((ALSC_FW_START == cmd) || (ALSC_FW_PROC_START == cmd) || (ALSC_FW_STOP == cmd)) {
 		msg.cmd = cmd;
 		msg.in = in_ptr;
 		msg.out = out_ptr;
