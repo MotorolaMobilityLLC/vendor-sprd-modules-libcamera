@@ -90,7 +90,8 @@ LOCAL_HEADER_LIBRARIES += liblog_headers
 
 LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/inc \
-        $(LOCAL_PATH)/../inc
+        $(LOCAL_PATH)/../inc \
+        $(LOCAL_PATH)/../sprd_camalg_assist
 
 LOCAL_SRC_FILES += sprd_facebeauty_adapter.cpp
 
@@ -101,7 +102,8 @@ LOCAL_SHARED_LIBRARIES:= \
      liblog \
      libcutils \
      libsprdfacebeauty \
-     libsprdfacebeauty_vdsp
+     libsprdfacebeauty_vdsp \
+     libsprdcamalgassist
 
 LOCAL_MODULE := libcamfacebeauty
 LOCAL_MODULE_TAGS := optional
