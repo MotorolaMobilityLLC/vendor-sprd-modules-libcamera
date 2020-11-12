@@ -4,7 +4,7 @@
 /*sharkl3_sensor_cnr3_level*/
 {
 	/*level_enable*/
-	0x01,
+	0x00,
 	/*reserved0*/
 	{
 		0x00,0x00,0x00/*0-2*/
