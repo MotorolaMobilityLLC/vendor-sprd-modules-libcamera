@@ -1090,6 +1090,13 @@ static cmr_s32 ae_update_result_to_slave_sensor(struct ae_ctrl_cxt *cxt, struct 
 
 	cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_SYNC_OUTPUT, NULL, &ae_sync_lib_output);
 
+	//slave need callbclk mapping result but not lib calc result
+	cxt->calc_results.ae_output.cur_again = ae_sync_lib_output.ae_gain;
+	cxt->calc_results.ae_output.cur_exp_line = ae_sync_lib_output.exp_line;
+	cxt->calc_results.ae_output.line_time = ae_sync_lib_output.line_time;
+	cxt->calc_results.ae_output.exposure_time = (float) ae_sync_lib_output.exp_time / AEC_LINETIME_PRECESION;
+	cxt->calc_results.ae_output.cur_dummy = ae_sync_lib_output.dmy_line;
+
 	ae_parse_isp_gain(cxt, 0, ae_sync_lib_output.ae_gain, &ae_sync_gain.sensor_gain, &ae_sync_gain.isp_gain);
 	ISP_LOGV("ae_update_result_to_slave_sensor, sync_lib_out, gain_info, ae_gain:%d, sensor_gain:%d, isp_gain:%d", ae_sync_lib_output.ae_gain, ae_sync_gain.sensor_gain, ae_sync_gain.isp_gain);
 	input_item.exp_line = ae_sync_lib_output.exp_line;
