@@ -2126,7 +2126,6 @@ static void lsc_sprd_do_postgain(void *handle,cmr_u16 *org_gain,cmr_u32 gain_wid
 	post_gain_param.gain_width = gain_width;
 	post_gain_param.gain_height = gain_height;
 	post_gain_param.gain_pattern = cxt->output_gain_pattern;
-	post_gain_param.frame_count = cxt->frame_count;
 	post_gain_param.bv = bv;
 	post_gain_param.bv_gain = bv_gain;
 	post_gain_param.flash_mode = flash_mode;

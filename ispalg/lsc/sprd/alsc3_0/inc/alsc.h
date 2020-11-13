@@ -36,8 +36,8 @@ struct lsc_otp_convert_param{
 	int gain_height;
 	int grid;
 	unsigned short *lsc_table[9];
-	int gridy;
 	int gridx;
+	int gridy;
 };
 
 struct lsc_flash_y_gain_param{
@@ -126,7 +126,6 @@ struct lsc_post_shading_param {
 	int gain_width;
 	int gain_height;
 	int gain_pattern;
-	int frame_count;
 	int bv;
 	int bv_gain;
 	int flash_mode;
