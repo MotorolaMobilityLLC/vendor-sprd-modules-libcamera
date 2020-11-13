@@ -48,8 +48,13 @@
 #define VIDEO_HEIGHT 720
 #define PREVIEW_WIDTH 2048
 #define PREVIEW_HEIGHT 1536
+#if defined(CONFIG_CAMERA_SUPPORT_8M)
+#define SNAPSHOT_WIDTH 2048
+#define SNAPSHOT_HEIGHT 1536
+#else
 #define SNAPSHOT_WIDTH 4096
 #define SNAPSHOT_HEIGHT 3072
+#endif
 
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
@@ -214,11 +219,12 @@ static struct sensor_res_tab_info s_ov12a10_resolution_tab_raw[VENDOR_NUM] = {
           {ADDR_AND_LEN_OF_ARRAY(ov12a10_preview_setting), PNULL, 0,
            .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
+#ifndef CONFIG_CAMERA_SUPPORT_8M
           {ADDR_AND_LEN_OF_ARRAY(ov12a10_snapshot_setting), PNULL, 0,
            .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
-
+           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
+#endif
+          }},
     /*If there are multiple modules,please add here*/
 };
 
