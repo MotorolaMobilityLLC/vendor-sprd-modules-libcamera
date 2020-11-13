@@ -546,6 +546,7 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
 void SprdCamera3OEMIf::closeCamera() {
     ATRACE_CALL();
+    FLASH_INFO_Tag flashInfo;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
     Mutex::Autolock l(&mLock);
@@ -567,7 +568,10 @@ void SprdCamera3OEMIf::closeCamera() {
         stopPreviewInternal();
     }
 
-    SprdCamera3Flash::releaseFlash(mCameraId);
+    mSetting->getFLASHINFOTag(&flashInfo);
+    if (flashInfo.available) {
+        SprdCamera3Flash::releaseFlash(mCameraId);
+    }
 
 #ifdef CONFIG_CAMERA_GYRO
     gyro_monitor_thread_deinit((void *)this);
@@ -712,7 +716,6 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR:
-        SprdCamera3Flash::releaseFlash(mCameraId);
         stopPreviewInternal();
         if (mCaptureMode == CAMERA_NORMAL_MODE) {
             FreeReDisplayMem();
@@ -3366,6 +3369,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     char value[PROPERTY_VALUE_MAX];
     char multicameramode[PROPERTY_VALUE_MAX];
     struct img_size jpeg_thumb_size;
+    FLASH_INFO_Tag flashInfo;
 
     HAL_LOGI("E camera id %d", mCameraId);
 
@@ -3454,8 +3458,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         deinitPreview();
         return UNKNOWN_ERROR;
     }
-    SprdCamera3Flash::reserveFlash(mCameraId);
-
+    mSetting->getFLASHINFOTag(&flashInfo);
+    if (flashInfo.available) {
+        SprdCamera3Flash::reserveFlash(mCameraId);
+    }
     // api1 dont set thumbnail size when preview, so we calculate the value same
     // as camera app
     chooseDefaultThumbnailSize(&jpeg_thumb_size.width, &jpeg_thumb_size.height);
