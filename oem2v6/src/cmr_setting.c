@@ -450,6 +450,7 @@ static cmr_int setting_isp_ctrl(struct setting_component *cpt, cmr_uint isp_cmd,
     cmr_int ret = 0;
     struct setting_init_in *init_in = &cpt->init_in;
     struct common_isp_cmd_param isp_param;
+    struct setting_hal_param *hal_param = NULL;
 
     if (isp_cmd >= COM_ISP_TYPE_MAX) {
         return ret;
@@ -458,7 +459,14 @@ static cmr_int setting_isp_ctrl(struct setting_component *cpt, cmr_uint isp_cmd,
     if (init_in->setting_isp_ioctl) {
         isp_param.camera_id = parm->camera_id;
         camera_param_to_isp(isp_cmd, parm, &isp_param);
-
+        if (isp_cmd == COM_ISP_SET_AE_MODE) {
+            hal_param = get_hal_param(cpt, parm->camera_id);
+            CMR_LOGD("app_mode:%d, scene_mode:%d", hal_param->app_mode,
+                     parm->cmd_type_value);
+            if (hal_param->app_mode == CAMERA_MODE_FDR) {
+                 isp_param.cmd_value = ISP_FDR;
+            }
+        }
         if (COM_ISP_SET_FPS_LLS_MODE == isp_cmd) {
             isp_param.fps_param.min_fps = parm->preview_fps_param.frame_rate;
             isp_param.fps_param.max_fps = parm->preview_fps_param.video_mode;

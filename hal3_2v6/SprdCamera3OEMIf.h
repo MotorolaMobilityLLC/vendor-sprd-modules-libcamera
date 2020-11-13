@@ -332,6 +332,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void getDualOtpData(void **addr, int *size, int *read);
     void getOnlineBuffer(void *cali_info);
     bool isNeedAfFullscan();
+    bool isFdrHasTuningParam();
     bool isVideoCopyFromPreview();
     int camera_ioctrl(int cmd, void *param1, void *param2);
     void setMimeType(int type);
@@ -918,6 +919,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int64_t mtimestamplast;
     bool mIsFovFusionMode;
     bool mIsRawCapture;
+    bool mIsFDRCapture;
 #ifdef CONFIG_FACE_BEAUTY
     struct fb_beauty_param face_beauty;
     bool mflagfb;

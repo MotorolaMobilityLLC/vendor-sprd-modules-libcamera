@@ -498,9 +498,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
       mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
-      mIsYuvSensor(0),
-      mIsUltraWideMode(false), mIsFovFusionMode(false),
-      mIsRawCapture(0), mIsCameraClearQBuf(0),
+      mIsYuvSensor(0), mIsUltraWideMode(false),
+      mIsFovFusionMode(false), mIsRawCapture(0),
+      mIsFDRCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0), lightportrait_type(0),
       mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID)
@@ -1802,6 +1802,23 @@ bool SprdCamera3OEMIf::isNeedAfFullscan() {
     if (2 <= atoi(prop)) {
         ret = true;
     }
+    return ret;
+}
+
+bool SprdCamera3OEMIf::isFdrHasTuningParam() {
+    bool ret = false;
+    cmr_int tuning_ret = CMR_CAMERA_SUCCESS;
+    cmr_int tuning_flag = 0;
+    tuning_ret = mHalOem->ops->camera_ioctrl(
+        mCameraHandle, CAMERA_IOCTRL_GET_FDR_TUNING_FLAG, &tuning_flag);
+    if (tuning_flag == 1) {
+        HAL_LOGD("device has tuning param");
+        ret = true;
+    } else {
+        HAL_LOGE("get fdr tuning param failed");
+        ret = false;
+    }
+
     return ret;
 }
 
@@ -3356,6 +3373,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     HAL_LOGI("E mCameraId=%d", mCameraId);
     mIsStoppingPreview = 1;
     mZslCaptureExitLoop = true;
+    mIsFDRCapture = false;
 
     if (isCapturing()) {
         cancelPictureInternal();
@@ -5682,10 +5700,6 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
         break;
     }
     case CAMERA_EVT_CB_RETURN_ZSL_BUF: {
-	 CONTROL_Tag controlInfo;
-	 int8_t drvSceneMode = 0;
-        mSetting->getCONTROLTag(&controlInfo);
-        mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
         if (isPreviewing() && iSZslMode() &&
             (mSprd3dCalibrationEnabled || mSprdYuvCallBack ||
              mMultiCameraMode == MODE_BLUR || mMultiCameraMode == MODE_BOKEH ||
@@ -5700,9 +5714,9 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
                 HAL_LOGW("zsl lost a buffer, this should not happen");
                 break;
             }
-            HAL_LOGD("zsl_frame->fd=0x%x, drvSceneMode:%d", zsl_frame->fd, drvSceneMode);
+            HAL_LOGD("zsl_frame->fd=0x%x, mIsFDRCapture:%d", zsl_frame->fd, mIsFDRCapture);
             buf_id = getZslBufferIDForFd(zsl_frame->fd);
-            if (buf_id != 0xFFFFFFFF && drvSceneMode != CAMERA_SCENE_MODE_FDR) {
+            if (buf_id != 0xFFFFFFFF && !mIsFDRCapture) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     mCameraHandle, mZslHeapArray[buf_id]->phys_addr,
                     (cmr_uint)mZslHeapArray[buf_id]->data,
@@ -5770,11 +5784,6 @@ void SprdCamera3OEMIf::HandleCancelPicture(enum camera_cb_type cb,
 
 void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
-    CONTROL_Tag controlInfo;
-    int8_t drvSceneMode = 0;
-    mSetting->getCONTROLTag(&controlInfo);
-    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
-
     HAL_LOGD("E: cb = %d, parm4 = %p, state = %s", cb, parm4,
              getCameraStateStr(getCaptureState()));
 
@@ -5807,8 +5816,7 @@ void SprdCamera3OEMIf::HandleEncode(enum camera_cb_type cb, void *parm4) {
             HAL_LOGD("zsl_frame->fd=0x%x,  frame_id %d, buf_id 0x%x\n",
 				zsl_frame->fd, zsl_frame->frame_num, buf_id);
             if (buf_id != 0xFFFFFFFF) {
-                if(mSprdAppmodeId == CAMERA_MODE_AUDIO_PICTURE &&
-                        drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+                if (mIsFDRCapture) {
                     HAL_LOGD("fdr mode, skip set zsl buffer");
                 } else {
                     mHalOem->ops->camera_set_zsl_buffer(
@@ -7229,14 +7237,25 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         int8_t drvSceneMode = 0;
         mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode,
                                             &drvSceneMode);
-        HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d", drvSceneMode, mMultiCameraMode);
+        if (drvSceneMode == CAMERA_SCENE_MODE_FDR && !isFdrHasTuningParam()) {
+            drvSceneMode = CAMERA_SCENE_MODE_HDR;
+        }
+
+        if (drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+            mIsFDRCapture = true;
+        } else if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR) {
+            mIsFDRCapture = false;
+        }
+        HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d, mIsFDRCapture:%d, app_mode:%d",
+                          drvSceneMode, mMultiCameraMode, mIsFDRCapture, sprddefInfo->sprd_appmode_id);
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_PANORAMA) {
             drvSceneMode = CAMERA_SCENE_MODE_PANORAMA;
         }
 	  if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_SLOWMOTION) {
             drvSceneMode = CAMERA_SCENE_MODE_SLOWMOTION;
         }
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+       if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR)
+           SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {
@@ -7961,6 +7980,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW;
 #endif
             }
+            if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_FDR) {
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_CAP_NULL;
+            }
         } else {
             // 3dnr off
             mSprd3dnrType = CAMERA_3DNR_TYPE_NULL;
@@ -7977,8 +7999,20 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     } break;
     case ANDROID_SPRD_APP_MODE_ID: {
         SPRD_DEF_Tag *sprddefInfo;
+        int8_t drvSceneMode = 0;
         sprddefInfo = mSetting->getSPRDDEFTagPTR();
         mSprdAppmodeId = sprddefInfo->sprd_appmode_id;
+        HAL_LOGD("getCaptureState: %s,  mSprdAppmodeId:%d",
+                 getCameraStateStr(getPreviewState()), mSprdAppmodeId);
+        if (SPRD_INTERNAL_PREVIEW_REQUESTED == getPreviewState() ||
+            SPRD_PREVIEW_IN_PROGRESS == getPreviewState()) {
+            if (mSprdAppmodeId == CAMERA_MODE_FDR && isFdrHasTuningParam()) {
+                drvSceneMode = CAMERA_SCENE_MODE_FDR;
+		  mIsFDRCapture = true;
+                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE,
+                         drvSceneMode);
+            }
+        }
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_SET_APPMODE,
                  sprddefInfo->sprd_appmode_id);
     } break;
@@ -10909,9 +10943,12 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
     HAL_LOGD("lightportrait_type = %d, mCNRMode = %d", lightportrait_type, mCNRMode);
 
-    int8_t drvSceneMode;
-    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
-    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+    if (mIsFDRCapture) {
+        mEEMode = 1;
+    }
+
+    if (mIsFDRCapture) {
+        //close cnr temporarily in FDR capture
         property_get("persist.vendor.cam.cnr.mode", value, "0");
         if (atoi(value)) {
             mCNRMode = 1;
@@ -10920,7 +10957,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
     HAL_LOGD("mCNRMode = %d", mCNRMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
-    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
+    if(mIsFDRCapture) {
        property_get("persist.vendor.cam.fdr.enable", value, "0");
        if (atoi(value)) {
             mEEMode = 1;
@@ -10964,8 +11001,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
         mZslMaxFrameNum = 3;
-        (drvSceneMode == CAMERA_SCENE_MODE_FDR)?
-            (obj->mFlagHdr = false):(obj->mFlagHdr = true);
+        (mIsFDRCapture)?(obj->mFlagHdr = false):(obj->mFlagHdr = true);
     } else if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                 mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) &&
                mRecordingMode == false) {

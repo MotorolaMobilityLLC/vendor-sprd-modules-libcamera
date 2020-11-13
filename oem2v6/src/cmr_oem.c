@@ -8571,7 +8571,8 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     sprd_3dnr_type = camera_get_3dnr_flag(cxt);
 
     if ((((sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) ||
-          (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) &&
+          (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW) ||
+          (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_NULL)) &&
          param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW) ||
         (((sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW) ||
           (sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW)) &&
@@ -9702,7 +9703,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         if (ISP_AE_MODE_MAX == isp_param) {
             set_isp_flag = 0;
         }
-        CMR_LOGD("ae mode %d", param_ptr->cmd_value);
+        CMR_LOGD("ae scene mode %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EXPOSURE_TIME:
         CMR_LOGD("exposure time %d", param_ptr->cmd_value);

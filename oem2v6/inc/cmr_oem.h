@@ -787,6 +787,8 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                                 struct common_isp_cmd_param *param_ptr);
 cmr_int cmr_get_reboke_data(cmr_handle oem_handle,
                             struct af_relbokeh_oem_data *golden_distance);
+cmr_int camera_get_fdr_tuning_flag(cmr_handle oem_handle,
+                                      cmr_int * tuning_flag);
 cmr_int camera_local_get_tuning_param(cmr_handle oem_handle,
                                       struct tuning_param_info *tuning_info);
 cmr_int camera_get_fdr_tuning_param(cmr_handle oem_handle,
