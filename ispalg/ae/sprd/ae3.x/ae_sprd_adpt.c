@@ -4158,7 +4158,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 				}
 			}
 
-			if (0 == (cxt->mode_switch[cxt->app_mode].gain)){
+
+			if ((0 == (cxt->mode_switch[cxt->app_mode].gain))||(cxt->app_mode == last_app_mode)){
 					if (cxt->cur_status.adv_param.cur_ev_setting.line_time != cxt->last_exp_param.line_time){
 						src_exp.exp_line = (cmr_u32) (1.0 * cxt->last_exp_param.exp_line * cxt->last_exp_param.line_time / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 						if (cxt->min_exp_line > src_exp.exp_line) {
