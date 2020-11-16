@@ -32,16 +32,6 @@
 #define SPAF_MAX_ROI_NUM 5
 #define SPAF_MAX_WIN_NUM 90
 
-typedef enum _eAF_FILTER_TYPE {
-	T_SOBEL9 = 0,
-	T_SOBEL5,
-	T_SPSMD,
-	T_FV0,
-	T_FV1,
-	T_COV,
-	T_TOTAL_FILTER_TYPE
-} eAF_FILTER_TYPE;
-
 typedef enum _eAF_OTP_TYPE {
 	T_LENS_BY_DEFAULT = 0,
 	T_LENS_BY_OTP,
@@ -60,6 +50,16 @@ typedef enum _e_LOCK {
 	UNLOCK,
 } e_LOCK;
 
+typedef enum _e_AF_MULTI_MODE {
+	SPAF_SINGLE = 0,
+	SPAF_DUAL_C_C,
+	SPAF_DUAL_SBS,
+	SPAF_BLUR_REAR,
+	SPAF_DUAL_W_T,
+	SPAF_DUAL_C_M,
+	SPAF_CAMERA_MAX
+} e_AF_MULTI_MODE;
+
 typedef enum _eAF_MODE {
 	SAF = 0,		//single zone AF
 	CAF,			//continue AF
@@ -74,29 +74,9 @@ typedef enum _eAF_MODE {
 	OTAF,			//objecttracking af
 } eAF_MODE;
 
-typedef enum _e_AF_MULTI_MODE {
-	SPAF_SINGLE = 0,
-	SPAF_DUAL_C_C,
-	SPAF_DUAL_SBS,
-	SPAF_BLUR_REAR,
-	SPAF_DUAL_W_T,
-	SPAF_DUAL_C_M,
-	SPAF_CAMERA_MAX
-} e_AF_MULTI_MODE;
-
-typedef enum _e_AF_TRIGGER {
-	NO_TRIGGER = 0,
-	AF_TRIGGER,
-	RE_TRIGGER,
-} e_AF_TRIGGER;
-
 typedef enum _eAF_Triger_Type {
-	RF_NORMAL = 0,		//noraml R/F search for AFT
-	R_NORMAL,		//noraml Rough search for AFT
-	F_NORMAL,		//noraml Fine search for AFT
-	RF_FAST,		//Fast R/F search for AFT
-	R_FAST,			//Fast Rough search for AFT
-	F_FAST,			//Fast Fine search for AFT
+	RF_NORMAL = 0,
+	RF_FAST,
 	DEFOCUS,
 	BOKEH,
 } eAF_Triger_Type;
@@ -108,11 +88,6 @@ enum {
 	AF_TIME_TYPE_TOTAL,
 };
 
-typedef enum _e_RESULT {
-	NO_PEAK = 0,
-	HAVE_PEAK,
-} e_RESULT;
-
 typedef enum _af_io_cmd {
 	AF_IOCTRL_SET_BASE = 0x100,
 	AF_IOCTRL_SET_ROI,
@@ -123,7 +98,7 @@ typedef enum _af_io_cmd {
 	AF_IOCTRL_SET_REG_POS,
 	AF_IOCTRL_SET_FV,
 	AF_IOCTRL_SET_DAC_INFO,
-	AF_IOCTRL_SET_PRE_TRIGGER_DATA,
+	AF_IOCTRL_SET_RUNTIME_DATA,
 	AF_IOCTRL_SET_BOKEH_DISTANCE,
 	AF_IOCTRL_SET_MAX,
 
@@ -134,6 +109,8 @@ typedef enum _af_io_cmd {
 	AF_IOCTRL_GET_RESULT,
 	AF_IOCTRL_GET_BOKEH_GOLDEN_DATA,
 	AF_IOCTRL_GET_BOKEH_RESULT,	// out of use
+	AF_IOCTRL_GET_DISTANCE,
+	AF_IOCTRL_GET_POSTUREDAC,
 	AF_IOCTRL_GET_MAX,
 } af_io_cmd;
 
@@ -145,7 +122,7 @@ typedef enum pdaf_support {
 	PDAF_DUAL_MODE1,
 	PDAF_DUAL_MODE3,
 	PDAF_DUAL_MODE4,
-	PDAF_MAX
+	PDAF_MAX,
 } pdaf_support;
 
 #pragma pack(push,4)
@@ -293,8 +270,6 @@ typedef struct _bokeh_distance_info {
 } bokeh_distance_info;
 
 typedef struct _bokeh_motor_info {
-	cmr_u16 limited_infi;	// calibrated for 30cm
-	cmr_u16 limited_macro;	// calibrated for 150cm
 	cmr_u16 total_seg;
 	cmr_u16 vcm_dac[20];
 	cmr_u16 reserved[20];
@@ -336,7 +311,7 @@ typedef struct _lens_range_info {
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
 	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
-	 cmr_u8(*statistics_get_data) (cmr_u64 fv[T_TOTAL_FILTER_TYPE], _af_stat_data_t * p_stat_data, void *cookie);
+	 cmr_u8(*statistics_get_data) (_af_stat_data_t * p_stat_data, void *cookie);
 	 cmr_u8(*statistics_set_data) (cmr_u32 set_stat, void *cookie);
 	 cmr_u8(*clear_fd_stop_counter) (cmr_u32 * FD_count, void *cookie);
 	 cmr_u8(*phase_detection_get_data) (pd_algo_result_t * pd_result, void *cookie);
@@ -394,29 +369,12 @@ typedef struct defocus_param_s {
 } defocus_param_t;
 
 typedef struct _AF_Trigger_Data {
-	cmr_u8 bisTrigger;
-	cmr_u32 AF_Trigger_Type;
-	cmr_u32 AFT_mode;
-	defocus_param_t defocus_param;
-	cmr_u32 re_trigger;
+	cmr_u32 trigger_mode;
+	cmr_u32 trigger_type;
 	cmr_u32 trigger_source;
+	defocus_param_t defocus_param;
 	cmr_u32 reserved[6];
 } AF_Trigger_Data;
-
-typedef struct _Bokeh_Result {
-	cmr_u8 row_num;		/* The number of AF windows with row (i.e. vertical) *//* depend on the AF Scanning */
-	cmr_u8 column_num;	/* The number of AF windows with row (i.e. horizontal) *//* depend on the AF Scanning */
-	cmr_u32 win_peak_pos_num;
-	cmr_u32 *win_peak_pos;	/* The seqence of peak position which be provided via struct isp_af_fullscan_info *//* depend on the AF Scanning */
-	cmr_u16 vcm_dac_up_bound;
-	cmr_u16 vcm_dac_low_bound;
-	cmr_u16 boundary_ratio;	/*  (Unit : Percentage) *//* depend on the AF Scanning */
-	cmr_u32 af_peak_pos;
-	cmr_u32 near_peak_pos;
-	cmr_u32 far_peak_pos;
-	cmr_u32 distance_reminder;
-	cmr_u32 reserved[16];
-} Bokeh_Result;
 
 typedef struct _af_init_in {
 	AF_Ctrl_Ops AF_Ops;
@@ -437,6 +395,5 @@ typedef struct _af_init_out {
 void *af_init(af_init_in * af_in, af_init_out * af_out);
 cmr_u8 af_deinit(void *handle);
 cmr_u8 af_process(void *handle);
-cmr_u8 af_ioctrl(void *handle, cmr_u32 cmd, void *param);
-
+cmr_u8 af_ioctrl(void *handle, cmr_u32 cmd, void *in, void *out);
 #endif
