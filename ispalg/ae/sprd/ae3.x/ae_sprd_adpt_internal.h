@@ -138,6 +138,13 @@ extern "C" {
 		int prop_bright;
 		int ev_pre;
 		int ev_final;
+		int cur_face_up;
+		int face_up_enable;
+		int up_ratio;
+		int cur_face_down;
+		int face_down_enable;
+		int down_ratio;
+		int ev_face;
 	};
 
 	struct fdr_stat_t {
