@@ -43,7 +43,7 @@ class DrvCaseComm : public IParseJson {
     void Set_ChipID(string strKey, void *value) {
         const char *tmp = (static_cast<const char *>(value));
         if(m_jsonChipIDMap.find(tmp) != m_jsonChipIDMap.end()) {
-            m_caseID = m_jsonChipIDMap[tmp];
+            this->m_chipID= m_jsonChipIDMap[tmp];
         } else {
             IT_LOGE("ERR stream type info");
         }
