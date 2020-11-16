@@ -22,10 +22,8 @@
 #include "aft_interface.h"
 #include "AFv1_Interface.h"
 
-#define AF_SYS_VERSION "2019120300"
+#define AF_SYS_VERSION "2020111700"
 #define AF_SAVE_MLOG_STR "persist.vendor.cam.isp.af.mlog"	/*save/no */
-#define AF_WAIT_CAF_SEC 3	//1s == (1000 * 1000 * 1000)ns
-#define AF_WAIT_CAF_NSEC 0	//this macro should be less than 1000 * 1000 * 1000
 
 enum afv1_bool {
 	AFV1_FALSE = 0,
@@ -182,7 +180,7 @@ typedef struct _af_lib_ops {
 	void *(*init) (af_init_in * af_in, af_init_out * af_out);
 	 cmr_u8(*deinit) (void *handle);
 	 cmr_u8(*calc) (void *handle);
-	 cmr_u8(*ioctrl) (void *handle, cmr_u32 cmd, void *param);
+	 cmr_u8(*ioctrl) (void *handle, cmr_u32 cmd, void *in, void *out);
 } af_lib_ops_t;
 
 #define AF_LIB "libspafv1.so"
@@ -290,7 +288,7 @@ typedef struct _af_ctrl {
 	cmr_u64 takepic_timestamp;
 	cmr_u32 Y_sum_trigger;
 	cmr_u32 Y_sum_normalize;
-	cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
+	//cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
 	struct afctrl_gsensor_info gsensor_info;
 	cmr_u32 g_orientation;
@@ -320,9 +318,6 @@ typedef struct _af_ctrl {
 	cmr_u32 defocus;
 	cmr_u8 bypass;
 	cmr_u32 ts_counter;
-	// non-zsl,easy for motor moving and capturing
-	cmr_u8 test_loop_quit;
-	pthread_t test_loop_handle;
 	cmr_handle caller;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;
@@ -348,6 +343,7 @@ typedef struct _af_ctrl {
 	cmr_u8 *pdaf_rdm_otp_data;
 	cmr_u32 trigger_counter;
 	cmr_u32 cur_master_id;
+	cmr_u32 next_master_id;
 	cmr_u32 camera_id;
 	cmr_u32 sensor_role;
 	af_ctrl_br_ioctrl bridge_ctrl;
@@ -368,12 +364,6 @@ typedef struct _af_ctrl {
 	cmr_u32 slave_focus_cnt;
 	cmr_u32 pdaf_support;
 } af_ctrl_t;
-
-typedef struct _test_mode_command {
-	char *command;
-	cmr_u64 key;
-	void (*command_func) (af_ctrl_t * af, char *test_param);
-} test_mode_command_t;
 
 cmr_handle sprd_afv1_init(void *in, void *out);
 cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result);

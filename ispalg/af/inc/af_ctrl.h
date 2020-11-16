@@ -46,6 +46,7 @@ extern "C" {
 		AF_ALG_DUAL_C_M,
 		AF_ALG_BLUR_PORTRAIT,
 		AF_ALG_TRIBLE_W_T_UW,
+		AF_ALG_TRIBLE_MT_SMOOTH,
 		AF_ALG_CAMERA_MAX
 	};
 
@@ -108,6 +109,7 @@ extern "C" {
 		AF_CMD_SET_ZOOM_RATIO = 0x101D,
 		AF_CMD_SET_OT_SWITCH = 0x101E,
 		AF_CMD_SET_OT_INFO = 0x101F,
+		AF_CMD_SET_MULTI_SWITCH_INFO = 0x1020,
 		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,
@@ -554,7 +556,8 @@ extern "C" {
 		cmr_u32 af_mode;
 		cmr_u32 af_state;
 		cmr_u32 af_status;
-		cmr_u32 af_position;
+		cmr_u16 af_position;
+		cmr_u16 af_distance;
 	};
 
 	struct af_manual_info {
@@ -563,8 +566,14 @@ extern "C" {
 
 	struct af_sync_info {
 		cmr_u32 cur_master_id;
-		cmr_u32 camera_id;
-		cmr_u32 sensor_role;
+		cmr_u32 camera_id;//not used
+		cmr_u32 sensor_role;//not used
+	};
+
+	struct af_multi_info {
+		cmr_u8 cur_master_id;
+		cmr_u8 next_master_id;
+		cmr_u8 syncflag;
 	};
 
 	typedef cmr_int(*af_ctrl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
