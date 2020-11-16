@@ -419,6 +419,7 @@ typedef struct {
     int32_t stl3d_id;
     uint8_t sprd_super_macro;
     uint8_t smile_capture_enable;
+    uint8_t sprd_ae_sync;
 } SPRD_DEF_Tag;
 
 typedef struct {

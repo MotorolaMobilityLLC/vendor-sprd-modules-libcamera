@@ -122,6 +122,8 @@ class SprdCamera3HWI {
     void setRealMultiMode(bool mode);
     void setMultiAppRatio(float app_ratio);
     static void dumpMemoryAddresses(size_t limit);
+    void setSyncState(SyncState mSyncState);
+	SprdCamera3MetadataChannel *getMetadataChannel();
 
   private:
     int openCamera();

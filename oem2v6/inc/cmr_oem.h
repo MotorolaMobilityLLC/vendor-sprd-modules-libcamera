@@ -730,6 +730,9 @@ cmr_int camera_set_fov_fusion_mode(cmr_handle oem_handle,
                                    cmr_uint is_fov_fusion);
 cmr_int camera_set_fov_fusion_app_ratio(cmr_handle oem_handle,
                                    float app_ratio);
+cmr_int camera_set_sync_state(cmr_handle oem_handle,
+                                   SyncState *mSyncState);
+
 cmr_int camera_set_multi_camera_id(cmr_handle oem_handle,
                                    cmr_uint is_multi_camera_id);
 cmr_int cmr_set_snapshot_timestamp(cmr_handle oem_handle, int64_t timestamp);

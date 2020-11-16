@@ -2699,6 +2699,13 @@ void SprdCamera3HWI::setMultiAppRatio(float app_ratio) {
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_FOV_FUSION_APP_RATIO, &app_ratio, NULL);
 }
 
+void SprdCamera3HWI::setSyncState(SyncState mSyncstate){
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_SYNC_STATE, &mSyncstate, NULL);
+}
+SprdCamera3MetadataChannel *SprdCamera3HWI::getMetadataChannel(){
+     return mMetadataChannel;
+}
+
 void SprdCamera3HWI::getDualOtpData(void **addr, int *size, int *read) {
     void *otp_data = NULL;
     int otp_size = 0;

@@ -539,6 +539,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mIsPreAllocCapMem = 0;
 #endif
 
+
     if (mMultiCameraMatchZsl == NULL) {
         mMultiCameraMatchZsl = (multi_camera_zsl_match_frame *)malloc(
             sizeof(multi_camera_zsl_match_frame));
@@ -6129,6 +6130,14 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
             }
         }
     } break;
+
+    case CAMERA_EVT_CB_AE_SYNC:
+        SPRD_DEF_Tag *sprdAeSyncInfo;
+        sprdAeSyncInfo = mSetting->getSPRDDEFTagPTR();
+        sprdAeSyncInfo->sprd_ae_sync = *(uint8_t *)parm4;
+        HAL_LOGD("sprd_ae_sync %d",
+                  sprdAeSyncInfo->sprd_ae_sync);
+        break;
 
     default:
         break;

@@ -1642,6 +1642,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_FLUSH_BUF,
     CAMERA_EVT_CB_EV_ADJUST_SCENE,
     CAMERA_EVT_CB_FDR_SCENE,
+    CAMERA_EVT_CB_AE_SYNC,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -2175,8 +2176,18 @@ typedef enum {
     CAMERA_IOCTRL_MULTI_CAMERA_ID,
     CAMERA_IOCTRL_JPEG_DECODE_PROC,
     CAMERA_IOCTRL_GET_FDR_TUNING_FLAG,
+    CAMERA_IOCTRL_SET_SYNC_STATE,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
+
+typedef struct {
+    uint8_t mRefId;
+    uint8_t mNestId;
+    bool mSyncFlag;
+}SyncState;
+
+
+
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);
 
 typedef void (*camera_cb_of_type)(enum camera_cb_type cb,
