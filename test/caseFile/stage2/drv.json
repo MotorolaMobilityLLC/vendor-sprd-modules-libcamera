@@ -2,7 +2,7 @@
 	"drvCaseLists" :
 	[
 		{
-			"CaseID" : 0,
+			"CaseID" : "dcam_base_func_test",
 			"ChipID" : "chip_dcam0",
 			"PathID" :[1,0],
 			"TestMode" : 1,
@@ -11,7 +11,7 @@
 		},
 
 		{
-			"CaseID" : 1,
+			"CaseID" : "isp_cfg_func_test",
 			"ChipID" : "chip_isp0",
 			"PathID" : [0,1],
 			"TestMode" : 0,
@@ -20,7 +20,7 @@
 		},
 
 		{
-			"CaseID" : 2,
+			"CaseID" : "isp_ap_base_func_test",
 			"ChipID" : "chip_isp0",
 			"PathID" : [0,1],
 			"TestMode" : 1,

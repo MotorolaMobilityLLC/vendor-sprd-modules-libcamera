@@ -23,6 +23,11 @@ class DrvCaseComm : public IParseJson {
         m_jsonMethodMap["TestMode"] = &DrvCaseComm::Set_TestMode;
         m_jsonMethodMap["ParmPath"] = &DrvCaseComm::Set_ParmPath;
         m_jsonMethodMap["ImagePath"] = &DrvCaseComm::Set_ImagePath;
+
+        m_jsonCaseIDMap.insert({"dcam_base_func_test",0});
+        m_jsonCaseIDMap.insert({"isp_cfg_func_test",1});
+        m_jsonCaseIDMap.insert({"isp_ap_base_func_test",2});
+
         m_jsonChipIDMap.insert({"chip_dcam0",0});
         m_jsonChipIDMap.insert({"chip_dcam1",1});
         m_jsonChipIDMap.insert({"chip_dcam2",2});
@@ -37,8 +42,14 @@ class DrvCaseComm : public IParseJson {
     typedef map<string, casecommFunc> JsonMethodMap;
     JsonMethodMap m_jsonMethodMap;
     map<string, uint32_t> m_jsonChipIDMap;
+    map<string, uint32_t> m_jsonCaseIDMap;
     void Set_ID(string strKey, void *value) {
-        this->m_caseID = *(static_cast<uint32_t *>(value));
+        const char *tmp = (static_cast<const char *>(value));
+        if(m_jsonChipIDMap.find(tmp) != m_jsonCaseIDMap.end()) {
+            this->m_caseID = m_jsonCaseIDMap[tmp];
+        } else {
+            IT_LOGE("ERR CaseID Type Info");
+        }
     }
     void Set_ChipID(string strKey, void *value) {
         const char *tmp = (static_cast<const char *>(value));

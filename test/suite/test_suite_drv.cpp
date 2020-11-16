@@ -37,7 +37,7 @@ struct host_info_t host_info[ISP_PATH_NUM] = {0};
 TestSuiteDRV::TestSuiteDRV()
 {
 	IT_LOGD("");
-	m_Module=GetModuleWrapper(string(THIS_MODULE_NAME));
+	m_Module = GetModuleWrapper(string(THIS_MODULE_NAME));
 	m_json2 = new CameraDrvIT;
 }
 
@@ -48,31 +48,31 @@ TestSuiteDRV::~TestSuiteDRV()
 
 int TestSuiteDRV::SetUp(void)
 {
-    int ret=IT_OK;
+    int ret = IT_OK;
     IT_LOGD("");
     return ret;
 }
 
 int TestSuiteDRV::TearDown(void)
 {
-    int ret=IT_OK;
+    int ret = IT_OK;
     IT_LOGD("");
     return ret;
 }
 int TestSuiteDRV::ControlEmulator(IT_SWITCH_T status)
 {
-    int ret=IT_OK;
+    int ret = IT_OK;
     IT_LOGD("");
     return ret;
 }
 
 int TestSuiteDRV::Run(IParseJson *Json2)
 {
-	int ret=IT_OK;
+	int ret = IT_OK;
 	IT_LOGD(" TestSuiteDRV::Run start \n");
-	DrvCaseComm *json2=(DrvCaseComm *)Json2;
+	DrvCaseComm *json2 = (DrvCaseComm *)Json2;
 	json2->g_host_info = host_info;
-	if (0 != isp_path_init(json2) ){
+	if (0 != isp_path_init(json2) ) {
 		IT_LOGE("fail to parse cam config parameters\n");
 	}
 	 if (m_Module)
@@ -82,9 +82,9 @@ int TestSuiteDRV::Run(IParseJson *Json2)
 
 int TestSuiteDRV::ParseSecJson(caseid* caseid, vector<IParseJson*>* pVec_TotalCase)
 {
-	int ret=IT_OK;
+	int ret = IT_OK;
 	if (!m_isParsed){
-		string path= JSON_PATH;
+		string path = JSON_PATH;
 		string input = m_json2->readInputTestFile(path.data());
 		if (input.empty()) {
 			IT_LOGD("Failed to read input or empty input: %s", path.data());
@@ -96,21 +96,21 @@ int TestSuiteDRV::ParseSecJson(caseid* caseid, vector<IParseJson*>* pVec_TotalCa
 		for (i = m_json2->m_casecommArr.begin();
 			i != m_json2->m_casecommArr.end(); i++) {
 			IT_LOGD("================");
-			IT_LOGD("caseID:%d",(*i)->m_caseID);
-			IT_LOGD("chipID:%d",(*i)->m_chipID);
+			IT_LOGD("caseID:%d", (*i)->m_caseID);
+			IT_LOGD("chipID:%d", (*i)->m_chipID);
 			for(int j = 0; j < (*i)->m_pathID.size(); j++)
-				IT_LOGD("pathID[%d]:%d\n",j,(*i)->m_pathID[j]);
-			IT_LOGD("testMode:%d",(*i)->m_testMode);
-			IT_LOGD("parmPath:%s",(*i)->m_parmPath.data());
-			IT_LOGD("imagePath:%s",(*i)->m_imageName.data());
+				IT_LOGD("pathID[%d]:%d", j, (*i)->m_pathID[j]);
+			IT_LOGD("testMode:%d", (*i)->m_testMode);
+			IT_LOGD("parmPath:%s", (*i)->m_parmPath.data());
+			IT_LOGD("imagePath:%s\n", (*i)->m_imageName.data());
 		}
 	}
-	IParseJson* caseData= m_json2->getCaseAt(caseid->getID());
+	IParseJson* caseData = m_json2->getCaseAt(caseid->getID());
 	if (caseData) {
-		caseData->m_thisModuleName=THIS_MODULE_NAME;
+		caseData->m_thisModuleName = THIS_MODULE_NAME;
 		pVec_TotalCase->push_back(caseData);
 	} else {
-	IT_LOGE("Failed to find this case ID:%d",caseid->getID());
+	IT_LOGE("Failed to find this case ID:%d", caseid->getID());
 	ret = IT_ERR;
 	}
 	return ret;

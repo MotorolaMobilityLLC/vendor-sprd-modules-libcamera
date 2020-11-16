@@ -56,27 +56,28 @@ static int camt_read_file(char *file_name, unsigned int size, unsigned long addr
 		IT_LOGD("can not open file: %s \n", file_name);
 		return -1;
 	}
-
 	ret = fread((void *)addr, 1, size, fp);
 	fclose(fp);
 	fp = NULL;
 	return ret;
 }
 
-static int camt_write_file(char *file_name, unsigned int chipid, unsigned int width, unsigned int height, struct img_store_addr addr, int index)
+static int camt_write_file(char *file_name, unsigned int chipid, size_t width, size_t height, struct img_store_addr addr)
 {
 	int ret = 0;
 	FILE *fp = NULL;
-	char temp[5];
+	char temp[20];
+	char filename1[256];
 
 	if (chipid == CAMT_CHIP_ISP0 || chipid == CAMT_CHIP_ISP1) {
-		IT_LOGD("file_name:%s size %d vir_addr %ld_isp", file_name, width * height, addr.addr_ch0);
-		strncat(file_name, "_yuv_", 4);
-		sprintf(temp, "%d", index);
+		IT_LOGD("file_name:%s size %lu vir_addr %ld_isp", file_name, width * height, addr.addr_ch0);
+		strncat(file_name, "_yuv", 4);
+		sprintf(temp, "_%lu_%lu", width, height);
 		strncat(file_name, temp, 20);
+		strncpy(filename1, file_name, 256);
 		strncat(file_name, ".y", 2);
 		fp = fopen(file_name, "wb");
-		if (NULL == fp) {
+		if (fp == NULL) {
 			IT_LOGD("can not open file: %s \n", file_name);
 			return -1;
 		}
@@ -89,8 +90,8 @@ static int camt_write_file(char *file_name, unsigned int chipid, unsigned int wi
 		}
 		fclose(fp);
 		fp = NULL;
-		strncat(file_name, "uv", 3);
-		fp = fopen(file_name, "wb");
+		strncat(filename1, ".uv", 3);
+		fp = fopen(filename1, "wb");
 		if (fp == NULL) {
 			IT_LOGD("can not open file: %s \n", file_name);
 			return -1;
@@ -105,14 +106,22 @@ static int camt_write_file(char *file_name, unsigned int chipid, unsigned int wi
 		fclose(fp);
 		fp = NULL;
 	} else if (CAMT_CHIP_DCAM0 <= chipid && chipid <= CAMT_CHIP_DCAM_LITE1) {
-		IT_LOGD("file_name:%s size %d vir_addr %ld_dcam", file_name, width * height, addr.addr_ch0);
-		strncat(file_name,".mipi_raw", 9);
+		IT_LOGD("file_name:%s size %lu vir_addr %ld_dcam", file_name, width * height, addr.addr_ch0);
+		sprintf(temp, "_%lu_%lu", width, height);
+		strncat(file_name, temp, 4);
+		strncat(file_name, ".mipi_raw", 9);
 		fp = fopen(file_name, "wb");
 		if (fp == NULL) {
 			IT_LOGD("can not open file: %s \n", file_name);
 			return -1;
 		}
 		ret = fwrite((void *)addr.addr_ch0, 1, width * height, fp);
+		if (ret != 1) {
+			IT_LOGD("Mipi_Raw Write Error!\n");
+			fclose(fp);
+			fp = NULL;
+			return -1;
+		}
 		fclose(fp);
 		fp = NULL;
 	}
@@ -214,10 +223,10 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	}
 
 	for(i = 0; i < _json2->m_pathID.size(); i++) {
-		strcpy(output_file[i], CAMT_OUT_PATH);
-		strcat(output_file[i], "output_");
+		strncpy(output_file[i], CAMT_OUT_PATH, 36);
+		strncat(output_file[i], "output_", 7);
 		sprintf(tmp_str, "%d_%d", _json2->m_caseID,_json2->m_pathID[i]);
-		strcat(output_file[i], tmp_str);
+		strncat(output_file[i], tmp_str, 10);
 	}
 
 	param = &_json2->g_host_info->isp_param;
@@ -238,7 +247,6 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	*/
 	cxt.info.output_size.w = cxt.info.crop_rect.w;
 	cxt.info.output_size.h = cxt.info.crop_rect.h;
-
 	IT_LOGD(" in %d %d crop %d %d %d %d out %d %d", cxt.info.input_size.w,
 		cxt.info.input_size.h, cxt.info.crop_rect.x, cxt.info.crop_rect.y,
 		cxt.info.crop_rect.w, cxt.info.crop_rect.h, cxt.info.output_size.w,
@@ -310,15 +318,17 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 		if (cxt.info.chip == CAMT_CHIP_ISP0 || cxt.info.chip == CAMT_CHIP_ISP1) {
 			store_addr_out[i].addr_ch0 = vir_addr_out[i];
 			store_addr_out[i].addr_ch1 = vir_addr_out[i] + size / 2;
+			strncat(output_file[i], "_isp", 4);
 			IT_LOGD("isp_module");
 		} else if (CAMT_CHIP_DCAM0 <= cxt.info.chip && cxt.info.chip <= CAMT_CHIP_DCAM_LITE1) {
 			store_addr_out[i].addr_ch0 = vir_addr_out[i];
+			strncat(output_file[i], "_dcam", 5);
 			IT_LOGD("dcam_module");
 		} else {
 			IT_LOGD("error set ChipID,Please Check it!!!");
 			return IT_ERR;
 		}
-		ret = camt_write_file(output_file[i], cxt.info.chip, cxt.info.input_size.w, cxt.info.input_size.h, store_addr_out[i], i);
+		ret = camt_write_file(output_file[i], cxt.info.chip, cxt.info.input_size.w, cxt.info.input_size.h, store_addr_out[i]);
 	}
 
 	if (ret < 0) {
