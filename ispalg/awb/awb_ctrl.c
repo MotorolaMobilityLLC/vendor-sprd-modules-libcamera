@@ -33,6 +33,7 @@
 #define AWB_3X_TURNING_PARAM_FRONT  "/vendor/lib/awb3_tuning_param_front.bin"
 
 #define AWB_3_0_TURNNING_VERSION 0x00030000
+#define AWB_3_2_TURNNING_VERSION 0x00030002
 
 struct awbctrl_work_lib {
 	cmr_handle lib_handle;
@@ -124,12 +125,16 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	//1、judge the camera id
 	if (in_ptr->camera_id ==0){
 		//back camera
-		ISP_LOGV("back camera, camera_id = %d",in_ptr->camera_id);
+		ISP_LOGE("back camera, camera_id = %d",in_ptr->camera_id);
 		paramfile_path = AWB_3X_TURNING_PARAM_BACK;
 	} else if(in_ptr->camera_id == 1){
 		//front camera
-		ISP_LOGV("front camera, camera_id = %d",in_ptr->camera_id);
+		ISP_LOGE("front camera, camera_id = %d",in_ptr->camera_id);
 		paramfile_path = AWB_3X_TURNING_PARAM_FRONT;
+	} else {
+		//back camera
+		ISP_LOGE("back camera, camera_id = %d",in_ptr->camera_id);
+		paramfile_path = AWB_3X_TURNING_PARAM_BACK;
 	}
 
 	//2、get the param file
@@ -140,24 +145,27 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 		fp_3 = fopen(paramfile_path, "rb");
 	if(!fp_3) {
 		//in_ptr->tuning_param = in_ptr->tuning_param;
-		ISP_LOGV("Get the trunning param from upper layer!");
+		ISP_LOGE("Get the trunning param from upper layer!");
 	} else {
 		awb_param_size_3 = fread(awb_param_3,1,64 * 1024,fp_3);
 		fclose(fp_3);
 		in_ptr->tuning_param = &awb_param_3;
-		ISP_LOGV("Get the trunning param from param file!");
+		ISP_LOGE("Get the trunning param from param file!");
 	}
 
 	//3、judge the awblib is 2.x or 3.x
 	int* turnning_version = (int*) in_ptr->tuning_param + 1;
 	if(!turnning_version)
-		ISP_LOGV("awb ctrl:input turnning param is null!");
+		ISP_LOGE("awb ctrl:input turnning param is null!");
 	if((*(turnning_version)) == AWB_3_0_TURNNING_VERSION) {
-		in_ptr->lib_param.version_id = 0;	//isp3.x
-		ISP_LOGV("lib_param.version_id = 0 (isp3.x)");
+		in_ptr->lib_param.version_id = 1;	//isp3.0
+		ISP_LOGE("lib_param.version_id = 1 (isp3.0)");
+	} else if ((*(turnning_version)) == AWB_3_2_TURNNING_VERSION ) {
+		in_ptr->lib_param.version_id = 2;	//isp3.2
+		ISP_LOGE("lib_param.version_id = 2 (isp3.2)");
 	} else {
-		in_ptr->lib_param.version_id = 1;	//isp2.x
-		ISP_LOGV("lib_param.version_id = 1 (isp2.x)");
+		in_ptr->lib_param.version_id = 0;	//isp2.1
+		ISP_LOGE("lib_param.version_id = 0 (isp2.1)");
 	}
 
 	rtn = adpt_get_ops(ADPT_LIB_AWB, &in_ptr->lib_param, &cxt_ptr->work_lib.adpt_ops);
@@ -333,7 +341,6 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handl
 		goto exit;
 	}
 	memset(cxt_ptr, 0, sizeof(*cxt_ptr));
-
 	rtn = awbctrl_create_thread(cxt_ptr);
 	if (rtn) {
 		goto exit;

@@ -3,19 +3,13 @@
 
 
 #ifndef WIN32
-
-#ifndef _RTOS
 typedef long long __int64;
 #include <linux/types.h>
 #include <sys/types.h>
-//#include <android/log.h>
-#else
-#include "sci_types.h"
-#endif
+#include <android/log.h>
 #else
 #include <windows.h>
 #endif
-
 
 
 #ifdef __cplusplus
@@ -292,12 +286,10 @@ enum
 #ifdef AWBDLL_EXPORTS
 extern __declspec(dllexport) void *awb_init(struct awb_init_param_3_0 *init_param, struct awb_rgb_gain_3_0 *gain);
 extern __declspec(dllexport) int awb_deinit(void *awb_handle);
-extern __declspec(dllexport) void *awb_debug_get_lib_version(void);
 extern __declspec(dllexport) int awb_calc(void *awb_handle, struct awb_calc_param_3_0 *calc_param, struct awb_calc_result_3_0 *calc_result);
 extern __declspec(dllexport) int awb_ioctrl(void *awb_handle, int cmd, void *in, void *out);
 #else
 void *awb_init(struct awb_init_param_3_0 *init_param, struct awb_rgb_gain_3_0 *gain);
-void *awb_debug_get_lib_version(void);
 int awb_deinit(void *awb_handle);
 int awb_calc(void *awb_handle, struct awb_calc_param_3_0 *calc_param, struct awb_calc_result_3_0 *calc_result);
 int awb_ioctrl(void *awb_handle, int cmd, void *param1, void *param2);

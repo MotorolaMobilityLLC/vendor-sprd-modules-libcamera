@@ -7,7 +7,7 @@
 #include <linux/types.h>
 #include <sys/types.h>
 
-#include <stdint.h> 
+#include <stdint.h>
 
 
 #if 0

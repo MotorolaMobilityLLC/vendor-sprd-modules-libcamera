@@ -39,7 +39,9 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../../$(ALG_DIR)/ae/sprd/ae3.x/flash/inc \
 	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/inc \
 	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/alc_awb/inc \
-	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/sprd/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/sprd/awb2.1/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/sprd/awb3.0/inc \
+	$(LOCAL_PATH)/../../$(ALG_DIR)/awb/sprd/awb3.2/inc \
 	$(LOCAL_PATH)/../../$(ALG_DIR)/af/inc \
 	$(LOCAL_PATH)/../../$(ALG_DIR)/af/sprd/afv1/inc \
 	$(LOCAL_PATH)/../../$(ALG_DIR)/af/sprd/aft/inc \

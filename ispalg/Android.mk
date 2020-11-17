@@ -73,7 +73,9 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/atm/sprd/inc\
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/alc_awb/inc \
-	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/sprd/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/sprd/awb2.1/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/sprd/awb3.0/inc \
+	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/awb/sprd/awb3.2/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/af/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/af/sprd/afv1/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/af/sprd/aft/inc \
@@ -121,7 +123,7 @@ LOCAL_SHARED_LIBRARIES += libcamsensor
 LOCAL_SHARED_LIBRARIES += libdeflicker
 
 LOCAL_SHARED_LIBRARIES += libae libae3.x libflash libhdr
-LOCAL_SHARED_LIBRARIES += libawb libawb1
+LOCAL_SHARED_LIBRARIES += libawb libawb1 libawb3.2
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.8)
 LOCAL_SHARED_LIBRARIES += libalsc3.2

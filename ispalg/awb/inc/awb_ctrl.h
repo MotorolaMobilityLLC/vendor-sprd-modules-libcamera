@@ -34,6 +34,10 @@ extern "C" {
 #define AWB_CTRL_INVALID_HANDLE NULL
 #define AWB_CTRL_ENVI_NUM 8
 
+#define AWB_2_0_TURNNING_VERSION 0x00020000
+#define AWB_3_0_TURNNING_VERSION 0x00030000
+#define AWB_3_2_TURNNING_VERSION 0x00030002
+
 	typedef void *awb_ctrl_handle_t;
 
 	enum awb_ctrl_rtn {
@@ -77,10 +81,14 @@ extern "C" {
 		AWB_CTRL_CMD_GET_PIX_CNT = 0x30C,
 		AWB_CTRL_CMD_VIDEO_STOP_NOTIFY = 0x30D,
 		AWB_CTRL_CMD_FLASH_SNOP = 0X30f,
+		AWB_CTRL_CMD_SET_MAINFLASH_EN,
+		AWB_CTRL_CMD_SET_FLASH_RATIO,
+		AWB_CTRL_CMD_SET_PREDICT_MFGAIN,
 		AWB_CTRL_CMD_EM_GET_PARAM = 0x400,
 		AWB_CTRL_CMD_GET_CT_TABLE20 = 0x500,
 		AWB_CTRL_CMD_GET_DATA_TYPE = 0x600,
 		AWB_CTRL_CMD_GET_OTP_INFO = 0x700,
+		AWB_GET_VERSION = 0x800,
 
 		AWB_SYNC_MSG_END,
 		/*
@@ -159,6 +167,17 @@ extern "C" {
 		cmr_s16 y;
 	};
 
+	//awblib flash_info
+	struct awb_lib_flash_info
+	{
+		int mainFlash_enable;
+		enum awb_ctrl_flash_status  flash_status;
+		int flash_ratio; // [0,256] flash /(flash + enviroment)
+		int flash_ratio1; // [0,256] flash1 / (flash1+flash2)
+		int reserved[4];
+	};
+
+
 	struct awb_flash_info {
 		enum awb_ctrl_flash_mode flash_mode;
 		struct awb_ctrl_gain flash_ratio;
@@ -167,7 +186,9 @@ extern "C" {
 		cmr_u32 flash_enable;
 		cmr_u32 main_flash_enable;
 		enum awb_ctrl_flash_status flash_status;
+		struct awb_lib_flash_info awblib_flash_info;
 	};
+
 	union awb_ctrl_stat_img {
 		struct awb_ctrl_chn_img chn_img;
 		cmr_u8 *raw_img_8;
