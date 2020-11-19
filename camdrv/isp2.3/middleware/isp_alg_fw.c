@@ -50,7 +50,7 @@ struct commn_info_t {
 	cmr_s32 isp_mode;
 	cmr_u32 mode_flag;
 	cmr_u32 multi_nr_flag;
-	cmr_u32 scene_flag;
+	cmr_u32 nr_scene_flag;
 	cmr_u32 image_pattern;
 	cmr_u32 param_index;
 	cmr_u32 isp_callback_bypass;
@@ -2167,7 +2167,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		smart_proc_in.cal_para.ct = awb_output->ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
-		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
+		smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
 		smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
 		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 		smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
@@ -4448,7 +4448,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
+		smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
 		smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
 		ispalg_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 		for (i = 0; i < num; i++) {

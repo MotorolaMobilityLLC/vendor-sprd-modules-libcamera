@@ -62,6 +62,8 @@ static const char *SMART_START = "ISP_SMART_";
 static const char *SMART_END = "ISP_SMART_";
 static const char *AI_START = "ISP_AI__";
 static const char *AI_END = "ISP_AI__";
+static const char *FDR_START = "ISP_FDR__";
+static const char *FDR_END = "ISP_FDR__";
 static const char *OTP_START = "ISP_OTP_";
 static const char *OTP_END = "ISP_OTP_";
 static cmr_u8 awb_log_buff[256 * 1024] = {0};
@@ -1752,6 +1754,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 	struct debuginfo_message *current_aft_msg = NULL;
 	struct debuginfo_message *current_smart_msg = NULL;
 	struct debuginfo_message *current_ae_msg = NULL;
+	struct debuginfo_message *current_fdr_msg, fdr_msg;
 
 	if (NULL == info_ptr) {
 		ISP_LOGE("fail to get valid param ");
@@ -1789,6 +1792,10 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		current_smart_msg = msg_get(&cxt->smart_queue, frame_id);
 		current_ai_msg = msg_get(&cxt->ai_queue, frame_id);
 		current_ae_msg = msg_get(&cxt->ae_queue, frame_id);
+		current_fdr_msg = &fdr_msg;
+		current_fdr_msg->msg_log = cxt->fdr_cxt.log_fdr;
+		current_fdr_msg->msg_size = cxt->fdr_cxt.log_fdr_size;
+		current_fdr_msg->frame_id = frame_id;
 
 		ISP_LOGD("frame_id_sof  %d,  input frame id %d", cxt->frame_id_sof, frame_id);
 		ISP_LOGV("af_msg  %p, %d, %d", current_af_msg->msg_log, current_af_msg->msg_size, current_af_msg->frame_id);
@@ -1798,6 +1805,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		ISP_LOGV("smart_msg  %p, %d, %d", current_smart_msg->msg_log, current_smart_msg->msg_size, current_smart_msg->frame_id);
 		ISP_LOGV("ai_msg   %p,%d, %d", current_ai_msg->msg_log, current_ai_msg->msg_size,current_ai_msg->frame_id);
 		ISP_LOGV("ae_msg  %p,%d, %d", current_ae_msg->msg_log, current_ae_msg->msg_size,current_ae_msg->frame_id);
+		ISP_LOGD("fdr_msg  %p,%d, %d", current_fdr_msg->msg_log, current_fdr_msg->msg_size,current_fdr_msg->frame_id);
 
 		total_size = sizeof(struct sprd_isp_debug_info) + sizeof(isp_log_info_t)
 		    + calc_log_size(current_af_msg->msg_log, current_af_msg->msg_size, AF_START, AF_END)
@@ -1807,8 +1815,9 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		    + calc_log_size(current_smart_msg->msg_log, current_smart_msg->msg_size, SMART_START, SMART_END)
 		    + calc_log_size(current_ai_msg->msg_log, current_ai_msg->msg_size, AI_START, AI_END)
 		    + calc_log_size(current_ae_msg->msg_log, current_ae_msg->msg_size, AE_START, AE_END)
+		    + calc_log_size(current_fdr_msg->msg_log, current_fdr_msg->msg_size, FDR_START, FDR_END)
 		    + sizeof(cmr_u32);
-	      ISP_LOGV("total_size  %d", total_size);
+		ISP_LOGV("total_size  %d", total_size);
 
 		if (cxt->otp_data != NULL) {
 			total_size += calc_log_size(cxt->otp_data->total_otp.data_ptr,
@@ -1850,6 +1859,7 @@ static cmr_int ispctl_get_info(cmr_handle isp_alg_handle, void *param_ptr)
 		COPY_LOG(lsc, LSC);
 		COPY_LOG(smart, SMART);
 		COPY_LOG(ai, AI);
+		COPY_LOG(fdr, FDR);
 
 		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 
@@ -2004,19 +2014,86 @@ static cmr_int ispctl_ae_measure_lum(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
+{
+	cmr_u32 convert_scene_flag = 0;
+	switch (scene_flag) {
+	case ISP_AUTO:
+		convert_scene_flag = AE_SCENE_NORMAL;
+		break;
+	case ISP_NIGHT:
+		convert_scene_flag =  AE_SCENE_NIGHT;
+		break;
+	case ISP_SPORT:
+		convert_scene_flag = AE_SCENE_SPORT;
+		break;
+	case ISP_PORTRAIT:
+		convert_scene_flag = AE_SCENE_PORTRAIT;
+		break;
+	case ISP_FDR:
+		convert_scene_flag = AE_SCENE_FDR;
+		break;
+	case ISP_PANORAMA:
+		convert_scene_flag =  AE_SCENE_PANORAMA;
+		break;
+	case ISP_VIDEO:
+		convert_scene_flag =  AE_SCENE_VIDEO;
+		break;
+	case ISP_VIDEO_EIS:
+		convert_scene_flag =  AE_SCENE_VIDEO_EIS;
+		break;
+	default:
+		convert_scene_flag = AE_SCENE_NORMAL;
+		break;
+	}
+	return convert_scene_flag;
+}
+
+static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
+{
+	cmr_u32 convert_scene_flag = 0;
+	switch (scene_flag) {
+	case ISP_AUTO:
+		convert_scene_flag = ISP_SCENEMODE_AUTO;
+		break;
+	case ISP_NIGHT:
+		convert_scene_flag = ISP_SCENEMODE_NIGHT;
+		break;
+	case ISP_SPORT:
+		convert_scene_flag = ISP_SCENEMODE_SPORT;
+		break;
+	case ISP_PORTRAIT:
+		convert_scene_flag = ISP_SCENEMODE_PORTRAIT;
+		break;
+	case ISP_LANDSCAPE:
+		convert_scene_flag = ISP_SCENEMODE_LANDSCAPE;
+		break;
+	case ISP_PANORAMA:
+		convert_scene_flag = ISP_SCENEMODE_PANORAMA;
+		break;
+	default:
+		convert_scene_flag = ISP_SCENEMODE_AUTO;
+		break;
+	}
+	return convert_scene_flag;
+}
+
 static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_scene set_scene = { 0 };
+	cmr_u32 scene_flag = 0;
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
-	set_scene.mode = *(cmr_u32 *) param_ptr;
-	cxt->commn_cxt.scene_flag = set_scene.mode;
+	scene_flag = *(cmr_u32 *) param_ptr;
+	set_scene.mode = convert_scene_flag_for_ae(scene_flag);
+	cxt->commn_cxt.nr_scene_flag = convert_scene_flag_for_nr(scene_flag);
+	ISP_LOGD("set_scene_mode %d, (nr %d ae %d)", scene_flag, cxt->commn_cxt.nr_scene_flag, set_scene.mode);
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SCENE_MODE, &set_scene, NULL);
 
@@ -2767,6 +2844,8 @@ static cmr_int ispctl_start_3a(cmr_handle isp_alg_handle, void *param_ptr)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)&af_bypass, NULL);
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
 
 	ISP_LOGV("done");
 
@@ -2789,6 +2868,8 @@ static cmr_int ispctl_stop_3a(cmr_handle isp_alg_handle, void *param_ptr)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_BYPASS, (void *)&af_bypass, NULL);
+	if (cxt->ops.lsc_ops.ioctrl)
+		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
 
 	ISP_LOGV("done");
 
@@ -4454,16 +4535,14 @@ static cmr_int ispctl_set_fdr_dbgdat(cmr_handle isp_alg_handle, void *param_ptr)
 	if (cxt->dbg_cxt.fp_info) {
 		fprintf(cxt->dbg_cxt.fp_info, "sensor name = %s\n", cxt->dbg_cxt.sensor_name);
 		fprintf(cxt->dbg_cxt.fp_info, "bayer pattern = %d\n", cxt->commn_cxt.image_pattern);
-		fprintf(cxt->dbg_cxt.fp_info, "fdr pre-proc bv = %d\n", dbg_data->pre_bv);
+		fprintf(cxt->dbg_cxt.fp_info, "bv = %d\n", dbg_data->bv);
+		fprintf(cxt->dbg_cxt.fp_info, "sensor gain = %d\n", dbg_data->sensor_gain);
 		fprintf(cxt->dbg_cxt.fp_info, "total frm = %d\n", dbg_data->total_frm_num);
 		fprintf(cxt->dbg_cxt.fp_info, "ref frm = %d\n", dbg_data->ref_frm_num);
-		fprintf(cxt->dbg_cxt.fp_info, "sensor gain = %d\n", dbg_data->sensor_gain);
-		fprintf(cxt->dbg_cxt.fp_info, "bv = %d\n", dbg_data->bv);
-		fprintf(cxt->dbg_cxt.fp_info, "merge out bin0  = %d\n", dbg_data->merge_bin0);
-		fprintf(cxt->dbg_cxt.fp_info, "merge out gain  = %d\n", dbg_data->merge_gain);
-		fprintf(cxt->dbg_cxt.fp_info, "merge out nlm ratio = %d %d %d %d\n",
+		fprintf(cxt->dbg_cxt.fp_info, "merge out nlm ratio = %d %d %d %d %d\n",
 			dbg_data->nlm_out_ratio0, dbg_data->nlm_out_ratio1,
-			dbg_data->nlm_out_ratio2, dbg_data->nlm_out_ratio3);
+			dbg_data->nlm_out_ratio2, dbg_data->nlm_out_ratio3,
+			dbg_data->nlm_out_ratio4);
 
 		fprintf(cxt->dbg_cxt.fp_info, "awb r = %d,  gr = %d,  gb = %d,  b = %d\n",
 			cxt->fdr_cxt.awb_gain.r, cxt->fdr_cxt.awb_gain.gr,
@@ -4503,44 +4582,6 @@ repeat:
 		cxt->smart_cxt.cur_set_id = i;
 		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[i];
 		smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[i];
-
-		/*  TODO - delete it later. Just for smart debug */
-		if (1) {
-			smart_proc_in.aem_shift = 0xff;
-			ISP_LOGD("set %d,  bv %d %d, stab %d awb %d %d,  flash %d %d, abl %d, gtab %p\n", i,
-				smart_proc_in.cal_para.bv,
-				smart_proc_in.cal_para.bv_gain,
-				smart_proc_in.cal_para.stable,
-				smart_proc_in.cal_para.ct,
-				smart_proc_in.cal_para.alc_awb,
-				smart_proc_in.cal_para.flash_ratio,
-				smart_proc_in.cal_para.flash_ratio1,
-				smart_proc_in.cal_para.abl_weight,
-				smart_proc_in.cal_para.gamma_tab);
-			ISP_LOGD("set %d,  mode %d %d %d, alc %d, lock %d %d %d %d %d %d %d\n", i,
-				smart_proc_in.mode_flag,
-				smart_proc_in.scene_flag,
-				smart_proc_in.ai_scene_id,
-				smart_proc_in.alc_awb,
-				smart_proc_in.lock_nlm,
-				smart_proc_in.lock_ee,
-				smart_proc_in.lock_precdn,
-				smart_proc_in.lock_cdn,
-				smart_proc_in.lock_postcdn,
-				smart_proc_in.lock_ccnr,
-				smart_proc_in.lock_ynr);
-			ISP_LOGD("set %d, aem %d, rgb %p %p %p, win %d %d %d %d, log %p, %d\n", i,
-				smart_proc_in.aem_shift,
-				smart_proc_in.r_info,
-				smart_proc_in.g_info,
-				smart_proc_in.b_info,
-				smart_proc_in.win_num_w,
-				smart_proc_in.win_num_h,
-				smart_proc_in.win_size_w,
-				smart_proc_in.win_size_h,
-				smart_proc_in.log,
-				smart_proc_in.size);
-		}
 		smart_proc_in.log = NULL;
 		smart_proc_in.size = 0;
 
@@ -4555,48 +4596,37 @@ repeat:
 			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 			ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
 		}
-
-		/*  TODO - delete it later. Just for smart debug */
-		if (1) {
-			ISP_LOGD("set %d,  bv %d %d, stab %d awb %d %d,  flash %d %d, abl %d, gtab %p\n", i,
-				smart_proc_in.cal_para.bv,
-				smart_proc_in.cal_para.bv_gain,
-				smart_proc_in.cal_para.stable,
-				smart_proc_in.cal_para.ct,
-				smart_proc_in.cal_para.alc_awb,
-				smart_proc_in.cal_para.flash_ratio,
-				smart_proc_in.cal_para.flash_ratio1,
-				smart_proc_in.cal_para.abl_weight,
-				smart_proc_in.cal_para.gamma_tab);
-			ISP_LOGD("set %d,  mode %d %d %d, alc %d, lock %d %d %d %d %d %d %d\n", i,
-				smart_proc_in.mode_flag,
-				smart_proc_in.scene_flag,
-				smart_proc_in.ai_scene_id,
-				smart_proc_in.alc_awb,
-				smart_proc_in.lock_nlm,
-				smart_proc_in.lock_ee,
-				smart_proc_in.lock_precdn,
-				smart_proc_in.lock_cdn,
-				smart_proc_in.lock_postcdn,
-				smart_proc_in.lock_ccnr,
-				smart_proc_in.lock_ynr);
-			ISP_LOGD("set %d, aem %d, rgb %p %p %p, win %d %d %d %d, log %p, %d\n", i,
-				smart_proc_in.aem_shift,
-				smart_proc_in.r_info,
-				smart_proc_in.g_info,
-				smart_proc_in.b_info,
-				smart_proc_in.win_num_w,
-				smart_proc_in.win_num_h,
-				smart_proc_in.win_size_w,
-				smart_proc_in.win_size_h,
-				smart_proc_in.log,
-				smart_proc_in.size);
-		}
 	}
 
 	n++;
 	if (n < loop)
 		goto repeat;
+
+	return ret;
+}
+
+static cmr_int ispctl_get_fdr_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_blkpm_t *out_ptr;
+
+	if (param_ptr == NULL) {
+		ISP_LOGE("fail to get ptr %p\n", param_ptr);
+		return -ISP_PARAM_NULL;
+	}
+
+	out_ptr = (struct isp_blkpm_t *)param_ptr;
+	out_ptr->param_ptr = cxt->fdr_cxt.tuning_param_ptr;
+	out_ptr->param_size = cxt->fdr_cxt.tuning_param_size;
+	if (out_ptr->param_ptr == NULL) {
+		out_ptr->param_size = 0;
+		ret = -ISP_PARAM_NULL;
+	} else {
+		ret = ISP_SUCCESS;
+	}
+	ISP_LOGD("cam%ld param ptr %p, size %d\n",
+		cxt->camera_id, out_ptr->param_ptr, out_ptr->param_size);
 
 	return ret;
 }
@@ -4607,15 +4637,16 @@ static cmr_int ispctl_init_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_u32 set_id = PARAM_SET2;
 	cmr_u32 adaptive_size_info[3] = {0, 0, 0};
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_blkpm_t *out_ptr;
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct pm_workmode_input  pm_input;
 	struct pm_workmode_output pm_output;
 	struct isp_pm_param_data param_data_grid;
 	struct isp_size pic_size;
+	UNUSED(param_ptr);
 
-	if (param_ptr == NULL) {
-		ISP_LOGE("fail to get ptr %p\n", param_ptr);
+	if (cxt->fdr_cxt.tuning_param_ptr == NULL || cxt->fdr_cxt.tuning_param_size == 0) {
+		cxt->fdr_cxt.fdr_init = 0;
+		ISP_LOGE("cam%ld has no fdr param\n", cxt->camera_id);
 		return -ISP_PARAM_NULL;
 	}
 
@@ -4664,23 +4695,11 @@ exit:
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_FDR_LOCK, &pm_input, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to set fdr pm locked"));
 
-	/* 2.  get tuning param for FDR algo */
-	out_ptr = (struct isp_blkpm_t *)param_ptr;
-	out_ptr->param_ptr = cxt->fdr_cxt.tuning_param_ptr;
-	out_ptr->param_size = cxt->fdr_cxt.tuning_param_size;
-	if (out_ptr->param_ptr == NULL) {
-		cxt->fdr_cxt.fdr_init = 0;
-		ret = -ISP_PARAM_NULL;
-	} else {
-		cxt->fdr_cxt.fdr_init = 1;
-		ret = ISP_SUCCESS;
-	}
-
 	cxt->fdr_cxt.fdr_start = FDR_STATUS_NONE;
 	ISP_LOGD("cam%ld init %d,  fdr mode %d,  tuning param ptr %p, size %d\n",
 		cxt->camera_id, cxt->fdr_cxt.fdr_init,
 		cxt->commn_cxt.isp_pm_mode[set_id],
-		out_ptr->param_ptr, out_ptr->param_size);
+		cxt->fdr_cxt.tuning_param_ptr, cxt->fdr_cxt.tuning_param_size);
 
 	return ret;
 }
@@ -4691,6 +4710,7 @@ static cmr_int ispctl_deinit_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	UNUSED(param_ptr);
 
+	ISP_LOGD("E");
 	cxt->fdr_cxt.fdr_init = 0;
 	return ret;
 }
@@ -4713,6 +4733,42 @@ static cmr_int ispctl_set_auto_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (cxt->ops.ae_ops.ioctrl)
 		cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AUTO_FDR, (void *)&ae_auto_fdr, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_set_fdr_log(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_info *info;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (param_ptr == NULL) {
+		ISP_LOGE("fail to get ptr %p\n", param_ptr);
+		return ISP_PARAM_NULL;
+	}
+
+	info = (struct isp_info *)param_ptr;
+	if (info->addr == NULL || info->size <= 0) {
+		ISP_LOGE("error fdr log data %p, size %d\n", info->addr, info->size);
+		return ISP_PARAM_ERROR;
+	}
+
+	if (cxt->fdr_cxt.log_fdr_size != (cmr_u32)info->size) {
+		if (cxt->fdr_cxt.log_fdr) {
+			free(cxt->fdr_cxt.log_fdr);
+			cxt->fdr_cxt.log_fdr = NULL;
+			cxt->fdr_cxt.log_fdr_size = 0;
+		}
+		cxt->fdr_cxt.log_fdr = malloc(info->size);
+		if (cxt->fdr_cxt.log_fdr == NULL) {
+			ISP_LOGE("fail to malloc fdr log data\n");
+			return ISP_ALLOC_ERROR;
+		}
+		cxt->fdr_cxt.log_fdr_size = (cmr_u32)info->size;
+	}
+
+	memcpy((void *)cxt->fdr_cxt.log_fdr, info->addr, info->size);
 
 	return ret;
 }
@@ -4853,7 +4909,7 @@ static cmr_int ispctl_end_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 blk_id = 0, max_val;
+	cmr_u32 blk_id = 0, max_val, fdr_version = 0;
 	struct dcam_dev_rgb_gain_info *rgb_gain;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input = { NULL, 0 };
@@ -4862,10 +4918,8 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_nlm_factor *in;
 	CMR_MSG_INIT(message);
 
-	if (param_ptr == NULL) {
-		ISP_LOGE("fail to get ptr %p\n", param_ptr);
-		return -ISP_PARAM_NULL;
-	}
+	if (param_ptr == NULL)
+		fdr_version = 1;
 
 	if (cxt->save_data && cxt->dbg_cxt.fp_dat == NULL) {
 		char fname[512], tmp_str[32];
@@ -4887,6 +4941,27 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	ret = cmr_thread_msg_send(cxt->thr_handle, &message);
 
+	rgb_gain = &cxt->fdr_cxt.rgb_gain;
+	max_val = (1 << CAM_RAW_BITS) - 1;
+	rgb_gain->bypass = 0;
+	rgb_gain->global_gain = (max_val * 4096) / (max_val - cxt->fdr_cxt.blc_data.r);
+	rgb_gain->r_gain = 4096;
+	rgb_gain->g_gain = 4096;
+	rgb_gain->b_gain = 4096;
+	ISP_LOGD("FDR rgb gain bypass %d, global_gain %x,  r %x b %x g %x\n",
+		cxt->fdr_cxt.rgb_gain.bypass, cxt->fdr_cxt.rgb_gain.global_gain,
+		cxt->fdr_cxt.rgb_gain.r_gain, cxt->fdr_cxt.rgb_gain.b_gain,
+		cxt->fdr_cxt.rgb_gain.g_gain);
+
+	cfg.scene_id = PM_SCENE_FDRL;
+	cfg.block_info = &cxt->fdr_cxt.rgb_gain;
+	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &cfg, NULL);
+	cfg.block_info = &cxt->fdr_cxt.awb_gain;
+	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
+
+	if (fdr_version == 1)
+		goto exit;
+
 	/* update NLM for FDR_H accoring to algo output */
 	in = (struct isp_nlm_factor *)param_ptr;
 	ISP_LOGD("fdr merge output %d %d %d %d\n",
@@ -4907,30 +4982,13 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
 	ret = cmr_thread_msg_send(cxt->thr_handle, &message);
 
-	rgb_gain = &cxt->fdr_cxt.rgb_gain;
-	max_val = (1 << CAM_RAW_BITS) - 1;
-	rgb_gain->bypass = 0;
-	rgb_gain->global_gain = (max_val * 4096) / (max_val - cxt->fdr_cxt.blc_data.r);
-	rgb_gain->r_gain = 4096;
-	rgb_gain->g_gain = 4096;
-	rgb_gain->b_gain = 4096;
-	ISP_LOGD("FDR rgb gain bypass %d, global_gain %x,  r %x b %x g %x\n",
-		cxt->fdr_cxt.rgb_gain.bypass, cxt->fdr_cxt.rgb_gain.global_gain,
-		cxt->fdr_cxt.rgb_gain.r_gain, cxt->fdr_cxt.rgb_gain.b_gain,
-		cxt->fdr_cxt.rgb_gain.g_gain);
-
+	cfg.scene_id = PM_SCENE_FDRH;
 	cfg.block_info = &cxt->fdr_cxt.rgb_gain;
-	cfg.scene_id = PM_SCENE_FDRL;
 	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &cfg, NULL);
-	cfg.scene_id = PM_SCENE_FDRH;
-	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_RGB_GAIN, &cfg, NULL);
-
 	cfg.block_info = &cxt->fdr_cxt.awb_gain;
-	cfg.scene_id = PM_SCENE_FDRL;
-	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
-	cfg.scene_id = PM_SCENE_FDRH;
 	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
 
+exit:
 	return ret;
 }
 
@@ -5344,8 +5402,10 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_UPDATE_FDR, ispctl_update_fdr},
 	{ISP_CTRL_DONE_FDR, ispctl_end_fdr},
 	{ISP_CTRL_AUTO_FDR_MODE, ispctl_set_auto_fdr},
+	{ISP_CTRL_SET_FDR_LOG, ispctl_set_fdr_log},
 	{ISP_CTRL_GET_BLC, ispctl_get_blc},
 	{ISP_CTRL_GET_POSTEE, ispctl_get_postee},
+	{ISP_CTRL_GET_FDR_PARAM, ispctl_get_fdr_param},
 
 	{ISP_CTRL_SET_APP_MODE, ispctl_set_app_mode},
 	{ISP_CTRL_SET_CAP_FLAG, ispctl_set_cap_flag},

@@ -47,9 +47,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_AI_FD_NUM (20)
 //#define ISP_AI_AE_STAT_SIZE (16384) /*128*128*/
 #define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
-#ifdef CAMERA_CNR3_ENABLE
 #define CNR3_LAYER_NUM 5
-#endif
 
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
@@ -111,7 +109,7 @@ enum isp_callback_cmd {
 	ISP_AF_STAT_END_CALLBACK = 0x00000600,
 	ISP_AWB_STAT_CALLBACK = 0x00000700,
 	ISP_CONTINUE_AF_NOTICE_CALLBACK = 0x00000800,
-	ISP_AE_CHG_CALLBACK = 0x00000900,
+	ISP_AE_PARAM_CALLBACK = 0x00000900,
 	ISP_ONLINE_FLASH_CALLBACK = 0x00000A00,
 	ISP_QUICK_MODE_DOWN = 0x00000B00,
 	ISP_AE_STAB_NOTIFY = 0x00000C00,
@@ -196,6 +194,9 @@ enum isp_ae_mode {
 	ISP_FACEID,
 	ISP_PANORAMA,
 	ISP_VIDEO,
+	ISP_VIDEO_EIS,
+	ISP_FDR,
+	ISP_HDR,
 	ISP_AE_MODE_MAX
 };
 
@@ -371,11 +372,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_CNR2_PARAM,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_3DNR_MODE,
-#ifdef CAMERA_CNR3_ENABLE
 	ISP_CTRL_GET_CNR2CNR3_YNR_EN,
-#else
 	ISP_CTRL_GET_CNR2_YNR_EN,
-#endif
 	ISP_CTRL_SET_CAP_FLAG,
 	ISP_CTRL_AI_PROCESS_START,
 	ISP_CTRL_AI_PROCESS_STOP,
@@ -398,6 +396,8 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_UPDATE_FDR,
 	ISP_CTRL_DONE_FDR,
 	ISP_CTRL_AUTO_FDR_MODE,
+	ISP_CTRL_GET_FDR_PARAM,
+	ISP_CTRL_SET_FDR_LOG,
 	ISP_CTRL_GET_BLC,
 	ISP_CTRL_GET_POSTEE,
 	ISP_CTRL_AE_SET_TARGET_REGION,
@@ -410,9 +410,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_ADJUST,
 	ISP_CTRL_GET_FB_PREV_PARAM,
 	ISP_CTRL_GET_FB_CAP_PARAM,
-#ifdef CAMERA_CNR3_ENABLE
 	ISP_CTRL_GET_CNR3_PARAM,
-#endif
 	ISP_CTRL_GET_MFNR_PARAM,
 	ISP_CTRL_GET_DRE_PRO_PARAM,
 	ISP_CTRL_SET_PROF_MODE,
@@ -828,6 +826,7 @@ struct isp_nlm_factor {
 	cmr_s32 nlm_out_ratio1;
 	cmr_s32 nlm_out_ratio2;
 	cmr_s32 nlm_out_ratio3;
+	cmr_s32 nlm_out_ratio4;
 };
 
 struct isp_hdr_ev_param {
@@ -1108,6 +1107,9 @@ struct isp_fdr_dbgdata {
 	cmr_s32 nlm_out_ratio1;
 	cmr_s32 nlm_out_ratio2;
 	cmr_s32 nlm_out_ratio3;
+	cmr_s32 nlm_out_ratio4;
+	cmr_s32 exif_log_size;
+	void *exif_log_addr;
 	cmr_s32 reserved[5];
 };
 /* for new raw capture sulotion  --- end */
@@ -1250,7 +1252,6 @@ struct isp_ai_img_param {
 	enum isp_ai_rotation orientation;
 };
 
-#ifdef CAMERA_CNR3_ENABLE
 //cnr3.0
 struct isp_sw_cnr3_level_info {
 	cmr_u8 level_enable;
@@ -1275,7 +1276,6 @@ struct isp_sw_cnr3_info {
 	cmr_u16 baseRadius;
 	struct isp_sw_multilayer_param param_layer[CNR3_LAYER_NUM];
 };
-#endif
 
 enum isp_ai_status {
 	ISP_AI_STATUS_IDLE,
