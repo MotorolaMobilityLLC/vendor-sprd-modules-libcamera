@@ -176,7 +176,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct isp_alg_fw_context *isp_ctx = NULL;
 	cmr_u16 i;
 	cmr_s32 res_w, res_h, res_pd_w, res_pd_h;
-	cmr_u32 base_w = 512, base_h = 384;
+	cmr_s32 base_w = 512, base_h = 384;
 	cmr_s32 temp_win_start_x = 0, temp_win_start_y = 0;
 	cmr_s32 roi_pixel_num_x = 0;
 	cmr_s32 roi_pixel_num_y = 0;
@@ -1045,41 +1045,44 @@ void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int
 		sprintf(file_name_dual_r, CAMERA_DATA_FILE "/DualPDBuf_R_2016X756_%d.raw", PD_FRAME_ID);
 
 		DualTempBuf = (cmr_u8 *)all_raw;
-		fpL = fopen(file_name_dual_l, "wb+");
-		fpR = fopen(file_name_dual_r, "wb+");
-		while (dual_index != PDAF_FULL_NUM_IMX362_SIZE && DualTempBuf) {	//4032*756*5/4 bytes
-			for (int i = 0; i < 5; i++) {
-				temp[i] = *DualTempBuf;
-				DualTempBuf++;
-			}
-			dual_left0 = ((temp[0] << 2) | (temp[4] & 0x03));	//mipi_raw convert to raw
-			dual_left1 = ((temp[2] << 2) | ((temp[4] & 0x30) >> 4));
+		if (DualTempBuf != NULL){
+			fpL = fopen(file_name_dual_l, "wb+");
+			fpR = fopen(file_name_dual_r, "wb+");
+			while (dual_index != PDAF_FULL_NUM_IMX362_SIZE && DualTempBuf) {	//4032*756*5/4 bytes
+				for (int i = 0; i < 5; i++) {
+					temp[i] = *DualTempBuf;
+					DualTempBuf++;
+				}
+				dual_left0 = ((temp[0] << 2) | (temp[4] & 0x03));	//mipi_raw convert to raw
+				dual_left1 = ((temp[2] << 2) | ((temp[4] & 0x30) >> 4));
 
-			dual_right0 = ((temp[1] << 2) | ((temp[4] & 0x0c) >> 2));
-			dual_right1 = ((temp[3] << 2) | ((temp[4] & 0xc0) >> 6));
-			if (fpL != NULL) {
-				fwrite(&dual_left0, sizeof(cmr_s16), 1, fpL);
+				dual_right0 = ((temp[1] << 2) | ((temp[4] & 0x0c) >> 2));
+				dual_right1 = ((temp[3] << 2) | ((temp[4] & 0xc0) >> 6));
+				if (fpL != NULL) {
+					fwrite(&dual_left0, sizeof(cmr_s16), 1, fpL);
+				}
+				if (fpL != NULL) {
+					fwrite(&dual_left1, sizeof(cmr_s16), 1, fpL);
+				}
+				if (fpR != NULL) {
+					fwrite(&dual_right0, sizeof(cmr_s16), 1, fpR);
+				}
+				if (fpR != NULL) {
+					fwrite(&dual_right1, sizeof(cmr_s16), 1, fpR);
+				}
+				dual_index = dual_index + 5;
 			}
 			if (fpL != NULL) {
-				fwrite(&dual_left1, sizeof(cmr_s16), 1, fpL);
+				fclose(fpL);
 			}
 			if (fpR != NULL) {
-				fwrite(&dual_right0, sizeof(cmr_s16), 1, fpR);
+				fclose(fpR);
 			}
-			if (fpR != NULL) {
-				fwrite(&dual_right1, sizeof(cmr_s16), 1, fpR);
-			}
-			dual_index = dual_index + 5;
+			DualTempBuf = NULL;
+			fpL = NULL;
+			fpR = NULL;
+
 		}
-		if (fpL != NULL) {
-			fclose(fpL);
-		}
-		if (fpR != NULL) {
-			fclose(fpR);
-		}
-		DualTempBuf = NULL;
-		fpL = NULL;
-		fpR = NULL;
 	}
 	PD_FRAME_ID++;
 }
