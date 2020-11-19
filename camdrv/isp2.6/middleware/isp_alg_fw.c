@@ -114,7 +114,7 @@ struct cam_debug_info {
 struct commn_info {
 	cmr_s32 isp_pm_mode[PARAM_SET_MAX];
 	cmr_u32 multi_nr_flag;
-	cmr_u32 scene_flag;
+	cmr_u32 nr_scene_flag;
 	cmr_u32 ai_scene_id;
 	cmr_u32 image_pattern;
 	cmr_u32 param_index;
@@ -270,6 +270,9 @@ struct fdr_info {
 	struct isp_fdr_dbgdata dbg_data;
 	struct smart_proc_input smart_proc_in;
 	cmr_u32 smart_in;
+
+	cmr_u8 *log_fdr;
+	cmr_u32 log_fdr_size;
 };
 
 struct ai_info {
@@ -843,7 +846,8 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_FLASH_FIRED:
 		cmd = ISP_AE_CB_FLASH_FIRED;
 		break;
-	case AE_CB_PROCESS_OUT:
+	case AE_CB_PROCESS_RESULT:
+		cmd = ISP_AE_PARAM_CALLBACK;
 		break;
 	case AE_CB_HDR_STATUS:
 		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
@@ -3298,7 +3302,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 			if (cxt->remosaic_type == 1)
 				smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[1];
-			smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
+			smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
 			smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
 			smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 			smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
@@ -6037,7 +6041,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
+		smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
 		smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
 		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 		for (i = 0; i < num; i++) {
@@ -6090,12 +6094,12 @@ static cmr_int ispalg_update_smart_param(cmr_handle isp_alg_handle)
 		smart_proc_in.cal_para.bv_gain = scene_param.gain;
 		smart_proc_in.cal_para.ct = scene_param.smart_ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-		smart_proc_in.scene_flag = cxt->commn_cxt.scene_flag;
+		smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
 		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[0];
 		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 		cxt->smart_cxt.cur_set_id = 0;
 
-		ISP_LOGI("bv=%d, bv_gain=%d, ct=%d, alc_awb=%d, mode_flag=%d, scene_flag=%d\n",
+		ISP_LOGI("bv=%d, bv_gain=%d, ct=%d, alc_awb=%d, mode_flag=%d, nr_scene_flag=%d\n",
 			smart_proc_in.cal_para.bv,
 			smart_proc_in.cal_para.bv_gain,
 			smart_proc_in.cal_para.ct,
@@ -7405,6 +7409,11 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	if (cxt->commn_cxt.log_isp) {
 		free(cxt->commn_cxt.log_isp);
 		cxt->commn_cxt.log_isp = NULL;
+	}
+
+	if (cxt->fdr_cxt.log_fdr) {
+		free(cxt->fdr_cxt.log_fdr);
+		cxt->fdr_cxt.log_fdr= NULL;
 	}
 
 	if (cxt->dbg_cxt.fp_dat) {

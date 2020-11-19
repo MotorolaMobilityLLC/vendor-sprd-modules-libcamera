@@ -48,10 +48,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_AI_FD_NUM (20)
 //#define ISP_AI_AE_STAT_SIZE (16384) /*128*128*/
 #define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
-
-#ifdef CAMERA_CNR3_ENABLE
 #define CNR3_LAYER_NUM 5
-#endif
 
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
@@ -378,19 +375,14 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_APP_MODE,
 	ISP_CTRL_AI_SET_FD_STATUS,
 	ISP_CTRL_SET_VCM_DIST,
-#ifdef CAMERA_CNR3_ENABLE
 	ISP_CTRL_GET_CNR2CNR3_YNR_EN,
-#else
 	ISP_CTRL_GET_CNR2_YNR_EN,
-#endif
 	ISP_CTRL_GET_CNR2_PARAM,
 	ISP_CTRL_GET_YNRS_PARAM,
 	ISP_CTRL_GET_FB_PREV_PARAM,
 	ISP_CTRL_GET_FB_CAP_PARAM,
 	ISP_CTRL_FDR,
-#ifdef CAMERA_CNR3_ENABLE
 	ISP_CTRL_GET_CNR3_PARAM,
-#endif
 	ISP_CTRL_GET_MFNR_PARAM,
 	ISP_CTRL_GET_DRE_PRO_PARAM,
 	ISP_CTRL_MAX
@@ -1224,7 +1216,6 @@ struct isp_ai_img_status {
 	enum isp_ai_img_flag img_flag;
 };
 
-#ifdef CAMERA_CNR3_ENABLE
 //cnr3.0
 struct isp_sw_cnr3_level_info {
 	cmr_u8 level_enable;
@@ -1249,7 +1240,6 @@ struct isp_sw_cnr3_info {
 	cmr_u16 baseRadius;
 	struct isp_sw_multilayer_param param_layer[CNR3_LAYER_NUM];
 };
-#endif
 
 struct isp_sw_cnr2_level_info {
 	cmr_u8 level_enable;

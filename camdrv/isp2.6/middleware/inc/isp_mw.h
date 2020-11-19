@@ -128,7 +128,7 @@ enum isp_callback_cmd {
 	ISP_AF_STAT_END_CALLBACK = 0x00000600,
 	ISP_AWB_STAT_CALLBACK = 0x00000700,
 	ISP_CONTINUE_AF_NOTICE_CALLBACK = 0x00000800,
-	ISP_AE_CHG_CALLBACK = 0x00000900,
+	ISP_AE_PARAM_CALLBACK = 0x00000900,
 	ISP_ONLINE_FLASH_CALLBACK = 0x00000A00,
 	ISP_QUICK_MODE_DOWN = 0x00000B00,
 	ISP_AE_STAB_NOTIFY = 0x00000C00,
@@ -213,6 +213,9 @@ enum isp_ae_mode {
 	ISP_FACEID,
 	ISP_PANORAMA,
 	ISP_VIDEO,
+	ISP_VIDEO_EIS,
+	ISP_FDR,
+	ISP_HDR,
 	ISP_AE_MODE_MAX
 };
 
@@ -425,8 +428,10 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_UPDATE_FDR,
 	ISP_CTRL_DONE_FDR,
 	ISP_CTRL_AUTO_FDR_MODE,
+	ISP_CTRL_SET_FDR_LOG,
 	ISP_CTRL_GET_BLC,
 	ISP_CTRL_GET_POSTEE,
+	ISP_CTRL_GET_FDR_PARAM,
 	ISP_CTRL_GET_CNR2CNR3_YNR_EN = 180,
 	ISP_CTRL_GET_CNR3_PARAM,
 	ISP_CTRL_GET_FB_PREV_PARAM,
@@ -912,6 +917,7 @@ struct isp_nlm_factor {
 	cmr_s32 nlm_out_ratio1;
 	cmr_s32 nlm_out_ratio2;
 	cmr_s32 nlm_out_ratio3;
+	cmr_s32 nlm_out_ratio4;
 };
 
 struct isp_sensor_resolution_info {
@@ -1110,18 +1116,19 @@ struct isp_fdr_dbgdata {
 	cmr_s32 align_mode;
 	cmr_s32 merge_mode;
 	cmr_s32 fusion_mode;
-	cmr_s32 run_type;
-	cmr_s32 pre_bv;
+	cmr_s32 bv;
+	cmr_s32 sensor_gain;
 	cmr_s32 total_frm_num;
 	cmr_s32 ref_frm_num;
-	cmr_s32 sensor_gain;
-	cmr_s32 bv;
 	cmr_s32 merge_gain;
 	cmr_s32 merge_bin0;
 	cmr_s32 nlm_out_ratio0;
 	cmr_s32 nlm_out_ratio1;
 	cmr_s32 nlm_out_ratio2;
 	cmr_s32 nlm_out_ratio3;
+	cmr_s32 nlm_out_ratio4;
+	cmr_s32 exif_log_size;
+	void *exif_log_addr;
 	cmr_s32 reserved[5];
 };
 /* for new raw capture sulotion  --- end */
