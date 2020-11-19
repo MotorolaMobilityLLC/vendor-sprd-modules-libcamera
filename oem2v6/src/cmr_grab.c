@@ -985,31 +985,12 @@ cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
     cmr_int ret = 0;
     cmr_u32 i, j;
     struct sprd_img_parm parm;
-    struct cmr_grab *p_grab;
-    cmr_s64 frm_time;
-
-    if(buf_cfg != NULL) {
-        CMR_LOGD("fdr transfer base_id: 0x%x, sec: %u, usec %u monoboottime=%" PRId64,
-              buf_cfg->base_id,
-              buf_cfg->slice_height,
-              buf_cfg->start_buf_id,
-              buf_cfg->monoboottime);
-        for (i = 0; i< 6; i++) {
-            CMR_LOGD("for transfer, chn_id=%d, i=%d, fd=0x%x addr:"
-                     "0x%lx, 0x%lx, 0x%lx, addr_vir:0x%lx, 0x%lx, 0x%lx",
-                 buf_cfg->channel_id, i, (cmr_u32)buf_cfg->fd[i],
-                 buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
-                 buf_cfg->addr[i].addr_v,
-                 buf_cfg->addr_vir[i].addr_y, buf_cfg->addr_vir[i].addr_u,
-                 buf_cfg->addr_vir[i].addr_v);
-        }
-    }
+    struct cmr_grab *p_grab = (struct cmr_grab *)grab_handle;
 
     if (NULL == buf_cfg || buf_cfg->count > GRAB_BUF_MAX) {
         CMR_LOGE("null buffer ");
         return -1;
     }
-    p_grab = (struct cmr_grab *)grab_handle;
 
     cmr_bzero(&parm, sizeof(parm));
     parm.channel_id = buf_cfg->channel_id;
@@ -1017,20 +998,26 @@ cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
     parm.pixel_fmt = IMG_PIX_FMT_GREY;
 
     /* real frame id and sec/usec/monoboottime must be set */
-    parm.index = buf_cfg->base_id;  // real frame id 
+    parm.index = buf_cfg->base_id;  // real frame id
     parm.reserved[0] = buf_cfg->slice_height; // sec
     parm.reserved[1] = buf_cfg->start_buf_id; // usec
-    frm_time = buf_cfg->slice_height;
-    frm_time = (frm_time<<32) | (buf_cfg->start_buf_id & 0xffffffff);
-    buf_cfg->monoboottime = frm_time;
     // low 32bit for timestamp
     parm.reserved[2] = (cmr_u32)buf_cfg->monoboottime;
     // high 32bit for timestamp
     parm.reserved[3] = (cmr_u32)(buf_cfg->monoboottime >> 32);
 
-    CMR_LOGD("after convert frame id 0x%x,sec %u usec %u monoboottime=%" PRId64,
+    CMR_LOGD("frame id 0x%x,sec %u usec %u monoboottime=%" PRId64,
                          parm.index, parm.reserved[0],
                          parm.reserved[1], buf_cfg->monoboottime);
+    for (i = 0; i< 6; i++) {
+            CMR_LOGD("ch_id = %d, i=%d, fd=%d addr:"
+                     "0x%lx, 0x%lx, 0x%lx, addr_vir:0x%lx, 0x%lx, 0x%lx",
+                 buf_cfg->channel_id, i, (cmr_u32)buf_cfg->fd[i],
+                 buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
+                 buf_cfg->addr[i].addr_v,
+                 buf_cfg->addr_vir[i].addr_y, buf_cfg->addr_vir[i].addr_u,
+                 buf_cfg->addr_vir[i].addr_v);
+    }
 
     for (i = 0; i < 3; i++) {
         /* re-use fisrt 3 buffers for low */
@@ -1043,7 +1030,7 @@ cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
         parm.fd_array[i] = buf_cfg->fd[i];
     }
     parm.scene_mode = FDR_POST_LOW;
-    CMR_LOGD("fdr raw->yuv");
+    CMR_LOGD("fdr rawl->yuvl");
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_POST_FDR, &parm);
     if (ret)
         CMR_LOGE("failed to post FDR_LOW,  ret=%ld,", ret);
@@ -1061,10 +1048,68 @@ cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
     }
 
     parm.scene_mode = FDR_POST_HIGH;
-    CMR_LOGD("fdr high raw->yuv");
+    CMR_LOGD("fdr rawh->yuvh");
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_POST_FDR, &parm);
     if (ret)
         CMR_LOGE("failed to post FDR_HIGH,  ret=%ld,", ret);
+
+    return ret;
+}
+
+cmr_int cmr_grab_fdr_postproc_v1(cmr_handle grab_handle,
+                             struct buffer_cfg *buf_cfg, cmr_u32 step) {
+    cmr_int ret = 0;
+    cmr_u32 i, j;
+    struct sprd_img_parm parm;
+    struct cmr_grab *p_grab = (struct cmr_grab *)grab_handle;
+
+    if (NULL == buf_cfg || buf_cfg->count > GRAB_BUF_MAX) {
+        CMR_LOGE("null buffer ");
+        return -1;
+    }
+
+    cmr_bzero(&parm, sizeof(parm));
+    parm.channel_id = buf_cfg->channel_id;
+    parm.buffer_count = buf_cfg->count;
+    parm.pixel_fmt = (step == 0) ? IMG_PIX_FMT_GREY : IMG_PIX_FMT_RGB565;
+
+    /* real frame id and sec/usec/monoboottime must be set */
+    parm.index = buf_cfg->base_id;  // real frame id
+    parm.reserved[0] = buf_cfg->slice_height; // sec
+    parm.reserved[1] = buf_cfg->start_buf_id; // usec
+    // low 32bit for timestamp
+    parm.reserved[2] = (cmr_u32)buf_cfg->monoboottime;
+    // high 32bit for timestamp
+    parm.reserved[3] = (cmr_u32)(buf_cfg->monoboottime >> 32);
+
+    CMR_LOGD("frame id 0x%x,sec %u usec %u monoboottime=%" PRId64,
+                         parm.index, parm.reserved[0],
+                         parm.reserved[1], buf_cfg->monoboottime);
+    for (i = 0; i< parm.buffer_count; i++) {
+            CMR_LOGD("ch_id = %d, i=%d, fd=%d addr:"
+                     "0x%lx, 0x%lx, 0x%lx, addr_vir:0x%lx, 0x%lx, 0x%lx",
+                 buf_cfg->channel_id, i, (cmr_u32)buf_cfg->fd[i],
+                 buf_cfg->addr[i].addr_y, buf_cfg->addr[i].addr_u,
+                 buf_cfg->addr[i].addr_v,
+                 buf_cfg->addr_vir[i].addr_y, buf_cfg->addr_vir[i].addr_u,
+                 buf_cfg->addr_vir[i].addr_v);
+    }
+    for (i = 0; i < parm.buffer_count; i++) {
+        /* re-use fisrt 3 buffers for low */
+        parm.frame_addr_array[i].y = buf_cfg->addr[i].addr_y;
+        parm.frame_addr_array[i].u = buf_cfg->addr[i].addr_u;
+        parm.frame_addr_array[i].v = buf_cfg->addr[i].addr_v;
+        parm.frame_addr_vir_array[i].y = buf_cfg->addr_vir[i].addr_y;
+        parm.frame_addr_vir_array[i].u = buf_cfg->addr_vir[i].addr_u;
+        parm.frame_addr_vir_array[i].v = buf_cfg->addr_vir[i].addr_v;
+        parm.fd_array[i] = buf_cfg->fd[i];
+    }
+    parm.scene_mode =  (step == 0) ? FDR_POST_LOW : FDR_POST_HIGH;
+    CMR_LOGD("fdr post step %d, scene %d\n", step, parm.scene_mode);
+
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_POST_FDR, &parm);
+    if (ret)
+        CMR_LOGE("failed to post parm.scene_mode %d  ret=%ld,", ret);
 
     return ret;
 }
@@ -1613,31 +1658,33 @@ static void *cmr_grab_thread_proc(void *data) {
                     continue;
                 }
 
+                cmr_bzero(&frame, sizeof(struct frm_info));
                 if (op.parm.frame.irq_type == CAMERA_IRQ_4IN1_DONE) {
                     frame.is_4in1_frame = 1;
                 } else {
                     frame.is_4in1_frame = 0;
                 }
 
-                if (op.parm.frame.irq_type == CAMERA_IRQ_FDRL) {
-                    CMR_LOGD("read fdr yuv_L");
-                    frame.is_fdr_frame_l = 1;
-                    frame.is_fdr_frame_h = 0;
-                } else if (op.parm.frame.irq_type == CAMERA_IRQ_FDRH) {
-                    CMR_LOGD("read fdr yuv_H");
-                    frame.is_fdr_frame_l = 0;
-                    frame.is_fdr_frame_h = 1;
-                    cmr_u32 stop = 1;
-                    ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
-                } else {
-                    CMR_LOGD("read nomal yuv");
-                    frame.is_fdr_frame_l = 0;
-                    frame.is_fdr_frame_h = 0;
-                }
-
                 frame.channel_id = op.parm.frame.channel_id;
 
                 if (frame.channel_id == 3) {
+	                if (op.parm.frame.irq_type == CAMERA_IRQ_FDRL) {
+	                    CMR_LOGD("read fdr yuv_L");
+	                    frame.frame_type = FDR_FRAME_YUVL;
+	                } else if (op.parm.frame.irq_type == CAMERA_IRQ_FDRH) {
+	                    cmr_u32 stop = 1;
+
+	                    ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
+	                    CMR_LOGD("read fdr yuv_H");
+	                    frame.frame_type = FDR_FRAME_YUVH;
+	                } else if (op.parm.frame.img_fmt == IMG_PIX_FMT_GREY) {
+	                    CMR_LOGD("read fdr raw");
+	                    frame.frame_type = FDR_FRAME_RAW;
+	                } else {
+	                    CMR_LOGD("read nomal yuv or raw. fmt 0x%x\n",
+							cmr_grab_get_img_type(op.parm.frame.img_fmt));
+	                }
+
                     CMR_LOGD("fdr real id=%d, monoboottime=%" PRId64,
                              op.parm.frame.real_index,
                              op.parm.frame.monoboottime);

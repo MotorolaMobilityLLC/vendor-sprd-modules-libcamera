@@ -25,6 +25,28 @@
 #define ZOOM_STEP(x) (((x) - (x) / CMR_ZOOM_FACTOR) / CAMERA_ZOOM_LEVEL_MAX)
 #define ROTATE_LEFT(x, s, n) ((x) << (n)) | ((x) >> ((s) - (n)))
 
+struct BITMAPFILEHEADER {
+	unsigned short bfType;
+	unsigned int bfSize;
+	unsigned short bfReserved1;
+	unsigned short bfReserved2;
+	unsigned int bfOffBits;
+} __attribute__ ((packed));
+
+struct BITMAPINFOHEADER {
+	unsigned int biSize;
+	unsigned int biWidth;
+	unsigned int biHeight;
+	unsigned short biPlanes;
+	unsigned short biBitCount;
+	unsigned int biCompression;
+	unsigned int biSizeImage;
+	unsigned int biXPelsPerMeter;
+	unsigned int biYPelsPerMeter;
+	unsigned int biClrUsed;
+	unsigned int biClrImportant;
+};
+
 struct CAMERA_TAKEPIC_STAT cap_stp[CMR_STEP_MAX] = {
     {"takepicture", 0, 0, 0},    {"capture start", 0, 0, 0},
     {"capture end", 0, 0, 0},    {"rotate start", 0, 0, 0},
@@ -478,6 +500,75 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     return 0;
 }
 
+static cmr_int dump_rgb14_tobmp(char *file_prefix,
+                    cmr_u32 w, cmr_u32 h, struct img_addr *vir_addr)
+{
+	cmr_u32 i, j, pitch;
+	uint8_t *line_buf;
+	uint16_t *src_R, *src_G, *src_B;
+	char file_name[512];
+	FILE *fp = NULL;
+	struct BITMAPFILEHEADER bfheader;
+	struct BITMAPINFOHEADER biheader;
+
+	pitch = (w * 3 + 3) & ~3;
+	line_buf = (uint8_t *)malloc(pitch);
+	if (line_buf == NULL) {
+		ISP_LOGD("fail to malloc buf size %d\n", pitch);
+		return 0;
+	}
+
+	strcpy(file_name, file_prefix);
+	strcat(file_name, ".bmp");
+
+	fp = fopen(file_name, "wb");
+	if (NULL == fp) {
+		CMR_LOGE("can not open file: %s", file_name);
+		free(line_buf);
+		return 0;
+	}
+
+	memset(&bfheader, 0, sizeof(bfheader));
+	bfheader.bfType = 'B' | ('M' << 8);
+	bfheader.bfSize = sizeof(bfheader) + sizeof(biheader) + pitch * w;
+	bfheader.bfOffBits = sizeof(bfheader) + sizeof(biheader);
+
+	if (fwrite(&bfheader, 1, sizeof(bfheader), fp) != sizeof(bfheader)) {
+		goto exit;
+	}
+
+	memset(&biheader, 0, sizeof(biheader));
+	biheader.biSize = sizeof(biheader);
+	biheader.biPlanes = 1;
+	biheader.biWidth = w;
+	biheader.biHeight = 0 - h;
+	biheader.biBitCount = 24;
+	biheader.biSizeImage = pitch * h;
+	if (fwrite(&biheader, 1, sizeof(biheader), fp) != sizeof(biheader)) {
+		goto exit;
+	}
+
+	for (j = 0; j < h; j++) {
+		src_R = (uint16_t *)(vir_addr->addr_y + j * w * 3 * 2);
+		src_G = src_R + 1;
+		src_B = src_G + 1;
+		for (i = 0; i < w; i++) {
+			line_buf[i * 3 + 0] = (uint8_t)((*src_B >> 6) & 0xFF);
+			line_buf[i * 3 + 1] = (uint8_t)((*src_G >> 6) & 0xFF);
+			line_buf[i * 3 + 2] = (uint8_t)((*src_R >> 6) & 0xFF);
+		}
+		fwrite(line_buf, 1, pitch, fp);
+	}
+
+	ISP_LOGD("file %s done\n", file_name);
+
+exit:
+	fclose(fp);
+	free(line_buf);
+
+	return 0;
+}
+
 // more tags for file
 cmr_int dump_image_tags(char *tag, char *tag_suffix,
                     cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
@@ -538,6 +629,11 @@ cmr_int dump_image_tags(char *tag, char *tag_suffix,
     } else if (CAM_IMG_FMT_DCAM_RAW14BIT == img_fmt) {
         strcat(file_name, ".dcam.raw");
         size = width * height * 2;
+
+    } else if (CAM_IMG_FMT_RGB14 == img_fmt) {
+        dump_rgb14_tobmp(file_name, width, height, vir_addr);
+        strcat(file_name, ".rgb");
+        size = width * height * 3 * 2;
 
     }
 

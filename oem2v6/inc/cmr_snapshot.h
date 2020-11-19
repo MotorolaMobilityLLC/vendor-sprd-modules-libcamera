@@ -37,6 +37,7 @@ enum snapshot_receive_evt_type {
     SNAPSHOT_EVT_JPEG_ENC_ERR,
     SNAPSHOT_EVT_JPEG_DEC_ERR,
     SNAPSHOT_EVT_FREE_FRM,
+    SNAPSHOT_EVT_FDR_PROC,
     SNPASHOT_EVT_MAX
 };
 
@@ -66,6 +67,19 @@ enum snapshot_func_type {
     SNAPSHOT_FUNC_RECOVERY,
     SNAPSHOT_FUNC_MAX
 };
+
+
+enum snap_frame_type {
+	FRAME_COMMON = 0,
+	FRAME_4IN1,
+	FDR_FRAME_RAW,
+	FDR_FRAME_YUVL,
+	FDR_FRAME_YUVH,
+	FDR_FRAME_MAX,
+};
+
+#define IS_FDR_FRAME(frame_type) \
+	(((frame_type >= FDR_FRAME_RAW) && (frame_type <= FDR_FRAME_YUVH)) ? 1 : 0)
 
 typedef void (*snapshot_cb_of_state)(cmr_handle oem_handle,
                                      enum snapshot_cb_type cb,
