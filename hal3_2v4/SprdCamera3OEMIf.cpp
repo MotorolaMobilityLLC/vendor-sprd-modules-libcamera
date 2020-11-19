@@ -907,9 +907,10 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     cmr_uint been_preflash = 0;
     cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
     HAL_LOGI("E");
+
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
 
-    if (mCameraId != 1){
+    if (mCameraId != 1) {
         mHalOem->ops->camera_get_last_preflash_time(mCameraHandle, &last_preflash_time);
         now_time = systemTime(CLOCK_MONOTONIC);
         HAL_LOGD("lst_preflash_time = %" PRId64 ", now_time=%" PRId64,
@@ -976,6 +977,7 @@ int SprdCamera3OEMIf::zslTakePictureL() {
 
     JPEG_Tag jpgInfo;
     struct img_size jpeg_thumb_size;
+
     mSetting->getJPEGTag(&jpgInfo);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_JPEG_QUALITY,
              jpgInfo.quality);
@@ -999,6 +1001,12 @@ int SprdCamera3OEMIf::zslTakePictureL() {
             /*after caf picture, set af mode again to isp*/
             SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
         }
+    }
+
+    if (mZslCaptureExitLoop == true) {
+       HAL_LOGE("deinit capture");
+       setCameraState(SPRD_IDLE, STATE_CAPTURE);
+       goto exit;
     }
 
     if (CMR_CAMERA_SUCCESS !=
@@ -3534,6 +3542,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
     mUpdateRangeFpsCount = 0;
+    mZslCaptureExitLoop == true;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -9944,11 +9953,13 @@ cmr_int SprdCamera3OEMIf::ZSLMode_monitor_thread_proc(struct cmr_msg *message,
         HAL_LOGD("zsl thread msg init");
         break;
     case CMR_EVT_ZSL_MON_SNP:
-        if (!(obj->zslTakePictureL())) {
-            obj->mZslShotPushFlag = 1;
-            obj->snapshotZsl(p_data);
-        } else {
-            obj->mZslShotPushFlag = 0;
+        if (!mZslCaptureExitLoop) {
+            if (!(obj->zslTakePictureL())) {
+                obj->mZslShotPushFlag = 1;
+                obj->snapshotZsl(p_data);
+            } else {
+                obj->mZslShotPushFlag = 0;
+            }
         }
         break;
     case CMR_EVT_ZSL_MON_STOP_OFFLINE_PATH:
