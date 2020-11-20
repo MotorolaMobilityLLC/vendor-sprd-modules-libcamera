@@ -85,6 +85,10 @@ extern "C" {
 		AWB_CTRL_CMD_GET_DATA_TYPE = 0x600,
 		AWB_CTRL_CMD_GET_OTP_INFO = 0x700,
 
+		AWB_GET_VERSION = 0x800,
+		AWB_SET_MULTI_SWITCH_INFO = 0x900,
+
+
 		AWB_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly

@@ -85,6 +85,11 @@ struct match_data_param {
 	struct isp_hist_statistic_info y_hist[CAM_SENSOR_MAX];
 };
 
+struct awb_master_sync_data {
+	cmr_u32 ct;
+	cmr_u32 tint;
+};
+
 struct ispbr_context {
 	cmr_u32 start_user_cnt;
 	cmr_handle ispalg_fw_handles[CAM_SENSOR_MAX];
@@ -94,6 +99,7 @@ struct ispbr_context {
 	sem_t awb_sm;
 	sem_t af_sm;
 	struct match_data_param match_param;
+	struct awb_master_sync_data awb_master_data;
 
 	cmr_u32 ae_ref_camera_id;
 	struct ae_rect_data ae_region[CAM_SENSOR_MAX];
@@ -558,7 +564,26 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sizeof(cxt->match_param.awb_gain[sensor_role]));
 		sem_post(&cxt->awb_sm);
 		break;
-
+	case SET_MASTER_AWB_DATA:
+		ISP_LOGV("SET_MASTER_AWB_DATA : ");
+		if(in) {
+			struct awb_master_sync_data *in_tmp = (struct awb_master_sync_data *)in;
+			sem_wait(&cxt->awb_sm);
+			memcpy(&cxt->awb_master_data, in_tmp, sizeof(cxt->awb_master_data));
+			ISP_LOGV("set master_awb_data: %d, %d", cxt->awb_master_data.ct, cxt->awb_master_data.tint);
+			sem_post(&cxt->awb_sm);
+		} else {
+			ISP_LOGE("input param is NULL");
+		}
+		break;
+	case GET_MASTER_AWB_DATA:
+		ISP_LOGV("GET_MASTER_AWB_DATA : ");
+		struct awb_master_sync_data *out_tmp = (struct awb_master_sync_data *)out;
+		sem_wait(&cxt->awb_sm);
+		memcpy(out_tmp, &cxt->awb_master_data, sizeof(cxt->awb_master_data));
+		ISP_LOGV("get master_awb_data: %d, %d", out_tmp->ct, out_tmp->tint);
+		sem_post(&cxt->awb_sm);
+		break;
 	case SET_FOV_DATA:
 		sem_wait(&cxt->awb_sm);
 		memcpy(&cxt->match_param.fov_info[sensor_role], in,

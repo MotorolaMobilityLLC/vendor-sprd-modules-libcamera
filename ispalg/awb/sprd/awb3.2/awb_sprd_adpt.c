@@ -90,6 +90,11 @@ struct awb_ae_stat {
 	cmr_u32 b_info[16384];
 };
 
+struct awb_master_sync_data {
+	cmr_u32 ct;
+	cmr_u32 tint;
+};
+
 struct awb_ctrl_cxt {
 	/*must be the first one */
 	cmr_u32 magic_begin;
@@ -180,6 +185,17 @@ struct awb_ctrl_cxt {
 	struct awb_ctrl_gain gain_to_save_auto;
 	cmr_u32 ct_auto_to_save;
 	cmr_u32 flash_awb_en;
+
+	//for awb_sync_mode
+	struct awb_master_sync_data main_result;
+	int main_result_tmp[3];
+	cmr_u8 cur_ref_sensor_id;
+	cmr_u8 next_sensor_id;
+	struct awb_calc_result_3_0 awb_sync_result;
+	cmr_u32 awb_sync_mode;
+	cmr_u32 sync_enable;
+	cmr_u32 sync_start;
+	cmr_u32 sync_end;
 
 };
 
@@ -1138,6 +1154,28 @@ static cmr_u32 _awb_parser_otp_info(struct awb_ctrl_init_param * param)
 	return rtn;
 }
 
+//typedef enum { false, true }bool;
+
+struct awb_sync_smooth{
+	uint8_t mRefId;
+	uint8_t mNestId;
+	_Bool mSyncFlag;
+};
+
+static cmr_s32 awb_get_sync_info(struct awb_ctrl_cxt *cxt, cmr_handle param) {
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	struct awb_sync_smooth *awb_sync_info;
+	awb_sync_info = (struct awb_sync_smooth *)param;
+	cxt->cur_ref_sensor_id = awb_sync_info->mRefId;
+	cxt->next_sensor_id = awb_sync_info->mNestId;
+	if(cxt->cur_ref_sensor_id != cxt->next_sensor_id && awb_sync_info->mSyncFlag ==1) {
+		cxt->sync_enable = 1;
+	} else {
+		cxt->sync_enable = 0;
+	}
+	return rtn;
+}
+
 /*------------------------------------------------------------------------------*
 *					public functions			*
 *-------------------------------------------------------------------------------*/
@@ -1510,8 +1548,8 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.awb_calc_v3_2(cxt->alg_handle, &calc_param_v3, &calc_result_v3);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
-	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain,
-			 calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct, (cmr_s32) ((time1 - time0) / 1000));
+	ISP_LOGE("AWB %dx%d: (%d,%d,%d) %dK, %dus,sensor_id:%d", calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain,
+			 calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct, (cmr_s32) ((time1 - time0) / 1000), cxt->sensor_role_type);
 
 	if (_awb_get_cmd_property() == 1){
 		ISP_LOGI("[AWB_TEST] calc frame_count: %d, awb_camera_id: %d --(0: back camera, 1: front camera), awb_work_mode: %d --(0: preview, 1:capture, 2:video),\
@@ -1622,11 +1660,48 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 		cxt->flash_info.main_flash_enable = 0;
 	}
 
+	//FOR DEBUG
+	#define ISP_ALG_TRIBLE_W_T_UW_SYNC 8
+	//cxt->sync_enable = 1;
+	//cxt->is_multi_mode = 8;
+	//主sensor开始切到从sensor时，并且此时为所摄顺切模式。
+	//cxt->sync_enable = 1;
+	if(cxt->sync_enable ==1 && cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW_SYNC) {
+		//主摄
+		if(1 == cxt->sensor_role) {
+			//将当前主sensor的ct/tint/值传到bridge
+			cxt->main_result.ct = cxt->output_ct;
+			cxt->main_result.tint = calc_result_v3.awb_gain.tint;
+			ISP_LOGI("MASTER_UPLOAD_start,sensor_id:%d, ct:%d, tint: %d",cxt->sensor_role_type, cxt->main_result.ct, cxt->main_result.tint);
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , SET_MASTER_AWB_DATA, &cxt->main_result, NULL);
+			ISP_LOGI("MASTER_UPLOAD_end: main_result.ct = %d, main_result.tint= %d, sensor_id:%d", cxt->main_result.ct, cxt->main_result.tint, cxt->sensor_role_type);
+		} else if(cxt->sensor_role != 1){
+			//从brigde获取master的结果
+			ISP_LOGI("MASTER_DOWLOAD_start, sensor_id:%d", cxt->sensor_role_type);
+			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_MASTER_AWB_DATA, NULL, &(cxt->main_result));
+			ISP_LOGI("MASTER_DOWLOAD_end, sensor_id:%d", cxt->sensor_role_type);
+			//当前sensor的bv值
+			cxt->main_result_tmp[0] = cxt->main_result.ct;
+			cxt->main_result_tmp[1] = cxt->main_result.tint;
+			cxt->main_result_tmp[2] = calc_param_v3.bv;
+			//根据master的结果去mapping slave的值
+			cxt->lib_ops.awb_ioctrl_v3_2(cxt->alg_handle, AWB_IOCTRL_AWB_SYNC_DEBUGINFO ,cxt->main_result_tmp, &cxt->awb_sync_result);
+			cxt->output_gain.r = cxt->awb_sync_result.awb_gain.r_gain;
+			cxt->output_gain.g = cxt->awb_sync_result.awb_gain.g_gain;
+			cxt->output_gain.b = cxt->awb_sync_result.awb_gain.b_gain;
+			cxt->output_ct = cxt->awb_sync_result.awb_gain.ct;
+			cxt->output_ct_mean = cxt->awb_sync_result.awb_gain.ct_mean;
+			cxt->cur_tint = cxt->awb_sync_result.awb_gain.tint;
+			ISP_LOGI("SLAVE_SYNC: r_gain = %d, g_gain = %d, b_gain = %d,ct = %d",cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b,cxt->output_ct);
+		}
+		//每帧都下发sync_start时需要每帧清零
+		//sync_enable = 0;
+	}
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-	ISP_LOGV("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id);
+	ISP_LOGV("AWB result : (%d,%d,%d) %dK , fram_count : %d , sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->sensor_role_type);
 	if (_awb_get_cmd_property() == 1){
-		ISP_LOGD("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id);
+		ISP_LOGD("AWB result : (%d,%d,%d) %dK , fram_count : %d , sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->sensor_role_type);
 	}
 
 	//set the gain/ct to_save_file
@@ -1883,6 +1958,9 @@ cmr_s32 awb_sprd_ctrl_ioctrl_v3_2(void *handle, cmr_s32 cmd, void *in, void *out
 		break;
 	case AWB_CTRL_CMD_READ_FILE:
 		rtn = _awb_read_file_for_init(cxt);
+		break;
+	case AWB_SET_MULTI_SWITCH_INFO:
+		rtn = awb_get_sync_info(cxt, in);
 		break;
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);
