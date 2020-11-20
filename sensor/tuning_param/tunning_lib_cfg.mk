@@ -91,6 +91,14 @@ PRODUCT_PACKAGES += libparam_ov5675_front_main
 PRODUCT_PACKAGES += libparam_ov5675_dual
 #endif
 
+#ifeq ($(strip $(CHIP_NAME)),qogirl6)
+#ums9230_1h10_nosec
+PRODUCT_PACKAGES += libparam_s5kgw1sp03
+PRODUCT_PACKAGES += libparam_ov8856_back
+PRODUCT_PACKAGES += libparam_imx616
+PRODUCT_PACKAGES += libparam_ov08a10
+#endif
+
 #default tuning 
 PRODUCT_PACKAGES += libparam_default_id_0
 PRODUCT_PACKAGES += libparam_default_id_1
