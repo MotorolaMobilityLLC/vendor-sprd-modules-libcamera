@@ -4217,30 +4217,32 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 
 	ae_set_app_mode_for_face_start(cxt);
 
-	if (((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode)||(cxt->mode_switch[cxt->app_mode].gain))) || (CAMERA_MODE_MANUAL == cxt->app_mode)) {
-		dst_exp.exp_time = src_exp.exp_time;
-		dst_exp.exp_line = src_exp.exp_line;
-		dst_exp.gain = src_exp.gain;
-		dst_exp.dummy = src_exp.dummy;
-		dst_exp.cur_index = src_exp.cur_index;
-		dst_exp.frm_len = src_exp.frm_len;
-		dst_exp.frm_len_def = src_exp.frm_len_def;
-	} else {
-		src_exp.dummy = 0;
-		max_expl = (cmr_u32) (1.0 * cxt->ae_tbl_param.max_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-		if (work_info->sensor_fps.is_high_fps) {
-			fps_range.min = work_info->sensor_fps.max_fps;
-			fps_range.max = work_info->sensor_fps.max_fps;
-			cxt->cur_status.adv_param.sensor_fps_range.max = work_info->sensor_fps.max_fps;
-		}else if(CAMERA_MODE_SLOWMOTION == cxt->app_mode){
-			fps_range.min = cxt->cur_status.adv_param.sensor_fps_range.max;
-			fps_range.max = cxt->cur_status.adv_param.sensor_fps_range.max;
-		}else {
-			fps_range.min = cxt->fps_range.min;
-			fps_range.max = cxt->fps_range.max;
-		}
-		ae_adjust_exp_gain(cxt, &src_exp, &fps_range, max_expl, &dst_exp);
+	if(cxt->app_mode < CAMERA_MODE_MAX){
+		if (((1 == cxt->last_enable) && ((1 == work_info->is_snapshot) || (last_cam_mode == cxt->last_cam_mode)||(cxt->mode_switch[cxt->app_mode].gain))) || (CAMERA_MODE_MANUAL == cxt->app_mode)) {
+			dst_exp.exp_time = src_exp.exp_time;
+			dst_exp.exp_line = src_exp.exp_line;
+			dst_exp.gain = src_exp.gain;
+			dst_exp.dummy = src_exp.dummy;
+			dst_exp.cur_index = src_exp.cur_index;
+			dst_exp.frm_len = src_exp.frm_len;
+			dst_exp.frm_len_def = src_exp.frm_len_def;
+		} else {
+			src_exp.dummy = 0;
+			max_expl = (cmr_u32) (1.0 * cxt->ae_tbl_param.max_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+			if (work_info->sensor_fps.is_high_fps) {
+				fps_range.min = work_info->sensor_fps.max_fps;
+				fps_range.max = work_info->sensor_fps.max_fps;
+				cxt->cur_status.adv_param.sensor_fps_range.max = work_info->sensor_fps.max_fps;
+			}else if(CAMERA_MODE_SLOWMOTION == cxt->app_mode){
+				fps_range.min = cxt->cur_status.adv_param.sensor_fps_range.max;
+				fps_range.max = cxt->cur_status.adv_param.sensor_fps_range.max;
+			}else {
+				fps_range.min = cxt->fps_range.min;
+				fps_range.max = cxt->fps_range.max;
+			}
+			ae_adjust_exp_gain(cxt, &src_exp, &fps_range, max_expl, &dst_exp);
 
+		}
 	}
 
 	cxt->cur_result.ev_setting.exp_time = dst_exp.exp_time;
