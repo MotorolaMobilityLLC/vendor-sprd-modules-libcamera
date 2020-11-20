@@ -135,6 +135,7 @@ struct CAMERA_MEM_CB_TYPE_STAT mem_cb_stat[CAMERA_MEM_CB_TYPE_MAX] = {
     {CAMERA_FD_SMALL, CACHE_TRUE},
     {CAMERA_SNAPSHOT_SW3DNR_SMALL_PATH, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL_RAW, CACHE_TRUE},
+    {CAMERA_SNAPSHOT_ZSL_RGB, CACHE_TRUE},
 };
 #include <android/hardware/graphics/common/1.0/types.h>
 
@@ -10585,8 +10586,8 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
     int64_t diff_ms = 0;
     SPRD_DEF_Tag *sprddefInfo;
 
-    HAL_LOGI("E. zsl buff fd=0x%x, frame_id %d frame type=%ld",
-        zsl_frame->fd, zsl_frame->frame_num, zsl_frame->type);
+    HAL_LOGI("E. zsl buff fd=0x%x, frame_id %d frame type=%ld, mIsFDRCapture %d",
+        zsl_frame->fd, zsl_frame->frame_num, zsl_frame->type, mIsFDRCapture);
 
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     if (mMultiCameraMode == MODE_BLUR && mIsBlur2Zsl == true) {
@@ -10663,7 +10664,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             return -1;
         }
 
-        if (mZslSnapshotTime > zsl_frame->monoboottime) {
+        if (mZslSnapshotTime > zsl_frame->monoboottime && !mIsFDRCapture) {
             diff_ms = (mZslSnapshotTime - zsl_frame->monoboottime) / 1000000;
             HAL_LOGV("diff_ms=%" PRId64, diff_ms);
             // make single capture frame time > mZslSnapshotTime
@@ -10679,7 +10680,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
 
         // single capture wait the caf focused frame
         if (sprddefInfo->capture_mode == 1 && obj->mLatestFocusDoneTime > 0 &&
-            zsl_frame->monoboottime < obj->mLatestFocusDoneTime &&
+            zsl_frame->monoboottime < obj->mLatestFocusDoneTime && !mIsFDRCapture &&
             mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene) {
             HAL_LOGD("not the focused frame, skip it");
             mHalOem->ops->camera_set_zsl_buffer(

@@ -108,6 +108,8 @@ cmr_int cmr_grab_buff_reproc(cmr_handle grab_handle,
                              struct buffer_cfg *buf_cfg);
 cmr_int cmr_grab_fdr_postproc(cmr_handle grab_handle,
                              struct buffer_cfg *buf_cfg);
+cmr_int cmr_grab_fdr_postproc_v1(cmr_handle grab_handle,
+                             struct buffer_cfg *buf_cfg, cmr_u32 step);
 cmr_int cmr_grab_set_next_vcm_pos(cmr_handle grab_handle,
                                   struct sprd_img_vcm_param *info);
 cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line);

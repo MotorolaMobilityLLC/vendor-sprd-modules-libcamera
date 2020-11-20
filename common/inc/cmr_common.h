@@ -223,8 +223,6 @@ struct after_set_cb_param {
     nsecs_t timestamp;
 };
 
-enum cam_fdr_post_scene { CAM_FDR_POST_LOW = 1, CAM_FDR_POST_HIGH };
-
 enum preview_param_mode { PARAM_NORMAL = 0, PARAM_ZOOM, PARAM_MODE_MAX };
 
 typedef void (*cmr_evt_cb)(cmr_int evt, void *data, void *privdata);
@@ -332,6 +330,9 @@ typedef enum {
 
     // jpeg
     CAM_IMG_FMT_JPEG = 0x40,
+
+    // rgb
+    CAM_IMG_FMT_RGB14 = 0x50,
 
     CAM_IMG_FMT_MAX
 } cam_img_format_t;
@@ -467,11 +468,8 @@ enum common_isp_cmd_type {
     COM_ISP_GET_YNRS_PARAM,
     COM_ISP_GET_DRE_PARAM,
     COM_ISP_GET_MFNR_PARAM,
-#ifdef CAMERA_CNR3_ENABLE
     COM_ISP_GET_CNR2CNR3_YNR_EN,
-#else
     COM_ISP_GET_CNR2_YNR_EN,
-#endif
     COM_ISP_GET_CNR2_EN,
     COM_ISP_SET_AUTO_HDR,
     COM_ISP_SET_SPRD_APP_MODE,
@@ -497,13 +495,12 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AE_TARGET_REGION,
     COM_ISP_GET_AE_FPS_RANGE,
     COM_ISP_SET_SENSOR_SIZE,
-#ifdef CAMERA_CNR3_ENABLE
     COM_ISP_GET_CNR3_PARAM,
-#endif
     COM_ISP_GET_FB_PREV_PARAM,
     COM_ISP_GET_FB_CAP_PARAM,
     COM_ISP_GET_DRE_PRO_PARAM,
     COM_ISP_SET_AUTO_FDR,
+    COM_ISP_SET_FDR_LOG,
     COM_ISP_TYPE_MAX
 };
 
@@ -657,8 +654,6 @@ struct img_frm {
     void *reserved;
     cmr_s64 monoboottime;
     cmr_u32 frame_number;
-    cmr_u32 is_fdr_frame_l;
-    cmr_u32 is_fdr_frame_h;
 };
 
 struct snp_thumb_yuv_param {
@@ -1187,29 +1182,19 @@ struct common_isp_cmd_param {
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
-        cmr_u32 cnr2_ynr_en;
 #if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
     defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
         struct isp_ev_control ev_setting;
 #endif
-#ifdef CAMERA_CNR3_ENABLE
+        cmr_u32 cnr2_ynr_en;
         cmr_u32 cnr2cnr3_ynr_en;
-#endif
-#ifdef CONFIG_CAMERA_CNR
         struct isp_sw_cnr2_info cnr2_param;
         struct isp_ynrs_info ynr_param;
-#ifdef CAMERA_CNR3_ENABLE
         struct isp_sw_cnr3_info cnr3_param;
-#endif
-#endif
         struct isp_mfnr_info mfnr_param;
         struct isp_sw3dnr_info threednr_param;
-#ifdef CONFIG_CAMERA_DRE
         struct isp_dre_level dre_param;
-#endif
-#ifdef CONFIG_CAMERA_DRE_PRO
         struct isp_dre_pro_level dre_pro_param;
-#endif
         struct isp_ai_img_param ai_img_param;
         struct isp_ai_img_status ai_img_status;
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
@@ -1461,9 +1446,10 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 cmr_int dump_image(char *tag, cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
                    cmr_u32 index, struct img_addr *vir_addr,
                    cmr_u32 image_size);
-cmr_int dump_image_tags(char *tag, char *tag_suffix, cmr_u32 img_fmt,
-                        cmr_u32 width, cmr_u32 height, cmr_s32 index,
-                        struct img_addr *vir_addr, cmr_u32 image_size);
+cmr_int dump_image_tags(char *tag, char *tag_suffix,
+                    cmr_u32 img_fmt, cmr_u32 width, cmr_u32 height,
+                    cmr_s32 index, struct img_addr *vir_addr,
+                    cmr_u32 image_size);
 
 cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size);
 

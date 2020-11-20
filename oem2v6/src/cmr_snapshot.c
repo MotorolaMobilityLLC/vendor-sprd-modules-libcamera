@@ -4816,6 +4816,9 @@ cmr_int snp_post_proc(cmr_handle snp_handle, void *data) {
     if (CAMERA_AUTOTEST_MODE == cxt->req_param.mode) {
         snp_autotest_proc(snp_handle, data);
         return ret;
+    } else if (IS_FDR_FRAME(chn_data_ptr->frame_type)) {
+        ret = camera_fdr_handle(data, cxt->oem_handle);
+        sem_post(&cxt->proc_done_sm);
     } else {
         switch (fmt) {
         case CAM_IMG_FMT_JPEG:
@@ -5312,6 +5315,9 @@ cmr_int snp_get_snp_info(cmr_handle snapshot_handle, cmr_int evt,
         {SNAPSHOT_EVT_JPEG_DEC_ERR,    SNP_EVT_PROC_CB_JPEG_DEC_ERR,
             0,
             cxt->thread_cxt.proc_cb_thr_handle    },
+        {SNAPSHOT_EVT_FDR_PROC,   SNP_EVT_POSTPROC_START,
+            sizeof(struct frm_info),
+            cxt->thread_cxt.post_proc_thr_handle    },
     };
 
     snp_info_cnt = sizeof(snp_info) / sizeof(snp_info[0]);
