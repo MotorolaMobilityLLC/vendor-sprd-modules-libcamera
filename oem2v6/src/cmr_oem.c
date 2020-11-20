@@ -6912,7 +6912,6 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
     ret = camera_nightpro_init(oem_handle);
     if (ret) {
         CMR_LOGE("failed to init nightpro %ld", ret);
-        goto exit;
     }
 
     ret = camera_ipmpro_init(oem_handle);
