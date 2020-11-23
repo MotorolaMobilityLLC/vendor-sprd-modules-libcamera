@@ -513,6 +513,32 @@ static cmr_int ispalg_get_k_timestamp(cmr_handle isp_alg_handle, cmr_u32 * sec, 
 	return ret;
 }
 
+static cmr_int ispalg_awb_set_cb(cmr_handle isp_alg_handle,
+		cmr_int type, void *param0, void *param1)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	UNUSED(param1);
+
+	if (!cxt) {
+		ISP_LOGE("fail to get valid cxt ptr\n");
+		return ISP_PARAM_NULL;
+	}
+
+	switch (type) {
+	case ISP_AWB_SET_WBC_GAIN:{
+		struct ae_awb_gain *awb_gain = (struct ae_awb_gain*)param0;
+		ret = isp_dev_awb_gain(cxt->dev_access_handle, awb_gain->r, awb_gain->g, awb_gain->b);
+		}
+		break;
+	default:
+		ISP_LOGV("unsupported awb cb: %lx\n", type);
+		break;
+	}
+
+	return ret;
+}
+
 static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *param0, void *param1)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -2511,6 +2537,8 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.stat_img_size.h = info.win_num.h;
 	param.stat_win_size.w = info.win_size.w;
 	param.stat_win_size.h = info.win_size.h;
+	param.awb_set_cb = ispalg_awb_set_cb;
+	param.caller_handle = (cmr_handle) cxt;
 
 	param.stat_img_size.w = cxt->binning_stats.binning_size.w;
 	param.stat_img_size.h = cxt->binning_stats.binning_size.h;
@@ -3765,6 +3793,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
 	cmr_s32 mode = 0, dv_mode = 0;
+	cmr_u32 flash_awb_en = 0;
+	cmr_u8 mainflash_en = 1;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
 	struct afctrl_fwstart_info af_start_info;
 	struct soft_isp_startparam sw_isp_start_param;
@@ -3902,6 +3932,25 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
+	}
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_FLASH_AWB_ENABLE, NULL, &flash_awb_en);
+		ISP_TRACE_IF_FAIL(ret, ("fail to get flash awb enable"));
+	}
+
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_AWB_EN, (void *)&flash_awb_en, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("ae: fail to set flash awb en"));
+
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MAINFLASH_EN, NULL, (void *)&mainflash_en);
+		ISP_TRACE_IF_FAIL(ret, ("ae: fail to get flash info"));
+
+	}
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_MAINFLASH_EN, (void*)&mainflash_en, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to set mainflash_en"));
 	}
 
 	if(cxt->is_master && in_ptr->is_real_bokeh)

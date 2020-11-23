@@ -1104,6 +1104,51 @@ static cmr_int ispalg_lsc_set_cb(cmr_handle isp_alg_handle,
 	return ret;
 }
 
+static cmr_int ispalg_awb_set_cb(cmr_handle isp_alg_handle,
+		cmr_int type, void *param0, void *param1)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	UNUSED(param1);
+
+	if (!cxt) {
+		ISP_LOGE("fail to get valid cxt ptr\n");
+		return ISP_PARAM_NULL;
+	}
+
+	switch (type) {
+	case ISP_AWB_SET_WBC_GAIN:
+		{
+		struct img_rgb_info gain;
+		struct isp_u_blocks_info cfg;
+		struct awb_ctrl_gain *awb_gain = (struct awb_ctrl_gain*)param0;
+		gain.r = awb_gain->r;
+		gain.gr = awb_gain->g;
+		gain.gb = awb_gain->g;
+		gain.b = awb_gain->b;
+		/* todo: also set capture gain if 4in1 */
+		if (cxt->remosaic_type) {
+			cfg.scene_id = PM_SCENE_CAP;
+			cfg.block_info = &gain;
+			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, (void*)&cfg, param1);
+			if(ret != ISP_SUCCESS){
+				ISP_LOGE("fail to set isp device access ioctl.");
+				return ret;
+			}
+		}
+		cfg.scene_id = PM_SCENE_PRE;
+		cfg.block_info = &gain;
+		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, (void*)&cfg, param1);
+		break;
+		}
+	default:
+		ISP_LOGV("unsupported awb cb: %lx\n", type);
+		break;
+	}
+
+	return ret;
+}
+
 
 static cmr_int ispalg_ae_set_cb(cmr_handle isp_alg_handle,
 		cmr_int type, void *param0, void *param1)
@@ -4519,6 +4564,8 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	param.stat_img_size_ae.h = info.win_num.h;
 	param.stat_win_size.w = info.win_size.w;
 	param.stat_win_size.h = info.win_size.h;
+	param.awb_set_cb = ispalg_awb_set_cb;
+	param.caller_handle = (cmr_handle) cxt;
 
 	ISP_LOGI("awb get ae win %d %d %d %d %d %d\n", info.trim.x, info.trim.y,
 		info.win_size.w, info.win_size.h, info.win_num.w, info.win_num.h);
@@ -6365,6 +6412,8 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cmr_int isp_pdaf_type = 0;
 	cmr_u32 sn_mode = 0;
 	cmr_u32 pdaf_bypass = 0;
+	cmr_u32 flash_awb_en = 0;
+	cmr_u8 mainflash_en = 1;
 	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
@@ -6620,6 +6669,10 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 				AWB_CTRL_CMD_GET_PIX_CNT, &cxt->commn_cxt.prv_size, NULL);
 		ISP_RETURN_IF_FAIL(ret, ("fail to get_awb_pix_cnt"));
+
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+				AWB_CTRL_CMD_GET_FLASH_AWB_ENABLE, NULL, &flash_awb_en);
+		ISP_TRACE_IF_FAIL(ret, ("fail to get flash awb enable"));
 	}
 
 	memset(&af_start_info, 0, sizeof(struct afctrl_fwstart_info));
@@ -6644,6 +6697,20 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START_END, (void *)&fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to end alsc_fw_start"));
+	}
+
+	if (cxt->ops.ae_ops.ioctrl) {
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_AWB_EN, (void *)&flash_awb_en, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("ae: fail to set flash awb en"));
+
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_MAINFLASH_EN, NULL, (void *)&mainflash_en);
+		ISP_TRACE_IF_FAIL(ret, ("ae: fail to get flash info"));
+
+	}
+
+	if (cxt->ops.awb_ops.ioctrl) {
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_MAINFLASH_EN, (void*)&mainflash_en, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to set mainflash_en"));
 	}
 
 	if (cxt->is_4in1_sensor && cxt->work_mode && cxt->is_high_res_mode) {

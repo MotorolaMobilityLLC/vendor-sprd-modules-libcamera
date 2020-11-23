@@ -494,6 +494,7 @@ extern "C" {
 		struct ae_frm_sync_param sync_param[4];
 		struct ae_exposure_param_switch mode_switch[64];
 		cmr_u8 mainFlashEn;
+		cmr_u8 flash_awben;
 		cmr_u8 calcFirstFlag;
 
 		cmr_u32 end_id;

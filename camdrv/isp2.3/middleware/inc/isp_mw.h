@@ -97,6 +97,7 @@ enum isp_alg_set_cmd {
 	ISP_AFM_TYPE2_STS,
 	ISP_AFM_TYPE1_STS,
 	ISP_AF_SET_TOF_INFO,
+	ISP_AWB_SET_WBC_GAIN,
 };
 
 enum isp_callback_cmd {
@@ -1423,6 +1424,8 @@ typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void
 typedef cmr_int(*isp_pdaf_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_afl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_lsc_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+typedef cmr_int(*isp_awb_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
+
 
 cmr_int isp_init(struct isp_init_param *ptr, cmr_handle *handle);
 cmr_int isp_deinit(cmr_handle handle);

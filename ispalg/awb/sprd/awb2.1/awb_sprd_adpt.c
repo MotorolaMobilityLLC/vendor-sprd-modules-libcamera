@@ -183,6 +183,7 @@ struct awb_ctrl_cxt {
 	//0:auto_mode ,1:manual mode
 	cmr_u32 app_mode;
 	cmr_u32 init_status;
+	cmr_u32 flash_awb_en;
 
 };
 
@@ -745,6 +746,17 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 
 }
 
+static cmr_u32 awb_get_flash_awb_enable(struct awb_ctrl_cxt *cxt, void *out)
+{
+	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	cmr_u32 *flash_awb_en = (cmr_u32 *)out;
+
+	*flash_awb_en = cxt->flash_awb_en;
+	ISP_LOGV("AWB Flash_awb_en %d",cxt->flash_awb_en);
+	return rtn;
+}
+
+
 static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 #if 1
 {
@@ -1272,6 +1284,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 	cxt->is_mono_sensor = param->is_mono_sensor;
 	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
 	cxt->init_status = 1;
+	cxt->flash_awb_en = 0;
 	ISP_LOGI("is_multi_mode=%d , color_support=%d\n", param->is_multi_mode , cxt->color_support);
 	if(cxt->sensor_role == 1)
 	{
@@ -2015,6 +2028,15 @@ cmr_s32 awb_sprd_ctrl_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case AWB_CTRL_CMD_SET_FLASH_STATUS:
 		rtn = _awb_set_flash_status(cxt, in);
 		break;
+
+	case AWB_CTRL_CMD_GET_FLASH_AWB_ENABLE:
+		rtn = awb_get_flash_awb_enable(cxt, out);
+		break;
+
+	case AWB_CTRL_CMD_SET_MAINFLASH_EN:
+	case AWB_CTRL_CMD_SET_FLASH_RATIO:
+		break;
+
 	case AWB_CTRL_CMD_SET_UPDATE_TUNING_PARAM:
 		rtn = _awb_set_tuning_param(cxt, in);
 		break;

@@ -978,13 +978,14 @@ static cmr_int isp_flash_pre_after(struct isp_alg_fw_context *cxt,
                                    void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-	float captureFlashEnvRatio = 0.0;
-	float captureFlash1ofALLRatio = 0.0;
+	float captureFlashEnvRatio = 0.0;  // 0-1, flash/ (flash+environment)
+	float captureFlash1ofALLRatio = 0.0;  // 0-1,  flash1 / (flash1+flash2)
 	struct ae_flash_notice ae_notice = {0};
 	struct alsc_flash_info flash_info = {0, 0};
 	struct isp_flash_notice *flash_notice = NULL;
 	enum awb_ctrl_flash_status awb_flash_status = 0;
 	enum smart_ctrl_flash_mode flash_mode = 0;
+	cmr_s32 flash_ratio[2] = {0,0};
 
 	if (cxt == NULL || param_ptr == NULL) {
 		ISP_LOGE("param ptr is null");
@@ -994,18 +995,34 @@ static cmr_int isp_flash_pre_after(struct isp_alg_fw_context *cxt,
 	flash_notice = (struct isp_flash_notice *)param_ptr;
 	ae_notice.mode = AE_FLASH_PRE_AFTER;
 	ae_notice.will_capture = flash_notice->will_capture;
-	if (cxt->ops.ae_ops.ioctrl)
+	if (cxt->ops.ae_ops.ioctrl){
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_NOTICE,
 		                             &ae_notice, NULL);
+
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO,
+		                             NULL, (void *)&captureFlashEnvRatio);
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle,
+		                             AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL,
+		                             (void *)&captureFlash1ofALLRatio);
+	}
+
 	awb_flash_status = AWB_FLASH_PRE_AFTER;
-	if (cxt->ops.awb_ops.ioctrl)
+	flash_ratio[0] = captureFlashEnvRatio * 256;
+	flash_ratio[1] = captureFlash1ofALLRatio * 256;
+	if (cxt->ops.awb_ops.ioctrl){
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 		                              AWB_CTRL_CMD_SET_FLASH_STATUS,
 		                              (void *)&awb_flash_status, NULL);
 
-	if (cxt->ops.awb_ops.ioctrl)
+		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
+		                             AWB_CTRL_CMD_SET_FLASH_RATIO,
+		                             (void *)flash_ratio, NULL);
+
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 		                              AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
+	}
+	ret = ispctl_set_awb_gain((cmr_handle)cxt);
+
 	ispctl_set_awb_gain((cmr_handle)cxt);
 
 	flash_mode = SMART_CTRL_FLASH_CLOSE;
@@ -1022,15 +1039,6 @@ static cmr_int isp_flash_pre_after(struct isp_alg_fw_context *cxt,
 		                             (void *)&(flash_notice->mode), NULL);
 
 	cxt->lsc_flash_onoff = 0;
-	captureFlashEnvRatio = 0.0;    // 0-1, flash/ (flash+environment)
-	captureFlash1ofALLRatio = 0.0; // 0-1,  flash1 / (flash1+flash2)
-	if (cxt->ops.ae_ops.ioctrl) {
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FLASH_ENV_RATIO,
-		                             NULL, (void *)&captureFlashEnvRatio);
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle,
-		                             AE_GET_FLASH_ONE_OF_ALL_RATIO, NULL,
-		                             (void *)&captureFlash1ofALLRatio);
-	}
 	flash_info.io_captureFlashEnvRatio = captureFlashEnvRatio;
 	flash_info.io_captureFlash1Ratio = captureFlash1ofALLRatio;
 	if (cxt->ops.lsc_ops.ioctrl)
@@ -1074,9 +1082,9 @@ static cmr_int isp_flash_main_before(struct isp_alg_fw_context *cxt,
 		                              AWB_CTRL_CMD_SET_FLASH_STATUS,
 		                              (void *)&awb_flash_status, NULL);
 	ispctl_set_awb_flash_gain((cmr_handle)cxt);
-	if (cxt->ops.awb_ops.ioctrl)
+	/*if (cxt->ops.awb_ops.ioctrl)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK,
-		                              NULL, NULL);
+		                              NULL, NULL);*/
 
 	cxt->lsc_flash_onoff = 1;
 	if (cxt->ops.lsc_ops.ioctrl)
@@ -1171,8 +1179,8 @@ static cmr_int isp_flash_main_after(struct isp_alg_fw_context *cxt,
 		                              AWB_CTRL_CMD_FLASH_CLOSE, NULL, NULL);
 	ispctl_set_awb_gain((cmr_handle)cxt);
 	if (cxt->ops.awb_ops.ioctrl) {
-		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK,
-		                              NULL, NULL);
+		//ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK,
+		//                              NULL, NULL);
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 		                              AWB_CTRL_CMD_FLASH_SNOP, NULL, NULL);
 	}

@@ -43,6 +43,8 @@ struct awbctrl_work_lib {
 struct awbctrl_cxt {
 	cmr_handle thr_handle;
 	struct awbctrl_work_lib work_lib;
+	cmr_handle caller_handle;
+	isp_awb_cb awb_set_cb;
 };
 cmr_u32 _awb_get_cmd_property(void)
 {
@@ -202,6 +204,19 @@ cmr_int awbctrl_ioctrl(struct awbctrl_cxt * cxt_ptr, enum awb_ctrl_cmd cmd, void
 	return rtn;
 }
 
+static cmr_s32 awb_set_wbc_gain(cmr_handle handler, struct awb_ctrl_gain *awb_gain)
+{
+	cmr_int rtn = ISP_SUCCESS;
+	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt *)handler;
+
+	if (cxt_ptr->awb_set_cb) {
+		cxt_ptr->awb_set_cb(cxt_ptr->caller_handle, ISP_AWB_SET_WBC_GAIN, awb_gain, NULL);
+	}
+
+	return rtn;
+}
+
+
 static cmr_int awbctrl_process(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_calc_param *in_ptr, struct awb_ctrl_calc_result *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
@@ -333,6 +348,7 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handl
 	struct awb_ctrl_init_result result;
 
 	memset((void *)&result, 0, sizeof(result));
+	input_ptr->isp_ops.set_wbc_gain = awb_set_wbc_gain;
 
 	cxt_ptr = (struct awbctrl_cxt *)malloc(sizeof(*cxt_ptr));
 	if (NULL == cxt_ptr) {
@@ -341,6 +357,11 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handl
 		goto exit;
 	}
 	memset(cxt_ptr, 0, sizeof(*cxt_ptr));
+
+	input_ptr->isp_ops.isp_handler = (cmr_handle) cxt_ptr;
+	cxt_ptr->caller_handle = input_ptr->caller_handle;
+	cxt_ptr->awb_set_cb = input_ptr->awb_set_cb;
+
 	rtn = awbctrl_create_thread(cxt_ptr);
 	if (rtn) {
 		goto exit;

@@ -441,6 +441,7 @@ extern "C" {
 		cmr_u8 pre_flash_after_delay_cnt;
 		cmr_u8 flash_main_before_flag;
 		cmr_u8 mainFlashEn;
+		cmr_u8 flash_awben;
 		cmr_u8 calcFirstFlag;
 		cmr_u32 end_id;
 	};

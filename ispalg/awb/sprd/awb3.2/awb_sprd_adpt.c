@@ -173,7 +173,7 @@ struct awb_ctrl_cxt {
 	struct awb_face_info_3_0 awb_face_info_v3;
 
 	struct awb_flash_info_3_0 awb_flash_info_v3;
-	//struct awb_isp_ctrl_ops isp_ops;
+	struct awb_isp_ctrl_ops isp_ops;
 
 	/*for save gain/ct to file*/
 	struct awb_save_gain s_save_awb_param;
@@ -186,6 +186,7 @@ struct awb_ctrl_cxt {
 	//0:auto_mode ,1:manual mode
 	cmr_u32 app_mode;
 	cmr_u32 init_status;
+	cmr_u32 flash_awb_en;
 
 };
 
@@ -615,15 +616,16 @@ static cmr_u32 _awb_get_recgain(struct awb_ctrl_cxt *cxt, void *param)
 	return rtn;
 
 }
-static cmr_u32 awb_get_version(void *param)
+static cmr_u32 awb_get_flash_awb_enable(struct awb_ctrl_cxt *cxt, void *out)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	cmr_u32 *awb_version = (cmr_u32 *)param;
-	*awb_version = AWB_3_2_TURNNING_VERSION;
-	ISP_LOGI("AWB_VERSION = AWB3.2");
+	cmr_u32 *flash_awb_en = (cmr_u32 *)out;
 
+	*flash_awb_en = cxt->flash_awb_en;
+	ISP_LOGV("AWB Flash_awb_en %d",cxt->flash_awb_en);
 	return rtn;
 }
+
 static cmr_u32 _awb_set_lock(struct awb_ctrl_cxt *cxt, void *param)
 #if 1
 {
@@ -766,7 +768,7 @@ static cmr_u32 _awb_set_mainflash_en(struct awb_ctrl_cxt *cxt, void *param)
 
 	cxt->awb_flash_info_v3.mainFlash_enable = *mainFlash_en;
 
-	ISP_LOGI("mainflash enable = %d", cxt->awb_flash_info_v3.mainFlash_enable);
+	ISP_LOGV("mainflash enable = %d", cxt->awb_flash_info_v3.mainFlash_enable);
 
 	return rtn;
 }
@@ -780,22 +782,7 @@ static cmr_u32 _awb_set_flash_ratio(struct awb_ctrl_cxt *cxt, void *param)
 	cxt->awb_flash_info_v3.flash_ratio = flash_ratio[0];
 	cxt->awb_flash_info_v3.flash_ratio1= flash_ratio[1];
 
-	ISP_LOGI("flash led ratio = %d, flash led ratio1 = %d", cxt->awb_flash_info_v3.flash_ratio,cxt->awb_flash_info_v3.flash_ratio1);
-
-	return rtn;
-}
-
-static cmr_u32 _awb_set_predict_mfgain(struct awb_ctrl_cxt *cxt, void *param)
-{
-	UNUSED(param);
-	cmr_u32 rtn = AWB_CTRL_SUCCESS;
-	struct awb_ctrl_gain *flash_gain = (struct awb_ctrl_gain *)param;
-
-	cxt->lock_info.lock_gain.r = flash_gain->r;
-	cxt->lock_info.lock_gain.g = flash_gain->g;
-	cxt->lock_info.lock_gain.b = flash_gain->b;
-
-	ISP_LOGI("ae predict mainflash gain = (%d, %d,%d)",flash_gain->r,flash_gain->g,flash_gain->b);
+	ISP_LOGV("flash led ratio = %d, flash led ratio1 = %d", cxt->awb_flash_info_v3.flash_ratio,cxt->awb_flash_info_v3.flash_ratio1);
 
 	return rtn;
 }
@@ -1225,8 +1212,9 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3_2(void *in, void *out)
 	cxt->is_multi_mode = param->is_multi_mode;
 	cxt->is_mono_sensor = param->is_mono_sensor;
 	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
-	//cxt->isp_ops = param->isp_ops;
+	cxt->isp_ops = param->isp_ops;
 	cxt->init_status = 1;
+	cxt->flash_awb_en = 1;
 	ISP_LOGI("is_multi_mode=%d , color_support=%d\n", param->is_multi_mode , cxt->color_support);
 #if 0
 	if(cxt->sensor_role == 1)
@@ -1643,13 +1631,6 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 		cxt->output_ct     = cxt->lock_info.lock_ct;
 	}
 
-	//lock pre lighting awb,and use it when mianFlash lighting or mainFlash before
-	if (((AWB_FLASH_MAIN_BEFORE_3_0 == cxt->awb_flash_info_v3.flash_status) || (AWB_FLASH_MAIN_LIGHTING_3_0 == cxt->awb_flash_info_v3.flash_status && cxt->awb_flash_info_v3.mainFlash_enable==0))  && cxt->wb_mode == 0) {
-		cxt->output_gain.r = cxt->lock_info.lock_gain.r;
-		cxt->output_gain.g = cxt->lock_info.lock_gain.g;
-		cxt->output_gain.b = cxt->lock_info.lock_gain.b;
-	}
-
 	//only pre flash after
 	if (cxt->flash_pre_state != 0 && cxt->wb_mode == 0) {
 		cxt->output_gain.r = cxt->recover_gain.r;
@@ -1668,6 +1649,7 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	} else {
 		cxt->flash_info.main_flash_enable = 0;
 	}
+
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
 	ISP_LOGV("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id);
@@ -1697,12 +1679,12 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	result.offset.b_offset = cxt->cur_offset.b_offset;
 	result.ct = cxt->output_ct;
 	//when main flash lighting, awb set gain
-	//if(cxt->flash_update_awb == 0)
-	//{
-	   //if(cxt->isp_ops.set_wbc_gain){
-	      //cxt->isp_ops.set_wbc_gain(cxt->isp_ops.isp_handler, &cxt->output_gain);
-	   //}
-	//}
+	if(cxt->flash_update_awb == 0)
+	{
+	   if(cxt->isp_ops.set_wbc_gain){
+	      cxt->isp_ops.set_wbc_gain(cxt->isp_ops.isp_handler, &cxt->output_gain);
+	   }
+	}
 
 	/*
 	if ((cxt->is_multi_mode == ISP_ALG_DUAL_SBS) && (cxt->ptr_isp_br_ioctrl != NULL)) {
@@ -1873,16 +1855,16 @@ cmr_s32 awb_sprd_ctrl_ioctrl_v3_2(void *handle, cmr_s32 cmd, void *in, void *out
 		rtn = _awb_set_flash_status(cxt, in);
 		break;
 
+	case AWB_CTRL_CMD_GET_FLASH_AWB_ENABLE:
+		rtn = awb_get_flash_awb_enable(cxt, out);
+		break;
+
 	case AWB_CTRL_CMD_SET_MAINFLASH_EN:
 		rtn = _awb_set_mainflash_en(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_SET_FLASH_RATIO:
 		rtn = _awb_set_flash_ratio(cxt, in);
-		break;
-
-	case AWB_CTRL_CMD_SET_PREDICT_MFGAIN:
-		rtn = _awb_set_predict_mfgain(cxt, in);
 		break;
 
 	case AWB_CTRL_CMD_SET_UPDATE_TUNING_PARAM:
@@ -1926,9 +1908,6 @@ cmr_s32 awb_sprd_ctrl_ioctrl_v3_2(void *handle, cmr_s32 cmd, void *in, void *out
 		break;
 	case AWB_SET_APP_MODE:
 		rtn = _awb_read_file_for_init(cxt, in);
-		break;
-	case AWB_GET_VERSION:
-		rtn = awb_get_version(out);
 		break;
 	default:
 		ISP_LOGE("fail to get invalid cmd %d", cmd);

@@ -34,10 +34,6 @@ extern "C" {
 #define AWB_CTRL_INVALID_HANDLE NULL
 #define AWB_CTRL_ENVI_NUM 8
 
-#define AWB_2_0_TURNNING_VERSION 0x00020000
-#define AWB_3_0_TURNNING_VERSION 0x00030000
-#define AWB_3_2_TURNNING_VERSION 0x00030002
-
 	typedef void *awb_ctrl_handle_t;
 
 	enum awb_ctrl_rtn {
@@ -81,14 +77,13 @@ extern "C" {
 		AWB_CTRL_CMD_GET_PIX_CNT = 0x30C,
 		AWB_CTRL_CMD_VIDEO_STOP_NOTIFY = 0x30D,
 		AWB_CTRL_CMD_FLASH_SNOP = 0X30f,
-		AWB_CTRL_CMD_SET_MAINFLASH_EN,
-		AWB_CTRL_CMD_SET_FLASH_RATIO,
-		AWB_CTRL_CMD_SET_PREDICT_MFGAIN,
+		AWB_CTRL_CMD_SET_MAINFLASH_EN = 0x310,
+		AWB_CTRL_CMD_SET_FLASH_RATIO= 0x311,
+		AWB_CTRL_CMD_GET_FLASH_AWB_ENABLE= 0x312,
 		AWB_CTRL_CMD_EM_GET_PARAM = 0x400,
 		AWB_CTRL_CMD_GET_CT_TABLE20 = 0x500,
 		AWB_CTRL_CMD_GET_DATA_TYPE = 0x600,
 		AWB_CTRL_CMD_GET_OTP_INFO = 0x700,
-		AWB_GET_VERSION = 0x800,
 
 		AWB_SYNC_MSG_END,
 		/*
@@ -167,6 +162,11 @@ extern "C" {
 		cmr_s16 y;
 	};
 
+	struct awb_isp_ctrl_ops {
+		cmr_handle isp_handler;
+			cmr_s32(*set_wbc_gain) (cmr_handle handler, struct awb_ctrl_gain * awb_gain_f);
+	};
+
 	//awblib flash_info
 	struct awb_lib_flash_info
 	{
@@ -232,6 +232,9 @@ extern "C" {
 		cmr_u8 is_master;
 		cmr_u32 is_mono_sensor;
 		cmr_u32 app_mode;
+		isp_awb_cb awb_set_cb;
+		struct awb_isp_ctrl_ops isp_ops;
+		cmr_handle caller_handle;
 	};
 
 	struct awb_ctrl_init_result {

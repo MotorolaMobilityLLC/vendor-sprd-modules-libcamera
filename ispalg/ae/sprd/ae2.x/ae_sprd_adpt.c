@@ -3708,7 +3708,9 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		cxt->send_once[2]++;
 
 		/*write flash awb gain*/
-		if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0)) {
+		if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0)
+				&& (FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status
+				&& FLASH_MAIN_BEFORE == current_status->settings.flash)) {
 			if (cxt->isp_ops.set_wbc_gain) {
 				struct ae_alg_rgb_gain awb_m_b_flash_gain;
 				awb_m_b_flash_gain.r = cxt->flash_esti_result.captureRGain;
@@ -3718,18 +3720,20 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				ISP_LOGV("flash_cap awb_m r %d, g %d, b %d", awb_m_b_flash_gain.r, awb_m_b_flash_gain.g, awb_m_b_flash_gain.b);
 				}
 			}
-
-		if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts) && (cxt->mainFlashEn == 1)) {
-			if (cxt->isp_ops.set_wbc_gain) {
-				struct ae_alg_rgb_gain awb_gain;
-				awb_gain.r = cxt->flash_main_esti_result.captureRGain;
-				awb_gain.g = cxt->flash_main_esti_result.captureGGain;
-				awb_gain.b = cxt->flash_main_esti_result.captureBGain;
-				cxt->isp_ops.set_wbc_gain(cxt->isp_ops.isp_handler, &awb_gain);
-				ISP_LOGV("flash_cap awb r %d, g %d, b %d", awb_gain.r, awb_gain.g, awb_gain.b);
+		if(0 == cxt->flash_awben){//if awb3.2, mainflash use awb
+			if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts) && (cxt->mainFlashEn == 1)) {
+				if (cxt->isp_ops.set_wbc_gain) {
+					struct ae_alg_rgb_gain awb_gain;
+					awb_gain.r = cxt->flash_main_esti_result.captureRGain;
+					awb_gain.g = cxt->flash_main_esti_result.captureGGain;
+					awb_gain.b = cxt->flash_main_esti_result.captureBGain;
+					cxt->isp_ops.set_wbc_gain(cxt->isp_ops.isp_handler, &awb_gain);
+					ISP_LOGV("flash_cap awb r %d, g %d, b %d", awb_gain.r, awb_gain.g, awb_gain.b);
+					}
 				}
 			}
 		}
+
 
 		if (FLASH_MAIN_AFTER_RECEIVE == cxt->cur_result.flash_status && FLASH_MAIN_AFTER == current_status->settings.flash) {
 			ISP_LOGD("ae_flash1_status shake_6");
@@ -6804,6 +6808,16 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 	case AE_GET_DC_DV_FPS_RANGE:
 		rtn = ae_get_dc_dv_fps_range(cxt, result);
 		break;
+	case AE_SET_FLASH_AWB_EN:
+		if (param) {
+			cxt->flash_awben = (cmr_u8)(*(cmr_u32*)param);
+		}
+		break;
+	case AE_GET_MAINFLASH_EN:
+		if (result) {
+			*(cmr_u8 *) result = cxt->mainFlashEn;
+		}
+		break;
 	default:
 		rtn = AE_ERROR;
 		break;
@@ -7213,6 +7227,7 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->flash_ver = flash_out.version;
 	cxt->mainFlashEn = flash_out.mainFlashEn;
 	ae_init_out->flash_ver = cxt->flash_ver;
+	cxt->flash_awben = 0;
 	/*HJW_E */
 
 	/*jhin add flash mode*/
