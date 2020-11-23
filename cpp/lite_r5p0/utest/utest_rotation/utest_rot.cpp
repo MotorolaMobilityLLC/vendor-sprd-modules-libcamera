@@ -39,7 +39,7 @@ using namespace android;
 
 #define ERR(x...) fprintf(stderr, x)
 #define INFO(x...) fprintf(stdout, x)
-#define UTEST_ROTATION_COUNTER 10
+#define UTEST_ROTATION_COUNTER 1
 
 struct utest_rot_cxt {
     MemIon *input_y_pmem_hp;
@@ -65,14 +65,14 @@ struct utest_rot_cxt {
     struct sprd_cpp_rot_cfg_parm rot_cfg;
 };
 
-static char utest_rot_src_y_422_file[] = "/data/like/pic/src_y_422.raw";
-static char utest_rot_src_uv_422_file[] = "/data/like/pic/src_uv_422.raw";
-static char utest_rot_src_y_420_file[] = "/data/like/pic/src_y_420.raw";
-static char utest_rot_src_uv_420_file[] = "/data/like/pic/src_uv_420.raw";
+static char utest_rot_src_y_422_file[] = "/data/vendor/cameraserver/data/like/pic/src_y_422.raw";
+static char utest_rot_src_uv_422_file[] = "/data/vendor/cameraserver/data/like/pic/src_uv_422.raw";
+static char utest_rot_src_y_420_file[] = "/data/vendor/cameraserver/data/like/pic/src_y_420.raw";
+static char utest_rot_src_uv_420_file[] = "/data/vendor/cameraserver/data/like/pic/src_uv_420.raw";
 static char utest_rot_dst_y_file[] =
-    "/data/like/pic/dst_y_%dx%d-angle%d-format%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/dst_y_%dx%d-angle%d-format%d_%d.raw";
 static char utest_rot_dst_uv_file[] =
-    "/data/like/pic/dst_uv_%dx%d-angle%d-format%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/dst_uv_%dx%d-angle%d-format%d_%d.raw";
 
 static void usage(void) {
     INFO("Usage:\n");
@@ -103,7 +103,7 @@ static int utest_rot_mem_alloc(
     rot_cxt_ptr->input_y_pmem_hp = new MemIon(
         "/dev/ion",
         rot_cxt_ptr->rot_cfg.size.w * rot_cxt_ptr->rot_cfg.size.h,
-        MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+        MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 
     if (rot_cxt_ptr->input_y_pmem_hp->getHeapID() < 0) {
         ERR("failed to alloc input_y pmem buffer.\n");
@@ -128,13 +128,14 @@ static int utest_rot_mem_alloc(
     memset(rot_cxt_ptr->input_y_vir_addr, 0x80,
 		rot_cxt_ptr->rot_cfg.size.w * rot_cxt_ptr->rot_cfg.size.h);
 
-    rot_cxt_ptr->rot_cfg.src_addr.y = rot_cxt_ptr->input_y_phy_addr;
+    //rot_cxt_ptr->rot_cfg.src_addr.y = rot_cxt_ptr->input_y_phy_addr;
+     rot_cxt_ptr->rot_cfg.src_addr.mfd[0] = rot_cxt_ptr->input_y_pmem_hp->getHeapID();
 
 //intput uv addr-------------------------------
     rot_cxt_ptr->input_uv_pmem_hp = new MemIon(
         "/dev/ion",
         rot_cxt_ptr->rot_cfg.size.w * rot_cxt_ptr->rot_cfg.size.h,
-        MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+        MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 
     if (rot_cxt_ptr->input_uv_pmem_hp->getHeapID() < 0) {
         ERR("failed to alloc input_uv pmem buffer.\n");
@@ -159,14 +160,15 @@ static int utest_rot_mem_alloc(
     memset(rot_cxt_ptr->input_uv_vir_addr, 0x80,
 		rot_cxt_ptr->rot_cfg.size.w * rot_cxt_ptr->rot_cfg.size.h);
 
-    rot_cxt_ptr->rot_cfg.src_addr.u = rot_cxt_ptr->input_uv_phy_addr;
-    rot_cxt_ptr->rot_cfg.src_addr.v = rot_cxt_ptr->input_uv_phy_addr;
+    //rot_cxt_ptr->rot_cfg.src_addr.u = rot_cxt_ptr->input_uv_phy_addr;
+    //rot_cxt_ptr->rot_cfg.src_addr.v = rot_cxt_ptr->input_uv_phy_addr;
+    rot_cxt_ptr->rot_cfg.src_addr.mfd[1] = rot_cxt_ptr->input_uv_pmem_hp->getHeapID();
 
 //output y addr-------------------------------
     rot_cxt_ptr->output_y_pmem_hp = new MemIon(
         "/dev/ion",
         rot_cxt_ptr->rot_cfg.size.w * rot_cxt_ptr->rot_cfg.size.h,
-        MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+        MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 
     if (rot_cxt_ptr->output_y_pmem_hp->getHeapID() < 0) {
         ERR("failed to alloc output_y pmem buffer.\n");
@@ -188,13 +190,14 @@ static int utest_rot_mem_alloc(
         return -1;
     }
 
-    rot_cxt_ptr->rot_cfg.dst_addr.y = rot_cxt_ptr->output_y_phy_addr;
+    //rot_cxt_ptr->rot_cfg.dst_addr.y = rot_cxt_ptr->output_y_phy_addr;
+    rot_cxt_ptr->rot_cfg.dst_addr.mfd[0] = rot_cxt_ptr->output_y_pmem_hp->getHeapID();
 
 //output uv addr-------------------------------
     rot_cxt_ptr->output_uv_pmem_hp = new MemIon(
         "/dev/ion",
         rot_cxt_ptr->rot_cfg.size.w * rot_cxt_ptr->rot_cfg.size.h,
-        MemIon::NO_CACHING, ION_HEAP_ID_MASK_MM);
+        MemIon::NO_CACHING, ION_HEAP_ID_MASK_SYSTEM);
 
     if (rot_cxt_ptr->output_uv_pmem_hp->getHeapID() < 0) {
         ERR("failed to alloc output_uv pmem buffer.\n");
@@ -216,8 +219,9 @@ static int utest_rot_mem_alloc(
         return -1;
     }
 
-    rot_cxt_ptr->rot_cfg.dst_addr.u = rot_cxt_ptr->output_uv_phy_addr;
-    rot_cxt_ptr->rot_cfg.dst_addr.v = rot_cxt_ptr->output_uv_phy_addr;
+    //rot_cxt_ptr->rot_cfg.dst_addr.u = rot_cxt_ptr->output_uv_phy_addr;
+    //rot_cxt_ptr->rot_cfg.dst_addr.v = rot_cxt_ptr->output_uv_phy_addr;
+    rot_cxt_ptr->rot_cfg.dst_addr.mfd[1] = rot_cxt_ptr->output_uv_pmem_hp->getHeapID();
     return 0;
 }
 

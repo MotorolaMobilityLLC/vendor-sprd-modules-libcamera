@@ -26,7 +26,7 @@
 #include <cutils/log.h>
 //#include "cmr_common.h"
 #include <semaphore.h>
-#include <linux/ion.h>
+#include <ion.h>
 #include "sprd_ion.h"
 #include <linux/types.h>
 #include <asm/ioctl.h>
@@ -38,7 +38,7 @@ extern "C" {
 
 using namespace android;
 
-#define UTEST_SCALING_COUNTER 10
+#define UTEST_SCALING_COUNTER 1
 #define ERR(x...) fprintf(stderr, x)
 #define INFO(x...) fprintf(stdout, x)
 
@@ -63,20 +63,20 @@ struct utest_scal_cxt {
     sprd_cpp_scale_cfg_parm scal_cfg;
 };
 
-static char u_test_cfg_file[] = "/data/like/cfg_file.txt";
-static char utest_scal_src_y_422_file[] = "/data/like/pic/src_y_422.raw";
-static char utest_scal_src_uv_422_file[] = "/data/like/pic/src_uv_422.raw";
-static char utest_scal_src_y_420_file[] = "/data/like/pic/src_y_420.raw";
-static char utest_scal_src_uv_420_file[] = "/data/like/pic/src_uv_420.raw";
+static char u_test_cfg_file[] = "/data/vendor/cameraserver/data/like/cfg_file.txt";
+static char utest_scal_src_y_422_file[] = "/data/vendor/cameraserver/data/like/pic/src_y_422.raw";
+static char utest_scal_src_uv_422_file[] = "/data/vendor/cameraserver/data/like/pic/src_uv_422.raw";
+static char utest_scal_src_y_420_file[] = "/data/vendor/cameraserver/data/like/pic/src_y_420.raw";
+static char utest_scal_src_uv_420_file[] = "/data/vendor/cameraserver/data/like/pic/src_uv_420.raw";
 
 static char utest_scal_sc_dst_y_file[] =
-    "/data/like/pic/utest_scal_sc_dst_y_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_sc_dst_y_%dx%d_format_%d_%d_%d.raw";
 static char utest_scal_sc_dst_uv_file[] =
-    "/data/like/pic/utest_scal_sc_dst_uv_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_sc_dst_uv_%dx%d_format_%d_%d_%d.raw";
 static char utest_scal_bp_dst_y_file[] =
-    "/data/like/pic/utest_scal_bp_dst_y_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_bp_dst_y_%dx%d_format_%d_%d_%d.raw";
 static char utest_scal_bp_dst_uv_file[] =
-    "/data/like/pic/utest_scal_bp_dst_uv_%dx%d_format_%d_%d_%d.raw";
+    "/data/vendor/cameraserver/data/like/pic/utest_scal_bp_dst_uv_%dx%d_format_%d_%d_%d.raw";
 
 const char *cfg_string[] = {
 	"input_size_w",
@@ -113,8 +113,7 @@ static void usage(void) {
     "-oey 0 -oeu 0 -sm 2 -decih 0 -deciv 0 -box 0 -boy 0 -bow 320 -boh 240 -bop 336\n");
 }
 
-static cpp_memory_t *allocMem(
-	int buf_size, int num_bufs, uint32_t is_cache)
+static cpp_memory_t *allocMem(int buf_size, int num_bufs)
 {
 	size_t mem_size = 0;
 	int heap_type;
@@ -127,12 +126,11 @@ static cpp_memory_t *allocMem(
 #else
 	iommu_en = true;
 #endif
-	heap_type = iommu_en ?
-		ION_HEAP_ID_MASK_SYSTEM :
-		ION_HEAP_ID_MASK_MM;
+	//for test....
+	iommu_en = true;
+	heap_type = iommu_en ? ION_HEAP_ID_MASK_SYSTEM : ION_HEAP_ID_MASK_MM;
 
-	cpp_memory_t *memory =
-	    (cpp_memory_t *)malloc(sizeof(cpp_memory_t));
+	cpp_memory_t *memory = (cpp_memory_t *)malloc(sizeof(cpp_memory_t));
 	if (NULL == memory) {
 		goto getpmem_fail;
 	}
@@ -140,7 +138,7 @@ static cpp_memory_t *allocMem(
 	memory->busy_flag = false;
 
 	mem_size = buf_size * num_bufs;
-	mem_size = (mem_size + 4095U) & (~4095U);
+	mem_size = (mem_size + 4095U) & (~4095U); //Why need 4096 Align
 
 	pHeapIon = new MemIon("/dev/ion", mem_size, MemIon::NO_CACHING, heap_type);
 
@@ -148,7 +146,7 @@ static cpp_memory_t *allocMem(
 		ERR("failed to alloc ion pmem buffer1.\n");
 		goto getpmem_fail;
 	}
-    	pHeapIon->get_phy_addr_from_ion(&paddr, &mem_size);
+	pHeapIon->get_phy_addr_from_ion(&paddr, &mem_size);
 
 	if (NULL == pHeapIon->getBase() || MAP_FAILED == pHeapIon->getBase()) {
 		ERR("failed to alloc ion pmem buffer2.\n");
@@ -163,8 +161,8 @@ static cpp_memory_t *allocMem(
 	memory->data = pHeapIon->getBase();
 
 	INFO("alloc success fd=0x%x, phys_addr=0x%lx, virt_addr=%p, size=0x%lx, heap=%p\n",
-              memory->fd, memory->phys_addr,
-              memory->data, memory->phys_size, pHeapIon);
+		memory->fd, memory->phys_addr,
+		memory->data, memory->phys_size, pHeapIon);
 
 	return memory;
 
@@ -193,89 +191,16 @@ static void freeMem(cpp_memory_t *memory)
 	free(memory);
 }
 
-static int utest_scal_param_set1(
-    struct utest_scal_cxt *scal_cxt_ptr, int argc,
-    char **argv) {
-    int i = 0;
+static int utest_scal_param_set(struct utest_scal_cxt *scal_cxt_ptr,
+	int argc, char **argv) {
+ 	FILE *fp = NULL;
+	char param[20];
+	int value = 0;
+	int i;
 
-    if (argc < 25) {
-        usage();
-        return -1;
-    }
-
-    memset(scal_cxt_ptr, 0, sizeof(struct utest_scal_cxt));
-
-    for (i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-if") == 0 && (i < argc - 1)) {
-            scal_cxt_ptr->scal_cfg.input_format = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-iw") == 0 && (i < argc - 1)) {
-            scal_cxt_ptr->scal_cfg.input_size.w = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-ih") == 0 && (i < argc - 1)) {
-            scal_cxt_ptr->scal_cfg.input_size.h = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-rx") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.input_rect.x = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-ry") == 0 && (i < argc - 1)) {
-            scal_cxt_ptr->scal_cfg.input_rect.y = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-rw") == 0 && (i < argc - 1)) {
-            scal_cxt_ptr->scal_cfg.input_rect.w = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-rh") == 0 && (i < argc - 1)) {
-            scal_cxt_ptr->scal_cfg.input_rect.h = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-iey") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.input_endian.y_endian = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-ieu") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.input_endian.uv_endian = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-sctx") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.sc_trim.x = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-scty") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.sc_trim.y = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-sctw") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.sc_trim.w = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-scth") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.sc_trim.h = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-ow") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.output_size.w = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-oh") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.output_size.h = atoi(argv[++i]);
-        }else if (strcmp(argv[i], "-op") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.output_pitch = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-of") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.output_format = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-oey") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.output_endian.y_endian = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-oeu") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.output_endian.uv_endian = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-sm") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.scale_mode = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-decih") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.scale_deci.hor = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-deciv") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.scale_deci.ver = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-box") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.bp_trim.x = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-boy") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.bp_trim.y = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-bow") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.bp_trim.w = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "-boh") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.bp_trim.h = atoi(argv[++i]);
-        }else if (strcmp(argv[i], "-bop") == 0 && (i < argc - 1)) {
-           scal_cxt_ptr->scal_cfg.bpout_pitch = atoi(argv[++i]);
-        } else {
-            usage();
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-  #ifdef USE_FILE
-static int utest_scal_param_set(struct utest_scal_cxt *scal_cxt_ptr) {
-    FILE *fp = NULL;
-    char param[20];
-    int value = 0;
-
-	if ((fp = fopen(u_test_cfg_file, "r")) != NULL){
+	memset(scal_cxt_ptr, 0, sizeof(struct utest_scal_cxt));
+	if (fp = fopen(u_test_cfg_file, "r")){
+		//Read Parameter from File.
 		fscanf(fp, "%s%d", param, &scal_cxt_ptr->scal_cfg.input_size.w);
 		ERR("param get from txt is param:%s, value:%d .\n",
 			param, scal_cxt_ptr->scal_cfg.input_size.w);
@@ -349,29 +274,95 @@ static int utest_scal_param_set(struct utest_scal_cxt *scal_cxt_ptr) {
 		ERR("param get from txt is param:%s, value:%d .\n",
 			param, scal_cxt_ptr->scal_cfg.bp_trim.w);
 		fscanf(fp, "%s%d", param, &scal_cxt_ptr->scal_cfg.bp_trim.h);
-		ERR("param get from txt is param:%s, value:%d .\n",
+		ERR("param get from txt is param:%s, bp_trim.h value:%d .\n",
 			param, scal_cxt_ptr->scal_cfg.bp_trim.h);
+		scal_cxt_ptr->scal_cfg.output_pitch = scal_cxt_ptr->scal_cfg.output_size.w;
+		scal_cxt_ptr->scal_cfg.bpout_pitch = scal_cxt_ptr->scal_cfg.bp_trim.w;
+		fclose(fp);
+	}else{
+		//Read parameter from command line parameter.
+		if (argc < 25) {
+			usage();
+			return -1;
+		}
+		for (i = 1; i < argc; i++) {
+			if (strcmp(argv[i], "-if") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_format = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-iw") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_size.w = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-ih") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_size.h = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-rx") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_rect.x = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-ry") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_rect.y = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-rw") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_rect.w = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-rh") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_rect.h = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-iey") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_endian.y_endian = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-ieu") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.input_endian.uv_endian = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-sctx") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.sc_trim.x = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-scty") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.sc_trim.y = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-sctw") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.sc_trim.w = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-scth") == 0 && (i < argc - 1)) {
+			scal_cxt_ptr->scal_cfg.sc_trim.h = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-ow") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.output_size.w = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-oh") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.output_size.h = atoi(argv[++i]);
+			}else if (strcmp(argv[i], "-op") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.output_pitch = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-of") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.output_format = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-oey") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.output_endian.y_endian = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-oeu") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.output_endian.uv_endian = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-sm") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.scale_mode = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-decih") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.scale_deci.hor = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-deciv") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.scale_deci.ver = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-box") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.bp_trim.x = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-boy") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.bp_trim.y = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-bow") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.bp_trim.w = atoi(argv[++i]);
+			} else if (strcmp(argv[i], "-boh") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.bp_trim.h = atoi(argv[++i]);
+			}else if (strcmp(argv[i], "-bop") == 0 && (i < argc - 1)) {
+				scal_cxt_ptr->scal_cfg.bpout_pitch = atoi(argv[++i]);
+			} else {
+				usage();
+				return -1;
+			}
+		}
 	}
-
-	fclose(fp);
 	return 0;
 }
-#endif
 
 static int
 utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
     /* alloc input y buffer */
 	scal_cxt_ptr->input_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.input_size.w *
-		scal_cxt_ptr->scal_cfg.input_size.h, 1, false);
+		scal_cxt_ptr->scal_cfg.input_size.h, 1);
     INFO("LIKE:src y phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->input_y_mem->phys_addr,
          scal_cxt_ptr->input_y_mem->data);
     memset(scal_cxt_ptr->input_y_mem->data, 0x80,
            scal_cxt_ptr->input_y_mem->phys_size);
 #ifdef TEST_ON_HAPS
-	scal_cxt_ptr->scal_cfg.input_addr.y =
-		scal_cxt_ptr->input_y_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.input_addr.y =
+	//	scal_cxt_ptr->input_y_mem->phys_addr;
 #endif
 	scal_cxt_ptr->scal_cfg.input_addr_vir.y =
 		(unsigned int)scal_cxt_ptr->input_y_mem->data;
@@ -380,17 +371,17 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
     /* alloc input uv buffer */
 	scal_cxt_ptr->input_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.input_size.w *
-		scal_cxt_ptr->scal_cfg.input_size.h, 1, false);
+		scal_cxt_ptr->scal_cfg.input_size.h, 1);
     INFO("LIKE:src uv phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->input_uv_mem->phys_addr,
          scal_cxt_ptr->input_uv_mem->data);
     memset(scal_cxt_ptr->input_uv_mem->data, 0x80,
            scal_cxt_ptr->input_uv_mem->phys_size);
 #ifdef TEST_ON_HAPS
-	scal_cxt_ptr->scal_cfg.input_addr.u =
-		scal_cxt_ptr->input_uv_mem->phys_addr;
-	scal_cxt_ptr->scal_cfg.input_addr.v =
-		scal_cxt_ptr->input_uv_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.input_addr.u =
+	//	scal_cxt_ptr->input_uv_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.input_addr.v =
+	//	scal_cxt_ptr->input_uv_mem->phys_addr;
 #endif
 	scal_cxt_ptr->scal_cfg.input_addr_vir.u =
 		(unsigned int)scal_cxt_ptr->input_uv_mem->data;
@@ -400,15 +391,15 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
     /* alloc sc outout y buffer */
 	scal_cxt_ptr->output_sc_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_pitch *
-		scal_cxt_ptr->scal_cfg.output_size.h, 1, false);
+		scal_cxt_ptr->scal_cfg.output_size.h, 1);
     INFO("LIKE:sc out y phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_sc_y_mem->phys_addr,
          scal_cxt_ptr->output_sc_y_mem->data);
     memset(scal_cxt_ptr->output_sc_y_mem->data, 0x80,
            scal_cxt_ptr->output_sc_y_mem->phys_size);
 #ifdef TEST_ON_HAPS
-	scal_cxt_ptr->scal_cfg.output_addr.y =
-		scal_cxt_ptr->output_sc_y_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.output_addr.y =
+	//	scal_cxt_ptr->output_sc_y_mem->phys_addr;
 #endif
 	scal_cxt_ptr->scal_cfg.output_addr_vir.y =
 		(unsigned int)scal_cxt_ptr->output_sc_y_mem->data;
@@ -417,17 +408,17 @@ utest_scal_mem_alloc(struct utest_scal_cxt *scal_cxt_ptr) {
     /* alloc sc outout uv buffer */
 	scal_cxt_ptr->output_sc_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.output_pitch *
-		scal_cxt_ptr->scal_cfg.output_size.h, 1, false);
+		scal_cxt_ptr->scal_cfg.output_size.h, 1);
     INFO("LIKE:sc out uv phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_sc_uv_mem->phys_addr,
          scal_cxt_ptr->output_sc_uv_mem->data);
     memset(scal_cxt_ptr->output_sc_uv_mem->data, 0x80,
            scal_cxt_ptr->output_sc_uv_mem->phys_size);
 #ifdef TEST_ON_HAPS
-	scal_cxt_ptr->scal_cfg.output_addr.u =
-		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
-	scal_cxt_ptr->scal_cfg.output_addr.v =
-		scal_cxt_ptr->output_sc_uv_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.output_addr.u =
+	//	scal_cxt_ptr->output_sc_uv_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.output_addr.v =
+	//	scal_cxt_ptr->output_sc_uv_mem->phys_addr;
 #endif
 	scal_cxt_ptr->scal_cfg.output_addr_vir.u =
 		(unsigned int)scal_cxt_ptr->output_sc_uv_mem->data;
@@ -437,15 +428,15 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     /* alloc bp outout y buffer */
 	scal_cxt_ptr->output_bp_y_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.bpout_pitch *
-		scal_cxt_ptr->scal_cfg.bp_trim.h, 1, false);
+		scal_cxt_ptr->scal_cfg.bp_trim.h, 1);
     INFO("LIKE:bp out y phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_bp_y_mem->phys_addr,
          scal_cxt_ptr->output_bp_y_mem->data);
     memset(scal_cxt_ptr->output_bp_y_mem->data, 0x80,
            scal_cxt_ptr->output_bp_y_mem->phys_size);
 #ifdef TEST_ON_HAPS
-	scal_cxt_ptr->scal_cfg.bp_output_addr.y =
-		scal_cxt_ptr->output_bp_y_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.bp_output_addr.y =
+	//	scal_cxt_ptr->output_bp_y_mem->phys_addr;
 #endif
 	scal_cxt_ptr->scal_cfg.bp_output_addr_vir.y =
 		(unsigned int)scal_cxt_ptr->output_bp_y_mem->data;
@@ -454,17 +445,17 @@ if (scal_cxt_ptr->scal_cfg.scale_mode == 2) {
     /* alloc bp outout uv buffer */
 	scal_cxt_ptr->output_bp_uv_mem =
 	allocMem(scal_cxt_ptr->scal_cfg.bpout_pitch *
-		scal_cxt_ptr->scal_cfg.bp_trim.h, 1, false);
+		scal_cxt_ptr->scal_cfg.bp_trim.h, 1);
     INFO("LIKE:bp out uv phy addr :0x%lx, virtual addr:%p\n",
          scal_cxt_ptr->output_bp_uv_mem->phys_addr,
          scal_cxt_ptr->output_bp_uv_mem->data);
     memset(scal_cxt_ptr->output_bp_uv_mem->data, 0x80,
            scal_cxt_ptr->output_bp_uv_mem->phys_size);
 #ifdef TEST_ON_HAPS
-	scal_cxt_ptr->scal_cfg.bp_output_addr.u =
-		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
-	scal_cxt_ptr->scal_cfg.bp_output_addr.v =
-		scal_cxt_ptr->output_bp_uv_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.bp_output_addr.u =
+	//	scal_cxt_ptr->output_bp_uv_mem->phys_addr;
+	//scal_cxt_ptr->scal_cfg.bp_output_addr.v =
+	//	scal_cxt_ptr->output_bp_uv_mem->phys_addr;
 #endif
 	scal_cxt_ptr->scal_cfg.bp_output_addr_vir.u =
 		(unsigned int)scal_cxt_ptr->output_bp_uv_mem->data;
@@ -673,16 +664,11 @@ int main(int argc, char **argv) {
     scal_param.host_fd = -1;
     scal_param.scale_cfg_param = &scal_cxt_ptr->scal_cfg;
 
-   if (utest_scal_param_set1(scal_cxt_ptr, argc, argv)) {
+    if (utest_scal_param_set(scal_cxt_ptr, argc, argv)) {
 	 ERR("get invild scal param.\n");
         return ret;
     }
-  #ifdef USE_FILE
-    if (utest_scal_param_set(scal_cxt_ptr)) {
-	 ERR("get invild scal param.\n");
-        return ret;
-    }
-#endif
+
     if (utest_scal_mem_alloc(scal_cxt_ptr)) {
 	 ERR("failed to alloc scal memory.\n");
 	goto err;

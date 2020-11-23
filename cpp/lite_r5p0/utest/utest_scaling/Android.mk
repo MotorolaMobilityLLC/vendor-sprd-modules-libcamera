@@ -1,12 +1,11 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
-
 LOCAL_SRC_FILES := \
-    utest_scal.cpp \
+	utest_scal.cpp \
 
 LOCAL_C_INCLUDES:= \
 	$(TOP)/vendor/sprd/modules/libmemion/ \
-    $(TOP)/vendor/sprd/external/kernel-headers \
+	$(TOP)/vendor/sprd/external/kernel-headers \
 	$(LOCAL_PATH)/../../algo/inc \
 	$(LOCAL_PATH)/../../driver/inc \
 	$(TOP)/vendor/sprd/modules/libcamera/$(OEM_DIR)/inc \
@@ -15,7 +14,7 @@ LOCAL_C_INCLUDES:= \
 	$(TOP)/vendor/sprd/modules/libcamera/$(ISPDRV_DIR)/driver/inc \
 	$(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
 	$(TOP)/vendor/sprd/modules/libcamera/common/inc \
-	$(LOCAL_PATH)/../../../kernel_module/interface
+	$(LOCAL_PATH)/../../../../kernel_module/interface
 
 #LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_BSP_UAPI_PATH)/kernel/usr
 LOCAL_SHARED_LIBRARIES := libcppdrv libmemion liblog libEGL libbinder libutils
