@@ -44,10 +44,10 @@
 /* effective sensor output image size */
 #define VIDEO_WIDTH 1920
 #define VIDEO_HEIGHT 1080
-#define PREVIEW_WIDTH 3200
-#define PREVIEW_HEIGHT 2432
-#define SNAPSHOT_WIDTH 6528
-#define SNAPSHOT_HEIGHT 4864
+#define PREVIEW_WIDTH 3280 //3200
+#define PREVIEW_HEIGHT 2464 //2432
+#define SNAPSHOT_WIDTH 6560 //6528
+#define SNAPSHOT_HEIGHT 4928 //4864
 
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
@@ -500,9 +500,9 @@ static const SENSOR_REG_T imx616_preview_setting[] = {
     {0x040E, 0x09}, //
     {0x040F, 0x80}, // Output Size Setting 2432
     {0x034C, 0x0C}, //
-    {0x034D, 0x80}, // 0xc80 3200
+    {0x034D, 0xd0},//3280//80}, // 0xc80 3200
     {0x034E, 0x09}, //
-    {0x034F, 0x80}, // Clock Setting
+    {0x034F, 0xa0},//2464//80}, // Clock Setting
     {0x0301, 0x05}, //
     {0x0303, 0x02}, //
     {0x0305, 0x04}, //
@@ -600,7 +600,7 @@ static const SENSOR_REG_T imx616_snapshot_setting[] = {
     {0x040E, 0x13}, //
     {0x040F, 0x00}, // Output Size Setting
     {0x034C, 0x19}, //
-    {0x034D, 0x80}, //
+    {0x034D, 0xa0},//80}, //
     {0x034E, 0x13}, //
     {0x034F, 0x40}, // Clock Setting
     {0x0301, 0x05}, //
@@ -698,9 +698,9 @@ static const SENSOR_REG_T imx616_snapshot_setting1[] = {
     {0x040C, 0x19},
     {0x040D, 0xA0},
     {0x040E, 0x13},
-    {0x040F, 0x00}, // 0x40
+    {0x040F, 0x40},//00}, // 0x40
     {0x034C, 0x19},
-    {0x034D, 0x80}, // 0xA0
+    {0x034D, 0xA0},//80}, // 0xA0
     {0x034E, 0x13},
     {0x034F, 0x40},
     {0x0301, 0x05},
