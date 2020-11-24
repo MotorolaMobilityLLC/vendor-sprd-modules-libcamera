@@ -8722,6 +8722,14 @@ cmr_int camera_set_fov_fusion_app_ratio(cmr_handle oem_handle,
     return ret;
 }
 
+cmr_int camera_set_sync_state(cmr_handle oem_handle,
+                                   SyncState *mSyncState) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+   CMR_LOGI("mRefId %d mNestId %d mSyncFlag %d",mSyncState->mRefId,mSyncState->mNestId,mSyncState->mSyncFlag);
+    return ret;
+}
+
 cmr_int camera_set_multi_camera_id(cmr_handle oem_handle,
                                    cmr_uint is_multi_camera_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
