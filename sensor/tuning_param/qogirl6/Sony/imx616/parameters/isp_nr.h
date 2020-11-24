@@ -109,3 +109,5 @@ static struct sensor_nr_scene_map_param s_imx616_nr_scene_map_param = {{
 
 
 
+#ifdef _NR_POST_EE_PARAM_
+#endif
