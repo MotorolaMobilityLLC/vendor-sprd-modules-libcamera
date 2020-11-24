@@ -7799,7 +7799,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_hdr_param hdr_param;
     struct isp_3dnr_ctrl_param param_3dnr;
     struct isp_exp_compensation ae_compensation;
-    if (!oem_handle || !param_ptr) {
+    if (!oem_handle || !param_ptr || !isp_cxt) {
         CMR_LOGE("in parm error");
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
