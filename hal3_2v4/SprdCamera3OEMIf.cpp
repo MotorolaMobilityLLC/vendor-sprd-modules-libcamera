@@ -3400,6 +3400,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         } else
             stopPreviewInternal();
     }
+
+    mZslCaptureExitLoop = false;
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
     mVideoProcessedWithPreview = false;
@@ -3548,7 +3550,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     nsecs_t start_timestamp = systemTime();
     nsecs_t end_timestamp;
     mUpdateRangeFpsCount = 0;
-    mZslCaptureExitLoop == true;
+    mZslCaptureExitLoop = true;
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -5402,7 +5404,9 @@ void SprdCamera3OEMIf::HandleStartPreview(enum camera_cb_type cb, void *parm4) {
         HAL_LOGV("CAMERA_EVT_CB_FRAME");
         switch (getPreviewState()) {
         case SPRD_PREVIEW_IN_PROGRESS:
-            receivePreviewFrame((struct camera_frame_type *)parm4);
+            if (SPRD_INTERNAL_STOPPING != mCameraState.camera_state) {
+                receivePreviewFrame((struct camera_frame_type *)parm4);
+            }
             break;
 
         case SPRD_INTERNAL_PREVIEW_STOPPING:
