@@ -201,17 +201,6 @@ typedef struct {
 } new_mem_t;
 
 typedef enum {
-    CAMERA_STREAM_TYPE_DEFAULT,
-    CAMERA_STREAM_TYPE_PREVIEW,
-    CAMERA_STREAM_TYPE_VIDEO,
-    CAMERA_STREAM_TYPE_CALLBACK,
-    CAMERA_STREAM_TYPE_YUV2,
-    CAMERA_STREAM_TYPE_ZSL_PREVIEW,
-    CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT,
-    CAMERA_STREAM_TYPE_MAX,
-} camera_stream_type_t;
-
-typedef enum {
     CAMERA_OPEN_CAMEAR,
     CAMERA_START_PREVIEW,
     CAMERA_TAKE_PIC,
@@ -224,7 +213,7 @@ typedef struct {
     camera_stream_type_t stream_type;
     int width;
     int height;
-    PixelFormat pixel;
+    android_pixel_format_t pixel;
 } streamconfig;
 
 hal_mem_info_t memory_gloable;    // snapshot memory map
@@ -1393,7 +1382,8 @@ void NativeCameraHidl::configureAvailableStream(
             StreamType::OUTPUT,
             static_cast<uint32_t>(outputCallbackStreams[0].width),
             static_cast<uint32_t>(outputCallbackStreams[0].height),
-            static_cast<PixelFormat>(outputCallbackStreams[0].format),
+            static_cast<android::hardware::graphics::common::V1_0::PixelFormat>(
+                outputCallbackStreams[0].format),
             GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
             0,
             StreamRotation::ROTATION_0};
@@ -1411,7 +1401,8 @@ void NativeCameraHidl::configureAvailableStream(
                        StreamType::OUTPUT,
                        static_cast<uint32_t>(outputVideoStreams[0].width),
                        static_cast<uint32_t>(outputVideoStreams[0].height),
-                       static_cast<PixelFormat>(outputVideoStreams[0].format),
+                       static_cast<android::hardware::graphics::common::V1_0::PixelFormat>(
+                           outputVideoStreams[0].format),
                        GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
                        0,
                        StreamRotation::ROTATION_0};
@@ -1429,7 +1420,8 @@ void NativeCameraHidl::configureAvailableStream(
                        StreamType::OUTPUT,
                        static_cast<uint32_t>(outputCaptureStreams[0].width),
                        static_cast<uint32_t>(outputCaptureStreams[0].height),
-                       static_cast<PixelFormat>(outputCaptureStreams[0].format),
+                       static_cast<android::hardware::graphics::common::V1_0::PixelFormat>(
+                           outputCaptureStreams[0].format),
                        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                        0,
                        StreamRotation::ROTATION_0};
@@ -2640,7 +2632,7 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
             g_streamConfig[g_stream_count].width = stream->s_width;
             g_streamConfig[g_stream_count].height = stream->s_height;
             g_streamConfig[g_stream_count].pixel =
-                PixelFormat(stream->s_format);
+                android_pixel_format_t(stream->s_format);
             ALOGI("stream_type =%d,width =%d,height =%d,pixel "
                   "=%d,g_stream_count=%d",
                   g_streamConfig[g_stream_count].stream_type,

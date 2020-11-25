@@ -1,10 +1,13 @@
 #ifndef _JSON2HAL_H_
 #define _JSON2HAL_H_
 #include "IParseJson.h"
+#include "SprdCamera3HALHeader.h"
+#include "gralloc_public.h"
 //#include <crtdefs.h>
 #include <map>
 #include <vector>
 using namespace std;
+using namespace sprdcamera;
 
 union Val {
     int32_t i32;
@@ -64,44 +67,44 @@ class stream : public IParseJson {
         m_jsonMethodMap["height"] = &stream::Set_Height;
         m_jsonMethodMap["format"] = &stream::Set_Fromat;
         m_jsonMethodMap["usage"] = &stream::Set_Usage;
-        m_jsonTypeMap.insert({"default_stream",0});
-        m_jsonTypeMap.insert({"preview_stream",1});
-        m_jsonTypeMap.insert({"video_stream",2});
-        m_jsonTypeMap.insert({"callback_stream",3});
-        m_jsonTypeMap.insert({"yuv2_stream",4});
-        m_jsonTypeMap.insert({"zsl_prev_stream",5});
-        m_jsonTypeMap.insert({"picture_stream",6});
-        m_jsonFormatMap.insert({"RGBA_8888",1});
-        m_jsonFormatMap.insert({"RGBX_8888",2});
-        m_jsonFormatMap.insert({"RGB_888",3});
-        m_jsonFormatMap.insert({"RGB_565",4});
-        m_jsonFormatMap.insert({"BGRA_8888",5});
-        m_jsonFormatMap.insert({"YCBCR_422_SP",16});
-        m_jsonFormatMap.insert({"YCRCB_420_SP",17});
-        m_jsonFormatMap.insert({"YCBCR_422_I",20});
-        m_jsonFormatMap.insert({"RGBA_FP16",22});
-        m_jsonFormatMap.insert({"RAW16",32});
-        m_jsonFormatMap.insert({"BLOB",33});
-        m_jsonFormatMap.insert({"IMPLEMENTATION_DEFINED",34});
-        m_jsonFormatMap.insert({"YCBCR_420_888",35});
-        m_jsonFormatMap.insert({"RAW_OPAQUE",36});
-        m_jsonFormatMap.insert({"RAW10",37});
-        m_jsonFormatMap.insert({"RAW12",38});
-        m_jsonFormatMap.insert({"RGBA_1010102",43});
-        m_jsonFormatMap.insert({"Y8",538982489});
-        m_jsonFormatMap.insert({"Y16",540422489});
-        m_jsonFormatMap.insert({"YV12",842094169});
+        m_jsonTypeMap.insert({"default_stream",CAMERA_STREAM_TYPE_DEFAULT});
+        m_jsonTypeMap.insert({"preview_stream",CAMERA_STREAM_TYPE_PREVIEW});
+        m_jsonTypeMap.insert({"video_stream",CAMERA_STREAM_TYPE_VIDEO});
+        m_jsonTypeMap.insert({"callback_stream",CAMERA_STREAM_TYPE_CALLBACK});
+        m_jsonTypeMap.insert({"yuv2_stream",CAMERA_STREAM_TYPE_YUV2});
+        m_jsonTypeMap.insert({"zsl_prev_stream",CAMERA_STREAM_TYPE_ZSL_PREVIEW});
+        m_jsonTypeMap.insert({"picture_stream",CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT});
+        m_jsonFormatMap.insert({"RGBA_8888", HAL_PIXEL_FORMAT_RGBA_8888});
+        m_jsonFormatMap.insert({"RGBX_8888", HAL_PIXEL_FORMAT_RGBX_8888});
+        m_jsonFormatMap.insert({"RGB_888", HAL_PIXEL_FORMAT_RGB_888});
+        m_jsonFormatMap.insert({"RGB_565", HAL_PIXEL_FORMAT_RGB_565});
+        m_jsonFormatMap.insert({"BGRA_8888", HAL_PIXEL_FORMAT_BGRA_8888});
+        m_jsonFormatMap.insert({"YCBCR_422_SP", HAL_PIXEL_FORMAT_YCBCR_422_SP});
+        m_jsonFormatMap.insert({"YCRCB_420_SP", HAL_PIXEL_FORMAT_YCRCB_420_SP});
+        m_jsonFormatMap.insert({"YCBCR_422_I", HAL_PIXEL_FORMAT_YCBCR_422_I});
+        m_jsonFormatMap.insert({"RGBA_FP16", HAL_PIXEL_FORMAT_RGBA_FP16});
+        m_jsonFormatMap.insert({"RAW16", HAL_PIXEL_FORMAT_RAW16});
+        m_jsonFormatMap.insert({"BLOB", HAL_PIXEL_FORMAT_BLOB});
+        m_jsonFormatMap.insert({"IMPLEMENTATION_DEFINED", HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED});
+        m_jsonFormatMap.insert({"YCBCR_420_888", HAL_PIXEL_FORMAT_YCBCR_420_888});
+        m_jsonFormatMap.insert({"RAW_OPAQUE", HAL_PIXEL_FORMAT_RAW_OPAQUE});
+        m_jsonFormatMap.insert({"RAW10", HAL_PIXEL_FORMAT_RAW10});
+        m_jsonFormatMap.insert({"RAW12", HAL_PIXEL_FORMAT_RAW12});
+        m_jsonFormatMap.insert({"RGBA_1010102", HAL_PIXEL_FORMAT_RGBA_1010102});
+        m_jsonFormatMap.insert({"Y8", HAL_PIXEL_FORMAT_Y8});
+        m_jsonFormatMap.insert({"Y16", HAL_PIXEL_FORMAT_Y16});
+        m_jsonFormatMap.insert({"YV12", HAL_PIXEL_FORMAT_YV12});
     }
     virtual ~stream() {}
     typedef void (stream::*streamFunc)(string key, void *value);
     typedef map<string, streamFunc> JsonMethodMap;
     JsonMethodMap m_jsonMethodMap;
-    map<string, uint32_t> m_jsonTypeMap;
-    map<string, uint32_t> m_jsonFormatMap;
+    map<string, camera_stream_type_t> m_jsonTypeMap;
+    map<string, android_pixel_format_t> m_jsonFormatMap;
     void Set_Type(string strKey, void *value) {
         string *tmp = (static_cast<string *>(value));
          if(m_jsonTypeMap.find(*tmp) != m_jsonTypeMap.end()) {
-            s_type = m_jsonTypeMap[*tmp];
+            s_type = (int32_t)m_jsonTypeMap[*tmp];
         } else {
             IT_LOGE("ERR stream type info");
         }
@@ -115,13 +118,16 @@ class stream : public IParseJson {
     void Set_Fromat(string strKey, void *value) {
         string *tmp = (static_cast<string *>(value));
          if(m_jsonFormatMap.find(*tmp) != m_jsonFormatMap.end()) {
-            s_format = m_jsonFormatMap[*tmp];
+            s_format = (int32_t)m_jsonFormatMap[*tmp];
         } else {
             IT_LOGE("ERR stream format info");
         }
     }
     void Set_Usage(string strKey, void *value) {
-        this->s_usage = *(static_cast<uint32_t *>(value));
+        string *tmp = (static_cast<string *>(value));
+        int64_t usage = 0;
+        sscanf(tmp->c_str(),"%x",&usage);
+        s_usage = (uint32_t)usage;
     }
     virtual void DealJsonNode(string strNode, int value) {
         if (m_jsonMethodMap.find(strNode) != m_jsonMethodMap.end()) {

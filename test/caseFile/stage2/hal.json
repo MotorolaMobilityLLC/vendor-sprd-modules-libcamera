@@ -14,9 +14,9 @@
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
 			"StreamList" : [
-  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 4},
-				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : 4},
-			    {"type" : "video_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 65536}
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+			    {"type" : "video_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10000"}
 			],
 			"Metadata" : [
 								{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -46,8 +46,8 @@
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
 			"StreamList" : [
-  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 4},
-				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : 4}
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
 			],
 			"Metadata" : [
 								{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -62,9 +62,9 @@
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
-				{"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : 3},
-				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : 3}
+				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x3"}
 			],
 			"Metadata" : [
 						{"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,3264,2448]},
@@ -89,10 +89,10 @@
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
-				{"type" : "video_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : 65539},
-				{"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : 3},
-				{"type" : "picture_stream", "width" : 1920,"height" : 1080, "format": "BLOB","usage" : 3}
+				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "video_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10003"},
+				{"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"},
+				{"type" : "picture_stream", "width" : 1920,"height" : 1080, "format": "BLOB","usage" : "0x3"}
 			],
 			"Metadata" : [
 						{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -116,8 +116,8 @@
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
-				{"type" : "picture_stream", "width" : 2592,"height" : 1944, "format": "BLOB","usage" : 3}
+				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 2592,"height" : 1944, "format": "BLOB","usage" : "0x3"}
 			],
 			"Metadata" : [
 						{"tagName": "sprdZslEnabled", "tagVal" : 1},
@@ -137,8 +137,8 @@
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
 			"StreamList" : [
-				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : 536873219},
-				{"type" : "picture_stream", "width" : 2592,"height" : 1944, "format": "BLOB","usage" : 3}
+				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 2592,"height" : 1944, "format": "BLOB","usage" : "0x3"}
 			],
 			"Metadata" : [
 						{"tagName": "sprd3auto3dnrEnabled", "tagVal" : 1},
@@ -147,6 +147,103 @@
 						{"tagName": "sprdlightPortraitType", "tagVal" : 4},
 						{"tagName": "perfectskinlevel", "tagVal" : [1,8,0,0,12,2,12,10,10]}
 			]
+		},
+		{
+			"CaseID" : 37,
+			"README":"video with camera ID 1",
+			"Priority": 0,
+			"FuncName" : "opencamera",
+			"CameraID" : 1
+		},
+		{
+			"CaseID" : 38,
+			"Priority": 4,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"Time" : 0,
+			"StreamList" : [
+				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 1280,"height" : 720, "format": "BLOB","usage" : "0x3"},
+				{"type" : "video_stream", "width" : 1280,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x3"}
+			],
+			"Metadata" : [
+						{"tagName": "sprdFaceAttributesEnable", "tagVal" : 1},
+						{"tagName": "perfectskinlevel", "tagVal" : [0,10,2,10,10,2,10,10,10]}
+			]
+		},
+		{
+			"CaseID" : 39,
+			"Priority": 5,
+			"FuncName" : "closecamera"
+		},
+		{
+			"CaseID" : 40,
+			"README":"Dual video with preview",
+			"Priority": 0,
+			"FuncName" : "opencamera",
+			"CameraID" : 54
+		},
+		{
+			"CaseID" : 41,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"Time" : 0,
+			"StreamList" : [
+				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 1920,"height" : 1080, "format": "BLOB","usage" : "0x3"},
+				{"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+						{"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,1700,980]}
+			]
+		},
+		{
+			"CaseID" : 42,
+			"Priority": 5,
+			"FuncName" : "closecamera"
+		},
+		{
+			"CaseID" : 43,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"Time" : 0,
+			"StreamList" : [
+				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 1920,"height" : 1080, "format": "BLOB","usage" : "0x3"},
+				{"type" : "video_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10003"}
+			],
+			"Metadata" : [
+						{"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,1700,980]}
+			]
+		},
+		{
+			"CaseID" : 44,
+			"README":"BOKEH with main camera",
+			"Priority": 0,
+			"FuncName" : "opencamera",
+			"CameraID" : 24
+		},
+		{
+			"CaseID" : 45,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"Time" : 0,
+			"StreamList" : [
+				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x3"},
+				{"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+						{"tagName": "sprd3BlurFNumber", "tagVal" : 10}
+			]
+		},
+		{
+			"CaseID" : 46,
+			"Priority": 5,
+			"FuncName" : "closecamera"
 		}
 	]
 }

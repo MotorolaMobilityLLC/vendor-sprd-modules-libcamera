@@ -69,6 +69,50 @@
 					]
 				}
 			]
+		},
+		{
+			"ID":18,
+			"README":"example for video 美颜",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[37,38,39]}
+					]
+				}
+			]
+		},
+		{
+			"ID":19,
+			"README":"example for Dual video preview",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[40,41,42]}
+					]
+				}
+			]
+		},
+		{
+			"ID":20,
+			"README":"example for Dual video",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[40,43,42]}
+					]
+				}
+			]
+		},
+		{
+			"ID":21,
+			"README":"example for bokeh 0",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[44,45,46]}
+					]
+				}
+			]
 		}
 	]
 }

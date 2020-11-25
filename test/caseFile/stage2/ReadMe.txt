@@ -36,6 +36,11 @@
             "YV12"//842094169
 /* 为所测试的streamlist中的format类型，参见hardware/interfaces/graphics/common/1.0/types.hal中的PixelFormat */
 
+“usage”:   "0x3"//3
+            "0x4"//4
+            "0x10003"//65539
+/* 为所测试的streamlist中的usage类型, 输入十六进制数 */
+
 "ChipID" : 	"chip_dcam0",
             "chip_dcam1",
             "chip_dcam2",
