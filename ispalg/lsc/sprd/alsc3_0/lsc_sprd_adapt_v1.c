@@ -2279,7 +2279,10 @@ static void *lsc_sprd_init(void *in, void *out)
 	}
 	// alsc_init
 	cxt->is_planar = 1;	// 1 -- use planar lsc table in alsc algorithm;  0 -- use interlace lsc table in alsc algorithm
-	cxt->stats_inverse = 0; // set 0 if use LSCM statistic data; set 1 if use AEM statistic data
+	cxt->stats_inverse = 1; // set 0 if use LSCM statistic data; set 1 if use AEM statistic data
+#if ((defined CONFIG_ISP_2_7)||(defined CONFIG_ISP_2_8))
+	cxt->stats_inverse = 0; //sharkl5pro and sharkl6 use LSCM statistic data
+#endif
 	rtn = lsc_set_init_param(init_param, cxt, &sprd_init_param);
 
 	sprd_init_output_param.lsc_buffer = NULL;
