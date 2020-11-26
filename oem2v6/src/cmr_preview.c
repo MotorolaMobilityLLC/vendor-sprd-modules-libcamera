@@ -4053,7 +4053,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
 
 // TBD: isp dont need to know zsl or not
 #ifdef CONFIG_CAMERA_OFFLINE
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_7) ||  defined(CONFIG_ISP_2_8)
         if (prev_cxt->prev_param.sprd_zsl_enabled ||
             ((channel_bits & (1 << CHN_3)) && (preview_enable == 1))) {
             isp_param.sprd_zsl_flag = 1;
