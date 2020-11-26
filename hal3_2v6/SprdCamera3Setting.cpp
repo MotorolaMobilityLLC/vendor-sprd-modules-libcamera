@@ -2344,10 +2344,6 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
         available_cam_features.add(0);
     }
 
-    // fdr replace 3dnr need to use its own ip later
-    available_cam_features.add(resetFeatureStatus("persist.vendor.cam.ip.fdr.module",
-                                    "persist.vendor.cam.fdr.3dnr.enable"));
-
     // 33 video face detect support default
     available_cam_features.add(1);
 
