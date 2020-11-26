@@ -2274,9 +2274,13 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	struct isp_af_ts af_ts;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_u32 tmp = 0;
+	struct af_log_info af_param = {NULL, 0};
+	struct af_log_info aft_param = {NULL, 0};
 	struct debuginfo_message ae_msg = { NULL, 0, 0, 0 };
 	struct debuginfo_message ai_msg = { NULL, 0, 0, 0 };
 	struct debuginfo_message alsc_msg = { NULL, 0, 0, 0 };
+	struct debuginfo_message af_msg = { NULL, 0, 0, 0 };
+	struct debuginfo_message aft_msg = { NULL, 0, 0, 0 };
 
 	if (cxt->ops.af_ops.ioctrl) {
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_GET_SYSTEM_TIME, &sec, &usec);
@@ -2318,6 +2322,26 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 
 		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
 		debuginfo_eq(&cxt->alsc_queue, &alsc_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+
+		if (cxt->ops.af_ops.ioctrl) {
+			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AF_LOG_INFO, (void *)&af_param, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to get_af_log_info"));
+			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_AFT_LOG_INFO, (void *)&aft_param, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to get_aft_log_info"));
+		}
+		af_msg.msg_log = af_param.log_cxt;
+		af_msg.msg_size = af_param.log_len;
+		af_msg.frame_id = cxt->frame_id_sof - 1;
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->af_queue, &af_msg);
+		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+
+		aft_msg.msg_log = aft_param.log_cxt;
+		aft_msg.msg_size = aft_param.log_len;
+		aft_msg.frame_id = cxt->frame_id_sof - 1;
+		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+		debuginfo_eq(&cxt->aft_queue, &aft_msg);
 		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 	}
 
@@ -5776,27 +5800,6 @@ static void * isp_alg_fw_init_async(void *data)
 	ispalg_init_async_done(init_cxt);
 
 	ISP_LOGD("cam%ld wait isp alg done\n", cxt->camera_id);
-
-	if(s_dbg_ver) {
-		struct debuginfo_message af_msg = { NULL, 0, 0, 0 };
-		struct debuginfo_message aft_msg = { NULL, 0, 0, 0 };
-
-		af_msg.msg_log = cxt->af_cxt.log_af;
-		af_msg.msg_size = cxt->af_cxt.log_af_size;
-		af_msg.frame_id = 0;
-		ISP_LOGD("cam%ld, af log %p, %d\n", cxt->camera_id, af_msg.msg_log, af_msg.msg_size);
-		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
-		debuginfo_eq(&cxt->af_queue, &af_msg);
-		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
-
-		aft_msg.msg_log = cxt->aft_cxt.log_aft;
-		aft_msg.msg_size = cxt->aft_cxt.log_aft_size;
-		aft_msg.frame_id = 0;
-		ISP_LOGD("cam%ld, aft log %p, %d\n", cxt->camera_id, aft_msg.msg_log, aft_msg.msg_size);
-		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
-		debuginfo_eq(&cxt->aft_queue, &aft_msg);
-		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
-	}
 
 	cxt->init_status = FW_INIT_DONE;
 	ISP_LOGI("cam%ld done, alg enable %d, init %d\n", cxt->camera_id, cxt->alg_enable, cxt->init_status);
