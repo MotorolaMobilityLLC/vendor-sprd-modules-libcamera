@@ -66,6 +66,8 @@ public:
         chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
         chipinfo = SHARKL5PRO;
+#elif defined(CONFIG_ISP_2_8)
+        chipinfo = QOGIRL6;
 #endif
 
         face_beauty_init(&face_beauty, 0, 2, chipinfo);
@@ -146,6 +148,8 @@ public:
         chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
         chipinfo = SHARKL5PRO;
+#elif defined(CONFIG_ISP_2_8)
+        chipinfo = QOGIRL6;
 #endif
         init_fb_handle(&face_beauty, work_mode, 2, chipinfo);
         construct_fb_image(

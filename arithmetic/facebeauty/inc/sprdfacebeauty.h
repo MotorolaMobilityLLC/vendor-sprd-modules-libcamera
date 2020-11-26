@@ -24,7 +24,8 @@ typedef enum{
     SHARKLE = 1,
     SHARKL3 = 2,
     SHARKL5PRO = 3,
-    SHARKL5 = 4
+    SHARKL5 = 4,
+    QOGIRL6 = 5
 }fb_chipinfo;
 
 /* The error codes */

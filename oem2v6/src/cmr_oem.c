@@ -6292,6 +6292,8 @@ void camera_frame_facebeauty(void *data, struct camera_frame_type *frame,
         chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
         chipinfo = SHARKL5PRO;
+#elif defined(CONFIG_ISP_2_8)
+        chipinfo = QOGIRL6;
 #endif
         face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
         if (cxt->prev_face_beauty.hSprdFB != NULL)

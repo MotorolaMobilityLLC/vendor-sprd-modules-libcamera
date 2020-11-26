@@ -4017,6 +4017,8 @@ void SprdCamera3OEMIf::PreviewFrameFaceBeauty(struct camera_frame_type *frame,
         chipinfo = SHARKL5;
 #elif defined(CONFIG_ISP_2_7)
         chipinfo = SHARKL5PRO;
+#elif defined(CONFIG_ISP_2_8)
+        chipinfo = QOGIRL6;
 #endif
         face_beauty_init(&face_beauty, 1, 2, chipinfo);
         if (face_beauty.hSprdFB != NULL) {
