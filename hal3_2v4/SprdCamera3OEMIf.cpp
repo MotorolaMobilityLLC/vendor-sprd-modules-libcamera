@@ -3555,6 +3555,12 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     if (isCapturing()) {
         Mutex::Autolock l(&mLock);
         cancelPictureInternal();
+    } else if (mSprdYuvCallBack) {
+        HAL_LOGD("reprocess was not executed");
+        if (0 != mHalOem->ops->camera_cancel_takepicture(mCameraHandle)) {
+            HAL_LOGE("camera_stop_capture failed!");
+            return;
+        }
     }
 
     if (isPreviewStart()) {
@@ -3598,6 +3604,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     deinit_fb_handle(&face_beauty);
 #endif
 
+    mSprdYuvCallBack = false;
     HAL_LOGI("X Time:%lld(ms). camera id %d",
              (end_timestamp - start_timestamp) / 1000000, mCameraId);
 }
@@ -5607,13 +5614,15 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
             /**modified for 3d calibration&3d capture return yuv buffer finished
              * begin */
             HAL_LOGD("mSprdYuvCallBack:%d, mSprd3dCalibrationEnabled:%d, "
-                     "mTakePictureMode:%d",
+                     "mTakePictureMode:%d, mCameraId:%d",
                      mSprdYuvCallBack, mSprd3dCalibrationEnabled,
-                     mTakePictureMode);
+                     mTakePictureMode, mCameraId);
             if ((mSprdYuvCallBack || mSprd3dCalibrationEnabled) &&
                 mTakePictureMode == SNAPSHOT_ZSL_MODE) {
                 transitionState(SPRD_WAITING_RAW, SPRD_IDLE, STATE_CAPTURE);
-                mSprdYuvCallBack = false;
+                if (mCameraId != 0 && mCameraId != 1) {
+                    mSprdYuvCallBack = false;
+                }
             } else {
                 transitionState(SPRD_WAITING_RAW, SPRD_WAITING_JPEG,
                                 STATE_CAPTURE);
