@@ -7950,20 +7950,7 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.frm_num = -1;
     chn_param.skip_num = sensor_info->mipi_cap_skip_num;
 
-    /* in slowmotion, we want do decimation in preview channel,
-    bug video buffer and preview buffer is in one request, so we cant
-    do decimation for now, otherwise the fps is low */
-
     chn_param.cap_inf_cfg.chn_deci_factor = 0;
-
-#ifdef SPRD_SLOWMOTION_OPTIMIZE
-    if (prev_cxt->prev_param.video_eb &&
-        prev_cxt->prev_param.video_slowmotion_eb) {
-        chn_param.cap_inf_cfg.chn_deci_factor = 3;
-        prev_cxt->prev_skip_num = 2;
-    }
-#endif
-
     chn_param.cap_inf_cfg.frm_num = -1;
     chn_param.cap_inf_cfg.buffer_cfg_isp = 0;
     chn_param.cap_inf_cfg.cfg.need_binning = 0;
@@ -8085,7 +8072,8 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->prev_rect.height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
+    ret = prev_get_sn_inf(handle, camera_id,
+                          chn_param.cap_inf_cfg.chn_deci_factor,
                           &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
@@ -8103,6 +8091,17 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
+
+    /* in slowmotion, we want do decimation in preview channel,
+    bug video buffer and preview buffer is in one request, so we cant
+    do decimation for now, otherwise the fps is low */
+#ifdef SPRD_SLOWMOTION_OPTIMIZE
+        if (prev_cxt->prev_param.video_eb &&
+            prev_cxt->prev_param.video_slowmotion_eb) {
+            chn_param.cap_inf_cfg.chn_deci_factor = 3;
+            prev_cxt->prev_skip_num = 2;
+        }
+#endif
 
     chn_param.cap_inf_cfg.cfg.flip_on = 0;
 
@@ -8531,7 +8530,8 @@ cmr_int prev_set_video_param(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->video_rect.height = chn_param.cap_inf_cfg.cfg.src_img_rect.height;
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
+    ret = prev_get_sn_inf(handle, camera_id,
+                          chn_param.cap_inf_cfg.chn_deci_factor,
                           &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
@@ -8992,7 +8992,8 @@ cmr_int channel0_configure(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_PREVIEW;
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
+    ret = prev_get_sn_inf(handle, camera_id,
+                          chn_param.cap_inf_cfg.chn_deci_factor,
                           &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
@@ -9614,8 +9615,9 @@ cmr_int channel1_configure(struct prev_handle *handle, cmr_u32 camera_id,
              chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
-                          &chn_param.sn_if);
+    ret = prev_get_sn_inf(handle, camera_id,
+                       chn_param.cap_inf_cfg.chn_deci_factor,
+                       &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
         goto exit;
@@ -10456,8 +10458,9 @@ cmr_int channel2_configure(struct prev_handle *handle, cmr_u32 camera_id,
              chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
-                          &chn_param.sn_if);
+    ret = prev_get_sn_inf(handle, camera_id,
+                       chn_param.cap_inf_cfg.chn_deci_factor,
+                       &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
         goto exit;
@@ -11324,8 +11327,9 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
              chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
-                          &chn_param.sn_if);
+    ret = prev_get_sn_inf(handle, camera_id,
+                       chn_param.cap_inf_cfg.chn_deci_factor,
+                       &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
         goto exit;
@@ -12166,7 +12170,8 @@ cmr_int channel4_configure(struct prev_handle *handle, cmr_u32 camera_id,
              chn_param.cap_inf_cfg.cfg.src_img_rect.height);
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
+    ret = prev_get_sn_inf(handle, camera_id,
+                          chn_param.cap_inf_cfg.chn_deci_factor,
                           &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
@@ -13209,7 +13214,8 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
     /*get sensor interface info*/
-    ret = prev_get_sn_inf(handle, camera_id, chn_param.skip_num,
+    ret = prev_get_sn_inf(handle, camera_id,
+                          chn_param.cap_inf_cfg.chn_deci_factor,
                           &chn_param.sn_if);
     if (ret) {
         CMR_LOGE("get sn inf failed");
