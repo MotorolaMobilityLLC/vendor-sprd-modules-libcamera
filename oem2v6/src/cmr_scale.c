@@ -171,6 +171,7 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
     if (cfg_params->scale_cb) {
         sem_post(&file->sync_sem);
     }
+/*
     if (cfg_params->scale_cb) {
         memset((void *)&frame, 0x00, sizeof(frame));
         frame.size.width = frame_params->output_size.w;
@@ -181,6 +182,7 @@ static cmr_int cmr_scale_sw_start(struct scale_cfg_param_t *cfg_params,
         (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
                                 cfg_params->cb_handle);
     }
+*/
 exit:
     CMR_LOGV("X ret %ld", ret);
     return ret;
