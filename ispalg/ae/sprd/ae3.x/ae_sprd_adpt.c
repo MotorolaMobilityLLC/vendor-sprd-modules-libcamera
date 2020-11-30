@@ -5571,6 +5571,7 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	current_status = &cxt->sync_cur_status;
 	current_result = &cxt->sync_cur_result;
 	cur_calc_result = &cxt->calc_results;
+	cxt->ebd_support = 0;
 
 	calc_in = (struct ae_calc_in *)param;
 	aem_type = cxt->monitor_cfg.data_type;
@@ -5600,12 +5601,12 @@ static cmr_s32 ae_calculation_slow_motion(cmr_handle handle, cmr_handle param, c
 	// get effective E&g
 	if(cxt->monitor_cfg.skip_num > cxt->exp_skip_num){
 		/*write param already take effective when next ae calc(skipping 2or3 frames at high_fps mode)*/
-		cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.write_data.cur_index;
-		cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.write_data.frm_len;
-		cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->exp_data.write_data.exp_line;
-		cxt->cur_status.adv_param.cur_ev_setting.exp_time = cxt->exp_data.write_data.exp_time;
-		cxt->cur_status.adv_param.cur_ev_setting.dmy_line = cxt->exp_data.write_data.dummy;
-		cxt->cur_status.adv_param.cur_ev_setting.ae_gain = (cmr_s32) (1.0 * cxt->exp_data.write_data.isp_gain * cxt->exp_data.write_data.sensor_gain / 4096.0 + 0.5);
+		cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.lib_data.cur_index;
+		cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.lib_data.frm_len;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_line = cxt->exp_data.lib_data.exp_line;
+		cxt->cur_status.adv_param.cur_ev_setting.exp_time = cxt->exp_data.lib_data.exp_time;
+		cxt->cur_status.adv_param.cur_ev_setting.dmy_line = cxt->exp_data.lib_data.dummy;
+		cxt->cur_status.adv_param.cur_ev_setting.ae_gain = cxt->exp_data.lib_data.gain;
 	}else{
 		cxt->cur_status.adv_param.cur_ev_setting.ae_idx = cxt->exp_data.actual_data.cur_index;
 		cxt->cur_status.adv_param.cur_ev_setting.frm_len = cxt->exp_data.actual_data.frm_len;
