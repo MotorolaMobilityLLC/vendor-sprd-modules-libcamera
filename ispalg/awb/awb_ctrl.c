@@ -119,6 +119,8 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check para, param is NULL!");
 		goto exit;
+	} else {
+		ISP_LOGV("check param success");
 	}
 
 	char *paramfile_path = NULL;
@@ -141,10 +143,18 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 
 	//2、get the param file
 	FILE* fp_3 = NULL;
-	unsigned char awb_param_3[64 * 1024] = {0};
+	unsigned char *awb_param_3 = NULL;
+	awb_param_3 = malloc(64*1024);
+	if(!awb_param_3){
+		ISP_LOGE("malloc awb_param fail");
+	} else {
+		ISP_LOGV("malloc awb_param success");
+	}
 	unsigned int awb_param_size_3 = 0;
 	if(paramfile_path)
 		fp_3 = fopen(paramfile_path, "rb");
+	else
+		ISP_LOGE("paramfile_path is NULL");
 	if(!fp_3) {
 		//in_ptr->tuning_param = in_ptr->tuning_param;
 		ISP_LOGE("Get the trunning param from upper layer!");
@@ -154,6 +164,10 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 		in_ptr->tuning_param = &awb_param_3;
 		ISP_LOGE("Get the trunning param from param file!");
 	}
+	if(awb_param_3)
+		free(awb_param_3);
+	else
+		ISP_LOGV("awb_param_3 is NULL");
 
 	//3、judge the awblib is 2.x or 3.x
 	int* turnning_version = (int*) in_ptr->tuning_param + 1;

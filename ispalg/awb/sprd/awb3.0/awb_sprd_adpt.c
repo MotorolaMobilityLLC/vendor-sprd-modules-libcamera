@@ -280,7 +280,7 @@ static void _awb_save_gain(struct awb_save_gain *cxt, struct awb_ctrl_cxt *cxt_t
 	property_get("ro.build.version.release", version, "");
 
 	if (atoi(version) > 6) {
-		sprintf(file_name, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, cxt_tmp->camera_id, app_mode);
+		snprintf(file_name, 1024, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, cxt_tmp->camera_id, app_mode);
 		fp = fopen(file_name, "wb");
 		if (fp) {
 			ISP_LOGV("save_gain to:%s, camer_id[%d]: %d, %d, %d, %d\n", file_name, cxt_tmp->camera_id, cxt->r, cxt->g, cxt->b, cxt->ct);
@@ -289,7 +289,7 @@ static void _awb_save_gain(struct awb_save_gain *cxt, struct awb_ctrl_cxt *cxt_t
 			fp = NULL;
 		}
 	} else {
-		sprintf(file_name, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_MEDIA, cxt_tmp->camera_id, app_mode);
+		snprintf(file_name, 1024, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_MEDIA, cxt_tmp->camera_id, app_mode);
 		fp = fopen(file_name, "wb");
 		if (fp) {
 			ISP_LOGV("save_gain to:%s, camera_id[%d]: %d, %d, %d, %d\n", file_name, cxt_tmp->camera_id, cxt->r, cxt->g, cxt->b, cxt->ct);
@@ -324,14 +324,14 @@ static int _awb_save_gain_tofile(struct awb_ctrl_cxt *cxt)
 }
 static void _awb_read_gain(struct awb_save_gain *cxt, struct awb_ctrl_cxt *cxt_tmp)
 {
-	int count = 0;
+	unsigned long count = 0;
 	FILE *fp = NULL;
 	char version[1024];
 	char file_name[1024];
 	property_get("ro.build.version.release", version, "");
 
 	if (atoi(version) > 6) {
-		sprintf(file_name, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, cxt_tmp->camera_id, cxt_tmp->app_mode);
+		snprintf(file_name, 1024, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_CAMERASERVER, cxt_tmp->camera_id, cxt_tmp->app_mode);
 		fp = fopen(file_name, "rb");
 		if (fp) {
 			memset((void *)cxt, 0, sizeof(struct awb_save_gain));
@@ -343,7 +343,7 @@ static void _awb_read_gain(struct awb_save_gain *cxt, struct awb_ctrl_cxt *cxt_t
 			ISP_LOGE("read_gain from:%s, camera_id[%d]: %d, %d, %d, %d\n", file_name, cxt_tmp->camera_id, cxt->r, cxt->g, cxt->b, cxt->ct);
 		}
 	} else {
-		sprintf(file_name, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_MEDIA, cxt_tmp->camera_id, cxt_tmp->app_mode);
+		snprintf(file_name, 1024, "%scamera_%d_awb%d.file", AWB_GAIN_PARAM_FILE_NAME_MEDIA, cxt_tmp->camera_id, cxt_tmp->app_mode);
 		fp = fopen(file_name, "rb");
 		if (fp) {
 			memset((void *)cxt, 0, sizeof(struct awb_save_gain));
@@ -1228,6 +1228,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	cxt->otp_info.rdm_stat_info.b  = param->otp_info.rdm_stat_info.b;
 
 	struct awb_rgb_gain_3_0 awb_gain_v3;
+	memset(&awb_gain_v3,0,sizeof(struct awb_rgb_gain_3_0));
 	ISP_LOGV("start the awb_init() in the awblib");
 	if(cxt->lib_ops.awb_init_v3 != NULL){
 	cxt->alg_handle = cxt->lib_ops.awb_init_v3(&cxt->awb_init_param_v3, &awb_gain_v3);
