@@ -1822,6 +1822,10 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		cxt->output_gain.g = cxt->lock_info.lock_gain.g;
 		cxt->output_gain.b = cxt->lock_info.lock_gain.b;
 		cxt->output_ct = cxt->lock_info.lock_ct;
+		cxt->cur_gain.r = cxt->lock_info.lock_gain.r;
+		cxt->cur_gain.g = cxt->lock_info.lock_gain.g;
+		cxt->cur_gain.b = cxt->lock_info.lock_gain.b;
+		cxt->cur_ct = cxt->lock_info.lock_ct;
 	}
 	//only pre flash after
 	if (cxt->flash_pre_state != 0 && cxt->wb_mode == 0) {
@@ -1854,10 +1858,18 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 	cxt->gain_to_save_manual.b = cxt->output_gain.b;
 	cxt->ct_manual_to_save = cxt->output_ct;
 	//for auto mode
-	cxt->gain_to_save_auto.r = result.gain.r;
-	cxt->gain_to_save_auto.g = result.gain.g;
-	cxt->gain_to_save_auto.b = result.gain.b;
-	cxt->ct_auto_to_save	 = result.ct;
+	if(cxt->wb_mode == 0)
+	{
+		cxt->gain_to_save_auto.r = cxt->output_gain.r;
+		cxt->gain_to_save_auto.g = cxt->output_gain.g;
+		cxt->gain_to_save_auto.b = cxt->output_gain.b;
+		cxt->ct_auto_to_save	 = cxt->output_ct;
+        }else{
+		cxt->gain_to_save_auto.r = result.gain.r;
+		cxt->gain_to_save_auto.g = result.gain.g;
+		cxt->gain_to_save_auto.b = result.gain.b;
+		cxt->ct_auto_to_save	 = result.ct;
+	 }
 	//set gain/ct to update to sensor
 	result.gain.r = cxt->output_gain.r;
 	result.gain.g = cxt->output_gain.g;
