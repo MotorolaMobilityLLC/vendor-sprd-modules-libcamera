@@ -135,7 +135,7 @@ int testManager::CmdParse(int argc, char *argv[], originData_t *originData) {
     if (!strcmp(argv[1], "json1_default")) {
         ret = IT_PARSE_FIRST;
     } else if (!strcmp(argv[1], "hal") || !strcmp(argv[1], "oem") ||
-               !strcmp(argv[1], "drv")) {
+               !strcmp(argv[1], "drv") || !strcmp(argv[1], "sns") ) {
         originData->moduleName = argv[1];
         ret = IT_PARSE_SECOND;
     } else {
