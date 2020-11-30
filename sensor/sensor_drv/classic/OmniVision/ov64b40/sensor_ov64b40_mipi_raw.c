@@ -959,7 +959,7 @@ static cmr_int ov64b40_drv_set_slave_FrameSync(cmr_handle handle,
 static cmr_int ov64b40_drv_set_pdc_data(cmr_handle handle, cmr_uint param){
 	struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 //	cmr_u8 *param_ptr = (cmr_u8 *)param;
-	cmr_u8 param_ptr[0x1000] = {0x00};
+	cmr_u8 param_ptr[0x3000] = {0x00};
 
 //	hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x5386, 0x19);
 //	hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x5387, 0x80);
