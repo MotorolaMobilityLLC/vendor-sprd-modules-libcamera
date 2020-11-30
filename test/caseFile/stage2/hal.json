@@ -128,8 +128,44 @@
 		},
 		{
 			"CaseID" : 10,
-			"Priority": 5,
-			"FuncName" : "closecamera"
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1280,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 1280,"height" : 720, "format": "BLOB","usage" : "0x3"},
+			        {"type" : "video_stream", "width" : 1280,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10003"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.control.awbMode", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [20,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,3264,2448]}
+			]
+		},
+		{
+			"CaseID" : 11,
+			"README":"CameraID is multicamera of refocus mode in main camera",
+			"Priority": 0,
+			"FuncName" : "opencamera",
+			"CameraID" : 24
+		},
+		{
+			"CaseID" : 12,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 4608,"height" : 3456, "format": "BLOB","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.control.awbMode", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+				{"tagName": "sprdBokehMode", "tagVal" : 1},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,4608,3456]}
+			]
 		},
 		{
 			"CaseID" : 26,
@@ -149,18 +185,33 @@
 			]
 		},
 		{
-			"CaseID" : 37,
-			"README":"video with camera ID 1",
+			"CaseID" : 27,
+			"README":"CameraID is multicamera of portrait mode in main camera",
 			"Priority": 0,
 			"FuncName" : "opencamera",
-			"CameraID" : 1
+			"CameraID" : 38
 		},
 		{
-			"CaseID" : 38,
+			"CaseID" : 28,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 960,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
+				{"type" : "picture_stream", "width" : 4608,"height" : 3456, "format": "BLOB","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.control.awbMode", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,4608,3456]}
+			]
+		},
+		{
+			"CaseID" : 39,
 			"Priority": 4,
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
-			"Time" : 0,
 			"StreamList" : [
 				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x20000903"},
 				{"type" : "picture_stream", "width" : 1280,"height" : 720, "format": "BLOB","usage" : "0x3"},
@@ -170,11 +221,6 @@
 						{"tagName": "sprdFaceAttributesEnable", "tagVal" : 1},
 						{"tagName": "perfectskinlevel", "tagVal" : [0,10,2,10,10,2,10,10,10]}
 			]
-		},
-		{
-			"CaseID" : 39,
-			"Priority": 5,
-			"FuncName" : "closecamera"
 		},
 		{
 			"CaseID" : 40,
@@ -200,11 +246,6 @@
 		},
 		{
 			"CaseID" : 42,
-			"Priority": 5,
-			"FuncName" : "closecamera"
-		},
-		{
-			"CaseID" : 43,
 			"Priority": 1,
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
@@ -219,14 +260,7 @@
 			]
 		},
 		{
-			"CaseID" : 44,
-			"README":"BOKEH with main camera",
-			"Priority": 0,
-			"FuncName" : "opencamera",
-			"CameraID" : 24
-		},
-		{
-			"CaseID" : 45,
+			"CaseID" : 43,
 			"Priority": 1,
 			"FuncName" : "startpreview",
 			"LoopNum" : 5,
@@ -239,11 +273,6 @@
 			"Metadata" : [
 						{"tagName": "sprd3BlurFNumber", "tagVal" : 10}
 			]
-		},
-		{
-			"CaseID" : 46,
-			"Priority": 5,
-			"FuncName" : "closecamera"
 		}
 	]
 }

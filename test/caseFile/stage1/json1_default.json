@@ -54,7 +54,29 @@
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
-						{"name":"HAL","mcaseid":[8,9,10]}
+						{"name":"HAL","mcaseid":[8,9,3]}
+					]
+				}
+			]
+		},
+		{
+			"ID":5,
+			"README":"front camera for video",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[8,10,3]}
+					]
+				}
+			]
+		},
+		{
+			"ID":6,
+			"README":"preview for refocus mode in main camera",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[11,12,3]}
 					]
 				}
 			]
@@ -65,7 +87,18 @@
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
-						{"name":"HAL","mcaseid":[8,10,26]}
+						{"name":"HAL","mcaseid":[8,26,3]}
+					]
+				}
+			]
+		},
+                {
+			"ID":14,
+			"README":"preview for portrait mode in main camera",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[27,28,3]}
 					]
 				}
 			]
@@ -76,7 +109,7 @@
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
-						{"name":"HAL","mcaseid":[37,38,39]}
+						{"name":"HAL","mcaseid":[8,39,3]}
 					]
 				}
 			]
@@ -87,7 +120,7 @@
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
-						{"name":"HAL","mcaseid":[40,41,42]}
+						{"name":"HAL","mcaseid":[40,41,3]}
 					]
 				}
 			]
@@ -98,7 +131,7 @@
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
-						{"name":"HAL","mcaseid":[40,43,42]}
+						{"name":"HAL","mcaseid":[40,42,3]}
 					]
 				}
 			]
@@ -109,7 +142,7 @@
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
-						{"name":"HAL","mcaseid":[44,45,46]}
+						{"name":"HAL","mcaseid":[11,43,3]}
 					]
 				}
 			]
