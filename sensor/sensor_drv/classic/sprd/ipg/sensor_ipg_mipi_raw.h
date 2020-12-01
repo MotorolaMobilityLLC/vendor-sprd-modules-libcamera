@@ -49,7 +49,6 @@ static SENSOR_STATIC_INFO_T s_ipg_static_info[VENDOR_NUM] = {
                      .max_fps = 0,
                      .max_adgain = 15 * 2,
                      .ois_supported = 0,
-                     .pdaf_supported = 0,
 
 #ifdef CONFIG_CAMERA_PDAF_TYPE
                      .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,

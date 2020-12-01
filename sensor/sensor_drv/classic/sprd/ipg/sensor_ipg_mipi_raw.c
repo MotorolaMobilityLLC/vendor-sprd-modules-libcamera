@@ -67,7 +67,7 @@ static cmr_int ipg_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 static cmr_int ipg_drv_write_gain(cmr_handle handle, cmr_uint param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     cmr_u16 value = 0x00;
-    cmr_u32 real_gain = 0;
+    cmr_uint real_gain = 0;
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
@@ -182,7 +182,7 @@ static cmr_int ipg_drv_init_fps_info(cmr_handle handle) {
     return rtn;
 }
 
-static cmr_int ipg_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
+static cmr_int ipg_drv_get_static_info(cmr_handle handle, cmr_uint *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
     cmr_u32 up = 0;
@@ -221,7 +221,7 @@ static cmr_int ipg_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
-static cmr_int ipg_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
+static cmr_int ipg_drv_get_fps_info(cmr_handle handle, cmr_uint *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -267,7 +267,7 @@ static cmr_int ipg_drv_ext_func(cmr_handle handle, cmr_uint ctl_param) {
 }
 
 static cmr_int ipg_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
-    cmr_u32 cap_mode = (param >> CAP_MODE_BITS);
+    cmr_uint cap_mode = (param >> CAP_MODE_BITS);
     cmr_u8 ret_l, ret_m, ret_h;
     cmr_u32 capture_exposure, preview_maxline;
     cmr_u32 capture_maxline, preview_exposure;
