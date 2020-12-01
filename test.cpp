@@ -2,7 +2,7 @@
 #include <utils/Log.h>
 #if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) ||                      \
     defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
-    defined(CONFIG_ISP_2_6) ||  defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
+    defined(CONFIG_ISP_2_6) ||  defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 #if defined(CONFIG_ISP_2_1_A)
 #include "hal3_2v1a/SprdCamera3OEMIf.h"
 #include "hal3_2v1a/SprdCamera3Setting.h"

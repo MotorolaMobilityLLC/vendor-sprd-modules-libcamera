@@ -90,7 +90,7 @@ struct isp_block_operations s_mfnr_ops = { _pm_mfnr_init, _pm_mfnr_set_param, _p
 struct isp_block_operations s_dre_pro_ops = { _pm_dre_pro_init, _pm_dre_pro_set_param, _pm_dre_pro_get_param, PNULL, PNULL };
 #endif
 
-#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
+#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 struct isp_block_operations s_hsv_new2_ops = { _pm_hsv_new2_init, _pm_hsv_new2_set_param, _pm_hsv_new2_get_param, _pm_common_rest, PNULL};
 struct isp_block_operations s_ppe_ops = { _pm_ppe_init, _pm_ppe_set_param, _pm_ppe_get_param, PNULL, PNULL };
 struct isp_block_operations s_bchs_ops = { _pm_bchs_init, _pm_bchs_set_param, _pm_bchs_get_param, PNULL, PNULL };
@@ -206,7 +206,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	//{ISP_BLK_DRE, array_offset(struct isp_context, dre), sizeof(struct isp_dres_param), &s_dre_ops},
 	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},
 };
-#elif defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
+#elif defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 struct isp_block_cfg s_blk_cfgs[] = {
 	/* ======== dcam blocks list starts ======= */
 	{ISP_BLK_BLC, array_offset(struct isp_context, blc), sizeof(struct isp_blc_param), &s_blc_ops},

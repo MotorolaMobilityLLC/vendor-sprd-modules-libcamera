@@ -415,7 +415,7 @@ cmr_s32 read_ae_weight(FILE * fp, struct ae_weight_tab * weight_ptr)
 }
 
 
-#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
+#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 cmr_s32 read_ae_scene_info(FILE * fp, struct sensor_ae_tab * ae_ptr, cmr_s32 scene_mode)
 {
 	cmr_s32 rtn = 0x00;
@@ -1992,7 +1992,7 @@ cmr_s32 update_params(struct sensor_raw_info * sensor_raw_ptr, const char *senso
 				}
 				continue;
 			}
-#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
+#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 			if (strstr(line_buf, ae_tab) != NULL) {
 				if (sensor_raw_ptr->fix_ptr[i]->ae.ae_param.ae != NULL) {
 					rtn = read_fix_ae_info(fp, &sensor_raw_ptr->fix_ptr[i]->ae);

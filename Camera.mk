@@ -29,6 +29,10 @@ else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.8)
 HAL_DIR := hal3_2v6
 OEM_DIR := oem2v6
 ISPDRV_DIR := camdrv/isp2.6
+else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.9)
+HAL_DIR := hal3_2v6
+OEM_DIR := oem2v6
+ISPDRV_DIR := camdrv/isp2.6
 endif
 
 ISPALG_DIR := ispalg

@@ -869,7 +869,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
     case AE_CB_EXPTIME_NOTIFY:
 		cmd = ISP_AE_EXP_TIME;
 		break;
-#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
+#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 	case AE_CB_EV_ADJUST_NOTIFY:
 		cmd = ISP_EV_EFFECT_CALLBACK;
 		break;
@@ -1969,7 +1969,7 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 	cmr_u32 blk_id = 0, blk_num = 0;
 	cmr_u16 smooth_ratio = 0;
 	enum ai_status ai_sta = AI_STATUS_MAX;
-#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
+#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 	cmr_u32 hsv_blk_id = ISP_BLK_HSV_NEW2;
 	cmr_u32 ee_blk_id = ISP_BLK_EE_V1;
 	cmr_u32 bchs_blk_id[4] = { ISP_BLK_BCHS, ISP_BLK_ID_MAX,  ISP_BLK_ID_MAX, ISP_BLK_ID_MAX};
@@ -4932,7 +4932,7 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.caller_handle = NULL;
 	lsc_param.lsc_set_cb = NULL;
 #endif
-#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
+#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 	lsc_param.lib_param.version_id = 1;
 	lsc_param.caller_handle = (cmr_handle) cxt;
 	lsc_param.lsc_set_cb = ispalg_lsc_set_cb;

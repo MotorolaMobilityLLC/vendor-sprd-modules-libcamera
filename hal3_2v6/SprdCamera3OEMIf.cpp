@@ -9288,7 +9288,7 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
         if (mCommonHeapReserved == NULL) {
 #if defined(CONFIG_ISP_2_3)
         mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
-#elif defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8)
+#elif defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
         mem_size = PAGE_SIZE;
 
 #endif

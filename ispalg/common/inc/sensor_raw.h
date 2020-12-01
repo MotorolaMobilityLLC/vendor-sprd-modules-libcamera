@@ -214,9 +214,10 @@ enum isp_smart_id {
 #elif defined CONFIG_ISP_2_6
 #include "sensor_raw_sharkl5.h"
 #elif defined CONFIG_ISP_2_7
-
 #include "sensor_raw_sharkl5pro.h"
 #elif defined CONFIG_ISP_2_8
+#include "sensor_raw_sharkl5pro.h"
+#elif defined CONFIG_ISP_2_9
 #include "sensor_raw_sharkl5pro.h"
 #else
 
