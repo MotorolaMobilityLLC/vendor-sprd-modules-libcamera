@@ -1,7 +1,7 @@
-/*versionid=0x000B0009*/
+/*versionid=0x000C000F*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -137,11 +137,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -206,7 +206,7 @@
 }
 ,
 /*param1.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -342,11 +342,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -411,7 +411,7 @@
 }
 ,
 /*param2.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -547,11 +547,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -616,7 +616,7 @@
 }
 ,
 /*param3.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -752,11 +752,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -821,7 +821,7 @@
 }
 ,
 /*param4.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -957,11 +957,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -1026,7 +1026,7 @@
 }
 ,
 /*param5.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -1162,11 +1162,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -1231,7 +1231,7 @@
 }
 ,
 /*param6.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -1367,11 +1367,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -1436,7 +1436,7 @@
 }
 ,
 /*param7.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -1572,11 +1572,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -1641,7 +1641,7 @@
 }
 ,
 /*param8.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -1777,11 +1777,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -1846,7 +1846,7 @@
 }
 ,
 /*param9.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -1982,11 +1982,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -2051,7 +2051,7 @@
 }
 ,
 /*param10.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -2187,11 +2187,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -2256,7 +2256,7 @@
 }
 ,
 /*param11.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -2392,11 +2392,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -2461,7 +2461,7 @@
 }
 ,
 /*param12.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -2597,11 +2597,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -2666,7 +2666,7 @@
 }
 ,
 /*param13.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -2802,11 +2802,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -2871,7 +2871,7 @@
 }
 ,
 /*param14.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -3007,11 +3007,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -3076,7 +3076,7 @@
 }
 ,
 /*param15.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -3212,11 +3212,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -3281,7 +3281,7 @@
 }
 ,
 /*param16.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -3417,11 +3417,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -3486,7 +3486,7 @@
 }
 ,
 /*param17.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -3622,11 +3622,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -3691,7 +3691,7 @@
 }
 ,
 /*param18.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -3827,11 +3827,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -3896,7 +3896,7 @@
 }
 ,
 /*param19.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -4032,11 +4032,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -4101,7 +4101,7 @@
 }
 ,
 /*param20.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -4237,11 +4237,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -4306,7 +4306,7 @@
 }
 ,
 /*param21.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -4442,11 +4442,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -4511,7 +4511,7 @@
 }
 ,
 /*param22.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -4647,11 +4647,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -4716,7 +4716,7 @@
 }
 ,
 /*param23.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -4852,11 +4852,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
@@ -4921,7 +4921,7 @@
 }
 ,
 /*param24.&BasePoint=1&*/
-/*sharkl5pro_sensor_nlm_imbalance_level*/
+/*sharkl6_sensor_nlm_imbalance_level*/
 {
 	/*imblance_face_rbg*/
 	{
@@ -5057,11 +5057,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0CD0,
+		0x0920,
 		/*imblance_radial_1D_center_y*/
-		0x09A0,
+		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
-		0x1187,
+		0x0C79,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/

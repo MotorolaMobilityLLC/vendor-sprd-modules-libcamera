@@ -108,9 +108,10 @@ static struct sensor_raw_ioctrl s_s5kgw1sp03_ioctrl=
  * NO modifying manually.
 ********************************************************************************/
 
+
 static struct sensor_version_info s_s5kgw1sp03_version_info=
 {
-	0x000B0009,
+	0x000C000F,
 	{
 		{
 			0x676B3573,

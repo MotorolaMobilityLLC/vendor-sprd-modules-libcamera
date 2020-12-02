@@ -106,7 +106,7 @@ static struct sensor_raw_ioctrl s_GC5035_ioctrl=
 
 static struct sensor_version_info s_GC5035_version_info=
 {
-	0x000B0009,
+	0x000C000F,
 	{
 		{
 			0x30354347,

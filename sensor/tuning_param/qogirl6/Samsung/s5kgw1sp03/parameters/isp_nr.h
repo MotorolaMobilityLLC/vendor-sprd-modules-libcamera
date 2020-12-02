@@ -35,10 +35,6 @@ static struct sensor_nr_scene_map_param s_s5kgw1sp03_nr_scene_map_param = {{
 #include "NR/common/normal/bpc_param.h"
 #endif
 
-#ifdef _NR_GRGB_PARAM_
-#include "NR/common/normal/grgb_param.h"
-#endif
-
 #ifdef _NR_CFAI_PARAM_
 #include "NR/common/normal/cfai_param.h"
 #endif
@@ -116,4 +112,5 @@ static struct sensor_nr_scene_map_param s_s5kgw1sp03_nr_scene_map_param = {{
 #endif
 
 #ifdef _NR_POST_EE_PARAM_
+#include "NR/common/normal/post_ee_param.h"
 #endif

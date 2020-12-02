@@ -1,4 +1,4 @@
-/*versionid=0x000B0009*/
+/*versionid=0x000C000F*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_iircnr_level*/
@@ -153,7 +153,7 @@
 
 	},
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param1.&BasePoint=1&*/
@@ -309,7 +309,7 @@
 
 	},
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param2.&BasePoint=1&*/

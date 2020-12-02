@@ -108,9 +108,10 @@ static struct sensor_raw_ioctrl s_ov08a10_ioctrl=
  * NO modifying manually.
 ********************************************************************************/
 
+
 static struct sensor_version_info s_ov08a10_version_info=
 {
-	0x000B0009,
+	0x000C000F,
 	{
 		{
 			0x3830766F,

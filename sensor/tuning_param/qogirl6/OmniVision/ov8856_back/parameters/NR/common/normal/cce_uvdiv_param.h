@@ -1,7 +1,7 @@
-/*versionid=0x000B0009*/
+/*versionid=0x000C000F*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -101,7 +101,7 @@
 }
 ,
 /*param1.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -201,7 +201,7 @@
 }
 ,
 /*param2.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -301,7 +301,7 @@
 }
 ,
 /*param3.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -401,7 +401,7 @@
 }
 ,
 /*param4.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -501,7 +501,7 @@
 }
 ,
 /*param5.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -601,7 +601,7 @@
 }
 ,
 /*param6.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -701,7 +701,7 @@
 }
 ,
 /*param7.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -801,7 +801,7 @@
 }
 ,
 /*param8.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -901,7 +901,7 @@
 }
 ,
 /*param9.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1001,7 +1001,7 @@
 }
 ,
 /*param10.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1101,7 +1101,7 @@
 }
 ,
 /*param11.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1201,7 +1201,7 @@
 }
 ,
 /*param12.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1301,7 +1301,7 @@
 }
 ,
 /*param13.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1401,7 +1401,7 @@
 }
 ,
 /*param14.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1501,7 +1501,7 @@
 }
 ,
 /*param15.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1601,7 +1601,7 @@
 }
 ,
 /*param16.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1701,7 +1701,7 @@
 }
 ,
 /*param17.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1801,7 +1801,7 @@
 }
 ,
 /*param18.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -1901,7 +1901,7 @@
 }
 ,
 /*param19.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -2001,7 +2001,7 @@
 }
 ,
 /*param20.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -2101,7 +2101,7 @@
 }
 ,
 /*param21.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -2201,7 +2201,7 @@
 }
 ,
 /*param22.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -2301,7 +2301,7 @@
 }
 ,
 /*param23.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
@@ -2401,7 +2401,7 @@
 }
 ,
 /*param24.&BasePoint=1&*/
-/*sharkl5_sensor_cce_uvdiv_level*/
+/*sharkl6_sensor_cce_uvdiv_level*/
 {
 	/*uvdiv_lum*/
 	{
