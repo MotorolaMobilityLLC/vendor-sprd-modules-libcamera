@@ -856,6 +856,7 @@ static cmr_int camera_prepare_postparam(
 		}
 	}
 
+	cmr_bzero(&ee_pm, sizeof(struct isp_blkpm_t));
 	ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_POSTEE, &ee_pm);
 	if (ret) {
 		CMR_LOGE("fail to get ee param\n");
@@ -1092,7 +1093,7 @@ static cmr_int camera_fdr_handle_post(struct camera_context *cxt, struct frm_inf
 	src_param.usec = frame->usec;
 	src_param.addr_vir[0] = frame->yaddr_vir;
 	src_param.addr_vir[1] = frame->uaddr_vir;
-	src_param.addr_vir[1] = frame->vaddr_vir;
+	src_param.addr_vir[2] = frame->vaddr_vir;
 	src_param.addr_phy[0] = frame->yaddr;
 	src_param.addr_phy[1] = frame->uaddr;
 	src_param.addr_phy[2] = frame->vaddr;
@@ -1264,7 +1265,7 @@ cmr_int camera_fdr_handle(void *data, void *privdata) {
 	src_param.usec = frame->usec;
 	src_param.addr_vir[0] = frame->yaddr_vir;
 	src_param.addr_vir[1] = frame->uaddr_vir;
-	src_param.addr_vir[1] = frame->vaddr_vir;
+	src_param.addr_vir[2] = frame->vaddr_vir;
 	src_param.addr_phy[0] = frame->yaddr;
 	src_param.addr_phy[1] = frame->uaddr;
 	src_param.addr_phy[2] = frame->vaddr;
@@ -2377,8 +2378,11 @@ void camera_scaler_evt_cb(cmr_int evt, void *data, void *privdata) {
 
     if (CMR_IMG_CVT_SC_DONE == evt) {
         camera_take_snapshot_step(CMR_STEP_SC_E);
-        cmr_snapshot_receive_data((cmr_handle)privdata, SNAPSHOT_EVT_SCALE_DONE,
+        ret = cmr_snapshot_receive_data((cmr_handle)privdata, SNAPSHOT_EVT_SCALE_DONE,
                                   data);
+        if (ret) {
+            CMR_LOGE("err, fail receive data");
+        }
     } else {
         CMR_LOGE("err, don't support evt 0x%lx", evt);
     }
@@ -13205,6 +13209,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         CMR_LOGE("failed to config 3dnr  %ld", ret);
     }
 
+    cmr_bzero(&prev_rect, sizeof(struct img_rect));
     ret = cmr_preview_get_prev_rect(cxt->prev_cxt.preview_handle,
                                     cxt->camera_id, &prev_rect);
     cxt->prev_cxt.rect = prev_rect;

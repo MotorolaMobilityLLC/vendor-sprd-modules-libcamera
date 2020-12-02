@@ -1109,7 +1109,7 @@ cmr_int cmr_grab_fdr_postproc_v1(cmr_handle grab_handle,
 
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_POST_FDR, &parm);
     if (ret)
-        CMR_LOGE("failed to post parm.scene_mode %d  ret=%ld,", ret);
+        CMR_LOGE("failed to post parm.scene_mode %d  ret=%ld,", parm.scene_mode, ret);
 
     return ret;
 }
