@@ -1351,7 +1351,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	unsigned long long hist[256] = {0};
 	unsigned char uConvCurY[256] = {0},
 	uOutGamma[3][256];
-	static unsigned char uPrevGamma[3][256];
+	unsigned char uPrevGamma[3][256] = {{0},{0},{0}};
 	unsigned short
 	u2CurX[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}},
 	u2CurY[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
