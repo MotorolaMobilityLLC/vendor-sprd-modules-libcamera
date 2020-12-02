@@ -835,6 +835,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
     while ((tag = mSetting->popAndroidParaTag()) != -1) {
         switch (tag) {
         case ANDROID_CONTROL_AF_TRIGGER:
+            HAL_LOGD("ANDROID_CONTROL_AF_TRIGGER frame_number %d", frame_number);
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
             break;
 

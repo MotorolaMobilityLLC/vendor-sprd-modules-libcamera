@@ -1353,13 +1353,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
     captureIntent = getReqCapureIntent(captureIntent);
 
-	HAL_LOGV("captureIntent %d ,num_streams = %d, prv status %d, snap status %d, vid status %d, yuvcallbackk status %d",
-			captureIntent,
-			mStreamConfiguration.num_streams,
-			mStreamConfiguration.preview.status,
-			mStreamConfiguration.snapshot.status,
-			mStreamConfiguration.video.status,
-			mStreamConfiguration.yuvcallback.status);
+    HAL_LOGV("captureIntent %d, num_streams = %d, prv status %d, snap status %d, vid status %d, yuvcallbackk status %d",
+                         captureIntent,
+                         mStreamConfiguration.num_streams,
+                         mStreamConfiguration.preview.status,
+                         mStreamConfiguration.snapshot.status,
+                         mStreamConfiguration.video.status,
+                         mStreamConfiguration.yuvcallback.status);
 
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:

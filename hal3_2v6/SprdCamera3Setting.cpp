@@ -5654,6 +5654,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SHADING_MODE,
                        &(s_setting[mCameraId].shadingInfo.mode), 1);
 
+    HAL_LOGD("mCameraId %d, af_trigger %d, af_state %d", mCameraId,
+        s_setting[mCameraId].resultInfo.af_trigger,
+        s_setting[mCameraId].controlInfo.af_state);
+
     if (s_setting[mCameraId].resultInfo.af_trigger !=
         ANDROID_CONTROL_AF_TRIGGER_IDLE)
         s_setting[mCameraId].resultInfo.af_state =
