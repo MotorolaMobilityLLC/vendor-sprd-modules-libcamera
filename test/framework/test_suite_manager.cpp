@@ -235,6 +235,21 @@ int suiteManager::RunTests() {
     return ret;
 }
 
+int suiteManager::Compare(){
+    int ret = IT_OK;
+    IT_LOGD("");
+    for(auto &moduleResult:gMap_Result){
+        vector<resultData_t> funcResult = *(moduleResult.second);
+        vector<resultData_t>::iterator unitResult=funcResult.begin();
+        for(;unitResult!=funcResult.end();unitResult++){
+            /*if(IT_OK != compare_Image(*unitResult)){
+                dump_image(*unitResult);
+            }*/
+        }
+    }
+    return ret;
+}
+
 int suiteManager::Clear() {
     int ret = IT_OK;
     IT_LOGD("");

@@ -8,6 +8,7 @@
 #include "test_suite_oem.h"
 #include "test_suite_drv.h"
 #include "test_suite_hal.h"
+#include "compare_func.h"
 #include "factory.h"
 using namespace std;
 
@@ -42,6 +43,7 @@ class suiteManager {
     int SortTest();
     static bool SortPriority(IParseJson *pVec_TotalCase1,
                              IParseJson *pVec_TotalCase2);
+    int Compare();
     int Clear();
 
   private:

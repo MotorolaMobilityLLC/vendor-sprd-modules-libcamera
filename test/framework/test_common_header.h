@@ -71,4 +71,18 @@ typedef enum {
     IT_ON = 1
 } IT_SWITCH_T;
 
+typedef enum {
+    IT_IMG_FORMAT_YUV,
+    IT_IMG_FORMAT_JPEG,
+    IT_IMG_FORMAT_RAW
+}IT_IMG_FORMAT_T;
+
+typedef struct compareInfo{
+    unsigned char *test_img;
+    unsigned char *golden_img;
+    int w;
+    int h;
+    IT_IMG_FORMAT_T format;
+}compareInfo_t;
+
 #endif

@@ -47,6 +47,7 @@ class testManager {
     bool CheckNum(char *data);
     int Read();
     int Run();
+    int Compare();
     int Clear();
     int Sort();
     int CmdParse(int argc, char *argv[], originData_t *originData);
@@ -83,6 +84,10 @@ int testManager::Read() { return impl()->ReadInjectData(); }
 
 int testManager::Run() {
     return impl()->RunTest();
+}
+
+int testManager::Compare() {
+    return impl()->Compare();
 }
 
 int testManager::Clear() { return impl()->Clear(); }
@@ -177,6 +182,7 @@ int body(testManager *p_TestManager, originData_t originData, uint32_t id,
         goto exit;
     }
     runResult = p_TestManager->Run();
+    p_TestManager->Compare();
     p_TestManager->Clear();
 
     switch(runResult){
