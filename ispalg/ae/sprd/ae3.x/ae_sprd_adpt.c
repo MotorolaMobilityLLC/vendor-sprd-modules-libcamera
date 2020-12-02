@@ -4787,6 +4787,7 @@ static cmr_s32 ae_set_fdr_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->fdr_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
 			cxt->fdr_gain = cxt->sync_cur_result.ev_setting.ae_gain;
 			cxt->fdr_down_ev = cxt->fdr_calc_ev;
+			cxt->cur_status.adv_param.is_snapshot = 1;
 			//ae_set_force_pause(cxt, 1, 16);//lock/unlock is handled by FDR capture processing
 		} else {
 			//ae_set_force_pause(cxt, 0, 17);
@@ -4794,6 +4795,7 @@ static cmr_s32 ae_set_fdr_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->fdr_gain;
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
 			cxt->cur_status.adv_param.prof_mode = 1;
+			cxt->cur_status.adv_param.is_snapshot = 0;
 			ISP_LOGD("_isp_fdr_normal_exp: exp_line %d, gain %d\n", cxt->fdr_exp_line, cxt->fdr_gain);
 		}
 		ISP_LOGD("AE_SET_FDR: fdr_enable %d, fdr_cb_cnt %d, expl %d, gain %d, lock_ae_state %d,fdr_down_ev %f,fdr_flag %d",
@@ -4993,12 +4995,14 @@ static cmr_s32 ae_set_ev_adjust_start(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->ev_adj_flag = 1;
 			cxt->ev_adj_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
 			cxt->ev_adj_gain = cxt->sync_cur_result.ev_setting.ae_gain;
+			cxt->cur_status.adv_param.is_snapshot = 1;
 			ae_set_pause(cxt, 4);
 		} else {
 			ae_set_restore_cnt(cxt, 6);
 			cxt->ev_adj_flag = 0;
 			cxt->cur_status.adv_param.prof_mode = 0;
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+			cxt->cur_status.adv_param.is_snapshot = 0;
 		}
 		ISP_LOGD("AE_SET_EV_ADJ:enable %d, expl %d, gain %d, lock_ae_state %d",
 			cxt->ev_adj_enable,
