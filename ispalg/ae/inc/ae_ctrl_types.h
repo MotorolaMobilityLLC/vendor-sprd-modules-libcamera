@@ -689,6 +689,7 @@ extern "C" {
 		struct ae_range comp_range;
 		cmr_s32 step_numerator;
 		cmr_s32 step_denominator;
+		cmr_s32 mode;
 	};
 
 #ifdef __cplusplus

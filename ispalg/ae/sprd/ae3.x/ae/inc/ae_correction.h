@@ -113,6 +113,7 @@ struct ae_adv_param {
 	struct ae_mode_param mode_param;
 	cmr_u8 lock;				/* 0:unlock 1:lock */	
 	cmr_u8 work_mode;		/* DC DV */
+	cmr_u8 high_res_mode;  /*high_res_mode*/
 	cmr_u8 flash;				/*flash */
 	cmr_u8 flash_mode;		/*flash mode:0:off;1:on;2:torch;3:auto;*/
 	cmr_u8 awb_mode;		/*auto or manual mode*/
@@ -144,6 +145,7 @@ struct ae_lib_calc_in {
 	cmr_u32 frm_id;
 	/*basic information*/
 	cmr_u32 ref_camera_id;
+	cmr_u32 cam_id;
 	cmr_u32 is_multi_mode;
 	struct ae_size img_size;/*image resolution*/
 	struct ae_rect bhist_size;
@@ -172,6 +174,7 @@ struct ae_lib_calc_out  {
 	cmr_u32 stable;
 	cmr_u32 face_stable;
 	cmr_u32 face_enable;
+	cmr_u32 face_luma;
 	cmr_u32 near_stable;
 	cmr_s32 cur_bv;
 	cmr_s32 cur_bv_nonmatch;
@@ -213,7 +216,6 @@ struct ae_lib_calc_out  {
 	cmr_u32 privated_data;
 	cmr_u32 face_flag;		/*face status flag*/
 	cmr_u32 cvg_skip_flag;
-	uint8_t nzl_cap_flag;
 };
 
 struct ae_alg_id_info {

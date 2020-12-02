@@ -389,6 +389,7 @@ enum ae_mode_type {
 enum ae_ev_mode_type {
 	AE_EV_MOD_COM_VAL,
 	AE_EV_MOD_OFFSET,
+	AE_EV_MOD_OFFSET_ADV,
 };
 
 enum ae_mod_idx_type {
@@ -560,7 +561,8 @@ struct ae_gamma_param{
 
 struct ae_compensation_param {
 	cmr_u8 mode;/*0(AE_EV_MOD_COM_VAL): ae compensation;
-				    1(AE_EV_MOD_OFFSET): EV setting in professial mode*/
+				    1(AE_EV_MOD_OFFSET): EV setting in professial mode
+				    2(AE_EV_MOD_OFFSET): EV advance setting in professial mode*/
 	union {
 		float ev_value;
 		cmr_s32 ev_index;

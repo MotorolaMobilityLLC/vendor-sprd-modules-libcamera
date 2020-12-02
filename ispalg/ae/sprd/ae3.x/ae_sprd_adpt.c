@@ -4560,15 +4560,23 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 			cxt->is_ev_setting = 0;
 
 		if (CAMERA_MODE_MANUAL == cxt->app_mode) {
-			struct ae_set_ev ev;
-			ev.level = exp_comp->comp_val + exp_comp->comp_range.max;
-			if (ev.level < AE_LEVEL_MAX) {
-				cxt->cur_status.adv_param.comp_param.value.ev_index = ev.level;
-			} else {
-				cxt->cur_status.adv_param.comp_param.value.ev_index = 0;
+			if(1 == exp_comp->mode){
+				struct ae_set_ev ev;
+				ev.level = exp_comp->comp_val + exp_comp->comp_range.max;
+				if (ev.level < AE_LEVEL_MAX) {
+					cxt->cur_status.adv_param.comp_param.value.ev_index = ev.level;
+				} else {
+					cxt->cur_status.adv_param.comp_param.value.ev_index = 0;
+				}
+				cxt->cur_status.adv_param.comp_param.mode = 1;
+				ISP_LOGD("ev.level:%d, comp_val: %d, comp_range.max:%d",ev.level, exp_comp->comp_val, exp_comp->comp_range.max);
+			}else if(2 == exp_comp->mode){
+				cxt->cur_status.adv_param.comp_param.mode = 2;
+				cxt->cur_status.adv_param.comp_param.value.ev_value = 1.0 * exp_comp->comp_val * exp_comp->step_numerator / exp_comp->step_denominator;
+				ISP_LOGD("comp_val=%d, ev_value=%f, range=[%d,%d], lock=%d, step_numerator=%d, step_denominator = %d",
+				exp_comp->comp_val, cxt->cur_status.adv_param.comp_param.value.ev_value, exp_comp->comp_range.min, exp_comp->comp_range.max, cxt->force_lock_ae,
+				exp_comp->step_numerator, exp_comp->step_denominator);
 			}
-			cxt->cur_status.adv_param.comp_param.mode = 1;
-			ISP_LOGD("ev.level:%d, comp_val: %d, comp_range.max:%d",ev.level, exp_comp->comp_val, exp_comp->comp_range.max);
 		} else {
 			cxt->cur_status.adv_param.comp_param.mode = 0;
 			cxt->cur_status.adv_param.comp_param.value.ev_value = 1.0 * exp_comp->comp_val * exp_comp->step_numerator / exp_comp->step_denominator;
