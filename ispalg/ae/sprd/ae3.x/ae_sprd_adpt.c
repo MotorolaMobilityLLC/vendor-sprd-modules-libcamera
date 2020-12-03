@@ -4084,7 +4084,9 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 		cxt->cur_status.adv_param.prof_mode = 0;
 		cxt->cur_status.adv_param.comp_param.mode = 0;
 		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
-		cxt->cur_status.adv_param.comp_param.value.ev_index = 0;			//(AE_EV_MOD_OFFSET): EV setting in professial mode
+		if (cxt->app_mode != (cxt->last_cam_mode & 0xff)) {
+			cxt->cur_status.adv_param.comp_param.value.ev_index = 0;			//(AE_EV_MOD_OFFSET): EV setting in professial mode
+		}
 	}
 
 	if(CAMERA_MODE_TIMELAPSE == cxt->app_mode)
