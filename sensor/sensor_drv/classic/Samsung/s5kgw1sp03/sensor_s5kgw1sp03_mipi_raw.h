@@ -69,7 +69,7 @@
 #define SNAPSHOT_LINE_TIME 11382
 
 /* frame length*/
-#define VIDEO_FRAME_LENGTH 1152
+#define VIDEO_FRAME_LENGTH 2304 //1152
 #define PREVIEW_FRAME_LENGTH 3616
 #define SNAPSHOT_FRAME_LENGTH 8768
 
@@ -969,7 +969,7 @@ static const SENSOR_REG_T s5kgw1sp03_video_4lane_setting[] = {
 	{0x0350, 0x0000},// 0
 	{0x0352, 0x0000},// 0
 	{0x0342, 0x1B20},// 6944
-	{0x0340, 0x0480},// 1152
+	{0x0340, 0x900},//2304 //0x0480},// 1152
 	{0x602A, 0x3652},// 
 	{0x6F12, 0x0401},// 
 	{0x0380, 0x0002},// 
@@ -3928,7 +3928,11 @@ static struct sensor_module_info s_s5kgw1sp03_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = 4,
                              .pixel_width = 10,
-                             .is_loose = 0,////TODO : 2,
+                             #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+                             .is_loose = 2,
+                             #else
+                             .is_loose = 0,
+                             #endif
                          },
 
                      .change_setting_skip_num = 3,

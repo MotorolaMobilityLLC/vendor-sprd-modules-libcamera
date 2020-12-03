@@ -746,7 +746,7 @@ static struct sensor_ic_ops s_ov08a10_ops_tab = {
     .write_gain_value = ov08a10_drv_write_gain_value,
 
 #if defined(CONFIG_DUAL_MODULE)
-    //.read_aec_info = ov08a10_drv_read_aec_info,
+    .read_aec_info = ov08a10_drv_read_aec_info,
 #endif
 
     .ext_ops = {
