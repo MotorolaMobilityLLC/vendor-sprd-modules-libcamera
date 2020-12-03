@@ -235,6 +235,24 @@ exit:
     return ret;
 }
 
+cmr_int camera_set_snpcancel_flag(cmr_handle camera_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!camera_handle) {
+        CMR_LOGE("camera handle is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    ret = camera_local_stop_snpcancel_flag(camera_handle);
+    if (ret) {
+        CMR_LOGE("failed to cancel snapshot %ld", ret);
+    }
+exit:
+    CMR_LOGI("done");
+    return ret;
+}
+
 cmr_int camera_take_picture(cmr_handle camera_handle,
                             enum takepicture_mode cap_mode) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -1292,7 +1310,7 @@ cmr_int camera_set_gpu_mem_ops(cmr_handle camera_handle, void *cb_of_malloc,
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
-    camera_cancel_autofocus, camera_cancel_takepicture, camera_set_recovery_status,
+    camera_cancel_autofocus, camera_cancel_takepicture, camera_set_recovery_status,camera_set_snpcancel_flag,
     // camera_safe_scale_th,
     camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
     camera_get_redisplay_data, camera_is_change_size,

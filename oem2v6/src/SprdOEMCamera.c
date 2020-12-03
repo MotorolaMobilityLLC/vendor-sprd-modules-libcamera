@@ -1434,7 +1434,7 @@ static oem_ops_t oem_module_ops = {
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
     camera_cancel_autofocus, camera_cancel_takepicture,
     // camera_safe_scale_th,
-    NULL, camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
+    NULL, NULL, camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
     camera_get_redisplay_data, camera_is_change_size,
     NULL, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,

@@ -9903,6 +9903,12 @@ exit:
     return ret;
 }
 
+cmr_int camera_local_stop_snpcancel_flag(cmr_handle oem_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+     cxt->snp_cancel = true;
+     return ret;
+}
 cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     ATRACE_BEGIN(__FUNCTION__);
 

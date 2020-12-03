@@ -425,6 +425,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
 cmr_int camera_local_stop_snapshot(cmr_handle oem_handle);
 
+cmr_int camera_local_stop_snpcancel_flag(cmr_handle oem_handle);
+
 cmr_int camera_get_tuning_info(cmr_handle oem_handle,
                                struct isp_adgain_exp_info *adgain_exp_info_ptr);
 cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
