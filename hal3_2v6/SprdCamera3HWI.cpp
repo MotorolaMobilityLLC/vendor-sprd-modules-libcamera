@@ -1366,13 +1366,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         if (sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) {
             int i = 600, tmp;
             // high res, preview need wait nonzsl capture finish(sensor stream off)
-            mHighResNonzsl = 0; // once per non-zsl capture
             while (i--) {
                camera_ioctrl(CAMERA_TOCTRL_GET_SN_STREAM_STATUS, &tmp, NULL);
                if (tmp == 0)
                    break;
                usleep(5000);
             }
+            mHighResNonzsl = 0; // once per non-zsl capture
             HAL_LOGD("non-zsl,sensor stream off, i=%d", i);
         }
 
@@ -2010,7 +2010,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                     result_buffers->stream = stream;
                     result_buffers->buffer = buffer;
-                    if (mBufferStatusError || (mHighResNonzsl == 1 && sprddefInfo ->return_previewframe_after_nozsl_cap == 1)) {
+                    if (mBufferStatusError || sprddefInfo ->return_previewframe_after_nozsl_cap == 1) {
                         result_buffers->status = CAMERA3_BUFFER_STATUS_ERROR;
                         HAL_LOGI("bufferstatus:%d",result_buffers->status);
                     } else {
