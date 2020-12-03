@@ -220,9 +220,8 @@ cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr)
 		pthread_mutex_unlock(&cxt->isp_mw_mutex);
 		return ret;
 	}
-	pthread_mutex_unlock(&cxt->isp_mw_mutex);
-
 	ret = isp_alg_fw_ioctl(cxt->alg_fw_handle, cmd, param_ptr);
+        pthread_mutex_unlock(&cxt->isp_mw_mutex);
 
 	ISP_TRACE_IF_FAIL(ret, ("fail to do isp_ioctl"));
 
@@ -245,9 +244,8 @@ cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr)
 		pthread_mutex_unlock(&cxt->isp_mw_mutex);
 		return ret;
 	}
-	pthread_mutex_unlock(&cxt->isp_mw_mutex);
-
 	ret = isp_alg_fw_start(cxt->alg_fw_handle, param_ptr);
+        pthread_mutex_unlock(&cxt->isp_mw_mutex);
 
 exit:
 	ISP_LOGV("done %ld", ret);
@@ -270,8 +268,8 @@ cmr_int isp_video_stop(cmr_handle handle)
 		pthread_mutex_unlock(&cxt->isp_mw_mutex);
 		return ret;
 	}
-	pthread_mutex_unlock(&cxt->isp_mw_mutex);
 	ret = isp_alg_fw_stop(cxt->alg_fw_handle);
+        pthread_mutex_unlock(&cxt->isp_mw_mutex);
 
 exit:
 	return ret;
