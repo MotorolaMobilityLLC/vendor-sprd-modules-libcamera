@@ -213,6 +213,7 @@ struct ae_lib_calc_out  {
 	cmr_u32 privated_data;
 	cmr_u32 face_flag;		/*face status flag*/
 	cmr_u32 cvg_skip_flag;
+	uint8_t nzl_cap_flag;
 };
 
 struct ae_alg_id_info {
