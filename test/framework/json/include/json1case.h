@@ -122,29 +122,70 @@ class order : public IParseJson {
 
 class injectInfo : public IParseJson {
   public:
-    uint32_t m_frameOrder;
+    /*uint32_t m_frameOrder;*/
     string m_path;
-    string m_otherInfo;
+    uint32_t m_imgWidth;
+    uint32_t m_imgHeight;
+    int m_injectType;
+    int m_imgFormat;
+    map<string, int> m_InjectTagMap;
+    map<string, int> m_InjectFormatMap;
+    /*string m_otherInfo;*/
 
     injectInfo() {
-        m_jsonMethodMap["frameOrder"] = &injectInfo::Set_Frame_Order;
+        /*m_jsonMethodMap["frameOrder"] = &injectInfo::Set_Frame_Order;*/
         m_jsonMethodMap["path"] = &injectInfo::Set_Path;
-        m_jsonMethodMap["otherInfo"] = &injectInfo::Set_Other_Info;
+        m_jsonMethodMap["imgW"] = &injectInfo::Set_img_Width;
+        m_jsonMethodMap["imgH"] = &injectInfo::Set_img_Height;
+        m_jsonMethodMap["injectType"] = &injectInfo::Set_inject_Type;
+        m_jsonMethodMap["imgFormat"] = &injectInfo::Set_img_Format;
+        /*m_jsonMethodMap["otherInfo"] = &injectInfo::Set_Other_Info;*/
+        m_InjectTagMap.insert({"DCAM_PREV",INJECT_DCAM_PREV});
+        m_InjectTagMap.insert({"DCAM_CAP",INJECT_DCAM_CAP});
+        m_InjectTagMap.insert({"ISP_PREV",INJECT_ISP_PREV});
+        m_InjectTagMap.insert({"ISP_CAP",INJECT_ISP_CAP});
+        m_InjectTagMap.insert({"OEM_PREV",INJECT_OEM_PREV});
+        m_InjectTagMap.insert({"OEM_CAP",INJECT_OEM_CAP});
+        m_InjectTagMap.insert({"HAL_PREV",INJECT_HAL_PREV});
+        m_InjectTagMap.insert({"HAL_CAP",INJECT_HAL_CAP});
+        m_InjectTagMap.insert({"GOLDEN_DCAM_PREV",INJECT_GOLDEN_DCAM_PREV});
+        m_InjectTagMap.insert({"GOLDEN_DCAM_CAP",INJECT_GOLDEN_DCAM_CAP});
+        m_InjectTagMap.insert({"GOLDEN_ISP_PREV",INJECT_GOLDEN_ISP_PREV});
+        m_InjectTagMap.insert({"GOLDEN_ISP_CAP",INJECT_GOLDEN_ISP_CAP});
+        m_InjectTagMap.insert({"GOLDEN_OEM_PREV",INJECT_GOLDEN_OEM_PREV});
+        m_InjectTagMap.insert({"GOLDEN_OEM_CAP",INJECT_GOLDEN_OEM_CAP});
+        m_InjectTagMap.insert({"GOLDEN_HAL_PREV",INJECT_GOLDEN_HAL_PREV});
+        m_InjectTagMap.insert({"GOLDEN_HAL_CAP",INJECT_GOLDEN_HAL_CAP});
+        m_InjectFormatMap.insert({"raw", IT_IMG_FORMAT_RAW});
+        m_InjectFormatMap.insert({"yuv", IT_IMG_FORMAT_YUV});
+        m_InjectFormatMap.insert({"jpg", IT_IMG_FORMAT_JPEG});
     }
     virtual ~injectInfo() {}
     typedef void (injectInfo::*injectInfoFunc)(string key, void *value);
     typedef map<string, injectInfoFunc> JsonMethodMap;
     JsonMethodMap m_jsonMethodMap;
 
-    void Set_Frame_Order(string strKey, void *value) {
+    /*void Set_Frame_Order(string strKey, void *value) {
         this->m_frameOrder = *(static_cast<uint32_t *>(value));
-    }
+    }*/
     void Set_Path(string strKey, void *value) {
         this->m_path = (static_cast<string *>(value)->data());
     }
-    void Set_Other_Info(string strKey, void *value) {
-        this->m_otherInfo = (static_cast<string *>(value)->data());
+    void Set_img_Width(string strKey, void *value) {
+        this->m_imgWidth = *(static_cast<uint32_t *>(value));
     }
+    void Set_img_Height(string strKey, void *value) {
+        this->m_imgHeight = *(static_cast<uint32_t *>(value));
+    }
+    void Set_inject_Type(string strKey, void *value) {
+        this->m_injectType = m_InjectTagMap[(static_cast<string *>(value)->data())];
+    }
+    void Set_img_Format(string strKey, void *value) {
+        this->m_imgFormat =  m_InjectFormatMap[(static_cast<string *>(value)->data())];
+    }
+    /*void Set_Other_Info(string strKey, void *value) {
+        this->m_otherInfo = (static_cast<string *>(value)->data());
+    }*/
 
     virtual void DealJsonNode(string strNode, int value) {
         if (m_jsonMethodMap.find(strNode) != m_jsonMethodMap.end()) {

@@ -422,3 +422,15 @@ int TestMemPool::UnMap(new_gpu_mem_t *gpu_buf){
     ret = UnMap(buffer);
     return ret;
 }
+
+bufferData TestMemPool::popBufferAndWait(int type) {
+    bufferData buf_wait;
+    while (1)
+    {
+        buf_wait = popBufferList(type);
+        if (buf_wait.handle || buf_wait.ion_buffer) {
+            break;
+        }
+    }
+    return buf_wait;
+}

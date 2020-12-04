@@ -30,15 +30,38 @@
 #include "json1case.h"
 #include <unistd.h>
 #include <time.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <map>
 #define LOG_TAG "IT-suiteManager"
 #define JSON_1_FILE_PATH "./json1_default.json"
-#define RESULT_FILE_PATH "/data/ylog/ap/cameraIT_Result_"
+#define RESULT_FILE_PATH "./data/ylog/ap/cameraIT_Result_"
 #define CHAR_MAX_LEN 255
+//#define CAMT_OUT_PATH "./data/vendor/cameraserver/"
+#define CAMT_OUT_PATH "./"
 
 using namespace std;
+
+int inject_read_file(string file_name, cmr_uint size, void *addr)
+{
+	int ret = 0;
+	FILE *fp = NULL;
+
+	IT_LOGD("file_name:%s size %d vir_addr %ld", file_name.c_str(), size, addr);
+	fp = fopen(file_name.c_str(), "rb+");
+	if (NULL == fp) {
+		IT_LOGD("can not open file: %s \n", file_name.c_str());
+		return -1;
+	}
+
+	ret = fread(addr, sizeof(char), size, fp);
+	fclose(fp);
+	return ret;
+}
 
 extern map<string, vector<resultData_t> *> gMap_Result;
 suiteManager::suiteManager() : m_json1(NULL), m_isParse(false), m_ResultFile(NULL) {
@@ -46,6 +69,7 @@ suiteManager::suiteManager() : m_json1(NULL), m_isParse(false), m_ResultFile(NUL
         (SuiteFactory *)AbstractFactory::createFactory("suite");
     m_json1 = new stage1json;
     m_curr1CaseID = -1;
+    m_InjectBufAlloc = NULL;
 }
 
 suiteManager::~suiteManager() {
@@ -148,16 +172,77 @@ int suiteManager::ParseFirstJson(uint32_t caseID) {
 
 int suiteManager::ReadInjectData() {
     int ret = IT_OK;
+    unsigned int imgSize=0;
+    int i=0, total_nums=0;
+    vector<ion_info_t> ionbuf_config;
+    map<int, ion_info_t> pre_ion;
+    map<int, bufferData> pop_data;
+    vector<new_ion_mem_t*> img_memory;
 
     casecomm *json1case = m_json1->getCaseAt(m_curr1CaseID);
-    vector<injectInfo *>::iterator itor = json1case->m_injectArr.begin();
-    while (itor != json1case->m_injectArr.end()) {
-        IT_LOGD("frameOrder = %u, path = %s, otherInfo = %s",
-                (*itor)->m_frameOrder, (*itor)->m_path.data(),
-                (*itor)->m_otherInfo.data());
-        itor++;
-    }
+    if (json1case->m_injectArr.size() == 0) {
+        IT_LOGD("don't have Injectdata.");
+        goto exit;
+    }else {
+        vector<injectInfo *>::iterator itor = json1case->m_injectArr.begin();
 
+        for( ; itor!=json1case->m_injectArr.end(); itor++) {
+            IT_LOGD("path = %s, injectType = %d, format = %d", (*itor)->m_path.data(), (*itor)->m_injectType, (*itor)->m_imgFormat);
+            /*determine buffer size*/
+            if((*itor)->m_imgFormat == IT_IMG_FORMAT_RAW) {
+                imgSize = (*itor)->m_imgWidth * (*itor)->m_imgHeight * 2;
+    	    }
+    	    else if(((*itor)->m_imgFormat == IT_IMG_FORMAT_YUV) || ((*itor)->m_imgFormat == IT_IMG_FORMAT_JPEG)) {
+                imgSize = (*itor)->m_imgWidth * (*itor)->m_imgHeight * 3 / 2;
+    	    }
+            map<int, ion_info_t>::iterator loct;
+            loct = pre_ion.find((*itor)->m_injectType);
+            if (loct == pre_ion.end()) {
+                pre_ion[(*itor)->m_injectType].buf_size = imgSize;
+                pre_ion[(*itor)->m_injectType].num_bufs = 1;
+                pre_ion[(*itor)->m_injectType].is_cache = true;
+                pre_ion[(*itor)->m_injectType].tag = (*itor)->m_injectType;
+            }
+            else {
+                pre_ion[(*itor)->m_injectType].buf_size = imgSize;
+                pre_ion[(*itor)->m_injectType].num_bufs++;
+                pre_ion[(*itor)->m_injectType].is_cache = true;
+                pre_ion[(*itor)->m_injectType].tag = (*itor)->m_injectType;
+            }
+            total_nums++;
+        }
+        if (total_nums == 0) {
+            IT_LOGE("totalnums is 0");
+            goto exit;
+        }else {
+            map<int, ion_info_t>::iterator loct = pre_ion.begin();
+            for( ; loct!=pre_ion.end(); loct++) {
+                ionbuf_config.push_back(loct->second);
+            }
+
+            /*allocate Ionbuffer*/
+            m_InjectBufAlloc = new TestMemPool(ionbuf_config);
+
+            itor = json1case->m_injectArr.begin();
+            while (itor != json1case->m_injectArr.end() && i < total_nums) {
+                pop_data[i] = m_InjectBufAlloc->popBufferList((*itor)->m_injectType);
+                ret = inject_read_file((*itor)->m_path.data(), pop_data[i].ion_buffer->phys_size, pop_data[i].ion_buffer->virs_addr);
+                img_memory.push_back(pop_data[i].ion_buffer);
+                if(ret <= 0){
+                    IT_LOGE("failed to read inject image");
+                    goto exit;
+                }
+                itor++;
+                i++;
+            }
+            /*push to buffer manager*/
+            for(int j=0; j < total_nums; j++) {
+                m_InjectBufAlloc->pushBufferList(img_memory[j]);
+            }
+        }
+    }
+exit:
+    IT_LOGD("end %d", ret);
     return ret;
 }
 
@@ -267,11 +352,81 @@ int suiteManager::Clear() {
     return ret;
 }
 
-void suiteManager::Now(string& time){
+void suiteManager::Now(string& time) {
     struct timeval t;
     char c_t[20] ={0};
 
     gettimeofday(&t,NULL);
     strftime(c_t,sizeof(c_t),"%Y-%m-%d_%H_%M_%S",localtime(&t.tv_sec));
     time=c_t;
+}
+
+vector<new_ion_mem_t> suiteManager::TestGetInjectImg(InjectType_t type) {
+    vector<new_ion_mem_t> type_BufferList;
+    bufferData pop_IonMem;
+    new_ion_mem_t img_IonMem;
+    while (1)
+    {
+        /*ion popBufferList */
+        pop_IonMem = m_InjectBufAlloc->popBufferList(type);
+        if (pop_IonMem.ion_buffer == NULL) {
+            IT_LOGD("pop_IonMem NULL");
+            break;
+        }
+        else {
+            img_IonMem.virs_addr = pop_IonMem.ion_buffer->virs_addr;
+            IT_LOGD("img_IonMem %p", img_IonMem);
+            type_BufferList.push_back(img_IonMem);
+        }
+    }
+    return type_BufferList;
+}
+
+int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
+    int ret = 0;
+    char output_file[256];
+    char fail_imgName[40];
+    unsigned int size;
+    string n_time;
+    FILE *fp = NULL;
+    memset(output_file, '\0', sizeof(output_file));
+    memset(fail_imgName, '\0', 40);
+    strcpy(output_file, CAMT_OUT_PATH);
+    Now(n_time);
+    sprintf(fail_imgName, "testImage_%dx%d_%s" , f_imgInfo.w, f_imgInfo.h, n_time.c_str());
+    strcat(output_file, fail_imgName);
+    if (f_imgInfo.format == IT_IMG_FORMAT_YUV) {
+        strcat(output_file, ".yuv");
+        fp = fopen(output_file, "wb+");
+        if (NULL == fp) {
+ 	        IT_LOGD("can not open file: %s \n", output_file);
+ 	        return IT_UNKNOWN_FAULT;
+        }
+        size = f_imgInfo.w * f_imgInfo.h * 3 / 2;
+        ret = fwrite(f_imgInfo.test_img, sizeof(char), size, fp);
+        fclose(fp);
+    }
+    else if (f_imgInfo.format == IT_IMG_FORMAT_RAW) {
+        strcat(output_file, ".raw");
+        fp = fopen(output_file, "wb+");
+        if (NULL == fp) {
+ 	        IT_LOGD("can not open file: %s \n", output_file);
+ 	        return IT_UNKNOWN_FAULT;
+        }
+        size = f_imgInfo.w * f_imgInfo.h * 2;
+        ret = fwrite(f_imgInfo.test_img, sizeof(char), size, fp);
+        fclose(fp);
+    }
+    else if (f_imgInfo.format == IT_IMG_FORMAT_JPEG) {
+        strcat(output_file, ".jpg");
+        fp = fopen(output_file, "wb+");
+        if (NULL == fp) {
+ 	        IT_LOGD("can not open file: %s \n", output_file);
+ 	        return IT_UNKNOWN_FAULT;
+        }
+        size = f_imgInfo.w * f_imgInfo.h * 3 / 2;
+        ret = fwrite(f_imgInfo.test_img, sizeof(char), size, fp);
+        fclose(fp);
+    }
+    return ret;
 }

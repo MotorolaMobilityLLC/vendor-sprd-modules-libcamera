@@ -92,7 +92,7 @@ struct ZslBufferQueue {
 };
 
 typedef int32_t status_t;
-
+/*
 enum preview_frame_type {
     PREVIEW_FRAME = 0,
     PREVIEW_VIDEO_FRAME,
@@ -106,7 +106,7 @@ enum preview_frame_type {
     CHANNEL3_FRAME,
     CHANNEL4_FRAME,
     PREVIEW_FRAME_TYPE_MAX
-};
+};*/
 
 typedef enum {
     CAMERA_STREAM_TYPE_DEFAULT, /* default stream type */

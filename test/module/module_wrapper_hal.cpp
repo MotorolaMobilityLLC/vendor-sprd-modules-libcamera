@@ -27,6 +27,7 @@
  *
  */
 #include "module_wrapper_hal.h"
+#include "test_mem_alloc.h"
 #include <algorithm>
 #include <chrono>
 #include <mutex>
@@ -177,29 +178,6 @@ struct AvailableStream {
 
 camera_metadata_entry updatemeta[5];
 int metacount = 0;
-typedef struct {
-    int fd;
-    size_t size;
-    // offset from fd, always set to 0
-    void *addr_phy;
-    void *addr_vir;
-    int width;
-    int height;
-    int format;
-    sp<GraphicBuffer> pbuffer;
-    void *bufferPtr;
-} hal_mem_info_t;
-
-typedef struct {
-    const native_handle_t *native_handle;
-    sp<GraphicBuffer> graphicBuffer;
-    int width;
-    int height;
-    void *vir_addr;
-    void *phy_addr;
-    //    camera_buffer_type_t type;
-    void *private_handle;
-} new_mem_t;
 
 typedef enum {
     CAMERA_OPEN_CAMEAR,

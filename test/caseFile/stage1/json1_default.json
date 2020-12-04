@@ -4,7 +4,10 @@
 			"ID":0,
 			"README":"example for write case,including formats of injectDataInfo（Temporarily unavailable） and openSimulator（Temporarily unavailable）",
 			"injectDataInfo":[
-				{"frameOrder":0,"path":"./bokeh_left.yuv","otherInfo":""}
+				{"path":"./ccap_1_3264x2448.yuv","imgW":3264, "imgH":2448,"injectType":"OEM_PREV","imgFormat":"yuv"},
+				{"path":"./ccap_2_3264x2448.yuv","imgW":3264, "imgH":2448,"injectType":"OEM_CAP","imgFormat":"yuv"},
+				{"path":"./ccap_3_3264x2448.yuv","imgW":3264, "imgH":2448,"injectType":"GOLDEN_OEM_PREV","imgFormat":"yuv"},
+				{"path":"./ccap_4_3264x2448.yuv","imgW":3264, "imgH":2448,"injectType":"GOLDEN_OEM_CAP","imgFormat":"yuv"}
 			],
 			"openSimulator":["DRV","OEM"],
 			"order":[

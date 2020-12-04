@@ -67,7 +67,7 @@ class TestMemPool {
     int UnMap(buffer_handle_t *buffer);
     int Map(new_gpu_mem_t *gpu_buf);
     int UnMap(new_gpu_mem_t *gpu_buf);
-    buffer_handle_t *popBufferAndWait(int type);
+    bufferData popBufferAndWait(int type);
   private:
     TestMemPool()=delete;
     vector<new_ion_mem_t> mIonBufferArr;
@@ -81,4 +81,22 @@ class TestMemPool {
     int mIommuEnabled;
 };
 
+typedef enum InjectType{
+    INJECT_DCAM_PREV=0,
+    INJECT_DCAM_CAP,
+    INJECT_ISP_PREV,
+    INJECT_ISP_CAP,
+    INJECT_OEM_PREV,
+    INJECT_OEM_CAP,
+    INJECT_HAL_PREV,
+    INJECT_HAL_CAP,
+    INJECT_GOLDEN_DCAM_PREV=16,
+    INJECT_GOLDEN_DCAM_CAP,
+    INJECT_GOLDEN_ISP_PREV,
+    INJECT_GOLDEN_ISP_CAP,
+    INJECT_GOLDEN_OEM_PREV,
+    INJECT_GOLDEN_OEM_CAP,
+    INJECT_GOLDEN_HAL_PREV,
+    INJECT_GOLDEN_HAL_CAP,
+}InjectType_t;
 #endif

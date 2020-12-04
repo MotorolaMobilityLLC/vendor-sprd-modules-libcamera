@@ -4,21 +4,22 @@
 #define RUN_ALL_CASE 0xFFFF
 
 #include "test_common_header.h"
-
 #include "test_suite_oem.h"
 #include "test_suite_drv.h"
 #include "test_suite_hal.h"
 #include "compare_func.h"
 #include "factory.h"
+#include "test_mem_alloc.h"
 using namespace std;
 
 typedef struct inject_data {
     uint32_t sensorID;
     uint32_t frameOrder;
-    test_camera_memory_t *data;
+    new_ion_mem_t *data;
     uint32_t w;
     uint32_t h;
 } inject_data_t;
+
 /*this class is implementation of the testManager class*/
 class suiteManager {
   public:
@@ -38,6 +39,9 @@ class suiteManager {
         m_CurrentSuite = a_current_test_suite;
     }
     // void RegisterFunction(SuiteBase *funcObj);
+    //compareInfo_t JpegToYuv(compareInfo_t &img_info);
+    vector<new_ion_mem_t> TestGetInjectImg(InjectType_t type);
+    int dump_image(compareInfo_t &f_imgInfo);
     int RunTest();
     int RunTests();
     int SortTest();
@@ -54,9 +58,10 @@ class suiteManager {
     vector<IParseJson *> mVec_TotalCase;
     SuiteBase *m_CurrentSuite;
     int32_t m_curr1CaseID;
-    map<uint32_t, test_camera_memory_t *> m_injectImg;
+    map<uint32_t, new_ion_mem_t *> m_injectImg;
     string m_ResultPath;
     FILE* m_ResultFile;
+    TestMemPool* m_InjectBufAlloc;
 };
 
 #endif /* __TEST_SUITE_MANAGER_H__ */
