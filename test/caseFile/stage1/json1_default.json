@@ -82,6 +82,50 @@
 			]
 		},
 		{
+			"ID":7,
+			"README":"example for preview in main_back camera ",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[0,3,20]}
+					]
+				}
+			]
+		},
+		{
+			"ID":8,
+			"README":"example for preview in front camera ",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[3,8,21]}
+					]
+				}
+			]
+		},
+		{
+			"ID":9,
+			"README":"example for capture in front camera",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[3,22,8,23]}
+					]
+				}
+			]
+		},
+		{
+			"ID":10,
+			"README":"example for capture in main_back camera with facebeauty",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[0,3,24,25]}
+					]
+				}
+			]
+		},
+		{
 			"ID":13,
 			"README":"example for portrait 美颜，光效，人脸检测",
 			"order":[
