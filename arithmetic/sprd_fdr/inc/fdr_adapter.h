@@ -21,6 +21,7 @@ typedef enum {
     FDR_CMD_GET_EXIF,
     FDR_CMD_GET_FRAMENUM,
     FDR_CMD_GET_MAX_FRAMENUM,
+    FDR_CMD_FAST_STOP,
 } FDR_CMD;
 
 typedef struct {
@@ -78,6 +79,10 @@ typedef struct {
     int *max_total_frame_num;
     int *max_ref_frame_num;
 } FDR_CMD_GET_MAX_FRAMENUM_PARAM_T;
+
+typedef struct {
+    void **ctx;
+} FDR_CMD_FAST_STOP_PARAM_T;
 
 
 #ifdef __cplusplus

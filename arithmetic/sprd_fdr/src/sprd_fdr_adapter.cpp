@@ -66,7 +66,6 @@ int sprd_fdr_adapter_fusion(void **ctx, sprd_camalg_image_t *image_in_array, spr
 
 int sprd_fdr_adapter_close(void **ctx)
 {
-    sprd_fdr_fast_stop(*ctx);
     return sprd_fdr_close(ctx);
 }
 
@@ -156,6 +155,12 @@ int sprd_fdr_adapter_ctrl(FDR_CMD cmd, void *vparam)
         {
             FDR_CMD_GET_MAX_FRAMENUM_PARAM_T *param = (FDR_CMD_GET_MAX_FRAMENUM_PARAM_T *)vparam;
             ret = sprd_fdr_get_max_frame_num(param->max_total_frame_num, param->max_ref_frame_num);
+            break;
+        }
+        case FDR_CMD_FAST_STOP:
+        {
+            FDR_CMD_FAST_STOP_PARAM_T *param = (FDR_CMD_FAST_STOP_PARAM_T *)vparam;
+            ret = sprd_fdr_fast_stop(*param->ctx);
             break;
         }
         default:
