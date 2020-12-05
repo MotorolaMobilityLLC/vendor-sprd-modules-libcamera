@@ -1,4 +1,4 @@
-/*versionid=0x000A0008*/
+/*versionid=0x000A000E*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5_sensor_nlm_level*/
@@ -2530,9 +2530,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x06D6,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00FA,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -3228,9 +3228,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x06D6,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00FA,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -3926,9 +3926,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x064A,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00E6,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -4624,9 +4624,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0992,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x015E,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -5322,9 +5322,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0992,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x015E,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -6020,9 +6020,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x05BE,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00D2,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -6718,9 +6718,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x05BE,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00D2,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -7416,9 +7416,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x064A,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00E6,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -8114,9 +8114,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x05BE,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00D2,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -8812,9 +8812,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x05BE,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00D2,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -9510,9 +9510,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x05BE,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00D2,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -10208,9 +10208,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0532,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x00BE,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -10906,9 +10906,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x041A,
+		0x071C,
 		/*radius_threshold_factor*/
-		0x0096,
+		0x0104,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
