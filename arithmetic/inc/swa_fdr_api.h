@@ -34,7 +34,7 @@ struct swa_fdr_init_param {
 
 	uint32_t param_size;
 	void *param_ptr;
-
+	void *ae_common_info;
 	enum swa_image_fmt sensor_fmt;
 	enum swa_raw_pattern sensor_pattern;
 	enum swa_image_fmt dst_fmt;
@@ -48,7 +48,6 @@ struct swa_fdr_init_param {
 
 
 struct swa_fdr_proc_param {
-	void *ae_common_info;
 	void *ae_fdr_info;
 
 	uint32_t r;

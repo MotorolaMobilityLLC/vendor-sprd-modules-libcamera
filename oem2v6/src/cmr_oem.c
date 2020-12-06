@@ -474,6 +474,7 @@ static cmr_int camera_open_fdr(struct camera_context *cxt) {
 	init_data.dst_size.height = cxt->snp_cxt.request_size.height;
 	init_data.param_ptr = cxt->snp_cxt.fdr_tuning_param.param_ptr;
 	init_data.param_size = cxt->snp_cxt.fdr_tuning_param.param_size;
+	init_data.ae_common_info = cxt->snp_cxt.ae_common_info;
 	CMR_LOGD("fdr version %d\n", init_data.fdr_version, swa_cxt->version);
 
 	property_get("debug.cam.fdr.loglevel", value, "4");
@@ -789,15 +790,13 @@ static cmr_int camera_prepare_fdrparam(
        struct isp_fdr_dbgdata *dbg_data = cxt->dbg_cxt.dbg_data;
 
 	memset(fdr_param, 0, sizeof(struct swa_fdr_proc_param));
-	fdr_param->ae_common_info = cxt->snp_cxt.ae_common_info;
 	fdr_param->ae_fdr_info = cxt->snp_cxt.fdr_ae_info;
 
 	/* process last one frame, should input/output merge & fusion param */
 	blc = &blc_data;
 	ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_BLC, blc);
 	CMR_LOGD("ret %d , blc %d %d %d %d\n",  ret, blc->r, blc->b, blc->gr, blc->gb);
-	CMR_LOGD("ae common info ptr %p, fdr_ae_info %p\n",
-		cxt->snp_cxt.ae_common_info, cxt->snp_cxt.fdr_ae_info);
+	CMR_LOGD("fdr_ae_info %p\n", cxt->snp_cxt.fdr_ae_info);
 
 	fdr_param->r = blc->r;
 	fdr_param->b = blc->b;
