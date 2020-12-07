@@ -136,7 +136,7 @@ static void ov64b40_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
     cmr_u32 fr_len = 0;
-    float fps = 0.0;
+    double fps = 0.0;
     cmr_u16 frame_interval = 0x00;
 
     SENSOR_IC_CHECK_PTR_VOID(aec_info);
@@ -191,7 +191,7 @@ static void ov64b40_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 sensor_gain = 0;
 
-    sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
+    sensor_gain = (cmr_u32)isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
     if (SENSOR_MAX_GAIN < sensor_gain)
@@ -747,7 +747,7 @@ static cmr_int ov64b40_drv_access_val(cmr_handle handle, cmr_uint param) {
     default:
         break;
     }
-    ret = SENSOR_SUCCESS;
+    //ret = SENSOR_SUCCESS;
 
     return ret;
 }
@@ -823,7 +823,7 @@ static cmr_int ov64b40_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
         cap_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
-        cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
+        cap_gain = (cmr_u32)sns_drv_cxt->sensor_ev_info.preview_gain;
         goto snapshot_info;
     }
 
@@ -1107,7 +1107,7 @@ static cmr_int ov64b40_drv_stream_on(cmr_handle handle, cmr_uint param) {
     if (!strcmp(value1, "1")) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x01);
     }
-    cmr_uint sensor_mode = 0;
+    cmr_u32 sensor_mode = 0;
     sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
 
     if (sensor_mode > 2)
