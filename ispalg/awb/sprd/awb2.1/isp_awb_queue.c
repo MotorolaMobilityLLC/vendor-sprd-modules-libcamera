@@ -115,7 +115,7 @@ cmr_u32 _calcAvgValueOfQueue(struct awbl_cyc_queue * queue)
 		sum += q[i];
 	}
 
-	avg = sum / size;
+	avg = sum / (cmr_u32)size;
 
 	return avg;
 }
@@ -186,6 +186,9 @@ cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue * queue)
 
 	size = (queue->cur_index < queue->size)
 		? queue->cur_index : queue->size;
+	
+	if(size>64)
+		size=64;
 
 	if (size < 2)
 		return 0;
@@ -209,6 +212,9 @@ cmr_s32 _calcDeltaOfQueue(struct awbl_cyc_queue * queue)
 
 	size = (queue->cur_index < queue->size) ? queue->cur_index : queue->size;
 
+	if(size>64)
+		size=64;
+	
 	if (size < 2)
 		return 0;
 
@@ -263,7 +269,7 @@ cmr_u32 _calc_weighted_average(struct awbl_cyc_queue * queue_value, struct awbl_
 
 	size_w = (queue_weight->cur_index < queue_weight->size)
 		? queue_weight->cur_index : queue_weight->size;
-
+	
 	if (size_v != size_w || 0 == size_w)
 		return 0;
 
@@ -271,11 +277,14 @@ cmr_u32 _calc_weighted_average(struct awbl_cyc_queue * queue_value, struct awbl_
 		qw[i] = 256;
 	}
 
+
+	if(size_w>64)
+		size_w=64;	
+
 	if (size_w > 1) {
 
 		qw[0] = qw[0] - 60;
 		qw[size_w - 1] = qw[size_w - 1] + 60;
-
 	}
 
 	for (i = 0; i < size_v; i++) {
