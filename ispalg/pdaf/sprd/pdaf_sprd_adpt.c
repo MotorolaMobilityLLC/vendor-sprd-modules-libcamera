@@ -176,7 +176,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct isp_alg_fw_context *isp_ctx = NULL;
 	cmr_u16 i;
 	cmr_s32 res_w, res_h, res_pd_w, res_pd_h;
-	cmr_s32 base_w = 512, base_h = 384;
+	cmr_u32 base_w = 512, base_h = 384;
 	cmr_s32 temp_win_start_x = 0, temp_win_start_y = 0;
 	cmr_s32 roi_pixel_num_x = 0;
 	cmr_s32 roi_pixel_num_y = 0;
