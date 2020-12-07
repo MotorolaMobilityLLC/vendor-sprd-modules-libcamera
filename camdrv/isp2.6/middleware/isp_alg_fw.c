@@ -6031,6 +6031,8 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		cxt->aem_is_update = 0;
 		memset(&result, 0, sizeof(result));
 		if (cxt->ops.awb_ops.ioctrl) {
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_READ_FILE, NULL, NULL);
+			ISP_TRACE_IF_FAIL(ret, ("fail to read awb.file"));
 			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_GET_GAIN, (void *)&result, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to AWB_CTRL_CMD_GET_GAIN"));
 		}
