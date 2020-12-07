@@ -1272,6 +1272,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3_2(void *in, void *out)
 	cxt->otp_info.rdm_stat_info.b  = param->otp_info.rdm_stat_info.b;
 
 	struct awb_rgb_gain_3_0 awb_gain_v3;
+	memset(&awb_gain_v3,0,sizeof(awb_gain_v3) );
 	ISP_LOGV("start the awb_init() in the awblib");
 	if(cxt->lib_ops.awb_init_v3_2 != NULL){
 		cxt->alg_handle = cxt->lib_ops.awb_init_v3_2(&cxt->awb_init_param_v3, &awb_gain_v3);
@@ -1315,7 +1316,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3_2(void *in, void *out)
 #ifndef CONFIG_ISP_2_2
 	ISP_LOGI("start the isp_br_ioctrl()");
 	if (cxt->ptr_isp_br_ioctrl != NULL) {
-		rtn = cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, SET_OTP_AWB, &otp_info, NULL);
+		rtn = (cmr_u32)(cxt->ptr_isp_br_ioctrl(cxt->sensor_role_type, SET_OTP_AWB, &otp_info, NULL) );
 	}
 	ISP_LOGI("end the isp_br_ioctrl()");
 #endif
