@@ -107,5 +107,13 @@ static struct sensor_nr_scene_map_param s_s5kgw1sp03_nr_scene_map_param = {{
 #include "NR/common/normal/ynrs_param.h"
 #endif
 
+#ifdef _NR_CNR3_PARAM_
+#include "NR/common/normal/cnr3_param.h"
+#endif
 
+#ifdef _NR_MFNR_PARAM_
+#include "NR/common/normal/mfnr_param.h"
+#endif
 
+#ifdef _NR_POST_EE_PARAM_
+#endif
