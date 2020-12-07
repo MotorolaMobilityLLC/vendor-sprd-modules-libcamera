@@ -200,6 +200,10 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	cmr_u32 fm=0;
 	#endif
 
+        #if defined(CONFIG_ISP_2_3)
+        ev_setting.afl_platform_flag = AFL_LE;
+        #endif
+  
 	if (!cxt) {
 		ISP_LOGE("fail to check param is NULL!");
 		goto exit;

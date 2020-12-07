@@ -43,8 +43,18 @@ struct afl_ev_setting_t
 	cmr_s32 ae_exp_flag;
 	cmr_int bypass;
 	struct afl_input_image_size input_image_size;
+        cmr_u32 afl_platform_flag;
 };
 
+enum afl_platform
+{
+	AFL_BASE = 0,
+	AFL_PIKE2,
+	AFL_LE,
+	AFL_L3,
+	AFL_L5,
+	AFL_L5PRO
+};
 
 #ifdef __cplusplus
 extern "C" {
