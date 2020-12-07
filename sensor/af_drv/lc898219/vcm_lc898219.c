@@ -55,6 +55,7 @@ static uint32_t _lc898219_get_test_vcm_mode(cmr_handle sns_af_drv_handle) {
 
     FILE *fp = NULL;
     fp = fopen("/data/vendor/cameraserver/cur_vcm_info.txt", "wb");
+    CHECK_PTR(fp);
     // read
     cmd_val[0] = 0x02;
     cmd_val[1] = 0x02;
@@ -223,19 +224,18 @@ static int lc898219_drv_get_pos(cmr_handle sns_af_drv_handle, uint16_t *pos) {
 static int lc898219_drv_ioctl(cmr_handle sns_af_drv_handle, enum sns_cmd cmd,
                             void *param) {
     uint32_t ret_value = AF_SUCCESS;
-    return ret_value;
     struct sns_af_drv_cxt *af_drv_cxt =
         (struct sns_af_drv_cxt *)sns_af_drv_handle;
     CHECK_PTR(sns_af_drv_handle);
     switch (cmd) {
     case CMD_SNS_AF_SET_BEST_MODE:
-        _lc898219_set_motor_bestmode(sns_af_drv_handle);
+        //_lc898219_set_motor_bestmode(sns_af_drv_handle);
         break;
     case CMD_SNS_AF_GET_TEST_MODE:
-        _lc898219_get_test_vcm_mode(sns_af_drv_handle);
+        //_lc898219_get_test_vcm_mode(sns_af_drv_handle);
         break;
     case CMD_SNS_AF_SET_TEST_MODE:
-        _lc898219_set_test_vcm_mode(sns_af_drv_handle, param);
+        //_lc898219_set_test_vcm_mode(sns_af_drv_handle, param);
         break;
     default:
         break;
