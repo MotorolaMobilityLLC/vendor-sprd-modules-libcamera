@@ -2374,6 +2374,10 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     property_get("persist.vendor.cam.capture.torch.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
+    //37 ev+-20
+    property_get("persist.vendor.cam.ev.20.enable",prop,"0");
+    available_cam_features.add(atoi(prop));
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
@@ -5164,6 +5168,8 @@ int SprdCamera3Setting::updateWorkParameters(
         s_setting[mCameraId].controlInfo.ae_exposure_compensation =
             frame_settings.find(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION)
                 .data.i32[0];
+        HAL_LOGV("ae_exposure_compensation=%d",
+			s_setting[mCameraId].controlInfo.ae_exposure_compensation);
         pushAndroidParaTag(ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION);
     }
 

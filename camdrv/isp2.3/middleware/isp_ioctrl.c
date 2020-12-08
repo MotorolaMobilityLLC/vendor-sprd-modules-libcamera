@@ -310,7 +310,7 @@ static cmr_int ispctl_ae_exp_compensation(cmr_handle isp_alg_handle, void *param
 	exp_comp.comp_range.max = exp_compensation->comp_range.max;
 	exp_comp.comp_val = exp_compensation->comp_val;
 	exp_comp.step_numerator = exp_compensation->step_numerator;
-	exp_comp.step_denominator = exp_compensation->step_denominator;	
+	exp_comp.step_denominator = exp_compensation->step_denominator;
 	if (cxt->ops.ae_ops.ioctrl) {
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXPOSURE_COMPENSATION, &exp_comp, NULL);
 	}

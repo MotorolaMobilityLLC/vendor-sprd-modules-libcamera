@@ -106,6 +106,7 @@ struct cmr_ae_compensation_param {
     cmr_s32 ae_compensation_step_numerator;
     cmr_s32 ae_compensation_step_denominator;
     cmr_s32 ae_exposure_compensation;
+    cmr_s32 ae_mode;
 };
 
 struct cmr_preview_fps_param {

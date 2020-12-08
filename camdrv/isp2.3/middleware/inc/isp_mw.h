@@ -1061,6 +1061,7 @@ struct isp_exp_compensation{
 	struct isp_range_l comp_range;
 	cmr_s32 step_numerator;
 	cmr_s32 step_denominator;
+	cmr_s32 ae_mode;
 };
 
 

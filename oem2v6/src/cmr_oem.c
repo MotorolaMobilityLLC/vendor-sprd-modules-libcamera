@@ -10607,12 +10607,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             param_ptr->ae_compensation_param.ae_compensation_step_numerator;
         ae_compensation.step_denominator =
             param_ptr->ae_compensation_param.ae_compensation_step_denominator;
+        ae_compensation.ae_mode = param_ptr->ae_compensation_param.ae_mode;
         isp_param_ptr = (void *)&ae_compensation;
         CMR_LOGD("ae compensation: comp_val=%d, range.min=%d, range.max=%d, "
-                 "step_numerator=%d, step_denominator=%d",
+                 "step_numerator=%d, step_denominator=%d ae_mode=%d",
                  ae_compensation.comp_val, ae_compensation.comp_range.min,
                  ae_compensation.comp_range.max, ae_compensation.step_numerator,
-                 ae_compensation.step_denominator);
+                 ae_compensation.step_denominator, ae_compensation.ae_mode);
         break;
     case COM_ISP_SET_AWB_MODE:
         CMR_LOGD("awb mode 00 %d isp param %d", param_ptr->cmd_value,

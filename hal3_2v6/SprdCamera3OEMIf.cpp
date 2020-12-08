@@ -203,6 +203,12 @@ namespace sprdcamera {
 #define LEGACY_SPRD_AE_COMPENSATION_STEP_NUMERATOR 1
 #define LEGACY_SPRD_AE_COMPENSATION_STEP_DEMINATOR 1
 
+//legacy sprd isp ae compensation manual mode, just for manual mode
+//ev+-20 steps
+#define LEGACY_SPRD_AE_COMPENSATION_TWENTY_RANGE_MIN -30
+#define LEGACY_SPRD_AE_COMPENSATION_TWENTY_RANGE_MAX 30
+#define LEGACY_SPRD_AE_COMPENSATION_TWENTY_STEP_DEMINATOR 10
+
 #define SHINWHITED_NOT_DETECTFD_MAXNUM 10
 
 // 300 means 300ms
@@ -7440,10 +7446,25 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     case ANDROID_CONTROL_AE_EXPOSURE_COMPENSATION:
         SPRD_DEF_Tag *sprddefInfo;
+        char prop[PROPERTY_VALUE_MAX];
         struct cmr_ae_compensation_param ae_compensation_param;
         sprddefInfo = mSetting->getSPRDDEFTagPTR();
+        property_get("persist.vendor.cam.ev.20.enable",prop,"0");
 
-        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_MANUAL) {
+        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_MANUAL && atoi(prop)) {
+            // just for legacy sprd isp ae compensation manual mode
+            ae_compensation_param.ae_compensation_range[0] =
+                LEGACY_SPRD_AE_COMPENSATION_TWENTY_RANGE_MIN;
+            ae_compensation_param.ae_compensation_range[1] =
+                LEGACY_SPRD_AE_COMPENSATION_TWENTY_RANGE_MAX;
+            ae_compensation_param.ae_compensation_step_numerator =
+                LEGACY_SPRD_AE_COMPENSATION_STEP_NUMERATOR;
+            ae_compensation_param.ae_compensation_step_denominator =
+                LEGACY_SPRD_AE_COMPENSATION_TWENTY_STEP_DEMINATOR;
+            ae_compensation_param.ae_exposure_compensation =
+                controlInfo.ae_exposure_compensation;
+            ae_compensation_param.ae_mode = 2;
+        } else if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_MANUAL) {
             // just for legacy sprd isp ae compensation manual mode
             ae_compensation_param.ae_compensation_range[0] =
                 LEGACY_SPRD_AE_COMPENSATION_RANGE_MIN;
@@ -7455,6 +7476,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 LEGACY_SPRD_AE_COMPENSATION_STEP_DEMINATOR;
             ae_compensation_param.ae_exposure_compensation =
                 controlInfo.ae_exposure_compensation;
+            ae_compensation_param.ae_mode = 1;
         } else {
             // standard implementation following android api
             ae_compensation_param.ae_compensation_range[0] =
