@@ -2167,25 +2167,33 @@ enum isp_pm_cmd ispalg_get_param_type(cmr_u32 cfg_type)
 	}
 }
 
-static void ispalg_cfg_prv_param(cmr_handle isp_alg_handle,
+static void ispalg_cfg_blks(cmr_handle isp_alg_handle,
 		struct isp_pm_param_data *param_data, cmr_u32 param_num,
 		cmr_u32 gtm_ltm_on, cmr_u32 scene_id, cmr_u32 start, int dump_lsc)
 {
-	cmr_u32 i = 0;
+	cmr_u32 i = 0, is_gtm_blk, gtm_bypass, dcam_shared, blk_skip;
 	struct dcam_dev_lsc_info *lsc = NULL;
-	struct isp_u_blocks_info sub_block_info;
+	struct isp_u_blocks_info sub_block_info = { 0, NULL };
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
-	memset((void *)&sub_block_info, 0x00, sizeof(sub_block_info));
+	sub_block_info.scene_id = scene_id;
+	dcam_shared = ((cxt->work_mode == 0) && cxt->zsl_flag &&
+		(scene_id == PM_SCENE_CAP) && (cxt->remosaic_type == 0)) ? 1 : 0;
 
 	for (i = 0; i < param_num; i++) {
-		if ((gtm_ltm_on == 0) && (param_data->id == ISP_BLK_RAW_GTM ||
-			(param_data->id == ISP_BLK_RGB_LTM) || (param_data->id == ISP_BLK_YUV_LTM))) {
+		blk_skip = (IS_DCAM_BLOCK(param_data->id) && dcam_shared) ?  1 : 0;
+		is_gtm_blk = ((param_data->id == ISP_BLK_RAW_GTM) ||
+					(param_data->id == ISP_BLK_RGB_LTM) ||
+					(param_data->id == ISP_BLK_YUV_LTM)) ? 1 : 0;
+		gtm_bypass = ((gtm_ltm_on == 0) && is_gtm_blk) ? 1 : 0;
+		if (blk_skip || gtm_bypass) {
+			ISP_LOGV("skip block 0x%04x for scene %d, dcam_skip %d, gtm_bypass %d\n",
+				param_data->id, scene_id, blk_skip, gtm_bypass);
 			param_data++;
 			continue;
 		}
+
 		sub_block_info.block_info = param_data->data_ptr;
-		sub_block_info.scene_id = scene_id;
 		if (param_data->id == ISP_BLK_2D_LSC) {
 			if (scene_id == PM_SCENE_FDRL || scene_id == PM_SCENE_FDRH) {
 				lsc = (struct dcam_dev_lsc_info *)sub_block_info.block_info;
@@ -2196,39 +2204,9 @@ static void ispalg_cfg_prv_param(cmr_handle isp_alg_handle,
 		}
 
 		isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-		ISP_LOGV("cfg block %x for prev.\n", param_data->id);
+		ISP_LOGV("cfg block 0x%04x for scene %d\n", param_data->id, scene_id);
 		param_data++;
 	}
-}
-
-static void ispalg_cfg_cap_param(cmr_handle isp_alg_handle,
-		struct isp_pm_param_data *param_data, cmr_u32 param_num,
-		cmr_u32 start, int dump_lsc)
-{
-	cmr_u32 i = 0;
-	struct isp_u_blocks_info sub_block_info;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
-	memset((void *)&sub_block_info, 0x00, sizeof(sub_block_info));
-
-	for (i = 0; i < param_num; i++) {
-			if ((cxt->gtm_ltm_on == 0) &&
-				(param_data->id == ISP_BLK_RAW_GTM || param_data->id == ISP_BLK_RGB_LTM)) {
-				param_data++;
-				continue;
-			}
-			sub_block_info.block_info = param_data->data_ptr;
-			sub_block_info.scene_id = PM_SCENE_CAP;
-			if ((!IS_DCAM_BLOCK(param_data->id)) || cxt->remosaic_type) {
-				/* todo: refine for 4in1 sensor */
-				if (dump_lsc && param_data->id == ISP_BLK_2D_LSC)
-					dump_lsc_data(cxt, start, PM_SCENE_CAP, param_data->data_ptr);
-
-				isp_dev_cfg_block(cxt->dev_access_handle, &sub_block_info, param_data->id);
-				ISP_LOGV("cfg block %x for cap.\n", param_data->id);
-			}
-			param_data++;
-		}
 }
 
 static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
@@ -2279,12 +2257,12 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
 
 	param_data = output.prv_param_data;
 	param_num = output.prv_param_num;
-	ispalg_cfg_prv_param((cmr_handle) cxt, param_data, param_num, gtm_ltm_on, scene_id, start, dump_lsc);
+	ispalg_cfg_blks((cmr_handle) cxt, param_data, param_num, gtm_ltm_on, scene_id, start, dump_lsc);
 
 	if ((work_mode == 0) && cxt->zsl_flag) {
 		param_data = output.cap_param_data;
-		param_num = output.prv_param_num;
-		ispalg_cfg_cap_param((cmr_handle) cxt, param_data, param_num, start, dump_lsc);
+		param_num = output.cap_param_num;
+		ispalg_cfg_blks((cmr_handle) cxt, param_data, param_num, gtm_ltm_on, PM_SCENE_CAP, start, dump_lsc);
 	}
 
 	isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_UNLOCK, NULL, NULL);
@@ -6363,12 +6341,12 @@ cmr_int ispalg_calc_stats_size(cmr_handle isp_alg_handle)
 
 	cxt->stats_mem_info.dbg_buf.size = 0;
 	cxt->stats_mem_info.dbg_buf.num = 0;
-	if (cxt->save_data) {
+	size0 = DCAM_PARAM_SIZE;
+	size1 = ISP_PARAM_SIZE;
+	if (cxt->save_data && (size0 > 0) && (size1 > 0)) {
 		struct isp_pmdbg_alloc_info *buf_info;
 
 		buf_info = &cxt->stats_mem_info.dbg_buf;
-		size0 = DCAM_PARAM_SIZE;
-		size1 = ISP_PARAM_SIZE;
 		buf_info->size = (size0 > size1) ? size0 : size1;
 		buf_info->size += STATIS_TAIL_RESERVED_SIZE;
 		buf_info->num = PARAM_BUF_NUM_MAX;

@@ -54,7 +54,7 @@
 #define STATIS_ISP_HIST2_BUF_SIZE   (256 * 4)
 
 
-#ifdef CONFIG_ISP_2_7
+#ifdef CONFIG_ISP_2_7 /* for SharkL5Pro */
 
 #define CAM_RAW_BITS (14)
 
@@ -76,9 +76,27 @@
 #define PM1_SIZE 	(sizeof(struct isp_param_data_l5pro) + sizeof(struct debug_base_info))
 #define ISP_PARAM_SIZE	(cmr_u32)((PM1_SIZE + 15) & ~15)
 
-#else
+#elif defined CONFIG_ISP_2_8 /* for SharkL6 */
 
-#ifdef CONFIG_ISP_2_5
+#define CAM_RAW_BITS (14)
+
+#define STATIS_AEM_BUF_NUM 4
+#define STATIS_AFM_BUF_NUM 4
+#define STATIS_AFL_BUF_NUM 3
+#define STATIS_3DNR_BUF_NUM 6
+#define STATIS_PDAF_BUF_NUM 6
+#define STATIS_EBD_BUF_NUM 4
+#define STATIS_HIST_BUF_NUM   4
+#define STATIS_LSCM_BUF_NUM   4
+#define STATIS_ISP_HIST2_BUF_NUM 4
+
+#define STATIS_AFL_SIZE  (STATIS_AFL_RBUF_SIZE + STATIS_AFL_GBUF_SIZE)
+#define AFL_RBUF_OFFSET	STATIS_AFL_GBUF_SIZE
+
+#define DCAM_PARAM_SIZE  0
+#define ISP_PARAM_SIZE  0
+
+#elif defined CONFIG_ISP_2_5 /* for SharkL3 */
 
 #define CAM_RAW_BITS (10)
 
@@ -99,7 +117,7 @@
 #define PM1_SIZE 	(sizeof(struct isp_param_data_l3) + sizeof(struct debug_base_info))
 #define ISP_PARAM_SIZE	(cmr_u32)((PM1_SIZE + 15) & ~15)
 
-#else
+#else /* CONFIG_ISP_2_6  for SharkL5 & ROC1 */
 
 #define CAM_RAW_BITS (10)
 
@@ -118,29 +136,6 @@
 #define ISP_PARAM_SIZE  0
 
 #endif
-
-/* temp solution for sharkl3 compiling */
-#if 0 /*lyc*/
-struct lsc_monitor_info {
-	cmr_u32 shift;
-	cmr_u32 work_mode;
-	cmr_u32 skip_num;
-	struct isp_size win_size;
-	struct isp_size win_num;
-	struct isp_trim_size trim;
-};
-
-struct isp_lsc_statistic_info{
-	cmr_u32 r_info[2];
-	cmr_u32 g_info[2];
-	cmr_u32 b_info[2];
-	cmr_u32 sec;
-	cmr_u32 usec;
-};
-#endif 
-#endif
-
-
 
 
 struct isp_file {

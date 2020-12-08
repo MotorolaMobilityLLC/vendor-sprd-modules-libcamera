@@ -5137,7 +5137,7 @@ static cmr_int ispctl_get_postee(cmr_handle isp_alg_handle, void *param_ptr)
 			ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7]);
 	}
 
-	if (cxt->save_data) {
+	if (cxt->save_data && out_ptr->multi_nr_map && out_ptr->param_ptr) {
 		FILE *fp;
 		char file_name[512], tmp_str[64];
 
