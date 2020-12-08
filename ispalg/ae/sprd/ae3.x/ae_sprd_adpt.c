@@ -3914,6 +3914,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->is_snapshot = work_info->is_snapshot;
 	cxt->snr_info = work_info->resolution_info;
 
+	ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_AEM_PARAM, NULL, &cxt->ae_monitor_setting);
+	cxt->monitor_cfg.blk_num.w = cxt->ae_monitor_setting.blk_num.w;
+	cxt->monitor_cfg.blk_num.h = cxt->ae_monitor_setting.blk_num.h;
+
 	bool monitor_cfg_blk_num_32_flag;
 	bool monitor_cfg_blk_wh_flag = (cxt->monitor_cfg.blk_num.w != cxt->monitor_cfg.blk_num.h);
 	bool monitor_cfg_blk_wh32_flag1 = (cxt->monitor_cfg.blk_num.w < 32);

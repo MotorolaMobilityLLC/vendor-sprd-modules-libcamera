@@ -503,6 +503,7 @@ extern "C" {
 		cmr_u8 mainFlashEn;
 		cmr_u8 flash_awben;
 		cmr_u8 calcFirstFlag;
+		struct ae_monitor_cfg ae_monitor_setting;
 
 		cmr_u32 end_id;
 
