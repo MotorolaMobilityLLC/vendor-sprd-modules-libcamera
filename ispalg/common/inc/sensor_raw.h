@@ -146,6 +146,7 @@ enum ISP_BLK_ID {
 	ISP_BLK_MFNR = 0x5080,
 	ISP_BLK_DRE_PRO = 0x5081,
 	ISP_BLK_POST_EE = 0x5082,
+	ISP_BLK_HSV_LUT = 0x508D,
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
 };
@@ -204,6 +205,7 @@ enum isp_smart_id {
 	ISP_SMART_MFNR = 57,
 	ISP_SMART_DRE_PRO = 58,
 	ISP_SMART_POST_EE = 59,
+	ISP_SMART_HSV_LUT = 67,
 	ISP_SMART_MAX
 };
 
@@ -216,7 +218,7 @@ enum isp_smart_id {
 #elif defined CONFIG_ISP_2_7
 #include "sensor_raw_sharkl5pro.h"
 #elif defined CONFIG_ISP_2_8
-#include "sensor_raw_sharkl5pro.h"
+#include "sensor_raw_sharkl6.h"
 #elif defined CONFIG_ISP_2_9
 #include "sensor_raw_sharkl5pro.h"
 #else
