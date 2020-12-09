@@ -28,6 +28,7 @@
  */
 #include "test_suite_manager.h"
 #include "json1case.h"
+#include "json2hal.h"
 #include <unistd.h>
 #include <time.h>
 #include <stdio.h>
@@ -248,39 +249,87 @@ exit:
 
 int suiteManager::RunTest() {
     IT_LOGD("[%d]: E",m_curr1CaseID);
-    int ret = -IT_ERR;
+    int ret = IT_NO_THIS_CASE;
+    char TestStartTime[30];
+    char TestEndTime[30];
+    int StartTime, EndTime;
+    IParseJson *Json2;
+    struct timeval tv_start, tv_end;
+    struct timezone tz_start, tz_end;
+    struct tm *p_start, *p_end;
     char* resultStr=(char*)malloc(CHAR_MAX_LEN);
     memset(resultStr,0,CHAR_MAX_LEN);
 
-    vector<IParseJson *>::iterator itor = mVec_TotalCase.begin();
-    while (itor != mVec_TotalCase.end()) {
-        string moduleName = (*itor)->m_thisModuleName;
-        if (mMap_Suite[moduleName.data()]){
-            ret = mMap_Suite[moduleName.data()]->Run(*itor);
-        }
-        if (ret != IT_OK){
-            IT_LOGE("[%d]%s_%d: FAILED",m_curr1CaseID,moduleName.data(),(*itor)->getID());
-            sprintf(resultStr,"[%d]%s_%d: FAILED\n",m_curr1CaseID,moduleName.data(),(*itor)->getID());
-            if (m_ResultFile){
+    if (m_ResultFile && resultStr){
+//Test Start
+        sprintf(resultStr, "[ Test m_curr1CaseID [%d] Start \n",m_curr1CaseID);
+        fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+        vector<IParseJson *>::iterator itor = mVec_TotalCase.begin();
+        while (itor != mVec_TotalCase.end()) {
+            Json2 = *itor;
+            HalCaseComm *_json2 = (HalCaseComm *)Json2;
+            string moduleName = (*itor)->m_thisModuleName;
+            if (mMap_Suite[moduleName.data()]){
+                gettimeofday(&tv_start, &tz_start);
+                p_start = localtime(&tv_start.tv_sec);
+                sprintf(TestStartTime, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", (1900 + p_start->tm_year),
+                        (1 + p_start->tm_mon), p_start->tm_mday, p_start->tm_hour, p_start->tm_min,
+                        p_start->tm_sec, tv_start.tv_usec);
+                StartTime = p_start->tm_sec * 1000000 + tv_start.tv_usec;
+                ret = mMap_Suite[moduleName.data()]->Run(*itor);
+                gettimeofday(&tv_end, &tz_end);
+                p_end = localtime(&tv_end.tv_sec);
+                sprintf(TestEndTime, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", (1900 + p_end->tm_year),
+                        (1 + p_end->tm_mon), p_end->tm_mday, p_end->tm_hour, p_end->tm_min,
+                        p_end->tm_sec, tv_end.tv_usec);
+                EndTime = p_end->tm_sec * 1000000 + tv_end.tv_usec;
+            } else {
+                sprintf(resultStr, "    { \n            CaseName : %s_%d, (%s), \n",
+                            moduleName.data() , (*itor)->getID() , _json2->m_funcName.c_str());
                 fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
-                IT_LOGD("[%d]: FAILED",m_curr1CaseID);
-                sprintf(resultStr,"[%d]: FAILED\n",m_curr1CaseID);
-            }
-            goto exit;
-        } else{
-            IT_LOGD("[%d]_%s_%d: PASSED",m_curr1CaseID,moduleName.data(),(*itor)->getID());
-            sprintf(resultStr,"[%d]_%s_%d: PASSED\n",m_curr1CaseID,moduleName.data(),(*itor)->getID());
-            if (m_ResultFile){
+                sprintf(resultStr, "            TestStatus : %d , \n", ret);
                 fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+                itor++;
+                continue;
             }
+
+//Test Common data, include CaseName CostTime, etc
+            sprintf(resultStr, "    { \n            CaseName : %s_%d (%s), \n",
+                        moduleName.data() , (*itor)->getID() , _json2->m_funcName.c_str());
+            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+            sprintf(resultStr, "            TestStatus : %d , \n", ret);
+            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+            sprintf(resultStr, "            SatrtTime : %s , \n", TestStartTime);
+            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+            sprintf(resultStr, "            EndTime : %s , \n", TestEndTime);
+            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+            sprintf(resultStr, "            CostTime : %dms , \n",((EndTime - StartTime)/1000));
+            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+            if (ret != IT_OK){
+                IT_LOGE("[%d]%s_%d: FAILED",m_curr1CaseID,moduleName.data(),(*itor)->getID());
+                sprintf(resultStr,"            FailCause : %d , \n",m_curr1CaseID);
+                fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+                goto exit;
+            } else{
+                IT_LOGD("[%d]_%s_%d: PASSED",m_curr1CaseID,moduleName.data(),(*itor)->getID());
+            }
+            sprintf(resultStr, "            Extends : { %d } , \n    }, \n", m_curr1CaseID);
+            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+            itor++;
         }
-        itor++;
-    }
-    IT_LOGD("[%d]: PASSED",m_curr1CaseID);
-    if (m_ResultFile){
-        sprintf(resultStr,"[%d]: PASSED\n",m_curr1CaseID);
+
+        IT_LOGD("[%d]: PASSED",m_curr1CaseID);
+        sprintf(resultStr,"Test m_curr1CaseID [%d] End ]\n",m_curr1CaseID);
         fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
     }
+
 exit:
     free(resultStr);
     return ret;
