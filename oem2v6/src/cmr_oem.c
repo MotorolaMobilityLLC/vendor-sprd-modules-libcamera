@@ -5827,12 +5827,13 @@ cmr_int camera_ipm_deinit(cmr_handle oem_handle) {
     }
 
 #ifdef CONFIG_CAMERA_DRE
-    if (cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
+    if (cxt->ipm_cxt.dre_inited) {
         ret = camera_close_dre(cxt);
         if (ret) {
             CMR_LOGE("failed to close cnr");
+        } else {
+            cxt->ipm_cxt.dre_inited = 0;
         }
-        cxt->ipm_cxt.dre_inited = 0;
     }
 #endif
 
@@ -13439,12 +13440,13 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     }
 
 #ifdef CONFIG_CAMERA_DRE
-    if (cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
+    if (cxt->ipm_cxt.dre_inited) {
         ret = camera_close_dre(cxt);
         if (ret) {
             CMR_LOGE("failed to close dre");
+        } else {
+            cxt->ipm_cxt.dre_inited = 0;
         }
-        cxt->ipm_cxt.dre_inited = 0;
     }
 #endif
 
