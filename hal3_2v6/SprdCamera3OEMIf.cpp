@@ -4270,7 +4270,11 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     cmr_uint videobuf_vir = 0;
     cmr_uint prebuf_phy = 0;
     cmr_uint prebuf_vir = 0;
-    const SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
+    SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
+
+    mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
+													&sprddefInfo->af_pos);
+    mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &sprddefInfo->bv);
 
     channel = reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
     channel->getStream(CAMERA_STREAM_TYPE_VIDEO, &rec_stream);

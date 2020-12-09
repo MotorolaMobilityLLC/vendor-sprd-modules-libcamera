@@ -253,6 +253,7 @@ static tags_info_t
         {"sprdAvailableAutoFdr", TYPE_BYTE},
         {"supermacrophoto", TYPE_BYTE},
         {"sprdSimleShutterEnable", TYPE_BYTE},
+        {"engeneerParam", TYPE_INT32},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

@@ -3204,6 +3204,10 @@ int SprdCamera3Setting::initStaticMetadata(
 
     staticInfo.update(ANDROID_SPRD_AVAILABLE_AI_SCENE,
                       &(s_setting[cameraId].sprddefInfo.availabe_ai_scene), 1);
+    sensor_get_otp_tag((s_setting[cameraId].engeneerInfo.otp_data), cameraId);
+    staticInfo.update(ANDROID_SPRD_ENGENEER_MODE_PARAM,
+                      s_setting[cameraId].engeneerInfo.otp_data,
+                      ARRAY_SIZE(s_setting[cameraId].engeneerInfo.otp_data));
 
     *static_metadata = staticInfo.release();
 #undef FILL_CAM_INFO
@@ -6100,6 +6104,13 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     }
     camMetadata.update(ANDROID_SPRD_AUTOCHASING_TRACEREGION,
                        s_setting[mCameraId].autotrackingInfo.at_cb_info, 3);
+
+    int32_t engeneerParam[2];
+    engeneerParam[0] = s_setting[mCameraId].sprddefInfo.af_pos;
+    engeneerParam[1] = s_setting[mCameraId].sprddefInfo.bv;
+    HAL_LOGD("s_setting[mCameraId].sprddefInfo.af_pos %d s_setting[mCameraId].sprddefInfo.bv %d",
+             engeneerParam[0],engeneerParam[1]);
+    camMetadata.update(ANDROID_SPRD_ENGENEER_MODE_PARAM, engeneerParam, 2);
 
     resultMetadata = camMetadata.release();
     return resultMetadata;

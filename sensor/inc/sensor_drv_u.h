@@ -835,7 +835,7 @@ cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
-
+cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id);
 #ifdef __cplusplus
 }
 #endif

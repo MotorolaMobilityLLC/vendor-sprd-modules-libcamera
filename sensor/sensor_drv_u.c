@@ -43,7 +43,8 @@ static pthread_mutex_t cali_otp_mutex;
 #define SENSOR_CTRL_EVT_STREAM_CTRL (SENSOR_CTRL_EVT_BASE + 0x5)
 
 #define LOGICAL_SENSOR_ID_MAX 16
-
+#define SPRD_AWB_OTP_SIZE 128
+#define SPRD_AF_OTP_SIZE 128
 /**---------------------------------------------------------------------------*
  **                         Local Variables                                   *
  **---------------------------------------------------------------------------*/
@@ -65,6 +66,8 @@ static struct xml_camera_cfg_info xml_cfg_tab[SENSOR_ID_MAX] = {0};
 
 static cmr_u32 sensor_is_HD_mode = 0;
 static cmr_u8 otpdata[SENSOR_ID_MAX][SPRD_DUAL_OTP_SIZE] = {0};
+static cmr_u8 otp_awb_data[SENSOR_ID_MAX][SPRD_AWB_OTP_SIZE] = {0};
+static cmr_u8 otp_af_data[SENSOR_ID_MAX][SPRD_AF_OTP_SIZE] = {0};
 
 /**---------------------------------------------------------------------------*
  **                         Local Functions                                   *
@@ -3237,7 +3240,8 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     struct xml_camera_cfg_info *camera_cfg;
     struct otp_drv_lib *libOtpPtr = &otp_lib_mngr[sensor_cxt->slot_id];
     struct vcm_drv_lib *libVcmPtr = &vcm_lib_mngr[sensor_cxt->slot_id];
-
+    struct module_info_t *module_info = PNULL;
+    cmr_u8 *awb_src_dat, *af_src_dat;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
     SENSOR_DRV_CHECK_ZERO(sns_module);
@@ -3278,6 +3282,15 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     if (SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) {
         if (sns_module->otp_drv_info.otp_drv_entry) {
             sensor_otp_process(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
+            otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)sensor_cxt->otp_drv_handle;
+            module_info = &(otp_cxt->otp_module_info);
+            SENSOR_DRV_CHECK_ZERO(module_info);
+            awb_src_dat = otp_cxt->otp_raw_data.buffer + module_info->master_awb_info.offset;
+            af_src_dat = otp_cxt->otp_raw_data.buffer + module_info->master_af_info.offset;
+            SENSOR_DRV_CHECK_ZERO(awb_src_dat);
+            SENSOR_DRV_CHECK_ZERO(af_src_dat);
+            memcpy(otp_awb_data, awb_src_dat, SPRD_AWB_OTP_SIZE);
+            memcpy(otp_af_data, af_src_dat, SPRD_AF_OTP_SIZE);
         } else {
             SENSOR_LOGI(
                 "otp_drv_entry not configured:mod:%p,otp_drv:%p", sns_module,
@@ -4235,4 +4248,56 @@ cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) {
     sensor_is_HD_mode = is_HD_mode;
     SENSOR_LOGI("is_HD_mode:%d", is_HD_mode);
     return ret;
+}
+
+
+cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id) {
+    if(id > SENSOR_ID_MAX) {
+        SENSOR_LOGE("not valid sensor id");
+        return -1;
+    }
+    cmr_u8 *awb_src_dat, *af_src_dat;
+    cmr_int ret = SENSOR_SUCCESS;
+    uint16_t RG_GAIN, BG_GAIN, RG_GOLDEN_GAIN, BG_GOLDEN_GAIN, AF_INFI, AF_MAC;
+    uint16_t r_gain_current = 0, g_gain_current = 0, b_gain_current = 0, base_gain = 0;
+    uint16_t r_gain = 1024, g_gain = 1024, b_gain = 1024;
+    SENSOR_DRV_CHECK_ZERO(otp_ptr);
+
+    awb_src_dat = otp_awb_data;
+    af_src_dat = otp_af_data;
+
+    SENSOR_DRV_CHECK_ZERO(awb_src_dat);
+    SENSOR_DRV_CHECK_ZERO(af_src_dat);
+
+    RG_GAIN = (awb_src_dat[0] | (((cmr_u16)awb_src_dat[1] & 0xf0) << 4)) > 0 ? (awb_src_dat[0] | (((cmr_u16)awb_src_dat[1] & 0xf0) << 4)) : 0x400;
+    BG_GAIN = ((((cmr_u16)awb_src_dat[1] & 0x0f) << 8) | awb_src_dat[2]) > 0 ? ((((cmr_u16)awb_src_dat[1] & 0x0f)  << 8) | awb_src_dat[2]) : 0x400;
+    RG_GOLDEN_GAIN = (awb_src_dat[0x4] | (((cmr_u16)awb_src_dat[0x5] & 0xf0) << 4)) > 0 ? (awb_src_dat[0x4] | (((cmr_u16)awb_src_dat[1] & 0xf0) << 4)) : 0x400;
+    BG_GOLDEN_GAIN = ((((cmr_u16)awb_src_dat[0x5] & 0x0f) << 8) | awb_src_dat[0x6]) > 0 ? ((((cmr_u16)awb_src_dat[0x5] & 0x0f)  << 8) | awb_src_dat[0x6]) : 0x400;
+
+    AF_INFI = (((cmr_u16)af_src_dat[0] << 8) & 0xff00) | af_src_dat[1];
+    AF_MAC = (((cmr_u16)af_src_dat[4] << 8) & 0xff00) | af_src_dat[5];
+
+
+    if(RG_GAIN && BG_GAIN && RG_GOLDEN_GAIN && BG_GOLDEN_GAIN) {
+        r_gain_current = 2048 * RG_GOLDEN_GAIN / RG_GAIN;
+        b_gain_current = 2048 * BG_GOLDEN_GAIN / BG_GAIN;
+        g_gain_current = 2048;
+
+        base_gain = (r_gain_current < b_gain_current) ? r_gain_current : b_gain_current;
+        base_gain = (base_gain < g_gain_current) ? base_gain : g_gain_current;
+
+        r_gain = 0x400 * r_gain_current / base_gain;
+        g_gain = 0x400 * g_gain_current / base_gain;
+        b_gain = 0x400 * b_gain_current / base_gain;
+
+        *otp_ptr++ = (cmr_s32)RG_GAIN;
+        *otp_ptr++ = (cmr_s32)BG_GAIN;
+        *otp_ptr++ = (cmr_s32)r_gain;
+        *otp_ptr++ = (cmr_s32)b_gain;
+        *otp_ptr++ = (cmr_s32)g_gain;
+        *otp_ptr++ = (cmr_s32)AF_INFI;
+        *otp_ptr++ = (cmr_s32)AF_MAC;
+    }
+
+    return 0;
 }

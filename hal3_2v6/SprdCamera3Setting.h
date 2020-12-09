@@ -420,6 +420,8 @@ typedef struct {
     uint8_t sprd_super_macro;
     uint8_t smile_capture_enable;
     uint8_t sprd_ae_sync;
+    uint32_t af_pos;
+    uint32_t bv;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -486,6 +488,12 @@ enum vcm_result {
     VCM_RESULT_FAIL = 0x3
 };
 
+typedef struct {
+    int32_t otp_data[7];
+    int32_t af_pos;
+    int32_t bv;
+} ENGENEER_Tag;
+
 typedef struct cam_stream_info {
     struct img_size stream_sizes_tbl;
     int64_t stream_min_duration;
@@ -544,6 +552,7 @@ typedef struct {
     AUTO_TRACKING_Tag autotrackingInfo;
     MLOG_Tag mlogInfo;
     int32_t fd_score[10];
+    ENGENEER_Tag engeneerInfo;
 } sprd_setting_info_t;
 typedef int (*CAMIP_INTERFACE_INIT)(char **);
 class SprdCamera3Setting {
