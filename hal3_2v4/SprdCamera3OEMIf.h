@@ -382,7 +382,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     enum Sprd_camera_state {
         SPRD_INIT,
         SPRD_IDLE,
-        SPRD_INTERNAL_BEFORE_RAW_REQUESTED,
         SPRD_ERROR,
         SPRD_PREVIEW_IN_PROGRESS,
         SPRD_FOCUS_IN_PROGRESS,
@@ -621,7 +620,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     Mutex mCapBufLock;
     Mutex mZslLock;
     uint32_t mCapBufIsAvail;
-    Mutex mSetsnpcancelLock;
+
     uint32_t m_zslValidDataWidth;
     uint32_t m_zslValidDataHeight;
 
