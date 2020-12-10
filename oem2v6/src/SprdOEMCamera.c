@@ -1153,6 +1153,9 @@ static cmr_int ioctrl_set_high_res_mode(cmr_handle handle, void *param) {
 static cmr_int ioctrl_local_get_cover(cmr_handle handle, void *param) {
         return camera_local_get_cover(handle, (struct dual_sensor_luma_info *)param);
 }
+static cmr_int ioctrl_cpat_get_cover(cmr_handle handle, void *param) {
+        return camera_cpat_get_cover(handle, (cmr_uint *)param);
+}
 static cmr_int ioctrl_get_isp_af_fullscan(cmr_handle handle, void *param) {
         return cmr_get_isp_af_fullscan(handle, (struct isp_af_fullscan_info *)param);
 }
@@ -1288,6 +1291,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_JPEG_DECODE_PROC]           = ioctrl_jpeg_decode_simplify,
     [CAMERA_IOCTRL_GET_FDR_TUNING_FLAG]      = ioctrl_get_fdr_tuning_flag,
     [CAMERA_IOCTRL_SET_SYNC_STATE]             = ioctrl_set_sync_state,
+    [CPAT_IOCTRL_GET_SENSOR_LUMA]            = ioctrl_cpat_get_cover,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {

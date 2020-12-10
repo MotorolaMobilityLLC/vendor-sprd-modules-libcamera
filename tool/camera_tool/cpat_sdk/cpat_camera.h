@@ -11,6 +11,8 @@
 #define SENSOR_LIBRARY_PATH "libcamsensor.so"
 #define SENSOR_CAPT_FAIL 1
 #define SENSOR_DEFAULT_INFO "0xff"
+#define SENSOR_LUMA_READ_FAIL -2
+#define SENSOR_LUMA_NOT_SUPPORT -1
 #define SENSOR_CHECK_PARAM(a)                       \
         do {                                        \
             if(!a){                                 \

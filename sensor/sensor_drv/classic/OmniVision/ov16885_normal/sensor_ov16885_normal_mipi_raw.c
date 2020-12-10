@@ -483,7 +483,15 @@ static cmr_int ov16885_normal_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *para
 //#endif
     return rtn;
 }
+static cmr_int ov16885_normal_drv_get_brightness(cmr_handle handle, cmr_u32 *param) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    SENSOR_IC_CHECK_PTR(param);
+    struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    *param = 20;// this value 20 is only for test
+    SENSOR_LOGI("SENSOR: get_brightness: lumma = 0x%x\n", *param);
 
+    return 0;
+}
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -513,6 +521,9 @@ static cmr_int ov16885_normal_drv_access_val(cmr_handle handle, cmr_uint param)
             break;
         case SENSOR_VAL_TYPE_GET_PDAF_INFO:
             ret = ov16885_normal_drv_get_pdaf_info(handle, param_ptr->pval);
+            break;
+        case SENSOR_VAL_TYPE_GET_BV:
+            //ret = ov16885_normal_drv_get_brightness(handle, param_ptr->pval);
             break;
         default:
             break;

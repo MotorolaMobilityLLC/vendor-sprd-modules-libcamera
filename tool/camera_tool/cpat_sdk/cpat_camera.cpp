@@ -57,7 +57,7 @@ typedef struct sprd_camera_memory {
 static Mutex preview_lock;
 static int preview_valid = 0;
 static int is_iommu_enabled = 0;
-static unsigned char camera_id = 0;
+static unsigned char g_camera_id = 0;
 static uint32_t frame_has_callback = 0;
 static unsigned int m_preview_heap_num = 0;
 static sprd_camera_memory_t *m_preview_heap_reserved = NULL;
@@ -146,6 +146,7 @@ static unsigned int cpat_get_preview_buf_id_for_fd(cmr_s32 fd) {
 void cpat_camera_cb(enum camera_cb_type cb, const void *client_data,
                         enum camera_func_type func, void *parm4) {
     struct camera_frame_type *frame = (struct camera_frame_type *)parm4;
+    int lum_value = SENSOR_LUMA_READ_FAIL;
 
     if (!frame) {
         CMR_LOGE("callback with no frame");
@@ -164,8 +165,14 @@ void cpat_camera_cb(enum camera_cb_type cb, const void *client_data,
 
     target_buffer_id = cpat_get_preview_buf_id_for_fd(frame->fd);
     CMR_LOGI("target_buffer_id: %d", target_buffer_id);
+    if (g_camera_id == 2) {
+        m_hal_oem->ops->camera_ioctrl(oem_handle, CPAT_IOCTRL_GET_SENSOR_LUMA,
+                                       (void *)&lum_value);
+    } else {
+        lum_value = SENSOR_LUMA_NOT_SUPPORT;
+    }
 
-    if (!frame_has_callback) {
+    if (!frame_has_callback && (lum_value != SENSOR_LUMA_READ_FAIL)) {
         frame_has_callback = 1;
     }
 
@@ -665,7 +672,7 @@ loaderror:
 
 int cpat_camera_init(int camera_id) {
     int ret = 0;
-
+    g_camera_id = camera_id;
     CMR_LOGI("E, camera_id %d", camera_id);
 
     ret = cpat_load_hal_lib();

@@ -3075,7 +3075,7 @@ SENSOR_INFO_T g_ov16885_normal_mipi_raw_info = {
     .source_width_max = SNAPSHOT_WIDTH,
     .source_height_max = SNAPSHOT_HEIGHT,
     .name = (cmr_s8 *)SENSOR_NAME,
-    .image_format = SENSOR_IMAGE_FORMAT_RAW,
+    .image_format = SENSOR_IMAGE_FORMAT_RAW,//if yuv sensor, pls replace by SENSOR_IMAGE_FORMAT_YUV422
 
     .module_info_tab = s_ov16885_normal_module_info_tab,
     .module_info_tab_size = ARRAY_SIZE(s_ov16885_normal_module_info_tab),

@@ -715,6 +715,8 @@ cmr_int camera_local_dcam_state(cmr_handle oem_handle,
 
 cmr_int camera_local_get_cover(cmr_handle cmr_handle,
                                struct dual_sensor_luma_info *cover_value);
+cmr_int camera_cpat_get_cover(cmr_handle oem_handle, cmr_handle luma_info);
+
 cmr_int camera_stream_ctrl(cmr_handle cmr_handle, cmr_u32 on_off);
 cmr_int cmr_get_isp_af_fullscan(cmr_handle oem_handle,
                                 struct isp_af_fullscan_info *af_fullscan_info);

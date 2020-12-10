@@ -15718,7 +15718,24 @@ cmr_int camera_local_get_cover(cmr_handle oem_handle,
         ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                                SENSOR_ACCESS_VAL, (cmr_uint)&val);
     }
-    CMR_LOGV("X");
+    CMR_LOGD("X");
+    return ret;
+}
+
+cmr_int camera_cpat_get_cover(cmr_handle oem_handle, cmr_handle luma_info) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    SENSOR_VAL_T val;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_LOGD("E id=%d", cxt->camera_id);
+    if (CAM_IMG_FMT_YUV422P == cxt->sn_cxt.sensor_info.image_format) {
+        val.type = SENSOR_VAL_TYPE_GET_BV;
+        val.pval = luma_info;
+        ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,
+                                SENSOR_ACCESS_VAL, (cmr_uint)&val);
+    } else {
+        *(cmr_uint *)luma_info = -1;
+    }
+    CMR_LOGD("X");
     return ret;
 }
 
