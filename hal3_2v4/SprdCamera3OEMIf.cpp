@@ -911,8 +911,6 @@ int SprdCamera3OEMIf::zslTakePictureL() {
     cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
     HAL_LOGI("E");
 
-    setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
-
     if (mCameraId != 1) {
         mHalOem->ops->camera_get_last_preflash_time(mCameraHandle, &last_preflash_time);
         now_time = systemTime(CLOCK_MONOTONIC);
@@ -1011,7 +1009,10 @@ int SprdCamera3OEMIf::zslTakePictureL() {
        setCameraState(SPRD_IDLE, STATE_CAPTURE);
        goto exit;
     }
-
+    {
+        Mutex::Autolock l(&mSetsnpcancelLock);
+        setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
+    }
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
@@ -1058,6 +1059,7 @@ int SprdCamera3OEMIf::zslTakePicture() {
     }
     if (mSprdZslEnabled == true) {
         CMR_MSG_INIT(message);
+        setCameraState(SPRD_INTERNAL_BEFORE_RAW_REQUESTED, STATE_CAPTURE);
         message.msg_type = CMR_EVT_ZSL_MON_SNP;
         message.sync_flag = CMR_MSG_SYNC_NONE;
         message.data = NULL;
@@ -1870,6 +1872,7 @@ SprdCamera3OEMIf::getCameraStateStr(SprdCamera3OEMIf::Sprd_camera_state s) {
         STATE_STR(SPRD_INTERNAL_PREVIEW_STOPPING),
         STATE_STR(SPRD_INTERNAL_CAPTURE_STOPPING),
         STATE_STR(SPRD_INTERNAL_PREVIEW_REQUESTED),
+        STATE_STR(SPRD_INTERNAL_BEFORE_RAW_REQUESTED),
         STATE_STR(SPRD_INTERNAL_RAW_REQUESTED),
         STATE_STR(SPRD_INTERNAL_STOPPING),
 #undef STATE_STR
@@ -2384,6 +2387,7 @@ void SprdCamera3OEMIf::setCameraState(Sprd_camera_state state,
 
     /*capture state*/
     case SPRD_FLASH_IN_PROGRESS:
+    case SPRD_INTERNAL_BEFORE_RAW_REQUESTED:
     case SPRD_INTERNAL_RAW_REQUESTED:
     case SPRD_WAITING_RAW:
     case SPRD_WAITING_JPEG:
@@ -3558,6 +3562,12 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     }
 
     HAL_LOGI("E camera id %d", mCameraId);
+    {
+        Mutex::Autolock l(&mSetsnpcancelLock);
+        if(SPRD_INTERNAL_BEFORE_RAW_REQUESTED == mCameraState.capture_state) {
+            mHalOem->ops->camera_set_snpcancel_flag(mCameraHandle);
+        }
+    }
     if (isCapturing()) {
         Mutex::Autolock l(&mLock);
         cancelPictureInternal();

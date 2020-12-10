@@ -2233,6 +2233,8 @@ typedef struct oem_ops {
 
     cmr_int (*camera_set_recovery_status)(cmr_handle camera_handle);
 
+    cmr_int (*camera_set_snpcancel_flag)(cmr_handle camera_handle);
+
     //uint32_t (*camera_safe_scale_th)(void);
 
     cmr_int (*camera_take_picture)(cmr_handle camera_handle,

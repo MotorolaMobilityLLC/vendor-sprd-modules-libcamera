@@ -394,6 +394,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
         SPRD_INTERNAL_PREVIEW_STOPPING,
         SPRD_INTERNAL_CAPTURE_STOPPING,
         SPRD_INTERNAL_PREVIEW_REQUESTED,
+        SPRD_INTERNAL_BEFORE_RAW_REQUESTED,
         SPRD_INTERNAL_RAW_REQUESTED,
         SPRD_INTERNAL_STOPPING,
 
@@ -620,7 +621,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     Mutex mCapBufLock;
     Mutex mZslLock;
     uint32_t mCapBufIsAvail;
-
+    Mutex mSetsnpcancelLock;
     uint32_t m_zslValidDataWidth;
     uint32_t m_zslValidDataHeight;
 
