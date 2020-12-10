@@ -1,0 +1,1084 @@
+{
+        "ImageSensorCaseLists": [
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "OpenCommon",
+                        "CaseID": 3,
+                        "Param": [],
+                        "Description": "Sensor 0 Open"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewOpenCommon",
+                        "CaseID": 4,
+                        "Param": [
+                                640,
+                                480,
+                                10
+                        ],
+                        "Description": "Sensor 0 StartPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewOpenCommon",
+                        "CaseID": 5,
+                        "Param": [
+                                1080,
+                                720,
+                                10
+                        ],
+                        "Description": "Sensor 0 StartPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewStopCommon",
+                        "CaseID": 6,
+                        "Param": [
+                                1
+                        ],
+                        "Description": "Sensor 0 StopPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "CloseCommon",
+                        "CaseID": 7,
+                        "Param": [],
+                        "Description": "Sensor 0 CloseCommon"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "OpenCommon",
+                        "CaseID": 8,
+                        "Param": [],
+                        "Description": "Sensor 0 Open"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewOpenCommon",
+                        "CaseID": 9,
+                        "Param": [
+                                1080,
+                                720,
+                                10
+                        ],
+                        "Description": "Sensor 0 StartPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 10,
+                        "Param": [
+                                10000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 11,
+                        "Param": [
+                                128
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 12,
+                        "Param": [
+                                256
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 13,
+                        "Param": [
+                                384
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 14,
+                        "Param": [
+                                512
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 15,
+                        "Param": [
+                                640
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 16,
+                        "Param": [
+                                768
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 17,
+                        "Param": [
+                                896
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 18,
+                        "Param": [
+                                1024
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 19,
+                        "Param": [
+                                1152
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 20,
+                        "Param": [
+                                1280
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 21,
+                        "Param": [
+                                1408
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 22,
+                        "Param": [
+                                1536
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 23,
+                        "Param": [
+                                1664
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 24,
+                        "Param": [
+                                1792
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 25,
+                        "Param": [
+                                1920
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 26,
+                        "Param": [
+                                2048
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 27,
+                        "Param": [
+                                2176
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 28,
+                        "Param": [
+                                2304
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 29,
+                        "Param": [
+                                2432
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 30,
+                        "Param": [
+                                2560
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 31,
+                        "Param": [
+                                2688
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 32,
+                        "Param": [
+                                2816
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 33,
+                        "Param": [
+                                2944
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 34,
+                        "Param": [
+                                3072
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 35,
+                        "Param": [
+                                3200
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 36,
+                        "Param": [
+                                3328
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 37,
+                        "Param": [
+                                3456
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 38,
+                        "Param": [
+                                3584
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 39,
+                        "Param": [
+                                3712
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 40,
+                        "Param": [
+                                3840
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewStopCommon",
+                        "CaseID": 41,
+                        "Param": [
+                                1
+                        ],
+                        "Description": "Sensor 0 StopPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "CloseCommon",
+                        "CaseID": 42,
+                        "Param": [],
+                        "Description": "Sensor 0 CloseCommon"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "OpenCommon",
+                        "CaseID": 43,
+                        "Param": [],
+                        "Description": "Sensor 0 Open"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewOpenCommon",
+                        "CaseID": 44,
+                        "Param": [
+                                1080,
+                                720,
+                                10
+                        ],
+                        "Description": "Sensor 0 StartPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 45,
+                        "Param": [
+                                128
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 46,
+                        "Param": [
+                                1000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 47,
+                        "Param": [
+                                2000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 48,
+                        "Param": [
+                                3000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 49,
+                        "Param": [
+                                4000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 50,
+                        "Param": [
+                                5000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 51,
+                        "Param": [
+                                6000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 52,
+                        "Param": [
+                                7000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 53,
+                        "Param": [
+                                8000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 54,
+                        "Param": [
+                                9000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 55,
+                        "Param": [
+                                10000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 56,
+                        "Param": [
+                                11000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 57,
+                        "Param": [
+                                12000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 58,
+                        "Param": [
+                                13000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 59,
+                        "Param": [
+                                14000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 60,
+                        "Param": [
+                                15000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 61,
+                        "Param": [
+                                16000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 62,
+                        "Param": [
+                                17000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 63,
+                        "Param": [
+                                18000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 64,
+                        "Param": [
+                                19000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 65,
+                        "Param": [
+                                20000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 66,
+                        "Param": [
+                                21000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 67,
+                        "Param": [
+                                22000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 68,
+                        "Param": [
+                                23000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 69,
+                        "Param": [
+                                24000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 70,
+                        "Param": [
+                                25000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 71,
+                        "Param": [
+                                26000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 72,
+                        "Param": [
+                                27000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 73,
+                        "Param": [
+                                28000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 74,
+                        "Param": [
+                                29000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 75,
+                        "Param": [
+                                30000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewStopCommon",
+                        "CaseID": 76,
+                        "Param": [
+                                1
+                        ],
+                        "Description": "Sensor 0 StopPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "CloseCommon",
+                        "CaseID": 77,
+                        "Param": [],
+                        "Description": "Sensor 0 CloseCommon"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "OpenCommon",
+                        "CaseID": 78,
+                        "Param": [],
+                        "Description": "Sensor 0 Open"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewOpenCommon",
+                        "CaseID": 79,
+                        "Param": [
+                                1080,
+                                720,
+                                10
+                        ],
+                        "Description": "Sensor 0 StartPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteExposure",
+                        "CaseID": 80,
+                        "Param": [
+                                10000,
+                                0,
+                                0,
+                                0
+                        ],
+                        "Description": "Sensor 0 Set Exposure"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 81,
+                        "Param": [
+                                128
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 82,
+                        "Param": [
+                                256
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 83,
+                        "Param": [
+                                384
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 84,
+                        "Param": [
+                                512
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 85,
+                        "Param": [
+                                640
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 86,
+                        "Param": [
+                                768
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 87,
+                        "Param": [
+                                896
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 88,
+                        "Param": [
+                                1024
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 89,
+                        "Param": [
+                                1152
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 90,
+                        "Param": [
+                                1280
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 91,
+                        "Param": [
+                                1408
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 92,
+                        "Param": [
+                                1536
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 93,
+                        "Param": [
+                                1664
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 94,
+                        "Param": [
+                                1792
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 95,
+                        "Param": [
+                                1920
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 96,
+                        "Param": [
+                                2048
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 97,
+                        "Param": [
+                                2176
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 98,
+                        "Param": [
+                                2304
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 99,
+                        "Param": [
+                                2432
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 100,
+                        "Param": [
+                                2560
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 101,
+                        "Param": [
+                                2688
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 102,
+                        "Param": [
+                                2816
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 103,
+                        "Param": [
+                                2944
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 104,
+                        "Param": [
+                                3072
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 105,
+                        "Param": [
+                                3200
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 106,
+                        "Param": [
+                                3328
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 107,
+                        "Param": [
+                                3456
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 108,
+                        "Param": [
+                                3584
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 109,
+                        "Param": [
+                                3712
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "ICWriteGain",
+                        "CaseID": 110,
+                        "Param": [
+                                3840
+                        ],
+                        "Description": "Sensor 0 Set Gain"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "PreviewStopCommon",
+                        "CaseID": 111,
+                        "Param": [
+                                1
+                        ],
+                        "Description": "Sensor 0 StopPreview"
+                },
+                {
+                        "PhysicalSensorID": 0,
+                        "FuncName": "CloseCommon",
+                        "CaseID": 112,
+                        "Param": [],
+                        "Description": "Sensor 0 CloseCommon"
+                }
+        ]
+}
