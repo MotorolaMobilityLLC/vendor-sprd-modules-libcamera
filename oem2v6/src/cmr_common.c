@@ -549,13 +549,16 @@ static cmr_int dump_rgb14_tobmp(char *file_prefix,
 	}
 
 	for (j = 0; j < h; j++) {
-		src_R = (uint16_t *)(vir_addr->addr_y + j * w * 3 * 2);
+		src_R = (uint16_t *)(vir_addr->addr_y + j * w * 8);
 		src_G = src_R + 1;
 		src_B = src_G + 1;
 		for (i = 0; i < w; i++) {
 			line_buf[i * 3 + 0] = (uint8_t)((*src_B >> 6) & 0xFF);
-			line_buf[i * 3 + 1] = (uint8_t)((*src_G >> 6) & 0xFF);
-			line_buf[i * 3 + 2] = (uint8_t)((*src_R >> 6) & 0xFF);
+			line_buf[i * 3 + 1] = (uint8_t)((*src_R >> 6) & 0xFF);
+			line_buf[i * 3 + 2] = (uint8_t)((*src_G >> 6) & 0xFF);
+			src_B += 4;
+			src_R += 4;
+			src_G += 4;
 		}
 		fwrite(line_buf, 1, pitch, fp);
 	}
@@ -633,7 +636,7 @@ cmr_int dump_image_tags(char *tag, char *tag_suffix,
     } else if (CAM_IMG_FMT_RGB14 == img_fmt) {
         dump_rgb14_tobmp(file_name, width, height, vir_addr);
         strcat(file_name, ".rgb");
-        size = width * height * 3 * 2;
+        size = width * height * 8;
 
     }
 

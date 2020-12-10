@@ -17577,7 +17577,7 @@ cmr_preview_realloc_buffer_for_fdr(cmr_handle preview_handle, cmr_u32 camera_id,
     if (!need_rgb)
         goto exit;
 
-    prev_cxt->cap_rgb_mem_size = (width+2) * (height+2) * 2 * 3;
+    prev_cxt->cap_rgb_mem_size = (width+2) * (height+2) * 8;
     prev_cxt->cap_rgb_mem_num = 2;
     ret = mem_ops->alloc_mem(CAMERA_SNAPSHOT_ZSL_RGB, handle->oem_handle,
                (cmr_u32 *)&prev_cxt->cap_rgb_mem_size,

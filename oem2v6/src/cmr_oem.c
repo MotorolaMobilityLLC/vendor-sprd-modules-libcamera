@@ -556,7 +556,7 @@ static cmr_int camera_close_fdr(struct camera_context *cxt) {
 
 /* send to hw reproc merged raw frame */
 static cmr_int camera_fdr_reproc_v1raw(struct camera_context *cxt,
-	struct swa_frame *src_frame)
+	struct swa_frame *src_frame, struct swa_frame *mid_frame)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 buf_size = 0;
@@ -604,14 +604,23 @@ static cmr_int camera_fdr_reproc_v1raw(struct camera_context *cxt,
 	buf_cfg.addr[0].addr_u = src_frame->addr_phy[1];
 	buf_cfg.addr[0].addr_v = src_frame->addr_phy[2];
 
+	/* for dcam output raw buffer */
+	buf_cfg.fd[1] = mid_frame->fd;
+	buf_cfg.addr_vir[1].addr_y = mid_frame->addr_vir[0];
+	buf_cfg.addr_vir[1].addr_u = mid_frame->addr_vir[1];
+	buf_cfg.addr_vir[1].addr_v = mid_frame->addr_vir[2];
+	buf_cfg.addr[1].addr_y = mid_frame->addr_phy[0];
+	buf_cfg.addr[1].addr_u = mid_frame->addr_phy[1];
+	buf_cfg.addr[1].addr_v = mid_frame->addr_phy[2];
+
 	/* for hw output RGB buffer */
-	buf_cfg.fd[1] = free_buf.fd[0];
-	buf_cfg.addr_vir[1] = free_buf.addr_vir[0];
-	buf_cfg.addr[1] = free_buf.addr[0];
+	buf_cfg.fd[2] = free_buf.fd[0];
+	buf_cfg.addr_vir[2] = free_buf.addr_vir[0];
+	buf_cfg.addr[2] = free_buf.addr[0];
 
 	buf_cfg.channel_id = cxt->snp_cxt.channel_id;
 	buf_cfg.base_id = src_frame->base_id;
-	buf_cfg.count = 2;
+	buf_cfg.count = 3;
 	buf_cfg.slice_height = src_frame->sec;
 	buf_cfg.start_buf_id = src_frame->usec;
 	buf_cfg.monoboottime = src_frame->monoboottime;
@@ -637,6 +646,11 @@ static cmr_int camera_fdr_reproc_v1rgb(struct camera_context *cxt,
 	struct buffer_cfg buf_cfg;
 	struct img_size sn_size;
 	struct img_addr vir_addr;
+	struct img_frm yuv_frame;
+
+	bzero(&yuv_frame, sizeof(struct img_frm));
+	cmr_preview_get_fdr_zsl_buffer(cxt->prev_cxt.preview_handle,
+		cxt->camera_id, &yuv_frame);
 
 	cmr_preview_get_fdr_sn_size(cxt->prev_cxt.preview_handle,
 		cxt->camera_id, &sn_size);
@@ -657,10 +671,10 @@ static cmr_int camera_fdr_reproc_v1rgb(struct camera_context *cxt,
 	buf_cfg.addr[0].addr_u = src_frame->addr_phy[1];
 	buf_cfg.addr[0].addr_v = src_frame->addr_phy[2];
 
-	/* for hw output yuv buffer: reuse merged out raw buffer */
-	buf_cfg.fd[1] = cxt->dbg_cxt.buff_cfg.fd[0];
-	buf_cfg.addr_vir[1] = cxt->dbg_cxt.buff_cfg.addr_vir[0];
-	buf_cfg.addr[1] = cxt->dbg_cxt.buff_cfg.addr[0];
+	/*use zsl buffer for hw output yuv, as well as NR/EE input and output */
+	buf_cfg.fd[1] = yuv_frame.fd;
+	buf_cfg.addr_vir[1].addr_y = yuv_frame.addr_vir.addr_y;
+	buf_cfg.addr[1].addr_y = yuv_frame.addr_phy.addr_y;
 
 	buf_cfg.channel_id = cxt->snp_cxt.channel_id;
 	buf_cfg.base_id = src_frame->base_id;
@@ -689,14 +703,14 @@ static cmr_int camera_fdr_reproc(struct camera_context *cxt,
 	struct swa_frame *cur_frame;
 	int i, j, n, idx_map[6] = { 0, 3, 1, 2, 4, 5 };
 
-	if (cxt->swa_cxt_fdr.version == FDR_VERSION_1) {
-		ret = camera_fdr_reproc_v1raw(cxt, &out->frms[0]);
-		return ret;
-	}
-
 	if (out->frame_num < 2) {
 		CMR_LOGE("fail to get fdr out frames\n");
 		return CMR_CAMERA_FAIL;
+	}
+
+	if (cxt->swa_cxt_fdr.version == FDR_VERSION_1) {
+		ret = camera_fdr_reproc_v1raw(cxt, &out->frms[0], &out->frms[1]);
+		return ret;
 	}
 
 	cmr_preview_get_fdr_sn_size(cxt->prev_cxt.preview_handle,
@@ -928,15 +942,26 @@ static cmr_int camera_fdr_handle_postv1rgb(struct camera_context *cxt,
 
 	if (cxt->dbg_cxt.inited && cxt->dbg_cxt.dump_bits) {
 		struct img_addr vir_addr;
+		struct buffer_cfg *buf_cfg = &cxt->dbg_cxt.buff_cfg;
 
 		vir_addr.addr_y = frame->yaddr_vir;
-		buf_size = pic_size.width * pic_size.height * 3 * 2;
+		buf_size = pic_size.width * pic_size.height * 8;
 		dump_image_tags(cxt->dbg_cxt.tags, "rgb_hw",
 		        CAM_IMG_FMT_RGB14, pic_size.width, pic_size.height,
 		        -1, &vir_addr, buf_size);
 		CMR_LOGD("dump fdr rgb from hw, prefix %s, fd %d,  w %d h %d,  vaddr %lx\n",
 		        cxt->dbg_cxt.tags,
 		        frame->fd, pic_size.width, pic_size.height, vir_addr.addr_y);
+
+		vir_addr.addr_y = buf_cfg->addr_vir[1].addr_y;
+		buf_size = pic_size.width * pic_size.height * 2;
+		camera_invalidate_buf(cxt, buf_cfg->fd[1], buf_size, buf_cfg->addr[1].addr_y, buf_cfg->addr_vir[1].addr_y);
+		dump_image_tags(cxt->dbg_cxt.tags, "low",
+		        CAM_IMG_FMT_DCAM_RAW14BIT, pic_size.width, pic_size.height,
+		        -1, &vir_addr, buf_size);
+		CMR_LOGD("dump fdr dcam raw, prefix %s, fd %d,  w %d h %d,  vaddr %lx\n",
+		        cxt->dbg_cxt.tags,
+		        buf_cfg->fd[1], pic_size.width, pic_size.height, vir_addr.addr_y);
 	}
 
 	memset(&free_buf, 0, sizeof(free_buf));
@@ -955,9 +980,6 @@ static cmr_int camera_fdr_handle_postv1rgb(struct camera_context *cxt,
 	out.frame_num = 1;
 	dst_frame = &out.frms[0];
 	*dst_frame = *src_param;
-	dst_frame->fd = free_buf.fd[0];
-	dst_frame->addr_vir[0] = free_buf.addr_vir[0].addr_y;
-	dst_frame->addr_phy[0] = free_buf.addr[0].addr_y;
 
 	ret = swa_cxt->swa_process(swa_cxt->swa_handle, &in, &out, NULL);
 	if (ret) {
@@ -992,9 +1014,6 @@ static cmr_int camera_fdr_handle_postv1yuv(struct camera_context *cxt,
 	cmr_u32 buf_size = 0;
 	struct ipmpro_context *swa_cxt = &cxt->swa_cxt_fdr;
 	struct img_size pic_size;
-	struct img_frm yuv_frame;
-	struct frm_info dst_frame;
-	struct buffer_cfg buf_cfg, free_buf;
 	struct swa_frames_inout in, out;
 
 	pic_size.width = frame->length;
@@ -1005,7 +1024,7 @@ static cmr_int camera_fdr_handle_postv1yuv(struct camera_context *cxt,
 
 		vir_addr.addr_y = frame->yaddr_vir;
 		buf_size = pic_size.width * pic_size.height * 3 / 2;
-		dump_image_tags(cxt->dbg_cxt.tags, "yuv",
+		dump_image_tags(cxt->dbg_cxt.tags, "yuvisp",
 		        frame->fmt, pic_size.width, pic_size.height,
 		        -1, &vir_addr, buf_size);
 		CMR_LOGD("dump fdr hw yuv, prefix %s, fd %d,  w %d h %d,  vaddr %lx\n",
@@ -1014,12 +1033,13 @@ static cmr_int camera_fdr_handle_postv1yuv(struct camera_context *cxt,
 	}
 
 	memset(&in, 0, sizeof(struct swa_frames_inout));
+	memset(&out, 0, sizeof(struct swa_frames_inout));
 	in.frame_num = 1;
 	in.frms[0] = *src_param;
+	out.frame_num = 1;
+	out.frms[0] = *src_param;
 
 	//Config the final yuv buffer and yuv post proc parameters
-	camera_prepare_fdr_output(cxt, frame, src_param, &yuv_frame, &out);
-
 	ret = swa_cxt->swa_process(swa_cxt->swa_handle, &in, &out, NULL);
 	if (ret) {
 		CMR_LOGE("fdr swa_process failed\n");
@@ -1031,26 +1051,18 @@ static cmr_int camera_fdr_handle_postv1yuv(struct camera_context *cxt,
 
 		pic_size.width = frame->length;
 		pic_size.height = frame->height;
-		vir_addr.addr_y = yuv_frame.addr_vir.addr_y;
+		vir_addr.addr_y = frame->yaddr_vir;
 		buf_size = frame->height * frame->length * 3 / 2;
 
-		dump_image_tags(cxt->dbg_cxt.tags, "final",
+		dump_image_tags(cxt->dbg_cxt.tags, "yuvfinal",
 		        frame->fmt, pic_size.width, pic_size.height, -1, &vir_addr, buf_size);
 		CMR_LOGD("dump fdr final yuv, prefix %s, fd %d,  w %d h %d,  vaddr %lx\n",
 		        cxt->dbg_cxt.tags,
-		        yuv_frame.fd, pic_size.width, pic_size.height, vir_addr.addr_y);
+		        frame->fd, pic_size.width, pic_size.height, vir_addr.addr_y);
 	}
 
-	dst_frame = cxt->snp_cxt.cur_frm_info;
-	frame = &dst_frame;
 	frame->frame_type = FRAME_COMMON;
-	frame->fd = yuv_frame.fd;
-	frame->yaddr = yuv_frame.addr_phy.addr_y;
-	frame->uaddr = yuv_frame.addr_phy.addr_u;
-	frame->vaddr = yuv_frame.addr_phy.addr_v;
-	frame->yaddr_vir = yuv_frame.addr_vir.addr_y;
-	frame->uaddr_vir = yuv_frame.addr_vir.addr_u;
-	frame->vaddr_vir = yuv_frame.addr_vir.addr_v;
+	cxt->snp_cxt.cur_frm_info = *frame;
 	camera_send_channel_data((cmr_handle)cxt,
 		cxt->grab_cxt.caller_handle[frame->channel_id], CMR_GRAB_TX_DONE, (void *)frame);
 	CMR_LOGD("send final yuv fd %d for FDR, mono time %lld\n", frame->fd, frame->monoboottime);
@@ -1449,15 +1461,6 @@ static cmr_int camera_ipmpro_init(cmr_handle oem_handle) {
 	swa_cxt->version = FDR_VERSION_1;
 #endif
 
-	if (1) {
-		char value[PROPERTY_VALUE_MAX];
-		int ival;
-
-		property_get("debug.cam.fdr.version", value, "0");
-		ival = atoi(value);
-		swa_cxt->version = (ival == 0) ?  FDR_VERSION_0 : FDR_VERSION_1;
-		CMR_LOGI("fdr version %d\n", swa_cxt->version);
-	}
 	return 0;
 
 exit:
