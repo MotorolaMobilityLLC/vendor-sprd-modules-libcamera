@@ -1518,18 +1518,25 @@ NativeCameraHidl::popBufferList(android::List<new_mem_t *> &list, int type) {
         return NULL;
     }
     // Mutex::Autolock l(mBufferListLock);
-    android::List<new_mem_t *>::iterator j = list.begin();
-    for (; j != list.end(); j++) {
-        ret = &((*j)->native_handle);
-        if (ret && 1) {
+    while(1) {
+        android::List<new_mem_t *>::iterator j = list.begin();
+        for (; j != list.end();) {
+            ret = &((*j)->native_handle);
+            if (*ret == NULL) {
+                IT_LOGD("native_handle is null");
+                list.erase(j);
+                continue;
+            } else {
+                list.erase(j);
+                break;
+            }
+        }
+        if(*ret) {
             break;
+        } else {
+            usleep(10000);
         }
     }
-    if (ret == NULL || j == list.end()) {
-        IT_LOGE("popBufferList failed!");
-        return ret;
-    }
-    list.erase(j);
     return ret;
 }
 
@@ -1921,12 +1928,14 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
     IT_LOGI("g_camera_id: %d", g_camera_id);
     std::string service_name = "legacy/0";
     IT_LOGI("get service with name: %s", service_name.c_str());
-    
+
     uint32_t id;
     bool previewStreamFound = false;
     uint64_t bufferId = 0;
     uint32_t frameNumber = 0;
     ::android::hardware::hidl_vec<uint8_t> settings;
+    mLocalBufferList.clear();
+    mCallbackBufferList.clear();
 
     IT_LOGI("mProvider address = %p", &mProvider);
     hidl_vec<hidl_string> cameraDeviceNames =
@@ -2078,7 +2087,8 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             camera_metadata_entry_t entry;
             int res;
             camera_metadata_t *metaBuffer;
-            if (request_buf.frame_number == 0) {
+            if (request_buf.frame_number == 0 ||
+                (capture_flag && snapshot_buffer.native_handle != NULL)) {
                 requestMeta.append(
                     reinterpret_cast<camera_metadata_t *>(settings.data()));
             }
@@ -2126,7 +2136,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                 }
             }
             request_buf.output_buffers = (const camera3_stream_buffer_t *)&sb;
-            if (capture_flag)
+            if (capture_flag && snapshot_buffer.native_handle != NULL)
                 request_buf.num_output_buffers = g_stream_count;
             else
                 request_buf.num_output_buffers = g_stream_count - 1;
@@ -2134,7 +2144,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             StreamBuffer outputBuffer_new[g_stream_count];
             for (int i = 0; i < g_stream_count; i++) {
                 if ((streamlist[i] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
-                     capture_flag) ||
+                     (capture_flag && snapshot_buffer.native_handle != NULL)) ||
                     streamlist[i] != CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
                     if(!sb[i].buffer){
                         IT_LOGE("stream[%d] NULL buf",i);
@@ -2154,7 +2164,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             }
 
             ::android::hardware::hidl_vec<StreamBuffer> outputBuffers;
-            if (capture_flag) // add capture buffer
+            if (capture_flag && snapshot_buffer.native_handle != NULL) // add capture buffer
                 outputBuffers.resize(g_stream_count);
             else
                 outputBuffers.resize(g_stream_count - 1);
@@ -2162,7 +2172,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             uint32_t bufferindex = 0;
             for (int i = 0; i < g_stream_count; i++) {
                 if ((streamlist[i] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
-                     capture_flag) ||
+                     (capture_flag && snapshot_buffer.native_handle != NULL)) ||
                     streamlist[i] != CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
                     outputBuffers[bufferindex] = outputBuffer_new[i];
                     IT_LOGI("bufferindex =%d,i =%d,capture_flag=%d", bufferindex,
@@ -2171,7 +2181,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                 }
             }
             // reset capture flag and record capture num
-            if (capture_flag) {
+            if (capture_flag && snapshot_buffer.native_handle != NULL) {
                 capture_frame = _frameNum - 1;
                 capture_flag = false;
             }
@@ -2287,11 +2297,13 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         }
     }
     g_need_exit = true;
+/*
     char pid_name[50] = "cameraserver";
     long pid;
     pid = find_pid_by_name(pid_name);
     kill(pid, SIGKILL);
     IT_LOGE("pid =%d", pid);
+*/
     return IT_OK;
 }
 
@@ -2378,12 +2390,13 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
     if (strcmp(_json2->m_funcName.c_str(), "startpreview") == 0 &&
         !g_first_preview) {
         g_stream_count = 0;
+        g_streamConfig.clear();
         for (auto &stream : _json2->m_StreamArr) {
             g_streamConfig[stream->s_type].stream_type =
                 (camera_stream_type_t)stream->s_type;
             g_streamConfig[stream->s_type].width = stream->s_width;
             g_streamConfig[stream->s_type].height = stream->s_height;
-            g_streamConfig[stream->s_type].pixel = 
+            g_streamConfig[stream->s_type].pixel =
             (android_pixel_format_t)stream->s_format;
             g_streamConfig[stream->s_type].usage = stream->s_usage;
 
@@ -2416,6 +2429,7 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
     }
 
     if (strcmp(_json2->m_funcName.c_str(), "takesnapshot") == 0) {
+        IT_LOGI("set capture_flag is true");
         capture_flag = true;
         while (!g_need_exit) // result check
         {
