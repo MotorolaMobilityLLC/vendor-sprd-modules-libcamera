@@ -217,7 +217,7 @@ const int32_t kavailable_fps_ranges_front[] = {5, 15, 15, 15, 5,  20, 20, 20,
 const int32_t kavailable_fps_ranges_sub[] = {5, 15, 15, 15, 24, 24, 5, 30, 20, 30, 30, 30};
 
 const int32_t kavailable_high_speed_video_configration[] = {
-    1280, 720, 30, 120, 1280, 720, 120, 120};
+    1280, 720, 30, 120, 1, 1280, 720, 120, 120, 1, 720, 480, 30, 120, 1, 720, 480, 120, 120, 1};
 
 const int32_t kexposureCompensationRange[2] = {-32, 32};
 const camera_metadata_rational kae_compensation_step = {1, 16};
@@ -3150,9 +3150,8 @@ int SprdCamera3Setting::initStaticMetadata(
         staticInfo.update(ANDROID_CONTROL_AVAILABLE_MODES, control_modes,
                   sizeof(control_modes) / sizeof(uint8_t));
 
-        const int32_t avl_high_speed_video_config[] = {1280, 720, 30, 120, 1, 1280, 720, 120, 120, 1};
         staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
-                      avl_high_speed_video_config, ARRAY_SIZE(avl_high_speed_video_config));
+                      kavailable_high_speed_video_configration, ARRAY_SIZE(kavailable_high_speed_video_configration));
     }
 
     /*LENS SHADING*/
