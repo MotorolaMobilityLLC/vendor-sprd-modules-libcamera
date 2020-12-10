@@ -75,14 +75,14 @@ typedef enum {
     IT_IMG_FORMAT_YUV,
     IT_IMG_FORMAT_JPEG,
     IT_IMG_FORMAT_RAW
-}IT_IMG_FORMAT_T;
+} IT_IMG_FORMAT_T;
 
-typedef struct compareInfo{
+typedef struct compareInfo {
     unsigned char *test_img;
     unsigned char *golden_img;
     int w;
     int h;
     IT_IMG_FORMAT_T format;
-}compareInfo_t;
+} compareInfo_t;
 
 #endif

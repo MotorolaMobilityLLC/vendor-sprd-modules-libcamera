@@ -6,7 +6,7 @@ typedef enum {
     Y_RENGION,
     V_RENGION,
     U_RENGION
-}RENGION;
+} RENGION_E;
 
 int compare_Image(compareInfo_t &compinfo);
 #endif
