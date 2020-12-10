@@ -1921,7 +1921,7 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 	int i = 0;
 
 	if (cxt->LSC_SPD_VERSION >= 6) {
-		if (cxt->init_img_width / fwstart_info->img_width_new == cxt->init_img_height / fwstart_info->img_height_new) {
+		if (cxt->init_img_width * fwstart_info->img_height_new == cxt->init_img_height * fwstart_info->img_width_new) {
 			cxt->grid = (cmr_u32) (cxt->init_grid / (cxt->init_img_width / fwstart_info->img_width_new));
 			cxt->gain_width = cxt->init_gain_width;
 			cxt->gain_height = cxt->init_gain_height;
@@ -2698,7 +2698,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 			chnl_gain_num = cxt->gain_width * cxt->gain_height;
 
-			if (cxt->init_img_width / fwstart_info->img_width_new == cxt->init_img_height / fwstart_info->img_height_new) {
+			if (cxt->init_img_width * fwstart_info->img_height_new == cxt->init_img_height * fwstart_info->img_width_new) {
 				cxt->cur_lsc_pm_mode = 0;	// common table size
 			} else if (fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720) {
 				cxt->cur_lsc_pm_mode = 1;	// 720p table size
