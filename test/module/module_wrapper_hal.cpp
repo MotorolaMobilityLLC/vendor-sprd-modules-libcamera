@@ -166,6 +166,7 @@ using namespace ::android::hardware::camera;
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
 #endif
 #define LOG_TAG "IT-moduleHal"
+#define MAX_BUFFER_MAXNUMS 20
 #define ALIGN_TO(val, alignment)                                               \
     (((uintptr_t)(val) + ((alignment)-1)) & ~((alignment)-1))
 struct AvailableStream {
@@ -214,6 +215,8 @@ typedef struct {
     int width;
     int height;
     android_pixel_format_t pixel;
+    uint32_t usage;
+    int max_buffers;
 } streamconfig;
 
 hal_mem_info_t memory_gloable;    // snapshot memory map
@@ -221,14 +224,15 @@ static new_mem_t snapshot_buffer; // snapshot memory
 static sp<ICameraDeviceSession> g_session;
 static int capture_flag = false; // flag to  start capture
 static int capture_frame = -10;  // reocording capture frame
-static int max_buffers = 4;
-static streamconfig *g_streamConfig; // stream config
+static map<int,streamconfig> g_streamConfig;
+
+
 int g_stream_count = 0;
 static bool volatile g_result[CAMERA_TEST_MAX] = {false}; // result struct
 
-new_mem_t mLocalBuffer[20];
-new_mem_t mCallbackBuffer[20];
-new_mem_t mVideoBuffer[20];
+new_mem_t mLocalBuffer[MAX_BUFFER_MAXNUMS];
+new_mem_t mCallbackBuffer[MAX_BUFFER_MAXNUMS];
+new_mem_t mVideoBuffer[MAX_BUFFER_MAXNUMS];
 map<string, uint32_t> mMap_tag;
 map<string, uint8_t> mMap_tagType;
 android::List<new_mem_t *> mLocalBufferList;
@@ -246,7 +250,7 @@ static long find_pid_by_name(char *pidName) {
     long pid = 0;
     dir = opendir("/proc");
     if (!dir) {
-        ALOGE("can not open proc");
+        IT_LOGE("can not open proc");
     }
     while ((next = readdir(dir)) != NULL) {
         FILE *status;
@@ -270,7 +274,7 @@ static long find_pid_by_name(char *pidName) {
         fclose(status);
         sscanf(buffer, "%*s %s", name);
         if (strcmp(name, pidName) == 0) {
-            ALOGE("find pid ,%s", name);
+            IT_LOGE("find pid ,%s", name);
             pid = atoi(next->d_name);
         }
     }
@@ -284,10 +288,10 @@ static void pushBufferList(new_mem_t *localbuffer, buffer_handle_t *backbuf,
     int i;
 
     if (backbuf == NULL) {
-        ALOGE("backbuf is NULL");
+        IT_LOGE("backbuf is NULL");
         return;
     }
-    ALOGE("pushBufferList = %p", *backbuf);
+    IT_LOGE("pushBufferList = %p", *backbuf);
     //    Mutex::Autolock l(mBufferListLock);
     for (i = 0; i < localbuffer_num; i++) {
         if (localbuffer[i].native_handle == NULL)
@@ -298,7 +302,7 @@ static void pushBufferList(new_mem_t *localbuffer, buffer_handle_t *backbuf,
         }
     }
     if (i >= localbuffer_num) {
-        ALOGE("find backbuf failed");
+        IT_LOGE("find backbuf failed");
     }
     return;
 }
@@ -367,7 +371,7 @@ int getCameraDeviceVersion(const hidl_string &deviceName,
     std::string version;
     bool match = matchDeviceName(deviceName, providerType, &version, nullptr);
     if (!match) {
-        return -1;
+        return IT_INVAL;
     }
 
     if (version.compare(kHAL3_4) == 0) {
@@ -379,21 +383,20 @@ int getCameraDeviceVersion(const hidl_string &deviceName,
     } else if (version.compare(kHAL1_0) == 0) {
         return CAMERA_DEVICE_API_VERSION_1_0_1;
     }
-    return 0;
+    return IT_OK;
 }
 
 bool parseProviderName(const std::string &name, std::string *type /*out*/,
                        uint32_t *id /*out*/) {
     if (!type || !id) {
-        ALOGE("%s\uff0c%d", __FUNCTION__, __LINE__);
+        IT_LOGE("");
         return false;
     }
 
     std::string::size_type slashIdx = name.find('/');
     if (slashIdx == std::string::npos || slashIdx == name.size() - 1) {
-        ALOGE("Provider name does not have separator between type and id "
-              "%s\uff0c%d",
-              __FUNCTION__, __LINE__);
+        IT_LOGE("Provider name does not have separator between type and id "
+        "");
         return false;
     }
 
@@ -403,18 +406,16 @@ bool parseProviderName(const std::string &name, std::string *type /*out*/,
     errno = 0;
     long idVal = strtol(name.c_str() + slashIdx + 1, &endPtr, 10);
     if (errno != 0) {
-        ALOGE("%s\uff0c%d cannot parse provider id as an integer: %s",
-              __FUNCTION__, __LINE__, name.c_str());
+        IT_LOGE(" cannot parse provider id as an integer: %s",
+              name.c_str());
         return false;
     }
     if (endPtr != name.c_str() + name.size()) {
-        ALOGE("%s\uff0c%d provider id has unexpected length: %s", __FUNCTION__,
-              __LINE__, name.c_str());
+        IT_LOGE(" provider id has unexpected length: %s",name.c_str());
         return false;
     }
     if (idVal < 0) {
-        ALOGE("%s\uff0c%d id is negative:: %s,%d", __FUNCTION__, __LINE__,
-              name.c_str(), static_cast<uint32_t>(idVal));
+        IT_LOGE(" id is negative:: %s,%d", name.c_str(), static_cast<uint32_t>(idVal));
         return false;
     }
 
@@ -432,13 +433,13 @@ class NativeCameraHidl {
     struct EmptyDeviceCb : public ICameraDeviceCallback {
         virtual Return<void> processCaptureResult(
             const hidl_vec<CaptureResult> & /*results*/) override {
-            ALOGI("processCaptureResult callback");
+            IT_LOGI("processCaptureResult callback");
             return Void();
         }
 
         virtual Return<void>
         notify(const hidl_vec<NotifyMsg> & /*msgs*/) override {
-            ALOGI("notify callback");
+            IT_LOGI("notify callback");
             return Void();
         }
     };
@@ -632,18 +633,12 @@ class NativeCameraHidl {
     std::vector<int32_t> meta_int32;
     uint8_t mode_test;
     buffer_handle_t *popBufferList(android::List<new_mem_t *> &list, int type);
-    // void pushBufferList(new_mem_t *localbuffer,
-    //                                     buffer_handle_t *backbuf,
-    //                                     int localbuffer_num,
-    //                                    android::List<new_mem_t *> &list) ;
     ::android::hardware::camera::common::V1_0::helper::CameraMetadata
     updatemetedata(camera_metadata_t *metaBuffer);
     ::android::hardware::camera::common::V1_0::helper::CameraMetadata
     updatemetedata_v2(camera_metadata_t *metaBuffer,
                       camera_metadata_entry *meta_entry, int meta_count);
     int g_surface_f = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-
-    //    sp<ANativeWindow> nativeWindow = NULL;
 };
 
 static bool volatile g_need_exit = false;
@@ -654,11 +649,11 @@ void IntSignalHandler(int signum, siginfo_t *, void *sigcontext) {
     UNUSED(sigcontext);
 
     if (signum == SIGINT) {
-        ALOGI("\nCTRL^C pressed");
+        IT_LOGI("\nCTRL^C pressed");
         g_need_exit = true;
 
     } else if (signum == SIGTERM) {
-        ALOGI("\n get Kill command");
+        IT_LOGI("\n get Kill command");
         g_need_exit = true;
     }
 }
@@ -690,12 +685,12 @@ int NativeCameraHidl::nativecamerainit(int g_rotate, int mirror) {
     act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
     sigemptyset(&act.sa_mask);
     if (sigaction(SIGINT, &act, &oldact) != 0) {
-        ALOGI("install signal error");
+        IT_LOGI("install signal error");
         return -1;
     }
 
     if (sigaction(SIGTERM, &act, &oldact) != 0) {
-        ALOGI("install signal SIGTERM error");
+        IT_LOGI("install signal SIGTERM error");
         return -1;
     }
     return 0;
@@ -723,28 +718,22 @@ Return<void> NativeCameraHidl::DeviceCb::processCaptureResult_3_4(
 
 Return<void> NativeCameraHidl::DeviceCb::processCaptureResult(
     const hidl_vec<CaptureResult> &results) {
-    // ALOGI("debug_zy begin %s ,%d,frame_number=%d partialResult=%d,%p",
-    // __FUNCTION__,__LINE__,results[0].frameNumber,
-    // results[0].partialResult,&(results[0].outputBuffers[0].buffer));
-
     if (nullptr == mParent) {
         return Void();
     }
 
     bool notify = false;
-    std::unique_lock<std::mutex> l(mParent->mLock);
+    {
+        std::unique_lock<std::mutex> l(mParent->mLock);
 
-    // ALOGI("debug_zy %s ,%d,results.size()=%zu",
-    // __FUNCTION__,__LINE__,results.size());
-    for (size_t i = 0; i < results.size(); i++) {
-        notify = processCaptureResultLocked(results[i]);
+        for (size_t i = 0; i < results.size(); i++) {
+            notify = processCaptureResultLocked(results[i]);
+        }
     }
 
-    l.unlock();
     if (notify) {
         mParent->mResultCondition.notify_one();
     }
-
     return Void();
 }
 std::unordered_map<uint64_t, std::pair<buffer_handle_t *, int>>
@@ -783,7 +772,6 @@ android::status_t NativeCameraHidl::DeviceCb::popInflightBuffer(
     uint64_t key = static_cast<uint64_t>(frameNumber) << 32 |
                    static_cast<uint64_t>(streamId);
 
-    // ALOGI("debug_zy_map:%s\uff0c%d", __FUNCTION__,__LINE__);
     auto it = mInflightBufferMap.find(key);
     if (it == mInflightBufferMap.end()) {
         return android::NAME_NOT_FOUND;
@@ -803,19 +791,16 @@ void NativeCameraHidl::DeviceCb::wrapAsHidlRequest(
     /*out*/ device::V3_2::CaptureRequest *captureRequest,
     /*out*/ std::vector<native_handle_t *> *handlesCreated) {
 
-    ALOGV("%s: captureRequest (%p) and handlesCreated (%p) ", __FUNCTION__,
-          captureRequest, handlesCreated);
+    IT_LOGV("captureRequest (%p) and handlesCreated (%p) ", 
+        captureRequest, handlesCreated);
 
     if (captureRequest == nullptr || handlesCreated == nullptr) {
-        ALOGE(
-            "%s: captureRequest (%p) and handlesCreated (%p) must not be null",
-            __FUNCTION__, captureRequest, handlesCreated);
+    IT_LOGE("captureRequest (%p) and handlesCreated (%p) must not be null",
+         captureRequest, handlesCreated);
         return;
     }
 
     captureRequest->frameNumber = request->frame_number;
-    // ALOGI("debug_zy :%s\uff0c%d,request->frame_number:%d",
-    // __FUNCTION__,__LINE__,request->frame_number);
 
     captureRequest->fmqSettingsSize = 0;
 
@@ -825,35 +810,26 @@ void NativeCameraHidl::DeviceCb::wrapAsHidlRequest(
         captureRequest->inputBuffer.streamId = -1;
         captureRequest->inputBuffer.bufferId = 0;
 
-        // ALOGI("debug_zy :%s\uff0c%d,request->num_output_buffers:%d",
-        // __FUNCTION__,__LINE__,request->num_output_buffers);
-
         captureRequest->outputBuffers.resize(request->num_output_buffers);
         int32_t streamId = 0;
-        ALOGE("num_out_buffers =%d", request->num_output_buffers);
+        IT_LOGE("num_out_buffers =%d", request->num_output_buffers);
         for (size_t i = 0; i < request->num_output_buffers; i++) {
             const camera3_stream_buffer_t *src = request->output_buffers + i;
             StreamBuffer &dst = captureRequest->outputBuffers[i];
 
             buffer_handle_t buf = *(src->buffer);
-            // auto pair = getBufferId(buf, streamId);
             bool isNewBuffer = 1; // pair.first;
 
             dst.streamId = streamId;
 
-            ALOGE("dst.streamId =%d i =%d", dst.streamId, i);
+            IT_LOGE("dst.streamId =%d i =%d", dst.streamId, i);
+
             if (mBufferId == 6) {
                 mBufferId = 1;
             }
 
-            // D("mBufferId:%d",mBufferId); //
             dst.bufferId = mBufferId++; // 1;//pair.second;1 2 3 4 5
             dst.buffer = isNewBuffer ? buf : nullptr;
-
-            // D("
-            // buffer_handle:%d",(*request->output_buffers->buffer)->version);
-            // //12
-            //	ALOGI("buffer_handle:%d",captureRequest->outputBuffers[0].buffer->version);
 
             dst.status = BufferStatus::OK;
             native_handle_t *acquireFence = nullptr;
@@ -883,19 +859,17 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
     if ((results.result.size() == 0) && (results.outputBuffers.size() == 0) &&
         (results.inputBuffer.buffer == nullptr) &&
         (results.fmqResultSize == 0)) {
-        ALOGE(
-            "%s: No result data provided by HAL for frame %d result count: %d",
-            __FUNCTION__, frameNumber, (int)results.fmqResultSize);
+        IT_LOGE("No result data provided by HAL for frame %d,result count: %d",
+             frameNumber, (int)results.fmqResultSize);
         return notify;
     }
 
     ssize_t idx = mParent->mInflightMap.indexOfKey(frameNumber);
 
-    ALOGI("debug_zy %s ,%d,idx:%zu,frameNumber:%d", __FUNCTION__, __LINE__, idx,
-          frameNumber);
+    IT_LOGI("idx:%zu,frameNumber:%d",idx,frameNumber);
+
     if (::android::NAME_NOT_FOUND == idx) {
-        ALOGE("%s: Unexpected frame number! received: %u", __FUNCTION__,
-              frameNumber);
+        IT_LOGE("Unexpected frame number! received: %u", frameNumber);
         return notify;
     }
 
@@ -911,9 +885,7 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
         }
         if (!request->resultQueue->read(resultMetadata.data(),
                                         results.fmqResultSize)) {
-            ALOGE("%s: Frame %d: Cannot read camera metadata from fmq,"
-                  "size = %" PRIu64,
-                  __FUNCTION__, frameNumber, results.fmqResultSize);
+            IT_LOGE("Cannot read camera metadata from fmq Frame");
             return notify;
         }
         resultSize = resultMetadata.size();
@@ -923,28 +895,20 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
             results.result.size());
         resultSize = resultMetadata.size();
     }
-
     if (!request->usePartialResult && (resultSize > 0) &&
         (results.partialResult != 1)) {
-        ALOGE("%s: Result is malformed for frame %d: partial_result %u "
-              "must be 1  if partial result is not supported",
-              __FUNCTION__, frameNumber, results.partialResult);
+        IT_LOGE("must be 1  if partial result is not supported");
         return notify;
     }
-
     if (results.partialResult != 0) {
         request->partialResultCount = results.partialResult;
     }
-
     // Check if this result carries only partial metadata
     if (request->usePartialResult && (resultSize > 0)) {
         if ((results.partialResult > request->numPartialResults) ||
             (results.partialResult < 1)) {
-            ALOGE("%s: Result is malformed for frame %d: partial_result %u"
-                  " must be  in the range of [1, %d] when metadata is "
-                  "included in the result",
-                  __FUNCTION__, frameNumber, results.partialResult,
-                  request->numPartialResults);
+            IT_LOGE("Result is malformed for frame %d,partial_result %u",
+                     frameNumber, results.partialResult);
             return notify;
         }
         request->collectedResult.append(
@@ -956,137 +920,104 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
             reinterpret_cast<const camera_metadata_t *>(resultMetadata.data()));
         isPartialResult = false;
     }
-
     hasInputBufferInRequest = request->hasInputBuffer;
-    // ALOGI("debug_zy  %s
-    // ,%d,resultSize:%zu,isPartialResult:%d,haveResultMetadata:%d",
-    // __FUNCTION__,__LINE__,resultSize,isPartialResult,request->haveResultMetadata);
-    // Did we get the (final) result metadata for this capture?
     if ((resultSize > 0) && !isPartialResult) {
         if (request->haveResultMetadata) {
-            ALOGE("%s: Called multiple times with metadata for frame %d",
-                  __FUNCTION__, frameNumber);
-            // return notify;
+            IT_LOGE("Called multiple times with metadata for frame %d",frameNumber);
         }
         request->haveResultMetadata = true;
         request->collectedResult.sort();
     }
 
     uint32_t numBuffersReturned = results.outputBuffers.size();
-
     std::vector<camera3_stream_buffer_t> outputBuffers(
         results.outputBuffers.size());
     std::vector<buffer_handle_t> outputBufferHandles(
         results.outputBuffers.size());
-    ALOGI("results.outputBuffers.size() =%d", results.outputBuffers.size());
+    IT_LOGI("results.outputBuffers.size() =%d", results.outputBuffers.size());
     for (size_t i = 0; i < results.outputBuffers.size(); i++) {
         auto &bDst = outputBuffers[i];
         const StreamBuffer &bSrc = results.outputBuffers[i];
         buffer_handle_t *buffer;
         res = popInflightBuffer(results.frameNumber, bSrc.streamId, &buffer);
         if (res != android::OK) {
-            ALOGE("%s: Frame %d: Buffer %zu: No in-flight buffer for stream %d",
-                  __FUNCTION__, results.frameNumber, i, bSrc.streamId);
-            // return;
+            IT_LOGE("Frame %d, Buffer %zu,No in-flight buffer for stream %d", 
+                    results.frameNumber, i, bSrc.streamId);
         }
         bDst.buffer = buffer;
 
         if (results.partialResult == 0 && (results.frameNumber == 1)) {
             g_result[CAMERA_START_PREVIEW] = true;
-            ALOGI("receive first preview frame,preview sucess");
+            IT_LOGI("receive first preview frame,preview sucess");
         }
 
-// D("queueBuffer");
-// ALOGI("debug_zy :%s\uff0c%d,version:%d",
-// __FUNCTION__,__LINE__,(results.outputBuffers[0].buffer)->version);
-// ALOGI("debug_zy :%s\uff0c%d,version:%d,partialResult:%d",
-// __FUNCTION__,__LINE__,(*outputBuffers[0].buffer)->version,results.partialResult);
 #if 1 // ok
-      // if (results.partialResult == 0 && (results.frameNumber ==
-      // capture_frame )) {
         if (results.partialResult == 0 &&
             (results.frameNumber == capture_frame)) {
             android::GraphicBufferMapper &mapper =
                 android::GraphicBufferMapper::get();
             void *dst;
-            // mapper.lock(*outputBuffers[0].buffer,
-            // GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN,
-            // android::Rect(1440, 1080), &dst);
             mapper.lock(
                 *outputBuffers[0].buffer,
                 GRALLOC_USAGE_SW_WRITE_OFTEN | GRALLOC_USAGE_SW_READ_OFTEN,
-                android::Rect(g_streamConfig[snapshotStreamID].width *
-                                  g_streamConfig[snapshotStreamID].height,
+                android::Rect(g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width *
+                                  g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height,
                               1),
                 &dst);
-            {
-                ALOGE("address = %p ", dst);
-                if (dst == memory_gloable.addr_vir) // write pic frame
-                // if(dst != NULL)
-                {
-                    ALOGE("address = %p ", dst);
-                    char filename[128];
-                    sprintf(filename, "/data/vendor/ylog/%d_%dx%d.nv",
-                            results.frameNumber, g_sensor_width,
-                            g_sensor_height);
-                    FILE *fp = fopen(filename, "w+");
-                    if (fp) {
-                        // int ret =  fwrite(dst, 1, 1440 * 1080 * 3 / 2, fp);
-                        int ret =
-                            fwrite(dst, 1,
-                                   g_streamConfig[snapshotStreamID].width *
-                                       g_streamConfig[snapshotStreamID].height,
-                                   fp);
-                        ALOGE("write ret = %d", ret);
-                        fclose(fp);
-                    } else {
-                        ALOGE("fail to open file");
-                    }
-                    g_result[CAMERA_TAKE_PIC] = true;
-                }
-            }
-
+            // {
+            //     IT_LOGE("address = %p ", dst);
+            //     if (dst == memory_gloable.addr_vir) // write pic frame
+            //     // if(dst != NULL)
+            //     {
+            //         IT_LOGE("address = %p ", dst);
+            //         char filename[128];
+            //         sprintf(filename, "/data/vendor/ylog/%d_%dx%d.nv",
+            //                 results.frameNumber, g_sensor_width,
+            //                 g_sensor_height);
+            //         FILE *fp = fopen(filename, "w+");
+            //         if (fp) {
+            //             // int ret =  fwrite(dst, 1, 1440 * 1080 * 3 / 2, fp);
+            //             int ret =
+            //                 fwrite(dst, 1,
+            //                        g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width *
+            //                            g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height,
+            //                        fp);
+            //             IT_LOGE("write ret = %d", ret);
+            //             fclose(fp);
+            //         } else {
+            //             IT_LOGE("fail to open file");
+            //         }
+            //         g_result[CAMERA_TAKE_PIC] = true;
+            //     }
+            // }
+            g_result[CAMERA_TAKE_PIC] = true;
             mapper.unlock(*outputBuffers[0].buffer);
         }
 #endif
-        //	D("debug_zy_exit:%s\uff0c%d,%p",
-        //__FUNCTION__,__LINE__,outputBuffers[0].buffer);
+
         pushBufferList(mLocalBuffer, outputBuffers[0].buffer, 20,
                        mLocalBufferList);
         pushBufferList(mCallbackBuffer, outputBuffers[0].buffer, 20,
                        mCallbackBufferList);
         pushBufferList(mVideoBuffer, outputBuffers[0].buffer, 20,
                        mVideoBufferList);
-        //  android::status_t res =
-        //  mParent->nativeWindow->queueBuffer(mParent->nativeWindow.get(),
-        //                                                            container_of(outputBuffers[0].buffer,
-        //                                                            ANativeWindowBuffer,
-        //                                                            handle),
-        //                                                            -1);
         if (res != android::OK) {
-            E("queueBuffer error=%d", res);
+            IT_LOGE("queueBuffer error=%d", res);
         }
     }
     r.num_output_buffers = outputBuffers.size();
     r.output_buffers = outputBuffers.data();
-
     if (results.inputBuffer.buffer != nullptr) {
         if (hasInputBufferInRequest) {
             numBuffersReturned += 1;
         } else {
-            ALOGW("%s: Input buffer should be NULL if there is no input"
-                  " buffer sent in the request",
-                  __FUNCTION__);
+            IT_LOGW("Input buffer should be NULL if there is no input"
+                  " buffer sent in the request");
         }
     }
-
-    // ALOGI("debug_zy  %s ,%d,numBuffersLeft:%zu,numBuffersReturned:%d",
-    // __FUNCTION__,__LINE__,request->numBuffersLeft,numBuffersReturned);
     request->numBuffersLeft -= numBuffersReturned;
     if (request->numBuffersLeft < 0) {
-        ALOGE("%s: Too many buffers returned for frame %d", __FUNCTION__,
-              frameNumber);
-        // return notify;
+         IT_LOGE("Too many buffers returned for frame %d", frameNumber);
     }
     request->resultOutputBuffers.appendArray(results.outputBuffers.data(),
                                              results.outputBuffers.size());
@@ -1094,7 +1025,6 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
     if (request->shutterTimestamp != 0) {
         notify = true;
     }
-
     return notify;
 }
 
@@ -1105,13 +1035,8 @@ NativeCameraHidl::DeviceCb::notify(const hidl_vec<NotifyMsg> &messages) {
     for (size_t i = 0; i < messages.size(); i++) {
         ssize_t idx = mParent->mInflightMap.indexOfKey(
             messages[i].msg.shutter.frameNumber);
-
-        // ALOGI("debug_zy %s ,%d,idx:%zu,frameNumber:%d",
-        // __FUNCTION__,__LINE__,idx,messages[i].msg.shutter.frameNumber);
-
         if (::android::NAME_NOT_FOUND == idx) {
-            ALOGE("%s: Unexpected frame number! received: %u", __FUNCTION__,
-                  messages[i].msg.shutter.frameNumber);
+            IT_LOGE("Unexpected frame number! received: %u", messages[i].msg.shutter.frameNumber);
             break;
         }
         InFlightRequest *r = mParent->mInflightMap.editValueAt(idx);
@@ -1119,7 +1044,7 @@ NativeCameraHidl::DeviceCb::notify(const hidl_vec<NotifyMsg> &messages) {
         switch (messages[i].type) {
         case MsgType::ERROR:
             if (ErrorCode::ERROR_DEVICE == messages[i].msg.error.errorCode) {
-                ALOGE("%s: Camera reported serious device error", __FUNCTION__);
+                 IT_LOGE("Camera reported serious device error");
             } else {
                 r->errorCodeValid = true;
                 r->errorCode = messages[i].msg.error.errorCode;
@@ -1130,8 +1055,7 @@ NativeCameraHidl::DeviceCb::notify(const hidl_vec<NotifyMsg> &messages) {
             r->shutterTimestamp = messages[i].msg.shutter.timestamp;
             break;
         default:
-            ALOGE("%s: Unsupported notify message %d", __FUNCTION__,
-                  messages[i].type);
+                IT_LOGE("Unsupported notify message %d", messages[i].type);
             break;
         }
     }
@@ -1146,17 +1070,14 @@ NativeCameraHidl::getCameraDeviceNames(int g_camera_id,
     std::vector<std::string> cameraDeviceNames;
     Return<void> ret;
     ret = provider->getCameraIdList([&](auto status, const auto &idList) {
-        ALOGI("getCameraIdList returns status:%d", (int)status);
+        IT_LOGI("getCameraIdList returns status:%d", (int)status);
         for (size_t i = 0; i < idList.size(); i++) {
-            ALOGI("Camera Id[%zu] is %s", i, idList[i].c_str());
+            IT_LOGI("Camera Id[%zu] is %s", i, idList[i].c_str());
         }
-        // for (const auto & id : idList) {
-        //  cameraDeviceNames.push_back(id);
-        //}
         cameraDeviceNames.push_back(idList[g_camera_id].c_str());
     });
     if (!ret.isOk()) {
-        ALOGE("%s\uff0c%d", __FUNCTION__, __LINE__);
+        IT_LOGE("");
     }
 
     // External camera devices are reported through cameraDeviceStatusChange
@@ -1164,7 +1085,7 @@ NativeCameraHidl::getCameraDeviceNames(int g_camera_id,
         virtual Return<void>
         cameraDeviceStatusChange(const hidl_string &devName,
                                  CameraDeviceStatus newStatus) override {
-            ALOGI("camera device status callback name %s, status %d",
+            IT_LOGI("camera device status callback name %s, status %d",
                   devName.c_str(), (int)newStatus);
             if (newStatus == CameraDeviceStatus::PRESENT) {
                 externalCameraDeviceNames.push_back(devName);
@@ -1264,6 +1185,7 @@ void NativeCameraHidl::configureAvailableStream(
     bool *supportsPartialResults /*out*/,
     uint32_t *partialResultCount /*out*/) {
 
+
     std::vector<AvailableStream> outputPreviewStreams;
     std::vector<AvailableStream> outputCaptureStreams;
     std::vector<AvailableStream> outputCallbackStreams;
@@ -1272,22 +1194,15 @@ void NativeCameraHidl::configureAvailableStream(
     bool captureStreamNeed = false;
     bool videoStreamNeed = false;
     bool callbackStreamNeed = false;
-    ALOGI("configureStreams: Testing camera device %s", name.c_str());
+    IT_LOGI("configureStreams: Testing camera device %s", name.c_str());
     Return<void> ret;
     ret = provider->getCameraDeviceInterface_V3_x(
         name, [&](auto status, const auto &device) {
-            ALOGI("getCameraDeviceInterface_V3_x returns status:%d",
+            IT_LOGI("getCameraDeviceInterface_V3_x returns status:%d",
                   (int)status);
             device3_x = device;
         });
 
-    /*  sp<DeviceCb> cb = new DeviceCb(this);
-      ret = device3_x->open(
-                cb,
-      [&](auto status, const auto & newSession) {
-          ALOGI("device::open returns status:%d", (int)status);
-          *session = newSession;
-      });*/
     *session = g_session;
     sp<device::V3_3::ICameraDeviceSession> session3_3;
     sp<device::V3_4::ICameraDeviceSession> session3_4;
@@ -1297,8 +1212,7 @@ void NativeCameraHidl::configureAvailableStream(
     ret = device3_x->getCameraCharacteristics(
         [&](Status s,
             android::hardware::camera::device::V3_2::CameraMetadata metadata) {
-            ALOGI("%s,%d,s: %d", __FUNCTION__, __LINE__,
-                  static_cast<uint32_t>(s));
+        IT_LOGI("s: %d", static_cast<uint32_t>(s));
             staticMeta = clone_camera_metadata(
                 reinterpret_cast<const camera_metadata_t *>(metadata.data()));
         });
@@ -1314,52 +1228,52 @@ void NativeCameraHidl::configureAvailableStream(
     outputPreviewStreams.clear();
     auto rc = getAvailableOutputStreams(staticMeta, outputPreviewStreams,
                                         previewThreshold);
-    for (int i = 0; i < g_stream_count; i++) {
-        if (g_streamConfig[i].stream_type ==
-            CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+    map<int,streamconfig>::iterator iter = g_streamConfig.find(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+    //auto iter = g_streamConfig.find(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+    if(iter != g_streamConfig.end())
+        {
             AvailableStream captureThreshold = {
-                g_streamConfig[i].width, g_streamConfig[i].height,
-                static_cast<int32_t>(g_streamConfig[i].pixel)};
+                g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width, 
+                g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height,
+                static_cast<int32_t>(g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].pixel)};
             auto rc1 = getAvailableOutputStreams(
                 staticMeta, outputCaptureStreams, &captureThreshold);
-            ALOGI("%s,%d,rc: %d", __FUNCTION__, __LINE__,
-                  static_cast<uint32_t>(rc));
+            IT_LOGI("rc: %d", static_cast<uint32_t>(rc));
             captureStreamNeed = true;
         }
-    }
 
-    for (int i = 0; i < g_stream_count; i++) {
-        if (g_streamConfig[i].stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
+    iter = g_streamConfig.find(CAMERA_STREAM_TYPE_CALLBACK);
+    if(iter != g_streamConfig.end())
+        {
             AvailableStream callbackThreshold = {
-                g_streamConfig[i].width, g_streamConfig[i].height,
-                static_cast<int32_t>(g_streamConfig[i].pixel)};
+                g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].width, 
+                g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].height,
+                static_cast<int32_t>(g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].pixel)};
             auto rc1 = getAvailableOutputStreams(
                 staticMeta, outputCallbackStreams, &callbackThreshold);
-            ALOGI("%s,%d,rc: %d", __FUNCTION__, __LINE__,
-                  static_cast<uint32_t>(rc));
+            IT_LOGI("rc: %d", static_cast<uint32_t>(rc));
             callbackStreamNeed = true;
         }
-    }
 
-    for (int i = 0; i < g_stream_count; i++) {
-        if (g_streamConfig[i].stream_type == CAMERA_STREAM_TYPE_VIDEO) {
-            AvailableStream videoThreshold = {
-                g_streamConfig[i].width, g_streamConfig[i].height,
-                static_cast<int32_t>(g_streamConfig[i].pixel)};
-            auto rc1 = getAvailableOutputStreams(staticMeta, outputVideoStreams,
-                                                 &videoThreshold);
-            ALOGI("%s,%d,rc: %d", __FUNCTION__, __LINE__,
-                  static_cast<uint32_t>(rc));
+    iter = g_streamConfig.find(CAMERA_STREAM_TYPE_VIDEO);
+    if(iter != g_streamConfig.end())
+        {
+             AvailableStream videoThreshold = {
+                g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].width,
+                g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].height,
+                static_cast<int32_t>(g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].pixel)};
+            auto rc1 = getAvailableOutputStreams(
+                staticMeta, outputVideoStreams, &videoThreshold);
+            IT_LOGI("rc: %d", static_cast<uint32_t>(rc));
             videoStreamNeed = true;
         }
-    }
 
     free_camera_metadata(staticMeta);
     int size = outputCaptureStreams.size();
 
     V3_2::Stream stream3_2;
     int32_t streamIndex = 0;
-    ALOGI("g_stream_count = %d", g_stream_count);
+    IT_LOGI("g_stream_count = %d", g_stream_count);
     ::android::hardware::hidl_vec<V3_2::Stream> streams3_2(g_stream_count);
     stream3_2 = {
         streamIndex,
@@ -1387,12 +1301,10 @@ void NativeCameraHidl::configureAvailableStream(
             GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
             0,
             StreamRotation::ROTATION_0};
-        //::android::hardware::hidl_vec<V3_2::Stream> streams3_2 =
-        //{stream3_2,stream3_2_1};
         streams3_2[streamIndex] = stream3_2_2; // captrue stream
         streamIndex++;
         streamlist.push_back(CAMERA_STREAM_TYPE_CALLBACK);
-        ALOGI("callbackstream configured");
+        IT_LOGI("callbackstream configured");
     }
 
     if (videoStreamNeed) {
@@ -1406,12 +1318,10 @@ void NativeCameraHidl::configureAvailableStream(
                        GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER,
                        0,
                        StreamRotation::ROTATION_0};
-        //::android::hardware::hidl_vec<V3_2::Stream> streams3_2 =
-        //{stream3_2,stream3_2_1};
         streams3_2[streamIndex] = stream3_2_3; // captrue stream
         streamIndex++;
         streamlist.push_back(CAMERA_STREAM_TYPE_VIDEO);
-        ALOGI("video configured");
+        IT_LOGI("video configured");
     }
 
     if (captureStreamNeed) {
@@ -1425,8 +1335,6 @@ void NativeCameraHidl::configureAvailableStream(
                        GRALLOC1_CONSUMER_USAGE_HWCOMPOSER,
                        0,
                        StreamRotation::ROTATION_0};
-        //::android::hardware::hidl_vec<V3_2::Stream> streams3_2 =
-        //{stream3_2,stream3_2_1};
         streams3_2[streamIndex] = stream3_2_1; // captrue stream
         streamIndex++;
         streamlist.push_back(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
@@ -1441,15 +1349,13 @@ void NativeCameraHidl::configureAvailableStream(
         RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
         ret = session3_4->constructDefaultRequestSettings(
             reqTemplate, [&config3_4](auto status, const auto &req) {
-                ALOGD("%s,%d,status: %d", __FUNCTION__, __LINE__,
-                      static_cast<uint32_t>(status));
+            IT_LOGD("status: %d", static_cast<uint32_t>(status));
                 config3_4.sessionParams = req;
             });
         ret = session3_4->configureStreams_3_4(
             config3_4,
             [&](Status s, device::V3_4::HalStreamConfiguration halConfig) {
-                ALOGD("%s,%d,status: %d", __FUNCTION__, __LINE__,
-                      static_cast<uint32_t>(s));
+            IT_LOGD("status: %d", static_cast<uint32_t>(s));
                 halStreamConfig->streams.resize(halConfig.streams.size());
                 for (size_t i = 0; i < halConfig.streams.size(); i++) {
                     halStreamConfig->streams[i] =
@@ -1460,19 +1366,74 @@ void NativeCameraHidl::configureAvailableStream(
         ret = session3_3->configureStreams_3_3(
             config3_2,
             [&](Status s, device::V3_3::HalStreamConfiguration halConfig) {
-                ALOGD("%s,%d,status: %d", __FUNCTION__, __LINE__,
-                      static_cast<uint32_t>(s));
+                IT_LOGD("status: %d", static_cast<uint32_t>(s));
                 halStreamConfig->streams.resize(halConfig.streams.size());
                 for (size_t i = 0; i < halConfig.streams.size(); i++) {
                     halStreamConfig->streams[i] = halConfig.streams[i].v3_2;
-                    ALOGE("stream id = %d", halStreamConfig->streams[i].id);
+                    IT_LOGE("stream id = %d", halStreamConfig->streams[i].id);
+                    uint32_t alreadyHasPreviewStream = 0;
+                    // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
+                    uint32_t hasImplementationDefinedOutputStream = 0;
+                    // for callback stream
+                    uint32_t hasCallbackStream = 0;
+                    // for yuv2 stream
+                    uint32_t hasYuv2Stream = 0;
+                    switch (static_cast<android_pixel_format_t>(halStreamConfig->streams[i].overrideFormat))
+                    {
+                        IT_LOGD("stream overrideFormat = %d", 
+                        static_cast<android_pixel_format_t>(halStreamConfig->streams[i].overrideFormat));
+                    case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+                    case HAL_PIXEL_FORMAT_YCrCb_420_SP:
+                        if(halStreamConfig->streams[i].producerUsage & GRALLOC_USAGE_HW_VIDEO_ENCODER){
+                            g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                            IT_LOGD("CAMERA_STREAM_TYPE_VIDEO.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].max_buffers);
+                        } else if (alreadyHasPreviewStream == 0){
+                            g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                            IT_LOGD("CAMERA_STREAM_TYPE_PREVIEW.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].max_buffers);
+                            alreadyHasPreviewStream = 1;
+                        } else {
+                            g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                            if(g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers == 0){
+                                g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers = 10;
+                            }
+                            IT_LOGD("CAMERA_STREAM_TYPE_CALLBACK.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers);
+                        } 
+                        break;
+
+                    case HAL_PIXEL_FORMAT_YV12:
+                    case HAL_PIXEL_FORMAT_YCbCr_420_888:
+                        if (hasCallbackStream == 0) {
+                            g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                            if(g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers == 0){
+                                g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers = 10;
+                            }
+                            IT_LOGD("CAMERA_STREAM_TYPE_CALLBACK.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers);
+                        } else if (hasYuv2Stream == 0) {
+                            g_streamConfig[CAMERA_STREAM_TYPE_YUV2].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                            IT_LOGD("CAMERA_STREAM_TYPE_YUV2.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_YUV2].max_buffers);
+                            hasYuv2Stream = 1;
+                        }
+                        break;
+                    case HAL_PIXEL_FORMAT_BLOB:
+                        g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                        IT_LOGD("CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].max_buffers);
+                        break;
+                    case HAL_PIXEL_FORMAT_RAW16:
+                        g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                        IT_LOGD("CAMERA_STREAM_TYPE_PREVIEW.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].max_buffers);
+                        break;
+
+                    default:
+                        g_streamConfig[CAMERA_STREAM_TYPE_DEFAULT].max_buffers = halStreamConfig->streams[i].maxBuffers;
+                        IT_LOGD("CAMERA_STREAM_TYPE_DEFAULT.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_DEFAULT].max_buffers);
+                        break;
+                    }                    
                 }
             });
     } else {
         ret = (*session)->configureStreams(
             config3_2, [&](Status s, HalStreamConfiguration halConfig) {
-                ALOGV("%s,%d,status: %d", __FUNCTION__, __LINE__,
-                      static_cast<uint32_t>(s));
+                IT_LOGD("status: %d", static_cast<uint32_t>(s));
                 *halStreamConfig = halConfig;
             });
     }
@@ -1507,12 +1468,12 @@ int NativeCameraHidl::map2(buffer_handle_t *buffer_handle,
     int ret = 0;
 
     if (NULL == mem_info || NULL == buffer_handle) {
-        ALOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
+        IT_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
         return -EINVAL;
     }
 
-    int width = g_streamConfig[snapshotStreamID].width *
-                g_streamConfig[snapshotStreamID].height;
+    int width = g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width *
+                g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height;
     int height = 1;
     int format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
     android_ycbcr ycbcr;
@@ -1523,21 +1484,17 @@ int NativeCameraHidl::map2(buffer_handle_t *buffer_handle,
 
     bzero((void *)&ycbcr, sizeof(ycbcr));
     usage = GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
-    // ALOGE("nativecamera map2 width=%d,height =%d,format =%d buffer_handle =
-    // %p",width,height,format,buffer_handle);
-    // ALOGE("nativecamera map2 555 width=%d,height =%d,format =%d buffer_handle
-    // = %p",width,height,format,*buffer_handle);
     if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
         ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
                                bounds, &ycbcr);
         if (ret != 0) {
-            ALOGE("lockcbcr.onQueueFilled, mapper.lock failed try "
+            IT_LOGE("lockcbcr.onQueueFilled, mapper.lock failed try "
                   "lockycbcr. %p, ret %d",
                   *buffer_handle, ret);
             ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
                               bounds, &vaddr);
             if (ret != 0) {
-                ALOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
+                IT_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
                       *buffer_handle, ret);
             } else {
                 mem_info->addr_vir = vaddr;
@@ -1549,13 +1506,13 @@ int NativeCameraHidl::map2(buffer_handle_t *buffer_handle,
         ret = mapper.lock((const native_handle_t *)*buffer_handle, usage,
                           bounds, &vaddr);
         if (ret != 0) {
-            ALOGE("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
+            IT_LOGE("lockonQueueFilled, mapper.lock failed try lockycbcr. %p, "
                   "ret %d",
                   *buffer_handle, ret);
             ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle,
                                    usage, bounds, &ycbcr);
             if (ret != 0) {
-                ALOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                IT_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
                       *buffer_handle, ret);
             } else {
                 mem_info->addr_vir = ycbcr.y;
@@ -1564,14 +1521,8 @@ int NativeCameraHidl::map2(buffer_handle_t *buffer_handle,
             mem_info->addr_vir = vaddr;
         }
     }
-    // mem_info->fd = ADP_BUFFD(*buffer_handle);
-    // mem_info->addr_phy is offset, always set to 0 for yaddr
     mem_info->addr_phy = (void *)0;
-    // mem_info->size = ADP_BUFSIZE(*buffer_handle);
-    // mem_info->width = ADP_WIDTH(*buffer_handle);
-    // mem_info->height = ADP_HEIGHT(*buffer_handle);
-    // mem_info->format= ADP_FORMAT(*buffer_handle);
-    ALOGE("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
+    IT_LOGE("fd = 0x%x, addr_phy offset = %p, addr_vir = %p,"
           " buf size = %zu, width = %d, height = %d, fmt = %d",
           mem_info->fd, mem_info->addr_phy, mem_info->addr_vir, mem_info->size,
           mem_info->width, mem_info->height, mem_info->format);
@@ -1584,7 +1535,7 @@ buffer_handle_t *
 NativeCameraHidl::popBufferList(android::List<new_mem_t *> &list, int type) {
     buffer_handle_t *ret = NULL;
     if (list.empty()) {
-        ALOGE("list is NULL");
+        IT_LOGE("list is NULL");
         return NULL;
     }
     // Mutex::Autolock l(mBufferListLock);
@@ -1596,7 +1547,7 @@ NativeCameraHidl::popBufferList(android::List<new_mem_t *> &list, int type) {
         }
     }
     if (ret == NULL || j == list.end()) {
-        ALOGE("popBufferList failed!");
+        IT_LOGE("popBufferList failed!");
         return ret;
     }
     list.erase(j);
@@ -1604,12 +1555,12 @@ NativeCameraHidl::popBufferList(android::List<new_mem_t *> &list, int type) {
 }
 
 int NativeCameraHidl::openNativeCamera(int g_camera_id) {
-    ALOGI("%s: g_camera_id: %d", __FUNCTION__, g_camera_id);
+    IT_LOGI("g_camera_id: %d",g_camera_id);
     uint32_t id;
     std::string service_name = "legacy/0";
-    ALOGI("get service with name: %s", service_name.c_str());
+    IT_LOGI("get service with name: %s", service_name.c_str());
     mProvider = ICameraProvider::getService(service_name);
-    ALOGI("mProvider address = %p", &mProvider);
+    IT_LOGI("mProvider address = %p", &mProvider);
     parseProviderName(service_name, &mProviderType, &id);
     hidl_vec<hidl_string> cameraDeviceNames;
     if (g_camera_id < 4)
@@ -1623,20 +1574,19 @@ int NativeCameraHidl::openNativeCamera(int g_camera_id) {
         hidl_string string_id(cameraid);
         Return<void> ret;
         int deviceVersion = getCameraDeviceVersion(string_id, mProviderType);
-        ALOGI("name = %s,deviceVersion=%d", string_id.c_str(), deviceVersion);
+        IT_LOGI("name = %s,deviceVersion=%d", string_id.c_str(), deviceVersion);
         ret = mProvider->getCameraDeviceInterface_V3_x(
             string_id, [&](auto status, const auto &device) {
-                ALOGI("getCameraDeviceInterface_V3_x returns status:%d",
+                IT_LOGI("getCameraDeviceInterface_V3_x returns status:%d",
                       (int)status);
                 device3_x = device;
             });
         sp<DeviceCb> cb = new DeviceCb(this);
         ret = device3_x->open(cb, [&](auto status, const auto &newSession) {
-            ALOGI("device::open returns status:%d", (int)status);
+            IT_LOGI("device::open returns status:%d", (int)status);
             g_session = newSession;
         });
-        //    ALOGI("open camera id =%d, ret =%d",g_camera_id ,ret);
-        return 0;
+        return IT_OK;
     }
 
     for (const auto &name : cameraDeviceNames) {
@@ -1644,27 +1594,26 @@ int NativeCameraHidl::openNativeCamera(int g_camera_id) {
         if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0_1) {
             continue;
         } else if (deviceVersion <= 0) {
-            ALOGE("%s: Unsupported device version %d", __FUNCTION__,
-                  deviceVersion);
-            return -1;
+           IT_LOGE("Unsupported device version %d", deviceVersion);
+            return IT_INVAL;
         }
-        ALOGI("configureStreams: Testing camera device %s", name.c_str());
+        IT_LOGI("configureStreams: Testing camera device %s", name.c_str());
         Return<void> ret;
         // sp<ICameraDeviceSession> session;
         ret = mProvider->getCameraDeviceInterface_V3_x(
             name, [&](auto status, const auto &device) {
-                ALOGI("getCameraDeviceInterface_V3_x returns status:%d",
+                IT_LOGI("getCameraDeviceInterface_V3_x returns status:%d",
                       (int)status);
                 device3_x = device;
             });
         sp<DeviceCb> cb = new DeviceCb(this);
         ret = device3_x->open(cb, [&](auto status, const auto &newSession) {
-            ALOGI("device::open returns status:%d", (int)status);
+            IT_LOGI("device::open returns status:%d", (int)status);
             g_session = newSession;
         });
     }
-    ALOGE("open camera end");
-    return 0;
+    IT_LOGE("open camera end");
+    return IT_OK;
 }
 #define CMR_EVT_UT_IT_BASE (1 << 27)
 #define CMR_EVT_PREVIEW_START (CMR_EVT_UT_IT_BASE + 0X100)
@@ -1672,9 +1621,9 @@ int NativeCameraHidl::openNativeCamera(int g_camera_id) {
 static void *ut_process_thread_proc(void *data) {
 
     NativeCameraHidl *nativecamera = (NativeCameraHidl *)data;
-    nativecamera->startnativePreview(0, 1440, 1080, g_streamConfig[0].width,
-                                     g_streamConfig[0].height, 0);
-    ALOGE("ut_process_thread_proc exit");
+    nativecamera->startnativePreview(0, 1440, 1080, 0,
+                                     0, 0);
+    IT_LOGE("ut_process_thread_proc exit");
     return NULL;
 }
 int NativeCameraHidl::startpreview() // create preview running thread
@@ -1712,7 +1661,7 @@ int NativeCameraHidl::transferMetaData(HalCaseComm *_json2) {
         if (mMap_tag.find(tag_name) != mMap_tag.end()) {
             tag = mMap_tag[tag_name];
             tag_type = mMap_tagType[tag_name];
-            ALOGI("sprd tag =%ld,tag_type =%d,tag_name=%s", tag, tag_type,
+            IT_LOGI("sprd tag =%ld,tag_type =%d,tag_name=%s", tag, tag_type,
                   tag_name.c_str());
             is_sprdtag = true;
         }
@@ -1732,11 +1681,11 @@ int NativeCameraHidl::transferMetaData(HalCaseComm *_json2) {
                 CameraMetadata::getTagFromName(tag_name.c_str(), vTags.get(),
                                                &tag);
             if (tag == 0) {
-                ALOGI("not find the metadata , please check the metaname");
-                return -1;
+                IT_LOGI("not find the metadata , please check the metaname");
+                return IT_INVAL;
             }
             tag_type = get_local_camera_metadata_tag_type(tag, NULL);
-            ALOGI("andorid tag =%ld,tag_type =%d,tag_name=%s", tag, tag_type,
+            IT_LOGI("andorid tag =%ld,tag_type =%d,tag_name=%s", tag, tag_type,
                   tag_name.c_str());
         }
 
@@ -1750,18 +1699,18 @@ int NativeCameraHidl::transferMetaData(HalCaseComm *_json2) {
                 if (i == 0) {
                     updatemeta[metacount].data.u8 = &meta_u8.back();
                 }
-                ALOGI("update success,updatemeta[metacount].data.u8=%d",
+                IT_LOGI("update success,updatemeta[metacount].data.u8=%d",
                       updatemeta[metacount].data.u8[i]);
             }
             break;
         case 1:
-            ALOGI("count =%d", updatemeta[metacount].count);
+            IT_LOGI("count =%d", updatemeta[metacount].count);
             for (i = 0; i < updatemeta[metacount].count; i++) {
                 meta_int32.push_back((int32_t)metadata->mVec_tagVal[i].i32);
                 if (i == 0) {
                     updatemeta[metacount].data.i32 = &meta_int32.back();
                 }
-                ALOGI("update success,updatemeta[metacount].data.int32=%d",
+                IT_LOGI("update success,updatemeta[metacount].data.int32=%d",
                       updatemeta[metacount].data.i32[i]);
             }
             break;
@@ -1775,9 +1724,9 @@ int NativeCameraHidl::transferMetaData(HalCaseComm *_json2) {
             break;
         }
         metacount++;
-        ALOGI("metacount =%d", metacount);
+        IT_LOGI("metacount =%d", metacount);
     }
-    return 0;
+    return IT_OK;
 }
 
 ::android::hardware::camera::common::V1_0::helper::CameraMetadata
@@ -1814,12 +1763,10 @@ NativeCameraHidl::updatemetedata(camera_metadata_t *metaBuffer) {
             default:
                 break;
             }
-            ALOGE("enter > VENDOR_SECTION_START");
+            IT_LOGE("enter > VENDOR_SECTION_START");
             camera_metadata_entry_t entry;
             int res = find_camera_metadata_entry(metaBuffer, updatemeta[i].tag,
                                                  &entry);
-            // switch(updatemeta[i].type)
-            // case  1:
             if (res == -1) {
                 res = add_camera_metadata_entry(metaBuffer, updatemeta[i].tag,
                                                 data, updatemeta[i].count);
@@ -1829,11 +1776,11 @@ NativeCameraHidl::updatemetedata(camera_metadata_t *metaBuffer) {
             }
             requestmeta = metaBuffer;
         } else {
-            ALOGE("enter <=  VENDOR_SECTION_START");
+            IT_LOGE("enter <=  VENDOR_SECTION_START");
             requestmeta = metaBuffer;
             switch (updatemeta[i].type) {
             case 0:
-                ALOGE("type =%d,data=%d,i=%d,tag=%ld", updatemeta[i].type,
+                IT_LOGE("type =%d,data=%d,i=%d,tag=%ld", updatemeta[i].type,
                       updatemeta[i].data.u8[0], i, updatemeta[i].tag);
                 requestmeta.update(updatemeta[i].tag, updatemeta[i].data.u8,
                                    updatemeta[i].count);
@@ -1864,7 +1811,7 @@ NativeCameraHidl::updatemetedata(camera_metadata_t *metaBuffer) {
         }
     }
 
-    ALOGE("updatemeta end");
+    IT_LOGE("updatemeta end");
     return requestmeta;
 }
 
@@ -1904,7 +1851,7 @@ NativeCameraHidl::updatemetedata_v2(camera_metadata_t *metaBuffer,
             default:
                 break;
             }
-            ALOGE("enter > VENDOR_SECTION_START");
+            IT_LOGE("enter > VENDOR_SECTION_START");
             camera_metadata_entry_t entry;
             int res = find_camera_metadata_entry(metaBuffer, meta_entry[i].tag,
                                                  &entry);
@@ -1921,11 +1868,11 @@ NativeCameraHidl::updatemetedata_v2(camera_metadata_t *metaBuffer,
                 }
             requestmeta = metaBuffer;
         } else {
-            ALOGE("enter <=  VENDOR_SECTION_START");
+            IT_LOGE("enter <=  VENDOR_SECTION_START");
             requestmeta = metaBuffer;
             switch (meta_entry[i].type) {
             case 0:
-                ALOGE("type =%d,data=%d,i=%d,tag=%ld", meta_entry[i].type,
+                IT_LOGE("type =%d,data=%d,i=%d,tag=%ld", meta_entry[i].type,
                       meta_entry[i].data.u8[0], i, meta_entry[i].tag);
                 requestmeta.update(meta_entry[i].tag, meta_entry[i].data.u8,
                                    meta_entry[i].count);
@@ -1956,7 +1903,7 @@ NativeCameraHidl::updatemetedata_v2(camera_metadata_t *metaBuffer,
         }
     }
 
-    ALOGE("updatemeta end");
+    IT_LOGE("updatemeta end");
     return requestmeta;
 }
 
@@ -1969,61 +1916,43 @@ int NativeCameraHidl::SetupSprdTags() {
         mMap_tag[tag_name] = VENDOR_SECTION_START + i;
         mMap_tagType[tag_name] = cam_tag[i].tag_type;
     }
-    return 0;
+    return IT_OK;
 }
 
 int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                                          int g_height, int g_sensor_width,
                                          int g_sensor_height, int g_rotate) {
-    ALOGI("%s: g_camera_id: %d", __FUNCTION__, g_camera_id);
+    IT_LOGI("g_camera_id: %d", g_camera_id);
     std::string service_name = "legacy/0";
-    ALOGI("get service with name: %s", service_name.c_str());
-    // mProvider = ICameraProvider::getService(service_name);
-
+    IT_LOGI("get service with name: %s", service_name.c_str());
+    
     uint32_t id;
     bool previewStreamFound = false;
     uint64_t bufferId = 0;
     uint32_t frameNumber = 0;
     ::android::hardware::hidl_vec<uint8_t> settings;
 
-    // parseProviderName(service_name, &mProviderType, &id);
-    ALOGI("mProvider address = %p", &mProvider);
+    IT_LOGI("mProvider address = %p", &mProvider);
     hidl_vec<hidl_string> cameraDeviceNames =
         getCameraDeviceNames(g_camera_id, mProvider);
     std::vector<AvailableStream> outputPreviewStreams;
     AvailableStream previewThreshold;
-
-    for (int i = 0; i < g_stream_count; i++) {
-        if (g_streamConfig[i].stream_type == CAMERA_STREAM_TYPE_PREVIEW) {
-            previewThreshold = {g_streamConfig[i].width,
-                                g_streamConfig[i].height,
-                                static_cast<int32_t>(g_streamConfig[i].pixel)};
-            ALOGI("g_streamConfig .stream_type =%d",
-                  g_streamConfig[i].stream_type);
-            previewStreamID = i;
-            previewStreamFound = true;
-        }
-        if (g_streamConfig[i].stream_type ==
-            CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
-            snapshotStreamID = i;
-        }
-
-        if (g_streamConfig[i].stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
-            callbackStreamID = i;
-        }
-
-        if (g_streamConfig[i].stream_type == CAMERA_STREAM_TYPE_VIDEO) {
-            videoStreamID = i;
-        }
-        ALOGI("previewStreamID=%d,snapshotStreamID=%d,callbackStreamID=%d,"
-              "videoStreamID=%d",
-              previewStreamID, snapshotStreamID, callbackStreamID,
-              videoStreamID);
+    auto iter = g_streamConfig.find(CAMERA_STREAM_TYPE_PREVIEW);
+    if(iter != g_streamConfig.end()){
+        previewThreshold = {g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].width,
+                            g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].height,
+                            static_cast<int32_t>(g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].pixel)};
+        IT_LOGD("width %d,height %d,pixel %d",
+                g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].width,
+                g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].height,
+                static_cast<int32_t>(g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].pixel));
+       previewStreamFound = true;
     }
 
+
     if (!previewStreamFound) {
-        ALOGE("please config preview stream first");
-        return -1;
+        IT_LOGE("please config preview stream first");
+        return IT_INVAL;
     }
 
     for (const auto &name : cameraDeviceNames) {
@@ -2032,9 +1961,8 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         if (deviceVersion == CAMERA_DEVICE_API_VERSION_1_0_1) {
             continue;
         } else if (deviceVersion <= 0) {
-            ALOGE("%s: Unsupported device version %d", __FUNCTION__,
-                  deviceVersion);
-            return -1;
+            IT_LOGE("Unsupported device version %d", deviceVersion);
+            return IT_INVAL;
         }
 
         V3_2::Stream previewStream;
@@ -2053,9 +1981,8 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                 resultQueue = std::make_shared<ResultMetadataQueue>(descriptor);
                 if (!resultQueue->isValid() ||
                     resultQueue->availableToWrite() <= 0) {
-                    ALOGE("%s: HAL returns empty result metadata fmq,"
-                          " not use it",
-                          __FUNCTION__);
+                   IT_LOGE("HAL returns empty result metadata fmq,"
+                    " not use it");
                     resultQueue = nullptr;
                     // Don't use the queue onwards.
                 }
@@ -2067,8 +1994,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         Return<void> ret;
         ret = session->constructDefaultRequestSettings(
             reqTemplate, [&](auto status, const auto &req) {
-                ALOGV("%s,%d,status: %d", __FUNCTION__, __LINE__,
-                      static_cast<uint32_t>(status));
+            IT_LOGV("status: %d", static_cast<uint32_t>(status));
                 settings = req;
             });
 
@@ -2088,173 +2014,54 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         int bufferIdx = 0;
         int maxConsumerBuffers;
         android::DisplayInfo dinfo;
-
+        memset(mLocalBuffer,0,sizeof(new_mem_t)*MAX_BUFFER_MAXNUMS);
+        memset(mCallbackBuffer,0,sizeof(new_mem_t)*MAX_BUFFER_MAXNUMS);
+        memset(mVideoBuffer,0,sizeof(new_mem_t)*MAX_BUFFER_MAXNUMS);
         /*alloc local preview memory begin */
-        for (size_t j = 0; j < max_buffers + 1; j++) {
-            if (0 > allocateOne(g_streamConfig[previewStreamID].width,
-                                g_streamConfig[previewStreamID].height,
-                                &(mLocalBuffer[j]), 0)) {
-                ALOGE("request one buf failed.");
-                return -1;
+            for (size_t j = 0; j < g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].max_buffers; j++) {
+                if (0 > allocateOne(g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].width,
+                                    g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].height,
+                                    &(mLocalBuffer[j]), 0)) {
+                    IT_LOGE("request one buf failed.");
+                    return -1;
+                }
+                mLocalBufferList.push_back(&(mLocalBuffer[j]));
             }
-            mLocalBufferList.push_back(&(mLocalBuffer[j]));
-        }
-        ALOGE("alloc preview buffer num =%d", max_buffers + 1);
+        IT_LOGE("alloc preview buffer num =%d", 
+        g_streamConfig[CAMERA_STREAM_TYPE_PREVIEW].max_buffers);
         /*alloc local preview memory end */
-        for (int i = 0; i < g_stream_count; i++) {
-            if (streamlist[i] == CAMERA_STREAM_TYPE_CALLBACK) {
-                for (size_t j = 0; j < max_buffers + 1; j++) {
-                    if (0 > allocateOne(g_streamConfig[callbackStreamID].width,
-                                        g_streamConfig[callbackStreamID].height,
+        for (int i = 0; i < g_stream_count; i++){
+            if (streamlist[i] == CAMERA_STREAM_TYPE_CALLBACK){
+                for (size_t j = 0; j < g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers; j++) {
+                    if (0 > allocateOne(g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].width,
+                                        g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].height,
                                         &(mCallbackBuffer[j]), 0)) {
-                        ALOGE("request one buf failed.");
+                        IT_LOGE("request one buf failed.");
                         return -1;
                     }
-                    // mLocalBuffer[j].type = PREVIEW_MAIN_BUFFER;
+                    IT_LOGD("push callback buf=%p",&(mCallbackBuffer[j]));
                     mCallbackBufferList.push_back(&(mCallbackBuffer[j]));
                 }
-                ALOGE("alloc callback buffer num =%d", max_buffers + 1);
+                IT_LOGE("alloc callback buffer num =%d",
+                    g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers);
             }
-            // alloc other buffer here
-            if (streamlist[i] == CAMERA_STREAM_TYPE_VIDEO) {
-                for (size_t j = 0; j < max_buffers + 1; j++) {
-                    if (0 > allocateOne(g_streamConfig[videoStreamID].width,
-                                        g_streamConfig[videoStreamID].height,
+        // alloc other buffer here
+            if (streamlist[i] == CAMERA_STREAM_TYPE_VIDEO){
+                for (size_t j = 0; j < g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].max_buffers; j++) {
+                    if (0 > allocateOne(g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].width,
+                                        g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].height,
                                         &(mVideoBuffer[j]), 0)) {
-                        ALOGE("request one buf failed.");
+                        IT_LOGE("request one buf failed.");
                         return -1;
                     }
                     // mLocalBuffer[j].type = PREVIEW_MAIN_BUFFER;
                     mVideoBufferList.push_back(&(mVideoBuffer[j]));
+                    IT_LOGD("mVideoBufferList= %d",mVideoBufferList.size());
                 }
-                ALOGE("video  buffer num =%d", max_buffers + 1);
+                IT_LOGE("video  buffer num =%d", 
+                        g_streamConfig[CAMERA_STREAM_TYPE_VIDEO].max_buffers);
             }
         }
-
-        /* surface code */
-        /*
-                ANativeWindowBuffer **anwBuffers = NULL;
-                // create a client to surfaceflinger
-                int trim_x = 0, trim_y = 0;
-                ALOGE("begin get surface 111");
-                sp<android::SurfaceComposerClient> composerClient = new
-           android::SurfaceComposerClient();
-                ALOGE("begin get surface 000");
-                if (android::NO_ERROR != composerClient->initCheck()) {
-                    E("initCheck error");
-                    return -1;
-                }
-                ALOGE("begin get surface 222");
-                //android::SurfaceComposerClient::getDisplayInfo(android::SurfaceComposerClient::getBuiltInDisplay(android::ISurfaceComposer::eDisplayIdMain),
-           &dinfo);
-                android::SurfaceComposerClient::getDisplayInfo(android::SurfaceComposerClient::getInternalDisplayToken(),
-           &dinfo);
-                E("w=%d,h=%d,xdpi=%f,ydpi=%f,fps=%f,ds=%f\n", dinfo.w, dinfo.h,
-           dinfo.xdpi, dinfo.ydpi, dinfo.fps, dinfo.density);
-               // g_width = dinfo.w;
-               // g_height = dinfo.h;
-                ALOGE("begin get surface 333");
-                sp<android::SurfaceControl> surfaceControl =
-           composerClient->createSurface(::android::String8("NativeCameraPreviewSurface"),
-           g_width + trim_x, g_height + trim_y, g_surface_f);
-
-                if (NULL == surfaceControl.get() || !surfaceControl->isValid())
-           {
-                    E("createSurface error");
-                    return -1;
-                }
-                android::SurfaceComposerClient::Transaction t;
-
-                t.setPosition(surfaceControl, -trim_x / 2, 0);
-                t.setLayer(surfaceControl, 0x7FFFFFFF).apply();
-                t.show(surfaceControl);
-                sp<Surface> surface = surfaceControl->getSurface();
-                if (surface == NULL || surface.get() == NULL) {
-                    E("getSurface error");
-                    return -1;
-                }
-                ALOGE("begin get surface 444");
-                nativeWindow = surface;
-                android::status_t ui_status =
-           native_window_api_connect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                if (ui_status != android::OK) {
-                    E("native_window_api_connect error");
-                    //return -1;
-                }
-                //\u628a\u7a97\u53e3\u8bbe\u7f6e\u4e3a\u9690\u85cf\u5e94\u53ef\u4ee5\u51cf\u5c11\u529f\u8017
-                ui_status = native_window_set_usage(nativeWindow.get(),
-                                                    GRALLOC_USAGE_SW_READ_OFTEN
-           |
-                                                    GRALLOC_USAGE_SW_WRITE_OFTEN
-           |
-                                                    GRALLOC_USAGE_HW_TEXTURE |
-                                                    GRALLOC_USAGE_EXTERNAL_DISP);
-
-                if (ui_status != android::OK) {
-                    E("native_window_set_usage error");
-                    native_window_api_disconnect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                    return -1;
-                }
-                ui_status = native_window_set_scaling_mode(nativeWindow.get(),
-           NATIVE_WINDOW_SCALING_MODE_SCALE_TO_WINDOW);
-                if (ui_status != android::OK) {
-                    E("native_window_set_scaling_mode error");
-                    native_window_api_disconnect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                    return -1;
-                }
-
-                ui_status =
-           native_window_set_buffers_dimensions(nativeWindow.get(),
-           g_sensor_width, g_sensor_height);
-                if (ui_status != android::OK) {
-                    E("native_window_set_buffers_dimensions error");
-                    native_window_api_disconnect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                    return -1;
-                }
-                ui_status = native_window_set_buffers_format(nativeWindow.get(),
-           g_surface_f);
-                if (ui_status != android::OK) {
-                    E("native_window_set_buffers_format error");
-                    native_window_api_disconnect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                    return -1;
-                }
-
-                ui_status = nativeWindow->query(nativeWindow.get(),
-           NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS, &maxConsumerBuffers);
-                if (ui_status != android::OK) {
-                    E("Unable to query consumer undequeued");
-                    native_window_api_disconnect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                    return -1;
-                }
-                D("wants %d buffers", maxConsumerBuffers);
-                int totalBuffers = maxConsumerBuffers + max_buffers;
-                D("totalBuffers %d", totalBuffers);
-                ui_status = native_window_set_buffer_count(nativeWindow.get(),
-           totalBuffers);
-                if (ui_status != android::OK) {
-                    E("native_window_set_buffer_count error");
-                    native_window_api_disconnect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                    return -1;
-                }
-                D("rotate window");
-                ui_status =
-           native_window_set_buffers_transform(nativeWindow.get(), g_rotate |
-           NATIVE_WINDOW_TRANSFORM_INVERSE_DISPLAY);
-                if (ui_status != android::OK) {
-                    E("native_window_set_buffers_transform error");
-                    native_window_api_disconnect(nativeWindow.get(),
-           NATIVE_WINDOW_API_CAMERA);
-                    return -1;
-                }
-
-                anwBuffers = new ANativeWindowBuffer*[totalBuffers];*/
 
         _frameNum = 0;
         bufferIdx = 0;
@@ -2265,11 +2072,6 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         cb->mBufferId = 1;
 
         while (1) {
-            // D("dequeueBufferr");
-            /* surface code */
-            //   ui_status =
-            //   native_window_dequeue_buffer_and_wait(nativeWindow.get(),
-            //   &anwBuffers[bufferIdx]);
             if (exit_camera()) {
                 break;
             }
@@ -2286,13 +2088,9 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                     reinterpret_cast<camera_metadata_t *>(settings.data()));
             }
             for (int i = 0; i < g_stream_count; i++) {
-                ALOGE("request_buf.frame_number =%d,capture_frame=%d",
-                      request_buf.frame_number, capture_frame);
                 if (streamlist[i] == CAMERA_STREAM_TYPE_PREVIEW) {
                     sb[i].stream = &preview_stream;
                     sb[i].status = 0;
-                    /* surface code */
-                    // sb[0].buffer = &anwBuffers[bufferIdx]->handle;
                     sb[i].buffer = popBufferList(mLocalBufferList, 0);
                     sb[i].acquire_fence = -1;
                     sb[i].release_fence = -1;
@@ -2300,13 +2098,13 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                 if (capture_flag &&
                     streamlist[i] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
                     if (snapshot_buffer.native_handle == NULL) {
-                        allocateOne(g_streamConfig[snapshotStreamID].width *
-                                        g_streamConfig[snapshotStreamID].height,
+                        allocateOne(g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width *
+                                        g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height,
                                     1, &snapshot_buffer,
                                     0); // capture ion buffer ,size fixed??
-                        ALOGE("alloc new memory ,width =%d ,height =%d",
-                              g_streamConfig[snapshotStreamID].width,
-                              g_streamConfig[snapshotStreamID].height);
+                        IT_LOGE("alloc new memory ,width =%d ,height =%d",
+                              g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width,
+                              g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height);
                         sb[i].stream = &capture_stream;
                         sb[i].status = 0;
                         sb[i].buffer = &snapshot_buffer.native_handle;
@@ -2332,32 +2130,30 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                     sb[i].release_fence = -1;
                 }
             }
-            // D("buffer_handle:%d",(*sb.buffer)->version);
             request_buf.output_buffers = (const camera3_stream_buffer_t *)&sb;
             if (capture_flag)
                 request_buf.num_output_buffers = g_stream_count;
             else
                 request_buf.num_output_buffers = g_stream_count - 1;
 
-            // D("buffer_handle:%d",(*request_buf.output_buffers->buffer)->version);
-            // //12
-            // D("debug_zy:%s\uff0c%d,%p", __FUNCTION__,__LINE__,sb.buffer);
-
-            // native_handle_t *buffers = (native_handle_t *)*sb[0].buffer ;
-            // buffer_handle = buffers;
             StreamBuffer outputBuffer_new[g_stream_count];
             for (int i = 0; i < g_stream_count; i++) {
                 if ((streamlist[i] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT &&
                      capture_flag) ||
                     streamlist[i] != CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
-                    buffer_handle_new[i] = (native_handle_t *)*sb[i].buffer;
+                    if(!sb[i].buffer){
+                        IT_LOGE("stream[%d] NULL buf",i);
+                        return -IT_NO_MEM;
+                    }else{
+                        buffer_handle_new[i] = (native_handle_t *)*sb[i].buffer;
+                    }
                     outputBuffer_new[i] = {halStreamConfig.streams[i].id,
                                            bufferId,
                                            buffer_handle_new[i],
                                            BufferStatus::OK,
                                            nullptr,
                                            nullptr};
-                    ALOGI("i=%d,halStreamConfig.streams[i].id =%d ", i,
+                    IT_LOGI("i=%d,halStreamConfig.streams[i].id =%d ", i,
                           halStreamConfig.streams[i].id);
                 }
             }
@@ -2374,7 +2170,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                      capture_flag) ||
                     streamlist[i] != CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
                     outputBuffers[bufferindex] = outputBuffer_new[i];
-                    ALOGI("bufferindex =%d,i =%d,capture_flag=%d", bufferindex,
+                    IT_LOGI("bufferindex =%d,i =%d,capture_flag=%d", bufferindex,
                           i, capture_flag);
                     bufferindex++;
                 }
@@ -2386,7 +2182,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             }
 
             if (true) { // update meta  when preview runing
-                ALOGE("update metadata here");
+                IT_LOGE("update metadata here");
                 if (request_buf.frame_number ==
                     capture_frame + 1) // after capture ,set capture intent
                 {
@@ -2394,19 +2190,17 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                         ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW);
                     updatemeta[0].tag = ANDROID_CONTROL_CAPTURE_INTENT;
                     updatemeta[0].data.u8 = &mode_test;
-                    ALOGE("capture intent = %d,mode =%d",
+                    IT_LOGE("capture intent = %d,mode =%d",
                           updatemeta[0].data.u8[0], mode_test);
                     updatemeta[0].count = 1;
                     updatemeta[0].type = 0;
                     metacount = 1;
                 }
-                ALOGE("metacount =%d,local_meta_count=%d", metacount,
+                IT_LOGE("metacount =%d,local_meta_count=%d", metacount,
                       local_meta_count);
                 if (metacount > 0) {
                     metaBuffer = requestMeta.release();
                     requestMeta = updatemetedata(metaBuffer);
-                    //  requestMeta =
-                    //  updatemetedata_v2(metaBuffer,local_meta,local_meta_count);
                     metaBuffer = requestMeta.release();
                     metacount = 0;
                     requestSettings.setToExternal(
@@ -2414,7 +2208,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                         get_camera_metadata_size(metaBuffer), true);
                 }
                 if (local_meta_count > 0) {
-                    ALOGE("update local_meta");
+                    IT_LOGE("update local_meta");
                     metaBuffer = requestMeta.release();
                     memcpy(updatemeta, local_meta,
                            5 * sizeof(camera_metadata_entry));
@@ -2438,10 +2232,6 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                 std::unique_lock<std::mutex> l(mLock);
                 inflightReq = {1, false, supportsPartialResults,
                                partialResultCount, resultQueue};
-                //	ALOGI("debug_zy %s
-                //,%d,frameNumber:%d,shutterTimestamp:%" PRId64
-                //",haveResultMetadata:%d,numBuffersLeft:%zu",
-                //__FUNCTION__,__LINE__,frameNumber,inflightReq.shutterTimestamp,inflightReq.haveResultMetadata,inflightReq.numBuffersLeft);
                 mInflightMap.add(frameNumber, &inflightReq);
             }
             CaptureRequest captureRequests_buf = {
@@ -2455,16 +2245,8 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             Status status = Status::INTERNAL_ERROR;
             uint32_t numRequestProcessed = 0;
             hidl_vec<BufferCache> cachesToRemove;
-            /*if(previewstop == false)
-            {
-                      ALOGE("frame num reach 200 ,flush and close camera");
-                      break;
-                      //session->flush();
-                      // session->close();
-                       previewstop = true;
-            }*/
             if (previewstop || g_need_exit) {
-                ALOGI("preview stop ,break prevew thread");
+                IT_LOGI("preview stop ,break prevew thread");
                 break;
             }
 
@@ -2475,8 +2257,6 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                      &numRequestProcessed](auto s, // captureRequests {request}
                                            uint32_t n) {
                         status = s;
-                        ALOGV("%s,%d,status: %d", __FUNCTION__, __LINE__,
-                              static_cast<uint32_t>(status));
                         numRequestProcessed = n;
                     });
             }
@@ -2484,11 +2264,6 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             for (auto &handle : handlesCreated) {
                 native_handle_delete(handle);
             }
-            /* surface code */
-            /*  bufferIdx++;
-              if (bufferIdx >= totalBuffers) {
-                  bufferIdx = 0;
-              }*/
         }
 #endif
         // Flush before waiting for request to complete.
@@ -2507,25 +2282,11 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
                     break;
                 case ErrorCode::ERROR_DEVICE:
                 default:
-                    ALOGE("Unexpected error:%d",
+                    IT_LOGE("Unexpected error:%d",
                           static_cast<uint32_t>(inflightReq.errorCode));
                 }
             }
             mInflightMap.clear();
-            /* surface code */
-            /*  for (int i = 0; i < totalBuffers; i++) {
-                  //ALOGI("debug_zy totalBuffers:%d",totalBuffers);
-                  ui_status = nativeWindow->cancelBuffer(nativeWindow.get(),
-              anwBuffers[i], -1);
-                  if (ui_status != android::OK) {
-                      E("cancelBuffer error");
-                  }
-              }
-              native_window_api_disconnect(nativeWindow.get(),
-              NATIVE_WINDOW_API_CAMERA);
-              surface.clear();
-              composerClient->dispose();
-              delete []anwBuffers;*/
             session->flush();
             ret = session->close();
         }
@@ -2535,22 +2296,21 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
     long pid;
     pid = find_pid_by_name(pid_name);
     kill(pid, SIGKILL);
-    ALOGE("pid =%d", pid);
-    return 0;
+    IT_LOGE("pid =%d", pid);
+    return IT_OK;
 }
 
 int NativeCameraHidl::freeAllBuffers() // create preview running thread
 {
     int ret = 0;
     /*free preview buffer*/
-    for (int i = 0; i < max_buffers + 1; i++) {
+    for (int i = 0; i <MAX_BUFFER_MAXNUMS; i++) {
         freeOneBuffer(&mLocalBuffer[i]);
         freeOneBuffer(&mCallbackBuffer[i]);
         freeOneBuffer(&mVideoBuffer[i]);
     }
     /*free snapshot buffer */
     freeOneBuffer(&snapshot_buffer);
-    free(g_streamConfig);
     return ret;
 }
 
@@ -2564,9 +2324,9 @@ void NativeCameraHidl::freeOneBuffer(new_mem_t *buffer) {
         }
         buffer->native_handle = NULL;
     } else {
-        ALOGI("Not allocated, No need to free");
+        IT_LOGI("Not allocated, No need to free");
     }
-    ALOGD("X");
+    IT_LOGD("X");
     return;
 }
 
@@ -2604,9 +2364,8 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
     int g_camera_id = _json2->m_cameraID;
     status = native_camera.transferMetaData(_json2);
 
-    ALOGI("metacount =%d", metacount);
+    IT_LOGI("metacount =%d", metacount);
 
-    // if (_json2->getID() == 0 && !g_first_open) {
     if (strcmp(_json2->m_funcName.c_str(), "opencamera") == 0 &&
         !g_first_open) {
         native_camera.SetupSprdTags();
@@ -2625,20 +2384,21 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
     if (strcmp(_json2->m_funcName.c_str(), "startpreview") == 0 &&
         !g_first_preview) {
         g_stream_count = 0;
-        g_streamConfig = (streamconfig *)malloc(8 * sizeof(streamconfig));
         for (auto &stream : _json2->m_StreamArr) {
-            g_streamConfig[g_stream_count].stream_type =
+            g_streamConfig[stream->s_type].stream_type =
                 (camera_stream_type_t)stream->s_type;
-            g_streamConfig[g_stream_count].width = stream->s_width;
-            g_streamConfig[g_stream_count].height = stream->s_height;
-            g_streamConfig[g_stream_count].pixel =
-                android_pixel_format_t(stream->s_format);
-            ALOGI("stream_type =%d,width =%d,height =%d,pixel "
+            g_streamConfig[stream->s_type].width = stream->s_width;
+            g_streamConfig[stream->s_type].height = stream->s_height;
+            g_streamConfig[stream->s_type].pixel = 
+            (android_pixel_format_t)stream->s_format;
+            g_streamConfig[stream->s_type].usage = stream->s_usage;
+
+            IT_LOGI("stream_type =%d,width =%d,height =%d,pixel "
                   "=%d,g_stream_count=%d",
-                  g_streamConfig[g_stream_count].stream_type,
-                  g_streamConfig[g_stream_count].width = stream->s_width,
-                  g_streamConfig[g_stream_count].height,
-                  g_streamConfig[g_stream_count].pixel, g_stream_count);
+                  g_streamConfig[stream->s_type].stream_type,
+                  g_streamConfig[stream->s_type].width,
+                  g_streamConfig[stream->s_type].height,
+                  g_streamConfig[stream->s_type].pixel, g_stream_count);
             g_stream_count++;
         }
         native_camera.previewstop = 0;
@@ -2682,7 +2442,7 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
     if (strcmp(_json2->m_funcName.c_str(), "closecamera") == 0) {
         // close camera
         native_camera.previewstop = 1;
-        ALOGI("stop preview and closecamera");
+        IT_LOGI("stop preview and closecamera");
         while (!g_need_exit) // result check
         {
             // if((g_result[CAMERA_CLOSE_CAMERA] && _json2->getID() == 3))
@@ -2691,7 +2451,7 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
                 break;
             }
         }
-        ALOGI("exit success,g_result[CAMERA_CLOSE_CAMERA]=%d,g_need_exit=%d",
+        IT_LOGI("exit success,g_result[CAMERA_CLOSE_CAMERA]=%d,g_need_exit=%d",
               g_result[CAMERA_CLOSE_CAMERA], g_need_exit);
         g_first_open = false;
         g_first_preview = false;
@@ -2709,8 +2469,8 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         CloseResult.funcName = _json2->m_funcName;
         pVec_Result->push_back(CloseResult);
     }
-    if (status != 0) {
-        return -1;
+    if (status != IT_OK) {
+        return status;
     }
     return ret;
 }

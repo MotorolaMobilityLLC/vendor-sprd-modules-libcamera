@@ -58,6 +58,12 @@ typedef enum {
     IT_FILE_EMPTY,
     IT_UNKNOWN_FAULT,
     IT_NO_MEM,
+    IT_TRY_AGAIN,
+    IT_BAD_ADDR,
+    IT_BUSY,
+    IT_FILE_EXIST,
+    IT_INVAL,
+    IT_WRITE_FAIL,
     IT_STATUS_MAX,
 } IT_STATUS_T;
 
