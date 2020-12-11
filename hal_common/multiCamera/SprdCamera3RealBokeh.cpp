@@ -3131,17 +3131,20 @@ void SprdCamera3RealBokeh::dump(const struct camera3_device *device, int fd) {
  * RETURN     :
  *==========================================================================*/
 int SprdCamera3RealBokeh::flush(const struct camera3_device *device) {
-    int rc = 0;
+    int rc = NO_ERROR;
 
-    HAL_LOGI(" E");
+    HAL_LOGI("E");
     CHECK_CAPTURE_ERROR();
     mRealBokeh->mTimeoutFlush.tv_sec += PENDINGTIMEOUT/1000000000;
     if(!mRealBokeh->mFlushing && mRealBokeh->is_caprequest){
-        sem_timedwait(&mRealBokeh->mflushvalue, &mRealBokeh->mTimeoutFlush);
+        rc = sem_timedwait(&mRealBokeh->mflushvalue, &mRealBokeh->mTimeoutFlush);
+        if(rc!= NO_ERROR){
+            HAL_LOGE("sem_timedwait failed");
+        }
         sem_destroy(&mRealBokeh->mflushvalue);
     }
     rc = mRealBokeh->_flush(device);
-    HAL_LOGI(" X");
+    HAL_LOGI("X");
 
     return rc;
 }

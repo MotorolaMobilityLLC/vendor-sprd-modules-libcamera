@@ -3028,17 +3028,20 @@ void SprdCamera3Portrait::dump(const struct camera3_device *device, int fd) {
  * RETURN     :
  *==========================================================================*/
 int SprdCamera3Portrait::flush(const struct camera3_device *device) {
-    int rc = 0;
+    int rc = NO_ERROR;
 
-    HAL_LOGI(" E ");
+    HAL_LOGI("E");
     CHECK_CAPTURE_ERROR();
     mPortrait->mTimeoutFlush.tv_sec += PENDINGTIMEOUT/1000000000;
     if(!mPortrait->mFlushing && mPortrait->is_caprequest){
-        sem_timedwait(&mPortrait->mflushvalue, &mPortrait->mTimeoutFlush);
+        rc = sem_timedwait(&mPortrait->mflushvalue, &mPortrait->mTimeoutFlush);
+        if(rc!= NO_ERROR){
+            HAL_LOGE("sem_timedwait failed");
+        }
         sem_destroy(&mPortrait->mflushvalue);
     }
     rc = mPortrait->_flush(device);
-    HAL_LOGI(" X");
+    HAL_LOGI("X");
 
     return rc;
 }
