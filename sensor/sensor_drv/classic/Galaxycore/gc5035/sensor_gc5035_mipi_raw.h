@@ -95,12 +95,6 @@
 /* please don't change it */
 #define EX_MCLK				24
 
-#undef GC5035_MIRROR_NORMAL
-#undef GC5035_MIRROR_H
-#undef GC5035_MIRROR_V
-#undef GC5035_MIRROR_HV
-#define GC5035_MIRROR_NORMAL
-
 #if defined(GC5035_MIRROR_NORMAL)
 	#define GC5035_MIRROR	 0x80
 	#define GC5035_RSTDUMMY1 0x02
