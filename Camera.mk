@@ -195,6 +195,11 @@ LOCAL_SRC_FILES := \
     hal_common/camera_power_perf/SprdCameraPowerPerformance.cpp \
     hal1.0/src/SprdCameraParameters.cpp
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_IMAGE_FLIP)),true)
+LOCAL_SRC_FILES += \
+    $(HAL_DIR)/SprdCamera3ImageFlip.cpp
+endif
+
 # for multi-camera
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
 LOCAL_SRC_FILES+= \

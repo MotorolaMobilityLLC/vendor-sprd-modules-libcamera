@@ -66,6 +66,9 @@
 #include "libyuv/convert.h"
 #include "libyuv/convert_from.h"
 #include "libyuv/scale.h"
+#ifdef CONFIG_CAMERA_IMAGE_FLIP
+#include "SprdCamera3ImageFlip.h"
+#endif
 
 extern "C" {
 #include "isp_video.h"
@@ -4108,7 +4111,6 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
         return 0;
     }
 
-
     ATRACE_BEGIN("video_frame");
     HAL_LOGD("mCameraId=%d,fd=0x%x,vir=0x%lx,num=%d,time=0x%llx,rec=0x%llx",
              mCameraId, (cmr_u32)frame->fd, buff_vir, frame_num,
@@ -4138,10 +4140,41 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
                     mJpegDebugQ.push_back(node);
                     HAL_LOGD("Cam%d JpegQueue video fd 0x%x,  frame_id %d, frame_num %d\n",
 						mCameraId, frame->fd, frame->frame_num, frame_num);
-		}
+                }
             }
         }
 
+#ifdef CONFIG_CAMERA_IMAGE_FLIP
+        /* when mirror enable, APP set param: flip_on and jpeg orientation */
+        if(mCameraId == 1 && (sprddefInfo->flip_on == 1)) {
+            SprdCamera3ImageFlip mSprdCamera3ImageFlip;
+            JPEG_Tag jpegInfo;
+            mSetting->getJPEGTag(&jpegInfo);
+            HAL_LOGV("mirror = %d, orientation = %d", sprddefInfo->flip_on, jpegInfo.orientation);
+
+            switch (jpegInfo.orientation) {
+            case 0:
+                mSprdCamera3ImageFlip.imageYuvMirror((uint8_t*)buff_vir,
+                    (int)frame->width, (int)frame->height);
+                break;
+            case 90:
+                mSprdCamera3ImageFlip.imageYuvFlip((uint8_t*)buff_vir,
+                    (int)frame->width, (int)frame->height);
+                break;
+            case 180:
+                mSprdCamera3ImageFlip.imageYuvMirror((uint8_t*)buff_vir,
+                    (int)frame->width, (int)frame->height);
+                break;
+            case 270:
+                mSprdCamera3ImageFlip.imageYuvFlip((uint8_t*)buff_vir,
+                    (int)frame->width, (int)frame->height);
+                break;
+            default:
+                HAL_LOGW("orientation error");
+                break;
+            }
+        }
+#endif
         if (mSlowPara.last_frm_timestamp == 0) { /*record first frame*/
             mSlowPara.last_frm_timestamp = buffer_timestamp;
             mSlowPara.rec_timestamp = buffer_timestamp;

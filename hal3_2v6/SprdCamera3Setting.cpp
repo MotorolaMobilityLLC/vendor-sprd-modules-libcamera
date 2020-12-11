@@ -4997,7 +4997,8 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("jpeg quality is %d", valueU8);
     }
 
-    if (frame_settings.exists(ANDROID_JPEG_ORIENTATION) && is_capture) {
+    if (frame_settings.exists(ANDROID_JPEG_ORIENTATION) && (is_capture
+        || s_setting[mCameraId].sprddefInfo.flip_on)) {
         int32_t jpeg_orientation =
             frame_settings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
         s_setting[mCameraId].jpgInfo.orientation_original = jpeg_orientation;
