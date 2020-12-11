@@ -128,6 +128,7 @@ cmr_int cmr_grab_cap_resume(cmr_handle grab_handle, cmr_u32 channel_id,
                             cmr_s32 frm_num);
 cmr_int cmr_grab_cap_pause(cmr_handle grab_handle, cmr_u32 channel_id,
                            cmr_u32 reconfig_flag);
+cmr_int cmr_grab_dcam_switch(cmr_handle grab_handle, bool flag);
 cmr_int cmr_grab_free_frame(cmr_handle grab_handle, cmr_u32 channel_id,
                             cmr_u32 index);
 cmr_int cmr_grab_scale_capability(cmr_handle grab_handle, cmr_u32 *width,

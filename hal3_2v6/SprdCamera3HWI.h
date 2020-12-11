@@ -107,6 +107,7 @@ class SprdCamera3HWI {
     void setVisibleRegion(uint32_t serial, int32_t region[4]);
     void setGlobalZoomRatio(float ratio);
     void setCapState(bool flag);
+    void setDcamState(bool flag);
     static bool isMultiCameraMode(int Mode);
     void setSprdCameraLowpower(int flag);
     int camera_ioctrl(int cmd, void *param1, void *param2);

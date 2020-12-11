@@ -2638,6 +2638,10 @@ void SprdCamera3HWI::setCapState(bool flag) {
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_CAP_STATE, &flag, NULL);
 }
 
+void SprdCamera3HWI::setDcamState(bool flag) {
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_DCAM_STATE, &flag, NULL);
+}
+
 bool SprdCamera3HWI::isMultiCameraMode(int Mode) {
     bool ret = false;
     if (Mode > MODE_SINGLE_CAMERA && Mode < MODE_CAMERA_MAX) {

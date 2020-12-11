@@ -1377,6 +1377,27 @@ cmr_int cmr_grab_cap_pause(cmr_handle grab_handle, cmr_u32 channel_id,
     return ret;
 }
 
+cmr_int cmr_grab_dcam_switch(cmr_handle grab_handle,
+                               bool flag) {
+    struct cmr_grab *p_grab;
+    cmr_int ret = 0;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+
+    uint32_t param = 0;
+    param = (uint32_t)flag;
+    CMR_LOGD("flag %d, param %d", flag, param);
+
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_DCAM_SWITCH, &param);
+    if (ret) {
+        CMR_LOGE("SPRD_IMG_IO_DCAM_SWITCH Failed");
+    }
+
+    return ret;
+}
+
 cmr_int cmr_grab_get_cap_time(cmr_handle grab_handle, cmr_u32 *sec,
                               cmr_u32 *usec) {
     cmr_int ret = 0;

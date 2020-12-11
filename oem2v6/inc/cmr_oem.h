@@ -710,6 +710,8 @@ cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
 cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle, float *ratio);
 cmr_int camera_local_cap_state(cmr_handle oem_handle,
                                        bool *flag);
+cmr_int camera_local_dcam_state(cmr_handle oem_handle,
+                                       bool *flag);
 
 cmr_int camera_local_get_cover(cmr_handle cmr_handle,
                                struct dual_sensor_luma_info *cover_value);
