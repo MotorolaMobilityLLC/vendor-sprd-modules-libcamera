@@ -8932,7 +8932,7 @@ cmr_int channel0_configure(struct prev_handle *handle, cmr_u32 camera_id,
                            struct preview_out_param *out_param_ptr) {
     ATRACE_BEGIN(__FUNCTION__);
 
-    int32_t ret = CMR_CAMERA_SUCCESS;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
     struct sensor_exp_info *sensor_info = NULL;
     struct sensor_mode_info *sensor_mode_info = NULL;
     struct prev_context *prev_cxt = NULL;
