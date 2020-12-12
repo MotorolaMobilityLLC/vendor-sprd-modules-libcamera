@@ -128,7 +128,7 @@ struct smart_context {
 	cmr_handle caller_handle;
 	isp_smart_cb smart_set_cb;
 
-	cmr_u32 camera_id;
+	cmr_int camera_id;
 	struct smart_stash smart_stash_param;
 	cmr_u32 smart_lock_frame;
     // new debug
