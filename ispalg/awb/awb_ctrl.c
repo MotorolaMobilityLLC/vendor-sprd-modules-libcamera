@@ -220,7 +220,7 @@ cmr_int awbctrl_ioctrl(struct awbctrl_cxt * cxt_ptr, enum awb_ctrl_cmd cmd, void
 
 static cmr_s32 awb_set_wbc_gain(cmr_handle handler, struct awb_ctrl_gain *awb_gain)
 {
-	cmr_int rtn = ISP_SUCCESS;
+	cmr_s32 rtn = ISP_SUCCESS;
 	struct awbctrl_cxt *cxt_ptr = (struct awbctrl_cxt *)handler;
 
 	if (cxt_ptr->awb_set_cb) {

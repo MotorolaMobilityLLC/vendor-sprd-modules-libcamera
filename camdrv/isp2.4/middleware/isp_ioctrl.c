@@ -482,6 +482,8 @@ static cmr_int isp_flash_pre_after(struct isp_alg_fw_context *cxt,
 		                             (void *)&captureFlash1ofALLRatio);
 	}
 	awb_flash_status = AWB_FLASH_PRE_AFTER;
+	flash_ratio[0] = (cmr_s32)(captureFlashEnvRatio * 256);
+	flash_ratio[1] = (cmr_s32)(captureFlash1ofALLRatio * 256);
 	if (cxt->ops.awb_ops.ioctrl){
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle,
 		                              AWB_CTRL_CMD_SET_FLASH_STATUS,
