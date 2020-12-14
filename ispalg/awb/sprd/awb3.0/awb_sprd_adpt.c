@@ -1136,7 +1136,8 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 		ISP_LOGE("fail to malloc awb ctrl cxt");
 		goto ERROR_EXIT;
 	}
-	memset(cxt, 0, sizeof(struct awb_ctrl_cxt));
+	if(cxt)
+		memset(cxt, 0, sizeof(struct awb_ctrl_cxt));
 	cxt->lib_info = &param->lib_param;
 
 	rtn = awbsprd_load_lib(cxt);

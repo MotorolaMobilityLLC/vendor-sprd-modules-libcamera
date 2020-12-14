@@ -253,8 +253,8 @@ static cmr_u32 _awb_set_gain_manualwb_v3(struct awb_ctrl_cxt *cxt)
 			if (otp_g_coef != 0) {
 				otp_r_coef = otp_r_coef / otp_g_coef;
 				otp_b_coef = otp_b_coef / otp_g_coef;
-				cxt->output_gain.r = cxt->output_gain.r * otp_r_coef;
-				cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
+				cxt->output_gain.r = (cmr_u32)cxt->output_gain.r * (cmr_u32)otp_r_coef;
+				cxt->output_gain.b = (cmr_u32)cxt->output_gain.b * (cmr_u32)otp_b_coef;
 			}
 		}
 		cxt->awb_result.gain.r = cxt->output_gain.r;
@@ -1181,7 +1181,8 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3_2(void *in, void *out)
 	} else {
 		ISP_LOGV("success to malloc awb_ctrl cxt");
 	}
-	memset(cxt, 0, sizeof(struct awb_ctrl_cxt));
+	if(cxt)
+		memset(cxt, 0, sizeof(struct awb_ctrl_cxt));
 	cxt->lib_info = &param->lib_param;
 
 	rtn = awbsprd_load_lib(cxt);
@@ -1603,8 +1604,8 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 				if (otp_g_coef != 0) {
 					otp_r_coef = otp_r_coef / otp_g_coef;
 					otp_b_coef = otp_b_coef / otp_g_coef;
-					cxt->output_gain.r = cxt->output_gain.r * otp_r_coef;
-					cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
+					cxt->output_gain.r = (cmr_u32)cxt->output_gain.r * (cmr_u32)otp_r_coef;
+					cxt->output_gain.b = (cmr_u32)cxt->output_gain.b * (cmr_u32)otp_b_coef;
 				}
 			}
 		}

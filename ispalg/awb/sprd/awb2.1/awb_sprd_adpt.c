@@ -376,8 +376,8 @@ static cmr_u32 _awb_set_gain_manualwb(struct awb_ctrl_cxt *cxt)
 			if (otp_g_coef != 0) {
 				otp_r_coef = otp_r_coef / otp_g_coef;
 				otp_b_coef = otp_b_coef / otp_g_coef;
-				cxt->output_gain.r = cxt->output_gain.r * otp_r_coef;
-				cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
+				cxt->output_gain.r = (cmr_u32)cxt->output_gain.r * (cmr_u32)otp_r_coef;
+				cxt->output_gain.b = (cmr_u32)cxt->output_gain.b * (cmr_u32)otp_b_coef;
 			}
 		}
 		cxt->awb_result.gain.r = cxt->output_gain.r;
@@ -884,7 +884,7 @@ static cmr_u32 _awb_set_tuning_param(struct awb_ctrl_cxt *cxt, void *param0)
 	rtn = _check_init_param(param0);
 	if (AWB_CTRL_SUCCESS != rtn) {
 		ISP_LOGE("fail to check init param");
-		return AWB_CTRL_ERROR;
+		rtn = AWB_CTRL_ERROR;
 	}
 
 	return rtn;
@@ -1249,7 +1249,8 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		ISP_LOGE("fail to malloc awb ctrl cxt");
 		goto ERROR_EXIT;
 	}
-	memset(cxt, 0, sizeof(struct awb_ctrl_cxt));
+	if(cxt)
+		memset(cxt, 0, sizeof(struct awb_ctrl_cxt));
 	cxt->lib_info = &param->lib_param;
 
 	rtn = awbsprd_load_lib(cxt);
@@ -1342,6 +1343,10 @@ awb_ctrl_handle_t awb_sprd_ctrl_init(void *in, void *out)
 		cxt->awb_init_param.tuning_param.smooth_buffer_num = 8;
 	}
 	struct awb_rgb_gain awb_gain;
+	awb_gain.r_gain = 0;
+	awb_gain.g_gain = 0;
+	awb_gain.b_gain = 0;
+	awb_gain.ct = 0;
 	if(cxt->lib_ops.awb_init_v1 != NULL){
 	cxt->alg_handle = cxt->lib_ops.awb_init_v1(&cxt->awb_init_param, &awb_gain);
 	}
@@ -1781,8 +1786,8 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 				if (otp_g_coef != 0) {
 					otp_r_coef = otp_r_coef / otp_g_coef;
 					otp_b_coef = otp_b_coef / otp_g_coef;
-					cxt->output_gain.r = cxt->output_gain.r * otp_r_coef;
-					cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
+					cxt->output_gain.r = (cmr_u32)cxt->output_gain.r * (cmr_u32)otp_r_coef;
+					cxt->output_gain.b = (cmr_u32)cxt->output_gain.b * (cmr_u32)otp_b_coef;
 				}
 			}
 		}

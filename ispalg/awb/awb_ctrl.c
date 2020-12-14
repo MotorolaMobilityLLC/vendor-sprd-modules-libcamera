@@ -115,6 +115,10 @@ static cmr_int awbctrl_init_lib(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_ini
 static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_init_param *in_ptr, struct awb_ctrl_init_result *out_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
+	char *paramfile_path = AWB_3X_TURNING_PARAM_BACK;
+	unsigned long awb_param_size_3 = 0;
+	FILE* fp_3 = NULL;
+	unsigned char *awb_param_3 = NULL;
 
 	if (!cxt_ptr) {
 		ISP_LOGE("fail to check para, param is NULL!");
@@ -122,8 +126,6 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	} else {
 		ISP_LOGV("check param success");
 	}
-
-	char *paramfile_path = NULL;
 
 	/* find vendor adpter */
 	//1、judge the camera id
@@ -142,41 +144,37 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	}
 
 	//2、get the param file
-	FILE* fp_3 = NULL;
-	unsigned char *awb_param_3 = NULL;
 	awb_param_3 = malloc(64*1024);
 	if(!awb_param_3){
 		ISP_LOGE("malloc awb_param fail");
-	} else {
-		ISP_LOGV("malloc awb_param success");
 	}
-	unsigned int awb_param_size_3 = 0;
-	if(paramfile_path)
+
+	if(paramfile_path) {
 		fp_3 = fopen(paramfile_path, "rb");
-	else
-		ISP_LOGE("paramfile_path is NULL");
-	if(!fp_3) {
-		//in_ptr->tuning_param = in_ptr->tuning_param;
-		ISP_LOGE("Get the trunning param from upper layer!");
-	} else {
-		awb_param_size_3 = fread(awb_param_3,1,64 * 1024,fp_3);
-		fclose(fp_3);
-		in_ptr->tuning_param = &awb_param_3;
-		ISP_LOGE("Get the trunning param from param file!");
+		if(!fp_3) {
+			ISP_LOGE("Get the trunning param from upper layer!, open param_file fail");
+		} else {
+			if(awb_param_3) {
+				awb_param_size_3 = fread(awb_param_3,1,64 * 1024,fp_3);
+				in_ptr->tuning_param = &awb_param_3;
+			}
+			ISP_LOGE("Get the trunning param from param file!");
+		}
+		if(fp_3)
+			fclose(fp_3);
 	}
-	if(awb_param_3)
-		free(awb_param_3);
-	else
-		ISP_LOGV("awb_param_3 is NULL");
+	else {
+		ISP_LOGE("paramfile_path is NULL");
+	}
 
 	//3、judge the awblib is 2.x or 3.x
-	int* turnning_version = (int*) in_ptr->tuning_param + 1;
-	if(!turnning_version)
+	int* turnning_version = (int*) in_ptr->tuning_param;
+	if (!turnning_version)
 		ISP_LOGE("awb ctrl:input turnning param is null!");
-	if((*(turnning_version)) == AWB_3_0_TURNNING_VERSION) {
+	if (turnning_version[1] == AWB_3_0_TURNNING_VERSION) {
 		in_ptr->lib_param.version_id = 1;	//isp3.0
 		ISP_LOGE("lib_param.version_id = 1 (isp3.0)");
-	} else if ((*(turnning_version)) == AWB_3_2_TURNNING_VERSION ) {
+	} else if (turnning_version[1] == AWB_3_2_TURNNING_VERSION ) {
 		in_ptr->lib_param.version_id = 2;	//isp3.2
 		ISP_LOGE("lib_param.version_id = 2 (isp3.2)");
 	} else {
@@ -192,6 +190,7 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	ISP_LOGV("awbctrl_init_lib ");
 	rtn = awbctrl_init_lib(cxt_ptr, in_ptr, out_ptr);
   exit:
+	free(awb_param_3);
 	ISP_LOGI("done %ld", rtn);
 	return rtn;
 }
@@ -350,7 +349,6 @@ cmr_int awb_ctrl_ioctrl(cmr_handle handle, enum awb_ctrl_cmd cmd, cmr_handle in_
 		rtn = awbctrl_ioctrl(cxt_ptr, cmd, in_ptr, out_ptr);
 	}
 
-  exit:
 	ISP_LOGV("cmd = %x,done %ld", cmd, rtn);
 	return rtn;
 }
@@ -370,7 +368,8 @@ cmr_int awb_ctrl_init(struct awb_ctrl_init_param * input_ptr, cmr_handle * handl
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	memset(cxt_ptr, 0, sizeof(*cxt_ptr));
+	if(cxt_ptr)
+		memset(cxt_ptr, 0, sizeof(*cxt_ptr));
 
 	input_ptr->isp_ops.isp_handler = (cmr_handle) cxt_ptr;
 	cxt_ptr->caller_handle = input_ptr->caller_handle;
@@ -458,7 +457,8 @@ cmr_int awb_ctrl_process(cmr_handle handle_awb, struct awb_ctrl_calc_param * in_
 		rtn = ISP_ALLOC_ERROR;
 		goto exit;
 	}
-	memcpy(message.data, (cmr_handle) in_ptr, sizeof(struct awb_ctrl_calc_param));
+	if(message.data && in_ptr)
+		memcpy(message.data, (cmr_handle) in_ptr, sizeof(struct awb_ctrl_calc_param));
 	message.alloc_flag = 1;
 
 	message.msg_type = AWBCTRL_EVT_PROCESS;
