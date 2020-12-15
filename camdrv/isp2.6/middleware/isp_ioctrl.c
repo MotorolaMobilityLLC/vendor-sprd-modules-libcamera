@@ -2091,6 +2091,7 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_scene set_scene = { 0 };
 	cmr_u32 scene_flag = 0;
+	cmr_u32 eis_enable = 0;
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param !");
@@ -2098,12 +2099,18 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 
 	scene_flag = *(cmr_u32 *) param_ptr;
+	if (scene_flag == ISP_VIDEO_EIS)
+		eis_enable = 1;
+
 	set_scene.mode = convert_scene_flag_for_ae(scene_flag);
 	cxt->commn_cxt.nr_scene_flag = convert_scene_flag_for_nr(scene_flag);
 	ISP_LOGD("set_scene_mode %d, (nr %d ae %d)", scene_flag, cxt->commn_cxt.nr_scene_flag, set_scene.mode);
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SCENE_MODE, &set_scene, NULL);
 
+/*	if (cxt->ops.af_ops.ioctrl)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_EIS_ENABLE, (void *)&eis_enable, NULL);
+*/
 	return ret;
 }
 
@@ -3790,6 +3797,16 @@ static cmr_int ispctl_ae_set_global_zoom_ratio(cmr_handle isp_alg_handle, void *
 	return isp_br_ioctrl(cxt->sensor_role, SET_GLOBAL_ZOOM_RATIO, param_ptr, NULL);
 }
 
+static cmr_int ispctl_ae_set_eis_move_info(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cxt->eis_move_info = *(cmr_u8 *)param_ptr;//use ispalg_start_ae_process transfer param to ae lib
+	ISP_LOGD("eis_move_info %d", cxt->eis_move_info);
+
+	return ret;
+}
+
 static cmr_int ispctl_get_gtm_status(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5427,6 +5444,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_SET_REF_CAMERA_ID, ispctl_ae_set_ref_camera_id},
 	{ISP_CTRL_AE_SET_VISIBLE_REGION, ispctl_ae_set_visible_region},
 	{ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO, ispctl_ae_set_global_zoom_ratio},
+	{ISP_CTRL_AE_SET_EIS_MOVE_INFO, ispctl_ae_set_eis_move_info},// for eis scene move info param
 	{ISP_CTRL_GET_GTM_STATUS, ispctl_get_gtm_status},
 	{ISP_CTRL_SET_GTM_ONFF, ispctl_gtm_switch},
 	{ISP_CTRL_SET_SENSOR_SIZE, ispctl_set_sensor_size},

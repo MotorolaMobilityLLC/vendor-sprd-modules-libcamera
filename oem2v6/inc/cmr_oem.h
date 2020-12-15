@@ -708,6 +708,7 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
 cmr_int camera_local_set_visible_region(cmr_handle oem_handle,
                                         struct visible_region_info *info);
 cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle, float *ratio);
+cmr_int camera_set_eis_move_info(cmr_handle oem_handle, cmr_u8 *move_info);
 cmr_int camera_local_cap_state(cmr_handle oem_handle,
                                        bool *flag);
 

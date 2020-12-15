@@ -1222,6 +1222,10 @@ static cmr_int ioctrl_jpeg_decode_simplify(cmr_handle handle, void *param) {
 static cmr_int ioctrl_get_fdr_tuning_flag(cmr_handle handle, void *param) {
         return camera_get_fdr_tuning_flag(handle, (cmr_int *)param);
 }
+static cmr_int ioctrl_set_eis_move_info(cmr_handle handle, void *param) {
+        return camera_set_eis_move_info(handle, (cmr_u8 *)param);
+}
+
 const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_MULTI_CAMERAMODE]       = ioctrl_multi_cameramode,
     [CAMERA_IOCTRL_GET_SENSOR_LUMA]            = ioctrl_local_get_cover,
@@ -1279,6 +1283,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_MULTI_CAMERA_ID]            = ioctrl_set_mult_camera_id,
     [CAMERA_IOCTRL_JPEG_DECODE_PROC]           = ioctrl_jpeg_decode_simplify,
     [CAMERA_IOCTRL_GET_FDR_TUNING_FLAG]      = ioctrl_get_fdr_tuning_flag,
+    [CAMERA_IOCTRL_SET_MOVE_INFO]              = ioctrl_set_eis_move_info,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {

@@ -380,6 +380,7 @@ struct isp_alg_fw_context {
 	cmr_u8 ai_init_status;
 	cmr_u8 alg_enable;
 	cmr_u8 aem_is_update;
+	cmr_u8 eis_move_info;//for eis scene move info param
 	cmr_u8 bayerhist_update;
 	cmr_u8 lscm_is_update;
 	cmr_u8 fw_started;
@@ -866,10 +867,10 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_3DNR_NOTIFY:
 		cmd = ISP_3DNR_CALLBACK;
 		break;
-    case AE_CB_EXPTIME_NOTIFY:
-        cmd = ISP_AE_EXP_TIME;
-        break;
-#ifdef CONFIG_ISP_2_7
+	case AE_CB_EXPTIME_NOTIFY:
+		cmd = ISP_AE_EXP_TIME;
+		break;
+#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 	case AE_CB_EV_ADJUST_NOTIFY:
 		cmd = ISP_EV_EFFECT_CALLBACK;
 		break;
@@ -2992,6 +2993,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.is_last_frm = 0;
 	in_param.time_diff = -1;
 	in_param.is_update = cxt->aem_is_update;
+	in_param.mv_value= cxt->eis_move_info;
 	in_param.sensor_fps.mode = cxt->sensor_fps.mode;
 	in_param.sensor_fps.max_fps = cxt->sensor_fps.max_fps;
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
@@ -3655,6 +3657,7 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 			cmr_u32 af_temp[15*20][3];
 			cmr_u32 *ptr, *dst;
 			cmr_u32 *zoom_ratio;
+			//cmr_u8 eis_move_info;
 			struct isp_statis_info *statis_info = (struct isp_statis_info *)in_ptr;
 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle,
@@ -3706,6 +3709,12 @@ static cmr_int ispalg_af_process(cmr_handle isp_alg_handle, cmr_u32 data_type, v
 				cxt->last_ratio = cxt->cur_ratio;
 			}
 
+			/* set eis_move_info to af ctrl */
+		/*	eis_move_info = cxt->eis_move_info;
+			if (cxt->ops.af_ops.ioctrl) {
+				ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_EIS_POWER, (void *)&eis_move_info, NULL);
+			}
+*/
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 			if (ret) {
 				ISP_LOGE("fail to set statis buf");
@@ -6401,6 +6410,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	cxt->first_frm = 1;
 	cxt->aem_is_update = 0;
+	cxt->eis_move_info = 0;
 	cxt->smooth_ratio = 0;
 	cxt->work_mode = in_ptr->work_mode;
 	cxt->zsl_flag = in_ptr->zsl_flag;

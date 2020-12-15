@@ -15624,6 +15624,14 @@ cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle,
                      ratio);
 }
 
+cmr_int camera_set_eis_move_info(cmr_handle oem_handle,
+                                           cmr_u8 *move_info) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_EIS_MOVE_INFO,
+                     move_info);
+}
+
 cmr_int camera_local_cap_state(cmr_handle oem_handle, bool *flag) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;

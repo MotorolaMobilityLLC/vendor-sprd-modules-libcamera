@@ -18,6 +18,7 @@ typedef struct frame_out {
     mat33 warp;
     uint32_t frame_num;
     double timestamp;
+    uint8_t movement_inf;
 } vsOutFrame;
 
 typedef struct vs_param {
@@ -103,7 +104,7 @@ const sprd_eis_init_info_t eis_init_info_tab[] = {
     {"sp9861e-2", 1230.0f, 0.004f, 0.021f},
     {"sp9863a-1", 0.7747f, 0.038f, 0.024f},
     {"ums312-1", 0.768f, 0.01f, 0.0144f},
-    {"ums512-1", 0.7385f, 0.014f, 0.021f},
+    {"ums512-1", 0.7616f, 0.0303f, 0.0233f},
 };
 
 const sprd_eis_multi_init_info eis_multi_init_info_tab[] = {
