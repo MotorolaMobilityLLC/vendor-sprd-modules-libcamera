@@ -103,7 +103,7 @@ exit:
 }
 
 cmr_int camera_set_param(cmr_handle camera_handle, enum camera_param_type id,
-                         cmr_uint param) {
+                         uint64_t param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)camera_handle;
     struct setting_cmd_parameter setting_param;

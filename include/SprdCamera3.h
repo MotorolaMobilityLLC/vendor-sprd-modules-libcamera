@@ -259,6 +259,7 @@ static tags_info_t
         {"sprdIsp3aVerison", TYPE_BYTE},
         {"sprdMultiVerison", TYPE_BYTE},
         {"sprdCvVerison", TYPE_BYTE},
+        {"sprdSendorExposureLongTime", TYPE_DOUBLE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

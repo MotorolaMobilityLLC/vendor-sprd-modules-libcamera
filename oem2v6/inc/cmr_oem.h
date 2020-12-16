@@ -522,6 +522,9 @@ struct camera_context {
     cmr_uint auto3dnr_flag;
     cmr_u8 night_flag;//night mode
     void *aux_param;
+    cmr_uint long_expo_enable;
+    cmr_u8 longexp_skipnum;
+    double exp_time;
 };
 
 struct prev_ai_scene_info {
@@ -595,7 +598,7 @@ cmr_int camera_isp_set_params(cmr_handle camera_handle,
                               enum camera_param_type id, cmr_uint param);
 
 cmr_int camera_local_set_param(cmr_handle camera_handle,
-                               enum camera_param_type id, cmr_uint param);
+                               enum camera_param_type id, uint64_t param);
 
 cmr_int camera_local_get_zsl_info(cmr_handle oem_handle, cmr_uint *is_support,
                                   cmr_uint *max_width, cmr_uint *max_height);

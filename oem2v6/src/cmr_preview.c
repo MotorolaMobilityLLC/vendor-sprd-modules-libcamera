@@ -6924,6 +6924,7 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 is_3D_caputre = 0;
     cmr_u32 is_3D_preview = 0;
     struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct phySensorInfo *phyPtr = NULL;
 
     if (!sensor_info) {
         CMR_LOGE("sn info is null!");
@@ -6933,6 +6934,9 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
+    }
+    if (cxt->long_expo_enable){
+        phyPtr = sensorGetPhysicalSnsInfo(camera_id);
     }
 
     float max_binning_ratio = 0;
@@ -6983,6 +6987,28 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
                 if (CAM_IMG_FMT_JPEG !=
                     sensor_info->mode_info[i].image_format) {
                     if (search_height == height && search_width == width) {
+                        target_mode = i;
+                        ret = CMR_CAMERA_SUCCESS;
+                        break;
+                    } else {
+                        last_mode = i;
+                    }
+                }
+            }
+        }
+    } else if (cxt->long_expo_enable &&
+        (!handle->prev_cxt[camera_id].prev_param.preview_eb) &&
+            phyPtr->long_expose_supported && phyPtr->longExp_need_switch_setting &&
+                cxt->exp_time >= phyPtr->long_exposure_threshold) {
+        CMR_LOGD("search_height = %d", search_height);
+        for (i = SENSOR_MODE_PREVIEW_ONE; i < SENSOR_MODE_MAX; i++) {
+            if (SENSOR_MODE_MAX != sensor_info->mode_info[i].mode) {
+                height = sensor_info->mode_info[i].trim_height;
+                width = sensor_info->mode_info[i].trim_width;
+                CMR_LOGD("i %d,height = %d, width = %d",i, height, width);
+                if (CAM_IMG_FMT_JPEG !=
+                    sensor_info->mode_info[i].image_format) {
+                    if (search_height <= height && search_width <= width && phyPtr->long_exposure_setting[i] == 1) {
                         target_mode = i;
                         ret = CMR_CAMERA_SUCCESS;
                         break;
@@ -12718,6 +12744,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
     struct buffer_cfg buf_cfg;
     struct camera_context *cxt = NULL;
     struct setting_cmd_parameter setting_param = {0};
+    struct phySensorInfo *phyPtr = NULL;
     cmr_u32 i;
 
     CHECK_HANDLE_VALID(handle);
@@ -12870,7 +12897,40 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         chn_param.buffer.channel_id = prev_cxt->cap_channel_id;
         if (handle->zsl_ips_en) {
             CMR_LOGI("zsl_ips_en: skip zsl buffer configure here\n");
-	} else {
+	 } else {
+	     if(cxt->long_expo_enable && (!prev_cxt->prev_param.preview_eb) && prev_cxt->prev_param.snapshot_eb) {
+                phyPtr = sensorGetPhysicalSnsInfo(camera_id);
+                if(phyPtr->long_expose_supported) {
+                    CMR_LOGI("long_expo_cap_skip_num:%d", phyPtr->longExp_valid_frame_num); 
+                    for(i = 0; i <= phyPtr->longExp_valid_frame_num; i++) {
+                        cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+                        buf_cfg.channel_id = prev_cxt->cap_channel_id;
+                        if (prev_cxt->prev_param.sprd_zsl_enabled == 1) {
+                            buf_cfg.base_id = CMR_CAP1_ID_BASE;
+                        } else {
+                            buf_cfg.base_id = CMR_CAP0_ID_BASE;
+                        }
+                        buf_cfg.count = 1;
+                        buf_cfg.length = prev_cxt->cap_zsl_mem_size;
+                        buf_cfg.is_reserved_buf = 0;
+                        buf_cfg.flag = BUF_FLAG_INIT;
+                        buf_cfg.addr[0].addr_y = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
+                        buf_cfg.addr[0].addr_u = prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
+                        buf_cfg.addr_vir[0].addr_y =
+                            prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
+                        buf_cfg.addr_vir[0].addr_u =
+                            prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
+                        buf_cfg.fd[0] = prev_cxt->cap_zsl_reserved_frm.fd;
+                        buf_cfg.frame_number = 0xFFFFFFFF;
+                        ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
+                        if (ret) {
+                            CMR_LOGE("channel buff config failed");
+                            ret = CMR_CAMERA_FAIL;
+                            goto exit;
+                        }
+                    }
+	         }
+	     }
             ret = handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
             if (ret) {
                 CMR_LOGE("channel buff config failed");

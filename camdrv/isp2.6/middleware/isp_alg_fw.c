@@ -443,6 +443,7 @@ struct isp_alg_fw_context {
 	cmr_u32 zsl_flag;
 	cmr_u32 sn_mode;
 	cmr_u32 gtm_ltm_on;
+	cmr_u32 long_expose_support;
 	/* for 4x zoom focus */
 	cmr_u32 last_ratio;
 	cmr_u32 cur_ratio;
@@ -878,7 +879,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	case AE_CB_3DNR_NOTIFY:
 		cmd = ISP_3DNR_CALLBACK;
 		break;
-    case AE_CB_EXPTIME_NOTIFY:
+	case AE_CB_EXPTIME_NOTIFY:
 		cmd = ISP_AE_EXP_TIME;
 		break;
 	case AE_CB_EV_ADJUST_NOTIFY:
@@ -886,6 +887,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		break;
 	case AE_CB_SYNC_STABLE:
 		cmd = ISP_AE_SYNC_STATUS_CALLBACK;
+		break;
+	case AE_CB_LONG_EXP_START:
+		cmd = ISP_LONGEXP_SKIPNUM_CALLBACK;
 		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
@@ -4639,6 +4643,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		}
 	}
 
+	ae_input.long_expose_support = cxt->long_expose_support;
+
 	ISP_LOGI("camera_id %u, is_master %u, is_multi_mode %u, sensor_role %u",
 			ae_input.camera_id, ae_input.is_master,
 			ae_input.is_multi_mode, ae_input.sensor_role);
@@ -7514,6 +7520,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;
 	cxt->awb_cxt.color_support = input_ptr->init_param->ex_info.color_support;
+	cxt->long_expose_support = input_ptr->init_param->ex_info.long_expose_supported;
 	cxt->is_4in1_sensor = input_ptr->init_param->is_4in1_sensor;
 	cxt->is_simulator = input_ptr->init_param->is_simulator;
 	cxt->commn_cxt.is_faceId_unlock =input_ptr->init_param->is_faceId_unlock;

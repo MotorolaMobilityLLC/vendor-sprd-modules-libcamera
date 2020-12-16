@@ -306,6 +306,7 @@ class SprdCamera3HWI {
     static unsigned int mCameraSessionActive;
     static const int64_t kPendingTime = 1000000;       // 1ms
     static const int64_t kPendingTimeOut = 5000000000; // 5s
+    static const int64_t ksltePendingTimeOut = 50000000000; // 50s for super long exposure
     bool mFlush;
     bool mBufferStatusError; // change buffer status to
                              // CAMERA3_BUFFER_STATUS_ERROR when in flush
@@ -328,6 +329,7 @@ class SprdCamera3HWI {
     int mSprdCameraLowpower;
     bool mFirstRequestGet;
     bool mHighResNonzsl; // high res,1:non-zsl,0:zsl
+    bool mSuperExposeNonzsl;// super long exposure,1:non-zsl,0:zsl
     //1:always zsl,2:non-zsl,other:detect
     uint8_t mHighResFixZsl;
 

@@ -814,6 +814,22 @@ cmr_int cmr_grab_3dnr_cfg(cmr_handle grab_handle, cmr_u32 channel_id,
     return ret;
 }
 
+cmr_int cmr_grab_longexp_cfg(cmr_handle grab_handle, cmr_u32 need_longexp){
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    struct sprd_img_longexp_mode sprd_longexp_mode;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    cmr_bzero(&sprd_longexp_mode, sizeof(struct sprd_img_longexp_mode));
+
+    sprd_longexp_mode.need_longexp = need_longexp;
+    CMR_LOGD("need_longexp: %d", sprd_longexp_mode.need_longexp);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_LONGEXP_CAP, &sprd_longexp_mode);
+
+    CMR_LOGD("ret %ld", ret);
+    return ret;
+}
+
 cmr_int cmr_grab_auto_3dnr_cfg(cmr_handle grab_handle,
                                cmr_u32 auto_3dnr_enable) {
     cmr_int ret = 0;

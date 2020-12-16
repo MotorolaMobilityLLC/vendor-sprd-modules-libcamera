@@ -100,6 +100,7 @@ cmr_int cmr_grab_sn_cfg(cmr_handle grab_handle, struct sn_cfg *config);
 cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
                          cmr_u32 *channel_id, struct img_data_end *endian);
 cmr_int cmr_grab_3dnr_cfg(cmr_handle grab_handle, cmr_u32 channel_id, cmr_u32 enable);
+cmr_int cmr_grab_longexp_cfg(cmr_handle grab_handle, cmr_u32 enable);
 cmr_int cmr_grab_auto_3dnr_cfg(cmr_handle grab_handle, cmr_u32 auto_3dnr_enable);
 cmr_int cmr_grab_cap_cfg_lightly(cmr_handle grab_handle, struct cap_cfg *config,
                                  cmr_u32 channel_id);

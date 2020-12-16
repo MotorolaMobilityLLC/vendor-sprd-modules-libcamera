@@ -333,7 +333,7 @@ static cmr_int camera_get_sensor_autotest_mode(cmr_handle oem_handle,
                                                cmr_uint sensor_id,
                                                cmr_uint *is_autotest);
 static cmr_int camera_set_setting(cmr_handle oem_handle,
-                                  enum camera_param_type id, cmr_uint param);
+                                  enum camera_param_type id, cmr_u64 param);
 static void camera_set_3dnr_flag(struct camera_context *cxt,
                                  cmr_u32 threednr_flag);
 static cmr_u32 camera_get_3dnr_flag(struct camera_context *cxt);
@@ -2742,6 +2742,8 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         oem_cb = CAMERA_EVT_CB_AE_STAB_NOTIFY;
         if (data != NULL) {
             ae_info = (cmr_u32 *)data;
+            cxt->long_expo_enable = ae_info[AE_CB_LONG_EXP_INDEX];
+            CMR_LOGD("cxt->long_expo_enable %d", cxt->long_expo_enable);
             cxt->camera_cb(oem_cb, cxt->client_data,
                            CAMERA_FUNC_AE_STATE_CALLBACK, ae_info);
             cmr_preview_facedetect_set_ae_stab(cxt->prev_cxt.preview_handle,
@@ -2816,6 +2818,13 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         CMR_LOGD("ae sync stable:%d", *(cmr_u8 *)data);
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
+        break;
+    case ISP_LONGEXP_SKIPNUM_CALLBACK:
+        oem_cb = CAMERA_EVT_CB_LONGEXP_SKIPNUM;
+#if 0
+        CMR_LOGD("long exp skip num:%d", *(cmr_u8 *)data);
+        cxt->longexp_skipnum = *(cmr_u8 *)data;
+#endif
         break;
     case ISP_AI_SCENE_TYPE_CALLBACK:
         oem_cb = CAMERA_EVT_CB_AI_SCENE;
@@ -5630,7 +5639,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
         "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
         "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, "
-        "is_4in1_sensor=%d, is_faceId_unlock=%d",
+        "is_4in1_sensor=%d, is_faceId_unlock=%d, long_expose_supported=%d",
         isp_param.multi_mode, isp_param.ex_info.f_num,
         isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
         isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
@@ -5639,7 +5648,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.ex_info.preview_skip_num, isp_param.ex_info.capture_skip_num,
         isp_param.size.w, isp_param.size.h, isp_param.image_pattern,
         sensor_info_ptr->image_pattern, isp_param.is_4in1_sensor,
-        isp_param.is_faceId_unlock);
+        isp_param.is_faceId_unlock, isp_param.ex_info.long_expose_supported);
 
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
     if (ret) {
@@ -9846,6 +9855,7 @@ cmr_int camera_channel_start(cmr_handle oem_handle, cmr_u32 channel_bits,
         CMR_LOGI("skip_num %ld", skip_number);
     }
 */
+
     ret = cmr_grab_cap_start(cxt->grab_cxt.grab_handle, skip_number);
     if (ret) {
         CMR_LOGE("failed to start cap %ld", ret);
@@ -10663,7 +10673,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     cmr_u32 isp_cmd = ISP_CTRL_MAX;
-    cmr_u32 isp_param = 0;
+    cmr_u64 isp_param = 0;
     void *isp_param_ptr = NULL;
     cmr_u32 ptr_flag = 0;
     cmr_uint set_exif_flag = 0;
@@ -10721,9 +10731,10 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("ae scene mode %d", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EXPOSURE_TIME:
-        CMR_LOGD("exposure time %d", param_ptr->cmd_value);
+        CMR_LOGD("exposure time %" PRIu64 "", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_AE_EXP_TIME;
         isp_param = param_ptr->cmd_value;
+        cxt->exp_time = isp_param;
         break;
     case COM_ISP_SET_AE_MEASURE_LUM:
         isp_cmd = ISP_CTRL_AE_MEASURE_LUM;
@@ -12412,7 +12423,7 @@ exit:
 }
 
 cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
-                           cmr_uint param) {
+                           cmr_u64 param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
@@ -12544,6 +12555,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
 
     case CAMERA_PARAM_EXPOSURE_TIME:
         setting_param.cmd_type_value = param;
+	 CMR_LOGI("param=%"PRIu64"", param);	
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
@@ -12981,7 +12993,7 @@ cmr_int camera_local_int(cmr_u32 camera_id, camera_cb_of_type callback,
     cxt->hal_free = cb_of_free;
     cxt->is_multi_mode = is_multi_camera_mode_oem;
     cxt->blur_facebeauty_flag = 0;
-    phyPtr = sensorGetPhysicalSnsInfo(camera_id);
+    phyPtr = sensorGetPhysicalSnsInfo(cxt->camera_id);
     cxt->facing = phyPtr->face_type;
 
     CMR_LOGI("cxt=%p, client_data=%p, master_id=%d", cxt, cxt->client_data, cxt->master_id);
@@ -13501,6 +13513,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                             need_3dnr);
     if (ret) {
         CMR_LOGE("failed to config 3dnr  %ld", ret);
+    }
+
+    ret = cmr_grab_longexp_cfg(cxt->grab_cxt.grab_handle, cxt->long_expo_enable);
+    if (ret) {
+        CMR_LOGE("failed to config long_expo_enable  %ld", ret);
     }
 
     cmr_bzero(&prev_rect, sizeof(struct img_rect));
@@ -14451,7 +14468,7 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
 }
 
 cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
-                               cmr_uint param) {
+                               uint64_t param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CHECK_HANDLE_VALID(oem_handle);
@@ -15125,6 +15142,7 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
     out_isp_sn_ex_info->ois_supported = in_sn_ex_info->ois_supported;
     out_isp_sn_ex_info->pdaf_supported = in_sn_ex_info->pdaf_supported;
     out_isp_sn_ex_info->ebd_supported = in_sn_ex_info->embedded_line_enable;
+    out_isp_sn_ex_info->long_expose_supported = in_sn_ex_info ->long_expose_supported;
     out_isp_sn_ex_info->exp_valid_frame_num =
         in_sn_ex_info->exp_valid_frame_num;
     out_isp_sn_ex_info->clamp_level = in_sn_ex_info->clamp_level;

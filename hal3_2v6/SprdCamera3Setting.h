@@ -268,6 +268,8 @@ typedef struct {
     int32_t white_level;
     int32_t sensitivity_range[2];
     uint8_t timestamp_source;
+    double exposupre_long_time[12];
+    int32_t exposupre_long_time_size;
 } SENSOR_INFO_Tag;
 
 typedef struct {
@@ -442,6 +444,7 @@ typedef struct {
     uint32_t af_pos;
     uint32_t bv;
     uint8_t sprd_flash_level;
+    uint32_t long_expo_enable;
 } SPRD_DEF_Tag;
 
 typedef struct {

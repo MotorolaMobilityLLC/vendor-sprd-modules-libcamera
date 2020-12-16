@@ -386,8 +386,8 @@ static cmr_int setting_sn_ctrl(struct setting_component *cpt, cmr_uint sn_cmd,
 static cmr_uint camera_param_to_isp(cmr_uint cmd,
                                     struct setting_cmd_parameter *parm,
                                     struct common_isp_cmd_param *isp_param) {
-    cmr_uint in_param = parm->cmd_type_value;
-    cmr_uint out_param = in_param;
+    cmr_u64 in_param = parm->cmd_type_value;
+    cmr_u64 out_param = in_param;
 
     switch (cmd) {
     case COM_ISP_SET_AE_MODE: {
@@ -463,6 +463,10 @@ static cmr_int setting_isp_ctrl(struct setting_component *cpt, cmr_uint isp_cmd,
 
     if (init_in->setting_isp_ioctl) {
         isp_param.camera_id = parm->camera_id;
+        if(COM_ISP_SET_EXPOSURE_TIME == isp_cmd) {
+            parm->cmd_type_value = parm->cmd_type_value * 1000;
+        }
+	  CMR_LOGD("cmd_type_value=%"PRIu64"",parm->cmd_type_value);
         camera_param_to_isp(isp_cmd, parm, &isp_param);
         if (isp_cmd == COM_ISP_SET_AE_MODE) {
             hal_param = get_hal_param(cpt, parm->camera_id);
@@ -1014,7 +1018,7 @@ static cmr_int setting_set_ae_region(struct setting_component *cpt,
 static cmr_int setting_set_exposure_time(struct setting_component *cpt,
                                          struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
-    CMR_LOGI("exposure time = %lu", parm->cmd_type_value);
+    CMR_LOGI("exposure time = %" PRIu64 "", parm->cmd_type_value);
 
     ret = setting_set_general(cpt, SETTING_GENERAL_EXPOSURE_TIME, parm);
 

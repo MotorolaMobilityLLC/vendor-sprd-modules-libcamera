@@ -1185,7 +1185,7 @@ struct common_isp_cmd_param {
     union {
         cmr_u32 isp_cur_iso;
         cmr_u32 isp_cur_ct;
-        cmr_u32 cmd_value;
+        cmr_u64 cmd_value;
         void *cmd_ptr;
         cmr_u32 padding;
         cmr_u32 vcm_step;
@@ -1528,6 +1528,7 @@ enum ae_stab_cb_value_index {
     AE_CB_BLS_ENABLE_INDEX,
     AE_CB_BV_INDEX,
     AE_CB_FACE_INDEX,
+    AE_CB_LONG_EXP_INDEX,
     AE_CB_RESERVED_INDEX,
     AE_CB_MAX_INDEX
 };
@@ -1661,6 +1662,7 @@ enum camera_cb_type {
     CAMERA_EVT_CB_EV_ADJUST_SCENE,
     CAMERA_EVT_CB_FDR_SCENE,
     CAMERA_EVT_CB_AE_SYNC,
+    CAMERA_EVT_CB_LONGEXP_SKIPNUM,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -2241,7 +2243,7 @@ typedef struct oem_ops {
                                     enum camera_data data, cmr_uint index);
 
     cmr_int (*camera_set_param)(cmr_handle camera_handle,
-                                enum camera_param_type id, cmr_uint param);
+                                enum camera_param_type id, uint64_t param);
 
     cmr_int (*camera_start_preview)(cmr_handle camera_handle,
                                     enum takepicture_mode mode);

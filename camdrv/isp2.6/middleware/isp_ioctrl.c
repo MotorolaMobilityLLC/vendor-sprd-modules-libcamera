@@ -3713,7 +3713,7 @@ static cmr_int ispctl_set_ae_exp_time(cmr_handle isp_alg_handle, void *param_ptr
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 exp_time = *(cmr_u32 *) param_ptr;
+	cmr_u64 exp_time = *(cmr_u64 *) param_ptr;
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_EXP_TIME, (void *)&exp_time, NULL);

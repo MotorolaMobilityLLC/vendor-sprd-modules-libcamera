@@ -126,6 +126,7 @@ enum isp_callback_cmd {
 	ISP_3DNR_CALLBACK = 0x0000A000,
 	ISP_FDR_EV_EFFECT_CALLBACK = 0x0000C000,
 	ISP_AE_SYNC_STATUS_CALLBACK = 0x0000E000,
+	ISP_LONGEXP_SKIPNUM_CALLBACK = 0x0000F000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -666,6 +667,7 @@ struct isp_sensor_ex_info {
 	cmr_u32 max_adgain;
 	cmr_u32 ois_supported;
 	cmr_u32 pdaf_supported;
+	cmr_u32 long_expose_supported;
 	cmr_u32 exp_valid_frame_num;
 	cmr_u32 clamp_level;
 	cmr_u32 adgain_valid_frame_num;
