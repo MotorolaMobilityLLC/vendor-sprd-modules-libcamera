@@ -17,27 +17,31 @@
 #include <math.h>
 #include <string.h>
 
+#ifdef LOG_TAG
+#undef LOG_TAG
 #define LOG_TAG "IT-Compare"
+#endif
 
 int compare_rengion(compareInfo_t &com,int rengion) {
     int32_t ret = IT_OK;
     int64_t size = com.w * com.h;
     int64_t diff = 0;
     int64_t num = 0;
+    int64_t pixel_num = 0;
     double cmp_ratio = 0.0;
     char reng = 'a';
-    float threshold = 0.0;
+    double threshold = 0.0;
     double full_mean = 0.0;
     double area_mean = 0.0;
-    float part_threshold = 0.0;
+    double part_threshold = 0.0;
     double part_mean = 0.0;
     int64_t pxl_start = 0;
     int64_t pxl_end = 0;
-    int32_t pxl_span = 0;
-    int32_t temp = 0;
+    int64_t pxl_span = 0;
+    int64_t temp = 0;
 
     if (rengion == Y_RENGION) {
-        reng='Y';
+        reng = 'Y';
         pxl_start = 0;
         pxl_end = size;
         pxl_span = 1;
@@ -58,18 +62,23 @@ int compare_rengion(compareInfo_t &com,int rengion) {
         threshold = 3;
     }
     for (int64_t i = pxl_start; i < pxl_end; i = i + pxl_span) {
-        temp = abs(com.test_img[i] - com.golden_img[i]);
+        temp = (int64_t)abs(com.test_img[i] - com.golden_img[i]);
         if (temp > 0) {
             diff = diff + temp;
             num++;
         }
     }
-    if (diff <= 0) {
+    if (num <= 0) {
         cmp_ratio = 100.0;
         IT_LOGD("Similarity ratio in %c region is 100%%.",reng);
         ret = IT_OK;
     } else {
-        full_mean = (double)diff / ((pxl_end-pxl_start) / pxl_span);
+        if(pxl_span && (pxl_end - pxl_start)) {
+            pixel_num = (pxl_end - pxl_start) / pxl_span;
+            if (pixel_num) {
+                full_mean = (double)diff / pixel_num;
+            }
+        }
         area_mean = (double)diff / num;
         if (area_mean < threshold - 3) {
             part_threshold = area_mean + 3;
@@ -79,7 +88,7 @@ int compare_rengion(compareInfo_t &com,int rengion) {
         diff = 0;
         num = 0;
         for (int64_t i = pxl_start; i < pxl_end; i = i + pxl_span) {
-            temp=abs(com.test_img[i] - com.golden_img[i]);
+            temp = (int64_t)abs(com.test_img[i] - com.golden_img[i]);
             if (temp > part_threshold) {
                 diff = diff + temp;
                 num++;
@@ -117,9 +126,9 @@ int compare_yuv(compareInfo_t &compin) {
     if (!compin.test_img || !compin.golden_img) {
         IT_LOGD("Compare image error.");
     } else {
-        if (compare_rengion(compin,Y_RENGION) == 0) {
-            if (compare_rengion(compin,V_RENGION) == 0) {
-                if (compare_rengion(compin,U_RENGION) == 0) {
+        if (compare_rengion(compin,Y_RENGION) == IT_OK) {
+            if (compare_rengion(compin,V_RENGION) == IT_OK) {
+                if (compare_rengion(compin,U_RENGION) == IT_OK) {
                    ret = IT_OK;
                    IT_LOGD("CameraIT compare pass.");
                 }

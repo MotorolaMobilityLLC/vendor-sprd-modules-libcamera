@@ -86,8 +86,8 @@ typedef enum {
 typedef struct compareInfo {
     unsigned char *test_img;
     unsigned char *golden_img;
-    int w;
-    int h;
+    int64_t w;
+    int64_t h;
     IT_IMG_FORMAT_T format;
 } compareInfo_t;
 
