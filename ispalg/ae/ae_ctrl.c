@@ -679,7 +679,7 @@ static cmr_int aectrl_init_adpt(struct aectrl_cxt *cxt_ptr, struct ae_init_in *i
 
 	ISP_LOGI("aectrl_init_adpt, major_id:%d, minor_id:%d", major_id, minor_id);
 
-	if((major_id ==3) && (minor_id ==1)){
+	if((major_id ==3) && (minor_id >=1)){
 		ISP_LOGI("AE3.X");
 		in_ptr->lib_param.version_id = 1; //ae3.x
 	} else {
