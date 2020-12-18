@@ -1447,9 +1447,14 @@ cmr_int dump_image_tags(char *tag, char *tag_suffix,
                     cmr_s32 index, struct img_addr *vir_addr,
                     cmr_u32 image_size);
 
-cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size);
+uint32_t read_file(const char *file_name, void *data_buf, uint32_t buf_size);
 
-cmr_int save_file(const char *file_name, void *data, uint32_t data_size);
+uint32_t save_file(const char *file_name, void *data, uint32_t data_size);
+
+uint32_t read_file_bin_u8(const char *file, void *data_buf, uint32_t buf_size);
+uint32_t write_file_bin_u8(const char *file, void *data_buf, uint32_t data_size);
+uint32_t read_file_txt_s32(const char *file, void *data_buf, uint32_t buf_size);
+uint32_t write_file_txt_s32(const char *file, void *data_buf, uint32_t data_size);
 
 cmr_int camera_save_y_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
                               cmr_u32 height, void *addr);

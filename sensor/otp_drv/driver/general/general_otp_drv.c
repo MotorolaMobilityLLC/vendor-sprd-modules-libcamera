@@ -415,7 +415,7 @@ static cmr_int _general_otp_parse_module_data_1v0(cmr_handle otp_drv_handle) {
         "Invalid", "Sunny",   "Truly",   "ReachTech", "Q-Tech",   "Altek",
         "CMK",     "Shine",   "Darling", "Broad",     "Invalid",  "Invalid",
         "Invalid", "Invalid", "Invalid", "Invalid",   "DMEGC",    "Seasons",
-        "Sunwin",  "O-Flim",  "Hongshi", "Holitech",  "Zhengqiao"};
+        "Sunwin",  "O-Film",  "Hongshi", "Holitech",  "Zhengqiao"};
 
     ret = _general_otp_section_checksum(otp_cxt->otp_raw_data.buffer, 0x00, 80,
                                         0x50, module_info->otp_version);
@@ -2270,6 +2270,18 @@ static cmr_int _general_otp_parse_spw_1v1(cmr_handle otp_drv_handle) {
     spw_cali_dat->gld_info.buffer = NULL;
     spw_cali_dat->gld_info.size = 0;
 
+    FILE *fp = fopen("/data/vendor/cameraserver/otp_debug_spw.bin", "rb");
+
+    if (NULL == fp) {
+        CMR_LOGD("otp_debug_spw.bin not exist");
+    } else {
+        fread(spw_cali_dat->rdm_info.buffer, 1, spw_cali_dat->rdm_info.size,
+              fp);
+        fclose(fp);
+        fp = NULL;
+        CMR_LOGD("otp_debug_spw.bin read finished");
+    }
+
     OTP_LOGD("X");
     return ret;
 }
@@ -2842,6 +2854,80 @@ static cmr_int _general_otp_compatible_convert_slave(cmr_handle otp_drv_handle,
     return ret;
 }
 
+static cmr_int _general_otp_get_module_vendor_id(cmr_handle otp_drv_handle) {
+    cmr_int ret = OTP_CAMERA_SUCCESS;
+    CHECK_PTR(otp_drv_handle);
+    OTP_LOGV("E");
+
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)otp_drv_handle;
+    struct module_info_t *module_info = &(otp_cxt->otp_module_info);
+    char *otp_ver[] = {"0",   "0.1", "0.2", "0.3", "0.4", "0.5",
+                       "0.6", "0.7", "0.8", "0.9", "1.0", "1.1"};
+    char *module_vendor_1_0[23] = {
+        "Invalid", "Sunny",   "Truly",   "ReachTech", "Q-Tech",   "Altek",
+        "CMK",     "Shine",   "Darling", "Broad",     "Invalid",  "Invalid",
+        "Invalid", "Invalid", "Invalid", "Invalid",   "DMEGC",    "Seasons",
+        "Sunwin",  "O-Film",  "Hongshi", "Holitech",  "Zhengqiao"};
+    char *module_vendor_1_1[27] = {
+        "Invalid", "Sunny",     "Truly",   "ReachTech", "Q-Tech", "Altek",
+        "CMK",     "Shine",     "Darling", "Broad",     "DMEGC",  "Seasons",
+        "Sunwin",  "O-Film",    "Hongshi", "Sunniness", "Riyong", "Tongju",
+        "A_Kerr",  "Litearray", "Huaquan", "Kingcom",   "Booyi",  "LAIMU",
+        "WDSEN",   "Sunrise",   "TSP"};
+
+    if (module_info->otp_version == OTP_1_1 ||
+        module_info->otp_version == OTP_1_0) {
+        if (otp_cxt->sensor_id == 0 || otp_cxt->sensor_id == 1) {
+            otp_cxt->module_vendor_id =
+                module_info->module_id_info.master_vendor_id;
+        } else if (otp_cxt->sensor_id == 2 || otp_cxt->sensor_id == 3 ||
+                   otp_cxt->sensor_id == 4 || otp_cxt->sensor_id == 5) {
+            otp_cxt->module_vendor_id =
+                module_info->module_id_info.slave_vendor_id;
+        } else {
+            OTP_LOGE("illegal sensor id");
+            goto exit;
+        }
+
+        OTP_LOGD("sensor_id %d, otp_version %s, module_vendor_id %d",
+                 otp_cxt->sensor_id, otp_ver[module_info->otp_version],
+                 otp_cxt->module_vendor_id);
+
+        if (module_info->otp_version == OTP_1_1) {
+            if (otp_cxt->module_vendor_id < 27) {
+                strcpy(otp_cxt->module_vendor_name,
+                       module_vendor_1_1[otp_cxt->module_vendor_id]);
+                OTP_LOGD("module_vendor_id 0x%x %d, module vendor is %s",
+                         otp_cxt->module_vendor_id, otp_cxt->module_vendor_id,
+                         module_vendor_1_1[otp_cxt->module_vendor_id]);
+            } else {
+                OTP_LOGI("Illegal module_vendor_id %d for otp 1.1!",
+                         otp_cxt->module_vendor_id);
+            }
+        } else if (module_info->otp_version == OTP_1_0) {
+            if (otp_cxt->module_vendor_id < 23) {
+                strcpy(otp_cxt->module_vendor_name,
+                       module_vendor_1_0[otp_cxt->module_vendor_id]);
+                OTP_LOGD("module_vendor_id 0x%x %d, module vendor is %s",
+                         otp_cxt->module_vendor_id, otp_cxt->module_vendor_id,
+                         module_vendor_1_0[otp_cxt->module_vendor_id]);
+            } else {
+                OTP_LOGI("Illegal module_vendor_id %d for otp 1.0!",
+                         otp_cxt->module_vendor_id);
+            }
+        }
+
+    } else {
+        OTP_LOGI("only get module_vendor_id for otp 1.0 and 1.1, unsupported "
+                 "calib_version = 0x%04x",
+                 module_info->calib_version);
+    }
+
+exit:
+    OTP_LOGV("X");
+    return ret;
+}
+
 /*==================================================
 *                External interface
 ====================================================*/
@@ -3049,7 +3135,7 @@ static cmr_int general_otp_drv_parse(cmr_handle otp_drv_handle, void *param) {
     if (module_info->otp_version == OTP_1_1) {
         _general_otp_parse_module_data_1v1(otp_drv_handle);
 
-        if (otp_cxt->sensor_id < 6) {
+        if (otp_cxt->sensor_id < SENSOR_ID_MAX) {
             _general_otp_parse_af_1v1(otp_drv_handle);
             _general_otp_parse_awb_1v1(otp_drv_handle);
             _general_otp_parse_lsc_1v1(otp_drv_handle);
@@ -3167,6 +3253,9 @@ static cmr_int general_otp_drv_ioctl(cmr_handle otp_drv_handle, cmr_uint cmd,
         } else {
             OTP_LOGE("illegal sensor id");
         }
+        break;
+    case CMD_SNS_OTP_GET_MODULE_VENDOR_ID:
+        _general_otp_get_module_vendor_id(otp_drv_handle);
         break;
     default:
         break;

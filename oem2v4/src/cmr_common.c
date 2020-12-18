@@ -459,42 +459,181 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     return 0;
 }
 
-cmr_int read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
-    FILE *pf = NULL;
-    cmr_s64 file_len = 0;
+uint32_t read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
+    FILE *fp = NULL;
+    int file_len = 0;
 
     if (NULL == data_buf)
         return 0;
 
-    pf = fopen(file_name, "rb");
-    if (NULL == pf)
+    fp = fopen(file_name, "rb");
+    if (NULL == fp)
         return 0;
 
-    fseek(pf, 0, SEEK_END);
-    file_len = ftell(pf);
-    fseek(pf, 0, SEEK_SET);
+    fseek(fp, 0, SEEK_END);
+    file_len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
 
     if (buf_size >= file_len && file_len > 0)
-        file_len = fread(data_buf, 1, file_len, pf);
+        file_len = fread(data_buf, 1, file_len, fp);
     else
         file_len = 0;
 
-    fclose(pf);
+    fclose(fp);
 
     return file_len;
 }
 
-cmr_int save_file(const char *file_name, void *data, uint32_t data_size) {
-    FILE *pf = fopen(file_name, "wb");
+uint32_t save_file(const char *file_name, void *data, uint32_t data_size) {
+    FILE *fp = fopen(file_name, "wb");
     uint32_t write_bytes = 0;
 
-    if (NULL == pf)
+    if (NULL == fp)
         return 0;
 
-    write_bytes = fwrite(data, 1, data_size, pf);
-    fclose(pf);
+    write_bytes = fwrite(data, 1, data_size, fp);
+    fclose(fp);
 
     return write_bytes;
+}
+
+uint32_t read_file_bin_u8(const char *file, void *data_buf, uint32_t buf_size) {
+    FILE *fp = NULL;
+    int file_len = 0;
+    uint32_t read_bytes = 0;
+
+    if (data_buf == NULL) {
+        CMR_LOGE("data_buf is null");
+        goto exit;
+    }
+
+    fp = fopen(file, "rb");
+    if (fp == NULL) {
+        CMR_LOGI("%s rb fopen fp is null", file);
+        goto exit;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    file_len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    CMR_LOGD("buf_size %d, file_len %d", buf_size, file_len);
+
+    if (file_len > 0) {
+        if (buf_size >= file_len) {
+            read_bytes = fread(data_buf, 1, file_len, fp);
+            CMR_LOGI("%s read_bytes = %d", file, read_bytes);
+        } else {
+            CMR_LOGE("buf_size %d is smaller than file_len %d", buf_size, file_len);
+            read_bytes = 0;
+        }
+    } else {
+        CMR_LOGE("invalid file_len %d", file_len);
+        read_bytes = 0;
+    }
+
+    fclose(fp);
+
+    return read_bytes;
+
+exit:
+    return 0;
+}
+
+cmr_u32 write_file_bin_u8(const char *file, void *data_buf, cmr_u32 data_size) {
+    FILE *fp = NULL;
+    cmr_u32 write_bytes = 0;
+
+    if (data_buf == NULL) {
+        CMR_LOGE("data_buf is null");
+        goto exit;
+    }
+
+    fp = fopen(file, "wb");
+    if (fp == NULL) {
+        CMR_LOGE("%s wb fopen fp is null", file);
+        goto exit;
+    }
+
+    write_bytes = fwrite(data_buf, 1, data_size, fp);
+
+    fclose(fp);
+
+    CMR_LOGI("%s write_bytes = %d", file, write_bytes);
+
+    return write_bytes;
+
+exit:
+    return 0;
+}
+
+cmr_u32 read_file_txt_s32(const char *file, void *data_buf, cmr_u32 buf_size) {
+    FILE *fp = NULL;
+    cmr_u32 file_len = 0;
+    cmr_u32 read_bytes = 0;
+
+    if (data_buf == NULL) {
+        CMR_LOGE("data_buf is null");
+        goto exit;
+    }
+
+    fp = fopen(file, "r");
+    if (fp == NULL) {
+        CMR_LOGI("%s r fopen fp is null", file);
+        goto exit;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    file_len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    /*the file_len of txt and bin are not equal*/
+    CMR_LOGD("buf_size %d, file_len %d", buf_size, file_len);
+
+    /*buffer must be large enough*/
+    int *buf = (int *)data_buf;
+    while (!feof(fp)) {
+        if (fscanf(fp, "%d\n", buf++) != EOF) {
+            read_bytes += 4;
+        }
+    }
+    fclose(fp);
+
+    CMR_LOGI("%s read_bytes = %d", file, read_bytes);
+
+    return read_bytes;
+
+exit:
+    return 0;
+}
+
+cmr_u32 write_file_txt_s32(const char *file, void *data_buf, cmr_u32 data_size) {
+    FILE *fp = NULL;
+    cmr_u32 write_bytes = 0;
+    cmr_u32 i = 0;
+
+    if (data_buf == NULL) {
+        CMR_LOGE("data_buf is null");
+        goto exit;
+    }
+
+    fp = fopen(file, "w");
+    if (fp == NULL) {
+        CMR_LOGE("%s w fopen fp is null", file);
+        goto exit;
+    }
+
+    int *buf = (int *)data_buf;
+    for (i = 0; i < (data_size / 4); i++) {
+        fprintf(fp, "%d\n", *buf++);
+        write_bytes += 4;
+    }
+    fclose(fp);
+
+    CMR_LOGI("%s write_bytes = %d", file, write_bytes);
+
+    return write_bytes;
+
+exit:
+    return 0;
 }
 
 // parse the filename like

@@ -165,30 +165,31 @@ typedef enum {
 enum camera_module_id {
     MODULE_DEFAULT = 0, /*NULL*/
     MODULE_SUNNY = 1,
-    MODULE_TRULY,
-    MODULE_RTECH,
-    MODULE_QTECH,
-    MODULE_ALTEK, /*5*/
-    MODULE_CMK,
-    MODULE_SHINE,
-    MODULE_DARLING,
-    MODULE_BROAD,
-    MODULE_DMEGC, /*10*/
-    MODULE_SEASONS,
-    MODULE_SUNWIN,
-    MODULE_OFLIM,
-    MODULE_HONGSHI,
-    MODULE_SUNNINESS, /*15*/
-    MODULE_RIYONG,
-    MODULE_TONGJU,
-    MODULE_A_KERR,
-    MODULE_LITEARRAY,
-    MODULE_HUAQUAN, /*20*/
-    MODULE_KINGCOM,
-    MODULE_BOOYI,
-    MODULE_LAIMU,
-    MODULE_WDSEN,
-    MODULE_SUNRISE, /*25*/
+    MODULE_TRULY = 2,
+    MODULE_RTECH = 3,
+    MODULE_QTECH = 4,
+    MODULE_ALTEK = 5, /*5*/
+    MODULE_CMK = 6,
+    MODULE_SHINE = 7,
+    MODULE_DARLING = 8,
+    MODULE_BROAD = 9,
+    MODULE_DMEGC = 10, /*10*/
+    MODULE_SEASONS = 11,
+    MODULE_SUNWIN = 12,
+    MODULE_OFILM = 13,
+    MODULE_HONGSHI = 14,
+    MODULE_SUNNINESS = 15, /*15*/
+    MODULE_RIYONG = 16,
+    MODULE_TONGJU = 17,
+    MODULE_A_KERR = 18,
+    MODULE_LITEARRAY = 19,
+    MODULE_HUAQUAN = 20, /*20*/
+    MODULE_KINGCOM = 21,
+    MODULE_BOOYI = 22,
+    MODULE_LAIMU = 23,
+    MODULE_WDSEN = 24,
+    MODULE_SUNRISE = 25, /*25*/
+    MODULE_TSP = 26,
     /*add camera vendor name index here*/
 
     MODULE_MAX, /*NOTE:This used to be the last line*/
@@ -702,6 +703,8 @@ typedef struct phySensorInfo {
     cmr_u32 face_type;
     int angle;
     int resource_cost;
+    cmr_u32 module_vendor_id;
+    cmr_u32 otp_version;
     SENSOR_IMAGE_FORMAT image_format;
     int data_type;
     cmr_u8 focus_eb;
