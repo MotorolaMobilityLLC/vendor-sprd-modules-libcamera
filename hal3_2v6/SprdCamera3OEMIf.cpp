@@ -10735,7 +10735,35 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 return 0;
             }
         }
-
+        if(mIsUltraWideMode) {
+            SprdCamera3RegularChannel *Rechannel =
+                reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+            SprdCamera3PicChannel *Picchannel =
+                reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+            SprdCamera3Stream *stream = NULL;
+            uint32_t current_prev_frame = 0, pic_frame = 0;
+            Rechannel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
+            if (stream == NULL) {
+                HAL_LOGE("prev_stream=%p", stream);
+            } else {
+                ret = stream->getQBuffFirstNum(&current_prev_frame);
+                if (ret == NO_ERROR) {
+                    Picchannel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &stream);
+                    if (stream == NULL) {
+                        HAL_LOGE("pic_stream=%p", stream);
+                    } else {
+                        ret = stream->getQBuffFirstNum(&pic_frame);
+                        if (ret == NO_ERROR && current_prev_frame <= pic_frame) {
+                            HAL_LOGD("not the right frame, skip it");
+                            mHalOem->ops->camera_set_zsl_buffer(
+                                obj->mCameraHandle, zsl_frame->y_phy_addr,
+                                zsl_frame->y_vir_addr, zsl_frame->fd);
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
         // single capture wait the caf focused frame
         if (sprddefInfo->capture_mode == 1 && obj->mLatestFocusDoneTime > 0 &&
             zsl_frame->monoboottime < obj->mLatestFocusDoneTime && !mIsFDRCapture &&
