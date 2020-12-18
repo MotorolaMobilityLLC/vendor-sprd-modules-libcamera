@@ -311,7 +311,7 @@ static cmr_int denoise_param_read_v26(cmr_handle isp_alg_handle, void *param_ptr
 
 static denoise_param_read_t s_adapt_ioctl_nr_read = denoise_param_read_v26;
 
-#elif defined CONFIG_ISP_2_7
+#elif defined CONFIG_ISP_2_7 || defined CONFIG_ISP_2_8 || defined CONFIG_ISP_2_9
 static cmr_u32 get_cnr_blkid (void)
 {
 	return ISP_BLK_CNR2_V1;
@@ -354,9 +354,11 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 		case DCAM_BLK_BPC_V1:
 			update_param->bpc_level_ptr = (struct sensor_bpc_level *)fix_data_ptr->nr.nr_set_group.bpc;
 			break;
+#ifndef CONFIG_ISP_2_8
 		case ISP_BLK_GRGB_V1:
 			update_param->grgb_level_ptr = (struct sensor_grgb_level *)fix_data_ptr->nr.nr_set_group.grgb;
 			break;
+#endif
 		case ISP_BLK_NLM_V2:
 			update_param->nlm_level_ptr = (struct sensor_nlm_level *)fix_data_ptr->nr.nr_set_group.nlm;
 			update_param->vst_level_ptr = (struct sensor_vst_level *)fix_data_ptr->nr.nr_set_group.vst;

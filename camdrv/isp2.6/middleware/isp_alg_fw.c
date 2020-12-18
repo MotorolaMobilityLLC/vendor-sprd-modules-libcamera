@@ -1969,8 +1969,12 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 	cmr_u32 blk_id = 0, blk_num = 0;
 	cmr_u16 smooth_ratio = 0;
 	enum ai_status ai_sta = AI_STATUS_MAX;
-#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
+#if defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_9)
 	cmr_u32 hsv_blk_id = ISP_BLK_HSV_NEW2;
+	cmr_u32 ee_blk_id = ISP_BLK_EE_V1;
+	cmr_u32 bchs_blk_id[4] = { ISP_BLK_BCHS, ISP_BLK_ID_MAX,  ISP_BLK_ID_MAX, ISP_BLK_ID_MAX};
+#elif defined CONFIG_ISP_2_8
+	cmr_u32 hsv_blk_id = ISP_BLK_HSV_LUT;
 	cmr_u32 ee_blk_id = ISP_BLK_EE_V1;
 	cmr_u32 bchs_blk_id[4] = { ISP_BLK_BCHS, ISP_BLK_ID_MAX,  ISP_BLK_ID_MAX, ISP_BLK_ID_MAX};
 #elif defined CONFIG_ISP_2_5
@@ -5087,7 +5091,7 @@ static cmr_int ispalg_bypass_init(struct isp_alg_fw_context *cxt)
 		cxt->afl_cxt.sw_bypass = 1;
 		cxt->pdaf_cxt.sw_bypass = 1;
 	}
-	ISP_LOGI("ae sw bypass: %d\n", cxt->ae_cxt.sw_bypass);
+	ISP_LOGI("ae sw bypass123: %d\n", cxt->ae_cxt.sw_bypass);
 	ISP_LOGI("af sw bypass: %d\n", cxt->af_cxt.sw_bypass);
 	ISP_LOGI("awb sw bypass: %d\n", cxt->awb_cxt.sw_bypass);
 	ISP_LOGI("lsc sw bypass: %d\n", cxt->lsc_cxt.sw_bypass);

@@ -85,7 +85,15 @@ enum ai_scene_pro{
 	AI_SECNE_PM_PRO_SNOW,
 	AI_SECNE_PM_PRO_FIREWORK,
 	AI_SECNE_PM_PRO_PET,
-	AI_SECNE_PM_PRO_FLOWER,//11
+	AI_SECNE_PM_PRO_FLOWER,//12
+	AI_SECNE_PM_PRO_OVERCAST,
+	AI_SECNE_PM_PRO_CAR,
+	AI_SECNE_PM_PRO_BICYCLE,
+	AI_SECNE_PM_PRO_BEACH,
+	AI_SECNE_PM_PRO_WATERAREA,
+	AI_SECNE_PM_PRO_WATERFALL,
+	AI_SECNE_PM_PRO_AUTUMNLEAF,
+	AI_SECNE_PM_PRO_CHINESEARCHITECTUR,
 	AI_SECNE_PM_PRO_RESERVED0,
 	AI_SECNE_PM_PRO_RESERVED1,
 	AI_SECNE_PM_PRO_RESERVED2,
@@ -94,6 +102,9 @@ enum ai_scene_pro{
 	AI_SECNE_PM_PRO_RESERVED5,
 	AI_SECNE_PM_PRO_RESERVED6,
 	AI_SECNE_PM_PRO_RESERVED7,
+	AI_SECNE_PM_PRO_RESERVED8,
+	AI_SECNE_PM_PRO_RESERVED9,
+	AI_SECNE_PM_PRO_RESERVED10,
 	AI_SCENE_PM_PRO_MAX
 };
 
@@ -517,7 +528,7 @@ struct isp_grgb_param {
 struct isp_hist2_param {
 	struct isp_dev_hist2_info cur;
 };
-
+//sharkle hsv
 struct isp_hsv_param {
 	struct isp_dev_hsv_info_v2 cur;
 	struct isp_sample_point_info cur_idx;
@@ -531,14 +542,14 @@ struct isp_hsv_table {
 	cmr_s16 hue_table[SENSOR_HSV_TAB_NUM];
 	cmr_s16 sat_table[SENSOR_HSV_TAB_NUM];
 };
-
+//l5pro hsv
 struct isp_hsv_param_new2 {
 	struct isp_dev_hsv_info_v2 cur;
 	struct isp_sample_point_info cur_idx;
 	struct isp_hsv_table hsv_table[SENSOR_HSV_NUM];
 	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 };
-
+//l3 hsv
 struct isp_hsv_param_new {
 	struct isp_dev_hsv_info_v2 cur;
 	struct isp_sample_point_info cur_idx;
@@ -546,6 +557,39 @@ struct isp_hsv_param_new {
 	struct isp_data_info map[SENSOR_HSV_NUM_NEW];
 	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 	cmr_u32 *ct_result[2];
+};
+
+//sharkl6
+struct isp_hsv_curve {
+	cmr_u16 start_a;
+	cmr_u16 end_a;
+	cmr_u16 start_b;
+	cmr_u16 end_b;
+};
+
+struct isp_hsv_table_v0 {
+	cmr_s16 hsv_2d_hue_lut[25][17];
+	cmr_u16 hsv_2d_sat_lut[25][17];
+	cmr_u16 hsv_2d_hue_lut_reg[25][17];
+	cmr_u16 y_blending_factor;
+};
+
+struct isp_hsv_param_v0 {
+	cmr_u8 hsv_bypass;
+	cmr_u8 delta_value_en; //ctrl curve enble
+	cmr_u8 hsv_hue_thr[3][2]; //control ui
+	cmr_u16 hsv_1d_hue_lut[25];
+	cmr_u16 hsv_1d_sat_lut[17];
+	struct isp_hsv_curve hsv_curve_param[4];
+};
+
+//sharkl6 hsv
+struct isp_hsv_param_new3 {
+	// struct isp_dev_hsv_info_v3 cur;
+	struct isp_hsv_param_v0 hsv_param;
+	struct isp_sample_point_info cur_idx;
+	struct isp_hsv_table_v0 hsv_lut[SENSOR_HSV_NUM];
+	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
 };
 
 struct isp_iircnr_iir_param {
@@ -578,6 +622,7 @@ struct isp_imblance_param {
 	union {
 		struct isp_dev_nlm_imblance cur;
 		struct isp_dev_nlm_imblance_v1 cur_v1;
+		// struct isp_dev_nlm_imblance_v2 cur_v2;
 	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -869,6 +914,13 @@ struct isp_ai_hsv_info {
 	cmr_s16 saturation_table_item_offset[360];
 };
 
+struct isp_ai_hsv_info_v1 {
+	cmr_s16 hue_offset[25][17];
+	cmr_s16 sat_offset[25][17];
+	cmr_u16 y_blending_offset;
+	cmr_u16 hue_offset_enable;
+};
+
 //AI_ee
 struct isp_ee_r_cfg_offset {
 	cmr_s8 ee_r1_cfg_offset;
@@ -975,7 +1027,10 @@ struct isp_ai_ee_param_v1 {
 
 struct isp_ai_param {
 	struct isp_ai_bchs_param bchs_cur;
-	struct isp_ai_hsv_info hsv_cur;
+	union {
+		struct isp_ai_hsv_info hsv_cur;
+		struct isp_ai_hsv_info_v1 hsv_cur_v1;
+	};
 	union {
 		struct isp_ai_ee_param ee_cur;
 		struct isp_ai_ee_param_v1 ee_cur_v1;
@@ -983,7 +1038,10 @@ struct isp_ai_param {
 	cmr_u16 smooth_frame_ai_cur;
 	cmr_u16 smooth_frame_ai[AI_SCENE_PRO_MAX];
 	struct isp_ai_bchs_info isp_ai_bchs[AI_SCENE_PRO_MAX];
+	union {
 	struct isp_ai_hsv_info isp_ai_hsv[AI_SCENE_PRO_MAX];
+	struct isp_ai_hsv_info_v1 isp_ai_hsv_v1[AI_SCENE_PRO_MAX];
+	};
 	struct isp_ai_ee_info isp_ai_ee[AI_SCENE_PRO_MAX];
 };
 
@@ -1033,6 +1091,7 @@ struct isp_context {
 		struct isp_hsv_param hsv;
 		struct isp_hsv_param_new hsv_new;
 		struct isp_hsv_param_new2 hsv_new2;
+		struct isp_hsv_param_new3 hsv_new3;
 	};
 	struct isp_iircnr_iir_param iircnr;
 	struct isp_iircnr_yrandom_param yrandom;
@@ -1199,6 +1258,10 @@ cmr_s32 _pm_hsv_new_deinit(void *hsv_param);
 cmr_s32 _pm_hsv_new2_init(void *dst_hsv_param, void *src_hsv_param, void *param1, void *param2);
 cmr_s32 _pm_hsv_new2_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_hsv_new2_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_hsv_new3_init(void *dst_hsv_param, void *src_hsv_param, void *param1, void *param2);
+cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_hsv_new3_get_param(void *hsv_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 cmr_s32 _pm_iircnr_iir_init(void *dst_iircnr_param, void *src_iircnr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_iircnr_iir_set_param(void *iircnr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

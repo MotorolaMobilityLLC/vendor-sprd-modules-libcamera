@@ -87,7 +87,7 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"cnr3",
 	"mfnr",
 };
-#else
+#elif defined CONFIG_ISP_2_7 /* for SharkL5pro */
 char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"bayer_nr",
 	"vst",
@@ -115,6 +115,33 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"cnr3",
 	"mfnr",
 	"post_ee",
+};
+#elif defined CONFIG_ISP_2_8 /* for SharkL6 */
+char nr_param_name[ISP_BLK_NR_MAX][20] = {
+	"bayer_nr",
+	"vst",
+	"ivst",
+	"rgb_dither",
+	"bpc",
+	"cfai",
+	"rgb_afm",
+	"cce_uvdiv",
+	"3dnr",
+	"ppe",
+	"yuv_precdn",
+	"uv_cdn",
+	"uv_postcdn",
+	"ynr",
+	"ee",
+	"iircnr",
+	"yuv_noisefilter",
+	"cnr",
+	"imbalance",
+	"sw3dnr",
+	"bwu_bwd",
+	"ynrs",
+	"cnr3",
+	"mfnr",
 };
 #endif
 
@@ -1515,6 +1542,8 @@ cmr_s32 read_lnc_map_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 	return rtn;
 }
 
+
+#ifndef CONFIG_ISP_2_8
 cmr_s32 read_lnc_weight_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 {
 	cmr_s32 rtn = 0x00;
@@ -1554,7 +1583,7 @@ cmr_s32 read_lnc_weight_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 
 	return rtn;
 }
-
+#endif
 cmr_s32 read_lnc_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 {
 	cmr_s32 rtn = 0x00;
@@ -1605,7 +1634,6 @@ cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 	cmr_s32 i;
 
 	char lnc_map_info[50];
-	char lnc_weight_info[50];
 	char lnc_info[20];
 
 	char *line_buf = (char *)malloc(512 * sizeof(char));
@@ -1630,6 +1658,8 @@ cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 				}
 			}
 		}
+#ifndef CONFIG_ISP_2_8
+	char lnc_weight_info[50];
 		if (NULL != strstr(line_buf, "_lnc_weight_0")) {
 			for (i = 0; i < LNC_MAP_NUM; i++) {
 				sprintf(lnc_weight_info, "_lnc_weight_0%d", i);
@@ -1642,6 +1672,7 @@ cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 				}
 			}
 		}
+#endif
 		if (NULL != strstr(line_buf, "_lnc_0")) {
 			for (i = 0; i < LNC_MAP_NUM; i++) {
 				sprintf(lnc_info, "_lnc_0%d", i);
