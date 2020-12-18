@@ -4751,15 +4751,8 @@ cmr_int camera_get_otpinfo(cmr_handle oem_handle, cmr_u8 dual_flag,
 
     ret = sensor_read_calibration_otp(dual_flag, otp_data, cxt->camera_id);
     if (CMR_CAMERA_SUCCESS == ret) {
-        CMR_LOGD("dual_otp data from bin file");
+        CMR_LOGD("dual_otp data from calibration bin");
     } else {
-        if (3 == dualflag) {
-#ifdef L5PRO_CLOSE_SPW_OTP
-            ret = CMR_CAMERA_FAIL;
-            CMR_LOGI("L5pro close spw otp");
-            goto exit;
-#endif
-        }
         val.type = SENSOR_VAL_TYPE_READ_DUAL_OTP;
         val.pval = &dualflag;
         ret = cmr_sensor_ioctl(cxt->sn_cxt.sensor_handle, cxt->camera_id,

@@ -520,7 +520,7 @@ struct dualcam_data_t {
 
 typedef struct {
     cmr_u32 sensor_id;
-    char dev_name[32];
+    char dev_name[SENSOR_NAME_LEN];
     /*sensor ic i2c address*/
     cmr_u8 sensor_ic_addr;
 
@@ -543,6 +543,9 @@ typedef struct {
     cmr_uint otp_data_module_index;
 
     struct module_info_t otp_module_info;
+
+    cmr_u32 module_vendor_id;
+    char module_vendor_name[SENSOR_NAME_LEN];
 } otp_drv_cxt_t;
 
 struct otp_drv_lib {

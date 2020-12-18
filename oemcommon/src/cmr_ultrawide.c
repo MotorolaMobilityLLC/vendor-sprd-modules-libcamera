@@ -260,58 +260,117 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
 }
 
 static void loadUltrawideOtp(struct class_ultrawide *ultrawide_handle) {
-    static cmr_u32 otp_info[256] = {0};
-    cmr_u32 otp_size = 0;
+    static cmr_u32 spw_otp_info[256] = {0};
+    cmr_u8 *otp_data = NULL;
+    static cmr_u32 spw_otp_size = 0;
     cmr_u32 read_byte = 0;
-    char prop[PROPERTY_VALUE_MAX] = "0";
+    char value1[PROPERTY_VALUE_MAX] = "0";
+    char value2[PROPERTY_VALUE_MAX] = "0";
+    char value3[PROPERTY_VALUE_MAX] = "0";
     struct class_ultrawide *handle = ultrawide_handle;
     cmr_handle oem_handle = handle->common.ipm_cxt->init_in.oem_handle;
+    cmr_u32 sensor_id = handle->common.ipm_cxt->init_in.sensor_id;
+    char file_golden_txt[PROPERTY_VALUE_MAX];
+    char file_golden_bin[PROPERTY_VALUE_MAX];
+    struct phySensorInfo *phyPtr = NULL;
+    char *module_vendor_1_1[27] = {
+        "invalid", "sunny",     "truly",   "rtech",     "qtech",  "altek",
+        "cmk",     "shine",     "darling", "broad",     "dmegc",  "seasons",
+        "sunwin",  "ofilm",     "hongshi", "sunniness", "riyong", "tongju",
+        "a_kerr",  "litearray", "huaquan", "kingcom",   "booyi",  "laimu",
+        "wdsen",   "sunrise",   "tsp"};
 
-    FILE *fid = fopen("/data/vendor/cameraserver/otp_manual_spw.txt", "rb");
-
-    if (NULL == fid) {
-        CMR_LOGD("otp_manual_spw.txt not exist");
+    property_get("persist.vendor.otp.golden.spw.force", value1, "1");
+    property_get("persist.vendor.otp.golden.spw.vendor", value2, "1");
+    phyPtr = sensorGetPhysicalSnsInfo(sensor_id);
+    CMR_LOGI("otp_version %d, module_vendor_id %d", phyPtr->otp_version,
+             phyPtr->module_vendor_id);
+    if (phyPtr->otp_version == 11 && phyPtr->module_vendor_id > 0 &&
+        phyPtr->module_vendor_id < 27 && atoi(value2) == 1) {
+        CMR_LOGD(
+            "only support otp 1.1, module_vendor_id %d,  module vendor is %s",
+            phyPtr->module_vendor_id,
+            module_vendor_1_1[phyPtr->module_vendor_id]);
+        snprintf(file_golden_txt, sizeof(file_golden_txt), "%s%s%s",
+                 "/vendor/etc/otpdata/otp_golden_spw_",
+                 module_vendor_1_1[phyPtr->module_vendor_id], ".txt");
+        snprintf(file_golden_bin, sizeof(file_golden_bin), "%s%s%s",
+                 "/vendor/etc/otpdata/otp_golden_spw_",
+                 module_vendor_1_1[phyPtr->module_vendor_id], ".bin");
     } else {
-        cmr_u8 *otp_data = (cmr_u8 *)otp_info;
-        while (!feof(fid)) {
-            if (fscanf(fid, "%d\n", otp_data) != EOF) {
-                otp_data += 4;
-                read_byte += 4;
-            }
-        }
-        fclose(fid);
-        CMR_LOGD("otp_manual_spw.txt read_bytes = %d", read_byte);
-        otp_size = read_byte;
+        CMR_LOGI("not support otp golden spw file by vendor");
+        strncpy(file_golden_txt, "/vendor/etc/otpdata/otp_golden_spw.txt",
+                sizeof(file_golden_txt));
+        strncpy(file_golden_bin, "/vendor/etc/otpdata/otp_golden_spw.bin",
+                sizeof(file_golden_bin));
     }
 
-    if (otp_size == 0) {
+    otp_data = (cmr_u8 *)spw_otp_info;
+    read_byte =
+        read_file_txt_s32("/data/vendor/cameraserver/otp_manual_spw.txt",
+                          otp_data, sizeof(spw_otp_info));
+    spw_otp_size = read_byte;
+
+    if (spw_otp_size == 0) {
         struct sensor_otp_cust_info otpdata;
         memset(&otpdata, 0, sizeof(struct sensor_otp_cust_info));
         camera_get_otpinfo(oem_handle, 3, &otpdata);
 
         if (otpdata.dual_otp.data_3d.size > 0) {
-            otp_size = otpdata.dual_otp.data_3d.size;
-            memcpy(otp_info, (cmr_u8 *)otpdata.dual_otp.data_3d.data_ptr,
-                    otpdata.dual_otp.data_3d.size);
+            spw_otp_size = otpdata.dual_otp.data_3d.size;
+            memcpy(spw_otp_info, (cmr_u8 *)otpdata.dual_otp.data_3d.data_ptr,
+                   otpdata.dual_otp.data_3d.size);
         }
     }
-    handle->warp_param.otp_buf = otp_info;
-    handle->warp_param.otp_size = otp_size;
 
-    if (otp_size > 0)
-        CMR_LOGD("load ultra wide otp success, otp_size %d", otp_size);
-    else
-        CMR_LOGD("load ultra wide otp failed, otp_size %d", otp_size);
+    CMR_LOGD("spw_otp_info[13] %d, width %d, height %d", (int)spw_otp_info[13],
+             spw_otp_info[18], spw_otp_info[19]);
+    /* change golden file please restart or set preperty golden.spw.force to 1*/
+    if ((int)spw_otp_info[13] <= 0 || atoi(value1) == 1) {
+        read_byte =
+            read_file_txt_s32(file_golden_txt, otp_data, sizeof(spw_otp_info));
+        if (read_byte > 0) {
+            spw_otp_size = read_byte;
+            CMR_LOGD("spw_golden_txt[13] %d, width %d, height %d",
+                     (int)spw_otp_info[13], spw_otp_info[18], spw_otp_info[19]);
+        } else {
+            read_byte = read_file_bin_u8(file_golden_bin, otp_data,
+                                         sizeof(spw_otp_info));
+            if (read_byte > 0) {
+                spw_otp_size = read_byte;
+                CMR_LOGD("spw_golden_bin[13] %d, width %d, height %d",
+                         (int)spw_otp_info[13], spw_otp_info[18],
+                         spw_otp_info[19]);
+            } else {
+                CMR_LOGI("ultrawide golden txt or bin not exist");
+            }
+        }
+    } else {
+        CMR_LOGD("load ultrawide valid otp data successfully before, otp_size "
+                 "%d, not load golden",
+                 spw_otp_size);
+    }
 
-    property_get("persist.vendor.cam.dump.spw.otp.log", prop, "0");
-    if (atoi(prop) == 1) {
-        for (cmr_u32 i = 0; i < otp_size; i = i + 8) {
+    if (spw_otp_size > 0) {
+        handle->warp_param.otp_buf = spw_otp_info;
+        handle->warp_param.otp_size = spw_otp_size;
+        CMR_LOGD("load ultrawide otp success, otp_size %d", spw_otp_size);
+    } else {
+        handle->warp_param.otp_buf = NULL;
+        handle->warp_param.otp_size = 0;
+        CMR_LOGD("load ultrawide otp failed, otp_size %d", spw_otp_size);
+    }
+
+    property_get("persist.vendor.cam.dump.spw.otp.log", value3, "0");
+    if (atoi(value3) == 1) {
+        otp_data = (cmr_u8 *)spw_otp_info;
+        for (cmr_u32 i = 0; i < spw_otp_size; i = i + 8) {
             CMR_LOGD("ultrawide otp data [%d %d %d %d %d %d %d %d]: 0x%x 0x%x "
                      "0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
                      i, i + 1, i + 2, i + 3, i + 4, i + 5, i + 6, i + 7,
-                     otp_info[i], otp_info[i + 1], otp_info[i + 2],
-                     otp_info[i + 3], otp_info[i + 4], otp_info[i + 5],
-                     otp_info[i + 6], otp_info[i + 7]);
+                     otp_data[i], otp_data[i + 1], otp_data[i + 2],
+                     otp_data[i + 3], otp_data[i + 4], otp_data[i + 5],
+                     otp_data[i + 6], otp_data[i + 7]);
         }
     }
 }

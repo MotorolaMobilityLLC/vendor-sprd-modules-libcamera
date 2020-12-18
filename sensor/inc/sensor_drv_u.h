@@ -749,6 +749,8 @@ struct sensor_drv_context {
     cmr_handle sns_ic_drv_handle;
     cmr_u8 mono_sensor;
     cmr_u32 is_HD_mode;
+    cmr_u32 module_vendor_id;
+    cmr_u32 otp_version;
 };
 
 struct tuning_param_lib {

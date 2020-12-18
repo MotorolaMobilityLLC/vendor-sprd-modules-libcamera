@@ -1,3 +1,4 @@
+#define LOG_TAG "otp_cali"
 #include "otp_cali.h"
 
 static cmr_u16 calc_checksum(cmr_u8 *dat, cmr_u16 len);

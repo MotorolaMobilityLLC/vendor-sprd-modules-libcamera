@@ -2922,6 +2922,10 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->angle = sensor_cxt->xml_info->cfgPtr->orientation;
     phyPtr->resource_cost = sensor_cxt->xml_info->cfgPtr->resource_cost;
     phyPtr->mono_sensor = sensor_cxt->mono_sensor;
+
+    phyPtr->module_vendor_id = sensor_cxt->module_vendor_id;
+    phyPtr->otp_version = sensor_cxt->otp_version;
+
     // special phyiscal sensor info overwrite
     sensor_drv_special_phy_sensor_info(phyPtr, slot_id);
 
@@ -3278,6 +3282,15 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     if (SENSOR_IMAGE_FORMAT_RAW == sensor_cxt->sensor_info_ptr->image_format) {
         if (sns_module->otp_drv_info.otp_drv_entry) {
             sensor_otp_process(sensor_cxt, OTP_READ_PARSE_DATA, 0, NULL);
+
+            otp_drv_cxt_t *otp_cxt =
+                (otp_drv_cxt_t *)sensor_cxt->otp_drv_handle;
+            sensor_otp_ops_t *otp_ops =
+                &sns_module->otp_drv_info.otp_drv_entry->otp_ops;
+            otp_ops->sensor_otp_ioctl(sensor_cxt->otp_drv_handle,
+                                      CMD_SNS_OTP_GET_MODULE_VENDOR_ID, NULL);
+            sensor_cxt->module_vendor_id = otp_cxt->module_vendor_id;
+            sensor_cxt->otp_version = otp_cxt->otp_module_info.otp_version;
         } else {
             SENSOR_LOGI(
                 "otp_drv_entry not configured:mod:%p,otp_drv:%p", sns_module,

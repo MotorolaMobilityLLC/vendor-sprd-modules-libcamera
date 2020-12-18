@@ -6369,6 +6369,8 @@ int SprdCamera3OEMIf::openCamera() {
     ATRACE_CALL();
 
     char value[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX];
+    char value2[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
     int is_raw_capture = 0;
     cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0;
@@ -6514,6 +6516,8 @@ int SprdCamera3OEMIf::openCamera() {
         mSetting->getOTPTag(&otpInfo);
 
         struct sensor_otp_cust_info otp_info;
+        cmr_u8 *otp_data = NULL;
+        cmr_u32 read_byte = 0;
         memset(&otp_info, 0, sizeof(struct sensor_otp_cust_info));
         mHalOem->ops->camera_get_sensor_otp_info(mCameraHandle, dual_flag,
                                                  &otp_info);
@@ -6531,8 +6535,76 @@ int SprdCamera3OEMIf::openCamera() {
                      otp_info.dual_otp.data_3d.size);
         } else {
             otpInfo.dual_otp_flag = 0;
-            HAL_LOGD("camera_id %d, get no dual_otp data from socket or eeprom",
+            HAL_LOGD("camera_id %d, get no dual_otp data from bin or eeprom",
                      mCameraId);
+        }
+
+        char file_golden_txt[PROPERTY_VALUE_MAX];
+        char file_golden_bin[PROPERTY_VALUE_MAX];
+        struct phySensorInfo *phyPtr = NULL;
+        char module_vendor_1_1[SENSOR_NAME_LEN][27] = {
+            "invalid", "sunny",     "truly",   "rtech",     "qtech",  "altek",
+            "cmk",     "shine",     "darling", "broad",     "dmegc",  "seasons",
+            "sunwin",  "ofilm",     "hongshi", "sunniness", "riyong", "tongju",
+            "a_kerr",  "litearray", "huaquan", "kingcom",   "booyi",  "laimu",
+            "wdsen",   "sunrise",   "tsp"};
+
+        property_get("persist.vendor.otp.golden.spw.force", value1, "1");
+        property_get("persist.vendor.otp.golden.spw.vendor", value2, "1");
+        if (dual_flag == 3) {
+            phyPtr = sensorGetPhysicalSnsInfo(mCameraId);
+            HAL_LOGI("otp_version %d, module_vendor_id %d", phyPtr->otp_version,
+                     phyPtr->module_vendor_id);
+            if (phyPtr->otp_version == 11 && phyPtr->module_vendor_id > 0 &&
+                phyPtr->module_vendor_id < 27 && atoi(value2) == 1) {
+                HAL_LOGD("only support otp 1.1, module_vendor_id %d,  module "
+                         "vendor is %s",
+                         phyPtr->module_vendor_id,
+                         module_vendor_1_1[phyPtr->module_vendor_id]);
+                snprintf(file_golden_txt, sizeof(file_golden_txt), "%s%s%s",
+                         "/vendor/etc/otpdata/otp_golden_spw_",
+                         module_vendor_1_1[phyPtr->module_vendor_id], ".txt");
+                snprintf(file_golden_bin, sizeof(file_golden_bin), "%s%s%s",
+                         "/vendor/etc/otpdata/otp_golden_spw_",
+                         module_vendor_1_1[phyPtr->module_vendor_id], ".bin");
+            } else {
+                HAL_LOGI("not support otp golden spw file by vendor");
+                strncpy(file_golden_txt,
+                        "/vendor/etc/otpdata/otp_golden_spw.txt",
+                        sizeof(file_golden_txt));
+                strncpy(file_golden_bin,
+                        "/vendor/etc/otpdata/otp_golden_spw.bin",
+                        sizeof(file_golden_bin));
+            }
+            int *otp_spw = (int *)otpInfo.otp_data;
+            HAL_LOGD("otp_spw[13] %d, width %d, height %d", otp_spw[13],
+                     otp_spw[18], otp_spw[19]);
+            if (otp_spw[13] <= 0 || atoi(value1) == 1) {
+                otp_data = (cmr_u8 *)otpInfo.otp_data;
+                read_byte = read_file_txt_s32(file_golden_txt, otp_data,
+                                              SPRD_DUAL_OTP_SIZE);
+                if (read_byte > 0) {
+                    HAL_LOGD("spw_golden_txt[13] %d, width %d, height %d",
+                             otp_spw[13], otp_spw[18], otp_spw[19]);
+                    otp_info.dual_otp.data_3d.size = read_byte;
+                    otpInfo.otp_type = 0;
+                    otpInfo.dual_otp_flag = 3;
+                } else {
+                    read_byte = read_file_bin_u8(file_golden_bin, otp_data,
+                                                 SPRD_DUAL_OTP_SIZE);
+                    if (read_byte > 0) {
+                        HAL_LOGD("spw_golden_bin[13] %d, width %d, height %d",
+                                 otp_spw[13], otp_spw[18], otp_spw[19]);
+                        otp_info.dual_otp.data_3d.size = read_byte;
+                        otpInfo.otp_type = 0;
+                        otpInfo.dual_otp_flag = 3;
+                    } else {
+                        HAL_LOGD("dual_flag %d, superwide golden txt or bin "
+                                 "not exist",
+                                 dual_flag);
+                    }
+                }
+            }
         }
 
         do {
@@ -6556,8 +6628,8 @@ int SprdCamera3OEMIf::openCamera() {
                 HAL_LOGD("dual_flag %d, manual calibration otp txt not exist",
                          dual_flag);
             } else {
-                int read_byte = 0;
-                cmr_u8 *otp_data = (cmr_u8 *)otpInfo.otp_data;
+                read_byte = 0;
+                otp_data = (cmr_u8 *)otpInfo.otp_data;
                 while (!feof(fid)) {
                     /* coverity:check_return: Calling "fscanf(fid, "%d\n",
                      * otp_data)"
