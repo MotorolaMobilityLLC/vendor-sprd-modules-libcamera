@@ -44,6 +44,8 @@ TestSuiteOEM::TestSuiteOEM()
 TestSuiteOEM::~TestSuiteOEM()
 {
     IT_LOGD("");
+    if (m_json2)
+        delete m_json2;
 }
 
 int TestSuiteOEM::SetUp(void)

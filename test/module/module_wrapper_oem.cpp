@@ -385,16 +385,6 @@ CameraOemTest::CameraOemTest() {
 
     mZslMaxFrameNum = 1;
     mSubRawHeapNum = 0;
-
-//    cmr_u16 picW, picH;
-    cmr_u16 snsW, snsH;
-
-//    getLargestPictureSize(mOem_cxt->camera_id, &picW, &picH);
-    getLargestSensorSize(mOem_cxt->camera_id, &snsW, &snsH);
-
-    mLargestSensorWidth = snsW;
-    mLargestSensorHeight = snsH;
-
 }
 
 CameraOemTest::~CameraOemTest() {
@@ -456,19 +446,22 @@ loaderror:
 }
 
 int CameraOemTest::openCamera() {
-
     int ret = 0;
-    mOem_cxt->camera_id = 0;
-    unsigned int cameraId = mOem_cxt->camera_id;
-
     if (mOem_cxt == NULL) {
         CMR_LOGE("failed: input camera_oem.mOem_cxt is null");
         return -1;
     }
 
-    cameraId = mOem_cxt->camera_id;
+    unsigned int cameraId = mOem_cxt->camera_id;
 
-    mOem->ops->camera_set_largest_picture_size(mOem_cxt->camera_id,
+//    cmr_u16 picW, picH;
+    cmr_u16 snsW, snsH;
+//    getLargestPictureSize(cameraId, &picW, &picH);
+    getLargestSensorSize(cameraId, &snsW, &snsH);
+    mLargestSensorWidth = snsW;
+    mLargestSensorHeight = snsH;
+
+    mOem->ops->camera_set_largest_picture_size(cameraId,
                             mLargestSensorWidth, mLargestSensorHeight);
 
     ret = mOem->ops->camera_init(
@@ -591,10 +584,17 @@ int CameraOemTest::zslSnapshot() {
     Mutex::Autolock l(&mLock);
 
     mPicCaptureCnt = 1;
+    struct img_size req_size = {0, 0};
 
 //WAIT CAPTURE DONE
     if (isCapturing()) {
       WaitForCaptureDone();
+    }
+
+    if (NULL == mCameraHandle || NULL == mOem || NULL == mOem->ops) {
+        CMR_LOGE("oem is null or oem ops is null");
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
     }
 
     SET_PARM(mOem, mCameraHandle, CAMERA_PARAM_SHOT_NUM,
@@ -602,7 +602,6 @@ int CameraOemTest::zslSnapshot() {
     SET_PARM(mOem, mCameraHandle, CAMERA_PARAM_EXIF_MIME_TYPE,
              MODE_SINGLE_CAMERA);
 
-    struct img_size req_size = {0, 0};
     SET_PARM(mOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&req_size);
 
@@ -610,7 +609,7 @@ int CameraOemTest::zslSnapshot() {
     ret = mOem->ops->camera_take_picture(mCameraHandle, mCaptureMode);
     if (ret) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
-        CMR_LOGE("fail to camera_take_picture");
+        CMR_LOGE("fail to zsl snapshot");
         goto exit;
     }
 
@@ -713,7 +712,7 @@ int CameraOemTest::takePicture() {
         }
 
         if (!isCameraInit()) {
-            CMR_LOGE("camera initialize error!, camera state = %d",
+            CMR_LOGE("camera initialize error!, camera state = %s",
                       getCameraStateStr(getCameraState()));
             ret = CMR_CAMERA_FAIL;
             goto exit;
@@ -891,8 +890,8 @@ int CameraOemTest::snapshot_zsl() {
         }
     }
 
-    return ret;
     CMR_LOGD("X");
+    return ret;
 }
 
 int CameraOemTest::pushZslFrame(struct camera_frame_type *frame) {
@@ -1154,13 +1153,13 @@ void CameraOemTest::receivePreviewFrame(struct camera_frame_type *parm4) {
     char tag_name[30]={0};
     strcpy(tag_name, "dump_preview");
 
-    CMR_LOGI("frame type = %d",frame->type);
-    memset((void *)&addr_vir, 0, sizeof(addr_vir));
-
     if (frame == NULL) {
         CMR_LOGI("parm4 error: null");
         goto exit;
     }
+
+    CMR_LOGI("frame type = %d",frame->type);
+    memset((void *)&addr_vir, 0, sizeof(addr_vir));
 
     if (!mPreviewHeapArray[frame->buf_id]) {
         CMR_LOGI("preview heap array empty");
@@ -1249,9 +1248,6 @@ void CameraOemTest::receiveJpegPicture(struct camera_frame_type *parm4) {
     struct camera_frame_type *frame = (struct camera_frame_type *)parm4;
     struct img_addr addr_vir;
 
-    CMR_LOGI("frame type = %d",frame->type);
-    memset((void *)&addr_vir, 0, sizeof(addr_vir));
-
     Mutex::Autolock cbLock(&mCaptureCbLock);
     Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
 
@@ -1259,6 +1255,9 @@ void CameraOemTest::receiveJpegPicture(struct camera_frame_type *parm4) {
         CMR_LOGI("parm4 error: null");
         goto exit;
     }
+
+    CMR_LOGI("frame type = %d",frame->type);
+    memset((void *)&addr_vir, 0, sizeof(addr_vir));
 
     if (!previewvalid) {
         CMR_LOGI("zsl disabled");
@@ -1404,11 +1403,11 @@ CameraOemTest::transitionState(CameraOemTest::Sprd_camera_state from,
                                  CameraOemTest::state_owner owner,
                                bool lock) {
     volatile CameraOemTest::Sprd_camera_state *which_ptr = NULL;
-    CMR_LOGI("transitionState E");
+    CMR_LOGV("transitionState E");
 
     if (lock)
         mStateLock.lock();
-        CMR_LOGI("transitionState: owner = %d, lock = %d", owner, lock);
+    CMR_LOGV("transitionState: owner = %d, lock = %d", owner, lock);
 
     switch (owner) {
     case STATE_CAMERA:
@@ -2588,7 +2587,8 @@ int ModuleWrapperOEM::Run(IParseJson *Json2) {
 
             switch (stream_count) {
             case CAMERA_STREAM_TYPE_PREVIEW:
-                camera_oem.mOem_cxt->fps = stream->s_fps;
+                if (stream->s_fps)
+                    camera_oem.mOem_cxt->fps = stream->s_fps;
                 if (stream->s_width > 0 && stream->s_height >0) {
                     camera_oem.mPreviewWidth = stream->s_width;
                     camera_oem.mPreviewHeight = stream->s_height;
