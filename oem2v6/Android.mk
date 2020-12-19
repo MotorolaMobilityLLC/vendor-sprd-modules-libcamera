@@ -144,6 +144,8 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_DRE_PRO_CAPTURE)),true)
 LOCAL_CFLAGS += -DCONFIG_CAMERA_DRE_PRO
+LOCAL_SRC_FILES+= src/cmr_dre_pro.c
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libdrepro/inc
 LOCAL_SHARED_LIBRARIES += libsprddrepro
 LOCAL_SHARED_LIBRARIES += libsprddreproadapter
 endif

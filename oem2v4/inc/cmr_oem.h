@@ -126,32 +126,6 @@ struct ipm_context {
     struct ipm_version hdr_version;
 };
 
-struct ipm_pro_context {
-    cmr_handle ipm_pro_handle;
-    cmr_handle mfnr_handle;
-    cmr_handle cnr_pro_handle;
-    cmr_handle dre_pro_handle;
-    cmr_u32 pro_inited;
-    cmr_u32 mfnr_num;
-    cmr_u32 frm_num;
-    cmr_u32 cnr_pro_inited;
-    cmr_u32 dre_pro_inited;
-};
-
-struct nightpro_context {
-    cmr_uint is_authorized;
-    cmr_uint mfnr_on_off;
-    void *sw_handle;
-    int (*sw_open)(cmr_handle oem_handle);
-    int (*sw_process)(cmr_handle oem_handle,
-                                 struct image_sw_algorithm_buf *src_buf,
-                                 struct image_sw_algorithm_buf *dst_buf);
-    int (*sw_close)(cmr_handle oem_handle);
-    int (*ipmpro_init)(cmr_handle oem_handle);
-    int (*ipmpro_deinit)(cmr_handle oem_handle);
-    int (*ipmpro_process)(cmr_handle oem_handle, void *data);
-};
-
 struct preview_context {
     cmr_handle preview_handle;
     cmr_u32 inited;
@@ -280,7 +254,6 @@ struct camera_context {
     struct snapshot_context snp_cxt;
     struct focus_context focus_cxt;
     struct ipm_context ipm_cxt;
-    struct ipm_pro_context ipm_pro_cxt;
     struct setting_context setting_cxt;
 
     /*for the workflow management*/
@@ -390,8 +363,8 @@ struct camera_context {
     float zoom_ratio;
     bool night_flag;
     cmr_u8 nightscepro_flag;
-    struct nightpro_context night_cxt;
     bool snp_cancel;
+    cmr_uint mfnr_on_off;
     void *aux_param;
 };
 

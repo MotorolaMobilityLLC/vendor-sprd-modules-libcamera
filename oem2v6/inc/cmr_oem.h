@@ -127,32 +127,25 @@ struct rotation_context {
     cmr_handle caller_handle;
 };
 
-
-
 struct ipmpro_context {
-	cmr_u32 inited;
-	cmr_u32 version;
-	cmr_handle lib_handle;
-	/* for snapshot image handle */
-	sem_t sem_flag;
-	sem_t sem;
-	cmr_u32 log_level;
+    cmr_u32 inited;
+    cmr_u32 version;
+    cmr_handle lib_handle;
+    /* for snapshot image handle */
+    sem_t sem_flag;
+    sem_t sem;
+    cmr_u32 log_level;
 
-	cmr_handle swa_handle;
-	cmr_s32 swa_handle_size;
-	cmr_s32 get_flag;
-
-	int (*swa_open)(void *ipmpro_hanlde,
-			void *open_param,
-			uint32_t log_level);
-	int (*swa_process)(void * ipmpro_hanlde,
-			void *frms_in,
-			void *frms_out,
-			void * data);
-	int (*swa_close)(void *ipmpro_hanlde,
-			void * close_param);
+    cmr_handle swa_handle;
+    cmr_s32 swa_handle_size;
+    cmr_s32 get_flag;
+    int (*swa_open)(void *ipmpro_hanlde,
+        void *open_param, uint32_t log_level);
+    int (*swa_process)(void * ipmpro_hanlde,
+        void *frms_in, void *frms_out, void * data);
+    int (*swa_close)(void *ipmpro_hanlde,
+        void * close_param);
 };
-
 
 struct ipm_context {
     cmr_handle ipm_handle;
@@ -167,6 +160,7 @@ struct ipm_context {
     cmr_handle cnr_handle;
     cmr_handle ee_handle;
     cmr_handle dre_handle;
+    cmr_handle dre_pro_handle;
     cmr_u32 inited;
     cmr_u32 frm_num;
     cmr_u32 hdr_num;
@@ -177,6 +171,7 @@ struct ipm_context {
     cmr_u32 cnr_inited;
     cmr_u32 ee_inited;
     cmr_u32 dre_inited;
+    cmr_u32 dre_pro_inited;
     struct ipm_version hdr_version;
     cmr_u32 four_in_one_inited;
 };
@@ -191,19 +186,6 @@ struct ipm_pro_context {
     cmr_u32 mfnr_num;
     cmr_u32 cnr_pro_inited;
     cmr_u32 dre_pro_inited;
-};
-struct nightpro_context {
-    cmr_uint is_authorized;
-    cmr_uint mfnr_on_off;
-    void *sw_handle;
-    int (*sw_open)(cmr_handle oem_handle);
-    int (*sw_process)(cmr_handle oem_handle,
-                                 struct image_sw_algorithm_buf *src_buf,
-                                 struct image_sw_algorithm_buf *dst_buf);
-    int (*sw_close)(cmr_handle oem_handle);
-    int (*ipmpro_init)(cmr_handle oem_handle);
-    int (*ipmpro_deinit)(cmr_handle oem_handle);
-    int (*ipmpro_process)(cmr_handle oem_handle, void *data);
 };
 
 struct preview_context {
@@ -372,7 +354,6 @@ struct camera_context {
     struct snapshot_context snp_cxt;
     struct focus_context focus_cxt;
     struct ipm_context ipm_cxt;
-    struct ipm_pro_context ipm_pro_cxt;
     struct setting_context setting_cxt;
     struct debug_context dbg_cxt;
     struct ipmpro_context swa_cxt_fdr;
@@ -514,9 +495,6 @@ struct camera_context {
     cmr_u8 gtm_flag;
     cmr_u8 predre_flag;
     cmr_u8 skipframe;
-    bool night_flag;
-    struct nightpro_context night_cxt;
-
     /*for flash skip preview frame*/
     cmr_s64 flash_handle_timestamp;
     cmr_u32 flash_skip_frame_enable;
@@ -537,6 +515,7 @@ struct camera_context {
     jpg_encode_status jpg_encode;
     cmr_u8 nightscepro_flag;
     bool snp_cancel;
+    cmr_uint mfnr_on_off;
     void *aux_param;
 };
 
@@ -802,7 +781,7 @@ cmr_int cmr_get_bokeh_sn_trim(cmr_handle handle,
                               struct sprd_img_path_rect *trim_param);
 
 cmr_int camera_get_remosaic_type(struct sensor_4in1_info *p,
-							  cmr_u32 sensor_w, cmr_u32 sensor_h);
+                              cmr_u32 sensor_w, cmr_u32 sensor_h);
 cmr_int camera_get_is_4in1_sensor(struct sensor_4in1_info *p);
 cmr_int camera_get_4in1_info(cmr_handle handle, struct fin1_info *param);
 cmr_int camera_set_high_res_mode(cmr_handle oem_handle,cmr_uint is_high_res_mode);

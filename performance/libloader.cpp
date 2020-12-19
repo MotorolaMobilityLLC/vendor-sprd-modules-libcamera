@@ -16,7 +16,6 @@ static const char *kPreloadLibraryOverride =
 static const char *kPreloadLibraries[] = {
     "libispalg.so",
     "libjpeg_hw_sprd.so",
-    "libnight.so",
     "libawb.so",
     "libawb1.so"};
 

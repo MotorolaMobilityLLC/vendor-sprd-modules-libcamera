@@ -1271,6 +1271,7 @@ enum ipm_class_type {
     IPM_TYPE_ULTRA_WIDE = 0x00000300,
     IPM_TYPE_AUTO_TRACKING = 0x00000400,
     IPM_TYPE_DRE = 0x00000500,
+    IPM_TYPE_DRE_PRO = 0x00000600,
 };
 
 enum img_fmt {

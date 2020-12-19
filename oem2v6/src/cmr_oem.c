@@ -92,9 +92,6 @@ enum oem_ev_level { OEM_EV_LEVEL_1, OEM_EV_LEVEL_2, OEM_EV_LEVEL_3 };
                               is_multi_camera_mode_oem == MODE_PAGE_TURN)))
 
 
-static cmr_int camera_nightpro_init(cmr_handle oem_handle);
-static cmr_int camera_nightpro_deinit(cmr_handle oem_handle);
-
 static pthread_mutex_t close_mutex = PTHREAD_MUTEX_INITIALIZER;
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
 static pthread_mutex_t mm_dvfs_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -355,6 +352,10 @@ static cmr_int camera_open_dre(struct camera_context *cxt,
                                struct ipm_open_in *in_ptr,
                                struct ipm_open_out *out_ptr);
 static cmr_int camera_close_dre(struct camera_context *cxt);
+static cmr_int camera_open_dre_pro(struct camera_context *cxt,
+                               struct ipm_open_in *in_ptr,
+                        struct ipm_open_out *out_ptr);
+static cmr_int camera_close_dre_pro(struct camera_context *cxt);
 static cmr_int camera_open_ai_scene(struct camera_context *cxt,
                                     struct ipm_open_in *in_ptr,
                                     struct ipm_open_out *out_ptr);
@@ -433,6 +434,11 @@ cmr_int camera_invalidate_buf(cmr_handle oem_handle, cmr_s32 buf_fd,
 cmr_int camera_flush_buf(cmr_handle oem_handle, cmr_s32 buf_fd, cmr_u32 size,
                          cmr_uint phy_addr, cmr_uint vir_addr);
 
+static cmr_int camera_nightpro_open(cmr_handle oem_handle);
+static cmr_int camera_nightpro_process(cmr_handle oem_handle, struct image_sw_algorithm_buf *src_buf,
+                              struct image_sw_algorithm_buf *dst__buf);
+static cmr_int camera_nightpro_close(cmr_handle oem_handle);
+static cmr_int camera_ipm_pro_process(cmr_handle oem_handle, void *data);
 
 static cmr_int camera_open_fdr(struct camera_context *cxt) {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -3735,6 +3741,34 @@ cmr_int camera_close_dre(struct camera_context *cxt) {
     CMR_LOGI("close dre done %ld", ret);
     return ret;
 }
+
+cmr_int camera_open_dre_pro(struct camera_context *cxt, struct ipm_open_in *in_ptr,
+                        struct ipm_open_out *out_ptr) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    CMR_LOGD("E");
+    sem_wait(&cxt->dre_pro_flag_sm);
+    if (NULL == cxt->ipm_cxt.dre_pro_handle) {
+        ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_DRE_PRO, in_ptr,
+                           out_ptr, &cxt->ipm_cxt.dre_pro_handle);
+    }
+    sem_post(&cxt->dre_pro_flag_sm);
+    CMR_LOGD("X");
+    return ret;
+}
+
+cmr_int camera_close_dre_pro(struct camera_context *cxt) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    sem_wait(&cxt->dre_pro_flag_sm);
+    if (cxt->ipm_cxt.dre_pro_handle) {
+        ret = cmr_ipm_close(cxt->ipm_cxt.dre_pro_handle);
+        cxt->ipm_cxt.dre_pro_handle = 0;
+    }
+    sem_post(&cxt->dre_pro_flag_sm);
+    CMR_LOGI("close dre pro done %ld", ret);
+    return ret;
+}
+
 cmr_int camera_open_ai_scene(struct camera_context *cxt,
                              struct ipm_open_in *in_ptr,
                              struct ipm_open_out *out_ptr) {
@@ -3903,19 +3937,35 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
             setting_param.camera_id = cxt->camera_id;
             ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                                     SETTING_GET_APPMODE, &setting_param);
-            if (ret)
+            if (ret) {
                 CMR_LOGE("failed to get app mode");
-            if ((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) &&
-                cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
-                cxt->night_cxt.mfnr_on_off = 0;
-                ret = cxt->night_cxt.sw_close(cxt);
+            }
+            if ((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) && cxt->mfnr_on_off) {
+                cxt->mfnr_on_off = 0;
+                ret = camera_nightpro_close(oem_handle);
+                if (ret) {
+                    CMR_LOGE("failed to close mfnr");
+                    goto exit;
+                }
             } else if (1 == camera_get_hdr_flag(cxt)) {
                 ret = camera_close_hdr(cxt);
+                if (ret) {
+                    CMR_LOGE("failed to close hdr");
+                    goto exit;
+                }
             } else if (1 == camera_get_3dnr_flag(cxt) ||
                        5 == camera_get_3dnr_flag(cxt)) {
                 ret = camera_close_3dnr(cxt);
+                if (ret) {
+                    CMR_LOGE("failed to close hdr");
+                    goto exit;
+                }
             } else if (camera_get_fdr_flag(cxt)) {
                 ret = camera_close_fdr(cxt);
+                if (ret) {
+                    CMR_LOGE("failed to close hdr");
+                    goto exit;
+                }
             }
             CMR_LOGD("jpeg enc done");
             break;
@@ -3931,6 +3981,8 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
     if (SNAPSHOT_FUNC_RECOVERY == func) {
         // to do
     }
+exit:
+    CMR_LOGV("Err exit %ld", ret);
 }
 
 void camera_snapshot_cb(cmr_handle oem_handle, enum snapshot_cb_type cb,
@@ -5709,12 +5761,10 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
     if (ret)
         CMR_LOGE("failed to get app mode");
     if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) {
-          if (cxt->night_cxt.is_authorized) {
-            ret = cxt->night_cxt.sw_open(cxt);
-            cxt->night_cxt.mfnr_on_off = 1;
-            if (ret)
+        ret = camera_nightpro_open(oem_handle);
+        cxt->mfnr_on_off = 1;
+        if (ret)
                 CMR_LOGE("failed to open sw %ld", ret);
-        }
         return ret;
     }
 
@@ -5829,6 +5879,17 @@ cmr_int camera_ipm_deinit(cmr_handle oem_handle) {
     }
 #endif
 
+#ifdef CONFIG_CAMERA_DRE_PRO
+    if (cxt->ipm_cxt.dre_pro_inited) {
+        ret = camera_close_dre_pro(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close cnr");
+        } else {
+            cxt->ipm_cxt.dre_pro_inited = 0;
+        }
+    }
+#endif
+
     if (0 == ipm_cxt->inited) {
         CMR_LOGD("ipm has been de-intialized");
         goto exit;
@@ -5911,20 +5972,24 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
                             &setting_param);
     if (ret)
         CMR_LOGE("failed to get app mode");
-    if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO &&
-        cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
-        cxt->night_cxt.mfnr_on_off = 0;
-        ret = cxt->night_cxt.sw_close(cxt);
-        ret = cxt->night_cxt.ipmpro_process(oem_handle, data);
-        if(ret) {
-            CMR_LOGE("failed to process ipmpro %ld",ret);
+    if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO && cxt->mfnr_on_off) {
+        cxt->mfnr_on_off = 0;
+        ret = camera_nightpro_close(oem_handle);
+        if (ret) {
+            CMR_LOGE("failed to close mfnr %ld", ret);
+            goto exit;
+        }
+        ret = camera_ipm_pro_process(oem_handle, data);
+        if (ret) {
+            CMR_LOGE("failed to process ipmpro %ld", ret);
+            goto exit;
         }
         goto exit;
     }
 
     if (camera_get_fdr_flag(cxt)) {
-	CMR_LOGD("no ipm process for fdr\n");
-	return ret;
+        CMR_LOGD("no ipm process for fdr\n");
+        return ret;
     }
 
     is_filter = cxt->snp_cxt.filter_type;
@@ -6907,17 +6972,6 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         goto exit;
     }
 
-    ret = camera_nightpro_init(oem_handle);
-    if (ret) {
-        CMR_LOGE("failed to init nightpro %ld", ret);
-    }
-
-    ret = camera_ipmpro_init(oem_handle);
-    if (ret) {
-        CMR_LOGE("failed to init ipmpro %ld", ret);
-        goto exit;
-    }
-
     ret = camera_ipm_init(oem_handle);
     if (ret) {
         CMR_LOGE("failed to init ipm %ld", ret);
@@ -6998,10 +7052,6 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     camera_scaler_deinit(oem_handle);
 
     camera_ipm_deinit(oem_handle);
-    if (cxt->night_cxt.is_authorized) {
-        camera_nightpro_deinit(oem_handle);
-    }
-    camera_ipmpro_deinit(oem_handle);
 
     camera_deinit_thread(oem_handle);
 
@@ -7341,93 +7391,6 @@ cmr_int camera_deinit_internal(cmr_handle oem_handle) {
     CMR_LOGD("active_camera_num =%d", active_camera_num);
 exit:
 
-    ATRACE_END();
-    CMR_LOGD("X");
-    return ret;
-}
-
-cmr_int camera_nightpro_init(cmr_handle oem_handle) {
-    ATRACE_BEGIN(__FUNCTION__);
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    CMR_LOGD("E");
-#if USE_LEGACY_DLFCN
-    cxt->night_cxt.sw_handle = dlopen("libnight.so", RTLD_NOW);
-#else
-    cxt->night_cxt.sw_handle = get_lib_handle("libnight.so");
-#endif
-    if (!cxt->night_cxt.sw_handle) {
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        CMR_LOGD("libnight open failed with %s", dlerror());
-        goto exit;
-    } else {
-        cxt->night_cxt.sw_open = dlsym(cxt->night_cxt.sw_handle,
-                        "camera_sw_open");
-        cxt->night_cxt.sw_process = dlsym(cxt->night_cxt.sw_handle,
-                        "camera_sw_process");
-        cxt->night_cxt.sw_close = dlsym(cxt->night_cxt.sw_handle,
-                        "camera_sw_close");
-        cxt->night_cxt.ipmpro_init = dlsym(cxt->night_cxt.sw_handle,
-                        "camera_ipm_pro_init");
-        cxt->night_cxt.ipmpro_deinit = dlsym(cxt->night_cxt.sw_handle,
-                        "camera_ipm_pro_deinit");
-        cxt->night_cxt.ipmpro_process = dlsym(cxt->night_cxt.sw_handle,
-                        "camera_ipm_pro_process");
-        if ((!cxt->night_cxt.sw_open) || (!cxt->night_cxt.sw_process) ||
-                (!cxt->night_cxt.sw_close) || (!cxt->night_cxt.ipmpro_init) ||
-                (!cxt->night_cxt.ipmpro_deinit) || (!cxt->night_cxt.ipmpro_process)) {
-            CMR_LOGD("func analyzing failed with %s", dlerror());
-#if USE_LEGACY_DLFCN
-            dlclose(cxt->night_cxt.sw_handle);
-#else
-            put_lib_handle(cxt->night_cxt.sw_handle);
-#endif
-            cxt->night_cxt.is_authorized = 0;
-        } else {
-            cxt->night_cxt.is_authorized = 1;
-        }
-    }
-    CMR_LOGV("is_authorized %d", cxt->night_cxt.is_authorized);
-
-    if (cxt->night_cxt.is_authorized) {
-        ret = cxt->night_cxt.ipmpro_init(oem_handle);
-        if (ret) {
-#if USE_LEGACY_DLFCN
-            dlclose(cxt->night_cxt.sw_handle);
-#else
-            put_lib_handle(cxt->night_cxt.sw_handle);
-#endif
-            cxt->night_cxt.is_authorized = 0;
-            CMR_LOGE("failed to init ipm pro %ld", ret);
-        }
-    }
-
-exit:
-    ATRACE_END();
-    CMR_LOGD("X");
-    return ret;
-}
-
-cmr_int camera_nightpro_deinit(cmr_handle oem_handle) {
-    ATRACE_BEGIN(__FUNCTION__);
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    cxt->night_flag = true;
-    CMR_LOGD("D");
-    if(cxt->night_cxt.ipmpro_deinit)
-        cxt->night_cxt.ipmpro_deinit(oem_handle);
-#if USE_LEGACY_DLFCN
-    dlclose(cxt->night_cxt.sw_handle);
-#else
-    put_lib_handle(cxt->night_cxt.sw_handle);
-#endif
-    cxt->night_cxt.sw_open = NULL;
-    cxt->night_cxt.sw_process = NULL;
-    cxt->night_cxt.sw_close = NULL;
-    cxt->night_cxt.ipmpro_init = NULL;
-    cxt->night_cxt.ipmpro_deinit = NULL;
-    cxt->night_cxt.ipmpro_process = NULL;
-    cxt->night_cxt.is_authorized = 0;
     ATRACE_END();
     CMR_LOGD("X");
     return ret;
@@ -13056,11 +13019,6 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
         cxt->ipm_cxt.ai_scene_inited = 0;
     }
 
-    if (cxt->night_cxt.is_authorized) {
-        cxt->night_flag = false;
-        cxt->night_cxt.ipmpro_deinit(oem_handle);
-    }
-
 exit:
     CMR_LOGD("X");
     ATRACE_END();
@@ -13397,22 +13355,31 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
         setting_param.camera_id = cxt->camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
-
-        if((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO)
-                 && cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
-                cxt->night_cxt.mfnr_on_off = 0;
-                ret = cxt->night_cxt.sw_close(cxt);
-        } else{
+        if (ret) {
+            CMR_LOGE("Err: get camera appmode failed!");
+            goto exit;
+        }
+        if((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) && cxt->mfnr_on_off) {
+            cxt->mfnr_on_off = 0;
+            ret = camera_nightpro_close(oem_handle);
+            if (ret) {
+                CMR_LOGE("Err: failed to close mfnr");
+                goto exit;
+            }
+        } else {
              ret = camera_close_3dnr(cxt);
-             if (ret)
-                CMR_LOGE("failed to close 3dnr");
+             if (ret) {
+                 CMR_LOGE("Err: failed to close 3dnr");
+                 goto exit;
+             }
         }
     }
 
     if (cxt->ipm_cxt.cnr_inited) {
         ret = camera_close_cnr(cxt);
         if (ret) {
-            CMR_LOGE("failed to close cnr");
+            CMR_LOGE("Err: failed to close cnr");
+            goto exit;
         }
         cxt->ipm_cxt.cnr_inited = 0;
     }
@@ -13421,10 +13388,22 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     if (cxt->ipm_cxt.dre_inited) {
         ret = camera_close_dre(cxt);
         if (ret) {
-            CMR_LOGE("failed to close dre");
+            CMR_LOGE("Err: failed to close dre");
+            goto exit;
         } else {
             cxt->ipm_cxt.dre_inited = 0;
         }
+    }
+#endif
+
+#ifdef CONFIG_CAMERA_DRE_PRO
+    if (cxt->ipm_cxt.dre_pro_inited) {
+        ret = camera_close_dre_pro(cxt);
+        if (ret) {
+            CMR_LOGE("failed to close dre");
+            goto exit;
+        }
+        cxt->ipm_cxt.dre_pro_inited = 0;
     }
 #endif
 
@@ -16478,9 +16457,8 @@ cmr_int camera_local_image_sw_algorithm_processing(
         }
         ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
                                  &imp_out_param);
-    } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT &&
-               cxt->night_cxt.is_authorized) {
-        ret = cxt->night_cxt.sw_process(oem_handle, src_sw_algorithm_buf,
+    } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT) {
+        ret = camera_nightpro_process(oem_handle, src_sw_algorithm_buf,
                         dst_sw_algorithm_buf);
     } else {
         CMR_LOGV("sw_type %d", sw_algorithm_type);
@@ -16726,3 +16704,195 @@ void camera_local_set_original_picture_size(cmr_handle oem_handle , int32_t widt
     setting_param.camera_id = cxt->camera_id;
     cmr_setting_ioctl(setting_cxt->setting_handle,SETTING_SET_ORIGINAL_PICTURE_SIZE, &setting_param);
 }
+
+
+cmr_int camera_nightpro_open(cmr_handle oem_handle) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct ipm_open_in in_param;
+    struct ipm_open_out out_param;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    cmr_bzero(&in_param, sizeof(struct ipm_open_in));
+    cmr_bzero(&out_param, sizeof(struct ipm_open_out));
+
+    in_param.frame_rect.start_x = 0;
+    in_param.frame_rect.start_y = 0;
+    in_param.reg_cb = camera_ipm_cb;
+
+    if (1 != cxt->is_3dnr_video) {
+        struct isp_adgain_exp_info adgain_exp_info;
+
+#ifndef USE_OFFLINE
+        in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+        in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+#else
+        if (cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height
+            > SNS_INTERPOL_ONLINE_MAX_SIZE) {
+            in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+            in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+        } else {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+            in_param.frame_size.height = cxt->snp_cxt.requesst_size.height;
+        }
+#endif
+
+        in_param.frame_rect.width = in_param.frame_size.width;
+        in_param.frame_rect.height = in_param.frame_size.height;
+        in_param.reg_cb = camera_ipm_cb;
+
+        ret = camera_get_tuning_info((cmr_handle)cxt, &adgain_exp_info);
+        if (ret) {
+            CMR_LOGE("failed to get gain %ld, and using default gain", ret);
+            return ret;
+        } else {
+            in_param.adgain = adgain_exp_info.adgain / 128;
+        }
+        CMR_LOGD("MFNR, Get Gain from ISP: %d", in_param.adgain);
+
+        ret = camera_open_3dnr(cxt, &in_param, &out_param);
+        if (ret) {
+            CMR_LOGE("failed to open mfnr %ld", ret);
+            return ret;
+        }
+        cxt->ipm_cxt.threednr_num = out_param.total_frame_number;
+        CMR_LOGD("get mfnr num %d", cxt->ipm_cxt.threednr_num);
+    }
+    if ( !cxt->ipm_cxt.cnr_inited) {
+        ret = camera_open_cnr(cxt, NULL, NULL);
+        if (ret) {
+            CMR_LOGE("failed to open cnr %ld", ret);
+            return ret;
+        }
+        cxt->ipm_cxt.cnr_inited = 1;
+    }
+
+    CMR_LOGD("dre_flag %d",cxt->dre_flag);
+    if (!cxt->ipm_cxt.dre_pro_inited) {
+        in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
+        in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
+        ret = camera_open_dre_pro(cxt, &in_param, NULL);
+        cxt->ipm_cxt.dre_pro_inited = 1;
+    }
+
+    return ret;
+}
+
+cmr_int camera_nightpro_process(cmr_handle oem_handle, struct image_sw_algorithm_buf *src_buf,
+    struct image_sw_algorithm_buf *dst_buf) {
+
+    struct ipm_frame_in ipm_in_param;
+    struct ipm_frame_out imp_out_param;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct ipm_context *ipm_pro_cxt = &cxt->ipm_cxt;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    if (!oem_handle || !src_buf || !dst_buf) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    CMR_LOGD("0x%p 0x%p 0x%p fd %d", oem_handle, src_buf, dst_buf,src_buf->fd);
+
+    ipm_in_param.src_frame.addr_phy.addr_u = src_buf->phy_addr_u;
+    ipm_in_param.src_frame.addr_phy.addr_v = src_buf->phy_addr_v;
+    ipm_in_param.private_data = (void *)cxt;
+    ipm_in_param.src_frame.size.width = src_buf->width;
+    ipm_in_param.src_frame.size.height = src_buf->height;
+    ipm_in_param.src_frame.fd = src_buf->fd;
+    ipm_in_param.src_frame.fmt = src_buf->format;
+    ipm_in_param.src_frame.buf_size = ipm_in_param.src_frame.size.width *
+                                      ipm_in_param.src_frame.size.height * 3 /
+                                      2;
+    ipm_in_param.src_frame.addr_vir.addr_y = src_buf->y_vir_addr;
+    ipm_in_param.src_frame.addr_vir.addr_u =
+        src_buf->y_vir_addr +
+        ipm_in_param.src_frame.size.width * ipm_in_param.src_frame.size.height;
+    ipm_in_param.src_frame.addr_phy.addr_y = src_buf->y_phy_addr;
+    imp_out_param.private_data = src_buf->reserved;
+
+    ipm_in_param.dst_frame.size.width = dst_buf->width;
+    ipm_in_param.dst_frame.size.height = dst_buf->height;
+    ipm_in_param.dst_frame.fd = dst_buf->fd;
+    ipm_in_param.dst_frame.fmt = dst_buf->format;
+    ipm_in_param.dst_frame.buf_size = ipm_in_param.dst_frame.size.width *
+                                      ipm_in_param.dst_frame.size.height * 3 /
+                                      2;
+    ipm_in_param.dst_frame.addr_vir.addr_y = dst_buf->y_vir_addr;
+    ipm_in_param.dst_frame.addr_vir.addr_u =
+        dst_buf->y_vir_addr +
+        ipm_in_param.dst_frame.size.width * ipm_in_param.dst_frame.size.height;
+    ipm_in_param.dst_frame.addr_phy.addr_y = dst_buf->y_phy_addr;
+    cmr_snapshot_invalidate_cache(cxt->snp_cxt.snapshot_handle,
+                                  &ipm_in_param.src_frame);
+    ret = ipm_transfer_frame(ipm_pro_cxt->threednr_handle, &ipm_in_param,
+                                 &imp_out_param);
+
+exit:
+    return ret;
+}
+
+cmr_int camera_nightpro_close(cmr_handle oem_handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    ret = camera_close_3dnr(oem_handle);
+    return ret;
+}
+
+cmr_int camera_ipm_pro_process(cmr_handle oem_handle, void *data) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct frm_info *frame = (struct frm_info *)data;
+    struct ipm_context *ipm_pro_cxt = &cxt->ipm_cxt;
+    struct ipm_frame_in ipm_in_param;
+    struct ipm_frame_out imp_out_param;
+    struct img_frm *img_frame = (struct img_frm *)data;
+    CMR_LOGI("E");
+
+    CHECK_HANDLE_VALID(oem_handle);
+    CHECK_HANDLE_VALID(data);
+    CHECK_HANDLE_VALID(ipm_pro_cxt);
+
+    if (cxt->skipframe) {
+        camera_snapshot_set_ev(oem_handle, 0 , SNAPSHOT_NULL);
+        cxt->skipframe = 0;
+        CMR_LOGD("set ev to 0 and reset skipframe");
+    }
+
+    if (cxt->nr_flag || cxt->dre_flag) {
+        cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
+        cmr_bzero(&imp_out_param, sizeof(imp_out_param));
+
+        ipm_pro_cxt->frm_num++;
+        ipm_in_param.src_frame = *img_frame;
+        ipm_in_param.private_data = (void *)cxt;
+        imp_out_param.dst_frame = *img_frame;
+        CMR_LOGD("img_frame width = %d , height = %d ",
+                 imp_out_param.dst_frame.size.width,
+                 imp_out_param.dst_frame.size.height);
+
+        // do cnr
+        CMR_LOGD("nr_flag cnr_inited(%d %d)", cxt->nr_flag, ipm_pro_cxt->cnr_inited);
+        if (cxt->nr_flag && ipm_pro_cxt->cnr_inited) {
+            ret = ipm_transfer_frame(ipm_pro_cxt->cnr_handle, &ipm_in_param, NULL);
+            if (ret) {
+                CMR_LOGE("failed to do cnr process %ld", ret);
+            }
+        }
+
+        // do dre
+        if (cxt->dre_flag && ipm_pro_cxt->dre_pro_inited) {
+            ret = ipm_transfer_frame(ipm_pro_cxt->dre_pro_handle,
+                                    &ipm_in_param, NULL);
+            if (ret) {
+                CMR_LOGE("failed to do dre process %ld", ret);
+            }
+        }
+
+        ret = cmr_snapshot_memory_flush(cxt->snp_cxt.snapshot_handle, img_frame);
+        if (ret) {
+            CMR_LOGE("failed to do memory_flush %ld", ret);
+        }
+    }
+exit:
+    CMR_LOGI("X");
+    return ret;
+}
+
