@@ -25,7 +25,7 @@ cmr_s32 _pm_ai_pro_init(void *dst_ai_param, void *src_ai_param, void *param1, vo
 	struct isp_pm_block_header *ai_header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 
-	for (i = 0;i < AI_SCENE_MAX;i++){
+	for (i = 0;i < AI_SCENE_PM_PRO_MAX;i++){
 		dst_ptr->isp_ai_bchs[i].ai_brightness.brightness_ai_adj_eb = src_ptr->sensor_ai_bchs[i].ai_brightness.brightness_ai_adj_eb;
 		dst_ptr->isp_ai_bchs[i].ai_contrast.contrast_adj_ai_eb = src_ptr->sensor_ai_bchs[i].ai_contrast.contrast_adj_ai_eb;
 		dst_ptr->isp_ai_bchs[i].ai_hue_v1.hue_adj_ai_eb = src_ptr->sensor_ai_bchs[i].ai_hue.hue_adj_ai_eb;
@@ -82,7 +82,9 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 	cmr_s32 rtn = ISP_SUCCESS;
 	struct isp_ai_param *dst_ptr = (struct isp_ai_param *)ai_param;
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param_ptr1;
+	char value[PROPERTY_VALUE_MAX] = {0};
 
+	property_get("persist.vendor.cam.ai.scence.enable", value, "0");
 	switch (cmd) {
 	case ISP_PM_BLK_SMART_SETTING:
 		{
@@ -131,6 +133,16 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 				weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 				weight[1] = SMART_WEIGHT_UNIT - weight[0];
 
+				if (atoi(value) == 1){
+					if ((block_result->ai_scene_id == ISP_PM_AI_SCENE_BEACH) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_OVERCAST) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_CAR) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_BICYCLE) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_WATERAREA) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_WATERFALL) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_AUTUMNLEAF))
+							block_result->ai_scene_id = ISP_PM_AI_SCENE_DEFAULT;
+				}
 				ISP_LOGV("ISP_SMART_AI_BCHS ai_scene_id %d", block_result->ai_scene_id);
 				switch (block_result->ai_scene_id) {
 				case ISP_PM_AI_SCENE_DEFAULT:
@@ -158,6 +170,7 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 					ai_scene = AI_SECNE_PM_PRO_SUNRISESET;
 					break;
 				case ISP_PM_AI_SCENE_BUILDING:
+				case ISP_PM_AI_SCENE_OTHERBUILDING:
 					ai_scene = AI_SECNE_PM_PRO_BUILDING;
 					break;
 				case ISP_PM_AI_SCENE_SNOW:
@@ -171,6 +184,27 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 					break;
 				case ISP_PM_AI_SCENE_FLOWER:
 					ai_scene = AI_SECNE_PM_PRO_FLOWER;
+					break;
+				case ISP_PM_AI_SCENE_BEACH:
+					ai_scene = AI_SECNE_PM_PRO_BEACH;
+					break;
+				case ISP_PM_AI_SCENE_OVERCAST:
+					ai_scene = AI_SECNE_PM_PRO_OVERCAST;
+					break;
+				case ISP_PM_AI_SCENE_CAR:
+					ai_scene = AI_SECNE_PM_PRO_CAR;
+					break;
+				case ISP_PM_AI_SCENE_BICYCLE:
+					ai_scene = AI_SECNE_PM_PRO_BICYCLE;
+					break;
+				case ISP_PM_AI_SCENE_WATERAREA:
+					ai_scene = AI_SECNE_PM_PRO_WATERAREA;
+					break;
+				case ISP_PM_AI_SCENE_WATERFALL:
+					ai_scene = AI_SECNE_PM_PRO_WATERFALL;
+					break;
+				case ISP_PM_AI_SCENE_AUTUMNLEAF:
+					ai_scene = AI_SECNE_PM_PRO_AUTUMNLEAF;
 					break;
 				default:
 					ai_scene = 0;
@@ -258,6 +292,17 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 
 				level = (cmr_u32) block_result->component[0].fix_data[0];
 
+				if (atoi(value) == 1){
+					if ((block_result->ai_scene_id == ISP_PM_AI_SCENE_BEACH) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_OVERCAST) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_CAR) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_BICYCLE) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_WATERAREA) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_WATERFALL) ||
+						(block_result->ai_scene_id == ISP_PM_AI_SCENE_AUTUMNLEAF))
+							block_result->ai_scene_id = ISP_PM_AI_SCENE_DEFAULT;
+				}
+
 				switch (block_result->ai_scene_id) {
 				case ISP_PM_AI_SCENE_DEFAULT:
 					ai_scene = AI_SECNE_PM_PRO_DEFAULT;
@@ -284,6 +329,7 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 					ai_scene = AI_SECNE_PM_PRO_SUNRISESET;
 					break;
 				case ISP_PM_AI_SCENE_BUILDING:
+				case ISP_PM_AI_SCENE_OTHERBUILDING:
 					ai_scene = AI_SECNE_PM_PRO_BUILDING;
 					break;
 				case ISP_PM_AI_SCENE_SNOW:
@@ -297,6 +343,27 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 					break;
 				case ISP_PM_AI_SCENE_FLOWER:
 					ai_scene = AI_SECNE_PM_PRO_FLOWER;
+					break;
+				case ISP_PM_AI_SCENE_BEACH:
+					ai_scene = AI_SECNE_PM_PRO_BEACH;
+					break;
+				case ISP_PM_AI_SCENE_OVERCAST:
+					ai_scene = AI_SECNE_PM_PRO_OVERCAST;
+					break;
+				case ISP_PM_AI_SCENE_CAR:
+					ai_scene = AI_SECNE_PM_PRO_CAR;
+					break;
+				case ISP_PM_AI_SCENE_BICYCLE:
+					ai_scene = AI_SECNE_PM_PRO_BICYCLE;
+					break;
+				case ISP_PM_AI_SCENE_WATERAREA:
+					ai_scene = AI_SECNE_PM_PRO_WATERAREA;
+					break;
+				case ISP_PM_AI_SCENE_WATERFALL:
+					ai_scene = AI_SECNE_PM_PRO_WATERFALL;
+					break;
+				case ISP_PM_AI_SCENE_AUTUMNLEAF:
+					ai_scene = AI_SECNE_PM_PRO_AUTUMNLEAF;
 					break;
 				default:
 					ai_scene = 0;

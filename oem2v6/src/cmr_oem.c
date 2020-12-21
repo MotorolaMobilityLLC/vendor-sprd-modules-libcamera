@@ -13134,6 +13134,7 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct setting_cmd_parameter setting_param;
     struct common_isp_cmd_param isp_param;
     struct snapshot_param snp_param;
+    char value[PROPERTY_VALUE_MAX] = {0};
 
     cxt->ambient_highlight = 0; /* default 0 when start preview */
 
@@ -13149,8 +13150,8 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
         CMR_LOGE("failed to set prev param %ld", ret);
         goto exit;
     }
-
-    if (property_get_bool("persist.vendor.cam.ai.scence.enable", 0)) {
+    property_get("persist.vendor.cam.ai.scence.enable", value, "0");
+    if (atoi(value)) {
         cmr_bzero(&setting_param, sizeof(setting_param));
         setting_param.camera_id = cxt->camera_id;
         ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -16751,6 +16752,27 @@ cmr_uint camera_hal_ai_scene_type(cmr_u8 isp_scene_type) {
         break;
     case ISP_AI_SCENE_FLOWER:
         hal_scene_type = HAL_AI_SCENE_FLOWER;
+        break;
+    case ISP_AI_SCENE_OVERCAST:
+        hal_scene_type = HAL_AI_SCENE_OVERCAST;
+        break;
+    case ISP_AI_SCENE_CAR:
+        hal_scene_type = HAL_AI_SCENE_CAR;
+        break;
+    case ISP_AI_SCENE_BICYCLE:
+        hal_scene_type = HAL_AI_SCENE_BICYCLE;
+        break;
+    case ISP_AI_SCENE_WATERAREA:
+        hal_scene_type = HAL_AI_SCENE_WATERAREA;
+        break;
+    case ISP_AI_SCENE_WATERFALL:
+        hal_scene_type = HAL_AI_SCENE_WATERFALL;
+        break;
+    case ISP_AI_SCENE_AUTUMNLEAF:
+        hal_scene_type = HAL_AI_SCENE_AUTUMNLEAF;
+        break;
+     case ISP_AI_SCENE_OTHERBUILDING:
+        hal_scene_type = HAL_AI_SCENE_OTHERBUILDING;
         break;
     default:
         CMR_LOGE("invalid isp ai scene type:%u", isp_scene_type);

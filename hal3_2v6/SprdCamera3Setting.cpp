@@ -1356,6 +1356,7 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     // camera3_default_info.common.aperture = 2.8f;
     camera3_default_info.common.filter_density = 0.0f;
     camera3_default_info.common.optical_stabilization = 0;
+    char value[PROPERTY_VALUE_MAX] = {0};
 
     memcpy(camera3_default_info.common.lens_shading_map_size,
            klens_shading_map_size, sizeof(klens_shading_map_size));
@@ -1456,8 +1457,8 @@ int SprdCamera3Setting::setDefaultParaInfo(int32_t cameraId) {
     camera3_default_info.common.availLogoWatermark = availLogoWatermark;
     camera3_default_info.common.availTimeWatermark = availTimeWatermark;
 
-    camera3_default_info.common.availableAiScene =
-        property_get_bool("persist.vendor.cam.ai.scence.enable", 0);
+    property_get("persist.vendor.cam.ai.scence.enable", value, "0");
+    camera3_default_info.common.availableAiScene = atoi(value);
 
     memcpy(camera3_default_info.common.availDistortionCorrectionModes,
            availDistortionCorrectionModes,
@@ -2423,6 +2424,10 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
     // 40 auto fast thumb
     property_get("persist.vendor.cam.auto.fast.thumb", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 41 ai version, 0-close, 1-ai1.0,2-ai2.0
+    property_get("persist.vendor.cam.ai.scence.enable", prop, "0");
     available_cam_features.add(atoi(prop));
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
