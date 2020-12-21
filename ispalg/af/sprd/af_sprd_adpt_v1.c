@@ -286,26 +286,18 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 			win_num.y = 3;
 		}
 
-		if (win[9].start_x > PIXEL_OFFSET) {
-			win[9].start_x = win[9].start_x - PIXEL_OFFSET;
-			win[9].end_x = win[9].end_x > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x;
-		} else {
-			win[9].start_x = 10;
-			win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
-		}
-
-		if (win[9].end_x - win[9].start_x < win_num.x * MIN_ROI_SIZE + PIXEL_OFFSET) {
+		if (win[9].end_x - win[9].start_x < win_num.x * MIN_ROI_SIZE) {
 			ISP_LOGI("s.x: %d,e.x: %d", win[9].start_x, win[9].end_x);
 			cmr_u32 center_x = (win[9].start_x + win[9].end_x) >> 1;
-			if (center_x < win_num.x * (MIN_ROI_SIZE >> 1) + PIXEL_OFFSET) {
-				win[9].start_x = 10;
-				win[9].end_x = win[9].start_x + win_num.x * MIN_ROI_SIZE + PIXEL_OFFSET;
+			if (center_x < win_num.x * (MIN_ROI_SIZE >> 1)) {
+				win[9].start_x = win[9].start_x < 10 ? 10 : win[9].start_x;
+				win[9].end_x = win[9].start_x + win_num.x * MIN_ROI_SIZE;
 			} else if (center_x + win_num.x * (MIN_ROI_SIZE >> 1) > af->isp_info.width) {
-				win[9].end_x = af->isp_info.width - 10;
-				win[9].start_x = win[9].end_x - win_num.x * MIN_ROI_SIZE - PIXEL_OFFSET;
+				win[9].end_x = win[9].end_x > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x;
+				win[9].start_x = win[9].end_x - win_num.x * MIN_ROI_SIZE;
 			} else {
 				win[9].end_x = center_x + win_num.x * (MIN_ROI_SIZE >> 1);
-				win[9].start_x = center_x - win_num.x * (MIN_ROI_SIZE >> 1) - PIXEL_OFFSET;
+				win[9].start_x = center_x - win_num.x * (MIN_ROI_SIZE >> 1);
 			}
 			ISP_LOGI("s.x: %d,e.x: %d", win[9].start_x, win[9].end_x);
 		}
@@ -323,6 +315,15 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 			}
 			ISP_LOGI("s.y: %d,e.y: %d", win[9].start_y, win[9].end_y);
 		}
+
+		if (win[9].start_x > PIXEL_OFFSET) {
+			win[9].start_x = win[9].start_x - PIXEL_OFFSET;
+			win[9].end_x = win[9].end_x > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x;
+		} else {
+			win[9].start_x = win[9].start_x < 10 ? 10 : win[9].start_x;
+			win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
+		}
+
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6)
 		if (win[9].end_x - win[9].start_x > 2336) {
 			cmr_u32 center_x = (win[9].start_x + win[9].end_x) >> 1;
@@ -424,7 +425,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 			win[9].start_x = win[9].start_x - PIXEL_OFFSET;
 			win[9].end_x = win[9].end_x > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x;
 		} else {
-			win[9].start_x = 10;
+			win[9].start_x = win[9].start_x < 10 ? 10 : win[9].start_x;
 			win[9].end_x = win[9].end_x + PIXEL_OFFSET > af->isp_info.width ? af->isp_info.width - 10 : win[9].end_x + PIXEL_OFFSET;
 		}
 		//win[9].start_x = win[9].start_x > PIXEL_OFFSET ? win[9].start_x - PIXEL_OFFSET : 10;
@@ -490,13 +491,13 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 
 	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face FV mapping
 		ISP_LOGI("roll_angle %d", af->roll_angle);
-		if (FACE_UP == af->f_orientation || FACE_DOWN == af->f_orientation) {	//6x4
+		if (FACE_UP == af->f_orientation || FACE_DOWN == af->f_orientation) {	//4*6
 			if (FACE_UP == af->f_orientation) {
 				for (i = 0; i < 6; i++) {	//3
 					af->af_fv_val.af_fv0[i] = (cmr_u64) af_fv_val[FV0_INDEX(i / 3 * 4 + i % 3 + af->win_offset)];
 					af->af_fv_val.af_fv1[i] = (cmr_u64) af_fv_val[FV1_INDEX(i / 3 * 4 + i % 3 + af->win_offset)];
 					if (val == 1) {
-						ISP_LOGI("i: %d, af_fv0[%d]: %15" PRIu64 ", j:%d, FV0_INDEX(%d):%d , af_fv_val[%d]:%d",
+						ISP_LOGE("i: %d, af_fv0[%d]: %15" PRIu64 ", j:%d, FV0_INDEX(%d):%d , af_fv_val[%d]:%d",
 							 i, i, af->af_fv_val.af_fv0[i], i / 3 * 4 + i % 3 + af->win_offset, i / 3 * 4 + i % 3 + af->win_offset,
 							 FV0_INDEX(i / 3 * 4 + i % 3 + af->win_offset), FV0_INDEX(i / 3 * 4 + i % 3 + af->win_offset),
 							 af_fv_val[FV0_INDEX(i / 3 * 4 + i % 3 + af->win_offset)]);
@@ -505,36 +506,32 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				if (0 == af->win_offset) {
 					af->af_fv_val.af_fv0[7] = (cmr_u64) af_fv_val[FV0_INDEX(9)];
 					af->af_fv_val.af_fv1[7] = (cmr_u64) af_fv_val[FV1_INDEX(9)];
-					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(20)] + af_fv_val[FV0_INDEX(21)];
-					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(20)] + af_fv_val[FV1_INDEX(21)];
-					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(22)] + af_fv_val[FV0_INDEX(21)];
-					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(22)] + af_fv_val[FV1_INDEX(21)];
+					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(16)];
+					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(16)];
+					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(18)];
+					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(18)];
 					if (val == 1) {
-						ISP_LOGI("i: 6, af_fv0[6]: %15" PRIu64 ", j: 20, FV0_INDEX(20):%d ,FV0_INDEX(21):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[6], FV0_INDEX(20), FV0_INDEX(21), FV0_INDEX(20), af_fv_val[FV0_INDEX(20)], FV0_INDEX(21),
-							 af_fv_val[FV0_INDEX(21)]);
-						ISP_LOGI("i: 7, af_fv0[7]: %15" PRIu64 ", j: 9, FV0_INDEX(9):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(9),
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(16), 
+							 FV0_INDEX(16), af_fv_val[FV0_INDEX(16)]);
+						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 9, FV0_INDEX(9):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(9),
 							 FV0_INDEX(9), af_fv_val[FV0_INDEX(9)]);
-						ISP_LOGI("i: 8, af_fv0[8]: %15" PRIu64 ", j: 22, FV0_INDEX(22):%d ,FV0_INDEX(21):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[8], FV0_INDEX(22), FV0_INDEX(21), FV0_INDEX(22), af_fv_val[FV0_INDEX(22)], FV0_INDEX(21),
-							 af_fv_val[FV0_INDEX(21)]);
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 18, FV0_INDEX(18):%d, af_fv_val[%d]:%d",af->af_fv_val.af_fv0[8], FV0_INDEX(18), 
+							 FV0_INDEX(18), af_fv_val[FV0_INDEX(18)]);
 					}
 				} else {
 					af->af_fv_val.af_fv0[7] = (cmr_u64) af_fv_val[FV0_INDEX(10)];
 					af->af_fv_val.af_fv1[7] = (cmr_u64) af_fv_val[FV1_INDEX(10)];
-					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(21)] + af_fv_val[FV0_INDEX(22)];
-					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(21)] + af_fv_val[FV1_INDEX(22)];
-					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(23)] + af_fv_val[FV0_INDEX(22)];
-					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(23)] + af_fv_val[FV1_INDEX(22)];
+					af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(17)];
+					af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(17)];
+					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(19)];
+					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(19)];
 					if (val == 1) {
-						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 21, FV0_INDEX(21):%d ,FV0_INDEX(22):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[6], FV0_INDEX(21), FV0_INDEX(22), FV0_INDEX(21), af_fv_val[FV0_INDEX(21)], FV0_INDEX(22),
-							 af_fv_val[FV0_INDEX(22)]);
-						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 10, FV0_INDEX(10):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7],
-							 FV0_INDEX(10), FV0_INDEX(10), af_fv_val[FV0_INDEX(10)]);
-						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 23, FV0_INDEX(23):%d ,FV0_INDEX(22):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[8], FV0_INDEX(23), FV0_INDEX(22), FV0_INDEX(23), af_fv_val[FV0_INDEX(23)], FV0_INDEX(22),
-							 af_fv_val[FV0_INDEX(22)]);
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(17), 
+							 FV0_INDEX(17), af_fv_val[FV0_INDEX(17)]);
+						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 10, FV0_INDEX(10):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(10),
+							 FV0_INDEX(10), af_fv_val[FV0_INDEX(10)]);
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 19, FV0_INDEX(19):%d, af_fv_val[%d]:%d",af->af_fv_val.af_fv0[8], FV0_INDEX(19), 
+							 FV0_INDEX(19), af_fv_val[FV0_INDEX(19)]);
 					}
 				}
 			} else if (FACE_DOWN == af->f_orientation) {
@@ -551,36 +548,32 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				if (0 == af->win_offset) {
 					af->af_fv_val.af_fv0[1] = (cmr_u64) af_fv_val[FV0_INDEX(13)];
 					af->af_fv_val.af_fv1[1] = (cmr_u64) af_fv_val[FV1_INDEX(13)];
-					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(0)] + af_fv_val[FV0_INDEX(1)];
-					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(0)] + af_fv_val[FV1_INDEX(1)];
-					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(2)] + af_fv_val[FV0_INDEX(1)];
-					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(2)] + af_fv_val[FV1_INDEX(1)];
+					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(4)];
+					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(4)];
+					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(6)];
+					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(6)];
 					if (val == 1) {
-						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 0, FV0_INDEX(0):%d ,FV0_INDEX(1):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[0], FV0_INDEX(0), FV0_INDEX(1), FV0_INDEX(0), af_fv_val[FV0_INDEX(0)], FV0_INDEX(1),
-							 af_fv_val[FV0_INDEX(1)]);
+						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 4, FV0_INDEX(4):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0],
+							 FV0_INDEX(4), FV0_INDEX(4), af_fv_val[FV0_INDEX(4)]);
 						ISP_LOGE("i: 1, af_fv0[1]: %15" PRIu64 ", j: 13, FV0_INDEX(13):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[1],
 							 FV0_INDEX(13), FV0_INDEX(13), af_fv_val[FV0_INDEX(13)]);
-						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 2, FV0_INDEX(2):%d ,FV0_INDEX(1):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[2], FV0_INDEX(2), FV0_INDEX(1), FV0_INDEX(2), af_fv_val[FV0_INDEX(2)], FV0_INDEX(1),
-							 af_fv_val[FV0_INDEX(1)]);
+						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 6, FV0_INDEX(6):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2],
+							 FV0_INDEX(6), FV0_INDEX(6), af_fv_val[FV0_INDEX(6)]);
 					}
 				} else {
 					af->af_fv_val.af_fv0[1] = (cmr_u64) af_fv_val[FV0_INDEX(14)];
 					af->af_fv_val.af_fv1[1] = (cmr_u64) af_fv_val[FV1_INDEX(14)];
-					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(1)] + af_fv_val[FV0_INDEX(2)];
-					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(1)] + af_fv_val[FV1_INDEX(2)];
-					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(3)] + af_fv_val[FV0_INDEX(2)];
-					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(3)] + af_fv_val[FV1_INDEX(2)];
+					af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(5)];
+					af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(5)];
+					af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(7)];
+					af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(7)];
 					if (val == 1) {
-						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 1, FV0_INDEX(1):%d ,FV0_INDEX(2):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[0], FV0_INDEX(1), FV0_INDEX(2), FV0_INDEX(1), af_fv_val[FV0_INDEX(1)], FV0_INDEX(2),
-							 af_fv_val[FV0_INDEX(2)]);
+						ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 5, FV0_INDEX(5):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0],
+							 FV0_INDEX(5), FV0_INDEX(5), af_fv_val[FV0_INDEX(5)]);
 						ISP_LOGE("i: 1, af_fv0[1]: %15" PRIu64 ", j: 14, FV0_INDEX(14):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[1],
 							 FV0_INDEX(14), FV0_INDEX(14), af_fv_val[FV0_INDEX(14)]);
-						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 3, FV0_INDEX(3):%d ,FV0_INDEX(2):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-							 af->af_fv_val.af_fv0[2], FV0_INDEX(3), FV0_INDEX(2), FV0_INDEX(3), af_fv_val[FV0_INDEX(3)], FV0_INDEX(2),
-							 af_fv_val[FV0_INDEX(2)]);
+						ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 7, FV0_INDEX(7):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2],
+							 FV0_INDEX(7), FV0_INDEX(7), af_fv_val[FV0_INDEX(7)]);
 					}
 				}
 			}
@@ -597,19 +590,17 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				}
 				af->af_fv_val.af_fv0[5] = (cmr_u64) af_fv_val[FV0_INDEX(8)];
 				af->af_fv_val.af_fv1[5] = (cmr_u64) af_fv_val[FV1_INDEX(8)];
-				af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(5)] + af_fv_val[FV0_INDEX(11)];
-				af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(5)] + af_fv_val[FV1_INDEX(11)];
-				af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(17)] + af_fv_val[FV0_INDEX(11)];
-				af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(17)] + af_fv_val[FV1_INDEX(11)];
+				af->af_fv_val.af_fv0[2] = (cmr_u64) af_fv_val[FV0_INDEX(4)];
+				af->af_fv_val.af_fv1[2] = (cmr_u64) af_fv_val[FV1_INDEX(4)];
+				af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(16)];
+				af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(16)];
 				if (val == 1) {
-					ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 5, FV0_INDEX(5):%d ,FV0_INDEX(11):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-						 af->af_fv_val.af_fv0[2], FV0_INDEX(5), FV0_INDEX(11), FV0_INDEX(5), af_fv_val[FV0_INDEX(5)], FV0_INDEX(11),
-						 af_fv_val[FV0_INDEX(11)]);
+					ISP_LOGE("i: 2, af_fv0[2]: %15" PRIu64 ", j: 4, FV0_INDEX(4):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[2], FV0_INDEX(4),
+						 FV0_INDEX(4), af_fv_val[FV0_INDEX(4)]);
 					ISP_LOGE("i: 5, af_fv0[5]: %15" PRIu64 ", j: 8, FV0_INDEX(8):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[5], FV0_INDEX(8),
 						 FV0_INDEX(8), af_fv_val[FV0_INDEX(8)]);
-					ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d ,FV0_INDEX(11):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-						 af->af_fv_val.af_fv0[8], FV0_INDEX(17), FV0_INDEX(11), FV0_INDEX(17), af_fv_val[FV0_INDEX(17)], FV0_INDEX(11),
-						 af_fv_val[FV0_INDEX(11)]);
+					ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(16),
+						 FV0_INDEX(16), af_fv_val[FV0_INDEX(16)]);
 				}
 			} else if (FACE_RIGHT == af->f_orientation) {
 				for (i = 0; i < 6; i++) {	//3
@@ -624,18 +615,17 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 				}
 				af->af_fv_val.af_fv0[3] = (cmr_u64) af_fv_val[FV0_INDEX(9)];
 				af->af_fv_val.af_fv1[3] = (cmr_u64) af_fv_val[FV1_INDEX(9)];
-				af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(0)] + af_fv_val[FV0_INDEX(6)];
-				af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(0)] + af_fv_val[FV1_INDEX(6)];
-				af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(12)] + af_fv_val[FV0_INDEX(6)];
-				af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(12)] + af_fv_val[FV1_INDEX(6)];
+				af->af_fv_val.af_fv0[0] = (cmr_u64) af_fv_val[FV0_INDEX(1)];
+				af->af_fv_val.af_fv1[0] = (cmr_u64) af_fv_val[FV1_INDEX(1)];
+				af->af_fv_val.af_fv0[6] = (cmr_u64) af_fv_val[FV0_INDEX(13)];
+				af->af_fv_val.af_fv1[6] = (cmr_u64) af_fv_val[FV1_INDEX(13)];
 				if (val == 1) {
-					ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 0, FV0_INDEX(0):%d ,FV0_INDEX(6):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-						 af->af_fv_val.af_fv0[0], FV0_INDEX(0), FV0_INDEX(6), FV0_INDEX(0), af_fv_val[FV0_INDEX(0)], FV0_INDEX(6), af_fv_val[FV0_INDEX(6)]);
+					ISP_LOGE("i: 0, af_fv0[0]: %15" PRIu64 ", j: 1, FV0_INDEX(1):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[0], FV0_INDEX(1),
+						 FV0_INDEX(1), af_fv_val[FV0_INDEX(1)]);
 					ISP_LOGE("i: 3, af_fv0[3]: %15" PRIu64 ", j: 9, FV0_INDEX(9):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[3], FV0_INDEX(9),
 						 FV0_INDEX(9), af_fv_val[FV0_INDEX(9)]);
-					ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 12, FV0_INDEX(12):%d ,FV0_INDEX(6):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
-						 af->af_fv_val.af_fv0[6], FV0_INDEX(12), FV0_INDEX(6), FV0_INDEX(12), af_fv_val[FV0_INDEX(12)], FV0_INDEX(6),
-						 af_fv_val[FV0_INDEX(6)]);
+					ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 9, FV0_INDEX(6):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(13),
+						 FV0_INDEX(13), af_fv_val[FV0_INDEX(13)]);
 				}
 			}
 		}
@@ -680,7 +670,7 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 			af->af_fv_val.af_fv0[9] += af->af_fv_val.af_fv0[i];
 			af->af_fv_val.af_fv1[9] += af->af_fv_val.af_fv1[i];
 			if (val == 1) {
-				ISP_LOGI("i: %d, af_fv0[%d]: %15" PRIu64 ", j:%d, FV0_INDEX(%d):%d ,FV0_INDEX(%d):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
+				ISP_LOGE("i: %d, af_fv0[%d]: %15" PRIu64 ", j:%d, FV0_INDEX(%d):%d ,FV0_INDEX(%d):%d, af_fv_val[%d]:%d, af_fv_val[%d]:%d",
 					 i, i, af->af_fv_val.af_fv0[i], j, j, FV0_INDEX(j), j + 1, FV0_INDEX(j + 1), FV0_INDEX(j), af_fv_val[FV0_INDEX(j)],
 					 FV0_INDEX(j + 1), af_fv_val[FV0_INDEX(j + 1)]);
 			}
