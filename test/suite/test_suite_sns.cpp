@@ -42,6 +42,10 @@ TestSuiteSNS::TestSuiteSNS()
 TestSuiteSNS::~TestSuiteSNS()
 {
     IT_LOGD("");
+	if(m_json2) {
+	delete m_json2;
+	m_json2 = NULL;
+	}
 }
 
 int TestSuiteSNS::SetUp(void)
