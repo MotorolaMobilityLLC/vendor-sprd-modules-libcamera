@@ -171,7 +171,7 @@ static cmr_int awbctrl_init_adpt(struct awbctrl_cxt *cxt_ptr, struct awb_ctrl_in
 	int* turnning_version = (int*) in_ptr->tuning_param;
 	if (!turnning_version)
 		ISP_LOGE("awb ctrl:input turnning param is null!");
-	if (turnning_version[1] == AWB_3_0_TURNNING_VERSION) {
+	else if (turnning_version[1] == AWB_3_0_TURNNING_VERSION) {
 		in_ptr->lib_param.version_id = 1;	//isp3.0
 		ISP_LOGE("lib_param.version_id = 1 (isp3.0)");
 	} else if (turnning_version[1] == AWB_3_2_TURNNING_VERSION ) {
