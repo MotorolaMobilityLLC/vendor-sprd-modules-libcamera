@@ -7,8 +7,8 @@ using namespace std;
 
 class SnsCaseComm : public IParseJson {
   public:
-    uint32_t m_caseID;
-    uint32_t m_physicalSensorID;
+    uint32_t m_caseID= 0 ;
+    uint32_t m_physicalSensorID = 0;
     string m_funcName;
     vector<int> m_param;
 

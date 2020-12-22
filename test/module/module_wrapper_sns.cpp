@@ -713,10 +713,9 @@ static int mn_startpreview(oem_module_t* oem_dev, cmr_handle oem_handle,
     struct cmr_range_fps_param fps_param;
     memset(&zoom_param, 0, sizeof(struct cmr_zoom_param));
 
-    if (oem_handle == NULL || oem_dev == NULL || oem_dev->ops == NULL) {
+    if (oem_handle == NULL) {
         IT_LOGE("failed: input param is null "
-            "oem_handle:%p,oem_dev:%p,oem_dev->ops:%p",
-            oem_handle, oem_dev, oem_dev->ops);
+        "oem_handle:%p",oem_handle);
         goto exit;
     }
 
@@ -989,7 +988,7 @@ namespace ITsensorIf {
 static cmr_int check_test_function_states(string fn_name, int sensor_id) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
 
-    if (sensor_id > SENSOR_ID_MAX) {
+    if (sensor_id >= SENSOR_ID_MAX) {
         IT_LOGE("fail in sensor id");
         goto exit;
     }
