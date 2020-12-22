@@ -11450,6 +11450,13 @@ int SprdCamera3OEMIf::log_monitor_thread_deinit(void) {
     return ret;
 }
 
+void SprdCamera3OEMIf::setOriginalPictureSize( int32_t width ,int32_t  height) {
+   if (width == 0 || height == 0) {
+         CMR_LOGI("original picture width and height must not be 0");
+    }
+    mHalOem->ops->camera_set_original_picture_size(mCameraHandle ,width,height);
+}
+
 #ifdef CONFIG_CAMERA_EIS
 void SprdCamera3OEMIf::EisPreview_init() {
     int i = 0;
@@ -12280,13 +12287,6 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
     HAL_LOGD("X inited=%d, Deinit = %d", obj->mGyroInit, obj->mGyroExit);
 
     return ret;
-}
-
-void SprdCamera3OEMIf::setOriginalPictureSize( int32_t width ,int32_t  height) {
-   if (width == 0 || height == 0) {
-         CMR_LOGI("original picture width and height must not be 0");
-    }
-    mHalOem->ops->camera_set_original_picture_size(mCameraHandle ,width,height);
 }
 
 #endif
