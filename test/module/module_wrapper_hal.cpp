@@ -1368,16 +1368,16 @@ void NativeCameraHidl::configureAvailableStream(
             [&](Status s, device::V3_3::HalStreamConfiguration halConfig) {
                 IT_LOGD("status: %d", static_cast<uint32_t>(s));
                 halStreamConfig->streams.resize(halConfig.streams.size());
+                    int alreadyHasPreviewStream = 0;
+                    // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
+                    int hasImplementationDefinedOutputStream = 0;
+                    // for callback stream
+                    int hasCallbackStream = 0;
+                    // for yuv2 stream
+                    int hasYuv2Stream = 0;
                 for (size_t i = 0; i < halConfig.streams.size(); i++) {
                     halStreamConfig->streams[i] = halConfig.streams[i].v3_2;
                     IT_LOGE("stream id = %d", halStreamConfig->streams[i].id);
-                    uint32_t alreadyHasPreviewStream = 0;
-                    // for zero HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED stream
-                    uint32_t hasImplementationDefinedOutputStream = 0;
-                    // for callback stream
-                    uint32_t hasCallbackStream = 0;
-                    // for yuv2 stream
-                    uint32_t hasYuv2Stream = 0;
                     switch (static_cast<android_pixel_format_t>(halStreamConfig->streams[i].overrideFormat))
                     {
                         IT_LOGD("stream overrideFormat = %d", 
