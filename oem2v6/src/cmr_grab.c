@@ -1979,6 +1979,8 @@ cmr_int cmr_grab_flash_cb(cmr_handle grab_handle,
     set_flash.led0_status = flash_opt->flash_mode;
     set_flash.led1_status = flash_opt->flash_mode;
     set_flash.flash_index = flash_opt->flash_index;
+    CMR_LOGI("flash_mode = %d,led0_ctrl = %d, led1_ctrl = %d",
+        flash_opt->flash_mode, set_flash.led0_ctrl, set_flash.led1_ctrl);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_FLASH, &set_flash);
     if (ret) {
         CMR_LOGE("error");

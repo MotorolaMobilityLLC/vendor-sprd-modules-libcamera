@@ -422,6 +422,7 @@ typedef struct {
     uint8_t sprd_ae_sync;
     uint32_t af_pos;
     uint32_t bv;
+    uint8_t sprd_flash_level;
 } SPRD_DEF_Tag;
 
 typedef struct {

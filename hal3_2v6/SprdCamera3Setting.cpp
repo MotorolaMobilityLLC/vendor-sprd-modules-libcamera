@@ -2370,6 +2370,10 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     available_cam_features.add(0);
 #endif
 
+    // 36 capture flash torch
+    property_get("persist.vendor.cam.capture.torch.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
@@ -5078,10 +5082,30 @@ int SprdCamera3Setting::updateWorkParameters(
                  s_setting[mCameraId].jpgInfo.gps_timestamp);
     }
 
+    if (frame_settings.exists(ANDROID_SPRD_ADJUST_FLASH_LEVEL)) {
+        valueU8 =
+            frame_settings.find(ANDROID_SPRD_ADJUST_FLASH_LEVEL).data.u8[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_flash_level, valueU8,
+            ANDROID_SPRD_ADJUST_FLASH_LEVEL, 1);
+        HAL_LOGD("sprd_flash_level =%d",s_setting[mCameraId].sprddefInfo.sprd_flash_level);
+    }
+
     if (frame_settings.exists(ANDROID_FLASH_MODE)) {
-        valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
-                         ANDROID_FLASH_MODE, 1)
+         int flash_sprd_level = 0;
+         if (frame_settings.exists(ANDROID_SPRD_ADJUST_FLASH_LEVEL)) {
+            flash_sprd_level =
+                frame_settings.find(ANDROID_SPRD_ADJUST_FLASH_LEVEL).data.u8[0];
+            HAL_LOGD("sprd_flash_level =%d",flash_sprd_level);
+        }
+        if(flash_sprd_level == 0) {
+            valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
+            HAL_LOGD("flashInfo.mode=%d,value=%d",s_setting[mCameraId].flashInfo.mode,
+                valueU8);
+            GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
+                ANDROID_FLASH_MODE, 1)
+        } else{
+          HAL_LOGD("sprd_flash_level is uesd");
+        }
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
@@ -5514,6 +5538,7 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].sprddefInfo.sprd_is_time_watermark, valueU8,
             ANDROID_SPRD_TIMEWATERMARK_ENABLED, 1);
     }
+
 #ifdef SUPER_MACRO
     if (frame_settings.exists(ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE)

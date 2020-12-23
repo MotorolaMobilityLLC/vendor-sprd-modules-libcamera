@@ -448,6 +448,79 @@ static void writeCamInitTimeToProc(float init_time) {
     writeCamInitTimeToApct(cam_time_buf);
 }
 
+static int sprd_flash_level (uint8_t flash_level){
+    int32_t retVal = 0;
+    int32_t bytes = 0;
+    int element = 0;
+    char buffer[16];
+    const char *const flashInterface =
+        "/sys/devices/virtual/misc/sprd_flash/test";
+    ssize_t wr_ret;
+
+    HAL_LOGD("open flash driver interface");
+    int fd = open(flashInterface, O_WRONLY);
+    /* open sysfs file parition */
+    if (-1 == fd) {
+        HAL_LOGE("Failed to open: flash_light_interface, %s", flashInterface);
+        return -EINVAL;
+    }
+    flash_level = flash_level*4;
+    HAL_LOGD("flash_level =%d",flash_level);
+    element =  7 + (flash_level << 8);
+
+    /* wrire flash level*/
+    bytes = snprintf(buffer, sizeof(buffer), "0x%x", element);
+    wr_ret = write(fd, buffer, bytes);
+    if (-1 == wr_ret) {
+        HAL_LOGE("write flash level failed \n");
+        retVal = -EINVAL;
+    }
+
+    /* wrire flash mode*/
+    bytes = snprintf(buffer, sizeof(buffer), "0x%x",2);
+    wr_ret = write(fd, buffer, bytes);
+
+    if (-1 == wr_ret) {
+        HAL_LOGE("write flash mode failed \n");
+        retVal = -EINVAL;
+    }
+
+    close(fd);
+    HAL_LOGV("Close file");
+    return retVal;
+}
+
+static int close_flash_torch (){
+    int32_t retVal = 0;
+    int32_t bytes = 0;
+    char buffer[16];
+    const char *const flashInterface =
+        "/sys/devices/virtual/misc/sprd_flash/test";
+    ssize_t wr_ret;
+
+    HAL_LOGD("close flash driver interface");
+    int fd = open(flashInterface, O_WRONLY);
+    /* open sysfs file parition */
+    if (-1 == fd) {
+        HAL_LOGE("Failed to open: flash_light_interface, %s", flashInterface);
+        return -EINVAL;
+    }
+
+    /* wrire flash mode*/
+    HAL_LOGD("Close flash torch");
+    bytes = snprintf(buffer, sizeof(buffer), "0x%x",3);
+    wr_ret = write(fd, buffer, bytes);
+
+    if (-1 == wr_ret) {
+        HAL_LOGE("write flash mode failed \n");
+        retVal = -EINVAL;
+    }
+
+    close(fd);
+    HAL_LOGV("Close file");
+    return retVal;
+}
+
 bool getApctCamInitSupport() {
     if (gIsApctRead) {
         return gIsApctCamInitTimeShow;
@@ -764,6 +837,7 @@ void SprdCamera3OEMIf::closeCamera() {
     FLASH_INFO_Tag flashInfo;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
+    close_flash_torch ();
 
     Mutex::Autolock l(&mLock);
 
@@ -7772,29 +7846,52 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                  (cmr_uint)&ae_param);
 
     } break;
-
-    case ANDROID_FLASH_MODE:
-        if (getMultiCameraMode() == MODE_MULTI_CAMERA || ((mCameraId >= 0)&&(mCameraId <= 16))) {
-            int8_t flashMode = 0;
-            FLASH_Tag flashInfo;
-            mSetting->getFLASHTag(&flashInfo);
-            mSetting->androidFlashModeToDrvFlashMode(flashInfo.mode,
-                                                     &flashMode);
-            if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
-                if (CAMERA_FLASH_MODE_TORCH == flashMode ||
-                    CAMERA_FLASH_MODE_TORCH == mFlashMode) {
-                    HAL_LOGD("set flashMode when ae_mode is not off and TORCH");
-                    mFlashMode = flashMode;
-                    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                             mFlashMode);
-                }
-            } else {
-                HAL_LOGD("set flashMode when ANDROID_CONTROL_AE_MODE_OFF");
-                mFlashMode = flashMode;
-                SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH,
-                         mFlashMode);
-            }
+    case ANDROID_SPRD_ADJUST_FLASH_LEVEL: {
+        SPRD_DEF_Tag *sprdInfo;
+        sprdInfo = mSetting->getSPRDDEFTagPTR();
+        FLASH_Tag flashInfo;
+        mSetting->getFLASHTag(&flashInfo);
+        uint8_t flash_level = sprdInfo->sprd_flash_level;
+        if(flash_level != 0) {
+            flashInfo.mode = CAMERA_FLASH_MODE_DC_TORCH;
+            mSetting->setFLASHTag(flashInfo);
         }
+        HAL_LOGD("flash_level=%d,flash_mode=%d",flash_level,flashInfo.mode);
+
+        if(flashInfo.mode != ANDROID_FLASH_MODE_TORCH) {
+            if(flash_level == 0 )
+                close_flash_torch();
+            else
+                sprd_flash_level(flash_level);
+        }
+    } break;
+    case ANDROID_FLASH_MODE: {
+        SPRD_DEF_Tag *sprddefInfo;
+        sprddefInfo = mSetting->getSPRDDEFTagPTR();
+        if(sprddefInfo->sprd_flash_level == 0){
+            if (getMultiCameraMode() == MODE_MULTI_CAMERA || ((mCameraId >= 0)&&(mCameraId <= 16))) {
+                int8_t flashMode = 0;
+                FLASH_Tag flashInfo;
+                mSetting->getFLASHTag(&flashInfo);
+                mSetting->androidFlashModeToDrvFlashMode(flashInfo.mode, &flashMode);
+
+                if (controlInfo.ae_mode != ANDROID_CONTROL_AE_MODE_OFF) {
+                    if (CAMERA_FLASH_MODE_TORCH == flashMode ||
+                        CAMERA_FLASH_MODE_TORCH == mFlashMode) {
+                            HAL_LOGD("set flashMode when ae_mode is not off and TORCH");
+                            mFlashMode = flashMode;
+                            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, mFlashMode);
+                    }
+                } else {
+                    HAL_LOGD("set flashMode when ANDROID_CONTROL_AE_MODE_OFF");
+                    mFlashMode = flashMode;
+                    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FLASH, mFlashMode);
+                }
+            }
+        } else {
+            HAL_LOGD("flash_level =%d", sprddefInfo->sprd_flash_level);
+        }
+    }
         break;
 
     case ANDROID_SPRD_CAPTURE_MODE: {

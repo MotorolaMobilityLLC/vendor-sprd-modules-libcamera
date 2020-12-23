@@ -1524,6 +1524,12 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     // 34 portrait.bokeh
     available_cam_features.add(0);
 
+    //35 front video mirror
+    available_cam_features.add(0);
+
+    // 36 capture flash torch
+    available_cam_features.add(0);
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));

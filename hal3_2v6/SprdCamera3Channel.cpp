@@ -890,8 +890,8 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_SENSOR_EXPOSURE_TIME:
             mOEMIf->SetCameraParaTag(ANDROID_SENSOR_EXPOSURE_TIME);
             break;
-	case ANDROID_SENSOR_SENSITIVITY:
-	    HAL_LOGV("ANDROID_SENSOR_SENSITIVITY");
+        case ANDROID_SENSOR_SENSITIVITY:
+            HAL_LOGV("ANDROID_SENSOR_SENSITIVITY");
             mOEMIf->SetCameraParaTag(ANDROID_SENSOR_SENSITIVITY);
             break;
         case ANDROID_CONTROL_AE_ANTIBANDING_MODE:
@@ -1078,7 +1078,11 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_TIMEWATERMARK_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_TIMEWATERMARK_ENABLED);
             break;
-	case ANDROID_SPRD_SMILE_CAPTURE:
+        case ANDROID_SPRD_ADJUST_FLASH_LEVEL:
+            HAL_LOGV("ANDROID_SPRD_ADJUST_FLASH_LEVEL");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_ADJUST_FLASH_LEVEL);
+            break;
+        case ANDROID_SPRD_SMILE_CAPTURE:
             HAL_LOGV("ANDROID_SPRD_SMILE_CAPTURE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_SMILE_CAPTURE);
             break;

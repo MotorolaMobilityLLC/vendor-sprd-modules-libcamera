@@ -10028,7 +10028,7 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         }
         char value1[PROPERTY_VALUE_MAX];
         property_get("persist.vendor.cam.flash.torch.cfg", value1, "02");
-
+        CMR_LOGD("flash mode =%d",param_ptr->cmd_value);
         /*cfg torch value*/
         if (param_ptr->cmd_value == FLASH_TORCH) {
             struct sprd_flash_cfg_param cfg;
