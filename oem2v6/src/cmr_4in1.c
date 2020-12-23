@@ -228,8 +228,8 @@ static cmr_int frame_transform_4in1(cmr_handle class_handle,
     if (handle->common.ipm_cxt->init_in.ops.channel_reproc && !is_raw_capture) {
         cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
         buf_cfg.count = 1;
-        buf_cfg.length =
-            in->src_frame.size.width * in->src_frame.size.height * 5 / 4;
+        buf_cfg.length = camera_get_mipi_raw_dcam_pitch(in->src_frame.size.width) *
+            in->src_frame.size.height;
         buf_cfg.slice_height = in->src_frame.size.height;
         buf_cfg.addr[0].addr_y = in->src_frame.addr_phy.addr_y;
         buf_cfg.addr_vir[0].addr_y = in->src_frame.addr_vir.addr_y;

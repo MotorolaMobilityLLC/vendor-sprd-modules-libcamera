@@ -1491,13 +1491,15 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
             cap_raw_small.fmt = ISP_DATA_NORMAL_RAW10;
         } else {
             isp_in_param.src_frame.buf_size =
-            mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4;
+                camera_get_mipi_raw_dcam_pitch(mem_ptr->cap_raw.size.width) *
+                mem_ptr->cap_raw.size.height;
 
             small_w = mem_ptr->cap_raw.size.width >> 1;
             small_h = mem_ptr->cap_raw.size.height >> 1;
             cap_raw_big = mem_ptr->cap_raw;
             cap_raw_big.buf_size =
-                mem_ptr->cap_raw.size.width * mem_ptr->cap_raw.size.height * 5 / 4;
+                camera_get_mipi_raw_dcam_pitch(mem_ptr->cap_raw.size.width) *
+                mem_ptr->cap_raw.size.height;
 
             cap_raw_small.addr_phy.addr_y =
                 mem_ptr->cap_raw.addr_phy.addr_y +
@@ -1508,7 +1510,7 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                 (cap_raw_big.buf_size + PAGE_SIZE - 1) &
                 ~(PAGE_SIZE - 1);
             cap_raw_small.fd = mem_ptr->cap_raw.fd;
-            cap_raw_small.buf_size = small_w * small_h * RAWRGB_BIT_WIDTH / 8;
+            cap_raw_small.buf_size = camera_get_mipi_raw_dcam_pitch(small_w) * small_h;
             cap_raw_small.size.width = small_w;
             cap_raw_small.size.height = small_h;
             cap_raw_small.fmt = ISP_DATA_CSI2_RAW10;
@@ -1600,7 +1602,8 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                     snp_cxt->ops.dump_image_with_3a_info(
                         snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
                         mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                        ((mem_ptr->cap_raw.size.width * 5 / 4 + 3) & ~3) * mem_ptr->cap_raw.size.height,
+                        camera_get_mipi_raw_dcam_pitch(mem_ptr->cap_raw.size.width) *
+                        mem_ptr->cap_raw.size.height,
                         &mem_ptr->cap_raw.addr_vir);
                 }
 
@@ -1617,7 +1620,8 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
                     snp_cxt->ops.dump_image_with_3a_info(
                         snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
                         mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-                        ((mem_ptr->cap_raw.size.width * 5 / 4 + 3) & ~3) * mem_ptr->cap_raw.size.height,
+                        camera_get_mipi_raw_dcam_pitch(mem_ptr->cap_raw.size.width) *
+                        mem_ptr->cap_raw.size.height,
                         &mem_ptr->cap_raw.addr_vir);
                 }
             }
@@ -1627,7 +1631,8 @@ cmr_int snp_start_isp_proc(cmr_handle snp_handle, void *data) {
         snp_cxt->ops.dump_image_with_3a_info(
             snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_MIPI_RAW,
             mem_ptr->cap_raw.size.width, mem_ptr->cap_raw.size.height,
-            ((mem_ptr->cap_raw.size.width * 5 / 4 + 3) & ~3) * mem_ptr->cap_raw.size.height,
+            camera_get_mipi_raw_dcam_pitch(mem_ptr->cap_raw.size.width) *
+            mem_ptr->cap_raw.size.height,
             &mem_ptr->cap_raw.addr_vir);
     }
     ret = snp_cxt->ops.raw_proc(snp_cxt->oem_handle, snp_handle, &isp_in_param);
@@ -4653,7 +4658,8 @@ cmr_int snp_post_proc_for_isp_tuning(cmr_handle snp_handle, void *data) {
             CMR_LOGD("dump dcam raw");
             snp_cxt->ops.dump_image_with_3a_info(
             snp_cxt->oem_handle, CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW, width, height,
-            ((width * 5 / 4 + 3) & ~3) * height, &mem_ptr->cap_raw2.addr_vir);
+            camera_get_mipi_raw_dcam_pitch(width) * height,
+            &mem_ptr->cap_raw2.addr_vir);
         }
 
         CMR_LOGD("dump yuv");
@@ -5505,7 +5511,8 @@ cmr_int cmr_snapshot_memory_flush(cmr_handle snapshot_handle,
     ion_buf.addr_phy = (void *)img->addr_phy.addr_y;
     ion_buf.addr_vir = (void *)img->addr_vir.addr_y;
     if (img->fmt == CAM_IMG_FMT_BAYER_MIPI_RAW) {
-        ion_buf.size = img->size.width * img->size.height * 5 / 4;
+        ion_buf.size = camera_get_mipi_raw_dcam_pitch(img->size.width) *
+                                                      img->size.height;
     } else {
         ion_buf.size = img->size.width * img->size.height * 3 / 2;
     }

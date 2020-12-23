@@ -61,6 +61,8 @@ uint32_t camera_get_aligned_size(uint32_t type, uint32_t size);
 
 void camera_set_mem_multimode(multiCameraMode camera_mode);
 
+int camera_get_mipi_raw_dcam_pitch(int w);
+
 #ifdef __cplusplus
 }
 #endif

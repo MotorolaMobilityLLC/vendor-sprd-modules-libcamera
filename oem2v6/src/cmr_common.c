@@ -20,6 +20,7 @@
 #include <cutils/trace.h>
 #include <stdlib.h>
 #include "cmr_common.h"
+#include "cmr_mem.h"
 
 #define CAMERA_ZOOM_LEVEL_MAX 8
 #define ZOOM_STEP(x) (((x) - (x) / CMR_ZOOM_FACTOR) / CAMERA_ZOOM_LEVEL_MAX)
@@ -382,8 +383,6 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
     } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, "_mipi.raw");
         ISP_LOGI("file name %s\n", file_name);
-        width = (width * 5 / 4);
-        ISP_LOGI("new width %d\n", width);
 
         fp = fopen(file_name, "wb");
         if (NULL == fp) {
@@ -391,8 +390,8 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
             return 0;
         }
 
-        fwrite((void *)addr->addr_y, 1, (uint32_t)((width * 5 / 4) * height),
-               fp);
+        fwrite((void *)addr->addr_y, 1,
+               (camera_get_mipi_raw_dcam_pitch(width) * height), fp);
         fclose(fp);
     } else if (CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW == img_fmt) {
         strcat(file_name, "_mipi2.raw");
@@ -471,8 +470,8 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
             CMR_LOGE("can not open file: %s", file_name);
             return 0;
         }
-        fwrite((void *)vir_addr->addr_y, 1, (uint32_t)width * height * 5 / 4,
-               fp);
+        fwrite((void *)vir_addr->addr_y, 1,
+               (uint32_t)camera_get_mipi_raw_dcam_pitch(width) * height, fp);
         fclose(fp);
     } else if (CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW == img_fmt) {
         strcat(file_name, "_mipi2.raw");
@@ -482,8 +481,8 @@ cmr_int camera_save_yuv_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
             CMR_LOGE("can not open file: %s", file_name);
             return 0;
         }
-        fwrite((void *)vir_addr->addr_y, 1, (uint32_t)width * height * 5 / 4,
-               fp);
+        fwrite((void *)vir_addr->addr_y, 1,
+               (uint32_t)camera_get_mipi_raw_dcam_pitch(width) * height, fp);
         fclose(fp);
     } else if (CAM_IMG_FMT_JPEG == img_fmt) {
         strcat(file_name, ".jpg");
@@ -615,11 +614,11 @@ cmr_int dump_image_tags(char *tag, char *tag_suffix,
 
     } else if (CAM_IMG_FMT_BAYER_MIPI_RAW == img_fmt) {
         strcat(file_name, ".mipi_raw");
-        size = width * height * 5 / 4;
+        size = camera_get_mipi_raw_dcam_pitch(width) * height;
 
     } else if (CAM_IMG_FMT_BAYER_SPRD_DCAM_RAW == img_fmt) {
         strcat(file_name, ".dcam.mipi_raw");
-        size = width * height * 5 / 4;
+        size = camera_get_mipi_raw_dcam_pitch(width) * height;
 
     } else if (CAM_IMG_FMT_JPEG == img_fmt) {
         strcat(file_name, ".jpg");
@@ -869,8 +868,8 @@ cmr_int camera_get_data_from_file(char *file_name, cmr_u32 img_fmt,
             return 0;
         }
 
-        ret = fread((void *)addr->addr_y, 1, (uint32_t)(width * height * 5 / 4),
-                    fp);
+        ret = fread((void *)addr->addr_y, 1,
+              (uint32_t)(camera_get_mipi_raw_dcam_pitch(width) * height), fp);
         fclose(fp);
     } else if (CAM_IMG_FMT_RAW14BIT == img_fmt){
        fp = fopen(file_name, "rb");
@@ -926,7 +925,7 @@ void camera_take_snapshot_step(enum CAMERA_TAKEPIC_STEP step) {
 
 int raw14bit_process(struct img_addr *src, struct img_addr *dst, uint32_t input_width, uint32_t input_height){
 
-    uint32_t aFrameLen10 = (input_width*input_height * 5 / 4);
+    uint32_t aFrameLen10 = camera_get_mipi_raw_dcam_pitch(input_width) * input_height;
     uint32_t aFrameLen16 = (input_width*input_height * 2);
     unsigned char *m_pInputBuffer = (unsigned char *)src->addr_y;
     uint16_t *inputRaw16 = (uint16_t*)dst->addr_y;

@@ -533,8 +533,7 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
     mem_end = *io_mem_end;
 
 #ifdef CAMERA_PITCH_SUPPORT
-    #define _pitch(w)  (((w + 3) / 4 * 5 + 3) & (~0x3))
-    fetch_pitch = _pitch(sn_size->width);
+    fetch_pitch = camera_get_mipi_raw_dcam_pitch(sn_size->width);
     raw_size = fetch_pitch * sn_size->height;
     raw2_size = fetch_pitch * sn_size->height;
     CMR_LOGI("fetch_pitch, %d\n", fetch_pitch);
@@ -544,8 +543,9 @@ int arrange_raw_buf(struct cmr_cap_2_frm *cap_2_frm, struct img_size *sn_size,
         raw_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
         raw2_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
     } else {
-        raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
-        raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+        /* RAWRGB_BIT_WIDTH */
+        raw_size = camera_get_mipi_raw_dcam_pitch(sn_size->width) * sn_size->height;
+        raw2_size = camera_get_mipi_raw_dcam_pitch(sn_size->width) * sn_size->height;
     }
 
 #endif
@@ -655,8 +655,9 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
         raw_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
         raw2_size = sn_size->width * sn_size->height * RAWRGB_RAW14BIT_WIDTH / 8;
     } else {
-        raw_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
-        raw2_size = sn_size->width * sn_size->height * RAWRGB_BIT_WIDTH / 8;
+        /* RAWRGB_BIT_WIDTH */
+        raw_size = camera_get_mipi_raw_dcam_pitch(sn_size->width) * sn_size->height;
+        raw2_size = camera_get_mipi_raw_dcam_pitch(sn_size->width) * sn_size->height;
     }
     raw_size_4K_align = (raw_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 
@@ -705,8 +706,8 @@ int arrange_4in1_raw_buf(struct cmr_cap_2_frm *cap_2_frm,
         cap_mem->cap_raw.buf_size =
         raw_size_4K_align + small_w * small_h * RAWRGB_RAW14BIT_WIDTH/ 8;
     } else {
-        cap_mem->cap_raw.buf_size =
-        raw_size_4K_align + small_w * small_h * RAWRGB_BIT_WIDTH / 8;
+        cap_mem->cap_raw.buf_size = raw_size_4K_align +
+            camera_get_mipi_raw_dcam_pitch(small_w) * small_h;
     }
     cap_mem->cap_raw.size.width = sn_size->width;
     cap_mem->cap_raw.size.height = sn_size->height;
@@ -1213,4 +1214,33 @@ uint32_t camera_get_aligned_size(uint32_t type, uint32_t size) {
 void camera_set_mem_multimode(multiCameraMode camera_mode) {
     CMR_LOGD("camera_mode %d", camera_mode);
     is_multi_camera_mode_mem = camera_mode;
+}
+
+/* Function: for calculate 10bit packed mipi raw image size
+ * this size = BYTES per line(means: pitch) * height
+ * pitch: 5Bytes per 4pixels(if last pixels less than 4,packed
+ * 5Bytes too) and then align to 4 or 16(for hardware access faster)
+ */
+int camera_get_mipi_raw_dcam_pitch(int w)
+{
+    static int dcam_align = 0;
+
+    // normal return directly, only first time get property
+    switch (dcam_align) {
+    case 4:
+        return (((w + 3) / 4 * 5) + 3) & (~(4 - 1));
+    case 16:
+        return (((w + 3) / 4 * 5) + 15) & (~(16 - 1));
+    }
+
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.dcam.mipi.raw.align", value, "4");
+    dcam_align = atoi(value);
+    // now: only[4,16]
+    if (dcam_align == 16)
+        return (((w + 3) / 4 * 5) + 15) & (~(16 - 1));
+
+    dcam_align = 4;
+
+    return (((w + 3) / 4 * 5) + 3) & (~(4 - 1));
 }

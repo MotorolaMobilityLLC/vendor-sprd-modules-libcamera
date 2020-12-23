@@ -6272,7 +6272,7 @@ cmr_int prev_alloc_4in1_buf(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("4in1 width %d height %d", width, height);
 
     /*init  memory info*/
-    prev_cxt->cap_4in1_mem_size = (width * height * 5) / 4;
+    prev_cxt->cap_4in1_mem_size = camera_get_mipi_raw_dcam_pitch(width) * height;
     /*alloc  buffer*/
     if (!mem_ops->alloc_mem || !mem_ops->free_mem) {
         CMR_LOGE("mem ops is null, 0x%p, 0x%p", mem_ops->alloc_mem,

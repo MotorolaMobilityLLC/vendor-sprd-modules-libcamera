@@ -8956,8 +8956,8 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
                        param_ptr->src_frame.size.height,
                        FORM_DUMPINDEX(0x4000, cxt->dump_cnt, 0),
                        &param_ptr->src_frame.addr_vir,
-                       param_ptr->src_frame.size.width *
-                           param_ptr->src_frame.size.height * 5 / 4);
+                       camera_get_mipi_raw_dcam_pitch(param_ptr->src_frame.size.width) *
+                       param_ptr->src_frame.size.height);
         }
 
 #if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) ||                      \
