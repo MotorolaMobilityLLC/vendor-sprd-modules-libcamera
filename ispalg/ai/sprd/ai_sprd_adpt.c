@@ -204,6 +204,54 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 		scene_info->task2[i].id = cxt->aic_result.task2[i].id;
 		scene_info->task2[i].score = cxt->aic_result.task2[i].score;
 	}
+	for (i = 0; i < AI_SCENE_TASK3_MAX; i++) {
+		scene_info->task3[i].id = cxt->aic_result.task3[i].id;
+		scene_info->task3[i].score = cxt->aic_result.task3[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK4_MAX; i++) {
+		scene_info->task4[i].id = cxt->aic_result.task4[i].id;
+		scene_info->task4[i].score = cxt->aic_result.task4[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK5_MAX; i++) {
+		scene_info->task5[i].id = cxt->aic_result.task5[i].id;
+		scene_info->task5[i].score = cxt->aic_result.task5[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK6_MAX; i++) {
+		scene_info->task6[i].id = cxt->aic_result.task6[i].id;
+		scene_info->task6[i].score = cxt->aic_result.task6[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK7_MAX; i++) {
+		scene_info->task7[i].id = cxt->aic_result.task7[i].id;
+		scene_info->task7[i].score = cxt->aic_result.task7[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK8_MAX; i++) {
+		scene_info->task8[i].id = cxt->aic_result.task8[i].id;
+		scene_info->task8[i].score = cxt->aic_result.task8[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK9_MAX; i++) {
+		scene_info->task9[i].id = cxt->aic_result.task9[i].id;
+		scene_info->task9[i].score = cxt->aic_result.task9[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK10_MAX; i++) {
+		scene_info->task10[i].id = cxt->aic_result.task10[i].id;
+		scene_info->task10[i].score = cxt->aic_result.task10[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK11_MAX; i++) {
+		scene_info->task11[i].id = cxt->aic_result.task11[i].id;
+		scene_info->task11[i].score = cxt->aic_result.task11[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK12_MAX; i++) {
+		scene_info->task12[i].id = cxt->aic_result.task12[i].id;
+		scene_info->task12[i].score = cxt->aic_result.task12[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK13_MAX; i++) {
+		scene_info->task13[i].id = cxt->aic_result.task13[i].id;
+		scene_info->task13[i].score = cxt->aic_result.task13[i].score;
+	}
+	for (i = 0; i < AI_SCENE_TASK14_MAX; i++) {
+		scene_info->task14[i].id = cxt->aic_result.task14[i].id;
+		scene_info->task14[i].score = cxt->aic_result.task14[i].score;
+	}
 
 	switch(cxt->aic_result.scene_label) {
 		case SC_LABEL_NONE:
@@ -215,8 +263,11 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 		case SC_LABEL_NIGHT:
 			scene_id = AI_SCENE_NIGHT;
 			break;
-		case SC_LABEL_BACKLIGHT:
-			scene_id = AI_SCENE_BACKLIGHT;
+		case SC_LABEL_BACKLIGHT_POTRAIT:
+			scene_id = AI_SCENE_BACKLIGHT_POTRAIT;
+			break;
+		case SC_LABEL_DARKLIGHT_POTRAIT:
+			scene_id = AI_SCENE_DARKLIGHT_POTRAIT;
 			break;
 		case SC_LABEL_SUNRISESET:
 			scene_id = AI_SCENE_SUNRISE;
@@ -230,7 +281,7 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 		case SC_LABEL_GREENPLANT:
 			scene_id = AI_SCENE_FOLIAGE;
 			break;
-		case SC_LABEL_DOCUMENT:
+		case SC_LABEL_TEXT:
 			scene_id = AI_SCENE_TEXT;
 			break;
 		case SC_LABEL_CATDOG:
@@ -242,11 +293,35 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 		case SC_LABEL_BLUESKY:
 			scene_id = AI_SCENE_SKY;
 			break;
-		case SC_LABEL_BUILDING:
-			scene_id = AI_SCENE_BUILDING;
+		case SC_LABEL_CHINESE_BUILDING:
+			scene_id = AI_SCENE_CHINESE_BUILDING;
+			break;
+		case SC_LABEL_OTHER_BUILDING:
+			scene_id = AI_SCENE_OTHER_BUILDING;
 			break;
 		case SC_LABEL_SNOW:
 			scene_id = AI_SCENE_SNOW;
+			break;
+		case SC_LABEL_CAR:
+			scene_id = AI_SCENE_CAR;
+			break;
+		case SC_LABEL_BICYCLE:
+			scene_id = AI_SCENE_BICYCLE;
+			break;
+		case SC_LABEL_OVERCAST:
+			scene_id = AI_SCENE_OVERCAST;
+			break;
+		case SC_LABEL_BEACH:
+			scene_id = AI_SCENE_BEACH;
+			break;
+		case SC_LABEL_WATERFALL:
+			scene_id = AI_SCENE_WATERFALL;
+			break;
+		case SC_LABEL_LAKE:
+			scene_id = AI_SCENE_LAKE;
+			break;
+		case SC_LABEL_AUTUMNLEAF:
+			scene_id = AI_SCENE_AUTUMNLEAF;
 			break;
 		default:
 			scene_id = AI_SCENE_DEFAULT;
@@ -295,7 +370,7 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 			goto exit;
 		}
 		memcpy(&cxt->aic_faceinfo, param, sizeof(struct ai_fd_param));
-		ISP_LOGV("ai fd: width: %d, height: %d, facenum: %d.", cxt->aic_faceinfo.width, cxt->aic_faceinfo.height, cxt->aic_faceinfo.face_num);
+		ISP_LOGV("ai fd: width: %d, height: %d, facenum: %d.", cxt->aic_faceinfo.img_width, cxt->aic_faceinfo.img_height, cxt->aic_faceinfo.face_num);
 		ISP_LOGV("ai fd: frame_id: %d, timestamp: %"PRIu64".", cxt->aic_faceinfo.frame_id, cxt->aic_faceinfo.timestamp);
 		for (i = 0; i < cxt->aic_faceinfo.face_num; i++) {
 			cxt->aic_faceinfo.face_area[i].score = cxt->aic_faceinfo.face_area[i].score * 10;
@@ -326,8 +401,8 @@ static cmr_s32 ai_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		if(0 == cxt->fd_on_off){
 			memset(&cxt->aic_faceinfo, 0, sizeof(struct ai_fd_param));
 			cxt->aic_faceinfo.frame_id = cxt->temp_fd_frameid + 1;
-                	cxt->aic_faceinfo.width = 1;
-                	cxt->aic_faceinfo.height = 1;
+			cxt->aic_faceinfo.img_width = 1;
+			cxt->aic_faceinfo.img_height = 1;
 
 			if (0 != AIC_SetFaceInfo(cxt->aic_handle, &cxt->aic_faceinfo)) {
 				rtn = ISP_ERROR;
@@ -511,10 +586,10 @@ static cmr_s32 ai_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 			goto exit;
 		}
 		switch (cxt->aic_img_status.img_flag) {
-			case AIC_IMAGE_DATA_NOT_REQUIRED:
+			case AIC_IMAGE_DATA_NOT_REQUESTED:
 				ai_img_status_ptr->img_flag = IMAGE_DATA_NOT_REQUIRED;
 				break;
-			case AIC_IMAGE_DATA_REQUIRED:
+			case AIC_IMAGE_DATA_REQUESTED:
 				ai_img_status_ptr->img_flag = IMAGE_DATA_REQUIRED;
 				break;
 			default:

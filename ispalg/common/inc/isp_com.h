@@ -286,16 +286,24 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		AI_SCENE_FOLIAGE,
 		AI_SCENE_SKY,
 		AI_SCENE_NIGHT,
-		AI_SCENE_BACKLIGHT,
+		AI_SCENE_BACKLIGHT_POTRAIT,
 		AI_SCENE_TEXT,
 		AI_SCENE_SUNRISE,
-		AI_SCENE_BUILDING,
+		AI_SCENE_CHINESE_BUILDING,
 		AI_SCENE_LANDSCAPE,
 		AI_SCENE_SNOW,
 		AI_SCENE_FIREWORK,
 		AI_SCENE_BEACH,
 		AI_SCENE_PET,
 		AI_SCENE_FLOWER,
+		AI_SCENE_CAR,
+		AI_SCENE_BICYCLE,
+		AI_SCENE_AUTUMNLEAF,
+		AI_SCENE_OVERCAST,
+		AI_SCENE_WATERFALL,
+		AI_SCENE_LAKE,
+		AI_SCENE_OTHER_BUILDING,
+		AI_SCENE_DARKLIGHT_POTRAIT,
 		AI_SCENE_MAX
 	};
 
@@ -378,55 +386,155 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		AI_STATUS_MAX
 	};
 
-	enum ai_task_0 {
-		AI_SCENE_TASK0_INDOOR,
-		AI_SCENE_TASK0_OUTDOOR,
-		AI_SCENE_TASK0_MAX
+	enum
+	{
+		AI_SCENE_TASK0_BLUESKY,
+		AI_SCENE_TASK0_SUNRISESET,
+		AI_SCENE_TASK0_OTHERS,
+		AI_SCENE_TASK0_MAX,
 	};
 
-	enum ai_task_1 {
+	enum
+	{
+		AI_SCENE_TASK1_SNOW,
 		AI_SCENE_TASK1_NIGHT,
-		AI_SCENE_TASK1_BACKLIGHT,
-		AI_SCENE_TASK1_SUNRISESET,
 		AI_SCENE_TASK1_FIREWORK,
 		AI_SCENE_TASK1_OTHERS,
-		AI_SCENE_TASK1_MAX
+		AI_SCENE_TASK1_MAX,
 	};
 
-	enum ai_task_2 {
-		AI_SCENE_TASK2_FOOD,
+	enum
+	{
 		AI_SCENE_TASK2_GREENPLANT,
-		AI_SCENE_TASK2_DOCUMENT,
-		AI_SCENE_TASK2_CATDOG,
-		AI_SCENE_TASK2_FLOWER,
-		AI_SCENE_TASK2_BLUESKY,
-		AI_SCENE_TASK2_BUILDING,
-		AI_SCENE_TASK2_SNOW,
 		AI_SCENE_TASK2_OTHERS,
-		AI_SCENE_TASK2_MAX
+		AI_SCENE_TASK2_MAX,
 	};
 
+	enum
+	{
+		AI_SCENE_TASK3_FLOWER,
+		AI_SCENE_TASK3_OTHERS,
+		AI_SCENE_TASK3_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK4_FOOD,
+		AI_SCENE_TASK4_OTHERS,
+		AI_SCENE_TASK4_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK5_CHINESE_BUILDING,
+		AI_SCENE_TASK5_OTHER_BUILDING,
+		AI_SCENE_TASK5_OTHERS,
+		AI_SCENE_TASK5_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK6_CATDOG,
+		AI_SCENE_TASK6_OTHERS,
+		AI_SCENE_TASK6_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK7_TEXT,
+		AI_SCENE_TASK7_OTHERS,
+		AI_SCENE_TASK7_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK8_BACKLIGHT_POTRAIT,
+		AI_SCENE_TASK8_DARKLIGHT_POTRAIT,
+		AI_SCENE_TASK8_OTHERS,
+		AI_SCENE_TASK8_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK9_CAR,
+		AI_SCENE_TASK9_OTHERS,
+		AI_SCENE_TASK9_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK10_BICYCLE,
+		AI_SCENE_TASK10_OTHERS,
+		AI_SCENE_TASK10_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK11_AUTUMNLEAF,
+		AI_SCENE_TASK11_OTHERS,
+		AI_SCENE_TASK11_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK12_OVERCAST,
+		AI_SCENE_TASK12_OTHERS,
+		AI_SCENE_TASK12_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK13_BEACH,
+		AI_SCENE_TASK13_WATERFALL,
+		AI_SCENE_TASK13_OTHERS,
+		AI_SCENE_TASK13_MAX,
+	};
+
+	enum
+	{
+		AI_SCENE_TASK14_LAKE,
+		AI_SCENE_TASK14_OTHERS,
+		AI_SCENE_TASK14_MAX,
+	};
+
+	struct task_result
+	{
+	    cmr_u16 id;
+	    cmr_u16 score;
+	};
 	struct ai_task0_result {
-		enum ai_task_0 id;
+		cmr_u16 id;
 		cmr_u16 score;
 	};
 
 	struct ai_task1_result {
-		enum ai_task_1 id;
+		cmr_u16 id;
 		cmr_u16 score;
 	};
 
 	struct ai_task2_result {
-		enum ai_task_2 id;
+		cmr_u16 id;
 		cmr_u16 score;
 	};
 
 	struct ai_scene_detect_info {
 		cmr_u32 frame_id;
-		enum ai_scene_type cur_scene_id;
-		struct ai_task0_result task0[AI_SCENE_TASK0_MAX];
-		struct ai_task1_result task1[AI_SCENE_TASK1_MAX];
-		struct ai_task2_result task2[AI_SCENE_TASK2_MAX];
+		enum ai_scene_type cur_scene_id;                     /* The most possible scene label */
+		struct task_result task0[AI_SCENE_TASK0_MAX];
+		struct task_result task1[AI_SCENE_TASK1_MAX];
+		struct task_result task2[AI_SCENE_TASK2_MAX];
+		struct task_result task3[AI_SCENE_TASK3_MAX];
+		struct task_result task4[AI_SCENE_TASK4_MAX];
+		struct task_result task5[AI_SCENE_TASK5_MAX];
+		struct task_result task6[AI_SCENE_TASK6_MAX];
+		struct task_result task7[AI_SCENE_TASK7_MAX];
+		struct task_result task8[AI_SCENE_TASK8_MAX];
+		struct task_result task9[AI_SCENE_TASK9_MAX];
+		struct task_result task10[AI_SCENE_TASK10_MAX];
+		struct task_result task11[AI_SCENE_TASK11_MAX];
+		struct task_result task12[AI_SCENE_TASK12_MAX];
+		struct task_result task13[AI_SCENE_TASK13_MAX];
+		struct task_result task14[AI_SCENE_TASK14_MAX];
 	};
 
 	enum ai_img_flag {
