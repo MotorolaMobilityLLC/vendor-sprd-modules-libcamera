@@ -188,7 +188,7 @@ cmr_s32 _calcDeltaValueOfQueue(struct awbl_cyc_queue * queue)
 		? queue->cur_index : queue->size;
 	
 	if(size>64)
-		size=64;
+		return 0;
 
 	if (size < 2)
 		return 0;
@@ -213,7 +213,7 @@ cmr_s32 _calcDeltaOfQueue(struct awbl_cyc_queue * queue)
 	size = (queue->cur_index < queue->size) ? queue->cur_index : queue->size;
 
 	if(size>64)
-		size=64;
+		return 0;
 	
 	if (size < 2)
 		return 0;
@@ -279,7 +279,7 @@ cmr_u32 _calc_weighted_average(struct awbl_cyc_queue * queue_value, struct awbl_
 
 
 	if(size_w>64)
-		size_w=64;	
+		return 0;	
 
 	if (size_w > 1) {
 
