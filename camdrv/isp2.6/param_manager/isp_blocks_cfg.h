@@ -622,7 +622,7 @@ struct isp_imblance_param {
 	union {
 		struct isp_dev_nlm_imblance cur;
 		struct isp_dev_nlm_imblance_v1 cur_v1;
-		// struct isp_dev_nlm_imblance_v2 cur_v2;
+		struct isp_dev_nlm_imblance_v2 cur_v2;
 	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;

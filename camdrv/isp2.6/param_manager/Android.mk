@@ -94,7 +94,7 @@ LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
 	blk_v27/isp_blk_raw_gtm.c\
 	blk_v27/isp_blk_rgb_ltm.c\
 	blk_v27/isp_blk_yuv_ygamma.c
-# LOCAL_SRC_FILES += $(call all-c-files-under, blk_v28)
+LOCAL_SRC_FILES += $(call all-c-files-under, blk_v28)
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.9)
 LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
 	blk_v26/isp_blk_bchs.c \
