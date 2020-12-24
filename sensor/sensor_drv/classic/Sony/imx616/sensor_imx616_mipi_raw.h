@@ -943,11 +943,11 @@ static struct sensor_module_info s_imx616_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
-                             #ifdef _SENSOR_RAW_SHARKL5PRO_H_,
+#if defined  _SENSOR_RAW_SHARKL5PRO_H_ || defined _SENSOR_RAW_SHARKL6_H
                              .is_loose = 2,
-                             #else
+#else
                              .is_loose = 0,
-                             #endif
+#endif
                          },
                      .change_setting_skip_num = 1,
                      .horizontal_view_angle = 65,
