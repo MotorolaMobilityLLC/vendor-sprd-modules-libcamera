@@ -4266,7 +4266,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 			base_exposure_line = cxt->cur_status.ae_table->exposure[base_idx];
 			base_gain = cxt->cur_status.ae_table->again[base_idx];
 #ifdef CONFIG_SUPPROT_AUTO_HDR
-		down_exposure = (cmr_u32)1.0 / pow(2, cxt->hdr_calc_result.ev[0]) * base_exposure_line * cxt->cur_status.line_time;
+		down_exposure = (cmr_u32)(1.0 / pow(2, cxt->hdr_calc_result.ev[0]) * base_exposure_line * cxt->cur_status.line_time);
 		ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure, pow(2, cxt->hdr_calc_result.ev[0]));
 #else
 		down_exposure = (cmr_u32)1.0 / pow(2, down_EV_offset / 100.0) * base_exposure_line * cxt->cur_status.line_time;
