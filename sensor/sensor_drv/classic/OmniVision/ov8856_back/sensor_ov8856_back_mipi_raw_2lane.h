@@ -689,7 +689,7 @@ static struct sensor_module_info s_ov8856_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
-#if defined  _SENSOR_RAW_SHARKL5PRO_H_ || defined _SENSOR_RAW_SHARKL6_H
+#if defined  _SENSOR_RAW_SHARKL5PRO_H_ || defined _SENSOR_RAW_SHARKL6_H_
                              .is_loose = 2,
 #else
                              .is_loose = 0,
