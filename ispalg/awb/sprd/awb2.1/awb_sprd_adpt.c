@@ -881,12 +881,14 @@ static cmr_u32 _awb_set_tuning_param(struct awb_ctrl_cxt *cxt, void *param0)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	UNUSED(cxt);
+	UNUSED(param0);
+	/*
 	rtn = _check_init_param(param0);
 	if (AWB_CTRL_SUCCESS != rtn) {
 		ISP_LOGE("fail to check init param");
 		rtn = AWB_CTRL_ERROR;
 	}
-
+	*/
 	return rtn;
 }
 
