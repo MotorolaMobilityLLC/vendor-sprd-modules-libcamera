@@ -2363,6 +2363,13 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     property_get("persist.vendor.cam.portrait.ai.bokeh", prop, "0");
     available_cam_features.add(atoi(prop));
 
+    //35 front video mirror
+#ifdef CONFIG_CAMERA_IMAGE_FLIP
+    available_cam_features.add(1);
+#else
+    available_cam_features.add(0);
+#endif
+
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
            available_cam_features.size() * sizeof(uint8_t));
