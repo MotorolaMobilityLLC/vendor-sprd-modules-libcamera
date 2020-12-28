@@ -245,6 +245,7 @@ struct preview_context {
     struct img_size actual_video_size;
     struct frm_info video_cur_chn_data;
     struct img_rect rect;
+    void *prv_aux_param;
 };
 
 struct snapshot_context {
@@ -282,6 +283,7 @@ struct snapshot_context {
     struct isp_blkpm_t fdr_tuning_param;
     void *fdr_ae_info;
     void *ae_common_info;
+    void *snp_aux_param;
 };
 
 struct focus_context {
@@ -535,6 +537,7 @@ struct camera_context {
     jpg_encode_status jpg_encode;
     cmr_u8 nightscepro_flag;
     bool snp_cancel;
+    void *aux_param;
 };
 
 struct prev_ai_scene_info {

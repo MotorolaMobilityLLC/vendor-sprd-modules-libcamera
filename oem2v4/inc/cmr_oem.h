@@ -172,6 +172,7 @@ struct preview_context {
     struct img_rect rect;
     struct img_data_end data_endian;
     struct img_data_end video_data_endian;
+    void *prv_aux_param;
 };
 
 struct snapshot_context {
@@ -203,6 +204,7 @@ struct snapshot_context {
     struct img_data_end data_endian;
     struct frm_info cur_chn_data;
     struct touch_coordinate touch_xy;
+    void *snp_aux_param;
 };
 
 struct focus_context {
@@ -390,6 +392,7 @@ struct camera_context {
     cmr_u8 nightscepro_flag;
     struct nightpro_context night_cxt;
     bool snp_cancel;
+    void *aux_param;
 };
 
 struct prev_threednr_info {
