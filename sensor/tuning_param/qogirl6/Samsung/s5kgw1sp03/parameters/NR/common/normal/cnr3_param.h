@@ -1,4 +1,4 @@
-/*versionid=0x000C000F*/
+/*versionid=0x000B0009*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl3_sensor_cnr3_level*/
@@ -18,7 +18,7 @@
 		/*[0x0]*/
 		{
 			/*lowpass_filter_en*/
-			0x01,
+			0x00,
 			/*denoise_radial_en*/
 			0x01,
 			/*reserved0*/
@@ -36,7 +36,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1F80,
+			0x0B28,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -57,9 +57,9 @@
 		/*[0x1]*/
 		{
 			/*lowpass_filter_en*/
-			0x01,
+			0x00,
 			/*denoise_radial_en*/
-			0x01,
+			0x00,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -75,7 +75,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0969,
+			0x0355,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -96,9 +96,9 @@
 		/*[0x2]*/
 		{
 			/*lowpass_filter_en*/
-			0x01,
+			0x00,
 			/*denoise_radial_en*/
-			0x01,
+			0x00,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -114,7 +114,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x025A,
+			0x00D5,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -135,9 +135,9 @@
 		/*[0x3]*/
 		{
 			/*lowpass_filter_en*/
-			0x01,
+			0x00,
 			/*denoise_radial_en*/
-			0x01,
+			0x00,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -153,7 +153,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0096,
+			0x0035,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -176,7 +176,7 @@
 			/*lowpass_filter_en*/
 			0x01,
 			/*denoise_radial_en*/
-			0x01,
+			0x00,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -192,7 +192,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0025,
+			0x000D,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
@@ -235,7 +235,7 @@
 		/*[0x0]*/
 		{
 			/*lowpass_filter_en*/
-			0x01,
+			0x00,
 			/*denoise_radial_en*/
 			0x01,
 			/*reserved0*/
@@ -253,7 +253,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x1F80,
+			0x0B28,
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
@@ -274,7 +274,7 @@
 		/*[0x1]*/
 		{
 			/*lowpass_filter_en*/
-			0x01,
+			0x00,
 			/*denoise_radial_en*/
 			0x01,
 			/*reserved0*/
@@ -292,7 +292,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0969,
+			0x0355,
 			/*baseRadius_factor*/
 			0x0264,
 			/*minRatio*/
@@ -313,9 +313,9 @@
 		/*[0x2]*/
 		{
 			/*lowpass_filter_en*/
-			0x01,
+			0x00,
 			/*denoise_radial_en*/
-			0x01,
+			0x00,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -331,7 +331,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x025A,
+			0x00D5,
 			/*baseRadius_factor*/
 			0x0132,
 			/*minRatio*/
@@ -354,7 +354,7 @@
 			/*lowpass_filter_en*/
 			0x01,
 			/*denoise_radial_en*/
-			0x01,
+			0x00,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -370,7 +370,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0096,
+			0x0035,
 			/*baseRadius_factor*/
 			0x0099,
 			/*minRatio*/
@@ -393,7 +393,7 @@
 			/*lowpass_filter_en*/
 			0x01,
 			/*denoise_radial_en*/
-			0x01,
+			0x00,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -409,7 +409,7 @@
 			/*slope*/
 			0x01F4,
 			/*baseRadius*/
-			0x0025,
+			0x000D,
 			/*baseRadius_factor*/
 			0x004C,
 			/*minRatio*/
