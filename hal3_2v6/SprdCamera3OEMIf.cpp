@@ -835,6 +835,10 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 void SprdCamera3OEMIf::closeCamera() {
     ATRACE_CALL();
     FLASH_INFO_Tag flashInfo;
+    int ret = NO_ERROR;
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
     close_flash_torch ();
@@ -861,6 +865,10 @@ void SprdCamera3OEMIf::closeCamera() {
     if (isCapturing()) {
         cancelPictureInternal();
     }
+    if( sprddefInfo->af_support == 1)
+        ret = mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
+    if(ret)
+        HAL_LOGD("cancel autofocus fail");
 
     if (isPreviewing()) {
         stopPreviewInternal();
@@ -3476,8 +3484,6 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     setCameraState(SPRD_INTERNAL_PREVIEW_STOPPING, STATE_PREVIEW);
 
-    if (sprddefInfo->af_support == 1)
-        mHalOem->ops->camera_cancel_autofocus(mCameraHandle);
 
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_stop_preview(mCameraHandle)) {
@@ -11065,30 +11071,31 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
-    if (controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED &&
-        sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
-        (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
-        controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
-        (!been_preflash)) {
-        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
-        mSetting->setCONTROLTag(&controlInfo);
-        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
-        mSetting->getCONTROLTag(&controlInfo);
-        HAL_LOGV("af_state =%d",controlInfo.af_state);
-        while (controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-            if (count1 > 2800) {
-                HAL_LOGD("wait for preflash timeout 2.8s");
-                break;
-            }
-            if (mZslCaptureExitLoop == true) {
-                HAL_LOGD("close camera");
-                break;
-            }
-            mSetting->getCONTROLTag(&controlInfo);
-            usleep(1000); //1ms
-            count1 ++;
-        }
-        clear_af_trigger = 1;
+    if(controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED &&
+                sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
+                (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
+                controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
+                (!been_preflash) && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_MANUAL)) {
+                        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
+                        mSetting->setCONTROLTag(&controlInfo);
+                        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+                        mSetting->getCONTROLTag(&controlInfo);
+                        HAL_LOGV("af_state =%d",controlInfo.af_state);
+                        while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
+                                if (count1 > 3500) {
+                                        HAL_LOGD("wait for preflash timeout 3.5s");
+                                        break;
+                                }
+                                if (mZslCaptureExitLoop == true)
+                                {
+                                        HAL_LOGD("close camera");
+                                        break;
+                                }
+                                mSetting->getCONTROLTag(&controlInfo);
+                                usleep(1000); //1ms
+                                count1 ++;
+                        }
+                        clear_af_trigger = 1;
     }
 
     if(mZslCaptureExitLoop == true) {
