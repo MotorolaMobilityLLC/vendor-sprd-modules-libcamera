@@ -71,30 +71,42 @@ static int camt_write_file(char *file_name, unsigned int chipid, unsigned int wi
 
 	if (chipid == CAMT_CHIP_ISP0 || chipid == CAMT_CHIP_ISP1) {
 		IT_LOGD("file_name:%s size %d vir_addr %ld_isp", file_name, width * height, addr.addr_ch0);
-		strcat(file_name, "_yuv_");
+		strncat(file_name, "_yuv_", 4);
 		sprintf(temp, "%d", index);
-		strcat(file_name, temp);
-		strcat(file_name, ".y");
+		strncat(file_name, temp, 20);
+		strncat(file_name, ".y", 2);
 		fp = fopen(file_name, "wb");
 		if (NULL == fp) {
 			IT_LOGD("can not open file: %s \n", file_name);
 			return -1;
 		}
 		ret = fwrite((void *)addr.addr_ch0, 1, width * height , fp);
+		if (ret != 1) {
+			IT_LOGD("Y Write Error!\n");
+			fclose(fp);
+			fp = NULL;
+			return -1;
+		}
 		fclose(fp);
 		fp = NULL;
-		strcat(file_name, "uv");
+		strncat(file_name, "uv", 3);
 		fp = fopen(file_name, "wb");
 		if (fp == NULL) {
 			IT_LOGD("can not open file: %s \n", file_name);
 			return -1;
 		}
 		ret = fwrite((void *)addr.addr_ch1, 1, width * height / 2, fp);
+		if (ret != 1) {
+			IT_LOGD("UV Write Error!\n");
+			fclose(fp);
+			fp = NULL;
+			return -1;
+		}
 		fclose(fp);
 		fp = NULL;
 	} else if (CAMT_CHIP_DCAM0 <= chipid && chipid <= CAMT_CHIP_DCAM_LITE1) {
 		IT_LOGD("file_name:%s size %d vir_addr %ld_dcam", file_name, width * height, addr.addr_ch0);
-		strcat(file_name,".mipi_raw");
+		strncat(file_name,".mipi_raw", 9);
 		fp = fopen(file_name, "wb");
 		if (fp == NULL) {
 			IT_LOGD("can not open file: %s \n", file_name);
@@ -165,8 +177,8 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	ISP_PARAM_T *param = NULL;
 	/*struct test_camera_mem_type_stat type;*/
 	unsigned int size, sum_in, sum_out;
-	int mfd_in;
-	unsigned long phy_addr_in;
+	int mfd_in, fd;;
+	unsigned long phy_addr_in, phys_addr;
 	unsigned long vir_addr_in;
 	int mfd_out[DRV_PATH_NUM];
 	unsigned long phy_addr_out[DRV_PATH_NUM];
@@ -178,10 +190,8 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	ion_info_t ion_out;
 	vector<ion_info_t> ion_config_in;
 	vector<ion_info_t> ion_config_out;
-	new_ion_mem_t ion_buffer_in;
-	new_ion_mem_t ion_buffer_out[DRV_PATH_NUM];
-	int tag_in = 1;
-	int tag_out = 3;
+	int tag_in;
+	int tag_out;
 	bufferData buf_data_in;
 	bufferData buf_data_out[DRV_PATH_NUM];
 
@@ -258,18 +268,16 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	TestMemPool *pMemAlloc_out = new TestMemPool(ion_config_out);
 
 	buf_data_in = pMemAlloc_in->popBufferList(tag_in);
-	ion_buffer_in.virs_addr = buf_data_in.ion_buffer->virs_addr;
-	phy_addr_in = ion_buffer_in.phys_addr;
-	vir_addr_in = (unsigned long)(ion_buffer_in.virs_addr);
-	mfd_in = ion_buffer_in.fd;
+	phy_addr_in = buf_data_in.ion_buffer->phys_addr;
+	vir_addr_in = (unsigned long)(buf_data_in.ion_buffer->virs_addr);
+	mfd_in = buf_data_in.ion_buffer->fd;
 
 	IT_LOGD("mfd_in: %d", mfd_in);
 	for(i = 0; i < DRV_PATH_NUM; i++){
 	    buf_data_out[i] = pMemAlloc_out->popBufferList(tag_out);
-		ion_buffer_out[i].virs_addr = buf_data_out[i].ion_buffer->virs_addr;
-        phy_addr_out[i] = ion_buffer_out[i].phys_addr;
-		vir_addr_out[i] = (unsigned long)(ion_buffer_out[i].virs_addr);
-		mfd_out[i] = ion_buffer_out[i].fd;
+		phy_addr_out[i] = buf_data_out[i].ion_buffer->phys_addr;
+		vir_addr_out[i] = (unsigned long)(buf_data_out[i].ion_buffer->virs_addr);
+		mfd_out[i] = buf_data_out[i].ion_buffer->fd;
 		IT_LOGD("mfd_out[%d]: %d", i, mfd_out[i]);
 	}
 
@@ -284,7 +292,7 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	ret = camt_read_file(_json2->m_imageName.data(), size, vir_addr_in);
 	if (ret < 0) {
 		IT_LOGE("failed to read input file");
-		goto exit;
+		goto start_fail;
 	}
 
 	/* start camt */
@@ -315,7 +323,7 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 
 	if (ret < 0) {
 		IT_LOGE("failed to write output file");
-		goto exit;
+		goto start_fail;
 	}
 
 	cxt.info.cmd = CAMT_CMD_STOP;
@@ -324,13 +332,13 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 		IT_LOGE("failed to stop cam drv test");
 
 start_fail:
-	delete pMemAlloc_in;
-	delete pMemAlloc_out;
 	cxt.info.cmd = CAMT_CMD_DEINIT;
 	ioctl(cxt.fd, SPRD_IMG_IO_CAM_TEST, &cxt.info);
-	ret = close(cxt.fd);
 
 exit:
+	delete pMemAlloc_in;
+	delete pMemAlloc_out;
+	ret = close(cxt.fd);
 	IT_LOGD("end %d", ret);
 	return ret;
 }
