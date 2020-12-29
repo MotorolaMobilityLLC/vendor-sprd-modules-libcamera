@@ -2014,3 +2014,22 @@ cmr_int cmr_grab_cfg_flash(cmr_handle grab_handle,
     }
     return ret;
 }
+
+cmr_int cmr_grab_get_scaler_capability(cmr_handle grab_handle, uint32_t *scaler) {
+    cmr_int ret = 0;
+    int fd = -1;
+    fd = open(CMR_GRAB_DEV_NAME, O_RDWR, 0);
+    if (fd == -1) {
+            CMR_LOGE("open file error");
+        return -1;
+    }
+
+    ret = ioctl(fd, SPRD_IMG_IO_GET_SCALER_CAP, scaler);
+    if (ret) {
+        CMR_LOGE("error");
+    }
+    close(fd);
+
+    return ret;
+}
+

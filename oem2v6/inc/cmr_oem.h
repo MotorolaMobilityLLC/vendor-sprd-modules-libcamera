@@ -796,6 +796,7 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);
 void camera_local_set_original_picture_size(cmr_handle oem_handle ,int32_t width , int32_t height);
 cmr_int camera_fdr_handle(void *data, void *privdata);
+int camera_local_get_scaler(uint32_t *scaler);
 
 #ifdef __cplusplus
 }

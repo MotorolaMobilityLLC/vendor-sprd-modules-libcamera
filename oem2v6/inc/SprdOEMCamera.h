@@ -215,6 +215,7 @@ cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
 #endif
 void camera_set_original_picture_size(cmr_handle camera_handle,
                                    int32_t width,int32_t height);
+int camera_get_scaler(uint32_t *scaler);
 
 #ifdef __cplusplus
 }

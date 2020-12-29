@@ -2443,6 +2443,7 @@ typedef struct oem_ops {
 #endif
     void (*camera_set_original_picture_size)(cmr_handle handle, int32_t width,
                                              int32_t height);
+    int (*camera_get_scaler)(uint32_t *scaler);
 } oem_ops_t;
 
 typedef struct oem_module {

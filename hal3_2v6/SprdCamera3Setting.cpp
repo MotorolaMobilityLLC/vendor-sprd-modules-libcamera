@@ -2022,7 +2022,28 @@ int SprdCamera3Setting::initStaticParametersforScalerInfo(int32_t cameraId) {
     int ultrawide_id =
         sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK);
     s_setting[cameraId].sprddefInfo.ultrawide_id = ultrawide_id;
-    s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
+    // if get scaler capability fail from driver, using default value
+    uint32_t scaler = 0;
+    void *dso = NULL;
+    dso = dlopen(OEM_LIBRARY_PATH, RTLD_NOW);
+    if (NULL == dso) {
+        char const *err_str = dlerror();
+        HAL_LOGE("dlopen error%s ", err_str ? err_str : "unknown");
+    } else {
+        const char *sym = OEM_MODULE_INFO_SYM_AS_STR;
+        oem_module_t *omi = NULL;
+        omi = (oem_module_t *)dlsym(dso, sym);
+        if (omi && omi->ops != NULL) {
+            if (omi->ops->camera_get_scaler)
+               omi->ops->camera_get_scaler(&scaler);
+        }
+        dlclose(dso);
+    }
+
+    if (scaler > 0)
+        s_setting[cameraId].scalerInfo.max_digital_zoom = scaler;
+    else
+        s_setting[cameraId].scalerInfo.max_digital_zoom = MAX_DIGITAL_ZOOM_RATIO;
     HAL_LOGD("cameraId = %d, ultrawide_id = %d, max_digital_zoom = %f",
              cameraId, ultrawide_id,
              s_setting[cameraId].scalerInfo.max_digital_zoom);

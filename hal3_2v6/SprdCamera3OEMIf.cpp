@@ -7232,14 +7232,14 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
         if (zoomRatio > MULTI_MAX_DIGITAL_ZOOM_RATIO) {
             zoomRatio = MULTI_MAX_DIGITAL_ZOOM_RATIO;
         }
-    } else if (zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
-        zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
+    } else if (zoomRatio > scaleInfo.max_digital_zoom){
+            zoomRatio = scaleInfo.max_digital_zoom;
     }
 
     if (mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK) &&
         getMultiCameraMode() == MODE_MULTI_CAMERA &&
-        zoomRatio > MAX_DIGITAL_ZOOM_RATIO) {
-        zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
+        zoomRatio > scaleInfo.max_digital_zoom) {
+        zoomRatio = scaleInfo.max_digital_zoom;
     }
 
     struct sensor_zoom_param_input ZoomInputParam;
@@ -7249,9 +7249,9 @@ int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
 
     if (mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_WIDE, SNS_FACE_BACK) &&
         getMultiCameraMode() == MODE_MULTI_CAMERA &&
-        zoomRatio > MAX_DIGITAL_ZOOM_RATIO &&
+        zoomRatio > scaleInfo.max_digital_zoom &&
         PhyCam == MULTI_THREE_SECTION) {
-        zoomRatio = MAX_DIGITAL_ZOOM_RATIO;
+        zoomRatio = scaleInfo.max_digital_zoom;
     }
 
     mZoomInfo.mode = ZOOM_INFO;

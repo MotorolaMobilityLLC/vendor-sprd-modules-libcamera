@@ -13529,31 +13529,12 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         tmp_width = (cmr_u32)(sc_factor * img_cap->src_img_rect.width);
-        CMR_LOGD("%d, %d, %d, %d, %d", tmp_width, img_cap->src_img_rect.width,
-                 cap_size->width, cap_size->height, sc_threshold);
-        if ((img_cap->src_img_rect.width >= cap_size->width ||
-             cap_size->width <= sc_threshold) &&
-            ZOOM_BY_CAP == prev_cxt->cap_zoom_mode) {
-            /* if the out size is smaller than the in size, try to
-             * use scaler on the fly
-             */
-            if (cap_size->width > tmp_width) {
-                if (tmp_width > sc_capability) {
-                    img_cap->dst_img_size.width = sc_capability;
-                } else {
-                    img_cap->dst_img_size.width = tmp_width;
-                }
-                img_cap->dst_img_size.height =
-                    (cmr_u32)(img_cap->src_img_rect.height * sc_factor);
-            } else {
-                /* just use scaler on the fly */
-                img_cap->dst_img_size.width = cap_size->width;
-                img_cap->dst_img_size.height = cap_size->height;
-            }
-        } else {
-            img_cap->dst_img_size.width = cap_size->width;
-            img_cap->dst_img_size.height = cap_size->height;
-        }
+        CMR_LOGD("%d, %d, %d, %d, %d, %d", tmp_width, img_cap->src_img_rect.width,
+                 cap_size->width, cap_size->height, sc_capability, sc_threshold);
+
+        img_cap->dst_img_size.width = cap_size->width;
+        img_cap->dst_img_size.height = cap_size->height;
+
     }
     /* If 4in1 high resolution && zsl
      * sensor output binning size, isp hardware output binning size

@@ -1437,6 +1437,17 @@ void camera_set_original_picture_size(cmr_handle handle,int32_t width,
     camera_local_set_original_picture_size(handle,width,height);
 }
 
+int camera_get_scaler(uint32_t *scaler)
+{
+    int ret = CMR_CAMERA_SUCCESS;
+    ret = camera_local_get_scaler(scaler);
+    if (ret) {
+        ret = -CMR_CAMERA_FAIL;
+        CMR_LOGE("failed to set camera get scaler %d", ret);
+    }
+    return ret;
+}
+
 static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
@@ -1479,6 +1490,7 @@ static oem_ops_t oem_module_ops = {
     camera_set_mm_dvfs_policy,
 #endif
     camera_set_original_picture_size,
+    camera_get_scaler,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

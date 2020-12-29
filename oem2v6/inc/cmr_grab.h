@@ -156,6 +156,7 @@ cmr_int cmr_grab_stop_capture(cmr_handle grab_handle);
 
 cmr_int cmr_grab_stream_pause(cmr_handle grab_handle);
 cmr_int cmr_grab_stream_resume(cmr_handle grab_handle);
+cmr_int cmr_grab_get_scaler_capability(cmr_handle grab_handle, uint32_t *scaler);
 
 #ifdef __cplusplus
 }

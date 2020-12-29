@@ -16714,7 +16714,6 @@ void camera_local_set_original_picture_size(cmr_handle oem_handle , int32_t widt
     cmr_setting_ioctl(setting_cxt->setting_handle,SETTING_SET_ORIGINAL_PICTURE_SIZE, &setting_param);
 }
 
-
 cmr_int camera_nightpro_open(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct ipm_open_in in_param;
@@ -16905,3 +16904,14 @@ exit:
     return ret;
 }
 
+int camera_local_get_scaler(uint32_t *scaler) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    ret = cmr_grab_get_scaler_capability(NULL, scaler);
+    if (ret) {
+        CMR_LOGE("failed to get isp param %d", ret);
+        return ret;
+    }
+
+    return ret;
+}
