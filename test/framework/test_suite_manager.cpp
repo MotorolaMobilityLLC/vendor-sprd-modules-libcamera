@@ -51,7 +51,7 @@ int inject_read_file(string file_name, cmr_uint size, void *addr)
 	int ret = 0;
 	FILE *fp = NULL;
 
-	IT_LOGD("file_name:%s size %d vir_addr %ld", file_name.c_str(), size, addr);
+	IT_LOGD("file_name:%s size %d vir_addr %p", file_name.c_str(), size, addr);
 	fp = fopen(file_name.c_str(), "rb+");
 	if (NULL == fp) {
 		IT_LOGD("can not open file: %s \n", file_name.c_str());
@@ -364,7 +364,7 @@ void suiteManager::Now(string& time) {
 vector<new_ion_mem_t> suiteManager::TestGetInjectImg(InjectType_t type) {
     vector<new_ion_mem_t> type_BufferList;
     bufferData pop_IonMem;
-    new_ion_mem_t img_IonMem;
+    new_ion_mem_t img_IonMem = {0};
     while (1)
     {
         /*ion popBufferList */
@@ -375,7 +375,7 @@ vector<new_ion_mem_t> suiteManager::TestGetInjectImg(InjectType_t type) {
         }
         else {
             img_IonMem.virs_addr = pop_IonMem.ion_buffer->virs_addr;
-            IT_LOGD("img_IonMem %p", img_IonMem);
+            IT_LOGD("img_IonMem viraddr %p", img_IonMem.virs_addr);
             type_BufferList.push_back(img_IonMem);
         }
     }
@@ -393,7 +393,7 @@ int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
     memset(fail_imgName, '\0', 40);
     strcpy(output_file, CAMT_OUT_PATH);
     Now(n_time);
-    sprintf(fail_imgName, "testImage_%dx%d_%s" , f_imgInfo.w, f_imgInfo.h, n_time.c_str());
+    sprintf(fail_imgName, "testImage_%ldx%ld_%s" , f_imgInfo.w, f_imgInfo.h, n_time.c_str());
     strcat(output_file, fail_imgName);
     if (f_imgInfo.format == IT_IMG_FORMAT_YUV) {
         strcat(output_file, ".yuv");

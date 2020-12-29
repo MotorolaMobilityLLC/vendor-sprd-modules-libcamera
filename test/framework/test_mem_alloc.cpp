@@ -109,8 +109,8 @@ TestMemPool::TestMemPool(vector<ion_info_t> &ion_config){
         mem_size = (mem_size + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
         for(int x=0;x<itor->num_bufs;x++){
             if (mem_size == 0 ) {
+                IT_LOGE ("buffer size is 0");
                 goto getpmem_fail;
-            IT_LOGE ("buffer size is 0");
             }
             ionArr.busy_flag = false;
             IT_LOGD ("mIommuEnabled %d,mem size=%d", mIommuEnabled,mem_size);
@@ -197,7 +197,7 @@ TestMemPool::TestMemPool(vector<gpu_info_t> &gpu_config){
     itor=gpu_config.begin();
     while(itor!=gpu_config.end()){
         for(int x=0;x<itor->num_buf;x++){
-            if (itor->cache_flag = true){
+            if (itor->cache_flag == true){
                 yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
                                GraphicBuffer::USAGE_SW_READ_OFTEN |
                                GraphicBuffer::USAGE_SW_WRITE_OFTEN;
@@ -424,7 +424,7 @@ int TestMemPool::UnMap(new_gpu_mem_t *gpu_buf){
 }
 
 bufferData TestMemPool::popBufferAndWait(int type) {
-    bufferData buf_wait;
+    bufferData buf_wait = {0};
     while (1)
     {
         buf_wait = popBufferList(type);
