@@ -144,6 +144,32 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"mfnr",
 	"post_ee",
 };
+#elif defined CONFIG_ISP_2_9 /* for N6pro */
+char nr_param_name[ISP_BLK_NR_MAX][20] = {
+	"bayer_nr",
+	"vst",
+	"ivst",
+	"rgb_dither",
+	"bpc",
+	"cfai",
+	"rgb_afm",
+	"cce_uvdiv",
+	"3dnr",
+	"ppe",
+	"yuv_precdn",
+	"uv_cdn",
+	"uv_postcdn",
+	"ynr",
+	"ee",
+	"yuv_noisefilter",
+	"imbalance",
+	"sw3dnr",
+	"bwu_bwd",
+	"ynrs",
+	"cnr3",
+	"mfnr",
+	"post_ee",
+};
 #endif
 
 

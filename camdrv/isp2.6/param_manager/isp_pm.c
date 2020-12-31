@@ -410,7 +410,89 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_CNR3,				ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
 	{ ISP_BLK_MFNR,				ISP_BLK_MFNR_T, sizeof(struct sensor_mfnr_level) },
 };
+#elif defined CONFIG_ISP_2_9 /* for N6pro*/
+static struct blk_info blocks_array[] = {
+	/* DCAM blocks */
+	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
+	{ ISP_BLK_RGB_GAIN, sizeof(struct sensor_rgb_gain_param) },
+	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
+	{ ISP_BLK_RAW_GTM, sizeof(struct sensor_raw_gtm_param) },
+	//{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
+	{ ISP_BLK_AWB_NEW, 0 },
+	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
+	//{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
+	{ ISP_BLK_PPE_V1, 0 }, /* NR block */
+	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
 
+	/*  ISP blocks */
+	//{ ISP_BLK_HSV_NEW2, 0 },  /* parsed in hsv block init() */
+	{ ISP_BLK_BCHS, sizeof(struct sensor_bchs_level) },
+	{ ISP_BLK_CCE, sizeof(struct sensor_cce_param) },
+	{ ISP_BLK_CMC10, sizeof(struct sensor_cmc10_param) },
+	{ ISP_BLK_RGB_GAMC, sizeof(struct sensor_frgb_gammac_param) },
+	{ ISP_BLK_HIST2, 0 }, // todo: should be sizeof(struct sensor_hists2_param)
+	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
+	{ ISP_BLK_Y_GAMMC_V1, sizeof(struct sensor_y_gamma_param) },
+	{ ISP_BLK_YUV_LTM, sizeof(struct sensor_yuv_ltm_param) },
+	//{ ISP_BLK_3DNR, 0 }, /* NR block */
+	{ ISP_BLK_CFA_V1, 0 }, /* NR block */
+	{ ISP_BLK_EE_V1, 0 }, /* NR block */
+	{ ISP_BLK_NLM_V2, 0 }, /* NR block */
+	//{ ISP_BLK_IMBALANCE_V1, 0 }, /* NR block */
+	//{ ISP_BLK_UVDIV_V1, 0 }, /* NR block */
+	//{ ISP_BLK_YNR_V1, 0 }, /* NR block */
+	{ ISP_BLK_UV_CDN_V1, 0 }, /* NR block */
+	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
+
+	/* software algo blocks */
+	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
+	//{ ISP_BLK_AI_PRO_V1, sizeof(struct sensor_ai_param) },
+	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
+	{ ISP_BLK_YNRS, 0 }, /* NR block */
+	{ ISP_BLK_CNR3, 0 }, /* NR block */
+	{ ISP_BLK_MFNR, 0 }, /* NR block */
+	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
+	{ ISP_BLK_POST_EE, 0}, /* NR block */
+	{ ISP_BLK_AE_NEW, 0 },
+	{ ISP_BLK_ALSC, 0 },
+	{ ISP_BLK_AF_NEW, 0 },
+	{ ISP_BLK_SMART, 0 },
+	{ ISP_BLK_AFT, 0 },
+	{ ISP_BLK_FDR, 0 },
+	{ ISP_BLK_PDAF_TUNE, 0 },
+	{ ISP_BLK_DUAL_FLASH, 0 },
+	{ ISP_BLK_AE_SYNC, 0 },
+	{ ISP_BLK_AE_ADAPT_PARAM, 0 },
+	{ ISP_BLK_4IN1_PARAM, 0 },
+	{ ISP_BLK_TOF_TUNE, 0 },
+	{ ISP_BLK_ATM_TUNE, 0 },
+	{ ISP_BLK_DRE, 0 },
+	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
+};
+
+struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
+	{ DCAM_BLK_RGB_AFM_V1,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
+	//{ DCAM_BLK_BPC_V1,			ISP_BLK_BPC_T, sizeof(struct sensor_bpc_level) },
+	{ DCAM_BLK_RGB_DITHER,		ISP_BLK_RGB_DITHER_T,  sizeof(struct sensor_rgb_dither_level) },
+	{ ISP_BLK_PPE_V1,			ISP_BLK_PPE_T,  sizeof(struct sensor_ppe_level) },
+	{ ISP_BLK_3DNR,				ISP_BLK_3DNR_T, sizeof(struct sensor_3dnr_level) },
+	//{ ISP_BLK_UVDIV_V1,			ISP_BLK_UVDIV_T, sizeof(struct sensor_cce_uvdiv_level) },
+	{ ISP_BLK_CFA_V1,			ISP_BLK_CFA_T,  sizeof(struct sensor_cfa_param_level) },
+	//{ ISP_BLK_YNR_V1,			ISP_BLK_YNR_T, sizeof(struct sensor_ynr_level) },
+	{ ISP_BLK_EE_V1,				ISP_BLK_EDGE_T, sizeof(struct sensor_ee_level) },
+	{ ISP_BLK_UV_CDN_V1,		ISP_BLK_CDN_T, sizeof(struct sensor_uv_cdn_level) },
+	//{ ISP_BLK_IMBALANCE_V1,			ISP_BLK_IMBALANCEE_T, sizeof(struct sensor_nlm_imbalance_level) },
+	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },
+	{ ISP_BLK_YUV_NOISEFILTER_V1,	ISP_BLK_YUV_NOISEFILTER_T, sizeof(struct sensor_yuv_noisefilter_level) },
+	{ ISP_BLK_POST_EE,			ISP_BLK_POST_EE_T, sizeof(struct sensor_post_ee_level) },
+	{ ISP_BLK_NLM_V2,			ISP_BLK_NLM_T, sizeof(struct sensor_nlm_level) },
+	{ ISP_BLK_NLM_V2,			ISP_BLK_VST_T, sizeof(struct sensor_vst_level) },
+	{ ISP_BLK_NLM_V2,			ISP_BLK_IVST_T, sizeof(struct sensor_ivst_level) },
+	{ ISP_BLK_YNRS,				ISP_BLK_YNRS_T, sizeof(struct sensor_ynrs_level) },
+	{ ISP_BLK_BWU_BWD,			ISP_BLK_BWU_BWD_T, sizeof(struct sensor_bwu_bwd_level) },
+	{ ISP_BLK_CNR3,				ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
+	{ ISP_BLK_MFNR,				ISP_BLK_MFNR_T, sizeof(struct sensor_mfnr_level) },
+};
 #endif
 /************************ Project adapt data END *******************************************/
 

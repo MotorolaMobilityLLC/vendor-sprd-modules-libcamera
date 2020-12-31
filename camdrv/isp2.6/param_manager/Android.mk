@@ -50,77 +50,201 @@ LOCAL_C_INCLUDES += \
 
 #LOCAL_SRC_FILES += $(call all-c-files-under, .)
 LOCAL_SRC_FILES := isp_pm.c isp_blocks_cfg.c isp_com_alg.c isp_param_file_update.c
-LOCAL_SRC_FILES += $(call all-c-files-under, blk_comm)
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
-LOCAL_SRC_FILES += $(call all-c-files-under, blk_v25)
+LOCAL_SRC_FILES += blk_list/isp_block_com.c \
+	blk_list/isp_blk_2d_lsc.c \
+	blk_list/isp_blk_3dnr.c \
+	blk_list/isp_blk_aem.c \
+	blk_list/isp_blk_ae_adapt.c \
+	blk_list/isp_blk_afm.c \
+	blk_list/isp_blk_ai_pro.c \
+	blk_list/isp_blk_awb_new.c \
+	blk_list/isp_blk_blc.c \
+	blk_list/isp_blk_bpc.c \
+	blk_list/isp_blk_brightness.c \
+	blk_list/isp_blk_cce.c \
+	blk_list/isp_blk_cfa.c \
+	blk_list/isp_blk_cmc10.c \
+	blk_list/isp_blk_cnr2.c \
+	blk_list/isp_blk_cnr3.c \
+	blk_list/isp_blk_contrast.c \
+	blk_list/isp_blk_dre.c \
+	blk_list/isp_blk_dre_pro.c \
+	blk_list/isp_blk_edge.c \
+	blk_list/isp_blk_fb.c \
+	blk_list/isp_blk_frgb_gamc.c \
+	blk_list/isp_blk_grgb.c \
+	blk_list/isp_blk_hsv.c \
+	blk_list/isp_blk_hsv_new.c \
+	blk_list/isp_blk_hue.c \
+	blk_list/isp_blk_iircnr_iir.c \
+	blk_list/isp_blk_iir_yrandom.c \
+	blk_list/isp_blk_mfnr.c \
+	blk_list/isp_blk_nlm.c \
+	blk_list/isp_blk_posterize.c \
+	blk_list/isp_blk_rgb_dither.c \
+	blk_list/isp_blk_rgb_gain.c \
+	blk_list/isp_blk_saturation.c \
+	blk_list/isp_blk_uv_cdn.c \
+	blk_list/isp_blk_uv_div.c \
+	blk_list/isp_blk_uv_postcdn.c \
+	blk_list/isp_blk_ynr.c \
+	blk_list/isp_blk_ynrs.c \
+	blk_list/isp_blk_yuv_noisefilter.c \
+	blk_list/isp_blk_yuv_precdn.c \
+	blk_list/isp_blk_yuv_ygamma.c
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
-LOCAL_SRC_FILES += $(call all-c-files-under, blk_v26)
+LOCAL_SRC_FILES += blk_list/isp_block_com.c \
+	blk_list/isp_blk_2d_lsc.c \
+	blk_list/isp_blk_3dnr_v1.c \
+	blk_list/isp_blk_aem.c \
+	blk_list/isp_blk_afm.c \
+	blk_list/isp_blk_awb_new.c \
+	blk_list/isp_blk_bchs.c \
+	blk_list/isp_blk_blc.c \
+	blk_list/isp_blk_bpc_v1.c \
+	blk_list/isp_blk_cce.c \
+	blk_list/isp_blk_cfa.c \
+	blk_list/isp_blk_cmc10.c \
+	blk_list/isp_blk_cnr2_v1.c \
+	blk_list/isp_blk_cnr3.c \
+	blk_list/isp_blk_dre_pro.c \
+	blk_list/isp_blk_edge_v1.c \
+	blk_list/isp_blk_fb.c \
+	blk_list/isp_blk_frgb_gamc.c \
+	blk_list/isp_blk_grgb.c \
+	blk_list/isp_blk_hsv_v1.c \
+	blk_list/isp_blk_iircnr_iir.c \
+	blk_list/isp_blk_iir_yrandom.c \
+	blk_list/isp_blk_imblance.c \
+	blk_list/isp_blk_ltm.c \
+	blk_list/isp_blk_mfnr.c \
+	blk_list/isp_blk_nlm_v1.c \
+	blk_list/isp_blk_posterize_v1.c \
+	blk_list/isp_blk_ppe.c \
+	blk_list/isp_blk_rgb_dither.c \
+	blk_list/isp_blk_rgb_gain.c \
+	blk_list/isp_blk_sw3dnr.c \
+	blk_list/isp_blk_uv_cdn.c \
+	blk_list/isp_blk_uv_div_v1.c \
+	blk_list/isp_blk_uv_postcdn.c \
+	blk_list/isp_blk_ynr_v1.c \
+	blk_list/isp_blk_ynrs_v1.c \
+	blk_list/isp_blk_yuv_noisefilter_v1.c \
+	blk_list/isp_blk_yuv_precdn.c \
+	blk_list/isp_blk_yuv_ygamma.c
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
-LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
-	blk_v26/isp_blk_bchs.c \
-	blk_v26/isp_blk_bpc.c \
-	blk_v26/isp_blk_cnr2.c \
-	blk_v26/isp_blk_edge.c \
-	blk_v26/isp_blk_nlm.c \
-	blk_v26/isp_blk_posterize.c \
-	blk_v26/isp_blk_sw3dnr.c \
-	blk_v26/isp_blk_uv_div.c \
-	blk_v26/isp_blk_ynr.c \
-	blk_v26/isp_blk_yuv_noisefilter.c \
-	blk_v26/isp_blk_mfnr.c \
-	blk_v26/isp_blk_cnr3.c \
-	blk_v26/isp_blk_fb.c \
-	blk_v26/isp_blk_dre_pro.c
-LOCAL_SRC_FILES += $(call all-c-files-under, blk_v27)
+LOCAL_SRC_FILES += blk_list/isp_block_com.c \
+	blk_list/isp_blk_2d_lsc.c \
+	blk_list/isp_blk_3dnr_v1.c \
+	blk_list/isp_blk_aem.c \
+	blk_list/isp_blk_ae_adapt.c \
+	blk_list/isp_blk_afm.c \
+	blk_list/isp_blk_ai_pro_v1.c \
+	blk_list/isp_blk_awb_new.c \
+	blk_list/isp_blk_bchs.c \
+	blk_list/isp_blk_blc.c \
+	blk_list/isp_blk_bpc_v1.c \
+	blk_list/isp_blk_cce.c \
+	blk_list/isp_blk_cfa.c \
+	blk_list/isp_blk_cmc10.c \
+	blk_list/isp_blk_cnr2_v1.c \
+	blk_list/isp_blk_cnr3.c \
+	blk_list/isp_blk_dre.c \
+	blk_list/isp_blk_dre_pro.c \
+	blk_list/isp_blk_edge_v1.c \
+	blk_list/isp_blk_fb.c \
+	blk_list/isp_blk_frgb_gamc.c \
+	blk_list/isp_blk_grgb.c \
+	blk_list/isp_blk_hsv_v2.c \
+	blk_list/isp_blk_iircnr_iir.c \
+	blk_list/isp_blk_iir_yrandom.c \
+	blk_list/isp_blk_imblance_v1.c \
+	blk_list/isp_blk_mfnr.c \
+	blk_list/isp_blk_nlm_v1.c \
+	blk_list/isp_blk_posterize_v1.c \
+	blk_list/isp_blk_ppe_v1.c \
+	blk_list/isp_blk_raw_gtm.c \
+	blk_list/isp_blk_rgb_dither.c \
+	blk_list/isp_blk_rgb_gain.c \
+	blk_list/isp_blk_rgb_ltm.c \
+	blk_list/isp_blk_sw3dnr.c \
+	blk_list/isp_blk_uv_cdn.c \
+	blk_list/isp_blk_uv_div_v1.c \
+	blk_list/isp_blk_uv_postcdn.c \
+	blk_list/isp_blk_ynr_v1.c \
+	blk_list/isp_blk_ynrs_v1.c \
+	blk_list/isp_blk_yuv_ltm.c \
+	blk_list/isp_blk_yuv_noisefilter_v1.c \
+	blk_list/isp_blk_yuv_precdn.c \
+	blk_list/isp_blk_yuv_ygamma_v1.c
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.8)
-LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
-	blk_v26/isp_blk_bchs.c \
-	blk_v26/isp_blk_bpc.c \
-	blk_v26/isp_blk_cnr2.c \
-	blk_v26/isp_blk_edge.c \
-	blk_v26/isp_blk_nlm.c \
-	blk_v26/isp_blk_sw3dnr.c \
-	blk_v26/isp_blk_uv_div.c \
-	blk_v26/isp_blk_ynr.c \
-	blk_v26/isp_blk_ynrs.c \
-	blk_v26/isp_blk_yuv_noisefilter.c \
-	blk_v26/isp_blk_mfnr.c \
-	blk_v26/isp_blk_cnr3.c \
-	blk_v26/isp_blk_fb.c \
-	blk_v26/isp_blk_dre_pro.c\
-	blk_v27/isp_blk_dre.c\
-	blk_v27/isp_blk_ppe.c\
-	blk_v27/isp_blk_raw_gtm.c\
-	blk_v27/isp_blk_rgb_ltm.c\
-	blk_v27/isp_blk_yuv_ygamma.c
-LOCAL_SRC_FILES += $(call all-c-files-under, blk_v28)
+LOCAL_SRC_FILES += blk_list/isp_block_com.c \
+	blk_list/isp_blk_2d_lsc_v1.c \
+	blk_list/isp_blk_3dnr_v1.c \
+	blk_list/isp_blk_aem.c \
+	blk_list/isp_blk_ae_adapt.c \
+	blk_list/isp_blk_afm.c \
+	blk_list/isp_blk_awb_new.c \
+	blk_list/isp_blk_bchs.c \
+	blk_list/isp_blk_blc.c \
+	blk_list/isp_blk_bpc_v1.c \
+	blk_list/isp_blk_cce.c \
+	blk_list/isp_blk_cfa.c \
+	blk_list/isp_blk_cmc10.c \
+	blk_list/isp_blk_cnr2_v1.c \
+	blk_list/isp_blk_cnr3.c \
+	blk_list/isp_blk_dre.c \
+	blk_list/isp_blk_dre_pro.c \
+	blk_list/isp_blk_edge_v1.c \
+	blk_list/isp_blk_fb.c \
+	blk_list/isp_blk_frgb_gamc.c \
+	blk_list/isp_blk_iircnr_iir.c \
+	blk_list/isp_blk_iir_yrandom.c \
+	blk_list/isp_blk_imblance_v2.c \
+	blk_list/isp_blk_mfnr.c \
+	blk_list/isp_blk_nlm_v1.c \
+	blk_list/isp_blk_ppe_v1.c \
+	blk_list/isp_blk_rgb_dither.c \
+	blk_list/isp_blk_rgb_gain.c \
+	blk_list/isp_blk_rgb_ltm.c \
+	blk_list/isp_blk_sw3dnr.c \
+	blk_list/isp_blk_uv_cdn.c \
+	blk_list/isp_blk_uv_div_v1.c \
+	blk_list/isp_blk_uv_postcdn.c \
+	blk_list/isp_blk_ynr_v1.c \
+	blk_list/isp_blk_ynrs_v1.c \
+	blk_list/isp_blk_yuv_noisefilter_v1.c \
+	blk_list/isp_blk_yuv_precdn.c \
+	blk_list/isp_blk_yuv_ygamma_v1.c
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.9)
-LOCAL_SRC_FILES += blk_v26/isp_blk_3dnr.c \
-	blk_v26/isp_blk_bchs.c \
-	blk_v26/isp_blk_bpc.c \
-	blk_v26/isp_blk_cnr2.c \
-	blk_v26/isp_blk_edge.c \
-	blk_v26/isp_blk_nlm.c \
-	blk_v26/isp_blk_posterize.c \
-	blk_v26/isp_blk_sw3dnr.c \
-	blk_v26/isp_blk_uv_div.c \
-	blk_v26/isp_blk_ynr.c \
-	blk_v26/isp_blk_ynrs.c \
-	blk_v26/isp_blk_yuv_noisefilter.c \
-	blk_v26/isp_blk_mfnr.c \
-	blk_v26/isp_blk_cnr3.c \
-	blk_v26/isp_blk_dre_pro.c\
-	blk_v27/isp_blk_ai_pro.c\
-	blk_v27/isp_blk_dre.c\
-	blk_v27/isp_blk_fb.c\
-	blk_v27/isp_blk_hsv.c\
-	blk_v27/isp_blk_imblance.c\
-	blk_v27/isp_blk_ppe.c\
-	blk_v27/isp_blk_raw_gtm.c\
-	blk_v27/isp_blk_rgb_ltm.c\
-	blk_v27/isp_blk_yuv_ltm.c\
-	blk_v27/isp_blk_yuv_ygamma.c
+LOCAL_SRC_FILES += blk_list/isp_block_com.c \
+	blk_list/isp_blk_aem.c \
+	blk_list/isp_blk_ae_adapt.c \
+	blk_list/isp_blk_awb_new.c \
+	blk_list/isp_blk_bchs.c \
+	blk_list/isp_blk_blc.c \
+	blk_list/isp_blk_cce.c \
+	blk_list/isp_blk_cmc10.c \
+	blk_list/isp_blk_cnr3.c \
+	blk_list/isp_blk_dre.c \
+	blk_list/isp_blk_dre_pro.c \
+	blk_list/isp_blk_fb.c \
+	blk_list/isp_blk_frgb_gamc.c \
+	blk_list/isp_blk_iir_yrandom.c \
+	blk_list/isp_blk_mfnr.c \
+	blk_list/isp_blk_nlm_v1.c \
+	blk_list/isp_blk_ppe_v1.c \
+	blk_list/isp_blk_raw_gtm.c \
+	blk_list/isp_blk_rgb_dither.c \
+	blk_list/isp_blk_rgb_gain.c \
+	blk_list/isp_blk_sw3dnr.c \
+	blk_list/isp_blk_uv_cdn.c \
+	blk_list/isp_blk_ynrs_v1.c \
+	blk_list/isp_blk_raw_gtm.c \
+	blk_list/isp_blk_yuv_noisefilter_v1.c \
+	blk_list/isp_blk_yuv_ygamma_v1.c
 endif
 
 include $(LOCAL_PATH)/../../../SprdCtrl.mk

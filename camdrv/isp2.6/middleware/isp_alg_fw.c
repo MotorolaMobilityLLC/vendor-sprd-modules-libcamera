@@ -4903,6 +4903,8 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 
 	for (i = 0; i < 9; i++) {
 		lsc_param.lsc_tab_address[i] = lsc_tab_param_ptr->map_tab[i].param_addr;
+		lsc_param.rg_gradient[i] = lsc_tab_param_ptr->map_tab[i].rg;
+		lsc_param.bg_gradient[i] = lsc_tab_param_ptr->map_tab[i].bg;
 	}
 
 	lsc_param.img_height = lsc_tab_param_ptr->resolution.h;

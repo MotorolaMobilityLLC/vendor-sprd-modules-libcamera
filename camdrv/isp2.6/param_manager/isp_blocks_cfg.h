@@ -145,7 +145,8 @@ struct isp_rgb_dither_param {
 };
 
 struct isp_lsc_map {
-	cmr_u32 ct;
+	cmr_u32 rg;
+	cmr_u32 bg;
 	cmr_u32 grid;
 	cmr_u32 gain_w;
 	cmr_u32 gain_h;

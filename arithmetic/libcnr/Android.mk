@@ -75,5 +75,3 @@ LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_CPU
 include $(BUILD_SHARED_LIBRARY)
 endif
 endif
-
-

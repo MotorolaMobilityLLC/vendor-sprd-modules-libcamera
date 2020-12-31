@@ -617,7 +617,7 @@ LOCAL_CFLAGS += -DCAMERA_CNR3_ENABLE
 endif
 endif
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),ums512)
+ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 ums312 ums9230 ums9520),)
 LOCAL_CFLAGS += -DCAMERA_RADIUS_ENABLE
 endif
 
