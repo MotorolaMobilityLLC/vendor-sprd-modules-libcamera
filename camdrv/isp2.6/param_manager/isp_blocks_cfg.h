@@ -586,7 +586,7 @@ struct isp_hsv_param_v0 {
 
 //sharkl6 hsv
 struct isp_hsv_param_new3 {
-	// struct isp_dev_hsv_info_v3 cur;
+	struct isp_dev_hsv_info_v3 cur;
 	struct isp_hsv_param_v0 hsv_param;
 	struct isp_sample_point_info cur_idx;
 	struct isp_hsv_table_v0 hsv_lut[SENSOR_HSV_NUM];
