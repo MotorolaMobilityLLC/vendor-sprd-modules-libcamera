@@ -166,6 +166,7 @@ typedef enum {
 	SHARKL5_NOISEFILTER = 0x48,
 	SHARKL5_PRO_PPE = 0x49,
 	SHARKL5_PRO_IMBALANCE = 0x4A,
+	SHARKL6_IMBALANCE = 0x55,
 	SHARKL5_PRO_BWUD = 0x4B,
 	SHARKL5_PRO_RAW_GTM = 0x4C,
 	SHARKL5_PRO_RGB_LTM = 0x4D,
@@ -2511,16 +2512,6 @@ cmr_s32 isp_denoise_write_v28(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_CNR2_T] = 1;
 			break;
 		}
-	case SHARKL5_IMBALANCE:
-		{
-			static cmr_u32 imblance_ptr_offset;
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = offset_units * sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
-			memcpy(((cmr_u8 *) (nr_update_param.imbalance_level_ptr)) + nr_offset_addr + imblance_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
-			imblance_ptr_offset = (0x01 != data_head->packet_status) ? (imblance_ptr_offset + data_actual_len) : 0;
-			nr_tool_flag[ISP_BLK_IMBALANCEE_T] = 1;
-			break;
-		}
 	case SHARKL5_PRO_PPE:
 		{
 			static cmr_u32 ppe_ptr_offset;
@@ -2531,7 +2522,7 @@ cmr_s32 isp_denoise_write_v28(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_PPE_T] = 1;
 			break;
 		}
-	case SHARKL5_PRO_IMBALANCE:
+	case SHARKL6_IMBALANCE:
 		{
 			static cmr_u32 imblance_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -2569,6 +2560,16 @@ cmr_s32 isp_denoise_write_v28(cmr_u8 * data_buf, cmr_u32 * data_size)
 			memcpy(((cmr_u8 *) (nr_update_param.ivst_level_ptr)) + nr_offset_addr + ivst_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			ivst_ptr_offset = (0x01 != data_head->packet_status) ? (ivst_ptr_offset + data_actual_len) : 0;
 			nr_tool_flag[ISP_BLK_IVST_T] = 1;
+			break;
+		}
+	case POST_EE:
+		{
+			static cmr_u32 post_edge_ptr_offset;
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = offset_units * sizeof(struct sensor_post_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POST_EE_T];
+			memcpy(((cmr_u8 *) (nr_update_param.soft_ee_level_ptr)) + nr_offset_addr + post_edge_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
+			post_edge_ptr_offset = (0x01 != data_head->packet_status) ? (post_edge_ptr_offset + data_actual_len) : 0;
+			nr_tool_flags[ISP_BLK_POST_EE_T] = 1;
 			break;
 		}
 	case YNRS:
@@ -2826,14 +2827,6 @@ cmr_s32 isp_denoise_read_v28(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.cnr2_level_ptr + offset_units * src_size;
 			break;
 		}
-	case SHARKL5_IMBALANCE:
-		{
-			data_head_ptr->sub_type = SHARKL5_IMBALANCE;
-			src_size = sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.imbalance_level_ptr + offset_units * src_size;
-			break;
-		}
 	case SHARKL5_PRO_PPE:
 		{
 			data_head_ptr->sub_type = SHARKL5_PRO_PPE;
@@ -2842,9 +2835,9 @@ cmr_s32 isp_denoise_read_v28(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.ppe_level_ptr + offset_units * src_size;
 			break;
 		}
-	case SHARKL5_PRO_IMBALANCE:
+	case SHARKL6_IMBALANCE:
 		{
-			data_head_ptr->sub_type = SHARKL5_PRO_IMBALANCE;
+			data_head_ptr->sub_type = SHARKL6_IMBALANCE;
 			src_size = sizeof(struct sensor_nlm_imbalance_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IMBALANCEE_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.imbalance_level_ptr + offset_units * src_size;
@@ -2872,6 +2865,14 @@ cmr_s32 isp_denoise_read_v28(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			src_size = sizeof(struct sensor_ivst_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IVST_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.ivst_level_ptr + offset_units * src_size;
+			break;
+		}
+	case POST_EE:
+		{
+			data_head_ptr->sub_type = POST_EE;
+			src_size = sizeof(struct sensor_post_ee_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_POST_EE_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.soft_ee_level_ptr + offset_units * src_size;
 			break;
 		}
 	case YNRS:
