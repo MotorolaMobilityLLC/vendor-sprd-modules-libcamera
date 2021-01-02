@@ -1443,9 +1443,6 @@ cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
 cmr_int isp_video_stop(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
 
-
-cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
 #endif

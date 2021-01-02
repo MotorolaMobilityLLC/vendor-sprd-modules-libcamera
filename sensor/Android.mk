@@ -95,11 +95,6 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/ams/tcs3430/tcs_3430_drv.h
 LOCAL_SRC_FILES+= ams/tcs3430/tcs_3430_drv.c
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/al3200
-LOCAL_SRC_FILES += al3200/al3200.c
-endif
-
 LOCAL_MODULE := libcamsensor
 LOCAL_MODULE_TAGS := optional
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ASAN_MEM_DETECT)),true)

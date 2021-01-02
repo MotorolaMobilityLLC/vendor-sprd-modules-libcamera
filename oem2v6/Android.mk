@@ -106,11 +106,6 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_EIS)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/eis/inc
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/inc/ydenoise_paten
-LOCAL_SRC_FILES += src/cmr_ydenoise.c
-endif
-
 #include fdr files
 ifeq ($(strip $(TARGET_BOARD_CAMERA_FDR_CAPTURE)),true)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/sprd_fdr/inc
@@ -120,10 +115,6 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 LOCAL_SRC_FILES += src/cmr_hdr.c
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
-LOCAL_SRC_FILES += src/cmr_uvdenoise.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
@@ -227,19 +218,6 @@ else
 LOCAL_CFLAGS += -DCONFIG_SPRD_HDR_LIB
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
-LOCAL_SHARED_LIBRARIES += libuvdenoise
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
-LOCAL_SHARED_LIBRARIES += libynoise
-endif
-
-
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
-LOCAL_SHARED_LIBRARIES += libalRnBLV
 endif
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))

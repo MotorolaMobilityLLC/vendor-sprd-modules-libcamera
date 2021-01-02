@@ -25,15 +25,6 @@ extern struct class_tab_t hdr_tab_info;
 #ifdef CONFIG_CAMERA_FACE_DETECT
 extern struct class_tab_t fd_tab_info;
 #endif
-#ifdef CONFIG_CAMERA_UV_DENOISE
-extern struct class_tab_t uvde_tab_info;
-#endif
-#ifdef CONFIG_CAMERA_Y_DENOISE
-extern struct class_tab_t yde_tab_info;
-#endif
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-extern struct class_tab_t refocus_tab_info;
-#endif
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE
 extern struct class_tab_t threednr_tab_info;
 extern struct class_tab_t threednr_prev_tab_info;
@@ -68,15 +59,6 @@ struct ipm_class_tab class_type_tab[] = {
 #endif
 #ifdef CONFIG_CAMERA_FACE_DETECT
     {IPM_TYPE_FD, &fd_tab_info},
-#endif
-#ifdef CONFIG_CAMERA_UV_DENOISE
-    {IPM_TYPE_UVDE, &uvde_tab_info},
-#endif
-#ifdef CONFIG_CAMERA_Y_DENOISE
-    {IPM_TYPE_YDE, &yde_tab_info},
-#endif
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-    {IPM_TYPE_REFOCUS, &refocus_tab_info},
 #endif
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE
     {IPM_TYPE_3DNR, &threednr_tab_info},

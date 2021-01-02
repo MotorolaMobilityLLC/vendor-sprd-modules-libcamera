@@ -62,6 +62,10 @@ struct commn_info {
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
 };
 
+struct sensor_pm_info {
+	struct sensor_raw_info *sn_raw_info;
+};
+
 struct ae_info {
 	cmr_handle handle;
 	cmr_u32 sw_bypass;
@@ -245,7 +249,7 @@ struct isp_alg_fw_context {
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info commn_cxt;
-	struct sensor_data_info sn_cxt;
+	struct sensor_pm_info sn_cxt;
 	struct isp_hist_statistic_info hist_stats;
 	struct ae_info ae_cxt;
 	struct awb_info awb_cxt;
@@ -3081,7 +3085,6 @@ static cmr_int ispalg_pm_init(cmr_handle isp_alg_handle, struct isp_init_param *
 	memset(&output, 0, sizeof(output));
 	cxt->sn_cxt.sn_raw_info = sensor_raw_info_ptr;
 	isp_pm_raw_para_update_from_file(sensor_raw_info_ptr);
-	memcpy((void *)cxt->sn_cxt.isp_init_data, (void *)input_ptr->mode_ptr, ISP_MODE_NUM_MAX * sizeof(struct isp_data_info));
 
 	input.num = MAX_MODE_NUM;
 	version_info = (struct sensor_version_info *)sensor_raw_info_ptr->version_info;

@@ -249,25 +249,3 @@ void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata)
 
 	isp_dev_irq_info_proc(cxt->dev_access_handle, data);
 }
-
-
-/************** Unused or unsupported mw interface below******************/
-cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	UNUSED(handle);
-	UNUSED(in_ptr);
-	UNUSED(out_ptr);
-
-	ret = ISP_ERROR;
-	ISP_LOGE("error: not supported interface.\n");
-
-	return ret;
-}
-
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
-{
-	UNUSED(handle);
-	UNUSED(grab_event_cb);
-}
-

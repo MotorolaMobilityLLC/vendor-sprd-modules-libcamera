@@ -20,20 +20,20 @@
 extern "C" {
 #endif
 
-#include "cmr_type.h"
-#include "isp_app.h"
-#include "sensor_raw.h"
+
 #include <cutils/properties.h>
 #include <sys/types.h>
 #include <utils/Log.h>
 #include <utils/Timers.h>
-#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-#include "isp_pfc.h"
-#endif
+
+#include "sprd_img.h"
+#include "sprd_sensor_k.h"
+
+#include "cmr_type.h"
 #include "cmr_log.h"
 #include "jpeg_exif_header.h"
-#include "sprd_img.h"
-#include <sprd_sensor_k.h>
+#include "isp_app.h"
+#include "sensor_raw.h"
 
 #define OEM_LIBRARY_PATH "libcamoem.so"
 #ifdef CONFIG_USE_CAMERASERVER_PROC
@@ -1261,9 +1261,6 @@ enum ipm_class_type {
     IPM_TYPE_NONE = 0x0,
     IPM_TYPE_HDR = 0x00000001,
     IPM_TYPE_FD = 0x00000002,
-    IPM_TYPE_FDR = 0x00000003,
-    IPM_TYPE_UVDE = 0x00000004,
-    IPM_TYPE_YDE = 0x00000008,
     IPM_TYPE_REFOCUS = 0x00000010,
     IPM_TYPE_3DNR = 0x00000020,
     IPM_TYPE_3DNR_PRE = 0x00000040,
@@ -1274,8 +1271,6 @@ enum ipm_class_type {
     IPM_TYPE_ULTRA_WIDE = 0x00000300,
     IPM_TYPE_AUTO_TRACKING = 0x00000400,
     IPM_TYPE_DRE = 0x00000500,
-    IPM_TYPE_EE_FDR = 0x00000600,
-    IPM_TYPE_CNR_FDR = 0x00000700,
 };
 
 enum img_fmt {

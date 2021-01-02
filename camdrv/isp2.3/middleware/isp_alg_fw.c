@@ -66,6 +66,10 @@ struct commn_info_t {
 	cmr_u32 ebd_support;
 };
 
+struct sensor_pm_info {
+	struct sensor_raw_info *sn_raw_info;
+};
+
 struct ae_info_t {
 	cmr_handle handle;
 	cmr_u32 sw_bypass;
@@ -256,7 +260,7 @@ struct isp_alg_fw_context {
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info_t commn_cxt;
-	struct sensor_data_info sn_cxt;
+	struct sensor_pm_info sn_cxt;
 	struct ae_info_t ae_cxt;
 	struct awb_info_t awb_cxt;
 	struct smart_info_t smart_cxt;
@@ -5296,19 +5300,6 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	/* restore to default mode, or else normal take picture will still be treated as simulation mode. */
 	cxt->takepicture_mode = CAMERA_NORMAL_MODE;
 
-exit:
-	ISP_LOGV("done %ld", ret);
-	return ret;
-}
-
-cmr_int isp_alg_fw_proc_next(cmr_handle isp_alg_handle, struct ipn_in_param *in_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-
-	UNUSED(isp_alg_handle);
-	UNUSED(in_ptr);
-	/*do not support silce capture function now */
-	ISP_LOGV("If need slice capture process, add releated code!");
 exit:
 	ISP_LOGV("done %ld", ret);
 	return ret;

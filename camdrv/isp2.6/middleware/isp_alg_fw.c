@@ -131,6 +131,10 @@ struct commn_info {
 	struct sensor_raw_resolution_info input_size_trim[ISP_INPUT_SIZE_NUM_MAX];
 };
 
+struct sensor_pm_info {
+	struct sensor_raw_info *sn_raw_info;
+};
+
 struct ae_info {
 	cmr_handle handle;
 	cmr_u32 sw_bypass;
@@ -400,7 +404,7 @@ struct isp_alg_fw_context {
 	struct afctrl_ae_info ae_info;
 	struct afctrl_awb_info awb_info;
 	struct commn_info commn_cxt;
-	struct sensor_data_info sn_cxt;
+	struct sensor_pm_info sn_cxt;
 	struct ae_info ae_cxt;
 	struct awb_info awb_cxt;
 	struct smart_info smart_cxt;

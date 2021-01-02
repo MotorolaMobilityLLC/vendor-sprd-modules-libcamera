@@ -33,12 +33,6 @@ struct isp_mw_context {
 	cmr_u32 isp_mw_sts;
 };
 
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
-{
-	UNUSED(handle);
-	UNUSED(grab_event_cb);
-}
-
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
 {
 	struct isp_mw_context *cxt = (struct isp_mw_context *)privdata;
@@ -79,20 +73,6 @@ static cmr_s32 ispmw_check_proc_start_param(struct ips_in_param *in_param_ptr)
 		ISP_RETURN_IF_FAIL(ret, ("fail to check start param input size: w:%d, h:%d",
 					 in_param_ptr->src_frame.img_size.w,
 					 in_param_ptr->src_frame.img_size.h));
-	}
-
-	return ret;
-}
-
-static cmr_s32 ispmw_check_proc_next_param(struct ipn_in_param *in_param_ptr)
-{
-	cmr_s32 ret = ISP_SUCCESS;
-
-	if ((ISP_ZERO != (in_param_ptr->src_slice_height & ISP_ONE)) ||
-	    (ISP_ZERO != (in_param_ptr->src_avail_height & ISP_ONE))) {
-		ret = ISP_PARAM_ERROR;
-		ISP_RETURN_IF_FAIL(ret, ("fail to check param,input size:src_slice_h:%d,src_avail_h:%d",
-					 in_param_ptr->src_slice_height, in_param_ptr->src_avail_height));
 	}
 
 	return ret;
@@ -297,25 +277,6 @@ cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_ptr, struct ip
 	ISP_RETURN_IF_FAIL(ret, ("fail to check init param"));
 
 	ret = isp_alg_fw_proc_start(cxt->alg_fw_handle, in_ptr);
-
-	return ret;
-}
-
-cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
-	UNUSED(out_ptr);
-
-	if (NULL == cxt) {
-		ISP_LOGE("fail to check isp handler");
-		return ISP_PARAM_NULL;
-	}
-
-	ret = ispmw_check_proc_next_param(in_ptr);
-	ISP_RETURN_IF_FAIL(ret, ("fail to check init param"));
-
-	ret = isp_alg_fw_proc_next(cxt->alg_fw_handle, in_ptr);
 
 	return ret;
 }

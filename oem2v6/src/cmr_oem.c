@@ -2338,17 +2338,6 @@ cmr_uint camera_isp_af_param(cmr_uint cmd, cmr_uint cmd_value) {
     return out_param;
 }
 
-void camera_isp_dev_evt_cb(cmr_int evt, void *data, cmr_u32 data_len,
-                           void *privdata) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)privdata;
-    struct frm_info *frame = (struct frm_info *)data;
-    cmr_u32 channel_id;
-    cmr_handle receiver_handle;
-    cmr_int flash_status = FLASH_CLOSE;
-    struct setting_cmd_parameter setting_param;
-}
-
 void camera_grab_post_ynr_evt_cb(cmr_int evt, void *data, void *privdata) {
     struct camera_context *cxt = NULL;
 
@@ -8985,19 +8974,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
                            param_ptr->dst_frame.size.height * 3 / 2);
         }
     } else {
-        struct ipn_in_param in_param;
-        struct ips_out_param out_param;
-        in_param.src_avail_height = param_ptr->src_avail_height;
-        in_param.src_slice_height = param_ptr->src_slice_height;
-        in_param.src_addr_phy.chn0 = param_ptr->src_frame.addr_phy.addr_y;
-        in_param.src_addr_phy.chn1 = param_ptr->src_frame.addr_phy.addr_u;
-        in_param.dst_addr_phy.chn0 = param_ptr->dst_frame.addr_phy.addr_y;
-        in_param.dst_addr_phy.chn1 = param_ptr->dst_frame.addr_phy.addr_u;
-        ret = isp_proc_next(isp_cxt->isp_handle, &in_param, &out_param);
-        if (ret) {
-            CMR_LOGE("failed to start proc %ld", ret);
-            goto exit;
-        }
+        CMR_LOGE("failed to proc slice in oem\n");
     }
 
     if (CMR_CAMERA_SUCCESS == ret) {
@@ -9221,8 +9198,6 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     else
         sensor_info_ptr->mode_info[sn_mode].binning_factor = 1;
     isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
-
-    ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
 
     if (1 == cxt->isp_to_dram) {
         isp_param.capture_mode = ISP_CAP_MODE_DRAM;

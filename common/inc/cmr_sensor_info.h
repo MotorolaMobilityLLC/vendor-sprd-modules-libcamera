@@ -18,18 +18,10 @@
 #define _CMR_SENSOR_INFO_H_
 #include "cmr_types.h"
 
-#define MAX_MODE_NUM 16
 
-#define AE_FLICKER_NUM 2
-#define AE_ISO_NUM_NEW 8
-#define AE_WEIGHT_TABLE_NUM 3
-#define AE_SCENE_NUM 8
-#define SNR_NAME_MAX_LEN 64
 #define SENSOR_PDAF_MODE 4
 #define SENSOR_NAME_LEN 32
 
-typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len,
-                                   void *privdata);
 enum sns_cmd_section { CMD_SNS_OTP, CMD_SNS_IC, CMD_SNS_AF };
 
 enum sns_cmd_section_start {
@@ -209,9 +201,6 @@ struct sensor_data_info {
     cmr_u32 size;
     void *sub_data_ptr;
     cmr_u32 sub_size;
-    struct sensor_raw_info *sn_raw_info;
-    struct isp_data_info isp_init_data[MAX_MODE_NUM];
-    struct isp_data_info isp_update_data[MAX_MODE_NUM]; /*for isp_tool*/
     cmr_u8 dualcam_cali_lib_type;
 };
 

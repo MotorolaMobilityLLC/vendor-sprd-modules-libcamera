@@ -6553,8 +6553,6 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
 
     isp_param.resolution_info.max_gain = sns_ex_info_ptr->max_adgain;
 
-    ispmw_dev_buf_cfg_evt_cb(isp_cxt->isp_handle, camera_isp_dev_evt_cb);
-
     if (1 == cxt->isp_to_dram) {
         isp_param.capture_mode = ISP_CAP_MODE_DRAM;
     }

@@ -33,12 +33,6 @@ struct isp_mw_context {
 	cmr_u32 isp_mw_sts;
 };
 
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb)
-{
-	UNUSED(handle);
-	UNUSED(grab_event_cb);
-}
-
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata)
 {
 	struct isp_mw_context *mw_cxt = (struct isp_mw_context *)privdata;

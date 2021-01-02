@@ -45,19 +45,6 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_DRE_CAPTURE)),true)
 LOCAL_SHARED_LIBRARIES += libsprddre
 endif
 
-ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
-LOCAL_SHARED_LIBRARIES += libuvdenoise
-endif
-
-ifeq ($(strip $(TARGET_BOARD_CAMERA_Y_DENOISE)),true)
-LOCAL_SHARED_LIBRARIES += libynoise
-endif
-
-
-ifeq ($(strip $(TARGET_BOARD_CONFIG_CAMERA_RT_REFOCUS)),true)
-LOCAL_SHARED_LIBRARIES += libalRnBLV
-endif
-
 ifeq ($(strip $(TARGET_BOARD_BLUR_MODE_SUPPORT)),true)
 LOCAL_SHARED_LIBRARIES += libbokeh_gaussian libbokeh_gaussian_cap libTfliteWrapper libSegLite libBokeh2Frames
 endif

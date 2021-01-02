@@ -1144,11 +1144,6 @@ struct isp_init_param {
 	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
 	struct isp_size sensor_max_size;
-#ifdef CONFIG_CAMERA_RT_REFOCUS
-	struct isp_sensor_ex_info ex_info_slv;
-	void *setting_param_ptr_slv;	// slave sensor
-	struct sensor_otp_cust_info *otp_data_slv;
-#endif
 	cmr_u32 image_pattern;
 	cmr_s32 dcam_fd;
 	uint32_t multi_mode;
@@ -1434,8 +1429,7 @@ cmr_int isp_ioctl(cmr_handle handle, enum isp_ctrl_cmd cmd, void *param_ptr);
 cmr_int isp_video_start(cmr_handle handle, struct isp_video_start *param_ptr);
 cmr_int isp_video_stop(cmr_handle handle);
 cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, struct ips_out_param *out_ptr);
-cmr_int isp_proc_next(cmr_handle handle, struct ipn_in_param *in_ptr, struct ips_out_param *out_ptr);
-void ispmw_dev_buf_cfg_evt_cb(cmr_handle handle, isp_buf_cfg_evt_cb grab_event_cb);
+
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
 
