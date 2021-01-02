@@ -1971,7 +1971,6 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 	struct isp_pm_ioctl_input ioctl_input = { PNULL, 0 };
 	struct isp_pm_param_data pm_param;
 	struct isp_ai_bchs_param *bchs_cur[2] = { PNULL, PNULL };
-	struct isp_ai_hsv_info *hsv_cur[2] = { PNULL, PNULL };
 	struct isp_ai_ee_param *ee_cur[2] = { PNULL, PNULL };
 	cmr_u32 blk_id = 0, blk_num = 0;
 	cmr_u16 smooth_ratio = 0;
@@ -2074,6 +2073,8 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 		ret = isp_pm_ioctl(cxt->handle_pm,
 				cmd, (void *)&ioctl_input, (void *)&ioctl_output);
 		ISP_TRACE_IF_FAIL(ret, ("fail to get hsv ai PARAM"));
+#ifndef CONFIG_ISP_2_8
+		struct isp_ai_hsv_info *hsv_cur[2] = { PNULL, PNULL };
 		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
 			hsv_cur[i] = (struct isp_ai_hsv_info *)ioctl_output.param_data_ptr->data_ptr;
 
@@ -2092,6 +2093,27 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 			ioctl_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[i];
 			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &ioctl_input, NULL);
 		}
+#else
+		struct isp_ai_hsv_info_v1 *hsv_cur_v1[2] = { PNULL, PNULL };
+		if (ioctl_output.param_num == 1 && ioctl_output.param_data_ptr && ioctl_output.param_data_ptr->data_ptr)
+			hsv_cur_v1[i] = (struct isp_ai_hsv_info_v1 *)ioctl_output.param_data_ptr->data_ptr;
+
+		if (hsv_cur_v1[i] && hsv_cur_v1[i]->hue_offset_enable) {
+			if (cxt->smooth_ratio == 0 && !cxt->ai_scene_flag)
+				continue;
+
+			ai_update_data.param_ptr = (void *)hsv_cur_v1[i];
+			memset(&pm_param, 0, sizeof(pm_param));
+			BLOCK_PARAM_CFG(ioctl_input, pm_param,
+				ISP_PM_BLK_AI_SCENE_UPDATE_HSV,
+				hsv_blk_id,
+				&ai_update_data,
+				sizeof(struct isp_ai_update_param));
+
+			ioctl_input.param_data_ptr->mode_id = cxt->commn_cxt.isp_pm_mode[i];
+			ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_AI_SCENE_PARAM, &ioctl_input, NULL);
+		}
+#endif
 	}
 
 	for (i = 0; i < num; i++) {
