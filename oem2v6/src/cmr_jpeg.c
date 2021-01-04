@@ -20,6 +20,10 @@
 #include "cmr_jpeg.h"
 #include <dlfcn.h>
 #include <libloader.h>
+#include "pthread.h"
+
+static uint32_t inited = 0;
+static pthread_mutex_t jpeg_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
                       jpg_evt_cb_ptr adp_event_cb) {
@@ -33,11 +37,13 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
+    pthread_mutex_lock(&jpeg_mutex);
     *jpeg_handle = 0;
 
     jcxt = (struct jpeg_lib_cxt *)malloc(sizeof(struct jpeg_lib_cxt));
     if (!jcxt) {
         CMR_LOGE("No mem!\n");
+        pthread_mutex_unlock(&jpeg_mutex);
         return CMR_CAMERA_NO_MEM;
     }
     codec_handle = (struct jpeg_codec_caller_handle *)malloc(
@@ -46,6 +52,7 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
         free(jcxt);
         jcxt = NULL;
         CMR_LOGE("No mem!\n");
+        pthread_mutex_unlock(&jpeg_mutex);
         return CMR_CAMERA_NO_MEM;
     }
     codec_handle->reserved = oem_handle;
@@ -114,6 +121,8 @@ exit:
         }
     }
 
+    inited = 1;
+    pthread_mutex_unlock(&jpeg_mutex);
     CMR_LOGD("ret %d", ret);
     return ret;
 }
@@ -130,6 +139,7 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
+    pthread_mutex_lock(&jpeg_mutex);
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
 
     jpeg_src.fmt = src->fmt;
@@ -178,6 +188,7 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
 
     ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean,
                                 enc_cb_param);
+    pthread_mutex_unlock(&jpeg_mutex);
     if (ret) {
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
@@ -198,7 +209,7 @@ cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
+    pthread_mutex_lock(&jpeg_mutex);
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
 
     jpeg_src.fmt = src->fmt;
@@ -246,6 +257,7 @@ cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
     jpeg_dst.reserved = dst->reserved;
 
     ret = jcxt->ops.jpeg_decode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean);
+    pthread_mutex_unlock(&jpeg_mutex);
     if (ret) {
         CMR_LOGE("jpeg encode error");
         return CMR_CAMERA_FAIL;
@@ -296,9 +308,7 @@ static cmr_int _jpeg_enc_wexif(struct jpeg_enc_exif_param *param_ptr,
              input_param.src_jpeg_buf_ptr, input_param.src_jpeg_size,
              input_param.thumbnail_buf_ptr, input_param.thumbnail_buf_size,
              input_param.target_buf_ptr, input_param.target_buf_size);
-
     ret = IMGJPEG_WriteExif(&input_param, &output_param);
-
     out_ptr->output_buf_virt_addr = (cmr_uint)output_param.output_buf_ptr;
     out_ptr->output_buf_size = output_param.output_size;
     free(input_param.temp_buf_ptr);
@@ -322,9 +332,10 @@ cmr_int cmr_jpeg_enc_add_eixf(cmr_handle jpeg_handle,
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
+    pthread_mutex_lock(&jpeg_mutex);
     CMR_LOGD("jpeg:enc add exit start");
     ret = _jpeg_enc_wexif(param_ptr, output_ptr);
+    pthread_mutex_unlock(&jpeg_mutex);
     if (ret) {
         CMR_LOGE("jpeg encode add eixf error");
         return CMR_CAMERA_FAIL;
@@ -345,13 +356,22 @@ cmr_int cmr_stop_codec(cmr_handle jpeg_handle) {
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    pthread_mutex_lock(&jpeg_mutex);
+    if (inited == 0) {
+        CMR_LOGE("already deinit!");
+        goto exit;
+    }
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
     CMR_LOGI("cmr_stop_codec enter");
     ret = jcxt->ops.jpeg_stop(jcxt->codec_handle);
     if (ret) {
         CMR_LOGE("stop codec error");
+        pthread_mutex_unlock(&jpeg_mutex);
         return CMR_CAMERA_FAIL;
     }
+
+exit:
+    pthread_mutex_unlock(&jpeg_mutex);
     CMR_LOGD("ret %d", ret);
     return ret;
 }
@@ -365,10 +385,12 @@ cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle) {
         return CMR_CAMERA_INVALID_PARAM;
     }
 
+    pthread_mutex_lock(&jpeg_mutex);
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
     ret = jcxt->ops.jpeg_deinit(jcxt->codec_handle);
     if (ret) {
         CMR_LOGE("jpeg deinit error");
+        pthread_mutex_unlock(&jpeg_mutex);
         return CMR_CAMERA_FAIL;
     }
     if (jcxt->codec_handle) {
@@ -385,6 +407,8 @@ cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle) {
         free(jcxt);
         jcxt = NULL;
     }
+    inited = 0;
+    pthread_mutex_unlock(&jpeg_mutex);
     CMR_LOGD("ret %d", ret);
     return ret;
 }
