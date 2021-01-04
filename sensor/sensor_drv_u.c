@@ -4191,11 +4191,11 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
         zoom_param->MaxDigitalZoom = 8.0;
         zoom_param->ZoomRatioSection[0] = 0.6;
         zoom_param->ZoomRatioSection[1] = 1.0;
-        zoom_param->ZoomRatioSection[2] = 8.0;
+        zoom_param->ZoomRatioSection[2] = 4.0;
         zoom_param->ZoomRatioSection[3] = 0;
         zoom_param->ZoomRatioSection[4] = 0;
         zoom_param->ZoomRatioSection[5] = 0;
-        zoom_param->BinningRatio = 8.0;
+        zoom_param->BinningRatio = 5.0;
     }
 
     return ret;
