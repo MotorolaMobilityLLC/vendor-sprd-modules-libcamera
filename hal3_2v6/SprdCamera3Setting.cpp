@@ -4307,6 +4307,16 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     uint8_t burstCapCnt = 0;
     requestInfo.update(ANDROID_SPRD_BURST_CAP_CNT, &burstCapCnt, 1);
 
+    char ITaddTag_property[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.ITaddTag", ITaddTag_property, "0");
+    if (atoi(ITaddTag_property) != 0) {
+        int32_t perfectskinlevel[SPRD_FACE_BEAUTY_PARAM_NUM] = {0};
+        requestInfo.update(ANDROID_SPRD_UCAM_SKIN_LEVEL, (perfectskinlevel), ARRAY_SIZE(perfectskinlevel));
+
+        uint8_t mirror = 0;
+        requestInfo.update(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR, &mirror, 1);
+    }
+
     uint8_t captureMode = 1;
     requestInfo.update(ANDROID_SPRD_CAPTURE_MODE, &captureMode, 1);
 

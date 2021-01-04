@@ -609,6 +609,7 @@ class NativeCameraHidl {
     int local_meta_count = 0;
     std::vector<uint8_t> meta_u8;
     std::vector<int32_t> meta_int32;
+    std::vector<float> meta_float;
     uint8_t mode_test;
     buffer_handle_t *popBufferList(android::List<new_mem_t *> &list, int type);
     ::android::hardware::camera::common::V1_0::helper::CameraMetadata
@@ -1541,6 +1542,7 @@ int NativeCameraHidl::openNativeCamera(int g_camera_id) {
     IT_LOGI("mProvider address = %p", &mProvider);
     parseProviderName(service_name, &mProviderType, &id);
     hidl_vec<hidl_string> cameraDeviceNames;
+    property_set("persist.vendor.cam.ITaddTag", "1");
     if (g_camera_id < 4)
         cameraDeviceNames = getCameraDeviceNames(g_camera_id, mProvider);
     ::android::sp<ICameraDevice> device3_x;
@@ -1630,8 +1632,10 @@ int NativeCameraHidl::transferMetaData(HalCaseComm *_json2) {
     int32_t **p;
     meta_int32.clear();
     meta_u8.clear();
+    meta_float.clear();
     meta_int32.resize(50);
     meta_u8.resize(50);
+    meta_float.resize(50);
     for (auto &metadata : _json2->m_MetadataArr) {
         is_sprdtag = false;
         tag = 0;
@@ -1693,6 +1697,16 @@ int NativeCameraHidl::transferMetaData(HalCaseComm *_json2) {
             }
             break;
         case 2:
+            IT_LOGI("count =%d", updatemeta[metacount].count);
+            for (i = 0; i < updatemeta[metacount].count; i++) {
+            IT_LOGI("mVec_tagVal is %f", metadata->mVec_tagVal[i].f);
+                meta_float.push_back((float)metadata->mVec_tagVal[i].f);
+                if (i == 0) {
+                    updatemeta[metacount].data.f = &meta_float.back();
+                }
+                IT_LOGI("update success,updatemeta[metacount].data.float=%f",
+                      updatemeta[metacount].data.f[i]);
+            }
             break;
         case 3:
             break;
@@ -1742,15 +1756,19 @@ NativeCameraHidl::updatemetedata(camera_metadata_t *metaBuffer) {
                 break;
             }
             IT_LOGE("enter > VENDOR_SECTION_START");
+            IT_LOGE("type =%d,data=%d,i=%d,tag=%ld", updatemeta[i].type,
+                  data, i, updatemeta[i].tag);
             camera_metadata_entry_t entry;
             int res = find_camera_metadata_entry(metaBuffer, updatemeta[i].tag,
                                                  &entry);
+            IT_LOGE("res =%d 11",res);
             if (res == -1) {
                 res = add_camera_metadata_entry(metaBuffer, updatemeta[i].tag,
                                                 data, updatemeta[i].count);
             } else if (res == android::OK) {
                 res = update_camera_metadata_entry(
                     metaBuffer, entry.index, data, updatemeta[i].count, NULL);
+             IT_LOGE("res =%d 22",res);
             }
             requestmeta = metaBuffer;
         } else {
@@ -2048,6 +2066,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         hidl_handle buffer_handle_new[g_stream_count];
         sp<DeviceCb> cb = new DeviceCb(this);
         cb->mBufferId = 1;
+        ::android::hardware::camera::common::V1_0::helper::CameraMetadata requestMeta;
 
         while (1) {
             if (exit_camera()) {
@@ -2055,8 +2074,6 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
             }
             request_buf.frame_number = _frameNum++;
 
-            ::android::hardware::camera::common::V1_0::helper::CameraMetadata
-                requestMeta;
             ::android::hardware::hidl_vec<uint8_t> requestSettings;
             camera_metadata_entry_t entry;
             int res;
@@ -2322,7 +2339,6 @@ int ModuleWrapperHAL::SetUp() {
 
 int ModuleWrapperHAL::TearDown() {
     int ret = IT_OK;
-    IT_LOGD("");
     return ret;
 }
 
@@ -2419,6 +2435,7 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
 
     if (strcmp(_json2->m_funcName.c_str(), "closecamera") == 0) {
         // close camera
+        property_set("persist.vendor.cam.ITaddTag", "0");
         native_camera.previewstop = 1;
         IT_LOGI("stop preview and closecamera");
         while (!g_need_exit) // result check

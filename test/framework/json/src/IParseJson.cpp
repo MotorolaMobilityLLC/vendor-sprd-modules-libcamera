@@ -20,7 +20,7 @@ void IParseJson::PrintValueTree(Json::Value &value, IParseJson *pParent,
         pobj->DealJsonNode(strkey, value.asUInt());
         break;
     case Json::realValue:
-        pobj->DealJsonNode(strkey, value.asDouble());
+        pobj->DealJsonNode(strkey, value.asFloat());
         break;
     case Json::stringValue:
         pobj->DealJsonNode(strkey, value.asString());

@@ -366,6 +366,1685 @@
 			"Metadata" : [
 						{"tagName": "sprd3BlurFNumber", "tagVal" : 10}
 			]
+		},
+		{
+			"CaseID" : 101,
+			"README":"open rear camera",
+			"Priority": 1,
+			"FuncName" : "opencamera",
+			"CameraID" : 0
+		},
+		{
+			"CaseID" : 102,
+			"README":"open front camera",
+			"Priority": 1,
+			"FuncName" : "opencamera",
+			"CameraID" : 1
+		},
+		{
+			"CaseID" : 103,
+			"Priority": 1,
+			"FuncName" : "closecamera"
+		},
+		{
+			"CaseID" : 104,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 105,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 106,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 107,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1920,"height" : 1080, "format": "BLOB","usage" : "0x4"},
+				{"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"},
+				{"type" : "video_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10003"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 9},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [20,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 108,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.captureIntent", "tagVal" : 3}
+			]
+		},
+		{
+			"CaseID" : 109,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "mirror", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 110,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,2,2,2,2,2,2,2,2]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 111,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,4,2,4,4,2,4,4,4]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 112,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,6,2,6,6,2,6,6,6]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 113,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,8,2,8,8,2,8,8,8]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 114,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 115,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,2,2,2,2,2,2,2,2]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 116,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,4,2,4,4,2,4,4,4]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 117,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,6,2,6,6,2,6,6,6]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 118,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,8,2,8,8,2,8,8,8]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 119,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 120,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.flash.mode", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 121,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,2,2,2,2,2,2,2,2]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 122,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,4,2,4,4,2,4,4,4]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 123,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,6,2,6,6,2,6,6,6]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 124,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,8,2,8,8,2,8,8,8]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 125,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 126,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.flash.mode", "tagVal" : 2},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,2,2,2,2,2,2,2,2]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 127,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.flash.mode", "tagVal" : 2},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,4,2,4,4,2,4,4,4]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 128,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.flash.mode", "tagVal" : 2},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,6,2,6,6,2,6,6,6]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 129,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.flash.mode", "tagVal" : 2},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,8,2,8,8,2,8,8,8]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 130,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.flash.mode", "tagVal" : 2},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 131,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.jpeg.quality", "tagVal" : 70},
+                                {"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 132,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.jpeg.quality", "tagVal" : 80},
+                                {"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 133,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.jpeg.quality", "tagVal" : 95},
+                                {"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 134,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.jpeg.quality", "tagVal" : 70},
+                                {"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 135,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.jpeg.quality", "tagVal" : 80},
+                                {"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 136,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "android.jpeg.quality", "tagVal" : 95},
+                                {"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 137,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 960,"height" : 720, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 138,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1280,"height" : 720, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 139,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1600,"height" : 1200, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 140,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2048,"height" : 1152, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 141,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 142,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1600,"height" : 900, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1600,"height" : 900, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 143,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1600,"height" : 1200, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1600,"height" : 1200, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 144,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2048,"height" : 1152, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 2048,"height" : 1152, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 145,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 2304,"height" : 1728, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 146,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 1836, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 1836, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 147,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 148,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 2304,"height" : 1728, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 1440,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 149,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [576,288,1536,1152]}
+			]
+		},
+		{
+			"CaseID" : 150,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [576,288,1152,864]}
+			]
+		},
+		{
+			"CaseID" : 151,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [576,288,921,691]}
+			]
+		},
+		{
+			"CaseID" : 152,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [576,288,768,493]}
+			]
+		},
+		{
+			"CaseID" : 153,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [576,288,658,576]}
+			]
+		},
+		{
+			"CaseID" : 154,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [576,288,576,432]}
+			]
+		},
+		{
+			"CaseID" : 155,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 156,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,2176,1632]}
+			]
+		},
+		{
+			"CaseID" : 157,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,1632,1224]}
+			]
+		},
+		{
+			"CaseID" : 158,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,1305,979]}
+			]
+		},
+		{
+			"CaseID" : 159,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,1088,816]}
+			]
+		},
+		{
+			"CaseID" : 160,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,932,699]}
+			]
+		},
+		{
+			"CaseID" : 161,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,816,612]}
+			]
+		},
+		{
+			"CaseID" : 162,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,725,544]}
+			]
+		},
+		{
+			"CaseID" : 163,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,652,489]}
+			]
+		},
+		{
+			"CaseID" : 164,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,593,445]}
+			]
+		},
+		{
+			"CaseID" : 165,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,544,408]}
+			]
+		},
+		{
+			"CaseID" : 166,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,502,376]}
+			]
+		},
+		{
+			"CaseID" : 167,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,466,349]}
+			]
+		},
+		{
+			"CaseID" : 168,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,435,326]}
+			]
+		},
+		{
+			"CaseID" : 169,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,408,306]}
+			]
+		},
+		{
+			"CaseID" : 170,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,384,288]}
+			]
+		},
+		{
+			"CaseID" : 171,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,362,272]}
+			]
+		},
+		{
+			"CaseID" : 172,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,343,257]}
+			]
+		},
+		{
+			"CaseID" : 173,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [816,612,327,245]}
+			]
+		},
+		{
+			"CaseID" : 174,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1280,"height" : 720, "format": "BLOB","usage" : "0x4"},
+				{"type" : "callback_stream", "width" : 1280,"height" : 720, "format": "YCBCR_420_888","usage" : "0x3"},
+				{"type" : "video_stream", "width" : 1280,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10003"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 9},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [20,30]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 175,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1280,"height" : 720, "format": "BLOB","usage" : "0x4"},
+				{"type" : "callback_stream", "width" : 1280,"height" : 720, "format": "YCBCR_420_888","usage" : "0x3"},
+				{"type" : "video_stream", "width" : 1280,"height" : 720, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10003"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 9},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [20,30]},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,2304,1728]}
+			]
+		},
+		{
+			"CaseID" : 176,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 1920,"height" : 1080, "format": "BLOB","usage" : "0x4"},
+				{"type" : "callback_stream", "width" : 1920,"height" : 1080, "format": "YCBCR_420_888","usage" : "0x3"},
+				{"type" : "video_stream", "width" : 1920,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x10003"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 9},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [20,30]},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+                                {"tagName": "android.scaler.cropRegion", "tagVal" : [0,0,6528,4896]}
+			]
+		},
+		{
+			"CaseID" : 177,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "sprd3auto3dnrEnabled", "tagVal" : 1},
+				{"tagName": "sprd3dnrEnabled", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 178,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 20},
+				{"tagName": "sprd3dnrEnabled", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 179,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+				{"tagName": "android.control.awbMode", "tagVal" : 5},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 180,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+				{"tagName": "android.control.awbMode", "tagVal" : 6},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 181,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+				{"tagName": "android.control.awbMode", "tagVal" : 2},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 182,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+				{"tagName": "android.control.awbMode", "tagVal" : 3},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 183,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 184,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "contrast", "tagVal" : 4},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 185,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "contrast", "tagVal" : 5},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 186,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "contrast", "tagVal" : 6},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 187,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 188,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.afMode", "tagVal" : 0},
+				{"tagName": "android.lens.focusDistance", "tagVal" : 816.1},
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 189,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.afMode", "tagVal" : 0},
+				{"tagName": "android.lens.focusDistance", "tagVal" : 620.1},
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 190,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.afMode", "tagVal" : 0},
+				{"tagName": "android.lens.focusDistance", "tagVal" : 423.1},
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 191,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.afMode", "tagVal" : 0},
+				{"tagName": "android.lens.focusDistance", "tagVal" : 217.1},
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 192,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.afMode", "tagVal" : 0},
+				{"tagName": "android.lens.focusDistance", "tagVal" : 0.000061},
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 193,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 194,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "saturation", "tagVal" : 4},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 195,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "saturation", "tagVal" : 5},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 196,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "saturation", "tagVal" : 6},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 197,
+			"Priority": 1,
+			"FuncName" : "startpreview",
+			"LoopNum" : 5,
+			"StreamList" : [
+  				{"type" : "preview_stream", "width" : 1440,"height" : 1080, "format": "IMPLEMENTATION_DEFINED","usage" : "0x4"},
+				{"type" : "picture_stream", "width" : 3264,"height" : 2448, "format": "BLOB","usage" : "0x4"},
+                                {"type" : "callback_stream", "width" : 3264,"height" : 2448, "format": "YCBCR_420_888","usage" : "0x3"}
+			],
+			"Metadata" : [
+				{"tagName": "sprdZslEnabled", "tagVal" : 1},
+                                {"tagName": "android.statistics.faceDetectMode", "tagVal" : 1},
+				{"tagName": "sprdAppmodeId", "tagVal" : 1},
+                                {"tagName": "android.control.aeTargetFpsRange", "tagVal" : [5,30]}
+			]
+		},
+		{
+			"CaseID" : 198,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.aeLock", "tagVal" : 1},
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 199,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,2,2,2,2,2,2,2,2]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 200,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,4,2,4,4,2,4,4,4]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 201,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,6,2,6,6,2,6,6,6]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 202,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,8,2,8,8,2,8,8,8]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 203,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 204,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,2,2,2,2,2,2,2,2]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 205,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,4,2,4,4,2,4,4,4]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 206,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,6,2,6,6,2,6,6,6]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 207,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,8,2,8,8,2,8,8,8]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 208,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 209,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 210,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,2,2,2,2,2,2,2,2]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 211,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,4,2,4,4,2,4,4,4]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 212,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,6,2,6,6,2,6,6,6]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 213,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,8,2,8,8,2,8,8,8]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 214,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 270},
+				{"tagName": "mirror", "tagVal" : 1},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 215,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+				{"tagName": "android.control.captureIntent", "tagVal" : 3},
+				{"tagName": "perfectskinlevel", "tagVal" : [1,10,2,10,10,2,10,10,10]}
+			]
+		},
+		{
+			"CaseID" : 216,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "sprdAppmodeId", "tagVal" : 20},
+				{"tagName": "sprd3dnrEnabled", "tagVal" : 1},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
+		},
+		{
+			"CaseID" : 217,
+			"Priority": 1,
+			"FuncName" : "takesnapshot",
+			"LoopNum" : 5,
+			"Metadata" : [
+                                {"tagName": "android.jpeg.orientation", "tagVal" : 90},
+				{"tagName": "sprdAppmodeId", "tagVal" : 0},
+				{"tagName": "sprd3auto3dnrEnabled", "tagVal" : 1},
+				{"tagName": "sprd3dnrEnabled", "tagVal" : 1},
+				{"tagName": "android.control.captureIntent", "tagVal" : 2}
+			]
 		}
 	]
 }

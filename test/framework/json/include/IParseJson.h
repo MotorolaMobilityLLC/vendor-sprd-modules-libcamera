@@ -43,6 +43,8 @@ class IParseJson {
 
     virtual void DealJsonNode(string strNode, double value) {}
 
+    virtual void DealJsonNode(string strNode, float value) {}
+
     virtual IParseJson *CreateJsonItem(string strKey);
 
   private:

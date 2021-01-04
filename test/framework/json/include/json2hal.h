@@ -12,6 +12,7 @@ using namespace sprdcamera;
 union Val {
     int32_t i32;
     double d;
+    float f;
 };
 
 class Metadata : public IParseJson {
@@ -38,6 +39,12 @@ class Metadata : public IParseJson {
         if (m_jsonMethodMap.find(strNode) != m_jsonMethodMap.end()) {
             (this->*m_jsonMethodMap[strNode])(strNode, (void *)value.c_str());
         }
+    }
+    virtual void DealJsonNode(string strNode, float value) {
+        Val V;
+        V.f = value;
+        ALOGI("V f is %f", V.f);
+        this->mVec_tagVal.push_back(V);
     }
     virtual void DealJsonNode(string strNode, int value) {
         if (m_jsonMethodMap.find(strNode) != m_jsonMethodMap.end()) {
