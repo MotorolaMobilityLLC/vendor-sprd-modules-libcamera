@@ -220,6 +220,7 @@ uint32_t previewStreamID = -1;
 uint32_t snapshotStreamID = -1;
 uint32_t callbackStreamID = -1;
 uint32_t videoStreamID = -1;
+bool is_4in1_mode = false;
 
 static long find_pid_by_name(char *pidName) {
     DIR *dir;
@@ -943,33 +944,33 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
                                   g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height,
                               1),
                 &dst);
-            // {
-            //     IT_LOGE("address = %p ", dst);
-            //     if (dst == memory_gloable.addr_vir) // write pic frame
-            //     // if(dst != NULL)
-            //     {
-            //         IT_LOGE("address = %p ", dst);
-            //         char filename[128];
-            //         sprintf(filename, "/data/vendor/ylog/%d_%dx%d.nv",
-            //                 results.frameNumber, g_sensor_width,
-            //                 g_sensor_height);
-            //         FILE *fp = fopen(filename, "w+");
-            //         if (fp) {
-            //             // int ret =  fwrite(dst, 1, 1440 * 1080 * 3 / 2, fp);
-            //             int ret =
-            //                 fwrite(dst, 1,
-            //                        g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width *
-            //                            g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height,
-            //                        fp);
-            //             IT_LOGE("write ret = %d", ret);
-            //             fclose(fp);
-            //         } else {
-            //             IT_LOGE("fail to open file");
-            //         }
-            //         g_result[CAMERA_TAKE_PIC] = true;
-            //     }
-            // }
-            g_result[CAMERA_TAKE_PIC] = true;
+            {
+                IT_LOGE("address = %p ", dst);
+                if (dst == memory_gloable.addr_vir) // write pic frame
+                // if(dst != NULL)
+                {
+                    IT_LOGE("address = %p ", dst);
+                    char filename[128];
+                    sprintf(filename, "/data/vendor/ylog/%d_%dx%d.nv",
+                            results.frameNumber, g_sensor_width,
+                            g_sensor_height);
+                    FILE *fp = fopen(filename, "w+");
+                    if (fp) {
+                        // int ret =  fwrite(dst, 1, 1440 * 1080 * 3 / 2, fp);
+                        int ret =
+                            fwrite(dst, 1,
+                                   g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].width *
+                                       g_streamConfig[CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT].height,
+                                   fp);
+                        IT_LOGE("write ret = %d", ret);
+                        fclose(fp);
+                    } else {
+                        IT_LOGE("fail to open file");
+                    }
+                    g_result[CAMERA_TAKE_PIC] = true;
+                }
+            }
+            // g_result[CAMERA_TAKE_PIC] = true;
             mapper.unlock(*outputBuffers[0].buffer);
         }
 #endif
@@ -1104,6 +1105,12 @@ Status NativeCameraHidl::getAvailableOutputStreams(
     const AvailableStream *threshold) {
     if (nullptr == staticMeta) {
         return Status::ILLEGAL_ARGUMENT;
+    }
+
+    if (is_4in1_mode && threshold->format == HAL_PIXEL_FORMAT_BLOB) {
+        AvailableStream s = {threshold->width, threshold->height, threshold->format};
+        outputStreams.push_back(s);
+        return Status::OK;
     }
 
     camera_metadata_ro_entry entry;
@@ -1417,6 +1424,7 @@ void NativeCameraHidl::configureAvailableStream(
             });
     }
     *previewStream = stream3_2;
+    is_4in1_mode = false;
 }
 
 // Cast camera device session to corresponding version
@@ -1701,6 +1709,9 @@ int NativeCameraHidl::transferMetaData(HalCaseComm *_json2) {
                 }
                 IT_LOGI("update success,updatemeta[metacount].data.int32=%d",
                       updatemeta[metacount].data.i32[i]);
+                if (strcmp(tag_name.c_str(), "sprdAppmodeId") == 0 && updatemeta[metacount].data.i32[i] == 30) {
+                    is_4in1_mode = true;
+                }
             }
             break;
         case 2:
@@ -1769,7 +1780,7 @@ NativeCameraHidl::updatemetedata(camera_metadata_t *metaBuffer) {
             int res = find_camera_metadata_entry(metaBuffer, updatemeta[i].tag,
                                                  &entry);
             IT_LOGE("res =%d 11",res);
-            if (res == -1) {
+            if (res < 0) {
                 res = add_camera_metadata_entry(metaBuffer, updatemeta[i].tag,
                                                 data, updatemeta[i].count);
             } else if (res == android::OK) {
@@ -1860,7 +1871,7 @@ NativeCameraHidl::updatemetedata_v2(camera_metadata_t *metaBuffer,
                                                  &entry);
             switch (meta_entry[i].type)
             case 1:
-                if (res == -1) {
+                if (res < 0) {
                     res =
                         add_camera_metadata_entry(metaBuffer, meta_entry[i].tag,
                                                   data, meta_entry[i].count);

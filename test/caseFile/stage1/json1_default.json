@@ -129,7 +129,7 @@
 			]
 		},
 		{
-			"ID":13,
+			"ID":11,
 			"README":"example for portrait 美颜，光效，人脸检测",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -140,7 +140,7 @@
 			]
 		},
                 {
-			"ID":14,
+			"ID":12,
 			"README":"preview for portrait mode in main camera",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -151,7 +151,7 @@
 			]
 		},
 		{
-			"ID":18,
+			"ID":13,
 			"README":"example for video 美颜",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -162,7 +162,7 @@
 			]
 		},
 		{
-			"ID":19,
+			"ID":14,
 			"README":"example for Dual video preview",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -173,7 +173,7 @@
 			]
 		},
 		{
-			"ID":20,
+			"ID":15,
 			"README":"example for Dual video",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -184,7 +184,7 @@
 			]
 		},
 		{
-			"ID":21,
+			"ID":16,
 			"README":"example for bokeh 0",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
@@ -195,12 +195,89 @@
 			]
 		},
 		{
-			"ID":100,
+			"ID":17,
 			"README":"example for OEM startpreview and zsl&&nozsl snapshot",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
 						{"name":"OEM","mcaseid":[0,2,4,3,5,1]}
+					]
+				}
+			]
+		},
+		{
+			"ID":18,
+			"README":"example for video recording",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[101,45,103]}
+					]
+				}
+			]
+		},
+		{
+			"ID":19,
+			"README":"example for video snapshot",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[101,46,44,103]}
+					]
+				}
+			]
+		},
+		{
+			"ID":20,
+			"README":"example for video snapshot",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[101,54,44,103]}
+					]
+				}
+			]
+		},
+		{
+			"ID":21,
+			"README":"example for video snapshot",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[101,55,44,103]}
+					]
+				}
+			]
+		},
+		{
+			"ID":22,
+			"README":"example for slow motion recoding",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[101,47,103]}
+					]
+				}
+			]
+		},
+		{
+			"ID":23,
+			"README":"example for fdr",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[51,49,50,103]}
+					]
+				}
+			]
+		},
+		{
+			"ID":24,
+			"README":"example for ultra res",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"HAL","mcaseid":[53,52,48,103]}
 					]
 				}
 			]
