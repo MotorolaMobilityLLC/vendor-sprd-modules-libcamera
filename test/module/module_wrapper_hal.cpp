@@ -1383,7 +1383,7 @@ void NativeCameraHidl::configureAvailableStream(
                                 g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers = 10;
                             }
                             IT_LOGD("CAMERA_STREAM_TYPE_CALLBACK.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers);
-                        } 
+                        }
                         break;
 
                     case HAL_PIXEL_FORMAT_YV12:
@@ -1393,6 +1393,7 @@ void NativeCameraHidl::configureAvailableStream(
                             if(g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers == 0){
                                 g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers = 10;
                             }
+                            hasCallbackStream = 1;
                             IT_LOGD("CAMERA_STREAM_TYPE_CALLBACK.maxbuffer: %d",g_streamConfig[CAMERA_STREAM_TYPE_CALLBACK].max_buffers);
                         } else if (hasYuv2Stream == 0) {
                             g_streamConfig[CAMERA_STREAM_TYPE_YUV2].max_buffers = halStreamConfig->streams[i].maxBuffers;
