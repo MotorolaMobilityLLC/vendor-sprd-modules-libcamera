@@ -98,6 +98,8 @@ PRODUCT_PACKAGES += libparam_ov8856_back
 PRODUCT_PACKAGES += libparam_imx616
 PRODUCT_PACKAGES += libparam_ov08a10
 PRODUCT_PACKAGES += libparam_GC5035
+PRODUCT_PACKAGES += libparam_gc5035
+PRODUCT_PACKAGES += libparam_s5k3l6
 #endif
 
 #default tuning 
