@@ -131,7 +131,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     getLogLevel();
     HAL_LOGD("mCameraId %d,mCameraDevice %p", mCameraId, &mCameraDevice);
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
-    mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_2;
+    mCameraDevice.common.version = CAMERA_DEVICE_API_VERSION_3_5;
     mCameraDevice.common.close = close_camera_device;
     mCameraDevice.ops = &mCameraOps;
     mCameraDevice.priv = this;
@@ -2203,6 +2203,76 @@ void SprdCamera3HWI::dump(int /*fd */) {
     HAL_LOGD("SprdCamera3HWI::dump");
 #endif
     return;
+}
+
+int SprdCamera3HWI::isStreamCombinationSupported(
+            const camera_stream_combination_t *comb) {
+    int ret = 0;
+    HAL_LOGI("E");
+    if (!comb) {
+        HAL_LOGE("NULL stream combination");
+        return -EINVAL;
+    }
+    camera3_stream_configuration_t streamList = {
+        comb->num_streams, /*streams*/ nullptr, comb->operation_mode,
+        /*session_parameters*/ nullptr};
+    streamList.streams = new camera3_stream_t *[comb->num_streams];
+    camera3_stream_t *streamBuffer = new camera3_stream_t[comb->num_streams];
+    if (streamList.streams == NULL) {
+        HAL_LOGD("NULL stream list");
+        ret = -EINVAL;
+        goto exit;
+    }
+
+    if (streamList.num_streams < 1) {
+        HAL_LOGE("Bad number of streams requested: %d", streamList.num_streams);
+        ret = -EINVAL;
+        goto exit;
+    }
+    for (uint8_t i = 0; i < comb->num_streams; i++) {
+        streamBuffer[i] = {comb->streams[i].stream_type,
+                           comb->streams[i].width,
+                           comb->streams[i].height,
+                           comb->streams[i].format,
+                           comb->streams[i].usage,
+                           /*max_buffers*/ 0,
+                           /*priv*/ nullptr,
+                           comb->streams[i].data_space,
+                           comb->streams[i].rotation,
+                           comb->streams[i].physical_camera_id,
+                           /*reserved*/ {nullptr}};
+        streamList.streams[i] = &streamBuffer[i];
+        if (streamList.streams[i]->physical_camera_id &&
+                   strlen(streamList.streams[i]->physical_camera_id)) {
+            HAL_LOGW("assign physical camera id %d to stream is currently not supported",
+                    atoi(streamList.streams[i]->physical_camera_id));
+            ret = -EINVAL;
+            goto exit;
+        }
+    }
+    if (streamList.streams[0] != NULL) {
+         if(streamList.streams[0]->width == 0 ||
+                   streamList.streams[0]->height == 0 ||
+                   streamList.streams[0]->width == UINT32_MAX ||
+                   streamList.streams[0]->height == UINT32_MAX ||
+                   (uint32_t)streamList.streams[0]->format == UINT32_MAX ||
+                   (uint32_t)streamList.streams[0]->rotation == UINT32_MAX) {
+              HAL_LOGE("INVALID stream list");
+              ret = -EINVAL;
+              goto exit;
+         }
+    } else {
+        HAL_LOGE("NULL streamList->streams[0]");
+        ret = -EINVAL;
+    }
+
+exit:
+    HAL_LOGI("X, rc: %d", ret);
+    if (streamBuffer)
+        delete[] streamBuffer;
+    if (streamList.streams)
+        delete[] streamList.streams;
+    return ret;
 }
 
 #ifdef DEBUG_MALLOC_ON_64

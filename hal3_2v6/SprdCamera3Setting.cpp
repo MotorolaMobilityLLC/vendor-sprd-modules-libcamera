@@ -701,6 +701,10 @@ const int32_t kavailable_characteristics_keys[] = {
     ANDROID_SPRD_AVAILABLE_SENSORTYPE,
     ANDROID_SPRD_AVAILABLE_FACEAGEENABLE,
     ANDROID_SPRD_AVAILABLE_AUTO_3DNR,
+    ANDROID_REQUEST_AVAILABLE_SESSION_KEYS,  /*HAL3.5*/
+    ANDROID_CONTROL_AVAILABLE_MODES,
+    ANDROID_CONTROL_AE_LOCK_AVAILABLE,
+    ANDROID_CONTROL_AWB_LOCK_AVAILABLE,
 };
 
 const int32_t kavailable_request_keys[] = {
@@ -732,7 +736,8 @@ const int32_t kavailable_request_keys[] = {
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
-    ANDROID_NOISE_REDUCTION_MODE};
+    ANDROID_NOISE_REDUCTION_MODE,
+    ANDROID_SPRD_APP_MODE_ID};
 const int32_t front_kavailable_request_keys[] = {
     ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
     ANDROID_CONTROL_AE_ANTIBANDING_MODE,
@@ -762,7 +767,7 @@ const int32_t front_kavailable_request_keys[] = {
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
-    ANDROID_NOISE_REDUCTION_MODE};
+    ANDROID_NOISE_REDUCTION_MODE, ANDROID_SPRD_APP_MODE_ID};
 
 const int32_t kavailable_result_keys[] = {
     ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
@@ -1290,6 +1295,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
         cameraInfo->orientation = phyPtr->angle;
         cameraInfo->resource_cost = phyPtr->resource_cost;
     }
+    cameraInfo->device_version = CAMERA_DEVICE_API_VERSION_3_5;
     // TBD: may be will add other variable in struct camera_info
 
     return 0;
@@ -3023,10 +3029,6 @@ int SprdCamera3Setting::initStaticMetadata(
         s_setting[cameraId].controlInfo.available_video_stab_modes,
         ARRAY_SIZE(s_setting[cameraId].controlInfo.available_video_stab_modes));
 
-    staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
-                      kavailable_high_speed_video_configration,
-                      ARRAY_SIZE(kavailable_high_speed_video_configration));
-
     staticInfo.update(ANDROID_CONTROL_MAX_REGIONS,
                       s_setting[cameraId].controlInfo.max_regions,
                       ARRAY_SIZE(s_setting[cameraId].controlInfo.max_regions));
@@ -3103,6 +3105,26 @@ int SprdCamera3Setting::initStaticMetadata(
                       1);
     staticInfo.update(ANDROID_REQUEST_PIPELINE_MAX_DEPTH,
                       &(s_setting[cameraId].requestInfo.pipeline_max_depth), 1);
+
+    {
+        int32_t session_keys[] = {ANDROID_SPRD_APP_MODE_ID};
+        staticInfo.update(ANDROID_REQUEST_AVAILABLE_SESSION_KEYS, session_keys,
+                 sizeof(session_keys) / sizeof(session_keys[0]));
+        uint8_t data = ANDROID_CONTROL_AE_LOCK_AVAILABLE_TRUE;
+        staticInfo.update(ANDROID_CONTROL_AE_LOCK_AVAILABLE, &data, 1);
+        data = ANDROID_CONTROL_AWB_LOCK_AVAILABLE_TRUE;
+        staticInfo.update(ANDROID_CONTROL_AWB_LOCK_AVAILABLE, &data, 1);
+
+        uint8_t control_modes[] = {
+                  ANDROID_CONTROL_MODE_OFF, ANDROID_CONTROL_MODE_AUTO,
+                  ANDROID_CONTROL_MODE_USE_SCENE_MODE};
+        staticInfo.update(ANDROID_CONTROL_AVAILABLE_MODES, control_modes,
+                  sizeof(control_modes) / sizeof(uint8_t));
+
+        const int32_t avl_high_speed_video_config[] = {1280, 720, 30, 120, 1, 1280, 720, 120, 120, 1};
+        staticInfo.update(ANDROID_CONTROL_AVAILABLE_HIGH_SPEED_VIDEO_CONFIGURATIONS,
+                      avl_high_speed_video_config, ARRAY_SIZE(avl_high_speed_video_config));
+    }
 
     /*LENS SHADING*/
     staticInfo.update(ANDROID_STATISTICS_LENS_SHADING_CORRECTION_MAP,

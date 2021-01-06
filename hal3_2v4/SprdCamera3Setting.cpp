@@ -1049,6 +1049,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
         cameraInfo->orientation = phyPtr->angle;
         cameraInfo->resource_cost = phyPtr->resource_cost;
     }
+    cameraInfo->device_version = CAMERA_DEVICE_API_VERSION_3_2;
     // TBD: may be will add other variable in struct camera_info
 
     return 0;

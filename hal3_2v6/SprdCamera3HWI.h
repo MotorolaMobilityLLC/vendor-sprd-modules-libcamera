@@ -74,6 +74,8 @@ class SprdCamera3HWI {
     static void dump(const struct camera3_device *, int fd);
     static int flush(const struct camera3_device *);
     static int close_camera_device(struct hw_device_t *device);
+    static int isStreamCombinationSupported(
+        const camera_stream_combination_t *comb);
     SprdCamera3HWI(int cameraId);
     virtual ~SprdCamera3HWI();
     int openCamera(struct hw_device_t **hw_device);

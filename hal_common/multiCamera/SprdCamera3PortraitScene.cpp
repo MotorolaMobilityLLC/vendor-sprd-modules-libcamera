@@ -2190,8 +2190,6 @@ int SprdCamera3PortraitScene::getCameraInfo(int blur_camera_id,
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
 
-    info->device_version =
-        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
 
@@ -2269,7 +2267,11 @@ int SprdCamera3PortraitScene::cameraDeviceOpen(__unused int camera_id,
     }
 
     m_VirtCamera.dev.common.tag = HARDWARE_DEVICE_TAG;
+#ifdef CONFIG_ISP_2_4
     m_VirtCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_2;
+#else
+    m_VirtCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_5;
+#endif
     m_VirtCamera.dev.common.close = close_camera_device;
     m_VirtCamera.dev.ops = &mCameraCaptureOps;
     m_VirtCamera.dev.priv = (void *)&m_VirtCamera;

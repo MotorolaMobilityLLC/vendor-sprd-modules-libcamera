@@ -578,7 +578,11 @@ cmr_s32 SprdCamera3SingleFaceIdRegister::cameraDeviceOpen(
     }
 
     m_VirtualCamera.dev.common.tag = HARDWARE_DEVICE_TAG;
+#ifdef CONFIG_ISP_2_4
     m_VirtualCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_2;
+#else
+    m_VirtualCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_5;
+#endif
     m_VirtualCamera.dev.common.close = close_camera_device;
     m_VirtualCamera.dev.ops = &mCameraCaptureOps;
     m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
@@ -621,7 +625,7 @@ SprdCamera3SingleFaceIdRegister::getCameraInfo(cmr_s32 face_camera_id,
     }
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
-    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;
+
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
 

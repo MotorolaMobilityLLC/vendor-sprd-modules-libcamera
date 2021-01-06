@@ -1032,7 +1032,11 @@ int SprdCamera3Portrait::cameraDeviceOpen(__unused int camera_id,
     }
 
     m_VirtualCamera.dev.common.tag = HARDWARE_DEVICE_TAG;
+#ifdef CONFIG_ISP_2_4
     m_VirtualCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_2;
+#else
+    m_VirtualCamera.dev.common.version = CAMERA_DEVICE_API_VERSION_3_5;
+#endif
     m_VirtualCamera.dev.common.close = close_camera_device;
     m_VirtualCamera.dev.ops = &mCameraCaptureOps;
     m_VirtualCamera.dev.priv = (void *)&m_VirtualCamera;
@@ -1131,8 +1135,7 @@ int SprdCamera3Portrait::getCameraInfo(int id, struct camera_info *info) {
     mStaticMetadata = metadata.release();
 
     SprdCamera3Setting::getCameraInfo(camera_id, info);
-    info->device_version =
-        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_0;
+
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
     info->resource_cost += info_slave.resource_cost;

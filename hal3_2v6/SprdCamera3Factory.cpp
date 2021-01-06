@@ -369,7 +369,7 @@ int SprdCamera3Factory::getHighResolutionSize(int camera_id,
     staticMetadata = metadata.release();
     SprdCamera3Setting::getCameraInfo(camera_id, info);
 
-    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;
+    info->device_version = CAMERA_DEVICE_API_VERSION_3_5;
     info->static_camera_characteristics = staticMetadata;
 
     info->conflicting_devices_length = 0;
@@ -464,8 +464,7 @@ int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,
     SprdCamera3Setting::getCameraInfo(cameraId, info);
 
     info->static_camera_characteristics = staticMetadata;
-    info->device_version =
-        CAMERA_DEVICE_API_VERSION_3_2; // CAMERA_DEVICE_API_VERSION_3_2;
+    info->device_version = CAMERA_DEVICE_API_VERSION_3_5;
 
     return rc;
 }
@@ -1071,7 +1070,7 @@ int SprdCamera3Factory::isStreamCombinationSupported(
         return mCameras[id]->isStreamCombinationSupported(streams);
 
     // TODO need to support this call
-    return -EINVAL;
+    return SprdCamera3HWI::isStreamCombinationSupported(streams);
 }
 
 char **

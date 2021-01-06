@@ -65,7 +65,7 @@ int SingleCamera::getCameraInfo(camera_info_t *info) {
     }
 
     SprdCamera3Setting::getCameraInfo(mSensorId, info);
-    info->device_version = CAMERA_DEVICE_API_VERSION_3_2;
+
     info->static_camera_characteristics = staticMetadata;
     info->conflicting_devices_length = 0;
 
