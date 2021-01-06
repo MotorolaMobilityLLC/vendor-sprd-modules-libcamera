@@ -8,9 +8,7 @@
 #include "SprdMultiCam3Common.h"
 #include <string.h>
 #include <vector>
-
-typedef unsigned long cmr_uint;
-typedef int cmr_s32;
+#include <cmr_types.h>
 
 typedef struct {
     android::MemIon *ion_heap;
@@ -81,7 +79,7 @@ class TestMemPool {
     int mIommuEnabled;
 };
 
-typedef enum InjectType{
+typedef enum InjectType {
     INJECT_DCAM_PREV=0,
     INJECT_DCAM_CAP,
     INJECT_ISP_PREV,
