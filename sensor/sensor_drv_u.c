@@ -257,6 +257,7 @@ static cmr_int sensor_save_pdaf_info(struct sensor_drv_context *sensor_cxt) {
     SENSOR_VAL_T val;
     char *name_of_sensor = NULL;
     struct sensor_pdaf_info phasePixelMap;
+    memset(&phasePixelMap, 0, sizeof(struct sensor_pdaf_info));
     char property_value[PROPERTY_VALUE_MAX];
     cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
     struct sensor_ic_ops *sns_ops = PNULL;

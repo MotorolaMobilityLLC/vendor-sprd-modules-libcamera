@@ -275,7 +275,9 @@ cmr_int sensor_pdaf_buffer_block_seprator(struct pdaf_block_descriptor *descript
             if(line_coordinate == (judger->number))
                 line_coordinate = 0;
         }
-        if(!((i + 1) % block_height)) {
+        int num;
+        num = i + 1;
+        if(!(num % block_height)) {
             output_line++;
             judger = descriptor->pd_line_coordinate;
         } else
