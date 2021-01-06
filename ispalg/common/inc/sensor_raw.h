@@ -16,6 +16,8 @@
 #ifndef _SENSOR_RAW_H_
 #define _SENSOR_RAW_H_
 
+#include "cmr_types.h"
+
 enum ISP_BLK_ID {
 	ISP_BLK_SHARKL2_BASE = 0x4000,
 	ISP_BLK_PRE_GBL_GAIN = 0x4001,
@@ -207,6 +209,79 @@ enum isp_smart_id {
 	ISP_SMART_POST_EE = 59,
 	ISP_SMART_HSV_LUT = 67,
 	ISP_SMART_MAX
+};
+
+enum {
+	ISP_MODE_ID_COMMON = 0x00,
+	ISP_MODE_ID_PRV_0,
+	ISP_MODE_ID_PRV_1,
+	ISP_MODE_ID_PRV_2,
+	ISP_MODE_ID_PRV_3,
+	ISP_MODE_ID_CAP_0,
+	ISP_MODE_ID_CAP_1,
+	ISP_MODE_ID_CAP_2,
+	ISP_MODE_ID_CAP_3,
+	ISP_MODE_ID_VIDEO_0,
+	ISP_MODE_ID_VIDEO_1,
+	ISP_MODE_ID_VIDEO_2,
+	ISP_MODE_ID_VIDEO_3,
+	ISP_MODE_ID_FDR_CAP_0,
+	ISP_MODE_ID_FDR_CAP_1,
+	ISP_MODE_ID_FDR_CAP_2,
+	ISP_MODE_ID_MAX = 0xff,
+};
+
+struct isp_block_header {
+    cmr_u8 block_name[8];
+
+    cmr_u32 block_id;
+    cmr_u32 version_id;
+    cmr_u32 param_id;
+
+    cmr_u32 bypass;
+
+    cmr_u32 size;
+    cmr_u32 offset;
+
+    cmr_u32 reserved[4];
+};
+
+struct isp_mode_param {
+    cmr_u32 version_id;
+
+    cmr_u8 mode_name[8];
+
+    cmr_u32 mode_id;
+    cmr_u32 block_num;
+    cmr_u32 size;
+    cmr_u32 width;
+    cmr_u32 height;
+
+    cmr_u32 fps;
+    cmr_u32 reserved[3];
+
+    struct isp_block_header block_header[256];
+};
+
+struct isp_mode_param_info {
+    cmr_u8 *addr;
+    cmr_u32 len;
+};
+
+struct third_lib_info {
+    uint32_t product_id;
+    uint32_t product_name_high;
+    uint32_t product_name_low;
+    uint32_t version_id;
+    uint32_t reserve[4];
+};
+
+struct sensor_libuse_info {
+    struct third_lib_info awb_lib_info;
+    struct third_lib_info ae_lib_info;
+    struct third_lib_info af_lib_info;
+    struct third_lib_info lsc_lib_info;
+    uint32_t reserve[32];
 };
 
 #ifdef CONFIG_ISP_2_4
