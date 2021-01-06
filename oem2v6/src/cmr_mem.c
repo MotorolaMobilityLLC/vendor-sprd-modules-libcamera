@@ -1221,7 +1221,7 @@ void camera_set_mem_multimode(multiCameraMode camera_mode) {
  * pitch: 5Bytes per 4pixels(if last pixels less than 4,packed
  * 5Bytes too) and then align to 4 or 16(for hardware access faster)
  */
-int camera_get_mipi_raw_dcam_pitch(int w)
+unsigned int camera_get_mipi_raw_dcam_pitch(int w)
 {
     static int dcam_align = 0;
 
@@ -1231,6 +1231,8 @@ int camera_get_mipi_raw_dcam_pitch(int w)
         return (((w + 3) / 4 * 5) + 3) & (~(4 - 1));
     case 16:
         return (((w + 3) / 4 * 5) + 15) & (~(16 - 1));
+    default: // first: read from prop
+        CMR_LOGV("dcam_align = %d", dcam_align);
     }
 
     char value[PROPERTY_VALUE_MAX];
