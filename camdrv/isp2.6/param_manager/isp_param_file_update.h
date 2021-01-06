@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 extern char nr_param_name[ISP_BLK_NR_MAX][20];
-extern char nr_mode_name[MAX_MODE_NUM][12];
+extern char nr_mode_name[ISP_TUNE_MODE_MAX][12];
 extern char nr_scene_name[MAX_SCENEMODE_NUM][12];
 extern struct isp_pm_nrblk_info nr_blocks_info[ISP_BLK_NR_MAX];
 

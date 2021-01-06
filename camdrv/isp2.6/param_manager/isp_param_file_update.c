@@ -173,7 +173,7 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 #endif
 
 
-char nr_mode_name[MAX_MODE_NUM][12] = {
+char nr_mode_name[ISP_TUNE_MODE_MAX][12] = {
 	"common",
 	"prv_0",
 	"prv_1",

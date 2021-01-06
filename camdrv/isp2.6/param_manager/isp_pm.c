@@ -550,9 +550,9 @@ static cmr_u32 search_modes[4][ISP_TUNE_MODE_MAX] = {
 	},
 	{
 		/* for FDR capture */
-		ISP_MODE_ID_VIDEO_3 + 1,
-		ISP_MODE_ID_VIDEO_3 + 2,
-		ISP_MODE_ID_VIDEO_3 + 3,
+		ISP_MODE_ID_FDR_CAP_0,
+		ISP_MODE_ID_FDR_CAP_1,
+		ISP_MODE_ID_FDR_CAP_2,
 		ISP_MODE_ID_CAP_0,
 		ISP_MODE_ID_CAP_1,
 		ISP_MODE_ID_CAP_2,
@@ -985,7 +985,7 @@ static cmr_s32 isp_pm_get_mode_block_param(struct isp_pm_context *pm_cxt_ptr,
 	struct isp_pm_block_header *blk_header_array = PNULL;
 	struct isp_pm_mode_param *mode_param_ptr = PNULL;
 
-	for (j = 0; j < ISP_TUNE_MODE_MAX; j++) {
+	for (j = 0; j < MAX_MODE_NUM; j++) {
 		mode_param_ptr = pm_cxt_ptr->tune_mode_array[j];
 		if (mode_param_ptr == PNULL)
 			continue;
@@ -1241,7 +1241,7 @@ static cmr_s32 isp_pm_get_all_blocks(cmr_handle handle,
 		}
 
 		src_mode = NULL;
-		for (k = 0; k < ISP_TUNE_MODE_MAX; k++) {
+		for (k = 0; k < MAX_MODE_NUM; k++) {
 			if (pm_cxt_ptr->tune_mode_array[k] == NULL)
 				continue;
 			if (pm_cxt_ptr->tune_mode_array[k]->mode_id == param_mode_id) {
@@ -1363,7 +1363,7 @@ static cmr_s32 isp_pm_get_all_blocks_compatible(cmr_handle handle,
 		}
 retry:
 		src_mode = NULL;
-		for (k = 0; k < ISP_TUNE_MODE_MAX; k++) {
+		for (k = 0; k < MAX_MODE_NUM; k++) {
 			if (pm_cxt_ptr->tune_mode_array[k] == NULL)
 				continue;
 			if (pm_cxt_ptr->tune_mode_array[k]->mode_id == param_mode_id) {
@@ -1484,7 +1484,7 @@ static cmr_s32 isp_pm_set_param(cmr_handle handle, enum isp_pm_cmd cmd, void *pa
 			if (input->mode[i] >= WORKMODE_MAX)
 				continue;
 
-			max = ISP_TUNE_MODE_MAX;
+			max = MAX_MODE_NUM;
 			if (pm_cxt_ptr->is_4in1_sensor) {
 				ISP_LOGD("mode %d, remosaic %d", input->mode[i], pm_cxt_ptr->remosaic_type);
 				if (input->mode[i] == WORKMODE_PREVIEW) {
@@ -1728,7 +1728,7 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			search = &search_modes[2][0];
 		param_ptr = (struct isp_video_start *)in_ptr;
 		*((cmr_s32 *)out_ptr) = ISP_MODE_ID_COMMON;
-		for (i = 0; i < ISP_TUNE_MODE_MAX; i++) {
+		for (i = 0; i < MAX_MODE_NUM; i++) {
 			mode = search[i];
 			if (mode == ISP_MODE_ID_MAX)
 				break;
@@ -2155,7 +2155,7 @@ static cmr_s32 isp_pm_mode_list_init(cmr_handle handle,
 	}
 
 start_parse:
-	for (i = 0; i < ISP_TUNE_MODE_MAX; i++) {
+	for (i = 0; i < MAX_MODE_NUM; i++) {
 		cmr_u32 mode_data_size;
 		extend_offset = 0;
 
@@ -2435,7 +2435,7 @@ start_parse:
 		}
 
 		/* data size mismatched, discard the block in all mode */
-		for (k = 0; k < ISP_TUNE_MODE_MAX; k++) {
+		for (k = 0; k < MAX_MODE_NUM; k++) {
 			dst_mod_ptr = pm_cxt_ptr->tune_mode_array[k];
 			if (dst_mod_ptr == PNULL)
 				continue;

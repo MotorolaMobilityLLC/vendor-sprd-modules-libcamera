@@ -56,7 +56,7 @@ cmr_u32 scene_mode_matrix[MAX_SCENEMODE_NUM] = {
 	ISP_NR_15_MODE_BIT,
 };
 
-cmr_u32 sensor_mode_matrix[MAX_MODE_NUM] = {
+cmr_u32 sensor_mode_matrix[ISP_TUNE_MODE_MAX] = {
 	ISP_MODE_ID_COMMON,
 	ISP_MODE_ID_PRV_0,
 	ISP_MODE_ID_PRV_0,
@@ -70,6 +70,9 @@ cmr_u32 sensor_mode_matrix[MAX_MODE_NUM] = {
 	ISP_MODE_ID_VIDEO_0,
 	ISP_MODE_ID_VIDEO_0,
 	ISP_MODE_ID_VIDEO_0,
+	ISP_MODE_ID_FDR_CAP_0,
+	ISP_MODE_ID_FDR_CAP_0,
+	ISP_MODE_ID_FDR_CAP_0,
 };
 
 cmr_u32 _pm_calc_nr_addr_offset(cmr_u32 mode_flag, cmr_u32 scene_flag, cmr_u32 * one_multi_mode_ptr)

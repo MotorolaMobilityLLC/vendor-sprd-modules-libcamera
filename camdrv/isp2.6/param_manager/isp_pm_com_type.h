@@ -25,8 +25,8 @@ extern "C" {
 #endif
 
 
-#define ISP_TUNE_MODE_MAX 16
-#define ISP_TUNE_BLOCK_MAX 64
+#define ISP_TUNE_MODE_MAX 32
+#define ISP_TUNE_BLOCK_MAX 96
 #define ISP_TUNE_MODE_INVALID 0xff
 #define ISP_PM_MAGIC_FLAG        0xFFEE5511
 #define ISP_PM_BLK_UPDATE   (1 << 31)
