@@ -176,7 +176,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	struct isp_alg_fw_context *isp_ctx = NULL;
 	cmr_u16 i;
 	cmr_s32 res_w, res_h, res_pd_w, res_pd_h;
-	cmr_u32 base_w = 512, base_h = 384;
+	cmr_u32 base_w = 0, base_h = 0;
 	cmr_s32 temp_win_start_x = 0, temp_win_start_y = 0;
 	cmr_s32 roi_pixel_num_x = 0;
 	cmr_s32 roi_pixel_num_y = 0;
@@ -297,13 +297,10 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pd_gobal_setting.dBeginX = in_p->pd_info->pd_offset_x;
 	cxt->pd_gobal_setting.dBeginY = in_p->pd_info->pd_offset_y;
 
-	//step1: calculate the size of each block in 8*8. If pd_area can cover 512*384, the block size is set to 512*384; otherwise, adjust the block size
-	if (cxt->pd_sensor_setting.dAreaW_orig < base_w * 8) {
-		base_w = (cxt->pd_sensor_setting.dAreaW_orig / 8 / cxt->pd_gobal_setting.pd_unit_w) * cxt->pd_gobal_setting.pd_unit_w;
-	}
-	if (cxt->pd_sensor_setting.dAreaH_orig < base_h * 8) {
-		base_h = (cxt->pd_sensor_setting.dAreaH_orig / 8 / cxt->pd_gobal_setting.pd_unit_h) * cxt->pd_gobal_setting.pd_unit_h;
-	}
+	//step1: calculate the size of each block in 8*8.
+	base_w = (cxt->pd_sensor_setting.dAreaW_orig / 8 / cxt->pd_gobal_setting.pd_unit_w) * cxt->pd_gobal_setting.pd_unit_w;
+	base_h = (cxt->pd_sensor_setting.dAreaH_orig / 8 / cxt->pd_gobal_setting.pd_unit_h) * cxt->pd_gobal_setting.pd_unit_h;
+
 	//step2:calculate the starting coordinates of pd_are required by the algorithm library
 	res_w = (cxt->pd_sensor_setting.dAreaW_orig - base_w * 8) / 2;
 	res_pd_w = cxt->pd_gobal_setting.pd_unit_w * (res_w / cxt->pd_gobal_setting.pd_unit_w);
@@ -312,7 +309,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	res_pd_h = cxt->pd_gobal_setting.pd_unit_h * (res_h / cxt->pd_gobal_setting.pd_unit_h);
 	cxt->pd_gobal_setting.dBeginY = cxt->pd_sensor_setting.dBeginY_orig + res_pd_h;
 
-	//step3:calculate the starting coordinates of ROI_are
+	//step3:calculate the starting coordinates of ROI_area
 	temp_win_start_x = cxt->pd_gobal_setting.dBeginX + 2 * base_w;
 	temp_win_start_y = cxt->pd_gobal_setting.dBeginY + 2 * base_h;
 
