@@ -137,6 +137,12 @@ int bbat_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
             ret = -1;
             break;
         }
+/* camera ID2 is for occlusion, yuv sensor do not need to output picture*/
+#if defined(ID2_FOR_OCCLUSION)
+        if (2 == cam_id)
+            break;
+#endif
+
         fun_ret = cpat_camera_startpreview();
         if (fun_ret < 0) {
             ret = -1;
@@ -145,6 +151,18 @@ int bbat_mipicam(char *buf, int buf_len, char *rsp, int rsp_size) {
         break;
 
     case BBAT_CMD_MIPICAM_READ_BUF:
+
+/* camera ID2 is for occlusion, yuv sensor do not need to output picture*/
+#if defined(ID2_FOR_OCCLUSION)
+        if (2 == cam_id) {
+            fun_ret = cpat_read_yuv_sensor_luma();
+            CMR_LOGI("fun_ret: %d", fun_ret);
+            if (fun_ret < 0)
+                ret = -1;
+            break;
+        }
+#endif
+
         CMR_LOGI("rsp_size: %d", rsp_size);
         fun_ret = cpat_read_cam_buf((void **)&p_buf, SBUFFER_SIZE,
                                         &rec_image_size);

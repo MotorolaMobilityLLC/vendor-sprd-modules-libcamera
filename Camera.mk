@@ -338,6 +338,8 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
+include $(LOCAL_PATH)/SprdCtrl.mk
+
 LOCAL_C_INCLUDES := \
     $(TOP)/system/core/libutils/include/ \
     $(TOP)/vendor/sprd/proprietories-source/engpc/sprd_fts_inc \
