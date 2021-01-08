@@ -1666,24 +1666,23 @@ static void *cmr_grab_thread_proc(void *data) {
                 }
 
                 frame.channel_id = op.parm.frame.channel_id;
-
                 if (frame.channel_id == 3) {
-	                if (op.parm.frame.irq_type == CAMERA_IRQ_FDRL) {
-	                    CMR_LOGD("read fdr yuv_L");
-	                    frame.frame_type = FDR_FRAME_YUVL;
-	                } else if (op.parm.frame.irq_type == CAMERA_IRQ_FDRH) {
-	                    cmr_u32 stop = 1;
+                    if (op.parm.frame.irq_type == CAMERA_IRQ_FDRL) {
+                        CMR_LOGD("read fdr yuv_L");
+                        frame.frame_type = FDR_FRAME_YUVL;
+                    } else if (op.parm.frame.irq_type == CAMERA_IRQ_FDRH) {
+                        cmr_u32 stop = 1;
 
-	                    ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
-	                    CMR_LOGD("read fdr yuv_H");
-	                    frame.frame_type = FDR_FRAME_YUVH;
-	                } else if (op.parm.frame.img_fmt == IMG_PIX_FMT_GREY) {
-	                    CMR_LOGD("read fdr raw");
-	                    frame.frame_type = FDR_FRAME_RAW;
-	                } else {
-	                    CMR_LOGD("read nomal yuv or raw. fmt 0x%x\n",
-							cmr_grab_get_img_type(op.parm.frame.img_fmt));
-	                }
+                        ioctl(p_grab->fd, SPRD_IMG_IO_STOP_CAPTURE, &stop);
+                        CMR_LOGD("read fdr yuv_H");
+                        frame.frame_type = FDR_FRAME_YUVH;
+                } else if (op.parm.frame.img_fmt == IMG_PIX_FMT_GREY) {
+                        CMR_LOGD("read fdr raw");
+                        frame.frame_type = FDR_FRAME_RAW;
+                } else {
+                        CMR_LOGD("read nomal yuv or raw. fmt 0x%x\n",
+                        cmr_grab_get_img_type(op.parm.frame.img_fmt));
+                }
 
                     CMR_LOGD("fdr real id=%d, monoboottime=%" PRId64,
                              op.parm.frame.real_index,

@@ -3290,13 +3290,14 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
     }
 
-/* for sharkle auto3dnr */
-#ifdef CONFIG_ISP_2_3
+/* for sharkle auto3dnr & T610 automfnr */
+#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_7)
     if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
@@ -5753,7 +5754,8 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
             }
             mFlagHdr = false;
         } else if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-                        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+                        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+                        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
             for (i = 0; i < (cmr_int)mZslNum; i++) {
                 mHalOem->ops->camera_set_zsl_buffer(
                     mCameraHandle, mZslHeapArray[i]->phys_addr,
@@ -6061,6 +6063,7 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         }
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
             mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW ||
             mMultiCameraMode == MODE_BOKEH) {
             mIsNeedFlashFired = 0;
         }
@@ -8017,7 +8020,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 #ifdef CONFIG_NIGHT_3DNR_PREV_SW_CAP_SW
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_CAP_SW;
 #else
-                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
+                property_get("ro.boot.auto.efuse", value, "T618");
+                if (!strcmp("T618", value)) {
+                    mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;
+                } else {
+                    //T610
+                    mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW;
+                }
 #endif
             } else {
 #ifdef CONFIG_NIGHT_3DNR_PREV_HW_CAP_HW
@@ -8569,8 +8578,11 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     cmr_u32 i;
     Mutex::Autolock l(&mPrevBufLock);
     Mutex::Autolock zsllock(&mZslBufLock);
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
-    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
     }
@@ -8608,7 +8620,8 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     *vir_addr = 0;
     *fd = 0;
 
-    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO) {
         ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
         return ret;
     }
@@ -9560,7 +9573,6 @@ int SprdCamera3OEMIf::Callback_GpuMalloc(enum camera_mem_cb_type type,
         HAL_LOGE("mem type error %ld", (cmr_uint)type);
         return BAD_VALUE;
     }
-
     switch (type) {
     case CAMERA_PREVIEW_ULTRA_WIDE:
     case CAMERA_VIDEO_ULTRA_WIDE:
@@ -10511,8 +10523,7 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
         src_alg_buf->reserved =
             (void *)m3DNRGraphicPathArray[buf_id].bufferhandle.get();
     } else {
-        src_alg_buf->reserved =
-            (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
+        src_alg_buf->reserved = (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
     }
     src_alg_buf->height = zsl_frame->height;
     src_alg_buf->width = zsl_frame->width;
@@ -10528,9 +10539,8 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
         node.heap_array = NULL;
         mJpegDebugQ.push_back(node);
         HAL_LOGD("Cam%d JpegQueue 3dnr fd 0x%x,  frame_id %d\n",
-			mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+                    mCameraId, zsl_frame->fd, zsl_frame->frame_num);
     }
-
     // dst_alg_buf use first intput frame for now
     if (buf_cnt == 0) {
         dst_alg_buf->height = zsl_frame->height;
@@ -10600,7 +10610,7 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
         node.heap_array = NULL;
         mJpegDebugQ.push_back(node);
         HAL_LOGD("Cam%d JpegQueue hdr fd 0x%x,  frame_id %d\n",
-			mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+                mCameraId, zsl_frame->fd, zsl_frame->frame_num);
     }
 
     if (buf_cnt == 0) {
@@ -10861,7 +10871,8 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
         }
         // for 3dnr sw 2.0
         if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
             ret = SnapshotZsl3dnr(obj, &zsl_frame,
                        &src_alg_buf, &dst_alg_buf, buf_cnt);
             if (ret)
@@ -11082,13 +11093,17 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
+        mZslNum = 3;
         mZslMaxFrameNum = 3;
         (mIsFDRCapture)?(obj->mFlagHdr = false):(obj->mFlagHdr = true);
     } else if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-                mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) &&
+                mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+                mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) &&
                mRecordingMode == false) {
+        mZslNum = 5;
         mZslMaxFrameNum = 5;
     } else {
+        mZslNum = 1;
         mZslMaxFrameNum = 1;
     }
     if (sprddefInfo->is_smile_capture == 1 && sprddefInfo->af_support == 1) {
