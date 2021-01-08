@@ -273,17 +273,27 @@ int suiteManager::RunTest() {
             if (mMap_Suite[moduleName.data()]){
                 gettimeofday(&tv_start, &tz_start);
                 p_start = localtime(&tv_start.tv_sec);
-                sprintf(TestStartTime, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", (1900 + p_start->tm_year),
-                        (1 + p_start->tm_mon), p_start->tm_mday, p_start->tm_hour, p_start->tm_min,
-                        p_start->tm_sec, tv_start.tv_usec);
-                StartTime = p_start->tm_sec * 1000000 + tv_start.tv_usec;
                 ret = mMap_Suite[moduleName.data()]->Run(*itor);
                 gettimeofday(&tv_end, &tz_end);
                 p_end = localtime(&tv_end.tv_sec);
-                sprintf(TestEndTime, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", (1900 + p_end->tm_year),
+                if (p_start != nullptr && p_end != nullptr) {
+                    sprintf(TestStartTime, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", (1900 + p_start->tm_year),
+                        (1 + p_start->tm_mon), p_start->tm_mday, p_start->tm_hour, p_start->tm_min,
+                        p_start->tm_sec, tv_start.tv_usec);
+                    StartTime = p_start->tm_sec * 1000000 + tv_start.tv_usec;
+                    sprintf(TestEndTime, "%04d-%02d-%02d %02d:%02d:%02d.%06ld", (1900 + p_end->tm_year),
                         (1 + p_end->tm_mon), p_end->tm_mday, p_end->tm_hour, p_end->tm_min,
                         p_end->tm_sec, tv_end.tv_usec);
-                EndTime = p_end->tm_sec * 1000000 + tv_end.tv_usec;
+                    EndTime = p_end->tm_sec * 1000000 + tv_end.tv_usec;
+                    sprintf(resultStr, "            SatrtTime : %s , \n", TestStartTime);
+                    fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+                    sprintf(resultStr, "            EndTime : %s , \n", TestEndTime);
+                    fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+
+                    sprintf(resultStr, "            CostTime : %dms , \n",((EndTime - StartTime)/1000));
+                    fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
+                }
             } else {
                 sprintf(resultStr, "    { \n            CaseName : %s_%d, (%s), \n",
                             moduleName.data() , (*itor)->getID() , _json2->m_funcName.c_str());
@@ -300,15 +310,6 @@ int suiteManager::RunTest() {
             fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
 
             sprintf(resultStr, "            TestStatus : %d , \n", ret);
-            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
-
-            sprintf(resultStr, "            SatrtTime : %s , \n", TestStartTime);
-            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
-
-            sprintf(resultStr, "            EndTime : %s , \n", TestEndTime);
-            fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
-
-            sprintf(resultStr, "            CostTime : %dms , \n",((EndTime - StartTime)/1000));
             fwrite(resultStr,strlen(resultStr),1,m_ResultFile);
 
             if (ret != IT_OK){
@@ -440,12 +441,12 @@ int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
     FILE *fp = NULL;
     memset(output_file, '\0', sizeof(output_file));
     memset(fail_imgName, '\0', 40);
-    strcpy(output_file, CAMT_OUT_PATH);
+    strncpy(output_file, CAMT_OUT_PATH, 256);
     Now(n_time);
-    sprintf(fail_imgName, "testImage_%ldx%ld_%s" , f_imgInfo.w, f_imgInfo.h, n_time.c_str());
-    strcat(output_file, fail_imgName);
+    snprintf(fail_imgName, 40, "testImage_%lldx%lld_%s", f_imgInfo.w, f_imgInfo.h, n_time.c_str());
+    strncat(output_file, fail_imgName, 40);
     if (f_imgInfo.format == IT_IMG_FORMAT_YUV) {
-        strcat(output_file, ".yuv");
+        strncat(output_file, ".yuv", 5);
         fp = fopen(output_file, "wb+");
         if (NULL == fp) {
  	        IT_LOGD("can not open file: %s \n", output_file);
@@ -456,7 +457,7 @@ int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
         fclose(fp);
     }
     else if (f_imgInfo.format == IT_IMG_FORMAT_RAW) {
-        strcat(output_file, ".raw");
+        strncat(output_file, ".raw", 5);
         fp = fopen(output_file, "wb+");
         if (NULL == fp) {
  	        IT_LOGD("can not open file: %s \n", output_file);
@@ -467,7 +468,7 @@ int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
         fclose(fp);
     }
     else if (f_imgInfo.format == IT_IMG_FORMAT_JPEG) {
-        strcat(output_file, ".jpg");
+        strncat(output_file, ".jpg", 5);
         fp = fopen(output_file, "wb+");
         if (NULL == fp) {
  	        IT_LOGD("can not open file: %s \n", output_file);
