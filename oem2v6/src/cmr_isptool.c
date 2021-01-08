@@ -45,15 +45,17 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
         scene_param.global_gain = image_info->raw_image_ptr[image_index].sdGain;
         scene_param.smart_bv = image_info->raw_image_ptr[image_index].sBv;
         scene_param.smart_ct = image_info->raw_image_ptr[image_index].uCt;
+	scene_param.abl_weight = image_info->raw_image_ptr[image_index].sabl_weight;
 
-        CMR_LOGI("scene_param w[%d]h[%d] r_gain[%d] g_gain[%d] b_gain[%d] isp_cap_raw w[%d]h[%d]\n",
+        CMR_LOGI("scene_param w[%d]h[%d] r_gain[%d] g_gain[%d] b_gain[%d] isp_cap_raw w[%d]h[%d] scene_param weight [%d]\n",
             scene_param.width,
             scene_param.height,
             scene_param.awb_gain_r,
             scene_param.awb_gain_g,
             scene_param.awb_gain_b,
             isp_cap_raw.size.width,
-            isp_cap_raw.size.height);
+            isp_cap_raw.size.height,
+	    scene_param.abl_weight);
 
 
         ret = isp_sim_set_scene_parm(&scene_param);
@@ -99,11 +101,12 @@ cmr_int cmr_isp_simulation_proc(cmr_handle oem_handle,
             //	4208X3120_gain_123_awbgain_r_1659_g_1024_b_1757_ct_4901_bv_64.mipi_raw
 
             CMR_LOGI("w/h %d/%d, gain %d awb_r %d, awb_g %d awb_b %d ct %d bv "
-                     "%d glb %d",
+                     "%d glb %d abl_weight %d",
                      scene_param.width, scene_param.height, scene_param.gain,
                      scene_param.awb_gain_r, scene_param.awb_gain_g,
                      scene_param.awb_gain_b, scene_param.smart_ct,
-                     scene_param.smart_bv, scene_param.global_gain);
+                     scene_param.smart_bv, scene_param.global_gain,
+		     scene_param.abl_weight);
 
             ret = isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_TOOL_SET_SCENE_PARAM,
                             (void *)&scene_param);

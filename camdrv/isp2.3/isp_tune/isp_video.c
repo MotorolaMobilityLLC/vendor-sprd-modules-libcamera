@@ -330,7 +330,7 @@ char raw_filename[200] = { 0 };
 
 cmr_u32 tool_fmt_pattern = INVALID_FORMAT_PATTERN;
 static FILE *raw_fp = NULL;
-static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 static sem_t preview_sem_lock;
 static sem_t capture_sem_lock;

@@ -305,6 +305,7 @@ extern "C" {
 		cmr_u32 cur_index;
 		cmr_u32 cur_iso;
 		cmr_u32 cur_fps;
+		cmr_u32 abl_weight;
 	};
 
 	struct afctrl_ae_info {

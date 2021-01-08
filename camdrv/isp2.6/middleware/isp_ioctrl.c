@@ -3668,6 +3668,7 @@ label_set_awb:
 		cxt->smart_cxt.tunning_gamma_cur[0] = ioctl_output.param_data_ptr->data_ptr;
 
 	smart_proc_in.cal_para.bv = scene_parm->smart_bv;
+	smart_proc_in.cal_para.abl_weight= scene_parm->abl_weight;
 	smart_proc_in.cal_para.bv_gain = scene_parm->gain;
 	smart_proc_in.cal_para.ct = scene_parm->smart_ct;
 	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;

@@ -305,6 +305,7 @@ struct isp_alg_fw_context {
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
+cmr_u32 isp_abl_weight;
 
 #define LIBCAM_ALG_PATH "libispalg.so"
 
@@ -2311,6 +2312,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 
 	isp_cur_bv = ae_in->ae_output.cur_bv;
 	isp_cur_ct = awb_output->ct;
+	isp_abl_weight = ae_in->ae_output.abl_weight;
 
 	ae_info = &cxt->ae_info;
 	awb_info = &cxt->awb_info;
@@ -2323,6 +2325,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ae_info->img_blk_info.pix_per_blk = 1;
 		ae_info->img_blk_info.data = (cmr_u32 *) &cxt->ae_cxt.aem_stats;
 		ae_info->ae_rlt_info.bv = ae_in->ae_output.cur_bv;
+		ae_info->ae_rlt_info.abl_weight = ae_in->ae_output.abl_weight;
 		ae_info->ae_rlt_info.is_stab = ae_in->ae_output.is_stab;
 		ae_info->ae_rlt_info.cur_exp_line = ae_in->ae_output.cur_exp_line;
 		ae_info->ae_rlt_info.cur_dummy = ae_in->ae_output.cur_dummy;
@@ -4425,6 +4428,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 	struct alsc_ver_info lsc_ver = { 0 };
 	cmr_u32 ct = 0;
 	cmr_s32 bv = 0;
+	cmr_u32 abl_weight = 0;
 	cmr_s32 bv_gain = 0;
 	cmr_s32 i = 0;
 
@@ -4501,6 +4505,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
+		smart_proc_in.cal_para.abl_weight = abl_weight;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 		smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
 		smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;

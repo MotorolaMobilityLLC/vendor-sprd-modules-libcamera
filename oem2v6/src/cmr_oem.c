@@ -10118,7 +10118,7 @@ camera_get_tuning_info(cmr_handle oem_handle,
     adgain_exp_info_ptr->adgain = isp_param.isp_adgain.adgain;
     adgain_exp_info_ptr->exp_time = isp_param.isp_adgain.exp_time;
     adgain_exp_info_ptr->bv = isp_param.isp_adgain.bv;
-    CMR_LOGV("adgain=%d, exp_time=%d, bv=%d", adgain_exp_info_ptr->adgain,
+    CMR_LOGV("adgain=%d, exp_time=%d, bv=%d",adgain_exp_info_ptr->adgain,
              adgain_exp_info_ptr->exp_time, adgain_exp_info_ptr->bv);
     return ret;
 }
@@ -16957,6 +16957,7 @@ struct awbc_cfg {
 };
 extern cmr_u32 isp_cur_bv;
 extern cmr_u32 isp_cur_ct;
+extern cmr_u32 isp_abl_weight;
 /* dump image with 3a info */
 int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
                             uint32_t width, uint32_t height, uint32_t dump_size,
@@ -16969,6 +16970,7 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
     uint32_t gain = 0;
     uint32_t shutter = 0;
     int32_t bv = 0;
+    int32_t abl_weight = 0;
     uint32_t pos = 0;
     cmr_u32 glb_gain = 0;
     struct isp_adgain_exp_info adgain_exp_info;
@@ -17078,6 +17080,13 @@ int dump_image_with_3a_info(cmr_handle oem_handle, uint32_t img_fmt,
         strcat(file_name, "bv");
         strcat(file_name, "_");
         sprintf(tmp_str, "%d", isp_cur_bv);
+        strcat(file_name, tmp_str);
+
+        memset(tmp_str, 0, sizeof(tmp_str));
+        strcat(file_name, "_");
+        strcat(file_name, "abl_weight");
+        strcat(file_name, "_");
+        sprintf(tmp_str, "%d", isp_abl_weight);
         strcat(file_name, tmp_str);
     }
 

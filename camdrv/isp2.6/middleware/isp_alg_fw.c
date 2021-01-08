@@ -79,6 +79,7 @@ enum {
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
+cmr_u32 isp_abl_weight;
 static int s_dbg_ver;
 
 struct BITMAPFILEHEADER {
@@ -448,6 +449,7 @@ struct isp_alg_fw_context {
 	cmr_u32 last_ratio;
 	cmr_u32 cur_ratio;
 	cmr_s32 curr_bv;
+	cmr_u32 abl_weight;
 	/* new 4in1 solution2, 20191028 */
 	cmr_u32 is_4in1_sensor; /* bind with sensor,not refer to sensor's output size */
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
@@ -3544,6 +3546,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			cxt->fdr_cxt.smart_in = 0;
 
 			cxt->curr_bv = ae_in->ae_output.cur_bv;
+			cxt->abl_weight = ae_in->ae_output.abl_weight;
 			cxt->smart_cxt.log_smart = smart_proc_in.log;
 			cxt->smart_cxt.log_smart_size = smart_proc_in.size;
 
@@ -3594,6 +3597,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 
 	isp_cur_bv = ae_in->ae_output.cur_bv;
 	isp_cur_ct = awb_output->ct;
+	isp_abl_weight = ae_in->ae_output.abl_weight;
 
 	ae_info = &cxt->ae_info;
 	awb_info = &cxt->awb_info;
@@ -3606,6 +3610,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ae_info->img_blk_info.pix_per_blk = 1;
 		ae_info->img_blk_info.data = (cmr_u32 *) &cxt->aem_stats_data;
 		ae_info->ae_rlt_info.bv = ae_in->ae_output.cur_bv;
+		ae_info->ae_rlt_info.abl_weight = ae_in->ae_output.abl_weight;
 		ae_info->ae_rlt_info.is_stab = ae_in->ae_output.is_stab;
 		ae_info->ae_rlt_info.near_stab = ae_in->ae_output.near_stab;
 		ae_info->ae_rlt_info.cur_exp_line = ae_in->ae_output.cur_exp_line;
@@ -4154,6 +4159,12 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 			ISP_LOGV("is_master :%d\n", cxt->is_master);
 		isp_br_ioctrl(cxt->sensor_role, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
 		ret = ispalg_ai_process((cmr_handle)cxt);
+		if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
+			ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
+		}
+		ISP_LOGE("takepicture_mode[%d] camera_id[%d] cxt[%p]\n",
+			cxt->takepicture_mode,
+			(unsigned int)cxt->camera_id,cxt);
 		break;
 	}
 	case ISP_EVT_SOF: {
@@ -6301,6 +6312,7 @@ static cmr_int ispalg_update_smart_param(cmr_handle isp_alg_handle)
 
 	if ((cxt->smart_cxt.sw_bypass == 0) && (0 != scene_param.gain) && (0 != scene_param.smart_ct)) {
 		smart_proc_in.cal_para.bv = scene_param.smart_bv;
+		smart_proc_in.cal_para.abl_weight= scene_param.abl_weight;
 		smart_proc_in.cal_para.bv_gain = scene_param.gain;
 		smart_proc_in.cal_para.ct = scene_param.smart_ct;
 		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
@@ -6309,8 +6321,9 @@ static cmr_int ispalg_update_smart_param(cmr_handle isp_alg_handle)
 		isp_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 		cxt->smart_cxt.cur_set_id = 0;
 
-		ISP_LOGI("bv=%d, bv_gain=%d, ct=%d, alc_awb=%d, mode_flag=%d, nr_scene_flag=%d\n",
+		ISP_LOGI("bv=%d, abl_weight=%d, bv_gain=%d, ct=%d, alc_awb=%d, mode_flag=%d, nr_scene_flag=%d\n",
 			smart_proc_in.cal_para.bv,
+			smart_proc_in.cal_para.abl_weight,
 			smart_proc_in.cal_para.bv_gain,
 			smart_proc_in.cal_para.ct,
 			smart_proc_in.alc_awb,

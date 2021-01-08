@@ -764,6 +764,7 @@ struct isptool_scene_param {
     cmr_u32 awb_gain_b;
     cmr_u32 smart_ct;
     cmr_s32 smart_bv;
+    cmr_u32 abl_weight;
     cmr_s32 global_gain;
 };
 
@@ -2121,6 +2122,7 @@ struct tuning_param_info {
     cmr_u32 gain;
     cmr_u32 shutter;
     cmr_int bv;
+    cmr_int abl_weight;
     struct isp_awb_info awb_info;
 };
 

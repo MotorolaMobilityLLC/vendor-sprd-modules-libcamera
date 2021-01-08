@@ -393,7 +393,7 @@ static struct isp_raw_image raw_images = { 0, NULL };
 
 cmr_u32 tool_fmt_pattern = INVALID_FORMAT_PATTERN;
 static FILE *raw_fp = NULL;
-static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+static struct isptool_scene_param scene_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0,0 };
 
 static sem_t preview_sem_lock;
 static sem_t capture_sem_lock;
@@ -3620,6 +3620,7 @@ cmr_s32 ispvideo_GetImgInfo(cmr_u8 *dig_ptr, struct isp_raw_image *raw_images_pt
 	raw_images_ptr->raw_image_ptr =
 		(struct raw_image_info *)ispParserAlloc(raw_images_ptr->count * sizeof(struct raw_image_info));
 	tmp_ptr = (char *) (dig_ptr + 0x0b);
+        ISP_LOGE("raw_images_ptr = %d",(unsigned int)sizeof(struct raw_image_info));
 	while (i < raw_images_ptr->count) {
 		memcpy((char *)&raw_images_ptr->raw_image_ptr[i], (char *)tmp_ptr,
 			sizeof(struct raw_image_info));

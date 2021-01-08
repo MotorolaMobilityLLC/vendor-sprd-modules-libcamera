@@ -68,6 +68,7 @@ struct debug_ae_param {
 	cmr_u8 TC_AE_status;		/*touch ae enable */
 	cmr_s8 TC_target_offset;	/*touch target offset */
 	cmr_u16 TC_cur_lum;			/*touch  lum */
+	cmr_u32 abl_weight;
 
 	cmr_s8 mulaes_target_offset;
 	cmr_s8 region_target_offset;
@@ -100,6 +101,7 @@ struct debug_awb_param {
 
 	cmr_s32 cur_bv;				/*current bv */
 	cmr_s32 cur_iso;			/*current iso value */
+	cmr_u32 abl_weight;
 
 	cmr_u32 r_stat_info[1024];	/*r channel of awb statics state data */
 	cmr_u32 g_stat_info[1024];	/*g channel of awb statics state data */

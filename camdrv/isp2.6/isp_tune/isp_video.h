@@ -58,7 +58,8 @@ struct raw_image_info{
 	cmr_u16 uAfPos;
 	cmr_u16 uCt;
 	cmr_s16 sBv;
-	cmr_u16 uReserved[28];
+	cmr_u16 sabl_weight;
+	cmr_u16 uReserved[27];
 } __attribute__ ((packed));
 
 struct isp_raw_image{
