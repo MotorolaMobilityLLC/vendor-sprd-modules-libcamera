@@ -282,7 +282,7 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 
 	IT_LOGD("mfd_in: %d", mfd_in);
 	for(i = 0; i < DRV_PATH_NUM; i++){
-	    buf_data_out[i] = pMemAlloc_out->popBufferList(tag_out);
+		buf_data_out[i] = pMemAlloc_out->popBufferList(tag_out);
 		phy_addr_out[i] = buf_data_out[i].ion_buffer->phys_addr;
 		vir_addr_out[i] = (unsigned long)(buf_data_out[i].ion_buffer->virs_addr);
 		mfd_out[i] = buf_data_out[i].ion_buffer->fd;

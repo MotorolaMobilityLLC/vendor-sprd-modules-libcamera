@@ -45,10 +45,10 @@ class DrvCaseComm : public IParseJson {
     map<string, uint32_t> m_jsonCaseIDMap;
     void Set_ID(string strKey, void *value) {
         const char *tmp = (static_cast<const char *>(value));
-        if(m_jsonChipIDMap.find(tmp) != m_jsonCaseIDMap.end()) {
+        if(m_jsonCaseIDMap.find(tmp) != m_jsonCaseIDMap.end()) {
             this->m_caseID = m_jsonCaseIDMap[tmp];
         } else {
-            IT_LOGE("ERR CaseID Type Info");
+            IT_LOGE("ERR CaseID Type Info", m_jsonCaseIDMap[tmp]);
         }
     }
     void Set_ChipID(string strKey, void *value) {
