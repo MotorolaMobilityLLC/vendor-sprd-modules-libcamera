@@ -196,11 +196,11 @@
 		},
 		{
 			"ID":17,
-			"README":"example for OEM startpreview and zsl&&nozsl snapshot",
+			"README":"example for OEM startpreview and zsl snapshot",
 			"order":[
 				{"index":0,"time":0,"logL":4,"module":
 					[
-						{"name":"OEM","mcaseid":[0,2,4,3,5,1]}
+						{"name":"OEM","mcaseid":[0,2,4,3,1]}
 					]
 				}
 			]
@@ -1378,6 +1378,17 @@
 				{"index":0,"time":0,"logL":4,"module":
 					[
 						{"name":"HAL","mcaseid":[101,120,103,101,119,103]}
+					]
+				}
+			]
+		},
+		{
+			"ID":125,
+			"README":"example for OEM nozsl snapshot",
+			"order":[
+				{"index":0,"time":0,"logL":4,"module":
+					[
+						{"name":"OEM","mcaseid":[0,5,1]}
 					]
 				}
 			]

@@ -836,6 +836,11 @@ bool NativeCameraHidl::DeviceCb::processCaptureResultLocked(
     r.frame_number = results.frameNumber;
     android::status_t res;
 
+    if (native_camera.previewstop == 1) {
+        IT_LOGE("buffer is err, return");
+        return notify;
+    }
+
     if ((results.result.size() == 0) && (results.outputBuffers.size() == 0) &&
         (results.inputBuffer.buffer == nullptr) &&
         (results.fmqResultSize == 0)) {
@@ -2090,7 +2095,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         ::android::hardware::camera::common::V1_0::helper::CameraMetadata requestMeta;
 
         while (1) {
-            if (exit_camera()) {
+            if (exit_camera() || native_camera.previewstop == 1) {
                 break;
             }
             request_buf.frame_number = _frameNum++;
@@ -2284,6 +2289,7 @@ int NativeCameraHidl::startnativePreview(int g_camera_id, int g_width,
         }
 #endif
         // Flush before waiting for request to complete.
+        IT_LOGI("start session->flush");
         Return<Status> returnStatus = session->flush();
 
         {
@@ -2443,6 +2449,9 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
     if (strcmp(_json2->m_funcName.c_str(), "takesnapshot") == 0) {
         IT_LOGI("set capture_flag is true");
         capture_flag = true;
+        int64_t capture_start_time = 0;
+        int64_t capture_end_time = 0;
+        capture_start_time = systemTime(CLOCK_MONOTONIC);
         while (!g_need_exit) // result check
         {
             if ((g_result[CAMERA_TAKE_PIC] &&
@@ -2450,6 +2459,14 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
                 D("take pic success ,return");
                 break;
             }
+
+            if (((capture_end_time - capture_start_time) / 1000000000) >= 30) {
+                ret = IT_ERR;
+                native_camera.previewstop = 1;
+                IT_LOGE("teke pic cost time more than 30s, return ERR");
+            }
+            usleep(10000);
+            capture_end_time = systemTime(CLOCK_MONOTONIC);
         }
         resultData snapshotResult;
         snapshotResult.available = 1;
@@ -2457,6 +2474,24 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         snapshotResult.funcName = _json2->m_funcName;
         snapshotResult.data[snapshotResult.funcName] = memory_gloable.addr_vir;
         pVec_Result->push_back(snapshotResult);
+
+        if (native_camera.previewstop == 1 && ret != IT_OK && g_need_exit) {
+            IT_LOGI("take snapshot fail, free data");
+            g_first_open = false;
+            g_first_preview = false;
+            g_need_exit = false;
+            native_camera.streamlist.clear();
+            for (int i = 0; i < CAMERA_TEST_MAX; i++) {
+                g_result[i] = false;
+            }
+            PERFORMANCE_MONITOR("freeAllBuffers",
+                                 native_camera.freeAllBuffers());
+            resultData CloseResult;
+            CloseResult.available = 1;
+            CloseResult.funcID = _json2->getID();
+            CloseResult.funcName = _json2->m_funcName;
+            pVec_Result->push_back(CloseResult);
+        }
     }
 
     if (strcmp(_json2->m_funcName.c_str(), "closecamera") == 0) {
