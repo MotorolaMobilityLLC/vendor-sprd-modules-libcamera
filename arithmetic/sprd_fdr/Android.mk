@@ -36,13 +36,29 @@ endif
 
 include $(BUILD_PREBUILT)
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := libsprdfacebeautyfdr
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_TAGS := optional
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
+LOCAL_CHECK_ELF_FILES := false
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_PREBUILT)
+
 ### adapter ###
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := src/sprd_fdr_adapter.cpp
 LOCAL_MODULE := libsprdfdradapter
 LOCAL_MODULE_TAGS := optional
 LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
-LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdfdr libsprdcamalgassist
+LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdfdr libsprdcamalgassist libsprdfacebeautyfdr libsprdfd
 
 LOCAL_C_INCLUDES := \
          $(LOCAL_PATH)/inc \
@@ -51,7 +67,8 @@ LOCAL_C_INCLUDES := \
          $(TOP)/system/core/include \
          $(LOCAL_PATH)/../../ispalg/ae/inc \
          $(LOCAL_PATH)/../../common/inc \
-         $(LOCAL_PATH)/../sprd_camalg_assist
+         $(LOCAL_PATH)/../sprd_camalg_assist \
+         $(LOCAL_PATH)/../sprdface/inc
 
 ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true

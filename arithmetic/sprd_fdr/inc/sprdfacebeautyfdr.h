@@ -5,58 +5,60 @@
 /* 
     Face beautify library API
 */
+#include <stdio.h>
+#include <stdlib.h>
 
-#ifndef __SPRD_FACEBEAUTY_API_H__
-#define __SPRD_FACEBEAUTY_API_H__
+#ifndef __SPRD_FACEBEAUTYFDR_API_H__
+#define __SPRD_FACEBEAUTYFDR_API_H__
 
-#if (defined( WIN32 ) || defined( WIN64 )) && (defined FBAPI_EXPORTS)
-#define FBMOTO_EXPORTS __declspec(dllexport)
+#if (defined( WIN32 ) || defined( WIN64 )) && (defined FBFDRAPI_EXPORTS)
+#define FBFDR_EXPORTS __declspec(dllexport)
 #elif (defined(__ANDROID__))
-#define FBMOTO_EXPORTS __attribute__((visibility("default")))
+#define FBFDR_EXPORTS __attribute__((visibility("default")))
 #else
-#define FBMOTO_EXPORTS
+#define FBFDR_EXPORTS
 #endif
 
-#ifndef FBAPI
-#define FBAPI(rettype) extern FBMOTO_EXPORTS rettype
+#ifndef FBFDRAPI
+#define FBFDRAPI(rettype) extern FBFDR_EXPORTS rettype
 #endif
 
 typedef enum{
-    PIKE2 = 0,
-    SHARKLE = 1,
-    SHARKL3 = 2,
-    SHARKL5PRO = 3,
-    SHARKL5 = 4
-}fb_chipinfo;
+    FBFDR_PIKE2 = 0,
+    FBFDR_SHARKLE = 1,
+    FBFDR_SHARKL3 = 2,
+    FBFDR_SHARKL5PRO = 3,
+    FBFDR_SHARKL5 = 4
+}fbfdr_chipinfo;
 
 /* The error codes */
-#define FB_OK                   0     /* Ok!                                      */
-#define FB_ERROR_INTERNAL       -1    /* Error: Unknown internal error            */
-#define FB_ERROR_NOMEMORY       -2    /* Error: Memory allocation error           */
-#define FB_ERROR_INVALIDARG     -3    /* Error: Invalid argument                  */
+#define FBFDR_OK                   0     /* Ok!                                      */
+#define FBFDR_ERROR_INTERNAL       -1    /* Error: Unknown internal error            */
+#define FBFDR_ERROR_NOMEMORY       -2    /* Error: Memory allocation error           */
+#define FBFDR_ERROR_INVALIDARG     -3    /* Error: Invalid argument                  */
 
 /* The work modes */
-#define FB_WORKMODE_STILL       0x00  /* Still mode: for capture                  */
-#define FB_WORKMODE_MOVIE       0x01  /* Movie mode: for preview and video        */
+#define FBFDR_WORKMODE_STILL       0x00  /* Still mode: for capture                  */
+#define FBFDR_WORKMODE_MOVIE       0x01  /* Movie mode: for preview and video        */
 
 /* The work camera */
-#define FB_CAMERA_FRONT       0x00    /* Front: use front camera                  */
-#define FB_CAMERA_REAR        0x01    /* Rear: use rear camera                    */
+#define FBFDR_CAMERA_FRONT       0x00    /* Front: use front camera                  */
+#define FBFDR_CAMERA_REAR        0x01    /* Rear: use rear camera                    */
 
 /* Skin color defintions */
-#define FB_SKINCOLOR_WHITE      0     /* White color                              */
-#define FB_SKINCOLOR_ROSY       1     /* Rosy color                               */
-#define FB_SKINCOLOR_WHEAT      2     /* The healthy wheat color                  */
+#define FBFDR_SKINCOLOR_WHITE      0     /* White color                              */
+#define FBFDR_SKINCOLOR_ROSY       1     /* Rosy color                               */
+#define FBFDR_SKINCOLOR_WHEAT      2     /* The healthy wheat color                  */
 
-#define FB_LIPCOLOR_CRIMSON     0     /* Crimson color                            */
-#define FB_LIPCOLOR_PINK        1     /* Pink color                               */
-#define FB_LIPCOLOR_FUCHSIA     2     /* Fuchsia colr                             */
+#define FBFDR_LIPCOLOR_CRIMSON     0     /* Crimson color                            */
+#define FBFDR_LIPCOLOR_PINK        1     /* Pink color                               */
+#define FBFDR_LIPCOLOR_FUCHSIA     2     /* Fuchsia colr                             */
 
 /* Light portrait type defintions */
-#define FB_LPT_LIGHT_SATGE         5     /* Stage lighting                        */
-#define FB_LPT_LIGHT_CLASSIC       6     /* Classic lighting                      */
-#define FB_LPT_LIGHT_WINDOW        7     /* Window lighting                       */
-#define FB_LPT_LIGHT_WAVEDOT       8     /* Wavedot lighting                      */
+#define FBFDR_LPT_LIGHT_SATGE         5     /* Stage lighting                        */
+#define FBFDR_LPT_LIGHT_CLASSIC       6     /* Classic lighting                      */
+#define FBFDR_LPT_LIGHT_WINDOW        7     /* Window lighting                       */
+#define FBFDR_LPT_LIGHT_WAVEDOT       8     /* Wavedot lighting                      */
 
 /* Face beautify options */
 typedef struct {
@@ -82,22 +84,22 @@ typedef struct {
 
     unsigned char debugMode;               /* Debug mode. 0 --> OFF; 1 --> ON                   */
     unsigned char fbVersion;               /* facebeauty version control. 0 --> old; 1 --> new  */
-} FB_BEAUTY_OPTION;
+} FBFDR_BEAUTY_OPTION;
 
 
 typedef enum {
-    YUV420_FORMAT_CBCR = 0,          /* NV12 format; pixel order:  CbCrCbCr     */
-    YUV420_FORMAT_CRCB = 1           /* NV21 format; pixel order:  CrCbCrCb     */
-} FB_YUV420_FORMAT;
+    FBFDR_YUV420_FORMAT_CBCR = 0,          /* NV12 format; pixel order:  CbCrCbCr     */
+    FBFDR_YUV420_FORMAT_CRCB = 1           /* NV21 format; pixel order:  CrCbCrCb     */
+} FBFDR_YUV420_FORMAT;
 
 /* YUV420SP image structure */
 typedef struct {
     int width;                       /* Image width                              */
     int height;                      /* Image height                             */
-    FB_YUV420_FORMAT format;         /* Image format                             */
+    FBFDR_YUV420_FORMAT format;         /* Image format                             */
     unsigned char *yData;            /* Y data pointer                           */
     unsigned char *uvData;           /* UV data pointer                          */
-} FB_IMAGE_YUV420SP;
+} FBFDR_IMAGE_YUV420SP;
 
 /* The portrait background segmentation template */
 typedef struct
@@ -105,7 +107,7 @@ typedef struct
     int width;                      /* Image width                               */
     int height;                     /* Image height                              */
     unsigned char *data;            /* Data pointer                              */
-} FB_PORTRAITMASK;
+} FBFDR_PORTRAITMASK;
 
 /* The face information structure */
 typedef struct
@@ -118,33 +120,33 @@ typedef struct
     unsigned char faceAttriRace;    /* Skin color of race: yellow, white, black, or indian        */
     unsigned char faceAttriGender;  /* Gender from face attribute detection demo */
     unsigned char faceAttriAge;     /* Age from face attribute detection demo    */
-} FB_FACEINFO;
+} FBFDR_FACEINFO;
 
 
 /* The face beauty handle */
-typedef void * FB_BEAUTY_HANDLE;
+typedef void * FBFDR_BEAUTY_HANDLE;
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
 /* Get the software version */
-FBAPI(const char *) FB_GetVersion();
+const char* FBFDR_GetVersion();
 
-/* Initialize the FB_BEAUTY_OPTION structure by default values */
-FBAPI(void) FB_InitBeautyOption(FB_BEAUTY_OPTION *option);
+/* Initialize the FBFDR_BEAUTY_OPTION structure by default values */
+void FBFDR_InitBeautyOption(FBFDR_BEAUTY_OPTION *option);
 
 /*
 \brief Create a Face Beauty handle
 \param hFB          Pointer to the created Face Beauty handle
-\param workMode     Work mode: FB_WORKMODE_STILL or FB_WORKMODE_MOVIE
+\param workMode     Work mode: FBFDR_WORKMODE_STILL or FBFDR_WORKMODE_MOVIE
 \param threadNum    Number of thread to use. Value range [1, 4]
-\return Returns FB_OK if successful. Returns negative numbers otherwise.
+\return Returns FBFDR_OK if successful. Returns negative numbers otherwise.
 */
-FBAPI(int) FB_CreateBeautyHandle(FB_BEAUTY_HANDLE *hFB, int workMode, int threadNum);
+int FBFDR_CreateBeautyHandle(FBFDR_BEAUTY_HANDLE *hFB, int workMode, int threadNum);
 
 /* Release the Face Beauty handle */
-FBAPI(void) FB_DeleteBeautyHandle(FB_BEAUTY_HANDLE *hFB);
+void FBFDR_DeleteBeautyHandle(FBFDR_BEAUTY_HANDLE *hFB);
 
 /* 
 \brief Do face beautification on the YUV420SP image
@@ -153,19 +155,23 @@ FBAPI(void) FB_DeleteBeautyHandle(FB_BEAUTY_HANDLE *hFB);
 \param option       The face beautification options
 \param faceInfo     The head of the face array. 
 \param faceCount    The face count in the face array.
-\return Returns FB_OK if successful. Returns negative numbers otherwise.
+\return Returns FBFDR_OK if successful. Returns negative numbers otherwise.
 */
-FBAPI(int) FB_FaceBeauty_YUV420SP(FB_BEAUTY_HANDLE hFB, 
-                                  FB_IMAGE_YUV420SP *imageYUV,
-                                  const FB_BEAUTY_OPTION *option,
-                                  const FB_FACEINFO *faceInfo,
+int FDRFB_FaceBeauty_YUV420SP(FBFDR_BEAUTY_HANDLE hFB, 
+                                  FBFDR_IMAGE_YUV420SP *imageYUV,
+                                  const FBFDR_BEAUTY_OPTION *option,
+                                  const FBFDR_FACEINFO *faceInfo,
                                   int faceCount,
-                                  FB_PORTRAITMASK *imageMask);
+                                  FBFDR_PORTRAITMASK *imageMask);
 
+FBFDRAPI(int) FBFDR_FaceBeauty_YUV420SP(FBFDR_IMAGE_YUV420SP *imageYUV,
+								const FBFDR_FACEINFO *faceInfo,
+								int faceCount,
+								int threadNum);
 
 
 #ifdef  __cplusplus
 }
 #endif
 
-#endif /* __SPRD_FACEBEAUTY_API_H__ */
+#endif /* __SPRD_FACEBEAUTYFDR_API_H__ */

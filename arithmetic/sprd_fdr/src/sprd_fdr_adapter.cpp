@@ -8,6 +8,8 @@
 #include "cmr_types.h"
 #include "ae_ctrl_common.h"
 #include "sprd_camalg_assist.h"
+#include "sprdfacebeautyfdr.h"
+#include "sprdfdapi.h"
 
 #define LOG_TAG "sprd_fdr_adapter"
 #define ADAPTER_LOGE(format,...) ALOGE(format, ##__VA_ARGS__)
@@ -59,9 +61,80 @@ int sprd_fdr_adapter_merge(void **ctx, sprd_camalg_image_t *image_array, fdr_mer
     return sprd_fdr_merge(*ctx, image_array, merge_param, merge_out_param);
 }
 
+int sprd_fdr_fb(sprd_camalg_image_t *image)
+{
+    FD_IMAGE fdImage;
+    memset(&fdImage, 0, sizeof(FD_IMAGE));
+    fdImage.data = (unsigned char *)image->addr[0];
+    fdImage.width = image->width;
+    fdImage.height = image->height;
+    fdImage.step = image->width;
+    fdImage.context.orientation = 270;
+
+    void *fd_handle = 0;
+    FD_OPTION option = {0};
+    option.fdEnv = FD_ENV_HW;
+
+    FdInitOption(&option);
+
+    option.platform = PLATFORM_ID_SHARKL5P;
+    option.workMode = FD_WORKMODE_MOVIE;
+    option.maxFaceNum = 10;
+    option.minFaceSize = ((fdImage.height < fdImage.width) ? fdImage.height:fdImage.width) / 12;
+    option.directions = FD_DIRECTION_ALL;
+    option.angleFrontal = FD_ANGLE_RANGE_90;
+    option.angleHalfProfile = FD_ANGLE_RANGE_30;
+    option.angleFullProfile = FD_ANGLE_RANGE_30;
+    option.detectDensity = 5;
+    option.scoreThreshold = 0;
+    option.detectInterval = 6;
+    option.trackDensity = 5;
+    option.lostRetryCount = 1;
+    option.lostHoldCount = 1;
+    option.holdPositionRate = 5;
+    option.holdSizeRate = 4;
+    option.swapFaceRate = 200;
+    option.guessFaceDirection = 1;
+
+    FdCreateDetector(&fd_handle, &option);
+
+    FdDetectFace(fd_handle, &fdImage);
+
+    FD_FACEINFO face;
+    FBFDR_FACEINFO faceInfo[10];
+    int faceNum = FdGetFaceCount(fd_handle);
+    faceNum = faceNum > 10 ? 10:faceNum;
+    for (int i = 0; i < faceNum; i++) {
+        FdGetFaceInfo(fd_handle, i, &face);
+
+        faceInfo[i].x = face.x;
+        faceInfo[i].y = face.y;
+        faceInfo[i].width = face.width;
+        faceInfo[i].height = face.height;
+        faceInfo[i].yawAngle = face.yawAngle;
+        faceInfo[i].rollAngle = face.rollAngle;
+    }
+
+    FBFDR_IMAGE_YUV420SP fbImage;
+    fbImage.format = FBFDR_YUV420_FORMAT_CRCB;
+    fbImage.width = image->width;
+    fbImage.height = image->height;
+    fbImage.yData = (unsigned char *)image->addr[0];
+    fbImage.uvData = fbImage.yData + fbImage.width * fbImage.height;
+
+    FBFDR_FaceBeauty_YUV420SP(&fbImage, faceInfo, faceNum, 4);
+
+    FdDeleteDetector(&fd_handle);
+
+    return 0;
+}
+
 int sprd_fdr_adapter_fusion(void **ctx, sprd_camalg_image_t *image_in_array, sprd_camalg_image_t *image_out, expfusion_proc_param_t *param_proc)
 {
-    return sprd_fdr_fusion(*ctx, image_in_array, image_out, param_proc);
+    int ret = -1;
+    ret =  sprd_fdr_fusion(*ctx, image_in_array, image_out, param_proc);
+    ret |= sprd_fdr_fb(image_out);
+    return ret;
 }
 
 int sprd_fdr_adapter_close(void **ctx)
