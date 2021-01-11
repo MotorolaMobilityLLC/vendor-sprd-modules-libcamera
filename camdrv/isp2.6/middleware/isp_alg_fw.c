@@ -1731,6 +1731,12 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 		smart_result = (struct smart_calc_result *)param0;
 		for (i = 0; i < smart_result->counts; i++) {
 			block_result = &smart_result->block_result[i];
+
+			if (ISP_SMART_LNC == block_result->smart_id){
+				if (cxt->ops.lsc_ops.ioctrl)
+					cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_SET_SMART_RESULT, (void *)block_result->component[0].fix_data, NULL);	
+			}
+
 			if (block_result->update == 0)
 				continue;
 			if (cxt->first_frm && (block_result->block_id == ISP_BLK_RGB_GAMC)) {

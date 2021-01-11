@@ -112,7 +112,8 @@ struct lsc_sprd_calc_in {
 	int ct;
 	int gridx;
 	int gridy;
-	unsigned int reserved[8];
+        void *smart_lsc_result;
+	unsigned int reserved[7];
 };
 
 struct lsc_sprd_calc_out {

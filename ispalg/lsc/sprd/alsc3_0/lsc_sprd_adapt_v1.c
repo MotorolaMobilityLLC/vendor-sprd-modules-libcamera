@@ -2715,6 +2715,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		calc_in.ct = param->ct;
 		calc_in.gridx = param->grid;
 		calc_in.gridy = param->grid;
+		calc_in.smart_lsc_result = cxt->smart_result;
 
 		calc_out.dst_gain = result->dst_gain;
 		calc_out.debug_info_ptr = cxt->lsc_debug_info_ptr;
@@ -3311,6 +3312,9 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			cxt->sync_count = 1;
 		}
 		ISP_LOGD("ref_camera_id=%d, next_camera_id=%d, sync_flag=%d",cxt->ref_camera_id,cxt->next_camera_id,cxt->sync_flag);
+
+	case ALSC_SET_SMART_RESULT:
+		cxt->smart_result = in;
 		break;
 
 	default:

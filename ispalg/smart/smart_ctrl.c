@@ -817,7 +817,7 @@ static cmr_s32 smart_ctl_calc_component(struct isp_smart_component_cfg *cfg, str
 		break;
 
 	case ISP_SMART_Y_TYPE_WEIGHT_VALUE:
-		if ((smart_id == ISP_SMART_CMC) || (smart_id == ISP_SMART_HSV) || (smart_id == ISP_SMART_HSV_NEW)) {
+		if ((smart_id == ISP_SMART_CMC) || (smart_id == ISP_SMART_HSV) || (smart_id == ISP_SMART_HSV_NEW) || (smart_id == ISP_SMART_LNC)) {
 			result->size = sizeof(bv_result) * 3;
 			fix_data[0].weight[0] = bv_result.weight[0];
 			fix_data[0].weight[1] = bv_result.weight[1];

@@ -219,6 +219,7 @@ struct lsc_sprd_ctrl_context {
 	cmr_u16 next_camera_id;
 	cmr_u16 sync_flag;
 	cmr_u16 sync_count;
+	void *smart_result;
 };
 
 struct lsc_param {
