@@ -238,13 +238,12 @@ LOCAL_SRC_FILES += blk_list/isp_block_com.c \
 	blk_list/isp_blk_mfnr.c \
 	blk_list/isp_blk_nlm_v1.c \
 	blk_list/isp_blk_ppe_v1.c \
-	blk_list/isp_blk_raw_gtm.c \
 	blk_list/isp_blk_rgb_dither.c \
 	blk_list/isp_blk_rgb_gain.c \
 	blk_list/isp_blk_sw3dnr.c \
 	blk_list/isp_blk_uv_cdn.c \
 	blk_list/isp_blk_ynrs_v1.c \
-	blk_list/isp_blk_raw_gtm.c \
+	blk_list/isp_blk_rgb_ltm.c \
 	blk_list/isp_blk_yuv_noisefilter_v1.c \
 	blk_list/isp_blk_yuv_ygamma_v1.c
 endif

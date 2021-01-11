@@ -311,7 +311,7 @@ static cmr_int denoise_param_read_v26(cmr_handle isp_alg_handle, void *param_ptr
 
 static denoise_param_read_t s_adapt_ioctl_nr_read = denoise_param_read_v26;
 
-#elif defined CONFIG_ISP_2_7 || defined CONFIG_ISP_2_8 || defined CONFIG_ISP_2_9
+#elif defined CONFIG_ISP_2_7 || defined CONFIG_ISP_2_8
 static cmr_u32 get_cnr_blkid (void)
 {
 	return ISP_BLK_CNR2_V1;
@@ -435,6 +435,122 @@ static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr
 	return ISP_SUCCESS;}
 
 static denoise_param_read_t s_adapt_ioctl_nr_read = denoise_param_read_v27;
+
+#elif defined CONFIG_ISP_2_9
+static cmr_u32 get_cnr_blkid (void)
+{
+	return ISP_BLK_CNR2_V1;
+}
+
+static cmr_int denoise_param_read_v29(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct sensor_raw_info *raw_sensor_ptr = cxt->sn_cxt.sn_raw_info;
+	struct isp_mode_param *mode_common_ptr = (struct isp_mode_param *)raw_sensor_ptr->mode_ptr[0].addr;
+	struct denoise_param_update *update_param = (struct denoise_param_update *)param_ptr;
+	cmr_u32 i;
+	struct sensor_raw_fix_info *fix_data_ptr = PNULL;
+	struct sensor_nr_fix_info *nr_fix = PNULL;
+	fix_data_ptr = raw_sensor_ptr->fix_ptr[0];
+	nr_fix = &raw_sensor_ptr->nr_fix;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	update_param->multi_nr_flag = SENSOR_MULTI_MODE_FLAG;
+	update_param->nr_scene_map_ptr = nr_fix->nr_scene_ptr;
+	update_param->nr_level_number_map_ptr = nr_fix->nr_level_number_ptr;
+	update_param->nr_default_level_map_ptr = nr_fix->nr_default_level_ptr;
+	if (update_param->nr_level_number_map_ptr) {
+		ISP_LOGV("ISP_TOOL:update_param->nr_level_number_map_ptr sizeof = %zd",
+			sizeof(update_param->nr_level_number_map_ptr));
+	} else {
+		ISP_LOGV("ISP_TOOL: nr map is null");
+	}
+
+	for (i = 0; i < mode_common_ptr->block_num; i++) {
+		struct isp_block_header *header = &(mode_common_ptr->block_header[i]);
+
+		switch (header->block_id) {
+		case DCAM_BLK_PPE:
+			update_param->ppe_level_ptr = (struct sensor_ppe_level *)fix_data_ptr->nr.nr_set_group.ppe;
+			break;
+/*
+		case DCAM_BLK_BPC_V1:
+			update_param->bpc_level_ptr = (struct sensor_bpc_level *)fix_data_ptr->nr.nr_set_group.bpc;
+			break;
+*/
+		case ISP_BLK_NLM_V2:
+			update_param->nlm_level_ptr = (struct sensor_nlm_level *)fix_data_ptr->nr.nr_set_group.nlm;
+			update_param->vst_level_ptr = (struct sensor_vst_level *)fix_data_ptr->nr.nr_set_group.vst;
+			update_param->ivst_level_ptr = (struct sensor_ivst_level *)fix_data_ptr->nr.nr_set_group.ivst;
+			break;
+		case DCAM_BLK_RGB_DITHER:
+			update_param->rgb_dither_level_ptr = (struct sensor_rgb_dither_level *)fix_data_ptr->nr.nr_set_group.rgb_dither;
+			break;
+/*
+		case ISP_BLK_CFA_V1:
+			update_param->cfae_level_ptr = (struct sensor_cfai_level *)fix_data_ptr->nr.nr_set_group.cfa;
+			break;
+		case DCAM_BLK_RGB_AFM_V1:
+			update_param->rgb_afm_level_ptr = (struct sensor_rgb_afm_level *)fix_data_ptr->nr.nr_set_group.rgb_afm;
+			break;
+		case ISP_BLK_UVDIV_V1:
+			update_param->cce_uvdiv_level_ptr = (struct sensor_cce_uvdiv_level *)fix_data_ptr->nr.nr_set_group.uvdiv;
+			break;
+		case ISP_BLK_3DNR:
+			update_param->dnr_level_ptr = (struct sensor_3dnr_level *)fix_data_ptr->nr.nr_set_group.nr3d;
+			break;
+		case ISP_BLK_EE_V1:
+			update_param->ee_level_ptr = (struct sensor_ee_level *)fix_data_ptr->nr.nr_set_group.edge;
+			break;
+		case ISP_BLK_YNR_V1:
+			update_param->ynr_level_ptr = (struct sensor_ynr_level *)fix_data_ptr->nr.nr_set_group.ynr;
+			break;
+*/
+		case ISP_BLK_UV_CDN_V1:
+			update_param->uv_cdn_level_ptr = (struct sensor_uv_cdn_level *)fix_data_ptr->nr.nr_set_group.cdn;
+			break;
+		case ISP_BLK_YUV_NOISEFILTER_V1:
+			update_param->yuv_noisefilter_level_ptr = (struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;
+			break;
+/*
+		case ISP_BLK_IMBALANCE_V1:
+			update_param->imbalance_level_ptr = (struct sensor_nlm_imbalance_level *)fix_data_ptr->nr.nr_set_group.imblance;
+			break;
+*/
+		case ISP_BLK_POST_EE:
+			update_param->soft_ee_level_ptr = (struct sensor_post_ee_level *)fix_data_ptr->nr.nr_set_group.post_ee;
+			break;
+		case ISP_BLK_SW3DNR:
+			update_param->sw3dnr_level_ptr = (struct sensor_sw3dnr_level *)fix_data_ptr->nr.nr_set_group.sw_3dnr;
+			break;
+		case ISP_BLK_PPE_V1:
+			update_param->ppe_level_ptr = (struct sensor_ppe_level *)fix_data_ptr->nr.nr_set_group.ppe;
+			break;
+		case ISP_BLK_BWU_BWD:
+			update_param->bwu_bwd_level_ptr = (struct sensor_bwu_bwd_level *)fix_data_ptr->nr.nr_set_group.bwu_bwd;
+			break;
+		case ISP_BLK_YNRS:
+			update_param->ynrs_level_ptr = (struct sensor_ynrs_level *)fix_data_ptr->nr.nr_set_group.ynrs;
+			break;
+		case ISP_BLK_CNR3:
+			update_param->cnr3_level_ptr = (struct sensor_cnr3_level *)fix_data_ptr->nr.nr_set_group.cnr3;
+			break;
+		case ISP_BLK_MFNR:
+			update_param->mfnr_level_ptr = (struct sensor_mfnr_level *)fix_data_ptr->nr.nr_set_group.mfnr;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return ISP_SUCCESS;
+}
+
+static denoise_param_read_t s_adapt_ioctl_nr_read = denoise_param_read_v29;
+
 
 #else
 static cmr_u32 get_cnr_blkid (void)

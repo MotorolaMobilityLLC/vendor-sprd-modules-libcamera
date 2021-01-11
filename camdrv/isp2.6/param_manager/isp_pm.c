@@ -416,13 +416,13 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
 	{ ISP_BLK_RGB_GAIN, sizeof(struct sensor_rgb_gain_param) },
 	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
-	{ ISP_BLK_RAW_GTM, sizeof(struct sensor_raw_gtm_param) },
+	//{ ISP_BLK_RAW_GTM, sizeof(struct sensor_raw_gtm_param) },
 	//{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
 	{ ISP_BLK_AWB_NEW, 0 },
 	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
 	//{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
 	{ ISP_BLK_PPE_V1, 0 }, /* NR block */
-	{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
+	//{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
 
 	/*  ISP blocks */
 	//{ ISP_BLK_HSV_NEW2, 0 },  /* parsed in hsv block init() */
@@ -433,10 +433,10 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_HIST2, 0 }, // todo: should be sizeof(struct sensor_hists2_param)
 	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
 	{ ISP_BLK_Y_GAMMC_V1, sizeof(struct sensor_y_gamma_param) },
-	{ ISP_BLK_YUV_LTM, sizeof(struct sensor_yuv_ltm_param) },
+	//{ ISP_BLK_YUV_LTM, sizeof(struct sensor_yuv_ltm_param) },
 	//{ ISP_BLK_3DNR, 0 }, /* NR block */
-	{ ISP_BLK_CFA_V1, 0 }, /* NR block */
-	{ ISP_BLK_EE_V1, 0 }, /* NR block */
+	//{ ISP_BLK_CFA_V1, 0 }, /* NR block */
+	//{ ISP_BLK_EE_V1, 0 }, /* NR block */
 	{ ISP_BLK_NLM_V2, 0 }, /* NR block */
 	//{ ISP_BLK_IMBALANCE_V1, 0 }, /* NR block */
 	//{ ISP_BLK_UVDIV_V1, 0 }, /* NR block */
@@ -471,15 +471,15 @@ static struct blk_info blocks_array[] = {
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
-	{ DCAM_BLK_RGB_AFM_V1,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
+	//{ DCAM_BLK_RGB_AFM_V1,		ISP_BLK_RGB_AFM_T, sizeof(struct sensor_rgb_afm_level) },
 	//{ DCAM_BLK_BPC_V1,			ISP_BLK_BPC_T, sizeof(struct sensor_bpc_level) },
 	{ DCAM_BLK_RGB_DITHER,		ISP_BLK_RGB_DITHER_T,  sizeof(struct sensor_rgb_dither_level) },
 	{ ISP_BLK_PPE_V1,			ISP_BLK_PPE_T,  sizeof(struct sensor_ppe_level) },
-	{ ISP_BLK_3DNR,				ISP_BLK_3DNR_T, sizeof(struct sensor_3dnr_level) },
+	//{ ISP_BLK_3DNR,				ISP_BLK_3DNR_T, sizeof(struct sensor_3dnr_level) },
 	//{ ISP_BLK_UVDIV_V1,			ISP_BLK_UVDIV_T, sizeof(struct sensor_cce_uvdiv_level) },
-	{ ISP_BLK_CFA_V1,			ISP_BLK_CFA_T,  sizeof(struct sensor_cfa_param_level) },
+	//{ ISP_BLK_CFA_V1,			ISP_BLK_CFA_T,  sizeof(struct sensor_cfa_param_level) },
 	//{ ISP_BLK_YNR_V1,			ISP_BLK_YNR_T, sizeof(struct sensor_ynr_level) },
-	{ ISP_BLK_EE_V1,				ISP_BLK_EDGE_T, sizeof(struct sensor_ee_level) },
+	//{ ISP_BLK_EE_V1,				ISP_BLK_EDGE_T, sizeof(struct sensor_ee_level) },
 	{ ISP_BLK_UV_CDN_V1,		ISP_BLK_CDN_T, sizeof(struct sensor_uv_cdn_level) },
 	//{ ISP_BLK_IMBALANCE_V1,			ISP_BLK_IMBALANCEE_T, sizeof(struct sensor_nlm_imbalance_level) },
 	{ ISP_BLK_SW3DNR,			ISP_BLK_SW3DNR_T, sizeof(struct sensor_sw3dnr_level) },

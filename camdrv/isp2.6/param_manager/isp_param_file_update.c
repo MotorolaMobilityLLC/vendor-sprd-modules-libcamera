@@ -150,19 +150,19 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"vst",
 	"ivst",
 	"rgb_dither",
-	"bpc",
-	"cfai",
-	"rgb_afm",
+	//"bpc",
+	//"cfai",
+	//"rgb_afm",
 	"cce_uvdiv",
-	"3dnr",
+	//"3dnr",
 	"ppe",
-	"yuv_precdn",
+	//"yuv_precdn",
 	"uv_cdn",
-	"uv_postcdn",
-	"ynr",
-	"ee",
+	//"uv_postcdn",
+	//"ynr",
+	//"ee",
 	"yuv_noisefilter",
-	"imbalance",
+	//"imbalance",
 	"sw3dnr",
 	"bwu_bwd",
 	"ynrs",
@@ -1570,7 +1570,7 @@ cmr_s32 read_lnc_map_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 }
 
 
-#ifndef CONFIG_ISP_2_8
+#if defined (CONFIG_ISP_2_5) || defined (CONFIG_ISP_2_6) || defined (CONFIG_ISP_2_7)
 cmr_s32 read_lnc_weight_info(FILE * fp, struct sensor_lens_map * lnc_map_ptr)
 {
 	cmr_s32 rtn = 0x00;
@@ -1685,7 +1685,7 @@ cmr_s32 read_fix_lnc_info(FILE * fp, struct sensor_lsc_map * lnc_ptr)
 				}
 			}
 		}
-#ifndef CONFIG_ISP_2_8
+#if defined (CONFIG_ISP_2_5) || defined (CONFIG_ISP_2_6) || defined (CONFIG_ISP_2_7)
 	char lnc_weight_info[50];
 		if (NULL != strstr(line_buf, "_lnc_weight_0")) {
 			for (i = 0; i < LNC_MAP_NUM; i++) {
