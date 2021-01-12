@@ -49,6 +49,7 @@ extern "C" {
 #define ISP_PM_HSV_CTRESULT_NUM 2
 #define SENSOR_YUV_LTM_NUM 16
 #define SENSOR_RAW_GTM_NUM 16
+#define SENSOR_RGB_GTM_NUM 16
 
 /*************************************************************************/
 
@@ -300,6 +301,39 @@ struct isp_yuv_ltm_param {
 	struct isp_dev_yuv_ltm_info cur;
 	struct isp_sample_point_info cur_idx;
 	struct isp_yuv_ltm_inter ltm_param[SENSOR_YUV_LTM_NUM];
+};
+
+struct isp_rgb_gtm_inter {
+	cmr_u32 gtm_hist_stat_bypass;//gtm_stat_bypass
+	cmr_u32 gtm_rgb2y_mode;;//rgb2y_mode
+	cmr_u32 tm_rgb2y_g_coeff;//rgb2y_r_coeff
+	cmr_u32 tm_rgb2y_r_coeff;//rgb2y_g_coeff
+	cmr_u32 tm_rgb2y_b_coeff;//rgb2y_b_coeff
+	cmr_u32 min_percentile_16bit;
+	cmr_u32 max_percentile_16bit;
+	cmr_u32 gtm_target_norm_coeff;//target_norm_coeff    jianjiejisuan
+	cmr_u32 gtm_target_norm;//target_norm
+	cmr_u32 gtm_target_norm_setting_mode;//target_norm_set_mode
+	cmr_u32 gtm_imgkey_setting_value;//image_key
+	cmr_u32 gtm_imgkey_setting_mode;//image_key_set_mode
+	cmr_u32 gtm_ymax_diff_thr;//luma_sm_Ymax_diff_thr
+	cmr_u32 gtm_yavg_diff_thr;//luma_sm_Yavg_diff_thr
+	cmr_u32 gtm_pre_ymin_weight;//pre_Ymin_weight
+	cmr_u32 gtm_cur_ymin_weight;//cur_Ymin_weight
+	cmr_u32 gtm_map_bypass;//bypass
+	cmr_u32 gtm_map_video_mode;//map_video_mode
+	cmr_u32 gtm_map_dist[7][7];
+	cmr_u32 gtm_map_bilateral_sigma_d;
+	cmr_u32 gtm_map_bilateral_sigma_r;
+	cmr_u32 gtm_map_dis_weight[19];
+	cmr_u32 gtm_map_range_weight[61];
+	cmr_u32 gtm_hist_total;
+};
+
+struct isp_rgb_gtm_param {
+	struct dcam_dev_rgb_gtm_block_info cur;
+	struct isp_sample_point_info cur_idx;
+	struct isp_rgb_gtm_inter rgb_gtm_param[SENSOR_RGB_GTM_NUM];
 };
 
 struct isp_raw_gtm_inter {
@@ -663,6 +697,24 @@ struct isp_yuv_ygamma_param {
 	struct sensor_gamma_curve specialeffect_tab[MAX_SPECIALEFFECT_NUM];
 };
 
+struct isp_pyramid_onl_param {
+	struct isp_pyramid_onl_info cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
+struct isp_pyramid_offl_param {
+	struct isp_pyramid_offl_info cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
 struct isp_cnr2_level_info {
 	cmr_u16 level_enable;
 	cmr_u16 low_ct_thrd;
@@ -686,6 +738,45 @@ struct isp_cnr2_param {
 struct isp_cnr3_param {
 	struct isp_sw_cnr3_info cur;
 	struct isp_cnr3_level_info level_info;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
+struct isp_dct_param {
+	struct isp_dev_dct_info cur;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
+struct isp_dev_cnr_h_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+};
+
+struct isp_cnr_h_param {
+	struct isp_dev_cnr_h_info cur;
+	struct isp_dev_cnr_h_level_info level_info;
+	cmr_u32 cur_level;
+	cmr_u32 level_num;
+	cmr_uint *param_ptr;
+	cmr_uint *scene_ptr;
+	cmr_u32 nr_mode_setting;
+};
+
+struct isp_dev_post_cnr_h_level_info {
+	cmr_u8 level_enable;
+	cmr_u16 low_ct_thrd;
+};
+
+struct isp_post_cnr_h_param {
+	struct isp_dev_post_cnr_h_info cur;
+	struct isp_dev_post_cnr_h_level_info level_info;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -993,6 +1084,12 @@ struct isp_context {
 	struct isp_ynr_param ynr;
 	struct isp_dev_noise_filter_param noisefilter;
 	struct isp_yuv_ygamma_param ygamma;
+	struct isp_pyramid_onl_param pyramid_onl;
+	struct isp_pyramid_offl_param pyramid_offl;
+	struct isp_dct_param dct;
+	struct isp_rgb_gtm_param rgb_gtm;
+	struct isp_cnr_h_param cnr_h;
+	struct isp_post_cnr_h_param post_cnr_h;
 
 	/* soft algo block */
 	struct isp_cnr2_param cnr2;
@@ -1210,6 +1307,29 @@ cmr_s32 _pm_uv_div_init(void *dst_uv_div_param, void *src_uv_div_param, void *pa
 cmr_s32 _pm_uv_div_set_param(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
+cmr_s32 _pm_pyramid_onl_init(void *dst_pyramid_onl_param, void *src_pyramid_onl_param, void *param1, void *param2);
+cmr_s32 _pm_pyramid_onl_set_param(void *pyramid_onl_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_pyramid_onl_get_param(void *pyramid_onl_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_pyramid_offl_init(void *dst_pyramid_offl_param, void *src_pyramid_offl_param, void *param1, void *param2);
+cmr_s32 _pm_pyramid_offl_set_param(void *pyramid_offl_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_pyramid_offl_get_param(void *pyramid_offl_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_dct_init(void *dst_dct_param, void *src_dct_param, void *param1, void *param2);
+cmr_s32 _pm_dct_set_param(void *dct_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_dct_get_param(void *dct_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_rgb_gtm_init(void *dst_rgb_gtm_param, void *src_rgb_gtm_param, void *param1, void *param_ptr2);
+cmr_s32 _pm_rgb_gtm_set_param(void *rgb_gtm_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_rgb_gtm_get_param(void *rgb_gtm_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_cnr_h_init(void *dst_cnr_h_param, void *src_cnr_h_param, void *param1, void *param2);
+cmr_s32 _pm_cnr_h_set_param(void *cnr_h_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_cnr_h_get_param(void *cnr_h_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_post_cnr_h_init(void *dst_post_cnr_h_param, void *src_post_cnr_h_param, void *param1, void *param2);
+cmr_s32 _pm_post_cnr_h_set_param(void *post_cnr_h_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_post_cnr_h_get_param(void *post_cnr_h_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 /* ISP blocks end..... */
 

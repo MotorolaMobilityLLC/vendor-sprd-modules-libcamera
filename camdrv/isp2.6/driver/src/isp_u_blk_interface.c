@@ -97,6 +97,13 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_RGB_LTM, isp_u_rgb_ltm_block},
 	/* isp blocks for sharkl6 */
 	{ISP_BLK_HSV_LUT, isp_u_hsv_block},
+	/* isp blocks for N6 pro*/
+	{ISP_BLK_PYRAMID_ONL, isp_u_pyramid_onl_block},
+	{ISP_BLK_PYRAMID_OFFL, isp_u_pyramid_offl_block},
+	{ISP_BLK_DCT, isp_u_dct_block},
+	{ISP_BLK_RGB_GTM, dcam_u_rgb_gtm_block},
+	{ISP_BLK_CNR_H, isp_u_cnr_h_block},
+	{ISP_BLK_POST_CNR_H, isp_u_post_cnr_h_block},
 };
 
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block)

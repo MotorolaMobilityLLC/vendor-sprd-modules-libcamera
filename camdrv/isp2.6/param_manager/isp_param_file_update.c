@@ -169,6 +169,11 @@ char nr_param_name[ISP_BLK_NR_MAX][20] = {
 	"cnr3",
 	"mfnr",
 	"post_ee",
+	"pyramid_onl",
+	"pyramid_offl",
+	"dct",
+	"cnr_h",
+	"post_cnr_h",
 };
 #endif
 

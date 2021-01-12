@@ -423,6 +423,7 @@ static struct blk_info blocks_array[] = {
 	//{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
 	{ ISP_BLK_PPE_V1, 0 }, /* NR block */
 	//{ DCAM_BLK_RGB_AFM_V1, 0 }, /* NR block */
+	{ ISP_BLK_RGB_GTM, 0 },
 
 	/*  ISP blocks */
 	//{ ISP_BLK_HSV_NEW2, 0 },  /* parsed in hsv block init() */
@@ -443,6 +444,11 @@ static struct blk_info blocks_array[] = {
 	//{ ISP_BLK_YNR_V1, 0 }, /* NR block */
 	{ ISP_BLK_UV_CDN_V1, 0 }, /* NR block */
 	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
+	{ ISP_BLK_PYRAMID_ONL, 0 }, /* NR block */
+	{ ISP_BLK_PYRAMID_OFFL, 0 }, /* NR block */
+	{ ISP_BLK_DCT, 0 }, /* NR block */
+	{ ISP_BLK_CNR_H, 0 }, /* NR block */
+	{ ISP_BLK_POST_CNR_H, 0 }, /* NR block */
 
 	/* software algo blocks */
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
@@ -492,6 +498,11 @@ struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
 	{ ISP_BLK_BWU_BWD,			ISP_BLK_BWU_BWD_T, sizeof(struct sensor_bwu_bwd_level) },
 	{ ISP_BLK_CNR3,				ISP_BLK_CNR3_T, sizeof(struct sensor_cnr3_level) },
 	{ ISP_BLK_MFNR,				ISP_BLK_MFNR_T, sizeof(struct sensor_mfnr_level) },
+	{ ISP_BLK_PYRAMID_ONL,		ISP_BLK_PYRAMID_ONL_T, sizeof(struct sensor_pyramid_onl_level) },
+	{ ISP_BLK_PYRAMID_OFFL,		ISP_BLK_PYRAMID_OFFL_T, sizeof(struct sensor_pyramid_offl_level) },
+	{ ISP_BLK_DCT,				ISP_BLK_DCT_T, sizeof(struct sensor_dct_level) },
+	{ ISP_BLK_CNR_H,				ISP_BLK_CNR_H_T, sizeof(struct sensor_cnr_h_level) },
+	{ ISP_BLK_POST_CNR_H,		ISP_BLK_POST_CNR_H_T, sizeof(struct sensor_post_cnr_h_level) },
 };
 #endif
 /************************ Project adapt data END *******************************************/
@@ -724,6 +735,14 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 {
 
 	switch (id) {
+
+	/* NR for N6pro */
+	case ISP_BLK_PYRAMID_ONL:
+	case ISP_BLK_PYRAMID_OFFL:
+	case ISP_BLK_DCT:
+	case ISP_BLK_CNR_H:
+	case ISP_BLK_POST_CNR_H:
+		return 1;
 	/* NR for SharkL5 */
 	case DCAM_BLK_RGB_DITHER:
 	case DCAM_BLK_BPC_V1:

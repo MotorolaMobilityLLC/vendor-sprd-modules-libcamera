@@ -228,7 +228,7 @@ struct isp_block_operations s_iircnr_yrandom_ops = { _pm_iircnr_yrandom_init, _p
 struct isp_block_operations s_mfnr_ops= {_pm_mfnr_init,_pm_mfnr_set_param,_pm_mfnr_get_param, PNULL, PNULL };
 struct isp_block_operations s_nlm_ops= {_pm_nlm_init,_pm_nlm_set_param,_pm_nlm_get_param, PNULL, PNULL };
 struct isp_block_operations s_ppe_ops= {_pm_ppe_init,_pm_ppe_set_param,_pm_ppe_get_param, PNULL, PNULL };
-//struct isp_block_operations s_raw_gtm_ops= {_pm_gtm_init,_pm_gtm_set_param,_pm_gtm_get_param, PNULL, PNULL };
+struct isp_block_operations s_rgb_gtm_ops= {_pm_rgb_gtm_init,_pm_rgb_gtm_set_param,_pm_rgb_gtm_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_dither_ops= {_pm_rgb_dither_init,_pm_rgb_dither_set_param,_pm_rgb_dither_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_gain_ops= {_pm_rgb_gain_init,_pm_rgb_gain_set_param,_pm_rgb_gain_get_param, PNULL, PNULL };
 struct isp_block_operations s_sw3dnr_ops= {_pm_sw3dnr_init,_pm_sw3dnr_set_param,_pm_sw3dnr_get_param, PNULL, PNULL };
@@ -239,6 +239,11 @@ struct isp_block_operations s_ynrs_ops= {_pm_ynrs_init,_pm_ynrs_set_param,_pm_yn
 struct isp_block_operations s_yuv_noisefilter_ops= {_pm_yuv_noisefilter_init,_pm_yuv_noisefilter_set_param,_pm_yuv_noisefilter_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_ltm_ops= {_pm_rgb_ltm_init,_pm_rgb_ltm_set_param,_pm_rgb_ltm_get_param, PNULL, PNULL };
 struct isp_block_operations s_yuv_ygamma_ops= {_pm_yuv_ygamma_init,_pm_yuv_ygamma_set_param,_pm_yuv_ygamma_get_param, PNULL, PNULL };
+struct isp_block_operations s_pyramid_onl_ops = { _pm_pyramid_onl_init,_pm_pyramid_onl_set_param,_pm_pyramid_onl_get_param, PNULL, PNULL };
+struct isp_block_operations s_pyramid_offl_ops = { _pm_pyramid_offl_init,_pm_pyramid_offl_set_param,_pm_pyramid_offl_get_param, PNULL, PNULL };
+struct isp_block_operations s_dct_ops = { _pm_dct_init,_pm_dct_set_param,_pm_dct_get_param, PNULL, PNULL };
+struct isp_block_operations s_cnr_h_ops = {_pm_cnr_h_init,_pm_cnr_h_set_param,_pm_cnr_h_get_param, PNULL, PNULL };
+struct isp_block_operations s_post_cnr_h_ops = { _pm_post_cnr_h_init,_pm_post_cnr_h_set_param,_pm_post_cnr_h_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_5
@@ -450,6 +455,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_PPE_V1, array_offset(struct isp_context, ppe), sizeof(struct isp_ppe_param), &s_ppe_ops},
 	//{DCAM_BLK_RGB_AFM_V1, array_offset(struct isp_context, afm), sizeof(struct isp_rgb_afm_param), &s_rgb_afm_ops},
 	{DCAM_BLK_RGB_DITHER, array_offset(struct isp_context, rgb_dither), sizeof(struct isp_rgb_dither_param), &s_rgb_dither_ops},
+	{ISP_BLK_RGB_GTM, array_offset(struct isp_context, rgb_gtm), sizeof(struct isp_rgb_gtm_param), &s_rgb_gtm_ops},
 
 	/* ======== isp blocks list starts ======= */
 	{ISP_BLK_CCE, array_offset(struct isp_context, cce), sizeof(struct isp_cce_param), &s_cce_ops},
@@ -468,6 +474,11 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	//{ISP_BLK_YNR_V1, array_offset(struct isp_context, ynr), sizeof(struct isp_ynr_param), &s_ynr_ops},
 	{ISP_BLK_UV_CDN_V1, array_offset(struct isp_context, cdn), sizeof(struct isp_uv_cdn_param), &s_uv_cdn_ops},
 	{ISP_BLK_YUV_NOISEFILTER_V1, array_offset(struct isp_context, noisefilter), sizeof(struct isp_dev_noise_filter_param), &s_yuv_noisefilter_ops},
+	{ISP_BLK_PYRAMID_ONL, array_offset(struct isp_context, pyramid_onl), sizeof(struct isp_pyramid_onl_param), &s_pyramid_onl_ops},
+	{ISP_BLK_PYRAMID_OFFL, array_offset(struct isp_context, pyramid_offl), sizeof(struct isp_pyramid_offl_param), &s_pyramid_offl_ops},
+	{ISP_BLK_DCT, array_offset(struct isp_context, dct), sizeof(struct isp_dct_param), &s_dct_ops},
+	{ISP_BLK_CNR_H, array_offset(struct isp_context, cnr_h), sizeof(struct isp_cnr_h_param), &s_cnr_h_ops},
+	{ISP_BLK_POST_CNR_H, array_offset(struct isp_context, post_cnr_h), sizeof(struct isp_post_cnr_h_param), &s_post_cnr_h_ops},
 
 	/* ======== soft algo blocks list starts ======= */
 	{ISP_BLK_SW3DNR, array_offset(struct isp_context, sw3dnr), sizeof(struct isp_sw3dnr_param), &s_sw3dnr_ops},
@@ -476,7 +487,6 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_DRE, array_offset(struct isp_context, dre), sizeof(struct isp_dres_param), &s_dre_ops},
 	{ISP_BLK_CNR3, array_offset(struct isp_context, cnr3), sizeof(struct isp_cnr3_param), &s_cnr3_ops},
 	{ISP_BLK_RGB_LTM, array_offset(struct isp_context, rgb_ltm), sizeof(struct isp_rgb_ltm_param), &s_rgb_ltm_ops},
-	//{ISP_BLK_RAW_GTM, array_offset(struct isp_context, gtm), sizeof(struct isp_raw_gtm_param), &s_raw_gtm_ops},
 	{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
 	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
 	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},

@@ -299,6 +299,7 @@ cmr_s32 dcam_u_dual_pdaf_block(cmr_handle handle, void *block_info);
 
 cmr_s32 dcam_u_grgb_block(cmr_handle handle, void *block_info);
 cmr_s32 dcam_u_raw_gtm_block(cmr_handle handle, void *block_info);
+cmr_s32 dcam_u_rgb_gtm_block(cmr_handle handle, void *block_info);
 
 cmr_s32 isp_u_rgb_ltm_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_yuv_ltm_block(cmr_handle handle, void *block_info);
@@ -333,4 +334,9 @@ cmr_s32 isp_u_uvd_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_ygamma_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_ynr_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_noisefilter_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_pyramid_onl_block(cmr_handle handle, void * block_info);
+cmr_s32 isp_u_pyramid_offl_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_dct_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_cnr_h_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_post_cnr_h_block(cmr_handle handle, void *block_info);
 #endif

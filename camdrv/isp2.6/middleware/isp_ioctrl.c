@@ -561,6 +561,19 @@ static cmr_int denoise_param_read_v29(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_MFNR:
 			update_param->mfnr_level_ptr = (struct sensor_mfnr_level *)fix_data_ptr->nr.nr_set_group.mfnr;
 			break;
+		case ISP_BLK_DCT:
+			update_param->dct_level_ptr = (struct sensor_dct_level *)fix_data_ptr->nr.nr_set_group.dct;
+		case ISP_BLK_CNR_H:
+			update_param->cnr_h_level_ptr = (struct sensor_cnr_h_level *)fix_data_ptr->nr.nr_set_group.cnr_h;
+			break;
+		case ISP_BLK_POST_CNR_H:
+			update_param->post_cnr_h_level_ptr = (struct sensor_post_cnr_h_level *)fix_data_ptr->nr.nr_set_group.post_cnr_h;
+		case ISP_BLK_PYRAMID_ONL:
+			update_param->pyramid_onl_level_ptr = (struct sensor_pyramid_onl_level *)fix_data_ptr->nr.nr_set_group.pyramid_onl;
+			break;
+		case ISP_BLK_PYRAMID_OFFL:
+			update_param->pyramid_offl_level_ptr = (struct sensor_pyramid_offl_level *)fix_data_ptr->nr.nr_set_group.pyramid_offl;
+			break;
 		default:
 			break;
 		}

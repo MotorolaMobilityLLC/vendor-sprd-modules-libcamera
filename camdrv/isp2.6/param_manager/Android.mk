@@ -246,7 +246,13 @@ LOCAL_SRC_FILES += blk_list/isp_block_com.c \
 	blk_list/isp_blk_ynrs_v1.c \
 	blk_list/isp_blk_rgb_ltm.c \
 	blk_list/isp_blk_yuv_noisefilter_v1.c \
-	blk_list/isp_blk_yuv_ygamma_v1.c
+	blk_list/isp_blk_yuv_ygamma_v1.c \
+        blk_list/isp_blk_pyramid_onl.c \
+        blk_list/isp_blk_pyramid_offl.c \
+        blk_list/isp_blk_dct.c \
+	blk_list/isp_blk_rgb_gtm.c \
+	blk_list/isp_blk_cnr_h.c \
+	blk_list/isp_blk_post_cnr_h.c
 endif
 
 include $(LOCAL_PATH)/../../../SprdCtrl.mk
