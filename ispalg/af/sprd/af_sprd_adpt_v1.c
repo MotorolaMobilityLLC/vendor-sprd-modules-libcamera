@@ -467,6 +467,141 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 	af->cb_ops.set_monitor_win(af->caller, &winparam);
 }
 
+static cmr_s32 afm_set_lum(af_ctrl_t * af, void *in)
+{
+	cmr_u32 *afm_data = (cmr_u32 *) in;
+	cmr_u8 i = 0;
+	char prop[256];
+	int val = 0;
+	property_get("debug.isp.af.lumlog", prop, "0");
+	val = atoi(prop);
+
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined(CONFIG_ISP_2_9)
+
+#if defined(CONFIG_ISP_2_5)
+#define LUM_INDEX(block) (6 * ((block) >> 1) + ((block) & 0x01))
+#endif
+
+#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined(CONFIG_ISP_2_9)
+#define LUM_INDEX(block) (((block) * 3) + 2)
+#endif
+
+	if (STATE_FAF == af->state && FACE_NONE != af->f_orientation) {	//face lum mapping
+		ISP_LOGI("roll_angle %d", af->roll_angle);
+		if (FACE_UP == af->f_orientation || FACE_DOWN == af->f_orientation) {	//4*6
+			if (FACE_UP == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
+					af->afm_lum[i] = afm_data[LUM_INDEX(i / 3 * 4 + i % 3 + af->win_offset)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[%d]: %d, block: %d, afm_data[%d]:%d", i, af->afm_lum[i], i / 3 * 4 + i % 3 + af->win_offset,
+							 LUM_INDEX(i / 3 * 4 + i % 3 + af->win_offset), afm_data[LUM_INDEX(i / 3 * 4 + i % 3 + af->win_offset)]);
+					}
+				}
+				if (0 == af->win_offset) {
+					af->afm_lum[7] = afm_data[LUM_INDEX(9)];
+					af->afm_lum[6] = afm_data[LUM_INDEX(16)];
+					af->afm_lum[8] = afm_data[LUM_INDEX(18)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[6]: %d, block: 20, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(16), afm_data[LUM_INDEX(16)]);
+						ISP_LOGI("afm_lum[7]: %d, block: 9,  afm_data[%d]:%d", af->afm_lum[7], LUM_INDEX(9), afm_data[LUM_INDEX(9)]);
+						ISP_LOGI("afm_lum[8]: %d, block: 22, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(18), afm_data[LUM_INDEX(18)]);
+					}
+				} else {
+					af->afm_lum[7] = afm_data[LUM_INDEX(10)];
+					af->afm_lum[6] = afm_data[LUM_INDEX(17)];
+					af->afm_lum[8] = afm_data[LUM_INDEX(19)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[6]: %d, block: 21, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(17), afm_data[LUM_INDEX(17)]);
+						ISP_LOGI("afm_lum[7]: %d, block: 10,  afm_data[%d]:%d", af->afm_lum[7], LUM_INDEX(10), afm_data[LUM_INDEX(10)]);
+						ISP_LOGI("afm_lum[8]: %d, block: 23, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(19), afm_data[LUM_INDEX(19)]);
+					}
+				}
+			} else if (FACE_DOWN == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
+					af->afm_lum[i + 3] = afm_data[LUM_INDEX(i / 3 * 4 + i % 3 + 16 + af->win_offset)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[%d]: %d, block: %d, afm_data[%d]:%d", i + 3, af->afm_lum[i + 3], i / 3 * 4 + i % 3 + 16 + af->win_offset,
+							 LUM_INDEX(i / 3 * 4 + i % 3 + 16 + af->win_offset), afm_data[LUM_INDEX(i / 3 * 4 + i % 3 + 16 + af->win_offset)]);
+					}
+				}
+				if (0 == af->win_offset) {
+					af->afm_lum[1] = afm_data[LUM_INDEX(13)];
+					af->afm_lum[0] = afm_data[LUM_INDEX(4)];
+					af->afm_lum[2] = afm_data[LUM_INDEX(6)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[0]: %d, block: 0, afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(4), afm_data[LUM_INDEX(4)]);
+						ISP_LOGI("afm_lum[1]: %d, block: 13,  afm_data[%d]:%d", af->afm_lum[1], LUM_INDEX(13), afm_data[LUM_INDEX(13)]);
+						ISP_LOGI("afm_lum[2]: %d, block: 2, afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(6), afm_data[LUM_INDEX(6)]);
+					}
+				} else {
+					af->afm_lum[1] = afm_data[LUM_INDEX(14)];
+					af->afm_lum[0] = afm_data[LUM_INDEX(5)];
+					af->afm_lum[2] = afm_data[LUM_INDEX(7)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[0]: %d, block: 1, afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(5), afm_data[LUM_INDEX(5)]);
+						ISP_LOGI("afm_lum[1]: %d, block: 14,  afm_data[%d]:%d", af->afm_lum[1], LUM_INDEX(14), afm_data[LUM_INDEX(14)]);
+						ISP_LOGI("afm_lum[2]: %d, block: 3, afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(7), afm_data[LUM_INDEX(7)]);
+					}
+				}
+			}
+		} else if (FACE_RIGHT == af->f_orientation || FACE_LEFT == af->f_orientation) {	//3//3x6
+			if (FACE_LEFT == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
+					af->afm_lum[i / 2 * 3 + i % 2] = afm_data[LUM_INDEX(i / 2 * 6 + i % 2)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[%d]: %d, block: %d, afm_data[%d]:%d", (i / 2 * 3 + i % 2), af->afm_lum[i / 2 * 3 + i % 2], i / 2 * 3 + i % 2,
+							 LUM_INDEX(i / 2 * 3 + i % 2), afm_data[LUM_INDEX(i / 2 * 3 + i % 2)]);
+					}
+				}
+				af->afm_lum[5] = afm_data[LUM_INDEX(8)];
+				af->afm_lum[2] = afm_data[LUM_INDEX(4)];
+				af->afm_lum[8] = afm_data[LUM_INDEX(16)];
+				if (val == 1) {
+					ISP_LOGI("afm_lum[5]: %d, block: 8, afm_data[%d]:%d", af->afm_lum[5], LUM_INDEX(8), afm_data[LUM_INDEX(8)]);
+					ISP_LOGI("afm_lum[2]: %d, block: 5,  afm_data[%d]:%d", af->afm_lum[2], LUM_INDEX(4), afm_data[LUM_INDEX(4)]);
+					ISP_LOGI("afm_lum[8]: %d, block: 17, afm_data[%d]:%d", af->afm_lum[8], LUM_INDEX(16), afm_data[LUM_INDEX(16)]);
+				}
+			} else if (FACE_RIGHT == af->f_orientation) {
+				for (i = 0; i < 6; i++) {	//3
+					af->afm_lum[i / 2 * 3 + i % 2 + 1] = afm_data[LUM_INDEX(i / 2 * 6 + i % 2 + 4)];
+					if (val == 1) {
+						ISP_LOGI("afm_lum[%d]: %d, block: %d, afm_data[%d]:%d", (i / 2 * 3 + i % 2 + 1), af->afm_lum[i / 2 * 3 + i % 2 + 1], i / 2 * 3 + i % 2 + 1,
+							 LUM_INDEX(i / 2 * 3 + i % 2 + 1), afm_data[LUM_INDEX(i / 2 * 3 + i % 2 + 1)]);
+					}
+				}
+				af->afm_lum[3] = afm_data[LUM_INDEX(9)];
+				af->afm_lum[0] = afm_data[LUM_INDEX(1)];
+				af->afm_lum[6] = afm_data[LUM_INDEX(13)];
+				if (val == 1) {
+					ISP_LOGI("afm_lum[3]: %d, block: 9, afm_data[%d]:%d", af->afm_lum[3], LUM_INDEX(9), afm_data[LUM_INDEX(9)]);
+					ISP_LOGI("afm_lum[0]: %d, block: 0,  afm_data[%d]:%d", af->afm_lum[0], LUM_INDEX(1), afm_data[LUM_INDEX(1)]);
+					ISP_LOGI("afm_lum[6]: %d, block: 12, afm_data[%d]:%d", af->afm_lum[6], LUM_INDEX(13), afm_data[LUM_INDEX(13)]);
+				}
+			}
+		}
+	} else {
+		af->afm_lum[9] = 0;
+		for (i = 0; i < 9; i++) {
+			cmr_u8 j = i << 1;	// 3x3 map to 3x6
+			af->afm_lum[i] = afm_data[LUM_INDEX(j)] + afm_data[LUM_INDEX(j + 1)];
+			af->afm_lum[9] += af->afm_lum[i];
+			if (val == 1) {
+				ISP_LOGI("afm_lum[%d]: %d, block:%d, afm_data[%d]:%d, block:%d, afm_data[%d]:%d",
+					 i, af->afm_lum[i], j, LUM_INDEX(j), afm_data[LUM_INDEX(j)], j + 1, LUM_INDEX(j + 1), afm_data[LUM_INDEX(j + 1)]);
+			}
+		}
+	}
+#endif
+
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4)
+	UNUSED(afm_data);
+	for (i = 0; i < 10; i++) {
+		af->afm_lum[i] = 0;
+	}
+#endif
+	return 0;
+}
+
 static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 {
 	cmr_u32 *af_fv_val = NULL;
@@ -886,7 +1021,11 @@ static cmr_u8 if_get_sub_wins_ysum(Y_Sum * c_y_sum, void *cookie)
 	af_ctrl_t *af = cookie;
 	cmr_u32 index = 0;
 	while (index < 10) {
+#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_2) || defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4)
 		c_y_sum->y_sum[index] = af->roi_RGBY.Y_sum[index];
+#else
+		c_y_sum->y_sum[index] = af->afm_lum[index];
+#endif
 		index += 1;
 	}
 	return 0;
@@ -4052,6 +4191,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		afm_set_fv(af, inparam->data);
+		afm_set_lum(af, inparam->data);
 		af->trigger_source_type |= AF_DATA_AF;
 		break;
 	case AF_DATA_IMG_BLK:

@@ -290,6 +290,7 @@ typedef struct _af_ctrl {
 	cmr_u32 Y_sum_normalize;
 	//cmr_u64 fv_combine[T_TOTAL_FILTER_TYPE];
 	af_fv af_fv_val;
+	cmr_u32 afm_lum[10];
 	struct afctrl_gsensor_info gsensor_info;
 	cmr_u32 g_orientation;
 	cmr_u32 f_orientation;
