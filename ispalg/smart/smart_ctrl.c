@@ -2073,35 +2073,34 @@ cmr_s32 smart_ctl_block_enable_recover(smart_handle_t handle, cmr_u32 smart_id)
 
 	cxt = (struct smart_context *)handle;
 
-	if (ISP_MODE_ID_PRV_0 == cxt->work_mode) {
-		cxt->cur_param = &cxt->tuning_param[ISP_MODE_ID_COMMON];
-		org_param = &cxt->tuning_param_org[ISP_MODE_ID_COMMON];
-	} else {
-		cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
-		org_param = &cxt->tuning_param_org[cxt->work_mode];
-	}
+	for (int j = 0; j < SMART_MAX_WORK_MODE; j++) {
+		if(cxt->tuning_param[j].param.block_num > 0) {
+			cxt->cur_param = &cxt->tuning_param[j];
+			org_param = &cxt->tuning_param_org[j];
 
-	cur_param = cxt->cur_param;
+			cur_param = cxt->cur_param;
 
-	if (1 == cur_param->bypass) {
-		ISP_LOGV("current paramter is bypass");
-		return ISP_SUCCESS;
-	}
+			if (1 == cur_param->bypass) {
+				ISP_LOGV("current paramter is bypass");
+				return ISP_SUCCESS;
+			}
 
-	smart_param = &cur_param->param;
+			smart_param = &cur_param->param;
 
-	if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
-		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
-		return ISP_ERROR;
-	}
+			if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
+				ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
+				return ISP_ERROR;
+			}
 
-	for (i = 0; i < smart_param->block_num; i++) {
-		if (smart_id == smart_param->block[i].smart_id) {
-			smart_param->block[i].enable = org_param->param.block[i].enable;
-			break;
+			for (i = 0; i < smart_param->block_num; i++) {
+				if (smart_id == smart_param->block[i].smart_id) {
+					smart_param->block[i].enable = org_param->param.block[i].enable;
+					ISP_LOGE("YJW:%d\n",smart_id);
+					break;
+				}
+			}
 		}
 	}
-
 	return rtn;
 }
 
@@ -2198,30 +2197,30 @@ cmr_s32 smart_ctl_block_disable(smart_handle_t handle, cmr_u32 smart_id)
 
 	cxt = (struct smart_context *)handle;
 
-	if (ISP_MODE_ID_PRV_0 == cxt->work_mode) {
-		cxt->cur_param = &cxt->tuning_param[ISP_MODE_ID_COMMON];
-	} else {
-		cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
-	}
+	for (int j = 0; j < SMART_MAX_WORK_MODE; j++) {
+		if(cxt->tuning_param[j].param.block_num > 0) {
+			cxt->cur_param = &cxt->tuning_param[j];
 
-	cur_param = cxt->cur_param;
+			cur_param = cxt->cur_param;
 
-	if (1 == cur_param->bypass) {
-		ISP_LOGV("current paramter is bypass");
-		return ISP_SUCCESS;
-	}
+			if (1 == cur_param->bypass) {
+				ISP_LOGV("current paramter is bypass");
+				return ISP_SUCCESS;
+			}
 
-	smart_param = &cur_param->param;
+			smart_param = &cur_param->param;
 
-	if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
-		ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
-		return ISP_ERROR;
-	}
+			if (ISP_SMART_MAX_BLOCK_NUM < smart_param->block_num) {
+				ISP_LOGE("fail to get smart block number %d", smart_param->block_num);
+				return ISP_ERROR;
+			}
 
-	for (i = 0; i < smart_param->block_num; i++) {
-		if (smart_id == smart_param->block[i].smart_id) {
-			smart_param->block[i].enable = 0;
-			break;
+			for (i = 0; i < smart_param->block_num; i++) {
+				if (smart_id == smart_param->block[i].smart_id) {
+					smart_param->block[i].enable = 0;
+					break;
+				}
+			}
 		}
 	}
 
