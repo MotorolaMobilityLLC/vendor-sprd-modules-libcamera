@@ -199,8 +199,8 @@ int ModuleWrapperDRV::Run(IParseJson *Json2)
 	ion_info_t ion_out;
 	vector<ion_info_t> ion_config_in;
 	vector<ion_info_t> ion_config_out;
-	int tag_in;
-	int tag_out;
+	int tag_in = 1;
+	int tag_out = 2;
 	bufferData buf_data_in;
 	bufferData buf_data_out[DRV_PATH_NUM];
 
