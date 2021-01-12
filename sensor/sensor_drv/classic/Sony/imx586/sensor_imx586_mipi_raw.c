@@ -323,7 +323,6 @@ static cmr_int imx586_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
     cmr_u32 up = 0;
     cmr_u32 down = 0;
-
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(ex_info);
     SENSOR_IC_CHECK_PTR(param);
@@ -387,6 +386,101 @@ static cmr_int imx586_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
     return rtn;
 }
 
+static const cmr_u16 imx586_pd_is_right[] = {
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0,
+    1, 0, 1, 0
+};
+
+static const cmr_u16 imx586_pd_row[] = {
+    1, 1, 1, 1,
+    3, 3, 3, 3,
+    5, 5, 5, 5,
+    7, 7, 7, 7,
+    9, 9, 9, 9,
+    11, 11, 11, 11,
+    13, 13, 13, 13,
+    15, 15, 15, 15,
+};
+
+static const cmr_u16 imx586_pd_col[] = {
+    2, 3, 10, 11,
+    0, 1, 8, 9,
+    4, 5, 12, 13,
+    6, 7, 14, 15,
+    2, 3, 10, 11,
+    0, 1, 8, 9,
+    4, 5, 12, 13,
+    6, 7, 14, 15
+};
+
+static const struct pd_pos_info imx586_pd_pos_l[] = {
+    {3, 1}, {11, 1},
+    {1, 3}, {9, 3},
+    {5, 5}, {13, 5},
+    {7, 7}, {15, 7},
+    {3, 9}, {11, 9},
+    {1, 11}, {9, 11},
+    {5, 13}, {13, 13},
+    {7, 15}, {15, 15}
+};
+
+static const struct pd_pos_info imx586_pd_pos_r[] = {
+    {2, 1}, {10, 1},
+    {0, 3}, {8, 3},
+    {4, 5}, {12, 5},
+    {6, 7}, {14, 7},
+    {2, 9}, {10, 9},
+    {0, 11}, {8, 11},
+    {4, 13}, {12, 13},
+    {6, 15}, {14, 15}
+  };
+
+static const cmr_u32 pd_sns_mode[] = {0, 0, 1, 0};
+
+struct pdaf_coordinate_tab imx586_pd_coordinate_table[] = {
+    {.number = 4,
+     .pos_info = {0, 1, 0, 1},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    },
+    {.number = 4,
+     .pos_info = {1, 0, 1, 0},
+    }
+};
+
+struct pdaf_block_descriptor imx586_pd_seprator_helper = {
+    .block_width = 4,
+    .block_height = 8,
+    .coordinate_tab = NULL,
+    .line_width = 4,
+    .block_pattern = CROSS_PATTERN,
+    .pd_line_coordinate = imx586_pd_coordinate_table,
+};
+
+cmr_int imx586_drv_pdaf_data_process(void *buffer_handle);
+
 static cmr_int imx586_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_pdaf_info *pdaf_info = NULL;
@@ -409,21 +503,45 @@ static cmr_int imx586_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
         return SENSOR_FAIL;
     }
 
-    pdaf_info->pd_offset_x = 24;
-    pdaf_info->pd_offset_y = 24;
-    pdaf_info->pd_end_x = 4184;
-    pdaf_info->pd_end_y = 3096;
-    pdaf_info->pd_block_w = 3;
-    pdaf_info->pd_block_h = 3;
-    pdaf_info->pd_block_num_x = 65;
-    pdaf_info->pd_block_num_y = 48;
     pdaf_info->pd_is_right = (cmr_u16 *)imx586_pd_is_right;
     pdaf_info->pd_pos_row = (cmr_u16 *)imx586_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)imx586_pd_col;
-    //	pdaf_info->vendor_type = SENSOR_VENDOR_XXX;
-    pdaf_info->sns_orientation = 1; /*1: mirror+flip; 0: normal*/
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)imx586_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)imx586_pd_pos_l;
+    pdaf_info->pd_pos_size = NUMBER_OF_ARRAY(imx586_pd_pos_r);
+    pdaf_info->pd_offset_x = 17;
+    pdaf_info->pd_offset_y = 12;
+    pdaf_info->pd_end_x = 3985;
+    pdaf_info->pd_end_y = 2988;
+    pdaf_info->pd_block_w = 1;
+    pdaf_info->pd_block_h = 1;
+    pdaf_info->pd_block_num_x = 248;
+    pdaf_info->pd_block_num_y = 186;
+    pdaf_info->pd_density_x = 8;
+    pdaf_info->pd_density_y = 2;
+    pdaf_info->pd_pitch_x = 382;
+    pdaf_info->pd_pitch_y = 248;
 
+    pdaf_info->vch2_info.bypass = 0;
+    pdaf_info->vch2_info.vch2_vc = 0;
+    pdaf_info->vch2_info.vch2_data_type = 0x34;
+    pdaf_info->vch2_info.vch2_mode = 0x01;
+    pdaf_info->sns_mode = pd_sns_mode;
+    pdaf_info->descriptor = &imx586_pd_seprator_helper;
+    pdaf_info->pdaf_format_converter = imx586_drv_pdaf_data_process;
+    pdaf_info->sns_orientation = 0; /*1: mirror+flip; 0: normal*/
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y
+				* pd_pos_is_right_size * 5;
     return rtn;
+}
+
+cmr_int imx586_drv_pdaf_data_process(void *buffer_handle) {
+    if(!buffer_handle)
+        return SENSOR_FAIL;
+    struct sensor_pdaf_info pdaf_info;
+    imx586_drv_get_pdaf_info(NULL, (cmr_u32 *)(&pdaf_info));
+    sensor_pdaf_format_convertor(buffer_handle, s_imx586_static_info[0].static_info.pdaf_supported, (cmr_u32 *)(&pdaf_info));
+    return SENSOR_SUCCESS;
 }
 /*
 #include "parameters/param_manager.c"
@@ -733,6 +851,30 @@ static cmr_int imx586_drv_set_pdaf_mode(cmr_handle handle, cmr_uint param) {
     return 0;
 }
 
+static cmr_int imx586_drv_set_qsc_data(cmr_handle handle, cmr_uint param) {
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u8 *param_ptr = NULL;
+    struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(sns_drv_cxt->caller_handle);
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)(sensor_cxt->otp_drv_handle);
+    char value[128];
+    property_get("persist.vendor.cam.skip.qsc", value, "0");
+    if(atoi(value))
+        return 0;
+    if(!otp_cxt->otp_raw_data.buffer) {
+        SENSOR_LOGD("otp not configured");
+        return 0;
+    }
+    param_ptr = otp_cxt->otp_raw_data.buffer;
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3621, 0x01);
+    for (int i = 0; i < 2304; i++) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7f00 + i, *(param_ptr + 0xdde + i));
+        SENSOR_LOGV("imx586_qsc address {0x%x, 0x%x}", 0x7f00 + i, *(param_ptr + 0xdde + i));
+    }
+exit:
+    return 0;
+
+}
+
 /*==============================================================================
  * Description:
  * mipi stream on
@@ -745,12 +887,21 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
     char value1[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.colorbar", value1, "0");
+
+    cmr_u32 sensor_mode = 0;
+    sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
+
+    if (sensor_mode > 2)
+        imx586_drv_set_qsc_data(handle, param);
+    else
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3621, 0x00);
     if (!strcmp(value1, "1")) {
         SENSOR_LOGI("enable test mode");
      //   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x780F, 0x00);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0600, 0x00);
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0601, 0x02);
     }
+
 #if 0//def IMX586_CPHY
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0808, 0x02); //default 00
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0854, 0x03); //default 00
@@ -769,7 +920,7 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
     property_get("vendor.cam.hw.framesync.on", value2, "1");
     if (!strcmp(value2, "1")) {
 #if defined(CONFIG_DUAL_MODULE)
-        // imx586_drv_set_master_FrameSync(handle, param);
+        //imx586_drv_set_master_FrameSync(handle, param);
         // imx586_drv_set_slave_FrameSync(handle, param);
 #endif
     }
