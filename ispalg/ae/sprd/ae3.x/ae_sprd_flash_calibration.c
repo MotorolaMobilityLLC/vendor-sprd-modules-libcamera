@@ -162,6 +162,9 @@ struct FCData {
 	int gain;
 	float expTimeBase;
 	int gainBase;
+	float nextexpTime;
+	int nextgain;
+
 
 	int testIndAll;
 	uint32 testInd;
@@ -835,6 +838,10 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 					caliData->expTime = caliData->expTimeBase;
 					caliData->gain = caliData->gainBase;
 				}
+				if(caliData->expReset[id] == 2){
+					caliData->expTime = caliData->nextexpTime;
+					caliData->gain = caliData->nextgain;
+				}
 				caliData->expTab[id] = caliData->expTime;
 				caliData->gainTab[id] = caliData->gain;
 				if (led1 == 0 && led2 == 0)
@@ -848,7 +855,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 				//struct ae_lib_calc_in *current_status = &cxt->sync_cur_status;
 				getCenterMean((cmr_u32 *) & cxt->sync_aem[0],
 							  caliData->rBuf, caliData->gBuf, caliData->bBuf,cxt->cur_status.stats_data_basic.blk_size, cxt->cur_status.stats_data_basic.size, 0, &rmean, &gmean, &bmean);
-				if (gmean > 600) {
+				if (gmean > 500) {
 
 					float rat = gmean / 300.0;
 					float rat1;
@@ -861,7 +868,7 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						if (expTest < 0.03 * AEC_LINETIME_PRECESION)
 							expTest = 0.03 * AEC_LINETIME_PRECESION;
 						rat1 = caliData->expTime / expTest;
-						caliData->expTime = expTest;
+						caliData->nextexpTime = expTest;
 					} else
 						rat1 = 1;
 
@@ -871,19 +878,19 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 						if (gainTest < 128)
 							gainTest = 128;
 						rat2 = (float)caliData->gain / (float)gainTest;
-						caliData->gain = gainTest;
+						caliData->nextgain = gainTest;
 					} else {
 						rat2 = 1;
 					}
 					{
 						rat3 = rat / rat1 / rat2;
-						float expTest = caliData->expTime / rat3;
+						float expTest = caliData->nextexpTime / rat3;
 						if (expTest < 0.001 * AEC_LINETIME_PRECESION)
 							expTest = 0.001 * AEC_LINETIME_PRECESION;
-						rat3 = caliData->expTime / expTest;
-						caliData->expTime = expTest;
+						rat3 = caliData->nextexpTime / expTest;
+						caliData->nextexpTime = expTest;
 
-						if (FLOAT_EQUAL(expTest, 0.001 * AEC_LINETIME_PRECESION) && caliData->gain == 128) {
+						if (FLOAT_EQUAL(expTest, 0.001 * AEC_LINETIME_PRECESION) && caliData->nextgain == 128) {
 							char err[] = "error: the exposure is min\n";
 #ifdef WIN32
 							printf(err);
@@ -892,10 +899,13 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 							caliData->out.error = FlashCali_too_close;
 
 						} else {
-							caliData->expReset[caliData->testInd] = 0; // reset value is not enough for calibration
-							caliData->stateCaliFrameCntStSub = frameCount + 1;
+							caliData->expReset[caliData->testInd + 1] = 2; // reset value is not enough for calibration
+							//caliData->stateCaliFrameCntStSub = frameCount + 1;
 						}
 					}
+					caliData->rFrame[caliData->testInd][frmCnt] = rmean;
+					caliData->gFrame[caliData->testInd][frmCnt] = gmean;
+					caliData->bFrame[caliData->testInd][frmCnt] = bmean;
 				} else {
 					caliData->rFrame[caliData->testInd][frmCnt] = rmean;
 					caliData->gFrame[caliData->testInd][frmCnt] = gmean;
