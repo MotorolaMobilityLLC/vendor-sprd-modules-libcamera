@@ -6398,12 +6398,13 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 	if (cxt->hdr_menu_ctrl) {
 		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
-		if(-1 == auto_hdr_enable)
+		if((-1 == auto_hdr_enable)||((1 == cxt->cur_status.threednr_status)&&(AE_3DNR_AUTO == cxt->cur_status.settings.threednr_mode)))
 			auto_hdr_enable = 0;
 		if(cxt->isp_ops.callback)
 		        (*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
 		else
 		        ISP_LOGE("isp_ops.callback is NULL");
+		ISP_LOGV("auto_hdr_enable %d",auto_hdr_enable);
 	}
 #endif
 
