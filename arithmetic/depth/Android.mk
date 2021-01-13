@@ -32,7 +32,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprddepth.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprddepth.so
-LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm libSegLite libTfliteWrapper
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
