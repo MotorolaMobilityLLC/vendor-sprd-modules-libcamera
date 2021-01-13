@@ -5916,7 +5916,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
         CMR_LOGD("set ev to 0 and reset skipframe");
     }
 
-    if (cxt->nr_flag || is_filter || cxt->dre_flag || cxt->ee_flag) {
+    if ((cxt->nr_flag&&cxt->is_multi_mode != MODE_BOKEH) || is_filter || cxt->dre_flag || cxt->ee_flag) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
         cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
@@ -16443,7 +16443,23 @@ cmr_int camera_local_image_sw_algorithm_processing(
                cxt->night_cxt.is_authorized) {
         ret = cxt->night_cxt.sw_process(oem_handle, src_sw_algorithm_buf,
                         dst_sw_algorithm_buf);
-    } else {
+    } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR) {
+
+        cxt->nr_flag = camera_get_cnr_realtime_flag(cxt);
+        if (cxt->nr_flag) {
+			// do cnr
+            if (cxt->nr_flag)
+                ret = ipm_transfer_frame(ipm_cxt->cnr_handle, &ipm_in_param, NULL);
+            if (ret) {
+                CMR_LOGE("failed to do cnr process %ld", ret);
+                goto exit;
+            }
+        }else{
+            ret=CMR_CAMERA_FAIL;
+            CMR_LOGD("not need to nr");
+        }
+		   
+    }else {
         CMR_LOGV("sw_type %d", sw_algorithm_type);
     }
 

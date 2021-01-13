@@ -1821,19 +1821,26 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
              cxt->req_param.is_zsl_snapshot);
     CMR_LOGD("cxt->req_param.is_3dnr %d", cxt->req_param.is_3dnr);
     if (cxt->req_param.is_zsl_snapshot) {
-        if (cxt->req_param.is_3dnr == 1 || cxt->req_param.is_hdr == 1 ||
+        if (cxt->req_param.is_3dnr == 1  ||
             cxt->req_param.is_3dnr == 5 ||cxt->req_param.is_3dnr == 8) {
-            // bokeh + hdr and auto mfnr RETURN_SW_ALGORITHM_ZSL_BUF message is in
-            // snp_yuv_callback_take_picture_done
-            if (cmr_cxt->is_multi_mode != MODE_BOKEH) {
                 CMR_LOGI(
                     "send SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here");
                 snp_send_msg_notify_thr(
                     snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                     SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
                     sizeof(struct camera_frame_type));
+        } else if (cxt->req_param.is_hdr == 1) {
+        // bokeh + hdr RETURN_SW_ALGORITHM_ZSL_BUF message is in
+            // snp_yuv_callback_take_picture_done
+            if (cmr_cxt->is_multi_mode != MODE_BOKEH) {
+                CMR_LOGI(
+                    "send HDR SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here");
+                snp_send_msg_notify_thr(
+                    snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                    SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
+                    sizeof(struct camera_frame_type));
             }
-        } else if (chn_param_ptr->is_rot) {
+        }else if (chn_param_ptr->is_rot) {
             rot_src = chn_param_ptr->rot[0].src_img;
             CMR_LOGD("fd=0x%x", rot_src.fd);
             zsl_frame.fd = rot_src.fd;

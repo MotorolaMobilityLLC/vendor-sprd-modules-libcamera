@@ -2648,4 +2648,9 @@ void SprdCamera3HWI::getOnlineBuffer(void *cali_info) {
     return;
 }
 
+int SprdCamera3HWI::ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type) {
+    return mOEMIf->ProcessAlgoNr(zsl_frame,sw_algorithm_type);
+}
+
+
 }; // end namespace sprdcamera

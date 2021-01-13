@@ -165,6 +165,20 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     static camera3_callback_ops callback_ops_main;
     static camera3_callback_ops callback_ops_aux;
 
+    typedef enum {
+        DUMP_MULTI_NR_AFTER,
+        DUMP_SINGLE_NR_BEFORE,
+        DUMP_SINGLE_NR_AFTER,
+        DUMP_PORTRAIT_SCENE_TYPE_MAX
+    } dump_bokeh_type;
+    typedef struct {
+       void *buffer_addr;
+       uint32_t frame_number;
+       int format;
+       int width;
+       int height;
+     } dump_image_info_t;
+
   private:
     sprdcamera_physical_descriptor_t *m_pPhyCamera;
     sprd_virtual_camera_t m_VirtualCamera;
@@ -217,7 +231,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
 #else
     buffer_handle_t *m_pMainSnapBuffer;
 #endif
-    uint8_t mHdrCallbackCnt;
+    uint8_t mNrCallbackCnt;
+
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
     int getCameraInfo(int id, struct camera_info *info);
@@ -378,6 +393,8 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     uint64_t mCapTimestamp;
     IBokehAlgo *mBokehAlgo;
     bool mIsHdrMode;
+    bool mIsNrMode;
+    uint8_t sprd_3dnr_enabled;
     bool sn_trim_flag;
     int trim_W;
     int trim_H;
@@ -422,6 +439,11 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int getPrevDepthBuffer(BUFFER_FLAG need_flag);
     void setPrevDepthBufferFlag(BUFFER_FLAG cur_flag, int index);
     unsigned char *getaddr(unsigned char *buffer_addr, uint32_t buffer_size);
+    int ProcessAlgo(buffer_handle_t *buffer,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
+    int mapMemInfo(buffer_handle_t *buffer_handle,
+                                    struct camera_frame_type *zsl_frame);
+    void dumpImg(
+    dump_bokeh_type type, dump_image_info_t *img_info);
 };
 };
 

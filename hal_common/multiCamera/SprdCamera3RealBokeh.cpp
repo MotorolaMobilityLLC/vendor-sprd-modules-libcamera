@@ -193,9 +193,10 @@ SprdCamera3RealBokeh::SprdCamera3RealBokeh() {
     mLastOnlieVcm = 0;
     mBokehAlgo = NULL;
     mIsHdrMode = false;
+    mIsNrMode = false;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
-    mHdrCallbackCnt = 0;
+    mNrCallbackCnt = 0;
     mAfstate = 0;
     mCameraIdMaster = CAM_BOKEH_MAIN_ID;
     mCameraIdSlave = CAM_DEPTH_ID;
@@ -2209,7 +2210,7 @@ void SprdCamera3RealBokeh::BokehCaptureThread::reprocessReq(
         mRealBokeh->mLocalBuffer, capture_msg.combo_buff.buffer1,
         mRealBokeh->mLocalBufferNumber, mRealBokeh->mLocalBufferList);
 
-    if (!mRealBokeh->mIsHdrMode) {
+    if (!mRealBokeh->mIsNrMode) {
         mRealBokeh->pushBufferList(
             mRealBokeh->mLocalBuffer, capture_msg.combo_buff.buffer2,
             mRealBokeh->mLocalBufferNumber, mRealBokeh->mLocalBufferList);
@@ -2269,7 +2270,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
         if (mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE) {
             mime_type = SPRD_MIMETPYE_NONE;
         }
-        if (!mRealBokeh->mIsHdrMode) {
+        if (!mRealBokeh->mIsNrMode) {
 #ifdef YUV_CONVERT_TO_JPEG
             mRealBokeh->m_pDstJpegBuffer = (mRealBokeh->popBufferList(
                 mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
@@ -2328,7 +2329,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             if (mRealBokeh->mIsCapDepthFinish == false &&
                 capture_msg.combo_buff.buffer1 != NULL &&
                 capture_msg.combo_buff.buffer2 == NULL &&
-                mRealBokeh->mIsHdrMode && mRealBokeh->mOtpData.otp_exist) {
+                mRealBokeh->mIsNrMode && mRealBokeh->mOtpData.otp_exist) {
                 mRealBokeh->mHdrSkipBlur = true;
                 HAL_LOGI("frame is hdr, and depth hasn't do");
                 break;
@@ -2369,16 +2370,19 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                                             input_buf1_addr);
             }
 #endif
-            mBokehResult = true;
             if (!mAbokehGallery ||
                 (mRealBokeh->mDoPortrait &&
                  mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
                 output_buffer = (mRealBokeh->popBufferList(
                     mRealBokeh->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
             }
-            if (mRealBokeh->mIsHdrMode &&
+            if (mRealBokeh->mIsNrMode &&
                 capture_msg.combo_buff.buffer1 != NULL &&
                 capture_msg.combo_buff.buffer2 == NULL) {
+                mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
+                mRealBokeh->ProcessAlgo(capture_msg.combo_buff.buffer1,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR);
+                rc = mRealBokeh->map(capture_msg.combo_buff.buffer1,
+                                     &input_buf1_addr);
                 HAL_LOGD("start process hdr frame to get "
                          "bokeh data!");
 #ifdef YUV_CONVERT_TO_JPEG
@@ -2459,14 +2463,18 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 } else {
                     mBokehResult = false;
                 }
-                HAL_LOGI("mRealBokeh->mIsHdrMode=%d,mAbokehGallery=%d,"
+                HAL_LOGI("mRealBokeh->mIsNrMode=%d,mAbokehGallery=%d,"
                          "mBokehResult=%d",
-                         mRealBokeh->mIsHdrMode, mAbokehGallery, mBokehResult);
-                if ((!mRealBokeh->mIsHdrMode && !mAbokehGallery &&
+                         mRealBokeh->mIsNrMode, mAbokehGallery, mBokehResult);
+                if ((!mRealBokeh->mIsNrMode && !mAbokehGallery &&
                      (mBokehResult == true) &&
                      mRealBokeh->mBokehMode == CAM_DUAL_BOKEH_MODE) ||
                     (mRealBokeh->mDoPortrait &&
                      mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
+                    mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
+                    mRealBokeh->ProcessAlgo(capture_msg.combo_buff.buffer1,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR);
+                    rc = mRealBokeh->map(capture_msg.combo_buff.buffer1,
+                                 &input_buf1_addr);
                     rc = sprdBokehCaptureHandle(output_buffer,
                                                 capture_msg.combo_buff.buffer1,
                                                 input_buf1_addr);
@@ -2481,7 +2489,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             if (!mRealBokeh->mFlushing)
                 mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                              &mime_type, NULL);
-            if (!mRealBokeh->mIsHdrMode) {
+            if (!mRealBokeh->mIsNrMode) {
                 reprocessReq(output_buffer, capture_msg);
             } else {
                 if (!mAbokehGallery) {
@@ -3178,9 +3186,10 @@ int SprdCamera3RealBokeh::initialize(
     mOtpData.otp_type = 0;
     mJpegOrientation = 0;
     mIsHdrMode = false;
+    mIsNrMode =false;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
-    mHdrCallbackCnt = 0;
+    mNrCallbackCnt = 0;
 #ifdef YUV_CONVERT_TO_JPEG
     mOrigJpegSize = 0;
     m_pDstJpegBuffer = NULL;
@@ -3277,6 +3286,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mDepthMuxerThread->mDepthMuxerMsgList.clear();
     mAfstate = 0;
     mbokehParm.f_number = 0;
+    mCaptureThread->mBokehResult = true;
     memset(pmainStreams, 0,
            sizeof(camera3_stream_t *) * REAL_BOKEH_MAX_NUM_STREAMS);
     memset(pauxStreams, 0,
@@ -3644,6 +3654,22 @@ int SprdCamera3RealBokeh::processCaptureRequest(
             else
                 mIsHdrMode = false;
         }
+
+        if (metaSettingsMain.exists(ANDROID_SPRD_3DNR_ENABLED)) {
+            sprd_3dnr_enabled =
+               metaSettingsMain.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
+        }
+		
+        if (metaSettingsAux.exists(ANDROID_SPRD_3DNR_ENABLED)) {
+            int aux_sprd_3dnr_enabled = 0;
+                metaSettingsAux.update(ANDROID_SPRD_3DNR_ENABLED, &aux_sprd_3dnr_enabled, 1);
+        }
+        HAL_LOGV("sprd_3dnr_enabled:%d,mIsHdrMode=%d", sprd_3dnr_enabled,
+					 mIsHdrMode);
+        if(mIsHdrMode||sprd_3dnr_enabled)
+            mIsNrMode = true;
+        else
+            mIsNrMode = false;
     }
 
     if (mIsHdrMode) {
@@ -3755,7 +3781,7 @@ int SprdCamera3RealBokeh::processCaptureRequest(
                 goto req_fail;
             }
             main_buffer_index++;
-            if (mIsHdrMode && !mFlushing) {
+            if (mIsNrMode && !mFlushing) {
                 camera3_stream_buffer_t *sbuf =
                     &out_streams_main[main_buffer_index];
                 *sbuf = req->output_buffers[i];
@@ -4146,6 +4172,58 @@ void SprdCamera3RealBokeh::dumpCaptureBokeh(unsigned char *result_buffer_addr,
     }
 }
 
+void SprdCamera3RealBokeh::dumpImg(
+    dump_bokeh_type type, dump_image_info_t *img_info) {
+
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    unsigned char *buffer_base = NULL;
+
+    switch (type) {
+    case DUMP_MULTI_NR_AFTER:
+        property_get("persist.vendor.cam.multinr.dump", prop, "0");
+
+        if (!strcmp(prop, "multinr") || !strcmp(prop, "all")) {
+            buffer_base = (unsigned char *)img_info->buffer_addr;
+            dumpData(buffer_base, 1,
+                            img_info->width * img_info->height * 3 /
+                                2,
+                            img_info->width, img_info->height,
+                            img_info->frame_number, "multinr_after");
+        }
+        break;
+
+    case DUMP_SINGLE_NR_BEFORE:
+        property_get("persist.vendor.cam.singlenr.dump", prop, "0");
+
+        if (!strcmp(prop, "singlenr") || !strcmp(prop, "all")) {
+            buffer_base = (unsigned char *)img_info->buffer_addr;
+             dumpData(buffer_base, 1,
+                            img_info->width * img_info->height * 3 /
+                                2,
+                            img_info->width, img_info->height,
+                            img_info->frame_number, "singlenr_before");
+        }
+        break;
+
+      case DUMP_SINGLE_NR_AFTER:
+        property_get("persist.vendor.cam.singlenr.dump", prop, "0");
+
+        if (!strcmp(prop, "singlenr") || !strcmp(prop, "all")) {
+            buffer_base = (unsigned char *)img_info->buffer_addr;
+             dumpData(buffer_base, 1,
+                            img_info->width * img_info->height * 3 /
+                                2,
+                            img_info->width, img_info->height,
+                            img_info->frame_number, "singlenr_after");
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 /*===========================================================================
  * FUNCTION   :processCaptureResultMain
  *
@@ -4258,8 +4336,8 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             CallBackSnapResult(CAMERA3_BUFFER_STATUS_OK);
         }
         Mutex::Autolock l(mDefaultStreamLock);
-        if (mIsHdrMode) {
-            mHdrCallbackCnt++;
+        if (mIsNrMode) {
+            mNrCallbackCnt++;
         }
 
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
@@ -4272,8 +4350,8 @@ void SprdCamera3RealBokeh::processCaptureResultMain(
             capture_msg.combo_buff.buffer1 = result->output_buffers->buffer;
             // hdr mode: the first DEFAULT_STREAM is normal frame,
             // and the second is hdr frame.
-            if (mHdrCallbackCnt == 2) {
-                mHdrCallbackCnt = 0;
+            if (mNrCallbackCnt == 2) {
+                mNrCallbackCnt = 0;
                 capture_msg.combo_buff.buffer2 = NULL;
             } else {
                 capture_msg.combo_buff.buffer2 =
@@ -5323,4 +5401,104 @@ void *SprdCamera3RealBokeh::jpeg_callback_thread_proc(void *p_data) {
     obj->mIsCapturing = false;
     return NULL;
 }
+
+int SprdCamera3RealBokeh::ProcessAlgo(buffer_handle_t *buffer_handle,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type){
+    int rc = 0;
+    struct camera_frame_type zsl_frame;
+    bzero(&zsl_frame, sizeof(struct camera_frame_type));
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi;
+    dump_image_info_t img_info;
+    bzero(&img_info, sizeof(dump_image_info_t));
+    rc = mapMemInfo(buffer_handle,&zsl_frame);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("fail to map buffer");
+    }
+    img_info.buffer_addr = (void *)(zsl_frame.y_vir_addr);
+    img_info.width = zsl_frame.width;
+    img_info.height = zsl_frame.height;
+    dumpImg(
+        DUMP_SINGLE_NR_BEFORE, &img_info);
+    rc = hwiMain->ProcessAlgo(&zsl_frame,sw_algorithm_type);
+	if (rc != NO_ERROR) {
+        HAL_LOGE("fail to ProcessAlgo");
+    }
+    dumpImg(
+        DUMP_SINGLE_NR_AFTER, &img_info);
+    rc = unmap(buffer_handle);
+	if (rc != NO_ERROR) {
+        HAL_LOGE("fail to unmap buffer");
+    }
+    return rc;
+
+}
+int SprdCamera3RealBokeh::mapMemInfo(buffer_handle_t *buffer_handle,
+                                    struct camera_frame_type *zsl_frame) {
+  int ret = NO_ERROR;
+
+  if (NULL == zsl_frame || NULL == buffer_handle) {
+    HAL_LOGE("Param invalid handle=%p, zsl_frame=%p", buffer_handle, zsl_frame);
+    return -EINVAL;
+  }
+  HAL_LOGD("E");
+
+  int width = ADP_WIDTH(*buffer_handle);
+  int height = ADP_HEIGHT(*buffer_handle);
+  int format = ADP_FORMAT(*buffer_handle);
+  android_ycbcr ycbcr;
+  Rect bounds(width, height);
+  void *vaddr = NULL;
+  int usage;
+  GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+
+  bzero((void *)&ycbcr, sizeof(ycbcr));
+  usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+
+  if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+    ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
+                           bounds, &ycbcr);
+    if (ret != NO_ERROR) {
+      HAL_LOGV("lockcbcr.onQueueFilled,failed try lockycbcr %p, ret %d",
+               *buffer_handle, ret);
+      ret = mapper.lock((const native_handle_t *)*buffer_handle, usage, bounds,
+                        &vaddr);
+      if (ret != NO_ERROR) {
+        HAL_LOGE("locky.onQueueFilled, mapper.lock fail %p, ret %d",
+                 *buffer_handle, ret);
+      } else {
+        zsl_frame->y_vir_addr = (cmr_uint)vaddr;
+      }
+    } else {
+      zsl_frame->y_vir_addr = (cmr_uint)ycbcr.y;
+    }
+  } else {
+    ret = mapper.lock((const native_handle_t *)*buffer_handle, usage, bounds,
+                      &vaddr);
+    if (ret != NO_ERROR) {
+      HAL_LOGV("lockonQueueFilled,lock failed try lockycbcr %p,ret %d",
+               *buffer_handle, ret);
+      ret = mapper.lockYCbCr((const native_handle_t *)*buffer_handle, usage,
+                             bounds, &ycbcr);
+      if (ret != NO_ERROR) {
+        HAL_LOGE("lockycbcr.onQueueFilled, Fail %p, ret %d", *buffer_handle,
+                 ret);
+      } else {
+        zsl_frame->y_vir_addr  = (cmr_uint)ycbcr.y;
+      }
+    } else {
+      zsl_frame->y_vir_addr  = (cmr_uint)vaddr;
+    }
+  }
+  zsl_frame->fd = ADP_BUFFD(*buffer_handle);
+  zsl_frame->y_phy_addr = (cmr_uint)0;
+  zsl_frame->width = ADP_WIDTH(*buffer_handle);
+  zsl_frame->height = ADP_HEIGHT(*buffer_handle);
+  zsl_frame->format = ADP_FORMAT(*buffer_handle);
+  HAL_LOGV("fd=0x%x,offset=%ld,addr_vir=%ld,w%d,h=%d,fmt=%d",
+           zsl_frame->fd, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+           zsl_frame->width, zsl_frame->height, zsl_frame->format);
+
+err_out:
+  return ret;
+}
+
 };
