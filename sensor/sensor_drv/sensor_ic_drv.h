@@ -257,6 +257,9 @@ struct sensor_static_info {
     /* Whether support pdaf,1:support,0:none*/
     cmr_u32 pdaf_supported;
 
+    /* Whether support long expose,0:none other: max expose(s)*/
+    cmr_u32 long_expose_supported;
+
     /* Whether embedded line enable,1:support,0:none*/
     cmr_u32 embedded_line_enable;
 
@@ -718,6 +721,13 @@ typedef struct phySensorInfo {
     cmr_u16 pdaf_supported;
     char sensor_name[SENSOR_NAME_LEN];
     cmr_u8 mono_sensor;
+    cmr_u32 long_expose_supported;
+    double long_expose_modes[12];
+    cmr_int long_expose_modes_size;
+    cmr_u32 longExp_need_switch_setting;
+    cmr_u32 long_exposure_setting[12];
+    cmr_u64 long_exposure_threshold;
+    cmr_u32 longExp_valid_frame_num;
 } PHYSICAL_SENSOR_INFO_T;
 
 struct phy_id_group {

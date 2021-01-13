@@ -181,6 +181,7 @@ static const SENSOR_REG_T s5k3l6_snapshot_setting[] = {
     {0x314A, 0x5F00}, {0x3300, 0x0000}, {0x3400, 0x0000}, {0x3402, 0x4E42},
     {0x32B2, 0x0006}, {0x32B4, 0x0006}, {0x32B6, 0x0006}, {0x32B8, 0x0006},
     {0x3C34, 0x0048}, {0x3C36, 0x3000}, {0x3C38, 0x0020}, {0x393E, 0x4000},
+    {0x0202, 0x03DE},
 };
 
 static struct sensor_res_tab_info s_s5k3l6_resolution_tab_raw[VENDOR_NUM] = {
@@ -301,6 +302,7 @@ static SENSOR_STATIC_INFO_T s_s5k3l6_static_info[VENDOR_NUM] = {
                      .focal_length = 354,
                      .max_fps = 30,
                      .max_adgain = 8,
+                     .long_expose_supported = 1,
                      .ois_supported = 0,
 #ifdef CONFIG_CAMERA_PDAF_TYPE
                      .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,

@@ -83,6 +83,7 @@ struct sensor_ex_info {
     cmr_u32 max_adgain;
     cmr_u32 ois_supported;
     cmr_u32 pdaf_supported;
+    cmr_u32 long_expose_supported;
     cmr_u32 embedded_line_enable;
     cmr_u32 exp_valid_frame_num;
     cmr_u32 clamp_level;
@@ -95,6 +96,13 @@ struct sensor_ex_info {
     cmr_s8 *sensor_version_info;
     struct af_pose_dis pos_dis;
     cmr_u32 *sns_binning_factor;
+    double *long_expose_modes;
+    cmr_int long_expose_modes_size;
+    cmr_u32 longExp_need_switch_setting;
+    cmr_u32 *long_exposure_setting;
+    cmr_u32 long_exposure_setting_size;
+    cmr_u64 long_exposure_threshold;
+    cmr_u32 longExp_valid_frame_num;
     cmr_u8 mono_sensor;
 };
 
@@ -530,7 +538,8 @@ struct sensor_ex_exposure {
     cmr_u32 exposure;
     cmr_u32 dummy;
     cmr_u32 size_index;
-    cmr_u32 exp_time;
+    cmr_u64 exp_time;
+    cmr_u32 long_exp_flag;
 };
 
 struct sensor_i2c_reg_tab {

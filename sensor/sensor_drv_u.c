@@ -1113,11 +1113,14 @@ LOCAL cmr_int sensor_set_mode(struct sensor_drv_context *sensor_cxt,
         goto exit;
     }
 
+#if 0
     if (sensor_cxt->sensor_mode == mode) {
         SENSOR_LOGI("The sensor mode as before");
         rtn = SENSOR_SUCCESS;
         goto exit;
     }
+#endif
+
     if (PNULL != res_info_ptr[mode].sensor_reg_tab_ptr) {
         mclk = res_info_ptr[mode].xclk_to_sensor;
         hw_sensor_set_mclk(sensor_cxt->hw_drv_handle, mclk);
@@ -2877,6 +2880,49 @@ static void sensor_drv_special_phy_sensor_info(PHYSICAL_SENSOR_INFO_T *phyPtr,
     }
 }
 
+static cmr_int sensor_drv_get_long_exp_info(struct sensor_drv_context
+                   *sensor_cxt, struct phySensorInfo *phyPtr)
+{
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_VAL_T val;
+    struct sensor_ic_ops *sns_ops = PNULL;
+    cmr_u32 sns_cmd = SENSOR_IOCTL_ACCESS_VAL;
+    struct sensor_ex_info sn_ex_info_slv;
+    memset(&sn_ex_info_slv, 0, sizeof(struct sensor_ex_info));
+
+    val.type = SENSOR_VAL_TYPE_GET_STATIC_INFO;
+    val.pval = &sn_ex_info_slv;
+
+    sns_ops = sensor_cxt->sensor_info_ptr->sns_ops;
+    if (sns_ops) {
+	if(!sensor_cxt->sns_ic_drv_handle)
+		sensor_ic_create(sensor_cxt, sensor_cxt->slot_id);
+        ret = sns_ops->ext_ops[sns_cmd].ops(sensor_cxt->sns_ic_drv_handle,
+                                           (cmr_uint)&val);
+      if(!ret) {
+        for(int i = 0; i < sn_ex_info_slv.long_expose_modes_size; i++) {
+            phyPtr->long_expose_modes[i] = sn_ex_info_slv.long_expose_modes[i];
+        }
+        phyPtr->long_expose_modes_size = sn_ex_info_slv.long_expose_modes_size;
+        phyPtr->longExp_need_switch_setting = sn_ex_info_slv.longExp_need_switch_setting;
+        if (phyPtr->longExp_need_switch_setting) {
+            for(int i = 0; i < sn_ex_info_slv.long_exposure_setting_size; i++) {
+                phyPtr->long_exposure_setting[i] = sn_ex_info_slv.long_exposure_setting[i];
+            }
+            phyPtr->long_exposure_threshold = sn_ex_info_slv.long_exposure_threshold;
+        }
+        phyPtr->longExp_valid_frame_num = sn_ex_info_slv.longExp_valid_frame_num;
+      } else {
+         SENSOR_LOGE("get sensor ex info failed");
+         return -1;
+      }
+    } else {
+       SENSOR_LOGE("sns_ops null");
+       return -1;
+    }
+    return 0;
+}
+
 static cmr_int
 sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 slot_id, cmr_u32 phy_id) {
@@ -2920,7 +2966,14 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->sensor_type = sensor_cxt->sensor_type;
     phyPtr->data_type = 0;
     phyPtr->pdaf_supported = sensor_cxt->static_info->pdaf_supported;
-
+    if(sensor_cxt->static_info->long_expose_supported) {
+       phyPtr->long_expose_supported = sensor_cxt->static_info->long_expose_supported;
+       sensor_drv_get_long_exp_info(sensor_cxt, phyPtr);
+       for(int i = 0;i < phyPtr->long_expose_modes_size;i++) {
+           SENSOR_LOGD("long_expose_modes[%d]=%f, long_expose_supported=%d, long_expose_modes_size=%d",
+               i, phyPtr->long_expose_modes[i], phyPtr->long_expose_supported, phyPtr->long_expose_modes_size);
+       }
+    }
     phyPtr->sensor_role_code = sensor_cxt->xml_info->cfgPtr->sensor_role_code;
     phyPtr->face_type = sensor_cxt->xml_info->cfgPtr->facing;
     phyPtr->angle = sensor_cxt->xml_info->cfgPtr->orientation;

@@ -29,6 +29,10 @@
  * please modify this function acording your spec
  *============================================================================*/
 
+static double s5k3l6_longExp_mode[] = {0.5, 1, 2, 3, 4, 5, 6};
+static const s5k3l6_longExp_valid_frame_num = 2;
+static cmr_u32 s5k3l6_longExp_cnt = 0;
+
 static void s5k3l6_drv_write_reg2sensor(cmr_handle handle,
                                         struct sensor_i2c_reg_tab *reg_info) {
     cmr_int i = 0;
@@ -331,7 +335,12 @@ static cmr_int s5k3l6_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
            sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
-
+    ex_info->long_expose_supported = static_info->long_expose_supported;
+    if(ex_info->long_expose_supported) {
+		ex_info->long_expose_modes = s5k3l6_longExp_mode;
+		ex_info->long_expose_modes_size = ARRAY_SIZE(s5k3l6_longExp_mode);
+             ex_info->longExp_valid_frame_num = s5k3l6_longExp_valid_frame_num;
+    }
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
@@ -451,9 +460,6 @@ static cmr_int s5k3l6_drv_access_val(cmr_handle handle, cmr_uint param) {
         break;
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         ret = s5k3l6_drv_get_fps_info(handle, param_ptr->pval);
-        break;
-    case SENSOR_VAL_TYPE_SET_SENSOR_CLOSE_FLAG:
-        ret = sns_drv_cxt->is_sensor_close = 1;
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
         ret = s5k3l6_drv_get_pdaf_info(handle, param_ptr->pval);
@@ -584,26 +590,130 @@ snapshot_info:
 static cmr_int s5k3l6_drv_write_exposure(cmr_handle handle, cmr_uint param) {
 
     cmr_int ret_value = SENSOR_SUCCESS;
-    cmr_u16 exposure_line = 0x00;
+    cmr_u32 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 size_index = 0x00;
-    cmr_u32 exp_time = 0x00;
+    cmr_u64 exp_time = 0x00;
+    cmr_u64 temp_value1 = 0x00;
+    cmr_u64 temp_value2 = 0x00;
+    cmr_u32 index = 0;
+    cmr_u32 value = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(param);
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sns_drv_cxt->caller_handle;
 
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     size_index = ex->size_index;
     exp_time = ex->exp_time;
 
-    s5k3l6_drv_calc_exposure(handle, exposure_line, dummy_line, size_index, exp_time,
-                             &s5k3l6_aec_info);
-    s5k3l6_drv_write_reg2sensor(handle, s5k3l6_aec_info.frame_length);
-    s5k3l6_drv_write_reg2sensor(handle, s5k3l6_aec_info.shutter);
+    if(exp_time > 600000000) {
+        SENSOR_LOGI("use longExp, exp_time:%lld",exp_time);
 
+        SENSOR_LOGI("s5k3l6_longExp_cnt E:%d",s5k3l6_longExp_cnt);
+        if(s5k3l6_longExp_cnt == 1) {
+
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
+            for (index =0; index <= 100; index++) {
+                value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0005);
+                if (0xFF == (value >> 8))
+                    break;
+                    usleep(1000);
+            }
+
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x0307, 0x60, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x3C1F, 0x03, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x030D, 0x03, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x030E, 0x00, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x030F, 0x78, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x3C17, 0x04, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x0820, 0x00, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x0821, 0x78, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38C5, 0x03, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38D9, 0x00, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38DB, 0x08, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38DD, 0x13, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38C3, 0x06, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38C1, 0x00, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38D7, 0x0F, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38D5, 0x03, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x38B1, 0x01, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x3932, 0x20, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x3938, 0x20, BITS_ADDR16_REG8);
+
+            if(exp_time < 7000000000) {
+                temp_value1 = ((exp_time / 1000) * 48) / 4896;
+                temp_value2 = temp_value1 + 2;
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0342, 0x1320);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, temp_value1);
+            } else if (7000000000 <= exp_time <= 22200000000) {
+                temp_value1 = ((exp_time / 1000) * 48) / 16272;
+                temp_value2 = temp_value1 + 2;
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0342, 0x3F90);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, temp_value1);
+            } else if (22200000000 < exp_time <= 23500000000) {
+                temp_value1 = (exp_time / 1000) * 48 / 17216;
+                temp_value2 = temp_value1 + 2;
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0342, 0x4340);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, temp_value1);
+            } else if (23500000000 < exp_time <= 32000000000) {
+                temp_value1 = (exp_time / 1000) * 48 / 23440;
+                temp_value2 = temp_value1 + 2;
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0342, 0x5b90);
+                hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, temp_value1);
+            }
+
+            if (sns_drv_cxt->ops_cb.set_exif_info) {
+                sns_drv_cxt->ops_cb.set_exif_info(
+                    sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME, exp_time);
+            }
+
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x3C1E, 0x01, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x0100, 0x01, BITS_ADDR16_REG8);
+            hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+                0x3C1E, 0x00, BITS_ADDR16_REG8);
+
+            s5k3l6_longExp_cnt ++;
+        }else {
+            s5k3l6_longExp_cnt ++;
+        }
+
+        SENSOR_LOGI("s5k3l6_longExp_cnt E:%d",s5k3l6_longExp_cnt);
+
+    } else {
+        s5k3l6_drv_calc_exposure(handle, exposure_line, dummy_line, size_index, exp_time,
+	                             &s5k3l6_aec_info);
+        s5k3l6_drv_write_reg2sensor(handle, s5k3l6_aec_info.frame_length);
+        s5k3l6_drv_write_reg2sensor(handle, s5k3l6_aec_info.shutter);
+    }
     return ret_value;
 }
 
@@ -705,21 +815,23 @@ static cmr_int s5k3l6_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)sns_drv_cxt->caller_handle;
     SENSOR_LOGI("E");
 
     char value1[PROPERTY_VALUE_MAX];
     property_get("vendor.cam.hw.framesync.on", value1, "1");
-    if (!strcmp(value1, "1")) {
+    if (!strcmp(value1, "1") && (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
 #if defined(CONFIG_DUAL_MODULE)
         s5k3l6_drv_set_master_FrameSync(handle, param);
 #endif
     }
 
-    /*TODO*/
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C1E, 0x0100);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0100);
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3C1E, 0x0000);
-    /*END*/
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+            0x3C1E, 0x01, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+            0x0100, 0x01, BITS_ADDR16_REG8);
+    hw_sensor_grc_write_i2c(sns_drv_cxt->hw_handle, sensor_cxt->i2c_addr,
+            0x3C1E, 0x00, BITS_ADDR16_REG8);
 
     SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
@@ -733,25 +845,22 @@ static cmr_int s5k3l6_drv_stream_on(cmr_handle handle, cmr_uint param) {
 static cmr_int s5k3l6_drv_stream_off(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
-    cmr_u16 value = 0;
-    cmr_u16 sleep_time = 0;
+    cmr_u32 value = 0;
+    cmr_u32 index = 0;
+
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0100);
-    if (value != 0x0000) {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
-        if (!sns_drv_cxt->is_sensor_close) {
-            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
-                          sns_drv_cxt->line_time_def / 1000000) +
-                         10;
-            usleep(sleep_time * 1000);
-            SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
-        }
-    } else {
-        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0000);
+
+    for (index =0; index <= 100; index++) {
+        value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0005);
+        if (0xFF == (value >> 8))
+            break;
+	 usleep(1000);
     }
-    sns_drv_cxt->is_sensor_close = 0;
+
+    s5k3l6_longExp_cnt = 0;
 
     SENSOR_LOGI("X");
     return SENSOR_SUCCESS;
