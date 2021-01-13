@@ -10530,6 +10530,10 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             }
         }
 
+        if (cxt->is_multi_mode == MODE_BOKEH){
+            param_ptr->cmd_value = ISP_BOKEHMODE;
+        }
+
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_SCENECAPTURETYPE;
         isp_param = param_ptr->cmd_value;

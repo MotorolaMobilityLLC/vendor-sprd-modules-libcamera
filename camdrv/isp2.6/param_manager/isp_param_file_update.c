@@ -145,6 +145,8 @@ char nr_scene_name[MAX_SCENEMODE_NUM][12] = {
 	"portrait",
 	"landscape",
 	"panorama",
+	"hdr",
+	"bokeh",
 };
 
 cmr_s32 read_nr_level_number_info(FILE * fp, cmr_u8 * data_ptr)

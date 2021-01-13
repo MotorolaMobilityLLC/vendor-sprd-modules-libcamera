@@ -216,6 +216,7 @@ enum isp_ae_mode {
 	ISP_VIDEO_EIS,
 	ISP_FDR,
 	ISP_HDR,
+	ISP_BOKEHMODE,
 	ISP_AE_MODE_MAX
 };
 

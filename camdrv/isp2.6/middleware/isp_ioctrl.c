@@ -2018,6 +2018,7 @@ static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
 {
 	cmr_u32 convert_scene_flag = 0;
 	switch (scene_flag) {
+	case ISP_BOKEHMODE:
 	case ISP_AUTO:
 		convert_scene_flag = AE_SCENE_NORMAL;
 		break;
@@ -2070,6 +2071,12 @@ static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
 		break;
 	case ISP_PANORAMA:
 		convert_scene_flag = ISP_SCENEMODE_PANORAMA;
+		break;
+	case ISP_HDR:
+		convert_scene_flag = ISP_SCENEMODE_HDR;
+		break;
+	case ISP_BOKEHMODE:
+		convert_scene_flag = ISP_SCENEMODE_BOKEH;
 		break;
 	default:
 		convert_scene_flag = ISP_SCENEMODE_AUTO;
