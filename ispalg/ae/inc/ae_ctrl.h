@@ -63,6 +63,7 @@ extern "C" {
 		cmr_u32 is_faceId_unlock;
 		void *fdr_tuning_param;
 		cmr_s32 fdr_tuning_size;
+		cmr_u32 long_expose_support;
 	};
 
 	struct ae_init_out {

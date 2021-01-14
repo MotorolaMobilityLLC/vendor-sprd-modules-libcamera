@@ -26,7 +26,7 @@ struct ae_callback_param {
 	cmr_u32 sensor_gain;
 	cmr_u32 isp_gain;
 	cmr_u32 exp_line;
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_u32 ae_stable;
 };
 

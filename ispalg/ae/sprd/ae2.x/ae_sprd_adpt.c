@@ -760,10 +760,10 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			exp.size_index = size_index;
 			if((cxt->app_mode == CAMERA_MODE_MANUAL) && (cxt->manual_exp_time != 0)) {
 				exp.exp_time = cxt->manual_exp_time;
-				ISP_LOGV("APP_MODE1 = %d, exp.exp_time = %d", cxt->app_mode, exp.exp_time);
+				ISP_LOGV("APP_MODE1 = %d, exp.exp_time = %"PRIu64"", cxt->app_mode, exp.exp_time);
 			} else {
 				exp.exp_time = write_param->exp_time;
-				ISP_LOGV("APP_MODE0 = %d, exp.exp_time = %d", cxt->app_mode, exp.exp_time);
+				ISP_LOGV("APP_MODE0 = %d, exp.exp_time = %"PRIu64"", cxt->app_mode, exp.exp_time);
 			}
 			if ((write_param->exp_line != prv_param->exp_line)
 				|| (write_param->dummy != prv_param->dummy)) {

@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 	struct q_item {
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_u32 exp_line;
 		cmr_u32 dumy_line;
 		cmr_u32 frm_len;

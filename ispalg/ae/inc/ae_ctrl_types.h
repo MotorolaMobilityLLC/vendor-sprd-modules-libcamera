@@ -194,6 +194,7 @@ extern "C" {
 		AE_CB_FDR_STATUS,
 		AE_CB_PROCESS_RESULT,
 		AE_CB_SYNC_STABLE,
+		AE_CB_LONG_EXP_START,
 		AE_CB_MAX
 	};
 	enum ae_cb_result_notify_hal {
@@ -202,6 +203,7 @@ extern "C" {
 		AE_CB_RESULT_BLS_ENABLE,
 		AE_CB_RESULT_BV_VALUE,
 		AE_CB_RESULT_FACA_LUM,
+		AE_CB_RESULT_LONG_EXP,
 		AE_CB_RESULT_MAX
 	};
 
@@ -382,7 +384,8 @@ extern "C" {
 		cmr_u32 exposure;
 		cmr_u32 dummy;
 		cmr_u32 size_index;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
+		//cmr_u32 long_exp_flag;
 	};
 
 	struct ae_gain {

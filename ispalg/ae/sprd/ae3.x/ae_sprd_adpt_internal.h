@@ -30,7 +30,7 @@ extern "C" {
 		cmr_u32 cur_index;
 		cmr_u32 line_time;
 		cmr_u32 exp_line;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_s32 dummy;
 		cmr_s32 frm_len;
 		cmr_s32 frm_len_def;
@@ -61,7 +61,7 @@ extern "C" {
 	struct ae_exposure_param_switch {
 		cmr_u32 target_offset;
 		cmr_u32 exp_line;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_s32 dummy;
 		cmr_u32 frm_len;
 		cmr_u32 frm_len_def;
@@ -76,7 +76,7 @@ extern "C" {
 	struct ae_exposure_param_switch_m {
 		cmr_u32 target_offset;
 		cmr_u32 exp_line;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_s32 dummy;
 		cmr_u32 frm_len;
 		cmr_u32 frm_len_def;
@@ -308,8 +308,8 @@ extern "C" {
 		/*
 		 *Save exposure & iso value on manual ae mode
 		 */
-		cmr_u32 manual_exp_time;
-		cmr_u32 manual_exp_line_bkup;
+		cmr_u64 manual_exp_time;
+		cmr_u64 manual_exp_line_bkup;
 		cmr_u32 manual_iso_value;
 		cmr_u8 manual_ae_mode;
 		/*
@@ -461,6 +461,7 @@ extern "C" {
 		cmr_u8 calcFirstFlag;
 		struct ae_monitor_cfg ae_monitor_setting;
 		cmr_u32 slave_aem_info[3*1024];
+		cmr_u8 long_exp_frame_cnt;
 		cmr_u32 end_id;
 
 	};
