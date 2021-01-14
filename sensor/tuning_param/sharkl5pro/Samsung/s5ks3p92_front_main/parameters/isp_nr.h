@@ -184,3 +184,5 @@ static struct sensor_nr_scene_map_param s_s5ks3p92_nr_scene_map_param = {{
 #endif
 
 
+#ifdef _NR_POST_EE_PARAM_
+#endif
