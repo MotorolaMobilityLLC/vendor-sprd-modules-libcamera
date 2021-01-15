@@ -148,6 +148,14 @@ enum ISP_BLK_ID {
 	ISP_BLK_MFNR = 0x5080,
 	ISP_BLK_DRE_PRO = 0x5081,
 	ISP_BLK_POST_EE = 0x5082,
+	ISP_BLK_DEWARPING = 0x5085,
+	ISP_BLK_PYRAMID_ONL = 0x5086,
+	ISP_BLK_PYRAMID_OFFL = 0x5087,
+	ISP_BLK_DCT = 0x5088,
+	ISP_BLK_3DLUT = 0x5089,
+	ISP_BLK_RGB_GTM = 0x508A,
+	ISP_BLK_CNR_H = 0x508B,
+	ISP_BLK_POST_CNR_H = 0x508C,
 	ISP_BLK_HSV_LUT = 0x508D,
 	ISP_BLK_EXT,
 	ISP_BLK_ID_MAX,
@@ -207,6 +215,13 @@ enum isp_smart_id {
 	ISP_SMART_MFNR = 57,
 	ISP_SMART_DRE_PRO = 58,
 	ISP_SMART_POST_EE = 59,
+	ISP_SMART_PYRAMID_ONL = 60,
+	ISP_SMART_PYRAMID_OFFL = 61,
+	ISP_SMART_DCT = 62,
+	ISP_SMART_3D_LUT = 63,
+	ISP_SMART_RGB_GTM = 64,
+	ISP_SMART_CNR_H = 65,
+	ISP_SMART_POST_CNR_H = 66,
 	ISP_SMART_HSV_LUT = 67,
 	ISP_SMART_MAX
 };
@@ -295,7 +310,7 @@ struct sensor_libuse_info {
 #elif defined CONFIG_ISP_2_8
 #include "sensor_raw_sharkl6.h"
 #elif defined CONFIG_ISP_2_9
-#include "sensor_raw_sharkl5pro.h"
+#include "sensor_raw_sharkl6pro.h"
 #else
 
 #include "sensor_raw_isp2.1.h"
