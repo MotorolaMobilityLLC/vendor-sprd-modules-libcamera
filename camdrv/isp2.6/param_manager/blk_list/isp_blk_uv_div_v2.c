@@ -17,8 +17,7 @@
 #include "isp_blocks_cfg.h"
 
 static cmr_u32 _pm_uv_div_convert_param(
-	void *dst_param, cmr_u32 strength_level,
-	cmr_u32 mode_flag, cmr_u32 scene_flag)
+	void *dst_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
@@ -32,38 +31,41 @@ static cmr_u32 _pm_uv_div_convert_param(
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
 		cce_uvdiv_param = (struct sensor_cce_uvdiv_level *)((cmr_u8 *) dst_ptr->param_ptr +
-		    		total_offset_units * dst_ptr->level_num * sizeof(struct sensor_cce_uvdiv_level));
+				total_offset_units * dst_ptr->level_num * sizeof(struct sensor_cce_uvdiv_level));
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
 	if (cce_uvdiv_param != NULL) {
-		dst_ptr->cur.lum_th_h_len = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_h_len;
-		dst_ptr->cur.lum_th_h = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_h;
-		dst_ptr->cur.lum_th_l_len = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_l_len;
-		dst_ptr->cur.lum_th_l = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_l;
+		dst_ptr->cur_v1.lum_th_h_len = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_h_len;
+		dst_ptr->cur_v1.lum_th_h = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_h;
+		dst_ptr->cur_v1.lum_th_l_len = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_l_len;
+		dst_ptr->cur_v1.lum_th_l = cce_uvdiv_param[strength_level].uvdiv_lum.lum_th_l;
 
-		dst_ptr->cur.u_th.th_h[0] = cce_uvdiv_param[strength_level].u_th_0.uvdiv_th_h;
-		dst_ptr->cur.u_th.th_h[1] = cce_uvdiv_param[strength_level].u_th_1.uvdiv_th_h;
-		dst_ptr->cur.u_th.th_l[0] = cce_uvdiv_param[strength_level].u_th_0.uvdiv_th_l;
-		dst_ptr->cur.u_th.th_l[1] = cce_uvdiv_param[strength_level].u_th_1.uvdiv_th_l;
-		dst_ptr->cur.v_th.th_h[0] = cce_uvdiv_param[strength_level].v_th_0.uvdiv_th_h;
-		dst_ptr->cur.v_th.th_h[1] = cce_uvdiv_param[strength_level].v_th_1.uvdiv_th_h;
-		dst_ptr->cur.v_th.th_l[0] = cce_uvdiv_param[strength_level].v_th_0.uvdiv_th_l;
-		dst_ptr->cur.v_th.th_l[1] = cce_uvdiv_param[strength_level].v_th_1.uvdiv_th_l;
+		dst_ptr->cur_v1.u_th.th_h[0] = cce_uvdiv_param[strength_level].u_th_0.uvdiv_th_h;
+		dst_ptr->cur_v1.u_th.th_h[1] = cce_uvdiv_param[strength_level].u_th_1.uvdiv_th_h;
+		dst_ptr->cur_v1.u_th.th_l[0] = cce_uvdiv_param[strength_level].u_th_0.uvdiv_th_l;
+		dst_ptr->cur_v1.u_th.th_l[1] = cce_uvdiv_param[strength_level].u_th_1.uvdiv_th_l;
+		dst_ptr->cur_v1.v_th.th_h[0] = cce_uvdiv_param[strength_level].v_th_0.uvdiv_th_h;
+		dst_ptr->cur_v1.v_th.th_h[1] = cce_uvdiv_param[strength_level].v_th_1.uvdiv_th_h;
+		dst_ptr->cur_v1.v_th.th_l[0] = cce_uvdiv_param[strength_level].v_th_0.uvdiv_th_l;
+		dst_ptr->cur_v1.v_th.th_l[1] = cce_uvdiv_param[strength_level].v_th_1.uvdiv_th_l;
 
-		dst_ptr->cur.luma_ratio = cce_uvdiv_param[strength_level].uvdiv_ratio.luma_ratio;
-		dst_ptr->cur.chroma_ratio= cce_uvdiv_param[strength_level].uvdiv_ratio.chroma_ratio;
-		dst_ptr->cur.ratio_uv_min = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_uv_min;
-		dst_ptr->cur.ratio_y_min[0] = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_y_min0;
-		dst_ptr->cur.ratio_y_min[1] = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_y_min1;
-		dst_ptr->cur.ratio0 = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_0;
-		dst_ptr->cur.ratio1 = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_1;
-		dst_ptr->cur.chroma_max_h = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max_h;
-		dst_ptr->cur.chroma_max_l = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max_l;
+		dst_ptr->cur_v1.luma_ratio = cce_uvdiv_param[strength_level].uvdiv_ratio.luma_ratio;
+		dst_ptr->cur_v1.chroma_ratio= cce_uvdiv_param[strength_level].uvdiv_ratio.chroma_ratio;
+		dst_ptr->cur_v1.ratio_y_min[0] = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_y_min0;
+		dst_ptr->cur_v1.ratio_y_min[1] = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_y_min1;
+		dst_ptr->cur_v1.ratio0 = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_0;
+		dst_ptr->cur_v1.ratio1 = cce_uvdiv_param[strength_level].uvdiv_ratio.ratio_1;
 
-		dst_ptr->cur.y_th_l_len = cce_uvdiv_param[strength_level].y_th_l_len;
-		dst_ptr->cur.y_th_h_len = cce_uvdiv_param[strength_level].y_th_h_len;
-		dst_ptr->cur.uv_abs_th_len = cce_uvdiv_param[strength_level].uv_abs_th_len;
-		dst_ptr->cur.bypass = cce_uvdiv_param[strength_level].bypass;
+		dst_ptr->cur_v1.chroma_max1_h = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max1_h;
+		dst_ptr->cur_v1.chroma_max1_m = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max1_m;
+		dst_ptr->cur_v1.chroma_max1_l = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max1_l;
+		dst_ptr->cur_v1.chroma_max2_h = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max2_h;
+		dst_ptr->cur_v1.chroma_max2_m = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max2_m;
+		dst_ptr->cur_v1.chroma_max2_l = cce_uvdiv_param[strength_level].uvdiv_chroma.chroma_max2_l;
+
+		dst_ptr->cur_v1.y_th_l_len = cce_uvdiv_param[strength_level].y_th_l_len;
+		dst_ptr->cur_v1.y_th_h_len = cce_uvdiv_param[strength_level].y_th_h_len;
+		dst_ptr->cur_v1.bypass = cce_uvdiv_param[strength_level].bypass;
 	}
 	return rtn;
 }
@@ -76,7 +78,7 @@ cmr_s32 _pm_uv_div_init(void *dst_uv_div_param, void *src_uv_div_param, void *pa
 	struct isp_pm_block_header *header_ptr = (struct isp_pm_block_header *)param1;
 	UNUSED(param_ptr2);
 
-	dst_ptr->cur.bypass = header_ptr->bypass;
+	dst_ptr->cur_v1.bypass = header_ptr->bypass;
 
 	dst_ptr->param_ptr = src_ptr->param_ptr;
 	dst_ptr->cur_level = src_ptr->default_strength_level;
@@ -86,7 +88,7 @@ cmr_s32 _pm_uv_div_init(void *dst_uv_div_param, void *src_uv_div_param, void *pa
 
 	if (!header_ptr->bypass)
 		rtn = _pm_uv_div_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);;
-	dst_ptr->cur.bypass |= header_ptr->bypass;
+	dst_ptr->cur_v1.bypass |= header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to  convert pm uv div param!");
 		return rtn;
@@ -135,7 +137,7 @@ cmr_s32 _pm_uv_div_set_param(void *uv_div_param, cmr_u32 cmd, void *param_ptr0, 
 				nr_tool_flag[ISP_BLK_UVDIV_T] = 0;
 
 				rtn = _pm_uv_div_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
-				dst_ptr->cur.bypass |= header_ptr->bypass;
+				dst_ptr->cur_v1.bypass |= header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to  convert pm uv div param!");
 					return rtn;
@@ -164,9 +166,9 @@ cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, 
 	switch (cmd) {
 	case ISP_PM_BLK_ISP_SETTING:
 		{
-			param_data_ptr->data_ptr = (void *)&uvdiv_ptr->cur;
-			param_data_ptr->data_size = sizeof(uvdiv_ptr->cur);
-			param_data_ptr->user_data[0] = uvdiv_ptr->cur.bypass;
+			param_data_ptr->data_ptr = (void *)&uvdiv_ptr->cur_v1;
+			param_data_ptr->data_size = sizeof(uvdiv_ptr->cur_v1);
+			param_data_ptr->user_data[0] = uvdiv_ptr->cur_v1.bypass;
 			*update_flag = ISP_ZERO;
 		}
 		break;
@@ -175,3 +177,4 @@ cmr_s32 _pm_uv_div_get_param(void *uv_div_param, cmr_u32 cmd, void *rtn_param0, 
 	}
 	return rtn;
 }
+

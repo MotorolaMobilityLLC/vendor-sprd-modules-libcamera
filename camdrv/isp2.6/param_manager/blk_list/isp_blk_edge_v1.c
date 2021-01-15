@@ -435,32 +435,32 @@ cmr_s32 _pm_edge_set_param(void *edge_param, cmr_u32 cmd, void *param_ptr0, void
 			ee_updata.ee_neg_c[2] = dst_ptr->cur.ee_neg_c[2] & 0xFF;
 
 
-			ee_updata.ee_ratio_old_gradient += ee_cur->ratio_old_gradient_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_ratio_new_pyramid += ee_cur->ratio_new_pyramid_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_hv_r[0][0] += ee_cur->ee_gain_hv1.ee_r1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_hv_r[0][1] += ee_cur->ee_gain_hv1.ee_r2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_hv_r[0][2] += ee_cur->ee_gain_hv1.ee_r3_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_hv_r[1][0] += ee_cur->ee_gain_hv2.ee_r1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_hv_r[1][1] += ee_cur->ee_gain_hv2.ee_r2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_hv_r[1][2] += ee_cur->ee_gain_hv2.ee_r3_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_diag_r[0][0] += ee_cur->ee_gain_diag1.ee_r1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_diag_r[0][1] += ee_cur->ee_gain_diag1.ee_r2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_diag_r[0][2] += ee_cur->ee_gain_diag1.ee_r3_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_diag_r[1][0] += ee_cur->ee_gain_diag2.ee_r1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_diag_r[1][1] += ee_cur->ee_gain_diag2.ee_r2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_gain_diag_r[1][2] += ee_cur->ee_gain_diag2.ee_r3_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_pos_r[0] += ee_cur->ee_pos_r.ee_r1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_pos_r[1] += ee_cur->ee_pos_r.ee_r2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_pos_r[2] += ee_cur->ee_pos_r.ee_r3_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_pos_c[0] += ee_cur->ee_pos_c.ee_c1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_pos_c[1] += ee_cur->ee_pos_c.ee_c2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_pos_c[2] += ee_cur->ee_pos_c.ee_c3_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_neg_r[0] += ee_cur->ee_neg_r.ee_r1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_neg_r[1] += ee_cur->ee_neg_r.ee_r2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_neg_r[2] += ee_cur->ee_neg_r.ee_r3_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_neg_c[0] += ee_cur->ee_neg_c.ee_c1_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_neg_c[1] += ee_cur->ee_neg_c.ee_c2_cfg_offset * smooth_factor / smooth_base;;
-			ee_updata.ee_neg_c[2] += ee_cur->ee_neg_c.ee_c3_cfg_offset * smooth_factor / smooth_base;;
+			ee_updata.ee_ratio_old_gradient += ee_cur->ratio_old_gradient_offset * smooth_factor / smooth_base;
+			ee_updata.ee_ratio_new_pyramid += ee_cur->ratio_new_pyramid_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[0][0] += ee_cur->ee_gain_hv1.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[0][1] += ee_cur->ee_gain_hv1.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[0][2] += ee_cur->ee_gain_hv1.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[1][0] += ee_cur->ee_gain_hv2.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[1][1] += ee_cur->ee_gain_hv2.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_hv_r[1][2] += ee_cur->ee_gain_hv2.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[0][0] += ee_cur->ee_gain_diag1.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[0][1] += ee_cur->ee_gain_diag1.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[0][2] += ee_cur->ee_gain_diag1.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[1][0] += ee_cur->ee_gain_diag2.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[1][1] += ee_cur->ee_gain_diag2.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_gain_diag_r[1][2] += ee_cur->ee_gain_diag2.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_r[0] += ee_cur->ee_pos_r.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_r[1] += ee_cur->ee_pos_r.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_r[2] += ee_cur->ee_pos_r.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_c[0] += ee_cur->ee_pos_c.ee_c1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_c[1] += ee_cur->ee_pos_c.ee_c2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_pos_c[2] += ee_cur->ee_pos_c.ee_c3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_r[0] += ee_cur->ee_neg_r.ee_r1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_r[1] += ee_cur->ee_neg_r.ee_r2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_r[2] += ee_cur->ee_neg_r.ee_r3_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_c[0] += ee_cur->ee_neg_c.ee_c1_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_c[1] += ee_cur->ee_neg_c.ee_c2_cfg_offset * smooth_factor / smooth_base;
+			ee_updata.ee_neg_c[2] += ee_cur->ee_neg_c.ee_c3_cfg_offset * smooth_factor / smooth_base;
 
 
 			if (ee_updata.ee_ratio_old_gradient > 63 )

@@ -199,6 +199,7 @@ struct isp_bpc_param {
 	union {
 		struct dcam_dev_bpc_info cur;
 		struct dcam_dev_bpc_info_l3 cur_v0;
+		struct dcam_dev_bpc_info_v1 cur_v1;
 	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -227,7 +228,10 @@ struct isp_rgb_afm_param {
 };
 
 struct isp_nr3d_param {
-	struct isp_dev_3dnr_info cur;
+	union {
+		struct isp_dev_3dnr_info cur;
+		struct isp_dev_3dnr_info_v1 cur_v1;
+	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -449,7 +453,10 @@ struct isp_cce_param {
 };
 
 struct isp_cfa_param {
-	struct isp_dev_cfa_info cur;
+	union {
+		struct isp_dev_cfa_info cur;
+		struct isp_dev_cfa_info_v1 cur_v1;
+	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -491,7 +498,10 @@ struct isp_edge_ai_param {
 };
 
 struct isp_edge_param {
-	struct isp_dev_edge_info_v2 cur;
+	union {
+		struct isp_dev_edge_info_v2 cur;
+		struct isp_dev_edge_info_v3 cur_v3;
+	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -659,6 +669,7 @@ struct isp_uvdiv_param {
 	union {
 		struct isp_dev_uvd_info_v2 cur;
 		struct isp_dev_uvd_info cur_v0;
+		struct isp_dev_uvd_info_v1 cur_v1;//N6pro
 	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -671,6 +682,7 @@ struct isp_ynr_param {
 	union {
 		struct isp_dev_ynr_info_v2 cur;
 		struct isp_dev_ynr_info cur_v0;
+		struct isp_dev_ynr_info_v3 cur_v3;//for N6pro
 	};
 	cmr_u32 cur_level;
 	cmr_u32 level_num;

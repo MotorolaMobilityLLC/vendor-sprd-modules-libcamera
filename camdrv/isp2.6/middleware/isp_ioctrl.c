@@ -496,11 +496,9 @@ static cmr_int denoise_param_read_v29(cmr_handle isp_alg_handle, void *param_ptr
 		case DCAM_BLK_PPE:
 			update_param->ppe_level_ptr = (struct sensor_ppe_level *)fix_data_ptr->nr.nr_set_group.ppe;
 			break;
-/*
 		case DCAM_BLK_BPC_V1:
 			update_param->bpc_level_ptr = (struct sensor_bpc_level *)fix_data_ptr->nr.nr_set_group.bpc;
 			break;
-*/
 		case ISP_BLK_NLM_V2:
 			update_param->nlm_level_ptr = (struct sensor_nlm_level *)fix_data_ptr->nr.nr_set_group.nlm;
 			update_param->vst_level_ptr = (struct sensor_vst_level *)fix_data_ptr->nr.nr_set_group.vst;
@@ -509,7 +507,6 @@ static cmr_int denoise_param_read_v29(cmr_handle isp_alg_handle, void *param_ptr
 		case DCAM_BLK_RGB_DITHER:
 			update_param->rgb_dither_level_ptr = (struct sensor_rgb_dither_level *)fix_data_ptr->nr.nr_set_group.rgb_dither;
 			break;
-/*
 		case ISP_BLK_CFA_V1:
 			update_param->cfae_level_ptr = (struct sensor_cfai_level *)fix_data_ptr->nr.nr_set_group.cfa;
 			break;
@@ -528,18 +525,15 @@ static cmr_int denoise_param_read_v29(cmr_handle isp_alg_handle, void *param_ptr
 		case ISP_BLK_YNR_V1:
 			update_param->ynr_level_ptr = (struct sensor_ynr_level *)fix_data_ptr->nr.nr_set_group.ynr;
 			break;
-*/
 		case ISP_BLK_UV_CDN_V1:
 			update_param->uv_cdn_level_ptr = (struct sensor_uv_cdn_level *)fix_data_ptr->nr.nr_set_group.cdn;
 			break;
 		case ISP_BLK_YUV_NOISEFILTER_V1:
 			update_param->yuv_noisefilter_level_ptr = (struct sensor_yuv_noisefilter_level *)fix_data_ptr->nr.nr_set_group.yuv_noisefilter;
 			break;
-/*
 		case ISP_BLK_IMBALANCE_V1:
 			update_param->imbalance_level_ptr = (struct sensor_nlm_imbalance_level *)fix_data_ptr->nr.nr_set_group.imblance;
 			break;
-*/
 		case ISP_BLK_POST_EE:
 			update_param->soft_ee_level_ptr = (struct sensor_post_ee_level *)fix_data_ptr->nr.nr_set_group.post_ee;
 			break;
