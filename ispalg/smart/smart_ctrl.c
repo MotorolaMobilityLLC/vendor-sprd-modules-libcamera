@@ -128,7 +128,7 @@ struct smart_context {
 	cmr_handle caller_handle;
 	isp_smart_cb smart_set_cb;
 
-	cmr_int camera_id;
+	cmr_u32 camera_id;
 	struct smart_stash smart_stash_param;
 	cmr_u32 smart_lock_frame;
     // new debug
@@ -1184,7 +1184,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	/* initial isp_smart_contex is set zeros. */
 	memset((void *)cxt, 0x00, sizeof(struct smart_context));
 
-	cxt->camera_id = param->camera_id;
+	cxt->camera_id = (cmr_u32)param->camera_id;
 	cxt->smart_lock_frame = 5; //lock smart N frames when change mode;
 
 	rtn = smart_ctl_parse_tuning_param(param->tuning_param, cxt->tuning_param, SMART_MAX_WORK_MODE);
