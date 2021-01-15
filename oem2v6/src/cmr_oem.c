@@ -6978,6 +6978,12 @@ static cmr_int camera_res_init_internal(cmr_handle oem_handle) {
         goto exit;
     }
 
+    ret = camera_ipmpro_init(oem_handle);
+    if (ret) {
+        CMR_LOGE("failed to init ipmpro %ld", ret);
+        goto exit;
+    }
+
     ret = camera_ipm_init(oem_handle);
     if (ret) {
         CMR_LOGE("failed to init ipm %ld", ret);
@@ -7058,6 +7064,7 @@ static cmr_int camera_res_deinit_internal(cmr_handle oem_handle) {
     camera_scaler_deinit(oem_handle);
 
     camera_ipm_deinit(oem_handle);
+    camera_ipmpro_deinit(oem_handle);
 
     camera_deinit_thread(oem_handle);
 
