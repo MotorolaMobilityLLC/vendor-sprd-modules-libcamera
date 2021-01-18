@@ -175,6 +175,9 @@ static cmr_s32 _lscctrl_init_lib(struct lsc_ctrl_cxt *cxt_ptr, struct lsc_adv_in
 	lib_ptr = &cxt_ptr->work_lib;
 	if (lib_ptr->adpt_ops->adpt_init) {
 		lib_ptr->lib_handle = lib_ptr->adpt_ops->adpt_init(in_ptr, (cmr_handle)cxt_ptr);
+		if(lib_ptr->lib_handle == NULL){
+			rtn = LSC_HANDLER_NULL;
+		}
 	} else {
 		ISP_LOGI("adpt_init fun is NULL");
 	}
@@ -253,20 +256,31 @@ cmr_int lsc_ctrl_init(struct lsc_adv_init_param * input_ptr, cmr_handle * handle
 	if (rtn) {
 		goto exit;
 	}
-	cxt_ptr->lsc_set_cb = input_ptr->lsc_set_cb;
-	cxt_ptr->caller_handle = input_ptr->caller_handle;
+	if(input_ptr){
+		cxt_ptr->lsc_set_cb = input_ptr->lsc_set_cb;
+		cxt_ptr->caller_handle = input_ptr->caller_handle;
+	}else{
+		cxt_ptr->lsc_set_cb = NULL;
+		cxt_ptr->caller_handle = NULL;
+	}
+
 	rtn = _lscctrl_init_adpt(cxt_ptr, input_ptr);
 	if (rtn) {
-		goto exit;
+		goto error_adpt_init;
 	}
+
+	*handle_lsc = (cmr_handle) cxt_ptr;
+	return rtn;
+
+error_adpt_init:
+	_lscctrl_destroy_thread(cxt_ptr);
 
 exit:
 	if (rtn) {
 		if (cxt_ptr) {
 			free(cxt_ptr);
+			cxt_ptr = NULL;
 		}
-	} else {
-		*handle_lsc = (cmr_handle) cxt_ptr;
 	}
 	ISP_LOGI("done %ld", rtn);
 

@@ -220,6 +220,7 @@ struct lsc_sprd_ctrl_context {
 	cmr_u16 sync_flag;
 	cmr_u16 sync_count;
 	void *smart_result;
+	cmr_u32 app_mode;
 };
 
 struct lsc_param {

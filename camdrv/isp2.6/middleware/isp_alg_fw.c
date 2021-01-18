@@ -1939,26 +1939,28 @@ cmr_s32 ispalg_alsc_calc(cmr_handle isp_alg_handle,
 		calc_param.lsc_tab_size = cxt->lsc_cxt.lsc_tab_size;
 
 		if (cxt->lsc_cxt.isp_smart_lsc_lock == 0) {
-			if (cxt->ops.lsc_ops.process)
+			if (cxt->ops.lsc_ops.process){
 				ret = cxt->ops.lsc_ops.process(lsc_adv_handle, &calc_param, &calc_result);
-			if (ISP_SUCCESS != ret) {
-				ISP_LOGE("fail to do lsc adv gain map calc");
-				return ret;
+				if (ISP_SUCCESS != ret) {
+					ISP_LOGE("fail to do lsc adv gain map calc");
+					return ret;
+				}
 			}
 		}
 
-		if (cxt->ops.lsc_ops.ioctrl)
+		if (cxt->ops.lsc_ops.ioctrl){
 			ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
-		if (ISP_SUCCESS != ret)
-			ISP_LOGE("fail to get ALSC update flag!");
+			if (ISP_SUCCESS != ret)
+				ISP_LOGE("fail to get ALSC update flag!");
 
-		if (update_info.alsc_update_flag == 1){
-			memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
-			BLOCK_PARAM_CFG(io_pm_input, pm_param,
-				ISP_PM_BLK_LSC_MEM_ADDR,
-				ISP_BLK_2D_LSC, update_info.lsc_buffer_addr,
-				lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
-			ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+			if (update_info.alsc_update_flag == 1){
+				memset(&pm_param, 0, sizeof(struct isp_pm_param_data));
+				BLOCK_PARAM_CFG(io_pm_input, pm_param,
+					ISP_PM_BLK_LSC_MEM_ADDR,
+					ISP_BLK_2D_LSC, update_info.lsc_buffer_addr,
+					lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
+				ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input, NULL);
+			}
 		}
 	}
 
@@ -5020,21 +5022,28 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 		if (cxt->ops.lsc_ops.init) {
 			ret = cxt->ops.lsc_ops.init(&lsc_param, &lsc_adv_handle);
 			if (NULL == lsc_adv_handle) {
-				ISP_LOGE("fail to do lsc adv init");
-				return ISP_ERROR;
+				cxt->ops.lsc_ops.init = NULL;
+				cxt->ops.lsc_ops.ioctrl = NULL;
+				cxt->ops.lsc_ops.process = NULL;
+				cxt->ops.lsc_ops.deinit = NULL;
+				ISP_LOGE("fail to do lsc adv init, camera_id=%d", lsc_param.camera_id);
 			}
+			cxt->lsc_cxt.handle = lsc_adv_handle;
 		}
-		cxt->lsc_cxt.handle = lsc_adv_handle;
 	}
 
-	if (cxt->ops.lsc_ops.ioctrl)
+	if (cxt->ops.lsc_ops.ioctrl){
 		ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_GET_VER, NULL, (void *)&lsc_ver);
-	if (ISP_SUCCESS != ret) {
-		ISP_LOGE("fail to Get ALSC ver info!");
-		cxt->lsc_cxt.LSC_SPD_VERSION = 4;
+		if (ISP_SUCCESS != ret) {
+			ISP_LOGE("fail to Get ALSC ver info!");
+			cxt->lsc_cxt.LSC_SPD_VERSION = 1;
+		} else {
+			cxt->lsc_cxt.LSC_SPD_VERSION =  lsc_ver.LSC_SPD_VERSION;
+			ISP_LOGD("Get ALSC ver: %d\n", lsc_ver.LSC_SPD_VERSION);
+		}
 	} else {
-		cxt->lsc_cxt.LSC_SPD_VERSION =  lsc_ver.LSC_SPD_VERSION;
-		ISP_LOGD("Get ALSC ver: %d\n", lsc_ver.LSC_SPD_VERSION);
+		cxt->lsc_cxt.LSC_SPD_VERSION = 1;
+		ISP_LOGD("lsc_ops is NULL, LSC_SPD_VERSION: %d\n", cxt->lsc_cxt.LSC_SPD_VERSION);
 	}
 
 	return ret;
@@ -6314,15 +6323,16 @@ static cmr_int ispalg_update_alsc_result(cmr_handle isp_alg_handle, cmr_handle o
 	if (cxt->ops.lsc_ops.ioctrl) {
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_FW_START, (void *)fwstart_info, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to ALSC_FW_START"));
+		if(ret == ISP_SUCCESS){
+			BLOCK_PARAM_CFG(input, pm_param,
+					ISP_PM_BLK_LSC_MEM_ADDR,
+					ISP_BLK_2D_LSC,
+					lsc_result_address_new, lsc_result_size);
+			ret = isp_pm_ioctl(cxt->handle_pm,
+					ISP_PM_CMD_SET_OTHERS,
+					&input, NULL);
+		}
 	}
-
-	BLOCK_PARAM_CFG(input, pm_param,
-			ISP_PM_BLK_LSC_MEM_ADDR,
-			ISP_BLK_2D_LSC,
-			lsc_result_address_new, lsc_result_size);
-	ret = isp_pm_ioctl(cxt->handle_pm,
-			ISP_PM_CMD_SET_OTHERS,
-			&input, NULL);
 
 	free(lsc_result_address_new);
 	lsc_result_address_new = NULL;
