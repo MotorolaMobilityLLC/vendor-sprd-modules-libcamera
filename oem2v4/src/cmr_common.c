@@ -524,11 +524,11 @@ uint32_t read_file_bin_u8(const char *file, void *data_buf, uint32_t buf_size) {
             CMR_LOGI("%s read_bytes = %d", file, read_bytes);
         } else {
             CMR_LOGE("buf_size %d is smaller than file_len %d", buf_size, file_len);
-            goto exit;
+            read_bytes = 0;
         }
     } else {
         CMR_LOGE("invalid file_len %d", file_len);
-        goto exit;
+        read_bytes = 0;
     }
 
     fclose(fp);
