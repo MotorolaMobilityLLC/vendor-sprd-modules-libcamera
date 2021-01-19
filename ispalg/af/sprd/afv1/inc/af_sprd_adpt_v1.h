@@ -364,6 +364,7 @@ typedef struct _af_ctrl {
 	cmr_u32 pdaf_type;
 	cmr_u32 slave_focus_cnt;
 	cmr_u32 pdaf_support;
+	cmr_u32 video_stop_af_mode;
 } af_ctrl_t;
 
 cmr_handle sprd_afv1_init(void *in, void *out);

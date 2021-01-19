@@ -565,8 +565,8 @@ static cmr_s32 afm_set_lum(af_ctrl_t * af, void *in)
 				for (i = 0; i < 6; i++) {	//3
 					af->afm_lum[i / 2 * 3 + i % 2 + 1] = afm_data[LUM_INDEX(i / 2 * 6 + i % 2 + 4)];
 					if (val == 1) {
-						ISP_LOGI("afm_lum[%d]: %d, block: %d, afm_data[%d]:%d", (i / 2 * 3 + i % 2 + 1), af->afm_lum[i / 2 * 3 + i % 2 + 1], i / 2 * 3 + i % 2 + 1,
-							 LUM_INDEX(i / 2 * 3 + i % 2 + 1), afm_data[LUM_INDEX(i / 2 * 3 + i % 2 + 1)]);
+						ISP_LOGI("afm_lum[%d]: %d, block: %d, afm_data[%d]:%d", (i / 2 * 3 + i % 2 + 1), af->afm_lum[i / 2 * 3 + i % 2 + 1],
+							 i / 2 * 3 + i % 2 + 1, LUM_INDEX(i / 2 * 3 + i % 2 + 1), afm_data[LUM_INDEX(i / 2 * 3 + i % 2 + 1)]);
 					}
 				}
 				af->afm_lum[3] = afm_data[LUM_INDEX(9)];
@@ -646,11 +646,11 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(18)];
 					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(18)];
 					if (val == 1) {
-						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(16), 
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(16),
 							 FV0_INDEX(16), af_fv_val[FV0_INDEX(16)]);
 						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 9, FV0_INDEX(9):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(9),
 							 FV0_INDEX(9), af_fv_val[FV0_INDEX(9)]);
-						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 18, FV0_INDEX(18):%d, af_fv_val[%d]:%d",af->af_fv_val.af_fv0[8], FV0_INDEX(18), 
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 18, FV0_INDEX(18):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(18),
 							 FV0_INDEX(18), af_fv_val[FV0_INDEX(18)]);
 					}
 				} else {
@@ -661,11 +661,11 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(19)];
 					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(19)];
 					if (val == 1) {
-						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(17), 
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(17),
 							 FV0_INDEX(17), af_fv_val[FV0_INDEX(17)]);
 						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 10, FV0_INDEX(10):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(10),
 							 FV0_INDEX(10), af_fv_val[FV0_INDEX(10)]);
-						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 19, FV0_INDEX(19):%d, af_fv_val[%d]:%d",af->af_fv_val.af_fv0[8], FV0_INDEX(19), 
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 19, FV0_INDEX(19):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(19),
 							 FV0_INDEX(19), af_fv_val[FV0_INDEX(19)]);
 					}
 				}
@@ -2576,9 +2576,7 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 
 	af->pre_state = af->state;
 
-	if (AF_MODE_MANUAL == af_mode) {
-		af->last_request_mode = af_mode;
-	}
+	af->last_request_mode = af->request_mode;
 
 	switch (af_mode) {
 	case AF_MODE_NORMAL:
@@ -2604,7 +2602,6 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		trigger_start(af);
 
 		if (AF_MODE_MANUAL == af->last_request_mode) {
-			af->last_request_mode = af_mode;
 			trigger_notice_force(af);
 		}
 
@@ -2793,7 +2790,7 @@ static cmr_s32 af_sprd_set_video_start(cmr_handle handle, void *param0)
 	af_set_default_roi(af, af->algo_mode);
 	do_start_af(af);
 
-	if (AF_STOPPED == af->focus_state) {
+	if (AF_STOPPED == af->focus_state || (AF_MODE_NORMAL == af->video_stop_af_mode && AF_MODE_CONTINUE == af->request_mode)) {
 		trigger_notice_force(af);
 	}
 
@@ -2824,6 +2821,8 @@ static cmr_s32 af_sprd_set_video_stop(cmr_handle handle, void *param0)
 	UNUSED(param0);
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	ISP_LOGI("af state = %s, focus state = %s", STATE_STRING(af->state), FOCUS_STATE_STR(af->focus_state));
+
+	af->video_stop_af_mode = af->request_mode;
 
 	if (STATE_CAF == af->state || STATE_RECORD_CAF == af->state || STATE_NORMAL_AF == af->state) {
 		trigger_stop(af);
