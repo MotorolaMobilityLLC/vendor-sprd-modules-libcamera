@@ -13247,6 +13247,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         cxt->hdr_skip_frame_cnt = 0;
     } else if (1 == camera_get_fdr_flag(cxt)) {
         //configure fdr buffer
+        cmr_preview_realloc_buffer_for_fdr(cxt->prev_cxt.preview_handle,
+                cxt->camera_id, (cxt->swa_cxt_fdr.version == FDR_VERSION_1) ? 1 : 0);
         cmr_preview_cfg_fdr_buffer(cxt->prev_cxt.preview_handle,
                                     cxt->camera_id);
         //lock 3A
