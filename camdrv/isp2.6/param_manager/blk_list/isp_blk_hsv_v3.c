@@ -109,9 +109,9 @@ cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 			cmr_u32 *dst0_b;
 			cmr_u32 *dst1_b;
 			cmr_u32 *dst2_b;
-			cmr_u32 dst0_c[2][SENSOR_HSV_NUM] = {0};
-			cmr_u32 dst1_c[2][25][17] = {0};
-			cmr_u32 dst2_c[2][25][17] = {0};
+			cmr_u16 dst0_c[2] = {0};
+			cmr_u16 dst1_c[2][25][17] = {0};
+			cmr_u16 dst2_c[2][25][17] = {0};
 
 			if (0 == block_result->update || hsv_header_ptr->bypass) {
 				ISP_LOGV("do not need update\n");
@@ -185,12 +185,12 @@ cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 			}
 
 			for (i = 0; i < 2; i++) {
-				cmr_u32 src_sat_matrix[2][25][17] = {0};
-				cmr_u32 src_reg_matrix[2][25][17] = {0};
-				void *src_matrix[2] = { NULL };
+				cmr_u16 src_sat_matrix[2][25][17] = {0};
+				cmr_u16 src_reg_matrix[2][25][17] = {0};
+				cmr_u16 src_matrix[2] = { 0 };
 				//src for smart interp base on ct
-				src_matrix[0] = &dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].y_blending_factor;
-				src_matrix[1] = &dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].y_blending_factor;
+				src_matrix[0] = dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].y_blending_factor;
+				src_matrix[1] = dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].y_blending_factor;
 				memcpy(src_sat_matrix[0], dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_sat_lut, sizeof(src_sat_matrix[0]));
 				memcpy(src_sat_matrix[1], dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].hsv_2d_sat_lut, sizeof(src_sat_matrix[1]));
 				memcpy(src_reg_matrix[0], dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_hue_lut_reg, sizeof(src_reg_matrix[0]));
@@ -201,7 +201,7 @@ cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 				weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 				weight[1] = SMART_WEIGHT_UNIT - weight[0];
 
-				isp_interp_data(dst0_c[i], src_matrix, weight, 16, ISP_INTERP_UINT32);
+				dst0_c[i] = src_matrix[0]*weight[0] + src_matrix[1]*weight[1];
 				for (j = 0; j < 25; j++) {
 					for (k = 0;k < 17; k++) {
 						dst1_c[i][j][k] = (src_sat_matrix[0][j][k]*weight[0] + src_sat_matrix[1][j][k]*weight[1]) / 256;
@@ -214,16 +214,6 @@ cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 			dst0_b = &dst_hsv_ptr->cur.y_blending_factor;
 			dst1_b = (cmr_u32 *)dst_hsv_ptr->cur.buf_param.hsv_2d_sat_lut;
 			dst2_b = (cmr_u32 *)dst_hsv_ptr->cur.buf_param.hsv_2d_hue_lut_reg;
-
-			cmr_u32 src_sat_matrix[2][25][17] = {0};
-			cmr_u32 src_reg_matrix[2][25][17] = {0};
-			void *src_matrix[2] = { NULL };
-			src_matrix[0] = &dst0_c[0][0];
-			src_matrix[1] = &dst0_c[1][0];
-			memcpy(src_sat_matrix[0], dst1_c[0], sizeof(src_sat_matrix[0]));
-			memcpy(src_sat_matrix[1], dst1_c[1], sizeof(src_sat_matrix[1]));
-			memcpy(src_reg_matrix[0], dst2_c[0], sizeof(src_reg_matrix[0]));
-			memcpy(src_reg_matrix[1], dst2_c[1], sizeof(src_reg_matrix[1]));
 
 			if (index0 != index1) {
 				//src for smart interp base on bv
@@ -238,12 +228,11 @@ cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 				weight[0] = weight[0] / (SMART_WEIGHT_UNIT / 16) * (SMART_WEIGHT_UNIT / 16);
 				weight[1] = SMART_WEIGHT_UNIT - weight[0];
 			}
-
-			isp_interp_data(dst0_b, src_matrix, weight, 16, ISP_INTERP_UINT32);
+			*dst0_b = dst0_c[0]*weight[0] + dst0_c[1]*weight[1];
 			for (j = 0; j < 25; j++) {
 				for (k = 0;k < 17; k++) {
-					*(dst1_b+(j*17+k)) = (src_sat_matrix[0][j][k]*weight[0] + src_sat_matrix[1][j][k]*weight[1]) / 256;
-					*(dst2_b+(j*17+k)) = (src_reg_matrix[0][j][k]*weight[0] + src_reg_matrix[1][j][k]*weight[1]) / 256;
+					*(dst1_b+(j*17+k)) = (dst1_c[0][j][k]*weight[0] + dst1_c[1][j][k]*weight[1]) / 256;
+					*(dst2_b+(j*17+k)) = (dst2_c[0][j][k]*weight[0] + dst2_c[1][j][k]*weight[1]) / 256;
 				}
 			}
 
