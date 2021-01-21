@@ -3312,6 +3312,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 			cxt->sync_count = 1;
 		}
 		ISP_LOGD("ref_camera_id=%d, next_camera_id=%d, sync_flag=%d",cxt->ref_camera_id,cxt->next_camera_id,cxt->sync_flag);
+		break;
 
 	case ALSC_SET_SMART_RESULT:
 		cxt->smart_result = in;
