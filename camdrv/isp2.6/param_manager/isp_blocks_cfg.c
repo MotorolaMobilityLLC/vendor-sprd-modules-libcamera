@@ -244,6 +244,7 @@ struct isp_block_operations s_pyramid_offl_ops = { _pm_pyramid_offl_init,_pm_pyr
 struct isp_block_operations s_dct_ops = { _pm_dct_init,_pm_dct_set_param,_pm_dct_get_param, PNULL, PNULL };
 struct isp_block_operations s_cnr_h_ops = {_pm_cnr_h_init,_pm_cnr_h_set_param,_pm_cnr_h_get_param, PNULL, PNULL };
 struct isp_block_operations s_post_cnr_h_ops = { _pm_post_cnr_h_init,_pm_post_cnr_h_set_param,_pm_post_cnr_h_get_param, PNULL, PNULL };
+struct isp_block_operations s_3dlut_ops = { _pm_3dlut_init, _pm_3dlut_set_param, _pm_3dlut_get_param, PNULL, PNULL };
 #endif
 
 #ifdef CONFIG_ISP_2_5
@@ -492,6 +493,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
 	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},
 	{ISP_BLK_AI_PRO_V1, array_offset(struct isp_context, ai_pro), sizeof(struct isp_ai_param), &s_ai_pro_ops},
+	{ISP_BLK_3DLUT, array_offset(struct isp_context, dlut), sizeof(struct isp_3dlut_param), &s_3dlut_ops},
 };
 #endif
 
