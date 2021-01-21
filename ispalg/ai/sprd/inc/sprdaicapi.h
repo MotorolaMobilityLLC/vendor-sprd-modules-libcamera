@@ -81,6 +81,7 @@ typedef enum
     SC_LABEL_BLUESKY,
     SC_LABEL_BUILDING,
     SC_LABEL_SNOW,
+    SC_LABEL_MULTIPEOPLE,
     SC_LABEL_MAX
 } aic_label_e;
 

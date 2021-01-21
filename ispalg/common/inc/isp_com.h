@@ -295,6 +295,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		AI_SCENE_BEACH,
 		AI_SCENE_PET,
 		AI_SCENE_FLOWER,
+		AI_SCENE_MUlTI_PORTRAIT,
 		AI_SCENE_MAX
 	};
 

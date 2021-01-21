@@ -51,6 +51,9 @@ struct ai_ctrl_cxt {
 	cmr_u32 fd_on_off;
 	cmr_u32 temp_fd_frameid;
 	cmr_u32 flash_enable;
+	cmr_u8 night_flag;
+	cmr_s32 night_thr_down;
+	cmr_s32 night_thr_up;
 };
 
 cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
@@ -59,6 +62,7 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 	struct ai_ctrl_cxt *cxt = NULL;
 	char ai_property[PROPERTY_VALUE_MAX];
 	int val = 0;
+	char ai_night[PROPERTY_VALUE_MAX];
 
 	UNUSED(param);
 
@@ -124,6 +128,17 @@ cmr_handle ai_sprd_adpt_init(cmr_handle handle, cmr_handle param)
 	}
 
 	cxt->aic_status = AI_STATUS_IDLE;
+
+	memset((cmr_handle) &ai_night, 0, sizeof(ai_night));
+	property_get("persist.vendor.cam.isp.ai.night_thrddown", ai_night, "70");
+	if (atoi(ai_night) != 0) {
+		cxt->night_thr_down = atoi(ai_night);
+	}
+	property_get("persist.vendor.cam.isp.ai.night_thrdup", ai_night, "90");
+	if (atoi(ai_night) != 0) {
+		cxt->night_thr_up = atoi(ai_night);
+	}
+	ISP_LOGI("cxt->night_thr: %d %d\n", cxt->night_thr_down,cxt->night_thr_up);
 
 	memset((cmr_handle) & ai_property, 0, sizeof(ai_property));
 	property_get("persist.vendor.cam.isp.ai.logv", ai_property, "0");
@@ -255,15 +270,30 @@ static cmr_s32 ai_sprd_set_ae_param(cmr_handle handle, struct ai_ae_param *ae_pa
 		case SC_LABEL_SNOW:
 			scene_id = AI_SCENE_SNOW;
 			break;
+		case SC_LABEL_MULTIPEOPLE:
+			scene_id = AI_SCENE_MUlTI_PORTRAIT;
+			break;
 		default:
 			scene_id = AI_SCENE_DEFAULT;
 			break;
 	}
 
+	if(cxt->aic_aeminfo.curr_bv < cxt->night_thr_down) {
+		cxt->night_flag = 1;
+	} else if(cxt->aic_aeminfo.curr_bv > cxt->night_thr_up) {
+		cxt->night_flag = 0;
+	}
+
+	if ((!cxt->night_flag)&&(AI_SCENE_NIGHT == scene_id)) {
+		scene_id = AI_SCENE_DEFAULT;
+	} else if (cxt->night_flag) {
+		scene_id = AI_SCENE_NIGHT;
+	}
+
 	scene_info->cur_scene_id = scene_id;
 	memcpy(&(cxt->scene_info), scene_info, sizeof(struct ai_scene_detect_info));
 
-	ISP_LOGV("done. cur_scene_id: %d.", scene_info->cur_scene_id);
+	ISP_LOGV("done. cur_scene_id: %d. night_flag %d", scene_info->cur_scene_id,cxt->night_flag);
 	return rtn;
 
 exit:
