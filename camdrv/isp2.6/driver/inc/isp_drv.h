@@ -339,4 +339,5 @@ cmr_s32 isp_u_pyramid_offl_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_dct_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_cnr_h_block(cmr_handle handle, void *block_info);
 cmr_s32 isp_u_post_cnr_h_block(cmr_handle handle, void *block_info);
+cmr_s32 isp_u_3dlut_block(cmr_handle handle, void *block_info);
 #endif

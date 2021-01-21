@@ -50,6 +50,7 @@ extern "C" {
 #define SENSOR_YUV_LTM_NUM 16
 #define SENSOR_RAW_GTM_NUM 16
 #define SENSOR_RGB_GTM_NUM 16
+#define ISP_3D_LUT_NUM 32
 
 /*************************************************************************/
 
@@ -596,6 +597,18 @@ struct isp_hsv_param_new3 {
 	struct isp_data_bin_info specialeffect[MAX_SPECIALEFFECT_NUM];
 };
 
+//l6pro 3dlut
+struct rgb3dlut_ct_table {
+	cmr_u32 rgb3dlut_final_table[729][6];
+};
+
+struct isp_3dlut_param {
+	struct isp_dev_3dlut_info cur;
+	struct isp_sample_point_info cur_idx;
+	struct rgb3dlut_ct_table table[ISP_3D_LUT_NUM];
+	struct isp_data_info specialeffect_tab[MAX_SPECIALEFFECT_NUM];
+};
+
 struct isp_iircnr_iir_param {
 	struct isp_dev_iircnr_info cur;
 	cmr_u32 cur_level;
@@ -1119,6 +1132,7 @@ struct isp_context {
 	struct isp_dres_pro_param dre_pro;
 	struct isp_facebeauty_param_info fb;
 	struct isp_ai_param ai_pro;
+	struct isp_3dlut_param dlut;
 };
 
 
@@ -1391,6 +1405,10 @@ cmr_s32 _pm_dre_pro_get_param(void *dre_pro_param, cmr_u32 cmd, void *rtn_param0
 cmr_s32 _pm_ai_pro_init(void *dst_ai_param, void *src_ai_param, void *param1, void *param2);
 cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_ai_pro_get_param(void *ai_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
+
+cmr_s32 _pm_3dlut_init(void *dst_dlut_param, void *src_dlut_param, void *param1, void *param2);
+cmr_s32 _pm_3dlut_set_param(void *dlut_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
+cmr_s32 _pm_3dlut_get_param(void *dlut_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
 struct isp_block_operations {
 	cmr_s32(*init) (void *blk_ptr, void *param_ptr0, void *param_ptr1, void *param_ptr2);

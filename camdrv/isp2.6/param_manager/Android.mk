@@ -263,7 +263,8 @@ LOCAL_SRC_FILES += blk_list/isp_block_com.c \
 	blk_list/isp_blk_edge_v2.c \
 	blk_list/isp_blk_uv_div_v2.c \
 	blk_list/isp_blk_3dnr_v2.c \
-	blk_list/isp_blk_2d_lsc_v2.c
+	blk_list/isp_blk_2d_lsc_v2.c \
+	blk_list/isp_blk_3dlut.c
 endif
 
 include $(LOCAL_PATH)/../../../SprdCtrl.mk
