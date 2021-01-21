@@ -417,7 +417,7 @@ static cmr_s32 ae_update_result_before_mapping(struct ae_ctrl_cxt *cxt, struct a
 	cmr_s32 ret = ISP_SUCCESS;
 	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item write_item = { 0, 0, 0, 0, 0, 0, 0};
-	struct q_item actual_item;
+	struct q_item actual_item = { 0, 0, 0, 0, 0, 0, 0};
 
 	if (0 == cxt) {
 		ISP_LOGE("cxt invalid, cxt: %p\n", cxt);
@@ -694,7 +694,7 @@ static cmr_s32 ae_sync_process(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_dat
 
 static cmr_s32 ae_write_to_sensor_sync_mapping(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data_sync)
 {
-	cmr_u32 rtn;
+	cmr_int rtn;
 	struct sensor_info info_master = {0};
 	struct sensor_info info_slave = {0};
 	struct ae_sync_data sync_info_master = {0};
