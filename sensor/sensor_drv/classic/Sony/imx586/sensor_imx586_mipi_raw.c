@@ -875,6 +875,34 @@ exit:
 
 }
 
+static cmr_int imx586_drv_set_LRC_data(cmr_handle handle, cmr_uint param) {
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(sns_drv_cxt->caller_handle);
+    cmr_u8 *param_ptr = NULL;
+    cmr_u16 lrc_area_control;
+    otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)(sensor_cxt->otp_drv_handle);
+    char value[128];
+    property_get("persist.vendor.cam.skip.LRC.area.control", value, "0");
+    if(!otp_cxt->otp_raw_data.buffer) {
+        SENSOR_LOGD("otp not configured");
+        return 0;
+    }
+    if(atoi(value)) {
+	SENSOR_LOGD("START TO SKIP");
+	return 0;
+    }
+    param_ptr = otp_cxt->otp_raw_data.buffer;
+    lrc_area_control = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3038);
+    SENSOR_LOGD("LRC area control is 0x3038 -> 0x%x", lrc_area_control);
+    for (int i = 0; i < 384; i++) {
+        	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7510 + i, *(param_ptr + 0x0C5D + i));
+        	SENSOR_LOGD("imx586_lrc address {0x%x, 0x%x}", 0x7510 + i, *(param_ptr + 0x0C5D + i));
+    }
+exit:
+    return 0;
+
+}
+
 /*==============================================================================
  * Description:
  * mipi stream on
@@ -890,7 +918,8 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     cmr_u32 sensor_mode = 0;
     sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
-
+    if(sensor_mode == 2)
+	imx586_drv_set_LRC_data(handle, param);
     if (sensor_mode > 2)
         imx586_drv_set_qsc_data(handle, param);
     else

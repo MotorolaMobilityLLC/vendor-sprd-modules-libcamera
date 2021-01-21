@@ -71,6 +71,13 @@ cmr_int sensor_pdaf_mipi_raw_type2(void *buffer_handle, cmr_u32 *param);
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle,
                                      cmr_int pdaf_supported, cmr_u32 *param);
 
+double tick(void)
+{
+    struct timeval t;
+    gettimeofday(&t, 0);
+    return t.tv_sec + 1E-6 * t.tv_usec;
+}
+
 cmr_int sensor_pdaf_mipi_data_processor(cmr_u8 *input_buf, cmr_u16 *output_buf, cmr_u32 size) {
     cmr_u16 convertor[5];
     int count = 0;
@@ -208,13 +215,15 @@ cmr_int sensor_pdaf_type3_convertor(struct pdaf_buffer_handle *pdaf_buffer,
     return 0;
 }
 
+int count = 0;
 cmr_int sensor_pdaf_dump_func(void *buffer, cmr_int dump_numb, unsigned char *name) {
     unsigned char file_path[128];
-    sprintf(file_path, "%s%s", PDAF_BUFFER_DUMP_PATH, name);
+    sprintf(file_path, "%s%d_%s", PDAF_BUFFER_DUMP_PATH, count, name);
     FILE *fp = fopen(file_path, "wb+");
     SENSOR_PDAF_CHECK_POINTER(fp);
     fwrite(buffer, dump_numb, 1, fp);
     fclose(fp);
+    count++;
     return SENSOR_SUCCESS;
 }
 
