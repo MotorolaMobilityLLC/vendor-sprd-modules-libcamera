@@ -104,6 +104,7 @@ static struct isp_cfg_fun s_isp_cfg_fun_tab[] = {
 	{ISP_BLK_RGB_GTM, dcam_u_rgb_gtm_block},
 	{ISP_BLK_CNR_H, isp_u_cnr_h_block},
 	{ISP_BLK_POST_CNR_H, isp_u_post_cnr_h_block},
+	{ISP_BLK_3DLUT, isp_u_3dlut_block},
 };
 
 cmr_s32 isp_cfg_block(cmr_handle handle, void *param_ptr, cmr_u32 sub_block)
