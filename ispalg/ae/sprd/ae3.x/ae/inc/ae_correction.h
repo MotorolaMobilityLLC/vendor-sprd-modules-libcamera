@@ -135,6 +135,7 @@ struct ae_adv_param {
 	cmr_u8 reserve_case;		/*will be removed, 0: normal mode, 1: just for debug mode, and manual control the exp/gain by APP*/
 	cmr_u8 app_force_lock;
 	cmr_s16 last_target;
+	cmr_u16 hm_auto_target;
 	cmr_u32 face_flag;
 	cmr_u8 special_fps_mode;
 	cmr_u32 cur_lum;
@@ -174,13 +175,14 @@ struct ae_lib_calc_out  {
 	cmr_u32 stable;
 	cmr_u32 face_stable;
 	cmr_u32 face_enable;
-	cmr_u32 face_luma;
+	cmr_u32 face_lum;
 	cmr_u32 near_stable;
 	cmr_s32 cur_bv;
 	cmr_s32 cur_bv_nonmatch;
 	cmr_u16 cur_lum;			/*the lum of image:0 ~255 */
 	cmr_u16 cur_lum_avg;	/*the lum without weight of image:0 ~255*/
 	cmr_u16 target_lum;
+	cmr_u16 hm_auto_target;
 	cmr_u16 base_target_lum;		//no face AE target luma
 	cmr_u16 stab_zone_in;
 	cmr_u16 stab_zone_out;
