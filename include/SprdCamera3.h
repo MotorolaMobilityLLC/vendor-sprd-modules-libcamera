@@ -253,6 +253,7 @@ static tags_info_t
         {"sprdAvailableAutoFdr", TYPE_BYTE},
         {"supermacrophoto", TYPE_BYTE},
         {"sprdSimleShutterEnable", TYPE_BYTE},
+        {"sprdNotifyNextCapture", TYPE_BYTE},
         {"engeneerParam", TYPE_INT32},
 };
 

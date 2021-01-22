@@ -789,6 +789,11 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mFlush = 0;
     mVideoAFBCFlag = 0;
 
+    mZslIpsEnable = false;
+    mCaptureRequestList.clear();
+    mThumbFrameNum = 0;
+    mClearAfTrigger = false;
+
     HAL_LOGI(":hal3: Constructor X");
 }
 
@@ -944,6 +949,8 @@ void SprdCamera3OEMIf::initialize() {
 #ifdef CONFIG_FACE_BEAUTY
     mflagfb = false;
 #endif
+    mZslIpsEnable = 0;
+    mThumbFrameNum = 0;
 }
 
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
@@ -993,10 +1000,18 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
-        mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
-                                                IS_CAP_BEGIN);
-#endif
+        bool firstPicReq = false;
+        if (mZslIpsEnable) {
+            Mutex::Autolock lock(&capReqLock);
+            if (mCaptureRequestList.empty()) firstPicReq = true;
+            mCaptureRequestList.push_back(frame_number);
+        }
+        HAL_LOGD("mTakePictureMode %d", mTakePictureMode);
+ #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+        if (!mZslIpsEnable || firstPicReq)
+            mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
+                                                 IS_CAP_BEGIN);
+ #endif
 
         if (mSprdReprocessing) {
             ret = reprocessInputBuffer();
@@ -2151,8 +2166,10 @@ int SprdCamera3OEMIf::setPreviewParams() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV_CALLBACK_FORMAT,
              (cmr_uint)mCallbackFormat);
 
-    yuv2Size.width = mYuv2Width;
-    yuv2Size.height = mYuv2Height;
+    if (!mZslIpsEnable) {
+        yuv2Size.width = mYuv2Width;
+        yuv2Size.height = mYuv2Height;
+    }
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV2_SIZE,
              (cmr_uint)&yuv2Size);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV2_FORMAT,
@@ -5902,6 +5919,52 @@ exit:
     ATRACE_END();
 }
 
+void SprdCamera3OEMIf::HandleSnapshot(enum camera_cb_type cb, void *data) {
+        ATRACE_BEGIN(__FUNCTION__);
+        struct snap_cb_data *param = (struct snap_cb_data *)data;
+        if (data == NULL) {
+            HAL_LOGE("fail to get cb data\n");
+            return;
+        }
+
+        HAL_LOGD("E: cam%d  cb = %d, data = %p, req id %d\n", mCameraId,  cb, data, param->request_id);
+        uint32_t frame_number = param->request_id;
+        switch (cb) {
+        case CAMERA_EVT_CB_SNAPSHOT_DONE:
+            // snapshot grab done
+            // callback for thumbnail yuv picture in param->frame
+            HAL_LOGD("yuv done. addr %p,  w %d h %d, fmt %d\n",
+                    param->frame.y_vir_addr, param->frame.width,
+                    param->frame.height, param->frame.format);
+            mSetting->notifyNextCapture(0);
+            cbThumbFrame(frame_number, &param->frame);
+            break;
+        case CAMERA_EXIT_CB_PREPARE:
+            // callback to notify that  next snapshot is ready.
+            HAL_LOGD("next snap is ready now\n");
+            mFlagOffLineZslStart = 0;
+            mSetting->notifyNextCapture(1);
+            break;
+        case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE:
+            // jpeg encode done
+            // callback for jpeg picture in param->frame
+            HAL_LOGD("jpeg done. addr %p, size %u", param->frame.jpeg_param.outPtr, param->frame.jpeg_param.size);
+            cbJpegFrame(frame_number, &param->frame);
+            break;
+        case CAMERA_EXIT_CB_FAILED:
+            // takepicture failed for this request.
+            HAL_LOGE("fail to take picture for request id %u", param->request_id);
+            cbErrorCaptureFrame(frame_number, &param->frame);
+            break;
+        default:
+            HAL_LOGE("unkown cb = %d", cb);
+            break;
+        }
+
+        HAL_LOGD("X");
+        ATRACE_END();
+}
+
 void SprdCamera3OEMIf::HandleCancelPicture(enum camera_cb_type cb,
                                            void *parm4) {
     ATRACE_BEGIN(__FUNCTION__);
@@ -6427,6 +6490,10 @@ void SprdCamera3OEMIf::camera_cb(enum camera_cb_type cb,
 
     case CAMERA_FUNC_ENCODE_PICTURE:
         obj->HandleEncode(cb, parm4);
+        break;
+
+    case CAMERA_FUNC_SNAPSHOT:
+        obj->HandleSnapshot(cb, parm4);
         break;
 
     case CAMERA_FUNC_START_FOCUS:
@@ -10046,7 +10113,8 @@ int SprdCamera3OEMIf::queueBuffer(buffer_handle_t *buff_handle,
             goto exit;
         }
 
-        mHalOem->ops->queue_buffer(mCameraHandle, buffer, SPRD_CAM_STREAM_YUV2);
+        if (!mZslIpsEnable)
+            mHalOem->ops->queue_buffer(mCameraHandle, buffer, SPRD_CAM_STREAM_YUV2);
         break;
     case CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT:
         break;
@@ -11152,7 +11220,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
 
-    if (isCapturing()) {
+    if (!mZslIpsEnable && isCapturing()) {
         WaitForCaptureDone();
     }
 
@@ -11196,6 +11264,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
                         }
                         clear_af_trigger = 1;
     }
+    mClearAfTrigger = !!clear_af_trigger;
 
     if(mZslCaptureExitLoop == true) {
        HAL_LOGE("deinit capture");
@@ -11302,8 +11371,17 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
-    ret = obj->mHalOem->ops->camera_take_picture(obj->mCameraHandle,
+    HAL_LOGD("mZslIpsEnable = %d", mZslIpsEnable);
+    if (mZslIpsEnable) {
+        struct snap_input_data req;
+        req.request_id = mVideoSnapshotFrameNum;  /*current capture frame number*/
+        req.zsl_snap_time  = mZslSnapshotTime;
+        ret = obj->mHalOem->ops->camera_request_snapshot(obj->mCameraHandle,
+                                                 obj->mCaptureMode, &req);
+    } else {
+        ret = obj->mHalOem->ops->camera_take_picture(obj->mCameraHandle,
                                                  obj->mCaptureMode);
+    }
     if (ret) {
         setCameraState(SPRD_ERROR, STATE_CAPTURE);
         HAL_LOGE("fail to camera_take_picture");
@@ -11321,10 +11399,14 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     HAL_LOGV("jpgInfo.quality=%d, thumb_quality=%d, focal_length=%f",
              jpgInfo.quality, jpgInfo.thumbnail_quality, lensInfo.focal_length);
 
-    snapshotZsl(p_data);
+    if (!mZslIpsEnable) {
+        snapshotZsl(p_data);
+    } else {
+        HAL_LOGD("don't call snapshotZsl");
+    }
 
 exit:
-    if(clear_af_trigger) {
+    if(!mZslIpsEnable && clear_af_trigger) {
         controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
         mSetting->setCONTROLTag(&controlInfo);
         SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
@@ -11690,6 +11772,228 @@ void SprdCamera3OEMIf::setOriginalPictureSize( int32_t width ,int32_t  height) {
          CMR_LOGI("original picture width and height must not be 0");
     }
     mHalOem->ops->camera_set_original_picture_size(mCameraHandle ,width,height);
+}
+void SprdCamera3OEMIf::setZslIpsEnable(bool zslIpsEnable) {
+    mZslIpsEnable = zslIpsEnable;
+    HAL_LOGD("mZslIpsEnable %d", mZslIpsEnable);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ZSL_IPS_ENABLE, (cmr_uint)mZslIpsEnable);
+}
+
+void SprdCamera3OEMIf::setThumbNumber(uint32_t thumbNumber) {
+    mThumbFrameNum = thumbNumber;
+}
+
+void SprdCamera3OEMIf::cbThumbFrame(uint32_t frame_number,
+             struct camera_frame_type *frame) {
+    HAL_LOGD("return thumb frame %u", frame_number);
+    SprdCamera3Stream *yuv2_stream = NULL;
+    cmr_uint addr_vir = 0, addr_phy = 0;
+    cmr_s32 ion_fd = 0;
+    uint32_t frame_num = 0;
+    int orientation = 0, angle = 0;
+    int64_t timestamp = frame->monoboottime;
+    Mutex::Autolock cbLock(&mCaptureCbLock);
+    SprdCamera3RegularChannel *regular_channel =
+                reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    HAL_LOGV("mClearAfTrigger %u", mClearAfTrigger);
+    if(mClearAfTrigger) {
+        CONTROL_Tag controlInfo;
+        mSetting->getCONTROLTag(&controlInfo);
+        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
+        mSetting->setCONTROLTag(&controlInfo);
+        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+    }
+    if (regular_channel == NULL) {
+        HAL_LOGE("regular_channel or pic_channel is null");
+        return;
+    }
+    regular_channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
+    if (yuv2_stream == NULL) {
+        HAL_LOGE("yuv2_stream is null");
+        return;
+    }
+
+    if (0 != frame->sensor_info.exposure_time_denominator) {
+        int64_t exposureTime = 1000000000ll *
+                       frame->sensor_info.exposure_time_numerator /
+                       frame->sensor_info.exposure_time_denominator;
+        mSetting->setExposureTimeTag(exposureTime);
+    }
+    yuv2_stream->getQBuffFirstNum(&frame_num);
+    if (frame_num != frame_number) {
+        HAL_LOGE("return wrong frame %u, should be %u", frame_number, frame_num);
+        return;
+    }
+
+    HAL_LOGD("frame->monoboottime 0x%llx", frame->monoboottime);
+    timestamp = frame->monoboottime;
+    yuv2_stream->getQBuffFirstVir(&addr_vir);
+    yuv2_stream->getQBuffFirstPhy(&addr_phy);
+    yuv2_stream->getQBuffFirstFd(&ion_fd);
+    if (addr_vir == 0 || ion_fd == 0) {
+        HAL_LOGW("addr_vir=%ld, ion_fd=%d", addr_vir, ion_fd);
+        return;
+    }
+    HAL_LOGD("frame (%d, %d), yuv2 (%d, %d)", frame->width, frame->height,
+               mYuv2Width, mYuv2Height);
+    if ((int)frame->width == mYuv2Width &&
+                (int)frame->height == mYuv2Height) {
+        memcpy((void *)addr_vir, (void *)frame->y_vir_addr,
+               (mYuv2Width * mYuv2Height * 3) / 2);
+    } else {
+        HAL_LOGE("thumb frame has wrong size.");
+    }
+    flushIonBuffer(ion_fd, (void *)addr_vir, (void *)NULL,
+                           mYuv2Width * mYuv2Height * 3 / 2);
+    mThumbFrameNum = 0; /*reset thumb frame number to 0*/
+    regular_channel->channelCbRoutine(frame_num, timestamp,
+                                      CAMERA_STREAM_TYPE_YUV2);
+}
+
+void SprdCamera3OEMIf::cbJpegFrame(uint32_t frame_number,
+            struct camera_frame_type *frame) {
+    ATRACE_CALL();
+    HAL_LOGD("return jpeg frame %u", frame_number);
+    int ret = 0;
+    struct camera_jpeg_param *encInfo = &frame->jpeg_param;
+    buffer_handle_t *jpeg_buff_handle = NULL;
+    int64_t timestamp;
+    cmr_uint pic_addr_vir = 0x0;
+    SprdCamera3Stream *pic_stream = NULL;
+    uint32_t heap_size = 0;
+    SprdCamera3PicChannel *picChannel =
+        reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+    uint32_t frame_num = 0;
+    ssize_t maxJpegSize = -1;
+    camera3_jpeg_blob *jpegBlob = NULL;
+
+    Mutex::Autolock cbLock(&mCaptureCbLock);
+    Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
+
+    HAL_LOGD("E mCameraId = %d, encInfo->size = %d, enc->buffer = %p,"
+             " encInfo->need_free = %d, time=%" PRId64,
+             mCameraId, encInfo->size, encInfo->outPtr, encInfo->need_free,
+             frame->timestamp);
+
+    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
+        HAL_LOGE("oem is null or oem ops is null");
+        goto exit;
+    }
+    timestamp = frame->monoboottime;
+
+    if (picChannel == NULL || encInfo->outPtr == NULL) {
+        HAL_LOGE("picChannel=%p, encInfo->outPtr=%p", picChannel,
+                 encInfo->outPtr);
+        goto exit;
+    }
+
+    picChannel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &pic_stream);
+    if (pic_stream == NULL) {
+        HAL_LOGE("pic_stream=%p", pic_stream);
+        goto exit;
+    }
+
+    ret = pic_stream->getQBuffFirstVir(&pic_addr_vir);
+    if (ret || pic_addr_vir == 0x0) {
+        HAL_LOGW("getQBuffFirstVir failed, ret=%d, pic_addr_vir=%ld", ret,
+                 pic_addr_vir);
+        goto exit;
+    }
+    HAL_LOGV("pic_addr_vir = 0x%lx", pic_addr_vir);
+    memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
+
+    pic_stream->getQBuffFirstNum(&frame_num);
+    if (frame_num != frame_number) {
+        HAL_LOGE("return wrong frame %u, should be %u", frame_number, frame_num);
+        goto exit;
+    }
+    pic_stream->getHeapSize(&heap_size);
+    pic_stream->getQBufHandleForNum(frame_num, &jpeg_buff_handle);
+    if (jpeg_buff_handle == NULL) {
+        HAL_LOGE("failed to get jpeg buffer handle");
+        goto exit;
+    }
+
+    maxJpegSize = ADP_WIDTH(*jpeg_buff_handle);
+    maxJpegSize = ((uint32_t)maxJpegSize > heap_size) ? heap_size : maxJpegSize;
+
+    jpegBlob = (camera3_jpeg_blob *)((char *)pic_addr_vir +
+                                     (maxJpegSize - sizeof(camera3_jpeg_blob)));
+    jpegBlob->jpeg_size = encInfo->size;
+    jpegBlob->jpeg_blob_id = CAMERA3_JPEG_BLOB_ID;
+
+    picChannel->channelCbRoutine(frame_num, timestamp,
+                                 CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+    {
+        Mutex::Autolock lock(&capReqLock);
+        if (!mCaptureRequestList.empty() && *(mCaptureRequestList.begin()) == frame_number) {
+            mCaptureRequestList.erase(mCaptureRequestList.begin());
+        } else if (!mCaptureRequestList.empty()) {
+            HAL_LOGW("capReq list has wrong frame");
+            for (List<uint32_t>::iterator i = mCaptureRequestList.begin();
+                    i !=mCaptureRequestList.end();) {
+                if (*i <= frame_number) mCaptureRequestList.erase(i++);
+                else break;
+            }
+        }
+        if (mCaptureRequestList.empty()) {
+            setCameraState(SPRD_IDLE, STATE_CAPTURE);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+            if (mSprdAppmodeId != CAMERA_MODE_CONTINUE) {
+                mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
+                                                IS_CAP_END);
+                HAL_LOGV("set dvfs cap_end");
+            }
+#endif
+        }
+    }
+exit:
+    HAL_LOGV("X");
+}
+
+void SprdCamera3OEMIf::cbErrorCaptureFrame(uint32_t frame_number,
+            struct camera_frame_type *frame) {
+    ATRACE_CALL();
+    SprdCamera3PicChannel *picChannel =
+        reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+    SprdCamera3RegularChannel *regularChannel =
+        reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    if (regularChannel != NULL) {
+        int ret = 0;
+        mThumbFrameNum = 0; /*reset thumb frame number*/
+        ret = regularChannel->channelClearInvalidQBuff(frame_number, frame->timestamp,
+		CAMERA_STREAM_TYPE_YUV2);
+        if (ret)
+            HAL_LOGD("no yuv2 stream or no yuv2 request %d", frame_number);
+    }
+    if (picChannel != NULL) {
+        int ret;
+        {
+            Mutex::Autolock lock(&capReqLock);
+            if (!mCaptureRequestList.empty() && *(mCaptureRequestList.begin()) == frame_number) {
+                mCaptureRequestList.erase(mCaptureRequestList.begin());
+            } else if (!mCaptureRequestList.empty()) {
+                HAL_LOGW("mCaptureRequestList has wrong frame");
+                for (List<uint32_t>::iterator i = mCaptureRequestList.begin();
+                           i !=mCaptureRequestList.end();) {
+                    if (*i <= frame_number) mCaptureRequestList.erase(i++);
+                    else break;
+                }
+            }
+            if (mCaptureRequestList.empty()) {
+                setCameraState(SPRD_IDLE, STATE_CAPTURE);
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+                mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
+                                                IS_CAP_END);
+                HAL_LOGV("set dvfs cap_end");
+#endif
+            }
+        }
+        ret = picChannel->channelClearInvalidQBuff(frame_number, frame->timestamp,
+                CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
+        if (ret)
+            HAL_LOGD("no jpeg stream or no jpeg request %u", frame_number);
+    }
 }
 
 #ifdef CONFIG_CAMERA_EIS

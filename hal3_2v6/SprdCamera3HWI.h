@@ -52,6 +52,8 @@ class SprdCamera3Setting;
 #define MIN_MULTI_CAMERA_FAKE_ID 6
 #define MAX_MULTI_CAMERA_FAKE_ID 50
 
+#define MAX_BUFFERS_IN_SHOT2SHOT 15    /*for shot2shot*/
+
 class SprdCamera3HWI {
   public:
     /* static variable and functions accessed by camera service */
@@ -140,6 +142,7 @@ class SprdCamera3HWI {
     void getHighResZslSetting(void);
     void checkHighResZslSetting(uint32_t *ambient_highlight);
     uint8_t getReqCapureIntent(uint8_t capIntent);
+    bool getIpsEnable(bool orgIpsEnable, const camera_metadata_t *metadata);
   public:
     SprdCamera3Setting *mSetting;
     uint32_t mFrameNum;
@@ -324,6 +327,8 @@ class SprdCamera3HWI {
     uint8_t mHighResFixZsl;
 
     cam3_stream_configuration_t mStreamConfiguration;
+    bool mZslIpsEnable;
+    uint32_t mThumbFrameNum;
 };
 
 }; // namespace sprdcamera

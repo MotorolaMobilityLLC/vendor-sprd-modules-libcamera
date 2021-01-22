@@ -553,6 +553,7 @@ typedef struct {
     AUTO_TRACKING_Tag autotrackingInfo;
     MLOG_Tag mlogInfo;
     int32_t fd_score[10];
+    uint8_t notify_next_cap;   /*for shot2shot*/
     ENGENEER_Tag engeneerInfo;
 } sprd_setting_info_t;
 typedef int (*CAMIP_INTERFACE_INIT)(char **);
@@ -755,7 +756,8 @@ class SprdCamera3Setting {
     int getSensorFov(float *w_fov,float  *sw_fov);
     int setFdScore(int32_t *fd_score, int num);
     int getFdScore(int32_t *fd_score, int num);
-
+    void notifyNextCapture(uint8_t nextCap);
+    uint8_t getNextCapture();
 
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];

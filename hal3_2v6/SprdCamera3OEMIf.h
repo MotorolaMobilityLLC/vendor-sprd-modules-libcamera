@@ -340,6 +340,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void pushDualVideoBuffer(hal_mem_info_t *mem_info);
     void setRealMultiMode(bool mode);
     void setMultiAppRatio(float app_ratio);
+    void setZslIpsEnable(bool zslIpsEnable);
+    void setThumbNumber(uint32_t thumbNumber);
 
   public:
     uint32_t isPreAllocCapMem();
@@ -423,6 +425,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void HandleStopPreview(enum camera_cb_type cb, void *parm4);
     void HandleTakePicture(enum camera_cb_type cb, void *parm4);
     void HandleEncode(enum camera_cb_type cb, void *parm4);
+    void HandleSnapshot(enum camera_cb_type cb, void *data);
     void HandleFocus(enum camera_cb_type cb, void *parm4);
     void HandleAutoExposure(enum camera_cb_type cb, void *parm4);
     void HandleCancelPicture(enum camera_cb_type cb, void *parm4);
@@ -464,6 +467,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
                           uint32_t &buf_cnt);
     int SnapshotZslOther(SprdCamera3OEMIf *obj,
 	                     struct camera_frame_type *zsl_frame);
+    void cbThumbFrame(uint32_t frame_number, struct camera_frame_type * frame);
+    void cbJpegFrame(uint32_t frame_number, struct camera_frame_type * frame);
+    void cbErrorCaptureFrame(uint32_t frame_number, struct camera_frame_type * frame);
 
     enum Sprd_camera_state {
         SPRD_INIT,
@@ -682,6 +688,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // add for blur2 capture
     bool mIsBlur2Zsl;
     bool mIsSlowmotion;
+
+    bool mZslIpsEnable; //for shot2shot
+    Mutex capReqLock;
+    List<uint32_t> mCaptureRequestList;
+    uint32_t mThumbFrameNum;
+    bool mClearAfTrigger;
 
     void yuvNv12ConvertToYv12(struct camera_frame_type *frame, char *tmpbuf);
     int nv21Scale(const uint8_t *src_y, const uint8_t *src_vu, int src_width,

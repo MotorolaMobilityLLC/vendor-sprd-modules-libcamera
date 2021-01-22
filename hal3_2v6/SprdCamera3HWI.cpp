@@ -496,6 +496,7 @@ int SprdCamera3HWI::initialize(
     pre_frame_num = 0;
     mCurFrameTimeStamp = 0;
     mBufferStatusError = false;
+    mZslIpsEnable = false;
 
     HAL_LOGI(":hal3: X");
     return ret;
@@ -656,6 +657,8 @@ int SprdCamera3HWI::configureStreams(
     uint32_t hasCallbackStream = 0;
     // for yuv2 stream
     uint32_t hasYuv2Stream = 0;
+    CameraMetadata sessionParam;
+    mZslIpsEnable = false;
     ret = checkStreamList(streamList);
     if (ret) {
         HAL_LOGE("check failed ret=%d", ret);
@@ -715,8 +718,13 @@ int SprdCamera3HWI::configureStreams(
                     HAL_PIXEL_FORMAT_YCrCb_420_SP) {
                 hasImplementationDefinedOutputStream = 1;
             }
+            if (streamList->streams[i]->format == HAL_PIXEL_FORMAT_YCbCr_420_888 &&
+                streamList->streams[i]->width <= 320 && streamList->num_streams >= 3) {
+                mZslIpsEnable = true;   /*may use to one frame fast thumbnail in the future*/
+            }
         }
     }
+    mZslIpsEnable = getIpsEnable(mZslIpsEnable, streamList->session_parameters);
 
     mStreamConfiguration.num_streams = streamList->num_streams;
 
@@ -768,7 +776,11 @@ int SprdCamera3HWI::configureStreams(
 
             case HAL_PIXEL_FORMAT_YV12:
             case HAL_PIXEL_FORMAT_YCbCr_420_888:
-                if (hasImplementationDefinedOutputStream == 0) {
+                if (mZslIpsEnable && newStream->width <= 320) {
+                    stream_type = CAMERA_STREAM_TYPE_YUV2;
+                    channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
+                    hasYuv2Stream = 1;
+                } else if (hasImplementationDefinedOutputStream == 0) {
                     stream_type = CAMERA_STREAM_TYPE_PREVIEW;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
                     // for two HAL_PIXEL_FORMAT_YCBCR_420_888 steam
@@ -915,7 +927,11 @@ int SprdCamera3HWI::configureStreams(
             HAL_LOGD("slowmotion=%d, high video mode = %d, kMaxBuffers=%d", sprddefInfo->slowmotion,
                      streamList->operation_mode, SprdCamera3RegularChannel::kMaxBuffers);
 
-            newStream->max_buffers = SprdCamera3RegularChannel::kMaxBuffers;
+            if (mZslIpsEnable && stream_type == CAMERA_STREAM_TYPE_YUV2) {
+                newStream->max_buffers = MAX_BUFFERS_IN_SHOT2SHOT;
+            } else {
+                newStream->max_buffers = SprdCamera3RegularChannel::kMaxBuffers;
+            }
             newStream->priv = mRegularChan;
             break;
         }
@@ -941,7 +957,11 @@ int SprdCamera3HWI::configureStreams(
             }
 
             newStream->priv = mPicChan;
-            newStream->max_buffers = SprdCamera3PicChannel::kMaxBuffers;
+            if (mZslIpsEnable) {
+                newStream->max_buffers = MAX_BUFFERS_IN_SHOT2SHOT;
+            } else {
+                newStream->max_buffers = SprdCamera3PicChannel::kMaxBuffers;
+            }
             mPictureRequest = false;
             break;
         }
@@ -950,6 +970,7 @@ int SprdCamera3HWI::configureStreams(
             HAL_LOGE("channel type is invalid channel");
             break;
         }
+        HAL_LOGD("stream type:%d, max_buffers:%d", stream_type, newStream->max_buffers);
     }
 
     if (mMultiCameraMode == MODE_BOKEH && mCameraId == 2 &&
@@ -1015,6 +1036,8 @@ int SprdCamera3HWI::configureStreams(
     }
 #endif
 
+    mOEMIf->setZslIpsEnable(mZslIpsEnable);
+
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
     mOEMIf->setCamStreamInfo(video_size, videoFormat, videoStreamType);
@@ -1029,7 +1052,10 @@ int SprdCamera3HWI::configureStreams(
     mSetting->setPictureSize(capture_size);
     mSetting->setCallbackSize(callback_size);
 
-    mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
+    if (mZslIpsEnable)
+        mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers + MAX_BUFFERS_IN_SHOT2SHOT;
+    else
+        mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
     mFirstRequestGet = false;
     mPendingRequestsList.clear();
 
@@ -1302,6 +1328,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     SPRD_DEF_Tag *sprddefInfo;
     REQUEST_Tag requestInfo;
     struct fin1_info fin1_info;
+    bool hasThumbReq = false;
 
     Mutex::Autolock l(mLock);
 
@@ -1675,6 +1702,14 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         }
 
         acquireFence = NULL;
+        if (mZslIpsEnable && mPictureRequest && streamType[i] == CAMERA_STREAM_TYPE_YUV2) {
+            hasThumbReq = true;
+            HAL_LOGD("hasThumbReq num %u", request->frame_number);
+        }
+    }
+    if (hasThumbReq) {  /*pic request has a thumbnail yuv buffer*/
+        mThumbFrameNum = request->frame_number;
+        mOEMIf->setThumbNumber(request->frame_number);
     }
 
     pendingRequest.meta_info.flash_mode = flashInfo.mode;
@@ -1817,6 +1852,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     }
 
     if (mPictureRequest == 1) {
+        if (mZslIpsEnable) mSetting->notifyNextCapture(0);
         ret = mPicChan->start(mFrameNum);
         if (ret) {
             HAL_LOGE("mPicChan->start failed, ret=%d", ret);
@@ -1889,6 +1925,12 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             }
             /**add for 3d capture reprocessing end   */
 
+            if (mZslIpsEnable && (frame_number == mThumbFrameNum ||
+                     result_info->stream->format == HAL_PIXEL_FORMAT_BLOB)) {
+                i++;
+                continue;
+            }
+
             if (!i->bNotified) {
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
                 notify_msg.message.shutter.frame_number = i->frame_number;
@@ -1902,6 +1944,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
                 CONTROL_Tag threeAControlInfo;
+                uint8_t notifyCap;
 
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
@@ -1932,6 +1975,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                 mSetting->setResultTag(&threeAControlInfo);
 
+                if (mZslIpsEnable) notifyCap = mSetting->getNextCapture();
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
                 result.num_output_buffers = 0;
@@ -1941,6 +1985,9 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
                 free_camera_metadata(
                     const_cast<camera_metadata_t *>(result.result));
+                if (mZslIpsEnable && notifyCap) { /*if this frame msg was dropped, app can't get the Tag, so reset it*/
+                    mSetting->notifyNextCapture(notifyCap);
+                }
             }
             i++;
         } else if (i->frame_number == frame_number) {
@@ -2028,6 +2075,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     if (mMultiCameraMode == MODE_3D_VIDEO) {
                         setVideoBufferTimestamp(capture_time);
                     }
+                    if (i->frame_number == mThumbFrameNum) mThumbFrameNum = 0;
                     mCallbackOps->process_capture_result(mCallbackOps, &result);
                     HAL_LOGV("data frame_number = %d, input_buffer = %p",
                              result.frame_number, i->input_buffer);
@@ -2731,6 +2779,22 @@ void SprdCamera3HWI::getOnlineBuffer(void *cali_info) {
 
     HAL_LOGD("online buffer addr %p", cali_info);
     return;
+}
+
+bool SprdCamera3HWI::getIpsEnable(bool orgIpsEnable,
+        const camera_metadata_t *metadata) {
+    int32_t appMode = -1;
+    bool dstIpsEnable = orgIpsEnable;
+    if (metadata != NULL) {
+        CameraMetadata meta;
+        meta = metadata;
+        if (meta.exists(ANDROID_SPRD_APP_MODE_ID)) {
+            appMode = meta.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
+            HAL_LOGD("session appMode %ld", appMode);
+        }
+    }
+    if (appMode == -1 && orgIpsEnable) dstIpsEnable = false;
+    return dstIpsEnable;
 }
 
 }; // end namespace sprdcamera

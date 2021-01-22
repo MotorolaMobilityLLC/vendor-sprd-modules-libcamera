@@ -552,6 +552,7 @@ const cam_stream_info_t stream_info[] = {
     {{640, 480}, 33331760L, 33331760L},
     {{352, 288}, 33331760L, 33331760L},
     {{320, 240}, 33331760L, 33331760L},
+    {{256, 144}, 33331760L, 33331760L},
     {{176, 144}, 33331760L, 33331760L}};
 
 const cam_stream_info_t subSensor_stream_info[] = {
@@ -2397,6 +2398,18 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
     //37 ev+-20
     property_get("persist.vendor.cam.ev.20.enable",prop,"0");
+    available_cam_features.add(atoi(prop));
+
+    // 38 auto mode shot2shot feature
+    property_get("persist.vendor.cam.auto.shot2shot.enable", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 39 blur fast thumb
+    property_get("persist.vendor.cam.blur.fast.thumb", prop, "0");
+    available_cam_features.add(atoi(prop));
+
+    // 40 auto fast thumb
+    property_get("persist.vendor.cam.auto.fast.thumb", prop, "0");
     available_cam_features.add(atoi(prop));
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
@@ -6173,6 +6186,14 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     }
     camMetadata.update(ANDROID_SPRD_AUTOCHASING_TRACEREGION,
                        s_setting[mCameraId].autotrackingInfo.at_cb_info, 3);
+    {
+        uint8_t notify_next_cap = s_setting[mCameraId].notify_next_cap;
+        camMetadata.update(ANDROID_SPRD_NOTIFY_NEXT_CAPTURE, &notify_next_cap, 1);
+        if (notify_next_cap) {
+            HAL_LOGD("notify_next_cap %d", notify_next_cap);
+            s_setting[mCameraId].notify_next_cap = 0;
+        }
+    }
 
     int32_t engeneerParam[2];
     engeneerParam[0] = s_setting[mCameraId].sprddefInfo.af_pos;
@@ -7137,6 +7158,14 @@ int SprdCamera3Setting::resetFeatureStatus(const char *fea_ip,
     }
 
     return rc;
+}
+
+void SprdCamera3Setting::notifyNextCapture(uint8_t nextCap) {
+    SprdCamera3Setting::s_setting[mCameraId].notify_next_cap = nextCap;
+}
+
+uint8_t SprdCamera3Setting::getNextCapture() {
+    return s_setting[mCameraId].notify_next_cap;
 }
 
 } // namespace sprdcamera
