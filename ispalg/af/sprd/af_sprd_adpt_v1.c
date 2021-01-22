@@ -2269,6 +2269,7 @@ static void caf_monitor_ae(af_ctrl_t * af, const struct af_ae_calc_out *ae, isp_
 	prm->ae_info.y_sum = af->Y_sum_trigger;
 	prm->ae_info.cur_scene = OUT_SCENE;
 	prm->ae_info.registor_pos = (cmr_u32) lens_get_pos(af);
+	prm->ae_info.near_stable = ae->near_stab;
 	//ISP_LOGI("exp_time = %d, gain = %d, cur_lum = %d, is_stable = %d, bv = %d", prm->ae_info.exp_time, prm->ae_info.gain, prm->ae_info.cur_lum, prm->ae_info.is_stable, prm->ae_info.bv);
 
 	caf_monitor_calc(af, prm);
