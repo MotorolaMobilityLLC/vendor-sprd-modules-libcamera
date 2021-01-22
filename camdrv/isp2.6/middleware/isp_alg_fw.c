@@ -3868,6 +3868,11 @@ cmr_int ispalg_ai_process(cmr_handle isp_alg_handle)
 
 	ISP_CHECK_HANDLE_VALID(isp_alg_handle);
 
+	if (!cxt->aem_is_update) {
+		ISP_LOGV("aem is not update\n");
+		return ret;
+	}
+
 	if (cxt->ops.ai_ops.ioctrl) {
 		ret = cxt->ops.ai_ops.ioctrl(cxt->ai_cxt.handle, AI_GET_STATUS, (void *)(&ai_sta), NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AI_GET_STATUS"));
@@ -3987,7 +3992,6 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		if (cxt->is_multi_mode)
 			ISP_LOGV("is_master :%d\n", cxt->is_master);
 		isp_br_ioctrl(cxt->sensor_role, SET_STAT_AWB_DATA, ae_stat_ptr, NULL);
-		ret = ispalg_ai_process((cmr_handle)cxt);
 		break;
 	}
 	case ISP_EVT_SOF: {
@@ -4026,6 +4030,8 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		}
 		if (ret)
 			ISP_LOGE("fail to start ae or awb process");
+
+		ret = ispalg_ai_process((cmr_handle)cxt);
 
 		cxt->aem_is_update = 0;
 

@@ -16366,6 +16366,9 @@ cmr_uint camera_hal_ai_scene_type(cmr_u8 isp_scene_type) {
     case ISP_AI_SCENE_FLOWER:
         hal_scene_type = HAL_AI_SCENE_FLOWER;
         break;
+    case ISP_AI_SCENE_MUlTI_PORTRAIT:
+        hal_scene_type = HAL_AI_SCENE_MUlTI_PORTRAIT;
+        break;
     default:
         CMR_LOGE("invalid isp ai scene type:%u", isp_scene_type);
         break;

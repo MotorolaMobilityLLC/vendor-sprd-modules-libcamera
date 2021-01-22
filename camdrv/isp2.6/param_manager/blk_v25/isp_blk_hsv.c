@@ -179,6 +179,7 @@ cmr_s32 _pm_hsv_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, void *
 			case ISP_PM_AI_SCENE_FOOD:
 				hsv_level = 10;
 				break;
+			case ISP_PM_AI_SCENE_MUlTI_PORTRAIT:
 			case ISP_PM_AI_SCENE_PORTRAIT:
 				hsv_level = 11;
 				break;

@@ -589,6 +589,7 @@ enum hal_ai_scene_type {
     HAL_AI_SCENE_BEACH,
     HAL_AI_SCENE_PET,
     HAL_AI_SCENE_FLOWER,
+    HAL_AI_SCENE_MUlTI_PORTRAIT,
     HAL_AI_SCENE_MAX
 };
 

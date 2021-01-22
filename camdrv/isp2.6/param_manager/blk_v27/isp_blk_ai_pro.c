@@ -146,6 +146,7 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 				case ISP_PM_AI_SCENE_FOOD:
 					ai_scene = AI_SECNE_PM_PRO_FOOD;
 					break;
+				case ISP_PM_AI_SCENE_MUlTI_PORTRAIT:
 				case ISP_PM_AI_SCENE_PORTRAIT:
 					ai_scene = AI_SECNE_PM_PRO_PORTRAIT;
 					break;
@@ -278,6 +279,7 @@ cmr_s32 _pm_ai_pro_set_param(void *ai_param, cmr_u32 cmd, void *param_ptr0, void
 				case ISP_PM_AI_SCENE_FOOD:
 					ai_scene = AI_SECNE_PM_PRO_FOOD;
 					break;
+				case ISP_PM_AI_SCENE_MUlTI_PORTRAIT:
 				case ISP_PM_AI_SCENE_PORTRAIT:
 					ai_scene = AI_SECNE_PM_PRO_PORTRAIT;
 					break;
