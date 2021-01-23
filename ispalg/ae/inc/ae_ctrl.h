@@ -170,6 +170,7 @@ extern "C" {
 		cmr_u32 awb_cur_gain_g;
 		cmr_u32 awb_cur_gain_b;
 		cmr_u32 is_update;
+		cmr_u8 mv_value;
 		struct ae_ctrl_ebd_info ebd_info;
 		struct ae_ctrl_isp_dgain_info isp_dgain;
 		struct ae_ctrl_zoom_info zoom_info;

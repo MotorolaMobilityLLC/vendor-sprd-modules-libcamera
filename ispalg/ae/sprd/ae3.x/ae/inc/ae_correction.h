@@ -138,6 +138,7 @@ struct ae_adv_param {
 	cmr_s16 last_target;
 	cmr_u32 face_flag;
 	cmr_u8 special_fps_mode;
+	cmr_u8 mv_value;
 	cmr_u32 cur_lum;
 };
 
@@ -145,6 +146,7 @@ struct ae_lib_calc_in {
 	cmr_u32 frm_id;
 	/*basic information*/
 	cmr_u32 ref_camera_id;
+	cmr_u32 cam_id;
 	cmr_u32 is_multi_mode;
 	struct ae_size img_size;/*image resolution*/
 	struct ae_rect bhist_size;

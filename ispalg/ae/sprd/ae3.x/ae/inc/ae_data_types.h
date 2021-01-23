@@ -414,7 +414,7 @@ struct ae_monitor_cfg {
 	cmr_u8 monitor_shift;		//for ae monitor data overflow
 	cmr_u16 oe_thrd;
 	cmr_u16 ue_thrd;
-	cmr_u32 data_type;//
+	cmr_u32 data_type;
 };
 
 struct ae_monitor_item_data_type {

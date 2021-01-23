@@ -5844,6 +5844,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
 	cxt->cur_status.adv_param.awb_mode = calc_in->awb_mode;
+	cxt->cur_status.adv_param.mv_value = calc_in->mv_value;
 
 	/*get aem static data current sensor*/
 	if(0 == aem_type) {
@@ -5968,7 +5969,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.aem_roi.end_y = ae_win_info.offset_y + ae_win_info.blk_num_y*ae_win_info.blk_size_y;
 	cxt->cur_status.adv_param.stats_data_adv.blk_size.w = ae_win_info.blk_size_x;
 	cxt->cur_status.adv_param.stats_data_adv.blk_size.h = ae_win_info.blk_size_y;
-
+	cxt->cur_status.cam_id = cxt->camera_id;
+	
 	/*get ae sync data for ISP_ALG_TRIBLE_W_T_UW mode*/
 	if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
 
