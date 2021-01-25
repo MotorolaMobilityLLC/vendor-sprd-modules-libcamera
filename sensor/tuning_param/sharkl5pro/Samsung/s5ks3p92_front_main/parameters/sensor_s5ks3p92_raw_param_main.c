@@ -36,6 +36,7 @@
 #include "sensor_s5ks3p92_raw_param_cap_1.c"
 #include "sensor_s5ks3p92_raw_param_video_0.c"
 #include "sensor_s5ks3p92_raw_param_video_1.c"
+#include "sensor_s5ks3p92_raw_param_fdr_cap0.c"
 
 /* End Include */
 
@@ -167,7 +168,7 @@ static struct sensor_raw_info s_s5ks3p92_mipi_raw_info=
 		{s_s5ks3p92_tune_info_video_1, sizeof(s_s5ks3p92_tune_info_video_1)},
 		{NULL, 0},
 		{NULL, 0},
-		{NULL, 0},
+		{s_s5ks3p92_tune_info_fdr_cap0, sizeof(s_s5ks3p92_tune_info_fdr_cap0)},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -188,7 +189,7 @@ static struct sensor_raw_info s_s5ks3p92_mipi_raw_info=
 		&s_s5ks3p92_fix_info_video_1,
 		NULL,
 		NULL,
-		NULL,
+		&s_s5ks3p92_fix_info_fdr_cap0,
 		NULL,
 		NULL,
 	},
@@ -206,7 +207,7 @@ static struct sensor_raw_info s_s5ks3p92_mipi_raw_info=
 		{s_s5ks3p92_video_1_tool_ui_input, sizeof(s_s5ks3p92_video_1_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
-		{NULL, 0},
+		{s_s5ks3p92_fdr_cap0_tool_ui_input, sizeof(s_s5ks3p92_fdr_cap0_tool_ui_input)},
 		{NULL, 0},
 		{NULL, 0},
 	},
