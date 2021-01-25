@@ -241,12 +241,14 @@ struct snapshot_context {
     cmr_u32 is_3dnr;
     cmr_u32 sprd_3dnr_type;
     cmr_u32 total_num;
+    cmr_u32 snap_cnt;
     cmr_u32 snp_mode;
     cmr_u32 is_cfg_rot_cap;
     cmr_u32 cfg_cap_rot;
     cmr_u32 status;
     cmr_u32 zsl_frame;
-    cmr_uint filter_type;
+    cmr_u32 filter_type;
+    cmr_u32 fb_on;
     cmr_uint is_req_snp;
     cmr_u8 is_super;
     // fix burst called cmr_grab_start_capture repeatedly
@@ -368,6 +370,7 @@ struct camera_context {
     void *client_data;
     cmr_u32 inited;
     cmr_u32 camera_mode;
+    cmr_u32 zsl_ips_en;
     cmr_uint is_discard_frm;
     sem_t hdr_sync_sm;
     sem_t hdr_flag_sm;
@@ -549,7 +552,7 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle);
 
 cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                                     enum takepicture_mode mode,
-                                    cmr_uint is_snapshot);
+                                    struct snap_input_data *req);
 
 cmr_int camera_local_stop_snapshot(cmr_handle oem_handle);
 
@@ -790,7 +793,7 @@ cmr_int camera_get_bv_info(cmr_handle oem_handle, cmr_u32 *bv_info);
 cmr_int camera_get_ct_info(cmr_handle oem_handle, cmr_u32 *ct_info);
 cmr_u32 camera_get_cnr_flag(cmr_handle oem_handle);
 cmr_u32 camera_get_ee_flag(cmr_handle oem_handle);
-cmr_u32 camera_get_watermark_flag(cmr_handle oem_handle);
+cmr_u32 camera_get_watermark_flag(cmr_handle oem_handle, char *time_text);
 cmr_u32 camera_get_fdr_flag(struct camera_context *cxt);
 void camera_grab_handle(cmr_int evt, void *data, void *privdata);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);

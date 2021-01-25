@@ -520,7 +520,7 @@ static cmr_int camera_get_logo_data(cmr_u8 *logo, sizeParam_t *size) {
  * return: how many char
  */
 static cmr_int combine_time_watermark(cmr_u8 *pnum, cmr_u8 *ptext, int subnum_len,
-                            const int subnum_total)
+                            const int subnum_total, char *time_in)
 {
     time_t timep;
     struct tm *p;
@@ -536,8 +536,8 @@ static cmr_int combine_time_watermark(cmr_u8 *pnum, cmr_u8 *ptext, int subnum_le
         return 0;
     }
     /* sizeof time_text should large than the string lenght */
-    sprintf(time_text, "%04d-%02d-%02d %02d:%02d:%02d", (1900 + p->tm_year),
-            (1 + p->tm_mon), p->tm_mday, p->tm_hour, p->tm_min, p->tm_sec);
+    sprintf(time_text, "%s", time_in);
+
     CMR_LOGV("Time watermark: %s", time_text);
     /* copy y */
     pdst = ptext;
@@ -585,7 +585,7 @@ static cmr_int combine_time_watermark(cmr_u8 *pnum, cmr_u8 *ptext, int subnum_le
  *        width, height --- size of yuv data(timestamp)
  * return: 0:seccuss,other:fail;
  */
-static cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
+static cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height, char *time_text) {
     cmr_s32 rtn;
     char tmp_name[256];
     /* info of source file for number */
@@ -647,7 +647,7 @@ static cmr_int camera_get_time_yuv420(cmr_u8 **data, int *width, int *height) {
         rtn = -ENOMEM;
         goto exit;
     }
-    j = combine_time_watermark(pnum, ptext, subnum_len, subnum_total);
+    j = combine_time_watermark(pnum, ptext, subnum_len, subnum_total, time_text);
     if (j == 0) {
         CMR_LOGE("combine fail");
         rtn = -ENOENT;
@@ -813,10 +813,9 @@ static cmr_int camera_select_time_file(struct time_src_tag *pt) {
  *         WATERMARK_LOGO: add logo
  *         WATERMARK_TIME: add time
  */
-int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
+int watermark_add_yuv(int flag, cmr_u8 *pyuv, char *time_text,
                       sizeParam_t *sizeparam) {
     cmr_int ret;
-    int flag = 0;
     int img_width, img_height, img_angle;
 
     if (sizeparam == NULL)
@@ -824,7 +823,6 @@ int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
     img_width = sizeparam->imgW;
     img_height = sizeparam->imgH;
     img_angle = sizeparam->angle;
-    flag = (int)camera_get_watermark_flag(oem_handle);
     CMR_LOGI("watermark flag %x,[%d %d]", flag, sizeparam->imgW,
              sizeparam->imgH);
     flag = flag & (WATERMARK_LOGO | WATERMARK_TIME);
@@ -863,7 +861,7 @@ int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
             time_width = img_height;
             time_height = img_width;
         }
-        ret = camera_get_time_yuv420(&ptime, &time_width, &time_height);
+        ret = camera_get_time_yuv420(&ptime, &time_width, &time_height, time_text);
         if (ret == 0) {
             sizeparam->logoW = time_width;
             sizeparam->logoH = time_height;

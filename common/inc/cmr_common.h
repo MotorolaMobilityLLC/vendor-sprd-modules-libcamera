@@ -34,6 +34,7 @@ extern "C" {
 #include "jpeg_exif_header.h"
 #include "isp_app.h"
 #include "sensor_raw.h"
+#include "swa_param.h"
 
 #define OEM_LIBRARY_PATH "libcamoem.so"
 #ifdef CONFIG_USE_CAMERASERVER_PROC
@@ -626,6 +627,12 @@ typedef enum {
     THREEDNR_HW,
 } sprd_3dnr_mode;
 
+
+#ifndef container_of
+#define container_of(ptr, type, member) \
+    (type *)((char*)(ptr) - offsetof(type, member))
+#endif
+
 struct img_addr {
     cmr_uint addr_y;
     cmr_uint addr_u;
@@ -733,9 +740,12 @@ struct video_start_param {
 };
 
 struct memory_param {
+    cmr_handle oem_handle;
     cmr_malloc alloc_mem;
     cmr_free free_mem;
     cmr_gpu_malloc gpu_alloc_mem;
+    cmr_invalidate_buf invalidate_cb;
+    cmr_flush_buf flush_cb;
 };
 
 struct isptool_scene_param {
@@ -1056,6 +1066,12 @@ enum sensor_type {
     FOURINONE_HW = 3
 };
 
+ enum camera_snapshot_tpye {
+	SNAPSHOT_NULL = 0,
+	SNAPSHOT_DRE,
+	SNAPSHOT_GTM,
+} ;
+
 #define SENSOR_VIDEO_MODE_MAX 4
 #define SENSOR_NAME_LEN 32
 
@@ -1150,13 +1166,10 @@ struct yuv_sn_af_param {
     struct img_rect zone[FOCUS_ZONE_CNT_MAX];
 };
 
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
-    defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 struct isp_ev_control {
     cmr_u32 cmd_value;
     enum camera_snapshot_tpye snapshot_type;
 };
-#endif
 /********************************* sensor end *********************************/
 
 /***************************** common ctrl start ******************************/
@@ -1182,11 +1195,7 @@ struct common_isp_cmd_param {
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_5) ||                      \
-    defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)|| defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
         struct isp_ev_control ev_setting;
-#endif
-        cmr_u32 cnr2_ynr_en;
         cmr_u32 cnr2cnr3_ynr_en;
         struct isp_sw_cnr2_info cnr2_param;
         struct isp_ynrs_info ynr_param;
@@ -1654,6 +1663,7 @@ enum camera_func_type {
     CAMERA_FUNC_START_PREVIEW,
     CAMERA_FUNC_TAKE_PICTURE,
     CAMERA_FUNC_ENCODE_PICTURE,
+    CAMERA_FUNC_SNAPSHOT,
     CAMERA_FUNC_START_FOCUS, /*5*/
     CAMERA_FUNC_STOP_PREVIEW,
     CAMERA_FUNC_RELEASE_PICTURE,
@@ -1790,6 +1800,7 @@ enum camera_param_type {
     CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_ENABLE,
     CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM,
     CAMERA_PARAM_SMILE_CAPTURE_ENABLE,
+    CAMERA_PARAM_ZSL_IPS_ENABLE,
     CAMERA_PARAM_TYPE_MAX
 };
 
@@ -1941,15 +1952,15 @@ struct image_sw_algorithm_buf {
     cmr_uint phy_addr_v;
 };
 
-/*
-struct camera_cap_frm_info {
-    cmr_uint y_virt_addr;
-    cmr_uint u_virt_addr;
-    cmr_u32 width;
-    cmr_u32 height;
-    cmr_s64 timestamp;
-    struct frm_info frame_info;
-};*/
+struct snap_cb_data {
+	cmr_u32 request_id;
+	struct camera_frame_type frame;
+};
+
+struct snap_input_data {
+	cmr_u32 request_id;
+	int64_t zsl_snap_time;
+};
 
 typedef struct prev_sn_param_dvfs_type {
     cmr_u32 bps_per_lane;
@@ -2239,7 +2250,8 @@ typedef struct oem_ops {
 
     cmr_int (*camera_set_snpcancel_flag)(cmr_handle camera_handle);
 
-    //uint32_t (*camera_safe_scale_th)(void);
+    cmr_int (*camera_request_snapshot)(cmr_handle camera_handle,
+                                   enum takepicture_mode cap_mode, struct snap_input_data *req);
 
     cmr_int (*camera_take_picture)(cmr_handle camera_handle,
                                    enum takepicture_mode cap_mode);

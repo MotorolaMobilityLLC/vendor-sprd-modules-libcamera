@@ -128,7 +128,7 @@ cmr_int camera_start_preview(cmr_handle camera_handle,
         goto exit;
     }
 
-    ret = camera_local_start_preview(camera_handle, mode, CAMERA_PREVIEW);
+    ret = camera_local_start_preview(camera_handle, mode, 0);
     if (ret) {
         CMR_LOGE("failed to start preview %ld", ret);
     }
@@ -211,6 +211,24 @@ exit:
     return ret;
 }
 
+cmr_int camera_request_snapshot(cmr_handle camera_handle,
+                            enum takepicture_mode cap_mode, struct snap_input_data *req) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    if (!camera_handle) {
+        CMR_LOGE("camera handle is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_local_start_snapshot(camera_handle, cap_mode, req);
+    if (ret) {
+        CMR_LOGE("failed to start snapshot %ld", ret);
+    }
+
+exit:
+    return ret;
+}
+
 cmr_int camera_take_picture(cmr_handle camera_handle,
                             enum takepicture_mode cap_mode) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -220,7 +238,7 @@ cmr_int camera_take_picture(cmr_handle camera_handle,
         ret = -CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-    ret = camera_local_start_snapshot(camera_handle, cap_mode, CAMERA_SNAPSHOT);
+    ret = camera_local_start_snapshot(camera_handle, cap_mode, NULL);
     if (ret) {
         CMR_LOGE("failed to start snapshot %ld", ret);
     }
@@ -1452,8 +1470,10 @@ static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
     camera_cancel_autofocus, camera_cancel_takepicture,
-    // camera_safe_scale_th,
-    NULL, NULL, camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
+    NULL, NULL,
+    camera_request_snapshot,
+    camera_take_picture,
+    camera_get_sn_trim, camera_set_mem_func,
     camera_get_redisplay_data, camera_is_change_size,
     NULL, camera_get_preview_rect,
     camera_get_zsl_capability, camera_get_sensor_info_for_raw,

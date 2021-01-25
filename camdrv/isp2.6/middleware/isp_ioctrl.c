@@ -4414,7 +4414,7 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 	struct isp_cnr2_level_info *level_info = NULL;
-	struct isp_sw_cnr3_level_info *level_info1 = NULL;
+	struct isp_cnr3_level_info *level_info1 = NULL;
 	struct isp_ynrs_info *ynr_info = NULL;
 	struct isp_sw_cnr3_info *cnr3_info = NULL;
 	cmr_u32 ct = 0;
@@ -4467,7 +4467,7 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 		ISP_BLK_CNR3, &cfg_set_id, sizeof(cfg_set_id));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
-		level_info1 = (struct isp_sw_cnr3_level_info *)output.param_data->data_ptr;
+		level_info1 = (struct isp_cnr3_level_info *)output.param_data->data_ptr;
 		level_enable1 = (cmr_u32)level_info1->level_enable;
 		low_ct_thrd1 = (cmr_u32)level_info1->low_ct_thrd;
 		ISP_LOGD("level_enable1 = %d, low_ct_thrd1 = %d, cur_ct = %d", level_enable1, low_ct_thrd1, ct);
@@ -4482,7 +4482,8 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		cnr3_info = (struct isp_sw_cnr3_info *)output.param_data->data_ptr;
-		ISP_LOGD("cnr3_info->bypass = %d\n", cnr3_info->bypass);
+		ISP_LOGD("cnr3_info->bypass = %d, level %d, ct_thd %d cur_ct %d\n",
+			cnr3_info->bypass, level_enable1, low_ct_thrd1, ct);
 		if (!cnr3_info->bypass) {
 			if (level_enable1 || (ct < low_ct_thrd1))
 				cnr3_en = 1;
@@ -4500,13 +4501,9 @@ static cmr_int ispctl_get_cnr2cnr3_ynr_en(cmr_handle isp_alg_handle, void *param
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING, &input, &output);
 	if (ISP_SUCCESS == ret && 1 == output.param_num) {
 		ynr_info = (struct isp_ynrs_info *)output.param_data->data_ptr;
-#ifdef CAMERA_RADIUS_ENABLE
-		if((cmr_u32)ynr_info->ynrs_param.bypass == 0)
-#else
-		if((cmr_u32)ynr_info->bypass == 0)
-#endif
+		if(ynr_info->ynrs_param.bypass == 0)
 			ynrs_en = 1;
-		ISP_LOGV("ynrs_en value = %d \n", ynrs_en);
+		ISP_LOGD("ynrs_en value = %d \n", ynrs_en);
 	} else {
 		ISP_LOGE("fail to get valid ynrs level info");
 	}

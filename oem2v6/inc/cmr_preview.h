@@ -229,6 +229,7 @@ struct preview_param {
     cmr_u32 is_cfg_rot_cap;
     cmr_u32 encode_angle;
 
+    cmr_u32 zsl_ips_en;
     cmr_u32 is_dv;
     cmr_u32 is_hdr;
     cmr_u32 is_fdr;

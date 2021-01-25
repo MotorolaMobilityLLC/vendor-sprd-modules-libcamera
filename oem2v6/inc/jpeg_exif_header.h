@@ -342,15 +342,12 @@ typedef struct exif_spec_other_tag {
 // structure of EXIF-specific information
 typedef struct exif_specific_info_tag {
     EXIF_SPEC_BASIC_T basic; // Mandatory
-    EXIF_SPEC_VERSION_T
-    *version_ptr; // Optional. Read only. Set NULL to ignore it
+    EXIF_SPEC_VERSION_T *version_ptr; // Optional. Read only. Set NULL to ignore it
     EXIF_SPEC_IMG_CONFIG_T *img_config_ptr; // Optional. Set NULL to ignore it
     EXIF_SPEC_USER_T *user_ptr;             // Optional. Set NULL to ignore it
-    EXIF_SPEC_RELATED_FILE_T
-    *related_file_ptr;                    // Optional. Set NULL to ignore it
+    EXIF_SPEC_RELATED_FILE_T *related_file_ptr;                    // Optional. Set NULL to ignore it
     EXIF_SPEC_DATE_TIME_T *date_time_ptr; // Optional. Set NULL to ignore it
-    EXIF_SPEC_PIC_TAKING_COND_T
-    *pic_taking_cond_ptr;         // Optional. Set NULL to ignore it
+    EXIF_SPEC_PIC_TAKING_COND_T *pic_taking_cond_ptr;         // Optional. Set NULL to ignore it
     EXIF_SPEC_OTHER_T *other_ptr; // Optional. Set NULL to ignore it
 } EXIF_SPECIFIC_INFO_T;
 
@@ -442,6 +439,34 @@ typedef struct exif_info_tag {
     EXIF_GPS_INFO_T *gps_ptr;                // Optional. Set NULL to ignore it
     EXIF_INTEROPERABILITY_INFO_T *inter_ptr; // Optional. Set NULL to ignore it
 } JINF_EXIF_INFO_T;
+
+
+typedef struct saved_exif_info {
+    /* data in (EXIF_PRIMARY_INFO_T primary) */
+    EXIF_PRI_DATA_STRUCT_T data_struct;
+    EXIF_PRI_DATA_CHAR_T data_char;
+    EXIF_PRI_DESC_T img_desc;
+
+    /* spec info and data in spec_info */
+    EXIF_SPECIFIC_INFO_T spec_info;
+    EXIF_SPEC_VERSION_T spec_version;
+    EXIF_SPEC_IMG_CONFIG_T spec_img_config;
+    EXIF_SPEC_USER_T spec_user;
+    EXIF_SPEC_RELATED_FILE_T spec_related_file;
+    EXIF_SPEC_DATE_TIME_T spec_date_time;
+    EXIF_SPEC_PIC_TAKING_COND_T spec_pic;
+    EXIF_SPEC_OTHER_T spec_other;
+
+    /* gps data */
+    EXIF_GPS_INFO_T gps_info;
+
+    /* inter_info */
+    EXIF_INTEROPERABILITY_INFO_T inter_info;
+
+    /* all ptr in following "info" should pointer to above data */
+    JINF_EXIF_INFO_T exif_info;
+} saved_exif_info_t;
+
 
 /**---------------------------------------------------------------------------*
  **                         Function Prototypes

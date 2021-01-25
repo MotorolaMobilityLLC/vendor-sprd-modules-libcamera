@@ -37,6 +37,8 @@ enum camera_mem_cb_type {
     CAMERA_SNAPSHOT,
     CAMERA_SNAPSHOT_ZSL,
     CAMERA_VIDEO,
+    CAMERA_BUF_CACHE,
+    CAMERA_BUF_UNCACHE,
     CAMERA_PREVIEW_RESERVED,
     CAMERA_SNAPSHOT_ZSL_RESERVED_MEM,
     CAMERA_SNAPSHOT_ZSL_RESERVED,
@@ -120,6 +122,19 @@ struct CAMERA_MEM_CB_TYPE_STAT {
     cmr_uint    mem_type;
     cmr_uint    is_cache;
 };
+
+struct img_rect {
+    cmr_u32 start_x;
+    cmr_u32 start_y;
+    cmr_u32 width;
+    cmr_u32 height;
+};
+
+struct img_size {
+    cmr_u32 width;
+    cmr_u32 height;
+};
+
 
 #ifndef bzero
 #define bzero(p, len) memset(p, 0, len);

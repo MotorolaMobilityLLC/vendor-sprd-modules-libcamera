@@ -607,6 +607,7 @@ struct prev_handle {
     struct prev_thread_cxt thread_cxt;
     struct prev_context prev_cxt[CAMERA_ID_MAX];
     cmr_uint frame_active;
+    cmr_u32 zsl_ips_en;
 };
 
 struct prev_cb_info {
@@ -5242,18 +5243,18 @@ cmr_int prev_alloc_cap_buf(struct prev_handle *handle, cmr_u32 camera_id,
                  mem_ops->free_mem);
         return CMR_CAMERA_INVALID_PARAM;
     }
+
     if (!is_restart) {
-        mem_ops->alloc_mem(CAMERA_SNAPSHOT, handle->oem_handle, &total_mem_size,
+        if (handle->zsl_ips_en) {
+            prev_cxt->cap_fd_array[0] = 0x3FF;
+            prev_cxt->cap_virt_addr_array[0] = 0xAAAA;
+            CMR_LOGI("zsl_ips_en: skip allocate cap buf\n");
+        } else
+            mem_ops->alloc_mem(CAMERA_SNAPSHOT, handle->oem_handle, &total_mem_size,
                            &sum, prev_cxt->cap_phys_addr_array,
                            prev_cxt->cap_virt_addr_array,
                            prev_cxt->cap_fd_array);
-#if 0 // for coverity 181595
-        for (i = 1; i < CMR_CAPTURE_MEM_SUM; i++) {
-            prev_cxt->cap_phys_addr_array[i] = prev_cxt->cap_phys_addr_array[0];
-            prev_cxt->cap_virt_addr_array[i] = prev_cxt->cap_virt_addr_array[0];
-            prev_cxt->cap_fd_array[i] = prev_cxt->cap_fd_array[0];
-        }
-#endif
+
         CMR_LOGD("virt_addr 0x%lx, fd 0x%x", prev_cxt->cap_virt_addr_array[0],
                  prev_cxt->cap_fd_array[0]);
 
@@ -7762,15 +7763,17 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
 
     handle->prev_cxt[camera_id].camera_id = camera_id;
     handle->prev_cxt[camera_id].out_ret_val = CMR_CAMERA_SUCCESS;
+    handle->zsl_ips_en = handle->prev_cxt[camera_id].prev_param.zsl_ips_en;
 
     CMR_LOGD("camera_id %ld, preview_eb %d, snapshot_eb %d, video_eb %d, "
-             "tool_eb %d, prev_status %ld",
+             "tool_eb %d, prev_status %ld, zsl_ips_en %d",
              handle->prev_cxt[camera_id].camera_id,
              handle->prev_cxt[camera_id].prev_param.preview_eb,
              handle->prev_cxt[camera_id].prev_param.snapshot_eb,
              handle->prev_cxt[camera_id].prev_param.video_eb,
              handle->prev_cxt[camera_id].prev_param.tool_eb,
-             handle->prev_cxt[camera_id].prev_status);
+             handle->prev_cxt[camera_id].prev_status,
+             handle->zsl_ips_en);
 
     CMR_LOGD("preview_size %d %d, picture_size %d %d, video_size %d %d",
              handle->prev_cxt[camera_id].prev_param.preview_size.width,
@@ -12797,7 +12800,9 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
         goto exit;
     }
 
-    if (prev_cxt->prev_param.sprd_zsl_enabled == 1) {
+    if (handle->zsl_ips_en) {
+       CMR_LOGI("zsl_ips_en: skip allocate cap zsl buf\n");
+    } else if (prev_cxt->prev_param.sprd_zsl_enabled == 1) {
         ret = prev_alloc_zsl_buf(handle, camera_id, is_restart,
                                  &chn_param.buffer);
         if (ret) {
@@ -12853,6 +12858,7 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
         prev_cxt->cap_channel_id = channel_id;
+        prev_cxt->cap_data_endian = endian;
         CMR_LOGD("cap chn id is %ld", prev_cxt->cap_channel_id);
         if (chn_param.cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_CAPTURE) {
             prev_cxt->cap_channel_status = PREV_CHN_BUSY;
@@ -12861,51 +12867,16 @@ cmr_int prev_set_cap_param(struct prev_handle *handle, cmr_u32 camera_id,
             prev_cxt->zsl_channel_status = PREV_CHN_BUSY;
         }
 
-        prev_cxt->cap_data_endian = endian;
-
-        /* for capture, not skip frame for now, for cts
-         * testMandatoryOutputCombinations issue */
-        if ((prev_cxt->skip_mode == IMG_SKIP_SW_KER) && 0) {
-            /*config skip num buffer*/
-            for (i = 0; i < prev_cxt->cap_skip_num; i++) {
-                cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
-                buf_cfg.channel_id = prev_cxt->cap_channel_id;
-                if (prev_cxt->prev_param.sprd_zsl_enabled == 1) {
-                    buf_cfg.base_id = CMR_CAP1_ID_BASE;
-                } else {
-                    buf_cfg.base_id = CMR_CAP0_ID_BASE;
-                }
-                buf_cfg.count = 1;
-                buf_cfg.length = prev_cxt->cap_zsl_mem_size;
-                buf_cfg.is_reserved_buf = 0;
-                buf_cfg.flag = BUF_FLAG_INIT;
-                buf_cfg.addr[0].addr_y =
-                    prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_y;
-                buf_cfg.addr[0].addr_u =
-                    prev_cxt->cap_zsl_reserved_frm.addr_phy.addr_u;
-                buf_cfg.addr_vir[0].addr_y =
-                    prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_y;
-                buf_cfg.addr_vir[0].addr_u =
-                    prev_cxt->cap_zsl_reserved_frm.addr_vir.addr_u;
-                buf_cfg.fd[0] = prev_cxt->cap_zsl_reserved_frm.fd;
-                buf_cfg.frame_number = 0xFFFFFFFF;
-                ret =
-                    handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
-                if (ret) {
-                    CMR_LOGE("channel buff config failed");
-                    ret = CMR_CAMERA_FAIL;
-                    goto exit;
-                }
-            }
-        }
-
         chn_param.buffer.channel_id = prev_cxt->cap_channel_id;
-        ret =
-            handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
-        if (ret) {
-            CMR_LOGE("channel buff config failed");
-            ret = CMR_CAMERA_FAIL;
-            goto exit;
+        if (handle->zsl_ips_en) {
+            CMR_LOGI("zsl_ips_en: skip zsl buffer configure here\n");
+	} else {
+            ret = handle->ops.channel_buff_cfg(handle->oem_handle, &chn_param.buffer);
+            if (ret) {
+                CMR_LOGE("channel buff config failed");
+                ret = CMR_CAMERA_FAIL;
+                goto exit;
+            }
         }
 
         /*config reserved buffer*/
@@ -13567,6 +13538,13 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     }
     CMR_LOGD("cap_orig_size %d %d", prev_cxt->cap_org_size.width,
              prev_cxt->cap_org_size.height);
+
+    if (handle->zsl_ips_en) {
+	img_cap->enable_slave_img = 1;
+	img_cap->slave_img_fmt = img_cap->dst_img_fmt;
+	img_cap->dst_slave_img_size.width = prev_cxt->prev_param.thumb_size.width;
+	img_cap->dst_slave_img_size.height = prev_cxt->prev_param.thumb_size.height;
+    }
 
 exit:
     CMR_LOGV("X");

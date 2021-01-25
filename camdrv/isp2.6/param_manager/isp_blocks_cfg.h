@@ -31,6 +31,7 @@
 #include "cmr_types.h"
 #include "sprd_isp_k.h"
 #include "isp_mw.h"
+#include "swa_param.h"
 
 #ifdef	 __cplusplus
 extern "C" {
@@ -106,16 +107,6 @@ enum ai_scene_pro{
 	AI_SECNE_PM_PRO_RESERVED9,
 	AI_SECNE_PM_PRO_RESERVED10,
 	AI_SCENE_PM_PRO_MAX
-};
-
-enum
-{
-	ISP_PM_FB_SKINTONE_DEFAULT,
-	ISP_PM_FB_SKINTONE_YELLOW,
-	ISP_PM_FB_SKINTONE_WHITE,
-	ISP_PM_FB_SKINTONE_BLACK,
-	ISP_PM_FB_SKINTONE_INDIAN,
-	ISP_PM_FB_SKINTONE_NUM
 };
 
 struct isp_blc_offset {
@@ -339,44 +330,8 @@ struct isp_raw_gtm_param {
 	struct isp_raw_gtm_inter gtm_param[SENSOR_RAW_GTM_NUM];
 };
 
-struct isp_facebeauty_level
-{
-	cmr_u8 skinSmoothLevel[11];
-	cmr_u8 skinSmoothDefaultLevel;
-	cmr_u8 skinTextureHiFreqLevel[11];
-	cmr_u8 skinTextureHiFreqDefaultLevel;
-	cmr_u8 skinTextureLoFreqLevel[11];
-	cmr_u8 skinTextureLoFreqDefaultLevel;
-	cmr_u8 skinSmoothRadiusCoeff[11];
-	cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
-	cmr_u8 skinBrightLevel[11];
-	cmr_u8 skinBrightDefaultLevel;
-	cmr_u8 largeEyeLevel[11];
-	cmr_u8 largeEyeDefaultLevel;
-	cmr_u8 slimFaceLevel[11];
-	cmr_u8 slimFaceDefaultLevel;
-	cmr_u8 skinColorLevel[11];
-	cmr_u8 skinColorDefaultLevel;
-	cmr_u8 lipColorLevel[11];
-	cmr_u8 lipColorDefaultLevel;
-};
-
-struct isp_facebeauty_param
-{
-	cmr_u8 removeBlemishFlag;
-	cmr_u8 blemishSizeThrCoeff;
-	cmr_u8 skinColorType;
-	cmr_u8 lipColorType;
-	struct isp_facebeauty_level fb_layer;
-};
-
-struct isp_facebeauty_param_cfg_info
-{
-	struct isp_facebeauty_param fb_param[ISP_PM_FB_SKINTONE_NUM];
-};
-
 struct isp_facebeauty_param_info {
-	struct isp_facebeauty_param_cfg_info cur;
+	struct isp_fb_param_info cur;
 };
 
 struct isp_bright_cfg {
@@ -709,29 +664,17 @@ struct isp_yuv_ygamma_param {
 };
 
 struct isp_cnr2_level_info {
-	cmr_u8 level_enable;
+	cmr_u16 level_enable;
 	cmr_u16 low_ct_thrd;
 };
 
 struct isp_cnr3_level_info {
-	cmr_u8 level_enable;
+	cmr_u16 level_enable;
 	cmr_u16 low_ct_thrd;
 };
 
-struct isp_filter_weights
-{
-	cmr_u8 distWeight[9];
-	cmr_u8 rangWeight[128];
-};
-
-struct isp_cnr2_info {
-	cmr_u8 filter_en[CNR_LEVEL];
-	cmr_u8 rangTh[CNR_LEVEL][2];
-	struct isp_filter_weights weight[CNR_LEVEL][2];
-};
-
 struct isp_cnr2_param {
-	struct isp_cnr2_info cur;
+	struct isp_sw_cnr2_info cur;
 	struct isp_cnr2_level_info level_info;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -740,27 +683,8 @@ struct isp_cnr2_param {
 	cmr_u32 nr_mode_setting;
 };
 
-struct isp_multilayer_param {
-	cmr_u8 lowpass_filter_en;
-	cmr_u8 denoise_radial_en;
-	cmr_u8 order[3];
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 slope;
-	cmr_u16 baseRadius;
-	cmr_u16 minRatio;
-	cmr_u16 luma_th[2];
-	float sigma[3];
-};
-
-struct isp_cnr3_info {
-	cmr_u8 bypass;
-	cmr_u16 baseRadius;
-	struct isp_multilayer_param param_layer[CNR3_LAYER_NUM];
-};
-
 struct isp_cnr3_param {
-	struct isp_cnr3_info cur;
+	struct isp_sw_cnr3_info cur;
 	struct isp_cnr3_level_info level_info;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -769,51 +693,8 @@ struct isp_cnr3_param {
 	cmr_u32 nr_mode_setting;
 };
 
-#ifdef CAMERA_RADIUS_ENABLE
-struct isp_ynrs_params {
-	cmr_u8 lumi_thresh[2];
-	cmr_u8 gf_rnr_ratio[5];
-	cmr_u8 gf_addback_enable[5];
-	cmr_u8 gf_addback_ratio[5];
-	cmr_u8 gf_addback_clip[5];
-	cmr_u16 Radius_factor;
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 gf_epsilon[5][3];
-	cmr_u16 gf_enable[5];
-	cmr_u16 gf_radius[5];
-	cmr_u16 gf_rnr_offset[5];
-	cmr_u16 bypass;
-	cmr_u8 reserved[2];
-};
-
-struct isp_ynrs_level{
-	cmr_u16 radius_base;
-	struct isp_ynrs_params ynrs_param;
-};
-
-#else
-
-struct isp_ynrs_level{
-	cmr_u8 lumi_thresh[2];
-	cmr_u8 gf_rnr_ratio[5];
-	cmr_u8 gf_addback_enable[5];
-	cmr_u8 gf_addback_ratio[5];
-	cmr_u8 gf_addback_clip[5];
-	cmr_u16 Radius;
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 gf_epsilon[5][3];
-	cmr_u16 gf_enable[5];
-	cmr_u16 gf_radius[5];
-	cmr_u16 gf_rnr_offset[5];
-	cmr_u16 bypass;
-	cmr_u8 reserved[2];
-};
-#endif
-
 struct isp_ynrs_param {
- 	struct isp_ynrs_level cur;
+	struct isp_ynrs_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -1115,10 +996,10 @@ struct isp_context {
 
 	/* soft algo block */
 	struct isp_cnr2_param cnr2;
+	struct isp_cnr3_param cnr3;
 	struct isp_ynrs_param ynrs;
 	struct isp_dres_param dre;
 	struct isp_dres_pro_param dre_pro;
-	struct isp_cnr3_param cnr3;
 	struct isp_facebeauty_param_info fb;
 	struct isp_ai_param ai_pro;
 };

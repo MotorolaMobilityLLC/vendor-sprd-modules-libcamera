@@ -91,22 +91,32 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
     int width=denoise_param->width;
     int height=denoise_param->height;
     denoise_mode cmd_in = (denoise_mode)cmd;
-
-#ifdef CAMERA_RADIUS_ENABLE
     int max_radius = 0;
     int i = 0;
+    float r_factor, r_base, r_new;
+
+    DENOISE_LOGD("width =%d,height =%d,zoom_ratio =%f, ynr_radius_base %d, cnr_radius_base =%d",
+			denoise_param->width, denoise_param->height, denoise_param->zoom_ratio,
+			denoise_param->ynr_ration_base, denoise_param->cnr_ration_base);
+
     if(paramInfo.ynrParam != NULL)
     {
         paramInfo.ynrParam->ynr_imgCenterX = denoise_param->width / 2;
         paramInfo.ynrParam->ynr_imgCenterY = denoise_param->height / 2;
-        DENOISE_LOGD("YNR : input yuv width =%d,height =%d,zoom_ratio =%f,ynr_radius =%d, ynr_radius_base=%d",denoise_param->width,denoise_param->height,denoise_param->zoom_ratio,
-            paramInfo.ynrParam->ynr_Radius,denoise_param->ynr_ration_base);
-        paramInfo.ynrParam->ynr_Radius =
-            ((float)paramInfo.ynrParam->ynr_Radius / (float)denoise_param->ynr_ration_base) * denoise_param->width*denoise_param->zoom_ratio;
-        if(paramInfo.ynrParam->ynr_Radius > denoise_param->width) {
-            paramInfo.ynrParam->ynr_Radius = denoise_param->width;
+        DENOISE_LOGD("YNR result :  center X =%d,center Y=%d, radius=%d",
+		paramInfo.ynrParam->ynr_imgCenterX, paramInfo.ynrParam->ynr_imgCenterY,paramInfo.ynrParam->ynr_Radius);
+
+	/* for tuning param compatible */
+        if (denoise_param->ynr_ration_base != 0) {
+		r_factor = (float)paramInfo.ynrParam->ynr_Radius;
+		r_base = (float)denoise_param->ynr_ration_base;
+		r_new = (r_factor / r_base) * denoise_param->width * denoise_param->zoom_ratio;
+		paramInfo.ynrParam->ynr_Radius = (unsigned short)r_new;
+		if(paramInfo.ynrParam->ynr_Radius > denoise_param->width)
+			paramInfo.ynrParam->ynr_Radius = denoise_param->width;
+		DENOISE_LOGD("YNRS radius:  r_factor %f, r_base %f, r_new %f,  final Radius=%d\n",
+			r_factor, r_base, r_new, paramInfo.ynrParam->ynr_Radius);
         }
-        DENOISE_LOGD("YNR result :  center X =%d,center Y=%d,radius=%d",paramInfo.ynrParam->ynr_imgCenterX,paramInfo.ynrParam->ynr_imgCenterY,paramInfo.ynrParam->ynr_Radius);
     }
 
     if(paramInfo.cnr3Param != NULL)
@@ -115,18 +125,21 @@ int sprd_yuv_denoise_adpt_ctrl(void *handle, sprd_yuv_denoise_cmd_t cmd, void *p
             paramInfo.cnr3Param->paramLayer[i].imgCenterX = (denoise_param->width>>1)/pow(2, (i+1));
             paramInfo.cnr3Param->paramLayer[i].imgCenterY = (denoise_param->height>>1)/pow(2, (i+1));
             max_radius = (denoise_param->width + denoise_param->height)/pow(2, (i+1));
-            DENOISE_LOGD("CNR3 : input yuv width =%d,height =%d,base radius=%d,ration_base=%d,zoom_ration=%f",denoise_param->width,denoise_param->height,
-                paramInfo.cnr3Param->paramLayer[i].baseRadius,denoise_param->cnr_ration_base,denoise_param->zoom_ratio);
-            paramInfo.cnr3Param->paramLayer[i].baseRadius =
-                ((float)paramInfo.cnr3Param->paramLayer[i].baseRadius/(float)denoise_param->cnr_ration_base)*max_radius*denoise_param->zoom_ratio;
-            if(paramInfo.cnr3Param->paramLayer[i].baseRadius > max_radius) {
+            DENOISE_LOGD("CNR3 Layer%d, base radius=%d, max_radius=%d, center (%d %d)\n",
+				i, paramInfo.cnr3Param->paramLayer[i].baseRadius, max_radius,
+				paramInfo.cnr3Param->paramLayer[i].imgCenterX, paramInfo.cnr3Param->paramLayer[i].imgCenterY);
+
+            r_factor = (float)paramInfo.cnr3Param->paramLayer[i].baseRadius;
+            r_base = (float)denoise_param->cnr_ration_base;
+            r_new = (r_factor / r_base) * max_radius * denoise_param->zoom_ratio;
+            paramInfo.cnr3Param->paramLayer[i].baseRadius = (unsigned short)r_new;
+            if(paramInfo.cnr3Param->paramLayer[i].baseRadius > max_radius)
                 paramInfo.cnr3Param->paramLayer[i].baseRadius = max_radius;
-            }
-            DENOISE_LOGD("CNR3 result : layer =%d,center x =%d,center y =%d ,max_radius=%d, Radius =%d", i,paramInfo.cnr3Param->paramLayer[i].imgCenterX,
-            paramInfo.cnr3Param->paramLayer[i].imgCenterY,max_radius,paramInfo.cnr3Param->paramLayer[i].baseRadius);
+            DENOISE_LOGD("CNR3 Layer%d, r_factor %f, r_base %f, r_new %f,  final Radius=%d",
+				i,  r_factor, r_base, r_new, paramInfo.cnr3Param->paramLayer[i].baseRadius);
         }
     }
-#endif
+
     if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU)
     {
         denoise_buffer imgBuffer;

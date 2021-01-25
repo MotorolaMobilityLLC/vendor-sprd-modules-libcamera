@@ -21,7 +21,6 @@
 
 #define ARR_MAX_LEN 100
 
-EXIF_PRIMARY_INFO_T exif_primary_info;
 EXIF_SPECIFIC_INFO_T exif_specific_info;
 EXIF_GPS_INFO_T exif_gps_info;
 
@@ -352,4 +351,73 @@ cmr_int set_exif_specific_data_time(JINF_EXIF_INFO_T *jinf_exif_info_ptr,
         jinf_exif_info->spec_ptr->date_time_ptr = p_image_date_time;
 
     return 0;
+}
+
+cmr_int cmr_exifinfo_save(JINF_EXIF_INFO_T *src, saved_exif_info_t *dst)
+{
+	cmr_int ret = 0;
+	JINF_EXIF_INFO_T *info;
+	EXIF_SPECIFIC_INFO_T *dst_spec_ptr;
+
+	if (!src || !dst) {
+		CMR_LOGE("fail to get input ptr\n");
+		return CMR_CAMERA_FAIL;
+	}
+	info = &dst->exif_info;
+	memcpy(&dst->exif_info, src, sizeof(JINF_EXIF_INFO_T));
+
+	if (src->gps_ptr) {
+		memcpy(&dst->gps_info, src->gps_ptr, sizeof(EXIF_GPS_INFO_T));
+		info->gps_ptr = &dst->gps_info;
+	}
+
+	if (src->inter_ptr) {
+		memcpy(&dst->inter_info, src->inter_ptr, sizeof(EXIF_INTEROPERABILITY_INFO_T));
+		info->inter_ptr = &dst->inter_info;
+	}
+
+	if (src->spec_ptr == NULL)
+		goto exit;
+
+	dst_spec_ptr = &dst->spec_info;
+	memcpy(dst_spec_ptr, src->spec_ptr, sizeof(EXIF_SPECIFIC_INFO_T));
+	info->spec_ptr = dst_spec_ptr;
+
+	if (src->spec_ptr->version_ptr) {
+		memcpy(&dst->spec_version, src->spec_ptr->version_ptr, sizeof(EXIF_SPEC_VERSION_T));
+		dst_spec_ptr->version_ptr = &dst->spec_version;
+	}
+
+	if (src->spec_ptr->img_config_ptr) {
+		memcpy(&dst->spec_img_config, src->spec_ptr->img_config_ptr, sizeof(EXIF_SPEC_IMG_CONFIG_T));
+		dst_spec_ptr->img_config_ptr = &dst->spec_img_config;
+	}
+
+	if (src->spec_ptr->user_ptr) {
+		memcpy(&dst->spec_user, src->spec_ptr->user_ptr, sizeof(EXIF_SPEC_USER_T));
+		dst_spec_ptr->user_ptr = &dst->spec_user;
+	}
+
+	if (src->spec_ptr->related_file_ptr) {
+		memcpy(&dst->spec_related_file, src->spec_ptr->related_file_ptr, sizeof(EXIF_SPEC_RELATED_FILE_T));
+		dst_spec_ptr->related_file_ptr = &dst->spec_related_file;
+	}
+
+	if (src->spec_ptr->date_time_ptr) {
+		memcpy(&dst->spec_date_time, src->spec_ptr->date_time_ptr, sizeof(EXIF_SPEC_DATE_TIME_T));
+		dst_spec_ptr->date_time_ptr = &dst->spec_date_time;
+	}
+
+	if (src->spec_ptr->pic_taking_cond_ptr) {
+		memcpy(&dst->spec_pic, src->spec_ptr->pic_taking_cond_ptr, sizeof(EXIF_SPEC_PIC_TAKING_COND_T));
+		dst_spec_ptr->pic_taking_cond_ptr = &dst->spec_pic;
+	}
+
+	if (src->spec_ptr->other_ptr) {
+		memcpy(&dst->spec_other, src->spec_ptr->other_ptr, sizeof(EXIF_SPEC_OTHER_T));
+		dst_spec_ptr->other_ptr = &dst->spec_other;
+	}
+
+exit:
+	return ret;
 }

@@ -28,7 +28,7 @@ cmr_s32 _pm_fb_init(void * dst_fb_param, void * src_fb_param,
 		(struct isp_pm_block_header *)param1;
 	UNUSED(param2);
 	cmr_s32 i = 0, j = 0;
-	for(i = 0; i < ISP_PM_FB_SKINTONE_NUM; i++) {
+	for(i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
 		dst_ptr->cur.fb_param[i].blemishSizeThrCoeff =
 			src_ptr->fb_param[i].blemishSizeThrCoeff;
 		dst_ptr->cur.fb_param[i].lipColorType =

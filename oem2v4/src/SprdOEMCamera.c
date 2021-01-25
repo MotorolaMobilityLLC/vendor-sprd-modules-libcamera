@@ -1311,7 +1311,7 @@ static oem_ops_t oem_module_ops = {
     camera_init, camera_deinit, camera_release_frame, camera_set_param,
     camera_start_preview, camera_stop_preview, camera_start_autofocus,
     camera_cancel_autofocus, camera_cancel_takepicture, camera_set_recovery_status, camera_set_snpcancel_flag,
-    // camera_safe_scale_th,
+    NULL,
     camera_take_picture, camera_get_sn_trim, camera_set_mem_func,
     camera_get_redisplay_data, camera_is_change_size,
     NULL, camera_get_preview_rect,

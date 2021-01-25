@@ -175,8 +175,8 @@ static cmr_int filter_transfer_frame(cmr_handle class_handle,
     width = in->src_frame.size.width;
     height = in->src_frame.size.height;
     orientation = in -> orientation;
-    filter_handle->filter_type = (int)out->private_data;
-    in -> is_front = (cxt ->camera_id == 1) ? 1 : 0;
+    filter_handle->filter_type = (cmr_uint)*(cmr_u32 *)out->private_data;
+    in->is_front = (cxt ->camera_id == 1) ? 1 : 0;
     memcpy(&(filter_handle->frame_in), in, sizeof(struct ipm_frame_in));
 
     char value[PROPERTY_VALUE_MAX];

@@ -81,6 +81,8 @@ struct CAMERA_MEM_CB_TYPE_STAT mem_cb_stat[CAMERA_MEM_CB_TYPE_MAX] = {
     {CAMERA_SNAPSHOT, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL, CACHE_TRUE},
     {CAMERA_VIDEO, CACHE_TRUE},
+    {CAMERA_BUF_CACHE, CACHE_TRUE},
+    {CAMERA_BUF_UNCACHE, CACHE_FASLE},
     {CAMERA_PREVIEW_RESERVED, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL_RESERVED_MEM, CACHE_TRUE},
     {CAMERA_SNAPSHOT_ZSL_RESERVED, CACHE_TRUE},
@@ -675,6 +677,9 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mCbInfoList.clear();
     cam_MemIonQueue.clear();
     cam_MemGpuQueue.clear();
+
+    mIonQueue.count = 0;
+    mIonQueue.BufList.clear();
 
     mPreviewWidth = 0;
     mPreviewHeight = 0;
@@ -2995,7 +3000,7 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocCameraMem(int buf_size,
     size_t mem_size = 0;
     MemIon *pHeapIon = NULL;
 
-    HAL_LOGD("buf_size %d, num_bufs %d", buf_size, num_bufs);
+    HAL_LOGD("buf_size %d, num_bufs %d, cached %d\n", buf_size, num_bufs, is_cache);
     sprd_camera_memory_t *memory =
         (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
     if (NULL == memory) {
@@ -3045,6 +3050,7 @@ sprd_camera_memory_t *SprdCamera3OEMIf::allocCameraMem(int buf_size,
     memory->ion_heap = pHeapIon;
     memory->fd = pHeapIon->getHeapID();
     memory->dev_fd = pHeapIon->getIonDeviceFd();
+    memory->cached = is_cache;
     // memory->phys_addr is offset from memory->fd, always set 0 for yaddr
     memory->phys_addr = 0;
     memory->phys_size = mem_size;
@@ -3127,6 +3133,23 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
         mCommonHeapReserved = NULL;
     }
 #endif
+
+    // free base common ION buffer.
+    // This Q should be empty here because memory owner(who apply for malloc it) should free them before this function called
+    // If any buffer is freed here, the buffer owner MUST notice it, because it ''IS'' memory leak actually.
+    // It is not the duty of memory manager to handle this type of memory leak.
+    for (List<IonBufNode>::iterator itor1 = mIonQueue.BufList.begin();
+			itor1 != mIonQueue.BufList.end(); itor1++) {
+        if (itor1->mIonHeap != NULL) {
+            HAL_LOGD("mem_type=%d mIonHeap=%p, fd=0x%x, addr %p\n",
+			itor1->mem_type, itor1->mIonHeap, itor1->mIonHeap->fd, itor1->mIonHeap->data);
+            freeCameraMem(itor1->mIonHeap);
+            itor1->mIonHeap = NULL;
+        }
+    }
+    mIonQueue.count = 0;
+    mIonQueue.BufList.clear();
+
     // free all ION buffer
     for (List<MemIonQueue>::iterator itor1 = cam_MemIonQueue.begin();
                                       itor1 != cam_MemIonQueue.end();) {
@@ -9693,6 +9716,88 @@ mem_fail:
     return BAD_VALUE;
 }
 
+
+int SprdCamera3OEMIf::ION_Free(enum camera_mem_cb_type type,
+                                         cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 num)
+{
+	cmr_u32 i;
+	Mutex::Autolock l(&mIonQueue.qLock);
+
+	HAL_LOGD("E. mem_type=%d sum=%d", type, num);
+	if (num == 0)
+		return 0;
+
+	for (i = 0; i < num; i++) {
+		for (List<IonBufNode>::iterator itor = mIonQueue.BufList.begin();
+					itor != mIonQueue.BufList.end(); itor++) {
+			if ((type == itor->mem_type) && (NULL != itor->mIonHeap) && itor->mIonHeap->fd == fd[i]) {
+				HAL_LOGD("i=%d, mem_type=%d mIonHeap=%p, cached %d, fd=%d, vaddr=0x%lx, 0x%lx\n",
+					i, type, itor->mIonHeap, itor->mIonHeap->cached,
+					fd[i], vir_addr[i], (cmr_uint)itor->mIonHeap->data);
+				freeCameraMem(itor->mIonHeap);
+				itor->mIonHeap = NULL;
+				mIonQueue.BufList.erase(itor);
+				mIonQueue.count--;
+				break;
+			}
+		}
+	}
+
+	HAL_LOGD("X. mIonQueue len %d\n", mIonQueue.count);
+	return 0;
+}
+
+int SprdCamera3OEMIf::ION_Malloc(enum camera_mem_cb_type type,
+                                           cmr_u32 cached, cmr_u32 size, cmr_u32 *num_ptr,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd)
+{
+	sprd_camera_memory_t *memory = NULL;
+	IonBufNode memIonNode;
+	cmr_u32 i, j, num;
+
+	num = *num_ptr;
+	HAL_LOGD("mem_type=%d cached %d, size=%d num=%d, mTotalIonSize=%d\n",
+		type, cached, size, num, mTotalIonSize);
+
+	if (size == 0 || num == 0)
+		return 0;
+
+	for (i = 0; i < num; i++) {
+		phy_addr[i] = 0;
+		vir_addr[i] = 0;
+		fd[i] = 0;
+	}
+
+	for (i = 0, j = 0; i < num; i++, j = 0) {
+		memIonNode.mIonHeap = NULL;
+		do {
+			memIonNode.mIonHeap = allocCameraMem(size, 1, cached);
+		} while (memIonNode.mIonHeap == NULL && (j++ < 10));
+
+		if (memIonNode.mIonHeap != NULL) {
+			Mutex::Autolock l(&mIonQueue.qLock);
+
+			memIonNode.mem_type = type;
+			mIonQueue.BufList.push_back(memIonNode);
+			mIonQueue.count++;
+			phy_addr[i] = (cmr_uint)memIonNode.mIonHeap->phys_addr;
+			vir_addr[i] = (cmr_uint)memIonNode.mIonHeap->data;
+			fd[i] = memIonNode.mIonHeap->fd;
+			HAL_LOGD("i=%d, type=%d, vaddr=0x%lx, paddr=0x%lx, fd=0x%x\n",
+				i, type, phy_addr[i], vir_addr[i], fd[i]);
+		} else {
+			HAL_LOGE("fail to alloc buf size = %d, type %d\n", size, type);
+			break;
+		}
+	}
+
+	*num_ptr = i;
+	HAL_LOGD("X, ret num=%d, mTotalIonSize=%d. mIonQueue len %d\n",
+		*num_ptr, mTotalIonSize, mIonQueue.count);
+	return 0;
+}
+
 int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
                                     cmr_uint *phy_addr, cmr_uint *vir_addr,
                                     cmr_s32 *fd, cmr_u32 sum,
@@ -9716,6 +9821,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
         // Performance optimization:move Callback_CaptureFree to closeCamera
         // function
         // ret = camera->Callback_CaptureFree(phy_addr, vir_addr, fd, sum);
+    } else if (CAMERA_BUF_CACHE == type || CAMERA_BUF_UNCACHE == type) {
+        ret = camera->ION_Free(type, vir_addr, fd, sum);
     } else if (CAMERA_SNAPSHOT_ZSL == type) {
         ret = camera->Callback_ZslFree(phy_addr, vir_addr, fd, sum);
     } else if (CAMERA_SNAPSHOT_ZSL_RAW == type) {
@@ -9766,6 +9873,10 @@ int SprdCamera3OEMIf::Callback_IonMalloc(enum camera_mem_cb_type type,
     if (CAMERA_PREVIEW == type || CAMERA_VIDEO == type) {
         //preview & video buffer from framework
         HAL_LOGD("Do not need malloc,mem_type %d buffer from framework", type);
+    } else if (CAMERA_BUF_CACHE == type) {
+        ret = camera->ION_Malloc(type, 1, size, sum_ptr, phy_addr, vir_addr, fd);
+    } else if (CAMERA_BUF_UNCACHE == type) {
+        ret = camera->ION_Malloc(type, 0, size, sum_ptr, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT == type) {
         ret = camera->Callback_CaptureMalloc(size, sum, phy_addr, vir_addr, fd);
     } else if (CAMERA_SNAPSHOT_ZSL == type) {
@@ -11170,7 +11281,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     SprdCamera3OEMIf *obj = (SprdCamera3OEMIf *)p_data;
     uint32_t ret = 0, count1 = 0, clear_af_trigger = 0;
-    int8_t drvSceneMode = 0;
     int64_t tmp1, tmp2;
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -11294,15 +11404,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     //control cnr enable
     Set_cnr_mode();
 
-    char value[PROPERTY_VALUE_MAX];
-    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
-    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
-       property_get("persist.vendor.cam.fdr.enable", value, "0");
-       if (atoi(value)) {
-            mEEMode = 1;
-            HAL_LOGD("ee mode, set ee mode to 1");
-       }
-    }
     HAL_LOGD("mEEMode = %d", mEEMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_POSTEE, mEEMode);
 
@@ -11419,19 +11520,19 @@ exit:
 }
 
 void SprdCamera3OEMIf::Set_cnr_mode() {
-    int8_t drvSceneMode = 0;;
     CONTROL_Tag controlInfo;
     mSetting->getCONTROLTag(&controlInfo);
     char value[PROPERTY_VALUE_MAX];
     if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
-        (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
         (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode) &&
         (mSprdAppmodeId != -1) && (false == mRecordingMode)) ||
         ((getMultiCameraMode() == MODE_BLUR) && lightportrait_type != 0))) {
         mCNRMode = 0;
     } else {
         mCNRMode = 1;
-    } if (ANDROID_CONTROL_SCENE_MODE_HDR == controlInfo.scene_mode) {
+    }
+
+    if (ANDROID_CONTROL_SCENE_MODE_HDR == controlInfo.scene_mode) {
         property_get("persist.vendor.cam.hdr.cnr.mode", value, "0");
         if (atoi(value)) {
             mCNRMode = 1;
@@ -11439,15 +11540,6 @@ void SprdCamera3OEMIf::Set_cnr_mode() {
             mCNRMode = 0;
     }
 
-    char value1[PROPERTY_VALUE_MAX];
-    mSetting->androidSceneModeToDrvMode(controlInfo.scene_mode, &drvSceneMode);
-    if(drvSceneMode == CAMERA_SCENE_MODE_FDR) {
-        property_get("persist.vendor.cam.cnr.mode", value1, "0");
-        if (atoi(value1)) {
-            mCNRMode = 1;
-            HAL_LOGD("fdr mode, set cnr mode to 1");
-        }
-    }
     HAL_LOGD("lightportrait_type = %d, mCNRMode = %d", lightportrait_type, mCNRMode);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
 }

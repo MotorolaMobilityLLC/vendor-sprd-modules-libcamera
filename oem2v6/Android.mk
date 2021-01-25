@@ -76,6 +76,7 @@ LOCAL_SRC_FILES+= \
     src/cmr_filter.c \
     src/cmr_img_debug.c \
     src/cmr_watermark.c \
+    src/ips_core.c \
     src/exif_writer.c \
     src/jpeg_stream.c \
     src/cmr_4in1.c

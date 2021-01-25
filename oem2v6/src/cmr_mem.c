@@ -1246,3 +1246,314 @@ unsigned int camera_get_mipi_raw_dcam_pitch(int w)
 
     return (((w + 3) / 4 * 5) + 3) & (~(4 - 1));
 }
+
+
+int get_free_buffer(struct cmr_queue *q, uint32_t size, struct cmr_buf *dst)
+{
+	int ret = CMR_CAMERA_SUCCESS;
+	int found = 0;
+	struct listnode *node;
+	struct cmr_buf *cur;
+
+	if (!q || (size == 0) || (dst == NULL)) {
+		CMR_LOGE("fail to get q %p, size %d, dst %p", q, size, dst);
+		return CMR_CAMERA_FAIL;
+	}
+
+	memset(dst, 0, sizeof(struct cmr_buf));
+	pthread_mutex_lock((pthread_mutex_t *)q->lock);
+
+	list_for_each(node, &q->header) {
+		cur = node_to_item(node, struct cmr_buf , list);
+		if (!cur->used && (cur->mem_size >= size)) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (found == 0) {
+		ret = CMR_CAMERA_NO_MEM;
+		goto exit;
+	}
+
+	q->free_cnt--;
+	cur->used = 1;
+	*dst = *cur;
+	CMR_LOGD("get freed buf %p, fd=0x%x, qmax %d, total %d, free %d\n",
+		cur, dst->fd, q->max, q->cnt, q->free_cnt);
+
+exit:
+	pthread_mutex_unlock((pthread_mutex_t *)q->lock);
+	CMR_LOGD("X, ret %d, fd 0x%x\n", ret, dst->fd);
+	return ret;
+}
+
+int put_free_buffer(struct cmr_queue *q, struct cmr_buf *dst)
+{
+	int ret = CMR_CAMERA_SUCCESS;
+	struct listnode *node = NULL;
+	struct cmr_buf *cur = NULL;
+	int found = 0;
+
+	if (!q || dst == NULL || dst->fd <= 0) {
+		CMR_LOGE("fail to get q %p,  dst buf %p\n", q, dst);
+		return CMR_CAMERA_FAIL;
+	}
+
+	pthread_mutex_lock((pthread_mutex_t *)q->lock);
+
+	list_for_each(node, &q->header) {
+		cur = node_to_item(node, struct cmr_buf , list);
+		if (cur->fd == dst->fd) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (!found) {
+		CMR_LOGE("fail to get node for buf fd 0x%x\n", dst->fd);
+		ret = CMR_CAMERA_FAIL;
+		goto exit;
+	}
+
+	if (!cur->used)
+		CMR_LOGE("fail to check buf fd 0x%x status, should be used\n");
+
+	cur->used = 0;
+	q->free_cnt++;
+	CMR_LOGD("put to freed buf %p, fd=0x%x, size=%d, qmax %d, total %d, free %d\n",
+			cur, cur->fd, cur->mem_size, q->max, q->cnt, q->free_cnt);
+
+exit:
+	pthread_mutex_unlock((pthread_mutex_t *)q->lock);
+	CMR_LOGD("X, ret %d, fd 0x%x\n", ret, dst->fd);
+	return ret;
+}
+
+int inc_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, uint32_t *cnt)
+{
+	int ret = CMR_CAMERA_SUCCESS;
+	struct cmr_buf *new_buf;
+	int32_t fd = 0;
+	uint32_t i, real_cnt = 0, loop, num;
+	cmr_uint phy_addr = 0, vir_addr = 0;
+
+	if (!q ||  !cnt  || (mops == NULL)) {
+		CMR_LOGE("fail to get q %p, mops %p,  cntp %p\n", q, mops, cnt);
+		return CMR_CAMERA_FAIL;
+	}
+
+	if ((size == 0) || (*cnt == 0)  || (mops->alloc_mem == NULL)) {
+		CMR_LOGE("fail to get size %d, cnt %d,  alloc_mem %p\n", size, *cnt, mops->alloc_mem);
+		return CMR_CAMERA_FAIL;
+	}
+
+	pthread_mutex_lock((pthread_mutex_t *)q->lock);
+
+	if (q->cnt >= q->max) {
+		CMR_LOGD("buffer q is full, max %d, cnt %d\n", q->max, q->cnt);
+		ret = CMR_CAMERA_NO_MEM;
+		*cnt = 0;
+		goto exit;
+	}
+
+	loop = MIN(*cnt, (q->max - q->cnt));
+	for (i = 0; i < loop; i++) {
+		new_buf = (struct cmr_buf *)malloc(sizeof(struct cmr_buf));
+		if (new_buf == NULL) {
+			CMR_LOGE("fail to alloc node\n");
+			continue;
+		}
+		num = 1;
+		ret = mops->alloc_mem(CAMERA_BUF_CACHE, mops->oem_handle,
+					&size, &num, &phy_addr, &vir_addr, &fd);
+		if (ret || num < 1) {
+			CMR_LOGE("fail to malloc ion buf size %d, ret=%lx, num=%d\n", size, ret, num);
+			free(new_buf);
+			continue;
+		}
+		real_cnt++;
+		new_buf->fd = fd;
+		new_buf->cache = 1;
+		new_buf->mem_type = CAMERA_BUF_CACHE;
+		new_buf->mem_size = size;
+		new_buf->used = 0;
+		new_buf->vaddr = vir_addr;
+		new_buf->paddr = phy_addr;
+		q->total_size += size;
+		q->cnt++;
+		q->free_cnt++;
+		list_add_head(&q->header, &new_buf->list);
+		CMR_LOGD("alloc new buf %p, fd=0x%x, size %d, vaddr 0x%lx, qmax %d, cnt %d, free %d, total_size %d\n",
+				new_buf, new_buf->fd, size, new_buf->vaddr, q->max, q->cnt, q->free_cnt, q->total_size);
+	}
+
+	ret = CMR_CAMERA_SUCCESS;
+	*cnt = real_cnt;
+
+exit:
+	pthread_mutex_unlock((pthread_mutex_t *)q->lock);
+	CMR_LOGD("X, ret %d, real cnt %d\n", ret, *cnt);
+	return ret;
+}
+
+
+int dec_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, uint32_t *cnt)
+{
+	int ret = CMR_CAMERA_SUCCESS;
+	struct listnode *node;
+	struct cmr_buf *cur;
+	int32_t fd = 0;
+	uint32_t i, real_cnt = 0, loop, num, found;
+	cmr_uint phy_addr = 0, vir_addr = 0;
+
+	if (!q || !cnt  || (*cnt == 0) || (mops == NULL) || (mops->free_mem == NULL)) {
+		CMR_LOGE("fail to get q %p, mem ops %p, cnt %p\n", q, mops, cnt);
+		return CMR_CAMERA_FAIL;
+	}
+
+	pthread_mutex_lock((pthread_mutex_t *)q->lock);
+
+	if (q->free_cnt == 0) {
+		CMR_LOGD("bufq, free_cnt is 0\n");
+		*cnt = 0;
+		goto exit;
+	}
+
+	loop = MIN(*cnt, q->free_cnt);
+	for (i = 0; i < loop; i++) {
+		found = 0;
+		list_for_each(node, &q->header) {
+			cur = node_to_item(node, struct cmr_buf , list);
+			if (!cur->used && ((size == 0) || (cur->mem_size <= size) )) {
+				found = 1;
+				break;
+			}
+		}
+
+		if (!found) {
+			CMR_LOGE("There is no un-used buf to free\n");
+			continue;
+		}
+		num = 1;
+		ret = mops->free_mem(cur->mem_type, mops->oem_handle,
+				&cur->paddr, &cur->vaddr, &cur->fd, num);
+		q->cnt--;
+		q->free_cnt--;
+		q->total_size -= cur->mem_size;
+		real_cnt++;
+		CMR_LOGD("free buf %p, fd=0x%x, size %d, qmax %d, cnt %d, free %d, total_size %d\n",
+				cur, cur->fd, cur->mem_size, q->max, q->cnt, q->free_cnt, q->total_size);
+
+		list_remove(&cur->list);
+		free(cur);
+	}
+
+	ret = CMR_CAMERA_SUCCESS;
+	*cnt = real_cnt;
+
+exit:
+	pthread_mutex_unlock((pthread_mutex_t *)q->lock);
+	CMR_LOGD("X, ret %d, real cnt %d\n", ret, *cnt);
+	return ret;
+}
+
+int clear_buffer_queue(struct cmr_queue *q, struct memory_param *mops)
+{
+	int ret = CMR_CAMERA_SUCCESS;
+	struct listnode *node;
+	struct cmr_buf *cur;
+	cmr_u32 num = 1, found;
+
+	if (!q || !mops || !mops->free_mem) {
+		CMR_LOGE("fail to get q %p, mem ops %p\n", q, mops);
+		return CMR_CAMERA_FAIL;
+	}
+
+	pthread_mutex_lock((pthread_mutex_t *)q->lock);
+
+next_one:
+	found = 0;
+	list_for_each(node, &q->header) {
+		cur = node_to_item(node, struct cmr_buf , list);
+		if (!cur->used) {
+			found = 1;
+			break;
+		}
+	}
+
+	if (!found) {
+		CMR_LOGD("NO un-used buf to free\n");
+		goto exit;
+	}
+
+	num = 1;
+	ret = mops->free_mem(cur->mem_type, mops->oem_handle,
+			&cur->paddr, &cur->vaddr, &cur->fd, num);
+	q->cnt--;
+	q->free_cnt--;
+	q->total_size -= cur->mem_size;
+	CMR_LOGD("free buf %p, fd=0x%x, size %d, qmax %d, cnt %d, free %d, total_size %d\n",
+			cur, cur->fd, cur->mem_size, q->max, q->cnt, q->free_cnt, q->total_size);
+
+	list_remove(&cur->list);
+	free(cur);
+	goto next_one;
+
+exit:
+	pthread_mutex_unlock((pthread_mutex_t *)q->lock);
+	CMR_LOGD("X, ret %d,  cnt %d\n", ret, q->cnt);
+	if (q->cnt > 0)
+		CMR_LOGE("fail to free all buffer: memleak");
+
+	return ret;
+}
+
+int init_buffer_q(struct cmr_queue *q, uint32_t max, uint32_t type)
+{
+	int ret = CMR_CAMERA_SUCCESS;
+	pthread_mutex_t *lock;
+
+	if (!q || (max == 0)) {
+		CMR_LOGE("fail to get q %p, max %d\n", q, max);
+		return CMR_CAMERA_FAIL;
+	}
+
+	memset(q, 0, sizeof(struct cmr_queue));
+	q->type = type;
+	q->max = max;
+	list_init(&q->header);
+
+	lock = (pthread_mutex_t  *)malloc(sizeof(pthread_mutex_t));
+	if (lock == NULL) {
+		CMR_LOGE("fail to alloc mutex lock");
+		return CMR_CAMERA_NO_MEM;
+	}
+	pthread_mutex_init(lock, NULL);
+	q->lock = (void *)lock;
+
+	return ret;
+}
+
+int deinit_buffer_q(struct cmr_queue *q, struct memory_param *mops)
+{
+	int ret = CMR_CAMERA_SUCCESS;
+
+	if (!q || !mops) {
+		CMR_LOGE("fail to get q %p, mem ops %p\n", q, mops);
+		return CMR_CAMERA_FAIL;
+	}
+	if (!q->max || !q->lock)
+		return ret;
+
+	ret = clear_buffer_queue(q, mops);
+	if (ret) {
+		CMR_LOGE("fail to clear buffer q\n");
+		return ret;
+	}
+	pthread_mutex_destroy((pthread_mutex_t *)q->lock);
+	free(q->lock);
+	q->lock = NULL;
+
+	return ret;
+}

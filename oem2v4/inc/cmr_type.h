@@ -56,18 +56,6 @@ enum camera_af_aux_sensor_type {
 
 enum zoom_param_mode { ZOOM_LEVEL = 0, ZOOM_INFO, ZOOM_MODE_MAX };
 
-struct img_rect {
-    cmr_u32 start_x;
-    cmr_u32 start_y;
-    cmr_u32 width;
-    cmr_u32 height;
-};
-
-struct img_size {
-    cmr_u32 width;
-    cmr_u32 height;
-};
-
 struct zoom_info {
     float zoom_ratio;
     float prev_aspect_ratio;

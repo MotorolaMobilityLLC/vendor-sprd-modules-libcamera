@@ -142,7 +142,7 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
                       jpg_evt_cb_ptr adp_event_cb);
 cmr_int cmr_jpeg_deinit(cmr_handle jpeg_handle);
 cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
-                        struct img_frm *dst, struct jpg_op_mean *mean,
+                        struct img_frm *dst, struct cmr_op_mean *mean,
                         struct jpeg_enc_cb_param *enc_cb_param);
 cmr_int cmr_jpeg_decode(cmr_handle jpeg_handle, struct img_frm *src,
                         struct img_frm *dst, struct jpg_op_mean *mean);

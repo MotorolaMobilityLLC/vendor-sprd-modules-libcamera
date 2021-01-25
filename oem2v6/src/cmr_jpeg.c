@@ -128,13 +128,16 @@ exit:
 }
 
 cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
-                        struct img_frm *dst, struct jpg_op_mean *mean,
+                        struct img_frm *dst, struct cmr_op_mean *mean,
                         struct jpeg_enc_cb_param *enc_cb_param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct jpeg_codec_caller_handle *codec_handle = NULL;
     struct jpeg_lib_cxt *jcxt = NULL;
     struct yuvbuf_frm jpeg_src;
     struct yuvbuf_frm jpeg_dst;
+    struct jpg_op_mean enc_mean;
+
+    CMR_LOGD("E. hanlde %p\n", jpeg_handle);
     if (!jpeg_handle) {
         CMR_LOGE("Invalid Param!");
         return CMR_CAMERA_INVALID_PARAM;
@@ -164,6 +167,20 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
     jpeg_src.format_pattern = src->format_pattern;
     jpeg_src.reserved = src->reserved;
 
+    if (1) {
+		struct img_frm *p = src;
+		CMR_LOGD("src fd 0x%x, buf size %d, addr_p 0x%x 0x%x 0x%x, add_v  0x%x 0x%x 0x%x\n",
+			p->fd, p->buf_size,
+			p->addr_phy.addr_y, p->addr_phy.addr_u, p->addr_phy.addr_v,
+			p->addr_vir.addr_y, p->addr_vir.addr_u, p->addr_vir.addr_v);
+		CMR_LOGD("thum %d, size (%d %d), rect (%d %d %d %d), end %d %d, fmt 0x%x 0x%x\n",
+			mean->is_thumb,
+			p->size.width, p->size.height,
+			p->rect.start_x, p->rect.start_y,  p->rect.width, p->rect.height,
+			p->data_end.y_endian, p->data_end.uv_endian,
+			p->fmt, p->format_pattern);
+    }
+
     jpeg_dst.fmt = dst->fmt;
     jpeg_dst.buf_size = dst->buf_size;
     jpeg_dst.rect.start_x = dst->rect.start_x;
@@ -186,7 +203,37 @@ cmr_int cmr_jpeg_encode(cmr_handle jpeg_handle, struct img_frm *src,
     jpeg_dst.format_pattern = dst->format_pattern;
     jpeg_dst.reserved = dst->reserved;
 
-    ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, mean,
+    if (1) {
+		struct img_frm *p = dst;
+		CMR_LOGD("dst fd 0x%x, buf size %d, addr_p 0x%x 0x%x 0x%x, add_v  0x%x 0x%x 0x%x\n",
+			p->fd, p->buf_size,
+			p->addr_phy.addr_y, p->addr_phy.addr_u, p->addr_phy.addr_v,
+			p->addr_vir.addr_y, p->addr_vir.addr_u, p->addr_vir.addr_v);
+		CMR_LOGD("dst size (%d %d), rect (%d %d %d %d), end %d %d, fmt 0x%x 0x%x\n",
+			p->size.width, p->size.height,
+			p->rect.start_x, p->rect.start_y,  p->rect.width, p->rect.height,
+			p->data_end.y_endian, p->data_end.uv_endian,
+			p->fmt, p->format_pattern);
+    }
+
+    memset(&enc_mean, 0, sizeof(struct jpg_op_mean));
+    enc_mean.slice_height = mean->slice_height;
+    enc_mean.slice_mode = mean->slice_mode;
+    enc_mean.ready_line_num = mean->ready_line_num;
+    enc_mean.slice_num = mean->slice_num;
+    enc_mean.is_sync = mean->is_sync;
+    enc_mean.is_thumb = mean->is_thumb;
+    enc_mean.mirror = mean->mirror;
+    enc_mean.flip= mean->flip;
+    enc_mean.rotation = mean->rot;
+    enc_mean.quality_level = mean->quality_level;
+    enc_mean.out_param = mean->out_param;
+    CMR_LOGD("slice %d %d %d, sync %d thumb %d, flip %d, mi %d, rot %d, qual %d, out 0x%lx\n",
+        enc_mean.slice_height, enc_mean.slice_mode, enc_mean.slice_num,
+        enc_mean.is_sync, enc_mean.is_thumb,  enc_mean.flip, enc_mean.mirror,
+        enc_mean.rotation, enc_mean.quality_level, enc_mean.out_param);
+
+    ret = jcxt->ops.jpeg_encode(jcxt->codec_handle, &jpeg_src, &jpeg_dst, &enc_mean,
                                 enc_cb_param);
     pthread_mutex_unlock(&jpeg_mutex);
     if (ret) {

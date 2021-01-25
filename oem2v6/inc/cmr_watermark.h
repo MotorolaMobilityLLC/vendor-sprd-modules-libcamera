@@ -4,8 +4,8 @@
 #ifndef _WATERMARK_H_
 #define _WATERMARK_H_
 
-#define WATERMARK_LOGO 0x1
-#define WATERMARK_TIME 0x2
+#define WATERMARK_LOGO (1<<0)
+#define WATERMARK_TIME (1<<1)
 
 typedef struct {
     int imgW;
@@ -19,7 +19,7 @@ typedef struct {
     char *filename;
 } sizeParam_t;
 
-int watermark_add_yuv(cmr_handle oem_handle, cmr_u8 *pyuv,
+int watermark_add_yuv(int flag, cmr_u8 *pyuv, char *time_text,
                       sizeParam_t *sizeparam);
 
 #endif //_WATERMARK_H_

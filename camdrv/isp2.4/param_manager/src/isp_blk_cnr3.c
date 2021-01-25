@@ -77,7 +77,7 @@ cmr_s32 _pm_cnr3_init(void *dst_cnr3_param, void *src_cnr3_param, void *param1, 
 
 	rtn = _pm_cnr3_convert_param(dst_ptr,
 			dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-	dst_ptr->cur.bypass |= header_ptr->bypass;
+	dst_ptr->cur.bypass = header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm cnr3 param !");
 		return rtn;
@@ -125,7 +125,7 @@ cmr_s32 _pm_cnr3_set_param(void *cnr3_param, cmr_u32 cmd, void *param_ptr0, void
 
 				rtn = _pm_cnr3_convert_param(dst_ptr,
 					dst_ptr->cur_level, block_result->mode_flag, block_result->scene_flag);
-				dst_ptr->cur.bypass |= header_ptr->bypass;
+				dst_ptr->cur.bypass = header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm cnr3 param !");
 					return rtn;

@@ -22,4 +22,6 @@
 cmr_int cmr_exif_init(JINF_EXIF_INFO_T *jinf_exif_info_ptr,
                       setting_get_pic_taking_cb setting_cb, void *priv_data);
 
+cmr_int cmr_exifinfo_save(JINF_EXIF_INFO_T *jinf_exif_info_ptr,
+                      saved_exif_info_t *dst);
 #endif

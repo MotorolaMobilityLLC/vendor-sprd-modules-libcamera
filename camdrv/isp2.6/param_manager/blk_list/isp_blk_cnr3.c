@@ -20,7 +20,7 @@
 cmr_u32 _pm_cnr3_convert_param(void *dst_cnr3_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 total_offset_units = 0;
+	cmr_u32 total_offset_units = 0, offset;
 	struct isp_cnr3_param *dst_ptr = (struct isp_cnr3_param *)dst_cnr3_param;
 	struct sensor_cnr3_level *cnr3_param = PNULL;
 	cmr_s32 i = 0, j = 0;
@@ -31,7 +31,8 @@ cmr_u32 _pm_cnr3_convert_param(void *dst_cnr3_param, cmr_u32 strength_level, cmr
 		cmr_u32 *multi_nr_map_ptr = PNULL;
 		multi_nr_map_ptr = (cmr_u32 *) dst_ptr->scene_ptr;
 		total_offset_units = _pm_calc_nr_addr_offset(mode_flag, scene_flag, multi_nr_map_ptr);
-		cnr3_param = (struct sensor_cnr3_level *)((cmr_u8 *) dst_ptr->param_ptr + total_offset_units * dst_ptr->level_num * sizeof(struct sensor_cnr3_level));
+		offset = total_offset_units * dst_ptr->level_num * sizeof(struct sensor_cnr3_level);
+		cnr3_param = (struct sensor_cnr3_level *)((cmr_uint) dst_ptr->param_ptr + offset);
 
 	}
 	strength_level = PM_CLIP(strength_level, 0, dst_ptr->level_num - 1);
@@ -56,7 +57,6 @@ cmr_u32 _pm_cnr3_convert_param(void *dst_cnr3_param, cmr_u32 strength_level, cmr
 		}
 		dst_ptr->level_info.level_enable = cnr3_param[strength_level].level_enable;
 		dst_ptr->level_info.low_ct_thrd = cnr3_param[strength_level].low_ct_thrd;
-		ISP_LOGV("ISP_SMART_NR: dst_ptr->level_info.level_enable=%d,dst_ptr->level_info.low_ct_thrd %d", dst_ptr->level_info.level_enable,dst_ptr->level_info.low_ct_thrd);
 	}
 
 	return rtn;
@@ -77,8 +77,7 @@ cmr_s32 _pm_cnr3_init(void *dst_cnr3_param, void *src_cnr3_param, void *param1, 
 	dst_ptr->nr_mode_setting = src_ptr->nr_mode_setting;
 
 	rtn = _pm_cnr3_convert_param(dst_ptr, dst_ptr->cur_level, ISP_MODE_ID_COMMON, ISP_SCENEMODE_AUTO);
-	dst_ptr->cur.bypass = 0;
-	dst_ptr->cur.bypass |= header_ptr->bypass;
+	dst_ptr->cur.bypass = header_ptr->bypass;
 	if (ISP_SUCCESS != rtn) {
 		ISP_LOGE("fail to convert pm cnr3 param !");
 		return rtn;
@@ -123,7 +122,7 @@ cmr_s32 _pm_cnr3_set_param(void *cnr3_param, cmr_u32 cmd, void *param_ptr0, void
 				header_ptr->is_update = ISP_ONE;
 				nr_tool_flag[ISP_BLK_CNR3_T] = 0;
 				rtn = _pm_cnr3_convert_param(dst_ptr, dst_ptr->cur_level, header_ptr->mode_id, block_result->scene_flag);
-				dst_ptr->cur.bypass |= header_ptr->bypass;
+				dst_ptr->cur.bypass = header_ptr->bypass;
 				if (ISP_SUCCESS != rtn) {
 					ISP_LOGE("fail to convert pm cnr3 param !");
 					return rtn;

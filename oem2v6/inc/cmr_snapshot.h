@@ -63,6 +63,7 @@ enum snapshot_func_type {
     SNAPSHOT_FUNC_RELEASE_PICTURE,
     SNAPSHOT_FUNC_TAKE_PICTURE,
     SNAPSHOT_FUNC_ENCODE_PICTURE,
+    SNAPSHOT_FUNC_SNAP_REQUEST,
     SNAPSHOT_FUNC_STATE,
     SNAPSHOT_FUNC_RECOVERY,
     SNAPSHOT_FUNC_MAX
@@ -105,6 +106,8 @@ struct jpeg_param {
     cmr_u32 quality;
     cmr_u32 thumb_quality;
     cmr_u32 set_encode_rotation;
+    cmr_u32 rotation;
+    cmr_u32 flip;
     cmr_u32 padding;
     struct img_size thum_size;
 };
@@ -182,17 +185,22 @@ struct snapshot_init_param {
     cmr_handle ipm_handle;
     snapshot_cb_of_state oem_cb;
     struct snapshot_md_ops ops;
+    struct memory_param memory_setting;
     void *private_data;
 };
 
 struct snapshot_param {
-    cmr_uint filter_type;
     cmr_u32 camera_id;
     cmr_u32 mode;
+    cmr_u32 filter_type;
+    cmr_u32 fb_on;
+    cmr_u32 watermark;
     cmr_u32 is_hdr;
+    cmr_u32 is_fdr;
     cmr_u32 is_3dnr;
     cmr_u32 is_video_snapshot;
     cmr_u32 is_zsl_snapshot;
+    cmr_u32 snap_cnt;
     cmr_u32 total_num;
     cmr_u32 rot_angle;
     cmr_u32 is_android_zsl;
@@ -216,6 +224,9 @@ struct snapshot_param {
     struct cmr_zoom_param zoom_param;
     struct jpeg_param jpeg_setting;
     struct snp_proc_param post_proc_setting;
+    cmr_u32 zsl_ips_en;
+    cmr_u32 request_id;
+    int64_t zsl_snap_time;
 };
 
 struct encode_cb_param {
@@ -245,6 +256,8 @@ cmr_int cmr_snapshot_init(struct snapshot_init_param *param_ptr,
 
 cmr_int cmr_snapshot_deinit(cmr_handle snapshot_handle);
 
+cmr_int cmr_snapshot_prepare(cmr_handle snapshot_handle,
+                               struct snapshot_param *param_ptr);
 cmr_int cmr_snapshot_post_proc(cmr_handle snapshot_handle,
                                struct snapshot_param *param_ptr);
 

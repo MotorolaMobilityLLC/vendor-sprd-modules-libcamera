@@ -42,18 +42,11 @@ static struct class_ops cnr_ops_tab_info = {
     cnr_open, cnr_close, cnr_transfer_frame, NULL, NULL,
 };
 
-#ifdef CAMERA_CNR3_ENABLE
 enum nr_type {
     YNRS_ENABLE = (1 << 0),
     CNR2_ENABLE = (1 << 1),
     CNR3_ENABLE = (1 << 2),
 };
-#else
-enum nr_type {
-    YNRS_ENABLE = (1 << 0),
-    CNR2_ENABLE = (1 << 1),
-};
-#endif
 
 struct class_tab_t cnr_tab_info = {
     &cnr_ops_tab_info,
@@ -145,7 +138,6 @@ static cmr_int cnr_close(cmr_handle class_handle) {
     return ret;
 }
 
-#ifdef CAMERA_CNR3_ENABLE
 static cmr_int cnr_transfer_frame(cmr_handle class_handle,
                                   struct ipm_frame_in *in,
                                   struct ipm_frame_out *out) {
@@ -215,12 +207,8 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
         if (CMR_CAMERA_SUCCESS != ret) {
             CMR_LOGE("failed to get isp YNR param %ld", ret);
         } else {
-#ifdef CAMERA_RADIUS_ENABLE
-            denoise_param.ynr_ration_base = isp_cmd_parm.ynr_param.Radius;
+            denoise_param.ynr_ration_base = isp_cmd_parm.ynr_param.radius_base;
             memcpy(&ynrParam, &isp_cmd_parm.ynr_param.ynrs_param, sizeof(YNR_Param));
-#else
-            memcpy(&ynrParam, &isp_cmd_parm.ynr_param, sizeof(YNR_Param));
-#endif
             denoise_param.ynrParam = &ynrParam;
             denoise_param.zoom_ratio = cxt->zoom_ratio;
             valid_nr_type |= YNRS_ENABLE;
@@ -299,125 +287,4 @@ exit:
     sem_post(&cnr_handle->sem);
     return ret;
 }
-#else
-static cmr_int cnr_transfer_frame(cmr_handle class_handle,
-                                  struct ipm_frame_in *in,
-                                  struct ipm_frame_out *out) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct img_addr *addr;
-    struct class_cnr *cnr_handle = NULL;
-    struct camera_context *cxt = NULL;
-    YNR_Param ynrParam;
-    CNR_Parameter cnr2Param;
-    cnr_param_t cnr3Param;
-    cmr_u32 valid_nr_type = 0;
-    sprd_yuv_denoise_cmd_t mode = cxt->nr_flag;
-    sprd_yuv_denoise_param_t denoise_param;
-    cmr_bzero(&ynrParam, sizeof(YNR_Param));
-    cmr_bzero(&cnr2Param, sizeof(CNR_Parameter));
-    cmr_bzero(&cnr3Param, sizeof(cnr_param_t));
-    cmr_bzero(&denoise_param, sizeof(sprd_yuv_denoise_param_t));
-
-    if (!in || !class_handle) {
-        CMR_LOGE("Invalid Param!");
-        return CMR_CAMERA_INVALID_PARAM;
-    }
-
-    cnr_handle = (struct class_cnr *)class_handle;
-    cxt = (struct camera_context *)in->private_data;
-
-    if (!cxt || !cnr_handle->handle) {
-        CMR_LOGE("Invalid Param!");
-        return CMR_CAMERA_INVALID_PARAM;
-    }
-
-    CMR_LOGV("E ");
-    if (!cnr_handle->is_inited) {
-        return ret;
-    }
-    sem_wait(&cnr_handle->sem);
-    denoise_param.bufferY.addr[0] = (void *)in->src_frame.addr_vir.addr_y;
-    denoise_param.bufferUV.addr[0] = (void *)in->src_frame.addr_vir.addr_u;
-    denoise_param.bufferY.ion_fd = (int32_t)in->src_frame.fd;
-    denoise_param.bufferUV.ion_fd = (int32_t)in->src_frame.fd;
-    denoise_param.width = in->src_frame.size.width;
-    denoise_param.height = in->src_frame.size.height;
-
-    char value[PROPERTY_VALUE_MAX];
-    property_get("debug.dump.before.docnr", value, "null");
-    if (!strcmp(value, "true")) {
-        addr = &in->src_frame.addr_vir;
-        dump_image("cnr_transfer_frame_before_cnr", CAM_IMG_FMT_YUV420_NV21, denoise_param.width,
-                   denoise_param.height, 0, addr, (denoise_param.width) * (denoise_param.height) * 3 / 2);
-    }
-
-    cmr_handle oem_handle = NULL;
-    struct common_isp_cmd_param isp_cmd_parm;
-    oem_handle = cnr_handle->common.ipm_cxt->init_in.oem_handle;
-
-    struct ipm_init_in *ipm_in = &cnr_handle->common.ipm_cxt->init_in;
-    CMR_LOGI("cxt->nr_flag %d", cxt->nr_flag);
-    if (cxt->nr_flag & YNRS_ENABLE) {
-        ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_YNRS_PARAM,
-                                    &isp_cmd_parm);
-        if (CMR_CAMERA_SUCCESS != ret) {
-            CMR_LOGE("failed to get isp YNRS param %ld", ret);
-        } else {
-            memcpy(&ynrParam, &isp_cmd_parm.ynr_param, sizeof(YNR_Param));
-            denoise_param.ynrParam = &ynrParam;
-            denoise_param.zoom_ratio = cxt->zoom_ratio;
-            valid_nr_type |= YNRS_ENABLE;
-        }
-    }
-    if (cxt->nr_flag & CNR2_ENABLE) {
-        ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
-                                    &isp_cmd_parm);
-        if (CMR_CAMERA_SUCCESS != ret) {
-            CMR_LOGE("failed to get isp CNR2 param %ld", ret);
-        } else {
-            memcpy(&cnr2Param, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
-            denoise_param.cnr2Param = &cnr2Param;
-            valid_nr_type |= CNR2_ENABLE;
-        }
-    }
-proc:
-    if (valid_nr_type == 0) {
-        CMR_LOGD("valid_nr_type is 0");
-        goto exit;
-    }
-    mode = valid_nr_type;
-    CMR_LOGD("valid_nr_type %d, param %p, %p, %p\n", valid_nr_type,
-                denoise_param.ynrParam, denoise_param.cnr2Param, denoise_param.cnr3Param);
-
-    char prop[PROPERTY_VALUE_MAX];
-    property_get("debug.dump.nr.mode", prop, "0");
-    if (atoi(prop) != 0) {
-        mode = atoi(prop);
-    }
-
-    if(mode >= SPRD_YUV_DENOISE_MAX_CMD){
-      CMR_LOGE("cmd %d is invalid.",mode);
-      goto exit;
-    }
-    ret = sprd_yuv_denoise_adpt_ctrl(cnr_handle->handle, mode, (void *)&denoise_param);
-    if (CMR_CAMERA_SUCCESS != ret) {
-        CMR_LOGE("failed to docnr %ld", ret);
-        goto exit;
-    }
-    property_get("debug.dump.after.docnr", value, "null");
-    if (!strcmp(value, "true")) {
-        addr = &in->src_frame.addr_vir;
-        dump_image("cnr_transfer_frame_after_cnr", CAM_IMG_FMT_YUV420_NV21, denoise_param.width,
-                   denoise_param.height, 1, addr, (denoise_param.width) * (denoise_param.height) * 3 / 2);
-    }
-
-exit:
-    CMR_LOGV("X");
-
-    sem_post(&cnr_handle->sem);
-    return ret;
-}
-
 #endif
-#endif
-

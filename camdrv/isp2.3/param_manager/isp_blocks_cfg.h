@@ -31,7 +31,7 @@
 #include "cmr_types.h"
 #include "sprd_isp_r6p11.h"
 #include "isp_mw.h"
-
+#include "swa_param.h"
 
 #ifdef	 __cplusplus
 extern "C" {
@@ -76,16 +76,6 @@ enum isp_slice_type_v1 {
 enum isp_slice_pos_info {
 	ISP_SLICE_MID,
 	ISP_SLICE_LAST,
-};
-
-enum
-{
-	ISP_PM_FB_SKINTONE_DEFAULT,
-	ISP_PM_FB_SKINTONE_YELLOW,
-	ISP_PM_FB_SKINTONE_WHITE,
-	ISP_PM_FB_SKINTONE_BLACK,
-	ISP_PM_FB_SKINTONE_INDIAN,
-	ISP_PM_FB_SKINTONE_NUM
 };
 
 struct isp_slice_param {
@@ -429,44 +419,8 @@ struct isp_ynr_param {
 	cmr_u32 nr_mode_setting;
 };
 
-struct isp_facebeauty_level
-{
-	cmr_u8 skinSmoothLevel[11];
-	cmr_u8 skinSmoothDefaultLevel;
-	cmr_u8 skinTextureHiFreqLevel[11];
-	cmr_u8 skinTextureHiFreqDefaultLevel;
-	cmr_u8 skinTextureLoFreqLevel[11];
-	cmr_u8 skinTextureLoFreqDefaultLevel;
-	cmr_u8 skinSmoothRadiusCoeff[11];
-	cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
-	cmr_u8 skinBrightLevel[11];
-	cmr_u8 skinBrightDefaultLevel;
-	cmr_u8 largeEyeLevel[11];
-	cmr_u8 largeEyeDefaultLevel;
-	cmr_u8 slimFaceLevel[11];
-	cmr_u8 slimFaceDefaultLevel;
-	cmr_u8 skinColorLevel[11];
-	cmr_u8 skinColorDefaultLevel;
-	cmr_u8 lipColorLevel[11];
-	cmr_u8 lipColorDefaultLevel;
-};
-
-struct isp_facebeauty_param
-{
-	cmr_u8 removeBlemishFlag;
-	cmr_u8 blemishSizeThrCoeff;
-	cmr_u8 skinColorType;
-	cmr_u8 lipColorType;
-	struct isp_facebeauty_level fb_layer;
-};
-
-struct isp_facebeauty_param_cfg_info
-{
-	struct isp_facebeauty_param fb_param[ISP_PM_FB_SKINTONE_NUM];
-};
-
 struct isp_facebeauty_param_info {
-	struct isp_facebeauty_param_cfg_info cur;
+	struct isp_fb_param_info cur;
 };
 
 struct isp_3d_nr_pre_param {
@@ -705,29 +659,17 @@ struct dcam_rgb_aem_param {
 };
 
 struct isp_cnr2_level_info {
-	cmr_u8 level_enable;
+	cmr_u16 level_enable;
 	cmr_u16 low_ct_thrd;
 };
 
 struct isp_cnr3_level_info {
-	cmr_u8 level_enable;
+	cmr_u16 level_enable;
 	cmr_u16 low_ct_thrd;
 };
 
-struct isp_filter_weights{
-	cmr_u8 distWeight[9];
-	cmr_u8 rangWeight[128];
-};
-
-#ifdef CAMERA_CNR3_ENABLE
-struct isp_cnr2_info {
-	cmr_u8 filter_en[CNR_LEVEL];
-	cmr_u8 rangTh[CNR_LEVEL][2];
-	struct isp_filter_weights weight[CNR_LEVEL][2];
-};
-
 struct isp_cnr2_param {
-	struct isp_cnr2_info cur;
+	struct isp_sw_cnr2_info cur;
 	struct isp_cnr2_level_info level_info;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -736,27 +678,8 @@ struct isp_cnr2_param {
 	cmr_u32 nr_mode_setting;
 };
 
-struct isp_multilayer_param {
-	cmr_u8 lowpass_filter_en;
-	cmr_u8 denoise_radial_en;
-	cmr_u8 order[3];
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 slope;
-	cmr_u16 baseRadius;
-	cmr_u16 minRatio;
-	cmr_u16 luma_th[2];
-	float sigma[3];
-};
-
-struct isp_cnr3_info {
-	cmr_u8 bypass;
-	cmr_u16 baseRadius;
-	struct isp_multilayer_param param_layer[CNR3_LAYER_NUM];
-};
-
 struct isp_cnr3_param {
-	struct isp_cnr3_info cur;
+	struct isp_sw_cnr3_info cur;
 	struct isp_cnr3_level_info level_info;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
@@ -764,24 +687,6 @@ struct isp_cnr3_param {
 	cmr_uint *scene_ptr;
 	cmr_u32 nr_mode_setting;
 };
-
-#else
-struct isp_cnr2_info {
-	cmr_u8 filter_en[CNR_LEVEL];
-	cmr_u8 rangTh[CNR_LEVEL][2];
-	struct isp_filter_weights weight[CNR_LEVEL][2];
-};
-
-struct isp_cnr2_param {
-	struct isp_cnr2_info cur;
-	struct isp_cnr2_level_info level_info;
-	cmr_u32 cur_level;
-	cmr_u32 level_num;
-	cmr_uint *param_ptr;
-	cmr_uint *scene_ptr;
-	cmr_u32 nr_mode_setting;
-};
-#endif
 
 struct isp_sw3dnr_param {
 	void *cur_data;
@@ -801,25 +706,8 @@ struct isp_mfnr_param {
 	cmr_u32 nr_mode_setting;
 };
 
-struct isp_ynrs_level{
-	cmr_u8 lumi_thresh[2];
-	cmr_u8 gf_rnr_ratio[5];
-	cmr_u8 gf_addback_enable[5];
-	cmr_u8 gf_addback_ratio[5];
-	cmr_u8 gf_addback_clip[5];
-	cmr_u16 Radius;
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 gf_epsilon[5][3];
-	cmr_u16 gf_enable[5];
-	cmr_u16 gf_radius[5];
-	cmr_u16 gf_rnr_offset[5];
-	cmr_u16 bypass;
-	cmr_u8 reserved[2];
-};
-
 struct isp_ynrs_param {
-	struct isp_ynrs_level cur;
+	struct isp_ynrs_info cur;
 	cmr_u32 cur_level;
 	cmr_u32 level_num;
 	cmr_uint *param_ptr;
@@ -916,9 +804,7 @@ struct isp_context {
 
 	struct isp_dres_param dre;
 	struct isp_facebeauty_param_info fb;
-#ifdef CAMERA_CNR3_ENABLE
 	struct isp_cnr3_param cnr3;
-#endif
 	struct isp_mfnr_param mfnr;
 	struct isp_dres_pro_param dre_pro;
 };
@@ -1223,12 +1109,10 @@ cmr_s32 _pm_ynrs_init(void *dst_ynrs_param, void *src_ynrs_param, void *param1, 
 cmr_s32 _pm_ynrs_set_param(void *ynrs_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_ynrs_get_param(void *ynrs_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
 
-#ifdef CAMERA_CNR3_ENABLE
 cmr_u32 _pm_cnr3_convert_param(void *dst_cnr3_param, cmr_u32 strength_level, cmr_u32 mode_flag, cmr_u32 scene_flag);
 cmr_s32 _pm_cnr3_init(void *dst_cnr3_param, void *src_cnr3_param, void *param1, void *param2);
 cmr_s32 _pm_cnr3_set_param(void *cnr3_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);
 cmr_s32 _pm_cnr3_get_param(void *cnr3_param, cmr_u32 cmd, void *rtn_param0, void *rtn_param1);
-#endif
 
 cmr_s32 _pm_mfnr_init(void *dst_mfnr_param, void *src_mfnr_param, void *param1, void *param_ptr2);
 cmr_s32 _pm_mfnr_set_param(void *mfnr_param, cmr_u32 cmd, void *param_ptr0, void *param_ptr1);

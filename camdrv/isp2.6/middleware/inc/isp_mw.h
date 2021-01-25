@@ -35,9 +35,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 #define ISP_CALLBACK_EVT                     0x00040000
 
 #define ISP_AI_FD_NUM (20)
-//#define ISP_AI_AE_STAT_SIZE (16384) /*128*128*/
 #define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
-#define CNR3_LAYER_NUM 5
 
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
@@ -390,7 +388,6 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_MICRODEPTH_PARAM = 113,
 	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
 	ISP_CTRL_SENSITIVITY,
-	ISP_CTRL_GET_CNR2_YNR_EN,
 	ISP_CTRL_GET_CNR2_PARAM = 117,
 	ISP_CTRL_AUTO_HDR_MODE,
 	ISP_CTRL_SET_CAP_FLAG,
@@ -511,82 +508,6 @@ enum isp_ai_rotation {
 	ISP_AI_SD_ORNT_180,
 	ISP_AI_SD_ORNT_270,
 	ISP_AI_SD_ORNT_MAX
-};
-
-enum
-{
-	ISP_FB_SKINTONE_DEFAULT,
-	ISP_FB_SKINTONE_YELLOW,
-	ISP_FB_SKINTONE_WHITE,
-	ISP_FB_SKINTONE_BLACK,
-	ISP_FB_SKINTONE_INDIAN,
-	ISP_FB_SKINTONE_NUM
-};
-
-//DRE feature
-struct isp_predre_param {
-	cmr_s32 enable;
-	cmr_s32 imgKey_setting_mode;
-	cmr_s32 tarNorm_setting_mode;
-	cmr_s32 target_norm;
-	cmr_s32 imagekey;
-	cmr_s32 min_per;
-	cmr_s32 max_per;
-	cmr_s32 stat_step;
-	cmr_s32 low_thresh;
-	cmr_s32 high_thresh;
-	cmr_s32 tarCoeff;
-};
-
-struct isp_postdre_param {
-	cmr_s32 enable;
-	cmr_s32 strength;
-	cmr_s32 texture_counter_en;
-	cmr_s32 text_point_thres;
-	cmr_s32 text_prop_thres;
-	cmr_s32 tile_num_auto;
-	cmr_s32 tile_num_x;
-	cmr_s32 tile_num_y;
-};
-
-//DRE level
-struct isp_dre_level {
-	struct isp_predre_param predre_param;
-	struct isp_postdre_param postdre_param;
-};
-
-//DRE_pro feature
-struct isp_predre_pro_param {
-	cmr_s32 enable;
-	cmr_s32 imgKey_setting_mode;
-	cmr_s32 tarNorm_setting_mode;
-	cmr_s32 target_norm;
-	cmr_s32 imagekey;
-	cmr_s32 min_per;
-	cmr_s32 max_per;
-	cmr_s32 stat_step ;
-	cmr_s32 low_thresh;
-	cmr_s32 high_thresh;
-	cmr_s32 uv_gain_ratio;
-	cmr_s32 tarCoeff;
-};
-
-struct isp_postdre_pro_param {
-	cmr_s32 enable;
-	cmr_s32 strength;
-	cmr_s32 texture_counter_en;
-	cmr_s32 text_point_thres;
-	cmr_s32 text_prop_thres;
-	cmr_s32 tile_num_auto;
-	cmr_s32 tile_num_x;
-	cmr_s32 tile_num_y;
-	cmr_s32 text_point_alpha;
-};
-
-//DRE_pro level
-struct isp_dre_pro_level {
-	struct isp_predre_pro_param predre_pro_param;
-	struct isp_postdre_pro_param postdre_pro_param;
 };
 
 struct isp_flash_cfg {
@@ -749,30 +670,6 @@ struct isp_af_ts {
 	cmr_u32 capture;
 };
 
-struct isp_face_info {
-	cmr_u32 sx;
-	cmr_u32 sy;
-	cmr_u32 ex;
-	cmr_u32 ey;
-	cmr_u32 brightness;
-	cmr_s32 pose;
-	cmr_s32 angle;
-	cmr_s32 yaw_angle;
-	cmr_s32 roll_angle;
-	cmr_u32 score;
-	cmr_u32 id;
-};
-
-struct isp_face_area {
-	cmr_u16 type;
-	cmr_u16 face_num;
-	cmr_u16 frame_width;
-	cmr_u16 frame_height;
-	struct isp_face_info face_info[10];
-	cmr_u32 frame_id;
-	cmr_s64 timestamp;
-};
-
 struct isp_img_mfd {
 	cmr_u32 y;
 	cmr_u32 u;
@@ -869,19 +766,11 @@ struct isp_fdr_param {
 	cmr_u32 ev_effect_cnt;
 };
 
- enum camera_snapshot_tpye {
-	SNAPSHOT_NULL = 0,
-	SNAPSHOT_DRE,
-	SNAPSHOT_GTM,
-} ;
-
-
-
 struct isp_snp_ae_param {   // param OEM sent to ISP
 	cmr_u32 enable;
 	cmr_u32 ev_effect_valid_num;
 	cmr_u32 ev_adjust_count;
-	enum camera_snapshot_tpye type;
+	cmr_u32 type;
 };
 
 struct isp_info {
@@ -1011,72 +900,6 @@ struct isp_video_start {
 	cmr_u16 app_mode;
 };
 
-struct isp_img_param {
-	cmr_u32 img_fmt;
-	cmr_u32 channel_id;
-	cmr_u32 base_id;
-	cmr_u32 count;
-	cmr_u32 length;
-	cmr_u32 slice_height;
-	cmr_u32 start_buf_id;
-	cmr_u32 is_reserved_buf;
-	cmr_u32 flag;
-	cmr_u32 index;
-	struct isp_size img_size;
-	struct isp_img_mfd img_fd;
-	struct isp_addr addr;
-	struct isp_addr addr_vir;
-	cmr_uint zsl_private;
-};
-
-struct isp_buffer {
-	cmr_u8 *buffer;
-	cmr_s32 fd;
-};
-
-struct isp_3dnr_info {
-	struct isp_buffer image[3];
-	cmr_u32 width;
-	cmr_u32 height;
-	cmr_s8 mv_x;
-	cmr_s8 mv_y;
-	cmr_u8 blending_no;
-};
-
-/* sw 3DNR param */
-/* used to pass sw3dnr param from tuning array to HAL->3dnr adapt
-  * must keep consistent with struct ( sensor_sw3dnr_level) in sensor_raw_xxx.h
-  * should not be modified except sensor_raw_xxx.h changes corresponding structure */
-struct isp_mfnr_info {
-	cmr_s32 threshold[4];
-	cmr_s32 slope[4];
-	cmr_u16 searchWindow_x;
-	cmr_u16 searchWindow_y;
-	cmr_s32 recur_str;
-	cmr_s32 match_ratio_sad;
-	cmr_s32 match_ratio_pro;
-	cmr_s32 feat_thr;
-	cmr_s32 zone_size;
-	cmr_s32 luma_ratio_high;
-	cmr_s32 luma_ratio_low;
-	cmr_s32 reserverd[16];
-};
-
-struct isp_sw3dnr_info {
-	cmr_s32 threshold[4];
-	cmr_s32 slope[4];
-	cmr_u16 searchWindow_x;
-	cmr_u16 searchWindow_y;
-	cmr_s32 recur_str;
-	cmr_s32 match_ratio_sad;
-	cmr_s32 match_ratio_pro;
-	cmr_s32 feat_thr;
-	cmr_s32 zone_size;
-	cmr_s32 luma_ratio_high;
-	cmr_s32 luma_ratio_low;
-	cmr_s32 reserverd[16];
-};
-
 struct isp_exp_compensation{
 	cmr_s32 comp_val;
 	struct isp_range_l comp_range;
@@ -1179,123 +1002,9 @@ struct isp_init_param {
 	cmr_u32 is_faceId_unlock;
 };
 
-struct isp_sw_filter_weights
-{
-	cmr_u8 distWeight[9];
-	cmr_u8 rangWeight[128];
-};
-
-struct isp_sw_cnr2_info {
-	cmr_u8 filter_en[4];
-	cmr_u8 rangTh[4][2];
-	struct isp_sw_filter_weights weight[4][2];
-};
-
-struct isp_sw_cnr3_level_info {
-	cmr_u8 level_enable;
-	cmr_u16 low_ct_thrd;
-};
-
-#ifdef CAMERA_RADIUS_ENABLE
-struct isp_ynrs_tolib_param {
-	cmr_u8 lumi_thresh[2];
-	cmr_u8 gf_rnr_ratio[5];
-	cmr_u8 gf_addback_enable[5];
-	cmr_u8 gf_addback_ratio[5];
-	cmr_u8 gf_addback_clip[5];
-	cmr_u16 Radius_factor;
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 gf_epsilon[5][3];
-	cmr_u16 gf_enable[5];
-	cmr_u16 gf_radius[5];
-	cmr_u16 gf_rnr_offset[5];
-	cmr_u16 bypass;
-	cmr_u8 reserved[2];
-};
-
-struct isp_ynrs_info{
-	cmr_u16 Radius;
-	struct isp_ynrs_tolib_param ynrs_param;
-};
-#else
-struct isp_ynrs_info{
-	cmr_u8 lumi_thresh[2];
-	cmr_u8 gf_rnr_ratio[5];
-	cmr_u8 gf_addback_enable[5];
-	cmr_u8 gf_addback_ratio[5];
-	cmr_u8 gf_addback_clip[5];
-	cmr_u16 Radius;
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 gf_epsilon[5][3];
-	cmr_u16 gf_enable[5];
-	cmr_u16 gf_radius[5];
-	cmr_u16 gf_rnr_offset[5];
-	cmr_u16 bypass;
-	cmr_u8 reserved[2];
-};
-#endif
-
 struct img_offset {
 	uint32_t x;
 	uint32_t y;
-};
-
-//cnr3.0
-struct isp_sw_multilayer_param {
-	cmr_u8 lowpass_filter_en;
-	cmr_u8 denoise_radial_en;
-	cmr_u8 order[3];
-	cmr_u16 imgCenterX;
-	cmr_u16 imgCenterY;
-	cmr_u16 slope;
-	cmr_u16 baseRadius;
-	cmr_u16 minRatio;
-	cmr_u16 luma_th[2];
-	float sigma[3];
-};
-
-struct isp_sw_cnr3_info {
-	cmr_u8 bypass;
-	cmr_u16 baseRadius;
-	struct isp_sw_multilayer_param param_layer[CNR3_LAYER_NUM];
-};
-
-struct isp_fb_level
-{
-	cmr_u8 skinSmoothLevel[11];
-	cmr_u8 skinSmoothDefaultLevel;
-	cmr_u8 skinTextureHiFreqLevel[11];
-	cmr_u8 skinTextureHiFreqDefaultLevel;
-	cmr_u8 skinTextureLoFreqLevel[11];
-	cmr_u8 skinTextureLoFreqDefaultLevel;
-	cmr_u8 skinSmoothRadiusCoeff[11];
-	cmr_u8 skinSmoothRadiusCoeffDefaultLevel;
-	cmr_u8 skinBrightLevel[11];
-	cmr_u8 skinBrightDefaultLevel;
-	cmr_u8 largeEyeLevel[11];
-	cmr_u8 largeEyeDefaultLevel;
-	cmr_u8 slimFaceLevel[11];
-	cmr_u8 slimFaceDefaultLevel;
-	cmr_u8 skinColorLevel[11];
-	cmr_u8 skinColorDefaultLevel;
-	cmr_u8 lipColorLevel[11];
-	cmr_u8 lipColorDefaultLevel;
-};
-
-struct isp_fb_param
-{
-	cmr_u8 removeBlemishFlag;
-	cmr_u8 blemishSizeThrCoeff;
-	cmr_u8 skinColorType;
-	cmr_u8 lipColorType;
-	struct isp_fb_level fb_layer;
-};
-
-struct isp_fb_param_info
-{
-	struct isp_fb_param fb_param[ISP_FB_SKINTONE_NUM];
 };
 
 struct isp_ai_rect {

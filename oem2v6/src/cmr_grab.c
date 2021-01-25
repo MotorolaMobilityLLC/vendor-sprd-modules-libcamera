@@ -737,6 +737,14 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.dst_size.h = config->cfg.dst_img_size.height;
     pxl_fmt = cmr_grab_get_4cc(config->cfg.dst_img_fmt);
     parm.pixel_fmt = pxl_fmt;
+
+    parm.aux_img.enable = config->cfg.enable_slave_img;
+    parm.aux_img.pixel_fmt = pxl_fmt;
+    parm.aux_img.dst_size.w = config->cfg.dst_slave_img_size.width;
+    parm.aux_img.dst_size.h = config->cfg.dst_slave_img_size.height;
+    CMR_LOGD("slave ch en %d, fmt 0x%x, size %d %d\n",parm.aux_img.enable,
+		parm.aux_img.pixel_fmt, parm.aux_img.dst_size.w, parm.aux_img.dst_size.h);
+
     parm.sensor_id = config->sensor_id;
     pxl_fmt = cmr_grab_get_4cc(config->cfg.src_img_fmt);
     parm.sn_fmt = pxl_fmt;
@@ -1706,7 +1714,7 @@ static void *cmr_grab_thread_proc(void *data) {
 							cmr_grab_get_img_type(op.parm.frame.img_fmt));
 	                }
 
-                    CMR_LOGD("fdr real id=%d, monoboottime=%" PRId64,
+                    CMR_LOGD("frm real id=%d, monoboottime=%" PRId64,
                              op.parm.frame.real_index,
                              op.parm.frame.monoboottime);
                     CMR_LOGD("sensor_id %d, channel_id 0x%x, id 0x%x, evt_id 0x%x "
@@ -1715,7 +1723,7 @@ static void *cmr_grab_thread_proc(void *data) {
                              op.parm.frame.index, evt_id, op.parm.frame.sec,
                              op.parm.frame.usec, op.parm.frame.mfd,
                              op.parm.frame.yaddr_vir, op.parm.frame.height, op.parm.frame.length);
-                    CMR_LOGD("fdr addr: 0x%lx, 0x%lx, 0x%lx, vir_addr: 0x%lx, 0x%lx, 0x%lx",
+                    CMR_LOGD("paddr: 0x%lx, 0x%lx, 0x%lx, vir_addr: 0x%lx, 0x%lx, 0x%lx",
                          op.parm.frame.yaddr, op.parm.frame.uaddr, op.parm.frame.vaddr,
                          op.parm.frame.yaddr_vir, op.parm.frame.uaddr_vir, op.parm.frame.vaddr_vir);
                 }

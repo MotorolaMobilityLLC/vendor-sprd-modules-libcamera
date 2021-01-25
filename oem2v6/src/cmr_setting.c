@@ -212,6 +212,7 @@ struct setting_hal_param {
     cmr_uint ot_status;
     cmr_uint face_attributes_enabled;
     cmr_uint smile_capture_enabled;
+    cmr_uint zsl_ips_enable;
     cmr_uint sprd_logo_watermark;
     cmr_uint sprd_time_watermark;
     struct img_size originalPictureSize;
@@ -754,6 +755,8 @@ static cmr_int setting_set_encode_angle(struct setting_component *cpt,
     cmr_uint encode_angle = 0;
     cmr_uint encode_rotation = 0;
 
+    CMR_LOGD("is_rotation_capture %d, value %d\n",
+		(int)hal_param->is_rotation_capture, (int)parm->cmd_type_value);
     if (hal_param->is_rotation_capture) {
         uint32_t orientation;
 
@@ -787,7 +790,8 @@ static cmr_int setting_set_encode_angle(struct setting_component *cpt,
     hal_param->encode_rotation = encode_rotation;
     hal_param->encode_angle = encode_angle;
 
-    CMR_LOGD("encode_angle %ld, encode_rotation=%d", hal_param->encode_angle,hal_param->encode_rotation);
+    CMR_LOGD("set encode_angle %ld, encode_rotation=%d\n",
+		hal_param->encode_angle,hal_param->encode_rotation);
     return ret;
 }
 
@@ -797,6 +801,7 @@ static cmr_int setting_get_encode_angle(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->encode_angle;
+    CMR_LOGD("get encode_angle %d\n", hal_param->encode_angle);
     return ret;
 }
 
@@ -806,7 +811,7 @@ static cmr_int setting_get_encode_rotation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->encode_rotation;
-    CMR_LOGV("encode_rotation=%d", hal_param->encode_rotation);
+    CMR_LOGD("get encode_rotation=%d", hal_param->encode_rotation);
     return ret;
 }
 
@@ -1352,7 +1357,7 @@ setting_get_sensor_orientation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->sensor_orientation;
-    CMR_LOGV("get sensor_orientation %d",parm->cmd_type_value);
+    CMR_LOGD("get sensor_orientation %d",parm->cmd_type_value);
     return ret;
 }
 
@@ -1363,7 +1368,7 @@ setting_set_sensor_orientation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     hal_param->sensor_orientation = parm->cmd_type_value;
-    CMR_LOGV("set sensor_orientation %d",hal_param->sensor_orientation);
+    CMR_LOGD("set sensor_orientation %d",hal_param->sensor_orientation);
     return ret;
 }
 
@@ -2501,7 +2506,8 @@ static cmr_int setting_set_capture_angle(struct setting_component *cpt,
 
     hal_param->preview_angle = angle;
     hal_param->capture_angle = angle;
-
+    CMR_LOGD("pre_angel %d, cap_angel %d\n",
+		hal_param->preview_angle, hal_param->capture_angle);
     return ret;
 }
 
@@ -2555,6 +2561,7 @@ static cmr_int setting_get_capture_angle(struct setting_component *cpt,
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
+    CMR_LOGD("get cap_angel %d\n", hal_param->capture_angle);
     parm->cmd_type_value = hal_param->capture_angle;
     return ret;
 }
@@ -3450,6 +3457,7 @@ setting_get_rotation_capture(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->is_rotation_capture;
+    CMR_LOGD("get is_rotation_capture %d\n", hal_param->is_rotation_capture);
     return ret;
 }
 
@@ -3460,6 +3468,7 @@ setting_set_rotation_capture(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     hal_param->is_rotation_capture = parm->cmd_type_value;
+    CMR_LOGD("set is_rotation_capture %d\n", hal_param->is_rotation_capture);
     return ret;
 }
 
@@ -4046,6 +4055,24 @@ static cmr_int get_super_macrophoto(struct setting_component *cpt,
     return ret;
 }
 
+static cmr_int setting_set_zsl_ips_enable(struct setting_component *cpt,
+                                         struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->zsl_ips_enable = parm->cmd_type_value;
+    return ret;
+}
+
+static cmr_int setting_get_zsl_ips_enable(struct setting_component *cpt,
+                                         struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->zsl_ips_enable;
+    return ret;
+}
+
 static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
 
     [CAMERA_PARAM_ZOOM] = setting_set_zoom_param,
@@ -4313,6 +4340,10 @@ static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
                              setting_set_smile_capture,
     [SETTING_GET_SPRD_SMILE_CAPTURE_ENABLED] =
                              setting_get_smile_capture,
+    [CAMERA_PARAM_ZSL_IPS_ENABLE] =
+                             setting_set_zsl_ips_enable,
+    [SETTING_GET_ZSL_IPS_ENABLE] =
+                             setting_get_zsl_ips_enable,
     [SETTING_GET_LAST_PREFLASH_TIME] =
                              setting_get_last_preflash_time,
 };
