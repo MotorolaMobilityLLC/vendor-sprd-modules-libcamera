@@ -187,7 +187,7 @@ struct isp_block_operations s_imblance_ops= {_pm_imblance_init,_pm_imblance_set_
 struct isp_block_operations s_mfnr_ops= {_pm_mfnr_init,_pm_mfnr_set_param,_pm_mfnr_get_param, PNULL, PNULL };
 struct isp_block_operations s_nlm_ops= {_pm_nlm_init,_pm_nlm_set_param,_pm_nlm_get_param, PNULL, PNULL };
 struct isp_block_operations s_ppe_ops= {_pm_ppe_init,_pm_ppe_set_param,_pm_ppe_get_param, PNULL, PNULL };
-//struct isp_block_operations s_raw_gtm_ops= {_pm_gtm_init,_pm_gtm_set_param,_pm_gtm_get_param, PNULL, PNULL };
+struct isp_block_operations s_raw_gtm_ops= {_pm_gtm_init,_pm_gtm_set_param,_pm_gtm_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_dither_ops= {_pm_rgb_dither_init,_pm_rgb_dither_set_param,_pm_rgb_dither_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_gain_ops= {_pm_rgb_gain_init,_pm_rgb_gain_set_param,_pm_rgb_gain_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_ltm_ops= {_pm_rgb_ltm_init,_pm_rgb_ltm_set_param,_pm_rgb_ltm_get_param, PNULL, PNULL };
@@ -432,7 +432,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_DRE, array_offset(struct isp_context, dre), sizeof(struct isp_dres_param), &s_dre_ops},
 	{ISP_BLK_CNR3, array_offset(struct isp_context, cnr3), sizeof(struct isp_cnr3_param), &s_cnr3_ops},
 	{ISP_BLK_RGB_LTM, array_offset(struct isp_context, rgb_ltm), sizeof(struct isp_rgb_ltm_param), &s_rgb_ltm_ops},
-	//{ISP_BLK_RAW_GTM, array_offset(struct isp_context, gtm), sizeof(struct isp_raw_gtm_param), &s_raw_gtm_ops},
+	{ISP_BLK_RAW_GTM, array_offset(struct isp_context, gtm), sizeof(struct isp_raw_gtm_param), &s_raw_gtm_ops},
 	{ISP_BLK_FB, array_offset(struct isp_context, fb), sizeof(struct isp_facebeauty_param_info), &s_fb_ops},
 	{ISP_BLK_MFNR, array_offset(struct isp_context, mfnr), sizeof(struct isp_mfnr_param), &s_mfnr_ops},
 	{ISP_BLK_DRE_PRO, array_offset(struct isp_context, dre_pro), sizeof(struct isp_dres_pro_param), &s_dre_pro_ops},

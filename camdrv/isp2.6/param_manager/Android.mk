@@ -219,7 +219,8 @@ LOCAL_SRC_FILES += blk_list/isp_block_com.c \
 	blk_list/isp_blk_yuv_precdn.c \
 	blk_list/isp_blk_yuv_ygamma_v1.c \
 	blk_list/isp_blk_hsv_v3.c \
-	blk_list/isp_blk_ai_pro_v2.c
+	blk_list/isp_blk_ai_pro_v2.c \
+	blk_list/isp_blk_raw_gtm.c
 else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.9)
 LOCAL_SRC_FILES += blk_list/isp_block_com.c \
 	blk_list/isp_blk_aem.c \
