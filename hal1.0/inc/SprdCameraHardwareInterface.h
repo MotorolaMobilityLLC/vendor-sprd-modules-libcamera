@@ -168,36 +168,6 @@ class SprdCameraHardware : public virtual RefBase {
 
   private:
     inline void print_time();
-
-    // This class represents a heap which maintains several contiguous
-    // buffers.  The heap may be backed by pmem (when pmem_pool contains
-    // the name of a /dev/pmem* file), or by ashmem (when pmem_pool == NULL).
-    struct MemPool : public RefBase {
-        MemPool(int buffer_size, int num_buffers, int frame_size,
-                int frame_offset, const char *name);
-        virtual ~MemPool() = 0;
-        void completeInitialization();
-        bool initialized() const {
-            if (mHeap != NULL) {
-                if (MAP_FAILED != mHeap->getBase())
-                    return true;
-                else
-                    return false;
-            } else {
-                return false;
-            }
-        }
-        virtual status_t dump(int fd, const Vector<String16> &args) const;
-        int mBufferSize;
-        int mNumBuffers;
-        int mFrameSize;
-        int mFrameOffset;
-        sp<MemoryHeapBase> mHeap;
-#if (MINICAMERA != 1)
-        sp<MemoryBase> *mBuffers;
-#endif
-        const char *mName;
-    };
     struct OneFrameMem {
         sp<MemIon> input_y_pmem_hp;
         uint32_t input_y_pmemory_size;
@@ -214,10 +184,6 @@ class SprdCameraHardware : public virtual RefBase {
         int diff_yuv_color[MAX_LOOP_COLOR_COUNT][MAX_Y_UV_COUNT];
         uint32_t mShakeTestColorCount;
         shake_test_state mShakeTestState;
-    };
-    struct AshmemPool : public MemPool {
-        AshmemPool(int buffer_size, int num_buffers, int frame_size,
-                   int frame_offset, const char *name);
     };
     bool allocatePreviewMemFromGraphics(cmr_u32 size, cmr_u32 sum,
                                         cmr_uint *phy_addr, cmr_uint *vir_addr,
