@@ -2429,11 +2429,6 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
             fps_param.min_fps = val_min > 5 ? val_min : 5;
             fps_param.max_fps = val_max;
         }
-        if(fps_param.min_fps == SLOWMOTION_120FPS && fps_param.max_fps == SLOWMOTION_120FPS) {
-            mIsSlowmotion = true;
-        } else {
-            mIsSlowmotion = false;
-        }
     } else {
         fps_param.min_fps = controlInfo.ae_target_fps_range[0];
         fps_param.max_fps = controlInfo.ae_target_fps_range[1];
@@ -2441,7 +2436,6 @@ void SprdCamera3OEMIf::setPreviewFps(bool isRecordMode) {
         setCamPreviewFps(fps_param);
     }
 
-    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SLOW_MOTION_FLAG, (cmr_uint)mIsSlowmotion);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_RANGE_FPS,
              (cmr_uint)&fps_param);
 
