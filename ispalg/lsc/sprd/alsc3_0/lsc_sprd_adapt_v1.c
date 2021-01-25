@@ -628,7 +628,7 @@ static void lsc_interlace_change_pattern(cmr_u16 * lsc_table, cmr_u32 width, cmr
 	lsc_channel_to_interlace(width, height, new_pattern, table_r, table_gr, table_gb, table_b, lsc_table);
 }
 
-static void lsc_table_linear_scaler(cmr_u16 * src_tab, cmr_u32 src_w, cmr_u32 src_h, cmr_u16 * dst_tab, cmr_u32 dst_w, cmr_u32 dst_h, cmr_u32 is_plane)
+static int lsc_table_linear_scaler(cmr_u16 * src_tab, cmr_u32 src_w, cmr_u32 src_h, cmr_u16 * dst_tab, cmr_u32 dst_w, cmr_u32 dst_h, cmr_u32 is_plane)
 {
 	cmr_u32 i, j;
 	cmr_u16 pre_r[32 * 32] = { 0 };
@@ -649,6 +649,16 @@ static void lsc_table_linear_scaler(cmr_u16 * src_tab, cmr_u32 src_w, cmr_u32 sr
 	cmr_u16 *ch_b;
 
 	ISP_LOGV("src_w=%d, src_h=%d, dst_w=%d, dst_h=%d, plane_flag=%d", src_w, src_h, dst_w, dst_h, is_plane);
+
+	if (src_w < 2 || src_h < 2 || src_w > MAX_WIDTH || src_h > MAX_HEIGHT) {
+		ISP_LOGE("the size of src_tab out of limit !");
+		return -1;
+	}
+
+	if (dst_w < 2 || dst_h < 2 || dst_w > MAX_WIDTH || dst_h > MAX_HEIGHT) {
+		ISP_LOGE("the size of dst_tab out of limit !");
+		return -1;
+	}
 
 	if (src_w == dst_w && src_h == dst_h) {
 		memcpy(dst_tab, src_tab, src_w * src_h * 4 * sizeof(cmr_u16));
@@ -733,11 +743,13 @@ static void lsc_table_linear_scaler(cmr_u16 * src_tab, cmr_u32 src_w, cmr_u32 sr
 			lsc_channel_to_interlace(dst_w, dst_h, 3, out_r, out_gr, out_gb, out_b, dst_tab);
 		}
 	}
+
+	return 0;
 }
 
 static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct alsc_fwprocstart_info *fwprocstart_info)
 {
-	cmr_u32 i;
+	cmr_u32 i, rtn = 0;
 	cmr_u32 pre_width = proc_start_gain_w;
 	cmr_u32 pre_height = proc_start_gain_h;
 	cmr_u32 pre_pattern = proc_start_gain_pattern;
@@ -766,7 +778,10 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 	new_pattern = lsc_raw_pattern_to_lsc_pattern(fwprocstart_info->image_pattern_new);
 
 	// scale master dnp table to slave size
-	lsc_table_linear_scaler(lsc_pre_table, pre_width, pre_height, output_tab, new_width, new_height, cxt->is_planar);
+	rtn = lsc_table_linear_scaler(lsc_pre_table, pre_width, pre_height, output_tab, new_width, new_height, cxt->is_planar);
+	if(rtn)
+		return -1;
+
 	lsc_interlace_to_channel(new_width, new_height, pre_pattern, out_r_tab, out_gr_tab, out_gb_tab, out_b_tab, output_tab);
 
 	// get slave dnp table
@@ -827,7 +842,10 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 	cmr_u16 output_gr[32 * 32] = { 0 };
 	cmr_u16 output_gb[32 * 32] = { 0 };
 	cmr_u16 output_b[32 * 32] = { 0 };
-	lsc_table_linear_scaler(lsc_pre_reslut_table, pre_width, pre_height, lsc_result_address_new, new_width, new_height, cxt->is_planar);
+	rtn = lsc_table_linear_scaler(lsc_pre_reslut_table, pre_width, pre_height, lsc_result_address_new, new_width, new_height, cxt->is_planar);
+	if(rtn)
+		return -1;
+
 	lsc_interlace_to_channel(new_width, new_height, pre_pattern, output_r, output_gr, output_gb, output_b, lsc_result_address_new);
 
 	//lsc_change_pattern
@@ -1548,7 +1566,7 @@ static cmr_u32 lsc_get_alg_in_flag(struct lsc_sprd_ctrl_context *cxt, cmr_u32 * 
 
 static cmr_s32 lsc_fwstart_update_first_tab(struct lsc_sprd_ctrl_context *cxt, struct alsc_fwstart_info *fwstart_info, cmr_u32 planar_flag)
 {
-	cmr_u32 i;
+	cmr_u32 i, rtn = 0;
 	struct lsc_flash_proc_param *flash_param = (struct lsc_flash_proc_param *)cxt->lsc_flash_proc_param;
 	cmr_u32 pre_width = cxt->gain_width;
 	cmr_u32 pre_height = cxt->gain_height;
@@ -1619,11 +1637,17 @@ static cmr_s32 lsc_fwstart_update_first_tab(struct lsc_sprd_ctrl_context *cxt, s
 		cmr_u32 gr_chnl_off, r_chnl_off, b_chnl_off, gb_chnl_off;
 
 		// step1: scale pre DNP table to new gain size
-		lsc_table_linear_scaler(lsc_pre_table, pre_width, pre_height, scaled_tab, new_width, new_height, 0);
+		rtn = lsc_table_linear_scaler(lsc_pre_table, pre_width, pre_height, scaled_tab, new_width, new_height, 0);
+		if(rtn)
+			return -1;
+
 		lsc_interlace_to_channel(new_width, new_height, pre_pattern, r_tab, gr_tab, gb_tab, b_tab, scaled_tab);
 
 		// step2: scale pre dest table
-		lsc_table_linear_scaler(lsc_pre_reslut_table, pre_width, pre_height, scaled_tab, new_width, new_height, planar_flag);
+		rtn = lsc_table_linear_scaler(lsc_pre_reslut_table, pre_width, pre_height, scaled_tab, new_width, new_height, planar_flag);
+		if(rtn)
+			return -1;
+
 		if (cxt->is_planar == 0) {
 			lsc_interlace_to_channel(new_width, new_height, output_gain_pattern, pre_out_r, pre_out_gr, pre_out_gb, pre_out_b, scaled_tab);
 		} else {
@@ -2227,7 +2251,7 @@ static void alsc_do_simulation(void *handle,void *in)
 }
 
 static void lsc_multi_camera_sync(struct lsc_sprd_ctrl_context *cxt){
-	cmr_u32 i;
+	cmr_u32 i, rtn = 0;
 	cmr_u32 pre_width = proc_start_gain_w;
 	cmr_u32 pre_height = proc_start_gain_h;
 	cmr_u32 pre_pattern = proc_start_gain_pattern;
@@ -2278,8 +2302,13 @@ static void lsc_multi_camera_sync(struct lsc_sprd_ctrl_context *cxt){
 		return;
 	}
 
-	lsc_table_linear_scaler(proc_start_output_table,pre_width,pre_height,lsc_pre_result_scale_table,new_width,new_height,cxt->is_planar);
-	lsc_table_linear_scaler(proc_start_param_table,pre_width,pre_height,lsc_pre_pm0_scale_table,new_width,new_height,cxt->is_planar);
+	rtn = lsc_table_linear_scaler(proc_start_output_table,pre_width,pre_height,lsc_pre_result_scale_table,new_width,new_height,cxt->is_planar);
+	if(rtn)
+		return;
+
+	rtn = lsc_table_linear_scaler(proc_start_param_table,pre_width,pre_height,lsc_pre_pm0_scale_table,new_width,new_height,cxt->is_planar);
+	if(rtn)
+		return;
 
 	if(cxt->is_planar == 1){
 		lsc_planar_to_channel(new_width, new_height, pre_pattern, pre_pm0_r_tab, pre_pm0_gr_tab, pre_pm0_gb_tab, pre_pm0_b_tab, lsc_pre_pm0_scale_table);
@@ -3206,7 +3235,9 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 					memcpy(proc_start_param_table, fwprocstart_info->lsc_tab_address_new[0], proc_start_gain_w * proc_start_gain_h * 4 * sizeof(cmr_u16));
 					lsc_table_interlace2planar(proc_start_param_table, fwprocstart_info->gain_width_new, fwprocstart_info->gain_height_new,
 						fwprocstart_info->image_pattern_new, cxt->output_gain_pattern);
-					lsc_table_linear_scaler(cxt->output_lsc_table, cxt->gain_width, cxt->gain_height, proc_start_output_table, proc_start_gain_w, proc_start_gain_h, 1);
+					rtn = lsc_table_linear_scaler(cxt->output_lsc_table, cxt->gain_width, cxt->gain_height, proc_start_output_table, proc_start_gain_w, proc_start_gain_h, 1);
+					if(rtn)
+						return -1;
 
 					ISP_LOGV("FW_PROC_START, master table size(%d,%d)", proc_start_gain_w, proc_start_gain_h);
 					//ISP_LOGV("FW_PROC_START, master output table=[%d,%d,%d,%d]", proc_start_output_table[0],
