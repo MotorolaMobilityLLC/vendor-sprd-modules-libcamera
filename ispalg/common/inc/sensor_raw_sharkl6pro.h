@@ -26,8 +26,8 @@
 #include "../../ae/sprd/ae3.x/ae/inc/ae_tuning_type.h"
 
 //Gamma Correction in full RGB domain
-#define SENSOR_GAMMA_POINT_NUM 257
-#define SENSOR_Y_GAMMA_POINT_NUM 129
+#define SENSOR_GAMMA_POINT_NUM 1025
+#define SENSOR_Y_GAMMA_POINT_NUM 513
 
 #define AWB_POS_WEIGHT_LEN 64
 #define AWB_POS_WEIGHT_WIDTH_HEIGHT 4
@@ -86,8 +86,7 @@
 #define SENSOR_AWBM_WHITE_NUM 0x05
 #define SENSOR_LNC_RC_NUM 0x04
 #define SENSOR_HIST2_ROI_NUM 0x04
-#define SENSOR_GAMMA_POINT_NUM	257
-#define SENSOR_RGB_AFM_GAMMA_POINT_NUM	1025
+#define SENSOR_RGB_AFM_GAMMA_POINT_NUM 1025
 #define SENSOR_GAMMA_NUM 9
 #define SENSOR_LEVEL_NUM 16
 #define SENSOR_CMC_POINT_NUM 9
@@ -1217,41 +1216,6 @@ struct sensor_y_gamma_param {
 	struct sensor_gamma_curve specialeffect[MAX_SPECIALEFFECT_NUM];
 };
 
-//Dewarping
-struct sensor_dewarping_calib{
-	cmr_u16 calib_crop_start_x;
-	cmr_u16 calib_crop_start_y;
-	cmr_u16 calib_crop_w;
-	cmr_u16 calib_crop_h;
-	cmr_u16 calib_w;
-	cmr_u16 calib_h;
-	float dewarping_matrix[9];
-	float dewarping_undistort_coefs[23];
-	float dewarping_rectify_coefs[25];
-};
-
-struct sensor_dewarping_calc{
-	cmr_u16 crop_start_x;
-	cmr_u16 crop_start_y;
-	cmr_u16 crop_w;
-	cmr_u16 crop_h;
-	cmr_u8 mode;
-	cmr_u8 grid_table_mode;
-	cmr_u8 reserved[2];
-	float dewarping_grid_xy[1120][2];
-};
-
-struct sensor_dewarping_param{
-	cmr_u8 dewarping_bypass;
-	cmr_u8 grid_size;
-	cmr_u8 scale;
-	cmr_u8 reserved;
-	cmr_u16 dst_w;
-	cmr_u16 dst_h;
-	struct sensor_dewarping_calib dewarping_calib;
-	struct sensor_dewarping_calc dewarping_calc;
-};
-
 //pyramid online
 struct sensor_pyramid_onl_level{
 	cmr_u8 dec1_onine_bypass;
@@ -1348,7 +1312,8 @@ struct sensor_dct_level{
 struct sensor_3dlut_param{
 	cmr_u8 rgb3dlut_bypass;
 	cmr_u8 reserved[3];
-	cmr_u16 rgb3dlut_ct_table[729][6];
+	struct isp_sample_point_info cur_idx;
+	cmr_u16 rgb3dlut_ct_table[SENSOR_3D_LUT_NUM][729][6];
 };
 
 //Anti-flicker, old and new
