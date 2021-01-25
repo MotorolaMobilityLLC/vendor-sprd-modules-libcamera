@@ -73,7 +73,7 @@ int sprd_fdr_fb(sprd_camalg_image_t *image)
 
     void *fd_handle = 0;
     FD_OPTION option = {0};
-    option.fdEnv = FD_ENV_HW;
+    option.fdEnv = FD_ENV_SW;
 
     FdInitOption(&option);
 
