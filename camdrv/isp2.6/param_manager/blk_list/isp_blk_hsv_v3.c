@@ -191,10 +191,14 @@ cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 				//src for smart interp base on ct
 				src_matrix[0] = dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].y_blending_factor;
 				src_matrix[1] = dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].y_blending_factor;
-				memcpy(src_sat_matrix[0], dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_sat_lut, sizeof(src_sat_matrix[0]));
-				memcpy(src_sat_matrix[1], dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].hsv_2d_sat_lut, sizeof(src_sat_matrix[1]));
-				memcpy(src_reg_matrix[0], dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_hue_lut_reg, sizeof(src_reg_matrix[0]));
-				memcpy(src_reg_matrix[1], dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].hsv_2d_hue_lut_reg, sizeof(src_reg_matrix[1]));
+				memcpy(src_sat_matrix[0], dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_sat_lut,
+					sizeof(dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_sat_lut));
+				memcpy(src_sat_matrix[1], dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].hsv_2d_sat_lut,
+					sizeof(dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].hsv_2d_sat_lut));
+				memcpy(src_reg_matrix[0], dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_hue_lut_reg,
+					sizeof(dst_hsv_ptr->hsv_lut[ct_value[i]->value[0]].hsv_2d_hue_lut_reg));
+				memcpy(src_reg_matrix[1], dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].hsv_2d_hue_lut_reg,
+					sizeof(dst_hsv_ptr->hsv_lut[ct_value[i]->value[1]].hsv_2d_hue_lut_reg));
 				cmr_u16 weight[2] = { 0 };
 				weight[0] = ct_value[i]->weight[0];
 				weight[1] = ct_value[i]->weight[1];
