@@ -3161,29 +3161,27 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 	}
 
 	/* notify APP if need autofocus or not, just in flash auto mode */
-	if (cxt->camera_id == 0 || cxt->camera_id == 2 || cxt->camera_id == 3){
-		ISP_LOGV("flash open thr=%d, flash close thr=%d, bv=%d, flash_fired=%d, delay_cnt=%d",
-				 cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up, cxt->sync_cur_result.cur_bv, cxt->flash_fired, cxt->delay_cnt);
+	ISP_LOGV("flash open thr=%d, flash close thr=%d, bv=%d, flash_fired=%d, delay_cnt=%d",
+			 cxt->flash_thrd.thd_down, cxt->flash_thrd.thd_up, cxt->sync_cur_result.cur_bv, cxt->flash_fired, cxt->delay_cnt);
 
-		if (cxt->sync_cur_result.cur_bv < cxt->flash_thrd.thd_down) {
-			cxt->delay_cnt = 0;
-			flash_fired = 1;
-			cxt->flash_fired = 1;
+	if (cxt->sync_cur_result.cur_bv < cxt->flash_thrd.thd_down) {
+		cxt->delay_cnt = 0;
+		flash_fired = 1;
+		cxt->flash_fired = 1;
+		cb_type = AE_CB_FLASH_FIRED;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &flash_fired);
+		ISP_LOGV("flash will fire!\r\n");
+	}
+
+	else if ((cxt->sync_cur_result.cur_bv > cxt->flash_thrd.thd_up) && (cxt->flash_fired == 1)) {
+		if (cxt->delay_cnt == cxt->flash_timing_param.main_capture_delay) {
+			flash_fired = 0;
+			cxt->flash_fired = 0;
 			cb_type = AE_CB_FLASH_FIRED;
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &flash_fired);
-			ISP_LOGV("flash will fire!\r\n");
+			ISP_LOGV("flash will not fire!\r\n");
 		}
-
-		else if ((cxt->sync_cur_result.cur_bv > cxt->flash_thrd.thd_up) && (cxt->flash_fired == 1)) {
-			if (cxt->delay_cnt == cxt->flash_timing_param.main_capture_delay) {
-				flash_fired = 0;
-				cxt->flash_fired = 0;
-				cb_type = AE_CB_FLASH_FIRED;
-				(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, cb_type, &flash_fired);
-				ISP_LOGV("flash will not fire!\r\n");
-			}
-			cxt->delay_cnt++;
-		}
+		cxt->delay_cnt++;
 	}
 
 	if (AE_3DNR_AUTO == cxt->threednr_mode) {
