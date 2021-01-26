@@ -39,11 +39,11 @@ static uint32_t _gt9772_write_dac_code(cmr_handle sns_af_drv_handle,
 
     cmd_val[0] = 0x03;
     cmd_val[1] = (code & 0x300) >> 8;
-    ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
+    ret_value = (uint32_t)hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
                                    (uint8_t *)&cmd_val[0], cmd_len);
     cmd_val[0] = 0x04;
     cmd_val[1] = (code & 0xff);
-    ret_value = hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
+    ret_value = (uint32_t)hw_Sensor_WriteI2C(af_drv_cxt->hw_handle, slave_addr,
                                    (uint8_t *)&cmd_val[0], cmd_len);
 
     return ret_value;
@@ -153,10 +153,10 @@ static int _gt9772_drv_set_mode(cmr_handle sns_af_drv_handle) {
     uint8_t cmd_val[2] = {0x00};
     uint16_t slave_addr = gt9772_VCM_SLAVE_ADDR;
     uint16_t cmd_len = 0;
-    uint32_t ret_value = AF_SUCCESS;
+    cmr_int ret_value = AF_SUCCESS;
     uint32_t mode = gt9772_drv_entry.default_work_mode;
 
-    CMR_LOGI("mode = %d %x\n", mode, af_drv_cxt->af_work_mode);	
+    CMR_LOGI("mode = %d %x\n", mode, af_drv_cxt->af_work_mode);
 
     switch (mode) {
     case 1:   //direct mode
@@ -206,7 +206,7 @@ static int _gt9772_drv_set_mode(cmr_handle sns_af_drv_handle) {
         break;
 
     case 2: //AAC2 mode
-       
+
         cmd_val[0] = 0xED;
         cmd_val[1] = 0xAB;
         cmd_len = 2;
@@ -233,6 +233,9 @@ static int _gt9772_drv_set_mode(cmr_handle sns_af_drv_handle) {
 
         break;
     case 3:
+        break;
+
+    default:
         break;
     }
 

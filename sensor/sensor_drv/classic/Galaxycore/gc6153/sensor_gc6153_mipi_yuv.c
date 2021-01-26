@@ -173,7 +173,7 @@ static void gc6153_drv_calc_gain(cmr_handle handle,cmr_uint isp_gain, struct sen
 	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 	cmr_u32 sensor_gain = 0;
 
-	sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
+	sensor_gain = (cmr_u32)(isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain);
 	sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
 	if (SENSOR_MAX_GAIN < sensor_gain)
@@ -340,7 +340,7 @@ static cmr_int gc6153_drv_init_fps_info(cmr_handle handle)
     return rtn;
 }
 
-static cmr_int gc6153_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
+static cmr_int gc6153_drv_get_static_info(cmr_handle handle, void *param)
 {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
@@ -380,7 +380,7 @@ static cmr_int gc6153_drv_get_static_info(cmr_handle handle, cmr_u32 *param)
     return rtn;
 }
 
-static cmr_int gc6153_drv_get_fps_info(cmr_handle handle, cmr_u32 *param)
+static cmr_int gc6153_drv_get_fps_info(cmr_handle handle, void *param)
 {
     cmr_int rtn = SENSOR_SUCCESS;
     SENSOR_MODE_FPS_T *fps_info = (SENSOR_MODE_FPS_T *)param;
@@ -541,12 +541,12 @@ static cmr_int gc6153_drv_before_snapshot(cmr_handle handle, cmr_uint param)
 
 	if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
-        cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
+        cap_gain = (cmr_u32)sns_drv_cxt->sensor_ev_info.preview_gain;
 		goto snapshot_info;
 	}
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
-    prv_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
+    prv_gain = (cmr_u32)sns_drv_cxt->sensor_ev_info.preview_gain;
 
     if(sns_drv_cxt->ops_cb.set_mode)
         sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
@@ -669,7 +669,7 @@ static cmr_int gc6153_drv_set_master_FrameSync(cmr_handle handle,cmr_uint param)
  * mipi stream on
  * please modify this function acording your spec
  *============================================================================*/
-static cmr_int gc6153_drv_stream_on(cmr_handle handle, cmr_u32 param)
+static cmr_int gc6153_drv_stream_on(cmr_handle handle, cmr_uint param)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -735,9 +735,9 @@ static cmr_int gc6153_drv_handle_create(struct sensor_ic_drv_init_para *init_par
 
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
 
-	gc6153_drv_write_frame_length(sns_drv_cxt, &gc6153_aec_info, sns_drv_cxt->sensor_ev_info.preview_framelength);
-	gc6153_drv_write_gain(sns_drv_cxt, &gc6153_aec_info, sns_drv_cxt->sensor_ev_info.preview_gain);
-	gc6153_drv_write_shutter(sns_drv_cxt, &gc6153_aec_info, sns_drv_cxt->sensor_ev_info.preview_shutter);
+    gc6153_drv_write_frame_length(sns_drv_cxt, &gc6153_aec_info, sns_drv_cxt->sensor_ev_info.preview_framelength);
+    gc6153_drv_write_gain(sns_drv_cxt, &gc6153_aec_info, (cmr_u32)sns_drv_cxt->sensor_ev_info.preview_gain);
+    gc6153_drv_write_shutter(sns_drv_cxt, &gc6153_aec_info, sns_drv_cxt->sensor_ev_info.preview_shutter);
 
     sensor_ic_set_match_module_info(sns_drv_cxt, ARRAY_SIZE(s_gc6153_module_info_tab), s_gc6153_module_info_tab);
     sensor_ic_set_match_resolution_info(sns_drv_cxt, ARRAY_SIZE(s_gc6153_resolution_tab_raw), s_gc6153_resolution_tab_raw);
