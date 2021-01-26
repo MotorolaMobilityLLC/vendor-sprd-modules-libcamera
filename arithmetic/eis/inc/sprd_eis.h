@@ -53,10 +53,11 @@ typedef struct sprd_eis_init_info {
 
 typedef struct sprd_eis_multi_init_info {
 	char board_name[36];
-    int camera_id;
+	char sensor_name[36];
 	double f;
 	double td;
 	double ts;
+	double fov_loss;
 } sprd_eis_multi_init_info_t;
 
 typedef struct eis_info {
@@ -108,12 +109,19 @@ const sprd_eis_init_info_t eis_init_info_tab[] = {
 };
 
 const sprd_eis_multi_init_info eis_multi_init_info_tab[] = {
-    {"sp9863a-1", 0, 0.7766f, 0.0397f, 0.0224f},
-    {"sp9863a-1", 3, 0.4701f, 0.0397f, 0.0219f},
-    {"ums512-1", 0, 0.7432f, 0.0289f, 0.0208f},
-    {"ums512-1", 2, 0.4468f, 0.0297f, 0.0204f},
-    {"ums512-1", 3, 1.5442f, 0.0308f, 0.0222f},
+    {"sp9863a-1", "imx351", 0.7766f, 0.0397f, 0.0224f, 0.25f},
+    {"sp9863a-1", "ov5675_dual", 0.4701f, 0.0397f, 0.0219f, 0.25f},
+    {"ums512-1", "ov32a1q", 0.7432f, 0.0289f, 0.0208f, 0.25f},
+    {"ums512-1", "ov16885_normal", 0.4468f, 0.0297f, 0.0204f, 0.25f},
+    {"ums512-1", "ov8856_shine", 1.5442f, 0.0308f, 0.0222f, 0.25f},
+    {"ums512-1", "s5kgm1st_ofilm_p352_main", 0.758f, 0.030f, 0.0245f, 0.25f},
+    {"ums512-1", "ov8856_qt_p352_wide", 0.4657f, 0.0309f, 0.0209f, 0.25f},
+    {"ums512-1", "gc02m1_ui_p352_macro", 0.7266f, 0.0301f, 0.0229f, 0.25f},
+    {"ums512-1", "s5kgm1st_qt_p352_main", 0.7616f, 0.0303f, 0.0233f, 0.25f},
+    {"ums512-1", "ov8856_ofilm_p352_wide", 0.4624f, 0.0310f, 0.0225f, 0.25f},
+    {"ums512-1", "ov02b10_cxt_p352_macro", 0.7206f, 0.0307f, 0.0232f, 0.25f},
 };
+
 
 #ifdef __cplusplus
 }

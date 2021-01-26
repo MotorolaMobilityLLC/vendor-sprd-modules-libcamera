@@ -11557,11 +11557,12 @@ void SprdCamera3OEMIf::setOriginalPictureSize( int32_t width ,int32_t  height) {
 void SprdCamera3OEMIf::EisPreview_init() {
     int i = 0;
     int num = 0;
-    if (mMultiCameraMode == MODE_MULTI_CAMERA) {
-        num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
-    }else {
-        num = sizeof(eis_init_info_tab) / sizeof(sprd_eis_init_info_t);
-    }
+    int isAssigned;
+
+    num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
+    struct phySensorInfo *phyPtr = NULL;
+    phyPtr = sensorGetPhysicalSnsInfo(mCameraId);
+    HAL_LOGD("camId = %d, sensor_name = %s", mCameraId, phyPtr->sensor_name);
     video_stab_param_default(&mPreviewParam);
     mPreviewParam.src_w = (uint16_t)mPreviewWidth;
     mPreviewParam.src_h = (uint16_t)mPreviewHeight;
@@ -11576,24 +11577,20 @@ void SprdCamera3OEMIf::EisPreview_init() {
     mPreviewParam.f = 0.7747f;
     mPreviewParam.td = 0.038f;
     mPreviewParam.ts = 0.024f;
-    mPreviewParam.fov_loss = 0.2f;
+    mPreviewParam.fov_loss = 0.25f;
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
-         if(mMultiCameraMode == MODE_MULTI_CAMERA) {
-           if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
-                 0) && (mCameraId == eis_multi_init_info_tab[i].camera_id)) {
-                mPreviewParam.f = eis_multi_init_info_tab[i].f;   // 1230;
-                mPreviewParam.td = eis_multi_init_info_tab[i].td; // 0.004;
-                mPreviewParam.ts = eis_multi_init_info_tab[i].ts; // 0.021;
-           }
-         }else {
-           if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
-                 0) {
-                mPreviewParam.f = eis_init_info_tab[i].f;   // 1230;
-                mPreviewParam.td = eis_init_info_tab[i].td; // 0.004;
-                mPreviewParam.ts = eis_init_info_tab[i].ts; // 0.021;
-           }
-		}
+        if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
+             0) && (strcmp(eis_multi_init_info_tab[i].sensor_name, phyPtr->sensor_name) == 0)) {
+            mPreviewParam.f = eis_multi_init_info_tab[i].f;   // 1230;
+            mPreviewParam.td = eis_multi_init_info_tab[i].td; // 0.004;
+            mPreviewParam.ts = eis_multi_init_info_tab[i].ts; // 0.021;
+            mPreviewParam.fov_loss = eis_multi_init_info_tab[i].fov_loss;
+            isAssigned = 1;
+        }
+    }
+    if (isAssigned == 0) {
+        HAL_LOGD("mPreviewParam is not assigned");
     }
     HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf, fov_loss:%lf",
              mCameraId, mPreviewParam.f, mPreviewParam.td, mPreviewParam.ts,
@@ -11608,11 +11605,12 @@ void SprdCamera3OEMIf::EisVideo_init() {
     // mParam = {0};
     int i = 0;
     int num = 0;
-    if (mMultiCameraMode == MODE_MULTI_CAMERA) {
-        num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
-    } else {
-        num = sizeof(eis_init_info_tab) / sizeof(sprd_eis_init_info_t);
-    }
+    int isAssigned;
+
+    num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
+    struct phySensorInfo *phyPtr = NULL;
+    phyPtr = sensorGetPhysicalSnsInfo(mCameraId);
+    HAL_LOGD("camId = %d, sensor_name = %s", mCameraId, phyPtr->sensor_name);
     video_stab_param_default(&mVideoParam);
     mVideoParam.src_w = (uint16_t)mVideoWidth;
     mVideoParam.src_h = (uint16_t)mVideoHeight;
@@ -11627,24 +11625,20 @@ void SprdCamera3OEMIf::EisVideo_init() {
     mVideoParam.f = 0.7747f;
     mVideoParam.td = 0.038f;
     mVideoParam.ts = 0.024f;
-    mVideoParam.fov_loss = 0.2f;
+    mVideoParam.fov_loss = 0.25f;
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
-         if(mMultiCameraMode == MODE_MULTI_CAMERA) {
-           if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
-                 0) && (mCameraId == eis_multi_init_info_tab[i].camera_id)) {
-               mVideoParam.f = eis_multi_init_info_tab[i].f;   // 1230;
-               mVideoParam.td = eis_multi_init_info_tab[i].td; // 0.004;
-               mVideoParam.ts = eis_multi_init_info_tab[i].ts; // 0.021;
-           }
-         }else {
-           if (strcmp(eis_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
-               0) {
-               mVideoParam.f = eis_init_info_tab[i].f;   // 1230;
-               mVideoParam.td = eis_init_info_tab[i].td; // 0.004;
-               mVideoParam.ts = eis_init_info_tab[i].ts; // 0.021;
-           }
-         }
+       if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
+           0) && (strcmp(eis_multi_init_info_tab[i].sensor_name, phyPtr->sensor_name) == 0)) {
+            mVideoParam.f = eis_multi_init_info_tab[i].f;   // 1230;
+            mVideoParam.td = eis_multi_init_info_tab[i].td; // 0.004;
+            mVideoParam.ts = eis_multi_init_info_tab[i].ts; // 0.021;
+            mVideoParam.fov_loss = eis_multi_init_info_tab[i].fov_loss;
+            isAssigned = 1;
+       }
+    }
+    if (isAssigned == 0) {
+        HAL_LOGD("mVideoParam is not assigned");
     }
     HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf , fov_loss:%lf",
              mCameraId, mVideoParam.f, mVideoParam.td, mVideoParam.ts,
@@ -12078,7 +12072,7 @@ int SprdCamera3OEMIf::gyro_get_data(
             // push gyro data for eis preview & video queue
             SPRD_DEF_Tag *sprddefInfo;
             sprddefInfo = obj->mSetting->getSPRDDEFTagPTR();
-            if (obj->mRecordingMode && sprddefInfo->sprd_eis_enabled) {
+            if (sprddefInfo->sprd_eis_enabled) {
                 struct timespec t1;
                 clock_gettime(CLOCK_BOOTTIME, &t1);
                 nsecs_t time1 = (t1.tv_sec) * 1000000000LL + t1.tv_nsec;
