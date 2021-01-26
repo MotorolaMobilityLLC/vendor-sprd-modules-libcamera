@@ -1338,7 +1338,7 @@ static oem_ops_t oem_module_ops = {
     camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
     dump_image_with_isp_info, camera_get_focus_point, camera_isp_sw_check_buf,
     camera_isp_sw_proc, camera_raw_post_proc, camera_get_tuning_param,
-    camera_set_gpu_mem_ops,NULL,
+    camera_set_gpu_mem_ops,NULL,NULL,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
