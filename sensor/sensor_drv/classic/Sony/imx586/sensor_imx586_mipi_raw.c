@@ -870,7 +870,7 @@ static cmr_int imx586_drv_set_qsc_data(cmr_handle handle, cmr_uint param) {
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7f00 + i, *(param_ptr + 0xdde + i));
         SENSOR_LOGV("imx586_qsc address {0x%x, 0x%x}", 0x7f00 + i, *(param_ptr + 0xdde + i));
     }
-exit:
+
     return 0;
 
 }
@@ -894,9 +894,13 @@ static cmr_int imx586_drv_set_LRC_data(cmr_handle handle, cmr_uint param) {
     param_ptr = otp_cxt->otp_raw_data.buffer;
     lrc_area_control = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3038);
     SENSOR_LOGD("LRC area control is 0x3038 -> 0x%x", lrc_area_control);
-    for (int i = 0; i < 384; i++) {
-        	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7510 + i, *(param_ptr + 0x0C5D + i));
-        	SENSOR_LOGD("imx586_lrc address {0x%x, 0x%x}", 0x7510 + i, *(param_ptr + 0x0C5D + i));
+    for (int i = 0; i < 192; i++) {
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7510 + i, *(param_ptr + 0x0C5D + i));
+	SENSOR_LOGV("imx586_lrc address {0x%x, 0x%x}", 0x7510 + i, *(param_ptr + 0x0C5D + i));
+    }
+    for (int i = 0; i < 192; i++) {
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7600 + i, *(param_ptr + 0x0C5D + 192 + i));
+	SENSOR_LOGV("imx586_lrc address {0x%x, 0x%x}", 0x7600 + i, *(param_ptr + 0x0C5D + 192 + i));
     }
 exit:
     return 0;
