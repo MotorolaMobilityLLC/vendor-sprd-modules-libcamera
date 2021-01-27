@@ -48,7 +48,7 @@ class DrvCaseComm : public IParseJson {
         if(m_jsonCaseIDMap.find(tmp) != m_jsonCaseIDMap.end()) {
             this->m_caseID = m_jsonCaseIDMap[tmp];
         } else {
-            IT_LOGE("ERR CaseID Type Info", m_jsonCaseIDMap[tmp]);
+            IT_LOGE("ERR CaseID Type Info");
         }
     }
     void Set_ChipID(string strKey, void *value) {
