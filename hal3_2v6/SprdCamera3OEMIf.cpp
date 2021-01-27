@@ -5745,7 +5745,6 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
             HAL_LOGD("mFlush=%d", mFlush);
             goto exit;
         }
-
         if (mFlagHdr) {
             for (i = 0; i < (cmr_int)mZslNum; i++) {
                 for (int j = 0; j < 3; j++) {
@@ -11163,8 +11162,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
-        mZslNum = 3;
-        mZslMaxFrameNum = 3;
+        mZslNum = 5;
+        mZslMaxFrameNum = 5;
         (mIsFDRCapture)?(obj->mFlagHdr = false):(obj->mFlagHdr = true);
     } else if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                 mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
