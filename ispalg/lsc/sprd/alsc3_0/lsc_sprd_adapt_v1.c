@@ -1286,6 +1286,9 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	cxt->is_multi_mode = init_param->is_multi_mode;
 	cxt->grid = init_param->grid;
 	cxt->camera_id = init_param->camera_id;
+	cxt->ref_camera_id = init_param->camera_id;
+	cxt->next_camera_id = init_param->camera_id;
+	cxt->sync_flag = 0;
 	cxt->can_update_dest = 1;
 	cxt->alsc_update_flag = 0;
 	cxt->fw_start_end = 0;
