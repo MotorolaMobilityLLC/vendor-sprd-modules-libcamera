@@ -32,7 +32,7 @@ static cmr_int _s5k3l6_otp_section_checksum(cmr_u8 *buffer, cmr_uint offset,
                                              cmr_uint size,
                                              cmr_uint checksum_offset) {
     cmr_int ret = OTP_CAMERA_SUCCESS;
-    cmr_u32 i = 0, sum = 0, checksum_cal = 0;
+    cmr_uint i = 0, sum = 0, checksum_cal = 0;
 
     OTP_LOGV("E");
     for (i = offset; i < offset + size; i++) {
@@ -316,7 +316,7 @@ static cmr_int _s5k3l6_otp_parse_master_lsc_1v0(cmr_handle otp_drv_handle) {
                  lsc_data.lsc_img_width, lsc_data.lsc_img_height,
                  lsc_data.lsc_grid);
 
-        lsc_data.lsc_channel_size = _s5k3l6_otp_get_lsc_channel_size(
+        lsc_data.lsc_channel_size = (cmr_u32)_s5k3l6_otp_get_lsc_channel_size(
             lsc_data.lsc_img_width, lsc_data.lsc_img_height, lsc_data.lsc_grid);
 
     //}
@@ -629,7 +629,7 @@ static cmr_int s5k3l6_otp_drv_read(cmr_handle otp_drv_handle, void *param) {
             goto exit;
         }
         read_size =
-            fread(otp_cxt->otp_raw_data.buffer, 1, otp_cxt->eeprom_size, fp);
+            fread(otp_cxt->otp_raw_data.buffer, 1, (size_t)otp_cxt->eeprom_size, fp);
         if (read_size != otp_cxt->eeprom_size) {
             OTP_LOGE("read otp bin error, read_size is %d, otp size is %d",
                      read_size, otp_cxt->eeprom_size);
