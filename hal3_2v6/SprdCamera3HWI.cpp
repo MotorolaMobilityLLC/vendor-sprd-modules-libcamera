@@ -1302,7 +1302,12 @@ uint8_t SprdCamera3HWI::getReqCapureIntent(uint8_t capIntent) {
                mStreamConfiguration.video.status == CONFIGURED &&
                mStreamConfiguration.snapshot.status == CONFIGURED &&
                captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE) {
-        captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
+        if(mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD ||
+          mOldCapIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT)
+            captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT;
+        else
+            captureIntent = ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE;
+        HAL_LOGD("captureIntent = %d,mOldCapIntent = %d", captureIntent, mOldCapIntent);
     }
     return captureIntent;
 }
