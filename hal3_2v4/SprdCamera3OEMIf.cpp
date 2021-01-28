@@ -4489,7 +4489,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                     sprddefInfo.slowmotion > 1) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (mRecordingMode == true) {
-                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_2);
+                    setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_5);
                 } else {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_1);
                 }
