@@ -22,7 +22,7 @@
 #include "sprd_dre_adapter_pro.h"
 #include "isp_mw.h"
 
-struct class_dre {
+struct class_dre_pro {
     struct ipm_common common;
     cmr_uint is_inited;
     cmr_uint height;
@@ -48,7 +48,7 @@ struct class_tab_t dre_pro_tab_info = {
 static cmr_int dre_open(cmr_handle ipm_handle, struct ipm_open_in *in,
                         struct ipm_open_out *out, cmr_handle *class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct class_dre *dre_handle = NULL;
+    struct class_dre_pro *dre_handle = NULL;
     char value[PROPERTY_VALUE_MAX] = {
         0,
     };
@@ -59,13 +59,13 @@ static cmr_int dre_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     }
     CMR_LOGI("E");
 
-    dre_handle = (struct class_dre *)malloc(sizeof(struct class_dre));
+    dre_handle = (struct class_dre_pro *)malloc(sizeof(struct class_dre_pro));
     if (!dre_handle) {
         CMR_LOGE("No mem!");
         return CMR_CAMERA_NO_MEM;
     }
 
-    cmr_bzero(dre_handle, sizeof(struct class_dre));
+    cmr_bzero(dre_handle, sizeof(struct class_dre_pro));
 
     dre_handle->common.ipm_cxt = (struct ipm_context_t *)ipm_handle;
     dre_handle->common.class_type = IPM_TYPE_DRE;
@@ -104,7 +104,7 @@ exit:
 
 static cmr_int dre_close(cmr_handle class_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct class_dre *dre_handle = (struct class_dre *)class_handle;
+    struct class_dre_pro *dre_handle = (struct class_dre_pro *)class_handle;
     if (!dre_handle || !dre_handle->handle) {
         CMR_LOGE("dre_handle is null");
         return CMR_CAMERA_INVALID_PARAM;
@@ -135,7 +135,7 @@ static cmr_int dre_transfer_frame(cmr_handle class_handle,
                                   struct ipm_frame_in *in,
                                   struct ipm_frame_out *out) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct class_dre *dre_handle = (struct class_dre *)class_handle;
+    struct class_dre_pro *dre_handle = (struct class_dre_pro *)class_handle;
     struct img_addr *addr;
     cmr_uint width = 0;
     cmr_uint height = 0;

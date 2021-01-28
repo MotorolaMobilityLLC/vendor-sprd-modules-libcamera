@@ -17308,7 +17308,7 @@ cmr_int camera_ipm_pro_process(cmr_handle oem_handle, void *data) {
             CMR_LOGE("failed to do memory_flush %ld", ret);
         }
     }
-exit:
+
     CMR_LOGI("X");
     return ret;
 }
