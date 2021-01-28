@@ -1833,6 +1833,7 @@ static void ae_reset_base_index(struct ae_ctrl_cxt *cxt)
 	exp_comp.comp_range.max=16;
 	exp_comp.step_numerator=1;
 	exp_comp.step_denominator=8;
+	exp_comp.mode=0;
 	ae_set_exposure_compensation(cxt,&exp_comp);
 	ISP_LOGV("table_idx is Zero,fix to %d", cxt->cur_status.adv_param.cur_ev_setting.ae_idx);
 }
