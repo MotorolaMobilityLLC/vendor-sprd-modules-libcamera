@@ -77,6 +77,8 @@ struct hdr_context_t {
 	sprd_hdr_version_t version;
 };
 
+#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
+
 int swa_hdr_get_handle_size()
 {
 	return sizeof(struct hdr_context_t);
@@ -213,7 +215,7 @@ int swa_hdr_close(void * ipmpro_hanlde,
 	return ret;
 }
 #endif
-
+#endif
 
 
 #ifdef CONFIG_CAMERA_CNR
