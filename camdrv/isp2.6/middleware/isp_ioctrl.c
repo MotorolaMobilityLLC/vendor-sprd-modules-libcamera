@@ -4850,7 +4850,7 @@ static cmr_int ispctl_init_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
 	cmr_u32 set_id = PARAM_SET2;
-	cmr_u32 adaptive_size_info[3] = {0, 0, 0};
+	cmr_u32 adaptive_size_info[4] = {0, 0, 0};
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_pm_ioctl_input input = { PNULL, 0 };
 	struct pm_workmode_input  pm_input;
@@ -4896,7 +4896,12 @@ static cmr_int ispctl_init_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 			ISP_LOGD("[ALSC] lsc_pm_normalization case1, n binning");
 			adaptive_size_info[0] = pic_size.w;
 			adaptive_size_info[1] = pic_size.h;
+#if defined (CONFIG_ISP_2_9)
+			adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid_x * pic_size.w / cxt->lsc_cxt.full_size_width;
+			adaptive_size_info[3] = cxt->lsc_cxt.full_size_grid_y * pic_size.h / cxt->lsc_cxt.full_size_height;
+#else
 			adaptive_size_info[2] = cxt->lsc_cxt.full_size_grid * pic_size.w / cxt->lsc_cxt.full_size_width;
+#endif
 			memset(&param_data_grid, 0, sizeof(param_data_grid));
 			BLOCK_PARAM_CFG(input, param_data_grid,
 				ISP_PM_BLK_LSC_UPDATE_GRID,

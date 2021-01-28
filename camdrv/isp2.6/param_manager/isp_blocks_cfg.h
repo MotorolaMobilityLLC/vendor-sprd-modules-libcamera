@@ -136,6 +136,8 @@ struct isp_lsc_map {
 	cmr_u32 rg;
 	cmr_u32 bg;
 	cmr_u32 grid;
+	cmr_u32 grid_x;
+	cmr_u32 grid_y;
 	cmr_u32 gain_w;
 	cmr_u32 gain_h;
 	void *param_addr;
@@ -148,6 +150,8 @@ struct isp_lsc_info {
 	void *param_ptr;
 	cmr_u32 len;
 	cmr_u32 grid;
+	cmr_u32 grid_x;
+	cmr_u32 grid_y;
 	cmr_u32 gain_w;
 	cmr_u32 gain_h;
 };

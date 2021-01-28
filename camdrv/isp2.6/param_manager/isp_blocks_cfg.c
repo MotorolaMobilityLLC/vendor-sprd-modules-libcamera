@@ -203,7 +203,7 @@ struct isp_block_operations s_yuv_ygamma_ops= {_pm_yuv_ygamma_init,_pm_yuv_ygamm
 #endif
 
 #ifdef CONFIG_ISP_2_9
-//struct isp_block_operations s_2d_lsc_ops = { _pm_2d_lsc_init, _pm_2d_lsc_set_param, _pm_2d_lsc_get_param, _pm_common_rest, _pm_2d_lsc_deinit };
+struct isp_block_operations s_2d_lsc_ops = { _pm_2d_lsc_init, _pm_2d_lsc_set_param, _pm_2d_lsc_get_param, _pm_common_rest, _pm_2d_lsc_deinit };
 struct isp_block_operations s_3dnr_ops= {_pm_3dnr_init,_pm_3dnr_set_param,_pm_3dnr_get_param, PNULL, PNULL };
 struct isp_block_operations s_rgb_aem_ops = { _pm_rgb_aem_init, _pm_rgb_aem_set_param, _pm_rgb_aem_get_param, PNULL, PNULL };
 struct isp_block_operations s_ae_adapt_ops= {_pm_ae_adapt_init,_pm_ae_adapt_set_param,_pm_ae_adapt_get_param, PNULL, PNULL };
@@ -448,7 +448,7 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	/* ======== dcam blocks list starts ======= */
 	{ISP_BLK_BLC, array_offset(struct isp_context, blc), sizeof(struct isp_blc_param), &s_blc_ops},
 	{ISP_BLK_RGB_GAIN, array_offset(struct isp_context, rgb_gain), sizeof(struct isp_rgb_gain_param), &s_rgb_gain_ops},
-	//{ISP_BLK_2D_LSC, array_offset(struct isp_context, lsc_2d), sizeof(struct isp_2d_lsc_param), &s_2d_lsc_ops},
+	{ISP_BLK_2D_LSC, array_offset(struct isp_context, lsc_2d), sizeof(struct isp_2d_lsc_param), &s_2d_lsc_ops},
 	{ISP_BLK_RGB_AEM, array_offset(struct isp_context, aem), sizeof(struct isp_rgb_aem_param), &s_rgb_aem_ops},
 	{ISP_BLK_AWB_NEW, array_offset(struct isp_context, awb), sizeof(struct isp_awb_param), &s_awb_new_ops},
 	{DCAM_BLK_BPC_V1, array_offset(struct isp_context, bpc), sizeof(struct isp_bpc_param), &s_bpc_ops},
@@ -467,7 +467,6 @@ struct isp_block_cfg s_blk_cfgs[] = {
 	{ISP_BLK_3DNR, array_offset(struct isp_context, nr3d), sizeof(struct isp_nr3d_param), &s_3dnr_ops},
 	{ISP_BLK_BCHS, array_offset(struct isp_context, bchs), sizeof(struct isp_bchs_param), &s_bchs_ops},
 	{ISP_BLK_CFA_V1, array_offset(struct isp_context, cfa), sizeof(struct isp_cfa_param), &s_cfa_ops},
-	//{ISP_BLK_EE_V1, array_offset(struct isp_context, edge), sizeof(struct isp_edge_param), &s_edge_ops},
 	{ISP_BLK_NLM_V2, array_offset(struct isp_context, nlm), sizeof(struct isp_nlm_param), &s_nlm_ops},
 	{ISP_BLK_IMBALANCE_V1, array_offset(struct isp_context, imblance), sizeof(struct isp_imblance_param), &s_imblance_ops},
 	{ISP_BLK_YNR_V1, array_offset(struct isp_context, ynr), sizeof(struct isp_ynr_param), &s_ynr_ops},

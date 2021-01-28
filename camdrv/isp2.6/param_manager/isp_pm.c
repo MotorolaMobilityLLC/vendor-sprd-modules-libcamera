@@ -417,7 +417,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_RGB_GAIN, sizeof(struct sensor_rgb_gain_param) },
 	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
 	//{ ISP_BLK_RAW_GTM, sizeof(struct sensor_raw_gtm_param) },
-	//{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
+	{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
 	{ ISP_BLK_AWB_NEW, 0 },
 	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
 	{ DCAM_BLK_BPC_V1, 0 }, /* NR block */
