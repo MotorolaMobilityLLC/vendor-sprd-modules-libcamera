@@ -510,7 +510,10 @@ struct isp_edge_param {
 };
 
 struct isp_frgb_gamc_param {
-	struct isp_dev_gamma_info cur;
+	union {
+		struct isp_dev_gamma_info cur;
+		struct isp_dev_gamma_info_v1 cur_v1;
+	};
 	struct sensor_rgbgamma_curve final_curve;
 	struct isp_sample_point_info cur_idx;
 	struct sensor_rgbgamma_curve curve_tab[SENSOR_GAMMA_NUM];
@@ -701,7 +704,10 @@ struct isp_dev_noise_filter_param {
 };
 
 struct isp_yuv_ygamma_param {
-	struct isp_dev_ygamma_info cur;
+	union {
+		struct isp_dev_ygamma_info cur;
+		struct isp_dev_ygamma_info_v1 cur_v1;
+	};
 	cmr_u32 cur_idx;
 	struct isp_sample_point_info cur_idx_weight;
 	struct sensor_gamma_curve final_curve;

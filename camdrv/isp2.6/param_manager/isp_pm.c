@@ -416,7 +416,6 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_BLC, sizeof(struct sensor_blc_param) },
 	{ ISP_BLK_RGB_GAIN, sizeof(struct sensor_rgb_gain_param) },
 	{ ISP_BLK_RGB_AEM, sizeof(struct sensor_rgb_aem_param) },
-	//{ ISP_BLK_RAW_GTM, sizeof(struct sensor_raw_gtm_param) },
 	{ ISP_BLK_2D_LSC, 0 }, /* todo: should be parsed in lsc block init() */
 	{ ISP_BLK_AWB_NEW, 0 },
 	{ DCAM_BLK_RGB_DITHER, 0 }, /* NR block */
@@ -434,7 +433,6 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_HIST2, 0 }, // todo: should be sizeof(struct sensor_hists2_param)
 	{ ISP_BLK_IIRCNR_YRANDOM, sizeof(struct sensor_iircnr_yrandom_param) },
 	{ ISP_BLK_Y_GAMMC_V1, sizeof(struct sensor_y_gamma_param) },
-	//{ ISP_BLK_YUV_LTM, sizeof(struct sensor_yuv_ltm_param) },
 	{ ISP_BLK_CFA_V1, 0 }, /* NR block */
 	{ ISP_BLK_NLM_V2, 0 }, /* NR block */
 	{ ISP_BLK_IMBALANCE_V1, 0 }, /* NR block */
@@ -453,7 +451,7 @@ static struct blk_info blocks_array[] = {
 
 	/* software algo blocks */
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
-	//{ ISP_BLK_AI_PRO_V1, sizeof(struct sensor_ai_param) },
+	{ ISP_BLK_AI_PRO_V1, sizeof(struct sensor_ai_param) },
 	{ ISP_BLK_SW3DNR, 0 }, /* NR block */
 	{ ISP_BLK_YNRS, 0 }, /* NR block */
 	{ ISP_BLK_CNR3, 0 }, /* NR block */
