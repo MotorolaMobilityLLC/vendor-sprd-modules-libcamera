@@ -5537,8 +5537,8 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SPRD_AWB_CT_VALUE)) {
         valueI32= frame_settings.find(ANDROID_SPRD_AWB_CT_VALUE).data.i32[0];
-        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.awb_ct_value, valueI32,
-                         ANDROID_SPRD_AWB_CT_VALUE, 1)
+        s_setting[mCameraId].sprddefInfo.awb_ct_value = valueI32;
+        pushAndroidParaTag(ANDROID_SPRD_AWB_CT_VALUE);
         HAL_LOGV("awb_ct %d", valueI32);
     }
 
