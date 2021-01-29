@@ -80,7 +80,7 @@ LOCAL_CFLAGS:=-o0 -g
 LOCAL_CFLAGS += -DTARGET_GPU_PLATFORM=$(TARGET_GPU_PLATFORM)
 
 LOCAL_STATIC_LIBRARIES :=android.hardware.camera.common@1.0 android.hardware.camera.common@1.0-helper android.hardware.camera.device@1.0 android.hardware.camera.device@3.2
-LOCAL_STATIC_LIBRARIES +=android.hardware.camera.device@3.3 android.hardware.camera.device@3.4 android.hardware.camera.provider@2.4 android.hardware.graphics.allocator@2.0
+LOCAL_STATIC_LIBRARIES +=android.hardware.camera.device@3.3 android.hardware.camera.device@3.4 android.hardware.camera.device@3.5 android.hardware.camera.provider@2.4 android.hardware.graphics.allocator@2.0
 LOCAL_STATIC_LIBRARIES +=android.hardware.graphics.common@1.0 android.hardware.graphics.common@1.0 android.hardware.graphics.mapper@2.0 android.hidl.allocator@1.0 libgrallocusage libhidlmemory
 LOCAL_STATIC_LIBRARIES += libjsoncpp
 

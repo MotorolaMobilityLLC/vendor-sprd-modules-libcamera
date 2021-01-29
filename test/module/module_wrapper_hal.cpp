@@ -41,6 +41,8 @@
 #include <android/hardware/camera/device/3.3/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.4/ICameraDeviceSession.h>
 #include <android/hardware/camera/device/3.4/ICameraDeviceCallback.h>
+#include <android/hardware/camera/device/3.5/ICameraDeviceSession.h>
+#include <android/hardware/camera/device/3.5/ICameraDeviceCallback.h>
 #include <android/hardware/camera/provider/2.4/ICameraProvider.h>
 #include <android/hidl/manager/1.0/IServiceManager.h>
 #include <binder/MemoryHeapBase.h>
@@ -289,10 +291,12 @@ static void pushBufferList(new_mem_t *localbuffer, buffer_handle_t *backbuf,
 namespace {
 // "device@<version>/legacy/<id>"
 const char *kDeviceNameRE = "device@([0-9]+\\.[0-9]+)/%s/(.+)";
+const int CAMERA_DEVICE_API_VERSION_3_5_1 = 0x305;
 const int CAMERA_DEVICE_API_VERSION_3_4_1 = 0x304;
 const int CAMERA_DEVICE_API_VERSION_3_3_1 = 0x303;
 const int CAMERA_DEVICE_API_VERSION_3_2_1 = 0x302;
 const int CAMERA_DEVICE_API_VERSION_1_0_1 = 0x100;
+const char *kHAL3_5 = "3.5";
 const char *kHAL3_4 = "3.4";
 const char *kHAL3_3 = "3.3";
 const char *kHAL3_2 = "3.2";
@@ -353,7 +357,9 @@ int getCameraDeviceVersion(const hidl_string &deviceName,
         return IT_INVAL;
     }
 
-    if (version.compare(kHAL3_4) == 0) {
+    if (version.compare(kHAL3_5) == 0) {
+        return CAMERA_DEVICE_API_VERSION_3_5_1;
+    } else if (version.compare(kHAL3_4) == 0) {
         return CAMERA_DEVICE_API_VERSION_3_4_1;
     } else if (version.compare(kHAL3_3) == 0) {
         return CAMERA_DEVICE_API_VERSION_3_3_1;
@@ -480,6 +486,7 @@ class NativeCameraHidl {
     castSession(const sp<ICameraDeviceSession> &session, int32_t deviceVersion,
                 sp<device::V3_3::ICameraDeviceSession> *session3_3 /*out*/,
                 sp<device::V3_4::ICameraDeviceSession> *session3_4 /*out*/);
+
     void createStreamConfiguration(
         const ::android::hardware::hidl_vec<V3_2::Stream> &streams3_2,
         StreamConfigurationMode configMode,
@@ -1336,6 +1343,7 @@ void NativeCameraHidl::configureAvailableStream(
     ::android::hardware::camera::device::V3_4::StreamConfiguration config3_4;
     createStreamConfiguration(streams3_2, StreamConfigurationMode::NORMAL_MODE,
                               &config3_2, &config3_4);
+
     if (session3_4 != nullptr) {
         RequestTemplate reqTemplate = RequestTemplate::PREVIEW;
         ret = session3_4->constructDefaultRequestSettings(
@@ -1371,7 +1379,7 @@ void NativeCameraHidl::configureAvailableStream(
                     IT_LOGE("stream id = %d", halStreamConfig->streams[i].id);
                     switch (static_cast<android_pixel_format_t>(halStreamConfig->streams[i].overrideFormat))
                     {
-                        IT_LOGD("stream overrideFormat = %d", 
+                        IT_LOGD("stream overrideFormat = %d",
                         static_cast<android_pixel_format_t>(halStreamConfig->streams[i].overrideFormat));
                     case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
                     case HAL_PIXEL_FORMAT_YCrCb_420_SP:
@@ -1446,6 +1454,11 @@ void NativeCameraHidl::castSession(
         break;
     }
     case CAMERA_DEVICE_API_VERSION_3_3_1: {
+        auto castResult = device::V3_3::ICameraDeviceSession::castFrom(session);
+        *session3_3 = castResult;
+        break;
+    }
+    case CAMERA_DEVICE_API_VERSION_3_5_1: {
         auto castResult = device::V3_3::ICameraDeviceSession::castFrom(session);
         *session3_3 = castResult;
         break;
