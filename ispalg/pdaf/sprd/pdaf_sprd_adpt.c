@@ -28,7 +28,6 @@
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include <cutils/trace.h>
 
-static cmr_s32 PD_FRAME_ID = 0;
 static cmr_s32 g_dumpraw = 0;
 static cmr_s32 skip_fr = 0;
 
@@ -77,7 +76,7 @@ struct sprd_pdaf_context {
 #define PDAF_FULL_NUM_IMX362 1524096	//4032*756/2
 #define PDAF_FULL_NUM_IMX362_SIZE 3810240	//4032*756*5/4
 
-void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int pixelnum_x, int pixelnum_y);
+void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int pixelnum_x, int pixelnum_y);
 
 static cmr_int pdaf_setup(cmr_handle pdaf)
 {
@@ -608,7 +607,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		ISP_LOGV("Data_flow: WH[%d, %d] Roi_startXY[%d, %d] Roi_WH[%d, %d] ROI_StartIndex[%d]", pd_pixel_num_x,
 			 pd_pixel_num_y, data_flow_roi_startX, data_flow_roi_startY, roi_pixel_num_x, roi_pixel_num_y, start_index);
 		if (g_dumpraw == 1){
-			dump_raw(cxt->pdaf_type, cxt->pLeftBuf, cxt->pRightBuf, NULL, pd_pixel_num_x, pd_pixel_num_y);
+			dump_raw(cxt->frame_id, cxt->pdaf_type, cxt->pLeftBuf, cxt->pRightBuf, NULL, pd_pixel_num_x, pd_pixel_num_y);
 		}
 	}
 	//For IMX362 Dual PD Mode4
@@ -637,7 +636,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		ISP_LOGI("PDALGO Dual PD E: Parser Index:[%d]", cxt->pd_gobal_setting.dSensorMode);
 #endif
 		if (g_dumpraw == 1){
-			dump_raw(cxt->pdaf_type, NULL, NULL, pInPhaseBuf_Dual_PD, 0, 0);
+			dump_raw(cxt->frame_id, cxt->pdaf_type, NULL, NULL, pInPhaseBuf_Dual_PD, 0, 0);
 		}
 	}
 
@@ -645,7 +644,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	if (3 == cxt->pdaf_type) {
 		ret = PD_PhaseFormatConverter((cmr_u8 *) pInPhaseBuf_left, (cmr_u8 *) pInPhaseBuf_right, cxt->pPD_left, cxt->pPD_right, roi_pixel_num, roi_pixel_num);
 		if (g_dumpraw == 1){
-			dump_raw(cxt->pdaf_type, pInPhaseBuf_left, pInPhaseBuf_right, NULL, roi_pixel_num_x, roi_pixel_num_y);
+			dump_raw(cxt->frame_id, cxt->pdaf_type, pInPhaseBuf_left, pInPhaseBuf_right, NULL, roi_pixel_num_x, roi_pixel_num_y);
 		}
 	} else {
 		ISP_LOGV("PDALGO No need Converter. SensorID[%d]", cxt->pd_gobal_setting.dSensorMode);
@@ -966,34 +965,49 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 	return ret;
 }
 
-void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int pixelnum_x, int pixelnum_y)
+void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int pixelnum_x, int pixelnum_y)
 {
-	if (pdaf_type == 2 && (PD_FRAME_ID % skip_fr) == 0) {
-		char file_name[200] = { 0 };
-		FILE *fp = NULL;
+	if (pdaf_type == 2 && (frame_id % skip_fr) == 0) {
+		cmr_s16 *TempL = NULL;
+		cmr_s16 *TempR = NULL;
+		char file_nameL[200] = { 0 };
+		char file_nameR[200] = { 0 };
+		FILE *fpL = NULL;
+		FILE *fpR = NULL;
+		cmr_u32 i = 0;
+
 		//dump complete pd left_raw
-		sprintf(file_name, CAMERA_DATA_FILE "/Left_Raw_%dX%d_%d.raw", pixelnum_x, pixelnum_y, PD_FRAME_ID);
-		fp = fopen(file_name, "wb");
-		if (fp != NULL && left_raw != NULL){
-			fwrite((void *)left_raw, sizeof(cmr_u32), pixelnum_x * pixelnum_y, fp);
+		sprintf(file_nameL, CAMERA_DATA_FILE "/Left_Raw_%dX%d_%d.raw", pixelnum_x, pixelnum_y, frame_id);
+		sprintf(file_nameR, CAMERA_DATA_FILE "/Right_Raw_%dX%d_%d.raw", pixelnum_x, pixelnum_y, frame_id);
+		fpL = fopen(file_nameL, "wb+");
+		fpR = fopen(file_nameR, "wb+");
+		TempL =  (cmr_s16 *)left_raw;
+		TempR =  (cmr_s16 *)right_raw;
+
+		while(i != pixelnum_x * pixelnum_y && TempL != NULL && TempR != NULL){
+			if(fpL != NULL){
+				fwrite((void *)TempL, sizeof(cmr_u32), 1, fpL);
+				TempL++;
+			}
+			if(fpR != NULL){
+				fwrite((void *)TempR, sizeof(cmr_u32), 1, fpR);
+				TempR++;
+			}
+			i++;
 		}
-		if (fp != NULL){
-			fclose(fp);
-			fp = NULL;
+
+		if (fpL != NULL){
+			fclose(fpL);
+			fpL = NULL;
 		}
-		//dump complete pd right_raw
-		sprintf(file_name, CAMERA_DATA_FILE "/Right_Raw_%dX%d_%d.raw", pixelnum_x, pixelnum_y, PD_FRAME_ID);
-		fp = fopen(file_name, "wb");
-		if (fp != NULL && right_raw != NULL){
-			fwrite((void *)right_raw, sizeof(cmr_u32), pixelnum_x * pixelnum_y, fp);
+		if (fpR != NULL){
+			fclose(fpR);
+			fpR = NULL;
 		}
-		if (fp != NULL){
-			fclose(fp);
-			fp = NULL;
-		}
+
 	}
 
-	if (pdaf_type == 3 && (PD_FRAME_ID % skip_fr) == 0) {
+	if (pdaf_type == 3 && (frame_id % skip_fr) == 0) {
 		//#define MLOG_BUF_SIZE 1024
 #define MLOG_FILE_NAME_SIZE 200
 		char file_name_r[MLOG_FILE_NAME_SIZE] = { 0 };
@@ -1001,8 +1015,8 @@ void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int
 		cmr_s32 *pTempBuf = NULL;
 		cmr_s32 dumpNum = (pixelnum_x * pixelnum_y * 4) / 3;
 		FILE *fp = NULL;
-		sprintf(file_name_l, CAMERA_DATA_FILE "/pdaf_L_tp3_%dX%d_%d.raw", pixelnum_x, pixelnum_y, PD_FRAME_ID);
-		sprintf(file_name_r, CAMERA_DATA_FILE "/pdaf_R_tp3_%dX%d_%d.raw", pixelnum_x, pixelnum_y, PD_FRAME_ID);
+		sprintf(file_name_l, CAMERA_DATA_FILE "/pdaf_L_tp3_%dX%d_%d.raw", pixelnum_x, pixelnum_y, frame_id);
+		sprintf(file_name_r, CAMERA_DATA_FILE "/pdaf_R_tp3_%dX%d_%d.raw", pixelnum_x, pixelnum_y, frame_id);
 
 		pTempBuf = ((left_raw == NULL) ? NULL : left_raw);
 		fp = fopen(file_name_l, "wb+");
@@ -1027,7 +1041,7 @@ void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int
 		pTempBuf = NULL;
 	}
 
-	if (pdaf_type == 4 && (PD_FRAME_ID % skip_fr) == 0) {
+	if (pdaf_type == 4 && (frame_id % skip_fr) == 0) {
 		char file_name_dual_l[200] = { 0 };
 		char file_name_dual_r[200] = { 0 };
 		cmr_u8 temp[5] = { 0 };
@@ -1038,8 +1052,8 @@ void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int
 
 		FILE *fpL = NULL;
 		FILE *fpR = NULL;
-		sprintf(file_name_dual_l, CAMERA_DATA_FILE "/DualPDBuf_L_2016X756_%d.raw", PD_FRAME_ID);
-		sprintf(file_name_dual_r, CAMERA_DATA_FILE "/DualPDBuf_R_2016X756_%d.raw", PD_FRAME_ID);
+		sprintf(file_name_dual_l, CAMERA_DATA_FILE "/DualPDBuf_L_2016X756_%d.raw", frame_id);
+		sprintf(file_name_dual_r, CAMERA_DATA_FILE "/DualPDBuf_R_2016X756_%d.raw", frame_id);
 
 		DualTempBuf = (cmr_u8 *)all_raw;
 		if (DualTempBuf != NULL){
@@ -1081,7 +1095,6 @@ void dump_raw(int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int
 
 		}
 	}
-	PD_FRAME_ID++;
 }
 
 struct adpt_ops_type sprd_pdaf_adpt_ops = {
