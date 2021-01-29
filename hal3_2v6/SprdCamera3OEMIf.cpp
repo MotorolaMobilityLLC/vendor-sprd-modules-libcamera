@@ -498,7 +498,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIommuEnabled(false), mFlashCaptureFlag(0),
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
-      mFlagOffLineZslStart(0), mZslSnapshotTime(0),  mAf_start_time(0),mAf_stop_time(0),
+      mFlagOffLineZslStart(0), mZslSnapshotTime(0),mAf_start_time(0),mAf_stop_time(0),
       mIsIspToolMode(0),
       mIsYuvSensor(0), mIsUltraWideMode(false),
       mIsFovFusionMode(false), mIsRawCapture(0),
@@ -11086,6 +11086,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             return -1;
         }
 
+        HAL_LOGV("mZslSnapshotTime=%lld, zsl_frame.monoboottime=%lld",mZslSnapshotTime, zsl_frame->monoboottime);
         if (mZslSnapshotTime > zsl_frame->monoboottime && !mIsFDRCapture) {
             diff_ms = (mZslSnapshotTime - zsl_frame->monoboottime) / 1000000;
             HAL_LOGV("diff_ms=%" PRId64, diff_ms);
@@ -11100,8 +11101,8 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             }
         }
 
-	// single capture wait the caf focused frame
-        if (sprddefInfo->sprd_appmode_id == 0 && sprddefInfo->af_support == 1 && !mIsFDRCapture &&
+
+        if (sprddefInfo->sprd_appmode_id == 0  && sprddefInfo->af_support == 1 && !mIsFDRCapture &&
                  mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene && mAf_start_time) {
                  HAL_LOGD("check af status");
                  if (mAf_start_time > mAf_stop_time){
@@ -11121,8 +11122,10 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
 		 }
                  HAL_LOGD("af is ok ");
         }
-	if (mAf_start_time == 0)
-	     HAL_LOGD("mAf_start_time = 0");
+        if (mAf_start_time == 0)
+            HAL_LOGD("mAf_start_time = 0");
+
+
 
 
         if (s_dbg_ver) {
@@ -11272,6 +11275,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     mSetting->getCONTROLTag(&controlInfo);
     cmr_uint been_preflash = 0;
     cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
+    int64_t diff_ms = 400*1000000;  //400ms
 
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
     bool isFrontLcd =
@@ -11316,7 +11320,17 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
-    mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
+    HAL_LOGV("nowTime=%lld",systemTime(SYSTEM_TIME_BOOTTIME));
+    if(sprddefInfo->sprd_appmode_id == 0 &&
+	controlInfo.scene_mode != ANDROID_CONTROL_SCENE_MODE_HDR){
+	mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME) - diff_ms;
+	HAL_LOGD("real zsl");
+
+    } else
+	mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
+
+    HAL_LOGV("mZslSnapshotTime=%lld",mZslSnapshotTime);
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP, &mZslSnapshotTime);
 
     if (isCapturing()) {
         WaitForCaptureDone();
@@ -11347,8 +11361,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 		mSetting->getCONTROLTag(&controlInfo);
 		HAL_LOGV("af_state =%d",controlInfo.af_state);
 		while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-			if (count1 > 2800) {
-				HAL_LOGD("wait for preflash timeout 2.8s");
+			if (count1 > 3500) {
+				HAL_LOGD("wait for preflash timeout 3.5s");
 				break;
 			}
                         if (mZslCaptureExitLoop == true)
@@ -11519,7 +11533,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
 
 exit:
-    if(clear_af_trigger){
+    if(clear_af_trigger &&  mZslCaptureExitLoop == false){
 	controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
 	mSetting->setCONTROLTag(&controlInfo);
 	SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);

@@ -15645,6 +15645,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.cap_scene = CAPTURE_FLASH;
     }
 
+    if (capture_param.type == DCAM_CAPTURE_START)
+        capture_param.timestamp = snp_cxt->cap_need_time_stamp;
     CMR_LOGD(
         "type %d, cnt %d, scene %d,  dre_flag %d dre_skipframe %d, flash %d\n",
         capture_param.type, capture_param.cap_cnt, capture_param.cap_scene,
