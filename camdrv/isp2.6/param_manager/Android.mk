@@ -234,7 +234,7 @@ LOCAL_SRC_FILES += blk_list/isp_block_com.c \
 	blk_list/isp_blk_dre.c \
 	blk_list/isp_blk_dre_pro.c \
 	blk_list/isp_blk_fb.c \
-	blk_list/isp_blk_frgb_gamc.c \
+	blk_list/isp_blk_frgb_gamc_v1.c \
 	blk_list/isp_blk_iir_yrandom.c \
 	blk_list/isp_blk_mfnr.c \
 	blk_list/isp_blk_nlm_v1.c \
@@ -246,7 +246,7 @@ LOCAL_SRC_FILES += blk_list/isp_block_com.c \
 	blk_list/isp_blk_ynrs_v1.c \
 	blk_list/isp_blk_rgb_ltm.c \
 	blk_list/isp_blk_yuv_noisefilter_v1.c \
-	blk_list/isp_blk_yuv_ygamma_v1.c \
+	blk_list/isp_blk_yuv_ygamma_v2.c \
         blk_list/isp_blk_pyramid_onl.c \
         blk_list/isp_blk_pyramid_offl.c \
         blk_list/isp_blk_dct.c \
@@ -257,6 +257,7 @@ LOCAL_SRC_FILES += blk_list/isp_block_com.c \
         blk_list/isp_blk_afm_v1.c \
 	blk_list/isp_blk_imblance_v2.c \
 	blk_list/isp_blk_hsv_v3.c \
+	blk_list/isp_blk_ai_pro_v2.c \
         blk_list/isp_blk_bpc_v2.c \
         blk_list/isp_blk_cfa_v1.c \
 	blk_list/isp_blk_edge_v2.c \
