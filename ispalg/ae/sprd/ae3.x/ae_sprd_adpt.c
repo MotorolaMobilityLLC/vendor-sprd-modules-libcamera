@@ -4707,7 +4707,7 @@ static cmr_s32 ae_get_fdr_param(struct ae_ctrl_cxt *cxt, void *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
 	if (result) {
-		struct fdr_det_param_out_t *fdr_param = (struct fdr_det_param_out_t *)result;
+		fdr_det_param_out_t *fdr_param = (fdr_det_param_out_t *)result;
 
 		fdr_param->ev = cxt->fdr_down_ev;
 		fdr_param->cur_bv_underexp =  cxt->cur_result.cur_bv;
@@ -4715,7 +4715,7 @@ static cmr_s32 ae_get_fdr_param(struct ae_ctrl_cxt *cxt, void *result)
 		fdr_param->exp_time_underexp = cxt->cur_status.adv_param.mode_param.value.exp_gain[0];
 		fdr_param->total_gain_underexp = cxt->cur_status.adv_param.mode_param.value.exp_gain[1];
 		fdr_param->sensor_gain_underexp = (fdr_param->total_gain_underexp > cxt->sensor_max_gain) ? cxt->sensor_max_gain : fdr_param->total_gain_underexp;
-		memcpy(&fdr_param->fdr_AE_exif, &cxt->fdr_exif, sizeof(struct fdr_AE_exif_t));
+		memcpy(&fdr_param->fdr_AE_exif, &cxt->fdr_exif, sizeof(fdr_AE_exif_t));
 		ISP_LOGV("fdr_param:ev %f total gain %d sensor gain %d \n", fdr_param->ev,fdr_param->total_gain_underexp,fdr_param->sensor_gain_underexp);
 		rtn = AE_SUCCESS;
 	} else
@@ -4801,8 +4801,8 @@ static void ae_set_fdr_detect(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
 	cmr_s8 auto_fdr_enable = 0;
 	struct ae_size fdr_stat_size = {0,0};
-	struct fdr_det_param_out_t det_result = {0,};
-	struct fdr_det_param_in_t fdr_stat ={0,};
+	fdr_det_param_out_t det_result = {0,};
+	fdr_det_param_in_t fdr_stat ={0,};
 
 	if(!cxt->is_snapshot) {
 		fdr_stat.tuning_param = cxt->fdr_tuning_param;
@@ -4840,7 +4840,7 @@ static void ae_set_fdr_detect(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 			auto_fdr_enable = (cmr_s8)cxt->fdr_ops.fdr_scndet(&fdr_stat, &det_result,&cxt->fdr_det_status);
 
 		cxt->fdr_calc_ev = det_result.ev;
-		memcpy(&cxt->fdr_exif, &det_result.fdr_AE_exif, sizeof(struct fdr_AE_exif_t));
+		memcpy(&cxt->fdr_exif, &det_result.fdr_AE_exif, sizeof(fdr_AE_exif_t));
 
 		ISP_LOGV("auto_fdr camera_id %d w %d h %d face_num %d ev %f ",fdr_stat.stat.camera_id, fdr_stat.stat.w, fdr_stat.stat.h, fdr_stat.stat.fd_param.face_num, det_result.ev);
 		ISP_LOGV("auto_fdr base target %d target %d face_stable %d ", fdr_stat.stat.base_target_lum, fdr_stat.stat.target_lum, fdr_stat.stat.face_stable);
