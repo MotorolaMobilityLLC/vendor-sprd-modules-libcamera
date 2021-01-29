@@ -96,6 +96,8 @@ LOCAL_C_INCLUDES += \
 	$(LOCAL_PATH)/$(ISP_DIR)/calibration/inc \
 	$(LOCAL_PATH)/../sensor/inc \
 	$(LOCAL_PATH)/../common/inc \
+	$(LOCAL_PATH)/../arithmetic/inc \
+	$(LOCAL_PATH)/../arithmetic/sprd_fdr/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/inc \
 	$(LOCAL_PATH)/$(ISP_ALGO_DIR)/ai/sprd/inc
 

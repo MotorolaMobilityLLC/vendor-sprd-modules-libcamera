@@ -27,21 +27,21 @@ typedef struct {
     int start_y;
     int end_x;
     int end_y;
-} ae_rect;
+} fdr_ae_rect;
 
 typedef struct {
-    ae_rect rect;
+    fdr_ae_rect rect;
     uint32_t face_lum;
     int pose;
     int angle;
-} ae_face;
+} fdr_ae_face;
 
 typedef struct {
     uint16_t width;
     uint16_t height;
     uint16_t face_num;
-    ae_face face_area[AE_FD_NUM];
-} ae_fd_param;
+    fdr_ae_face face_area[AE_FD_NUM];
+} fdr_ae_fd_param;
 
 typedef struct {
     uint32_t* hist256;      /*!< histogram buffer pointer */
@@ -49,7 +49,7 @@ typedef struct {
     int w;                  /*!< image width */
     int h;                  /*!< image height */
     int s;                  /*!< image buffer stride */
-    ae_fd_param fd_param;
+    fdr_ae_fd_param fd_param;
     uint16_t base_target_lum;
     uint16_t target_lum;
     uint32_t face_stable;
