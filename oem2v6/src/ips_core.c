@@ -159,8 +159,8 @@ struct ips_context {
 	struct ipmpro_handle_base ipmpro_base[IPS_TYPE_MAX];
 };
 
-static int test_cnt, dump_pic;
-static int jpeg_start_delay, common_delay;
+static int dump_pic;
+static int jpeg_start_delay;
 
 static cmr_int init_ipmpro_base(struct ipmpro_type *in, struct ipmpro_handle_base *cur)
 {
@@ -185,10 +185,10 @@ static cmr_int init_ipmpro_base(struct ipmpro_type *in, struct ipmpro_handle_bas
 		goto exit;
 	}
 
-	sprintf(sym_get, "swa_%s_get_handle_size", in->keywd);
-	sprintf(sym_open, "swa_%s_open", in->keywd);
-	sprintf(sym_close, "swa_%s_close", in->keywd);
-	sprintf(sym_process, "swa_%s_process", in->keywd);
+	snprintf(sym_get, 128, "swa_%s_get_handle_size", in->keywd);
+	snprintf(sym_open, 128, "swa_%s_open", in->keywd);
+	snprintf(sym_close, 128, "swa_%s_close", in->keywd);
+	snprintf(sym_process, 128, "swa_%s_process", in->keywd);
 	CMR_LOGD("symbols %s %s %s %s\n", sym_get, sym_open, sym_close, sym_process);
 
 	swa_get_size = dlsym(sw_handle, sym_get);
@@ -202,9 +202,12 @@ static cmr_int init_ipmpro_base(struct ipmpro_type *in, struct ipmpro_handle_bas
 	cur->swa_open = dlsym(sw_handle, sym_open);
 	cur->swa_process = dlsym(sw_handle, sym_process);
 	cur->swa_close = dlsym(sw_handle, sym_close);
-	if (!cur->swa_open || !cur->swa_process || !cur->swa_close) {
-		CMR_LOGW("warning: get api %p %p %p\n",
-			cur->swa_open, cur->swa_process, cur->swa_close);
+	if (!cur->swa_open || !cur->swa_close) {
+		CMR_LOGW("warning: get NULL api %p %p\n", cur->swa_open, cur->swa_close);
+	}
+	if (!cur->swa_process) {
+		CMR_LOGE("fail to get api %p, symbols %s\n", cur->swa_process, sym_process);
+		goto exit;
 	}
 
 	cur->lib_handle = sw_handle;
@@ -561,6 +564,11 @@ static cmr_int swa_jpeg_process(struct ips_context *ips_ctx,
 		dst->addr_vir.addr_y, dst->addr_vir.addr_u,
 		dst->addr_phy.addr_y, dst->addr_phy.addr_u);
 
+	if (jpeg_start_delay) {
+		CMR_LOGD("req_id %d jpeg start delay %d ms", req->req_in.request_id, jpeg_start_delay);
+		usleep(jpeg_start_delay*1000);
+	}
+
 	CMR_LOGD("req_id %d wait jpeg lock\n", req->req_in.request_id);
 
 	if (cur_proc->ipm_base->multi_support == 0)
@@ -585,11 +593,6 @@ static cmr_int swa_jpeg_process(struct ips_context *ips_ctx,
 
 	CMR_LOGD("handle %p %p %p\n", cur_proc->swa_handle,
 		ips_ctx->other_handles.jpeg_handle, ips_ctx->other_handles.scale_handle);
-
-	if (jpeg_start_delay) {
-		CMR_LOGD("req_id %d jpeg start delay %d ms", req->req_in.request_id, jpeg_start_delay);
-		usleep(jpeg_start_delay*1000);
-	}
 
 	ret = cmr_jpeg_encode(cur_proc->swa_handle,
 			src, dst, &pm->mean, NULL);
@@ -719,11 +722,6 @@ proc_done:
 		} else {
 			CMR_LOGE("fail to open file %s\n", fname);
 		}
-	}
-
-	if (common_delay) {
-		CMR_LOGD("req_id %d, proc type %d delay %d ms\n", req->req_in.request_id, cur_proc->type, common_delay);
-		usleep(common_delay * 1000);
 	}
 
 	req->frame_cnt++;
@@ -1083,13 +1081,16 @@ static cmr_int deinit_ips_thread(struct ips_thread_context *ips_thread)
 
 	CMR_LOGD("thread %d start\n", ips_thread->idx);
 
-	if (ips_thread->thr_handle)
-		cmr_thread_destroy(ips_thread->thr_handle);
+	if (ips_thread->thr_handle) {
+		ret = cmr_thread_destroy(ips_thread->thr_handle);
+		if (ret)
+			CMR_LOGE("fail to destroy thread");
+	}
 	pthread_mutex_destroy(&ips_thread->lock);
 
 	memset(ips_thread, 0, sizeof(struct ips_thread_context));
 
-	return ret;
+	return CMR_CAMERA_SUCCESS;
 }
 
 
@@ -1153,8 +1154,7 @@ static cmr_int put_ips_thread(struct ips_thread_context *cur)
 	cur->req_handle = (cmr_handle)NULL;
 	pthread_mutex_unlock(&cur->lock);
 
-exit:
-	CMR_LOGD("Done. thread No.%d, %p\n", ret, cur->idx, cur);
+	CMR_LOGD("Done. thread No.%d, ptr %p\n", cur->idx, cur);
 	return ret;
 }
 
@@ -1177,9 +1177,10 @@ cmr_int cmr_ips_set_jpeg_param(cmr_handle ips_handle,
 	if (proc && proc->type == IPS_TYPE_JPEG) {
 		memcpy(proc->param_ptr, param, sizeof(struct ips_jpeg_param_t));
 		pm = (struct ips_jpeg_param_t *)proc->param_ptr;
-		CMR_LOGD("jpeg param: quality %d, flip %d %d %d,  exif w %d %d, exp idx %d %d exp_tm %d %d, fnum %d %\n",
+		CMR_LOGD("jpeg param: quality %d, flip %d rot %d mirror %d\n",
 			pm->mean.quality_level,
-			pm->mean.flip, pm->mean.rot, pm->mean.mirror,
+			pm->mean.flip, pm->mean.rot, pm->mean.mirror);
+		CMR_LOGD("exif w %d h %d, exp_idx %d %d exp_tm %d %d, fnum %d %d\n",
 			pm->exif_data.exif_info.primary.basic.ImageWidth,
 			pm->exif_data.exif_info.primary.basic.ImageLength,
 			pm->exif_data.spec_pic.ExposureIndex.numerator,
@@ -1431,8 +1432,8 @@ cmr_int cmr_ips_init_req(cmr_handle ips_handle,
 
 		ipm_hdl = malloc(sizeof(struct ipmpro_node));
 		if (ipm_hdl == NULL) {
-			CMR_LOGE("fail to malloc\n");
-			goto err;
+			CMR_LOGE("fail to malloc handle for type %d\n", type);
+			continue;
 		}
 
 		CMR_LOGD("No.%d, type %d\n", i, type);
@@ -1451,7 +1452,6 @@ cmr_int cmr_ips_init_req(cmr_handle ips_handle,
 		j++;
 	}
 
-err:
 	if (j == 0) {
 		CMR_LOGE("fail to init any proc handle\n");
 		return CMR_CAMERA_FAIL;
@@ -1490,8 +1490,6 @@ cmr_int cmr_ips_init(cmr_handle *handle, cmr_handle client_data)
 	dump_pic = atoi(value);
 	property_get("debug.camera.ips.jpeg.delay.start", value, "0");
 	jpeg_start_delay = atoi(value);
-	property_get("debug.camera.ips.common.delay", value, "0");
-	common_delay = atoi(value);
 
 	ips_ctx = (struct ips_context *)malloc(sizeof(struct ips_context));
 	if (ips_ctx == NULL) {

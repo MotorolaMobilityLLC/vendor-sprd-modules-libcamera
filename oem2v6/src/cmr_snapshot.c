@@ -606,13 +606,12 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 		char fname[256];
 		uint32_t buf_size;
 		buf_size = snp_pm->req_size.width * snp_pm->req_size.height * 3 / 2;
-		sprintf(fname, "%sframe%03d_aaa.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
+		snprintf(fname, 256, "%sframe%03d_aaa.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 		fp = fopen(fname, "wb");
 		if (fp != NULL) {
 			CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 			fwrite((void *)frame->yaddr_vir, 1, buf_size, fp);
 			fclose(fp);
-			fp = NULL;
 		}
 	}
 
@@ -705,7 +704,7 @@ post:
 	CMR_LOGD("req id %d ready done\n", ips_req->request_id);
 
 	snp_set_request(cxt, TAKE_PICTURE_NO);
-	cxt->status = IDLE;
+	snp_set_status(cxt, IDLE);
 
 exit:
 	CMR_LOGD("X, req_id %d %d\n", ips_req->request_id, snp_pm->request_id);
@@ -735,6 +734,7 @@ static cmr_int snp_ips_req_thumb_callback(cmr_handle client_handle,
 static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
+	int iret;
 	uint32_t buf_size, offset, offset1, flip_on = 0, need_flush = 0, need_invalidate = 0;
 	struct snap_request *snp_req = cxt->cur_req;
 	struct ips_request_t *ips_req = snp_req->ips_req;
@@ -775,13 +775,12 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 		FILE *fp;
 		char fname[256];
 
-		sprintf(fname, "%sframe%03d_bbthumb0.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
+		snprintf(fname, 256, "%sframe%03d_bbthumb0.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 		fp = fopen(fname, "wb");
 		if (fp != NULL) {
 			CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 			fwrite((void *)thumb_frm.addr_vir.addr_y, 1, buf_size, fp);
 			fclose(fp);
-			fp = NULL;
 		}
 	}
 
@@ -822,13 +821,12 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 			FILE *fp;
 			char fname[256];
 
-			sprintf(fname, "%sframe%03d_bbthumb0_1filter.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
+			snprintf(fname, 256, "%sframe%03d_bbthumb0_1filter.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 			fp = fopen(fname, "wb");
 			if (fp != NULL) {
 				CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 				fwrite((void *)thumb_frm.addr_vir.addr_y, 1, buf_size, fp);
 				fclose(fp);
-				fp = NULL;
 			}
 		}
 	}
@@ -841,7 +839,6 @@ rot_flip:
 	if (snp_pm->jpeg_setting.flip) {
 		struct img_frm src, dst;
 		struct cmr_op_mean mean;
-		int iret;
 		iret = get_free_buffer(&cxt->thumb_buf_queue, buf_size, &new_buf);
 		if (!iret && new_buf.fd > 0) {
 			CMR_LOGD("get new thumb buffer fd 0x%x, vaddr 0x%lx\n", new_buf.fd, new_buf.vaddr);
@@ -854,7 +851,6 @@ rot_flip:
 			dst.addr_phy.addr_u = offset1;
 			mean.is_sync = 1;
 			mean.rot = IMG_ANGLE_MIRROR;
-			CMR_LOGD("rot %d, flip %d\n", mean.rot, mean.flip);
 			if (need_flush) {
 				need_flush = 0;
 				CMR_LOGD("flush buffer fd 0x%x\n", thumb_frm.fd);
@@ -871,13 +867,12 @@ rot_flip:
 			FILE *fp;
 			char fname[256];
 
-			sprintf(fname, "%sframe%03d_bbthumb0_2flip.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
+			snprintf(fname, 256, "%sframe%03d_bbthumb0_2flip.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 			fp = fopen(fname, "wb");
 			if (fp != NULL) {
 				CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 				fwrite((void *)thumb_frm.addr_vir.addr_y, 1, buf_size, fp);
 				fclose(fp);
-				fp = NULL;
 			}
 		}
 	}
@@ -891,7 +886,6 @@ rot_flip:
 		if (flip_on) {
 			dst = orig;
 		} else {
-			int iret;
 			dst.fd = 0;
 			iret = get_free_buffer(&cxt->thumb_buf_queue, buf_size, &new_buf);
 			if (!iret && new_buf.fd > 0) {
@@ -945,13 +939,12 @@ rot_flip:
 			FILE *fp;
 			char fname[256];
 
-			sprintf(fname, "%sframe%03d_bbthumb0_3rot.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
+			snprintf(fname, 256, "%sframe%03d_bbthumb0_3rot.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 			fp = fopen(fname, "wb");
 			if (fp != NULL) {
 				CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 				fwrite((void *)thumb_frm.addr_vir.addr_y, 1, buf_size, fp);
 				fclose(fp);
-				fp = NULL;
 			}
 		}
 	}
@@ -987,8 +980,11 @@ thumb_cb:
 		snp_req->status = SNAP_REQ_YUV_DONE;
 	}
 
-	if (new_buf.fd > 0)
-		put_free_buffer(&cxt->thumb_buf_queue, &new_buf);
+	if (new_buf.fd > 0) {
+		iret =put_free_buffer(&cxt->thumb_buf_queue, &new_buf);
+		if (iret)
+			CMR_LOGE("fail to put free buf fd 0x%x\n", new_buf.fd);
+	}
 
 	CMR_LOGD("X, req_id %d %d\n", ips_req->request_id, snp_pm->request_id);
 	return ret;
@@ -1069,6 +1065,7 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 
 	case IPS_CB_GET_BUF:
 		frm = (struct img_frm *)cb_data;
+		memset(&buf, 0, sizeof(struct cmr_buf));
 		iret = get_free_buffer(&cxt->buf_queue, frm->buf_size, &buf);
 		if (iret) {
 			CMR_LOGE("fail to put buffer fd %d, addr %p\n", buf.fd, (void *)buf.vaddr);
@@ -1141,7 +1138,13 @@ static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 	init_param.frame_size = cxt->req_param.req_size;
 	CMR_LOGD("frame size %d %d, frame total %d\n",
 		init_param.frame_size.width, init_param.frame_size.height, new_req->frame_total);
+
 	ret = cmr_ips_init_req(cxt->ips_handle, new_req, &init_param, snp_ips_req_callback);
+	if (ret) {
+		CMR_LOGE("fail to init req id %d\n", new_req->request_id);
+		cmr_ips_destroy_req(cxt->ips_handle, &new_req);
+		return ret;
+	}
 
 	for (i = 0; i < 32; i++) {
 		if (cxt->snap_req[i].used)
@@ -1313,8 +1316,6 @@ exit:
 cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)p_data;
-    struct buffer_cfg buf_cfg;
-    struct frm_info frame;
 
     if (!message || !p_data) {
         CMR_LOGE("param error");
@@ -1327,10 +1328,8 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
         ret = CMR_CAMERA_NORNAL_EXIT;
         goto exit;
     }
-    if (message->data)
-        frame = *(struct frm_info *)message->data;
-    CMR_LOGD("message.msg_type 0x%x, data 0x%lx, fd 0x%x, vaddr 0x%x", message->msg_type,
-             (cmr_uint)message->data, frame.fd, frame.yaddr_vir);
+    CMR_LOGD("message.msg_type 0x%x, data 0x%lx",
+		message->msg_type,(cmr_uint)message->data);
     switch (message->msg_type) {
     case SNP_EVT_POSTPROC_INIT:
         break;
@@ -1342,6 +1341,9 @@ cmr_int snp_postproc_thread_proc(struct cmr_msg *message, void *p_data) {
         break;
     case SNP_EVT_POSTPROC_FREE_FRM:
         if (cxt->ops.channel_buff_cfg) {
+            struct frm_info frame;
+            struct buffer_cfg buf_cfg;
+            frame = *(struct frm_info *)message->data;
             cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
             buf_cfg.channel_id = frame.channel_id;
             buf_cfg.base_id = CMR_BASE_ID(frame.frame_id);
@@ -1533,8 +1535,7 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct jpeg_enc_cb_param *enc_out_ptr = (struct jpeg_enc_cb_param *)data;
-    struct cmr_cap_mem *mem_ptr =
-        &cxt->req_param.post_proc_setting.mem[cxt->index];
+    struct cmr_cap_mem *mem_ptr = &cxt->req_param.post_proc_setting.mem[cxt->index];
     char value[PROPERTY_VALUE_MAX];
     struct camera_frame_type frame_type;
     void *isp_info_addr = NULL;
@@ -1608,14 +1609,12 @@ cmr_int snp_jpeg_enc_cb_handle(cmr_handle snp_handle, void *data) {
                 int u_ret = usleep(500 * 1000);
                 if (u_ret)
                     CMR_LOGE("usleep failed !");
-                if((cxt != NULL) && (mem_ptr != NULL)){
-                    send_capture_data(
+                send_capture_data(
                         0x10, /* jpg */
                         cxt->req_param.post_proc_setting.actual_snp_size.width,
                         cxt->req_param.post_proc_setting.actual_snp_size.height,
                         (char *)mem_ptr->target_jpeg.addr_vir.addr_y,
                         enc_out_ptr->stream_size, 0, 0, 0, 0);
-                }
             }
         }
         cxt->jpeg_stream_size = enc_out_ptr->stream_size;
@@ -5665,12 +5664,6 @@ cmr_int snp_post_proc(cmr_handle snp_handle, void *data) {
     ATRACE_BEGIN(__FUNCTION__);
 
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    if (!snp_handle || !data) {
-        CMR_LOGE("error param 0x%lx, 0x%lx", (cmr_uint)snp_handle,
-                 (cmr_uint)data);
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
     struct frm_info *chn_data_ptr = (struct frm_info *)data;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
     struct camera_context *cam_cxt = (struct camera_context *)cxt->oem_handle;
@@ -5888,6 +5881,8 @@ void snp_set_status(cmr_handle snp_handle, cmr_uint status) {
     sem_wait(&cxt->access_sm);
     cxt->status = status;
     sem_post(&cxt->access_sm);
+    if (cxt->zsl_ips_en)
+        goto exit;
     if (IDLE == status) {
         if (cxt->oem_cb) {
             cxt->oem_cb(cxt->oem_handle, SNAPSHOT_CB_EVT_STATE,
@@ -5899,6 +5894,7 @@ void snp_set_status(cmr_handle snp_handle, cmr_uint status) {
                                 SNAPSHOT_CB_EVT_STATE, (void *)&frame_type,
                                 sizeof(struct camera_frame_type));
     }
+exit:
     CMR_LOGV("X");
 }
 
@@ -5996,6 +5992,8 @@ cmr_int cmr_snapshot_deinit(cmr_handle snapshot_handle) {
 
     if (cxt->ips_handle) {
         ret = cmr_ips_deinit(cxt->ips_handle);
+        if (ret)
+            CMR_LOGE("fail to deinit cmr_ips\n");
         sem_destroy(&cxt->ips_sem);
         cxt->ips_handle = NULL;
     }
@@ -6020,7 +6018,7 @@ cmr_int cmr_snapshot_prepare(
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 buf_size, thumb_size, free_cnt;
 	struct snp_context *cxt = (struct snp_context *)snapshot_handle;
-	struct camera_context *cam_cxt = (struct camera_context *)cxt->oem_handle;
+	struct camera_context *cam_cxt;
 	struct ips_handle_t handles;
 	char value[PROPERTY_VALUE_MAX];
 
@@ -6073,6 +6071,7 @@ cmr_int cmr_snapshot_prepare(
 	CMR_LOGD("memops %p,  alloc %p, free_cnt %d\n",
 		&cxt->mem_ops, cxt->mem_ops.alloc_mem, cxt->buf_queue.free_cnt);
 
+	cam_cxt = (struct camera_context *)cxt->oem_handle;
 	handles.jpeg_handle = cam_cxt->jpeg_cxt.jpeg_handle;
 	handles.scale_handle = cam_cxt->scaler_cxt.scaler_handle;
 	CMR_LOGD("cxt %p, handle %p %p\n", cam_cxt,

@@ -1317,7 +1317,7 @@ int put_free_buffer(struct cmr_queue *q, struct cmr_buf *dst)
 	}
 
 	if (!cur->used)
-		CMR_LOGE("fail to check buf fd 0x%x status, should be used\n");
+		CMR_LOGE("fail to check buf fd 0x%x status, should be used\n", cur->fd);
 
 	cur->used = 0;
 	q->free_cnt++;

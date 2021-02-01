@@ -2091,7 +2091,9 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 
 	frm->zsl_private = (cmr_uint)frm_param;
 	if (cxt->snp_cxt.snap_cnt >= cxt->snp_cxt.total_num) {
-		cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
+		ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
+		if (ret)
+			CMR_LOGE("fail to stop capture\n");
 		cxt->snp_cxt.start_capture_flag = 0;
 		cxt->snp_cxt.snap_cnt = 0;
 		CMR_LOGI("zsl_ips_en, total %d is enough, stop cap\n", cxt->snp_cxt.total_num);
@@ -2099,11 +2101,15 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 		if (camera_get_hdr_flag(cxt)) {
 			isp_param.cmd_value = 0;
 			ret = camera_isp_ioctl(cxt, COM_ISP_SET_HDR, (void *)&isp_param);
-			CMR_LOGD("ips enable set hdr ev stop\n");
-
+			if (ret)
+				CMR_LOGE("fail to set hdr ev stop\n");
+			else
+				CMR_LOGD("ips enable set hdr ev stop\n");
 			memset(&setting_param, 0, sizeof(struct setting_cmd_parameter));
 			ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                 SETTING_CLEAR_HDR, &setting_param);
+			if (ret)
+				CMR_LOGD("failt to clear HDR setting\n");
 		}
 		if (cxt->skipframe) {
 			camera_snapshot_set_ev(cxt, 0, SNAPSHOT_NULL);

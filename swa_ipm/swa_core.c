@@ -354,7 +354,9 @@ int swa_cnr_close(void * ipmpro_hanlde,
 	if (cxt->cnr_handle == NULL)
 		return ret;
 
-	sprd_yuv_denoise_adpt_deinit(cxt->cnr_handle);
+	ret = sprd_yuv_denoise_adpt_deinit(cxt->cnr_handle);
+	if (ret)
+		SWA_LOGE("fail to deinit cnr process\n");
 	cxt->cnr_handle = NULL;
 
 	SWA_LOGD("Done");
