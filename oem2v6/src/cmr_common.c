@@ -690,7 +690,7 @@ cmr_int camera_save_jpg_to_file(cmr_u32 index, cmr_u32 img_fmt, cmr_u32 width,
 
 uint32_t read_file(const char *file_name, void *data_buf, uint32_t buf_size) {
     FILE *fp = NULL;
-    int file_len = 0;
+    uint32_t file_len = 0;
     char tmp_name[128];
 
     if (data_buf == NULL) {
@@ -746,7 +746,7 @@ exit:
 
 uint32_t read_file_bin_u8(const char *file, void *data_buf, uint32_t buf_size) {
     FILE *fp = NULL;
-    int file_len = 0;
+    uint32_t file_len = 0;
     uint32_t read_bytes = 0;
 
     if (data_buf == NULL) {
