@@ -2234,7 +2234,7 @@ int SprdCamera3HWI::isStreamCombinationSupported(
         ret = -EINVAL;
         goto exit;
     }
-    for (uint8_t i = 0; i < comb->num_streams; i++) {
+    for (uint32_t i = 0; i < comb->num_streams; i++) {
         streamBuffer[i] = {comb->streams[i].stream_type,
                            comb->streams[i].width,
                            comb->streams[i].height,
