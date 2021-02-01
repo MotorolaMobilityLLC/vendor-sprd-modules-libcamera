@@ -2408,7 +2408,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
     // 38 auto mode shot2shot feature
     property_get("persist.vendor.cam.auto.shot2shot.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    available_cam_features.add(0);
 
     // 39 blur fast thumb
     property_get("persist.vendor.cam.blur.fast.thumb", prop, "0");
@@ -2416,7 +2416,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
 
     // 40 auto fast thumb
     property_get("persist.vendor.cam.auto.fast.thumb", prop, "0");
-    available_cam_features.add(atoi(prop));
+    available_cam_features.add(0);
 
     memcpy(s_setting[cameraId].sprddefInfo.sprd_cam_feature_list,
            &(available_cam_features[0]),
