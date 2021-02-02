@@ -13486,6 +13486,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     cmr_u32 lock_af = 0;
     cmr_u32 lock_awb = 0;
     cmr_uint video_snapshot_type;
+    cmr_uint has_preflashed;
 
     CMR_LOGI("E.\n");
     sem_wait(&cxt->snapshot_sm);
@@ -13681,6 +13682,18 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                 CMR_LOGE("open high flash fail");
         }
     }
+
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_PRE_LOWFLASH_VALUE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get preflashed flag %ld", ret);
+    }
+    has_preflashed = setting_param.cmd_type_value;
+
+    if (has_preflashed)
+        camera_get_iso_value(oem_handle);
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
