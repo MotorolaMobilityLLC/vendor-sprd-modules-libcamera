@@ -2332,13 +2332,13 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     char strRunType[PROPERTY_VALUE_MAX];
     char debugSwitch[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.wechat.portrait.scene.enable",prop,"2");
-    property_get("ro.boot.lwfq.type", strRunType , "-1");
+    property_get("ro.boot.auto.efuse", strRunType , "-1");
     property_get("persist.vendor.cam.portrait.scene.debug", debugSwitch , "0");
     if (atoi(debugSwitch) != 0){
         available_cam_features.add(1);
         HAL_LOGD("portraitscene on");
     } else {
-        if (!strcmp("1", strRunType)) {
+        if (strcmp("T618", strRunType)) {
             property_set("persist.vendor.cam.ip.portrait.back.replace","2");
             property_set("persist.vendor.cam.portrait.scene.enable","2");
         } else if(atoi(prop) == 0){
