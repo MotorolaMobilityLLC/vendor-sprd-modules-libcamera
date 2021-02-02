@@ -126,7 +126,7 @@ int32_t SprdCamera3Flash::setFlashMode(const int camera_id, const bool mode) {
     ssize_t wr_ret;
     int32_t flash_index;
 
-    LOGV("open flash driver interface");
+    HAL_LOGD("open_flash_driver_interface, mode %d", mode);
     int fd = open(flashInterface, O_WRONLY);
     /* open sysfs file parition */
     if (-1 == fd) {

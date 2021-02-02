@@ -460,76 +460,88 @@ static void writeCamInitTimeToProc(float init_time) {
     writeCamInitTimeToApct(cam_time_buf);
 }
 
-static int sprd_flash_level (uint8_t flash_level){
-    int32_t retVal = 0;
+static cmr_int camera_write_sysfs_file(const char *filename, cmr_u32 value) {
     int32_t bytes = 0;
-    int element = 0;
     char buffer[16];
-    const char *const flashInterface =
-        "/sys/devices/virtual/misc/sprd_flash/test";
-    ssize_t wr_ret;
+    int ret = 0;
+    int fd;
+    HAL_LOGV("E");
 
-    HAL_LOGD("open flash driver interface");
-    int fd = open(flashInterface, O_WRONLY);
-    /* open sysfs file parition */
+    fd = open(filename, O_WRONLY);
     if (-1 == fd) {
-        HAL_LOGE("Failed to open: flash_light_interface, %s", flashInterface);
+        HAL_LOGE("Failed to open: sysfs_file %s", filename);
         return -EINVAL;
     }
-    flash_level = flash_level*4;
-    HAL_LOGD("flash_level =%d",flash_level);
-    element =  7 + (flash_level << 8);
 
-    /* wrire flash level*/
-    bytes = snprintf(buffer, sizeof(buffer), "0x%x", element);
-    wr_ret = write(fd, buffer, bytes);
-    if (-1 == wr_ret) {
-        HAL_LOGE("write flash level failed \n");
-        retVal = -EINVAL;
-    }
-
-    /* wrire flash mode*/
-    bytes = snprintf(buffer, sizeof(buffer), "0x%x",2);
-    wr_ret = write(fd, buffer, bytes);
-
-    if (-1 == wr_ret) {
-        HAL_LOGE("write flash mode failed \n");
-        retVal = -EINVAL;
+    bytes = snprintf(buffer, sizeof(buffer), "0x%x", value);
+    if (write(fd, buffer, bytes) != bytes) {
+        HAL_LOGE("write failed\n");
+        ret = -EINVAL;
     }
 
     close(fd);
-    HAL_LOGV("Close file");
+    HAL_LOGV("X");
+
+    return ret;
+}
+
+static cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
+    int32_t bytes = 0;
+    int ret = 0;
+    int fd;
+    char buffer[4] = {0};
+
+    HAL_LOGV("E");
+
+    fd = open(filename, O_RDONLY);
+    if (-1 == fd) {
+        HAL_LOGE("Failed to open: sysfs_file %s", filename);
+        return -EINVAL;
+    }
+
+    ret = read(fd, buffer, sizeof(buffer));
+    if (ret <= 0) {
+        HAL_LOGE("read failed\n");
+        ret = -EINVAL;
+    }
+    HAL_LOGV("buffer %s", buffer);
+
+    close(fd);
+    *value = atoi(buffer);
+
+    HAL_LOGV("X");
+    return ret;
+}
+
+
+static int sprd_flash_level (uint8_t flash_level){
+    int32_t retVal = 0;
+    int element = 0;
+    cmr_u8 isFlashOpen = 0;
+    const char *const flashInterface =
+        "/sys/devices/virtual/misc/sprd_flash/test";
+
+    flash_level = flash_level*4;
+    element =  7 + (flash_level << 8);
+    HAL_LOGD("open flash driver interface, new_flash_level %d", flash_level);
+
+    /* write flash level*/
+    camera_write_sysfs_file(flashInterface, element);
+
+    /* write flash mode*/
+    camera_write_sysfs_file(flashInterface, 2);
+
     return retVal;
 }
 
 static int close_flash_torch (){
     int32_t retVal = 0;
-    int32_t bytes = 0;
-    char buffer[16];
     const char *const flashInterface =
         "/sys/devices/virtual/misc/sprd_flash/test";
-    ssize_t wr_ret;
 
     HAL_LOGD("close flash driver interface");
-    int fd = open(flashInterface, O_WRONLY);
-    /* open sysfs file parition */
-    if (-1 == fd) {
-        HAL_LOGE("Failed to open: flash_light_interface, %s", flashInterface);
-        return -EINVAL;
-    }
+    camera_write_sysfs_file(flashInterface, 3);
 
-    /* wrire flash mode*/
-    HAL_LOGD("Close flash torch");
-    bytes = snprintf(buffer, sizeof(buffer), "0x%x",3);
-    wr_ret = write(fd, buffer, bytes);
-
-    if (-1 == wr_ret) {
-        HAL_LOGE("write flash mode failed \n");
-        retVal = -EINVAL;
-    }
-
-    close(fd);
-    HAL_LOGV("Close file");
     return retVal;
 }
 
@@ -8044,11 +8056,20 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
         HAL_LOGD("flash_level=%d,flash_mode=%d",flash_level,flashInfo.mode);
 
+        FLASH_INFO_Tag flashInfo_info;
         if(flashInfo.mode != ANDROID_FLASH_MODE_TORCH) {
-            if(flash_level == 0 )
+            if(flash_level == 0)
                 close_flash_torch();
-            else
-                sprd_flash_level(flash_level);
+            else{
+                /*Give control of the flash to the camera, and notify
+                framework that the flash has become unavailable.*/
+                mSetting->getFLASHINFOTag(&flashInfo_info);
+                HAL_LOGD("flashInfo_info_available=%d",flashInfo_info.available);
+                if (flashInfo_info.available) {
+                    SprdCamera3Flash::reserveFlash(mCameraId);
+                    sprd_flash_level(flash_level);
+                }
+            }
         }
     } break;
     case ANDROID_FLASH_MODE: {

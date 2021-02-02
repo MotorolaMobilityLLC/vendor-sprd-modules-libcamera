@@ -5155,7 +5155,6 @@ int SprdCamera3Setting::updateWorkParameters(
          if (frame_settings.exists(ANDROID_SPRD_ADJUST_FLASH_LEVEL)) {
             flash_sprd_level =
                 frame_settings.find(ANDROID_SPRD_ADJUST_FLASH_LEVEL).data.u8[0];
-            HAL_LOGD("sprd_flash_level =%d",flash_sprd_level);
         }
         if(flash_sprd_level == 0) {
             valueU8 = frame_settings.find(ANDROID_FLASH_MODE).data.u8[0];
@@ -5164,7 +5163,7 @@ int SprdCamera3Setting::updateWorkParameters(
             GET_VALUE_IF_DIF(s_setting[mCameraId].flashInfo.mode, valueU8,
                 ANDROID_FLASH_MODE, 1)
         } else{
-          HAL_LOGD("sprd_flash_level is uesd");
+          HAL_LOGD("sprd_flash_level is uesd, flash_level %d",flash_sprd_level);
         }
     }
 
