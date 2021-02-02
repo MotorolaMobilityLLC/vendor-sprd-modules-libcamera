@@ -448,25 +448,25 @@ struct pdaf_coordinate_tab imx586_pd_coordinate_table[] = {
      .pos_info = {0, 1, 0, 1},
     },
     {.number = 4,
-     .pos_info = {1, 0, 1, 0},
+     .pos_info = {0, 1, 0, 1},
     },
     {.number = 4,
-     .pos_info = {1, 0, 1, 0},
+     .pos_info = {0, 1, 0, 1},
     },
     {.number = 4,
-     .pos_info = {1, 0, 1, 0},
+     .pos_info = {0, 1, 0, 1},
     },
     {.number = 4,
-     .pos_info = {1, 0, 1, 0},
+     .pos_info = {0, 1, 0, 1},
     },
     {.number = 4,
-     .pos_info = {1, 0, 1, 0},
+     .pos_info = {0, 1, 0, 1},
     },
     {.number = 4,
-     .pos_info = {1, 0, 1, 0},
+     .pos_info = {0, 1, 0, 1},
     },
     {.number = 4,
-     .pos_info = {1, 0, 1, 0},
+     .pos_info = {0, 1, 0, 1},
     }
 };
 
@@ -808,16 +808,28 @@ static cmr_int imx586_drv_set_master_FrameSync(cmr_handle handle,
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    SENSOR_LOGI("E");
+    SENSOR_LOGD("E");
 
     /*TODO*/
 
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3002, 0x40);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3040, 0x01);
 
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3F71, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4B82, 0x03);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4B83, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4B85, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x423D, 0xff);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4BD7, 0x16);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x4225, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3041, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x424A, 0x00);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x424B, 0xf0);
     /*END*/
-
+    SENSOR_LOGD("0x424A read out is 0x%x", hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x424A));
+    SENSOR_LOGD("0x424B read out is 0x%x", hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x424B));
     return SENSOR_SUCCESS;
 }
+
 static cmr_int imx586_drv_set_pdaf_mode(cmr_handle handle, cmr_uint param) {
     UNUSED(param);
 
@@ -951,11 +963,9 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     char value2[PROPERTY_VALUE_MAX];
     property_get("vendor.cam.hw.framesync.on", value2, "1");
-    if (!strcmp(value2, "1")) {
-#if defined(CONFIG_DUAL_MODULE)
-        //imx586_drv_set_master_FrameSync(handle, param);
+    if (!strcmp(value2, "1") && sns_drv_cxt->is_multi_mode) {
+        imx586_drv_set_master_FrameSync(handle, param);
         // imx586_drv_set_slave_FrameSync(handle, param);
-#endif
     }
 
     /*TODO*/
