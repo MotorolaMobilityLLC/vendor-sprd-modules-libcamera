@@ -5960,7 +5960,7 @@ void SprdCamera3OEMIf::HandleSnapshot(enum camera_cb_type cb, void *data) {
         case CAMERA_EVT_CB_SNAPSHOT_DONE:
             // snapshot grab done
             // callback for thumbnail yuv picture in param->frame
-            HAL_LOGD("yuv done. addr %p,  w %d h %d, fmt %d\n",
+            HAL_LOGD("yuv done. addr 0x%lx,  w %u h %u, fmt %u",
                     param->frame.y_vir_addr, param->frame.width,
                     param->frame.height, param->frame.format);
             mSetting->notifyNextCapture(0);
@@ -11888,6 +11888,7 @@ void SprdCamera3OEMIf::cbThumbFrame(uint32_t frame_number,
     uint32_t frame_num = 0;
     int orientation = 0, angle = 0;
     int64_t timestamp = frame->monoboottime;
+    int ret = 0;
     Mutex::Autolock cbLock(&mCaptureCbLock);
     SprdCamera3RegularChannel *regular_channel =
                 reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -11903,8 +11904,8 @@ void SprdCamera3OEMIf::cbThumbFrame(uint32_t frame_number,
         HAL_LOGE("regular_channel or pic_channel is null");
         return;
     }
-    regular_channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
-    if (yuv2_stream == NULL) {
+    ret = regular_channel->getStream(CAMERA_STREAM_TYPE_YUV2, &yuv2_stream);
+    if (ret || yuv2_stream == NULL) {
         HAL_LOGE("yuv2_stream is null");
         return;
     }
@@ -11915,22 +11916,27 @@ void SprdCamera3OEMIf::cbThumbFrame(uint32_t frame_number,
                        frame->sensor_info.exposure_time_denominator;
         mSetting->setExposureTimeTag(exposureTime);
     }
-    yuv2_stream->getQBuffFirstNum(&frame_num);
-    if (frame_num != frame_number) {
+    ret = yuv2_stream->getQBuffFirstNum(&frame_num);
+    if (ret || frame_num != frame_number) {
         HAL_LOGE("return wrong frame %u, should be %u", frame_number, frame_num);
         return;
     }
 
     HAL_LOGD("frame->monoboottime 0x%llx", frame->monoboottime);
     timestamp = frame->monoboottime;
-    yuv2_stream->getQBuffFirstVir(&addr_vir);
-    yuv2_stream->getQBuffFirstPhy(&addr_phy);
-    yuv2_stream->getQBuffFirstFd(&ion_fd);
-    if (addr_vir == 0 || ion_fd == 0) {
-        HAL_LOGW("addr_vir=%ld, ion_fd=%d", addr_vir, ion_fd);
+    ret = yuv2_stream->getQBuffFirstVir(&addr_vir);
+    if (ret || addr_vir == 0) {
+        HAL_LOGW("addr_vir=%lu, ret=%d", addr_vir, ret);
         return;
     }
-    HAL_LOGD("frame (%d, %d), yuv2 (%d, %d)", frame->width, frame->height,
+    ret = yuv2_stream->getQBuffFirstPhy(&addr_phy);
+    if (ret) return;
+    ret = yuv2_stream->getQBuffFirstFd(&ion_fd);
+    if (ret || ion_fd == 0) {
+        HAL_LOGW("ion_fd=%d, ret=%d", ion_fd, ret);
+        return;
+    }
+    HAL_LOGD("frame (%u, %u), yuv2 (%u, %u)", frame->width, frame->height,
                mYuv2Width, mYuv2Height);
     if ((int)frame->width == mYuv2Width &&
                 (int)frame->height == mYuv2Height) {
