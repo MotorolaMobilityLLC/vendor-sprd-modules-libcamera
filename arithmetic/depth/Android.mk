@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 ifneq ($(PLATFORM_VERSION),4.4.4)
-#ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
@@ -32,11 +32,42 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprddepth.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprddepth.so
-LOCAL_SHARED_LIBRARIES := libc libdl liblog libm libSegLite libTfliteWrapper
-
-ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_depth_adapter.cpp
+LOCAL_MODULE := libsprddepthadapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden -Wno-error=unused-parameter
+LOCAL_SHARED_LIBRARIES := libcutils liblog
+LOCAL_SHARED_LIBRARIES += libsprddepth
+
+LOCAL_C_INCLUDES := \
+        $(LOCAL_PATH)/inc \
+        $(LOCAL_PATH)/../inc \
+        $(TOP)/system/core/include/cutils/ \
+        $(TOP)/system/core/include/ \
+        $(TOP)/libnativehelper/include_jni
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
 endif
+
+ifneq ($(filter $(TARGET_BOARD_PLATFORM), ud710), )
+LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_NPU
+else 
+LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_CPU
+endif
+
+include $(BUILD_SHARED_LIBRARY)
+include $(call all-makefiles-under, $(LOCAL_PATH))
+
+endif
+endif
+
+

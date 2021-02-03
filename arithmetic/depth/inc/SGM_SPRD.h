@@ -7,12 +7,29 @@ extern "C" {
 
 #define NUM_ROI 10
 
-typedef enum { YUV420_NV12 = 0, YUV422_YUYV } ImageYUVFormat;
-typedef enum { MODE_PREVIEW, MODE_CAPTURE } depth_mode;
+typedef enum 
+{ 
+    YUV420_NV21 = 0, 
+    YUV422_YUYV 
+} ImageYUVFormat;
+typedef enum 
+{ 
+    MODE_PREVIEW, 
+    MODE_CAPTURE 
+} depth_mode;
 
-typedef enum { MODE_DISPARITY, MODE_WEIGHTMAP } outFormat;
+typedef enum 
+{ 
+    MODE_DISPARITY,
+    MODE_WEIGHTMAP 
+} outFormat;
 
-typedef enum { DISTANCE_OK = 0, DISTANCE_FAR, DISTANCE_CLOSE } distanceRet;
+typedef enum 
+{ 
+    DISTANCE_OK = 0, 
+    DISTANCE_FAR, 
+    DISTANCE_CLOSE 
+} distanceRet;
 
 typedef enum {
     DEPTH_NORMAL = 0,
@@ -35,6 +52,7 @@ struct depth_init_inputparam {
     void *potpbuf;
     int otpsize;
     char *config_param;
+    int run_type;
 };
 
 struct depth_init_outputparam {
@@ -74,8 +92,8 @@ typedef struct {
     int sel_y;    /* The point which be touched */
     unsigned char *DisparityImage;
     int VCM_cur_value;
-    struct af_golden_vcm_data golden_vcm_data;
-    struct portrait_mode_param portrait_param;
+    void *golden_vcm_data;
+    struct portrait_mode_param *portrait_param;
 } weightmap_param;
 
 typedef struct DistanceTwoPointInfo {
