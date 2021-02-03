@@ -58,6 +58,8 @@
 #include "../arithmetic/portrait/inc/PortraitCapture_Interface.h"
 #include "../arithmetic/lightportrait/inc/camera_light_portrait.h"
 #include "../arithmetic/face_dense_align/inc/camera_face_dense_align.h"
+#include "../arithmetic/blur/preview/inc/sprd_preview_portrait_adapter.h"
+#include "../arithmetic/portrait/inc/sprd_capture_portrait_adapter.h"
 
 #ifdef CONFIG_FACE_BEAUTY
 #include "sprd_facebeauty_adapter.h"
@@ -368,11 +370,11 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         int capLPT(void *output_buff, int picWidth, int picHeight,
                              unsigned char *outPortraitMask, int lightPortraitType);
         int getPortraitMask(void *output_buff, void *input_buf1_addr,
-                                      int vcmCurValue, unsigned char *result);
+                            int vcmCurValue, void *bokehMask, unsigned char *lptMask);
 #ifdef CONFIG_FACE_BEAUTY
         int initFaceBeautyParams();
         int deinitFaceBeauty();
-        int doFaceBeauty(unsigned char *mask, void *input_buff, int picWidth, int picHeight, 
+        int doFaceBeauty(unsigned char *mask, void *input_buff, int picWidth, int picHeight,
                     int mode, faceBeautyLevels *facebeautylevel, int lightPortraitType);
 #endif
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
@@ -437,6 +439,7 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         capture_single_portrait_weight_params_t mCaptureWeightParams;
         capture2_single_portrait_init_params_t mCapture2InitParams;
         capture2_single_portrait_weight_params_t mCapture2WeightParams;
+
         int32_t mFaceInfo[4];
         uint32_t mRotation;
         int32_t mLastTouchX;
