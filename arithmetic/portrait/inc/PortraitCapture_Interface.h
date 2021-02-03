@@ -72,7 +72,8 @@ typedef struct {
     int height; // image height
     int depthW; // depth width
     int depthH; // depth height
-
+    int lptW;
+    int lptH;
     float min_slope; // 0.001~0.01, default is 0.005 ->0.0004
     float max_slope; // 0.01~0.1, default is 0.05 ->0.0019
     float Findex2Gamma_AdjustRatio; // 2~11, default is 6.0 ->15.0f
@@ -121,8 +122,8 @@ typedef struct _PortaitCapProcParams {
 
 JNIEXPORT int sprd_portrait_capture_init(void **handle, PortraitCap_Init_Params *initParams);
 JNIEXPORT int sprd_portrait_capture_deinit(void *handle);
-JNIEXPORT int sprd_portrait_capture_get_mask(void *handle , ProcDepthInputMap *depthInputData, PortaitCapProcParams *procParams, InoutYUV *yuvData, void *WeightMask);
-JNIEXPORT int sprd_portrait_capture_process(void *handle , InoutYUV *yuvData, void *WeightMask, int isCapture);
+JNIEXPORT int sprd_portrait_capture_get_mask(void *handle , ProcDepthInputMap *depthInputData, PortaitCapProcParams *procParams, InoutYUV *yuvData, void *bokehMask, void *lptMask);
+JNIEXPORT int sprd_portrait_capture_process(void *handle , InoutYUV *yuvData, void *bokehMask, int isCapture);
 JNIEXPORT int sprd_portrait_capture_get_mask_info(void *handle, unsigned int *width, unsigned int *height, unsigned int *bufSize);
 JNIEXPORT int sprd_portrait_capture_get_version(char *verInfo, int bufSize);
 
