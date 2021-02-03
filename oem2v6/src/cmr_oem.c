@@ -10697,12 +10697,9 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     struct isp_hdr_param hdr_param;
     struct isp_snp_ae_param snp_ae_param;
     struct isp_fdr_param fdr_param;
-
     struct isp_3dnr_ctrl_param param_3dnr;
     struct isp_exp_compensation ae_compensation;
-#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
     struct isp_gtm_switch_param gtm_switch;
-#endif
 
     if (!oem_handle || !param_ptr) {
         CMR_LOGE("in parm error");
@@ -10981,7 +10978,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&snp_ae_param;
         break;
 
-#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
     case COM_ISP_SET_GTM_ONFF:
         isp_cmd = ISP_CTRL_SET_GTM_ONFF;
         gtm_switch.enable = param_ptr->cmd_value;
@@ -10989,7 +10985,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&gtm_switch;
         CMR_LOGD("set gtm on off value =%d", gtm_switch.enable);
         break;
-#endif
 
     case COM_ISP_SET_3DNR:
         isp_cmd = ISP_CTRL_3DNR;
@@ -12312,21 +12307,14 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     out_ptr->ee_flag = camera_get_ee_flag(oem_handle);
     cxt->ee_flag = out_ptr->ee_flag;
 
-#if defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
     ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_GET_GTM_STATUS, &gtm_on);
     if (ret) {
-        CMR_LOGE("failed isp ioctl %ld", ret);
-    }
-    CMR_LOGD("gtm on %d\n", gtm_on);
-
-    if (gtm_on) {
-        cxt->gtm_flag = 1;
-    } else {
+        CMR_LOGD("can not get GTM status: %ld\n", ret);
         cxt->gtm_flag = 0;
+    } else {
+        cxt->gtm_flag = !!gtm_on;
+        CMR_LOGD("gtm on %d\n", cxt->gtm_flag);
     }
-#else
-    cxt->gtm_flag = 0;
-#endif
 
 #ifdef CONFIG_CAMERA_DRE
     setting_param.camera_id = cxt->camera_id;

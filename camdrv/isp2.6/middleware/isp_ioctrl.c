@@ -90,6 +90,11 @@ static cmr_u32 get_cnr_blkid (void)
 	return ISP_BLK_CNR2;
 }
 
+static cmr_u32 gtm_is_supported(void)
+{
+	return 0;
+}
+
 static cmr_int denoise_param_read_v25(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -197,6 +202,11 @@ static denoise_param_read_t s_adapt_ioctl_nr_read = denoise_param_read_v25;
 static cmr_u32 get_cnr_blkid (void)
 {
 	return ISP_BLK_CNR2_V1;
+}
+
+static cmr_u32 gtm_is_supported(void)
+{
+	return 0;
 }
 
 static cmr_int denoise_param_read_v26(cmr_handle isp_alg_handle, void *param_ptr)
@@ -315,6 +325,11 @@ static denoise_param_read_t s_adapt_ioctl_nr_read = denoise_param_read_v26;
 static cmr_u32 get_cnr_blkid (void)
 {
 	return ISP_BLK_CNR2_V1;
+}
+
+static cmr_u32 gtm_is_supported(void)
+{
+	return 1;
 }
 
 static cmr_int denoise_param_read_v27(cmr_handle isp_alg_handle, void *param_ptr)
@@ -440,6 +455,11 @@ static denoise_param_read_t s_adapt_ioctl_nr_read = denoise_param_read_v27;
 static cmr_u32 get_cnr_blkid (void)
 {
 	return ISP_BLK_CNR2_V1;
+}
+
+static cmr_u32 gtm_is_supported(void)
+{
+	return 1;
 }
 
 static cmr_int denoise_param_read_v29(cmr_handle isp_alg_handle, void *param_ptr)
@@ -3982,6 +4002,12 @@ static cmr_int ispctl_gtm_switch(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_pm_ioctl_input input = { NULL, 0 };
 	struct isp_pm_ioctl_output output = { NULL, 0 };
 
+	if (gtm_is_supported() == 0) {
+		CMR_LOGD("gtm is not supported\n");
+		cxt->gtm_ltm_on = 0;
+		return ret;
+	}
+
 	if (param_ptr == NULL) {
 		ISP_LOGE("fail to get valid param ptr!");
 		return ISP_PARAM_NULL;
@@ -5312,8 +5338,6 @@ exit:
 static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-
-#ifdef CONFIG_ISP_2_7
 	struct isp_alg_fw_context *cxt =
 		(struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_snp_ae_param *isp_ae_adj = (struct isp_snp_ae_param *)param_ptr;
@@ -5335,15 +5359,8 @@ static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 					     AE_CAP_EV_ADJUST_START, &ae_adj_param, NULL);
 
 	ISP_LOGI("ev adj cap start, ret %ld", ret);
-
-#else
-    UNUSED(isp_alg_handle);
-    UNUSED(param_ptr);
-#endif
-
 	return ret;
 }
-
 
 static cmr_int ispctl_get_cnr2_param(cmr_handle isp_alg_handle, void *param_ptr)
 {

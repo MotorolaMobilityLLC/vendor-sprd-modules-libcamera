@@ -403,6 +403,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AE_SET_REF_CAMERA_ID,
 	ISP_CTRL_AE_SET_VISIBLE_REGION,
 	ISP_CTRL_AE_SET_GLOBAL_ZOOM_RATIO,
+	ISP_CTRL_SET_GTM_ONFF,
 	ISP_CTRL_GET_GTM_STATUS,
 	ISP_CTRL_SET_SENSOR_SIZE,
 	ISP_CTRL_GET_DRE_PARAM,
@@ -487,6 +488,10 @@ struct isp_flash_cfg {
 struct isp_3dnr_ctrl_param {
 	cmr_u32 enable;
 	cmr_u32 count;
+};
+
+struct isp_gtm_switch_param {
+	cmr_u32 enable;
 };
 
 struct isp_adgain_exp_info {

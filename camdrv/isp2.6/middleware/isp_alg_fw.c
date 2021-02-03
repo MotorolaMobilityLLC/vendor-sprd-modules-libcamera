@@ -79,7 +79,6 @@ enum {
 
 cmr_u32 isp_cur_bv;
 cmr_u32 isp_cur_ct;
-static isp_lsc_cb s_lsc_set_cb; /* workaround for sharkl3 compiling*/
 static int s_dbg_ver;
 
 struct BITMAPFILEHEADER {
@@ -873,11 +872,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
     case AE_CB_EXPTIME_NOTIFY:
 		cmd = ISP_AE_EXP_TIME;
 		break;
-#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 	case AE_CB_EV_ADJUST_NOTIFY:
 		cmd = ISP_EV_EFFECT_CALLBACK;
 		break;
-#endif
 	case AE_CB_SYNC_STABLE:
 		cmd = ISP_AE_SYNC_STATUS_CALLBACK;
 		break;
@@ -4961,16 +4958,20 @@ static cmr_int ispalg_lsc_init(struct isp_alg_fw_context *cxt)
 	lsc_param.grid = lsc_info->grid;
 	lsc_param.camera_id = cxt->camera_id;
 	lsc_param.lib_param = cxt->lib_use_info->lsc_lib_info;
-#ifdef CONFIG_ISP_2_6
-	lsc_param.lib_param.version_id = 1;
-	lsc_param.caller_handle = NULL;
-	lsc_param.lsc_set_cb = NULL;
-#endif
-#if defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 	lsc_param.lib_param.version_id = 1;
 	lsc_param.caller_handle = (cmr_handle) cxt;
 	lsc_param.lsc_set_cb = ispalg_lsc_set_cb;
+#if defined(CONFIG_ISP_2_5)
+	lsc_param.lib_param.version_id = 0;
+	lsc_param.caller_handle = NULL;
+	lsc_param.lsc_set_cb = NULL;
+#elif defined(CONFIG_ISP_2_6)
+	lsc_param.caller_handle = NULL;
+	lsc_param.lsc_set_cb = NULL;
 #endif
+	ISP_LOGD("lsc version_id %d, set_cb %p %p\n", lsc_param.lib_param.version_id,
+		lsc_param.caller_handle, lsc_param.lsc_set_cb);
+
 	/*  alsc tuning param should be private and parsed in alsc lib */
 	//struct lsc2_tune_param* param = (struct lsc2_tune_param*)lsc_param.tune_param_ptr;
 	cxt->lsc_cxt.full_size_width = lsc_tab_param_ptr->resolution.w;
@@ -7457,7 +7458,6 @@ exit:
 	if (cxt)
 		free(cxt);
 
-	s_lsc_set_cb = ispalg_lsc_set_cb;
 	ISP_LOGE("done: %ld", ret);
 	return ret;
 }
