@@ -1,4 +1,4 @@
-#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL) 
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include "SprdPortraitAlgo.h"
 #include <cutils/trace.h>
 typedef enum { PREVIEW = 0, CAPTURE = 1 } portrait_mode;
@@ -40,6 +40,25 @@ SprdPortraitAlgo::SprdPortraitAlgo() {
     memset(&beauty_face, 0, sizeof(fbBeautyFacetT));
     memset(&beauty_image, 0, sizeof(fb_beauty_image_t));
 #endif
+    memset(&mBokehPortraitParams, 0, sizeof(portrait_mode_param));
+    memset(&tuning_golden_vcm, 0, sizeof(af_relbokeh_oem_data));
+    memset(&mPortraitPrevInitParams, 0, sizeof(sprd_preview_bokeh_init_param_t));
+    memset(&mPortraitPrevDeinitParams, 0, sizeof(sprd_preview_bokeh_deinit_param_t));
+    memset(&mPortraitPrevWeightmapParams, 0, sizeof(sprd_preview_bokeh_weight_param_t));
+    memset(&mPortraitPrevRunParams, 0, sizeof(sprd_preview_bokeh_blur_param_t));
+    memset(&mPortraitCapInitParams, 0, sizeof(sprd_capture_portrait_init_param_t));
+    memset(&mPortraitCapDeinitParams, 0, sizeof(sprd_capture_portrait_deinit_param_t));
+    memset(&mPortraitCapGetMaskInfoParams, 0, sizeof(sprd_capture_portrait_get_mask_info_param_t));
+    memset(&mPortraitCapGetMaskParams, 0, sizeof(sprd_capture_portrait_get_mask_param_t));
+    memset(&mPortraitCapRunParams, 0, sizeof(sprd_capture_portrait_process_param_t));
+    memset(&mPrevDepthInitParams, 0, sizeof(sprd_depth_init_param_t));
+    memset(&mCapDepthInitParams, 0, sizeof(sprd_depth_init_param_t));
+    memset(&mPrevDepthRunParams, 0, sizeof(sprd_depth_run_param_t));
+    memset(&mCapDepthRunParams, 0, sizeof(sprd_depth_run_param_t));
+    memset(&mCapDepthGdepthParams, 0, sizeof(sprd_depth_gdepth_param_t));
+    memset(&mDepthUsersetParams, 0, sizeof(sprd_depth_userset_param_t));
+    memset(&mPrevDepthOnlineCaliParams, 0, sizeof(sprd_depth_onlineCali_param_t));
+    memset(&mPrevDepthOnlinePostParams, 0, sizeof(sprd_depth_onlinepost_param_t));
 }
 
 SprdPortraitAlgo::~SprdPortraitAlgo() {
@@ -155,34 +174,25 @@ void SprdPortraitAlgo::setBokenParam(void *param) {
 
     mPreviewbokehParam.weight_params.sel_x = bokeh_param.sel_x;
     mPreviewbokehParam.weight_params.sel_y = bokeh_param.sel_y;
-    fnum = bokeh_param.f_number * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
-    mPreviewbokehParam.weight_params.F_number = fnum;
     mPreviewbokehParam.depth_param.sel_x = bokeh_param.sel_x;
     mPreviewbokehParam.depth_param.sel_y = bokeh_param.sel_y;
+    fnum = bokeh_param.f_number * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
+    mPreviewbokehParam.weight_params.F_number = fnum;
+    HAL_LOGD("sel_x,sel_y %d %d",mPreviewbokehParam.depth_param.sel_x,mPreviewbokehParam.depth_param.sel_y);
     mPreviewbokehParam.depth_param.F_number = fnum;
-    mPreviewbokehParam.depth_param.golden_vcm_data.golden_count =
-        bokeh_param.relbokeh_oem_data.golden_count;
-    mPreviewbokehParam.depth_param.golden_vcm_data.golden_macro =
-        bokeh_param.relbokeh_oem_data.golden_macro;
-    mPreviewbokehParam.depth_param.golden_vcm_data.golden_infinity =
-        bokeh_param.relbokeh_oem_data.golden_infinity;
-    memcpy(&mPreviewbokehParam.depth_param.portrait_param,
-           &bokeh_param.portrait_param, sizeof(struct portrait_mode_param));
-    for (int i = 0;
-         i < mPreviewbokehParam.depth_param.golden_vcm_data.golden_count; i++) {
-        mPreviewbokehParam.depth_param.golden_vcm_data.golden_vcm[i] =
-            bokeh_param.relbokeh_oem_data.golden_vcm[i];
-        mPreviewbokehParam.depth_param.golden_vcm_data.golden_distance[i] =
-            bokeh_param.relbokeh_oem_data.golden_distance[i];
-    }
+    memcpy(&tuning_golden_vcm,&bokeh_param.relbokeh_oem_data,sizeof(struct af_golden_vcm_data));
+    mPrevDepthRunParams.params.tuning_golden_vcm = &tuning_golden_vcm;
+    mCapDepthRunParams.params.tuning_golden_vcm = &tuning_golden_vcm;
+    memcpy(&mBokehPortraitParams,&bokeh_param.portrait_param, sizeof(struct portrait_mode_param));
     mPreviewbokehParam.depth_param.VCM_cur_value = bokeh_param.vcm;
+    mPreviewbokehParam.depth_param.portrait_param = &mBokehPortraitParams;
+    mPreviewbokehParam.depth_param.golden_vcm_data = &tuning_golden_vcm;
 }
 
 int SprdPortraitAlgo::prevDepthRun(void *para1, void *para2, void *para3,
                                    void *para4) {
     int rc = NO_ERROR;
     int64_t depthRun = 0;
-    distanceRet distance;
     if (!para1 || !para2 || !para3 || !para4) {
         HAL_LOGE(" para is null");
         rc = BAD_VALUE;
@@ -195,9 +205,15 @@ int SprdPortraitAlgo::prevDepthRun(void *para1, void *para2, void *para3,
              mPreviewbokehParam.depth_param.VCM_cur_value);
     depthRun = systemTime();
     if (mDepthPrevHandle) {
-        rc = sprd_depth_Run_distance(mDepthPrevHandle, para1, para4, para3,
-                                     para2, &mPreviewbokehParam.depth_param,
-                                     &distance);
+        mPrevDepthRunParams.input[0].addr[0] = para2;
+        mPrevDepthRunParams.input[1].addr[0] = para3;
+        mPrevDepthRunParams.output.addr[0] = para1;
+        mPrevDepthRunParams.params.F_number = mPreviewbokehParam.depth_param.F_number;
+        mPrevDepthRunParams.params.sel_x = mPreviewbokehParam.depth_param.sel_x;
+        mPrevDepthRunParams.params.sel_y = mPreviewbokehParam.depth_param.sel_y;
+        mPrevDepthRunParams.params.VCM_cur_value = mPreviewbokehParam.depth_param.VCM_cur_value;
+        mPrevDepthRunParams.params.portrait_param = &mBokehPortraitParams;
+        rc = sprd_depth_adpt_ctrl(mDepthPrevHandle,SPRD_DEPTH_RUN_CMD,&mPrevDepthRunParams);
     }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_Run_distance failed! %d", rc);
@@ -213,79 +229,47 @@ int SprdPortraitAlgo::initAlgo() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
         if (mDepthCapHandle) {
-            // sprd_depth_Close(mDepthCapHandle);
+             //rc = sprd_depth_adpt_deinit(mDepthCapHandle);
         }
         if (mDepthPrevHandle) {
-            sprd_depth_Close(mDepthPrevHandle);
+            rc = sprd_depth_adpt_deinit(mDepthPrevHandle);
         }
     }
 
     struct sprd_depth_configurable_para depth_config_param;
-    char acVersion[256] = {
-        0,
-    };
     // preview depth params
-    depth_init_inputparam prev_input_param;
-    depth_init_outputparam prev_output_info;
-    depth_mode prev_mode;
-    outFormat prev_outformat;
-    prev_input_param.input_width_main = mSize.preview_w;
-    prev_input_param.input_height_main = mSize.preview_h;
-    prev_input_param.input_width_sub = mSize.depth_prev_sub_w;
-    prev_input_param.input_height_sub = mSize.depth_prev_sub_h;
-    prev_input_param.output_depthwidth = mSize.depth_prev_out_w;
-    prev_input_param.output_depthheight = mSize.depth_prev_out_h;
-    prev_input_param.online_depthwidth = mSize.depth_snap_out_w;
-    prev_input_param.online_depthheight = mSize.depth_snap_out_h;
-    prev_input_param.depth_threadNum = 1;
-    prev_input_param.online_threadNum = 2;
-    prev_input_param.imageFormat_main = YUV420_NV12;
-    prev_input_param.imageFormat_sub = YUV420_NV12;
-    prev_input_param.potpbuf = mCalData.otp_data;
-    prev_input_param.otpsize = mCalData.otp_size;
-    prev_input_param.config_param = NULL;
-    prev_mode = MODE_CAPTURE;
-    prev_outformat = MODE_WEIGHTMAP;
+    mPrevDepthInitParams.inparam.input_width_main = mSize.preview_w;
+    mPrevDepthInitParams.inparam.input_height_main = mSize.preview_h;
+    mPrevDepthInitParams.inparam.input_width_sub = mSize.depth_prev_sub_w;
+    mPrevDepthInitParams.inparam.input_height_sub = mSize.depth_prev_sub_h;
+    mPrevDepthInitParams.inparam.otpbuf = mCalData.otp_data;
+    mPrevDepthInitParams.inparam.otpsize = mCalData.otp_size;
+    mPrevDepthInitParams.inparam.config_param = NULL;
+    mPrevDepthInitParams.format = PREVIEW_MODE;
     mDepthPrevHandle = NULL;
     // capture depth params
-    depth_init_inputparam cap_input_param;
-    depth_init_outputparam cap_output_info;
-    depth_mode cap_mode;
-    outFormat cap_outformat;
-    cap_input_param.input_width_main = mSize.depth_snap_main_w;
-    cap_input_param.input_height_main = mSize.depth_snap_main_h;
-    cap_input_param.input_width_sub = mSize.depth_snap_sub_w;
-    cap_input_param.input_height_sub = mSize.depth_snap_sub_h;
-    cap_input_param.output_depthwidth = mSize.depth_snap_out_w;
-    cap_input_param.output_depthheight = mSize.depth_snap_out_h;
-    cap_input_param.online_depthwidth = 0;
-    cap_input_param.online_depthheight = 0;
-    cap_input_param.depth_threadNum = 2;
-    cap_input_param.online_threadNum = 0;
-    cap_input_param.imageFormat_main = YUV420_NV12;
-    cap_input_param.imageFormat_sub = YUV420_NV12;
-    cap_input_param.potpbuf = mCalData.otp_data;
-    cap_input_param.otpsize = mCalData.otp_size;
-    cap_input_param.config_param = NULL;
-    cap_mode = MODE_CAPTURE;
-    cap_outformat = MODE_DISPARITY;
+    mCapDepthInitParams.inparam.input_width_main = mSize.depth_snap_main_w;
+    mCapDepthInitParams.inparam.input_height_main = mSize.depth_snap_main_h;
+    mCapDepthInitParams.inparam.input_width_sub = mSize.depth_snap_sub_w;
+    mCapDepthInitParams.inparam.input_height_sub = mSize.depth_snap_sub_h;
+    mCapDepthInitParams.inparam.otpbuf = mCalData.otp_data;
+    mCapDepthInitParams.inparam.otpsize = mCalData.otp_size;
+    mCapDepthInitParams.inparam.config_param = NULL;
+    mCapDepthInitParams.format = CAPTURE_MODE;
     mDepthCapHandle = NULL;
     rc = checkDepthPara(&depth_config_param);
     if (rc) {
-        prev_input_param.config_param = (char *)(&sprd_depth_config_para);
-        cap_input_param.config_param = (char *)(&sprd_depth_config_para);
+        mPrevDepthInitParams.inparam.config_param = (char *)(&sprd_depth_config_para);
+        mCapDepthInitParams.inparam.config_param = (char *)(&sprd_depth_config_para);
     } else {
-        prev_input_param.config_param = (char *)&depth_config_param;
-        cap_input_param.config_param = (char *)&depth_config_param;
+        mPrevDepthInitParams.inparam.config_param = (char *)&depth_config_param;
+        mCapDepthInitParams.inparam.config_param = (char *)&depth_config_param;
         HAL_LOGI("sensor_direction=%d", depth_config_param.SensorDirection);
     }
-    rc = sprd_depth_VersionInfo_Get(acVersion, 256);
-    HAL_LOGD("depth api version [%s]", acVersion);
+    rc = sprd_depth_adpt_ctrl(NULL,SPRD_DEPTH_GET_VERSION_CMD,NULL);
     if (mDepthPrevHandle == NULL) {
         int64_t depthInit = systemTime();
-        mDepthPrevHandle =
-            sprd_depth_Init(&(prev_input_param), &(prev_output_info), prev_mode,
-                            prev_outformat);
+        mDepthPrevHandle = sprd_depth_adpt_init(&mPrevDepthInitParams);
         if (mDepthPrevHandle == NULL) {
             HAL_LOGE("sprd_depth_Init failed!");
             rc = UNKNOWN_ERROR;
@@ -296,8 +280,7 @@ int SprdPortraitAlgo::initAlgo() {
     if (mDepthCapHandle == NULL) {
         int64_t depthInit = systemTime();
         /*
-        mDepthCapHandle = sprd_depth_Init(
-            &(cap_input_param), &(cap_output_info), cap_mode, cap_outformat);
+        mDepthCapHandle = sprd_depth_adpt_init(&mCapDepthInitParams);
         if (mDepthCapHandle == NULL) {
             HAL_LOGE("sprd_depth_Init failed!");
             rc = UNKNOWN_ERROR;
@@ -327,7 +310,8 @@ int SprdPortraitAlgo::initPrevDepth() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
         if (mBokehDepthPrevHandle) {
-            rc = iBokehDeinit(mBokehDepthPrevHandle);
+            mPortraitPrevDeinitParams.ctx = &mBokehDepthPrevHandle;
+            rc = iBokehCtrl_adpt(SPRD_PREVIEW_BOKEH_DEINIT_CMD,&mPortraitPrevDeinitParams);
         }
         if (rc != NO_ERROR) {
             rc = UNKNOWN_ERROR;
@@ -335,13 +319,22 @@ int SprdPortraitAlgo::initPrevDepth() {
             goto exit;
         }
     }
-    rc = iBokehInit(&mBokehDepthPrevHandle, &(mPreviewbokehParam.init_params));
+    mPortraitPrevInitParams.ctx = &mBokehDepthPrevHandle;
+    mPortraitPrevInitParams.width = mPreviewbokehParam.init_params.width;
+    mPortraitPrevInitParams.height = mPreviewbokehParam.init_params.height;
+    mPortraitPrevInitParams.depth_width = mPreviewbokehParam.init_params.depth_width;
+    mPortraitPrevInitParams.depth_height = mPreviewbokehParam.init_params.depth_height;
+    mPortraitPrevInitParams.SmoothWinSize = mPreviewbokehParam.init_params.SmoothWinSize;
+    mPortraitPrevInitParams.ClipRatio = mPreviewbokehParam.init_params.ClipRatio;
+    mPortraitPrevInitParams.Scalingratio = mPreviewbokehParam.init_params.Scalingratio;
+    mPortraitPrevInitParams.DisparitySmoothWinSize = mPreviewbokehParam.init_params.DisparitySmoothWinSize;
+    rc = iBokehCtrl_adpt(SPRD_PREVIEW_BOKEH_INIT_CMD,&mPortraitPrevInitParams);
     if (rc != NO_ERROR) {
         rc = UNKNOWN_ERROR;
-        HAL_LOGE("iBokehInit failed!");
+        HAL_LOGE("SPRD_PREVIEW_BOKEH_INIT_CMD failed!");
         goto exit;
     } else {
-        HAL_LOGD("iBokehInit success");
+        HAL_LOGD("SPRD_PREVIEW_BOKEH_INIT_CMD success");
     }
 
     mFirstSprdBokeh = true;
@@ -351,14 +344,13 @@ exit:
 
 int SprdPortraitAlgo::deinitPrevDepth() {
     int rc = NO_ERROR;
-
     if (mFirstSprdBokeh) {
 
         if (mDepthPrevHandle != NULL) {
             int64_t depthClose = systemTime();
-            rc = sprd_depth_Close(mDepthPrevHandle);
+             rc = sprd_depth_adpt_deinit(mDepthPrevHandle);
             if (rc != NO_ERROR) {
-                HAL_LOGE("prev sprd_depth_Close failed! %d", rc);
+                HAL_LOGE("prev sprd_depth_adpt_deinit failed! %d", rc);
                 return rc;
             }
             HAL_LOGD("prev depth close cost %lld ms",
@@ -368,11 +360,12 @@ int SprdPortraitAlgo::deinitPrevDepth() {
 
         if (mBokehDepthPrevHandle != NULL) {
             int64_t deinitStart = systemTime();
-            rc = iBokehDeinit(mBokehDepthPrevHandle);
+            mPortraitPrevDeinitParams.ctx = &mBokehDepthPrevHandle;
+            rc = iBokehCtrl_adpt(SPRD_PREVIEW_BOKEH_DEINIT_CMD, &mPortraitPrevDeinitParams);
             if (rc != NO_ERROR) {
                 HAL_LOGE("Deinit Err:%d", rc);
             }
-            HAL_LOGD("iBokehDeinit cost %lld ms",
+            HAL_LOGD("SPRD_PREVIEW_BOKEH_DEINIT_CMD cost %lld ms",
                      ns2ms(systemTime() - deinitStart));
         }
     }
@@ -394,26 +387,32 @@ int SprdPortraitAlgo::prevBluImage(sp<GraphicBuffer> &srcBuffer,
 
     mPreviewbokehParam.weight_params.DisparityImage = (unsigned char *)param;
     if (mBokehDepthPrevHandle) {
-        rc = iBokehCreateWeightMap(mBokehDepthPrevHandle,
-                                   &mPreviewbokehParam.weight_params);
+        mPortraitPrevWeightmapParams.ctx = &mBokehDepthPrevHandle;
+        mPortraitPrevWeightmapParams.F_number = mPreviewbokehParam.weight_params.F_number;
+        mPortraitPrevWeightmapParams.sel_x = mPreviewbokehParam.weight_params.sel_x;
+        mPortraitPrevWeightmapParams.sel_y = mPreviewbokehParam.weight_params.sel_y;
+        mPortraitPrevWeightmapParams.DisparityImage = mPreviewbokehParam.weight_params.DisparityImage;
+        rc = iBokehCtrl_adpt(SPRD_PREVIEW_BOKEH_WEIGHTMAP_PROCESS_CMD,&mPortraitPrevWeightmapParams);
     }
     if (rc != NO_ERROR) {
-        HAL_LOGE("iBokehCreateWeightMap failed!");
+        HAL_LOGE("SPRD_PREVIEW_BOKEH_WEIGHTMAP_PROCESS_CMD failed!");
         goto exit;
     }
-    HAL_LOGD("iBokehCreateWeightMap cost %lld ms",
+    HAL_LOGD("SPRD_PREVIEW_BOKEH_WEIGHTMAP_PROCESS_CMD cost %lld ms",
              ns2ms(systemTime() - bokehCreateWeightMap));
     bokehBlurImage = systemTime();
     if (mBokehDepthPrevHandle) {
-        rc = iBokehBlurImage(mBokehDepthPrevHandle, &(*srcBuffer),
-                             &(*dstBuffer));
+        mPortraitPrevRunParams.ctx = &mBokehDepthPrevHandle;
+        mPortraitPrevRunParams.Src_YUV = &(*srcBuffer);
+        mPortraitPrevRunParams.Output_YUV = &(*dstBuffer);
+        rc = iBokehCtrl_adpt(SPRD_PREVIEW_BOKEH_BLUR_PROCESS_CMD,&mPortraitPrevRunParams);
     }
 
     if (rc != NO_ERROR) {
-        HAL_LOGE("iBokehBlurImage failed!");
+        HAL_LOGE("SPRD_PREVIEW_BOKEH_BLUR_PROCESS_CMD failed!");
         goto exit;
     }
-    HAL_LOGD("iBokehBlurImage cost %lld ms",
+    HAL_LOGD("SPRD_PREVIEW_BOKEH_BLUR_PROCESS_CMD cost %lld ms",
              ns2ms(systemTime() - bokehBlurImage));
 exit:
     return rc;
@@ -423,12 +422,12 @@ int SprdPortraitAlgo::setFlag() {
     int rc = NO_ERROR;
 
     if (mDepthCapHandle) {
-        sprd_depth_Set_Stopflag(mDepthCapHandle, DEPTH_STOP);
+        rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_FAST_STOP_CMD,NULL);
     } else {
         HAL_LOGE("mDepthCapHandle is null");
     }
     if (mDepthPrevHandle) {
-        sprd_depth_Set_Stopflag(mDepthPrevHandle, DEPTH_STOP);
+        rc = sprd_depth_adpt_ctrl(mDepthPrevHandle,SPRD_DEPTH_FAST_STOP_CMD,NULL);
     } else {
         HAL_LOGE("mDepthPrevHandle is null");
     }
@@ -445,10 +444,10 @@ int SprdPortraitAlgo::deinitCapDepth() {
     int rc = NO_ERROR;
     if (mFirstSprdBokeh) {
         if (mDepthCapHandle) {
-            // rc = sprd_depth_Close(mDepthCapHandle);
+            // rc = sprd_depth_adpt_deinit(mDepthCapHandle);
         }
         if (rc != NO_ERROR) {
-            HAL_LOGE("cap sprd_depth_Close failed! %d", rc);
+            HAL_LOGE("cap sprd_depth_adpt_deinit failed! %d", rc);
             return rc;
         }
     }
@@ -462,13 +461,6 @@ int SprdPortraitAlgo::capDepthRun(void *para1, void *para2, void *para3,
                                   int vcmDown) {
     int rc = NO_ERROR;
     int f_number = 0;
-    weightmap_param weightParams;
-    char prop1[PROPERTY_VALUE_MAX] = {
-        0,
-    };
-    char prop2[PROPERTY_VALUE_MAX] = {
-        0,
-    };
     if (!para1 || !para3 || !para4) {
         HAL_LOGE(" para is null");
         rc = BAD_VALUE;
@@ -483,23 +475,19 @@ int SprdPortraitAlgo::capDepthRun(void *para1, void *para2, void *para3,
     mCapbokehParam.bokeh_level =
         (MAX_F_FUMBER + 1 - f_number) * 255 / MAX_F_FUMBER;
 
-    weightParams.F_number = mCapbokehParam.bokeh_level;
-    weightParams.sel_x = mCapbokehParam.sel_x;
-    weightParams.sel_y = mCapbokehParam.sel_y;
-    weightParams.DisparityImage = NULL;
-    weightParams.VCM_cur_value = vcmCurValue;
-    memcpy(&weightParams.portrait_param,
-           &mPreviewbokehParam.depth_param.portrait_param,
-           sizeof(struct portrait_mode_param));
-    memcpy(&weightParams.golden_vcm_data,
-           &mPreviewbokehParam.depth_param.golden_vcm_data,
-           sizeof(struct af_golden_vcm_data));
     HAL_LOGD("capture fnum %d coordinate (%d,%d) VCM_INFO:%d",
-             weightParams.F_number, mCapbokehParam.sel_x, mCapbokehParam.sel_y,
-             weightParams.VCM_cur_value);
+             mCapbokehParam.bokeh_level, mCapbokehParam.sel_x, mCapbokehParam.sel_y,
+             vcmCurValue);
+    mCapDepthRunParams.input[0].addr[0] = para4;
+    mCapDepthRunParams.input[1].addr[0] = para3;
+    mCapDepthRunParams.output.addr[0] = para1;
+    mCapDepthRunParams.params.F_number = mCapbokehParam.bokeh_level;
+    mCapDepthRunParams.params.sel_x = mCapbokehParam.sel_x;
+    mCapDepthRunParams.params.sel_y = mCapbokehParam.sel_y;
+    mCapDepthRunParams.params.VCM_cur_value = vcmCurValue;
 
-    rc = sprd_depth_Run(mDepthCapHandle, para1, para2, para3, para4,
-                        &weightParams);
+    mCapDepthRunParams.params.portrait_param = &mBokehPortraitParams;
+    rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_RUN_CMD,&mCapDepthRunParams);
 exit:
     return rc;
 }
@@ -507,6 +495,7 @@ exit:
 int SprdPortraitAlgo::capBlurImage(void *para1, void *para2, void *para3,
                                    int depthW, int depthH, int mode) {
     int rc = NO_ERROR;
+    /*
     int64_t bokehReFocusTime = 0;
     char acVersion[256] = {
         0,
@@ -550,6 +539,7 @@ int SprdPortraitAlgo::capBlurImage(void *para1, void *para2, void *para3,
     }
     HAL_LOGD("bokeh ReFocusGen cost %lld ms",
              ns2ms(systemTime() - bokehReFocusTime));
+    */
 exit:
     return rc;
 }
@@ -567,8 +557,10 @@ int SprdPortraitAlgo::onLine(void *para1, void *para2, void *para3,
 
     onlineRun = systemTime();
     if (mDepthPrevHandle) {
-        rc =
-            sprd_depth_OnlineCalibration(mDepthPrevHandle, para1, para3, para2);
+        mPrevDepthOnlineCaliParams.input[0].addr[0] = para2;
+        mPrevDepthOnlineCaliParams.input[1].addr[0] = para3;
+        mPrevDepthOnlineCaliParams.output.addr[0] = para1;
+        rc =sprd_depth_adpt_ctrl(mDepthPrevHandle,SPRD_DEPTH_ONLINECALI_CMD,&mPrevDepthOnlineCaliParams);
     }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_OnlineCalibration failed! %d", rc);
@@ -578,8 +570,9 @@ int SprdPortraitAlgo::onLine(void *para1, void *para2, void *para3,
     HAL_LOGD("onLine run cost %lld ms", ns2ms(systemTime() - onlineRun));
     onlineScale = systemTime();
     if (mDepthPrevHandle) {
-        rc = sprd_depth_OnlineCalibration_postprocess(mDepthPrevHandle, para1,
-                                                      para4);
+        mPrevDepthOnlinePostParams.input.addr[0] = para1;
+        mPrevDepthOnlinePostParams.output.addr[0] = para4;
+        rc = sprd_depth_adpt_ctrl(mDepthPrevHandle,SPRD_DEPTH_ONLINECALI_POST_CMD,&mPrevDepthOnlinePostParams);
     }
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_OnlineCalibration_postprocess failed! %d", rc);
@@ -600,7 +593,12 @@ int SprdPortraitAlgo::getGDepthInfo(void *para1, gdepth_outparam *para2) {
         goto exit;
     }
 
-    rc = sprd_depth_get_gdepthinfo(mDepthCapHandle, para1, para2);
+    mCapDepthGdepthParams.input.addr[0] = para1;
+    mCapDepthGdepthParams.gdepth_output.near = para2->near;
+    mCapDepthGdepthParams.gdepth_output.far = para2->far;
+    mCapDepthGdepthParams.gdepth_output.output[0].addr[0] = para2->confidence_map;
+    mCapDepthGdepthParams.gdepth_output.output[1].addr[0] = para2->depthnorm_data;
+    rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_GDEPTH_CMD,&mCapDepthGdepthParams);
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_get_gdepthinfo failed! %d", rc);
         rc = UNKNOWN_ERROR;
@@ -618,14 +616,16 @@ int SprdPortraitAlgo::setUserset(char *ptr, int size) {
         goto exit;
     }
 
-    rc = sprd_depth_userset(ptr, size);
+    mDepthUsersetParams.ptr = ptr;
+    mDepthUsersetParams.size = size;
+    rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_USERSET_CMD,&mDepthUsersetParams);
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_userset failed! %d", rc);
         rc = UNKNOWN_ERROR;
         goto exit;
     }
 
-    rc = sprd_bokeh_userset(ptr, size);
+    //rc = sprd_bokeh_userset(ptr, size);
     if (rc != NO_ERROR) {
         HAL_LOGE("sprd_depth_userset failed! %d", rc);
         rc = UNKNOWN_ERROR;
@@ -711,10 +711,11 @@ void SprdPortraitAlgo::loadDebugOtp() {
 }
 
 int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
-                                         bool galleryBokeh) {
+                        bool galleryBokeh, unsigned int bokehMaskSize) {
     int rc = NO_ERROR;
     if (mPortraitHandle) {
-        rc = sprd_portrait_capture_deinit(mPortraitHandle);
+        mPortraitCapDeinitParams.ctx = &mPortraitHandle;
+        rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_DEINIT_CMD,&mPortraitCapDeinitParams);
         HAL_LOGE(" mPortraitHandle is not null");
     }
 
@@ -738,7 +739,8 @@ int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
     initParams.height = m_Size.capture_h;        // 2448
     initParams.depthW = m_Size.depth_snap_out_w; // 800
     initParams.depthH = m_Size.depth_snap_out_h; // 600
-
+    initParams.lptW = 512;
+    initParams.lptH = 384;
     // capture 5M v1.0 v1.1 v1.2
     int mLastMinScope = 4;        // min_slope*10000
     int mLastMaxScope = 19;       // max_slope*10000
@@ -761,21 +763,22 @@ int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
     initParams.potpbuf = m_CalData.otp_data;
     initParams.otpsize = m_CalData.otp_size;
     initParams.config_param = NULL;
-    initParams.imageFormat_main = ImageFormat(YUV420_NV12);
-    initParams.imageFormat_sub = ImageFormat(YUV420_NV12);
-    rc = sprd_portrait_capture_init(&mPortraitHandle, &initParams);
+    initParams.imageFormat_main = ImageFormat(YUV420_NV21);
+    initParams.imageFormat_sub = ImageFormat(YUV420_NV21);
+    mPortraitCapInitParams.ctx = &mPortraitHandle;
+    mPortraitCapInitParams.param = &initParams;
+    rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_INIT_CMD,&mPortraitCapInitParams);
     if (rc) {
-        HAL_LOGE("sprd_portrait_capture_init failed");
-        goto exit;
+        HAL_LOGE("SPRD_CAPTURE_PORTRAIT_INIT_CMD failed");
+        rc = NO_ERROR;
     }
-    if (mPortraitHandle) {
-        unsigned int maskW = mSize.depth_snap_out_w,
-                     maskH = mSize.depth_snap_out_h;
-        unsigned int maskSize = maskW * maskH * 2;
-        rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW,
-                                                 &maskH, &maskSize);
-    }
-exit:
+    unsigned int maskw = 0;
+    unsigned int maskh = 0;
+    mPortraitCapGetMaskInfoParams.ctx = &mPortraitHandle;
+    mPortraitCapGetMaskInfoParams.width = &maskw;
+    mPortraitCapGetMaskInfoParams.height = &maskh;
+    mPortraitCapGetMaskInfoParams.bufSize = &bokehMaskSize;
+    rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_GET_MASK_INFO_CMD,&mPortraitCapGetMaskInfoParams);
     return rc;
 }
 
@@ -790,8 +793,12 @@ int SprdPortraitAlgo::capPortraitDepthRun(void *para1, void *para2, void *para3,
 
     yuvData.Src_YUV = (unsigned char *)input_buf1_addr;
     yuvData.Dst_YUV = (unsigned char *)output_buf;
-    rc = sprd_portrait_capture_process(mPortraitHandle, &yuvData, mask, 1);
+    mPortraitCapRunParams.ctx = &mPortraitHandle;
+    mPortraitCapRunParams.yuvData = &yuvData;
+    mPortraitCapRunParams.bokehMask = mask;
+    mPortraitCapRunParams.isCapture = 1;
 
+    rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_PROCESS_CMD, &mPortraitCapRunParams);
 exit:
     HAL_LOGI(" X");
     return rc;
@@ -802,10 +809,11 @@ int SprdPortraitAlgo::deinitPortrait() {
     HAL_LOGD("E");
     if (mFirstSprdBokeh) {
         if (mPortraitHandle) {
-            rc = sprd_portrait_capture_deinit(mPortraitHandle);
+            mPortraitCapDeinitParams.ctx = &mPortraitHandle;
+            rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_DEINIT_CMD,&mPortraitCapDeinitParams);
         }
         if (rc != NO_ERROR) {
-            HAL_LOGE("cap sprd_portrait_capture_deinit failed! %d", rc);
+            HAL_LOGE("cap SPRD_CAPTURE_PORTRAIT_DEINIT_CMD failed! %d", rc);
             return rc;
         }
     }
@@ -966,44 +974,44 @@ int SprdPortraitAlgo::prevLPT(void *input_buff, int picWidth, int picHeight) {
     }
     HAL_LOGV("lightPortraitType %d", lptOptions.lightPortraitType);
     construct_lpt_options(&lpt_prev, lptOptions);
-    int index = mPreviewbokehParam.depth_param.portrait_param.face_num;
+    int index = mPreviewbokehParam.depth_param.portrait_param->face_num;
     for (int j = 0; j < index; j++) {
         int sx = 0, sy = 0, ex = 0, ey = 0;
-        if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 0) {
-            sx = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+        if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 0) {
+            sx = mPreviewbokehParam.depth_param.portrait_param->x2[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            sy = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+            sy = mPreviewbokehParam.depth_param.portrait_param->y1[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
-            ex = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+            ex = mPreviewbokehParam.depth_param.portrait_param->x1[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            ey = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+            ey = mPreviewbokehParam.depth_param.portrait_param->y2[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
-        } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 90) {
-            sx = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+        } else if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 90) {
+            sx = mPreviewbokehParam.depth_param.portrait_param->x2[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            sy = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+            sy = mPreviewbokehParam.depth_param.portrait_param->y2[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
-            ex = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+            ex = mPreviewbokehParam.depth_param.portrait_param->x1[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            ey = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+            ey = mPreviewbokehParam.depth_param.portrait_param->y1[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
-        } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 180) {
-            sx = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+        } else if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 180) {
+            sx = mPreviewbokehParam.depth_param.portrait_param->x1[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            sy = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+            sy = mPreviewbokehParam.depth_param.portrait_param->y2[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
-            ex = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+            ex = mPreviewbokehParam.depth_param.portrait_param->x2[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            ey = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+            ey = mPreviewbokehParam.depth_param.portrait_param->y1[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
         } else {
-            sx = mPreviewbokehParam.depth_param.portrait_param.x1[j] * mSize.preview_w /
+            sx = mPreviewbokehParam.depth_param.portrait_param->x1[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            sy = mPreviewbokehParam.depth_param.portrait_param.y1[j] * mSize.preview_h /
+            sy = mPreviewbokehParam.depth_param.portrait_param->y1[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
-            ex = mPreviewbokehParam.depth_param.portrait_param.x2[j] * mSize.preview_w /
+            ex = mPreviewbokehParam.depth_param.portrait_param->x2[j] * mSize.preview_w /
                  mSize.depth_snap_out_w;
-            ey = mPreviewbokehParam.depth_param.portrait_param.y2[j] * mSize.preview_h /
+            ey = mPreviewbokehParam.depth_param.portrait_param->y2[j] * mSize.preview_h /
                  mSize.depth_snap_out_h;
         }
         int yaw = face_info.pose[j];
@@ -1020,7 +1028,7 @@ int SprdPortraitAlgo::prevLPT(void *input_buff, int picWidth, int picHeight) {
     unsigned char *addrUV = (unsigned char *)input_buff + picWidth * picHeight;
     int format = 1; /*NV21*/
     construct_lpt_image(&lpt_prev, picWidth, picHeight, addrY, addrUV, format);
-    int facecount = mPreviewbokehParam.depth_param.portrait_param.face_num;
+    int facecount = mPreviewbokehParam.depth_param.portrait_param->face_num;
 
     /*do lpt */
     HAL_LOGI("do_image_lpt E");
@@ -1180,60 +1188,60 @@ int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
     } else {
         construct_dfa_yuv420sp(&dfa_prev, picWidth, picHeight, addrY, addrUV, format);
         unsigned char rType = 0;
-        int index = mPreviewbokehParam.depth_param.portrait_param.face_num;
+        int index = mPreviewbokehParam.depth_param.portrait_param->face_num;
         for (int i = 0; i < index; i++) {
             int rX = 0, rY = 0, rWidth = 0, rHeight = 0;
-            if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 0) {
-                rX = mPreviewbokehParam.depth_param.portrait_param.x2[i] * mSize.preview_w /
+            if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 0) {
+                rX = mPreviewbokehParam.depth_param.portrait_param->x2[i] * mSize.preview_w /
                      mSize.depth_snap_out_w;
-                rY = mPreviewbokehParam.depth_param.portrait_param.y1[i] * mSize.preview_h /
+                rY = mPreviewbokehParam.depth_param.portrait_param->y1[i] * mSize.preview_h /
                      mSize.depth_snap_out_h;
-                rWidth = mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                rWidth = mPreviewbokehParam.depth_param.portrait_param->x1[i] *
                              mSize.preview_w / mSize.depth_snap_out_w -
-                         mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                         mPreviewbokehParam.depth_param.portrait_param->x2[i] *
                              mSize.preview_w / mSize.depth_snap_out_w;
-                rHeight = mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                rHeight = mPreviewbokehParam.depth_param.portrait_param->y2[i] *
                               mSize.preview_h / mSize.depth_snap_out_h -
-                          mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                          mPreviewbokehParam.depth_param.portrait_param->y1[i] *
                               mSize.preview_h / mSize.depth_snap_out_h;
-            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 90) {
-                rX = mPreviewbokehParam.depth_param.portrait_param.x2[i] * mSize.preview_w /
+            } else if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 90) {
+                rX = mPreviewbokehParam.depth_param.portrait_param->x2[i] * mSize.preview_w /
                      mSize.depth_snap_out_w;
-                rY = mPreviewbokehParam.depth_param.portrait_param.y2[i] * mSize.preview_h /
+                rY = mPreviewbokehParam.depth_param.portrait_param->y2[i] * mSize.preview_h /
                      mSize.depth_snap_out_h;
-                rWidth = mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                rWidth = mPreviewbokehParam.depth_param.portrait_param->x1[i] *
                              mSize.preview_w / mSize.depth_snap_out_w -
-                         mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                         mPreviewbokehParam.depth_param.portrait_param->x2[i] *
                              mSize.preview_w / mSize.depth_snap_out_w;
-                rHeight = mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                rHeight = mPreviewbokehParam.depth_param.portrait_param->y1[i] *
                               mSize.preview_h / mSize.depth_snap_out_h -
-                          mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                          mPreviewbokehParam.depth_param.portrait_param->y2[i] *
                               mSize.preview_h / mSize.depth_snap_out_h;
-            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 180) {
-                rX = mPreviewbokehParam.depth_param.portrait_param.x1[i] * mSize.preview_w /
+            } else if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 180) {
+                rX = mPreviewbokehParam.depth_param.portrait_param->x1[i] * mSize.preview_w /
                      mSize.depth_snap_out_w;
-                rY = mPreviewbokehParam.depth_param.portrait_param.y2[i] * mSize.preview_h /
+                rY = mPreviewbokehParam.depth_param.portrait_param->y2[i] * mSize.preview_h /
                      mSize.depth_snap_out_h;
-                rWidth = mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                rWidth = mPreviewbokehParam.depth_param.portrait_param->x2[i] *
                              mSize.preview_w / mSize.depth_snap_out_w -
-                         mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                         mPreviewbokehParam.depth_param.portrait_param->x1[i] *
                              mSize.preview_w / mSize.depth_snap_out_w;
-                rHeight = mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                rHeight = mPreviewbokehParam.depth_param.portrait_param->y1[i] *
                               mSize.preview_h / mSize.depth_snap_out_h -
-                          mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                          mPreviewbokehParam.depth_param.portrait_param->y2[i] *
                               mSize.preview_h / mSize.depth_snap_out_h;
             } else {
-                rX = mPreviewbokehParam.depth_param.portrait_param.x1[i] * mSize.preview_w /
+                rX = mPreviewbokehParam.depth_param.portrait_param->x1[i] * mSize.preview_w /
                      mSize.depth_snap_out_w;
-                rY = mPreviewbokehParam.depth_param.portrait_param.y1[i] * mSize.preview_h /
+                rY = mPreviewbokehParam.depth_param.portrait_param->y1[i] * mSize.preview_h /
                      mSize.depth_snap_out_h;
-                rWidth = mPreviewbokehParam.depth_param.portrait_param.x2[i] *
+                rWidth = mPreviewbokehParam.depth_param.portrait_param->x2[i] *
                              mSize.preview_w / mSize.depth_snap_out_w -
-                         mPreviewbokehParam.depth_param.portrait_param.x1[i] *
+                         mPreviewbokehParam.depth_param.portrait_param->x1[i] *
                              mSize.preview_w / mSize.depth_snap_out_w;
-                rHeight = mPreviewbokehParam.depth_param.portrait_param.y2[i] *
+                rHeight = mPreviewbokehParam.depth_param.portrait_param->y2[i] *
                               mSize.preview_h / mSize.depth_snap_out_h -
-                          mPreviewbokehParam.depth_param.portrait_param.y1[i] *
+                          mPreviewbokehParam.depth_param.portrait_param->y1[i] *
                               mSize.preview_h / mSize.depth_snap_out_h;
             }
             int rRollAngle = face_info.angle[i];
@@ -1243,7 +1251,7 @@ int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
         /*do dfa */
         DFA_RESULT dfa_result;
         memset(&dfa_result, 0, sizeof(DFA_RESULT));
-        do_dfa_image_yuv420sp(&dfa_prev, mPreviewbokehParam.depth_param.portrait_param.face_num, &dfa_result);
+        do_dfa_image_yuv420sp(&dfa_prev, mPreviewbokehParam.depth_param.portrait_param->face_num, &dfa_result);
         construct_lpt_dfaInfo(
             &lpt_prev, dfa_result.pitch, dfa_result.yaw, dfa_result.roll,
             dfa_result.t3d, 3, dfa_result.scale, dfa_result.R, 3,
@@ -1256,7 +1264,7 @@ int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
 int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
                                    int picWidth, int picHeight, int mode,
                                    faceBeautyLevels *facebeautylevel) {
-    HAL_LOGV("E");
+    HAL_LOGD("E");
     int rc = NO_ERROR;
     if (mode == CAPTURE) {
 #ifdef CONFIG_FACE_BEAUTY
@@ -1335,50 +1343,48 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
         face_beauty_deinit(&fb_cap);
 #endif
     } else {
-        int index = mPreviewbokehParam.depth_param.portrait_param.face_num;
-        int faceCount = mPreviewbokehParam.depth_param.portrait_param.face_num;
+        int index = mPreviewbokehParam.depth_param.portrait_param->face_num;
+        int faceCount = mPreviewbokehParam.depth_param.portrait_param->face_num;
         for (int j = 0; j < index; j++) {
             int sx = 0, sy = 0, ex = 0, ey = 0, angle = 0, pose = 0;
             beauty_face.idx = j;
-            if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 0) {
-                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+            if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 0) {
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param->x2[j] *
                                      mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param->y1[j] *
                                      mSize.preview_h /
                                      mSize.depth_snap_out_h;
-                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param->x1[j] *
                                    mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param->y2[j] *
                                    mSize.preview_h / mSize.depth_snap_out_h;
-            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 90) {
-                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+            } else if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 90) {
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param->x2[j] *
                                      mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param->y2[j] *
                                      mSize.preview_h /
                                      mSize.depth_snap_out_h;
-                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param->x1[j] *
                                    mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param->y1[j] *
                                    mSize.preview_h / mSize.depth_snap_out_h;
-            } else if (mPreviewbokehParam.depth_param.portrait_param.mobile_angle == 180) {
-                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+            } else if (mPreviewbokehParam.depth_param.portrait_param->mobile_angle == 180) {
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param->x1[j] *
                                      mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
-                                     mSize.preview_h /
-                                     mSize.depth_snap_out_h;
-                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param->y2[j] *
+                                     mSize.preview_h / mSize.depth_snap_out_h;
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param->x2[j] *
                                    mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param->y1[j] *
                                    mSize.preview_h / mSize.depth_snap_out_h;
             } else {
-                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param.x1[j] *
+                beauty_face.startX = mPreviewbokehParam.depth_param.portrait_param->x1[j] *
                                      mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param.y1[j] *
-                                     mSize.preview_h /
-                                     mSize.depth_snap_out_h;
-                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param.x2[j] *
+                beauty_face.startY = mPreviewbokehParam.depth_param.portrait_param->y1[j] *
+                                     mSize.preview_h / mSize.depth_snap_out_h;
+                beauty_face.endX = mPreviewbokehParam.depth_param.portrait_param->x2[j] *
                                    mSize.preview_w / mSize.depth_snap_out_w;
-                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param.y2[j] *
+                beauty_face.endY = mPreviewbokehParam.depth_param.portrait_param->y2[j] *
                                    mSize.preview_h / mSize.depth_snap_out_h;
             }
             beauty_face.angle = face_info.angle[j];
@@ -1416,16 +1422,17 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
         rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
                               &beautyLevels);
         fb_beauty_lptparam_t lpt_param;
-        lpt_param.faceCount = mPreviewbokehParam.depth_param.portrait_param.face_num;
+        memset(&lpt_param,0,sizeof(fb_beauty_lptparam_t));
+        lpt_param.faceCount = mPreviewbokehParam.depth_param.portrait_param->face_num;
         lpt_param.lightPortraitType = lptOptions.lightPortraitType;
         rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_LPT_PROCESS_CMD, &(lpt_param));
     }
-    HAL_LOGV("X");
+    HAL_LOGD("X");
     return rc;
 }
 
 int SprdPortraitAlgo::getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr,
-                                      int vcmCurValue, unsigned char *result) {
+                                      int vcmCurValue, void *bokehMask, unsigned char *lptMask) {
     /*get portrait_mask*/
     HAL_LOGD("E");
     int rc = NO_ERROR;
@@ -1475,12 +1482,13 @@ int SprdPortraitAlgo::getPortraitMask(void *para1, void *para2, void *output_buf
     yuvData.Src_YUV = (unsigned char *)input_buf1_addr;
     yuvData.Dst_YUV = (unsigned char *)output_buff;
 
-    unsigned int maskW = 0, maskH = 0, maskSize = 0;
-    rc = sprd_portrait_capture_get_mask_info(mPortraitHandle, &maskW, &maskH,
-                                             &maskSize);
-
-    rc = sprd_portrait_capture_get_mask(mPortraitHandle, &depthData, &wParams,
-                                           &yuvData, result);
+    mPortraitCapGetMaskParams.ctx = &mPortraitHandle;
+    mPortraitCapGetMaskParams.depthInputData = &depthData;
+    mPortraitCapGetMaskParams.procParams = &wParams;
+    mPortraitCapGetMaskParams.yuvData = &yuvData;
+    mPortraitCapGetMaskParams.bokehMask = bokehMask;
+    mPortraitCapGetMaskParams.lptMask = lptMask;
+    rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_GET_MASK_CMD,&mPortraitCapGetMaskParams);
 
     HAL_LOGD("x");
     return rc;

@@ -110,7 +110,7 @@ class IBokehAlgo {
     virtual int deinitPortrait() = 0;
 
     virtual int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
-                                   bool galleryBokeh) = 0;
+                                   bool galleryBokeh, unsigned int bokehMaskSize) = 0;
 
     virtual int initPortraitLightParams() = 0;
 
@@ -136,8 +136,8 @@ class IBokehAlgo {
 
     virtual int deinitFaceBeauty() = 0;
 
-    virtual int getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr, 
-                    int vcmCurValue, unsigned char *result) = 0;
+    virtual int getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr,
+                    int vcmCurValue, void *bokehMask, unsigned char *lptMask) = 0;
 
 };
 }

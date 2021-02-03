@@ -309,6 +309,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
         bool mAbokehGallery;
         bool mBokehResult;
         gdepth_outparam mGDepthOutputParam;
+
         void reprocessReq(buffer_handle_t *output_buffer,
                           capture_queue_msg_t_portrait capture_msg);
 
@@ -399,6 +400,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mLastOnlieVcm;
     int mVcmSteps;
     int mVcmStepsFixed;
+    int bokehMaskSize;
     uint64_t mCapTimestamp;
     IBokehAlgo *mBokehAlgo;
     bool mIsHdrMode;
