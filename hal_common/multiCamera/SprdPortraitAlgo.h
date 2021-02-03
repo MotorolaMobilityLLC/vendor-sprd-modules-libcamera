@@ -6,6 +6,9 @@
 #include "../arithmetic/portrait/inc/PortraitCapture_Interface.h"
 #include "../arithmetic/lightportrait/inc/camera_light_portrait.h"
 #include "../arithmetic/face_dense_align/inc/camera_face_dense_align.h"
+#include "../arithmetic/depth_bokeh/inc/sprd_preview_bokeh_adapter.h"
+#include "../arithmetic/depth/inc/sprd_depth_adapter.h"
+#include "../arithmetic/portrait/inc/sprd_capture_portrait_adapter.h"
 #ifdef CONFIG_FACE_BEAUTY
 #include "sprd_facebeauty_adapter.h"
 #endif
@@ -63,7 +66,7 @@ class SprdPortraitAlgo : public IBokehAlgo {
     int deinitPortrait();
 
     int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
-                           bool galleryBokeh);
+                           bool galleryBokeh, unsigned int bokehMaskSize);
 
     int initPortraitLightParams();
 
@@ -80,7 +83,7 @@ class SprdPortraitAlgo : public IBokehAlgo {
 
     int runDFA(void *input_buff, int picWidth, int picHeight, int mode);
 
-    int doFaceBeauty(unsigned char *mask, void *input_buff, int picWidth, int picHeight, 
+    int doFaceBeauty(unsigned char *mask, void *input_buff, int picWidth, int picHeight,
                     int mode, faceBeautyLevels *facebeautylevel);
 
     void setFaceInfo(int *angle, int *pose, int *fd_score);
@@ -89,8 +92,8 @@ class SprdPortraitAlgo : public IBokehAlgo {
 
     int deinitFaceBeauty();
 
-    int getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr, 
-                    int vcmCurValue, unsigned char *result);
+    int getPortraitMask(void *para1, void *para2, void *output_buff, void *input_buf1_addr,
+                    int vcmCurValue, void *bokehMask, unsigned char *lptMask);
 
   private:
     bool mFirstSprdBokeh;
@@ -110,6 +113,26 @@ class SprdPortraitAlgo : public IBokehAlgo {
     bokeh_cap_params_t mCapbokehParam;
     SPRD_BOKEH_PARAM mBokehParams;
     bokeh_params mPortraitCapParam;
+    portrait_mode_param mBokehPortraitParams;
+    af_relbokeh_oem_data tuning_golden_vcm;
+    sprd_preview_bokeh_init_param_t mPortraitPrevInitParams;
+    sprd_preview_bokeh_deinit_param_t mPortraitPrevDeinitParams;
+    sprd_preview_bokeh_weight_param_t mPortraitPrevWeightmapParams;
+    sprd_preview_bokeh_blur_param_t mPortraitPrevRunParams;
+    sprd_capture_portrait_init_param_t mPortraitCapInitParams;
+    sprd_capture_portrait_deinit_param_t mPortraitCapDeinitParams;
+    sprd_capture_portrait_get_mask_info_param_t mPortraitCapGetMaskInfoParams;
+    sprd_capture_portrait_get_mask_param_t mPortraitCapGetMaskParams;
+    sprd_capture_portrait_process_param_t mPortraitCapRunParams;
+    sprd_depth_init_param_t mPrevDepthInitParams;
+    sprd_depth_init_param_t mCapDepthInitParams;
+    sprd_depth_run_param_t mPrevDepthRunParams;
+    sprd_depth_run_param_t mCapDepthRunParams;
+    sprd_depth_gdepth_param_t mCapDepthGdepthParams;
+    sprd_depth_userset_param_t mDepthUsersetParams;
+    sprd_depth_onlineCali_param_t mPrevDepthOnlineCaliParams;
+    sprd_depth_onlinepost_param_t mPrevDepthOnlinePostParams;
+
     int checkDepthPara(struct sprd_depth_configurable_para *depth_config_param);
     void loadDebugOtp();
 

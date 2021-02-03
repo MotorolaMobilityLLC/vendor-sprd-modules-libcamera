@@ -65,19 +65,19 @@ endif
 LOCAL_SHARED_LIBRARIES += libXMPCore libXMPFiles
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libTfliteWrapper libSegLite
+LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libTfliteWrapper libSegLite libbokeh_depth_adapter libsprdbokeh_adapter libsprddepthadapter
 #else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
 #LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
 endif
 
 ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprd_portrait_cap libsprddepth libbokeh_depth libSegLiteMNN libcamlpt liblightportrait libcamdfa libdfa
+LOCAL_SHARED_LIBRARIES += libsprd_portrait_cap libsprdbokeh libsprddepth libbokeh_depth libSegLiteMNN libcamlpt liblightportrait libcamdfa libdfa libsprd_portrait_cap_adapter
 #else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
 #LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
 endif
 
 ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SINGLE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libbokeh_gaussian libbokeh_gaussian_cap libSegLiteMNN libBokeh2Frames libsprd_portrait_cap libcamlpt liblightportrait libcamdfa libdfa
+LOCAL_SHARED_LIBRARIES += libsprdbokeh libbokeh_gaussian libbokeh_gaussian_cap libSegLiteMNN libBokeh2Frames libsprd_portrait_cap libcamlpt liblightportrait libcamdfa libdfa libbokeh_gaussian_adapter libsprd_portrait_cap_adapter
 endif
 
 ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SCENE_SUPPORT)),true)

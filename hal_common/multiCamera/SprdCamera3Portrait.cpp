@@ -2479,7 +2479,8 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
     void *input_buf2_addr = NULL;
     void *snapshot_gdepth_buffer_addr = NULL;
     void *output_buf_addr = NULL;
-    unsigned char *outPortraitMask = NULL;
+    unsigned char *lptMask = NULL;
+    void *bokehMask = NULL;
     int64_t depthRun = 0;
     cmr_uint depth_jepg = 0;
     int rc = NO_ERROR;
@@ -2541,9 +2542,9 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
 
     /*get portrait mask*/
 
-    outPortraitMask = (unsigned char *)malloc(DEPTH_SNAP_OUTPUT_WIDTH *
-                                              DEPTH_SNAP_OUTPUT_HEIGHT * 2);
-    if (!outPortraitMask) {
+    lptMask = (unsigned char *)malloc(512*384);//lpt mask
+    bokehMask = malloc(768*576);//bokeh mask
+    if(!lptMask || !bokehMask) {
         HAL_LOGE("no mem!");
         return rc;
     }
@@ -2555,8 +2556,8 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
     mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
                 (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
                 output_buf_addr, input_buf1_addr,
-                mPortrait->mVcmStepsFixed, outPortraitMask);
-    if(!outPortraitMask) {
+                mPortrait->mVcmStepsFixed, bokehMask, lptMask);
+    if(!lptMask) {
         HAL_LOGE("no thing!");
     }
     /*do portrait*/
@@ -2572,13 +2573,13 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
                     mPortrait->mDepthBuffer.depth_out_map_table, input_buf2_addr,
                     (void *)mPortrait->mScaleInfo.addr_vir.addr_y, input_buf1_addr,
                     output_buf_addr, mPortrait->mVcmStepsFixed,
-                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, outPortraitMask);
+                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, bokehMask);
             } else {
                 rc = mPortrait->mBokehAlgo->capPortraitDepthRun(
                     mPortrait->mDepthBuffer.snap_depth_buffer, NULL, input_buf2_addr,
                     (void *)mPortrait->mScaleInfo.addr_vir.addr_y, input_buf1_addr,
                     output_buf_addr, mPortrait->mVcmStepsFixed,
-                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, outPortraitMask);
+                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, bokehMask);
                 HAL_LOGD("close online depth");
             }
             // memcpy(output_buf_addr,input_buf1_addr, ADP_BUFSIZE(*input_buf1));
@@ -2606,7 +2607,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             HAL_LOGD("feature support: portrait+fb");
         }
         rc = mPortrait->mBokehAlgo->doFaceBeauty(
-            outPortraitMask, output_buf_addr, mPortrait->mBokehSize.capture_w,
+            lptMask, output_buf_addr, mPortrait->mBokehSize.capture_w,
             mPortrait->mBokehSize.capture_h, 1, &mPortrait->facebeautylevel);
     }
 #endif
@@ -2623,7 +2624,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         rc = mPortrait->mBokehAlgo->capLPT(output_buf_addr,
                                            mPortrait->mBokehSize.capture_w,
                                            mPortrait->mBokehSize.capture_h,
-                                           outPortraitMask, lightPortraitType);
+                                           lptMask, lightPortraitType);
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("capLPT failed! %d", rc);
             goto exit;
@@ -2685,7 +2686,8 @@ exit : { // dump yuv data
     }
 }
     HAL_LOGI(":X");
-    free(outPortraitMask);
+    free(lptMask);
+    free(bokehMask);
     mPortrait->unmap(output_buf);
 fail_map_output:
     mPortrait->unmap(input_buf2);
@@ -3379,7 +3381,7 @@ int SprdCamera3Portrait::configureStreams(
 
     if (mPortraitFlag) {
         rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
-                                            mCaptureThread->mAbokehGallery);
+                    mCaptureThread->mAbokehGallery, mPortrait->bokehMaskSize);
         if (rc != NO_ERROR) {
             HAL_LOGE("fail to initPortraitParams");
             mPortraitFlag = false;
