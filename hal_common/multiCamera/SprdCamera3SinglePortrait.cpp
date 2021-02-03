@@ -27,9 +27,9 @@
  *
  */
 #define LOG_TAG "Cam3SinglePortrait"
-#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL) 
+#define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include "SprdCamera3SinglePortrait.h"
-#include <cutils/trace.h> 
+#include <cutils/trace.h>
 using namespace android;
 
 namespace sprdcamera {
@@ -845,49 +845,6 @@ int SprdCamera3SinglePortrait::CaptureThread::loadBlurApi() {
         }
         memset(mBlurApi[i], 0, sizeof(SinglePortraitAPI_t));
         HAL_LOGD("i = %d", i);
-        if (i == 0) {
-            mBlurApi[i]->handle = dlopen(BLUR_LIB_BOKEH_PREVIEW, RTLD_LAZY);
-            if (mBlurApi[i]->handle == NULL) {
-                error = dlerror();
-                HAL_LOGE("open Blur API failed.error = %s", error);
-                return -1;
-            }
-            mBlurApi[i]->iSmoothInit =
-                (int (*)(void **handle, int width, int height, float min_slope,
-                         float max_slope, float findex2gamma_adjust_ratio,
-                         int box_filter_size))dlsym(mBlurApi[i]->handle,
-                                                    "iSmoothInit");
-            if (mBlurApi[i]->iSmoothInit == NULL) {
-                error = dlerror();
-                HAL_LOGE("sym iSmoothInit failed.error = %s", error);
-                return -1;
-            }
-            mBlurApi[i]->iSmoothDeinit = (int (*)(void *handle))dlsym(
-                mBlurApi[i]->handle, "iSmoothDeinit");
-            if (mBlurApi[i]->iSmoothDeinit == NULL) {
-                error = dlerror();
-                HAL_LOGE("sym iSmoothDeinit failed.error = %s", error);
-                return -1;
-            }
-            mBlurApi[i]->iSmoothCreateWeightMap =
-                (int (*)(void *handle,
-                         preview_single_portrait_weight_params_t *params))
-                    dlsym(mBlurApi[i]->handle, "iSmoothCreateWeightMap");
-            if (mBlurApi[i]->iSmoothCreateWeightMap == NULL) {
-                error = dlerror();
-                HAL_LOGE("sym iSmoothCreateWeightMap failed.error = %s", error);
-                return -1;
-            }
-            mBlurApi[i]->iSmoothBlurImage =
-                (int (*)(void *handle, unsigned char *Src_YUV,
-                         unsigned char *Output_YUV))dlsym(mBlurApi[i]->handle,
-                                                          "iSmoothBlurImage");
-            if (mBlurApi[i]->iSmoothBlurImage == NULL) {
-                error = dlerror();
-                HAL_LOGE("sym iSmoothBlurImage failed.error = %s", error);
-                return -1;
-            }
-        }
         mBlurApi[i]->mHandle = NULL;
     }
 
@@ -918,7 +875,10 @@ void SprdCamera3SinglePortrait::CaptureThread::unLoadBlurApi() {
     for (i = 0; i < BLUR_LIB_BOKEH_NUM; i++) {
         if (mBlurApi[i] != NULL) {
             if (mBlurApi[i]->mHandle != NULL && (i != 1)) {
-                mBlurApi[i]->iSmoothDeinit(mBlurApi[i]->mHandle);
+                sprd_preview_portrait_deinit_param_t mPortraitPrevDeinitParams;
+                memset(&mPortraitPrevDeinitParams,0,sizeof(sprd_preview_portrait_deinit_param_t));
+                mPortraitPrevDeinitParams.ctx = &(mBlurApi[i]->mHandle);
+                int ret = sprd_preview_portrait_adpt(SPRD_PREVIEW_PORTRAIT_DEINIT_CMD,&mPortraitPrevDeinitParams);
                 mBlurApi[i]->mHandle = NULL;
                 int rc = deinitLightPortrait();
                 if(rc != NO_ERROR) {
@@ -931,7 +891,10 @@ void SprdCamera3SinglePortrait::CaptureThread::unLoadBlurApi() {
                 }
 #endif
             } else {
-                sprd_portrait_capture_deinit(mBlurApi[i]->mHandle);
+                sprd_capture_portrait_deinit_param_t mPortraitCapDeinitParams;
+                memset(&mPortraitCapDeinitParams,0,sizeof(sprd_capture_portrait_deinit_param_t));
+                mPortraitCapDeinitParams.ctx = &(mBlurApi[i]->mHandle);
+                int ret = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_DEINIT_CMD,&mPortraitCapDeinitParams);
                 mBlurApi[i]->mHandle = NULL;
             }
             if (mBlurApi[i]->handle != NULL) {
@@ -981,22 +944,31 @@ int SprdCamera3SinglePortrait::CaptureThread::prevBlurHandle(
         mFirstPreview = false;
         if (mBlurApi[0]->mHandle != NULL) {
             int64_t deinitStart = systemTime();
-            ret = mBlurApi[0]->iSmoothDeinit(mBlurApi[0]->mHandle);
+                sprd_preview_portrait_deinit_param_t mPortraitPrevDeinitParams;
+                memset(&mPortraitPrevDeinitParams,0,sizeof(sprd_preview_portrait_deinit_param_t));
+                mPortraitPrevDeinitParams.ctx = &(mBlurApi[0]->mHandle);
+                ret = sprd_preview_portrait_adpt(SPRD_PREVIEW_PORTRAIT_DEINIT_CMD,&mPortraitPrevDeinitParams);
             if (ret != 0) {
-                HAL_LOGE("preview iSmoothDeinit Err:%d", ret);
+                HAL_LOGE("preview SPRD_PREVIEW_PORTRAIT_DEINIT_CMD Err:%d", ret);
             }
             mBlurApi[0]->mHandle = NULL;
-            HAL_LOGD("preview iSmoothDeinit cost %lld ms",
+            HAL_LOGD("preview SPRD_PREVIEW_PORTRAIT_DEINIT_CMD cost %lld ms",
                      ns2ms(systemTime() - deinitStart));
         }
         int64_t initStart = systemTime();
-
-        ret = mBlurApi[0]->iSmoothInit(
-            &(mBlurApi[0]->mHandle), mPreviewInitParams.width,
-            mPreviewInitParams.height, mPreviewInitParams.min_slope,
-            mPreviewInitParams.max_slope,
-            mPreviewInitParams.findex2gamma_adjust_ratio,
-            mPreviewInitParams.box_filter_size);
+        InitGaussianParams mPrevInitGauParams;
+        memset(&mPrevInitGauParams,0,sizeof(InitGaussianParams));
+        mPrevInitGauParams.width = mPreviewInitParams.width;
+        mPrevInitGauParams.height = mPreviewInitParams.height;
+        mPrevInitGauParams.min_slope = mPreviewInitParams.min_slope;
+        mPrevInitGauParams.max_slope = mPreviewInitParams.max_slope;
+        mPrevInitGauParams.Findex2Gamma_AdjustRatio = mPreviewInitParams.findex2gamma_adjust_ratio;
+        mPrevInitGauParams.box_filter_size = mPreviewInitParams.box_filter_size;
+        sprd_preview_portrait_init_param_t mPortraitPrevInitParams;
+        memset(&mPortraitPrevInitParams,0,sizeof(sprd_preview_portrait_init_param_t));
+        mPortraitPrevInitParams.ctx = &(mBlurApi[0]->mHandle);
+        mPortraitPrevInitParams.params = &mPrevInitGauParams;
+        ret = sprd_preview_portrait_adpt(SPRD_PREVIEW_PORTRAIT_INIT_CMD,&mPortraitPrevInitParams);
 
         HAL_LOGD("preview iSmoothInit cost %lld ms",
                  ns2ms(systemTime() - initStart));
@@ -1013,12 +985,29 @@ int SprdCamera3SinglePortrait::CaptureThread::prevBlurHandle(
                  mPreviewWeightParams.circle_size,
                  mPreviewWeightParams.f_number, mPreviewWeightParams.sel_x,
                  mPreviewWeightParams.sel_y);
-        ret = mBlurApi[0]->iSmoothCreateWeightMap(mBlurApi[0]->mHandle,
-                                                  &mPreviewWeightParams);
+        WeightGaussianParams mPrevPortraitWeightParams;
+        memset(&mPrevPortraitWeightParams, 0 ,sizeof(WeightGaussianParams));
+        mPrevPortraitWeightParams.roi_type = mPreviewWeightParams.roi_type;
+        mPrevPortraitWeightParams.F_number = mPreviewWeightParams.f_number;
+        mPrevPortraitWeightParams.sel_x = mPreviewWeightParams.sel_x;
+        mPrevPortraitWeightParams.sel_y = mPreviewWeightParams.sel_y;
+        mPrevPortraitWeightParams.CircleSize = mPreviewWeightParams.circle_size;
+        mPrevPortraitWeightParams.valid_roi = mPreviewWeightParams.valid_roi;
+        memcpy(mPrevPortraitWeightParams.x1,mPreviewWeightParams.x1,sizeof(int) * BLUR_MAX_ROI);
+        memcpy(mPrevPortraitWeightParams.y1,mPreviewWeightParams.y1,sizeof(int) * BLUR_MAX_ROI);
+        memcpy(mPrevPortraitWeightParams.x2,mPreviewWeightParams.x2,sizeof(int) * BLUR_MAX_ROI);
+        memcpy(mPrevPortraitWeightParams.y2,mPreviewWeightParams.y2,sizeof(int) * BLUR_MAX_ROI);
+        memcpy(mPrevPortraitWeightParams.flag,mPreviewWeightParams.flag,sizeof(int) * BLUR_MAX_ROI);
+
+        sprd_preview_portrait_weightmap_param_t mPortraitPrevWeightmapParams;
+        memset(&mPortraitPrevWeightmapParams,0,sizeof(sprd_preview_portrait_weightmap_param_t));
+        mPortraitPrevWeightmapParams.ctx = &(mBlurApi[0]->mHandle);
+        mPortraitPrevWeightmapParams.params = &mPrevPortraitWeightParams;
+        ret = sprd_preview_portrait_adpt(SPRD_PREVIEW_PORTRAIT_GET_MASK_CMD,&mPortraitPrevWeightmapParams);
         if (ret != 0) {
-            HAL_LOGE("preview CreateWeightMap Err:%d", ret);
+            HAL_LOGE("preview SPRD_PREVIEW_PORTRAIT_GET_MASK_CMD Err:%d", ret);
         }
-        HAL_LOGD("preview iSmoothCreateWeightMap cost %lld ms",
+        HAL_LOGD("preview SPRD_PREVIEW_PORTRAIT_GET_MASK_CMD cost %lld ms",
                  ns2ms(systemTime() - creatStart));
     }
     property_get("persist.vendor.prev.dump", prop, "0");
@@ -1030,10 +1019,15 @@ int SprdCamera3SinglePortrait::CaptureThread::prevBlurHandle(
             0, "srcYUV_prev_blur_f");
     }
     int64_t blurStart = systemTime();
-    ret = mBlurApi[0]->iSmoothBlurImage(mBlurApi[0]->mHandle, srcYUV, NULL);
+    sprd_preview_portrait_blur_param_t mPortraitPrevRunParams;
+    memset(&mPortraitPrevRunParams,0,sizeof(sprd_preview_portrait_blur_param_t));
+    mPortraitPrevRunParams.ctx = &(mBlurApi[0]->mHandle);
+    mPortraitPrevRunParams.srcImg = srcYUV;
+    mPortraitPrevRunParams.dstImg = NULL;
+    ret = sprd_preview_portrait_adpt(SPRD_PREVIEW_PORTRAIT_PROCESS_CMD,&mPortraitPrevRunParams);
     if (ret != 0)
-        LOGE("ismoothblur is error");
-    HAL_LOGV("preview iSmoothBlurImage cost %lld ms",
+        LOGE("SPRD_PREVIEW_PORTRAIT_PROCESS_CMD is error");
+    HAL_LOGV("preview SPRD_PREVIEW_PORTRAIT_PROCESS_CMD cost %lld ms",
              ns2ms(systemTime() - blurStart));
     if (!strcmp(prop, "prev")) {
         mSinglePortrait->dumpData(
@@ -1109,8 +1103,13 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
 
     int64_t blurStart = systemTime();
     if (mAlgorithmFlag) {
-        ret = sprd_portrait_capture_process(mBlurApi[1]->mHandle, &yuvData,
-                                            mask, 1);
+        sprd_capture_portrait_process_param_t mPortraitCapRunParams;
+        memset(&mPortraitCapRunParams,0,sizeof(sprd_capture_portrait_process_param_t));
+        mPortraitCapRunParams.ctx = &(mBlurApi[1]->mHandle);
+        mPortraitCapRunParams.yuvData = &yuvData;
+        mPortraitCapRunParams.bokehMask = mask;
+        mPortraitCapRunParams.isCapture = 1;
+        ret = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_PROCESS_CMD,&mPortraitCapRunParams);
     } else {
         memcpy(destYUV, srcYUV, mSinglePortrait->mCaptureWidth *
                                     mSinglePortrait->mCaptureHeight * 3 /
@@ -1126,7 +1125,7 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
     if (ret != 0)
         LOGE("ismooth is error");
 
-    HAL_LOGD("mVersion:%d.%d capture sprd_portrait_capture_process cost %lld ms",
+    HAL_LOGD("mVersion:%d.%d capture SPRD_CAPTURE_PORTRAIT_PROCESS_CMD cost %lld ms",
                 mVersion, mCaptureWeightParams.roi_type,
                 ns2ms(systemTime() - blurStart));
 
@@ -1239,9 +1238,11 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
     buffer_handle_t *combo_buffer, void *combo_buff_addr,
     buffer_handle_t *output_buffer, void *output_buff_addr,
     uint32_t combe_frm_num) {
+    HAL_LOGD("E");
     int ret = 0;
     void *nearJpegBufferAddr = NULL;
-    unsigned char *outPortraitMask = NULL;
+    unsigned char *lptMask = NULL;
+    void *bokehMask = NULL;
     int portrait_flag = mSinglePortrait->mBlurMode;
     int lightportrait_flag = lpt_cap_type;
     int facebeauty_flag = fb_cap_type;
@@ -1287,19 +1288,20 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
             //                getOutWeightMap(mSavedResultBuff);
         }
         /*get portrait mask*/
-        outPortraitMask = (unsigned char *)malloc(Mask_DepthW * Mask_DepthH * 2);
-        if(!outPortraitMask) {
+        lptMask = (unsigned char *)malloc(512*384);
+        bokehMask = malloc(768*576);
+        if(!lptMask || !bokehMask) {
             HAL_LOGE("no mem!");
             return ret;
         }
-        ret = getPortraitMask(output_buff_addr, combo_buff_addr, 0, outPortraitMask);
-        if(!outPortraitMask) {
+        ret = getPortraitMask(output_buff_addr, combo_buff_addr, 0, bokehMask, lptMask);
+        if(!lptMask) {
             HAL_LOGE("no thing!");
         }
         if(portrait_flag){
             ret = capBlurHandle(combo_buffer, combo_buff_addr,
                             mSinglePortrait->m_pNearYuvBuffer, output_buffer,
-                            output_buff_addr, (void *)outPortraitMask);
+                            output_buff_addr, bokehMask);
         }
         if(facebeauty_flag){
             if(!portrait_flag){
@@ -1308,7 +1310,7 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
             } else {
                 HAL_LOGD("feature support:portrait+fb");
             }
-            ret = doFaceBeauty(outPortraitMask, output_buff_addr, mCaptureInitParams.width, 
+            ret = doFaceBeauty(lptMask, output_buff_addr, mCaptureInitParams.width, 
                         mCaptureInitParams.height, 1, &mSinglePortrait->fbLevels_cap, lightportrait_flag);
         }
         if(lightportrait_flag != 0) {
@@ -1321,9 +1323,10 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
                 HAL_LOGD("feature support:facebeauty + lpt");
             }
             ret = capLPT(output_buff_addr,mCaptureInitParams.width,mCaptureInitParams.height,
-                    outPortraitMask, lightportrait_flag);
+                    lptMask, lightportrait_flag);
         }
-        free(outPortraitMask);
+        free(lptMask);
+        free(bokehMask);
         output_buff.buffer_addr = output_buff_addr;
         output_buff.frame_number = combe_frm_num;
         dump_buffs[DUMP_SINGLE_PORTRAIT_OUTPUT] = &output_buff;
@@ -1535,7 +1538,7 @@ void SprdCamera3SinglePortrait::CaptureThread::dumpBlurIMG(
             uint32_t para_size = 0;
             uint32_t near_jpeg_size = mSinglePortrait->mNearJpegSize;
             uint32_t far_jpeg_size = mSinglePortrait->mFarJpegSize;
-            
+
            {
                 para_num += BLUR_REFOCUS_COMMON_PARAM_NUM +
                             BLUR_REFOCUS_2_PARAM_NUM + BLUR_AF_WINDOW_NUM +
@@ -1562,7 +1565,7 @@ void SprdCamera3SinglePortrait::CaptureThread::dumpBlurIMG(
                 (unsigned char *)(mSinglePortrait->m_pNearYuvBuffer), 1,
                 yuv_size, mCaptureInitParams.width, mCaptureInitParams.height,
                 0, "nearYuv");
-            
+
             if ((mVersion == 1) && (mCaptureWeightParams.roi_type == 2)) {
                 // dump output weight map
                 buffer_base -= output_weight_map;
@@ -1859,7 +1862,7 @@ void SprdCamera3SinglePortrait::CaptureThread::updateBlurWeightParams(
     // always get f_num and orientattion in request
     if (type == 0) {
         if (metaSettings.exists(ANDROID_SPRD_LIGHTPORTRAITTYPE)) {
-            lightPortraitType = 
+            lightPortraitType =
                 metaSettings.find(ANDROID_SPRD_LIGHTPORTRAITTYPE).data.i32[0];
                 HAL_LOGD("lightPortraitType %d",lightPortraitType);
         }
@@ -2193,7 +2196,7 @@ void SprdCamera3SinglePortrait::CaptureThread::updateBlurWeightParams(
                         }
                         k++;
                         continue;
-                    }*/ 
+                    }*/
                     if (mRotation == 270) {
                         int w = faceInfo[2] - faceInfo[0];
                         int h = faceInfo[3] - faceInfo[1];
@@ -2631,7 +2634,7 @@ void SprdCamera3SinglePortrait::CaptureThread::saveCaptureBlurParams(
         far_jpeg_size = 0;
         yuv_size2 = 0;
     }
-    
+
     if ((mVersion == 1) && (mCaptureWeightParams.roi_type == 2)) {
         use_size = para_size + near_jpeg_size + jpeg_size + output_weight_map;
     } else {
@@ -2639,7 +2642,7 @@ void SprdCamera3SinglePortrait::CaptureThread::saveCaptureBlurParams(
     }
     /* memset space after jpeg*/
     memset(buffer + jpeg_size, 0, use_size - jpeg_size);
-    
+
     {
         // blur1.0 and blur2.0 commom
         uint32_t orientation = mCaptureWeightParams.rotate_angle;
@@ -2805,7 +2808,7 @@ void SprdCamera3SinglePortrait::CaptureThread::saveCaptureBlurParams(
         HAL_LOGE("map m_pNearJpegBuffer(%p) failed",
                  mSinglePortrait->m_pNearJpegBuffer);
     }
-    
+
     // copy output weight map for blur1.2
     if ((mVersion == 1) && (mCaptureWeightParams.roi_type == 2)) {
         buffer -= output_weight_map;
@@ -3354,9 +3357,9 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
             }
             mCaptureThread->fb_cap_type = mSinglePortrait->mFaceBeautyFlag;
             memcpy(&mSinglePortrait->fbLevels_cap, &mSinglePortrait->fbLevels, sizeof(faceBeautyLevels));
-            if (!mFlushing && mCoverValue == 1 && 
-                (mBlurMode || mCaptureThread->lightPortraitType != 0 || 
-                mSinglePortrait->mFaceBeautyFlag) && 
+            if (!mFlushing && mCoverValue == 1 &&
+                (mBlurMode || mCaptureThread->lightPortraitType != 0 ||
+                mSinglePortrait->mFaceBeautyFlag) &&
                 ((!(mCaptureThread->mVersion == 3 &&
                     0 != mCaptureThread->mIspInfo.distance_reminder) &&
                   !((!mCaptureThread->mIsBlurAlways) &&
@@ -3607,7 +3610,7 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                     if (result->output_buffers->status !=
                             CAMERA3_BUFFER_STATUS_ERROR &&
                         mCoverValue == 1) {
-                        if (!mFlushing && (portrait_flag || 
+                        if (!mFlushing && (portrait_flag ||
                             lightportrait_flag != 0 || facebeauty_flag )) {
                             void *buffer_addr = NULL;
                             if (map(result->output_buffers->buffer,
@@ -3622,13 +3625,13 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                                 }
                                 if(facebeauty_flag){
                                     int rc = mCaptureThread->doFaceBeauty(NULL, buffer_addr,
-                                    mCaptureThread->mPreviewInitParams.width, 
+                                    mCaptureThread->mPreviewInitParams.width,
                                     mCaptureThread->mPreviewInitParams.height,
                                     0, &mSinglePortrait->fbLevels, lightportrait_flag);
                                 }
                                 if(lightportrait_flag != 0){
-                                    int rc = mCaptureThread->prevLPT(buffer_addr, 
-                                        mCaptureThread->mPreviewInitParams.width, 
+                                    int rc = mCaptureThread->prevLPT(buffer_addr,
+                                        mCaptureThread->mPreviewInitParams.width,
                                         mCaptureThread->mPreviewInitParams.height, lightportrait_flag);
                                 }
                             }
@@ -3694,7 +3697,7 @@ int SprdCamera3SinglePortrait::_flush(const struct camera3_device *device) {
              mCaptureThread->mCaptureMsgList.size(), mSavedRequestList.size());
     mFlushing = true;
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
-    rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev); 
+    rc = hwiMain->flush(m_pPhyCamera[CAM_TYPE_MAIN].dev);
     if (2 == m_nPhyCameras) {
         SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_AUX].hwi;
         rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_AUX].dev);
@@ -3707,9 +3710,12 @@ int SprdCamera3SinglePortrait::_flush(const struct camera3_device *device) {
         mInitThread = false;
     }
     if (mCaptureThread->mBlurApi[1]->mHandle != NULL) {
-        rc = sprd_portrait_capture_deinit(mCaptureThread->mBlurApi[1]->mHandle);
+        sprd_capture_portrait_deinit_param_t mPortraitCapDeinitParams;
+        memset(&mPortraitCapDeinitParams,0,sizeof(sprd_capture_portrait_deinit_param_t));
+        mPortraitCapDeinitParams.ctx = &(mCaptureThread->mBlurApi[1]->mHandle);
+        rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_DEINIT_CMD,&mPortraitCapDeinitParams);
         if (rc != 0) {
-            HAL_LOGE("capture iSmoothDeinit Err:%d", rc);
+            HAL_LOGE("capture SPRD_CAPTURE_PORTRAIT_DEINIT_CMD Err:%d", rc);
         }
         mCaptureThread->mBlurApi[1]->mHandle = NULL;
     }
@@ -3744,6 +3750,8 @@ int SprdCamera3SinglePortrait::CaptureThread::initPortraitParams() {
     capInitParams.height = mCaptureInitParams.height;
     capInitParams.depthW = mCaptureInitParams.depthW;
     capInitParams.depthH = mCaptureInitParams.depthH;
+    capInitParams.lptW = 512;
+    capInitParams.lptH = 384;
     int mLastMinScope = 4;        // min_slope*10000
     int mLastMaxScope = 19;       // max_slope*10000
     int mLastAdjustRati = 150000; // findex2gamma_adjust_ratio*10000
@@ -3758,13 +3766,16 @@ int SprdCamera3SinglePortrait::CaptureThread::initPortraitParams() {
     capInitParams.SmoothWinSize = 5;   // odd number ->5
     capInitParams.box_filter_size = 0; // odd number ->0
     int64_t initStart = systemTime();
-    ret =
-        sprd_portrait_capture_init(&(mBlurApi[1]->mHandle), &capInitParams);
-    HAL_LOGD("capture sprd_portrait_capture_init cost %lld ms",
+    sprd_capture_portrait_init_param_t mPortraitCapInitParams;
+    memset(&mPortraitCapInitParams,0,sizeof(sprd_capture_portrait_init_param_t));
+    mPortraitCapInitParams.ctx = &(mBlurApi[1]->mHandle);
+    mPortraitCapInitParams.param = &capInitParams;
+    ret = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_INIT_CMD,&mPortraitCapInitParams);
+    HAL_LOGD("capture SPRD_CAPTURE_PORTRAIT_INIT_CMD cost %lld ms",
                 ns2ms(systemTime() - initStart));
 
     if (ret != 0) {
-        HAL_LOGE("capture sprd_portrait_capture_init Err:%d", ret);
+        HAL_LOGE("capture SPRD_CAPTURE_PORTRAIT_INIT_CMD Err:%d", ret);
         ret= NO_ERROR;
     }
     return ret;
@@ -3997,8 +4008,8 @@ int SprdCamera3SinglePortrait::CaptureThread::runDFA(void *input_buff,
 }
 
 
-int SprdCamera3SinglePortrait::CaptureThread:: getPortraitMask(void *output_buff, 
-            void *input_buf1_addr, int vcmCurValue, unsigned char *result) {
+int SprdCamera3SinglePortrait::CaptureThread:: getPortraitMask(void *output_buff,
+            void *input_buf1_addr, int vcmCurValue, void *bokehMask, unsigned char *lptMask) {
     int rc = NO_ERROR;
     HAL_LOGD("E");
     /*get portrait_mask*/
@@ -4040,12 +4051,24 @@ int SprdCamera3SinglePortrait::CaptureThread:: getPortraitMask(void *output_buff
     yuvData.Src_YUV = (unsigned char *)input_buf1_addr;
     yuvData.Dst_YUV = (unsigned char *)output_buff;
 
-    unsigned int maskW = 0, maskH = 0, maskSize = 0;
-    rc = sprd_portrait_capture_get_mask_info(mBlurApi[1]->mHandle, &maskW, &maskH,
-                                             &maskSize);
-
-    rc = sprd_portrait_capture_get_mask(mBlurApi[1]->mHandle, NULL, &wParams,
-                                           &yuvData, result);
+    sprd_capture_portrait_get_mask_info_param_t mPortraitCapGetMaskInfoParams;
+    memset(&mPortraitCapGetMaskInfoParams,0,sizeof(sprd_capture_portrait_get_mask_info_param_t));
+    mPortraitCapGetMaskInfoParams.ctx = &(mBlurApi[1]->mHandle);
+    int bokehMaskWidth = 0,bokehMaskHeight = 0, bokehMaskSize = 0;
+    mPortraitCapGetMaskInfoParams.width = &bokehMaskWidth;
+    mPortraitCapGetMaskInfoParams.height = &bokehMaskHeight;
+    mPortraitCapGetMaskInfoParams.bufSize = &bokehMaskSize;
+    rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_GET_MASK_INFO_CMD,&mPortraitCapGetMaskInfoParams);
+    HAL_LOGD("mask size %d * %d = %d",bokehMaskWidth, bokehMaskHeight, bokehMaskSize);
+    sprd_capture_portrait_get_mask_param_t mPortraitCapGetMaskParams;
+    memset(&mPortraitCapGetMaskParams,0,sizeof(sprd_capture_portrait_get_mask_param_t));
+    mPortraitCapGetMaskParams.ctx = &(mBlurApi[1]->mHandle);
+    mPortraitCapGetMaskParams.depthInputData = NULL;
+    mPortraitCapGetMaskParams.procParams = &wParams;
+    mPortraitCapGetMaskParams.yuvData = &yuvData;
+    mPortraitCapGetMaskParams.bokehMask = bokehMask;
+    mPortraitCapGetMaskParams.lptMask = lptMask;
+    rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_GET_MASK_CMD,&mPortraitCapGetMaskParams);
 
     HAL_LOGD("X");
     return rc;
@@ -4214,40 +4237,40 @@ int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, 
         for (int j = 0; j < index; j++) {
             mSinglePortrait->beauty_face.idx = j;
             if(mobile_angle_cap == 0) {
-                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
-                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
             } else if (mobile_angle_cap == 90) {
-                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
-                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
             } else if (mobile_angle_cap == 180) {
-                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
-                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
             } else {
-                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.startX = mCaptureWeightParams.x1[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.startY = mCaptureWeightParams.y1[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
-                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width / 
+                mSinglePortrait->beauty_face.endX = mCaptureWeightParams.x2[j] * mCaptureInitParams.width /
                                                                     mCaptureInitParams.depthW;
-                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height / 
+                mSinglePortrait->beauty_face.endY = mCaptureWeightParams.y2[j] * mCaptureInitParams.height /
                                                                     mCaptureInitParams.depthH;
             }
 
