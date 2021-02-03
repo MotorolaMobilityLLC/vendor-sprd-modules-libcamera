@@ -3281,6 +3281,7 @@ int SprdCamera3RealBokeh::configureStreams(
     mLastOnlieVcm = 0;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
+    mCaptureThread->mBokehResult = true;
     sn_trim_flag = true;
     sem_init(&mRealBokeh->mflushvalue, 0, 0);
     mflushflag = true;
