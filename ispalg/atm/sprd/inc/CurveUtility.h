@@ -3,6 +3,14 @@
 
 #ifdef WIN32
 #include "sci_types.h"
+#endif
+
+#ifdef CONFIG_LINUX_LIKE
+#include <linux/types.h>
+#include <sys/types.h>
+//#include "sci_types.h"
+#include "stdint.h"
+#include <cmr_property.h>
 #else
 #include <linux/types.h>
 #include <sys/types.h>

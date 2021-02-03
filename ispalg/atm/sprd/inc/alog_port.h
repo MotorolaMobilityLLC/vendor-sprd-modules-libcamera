@@ -12,7 +12,20 @@
 extern "C" {
 #endif
 
-#ifndef WIN32
+#if (defined(CONFIG_LINUX_LIKE) || defined(WIN32))
+
+#define ALGO_LOGW printf
+#define ALGO_LOG printf
+#define ALGO_LOGI printf
+#define ALGO_LOGE printf
+#define ALGO_LOGV printf
+#define ALGO_LOGD printf
+#define ALOGE printf
+#define ALGO_LOGX printf
+
+#else
+
+//#ifndef WIN32
 #ifndef LOG_TAG
 #define LOG_TAG NULL
 #endif
@@ -111,15 +124,6 @@ extern uint32_t g_algo_log_level;
 #define ALGO_LOGI(fmt, args...) ALOGI_IF(g_algo_log_level >= ALGO_LOG_LEVEL_OVER_LOGI, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 #define ALGO_LOGD(fmt, args...) ALOGD_IF(g_algo_log_level >= ALGO_LOG_LEVEL_OVER_LOGD, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
 #define ALGO_LOGV(fmt, args...) ALOGV_IF(g_algo_log_level >= ALGO_LOG_LEVEL_OVER_LOGV, "%d, %s: " fmt, __LINE__, __FUNCTION__, ##args)
-#else
-#define ALGO_LOGW printf
-#define ALGO_LOG printf
-#define ALGO_LOGI printf
-#define ALGO_LOGE printf
-#define ALGO_LOGV printf
-#define ALGO_LOGD printf
-#define ALOGE printf
-#define ALGO_LOGX printf
 #endif
 #ifdef __cplusplus
 }

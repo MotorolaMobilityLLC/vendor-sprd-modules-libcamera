@@ -133,7 +133,9 @@ struct smart_context {
 	cmr_u32 smart_lock_frame;
     // new debug
 	smart_debuginfo smt_dbginfo;
+	cmr_u32 atm_version;
 	struct atm_tune_param atm_tuning_param;
+	struct ae_atm_tune_param_v1 atm_tuning_param_v1;
 	enum smart_ctrl_atm_switch_state atm_switch_state;
 
 };
@@ -1150,7 +1152,7 @@ static cmr_s32 smart_ctl_parse_atm_tuning_param(struct atm_tune_param *src, cmr_
 	cmr_s32 rtn = ISP_SUCCESS;
 
 	if (src != NULL) {
-		if (src->version == 0 && data_size > 0 && dst != NULL) {
+		if ((src->version == 0 || src->version == 1) && data_size > 0 && dst != NULL) {
 			memcpy(dst,src,sizeof(struct atm_tune_param));
 		}
 	} else {
@@ -1160,6 +1162,20 @@ static cmr_s32 smart_ctl_parse_atm_tuning_param(struct atm_tune_param *src, cmr_
 	return rtn;
 }
 
+static cmr_s32 smart_ctl_parse_atm_tuning_param_v1(struct ae_atm_tune_param_v1 *src, cmr_u32 data_size, struct ae_atm_tune_param_v1 *dst){
+
+	cmr_s32 rtn = ISP_SUCCESS;
+
+	if (src != NULL) {
+		if (src->version == 2 && data_size > 0 && dst != NULL) {
+			memcpy(dst,src,sizeof(struct ae_atm_tune_param_v1));
+		}
+	} else {
+		//rtn = ISP_ERROR;
+		ISP_LOGE("smart_ctl_parse_atm_tuning_param error,src null");
+	}
+	return rtn;
+}
 
 smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 {
@@ -1206,12 +1222,23 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	{ // ATM
 		struct atm_init_in atm_param_in;
 		isp_atm_init(&atm_param_in, (cmr_handle*)&cxt->handle_atm);
-		struct atm_tune_param *atm_info = (struct atm_tune_param *)param->atm_info;
-		rtn = smart_ctl_parse_atm_tuning_param(atm_info,param->atm_size,&cxt->atm_tuning_param);
-		if (ISP_SUCCESS != rtn) {
-			ISP_LOGE("fail to parse tuning param, rtn %d", rtn);
-			goto parse_tuning_failed;
-	        }
+		if(ATM_TUNING_VERSION_V0 == param->atm_size){
+			struct atm_tune_param *atm_info = (struct atm_tune_param *)param->atm_info;
+			rtn = smart_ctl_parse_atm_tuning_param(atm_info,param->atm_size,&cxt->atm_tuning_param);
+			cxt->atm_version = cxt->atm_tuning_param.version;
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGE("fail to parse tuning param, rtn %d", rtn);
+				goto parse_tuning_failed;
+			}
+		}else if(ATM_TUNING_VERSION_V1 == param->atm_size){
+			struct ae_atm_tune_param_v1 *atm_info = (struct ae_atm_tune_param_v1 *)param->atm_info;
+			rtn = smart_ctl_parse_atm_tuning_param_v1(atm_info,param->atm_size,&cxt->atm_tuning_param_v1);
+			cxt->atm_version = cxt->atm_tuning_param_v1.version;
+			if (ISP_SUCCESS != rtn) {
+				ISP_LOGE("fail to parse tuning param v1, rtn %d", rtn);
+				goto parse_tuning_failed;
+			}
+		}
 	}
 #endif
 	cxt->smt_dbginfo.nr_param.ppi[0] = 0;
@@ -1307,6 +1334,17 @@ param_failed:
 	return handle;
 }
 
+int isp_bayer_hist(struct smart_proc_input *smart_proc_in,  unsigned long long *hist) {
+	cmr_s32 rtn = ISP_SUCCESS;
+	cmr_u32 i = 0;
+
+	/*G R Bchannel, pdf and cdf related calc*/
+	for(i = 0; i < 256; i++){
+		hist[i] = smart_proc_in->bhist_stats[0].value[i] + smart_proc_in->bhist_stats[1].value[i] + smart_proc_in->bhist_stats[2].value[i];
+	}
+	return rtn;
+}
+
 void _get_8bitX_Y(int i4Bits, int i4InputLen, short *inputX, short *inputY, unsigned char *i4outputY) {
 	short i2StartX = 0;
 	int i, j;
@@ -1332,6 +1370,186 @@ void _get_8bitX_Y(int i4Bits, int i4InputLen, short *inputX, short *inputY, unsi
 			}
 		}
 	}
+}
+
+cmr_int _get_atm_curve_v1(cmr_handle *handle,
+	struct smart_proc_input *smart_proc_in,
+	int i4BV, void *in_gamma, void *out_gamma,
+	smart_gamma_debuginfo *dbginfo,
+	struct ae_atm_tune_param_v1*atm_param) {
+	char value[PROPERTY_VALUE_MAX];
+	property_get("debug.camera.atm.update", value, "1");
+	bool bATMUpdate = strtol(value, NULL, 10);
+	property_get("debug.camera.atm.dump", value, "0");
+	bool bATMDump = strtol(value, NULL, 10);
+	property_get("debug.camera.atm.hist", value, "0");
+	bool bATMDumpHist = strtol(value, NULL, 10);
+	int ret, i;
+	unsigned int u4GammaSize = 0;
+	unsigned long long hist[256] = {0};
+	unsigned char uConvCurY[256] = {0},
+	uOutGamma[3][256];
+	unsigned char uPrevGamma[3][256]= {{0},{0},{0}};
+	unsigned short
+	u2CurX[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}},
+	u2CurY[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
+	struct atm_calc_param ATMInput;
+	struct atm_calc_result ATMOutput;
+	memset(&ATMInput, 0, sizeof(struct atm_calc_param));
+	memset(&ATMOutput, 0, sizeof(struct atm_calc_result));
+
+	bool bAEMBinning = (smart_proc_in->win_size_w == 1 && smart_proc_in->win_size_h == 1);
+	if (in_gamma == NULL || out_gamma == NULL)
+		return ISP_ERROR;
+
+	struct sensor_rgbgamma_curve *gamma_info = (struct sensor_rgbgamma_curve *)in_gamma;
+	u4GammaSize = sizeof(struct sensor_rgbgamma_curve);
+	{
+		cmr_s32 i;
+		for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
+			u2CurY[0][i] = gamma_info->points_r[i].y;
+			u2CurX[0][i] = gamma_info->points_r[i].x;
+			u2CurY[1][i] = gamma_info->points_g[i].y;
+			u2CurX[1][i] = gamma_info->points_g[i].x;
+			u2CurY[2][i] = gamma_info->points_b[i].y;
+			u2CurX[2][i] = gamma_info->points_b[i].x;
+			if (i == 0||i == 64 || i == 128 || i == 255)
+			ISP_LOGV("%d x/y %d/%d\n", i, u2CurX[0][i], u2CurY[0][i]);
+        	}
+	}
+	if(smart_proc_in->bhist_update && atm_param->input_type){
+		ret = isp_bayer_hist(smart_proc_in, hist);
+	}else{
+		ret = isp_histAEM(smart_proc_in->r_info,
+			smart_proc_in->g_info, smart_proc_in->b_info, hist, bAEMBinning,
+			smart_proc_in->aem_shift,
+			smart_proc_in->win_num_w, smart_proc_in->win_num_h,
+			smart_proc_in->win_size_w, smart_proc_in->win_size_h);
+	}
+	if (ISP_SUCCESS != ret) {
+		 ISP_LOGE("ATM aem_ptr %p,%p,%p, win_num/win_size %d/%d, %d/%d, shift %d\n",
+		smart_proc_in->r_info,
+		smart_proc_in->g_info,
+		smart_proc_in->b_info,
+		smart_proc_in->win_num_w, smart_proc_in->win_num_h,
+		smart_proc_in->win_size_w, smart_proc_in->win_size_h,
+		smart_proc_in->aem_shift);
+		return ISP_ERROR;
+	}
+	if (bATMDumpHist == true) {
+		ISP_LOGV("aem num w/h %d/%d, size w/h %d/%d, shift %d\n",
+		smart_proc_in->win_num_w, smart_proc_in->win_num_h,
+		smart_proc_in->win_size_w, smart_proc_in->win_size_h,
+		smart_proc_in->aem_shift);
+	for (i = 0; i < 256; i+=4)
+	ISP_LOGV("Hist[%d-%d] = %llu,%llu,%llu,%llu\n",i,i+3,hist[i],hist[i+1],hist[i+2],hist[i+3]);
+	}
+	if (bATMDump == true) {
+		for (i = 0; i < 256; i+=4)
+			ISP_LOGV("Orig Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
+			u2CurX[1][i], u2CurY[1][i],
+			u2CurX[1][i+1], u2CurY[1][i+1],
+			u2CurX[1][i+2], u2CurY[1][i+2],
+			u2CurX[1][i+3], u2CurY[1][i+3]);
+	}
+	_get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
+	if (bATMDump == true) {
+	for (i = 0; i < 32; i+=4)
+		ISP_LOGV("Conv Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
+		i, uConvCurY[i],
+		i+1, uConvCurY[i+1],
+		i+2, uConvCurY[i+2],
+		i+3, uConvCurY[i+3]);
+	}
+
+	ISP_LOGV("atm Out Gamma %p \n", out_gamma);
+	{
+		ATMInput.stAlgoParams.i4BV = i4BV;
+		/*
+		ATMInput.stAlgoParams.i4BV = i4BV;
+		ATMInput.stAlgoParams.i4LowPT = atm_param->i4LowPT;
+		ATMInput.stAlgoParams.i4LowPcentThd = atm_param->i4LowPcentThd;
+		ATMInput.stAlgoParams.i4LowRightThd   = atm_param->i4LowRightThd;
+		ATMInput.stAlgoParams.i4LowLeftThd     = atm_param->i4LowLeftThd;
+		ATMInput.stAlgoParams.i4HighPT = atm_param->i4HighPT;
+		ATMInput.stAlgoParams.i4HighPcentThd = atm_param->i4HighPcentThd;
+		ATMInput.stAlgoParams.i4HighLeftThd  = atm_param->i4HighLeftThd;
+		ATMInput.stAlgoParams.i4HighRightThd = atm_param->i4HighRightThd;
+		ATMInput.stAlgoParams.strBVLut.i4Len = atm_param->strBVLut.i4Len;
+		memcpy(&ATMInput.stAlgoParams.strBVLut.i4X, atm_param->strBVLut.i4X, sizeof(cmr_s32)*8);
+		memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, atm_param->strBVLut.i4Y, sizeof(cmr_s32)*8);
+		*/
+		memcpy(&ATMInput.atm_tune, atm_param, sizeof(struct ae_atm_tune_param_v1));
+
+		ATMInput.pHist = hist;
+		ATMInput.u4Bins = 256;
+		ATMInput.uBaseGamma = uConvCurY;
+		ATMInput.uModGamma = uConvCurY;
+		ATMInput.bHistB4Gamma = true;
+		ATMOutput.uGamma = uOutGamma[1];
+		ATMInput.atm_version = ATMInput.atm_tune.version;
+
+		isp_atm((cmr_handle*)handle, ATMInput, &ATMOutput);
+		if (uOutGamma[1][255]) {
+			memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
+		}
+
+		isp_atm_smooth(200, 256, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
+		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(char)*256);
+		if (bATMDump == true) {
+			for (i = 0; i < 256; i+=4)
+				ISP_LOGV("Out Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
+				i, uOutGamma[1][i],
+				i+1, uOutGamma[1][i+1],
+				i+2, uOutGamma[1][i+2],
+				i+3, uOutGamma[1][i+3]);
+		}
+		 // rev to HW gamma curve
+ 		memcpy(out_gamma, in_gamma, u4GammaSize);
+		if (bATMUpdate == true) {
+			struct sensor_rgbgamma_curve *gamma_info = (struct sensor_rgbgamma_curve *)out_gamma;
+			{
+				for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
+				 	gamma_info->points_r[i].y =
+					uOutGamma[1][min(gamma_info->points_r[i].x>>2, 255)];
+					gamma_info->points_g[i].y =
+					uOutGamma[1][min(gamma_info->points_g[i].x>>2, 255)];
+					gamma_info->points_b[i].y =
+					uOutGamma[1][min(gamma_info->points_b[i].x>>2, 255)];
+				}
+				// check write out
+				if (bATMDump == true) {
+					for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i+=4) {
+					ISP_LOGV("Final Gamma [%d] = %d\n",
+					gamma_info->points_g[i].x,
+					gamma_info->points_g[i].y);
+					}
+				} else {
+					ISP_LOGV("Final Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d] \n",
+					gamma_info->points_g[0].x,
+					gamma_info->points_g[0].y,
+					gamma_info->points_g[64].x,
+					gamma_info->points_g[64].y,
+					gamma_info->points_g[128].x,
+					gamma_info->points_g[128].y,
+					gamma_info->points_g[255].x,
+					gamma_info->points_g[255].y);
+				}
+			}
+		}
+	}
+	// fill debug info
+	dbginfo->version = 1;
+	memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
+	memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
+	memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], 256);
+	memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], 256);
+	memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], 256);
+	dbginfo->uLowPT         = ATMOutput.uLowPT;
+	dbginfo->uHighPT        = ATMOutput.uHighPT;
+	dbginfo->uFinalLowBin   = ATMOutput.uFinalLowBin;
+	dbginfo->uFinalHighBin  = ATMOutput.uFinalHighBin;
+	return ISP_SUCCESS;
 }
 
 cmr_int _get_atm_curve(cmr_handle *handle,
@@ -1674,6 +1892,12 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 		return rtn;
 	}
 
+	if(0 == cxt->atm_version || 1 == cxt->atm_version){
+		atm_enable = cxt->atm_tuning_param.atmenable;
+	}else if(2 == cxt->atm_version){
+		atm_enable = cxt->atm_tuning_param_v1.enable;
+	}
+
 	cxt = (struct smart_context *)handle;
 	atm_enable = cxt->atm_tuning_param.atmenable;
 	atm_switch_state = cxt->atm_switch_state;
@@ -1691,9 +1915,16 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 		ret = _smart_gamma(in_ptr, block_result, &sm_gamma_out);
 
 		if (ISP_SUCCESS == ret) {
-			ret = _get_atm_curve((cmr_handle *)cxt->handle_atm,
-					in_ptr, param->bv,&sm_gamma_out,&atm_gamma_out,
-					&cxt->smt_dbginfo.smt_gma,&(cxt->atm_tuning_param));
+			if(0 == cxt->atm_version || 1 == cxt->atm_version){
+				ret = _get_atm_curve((cmr_handle *)cxt->handle_atm,
+									in_ptr, param->bv,&sm_gamma_out,&atm_gamma_out,
+									&cxt->smt_dbginfo.smt_gma,&(cxt->atm_tuning_param));
+			}else if(2 == cxt->atm_version){
+				ret = _get_atm_curve_v1((cmr_handle *)cxt->handle_atm,
+													in_ptr, param->bv,&sm_gamma_out,&atm_gamma_out,
+													&cxt->smt_dbginfo.smt_gma,&(cxt->atm_tuning_param_v1));
+
+			}
 		}
 
 		if (bATMTest){

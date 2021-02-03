@@ -3,6 +3,14 @@
 
 #ifdef WIN32
 #include "sci_types.h"
+#endif
+
+#ifdef CONFIG_LINUX_LIKE
+#include <linux/types.h>
+#include <sys/types.h>
+#include <cmr_property.h>
+#include "stdint.h"
+//#include "sci_types.h"
 #else
 #include <linux/types.h>
 #include <sys/types.h>
@@ -55,12 +63,53 @@ struct ATMCalcParam
 };
 
 #define MAX_SYNC_SENSORS (4)
+#define AEC_CFG_NUM 8
+#define U4BIT8BIN 256
+#define ATM_TUNING_VERSION_V0 78 * 4
+#define ATM_TUNING_VERSION_V1 738 * 4
 
 struct _atm_init_param
 {
     uint32_t u4Magic;
     uint8_t  uOrigGamma[256];
 };
+
+struct atm_table{
+	uint8_t i4PT;
+	uint8_t i4PcentThd;
+	uint8_t i4RightThd;
+	uint8_t i4LeftThd;
+};/*1 * 4 bytes*/
+
+struct atm_evd_table{
+	int16_t evd_idx;
+	uint16_t reserved;
+	struct atm_table table[8];
+};/*9 * 4 bytes*/
+
+struct atm_bvt_table{
+	int16_t bv_idx;
+	uint16_t evd_num;
+	struct atm_evd_table evd_table[8];	//72
+};/*73 * 4 bytes*/
+
+struct atm_tune_param_v1{
+	uint16_t bv_num;
+	uint16_t reserved;
+	struct atm_bvt_table bv_table[8];	/*8 * 73 * 4 bytes*/
+};/*585 * 4 bytes*/
+
+/*for ATM algorithm*/
+struct ae_atm_tune_param_v1{
+	uint32_t version;
+	uint32_t enable;					/*2 * 4 bytes*/
+	uint8_t input_type;
+	uint8_t output_type;
+	uint8_t point_num;
+	uint8_t reserved_0; 				/*1 * 4 bytes*/
+	struct atm_tune_param_v1 tune;		/*585 * 4 bytes*/
+	uint32_t reserved_1[150];			/*150 * 4 bytes*/
+};/*738 * 4 bytes*/
 
 struct atm_calc_param
 {
@@ -74,6 +123,8 @@ struct atm_calc_param
     uint8_t *uBaseGamma;
     uint8_t *uModGamma;
     uint8_t bHistB4Gamma;
+	uint32_t atm_version;
+	struct ae_atm_tune_param_v1 atm_tune;
 };
 
 struct atm_calc_result

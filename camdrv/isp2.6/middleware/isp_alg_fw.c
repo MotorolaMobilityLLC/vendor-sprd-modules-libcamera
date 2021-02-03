@@ -801,7 +801,16 @@ static cmr_int isp_prepare_atm_param(cmr_handle isp_alg_handle,
 	smart_proc_in->aem_shift = cxt->ae_cxt.shift;
 	smart_proc_in->win_size_w = cxt->ae_cxt.win_size.w;
 	smart_proc_in->win_size_h = cxt->ae_cxt.win_size.h;
-
+	smart_proc_in->bhist_update = cxt->bayerhist_update;
+	smart_proc_in->bhist_stats[0].bin = cxt->bayer_hist_stats[0].bin;
+	smart_proc_in->bhist_stats[1].bin = cxt->bayer_hist_stats[1].bin;
+	smart_proc_in->bhist_stats[2].bin = cxt->bayer_hist_stats[2].bin;
+	smart_proc_in->bhist_stats[0].sec = cxt->bayer_hist_stats[0].sec;
+	smart_proc_in->bhist_stats[0].usec = cxt->bayer_hist_stats[0].usec;
+	smart_proc_in->bhist_stats[0].frame_id = cxt->bayer_hist_stats[0].frame_id;
+	memcpy(&smart_proc_in->bhist_stats[0].value,&cxt->bayer_hist_stats[0].value,256 * sizeof(cmr_u32));
+	memcpy(&smart_proc_in->bhist_stats[1].value,&cxt->bayer_hist_stats[1].value,256 * sizeof(cmr_u32));
+	memcpy(&smart_proc_in->bhist_stats[2].value,&cxt->bayer_hist_stats[2].value,256 * sizeof(cmr_u32));
 	if (smart_proc_in->r_info == NULL)
 		ISP_LOGE("fail to access null r/g/b ptr %p/%p/%p\n",
 			smart_proc_in->r_info,

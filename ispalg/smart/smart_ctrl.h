@@ -162,6 +162,8 @@ extern "C" {
 		cmr_u32 win_size_w;
 		cmr_u32 win_size_h;
 		cmr_u32 aem_shift;
+		cmr_u8 bhist_update;
+		struct isp_hist_statistic_info bhist_stats[3];
 		cmr_u8 *log;
 		cmr_u32 size;
 		cmr_u8 lock_nlm;
