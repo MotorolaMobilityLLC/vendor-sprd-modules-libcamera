@@ -41,10 +41,27 @@ LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
-#LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/8.x/libbokeh_depth.so
-#LOCAL_SRC_FILES_64 := $(LIB_PATH)64/8.x/libbokeh_depth.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/8.x/libbokeh_depth.so
 endif
 
 include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_preview_bokeh_adapter.cpp
+LOCAL_MODULE := libbokeh_depth_adapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden 
+LOCAL_SHARED_LIBRARIES := libcutils liblog libbokeh_depth
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_SHARED_LIBRARY)
 endif
