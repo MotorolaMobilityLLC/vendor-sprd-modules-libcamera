@@ -17487,6 +17487,12 @@ cmr_preview_realloc_buffer_for_fdr(cmr_handle preview_handle, cmr_u32 camera_id,
         goto exit;
     }
 
+    if (prev_cxt->cap_sn_size.width < 16 || prev_cxt->cap_sn_size.height < 16) {
+        CMR_LOGI("sensor size may not be initialized!",
+			prev_cxt->cap_sn_size.width, prev_cxt->cap_sn_size.height);
+        goto exit;
+    }
+
     CMR_LOGD("sensor width %d sensor height %d", prev_cxt->cap_sn_size.width, prev_cxt->cap_sn_size.height);
     cmr_bzero(prev_cxt->cap_fdr_phys_addr_array,
               (FDR_FRM_ALLOC_CNT) * sizeof(cmr_uint));
@@ -17499,7 +17505,7 @@ cmr_preview_realloc_buffer_for_fdr(cmr_handle preview_handle, cmr_u32 camera_id,
     width = prev_cxt->cap_sn_size.width;
 
     /*init memory info*/
-    prev_cxt->cap_fdr_mem_size = (width+2) * (height+2) * 2;
+    prev_cxt->cap_fdr_mem_size = (width + 2) * (height + 2) * 2;
 #ifdef CONFIG_CAMERA_FDR
     sprd_fdr_get_max_frame_num(&fdr_total_frame_num, &fdr_ref_frame_num);
 #endif
@@ -17537,7 +17543,7 @@ cmr_preview_realloc_buffer_for_fdr(cmr_handle preview_handle, cmr_u32 camera_id,
         goto exit;
 
     prev_cxt->cap_rgb_mem_size = (width+2) * (height+2) * 8;
-    prev_cxt->cap_rgb_mem_num = 2;
+    prev_cxt->cap_rgb_mem_num = 1;
     ret = mem_ops->alloc_mem(CAMERA_SNAPSHOT_ZSL_RGB, handle->oem_handle,
                (cmr_u32 *)&prev_cxt->cap_rgb_mem_size,
                (cmr_u32 *)&prev_cxt->cap_rgb_mem_num,

@@ -929,7 +929,6 @@ static cmr_int camera_fdr_handle_postv1rgb(struct camera_context *cxt,
 	cmr_u32 buf_size = 0;
 	struct ipmpro_context *swa_cxt = &cxt->swa_cxt_fdr;
 	struct img_size pic_size;
-	struct buffer_cfg free_buf;
 	struct swa_frame *dst_frame;
 	struct swa_frames_inout in, out;
 
@@ -958,14 +957,6 @@ static cmr_int camera_fdr_handle_postv1rgb(struct camera_context *cxt,
 		CMR_LOGD("dump fdr dcam raw, prefix %s, fd %d,  w %d h %d,  vaddr %lx\n",
 		        cxt->dbg_cxt.tags,
 		        buf_cfg->fd[1], pic_size.width, pic_size.height, vir_addr.addr_y);
-	}
-
-	memset(&free_buf, 0, sizeof(free_buf));
-	ret = cmr_preview_get_fdr_free_buffer(
-			cxt->prev_cxt.preview_handle, cxt->camera_id, 1, &free_buf);
-	if (ret || (free_buf.count < 1)) {
-		CMR_LOGE("fail to get fdr post proc rgb buffers\n");
-		return CMR_CAMERA_FAIL;
 	}
 
 	memset(&in, 0, sizeof(struct swa_frames_inout));
@@ -12633,8 +12624,6 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
                 (is_multi_camera_mode_oem == MODE_MULTI_CAMERA && cxt->camera_id == cxt->ref_camera_id)) {
                 camera_get_fdr_tuning_param(cxt, NULL);
                 camera_set_fdr_flag(cxt, 1);
-                cmr_preview_realloc_buffer_for_fdr(cxt->prev_cxt.preview_handle,
-					cxt->camera_id, (cxt->swa_cxt_fdr.version == FDR_VERSION_1) ? 1 : 0);
             } else {
                 camera_set_fdr_flag(cxt, 0);
             }
@@ -13267,6 +13256,9 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     show_snap_param(&snp_param);
     snp_param.zsl_ips_en = cxt->zsl_ips_en;
     cmr_snapshot_prepare(cxt->snp_cxt.snapshot_handle, &snp_param);
+    if (snp_param.is_fdr)
+        cmr_preview_realloc_buffer_for_fdr(cxt->prev_cxt.preview_handle,
+                cxt->camera_id, (cxt->swa_cxt_fdr.version == FDR_VERSION_1) ? 1 : 0);
 
 #ifdef CONFIG_FACE_BEAUTY
     if (cxt->video_face_beauty_en) {
@@ -15982,9 +15974,6 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
             cxt->ref_camera_id != *ref_camera_id) {
         if(*ref_camera_id == cxt->camera_id) {
             camera_get_fdr_tuning_param(cxt, NULL);
-            //allocate fdr buffer for new ref camera id
-            cmr_preview_realloc_buffer_for_fdr(cxt->prev_cxt.preview_handle,
-                        cxt->camera_id, (cxt->swa_cxt_fdr.version == FDR_VERSION_1) ? 1 : 0);
         } else if(cxt->ref_camera_id == cxt->camera_id) {
             // free fdr buffer for old ref camera id
             cmr_preview_free_fdr_buffer(cxt->prev_cxt.preview_handle, cxt->camera_id);
