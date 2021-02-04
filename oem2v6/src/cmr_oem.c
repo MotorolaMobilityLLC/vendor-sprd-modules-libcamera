@@ -13132,6 +13132,10 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     cmr_u32 need_3dnr = 0;
     cmr_u32 lock_af = 0;
     cmr_u32 lock_awb = 0;
+    cmr_u32 is_raw_capture = 0;
+    cmr_u32 is_isptool_flag = 0;
+    char raw_value[PROPERTY_VALUE_MAX];
+    char isptool_value[PROPERTY_VALUE_MAX];
     cmr_uint video_snapshot_type;
 
     if (!oem_handle) {
@@ -13239,8 +13243,17 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
                                         &flash_status);
+    property_get("persist.vendor.cam.raw.mode", raw_value, "jpeg");
+    if (!strcmp(raw_value, "raw")) {
+        is_raw_capture = 1;
+    }
 
-
+    property_get("persist.vendor.cam.isptool.mode.enable", isptool_value, "false");
+    if ((!strcmp(isptool_value, "true")) ||
+        (CAMERA_ISP_SIMULATION_MODE == mode)) {
+        is_isptool_flag = 1;
+    }
+    CMR_LOGD("is_raw_capture %d, is_isptool_flag %d", is_raw_capture, is_isptool_flag);
 //GTM set ev
     if(camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL && cxt->gtm_flag &&
         1 != camera_get_hdr_flag(cxt) && !flash_status && 1 != camera_get_fdr_flag(cxt))
@@ -13292,9 +13305,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                CAMERA_3DNR_TYPE_PREV_SW_CAP_SW == camera_get_3dnr_flag(cxt) ||
                 CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW == camera_get_3dnr_flag(cxt)) {
         sem_init(&cxt->threednr_proc_sm, 0, 0);
-        ret = camera_3dnr_set_ev(oem_handle, 1);
-        if (ret)
-            CMR_LOGE("fail to set 3dnr ev");
+        if (!is_raw_capture || !is_isptool_flag) {
+            ret = camera_3dnr_set_ev(oem_handle, 1);
+            if (ret)
+                CMR_LOGE("fail to set 3dnr ev");
+        }
     } else {
         // whether FRONT_CAMERA_FLASH_TYPE is lcd
         bool isFrontLcd =
