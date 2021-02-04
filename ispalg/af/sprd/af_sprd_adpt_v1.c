@@ -205,10 +205,17 @@ static void afm_enable(af_ctrl_t * af)
 	af->cb_ops.af_monitor_bypass(af->caller, (void *)&bypass);
 }
 
-static void afm_disable(af_ctrl_t * af)
+static cmr_s32 afm_disable(af_ctrl_t * af)
 {
+	cmr_s32 rtn = AFV1_SUCCESS;
 	cmr_u32 bypass = 1;
-	af->cb_ops.af_monitor_bypass(af->caller, (void *)&bypass);
+	rtn = af->cb_ops.af_monitor_bypass(af->caller, (void *)&bypass);
+	if(AFV1_SUCCESS != rtn){
+		ISP_LOGE("fail to af_monitor_bypass");
+		return AFV1_ERROR;
+	}
+	return rtn;
+
 }
 
 static void afm_setup(af_ctrl_t * af)
@@ -1649,6 +1656,7 @@ static cmr_s32 load_trigger_lib(af_ctrl_t * af, const char *name)
 	if (0 != load_trigger_symbols(af)) {
 		dlclose(af->trig_lib);
 		af->trig_lib = NULL;
+		ISP_LOGE("fail to load af trigger symbols");
 		return -1;
 	}
 
@@ -1657,11 +1665,15 @@ static cmr_s32 load_trigger_lib(af_ctrl_t * af, const char *name)
 
 static cmr_s32 unload_trigger_lib(af_ctrl_t * af)
 {
-	if (af->trig_lib) {
+	cmr_s32 rtn = AFV1_SUCCESS;
+	if (NULL == af->trig_lib) {
+		ISP_LOGE("trigger lib is null");
+		rtn = AFV1_ERROR;
+	} else {
 		dlclose(af->trig_lib);
 		af->trig_lib = NULL;
 	}
-	return 0;
+	return rtn;
 }
 
 static cmr_u8 if_aft_binfile_is_exist(cmr_u8 * is_exist, void *cookie)
@@ -1776,6 +1788,7 @@ static cmr_s32 load_af_lib(af_ctrl_t * af, const char *name)
 	if (0 != load_af_symbols(af)) {
 		dlclose(af->af_lib);
 		af->af_lib = NULL;
+		ISP_LOGE("fail to load af symbols");
 		return -1;
 	}
 
@@ -1784,11 +1797,15 @@ static cmr_s32 load_af_lib(af_ctrl_t * af, const char *name)
 
 static cmr_s32 unload_af_lib(af_ctrl_t * af)
 {
-	if (af->af_lib) {
+	cmr_s32 rtn = AFV1_SUCCESS;
+	if (NULL == af->af_lib) {
+		ISP_LOGE("af lib is null");
+		rtn = AFV1_ERROR;
+	} else {
 		dlclose(af->af_lib);
 		af->af_lib = NULL;
 	}
-	return 0;
+	return rtn;
 }
 
 /* initialization */
@@ -1956,11 +1973,17 @@ static cmr_s32 trigger_calc(af_ctrl_t * af, struct aft_proc_calc_param *prm, str
 	return 0;
 }
 
-static cmr_s32 trigger_deinit(af_ctrl_t * af)
+static void trigger_deinit(af_ctrl_t * af)
 {
-	af->trig_ops.deinit(af->trig_ops.handle);
-	unload_trigger_lib(af);
-	return 0;
+	cmr_s32 rtn = AFV1_SUCCESS;
+	rtn = af->trig_ops.deinit(af->trig_ops.handle);
+	if (AFV1_SUCCESS != rtn) {
+		ISP_LOGE("fail to trigger lib deinit");
+	}
+	rtn = unload_trigger_lib(af);
+	if (AFV1_SUCCESS != rtn){
+		ISP_LOGE("fail to unload triggrt lib");
+	}
 }
 
 static cmr_s32 otaf_update_af_state(cmr_handle handle, cmr_u32 otaf_on);
@@ -4009,7 +4032,6 @@ cmr_handle sprd_afv1_init(void *in, void *out)
 	af->range_L1 = lens_range.range_L1;
 	af->range_L4 = lens_range.range_L4;
 	ISP_LOGD("af->range_L1 %d, af->range_L4 %d", af->range_L1, af->range_L4);
-
 	if (trigger_init(af, CAF_TRIGGER_LIB) != 0) {
 		ISP_LOGE("fail to init trigger");
 		goto ERROR_INIT;
@@ -4081,11 +4103,22 @@ cmr_s32 sprd_afv1_deinit(cmr_handle handle, void *param, void *result)
 		return AFV1_ERROR;
 	}
 
-	afm_disable(af);
+	rtn = afm_disable(af);
+	if (AFV1_SUCCESS != rtn) {
+		ISP_LOGE("fail to afm disable");
+	}
+
 	trigger_deinit(af);
 
-	af->af_ops.deinit(af->af_alg_cxt);
-	unload_af_lib(af);
+	rtn = af->af_ops.deinit(af->af_alg_cxt);
+	if (AFV1_SUCCESS != rtn) {
+		ISP_LOGE("fail to af deinit");
+	}
+
+	rtn = unload_af_lib(af);
+	if (AFV1_SUCCESS != rtn) {
+		ISP_LOGE("fail to unload af lib");
+	}
 
 	memset(af, 0, sizeof(*af));
 	free(af);
