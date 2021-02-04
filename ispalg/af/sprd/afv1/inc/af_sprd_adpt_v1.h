@@ -318,7 +318,6 @@ typedef struct _af_ctrl {
 	cmr_u32 vcm_stable;
 	cmr_u32 defocus;
 	cmr_u8 bypass;
-	cmr_u32 ts_counter;
 	cmr_handle caller;
 	cmr_u32 win_peak_pos[MULTI_STATIC_TOTAL];
 	cmr_u32 is_high_fps;

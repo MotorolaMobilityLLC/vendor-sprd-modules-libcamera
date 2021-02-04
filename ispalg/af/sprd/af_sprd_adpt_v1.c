@@ -306,7 +306,7 @@ static void afm_set_win(af_ctrl_t * af, win_coord_t * win, cmr_s32 num, cmr_s32 
 			ISP_LOGI("s.y: %d,e.y: %d", win[9].start_y, win[9].end_y);
 			cmr_u32 center_y = (win[9].start_y + win[9].end_y) >> 1;
 			if (center_y < win_num.y * (MIN_ROI_SIZE >> 1) + 4) {
-				win[9].end_y = win[9].start_y + win_num.x * MIN_ROI_SIZE + 8;
+				win[9].end_y = win[9].start_y + win_num.y * MIN_ROI_SIZE + 8;
 			} else if (center_y + win_num.y * (MIN_ROI_SIZE >> 1) + 4 > af->isp_info.height) {
 				win[9].start_y = win[9].end_y - win_num.y * MIN_ROI_SIZE - 8;
 			} else {
@@ -2993,7 +2993,6 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 	af_ctrl_t *af = (af_ctrl_t *) handle;
 	struct afctrl_ts_info *af_ts = (struct afctrl_ts_info *)param0;
 	cmr_s32 timecompare = 0;
-	cmr_u16 pos[2] = { 0 };
 	AF_Timestamp timestamp;
 
 	timecompare = compare_timestamp(af);
@@ -3006,28 +3005,7 @@ static cmr_s32 af_sprd_set_dcam_timestamp(cmr_handle handle, void *param0)
 		if (AF_IDLE == af->focus_state && DCAM_AFTER_VCM_YES == timecompare && 0 == af->vcm_stable) {
 			af->vcm_stable = 1;
 		}
-	} else if (1 == af_ts->capture) {
-		af->takepic_timestamp = af_ts->timestamp;
-		timestamp.type = AF_TIME_CAPTURE;
-		timestamp.time_stamp = af->takepic_timestamp;
-		af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_TIMESTAMP, &timestamp, NULL);
-		//ISP_LOGI("takepic_timestamp %" PRIu64 " ", (cmr_s64) af->takepic_timestamp);
-		ISP_LOGV("takepic_timestamp - vcm_timestamp =%" PRId64 " ms", ((cmr_s64) af->takepic_timestamp - (cmr_s64) af->vcm_timestamp) / 1000000);
-
-		if (0 == af->ts_counter) {
-			pos[0] = lens_get_pos(af);
-			ISP_LOGV("VCM registor pos0 :%d", pos[0]);
-			af->af_ops.ioctrl(af->af_alg_cxt, AF_IOCTRL_SET_REG_POS, &pos[0], NULL);
-		} else if (1 == af->ts_counter) {
-			pos[1] = lens_get_pos(af);
-			ISP_LOGV("VCM registor pos1 :%d", pos[1]);
-		}
-		af->ts_counter++;
-		if (2 == af->ts_counter) {
-			af->ts_counter = 0;
-		}
 	}
-
 	return AFV1_SUCCESS;
 }
 
