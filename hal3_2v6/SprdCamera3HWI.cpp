@@ -109,6 +109,7 @@ camera3_device_ops_t SprdCamera3HWI::mCameraOps = {
         NULL, // SprdCamera3HWI::get_metadata_vendor_tag_ops,
     .dump = SprdCamera3HWI::dump,
     .flush = SprdCamera3HWI::flush,
+    .is_reconfiguration_required = SprdCamera3HWI::is_reconfiguration_required,
     .reserved = {0},
 };
 
@@ -2559,6 +2560,21 @@ int SprdCamera3HWI::configure_streams(
     int ret = hw->configureStreams(stream_list);
     HAL_LOGD("X");
     return ret;
+}
+
+/*===========================================================================
+ * FUNCTION    : is_reconfiguration_required
+ * DESCRIPTION : If tags in session parameters are different from them in process_capture_request, this function
+                 will be called. If we don't have this function, the reconfiguration is required by default.
+ * PARAMETERS  : camera3_device, old_session_params, new_session_params
+ * RETURN      :      0: In case the stream reconfiguration is required
+                -EINVAL: In case the stream reconfiguration is not required.
+                -ENOSYS: In case the camera device does not support the reconfiguration query.
+*==========================================================================*/
+int SprdCamera3HWI::is_reconfiguration_required(const struct camera3_device *device,
+            const camera_metadata_t *old_session_params,
+            const camera_metadata_t *new_session_params) {
+    return -EINVAL;
 }
 
 int SprdCamera3HWI::register_stream_buffers(

@@ -76,6 +76,9 @@ class SprdCamera3HWI {
     static int close_camera_device(struct hw_device_t *device);
     static int isStreamCombinationSupported(
         const camera_stream_combination_t *comb);
+    static int is_reconfiguration_required(const struct camera3_device *device,
+            const camera_metadata_t *old_session_params,
+            const camera_metadata_t *new_session_params);
     SprdCamera3HWI(int cameraId);
     virtual ~SprdCamera3HWI();
     int openCamera(struct hw_device_t **hw_device);
