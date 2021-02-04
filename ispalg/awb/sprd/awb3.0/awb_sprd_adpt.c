@@ -1459,8 +1459,7 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.awb_calc_v3(cxt->alg_handle, &calc_param_v3, &calc_result_v3);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
-	ISP_LOGV("AWB %dx%d: (%d,%d,%d) %dK, %dus", calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain,
-			 calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct, (cmr_s32) ((time1 - time0) / 1000));
+	ISP_LOGV("AWB time %dus", (cmr_s32) ((time1 - time0) / 1000));
 
 	if (_awb_get_cmd_property() == 1){
 		ISP_LOGI("[AWB_TEST] calc frame_count: %d, awb_camera_id: %d --(0: back camera, 1: front camera), awb_work_mode: %d --(0: preview, 1:capture, 2:video),\
@@ -1571,10 +1570,8 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 	}
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-	ISP_LOGV("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id);
-	if (_awb_get_cmd_property() == 1) {
-		ISP_LOGD("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id);
-	}
+	ISP_LOGI("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d, wb mode: %d; AWB lib %dx%d: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id, cxt->wb_mode,\
+			calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat,calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain, calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct);
 
 	//set the gain/ct to_save_file
 	cxt->frame_count 	= cxt->frame_count + 1;

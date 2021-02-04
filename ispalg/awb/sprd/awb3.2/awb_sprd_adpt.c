@@ -1548,8 +1548,8 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.awb_calc_v3_2(cxt->alg_handle, &calc_param_v3, &calc_result_v3);
 	cmr_u64 time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
-	ISP_LOGE("AWB %dx%d: (%d,%d,%d) %dK, %dus,sensor_id:%d", calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain,
-			 calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct, (cmr_s32) ((time1 - time0) / 1000), cxt->sensor_role_type);
+	ISP_LOGV("AWB time %dus", (cmr_s32) ((time1 - time0) / 1000));
+
 
 	if (_awb_get_cmd_property() == 1){
 		ISP_LOGI("[AWB_TEST] calc frame_count: %d, awb_camera_id: %d --(0: back camera, 1: front camera), awb_work_mode: %d --(0: preview, 1:capture, 2:video),\
@@ -1672,14 +1672,11 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 			//将当前主sensor的ct/tint/值传到bridge
 			cxt->main_result.ct = cxt->output_ct;
 			cxt->main_result.tint = calc_result_v3.awb_gain.tint;
-			ISP_LOGI("MASTER_UPLOAD_start,sensor_id:%d, ct:%d, tint: %d",cxt->sensor_role_type, cxt->main_result.ct, cxt->main_result.tint);
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , SET_MASTER_AWB_DATA, &cxt->main_result, NULL);
-			ISP_LOGI("MASTER_UPLOAD_end: main_result.ct = %d, main_result.tint= %d, sensor_id:%d", cxt->main_result.ct, cxt->main_result.tint, cxt->sensor_role_type);
+			ISP_LOGI("MASTER_UPLOAD: main_result.ct = %d, main_result.tint= %d, sensor_id:%d", cxt->main_result.ct, cxt->main_result.tint, cxt->sensor_role_type);
 		} else if(cxt->sensor_role != 1){
 			//从brigde获取master的结果
-			ISP_LOGI("MASTER_DOWLOAD_start, sensor_id:%d", cxt->sensor_role_type);
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_MASTER_AWB_DATA, NULL, &(cxt->main_result));
-			ISP_LOGI("MASTER_DOWLOAD_end, sensor_id:%d", cxt->sensor_role_type);
 			//当前sensor的bv值
 			cxt->main_result_tmp[0] = cxt->main_result.ct;
 			cxt->main_result_tmp[1] = cxt->main_result.tint;
@@ -1692,17 +1689,15 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 			cxt->output_ct = cxt->awb_sync_result.awb_gain.ct;
 			cxt->output_ct_mean = cxt->awb_sync_result.awb_gain.ct_mean;
 			cxt->cur_tint = cxt->awb_sync_result.awb_gain.tint;
-			ISP_LOGI("SLAVE_SYNC: r_gain = %d, g_gain = %d, b_gain = %d,ct = %d",cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b,cxt->output_ct);
+			ISP_LOGI("MASTER_DOWLOAD, sensor_id:%d; SLAVE_SYNC: r_gain = %d, g_gain = %d, b_gain = %d, ct = %d", cxt->sensor_role_type, cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 		}
 		//每帧都下发sync_start时需要每帧清零
 		//sync_enable = 0;
 	}
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-	ISP_LOGV("AWB result : (%d,%d,%d) %dK , fram_count : %d , sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->sensor_role_type);
-	if (_awb_get_cmd_property() == 1){
-		ISP_LOGD("AWB result : (%d,%d,%d) %dK , fram_count : %d , sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->sensor_role_type);
-	}
+	ISP_LOGI("AWB result : (%d,%d,%d) %dK , fram_count : %d , sensor_id : %d, wb mode : %d; AWB lib %dx%d: (%d,%d,%d) %dK, sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->sensor_role_type, cxt->wb_mode,\
+			calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain, calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct, cxt->sensor_role_type);
 
 	//set the gain/ct to_save_file
 	cxt->frame_count 	= cxt->frame_count + 1;
