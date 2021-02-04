@@ -12141,7 +12141,7 @@ void *SprdCamera3OEMIf::gyro_ASensorManager_process(void *p_data) {
     ASensorManager *mSensorManager;
     int mNumSensors;
     ASensorList mSensorList;
-    uint32_t GyroRate = 5 * 1000;    // us
+    uint32_t GyroRate = 10 * 1000;    // us
     uint32_t GsensorRate = 50 * 1000; // us
     uint32_t delayTime = 10 * 1000;   // us
     uint32_t Gyro_flag = 0;
