@@ -2376,7 +2376,6 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                                             input_buf1_addr);
             }
 #endif
-            mBokehResult = true;
             if (!mAbokehGallery ||
                 (mRealBokeh->mDoPortrait &&
                  mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
