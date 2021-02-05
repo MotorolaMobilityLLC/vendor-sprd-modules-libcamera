@@ -7,6 +7,7 @@
 #include "test_suite_oem.h"
 #include "test_suite_drv.h"
 #include "test_suite_hal.h"
+#include "test_suite_hwsim.h"
 #include "compare_func.h"
 #include "factory.h"
 #include "test_mem_alloc.h"

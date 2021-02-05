@@ -31,6 +31,7 @@
 #define LOG_TAG "IT-testManager"
 using namespace std;
 
+string IT_path ;
 typedef enum {
     IT_PARSE_FIRST = 1,
     IT_PARSE_SECOND = 2,
@@ -122,6 +123,13 @@ int testManager::CmdParse(int argc, char *argv[], originData_t *originData) {
         caseid *examID = (caseid *)malloc(sizeof(caseid));
         examID->setID(RUN_ALL_CASE);
         originData->caseIDList.push_back(examID);
+    if (!strcmp(argv[1], "json1_default")) {
+            IT_path = "./json1_default.json";
+            IT_LOGI("fan set IT_path jsan");
+          } else if (!strcmp(argv[1], "hwsim_case")) {
+            IT_path = "./hwsim_case.json";
+            IT_LOGI("fan set IT_path hwsim");
+        }
         return IT_PARSE_FIRST;
     }
 
@@ -133,9 +141,13 @@ int testManager::CmdParse(int argc, char *argv[], originData_t *originData) {
     }
 
     if (!strcmp(argv[1], "json1_default")) {
-        ret = IT_PARSE_FIRST;
-    } else if (!strcmp(argv[1], "hal") || !strcmp(argv[1], "oem") ||
-               !strcmp(argv[1], "drv") || !strcmp(argv[1], "sns") ) {
+          IT_path = "./json1_default.json";
+          ret = IT_PARSE_FIRST;
+       } else if (!strcmp(argv[1], "hwsim_case")) {
+         IT_path = "./hwsim_case.json";
+         ret = IT_PARSE_FIRST;
+       } else if (!strcmp(argv[1], "hal") || !strcmp(argv[1], "oem") ||
+               !strcmp(argv[1], "drv") || !strcmp(argv[1], "sns") || !strcmp(argv[1], "hwsim") ) {
         originData->moduleName = argv[1];
         ret = IT_PARSE_SECOND;
     } else {

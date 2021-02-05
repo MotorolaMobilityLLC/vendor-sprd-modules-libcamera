@@ -47,22 +47,23 @@
 
 using namespace std;
 
+
+extern string IT_path ;
 int inject_read_file(string file_name, cmr_uint size, void *addr)
-{
-	int ret = 0;
-	FILE *fp = NULL;
+ {
+    int ret = 0;
+    FILE *fp = NULL;
 
-	IT_LOGD("file_name:%s size %d vir_addr %p", file_name.c_str(), size, addr);
-	fp = fopen(file_name.c_str(), "rb+");
-	if (NULL == fp) {
-		IT_LOGD("can not open file: %s \n", file_name.c_str());
-		return -1;
-	}
-
-	ret = fread(addr, sizeof(char), size, fp);
-	fclose(fp);
-	return ret;
-}
+    IT_LOGD("file_name:%s size %d vir_addr %p", file_name.c_str(), size, addr);
+    fp = fopen(file_name.c_str(), "rb+");
+    if (NULL == fp) {
+    IT_LOGD("can not open file: %s \n", file_name.c_str());
+    return -1;
+ }
+    ret = fread(addr, sizeof(char), size, fp);
+    fclose(fp);
+    return ret;
+ }
 
 extern map<string, vector<resultData_t> *> gMap_Result;
 suiteManager::suiteManager() : m_json1(NULL), m_isParse(false), m_ResultFile(NULL) {
@@ -133,13 +134,11 @@ int suiteManager::ParseFirstJson(uint32_t caseID) {
     int ret = IT_OK;
     originData_t originData;
     m_curr1CaseID = caseID;
-
     if (!m_json1)
         return IT_UNKNOWN_FAULT;
-
     /* load json1 and create resutl-file*/
     if (!m_isParse) {
-        string path = JSON_1_FILE_PATH;
+        string path = IT_path;
         string context = m_json1->readInputTestFile(path.data());
         m_json1->ParseJson(context);
         IT_LOGI("succeed in initializing json1");
@@ -192,10 +191,10 @@ int suiteManager::ReadInjectData() {
             /*determine buffer size*/
             if((*itor)->m_imgFormat == IT_IMG_FORMAT_RAW) {
                 imgSize = (*itor)->m_imgWidth * (*itor)->m_imgHeight * 2;
-    	    }
-    	    else if(((*itor)->m_imgFormat == IT_IMG_FORMAT_YUV) || ((*itor)->m_imgFormat == IT_IMG_FORMAT_JPEG)) {
+     }
+    else if(((*itor)->m_imgFormat == IT_IMG_FORMAT_YUV) || ((*itor)->m_imgFormat == IT_IMG_FORMAT_JPEG)) {
                 imgSize = (*itor)->m_imgWidth * (*itor)->m_imgHeight * 3 / 2;
-    	    }
+     }
             map<int, ion_info_t>::iterator loct;
             loct = pre_ion.find((*itor)->m_injectType);
             if (loct == pre_ion.end()) {
@@ -449,8 +448,8 @@ int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
         strncat(output_file, ".yuv", 5);
         fp = fopen(output_file, "wb+");
         if (NULL == fp) {
- 	        IT_LOGD("can not open file: %s \n", output_file);
- 	        return IT_UNKNOWN_FAULT;
+     IT_LOGD("can not open file: %s \n", output_file);
+     return IT_UNKNOWN_FAULT;
         }
         size = f_imgInfo.w * f_imgInfo.h * 3 / 2;
         ret = fwrite(f_imgInfo.test_img, sizeof(char), size, fp);
@@ -460,8 +459,8 @@ int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
         strncat(output_file, ".raw", 5);
         fp = fopen(output_file, "wb+");
         if (NULL == fp) {
- 	        IT_LOGD("can not open file: %s \n", output_file);
- 	        return IT_UNKNOWN_FAULT;
+           IT_LOGD("can not open file: %s \n", output_file);
+           return IT_UNKNOWN_FAULT;
         }
         size = f_imgInfo.w * f_imgInfo.h * 2;
         ret = fwrite(f_imgInfo.test_img, sizeof(char), size, fp);
@@ -471,8 +470,8 @@ int suiteManager::dump_image(compareInfo_t &f_imgInfo) {
         strncat(output_file, ".jpg", 5);
         fp = fopen(output_file, "wb+");
         if (NULL == fp) {
- 	        IT_LOGD("can not open file: %s \n", output_file);
- 	        return IT_UNKNOWN_FAULT;
+            IT_LOGD("can not open file: %s \n", output_file);
+           return IT_UNKNOWN_FAULT;
         }
         size = f_imgInfo.w * f_imgInfo.h * 3 / 2;
         ret = fwrite(f_imgInfo.test_img, sizeof(char), size, fp);

@@ -1,0 +1,15 @@
+{
+   "caselists":[
+       {
+    "ID":0,
+    "README":"example for hwsim opencamera startpreview stoppreview closecamera",
+    "order":[
+        {"index":0,"time":0,"logL":4,"module":
+           [
+                {"name":"HWSIM","mcaseid":[0,2,3,1]}
+           ]
+        }
+      ]
+    }
+  ]
+}
