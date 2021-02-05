@@ -55,21 +55,7 @@ public:
         }
         face_beauty_set_devicetype(&face_beauty ,SPRD_CAMALG_RUN_TYPE_CPU);
 
-        fb_chipinfo chipinfo;
-#if defined(CONFIG_ISP_2_3)
-        chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-        chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-        chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-        chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-        chipinfo = SHARKL5PRO;
-#elif defined(CONFIG_ISP_2_8)
-        chipinfo = QOGIRL6;
-#endif
-
+        fb_chipinfo chipinfo = SHARKL5PRO;
         face_beauty_init(&face_beauty, 0, 2, chipinfo);
         beauty_image.inputImage.format = SPRD_CAMALG_IMG_NV21;
         beauty_image.inputImage.addr[0] = (void*)frame->y_vir_addr;
@@ -137,20 +123,7 @@ public:
             }
         }
 
-        fb_chipinfo chipinfo;
-#if defined(CONFIG_ISP_2_3)
-        chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-        chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-        chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-        chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-        chipinfo = SHARKL5PRO;
-#elif defined(CONFIG_ISP_2_8)
-        chipinfo = QOGIRL6;
-#endif
+        fb_chipinfo chipinfo = SHARKL5PRO;
         init_fb_handle(&face_beauty, work_mode, 2, chipinfo);
         construct_fb_image(
             &face_beauty, frame->width, frame->height,

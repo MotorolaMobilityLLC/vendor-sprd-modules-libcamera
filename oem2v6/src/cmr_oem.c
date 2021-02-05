@@ -16,13 +16,7 @@
 #define LOG_TAG "cmr_oem"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 
-#include "cmr_oem.h"
-#include "cmr_common.h"
-#include "isp_otp_calibration.h"
-#include "isp_simulation.h"
-#include "isp_video.h"
-#include "cmr_watermark.h"
-#include "pthread.h"
+
 #include <cutils/properties.h>
 #include <cutils/trace.h>
 #include <dlfcn.h>
@@ -32,19 +26,26 @@
 #include <time.h>
 #include <dlfcn.h>
 #include <libloader.h>
+#include <pthread.h>
 
-#ifdef CONFIG_CAMERA_FDR
-#include "fdr_interface.h"
-#endif
-
+#include "cmr_oem.h"
+#include "cmr_common.h"
+#include "isp_otp_calibration.h"
+#include "isp_simulation.h"
+#include "isp_video.h"
+#include "cmr_watermark.h"
 #include "swa_fdr_api.h"
 
+#ifdef CONFIG_CAMERA_FDR
+ #include "fdr_interface.h"
+#endif
 #ifdef CONFIG_FACE_BEAUTY
 #include "sprd_facebeauty_adapter.h"
 #endif
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
 #include "cmr_mm_dvfs.h"
 #endif
+
 
 #define FILE_NAME_LEN 200
 #define PREVIEW_MSG_QUEUE_SIZE 100
@@ -1442,7 +1443,7 @@ static cmr_int camera_ipmpro_init(cmr_handle oem_handle) {
 	sem_init(&swa_cxt->sem, 0, 1);
 	swa_cxt->lib_handle = sw_handle;
 	swa_cxt->inited = 1;
-#if defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
+#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7)
 	swa_cxt->version = FDR_VERSION_0;
 #else
 	swa_cxt->version = FDR_VERSION_1;
@@ -6616,20 +6617,7 @@ void camera_frame_facebeauty(void *data, struct camera_frame_type *frame,
     if (!(cxt->mflagfb) && !strcmp(name, "prev")) {
         face_beauty_set_devicetype(&(cxt->prev_face_beauty),
                                    SPRD_CAMALG_RUN_TYPE_CPU);
-        fb_chipinfo chipinfo = SHARKLE;
-#if defined(CONFIG_ISP_2_3)
-        chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-        chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-        chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-        chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-        chipinfo = SHARKL5PRO;
-#elif defined(CONFIG_ISP_2_8)
-        chipinfo = QOGIRL6;
-#endif
+        fb_chipinfo chipinfo = SHARKL5PRO;
         face_beauty_init(&(cxt->prev_face_beauty), 1, 2, chipinfo);
         if (cxt->prev_face_beauty.hSprdFB != NULL)
             cxt->mflagfb = true;
@@ -6638,19 +6626,7 @@ void camera_frame_facebeauty(void *data, struct camera_frame_type *frame,
     if (!(cxt->mvideofb) && !strcmp(name, "video")) {
         face_beauty_set_devicetype(&(cxt->video_face_beauty),
                                    SPRD_CAMALG_RUN_TYPE_VDSP);
-        fb_chipinfo chipinfo = SHARKLE;
-#if defined(CONFIG_ISP_2_3)
-        chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-        chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-        chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-        chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-        chipinfo = SHARKL5PRO;
-#endif
-
+        fb_chipinfo chipinfo = SHARKL5PRO;
         face_beauty_init(&(cxt->video_face_beauty), 1, 2, chipinfo);
         if (cxt->video_face_beauty.hSprdFB != NULL) {
             cxt->mvideofb = true;
@@ -9146,8 +9122,7 @@ cmr_int camera_raw_proc(cmr_handle oem_handle, cmr_handle caller_handle,
                        param_ptr->src_frame.size.height);
         }
 
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) ||                      \
-    defined(CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
+#ifndef CONFIG_ISP_2_3
         if (isp_video_get_simulation_flag())
             in_param.hwsim_4in1_width =
                 cxt->sn_cxt.info_4in1.limited_4in1_width;
@@ -10259,10 +10234,6 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
         if (camera_front_lcd_flash_activie(flash_opt.flash_index)) {
             camera_front_lcd_flash_callback(cxt, flash_opt.flash_mode);
         } else {
-
-#if defined (CONFIG_ISP_2_3) || defined (CONFIG_ISP_2_4) ||                      \
-    defined (CONFIG_ISP_2_6) || defined (CONFIG_ISP_2_5) ||                      \
-    defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
             if (param_ptr->cmd_value == FLASH_CLOSE_AFTER_OPEN ||
                 param_ptr->cmd_value == FLASH_OPEN) {
                 cmr_u32 flash_capture_skip_num = 0;
@@ -10284,7 +10255,6 @@ cmr_int camera_ioctl_for_setting(cmr_handle oem_handle, cmr_uint cmd_type,
                 CMR_LOGD("flash_skip_frame_num %d flash_skip_frame_cnt %d",
                          cxt->flash_skip_frame_num, cxt->flash_skip_frame_cnt);
             }
-#endif
             cmr_grab_flash_cb(grab_handle, &flash_opt);
         }
     } break;
@@ -11220,8 +11190,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
         break;
-#if defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) ||                      \
-    defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
+#ifndef CONFIG_ISP_2_3
     case COM_ISP_SET_AUTO_TRACKING_ENABLE:
         CMR_LOGD("set auto tracking enable %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_AF_OT_SWITH;
@@ -13220,24 +13189,17 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     if (ret) {
         CMR_LOGE("failed to start prev %ld", ret);
     }
-#if defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
+
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
-    if (ret) {
-        CMR_LOGE("failed to get app mode %ld", ret);
-        goto exit;
-    }
-    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
-        setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE) {
-        isp_param.cmd_value = 1;
-    } else {
-        isp_param.cmd_value = 0;
-    }
-    ret =
-        camera_isp_ioctl(oem_handle, COM_ISP_SET_GTM_ONFF, (void *)&isp_param);
-#endif
+    if (!ret && (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
+            setting_param.cmd_type_value == CAMERA_MODE_BACK_ULTRA_WIDE))
+         isp_param.cmd_value = 1;
+    else
+	 isp_param.cmd_value = 0;
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_GTM_ONFF, (void *)&isp_param);
 
     cxt->camera_mode = mode;
     cxt->snp_cxt.start_capture_flag = 0;

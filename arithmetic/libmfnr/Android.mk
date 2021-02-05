@@ -14,7 +14,6 @@
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 LOCAL_PATH:= $(call my-dir)
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),sp9832e sp9863a sp7731e ums312 ud710 ums512 ums518 ums518-zebu ums9230),)
 ifeq ($(TARGET_ARCH), $(filter $(TARGET_ARCH), arm arm64))
 LIB_PATH := blacksesame/mv_lib/lib
 endif
@@ -54,5 +53,4 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_SHARED_LIBRARY)
 
-endif
 endif

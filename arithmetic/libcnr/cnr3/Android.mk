@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums512 sp9863a sp9832e ums312 sp7731e ums9230),)
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CNR_CAPTURE)),true)
 LOCAL_PATH := $(call my-dir)
@@ -76,5 +75,4 @@ LOCAL_CFLAGS += -DDEFAULT_RUNTYPE_CPU
 #endif
 
 include $(BUILD_SHARED_LIBRARY)
-endif
 endif

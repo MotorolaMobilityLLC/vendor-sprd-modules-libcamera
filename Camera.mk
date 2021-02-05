@@ -13,23 +13,7 @@ else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.4)
 HAL_DIR := hal3_2v4
 OEM_DIR := oem2v4
 ISPDRV_DIR := camdrv/isp2.4
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.5)
-HAL_DIR := hal3_2v6
-OEM_DIR := oem2v6
-ISPDRV_DIR := camdrv/isp2.6
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.6)
-HAL_DIR := hal3_2v6
-OEM_DIR := oem2v6
-ISPDRV_DIR := camdrv/isp2.6
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.7)
-HAL_DIR := hal3_2v6
-OEM_DIR := oem2v6
-ISPDRV_DIR := camdrv/isp2.6
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.8)
-HAL_DIR := hal3_2v6
-OEM_DIR := oem2v6
-ISPDRV_DIR := camdrv/isp2.6
-else ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.9)
+else
 HAL_DIR := hal3_2v6
 OEM_DIR := oem2v6
 ISPDRV_DIR := camdrv/isp2.6
@@ -91,12 +75,8 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(OEM_DIR)/inc \
+    $(LOCAL_PATH)/oemcommon/mm_dvfs \
     $(LOCAL_PATH)/oemcommon/inc
-
-ifeq ($(strip $(CONFIG_CAMERA_MM_DVFS_SUPPORT)),true)
-LOCAL_C_INCLUDES += \
-    $(LOCAL_PATH)/oemcommon/mm_dvfs
-endif
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/inc \

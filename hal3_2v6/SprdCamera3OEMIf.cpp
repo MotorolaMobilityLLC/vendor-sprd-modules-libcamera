@@ -4147,20 +4147,7 @@ void SprdCamera3OEMIf::PreviewFrameFaceBeauty(struct camera_frame_type *frame,
     if (!mflagfb) {
         face_beauty_set_devicetype(&face_beauty, SPRD_CAMALG_RUN_TYPE_CPU);
 
-        fb_chipinfo chipinfo;
-#if defined(CONFIG_ISP_2_3)
-        chipinfo = SHARKLE;
-#elif defined(CONFIG_ISP_2_4)
-        chipinfo = PIKE2;
-#elif defined(CONFIG_ISP_2_5)
-        chipinfo = SHARKL3;
-#elif defined(CONFIG_ISP_2_6)
-        chipinfo = SHARKL5;
-#elif defined(CONFIG_ISP_2_7)
-        chipinfo = SHARKL5PRO;
-#elif defined(CONFIG_ISP_2_8)
-        chipinfo = QOGIRL6;
-#endif
+        fb_chipinfo chipinfo = SHARKL5PRO;
         face_beauty_init(&face_beauty, 1, 2, chipinfo);
         if (face_beauty.hSprdFB != NULL) {
             mflagfb = true;
@@ -9631,9 +9618,8 @@ int SprdCamera3OEMIf::Callback_CommonMalloc(enum camera_mem_cb_type type,
         if (mCommonHeapReserved == NULL) {
 #if defined(CONFIG_ISP_2_3)
         mem_size = mLargestPictureWidth * mLargestPictureHeight * 3 / 2;
-#elif defined(CONFIG_ISP_2_5) || defined(CONFIG_ISP_2_6) || defined(CONFIG_ISP_2_7) || defined(CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
+#else
         mem_size = PAGE_SIZE;
-
 #endif
             memory = allocCameraMem(mem_size, 1, true);
             if (NULL == memory) {
