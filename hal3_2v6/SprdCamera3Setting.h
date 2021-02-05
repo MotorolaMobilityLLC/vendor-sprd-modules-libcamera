@@ -40,6 +40,14 @@
 #include "SprdCamera3HALHeader.h"
 #include "cmr_common.h"
 #include <dlfcn.h>
+#include <string.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
 
@@ -117,6 +125,16 @@ typedef int64_t nsecs_t;
 #define MAX_PREVIEW_SIZE_HEIGHT 1080
 
 #define EV_EFFECT_FRAME_NUM 3
+
+#define SAFE_FREE(a)                                                           \
+    do {                                                                       \
+        if (a)                                                                 \
+            free(a);                                                           \
+        a = NULL;                                                              \
+    } while (0)
+
+#define ALGO_VERSION_THRESHOLD 128
+#define ALGO_VERSION_NUMB_SINGLE_LIB 8
 
 typedef struct {
     uint8_t correction_mode;
@@ -555,6 +573,7 @@ typedef struct {
     int32_t fd_score[10];
     uint8_t notify_next_cap;   /*for shot2shot*/
     ENGENEER_Tag engeneerInfo;
+    uint8_t get_algo_version;
 } sprd_setting_info_t;
 typedef int (*CAMIP_INTERFACE_INIT)(char **);
 class SprdCamera3Setting {
@@ -575,7 +594,7 @@ class SprdCamera3Setting {
     static int getCameraInfo(int32_t cameraId, struct camera_info *cameraInfo);
     static int getNumberOfCameras();
     static int getCameraIPInited();
-    static void * getCameraIdentifyState();
+    static void *getCameraIdentifyState();
     static int initDefaultParameters(int32_t cameraId);
     static int getStaticMetadata(int32_t cameraId,
                                  camera_metadata_t **static_metadata);
@@ -600,7 +619,8 @@ class SprdCamera3Setting {
     /* get max capture size by sensor max size */
     static int getMaxCapSize(int32_t cameraId, int32_t *w, int32_t *h);
     /* for high resolution, return point */
-    static int getHighResCapSize(int32_t cameraId, const struct img_size **pRet);
+    static int getHighResCapSize(int32_t cameraId,
+                                 const struct img_size **pRet);
     /* for 4in1 sensor auto mode, return size */
     static int getHighResBinCapSize(int32_t cameraId, struct img_size *pRet,
                                     struct img_size sensor_max);
@@ -753,9 +773,10 @@ class SprdCamera3Setting {
     int setHISTOGRAMTag(int32_t *hist_report);
     int setAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
     int getAUTOTRACKINGTag(AUTO_TRACKING_Tag *autotrackingInfo);
-    int getSensorFov(float *w_fov,float  *sw_fov);
+    int getSensorFov(float *w_fov, float *sw_fov);
     int setFdScore(int32_t *fd_score, int num);
     int getFdScore(int32_t *fd_score, int num);
+    int updateAlgoVerison(CameraMetadata *camMetadata);
     void notifyNextCapture(uint8_t nextCap);
     uint8_t getNextCapture();
 
@@ -818,7 +839,10 @@ class SprdCamera3Setting {
     static int GetFovParam(int32_t cameraId);
     bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     void autotrackingCoordinateConvert(int32_t *area);
-    static int resetFeatureStatus(const char* fea_ip,const char* fea_eb);
+    static int resetFeatureStatus(const char *fea_ip, const char *fea_eb);
+    static int SearchLibMark(char *name, char *output, const char *marker, const char *bit);
+    static int SearchAllLibrary(const char *path, const char *lib_mark,
+                                char *output_buffer, const char *bit);
 };
 
 }; // namespace sprdcamera

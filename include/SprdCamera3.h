@@ -255,6 +255,10 @@ static tags_info_t
         {"sprdSimleShutterEnable", TYPE_BYTE},
         {"sprdNotifyNextCapture", TYPE_BYTE},
         {"engeneerParam", TYPE_INT32},
+        {"sprdGetAlgoVersion", TYPE_BYTE},
+        {"sprdIsp3aVerison", TYPE_BYTE},
+        {"sprdMultiVerison", TYPE_BYTE},
+        {"sprdCvVerison", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {

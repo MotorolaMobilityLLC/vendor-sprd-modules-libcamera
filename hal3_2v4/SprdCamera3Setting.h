@@ -40,6 +40,14 @@
 #include "SprdCamera3HALHeader.h"
 #include "SprdCameraParameters.h"
 #include "cmr_common.h"
+#include <string.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
@@ -110,6 +118,16 @@ typedef int64_t nsecs_t;
 #define MAX_PREVIEW_SIZE_WIDTH 1280
 #define MAX_PREVIEW_SIZE_HEIGHT 720
 #define EV_EFFECT_FRAME_NUM 3
+
+#define SAFE_FREE(a)                                                           \
+    do {                                                                       \
+        if (a)                                                                 \
+            free(a);                                                           \
+        a = NULL;                                                              \
+    } while (0)
+
+#define ALGO_VERSION_THRESHOLD 128
+#define ALGO_VERSION_NUMB_SINGLE_LIB 8
 
 typedef struct {
     uint8_t correction_mode;
@@ -446,6 +464,7 @@ typedef struct {
     VCM_Tag vcmInfo;
     int32_t hist_report[CAMERA_ISP_HIST_ITEMS];
     int32_t fd_score[10];
+    uint8_t get_algo_version; 
 } sprd_setting_info_t;
 
 typedef int (*CAMIP_INTERFACE_INIT)(char **);
@@ -615,6 +634,7 @@ class SprdCamera3Setting {
     int setVCMTag(VCM_Tag vcmInfo);
     int getVCMTag(VCM_Tag *vcmInfo);
     int setHISTOGRAMTag(int32_t *hist_report);
+    int updateAlgoVerison(CameraMetadata *camMetadata);
 
     static uint8_t mMaxCameraCount;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
@@ -662,6 +682,9 @@ class SprdCamera3Setting {
     static int GetFovParam(int32_t cameraId);
     bool isFaceBeautyOn(SPRD_DEF_Tag sprddefInfo);
     static int resetFeatureStatus(const char* fea_ip,const char* fea_eb);
+    static int SearchLibMark(char *name, char *output, const char *marker, const char *bit);
+    static int SearchAllLibrary(const char *path, const char *lib_mark,
+                                char *output_buffer, const char *bit);    
 };
 
 }; // namespace sprdcamera

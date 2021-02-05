@@ -117,6 +117,10 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_SMILE_CAPTURE_ENABLE,
     ANDROID_SPRD_NOTIFY_NEXT_CAPTURE,
     ANDROID_SPRD_ENGENEER_MODE_PARAM,
+    ANDROID_SPRD_GET_ALGO_VERSION,
+    ANDROID_SPRD_ISP_3A_VERSION,
+    ANDROID_SPRD_MULTI_VERSION,
+    ANDROID_SPRD_CV_VERSION,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

@@ -3741,6 +3741,11 @@ int SprdCamera3Setting::updateWorkParameters(
             HAL_LOGD("android request id %d", valueI32);
     }*/
 
+    if (frame_settings.exists(ANDROID_SPRD_GET_ALGO_VERSION)) {
+        valueU8 = frame_settings.find(ANDROID_SPRD_GET_ALGO_VERSION).data.u8[0];
+        s_setting[mCameraId].get_algo_version = valueU8;
+    }
+
     if (frame_settings.exists(ANDROID_REQUEST_TYPE)) {
         valueU8 = frame_settings.find(ANDROID_REQUEST_TYPE).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].requestInfo.type, valueU8,
@@ -4930,6 +4935,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        s_setting[mCameraId].toneInfo.curve_red,
                        SPRD_MAX_TONE_CURVE_POINT);
 
+    if (s_setting[mCameraId].get_algo_version) {
+        updateAlgoVerison(&camMetadata);
+        s_setting[mCameraId].get_algo_version = 0;
+    }
     if (mCameraId == 0) { // && s_setting[mCameraId].otpInfo.otp_data){ //
                           // "s_setting[mCameraId].otpInfo.otp_data" always
                           // "true"
@@ -5748,4 +5757,135 @@ int SprdCamera3Setting::resetFeatureStatus(const char *fea_ip,
 
     return rc;
 }
+
+int SprdCamera3Setting::SearchLibMark(char *name, char *output,
+                                      const char *marker, const char *bit) {
+    int fileSize, iter, count;
+    char *pointer_of_target, *file_buffer, *pointer_for_output;
+    iter = count = 0;
+    FILE *fp = fopen(name, "r");
+    HAL_LOGD("name %s", name);
+    if (!fp || !name || !output || !marker) {
+        HAL_LOGE("cannot open file \n");
+        return -1;
+    }
+    fseek(fp, 0L, SEEK_END);
+    fileSize = ftell(fp);
+    file_buffer = (char *)malloc(fileSize * sizeof(char));
+    pointer_for_output = output;
+    fseek(fp, 0L, SEEK_SET);
+    while (1) {
+        iter = fgetc(fp);
+        if (iter == EOF) {
+            HAL_LOGV("cannot find MARK with %s", marker);
+            goto exit;
+        }
+        if (iter == marker[0]) {
+            fseek(fp, -1, SEEK_CUR);
+            fread(file_buffer, ALGO_VERSION_THRESHOLD, 1, fp);
+            pointer_of_target = strstr(file_buffer, marker);
+            if (pointer_of_target) {
+                HAL_LOGI("pointer of target is %s \n", pointer_of_target);
+                memcpy(pointer_for_output, pointer_of_target, strlen(pointer_of_target));
+                if(bit)
+                    strcat(pointer_for_output, bit);
+                pointer_for_output += ALGO_VERSION_THRESHOLD;
+                fseek(fp, -(ALGO_VERSION_THRESHOLD / 2) , SEEK_CUR);
+                count++;
+                continue;
+            }
+            fseek(fp, 1, SEEK_CUR);
+            continue;
+        }
+    }
+
+exit:
+    SAFE_FREE(file_buffer);
+    fclose(fp);
+    return count;
+}
+
+int SprdCamera3Setting::SearchAllLibrary(const char *path, const char *lib_mark,
+                                         char *output_buffer, const char *bit) {
+    DIR *pDir = NULL;
+    struct dirent *pEnt = NULL;
+    int length;
+    char lib[8], *version_output, *pointer_of_output, file_name[256];
+    int count, version_size, algo_mark_count;
+    if (!path)
+        return -1;
+    count = 0;
+    algo_mark_count = 0;
+    version_size = ALGO_VERSION_THRESHOLD * ALGO_VERSION_NUMB_SINGLE_LIB;
+    version_output = (char *)malloc(version_size * sizeof(char));
+    pointer_of_output = output_buffer;
+    pDir = opendir(path);
+    if (NULL == pDir || !pointer_of_output || !version_output) {
+        HAL_LOGE("FILE open failed or invalid input parameters");
+        goto exit;
+    }
+    while (1) {
+        pEnt = readdir(pDir);
+        if (pEnt != NULL) {
+            length = (int)strlen(pEnt->d_name);
+            lib[0] = pEnt->d_name[length - 2];
+            lib[1] = pEnt->d_name[length - 1];
+            lib[3] = '\0';
+            if (strncmp(lib, "so", 2) == 0) {
+                memset(version_output, 0, version_size * sizeof(char));
+                memset(&file_name, 0, sizeof(file_name));
+                strcpy(file_name, path);
+                strcat(file_name, pEnt->d_name);
+                algo_mark_count = SearchLibMark(file_name, version_output, lib_mark, bit);
+                if (algo_mark_count && count < ALGO_VERSION_THRESHOLD) {
+                    memcpy(pointer_of_output, version_output, algo_mark_count * ALGO_VERSION_THRESHOLD);
+                    count+=algo_mark_count;
+                    pointer_of_output = output_buffer + ALGO_VERSION_THRESHOLD * count;
+                }
+                continue;
+            }
+        } else
+            break;
+    }
+exit:
+    closedir(pDir);
+    SAFE_FREE(version_output);
+    return count;
+}
+
+int SprdCamera3Setting::updateAlgoVerison(CameraMetadata *camMetadata) {
+    // s_setting[mCameraId].isp_3a_Version[2][3]={"aa","bc"};
+    char isp_3a_Version[ALGO_VERSION_THRESHOLD][ALGO_VERSION_THRESHOLD];
+    char cv_Version[ALGO_VERSION_THRESHOLD][ALGO_VERSION_THRESHOLD];
+    char multi_Version[ALGO_VERSION_THRESHOLD][ALGO_VERSION_THRESHOLD];
+    int count_32 = 0;
+    int count_64 = 0;
+    int count = 0;
+    char *pointer_for_output = (char *)&isp_3a_Version;
+    count = SearchAllLibrary("/vendor/lib/", "CAM_ALGO_ISP_3A", pointer_for_output,
+                             "[32bits]");
+    pointer_for_output += count * ALGO_VERSION_THRESHOLD;
+    count += SearchAllLibrary("/vendor/lib64/", "CAM_ALGO_ISP_3A", pointer_for_output,
+                              "[64bits]");
+    camMetadata->update(ANDROID_SPRD_ISP_3A_VERSION, (uint8_t *)isp_3a_Version,
+                        count*ALGO_VERSION_THRESHOLD);
+    pointer_for_output = (char *)&cv_Version;
+    count = SearchAllLibrary("/vendor/lib/", "CAM_ALGO_CV", pointer_for_output,
+                             "[32bits]");
+    pointer_for_output += count * ALGO_VERSION_THRESHOLD;
+    count += SearchAllLibrary("/vendor/lib64/", "CAM_ALGO_CV",
+                             pointer_for_output, "[64bits]");
+    camMetadata->update(ANDROID_SPRD_CV_VERSION, (uint8_t *)cv_Version,
+                        count*ALGO_VERSION_THRESHOLD);
+    pointer_for_output = (char *)&multi_Version;
+    count = SearchAllLibrary("/vendor/lib/", "CAM_ALGO_MULTI",
+                             pointer_for_output, "[32bits]");
+    pointer_for_output += count * ALGO_VERSION_THRESHOLD;
+    count += SearchAllLibrary("/vendor/lib64/", "CAM_ALGO_MULTI",
+                             pointer_for_output, "[64bits]");
+    camMetadata->update(ANDROID_SPRD_MULTI_VERSION, (uint8_t *)multi_Version,
+                        count*ALGO_VERSION_THRESHOLD);
+    return 0;
+}
+
 } // namespace sprdcamera
