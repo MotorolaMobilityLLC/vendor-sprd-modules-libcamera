@@ -2873,18 +2873,14 @@ void SprdCamera3RealBokeh::updateApiParams(CameraMetadata metaSettings,
     if (metaSettings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
         mbokehParm.portrait_param.mobile_angle =
             metaSettings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
-        if (mbokehParm.portrait_param.mobile_angle == 0) {
-            mbokehParm.portrait_param.mobile_angle = 180;
-        } else if (mbokehParm.portrait_param.mobile_angle == 180) {
-            mbokehParm.portrait_param.mobile_angle = 0;
-        }
     }
-    mbokehParm.portrait_param.mRotation =
-        mJpegOrientation; // mbokehParm.portrait_param.mobile_angle;
-
     mbokehParm.portrait_param.camera_angle =
         SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
             .sensorInfo.orientation;
+    mbokehParm.portrait_param.mRotation =
+        ((360 - mbokehParm.portrait_param.mobile_angle) % 360
+         + mbokehParm.portrait_param.camera_angle) % 360;
+
     if (!mIsCapturing) {
         j = 0;
         for (int i = 0; i < numFaces; i++) {
