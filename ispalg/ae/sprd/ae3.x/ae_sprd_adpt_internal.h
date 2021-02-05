@@ -175,7 +175,11 @@ extern "C" {
 	struct fdr_lib_ops{
 		cmr_s32 (*fdr_scndet)(struct fdr_det_param_in_t *param_in, struct fdr_det_param_out_t *param_out, struct fdr_det_status_t *det_status);
 	};
-
+	struct ae_q_params{
+		struct cts_ae_params ae_up_params;
+		cmr_s32 ae_q_flag;
+		cmr_s32 ae_qout_flag;
+	};
 /**************************************************************************/
 /*
 * BEGIN: FDAE related definitions
@@ -476,6 +480,8 @@ extern "C" {
 		cmr_u32 pri_set;
 		/*for callback to HAL*/
 		cmr_u32 ae_cb_result[10];
+		struct ae_q_params ae_q_pars[10];
+		cmr_s32 frame_number;
 
 		struct ae_scene_param_out ae_tbl_param;
 		cmr_u32 pause_cnt;

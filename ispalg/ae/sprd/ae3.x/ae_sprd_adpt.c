@@ -117,6 +117,9 @@ static cmr_s32 ae_abtain_or_and_flag(bool flag1,bool flag2,bool flag3);
 static cmr_s32 ae_abtain_and_or_flag(bool flag1,bool flag2,bool flag3);
 static cmr_s32 ae_abtain_2or_flag(bool flag1,bool flag2);
 static cmr_s32 ae_abtain_2and_flag(bool flag1,bool flag2);
+static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt);
+
+
 
 /**---------------------------------------------------------------------------*
 ** 				Local Function Prototypes				*
@@ -2199,6 +2202,38 @@ static cmr_s32 ae_get_exp_time(struct ae_ctrl_cxt *cxt, cmr_handle result)
 	return AE_SUCCESS;
 }
 
+static cmr_s32 ae_set_mode_params(struct ae_ctrl_cxt *cxt, cmr_handle param)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+
+	if (param) {
+		struct cts_ae_params *ae_set_mode = (struct cts_ae_params *)param;
+		cmr_u32 i;
+		cmr_u32 count =20;
+		for(i = 0; i <10 ; i++){
+			if (cxt->ae_q_pars[i].ae_q_flag == 0){
+				cxt->ae_q_pars[i].ae_up_params.ae_mode = ae_set_mode->ae_mode;
+				cxt->ae_q_pars[i].ae_up_params.exp_time = ae_set_mode->exp_time;
+				cxt->ae_q_pars[i].ae_up_params.sensitivity = ae_set_mode->sensitivity;
+				cxt->ae_q_pars[i].ae_up_params.frame_number = ae_set_mode->frame_number;
+				cxt->ae_q_pars[i].ae_q_flag = 1;
+				cxt->ae_q_pars[i].ae_qout_flag = 2;//not out
+				count = i;
+				break;
+			}
+		}
+		if (20==count){
+			ISP_LOGD("the q is full maybe params not effect");
+		}
+		ISP_LOGD("count %d ae_mode %d exp_time %d sensitivity %d frame_number %d",count,ae_set_mode->ae_mode,ae_set_mode->exp_time,ae_set_mode->sensitivity,ae_set_mode->frame_number);
+
+	}else {
+		ISP_LOGE("fail to set mode params, param %p", param);
+		return AE_ERROR;
+	}
+
+	return rtn;
+}
 static cmr_s32 ae_get_metering_mode(struct ae_ctrl_cxt *cxt, cmr_handle result)
 {
 	if (result) {
@@ -2355,7 +2390,7 @@ static cmr_s32 ae_set_force_pause(struct ae_ctrl_cxt *cxt, cmr_u32 enable, int c
 		}
 		cxt->cur_status.adv_param.lock = AE_STATE_LOCKED;
 		cxt->cur_status.adv_param.app_force_lock = AE_STATE_LOCKED;
-		} else {
+	} else {
 		if (2 > cxt->pause_cnt) {
 			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
 			cxt->pause_cnt = 0;
@@ -3256,6 +3291,12 @@ static cmr_s32 ae_make_ae_result_cb(struct ae_ctrl_cxt *cxt,  struct ae_callback
 	result->exp_line = cxt->cur_result.ev_setting.exp_line;
 	result->face_num = cxt->cur_status.adv_param.face_data.face_num;
 	result->face_stable = cxt->cur_result.face_stable;
+	result->flash_fired = cxt->flash_fired;
+	result->cur_effect_sensitivity = cxt->cur_status.adv_param.cur_ev_setting.ae_gain* 50 / 128;
+	result->cur_effect_fps = cxt->cur_result.cur_effect_fps;
+	result->cur_effect_exp_time = cxt->cur_status.adv_param.cur_ev_setting.exp_time;
+	result->frame_number =  cxt->frame_number;
+	ISP_LOGD("ae_stable %d flash_fired:%d sensitivity: %d cur_effect_fps: %f exp_time:%d frame_number:%d",result->ae_stable,result->flash_fired,result->cur_effect_sensitivity,result->cur_effect_fps,cxt->cur_status.adv_param.cur_ev_setting.exp_time,cxt->frame_number);
 	ISP_LOGV("gain: %d sensor_gain:%d isp_gain: %d exp_line: %d",result->total_gain,result->sensor_gain,result->isp_gain,result->exp_line);
 	return rtn;
 }
@@ -6197,6 +6238,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			cxt->cur_status.adv_param.fps_range.max = val_max;
 		}
 	}
+	ae_if_cts_params(cxt);
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	current_status = &cxt->sync_cur_status;
 	current_result = &cxt->sync_cur_result;
@@ -6209,14 +6251,12 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	misc_calc_out = &cxt->cur_result;
 	ATRACE_BEGIN(__FUNCTION__);
 	cmr_u64 ae_time0 = systemTime(CLOCK_MONOTONIC);
-
 	ISP_LOGV("misc_calc_in:camerId:%d, is_multi_mode:%d, ae_gain:%d, exp_time:%d", cxt->camera_id, cxt->is_multi_mode, cxt->cur_status.adv_param.mode_param.value.exp_gain[1], cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
 
 	if (0 == cxt->skip_update_param_flag) {
 		rtn = ae_lib_calculation(cxt->misc_handle, misc_calc_in, misc_calc_out);
 	}
 	ISP_LOGV("misc_calc_out: cameraId:%d, ae_idx:%d, ae_gain:%d, exp_time:%d", cxt->camera_id, cxt->cur_result.ev_setting.ae_idx, cxt->cur_result.ev_setting.ae_gain, cxt->cur_result.ev_setting.exp_time);
-
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
 	ISP_LOGV("skip_update_param_flag: %d", cxt->skip_update_param_flag);
@@ -6244,7 +6284,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->exp_data.lib_data.dummy = cxt->cur_result.ev_setting.dmy_line;
 	cxt->exp_data.lib_data.line_time = current_status->adv_param.cur_ev_setting.line_time;
 	cxt->exp_data.lib_data.frm_len = cxt->cur_result.ev_setting.frm_len;
-
 	ISP_LOGV("ae_calculation, ae_update_result_to_sensor BEFORE, cameraId:%d, sensor_role:%d, gain:%d, exp_line:%d, line_time:%d, exp_time:%d",\
 	cxt->camera_id, cxt->sensor_role, cxt->exp_data.lib_data.gain, cxt->exp_data.lib_data.exp_line, cxt->exp_data.lib_data.line_time, cxt->exp_data.lib_data.exp_time);
 
@@ -6311,7 +6350,6 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	memcpy(current_result, &cxt->cur_result, sizeof(struct ae_lib_calc_out));
 	pthread_mutex_unlock(&cxt->data_sync_lock);
-
 	if (cxt->isp_ops.callback) {
 		ae_make_ae_result_cb(cxt,&cxt->cb_param);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_PROCESS_RESULT, &cxt->cb_param);
@@ -6640,6 +6678,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_MANUAL_MODE:
 		rtn = ae_set_manual_mode(cxt, param);
+		break;
+
+	case AE_SET_MODE_PARAMS:
+		rtn = ae_set_mode_params(cxt, param);
 		break;
 
 	case AE_SET_EXP_TIME:
@@ -7208,5 +7250,91 @@ static cmr_s32 ae_abtain_2and_flag(bool flag1,bool flag2){
 	return out_2and_flag;
 
 }
+
+static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
+{
+		cmr_s32 rtn = AE_SUCCESS;
+		cmr_u32 j;
+		cmr_u32 temp_index = 20;
+		ISP_LOGD("adv:mode:%d gain:%d exp %d",cxt->cur_status.adv_param.mode_param.mode,cxt->cur_status.adv_param.mode_param.value.exp_gain[1],cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
+		ISP_LOGD("ae_q_pars[0]mode: %d cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.ae_mode,cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+		for(j = 0; j <10 ; j++){
+			if (2 == cxt->ae_q_pars[j].ae_qout_flag){//which not out
+				temp_index = j;
+				break;
+			}
+
+		}
+		if (20 != temp_index){
+			if (0 == cxt->ae_q_pars[temp_index].ae_up_params.ae_mode){
+				if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.exp_time) && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity){
+
+					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
+					ae_set_force_pause(cxt, 0, 5);
+					cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
+				}else if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) && cxt->ae_q_pars[temp_index].ae_up_params.exp_time){
+					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
+					ae_set_force_pause(cxt, 0, 4);
+					cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
+				}else if(cxt->ae_q_pars[temp_index].ae_up_params.exp_time && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity){
+					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+					ae_set_force_pause(cxt, 1, 3);
+					cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
+					cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
+
+				}
+
+
+			}else{
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = 0;
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = 0;
+				cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
+				cxt->cur_status.adv_param.app_force_lock = AE_STATE_NORMAL;
+				cxt->force_lock_ae = 0;
+				ISP_LOGD("check3:auto");
+			}
+			cxt->ae_q_pars[temp_index].ae_qout_flag = 1;//thist time out
+			ISP_LOGD("check2");
+		}
+			/* if effect?*/
+			ISP_LOGD("check1:cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+
+		if (1 == cxt->ae_q_pars[0].ae_qout_flag){
+			bool fix_exp_gain = (cxt->ae_q_pars[0].ae_up_params.exp_time && cxt->ae_q_pars[0].ae_up_params.sensitivity);
+			bool exp_first = ((0 == cxt->ae_q_pars[0].ae_up_params.sensitivity) && cxt->ae_q_pars[0].ae_up_params.exp_time);
+			bool gain_first = ((0 == cxt->ae_q_pars[0].ae_up_params.exp_time) && cxt->ae_q_pars[0].ae_up_params.sensitivity);
+			bool exp_equa = (cxt->ae_q_pars[0].ae_up_params.exp_time == cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+			bool gain_equa = ((cmr_u32)(cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50) == cxt->cur_status.adv_param.cur_ev_setting.ae_gain);
+			bool all_euqa = ae_abtain_2and_flag(exp_equa,gain_equa);
+			bool fix_and_allequa = ae_abtain_2and_flag(fix_exp_gain,all_euqa);
+			//bool expfir_expequa = ae_abtain_2and_flag(exp_first,exp_equa);
+			//bool gainfir_gainequa = ae_abtain_2and_flag(gain_first,gain_equa);
+			//bool man_mode_effect = ae_abtain_or_flag(fix_and_allequa,expfir_expequa,gainfir_gainequa);
+
+			if (((0 == cxt->ae_q_pars[0].ae_up_params.ae_mode) && (fix_and_allequa||exp_first||gain_first))||(1 == cxt->ae_q_pars[0].ae_up_params.ae_mode)){
+					cxt->frame_number = cxt->ae_q_pars[0].ae_up_params.frame_number;
+					cmr_u32 i;
+					for(i = 0; i <9 ; i++){
+						cxt->ae_q_pars[i].ae_qout_flag =cxt->ae_q_pars[i+1].ae_qout_flag;
+						cxt->ae_q_pars[i].ae_q_flag = cxt->ae_q_pars[i+1].ae_q_flag ;
+						cxt->ae_q_pars[i].ae_up_params.ae_mode = cxt->ae_q_pars[i+1].ae_up_params.ae_mode;
+						cxt->ae_q_pars[i].ae_up_params.exp_time = cxt->ae_q_pars[i+1].ae_up_params.exp_time;
+						cxt->ae_q_pars[i].ae_up_params.sensitivity = cxt->ae_q_pars[i+1].ae_up_params.sensitivity;
+						cxt->ae_q_pars[i].ae_up_params.frame_number = cxt->ae_q_pars[i+1].ae_up_params.frame_number;
+						ISP_LOGD("i %d ae_q_flag %d ae_mode %d exp_time %d sensitivity %d frame_number%d",i,cxt->ae_q_pars[i].ae_q_flag,cxt->ae_q_pars[i].ae_up_params.ae_mode,cxt->ae_q_pars[i].ae_up_params.exp_time,cxt->ae_q_pars[i].ae_up_params.sensitivity,cxt->ae_q_pars[i].ae_up_params.frame_number);
+					}
+					cxt->ae_q_pars[9].ae_q_flag = 0;
+			}else{
+					cxt->frame_number = -1;
+			}
+		}else{
+			cxt->frame_number = -1;
+		}
+
+
+	return rtn;
+}
+
 
 
