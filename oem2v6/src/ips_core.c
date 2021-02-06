@@ -195,19 +195,16 @@ static cmr_int init_ipmpro_base(struct ipmpro_type *in, struct ipmpro_handle_bas
 	if (swa_get_size)
 		cur->swa_handle_size = swa_get_size();
 	if (swa_get_size == NULL || cur->swa_handle_size <= 0) {
-		CMR_LOGW("warning: get swa_get_handle_size %p, %d",
-			swa_get_size, cur->swa_handle_size);
+		CMR_LOGW("warning: %s get swa_get_handle_size %p, %d",
+			in->keywd, swa_get_size, cur->swa_handle_size);
 	}
 
 	cur->swa_open = dlsym(sw_handle, sym_open);
 	cur->swa_process = dlsym(sw_handle, sym_process);
 	cur->swa_close = dlsym(sw_handle, sym_close);
-	if (!cur->swa_open || !cur->swa_close) {
-		CMR_LOGW("warning: get NULL api %p %p\n", cur->swa_open, cur->swa_close);
-	}
-	if (!cur->swa_process) {
-		CMR_LOGE("fail to get api %p, symbols %s\n", cur->swa_process, sym_process);
-		goto exit;
+	if (!cur->swa_open || !cur->swa_process || !cur->swa_close) {
+		CMR_LOGW("warning: %s get NULL api %p %p\n",
+			in->keywd, cur->swa_open, cur->swa_process, cur->swa_close);
 	}
 
 	cur->lib_handle = sw_handle;
