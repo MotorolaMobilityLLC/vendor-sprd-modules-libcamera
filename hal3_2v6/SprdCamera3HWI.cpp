@@ -2221,19 +2221,17 @@ int SprdCamera3HWI::isStreamCombinationSupported(
     camera3_stream_configuration_t streamList = {
         comb->num_streams, /*streams*/ nullptr, comb->operation_mode,
         /*session_parameters*/ nullptr};
-    streamList.streams = new camera3_stream_t *[comb->num_streams];
-    camera3_stream_t *streamBuffer = new camera3_stream_t[comb->num_streams];
-    if (streamList.streams == NULL) {
-        HAL_LOGD("NULL stream list");
-        ret = -EINVAL;
-        goto exit;
-    }
+    camera3_stream_t *streamBuffer = NULL;
 
     if (streamList.num_streams < 1) {
         HAL_LOGE("Bad number of streams requested: %d", streamList.num_streams);
         ret = -EINVAL;
         goto exit;
     }
+
+    streamList.streams = new camera3_stream_t *[comb->num_streams];
+    streamBuffer = new camera3_stream_t[comb->num_streams];
+
     for (uint32_t i = 0; i < comb->num_streams; i++) {
         streamBuffer[i] = {comb->streams[i].stream_type,
                            comb->streams[i].width,
@@ -2255,22 +2253,15 @@ int SprdCamera3HWI::isStreamCombinationSupported(
             goto exit;
         }
     }
-    if (streamList.streams[0] != NULL) {
-         if(streamList.streams[0]->width == 0 ||
+    if(streamList.streams[0]->width == 0 ||
                    streamList.streams[0]->height == 0 ||
                    streamList.streams[0]->width == UINT32_MAX ||
                    streamList.streams[0]->height == UINT32_MAX ||
                    (uint32_t)streamList.streams[0]->format == UINT32_MAX ||
                    (uint32_t)streamList.streams[0]->rotation == UINT32_MAX) {
-              HAL_LOGE("INVALID stream list");
-              ret = -EINVAL;
-              goto exit;
-         }
-    } else {
-        HAL_LOGE("NULL streamList->streams[0]");
+        HAL_LOGE("INVALID stream list");
         ret = -EINVAL;
     }
-
 exit:
     HAL_LOGI("X, rc: %d", ret);
     if (streamBuffer)
