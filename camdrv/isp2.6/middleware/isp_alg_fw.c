@@ -2793,6 +2793,7 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 
 	ptr = (cmr_u64 *)(statis_info->uaddr + STATIS_HIST_HEADER_SIZE);
 
+#if defined (CONFIG_ISP_2_6) || defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
 	/* G */
 	hist_stats = &cxt->bayer_hist_stats[0];
 	hist_stats->bin = 256;
@@ -2865,6 +2866,105 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 	hist_stats->value[j++] = (cmr_u32)(val0 & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)((val0 >> 24) & 0xffffff);
 	hist_stats->value[j++] = (cmr_u32)(((val1 & 0xff) << 16) | ((val0 >> 48) & 0xffff));
+
+#else
+	/* Change from 24bits to 25bits per value from QogirN6pro*/
+	/* G */
+	hist_stats = &cxt->bayer_hist_stats[0];
+	hist_stats->bin = 256;
+	hist_stats->sec = statis_info->sec;
+	hist_stats->usec = statis_info->usec;
+	hist_stats->frame_id = statis_info->frame_id;
+	j = 0;
+	for (i = 0; i < 51; i++) {
+		val0 = *ptr++;
+		val1 = *ptr++;
+		hist_stats->value[j++] = (cmr_u32)(val0 & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)((val0 >> 25) & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)(((val1 & 0x7ff) << 14) | ((val0 >> 50) & 0x3fff));
+		hist_stats->value[j++] = (cmr_u32)((val1 >> 11) & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)((val1 >> 36) & 0x1ffffff);
+	}
+	val0 = *ptr++;
+	val1 = *ptr++;
+	i++;
+	hist_stats->value[j++] = (cmr_u32)(val0 & 0x1ffffff);
+
+	/* R */
+	hist_stats = &cxt->bayer_hist_stats[1];
+	hist_stats->bin = 256;
+	hist_stats->sec = statis_info->sec;
+	hist_stats->usec = statis_info->usec;
+	hist_stats->frame_id = statis_info->frame_id;
+	j = 0;
+	hist_stats->value[j++] = (cmr_u32)((val0 >> 25) & 0x1ffffff);
+	hist_stats->value[j++] = (cmr_u32)(((val1 & 0x7ff) << 14) | ((val0 >> 50) & 0x3fff));
+	hist_stats->value[j++] = (cmr_u32)((val1 >> 11) & 0x1ffffff);
+	hist_stats->value[j++] = (cmr_u32)((val1 >> 36) & 0x1ffffff);
+	for ( ; i < 102; i++) {
+		val0 = *ptr++;
+		val1 = *ptr++;
+		hist_stats->value[j++] = (cmr_u32)(val0 & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)((val0 >> 25) & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)(((val1 & 0x7ff) << 14) | ((val0 >> 50) & 0x3fff));
+		hist_stats->value[j++] = (cmr_u32)((val1 >> 11) & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)((val1 >> 36) & 0x1ffffff);
+	}
+	val0 = *ptr++;
+	val1 = *ptr++;
+	i++;
+	hist_stats->value[j++] = (cmr_u32)(val0 & 0x1ffffff);
+	hist_stats->value[j++] = (cmr_u32)((val0 >> 25) & 0x1ffffff);
+
+	/* B */
+	hist_stats = &cxt->bayer_hist_stats[2];
+	hist_stats->bin = 256;
+	hist_stats->sec = statis_info->sec;
+	hist_stats->usec = statis_info->usec;
+	hist_stats->frame_id = statis_info->frame_id;
+	j = 0;
+	hist_stats->value[j++] = (cmr_u32)(((val1 & 0x7ff) << 14) | ((val0 >> 50) & 0x3fff));
+	hist_stats->value[j++] = (cmr_u32)((val1 >> 11) & 0x1ffffff);
+	hist_stats->value[j++] = (cmr_u32)((val1 >> 36) & 0x1ffffff);
+	for ( ; i < 153; i++) {
+		val0 = *ptr++;
+		val1 = *ptr++;
+		hist_stats->value[j++] = (cmr_u32)(val0 & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)((val0 >> 25) & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)(((val1 & 0x7ff) << 14) | ((val0 >> 50) & 0x3fff));
+		hist_stats->value[j++] = (cmr_u32)((val1 >> 11) & 0x1ffffff);
+		hist_stats->value[j++] = (cmr_u32)((val1 >> 36) & 0x1ffffff);
+	}
+	val0 = *ptr++;
+	val1 = *ptr++;
+	i ++;
+	hist_stats->value[j++] = (cmr_u32)(val0 & 0x1ffffff);
+	hist_stats->value[j++] = (cmr_u32)((val0 >> 25) & 0x1ffffff);
+	hist_stats->value[j++] = (cmr_u32)(((val1 & 0x7ff) << 14) | ((val0 >> 50) & 0x3fff));
+
+	if (cxt->save_data){
+		FILE *fp = NULL;
+		char file_name[256];
+		cmr_u32 pix_cnt[3] = { 0, 0, 0 };
+		sprintf(file_name, "%scam%d_bayerhsit_frm%05d.txt", CAMERA_DUMP_PATH,
+			(cmr_u32)cxt->camera_id, statis_info->frame_id);
+		fp = fopen(file_name, "w");
+		if (fp != NULL) {
+			for (j = 0; j < 256; j++) {
+				fprintf(fp,  "No.%d,  cnt G %08d  R %08d  B %08d\n", j,
+					cxt->bayer_hist_stats[0].value[i],
+					cxt->bayer_hist_stats[1].value[i],
+					cxt->bayer_hist_stats[2].value[i]);
+				pix_cnt[0] += cxt->bayer_hist_stats[0].value[i];
+				pix_cnt[1] += cxt->bayer_hist_stats[1].value[i];
+				pix_cnt[2] += cxt->bayer_hist_stats[2].value[i];
+			}
+			fprintf(fp, "hist ROI (%d %d %d %d),  total cnt G %08d,  R %08d,  B %08d\n",
+				win.start_x, win.start_y, win.width, win.height,
+				pix_cnt[0], pix_cnt[1], pix_cnt[2]);
+		}
+	}
+#endif
 
 	ISP_LOGD("cam%ld, frm %d, time %d.%06d, roi (%d %d %d %d),  data: r %d %d, g %d %d, b %d %d\n",
 		cxt->camera_id, statis_info->frame_id, statis_info->sec, statis_info->usec,
