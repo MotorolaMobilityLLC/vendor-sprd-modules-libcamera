@@ -650,12 +650,12 @@ static int lsc_table_linear_scaler(cmr_u16 * src_tab, cmr_u32 src_w, cmr_u32 src
 
 	ISP_LOGV("src_w=%d, src_h=%d, dst_w=%d, dst_h=%d, plane_flag=%d", src_w, src_h, dst_w, dst_h, is_plane);
 
-	if (src_w < 2 || src_h < 2 || src_w > MAX_WIDTH || src_h > MAX_HEIGHT) {
+	if (src_w < 4 || src_h < 4 || src_w > MAX_WIDTH || src_h > MAX_HEIGHT) {
 		ISP_LOGE("the size of src_tab out of limit !");
 		return -1;
 	}
 
-	if (dst_w < 2 || dst_h < 2 || dst_w > MAX_WIDTH || dst_h > MAX_HEIGHT) {
+	if (dst_w < 4 || dst_h < 4 || dst_w > MAX_WIDTH || dst_h > MAX_HEIGHT) {
 		ISP_LOGE("the size of dst_tab out of limit !");
 		return -1;
 	}
