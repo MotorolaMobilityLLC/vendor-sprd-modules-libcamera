@@ -495,6 +495,7 @@ extern "C" {
 		struct ae_exposure_param_switch mode_switch[64];
 		cmr_u8 mainFlashEn;
 		cmr_u8 calcFirstFlag;
+		struct ae_monitor_cfg ae_monitor_setting;
 
 		cmr_u32 end_id;
 

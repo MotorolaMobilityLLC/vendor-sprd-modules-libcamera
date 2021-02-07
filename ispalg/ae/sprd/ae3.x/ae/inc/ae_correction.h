@@ -32,6 +32,7 @@ enum ae_cmd_type {
 	AE_LIB_GET_DEBUG_INFO,
 	AE_LIB_GET_ALG_ID,
 	AE_LIB_GET_SCENE_PARAM,
+	AE_LIB_GET_AEM_PARAM,
 	AE_LIB_GET_CMD_MAX,
 	AE_LIB_CMD_MAX
 };
@@ -53,7 +54,7 @@ struct ae_lib_init_in {
 	cmr_u32 line_time;
 	struct ae_size img_size;/*image resolution*/
 	void *tuning_param;
-	void *dual_cam_tuning_param;
+	void *multi_cam_tuning_param;
 	/*will be used in the future*/
 	void *gamma_param;/*gamma curve param*/
 	void *smart_gamma_param;/*smart gamma param*/
@@ -72,8 +73,7 @@ struct ae_lib_init_out {
 	struct ae_monitor_cfg aem_cfg;/*aem cfg from ae tuning param*/
 	struct ae_bayer_hist_cfg bhist_cfg;/*bayer hist config from tuning*/
 	struct ae_flash_timing_param flash_timing_param;
-	struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
-	struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
+	struct ae_gamma_param gamma_param;	
 	struct ae_range fps_range;/*the fps range of ae table*/
 	struct ae_thd_param thrd_param[AE_LIB_SCENE_MAX];/*0: auto flash; 1: auto 3DNR, 2: auto fps adjust in video mode*/
 	struct ae_ev_param_table ev_param;
@@ -85,17 +85,15 @@ struct ae_lib_init_out {
 	cmr_u32 iso;				/*iso auto*/
 	cmr_u8 flicker;			/* 50hz 0 60hz 1 */
 	cmr_u8 scene_mode;		/* default: normal: spano sports night */
-	cmr_u8 ae_mode;			/*ae mode
-                                                        default: ae_mode_auto
-                                                      */
+	cmr_u8 ae_mode;			/*ae mode*/
 	float evd_val;			/*ev value*/
 };
 
 struct ae_adv_param {
-	/*the high resolution aem stats data*/
-	struct ae_stats_data_type stats_data_high;/*the high resolution aem stats data: ae monitor stats data or the binning data*/
-	/*will switch to struct ae_monitor_data_type soon*/
-	struct ae_monitor_data_type stats_data_adv;
+	union{
+		struct ae_stats_data_type stats_data_high;/*the high resolution aem stats data*/
+		struct ae_monitor_data_type stats_data_adv;/*will switch to struct ae_monitor_data_type soon*/
+	}data;
 	/*Histogram Data*/
 	struct ae_hist_data_type hist_data;/*yuv histogram data in yuv domain*/
 	//struct ae_rect hist_roi;
@@ -140,6 +138,7 @@ struct ae_adv_param {
 	cmr_u8 special_fps_mode;
 	cmr_u8 mv_value;
 	cmr_u32 cur_lum;
+	void *smart_gamma_param;/*smart out gamma param*/
 };
 
 struct ae_lib_calc_in {
@@ -166,6 +165,8 @@ struct ae_lib_calc_in {
 	struct ae_adv_param adv_param;
 	/*debug info*/
 	struct ae_debug_info debug_info;
+	/*ATM crtl*/
+	cmr_u32 atm_lock;
 };
 
 struct ae_lib_calc_out  {
@@ -188,8 +189,10 @@ struct ae_lib_calc_out  {
 	cmr_u16 abl_confidence;
 	cmr_s32 evd_value;
 	struct ae_ev_setting_param ev_setting;
-	struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
-	struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
+	//struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
+	//struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
+	cmr_u32 atmenable_for_crtl;/*add by jhin for atm enable*/
+	struct ae_gamma_param gamma_param;
 	/*AEM ROI setting*/
 	struct ae_point_type aem_roi_st;
 	struct ae_size aem_blk_size;
@@ -211,6 +214,7 @@ struct ae_lib_calc_out  {
 	/*privated information*/
 	cmr_u32 privated_data;
 	cmr_u32 face_flag;		/*face status flag*/
+	cmr_u32 cvg_skip_flag;
 };
 
 struct ae_alg_id_info {
@@ -249,6 +253,7 @@ struct ae_otp_info {
 
 struct ae_frm_sync_param {
 	/*ae ev setting limitation*/
+	cmr_u32 cam_id;
 	cmr_u32 is_benchmark;
 	cmr_s16 min_exp_line;
 	cmr_s16 max_exp_line;
@@ -279,9 +284,12 @@ struct ae_frm_sync_param {
 };
 
 struct ae_lib_frm_sync_in{//ae_dynamic_sync struct
-	cmr_u32 mode;/**/
+	cmr_u32 mode;/*0 boken 1 ae sync*/
 	cmr_u32 num;
-	struct ae_frm_sync_param* sync_param[4];/*benchmark sensor is must the first one*/
+	cmr_u32 ae_sync_type; /*0: fix mapping 1:dynamic mapping*/
+	cmr_u32 bmk_cam_id;
+	cmr_u32 tar_cam_id;
+	struct ae_frm_sync_param* sync_param[4];/*0:nor 1:rear 2:wide 3:tele*/
 };
 
 struct ae_lib_frm_sync_out {

@@ -3908,6 +3908,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->is_snapshot = work_info->is_snapshot;
 	cxt->snr_info = work_info->resolution_info;
 
+	ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_AEM_PARAM, NULL, &cxt->ae_monitor_setting);
+	cxt->monitor_cfg.blk_num.w = cxt->ae_monitor_setting.blk_num.w;
+	cxt->monitor_cfg.blk_num.h = cxt->ae_monitor_setting.blk_num.h;
+
 	bool monitor_cfg_blk_num_32_flag;
 	bool monitor_cfg_blk_wh_flag = (cxt->monitor_cfg.blk_num.w != cxt->monitor_cfg.blk_num.h);
 	bool monitor_cfg_blk_wh32_flag1 = (cxt->monitor_cfg.blk_num.w < 32);
@@ -4239,6 +4243,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	}
 
 	cxt->cur_status.adv_param.last_target = src_exp.target_luma;
+	ISP_LOGD("last_target=%d",cxt->cur_status.adv_param.last_target);
 
 	ae_set_app_mode_for_face_start(cxt);
 
@@ -5277,11 +5282,10 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 	cmr_u32 ratio_h = blk_num_h/BLK_NUM_W_ALG;///2
 	cmr_u32 ratio_w = blk_num_w/BLK_NUM_W_ALG;
 	cmr_u32 bayer_chnl = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/4;
-	
-	cxt->cur_status.adv_param.stats_data_adv.size.h = cxt->monitor_cfg.blk_num.h;
-	cxt->cur_status.adv_param.stats_data_adv.size.w = cxt->monitor_cfg.blk_num.w;
-	cxt->cur_status.adv_param.stats_data_adv.blk_size.w = cxt->monitor_cfg.blk_size.w;
-	cxt->cur_status.adv_param.stats_data_adv.blk_size.h = cxt->monitor_cfg.blk_size.h;
+	cxt->cur_status.adv_param.data.stats_data_adv.size.h = cxt->monitor_cfg.blk_num.h;
+	cxt->cur_status.adv_param.data.stats_data_adv.size.w = cxt->monitor_cfg.blk_num.w;
+	cxt->cur_status.adv_param.data.stats_data_adv.blk_size.w = cxt->monitor_cfg.blk_size.w;
+	cxt->cur_status.adv_param.data.stats_data_adv.blk_size.h = cxt->monitor_cfg.blk_size.h;
 
 	//cxt->cur_status.stats_data_basicv2.stat_data = &sync_aem_new[0];
 	cxt->cur_status.stats_data_basic.stat_data = &cxt->sync_aem[0];
@@ -5306,13 +5310,13 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 						num_me = bayer_chnl - num_oe - num_ue;
 						avg_r = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
 						tmp_r += avg_r/(ratio_w * ratio_h);//binning is average of adjacent pixels
-						
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].oe_stats_data = sum_oe;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].med_stats_data = sum_me;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].ue_stats_data = sum_ue;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].oe_conts = num_oe;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].med_conts = num_me;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[0][idx].ue_conts = num_ue;
+
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[0][idx].oe_stats_data = sum_oe;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[0][idx].med_stats_data = sum_me;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[0][idx].ue_stats_data = sum_ue;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[0][idx].oe_conts = num_oe;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[0][idx].med_conts = num_me;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[0][idx].ue_conts = num_ue;
 
 					//g channel
 						sum_oe = aem_stat_ptr->sum_oe_g[idx];
@@ -5323,13 +5327,13 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 						num_me = bayer_chnl - num_oe - num_ue;
 						avg_g = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
 						tmp_g += avg_g/(ratio_w * ratio_h);//binning is average of adjacent pixels
-						
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].oe_stats_data = sum_oe;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].med_stats_data = sum_me;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].ue_stats_data = sum_ue;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].oe_conts = num_oe;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].med_conts = num_me;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[1][idx].ue_conts = num_ue;
+
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[1][idx].oe_stats_data = sum_oe;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[1][idx].med_stats_data = sum_me;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[1][idx].ue_stats_data = sum_ue;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[1][idx].oe_conts = num_oe;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[1][idx].med_conts = num_me;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[1][idx].ue_conts = num_ue;
 
 					//b channel
 						sum_oe = aem_stat_ptr->sum_oe_b[idx];
@@ -5340,13 +5344,13 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 						num_me = bayer_chnl - num_oe - num_ue;
 						avg_b = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
 						tmp_b += avg_b/(ratio_w * ratio_h);//binning is average of adjacent pixels
-						
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].oe_stats_data = sum_oe;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].med_stats_data = sum_me;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].ue_stats_data = sum_ue;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].oe_conts = num_oe;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].med_conts = num_me;
-						cxt->cur_status.adv_param.stats_data_adv.stats_data[2][idx].ue_conts = num_ue;
+
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[2][idx].oe_stats_data = sum_oe;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[2][idx].med_stats_data = sum_me;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[2][idx].ue_stats_data = sum_ue;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[2][idx].oe_conts = num_oe;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[2][idx].med_conts = num_me;
+						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[2][idx].ue_conts = num_ue;
 				}
 			}
 			
@@ -5460,12 +5464,12 @@ static void ae_binning_for_aem_stats(struct ae_ctrl_cxt *cxt, void * img_stat)
 	memset(&cxt->sync_aem[0],0,sizeof(cxt->sync_aem));
 	
 	//cxt->cur_status.adv_param.stats_data_high.stat_data = img_stat;
-	cxt->cur_status.adv_param.stats_data_high.stat_data = &cxt->sync_aem_high[0];
-	cxt->cur_status.adv_param.stats_data_high.counts_per_pixel = 1;//bayer_pixels;
-	cxt->cur_status.adv_param.stats_data_high.size.h = blk_num_h;
-	cxt->cur_status.adv_param.stats_data_high.size.w = blk_num_w;
-	cxt->cur_status.adv_param.stats_data_high.blk_size.w = cxt->monitor_cfg.blk_size.w;
-	cxt->cur_status.adv_param.stats_data_high.blk_size.h = cxt->monitor_cfg.blk_size.h;
+	cxt->cur_status.adv_param.data.stats_data_high.stat_data = &cxt->sync_aem_high[0];
+	cxt->cur_status.adv_param.data.stats_data_high.counts_per_pixel = 1;//bayer_pixels;
+	cxt->cur_status.adv_param.data.stats_data_high.size.h = blk_num_h;
+	cxt->cur_status.adv_param.data.stats_data_high.size.w = blk_num_w;
+	cxt->cur_status.adv_param.data.stats_data_high.blk_size.w = cxt->monitor_cfg.blk_size.w;
+	cxt->cur_status.adv_param.data.stats_data_high.blk_size.h = cxt->monitor_cfg.blk_size.h;
 
 	cxt->cur_status.stats_data_basic.stat_data = &cxt->sync_aem[0];
 	cxt->cur_status.stats_data_basic.counts_per_pixel = 1;//ratio_h * ratio_w * bayer_pixels;
@@ -5482,15 +5486,15 @@ static void ae_binning_for_aem_stats(struct ae_ctrl_cxt *cxt, void * img_stat)
 					cmr_u32 idx = i * ratio_w * ratio_h * BLK_NUM_W_ALG + j * ratio_w + ii * ratio_h * BLK_NUM_W_ALG + jj;
 					avg = r_stat[idx]/bayer_pixels;
 					tmp_r += avg/(ratio_w * ratio_h);
-					cxt->cur_status.adv_param.stats_data_high.stat_data[idx] = avg;
+					cxt->cur_status.adv_param.data.stats_data_high.stat_data[idx] = avg;
 
 					avg = g_stat[idx]/bayer_pixels;
 					tmp_g += avg/(ratio_w * ratio_h);
-					cxt->cur_status.adv_param.stats_data_high.stat_data[idx + blk_num_w * blk_num_h] = avg;
+					cxt->cur_status.adv_param.data.stats_data_high.stat_data[idx + blk_num_w * blk_num_h] = avg;
 
 					avg = b_stat[idx]/bayer_pixels;
 					tmp_b += avg/(ratio_w * ratio_h);
-					cxt->cur_status.adv_param.stats_data_high.stat_data[idx+ 2 * blk_num_w * blk_num_h] = avg;
+					cxt->cur_status.adv_param.data.stats_data_high.stat_data[idx+ 2 * blk_num_w * blk_num_h] = avg;
 				}
 			}
 			cxt->sync_aem[i * BLK_NUM_W_ALG + j] = tmp_r;
@@ -5964,8 +5968,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.aem_roi.start_y = ae_win_info.offset_y;
 	cxt->cur_status.aem_roi.end_x = ae_win_info.offset_x + ae_win_info.blk_num_x*ae_win_info.blk_size_x;
 	cxt->cur_status.aem_roi.end_y = ae_win_info.offset_y + ae_win_info.blk_num_y*ae_win_info.blk_size_y;
-	cxt->cur_status.adv_param.stats_data_adv.blk_size.w = ae_win_info.blk_size_x;
-	cxt->cur_status.adv_param.stats_data_adv.blk_size.h = ae_win_info.blk_size_y;
+	cxt->cur_status.adv_param.data.stats_data_adv.blk_size.w = ae_win_info.blk_size_x;
+	cxt->cur_status.adv_param.data.stats_data_adv.blk_size.h = ae_win_info.blk_size_y;
 	cxt->cur_status.cam_id = cxt->camera_id;
 	
 	/*get ae sync data for ISP_ALG_TRIBLE_W_T_UW mode*/
@@ -6982,10 +6986,10 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 
 	ISP_LOGD("camera_id: %d, is master: %d, is_multi_mode: %d, sensor_role:%d", cxt->camera_id, init_param->is_master, init_param->is_multi_mode, cxt->sensor_role);
 	if((cxt->sensor_role == CAM_SENSOR_MASTER) && (init_param->is_multi_mode)) {//dual camera && master sensor
-		misc_init_in.dual_cam_tuning_param = init_param->ae_sync_param.param;
+		misc_init_in.multi_cam_tuning_param = init_param->ae_sync_param.param;
 		misc_init_in.cam_id = AE_ROLE_ID_MASTER;//ok
 	} else {
-		misc_init_in.dual_cam_tuning_param = NULL;
+		misc_init_in.multi_cam_tuning_param = NULL;
 		if (cxt->sensor_role == CAM_SENSOR_MASTER) {
 			misc_init_in.cam_id = AE_ROLE_ID_NORMAL;
 		} else if (cxt->sensor_role == CAM_SENSOR_SLAVE0) {
