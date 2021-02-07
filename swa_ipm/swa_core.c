@@ -274,7 +274,7 @@ int swa_cnr_process(void * ipmpro_hanlde,
 	YNR_Param ynr_param;
 	CNR_Parameter cnr2_param;
 	cnr_param_t cnr3_param;
-	sprd_yuv_denoise_cmd_t mode = 0;
+	cmr_u32 mode = 0;
 	sprd_yuv_denoise_param_t denoise_param;
 
 	if (ipmpro_hanlde == NULL || in == NULL || out == NULL || param == NULL) {
@@ -327,7 +327,7 @@ next:
 	denoise_param.height = frm_in->size.height;
 	denoise_param.zoom_ratio = frm_param->common_param.zoom_ratio;
 
-	ret = sprd_yuv_denoise_adpt_ctrl(cxt->cnr_handle, mode, (void *)&denoise_param);
+	ret = sprd_yuv_denoise_adpt_ctrl(cxt->cnr_handle, (sprd_yuv_denoise_cmd_t)mode, (void *)&denoise_param);
 	if (ret)
 		SWA_LOGE("fail to process Y/CNR\n");
 	else
@@ -394,7 +394,7 @@ int swa_dre_process(void * ipmpro_hanlde,
 	}
 
 	if (in->frame_num == 0) {
-		SWA_LOGE("fail to get in/out frame num %d %d\n", in->frame_num);
+		SWA_LOGE("fail to get in/out frame num %d %d\n", in->frame_num, out->frame_num);
 		return -1;
 	}
 	if (ipmpro_hanlde)

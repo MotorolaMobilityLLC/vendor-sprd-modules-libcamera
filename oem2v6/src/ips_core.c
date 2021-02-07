@@ -1369,7 +1369,7 @@ cmr_int cmr_ips_quickstop_req(cmr_handle ips_handle,
 cmr_int cmr_ips_destroy_req(cmr_handle ips_handle,
 	struct ips_request_t **dst)
 {
-    	cmr_int ret = CMR_CAMERA_SUCCESS;
+	cmr_int ret = CMR_CAMERA_SUCCESS;
 	struct ips_req_node *req;
 	struct ips_context *ips_ctx = (struct ips_context *)ips_handle;
 	struct ips_thread_context *ips_thread;
@@ -1429,7 +1429,7 @@ cmr_int cmr_ips_destroy_req(cmr_handle ips_handle,
 cmr_int cmr_ips_init_req(cmr_handle ips_handle,
 	struct ips_request_t *dst, void *data, ips_req_cb req_cb)
 {
-    	cmr_int ret = CMR_CAMERA_SUCCESS;
+	cmr_int ret = CMR_CAMERA_SUCCESS;
 	int i, j;
 	cmr_u32 type;
 	struct ips_req_node *req;

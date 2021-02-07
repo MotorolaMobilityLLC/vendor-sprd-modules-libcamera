@@ -1958,7 +1958,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
                 CONTROL_Tag threeAControlInfo;
-                uint8_t notifyCap;
+                uint8_t notifyCap = 0;
 
                 mSetting->getSENSORTag(&sensorInfo);
                 sensorInfo.timestamp = capture_time;
