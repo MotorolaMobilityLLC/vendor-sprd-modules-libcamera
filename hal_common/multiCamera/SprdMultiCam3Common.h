@@ -479,6 +479,7 @@ typedef enum {
     MULTI_OTP_DATA,
     MULTI_APP_MODE_ID,
     MULTI_AUTO_SLIDE_POSITION,
+    MULTI_3DNR_SCENE_TYPE,
 }multi_tag;
 
 };

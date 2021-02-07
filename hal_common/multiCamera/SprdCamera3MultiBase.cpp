@@ -2039,6 +2039,9 @@ int SprdCamera3MultiBase::getMultiTagToSprdTag(uint8_t multi_tag) {
     case MULTI_AUTO_SLIDE_POSITION:
         sprd_tag = ANDROID_SPRD_AUTO_SLIDE_POSITION;
         break;
+    case MULTI_3DNR_SCENE_TYPE:
+        sprd_tag = ANDROID_SPRD_IS_3DNR_SCENE;
+        break;
     default:
         break;
     }
