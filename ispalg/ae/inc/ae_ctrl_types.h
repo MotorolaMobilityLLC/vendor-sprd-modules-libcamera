@@ -180,6 +180,7 @@ extern "C" {
 		AE_CB_HDR_START,
 		AE_CB_HDR_STATUS,
 		AE_CB_EV_ADJUST_NOTIFY,
+		AE_CB_EV_ADJUST_PARMA,
 		AE_CB_LED_NOTIFY,
 		AE_CB_FLASH_FIRED,
 		AE_CB_PROCESS_OUT,
@@ -256,6 +257,7 @@ extern "C" {
 		AE_SNAPSHOT_NULL = 0,
 		AE_SNAPSHOT_DRE,
 		AE_SNAPSHOT_GTM,
+		AE_SNAPSHOT_NIGHT_DNS,
 	} ;
 
 	struct ae_set_fps {
@@ -586,6 +588,7 @@ extern "C" {
 		cmr_u32 ev_effect_valid_num;
 		cmr_u32 ev_adjust_cnt;
 		enum ae_snapshot_tpye type;
+		float ev_value[16];
 	};
 
 	struct ae_fdr_param {

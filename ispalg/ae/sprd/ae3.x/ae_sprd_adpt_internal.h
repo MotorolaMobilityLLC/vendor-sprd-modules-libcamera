@@ -383,6 +383,8 @@ extern "C" {
 		cmr_s8 ev_adjust_cnt;
 		cmr_s8 ev_adj_ev_effect_valid_num;
 		cmr_s8 ev_adj_snp_type;
+		float ev_value[16];
+		struct ae_adjust_param cb_parma;
 		/*
 		 * FDR control
 		 */

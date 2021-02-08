@@ -3576,6 +3576,9 @@ static void ae_set_ev_adjust_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *pa
 	float down_EV_offset =-(cxt->sync_cur_result.evd_value / 100.0);
 	cmr_s8 callback_flag = 0;
 	cmr_s8 callback_frame = 0;
+	float EV_offset = 0;
+	cmr_u32 down_up_exposure = 0;
+	cmr_u32 cur_iso;
 
 	cxt->ev_adj_frame_cnt++;
 	callback_frame = MAX((cmr_s8)cxt->ev_adj_ev_effect_valid_num,(cmr_s8)cxt->capture_skip_num);
@@ -3592,27 +3595,68 @@ static void ae_set_ev_adjust_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *pa
 	min_frame_line = (cmr_u32) (1.0 * cxt->ae_tbl_param.min_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
 
 	ISP_LOGV("max_frame_line %d, min_frame_line %d, fps_min %d, cur_line_time %d\n", max_frame_line, min_frame_line, cxt->fps_range.min, cxt->cur_status.adv_param.cur_ev_setting.line_time);
-	if ( cxt->ev_adj_flag <= cxt->ev_adjust_cnt ){
-		base_exposure_line = cxt->ev_adj_exp_line;
-		base_gain = cxt->ev_adj_gain;
-		down_exposure =(cmr_u32)(1.0 / pow(2,down_EV_offset) * base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
-		ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  down_EV_offset);
-		ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
-		ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
-		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
-		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-		cxt->cur_status.adv_param.prof_mode = 1;
-		cxt->ev_adj_flag++;
-		ISP_LOGD("isp_down_exp: exp_line %d, gain %d\n", exp_line, gain);
-	}else {
-		base_exposure_line = cxt->ev_adj_exp_line;
-		base_gain = cxt->ev_adj_gain;
-		cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
-		cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = base_gain;
-		cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-		cxt->cur_status.adv_param.prof_mode = 1;
-		ISP_LOGD("isp_normal_exp: exp_line %d, gain %d\n", base_exposure_line, base_gain);
+	if (cxt->ev_adj_snp_type == AE_SNAPSHOT_NIGHT_DNS) {
+		if ( cxt->ev_adj_flag <= cxt->ev_adjust_cnt ) {
+			EV_offset = cxt->ev_value[cxt->ev_adj_flag - 1];
+			base_exposure_line = cxt->ev_adj_exp_line;
+			base_gain = cxt->ev_adj_gain;
+			down_up_exposure =(cmr_u32)(1.0 * pow(2,EV_offset) * base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
+			ISP_LOGD("[%d]down_up_exp %d, pow2 %f base_gain %d, gain %d\n", cxt->ev_adj_flag, down_up_exposure,  EV_offset, base_gain, gain);
+			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_up_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+			ISP_LOGD("base_exposure: %d, base_gain: %d, down_up_exposure: %d, exp_line: %d",
+				base_exposure_line, base_gain, down_up_exposure, exp_line);
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->cur_status.adv_param.prof_mode = 1;
+			cxt->ev_adj_flag++;
+
+		cxt->cb_parma.exp_time = (cmr_u32 )(1.0 * exp_line*cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+		cxt->cb_parma.total_gain = gain;
+		ae_get_iso(cxt, &cur_iso);
+		cxt->cb_parma.iso = cur_iso;
+		cxt->cb_parma.isp_gain = cxt->exp_data.lib_data.isp_gain; // isp gain
+		cxt->cb_parma.ev = EV_offset;
+		cxt->cb_parma.exposure = down_up_exposure;
+		if (cxt->isp_ops.callback) {
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_EV_ADJUST_PARMA, &(cxt->cb_parma));
+		}
+		ISP_LOGI("exp %d, exp_line %d, gain %d %d iso %d, ev %f\n",
+			cxt->cb_parma.exp_time, exp_line, gain,
+			cxt->cb_parma.isp_gain, cur_iso, EV_offset);
+		}else {
+			base_exposure_line = cxt->ev_adj_exp_line;
+			base_gain = cxt->ev_adj_gain;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = base_gain;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->cur_status.adv_param.prof_mode = 1;
+			ISP_LOGD("isp_normal_exp: exp_line %d, gain %d\n", base_exposure_line, base_gain);
+			cxt->ev_adj_enable = 0;
+		}
+	} else {
+		if ( cxt->ev_adj_flag <= cxt->ev_adjust_cnt ) {
+			base_exposure_line = cxt->ev_adj_exp_line;
+			base_gain = cxt->ev_adj_gain;
+			down_exposure =1.0 / pow(2,down_EV_offset) * base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure,  down_EV_offset);
+			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+			ISP_LOGV("base_exposure: %d, base_gain: %d, down_up_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->cur_status.adv_param.prof_mode = 1;
+			cxt->ev_adj_flag++;
+			ISP_LOGD("isp_down_exp: exp_line %d, gain %d\n", exp_line, gain);
+		} else {
+			base_exposure_line = cxt->ev_adj_exp_line;
+			base_gain = cxt->ev_adj_gain;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = base_gain;
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+			cxt->cur_status.adv_param.prof_mode = 1;
+			ISP_LOGD("isp_normal_exp: exp_line %d, gain %d\n", base_exposure_line, base_gain);
+		}
 	}
 }
 
@@ -4987,6 +5031,11 @@ static cmr_s32 ae_set_ev_adjust_start(struct ae_ctrl_cxt *cxt, void *param)
 		cxt->ev_adjust_cnt = ev_adj_param->ev_adjust_cnt;
 		cxt->ev_adj_snp_type = ev_adj_param->type;
 		cxt->ev_adj_frame_cnt = 0;
+		for (int i = 0; i < (sizeof(cxt->ev_value) / sizeof(cxt->ev_value[0])); i++) {
+			cxt->ev_value[i] = ev_adj_param->ev_value[i];
+		}
+		ISP_LOGD("ev_adj_enable %d evd_value %d",
+			cxt->ev_adj_enable, cxt->sync_cur_result.evd_value);
 		if (cxt->ev_adj_enable) {
 			cxt->ev_adj_flag = 1;
 			cxt->ev_adj_exp_line = cxt->sync_cur_result.ev_setting.exp_line;
