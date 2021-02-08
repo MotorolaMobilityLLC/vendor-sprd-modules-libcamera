@@ -1635,9 +1635,16 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
             default_info->common.black_level;
 
     // android.sensor.info.timestampSource,(UNKNOWN/REALTIME)
-    ptr_sns_inf_tag->timestamp_source =
-        ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
 
+#ifdef CONFIG_CAMERA_GYRO
+    ptr_sns_inf_tag->timestamp_source =
+    ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME;
+    HAL_LOGD("android.sensor.info.timestampSource is REALTIME");
+#else
+    ptr_sns_inf_tag->timestamp_source =
+    ANDROID_SENSOR_INFO_TIMESTAMP_SOURCE_UNKNOWN;
+    HAL_LOGD("android.sensor.info.timestampSource is UNKNOWN");
+#endif
     HAL_LOGD("log_parameters_sensor_statics_info:%d", cameraId);
     return 0;
 }

@@ -4704,7 +4704,12 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                       frame->width * frame->height * 3 / 2);
     }
 
-    buffer_timestamp = frame->monoboottime;
+#ifdef CONFIG_CAMERA_GYRO
+     buffer_timestamp = frame->monoboottime;
+#else
+     buffer_timestamp = frame->timestamp;
+#endif
+
     if (!buffer_timestamp)
         HAL_LOGW("buffer_timestamp shouldn't be 0,please check");
 
@@ -5364,8 +5369,11 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
                        frame->sensor_info.exposure_time_denominator;
         mSetting->setExposureTimeTag(exposureTime);
     }
+#ifdef CONFIG_CAMERA_GYRO
     timestamp = frame->monoboottime;
-
+#else
+    timestamp = frame->timestamp;
+#endif
     property_get("persist.vendor.cam.debug.mode", debug_value, "non-debug");
 
     if (picChannel == NULL || encInfo->outPtr == NULL) {
