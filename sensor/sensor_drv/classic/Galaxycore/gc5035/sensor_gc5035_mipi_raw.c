@@ -872,13 +872,20 @@ static cmr_int gc5035_drv_stream_on(cmr_handle handle, cmr_uint param)
 {
 	SENSOR_IC_CHECK_HANDLE(handle);
 	struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-       cmr_u16 sleep_time = 0;
-	
+    cmr_u16 sleep_time = 0;
+    char value1[PROPERTY_VALUE_MAX];	
+    char value2[PROPERTY_VALUE_MAX];
+
 	SENSOR_LOGI("E");
 
-    char value1[PROPERTY_VALUE_MAX];
-    property_get("vendor.cam.hw.framesync.on", value1, "1");
-    if (!strcmp(value1, "1")) {
+  	property_get("persist.vendor.cam.colorbar", value1, "0");
+	if (!strcmp(value1, "1")) {
+		SENSOR_LOGI("enable test mode");
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x8c, 0x00);
+  	}
+
+    property_get("vendor.cam.hw.framesync.on", value2, "1");
+    if (!strcmp(value2, "1")) {
         if ((2 == sns_drv_cxt->sensor_id) &&
             (MODE_BOKEH == sns_drv_cxt->is_multi_mode)) {
 #if defined(CONFIG_DUAL_MODULE)

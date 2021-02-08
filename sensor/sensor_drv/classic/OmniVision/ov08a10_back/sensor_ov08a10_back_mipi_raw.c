@@ -689,10 +689,17 @@ static cmr_int ov08a10_back_drv_set_master_FrameSync(cmr_handle handle,
 static cmr_int ov08a10_back_drv_stream_on(cmr_handle handle, cmr_uint param) {
   SENSOR_IC_CHECK_HANDLE(handle);
   struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+  char value1[PROPERTY_VALUE_MAX];
+  char value2[PROPERTY_VALUE_MAX];
 
   SENSOR_LOGI("E");
 
-  char value2[PROPERTY_VALUE_MAX];
+  property_get("persist.vendor.cam.colorbar", value1, "0");
+  if (!strcmp(value1, "1")) {
+      SENSOR_LOGI("enable test mode");
+      hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x1);
+  }
+
   property_get("vendor.cam.hw.framesync.on", value2, "1");
   if (!strcmp(value2, "1")) {
 #if defined(CONFIG_DUAL_MODULE)

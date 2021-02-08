@@ -728,6 +728,7 @@ static cmr_int ov8856_drv_stream_on(cmr_handle handle, cmr_uint param) {
     char value1[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.colorbar", value1, "0");
     if (!strcmp(value1, "1")) {
+        SENSOR_LOGI("enable test mode");
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5e00, 0x80);
     }
 
