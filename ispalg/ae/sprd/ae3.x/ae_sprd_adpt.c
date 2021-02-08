@@ -6955,6 +6955,13 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		rtn = ae_set_multi_switch_info(cxt, param);
 		break;
 
+	case AE_SET_FACE_COLOR:
+		cxt->cur_status.adv_param.face_color = *(cmr_u32 *) param;
+		break;
+		
+	case AE_SET_NATION_CODE:
+		break;
+
 	default:
 		rtn = AE_ERROR;
 		break;
@@ -7279,6 +7286,7 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	misc_init_in.log_level = (cmr_u32) g_isp_log_level;
 	misc_init_in.line_time = init_param->resolution_info.line_time;
 	misc_init_in.tuning_param = init_param->param[0].param;
+	misc_init_in.face_color = init_param->face_color;
 	{
 		char prop_str[PROPERTY_VALUE_MAX] = {0};
 		property_get("persist.vendor.cam.isp.ae.read_tune_bin", prop_str, "0");
