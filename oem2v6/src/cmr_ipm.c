@@ -31,6 +31,9 @@ extern struct class_tab_t uvde_tab_info;
 #ifdef CONFIG_CAMERA_Y_DENOISE
 extern struct class_tab_t yde_tab_info;
 #endif
+#ifdef CONFIG_CAMERA_NIGHTDNS_CAPTURE
+extern struct class_tab_t nightb01_tab_info;
+#endif
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE
 extern struct class_tab_t threednr_tab_info;
 extern struct class_tab_t threednr_prev_tab_info;
@@ -69,6 +72,9 @@ struct ipm_class_tab class_type_tab[] = {
 #endif
 #ifdef CONFIG_CAMERA_Y_DENOISE
     {IPM_TYPE_YDE, &yde_tab_info},
+#endif
+#ifdef CONFIG_CAMERA_NIGHTDNS_CAPTURE
+    {IPM_TYPE_NIGHTDNS, &nightb01_tab_info},
 #endif
 #ifdef CONFIG_CAMERA_3DNR_CAPTURE
     {IPM_TYPE_3DNR, &threednr_tab_info},

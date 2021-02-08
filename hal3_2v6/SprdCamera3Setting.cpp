@@ -4492,10 +4492,14 @@ int SprdCamera3Setting::updateWorkParameters(
     if (frame_settings.exists(ANDROID_SPRD_APP_MODE_ID)) {
         s_setting[mCameraId].sprddefInfo.sprd_appmode_id =
             frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
-        property_get("persist.vendor.cam.fdr.sel", value, "0");
-        if (s_setting[mCameraId].sprddefInfo.sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO
-            && atoi(value) == 1) {
-            s_setting[mCameraId].sprddefInfo.sprd_appmode_id = CAMERA_MODE_FDR;
+        if (s_setting[mCameraId].sprddefInfo.sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
+                property_get("persist.vendor.cam.fdr.sel", value, "0");
+                if (atoi(value) == 1) {
+                    s_setting[mCameraId].sprddefInfo.sprd_appmode_id = CAMERA_MODE_FDR;
+#ifdef CONFIG_CAMERA_NIGHTDNS_CAPTURE
+                    if (mCameraId == 0) s_setting[mCameraId].sprddefInfo.sprd_appmode_id = CAMERA_MODE_NIGHT_PHOTO;
+#endif
+                }
         }
         pushAndroidParaTag(ANDROID_SPRD_APP_MODE_ID);
         HAL_LOGV("sprd sprd app mode id is %d",

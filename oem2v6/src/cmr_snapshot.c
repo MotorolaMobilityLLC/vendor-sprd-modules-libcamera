@@ -1822,15 +1822,15 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     CMR_LOGD("cxt->req_param.is_3dnr %d", cxt->req_param.is_3dnr);
     if (cxt->req_param.is_zsl_snapshot) {
         if (cxt->req_param.is_3dnr == 1  ||
-            cxt->req_param.is_3dnr == 5 ||cxt->req_param.is_3dnr == 8) {
+            cxt->req_param.is_3dnr == 5 ||cxt->req_param.is_3dnr == 8 ||
+            cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_NIGHT_DNS) {
                 CMR_LOGI(
                     "send 3dnr SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here");
                 snp_send_msg_notify_thr(
                     snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                     SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
                     sizeof(struct camera_frame_type));
-        }
-        if (cxt->req_param.is_hdr == 1) {
+        } else if (cxt->req_param.is_hdr == 1) {
         // bokeh + hdr RETURN_SW_ALGORITHM_ZSL_BUF message is in
             // snp_yuv_callback_take_picture_done
             if (cmr_cxt->is_multi_mode != MODE_BOKEH && cmr_cxt->is_multi_mode != MODE_MULTI_CAMERA) {
@@ -4251,8 +4251,9 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
         snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                 SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
                                 NULL, sizeof(struct camera_frame_type));
-    } else if (cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
-        CMR_LOGD("auto mfnr no need set buf here");
+    } else if (cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW ||
+            cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_NIGHT_DNS) {
+        CMR_LOGD("no need set buf here");
     } else {
         snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                 SNAPSHOT_CB_EVT_RETURN_ZSL_BUF,

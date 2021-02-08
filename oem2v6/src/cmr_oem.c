@@ -345,6 +345,9 @@ static cmr_int camera_open_3dnr(struct camera_context *cxt,
                                 struct ipm_open_in *in_ptr,
                                 struct ipm_open_out *out_ptr);
 static cmr_int camera_close_3dnr(struct camera_context *cxt);
+static cmr_int camera_open_night_dns(struct camera_context *cxt, struct ipm_open_in *in_ptr,
+                         struct ipm_open_out *out_ptr);
+static cmr_int camera_close_night_dns(struct camera_context *cxt);
 static cmr_int camera_open_cnr(struct camera_context *cxt,
                                struct ipm_open_in *in_ptr,
                                struct ipm_open_out *out_ptr);
@@ -2455,7 +2458,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     cmr_u32 *ae_info = NULL;
     struct cmr_focus_status focus_status;
     struct isp_af_notice *isp_af = NULL;
-
+    struct isp_ae_adjust_param *ae_aux_info = NULL;
     if (!oem_handle || CMR_EVT_ISP_BASE != (CMR_EVT_ISP_BASE & evt)) {
         CMR_LOGE("err param, 0x%lx 0x%x 0x%lx", (cmr_uint)data, evt,
                  (cmr_uint)oem_handle);
@@ -2576,10 +2579,36 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             *(cmr_u8 *)data = 1;
             cxt->skipframe = 1;
         }
+        if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NIGHT_DNS) {
+            *(cmr_u8 *)data = 1;
+            cxt->skipframe = 1;
+        }
+
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
         oem_cb = CAMERA_EVT_CB_EV_ADJUST_SCENE;
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
+        break;
+    case ISP_AE_AUX_EFFECT_CALLBACK: //exp,iso,gain etc
+            ae_aux_info = (struct isp_ae_adjust_param *)data;
+            cmr_u32 cnt = cxt->ae_aux_info.cnt;
+            CMR_LOGI("cnt %d, ev %1.3f", cnt, ae_aux_info->ev);
+            if (cnt < NIGHTDNS_CAP_NUM) {
+            cxt->ae_aux_info.param[cnt].exp_time = ae_aux_info->exp_time;
+            cxt->ae_aux_info.param[cnt].total_gain = ae_aux_info->total_gain;
+            cxt->ae_aux_info.param[cnt].isp_gain = ae_aux_info->isp_gain;
+            cxt->ae_aux_info.param[cnt].iso = ae_aux_info->iso;
+            cxt->ae_aux_info.param[cnt].exposure = ae_aux_info->exposure;
+            cxt->ae_aux_info.param[cnt].ev = ae_aux_info->ev;
+            cxt->ae_aux_info.cnt++;
+            CMR_LOGI("cnt %d exp_time total_gain iso isp_gain exposure ev(%d %d %d %d %d %d)",cnt,
+                cxt->ae_aux_info.param[cnt].exp_time,
+                cxt->ae_aux_info.param[cnt].total_gain,
+                cxt->ae_aux_info.param[cnt].iso,
+                cxt->ae_aux_info.param[cnt].isp_gain,
+                cxt->ae_aux_info.param[cnt].exposure,
+                cxt->ae_aux_info.param[cnt].ev);
+            }
         break;
     case ISP_FDR_EV_EFFECT_CALLBACK:
         cmr_setting_isp_notice_done(cxt->setting_cxt.setting_handle, data);
@@ -3305,7 +3334,8 @@ cmr_int camera_ipm_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             cb_param->dst_frame.addr_vir.addr_y, cb_param->dst_frame.fd);
     } else if (1 == camera_get_3dnr_flag(cxt) ||
                5 == camera_get_3dnr_flag(cxt) ||
-               8 == camera_get_3dnr_flag(cxt)) {
+               8 == camera_get_3dnr_flag(cxt) ||
+               CAMERA_3DNR_TYPE_NIGHT_DNS == camera_get_3dnr_flag(cxt)) {
         ret = camera_3dnr_set_ev((cmr_handle)cb_param->private_data, 0);
         if (ret)
             CMR_LOGE("fail to set 3dnr ev");
@@ -3669,6 +3699,33 @@ cmr_int camera_close_3dnr(struct camera_context *cxt) {
     return ret;
 }
 
+cmr_int camera_open_night_dns(struct camera_context *cxt, struct ipm_open_in *in_ptr,
+                         struct ipm_open_out *out_ptr) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    CMR_LOGD("E");
+    sem_wait(&cxt->threednr_flag_sm);
+    ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_NIGHTDNS, in_ptr, out_ptr,
+                       &cxt->ipm_cxt.threednr_handle);
+    sem_post(&cxt->threednr_flag_sm);
+    CMR_LOGD("X");
+    return ret;
+}
+
+cmr_int camera_close_night_dns(struct camera_context *cxt) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+
+    sem_wait(&cxt->threednr_flag_sm);
+    if (cxt->ipm_cxt.threednr_handle) {
+        ret = cmr_ipm_close(cxt->ipm_cxt.threednr_handle);
+        cxt->ipm_cxt.threednr_handle = 0;
+    }
+    sem_post(&cxt->threednr_flag_sm);
+    sem_destroy(&cxt->threednr_proc_sm);
+    CMR_LOGD("X,ret=%ld", ret);
+    return ret;
+}
+
 cmr_int camera_open_cnr(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                         struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -3894,7 +3951,9 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
                                     SETTING_GET_APPMODE, &setting_param);
             if (ret)
                 CMR_LOGE("failed to get app mode");
-            if ((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) &&
+            if (CAMERA_3DNR_TYPE_NIGHT_DNS == camera_get_3dnr_flag(cxt)) {
+                ret = camera_close_night_dns(cxt);
+            } else if ((setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) &&
                 cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
                 cxt->night_cxt.mfnr_on_off = 0;
                 ret = cxt->night_cxt.sw_close(cxt);
@@ -3904,7 +3963,7 @@ void camera_snapshot_state_handle(cmr_handle oem_handle,
                        5 == camera_get_3dnr_flag(cxt) ||
                        8 == camera_get_3dnr_flag(cxt)) {
                 ret = camera_close_3dnr(cxt);
-            } else if (camera_get_fdr_flag(cxt)) {
+            } else if(camera_get_fdr_flag(cxt)) {
                 ret = camera_close_fdr(cxt);
             }
             CMR_LOGD("jpeg enc done");
@@ -5691,7 +5750,8 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
                             &setting_param);
     if (ret)
         CMR_LOGE("failed to get app mode");
-    if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) {
+    if(setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO &&
+        camera_get_3dnr_flag(cxt) != CAMERA_3DNR_TYPE_NIGHT_DNS) {
           if (cxt->night_cxt.is_authorized) {
             ret = cxt->night_cxt.sw_open(cxt);
             cxt->night_cxt.mfnr_on_off = 1;
@@ -5731,7 +5791,8 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
     if (1 != cxt->is_3dnr_video &&
         (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
          camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)) {
+         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW ||
+         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NIGHT_DNS)) {
         struct isp_adgain_exp_info adgain_exp_info;
         in_param.frame_size.width = cxt->snp_cxt.request_size.width;
         in_param.frame_size.height = cxt->snp_cxt.request_size.height;
@@ -5749,7 +5810,11 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         }
         CMR_LOGD("SW 3DRN, Get Gain from ISP: %d", in_param.adgain);
 
-        ret = camera_open_3dnr(cxt, &in_param, &out_param);
+        if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NIGHT_DNS) {
+            ret = camera_open_night_dns(cxt, &in_param, &out_param);
+        } else {
+            ret = camera_open_3dnr(cxt, &in_param, &out_param);
+        }
         if (ret) {
             CMR_LOGE("failed to open 3dnr %ld", ret);
             return ret;
@@ -10762,17 +10827,19 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 
     case COM_ISP_SET_AE_ADJUST:
         isp_cmd = ISP_CTRL_SET_AE_ADJUST;
-        snp_ae_param.enable = param_ptr->ev_setting.cmd_value;
-        if (param_ptr->ev_setting.snapshot_type == SNAPSHOT_GTM) {
+        snp_ae_param = param_ptr->snp_ae_param;
+        if (snp_ae_param.type == SNAPSHOT_GTM) {
             snp_ae_param.ev_effect_valid_num =
                 cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
             snp_ae_param.ev_adjust_count = 2;
             snp_ae_param.type = SNAPSHOT_GTM;
-        } else if (param_ptr->ev_setting.snapshot_type == SNAPSHOT_DRE) {
+        } else if (snp_ae_param.type == SNAPSHOT_DRE) {
             snp_ae_param.ev_effect_valid_num =
                 cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
             snp_ae_param.ev_adjust_count = 1;
             snp_ae_param.type = SNAPSHOT_DRE;
+        } else if (snp_ae_param.type == SNAPSHOT_NIGHT_DNS) {
+            CMR_LOGD("NIGHT_DNS");
         }
         ptr_flag = 1;
         CMR_LOGD("set ae enable %d", snp_ae_param.enable);
@@ -13108,6 +13175,8 @@ void camera_adjust_ev_before_snapshot(cmr_handle oem_handle,
             cxt->skip_frame_cnt = 2;
         else if (type == SNAPSHOT_DRE)
             cxt->skip_frame_cnt = 1;
+        else if (type == SNAPSHOT_NIGHT_DNS)
+            cxt->skip_frame_cnt = 8;
     } else {
         cxt->skip_frame_enable = 0;
         camera_snapshot_set_ev(oem_handle, 0, type);
@@ -13135,7 +13204,6 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     cmr_u32 is_raw_capture = 0;
     cmr_u32 is_isptool_flag = 0;
     char raw_value[PROPERTY_VALUE_MAX];
-    char isptool_value[PROPERTY_VALUE_MAX];
     cmr_uint video_snapshot_type;
 
     if (!oem_handle) {
@@ -13248,13 +13316,13 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         is_raw_capture = 1;
     }
 
-    property_get("persist.vendor.cam.isptool.mode.enable", isptool_value, "false");
-    if ((!strcmp(isptool_value, "true")) ||
+    property_get("persist.vendor.cam.isptool.mode.enable", raw_value, "false");
+    if ((!strcmp(raw_value, "true")) ||
         (CAMERA_ISP_SIMULATION_MODE == mode)) {
         is_isptool_flag = 1;
     }
     CMR_LOGD("is_raw_capture %d, is_isptool_flag %d", is_raw_capture, is_isptool_flag);
-//GTM set ev
+    //GTM set ev
     if(camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL && cxt->gtm_flag &&
         1 != camera_get_hdr_flag(cxt) && !flash_status && 1 != camera_get_fdr_flag(cxt))
     {
@@ -13305,10 +13373,15 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                CAMERA_3DNR_TYPE_PREV_SW_CAP_SW == camera_get_3dnr_flag(cxt) ||
                 CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW == camera_get_3dnr_flag(cxt)) {
         sem_init(&cxt->threednr_proc_sm, 0, 0);
-        if (!is_raw_capture || !is_isptool_flag) {
+        if (!(is_raw_capture || is_isptool_flag)) {
             ret = camera_3dnr_set_ev(oem_handle, 1);
             if (ret)
                 CMR_LOGE("fail to set 3dnr ev");
+        }
+    } else if (CAMERA_3DNR_TYPE_NIGHT_DNS == camera_get_3dnr_flag(cxt)) {
+        sem_init(&cxt->threednr_proc_sm, 0, 0);
+        if (!(is_raw_capture || is_isptool_flag)) { // not (raw capture, isptool)
+            camera_adjust_ev_before_snapshot(oem_handle, SNAPSHOT_NIGHT_DNS);
         }
     } else {
         // whether FRONT_CAMERA_FLASH_TYPE is lcd
@@ -13408,11 +13481,15 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
                  && cxt->night_cxt.is_authorized && cxt->night_cxt.mfnr_on_off) {
                 cxt->night_cxt.mfnr_on_off = 0;
                 ret = cxt->night_cxt.sw_close(cxt);
-        } else{
+        } else {
              ret = camera_close_3dnr(cxt);
              if (ret)
                 CMR_LOGE("failed to close 3dnr");
         }
+    }else if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NIGHT_DNS) {
+         ret = camera_close_night_dns(cxt);
+         if (ret)
+            CMR_LOGE("failed to close night_dns");
     }
 
     if (cxt->ipm_cxt.cnr_inited) {
@@ -15190,11 +15267,40 @@ cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value,
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     struct setting_cmd_parameter setting_param;
     struct common_isp_cmd_param isp_param;
-    isp_param.ev_setting.cmd_value = value;
-    isp_param.ev_setting.snapshot_type = type;
+
+//    isp_param.ev_setting.cmd_value = value;
+//    isp_param.ev_setting.snapshot_type = type;
     if (value != 0)
         cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                           SETTING_CLEAR_AE_NOTIFY, &setting_param);
+
+    if (type == SNAPSHOT_NIGHT_DNS) {
+        float ev[7];
+        char value[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.night.b01.ev", value, "2,2,2,2,0,-3,-5");
+        sscanf(value, "%f,%f,%f,%f,%f,%f,%f", &ev[0], &ev[1], &ev[2], &ev[3], &ev[4],&ev[5], &ev[6]);
+        CMR_LOGD("ev_effect_valid_num %d", isp_param.snp_ae_param.ev_effect_valid_num);
+        isp_param.snp_ae_param.ev_effect_valid_num =
+            cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
+        isp_param.snp_ae_param.ev_adjust_count = 8;	//last is 0
+        isp_param.snp_ae_param.ev_value[0] = ev[0];
+        isp_param.snp_ae_param.ev_value[1] = ev[1];
+        isp_param.snp_ae_param.ev_value[2] = ev[2];
+        isp_param.snp_ae_param.ev_value[3] = ev[3];
+        isp_param.snp_ae_param.ev_value[4] = ev[4];
+        isp_param.snp_ae_param.ev_value[5] = ev[5];
+        isp_param.snp_ae_param.ev_value[6] = ev[6];
+        isp_param.snp_ae_param.ev_value[7] = 0.0;
+    }
+    ISP_LOGI("ae_adj: cnt %d (%f, %f, %f, %f, %f, %f, %f, %f)",
+            isp_param.snp_ae_param.ev_adjust_count,
+            isp_param.snp_ae_param.ev_value[0], isp_param.snp_ae_param.ev_value[1],
+            isp_param.snp_ae_param.ev_value[2], isp_param.snp_ae_param.ev_value[3],
+            isp_param.snp_ae_param.ev_value[4], isp_param.snp_ae_param.ev_value[5],
+            isp_param.snp_ae_param.ev_value[6], isp_param.snp_ae_param.ev_value[7]);
+
+    isp_param.snp_ae_param.type = type;
+    isp_param.snp_ae_param.enable = value;
     ret =
         camera_isp_ioctl(oem_handle, COM_ISP_SET_AE_ADJUST, (void *)&isp_param);
     if (value != 0)
@@ -15467,8 +15573,16 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 3;
         capture_param.cap_scene = CAPTURE_HDR;
-    } else if ((CAMERA_3DNR_TYPE_PREV_HW_CAP_SW == camera_get_3dnr_flag(cxt)) ||
-        (CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW == camera_get_3dnr_flag(cxt))) {
+    } else if ((CAMERA_3DNR_TYPE_PREV_HW_CAP_SW == camera_get_3dnr_flag(cxt))) {
+        // 5 continuous frames start from next sof interrupt
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = 5;
+        capture_param.cap_scene = CAPTURE_SW3DNR;
+    } else if (CAMERA_3DNR_TYPE_NIGHT_DNS == camera_get_3dnr_flag(cxt)) {
+        capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
+        capture_param.cap_cnt = 7;
+        capture_param.cap_scene = CAPTURE_SW3DNR;
+    } else if ((CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW == camera_get_3dnr_flag(cxt))) {
         // 5 continuous frames start from next sof interrupt
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 5;
@@ -16485,8 +16599,10 @@ cmr_int camera_local_image_sw_algorithm_processing(
             ret=CMR_CAMERA_FAIL;
             CMR_LOGD("not need to nr");
         }
-		   
-    }else {
+    } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT_DNS) {
+        ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
+                                 &imp_out_param);
+    } else {
         CMR_LOGV("sw_type %d", sw_algorithm_type);
     }
 

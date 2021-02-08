@@ -458,6 +458,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
                           struct image_sw_algorithm_buf *src_alg_buf,
                           struct image_sw_algorithm_buf *dst_alg_buf,
                           uint32_t &buf_cnt);
+    int SnapshotZslNightb01(SprdCamera3OEMIf *obj,
+                          struct camera_frame_type *zsl_frame,
+                          struct image_sw_algorithm_buf *src_alg_buf,
+                          struct image_sw_algorithm_buf *dst_alg_buf,
+                          uint32_t &buf_cnt);
     int SnapshotZslHdr(SprdCamera3OEMIf *obj,
                           struct camera_frame_type *zsl_frame,
                           struct image_sw_algorithm_buf *src_alg_buf,
@@ -825,7 +830,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_3dnr_memory_t
         mZslMfnrGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t *mRawHeapArray[kRawBufferCount + 1];
-    cmr_u32 hdr_fd[3];
+    cmr_u32 hdr_fd[HDR_CAP_NUM];
 
     List<MemIonQueue> cam_MemIonQueue;
     List<MemGpuQueue> cam_MemGpuQueue;

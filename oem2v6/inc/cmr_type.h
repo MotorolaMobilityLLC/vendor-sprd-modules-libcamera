@@ -67,6 +67,20 @@ struct img_size {
     cmr_u32 height;
 };
 
+struct ae_aux_param {
+    cmr_u32 exp_time;
+    cmr_u32 total_gain;
+    cmr_u32 iso;
+    cmr_u32 isp_gain;
+    cmr_u32 exposure;
+    float ev;
+};
+
+struct ae_aux_param_t {
+    int cnt;
+    struct ae_aux_param param[16];
+};
+
 struct zoom_info {
     float zoom_ratio;
     float prev_aspect_ratio;

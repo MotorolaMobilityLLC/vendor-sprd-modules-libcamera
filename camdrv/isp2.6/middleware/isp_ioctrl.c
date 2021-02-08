@@ -5197,6 +5197,7 @@ static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 		(struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_snp_ae_param *isp_ae_adj = (struct isp_snp_ae_param *)param_ptr;
 	struct ae_ev_adj_param ae_adj_param = {0};
+	int i, j;
 
 	if (isp_alg_handle == NULL || param_ptr == NULL) {
 		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p",
@@ -5208,10 +5209,21 @@ static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 	ae_adj_param.ev_effect_valid_num = isp_ae_adj->ev_effect_valid_num;
 	ae_adj_param.ev_adjust_cnt = isp_ae_adj->ev_adjust_count;
 	ae_adj_param.type = (enum ae_snapshot_tpye)(isp_ae_adj->type);
+	i = sizeof(isp_ae_adj->ev_value)/sizeof(isp_ae_adj->ev_value[0]);
+	j = sizeof(ae_adj_param.ev_value)/sizeof(ae_adj_param.ev_value[0]);
+	j = (i < j) ? i : j;
+	for (i = 0; i < j; i++)
+		ae_adj_param.ev_value[i] = isp_ae_adj->ev_value[i];
+
+	ISP_LOGV("cnt %d, (%f, %f, %f, %f, %f, %f, %f, %f)",
+		ae_adj_param.ev_adjust_cnt,
+		ae_adj_param.ev_value[0], ae_adj_param.ev_value[1], ae_adj_param.ev_value[2],
+		ae_adj_param.ev_value[3], ae_adj_param.ev_value[4], ae_adj_param.ev_value[5],
+		ae_adj_param.ev_value[6], ae_adj_param.ev_value[7]);
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle,
-					     AE_CAP_EV_ADJUST_START, &ae_adj_param, NULL);
+				 AE_CAP_EV_ADJUST_START, &ae_adj_param, NULL);
 
 	ISP_LOGI("ev adj cap start, ret %ld", ret);
 

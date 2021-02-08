@@ -492,10 +492,13 @@ struct camera_context {
     cmr_s32 swisp_out_mfd;
 
     cmr_s64 hdr_capture_timestamp;
+    cmr_s64 b01night_capture_timestamp;
     cmr_s64 fdr_capture_timestamp;
     cmr_s64 capture_timestamp;
     cmr_u32 hdr_skip_frame_enable;
+    cmr_u32 b01night_skip_frame_enable;
     cmr_u32 hdr_skip_frame_cnt;
+    cmr_u32 b01night_skip_frame_cnt;
     cmr_u32 fdr_skip_frame_enable;
     cmr_u32 fdr_skip_frame_cnt;
     cmr_u32 fdr_capture_frame_cnt;
@@ -523,6 +526,7 @@ struct camera_context {
     struct isp_face_area fd_face_area_capture;
     bool is_capture_face;
     cmr_u32 zsl_enabled; /* 1: zsl,0: non-zsl */
+    struct ae_aux_param_t ae_aux_info; //gain, exp, 10 is biggest num
 
     /* new 4in1 plan, 20191028 */
     cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */

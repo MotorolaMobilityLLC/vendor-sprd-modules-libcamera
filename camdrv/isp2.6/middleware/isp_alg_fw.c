@@ -875,6 +875,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		cmd = ISP_EV_EFFECT_CALLBACK;
 		break;
 #endif
+	case AE_CB_EV_ADJUST_PARMA:
+		cmd = ISP_AE_AUX_EFFECT_CALLBACK;
+        break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
 		break;

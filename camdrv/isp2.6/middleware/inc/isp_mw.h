@@ -148,6 +148,7 @@ enum isp_callback_cmd {
 	ISP_EV_EFFECT_CALLBACK = 0x0000B000,
 	ISP_FDR_EV_EFFECT_CALLBACK = 0x0000C000,
 	ISP_AUTO_FDR_STATUS_CALLBACK = 0x0000D000,
+	ISP_AE_AUX_EFFECT_CALLBACK = 0x0000E000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -869,19 +870,28 @@ struct isp_fdr_param {
 	cmr_u32 ev_effect_cnt;
 };
 
- enum camera_snapshot_tpye {
+  struct isp_ae_adjust_param {
+	cmr_u32 exp_time;
+	cmr_u32 total_gain;
+	cmr_u32 iso;
+	cmr_u32 isp_gain;
+	cmr_u32 exposure;
+	float ev;
+ };
+
+enum camera_snapshot_tpye {
 	SNAPSHOT_NULL = 0,
 	SNAPSHOT_DRE,
 	SNAPSHOT_GTM,
-} ;
-
-
+	SNAPSHOT_NIGHT_DNS,
+};
 
 struct isp_snp_ae_param {   // param OEM sent to ISP
 	cmr_u32 enable;
 	cmr_u32 ev_effect_valid_num;
 	cmr_u32 ev_adjust_count;
 	enum camera_snapshot_tpye type;
+	float ev_value[16];
 };
 
 struct isp_info {

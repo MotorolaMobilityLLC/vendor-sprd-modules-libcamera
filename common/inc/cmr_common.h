@@ -90,6 +90,7 @@ extern "C" {
 #define HDR_CAP_NUM 3
 #define PRE_3DNR_NUM 2
 #define CAP_3DNR_NUM 5
+#define NIGHTDNS_CAP_NUM 7
 #define PRE_SW_3DNR_RESERVE_NUM 8
 #define FACE_DETECT_NUM 10
 #define FRAME_NUM_MAX 0xFFFFFFFF
@@ -618,6 +619,7 @@ typedef enum {
     SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT,
     SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT_PRO,
     SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,
+    SPRD_CAM_IMAGE_SW_ALGORITHM_NIGHT_DNS,
     SPRD_CAM_IMAGE_SW_ALGORITHM_MAX,
 } sprd_cam_image_sw_algorithm_type_t;
 
@@ -1210,6 +1212,7 @@ struct common_isp_cmd_param {
         struct auto_tracking_info af_ot_info;
         struct img_rect ae_target_region;
         struct isp_fb_param_info fb_param;
+        struct isp_snp_ae_param snp_ae_param;
     };
 };
 
@@ -1278,6 +1281,7 @@ enum ipm_class_type {
     IPM_TYPE_DRE = 0x00000500,
     IPM_TYPE_EE_FDR = 0x00000600,
     IPM_TYPE_CNR_FDR = 0x00000700,
+    IPM_TYPE_NIGHTDNS = 0x00000800,
 };
 
 enum img_fmt {
@@ -1815,6 +1819,7 @@ enum camera_3dnr_type {
     CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW,
     CAMERA_3DNR_TYPE_PREV_HW_CAP_NULL,
     CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW,
+    CAMERA_3DNR_TYPE_NIGHT_DNS,
 };
 
 /*

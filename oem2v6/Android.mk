@@ -126,13 +126,29 @@ ifeq ($(strip $(TARGET_BOARD_CAMERA_UV_DENOISE)),true)
 LOCAL_SRC_FILES += src/cmr_uvdenoise.c
 endif
 
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_AUTO_3DNR)),true)
+LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libmfnr/blacksesame/inc
+LOCAL_SHARED_LIBRARIES += libmfnr libui libEGL libGLESv2
+LOCAL_SHARED_LIBRARIES += libSprdMfnrAdapter
+endif
+
+
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_CONFIG_NIGHT_DNS)),true)
+LOCAL_SRC_FILES += src/cmr_night.c
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../camlib/night/include
+LOCAL_SHARED_LIBRARIES += libNightDNSHDR
+else
+ifneq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_AUTO_3DNR)),true)
 ifneq ($(filter $(strip $(TARGET_BOARD_PLATFORM)),ums312 ud710 ums512 ums7520 ums518 ums518-zebu sp9832e sp9863a),)
 LOCAL_SRC_FILES += src/cmr_3dnr_sw.c
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../arithmetic/libmfnr/blacksesame/inc
 LOCAL_SHARED_LIBRARIES += libmfnr libui libEGL libGLESv2
 LOCAL_SHARED_LIBRARIES += libSprdMfnrAdapter
 endif
+endif #TARGET_BOARD_CAMERA_SUPPORT_AUTO_3DNR
+endif #TARGET_BOARD_CONFIG_NIGHT_DNS
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_CNR_CAPTURE)),true)
