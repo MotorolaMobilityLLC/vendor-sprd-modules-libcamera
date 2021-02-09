@@ -209,6 +209,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool mHdrSkipBlur;
     int mjpegSize;
     uint8_t mCameraId;
+    int mFrontCamera;
 #ifdef CONFIG_SPRD_FB_VDSP_SUPPORT
     faceBeautyLevels mPerfectskinlevel;
 #else

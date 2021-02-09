@@ -178,6 +178,7 @@ void SprdPortraitAlgo::setBokenParam(void *param) {
     mPreviewbokehParam.depth_param.sel_y = bokeh_param.sel_y;
     fnum = bokeh_param.f_number * MAX_BLUR_F_FUMBER / MAX_F_FUMBER;
     HAL_LOGD("sel_x,sel_y %d %d",mPreviewbokehParam.depth_param.sel_x,mPreviewbokehParam.depth_param.sel_y);
+    mPreviewbokehParam.weight_params.F_number = fnum;
     mPreviewbokehParam.depth_param.F_number = fnum;
     memcpy(&tuning_golden_vcm,&bokeh_param.relbokeh_oem_data,sizeof(struct af_golden_vcm_data));
     mPrevDepthRunParams.params.tuning_golden_vcm = &tuning_golden_vcm;
@@ -212,6 +213,7 @@ int SprdPortraitAlgo::prevDepthRun(void *para1, void *para2, void *para3,
         mPrevDepthRunParams.params.sel_y = mPreviewbokehParam.depth_param.sel_y;
         mPrevDepthRunParams.params.VCM_cur_value = mPreviewbokehParam.depth_param.VCM_cur_value;
         mPrevDepthRunParams.params.portrait_param = &mBokehPortraitParams;
+        HAL_LOGD("prev_depth_mRotation %d",mBokehPortraitParams.mRotation);
         rc = sprd_depth_adpt_ctrl(mDepthPrevHandle,SPRD_DEPTH_RUN_CMD,&mPrevDepthRunParams);
     }
     if (rc != NO_ERROR) {

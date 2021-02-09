@@ -215,6 +215,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool mHdrSkipBlur;
     int mjpegSize;
     uint8_t mCameraId;
+    int mFrontCamera;
     bool mFaceBeautyFlag;
 #ifdef CONFIG_FACE_BEAUTY
     faceBeautyLevels facebeautylevel;

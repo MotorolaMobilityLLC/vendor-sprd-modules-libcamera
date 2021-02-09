@@ -161,6 +161,7 @@ SprdCamera3Portrait::SprdCamera3Portrait() {
     mjpegSize = 0;
     capture_result_timestamp = 0;
     mCameraId = 0;
+    mFrontCamera = 0;
     mFlushing = false;
     mVcmSteps = 0;
     mVcmStepsFixed = 0;
@@ -1137,6 +1138,7 @@ int SprdCamera3Portrait::getCameraInfo(int id, struct camera_info *info) {
     info->static_camera_characteristics = mStaticMetadata;
     info->conflicting_devices_length = 0;
     info->resource_cost += info_slave.resource_cost;
+    mFrontCamera = info->facing;
     if(info->resource_cost > 100){
         info->resource_cost = 100;
         HAL_LOGE("resource_cost > 100");
@@ -2763,18 +2765,20 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
     if (metaSettings.exists(ANDROID_SPRD_DEVICE_ORIENTATION)) {
         mbokehParm.portrait_param.mobile_angle =
             metaSettings.find(ANDROID_SPRD_DEVICE_ORIENTATION).data.i32[0];
-        if (mbokehParm.portrait_param.mobile_angle == 0) {
-            mbokehParm.portrait_param.mobile_angle = 180;
-        } else if (mbokehParm.portrait_param.mobile_angle == 180) {
-            mbokehParm.portrait_param.mobile_angle = 0;
-        }
     }
-    mbokehParm.portrait_param.mRotation =
-        mJpegOrientation; // mbokehParm.portrait_param.mobile_angle;
-
     mbokehParm.portrait_param.camera_angle =
         SprdCamera3Setting::s_setting[mPortrait->mCameraId]
             .sensorInfo.orientation;
+    HAL_LOGD("isFrontCamera %d",mFrontCamera);
+    if (mFrontCamera == 0) {
+        mbokehParm.portrait_param.mRotation =
+            (mbokehParm.portrait_param.mobile_angle +
+             mbokehParm.portrait_param.camera_angle) % 360;
+    } else {
+        mbokehParm.portrait_param.mRotation =
+            ((360 - mbokehParm.portrait_param.mobile_angle) % 360 +
+             mbokehParm.portrait_param.camera_angle) % 360;
+    }
 
     if (!mIsCapturing) {
         j = 0;
@@ -3077,6 +3081,7 @@ int SprdCamera3Portrait::initialize(
     mCapFrameNumber = 0;
     mPrevBlurFrameNumber = 0;
     mjpegSize = 0;
+    mFrontCamera = 0;
     mFlushing = false;
     mCallbackOps = callback_ops;
     mLocalBufferList.clear();

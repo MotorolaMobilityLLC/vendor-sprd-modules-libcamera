@@ -189,6 +189,7 @@ int SprdBokehAlgo::prevDepthRun(void *para1, void *para2, void *para3,
         mPrevDepthRunParams.params.VCM_cur_value = mPreviewbokehParam.depth_param.VCM_cur_value;
 
         mPrevDepthRunParams.params.portrait_param = &mBokehPortraitParams;
+        HAL_LOGD("prev_depth_mRotation %d",mBokehPortraitParams.mRotation);
         rc = sprd_depth_adpt_ctrl(mDepthPrevHandle,SPRD_DEPTH_RUN_CMD,&mPrevDepthRunParams);
     }
     if (rc != NO_ERROR) {
@@ -446,8 +447,11 @@ int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
     mCapDepthRunParams.params.sel_y = mCapbokehParam.sel_y;
     mCapDepthRunParams.params.VCM_cur_value = vcmCurValue;
 
-    mCapDepthRunParams.params.portrait_param = &mBokehPortraitParams;
-
+    portrait_mode_param capParams;
+    memset(&capParams,0,sizeof(portrait_mode_param));
+    memcpy(&capParams,&mBokehPortraitParams,sizeof(struct portrait_mode_param));
+    mCapDepthRunParams.params.portrait_param = &capParams;
+    HAL_LOGD("cap_depth_mRotation %d",mBokehPortraitParams.mRotation);
     rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_RUN_CMD,&mCapDepthRunParams);
 exit:
     return rc;
