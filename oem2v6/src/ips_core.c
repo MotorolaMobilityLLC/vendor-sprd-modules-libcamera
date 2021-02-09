@@ -604,11 +604,43 @@ static cmr_int swa_jpeg_process(struct ips_context *ips_ctx,
 	return ret;
 }
 
+
+static int check_skip(struct ipmpro_node *cur_proc,
+	struct swa_frame_param *frm_param)
+{
+	switch (cur_proc->type) {
+
+	case IPS_TYPE_FB:
+		CMR_LOGD("fb bypass %d, face_num %d\n", frm_param->fb_info.bypass,
+			frm_param->face_param.face_num);
+		if (frm_param->fb_info.bypass || frm_param->face_param.face_num == 0)
+			return 1;
+		else
+			return 0;
+
+	case IPS_TYPE_CNR:
+		CMR_LOGD("cnr2_bypass %d cnr3 %d %d, ynnrs %d %d",
+			frm_param->cnr2_info.bypass,
+			frm_param->cnr3_info.bypass, frm_param->cnr3_info.baseRadius,
+			frm_param->ynrs_info.bypass, frm_param->ynrs_info.radius_base);
+		if (frm_param->ynrs_info.bypass &&
+			frm_param->cnr2_info.bypass &&
+			frm_param->cnr3_info.bypass)
+			return 1;
+		else
+			return 0;
+
+	default:
+		return 0;
+	}
+	return 0;
+}
+
 static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 	struct ips_req_node *req, struct img_frm *frame)
 {
     	cmr_int ret = CMR_CAMERA_SUCCESS;
-	int iret = 0, i;
+	int iret = 0, i, err = 0;
 	struct img_frm *dst, *src;
 	struct ipmpro_node *cur_proc = req->cur_proc;
 	struct ipmpro_handle_base *ipm_base = cur_proc->ipm_base;
@@ -618,11 +650,18 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 
 	frm_param = (struct swa_frame_param *)frame->reserved;
 
-	dst = &req->frm_in[req->frame_cnt];
-	*dst = *frame;
+	req->frm_in[req->frame_cnt] = *frame;
+	src = &req->frm_in[req->frame_cnt];
+	dst = &req->frm_out[req->frame_cnt];
+	*dst = *src;
 
-	CMR_LOGD("req_id %d, input frame %d, fd 0x%x, addr 0x%lx\n",
-		req->req_in.request_id, req->frame_cnt, dst->fd, dst->addr_vir.addr_y);
+	CMR_LOGD("req_id %d, param %p, input frame %d,  fd 0x%x, addr 0x%lx\n",
+		req->req_in.request_id, frm_param, req->frame_cnt, dst->fd, dst->addr_vir.addr_y);
+
+	if (check_skip(cur_proc, frm_param)) {
+		CMR_LOGD("proc type %d, skip\n", cur_proc->type);
+		goto exit;
+	}
 
 	if (ipm_base->multi_support == 0)
 		pthread_mutex_lock(&ipm_base->glock);
@@ -631,13 +670,11 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 		iret = ipm_base->swa_open(cur_proc->swa_handle, (void *)&req->init_param, 4);
 		if (iret) {
 			CMR_LOGE("fail to open for proc %d\n", cur_proc->type);
+			if (ipm_base->multi_support == 0)
+				pthread_mutex_unlock(&ipm_base->glock);
 			return CMR_CAMERA_FAIL;
 		}
 	}
-
-	src = &req->frm_in[req->frame_cnt];
-	dst = &req->frm_out[req->frame_cnt];
-	*dst = *src;
 
 	if (ipm_base->swa_process == NULL) {
 		CMR_LOGD("type %d process is NULL\n", cur_proc->type);
@@ -682,27 +719,23 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 	out.frms[0].addr_vir[1] = src->addr_vir.addr_u;
 	out.frms[0].addr_vir[2] = src->addr_vir.addr_v;
 
-	CMR_LOGD("param %p, cnr2_bypass %d cnr3 %d %d, ynnrs %d %d", frm_param,
-		frm_param->cnr2_info.bypass,
-		frm_param->cnr3_info.bypass, frm_param->cnr3_info.baseRadius,
-		frm_param->ynrs_info.bypass, frm_param->ynrs_info.radius_base);
 	iret = ipm_base->swa_process(cur_proc->swa_handle, &in, &out, frame->reserved);
 
 proc_done:
 	if (iret) {
 		CMR_LOGE("fail to process type %d\n", cur_proc->type);
-		return CMR_CAMERA_FAIL;
+		err |= 1;
 	}
 
 	if (ipm_base->swa_close) {
 		iret = ipm_base->swa_close(cur_proc->swa_handle, NULL);
 		if (iret) {
 			CMR_LOGE("fail to close for proc %d\n", cur_proc->type);
-			return CMR_CAMERA_FAIL;
+			err |= 1;
 		}
 	}
 
-	if (dump_pic & 1) {
+	if (!err  &&  (dump_pic & 1)) {
 		FILE *fp;
 		char fname[256];
 		int size;
@@ -721,10 +754,11 @@ proc_done:
 		}
 	}
 
-	req->frame_cnt++;
 	if (ipm_base->multi_support == 0)
 		pthread_mutex_unlock(&ipm_base->glock);
 
+exit:
+	req->frame_cnt++;
 	if (req->frame_cnt >= req->frame_total) {
 		CMR_LOGD("req id %d type %d process all frame %d done\n",
 			req->req_in.request_id,  cur_proc->type, req->frame_total);
