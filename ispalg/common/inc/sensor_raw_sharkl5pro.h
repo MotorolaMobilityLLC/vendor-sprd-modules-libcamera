@@ -2603,6 +2603,38 @@ struct sensor_dre_pro_level {
 	cmr_u8 reserved[280];
 };
 
+//hdr
+struct sensor_hdr_component {
+	float dark_low;
+	float dark_high;
+	float bright_low;
+	float bright_high;
+	float ev[2];
+	cmr_s32 scene_flag;
+	cmr_s32 thres_mv;
+	cmr_s32 thres_oe;
+	cmr_s32 thres_oe2;
+	cmr_s32 w_yoe_m;
+	float w_yoe_s;
+	cmr_s32 w_uv_m;
+	float w_uv_s;
+	float sat_strength;
+	cmr_s32 dist_thres;
+	cmr_s32 mv_num_thres;
+	cmr_s32 mv_border;
+	cmr_s32 mv_dilate_thres;
+};
+
+struct sensor_hdr_param {
+	cmr_u32 version;
+	cmr_s32 scene_num;
+	cmr_u32 bv_thr1;
+	cmr_u32 bv_thr2;
+	cmr_u8 thres_dark;
+	cmr_u8 thres_bright;
+	cmr_u8 reserved[2];
+	struct sensor_hdr_component scene[6][10];
+};
 
 struct sensor_ae_tab_param {
 	cmr_u8 *ae;
