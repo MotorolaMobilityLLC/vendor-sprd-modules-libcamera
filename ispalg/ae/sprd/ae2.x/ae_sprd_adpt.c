@@ -4202,6 +4202,53 @@ static void ae_hdr_calculation(struct ae_ctrl_cxt *cxt, cmr_u32 in_max_frame_lin
 	ISP_LOGV("exposure %d, max_frame_line %d, min_frame_line %d, exp_time %d, exp_line %d, gain %d", in_exposure, in_max_frame_line, in_min_frame_line, exp_time, exp_line, gain);
 }
 
+static cmr_s32 ae_get_hdr_exp_gain_infor(struct ae_ctrl_cxt *cxt, void *result)
+{
+	cmr_s32 rtn = AE_SUCCESS;
+
+	cmr_u32 base_exposure_line = 0;
+	cmr_u32 up_exposure = 0;
+	cmr_u32 down_exposure = 0;
+	cmr_u16 base_gain = 0;
+	cmr_u32 max_frame_line = 0;
+	cmr_u32 min_frame_line = 0;
+	cmr_u32 exp_line = 0;
+	cmr_u32 gain = 0;
+	cmr_u32 min_index = cxt->cur_status.ae_table->min_index;
+
+	if (result) {
+		struct ae_hdr_exp_gain_infor *hdr_param = (struct ae_hdr_exp_gain_infor *)result;
+
+		hdr_param->exp_time[0] = cxt->hdr_exp_line * cxt->cur_status.line_time;
+		hdr_param->total_gain[0] = cxt->hdr_gain;
+
+		max_frame_line = (cmr_u32) (1.0 * 1000000000 / cxt->fps_range.min / cxt->cur_status.line_time);
+		min_frame_line = cxt->cur_status.ae_table->exposure[min_index];
+
+		base_exposure_line = cxt->hdr_exp_line;
+		base_gain = cxt->hdr_gain;
+		down_exposure = (cmr_u32)(1.0 / pow(2, cxt->hdr_calc_result.ev[0]) * base_exposure_line * cxt->cur_status.line_time);
+		ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure, pow(2, cxt->hdr_calc_result.ev[0]));
+		ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+
+		hdr_param->exp_time[1] = exp_line * cxt->cur_status.line_time;
+		hdr_param->total_gain[1] = gain;
+
+		up_exposure = (cmr_u32)(pow(2, cxt->hdr_calc_result.ev[1]) * base_exposure_line * cxt->cur_status.line_time);
+		ISP_LOGD("up_exp %d, pow2 %f\n", up_exposure, pow(2, cxt->hdr_calc_result.ev[1]));
+		ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+
+		hdr_param->exp_time[2] = exp_line * cxt->cur_status.line_time;
+		hdr_param->total_gain[2] = gain;
+
+		rtn = AE_SUCCESS;
+	} else {
+		rtn = AE_ERROR;
+	}
+
+	return rtn;
+}
+
 static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
 	UNUSED(param);
@@ -4224,14 +4271,18 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	float ev_result[2] = {0, 0};
 	ev_result[0] = -cxt->hdr_calc_result.ev[0];
 	ev_result[1] = cxt->hdr_calc_result.ev[1];
-	ISP_LOGD("auto_hdr (cap) ev[0] %f ev[1] %f", ev_result[0], ev_result[1]);
+	cmr_u32 param_index = cxt->hdr_calc_result.tuning_param_index;
+	ISP_LOGD("auto_hdr (cap) ev[0] %f ev[1] %f param_index %d", ev_result[0], ev_result[1],param_index);
 #endif
 
 	cxt->hdr_frame_cnt++;
 	hdr_callback_flag = MAX((cmr_s8) cxt->hdr_cb_cnt, (cmr_s8) cxt->capture_skip_num);
 	if (cxt->hdr_frame_cnt == hdr_callback_flag) {
 #ifdef CONFIG_SUPPROT_AUTO_HDR
+		ae_get_hdr_exp_gain_infor(cxt,&cxt->hdr_exp_gain);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, (void *)ev_result);
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_TUNING_PARAM_INDEX, &param_index);
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_EXP_GAIN, &cxt->hdr_exp_gain);
 		if (cxt->is_multi_mode && cxt->isp_ops.ae_bokeh_hdr_cb) {
 			(*cxt->isp_ops.ae_bokeh_hdr_cb) (cxt->isp_ops.isp_handler, (void *)ev_result);
 		}
@@ -6200,6 +6251,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	struct _tag_hdr_stat_t hdr_stat;
 	float ev_result[2] = {0,0};
 	cmr_s8 auto_hdr_enable = 0;
+	char value[PROPERTY_VALUE_MAX];
 
 #endif
 
@@ -6391,9 +6443,19 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		}
 		hdr_param.thres_bright = 250;
 		hdr_param.thres_dark = 20;
-		auto_hdr_enable = (cmr_s8)sprd_hdr_scndet_multi_inst(&hdr_param, &hdr_stat, ev_result,&cxt->smooth_flag,&cxt->frameid);
+		hdr_param.tuning_param = cxt->hdr_tuning_param;
+		hdr_param.tuning_param_size = cxt->hdr_tuning_size;
+		hdr_param.abl_weight = cxt->calc_results.ae_output.abl_weight;
+		hdr_param.bv = cxt->calc_results.ae_output.cur_bv;
+		hdr_param.face_num = (cxt->cur_status.ae1_finfo.cur_info.face_num > 0) ? 1 : 0;
+		hdr_param.iso = cxt->calc_results.ae_output.cur_iso;
+		ISP_LOGV("hdr input param abl:%d bv:%d,face_num:%d iso:%d \n",hdr_param.abl_weight,hdr_param.bv,hdr_param.face_num,hdr_param.iso);
+		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+		if(strcmp(value, "true"))
+			auto_hdr_enable = (cmr_s8)sprd_hdr_scndet_multi_inst(&hdr_param, &hdr_stat, ev_result,&cxt->smooth_flag,&cxt->frameid);
 		cxt->hdr_calc_result.ev[0] = fabs(ev_result[0]);
 		cxt->hdr_calc_result.ev[1] = ev_result[1];
+		cxt->hdr_calc_result.tuning_param_index = hdr_param.tuning_param_index;
 		ISP_LOGV("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, ev_result[0], ev_result[1]);
 	}
 	if (cxt->hdr_menu_ctrl) {
@@ -7127,6 +7189,8 @@ cmr_handle ae_sprd_init(cmr_handle param, cmr_handle in_param)
 	cxt->calcFirstFlag = 0;
 	cxt->ebd_support = init_param->ebd_support;
 	cxt->bv_thd = init_param->bv_thd;
+	cxt->hdr_tuning_param = init_param->hdr_tuning_param;
+	cxt->hdr_tuning_size = init_param->hdr_tuning_size;
 	cxt->cur_status.base_img = (cmr_u32 *)malloc(3*16384*sizeof(cmr_u32));
 	if(NULL == cxt->cur_status.base_img){
                 rtn = AE_ALLOC_ERROR;

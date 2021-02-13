@@ -144,6 +144,7 @@ extern "C" {
 	struct hdr_calc_result {
 		float ev[2];
 		cmr_s8 auto_hdr_enable;
+		cmr_u32 tuning_param_index;
 	};
 
 /**************************************************************************/
@@ -354,6 +355,7 @@ extern "C" {
 		cmr_u8 hdr_version;
 		cmr_u8 hdr_menu_ctrl; /* auto: 1*/
 		struct hdr_calc_result hdr_calc_result;
+		struct ae_hdr_exp_gain_infor hdr_exp_gain;
 		cmr_s32 smooth_flag;
 		cmr_s32 frameid;
 		cmr_s8 dre_enable;
@@ -442,6 +444,8 @@ extern "C" {
 		cmr_u8 flash_main_before_flag;
 		cmr_u8 mainFlashEn;
 		cmr_u8 calcFirstFlag;
+		void *hdr_tuning_param;
+		cmr_s32 hdr_tuning_size;
 		cmr_u32 end_id;
 	};
 #ifdef __cplusplus

@@ -128,6 +128,7 @@ extern "C" {
 	struct hdr_calc_result {
 		float ev[2];
 		cmr_s8 auto_hdr_enable;
+		cmr_u32 tuning_param_index;
 	};
 
 	struct fdr_lib_ops{
@@ -334,6 +335,7 @@ extern "C" {
 		struct hdr_calc_result hdr_calc_result;
 		cmr_s32 smooth_flag;
 		cmr_s32 frameid;
+		struct ae_hdr_exp_gain_infor hdr_exp_gain;
 		/*
 		 * EV adjust control
 		 */
@@ -462,6 +464,9 @@ extern "C" {
 		cmr_u8 mainFlashEn;
 		cmr_u8 calcFirstFlag;
 		struct ae_monitor_cfg ae_monitor_setting;
+
+		void *hdr_tuning_param;
+		cmr_s32 hdr_tuning_size;
 
 		cmr_u32 end_id;
 
