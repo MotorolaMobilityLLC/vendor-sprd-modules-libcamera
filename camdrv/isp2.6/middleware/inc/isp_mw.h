@@ -144,6 +144,7 @@ enum isp_callback_cmd {
 	ISP_AF_PARAMS_CALLBACK = 0x000010000,
 	ISP_AE_CB_HDR_EXP_GAIN = 0x00020000,
 	ISP_AE_CB_HDR_TUNING_PARAM_INDEX = 0x00030000,
+	ISP_FLASH_CALIBRATION_CALLBACK  = 0x00040000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -458,6 +459,7 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_PARAMS,
 	ISP_CTRL_AE_SET_FD_STATUS,
 	ISP_CTRL_SET_LONG_EXP,
+	ISP_CTRL_SET_FALSH_CALIBRATION,
 	ISP_CTRL_MAX
 };
 
@@ -992,6 +994,8 @@ struct isp_init_param {
 	cmr_u32 is_4in1_sensor;
 	cmr_u32 is_faceId_unlock;
 	cmr_u8 is_dual_video;
+	void * flash_calibration_data;
+	cmr_int flash_calibration_size;
 };
 
 struct img_offset {

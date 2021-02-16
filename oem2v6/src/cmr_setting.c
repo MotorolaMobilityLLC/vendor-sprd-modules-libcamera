@@ -218,6 +218,7 @@ struct setting_hal_param {
     cmr_uint sprd_time_watermark;
     struct img_size originalPictureSize;
     cmr_uint is_super_macrophoto;
+    cmr_uint is_enable_flash_cali;
 };
 
 struct setting_camera_info {
