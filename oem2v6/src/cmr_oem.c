@@ -437,6 +437,30 @@ static cmr_int camera_nightpro_process(cmr_handle oem_handle, struct image_sw_al
 static cmr_int camera_nightpro_close(cmr_handle oem_handle);
 static cmr_int camera_ipm_pro_process(cmr_handle oem_handle, void *data);
 
+static cmr_int camera_deal_flash_cali_write_data(cmr_int camera_id, void *data, int size)
+{
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    const char *nv_path = "/mnt/vendor/productinfo/";
+    char path[256] = "";
+
+    sprintf(path, "%scamera_falsh_calibration_id_%d", nv_path, camera_id);
+    FILE *fp1 = fopen(path, "wb");
+    if (fp1)
+    {
+        fwrite(data, size, 1, fp1);
+        CMR_LOGI("write success : %s",path);
+        fclose(fp1);
+    }
+    else
+    {
+        ret = CMR_CAMERA_FAIL;
+        CMR_LOGI("write failed : %s",path);
+    }
+
+    CMR_LOGI("X");
+    return ret;
+}
+
 static cmr_int camera_open_fdr(struct camera_context *cxt) {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 log_level;
@@ -2972,6 +2996,11 @@ cmr_int camera_convert_coor_sensor_to_capture(const struct img_rect *sn_trim,
         return ret;
 }
 
+struct cali_write_cali_info{
+    void *ptr;
+    int size;
+};
+
 cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
                           cmr_u32 data_len) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -3236,6 +3265,17 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     case ISP_AE_CB_HDR_TUNING_PARAM_INDEX:
         cxt->snp_cxt.hdr_callback = data;
         break;
+    case ISP_FLASH_CALIBRATION_CALLBACK:
+        if (data) {
+            CMR_LOGI("flash calibration write data %p , %d ",
+                     (*(struct cali_write_cali_info *)data).ptr,
+                     (*(struct cali_write_cali_info *)data).size);
+            camera_deal_flash_cali_write_data(
+                cxt->camera_id, (*(struct cali_write_cali_info *)data).ptr,
+                (*(struct cali_write_cali_info *)data).size);
+        } else {
+            CMR_LOGI("flash calibration write data failed");
+        }
     default:
         break;
     }
@@ -6233,6 +6273,27 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         isp_param.image_pattern, sensor_info_ptr->image_pattern, isp_param.is_4in1_sensor,
         isp_param.is_faceId_unlock, isp_param.ex_info.long_expose_supported);
 
+    static const char *nv_path = "/mnt/vendor/productinfo/";
+    char path[256] = "";
+
+    sprintf(path, "%scamera_falsh_calibration_id_%d", nv_path, cxt->camera_id );
+    FILE *fp1 = fopen(path, "rb");
+    if (fp1) {
+        fseek(fp1, 0, SEEK_END);
+        isp_param.flash_calibration_size = ftell(fp1);
+        CMR_LOGI("feek size : %d", isp_param.flash_calibration_size);
+        isp_param.flash_calibration_data =(void *)malloc(isp_param.flash_calibration_size);
+        memset(isp_param.flash_calibration_data,0,isp_param.flash_calibration_size);
+        fseek(fp1, 0, SEEK_SET);
+        fread(isp_param.flash_calibration_data, 1, isp_param.flash_calibration_size, fp1);
+        CMR_LOGI("read success : %s", path);
+        fclose(fp1);
+    } else {
+        isp_param.flash_calibration_data = NULL;
+        isp_param.flash_calibration_size = 0 ;
+        CMR_LOGI("read null : %s", path);
+    }
+    
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
     if (ret) {
         CMR_LOGE("failed to init isp %ld", ret);
@@ -6257,6 +6318,12 @@ exit:
         cali_result.data_ptr = NULL;
     }
 
+    if(isp_param.flash_calibration_data)
+    {
+        free(isp_param.flash_calibration_data);
+        isp_param.flash_calibration_data = NULL;
+        isp_param.flash_calibration_size = 0;
+    }
     ATRACE_END();
     return ret;
 }
@@ -11848,7 +11915,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
          ptr_flag = 1;
          isp_param_ptr = param_ptr->cmd_ptr;
          break;
-
+    case COM_ISP_SET_FALSH_CALIBRATION:
+         CMR_LOGD("set ISP_CTRL_SET_FALSH_CALIBRATION");
+         isp_cmd = ISP_CTRL_SET_FALSH_CALIBRATION;
+         ptr_flag = 1;
+         isp_param_ptr = param_ptr->cmd_ptr;
+         break;
     default:
         CMR_LOGE("don't support cmd %ld", cmd_type);
         ret = CMR_CAMERA_NO_SUPPORT;
@@ -17058,6 +17130,33 @@ cmr_int camera_get_fdr_tuning_flag(cmr_handle oem_handle, cmr_int *tuning_flag) 
         *tuning_flag = 0;
     }
 
+    return ret;
+}
+
+cmr_int camera_set_flash_calibration(cmr_handle oem_handle,
+                                     cmr_int *param){
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct common_isp_cmd_param isp_param;
+    uint8_t isenable = *((uint8_t *)param + 1);
+
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    isp_param.camera_id = cxt->camera_id;
+    isp_param.cmd_ptr = (void *)param;
+    if (!isenable)
+    {
+        /*result will be return*/
+        CMR_LOGD("flash calibration %p",param);
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_FALSH_CALIBRATION, &isp_param);
+        if (ret)
+        {
+            CMR_LOGE("failed to set flash calibration enable %ld", ret);
+        }
+    }
+    else
+    {
+        CMR_LOGD("return some data %p", param);
+    }
     return ret;
 }
 

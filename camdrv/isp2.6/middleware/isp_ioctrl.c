@@ -5923,6 +5923,22 @@ static cmr_int ispctl_set_long_exp_lock_awb(cmr_handle isp_alg_handle, void *par
 	return ISP_SUCCESS;
 }
 
+static cmr_int ispctl_set_flash_calibration(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	    if (NULL == param_ptr) {
+			ISP_LOGE("fail to set ispctl_set_flash_calibration");
+            return ISP_PARAM_NULL;
+    }
+	ISP_LOGD("pointer %p", param_ptr);
+	//*((char*) param_ptr)=1;
+	if (cxt->ops.ae_ops.ioctrl)
+        ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FLASH_CALIBRATION,
+                                                NULL, param_ptr);
+	return ret;
+}
+
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
@@ -6057,6 +6073,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_FACEBEAUTY_ENABLE, ispctl_set_facebeauty_scene},
 	{ISP_CTRL_SET_AUTO_FLASH_CAP, ispctl_set_auto_flash_cap},
 	{ISP_CTRL_SET_LONG_EXP,ispctl_set_long_exp_lock_awb},
+	{ISP_CTRL_SET_FALSH_CALIBRATION,ispctl_set_flash_calibration},
 	{ISP_CTRL_MAX, NULL}
 };
 

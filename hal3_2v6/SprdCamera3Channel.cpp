@@ -1696,6 +1696,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_SMILE_CAPTURE_ENABLE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_SMILE_CAPTURE_ENABLE);
             break;
+        case ANDROID_SPRD_FALSH_CALIBRATION_ENABLE:
+            HAL_LOGD("ANDROID_SPRD_FALSH_CALIBRATION_ENABLE");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_FALSH_CALIBRATION_ENABLE);
+            break;
         default:
             HAL_LOGV("other tag");
             break;

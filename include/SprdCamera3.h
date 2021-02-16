@@ -262,6 +262,8 @@ static tags_info_t
         {"sprdSendorExposureLongTime", TYPE_DOUBLE},
         {"sprdAwbCtRange", TYPE_INT32},
         {"sprdAwbCtValue", TYPE_INT32},
+        {"sprdfalshcalibrationenable", TYPE_BYTE},
+        {"sprdfalshcalibrationresult", TYPE_BYTE},
 };
 
 tags_info_t *cam_tag_info[ANDROID_VENDOR_SECTION_COUNT] = {
