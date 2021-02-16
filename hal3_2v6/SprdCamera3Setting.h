@@ -370,6 +370,14 @@ typedef struct {
     uint32_t ot_frame_num;
 } REQUEST_Tag;
 
+#define SPRD_FALSH_CALI_INFO_SIZE 128
+typedef struct {
+    uint8_t first_tigger_flag;
+    uint8_t enable;
+    uint8_t result;
+    uint8_t error_info[SPRD_FALSH_CALI_INFO_SIZE];
+} FALSH_CALI_Tag;
+
 typedef struct {
     uint8_t availabe_brightness[7];
     uint8_t availabe_contrast[7];
@@ -462,6 +470,8 @@ typedef struct {
     uint32_t long_expo_enable;
     int32_t awb_ct_range[2];
     int32_t awb_ct_value;
+    uint8_t sprd_flash_cali_enable;
+    uint8_t sprd_flash_cali_first_trigger;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -603,6 +613,7 @@ typedef struct {
     uint8_t notify_next_cap;   /*for shot2shot*/
     ENGENEER_Tag engeneerInfo;
     uint8_t get_algo_version;
+    FALSH_CALI_Tag flash_cali_result;
 } sprd_setting_info_t;
 typedef int (*CAMIP_INTERFACE_INIT)(char **);
 class SprdCamera3Setting {
@@ -801,6 +812,7 @@ class SprdCamera3Setting {
     int getVCMTag(VCM_Tag *vcmInfo);
     int clearMLOGTag();
     int getMLOGTag(MLOG_Tag **mlogInfo);
+    int getflashcaliTag(FALSH_CALI_Tag **flashcaliInfo);
     int setVCMDACTag(uint16_t *vcmInfo, uint8_t num);
     int getVCMDISTTag(VCM_DIST_TAG *vcmDist);
     int getCALOTPTag(CAL_OTP_Tag *calOTP);

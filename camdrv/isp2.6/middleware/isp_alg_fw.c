@@ -510,6 +510,9 @@ struct isp_alg_fw_context {
 	cmr_u32 ambient_highlight; /* 4in1: 1:highlight,0:lowlight; other sensor:0 */
 	cmr_u32 is_high_res_mode; /* 1: high resolution mode */
 	cmr_u32 fix_highlight; /* 0: not fix, 1: highlight, 2:lowlight */
+	/* for flash calibration*/
+	void * flash_calibration_data;
+	cmr_u32 flash_calibration_size;
 
 	/* for debug */
 	struct mw_prop_ctrl prop_ctrl;
@@ -968,6 +971,9 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		break;
 	case AE_CB_HDR_TUNING_PARAM_INDEX:
 		cmd = ISP_AE_CB_HDR_TUNING_PARAM_INDEX;
+		break;
+	case AE_CB_FLASH_CALIBRATION:
+		cmd = ISP_FLASH_CALIBRATION_CALLBACK;
 		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
@@ -4864,6 +4870,9 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 
 	ae_input.ptr_isp_br_ioctrl = isp_br_ioctrl;
 
+	ae_input.flash_cali_data = cxt ->flash_calibration_data;
+	ae_input.flash_cali_size = cxt ->flash_calibration_size;
+
 	if (cxt->ops.ae_ops.init) {
 		ret = cxt->ops.ae_ops.init(&ae_input, &cxt->ae_cxt.handle, (cmr_handle)&result);
 		ISP_TRACE_IF_FAIL(ret, ("fail to do ae_ctrl_init"));
@@ -7850,7 +7859,17 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	ISP_LOGI("camera_id = %ld, master %d, is_4in1_sensor %d\n", cxt->camera_id,
 		cxt->is_master, cxt->is_4in1_sensor);
 
-	if (input_ptr->init_param->pdaf_info) {
+        if (input_ptr->init_param->flash_calibration_size) {
+            cxt->flash_calibration_data =
+                malloc(input_ptr->init_param->flash_calibration_size);
+            memcpy(cxt->flash_calibration_data,
+                   input_ptr->init_param->flash_calibration_data,
+                   input_ptr->init_param->flash_calibration_size);
+            cxt->flash_calibration_size =
+                input_ptr->init_param->flash_calibration_size;
+        }
+
+        if (input_ptr->init_param->pdaf_info) {
 		cxt->pdaf_info = (struct sensor_pdaf_info *)malloc(sizeof(struct sensor_pdaf_info));
 		if (!cxt->pdaf_info) {
 			ISP_LOGE("fail to malloc pdaf_info buf");
@@ -7906,6 +7925,10 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 		ISP_LOGE("fail to get cxt pointer");
 		ret = ISP_PARAM_NULL;
 		return ret;
+	}
+	if(cxt->flash_calibration_data){
+		free(cxt->flash_calibration_data);
+		cxt->flash_calibration_data = NULL;
 	}
 	if (!cxt->alg_enable) {
 		free((void *)cxt);

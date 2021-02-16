@@ -6036,6 +6036,16 @@ int SprdCamera3Setting::updateWorkParameters(
                          valueU8, ANDROID_SPRD_SUPER_MACROPHOTO_ENABLE, 1);
     }
 #endif
+
+    if (frame_settings.exists(ANDROID_SPRD_FALSH_CALIBRATION_ENABLE)){
+        HAL_LOGD("falshcali push");
+        s_setting[mCameraId].sprddefInfo.sprd_flash_cali_enable =
+            frame_settings.find(ANDROID_SPRD_FALSH_CALIBRATION_ENABLE).data.u8[0];
+        s_setting[mCameraId].sprddefInfo.sprd_flash_cali_first_trigger =
+            s_setting[mCameraId].sprddefInfo.sprd_flash_cali_enable;
+        pushAndroidParaTag(ANDROID_SPRD_FALSH_CALIBRATION_ENABLE);
+    }
+
     HAL_LOGD("mCameraId=%d, focus_distance=%f, ae_precap_trigger= %d, "
              "isFaceBeautyOn=%d, eis=%d, flash_mode=%d, ae_lock=%d, "
              "scene_mode=%d, cap_mode=%d, cap_cnt=%d, iso=%d, jpeg orien=%d, "
@@ -6832,6 +6842,15 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
              s_setting[mCameraId].controlInfo.af_state);
     camMetadata.update(ANDROID_SPRD_ENGENEER_MODE_PARAM, engeneerParam, 2);
 
+    uint8_t flashcaliparam[SPRD_FALSH_CALI_INFO_SIZE + 1];
+    if (s_setting[mCameraId].flash_cali_result.enable){
+        HAL_LOGD("flash cali result get result :%d (%s)",s_setting[mCameraId].flash_cali_result.result,s_setting[mCameraId].flash_cali_result.error_info);
+        flashcaliparam[0] = s_setting[mCameraId].flash_cali_result.result;
+        memcpy(&flashcaliparam[1], s_setting[mCameraId].flash_cali_result.error_info, SPRD_FALSH_CALI_INFO_SIZE);
+        camMetadata.update(ANDROID_SPRD_FALSH_CALIBRATION_RESULT, &flashcaliparam[0], SPRD_FALSH_CALI_INFO_SIZE + 1);
+        s_setting[mCameraId].flash_cali_result.enable = 0;
+    }
+
     resultMetadata = camMetadata.release();
     return resultMetadata;
 }
@@ -7229,6 +7248,11 @@ int SprdCamera3Setting::clearMLOGTag() {
 
 int SprdCamera3Setting::getMLOGTag(MLOG_Tag **mlogInfo) {
     *mlogInfo = &s_setting[mCameraId].mlogInfo;
+    return 0;
+}
+
+int SprdCamera3Setting::getflashcaliTag(FALSH_CALI_Tag **flashcaliInfo){
+    *flashcaliInfo = &s_setting[mCameraId].flash_cali_result;
     return 0;
 }
 

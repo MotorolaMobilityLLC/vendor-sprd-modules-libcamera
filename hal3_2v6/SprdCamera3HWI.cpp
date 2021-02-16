@@ -1515,7 +1515,24 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             mSuperExposeNonzsl = 0;// once per non-zsl capture
             HAL_LOGD("non-zsl,sensor stream off, i=%d", i);
         }
-
+        if(sprddefInfo->sprd_flash_cali_enable)
+        {
+            FALSH_CALI_Tag *flashcaliInfo;
+            mSetting->getflashcaliTag(&flashcaliInfo);
+            if (sprddefInfo->sprd_flash_cali_first_trigger){
+                HAL_LOGD("flash calibration run once");
+                memset(flashcaliInfo, 0, sizeof(FALSH_CALI_Tag));
+                flashcaliInfo->first_tigger_flag =
+                    sprddefInfo->sprd_flash_cali_first_trigger;
+                sprddefInfo->sprd_flash_cali_first_trigger =
+                    !sprddefInfo->sprd_flash_cali_first_trigger;
+            }
+            else{
+                flashcaliInfo->first_tigger_flag = 0 ;
+            }
+            HAL_LOGD("flash calibration run loop");
+            camera_ioctrl(CAMERA_IOCTRL_SET_FALSH_CALIBRATION_FLAG, (void *)flashcaliInfo, NULL);
+        }
         if (mOEMIf->isYuvSensor() &&
             mStreamConfiguration.num_streams > 1 &&
             mStreamConfiguration.preview.status == CONFIGURED &&
