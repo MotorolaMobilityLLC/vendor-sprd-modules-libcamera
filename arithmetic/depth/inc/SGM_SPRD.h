@@ -1,24 +1,45 @@
 #ifndef __SGM_SPRD_H__
 #define __SGM_SPRD_H__
-
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define NUM_ROI 10
 
-typedef enum { YUV420_NV12 = 0, YUV422_YUYV } ImageYUVFormat;
-typedef enum { MODE_PREVIEW, MODE_CAPTURE } depth_mode;
+typedef enum 
+{ 
+    YUV420_NV21 = 0, 
+    YUV422_YUYV 
+} ImageYUVFormat;
+typedef enum 
+{ 
+    MODE_PREVIEW, 
+    MODE_CAPTURE 
+} depth_mode;
 
-typedef enum { MODE_DISPARITY, MODE_WEIGHTMAP } outFormat;
+typedef enum 
+{ 
+    MODE_DISPARITY,
+    MODE_WEIGHTMAP 
+} outFormat;
 
-typedef enum { DISTANCE_OK = 0, DISTANCE_FAR, DISTANCE_CLOSE } distanceRet;
+typedef enum 
+{ 
+    DISTANCE_OK = 0, 
+    DISTANCE_FAR, 
+    DISTANCE_CLOSE 
+} distanceRet;
 
 typedef enum {
     DEPTH_NORMAL = 0,
     DEPTH_STOP,
 } depth_stop_flag;
 
+typedef struct
+{
+    int model_cfg;//0:HP 1:MP 
+}depth_modelcfg_param;
 struct depth_init_inputparam {
     int input_width_main;
     int input_height_main;
@@ -34,7 +55,8 @@ struct depth_init_inputparam {
     ImageYUVFormat imageFormat_sub;
     void *potpbuf;
     int otpsize;
-    char *config_param;
+    void *config_param;
+    int run_type;
 };
 
 struct depth_init_outputparam {
@@ -74,8 +96,8 @@ typedef struct {
     int sel_y;    /* The point which be touched */
     unsigned char *DisparityImage;
     int VCM_cur_value;
-    struct af_golden_vcm_data golden_vcm_data;
-    struct portrait_mode_param portrait_param;
+    void *golden_vcm_data;
+    struct portrait_mode_param *portrait_param;
 } weightmap_param;
 
 typedef struct DistanceTwoPointInfo {
@@ -93,6 +115,17 @@ typedef struct {
     unsigned char *depthnorm_data;
 } gdepth_outparam;
 
+typedef struct {
+    bool mChangeSensor;
+    int input_otpsize;
+    int output_otpsize;
+} updateotp_param;
+
+typedef struct {
+    void* (*mempool_malloc)(size_t size, char* type);
+    void (*mempool_free)(void* addr);
+} depth_mempool;
+
 int sprd_depth_VersionInfo_Get(char a_acOutRetbuf[256],
                                unsigned int a_udInSize);
 
@@ -100,7 +133,7 @@ void sprd_depth_Set_Stopflag(void *handle, depth_stop_flag stop_flag);
 
 void *sprd_depth_Init(struct depth_init_inputparam *inparam,
                       struct depth_init_outputparam *outputinfo,
-                      depth_mode mode, outFormat format);
+                      depth_mode mode, outFormat format,void *ptr);
 
 int sprd_depth_Run(void *handle, void *a_pOutDisparity, void *a_pInMaptable,
                    void *a_pInSub_YCC420NV21, void *a_pInMain_YCC420NV21,
@@ -129,6 +162,9 @@ int sprd_depth_get_gdepthinfo(void *handle, void *a_pOutDisparity,
                               gdepth_outparam *gdepth_output);
 
 int sprd_depth_userset(char *ptr, int size);
+
+int sprd_depth_updateotp(void*handle , void* a_pInSub_YCC420NV21,void* a_pInMain_YCC420NV21,void* input_otpbuf,void *output_otpbuf,updateotp_param *params);
+
 
 #ifdef __cplusplus
 } // extern C
