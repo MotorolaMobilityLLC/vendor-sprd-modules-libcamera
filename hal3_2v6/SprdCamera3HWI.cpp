@@ -620,6 +620,14 @@ static void set_usage_for_preview(camera3_stream_t *newStream)
 
     newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
 
+    property_get("persist.vendor.cam.n6p.usage.test", value, "");
+    if (atoi(value)) {
+        newStream->usage = 0;
+        HAL_LOGD("usage reserved[1] %p, usage 0x%x", newStream->reserved[1],
+            newStream->usage);
+        return;
+    }
+
     property_get("ro.boot.auto.efuse", value, "");
     if (!memcmp(value, "T618", 4) || !memcmp(value, "T610", 4)) {
         t = (GRALLOC1_PRODUCER_USAGE_PRIVATE_17) >> 32;
