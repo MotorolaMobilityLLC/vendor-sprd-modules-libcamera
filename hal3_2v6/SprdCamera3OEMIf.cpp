@@ -11107,7 +11107,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
-        (CAMERA_MODE_FILTER != mSprdAppmodeId) && (0 == mFbOn) &&
+        (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
         (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode|| MODE_BOKEH == mMultiCameraMode)  &&
         (mSprdAppmodeId != -1) && (false == mRecordingMode)) ||
         ((getMultiCameraMode() == MODE_BLUR) && lightportrait_type != 0))){
