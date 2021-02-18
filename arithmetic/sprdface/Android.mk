@@ -162,6 +162,21 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 include $(BUILD_PREBUILT)
 
+include $(CLEAR_VARS)
+LOCAL_MODULE := libsprdfacebeautyfdr
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MODULE_TAGS := optional
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
+LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/$(LOCAL_MODULE).so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/$(LOCAL_MODULE).so
+LOCAL_CHECK_ELF_FILES := false
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+include $(BUILD_PREBUILT)
+
 ifeq ($(strip $(TARGET_BOARD_SPRD_FD_VERSION)),1)
 # SPRD face attribute recognition (smile detection) library
 include $(CLEAR_VARS)

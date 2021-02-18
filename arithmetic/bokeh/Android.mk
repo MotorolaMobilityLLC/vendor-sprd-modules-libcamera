@@ -32,7 +32,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdbokeh.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdbokeh.so
-LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
+LOCAL_CHECK_ELF_FILES := false
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
@@ -40,4 +40,22 @@ endif
 
 include $(BUILD_PREBUILT)
 endif
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_capture_bokeh_adapter.cpp
+LOCAL_MODULE := libsprdbokeh_adapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden 
+LOCAL_SHARED_LIBRARIES := libcutils liblog libsprdbokeh libsprdfacebeautyfdr libsprdfd
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include \
+         $(LOCAL_PATH)/../sprdface/inc
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_SHARED_LIBRARY)
 endif
