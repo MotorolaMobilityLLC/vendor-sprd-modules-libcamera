@@ -1,16 +1,9 @@
 #ifndef __IBOKEH_H__
 #define __IBOKEH_H__
-#if (defined WIN32 || defined REALVIEW)
+#ifdef __linux__
+#define JNIEXPORT __attribute__ ((visibility ("default")))
+#else
 #define JNIEXPORT
-#else
-#include <jni.h>
-#endif
-
-#ifdef WIN32
-#define GraphicBuffer unsigned char
-#else
-//#include "GraphicBuffer.h"
-// using namespace android;
 #endif
 
 #ifdef __cplusplus
@@ -18,16 +11,14 @@ extern "C" {
 #endif
 
 typedef struct {
-    int width;  // image width
-    int height; // image height
+    int width;  		// image width
+    int height; 		// image height
     int depth_width;
     int depth_height;
     int SmoothWinSize;          // odd number
     int ClipRatio;              // RANGE 1:64
     int Scalingratio;           // 2,4,6,8
     int DisparitySmoothWinSize; // odd number
-    // int HistMinNumberRatio;
-    // int UpdatedMaxMinDiff;
 } InitParams;
 
 typedef struct {
