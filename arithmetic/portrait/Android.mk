@@ -32,7 +32,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprd_portrait_cap.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprd_portrait_cap.so
-LOCAL_SHARED_LIBRARIES := libSegLiteMNN libSegLite libc libdl liblog libm libz libTfliteWrapper
+LOCAL_CHECK_ELF_FILES := false
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
@@ -56,7 +56,7 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE).so
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE).so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libSegLiteMNN.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libSegLiteMNN.so
-LOCAL_SHARED_LIBRARIES := libc libdl liblog libm libz
+LOCAL_CHECK_ELF_FILES := false
 
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
@@ -64,4 +64,24 @@ endif
 
 include $(BUILD_PREBUILT)
 endif
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_capture_portrait_adapter.cpp
+LOCAL_MODULE := libsprd_portrait_cap_adapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden 
+LOCAL_SHARED_LIBRARIES := libcutils liblog libsprd_portrait_cap libsprdfacebeautyfdr libsprdfd
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/ \
+	 $(LOCAL_PATH)/../sprdface/inc
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
 endif
+
+include $(BUILD_SHARED_LIBRARY)
+
+endif
+
