@@ -38,5 +38,22 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_SRC_FILES := src/sprd_preview_portrait_adapter.cpp
+LOCAL_MODULE := libbokeh_gaussian_adapter
+LOCAL_MODULE_TAGS := optional
+LOCAL_CFLAGS := -O3 -fno-strict-aliasing -fPIC -fvisibility=hidden
+LOCAL_SHARED_LIBRARIES := libcutils liblog libbokeh_gaussian
+LOCAL_C_INCLUDES := \
+         $(LOCAL_PATH)/inc \
+         $(TOP)/system/core/include/cutils/ \
+         $(TOP)/system/core/include/
+
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
+include $(BUILD_SHARED_LIBRARY)
 endif
 
