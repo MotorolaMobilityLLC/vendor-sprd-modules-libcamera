@@ -2714,20 +2714,26 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
              cxt->req_param.is_zsl_snapshot);
     CMR_LOGD("cxt->req_param.is_3dnr %d", cxt->req_param.is_3dnr);
     if (cxt->req_param.is_zsl_snapshot) {
-        if (cxt->req_param.is_3dnr == 1 || cxt->req_param.is_hdr == 1 ||
-            cxt->req_param.is_3dnr == 5) {
-            // bokeh + hdr RETURN_SW_ALGORITHM_ZSL_BUF message is in
-            // snp_yuv_callback_take_picture_done
-            if (cmr_cxt->is_multi_mode != MODE_BOKEH &&
-                cmr_cxt->is_multi_mode != MODE_MULTI_CAMERA) {
+       if (cxt->req_param.is_3dnr == 1  ||
+            cxt->req_param.is_3dnr == 5 ||cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
                 CMR_LOGI(
-                    "send SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here ");
+                    "send 3dnr SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here");
+                snp_send_msg_notify_thr(
+                    snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
+                    SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
+                    sizeof(struct camera_frame_type));
+        } else if (cxt->req_param.is_hdr == 1) {
+        // bokeh + hdr RETURN_SW_ALGORITHM_ZSL_BUF message is in
+            // snp_yuv_callback_take_picture_done
+            if (cmr_cxt->is_multi_mode != MODE_BOKEH && cmr_cxt->is_multi_mode != MODE_MULTI_CAMERA) {
+                CMR_LOGI(
+                    "send HDR SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here");
                 snp_send_msg_notify_thr(
                     snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                     SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
                     sizeof(struct camera_frame_type));
             }
-        } else if (chn_param_ptr->is_rot) {
+         } else if (chn_param_ptr->is_rot) {
             rot_src = chn_param_ptr->rot[0].src_img;
             CMR_LOGD("fd=0x%x", rot_src.fd);
             zsl_frame.fd = rot_src.fd;
@@ -5143,12 +5149,15 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                             SNAPSHOT_CB_EVT_DONE, (void *)&frame_type,
                             sizeof(struct camera_frame_type));
+    CMR_LOGD("is_3dnr %d is_hdr %d", cxt->req_param.is_3dnr, cxt->req_param.is_hdr);
     if (cxt->req_param.is_hdr == 1 &&
         (cmr_cxt->is_multi_mode == MODE_BOKEH ||
          cmr_cxt->is_multi_mode == MODE_MULTI_CAMERA)) {
         snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                 SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
                                 NULL, sizeof(struct camera_frame_type));
+    }  else if (cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+        CMR_LOGD("auto mfnr no need set buf here");
     } else {
         snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                 SNAPSHOT_CB_EVT_RETURN_ZSL_BUF,

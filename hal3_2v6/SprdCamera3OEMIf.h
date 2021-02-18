@@ -852,6 +852,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
         *mZslRawHeapArray[kVideoBufferCount + kVideoRotBufferCount + 1];
     sprd_3dnr_memory_t
         mZslGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
+    sprd_3dnr_memory_t
+        mZslMfnrGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t *mRawHeapArray[kRawBufferCount + 1];
     cmr_u32 hdr_fd[3];
 

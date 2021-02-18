@@ -4883,8 +4883,8 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SPRD_3DNR_ENABLED)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
-        s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled = valueU8;
-        pushAndroidParaTag(ANDROID_SPRD_3DNR_ENABLED);
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled,
+                                     valueU8, ANDROID_SPRD_3DNR_ENABLED, 1)
         HAL_LOGV("sprd 3dnr enabled is %d",
                  s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled);
         if (s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled == 1 &&
@@ -5640,7 +5640,7 @@ int SprdCamera3Setting::updateWorkParameters(
              "am_mode=%d, updateAE=%d, ae_regions: %d %d %d %d %d, "
              "af_trigger=%d, af_mode=%d, af_state=%d, af_region: %d %d %d %d "
              "%d, sprd_auto_3dnr_enable:%d, "
-             "android zsl enable = %d,is_smile_capture=%d",
+             "android zsl enable = %d,is_smile_capture=%d sprd_3dnr_enabled:%d",
              mCameraId, s_setting[mCameraId].lensInfo.focus_distance,
              s_setting[mCameraId].controlInfo.ae_precap_trigger,
              isFaceBeautyOn(&s_setting[mCameraId].sprddefInfo),
@@ -5673,6 +5673,7 @@ int SprdCamera3Setting::updateWorkParameters(
              s_setting[mCameraId].controlInfo.af_regions[3],
              s_setting[mCameraId].controlInfo.af_regions[4],
              s_setting[mCameraId].sprddefInfo.sprd_auto_3dnr_enable,
+             s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled,
              s_setting[mCameraId].controlInfo.enable_zsl,
              s_setting[mCameraId].sprddefInfo.is_smile_capture);
 

@@ -540,41 +540,42 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     CMR_LOGD("sensor_id %ld index %d search window %hdx%hd threthold[3][2] %d",
              sensor_id, param_3dnr_index, param.SearchWindow_x,
              param.SearchWindow_y, param.threthold[3][2]);
-    CMR_LOGD("nightscepro_flag %d", cam_cxt->nightscepro_flag);
-    if (cam_cxt->nightscepro_flag) {
-        ret = ipm_in->ipm_isp_ioctl(oem_handle,
-                   COM_ISP_GET_MFNR_PARAM, &isp_cmd_parm);
-        if (ret) {
-            CMR_LOGE("failed to get isp param for mfnr %ld", ret);
-        } else {
-            param.SearchWindow_x = isp_cmd_parm.mfnr_param.searchWindow_x;
-            param.SearchWindow_y = isp_cmd_parm.mfnr_param.searchWindow_y;
-            param.recur_str = isp_cmd_parm.mfnr_param.recur_str;
-            param.match_ratio_sad = isp_cmd_parm.mfnr_param.match_ratio_sad;
-            param.match_ratio_pro = isp_cmd_parm.mfnr_param.match_ratio_pro;
-            param.feat_thr = isp_cmd_parm.mfnr_param.feat_thr;
-            param.luma_ratio_high = isp_cmd_parm.mfnr_param.luma_ratio_high;
-            param.luma_ratio_low = isp_cmd_parm.mfnr_param.luma_ratio_low;
-            param.zone_size = isp_cmd_parm.mfnr_param.zone_size;
-            memcpy(param.reserverd, isp_cmd_parm.mfnr_param.reserverd,(16 * sizeof(int)));
-        }
-    } else if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
-
-          ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
+    CMR_LOGD("auto3dnr_flag %d sprd_3dnr_type %d", cam_cxt->auto3dnr_flag, cam_cxt->snp_cxt.sprd_3dnr_type);
+    if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+          if (cam_cxt->auto3dnr_flag == 2) {
+              ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_MFNR_PARAM,
                                 &isp_cmd_parm);
-          if (ret) {
-              CMR_LOGE("failed to get isp param for sw3dnr %ld", ret);
+              if (ret) {
+                  CMR_LOGE("failed to get mfnr isp param  %ld", ret);
+              } else {
+                  param.SearchWindow_x = isp_cmd_parm.mfnr_param.searchWindow_x;
+                  param.SearchWindow_y = isp_cmd_parm.mfnr_param.searchWindow_y;
+                  param.recur_str = isp_cmd_parm.mfnr_param.recur_str;
+                  param.match_ratio_sad = isp_cmd_parm.mfnr_param.match_ratio_sad;
+                  param.match_ratio_pro = isp_cmd_parm.mfnr_param.match_ratio_pro;
+                  param.feat_thr = isp_cmd_parm.mfnr_param.feat_thr;
+                  param.luma_ratio_high = isp_cmd_parm.mfnr_param.luma_ratio_high;
+                  param.luma_ratio_low = isp_cmd_parm.mfnr_param.luma_ratio_low;
+                  param.zone_size = isp_cmd_parm.mfnr_param.zone_size;
+                  memcpy(param.reserverd, isp_cmd_parm.mfnr_param.reserverd,(16 * sizeof(int)));
+              }
           } else {
-              param.SearchWindow_x = isp_cmd_parm.threednr_param.searchWindow_x;
-              param.SearchWindow_y = isp_cmd_parm.threednr_param.searchWindow_y;
-              param.recur_str = isp_cmd_parm.threednr_param.recur_str;
-              param.match_ratio_sad = isp_cmd_parm.threednr_param.match_ratio_sad;
-              param.match_ratio_pro = isp_cmd_parm.threednr_param.match_ratio_pro;
-              param.feat_thr = isp_cmd_parm.threednr_param.feat_thr;
-              param.luma_ratio_high = isp_cmd_parm.threednr_param.luma_ratio_high;
-              param.luma_ratio_low = isp_cmd_parm.threednr_param.luma_ratio_low;
-              param.zone_size = isp_cmd_parm.threednr_param.zone_size;
-              memcpy(param.reserverd, isp_cmd_parm.threednr_param.reserverd,(16 * sizeof(int)));
+              ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
+                                &isp_cmd_parm);
+              if (ret) {
+                  CMR_LOGE("failed to get sw3dnr isp param for %ld", ret);
+              } else {
+                  param.SearchWindow_x = isp_cmd_parm.threednr_param.searchWindow_x;
+                  param.SearchWindow_y = isp_cmd_parm.threednr_param.searchWindow_y;
+                  param.recur_str = isp_cmd_parm.threednr_param.recur_str;
+                  param.match_ratio_sad = isp_cmd_parm.threednr_param.match_ratio_sad;
+                  param.match_ratio_pro = isp_cmd_parm.threednr_param.match_ratio_pro;
+                  param.feat_thr = isp_cmd_parm.threednr_param.feat_thr;
+                  param.luma_ratio_high = isp_cmd_parm.threednr_param.luma_ratio_high;
+                  param.luma_ratio_low = isp_cmd_parm.threednr_param.luma_ratio_low;
+                  param.zone_size = isp_cmd_parm.threednr_param.zone_size;
+                  memcpy(param.reserverd, isp_cmd_parm.threednr_param.reserverd,(16 * sizeof(int)));
+              }
           }
     }
     param.productInfo = PLATFORM_ID;
@@ -584,29 +585,29 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else {
         CMR_LOGD("ok to call threednr_init");
     }
-    if (cam_cxt->nightscepro_flag) {
+    if (cam_cxt->auto3dnr_flag == 2) {
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_MFNR_PARAM, &isp_cmd_parm);
         if (ret) {
-            CMR_LOGE("failed to get isp param	%ld", ret);
+            CMR_LOGE("failed to get mfnr isp param %ld", ret);
         }
         memcpy(process_param.proc_param.setpara_param.thr, isp_cmd_parm.mfnr_param.threshold, (4*sizeof(int)));
         memcpy(process_param.proc_param.setpara_param.slp, isp_cmd_parm.mfnr_param.slope, (4 * sizeof(int)));
         ret = sprd_mfnr_adpt_ctrl((void *)(threednr_handle->proc_handle), SPRD_MFNR_PROC_SET_PARAMS_CMD, (void *)&process_param);
         if(ret != 0){
-            CMR_LOGE("failed to set 3dnr init params. ret = %d",ret);
+            CMR_LOGE("failed to set mfnr init params. ret = %d",ret);
         }
     } else if (cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_SW3DNR_PARAM,
                                     &isp_cmd_parm);
         if (ret) {
-            CMR_LOGE("failed to get isp param  %ld", ret);
+            CMR_LOGE("failed to get sw3dnr isp param  %ld", ret);
         }
 
         memcpy(process_param.proc_param.setpara_param.thr, isp_cmd_parm.threednr_param.threshold, (4*sizeof(int)));
         memcpy(process_param.proc_param.setpara_param.slp, isp_cmd_parm.threednr_param.slope, (4 * sizeof(int)));
         ret = sprd_mfnr_adpt_ctrl((void *)(threednr_handle->proc_handle), SPRD_MFNR_PROC_SET_PARAMS_CMD, (void *)&process_param);
         if(ret != 0){
-            CMR_LOGE("failed to set 3dnr init params. ret = %d",ret);
+            CMR_LOGE("failed to set sw3dnr init params. ret = %d",ret);
         }
     }
 
@@ -649,7 +650,7 @@ static cmr_int threednr_close(cmr_handle class_handle) {
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
 
-    if((cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) || cam_cxt->nightscepro_flag)
+    if(cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
     {
         if (cam_cxt->hal_free == NULL) {
             CMR_LOGE("cam_cxt->hal_free is NULL");
@@ -699,7 +700,7 @@ static cmr_int threednr_save_frame(cmr_handle class_handle,
         return CMR_CAMERA_FAIL;
     }
 
-    CMR_LOGV(" 3dnr frame_sn %ld, y_addr 0x%lx", frame_sn,
+    CMR_LOGV("3dnr frame_sn %ld, y_addr 0x%lx", frame_sn,
              in->src_frame.addr_vir.addr_y);
     if (threednr_handle->mem_size >= in->src_frame.buf_size &&
         NULL != (void *)in->src_frame.addr_vir.addr_y) {
@@ -802,8 +803,8 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
     memset(&orig_image, 0, sizeof(mfnr_cap_gpu_buffer_t));
     ret = sprd_mfnr_get_devicetype(&run_type);
     // call 3dnr function
-    CMR_LOGD("Call the threednr_function() yaddr 0x%x cur_frm: %d",
-             in->src_frame.addr_vir.addr_y, cur_frm);
+    CMR_LOGD("Call the threednr_function() yaddr 0x%x cur_frm: %d run_type %d sprd_3dnr_type %d",
+             in->src_frame.addr_vir.addr_y, cur_frm, run_type, cam_cxt->snp_cxt.sprd_3dnr_type);
 
     if(run_type != SPRD_CAMALG_RUN_TYPE_VDSP) {
         orig_image.gpuHandle = out->private_data;
@@ -811,14 +812,13 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
         orig_image.bufferU =
             orig_image.bufferY + threednr_handle->width * threednr_handle->height;
         orig_image.bufferV = orig_image.bufferU;
-    }else {
+    } else {
         big_image.cpu_buffer.bufferY = (unsigned char *)in->src_frame.addr_vir.addr_y;
         big_image.cpu_buffer.bufferU = big_image.cpu_buffer.bufferY +
             threednr_handle->width * threednr_handle->height;
         big_image.cpu_buffer.bufferV = big_image.cpu_buffer.bufferU;
         big_image.cpu_buffer.fd = (int32_t)in->src_frame.fd;
     }
-    CMR_LOGI("cam_cxt->snp_cxt.sprd_3dnr_type=%d",cam_cxt->snp_cxt.sprd_3dnr_type);
 
     if(cam_cxt->snp_cxt.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW )
     {
@@ -842,7 +842,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
             threednr_handle->small_width * threednr_handle->small_height;
         small_image.cpu_buffer.bufferV = small_image.cpu_buffer.bufferU;
     }
-    CMR_LOGV("Call the threednr_function().big Y: %p, small %p."
+    CMR_LOGD("Call the threednr_function().big Y: %p, small %p."
              " ,threednr_handle->is_stop %ld",
              orig_image.bufferY, small_image.cpu_buffer.bufferY,
              threednr_handle->is_stop);
@@ -857,7 +857,7 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
         process_param.proc_param.cap_new_param.small_image = &small_image;
         process_param.proc_param.cap_new_param.orig_image = &orig_image;
         process_param.callWay = 1;
-    }else {
+    } else {
         process_param.proc_param.cap_param.small_image = &small_image;
         process_param.proc_param.cap_param.orig_image = &big_image;
         process_param.callWay = 0;
@@ -1001,7 +1001,7 @@ static cmr_int threadnr_scaler_process(cmr_handle class_handle,
     oem_handle = threednr_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
     cur_frm = info->cur_frame_num;
-    CMR_LOGD("E. yaddr 0x %x cur_frm: %d", in->src_frame.addr_vir.addr_y,
+    CMR_LOGD("fd 0x%x E. yaddr 0x %x cur_frm: %d", in->src_frame.fd, in->src_frame.addr_vir.addr_y,
              cur_frm);
     if (NULL == in->private_data) {
         CMR_LOGE("private_data is ptr of camera_context, now is null");
@@ -1089,7 +1089,6 @@ static cmr_int threadnr_scaler_process(cmr_handle class_handle,
              }
         }
     }
-
     ret = req_3dnr_process_frame(threednr_handle, info);
     if (ret) {
         CMR_LOGE("failed request 3dnr process");
@@ -1907,7 +1906,7 @@ static cmr_int threednr_transfer_frame(cmr_handle class_handle,
         memcpy(&threednr_handle->g_info_3dnr[cur_num].out, out,
                sizeof(struct ipm_frame_out));
         threednr_handle->g_info_3dnr[cur_num].cur_frame_num = cur_num;
-        CMR_LOGD("yaddr 0x%x", in->src_frame.addr_vir.addr_y);
+        CMR_LOGD("fd 0x%x yaddr 0x%x", in->src_frame.fd, in->src_frame.addr_vir.addr_y);
         ret = req_3dnr_scaler_frame(threednr_handle,
                                     &threednr_handle->g_info_3dnr[cur_num]);
         if (ret) {

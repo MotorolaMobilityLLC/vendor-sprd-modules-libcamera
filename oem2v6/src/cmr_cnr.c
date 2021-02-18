@@ -199,8 +199,7 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     oem_handle = cnr_handle->common.ipm_cxt->init_in.oem_handle;
 
     struct ipm_init_in *ipm_in = &cnr_handle->common.ipm_cxt->init_in;
-    CMR_LOGD("cxt->nr_flag %d,cxt->nightscepro_flag %d",
-                    cxt->nr_flag, cxt->nightscepro_flag);
+    CMR_LOGD("cnr_flag %d, night_flag %d", cxt->nr_flag, cxt->night_flag);
     if (cxt->nr_flag & YNRS_ENABLE) {
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_YNRS_PARAM,
                                     &isp_cmd_parm);
@@ -215,21 +214,20 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
         }
     }
     if (cxt->nr_flag & CNR2_ENABLE ) {
-        //auto cxt->nightscepro_flag 1, super_night flag 0
-        ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
+        if (cxt->night_flag) {
+            ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR2_PARAM,
                          &isp_cmd_parm);
-        if (CMR_CAMERA_SUCCESS != ret) {
-            CMR_LOGE("failed to get isp CNR2 param %ld", ret);
-        } else {
-            memcpy(&cnr2Param, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
-            denoise_param.cnr2Param = &cnr2Param;
-            valid_nr_type |= CNR2_ENABLE;
+            if (CMR_CAMERA_SUCCESS != ret) {
+                CMR_LOGE("failed to get isp CNR2 param %ld", ret);
+            } else {
+                memcpy(&cnr2Param, &isp_cmd_parm.cnr2_param, sizeof(CNR_Parameter));
+                denoise_param.cnr2Param = &cnr2Param;
+                valid_nr_type |= CNR2_ENABLE;
+            }
         }
     }
     if (cxt->nr_flag & CNR3_ENABLE) {
-        if(cxt->nightscepro_flag != 1) {
-            valid_nr_type |= (!CNR3_ENABLE);
-        } else { //auto
+        if (!cxt->night_flag) {
             ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_CNR3_PARAM,
                             &isp_cmd_parm);
             if (CMR_CAMERA_SUCCESS != ret) {
@@ -247,15 +245,10 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
             valid_nr_type |= CNR3_ENABLE;
         }
     }
-
 proc:
     if (valid_nr_type == 0) {
         CMR_LOGD("valid_nr_type is 0");
         goto exit;
-    }
-    if (cxt->nightscepro_flag == 1) {
-        if((valid_nr_type & CNR3_ENABLE) == CNR3_ENABLE)
-            valid_nr_type &= (~CNR2_ENABLE);
     }
     mode = valid_nr_type;
     CMR_LOGI("valid_nr_type %d, param %p, %p, %p\n", valid_nr_type,

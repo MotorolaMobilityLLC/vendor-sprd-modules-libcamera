@@ -519,6 +519,8 @@ struct camera_context {
     cmr_u8 nightscepro_flag;
     bool snp_cancel;
     cmr_uint mfnr_on_off;
+    cmr_uint auto3dnr_flag;
+    cmr_u8 night_flag;//night mode
     void *aux_param;
 };
 
