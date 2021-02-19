@@ -1271,7 +1271,8 @@ cmr_int camera_fdr_handle(void *data, void *privdata) {
 	src_param.monoboottime = frame->monoboottime;
 	cxt->fdr_capture_frame_cnt++;
 
-	if (cxt->fdr_capture_frame_cnt == cxt->fdr_ref_frame_num) {
+	if (cxt->fdr_capture_frame_cnt == cxt->fdr_ref_frame_num ||
+        cxt->fdr_capture_frame_cnt == cxt->fdr_ref_frame_num + 1) {
 		camera_prepare_fdrparam(cxt, &fdr_param);
 		camera_prepare_postparam(cxt,
 			&fdr_param, &isp_cnr_param, &isp_ynr_param, &ee_info);
