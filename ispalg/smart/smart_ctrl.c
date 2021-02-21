@@ -1891,15 +1891,12 @@ static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input 
 
 		return rtn;
 	}
-
+	cxt = (struct smart_context *)handle;
 	if(0 == cxt->atm_version || 1 == cxt->atm_version){
 		atm_enable = cxt->atm_tuning_param.atmenable;
 	}else if(2 == cxt->atm_version){
 		atm_enable = cxt->atm_tuning_param_v1.enable;
 	}
-
-	cxt = (struct smart_context *)handle;
-	atm_enable = cxt->atm_tuning_param.atmenable;
 	atm_switch_state = cxt->atm_switch_state;
 
 	if (!(strcmp(value, "on"))){
