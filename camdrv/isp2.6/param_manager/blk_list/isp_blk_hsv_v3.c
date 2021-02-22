@@ -37,7 +37,6 @@ cmr_s32 _pm_hsv_new3_init(void *dst_hsv_param, void *src_hsv_param, void *param1
 	dst_ptr->cur_idx.weight0 = src_ptr->cur_idx.weight0;
 	dst_ptr->cur_idx.weight1 = src_ptr->cur_idx.weight1;
 
-	dst_ptr->cur.hsv_bypass = src_ptr->hsv_bypass;
 	dst_ptr->cur.hsv_delta_value_en = src_ptr->delta_value_en;
 
 	for (i = 0; i < 3; i++) {
