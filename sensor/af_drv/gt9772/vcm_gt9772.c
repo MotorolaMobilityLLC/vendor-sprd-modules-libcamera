@@ -145,7 +145,7 @@ static int _gt9772_drv_power_on(cmr_handle sns_af_drv_handle,
     return AF_SUCCESS;
 }
 
-static int _gt9772_drv_set_mode(cmr_handle sns_af_drv_handle) {
+static cmr_int _gt9772_drv_set_mode(cmr_handle sns_af_drv_handle) {
     struct sns_af_drv_cxt *af_drv_cxt =
         (struct sns_af_drv_cxt *)sns_af_drv_handle;
     CHECK_PTR(sns_af_drv_handle);

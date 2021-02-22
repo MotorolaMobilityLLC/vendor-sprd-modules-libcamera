@@ -27,7 +27,7 @@ static int _gt9772_drv_power_on(cmr_handle sns_af_drv_handle,
                                  uint16_t power_on);
 static uint32_t _gt9772_write_dac_code(cmr_handle sns_af_drv_handle,
                                         int32_t code);
-static int _gt9772_drv_set_mode(cmr_handle sns_af_drv_handle);
+static cmr_int _gt9772_drv_set_mode(cmr_handle sns_af_drv_handle);
 static int gt9772_drv_create(struct af_drv_init_para *input_ptr,
                               cmr_handle *sns_af_drv_handle);
 static int gt9772_drv_delete(cmr_handle sns_af_drv_handle, void *param);

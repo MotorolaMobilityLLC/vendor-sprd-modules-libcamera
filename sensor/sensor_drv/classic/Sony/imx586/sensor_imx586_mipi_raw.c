@@ -914,7 +914,7 @@ static cmr_int imx586_drv_set_LRC_data(cmr_handle handle, cmr_uint param) {
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7600 + i, *(param_ptr + 0x0C5D + 192 + i));
 	SENSOR_LOGV("imx586_lrc address {0x%x, 0x%x}", 0x7600 + i, *(param_ptr + 0x0C5D + 192 + i));
     }
-exit:
+
     return 0;
 
 }
