@@ -616,27 +616,16 @@ int32_t SprdCamera3HWI::checkStreamSizeAndFormat(camera3_stream_t *new_stream) {
 
 static void set_usage_for_preview(camera3_stream_t *newStream)
 {
-    char value[PROPERTY_VALUE_MAX] = {0};
+    newStream->usage |= (uint32_t)(uint64_t)BufferUsage::CPU_READ_OFTEN;
+#if defined(CONFIG_CAMERA_USAGE_PRIVATE_17)
     unsigned long t;
 
-    newStream->usage |= (uint64_t)BufferUsage::CPU_READ_OFTEN;
-
-    property_get("persist.vendor.cam.n6p.usage.test", value, "");
-    if (atoi(value)) {
-        newStream->usage = 0;
-        HAL_LOGD("usage reserved[1] %p, usage 0x%x", newStream->reserved[1],
-            newStream->usage);
-        return;
-    }
-
-    property_get("ro.boot.auto.efuse", value, "");
-    if (!memcmp(value, "T618", 4) || !memcmp(value, "T610", 4)) {
-        t = (GRALLOC1_PRODUCER_USAGE_PRIVATE_17) >> 32;
-        t |= (unsigned long)newStream->reserved[1];
-        newStream->reserved[1] = (void *)t;
-    } else {
-        newStream->usage |= GRALLOC_USAGE_PRIVATE_1;
-    }
+    t = (GRALLOC1_PRODUCER_USAGE_PRIVATE_17) >> 32;
+    t |= (unsigned long)newStream->reserved[1];
+    newStream->reserved[1] = (void *)t;
+#else
+    newStream->usage |= GRALLOC_USAGE_PRIVATE_1;
+#endif // CONFIG_CAMERA_USAGE_PRIVATE_17
     HAL_LOGD("usage reserved[1] %p, usage 0x%x", newStream->reserved[1],
             newStream->usage);
 }
