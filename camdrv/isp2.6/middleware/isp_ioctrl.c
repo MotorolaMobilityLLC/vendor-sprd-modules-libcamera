@@ -4024,11 +4024,11 @@ static cmr_int ispctl_gtm_switch(cmr_handle isp_alg_handle, void *param_ptr)
 
 	ISP_LOGD("cam%ld, on: %d", cxt->camera_id, enable);
 
-	if (enable && cxt->gtm_ltm_on) {
+	if (enable && (cxt->gtm_ltm_on == 1)) {
 		ISP_LOGD("cam%ld gtm_ltm is already on\n", cxt->camera_id);
 		return 0;
 	}
-	if (!enable && !cxt->gtm_ltm_on) {
+	if (!enable && (cxt->gtm_ltm_on == 0)) {
 		ISP_LOGD("cam%ld gtm_ltm is already off\n", cxt->camera_id);
 		return 0;
 	}

@@ -2292,7 +2292,7 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
 		scene_id = (cfg_type == PARAM_CFG_FDRL) ? PM_SCENE_FDRL : PM_SCENE_FDRH;
 		ISP_LOGD("cam%ld cfg FDR param %d\n", cxt->camera_id, cfg_type);
 	} else {
-		gtm_ltm_on = cxt->gtm_ltm_on;
+		gtm_ltm_on = (cxt->gtm_ltm_on == 1) ? 1 : 0;
 		work_mode = cxt->work_mode;
 		scene_id = cxt->work_mode ? PM_SCENE_CAP : PM_SCENE_PRE;
 	}
@@ -6601,6 +6601,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 
 	/* free/reset statis buffers of previous session */
 	ret = isp_dev_free_buf(cxt->dev_access_handle, &cxt->stats_mem_info);
+
+    /* gtm_ltm_on != 1/0,means not set */
+	cxt->gtm_ltm_on = (-1);
 
 	cxt->first_frm = 1;
 	cxt->aem_is_update = 0;
