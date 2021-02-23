@@ -79,7 +79,7 @@ struct ae_lib_init_out {
 	struct ae_ev_param_table ev_param;
 	struct ae_range dc_fps;/*normal dc preview fps, 100x-->1x*/
 	struct ae_range dv_fps;/*video fps, 100x-->1x*/
-	cmr_u8 lock;				/* default: 0-unlock, 0:unlock 1:lock */
+	cmr_u8 lock;		   /* default: 0-unlock, 0:unlock 1:lock */
 	/*AE profession Setting*/
 	cmr_u8 metering_mode;	/*default: center metering; the metering mode*/
 	cmr_u32 iso;				/*iso auto*/
@@ -111,10 +111,11 @@ struct ae_adv_param {
 	struct ae_range fps_range;/*the fps setting from APP*/
 	struct ae_ev_setting_param cur_ev_setting;/*the ev setting of the current frame*/
 	struct ae_mode_param mode_param;
-	cmr_u8 lock;				/* 0:unlock 1:lock */	
+	cmr_u8 lock;			/* 0:unlock 1:lock */	
 	cmr_u8 work_mode;		/* DC DV */
-	cmr_u8 high_res_mode;  /*high_res_mode*/
-	cmr_u8 flash;				/*flash */
+	cmr_u8 high_res_mode;   /*high_res_mode*/
+	cmr_u8 app_scan_mode;   /*weixin scan mode*/
+	cmr_u8 flash;			/*flash */
 	cmr_u8 flash_mode;		/*flash mode:0:off;1:on;2:torch;3:auto;*/
 	cmr_u8 awb_mode;		/*auto or manual mode*/
 	cmr_u8 orig_direct;		/*the phone original direction*/
@@ -136,8 +137,10 @@ struct ae_adv_param {
 	cmr_u8 app_force_lock;
 	cmr_s16 last_target;
 	cmr_u16 hm_auto_target;
+	cmr_s32 face_auto_offset;
 	cmr_u32 face_flag;
 	cmr_u8 special_fps_mode;
+	cmr_u8 mv_value;
 	cmr_u32 cur_lum;
 	void *smart_gamma_param;/*smart out gamma param*/
 };
@@ -168,6 +171,8 @@ struct ae_lib_calc_in {
 	struct ae_debug_info debug_info;
 	/*ATM crtl*/
 	cmr_u32 atm_lock;
+	/*long shutter support flag*/
+	cmr_u8 LS_spt;
 };
 
 struct ae_lib_calc_out  {
@@ -180,10 +185,11 @@ struct ae_lib_calc_out  {
 	cmr_s32 cur_bv;
 	cmr_s32 cur_bv_nonmatch;
 	cmr_u16 cur_lum;			/*the lum of image:0 ~255 */
-	cmr_u16 cur_lum_avg;	/*the lum without weight of image:0 ~255*/
+	cmr_u16 cur_lum_avg;		/*the lum without weight of image:0 ~255*/
 	cmr_u16 target_lum;
 	cmr_u16 hm_auto_target;
-	cmr_u16 base_target_lum;		//no face AE target luma
+	cmr_s32 face_auto_offset;
+	cmr_u16 base_target_lum;	/*no face AE target luma*/
 	cmr_u16 stab_zone_in;
 	cmr_u16 stab_zone_out;
 	cmr_u32 flash_status;
@@ -218,6 +224,9 @@ struct ae_lib_calc_out  {
 	cmr_u32 privated_data;
 	cmr_u32 face_flag;		/*face status flag*/
 	cmr_u32 cvg_skip_flag;
+	cmr_u8 nzl_cap_flag;
+	cmr_u64 nzl_cap_exp;
+	cmr_u32 nzl_cap_gain;
 };
 
 struct ae_alg_id_info {

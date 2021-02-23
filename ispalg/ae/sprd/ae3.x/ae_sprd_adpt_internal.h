@@ -45,6 +45,7 @@ extern "C" {
 		cmr_u32 target_luma;
 		cmr_u32 face_flag;
 		cmr_u32 cur_lum;
+		cmr_u32 face_auto_offset;
 	};
 	struct ae_ev_param {
 		cmr_s16 target_lum;
@@ -70,6 +71,7 @@ extern "C" {
 		cmr_u32 tarlum;
 		cmr_u32 sensitivity;
 		cmr_s8 ev_index;
+		cmr_u32 face_auto_offset;
 	};
 	struct ae_exposure_param_switch_m {
 		cmr_u32 target_offset;
@@ -82,6 +84,7 @@ extern "C" {
 		cmr_u32 table_idx;
 		cmr_u32 manual_level;
 		cmr_u32 target_luma;
+		cmr_u32 face_auto_offset;
 	};
 
 	struct ae_sensor_exp_data {
