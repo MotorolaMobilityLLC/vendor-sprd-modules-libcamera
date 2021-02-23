@@ -2042,6 +2042,16 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 
 	/* get HDR param */
 	if (cxt->snp_cxt.is_hdr) {
+		ret = camera_isp_ioctl(cxt, COM_ISP_GET_HDR_PARAM, &isp_param);
+		if (CMR_CAMERA_SUCCESS != ret) {
+			CMR_LOGE("failed to get isp hdr param %ld", ret);
+			ret = 0;
+		} else {
+			frm_param->hdr_param.tuning_param_size = isp_param.hdr_param.param_size;
+			frm_param->hdr_param.tuning_param_ptr = isp_param.hdr_param.param_ptr;
+		}
+		frm_param->hdr_param.hdr_callback = cxt->snp_cxt.hdr_callback;
+		frm_param->hdr_param.ae_exp_gain_info = cxt->snp_cxt.ae_exp_gain_info;
 		memcpy(frm_param->hdr_param.ev, cxt->snp_cxt.hdr_ev, sizeof(cxt->snp_cxt.hdr_ev));
 		CMR_LOGD("param %p, ev %f %f %f.   ev %f %f %f\n", frm_param,
 			frm_param->hdr_param.ev[0], frm_param->hdr_param.ev[1], frm_param->hdr_param.ev[2],
@@ -2938,6 +2948,12 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
        cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AF_PARAMS_CALLBACK,
                       data);
        break;
+    case ISP_AE_CB_HDR_EXP_GAIN:
+        cxt->snp_cxt.ae_exp_gain_info = data;
+        break;
+    case ISP_AE_CB_HDR_TUNING_PARAM_INDEX:
+        cxt->snp_cxt.hdr_callback = data;
+        break;
     default:
         break;
     }
@@ -11253,7 +11269,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cnr2_param;
         break;
-
+    case COM_ISP_GET_HDR_PARAM:
+        isp_cmd = ISP_CTRL_GET_HDR_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->hdr_param;
+        break;
     case COM_ISP_GET_DRE_PARAM:
 #ifdef CONFIG_CAMERA_DRE
         isp_cmd = ISP_CTRL_GET_DRE_PARAM;
@@ -17072,6 +17092,10 @@ cmr_int camera_local_image_sw_algorithm_processing(
         if (cxt->ipm_cxt.hdr_version.major != 1) {
             memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
                    ((HDR_CAP_NUM)-1) * sizeof(float));
+            ipm_in_param.hdr_callback = cxt->snp_cxt.hdr_callback;
+            ipm_in_param.ae_exp_gain_info = cxt->snp_cxt.ae_exp_gain_info;
+            CMR_LOGV("ev: %f, %f, %p, %p", ipm_in_param.ev[0],
+             ipm_in_param.ev[1], ipm_in_param.ae_exp_gain_info, ipm_in_param.hdr_callback);
         }
         ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
                                  &imp_out_param);

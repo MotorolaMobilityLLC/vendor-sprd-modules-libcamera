@@ -564,10 +564,12 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 			frm_param, frm_param->common_param.bv,
 			frm_param->common_param.iso, frm_param->common_param.again,
 			frm_param->common_param.ct, frm_param->fb_info.bypass);
-		CMR_LOGD("HDR ev %f %f %f,  cnr3 %d cnr2 %d ynrs %d\n",
+		CMR_LOGD("HDR ev %f %f %f,  cnr3 %d cnr2 %d ynrs %d, hdr tunning param size %d, %p, %p, %p\n",
 			frm_param->hdr_param.ev[0], frm_param->hdr_param.ev[1],
 			frm_param->hdr_param.ev[2], frm_param->cnr3_info.bypass,
-			frm_param->cnr2_info.bypass, frm_param->ynrs_info.bypass);
+			frm_param->cnr2_info.bypass, frm_param->ynrs_info.bypass,
+			frm_param->hdr_param.tuning_param_size, frm_param->hdr_param.tuning_param_ptr,
+			frm_param->hdr_param.hdr_callback, frm_param->hdr_param.ae_exp_gain_info);
 	}
 
 	while (snp_pm->is_hdr) {

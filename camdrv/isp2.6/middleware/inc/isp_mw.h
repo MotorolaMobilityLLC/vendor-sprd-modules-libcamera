@@ -23,7 +23,7 @@
 
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
-#define ISP_EVT_MASK	 0x0000FF00
+#define ISP_EVT_MASK     0x000FFF00
 #define ISP_CALLBACK_EVT                     0x00040000
 
 #define ISP_FLASH_MAX_CELL	40
@@ -142,6 +142,8 @@ enum isp_callback_cmd {
 	ISP_AE_SYNC_STATUS_CALLBACK = 0x0000E000,
 	ISP_LONGEXP_SKIPNUM_CALLBACK = 0x0000F000,
 	ISP_AF_PARAMS_CALLBACK = 0x000010000,
+	ISP_AE_CB_HDR_EXP_GAIN = 0x00020000,
+	ISP_AE_CB_HDR_TUNING_PARAM_INDEX = 0x00030000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -1013,7 +1015,6 @@ struct isp_ai_img_status {
 	cmr_s32 frame_state;
 	enum isp_ai_img_flag img_flag;
 };
-
 
 typedef cmr_int(*isp_ae_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 typedef cmr_int(*isp_af_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);

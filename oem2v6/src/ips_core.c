@@ -837,12 +837,6 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 	if (hdr2_base->multi_support == 0)
 		pthread_mutex_lock(&hdr2_base->glock);
 
-	iret = hdr2_base->swa_open(ipm_hdl->swa_handle, (void *)&req->init_param, 4);
-	if (iret) {
-		CMR_LOGE("fail to open hdr2\n");
-		return CMR_CAMERA_FAIL;
-	}
-
 	frm_param = (struct swa_frame_param *)frame->reserved;
 	if (frm_param) {
 		hdr_param = &frm_param->hdr_param;
@@ -853,11 +847,18 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 		hdr_param->ev[2] = 1.0f;
 	}
 
-	hdr_param->pic_w = frame->size.width;
-	hdr_param->pic_h = frame->size.height;
+	frm_param->hdr_param.pic_w = frame->size.width;
+	frm_param->hdr_param.pic_h = frame->size.height;
+	frm_param->hdr_param.fmt = req->frame_cnt;
 	CMR_LOGD("hdr open w %d, h %d, param %p, ev %f %f %f\n",
 		hdr_param->pic_w, hdr_param->pic_h, frm_param,
 		hdr_param->ev[0],  hdr_param->ev[1], hdr_param->ev[2]);
+
+	iret = hdr2_base->swa_open(ipm_hdl->swa_handle, (void *)&frm_param->hdr_param, 4);
+	if (iret) {
+		CMR_LOGE("fail to open hdr2\n");
+		return CMR_CAMERA_FAIL;
+	}
 
 	memset(&in, 0, sizeof(struct swa_frames_inout));
 	memset(&out, 0, sizeof(struct swa_frames_inout));
