@@ -23,7 +23,7 @@
 
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
-#define ISP_EVT_MASK	 0x0000FF00
+#define ISP_EVT_MASK	 0x000FFF00
 
 #define ISP_FLASH_MAX_CELL	40
 #define ISP_MODE_NUM_MAX 16
@@ -127,6 +127,8 @@ enum isp_callback_cmd {
 	ISP_FDR_EV_EFFECT_CALLBACK = 0x0000C000,
 	ISP_AE_SYNC_STATUS_CALLBACK = 0x0000E000,
 	ISP_LONGEXP_SKIPNUM_CALLBACK = 0x0000F000,
+	ISP_AE_CB_HDR_EXP_GAIN = 0x00010000,
+	ISP_AE_CB_HDR_TUNING_PARAM_INDEX = 0x00020000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -388,9 +390,11 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_GET_CNR3_PARAM,
 	ISP_CTRL_GET_MFNR_PARAM,
 	ISP_CTRL_GET_DRE_PRO_PARAM,
+	ISP_CTRL_SENSITIVITY,
 	ISP_CTRL_SET_MULTI_SWITCH_INFO,
 	ISP_CTRL_SET_FD_RACE_TO_AE,
 	ISP_CTRL_SET_FD_NATION_CODE,
+	ISP_CTRL_GET_HDR_PARAM,
 	ISP_CTRL_MAX
 };
 
@@ -724,6 +728,24 @@ struct isp_fdr_param {
 	cmr_u32 fdr_enable;
 	cmr_u32 ev_effect_valid_num;
 	cmr_u32 ev_effect_cnt;
+};
+
+struct isp_blkpm_t {
+	cmr_u32 param_size;
+	void *param_ptr;
+	cmr_u32 *multi_nr_map;
+	cmr_s32 mode_num;
+	cmr_s32 scene_num;
+	cmr_s32 level_num;
+	cmr_s32 mode_id;
+	cmr_s32 scene_id;
+	cmr_s32 ai_scene_id;
+	/* smart result */
+	cmr_s32 idx0;
+	cmr_s32 idx1;
+	cmr_s32 weight0;
+	cmr_s32 weight1;
+	cmr_u32 reserved[3];
 };
 
 struct isp_info {
