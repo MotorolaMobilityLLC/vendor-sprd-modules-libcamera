@@ -4871,7 +4871,7 @@ cmr_int camera_get_otpinfo(cmr_handle oem_handle, cmr_u8 dual_flag,
         goto exit;
     }
 
-    ret = sensor_read_calibration_otp(dual_flag, otp_data, cxt->camera_id);
+    ret = cmr_sensor_read_calibration_otp(cxt->sn_cxt.sensor_handle, dual_flag, otp_data, cxt->camera_id);
     if (CMR_CAMERA_SUCCESS == ret) {
         CMR_LOGD("dual_otp data from calibration bin");
     } else {
@@ -14369,8 +14369,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
 
     case CAMERA_PARAM_WRITE_CALIBRATION_OTP_DATA: {
         struct cal_otp_info *temp_info = (struct cal_otp_info *)param;
-        ret = sensor_write_calibration_otp(
-            temp_info->otp_data, temp_info->dual_otp_flag, temp_info->otp_size);
+        ret = camera_write_calibration_otp(oem_handle,(struct cal_otp_info *)param);
         if (0 == ret) {
             temp_info->cal_otp_result = CAMERA_CALIC_OTP_SUCCESS;
         } else {
@@ -15840,6 +15839,21 @@ cmr_int camera_set_eis_move_info(cmr_handle oem_handle,
 
     return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_EIS_MOVE_INFO,
                      move_info);
+}
+
+cmr_int camera_write_calibration_otp(cmr_handle oem_handle, struct cal_otp_info * param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_LOGD("dual_otp_flag %d size %d", param->dual_otp_flag, param->otp_size);
+
+    ret = cmr_sensor_write_calibration_otp(cxt->sn_cxt.sensor_handle, param->otp_data,
+    param->dual_otp_flag, param->otp_size, cxt->camera_id);
+    if (0 == ret) {
+        param->cal_otp_result = CAMERA_CALIC_OTP_SUCCESS;
+    } else {
+        param->cal_otp_result = CAMERA_CALIC_OTP_FAIL;
+    }
+    return ret;
 }
 
 cmr_int camera_local_cap_state(cmr_handle oem_handle, bool *flag) {

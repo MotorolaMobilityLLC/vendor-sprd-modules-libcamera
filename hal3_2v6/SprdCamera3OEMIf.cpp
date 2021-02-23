@@ -1794,6 +1794,9 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
             lightportrait_type = *(int *)param1;
         }
         break;
+    case CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA:{
+        }
+        break;
     } /* switch */
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
@@ -6621,6 +6624,7 @@ int SprdCamera3OEMIf::openCamera() {
             memcpy(otpInfo.otp_data, (char *)otp_info.dual_otp.data_3d.data_ptr,
                    otp_info.dual_otp.data_3d.size);
             otpInfo.otp_type = otp_info.dual_otp.data_3d.dualcam_cali_lib_type;
+            otpInfo.mChangeSensor = otp_info.dual_otp.data_3d.mChangeSensor;
             otpInfo.dual_otp_flag = otp_info.dual_otp.dual_flag;
 
             HAL_LOGD("camera_id %d, total_otp raw buffer %p, total_otp size "

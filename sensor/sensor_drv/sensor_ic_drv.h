@@ -370,6 +370,8 @@ struct sensor_ic_ctrl_cb {
     cmr_int (*set_mode)(cmr_handle sns_module_handle, cmr_u32 mode);
     cmr_int (*set_mode_wait_done)(cmr_handle sns_module_handle);
     cmr_int (*get_mode)(cmr_handle sns_module_handle, cmr_u32 *mode);
+    cmr_int (*set_snspid)(cmr_handle sns_module_handle, cmr_u8 sensor_id,
+        cmr_u8 *snspid, cmr_u8 snspid_size);
     /*add ops here,if you need*/
 };
 

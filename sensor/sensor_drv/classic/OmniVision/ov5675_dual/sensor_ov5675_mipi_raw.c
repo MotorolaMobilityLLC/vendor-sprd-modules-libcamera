@@ -505,6 +505,33 @@ static cmr_int ov5675_drv_init_exif_info(cmr_handle handle,
     return ret;
 }
 
+static cmr_u8 ov5675_snspid_is_init = 0;
+
+static cmr_int ov5675_drv_save_snspid(cmr_handle handle) {
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    cmr_u8 snspid[16] = {0};
+    cmr_u8 snspid_size = 16;
+
+    SENSOR_LOGI("E");
+
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3D81, 0x01);
+    for (int i = 0; i < 16; i++) {
+        snspid[i] = hw_sensor_read_reg(sns_drv_cxt->hw_handle, (0x7000 + i));
+        SENSOR_LOGI("0x%x:0x%x", (0x7000 + i), snspid[i]);
+    }
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x00);
+
+    if (sns_drv_cxt->ops_cb.set_snspid) {
+        sns_drv_cxt->ops_cb.set_snspid(
+            sns_drv_cxt->caller_handle, sns_drv_cxt->sensor_id, snspid, snspid_size);
+    }
+
+    ov5675_snspid_is_init = 1;
+    return SENSOR_SUCCESS;
+}
+
 /*==============================================================================
  * Description:
  * identify sensor id
@@ -528,6 +555,9 @@ static cmr_int ov5675_drv_identify(cmr_handle handle, cmr_uint param) {
         if (ov5675_VER_VALUE == ver_value) {
             SENSOR_LOGI("this is ov5675 sensor");
             ov5675_drv_init_fps_info(handle);
+            if (!ov5675_snspid_is_init) {
+                ov5675_drv_save_snspid(handle);
+            }
             ret_value = SENSOR_SUCCESS;
         } else {
             SENSOR_LOGI("Identify this is %x%x sensor", pid_value, ver_value);

@@ -802,6 +802,9 @@ cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
 cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
                                cmr_u32 param);
 
+cmr_int sensor_set_snspid_common(cmr_handle sns_module_handle,
+        cmr_u8 sensor_id, cmr_u8 *snspid, cmr_u8 snspid_size);
+
 cmr_int sensor_get_exif_common(cmr_handle sns_module_handle, void **param);
 
 cmr_int sensor_get_info_common(struct sensor_drv_context *sensor_cxt,
@@ -831,11 +834,10 @@ int sensorGetPhyId4Role(enum sensor_role role, enum face_type facing);
 LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(int multiCameraId);
 
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param);
-cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
-                                    struct sensor_otp_cust_info *otp_data,
-                                    cmr_u32 camera_id);
-cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
-                                     cmr_u16 otp_size);
+cmr_int sensor_read_calibration_otp(struct sensor_drv_context *sensor_cxt,
+	                                cmr_u8 dual_flag, struct sensor_otp_cust_info *otp_data);
+cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
+                                     cmr_u8 *buf, cmr_u8 dual_flag, cmr_u16 otp_size);
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;

@@ -2267,6 +2267,7 @@ typedef enum {
     CAMERA_IOCTRL_JPEG_DECODE_PROC,
     CAMERA_IOCTRL_GET_FDR_TUNING_FLAG,
     CAMERA_IOCTRL_SET_MOVE_INFO,
+    CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

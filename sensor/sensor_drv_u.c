@@ -178,6 +178,7 @@ extern uint32_t isp_raw_para_update_from_file(SENSOR_INFO_T *sensor_info_ptr,
 cmr_int sensor_set_raw_infor(struct sensor_drv_context *sensor_cxt,
                              cmr_u8 vendor_id);
 cmr_int sensor_set_otp_data(struct sensor_drv_context *sensor_cxt);
+cmr_int get_sensor_pid(cmr_u8 *buf);
 
 void sensor_set_cxt_common(struct sensor_drv_context *sensor_cxt) {
     SENSOR_ID_E slot_id = 0;
@@ -2322,6 +2323,7 @@ static cmr_int sensor_ic_create(struct sensor_drv_context *sensor_cxt,
         sns_init_para.ops_cb.set_mode = sensor_set_mode_common;
         sns_init_para.ops_cb.get_mode = sensor_get_mode_common;
         sns_init_para.ops_cb.set_exif_info = sensor_set_exif_common;
+        sns_init_para.ops_cb.set_snspid = sensor_set_snspid_common;
         sns_init_para.ops_cb.get_exif_info = sensor_get_exif_common;
         sns_init_para.ops_cb.set_mode_wait_done = sensor_set_mode_done_common;
         ret = sns_ops->create_handle(&sns_init_para,
@@ -3834,6 +3836,412 @@ exit:
     return ret;
 }
 
+static cmr_u8 sensor_snspid[SENSOR_ID_MAX][SNSPID_MAX_SIZE]  = {0};
+
+static cmr_u8 bokeh_snspid[BOKEH_SNSPID_MAX_SIZE] = {0};
+static cmr_u8 bokeh_snspid_size = BOKEH_SNSPID_MAX_SIZE;
+static cmr_u8 bokeh_module_name[BOKEH_MODULE_NAME_MAX_SIZE] = {0};
+static cmr_u8 bokeh_module_name_size = BOKEH_MODULE_NAME_MAX_SIZE;
+static cmr_u8 bokeh_cmei[BOKEH_MODULE_NAME_MAX_SIZE + BOKEH_SNSPID_MAX_SIZE]= {0};
+static cmr_u8 bokeh_cmei_size = BOKEH_MODULE_NAME_MAX_SIZE + BOKEH_SNSPID_MAX_SIZE;
+
+static cmr_u8 oz1_snspid[OZ1_SNSPID_MAX_SIZE] = {0};
+static cmr_u8 oz1_snspid_size = OZ1_SNSPID_MAX_SIZE;
+static cmr_u8 oz1_module_name[OZ1_MODULE_NAME_MAX_SIZE] = {0};
+static cmr_u8 oz1_module_name_size = OZ1_MODULE_NAME_MAX_SIZE;
+static cmr_u8 oz1_cmei[OZ1_MODULE_NAME_MAX_SIZE + OZ1_SNSPID_MAX_SIZE]= {0};
+static cmr_u8 oz1_cmei_size = OZ1_MODULE_NAME_MAX_SIZE + OZ1_SNSPID_MAX_SIZE;
+
+static cmr_u8 oz2_snspid[OZ2_SNSPID_MAX_SIZE] = {0};
+static cmr_u8 oz2_snspid_size = OZ2_SNSPID_MAX_SIZE;
+static cmr_u8 oz2_module_name[OZ2_MODULE_NAME_MAX_SIZE] = {0};
+static cmr_u8 oz2_module_name_size = OZ2_MODULE_NAME_MAX_SIZE;
+static cmr_u8 oz2_cmei[OZ2_MODULE_NAME_MAX_SIZE + OZ2_SNSPID_MAX_SIZE]= {0};
+static cmr_u8 oz2_cmei_size = OZ2_MODULE_NAME_MAX_SIZE + OZ2_SNSPID_MAX_SIZE;
+
+cmr_int sensor_set_snspid_common(cmr_handle sns_module_handle,
+        cmr_u8 sensor_id, cmr_u8 *snspid, cmr_u8 snspid_size) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_module_handle;
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+    cmr_u8 i = 0;
+
+    SENSOR_LOGI("E");
+
+    for(i = 0; i < snspid_size; i++) {
+        sensor_snspid[sensor_id][i] = snspid[i];
+    }
+
+    return ret;
+}
+
+static cmr_int sensor_drv_create_multicam_snspid(cmr_u8 dual_flag) {
+    cmr_u32 has_scaned = SENSOR_FALSE;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+    struct phySensorInfo *phyPtr = phy_sensor_info_list;
+    struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+    cmr_u8 i = 0, j =0, k=0;
+
+    SENSOR_LOGI("E");
+
+    switch (dual_flag) {
+
+    case CALIBRATION_FLAG_BOKEH:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_BLUR_ID == (logicalPtr + i)->multiCameraId) {
+                logicalPtr += i;
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+      	     for(i = 0; i < logicalPtr->physicalNum; i++) {
+                for(j = 0; j < SNSPID_MAX_SIZE; j++)
+                    bokeh_snspid[i * SNSPID_MAX_SIZE + j] = 
+                            sensor_snspid[logicalPtr->phyIdGroup[i].phyId][j];
+      	     }
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ1:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_MULTI_CAMERA_ID == (logicalPtr + i)->multiCameraId) {
+                logicalPtr += i;
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+      	     for(i = 0, k = 0; i < logicalPtr->physicalNum; i++) {
+                if((SENSOR_ROLE_MULTICAM_WIDE == logicalPtr->phyIdGroup[i].sensor_role) ||
+                        (SENSOR_ROLE_MULTICAM_SUPERWIDE == logicalPtr->phyIdGroup[i].sensor_role)) {
+                    for(j = 0; j < SNSPID_MAX_SIZE; j++)
+                        oz1_snspid[k * SNSPID_MAX_SIZE + j] = sensor_snspid[logicalPtr->phyIdGroup[i].phyId][j];
+                    k++;
+                }
+      	     }
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ2:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_MULTI_CAMERA_ID == (logicalPtr + i)->multiCameraId) {
+                logicalPtr += i;
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+      	     for(i = 0, k = 0; i < logicalPtr->physicalNum; i++) {
+                if((SENSOR_ROLE_MULTICAM_WIDE == logicalPtr->phyIdGroup[i].sensor_role) ||
+                        (SENSOR_ROLE_MULTICAM_TELE== logicalPtr->phyIdGroup[i].sensor_role)) {
+                    for(j = 0; j < SNSPID_MAX_SIZE; j++)
+                        oz2_snspid[k * SNSPID_MAX_SIZE + j] = sensor_snspid[logicalPtr->phyIdGroup[i].phyId][j];
+                    k++;
+                }
+      	     }
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    default:
+        SENSOR_LOGE("input dual_flag:%d is invalid!", dual_flag);
+        return SENSOR_FAIL;
+    }
+
+    return SENSOR_SUCCESS;
+}
+
+static cmr_int sensor_drv_create_module_name(cmr_u8 dual_flag) {
+    cmr_u32 has_scaned = SENSOR_FALSE;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+    struct phySensorInfo *phyPtr = phy_sensor_info_list;
+    struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+    cmr_u8 i = 0, j = 0;
+
+    SENSOR_LOGI("E");
+
+    switch (dual_flag) {
+
+    case CALIBRATION_FLAG_BOKEH:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_BLUR_ID == (logicalPtr + i)->multiCameraId) {
+                logicalPtr += i;
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+            for(i = 0; i < logicalPtr->physicalNum; i++) {
+                strcat(bokeh_module_name, 
+                        (phyPtr + logicalPtr->phyIdGroup[i].phyId)->sensor_name);
+                if (i != (logicalPtr->physicalNum - 1)) {
+                    strcat(bokeh_module_name, "-");
+                }
+            }
+            SENSOR_LOGI("SPRD_BLUR_ID %s", bokeh_module_name);
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ1:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_MULTI_CAMERA_ID == (logicalPtr + i)->multiCameraId) {
+                logicalPtr += i;
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+            for(i = 0, j = 0; i < logicalPtr->physicalNum; i++) {
+                if((SENSOR_ROLE_MULTICAM_WIDE == logicalPtr->phyIdGroup[i].sensor_role) ||
+                        (SENSOR_ROLE_MULTICAM_SUPERWIDE == logicalPtr->phyIdGroup[i].sensor_role)) {
+                    strcat(oz1_module_name, 
+                            (phyPtr + logicalPtr->phyIdGroup[i].phyId)->sensor_name);
+                    if (j < 1) {
+                        strcat(oz1_module_name, "-");
+                    }
+                    j++;
+                }
+            }
+            SENSOR_LOGI("CALIBRATION_FLAG_OZ1 %s", oz1_module_name);
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ2:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_MULTI_CAMERA_ID == (logicalPtr + i)->multiCameraId) {
+                logicalPtr += i;
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+            for(i = 0, j = 0; i < logicalPtr->physicalNum; i++) {
+                if((SENSOR_ROLE_MULTICAM_WIDE == logicalPtr->phyIdGroup[i].sensor_role) ||
+                        (SENSOR_ROLE_MULTICAM_TELE == logicalPtr->phyIdGroup[i].sensor_role)) {
+                    strcat(oz2_module_name, 
+                            (phyPtr + logicalPtr->phyIdGroup[i].phyId)->sensor_name);
+                    if (j < 1) {
+                        strcat(oz2_module_name, "-");
+                    }
+                    j++;
+                }
+            }
+            SENSOR_LOGI("CALIBRATION_FLAG_OZ2 %s", oz2_module_name);
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    default:
+        SENSOR_LOGE("input dual_flag:%d is invalid!", dual_flag);
+        return SENSOR_FAIL;
+    }
+
+    return SENSOR_SUCCESS;
+}
+
+static cmr_int sensor_drv_create_cmei(cmr_u8 dual_flag) {
+    cmr_u32 has_scaned = SENSOR_FALSE;
+    struct camera_device_manager *devPtr = &camera_dev_manger;
+    struct phySensorInfo *phyPtr = phy_sensor_info_list;
+    struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
+    cmr_u8 i = 0;
+
+    SENSOR_LOGI("E");
+
+    switch (dual_flag) {
+
+    case CALIBRATION_FLAG_BOKEH:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_BLUR_ID == (logicalPtr + i)->multiCameraId) {
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+            memcpy(bokeh_cmei, bokeh_module_name, bokeh_module_name_size);
+            memcpy(bokeh_cmei+ bokeh_module_name_size, bokeh_snspid, bokeh_snspid_size);
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ1:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_MULTI_CAMERA_ID == (logicalPtr + i)->multiCameraId) {
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+            memcpy(oz1_cmei, oz1_module_name, oz1_module_name_size);
+            memcpy(oz1_cmei+ oz1_module_name_size, oz1_snspid, oz1_snspid_size);
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ2:
+        for (i = devPtr->physical_num; i < devPtr->logical_num; i++) {
+            if ((logicalPtr + i)->logicalId == 0xff)
+                continue;
+            if (SPRD_MULTI_CAMERA_ID == (logicalPtr + i)->multiCameraId) {
+                has_scaned = SENSOR_TRUE;
+                break;
+            }
+        }
+        if (SENSOR_TRUE == has_scaned) {
+            memcpy(oz2_cmei, oz2_module_name, oz2_module_name_size);
+            memcpy(oz2_cmei+ oz2_module_name_size, oz2_snspid, oz2_snspid_size);
+        } else {
+            SENSOR_LOGE("dual_flag:%d, can't find all configured sensors!",
+                          dual_flag);
+            return SENSOR_FAIL;
+        }
+        break;
+
+    default:
+        SENSOR_LOGE("input dual_flag:%d is invalid!", dual_flag);
+        return SENSOR_FAIL;
+    }
+
+    return SENSOR_SUCCESS;
+}
+
+static cmr_int sensor_drv_create_cmei_list(void)
+{
+    SENSOR_LOGI("E");
+
+    sensor_drv_create_multicam_snspid(CALIBRATION_FLAG_BOKEH);
+    sensor_drv_create_module_name(CALIBRATION_FLAG_BOKEH);
+    sensor_drv_create_cmei(CALIBRATION_FLAG_BOKEH);
+
+    sensor_drv_create_multicam_snspid(CALIBRATION_FLAG_OZ1);
+    sensor_drv_create_module_name(CALIBRATION_FLAG_OZ1);
+    sensor_drv_create_cmei(CALIBRATION_FLAG_OZ1);
+
+    sensor_drv_create_multicam_snspid(CALIBRATION_FLAG_OZ2);
+    sensor_drv_create_module_name(CALIBRATION_FLAG_OZ2);
+    sensor_drv_create_cmei(CALIBRATION_FLAG_OZ2);
+
+    return SENSOR_SUCCESS;
+}
+
+static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
+    cmr_u32 ret = SENSOR_FAIL;
+    cmr_u16 cmei_size = 0;
+    cmr_u8 bokeh_cmei_buf[bokeh_cmei_size];
+    cmr_u8 oz1_cmei_buf[oz1_cmei_size];
+    cmr_u8 oz2_cmei_buf[oz2_cmei_size];
+    SENSOR_LOGI("E");
+
+    switch (dual_flag) {
+
+    case CALIBRATION_FLAG_BOKEH:
+        cmei_size = read_cmei_from_file(bokeh_cmei_buf, bokeh_cmei_size,
+			CALIBRATION_FLAG_BOKEH);
+        if(bokeh_cmei_size == cmei_size) {
+            ret = memcmp(bokeh_cmei_buf, bokeh_cmei, bokeh_cmei_size);
+            if(0 == ret) {
+                SENSOR_LOGI("bokeh module hasnot changed, use calibraton data");
+                return SENSOR_SUCCESS;
+            } else{
+                SENSOR_LOGI("bokeh module has changed, use golden data");
+                return SENSOR_FAIL;
+            }
+        } else {
+            SENSOR_LOGI("cannot get bokeh module info, use golden data");
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ1:
+        cmei_size = read_cmei_from_file(oz1_cmei_buf, oz1_cmei_size,
+			CALIBRATION_FLAG_OZ1);
+        if(oz1_cmei_size == cmei_size) {
+            ret = memcmp(oz1_cmei_buf, oz1_cmei, oz1_cmei_size);
+            if(0 == ret) {
+                SENSOR_LOGI("oz1 module hasnot changed, use calibraton data");
+                return SENSOR_SUCCESS;
+            } else{
+                SENSOR_LOGI("oz1 module has changed, use golden data");
+                return SENSOR_FAIL;
+            }
+        } else {
+            SENSOR_LOGI("cannot get oz1 module info, use golden data");
+            return SENSOR_FAIL;
+        }
+        break;
+
+    case CALIBRATION_FLAG_OZ2:
+        cmei_size = read_cmei_from_file(oz2_cmei_buf, oz2_cmei_size,
+			CALIBRATION_FLAG_OZ2);
+        if(oz2_cmei_size == cmei_size) {
+            ret = memcmp(oz2_cmei_buf, oz2_cmei, oz2_cmei_size);
+            if(0 == ret) {
+                SENSOR_LOGI("oz2 module hasnot changed, use calibraton data");
+                return SENSOR_SUCCESS;
+            } else{
+                SENSOR_LOGI("oz2 module has changed, use golden data");
+                return SENSOR_FAIL;
+            }
+        } else {
+            SENSOR_LOGI("cannot get oz2 module info, use golden data");
+            return SENSOR_FAIL;
+        }
+        break;
+
+    default:
+        SENSOR_LOGE("input dual_flag:%d is invalid!", dual_flag);
+        return SENSOR_FAIL;
+    }
+
+    return SENSOR_SUCCESS;
+}
+
 static cmr_int sensor_drv_scan_hw(void) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct sensor_drv_context sns_cxt;
@@ -3967,6 +4375,8 @@ static cmr_int sensor_drv_scan_hw(void) {
     devPtr->logical_cam_num = sensor_drv_create_logical_camera_info();
 
     devPtr->hasScaned = 1;
+
+    sensor_drv_create_cmei_list();
 
 exit:
     if (docPtr) {
@@ -4230,45 +4640,77 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
     return ret;
 }
 
-cmr_int sensor_read_calibration_otp(cmr_u8 dual_flag,
-                                    struct sensor_otp_cust_info *otp_data,
-                                    cmr_u32 camera_id) {
-
+cmr_int sensor_read_calibration_otp(struct sensor_drv_context *sensor_cxt,
+                                    cmr_u8 dual_flag, struct sensor_otp_cust_info *otp_data) {
+    int ret = 0;
     cmr_u16 otpsize = 0;
+    cmr_u8 dual_flag_tmp = 0;
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+    char property_value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.bokeh.online.cali.gld", property_value, "0");
+
     SENSOR_LOGI("E");
 
     pthread_mutex_lock(&cali_otp_mutex);
-    otpsize = read_calibration_otp_from_file(otpdata[camera_id], dual_flag);
+
+    dual_flag_tmp = dual_flag;
+    if (CALIBRATION_FLAG_BOKEH == dual_flag) {
+        if (atoi(property_value) == 1) {
+            ret = sensor_drv_check_cmei(dual_flag);
+        }
+        if (ret)
+            dual_flag_tmp = CALIBRATION_FLAG_BOKEH_GLD_ONLINE;
+    } else if (CALIBRATION_FLAG_OZ1 == dual_flag) {
+        ret = sensor_drv_check_cmei(dual_flag);
+        if (ret)
+            dual_flag_tmp = CALIBRATION_FLAG_OZ1_GLD;
+    } else if (CALIBRATION_FLAG_OZ2 == dual_flag) {
+        ret = sensor_drv_check_cmei(dual_flag);
+        if (ret)
+            dual_flag_tmp = CALIBRATION_FLAG_OZ2_GLD;
+    }
+    otpsize = read_calibration_otp_from_file(otpdata[sensor_cxt->slot_id], dual_flag_tmp);
+
     pthread_mutex_unlock(&cali_otp_mutex);
     if (otpsize > 0) {
-        otp_data->total_otp.data_ptr = otpdata[camera_id];
+        otp_data->total_otp.data_ptr = otpdata[sensor_cxt->slot_id];
         otp_data->total_otp.size = otpsize;
         otp_data->dual_otp.dual_flag = dual_flag;
-        otp_data->dual_otp.data_3d.data_ptr = otpdata[camera_id];
+        otp_data->dual_otp.data_3d.data_ptr = otpdata[sensor_cxt->slot_id];
         otp_data->dual_otp.data_3d.size = otpsize;
-        SENSOR_LOGI("read calibration otp data success, size :%d", otpsize);
+        otp_data->dual_otp.data_3d.mChangeSensor = ret;
+        SENSOR_LOGI("read calibration otp data success, otpsize = %d, mChangeSensor = %d",
+            otpsize, otp_data->dual_otp.data_3d.mChangeSensor);
         return SENSOR_SUCCESS;
     } else {
         SENSOR_LOGE("read calibration otp data failed, size:%d", otpsize);
         return SENSOR_FAIL;
     }
-}
+};
 
-cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
-                                     cmr_u16 otp_size) {
+cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
+                                     cmr_u8 *buf, cmr_u8 dual_flag, cmr_u16 otp_size) {
     int ret = 0;
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
     SENSOR_LOGI("E");
 
     pthread_mutex_lock(&cali_otp_mutex);
-    ret = write_calibration_otp_to_file(buf, dual_flag, otp_size);
-    pthread_mutex_unlock(&cali_otp_mutex);
+    ret = write_calibration_otp_to_file(buf,dual_flag, otp_size);
     if (1 == ret) {
-        SENSOR_LOGI("write calibration otp data success");
-        return SENSOR_SUCCESS;
+        if(CALIBRATION_FLAG_BOKEH == dual_flag) {
+            write_cmei_to_file(bokeh_cmei, bokeh_cmei_size, dual_flag);
+        } else if (CALIBRATION_FLAG_OZ1== dual_flag) {
+            write_cmei_to_file(oz1_cmei, oz1_cmei_size, dual_flag);
+        } else if (CALIBRATION_FLAG_OZ2 == dual_flag) {
+            write_cmei_to_file(oz2_cmei, oz2_cmei_size, dual_flag);
+        }
+        ret = SENSOR_SUCCESS;
     } else {
         SENSOR_LOGE("write calibration otp data failed!");
-        return SENSOR_FAIL;
+        ret = SENSOR_FAIL;
     }
+    pthread_mutex_unlock(&cali_otp_mutex);
+    return ret;
 }
 
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) {

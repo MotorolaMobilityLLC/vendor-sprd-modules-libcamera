@@ -175,6 +175,17 @@ struct sensor_ex_info {
     cmr_s64 sensor_max_exp;
 };
 
+#define SNSPID_MAX_SIZE 32
+
+#define BOKEH_SNSPID_MAX_SIZE 64
+#define BOKEH_MODULE_NAME_MAX_SIZE 64
+
+#define OZ1_SNSPID_MAX_SIZE 64
+#define OZ1_MODULE_NAME_MAX_SIZE 64
+
+#define OZ2_SNSPID_MAX_SIZE 64
+#define OZ2_MODULE_NAME_MAX_SIZE 64
+
 struct sensor_raw_resolution_info_tab {
     cmr_u32 image_pattern;
     struct sensor_raw_resolution_info tab[10];
@@ -218,6 +229,7 @@ struct sensor_data_info {
     struct isp_data_info isp_init_data[MAX_MODE_NUM];
     struct isp_data_info isp_update_data[MAX_MODE_NUM]; /*for isp_tool*/
     cmr_u8 dualcam_cali_lib_type;
+    bool mChangeSensor;
 };
 
 struct sensor_otp_data_info {
