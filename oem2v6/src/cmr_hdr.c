@@ -49,6 +49,8 @@ struct class_hdr_lib_context {
 #endif
     float ev[HDR_CAP_NUM];
     struct ipm_version version;
+    cmr_u32 hdr_index;
+    void *ae_exp_gain_info;
 };
 
 struct hdr_frame_addr {
@@ -540,6 +542,8 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
         sprd_hdr_param.input[0].stride = width;
         sprd_hdr_param.input[0].size = width * height * 3 / 2;
         sprd_hdr_param.ev[0] = hdr_handle->lib_cxt.ev[0];
+        sprd_hdr_param.tuning_param_index = hdr_handle->lib_cxt.hdr_index;
+        CMR_LOGI("sprd_hdr_param.tuning_param_index %d", sprd_hdr_param.tuning_param_index);
 
         sprd_hdr_param.input[1].format = SPRD_CAMALG_IMG_NV21;
         sprd_hdr_param.input[1].addr[0] =
@@ -621,8 +625,10 @@ static cmr_int hdr_save_frame(cmr_handle class_handle,
 
     hdr_handle->lib_cxt.ev[0] = in->ev[0];
     hdr_handle->lib_cxt.ev[1] = in->ev[1];
-    CMR_LOGD("ev: %f, %f", hdr_handle->lib_cxt.ev[0],
-             hdr_handle->lib_cxt.ev[1]);
+    hdr_handle->lib_cxt.hdr_index = in->hdr_index;
+    hdr_handle->lib_cxt.ae_exp_gain_info = in->ae_exp_gain_info;
+    CMR_LOGD("ev: %f, %f, %p,%d", hdr_handle->lib_cxt.ev[0],
+             hdr_handle->lib_cxt.ev[1], hdr_handle->lib_cxt.ae_exp_gain_info,hdr_handle->lib_cxt.hdr_index);
     y_size = in->src_frame.size.height * in->src_frame.size.width;
     uv_size = in->src_frame.size.height * in->src_frame.size.width / 2;
     frame_sn = hdr_handle->common.save_frame_count - 1 -
@@ -866,6 +872,13 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle) {
     cmr_u32 max_width;
     cmr_u32 max_height;
     sprd_hdr_version_t version;
+    cmr_handle oem_handle = NULL;
+    struct common_isp_cmd_param isp_cmd_parm;
+    sprd_hdr_init_param_t hdr_param;
+    struct sensor_hdr_param *hdr_tuning_param;
+
+    cmr_bzero(&hdr_param, sizeof(sprd_hdr_init_param_t));
+    cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
 
     if (NULL == hdr_handle) {
         CMR_LOGE("error:hdr handle is NULL\n");
@@ -877,8 +890,27 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle) {
 
     CMR_LOGD("max width*height = [%d * %d]\n", max_width, max_height);
 
+    oem_handle = hdr_handle->common.ipm_cxt->init_in.oem_handle;
+    struct ipm_init_in *ipm_in = &hdr_handle->common.ipm_cxt->init_in;
+    ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_HDR_PARAM,
+                                    &isp_cmd_parm);
+    if (CMR_CAMERA_SUCCESS != ret) {
+        CMR_LOGE("failed to get isp hdr param %ld", ret);
+        ret = 0;
+    } else {
+        hdr_param.tuning_param = isp_cmd_parm.hdr_param.param_ptr;
+        hdr_param.tuning_param_size= isp_cmd_parm.hdr_param.param_size;
+        hdr_tuning_param = (struct sensor_hdr_param*)(hdr_param.tuning_param);
+
+        CMR_LOGD("hdr_tuning_param.version %d,hdr_tuning_param.scene_num %d, hdr_tuning_param.thres_dark %d\n",
+        hdr_tuning_param->version, hdr_tuning_param->scene_num,
+        hdr_tuning_param->thres_dark);
+    }
+
+    CMR_LOGD("hdr_param %p,size %d\n", hdr_param.tuning_param, hdr_param.tuning_param_size);
+
     hdr_handle->lib_cxt.lib_handle =
-        sprd_hdr_adpt_init(max_width, max_height, NULL);
+        sprd_hdr_adpt_init(max_width, max_height, (void *)&hdr_param);
     if (NULL == hdr_handle->lib_cxt.lib_handle) {
         CMR_LOGE("error:hdr handle is NULL\n");
         return -CMR_CAMERA_INVALID_PARAM;

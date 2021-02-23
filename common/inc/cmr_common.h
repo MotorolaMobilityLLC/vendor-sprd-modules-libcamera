@@ -502,6 +502,7 @@ enum common_isp_cmd_type {
     COM_ISP_GET_DRE_PRO_PARAM,
     COM_ISP_SET_AUTO_FDR,
     COM_ISP_SET_FDR_LOG,
+    COM_ISP_GET_HDR_PARAM,
     COM_ISP_TYPE_MAX
 };
 
@@ -1213,6 +1214,7 @@ struct common_isp_cmd_param {
         struct img_rect ae_target_region;
         struct isp_fb_param_info fb_param;
         struct isp_snp_ae_param snp_ae_param;
+        struct isp_blkpm_t hdr_param;
     };
 };
 

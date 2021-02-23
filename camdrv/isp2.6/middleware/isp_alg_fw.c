@@ -275,6 +275,11 @@ struct fdr_info {
 	cmr_u32 log_fdr_size;
 };
 
+struct hdr_info {
+	cmr_s32 tuning_param_size;
+	void *tuning_param_ptr;
+};
+
 struct ai_info {
 	cmr_handle handle;
 	cmr_u8 *log_ai;
@@ -413,6 +418,7 @@ struct isp_alg_fw_context {
 	struct ebd_info ebd_cxt;
 	struct ai_info ai_cxt;
 	struct fdr_info fdr_cxt;
+	struct hdr_info hdr_cxt;
 	struct swalgo_pm_info swpm_ctx;
 	struct sensor_libuse_info *lib_use_info;
 	struct sensor_raw_ioctrl *ioctrl_ptr;
@@ -877,7 +883,13 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 #endif
 	case AE_CB_EV_ADJUST_PARMA:
 		cmd = ISP_AE_AUX_EFFECT_CALLBACK;
-        break;
+		break;
+	case AE_CB_HDR_EXP_GAIN:
+		cmd = ISP_AE_CB_HDR_EXP_GAIN;
+		break;
+	case AE_CB_HDR_TUNING_PARAM_INDEX:
+		cmd = ISP_AE_CB_HDR_TUNING_PARAM_INDEX;
+		break;
 	default:
 		cmd = ISP_AE_STAB_CALLBACK;
 		break;
@@ -4395,6 +4407,19 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 			output.param_num, output.param_data->data_ptr, output.param_data->data_size);
 	}
 
+	/*  get tuning param for HDR algo */
+	memset(&output, 0, sizeof(output));
+	cxt->hdr_cxt.tuning_param_ptr = NULL;
+	cxt->hdr_cxt.tuning_param_size = 0;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_HDR_PARAM, NULL, &output);
+	if (ISP_SUCCESS != ret || output.param_num < 1 || output.param_data->data_ptr == NULL) {
+		ISP_LOGD("cam%ld, hdr param is not found. ret %ld, num %d, ptr %p\n",
+			cxt->camera_id, ret, output.param_num, output.param_data->data_ptr);
+	} else {
+		cxt->hdr_cxt.tuning_param_ptr = output.param_data->data_ptr;
+		cxt->hdr_cxt.tuning_param_size = output.param_data->data_size;
+	}
+
 	memset(&output, 0, sizeof(output));
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_AE_SYNC, NULL, &output);
 	if (ISP_SUCCESS != ret || 1 != output.param_num) {
@@ -4430,6 +4455,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.dflash_num = dflash_num;
 	ae_input.fdr_tuning_param = cxt->fdr_cxt.tuning_param_ptr;
 	ae_input.fdr_tuning_size = cxt->fdr_cxt.tuning_param_size;
+	ae_input.hdr_tuning_param = cxt->hdr_cxt.tuning_param_ptr;
+	ae_input.hdr_tuning_size = cxt->hdr_cxt.tuning_param_size;
 	ae_input.resolution_info.frame_size.w = cxt->commn_cxt.src.w;
 	ae_input.resolution_info.frame_size.h = cxt->commn_cxt.src.h;
 	ae_input.resolution_info.frame_line = cxt->commn_cxt.input_size_trim[1].frame_line;

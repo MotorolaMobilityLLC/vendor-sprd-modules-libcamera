@@ -44,6 +44,8 @@ struct ipm_frame_in {
     cmr_uint flip_on;
     cmr_uint is_front;
     cmr_uint smile_capture_on;
+    cmr_u32 hdr_index;
+    void *ae_exp_gain_info;
 };
 
 struct ipm_frame_out {

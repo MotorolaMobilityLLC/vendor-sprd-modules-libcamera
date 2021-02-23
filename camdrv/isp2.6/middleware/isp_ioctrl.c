@@ -4196,6 +4196,32 @@ static cmr_int ispctl_get_dre_pro_param(cmr_handle isp_alg_handle, void *param_p
 	return ret;
 }
 
+static cmr_int ispctl_get_hdr_param(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt =
+		(struct isp_alg_fw_context *)isp_alg_handle;
+
+	struct isp_blkpm_t *out_ptr;
+
+	if (param_ptr == NULL) {
+		ISP_LOGE("fail to get ptr %p\n", param_ptr);
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->hdr_cxt.tuning_param_ptr == NULL || cxt->hdr_cxt.tuning_param_size <= 0) {
+		ISP_LOGD("hdr data %p, size %d\n",
+			cxt->hdr_cxt.tuning_param_ptr, cxt->hdr_cxt.tuning_param_size);
+		return ISP_PARAM_NULL;
+	}
+
+	out_ptr = (struct isp_blkpm_t *)param_ptr;
+	out_ptr->param_ptr = cxt->hdr_cxt.tuning_param_ptr;
+	out_ptr->param_size = cxt->hdr_cxt.tuning_param_size;
+
+	return ret;
+}
+
 static cmr_int ispctl_ai_process_start(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5450,6 +5476,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_CNR3_PARAM, ispctl_get_cnr3_param},
 	{ISP_CTRL_GET_YNRS_PARAM, ispctl_get_ynrs_param},
 	{ISP_CTRL_GET_SW3DNR_PARAM, ispctl_get_sw3dnr_param},
+	{ISP_CTRL_GET_HDR_PARAM, ispctl_get_hdr_param},
 
 	{ISP_CTRL_GET_FLASH_SKIP_FRAME_NUM, ispctl_get_flash_skip_num},
 	{ISP_CTRL_AE_SET_TARGET_REGION, ispctl_ae_set_target_region},

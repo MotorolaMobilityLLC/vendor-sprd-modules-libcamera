@@ -2660,10 +2660,28 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
-     case ISP_AE_PARAM_CALLBACK:
+    case ISP_AE_PARAM_CALLBACK:
         cxt->snp_cxt.ae_common_info = data;
         CMR_LOGV("ae common info cb to oem ,addr = %p", cxt->snp_cxt.ae_common_info);
         break;
+    case ISP_AE_CB_HDR_EXP_GAIN: {
+        struct ae_hdr_exp_gain_info info;
+        cxt->snp_cxt.ae_exp_gain_info = data;
+        info = *(struct ae_hdr_exp_gain_info *)data;
+        CMR_LOGD("exp[%d %d %d], gain[%d %d %d]", info.exp_time[0],
+                 info.exp_time[1], info.exp_time[2], info.total_gain[0],
+                 info.total_gain[1], info.total_gain[2]);
+        // todo
+    }
+    break;
+    case ISP_AE_CB_HDR_TUNING_PARAM_INDEX: {
+        // got index(cmr_u32)
+        cmr_u32 index = *(cmr_u32 *)data;
+        CMR_LOGD("tuning param index %d", index);
+        cxt->snp_cxt.hdr_index = index;
+        //todo
+    }
+    break;
     default:
         break;
     }
@@ -10978,6 +10996,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->cnr2_param;
         break;
 
+    case COM_ISP_GET_HDR_PARAM:
+        isp_cmd = ISP_CTRL_GET_HDR_PARAM;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->hdr_param;
+        break;
+
     case COM_ISP_GET_DRE_PARAM:
 #ifdef CONFIG_CAMERA_DRE
         isp_cmd = ISP_CTRL_GET_DRE_PARAM;
@@ -16578,6 +16602,10 @@ cmr_int camera_local_image_sw_algorithm_processing(
         if (cxt->ipm_cxt.hdr_version.major != 1) {
             memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
                    ((HDR_CAP_NUM)-1) * sizeof(float));
+            ipm_in_param.hdr_index = cxt->snp_cxt.hdr_index;
+            ipm_in_param.ae_exp_gain_info = cxt->snp_cxt.ae_exp_gain_info;
+            CMR_LOGD("ev: %f, %f, %p, %d", ipm_in_param.ev[0],
+             ipm_in_param.ev[1], ipm_in_param.ae_exp_gain_info, ipm_in_param.hdr_index);
         }
         ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
                                  &imp_out_param);
