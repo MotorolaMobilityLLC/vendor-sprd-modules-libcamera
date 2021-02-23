@@ -1235,6 +1235,7 @@ struct common_isp_cmd_param {
         struct auto_tracking_info af_ot_info;
         struct img_rect ae_target_region;
         struct isp_fb_param_info fb_param;
+        struct isp_blkpm_t hdr_param;
     };
 };
 

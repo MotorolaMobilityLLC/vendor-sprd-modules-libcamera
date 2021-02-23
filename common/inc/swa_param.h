@@ -23,6 +23,10 @@ struct swa_hdr_param {
 	uint32_t pic_h;
 	uint32_t fmt;
 	float ev[HDR_CAP_MAX];
+	cmr_s32 tuning_param_size;
+	void *tuning_param_ptr;
+	void *hdr_callback;
+	void *ae_exp_gain_info;
 };
 
 /*========= for HDR end  ========*/

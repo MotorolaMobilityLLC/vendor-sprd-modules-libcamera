@@ -271,6 +271,8 @@ struct snapshot_context {
     void *fdr_ae_info;
     void *ae_common_info;
     void *snp_aux_param;
+    void *hdr_callback;
+    void *ae_exp_gain_info;
 };
 
 struct focus_context {
