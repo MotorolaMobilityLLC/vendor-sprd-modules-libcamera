@@ -103,6 +103,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_MFNR, 0 }, /* NR block */
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
+	{ ISP_BLK_HDR, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -288,6 +289,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_ATM_TUNE, 0 },
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
+	{ ISP_BLK_HDR, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -381,6 +383,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_ATM_TUNE, 0 },
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
+	{ ISP_BLK_HDR, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -1968,6 +1971,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			break;
 		case ISP_PM_CMD_GET_FDR_PARAM:
 			block_id = ISP_BLK_FDR;
+			break;
+		case ISP_PM_CMD_GET_HDR_PARAM:
+			block_id = ISP_BLK_HDR;
 			break;
 		default:
 			break;

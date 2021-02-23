@@ -96,7 +96,8 @@ int swa_hdr_open(void *ipmpro_hanlde,
 {
 	int ret = 0;
 	struct hdr_context_t *cxt = (struct hdr_context_t *)ipmpro_hanlde;
-	struct swa_init_data *init_param;
+	struct swa_hdr_param *init_param;
+	sprd_hdr_init_param_t hdr_param;
 
 	s_swa_log_level = log_level;
 
@@ -105,16 +106,20 @@ int swa_hdr_open(void *ipmpro_hanlde,
 		return -1;
 	}
 
-	init_param = (struct swa_init_data *)open_param;
+	init_param = (struct swa_hdr_param *)open_param;
 	memset(cxt, 0, sizeof(struct hdr_context_t));
 
-	cxt->frame_num = init_param->frm_total_num;
-	cxt->pic_w = init_param->frame_size.width;
-	cxt->pic_h = init_param->frame_size.height;
-	SWA_LOGI("frame num %d, pic size %d %d\n",
-		cxt->frame_num, cxt->pic_w, cxt->pic_h);
+	cxt->frame_num = init_param->fmt;
+	cxt->pic_w = init_param->pic_w;
+	cxt->pic_h = init_param->pic_h;
+	hdr_param.malloc = NULL;
+	hdr_param.free = NULL;
+	hdr_param.tuning_param_size = init_param->tuning_param_size;
+	hdr_param.tuning_param = init_param->tuning_param_ptr;
+	SWA_LOGI("frame num %d, pic size %d %d, hdr_param.tuning_param_size %d ,%p\n",
+		cxt->frame_num, cxt->pic_w, cxt->pic_h, hdr_param.tuning_param_size, hdr_param.tuning_param);
 
-	cxt->hdr_handle = sprd_hdr_adpt_init(cxt->pic_w, cxt->pic_h, NULL);
+	cxt->hdr_handle = sprd_hdr_adpt_init(cxt->pic_w, cxt->pic_h, (void *)&hdr_param);
 	if (cxt->hdr_handle == NULL) {
 		SWA_LOGE("fail to init hdr\n");
 		return -1;
@@ -183,9 +188,12 @@ int swa_hdr_process(void * ipmpro_hanlde,
 	alg_param.output.height = cxt->pic_h;
 	alg_param.output.stride = cxt->pic_w;
 	alg_param.output.size = cxt->pic_w * cxt->pic_h * 3 / 2;
+	alg_param.callback = hdr_param->hdr_callback;
+	alg_param.sensor_ae = hdr_param->ae_exp_gain_info;
 
-	SWA_LOGD("output fd 0x%x, addr %p %p %p\n", alg_param.output.ion_fd,
-		alg_param.output.addr[0], alg_param.output.addr[1], alg_param.output.addr[2]);
+	SWA_LOGD("output fd 0x%x, addr %p %p %p, alg_param.callback %p %p\n", alg_param.output.ion_fd,
+		alg_param.output.addr[0], alg_param.output.addr[1], alg_param.output.addr[2],
+		alg_param.callback,alg_param.sensor_ae);
 
 	ret = sprd_hdr_adpt_ctrl(cxt->hdr_handle, SPRD_HDR_PROCESS_CMD, &alg_param);
 	if (ret)
