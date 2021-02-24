@@ -327,21 +327,25 @@ static cmr_int imx586_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     SENSOR_IC_CHECK_PTR(ex_info);
     SENSOR_IC_CHECK_PTR(param);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
     struct sensor_fps_info *fps_info = sns_drv_cxt->fps_info;
     struct sensor_static_info *static_info = sns_drv_cxt->static_info;
     struct module_cfg_info *module_info = sns_drv_cxt->module_info;
+    char value[128];
 
     // make sure we have get max fps of all settings.
     if (!fps_info->is_init) {
         imx586_drv_init_fps_info(handle);
     }
+    property_get("persist.vendor.cam.sensor.pdaf.type1.on", value, "0");
     ex_info->f_num = static_info->f_num;
     ex_info->focal_length = static_info->focal_length;
     ex_info->max_fps = static_info->max_fps;
     ex_info->max_adgain = static_info->max_adgain;
     ex_info->ois_supported = static_info->ois_supported;
-    ex_info->pdaf_supported = static_info->pdaf_supported;
+    if(atoi(value))
+        ex_info->pdaf_supported = 1;
+    else
+        ex_info->pdaf_supported = static_info->pdaf_supported;
     ex_info->exp_valid_frame_num = static_info->exp_valid_frame_num;
     ex_info->clamp_level = static_info->clamp_level;
     ex_info->adgain_valid_frame_num = static_info->adgain_valid_frame_num;
@@ -445,28 +449,28 @@ static const cmr_u32 pd_sns_mode[] = {0, 0, 1, 0};
 
 struct pdaf_coordinate_tab imx586_pd_coordinate_table[] = {
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     },
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     },
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     },
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     },
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     },
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     },
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     },
     {.number = 4,
-     .pos_info = {0, 1, 0, 1},
+     .pos_info = {1, 0, 1, 0},
     }
 };
 
@@ -931,7 +935,7 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
     SENSOR_LOGI("E");
-    char value1[PROPERTY_VALUE_MAX];
+    char value1[PROPERTY_VALUE_MAX], value2[PROPERTY_VALUE_MAX], value3[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.colorbar", value1, "0");
 
     cmr_u32 sensor_mode = 0;
@@ -963,7 +967,7 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3049));
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x315d));*/
 
-    char value2[PROPERTY_VALUE_MAX];
+
     property_get("vendor.cam.hw.framesync.on", value2, "1");
     if (!strcmp(value2, "1") && sns_drv_cxt->is_multi_mode) {
         imx586_drv_set_master_FrameSync(handle, param);
@@ -971,7 +975,11 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
     }
 
     /*TODO*/
-
+    property_get("persist.vendor.cam.sensor.pdaf.type1.on", value3, "0");
+    if(atoi(value3)) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3e20, 0x02);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3e37, 0x00);
+    }
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 
     /*END*/
