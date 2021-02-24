@@ -408,7 +408,7 @@ static cmr_u32 _awb_set_gain_manualwb_v3(struct awb_ctrl_cxt *cxt)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
 	cmr_u32 mawb_id = cxt->wb_mode;
-	struct awb_rgb_gain out_gain_mwb;
+	struct awb_rgb_gain_3_0 out_gain_mwb;
 	if (AWB_CTRL_WB_MODE_AUTO != cxt->wb_mode) {
 		if (mawb_id == AWB_CTRL_AWB_MODE_OFF) {
 			cxt->output_gain.r = 1024;
@@ -437,17 +437,7 @@ static cmr_u32 _awb_set_gain_manualwb_v3(struct awb_ctrl_cxt *cxt)
 			cxt->output_ct_mean = out_gain_mwb.ct;
 			ISP_LOGV("get_rgb_gain by mwb ct in awb_ioctrl, r_gain = %d, g_gain= %d, b_gain = %d ct = %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
 		}
-		if ((cxt->otp_info.gldn_stat_info.r != 0) && (cxt->otp_info.gldn_stat_info.g != 0) && (cxt->otp_info.gldn_stat_info.b != 0)) {
-			double otp_g_coef = (double)cxt->otp_info.rdm_stat_info.g / cxt->otp_info.gldn_stat_info.g;
-			double otp_r_coef = (double)cxt->otp_info.rdm_stat_info.r / cxt->otp_info.gldn_stat_info.r;
-			double otp_b_coef = (double)cxt->otp_info.rdm_stat_info.b / cxt->otp_info.gldn_stat_info.b;
-			if (otp_g_coef != 0) {
-				otp_r_coef = otp_r_coef / otp_g_coef;
-				otp_b_coef = otp_b_coef / otp_g_coef;
-				cxt->output_gain.r = cxt->output_gain.r * otp_r_coef;
-				cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
-			}
-		}
+
 		cxt->awb_result.gain.r = cxt->output_gain.r;
 		cxt->awb_result.gain.g = cxt->output_gain.g;
 		cxt->awb_result.gain.b = cxt->output_gain.b;
@@ -2480,18 +2470,6 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 			cxt->output_ct     = out_gain_mwb.ct;
 			cxt->output_ct_mean = out_gain_mwb.ct;
 			ISP_LOGV("get_rgb_gain by mwb ct in awb_ioctrl, r_gain = %d, g_gain= %d, b_gain = %d ct = %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
-			}
-			if ((cxt->otp_info.gldn_stat_info.r != 0) && (cxt->otp_info.gldn_stat_info.g != 0) && (cxt->otp_info.gldn_stat_info.b != 0)) {
-				double otp_g_coef = (double)cxt->otp_info.rdm_stat_info.g / cxt->otp_info.gldn_stat_info.g;
-				double otp_r_coef = (double)cxt->otp_info.rdm_stat_info.r / cxt->otp_info.gldn_stat_info.r;
-				double otp_b_coef = (double)cxt->otp_info.rdm_stat_info.b / cxt->otp_info.gldn_stat_info.b;
-
-				if (otp_g_coef != 0) {
-					otp_r_coef = otp_r_coef / otp_g_coef;
-					otp_b_coef = otp_b_coef / otp_g_coef;
-					cxt->output_gain.r = cxt->output_gain.r * otp_r_coef;
-					cxt->output_gain.b = cxt->output_gain.b * otp_b_coef;
-				}
 			}
 		}
 	}
