@@ -871,9 +871,17 @@ void SprdCamera3OEMIf::closeCamera() {
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
-
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
-    close_flash_torch ();
+
+    /*Give control of the flash to the camera, and notify
+    framework that the flash has become unavailable.*/
+    FLASH_INFO_Tag flashInfo_info;
+    mSetting->getFLASHINFOTag(&flashInfo_info);
+    HAL_LOGD("flashInfo_info_available=%d",flashInfo_info.available);
+    if (flashInfo_info.available){
+        SprdCamera3Flash::reserveFlash(mCameraId);
+        close_flash_torch();
+    }
 
     Mutex::Autolock l(&mLock);
 
@@ -8047,29 +8055,30 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     } break;
     case ANDROID_SPRD_ADJUST_FLASH_LEVEL: {
-        SPRD_DEF_Tag *sprdInfo;
-        sprdInfo = mSetting->getSPRDDEFTagPTR();
-        FLASH_Tag flashInfo;
-        mSetting->getFLASHTag(&flashInfo);
-        uint8_t flash_level = sprdInfo->sprd_flash_level;
-        if(flash_level != 0) {
-            flashInfo.mode = CAMERA_FLASH_MODE_DC_TORCH;
-            mSetting->setFLASHTag(flashInfo);
-        }
-        HAL_LOGD("flash_level=%d,flash_mode=%d",flash_level,flashInfo.mode);
+        if (mCameraId != 1) {
+            SPRD_DEF_Tag *sprdInfo;
+            FLASH_Tag flashInfo;
+            FLASH_INFO_Tag flashInfo_info;
+            sprdInfo = mSetting->getSPRDDEFTagPTR();
+            mSetting->getFLASHTag(&flashInfo);
+            uint8_t flash_level = sprdInfo->sprd_flash_level;
+            if(flash_level != 0) {
+                flashInfo.mode = CAMERA_FLASH_MODE_DC_TORCH;
+                mSetting->setFLASHTag(flashInfo);
+            }
 
-        FLASH_INFO_Tag flashInfo_info;
-        if(flashInfo.mode != ANDROID_FLASH_MODE_TORCH) {
-            if(flash_level == 0)
-                close_flash_torch();
-            else{
-                /*Give control of the flash to the camera, and notify
-                framework that the flash has become unavailable.*/
-                mSetting->getFLASHINFOTag(&flashInfo_info);
-                HAL_LOGD("flashInfo_info_available=%d",flashInfo_info.available);
-                if (flashInfo_info.available) {
-                    SprdCamera3Flash::reserveFlash(mCameraId);
-                    sprd_flash_level(flash_level);
+            /*Give control of the flash to the camera, and notify
+            framework that the flash has become unavailable.*/
+            mSetting->getFLASHINFOTag(&flashInfo_info);
+            HAL_LOGD("flash_level=%d, flash_mode=%d, flashInfo_info_available=%d",
+                flash_level, flashInfo.mode, flashInfo_info.available);
+            if (flashInfo_info.available) {
+                SprdCamera3Flash::reserveFlash(mCameraId);
+                if(flashInfo.mode != ANDROID_FLASH_MODE_TORCH) {
+                    if(flash_level == 0)
+                        close_flash_torch();
+                    else
+                        sprd_flash_level(flash_level);
                 }
             }
         }
