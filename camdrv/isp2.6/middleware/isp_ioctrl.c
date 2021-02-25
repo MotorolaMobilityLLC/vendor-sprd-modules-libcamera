@@ -4248,6 +4248,40 @@ static cmr_int ispctl_ai_set_fd_status(cmr_handle isp_alg_handle, void *param_pt
 	return ret;
 }
 
+static cmr_int ispctl_set_fd_race(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_s32 race = 0;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	race = (*(cmr_u32 *)param_ptr)/1000;
+	ISP_LOGV("race color %d", race);
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FACE_COLOR, (void *)&race, NULL);
+
+	return ret;
+}
+
+static cmr_int ispctl_set_fd_nation_code(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_NATION_CODE, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
+
 static cmr_int ispctl_get_fb_pre_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5602,6 +5636,8 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_MFNR_PARAM, ispctl_get_mfnr_param},
 	{ISP_CTRL_GET_DRE_PRO_PARAM, ispctl_get_dre_pro_param},
 	{ISP_CTRL_SET_MULTI_SWITCH_INFO, ispctl_set_multi_switch_info},
+	{ISP_CTRL_SET_FD_RACE_TO_AE, ispctl_set_fd_race},
+	{ISP_CTRL_SET_FD_NATION_CODE, ispctl_set_fd_nation_code},
 	{ISP_CTRL_MAX, NULL}
 };
 

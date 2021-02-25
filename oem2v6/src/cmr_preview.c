@@ -582,6 +582,7 @@ struct prev_context {
     cmr_u32 sensor_out_height;
     /* super macro */
     cmr_uint is_super;
+    cmr_s32 gender_age_race;
 };
 
 struct prev_thread_cxt {
@@ -3971,6 +3972,31 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     struct sensor_context *sn_cxt = NULL;
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
     sn_cxt = &(cxt->sn_cxt);
+    cmr_u32 initmcc = 0;
+    cmr_u32 currentmcc = 0;
+    cmr_u32 mcc = 0;
+
+    char prop[PROPERTY_VALUE_MAX];
+    char prop1[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.mcc", prop, "0");
+    property_get("persist.vendor.cam.country", prop1, "0");
+
+    initmcc = atoi(prop);
+    currentmcc = atoi(prop1);
+    if (currentmcc)
+        mcc = currentmcc;
+    else
+        mcc = initmcc;
+
+    if (handle->ops.isp_ioctl) {
+       struct common_isp_cmd_param isp_cmd_parm;
+       isp_cmd_parm.cmd_value = mcc;
+       ret = handle->ops.isp_ioctl(
+                handle->oem_handle, COM_ISP_SET_NATION_CODE, &isp_cmd_parm);
+       if (ret < 0) {
+           CMR_LOGW("fail to set AE mcc");
+       }
+     }
 
     CHECK_HANDLE_VALID(sn_cxt);
     CHECK_HANDLE_VALID(handle);
@@ -15949,6 +15975,7 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     struct camera_context *cxt = (struct camera_context *)(handle->oem_handle);
     struct setting_context *setting_cxt = &cxt->setting_cxt;
     struct setting_cmd_parameter setting_param;
+    struct common_isp_cmd_param isp_cmd_parm;
 
     prev_cxt = &handle->prev_cxt[camera_id];
 
@@ -15980,6 +16007,13 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                             SETTING_GET_SPRD_SMILE_CAPTURE_ENABLED,
                             &setting_param);
     ipm_in_param.smile_capture_on = setting_param.cmd_type_value;
+    isp_cmd_parm.cmd_value = prev_cxt->gender_age_race;
+    CMR_LOGV("isp_cmd_parm.cmd_value = %d", isp_cmd_parm.cmd_value);
+
+    if (prev_cxt->fd_handle) {
+        ret = handle->ops.isp_ioctl(
+                    handle->oem_handle, COM_ISP_SET_FD_RACE_TO_AE, &isp_cmd_parm);
+    }
 
     /* collect face detect private data */
     private_data.camera_id = camera_id;
@@ -16056,7 +16090,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
         CMR_LOGW("fd closed");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
+    prev_cxt->gender_age_race = cb_param->face_area.range[0].gender_age_race;
     /*copy face-detect info*/
     cmr_bzero(&frame_type, sizeof(struct camera_frame_type));
     struct frm_info *info = cb_param->dst_frame.reserved;

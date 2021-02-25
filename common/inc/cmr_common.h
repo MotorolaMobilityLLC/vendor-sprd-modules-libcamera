@@ -502,6 +502,8 @@ enum common_isp_cmd_type {
     COM_ISP_GET_DRE_PRO_PARAM,
     COM_ISP_SET_AUTO_FDR,
     COM_ISP_SET_FDR_LOG,
+    COM_ISP_SET_FD_RACE_TO_AE,
+    COM_ISP_SET_NATION_CODE,
     COM_ISP_TYPE_MAX
 };
 

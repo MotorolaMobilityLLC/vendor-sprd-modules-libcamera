@@ -11212,6 +11212,16 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
         break;
+    case COM_ISP_SET_FD_RACE_TO_AE:
+        isp_cmd = ISP_CTRL_SET_FD_RACE_TO_AE;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cmd_value;
+        break;
+    case COM_ISP_SET_NATION_CODE:
+        isp_cmd = ISP_CTRL_SET_FD_NATION_CODE;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cmd_value;
+        break;
 #ifndef CONFIG_ISP_2_3
     case COM_ISP_SET_AUTO_TRACKING_ENABLE:
         CMR_LOGD("set auto tracking enable %d", param_ptr->cmd_value);
