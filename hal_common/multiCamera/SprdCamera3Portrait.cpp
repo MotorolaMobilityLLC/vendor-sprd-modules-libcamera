@@ -1331,10 +1331,6 @@ bool SprdCamera3Portrait::PreviewMuxerThread::threadLoop() {
             mFaceBeautyFlag = mPortrait->mFaceBeautyFlag;
 
             if (output_buffer != NULL) {
-                if(mPortrait->mflushflag){
-                    sem_post(&mPortrait->mflushvalue);
-                    mPortrait->mflushflag = false;
-                }
                 bool isDoDepth = false;
                 void *output_buf_addr = NULL;
                 void *input_buf1_addr = NULL;
@@ -4676,6 +4672,11 @@ void SprdCamera3Portrait::CallBackResult(
     result.partial_result = 0;
 
     mCallbackOps->process_capture_result(mCallbackOps, &result);
+    if(mPortrait->mflushflag){
+        sem_post(&mPortrait->mflushvalue);
+        mPortrait->mflushflag = false;
+    }
+
     HAL_LOGI("id:%d buffer_status %u", result.frame_number, buffer_status);
     if (!buffer_status) {
         mPortrait->dumpFps();

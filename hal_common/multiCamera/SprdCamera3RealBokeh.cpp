@@ -1352,11 +1352,6 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
             }
 
             if (output_buffer != NULL) {
-                if(mRealBokeh->mflushflag){
-                    sem_post(&mRealBokeh->mflushvalue);
-                    mRealBokeh->mflushflag = false;
-                }
-
                 bool isDoDepth = false;
                 void *output_buf_addr = NULL;
                 void *input_buf1_addr = NULL;
@@ -4755,6 +4750,10 @@ void SprdCamera3RealBokeh::CallBackResult(
     result.partial_result = 0;
 
     mCallbackOps->process_capture_result(mCallbackOps, &result);
+    if(mRealBokeh->mflushflag){
+        sem_post(&mRealBokeh->mflushvalue);
+        mRealBokeh->mflushflag = false;
+    }
     HAL_LOGD("id:%d buffer_status %u", result.frame_number, buffer_status);
     if (!buffer_status) {
         mRealBokeh->dumpFps();
