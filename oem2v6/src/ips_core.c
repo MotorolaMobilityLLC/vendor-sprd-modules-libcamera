@@ -1478,6 +1478,8 @@ cmr_int cmr_ips_init_req(cmr_handle ips_handle,
 			ipm_hdl->is_async = 1;
 		} else if (ipm_base->swa_handle_size) {
 			ipm_hdl->swa_handle = malloc(ipm_base->swa_handle_size);
+			if(ipm_hdl->swa_handle)
+				memset(ipm_hdl->swa_handle, 0, ipm_base->swa_handle_size);
 		}
 		list_add_tail(&req->ipm_head, &ipm_hdl->list);
 		j++;
