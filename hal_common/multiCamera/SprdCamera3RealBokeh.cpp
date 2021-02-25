@@ -2675,6 +2675,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
         mRealBokeh->mDepthBuffer.snap_depth_buffer, &mGDepthOutputParam);
     mRealBokeh->far = mGDepthOutputParam.far;
     mRealBokeh->near = mGDepthOutputParam.near;
+    HAL_LOGI("near00 %d far00 %d", mRealBokeh->near, mRealBokeh->far);
 #endif
 
 /*mRealBokeh->DepthRangLinear(

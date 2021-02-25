@@ -559,6 +559,8 @@ int SprdBokehAlgo::getGDepthInfo(void *para1, gdepth_outparam *para2) {
         rc = UNKNOWN_ERROR;
         goto exit;
     }
+    para2->near = mCapDepthGdepthParams.gdepth_output.near;
+    para2->far = mCapDepthGdepthParams.gdepth_output.far;
 exit:
     return rc;
 }
