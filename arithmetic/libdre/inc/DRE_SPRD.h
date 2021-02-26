@@ -14,6 +14,11 @@ extern "C" {
 #define EPARAM 2
 #define EINPUT 3
 
+typedef struct {
+    void *(*malloc)(size_t size, char* type);
+    void (*free)(void *addr);
+}sprd_dre_memory;
+
 /*
  * sprd_dre_init: initialize the dre library handle.
  * @param:
