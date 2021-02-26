@@ -8541,7 +8541,7 @@ int SprdCamera3OEMIf::freeCameraMemForGpu(cmr_uint *phy_addr,
             mZslGraphicsHandle[i].graphicBuffer = NULL;
             mTotalGpuSize = mTotalGpuSize - mZslGraphicsHandle[i].buf_size;
         }
-        HAL_LOGD("graphicBuffer_handle 0x%x 0x%x",
+        HAL_LOGD("graphicBuffer_handle 0x%p 0x%p",
                  mZslGraphicsHandle[i].graphicBuffer_handle, mZslMfnrGraphicsHandle[i].graphicBuffer_handle);
         mZslGraphicsHandle[i].graphicBuffer_handle = NULL;
         mZslMfnrGraphicsHandle[i].graphicBuffer_handle = NULL;
@@ -9298,7 +9298,7 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
 
         *handle = pbuffer.get();
         mZslMfnrGraphicsHandle[i].graphicBuffer_handle = pbuffer.get();
-        HAL_LOGD("graphicBuffer_handle 0x%x",mZslMfnrGraphicsHandle[i].graphicBuffer_handle);
+        HAL_LOGD("graphicBuffer_handle 0x%p",mZslMfnrGraphicsHandle[i].graphicBuffer_handle);
         handle++;
         memGpu_queue.mGpuHeap.bufferhandle = pbuffer;
         if (type == CAMERA_VIDEO_EIS_ULTRA_WIDE) {
@@ -10668,20 +10668,20 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
     if (buf_id == 0xFFFFFFFF)
         return -1;
 
+    HAL_LOGD("mZslMfnrGraphicsHandle =0x%p mZslGraphicsHandle = 0x%p",
+        mZslGraphicsHandle[buf_id].graphicBuffer_handle,
+        mZslMfnrGraphicsHandle[buf_id].graphicBuffer_handle);
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
         src_alg_buf->reserved =
             (void *)m3DNRGraphicPathArray[buf_id].bufferhandle.get();
-    }
-    HAL_LOGD("mZslMfnrGraphicsHandle =0x%x mZslGraphicsHandle = 0x%x",
-        mZslGraphicsHandle[buf_id].graphicBuffer_handle,
-        mZslMfnrGraphicsHandle[buf_id].graphicBuffer_handle);
-    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+    } else if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
         if(mIsUltraWideMode) {
             src_alg_buf->reserved = (void *)mZslMfnrGraphicsHandle[buf_id].graphicBuffer_handle;
         } else {
             src_alg_buf->reserved = (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
         }
-    }
+    } else
+        src_alg_buf->reserved = (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
     src_alg_buf->height = zsl_frame->height;
     src_alg_buf->width = zsl_frame->width;
     src_alg_buf->fd = zsl_frame->fd;
@@ -11734,7 +11734,7 @@ void SprdCamera3OEMIf::setOriginalPictureSize( int32_t width ,int32_t  height) {
 void SprdCamera3OEMIf::EisPreview_init() {
     int i = 0;
     int num = 0;
-    int isAssigned;
+    int isAssigned = 0;
 
     num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
     struct phySensorInfo *phyPtr = NULL;
@@ -11782,7 +11782,7 @@ void SprdCamera3OEMIf::EisVideo_init() {
     // mParam = {0};
     int i = 0;
     int num = 0;
-    int isAssigned;
+    int isAssigned = 0;
 
     num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
     struct phySensorInfo *phyPtr = NULL;

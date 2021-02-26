@@ -11298,10 +11298,6 @@ bool prev_get_appmode(cmr_handle oem_handle, cmr_u32 camera_id) {
         CMR_LOGE("failed to get app mode %ld", ret);
     }
     CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-    cxt->nightscepro_flag = 0;
-    if (setting_param.cmd_type_value != CAMERA_MODE_3DNR_PHOTO) {
-        cxt->nightscepro_flag = 1;
-    }
     if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
         // auto 3dnr available
         is_autophoto = true;
@@ -12930,6 +12926,18 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct common_isp_cmd_param isp_param;
 
     cxt->ambient_highlight = 0; /* default 0 when start preview */
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
+                            &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+    }
+    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+    cxt->nightscepro_flag = 0;
+    if (setting_param.cmd_type_value != CAMERA_MODE_3DNR_PHOTO) {
+        cxt->nightscepro_flag = 1;
+    }
     ret = camera_set_preview_param(oem_handle, mode, is_snapshot);
     if (ret) {
         CMR_LOGE("failed to set prev param %ld", ret);
@@ -12946,12 +12954,8 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
             goto exit;
         }
         CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-        cxt->nightscepro_flag = 0;
-        if (setting_param.cmd_type_value != CAMERA_MODE_3DNR_PHOTO) {
-            cxt->nightscepro_flag = 1;
-        }
         if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO ||
-	    setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) &&
+            setting_param.cmd_type_value == CAMERA_MODE_3DNR_PHOTO) &&
             (setting_param.camera_id == 0 ||
              cxt->is_multi_mode == MODE_MULTI_CAMERA ||
              cxt->is_multi_mode == MODE_FOV_FUSION)) {
