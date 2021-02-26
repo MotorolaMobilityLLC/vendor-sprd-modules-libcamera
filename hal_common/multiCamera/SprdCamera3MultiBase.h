@@ -222,6 +222,9 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     static int getMultiTagToSprdTag(uint8_t multi_tag);
     static int getBufferSize(buffer_handle_t h);
     static int getJpegStreamSize(const char *resolution);
+	int ProcessAlgo(buffer_handle_t *buffer_handle,void *input1_addr,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,SprdCamera3HWI *hwiMain);
+	int mapMemInfo(buffer_handle_t *buffer_handle,void *input1_addr,
+                                    struct camera_frame_type *zsl_frame);
 
   private:
     Mutex mBufferListLock;

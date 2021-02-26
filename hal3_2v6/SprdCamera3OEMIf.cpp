@@ -3322,7 +3322,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
 /* for sharkle auto3dnr*/
 #if defined(CONFIG_ISP_2_3)|| defined(CONFIG_ISP_2_7)
-    if ((getMultiCameraMode() == MODE_BOKEH&& mCameraId == mMasterId)) {
+    if ((getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
+        getMultiCameraMode() == MODE_BLUR) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
     }
@@ -8072,6 +8073,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                     else
                         mSprd3dnrType = 0;
                 }
+                if(getMultiCameraMode() == MODE_BLUR){
+                    mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW;
+                }
             } else {
 #ifdef CONFIG_NIGHT_3DNR_PREV_HW_CAP_HW
                 // night shot
@@ -8630,7 +8634,8 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||
-        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH&&mCameraId == mMasterId)) {
+        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
+        getMultiCameraMode() == MODE_BLUR) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
     }
@@ -8669,7 +8674,8 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     *fd = 0;
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||
-        (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)|| (getMultiCameraMode() == MODE_BOKEH&& mCameraId == mMasterId)) {
+        (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)|| (getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
+        getMultiCameraMode() == MODE_BLUR) {
         ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
         return ret;
     }
@@ -11262,9 +11268,9 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
 
     if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
         (CAMERA_MODE_FILTER != mSprdAppmodeId) &&
-        (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode|| MODE_BOKEH == mMultiCameraMode)  &&
-        (mSprdAppmodeId != -1) && (false == mRecordingMode)) ||
-        ((getMultiCameraMode() == MODE_BLUR) && lightportrait_type != 0))){
+        (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode ||
+        MODE_BOKEH == mMultiCameraMode || MODE_BLUR == mMultiCameraMode) &&
+        (mSprdAppmodeId != -1) && (false == mRecordingMode)))){
         mCNRMode = 0;
     }
     HAL_LOGD("lightportrait_type = %d, mCNRMode = %d %d", lightportrait_type, mCNRMode,getMultiCameraMode());

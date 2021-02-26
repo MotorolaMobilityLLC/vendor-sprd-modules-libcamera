@@ -1101,6 +1101,9 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
 
     int64_t blurStart = systemTime();
     if (mAlgorithmFlag) {
+		ret = mSinglePortrait->ProcessAlgo(input1,input1_addr,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,mSinglePortrait->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
+        if (ret != 0)
+            HAL_LOGE("cnr_yur processalgo is error");
         sprd_capture_portrait_process_param_t mPortraitCapRunParams;
         memset(&mPortraitCapRunParams,0,sizeof(sprd_capture_portrait_process_param_t));
         mPortraitCapRunParams.ctx = &(mBlurApi[1]->mHandle);

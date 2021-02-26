@@ -439,9 +439,9 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int getPrevDepthBuffer(BUFFER_FLAG need_flag);
     void setPrevDepthBufferFlag(BUFFER_FLAG cur_flag, int index);
     unsigned char *getaddr(unsigned char *buffer_addr, uint32_t buffer_size);
-    int ProcessAlgo(buffer_handle_t *buffer,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
+    /*int ProcessAlgo(buffer_handle_t *buffer,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
     int mapMemInfo(buffer_handle_t *buffer_handle,
-                                    struct camera_frame_type *zsl_frame);
+                                    struct camera_frame_type *zsl_frame);*/
     void dumpImg(
     dump_bokeh_type type, dump_image_info_t *img_info);
 };

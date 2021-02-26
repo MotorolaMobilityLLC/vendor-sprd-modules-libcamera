@@ -2379,10 +2379,10 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
             if (mRealBokeh->mIsNrMode &&
                 capture_msg.combo_buff.buffer1 != NULL &&
                 capture_msg.combo_buff.buffer2 == NULL) {
-                mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
-                mRealBokeh->ProcessAlgo(capture_msg.combo_buff.buffer1,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR);
-                rc = mRealBokeh->map(capture_msg.combo_buff.buffer1,
-                                     &input_buf1_addr);
+                //mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
+                mRealBokeh->ProcessAlgo(capture_msg.combo_buff.buffer1,input_buf1_addr,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
+                //rc = mRealBokeh->map(capture_msg.combo_buff.buffer1,
+                  //                   &input_buf1_addr);
                 HAL_LOGD("start process hdr frame to get "
                          "bokeh data!");
 #ifdef YUV_CONVERT_TO_JPEG
@@ -2472,7 +2472,7 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                     (mRealBokeh->mDoPortrait &&
                      mRealBokeh->mBokehMode == CAM_PORTRAIT_MODE)) {
                     mRealBokeh->unmap(capture_msg.combo_buff.buffer1);
-                    mRealBokeh->ProcessAlgo(capture_msg.combo_buff.buffer1,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR);
+                    mRealBokeh->ProcessAlgo(capture_msg.combo_buff.buffer1,input_buf1_addr,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR, mRealBokeh->m_pPhyCamera[CAM_TYPE_BOKEH_MAIN].hwi);
                     rc = mRealBokeh->map(capture_msg.combo_buff.buffer1,
                                  &input_buf1_addr);
                     rc = sprdBokehCaptureHandle(output_buffer,
@@ -5399,7 +5399,7 @@ void *SprdCamera3RealBokeh::jpeg_callback_thread_proc(void *p_data) {
     return NULL;
 }
 
-int SprdCamera3RealBokeh::ProcessAlgo(buffer_handle_t *buffer_handle,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type){
+/*int SprdCamera3RealBokeh::ProcessAlgo(buffer_handle_t *buffer_handle,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type){
     int rc = 0;
     struct camera_frame_type zsl_frame;
     bzero(&zsl_frame, sizeof(struct camera_frame_type));
@@ -5496,6 +5496,6 @@ int SprdCamera3RealBokeh::mapMemInfo(buffer_handle_t *buffer_handle,
 
 err_out:
   return ret;
-}
+}*/
 
 };

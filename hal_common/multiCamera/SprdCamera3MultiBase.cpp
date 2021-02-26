@@ -2051,4 +2051,48 @@ int SprdCamera3MultiBase::getMultiTagToSprdTag(uint8_t multi_tag) {
 int SprdCamera3MultiBase::getBufferSize(buffer_handle_t h) {
     return ADP_BUFSIZE(h);
 }
+int SprdCamera3MultiBase::ProcessAlgo(buffer_handle_t *buffer_handle,void *input1_addr,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,SprdCamera3HWI *hwiMain){
+    int rc = 0;
+    struct camera_frame_type zsl_frame;
+    bzero(&zsl_frame, sizeof(struct camera_frame_type));
+    rc = mapMemInfo(buffer_handle,input1_addr,&zsl_frame);
+    if (rc != NO_ERROR) {
+        HAL_LOGE("fail to map buffer");
+    }
+    rc = hwiMain->ProcessAlgo(&zsl_frame,sw_algorithm_type);
+	if (rc != NO_ERROR) {
+        HAL_LOGE("fail to ProcessAlgo");
+    }
+    rc = unmap(buffer_handle);
+	if (rc != NO_ERROR) {
+        HAL_LOGE("fail to unmap buffer");
+    }
+    return rc;
+
+}
+int SprdCamera3MultiBase::mapMemInfo(buffer_handle_t *input_buf1, void *input1_addr,
+    struct camera_frame_type *zsl_frame) {
+    int ret = NO_ERROR;
+	void *input_buf1_addr = NULL;
+
+    if (NULL == zsl_frame || NULL == input_buf1) {
+      HAL_LOGE("Param invalid handle=%p, zsl_frame=%p", input_buf1, zsl_frame);
+      return -EINVAL;
+    }
+    HAL_LOGD("E");
+    zsl_frame->y_vir_addr  = (cmr_uint)input1_addr;
+    zsl_frame->fd = ADP_BUFFD(*input_buf1);
+    zsl_frame->y_phy_addr = (cmr_uint)0;
+    zsl_frame->width = ADP_WIDTH(*input_buf1);
+    zsl_frame->height = ADP_HEIGHT(*input_buf1);
+    zsl_frame->format = ADP_FORMAT(*input_buf1);
+    HAL_LOGD("fd=0x%x,offset=%ld,addr_vir=%ld,w%d,h=%d,fmt=%d",
+             zsl_frame->fd, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+             zsl_frame->width, zsl_frame->height, zsl_frame->format);
+
+err_out:
+  return ret;
+}
+
+
 };

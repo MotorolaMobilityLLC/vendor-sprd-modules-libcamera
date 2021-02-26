@@ -5982,7 +5982,8 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
         CMR_LOGD("set ev to 0 and reset skipframe");
     }
 
-    if ((cxt->nr_flag&&cxt->is_multi_mode != MODE_BOKEH) || is_filter || cxt->dre_flag || cxt->ee_flag) {
+    if ((cxt->nr_flag && cxt->is_multi_mode != MODE_BOKEH && cxt->is_multi_mode != MODE_BLUR) ||
+        is_filter || cxt->dre_flag || cxt->ee_flag) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
         cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
