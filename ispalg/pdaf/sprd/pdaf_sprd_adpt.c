@@ -76,7 +76,7 @@ struct sprd_pdaf_context {
 #define PDAF_FULL_NUM_IMX362 1524096	//4032*756/2
 #define PDAF_FULL_NUM_IMX362_SIZE 3810240	//4032*756*5/4
 
-void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int pixelnum_x, int pixelnum_y);
+void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void *all_raw, cmr_s32 pixelnum_x, cmr_s32 pixelnum_y);
 
 static cmr_int pdaf_setup(cmr_handle pdaf)
 {
@@ -965,7 +965,7 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 	return ret;
 }
 
-void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void *all_raw, int pixelnum_x, int pixelnum_y)
+void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void *all_raw, cmr_s32 pixelnum_x, cmr_s32 pixelnum_y)
 {
 	if (pdaf_type == 2 && (frame_id % skip_fr) == 0) {
 		cmr_s16 *TempL = NULL;
@@ -974,7 +974,7 @@ void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void
 		char file_nameR[200] = { 0 };
 		FILE *fpL = NULL;
 		FILE *fpR = NULL;
-		cmr_u32 i = 0;
+		cmr_s32 i = 0;
 
 		//dump complete pd left_raw
 		sprintf(file_nameL, CAMERA_DATA_FILE "/Left_Raw_%dX%d_%d.raw", pixelnum_x, pixelnum_y, frame_id);
