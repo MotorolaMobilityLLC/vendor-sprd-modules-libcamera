@@ -3219,6 +3219,7 @@ cmr_s32 isp_denoise_write_v29(cmr_u8 * data_buf, cmr_u32 * data_size)
 			memcpy(((cmr_u8 *) (nr_update_param.post_cnr_h_level_ptr)) + nr_offset_addr + post_cnr_h_ptr_offset, (cmr_u8 *) data_actual_ptr, data_actual_len);
 			post_cnr_h_ptr_offset = (0x01 != data_head->packet_status) ? (post_cnr_h_ptr_offset + data_actual_len) : 0;
 			nr_tool_flag[ISP_BLK_POST_CNR_H_T] = 1;
+			break;
 		}
 	case N6_PRO_PYRAMID_ONLINE:
 		{
@@ -3521,6 +3522,7 @@ cmr_s32 isp_denoise_read_v29(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			src_size = sizeof(struct sensor_dct_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_DCT_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.dct_level_ptr + offset_units * src_size;
+			break;
 		}
 	case N6_PRO_CNR_H:
 		{
