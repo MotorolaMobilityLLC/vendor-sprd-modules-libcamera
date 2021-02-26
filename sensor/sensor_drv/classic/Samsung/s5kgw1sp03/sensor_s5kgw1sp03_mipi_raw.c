@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 #define LOG_TAG "s5kgw1sp03_mipi_raw"
-//#define USE_CPHY
+#if 1//def _SENSOR_RAW_SHARKL6PRO_H_
+#define USE_CPHY
+#endif
 #ifdef USE_CPHY
 #include "sensor_s5kgw1sp03_mipi_raw_cphy.h"
 #else

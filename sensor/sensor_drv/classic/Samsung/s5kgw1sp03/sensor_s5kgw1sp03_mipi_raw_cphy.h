@@ -24,6 +24,7 @@
 #include "sensor_raw.h"
 //#include "parameters/sensor_s5kgw1sp03_raw_param_main.c"
 
+#define BINNING_FACTOR 4
 #define VENDOR_NUM 1
 #define s5kgw1sp03_I2C_ADDR_W 0x5a
 #define s5kgw1sp03_I2C_ADDR_R 0x5a
