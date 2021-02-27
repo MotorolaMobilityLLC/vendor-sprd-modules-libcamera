@@ -1308,7 +1308,12 @@ bool SprdCamera3RealBokeh::PreviewMuxerThread::threadLoop() {
                 // return rc;
             }
 #ifdef CONFIG_DECRYPT_DEPTH
+
+#ifdef CONFIG_SUPPORT_GDEPTH
+            char userset[] = "49873";
+#else
             char userset[] = "12345";
+#endif
             rc = mRealBokeh->mBokehAlgo->setUserset(userset, sizeof(userset));
             if (rc != NO_ERROR) {
                 HAL_LOGE("fail to setUserset");
@@ -1995,7 +2000,7 @@ int SprdCamera3RealBokeh::BokehCaptureThread::saveCaptureBokehParams(
         bokeh_version = 0x11c0101;
 #endif
 
-#ifdef CONFIG_DECRYPT_DEPTH
+#if defined(CONFIG_DECRYPT_DEPTH) && !defined(CONFIG_SUPPORT_GDEPTH)
         uint32_t decrypt_mode = 1;
 #else
         uint32_t decrypt_mode = 0;
