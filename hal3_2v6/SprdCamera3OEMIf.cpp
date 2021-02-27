@@ -498,7 +498,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIommuEnabled(false), mFlashCaptureFlag(0),
       mFlashCaptureSkipNum(FLASH_CAPTURE_SKIP_FRAME_NUM), mFixedFpsEnabled(0),
       mSprdAppmodeId(-1), mTempStates(CAMERA_NORMAL_TEMP), mIsTempChanged(0),
-      mFlagOffLineZslStart(0), mZslSnapshotTime(0), mIsIspToolMode(0),
+      mFlagOffLineZslStart(0), mZslSnapshotTime(0),  mAf_start_time(0),mAf_stop_time(0),
+      mIsIspToolMode(0),
       mIsYuvSensor(0), mIsUltraWideMode(false),
       mIsFovFusionMode(false), mIsRawCapture(0),
       mIsFDRCapture(0), mIsCameraClearQBuf(0),
@@ -2243,6 +2244,17 @@ void SprdCamera3OEMIf::setAfState(enum afTransitionCause cause) {
     default:
         newState = ANDROID_CONTROL_AF_STATE_INACTIVE;
         break;
+    }
+
+    if(newState == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN || newState == ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN ){
+         mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
+	 HAL_LOGD("mAf_start_time =%lld",mAf_start_time);
+    }
+    if(newState == ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED || newState == ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED 
+	 || newState == ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED ||
+	 newState == ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED) {
+	 mAf_stop_time	= systemTime(SYSTEM_TIME_BOOTTIME);
+	 HAL_LOGD("mAf_stop_time =%lld",mAf_stop_time);
     }
 
 exit:
@@ -10962,16 +10974,30 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             }
         }
 
-        // single capture wait the caf focused frame
-        if (sprddefInfo->capture_mode == 1 && obj->mLatestFocusDoneTime > 0 &&
-            zsl_frame->monoboottime < obj->mLatestFocusDoneTime && !mIsFDRCapture &&
-            mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene) {
-            HAL_LOGD("not the focused frame, skip it");
-            mHalOem->ops->camera_set_zsl_buffer(
-                obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
-                zsl_frame->fd);
-            return 0;
+	// single capture wait the caf focused frame
+        if (sprddefInfo->sprd_appmode_id == 0 && sprddefInfo->af_support == 1 && !mIsFDRCapture &&
+                 mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene && mAf_start_time) {
+                 HAL_LOGD("check af status");
+                 if (mAf_start_time > mAf_stop_time){
+                         HAL_LOGD("af do not finshed, skip it");
+                         mHalOem->ops->camera_set_zsl_buffer(
+                                obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+                                     zsl_frame->fd);
+                                     return 0;
+                 } else {
+                          if (zsl_frame->monoboottime < mAf_stop_time) {
+                                HAL_LOGD("not the focused frame, skip it");
+                                mHalOem->ops->camera_set_zsl_buffer(
+                                    obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+                                        zsl_frame->fd);
+                                    return 0;
+			  }
+		 }
+                 HAL_LOGD("af is ok ");
         }
+	if (mAf_start_time == 0)
+	     HAL_LOGD("mAf_start_time = 0");
+
 
         if (s_dbg_ver) {
             Mutex::Autolock l(&mJpegDebugQLock);

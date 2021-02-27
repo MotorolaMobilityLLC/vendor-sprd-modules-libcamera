@@ -920,6 +920,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mSprdCameraLowpower;
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
+    int64_t mAf_start_time;
+    int64_t mAf_stop_time;
+
     bool mIsIspToolMode;
     bool mIsYuvSensor;
     bool mIsUltraWideMode;
