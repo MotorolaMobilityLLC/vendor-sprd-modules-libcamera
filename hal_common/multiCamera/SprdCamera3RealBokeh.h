@@ -399,6 +399,7 @@ class SprdCamera3RealBokeh : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool sn_trim_flag;
     int trim_W;
     int trim_H;
+    bool mChangeSensor;
     int mCameraIdMaster;
     int mCameraIdSlave;
     int initialize(const camera3_callback_ops_t *callback_ops);

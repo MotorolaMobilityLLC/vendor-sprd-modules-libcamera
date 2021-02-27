@@ -51,6 +51,19 @@ typedef struct {
     weightmap_param depth_param;
 } bokeh_prev_params_t;
 
+typedef struct {
+    void *para1;
+    void *para2;
+    void *para3;
+    void *para4;
+    int vcmCurValue;
+    int vcmUp;
+    int vcmDown;
+    struct cal_otp_info *otp_info;
+    bool mChangeSensor;
+    int ret_otp; //0 success, 1 fail
+} cap_depth_params_t;
+
 typedef struct { bokeh_cap_params_t cap; } SPRD_BOKEH_PARAM;
 
 typedef union { SPRD_BOKEH_PARAM sprd; } BOKEH_PARAM;
@@ -90,8 +103,7 @@ class IBokehAlgo {
 
     virtual int deinitCapDepth() = 0;
 
-    virtual int capDepthRun(void *para1, void *para2, void *para3, void *para4,
-                            int vcmCurValue, int vcmUp, int vcmDown) = 0;
+    virtual int capDepthRun(cap_depth_params_t *cap_depth_para) = 0;
 
     virtual int capBlurImage(void *para1, void *para2, void *para3, int depthW,
                              int depthH, int mode) = 0;
