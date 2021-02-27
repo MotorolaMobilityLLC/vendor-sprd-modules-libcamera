@@ -2608,7 +2608,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             cxt->ae_aux_info.param[cnt].exposure = ae_aux_info->exposure;
             cxt->ae_aux_info.param[cnt].ev = ae_aux_info->ev;
             cxt->ae_aux_info.cnt++;
-            CMR_LOGI("cnt %d exp_time total_gain iso isp_gain exposure ev(%d %d %d %d %d %d)",cnt,
+            CMR_LOGI("cnt %d exp_time total_gain iso isp_gain exposure ev(%d %d %d %d %d %f)",cnt,
                 cxt->ae_aux_info.param[cnt].exp_time,
                 cxt->ae_aux_info.param[cnt].total_gain,
                 cxt->ae_aux_info.param[cnt].iso,
@@ -3302,6 +3302,9 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             }
             if (cxt->skip_frame_cnt == 0) {
                 cxt->skip_frame_enable = 0;
+                // need disable ev adjust, or disable too late
+                if (CAMERA_3DNR_TYPE_NIGHT_DNS == camera_get_3dnr_flag(cxt))
+                    camera_snapshot_set_ev(oem_handle, 0, SNAPSHOT_NIGHT_DNS);
             }
         }
 
@@ -10899,6 +10902,16 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                  hdr_param.hdr_enable, hdr_param.ev_effect_valid_num);
         isp_param_ptr = (void *)&hdr_param;
         break;
+    case COM_ISP_LOCK_NR_SMART: // as COM_ISP_SET_HDR, but no AE_HDR_START
+        isp_cmd = ISP_CTRL_LOCK_NR_SMART;
+        hdr_param.hdr_enable = param_ptr->cmd_value;
+        hdr_param.ev_effect_valid_num =
+            cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;
+        ptr_flag = 1;
+        CMR_LOGD("set lock %d, ev_effect_valid_num %d",
+                 hdr_param.hdr_enable, hdr_param.ev_effect_valid_num);
+        isp_param_ptr = (void *)&hdr_param;
+        break;
     case COM_ISP_SET_FDR:
         fdr_param.fdr_enable = param_ptr->cmd_value;
         isp_cmd = fdr_param.fdr_enable ? ISP_CTRL_START_FDR : ISP_CTRL_STOP_FDR;
@@ -13281,6 +13294,9 @@ void camera_adjust_ev_before_snapshot(cmr_handle oem_handle,
                                       enum camera_snapshot_tpye type) {
     cmr_int ret;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    // clear to 0 for cb(transfer parameter back)
+    cxt->ae_aux_info.cnt = 0;
     ret = camera_snapshot_set_ev(oem_handle, 1, type);
     if (ret) {
         CMR_LOGE("fail to set dre ev");
@@ -15392,9 +15408,19 @@ cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value,
 
     if (type == SNAPSHOT_NIGHT_DNS) {
         float ev[7];
-        char value[PROPERTY_VALUE_MAX];
-        property_get("persist.vendor.cam.night.b01.ev", value, "2,2,2,2,0,-3,-5");
-        sscanf(value, "%f,%f,%f,%f,%f,%f,%f", &ev[0], &ev[1], &ev[2], &ev[3], &ev[4],&ev[5], &ev[6]);
+        char ch_ev[PROPERTY_VALUE_MAX];
+
+        //lock,unlock nr block by smart, used like hdr interface
+        // lock with ev_adj start, but unlock later by then got all frame
+        if (value) { //enable ev_adj
+            isp_param.cmd_value = !!value;
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_LOCK_NR_SMART, (void *)&isp_param);
+            if (ret)
+                CMR_LOGW("Lock nr block fail");
+        }
+
+        property_get("persist.vendor.cam.night.b01.ev", ch_ev, "-4,-2,0,1,1,1,1");
+        sscanf(ch_ev, "%f,%f,%f,%f,%f,%f,%f", &ev[0], &ev[1], &ev[2], &ev[3], &ev[4],&ev[5], &ev[6]);
         CMR_LOGD("ev_effect_valid_num %d", isp_param.snp_ae_param.ev_effect_valid_num);
         isp_param.snp_ae_param.ev_effect_valid_num =
             cxt->sn_cxt.cur_sns_ex_info.exp_valid_frame_num + 1;

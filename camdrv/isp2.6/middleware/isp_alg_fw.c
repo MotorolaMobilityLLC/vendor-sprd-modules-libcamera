@@ -479,6 +479,8 @@ struct isp_alg_fw_context {
 	struct debuginfo_queue af_queue;
 	struct debuginfo_queue aft_queue;
 	struct debuginfo_queue smart_queue;
+	//night dns disable ee when capturing
+	int disable_ee_night_dns;
 };
 
 struct fw_init_local {
@@ -2231,6 +2233,16 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
 	if (cfg_type < PARAM_CFG_FDRL)
 		ispalg_ai_pro_param_compatible((cmr_handle) cxt);
 
+	// check night_dns disable ee
+	if (cxt->disable_ee_night_dns) {
+		struct isp_pm_param_data param_data_ee = {0};
+		struct isp_pm_ioctl_input input = { NULL, 0 };
+		cmr_u32 ee_bypass = 1;
+
+		ISP_LOGD("set ee_bypass");
+		BLOCK_PARAM_CFG(input, param_data_ee, ISP_PM_BLK_EDGE_BYPASS, ISP_BLK_EE_V1, &ee_bypass, sizeof(cmr_u32));
+		isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_OTHERS, &input, NULL);
+	}
 	cmd = ispalg_get_param_type(cfg_type);
 	ret = isp_pm_ioctl(cxt->handle_pm, cmd, NULL, &output);
 
@@ -6482,6 +6494,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->is_ai_scene_pro = 0;
 	cxt->app_mode = in_ptr->app_mode;
 	cxt->ambient_highlight = 0;	/* default lowlight, zsl */
+	cxt->disable_ee_night_dns = 0;
 	if (cxt->remosaic_type && in_ptr->work_mode == 0) {
 		cxt->commn_cxt.prv_size.w >>= 1;
 		cxt->commn_cxt.prv_size.h >>= 1;

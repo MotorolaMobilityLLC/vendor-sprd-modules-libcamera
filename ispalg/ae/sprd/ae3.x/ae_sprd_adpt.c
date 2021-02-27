@@ -3670,7 +3670,7 @@ static void ae_set_ev_adjust_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *pa
 	cmr_s8 callback_frame = 0;
 	float EV_offset = 0;
 	cmr_u32 down_up_exposure = 0;
-	cmr_u32 cur_iso;
+	cmr_u32 cur_iso = 0;
 
 	cxt->ev_adj_frame_cnt++;
 	callback_frame = MAX((cmr_s8)cxt->ev_adj_ev_effect_valid_num,(cmr_s8)cxt->capture_skip_num);

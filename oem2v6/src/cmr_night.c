@@ -607,10 +607,18 @@ static cmr_int nightdns_transfer_frame(cmr_handle class_handle,
     //nightnds  process
     if (nightdns_handle->common.save_frame_count ==
         (NIGHTDNS_CAP_NUM + nightdns_handle->ev_effect_frame_interval)) {
+        struct common_isp_cmd_param isp_param;
         cmr_bzero(&out->dst_frame, sizeof(struct img_frm));
         sensor_ioctl = nightdns_handle->common.ipm_cxt->init_in.ipm_sensor_ioctl;
         //isp_ioctl = nightdns_handle->common.ipm_cxt->init_in.ipm_isp_ioctl;
         oem_handle = nightdns_handle->common.ipm_cxt->init_in.oem_handle;
+
+        // unlock nr block by smart
+        isp_param.cmd_value = 0;
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_LOCK_NR_SMART, (void *)&isp_param);
+        if (ret)
+            CMR_LOGW("Unlock nr block fail");
+
         nightdns_handle->frame_in = nightdns_handle->g_info_3dnr[0].in;
         CMR_LOGD("frame_in = %p", &(nightdns_handle->frame_in));
         ret = nightdns_process_frame(class_handle, addr, size);

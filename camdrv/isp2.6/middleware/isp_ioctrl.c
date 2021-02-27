@@ -2994,6 +2994,61 @@ static cmr_int ispctl_hdr(cmr_handle isp_alg_handle, void *param_ptr)
 	return ISP_SUCCESS;
 }
 
+/* lock nr block by smart when set group ev as night_dns
+ * lock: start capture
+ * unlock: get enough frame
+ */
+static cmr_int ispctl_lock_nr_smart(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	struct isp_hdr_param *isp_hdr = (struct isp_hdr_param *)param_ptr;
+	struct ae_hdr_param ae_hdr = { 0x00, 0x00 };
+	cmr_s16 smart_block_eb[ISP_SMART_MAX_BLOCK_NUM];
+
+	if (NULL == isp_alg_handle || NULL == param_ptr) {
+		ISP_LOGE("fail to get valid cxt=%p and param_ptr=%p", isp_alg_handle, param_ptr);
+		return ISP_PARAM_NULL;
+	}
+
+	memset(&smart_block_eb, 0x00, sizeof(smart_block_eb));
+
+	ae_hdr.hdr_enable = isp_hdr->hdr_enable;
+	ae_hdr.ev_effect_valid_num = isp_hdr->ev_effect_valid_num;
+
+	if (ae_hdr.hdr_enable) {
+		cxt->disable_ee_night_dns = 1;
+		if (cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_LNC);
+		if (cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_CMC);
+		if (cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		if (cxt->ops.smart_ops.NR_disable)
+			cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 1);
+		if (cxt->ops.awb_ops.ioctrl)
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
+		if (cxt->ops.lsc_ops.ioctrl)
+			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
+	} else {
+		cxt->disable_ee_night_dns = 0;
+		if (cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_LNC);
+		if (cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_CMC);
+		if (cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		if (cxt->ops.smart_ops.NR_disable)
+			cxt->ops.smart_ops.NR_disable(cxt->smart_cxt.handle, 0);
+		if (cxt->ops.awb_ops.ioctrl)
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
+		if (cxt->ops.lsc_ops.ioctrl)
+			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
 static cmr_int ispctl_set_ae_night_mode(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5585,6 +5640,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_FB_CAP_PARAM, ispctl_get_fb_cap_param},
 	{ISP_CTRL_GET_MFNR_PARAM, ispctl_get_mfnr_param},
 	{ISP_CTRL_GET_DRE_PRO_PARAM, ispctl_get_dre_pro_param},
+	{ISP_CTRL_LOCK_NR_SMART, ispctl_lock_nr_smart},
 	{ISP_CTRL_MAX, NULL}
 };
 

@@ -3370,11 +3370,14 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
-    } else if (mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS) {
+    }
+#ifdef CONFIG_CAMERA_NIGHTDNS_CAPTURE
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||
+        (mSprdAppmodeId == CAMERA_MODE_NIGHT_PHOTO && mCameraId == 0)) {
         mZslNum = 7;
         mZslMaxFrameNum = 7;
     }
-
+#endif // CONFIG_CAMERA_NIGHTDNS_CAPTURE
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
         mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
         mZslNum = 5;
@@ -3383,19 +3386,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
 /* for sharkle auto3dnr*/
 #if defined(CONFIG_ISP_2_3)|| defined(CONFIG_ISP_2_7)
-    if ((getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
+    if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO ||
+        (getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
         getMultiCameraMode() == MODE_BLUR) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
-    }
-    if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO) {
-#ifdef CONFIG_CAMERA_NIGHTDNS_CAPTURE
-        mZslNum = 7;
-        mZslMaxFrameNum = 7;
-#else
-        mZslNum = 5;
-        mZslMaxFrameNum = 5;
-#endif // CONFIG_CAMERA_NIGHTDNS_CAPTURE
     }
 #endif
     if (sprddefInfo->high_resolution_mode) {
@@ -11681,7 +11676,15 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
             SetCameraParaTag(ANDROID_CONTROL_AF_MODE);
         }
     }
-
+#ifdef CONFIG_CAMERA_NIGHTDNS_CAPTURE
+    if (mCameraId == 0 && mSprd3dnrType == 0 &&
+        sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
+        // clear by initialize when configurestream
+        // cam id == 0, and night pro, used night dns
+        mSprd3dnrType = CAMERA_3DNR_TYPE_NIGHT_DNS;
+        HAL_LOGI("mSprd3dnrType %d", mSprd3dnrType);
+    }
+#endif
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
         mZslNum = 3;
         mZslMaxFrameNum = 3;
