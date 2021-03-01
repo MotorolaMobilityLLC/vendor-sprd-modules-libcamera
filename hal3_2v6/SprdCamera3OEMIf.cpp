@@ -12022,14 +12022,14 @@ void SprdCamera3OEMIf::cbJpegFrame(uint32_t frame_number,
     HAL_LOGV("pic_addr_vir = 0x%lx", pic_addr_vir);
     memcpy((char *)pic_addr_vir, (char *)(encInfo->outPtr), encInfo->size);
 
-    pic_stream->getQBuffFirstNum(&frame_num);
-    if (frame_num != frame_number) {
-        HAL_LOGE("return wrong frame %u, should be %u", frame_number, frame_num);
+    ret = pic_stream->getQBuffFirstNum(&frame_num);
+    if (ret || frame_num != frame_number) {
+        HAL_LOGE("ret %d, return wrong frame %u, should be %u",ret, frame_number, frame_num);
         goto exit;
     }
-    pic_stream->getHeapSize(&heap_size);
-    pic_stream->getQBufHandleForNum(frame_num, &jpeg_buff_handle);
-    if (jpeg_buff_handle == NULL) {
+    ret = pic_stream->getHeapSize(&heap_size);
+    ret |= pic_stream->getQBufHandleForNum(frame_num, &jpeg_buff_handle);
+    if (ret || jpeg_buff_handle == NULL) {
         HAL_LOGE("failed to get jpeg buffer handle");
         goto exit;
     }

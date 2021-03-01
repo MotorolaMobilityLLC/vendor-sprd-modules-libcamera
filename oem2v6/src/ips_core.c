@@ -203,7 +203,7 @@ static cmr_int init_ipmpro_base(struct ipmpro_type *in, struct ipmpro_handle_bas
 	cur->swa_process = dlsym(sw_handle, sym_process);
 	cur->swa_close = dlsym(sw_handle, sym_close);
 	if (!cur->swa_open || !cur->swa_process || !cur->swa_close) {
-		CMR_LOGW("warning: %s get NULL api %p %p\n",
+		CMR_LOGW("warning: %s get NULL api %p %p %p\n",
 			in->keywd, cur->swa_open, cur->swa_process, cur->swa_close);
 	}
 
@@ -223,12 +223,6 @@ exit:
 	cur->swa_open = NULL;
 	cur->swa_process = NULL;
 	cur->swa_close = NULL;
-	if (sw_handle) {
-		if (cur->get_flag)
-			put_lib_handle(sw_handle);
-		else
-			dlclose(sw_handle);
-	}
 	CMR_LOGD("X, %s\n", in->keywd);
 	return ret;
 }
@@ -307,7 +301,7 @@ static cmr_int swa_exif_process(struct ips_context *ips_ctx,
 		FILE *fp;
 		char fname[256];
 		int size;
-		sprintf(fname, "%sframe%03d_ccc00.jpeg", CAMERA_DUMP_PATH, src.frame_number);
+		snprintf(fname, 256, "%sframe%03d_ccc00.jpeg", CAMERA_DUMP_PATH, src.frame_number);
 		fp = fopen(fname, "wb");
 		size = src.buf_size;
 		if (fp) {
@@ -348,7 +342,7 @@ static cmr_int swa_exif_process(struct ips_context *ips_ctx,
 		FILE *fp;
 		char fname[256];
 		int size;
-		sprintf(fname, "%sframe%03d_ccc11.jpeg", CAMERA_DUMP_PATH, src.frame_number);
+		snprintf(fname, 256, "%sframe%03d_ccc11.jpeg", CAMERA_DUMP_PATH, src.frame_number);
 		fp = fopen(fname, "wb");
 		size = src.buf_size;
 		if (fp) {
@@ -421,7 +415,7 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 		char fname[256];
 		int size;
 
-		sprintf(fname, "%sframe%03d_bbthumb2_scale.yuv", CAMERA_DUMP_PATH, src.frame_number);
+		snprintf(fname, 256, "%sframe%03d_bbthumb2_scale.yuv", CAMERA_DUMP_PATH, src.frame_number);
 		fp = fopen(fname, "wb");
 		size = src.size.width * src.size.height * 3 / 2;
 		if (fp) {
@@ -478,7 +472,7 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 		FILE *fp;
 		char fname[256];
 		int size;
-		sprintf(fname, "%sframe%03d_dddthumb.jpeg", CAMERA_DUMP_PATH, src.frame_number);
+		snprintf(fname, 256, "%sframe%03d_dddthumb.jpeg", CAMERA_DUMP_PATH, src.frame_number);
 		fp = fopen(fname, "wb");
 		size = src.size.width * src.size.height * 3 / 2;
 		if (fp) {
@@ -495,7 +489,7 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 		FILE *fp;
 		char fname[256];
 		int size;
-		sprintf(fname, "%sframe%03d_eeethumb.jpeg", CAMERA_DUMP_PATH, src.frame_number);
+		snprintf(fname, 256, "%sframe%03d_eeethumb.jpeg", CAMERA_DUMP_PATH, src.frame_number);
 		fp = fopen(fname, "wb");
 		size = enc_cb_param.stream_size;
 		if (fp) {
@@ -740,7 +734,7 @@ proc_done:
 		char fname[256];
 		int size;
 		struct img_frm src = req->frm_out[req->frame_cnt];
-		sprintf(fname, "%sframe%03d_type%d.yuv", CAMERA_DUMP_PATH, src.frame_number, cur_proc->type);
+		snprintf(fname, 256, "%sframe%03d_type%d.yuv", CAMERA_DUMP_PATH, src.frame_number, cur_proc->type);
 		fp = fopen(fname, "wb");
 		size = src.size.width * src.size.height * 3 / 2;
 		if (fp) {
@@ -862,7 +856,7 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 		char fname[256];
 		int size;
 		struct img_frm src = req->frm_out[0];
-		sprintf(fname, "%sframe%03d_type%d.yuv", CAMERA_DUMP_PATH, src.frame_number, ipm_hdl->type);
+		snprintf(fname, 256, "%sframe%03d_type%d.yuv", CAMERA_DUMP_PATH, src.frame_number, ipm_hdl->type);
 		fp = fopen(fname, "wb");
 		size = src.size.width * src.size.height * 3 / 2;
 		if (fp) {

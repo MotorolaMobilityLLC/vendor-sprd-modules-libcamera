@@ -911,8 +911,8 @@ rot_flip:
 				mean.rot = flip_on ? IMG_ANGLE_90 : IMG_ANGLE_270;
 			else
 				mean.rot = IMG_ANGLE_0;
-			CMR_LOGD("rot %d, flip %d, src fd 0x%x, addr 0x%lx 0x%lx, off 0x%lx 0x%lx\n",
-				mean.rot, mean.flip, src.fd, src.addr_vir.addr_y, src.addr_vir.addr_u,
+			CMR_LOGD("rot %d, src fd 0x%x, addr 0x%lx 0x%lx, off 0x%lx 0x%lx\n",
+				mean.rot, src.fd, src.addr_vir.addr_y, src.addr_vir.addr_u,
 				src.addr_phy.addr_y, src.addr_phy.addr_u);
 			if (need_flush) {
 				need_flush = 0;
@@ -4606,9 +4606,11 @@ cmr_int snp_set_post_proc_param(cmr_handle snp_handle,
         }
     }
 
-    if (cxt->zsl_ips_en)
+    if (cxt->zsl_ips_en) {
         ret = snp_ips_req_preproc(cxt);
-
+        if (ret)
+            goto exit;
+    }
     ret = snp_set_jpeg_exif_param(snp_handle);
     if (ret) {
         CMR_LOGE("failed to set exif param %ld", ret);
