@@ -66,6 +66,12 @@ typedef struct {
     struct sprd_camalg_image input[2];//[0]left_yuv   [1]right_yuv 
     struct sprd_camalg_image output;//depth16(16bit) 
     depthrun_inparam params;
+    bool mChangeSensor;
+    void *input_otpbuf;
+    int input_otpsize;
+    void *output_otpbuf;
+    int output_otpsize;
+    int ret_otp;//0 success,else fail
 }sprd_depth_run_param_t;
   
 typedef struct {

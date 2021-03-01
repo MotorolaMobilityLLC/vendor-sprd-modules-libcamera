@@ -111,6 +111,12 @@ typedef struct {
     unsigned char *depthnorm_data;
 } gdepth_outparam;
 
+typedef struct {
+    bool mChangeSensor;
+    int input_otpsize;
+    int output_otpsize;
+} updateotp_param;
+
 int sprd_depth_VersionInfo_Get(char a_acOutRetbuf[256],
                                unsigned int a_udInSize);
 
@@ -147,6 +153,9 @@ int sprd_depth_get_gdepthinfo(void *handle, void *a_pOutDisparity,
                               gdepth_outparam *gdepth_output);
 
 int sprd_depth_userset(char *ptr, int size);
+
+
+int sprd_depth_updateotp(void *handle, void *a_pInSub_YCC420NV21,void *a_pInMain_YCC420NV21, void *input_otpbuf,void *output_otpbuf,updateotp_param *params);
 
 #ifdef __cplusplus
 } // extern C

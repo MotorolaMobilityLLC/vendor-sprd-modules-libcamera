@@ -95,6 +95,8 @@ int sprd_depth_adpt_ctrl(void *handle, sprd_depth_cmd_t cmd, void *param)
         void * pInMain;
         void * pInSub;
         void * output;
+        updateotp_param otp_params;
+        depth_param->ret_otp=0;
 
         weightmap_param weightParams;
         weightParams.F_number = depth_param->params.F_number;
@@ -117,7 +119,17 @@ int sprd_depth_adpt_ctrl(void *handle, sprd_depth_cmd_t cmd, void *param)
             pInMain = depth_param->input[0].addr[0];
             pInSub = depth_param->input[1].addr[0];
             output = depth_param->output.addr[0];
-        } 
+        }
+        if(depth_param->mChangeSensor)
+        {
+            updateotp_param otp_params;
+            otp_params.mChangeSensor=depth_param->mChangeSensor;
+            otp_params.input_otpsize=depth_param->input_otpsize;
+            otp_params.output_otpsize=depth_param->output_otpsize=272; 
+            DEPTH_LOGD("mChangeSensor %d input_otpsize %d output_otpsize %d ret_otp %d\n",otp_params.mChangeSensor, otp_params.input_otpsize, otp_params.output_otpsize,depth_param->ret_otp);
+            depth_param->ret_otp = sprd_depth_updateotp(handle,pInSub,pInMain,depth_param->input_otpbuf,depth_param->output_otpbuf,&otp_params);
+            DEPTH_LOGD("ret_otp:%d\n",depth_param->ret_otp);
+        }        
         ret = sprd_depth_Run(handle , output,NULL,pInSub,pInMain,&weightParams);
 
         break;
