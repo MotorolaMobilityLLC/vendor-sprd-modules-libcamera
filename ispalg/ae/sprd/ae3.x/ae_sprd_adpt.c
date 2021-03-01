@@ -710,7 +710,7 @@ static cmr_s32 ae_write_to_sensor_sync_mapping(struct ae_ctrl_cxt *cxt, struct a
 	struct ae_sync_actual_data ae_sync_actual = {0};
 	struct ae_frm_sync_param *master_ae_sync_info_ptr = in_param.sync_param[cxt->camera_id];
 	struct ae_frm_sync_param *slave0_ae_sync_info_ptr = in_param.sync_param[cxt->sync_state.next_id];
-	cmr_u32 slave_aem_info[3*1024];
+	//cmr_u32 slave_aem_info[3*1024];
 	struct ae_alg_rgb_gain awb_gain_slave;
 
 //方案：
@@ -782,13 +782,13 @@ static cmr_s32 ae_write_to_sensor_sync_mapping(struct ae_ctrl_cxt *cxt, struct a
 		master_ae_sync_info_ptr->blks_num.h = BLK_NUM_W_ALG;
 
 
-		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_AEM_INFO, NULL, &slave_aem_info[0]);
+		rtn = cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_AEM_INFO, NULL, &cxt->slave_aem_info[0]);
 		if(rtn){
 			ISP_LOGE("GET_SLAVE0_AEM rtn = %d",rtn);
 		}
 
 		for(cmr_u32 i = 0; i < 3 * 1024; i++) {
-			slave0_ae_sync_info_ptr->aem[i] = slave_aem_info[i]>>2; //10bit->8bit(lib use 8 bits);
+			slave0_ae_sync_info_ptr->aem[i] = cxt->slave_aem_info[i]>>2; //10bit->8bit(lib use 8 bits);
 		}
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_LIB_OUTPUT, NULL, &ae_slave_lib_output);
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_ACTUAL_DATA, NULL, &ae_sync_actual);
@@ -4094,7 +4094,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_SCENE_PARAM, &scene_param_in, &cxt->ae_tbl_param);
 	ae_target_lum = cxt->ae_tbl_param.target_lum;
 	cxt->cur_param_target_lum = cxt->ae_tbl_param.target_lum;
-
+	if ((cxt->last_cam_mode & 0xff) == CAMERA_MODE_MANUAL) {
+		cxt->last_enable = 0;
+		ISP_LOGD("last_cam_mode %d, last_enable %d\n", cxt->last_cam_mode,cxt->last_enable);
+	}
 	if (1 == cxt->last_enable) {
 		if (cxt->cur_status.adv_param.cur_ev_setting.line_time == cxt->last_exp_param.line_time) {
 			src_exp.exp_line = cxt->last_exp_param.exp_line;
