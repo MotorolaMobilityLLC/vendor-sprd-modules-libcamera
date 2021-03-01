@@ -2546,7 +2546,11 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
 
     lptMask = (unsigned char *)malloc(512*384);//lpt mask
     bokehMask = malloc(768*576);//bokeh mask
-    if(!lptMask || !bokehMask) {
+    if(!lptMask) {
+        HAL_LOGE("no mem!");
+        return rc;
+    }
+    if(!bokehMask) {
         HAL_LOGE("no mem!");
         return rc;
     }

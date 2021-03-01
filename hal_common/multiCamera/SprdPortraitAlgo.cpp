@@ -108,8 +108,7 @@ int SprdPortraitAlgo::initParam(BokehSize *size, OtpData *data,
         mPreviewbokehParam.weight_params.F_number;
     mPreviewbokehParam.depth_param.DisparityImage = NULL;
     memset(&mPreviewbokehParam.depth_param.golden_vcm_data, 0,
-           sizeof(af_golden_vcm_data));
-
+           sizeof(mPreviewbokehParam.depth_param.golden_vcm_data));
     // capture bokeh params
     mCapbokehParam.sel_x = mSize.capture_w / 2;
     mCapbokehParam.sel_y = mSize.capture_h / 2;
