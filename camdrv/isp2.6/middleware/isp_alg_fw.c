@@ -2971,6 +2971,7 @@ static cmr_int ispalg_bayerhist_stats_parser(cmr_handle isp_alg_handle, void *da
 			fprintf(fp, "hist ROI (%d %d %d %d),  total cnt G %08d,  R %08d,  B %08d\n",
 				win.start_x, win.start_y, win.width, win.height,
 				pix_cnt[0], pix_cnt[1], pix_cnt[2]);
+			fclose(fp);
 		}
 	}
 #endif
