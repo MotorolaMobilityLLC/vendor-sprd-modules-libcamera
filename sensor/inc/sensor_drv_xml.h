@@ -90,6 +90,8 @@ typedef struct xml_camera_module_cfg {
     cmr_u32 facing;
     int orientation;
     int resource_cost;
+    char* conflicting_devices[MAX_SENSOR_NUM];
+    int conflicting_devices_length;
     /*---sensor section---*/
 
     /*+++lens section+++*/

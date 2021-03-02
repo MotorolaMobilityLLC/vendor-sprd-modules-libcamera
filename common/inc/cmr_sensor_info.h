@@ -27,6 +27,7 @@
 #define SNR_NAME_MAX_LEN 64
 #define SENSOR_PDAF_MODE 4
 #define SENSOR_NAME_LEN 32
+#define MAX_SENSOR_NUM 4
 
 typedef void (*isp_buf_cfg_evt_cb)(cmr_int evt, void *data, cmr_u32 data_len,
                                    void *privdata);

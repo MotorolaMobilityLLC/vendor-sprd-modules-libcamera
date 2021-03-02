@@ -711,6 +711,8 @@ typedef struct phySensorInfo {
     cmr_u32 face_type;
     int angle;
     int resource_cost;
+    char *conflicting_devices[MAX_SENSOR_NUM];
+    int conflicting_devices_length;
     cmr_u32 module_vendor_id;
     cmr_u32 otp_version;
     SENSOR_IMAGE_FORMAT image_format;

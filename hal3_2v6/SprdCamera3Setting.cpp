@@ -1324,7 +1324,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
     // add struct light camera info and three back camera phone info
 
     if (cameraId >= mPhysicalSensorNum) {
-        HAL_LOGE("failed");
+        HAL_LOGE("failed, camera id is %d", cameraId);
         return -1;
     }
 
@@ -1334,10 +1334,14 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
         cameraInfo->facing = -1;
         cameraInfo->orientation = -1;
         cameraInfo->resource_cost = -1;
+        cameraInfo->conflicting_devices = NULL;
+        cameraInfo->conflicting_devices_length = 0;
     } else {
         cameraInfo->facing = phyPtr->face_type;
         cameraInfo->orientation = phyPtr->angle;
         cameraInfo->resource_cost = phyPtr->resource_cost;
+        cameraInfo->conflicting_devices = phyPtr->conflicting_devices;
+        cameraInfo->conflicting_devices_length = phyPtr->conflicting_devices_length;
     }
     // TBD: may be will add other variable in struct camera_info
 
