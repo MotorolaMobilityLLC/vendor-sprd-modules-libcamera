@@ -198,7 +198,7 @@ static void lsc_cmd_set_output(cmr_u16 * table, cmr_u32 width, cmr_u32 height, c
 		for (i = 0; i < width * height; i++) {
 			table[4 * i + index_b] = 8192;
 		}
-	} else if (strcmp(prop, "1100") == 0) {	// up(8x)bottom(1x)
+	} else if (strcmp(prop, "10") == 0) {	// up(8x)bottom(1x)
 		for (j = 0; j < height / 2; j++) {
 			for (i = 0; i < width; i++) {
 				table[4 * (j * width + i) + 0] = 8192;
@@ -207,7 +207,7 @@ static void lsc_cmd_set_output(cmr_u16 * table, cmr_u32 width, cmr_u32 height, c
 				table[4 * (j * width + i) + 3] = 8192;
 			}
 		}
-	} else if (strcmp(prop, "0011") == 0) {	// up(1x)bottom(8x)
+	} else if (strcmp(prop, "01") == 0) {	// up(1x)bottom(8x)
 		for (j = height / 2; j < height; j++) {
 			for (i = 0; i < width; i++) {
 				table[4 * (j * width + i) + 0] = 8192;
