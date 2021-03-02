@@ -3,8 +3,11 @@
 #include "cmr_log.h"
 //#define RECURSIVE_TRAVERSAL_ENABLE
 #define MAX_SUPPORT_ROLE_NUM 8 // cmr_u32, 4 bits means a role_group
+#define MAX_SENSOR_NUM 4
 static uint32_t first_sensor_role_index = 5;
 static uint32_t sensor_role_num = 0;
+static uint32_t first_conflict_device_index = 5;
+static uint32_t conflict_device_num = 0;
 
 int sensor_drv_xml_load_file(char *file_name, xmlDocPtr *pDocPtr,
                              xmlNodePtr *pRootPtr, const char *nodeName) {
@@ -185,8 +188,9 @@ int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
     nodePtr = pNodePtr;
 #endif
     for (i = 0; i < data_size; i++) {
-        if (!xml_hash_map[i].value)
+        if (!xml_hash_map[i].value) {
             goto exit;
+        }
 
         switch (xml_hash_map[i].elem_type) {
         case XML_ELEMENT_NODE: {
@@ -199,6 +203,10 @@ int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
                     if (!xmlStrcmp(curPtr->name, "SensorRole")) {
                         curPtr = sensor_drv_xml_get_node(
                             nodePtr, "SensorRole", i - first_sensor_role_index);
+                        break;
+                    } else if (!xmlStrcmp(curPtr->name, "ConflictingDevice")) {
+                        curPtr = sensor_drv_xml_get_node(
+                            nodePtr, "ConflictingDevice", i - first_conflict_device_index);
                         break;
                     } else {
                         break;
@@ -333,6 +341,11 @@ int sensor_drv_xml_parse_camera_module_info(
     struct xmlHashMap xml_hash_map[MAX_HASH_MAP_SIZE];
     char facing[16];
     char sensor_role[MAX_SUPPORT_ROLE_NUM][SENSOR_NAME_LEN];
+    char* conflicting_devices[MAX_SENSOR_NUM];
+
+    for (int i = 0; i < MAX_SENSOR_NUM; i++) {
+        conflicting_devices[i] = (char*)malloc(sizeof(char) * 4);
+    }
 
     XML_NODE_CHECK_PTR(docPtr);
     XML_NODE_CHECK_PTR(nodePtr);
@@ -386,12 +399,30 @@ int sensor_drv_xml_parse_camera_module_info(
         elem_num++;
     }
 
+    first_conflict_device_index = elem_num;
+    conflict_device_num = sensor_drv_xml_get_node_num(nodePtr, "ConflictingDevice");
+    if (conflict_device_num > MAX_SENSOR_NUM) {
+        conflict_device_num = MAX_SENSOR_NUM;
+        SENSOR_LOGI("max support conflict_device_num %d", conflict_device_num);
+    }
+
+    for (i = 0; i < conflict_device_num; i++) {
+        strlcpy(xml_hash_map[elem_num].key, "ConflictingDevice", MAX_KEY_LEN);
+        xml_hash_map[elem_num].value = conflicting_devices[i];
+        xml_hash_map[elem_num].data_type = XML_DATA_STRING;
+        xml_hash_map[elem_num].elem_type = XML_ELEMENT_NODE;
+        elem_num++;
+    }
+
     SENSOR_LOGD("elem_num = %d", elem_num);
     ret = sensor_drv_xml_parse_node_data(nodePtr, "CameraModuleCfg",
                                          xml_hash_map, elem_num, 0);
 
     if (ret)
         goto exit;
+
+    cfgPtr->conflicting_devices_length = conflict_device_num;
+    memcpy(cfgPtr->conflicting_devices, conflicting_devices, sizeof(conflicting_devices));
 
     sensor_drv_xml_str_to_integer(facing, &cfgPtr->facing);
     for (i = 0; i < sensor_role_num; i++) {

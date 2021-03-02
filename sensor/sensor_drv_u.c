@@ -2925,6 +2925,8 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->face_type = sensor_cxt->xml_info->cfgPtr->facing;
     phyPtr->angle = sensor_cxt->xml_info->cfgPtr->orientation;
     phyPtr->resource_cost = sensor_cxt->xml_info->cfgPtr->resource_cost;
+    memcpy(phyPtr->conflicting_devices, sensor_cxt->xml_info->cfgPtr->conflicting_devices, sizeof(sensor_cxt->xml_info->cfgPtr->conflicting_devices));
+    phyPtr->conflicting_devices_length = sensor_cxt->xml_info->cfgPtr->conflicting_devices_length;
     phyPtr->mono_sensor = sensor_cxt->mono_sensor;
 
     phyPtr->module_vendor_id = sensor_cxt->module_vendor_id;

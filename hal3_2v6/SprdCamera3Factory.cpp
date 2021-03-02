@@ -465,6 +465,9 @@ int SprdCamera3Factory::getSingleCameraInfoChecked(int cameraId,
 
     info->static_camera_characteristics = staticMetadata;
     info->device_version = CAMERA_DEVICE_API_VERSION_3_5;
+    for (size_t i = 0; i < info->conflicting_devices_length; i++) {
+        HAL_LOGD("conflicting device of camera id %d is %s", cameraId, info->conflicting_devices[i]);
+    }
 
     return rc;
 }

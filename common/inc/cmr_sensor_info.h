@@ -21,6 +21,7 @@
 
 #define SENSOR_PDAF_MODE 4
 #define SENSOR_NAME_LEN 32
+#define MAX_SENSOR_NUM 4
 
 enum sns_cmd_section { CMD_SNS_OTP, CMD_SNS_IC, CMD_SNS_AF };
 
