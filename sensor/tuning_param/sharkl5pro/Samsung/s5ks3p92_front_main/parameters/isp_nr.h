@@ -215,3 +215,5 @@ static struct sensor_nr_scene_map_param s_s5ks3p92_nr_scene_map_param = {{
 #include "NR/fdr_cap0/normal/mfnr_param.h"
 #endif
 
+#ifdef _NR_POST_EE_PARAM_
+#endif
