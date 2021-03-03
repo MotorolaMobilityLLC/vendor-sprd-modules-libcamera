@@ -190,10 +190,12 @@ static void ov8856_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
     ov8856_drv_write_shutter(handle, aec_info, shutter);
 
+/*  HAL write exif info after adding manual sensor tag
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(
             sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
     }
+*/
 }
 
 static void ov8856_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
@@ -346,6 +348,8 @@ static cmr_int ov8856_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     }
     ex_info->f_num = static_info->f_num;
     ex_info->focal_length = static_info->focal_length;
+    ex_info->min_focus_distance = static_info->min_focal_distance;
+    ex_info->start_offset_time = static_info->start_offset_time;
     ex_info->max_fps = static_info->max_fps;
     ex_info->max_adgain = static_info->max_adgain;
     ex_info->ois_supported = static_info->ois_supported;
@@ -903,6 +907,21 @@ static cmr_int ov8856_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
+static cmr_s64 ov8856_drv_get_shutter_skew(cmr_handle handle, cmr_uint sensor_work_mode) {
+    cmr_u16 height = 0;
+    cmr_u32 line_time = 0;
+    cmr_s64 shutter_skew = 0;
+
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    height = s_ov8856_resolution_tab_raw[0].reg_tab[sensor_work_mode].height;
+    line_time = s_ov8856_resolution_trim_tab[0].trim_info[sensor_work_mode].line_time;
+    shutter_skew = (height - 1) * line_time;
+    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%d",
+        sensor_work_mode, height, line_time, shutter_skew);
+    return shutter_skew;
+}
+
 void *sensor_ic_open_lib(void)
 {
      return &g_ov8856_shine_mipi_raw_info;
@@ -924,6 +943,7 @@ static struct sensor_ic_ops s_ov8856_ops_tab = {
     .identify = ov8856_drv_identify,
     .ex_write_exp = ov8856_drv_write_exposure,
     .write_gain_value = ov8856_drv_write_gain_value,
+    .getShutterSkew = ov8856_drv_get_shutter_skew,
 
 #if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = ov8856_drv_read_aec_info,

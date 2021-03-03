@@ -2717,7 +2717,16 @@ static cmr_int ispctl_set_af_ot_info(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_focus_distance(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
+	if (cxt->ops.af_ops.ioctrl)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FOCUS_DISTANCE, param_ptr, NULL);
+
+	return ret;
+}
 
 static cmr_int ispctl_scaler_trim(cmr_handle isp_alg_handle, void *param_ptr)
 {
@@ -3576,6 +3585,17 @@ static cmr_int ispctl_set_ae_manual_mode(cmr_handle isp_alg_handle, void *param_
 
 	if (cxt->ops.ae_ops.ioctrl)
 		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MANUAL_MODE, (void *)&manual_mode, NULL);
+	return rtn;
+}
+
+static cmr_int ispctl_set_ae_params(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_int rtn = ISP_SUCCESS;
+	struct cts_ae_params *ae_up_params= (struct cts_ae_params *) param_ptr;
+
+	if (cxt->ops.ae_ops.ioctrl)
+		rtn = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MODE_PARAMS, (void *)ae_up_params, NULL);
 	return rtn;
 }
 
@@ -5413,6 +5433,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_AF_POS, ispctl_get_af_pos},	// for tool cali
 	{ISP_CTRL_SET_AF_OT_SWITH, ispctl_set_af_ot_switch},
 	{ISP_CTRL_SET_AF_OT_INFO, ispctl_set_af_ot_info},
+	{ISP_CTRL_SET_FOCUS_DISTANCE, ispctl_set_focus_distance},
 	{ISP_CTRL_GET_BOKEH_RANGE, ispctl_get_bokeh_range},
 	{ISP_CTRL_GET_REBOKEH_DATA, ispctl_get_rebokeh_data},
 	{ISP_CTRL_SET_VCM_DIST, ispctl_set_vcm_distance},
@@ -5435,6 +5456,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_FORCE_AE_QUICK_MODE, ispctl_force_ae_quick_mode},
 	{ISP_CTRL_SET_AE_EXP_TIME, ispctl_set_ae_exp_time},
 	{ISP_CTRL_SET_AE_MODE, ispctl_set_ae_manual_mode},
+	{ISP_CTRL_SET_AE_PARAMS, ispctl_set_ae_params},
 	{ISP_CTRL_SET_AE_SENSITIVITY, ispctl_set_ae_sensitivity},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, ispctl_set_dcam_timestamp},
 	{ISP_CTRL_SET_AUX_SENSOR_INFO, ispctl_set_aux_sensor_info},

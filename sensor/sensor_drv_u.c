@@ -2905,6 +2905,13 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
                sizeof(sensor_cxt->fov_info));
     }
 
+    if (sensor_cxt->sensor_min_exp) {
+        phyPtr->sensor_min_exp = sensor_cxt->sensor_min_exp;
+        phyPtr->sensor_max_exp = sensor_cxt->sensor_max_exp;
+        SENSOR_LOGD("sensor_range (%lld, %lld)",
+                 phyPtr->sensor_min_exp, phyPtr->sensor_max_exp);
+    }
+
     if (sensor_cxt->fov_angle > 0) {
         phyPtr->fov_angle = sensor_cxt->fov_angle;
     }
@@ -2922,6 +2929,11 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->angle = sensor_cxt->xml_info->cfgPtr->orientation;
     phyPtr->resource_cost = sensor_cxt->xml_info->cfgPtr->resource_cost;
     phyPtr->mono_sensor = sensor_cxt->mono_sensor;
+    phyPtr->f_num = sensor_cxt->static_info->f_num;
+    phyPtr->mim_focus_distance = sensor_cxt->static_info->min_focal_distance;
+    phyPtr->start_offset_time = sensor_cxt->static_info->start_offset_time;
+    SENSOR_LOGD("f_num:%f,mim_focus_distance:%f,start offset time:%lld",
+                 phyPtr->f_num,phyPtr->mim_focus_distance,phyPtr->start_offset_time);
 
     phyPtr->module_vendor_id = sensor_cxt->module_vendor_id;
     phyPtr->otp_version = sensor_cxt->otp_version;
@@ -3303,6 +3315,19 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     return 0;
 }
 
+cmr_s64 sensor_drv_get_shutter_skew(struct sensor_drv_context *sensor_cxt,
+                                    cmr_uint sensor_work_mode) {
+     cmr_s64 shutter_skew = 0;
+     if (PNULL == sensor_cxt) {
+         SENSOR_LOGE("zero pointer");
+         return SENSOR_FAIL;
+     }
+     shutter_skew = sensor_cxt->sensor_info_ptr->
+     sns_ops->getShutterSkew(sensor_cxt->sns_ic_drv_handle, sensor_work_mode);
+     SENSOR_LOGD("shutter skew:%lld",shutter_skew);
+     return shutter_skew;
+}
+
 static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T val;
@@ -3323,6 +3348,10 @@ static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
                    sizeof(sn_ex_info_slv.fov_info));
             sensor_cxt->fov_angle = sn_ex_info_slv.fov_angle;
             sensor_cxt->mono_sensor = sn_ex_info_slv.mono_sensor;
+            sensor_cxt->sensor_min_exp = sn_ex_info_slv.sensor_min_exp;
+            sensor_cxt->sensor_max_exp = sn_ex_info_slv.sensor_max_exp;
+            SENSOR_LOGD("sensor_range (%lld, %lld)",
+                     sensor_cxt->sensor_min_exp, sensor_cxt->sensor_max_exp);
         } else {
             SENSOR_LOGE("get sensor ex info failed");
             return -1;

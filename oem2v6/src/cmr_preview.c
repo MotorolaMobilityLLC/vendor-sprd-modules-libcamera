@@ -6686,6 +6686,14 @@ exit:
     return ret;
 }
 
+cmr_uint cmr_preview_get_sn_work_mode(cmr_handle preview_handle, cmr_u32 camera_id){
+    struct prev_handle *handle = (struct prev_handle *)preview_handle;
+    CHECK_HANDLE_VALID(handle);
+    cmr_uint sensor_work_mode = handle->prev_cxt[camera_id].prev_mode;
+    CMR_LOGD("sensor work mode:%d",sensor_work_mode);
+    return sensor_work_mode;
+}
+
 cmr_int prev_get_sn_preview_mode(struct prev_handle *handle, cmr_u32 camera_id,
                                  struct sensor_exp_info *sensor_info,
                                  struct img_size *target_size,
@@ -17246,12 +17254,12 @@ cmr_int prev_set_ae_time(cmr_handle preview_handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
     struct prev_context *prev_cxt = NULL;
-    cmr_uint ae_time = 0;
+    cmr_s64 ae_time = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
 
-    ae_time = *(cmr_uint *)data; // ns
+    ae_time = *(cmr_s64 *)data; // ns
 
     prev_cxt = &handle->prev_cxt[camera_id];
     prev_cxt->ae_time = ae_time;

@@ -441,6 +441,9 @@ cmr_int cmr_preview_get_ultra_wide_handle(cmr_handle preview_handle,
                                           cmr_u32 camera_id,
                                           cmr_s32 buf_fd, void **handle);
 
+cmr_uint cmr_preview_get_sn_work_mode(cmr_handle preview_handle,
+                                      cmr_u32 camera_id);
+
 #ifdef __cplusplus
 }
 #endif

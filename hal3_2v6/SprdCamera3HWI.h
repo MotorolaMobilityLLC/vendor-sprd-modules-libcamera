@@ -125,6 +125,7 @@ class SprdCamera3HWI {
     int ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
 
   private:
+    camera3_stream_buffer_t *result_buffers;
     int openCamera();
     int closeCamera();
     int validateCaptureRequest(camera3_capture_request_t *request);
@@ -166,6 +167,7 @@ class SprdCamera3HWI {
         int32_t receive_req_max;
         uint32_t pipeline_depth;
         threeA_info_t threeA_info;
+        uint32_t result_status;
     } PendingRequestInfo;
 
     typedef struct {
@@ -215,6 +217,7 @@ class SprdCamera3HWI {
     Mutex mLock;
     Mutex mRequestLock;
     Mutex mResultLock;
+    //Mutex mResultPtrLock;
     Condition mRequestSignal;
     bool mIsSkipFrm;
 

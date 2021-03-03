@@ -30,6 +30,7 @@
 #define LOG_TAG "Cam3HWI"
 //#define LOG_NDEBUG 0
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
+#include <string.h>
 
 #include <cutils/properties.h>
 #include <stdlib.h>
@@ -665,6 +666,7 @@ int SprdCamera3HWI::configureStreams(
         }
     } else {
         mMetadataChannel->stop(mFrameNum);
+        mMetadataChannel->clear();
     }
 
     // regular channel
@@ -757,6 +759,7 @@ int SprdCamera3HWI::configureStreams(
                     stream_type = CAMERA_STREAM_TYPE_CALLBACK;
                     channel_type = CAMERA_CHANNEL_TYPE_REGULAR;
                     set_usage_for_preview(newStream);
+                    hasCallbackStream = 1;
                 }
                 break;
 
@@ -963,7 +966,7 @@ int SprdCamera3HWI::configureStreams(
     }
 
     mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
-    mOEMIf->SetChannelHandle(mRegularChan, mPicChan);
+    mOEMIf->SetChannelHandle(mRegularChan, mPicChan, mMetadataChannel);
     mOEMIf->setUltraWideMode();
 
 #if defined(CONFIG_ISP_2_3)
@@ -1280,6 +1283,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     int ret = NO_ERROR;
     CameraMetadata meta;
+    CameraMetadata first_meta;
     SprdCamera3Stream *pre_stream = NULL;
     int receive_req_max = mReciveQeqMax;
     int32_t width = 0, height = 0;
@@ -1296,6 +1300,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     SPRD_DEF_Tag *sprddefInfo;
     REQUEST_Tag requestInfo;
     struct fin1_info fin1_info;
+    bool temp_first_req = false;
 
     Mutex::Autolock l(mLock);
 
@@ -1311,11 +1316,22 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     requestInfo.ot_frame_num = pre_frame_num;
     mSetting->setREQUESTTag(&requestInfo);
     pre_frame_num ++;
-    HAL_LOGV("frame_id = %d,ot_frame_num =%d", requestInfo.frame_id, requestInfo.ot_frame_num);
+    HAL_LOGV("frame_id = %d,ot_frame_num = %d", requestInfo.frame_id, requestInfo.ot_frame_num);
 
     meta = request->settings;
-    mMetadataChannel->request(meta);
+    ret = mSetting->updateAppMode(meta);
+    mMetadataChannel->start(mFrameNum);
 
+    if(mMetadataChannel->ReSetFirstMeta) {
+       HAL_LOGV("frame_id = %d,ot_frame_num = %d", requestInfo.frame_id, requestInfo.ot_frame_num);
+       first_meta = request->settings;
+       if (first_meta.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
+           int64_t valueI64 = first_meta.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
+           HAL_LOGV("sensor exposure_time is %lld ", valueI64);
+       }
+    }
+    mMetadataChannel->request(meta, mFrameNum);
+    mMetadataChannel->request(meta);
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     mSetting->getCONTROLTag(&controlInfo);
     mSetting->getFLASHTag(&flashInfo);
@@ -1354,6 +1370,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 			mStreamConfiguration.snapshot.status,
 			mStreamConfiguration.video.status,
 			mStreamConfiguration.yuvcallback.status);
+    HAL_LOGV("mOldCapIntent %d, mStreamOnWithZsl %d", mOldCapIntent, mOEMIf->mStreamOnWithZsl);
 
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
@@ -1734,15 +1751,26 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         goto exit;
     }
 
-    mMetadataChannel->start(mFrameNum);
-
     if (mFirstRegularRequest == 1) {
         ret = mRegularChan->start(mFrameNum);
         if (ret) {
             HAL_LOGE("mRegularChan->start failed, ret=%d", ret);
             goto exit;
         }
+        if (first_meta.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
+            int64_t valueI64 = first_meta.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
+            HAL_LOGV("sensor exposure_time is %lld", valueI64);
+        }
+        mMetadataChannel->request(first_meta, mFrameNum);
+        temp_first_req = true;
         mFirstRegularRequest = 0;
+    }
+
+    mMetadataChannel->start(mFrameNum);
+
+    if (temp_first_req) {
+        mOEMIf->setAeState(AE_START);
+        mOEMIf->setAwbState(AWB_START);
     }
 
     {
@@ -1864,11 +1892,14 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
     int receive_req_max = SprdCamera3RegularChannel::kMaxBuffers;
     int32_t width = 0, height = 0;
     SPRD_DEF_Tag *sprddefInfo;
+    int64_t exposure_time;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
+
     for (List<PendingRequestInfo>::iterator i = mPendingRequestsList.begin();
          i != mPendingRequestsList.end();) {
         camera3_capture_result_t result;
         camera3_notify_msg_t notify_msg;
+
 
         if (i->frame_number < frame_number) {
             HAL_LOGD("mCameraId=%d, i->frame_num=%d, frame_num=%d, i->req_id=%d, i->bNotified=%d",
@@ -1926,7 +1957,10 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                 mSetting->setResultTag(&threeAControlInfo);
 
-                result.result = mSetting->translateLocalToFwMetadata();
+                result.result = mMetadataChannel->getMetadata(i->frame_number);
+                if(!result.result) {
+                   HAL_LOGE("result is nullptr, AE or Af callback err in frame num %d", i->frame_number);
+                }
                 result.frame_number = i->frame_number;
                 result.num_output_buffers = 0;
                 result.output_buffers = NULL;
@@ -1942,8 +1976,21 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                      mCameraId, i->frame_number, frame_number, i->request_id,i->bNotified);
 
             if (!i->bNotified) {
+                SENSOR_Tag sensorInfo;
+                mSetting->getSENSORTag(&sensorInfo);
                 notify_msg.type = CAMERA3_MSG_SHUTTER;
                 notify_msg.message.shutter.frame_number = i->frame_number;
+                HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
+                         "dcam sof time = %lld",
+                         mCameraId, i->frame_number, capture_time);
+                exposure_time = sensorInfo.exposure_time;
+                capture_time = capture_time - (exposure_time - sensorInfo.start_offset_time);
+                HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
+                          "exposure time = %lld,"
+                          "sensor start offset time = %lld",
+                          mCameraId, i->frame_number,
+                          exposure_time, sensorInfo.start_offset_time);
+
                 notify_msg.message.shutter.timestamp = capture_time;
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->bNotified = true;
@@ -1951,7 +1998,6 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                          mCameraId, i->frame_number,
                          notify_msg.message.shutter.timestamp);
 
-                SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
                 CONTROL_Tag threeAControlInfo;
@@ -1984,14 +2030,17 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     i->threeA_info.ae_manual_trigger;
 
                 mSetting->setResultTag(&threeAControlInfo);
-
-                result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
+                result.result = mMetadataChannel->getMetadata(i->frame_number);
+                if(!result.result) {
+                   HAL_LOGE("result is nullptr, AE or Af callback err in frame num %d", i->frame_number);
+                }
                 result.num_output_buffers = 0;
                 result.output_buffers = NULL;
                 result.input_buffer = NULL;
                 result.partial_result = 1;
                 mCallbackOps->process_capture_result(mCallbackOps, &result);
+                HAL_LOGV("result.result %p", result.result);
                 free_camera_metadata(
                     const_cast<camera_metadata_t *>(result.result));
             }

@@ -240,10 +240,13 @@ struct module_fov_info {
 
 struct sensor_static_info {
     /* f-number,focal ratio,actual f-number*100 */
-    cmr_u32 f_num;
+    float f_num;
 
     /* focal_length */
     cmr_u32 focal_length; // actual focal_length*100
+
+    /* min focal distance */
+    cmr_u32 min_focal_distance;
 
     /* max fps of sensor's all settings */
     cmr_u32 max_fps;
@@ -273,6 +276,8 @@ struct sensor_static_info {
     float fov_angle;
     struct module_fov_info fov_info;
     cmr_u8 mono_sensor;
+    cmr_u32 mim_focus_distance;
+    cmr_s64 start_offset_time;
 };
 
 typedef struct sensor_static_info_tab {
@@ -439,6 +444,7 @@ struct sensor_ic_ops {
 
     /* not used currently*/
     cmr_int (*ioctl)(cmr_handle handle, int cmd, void *param);
+    cmr_s64 (*getShutterSkew)(cmr_handle handle, cmr_uint sensor_work_mode);
 };
 
 /**
@@ -716,6 +722,11 @@ typedef struct phySensorInfo {
     cmr_u16 pdaf_supported;
     char sensor_name[SENSOR_NAME_LEN];
     cmr_u8 mono_sensor;
+    cmr_s64 sensor_min_exp;
+    cmr_s64 sensor_max_exp;
+    float f_num;
+    cmr_u32 mim_focus_distance;
+    cmr_s64 start_offset_time;
 } PHYSICAL_SENSOR_INFO_T;
 
 struct phy_id_group {

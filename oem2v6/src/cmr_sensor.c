@@ -466,6 +466,15 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id,
     return ret;
 }
 
+cmr_s64 cmr_sensor_get_shutter_skew(cmr_handle sensor_handle, cmr_uint sensor_work_mode, cmr_uint sensor_id) {
+    cmr_s64 rolling_shutter_time;
+    struct cmr_sensor_handle *handle =
+         (struct cmr_sensor_handle *)sensor_handle;
+    CHECK_HANDLE_VALID(handle);
+    rolling_shutter_time = sensor_drv_get_shutter_skew(&(handle->sensor_cxt[sensor_id]), sensor_work_mode);
+    return rolling_shutter_time;
+}
+
 cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
                             cmr_uint mode) {
     ATRACE_BEGIN(__FUNCTION__);

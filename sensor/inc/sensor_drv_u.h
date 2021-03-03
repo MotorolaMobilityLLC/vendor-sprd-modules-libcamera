@@ -751,6 +751,8 @@ struct sensor_drv_context {
     cmr_u32 is_HD_mode;
     cmr_u32 module_vendor_id;
     cmr_u32 otp_version;
+    cmr_s64 sensor_min_exp;
+    cmr_s64 sensor_max_exp;
 };
 
 struct tuning_param_lib {
@@ -837,6 +839,8 @@ cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
+cmr_s64 sensor_drv_get_shutter_skew(struct sensor_drv_context *sensor_cxt,
+                                    cmr_uint sensor_work_mode);
 
 #ifdef __cplusplus
 }

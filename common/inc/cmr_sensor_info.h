@@ -152,6 +152,8 @@ struct drv_fov_info {
 struct sensor_ex_info {
     cmr_u32 f_num;
     cmr_u32 focal_length;
+    cmr_u32 min_focus_distance;
+    cmr_s64 start_offset_time;
     cmr_u32 max_fps;
     cmr_u32 max_adgain;
     cmr_u32 ois_supported;
@@ -169,6 +171,8 @@ struct sensor_ex_info {
     struct af_pose_dis pos_dis;
     cmr_u32 *sns_binning_factor;
     cmr_u8 mono_sensor;
+    cmr_s64 sensor_min_exp;
+    cmr_s64 sensor_max_exp;
 };
 
 struct sensor_raw_resolution_info_tab {

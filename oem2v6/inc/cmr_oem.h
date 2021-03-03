@@ -813,6 +813,11 @@ void camera_grab_handle(cmr_int evt, void *data, void *privdata);
 cmr_int camera_get_iso_info(cmr_handle oem_handle, cmr_u32 *iso_info);
 void camera_local_set_original_picture_size(cmr_handle oem_handle ,int32_t width , int32_t height);
 cmr_int camera_fdr_handle(void *data, void *privdata);
+cmr_int camera_set_ae_params(cmr_handle oem_handle, void *param);
+cmr_int camera_set_af_params(cmr_handle oem_handle, void *param);
+void camera_local_set_exif_iso_value(cmr_handle oem_handle, cmr_u32 iso_value);
+void camera_local_set_exif_exp_time(cmr_handle oem_handle, cmr_s64 exp_time);
+cmr_s64 camera_local_get_shutter_skew(cmr_handle oem_handle);
 
 #ifdef __cplusplus
 }

@@ -1656,6 +1656,8 @@ enum camera_cb_type {
     CAMERA_EVT_CB_FLUSH_BUF,
     CAMERA_EVT_CB_EV_ADJUST_SCENE,
     CAMERA_EVT_CB_FDR_SCENE,
+    CAMERA_EVT_CB_AE_PARAMS,
+    CAMERA_EVT_CB_AF_PARAMS,
     CAMERA_CB_TYPE_MAX
 };
 
@@ -1669,6 +1671,8 @@ enum camera_func_type {
     CAMERA_FUNC_STOP_PREVIEW,
     CAMERA_FUNC_RELEASE_PICTURE,
     CAMERA_FUNC_AE_STATE_CALLBACK,
+    CAMERA_FUNC_AE_PARAMS_CALLBACK,
+    CAMERA_FUNC_AF_PARAMS_CALLBACK,
     CAMERA_FUNC_SENSOR_DATATYPE,
 #ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
     CAMERA_FUNC_CONVERT_PARAM,
@@ -1765,6 +1769,7 @@ enum camera_param_type {
     CAMERA_PARAM_FILTER_TYPE,
     CAMERA_PARAM_AE_MODE,
     CAMERA_PARAM_EXPOSURE_TIME,
+    CAMERA_PARAM_EXIF_EXPOSURE_TIME,
     CAMERA_PARAM_SENSITIVITY,
     CAMERA_PARAM_AF_BYPASS,
     CAMERA_PARAM_LENS_FOCUS_DISTANCE,
@@ -2132,6 +2137,74 @@ struct visible_region_info {
     struct img_rect region;
 };
 
+struct ae_params {
+    cmr_s64 exp_time;
+    cmr_s32 sensitivity;
+    cmr_u8 ae_mode;
+    cmr_s32 frame_number;
+    bool is_push;
+    bool is_cts;
+    float fps;
+    cmr_s64 frame_duration;
+    cmr_u8 ae_precap_triger;
+};
+
+struct tmp_cts_ae_params{
+    cmr_u32 exp_time;
+    cmr_u32 sensitivity;
+    cmr_u32 ae_mode;/*0:auto 1:shutter&&iso 2:shutter first 3:iso first*/
+    cmr_s32 frame_number;
+};
+
+struct af_params {
+    float focus_distance;
+    cmr_s32 frame_number;
+    cmr_u8 af_mode;
+    cmr_u8 lens_state;
+    bool is_cts;
+    cmr_u8 af_triger;
+};
+
+struct isp_sync_params {
+    cmr_s32 frame_number;
+    struct ae_params ae_cts_params;
+    struct af_params af_cts_params;
+    cmr_u8 ae_notified;
+    cmr_u8 af_notified;
+    int syncRequst;
+    int unSyncCount;
+};
+
+struct ae_callback_params {
+   cmr_s32 cur_bv;
+   cmr_u32 face_stable;
+   cmr_u32 face_num;
+   cmr_u32 total_gain;
+   cmr_u32 sensor_gain;
+   cmr_u32 isp_gain;
+   cmr_u32 exp_line;
+   cmr_u32 exp_time;
+   cmr_u32 ae_stable;
+   cmr_u8 flash_fired;
+   cmr_u32 cur_effect_sensitivity;
+   cmr_u32 cur_effect_exp_time;
+   cmr_s32 frame_number;
+   float cur_effect_fps;
+};
+
+struct af_callback_params {
+    float focus_distance;
+    cmr_s32 frame_number;
+    cmr_u32 lens_state;
+    cmr_u32 reserverd[30];
+};
+
+typedef enum {
+    IMAGE_CALLBACK = 0x1,
+    METADATA_CALLBACK = 0x2,
+    RESULT_CALLBACK = 0x3,
+} callback_status;
+
 typedef enum {
     CAMERA_IOCTRL_SET_MULTI_CAMERAMODE = 0,
     CAMERA_IOCTRL_GET_SENSOR_LUMA,
@@ -2183,6 +2256,8 @@ typedef enum {
     CAMERA_TOCTRL_GET_SN_STREAM_STATUS,
     CAMERA_IOCTRL_GET_CT,
     CAMERA_IOCTRL_GET_ISO,
+    CAMERA_IOCTRL_SET_AE_PARAMS,
+    CAMERA_IOCTRL_SET_AF_PARAMS,
     //CAMERA_IOCTRL_GET_COLOR_TEMP,
     CAMERA_IOCTRL_FOV_FUSION_MODE,
     CAMERA_IOCTRL_SET_FOV_FUSION_APP_RATIO,
@@ -2441,6 +2516,7 @@ typedef struct oem_ops {
 #endif
     void (*camera_set_original_picture_size)(cmr_handle handle, int32_t width,
                                              int32_t height);
+    cmr_s64 (*camera_get_rolling_shutter_skew)(cmr_handle handle);
 } oem_ops_t;
 
 typedef struct oem_module {

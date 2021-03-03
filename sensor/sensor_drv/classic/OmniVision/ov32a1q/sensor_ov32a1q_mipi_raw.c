@@ -179,10 +179,13 @@ static void ov32a1q_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     ov32a1q_drv_write_shutter(handle, aec_info, shutter);
 
     sns_drv_cxt->sensor_ev_info.preview_exptime= exp_time;
+
+/*  HAL write exif info after adding manual sensor tag
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(
             sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME, exp_time);
     }
+*/
 }
 
 static void ov32a1q_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
@@ -335,6 +338,16 @@ static cmr_int ov32a1q_drv_init_exif_info(cmr_handle handle,
     return rtn;
 }
 
+static cmr_int ov32a1q_drv_get_exp_range(struct sensor_ex_info *ex_info) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    SENSOR_LOGI("E");
+    SENSOR_IC_CHECK_PTR(ex_info);
+    ex_info->sensor_min_exp = 99000; //99us
+    ex_info->sensor_max_exp = 200000000; //200ms
+    
+    return rtn;
+}
+
 static cmr_int ov32a1q_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_ex_info *ex_info = (struct sensor_ex_info *)param;
@@ -356,6 +369,8 @@ static cmr_int ov32a1q_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
     }
     ex_info->f_num = static_info->f_num;
     ex_info->focal_length = static_info->focal_length;
+    ex_info->min_focus_distance= static_info->min_focal_distance;
+    ex_info->start_offset_time = static_info->start_offset_time;
     ex_info->max_fps = static_info->max_fps;
     ex_info->max_adgain = static_info->max_adgain;
     ex_info->ois_supported = static_info->ois_supported;
@@ -373,6 +388,8 @@ static cmr_int ov32a1q_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
            sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ov32a1q_drv_get_exp_range(ex_info);
+    SENSOR_LOGI("sensor_min_exp %lld, sensor_max_exp: %lld", ex_info->sensor_min_exp, ex_info->sensor_max_exp);
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
     return rtn;
 }
@@ -1141,6 +1158,21 @@ static cmr_int ov32a1q_drv_get_private_data(cmr_handle handle, cmr_uint cmd,
     return ret;
 }
 
+static cmr_s64 ov32a1q_drv_get_shutter_skew(cmr_handle handle, cmr_uint sensor_work_mode) {
+    cmr_u16 height = 0;
+    cmr_u32 line_time = 0;
+    cmr_s64 shutter_skew = 0;
+
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    height = s_ov32a1q_resolution_tab_raw[0].reg_tab[sensor_work_mode].height;
+    line_time = s_ov32a1q_resolution_trim_tab[0].trim_info[sensor_work_mode].line_time;
+    shutter_skew = (height - 1) * line_time;
+    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%d",
+                sensor_work_mode, height, line_time, shutter_skew);
+    return shutter_skew;
+}
+
 void *sensor_ic_open_lib(void)
 {
      return &g_ov32a1q_mipi_raw_info;
@@ -1163,6 +1195,7 @@ static struct sensor_ic_ops s_ov32a1q_ops_tab = {
     .identify = ov32a1q_drv_identify,
     .ex_write_exp = ov32a1q_drv_write_exposure,
     .write_gain_value = ov32a1q_drv_write_gain_value,
+    .getShutterSkew = ov32a1q_drv_get_shutter_skew,
 
 #if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = ov32a1q_drv_read_aec_info,

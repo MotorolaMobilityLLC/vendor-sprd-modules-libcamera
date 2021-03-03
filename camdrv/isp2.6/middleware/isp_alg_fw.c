@@ -1493,6 +1493,11 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 						ISP_CALLBACK_EVT | ISP_AF_VCM_NOTICE_CALLBACK,
 						param0, sizeof(cmr_u32));
 		break;
+	case AF_CB_CMD_SET_CTS_PARAMS_RESULT:
+		ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
+						ISP_CALLBACK_EVT | ISP_AF_PARAMS_CALLBACK,
+						param0, sizeof(struct cts_af_params_result));
+						break;
 	default:
 		ISP_LOGE("unsupported af cb: %lx\n", type);
 		break;
