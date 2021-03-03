@@ -786,7 +786,6 @@ static cmr_int s5kgw1sp03_drv_stream_on(cmr_handle handle, cmr_s32 param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-   // SENSOR_LOGI("StreamOn E");
 
     char value1[PROPERTY_VALUE_MAX];
     property_get("debug.camera.test.mode", value1, "0");
@@ -799,15 +798,46 @@ static cmr_int s5kgw1sp03_drv_stream_on(cmr_handle handle, cmr_s32 param) {
     }
 	//s5kgw1sp03_drv_set_xtalk_data(handle, param);
 #ifdef USE_CPHY
+     cmr_int valule0 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x081d);
+     cmr_int valule11 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x081e);
+     cmr_int valule2 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x081f);
+     cmr_int valule3 = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0820);
+	 SENSOR_LOGI("StreamOn E org preamble 0x%x post 0x%x lpx 0x%x exit 0x%x", 
+	 	valule0, valule11, valule2, valule3);
     property_get("debug.camera.set.preamble", value1, "0");
     if (atoi(value1) > 0) {
-        SENSOR_LOGD("set preamble %x", atoi(value1));
+        SENSOR_LOGD("set preamble 0x%x", atoi(value1));
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x081d, atoi(value1));
     }
+    else
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x081d, 18);//14); //for cphy 2.5g
+    property_get("debug.camera.set.post", value1, "0");
+    if (atoi(value1) > 0) {
+        SENSOR_LOGD("set post 0x%x", atoi(value1));
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x081e, atoi(value1));
+    }
+    else
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x081e, valule11);//18);//14); //for cphy 2.5g
+    property_get("debug.camera.set.lpx", value1, "0");
+    if (atoi(value1) > 0) {
+        SENSOR_LOGD("set lpx 0x%x", atoi(value1));
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x081f, atoi(value1));
+    }
+    else
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x081f, valule2);//18);//14); //for cphy 2.5g
+    property_get("debug.camera.set.exit", value1, "0");
+    if (atoi(value1) > 0) {
+        SENSOR_LOGD("set exit 0x%x", atoi(value1));
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0820, atoi(value1));
+    }
+    else
+		hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0820, valule3);//18);//14); //for cphy 2.5g
 
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x081d, 13); //for cphy 2.5g
 #endif
 	//hw_sensor_write_reg_8bits(sns_drv_cxt->hw_handle, 0x0d01, 0x01);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x6208, 0x4000);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x6214, 0xf9f0);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x6218, 0xf9f0);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0103);
 
     SENSOR_LOGI("StreamOn out");
