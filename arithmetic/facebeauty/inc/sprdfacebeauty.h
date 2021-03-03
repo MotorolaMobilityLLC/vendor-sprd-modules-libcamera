@@ -10,13 +10,15 @@
 #define __SPRD_FACEBEAUTY_API_H__
 
 #if (defined( WIN32 ) || defined( WIN64 )) && (defined FBAPI_EXPORTS)
-#define FB_EXPORTS __declspec(dllexport)
+#define FBV1_EXPORTS __declspec(dllexport)
+#elif (defined(__ANDROID__))
+#define FBV1_EXPORTS __attribute__((visibility("default")))
 #else
-#define FB_EXPORTS
+#define FBV1_EXPORTS
 #endif
 
 #ifndef FBAPI
-#define FBAPI(rettype) extern FB_EXPORTS rettype
+#define FBAPI(rettype) extern FBV1_EXPORTS rettype
 #endif
 
 typedef enum{
@@ -24,8 +26,7 @@ typedef enum{
     SHARKLE = 1,
     SHARKL3 = 2,
     SHARKL5PRO = 3,
-    SHARKL5 = 4,
-    QOGIRL6 = 5
+    SHARKL5 = 4
 }fb_chipinfo;
 
 /* The error codes */
