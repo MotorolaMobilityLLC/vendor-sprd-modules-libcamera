@@ -467,6 +467,7 @@ extern "C" {
 
 		void *hdr_tuning_param;
 		cmr_s32 hdr_tuning_size;
+		struct ae_thd_param mfnr_hdr_thrd;
 
 		cmr_u32 end_id;
 

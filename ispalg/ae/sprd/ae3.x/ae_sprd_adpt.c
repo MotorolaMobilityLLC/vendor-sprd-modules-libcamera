@@ -3135,7 +3135,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		cxt->delay_cnt++;
 	}
 
-	if (AE_3DNR_AUTO == cxt->threednr_mode) {
+	if ((AE_3DNR_AUTO == cxt->threednr_mode)&&(0 == cxt->hdr_calc_result.auto_hdr_enable)){
 		ae_3dnr_auto(cxt);
 	}
 
@@ -4728,6 +4728,7 @@ static cmr_s32 ae_set_auto_hdr(struct ae_ctrl_cxt *cxt,  void *param)
 		cmr_u8 *menu_ctrl = (cmr_u8 *) param;
 		cxt->hdr_menu_ctrl = *menu_ctrl;
 		ISP_LOGI("hdr_menu %d", cxt->hdr_menu_ctrl);
+		cxt->hdr_calc_result.auto_hdr_enable = 0;
 
 	}
 	return AE_SUCCESS;
@@ -5946,6 +5947,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	struct _tag_hdr_stat_t hdr_stat;
 	float ev_result[2] = {0,0};
 	cmr_s8 auto_hdr_enable = 0;
+	cmr_s8 mfnr_en = 0;
 #endif
 	struct ae_sync_data aem_sync_info = {0};
 	struct ae_ctrl_visible_region_info zoom_roi = {0};
@@ -6265,17 +6267,40 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		cxt->cur_status.adv_param.hist_data.img_size.h = hdr_stat.h;
 		cxt->cur_status.adv_param.hist_data.hist_bin = 256;
 		memcpy(cxt->cur_status.adv_param.hist_data.hist_data, hdr_stat.hist256 ,cxt->cur_status.adv_param.hist_data.hist_bin * sizeof(cmr_u32));
-
+		ISP_LOGV("cam id %d auto_hdr_enable %d",cxt->camera_id,auto_hdr_enable);
 		ISP_LOGV("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, cxt->hdr_calc_result.ev[0], cxt->hdr_calc_result.ev[1]);
 	}
 	if (cxt->hdr_menu_ctrl) {
-		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
-		if((-1 == auto_hdr_enable)||((1 == cxt->threednr_mode_flag)&&(AE_3DNR_AUTO == cxt->threednr_mode)))//if 3dnr on,hdr should be off
+		if(-1 == auto_hdr_enable)
 			auto_hdr_enable = 0;
-		if(cxt->isp_ops.callback)
-			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
-		else
-			ISP_LOGE("isp_ops.callback is NULL");
+
+		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
+		if(auto_hdr_enable) {
+			if(cxt->calc_results.ae_output.cur_bv > cxt->mfnr_hdr_thrd.thd_up) {
+				mfnr_en = 0;
+				if(cxt->isp_ops.callback) {
+					(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+					(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_3DNR_NOTIFY, &mfnr_en);
+				}else {
+					ISP_LOGE("isp_ops.callback is NULL");
+				}
+			}else if(cxt->calc_results.ae_output.cur_bv < cxt->mfnr_hdr_thrd.thd_down) {
+				mfnr_en = 1;
+				auto_hdr_enable = 0;
+				if(cxt->isp_ops.callback) {
+					(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_3DNR_NOTIFY, &mfnr_en);
+					(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+				}else {
+					ISP_LOGE("isp_ops.callback is NULL");
+				}
+			}
+
+		} else {
+			if(cxt->isp_ops.callback)
+				(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+			else
+				ISP_LOGE("isp_ops.callback is NULL");
+		}
 
 		ISP_LOGV("auto_hdr_enable %d",auto_hdr_enable);
 	}
@@ -7019,6 +7044,7 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 	cxt->threednr_thrd = misc_init_out->thrd_param[1];
 	cxt->ae_video_fps = misc_init_out->thrd_param[2];
 	cxt->cam_4in1_switch_thrd = misc_init_out->thrd_param[3];
+	cxt->mfnr_hdr_thrd = misc_init_out->thrd_param[4];
 
 	if (1 == cxt->camera_id) {
 		cxt->flash_thrd.thd_down = cxt->flash_thrd.thd_down ? cxt->flash_thrd.thd_down : 250;
@@ -7040,6 +7066,9 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 		cxt->cam_4in1_switch_thrd.thd_down = cxt->cam_4in1_switch_thrd.thd_down ? cxt->cam_4in1_switch_thrd.thd_down : 500;
 		cxt->cam_4in1_switch_thrd.thd_up = cxt->cam_4in1_switch_thrd.thd_up ? cxt->cam_4in1_switch_thrd.thd_up : 800;
 	}
+	cxt->mfnr_hdr_thrd.thd_down = cxt->mfnr_hdr_thrd.thd_down ? cxt->mfnr_hdr_thrd.thd_down :300;
+	cxt->mfnr_hdr_thrd.thd_up = cxt->mfnr_hdr_thrd.thd_up ? cxt->mfnr_hdr_thrd.thd_up :500;
+	ISP_LOGD("cam_id %d mfnr_hdr_thrd_down %d mfnr_hdr_thrd_up %d",cxt->camera_id,cxt->mfnr_hdr_thrd.thd_down,cxt->mfnr_hdr_thrd.thd_up);
 }
 
 cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
