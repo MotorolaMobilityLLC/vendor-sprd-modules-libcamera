@@ -44,7 +44,7 @@ typedef int bool;
 
 #ifdef ISP_LOGV
 #undef ISP_LOGV
-cmr_int g_smart_log_level = LEVEL_OVER_LOGD;
+static cmr_int g_smart_log_level = LEVEL_OVER_LOGD;
 extern long g_isp_log_level;
 #define ISP_LOGV(format, ...)                                                  \
 	ALOGD_IF((((g_smart_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV))&&(g_smart_log_level!=6)), DEBUG_STR format, DEBUG_ARGS, \
@@ -1156,8 +1156,8 @@ static cmr_s32 smart_ctl_parse_atm_tuning_param(struct atm_tune_param *src, cmr_
 			memcpy(dst,src,sizeof(struct atm_tune_param));
 		}
 	} else {
-		//rtn = ISP_ERROR;
 		ISP_LOGE("smart_ctl_parse_atm_tuning_param error,src null");
+		rtn = ISP_ERROR;
 	}
 	return rtn;
 }
@@ -1171,8 +1171,8 @@ static cmr_s32 smart_ctl_parse_atm_tuning_param_v1(struct ae_atm_tune_param_v1 *
 			memcpy(dst,src,sizeof(struct ae_atm_tune_param_v1));
 		}
 	} else {
-		//rtn = ISP_ERROR;
 		ISP_LOGE("smart_ctl_parse_atm_tuning_param error,src null");
+		rtn = ISP_ERROR;
 	}
 	return rtn;
 }
@@ -1869,7 +1869,7 @@ cmr_int _smart_gamma(struct smart_proc_input *inptr,
 
 static cmr_s32 smart_ctl_calc_atm(smart_handle_t handle,struct smart_proc_input * in_ptr,struct smart_calc_param *param,struct smart_block_result *block_result){
 	cmr_s32 rtn = ISP_SUCCESS;
-	int ret = 0;
+	cmr_int ret = 0;
 	int n = 0;
 	cmr_u32 atm_enable = 0;
 	char value[PROPERTY_VALUE_MAX];
