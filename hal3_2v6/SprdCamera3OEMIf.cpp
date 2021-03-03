@@ -7394,6 +7394,7 @@ bool SprdCamera3OEMIf::cal_spw_size(int sw_width, int sw_height,
                                     cmr_u32 *out_width, cmr_u32 *out_height) {
     float sw_fov = 0, w_fov = 0;
     mSetting->getSensorFov(&w_fov, &sw_fov);
+    HAL_LOGV("wide_fov %f, sw_fov %f", w_fov, sw_fov);
     if ((sw_fov - w_fov) < 6.0) {
         HAL_LOGD(
             "the input fov is wrong, please check! wide_fov= %f, sw_fov= %f",
@@ -7406,6 +7407,7 @@ bool SprdCamera3OEMIf::cal_spw_size(int sw_width, int sw_height,
     int scale = sw_height * fov_scale / 48 + 1;
     *out_height = 48 * scale;
     *out_width = 64 * scale;
+    HAL_LOGV("out_width %d, out_height %d", *out_width, *out_height);
 
     return true;
 }

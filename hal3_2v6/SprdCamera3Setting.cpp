@@ -1122,11 +1122,11 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
              cameraId, phyPtr->source_height_max, phyPtr->source_width_max,
              phyPtr->sensor_name, phyPtr->pdaf_supported);
     HAL_LOGI("sensor sensorFocusEnable = %d, fov physical size (%f, %f), "
-             "focal_lengths %f",
+             "focal_lengths %f, fov_angle %f",
              mSensorFocusEnable[cameraId],
              sensor_fov[cameraId].physical_size[0],
              sensor_fov[cameraId].physical_size[1],
-             sensor_fov[cameraId].focal_lengths);
+             sensor_fov[cameraId].focal_lengths, phyPtr->fov_angle);
 
     alreadyGetSensorStaticInfo[cameraId] = 1;
 

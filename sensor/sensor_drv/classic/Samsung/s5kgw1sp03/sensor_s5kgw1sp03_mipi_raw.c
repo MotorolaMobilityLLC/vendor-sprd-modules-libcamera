@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "s5kgw1sp03_mipi_raw"
+//#define LOG_TAG "s5kgw1sp03_mipi_raw"
 #if 1//def _SENSOR_RAW_SHARKL6PRO_H_
 #define USE_CPHY
 #endif
+
 #ifdef USE_CPHY
 #include "sensor_s5kgw1sp03_mipi_raw_cphy.h"
+#define LOG_TAG "s5kgw1sp03_cphy"
 #else
 #include "sensor_s5kgw1sp03_mipi_raw.h"
+#define LOG_TAG "s5kgw1sp03_dphy"
 #endif
+
 #define RES_TAB_RAW s_s5kgw1sp03_resolution_Tab_RAW
 #define RES_TRIM_TAB s_s5kgw1sp03_Resolution_Trim_Tab
 #define STATIC_INFO s_s5kgw1sp03_static_info
@@ -912,6 +916,7 @@ static cmr_int s5kgw1sp03_drv_get_static_info(cmr_handle handle,
     ex_info->name = (cmr_s8 *)MIPI_RAW_INFO.name;
     ex_info->sensor_version_info = (cmr_s8 *)MIPI_RAW_INFO.sensor_version_info;
 
+    ex_info->fov_angle = static_info->fov_angle;
     memcpy(&ex_info->fov_info, &static_info->fov_info,
            sizeof(static_info->fov_info));
 

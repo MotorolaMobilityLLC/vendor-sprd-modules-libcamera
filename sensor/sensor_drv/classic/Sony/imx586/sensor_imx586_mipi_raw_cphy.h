@@ -31,7 +31,7 @@
 //#define FEATURE_OTP
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "imx586_mipi_raw"
+#define SENSOR_NAME "imx586_cphy"
 #define I2C_SLAVE_ADDR 0x34 /* 8bit slave address*/
 
 #define imx586_PID_ADDR 0x0016
@@ -1239,6 +1239,7 @@ static SENSOR_STATIC_INFO_T s_imx586_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 0,
+                     .fov_angle= 78.6,
                      .fov_info = {{4.614f, 3.444f}, 4.222f}}}
     /*If there are multiple modules,please add here*/
 };

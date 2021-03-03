@@ -3874,12 +3874,11 @@ static SENSOR_STATIC_INFO_T s_s5kgw1sp03_static_info[VENDOR_NUM] = {
                      .max_fps = 0,
                      .max_adgain = 16,
                      .ois_supported = 0,
-
                      .pdaf_supported = 3,
-
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
+                     .fov_angle = 78.6,
                      .fov_info = {{4.032f, 3.024f}, 2.886f}}}
     /*If there are multiple modules,please add here*/
 };
