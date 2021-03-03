@@ -100,6 +100,8 @@ PRODUCT_PACKAGES += libparam_ov08a10
 PRODUCT_PACKAGES += libparam_GC5035
 PRODUCT_PACKAGES += libparam_gc5035
 PRODUCT_PACKAGES += libparam_s5k3l6
+PRODUCT_PACKAGES += libparam_imx363_back_main
+
 #endif
 
 #default tuning 
