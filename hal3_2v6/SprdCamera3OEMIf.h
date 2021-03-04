@@ -574,6 +574,10 @@ class SprdCamera3OEMIf : public virtual RefBase {
                             cmr_u32 sum);
     int allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
                              cmr_uint *vir_addr, cmr_s32 *fd);
+    int allocCameraMemForMFNR(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
+                             cmr_uint *vir_addr, cmr_s32 *fd);
+    int freeCameraMemForMFNR(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
+                            cmr_u32 sum);
     int Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
                          cmr_u32 sum);
     int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
@@ -810,6 +814,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mIspToolStart;
     uint32_t mZslRawHeapNum;
     uint32_t mZslHeapNum;
+    uint32_t mZslHeapNum_mfnr;
     uint32_t mSubRawHeapNum;
     uint32_t mGraphicBufNum;
     uint32_t mSubRawHeapSize;
@@ -823,6 +828,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mPreviewDcamAllocBufferCnt;
     sprd_camera_memory_t
         *mZslHeapArray[kZslBufferCount + kZslRotBufferCount + 1];
+    sprd_camera_memory_t
+        *mZslHeapArray1[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t
         *mZslRawHeapArray[kVideoBufferCount + kVideoRotBufferCount + 1];
     sprd_3dnr_memory_t

@@ -504,10 +504,13 @@ struct prev_context {
     cmr_uint cap_zsl_phys_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
     cmr_uint cap_zsl_virt_addr_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
     cmr_s32 cap_zsl_fd_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+    cmr_s32 cap_zsl_ultra_wide_fd_array[ZSL_ROT_FRM_CNT];
     void *cap_zsl_ultra_wide_handle_array[ZSL_ROT_FRM_CNT];
     void *cap_zsl_3dnr_handle_array[ZSL_ROT_FRM_CNT];
     cmr_s32 cap_zsl_dst_fd_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
+    cmr_s32 cap_zsl_mfnr_fd_array[ZSL_FRM_CNT + ZSL_ROT_FRM_CNT];
     void *cap_zsl_dst_handle_array[ZSL_FRM_CNT];
+    void *cap_zsl_mfnr_handle_array[ZSL_FRM_CNT];
     cmr_uint cap_zsl_reserved_phys_addr;
     cmr_uint cap_zsl_reserved_virt_addr;
     cmr_s32 cap_zsl_reserved_fd;
@@ -3081,8 +3084,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
         }
 
         if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW &&
-            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW &&
-            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)
+            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
         {
             prev_cxt->prev_buf_id = frame_type.buf_id;
             ret = prev_pop_preview_buffer(handle, camera_id, data, 0);
@@ -3099,8 +3101,7 @@ cmr_int prev_preview_frame_handle(struct prev_handle *handle, cmr_u32 camera_id,
 
     } else {
         if (prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW &&
-            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW &&
-            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)
+            prev_cxt->prev_param.sprd_3dnr_type != CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
         {
             /*need rotation*/
             if (prev_cxt->prev_mem_valid_num > 0) {
@@ -4026,8 +4027,7 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
     }
 
         if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-            prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO ||
-            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)
+            prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO)
          {
               struct sprd_img_3dnr_param stream_info;
               stream_info.w = prev_cxt->threednr_cap_smallwidth;
@@ -4068,9 +4068,8 @@ cmr_int prev_start(struct prev_handle *handle, cmr_u32 camera_id,
             prev_ultra_wide_open(handle, camera_id);
         }
         /*init 3dnr*/
-       if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
-            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
+            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
             prev_3dnr_open(handle, camera_id);
         }
         /*init at, dual pd sensor default open 4d auto tracking */
@@ -4244,8 +4243,7 @@ cmr_int prev_stop(struct prev_handle *handle, cmr_u32 camera_id,
         /*deinit 3dnr_preview*/
         if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                   prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-                  prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
-                  prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+                  prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
             prev_3dnr_close(handle, camera_id);
         }
         /*stop auto tracking*/
@@ -5819,10 +5817,12 @@ cmr_int prev_alloc_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_cxt->cap_zsl_fd_array + cap_zsl_mem_num,
                 prev_cxt->cap_zsl_ultra_wide_handle_array, &real_width,
                 &real_height);
+            memcpy(prev_cxt->cap_zsl_ultra_wide_fd_array,
+                   prev_cxt->cap_zsl_fd_array + cap_zsl_mem_num,
+                   sizeof(prev_cxt->cap_zsl_ultra_wide_fd_array));
         }else {
 
-        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW ||
+        if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW||
             prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO)
         {
                 prev_cal_3dnr_smallsize (handle,camera_id);
@@ -6037,8 +6037,7 @@ cmr_int prev_free_zsl_buf(struct prev_handle *handle, cmr_u32 camera_id,
         } else {
 
         if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-            prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO ||
-            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+            prev_cxt->prev_param.is_auto_3dnr == CAMERA_3DNR_AUTO) {
              CMR_LOGI("free 3dnr memory");
               mem_ops->free_mem(CAMERA_SNAPSHOT_SW3DNR, handle->oem_handle,
                               prev_cxt->cap_zsl_phys_addr_array,
@@ -7430,14 +7429,12 @@ cmr_int prev_construct_frame(struct prev_handle *handle, cmr_u32 camera_id,
                 prev_fd_send_data(handle, camera_id, frm_ptr);
         }
         if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
-            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)
+            prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)
         {
             struct frm_info data;
             if (((void *)(frm_ptr->addr_vir.addr_y) != NULL) &&
                 (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW||
-                prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
-                prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)) {
+                prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW)) {
                 video_frm_id = frm_id;
                 video_frm_ptr = &prev_cxt->video_frm[frm_id];
             }
@@ -16211,8 +16208,7 @@ cmr_int prev_3dnr_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     ipm_in_param.src_frame = *frm;
     ipm_in_param.caller_handle = (void *)handle;
     if (prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW||
-                prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW ||
-                prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+                prev_cxt->prev_param.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
         CMR_LOGI("3DNR Using sw path");
         imp_out_param.dst_frame = *video_frm;
         ipm_in_param.private_data = (void *)(&threednr_info);
@@ -16903,7 +16899,7 @@ cmr_int prev_ultra_wide_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                 ret = CMR_CAMERA_FAIL;
                 goto exit;
             }
-            CMR_LOGD("ultra wide src:%p, dst:%p size:%ld"
+            CMR_LOGD("ultra wide src fd=0x%x, vaddr=%p, dst fd=0x%x, vaddr=%p, size:%ld"
                      ", src_buf_hd:%p, dst_buf_hd:%p\n",
                      (void *)src_img->addr_vir.addr_y,
                      (void *)dst_img->addr_vir.addr_y,
@@ -16959,6 +16955,40 @@ exit:
     dst_eis_img = NULL;
     return ret;
 }
+
+cmr_int cmr_preview_get_ultra_wide_handle(cmr_handle preview_handle,
+                                          cmr_u32 camera_id,
+                                          cmr_s32 buf_fd, void **handle) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    int i;
+    struct prev_context *prev_cxt = NULL;
+    struct prev_handle *prev_handle = (struct prev_handle *)preview_handle;
+
+    if (prev_handle == NULL || handle == NULL) {
+       CMR_LOGE("fail to get valid ptr %p %p\n", prev_handle, handle);
+    }
+
+    prev_cxt = &prev_handle->prev_cxt[camera_id];
+    for (int i = 0; i < ZSL_FRM_CNT; i++) {
+        if (buf_fd == prev_cxt->cap_zsl_dst_fd_array[i]) {
+            *handle = prev_cxt->cap_zsl_dst_handle_array[i];
+            CMR_LOGD("dst fd=0x%x, gpu handle %p\n", buf_fd, *handle);
+            goto exit;
+        }
+    }
+    for (int i = 0; i < ZSL_FRM_CNT; i++) {
+        if (buf_fd == prev_cxt->cap_zsl_ultra_wide_fd_array[i]) {
+            *handle = prev_cxt->cap_zsl_ultra_wide_handle_array[i];
+            CMR_LOGD("zsl fd=0x%x, gpu handle %p\n", buf_fd, *handle);
+            goto exit;
+        }
+    }
+    ret = CMR_CAMERA_FAIL;
+    CMR_LOGE("fail to get gpu handle for fd 0x%x\n", buf_fd);
+exit:
+    return ret;
+}
+
 cmr_int prev_ai_scene_send_data(struct prev_handle *handle, cmr_u32 camera_id,
                                 struct img_frm *frm,
                                 struct frm_info *frm_info) {

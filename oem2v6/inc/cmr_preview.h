@@ -437,6 +437,9 @@ cmr_int cmr_preview_get_prev_aspect_ratio(cmr_handle preview_handle,
                                           cmr_u32 camera_id,
                                           float *ratio);
 
+cmr_int cmr_preview_get_ultra_wide_handle(cmr_handle preview_handle,
+                                          cmr_u32 camera_id,
+                                          cmr_s32 buf_fd, void **handle);
 
 #ifdef __cplusplus
 }

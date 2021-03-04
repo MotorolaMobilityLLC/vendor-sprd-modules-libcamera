@@ -16598,8 +16598,15 @@ cmr_int camera_local_image_sw_algorithm_processing(
 
     cmr_snapshot_invalidate_cache(cxt->snp_cxt.snapshot_handle,
                                   &ipm_in_param.src_frame);
-
+    CMR_LOGD("sw type %d, is ultra %d\n", sw_algorithm_type, cxt->is_ultra_wide);
     if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_3DNR) {
+        if (cxt->is_ultra_wide) {
+            void *ghandle = NULL;
+            ret = cmr_preview_get_ultra_wide_handle(cxt->prev_cxt.preview_handle,
+                cxt->camera_id, src_sw_algorithm_buf->fd, &ghandle);
+            if (!ret)
+                imp_out_param.private_data = ghandle;
+        }
         ret = ipm_transfer_frame(ipm_cxt->threednr_handle, &ipm_in_param,
                                  &imp_out_param);
     } else if (sw_algorithm_type == SPRD_CAM_IMAGE_SW_ALGORITHM_HDR) {

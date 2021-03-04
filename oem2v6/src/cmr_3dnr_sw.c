@@ -851,7 +851,8 @@ static cmr_int threednr_process_frame(cmr_handle class_handle,
         CMR_LOGE("threednr_handle is stop");
         goto exit;
     }
-    CMR_LOGD("big_buf.gpu_buffer.handle %p", big_buf.gpu_buffer.handle);
+    CMR_LOGD("big_buf.fd=0x%x, vaddr=%p, gpu_buffer.handle %p\n",
+        in->src_frame.fd, orig_image.bufferY, orig_image.gpuHandle);
 
     if(run_type != SPRD_CAMALG_RUN_TYPE_VDSP) {
         process_param.proc_param.cap_new_param.small_image = &small_image;

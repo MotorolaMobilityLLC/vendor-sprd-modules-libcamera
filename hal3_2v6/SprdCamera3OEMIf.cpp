@@ -548,6 +548,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     memset(mSubRawHeapArray, 0, sizeof(mSubRawHeapArray));
     memset(mZslHeapArray, 0, sizeof(mZslHeapArray));
+    memset(mZslHeapArray1, 0, sizeof(mZslHeapArray1));
     memset(mZslRawHeapArray, 0, sizeof(mZslRawHeapArray));
     memset(&mSlowPara, 0, sizeof(slow_motion_para));
     memset(mPathRawHeapArray, 0, sizeof(mPathRawHeapArray));
@@ -633,6 +634,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     mZslRawHeapNum = 0;
     mZslHeapNum = 0;
+    mZslHeapNum_mfnr = 0;
     mSubRawHeapSize = 0;
     m3dnrGraphicPathHeapNum = 0;
     mTotalIonSize = 0;
@@ -3005,6 +3007,14 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
         }
     }
     mZslHeapNum = 0;
+
+    for (j = 0; j < mZslHeapNum_mfnr; j++) {
+        if (NULL != mZslHeapArray1[j]) {
+            freeCameraMem(mZslHeapArray1[j]);
+            mZslHeapArray1[j] = NULL;
+        }
+    }
+    mZslHeapNum_mfnr = 0;
 
     for (j = 0; j < mZslRawHeapNum; j++) {
         if (NULL != mZslRawHeapArray[j]) {
@@ -8625,6 +8635,110 @@ mem_fail:
     return BAD_VALUE;
 }
 
+int SprdCamera3OEMIf::allocCameraMemForMFNR(cmr_u32 size, cmr_u32 sum,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd) {
+    sp<GraphicBuffer> graphicBuffer = NULL;
+    sprd_camera_memory_t *memory = NULL;
+    cmr_int i = 0;
+    int ret = 0;
+    void *vaddr = NULL;
+    native_handle_t *nativeHandle = NULL;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+    if (!mIommuEnabled) {
+        yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
+    }
+    int usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+
+    Rect bounds(mCaptureWidth, mCaptureHeight);
+    HAL_LOGD("size %d sum %d mZslHeapNum %d mZslNum %d",
+        size, sum, mZslHeapNum_mfnr,mZslNum);
+    for (i = 0; i < (cmr_int)mZslNum; i++) {
+        if (mZslHeapArray1[i] == NULL) {
+            sprd_camera_memory_t *memory =
+                (sprd_camera_memory_t *)malloc(sizeof(sprd_camera_memory_t));
+            if (NULL == memory) {
+                HAL_LOGE("fatal error! memory pointer is null.");
+                goto mem_fail;
+            }
+            memset(memory, 0, sizeof(sprd_camera_memory_t));
+            mZslHeapArray1[i] = memory;
+            mZslHeapNum_mfnr++;
+            mTotalGpuSize = mTotalGpuSize + mCaptureWidth * mCaptureHeight;
+            graphicBuffer = new GraphicBuffer(mCaptureWidth, mCaptureHeight,
+                                              HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
+                                              yuvTextUsage, "auto_mfnr");
+
+            nativeHandle = (native_handle_t *)graphicBuffer->handle;
+
+            mZslHeapArray1[i]->fd = ADP_BUFFD(nativeHandle);
+            mZslHeapArray1[i]->phys_addr = 0;
+            mZslHeapArray1[i]->phys_size = size;
+            ret = mapper.lock((const native_handle_t *)nativeHandle, usage,
+                              bounds, &vaddr);
+            if (ret) {
+                HAL_LOGE("mapper.lock failed, ret=%d", ret);
+                goto mem_fail;
+            }
+            mZslHeapArray1[i]->data = (void *)vaddr;
+            mZslGraphicsHandle[i].graphicBuffer = graphicBuffer;
+            mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
+            mZslGraphicsHandle[i].native_handle = nativeHandle;
+            mZslGraphicsHandle[i].buf_size = mCaptureWidth * mCaptureHeight;
+            HAL_LOGD("graphicBuffer_handle 0x%p",
+                     mZslGraphicsHandle[i].graphicBuffer_handle);
+        }
+        *phy_addr++ = (cmr_uint)mZslHeapArray1[i]->phys_addr;
+        *vir_addr++ = (cmr_uint)mZslHeapArray1[i]->data;
+        *fd++ = mZslHeapArray1[i]->fd;
+    }
+    HAL_LOGD("TotalGpuSize=%d", mTotalGpuSize);
+    return 0;
+
+mem_fail:
+    freeCameraMemForMFNR(0, 0, 0, 0);
+    return BAD_VALUE;
+}
+
+int SprdCamera3OEMIf::freeCameraMemForMFNR(cmr_uint *phy_addr,
+                                          cmr_uint *vir_addr, cmr_s32 *fd,
+                                          cmr_u32 sum) {
+    cmr_u32 i;
+    int ret = 0;
+    GraphicBufferMapper &mapper = GraphicBufferMapper::get();
+
+    HAL_LOGD("mZslHeapNum_mfnr %d sum %d", mZslHeapNum_mfnr, sum);
+    for (i = 0; i < mZslHeapNum_mfnr; i++) {
+        ret = mapper.unlock(
+            (const native_handle_t *)mZslGraphicsHandle[i].native_handle);
+        if (ret != NO_ERROR) {
+            HAL_LOGE("mapper.unlock fail %p",
+                     mZslGraphicsHandle[i].native_handle);
+            return ret;
+        }
+        if (mZslGraphicsHandle[i].graphicBuffer != NULL) {
+            mZslGraphicsHandle[i].graphicBuffer.clear();
+            mZslGraphicsHandle[i].graphicBuffer = NULL;
+            mTotalGpuSize = mTotalGpuSize - mZslGraphicsHandle[i].buf_size;
+        }
+        HAL_LOGD("graphicBuffer_handle 0x%p",
+                 mZslGraphicsHandle[i].graphicBuffer_handle);
+        mZslGraphicsHandle[i].graphicBuffer_handle = NULL;
+        mZslGraphicsHandle[i].native_handle = NULL;
+        if (NULL != mZslHeapArray1[i]) {
+            free(mZslHeapArray1[i]);
+            mZslHeapArray1[i] = NULL;
+        }
+    }
+    mZslHeapNum_mfnr = 0;
+    releaseZSLQueue();
+    HAL_LOGD("TotalGpuSize=%d", mTotalGpuSize);
+    return 0;
+}
+
 int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
                                        cmr_s32 *fd, cmr_u32 sum) {
     cmr_u32 i;
@@ -9298,7 +9412,8 @@ int SprdCamera3OEMIf::Callback_GraphicBufferMalloc(
 
         *handle = pbuffer.get();
         mZslMfnrGraphicsHandle[i].graphicBuffer_handle = pbuffer.get();
-        HAL_LOGD("graphicBuffer_handle 0x%p",mZslMfnrGraphicsHandle[i].graphicBuffer_handle);
+        HAL_LOGD("buf No.%d, fd=0%x, vaddr=%p, graphicBuffer_handle %p",
+            i, fd[i], buf_mem_info.addr_vir, mZslMfnrGraphicsHandle[i].graphicBuffer_handle);
         handle++;
         memGpu_queue.mGpuHeap.bufferhandle = pbuffer;
         if (type == CAMERA_VIDEO_EIS_ULTRA_WIDE) {
@@ -9548,6 +9663,8 @@ int SprdCamera3OEMIf::Callback_Free(enum camera_mem_cb_type type,
         ret = camera->Callback_GraphicBufferFree(type, phy_addr, vir_addr, fd, sum);
     }else if (CAMERA_SNAPSHOT_SW3DNR == type) {
         ret = camera->Callback_Sw3DNRCapturePathFree(phy_addr, vir_addr, fd, sum);
+    } else if (CAMERA_SNAPSHOT_MFNR == type) {
+        ret = camera->freeCameraMemForMFNR(phy_addr, vir_addr, fd, sum);
     } else {
         ret = camera->Callback_CommonFree(type, phy_addr, vir_addr, fd, sum);
     }
@@ -9673,6 +9790,9 @@ int SprdCamera3OEMIf::Callback_GpuMalloc(enum camera_mem_cb_type type,
             camera->mZslHeapArray[camera->mZslHeapNum] = memory;
             camera->mZslHeapNum += 1;
         }
+        break;
+    case CAMERA_SNAPSHOT_MFNR:
+        ret = camera->allocCameraMemForMFNR(size, sum, phy_addr, vir_addr, fd);
         break;
     default:
         break;
@@ -11078,11 +11198,14 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             HAL_LOGD("mFlush=%d", mFlush);
             goto exit;
         }
-        HAL_LOGD("pop frame fd %d frame_id %d, addr %x\n", zsl_frame.fd, zsl_frame.frame_num, zsl_frame.y_vir_addr);
+        HAL_LOGD("pop frame fd %d frame_id %d, addr %x mZslSnapshotTime %lld monoboottime %lld\n",
+            zsl_frame.fd, zsl_frame.frame_num, zsl_frame.y_vir_addr,
+            mZslSnapshotTime, zsl_frame.monoboottime);
 
         /* for sharkle auto3dnr skip frame*/
         if (mZslSnapshotTime > zsl_frame.monoboottime &&
-            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) {
+            (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+            mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)) {
             diff_ms = (mZslSnapshotTime - zsl_frame.monoboottime) / 1000000;
             HAL_LOGI("diff_ms=%lld", diff_ms);
             // make single capture frame time > mZslSnapshotTime
