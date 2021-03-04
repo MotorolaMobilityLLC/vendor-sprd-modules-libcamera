@@ -380,6 +380,15 @@ struct debuginfo_message{
 	cmr_s32 frame_id;
 };
 
+struct scene_flag {
+	cmr_u32 hdr_scene;
+	cmr_u32 facebeauty_scene;
+	cmr_u32 zoom_scene;
+	cmr_u32 flash_scene;
+	cmr_u32 burst_scene;
+	cmr_u32 sr_scene;
+};
+
 struct debuginfo_queue{
 	struct debuginfo_message *head;
 	cmr_u32 cur;
@@ -440,6 +449,10 @@ struct isp_alg_fw_context {
 	cmr_handle tof_handle;
 	struct dcam_dev_rgb_gain_info rgb_gain;
 
+	cmr_u32 smart_update;
+	struct smart_proc_input smart_proc_in;
+	pthread_mutex_t smart_lock;
+
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
 	cmr_u32 lsc_flash_onoff;
@@ -486,6 +499,8 @@ struct isp_alg_fw_context {
 	struct debuginfo_queue af_queue;
 	struct debuginfo_queue aft_queue;
 	struct debuginfo_queue smart_queue;
+	struct scene_flag scene_cxt;
+	cmr_u32 flash_mode;
 };
 
 struct fw_init_local {
@@ -3479,6 +3494,27 @@ exit:
 	return ret;
 }
 
+static cmr_u32 ispalg_scene_flag(cmr_handle isp_alg_handle)
+{
+	cmr_u32 scene_flag = 0;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->scene_cxt.sr_scene == ISP_SCENEMODE_SPORT) {
+		scene_flag = cxt->scene_cxt.sr_scene;
+	} else if (cxt->commn_cxt.nr_scene_flag == ISP_SCENEMODE_HDR) {
+		scene_flag = cxt->commn_cxt.nr_scene_flag;
+	} else if (cxt->scene_cxt.facebeauty_scene) {
+		scene_flag = cxt->scene_cxt.facebeauty_scene;
+	} else if (cxt->scene_cxt.zoom_scene) {
+		scene_flag = cxt->scene_cxt.zoom_scene;
+	} else if (cxt->scene_cxt.flash_scene) {
+		scene_flag = cxt->scene_cxt.flash_scene;
+	}
+
+	ISP_LOGD("scene_flag %d\n", scene_flag);
+	return scene_flag;
+}
+
 static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					 struct ae_ctrl_callback_in *ae_in,
 					 struct awb_ctrl_calc_result *awb_output)
@@ -3494,11 +3530,13 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	struct afctrl_awb_info *awb_info;
 	struct awb_size stat_img_size;
 	struct awb_size win_size;
+	cmr_u32 scene_flag = 0;
 
 	memset(&info, 0, sizeof(info));
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	CMR_MSG_INIT(message);
-
+	if (cxt->app_mode == 0)
+		scene_flag = ispalg_scene_flag((cmr_handle) cxt);
 	time_start = ispalg_get_sys_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
 		ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f abl_weight %d",
@@ -3511,6 +3549,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			ae_in->flash_param.captureFlash1ofALLRatio,
 			ae_in->ae_output.abl_weight);
 		if (!cxt->smart_cxt.sw_bypass) {
+			pthread_mutex_lock(&cxt->smart_lock);
 			smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
 			smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
 			smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
@@ -3521,7 +3560,11 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 			if (cxt->remosaic_type == 1)
 				smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[1];
-			smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
+			if (!scene_flag)
+				smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
+			else
+				smart_proc_in.scene_flag = scene_flag;
+			ISP_LOGD("smart_proc_in.scene_flag %d\n", smart_proc_in.scene_flag);
 			smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
 			smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 			smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
@@ -3578,6 +3621,9 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 				debuginfo_eq(&cxt->smart_queue, &smart_msg);
 				pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 			}
+			cxt->smart_update = 1;
+			cxt->smart_proc_in = smart_proc_in;
+			pthread_mutex_unlock(&cxt->smart_lock);
 		}
 
 		if (!cxt->lsc_cxt.sw_bypass && cxt->lsc_cxt.use_lscm) {
@@ -4525,6 +4571,7 @@ static cmr_int ispalg_pm_init(struct fw_init_local *init_cxt)
 	}
 	cxt->commn_cxt.multi_nr_flag = pm_init_output.multi_nr_flag;
 	pthread_mutex_init(&cxt->pm_getting_lock, NULL);
+	pthread_mutex_init(&cxt->smart_lock, NULL);
 
 	ISP_LOGD("cam%ld done\n", cxt->camera_id);
 	return ret;
@@ -6329,6 +6376,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((cxt->smart_cxt.sw_bypass == 0) && (0 != bv_gain) && (0 != ct)) {
+		pthread_mutex_lock(&cxt->smart_lock);
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
@@ -6349,6 +6397,9 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 			if (cxt->ops.smart_ops.calc)
 				ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 		}
+		cxt->smart_update = 1;
+		cxt->smart_proc_in = smart_proc_in;
+		pthread_mutex_unlock(&cxt->smart_lock);
 	}
 
 	return ret;
@@ -6710,6 +6761,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
     /* gtm_ltm_on != 1/0,means not set */
 	cxt->gtm_ltm_on = (-1);
 
+	cxt->smart_update = 0;
 	cxt->first_frm = 1;
 	cxt->aem_is_update = 0;
 	cxt->smooth_ratio = 0;
@@ -6732,11 +6784,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		cxt->commn_cxt.prv_size.w >>= 1;
 		cxt->commn_cxt.prv_size.h >>= 1;
 	}
-	ISP_LOGD("work_mode %d,is_dv %d,zsl %d,size %d %d,prv_size %d %d, 4in1 %d, remosaic %d %d %d %d\n",
+	ISP_LOGD("work_mode %d,is_dv %d,zsl %d,size %d %d,prv_size %d %d, 4in1 %d, remosaic %d %d %d %d,cxt->app_mode %d\n",
 		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
 		in_ptr->size.w, in_ptr->size.h, cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
 		cxt->is_4in1_sensor, cxt->remosaic_type, cxt->ambient_highlight,
-		cxt->is_high_res_mode, cxt->fix_highlight);
+		cxt->is_high_res_mode, cxt->fix_highlight,cxt->app_mode);
 
 	cxt->stats_mem_info.alloc_cb = in_ptr->alloc_cb;
 	cxt->stats_mem_info.free_cb = in_ptr->free_cb;
@@ -7635,6 +7687,12 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->commn_cxt.callback = input_ptr->init_param->ctrl_callback;
 	cxt->commn_cxt.caller_id = input_ptr->init_param->oem_handle;
 	cxt->commn_cxt.ops = input_ptr->init_param->ops;
+	cxt->scene_cxt.hdr_scene = 0;
+	cxt->scene_cxt.facebeauty_scene = 0;
+	cxt->scene_cxt.zoom_scene = 0;
+	cxt->scene_cxt.flash_scene = 0;
+	cxt->scene_cxt.burst_scene = 0;
+	cxt->scene_cxt.sr_scene = 0;
 
 	ISP_LOGI("camera_id = %ld, master %d, is_4in1_sensor %d\n", cxt->camera_id,
 		cxt->is_master, cxt->is_4in1_sensor);
@@ -7716,6 +7774,7 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	ispalg_deinit((cmr_handle) cxt);
 	isp_br_deinit(cxt->camera_id);
 
+	pthread_mutex_destroy(&cxt->smart_lock);
 	pthread_mutex_destroy(&cxt->pm_getting_lock);
 	isp_pm_deinit(cxt->handle_pm);
 

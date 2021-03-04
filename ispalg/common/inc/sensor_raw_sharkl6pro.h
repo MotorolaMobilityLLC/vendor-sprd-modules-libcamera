@@ -36,8 +36,9 @@
 #define MAX_NR_NUM 32
 
 
-#define MAX_SCENEMODE_NUM 16
+#define MAX_SCENEMODE_NUM 32
 #define MAX_SPECIALEFFECT_NUM 16
+#define MAX_BCHSSCENEMODE_NUM 16
 
 #define SENSOR_AWB_CALI_NUM 0x09
 #define SENSOR_PIECEWISE_SAMPLE_NUM 0x10
@@ -106,6 +107,16 @@ enum isp_scene_mode {
 	ISP_SCENEMODE_LANDSCAPE,
 	ISP_SCENEMODE_PANORAMA,
 	ISP_SCENEMODE_HDR,
+	ISP_SCENEMODE_BOKEH,
+	ISP_SCENEMODE_PROFESSION,
+	ISP_SCENEMODE_BEAUTYFACE,
+	ISP_SCENEMODE_DELAYVIDEO,
+	ISP_SCENEMODE_CONTINUOUSPICTURE,
+	ISP_SCENEMODE_FILTER,
+	ISP_SCENEMODE_FLASH,
+	ISP_SCENEMODE_ZOOM,
+	ISP_SCENEMODE_THIRDPARTY,
+	ISP_SCENEMODE_INTERVAL,
 	ISP_SCENEMODE_MAX
 };
 
@@ -1356,7 +1367,7 @@ struct sensor_y_afm_level {
 struct sensor_bright_param {
 	cmr_s8 factor[16];
 	cmr_u32 cur_index;
-	cmr_s8 scenemode[MAX_SCENEMODE_NUM];
+	cmr_s8 scenemode[MAX_BCHSSCENEMODE_NUM];
 	cmr_u32 bypass;
 };
 
@@ -1364,7 +1375,7 @@ struct sensor_bright_param {
 struct sensor_contrast_param {
 	cmr_u8 factor[16];
 	cmr_u32 cur_index;
-	cmr_u8 scenemode[MAX_SCENEMODE_NUM];
+	cmr_u8 scenemode[MAX_BCHSSCENEMODE_NUM];
 	cmr_u32 bypass;
 };
 
@@ -1382,7 +1393,7 @@ struct sensor_saturation_param {
 	cmr_u8 csa_factor_v[16];
 	cmr_u32 index_u;
 	cmr_u32 index_v;
-	cmr_u8 scenemode[2][MAX_SCENEMODE_NUM];
+	cmr_u8 scenemode[2][MAX_BCHSSCENEMODE_NUM];
 	cmr_u32 bypass;
 };
 

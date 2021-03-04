@@ -34,7 +34,7 @@ cmr_s32 _pm_saturation_init(void *dst_csa_param, void *src_csa_param, void *para
 		dst_csa_ptr->tab[0][i] = src_csa_ptr->csa_factor_u[i];
 		dst_csa_ptr->tab[1][i] = src_csa_ptr->csa_factor_v[i];
 	}
-	for (i = 0; i < MAX_SCENEMODE_NUM; i++) {
+	for (i = 0; i < MAX_BCHSSCENEMODE_NUM; i++) {
 		dst_csa_ptr->scene_mode_tab[0][i] = src_csa_ptr->scenemode[0][i];
 		dst_csa_ptr->scene_mode_tab[1][i] = src_csa_ptr->scenemode[1][i];
 	}
