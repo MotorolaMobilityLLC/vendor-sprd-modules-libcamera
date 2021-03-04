@@ -25,7 +25,6 @@
 #include "ae_ctrl.h"
 #include "flash/inc/flash.h"
 #include "isp_debug.h"
-#include "hdr/inc/sprd_hdr_api.h"
 #ifdef WIN32
 #include "stdio.h"
 #include "ae_porint.h"
@@ -4271,8 +4270,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	float ev_result[2] = {0, 0};
 	ev_result[0] = -cxt->hdr_calc_result.ev[0];
 	ev_result[1] = cxt->hdr_calc_result.ev[1];
-	cmr_u32 param_index = cxt->hdr_calc_result.tuning_param_index;
-	ISP_LOGD("auto_hdr (cap) ev[0] %f ev[1] %f param_index %d", ev_result[0], ev_result[1],param_index);
+	ISP_LOGD("auto_hdr (cap) ev[0] %f ev[1] %f", ev_result[0], ev_result[1]);
 #endif
 
 	cxt->hdr_frame_cnt++;
@@ -4281,7 +4279,8 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 		ae_get_hdr_exp_gain_infor(cxt,&cxt->hdr_exp_gain);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, (void *)ev_result);
-		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_TUNING_PARAM_INDEX, &param_index);
+		memcpy(&cxt->hdr_callback_backup,&cxt->hdr_callback,sizeof(hdr_callback_t));
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_TUNING_PARAM_INDEX, &cxt->hdr_callback_backup);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_EXP_GAIN, &cxt->hdr_exp_gain);
 		if (cxt->is_multi_mode && cxt->isp_ops.ae_bokeh_hdr_cb) {
 			(*cxt->isp_ops.ae_bokeh_hdr_cb) (cxt->isp_ops.isp_handler, (void *)ev_result);
@@ -6456,7 +6455,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			auto_hdr_enable = (cmr_s8)sprd_hdr_scndet_multi_inst(&hdr_param, &hdr_stat, ev_result,&cxt->smooth_flag,&cxt->frameid);
 		cxt->hdr_calc_result.ev[0] = fabs(ev_result[0]);
 		cxt->hdr_calc_result.ev[1] = ev_result[1];
-		cxt->hdr_calc_result.tuning_param_index = hdr_param.tuning_param_index;
+		memcpy(&cxt->hdr_callback,&hdr_param.callback,sizeof(hdr_callback_t));
 		ISP_LOGV("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, ev_result[0], ev_result[1]);
 	}
 	if (cxt->hdr_menu_ctrl) {
