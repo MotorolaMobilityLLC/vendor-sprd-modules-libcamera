@@ -534,6 +534,8 @@ struct camera_context {
     double exp_time;
     cmr_uint _3rd_3dnr_flag;
     cmr_uint blurcynr_noface;
+    cmr_uint flash_mode;
+    cmr_uint need_sr;
 };
 
 struct prev_ai_scene_info {
