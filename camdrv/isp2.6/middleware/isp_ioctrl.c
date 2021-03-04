@@ -1410,6 +1410,11 @@ static cmr_int isp_flash_close(struct isp_alg_fw_context *cxt,
 		return ISP_ERROR;
 	}
 
+	if (cxt->app_mode == 0){
+		if (cxt->flash_mode == 3)
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_AUTO;
+	}
+
 	flash_notice = (struct isp_flash_notice *)param_ptr;
 	awb_flash_status = AWB_FLASH_MAIN_AFTER;
 	if (cxt->ops.awb_ops.ioctrl)
@@ -1512,6 +1517,45 @@ static cmr_int ispctl_flash_notice(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int change_scene_param(struct isp_alg_fw_context *cxt)
+{
+	cmr_int ret = ISP_SUCCESS;
+	int i;
+	CMR_MSG_INIT(message1);
+
+	pthread_mutex_lock(&cxt->smart_lock);
+	if (!cxt->smart_cxt.isp_smart_eb || cxt->smart_cxt.sw_bypass || !cxt->smart_update) {
+		ISP_LOGD("cam%ld, smart_eb %d, bypass %d, update %d\n", cxt->camera_id,
+			cxt->smart_cxt.isp_smart_eb, cxt->smart_cxt.sw_bypass, cxt->smart_update);
+		pthread_mutex_unlock(&cxt->smart_lock);
+		return ret;
+	}
+
+	i = (cxt->zsl_flag) ? 1 : 0;
+	cxt->smart_cxt.cur_set_id = i;
+	cxt->smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[i];
+	cxt->smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[i];
+	cxt->smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
+	if (cxt->ops.smart_ops.ioctrl) {
+		ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
+					ISP_SMART_IOCTL_SET_WORK_MODE,
+					(void *)&cxt->smart_proc_in.mode_flag, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
+	}
+	if (cxt->ops.smart_ops.calc) {
+		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &cxt->smart_proc_in);
+		ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
+	}
+	pthread_mutex_unlock(&cxt->smart_lock);
+
+	message1.msg_type = ISP_EVT_CFG;
+	message1.sub_msg_type = PARAM_CFG_DEFAULT;
+	message1.sync_flag = CMR_MSG_SYNC_NONE;
+	ret = cmr_thread_msg_send(cxt->thr_handle, &message1);
+
+	return ret;
+}
+
 static cmr_int ispctl_set_flash_mode(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1519,6 +1563,15 @@ static cmr_int ispctl_set_flash_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_u32 flash_mode = 0;
 
 	flash_mode = *(cmr_u32 *)param_ptr;
+	cxt->flash_mode = flash_mode;
+	if (cxt->app_mode == 0){
+		if (flash_mode == 1) {
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_FLASH;
+		} else {
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_AUTO;
+		}
+	}
+
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLASH_MODE, &flash_mode, NULL);
 
@@ -2224,11 +2277,91 @@ static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
 	case ISP_HDR:
 		convert_scene_flag = ISP_SCENEMODE_HDR;
 		break;
+	case ISP_BOKEHMODE:
+		convert_scene_flag = ISP_SCENEMODE_BOKEH;
+		break;
+	case ISP_BEAUTYFACE:
+		convert_scene_flag = ISP_SCENEMODE_BEAUTYFACE;
+		break;
+	case ISP_DELAYVIDEO:
+		convert_scene_flag = ISP_SCENEMODE_DELAYVIDEO;
+		break;
+	case ISP_CONTINUOUSPICTURE:
+		convert_scene_flag = ISP_SCENEMODE_CONTINUOUSPICTURE;
+		break;
+	case ISP_PROFESSION:
+		convert_scene_flag = ISP_SCENEMODE_PROFESSION;
+		break;
+	case ISP_FILTER:
+		convert_scene_flag = ISP_SCENEMODE_FILTER;
+		break;
+	case ISP_FLASH:
+		convert_scene_flag = ISP_SCENEMODE_FLASH;
+		break;
+	case ISP_ZOOM:
+		convert_scene_flag = ISP_SCENEMODE_ZOOM;
+		break;
+	case ISP_THIRDPARTY:
+		convert_scene_flag = ISP_SCENEMODE_THIRDPARTY;
+		break;
+	case ISP_INTERVAL:
+		convert_scene_flag = ISP_SCENEMODE_INTERVAL;
+		break;
+
 	default:
 		convert_scene_flag = ISP_SCENEMODE_AUTO;
 		break;
 	}
 	return convert_scene_flag;
+}
+
+static cmr_int ispctl_set_zoom_scene(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 scene_flag;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param!");
+		return ISP_PARAM_NULL;
+	}
+
+	scene_flag = *(cmr_u32 *) param_ptr;
+	if (cxt->app_mode == 0) {
+		if (scene_flag == ISP_ZOOM) {
+			cxt->scene_cxt.zoom_scene = ISP_SCENEMODE_ZOOM;
+		} else if (scene_flag == ISP_SPORT) {
+			cxt->scene_cxt.sr_scene = ISP_SCENEMODE_SPORT;
+		} else {
+			cxt->scene_cxt.sr_scene = ISP_SCENEMODE_AUTO;
+			cxt->scene_cxt.zoom_scene = ISP_SCENEMODE_AUTO;
+		}
+	}
+
+	return ret;
+}
+
+static cmr_int ispctl_set_facebeauty_scene(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 facebeauty_enable;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param!");
+		return ISP_PARAM_NULL;
+	}
+
+	facebeauty_enable = *(cmr_u32 *) param_ptr;
+	if (cxt->app_mode == 0){
+		if (facebeauty_enable == 1){
+			cxt->scene_cxt.facebeauty_scene = ISP_SCENEMODE_BEAUTYFACE;
+		}else {
+			cxt->scene_cxt.facebeauty_scene = ISP_SCENEMODE_AUTO;
+		}
+	}
+
+	return ret;
 }
 
 static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
@@ -2237,18 +2370,24 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	struct ae_set_scene set_scene = { 0 };
 	cmr_u32 scene_flag = 0;
+	cmr_u32 orig_nr_scene_flag;
+
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param !");
 		return ISP_PARAM_NULL;
 	}
 
+	orig_nr_scene_flag = cxt->commn_cxt.nr_scene_flag;
 	scene_flag = *(cmr_u32 *) param_ptr;
 	set_scene.mode = convert_scene_flag_for_ae(scene_flag);
 	cxt->commn_cxt.nr_scene_flag = convert_scene_flag_for_nr(scene_flag);
 	ISP_LOGD("set_scene_mode %d, (nr %d ae %d)", scene_flag, cxt->commn_cxt.nr_scene_flag, set_scene.mode);
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SCENE_MODE, &set_scene, NULL);
+
+	if (orig_nr_scene_flag != cxt->commn_cxt.nr_scene_flag)
+		ret = change_scene_param(cxt);
 
 	return ret;
 }
@@ -4598,6 +4737,27 @@ static cmr_int ispctl_set_cap_flag(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_auto_flash_cap(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 auto_flash_cap;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	auto_flash_cap = *(cmr_u32 *) param_ptr;
+	if (cxt->app_mode == 0){
+		if (auto_flash_cap)
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_FLASH;
+	}
+	ISP_LOGD("cxt->scene_cxt.flash_scene %d\n", cxt->scene_cxt.flash_scene);
+
+	return ret;
+}
+
+
 static cmr_int ispctl_set_dbg_tag(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5635,6 +5795,9 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_MULTI_SWITCH_INFO, ispctl_set_multi_switch_info},
 	{ISP_CTRL_SET_FD_RACE_TO_AE, ispctl_set_fd_race},
 	{ISP_CTRL_SET_FD_NATION_CODE, ispctl_set_fd_nation_code},
+	{ISP_CTRL_SET_ZOOM_SCENE, ispctl_set_zoom_scene},
+	{ISP_CTRL_SET_FACEBEAUTY_ENABLE, ispctl_set_facebeauty_scene},
+	{ISP_CTRL_SET_AUTO_FLASH_CAP, ispctl_set_auto_flash_cap},
 	{ISP_CTRL_MAX, NULL}
 };
 
