@@ -1236,6 +1236,11 @@ static cmr_int isp_flash_close(struct isp_alg_fw_context *cxt,
 		return ISP_ERROR;
 	}
 
+	if (cxt->app_mode == 0){
+		if (cxt->flash_mode == 3)
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_AUTO;
+	}
+
 	flash_notice = (struct isp_flash_notice *)param_ptr;
 	awb_flash_status = AWB_FLASH_MAIN_AFTER;
 	if (cxt->ops.awb_ops.ioctrl)
@@ -1345,6 +1350,15 @@ static cmr_int ispctl_set_flash_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	cmr_u32 flash_mode = 0;
 
 	flash_mode = *(cmr_u32 *)param_ptr;
+	cxt->flash_mode = flash_mode;
+	if (cxt->app_mode == 0){
+		if (flash_mode == 1) {
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_FLASH;
+		} else {
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_AUTO;
+		}
+	}
+
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_CTRL_SET_FLASH_MODE, &flash_mode, NULL);
 
@@ -2117,11 +2131,106 @@ static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
 	case ISP_BOKEHMODE:
 		convert_scene_flag = ISP_SCENEMODE_BOKEH;
 		break;
+	case ISP_BEAUTYFACE:
+		convert_scene_flag = ISP_SCENEMODE_BEAUTYFACE;
+		break;
+	case ISP_DELAYVIDEO:
+		convert_scene_flag = ISP_SCENEMODE_DELAYVIDEO;
+		break;
+	case ISP_CONTINUOUSPICTURE:
+		convert_scene_flag = ISP_SCENEMODE_CONTINUOUSPICTURE;
+		break;
+	case ISP_PROFESSION:
+		convert_scene_flag = ISP_SCENEMODE_PROFESSION;
+		break;
+	case ISP_FILTER:
+		convert_scene_flag = ISP_SCENEMODE_FILTER;
+		break;
+	case ISP_FLASH:
+		convert_scene_flag = ISP_SCENEMODE_FLASH;
+		break;
+	case ISP_ZOOM:
+		convert_scene_flag = ISP_SCENEMODE_ZOOM;
+		break;
+	case ISP_THIRDPARTY:
+		convert_scene_flag = ISP_SCENEMODE_THIRDPARTY;
+		break;
+	case ISP_INTERVAL:
+		convert_scene_flag = ISP_SCENEMODE_INTERVAL;
+		break;
+	case ISP_FACEBOOK:
+		convert_scene_flag = ISP_SCENEMODE_FACEBOOK;
+		break;
+	case ISP_MESSENGER:
+		convert_scene_flag = ISP_SCENEMODE_MESSENGER;
+		break;
+	case ISP_QQ:
+		convert_scene_flag = ISP_SCENEMODE_QQ;
+		break;
+	case ISP_SNAPCHAT:
+		convert_scene_flag = ISP_SCENEMODE_SNAPCHAT;
+		break;
+	case ISP_WHATAPPS:
+		convert_scene_flag = ISP_SCENEMODE_WHATAPPS;
+		break;
+	case ISP_WECHAT:
+		convert_scene_flag = ISP_SCENEMODE_WECHAT;
+		break;
+
 	default:
 		convert_scene_flag = ISP_SCENEMODE_AUTO;
 		break;
 	}
 	return convert_scene_flag;
+}
+
+static cmr_int ispctl_set_zoom_scene(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 scene_flag;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param!");
+		return ISP_PARAM_NULL;
+	}
+
+	scene_flag = *(cmr_u32 *) param_ptr;
+	if (cxt->app_mode == 0) {
+		if (scene_flag == ISP_ZOOM) {
+			cxt->scene_cxt.zoom_scene = ISP_SCENEMODE_ZOOM;
+		} else if (scene_flag == ISP_SPORT) {
+			cxt->scene_cxt.sr_scene = ISP_SCENEMODE_SPORT;
+		} else {
+			cxt->scene_cxt.sr_scene = ISP_SCENEMODE_AUTO;
+			cxt->scene_cxt.zoom_scene = ISP_SCENEMODE_AUTO;
+		}
+	}
+
+	return ret;
+}
+
+static cmr_int ispctl_set_facebeauty_scene(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 facebeauty_enable;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param!");
+		return ISP_PARAM_NULL;
+	}
+
+	facebeauty_enable = *(cmr_u32 *) param_ptr;
+	if (cxt->app_mode == 0){
+		if (facebeauty_enable == 1){
+			cxt->scene_cxt.facebeauty_scene = ISP_SCENEMODE_BEAUTYFACE;
+		}else {
+			cxt->scene_cxt.facebeauty_scene = ISP_SCENEMODE_AUTO;
+		}
+	}
+
+	return ret;
 }
 
 static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
@@ -4584,6 +4693,27 @@ static cmr_int ispctl_set_cap_flag(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_set_auto_flash_cap(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 auto_flash_cap;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	auto_flash_cap = *(cmr_u32 *) param_ptr;
+	if (cxt->app_mode == 0){
+		if (auto_flash_cap)
+			cxt->scene_cxt.flash_scene = ISP_SCENEMODE_FLASH;
+	}
+	ISP_LOGD("cxt->scene_cxt.flash_scene %d\n", cxt->scene_cxt.flash_scene);
+
+	return ret;
+}
+
+
 static cmr_int ispctl_set_dbg_tag(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5641,6 +5771,9 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_MFNR_PARAM, ispctl_get_mfnr_param},
 	{ISP_CTRL_GET_DRE_PRO_PARAM, ispctl_get_dre_pro_param},
 	{ISP_CTRL_LOCK_NR_SMART, ispctl_lock_nr_smart},
+	{ISP_CTRL_SET_ZOOM_SCENE, ispctl_set_zoom_scene},
+	{ISP_CTRL_SET_FACEBEAUTY_ENABLE, ispctl_set_facebeauty_scene},
+	{ISP_CTRL_SET_AUTO_FLASH_CAP, ispctl_set_auto_flash_cap},
 	{ISP_CTRL_MAX, NULL}
 };
 

@@ -384,14 +384,14 @@ struct isp_bright_param {
 	cmr_u32 cur_index;
 	struct isp_dev_brightness_info cur;
 	cmr_s8 bright_tab[16];
-	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
+	cmr_u8 scene_mode_tab[MAX_BCHSSCENEMODE_NUM];
 };
 
 struct isp_contrast_param {
 	cmr_u32 cur_index;
 	struct isp_dev_contrast_info cur;
 	cmr_u8 tab[16];
-	cmr_u8 scene_mode_tab[MAX_SCENEMODE_NUM];
+	cmr_u8 scene_mode_tab[MAX_BCHSSCENEMODE_NUM];
 };
 
 struct isp_hue_param {
@@ -411,7 +411,7 @@ struct isp_chrom_saturation_param {
 	cmr_u32 cur_u_idx;
 	cmr_u32 cur_v_idx;
 	cmr_u8 tab[2][SENSOR_LEVEL_NUM];
-	cmr_u8 scene_mode_tab[2][MAX_SCENEMODE_NUM];
+	cmr_u8 scene_mode_tab[2][MAX_BCHSSCENEMODE_NUM];
 };
 
 struct isp_bchs_ai_info{

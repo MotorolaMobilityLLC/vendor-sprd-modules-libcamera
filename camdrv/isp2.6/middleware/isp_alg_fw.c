@@ -384,6 +384,15 @@ struct debuginfo_message{
 	cmr_s32 frame_id;
 };
 
+struct scene_flag {
+	cmr_u32 hdr_scene;
+	cmr_u32 facebeauty_scene;
+	cmr_u32 zoom_scene;
+	cmr_u32 flash_scene;
+	cmr_u32 burst_scene;
+	cmr_u32 sr_scene;
+};
+
 struct debuginfo_queue{
 	struct debuginfo_message *head;
 	cmr_u32 cur;
@@ -495,6 +504,8 @@ struct isp_alg_fw_context {
 	struct debuginfo_queue smart_queue;
 	//night dns disable ee when capturing
 	int disable_ee_night_dns;
+	struct scene_flag scene_cxt;
+	cmr_u32 flash_mode;
 };
 
 struct fw_init_local {
@@ -3347,6 +3358,26 @@ exit:
 	return ret;
 }
 
+static cmr_u32 ispalg_scene_flag(cmr_handle isp_alg_handle)
+{
+	cmr_u32 scene_flag = 0;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (cxt->scene_cxt.sr_scene == ISP_SCENEMODE_SPORT) {
+		scene_flag = cxt->scene_cxt.sr_scene;
+	} else if (cxt->commn_cxt.nr_scene_flag == ISP_SCENEMODE_HDR) {
+		scene_flag = cxt->commn_cxt.nr_scene_flag;
+	} else if (cxt->scene_cxt.facebeauty_scene) {
+		scene_flag = cxt->scene_cxt.facebeauty_scene;
+	} else if (cxt->scene_cxt.zoom_scene) {
+		scene_flag = cxt->scene_cxt.zoom_scene;
+	} else if (cxt->scene_cxt.flash_scene) {
+		scene_flag = cxt->scene_cxt.flash_scene;
+	}
+
+	return scene_flag;
+}
+
 static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 					 struct ae_ctrl_callback_in *ae_in,
 					 struct awb_ctrl_calc_result *awb_output)
@@ -3362,11 +3393,13 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	struct afctrl_awb_info *awb_info;
 	struct awb_size stat_img_size;
 	struct awb_size win_size;
+	cmr_u32 scene_flag = 0;
 
 	memset(&info, 0, sizeof(info));
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	CMR_MSG_INIT(message);
-
+	if (cxt->app_mode == 0)
+		scene_flag = ispalg_scene_flag((cmr_handle) cxt);
 	time_start = ispalg_get_sys_timestamp();
 	if (1 == cxt->smart_cxt.isp_smart_eb) {
 		ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f abl_weight %d",
@@ -3390,7 +3423,11 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
 			if (cxt->remosaic_type == 1)
 				smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[1];
-			smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
+			if (!scene_flag)
+				smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
+			else
+				smart_proc_in.scene_flag = scene_flag;
+			ISP_LOGD("smart_proc_in.scene_flag %d\n", smart_proc_in.scene_flag);
 			smart_proc_in.ai_scene_id = cxt->commn_cxt.ai_scene_id;
 			smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
 			smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
@@ -6547,11 +6584,11 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 		cxt->commn_cxt.prv_size.w >>= 1;
 		cxt->commn_cxt.prv_size.h >>= 1;
 	}
-	ISP_LOGD("work_mode %d,is_dv %d,zsl %d,size %d %d,prv_size %d %d, 4in1 %d, remosaic %d %d %d %d\n",
+	ISP_LOGD("work_mode %d,is_dv %d,zsl %d,size %d %d,prv_size %d %d, 4in1 %d, remosaic %d %d %d %d,cxt->app_mode %d\n",
 		in_ptr->work_mode, in_ptr->dv_mode, in_ptr->zsl_flag,
 		in_ptr->size.w, in_ptr->size.h, cxt->commn_cxt.prv_size.w, cxt->commn_cxt.prv_size.h,
 		cxt->is_4in1_sensor, cxt->remosaic_type, cxt->ambient_highlight,
-		cxt->is_high_res_mode, cxt->fix_highlight);
+		cxt->is_high_res_mode, cxt->fix_highlight,cxt->app_mode);
 
 	cxt->stats_mem_info.alloc_cb = in_ptr->alloc_cb;
 	cxt->stats_mem_info.free_cb = in_ptr->free_cb;
@@ -7426,6 +7463,12 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->commn_cxt.callback = input_ptr->init_param->ctrl_callback;
 	cxt->commn_cxt.caller_id = input_ptr->init_param->oem_handle;
 	cxt->commn_cxt.ops = input_ptr->init_param->ops;
+	cxt->scene_cxt.hdr_scene = 0;
+	cxt->scene_cxt.facebeauty_scene = 0;
+	cxt->scene_cxt.zoom_scene = 0;
+	cxt->scene_cxt.flash_scene = 0;
+	cxt->scene_cxt.burst_scene = 0;
+	cxt->scene_cxt.sr_scene = 0;
 
 	ISP_LOGI("camera_id = %ld, master %d, is_4in1_sensor %d\n", cxt->camera_id,
 		cxt->is_master, cxt->is_4in1_sensor);

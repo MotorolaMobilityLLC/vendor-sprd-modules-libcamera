@@ -10680,6 +10680,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
 #ifdef CONFIG_ISP_2_7
     struct isp_gtm_switch_param gtm_switch;
 #endif
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
 
     if (!oem_handle || !param_ptr) {
         CMR_LOGE("in parm error");
@@ -10712,9 +10713,55 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                 isp_cmd = ISP_CTRL_SCENE_MODE;
             }
         }
+        struct setting_cmd_parameter setting_param;
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
+                                &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get app mode %ld", ret);
+            ret = 0;
+        }
+        CMR_LOGD("setting_param.cmd_type_value %d", setting_param.cmd_type_value);
 
-        if (cxt->is_multi_mode == MODE_BOKEH){
+        if (setting_param.cmd_type_value == CAMERA_MODE_MANUAL) {
+            param_ptr->cmd_value = ISP_PROFESSION;
+        } else if (setting_param.cmd_type_value == CAMERA_MODE_CONTINUE) {
+            param_ptr->cmd_value = ISP_CONTINUOUSPICTURE;
+        } else if (setting_param.cmd_type_value == CAMERA_MODE_FILTER) {
+            param_ptr->cmd_value = ISP_FILTER;
+        } else if (setting_param.cmd_type_value == CAMERA_MODE_TIMELAPSE) {
+            param_ptr->cmd_value = ISP_DELAYVIDEO;
+        } else if (setting_param.cmd_type_value == CAMERA_MODE_INTERVAL) {
+            param_ptr->cmd_value = ISP_INTERVAL;
+        } else if(setting_param.cmd_type_value == CAMERA_MODE_REFOCUS) {
             param_ptr->cmd_value = ISP_BOKEHMODE;
+        } else if (setting_param.cmd_type_value == CAMERA_MODE_PORTRAIT_PHOTO){
+            param_ptr->cmd_value = ISP_PORTRAIT;
+        } else if (setting_param.cmd_type_value == -1) {
+            switch (cxt->app_id) {
+            case TOP_APP_FACEBOOK:
+                param_ptr->cmd_value = ISP_FACEBOOK;
+                break;
+            case TOP_APP_MESSENGER:
+                param_ptr->cmd_value = ISP_MESSENGER;
+                break;
+            case TOP_APP_QQ:
+                param_ptr->cmd_value = ISP_QQ;
+                break;
+            case TOP_APP_SNAPCHAT:
+                param_ptr->cmd_value = ISP_SNAPCHAT;
+                break;
+            case TOP_APP_WHATSAPP:
+                param_ptr->cmd_value = ISP_WHATAPPS;
+                break;
+            case TOP_APP_WECHAT:
+                param_ptr->cmd_value = ISP_WECHAT;
+                break;
+            default:
+                param_ptr->cmd_value = ISP_THIRDPARTY;
+                break;
+           }
         }
 
         set_exif_flag = 1;
@@ -11024,6 +11071,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_FLASH_MODE:
         isp_cmd = ISP_CTRL_SET_FLASH_MODE;
         isp_param = param_ptr->cmd_value;
+        cxt->flash_mode = param_ptr->cmd_value;
         CMR_LOGD("flash mode %d", param_ptr->cmd_value);
         break;
 
@@ -11148,6 +11196,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->ynr_param;
         break;
 
+    case COM_ISP_SET_ZOOM_SCENE:
+        isp_cmd = ISP_CTRL_SET_ZOOM_SCENE;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cmd_value;
+        break;
+
     case COM_ISP_GET_CNR2CNR3_YNR_EN:
         isp_cmd = ISP_CTRL_GET_CNR2CNR3_YNR_EN;
         ptr_flag = 1;
@@ -11195,6 +11249,10 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_CAP_FLAG:
         CMR_LOGD("set cap flag %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_CAP_FLAG;
+        isp_param = param_ptr->cmd_value;
+        break;
+    case COM_ISP_SET_AUTO_FLASH_CAP:
+        isp_cmd = ISP_CTRL_SET_AUTO_FLASH_CAP;
         isp_param = param_ptr->cmd_value;
         break;
     case COM_ISP_GET_SW3DNR_PARAM:
@@ -13365,6 +13423,9 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     cmr_u32 is_isptool_flag = 0;
     char raw_value[PROPERTY_VALUE_MAX];
     cmr_uint video_snapshot_type;
+    cmr_uint has_preflashed;
+    struct common_isp_cmd_param isp_param;
+    CMR_LOGI("E.\n");
 
     if (!oem_handle) {
         CMR_LOGE("error handle");
@@ -13555,6 +13616,24 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             ret = camera_capture_highflash(oem_handle, cxt->camera_id);
             if (ret)
                 CMR_LOGE("open high flash fail");
+        }
+    }
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_PRE_LOWFLASH_VALUE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get preflashed flag %ld", ret);
+    }
+    has_preflashed = setting_param.cmd_type_value;
+
+    if (has_preflashed)
+        camera_get_iso_value(oem_handle);
+    if (cxt->flash_mode == 3){
+        if (setting_param.cmd_type_value == 1){
+            isp_param.cmd_value = 1;
+            ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_AUTO_FLASH_CAP, (void *)&isp_param);
         }
     }
 
@@ -14276,6 +14355,12 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         isp_param = param;
         CMR_LOGD("aperture %d", param);
         break;
+     case CAMERA_PARAM_FACE_BEAUTY_ENABLE:
+        set_isp_flag = 1;
+        isp_cmd = ISP_CTRL_SET_FACEBEAUTY_ENABLE;
+        isp_param = param;
+        CMR_LOGD("face beauty %d", param);
+        break;
 
     default:
         CMR_LOGE("don't support cmd %ld", id);
@@ -14347,6 +14432,12 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         struct cmr_zoom_param *zoom_reprocess =
             (struct cmr_zoom_param *)malloc(sizeof(struct cmr_zoom_param));
         cmr_uint zoom_factor_changed = 0;
+        struct common_isp_cmd_param isp_cmd_parm;
+        struct setting_context *setting_cxt = &cxt->setting_cxt;
+        struct setting_cmd_parameter setting_param;
+
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        cmr_bzero(&isp_cmd_parm, sizeof(struct common_isp_cmd_param));
         if (param) {
             cmr_bzero(zoom_param, sizeof(struct cmr_zoom_param));
             cmr_bzero(zoom_reprocess, sizeof(struct cmr_zoom_param));
@@ -14399,6 +14490,36 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         if (ret) {
             CMR_LOGE("failed to update zoom %ld", ret);
         }
+
+        setting_param.camera_id = cxt->camera_id;
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                                SETTING_GET_APPMODE, &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get app mode %ld", ret);
+        }
+        if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO){
+            if (cxt->need_sr) {
+                    isp_cmd_parm.cmd_value = ISP_SPORT;
+                    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_ZOOM_SCENE, &isp_cmd_parm);
+                    if (ret)
+                        CMR_LOGE("isp set MFSR  failed");
+            } else {
+                if (cxt->zoom_ratio - 1.0f > 0.0001f){
+                    isp_cmd_parm.cmd_value = ISP_ZOOM;
+                    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_ZOOM_SCENE, &isp_cmd_parm);
+                    if (ret)
+                        CMR_LOGE("isp set ISP_ZOOM  failed");
+                }
+                if (cxt->zoom_ratio - 1.0f <= 0.0001f){
+                    isp_cmd_parm.cmd_value = ISP_AUTO;
+                    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_ZOOM_SCENE, &isp_cmd_parm);
+                    if (ret)
+                        CMR_LOGE("isp set ISP_AUTO  failed");
+                }
+            }
+        }
+
+
         ret = camera_set_setting(oem_handle, id, (cmr_uint)zoom_param);
         if (ret) {
             CMR_LOGE("failed to set camera setting of zoom %ld", ret);
@@ -14440,6 +14561,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_CONTRAST:
     case CAMERA_PARAM_SATURATION:
     case CAMERA_PARAM_F_NUMBER:
+    case CAMERA_PARAM_FACE_BEAUTY_ENABLE:
         ret = camera_isp_set_params(oem_handle, id, param);
         break;
 
@@ -15791,9 +15913,9 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
     if (capture_param.type == DCAM_CAPTURE_START)
         capture_param.timestamp = snp_cxt->cap_need_time_stamp;
     CMR_LOGD(
-        "type %d, cnt %d, scene %d,  dre_flag %d dre_skipframe %d, flash %d\n",
+        "type %d, cnt %d, scene %d,  dre_flag %d dre_skipframe %d, flash %d, cxt->flash_mode %d\n",
         capture_param.type, capture_param.cap_cnt, capture_param.cap_scene,
-        cxt->dre_flag, cxt->skipframe, flash_status);
+        cxt->dre_flag, cxt->skipframe, flash_status, cxt->flash_mode);
 
     isp_param.cmd_value = 1;
 
