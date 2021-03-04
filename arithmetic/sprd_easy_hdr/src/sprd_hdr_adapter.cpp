@@ -105,7 +105,7 @@ int sprd_hdr_adpt_ctrl(void *handle, sprd_hdr_cmd_t cmd, void *param)
             input[i].height = hdr_param->input[i].height;
             input[i].stride = hdr_param->input[i].stride;
             input[i].ev = hdr_param->ev[i];
-            input[i].tuning_param_index = hdr_param->tuning_param_index;
+            input[i].callback = hdr_param->callback;
         }
 
         uint8_t *output = (uint8_t *)hdr_param->output.addr[0];
@@ -119,7 +119,7 @@ int sprd_hdr_adpt_ctrl(void *handle, sprd_hdr_cmd_t cmd, void *param)
             input_vdsp[i].image.height = hdr_param->input[i].height;
             input_vdsp[i].image.stride = hdr_param->input[i].stride;
             input_vdsp[i].image.ev = hdr_param->ev[i];
-            input_vdsp[i].image.tuning_param_index = hdr_param->tuning_param_index;
+            input_vdsp[i].image.callback = hdr_param->callback;
             input_vdsp[i].fd = hdr_param->input[i].ion_fd;
         }
 

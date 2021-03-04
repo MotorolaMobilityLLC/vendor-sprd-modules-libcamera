@@ -31,6 +31,13 @@ typedef struct _tag_hdr_stat_t
     int         s;                  /*!< image buffer stride */
 } hdr_stat_t;
 
+/*! hdr scndet out */
+typedef struct _tag_hdr_callback_t
+{
+    int         tuning_param_index;
+    uint64_t    clock;
+} hdr_callback_t;
+
 /*! hdr_detect parameters */
 typedef struct _tag_hdr_detect_t
 {
@@ -42,7 +49,7 @@ typedef struct _tag_hdr_detect_t
     uint32_t    iso;
     void*       tuning_param;
     int         tuning_param_size;
-    int         tuning_param_index;
+    hdr_callback_t     callback;
 } hdr_detect_t;
 
 /*! LDR image data structure */
@@ -53,7 +60,7 @@ typedef struct _tag_ldr_image_t
     int         height;
     int         stride;
     float       ev;
-    int         tuning_param_index;
+    void*       callback;
 } ldr_image_t;
 
 typedef struct

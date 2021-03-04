@@ -31,7 +31,7 @@ typedef struct {
     struct sprd_camalg_image input[HDR_IMG_NUM_MAX];//hdr2: use input[0]&[1]
     struct sprd_camalg_image output;
     float  ev[HDR_IMG_NUM_MAX];//hdr2: use ev[0]&[1]
-    int    tuning_param_index;
+    void*  callback;
     void*  sensor_ae;
 } sprd_hdr_param_t;
 
