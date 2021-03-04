@@ -7574,8 +7574,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             drvSceneMode = CAMERA_SCENE_MODE_VIDEO_EIS;
         }
 #endif
-        if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR)
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+
+       if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR)
+           SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+        HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d, mIsFDRCapture:%d, app_mode:%d",
+                          drvSceneMode, mMultiCameraMode, mIsFDRCapture, sprddefInfo->sprd_appmode_id);
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {
@@ -7823,6 +7826,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                 fb_param.skinColor || fb_param.skinLevel ||
                 fb_param.brightLevel || fb_param.lipColor ||
                 fb_param.lipLevel || fb_param.slimLevel || fb_param.largeLevel;
+        if (sprddefInfo->sprd_appmode_id == 0){
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_FACE_BEAUTY_ENABLE,
+                     mFbOn);
+        }
     } break;
     case ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR: {
         SPRD_DEF_Tag *sprddefInfo;
