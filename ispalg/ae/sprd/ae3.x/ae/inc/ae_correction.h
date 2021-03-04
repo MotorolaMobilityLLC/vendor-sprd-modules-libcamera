@@ -52,6 +52,7 @@ struct ae_lib_init_in {
 	cmr_u32 mlog_en;
 	cmr_u32 log_level;
 	cmr_u32 line_time;
+	cmr_u32 face_color;
 	struct ae_size img_size;/*image resolution*/
 	void *tuning_param;
 	void *multi_cam_tuning_param;
@@ -142,6 +143,7 @@ struct ae_adv_param {
 	cmr_u8 special_fps_mode;
 	cmr_u8 mv_value;
 	cmr_u32 cur_lum;
+	cmr_u32 face_color;
 	void *smart_gamma_param;/*smart out gamma param*/
 };
 
