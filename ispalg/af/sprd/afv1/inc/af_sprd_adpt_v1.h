@@ -276,6 +276,20 @@ typedef struct _mlog_AFtime {
 	char *AF_type;
 } mlog_AFtime;
 
+typedef struct _cts_params {
+	float focus_distance;
+	cmr_s32 frame_num;
+	cmr_u32 set_cts_params_flag;
+	cmr_u32 reserved[10];
+} cts_params;
+
+typedef struct _af_squeue {
+	cmr_u32 size;
+	cmr_s32 front;
+	cmr_s32 rear;
+	cts_params af_params[6];
+} af_squeue;
+
 typedef struct _af_ctrl {
 	void *af_alg_cxt;	// AF_Data fv;
 	cmr_u32 af_dump_info_len;
@@ -367,6 +381,9 @@ typedef struct _af_ctrl {
 	cmr_u32 pdaf_type;
 	cmr_u32 slave_focus_cnt;
 	cmr_u32 pdaf_support;
+	af_squeue queue;
+	cmr_u16 focus_distance_cnt;
+	cmr_u32 focus_distance_result[3];
 } af_ctrl_t;
 
 typedef struct _test_mode_command {

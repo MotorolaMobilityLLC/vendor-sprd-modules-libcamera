@@ -108,6 +108,7 @@ extern "C" {
 		AF_CMD_SET_ZOOM_RATIO = 0x101D,
 		AF_CMD_SET_OT_SWITCH = 0x101E,
 		AF_CMD_SET_OT_INFO = 0x101F,
+		AF_CMD_SET_FOCUS_DISTANCE = 0x1020,
 		AF_CMD_SET_MAX,
 
 		AF_CMD_GET_BASE = 0x2000,
@@ -209,6 +210,7 @@ extern "C" {
 		AF_CB_CMD_SET_AFM_DONE_TILE_NUM,
 		AF_CB_CMD_SET_MONITOR_WIN_NUM,
 		AF_CB_CMD_SET_MOTOR_STATUS,
+		AF_CB_CMD_SET_CTS_PARAMS_RESULT,
 		AF_CB_CMD_SET_MAX,
 
 		AF_CB_CMD_GET_MONITOR_WIN_NUM = 0x2000,
@@ -445,6 +447,12 @@ extern "C" {
 		struct af_win_rect win_pos[MAX_AF_WINS];
 	};
 
+	struct cts_af_params {
+		float focus_distance;
+		cmr_s32 frame_num;
+		cmr_u32 reserved[10];
+	};
+
 	struct af_otp_data {
 		cmr_u16 infinite_cali;
 		cmr_u16 macro_cali;
@@ -512,6 +520,13 @@ extern "C" {
 		cmr_u32 reserved[20];
 	};
 
+	struct cts_af_params_result {
+		float focus_distance;
+		cmr_s32 frame_num;
+		cmr_u32 lens_state;
+		cmr_u32 reserverd[30];
+	};
+
 	struct afctrl_cb_ops {
 		cmr_s32(*start_notice) (void *handle, struct afctrl_notice * in_param);
 		cmr_s32(*end_notice) (void *handle, struct afctrl_notice * in_param);
@@ -536,7 +551,8 @@ extern "C" {
 		cmr_s32(*af_monitor_done_tile_num) (void *handle, struct af_monitor_tile_num * done_tile_num);
 		cmr_s32(*set_monitor_win_num) (void *handle, struct af_monitor_win_num * win_num);
 		cmr_s32(*af_get_system_time) (void *handle, cmr_u32 * sec, cmr_u32 * usec);
-		// SharkLE Only ++
+		cmr_s32(*cts_params_result) (void *handle, struct cts_af_params_result * in_param);
+		    // SharkLE Only ++
 		cmr_s32(*af_set_pulse_line) (void *handle, cmr_u32 line);
 		cmr_s32(*af_set_next_vcm_pos) (void *handle, cmr_u32 pos);
 		cmr_s32(*af_set_pulse_log) (void *handle, cmr_u32 flag);

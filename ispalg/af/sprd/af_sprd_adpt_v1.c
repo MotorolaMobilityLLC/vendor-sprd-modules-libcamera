@@ -2507,6 +2507,80 @@ static void caf_monitor_process(af_ctrl_t * af)
 	return;
 }
 
+static cmr_u32 init_queue(cmr_handle handle)
+{
+	cmr_s32 rtn = AFV1_SUCCESS;
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+
+	af->queue.front = 0;
+	af->queue.rear = 0;
+	af->queue.size = 4;
+
+	return rtn;
+}
+
+static cmr_u32 EnQueue(cmr_handle handle, void *param0)
+{
+	cmr_s32 rtn = AFV1_SUCCESS;
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+
+	struct cts_af_params *af_params = (struct cts_af_params *)param0;
+
+	af->queue.rear = (af->queue.rear + 1) % af->queue.size;
+	af->queue.af_params[af->queue.rear].focus_distance = af_params->focus_distance;
+	af->queue.af_params[af->queue.rear].frame_num = af_params->frame_num;
+	af->queue.af_params[af->queue.rear].set_cts_params_flag = 1;
+
+	return rtn;
+}
+
+static cmr_u32 DeQueue(cmr_handle handle, void *param0)
+{
+	cmr_u32 rtn = AFV1_SUCCESS;
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+
+	struct cts_af_params_result *cts_result = (struct cts_af_params_result *)param0;
+
+	af->queue.front = (af->queue.front + 1) % af->queue.size;
+	cts_result->focus_distance = af->queue.af_params[af->queue.front].focus_distance;
+	cts_result->frame_num = af->queue.af_params[af->queue.front].frame_num;
+	af->queue.af_params[af->queue.rear].set_cts_params_flag = 0;
+
+	ISP_LOGI("focus_distance : %f,frame_num  : %d", cts_result->focus_distance, cts_result->frame_num);
+
+	return rtn;
+}
+
+static cmr_u32 empty_queue(cmr_handle handle)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+
+	if (af->queue.rear == af->queue.front) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+static cmr_u32 QueueLength(cmr_handle handle)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+
+	return (af->queue.rear - af->queue.front + af->queue.size) % af->queue.size;
+}
+
+static cmr_u32 deinit_queue(cmr_handle handle)
+{
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	cmr_s32 rtn = AFV1_SUCCESS;
+
+	if (!empty_queue(af)) {
+		af->queue.rear = af->queue.front = 0;
+	}
+
+	return rtn;
+}
+
 // af ioctrl functions
 static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 {
@@ -2583,6 +2657,70 @@ static cmr_s32 af_sprd_set_af_mode(cmr_handle handle, void *param0)
 		break;
 	}
 
+	if (AF_MODE_MANUAL == af->request_mode) {
+		init_queue(af);
+	} else {
+		deinit_queue(af);
+	}
+
+	return rtn;
+}
+
+static cmr_u32 af_sprd_set_focus_distance(cmr_handle handle, void *param0)
+{
+	cmr_s32 rtn = AFV1_SUCCESS;
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+
+	struct cts_af_params *af_params = (struct cts_af_params *)param0;
+	EnQueue(af, af_params);
+
+	ISP_LOGI("rear= %d,focus_distance = %f,frame_num = %d", af->queue.rear, af->queue.af_params[af->queue.rear].focus_distance, af->queue.af_params[af->queue.rear].frame_num);
+
+	return rtn;
+}
+
+static cmr_u32 af_sprd_get_cts_result(cmr_handle handle, void *param0)
+{
+	cmr_s32 rtn = AFV1_SUCCESS;
+	af_ctrl_t *af = (af_ctrl_t *) handle;
+	cmr_u16 pos = 0, i = 0;
+	cmr_u32 focus_distance = 0;
+
+	struct cts_af_params_result *cts_result = (struct cts_af_params_result *)param0;
+	if (1 == af->queue.af_params[af->queue.rear].set_cts_params_flag) {
+		DeQueue(af, cts_result);
+		//af->queue.af_params[af->queue.rear].set_cts_params_flag = 0;
+		ISP_LOGI("focus_distance : %f,frame_num  : %d", cts_result->focus_distance, cts_result->frame_num);
+		if (cts_result->focus_distance >= 0 && cts_result->focus_distance <= 10) {
+			pos = (cmr_u16) (af->range_L4 - ((af->range_L4 - af->range_L1) * cts_result->focus_distance / 10));
+			lens_move_to(af, pos);
+		} else {
+			ISP_LOGI("error message!");
+			rtn = AFV1_ERROR;
+			return rtn;
+		}
+		focus_distance = (cmr_u32) cts_result->focus_distance;
+		for (i = 0; i < 3; i++) {
+			af->focus_distance_result[2] = af->focus_distance_result[1];
+			af->focus_distance_result[1] = af->focus_distance_result[0];
+			af->focus_distance_result[0] = focus_distance;
+		}
+		if (((af->focus_distance_result[1] - af->focus_distance_result[2]) <= 1) && ((af->focus_distance_result[0] - af->focus_distance_result[1] <= 1))) {
+			if (10 == focus_distance) {
+				cts_result->lens_state = AF_IDLE;
+			} else {
+				cts_result->lens_state = AF_SEARCHING;
+			}
+		} else {
+			cts_result->lens_state = AF_IDLE;
+		}
+	} else {
+		memset(cts_result, 0, sizeof(struct cts_af_params_result));
+		cts_result->frame_num = -1;
+	}
+
+	af->cb_ops.cts_params_result(af->caller, cts_result);
+
 	return rtn;
 }
 
@@ -2627,6 +2765,7 @@ static cmr_s32 af_sprd_set_af_trigger(cmr_handle handle, void *param0)
 	}
 	af->focus_state = AF_SEARCHING;
 	ISP_LOGV("saf start done \n");
+
 	return rtn;
 }
 
@@ -3608,6 +3747,10 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 		rtn = af_sprd_set_ot_info(handle, param0);
 		break;
 
+	case AF_CMD_SET_FOCUS_DISTANCE:
+		rtn = af_sprd_set_focus_distance(handle, param0);
+		break;
+
 	default:
 		ISP_LOGW("set cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -3688,6 +3831,7 @@ cmr_s32 af_sprd_adpt_outctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void 
 			ISP_LOGD("otp type %d, inf,macro(%d,%d)", otp_data->otp_type, otp_data->infinity, otp_data->macro);
 			break;
 		}
+
 	default:
 		ISP_LOGW("cmd not support! cmd: %d", cmd);
 		rtn = AFV1_ERROR;
@@ -4156,6 +4300,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	struct aft_proc_result sync_result;
 	struct af_sync_info af_sync;
 	cmr_u32 pd_workable = 0;
+	struct cts_af_params_result cts_result;
 
 	cmr_u32 max_area = 0;
 	cmr_u16 max_index = 0;
@@ -4213,6 +4358,7 @@ cmr_s32 sprd_afv1_process(cmr_handle handle, void *in, void *out)
 	switch (inparam->data_type) {
 	case AF_DATA_AF:
 		afm_set_fv(af, inparam->data);
+		af_sprd_get_cts_result(af, &cts_result);
 		af->trigger_source_type |= AF_DATA_AF;
 		break;
 	case AF_DATA_IMG_BLK:

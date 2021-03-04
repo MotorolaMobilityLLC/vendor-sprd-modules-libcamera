@@ -135,6 +135,17 @@ static cmr_s32 af_start_notice(void *handle_af, struct afctrl_notice *in_param)
 	return ISP_SUCCESS;
 }
 
+static cmr_s32 af_set_cts_params_result(void *handle_af, struct cts_af_params_result *in_param)
+{
+	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
+
+	if (cxt_ptr->af_set_cb) {
+		cxt_ptr->af_set_cb(cxt_ptr->caller_handle, AF_CB_CMD_SET_CTS_PARAMS_RESULT, (void *)in_param, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
+
 static cmr_s32 af_lock_module(void *handle_af, cmr_int af_locker_type)
 {
 	struct afctrl_cxt *cxt_ptr = (struct afctrl_cxt *)handle_af;
@@ -543,8 +554,7 @@ static cmr_int afctrl_create_thread(struct afctrl_cxt *cxt_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
 
-	rtn = cmr_thread_create(&cxt_ptr->thr_handle, AFCTRL_THREAD_QUEUE_NUM,
-            afctrl_ctrl_thr_proc, (void *)cxt_ptr, "afctrl");
+	rtn = cmr_thread_create(&cxt_ptr->thr_handle, AFCTRL_THREAD_QUEUE_NUM, afctrl_ctrl_thr_proc, (void *)cxt_ptr, "afctrl");
 	if (rtn) {
 		ISP_LOGE("fail to create ctrl thread");
 		rtn = ISP_ERROR;
@@ -660,6 +670,7 @@ cmr_int af_ctrl_init(struct afctrl_init_in * input_ptr, cmr_handle * handle_af)
 	input_ptr->cb_ops.af_monitor_done_tile_num = af_monitor_done_tile_num;
 	input_ptr->cb_ops.set_monitor_win_num = af_set_monitor_win_num;
 	input_ptr->cb_ops.af_get_system_time = af_get_system_time;
+	input_ptr->cb_ops.cts_params_result = af_set_cts_params_result;
 
 	// SharkLE Only ++
 	input_ptr->cb_ops.af_set_pulse_line = af_set_pulse_line;
