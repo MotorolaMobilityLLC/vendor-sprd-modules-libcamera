@@ -49,7 +49,7 @@ struct class_hdr_lib_context {
 #endif
     float ev[HDR_CAP_NUM];
     struct ipm_version version;
-    cmr_u32 hdr_index;
+    void *hdr_callback;
     void *ae_exp_gain_info;
 };
 
@@ -542,8 +542,8 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
         sprd_hdr_param.input[0].stride = width;
         sprd_hdr_param.input[0].size = width * height * 3 / 2;
         sprd_hdr_param.ev[0] = hdr_handle->lib_cxt.ev[0];
-        sprd_hdr_param.tuning_param_index = hdr_handle->lib_cxt.hdr_index;
-        CMR_LOGI("sprd_hdr_param.tuning_param_index %d", sprd_hdr_param.tuning_param_index);
+        sprd_hdr_param.callback = hdr_handle->lib_cxt.hdr_callback;
+        CMR_LOGI("sprd_hdr_param.callback %p", sprd_hdr_param.callback);
 
         sprd_hdr_param.input[1].format = SPRD_CAMALG_IMG_NV21;
         sprd_hdr_param.input[1].addr[0] =
@@ -625,10 +625,10 @@ static cmr_int hdr_save_frame(cmr_handle class_handle,
 
     hdr_handle->lib_cxt.ev[0] = in->ev[0];
     hdr_handle->lib_cxt.ev[1] = in->ev[1];
-    hdr_handle->lib_cxt.hdr_index = in->hdr_index;
+    hdr_handle->lib_cxt.hdr_callback = in->hdr_callback;
     hdr_handle->lib_cxt.ae_exp_gain_info = in->ae_exp_gain_info;
-    CMR_LOGD("ev: %f, %f, %p,%d", hdr_handle->lib_cxt.ev[0],
-             hdr_handle->lib_cxt.ev[1], hdr_handle->lib_cxt.ae_exp_gain_info,hdr_handle->lib_cxt.hdr_index);
+    CMR_LOGD("ev: %f, %f, %p,%p", hdr_handle->lib_cxt.ev[0],
+             hdr_handle->lib_cxt.ev[1], hdr_handle->lib_cxt.ae_exp_gain_info,hdr_handle->lib_cxt.hdr_callback);
     y_size = in->src_frame.size.height * in->src_frame.size.width;
     uv_size = in->src_frame.size.height * in->src_frame.size.width / 2;
     frame_sn = hdr_handle->common.save_frame_count - 1 -
@@ -884,6 +884,9 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle) {
         CMR_LOGE("error:hdr handle is NULL\n");
         return -CMR_CAMERA_INVALID_PARAM;
     }
+
+    hdr_param.malloc = NULL;
+    hdr_param.free = NULL;
 
     max_width = hdr_handle->width;
     max_height = hdr_handle->height;

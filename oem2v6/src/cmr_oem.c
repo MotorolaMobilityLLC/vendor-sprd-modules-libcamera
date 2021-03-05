@@ -2705,9 +2705,9 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
     break;
     case ISP_AE_CB_HDR_TUNING_PARAM_INDEX: {
         // got index(cmr_u32)
-        cmr_u32 index = *(cmr_u32 *)data;
-        CMR_LOGD("tuning param index %d", index);
-        cxt->snp_cxt.hdr_index = index;
+        void *hdr_callback = data;
+        CMR_LOGD("hdr_callback %p", hdr_callback);
+        cxt->snp_cxt.hdr_callback = hdr_callback;
         //todo
     }
     break;
@@ -16699,10 +16699,10 @@ cmr_int camera_local_image_sw_algorithm_processing(
         if (cxt->ipm_cxt.hdr_version.major != 1) {
             memcpy(&ipm_in_param.ev[0], &cxt->snp_cxt.hdr_ev[0],
                    ((HDR_CAP_NUM)-1) * sizeof(float));
-            ipm_in_param.hdr_index = cxt->snp_cxt.hdr_index;
+            ipm_in_param.hdr_callback = cxt->snp_cxt.hdr_callback;
             ipm_in_param.ae_exp_gain_info = cxt->snp_cxt.ae_exp_gain_info;
-            CMR_LOGD("ev: %f, %f, %p, %d", ipm_in_param.ev[0],
-             ipm_in_param.ev[1], ipm_in_param.ae_exp_gain_info, ipm_in_param.hdr_index);
+            CMR_LOGD("ev: %f, %f, %p, %p", ipm_in_param.ev[0],
+             ipm_in_param.ev[1], ipm_in_param.ae_exp_gain_info, ipm_in_param.hdr_callback);
         }
         ret = ipm_transfer_frame(ipm_cxt->hdr_handle, &ipm_in_param,
                                  &imp_out_param);

@@ -103,7 +103,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_MFNR, 0 }, /* NR block */
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
-	{ ISP_BLK_HDR, sizeof(struct sensor_hdr_param) },
+	{ ISP_BLK_HDR, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -289,7 +289,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_ATM_TUNE, 0 },
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
-	{ ISP_BLK_HDR, sizeof(struct sensor_hdr_param) },
+	{ ISP_BLK_HDR, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {

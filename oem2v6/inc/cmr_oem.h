@@ -281,7 +281,7 @@ struct snapshot_context {
     struct isp_blkpm_t fdr_tuning_param;
     void *fdr_ae_info;
     void *ae_common_info;
-    cmr_u32 hdr_index;
+    void *hdr_callback;
     void *ae_exp_gain_info;
 };
 
