@@ -3376,7 +3376,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         }
     } else if (mRecordingMode == true && mVideoWidth != 0 &&
                mVideoHeight != 0 && mCaptureWidth != 0 && mCaptureHeight != 0) {
-        mSprdZslEnabled = true;
+#ifdef CONFIG_YUV_SUPPORT
+               if (mIsYuvSensor == 0)
+#endif
+                   mSprdZslEnabled = true;
     } else if (mSprdRefocusEnabled == true && mCallbackHeight != 0 &&
                mCallbackWidth != 0) {
         mSprdZslEnabled = true;
@@ -5497,7 +5500,6 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
         setCaptureReprocessMode(false, mCallbackWidth, mCallbackHeight);
         channel->releaseInputBuff();
     }
-
     if (mTakePictureMode == SNAPSHOT_NO_ZSL_MODE ||
         mTakePictureMode == SNAPSHOT_DEFAULT_MODE) {
         SprdCamera3RegularChannel *regularChannel =

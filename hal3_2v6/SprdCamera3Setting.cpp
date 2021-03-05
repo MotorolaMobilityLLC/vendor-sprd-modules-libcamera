@@ -4862,6 +4862,9 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SPRD_ZSL_ENABLED)) {
         uint8_t sprd_zsl_enabled;
+#ifdef CONFIG_YUV_SUPPORT
+        sprd_zsl_enabled = 0;
+#else
         if (is_raw_capture == 1 || is_isptool_mode == 1) {
             sprd_zsl_enabled = 0;
         } else {
@@ -4873,6 +4876,7 @@ int SprdCamera3Setting::updateWorkParameters(
                     s_setting[mCameraId].sprddefInfo.sprd_3dcalibration_enabled;
             /**add for 3d calibration force set sprd zsl enable end*/
         }
+#endif
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.sprd_zsl_enabled,
                          sprd_zsl_enabled, ANDROID_SPRD_ZSL_ENABLED, 1)
     }

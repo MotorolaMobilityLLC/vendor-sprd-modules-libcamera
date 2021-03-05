@@ -117,6 +117,10 @@ cmr_int isp_capability(cmr_handle handle, enum isp_capbility_cmd cmd, void *para
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_mw_context *cxt = (struct isp_mw_context *)handle;
+	if (NULL == cxt) {
+		ISP_LOGE("fail to check isp handler");
+		return ISP_PARAM_NULL;
+	}
 
 	switch (cmd) {
 	case ISP_VIDEO_SIZE:

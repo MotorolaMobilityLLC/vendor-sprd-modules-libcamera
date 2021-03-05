@@ -8185,8 +8185,10 @@ cmr_int camera_start_encode(cmr_handle oem_handle, cmr_handle caller_handle,
               cxt->blur_facebeauty_flag == 1)) &&
             (filter_type == 0) && (!cxt->prev_cxt.video_eb)) {
             if (camera_do_face_beauty_body(oem_handle, setting_cxt,
-                                           &setting_param, src))
-                goto exit;
+                                           &setting_param, src)) {
+                if (CAM_IMG_FMT_YUV422P != cxt->sn_cxt.sensor_info.image_format)
+                    goto exit;
+            }
             else
                 facebeauty_flush = 1;
         }

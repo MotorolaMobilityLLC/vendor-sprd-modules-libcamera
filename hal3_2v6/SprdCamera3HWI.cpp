@@ -1694,11 +1694,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
         mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
     } else {
-        if(((sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode)||sprddefInfo->long_expo_enable)&&
-            captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)
-            mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE ;
-        else
-            mOldCapIntent = captureIntent;
+#ifdef CONFIG_YUV_SUPPORT
+    if(mPictureRequest == 1)
+        mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
+    else
+        mOldCapIntent = captureIntent;
+#else
+    if(((sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode)||sprddefInfo->long_expo_enable)&&
+        captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)
+        mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
+    else
+        mOldCapIntent = captureIntent;
+#endif
     }
 
     if (captureRequestId == 0)
