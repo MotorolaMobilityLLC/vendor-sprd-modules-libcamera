@@ -815,6 +815,10 @@ static cmr_int s5kgw1sp03_drv_stream_on(cmr_handle handle, cmr_s32 param) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x6218, 0xf9f0);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x0103);
 
+    usleep(5 * 1000);
+    s5kgw1sp03_drv_write_gain(sns_drv_cxt, 2048);
+    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x202, 2048);
+    usleep(5 * 1000);
     SENSOR_LOGI("StreamOn out");
 
     return 0;
