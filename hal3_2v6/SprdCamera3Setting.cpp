@@ -1291,7 +1291,7 @@ int SprdCamera3Setting::getCameraInfo(int32_t cameraId,
         cameraInfo->orientation = -1;
         cameraInfo->resource_cost = -1;
         cameraInfo->conflicting_devices = NULL;
-        cameraInfo->conflicting_devices_length = -1;
+        cameraInfo->conflicting_devices_length = 0;
     } else {
         cameraInfo->facing = phyPtr->face_type;
         cameraInfo->orientation = phyPtr->angle;
