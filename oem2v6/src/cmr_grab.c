@@ -759,8 +759,11 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
     parm.reserved[0] = config->cfg.src_img_change;
     parm.reserved[1] = config->cfg.src_img_size.width;
     parm.reserved[2] = config->cfg.src_img_size.height;
+    if(config->skip_output_check == 1) {
+        parm.reserved[3] = 1;
+    }
     parm.scene_mode = config->cfg.sence_mode;
-
+    CMR_LOGI("parm.scene_mode =%d",parm.scene_mode);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_OUTPUT_SIZE, &parm);
     CMR_RTN_IF_ERR(ret);
 
@@ -1461,7 +1464,6 @@ cmr_int cmr_grab_path_capability(cmr_handle grab_handle,
     cnt = read(p_grab->fd, &op, sizeof(struct sprd_img_read_op));
     if (cnt != sizeof(struct sprd_img_read_op))
         ret = cnt;
-
     for (i = 0; i < (cmr_int)(op.parm.capability.count); i++) {
         if (op.parm.capability.path_info[i].support_yuv) {
             yuv_cnt++;

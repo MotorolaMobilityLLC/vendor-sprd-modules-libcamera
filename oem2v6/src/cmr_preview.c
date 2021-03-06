@@ -7692,6 +7692,10 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 is_raw_capture = 0;
     char value[PROPERTY_VALUE_MAX];
     struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    int app_mode;
+    bool config_thumb;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -7781,11 +7785,20 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
         }
     }
 
-    if (handle->prev_cxt[camera_id].prev_param.channel3_eb) {
-        ret = channel3_configure(handle, camera_id, is_restart, out_param_ptr);
-        if (ret) {
-            CMR_LOGE("channel3_configure failed");
-            goto exit;
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                         SETTING_GET_APPMODE, &setting_param);
+    app_mode = setting_param.cmd_type_value;
+    CMR_LOGD("app mode =%d",app_mode);
+    property_get("persist.vendor.cam.fast.automode", value, "null");
+    config_thumb = (camera_id == 1 && app_mode == 0 && !strcmp(value,"true"));
+    if(!config_thumb) {
+        if (handle->prev_cxt[camera_id].prev_param.channel3_eb) {
+            ret = channel3_configure(handle, camera_id, is_restart, out_param_ptr);
+            if (ret) {
+                CMR_LOGE("channel3_configure failed");
+                goto exit;
+            }
         }
     }
 
@@ -7796,7 +7809,7 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
     }
-
+    memset(value,0,PROPERTY_VALUE_MAX);
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
     if (!strcmp(value, "raw")) {
         is_raw_capture = 1;
@@ -7822,6 +7835,18 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
             goto exit;
         }
     }
+
+    if(config_thumb) {
+        CMR_LOGI("configure path3 after capture");
+        if (handle->prev_cxt[camera_id].prev_param.channel3_eb) {
+            ret = channel3_configure(handle, camera_id, is_restart, out_param_ptr);
+            if (ret) {
+                CMR_LOGE("channel3_configure failed");
+                goto exit;
+            }
+        }
+    }
+
 
 exit:
     CMR_LOGV("X");
@@ -10708,6 +10733,213 @@ exit:
 }
 
 cmr_uint g_channel2_frame_dump_cnt = 0;
+cmr_uint g_channel3_frame_dump_cnt = 0;
+
+cmr_uint channel3_thumb_rot_flip(struct prev_handle *handle, cmr_u32 camera_id, struct camera_frame_type *frame_type, struct frm_info *info)
+{
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cam_cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cam_cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    struct prev_context *prev_cxt = NULL;
+    cam_ion_buffer_t ion_buf;
+    cmr_u32 channel3_rot_angle = 0;
+    cmr_u32 flip_on = 0;
+    cmr_u32 valid_buf_cnt;
+    //int rot_index;
+    int i;
+    struct cmr_op_mean op_mean;
+
+    struct rot_param rot_param;
+
+    prev_cxt = &handle->prev_cxt[camera_id];
+
+    setting_param.camera_id = cam_cxt->camera_id;
+
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                      SETTING_GET_ENCODE_ROTATION, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get enc rotation %ld", ret);
+        return ret;
+    }
+    channel3_rot_angle = setting_param.cmd_type_value;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                      SETTING_GET_FLIP_ON, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get preview sprd flip_on enabled flag %ld",ret);
+        return ret;
+    }
+    flip_on = setting_param.cmd_type_value;
+    CMR_LOGI("channel3_rot_angle =%d，flip_on =%d",channel3_rot_angle,flip_on);
+    if(flip_on) {
+        switch (channel3_rot_angle){
+        case 90:
+            channel3_rot_angle = IMG_ANGLE_270;
+            break;
+        case 180:
+            channel3_rot_angle = IMG_ANGLE_180;
+            break;
+        case 270:
+            channel3_rot_angle= IMG_ANGLE_90;
+            break;
+        default:
+            break;
+         }
+    } else {
+        switch (channel3_rot_angle){
+            case 90:
+                channel3_rot_angle = IMG_ANGLE_90;
+                break;
+            case 180:
+                channel3_rot_angle = IMG_ANGLE_180;
+                break;
+            case 270:
+                channel3_rot_angle = IMG_ANGLE_270;
+                break;
+            default:
+                break;
+       }
+    }
+    CMR_LOGD("channel3_rot_angle =%d",channel3_rot_angle);
+    char value[PROPERTY_VALUE_MAX];
+    property_get("debug.camera.channel3.dump.count", value, "null");
+    cmr_uint dump_num = atoi(value);
+    if (strcmp(value, "null")) {
+        if (g_channel3_frame_dump_cnt < dump_num) {
+            char tag_name[30]={0};
+            char cameraId[2] ={0};
+            strcpy(tag_name, "dump_channel2_frame");
+            sprintf(cameraId, "%d", camera_id);
+            strcat(tag_name, cameraId);
+            dump_image(tag_name, CAM_IMG_FMT_YUV420_NV21,
+                    frame_type->width, frame_type->height,
+                    prev_cxt->channel3.frm_cnt,
+                    &prev_cxt->channel3.frm[0].addr_vir,
+                    frame_type->width * frame_type->height * 3 / 2);
+                    g_channel3_frame_dump_cnt++;
+        }
+    }
+
+    if(flip_on) {
+        cmr_int buf_size = prev_cxt->channel3.rot_frm[0].size.height*prev_cxt->channel3.rot_frm[0].size.width*3/2;
+        memcpy((void*)prev_cxt->channel3.rot_frm[0].addr_vir.addr_y,(void*)prev_cxt->channel3.frm[0].addr_vir.addr_y,buf_size);
+
+        ion_buf.fd = (int)prev_cxt->channel3.rot_frm[0].fd;
+        ion_buf.size = buf_size;
+        ion_buf.addr_phy = (void *)prev_cxt->channel3.rot_frm[0].addr_phy.addr_y;
+        ion_buf.addr_vir = (void *)prev_cxt->channel3.rot_frm[0].addr_vir.addr_y;
+        cam_cxt->camera_cb(CAMERA_EVT_CB_FLUSH_BUF, cam_cxt->client_data,
+                                 CAMERA_FUNC_BUFCACHE, (void *)&ion_buf);
+        rot_param.src_img = &prev_cxt->channel3.rot_frm[0];
+        rot_param.src_img->data_end = prev_cxt->channel3.endian;
+        rot_param.dst_img = &prev_cxt->channel3.frm[0];
+        rot_param.dst_img->data_end = prev_cxt->channel3.endian;
+        op_mean.rot = IMG_ANGLE_MIRROR;
+        ret = handle->ops.start_rot(handle->oem_handle, (cmr_handle)handle,
+                                        rot_param.src_img, rot_param.dst_img,
+                                        &op_mean);
+
+        ion_buf.fd = (int)prev_cxt->channel3.frm[0].fd;
+        ion_buf.size = buf_size;
+        ion_buf.addr_phy = (void *)prev_cxt->channel3.frm[0].addr_phy.addr_y;
+        ion_buf.addr_vir = (void *)prev_cxt->channel3.frm[0].addr_vir.addr_y;
+        cam_cxt->camera_cb(CAMERA_EVT_CB_INVALIDATE_BUF, cam_cxt->client_data,
+                        CAMERA_FUNC_BUFCACHE, (void *)&ion_buf);
+    }
+        // no rotation
+    if (channel3_rot_angle == 0) {
+        if (prev_cxt->channel3.frm[0].fd != (cmr_s32)info->fd) {
+            ret = -1;
+            CMR_LOGE("frame sequence error from kernel driver: info->fd=0x%x, "
+                             "prev_cxt->channel2.frm[0].fd=0x%x",
+                             info->fd, prev_cxt->channel3.frm[0].fd);
+            return ret;
+        }
+
+        frame_type->buf_id = 0;
+        frame_type->order_buf_id = 0;
+        frame_type->y_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_y;
+        frame_type->uv_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_u;
+        frame_type->fd = prev_cxt->channel3.frm[0].fd;
+        frame_type->y_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_y;
+        frame_type->uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
+        frame_type->width = prev_cxt->channel3.size.width;
+        frame_type->height = prev_cxt->channel3.size.height;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
+        frame_type->monoboottime = info->monoboottime;
+        frame_type->type = CHANNEL3_FRAME;
+
+
+        valid_buf_cnt = prev_cxt->channel3.valid_buf_cnt;
+        for (i = 0; i < (int)valid_buf_cnt - 1; i++) {
+            prev_cxt->channel3.fd[i] = prev_cxt->channel3.fd[i + 1];
+            prev_cxt->channel3.addr_phy[i] = prev_cxt->channel3.addr_phy[i + i];
+            prev_cxt->channel3.addr_vir[i] = prev_cxt->channel3.addr_vir[i + 1];
+            prev_cxt->channel3.frm[i] = prev_cxt->channel3.frm[i + 1];
+        }
+
+        prev_cxt->channel3.fd[valid_buf_cnt - 1] = 0;
+        prev_cxt->channel3.addr_phy[valid_buf_cnt - 1] = 0;
+        prev_cxt->channel3.addr_vir[valid_buf_cnt - 1] = 0;
+        cmr_bzero(&prev_cxt->channel3.frm[valid_buf_cnt - 1],
+                sizeof(struct img_frm));
+    } else {
+        cmr_int buf_size = prev_cxt->channel3.rot_frm[0].size.height*prev_cxt->channel3.rot_frm[0].size.width*3/2;
+        memcpy((void*)prev_cxt->channel3.rot_frm[0].addr_vir.addr_y,(void*)prev_cxt->channel3.frm[0].addr_vir.addr_y,buf_size);
+
+        ion_buf.fd = (int)prev_cxt->channel3.rot_frm[0].fd;
+        ion_buf.size = buf_size;
+        ion_buf.addr_phy = (void *)prev_cxt->channel3.rot_frm[0].addr_phy.addr_y;
+        ion_buf.addr_vir = (void *)prev_cxt->channel3.rot_frm[0].addr_vir.addr_y;
+        cam_cxt->camera_cb(CAMERA_EVT_CB_FLUSH_BUF, cam_cxt->client_data,
+                CAMERA_FUNC_BUFCACHE, (void *)&ion_buf);
+
+        rot_param.src_img = &prev_cxt->channel3.rot_frm[0];
+        rot_param.src_img->data_end = prev_cxt->channel3.endian;
+        rot_param.dst_img = &prev_cxt->channel3.frm[0];
+        rot_param.dst_img->data_end = prev_cxt->channel3.endian;
+        rot_param.angle = channel3_rot_angle;
+        op_mean.rot = channel3_rot_angle;
+        ret = handle->ops.start_rot(handle->oem_handle, (cmr_handle)handle,
+                        rot_param.src_img, rot_param.dst_img,
+                                        &op_mean);
+        if (ret) {
+            CMR_LOGE("rot failed");
+            ret = CMR_CAMERA_FAIL;
+            return ret;
+        }
+
+        frame_type->buf_id = 0;
+        frame_type->order_buf_id = 0;
+        frame_type->y_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_y;
+        frame_type->uv_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_u;
+        frame_type->fd = prev_cxt->channel3.frm[0].fd;
+        frame_type->y_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_y;
+        frame_type->uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
+        frame_type->width = prev_cxt->channel3.size.width;
+        frame_type->height = prev_cxt->channel3.size.height;
+        frame_type->timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
+        frame_type->monoboottime = info->monoboottime;
+        frame_type->type = CHANNEL3_FRAME;
+
+        valid_buf_cnt = prev_cxt->channel3.valid_buf_cnt;
+        for (i = 0; i < (int)valid_buf_cnt - 1; i++) {
+            prev_cxt->channel3.fd[i] = prev_cxt->channel3.fd[i + 1];
+            prev_cxt->channel3.addr_phy[i] = prev_cxt->channel3.addr_phy[i + i];
+            prev_cxt->channel3.addr_vir[i] = prev_cxt->channel3.addr_vir[i + 1];
+            prev_cxt->channel3.frm[i] = prev_cxt->channel3.frm[i + 1];
+        }
+
+        prev_cxt->channel3.fd[valid_buf_cnt - 1] = 0;
+        prev_cxt->channel3.addr_phy[valid_buf_cnt - 1] = 0;
+        prev_cxt->channel3.addr_vir[valid_buf_cnt - 1] = 0;
+        cmr_bzero(&prev_cxt->channel3.frm[valid_buf_cnt - 1],sizeof(struct img_frm));
+        prev_cxt->channel3.rot_frm_lock_flag[0] = 0;
+    }
+    return ret;
+
+}
+
 int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
                             struct frm_info *info) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -10724,6 +10956,7 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     int rot_index;
     struct camera_frame_type frame_type;
     int i;
+
 
     if (!handle || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p", handle, info);
@@ -10761,8 +10994,8 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         if (prev_cxt->channel2.frm[0].fd != (cmr_s32)info->fd) {
             ret = -1;
             CMR_LOGE("frame sequence error from kernel driver: info->fd=0x%x, "
-                     "prev_cxt->channel2.frm[0].fd=0x%x",
-                     info->fd, prev_cxt->channel2.frm[0].fd);
+                 "prev_cxt->channel2.frm[0].fd=0x%x",
+                  info->fd, prev_cxt->channel2.frm[0].fd);
             goto exit;
         }
 
@@ -10812,9 +11045,9 @@ int channel2_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         cmr_bzero(&prev_cxt->channel2.frm[valid_buf_cnt - 1],
                   sizeof(struct img_frm));
     } else {
-        // rotation case
+    // rotation case
         ret = get_frame_index(prev_cxt->channel2.rot_frm, CHANNEL2_BUF_CNT_ROT,
-                              info, &rot_index);
+                          info, &rot_index);
         if (ret) {
             CMR_LOGE("frame is not match");
             goto exit;
@@ -11020,8 +11253,26 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
                            &prev_cxt->channel3.frm_reserved.fd);
     }
 #else
+    cmr_uint app_mode;
+    char value[PROPERTY_VALUE_MAX];
+    struct setting_cmd_parameter setting_param;
+    struct camera_context *cam_cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cam_cxt->setting_cxt;
+
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cam_cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                      SETTING_GET_APPMODE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get app mode %ld", ret);
+    }
+    app_mode = setting_param.cmd_type_value;
+    CMR_LOGI("channel3_alloc_bufs,appmode=%d",app_mode);
+
+    property_get("persist.vendor.cam.fast.automode", value, "null");
+
     prev_cxt->channel3.buf_cnt = 0;
-    if (prev_cxt->prev_param.channel3_rot_angle) {
+    if (prev_cxt->prev_param.channel3_rot_angle ||(camera_id == 1 && app_mode == 0 && !strcmp(value,"true"))) {
         CMR_LOGD("rotation need more buffer");
         prev_cxt->channel3.buf_cnt += CHANNEL3_BUF_CNT_ROT;
         if (!is_restart) {
@@ -11088,7 +11339,7 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->channel3.frm_reserved.addr_phy.addr_y + width * height;
     //prev_cxt->channel3.frm_reserved.fd = prev_cxt->channel3.frm_reserved.fd;
 
-    if (prev_cxt->prev_param.channel3_rot_angle) {
+    if (prev_cxt->prev_param.channel3_rot_angle ||(camera_id == 1 && app_mode == 0 && !strcmp(value,"true"))) {
         for (i = 0; i < CHANNEL3_BUF_CNT_ROT; i++) {
             prev_cxt->channel3.rot_frm[i].fmt =
                 prev_cxt->prev_param.channel3_fmt;
@@ -11210,8 +11461,28 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.flip_on =
         handle->prev_cxt[camera_id].prev_param.channel3_flip_on;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
-    chn_param.cap_inf_cfg.cfg.sence_mode =
-        DCAM_SCENE_MODE_CAPTURE_CALLBACK; // TBD
+    cmr_uint app_mode;
+    struct camera_context *cam_cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cam_cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+
+    setting_param.camera_id = cam_cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                          SETTING_GET_APPMODE, &setting_param);
+    app_mode=setting_param.cmd_type_value;
+    char value[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.fast.automode", value, "null");
+
+    if(camera_id == 1 && app_mode == 0 && !strcmp(value,"true")) {
+        chn_param.cap_inf_cfg.skip_output_check = 1;
+        chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_THUMB;
+        CMR_LOGD("skip_output_check =%d",chn_param.cap_inf_cfg.skip_output_check);
+
+    } else {
+        chn_param.cap_inf_cfg.skip_output_check = 0;
+        chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_CALLBACK;
+    }
+
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
 
     if (CAM_IMG_FMT_BAYER_MIPI_RAW == sensor_mode_info->image_format) {
@@ -11297,7 +11568,7 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->need_binning = chn_param.cap_inf_cfg.cfg.need_binning;
 
     /* skip frame in dcam driver */
-    if (prev_cxt->channel3.skip_mode == IMG_SKIP_SW_KER) {
+    if (prev_cxt->channel3.skip_mode == IMG_SKIP_SW_KER && !(camera_id == 1 && app_mode == 0 && !strcmp(value,"true"))) {
         for (i = 0; i < prev_cxt->channel3.skip_num; i++) {
             cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
             buf_cfg.channel_id = prev_cxt->channel3.chn_id;
@@ -11483,10 +11754,18 @@ cmr_s32 channel3_queue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 width, height;
     struct buffer_cfg buf_cfg;
     cmr_u32 rot_index = 0;
+    struct buffer_cfg buf_cfg_thumb;
+    int i,app_mode,is_hdr;
+
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
     cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
+
+    struct camera_context *cam_cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cam_cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    char value[PROPERTY_VALUE_MAX];
 
     prev_cxt = &handle->prev_cxt[camera_id];
     valid_num = prev_cxt->channel3.valid_buf_cnt;
@@ -11556,6 +11835,48 @@ cmr_s32 channel3_queue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         buf_cfg.fd[0] = prev_cxt->channel3.frm[valid_num].fd;
     }
 
+    setting_param.camera_id = cam_cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_APPMODE, &setting_param);
+    app_mode = setting_param.cmd_type_value;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR,
+                            &setting_param);
+    is_hdr = setting_param.cmd_type_value;
+    CMR_LOGD("app mode =%d,is_hdr=%d",app_mode,is_hdr);
+    if (ret) {
+        CMR_LOGE("failed to get envir %ld", ret);
+        goto exit;
+    }
+    property_get("persist.vendor.cam.fast.automode", value, "null");
+    if (is_hdr == 1 && app_mode == 0 && !strcmp(value,"true")) {
+        for (i = 0; i < 2; i++) {
+            cmr_bzero(&buf_cfg_thumb, sizeof(struct buffer_cfg));
+            buf_cfg_thumb.channel_id = prev_cxt->channel2.chn_id;
+            buf_cfg_thumb.base_id = CMR_VIDEO_ID_BASE;
+            buf_cfg_thumb.count = 1;
+            buf_cfg_thumb.length = prev_cxt->channel2.frm_reserved.buf_size;
+            buf_cfg_thumb.is_reserved_buf = 0;
+            buf_cfg_thumb.flag = BUF_FLAG_RUNNING;
+            buf_cfg_thumb.addr[0].addr_y =
+                        prev_cxt->channel2.frm_reserved.addr_phy.addr_y;
+            buf_cfg_thumb.addr[0].addr_u =
+                        prev_cxt->channel2.frm_reserved.addr_phy.addr_u;
+            buf_cfg_thumb.addr_vir[0].addr_y =
+                        prev_cxt->channel2.frm_reserved.addr_vir.addr_y;
+            buf_cfg_thumb.addr_vir[0].addr_u =
+                        prev_cxt->channel2.frm_reserved.addr_vir.addr_u;
+            buf_cfg_thumb.fd[0] = prev_cxt->channel2.frm_reserved.fd;
+            buf_cfg_thumb.frame_number = buffer->frame_number;
+            ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg_thumb);
+            CMR_LOGI("skip 2 frames for hdr mode,fd =0x%x",buf_cfg_thumb.fd[0]);
+            if (ret) {
+                CMR_LOGE("channel buff config failed");
+                ret = CMR_CAMERA_FAIL;
+                goto exit;
+            }
+        }
+    }
+
     ret = handle->ops.channel_buff_cfg(handle->oem_handle, &buf_cfg);
     if (ret) {
         CMR_LOGE("channel_buff_cfg failed");
@@ -11617,96 +11938,113 @@ int channel3_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         CMR_LOGE("chn3 valid_buf_cnt=%d", prev_cxt->channel3.valid_buf_cnt);
         goto exit;
     }
+    struct camera_context *cam_cxt = (struct camera_context *)(handle->oem_handle);
+    struct setting_context *setting_cxt = &cam_cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    char value[PROPERTY_VALUE_MAX];
+    int app_mode;
+    setting_param.camera_id = cam_cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                        SETTING_GET_APPMODE, &setting_param);
+    app_mode = setting_param.cmd_type_value;
+    CMR_LOGD("app mode =%d",app_mode);
+    property_get("persist.vendor.cam.fast.automode", value, "null");
 
+    if(camera_id == 1 && app_mode == 0 && !strcmp(value,"true")) {
+        channel3_thumb_rot_flip(handle,camera_id,&frame_type, info);
+    }
+    else {
     // no rotation
-    if (channel3_rot_angle == 0) {
-        if (prev_cxt->channel3.frm[0].fd != (cmr_s32)info->fd) {
-            ret = -1;
-            CMR_LOGE("frame sequence error from kernel driver: info->fd=0x%x, "
-                     "prev_cxt->channel3.frm[0].fd=0x%x",
-                     info->fd, prev_cxt->channel3.frm[0].fd);
-            goto exit;
-        }
+        if (channel3_rot_angle == 0) {
+            if (prev_cxt->channel3.frm[0].fd != (cmr_s32)info->fd) {
+                ret = -1;
+                CMR_LOGE("frame sequence error from kernel driver: info->fd=0x%x, "
+                         "prev_cxt->channel3.frm[0].fd=0x%x",
+                         info->fd, prev_cxt->channel3.frm[0].fd);
+                goto exit;
+            }
 
-        frame_type.buf_id = 0;
-        frame_type.order_buf_id = 0;
-        frame_type.y_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_y;
-        frame_type.uv_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_u;
-        frame_type.fd = prev_cxt->channel3.frm[0].fd;
-        frame_type.y_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_y;
-        frame_type.uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
-        frame_type.width = prev_cxt->channel3.size.width;
-        frame_type.height = prev_cxt->channel3.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
-        frame_type.monoboottime = info->monoboottime;
-        frame_type.type = CHANNEL3_FRAME;
+            frame_type.buf_id = 0;
+            frame_type.order_buf_id = 0;
+            frame_type.y_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_y;
+            frame_type.uv_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_u;
+            frame_type.fd = prev_cxt->channel3.frm[0].fd;
+            frame_type.y_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_y;
+            frame_type.uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
+            frame_type.width = prev_cxt->channel3.size.width;
+            frame_type.height = prev_cxt->channel3.size.height;
+            frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
+            frame_type.monoboottime = info->monoboottime;
+            frame_type.type = CHANNEL3_FRAME;
 
-        valid_buf_cnt = prev_cxt->channel3.valid_buf_cnt;
-        for (i = 0; i < (int)valid_buf_cnt - 1; i++) {
-            prev_cxt->channel3.fd[i] = prev_cxt->channel3.fd[i + 1];
-            prev_cxt->channel3.addr_phy[i] = prev_cxt->channel3.addr_phy[i + i];
-            prev_cxt->channel3.addr_vir[i] = prev_cxt->channel3.addr_vir[i + 1];
-            prev_cxt->channel3.frm[i] = prev_cxt->channel3.frm[i + 1];
-        }
+            valid_buf_cnt = prev_cxt->channel3.valid_buf_cnt;
+            for (i = 0; i < (int)valid_buf_cnt - 1; i++) {
+                prev_cxt->channel3.fd[i] = prev_cxt->channel3.fd[i + 1];
+                prev_cxt->channel3.addr_phy[i] = prev_cxt->channel3.addr_phy[i + i];
+                prev_cxt->channel3.addr_vir[i] = prev_cxt->channel3.addr_vir[i + 1];
+                prev_cxt->channel3.frm[i] = prev_cxt->channel3.frm[i + 1];
+            }
 
-        prev_cxt->channel3.fd[valid_buf_cnt - 1] = 0;
-        prev_cxt->channel3.addr_phy[valid_buf_cnt - 1] = 0;
-        prev_cxt->channel3.addr_vir[valid_buf_cnt - 1] = 0;
-        cmr_bzero(&prev_cxt->channel3.frm[valid_buf_cnt - 1],
-                  sizeof(struct img_frm));
-    } else {
+            prev_cxt->channel3.fd[valid_buf_cnt - 1] = 0;
+            prev_cxt->channel3.addr_phy[valid_buf_cnt - 1] = 0;
+            prev_cxt->channel3.addr_vir[valid_buf_cnt - 1] = 0;
+            cmr_bzero(&prev_cxt->channel3.frm[valid_buf_cnt - 1],
+                      sizeof(struct img_frm));
+        } else {
         // rotation case
-        ret = get_frame_index(prev_cxt->channel3.rot_frm, CHANNEL3_BUF_CNT_ROT,
-                              info, &rot_index);
-        if (ret) {
-            CMR_LOGE("frame is not match");
-            goto exit;
-        }
+            ret = get_frame_index(prev_cxt->channel3.rot_frm, CHANNEL3_BUF_CNT_ROT,
+                                  info, &rot_index);
+            if (ret) {
+                CMR_LOGE("frame is not match");
+                goto exit;
+            }
 
-        rot_param.src_img = &prev_cxt->channel3.rot_frm[rot_index];
-        rot_param.src_img->data_end = prev_cxt->channel3.endian;
-        rot_param.dst_img = &prev_cxt->channel3.frm[0];
-        rot_param.dst_img->data_end = prev_cxt->channel3.endian;
-        rot_param.angle = channel3_rot_angle;
-        op_mean.rot = channel3_rot_angle;
-        ret = handle->ops.start_rot(handle->oem_handle, (cmr_handle)handle,
+            rot_param.src_img = &prev_cxt->channel3.rot_frm[rot_index];
+            rot_param.src_img->data_end = prev_cxt->channel3.endian;
+            rot_param.dst_img = &prev_cxt->channel3.frm[0];
+            rot_param.dst_img->data_end = prev_cxt->channel3.endian;
+            rot_param.angle = channel3_rot_angle;
+            op_mean.rot = channel3_rot_angle;
+            ret = handle->ops.start_rot(handle->oem_handle, (cmr_handle)handle,
                                     rot_param.src_img, rot_param.dst_img,
                                     &op_mean);
-        if (ret) {
-            CMR_LOGE("rot failed");
-            ret = CMR_CAMERA_FAIL;
-            goto exit;
+            if (ret) {
+                CMR_LOGE("rot failed");
+                ret = CMR_CAMERA_FAIL;
+                goto exit;
+            }
+
+            frame_type.buf_id = 0;
+            frame_type.order_buf_id = 0;
+            frame_type.y_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_y;
+            frame_type.uv_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_u;
+            frame_type.fd = prev_cxt->channel3.frm[0].fd;
+            frame_type.y_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_y;
+            frame_type.uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
+            frame_type.width = prev_cxt->channel3.size.width;
+            frame_type.height = prev_cxt->channel3.size.height;
+            frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
+            frame_type.monoboottime = info->monoboottime;
+            frame_type.type = CHANNEL3_FRAME;
+
+            valid_buf_cnt = prev_cxt->channel3.valid_buf_cnt;
+            for (i = 0; i < (int)valid_buf_cnt - 1; i++) {
+                prev_cxt->channel3.fd[i] = prev_cxt->channel3.fd[i + 1];
+                prev_cxt->channel3.addr_phy[i] = prev_cxt->channel3.addr_phy[i + i];
+                prev_cxt->channel3.addr_vir[i] = prev_cxt->channel3.addr_vir[i + 1];
+                prev_cxt->channel3.frm[i] = prev_cxt->channel3.frm[i + 1];
+            }
+
+            prev_cxt->channel3.fd[valid_buf_cnt - 1] = 0;
+            prev_cxt->channel3.addr_phy[valid_buf_cnt - 1] = 0;
+            prev_cxt->channel3.addr_vir[valid_buf_cnt - 1] = 0;
+            cmr_bzero(&prev_cxt->channel3.frm[valid_buf_cnt - 1],
+                      sizeof(struct img_frm));
+
+            prev_cxt->channel3.rot_frm_lock_flag[rot_index] = 0;
         }
-
-        frame_type.buf_id = 0;
-        frame_type.order_buf_id = 0;
-        frame_type.y_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_y;
-        frame_type.uv_vir_addr = prev_cxt->channel3.frm[0].addr_vir.addr_u;
-        frame_type.fd = prev_cxt->channel3.frm[0].fd;
-        frame_type.y_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_y;
-        frame_type.uv_phy_addr = prev_cxt->channel3.frm[0].addr_phy.addr_u;
-        frame_type.width = prev_cxt->channel3.size.width;
-        frame_type.height = prev_cxt->channel3.size.height;
-        frame_type.timestamp = info->sec * 1000000000LL + info->usec * 1000LL;
-        frame_type.monoboottime = info->monoboottime;
-        frame_type.type = CHANNEL3_FRAME;
-
-        valid_buf_cnt = prev_cxt->channel3.valid_buf_cnt;
-        for (i = 0; i < (int)valid_buf_cnt - 1; i++) {
-            prev_cxt->channel3.fd[i] = prev_cxt->channel3.fd[i + 1];
-            prev_cxt->channel3.addr_phy[i] = prev_cxt->channel3.addr_phy[i + i];
-            prev_cxt->channel3.addr_vir[i] = prev_cxt->channel3.addr_vir[i + 1];
-            prev_cxt->channel3.frm[i] = prev_cxt->channel3.frm[i + 1];
-        }
-
-        prev_cxt->channel3.fd[valid_buf_cnt - 1] = 0;
-        prev_cxt->channel3.addr_phy[valid_buf_cnt - 1] = 0;
-        prev_cxt->channel3.addr_vir[valid_buf_cnt - 1] = 0;
-        cmr_bzero(&prev_cxt->channel3.frm[valid_buf_cnt - 1],
-                  sizeof(struct img_frm));
-
-        prev_cxt->channel3.rot_frm_lock_flag[rot_index] = 0;
     }
+
 
     prev_cxt->channel3.valid_buf_cnt--;
 

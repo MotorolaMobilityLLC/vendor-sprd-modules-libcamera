@@ -969,6 +969,7 @@ struct cap_cfg {
     cmr_u32 hdr_cap;
     cmr_u32 video_enabled;
     cmr_u32 sensor_id;
+    cmr_u32 skip_output_check;
     struct img_frm_cap cfg;
 };
 
