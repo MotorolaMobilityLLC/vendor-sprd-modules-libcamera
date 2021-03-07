@@ -5422,6 +5422,7 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 	cmr_u32 ratio_h = blk_num_h/BLK_NUM_W_ALG;///2
 	cmr_u32 ratio_w = blk_num_w/BLK_NUM_W_ALG;
 	cmr_u32 bayer_chnl = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/4;
+	cmr_u32 bayer_chnl_g = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/2;
 	cxt->cur_status.adv_param.data.stats_data_adv.size.h = cxt->monitor_cfg.blk_num.h;
 	cxt->cur_status.adv_param.data.stats_data_adv.size.w = cxt->monitor_cfg.blk_num.w;
 	cxt->cur_status.adv_param.data.stats_data_adv.blk_size.w = cxt->monitor_cfg.blk_size.w;
@@ -5464,8 +5465,8 @@ static void ae_binning_for_aem_statsv2(struct ae_ctrl_cxt *cxt, struct ae_calc_i
 						sum_me = aem_stat_ptr->sum_ae_g[idx];
 						num_oe = aem_stat_ptr->cnt_oe_g[idx];
 						num_ue = aem_stat_ptr->cnt_ue_g[idx];
-						num_me = bayer_chnl - num_oe - num_ue;
-						avg_g = (sum_oe + sum_ue + sum_me)/ bayer_chnl;
+						num_me = bayer_chnl_g - num_oe - num_ue;
+						avg_g = (sum_oe + sum_ue + sum_me)/ bayer_chnl_g;
 						tmp_g += avg_g/(ratio_w * ratio_h);//binning is average of adjacent pixels
 
 						cxt->cur_status.adv_param.data.stats_data_adv.stats_data[1][idx].oe_stats_data = sum_oe;
