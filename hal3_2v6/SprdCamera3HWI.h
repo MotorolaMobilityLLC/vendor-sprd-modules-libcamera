@@ -132,7 +132,8 @@ class SprdCamera3HWI {
     void setMultiAppRatio(float app_ratio);
     static void dumpMemoryAddresses(size_t limit);
     void setSyncState(SyncState mSyncState);
-	SprdCamera3MetadataChannel *getMetadataChannel();
+    SprdCamera3MetadataChannel *getMetadataChannel();
+    int ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
 
   private:
     int openCamera();

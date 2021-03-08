@@ -2819,9 +2819,8 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
                     SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
                     sizeof(struct camera_frame_type));
         } else if (cxt->req_param.is_hdr == 1) {
-        // bokeh + hdr RETURN_SW_ALGORITHM_ZSL_BUF message is in
-            // snp_yuv_callback_take_picture_done
-            if (cmr_cxt->is_multi_mode != MODE_BOKEH && cmr_cxt->is_multi_mode != MODE_MULTI_CAMERA) {
+            if (cmr_cxt->is_multi_mode != MODE_BOKEH &&
+                cmr_cxt->is_multi_mode != MODE_MULTI_CAMERA) {
                 CMR_LOGI(
                     "send HDR SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here");
                 snp_send_msg_notify_thr(
@@ -5248,7 +5247,8 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     CMR_LOGD("is_3dnr %d is_hdr %d", cxt->req_param.is_3dnr, cxt->req_param.is_hdr);
     if (cxt->req_param.is_hdr == 1 &&
         (cmr_cxt->is_multi_mode == MODE_BOKEH ||
-         cmr_cxt->is_multi_mode == MODE_MULTI_CAMERA)) {
+         cmr_cxt->is_multi_mode == MODE_MULTI_CAMERA ||
+         cmr_cxt->is_multi_mode == MODE_BLUR)) {
         snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                 SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
                                 NULL, sizeof(struct camera_frame_type));

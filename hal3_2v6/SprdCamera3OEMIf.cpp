@@ -3503,6 +3503,14 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = 5;
     }
 
+#if defined(CONFIG_ISP_2_3)|| defined(CONFIG_ISP_2_7)
+    if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH&& mCameraId == mMasterId) ||
+        getMultiCameraMode() == MODE_BLUR) {
+        mZslNum = 5;
+        mZslMaxFrameNum = 5;
+    }
+#endif
+
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
         mVideoProcessedWithPreview = true;
     }
@@ -8390,6 +8398,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 #else
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW;//l5/l6
 #endif
+            if(getMultiCameraMode() == MODE_BOKEH){
+                    if(mCameraId == mMasterId)
+                        mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW;
+                    else
+                        mSprd3dnrType = 0;
+                }
+                if(getMultiCameraMode() == MODE_BLUR){
+                    mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW;
+                }
             } else {
 #ifdef CONFIG_NIGHT_3DNR_PREV_HW_CAP_HW
                 // l3 night shot
@@ -8966,7 +8983,8 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO) {
+        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId)
+         || getMultiCameraMode() == MODE_BLUR) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
     }
@@ -9006,7 +9024,8 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     *fd = 0;
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
-        sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO) {
+        (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)|| (getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId)
+         || getMultiCameraMode() == MODE_BLUR) {
         ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
         return ret;
     }
@@ -11099,7 +11118,7 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
     cmr_u32 buf_id = 0;
     SPRD_DEF_Tag *sprddefInfo;
 
-    HAL_LOGI("E");
+    HAL_LOGI("E mSprd3dnrType %d mCameraId %d",mSprd3dnrType,mCameraId);
     // for 3dnr sw 2.0
     buf_id = getZslBufferIDForFd(zsl_frame->fd);
     if (buf_id == 0xFFFFFFFF)
@@ -11142,6 +11161,16 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
         dst_alg_buf->y_vir_addr = zsl_frame->y_vir_addr;
         dst_alg_buf->y_phy_addr = zsl_frame->y_phy_addr;
     }
+    if (mMultiCameraMode == MODE_BOKEH) {
+        if (buf_cnt == 0) {
+            if (mIsStoppingPreview == 1) {
+                HAL_LOGD("preview is stoped");
+                return -1;
+            }
+
+            receiveRawPicture(zsl_frame);
+        }
+    }
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
         mHalOem->ops->image_sw_algorithm_processing(
@@ -11167,6 +11196,37 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
         return -1;
     }
     return 0;
+}
+
+int SprdCamera3OEMIf::ProcessAlgoNr(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type) {
+    int ret = 0;
+    cmr_u32 value = 0, is_slave = 0;
+    struct image_sw_algorithm_buf src_alg_buf;
+    struct image_sw_algorithm_buf dst_alg_buf;
+    bzero(&src_alg_buf, sizeof(struct image_sw_algorithm_buf));
+    bzero(&dst_alg_buf, sizeof(struct image_sw_algorithm_buf));
+
+    HAL_LOGI("E"); 
+    src_alg_buf.height = zsl_frame->height;
+    src_alg_buf.width = zsl_frame->width;
+    src_alg_buf.fd = zsl_frame->fd;
+    src_alg_buf.format = zsl_frame->format;
+    src_alg_buf.y_vir_addr = zsl_frame->y_vir_addr;
+    src_alg_buf.y_phy_addr = zsl_frame->y_phy_addr;
+  
+    dst_alg_buf.height = zsl_frame->height;
+    dst_alg_buf.width = zsl_frame->width;
+    dst_alg_buf.fd = zsl_frame->fd;
+    dst_alg_buf.format = zsl_frame->format;
+    dst_alg_buf.y_vir_addr = zsl_frame->y_vir_addr;
+    dst_alg_buf.y_phy_addr = zsl_frame->y_phy_addr;
+   
+    ret = mHalOem->ops->image_sw_algorithm_processing(
+        mCameraHandle, &src_alg_buf,
+        &dst_alg_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,
+        CAM_IMG_FMT_YUV420_NV21); 
+
+    return ret;
 }
 /* SnapshotZslHdr[sub function for snapshotZsl]
  * return: 0~success,-1~goto exit
@@ -11772,9 +11832,9 @@ void SprdCamera3OEMIf::Set_cnr_mode() {
     mSetting->getCONTROLTag(&controlInfo);
     char value[PROPERTY_VALUE_MAX];
     if((! ((CAMERA_MODE_CONTINUE != mSprdAppmodeId) &&
-        (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode) &&
-        (mSprdAppmodeId != -1) && (false == mRecordingMode)) ||
-        ((getMultiCameraMode() == MODE_BLUR) && lightportrait_type != 0))) {
+        (0 == mMultiCameraMode || MODE_MULTI_CAMERA == mMultiCameraMode ||
+        MODE_BOKEH == mMultiCameraMode || MODE_BLUR == mMultiCameraMode) &&
+        (mSprdAppmodeId != -1) && (false == mRecordingMode)))){
         mCNRMode = 0;
     } else {
         mCNRMode = 1;
@@ -11788,7 +11848,7 @@ void SprdCamera3OEMIf::Set_cnr_mode() {
             mCNRMode = 0;
     }
 
-    HAL_LOGD("lightportrait_type = %d, mCNRMode = %d", lightportrait_type, mCNRMode);
+    HAL_LOGD("lightportrait_type = %d, mCNRMode = %d %d", lightportrait_type, mCNRMode,getMultiCameraMode());
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
 }
 
