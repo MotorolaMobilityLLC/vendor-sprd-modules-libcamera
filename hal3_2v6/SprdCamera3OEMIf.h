@@ -980,6 +980,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // 0 - not use, default value is 0; 1 - use video buffer to jpeg enc;
     int32_t mVideoSnapshotType;
 
+    bool mHighFpsMode;
     int mIommuEnabled;
     // 0 - snapshot not need flash; 1 - snapshot need flash
     uint32_t mFlashCaptureFlag;

@@ -62,6 +62,7 @@
 #define CHANNEL1_BUF_CNT 8
 #define CHANNEL1_BUF_CNT_ROT 8
 #define CHANNEL2_BUF_CNT 8
+#define CHANNEL2_BUF_CNT_HIGHFPS 16
 #define CHANNEL2_BUF_CNT_ROT 8
 #define CHANNEL3_BUF_CNT 8
 #define CHANNEL3_BUF_CNT_ROT 8
@@ -6591,6 +6592,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     CMR_LOGV("app_mode = %d", setting_param.cmd_type_value);
     /*get sensor video_slowmotion work mode*/
     if (handle->prev_cxt[camera_id].prev_param.video_slowmotion_eb ||
+        handle->prev_cxt[camera_id].prev_param.high_fps_enabled ||
         setting_param.cmd_type_value == CAMERA_MODE_SLOWMOTION) {
         for (sn_mode = SENSOR_MODE_PREVIEW_ONE; sn_mode < SENSOR_MODE_MAX;
              sn_mode++) {
@@ -6620,7 +6622,9 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
                 sensor_info->mode_info[fps_info.mode].trim_height >=
                     act_video_size->height &&
                 sensor_info->mode_info[fps_info.mode].trim_height >=
-                    act_pic_size->height) {
+                    act_pic_size->height &&
+                sensor_info->mode_info[fps_info.mode].trim_height >=
+                    channel2_size->height) {
                 CMR_LOGD("HFPS: sensor mode=%d, prev_channel_deci=%d",
                          fps_info.mode, fps_info.high_fps_skip_num);
                 handle->prev_cxt[camera_id].prev_mode = fps_info.mode;
@@ -6628,6 +6632,8 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
                     handle->prev_cxt[camera_id].video_mode = fps_info.mode;
                 if (handle->prev_cxt[camera_id].prev_param.snapshot_eb)
                     handle->prev_cxt[camera_id].cap_mode = fps_info.mode;
+                if (handle->prev_cxt[camera_id].prev_param.channel2_eb)
+                    handle->prev_cxt[camera_id].channel2_work_mode = fps_info.mode;
                 handle->prev_cxt[camera_id].prev_channel_deci =
                     fps_info.high_fps_skip_num - 1;
                 break;
@@ -7885,7 +7891,10 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.src_img_fmt = sensor_mode_info->image_format;
     chn_param.cap_inf_cfg.cfg.regular_desc.regular_mode = 0;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
-    if (prev_cxt->prev_param.video_slowmotion_eb) {
+
+    CMR_LOGD("high_fps_enabled %d", prev_cxt->prev_param.high_fps_enabled);
+    if (prev_cxt->prev_param.video_slowmotion_eb ||
+        prev_cxt->prev_param.high_fps_enabled) {
         chn_param.cap_inf_cfg.cfg.slowmotion = 1;
     }
 
@@ -8022,11 +8031,11 @@ cmr_int prev_set_prev_param(struct prev_handle *handle, cmr_u32 camera_id,
     bug video buffer and preview buffer is in one request, so we cant
     do decimation for now, otherwise the fps is low */
 #ifdef SPRD_SLOWMOTION_OPTIMIZE
-        if (prev_cxt->prev_param.video_eb &&
-            prev_cxt->prev_param.video_slowmotion_eb) {
-            chn_param.cap_inf_cfg.chn_deci_factor = 3;
-            prev_cxt->prev_skip_num = 2;
-        }
+    if ((prev_cxt->prev_param.video_eb && prev_cxt->prev_param.video_slowmotion_eb) ||
+        (prev_cxt->prev_param.channel2_eb && prev_cxt->prev_param.high_fps_enabled)) {
+        chn_param.cap_inf_cfg.chn_deci_factor = 3;
+        prev_cxt->prev_skip_num = 2;
+    }
 #endif
 
     chn_param.cap_inf_cfg.cfg.flip_on = 0;
@@ -10605,6 +10614,7 @@ cmr_s32 channel2_queue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_u32 width, height;
     struct buffer_cfg buf_cfg;
     cmr_u32 rot_index = 0;
+    cmr_u32 channel2_buf_cnt = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -10613,7 +10623,13 @@ cmr_s32 channel2_queue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt = &handle->prev_cxt[camera_id];
     valid_num = prev_cxt->channel2.valid_buf_cnt;
 
-    if (valid_num >= CHANNEL2_BUF_CNT) {
+    if (prev_cxt->prev_param.high_fps_enabled) {
+        channel2_buf_cnt = CHANNEL2_BUF_CNT_HIGHFPS;
+    } else {
+        channel2_buf_cnt = CHANNEL2_BUF_CNT;
+    }
+
+    if (valid_num >= channel2_buf_cnt) {
         CMR_LOGE("cnt error valid_num %ld", valid_num);
         ret = CMR_CAMERA_INVALID_PARAM;
         return ret;

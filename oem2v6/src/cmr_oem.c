@@ -9384,6 +9384,18 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     }
     // TBD: check this
     isp_param.capture_mode = 0; // setting_param.cmd_type_value;
+
+//in high fps mode, set dv_mode to 1
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_HIGH_FPS_ENABLED, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get high_fps_enabled %ld", ret);
+        goto exit;
+    }
+    if (setting_param.cmd_type_value)
+        dv_mode = 1;
     isp_param.dv_mode = dv_mode;
 
     ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
@@ -12064,6 +12076,18 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
     out_param_ptr->sprd_zsl_enabled = cxt->zsl_enabled;
     CMR_LOGD("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
 
+//get high_fps_enabled
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_HIGH_FPS_ENABLED, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get high fps enabled %ld", ret);
+        goto exit;
+    }
+    out_param_ptr->high_fps_enabled = setting_param.cmd_type_value;
+    CMR_LOGD("high_fps_enabled %d", out_param_ptr->high_fps_enabled);
+
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -12903,6 +12927,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_SPRD_ZSL_ENABLED:
         cxt->zsl_enabled = param;
         CMR_LOGD("zsl %d", cxt->zsl_enabled);
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_HIGH_FPS_ENABLED:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);

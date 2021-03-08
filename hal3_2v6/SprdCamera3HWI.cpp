@@ -933,6 +933,11 @@ int SprdCamera3HWI::configureStreams(
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
             }
 #endif
+#ifdef SPRD_CALLBACK_HIGH_FPS_MODE
+            else if (stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
+                SprdCamera3RegularChannel::kMaxBuffers = 24;
+            }
+#endif
             else if (video_size.width % 4) {
                 /* for sprd_eis_enable,eis video_size=normal video_size+2*/
                 SprdCamera3RegularChannel::kMaxBuffers = 24;

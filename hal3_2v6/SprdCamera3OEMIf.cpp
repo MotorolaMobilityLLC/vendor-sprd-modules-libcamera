@@ -810,6 +810,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mLastAwbMode = 0;
     mSprd3dnrType = 0;
     mLastAfMode = 0;
+    mHighFpsMode = false;
 
 #ifdef CONFIG_CAMERA_EIS
     memset(mGyrodata, 0, sizeof(mGyrodata));
@@ -2202,6 +2203,16 @@ int SprdCamera3OEMIf::setPreviewParams() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_YUV_CALLBACK_FORMAT,
              (cmr_uint)mCallbackFormat);
 
+//mHighFpsMode: high fps for preview stream and callback stream, set dv_mode to slove LSC problem
+//slowmotion: high fps for preview stream and video stream
+#ifdef SPRD_CALLBACK_HIGH_FPS_MODE
+    if (callbackSize.width && callbackSize.height) {
+        mHighFpsMode = true;
+    } else {
+        mHighFpsMode = false;
+    }
+#endif
+
     if (!mZslIpsEnable) {
         yuv2Size.width = mYuv2Width;
         yuv2Size.height = mYuv2Height;
@@ -2231,7 +2242,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
         mPictureFormat = mCallbackFormat;
     }
 
-    if (mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
+    if (mSprdAppmodeId == CAMERA_MODE_SLOWMOTION || mHighFpsMode == true) {
         captureSize.width = 0;
         captureSize.height = 0;
     }
@@ -3433,6 +3444,8 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mSprdZslEnabled = false;
     } else if (mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
         mSprdZslEnabled = false;
+    } else if (mHighFpsMode == true) {
+        mSprdZslEnabled = false;
     } else if (mRecordingMode == false && mStreamOnWithZsl == 1) {
         mSprdZslEnabled = true;
     } else if ((mRecordingMode == true && sprddefInfo->slowmotion > 1) ||
@@ -3503,9 +3516,17 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_THUMB_SIZE,
              (cmr_uint)&jpeg_thumb_size);
 
+//for high fps callback stream
+    if (mHighFpsMode == true)
+        mSprdZslEnabled = false;
+
     HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
              (cmr_uint)mSprdZslEnabled);
+
+    HAL_LOGD("mHighFpsMode=%d", mHighFpsMode);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_HIGH_FPS_ENABLED,
+             (cmr_uint)mHighFpsMode);
 
     HAL_LOGD("mVideoSnapshotType=%d", mVideoSnapshotType);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SNAPSHOT_TYPE,
@@ -4486,7 +4507,7 @@ void SprdCamera3OEMIf::adjustPreviewPerformance(uint32_t frame_num,
                 } else if (getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_5) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_5);
                 } else if (getAppSceneLevel(mSprdAppmodeId) == CAM_PERFORMANCE_LEVEL_6 ||
-                           sprddefInfo->slowmotion > 1) {
+                           sprddefInfo->slowmotion > 1 || mHighFpsMode == true) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_6);
                 } else if (mRecordingMode == true) {
                     setCamPreformaceScene(CAM_PERFORMANCE_LEVEL_3);
