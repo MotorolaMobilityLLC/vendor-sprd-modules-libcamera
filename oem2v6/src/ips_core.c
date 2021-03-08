@@ -882,6 +882,11 @@ static cmr_int ipmpro_jpeg(struct ips_context *ips_ctx,
     	cmr_int ret = CMR_CAMERA_SUCCESS;
 	cmr_u32 offset;
 	struct img_frm *dst;
+	struct ipmpro_node *first_proc;
+
+	first_proc = node_to_item(req->ipm_head.next, struct ipmpro_node, list);
+	if (req->cur_proc != first_proc)
+		req->cb(req->client_data, &req->req_in, IPS_CB_FLUSH_BUFCACHE, (void *)frame);
 
 	CMR_LOGD("jpegsize %d %d, frame size %d %d\n", req->frm_jpeg.size.width,
 		req->frm_jpeg.size.height, frame->size.width, frame->size.height);

@@ -824,7 +824,7 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 			snprintf(fname, 256, "%sframe%03d_bbthumb0_1filter.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 			fp = fopen(fname, "wb");
 			if (fp != NULL) {
-				CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
+				CMR_LOGD("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 				fwrite((void *)thumb_frm.addr_vir.addr_y, 1, buf_size, fp);
 				fclose(fp);
 			}
@@ -870,6 +870,8 @@ rot_flip:
 			snprintf(fname, 256, "%sframe%03d_bbthumb0_2flip.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 			fp = fopen(fname, "wb");
 			if (fp != NULL) {
+				cxt->mem_ops.invalidate_cb(cxt->oem_handle, thumb_frm.fd,
+					thumb_frm.buf_size, thumb_frm.addr_phy.addr_y, thumb_frm.addr_vir.addr_y);
 				CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 				fwrite((void *)thumb_frm.addr_vir.addr_y, 1, buf_size, fp);
 				fclose(fp);
@@ -942,6 +944,8 @@ rot_flip:
 			snprintf(fname, 256, "%sframe%03d_bbthumb0_3rot.yuv", CAMERA_DUMP_PATH, frame->frame_real_id);
 			fp = fopen(fname, "wb");
 			if (fp != NULL) {
+				cxt->mem_ops.invalidate_cb(cxt->oem_handle, thumb_frm.fd,
+					thumb_frm.buf_size, thumb_frm.addr_phy.addr_y, thumb_frm.addr_vir.addr_y);
 				CMR_LOGI("gtang dump file %s, fp = %p, size %d\n", fname, fp, buf_size);
 				fwrite((void *)thumb_frm.addr_vir.addr_y, 1, buf_size, fp);
 				fclose(fp);
@@ -1084,6 +1088,24 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 		iret = put_free_buffer(&cxt->buf_queue, &buf);
 		if (iret) {
 			CMR_LOGE("fail to put buffer fd %d, addr %p\n", buf.fd, (void *)buf.vaddr);
+		}
+		break;
+
+	case IPS_CB_INV_BUFCACHE:
+		frm = (struct img_frm *)cb_data;
+		if (cxt->mem_ops.invalidate_cb) {
+			cxt->mem_ops.invalidate_cb(cxt->oem_handle, frm->fd,
+				frm->buf_size, frm->addr_phy.addr_y, frm->addr_vir.addr_y);
+			CMR_LOGD("invalidate buf fd=0x%x\n", frm->fd);
+		}
+		break;
+
+	case IPS_CB_FLUSH_BUFCACHE:
+		frm = (struct img_frm *)cb_data;
+		if (cxt->mem_ops.flush_cb) {
+			cxt->mem_ops.flush_cb(cxt->oem_handle, frm->fd,
+				frm->buf_size, frm->addr_phy.addr_y, frm->addr_vir.addr_y);
+			CMR_LOGD("flush buf fd=0x%x\n", frm->fd);
 		}
 		break;
 
