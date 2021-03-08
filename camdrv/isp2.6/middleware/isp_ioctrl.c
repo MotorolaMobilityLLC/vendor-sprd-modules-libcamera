@@ -3174,6 +3174,7 @@ static cmr_int ispctl_set_ae_lock_unlock(cmr_handle isp_alg_handle, void *param_
 		return ISP_PARAM_NULL;
 	}
 	memset((void *)&ae_result, 0, sizeof(struct ae_calc_out));
+	CMR_LOGV("APP_MODE =%d",cxt->app_mode);
 
 	ae_mode = *(cmr_u32 *) param_ptr;
 	if (ISP_AE_LOCK == ae_mode) {
@@ -3182,12 +3183,21 @@ static cmr_int ispctl_set_ae_lock_unlock(cmr_handle isp_alg_handle, void *param_
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_PAUSE, NULL, (void *)&ae_result);
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_LOCK, NULL, NULL);
+		if(cxt->app_mode == CAMERA_MODE_PANORAMA) {
+			if (cxt->ops.smart_ops.block_disable)
+				cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		}
 	} else if (ISP_AE_UNLOCK == ae_mode) {
 		ISP_LOGV("AE Un-Lock\n");
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FORCE_RESTORE, NULL, (void *)&ae_result);
 		if (cxt->ops.lsc_ops.ioctrl)
 			ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, SMART_LSC_ALG_UNLOCK, NULL, NULL);
+		if(cxt->app_mode == CAMERA_MODE_PANORAMA) {
+			if (cxt->ops.smart_ops.block_enable)
+				cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_GAMMA);
+		}
+
 	} else {
 		ISP_LOGV("Unsupported AE  mode (%d)\n", ae_mode);
 	}
