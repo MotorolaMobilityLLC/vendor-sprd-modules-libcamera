@@ -162,6 +162,7 @@ static void ov08a10_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
   dummy_line = dummy_line > FRAME_OFFSET ? dummy_line : FRAME_OFFSET;
   dest_fr_len =
       ((shutter + dummy_line) > fr_len) ? (shutter + dummy_line) : fr_len;
+ 
   sns_drv_cxt->frame_length = dest_fr_len;
 
   if (shutter < SENSOR_MIN_SHUTTER)
@@ -569,7 +570,7 @@ static cmr_int ov08a10_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
   if (sns_drv_cxt->ops_cb.set_mode_wait_done)
     sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
-  cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
+  cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR * 2;
   cap_gain = prv_gain;
 
   SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
@@ -612,8 +613,8 @@ static cmr_int ov08a10_drv_write_exposure(cmr_handle handle, cmr_uint param) {
   SENSOR_IC_CHECK_HANDLE(ex);
   struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-  exposure_line = ex->exposure;
-  dummy_line = ex->dummy;
+  exposure_line = ex->exposure * 2;
+  dummy_line = ex->dummy * 2;
   size_index = ex->size_index;
 
   ov08a10_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,
@@ -658,8 +659,8 @@ static cmr_int ov08a10_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
   struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
   info->aec_i2c_info_out = &ov08a10_aec_info;
-  exposure_line = info->exp.exposure;
-  dummy_line = info->exp.dummy;
+  exposure_line = info->exp.exposure * 2;
+  dummy_line = info->exp.dummy * 2;
   mode = info->exp.size_index;
 
   ov08a10_drv_calc_exposure(handle, exposure_line, dummy_line, mode,
