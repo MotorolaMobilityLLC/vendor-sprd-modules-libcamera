@@ -3371,6 +3371,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 #endif // CONFIG_CAMERA_NIGHTDNS_CAPTURE
     }
 #endif
+    if (sprddefInfo->high_resolution_mode) {
+        mZslNum = 5;
+        mZslMaxFrameNum = 5;
+    }
     HAL_LOGI("mZslNum %d", mZslNum);
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
@@ -8721,8 +8725,15 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
         yuvTextUsage |= GRALLOC_USAGE_VIDEO_BUFFER;
     }
     int usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+    int width = mCaptureWidth, height = mCaptureHeight;
+    if (sprddefInfo->high_resolution_mode) {
+        width = mCaptureWidth / 2;
+        height = mCaptureHeight / 2;
+    }
 
-    Rect bounds(mCaptureWidth, mCaptureHeight);
+    Rect bounds(width, height);
     HAL_LOGD("size %d sum %d mZslHeapNum %d", size, sum, mZslHeapNum);
 
     for (i = 0; i < (cmr_int)mZslNum; i++) {
@@ -8736,8 +8747,8 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             memset(memory, 0, sizeof(sprd_camera_memory_t));
             mZslHeapArray[i] = memory;
             mZslHeapNum++;
-            mTotalGpuSize = mTotalGpuSize + mCaptureWidth * mCaptureHeight;
-            graphicBuffer = new GraphicBuffer(mCaptureWidth, mCaptureHeight,
+            mTotalGpuSize = mTotalGpuSize + width * height;
+            graphicBuffer = new GraphicBuffer(width, height,
                                               HAL_PIXEL_FORMAT_YCrCb_420_SP, 1,
                                               yuvTextUsage, "sw_3dnr");
 
@@ -8756,7 +8767,7 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             mZslGraphicsHandle[i].graphicBuffer = graphicBuffer;
             mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
             mZslGraphicsHandle[i].native_handle = nativeHandle;
-            mZslGraphicsHandle[i].buf_size = mCaptureWidth * mCaptureHeight;
+            mZslGraphicsHandle[i].buf_size = width * height;
             HAL_LOGD("graphicBuffer_handle 0x%p",
                      mZslGraphicsHandle[i].graphicBuffer_handle);
         }
@@ -8886,7 +8897,7 @@ int SprdCamera3OEMIf::Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr,
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||
         sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO||(getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
-        getMultiCameraMode() == MODE_BLUR) {
+        getMultiCameraMode() == MODE_BLUR || sprddefInfo->high_resolution_mode == 1) {
         freeCameraMemForGpu(phy_addr, vir_addr, fd, sum);
         return 0;
     }
@@ -8926,7 +8937,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || mSprd3dnrType == CAMERA_3DNR_TYPE_NIGHT_DNS ||
         (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)|| (getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId) ||
-        getMultiCameraMode() == MODE_BLUR) {
+        getMultiCameraMode() == MODE_BLUR || sprddefInfo->high_resolution_mode == 1) {
         ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
         return ret;
     }
@@ -10940,6 +10951,8 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
         }
     } else
         src_alg_buf->reserved = (void *)mZslGraphicsHandle[buf_id].graphicBuffer_handle;
+
+    HAL_LOGD("zsl_frame %d, %d", zsl_frame->width, zsl_frame->height);
     src_alg_buf->height = zsl_frame->height;
     src_alg_buf->width = zsl_frame->width;
     src_alg_buf->fd = zsl_frame->fd;
@@ -10988,6 +11001,7 @@ int SprdCamera3OEMIf::SnapshotZsl3dnr(SprdCamera3OEMIf *obj,
         }*/
     }
 
+    HAL_LOGD("3dnr fd=0x%x", zsl_frame->fd);
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO) {
         mHalOem->ops->image_sw_algorithm_processing(

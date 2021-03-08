@@ -5857,8 +5857,14 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
          camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW ||
          camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NIGHT_DNS)) {
         struct isp_adgain_exp_info adgain_exp_info;
-        in_param.frame_size.width = cxt->snp_cxt.request_size.width;
-        in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        if (cxt->is_high_res_mode) {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width / 2;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height / 2;
+        } else {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        }
+        CMR_LOGD("%d, %d", in_param.frame_size.width, in_param.frame_size.height);
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.reg_cb = camera_ipm_cb;
