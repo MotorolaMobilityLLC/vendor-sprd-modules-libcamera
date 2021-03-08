@@ -841,8 +841,6 @@ cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
-cmr_s64 sensor_drv_get_shutter_skew(struct sensor_drv_context *sensor_cxt,
-                                    cmr_uint sensor_work_mode);
 
 #ifdef __cplusplus
 }

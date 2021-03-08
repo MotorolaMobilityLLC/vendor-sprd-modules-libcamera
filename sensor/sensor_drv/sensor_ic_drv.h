@@ -140,6 +140,7 @@ typedef enum {
     SENSOR_VAL_TYPE_4IN1_DEINIT,
     SENSOR_VAL_TYPE_GET_4IN1_INFO,
     SENSOR_VAL_TYPE_GET_3DNR_THRESHOLD,
+    SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA,
     SENSOR_VAL_TYPE_MAX
 } SENSOR_IOCTL_VAL_TYPE;
 
@@ -446,7 +447,6 @@ struct sensor_ic_ops {
 
     /* not used currently*/
     cmr_int (*ioctl)(cmr_handle handle, int cmd, void *param);
-    cmr_s64 (*getShutterSkew)(cmr_handle handle, cmr_uint sensor_work_mode);
 };
 
 /**

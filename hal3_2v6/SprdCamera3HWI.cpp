@@ -159,7 +159,11 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     // get property for high res
     getHighResZslSetting();
     memset(&mStreamConfiguration, 0, sizeof(cam3_stream_configuration_t));
-
+#ifdef CAMERA_MANULE_SNEOSR
+    useManualSesnor = true;
+#else
+    useManualSesnor = false;
+#endif
     HAL_LOGI(":hal3: Constructor X");
 }
 
@@ -290,7 +294,12 @@ int SprdCamera3HWI::openCamera(struct hw_device_t **hw_device) {
     Mutex::Autolock l(mLock);
 
     HAL_LOGD("camera3->open E");
-
+#ifdef CAMERA_MANULE_SNEOSR
+    if(isMultiCameraMode(mMultiCameraMode))
+        useManualSesnor = false;
+    else
+        useManualSesnor = true;
+#endif
     // single camera mode can only open one camera .multicamera mode can only
     // open two cameras.
     if ((mCameraSessionActive == 1 && !(isMultiCameraMode(mMultiCameraMode))) ||
@@ -1319,18 +1328,20 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     HAL_LOGV("frame_id = %d,ot_frame_num = %d", requestInfo.frame_id, requestInfo.ot_frame_num);
 
     meta = request->settings;
-    ret = mSetting->updateAppMode(meta);
-    mMetadataChannel->start(mFrameNum);
+    if(useManualSesnor) {
+        ret = mSetting->updateAppMode(meta);
+        mMetadataChannel->start(mFrameNum);
 
-    if(mMetadataChannel->ReSetFirstMeta) {
-       HAL_LOGV("frame_id = %d,ot_frame_num = %d", requestInfo.frame_id, requestInfo.ot_frame_num);
-       first_meta = request->settings;
-       if (first_meta.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
-           int64_t valueI64 = first_meta.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
-           HAL_LOGV("sensor exposure_time is %lld ", valueI64);
-       }
+        if(mMetadataChannel->ReSetFirstMeta) {
+           HAL_LOGV("frame_id = %d,ot_frame_num = %d", requestInfo.frame_id, requestInfo.ot_frame_num);
+           first_meta = request->settings;
+           if (first_meta.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
+               int64_t valueI64 = first_meta.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
+               HAL_LOGV("sensor exposure_time is %lld ", valueI64);
+           }
+        }
+        mMetadataChannel->request(meta, mFrameNum);
     }
-    mMetadataChannel->request(meta, mFrameNum);
     mMetadataChannel->request(meta);
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     mSetting->getCONTROLTag(&controlInfo);
@@ -1750,27 +1761,39 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         HAL_LOGI(":hal3: mFlush=1");
         goto exit;
     }
-
-    if (mFirstRegularRequest == 1) {
-        ret = mRegularChan->start(mFrameNum);
-        if (ret) {
-            HAL_LOGE("mRegularChan->start failed, ret=%d", ret);
-            goto exit;
+    if(useManualSesnor) {
+        if (mFirstRegularRequest == 1) {
+            ret = mRegularChan->start(mFrameNum);
+            if (ret) {
+                HAL_LOGE("mRegularChan->start failed, ret=%d", ret);
+                goto exit;
+            }
+            if (first_meta.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
+                int64_t valueI64 = first_meta.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
+                HAL_LOGV("sensor exposure_time is %lld", valueI64);
+            }
+            mMetadataChannel->request(first_meta, mFrameNum);
+            temp_first_req = true;
+            mFirstRegularRequest = 0;
         }
-        if (first_meta.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
-            int64_t valueI64 = first_meta.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
-            HAL_LOGV("sensor exposure_time is %lld", valueI64);
+
+        mMetadataChannel->start(mFrameNum);
+
+        if (temp_first_req) {
+            mOEMIf->setAeState(AE_START);
+            mOEMIf->setAwbState(AWB_START);
         }
-        mMetadataChannel->request(first_meta, mFrameNum);
-        temp_first_req = true;
-        mFirstRegularRequest = 0;
-    }
+    } else {
+        mMetadataChannel->start(mFrameNum);
 
-    mMetadataChannel->start(mFrameNum);
-
-    if (temp_first_req) {
-        mOEMIf->setAeState(AE_START);
-        mOEMIf->setAwbState(AWB_START);
+        if (mFirstRegularRequest == 1) {
+            ret = mRegularChan->start(mFrameNum);
+            if (ret) {
+                HAL_LOGE("mRegularChan->start failed, ret=%d", ret);
+                goto exit;
+            }
+            mFirstRegularRequest = 0;
+        }
     }
 
     {
@@ -1915,15 +1938,38 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
             /**add for 3d capture reprocessing end   */
 
             if (!i->bNotified) {
-                notify_msg.type = CAMERA3_MSG_SHUTTER;
-                notify_msg.message.shutter.frame_number = i->frame_number;
-                notify_msg.message.shutter.timestamp = capture_time;
-                mCallbackOps->notify(mCallbackOps, &notify_msg);
-                i->bNotified = true;
-                HAL_LOGD("drop msg frame_num = %d, timestamp = 0x%llx",
-                         i->frame_number, capture_time);
-
                 SENSOR_Tag sensorInfo;
+                if(useManualSesnor) {
+                    mSetting->getSENSORTag(&sensorInfo);
+                    notify_msg.type = CAMERA3_MSG_SHUTTER;
+                    notify_msg.message.shutter.frame_number = i->frame_number;
+                    HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
+                             "dcam sof time = %llx",
+                             mCameraId, i->frame_number, capture_time);
+                    exposure_time = sensorInfo.exposure_time;
+                    capture_time = capture_time - (exposure_time - sensorInfo.start_offset_time);
+                    HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
+                              "exposure time = %llx,"
+                              "sensor start offset time = %llx",
+                              mCameraId, i->frame_number,
+                              exposure_time, sensorInfo.start_offset_time);
+                    mOEMIf->mFmtimeMap[i->frame_number] = capture_time;
+                    notify_msg.message.shutter.timestamp = capture_time;
+                    mCallbackOps->notify(mCallbackOps, &notify_msg);
+                    i->bNotified = true;
+                    HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = 0x%llx",
+                             mCameraId, i->frame_number,
+                             notify_msg.message.shutter.timestamp);
+                } else {
+                    notify_msg.type = CAMERA3_MSG_SHUTTER;
+                    notify_msg.message.shutter.frame_number = i->frame_number;
+                    notify_msg.message.shutter.timestamp = capture_time;
+                    mCallbackOps->notify(mCallbackOps, &notify_msg);
+                    i->bNotified = true;
+                    HAL_LOGD("drop msg frame_num = %d, timestamp = 0x%llx",
+                             i->frame_number, capture_time);
+                }
+                //SENSOR_Tag sensorInfo;
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
                 CONTROL_Tag threeAControlInfo;
@@ -1956,10 +2002,16 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     i->threeA_info.ae_manual_trigger;
 
                 mSetting->setResultTag(&threeAControlInfo);
-
-                result.result = mMetadataChannel->getMetadata(i->frame_number);
-                if(!result.result) {
-                   HAL_LOGE("result is nullptr, AE or Af callback err in frame num %d", i->frame_number);
+                if(useManualSesnor) {
+                    if(isMultiCameraMode(mMultiCameraMode)||mFlush)
+                        result.result = mSetting->translateLocalToFwMetadata();
+                    else
+                        result.result = mMetadataChannel->getMetadata(i->frame_number);
+                    if(!result.result) {
+                       HAL_LOGE("result is nullptr, AE or Af callback err in frame num %d", i->frame_number);
+                    }
+                } else {
+                    result.result = mSetting->translateLocalToFwMetadata();
                 }
                 result.frame_number = i->frame_number;
                 result.num_output_buffers = 0;
@@ -1974,29 +2026,42 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
         } else if (i->frame_number == frame_number) {
             HAL_LOGD("mCameraId=%d, i->frame_num=%d, frame_num=%d, i->req_id=%d,i->bNotified=%d",
                      mCameraId, i->frame_number, frame_number, i->request_id,i->bNotified);
-
             if (!i->bNotified) {
                 SENSOR_Tag sensorInfo;
-                mSetting->getSENSORTag(&sensorInfo);
-                notify_msg.type = CAMERA3_MSG_SHUTTER;
-                notify_msg.message.shutter.frame_number = i->frame_number;
-                HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
-                         "dcam sof time = %lld",
-                         mCameraId, i->frame_number, capture_time);
-                exposure_time = sensorInfo.exposure_time;
-                capture_time = capture_time - (exposure_time - sensorInfo.start_offset_time);
-                HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
-                          "exposure time = %lld,"
-                          "sensor start offset time = %lld",
-                          mCameraId, i->frame_number,
-                          exposure_time, sensorInfo.start_offset_time);
+                if(useManualSesnor) {
+                    mSetting->getSENSORTag(&sensorInfo);
+                    notify_msg.type = CAMERA3_MSG_SHUTTER;
+                    notify_msg.message.shutter.frame_number = i->frame_number;
+                    HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
+                             "dcam sof time = %llx",
+                             mCameraId, i->frame_number, capture_time);
+                    exposure_time = sensorInfo.exposure_time;
+                    capture_time = capture_time - (exposure_time - sensorInfo.start_offset_time);
 
-                notify_msg.message.shutter.timestamp = capture_time;
-                mCallbackOps->notify(mCallbackOps, &notify_msg);
-                i->bNotified = true;
-                HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = 0x%llx",
-                         mCameraId, i->frame_number,
-                         notify_msg.message.shutter.timestamp);
+                    HAL_LOGV("mCameraId = %d, notified frame_num = %d,"
+                              "exposure time = %llx,"
+                              "sensor start offset time = %llx",
+                              mCameraId, i->frame_number,
+                              exposure_time, sensorInfo.start_offset_time);
+                    mOEMIf->mFmtimeMap[i->frame_number] = capture_time;
+
+                    notify_msg.message.shutter.timestamp = capture_time;
+                    mCallbackOps->notify(mCallbackOps, &notify_msg);
+                    i->bNotified = true;
+                    HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = 0x%llx",
+                             mCameraId, i->frame_number,
+                             notify_msg.message.shutter.timestamp);
+                } else {
+                    notify_msg.type = CAMERA3_MSG_SHUTTER;
+                    notify_msg.message.shutter.frame_number = i->frame_number;
+
+                    notify_msg.message.shutter.timestamp = capture_time;
+                    mCallbackOps->notify(mCallbackOps, &notify_msg);
+                    i->bNotified = true;
+                    HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = 0x%llx",
+                             mCameraId, i->frame_number,
+                             notify_msg.message.shutter.timestamp);
+                }
 
                 REQUEST_Tag requestInfo;
                 meta_info_t metaInfo;
@@ -2030,11 +2095,20 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     i->threeA_info.ae_manual_trigger;
 
                 mSetting->setResultTag(&threeAControlInfo);
-                result.frame_number = i->frame_number;
-                result.result = mMetadataChannel->getMetadata(i->frame_number);
-                if(!result.result) {
-                   HAL_LOGE("result is nullptr, AE or Af callback err in frame num %d", i->frame_number);
+                if(useManualSesnor) {
+                    if(isMultiCameraMode(mMultiCameraMode)||mFlush ||
+                        mOEMIf->mSprdAppmodeId == CAMERA_MODE_SLOWMOTION)
+                        result.result = mSetting->translateLocalToFwMetadata();
+                    else
+                        result.result = mMetadataChannel->getMetadata(i->frame_number);
+                    if(!result.result) {
+                       HAL_LOGE("result is nullptr, AE or Af callback err in frame num %d", i->frame_number);
+                    }
+                } else {
+                    result.result = mSetting->translateLocalToFwMetadata();
                 }
+
+                result.frame_number = i->frame_number;
                 result.num_output_buffers = 0;
                 result.output_buffers = NULL;
                 result.input_buffer = NULL;

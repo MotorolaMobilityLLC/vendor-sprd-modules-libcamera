@@ -108,6 +108,7 @@ class SprdCamera3HWI {
     void setGlobalZoomRatio(float ratio);
     void setCapState(bool flag);
     static bool isMultiCameraMode(int Mode);
+    int getMultiCameraMode(){return mMultiCameraMode;}
     void setSprdCameraLowpower(int flag);
     int camera_ioctrl(int cmd, void *param1, void *param2);
     int setSensorStream(uint32_t on_off);
@@ -248,6 +249,7 @@ class SprdCamera3HWI {
     bool mHighResNonzsl; // high res,1:non-zsl,0:zsl
     //1:always zsl,2:non-zsl,other:detect
     uint8_t mHighResFixZsl;
+    bool useManualSesnor;
 
     cam3_stream_configuration_t mStreamConfiguration;
 };

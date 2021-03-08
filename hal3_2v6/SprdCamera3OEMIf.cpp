@@ -910,6 +910,7 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
         break;
     }
     case CAMERA_CHANNEL_TYPE_PICTURE: {
+        Mutex::Autolock cbLock(&mCaptureCbLock);
 #ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
         mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
                                                 IS_CAP_BEGIN);
@@ -1559,6 +1560,7 @@ int SprdCamera3OEMIf::getMultiCameraMode() {
 }
 
 void SprdCamera3OEMIf::setCallBackYuvMode(bool mode) {
+    Mutex::Autolock cbLock(&mCaptureCbLock);
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
         return;
@@ -2417,13 +2419,13 @@ void SprdCamera3OEMIf::setAeState(enum aeTransitionCause cause) {
         (ANDROID_CONTROL_AE_STATE_CONVERGED == state)) {
         goto exit;
     }
-
+#ifdef CAMERA_MANULE_SNEOSR
     if ((mSprdAppmodeId == -1) && (AE_STABLE == cause) &&
         (ANDROID_CONTROL_AE_STATE_INACTIVE == state)) {
         newState = ANDROID_CONTROL_AE_STATE_SEARCHING;
         goto exit;
     }
-
+#endif
     size = sizeof(aeStateMachine) / sizeof(struct stateMachine);
     for (i = 0; i < size; i++) {
         if ((aeStateMachine[i].transitionCause == cause) &&
@@ -3399,6 +3401,10 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     setCameraState(SPRD_INTERNAL_PREVIEW_REQUESTED, STATE_PREVIEW);
     mPipelineStartSignal.signal();
+#ifndef CAMERA_MANULE_SNEOSR
+    setAeState(AE_START);
+    setAwbState(AWB_START);
+#endif
     mJpegDebugQ.clear();
 
     /*
@@ -3480,12 +3486,13 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
     end_timestamp = systemTime();
 
     setCameraState(SPRD_IDLE, STATE_PREVIEW);
+#ifdef CAMERA_MANULE_SNEOSR
     setAeState(AE_LOCK_OFF);
     setAwbState(AWB_LOCK_OFF);
     mSetting->getCONTROLTag(&controlInfo);
     controlInfo.ae_lock = 0;
     mSetting->setCONTROLTag(&controlInfo);
-
+#endif
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
         mflagfb = false;
@@ -5387,7 +5394,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
                                  CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT);
 
 {
-    Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
+    // Mutex::Autolock cbPreviewLock(&mPreviewCbLock);
     if (mSprdReprocessing) {
         SprdCamera3RegularChannel *channel =
             reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -7828,6 +7835,8 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         break;
 
     case ANDROID_SENSOR_SENSITIVITY:
+#ifdef CAMERA_MANULE_SNEOSR
+
         if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
             SENSOR_Tag sensorInfo;
             mSetting->getSENSORTag(&sensorInfo);
@@ -7835,6 +7844,17 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
                      sensorInfo.sensitivity);
         }
+
+#else
+        int8_t drv_iso_level;
+        SENSOR_Tag sensorInfo;
+        mSetting->getSENSORTag(&sensorInfo);
+        mSetting->androidIsoToDrvMode(sensorInfo.sensitivity,
+                                            &drv_iso_level);
+        HAL_LOGD("drv_iso_level %d", drv_iso_level);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
+                 drv_iso_level);
+#endif
         break;
 
     case ANDROID_CONTROL_AE_LOCK: {
@@ -8234,13 +8254,15 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             mSetting->getLENSTag(&lensInfo);
 
             HAL_LOGD("focus_distance:%f", lensInfo.focus_distance);
-/*          delete after adding manual sensor
+
+/*          delete after adding manual sensor */
+#ifndef CAMERA_MANULE_SNEOSR
             if (lensInfo.focus_distance) {
                 SET_PARM(mHalOem, mCameraHandle,
                          CAMERA_PARAM_LENS_FOCUS_DISTANCE,
                          (cmr_uint)(lensInfo.focus_distance));
             }
-*/
+#endif
         }
     } break;
     case ANDROID_SPRD_AUTO_HDR_ENABLED: {
@@ -11253,7 +11275,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             HAL_LOGD("Cam%d JpegQueue other fd 0x%x,  frame_id %d\n",
                         mCameraId, zsl_frame->fd, zsl_frame->frame_num);
         }
-
+#ifdef CAMERA_MANULE_SNEOSR
         mIsoMap[mPictureFrameNum] = mIsoValue;
         mExptimeMap[mPictureFrameNum] = mExptimeValue;
         HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d", mPictureFrameNum, mIsoValue);
@@ -11268,6 +11290,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                     zsl_frame->y_vir_addr, zsl_frame->fd);
                 return 0;
         }
+#endif
 
 
         HAL_LOGD("fd=0x%x", zsl_frame->fd);
@@ -12000,15 +12023,18 @@ void SprdCamera3OEMIf::setOriginalPictureSize( int32_t width ,int32_t  height) {
 }
 
 void SprdCamera3OEMIf::getRollingShutterSkew() {
-     int64_t RollingShutterSkew;
-     SENSOR_Tag sensorInfo;
-     RollingShutterSkew = mHalOem->ops->
-         camera_get_rolling_shutter_skew(mCameraHandle);
-     mSetting->getSENSORTag(&sensorInfo);
-     sensorInfo.rollingShutterSkew = RollingShutterSkew;
-     mSetting->rollingShutterSkew = RollingShutterSkew;
-     mSetting->setSENSORTag(sensorInfo);
-     HAL_LOGD("rolling shutter skew:%lld,address:%p",sensorInfo.rollingShutterSkew,&(sensorInfo));
+    int64_t RollingShutterSkew;
+    SENSOR_Tag sensorInfo;
+    mSetting->getSENSORTag(&sensorInfo);
+    sensorInfo.rollingShutterSkew = -1;
+    RollingShutterSkew = mHalOem->ops->
+     camera_get_rolling_shutter_skew(mCameraHandle);
+    if(RollingShutterSkew != -1) {
+        sensorInfo.rollingShutterSkew = RollingShutterSkew;
+        mSetting->rollingShutterSkew = RollingShutterSkew;
+        mSetting->setSENSORTag(sensorInfo);
+        HAL_LOGV("rolling shutter skew:%lld,address:%p",sensorInfo.rollingShutterSkew,&(sensorInfo));
+    }
 }
 
 #ifdef CONFIG_CAMERA_EIS

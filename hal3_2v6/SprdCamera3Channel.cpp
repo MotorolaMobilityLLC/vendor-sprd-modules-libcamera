@@ -42,6 +42,7 @@
 #include <utils/Errors.h>
 #include <cutils/properties.h>
 #include "SprdCamera3Channel.h"
+#include "SprdCamera3HWI.h"
 
 using namespace android;
 
@@ -1008,7 +1009,17 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
     enum camera_cb_type cb, void *params) {
     struct isp_sync_params isp_params;
     HAL_LOGD("E");
-
+    SprdCamera3HWI *hwi = (SprdCamera3HWI *) mUserData;
+    if(hwi->isMultiCameraMode(hwi->getMultiCameraMode())||
+        mOEMIf->mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
+        HAL_LOGE("multi camera can not use manule sensor");
+        return 0;
+    }
+#ifndef CAMERA_MANULE_SNEOSR
+    {
+        return 0;
+    }
+#endif
     switch (cb) {
     case CAMERA_EVT_CB_AE_PARAMS: {
         // bool result_notfied = false;
@@ -1271,15 +1282,17 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
                 int64_t tmp_timestamp = 
                     camMetadata->find(ANDROID_SENSOR_TIMESTAMP)
                     .data.i64[0];
-                HAL_LOGV("stmp_timestamp 0x%llx, sensor timestamp 0x%llx",
-                    tmp_timestamp,mSetting->
-                    s_setting[mOEMIf->getOemCameraId()].sensorInfo.timestamp);
-                if (tmp_timestamp !=
-                    mSetting->s_setting[mOEMIf->getOemCameraId()].sensorInfo.timestamp) {
-                    camMetadata->update(ANDROID_SENSOR_TIMESTAMP,
-                               &(mSetting->s_setting[mOEMIf->getOemCameraId()].
-                               sensorInfo.timestamp), 1);
-                }
+                    std::map<uint32_t, cmr_s64>::iterator iter;
+                    iter = mOEMIf->mFmtimeMap.find(frame_num);
+                    if (iter != mOEMIf->mFmtimeMap.end()) {
+                        HAL_LOGD("tmp_timestamp:%llx, FmtimeMap[%d]:%llx", tmp_timestamp,
+                            frame_num, iter->second);
+                        if (tmp_timestamp != iter->second)
+                            tmp_timestamp = iter->second;
+                        camMetadata->update(ANDROID_SENSOR_TIMESTAMP,
+                                   &tmp_timestamp, 1);
+                        mOEMIf->mFmtimeMap.erase(iter);
+                    }
             }
 
             if (camMetadata->exists(ANDROID_LENS_FOCUS_DISTANCE)) {

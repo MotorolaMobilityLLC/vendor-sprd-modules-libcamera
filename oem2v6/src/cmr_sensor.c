@@ -451,6 +451,7 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id,
     SENSOR_EXP_INFO_T *cur_sensor_info = NULL;
     CMR_LOGV("E");
 
+
     ret = sensor_get_info_common(&(handle->sensor_cxt[sensor_id]),
                                  &cur_sensor_info);
     if (ret) {
@@ -466,13 +467,23 @@ cmr_int cmr_sensor_get_info(cmr_handle sensor_handle, cmr_uint sensor_id,
     return ret;
 }
 
-cmr_s64 cmr_sensor_get_shutter_skew(cmr_handle sensor_handle, cmr_uint sensor_work_mode, cmr_uint sensor_id) {
-    cmr_s64 rolling_shutter_time;
-    struct cmr_sensor_handle *handle =
-         (struct cmr_sensor_handle *)sensor_handle;
-    CHECK_HANDLE_VALID(handle);
-    rolling_shutter_time = sensor_drv_get_shutter_skew(&(handle->sensor_cxt[sensor_id]), sensor_work_mode);
-    return rolling_shutter_time;
+cmr_s64 cmr_sensor_get_shutter_skew(cmr_handle sensor_handle,
+        cmr_uint sensor_work_mode, cmr_uint sensor_id) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    CHECK_HANDLE_VALID(sensor_handle);
+    struct sensor_shutter_skew_info shutter_skew_info;
+    memset(&shutter_skew_info, 0, sizeof(struct sensor_shutter_skew_info));
+    shutter_skew_info.sns_mode = sensor_work_mode;
+    shutter_skew_info.shutter_skew = -1;
+    SENSOR_VAL_T val;
+    val.type = SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA;
+    val.pval = &shutter_skew_info;
+    ret = cmr_sensor_ioctl(sensor_handle, sensor_id, SENSOR_ACCESS_VAL,
+                        (cmr_uint)&val);
+    if(ret == CMR_CAMERA_SUCCESS)
+        return shutter_skew_info.shutter_skew;
+
+    return ret;
 }
 
 cmr_int cmr_sensor_set_mode(cmr_handle sensor_handle, cmr_uint sensor_id,

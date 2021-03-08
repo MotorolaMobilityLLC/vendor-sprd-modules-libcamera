@@ -3317,19 +3317,6 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     return 0;
 }
 
-cmr_s64 sensor_drv_get_shutter_skew(struct sensor_drv_context *sensor_cxt,
-                                    cmr_uint sensor_work_mode) {
-     cmr_s64 shutter_skew = 0;
-     if (PNULL == sensor_cxt) {
-         SENSOR_LOGE("zero pointer");
-         return SENSOR_FAIL;
-     }
-     shutter_skew = sensor_cxt->sensor_info_ptr->
-     sns_ops->getShutterSkew(sensor_cxt->sns_ic_drv_handle, sensor_work_mode);
-     SENSOR_LOGD("shutter skew:%lld",shutter_skew);
-     return shutter_skew;
-}
-
 static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_VAL_T val;

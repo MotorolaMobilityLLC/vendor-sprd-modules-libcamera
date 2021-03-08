@@ -1452,7 +1452,7 @@ void camera_set_exif_exp_time(cmr_handle handle,cmr_s64 exp_time) {
 cmr_s64 camera_get_rolling_shutter_skew(cmr_handle handle){
     cmr_s64 rolling_shutter_skew = 0;
     rolling_shutter_skew = camera_local_get_shutter_skew(handle);
-    CMR_LOGD("rolling shutter skew:%lld",rolling_shutter_skew);
+    CMR_LOGV("rolling shutter skew:%lld",rolling_shutter_skew);
     return rolling_shutter_skew;
 }
 

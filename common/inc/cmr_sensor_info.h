@@ -655,6 +655,11 @@ struct sensor_multi_ae_info {
     struct sensor_ex_exposure exp;
 };
 
+struct sensor_shutter_skew_info {
+    cmr_s64 shutter_skew;
+    cmr_u32 sns_mode; // sensor mode shutter_skew_info
+};
+
 /*for default tuning parameters start*/
 #define SETTINGS_MAX 6
 typedef struct {

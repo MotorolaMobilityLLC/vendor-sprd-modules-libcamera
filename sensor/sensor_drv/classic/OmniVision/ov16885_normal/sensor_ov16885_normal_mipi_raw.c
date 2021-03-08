@@ -166,12 +166,13 @@ static void ov16885_normal_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
     ov16885_normal_drv_write_shutter(handle, aec_info, shutter);
 
-/*  HAL write exif info after adding manual sensor tag
+/*  HAL write exif info after adding manual sensor tag */
+#ifndef CAMERA_MANULE_SNEOSR
     if(sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
                           SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
     }
-*/
+#endif
 }
 
 
@@ -488,6 +489,26 @@ static cmr_int ov16885_normal_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *para
     return rtn;
 }
 
+static cmr_s64 ov16885_normal_drv_get_shutter_skew(cmr_handle handle, cmr_u32 *param) {
+    cmr_int rtn = SENSOR_SUCCESS;
+    cmr_u16 height = 0;
+    cmr_u32 line_time = 0;
+    cmr_s64 shutter_skew = 0;
+    SENSOR_IC_CHECK_PTR(param);
+    SENSOR_LOGI("E\n");
+    SENSOR_IC_CHECK_HANDLE(handle);
+    struct sensor_shutter_skew_info *shutter_skew_info =
+        (struct sensor_shutter_skew_info *)param;
+    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
+    height = s_ov16885_normal_resolution_tab_raw[0].reg_tab[shutter_skew_info->sns_mode].height;
+    line_time = s_ov16885_normal_resolution_trim_tab[0].trim_info[shutter_skew_info->sns_mode].line_time;
+    shutter_skew = (height - 1) * line_time;
+    shutter_skew_info->shutter_skew = shutter_skew;
+    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%d",
+                shutter_skew_info->sns_mode, height, line_time, shutter_skew);
+    return rtn;
+}
+
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -518,6 +539,9 @@ static cmr_int ov16885_normal_drv_access_val(cmr_handle handle, cmr_uint param)
         case SENSOR_VAL_TYPE_GET_PDAF_INFO:
             ret = ov16885_normal_drv_get_pdaf_info(handle, param_ptr->pval);
             break;
+        case SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA:
+            ret = ov16885_normal_drv_get_shutter_skew(handle, param_ptr->pval);
+
         default:
             break;
     }
@@ -843,21 +867,6 @@ static cmr_int ov16885_normal_drv_get_private_data(cmr_handle handle, cmr_uint c
     return ret;
 }
 
-static cmr_s64 ov16885_normal_drv_get_shutter_skew(cmr_handle handle, cmr_uint sensor_work_mode) {
-    cmr_u16 height = 0;
-    cmr_u32 line_time = 0;
-    cmr_s64 shutter_skew = 0;
-
-    SENSOR_IC_CHECK_HANDLE(handle);
-    struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    height = s_ov16885_normal_resolution_tab_raw[0].reg_tab[sensor_work_mode].height;
-    line_time = s_ov16885_normal_resolution_trim_tab[0].trim_info[sensor_work_mode].line_time;
-    shutter_skew = (height - 1)  * line_time;
-    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%d",
-                sensor_work_mode, height, line_time, shutter_skew);
-    return shutter_skew;
-}
-
 void *sensor_ic_open_lib(void)
 {
      return &g_ov16885_normal_mipi_raw_info;
@@ -880,8 +889,6 @@ static struct sensor_ic_ops s_ov16885_normal_ops_tab = {
     .identify = ov16885_normal_drv_identify,
     .ex_write_exp = ov16885_normal_drv_write_exposure,
     .write_gain_value = ov16885_normal_drv_write_gain_value,
-    .getShutterSkew = ov16885_normal_drv_get_shutter_skew,
-
 #if defined(CONFIG_DUAL_MODULE)
     .read_aec_info = ov16885_normal_drv_read_aec_info,
 #endif

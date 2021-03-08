@@ -353,6 +353,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t isPreAllocCapMem();
     std::map<uint32_t, cmr_u32> mIsoMap;
     std::map<uint32_t, cmr_s64> mExptimeMap;
+    std::map<uint32_t, cmr_s64> mFmtimeMap;
     int32_t mPictureFrameNum;
     int32_t mSprdAppmodeId;
     int32_t mStreamOnWithZsl;
