@@ -6263,8 +6263,8 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
                        1);
 
-    HAL_LOGD("auto 3dnr scene report %d",
-             s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene);
+    HAL_LOGD("auto 3dnr scene report %d mCameraId %d",
+             s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene,mCameraId);
     camMetadata.update(ANDROID_SPRD_IS_3DNR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene),
                        1);
