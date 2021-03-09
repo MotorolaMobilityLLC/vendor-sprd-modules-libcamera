@@ -168,6 +168,9 @@ struct class_tab_t fd_tab_info = {
 #define FD_SMALL_SIZE_1_1_WIDTH 480
 #define FD_SMALL_SIZE_1_1_HEIGHT 480
 
+#define FD_SMALL_SIZE_20_9_WIDTH 640
+#define FD_SMALL_SIZE_20_9_HEIGHT 290
+
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
         if (!handle) {                                                         \
@@ -248,12 +251,14 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     float src_ratio;
     float fd_small_4_3_ratio, fd_small_16_9_ratio;
     float fd_small_2_1_ratio, fd_small_1_1_ratio;
+    float fd_small_20_9_ratio = 0;
 
     src_ratio = (float)in->frame_size.width / (float)in->frame_size.height;
     fd_small_4_3_ratio = (float)4 / 3;
     fd_small_16_9_ratio = (float)16 / 9;
     fd_small_2_1_ratio = (float)2 / 1;
     fd_small_1_1_ratio = (float)1 / 1;
+    fd_small_20_9_ratio = (float)20 / 9;
     CMR_LOGD("src_ratio = %f", src_ratio);
 
     if (fabsf(src_ratio - fd_small_4_3_ratio) < 0.001) {
@@ -268,6 +273,9 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else if (fabsf(src_ratio - fd_small_1_1_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_1_1_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_1_1_HEIGHT;
+    } else if (fabsf(src_ratio - fd_small_20_9_ratio) < 0.06){
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_20_9_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_20_9_HEIGHT;
     } else {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_4_3_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_4_3_HEIGHT;
