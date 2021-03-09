@@ -2711,6 +2711,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
     int32_t faceRectangles[CAMERA3MAXFACE * 4];
     MRECT face_rect[CAMERA3MAXFACE];
     int32_t fd_score[10] = {0};
+    int afmode = 0;
     for (int i = 0; i < numFaces; i++) {
         *(fd_score + i) = hwiMain->mSetting->s_setting[phyId].fd_score[i];
         *(faceDetectionInfo->fd_score + i) = hwiMain->mSetting->s_setting[phyId].fd_score[i];
@@ -2849,6 +2850,10 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
             mDepthTrigger = TRIGGER_FNUM_PORTRAIT;
         }
     }
+    if (metaSettings.exists(ANDROID_CONTROL_AF_MODE)) {
+        afmode = metaSettings.find(ANDROID_CONTROL_AF_MODE).data.u8[0];
+        HAL_LOGD("afmode %d",afmode);
+    }
     if (metaSettings.exists(ANDROID_SPRD_AF_ROI)) {
         int left = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[0];
         int top = metaSettings.find(ANDROID_SPRD_AF_ROI).data.i32[1];
@@ -2868,7 +2873,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
                 HAL_LOGD("sel_x %d ,sel_y %d", x, y);
             }
         }
-        if (mPrevPortrait) {
+        if (mPrevPortrait && (afmode != 1)) {
             int x = face_rect[max_index].left +
                     (face_rect[max_index].right - face_rect[max_index].left) / 2;
             int y = face_rect[max_index].top +
@@ -2876,7 +2881,7 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
 
             mbokehParm.sel_x = x * mBokehSize.preview_w / origW;
             mbokehParm.sel_y = y * mBokehSize.preview_h / origH;
-            HAL_LOGD("update sel_x %d ,sel_y %d", mbokehParm.sel_x,
+            HAL_LOGD("face af sel_x %d ,sel_y %d", mbokehParm.sel_x,
                     mbokehParm.sel_y);
         }
         mbokehParm.cur_frame_number = cur_frame_number;
