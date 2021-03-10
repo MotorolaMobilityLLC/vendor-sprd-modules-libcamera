@@ -4620,8 +4620,13 @@ int SprdCamera3OEMIf::PreviewFrameCallbackStream(struct camera_frame_type *frame
           PreviewFrameFaceBeauty(frame, &beautyLevels);
       }
 #endif
-    channel->channelCbRoutine(frame_num, buffer_timestamp,
+    if (frame->type != CALLBACK_CANCELED_FRAME) {
+        channel->channelCbRoutine(frame_num, buffer_timestamp,
                               CAMERA_STREAM_TYPE_CALLBACK);
+    } else {
+        channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
+                              CAMERA_STREAM_TYPE_CALLBACK);
+    }
 
     if ((mTakePictureMode == SNAPSHOT_PREVIEW_MODE) &&
         (isJpegRequest == true)) {
