@@ -3358,12 +3358,12 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
         }
 
         // skip preview frames for hdr effect
-        if (camera_get_hdr_flag(cxt) == 1 && cxt->hdr_skip_frame_enable == 1 &&
-            cb_type == PREVIEW_EVT_CB_FRAME) {
+        if (camera_get_hdr_flag(cxt) == 1 && (cxt->hdr_skip_frame_enable == 1 ||
+            cxt->hdr_callback_skip_enable == 1) && cb_type == PREVIEW_EVT_CB_FRAME) {
             struct camera_frame_type *prev_frame =
                 (struct camera_frame_type *)param;
 
-            if (prev_frame->type == PREVIEW_FRAME) {
+            if (prev_frame->type == PREVIEW_FRAME && cxt->hdr_skip_frame_enable) {
                 CMR_LOGD("monoboottime %llu hdr_capture_timestamp %llu",
                          prev_frame->monoboottime, cxt->hdr_capture_timestamp);
 
@@ -3371,11 +3371,18 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                     prev_frame->type = PREVIEW_CANCELED_FRAME;
                     cxt->hdr_skip_frame_cnt++;
                     CMR_LOGD("hdr_skip_frame_cnt %d", cxt->hdr_skip_frame_cnt);
+                    cxt->hdr_skip_frame_enable =
+                            cxt->hdr_skip_frame_cnt == HDR_SKIP_FRAME_NUM ? 0 : 1;
                 }
-            }
-            if (cxt->hdr_skip_frame_cnt == HDR_SKIP_FRAME_NUM) {
-                cxt->hdr_skip_frame_enable = 0;
-                CMR_LOGD("hdr_skip_frame_cnt done");
+            } else if (prev_frame->type == CHANNEL2_FRAME && cxt->hdr_callback_skip_enable) {
+                /*for single camera motion photo+hdr*/
+                if (prev_frame->monoboottime > cxt->hdr_capture_timestamp) {
+                    prev_frame->type = CALLBACK_CANCELED_FRAME;
+                    cxt->hdr_callback_skip_cnt++;
+                    CMR_LOGD("hdr_skip_callback_frame_cnt %d", cxt->hdr_callback_skip_cnt);
+                    cxt->hdr_callback_skip_enable =
+                            cxt->hdr_callback_skip_cnt == HDR_SKIP_FRAME_NUM ? 0 : 1;
+                }
             }
         }
 
@@ -13648,6 +13655,11 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
         cxt->hdr_capture_timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
         cxt->hdr_skip_frame_enable = 1;
         cxt->hdr_skip_frame_cnt = 0;
+        if (prev_get_appmode(oem_handle, cxt->camera_id) &&
+                       cxt->is_multi_mode != MODE_MULTI_CAMERA) {
+            cxt->hdr_callback_skip_enable = 1;
+            cxt->hdr_callback_skip_cnt = 0;
+        }
     } else if (1 == camera_get_fdr_flag(cxt)) {
         //configure fdr buffer
         cmr_preview_realloc_buffer_for_fdr(cxt->prev_cxt.preview_handle,

@@ -81,6 +81,7 @@ enum preview_frame_type {
     CHANNEL2_FRAME,
     CHANNEL3_FRAME,
     CHANNEL4_FRAME,
+    CALLBACK_CANCELED_FRAME,
     PREVIEW_FRAME_TYPE_MAX
 };
 

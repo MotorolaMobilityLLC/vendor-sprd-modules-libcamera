@@ -482,6 +482,8 @@ struct camera_context {
     cmr_s64 capture_timestamp;
     cmr_u32 hdr_skip_frame_enable;
     cmr_u32 hdr_skip_frame_cnt;
+    cmr_u32 hdr_callback_skip_enable;
+    cmr_u32 hdr_callback_skip_cnt;
     cmr_u32 fdr_skip_frame_enable;
     cmr_u32 fdr_skip_frame_cnt;
     cmr_u32 fdr_capture_frame_cnt;
