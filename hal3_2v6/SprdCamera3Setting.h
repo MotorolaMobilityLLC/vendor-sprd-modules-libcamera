@@ -203,6 +203,7 @@ typedef struct {
 typedef struct {
     uint8_t firing_power;
     uint8_t mode;
+    uint8_t last_mode;
     uint8_t state;
 } FLASH_Tag;
 

@@ -867,7 +867,6 @@ SprdCamera3OEMIf::~SprdCamera3OEMIf() {
 
 void SprdCamera3OEMIf::closeCamera() {
     ATRACE_CALL();
-    FLASH_INFO_Tag flashInfo;
     int ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
@@ -877,9 +876,12 @@ void SprdCamera3OEMIf::closeCamera() {
     /*Give control of the flash to the camera, and notify
     framework that the flash has become unavailable.*/
     FLASH_INFO_Tag flashInfo_info;
+    FLASH_Tag flashInfo;
     mSetting->getFLASHINFOTag(&flashInfo_info);
-    HAL_LOGD("flashInfo_info_available=%d",flashInfo_info.available);
-    if (flashInfo_info.available){
+    mSetting->getFLASHTag(&flashInfo);
+    HAL_LOGD("flashInfo_info_available=%d, flashInfo_mode=%d",
+            flashInfo_info.available, flashInfo.mode);
+    if (flashInfo_info.available && flashInfo.mode == CAMERA_FLASH_MODE_DC_TORCH){
         SprdCamera3Flash::reserveFlash(mCameraId);
         close_flash_torch();
     }
@@ -915,8 +917,8 @@ void SprdCamera3OEMIf::closeCamera() {
         stopPreviewInternal();
     }
 
-    mSetting->getFLASHINFOTag(&flashInfo);
-    if (flashInfo.available) {
+    mSetting->getFLASHINFOTag(&flashInfo_info);
+    if (flashInfo_info.available) {
         SprdCamera3Flash::releaseFlash(mCameraId);
     }
 
@@ -8039,6 +8041,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             uint8_t flash_level = sprdInfo->sprd_flash_level;
             if(flash_level != 0) {
                 flashInfo.mode = CAMERA_FLASH_MODE_DC_TORCH;
+                flashInfo.last_mode = CAMERA_FLASH_MODE_DC_TORCH;
                 mSetting->setFLASHTag(flashInfo);
             }
 
@@ -8050,10 +8053,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             if (flashInfo_info.available) {
                 SprdCamera3Flash::reserveFlash(mCameraId);
                 if(flashInfo.mode != ANDROID_FLASH_MODE_TORCH) {
-                    if(flash_level == 0)
+                    if(flash_level == 0 && flashInfo.last_mode == CAMERA_FLASH_MODE_DC_TORCH){
                         close_flash_torch();
-                    else
+                        flashInfo.last_mode = 0;
+                        mSetting->setFLASHTag(flashInfo);
+                    }
+                    else if (flash_level != 0){
                         sprd_flash_level(flash_level);
+                    }
                 }
             }
         }
