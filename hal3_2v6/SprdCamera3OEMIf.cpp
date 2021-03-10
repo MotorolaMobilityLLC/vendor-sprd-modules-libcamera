@@ -5515,9 +5515,7 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
     }
 
     if (!jpeg_gps_location) {
-
         mSetting->clearGpsInfo();
-
     }
 
     if (encInfo->need_free) {
@@ -5795,30 +5793,7 @@ void SprdCamera3OEMIf::HandleTakePicture(enum camera_cb_type cb, void *parm4) {
     }
     case CAMERA_EVT_CB_CAPTURE_FRAME_DONE: {
         HAL_LOGV("CAMERA_EVT_CB_CAPTURE_FRAME_DONE");
-        JPEG_Tag jpegInfo;
-        mSetting->getJPEGTag(&jpegInfo);
-        if (jpeg_gps_location) {
-            camera_position_type pt = {0, 0, 0, 0, NULL};
-            pt.altitude = jpegInfo.gps_coordinates[2];
-            pt.latitude = jpegInfo.gps_coordinates[0];
-            pt.longitude = jpegInfo.gps_coordinates[1];
-            memcpy(mGps_processing_method, jpegInfo.gps_processing_method,
-                   sizeof(mGps_processing_method));
-            pt.process_method =
-                reinterpret_cast<const char *>(&mGps_processing_method[0]);
-            pt.timestamp = jpegInfo.gps_timestamp;
-            HAL_LOGV("gps pt.latitude = %f, pt.altitude = %f, pt.longitude = "
-                     "%f, pt.process_method = %s, jpegInfo.gps_timestamp = "
-                     "%" PRId64,
-                     pt.latitude, pt.altitude, pt.longitude, pt.process_method,
-                     jpegInfo.gps_timestamp);
 
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_POSITION,
-                     (cmr_uint)&pt);
-
-            jpeg_gps_location = false;
-
-        }
         break;
     }
     case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE: {
@@ -5977,6 +5952,9 @@ void SprdCamera3OEMIf::HandleSnapshot(enum camera_cb_type cb, void *data) {
             HAL_LOGD("next snap is ready now\n");
             mFlagOffLineZslStart = 0;
             mSetting->notifyNextCapture(1);
+            if (!jpeg_gps_location) {
+                mSetting->clearGpsInfo();
+            }
             break;
         case CAMERA_EVT_CB_SNAPSHOT_JPEG_DONE:
             // jpeg encode done
@@ -8528,6 +8506,29 @@ int SprdCamera3OEMIf::SetJpegGpsInfo(bool is_set_gps_location) {
     if (is_set_gps_location)
         jpeg_gps_location = true;
 
+    JPEG_Tag jpegInfo;
+    mSetting->getJPEGTag(&jpegInfo);
+    if (jpeg_gps_location) {
+        camera_position_type pt = {0, 0, 0, 0, NULL};
+        pt.altitude = jpegInfo.gps_coordinates[2];
+        pt.latitude = jpegInfo.gps_coordinates[0];
+        pt.longitude = jpegInfo.gps_coordinates[1];
+        memcpy(mGps_processing_method, jpegInfo.gps_processing_method,
+               sizeof(mGps_processing_method));
+        pt.process_method =
+            reinterpret_cast<const char *>(&mGps_processing_method[0]);
+        pt.timestamp = jpegInfo.gps_timestamp;
+        HAL_LOGV("gps pt.latitude = %f, pt.altitude = %f, pt.longitude = "
+                 "%f, pt.process_method = %s, jpegInfo.gps_timestamp = "
+                 "%" PRId64,
+                 pt.latitude, pt.altitude, pt.longitude, pt.process_method,
+                 jpegInfo.gps_timestamp);
+
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_POSITION,
+                 (cmr_uint)&pt);
+
+        jpeg_gps_location = false;
+    }
     return 0;
 }
 
