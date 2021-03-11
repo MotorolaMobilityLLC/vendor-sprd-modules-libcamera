@@ -5379,9 +5379,93 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 static cmr_s32 ae_set_scene_info(struct ae_ctrl_cxt *cxt,  void *param)
 {
 	if (param) {
+		cmr_u32 i=0;
 		struct ai_scene_detect_info *scene_info = (struct ai_scene_detect_info *) param;
+		cxt->cur_status.detect_scene.frame_id = scene_info->frame_id;
+		switch(scene_info->cur_scene_id){
+			case AE_AI_SCENE_DEFAULT:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_DEFAULT;
+				break;
 
-		memcpy(&cxt->cur_status.detect_scene, scene_info, sizeof(struct ai_scene_detect_info));
+			case AE_AI_SCENE_FOOD:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_FOOD;
+				break;
+
+			case AE_AI_SCENE_PORTRAIT:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_PORTRAIT;
+				break;
+
+			case AE_AI_SCENE_FOLIAGE:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_FOLIAGE;
+				break;
+
+			case AE_AI_SCENE_SKY:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_SKY;
+				break;
+
+			case AE_AI_SCENE_NIGHT:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_NIGHT;
+				break;
+
+			case AE_AI_SCENE_BACKLIGHT:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_BACKLIGHT;
+				break;
+
+			case AE_AI_SCENE_TEXT:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_TEXT;
+			        break;
+
+		       case AE_AI_SCENE_SUNRISE:
+			        cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_SUNRISE;
+			        break;
+
+		        case AE_AI_SCENE_BUILDING:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_BUILDING;
+			        break;
+
+		        case AE_AI_SCENE_LANDSCAPE:
+			         cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_LANDSCAPE;
+		                  break;
+
+		        case AE_AI_SCENE_SNOW:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_SNOW;
+				break;
+
+			case AE_AI_SCENE_FIREWORK:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_FIREWORK;
+				break;
+
+			case AE_AI_SCENE_BEACH:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_BEACH;
+				break;
+
+		        case AE_AI_SCENE_PET:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_PET;
+				break;
+
+			case AE_AI_SCENE_FLOWER:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_FLOWER;
+				break;
+
+			default:
+				cxt->cur_status.detect_scene.scene_id = AE_AI_SCENE_MAX;
+				break;
+			}
+
+
+		for (i=0;i<2;i++){
+			cxt->cur_status.detect_scene.task0[i].reliability = scene_info->task0[i].score;
+			cxt->cur_status.detect_scene.task0[i].id = scene_info->task0[i].id;
+		}
+		for (i=0;i<4;i++){
+			cxt->cur_status.detect_scene.task1[i].reliability = scene_info->task1[i].score;
+			cxt->cur_status.detect_scene.task1[i].id =scene_info->task1[i].id;
+		}
+		for (i=0;i<2;i++){
+			cxt->cur_status.detect_scene.task2[i].reliability = scene_info->task2[i].score;
+			cxt->cur_status.detect_scene.task2[i].id = scene_info->task2[i].id;
+		}
+
 		ISP_LOGV("done");
 	}
 
