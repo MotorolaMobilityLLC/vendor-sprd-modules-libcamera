@@ -2002,7 +2002,10 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
 
     if (cxt->prev_cxt.snapshot_eb &&
         cxt->snp_cxt.channel_id == frm_ptr->channel_id) {
+         cxt->is_capture_face = true;
          if((1 == camera_get_fdr_flag(cxt)) && IS_FDR_FRAME(frm_ptr->frame_type)) {
+            if (frm_ptr->frame_type != FDR_FRAME_RAW)
+                 cxt->is_capture_face = false;
             ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                             SNAPSHOT_EVT_FDR_PROC, data);
              if (ret)
@@ -7552,7 +7555,8 @@ cmr_int camera_do_face_beauty_body(cmr_handle oem_handle,
     int face_beauty_on = 0;
     cmr_u32 w = 0, h = 0;
     float ratio;
-    int facecount = cxt->fd_face_area.face_num;
+    int facecount;
+    struct isp_face_area fd_face_area;
     fbBeautyFacetT beauty_face;
     fb_beauty_image_t beauty_image;
     struct faceBeautyLevels beautyLevels;
@@ -7605,6 +7609,10 @@ cmr_int camera_do_face_beauty_body(cmr_handle oem_handle,
                                (void *)&fb_param_map_cap);
     }
 
+    memcpy(&fd_face_area, &cxt->fd_face_area_capture,
+                     sizeof(struct isp_face_area));
+    facecount = fd_face_area.face_num;
+
     beautyLevels.blemishLevel =
         (unsigned char)setting_param.fb_param.blemishLevel;
     beautyLevels.smoothLevel =
@@ -7641,25 +7649,22 @@ cmr_int camera_do_face_beauty_body(cmr_handle oem_handle,
                  beautyLevels.smoothLevel, beautyLevels.brightLevel,
                  beautyLevels.slimLevel, beautyLevels.largeLevel,
                  beautyLevels.cameraBV);
-        if (cxt->is_multi_mode == MODE_BOKEH) {
-            cmr_copy(&cxt->fd_face_area, &cxt->fd_face_area_capture,
-                     sizeof(struct isp_face_area));
-        }
+
         int sx, sy, ex, ey, angle, pose;
-        for (int i = 0; i < cxt->fd_face_area.face_num; i++) {
+        for (int i = 0; i < fd_face_area.face_num; i++) {
             beauty_face.idx = i;
-            w = cxt->fd_face_area.face_info[i].ex - cxt->fd_face_area.face_info[i].sx;
-            h = cxt->fd_face_area.face_info[i].ey -cxt->fd_face_area.face_info[i].sy;
-            ratio = (float)src.size.width / (float)(cxt->fd_face_area.frame_width);
-            beauty_face.startX = (int)(cxt->fd_face_area.face_info[i].sx * ratio);
-            beauty_face.startY = (int)(cxt->fd_face_area.face_info[i].sy * ratio);
+            w = fd_face_area.face_info[i].ex - fd_face_area.face_info[i].sx;
+            h = fd_face_area.face_info[i].ey -fd_face_area.face_info[i].sy;
+            ratio = (float)src.size.width / (float)(fd_face_area.frame_width);
+            beauty_face.startX = (int)(fd_face_area.face_info[i].sx * ratio);
+            beauty_face.startY = (int)(fd_face_area.face_info[i].sy * ratio);
             beauty_face.endX = (int)(beauty_face.startX + w * ratio);
             beauty_face.endY = (int)(beauty_face.startY + h * ratio);
-            beauty_face.angle = cxt->fd_face_area.face_info[i].angle;
-            beauty_face.pose = cxt->fd_face_area.face_info[i].pose;
+            beauty_face.angle = fd_face_area.face_info[i].angle;
+            beauty_face.pose = fd_face_area.face_info[i].pose;
             CMR_LOGD("src face_info(idx[%d]:sx,ex(%d, %d) sy,ey(%d, %d)", i,
-                cxt->fd_face_area.face_info[i].sx, cxt->fd_face_area.face_info[i].ex,
-                cxt->fd_face_area.face_info[i].sy, cxt->fd_face_area.face_info[i].ey);
+                fd_face_area.face_info[i].sx, fd_face_area.face_info[i].ex,
+                fd_face_area.face_info[i].sy, fd_face_area.face_info[i].ey);
             CMR_LOGD("dst face_info(idx[%d]:w,h(%d, %d) sx,ex(%d, %d) sy,ey(%d, %d)", i,
                 beauty_face.endX - beauty_face.startX,
                 beauty_face.endY - beauty_face.startY,
