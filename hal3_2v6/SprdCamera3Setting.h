@@ -770,10 +770,14 @@ class SprdCamera3Setting {
     int getSensorFov(float *w_fov,float  *sw_fov);
     int setFdScore(int32_t *fd_score, int num);
     int getFdScore(int32_t *fd_score, int num);
+    float focusDistanceTranslateToDrvFocusDistance(float focus_distance, uint8_t cameraId);
+    float drvFocusDistanceTranslateToFocusDistance(float focus_distance, uint8_t cameraId);
 
 
     static uint8_t mMaxCameraCount;
-   int64_t  rollingShutterSkew;
+    int64_t  rollingShutterSkew;
+    int32_t sprd_app_id;
+    multiCameraMode mMultiCameraMode;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
     camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
     static sprd_setting_info_t s_setting[CAMERA_ID_COUNT];
@@ -833,9 +837,6 @@ class SprdCamera3Setting {
     bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     void autotrackingCoordinateConvert(int32_t *area);
     static int resetFeatureStatus(const char* fea_ip,const char* fea_eb);
-    static float focusDistanceTranslateToDrvFocusDistance(float focus_distancie, uint8_t cameraId);
-    static float drvFocusDistanceTranslateToFocusDistance(float focus_distance,
-                                                          uint8_t cameraId);
     static float calculateHyperFocalDistance (int32_t cameraId);
     static cmr_u32 getMinFocusDistance(uint8_t cameraId);
     static int64_t getStartOffsetTime(uint8_t cameraId);

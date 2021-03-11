@@ -1522,8 +1522,12 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             mOEMIf->SetCameraParaTag(ANDROID_CONTROL_AE_REGIONS);
             break;
         case ANDROID_LENS_FOCUS_DISTANCE:
-            mOEMIf->SetCameraParaTag(ANDROID_LENS_FOCUS_DISTANCE);
-            mOEMIf->setCameraIspPara(SPRD_AF_PARAMS);
+            if (mSetting->sprd_app_id != 1 && !mSetting->mMultiCameraMode) {
+                mOEMIf->SetCameraParaTag(ANDROID_LENS_FOCUS_DISTANCE);
+                mOEMIf->setCameraIspPara(SPRD_AF_PARAMS);
+            } else if(mSetting->sprd_app_id == 1 || (mSetting->mMultiCameraMode && (mSetting->sprd_app_id == -1))) {
+                mOEMIf->SetCameraParaTag(ANDROID_LENS_FOCUS_DISTANCE);
+            }
             break;
 
         default:

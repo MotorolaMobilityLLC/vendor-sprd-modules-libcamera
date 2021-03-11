@@ -7835,27 +7835,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         break;
 
     case ANDROID_SENSOR_SENSITIVITY:
-#ifdef CAMERA_MANULE_SNEOSR
+       if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON) {
+           int8_t drv_iso_level;
+           SENSOR_Tag sensorInfo;
+           mSetting->getSENSORTag(&sensorInfo);
 
-        if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
-            SENSOR_Tag sensorInfo;
-            mSetting->getSENSORTag(&sensorInfo);
-            HAL_LOGD("iso_value %d", sensorInfo.sensitivity);
-            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
-                     sensorInfo.sensitivity);
-        }
-
-#else
-        int8_t drv_iso_level;
-        SENSOR_Tag sensorInfo;
-        mSetting->getSENSORTag(&sensorInfo);
-        mSetting->androidIsoToDrvMode(sensorInfo.sensitivity,
-                                            &drv_iso_level);
-        HAL_LOGD("drv_iso_level %d", drv_iso_level);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
-                 drv_iso_level);
-#endif
-        break;
+           mSetting->androidIsoToDrvMode(sensorInfo.sensitivity, &drv_iso_level);
+           HAL_LOGD("iso_value %d, drv_iso_level %d", sensorInfo.sensitivity, drv_iso_level);
+           SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, drv_iso_level);
+       }
+       break;
 
     case ANDROID_CONTROL_AE_LOCK: {
         uint8_t ae_lock;
@@ -8255,14 +8244,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
             HAL_LOGD("focus_distance:%f", lensInfo.focus_distance);
 
-/*          delete after adding manual sensor */
-#ifndef CAMERA_MANULE_SNEOSR
+            if (!mMultiCameraMode) {
+                lensInfo.focus_distance = mSetting->focusDistanceTranslateToDrvFocusDistance(lensInfo.focus_distance , mCameraId);
+                HAL_LOGD("transfer to drv focus distance:%d",lensInfo.focus_distance);
+            }
+
             if (lensInfo.focus_distance) {
                 SET_PARM(mHalOem, mCameraHandle,
                          CAMERA_PARAM_LENS_FOCUS_DISTANCE,
                          (cmr_uint)(lensInfo.focus_distance));
             }
-#endif
         }
     } break;
     case ANDROID_SPRD_AUTO_HDR_ENABLED: {

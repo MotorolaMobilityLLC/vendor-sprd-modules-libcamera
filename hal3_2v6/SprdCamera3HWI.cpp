@@ -1038,6 +1038,8 @@ int SprdCamera3HWI::configureStreams(
     mReciveQeqMax = SprdCamera3RegularChannel::kMaxBuffers;
     mFirstRequestGet = false;
     mPendingRequestsList.clear();
+    mSetting->mMultiCameraMode = mMultiCameraMode;
+    HAL_LOGD("mMultiCameraMode :%d",mMultiCameraMode);
 
     return ret;
 }
@@ -1792,6 +1794,10 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                 HAL_LOGE("mRegularChan->start failed, ret=%d", ret);
                 goto exit;
             }
+#ifdef CAMERA_MANULE_SNEOSR
+            mOEMIf->setAeState(AE_START);
+            mOEMIf->setAwbState(AWB_START);
+#endif
             mFirstRegularRequest = 0;
         }
     }

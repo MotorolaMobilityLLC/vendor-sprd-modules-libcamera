@@ -4665,7 +4665,6 @@ int SprdCamera3Setting::updateWorkParameters(
     bool is_push = false;
     int32_t is_capture = 0;
     float drv_focus_distance = 0.0f;
-    int32_t sprd_app_id = 0;
 
     uint8_t is_raw_capture = 0;
     uint8_t is_isptool_mode = 0;
@@ -5147,21 +5146,24 @@ int SprdCamera3Setting::updateWorkParameters(
     // SENSOR
 #ifndef CAMERA_MANULE_SNEOSR
     if (frame_settings.exists(ANDROID_SENSOR_EXPOSURE_TIME)) {
-        valueI64 =
-            frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
-        //GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.exposure_time,
-                        // valueI64, ANDROID_SENSOR_EXPOSURE_TIME, 1)
+        valueI64 = frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
         HAL_LOGD("sensor exposure_time is %" PRId64, valueI64);
         s_setting[mCameraId].sensorInfo.exposure_time = valueI64;
         pushAndroidParaTag(ANDROID_SENSOR_EXPOSURE_TIME);
     }
+#endif
+#ifndef CAMERA_MANULE_SNEOSR
     if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
+#else
+    if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY) &&
+        s_setting[mCameraId].controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON) {
+#endif
         valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.sensitivity, valueI32,
-                         ANDROID_SENSOR_SENSITIVITY, 1)
+                         ANDROID_SENSOR_SENSITIVITY, 1);
         HAL_LOGD("sensitivity is %d", valueI32);
     }
-#endif
+
 
     if (frame_settings.exists(ANDROID_SENSOR_FRAME_DURATION)) {
         valueI64 =
@@ -5276,6 +5278,9 @@ int SprdCamera3Setting::updateWorkParameters(
 
 #ifndef CAMERA_MANULE_SNEOSR
     if (frame_settings.exists(ANDROID_CONTROL_AE_MODE)) {
+#else
+    if (frame_settings.exists(ANDROID_CONTROL_AE_MODE) && mMultiCameraMode) {
+#endif
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_MODE).data.u8[0];
         HAL_LOGV("ae mode %d", s_setting[mCameraId].controlInfo.ae_mode);
         if (s_setting[mCameraId].flash_InfoInfo.available == 0 &&
@@ -5285,7 +5290,6 @@ int SprdCamera3Setting::updateWorkParameters(
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.ae_mode, valueU8,
                          ANDROID_CONTROL_AE_MODE, 1)
     }
-#endif
 
     if (frame_settings.exists(ANDROID_CONTROL_AE_LOCK)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AE_LOCK).data.u8[0];
@@ -5596,8 +5600,8 @@ int SprdCamera3Setting::updateWorkParameters(
                          ANDROID_CONTROL_AF_MODE, 1)
         HAL_LOGD("AF control mode %d", valueU8);
     }
-#ifndef CAMERA_MANULE_SNEOSR
-    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE)) {
+
+    if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE) && (sprd_app_id == 1 || (mMultiCameraMode && sprd_app_id == -1))) {
         valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].lensInfo.focus_distance,
                          valueFloat, ANDROID_LENS_FOCUS_DISTANCE, 1)
@@ -5605,7 +5609,7 @@ int SprdCamera3Setting::updateWorkParameters(
             s_setting[mCameraId].vcm_result = VCM_RESULT_IN;
         }
     }
-#endif
+
     if (frame_settings.exists(ANDROID_CONTROL_AF_TRIGGER)) {
         valueU8 = frame_settings.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0];
         s_setting[mCameraId].controlInfo.af_trigger = valueU8;
@@ -5833,7 +5837,7 @@ int SprdCamera3Setting::updateIspParameters(
 
     // AF
     if (frame_settings.exists(ANDROID_LENS_FOCUS_DISTANCE) &&
-        (s_setting[mCameraId].af_cts_params.af_mode == ANDROID_CONTROL_AF_MODE_OFF)) {
+        (s_setting[mCameraId].af_cts_params.af_mode == ANDROID_CONTROL_AF_MODE_OFF)&& sprd_app_id != 1) {
         valueFloat = frame_settings.find(ANDROID_LENS_FOCUS_DISTANCE).data.f[0];
         if (valueFloat != s_setting[mCameraId].af_cts_params.focus_distance) {
             s_setting[mCameraId].af_cts_params.focus_distance = valueFloat;
