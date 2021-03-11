@@ -10553,7 +10553,7 @@ cmr_int camera_local_fd_start(cmr_handle oem_handle) {
 }
 
 cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
-                               cmr_uint param) {
+                               uint64_t param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
     CHECK_HANDLE_VALID(oem_handle);

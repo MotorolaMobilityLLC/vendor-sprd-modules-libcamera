@@ -452,7 +452,7 @@ cmr_int prev_set_preview_skip_frame_num(cmr_handle preview_handle,
                                         cmr_uint has_preflashed);
 
 cmr_int camera_local_set_param(cmr_handle camera_handle,
-                               enum camera_param_type id, cmr_uint param);
+                               enum camera_param_type id, uint64_t param);
 
 cmr_int camera_local_get_zsl_info(cmr_handle oem_handle, cmr_uint *is_support,
                                   cmr_uint *max_width, cmr_uint *max_height);
