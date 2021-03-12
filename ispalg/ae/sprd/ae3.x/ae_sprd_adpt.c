@@ -266,8 +266,8 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 		if(!cxt->binning_factor_prev)
 			cxt->binning_factor_prev = 128;
 
-		tmp_param.exp_time = 1.0 * tmp_param.exp_time * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5;
-		tmp_param.exp_line = 1.0 * tmp_param.exp_line * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5;
+		tmp_param.exp_time = (cmr_u64)(1.0 * tmp_param.exp_time * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5);
+		tmp_param.exp_line = (cmr_u32)(1.0 * tmp_param.exp_line * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5);
 	}
 	ISP_LOGV("exp_line %d, binning_factor %d / %d, zsl_flag %d", tmp_param.exp_line, cxt->binning_factor_cap, cxt->binning_factor_prev,cxt->zsl_flag);
 	if ((cxt->zsl_flag == 0) && (cxt->is_snapshot) && (cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP])) {
