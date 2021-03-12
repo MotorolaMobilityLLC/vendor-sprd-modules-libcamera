@@ -8797,6 +8797,10 @@ cmr_int camera_get_af_support(cmr_handle oem_handle, cmr_u16 *af_support) {
     } else {
         *af_support = 0;
     }
+    // af cb when fdr capturing
+    if (cxt->fdr_skip_frame_enable)
+        *af_support = 0;
+
 
     CMR_LOGI("af_support %ld", *af_support);
     return ret;
