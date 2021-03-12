@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "imx616_mipi_raw"
+#define LOG_TAG "imx616_2lane_mipi_raw"
 #if 0 // def _SENSOR_RAW_SHARKL5PRO_H_
 #define IMX616_CPHY
 #endif
@@ -527,7 +527,7 @@ static cmr_int imx616_drv_identify(cmr_handle handle, cmr_uint param) {
         SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value,
                     ver_value);
         if (imx616_VER_VALUE == ver_value) {
-            SENSOR_LOGI("this is imx616 sensor");
+            SENSOR_LOGI("this is imx616 2lane sensor");
             ret_value = SENSOR_SUCCESS;
         } else {
             SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x",

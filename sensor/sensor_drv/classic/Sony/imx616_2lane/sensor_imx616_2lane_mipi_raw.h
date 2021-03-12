@@ -42,42 +42,24 @@
 /* sensor parameters begin */
 
 /* effective sensor output image size */
-#define VIDEO_WIDTH 1920
-#define VIDEO_HEIGHT 1080
 #define PREVIEW_WIDTH 3280 //3200
 #define PREVIEW_HEIGHT 2464 //2432
-#define SNAPSHOT_WIDTH 6560 //6528
-#define SNAPSHOT_HEIGHT 4928 //4864
 
 /*Raw Trim parameters*/
-#define VIDEO_TRIM_X 0
-#define VIDEO_TRIM_Y 0
-#define VIDEO_TRIM_W VIDEO_WIDTH
-#define VIDEO_TRIM_H VIDEO_HEIGHT
 #define PREVIEW_TRIM_X 0
 #define PREVIEW_TRIM_Y 0
 #define PREVIEW_TRIM_W PREVIEW_WIDTH
 #define PREVIEW_TRIM_H PREVIEW_HEIGHT
-#define SNAPSHOT_TRIM_X 0
-#define SNAPSHOT_TRIM_Y 0
-#define SNAPSHOT_TRIM_W SNAPSHOT_WIDTH
-#define SNAPSHOT_TRIM_H SNAPSHOT_HEIGHT
 #define RAW_BITS 10
 
 #define LANE_NUM 2
-#define VIDEO_MIPI_PER_LANE_BPS 831     /* 2*Mipi clk */
 #define PREVIEW_MIPI_PER_LANE_BPS 2220   /* 2*Mipi clk */
-#define SNAPSHOT_MIPI_PER_LANE_BPS 2090 /* 2*Mipi clk */
 
 /*line time unit: 1ns*/
-#define VIDEO_LINE_TIME 7130
 #define PREVIEW_LINE_TIME 7880
-#define SNAPSHOT_LINE_TIME 8320
 
 /* frame length*/
-#define VIDEO_FRAME_LENGTH 1166
 #define PREVIEW_FRAME_LENGTH 4224
-#define SNAPSHOT_FRAME_LENGTH 5005
 
 /* please ref your spec */
 #define FRAME_OFFSET 48
@@ -1045,16 +1027,8 @@ static struct sensor_res_tab_info s_imx616_resolution_tab_raw[VENDOR_NUM] = {
            .height = 0, .xclk_to_sensor = EX_MCLK,
            .image_format = SENSOR_IMAGE_FORMAT_RAW},
 
-          {ADDR_AND_LEN_OF_ARRAY(imx616_video_setting), PNULL, 0,
-           .width = VIDEO_WIDTH, .height = VIDEO_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
           {ADDR_AND_LEN_OF_ARRAY(imx616_preview_setting_2lane), PNULL, 0,
            .width = PREVIEW_WIDTH, .height = PREVIEW_HEIGHT,
-           .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
-          {ADDR_AND_LEN_OF_ARRAY(imx616_snapshot_setting), PNULL, 0,
-           .width = SNAPSHOT_WIDTH, .height = SNAPSHOT_HEIGHT,
            .xclk_to_sensor = EX_MCLK, .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
 
     /*If there are multiple modules,please add here*/
@@ -1065,18 +1039,6 @@ static SENSOR_TRIM_T s_imx616_resolution_trim_tab[VENDOR_NUM] = {
      .trim_info =
          {
              {0, 0, 0, 0, 0, 0, 0, {0, 0, 0, 0}},
-
-             {.trim_start_x = VIDEO_TRIM_X,
-              .trim_start_y = VIDEO_TRIM_Y,
-              .trim_width = VIDEO_TRIM_W,
-              .trim_height = VIDEO_TRIM_H,
-              .line_time = VIDEO_LINE_TIME,
-              .bps_per_lane = VIDEO_MIPI_PER_LANE_BPS,
-              .frame_line = VIDEO_FRAME_LENGTH,
-              .scaler_trim = {.x = VIDEO_TRIM_X,
-                              .y = VIDEO_TRIM_Y,
-                              .w = VIDEO_TRIM_W,
-                              .h = VIDEO_TRIM_H}},
 
              {.trim_start_x = PREVIEW_TRIM_X,
               .trim_start_y = PREVIEW_TRIM_Y,
@@ -1089,18 +1051,6 @@ static SENSOR_TRIM_T s_imx616_resolution_trim_tab[VENDOR_NUM] = {
                               .y = PREVIEW_TRIM_Y,
                               .w = PREVIEW_TRIM_W,
                               .h = PREVIEW_TRIM_H}},
-
-             {.trim_start_x = SNAPSHOT_TRIM_X,
-              .trim_start_y = SNAPSHOT_TRIM_Y,
-              .trim_width = SNAPSHOT_TRIM_W,
-              .trim_height = SNAPSHOT_TRIM_H,
-              .line_time = SNAPSHOT_LINE_TIME,
-              .bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
-              .frame_line = SNAPSHOT_FRAME_LENGTH,
-              .scaler_trim = {.x = SNAPSHOT_TRIM_X,
-                              .y = SNAPSHOT_TRIM_Y,
-                              .w = SNAPSHOT_TRIM_W,
-                              .h = SNAPSHOT_TRIM_H}},
          }}
 
     /*If there are multiple modules,please add here*/
@@ -1225,11 +1175,7 @@ static struct sensor_module_info s_imx616_module_info_tab[VENDOR_NUM] = {
                              .type = SENSOR_INTERFACE_TYPE_CSI2,
                              .bus_width = LANE_NUM,
                              .pixel_width = RAW_BITS,
-#if defined  _SENSOR_RAW_SHARKL5PRO_H_ || defined _SENSOR_RAW_SHARKL6_H_
                              .is_loose = 2,
-#else
-                             .is_loose = 0,
-#endif
                          },
                      .change_setting_skip_num = 1,
                      .horizontal_view_angle = 65,
@@ -1268,8 +1214,8 @@ SENSOR_INFO_T g_imx616_mipi_raw_info = {
                       {.reg_addr = imx616_VER_ADDR,
                        .reg_value = imx616_VER_VALUE}},
 
-    .source_width_max = SNAPSHOT_WIDTH,
-    .source_height_max = SNAPSHOT_HEIGHT,
+    .source_width_max = PREVIEW_WIDTH,
+    .source_height_max = PREVIEW_HEIGHT,
     .name = (cmr_s8 *)SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 
