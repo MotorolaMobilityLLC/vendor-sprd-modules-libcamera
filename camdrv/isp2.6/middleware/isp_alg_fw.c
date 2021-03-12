@@ -4151,7 +4151,8 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		if (cxt->fw_started == 0 && cxt->takepicture_mode != CAMERA_ISP_SIMULATION_MODE)
 			break;
 
-		ISP_LOGV("aem no.%d, timestamp %03d.%06d\n", statis_info->frame_id, statis_info->sec, statis_info->usec);
+		ISP_LOGV("aem no.%d, timestamp %03d.%06d, aem_is_update %d\n",
+			statis_info->frame_id, statis_info->sec, statis_info->usec, cxt->aem_is_update);
 
 		ret = ispalg_aem_stats_parser((cmr_handle) cxt, message->data);
 		struct isp_awb_statistic_info *ae_stat_ptr = (struct isp_awb_statistic_info *)&cxt->aem_stats_data;
@@ -4170,7 +4171,12 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 	case ISP_EVT_SOF: {
 		struct sprd_irq_info *irq_info = (struct sprd_irq_info *)message->data;
 		cxt->frame_id_sof = irq_info->frame_id;
-		ISP_LOGV("sof no.%d, timestamp %03d.%06d\n", irq_info->frame_id, irq_info->sec, irq_info->usec);
+		ISP_LOGV("sof no.%d, timestamp %03d.%06d, aem_is_update %d\n",
+			irq_info->frame_id, irq_info->sec, irq_info->usec, cxt->aem_is_update);
+		if (cxt->frame_id_sof == 0){
+			cxt->aem_is_update = 0;
+			ISP_LOGD("frame_id 0 not ae_calculation\n");
+		}
 
 		if (cxt->fw_started == 0) {
 			/* workaround for raw capture with flash
