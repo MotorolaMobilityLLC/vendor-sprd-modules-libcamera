@@ -462,6 +462,11 @@ extern "C" {
 		struct ae_monitor_cfg ae_monitor_setting;
 		cmr_u32 slave_aem_info[3*1024];
 		cmr_u8 long_exp_frame_cnt;
+		/*touch flash hold */
+		cmr_u32 touch_hold_cnt;
+		cmr_u32 touch_hold_flag;
+		struct ae_trim touch_hold_roi;	/*touch ROI*/
+		/*touch flash hold */
 		cmr_u32 end_id;
 
 	};

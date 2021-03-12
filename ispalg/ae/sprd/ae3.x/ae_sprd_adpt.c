@@ -4179,6 +4179,10 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->calc_results.monitor_info.trim = cxt->monitor_cfg.trim;
 	cxt->calc_results.monitor_info.win_num = cxt->monitor_cfg.blk_num;
 	cxt->calc_results.monitor_info.win_size = cxt->monitor_cfg.blk_size;
+	cxt->touch_hold_cnt = 0;
+	cxt->touch_hold_flag = 0;
+	cxt->cur_status.adv_param.touch_hold_flag =0;
+	memset(&cxt->touch_hold_roi, 0, sizeof(struct ae_trim));
 
 	if(CAMERA_MODE_MANUAL == cxt->app_mode)
 	{
@@ -4592,6 +4596,8 @@ static cmr_s32 ae_set_touch_zone(struct ae_ctrl_cxt *cxt, void *param)
 			cxt->cur_result.stable = 0;
 			cxt->cur_status.adv_param.touch_roi_flag = 1;
 			cxt->cur_status.adv_param.touch_roi = touch_zone->touch_zone;
+			cxt->touch_hold_cnt = 30;
+			cxt->touch_hold_roi = cxt->cur_status.adv_param.touch_roi;
 
 			ISP_LOGD("AE_SET_TOUCH_ZONE ae triger");
 		} else {
@@ -6379,6 +6385,22 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			cxt->cur_status.adv_param.fps_range.max = val_max;
 		}
 	}
+	cxt->cur_status.adv_param.touch_hold_flag = 0;
+	if (cxt->touch_hold_cnt >0){
+		if (cxt->touch_hold_flag == 0){
+			cxt->touch_hold_cnt--;
+		}
+		if (cxt->cur_status.adv_param.flash == FLASH_PRE_BEFORE&&(0 < cxt->cur_result.touch_status && cxt->cur_result.touch_status <= 3)) {
+			cxt->touch_hold_flag =1;
+		}
+		if ((cxt->cur_status.adv_param.flash == FLASH_PRE_AFTER) && (cxt->touch_hold_flag == 1)){
+			ae_set_touch_zone(cxt,&cxt->touch_hold_roi);
+			cxt->cur_status.adv_param.touch_hold_flag = 1;
+			cxt->touch_hold_flag = 0;
+			cxt->touch_hold_cnt = 0;
+		}
+	}
+	ISP_LOGV("flash_touch_hold cnt %d flag %d  in_flag %d",cxt->touch_hold_cnt,cxt->touch_hold_flag,cxt->cur_status.adv_param.touch_hold_flag);
 	pthread_mutex_lock(&cxt->data_sync_lock);
 	current_status = &cxt->sync_cur_status;
 	current_result = &cxt->sync_cur_result;
