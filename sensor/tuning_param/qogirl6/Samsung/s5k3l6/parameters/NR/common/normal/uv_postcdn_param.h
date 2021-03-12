@@ -275,11 +275,11 @@
 
 	},
 	/*sigma_d*/
-	8.00,
+	10.00,
 	/*sigma_u*/
-	8.00,
+	10.00,
 	/*sigma_v*/
-	8.00,
+	10.00,
 	/*adpt_med_thr*/
 	0x0028,
 	/*median_mode*/
@@ -423,11 +423,11 @@
 
 	},
 	/*sigma_d*/
-	8.00,
+	20.00,
 	/*sigma_u*/
-	8.00,
+	20.00,
 	/*sigma_v*/
-	8.00,
+	20.00,
 	/*adpt_med_thr*/
 	0x0028,
 	/*median_mode*/
@@ -571,11 +571,11 @@
 
 	},
 	/*sigma_d*/
-	8.00,
+	30.00,
 	/*sigma_u*/
-	8.00,
+	30.00,
 	/*sigma_v*/
-	8.00,
+	30.00,
 	/*adpt_med_thr*/
 	0x0028,
 	/*median_mode*/
@@ -719,11 +719,11 @@
 
 	},
 	/*sigma_d*/
-	8.00,
+	40.00,
 	/*sigma_u*/
-	8.00,
+	40.00,
 	/*sigma_v*/
-	8.00,
+	40.00,
 	/*adpt_med_thr*/
 	0x0028,
 	/*median_mode*/
@@ -737,7 +737,7 @@
 	/*downsample_bypass*/
 	0x00,
 	/*bypass*/
-	0x00000001,
+	0x00000000,
 }
 ,
 /*param5.&BasePoint=1&*/
