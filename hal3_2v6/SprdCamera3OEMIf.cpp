@@ -709,6 +709,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
 
     mFlush = 0;
     mVideoAFBCFlag = 0;
+    EisErr = false;
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -880,10 +881,12 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             mRecordingFirstFrameTime = 0;
 
 #ifdef CONFIG_CAMERA_EIS
+
         SPRD_DEF_Tag *sprddefInfo;
         sprddefInfo = mSetting->getSPRDDEFTagPTR();
         if (sprddefInfo->sprd_eis_enabled == 1) {
             mSprdEisEnabled = true;
+            EisErr = false;
         } else {
             mSprdEisEnabled = false;
         }
@@ -4233,9 +4236,15 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
                 frame_out = EisVideoFrameStab(frame, frame_num);
             }
             if (frame_out.frame_data) {
+                HAL_LOGV("cameraid %d eis process is err frame_out.frame_num %d",mCameraId, frame_out.frame_num);
                 channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000,
                                                 CAMERA_STREAM_TYPE_VIDEO);
+            } else if(EisErr || !(mGyroInit && !mGyroExit)) {
+                HAL_LOGV("cameraid %d eis process is err frame_num %d",mCameraId, frame_num);
+                channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
+                                  CAMERA_STREAM_TYPE_VIDEO);
             }
+
             HAL_LOGV("video callback frame vir address=0x%p,frame_num=%d",
                       frame_out.frame_data, frame_out.frame_num);
             goto bypass_rec;
@@ -7826,17 +7835,25 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
         break;
 
-    case ANDROID_SENSOR_SENSITIVITY:
-       if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON) {
-           int8_t drv_iso_level;
-           SENSOR_Tag sensorInfo;
-           mSetting->getSENSORTag(&sensorInfo);
-
-           mSetting->androidIsoToDrvMode(sensorInfo.sensitivity, &drv_iso_level);
-           HAL_LOGD("iso_value %d, drv_iso_level %d", sensorInfo.sensitivity, drv_iso_level);
-           SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, drv_iso_level);
-       }
-       break;
+        case ANDROID_SENSOR_SENSITIVITY: {
+#ifdef CAMERA_MANULE_SNEOSR
+          if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON) {
+            int8_t drv_iso_level = 0;
+            SENSOR_Tag sensorInfo;
+            mSetting->getSENSORTag(&sensorInfo);
+            mSetting->androidIsoToDrvMode(sensorInfo.sensitivity, &drv_iso_level);
+            HAL_LOGD("iso_value %lld, drv_iso_level:%d", sensorInfo.sensitivity, drv_iso_level);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, drv_iso_level);
+          }
+#else
+         int8_t drv_iso_level;
+         SENSOR_Tag sensorInfo;
+         mSetting->getSENSORTag(&sensorInfo);
+         mSetting->androidIsoToDrvMode(sensorInfo.sensitivity, &drv_iso_level);
+         HAL_LOGD("iso_value %d, drv_iso_level:%d", sensorInfo.sensitivity, drv_iso_level);
+         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, drv_iso_level);
+#endif
+    } break;
 
     case ANDROID_CONTROL_AE_LOCK: {
         uint8_t ae_lock;
@@ -11221,6 +11238,35 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             }
         }
 
+        if(sprddefInfo->sprd_appmode_id == -1) {
+            SprdCamera3RegularChannel *Rechannel =
+                reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+            SprdCamera3PicChannel *Picchannel =
+                reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+            SprdCamera3Stream *stream = NULL;
+            uint32_t current_prev_frame = 0, pic_frame = 0;
+            Rechannel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
+            if (stream == NULL) {
+                HAL_LOGE("prev_stream=%p", stream);
+            } else {
+                ret = stream->getQBuffFirstNum(&current_prev_frame);
+                if (ret == NO_ERROR) {
+                    Picchannel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &stream);
+                    if (stream == NULL) {
+                        HAL_LOGE("pic_stream=%p", stream);
+                    } else {
+                        ret = stream->getQBuffFirstNum(&pic_frame);
+                        if (ret == NO_ERROR && current_prev_frame <= pic_frame) {
+                            HAL_LOGD("not the right frame, skip it");
+                            mHalOem->ops->camera_set_zsl_buffer(
+                                obj->mCameraHandle, zsl_frame->y_phy_addr,
+                                zsl_frame->y_vir_addr, zsl_frame->fd);
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
 
         if (sprddefInfo->sprd_appmode_id == 0  && sprddefInfo->af_support == 1 && !mIsFDRCapture &&
                  mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene && mAf_start_time) {
@@ -12183,7 +12229,7 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
 
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroPreviewCond.waitRelative(
-                                     mReadGyroPreviewLock, 30000000))) {
+                                     mReadGyroPreviewLock, 15000000))) {
                 HAL_LOGW("gyro data is too slow for eis process");
                 break;
             }
@@ -12225,6 +12271,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
                  frame_in.timestamp, mGyromaxtimestamp);
         ret = video_stab_write_frame(mVideoInst, &frame_in);
         if (ret) {
+            EisErr = true;
             HAL_LOGE("video_stab_write_frame failed");
             goto exit;
         }
@@ -12276,7 +12323,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
 
             if (++count >= 4 || (NO_ERROR !=
                                  mReadGyroVideoCond.waitRelative(
-                                     mReadGyroVideoLock, 30000000))) {
+                                     mReadGyroVideoLock, 15000000))) {
                 HAL_LOGW("gyro data is too slow for eis process");
                 break;
             }
@@ -12288,6 +12335,7 @@ vsOutFrame SprdCamera3OEMIf::processVideoEIS(vsInFrame frame_in) {
                      frame_out_video.frame_num, frame_out_video.timestamp,
                      frame_out_video.frame_data);
         } else if (ret_eis == -1) {
+            EisErr = true;
             HAL_LOGE("video_stab_read failed");
             goto exit;
         } else if (ret_eis == 1) {
@@ -12554,6 +12602,9 @@ int SprdCamera3OEMIf::gyro_get_data(
                 obj->mReadGyroPreviewCond.signal();
                 if (obj->mIsRecording) {
                     obj->pushEISVideoQueue(&obj->mGyrodata[obj->mGyroNum]);
+                    HAL_LOGD("gyro timestamp %" PRId64 ", x: %f, y: %f, z: %f",
+                         buffer[i].timestamp, buffer[i].data[0],
+                         buffer[i].data[1], buffer[i].data[2]);
                     obj->mReadGyroVideoCond.signal();
                 }
                 if (++obj->mGyroNum >= obj->kGyrocount)

@@ -915,7 +915,7 @@ int SprdCamera3HWI::configureStreams(
 #endif
             else if (video_size.width % 4) {
                 /* for sprd_eis_enable,eis video_size=normal video_size+2*/
-                SprdCamera3RegularChannel::kMaxBuffers = 16;
+                SprdCamera3RegularChannel::kMaxBuffers = 24;
             } else
                 SprdCamera3RegularChannel::kMaxBuffers = 4;
             HAL_LOGD("slowmotion=%d, high video mode = %d, kMaxBuffers=%d", sprddefInfo->slowmotion,
@@ -2009,7 +2009,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                 mSetting->setResultTag(&threeAControlInfo);
                 if(useManualSesnor) {
-                    if(isMultiCameraMode(mMultiCameraMode)||mFlush)
+                    if(isMultiCameraMode(mMultiCameraMode)||mFlush ||
+                        mOEMIf->mSprdAppmodeId == CAMERA_MODE_SLOWMOTION)
                         result.result = mSetting->translateLocalToFwMetadata();
                     else
                         result.result = mMetadataChannel->getMetadata(i->frame_number);

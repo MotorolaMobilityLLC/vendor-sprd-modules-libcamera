@@ -995,6 +995,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     //for LPT type
     int lightportrait_type;
     uint32_t mMultiCameraId;
+    bool EisErr;
 };
 
 }; // namespace sprdcamera

@@ -813,18 +813,11 @@ SprdCamera3MetadataChannel::SprdCamera3MetadataChannel(
     }
 
 SprdCamera3MetadataChannel::~SprdCamera3MetadataChannel() {
-    while (!FrameVec.empty()){
-        FrameVec.pop_front();
-    }
-    while (!mAeCallBackQue.empty()) {
-        mAeCallBackQue.pop_front();
-    }
-    while (!mAfCallBackQue.empty()) {
-        mAfCallBackQue.pop_front();
-    }
-    while (!mSyncResult.empty()) {
-        mSyncResult.pop_front();
-    }
+    Mutex::Autolock lr(mLock);
+    FrameVec.clear();
+    mAeCallBackQue.clear();
+    mAfCallBackQue.clear();
+    mSyncResult.clear();
     mRequestInfoList.clear();
 }
 int SprdCamera3MetadataChannel::request(const CameraMetadata &metadata) {
@@ -945,7 +938,7 @@ bool SprdCamera3MetadataChannel::pushResult () {
     bool is_first_fame = false;
     HAL_LOGD("mAeCallBackQue size %d, mAfCallBackQue size %d, FrameVec %d",
     mAeCallBackQue.size(), mAfCallBackQue.size(), FrameVec.size());
-
+    Mutex::Autolock lr(mLock);
     if (!mAeCallBackQue.empty() && !mAfCallBackQue.empty()) {
         camera_metadata_t *new_result;
         sync_result_t tmp_result;
@@ -1012,7 +1005,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
     SprdCamera3HWI *hwi = (SprdCamera3HWI *) mUserData;
     if(hwi->isMultiCameraMode(hwi->getMultiCameraMode())||
         mOEMIf->mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
-        HAL_LOGE("multi camera can not use manule sensor");
+        //HAL_LOGE("multi camera can not use manule sensor");
         return 0;
     }
 #ifndef CAMERA_MANULE_SNEOSR
@@ -1211,7 +1204,7 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
           std::cv_status::timeout) {
             HAL_LOGE("timeout wait for mResultSignal");
         };
-    HAL_LOGD("report frame_num %d mSyncResult size %d", frame_num, mSyncResult.size());
+        HAL_LOGV("report frame_num %d mSyncResult size %d", frame_num, mSyncResult.size());
     }
 
     if (!FrameVec.empty()) {
@@ -1224,7 +1217,7 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
             FrameVec.erase(lsItr);
         }
     }
-
+    Mutex::Autolock lr(mLock);
     if (!mSyncResult.empty()) {
         sync_result_t result = mSyncResult.front();
         mSyncResult.pop_front();
@@ -1724,18 +1717,11 @@ int SprdCamera3MetadataChannel::stop(uint32_t frame_number) {
 }
 
 void SprdCamera3MetadataChannel::clear(){
-    while (!FrameVec.empty()){
-        FrameVec.pop_front();
-    }
-    while (!mAeCallBackQue.empty()) {
-        mAeCallBackQue.pop_front();
-    }
-    while (!mAfCallBackQue.empty()) {
-        mAfCallBackQue.pop_front();
-    }
-    while (!mSyncResult.empty()) {
-        mSyncResult.pop_front();
-    }
+    Mutex::Autolock lr(mLock);
+    FrameVec.clear();
+    mAeCallBackQue.clear();
+    mAfCallBackQue.clear();
+    mSyncResult.clear();
     mRequestInfoList.clear();
 }
 }; // namespace sprdcamera
