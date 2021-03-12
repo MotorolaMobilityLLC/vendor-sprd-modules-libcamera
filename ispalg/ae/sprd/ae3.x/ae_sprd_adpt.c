@@ -6242,6 +6242,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			hdr_stat.w = cxt->snr_info.frame_size.w;
 			hdr_stat.h = cxt->snr_info.frame_size.h;
 		}
+		memset(&hdr_param, 0 ,sizeof(struct _tag_hdr_detect_t));
 		hdr_param.thres_bright = 250;
 		hdr_param.thres_dark = 20;
 		hdr_param.tuning_param = cxt->hdr_tuning_param;
