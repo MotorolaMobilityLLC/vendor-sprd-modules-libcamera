@@ -176,7 +176,7 @@ struct ae_match_data {
 };
 
 struct ae_sync_actual_data {
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_u32 exp_line;
 	cmr_u32 ae_gain;
 	cmr_u32 dmy_line;
@@ -206,7 +206,7 @@ struct ae_rect_data {
 
 struct ae_sync_lib_outout_data {
 	cmr_u32 ae_idx;
-	cmr_u32 exp_time;
+	cmr_u64 exp_time;
 	cmr_u32 line_time;
 	cmr_u32 exp_line;
 	cmr_u32 dmy_line;

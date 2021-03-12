@@ -490,7 +490,7 @@ static cmr_s32 ae_update_sync_result_to_slave(struct ae_ctrl_cxt *cxt, struct ae
 		exp_data->lib_data.gain = ae_dynamic_sync_result.ae_gain;
 		exp_data->lib_data.dummy = ae_dynamic_sync_result.dmy_line;
 		exp_data->lib_data.frm_len = ae_dynamic_sync_result.frm_len;
-		ISP_LOGV("dynamic_result exp_line:%d, exp_time:%d, gain:%d, dummyline:%d", ae_dynamic_sync_result.exp_line, ae_dynamic_sync_result.exp_time, ae_dynamic_sync_result.ae_gain, ae_dynamic_sync_result.dmy_line);
+		ISP_LOGV("dynamic_result exp_line:%d, exp_time:%"PRIu64", gain:%d, dummyline:%d", ae_dynamic_sync_result.exp_line, ae_dynamic_sync_result.exp_time, ae_dynamic_sync_result.ae_gain, ae_dynamic_sync_result.dmy_line);
 	} else {
 		cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, GET_SYNC_SLAVE_SYNC_OUTPUT, NULL, &ae_sync_lib_output);
 		exp_data->lib_data.exp_line = ae_sync_lib_output.exp_line;
@@ -498,7 +498,7 @@ static cmr_s32 ae_update_sync_result_to_slave(struct ae_ctrl_cxt *cxt, struct ae
 		exp_data->lib_data.gain = ae_sync_lib_output.ae_gain;
 		exp_data->lib_data.dummy = ae_sync_lib_output.dmy_line;
 		exp_data->lib_data.frm_len = ae_sync_lib_output.frm_len;
-		ISP_LOGV("sync_result exp_line:%d, exp_time:%d, gain:%d, dummyline:%d", ae_sync_lib_output.exp_line, ae_sync_lib_output.exp_time, ae_sync_lib_output.ae_gain, ae_sync_lib_output.dmy_line);
+		ISP_LOGV("sync_result exp_line:%d, exp_time:%"PRIu64", gain:%d, dummyline:%d", ae_sync_lib_output.exp_line, ae_sync_lib_output.exp_time, ae_sync_lib_output.ae_gain, ae_sync_lib_output.dmy_line);
 	}
 	ae_update_exp_data(cxt, exp_data, &write_item, &actual_item, is_force);
 
