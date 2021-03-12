@@ -2716,7 +2716,7 @@ static cmr_s32 flash_estimation(struct ae_ctrl_cxt *cxt)
 		}
 
 		cxt->flash_last_exp_line = (cmr_u32)(1.0 * out.nextExposure / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-		cxt->flash_last_gain = current_status->adv_param.mode_param.value.exp_gain[1];
+		cxt->flash_last_gain = (cmr_s32)current_status->adv_param.mode_param.value.exp_gain[1];
 	}
 
   flash_estimation_exit:
@@ -3925,7 +3925,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->mode_switch[cxt->app_mode].face_auto_offset = cxt->last_exp_param.face_auto_offset;
 			cxt->app_mode_tarlum[cxt->app_mode] = cxt->sync_cur_result.target_lum;
 			if(cxt->mode_switch[cxt->app_mode].lum){
-				cxt->mode_switch[cxt->app_mode].sensitivity = (cxt->last_exp_param.exp_time) / 1000000 * (cxt->last_exp_param.gain) / (cxt->mode_switch[cxt->app_mode].lum);
+				cxt->mode_switch[cxt->app_mode].sensitivity = (cmr_u32)(cxt->last_exp_param.exp_time) / 1000000 * (cxt->last_exp_param.gain) / (cxt->mode_switch[cxt->app_mode].lum);
 				if(0 == cxt->mode_switch[cxt->app_mode].sensitivity)
 					cxt->mode_switch[cxt->app_mode].sensitivity = 1;
 				ISP_LOGV("sensitivity %d exp_time %"PRIu64" gain %d luma %d ",cxt->mode_switch[cxt->app_mode].sensitivity,cxt->last_exp_param.exp_time,cxt->last_exp_param.gain,cxt->mode_switch[cxt->app_mode].lum);
@@ -4330,7 +4330,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			&& (0 == s_bakup_exp_param[cxt->camera_id].is_ev_setting)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].gain)
 			&& (0 != s_bakup_exp_param[cxt->camera_id].bv)) {
-			src_exp.exp_line = s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time;
+			src_exp.exp_line = (cmr_u32)s_bakup_exp_param[cxt->camera_id].exp_time / cxt->cur_status.adv_param.cur_ev_setting.line_time;
 			src_exp.exp_time = s_bakup_exp_param[cxt->camera_id].exp_time;
 			src_exp.gain = s_bakup_exp_param[cxt->camera_id].gain;
 			src_exp.cur_index = s_bakup_exp_param[cxt->camera_id].cur_index;
@@ -6692,7 +6692,7 @@ static cmr_s32 ae_io_ctrl_direct(cmr_handle handle, cmr_s32 cmd, cmr_handle para
 
 	case AE_GET_EXP_TIME:
 		if (result) {
-			*(cmr_u32 *) result = cxt->cur_result.ev_setting.exp_time / 100;
+			*(cmr_u32 *) result = (cmr_u32) (cxt->cur_result.ev_setting.exp_time / 100);
 		}
 		break;
 
