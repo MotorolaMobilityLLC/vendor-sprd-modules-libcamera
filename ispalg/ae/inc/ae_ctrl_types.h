@@ -89,6 +89,7 @@ extern "C" {
 		AE_SET_FLICKER,
 		AE_SET_SCENE_MODE,
 		AE_SET_ISO,
+		AE_SET_ISO_VALUE,
 		AE_SET_MANUAL_ISO,
 		AE_SET_FPS,
 		AE_SET_AF_START,
@@ -114,6 +115,7 @@ extern "C" {
 		AE_SET_3DNR_THR,
 		AE_SET_AF_STATUS,
 		AE_FDR_START,
+		AE_SET_EXP_GAIN_CAP_START,
 		AE_SET_AUTO_FDR,
 		AE_SET_PROF_MODE,
 		AE_SET_FLASH_CALIBRATION,
@@ -205,6 +207,7 @@ extern "C" {
 		AE_CB_FLASH_CALIBRATION,
 		AE_CB_SYNC_STABLE,
 		AE_CB_LONG_EXP_START,
+		AE_CB_EXP_GAIN_CAP_START,
 		AE_CB_MAX
 	};
 	enum ae_cb_result_notify_hal {
@@ -624,6 +627,14 @@ extern "C" {
 		cmr_u32 fdr_enable;
 		cmr_u32 ev_effect_valid_num;
 		cmr_u32 ev_effect_cnt;
+	};
+
+	struct ae_exp_gain_cap_param {
+		cmr_s8 enable;
+		cmr_s8 effect_valid_num;
+		cmr_s8 adjust_cnt;
+		cmr_u32 exp_time;
+		cmr_u32 iso;
 	};
 
 	struct ae_flash_power {

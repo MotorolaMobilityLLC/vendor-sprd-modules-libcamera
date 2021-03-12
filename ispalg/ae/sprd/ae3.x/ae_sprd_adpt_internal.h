@@ -351,6 +351,18 @@ extern "C" {
 		cmr_s8 ev_adjust_cnt;
 		cmr_s8 ev_adj_ev_effect_valid_num;
 		cmr_s8 ev_adj_snp_type;
+
+		//exp_gain_cap control
+		cmr_s8 exp_gain_cap_enable;
+		cmr_u16 base_exp_line;
+		cmr_s16 base_gain;
+		cmr_s8 exp_gain_cap_frame_cnt;
+		cmr_s8 exp_gain_cap_flag;
+		cmr_s8 exp_gain_cap_adjust_cnt;
+		cmr_s8 exp_gain_cap_cb_num;
+		cmr_u32 set_exp_time;
+		cmr_u32 set_gain;
+		//cmr_s8 ev_adj_snp_type;
 		/*
 		 * FDR control
 		 */

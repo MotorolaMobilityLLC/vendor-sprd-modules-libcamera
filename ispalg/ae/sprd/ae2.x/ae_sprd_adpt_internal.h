@@ -43,6 +43,7 @@ extern "C" {
 		cmr_u32 is_lock;
 		cmr_u32 face_flag;
 		cmr_s16 cur_lum;
+		cmr_u32 is_ev_setting;
 	};
 	struct ae_ev_param {
 		cmr_s16 target_lum;
@@ -193,6 +194,7 @@ extern "C" {
 		cmr_s8 is_snapshot;
 		cmr_u8 is_first;
 		cmr_u32 multiColorLcdEn;
+		cmr_u8 is_ev_setting;
 		/*
 		 * ae control operation infaces
 		 */
