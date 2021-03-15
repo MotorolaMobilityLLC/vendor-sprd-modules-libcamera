@@ -247,6 +247,12 @@ struct stateMachine {
     uint32_t newState;
 };
 
+typedef struct {
+    uint32_t unRefreshcount;
+    uint64_t lastTimeStamp;
+    bool disableEIS;
+} eisContlInfo_t;
+
 class SprdCamera3OEMIf : public virtual RefBase {
   public:
     SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting);
@@ -272,7 +278,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     bool mManualExposureEnabled;
     char *mFrontFlash;
-
     enum camera_flush_mem_type_e {
         CAMERA_FLUSH_RAW_HEAP,
         CAMERA_FLUSH_RAW_HEAP_ALL,
@@ -737,6 +742,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint8_t mMasterId;
     Mutex mLock; // API lock -- all public methods
     Mutex mPreviewCbLock;
+    Mutex mVideoEisCbLock;
     Mutex mCaptureCbLock;
     Mutex mStateLock;
     Condition mStateWait;
@@ -912,9 +918,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     pthread_t mGyroMsgQueHandle;
     int mGyroNum;
     double mGyromaxtimestamp;
-    Mutex mReadGyroPreviewLock;
+    std::mutex mReadGyroPreviewLock;
     Mutex mReadGyroVideoLock;
-    Condition mReadGyroPreviewCond;
+    std::condition_variable mReadGyroPreviewCond;
     Condition mReadGyroVideoCond;
     sem_t mGyro_sem;
     Mutex mEisPreviewLock;
@@ -995,6 +1001,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     //for LPT type
     int lightportrait_type;
     uint32_t mMultiCameraId;
+    eisContlInfo_t mEisctl;
     bool EisErr;
 };
 
