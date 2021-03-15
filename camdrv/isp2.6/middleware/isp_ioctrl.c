@@ -1604,6 +1604,23 @@ static cmr_int ispctl_iso(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int ispctl_sensitivity(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 sensitivity_value = 0;
+
+	if (NULL == param_ptr)
+		return ISP_PARAM_NULL;
+
+	sensitivity_value = *(cmr_u32 *) param_ptr;
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_ISO_VALUE, &sensitivity_value, NULL);
+	ISP_LOGD("sensitivity_value=%d, ret=%ld", sensitivity_value, ret);
+
+	return ret;
+}
+
 static cmr_int ispctl_brightness(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -6214,6 +6231,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_AUTO_FLASH_CAP, ispctl_set_auto_flash_cap},
 	{ISP_CTRL_SET_LONG_EXP,ispctl_set_long_exp_lock_awb},
 	{ISP_CTRL_SET_FALSH_CALIBRATION,ispctl_set_flash_calibration},
+	{ISP_CTRL_SENSITIVITY, ispctl_sensitivity},
 	{ISP_CTRL_MAX, NULL}
 };
 

@@ -80,6 +80,7 @@ enum setting_general_type {
     SETTING_GENERAL_AWB_LOCK_UNLOCK,
     SETTING_GENERAL_SPRD_APP_MODE,
     SETTING_GENERAL_AUTO_HDR,
+    SETTING_GENERAL_SENSITIVITY,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -543,7 +544,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_SPRD_APP_MODE, &hal_param->hal_common.sprd_appmode_id,
          COM_ISP_SET_SPRD_APP_MODE, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_HDR, &hal_param->hal_common.is_auto_hdr,
-         COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX}};
+         COM_ISP_SET_AUTO_HDR, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_SENSITIVITY, &hal_param->hal_common.iso, COM_ISP_SET_SENSITIVITY,
+         COM_SN_TYPE_MAX}};
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
     cmr_int is_check_night_mode = 0;
@@ -592,6 +595,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         }
         hal_param->hal_common.ae_compensation_param =
             parm->ae_compensation_param;
+        break;
+    case SETTING_GENERAL_SENSITIVITY:
+        item->isp_cmd = COM_ISP_SET_SENSITIVITY;
+        ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         break;
     default:
         type_val = parm->cmd_type_value;
@@ -1013,6 +1020,15 @@ static cmr_int setting_set_iso(struct setting_component *cpt,
     cmr_int ret = 0;
 
     ret = setting_set_general(cpt, SETTING_GENERAL_ISO, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_sensitivity(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_SENSITIVITY, parm);
 
     return ret;
 }
@@ -3535,7 +3551,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_AF_MODE, NULL);    /*by focus module*/
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_AUTO_EXPOSURE_MODE,
                              setting_set_auto_exposure_mode);
-    cmr_add_cmd_fun_to_table(CAMERA_PARAM_ISO, setting_set_iso);
+    //cmr_add_cmd_fun_to_table(CAMERA_PARAM_ISO, setting_set_iso);
+    cmr_add_cmd_fun_to_table(CAMERA_PARAM_SENSITIVITY, setting_set_sensitivity);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_EXPOSURE_COMPENSATION,
                              setting_set_exposure_compensation);
     cmr_add_cmd_fun_to_table(CAMERA_PARAM_PREVIEW_FPS, setting_set_preview_fps);
