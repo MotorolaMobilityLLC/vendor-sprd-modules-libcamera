@@ -481,6 +481,8 @@ static cmr_int ov16885_normal_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *para
 //#ifdef OV16885_PDAF_USE_DT
 //	pdaf_info->type2_info.data_type = 0x2b;
 //#endif
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y
+				* pd_pos_is_right_size * 5;
     return rtn;
 }
 static cmr_int ov16885_normal_drv_get_brightness(cmr_handle handle, cmr_u32 *param) {
