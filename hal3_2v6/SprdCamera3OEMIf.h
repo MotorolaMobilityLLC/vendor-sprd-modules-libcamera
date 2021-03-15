@@ -228,6 +228,8 @@ typedef struct {
 #define SBS_RAW_DATA_WIDTH 3200
 #define SBS_RAW_DATA_HEIGHT 1200
 
+#define MSLEEP_TIME 1000000000L
+
 enum afTransitionCause {
     AF_MODE_CHANGE = 0,
     AF_INITIATES_NEW_SCAN,

@@ -6583,13 +6583,20 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_EXPOSURE_MODE,
                  (cmr_uint)&ae_param);
     } break;
-
+/*
     case ANDROID_SPRD_ISO: {
         SPRD_DEF_Tag sprddefInfo;
         mSetting->getSPRDDEFTag(&sprddefInfo);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
                  (cmr_uint)sprddefInfo.iso);
     } break;
+*/
+    case ANDROID_SENSOR_SENSITIVITY:
+        mSetting->getSENSORTag(&sensorInfo);
+        HAL_LOGD("controlInfo ae_mode=%d, mode=%d, sensitivity value=%d",
+                 controlInfo.ae_mode, controlInfo.mode, sensorInfo.sensitivity);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SENSITIVITY, sensorInfo.sensitivity);
+        break;
 
     case ANDROID_CONTROL_AE_TARGET_FPS_RANGE:
         setCameraPreviewMode(mRecordingMode);
@@ -6762,10 +6769,11 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         }
     } break;
     case ANDROID_SENSOR_EXPOSURE_TIME:
+        mSetting->getSENSORTag(&sensorInfo);
         if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
-            HAL_LOGD("exposure_time %lld", sensorInfo.exposure_time);
+            HAL_LOGD("exposure_time %" PRId64, sensorInfo.exposure_time);
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
-                     (cmr_uint)(sensorInfo.exposure_time));
+                     (cmr_s64)(sensorInfo.exposure_time));
         }
         break;
     default:

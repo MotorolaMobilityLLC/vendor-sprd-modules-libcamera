@@ -11594,7 +11594,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                  fdr_param.fdr_enable, fdr_param.ev_effect_valid_num, fdr_param.ev_effect_cnt);
         isp_param_ptr = (void *)&fdr_param;
         break;
-
+    case COM_ISP_SET_SENSITIVITY:
+        isp_cmd = ISP_CTRL_SENSITIVITY;
+        set_exif_flag = 1;
+        exif_cmd = SENSOR_EXIF_CTRL_ISOSPEEDRATINGS;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("sensitivity value %" PRId64, param_ptr->cmd_value);
+        break;
     case COM_ISP_SET_AE_ADJUST:
         isp_cmd = ISP_CTRL_SET_AE_ADJUST;
         snp_ae_param.enable = param_ptr->ev_setting.cmd_value;
@@ -11937,19 +11943,27 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ret = isp_ioctl(isp_cxt->isp_handle, isp_cmd, (void *)&isp_param);
         if (ret) {
             CMR_LOGW("failed isp ioctl %ld", ret);
-        } else {
-            if (COM_ISP_SET_ISO == cmd_type) {
-                if (0 == param_ptr->cmd_value) {
-                    isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO,
-                                   (void *)&isp_param);
-                    cxt->setting_cxt.is_auto_iso = 1;
-                } else {
-                    cxt->setting_cxt.is_auto_iso = 0;
-                }
-                isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
-                CMR_LOGI("auto iso %d, exif iso %d",
-                         cxt->setting_cxt.is_auto_iso, isp_param);
+        } else if (COM_ISP_SET_ISO == cmd_type) {
+            if (0 == param_ptr->cmd_value) {
+                isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO,
+                              (void *)&isp_param);
+                cxt->setting_cxt.is_auto_iso = 1;
+            } else {
+                cxt->setting_cxt.is_auto_iso = 0;
             }
+            isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
+            CMR_LOGI("auto iso %d, exif iso %d",
+                     cxt->setting_cxt.is_auto_iso, isp_param);
+        } else if (COM_ISP_SET_SENSITIVITY == cmd_type) {
+            if (0 == param_ptr->cmd_value) {
+                isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO,
+                              (void *)&isp_param);
+                cxt->setting_cxt.is_auto_iso = 1;
+            } else {
+                cxt->setting_cxt.is_auto_iso = 0;
+            }
+            CMR_LOGI("auto iso %d, exif iso %d",
+                     cxt->setting_cxt.is_auto_iso, isp_param);
         }
     }
 
@@ -13242,7 +13256,13 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
-    case CAMERA_PARAM_ISO:
+/*    case CAMERA_PARAM_ISO:
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+*/
+    case CAMERA_PARAM_SENSITIVITY:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
@@ -14229,6 +14249,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     char isptool_value[PROPERTY_VALUE_MAX];
     cmr_uint video_snapshot_type;
     cmr_uint has_preflashed;
+    cmr_u32 iso_value;
     struct common_isp_cmd_param isp_param;
     CMR_LOGI("E.\n");
     sem_wait(&cxt->snapshot_sm);
@@ -14551,6 +14572,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
     camera_snapshot_started((cmr_handle)cxt);
+    camera_get_iso_info(oem_handle, &iso_value);
+    camera_local_set_exif_iso_value(oem_handle, iso_value);
     //camera_set_exif_exposure_time(oem_handle);
     ret = camera_get_cap_time((cmr_handle)cxt);
     cxt->snp_cxt.status = SNAPSHOTING;
@@ -15181,7 +15204,7 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         isp_param = param;
         CMR_LOGD("flicker %d", isp_param);
         break;
-
+/*
     case CAMERA_PARAM_ISO:
         isp_cmd = ISP_CTRL_ISO;
         set_exif_flag = 1;
@@ -15189,7 +15212,7 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         isp_param = param;
         CMR_LOGD("iso %d", param);
         break;
-
+*/
     case CAMERA_PARAM_AE_REGION:
         isp_cmd = ISP_CTRL_AE_TOUCH;
         ae_param = *(struct cmr_ae_param *)param;
@@ -15291,21 +15314,6 @@ cmr_int camera_isp_set_params(cmr_handle oem_handle, enum camera_param_type id,
         ret = isp_ioctl(isp_cxt->isp_handle, isp_cmd, (void *)&isp_param);
         if (ret) {
             CMR_LOGE("failed isp ioctl %ld", ret);
-        } else {
-            if (CAMERA_PARAM_ISO == id) {
-                if (0 == param) {
-                    isp_capability(isp_cxt->isp_handle, ISP_CUR_ISO,
-                                   (void *)&isp_param);
-                    cxt->setting_cxt.is_auto_iso = 1;
-                } else {
-                    cxt->setting_cxt.is_auto_iso = 0;
-                }
-                if (cxt->setting_cxt.is_auto_iso != 1) {
-                    isp_param = POWER2(isp_param - 1) * ONE_HUNDRED;
-                }
-                CMR_LOGD("auto iso %d, exif iso %d",
-                         cxt->setting_cxt.is_auto_iso, isp_param);
-            }
         }
     }
 
@@ -15465,7 +15473,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
     case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
     case CAMERA_PARAM_ANTIBANDING:
-    case CAMERA_PARAM_ISO:
+    // case CAMERA_PARAM_ISO:
     case CAMERA_PARAM_AE_REGION:
     // case CAMERA_PARAM_EXPOSURE_COMPENSATION:
     case CAMERA_PARAM_EFFECT:

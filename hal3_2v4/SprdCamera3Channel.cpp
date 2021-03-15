@@ -893,6 +893,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SENSOR_EXPOSURE_TIME");
             mOEMIf->SetCameraParaTag(ANDROID_SENSOR_EXPOSURE_TIME);
             break;
+        case ANDROID_SENSOR_SENSITIVITY:
+            HAL_LOGV("ANDROID_SENSOR_SENSITIVITY");
+            mOEMIf->SetCameraParaTag(ANDROID_SENSOR_SENSITIVITY);
+            break;
         default:
             HAL_LOGV("other tag");
             break;
@@ -933,9 +937,11 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
         case ANDROID_SPRD_METERING_MODE:
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_METERING_MODE);
             break;
-        case ANDROID_SPRD_ISO:
+/*        case ANDROID_SPRD_ISO:
+            HAL_LOGV("ANDROID_SPRD_ISO");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_ISO);
             break;
+*/
         case ANDROID_SPRD_ZSL_ENABLED:
             HAL_LOGV("ANDROID_SPRD_ZSL_ENABLED");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_ZSL_ENABLED);

@@ -481,7 +481,7 @@ const uint8_t kavailable_edge_modes[] = {ANDROID_EDGE_MODE_OFF,
                                          ANDROID_EDGE_MODE_HIGH_QUALITY};
 
 const int32_t ksensitivity_range[2] = {
-    100, 3200,
+    50, 3200,
 };
 
 const uint8_t kavailable_tone_map_modes[] = {ANDROID_TONEMAP_MODE_FAST,
@@ -604,7 +604,7 @@ const int32_t kavailable_request_keys[] = {
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
     ANDROID_LENS_FOCAL_LENGTH, ANDROID_SENSOR_FRAME_DURATION,
     ANDROID_SENSOR_EXPOSURE_TIME,
-    // ANDROID_SENSOR_SENSITIVITY,
+    //ANDROID_SENSOR_SENSITIVITY,
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
@@ -632,7 +632,7 @@ const int32_t front_kavailable_request_keys[] = {
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
     ANDROID_LENS_FOCAL_LENGTH, ANDROID_SENSOR_FRAME_DURATION,
     ANDROID_SENSOR_EXPOSURE_TIME,
-    // ANDROID_SENSOR_SENSITIVITY,
+    //ANDROID_SENSOR_SENSITIVITY,
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
@@ -3559,7 +3559,7 @@ int SprdCamera3Setting::constructDefaultMetadata(int type,
     requestInfo.update(ANDROID_SPRD_SLOW_MOTION, &slowMotion, 1);
 
     uint8_t iso = 0;
-    requestInfo.update(ANDROID_SPRD_ISO, &iso, 1);
+    //requestInfo.update(ANDROID_SPRD_ISO, &iso, 1);
 
     uint8_t amMode = 0;
     requestInfo.update(ANDROID_SPRD_METERING_MODE, &amMode, 1);
@@ -3835,7 +3835,7 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_SENSOR_EXPOSURE_TIME).data.i64[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.exposure_time,
                          valueI64, ANDROID_SENSOR_EXPOSURE_TIME)
-        HAL_LOGV("sensor exposure_time is update = %lld", valueI64);
+        HAL_LOGD("sensor exposure_time is update = %lld", valueI64);
     }
 
     if (frame_settings.exists(ANDROID_SENSOR_FRAME_DURATION)) {
@@ -3850,7 +3850,7 @@ int SprdCamera3Setting::updateWorkParameters(
         valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.sensitivity, valueI32,
                          ANDROID_SENSOR_SENSITIVITY)
-        HAL_LOGV("sensitivity is %d", valueI32);
+        HAL_LOGD("sensitivity is %d", valueI32);
     }
 
     if (frame_settings.exists(ANDROID_SPRD_SENSOR_ORIENTATION)) {
@@ -4121,13 +4121,13 @@ int SprdCamera3Setting::updateWorkParameters(
         pushAndroidParaTag(ANDROID_SPRD_SATURATION);
         HAL_LOGV("saturation is %d", valueU8);
     }
-    if (frame_settings.exists(ANDROID_SPRD_ISO)) {
+/*    if (frame_settings.exists(ANDROID_SPRD_ISO)) {
         s_setting[mCameraId].sprddefInfo.iso =
             frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         pushAndroidParaTag(ANDROID_SPRD_ISO);
     }
-
+*/
     if (frame_settings.exists(ANDROID_SPRD_SLOW_MOTION)) {
         s_setting[mCameraId].sprddefInfo.slowmotion =
             frame_settings.find(ANDROID_SPRD_SLOW_MOTION).data.u8[0];
@@ -5368,36 +5368,6 @@ int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode,
     return ret;
 }
 
-int SprdCamera3Setting::androidIsoToDrvMode(uint8_t androidIso,
-                                            int8_t *convertDrvMode) {
-    int ret = 0;
-
-    HAL_LOGD("iso %d", androidIso);
-    switch (androidIso) {
-    case CAMERA_ISO_AUTO:
-        *convertDrvMode = 0;
-        break;
-    case CAMERA_ISO_100:
-        *convertDrvMode = 1;
-        break;
-    case CAMERA_ISO_200:
-        *convertDrvMode = 2;
-        break;
-    case CAMERA_ISO_400:
-        *convertDrvMode = 3;
-        break;
-    case CAMERA_ISO_800:
-        *convertDrvMode = 4;
-        break;
-    case CAMERA_ISO_1600:
-        *convertDrvMode = 5;
-        break;
-    default:
-        *convertDrvMode = 0;
-        break;
-    }
-    return ret;
-}
 int SprdCamera3Setting::androidSceneModeToDrvMode(uint8_t androidScreneMode,
                                                   int8_t *convertDrvMode) {
     int ret = 0;
