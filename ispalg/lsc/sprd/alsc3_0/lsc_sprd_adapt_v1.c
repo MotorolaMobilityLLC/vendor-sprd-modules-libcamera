@@ -1991,9 +1991,11 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			pm_lsc_full->gain_height = cxt->init_gain_height;
 			// Notice, if the crop action from binning size raw, do following action
 			binning_crop = 1;
-			pm_lsc_full->img_width /= 2;
-			pm_lsc_full->img_height /= 2;
-			pm_lsc_full->grid /= 2;
+			if((pm_lsc_full->img_width / 2) >= 1280 && (pm_lsc_full->img_height / 2) >= 720){
+				pm_lsc_full->img_width /= 2;
+			        pm_lsc_full->img_height /= 2;
+			        pm_lsc_full->grid /= 2;
+			}
 
 			pm_lsc_crop = (struct pm_lsc_crop *)malloc(sizeof(struct pm_lsc_crop));
 			pm_lsc_crop->img_width = fwstart_info->img_width_new;
@@ -2026,9 +2028,11 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			pm_lsc_full->gain_height = cxt->init_gain_height;
 			// Notice, if the crop action from binning size raw, do following action
 			binning_crop = 1;
-			pm_lsc_full->img_width /= 2;
-			pm_lsc_full->img_height /= 2;
-			pm_lsc_full->grid /= 2;
+			if((pm_lsc_full->img_width / 2) >= 1920 && (pm_lsc_full->img_height / 2) >= 1080){
+				pm_lsc_full->img_width /= 2;
+			        pm_lsc_full->img_height /= 2;
+			        pm_lsc_full->grid /= 2;
+			}
 
 			pm_lsc_crop = (struct pm_lsc_crop *)malloc(sizeof(struct pm_lsc_crop));
 			pm_lsc_crop->img_width = fwstart_info->img_width_new;
