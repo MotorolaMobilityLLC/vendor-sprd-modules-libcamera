@@ -493,6 +493,7 @@ static cmr_int ov8856_drv_access_val(cmr_handle handle, cmr_uint param) {
     //#endif
     case SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA:
         ret = ov8856_drv_get_shutter_skew(handle, param_ptr->pval);
+        break;
 
     default:
         break;

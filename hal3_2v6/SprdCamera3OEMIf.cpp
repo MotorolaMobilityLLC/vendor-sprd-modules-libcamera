@@ -4364,6 +4364,33 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     }
 
     adjustPreviewPerformance(frame_num, sprddefInfo);
+#ifdef CAMERA_MANULE_SNEOSR
+        {
+            SprdCamera3PicChannel *picChannel =
+                reinterpret_cast<SprdCamera3PicChannel *>(mPictureChan);
+            SprdCamera3Stream *pic_stream = NULL;
+            picChannel->getStream(CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT, &pic_stream);
+            uint32_t pic_frame_num = -1;
+            if (pic_stream != NULL) {
+                pic_stream->getQBuffFirstNum(&pic_frame_num);
+                if(pic_frame_num==frame_num) {
+                    bool wrtie_exif = false;
+                    std::map<uint32_t, cmr_u32>::iterator iter;
+                    iter = mIsoMap.find(frame_num);
+                    if (iter != mIsoMap.end()) {
+                        wrtie_exif = true;
+                    }
+                    if(!wrtie_exif) {
+                        mIsoMap[mPictureFrameNum] = mIsoValue;
+                        mExptimeMap[mPictureFrameNum] = mExptimeValue;
+                        HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d", mPictureFrameNum, mIsoValue);
+                        camera_set_exif_iso_value(mCameraHandle, mIsoMap[mPictureFrameNum]);
+                        camera_set_exif_exp_time(mCameraHandle, mExptimeMap[mPictureFrameNum]);
+                    }
+                }
+            }
+        }
+#endif
 
     if (frame->type == PREVIEW_FRAME) {
 #ifdef CONFIG_CAMERA_EIS
@@ -6236,6 +6263,8 @@ void SprdCamera3OEMIf::HandleIspParams(enum camera_cb_type cb, void *params) {
         mExptimeValue = temp_ae_params->cur_effect_exp_time;
         HAL_LOGV("iso_value = %d", mIsoValue);
         }
+    if(miSPreviewFirstFrame)
+        getRollingShutterSkew();
     channel->channelCbRoutine(cb, params);
 
 }
@@ -11251,7 +11280,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 return 0;
             }
         }
-
+#ifndef CAMERA_MANULE_SNEOSR
         if(sprddefInfo->sprd_appmode_id == -1) {
             SprdCamera3RegularChannel *Rechannel =
                 reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -11281,7 +11310,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 }
             }
         }
-
+#endif
         if (sprddefInfo->sprd_appmode_id == 0  && sprddefInfo->af_support == 1 && !mIsFDRCapture &&
                  mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene && mAf_start_time) {
                  HAL_LOGD("check af status");
@@ -11298,9 +11327,9 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                                     obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
                                         zsl_frame->fd);
                                     return 0;
-			  }
-		 }
-                 HAL_LOGD("af is ok ");
+                          }
+                 }
+             HAL_LOGD("af is ok ");
         }
         if (mAf_start_time == 0)
             HAL_LOGD("mAf_start_time = 0");
@@ -11318,12 +11347,20 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                         mCameraId, zsl_frame->fd, zsl_frame->frame_num);
         }
 #ifdef CAMERA_MANULE_SNEOSR
-        mIsoMap[mPictureFrameNum] = mIsoValue;
-        mExptimeMap[mPictureFrameNum] = mExptimeValue;
-        HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d", mPictureFrameNum, mIsoValue);
-        camera_set_exif_iso_value(obj->mCameraHandle, mIsoMap[mPictureFrameNum]);
-        camera_set_exif_exp_time(obj->mCameraHandle, mExptimeMap[mPictureFrameNum]);
-
+{
+        bool wrtie_exif = false;
+        std::map<uint32_t, cmr_u32>::iterator iter;
+        iter = mIsoMap.find(mPictureFrameNum);
+        if (iter != mIsoMap.end()) {
+            wrtie_exif = true;
+        }
+        if(!wrtie_exif) {
+            mIsoMap[mPictureFrameNum] = mIsoValue;
+            mExptimeMap[mPictureFrameNum] = mExptimeValue;
+            HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d", mPictureFrameNum, mIsoValue);
+            camera_set_exif_iso_value(obj->mCameraHandle, mIsoMap[mPictureFrameNum]);
+            camera_set_exif_exp_time(obj->mCameraHandle, mExptimeMap[mPictureFrameNum]);
+        }
 
         if (mPictureFrameNum == 0 && !mExptimeValue) {
                 HAL_LOGD("not the right frame for 0 capture, skip it");
@@ -11332,6 +11369,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                     zsl_frame->y_vir_addr, zsl_frame->fd);
                 return 0;
         }
+}
 #endif
 
 

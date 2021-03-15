@@ -541,7 +541,7 @@ static cmr_int ov16885_normal_drv_access_val(cmr_handle handle, cmr_uint param)
             break;
         case SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA:
             ret = ov16885_normal_drv_get_shutter_skew(handle, param_ptr->pval);
-
+            break;
         default:
             break;
     }

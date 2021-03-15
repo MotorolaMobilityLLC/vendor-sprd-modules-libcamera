@@ -720,6 +720,7 @@ static cmr_int s5ks3p92_drv_access_val(cmr_handle handle, cmr_uint param) {
 #endif
     case SENSOR_VAL_TYPE_GET_SHUTTER_SKEW_DATA:
       ret = s5ks3p92_drv_get_shutter_skew(handle, param_ptr->pval);
+      break;
 
   default:
     break;

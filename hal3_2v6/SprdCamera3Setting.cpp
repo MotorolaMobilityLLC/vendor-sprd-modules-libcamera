@@ -739,16 +739,19 @@ const int32_t kavailable_request_keys[] = {
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
     ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
     ANDROID_SENSOR_FRAME_DURATION,
-#ifdef CAMERA_MANULE_SNEOSR
-    ANDROID_SENSOR_EXPOSURE_TIME,
-#endif
+    // ANDROID_SENSOR_EXPOSURE_TIME,
     ANDROID_SENSOR_SENSITIVITY,
-#ifdef CAMERA_MANULE_SNEOSR
-    ANDROID_BLACK_LEVEL_LOCK,
-#endif
+    // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
     ANDROID_NOISE_REDUCTION_MODE};
+
+const int32_t kavailable_manual_request_keys[] = {
+    ANDROID_SENSOR_EXPOSURE_TIME,
+    ANDROID_BLACK_LEVEL_LOCK
+};
+
+
 const int32_t front_kavailable_request_keys[] = {
     ANDROID_COLOR_CORRECTION_ABERRATION_MODE,
     ANDROID_CONTROL_AE_ANTIBANDING_MODE,
@@ -773,13 +776,9 @@ const int32_t front_kavailable_request_keys[] = {
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
     ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
     ANDROID_SENSOR_FRAME_DURATION,
-#ifdef CAMERA_MANULE_SNEOSR
-        ANDROID_SENSOR_EXPOSURE_TIME,
-#endif
-        ANDROID_SENSOR_SENSITIVITY,
-#ifdef CAMERA_MANULE_SNEOSR
-        ANDROID_BLACK_LEVEL_LOCK,
-#endif
+    //ANDROID_SENSOR_EXPOSURE_TIME,
+    ANDROID_SENSOR_SENSITIVITY,
+    //ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
     ANDROID_COLOR_CORRECTION_TRANSFORM, ANDROID_SHADING_MODE, ANDROID_EDGE_MODE,
     ANDROID_NOISE_REDUCTION_MODE};
@@ -791,9 +790,7 @@ const int32_t kavailable_result_keys[] = {
     ANDROID_CONTROL_AE_MODE, ANDROID_CONTROL_AF_MODE, ANDROID_CONTROL_AF_STATE,
     ANDROID_CONTROL_AWB_MODE, ANDROID_CONTROL_AWB_LOCK, ANDROID_CONTROL_MODE,
     ANDROID_CONTROL_ENABLE_ZSL, ANDROID_STATISTICS_LENS_SHADING_MAP_MODE,
-#ifdef CAMERA_MANULE_SNEOSR
-    ANDROID_LENS_APERTURE, ANDROID_LENS_FILTER_DENSITY,
-#endif
+    //ANDROID_LENS_APERTURE, ANDROID_LENS_FILTER_DENSITY,
     ANDROID_SHADING_MODE, ANDROID_FLASH_MODE, ANDROID_JPEG_GPS_COORDINATES,
     ANDROID_JPEG_GPS_PROCESSING_METHOD, ANDROID_JPEG_GPS_TIMESTAMP,
     ANDROID_JPEG_ORIENTATION, ANDROID_JPEG_QUALITY,
@@ -802,23 +799,26 @@ const int32_t kavailable_result_keys[] = {
     // ANDROID_NOISE_REDUCTION_MODE,
     ANDROID_REQUEST_PIPELINE_DEPTH, ANDROID_SCALER_CROP_REGION,
     ANDROID_SENSOR_TIMESTAMP, ANDROID_STATISTICS_FACE_DETECT_MODE,
-#ifdef CAMERA_MANULE_SNEOSR
-    ANDROID_SYNC_FRAME_NUMBER,
-#endif
+    //ANDROID_SYNC_FRAME_NUMBER,
     ANDROID_SENSOR_FRAME_DURATION,
-#ifdef CAMERA_MANULE_SNEOSR
+    //ANDROID_SENSOR_EXPOSURE_TIME,
+    //ANDROID_SENSOR_SENSITIVITY,
+    //ANDROID_BLACK_LEVEL_LOCK,
+    ANDROID_EDGE_MODE, ANDROID_NOISE_REDUCTION_MODE};
+
+const int32_t kavailable_manual_result_keys[] = {
+    ANDROID_LENS_APERTURE, ANDROID_LENS_FILTER_DENSITY,
+    ANDROID_SYNC_FRAME_NUMBER,
     ANDROID_SENSOR_EXPOSURE_TIME,
     ANDROID_SENSOR_SENSITIVITY,
     ANDROID_BLACK_LEVEL_LOCK,
-#endif
-    ANDROID_EDGE_MODE, ANDROID_NOISE_REDUCTION_MODE};
+};
+
 
 const uint8_t kavailable_capabilities[] = {
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE,
-#ifdef CAMERA_MANULE_SNEOSR
-    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
-    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS,
-#endif
+    //ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
+    //ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS,
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_POST_PROCESSING,
     // ANDROID_REQUEST_AVAILABLE_CAPABILITIES_RAW,
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE,
@@ -827,6 +827,12 @@ const uint8_t kavailable_capabilities[] = {
 #endif
     ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME
 };
+
+const uint8_t kavailable_manual_capabilities[] = {
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR,
+    ANDROID_REQUEST_AVAILABLE_CAPABILITIES_READ_SENSOR_SETTINGS,
+};
+
 
 //L5 Pro front picture size from 4M to 16M
 const uint8_t kavailable_capabilities_without_burst[] = {
@@ -2659,8 +2665,22 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
 
     memcpy(s_setting[cameraId].requestInfo.available_request_keys,
            kavailable_request_keys, sizeof(kavailable_request_keys));
+
+#ifdef CAMERA_MANULE_SNEOSR
+    if(phyPtr->mono_sensor != 1) {
+        memcpy((s_setting[cameraId].requestInfo.available_request_keys + sizeof(kavailable_request_keys)/sizeof(int32_t)),
+           kavailable_manual_request_keys,
+           sizeof(kavailable_manual_request_keys));
+    }
+#endif
+
     if (mSensorFocusEnable[cameraId]) {
         int length = ARRAY_SIZE(kavailable_request_keys);
+#ifdef CAMERA_MANULE_SNEOSR
+        if(phyPtr->mono_sensor != 1) {
+            length += sizeof(kavailable_manual_request_keys)/sizeof(int32_t);
+        }
+#endif
         int maxIndex =
             ARRAY_SIZE(s_setting[cameraId].requestInfo.available_request_keys);
         if (length < maxIndex) {
@@ -2673,6 +2693,15 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     }
     memcpy(s_setting[cameraId].requestInfo.available_result_keys,
            kavailable_result_keys, sizeof(kavailable_result_keys));
+#ifdef CAMERA_MANULE_SNEOSR
+    if(phyPtr->mono_sensor != 1) {
+        memcpy(s_setting[cameraId].requestInfo.available_result_keys
+            + sizeof(kavailable_result_keys)/sizeof(int32_t),
+           kavailable_manual_result_keys,
+           sizeof(kavailable_manual_result_keys));
+    }
+#endif
+
 
 #ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
     if(cameraId == 1) {
@@ -2686,6 +2715,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         } else {
             memcpy(s_setting[cameraId].requestInfo.available_capabilites,
                    kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+#ifdef CAMERA_MANULE_SNEOSR
+            memcpy(s_setting[cameraId].requestInfo.available_capabilites
+                   + sizeof(kavailable_capabilities) - sizeof(uint8_t),
+                   kavailable_manual_capabilities,
+                   sizeof(kavailable_manual_capabilities));
+#endif
         }
     }
 #else
@@ -2695,6 +2730,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     } else {
         memcpy(s_setting[cameraId].requestInfo.available_capabilites,
                kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
+#ifdef CAMERA_MANULE_SNEOSR
+        memcpy(s_setting[cameraId].requestInfo.available_capabilites
+                + sizeof(kavailable_capabilities) - sizeof(uint8_t),
+                kavailable_manual_capabilities,
+                sizeof(kavailable_manual_capabilities));
+#endif
     }
 #endif
 
@@ -3126,7 +3167,7 @@ int SprdCamera3Setting::initStaticMetadata(
                   ANDROID_REQUEST_AVAILABLE_REQUEST_KEYS)
     FILL_CAM_INFO(s_setting[cameraId].requestInfo.available_result_keys, 0, 50,
                   ANDROID_REQUEST_AVAILABLE_RESULT_KEYS)
-    FILL_CAM_INFO(s_setting[cameraId].requestInfo.available_capabilites, 1, 5,
+    FILL_CAM_INFO(s_setting[cameraId].requestInfo.available_capabilites, 1, 6,
                   ANDROID_REQUEST_AVAILABLE_CAPABILITIES)
     staticInfo.update(ANDROID_REQUEST_PARTIAL_RESULT_COUNT,
                       &(s_setting[cameraId].requestInfo.partial_result_count),

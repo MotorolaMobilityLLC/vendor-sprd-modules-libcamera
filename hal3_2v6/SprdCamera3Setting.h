@@ -333,7 +333,7 @@ typedef struct {
     int32_t available_characteristics_keys[100];
     int32_t available_request_keys[50];
     int32_t available_result_keys[50];
-    uint8_t available_capabilites[5];
+    uint8_t available_capabilites[6];
     int32_t partial_result_count;
     uint8_t pipeline_max_depth;
     uint8_t pipeline_depth;
