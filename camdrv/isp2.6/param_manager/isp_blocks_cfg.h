@@ -899,7 +899,7 @@ struct isp_ai_hsv_info {
 struct isp_ai_hsv_info_v1 {
 	cmr_s16 hue_offset[25][17];
 	cmr_s16 sat_offset[25][17];
-	cmr_u16 y_blending_offset;
+	cmr_s16 y_blending_offset;
 	cmr_u16 hue_offset_enable;
 };
 

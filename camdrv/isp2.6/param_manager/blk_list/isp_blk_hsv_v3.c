@@ -269,16 +269,30 @@ cmr_s32 _pm_hsv_new3_set_param(void *hsv_param, cmr_u32 cmd, void *param_ptr0, v
 			}
 			for (i = 0; i < 25; i++) {
 				for (j = 0;j < 17; j++) {
-				hsv_param->hsv_2d_sat_lut[i][j] += hsv_cur_v1->sat_offset[i][j] * smooth_factor / smooth_base;
-				hsv_param->hsv_2d_hue_lut_reg[i][j] += hsv_cur_v1->hue_offset[i][j] * smooth_factor / smooth_base;
-				hsv_param->hsv_2d_sat_lut[i][j] = MAX(0, MIN(359, hsv_param->hsv_2d_sat_lut[i][j]));
-				hsv_param->hsv_2d_hue_lut_reg[i][j] = MAX(0, MIN(2047, hsv_param->hsv_2d_hue_lut_reg[i][j]));
+					cmr_s32 temp_val0 = hsv_param->hsv_2d_sat_lut[i][j];
+					cmr_s32 temp_val1 = hsv_param->hsv_2d_hue_lut_reg[i][j];
+					cmr_s32 temp_offset = (cmr_s32)hsv_cur_v1->sat_offset[i][j];
+					temp_val0 <<= 16;
+					temp_val0 >>= 16;
+					temp_val1 <<= 16;
+					temp_val1 >>= 16;
+					temp_offset <<= 16;
+					temp_offset >>= 16;
+					temp_val0 += temp_offset * smooth_factor / smooth_base;
+					temp_offset = (cmr_s32)hsv_cur_v1->hue_offset[i][j];
+					temp_offset <<= 16;
+					temp_offset >>= 16;
+					temp_val1 += temp_offset * smooth_factor / smooth_base;
+					temp_val0 = MAX(0, MIN(4096, temp_val0));
+					temp_val1 = MAX(-179, MIN(540, temp_val1));
+					hsv_param->hsv_2d_sat_lut[i][j] = (cmr_u16)(temp_val0 & 0xFFFF);
+					hsv_param->hsv_2d_hue_lut_reg[i][j] = (cmr_u16)(temp_val1 & 0xFFFF);
 				}
 			}
 			for (i = 0; i< 25; i++) {
 				for( j = 0; j < 17; j++) {
-				dst_hsv_ptr->cur.buf_param.hsv_2d_sat_lut[i][j] = hsv_param->hsv_2d_sat_lut[i][j];
-				dst_hsv_ptr->cur.buf_param.hsv_2d_hue_lut_reg[i][j] = hsv_param->hsv_2d_hue_lut_reg[i][j];
+					dst_hsv_ptr->cur.buf_param.hsv_2d_sat_lut[i][j] = hsv_param->hsv_2d_sat_lut[i][j];
+					dst_hsv_ptr->cur.buf_param.hsv_2d_hue_lut_reg[i][j] = hsv_param->hsv_2d_hue_lut_reg[i][j];
 				}
 			}
 			hsv_header_ptr->is_update = ISP_ONE;
