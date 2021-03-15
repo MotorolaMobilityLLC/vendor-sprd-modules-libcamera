@@ -514,9 +514,9 @@ static cmr_u32 _awb_set_scene_info_v3(struct awb_ctrl_cxt *cxt, void *param)
 	if (param) {
 		//get the ai_scene
 		cxt->ai_scene_info_v3.cur_scene_id = ai_scene_info->cur_scene_id;
-		memcpy(cxt->ai_scene_info_v3.task0,ai_scene_info->task0,sizeof(struct awb_ai_task0_result_3_0)*AI_SCENE_TASK0_MAX);
-		memcpy(cxt->ai_scene_info_v3.task1,ai_scene_info->task1,sizeof(struct awb_ai_task1_result_3_0)*AI_SCENE_TASK1_MAX);
-		memcpy(cxt->ai_scene_info_v3.task2,ai_scene_info->task2,sizeof(struct awb_ai_task2_result_3_0)*AI_SCENE_TASK2_MAX);
+		//memcpy(cxt->ai_scene_info_v3.task0,ai_scene_info->task0,sizeof(struct awb_ai_task0_result_3_0)*AI_SCENE_TASK0_MAX);
+		//memcpy(cxt->ai_scene_info_v3.task1,ai_scene_info->task1,sizeof(struct awb_ai_task1_result_3_0)*AI_SCENE_TASK1_MAX);
+		//memcpy(cxt->ai_scene_info_v3.task2,ai_scene_info->task2,sizeof(struct awb_ai_task2_result_3_0)*AI_SCENE_TASK2_MAX);
 		ISP_LOGV("done.");
 	}
 
@@ -1696,7 +1696,7 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	}
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-	ISP_LOGI("AWB result : (%d,%d,%d) %dK , fram_count : %d , sensor_id : %d, wb mode : %d; AWB lib %dx%d: (%d,%d,%d) %dK, sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->sensor_role_type, cxt->wb_mode,\
+	ISP_LOGI("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d, wb mode : %d; AWB lib %dx%d: (%d,%d,%d) %dK, sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id, cxt->wb_mode,\
 			calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain, calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct, cxt->sensor_role_type);
 
 	//set the gain/ct to_save_file

@@ -494,9 +494,9 @@ static cmr_u32 _awb_set_scene_info_v3(struct awb_ctrl_cxt *cxt, void *param)
 	if (param) {
 		//get the ai_scene
 		cxt->ai_scene_info_v3.cur_scene_id = ai_scene_info->cur_scene_id;
-		memcpy(cxt->ai_scene_info_v3.task0,ai_scene_info->task0,sizeof(struct awb_ai_task0_result_3_0)*AI_SCENE_TASK0_MAX);
-		memcpy(cxt->ai_scene_info_v3.task1,ai_scene_info->task1,sizeof(struct awb_ai_task1_result_3_0)*AI_SCENE_TASK1_MAX);
-		memcpy(cxt->ai_scene_info_v3.task2,ai_scene_info->task2,sizeof(struct awb_ai_task2_result_3_0)*AI_SCENE_TASK2_MAX);
+		//memcpy(cxt->ai_scene_info_v3.task0,ai_scene_info->task0,sizeof(struct awb_ai_task0_result_3_0)*AI_SCENE_TASK0_MAX);
+		//memcpy(cxt->ai_scene_info_v3.task1,ai_scene_info->task1,sizeof(struct awb_ai_task1_result_3_0)*AI_SCENE_TASK1_MAX);
+		//memcpy(cxt->ai_scene_info_v3.task2,ai_scene_info->task2,sizeof(struct awb_ai_task2_result_3_0)*AI_SCENE_TASK2_MAX);
 		ISP_LOGV("done.");
 	}
 

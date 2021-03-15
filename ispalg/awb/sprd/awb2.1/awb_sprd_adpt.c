@@ -627,9 +627,11 @@ static cmr_u32 _awb_get_result_info(struct awb_ctrl_cxt *cxt, void *param)
 static cmr_u32 _awb_set_scene_info(struct awb_ctrl_cxt *cxt, void *param)
 {
 	cmr_u32 rtn = AWB_CTRL_SUCCESS;
+	struct ai_scene_detect_info *ai_scene_info = param;
 
 	if (param) {
-		memcpy(&cxt->ai_scene_info, param, sizeof(struct ai_scene_detect_info));
+		cxt->ai_scene_info.cur_scene_id = ai_scene_info->cur_scene_id;
+		//memcpy(&cxt->ai_scene_info, param, sizeof(struct ai_scene_detect_info));
 		ISP_LOGV("done.");
 	}
 

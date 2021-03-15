@@ -146,9 +146,9 @@ struct awb_ai_task2_result_3_0
 struct awb_aiscene_info_3_0
 {
 	enum awb_aiscene_type_3_0 cur_scene_id;
-	struct awb_ai_task0_result_3_0 task0[AI_SCENE_TASK0_MAX];
-	struct awb_ai_task1_result_3_0 task1[AI_SCENE_TASK1_MAX];
-	struct awb_ai_task2_result_3_0 task2[AI_SCENE_TASK2_MAX];
+	struct awb_ai_task0_result_3_0 task0[AI_SCENE_TASK0_MAX_3_0];
+	struct awb_ai_task1_result_3_0 task1[AI_SCENE_TASK1_MAX_3_0];
+	struct awb_ai_task2_result_3_0 task2[AI_SCENE_TASK2_MAX_3_0];
 };
 struct awb_aiscene_info_old {
 	cmr_u32 frame_id;
