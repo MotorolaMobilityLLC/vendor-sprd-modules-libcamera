@@ -2905,6 +2905,11 @@ bool SprdCamera3HWI::getIpsEnable(bool orgIpsEnable,
         }
     }
     if (appMode == -1 && orgIpsEnable) dstIpsEnable = false;
+
+    // disable shot2shot when raw capture
+    if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode())
+        dstIpsEnable = false;
+
     return dstIpsEnable;
 }
 
