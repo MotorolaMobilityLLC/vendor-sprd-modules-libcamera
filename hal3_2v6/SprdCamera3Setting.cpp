@@ -1733,8 +1733,35 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
     ptr_sns_inf_tag->max_frame_duration =
         camera3_default_info.common.frame_duration_range[1];
     // sensitivityRange,Min <= 100, Max >= 800
-    memcpy(ptr_sns_inf_tag->sensitivity_range, ksensitivity_range,
-           sizeof(ksensitivity_range));
+    { /* sensitivity range */
+        char prop_value[PROPERTY_VALUE_MAX] = {0,};
+        char prop_name[128] = "persist.vendor.cam.sensitivityRange.id";
+        char tmp_str[10];
+        sprintf(tmp_str, "%d", cameraId);
+        strcat(prop_name, tmp_str);
+        HAL_LOGD("%s", prop_name);
+        property_get(prop_name, prop_value, "null");
+        if (strcmp(prop_value, "null")) {
+            int32_t sensitivity_range[2];
+            char *sensitivity_min, *sensitivity_max;
+            sensitivity_min = strtok(prop_value, ",");
+            sensitivity_max = strtok(NULL, ",");
+            sensitivity_range[0] = atoi(sensitivity_min);
+            sensitivity_range[1] = atoi(sensitivity_max);
+            HAL_LOGD("%s, %s %d, %d", sensitivity_min, sensitivity_max,
+            sensitivity_range[0], sensitivity_range[1]);
+            memcpy(ptr_sns_inf_tag->sensitivity_range, sensitivity_range,
+                        sizeof(sensitivity_range));
+            memcpy(s_setting[cameraId].sensor_InfoInfo.sensitivity_range,
+                        sensitivity_range, sizeof(sensitivity_range));
+        } else {
+        HAL_LOGD("ksensitivity_range %d, %d", ksensitivity_range[0], ksensitivity_range[1]);
+        memcpy(ptr_sns_inf_tag->sensitivity_range, ksensitivity_range,
+            sizeof(ksensitivity_range));
+        memcpy(s_setting[cameraId].sensor_InfoInfo.sensitivity_range,
+            ksensitivity_range, sizeof(ksensitivity_range));
+        }
+    }
     // colorFilterArrangement
     ptr_sns_inf_tag->color_filter_arrangement =
         default_info->common.color_arrangement;
@@ -6722,12 +6749,12 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
                        &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
      sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity;
-     if (!sensitivityValue && sprddefInfo->long_expo_enable) {
+     if (!sensitivityValue && s_setting[mCameraId].syncInfo.frame_number) {
             sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number -1].sensitivity;
-     } else if (sensitivityValue < ksensitivity_range[0])
-            sensitivityValue = ksensitivity_range[0];
-     else if (sensitivityValue > ksensitivity_range[1])
-            sensitivityValue = ksensitivity_range[1];
+     } else if (sensitivityValue < s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0])
+            sensitivityValue = s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0];
+     else if (sensitivityValue > s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1])
+            sensitivityValue = s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1];
     mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity = sensitivityValue;
     HAL_LOGV("mFrameNumMap sensitivity is %d", mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity);
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
@@ -6867,7 +6894,8 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
     CameraMetadata *camMetadata = new CameraMetadata(new_result);
     HAL_LOGV("report AE Control exp_time %lld ", tmp_cts_isp_params.ae_cts_params.exp_time);
     HAL_LOGV("report AE Control sensitivity %d sensitivity range [%d,%d]",
-        tmp_cts_isp_params.ae_cts_params.sensitivity, ksensitivity_range[0], ksensitivity_range[1]);
+        tmp_cts_isp_params.ae_cts_params.sensitivity, s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0],
+        s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1]);
     HAL_LOGV("report AE Control exp_time %lld exp_time range [%lld,%lld]",
         tmp_cts_isp_params.ae_cts_params.exp_time, s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[0],
         s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[1]);
@@ -6880,10 +6908,10 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
             s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[1])
             tmp_cts_isp_params.ae_cts_params.exp_time =
                 s_setting[mCameraId].sensor_InfoInfo.exposupre_time_range[1] - 10016;
-        if(tmp_cts_isp_params.ae_cts_params.sensitivity < ksensitivity_range[0])
-            tmp_cts_isp_params.ae_cts_params.sensitivity = ksensitivity_range[0];
-        else if (tmp_cts_isp_params.ae_cts_params.sensitivity > ksensitivity_range[1])
-            tmp_cts_isp_params.ae_cts_params.sensitivity = ksensitivity_range[1];
+        if (tmp_cts_isp_params.ae_cts_params.sensitivity < s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0])
+            tmp_cts_isp_params.ae_cts_params.sensitivity = s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0];
+        else if (tmp_cts_isp_params.ae_cts_params.sensitivity > s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1])
+            tmp_cts_isp_params.ae_cts_params.sensitivity = s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1];
     }
     s_setting[mCameraId].sensorInfo.frame_duration = tmp_cts_isp_params.ae_cts_params.frame_duration;
     s_setting[mCameraId].sensorInfo.exposure_time = tmp_cts_isp_params.ae_cts_params.exp_time;
@@ -6924,7 +6952,8 @@ camera_metadata_t *SprdCamera3Setting::reportMetadataToFramework
                        (int64_t *)&(tmp_cts_isp_params.ae_cts_params.exp_time), 1);
     HAL_LOGV("report AE Control exp_time %lld ", tmp_cts_isp_params.ae_cts_params.exp_time);
     HAL_LOGV("report AE Control sensitivity %d sensitivity range [%d,%d]",
-        tmp_cts_isp_params.ae_cts_params.sensitivity, ksensitivity_range[0], ksensitivity_range[1]);
+        tmp_cts_isp_params.ae_cts_params.sensitivity, s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[0],
+        s_setting[mCameraId].sensor_InfoInfo.sensitivity_range[1]);
 
         camMetadata->update(ANDROID_SENSOR_SENSITIVITY,
                    &(tmp_cts_isp_params.ae_cts_params.sensitivity), 1);
@@ -7492,36 +7521,6 @@ int SprdCamera3Setting::androidAfModeToDrvAfMode(uint8_t androidAfMode,
     return ret;
 }
 
-int SprdCamera3Setting::androidIsoToDrvMode(int32_t androidIso,
-                                            int8_t *convertDrvMode) {
-    int ret = 0;
-
-    HAL_LOGD("iso %d", androidIso);
-    switch (androidIso) {
-    case CAMERA_ISO_AUTO:
-        *convertDrvMode = 0;
-        break;
-    case CAMERA_ISO_100:
-        *convertDrvMode = 1;
-        break;
-    case CAMERA_ISO_200:
-        *convertDrvMode = 2;
-        break;
-    case CAMERA_ISO_400:
-        *convertDrvMode = 3;
-        break;
-    case CAMERA_ISO_800:
-        *convertDrvMode = 4;
-        break;
-    case CAMERA_ISO_1600:
-        *convertDrvMode = 5;
-        break;
-    default:
-        *convertDrvMode = 0;
-        break;
-    }
-    return ret;
-}
 int SprdCamera3Setting::androidSceneModeToDrvMode(uint8_t androidScreneMode,
                                                   int8_t *convertDrvMode) {
     int ret = 0;

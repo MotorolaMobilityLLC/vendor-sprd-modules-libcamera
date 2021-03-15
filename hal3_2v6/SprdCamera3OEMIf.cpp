@@ -4649,7 +4649,7 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
                     if(!wrtie_exif) {
                         mIsoMap[mPictureFrameNum] = mIsoValue;
                         mExptimeMap[mPictureFrameNum] = mExptimeValue;
-                        HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d", mPictureFrameNum, mIsoValue);
+                        HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d, mExptimeValue", mPictureFrameNum, mIsoValue, mExptimeValue);
                         camera_set_exif_iso_value(mCameraHandle, mIsoMap[mPictureFrameNum]);
                         camera_set_exif_exp_time(mCameraHandle, mExptimeMap[mPictureFrameNum]);
                     }
@@ -6603,19 +6603,26 @@ void SprdCamera3OEMIf::HandleIspParams(enum camera_cb_type cb, void *params) {
         reinterpret_cast<SprdCamera3MetadataChannel *>(mMetadataChannel);
     if (cb == CAMERA_EVT_CB_AE_PARAMS) {
         struct ae_callback_params *temp_ae_params = (struct ae_callback_params *)params;
-        if (temp_ae_params->cur_effect_sensitivity > MAXSENSITIVITY)
-            temp_ae_params->cur_effect_sensitivity = MAXSENSITIVITY;
-        else if (temp_ae_params->cur_effect_sensitivity < MINSENSITIVITY)
-            temp_ae_params->cur_effect_sensitivity = MINSENSITIVITY;
+        SENSOR_INFO_Tag sensor_InfoInfo;
+        int64_t max_exposure_time = 200000000L;
+        mSetting->getSENSORINFOTag(&sensor_InfoInfo);
+
+        if (temp_ae_params->cur_effect_sensitivity > sensor_InfoInfo.sensitivity_range[1])
+            temp_ae_params->cur_effect_sensitivity = sensor_InfoInfo.sensitivity_range[1];
+        else if (temp_ae_params->cur_effect_sensitivity < sensor_InfoInfo.sensitivity_range[0])
+            temp_ae_params->cur_effect_sensitivity = sensor_InfoInfo.sensitivity_range[0];
         mIsoValue = temp_ae_params->cur_effect_sensitivity;
 
-        if(temp_ae_params->cur_effect_exp_time > 200000000L)
-            temp_ae_params->cur_effect_exp_time = 200000000L;
+        if (sensor_InfoInfo.exposupre_long_time_size) {
+            max_exposure_time = sensor_InfoInfo.exposupre_long_time[sensor_InfoInfo.exposupre_long_time_size - 1] * MSLEEP_TIME;
+        }
+        if(temp_ae_params->cur_effect_exp_time > max_exposure_time)
+            temp_ae_params->cur_effect_exp_time = max_exposure_time;
         else if(temp_ae_params->cur_effect_exp_time < 100000L)
             temp_ae_params->cur_effect_exp_time = 100000L;
-
         mExptimeValue = temp_ae_params->cur_effect_exp_time;
-        HAL_LOGD("iso_value = %d", mIsoValue);
+
+        HAL_LOGD("mExptimeValue = %lld, iso_value = %d", mExptimeValue, mIsoValue);
     }
     if(miSPreviewFirstFrame)
         getRollingShutterSkew();
@@ -8321,33 +8328,32 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         break;
 
     case ANDROID_SENSOR_EXPOSURE_TIME:
+	 HAL_LOGD("ae mode %d", controlInfo.ae_mode);
         if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
             SENSOR_Tag sensorInfo;
             mSetting->getSENSORTag(&sensorInfo);
             HAL_LOGD("exposure_time %lld", sensorInfo.exposure_time);
             HAL_LOGD("exposure_time %" PRIu64 "", (uint64_t)(sensorInfo.exposure_time));
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
-                     (uint64_t)(sensorInfo.exposure_time/1000));
+                     (cmr_s64)(sensorInfo.exposure_time/1000));
         }
         break;
 
     case ANDROID_SENSOR_SENSITIVITY: {
 #ifdef CAMERA_MANULE_SNEOSR
         if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON) {
-        int8_t drv_iso_level = 0;
-        SENSOR_Tag sensorInfo;
+	SENSOR_Tag sensorInfo;
         mSetting->getSENSORTag(&sensorInfo);
-        mSetting->androidIsoToDrvMode(sensorInfo.sensitivity, &drv_iso_level);
-        HAL_LOGD("iso_value %lld, drv_iso_level:%d", sensorInfo.sensitivity, drv_iso_level);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, drv_iso_level);
-        }
+        HAL_LOGD("controlInfo ae_mode=%d, mode=%d, sensitivity value=%d",
+                        controlInfo.ae_mode, controlInfo.mode, sensorInfo.sensitivity);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SENSITIVITY, sensorInfo.sensitivity);
+	}
 #else
-        int8_t drv_iso_level;
-        SENSOR_Tag sensorInfo;
+	SENSOR_Tag sensorInfo;
         mSetting->getSENSORTag(&sensorInfo);
-        mSetting->androidIsoToDrvMode(sensorInfo.sensitivity, &drv_iso_level);
-        HAL_LOGD("iso_value %d, drv_iso_level:%d", sensorInfo.sensitivity, drv_iso_level);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO, drv_iso_level);
+        HAL_LOGD("controlInfo ae_mode=%d, mode=%d, sensitivity value=%d",
+                        controlInfo.ae_mode, controlInfo.mode, sensorInfo.sensitivity);
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SENSITIVITY, sensorInfo.sensitivity);
 #endif
     } break;
 
@@ -8522,14 +8528,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AUTO_EXPOSURE_MODE,
                  (cmr_uint)&ae_param);
     } break;
-
+/*
     case ANDROID_SPRD_ISO: {
         SPRD_DEF_Tag *sprddefInfo;
         sprddefInfo = mSetting->getSPRDDEFTagPTR();
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISO,
                  (cmr_uint)sprddefInfo->iso);
     } break;
-
+*/
     case ANDROID_CONTROL_AE_TARGET_FPS_RANGE:
         setPreviewFps(mRecordingMode);
         break;
@@ -12422,7 +12428,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
        HAL_LOGE("deinit capture");
        goto exit;
     }
-
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     HAL_LOGD("mZslIpsEnable = %d", mZslIpsEnable);
     if (mZslIpsEnable) {

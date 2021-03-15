@@ -85,6 +85,7 @@ enum setting_general_type {
     SETTING_GENERAL_EXPOSURE_TIME,
     SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE,
     SETTING_GENERAL_AUTO_FDR,
+    SETTING_GENERAL_SENSITIVITY,
     SETTING_GENERAL_ZOOM,
     SETTING_GENERAL_TYPE_MAX
 };
@@ -618,7 +619,9 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         {SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE, &hal_param->hal_common.is_auto_tracking,
          COM_ISP_SET_AUTO_TRACKING_ENABLE, COM_SN_TYPE_MAX},
         {SETTING_GENERAL_AUTO_FDR, &hal_param->hal_common.is_auto_fdr,
-         COM_ISP_SET_AUTO_FDR, COM_SN_TYPE_MAX}
+         COM_ISP_SET_AUTO_FDR, COM_SN_TYPE_MAX},
+        {SETTING_GENERAL_SENSITIVITY, &hal_param->hal_common.iso, COM_ISP_SET_SENSITIVITY,
+         COM_SN_TYPE_MAX}
     };
     struct setting_general_item *item = NULL;
     struct after_set_cb_param after_cb_param;
@@ -686,6 +689,10 @@ static cmr_int setting_set_general(struct setting_component *cpt,
         break;
     case SETTING_GENERAL_AUTO_TRACKING_INFO_ENABLE:
         item->isp_cmd = COM_ISP_SET_AUTO_TRACKING_ENABLE;
+        ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
+        break;
+    case SETTING_GENERAL_SENSITIVITY:
+        item->isp_cmd = COM_ISP_SET_SENSITIVITY;
         ret = setting_isp_ctrl(cpt, item->isp_cmd, parm);
         break;
 
@@ -1141,6 +1148,15 @@ static cmr_int setting_set_iso(struct setting_component *cpt,
     cmr_int ret = 0;
 
     ret = setting_set_general(cpt, SETTING_GENERAL_ISO, parm);
+
+    return ret;
+}
+
+static cmr_int setting_set_sensitivity(struct setting_component *cpt,
+                               struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    ret = setting_set_general(cpt, SETTING_GENERAL_SENSITIVITY, parm);
 
     return ret;
 }
@@ -4143,7 +4159,8 @@ static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
     [CAMERA_PARAM_AF_MODE] = NULL,    /*by focus module*/
     [CAMERA_PARAM_AUTO_EXPOSURE_MODE] =
                              setting_set_auto_exposure_mode,
-    [CAMERA_PARAM_ISO] = setting_set_iso,
+    //[CAMERA_PARAM_ISO] = setting_set_iso,
+    [CAMERA_PARAM_SENSITIVITY] = setting_set_sensitivity,
     [CAMERA_PARAM_EXPOSURE_COMPENSATION] =
                              setting_set_exposure_compensation,
     [CAMERA_PARAM_PREVIEW_FPS] = setting_set_preview_fps,

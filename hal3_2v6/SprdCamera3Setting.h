@@ -735,7 +735,6 @@ class SprdCamera3Setting {
                                        int8_t *convertDrvMode);
     int androidSceneModeToDrvMode(uint8_t androidScreneMode,
                                   int8_t *convertDrvMode);
-    int androidIsoToDrvMode(int32_t androidIso, int8_t *convertDrvMode);
     int androidEffectModeToDrvMode(uint8_t androidEffectMode,
                                    int8_t *convertDrvMode);
     int androidAwbModeToDrvAwbMode(uint8_t androidAwbMode,
