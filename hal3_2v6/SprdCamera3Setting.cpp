@@ -7233,10 +7233,14 @@ int SprdCamera3Setting::SearchLibMark(char *name, char *output,
     int fileSize, iter, count;
     char *pointer_of_target, *file_buffer, *pointer_for_output;
     iter = count = 0;
+    if (!name || !output || !marker){
+        HAL_LOGE("cannot open file \n");
+        return -1;
+    }
     FILE *fp = fopen(name, "r");
     HAL_LOGD("name %s", name);
-    if (!fp || !name || !output || !marker) {
-        HAL_LOGE("cannot open file \n");
+    if (!fp) {
+        HAL_LOGE("fail to open file \n");
         return -1;
     }
     fseek(fp, 0L, SEEK_END);
