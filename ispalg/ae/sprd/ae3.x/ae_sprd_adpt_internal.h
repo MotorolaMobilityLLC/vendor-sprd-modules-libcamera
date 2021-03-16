@@ -467,6 +467,7 @@ extern "C" {
 		cmr_u32 touch_hold_flag;
 		struct ae_trim touch_hold_roi;	/*touch ROI*/
 		/*touch flash hold */
+		cmr_u8 touchev_Flag;
 		cmr_u32 end_id;
 
 	};

@@ -3976,6 +3976,7 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 		ISP_LOGI("AE_VIDEO_STOP(in capture) cam-id %d BV %d BV_backup %d E %d G %d lt %d W %d H %d, enable: %d", cxt->camera_id, cxt->last_exp_param.bv, s_bakup_exp_param[cxt->camera_id].bv, cxt->last_exp_param.exp_line, cxt->last_exp_param.gain, cxt->cur_status.adv_param.cur_ev_setting.line_time, cxt->snr_info.frame_size.w, cxt->snr_info.frame_size.h, cxt->last_enable);
 	}
 	cxt->calcFirstFlag = 0;
+	cxt->touchev_Flag = 0;
 }
 
 static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
@@ -3991,6 +3992,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
 	struct ae_scene_param_in scene_param_in;
+	struct ae_set_touchev_param_in touchev_param_in;
+	struct ae_set_touchev_param_out touchev_param_out;
 
 	cmr_u32 k;
 	cmr_u32 last_cam_mode = 0;
@@ -4401,6 +4404,22 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	cxt->cur_result.ev_setting.ae_idx = dst_exp.cur_index;
 	cxt->cur_result.stable = 0;
 	cxt->cur_result.ev_setting.frm_len = dst_exp.frm_len;
+	ISP_LOGD("before:exp_line:%d  exp_time: %"PRIu64" gain:%d dummy %d frm_len %d",cxt->cur_result.ev_setting.exp_line, cxt->cur_result.ev_setting.exp_time,cxt->cur_result.ev_setting.ae_gain,cxt->cur_result.ev_setting.dmy_line,cxt->cur_result.ev_setting.frm_len);
+	ISP_LOGD("cxt->touchev_Flag :%d ",cxt->touchev_Flag);
+	if (1 == cxt->touchev_Flag){
+
+		touchev_param_in.exp_time = cxt->cur_result.ev_setting.exp_time;
+		touchev_param_in.ae_gain = cxt->cur_result.ev_setting.ae_gain;
+		touchev_param_in.evd_mode = 0;
+		touchev_param_in.ev_value = cxt->cur_status.adv_param.comp_param.value.ev_value;
+		ae_lib_ioctrl(cxt->misc_handle, AE_LIB_GET_TOUCH_EV_PARAM, &touchev_param_in, &touchev_param_out);
+		ISP_LOGD("ev_value %f exp=%d  gain=%d",touchev_param_in.ev_value,touchev_param_out.touch_ev_exp, touchev_param_out.touch_ev_gain);
+		cxt->cur_result.ev_setting.exp_line = (touchev_param_out.touch_ev_exp / cxt->cur_status.adv_param.cur_ev_setting.line_time);
+		cxt->cur_result.ev_setting.exp_time = touchev_param_out.touch_ev_exp;
+		cxt->cur_result.ev_setting.ae_gain = touchev_param_out.touch_ev_gain;
+		cxt->cur_result.ev_setting.dmy_line = cxt->cur_result.ev_setting.dmy_line + dst_exp.exp_line - cxt->cur_result.ev_setting.exp_line;
+		ISP_LOGD("after:exp_line:%d  exp_time: %"PRIu64" gain:%d dummy %d ",cxt->cur_result.ev_setting.exp_line, cxt->cur_result.ev_setting.exp_time,cxt->cur_result.ev_setting.ae_gain,cxt->cur_result.ev_setting.dmy_line);
+	}
 	cxt->sync_cur_result.ev_setting.exp_time = cxt->cur_result.ev_setting.exp_time;
 	cxt->sync_cur_result.ev_setting.exp_line = cxt->cur_result.ev_setting.exp_line;
 	cxt->sync_cur_result.ev_setting.ae_gain = cxt->cur_result.ev_setting.ae_gain;
@@ -4714,6 +4733,9 @@ static cmr_s32 ae_set_exposure_compensation(struct ae_ctrl_cxt *cxt, struct ae_e
 		} else {
 			cxt->cur_status.adv_param.comp_param.mode = 0;
 			cxt->cur_status.adv_param.comp_param.value.ev_value = 1.0 * exp_comp->comp_val * exp_comp->step_numerator / exp_comp->step_denominator;
+			if (1 == cxt->force_lock_ae){
+				cxt->touchev_Flag = 1;
+			}
 			ISP_LOGD("comp_val=%d, ev_value=%f, range=[%d,%d], lock=%d, step_numerator=%d, step_denominator = %d",
 				exp_comp->comp_val, cxt->cur_status.adv_param.comp_param.value.ev_value, exp_comp->comp_range.min, exp_comp->comp_range.max, cxt->force_lock_ae,
 				exp_comp->step_numerator, exp_comp->step_denominator);

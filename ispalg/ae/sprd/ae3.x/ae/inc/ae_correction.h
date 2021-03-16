@@ -33,6 +33,7 @@ enum ae_cmd_type {
 	AE_LIB_GET_ALG_ID,
 	AE_LIB_GET_SCENE_PARAM,
 	AE_LIB_GET_AEM_PARAM,
+	AE_LIB_GET_TOUCH_EV_PARAM,
 	AE_LIB_GET_CMD_MAX,
 	AE_LIB_CMD_MAX
 };
@@ -256,6 +257,19 @@ struct ae_scene_param_out {
 	cmr_u16 def_index;
 	cmr_u16 def_expline;
 	cmr_u16 def_gain;
+};
+
+struct ae_set_touchev_param_in {
+	uint8_t evd_mode;
+	float ev_value;
+	cmr_u64 exp_time;
+	cmr_u32 ae_gain;
+};
+
+struct ae_set_touchev_param_out {
+	int32_t touch_ev_index;
+	uint32_t touch_ev_exp;
+	uint32_t touch_ev_gain;
 };
 
 struct ae_otp_info {
