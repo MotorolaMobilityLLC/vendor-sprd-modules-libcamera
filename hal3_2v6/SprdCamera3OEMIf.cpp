@@ -797,6 +797,22 @@ void SprdCamera3OEMIf::closeCamera() {
     if (flashInfo.available) {
         SprdCamera3Flash::releaseFlash(mCameraId);
     }
+#ifdef CONFIG_CAMERA_EIS
+    if (mEisPreviewInit) {
+        Mutex::Autolock l(&mEisPreviewProcessLock);
+        video_stab_close(&mPreviewInst);
+        mEisPreviewInit = false;
+        SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
+        HAL_LOGI("preview stab close");
+    }
+    if (mEisVideoInit) {
+        Mutex::Autolock l(&mEisVideoProcessLock);
+        video_stab_close(&mVideoInst);
+        mEisVideoInit = false;
+        SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
+        HAL_LOGI("video stab close");
+    }
+#endif
 
 #ifdef CONFIG_CAMERA_GYRO
     gyro_monitor_thread_deinit((void *)this);
@@ -957,9 +973,11 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR:
+        SPRD_DEF_Tag *sprddefInfo;
+        sprddefInfo = mSetting->getSPRDDEFTagPTR();
         stopPreviewInternal();
 #ifdef CONFIG_CAMERA_EIS
-        if (mEisPreviewInit) {
+        if (mEisPreviewInit && sprddefInfo->sprd_eis_enabled != 1) {
             Mutex::Autolock l(&mEisPreviewProcessLock);
             video_stab_close(&mPreviewInst);
             mEisPreviewInit = false;
@@ -11250,15 +11268,15 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 HAL_LOGV("diff_ms=%" PRId64,
                          (zsl_frame->monoboottime - obj->mLatestFocusDoneTime) /
                              1000000);
-	    if (s_dbg_ver && (mCameraId == mMasterId)) {
-	        Mutex::Autolock l(&mJpegDebugQLock);
-	        ZslBufferQueue node;
-	        node.frame = *zsl_frame;
-               node.heap_array = NULL;
-	        mJpegDebugQ.push_back(node);
-	        HAL_LOGD("Cam%d JpegQueue BOKEH fd 0x%x,  frame_id %d\n",
-				mCameraId, zsl_frame->fd, zsl_frame->frame_num);
-	    }
+            if (s_dbg_ver && (mCameraId == mMasterId)) {
+                Mutex::Autolock l(&mJpegDebugQLock);
+                ZslBufferQueue node;
+                node.frame = *zsl_frame;
+                   node.heap_array = NULL;
+                mJpegDebugQ.push_back(node);
+                HAL_LOGD("Cam%d JpegQueue BOKEH fd 0x%x,  frame_id %d\n",
+                mCameraId, zsl_frame->fd, zsl_frame->frame_num);
+            }
 
             mHalOem->ops->camera_set_zsl_snapshot_buffer(
                 obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
