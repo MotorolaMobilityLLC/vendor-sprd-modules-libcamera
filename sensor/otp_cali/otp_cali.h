@@ -10,19 +10,22 @@
 #include "cmr_log.h"
 
 #define CALI_OTP_HEAD_SIZE 32
+#define CMEI_OTP_CMEI_SIZE 64
 
 #define OTP_HEAD_MAGIC 0x00004e56
-#define OTP_VERSION 001
+#define OTP_VERSION1 1 // calibration data structure, header+data
+#define OTP_VERSION2 2 // calibration data structure, header+data+cmei
 #define OTPDATA_TYPE_CALIBRATION (1)
 #define OTPDATA_TYPE_GOLDEN (2)
 
 typedef struct {
     cmr_u32 magic;
-    cmr_u16 len;
-    cmr_u32 checksum;
+    cmr_u16 otp_len;
+    cmr_u32 otp_checksum;
     cmr_u32 version;
     cmr_u8 data_type;
     cmr_u8 has_calibration;
+    cmr_u16 cmei_len;
 } otp_header_t;
 
 enum calibration_flag {
@@ -32,7 +35,10 @@ enum calibration_flag {
     CALIBRATION_FLAG_3D_STL,
     CALIBRATION_FLAG_OZ1,
     CALIBRATION_FLAG_OZ2,
-    CALIBRATION_FLAG_BOKEH_GLD,
+    CALIBRATION_FLAG_BOKEH_GLD, //For bokeh after-sale plan B, 7 times calibration data
+    CALIBRATION_FLAG_BOKEH_GLD2, //For bokeh after-sale golden plan, 1 time calibration data
+    CALIBRATION_FLAG_OZ1_GLD,
+    CALIBRATION_FLAG_OZ2_GLD,
     CALIBRATION_FLAG_MAX
 };
 
@@ -57,9 +63,15 @@ enum calibration_flag {
 #define OTPBK_CALI_OZ2_PATH "/mnt/vendor/productinfo/otpdata/otpbk_cali_oz2.bin"
 
 #define OTP_CALI_BOKEH_GLD_PATH "/vendor/etc/otpdata/otp_cali_bokeh_gld.bin"
+#define OTP_CALI_BOKEH_GLD2_PATH "/vendor/etc/otpdata/otp_cali_bokeh_gld2.bin"
+#define OTP_CALI_OZ1_GLD_PATH "/vendor/etc/otpdata/otp_cali_oz1_gld.bin"
+#define OTP_CALI_OZ2_GLD_PATH "/vendor/etc/otpdata/otp_cali_oz2_gld.bin"
 
-cmr_u16 read_calibration_otp_from_file(cmr_u8 *buf, cmr_u8 dual_flag);
-cmr_u8 write_calibration_otp_to_file(cmr_u8 *buf, cmr_u8 dual_flag,
+cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf);
+cmr_u16 read_calibration_otp(cmr_u8 dual_flag, cmr_u8 *otp_buf);
+cmr_u8 write_calibration_otp_with_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
+                                     cmr_u16 otp_size, cmr_u8 *cmei_buf, cmr_u16 cmei_size);
+cmr_u8 write_calibration_otp_no_cmei(cmr_u8 dual_flag, cmr_u8 *otp_buf,
                                      cmr_u16 otp_size);
 
 #endif
