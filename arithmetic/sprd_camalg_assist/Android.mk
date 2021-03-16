@@ -24,7 +24,7 @@ ifneq ($(filter $(TARGET_BOARD_PLATFORM), ud710), )
 LOCAL_CFLAGS += -DVDSP_CEVA
 endif
 
-ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512), )
+ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512 ums9620), )
 LOCAL_CFLAGS += -DVDSP_CADENCE
 LOCAL_SHARED_LIBRARIES += libvdspservice
 endif

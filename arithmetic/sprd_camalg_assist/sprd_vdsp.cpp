@@ -84,3 +84,12 @@ JNIEXPORT int sprd_caa_vdsp_check_supported()
     return 0;
 #endif
 }
+
+JNIEXPORT int sprd_caa_vdsp_load_library(void *h_vdsp, const char *nsid)
+{
+#ifdef VDSP_CADENCE
+    return sprd_caa_cadence_vdsp_load_library(h_vdsp, nsid);
+#else
+    return 0;
+#endif
+}

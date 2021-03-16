@@ -37,6 +37,8 @@ int sprd_caa_vdsp_Send(const char *nsid, int priority,
 //º”‘ÿÀ„∑®firmware(cadence vdsp)
 int sprd_caa_cadence_vdsp_load_library(void *h_vdsp, const char *nsid);
 
+int sprd_caa_vdsp_load_library(void *h_vdsp, const char *nsid);
+
 int sprd_caa_vdsp_maxfreq_lock(void *h_vdsp);
 
 int sprd_caa_vdsp_maxfreq_unlock(void *h_vdsp);
