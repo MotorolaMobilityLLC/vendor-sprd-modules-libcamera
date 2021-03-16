@@ -380,6 +380,8 @@ static cmr_int s5k3l6_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
  * Get PDAF info for every sensor with SIN_MODULE or DUAL_MODULE
  * please modify this function acording your sensor spec && pdaf map
  *============================================================================*/
+static const cmr_u32 pd_sns_mode[] = {0, 0, 1, 1};
+
 static const cmr_u16 s5k3l6_pd_is_right[] = {0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0,
                                              1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0,
                                              1, 1, 1, 1, 1, 0, 0, 1, 0, 0};
@@ -421,8 +423,8 @@ static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_offset_y = 24;
     pdaf_info->pd_end_x = 4184;
     pdaf_info->pd_end_y = 3096;
-   pdaf_info->pd_density_x = 16;
-   pdaf_info->pd_density_y = 16;
+    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 16;
     pdaf_info->pd_block_w = 3;
     pdaf_info->pd_block_h = 3;
     pdaf_info->pd_block_num_x = 65;
@@ -432,9 +434,10 @@ static cmr_int s5k3l6_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
     pdaf_info->pd_pos_row = (cmr_u16 *)s5k3l6_pd_row;
     pdaf_info->pd_pos_col = (cmr_u16 *)s5k3l6_pd_col;
     pdaf_info->pd_pos_size = (pd_pos_is_right_size / 2);
-    pdaf_info->vendor_type = SENSOR_VENDOR_S5K3L8XXM3;
     pdaf_info->sns_orientation = 0; // 1: mirror+flip; 0: normal
-
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y
+				* pd_pos_is_right_size * 5;
+    pdaf_info->sns_mode = pd_sns_mode;
     return rtn;
 }
 

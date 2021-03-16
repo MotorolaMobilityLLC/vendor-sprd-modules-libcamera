@@ -304,11 +304,7 @@ static SENSOR_STATIC_INFO_T s_s5k3l6_static_info[VENDOR_NUM] = {
                      .max_adgain = 8,
                      .long_expose_supported = 1,
                      .ois_supported = 0,
-#ifdef CONFIG_CAMERA_PDAF_TYPE
-                     .pdaf_supported = CONFIG_CAMERA_PDAF_TYPE,
-#else
-                     .pdaf_supported = 0,
-#endif
+                     .pdaf_supported = 3,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
