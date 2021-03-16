@@ -6089,6 +6089,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		ae_binning_for_aem_statsv2(cxt, calc_in);
 		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
 	}
+	ISP_LOGV("AE_TEST aem time cam_id %d,frame id %d time %d.%06d\n",cxt->camera_id, cxt->cur_status.frm_id,calc_in->sec, calc_in->usec);
 
 	/*send multi_mode to lib*/
 	cxt->cur_status.is_multi_mode = cxt->is_multi_mode;
@@ -6495,6 +6496,14 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 				} else if(sync_finish) {
 					/*get sync slave output data and write sensor*/
 					ae_update_sync_result_to_slave(cxt, &cxt->exp_data, 0);
+					/*save slave effect data to bridge*/
+					struct ae_sync_actual_data ae_sync_actual_output = {0};
+					ae_sync_actual_output.ae_gain = cxt->cur_status.adv_param.cur_ev_setting.ae_gain;
+					ae_sync_actual_output.exp_time = cxt->cur_status.adv_param.cur_ev_setting.exp_time;
+					ae_sync_actual_output.exp_line = cxt->cur_status.adv_param.cur_ev_setting.exp_line;
+					ae_sync_actual_output.dmy_line = cxt->cur_status.adv_param.cur_ev_setting.dmy_line;
+					ae_sync_actual_output.frm_len = cxt->cur_status.adv_param.cur_ev_setting.frm_len;
+					cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_SYNC_SLAVE_ACTUAL_DATA, &ae_sync_actual_output, NULL);
 				}
 				slave_sensor_active = 1;
 			}
