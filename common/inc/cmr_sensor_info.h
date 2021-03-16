@@ -106,6 +106,17 @@ struct sensor_ex_info {
     cmr_u8 mono_sensor;
 };
 
+#define SNSPID_SIZE 32
+
+#define BOKEH_SNSPID_SIZE 64
+#define BOKEH_MODULE_NAME_SIZE 64
+
+#define OZ1_SNSPID_SIZE 64
+#define OZ1_MODULE_NAME_SIZE 64
+
+#define OZ2_SNSPID_SIZE 64
+#define OZ2_MODULE_NAME_SIZE 64
+
 struct sensor_raw_resolution_info_tab {
     cmr_u32 image_pattern;
     struct sensor_raw_resolution_info tab[10];

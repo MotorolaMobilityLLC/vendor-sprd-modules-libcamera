@@ -27,6 +27,7 @@ cmr_int sensor_ic_drv_create(struct sensor_ic_drv_init_para *init_param,
         sns_drv_cxt->module_id = init_param->module_id;
         /*init ops*/
         sns_drv_cxt->ops_cb.set_exif_info = init_param->ops_cb.set_exif_info;
+         sns_drv_cxt->ops_cb.set_snspid = init_param->ops_cb.set_snspid;
         sns_drv_cxt->ops_cb.get_exif_info = init_param->ops_cb.get_exif_info;
         sns_drv_cxt->ops_cb.set_mode = init_param->ops_cb.set_mode;
         sns_drv_cxt->ops_cb.set_mode_wait_done =
