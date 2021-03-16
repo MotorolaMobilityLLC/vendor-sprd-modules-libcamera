@@ -8747,7 +8747,11 @@ cmr_int camera_capture_post_proc(cmr_handle oem_handle, cmr_u32 camera_id) {
             /*close flash*/
             memset(&setting_param, 0, sizeof(setting_param));
             setting_param.camera_id = camera_id;
-            setting_param.setting_flash_status = SETTING_FLASH_MAIN_AFTER;
+            if (FLASH_OPEN == flash_status)
+                setting_param.setting_flash_status = SETTING_FLASH_PRE_AFTER;
+            else
+                setting_param.setting_flash_status = SETTING_FLASH_MAIN_AFTER;
+
             ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                                     SETTING_CTRL_FLASH, &setting_param);
             if (ret) {
