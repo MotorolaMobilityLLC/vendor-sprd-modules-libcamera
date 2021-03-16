@@ -790,7 +790,8 @@ class SprdCamera3Setting {
     static int mPhysicalSensorNum;
     static int mLogicalSensorNum;
     static uint8_t camera_identify_state[CAMERA_ID_COUNT];
-   bool first_set;
+    bool first_set;
+    int save_iso_value;
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);
     void pushAndroidParaTag(sprd_camera_metadata_tag_t tag);

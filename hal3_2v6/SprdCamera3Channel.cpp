@@ -887,7 +887,7 @@ int SprdCamera3MetadataChannel::request(
     if (isp_params.af_cts_params.is_cts == false) {
         if (metadata.exists(ANDROID_CONTROL_AF_TRIGGER)) {
             if(metadata.find(ANDROID_CONTROL_AF_TRIGGER).data.u8[0] == 1) {
-                HAL_LOGV("jinyun AF triger frame_number:%d,", frame_number);
+                HAL_LOGV("AF triger frame_number:%d,", frame_number);
                 isp_params.af_cts_params.frame_number = frame_number;
                 isp_params.af_cts_params.af_triger = 1;
                 aeaf_triger = true;

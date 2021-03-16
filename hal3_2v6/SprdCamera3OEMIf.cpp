@@ -6279,8 +6279,8 @@ void SprdCamera3OEMIf::HandleIspParams(enum camera_cb_type cb, void *params) {
             temp_ae_params->cur_effect_exp_time = 100000L;
 
         mExptimeValue = temp_ae_params->cur_effect_exp_time;
-        HAL_LOGV("iso_value = %d", mIsoValue);
-        }
+        HAL_LOGD("iso_value = %d", mIsoValue);
+    }
     if(miSPreviewFirstFrame)
         getRollingShutterSkew();
     channel->channelCbRoutine(cb, params);
@@ -11375,7 +11375,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
         if(!wrtie_exif) {
             mIsoMap[mPictureFrameNum] = mIsoValue;
             mExptimeMap[mPictureFrameNum] = mExptimeValue;
-            HAL_LOGD("mPictureFrameNum:%d, mIsoValue:%d", mPictureFrameNum, mIsoValue);
+            HAL_LOGD("iso mPictureFrameNum:%d, mIsoValue:%d", mPictureFrameNum, mIsoValue);
             camera_set_exif_iso_value(obj->mCameraHandle, mIsoMap[mPictureFrameNum]);
             camera_set_exif_exp_time(obj->mCameraHandle, mExptimeMap[mPictureFrameNum]);
         }
@@ -11390,6 +11390,10 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
 }
 #endif
 
+       if (sprddefInfo->sprd_appmode_id == 1 && mSetting->save_iso_value) {
+            camera_set_exif_iso_value(obj->mCameraHandle,mSetting->save_iso_value);
+            HAL_LOGD("iso=%d", mSetting->save_iso_value);
+       }
 
         HAL_LOGD("fd=0x%x", zsl_frame->fd);
         mHalOem->ops->camera_set_zsl_snapshot_buffer(

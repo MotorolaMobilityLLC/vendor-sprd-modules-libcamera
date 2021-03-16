@@ -4886,12 +4886,14 @@ int SprdCamera3Setting::updateWorkParameters(
         HAL_LOGV("saturation is %d",
                  s_setting[mCameraId].sprddefInfo.saturation);
     }
-
-    /*if (frame_settings.exists(ANDROID_SPRD_ISO)) {
+/*
+    if (frame_settings.exists(ANDROID_SPRD_ISO)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_ISO).data.u8[0];
         GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.iso, valueU8,
                          ANDROID_SPRD_ISO, 1)
-    }*/
+        HAL_LOGD("iso=%d",s_setting[mCameraId].sprddefInfo.iso);
+    }
+*/
 
     if (frame_settings.exists(ANDROID_SPRD_SLOW_MOTION)) {
         valueU8 = frame_settings.find(ANDROID_SPRD_SLOW_MOTION).data.u8[0];
@@ -5867,17 +5869,23 @@ int SprdCamera3Setting::updateIspParameters(
     }
 
     if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
-        if (s_setting[mCameraId].ae_cts_params.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
-        valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
-         if (valueI32 != s_setting[mCameraId].ae_cts_params.sensitivity ||
-            (valueU8 == ANDROID_CONTROL_AE_MODE_OFF &&
-             s_setting[mCameraId].ae_cts_params.sensitivity)){
-             s_setting[mCameraId].ae_cts_params.sensitivity = valueI32;
-             s_setting[mCameraId].ae_cts_params.is_push = true;
-             s_setting[mCameraId].ae_cts_params.is_cts = true;
-             HAL_LOGD("sensor sensitivity is %d", s_setting[mCameraId].ae_cts_params.sensitivity);
+        if(sprd_app_id != 1){
+           if (s_setting[mCameraId].ae_cts_params.ae_mode == ANDROID_CONTROL_AE_MODE_OFF) {
+               valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
+               if (valueI32 != s_setting[mCameraId].ae_cts_params.sensitivity ||
+               (valueU8 == ANDROID_CONTROL_AE_MODE_OFF &&
+               s_setting[mCameraId].ae_cts_params.sensitivity)){
+               s_setting[mCameraId].ae_cts_params.sensitivity = valueI32;
+               s_setting[mCameraId].ae_cts_params.is_push = true;
+               s_setting[mCameraId].ae_cts_params.is_cts = true;
+               HAL_LOGD("sensor sensitivity is %d", s_setting[mCameraId].ae_cts_params.sensitivity);
+               }
+           }
+        } else {
+               valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
+               save_iso_value = valueI32;
+               HAL_LOGD("sensor sensitivity is %d", save_iso_value);
         }
-       }
     }
 
     // AF
