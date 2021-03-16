@@ -99,6 +99,11 @@ cmr_int cmr_sensor_get_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
 cmr_int cmr_sensor_update_isparm_from_file(cmr_handle sensor_handle,
                                            cmr_uint sensor_id);
 
+cmr_int cmr_sensor_read_calibration_otp(cmr_handle sensor_handle, cmr_u8 dual_flag,
+                                    struct sensor_otp_cust_info *otp_data, cmr_u32 camera_id);
+cmr_int cmr_sensor_write_calibration_otp(cmr_handle sensor_handle, cmr_u8 *buf,
+	                             cmr_u8 dual_flag, cmr_u16 otp_size,cmr_u32 camera_id);
+
 cmr_int cmr_sensor_set_exif(cmr_handle sensor_handle, cmr_uint sensor_id,
                             SENSOR_EXIF_CTRL_E cmd, cmr_uint param);
 
