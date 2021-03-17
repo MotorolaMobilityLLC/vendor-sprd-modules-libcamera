@@ -966,6 +966,8 @@ void SprdCamera3OEMIf::initialize() {
     mRawHeight = 0;
     mCallbackWidth = 0;
     mCallbackHeight = 0;
+    mYuv2Width = 0;
+    mYuv2Height = 0;
     mStreamOnWithZsl = 0;
     mIsNeedFlashFired = 0;
     mSprdZslEnabled = 0;
