@@ -197,6 +197,7 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg,
     maxPrevWidth = DEFAULT_PREVIEW_WIDTH;
     maxPrevHeight = DEFAULT_PREVIEW_WIDTH;
     mVideoPrevShare = false;
+    mChangeSensor = false;
     far = 0;
     near = 0;
     sn_trim_flag = true;
