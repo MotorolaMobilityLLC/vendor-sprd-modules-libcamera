@@ -4425,7 +4425,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 
 	ISP_LOGD("ae_set_video_start, ae_update_result_to_sensor,sensor_role:%d",cxt->sensor_role);
 	cxt->long_exp_frame_cnt = 0;
-	if(cxt->zsl_flag == 1 || cxt->is_snapshot == 0) {
+	/* skip first frame for long_exp */
+	if(cxt->zsl_flag == 1 || cxt->is_snapshot == 0 || cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP] == 0) {
 		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 1);
 	}
 
