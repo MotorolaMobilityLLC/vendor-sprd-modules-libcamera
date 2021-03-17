@@ -751,6 +751,7 @@ struct sensor_drv_context {
     cmr_u32 is_HD_mode;
     cmr_u32 module_vendor_id;
     cmr_u32 otp_version;
+    cmr_u32 is_long_expo;
 };
 
 struct tuning_param_lib {
@@ -837,6 +838,8 @@ cmr_int sensor_write_calibration_otp(cmr_u8 *buf, cmr_u8 dual_flag,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
+cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
+                           cmr_u32 long_expo_enable);
 cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id);
 #ifdef __cplusplus
 }

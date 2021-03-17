@@ -2747,6 +2747,8 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
             ae_info = (cmr_u32 *)data;
             cxt->long_expo_enable = ae_info[AE_CB_LONG_EXP_INDEX];
             CMR_LOGD("cxt->long_expo_enable %d", cxt->long_expo_enable);
+            cmr_sensor_set_longExp_enable(cxt->sn_cxt.sensor_handle,
+                           cxt->camera_id, cxt->long_expo_enable);
             cxt->camera_cb(oem_cb, cxt->client_data,
                            CAMERA_FUNC_AE_STATE_CALLBACK, ae_info);
             cmr_preview_facedetect_set_ae_stab(cxt->prev_cxt.preview_handle,

@@ -619,6 +619,21 @@ cmr_int cmr_sensor_get_exif(cmr_handle sensor_handle, cmr_uint sensor_id,
     return CMR_CAMERA_SUCCESS;
 }
 
+cmr_int cmr_sensor_set_longExp_enable(cmr_handle sensor_handle,
+                                cmr_u32 camera_id, cmr_u32 long_expo_enable) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct cmr_sensor_handle *handle =
+            (struct cmr_sensor_handle *)sensor_handle;
+    CHECK_HANDLE_VALID(handle);
+
+    ret = sensor_set_longExp_enable(&handle->sensor_cxt[camera_id], long_expo_enable);
+    if (ret) {
+        CMR_LOGE("cmr_sensor_set_longExp_enable failed!");
+        ret = CMR_CAMERA_FAIL;
+    }
+    return ret;
+}
+
 cmr_int cmr_sensor_get_gain_thrs(cmr_handle sensor_handle, cmr_uint sensor_id,
                                  cmr_u32 *gain_thrs) {
     cmr_int ret = CMR_CAMERA_SUCCESS;

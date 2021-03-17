@@ -1113,13 +1113,13 @@ LOCAL cmr_int sensor_set_mode(struct sensor_drv_context *sensor_cxt,
         goto exit;
     }
 
-#if 0
-    if (sensor_cxt->sensor_mode == mode) {
-        SENSOR_LOGI("The sensor mode as before");
-        rtn = SENSOR_SUCCESS;
-        goto exit;
+    if(!sensor_cxt->is_long_expo) {
+        if (sensor_cxt->sensor_mode == mode) {
+            SENSOR_LOGI("The sensor mode as before");
+            rtn = SENSOR_SUCCESS;
+            goto exit;
+        }
     }
-#endif
 
     if (PNULL != res_info_ptr[mode].sensor_reg_tab_ptr) {
         mclk = res_info_ptr[mode].xclk_to_sensor;
@@ -4321,6 +4321,15 @@ cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) {
     return ret;
 }
 
+cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
+                           cmr_u32 long_expo_enable) {
+    int ret = SENSOR_SUCCESS;
+    SENSOR_DRV_CHECK_ZERO(sensor_cxt);
+
+    sensor_cxt->is_long_expo = long_expo_enable;
+    SENSOR_LOGV("is_long_expo:%d", sensor_cxt->is_long_expo);
+    return ret;
+}
 
 cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id) {
     if(id > SENSOR_ID_MAX) {
