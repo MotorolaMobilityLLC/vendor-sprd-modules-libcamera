@@ -552,6 +552,8 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 		frame->fd, frame->length, frame->height,
 		frame->yaddr_vir, frame->uaddr_vir,frame->vaddr_vir,
 		frame->yaddr, frame->uaddr, frame->vaddr);
+	frame->length = snp_pm->req_size.width;
+	frame->height = snp_pm->req_size.height;
 
 	frm_param = (struct swa_frame_param *)frame->zsl_private;
 	if (frm_param) {
@@ -656,8 +658,6 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 	cmr_ips_set_jpeg_param(cxt->ips_handle, ips_req, &ips_param);
 
 post:
-	frame->length = snp_pm->req_size.width;
-	frame->height = snp_pm->req_size.height;
 	memset(&yuv_frm, 0, sizeof(struct img_frm));
 	convert_frame(&yuv_frm, frame);
 
@@ -735,15 +735,16 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	int iret;
-	uint32_t buf_size, offset, offset1, flip_on = 0, need_flush = 0, need_invalidate = 0;
+	uint32_t buf_size, offset1, flip_on = 0, need_flush = 0, need_invalidate = 0;
 	struct snap_request *snp_req = cxt->cur_req;
 	struct ips_request_t *ips_req = snp_req->ips_req;
 	struct snapshot_param *snp_pm = &cxt->req_param;
 	struct swa_frame_param *frm_param = NULL;
 	struct frm_info *frame = (struct frm_info *)data;
-	struct img_frm thumb_frm, orig;
-	struct cmr_buf new_buf;
+	struct img_frm src, thumb_frm, orig;
+	struct cmr_buf base_buf, new_buf;
 	struct snap_cb_data cb_data;
+	struct cmr_op_mean mean;
 
 	if (snp_req->status >= SNAP_REQ_YUV_DONE) {
 		CMR_LOGW("warning: status %d\n", snp_req->status);
@@ -754,21 +755,36 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 		ips_req->request_id, snp_pm->request_id, frame->fd,
 		frame->sec, frame->usec, frame->monoboottime);
 
-	offset = snp_pm->req_size.width * snp_pm->req_size.height * 3 / 2;
 	offset1 = snp_pm->jpeg_setting.thum_size.width * snp_pm->jpeg_setting.thum_size.height;
 	buf_size = snp_pm->jpeg_setting.thum_size.width * snp_pm->jpeg_setting.thum_size.height * 3 / 2;
+	new_buf.fd = base_buf.fd = 0;
 
-	memset(&thumb_frm, 0, sizeof(struct img_frm));
-	convert_frame(&thumb_frm, frame);
-	thumb_frm.buf_size = buf_size;
+	iret = get_free_buffer(&cxt->thumb_buf_queue, buf_size, &base_buf);
+	if (iret || base_buf.fd <= 0) {
+		CMR_LOGE("fail to get free buffer\n");
+		return -1;
+	}
+
+	memset(&src, 0, sizeof(struct img_frm));
+	convert_frame(&src, frame);
+	thumb_frm = src;
+	thumb_frm.fd = base_buf.fd;
+	thumb_frm.buf_size = base_buf.mem_size;
 	thumb_frm.size = snp_pm->jpeg_setting.thum_size;
-	thumb_frm.addr_vir.addr_y += offset;
+	thumb_frm.addr_vir.addr_y = base_buf.vaddr;
 	thumb_frm.addr_vir.addr_u = thumb_frm.addr_vir.addr_y + offset1;
-	thumb_frm.addr_phy.addr_y = offset;
-	thumb_frm.addr_phy.addr_u = offset + offset1;
+	thumb_frm.addr_phy.addr_y = 0;
+	thumb_frm.addr_phy.addr_u = offset1;
+	mean.is_sync = 1;
+	ret = cxt->ops.start_scale(cxt->oem_handle, cxt, &src, &thumb_frm, &mean);
+	if (ret) {
+		CMR_LOGE("fail to scaler\n");
+	}
+	cxt->mem_ops.invalidate_cb(cxt->oem_handle, thumb_frm.fd,
+			thumb_frm.buf_size, thumb_frm.addr_phy.addr_y, thumb_frm.addr_vir.addr_y);
 
-	CMR_LOGD("thumb offset = %d, thumb size =%d, vaddr 0x%lx, dst_addr 0x%lx, rot %d, flip %d\n",
-		offset, buf_size, frame->yaddr_vir, thumb_frm.addr_vir.addr_y,
+	CMR_LOGD("thumb size =%d, vaddr 0x%lx, dst_addr 0x%lx, rot %d, flip %d\n",
+		buf_size, frame->yaddr_vir, thumb_frm.addr_vir.addr_y,
 		snp_pm->jpeg_setting.rotation, snp_pm->jpeg_setting.flip);
 
 	if (dump_all & 4) {
@@ -988,6 +1004,12 @@ thumb_cb:
 		iret =put_free_buffer(&cxt->thumb_buf_queue, &new_buf);
 		if (iret)
 			CMR_LOGE("fail to put free buf fd 0x%x\n", new_buf.fd);
+	}
+
+	if (base_buf.fd > 0) {
+		iret =put_free_buffer(&cxt->thumb_buf_queue, &base_buf);
+		if (iret)
+			CMR_LOGE("fail to put free buf fd 0x%x\n", base_buf.fd);
 	}
 
 	CMR_LOGD("X, req_id %d %d\n", ips_req->request_id, snp_pm->request_id);
@@ -6142,7 +6164,7 @@ cmr_int cmr_snapshot_prepare(
 	}
 
 	/* alloc one small buffer for thumbnail rot/flip if needed */
-	free_cnt = 1;
+	free_cnt = 4;
 	ret = inc_buffer_q(&cxt->thumb_buf_queue, &cxt->mem_ops, thumb_size, &free_cnt);
 
 	CMR_LOGD("X. free buf cnt %d\n", cxt->buf_queue.free_cnt);

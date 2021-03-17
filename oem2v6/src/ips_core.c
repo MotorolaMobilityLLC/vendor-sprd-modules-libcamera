@@ -367,7 +367,6 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 	struct cmr_op_mean mean;
 	struct jpeg_enc_cb_param enc_cb_param;
 	struct ips_jpeg_param_t *pm = (struct ips_jpeg_param_t *)cur_proc->param_ptr;
-	struct ipmpro_node *first_proc;
 
 	src = req->frm_out[0];
 
@@ -392,16 +391,11 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 	dst.addr_phy.addr_y = offset;
 	dst.addr_phy.addr_u = offset + offset1;
 
-	first_proc = node_to_item(req->ipm_head.next, struct ipmpro_node, list);
-	if (first_proc->type == IPS_TYPE_JPEG) {
-		CMR_LOGD("no need to scale yuv for thumb\n");
-	} else {
-		ret = cmr_scale_start(ips_ctx->other_handles.scale_handle,
-				&src, &dst, (cmr_evt_cb)NULL, NULL);
-		if (ret) {
-			CMR_LOGE("fail to scale thumbnail");
-			return ret;
-		}
+	ret = cmr_scale_start(ips_ctx->other_handles.scale_handle,
+			&src, &dst, (cmr_evt_cb)NULL, NULL);
+	if (ret) {
+		CMR_LOGE("fail to scale thumbnail");
+		return ret;
 	}
 
 	src = dst;
@@ -410,7 +404,7 @@ static cmr_int swa_thumbnail_procss(struct ips_context *ips_ctx,
 		src.addr_phy.addr_y, src.addr_phy.addr_u, src.addr_phy.addr_v,
 		src.size.width, src.size.height);
 
-	if (first_proc->type != IPS_TYPE_JPEG && (dump_pic & 4)) {
+	if (dump_pic & 4) {
 		FILE *fp;
 		char fname[256];
 		int size;
