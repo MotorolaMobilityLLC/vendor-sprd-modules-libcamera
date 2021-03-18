@@ -3401,25 +3401,31 @@ static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
 static cmr_int
 sensor_drv_store_version_info(struct sensor_drv_context *sensor_cxt,
                               char *sensor_info) {
-    char buffer[32] = {0};
+    char buffer[64] = {0};
     cmr_u64 sensor_size = 0;
+    SENSOR_MATCH_T *sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
 
     SENSOR_LOGI("E");
-    if (sensor_cxt->sensor_info_ptr != NULL &&
-        sensor_cxt->sensor_info_ptr->sensor_version_info != NULL &&
-        strlen((const char *)sensor_cxt->sensor_info_ptr->sensor_version_info) >
-            1) {
+    if (sensor_cxt->sensor_info_ptr &&
+        sensor_cxt->current_module &&
+        sns_module && sns_module->sn_name[0]) {
+
         sensor_size =
             (cmr_u64)((cmr_uint)sensor_cxt->sensor_info_ptr->source_width_max *
                       (cmr_uint)sensor_cxt->sensor_info_ptr->source_height_max);
+        
         if (sensor_size >= 1000000) {
-            sprintf(buffer, "%s %dM \n",
-                    sensor_cxt->sensor_info_ptr->sensor_version_info,
-                    (cmr_u32)((float)sensor_size / 1000000.0 + 0.2));
+            sprintf(buffer, "id%d %s %dM \n",
+                    sensor_cxt->slot_id,
+                    sns_module->sn_name,
+                    (cmr_u32)((float)sensor_size / 1000000.0 + 0.2)
+                    );
         } else {
-            sprintf(buffer, "%s 0.%dM \n",
-                    sensor_cxt->sensor_info_ptr->sensor_version_info,
-                    (cmr_u32)(sensor_size / 100000));
+            sprintf(buffer, "id%d %s 0.%dM \n",
+                    sensor_cxt->slot_id,
+                    sns_module->sn_name,
+                    (cmr_u32)(sensor_size / 100000)
+                    );
         }
 
         strcat(sensor_info, buffer);
@@ -4281,7 +4287,7 @@ static cmr_int sensor_drv_scan_hw(void) {
     int physical_num = 0;
     cmr_int i = 0;
     cmr_int ret = SENSOR_FAIL;
-    char sensor_version_info[SENSOR_ID_MAX * 32] = {0};
+    char sensor_version_info[SENSOR_ID_MAX * 64] = {0};
     int32_t bytes = 0;
     char config_xml_name[CONFIG_XML_NAME_LEN];
     xmlDocPtr docPtr = NULL;
