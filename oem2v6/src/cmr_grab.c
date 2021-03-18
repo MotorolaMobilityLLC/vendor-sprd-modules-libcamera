@@ -774,7 +774,7 @@ cmr_int cmr_grab_cap_cfg(cmr_handle grab_handle, struct cap_cfg *config,
 
     sprd_3dnr_mode.channel_id = ch_id;
     sprd_3dnr_mode.need_3dnr = config->cfg.need_3dnr;
-    CMR_LOGV("get channel id: %d, need_3dnr:%d", ch_id,
+    CMR_LOGD("get channel id: %d, need_3dnr:%d", ch_id,
              sprd_3dnr_mode.need_3dnr);
     ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_3DNR_MODE, &sprd_3dnr_mode);
 
