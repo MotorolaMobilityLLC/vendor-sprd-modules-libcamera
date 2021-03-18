@@ -4861,7 +4861,7 @@ static cmr_s32 ae_get_fdr_param(struct ae_ctrl_cxt *cxt, void *result)
 
 		fdr_param->ev = cxt->fdr_down_ev;
 		fdr_param->cur_bv_underexp =  cxt->cur_result.cur_bv;
-		fdr_param->exp_line_underexp = cxt->cur_status.adv_param.mode_param.value.exp_gain[0] / cxt->cur_status.adv_param.cur_ev_setting.line_time;
+		fdr_param->exp_line_underexp = (cmr_u32)(cxt->cur_status.adv_param.mode_param.value.exp_gain[0] / cxt->cur_status.adv_param.cur_ev_setting.line_time);
 		fdr_param->exp_time_underexp = (cmr_u32)cxt->cur_status.adv_param.mode_param.value.exp_gain[0];
 		fdr_param->total_gain_underexp = (cmr_u32)cxt->cur_status.adv_param.mode_param.value.exp_gain[1];
 		fdr_param->sensor_gain_underexp =(int)((fdr_param->total_gain_underexp > cxt->sensor_max_gain) ? cxt->sensor_max_gain : fdr_param->total_gain_underexp);
