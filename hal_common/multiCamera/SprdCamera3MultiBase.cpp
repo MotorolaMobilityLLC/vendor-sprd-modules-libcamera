@@ -619,6 +619,12 @@ int SprdCamera3MultiBase::unmap(buffer_handle_t *buffer) {
 
 int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
     int stream_type = 0;
+
+    if (!new_stream) {
+        HAL_LOGW("invalid param!");
+        return stream_type;
+    }
+
     int format = new_stream->format;
     if (new_stream->stream_type == CAMERA3_STREAM_OUTPUT) {
         if (format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
