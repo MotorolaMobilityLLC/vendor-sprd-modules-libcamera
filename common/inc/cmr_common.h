@@ -1603,7 +1603,12 @@ enum sprd_camera_app_mode {
 /*
  * dont edit the enum alone, camera hal have the same enum
  */
-enum top_app_id { TOP_APP_NONE, TOP_APP_WECHAT, TOP_APP_MAX };
+enum top_app_id {
+    TOP_APP_NONE,
+    TOP_APP_WECHAT = (1 << 0),
+    TOP_APP_QQ = (1 << 1),
+    TOP_APP_MAX
+};
 
 enum cmr_focus_mode {
     CAMERA_FOCUS_MODE_AUTO = 0,
@@ -1817,6 +1822,7 @@ enum camera_param_type {
     CAMERA_PARAM_SPRD_SUPER_MACROPHOTO_PARAM,
     CAMERA_PARAM_SMILE_CAPTURE_ENABLE,
     CAMERA_PARAM_ZSL_IPS_ENABLE,
+    CAMERA_PARAM_3RD_3DNR_ENABLED,
     CAMERA_PARAM_TYPE_MAX
 };
 
