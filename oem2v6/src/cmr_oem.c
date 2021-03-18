@@ -9700,11 +9700,11 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
         CMR_LOGE("failed to get app mode %ld", ret);
     }
     CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
-    if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
-        // auto 3dnr available in auto mode
-        ret = cmr_grab_auto_3dnr_cfg(cxt->grab_cxt.grab_handle, 1);
-        if (ret) {
-            CMR_LOGE("failed to cap cfg %ld", ret);
+    if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) || cxt->_3rd_3dnr_flag) {
+        char value[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.preview.3dnr_enable", value, "true");
+        if(!strcmp(value,"true") && param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW) {
+            param_ptr->cap_inf_cfg.cfg.need_3dnr = 1;
         }
     }
 
@@ -14666,6 +14666,10 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         if (ret) {
             CMR_LOGE("failed to set super macrophoto enable %ld", ret);
         }
+        break;
+    }
+    case CAMERA_PARAM_3RD_3DNR_ENABLED: {
+        cxt->_3rd_3dnr_flag = param;
         break;
     }
     default:

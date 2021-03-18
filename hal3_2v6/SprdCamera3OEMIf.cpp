@@ -264,6 +264,7 @@ static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
 static int s_use_time = 0;
 static nsecs_t cam_init_begin_time = 0;
+static top_app_id whitelist[] = {TOP_APP_WECHAT, TOP_APP_QQ};
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
@@ -826,6 +827,10 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mClearAfTrigger = false;
     mNonZslFlag = false;
     mSkipNum = 0;
+    mWhitelists = 0;
+    for (int i = 0; i < sizeof(whitelist)/sizeof(whitelist[0]); i++) {
+        mWhitelists |= whitelist[i];
+    }
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -3441,6 +3446,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     mTopAppId = sprddefInfo->top_app_id;
+    if (mTopAppId & mWhitelists) {
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_3RD_3DNR_ENABLED, 1);
+    }
     if (mTopAppId == TOP_APP_WECHAT) {
         faceDectect(1);
         if (mPreviewWidth == 640 && mPreviewHeight == 480 &&

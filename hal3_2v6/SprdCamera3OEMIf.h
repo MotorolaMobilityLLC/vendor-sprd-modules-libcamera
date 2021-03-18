@@ -1021,6 +1021,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #endif
     bool mNonZslFlag;
     uint32_t mSkipNum;
+    int mWhitelists;
 };
 
 }; // namespace sprdcamera
