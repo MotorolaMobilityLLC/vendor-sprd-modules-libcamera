@@ -4314,7 +4314,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 					if(tmp_exptime > cxt->ae_tbl_param.max_exp){
 						tmp_exptime = cxt->ae_tbl_param.max_exp;
 					}
-					tmp_gain = (cmr_u32)(1.0 * src_exp.gain * ae_target_lum * src_exp.exp_time / ((cmr_u32)tmp_exptime * cxt->last_cur_lum));
+					tmp_gain = (cmr_u32)(1.0 * src_exp.gain * ae_target_lum * src_exp.exp_time / (cmr_u32)(tmp_exptime * cxt->last_cur_lum));
 					if(tmp_gain > cxt->ae_tbl_param.max_gain)
 						tmp_gain = cxt->ae_tbl_param.max_gain;
 					src_exp.exp_line = (cmr_u32)(1.0 * tmp_exptime / cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
