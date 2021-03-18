@@ -3877,7 +3877,7 @@ static cmr_u8 set_bokeh_golden_data_info(af_ctrl_t * af, bokeh_golden_data_info 
 cmr_u32 getf_orientation(cmr_s32 roll_angle)
 {
 
-	cmr_u32 f_orientation;
+	cmr_u32 f_orientation = 0;
 	if (roll_angle >= -45 && roll_angle <= 45) {
 		f_orientation = FACE_UP;
 		ISP_LOGI(" FACE_UP");
