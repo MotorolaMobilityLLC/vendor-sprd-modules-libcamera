@@ -885,11 +885,16 @@ void SprdCamera3OEMIf::closeCamera() {
     framework that the flash has become unavailable.*/
     FLASH_INFO_Tag flashInfo_info;
     FLASH_Tag flashInfo;
+    char prop[PROPERTY_VALUE_MAX];
     mSetting->getFLASHINFOTag(&flashInfo_info);
     mSetting->getFLASHTag(&flashInfo);
-    HAL_LOGD("flashInfo_info_available=%d, flashInfo_mode=%d",
-            flashInfo_info.available, flashInfo.mode);
-    if (flashInfo_info.available && flashInfo.mode == CAMERA_FLASH_MODE_DC_TORCH){
+    property_get("persist.vendor.cam.capture.torch.enable", prop, "0");
+    int torch_enable = atoi(prop);
+    HAL_LOGD("torch_enable=%d, flashInfo_info_available=%d, flashInfo_mode=%d",
+            torch_enable, flashInfo_info.available, flashInfo.mode);
+    if (torch_enable != 0 && flashInfo_info.available &&
+        (flashInfo.mode == CAMERA_FLASH_MODE_DC_TORCH ||
+        flashInfo.mode == CAMERA_FLASH_MODE_TORCH)){
         SprdCamera3Flash::reserveFlash(mCameraId);
         close_flash_torch();
     }
@@ -8057,7 +8062,10 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 
     } break;
     case ANDROID_SPRD_ADJUST_FLASH_LEVEL: {
-        if (mCameraId != 1) {
+        char prop[PROPERTY_VALUE_MAX];
+        property_get("persist.vendor.cam.capture.torch.enable", prop, "0");
+        int torch_enable = atoi(prop);
+        if (torch_enable != 0 && mCameraId != 1) {
             SPRD_DEF_Tag *sprdInfo;
             FLASH_Tag flashInfo;
             FLASH_INFO_Tag flashInfo_info;
