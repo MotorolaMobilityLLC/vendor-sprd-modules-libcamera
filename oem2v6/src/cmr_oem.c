@@ -3292,7 +3292,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 memcpy(&tmp_ae_params, cxt->snp_cxt.ae_common_info, sizeof(struct tmp_cts_ae_params));
                 if(tmp_ae_params.exp_time)
                     offettime = tmp_ae_params.exp_time - phyPtr->start_offset_time;
-                CMR_LOGD("offset %d current capture_timestamp %d start_offset_time %d",
+                CMR_LOGD("offset %d current capture_timestamp %d start_offset_time %lld",
                 offettime, tmp_ae_params.exp_time, phyPtr->start_offset_time);
                 if (app_mode != -1 && (prev_frame->monoboottime > cxt->capture_timestamp - offettime)) {
                     prev_frame->type = PREVIEW_CANCELED_FRAME;
