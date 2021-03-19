@@ -862,7 +862,7 @@ int SprdCamera3MetadataChannel::request(
         isp_params.ae_cts_params.sensitivity == 50 &&
         frame_number != 0) {
         HAL_LOGD("avoid to repeat setting ITS default params");
-        isp_params.ae_cts_params.is_cts == false;
+        isp_params.ae_cts_params.is_cts = false;
         }
 
     if (isp_params.ae_cts_params.is_cts == false) {
@@ -1054,7 +1054,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                     if (syncfamr_found && (ae_cts_callback_params->frame_number ==
                         AE_syncframe.frame_number ||
                         AE_syncframe.ae_cts_params.ae_precap_triger == 1)) {
-                        tmp_ae_params.ae_precap_triger == 1;
+                        tmp_ae_params.ae_precap_triger = 1;
                         AE_syncframe.ae_notified = CALLBACK_ERROR;
                     } else {
                         mAeCallBackQue.push_back(tmp_ae_params);
@@ -1166,10 +1166,10 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
                         mRequestInfoList[0].unSyncCount++;
                         HAL_LOGV("AF control unSyncCount %d",mRequestInfoList[0].unSyncCount);
                     }
-                    HAL_LOGD("report mRequestInfoList frame_number:%d, focus_distance: %f, sensitivity %d",
+                    HAL_LOGD("report mRequestInfoList frame_number:%d, focus_distance: %f, lens_state %d",
                         mRequestInfoList[0].af_cts_params.frame_number,
                         mRequestInfoList[0].af_cts_params.focus_distance,
-                        mRequestInfoList[0].af_cts_params.focus_distance);
+                        mRequestInfoList[0].af_cts_params.lens_state);
                 } 
             }else {
                 HAL_LOGV("AF control push %d",FrameVec.front());
@@ -1321,7 +1321,7 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
                     std::map<uint32_t, cmr_s64>::iterator iter;
                     iter = mOEMIf->mExptimeMap.find(frame_num);
                     if (iter != mOEMIf->mExptimeMap.end()) {
-                        HAL_LOGD("exp_value:%lld, mOEMIf->mIsoMap[%d]:%d", exp_value,
+                        HAL_LOGD("exp_value:%lld, mOEMIf->mIsoMap[%d]:%lld", exp_value,
                             frame_num, iter->second);
                         if (exp_value != iter->second &&
                             iter->second!= 0)

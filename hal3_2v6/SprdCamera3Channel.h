@@ -212,7 +212,6 @@ class SprdCamera3MetadataChannel : public SprdCamera3Channel {
 
     typedef struct ae_params ae_params_t;
     typedef struct af_params af_params_t;
-    int32_t callback_status;
     list<cmr_u32> FrameVec;
     list<ae_params_t> mAeCallBackQue;
     list<af_params_t> mAfCallBackQue;
@@ -221,7 +220,6 @@ class SprdCamera3MetadataChannel : public SprdCamera3Channel {
     bool ReSetFirstMeta;
     struct isp_sync_params syncAeParams;
     af_params_t syncAfParams;
-    cmr_s64 exp_time;
    private:
     std::mutex mResultLock;
     std::condition_variable mResultSignal;
