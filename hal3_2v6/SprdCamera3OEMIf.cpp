@@ -8460,7 +8460,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
 }
 
 int SprdCamera3OEMIf::setCameraIspPara(isp_params_t isp_mode) {
-    int ret = 0;
+    cmr_int ret = 0;
     struct ae_params ae_cts_params;
     ret = mSetting->getAeParams(&ae_cts_params);
     struct af_params af_cts_params;

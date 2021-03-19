@@ -919,7 +919,7 @@ int SprdCamera3MetadataChannel::request(
         aeaf_triger == true)) {
         mRequestInfoList.push_back(isp_params);
         if (!mRequestInfoList.empty()) {
-            int size = mRequestInfoList.size();;
+            cmr_uint size = mRequestInfoList.size();;
             struct isp_sync_params tmp_control_ =
             mRequestInfoList.at(size - 1);
             HAL_LOGD("syncRequst:%d, frame_number: %d",
@@ -1006,11 +1006,11 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
     if(hwi->isMultiCameraMode(hwi->getMultiCameraMode())||
         mOEMIf->mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
         //HAL_LOGE("multi camera can not use manule sensor");
-        return 0;
+        goto exit;
     }
 #ifndef CAMERA_MANULE_SNEOSR
     {
-        return 0;
+        goto exit;
     }
 #endif
     switch (cb) {
@@ -1192,6 +1192,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
         }
     }
 
+exit:
     return NO_ERROR;
 }
 
@@ -1694,7 +1695,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
 
 int SprdCamera3MetadataChannel::stop(uint32_t frame_number) {
     CONTROL_Tag controlInfo;
-    int i = 0;
+    cmr_uint i = 0;
     HAL_LOGD("E");
     mSetting->getCONTROLTag(&controlInfo);
     if ((controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_START) ||

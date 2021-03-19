@@ -3271,7 +3271,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             struct camera_frame_type *prev_frame =
                 (struct camera_frame_type *)param;
             if (prev_frame->type == PREVIEW_FRAME) {
-                int offettime = 0;
+                cmr_int offettime = 0;
                 CMR_LOGD("monoboottime %llu dre_capture_timestamp %llu",
                          prev_frame->monoboottime, cxt->capture_timestamp);
                 struct phySensorInfo *phyPtr = sensorGetPhysicalSnsInfo(cxt->camera_id);
