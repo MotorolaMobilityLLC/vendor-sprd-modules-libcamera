@@ -151,7 +151,9 @@ enum isp_callback_cmd {
 	ISP_AE_AUX_EFFECT_CALLBACK = 0x0000E000,
 	ISP_AE_CB_HDR_EXP_GAIN = 0x0000F000,
 	ISP_AE_CB_HDR_TUNING_PARAM_INDEX = 0x00010000,
-        ISP_AF_PARAMS_CALLBACK = 0x00020000,
+	ISP_AF_PARAMS_CALLBACK = 0x00020000,
+	ISP_AE_SYNC_STATUS_CALLBACK = 0x00030000,
+	ISP_LONGEXP_SKIPNUM_CALLBACK = 0x00040000,
 	ISP_CALLBACK_CMD_MAX = 0xffffffff
 };
 
@@ -842,6 +844,7 @@ struct isp_sensor_ex_info {
 	cmr_u32 ois_supported;
 	cmr_u32 pdaf_supported;
 	cmr_u32 ebd_supported;
+	cmr_u32 long_expose_supported;
 	cmr_u32 exp_valid_frame_num;
 	cmr_u32 clamp_level;
 	cmr_u32 adgain_valid_frame_num;

@@ -3618,7 +3618,7 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
         setCameraState(SPRD_ERROR, STATE_PREVIEW);
         HAL_LOGE("camera_stop_preview failed");
     }
-    if (sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode) {
+    if ((sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode) ||sprddefInfo->long_expo_enable) {
         mSprdZslEnabled = 0;
         HAL_LOGD("mSprdZslEnabled=%d", mSprdZslEnabled);
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
@@ -4945,7 +4945,7 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
 
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
-   if (sprddefInfo->high_resolution_mode == 1)
+   if (sprddefInfo->high_resolution_mode == 1 || sprddefInfo->long_expo_enable == 1)
         sprddefInfo->return_previewframe_after_nozsl_cap = 1;
     SprdCamera3RegularChannel *regular_channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -5055,7 +5055,7 @@ bool SprdCamera3OEMIf::returnPreviewFrame(struct camera_frame_type *frame) {
     regular_channel->channelCbRoutine(frame_num, timestamp,
                                       CAMERA_STREAM_TYPE_PREVIEW);
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
-    if (sprddefInfo->high_resolution_mode == 1)
+    if (sprddefInfo->return_previewframe_after_nozsl_cap == 1)
         sprddefInfo->return_previewframe_after_nozsl_cap = 0;
 
 exit:
@@ -6321,7 +6321,9 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
         if (NULL != parm4) {
             ae_info = (cmr_u32 *)parm4;
             ae_stab = ae_info[AE_CB_STABLE_INDEX];
-            HAL_LOGV("ae_info = %p, ae_stab = %d", ae_info, ae_stab);
+            sprddefInfo->long_expo_enable = ae_info[AE_CB_LONG_EXP_INDEX];
+            HAL_LOGV("ae_info = %p, ae_stab = %d long_expo_en=%d",
+                     ae_info, ae_stab, sprddefInfo->long_expo_enable);
         }
 
         if (ae_stab) {
@@ -8120,8 +8122,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             SENSOR_Tag sensorInfo;
             mSetting->getSENSORTag(&sensorInfo);
             HAL_LOGD("exposure_time %lld", sensorInfo.exposure_time);
+            HAL_LOGD("exposure_time %" PRIu64 "", (uint64_t)(sensorInfo.exposure_time));
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_TIME,
-                     (cmr_uint)(sensorInfo.exposure_time));
+                     (uint64_t)(sensorInfo.exposure_time/1000));
         }
         break;
 
@@ -8776,6 +8779,10 @@ int SprdCamera3OEMIf::setCapturePara(camera_capture_mode_t cap_mode,
     case CAMERA_CAPTURE_MODE_STILL_CAPTURE:
         if (sprddefInfo->high_resolution_mode &&
             sprddefInfo->fin1_highlight_mode) {
+            sprddefInfo->sprd_zsl_enabled = 0;
+            mStreamOnWithZsl = 0;
+        }
+        if(sprddefInfo->long_expo_enable){
             sprddefInfo->sprd_zsl_enabled = 0;
             mStreamOnWithZsl = 0;
         }
