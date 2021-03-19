@@ -104,6 +104,8 @@ typedef struct {
     uint8_t availDistortionCorrectionModes[1];
     uint8_t availLogoWatermark;
     uint8_t availTimeWatermark;
+    double availExposureLongTime[12];
+    int32_t availExposureLongTimeSize;
 } camera3_common_t;
 
 typedef struct {
@@ -209,9 +211,9 @@ const sensor_fov_tab_t fourth_sensor_fov_tab[] = {
     {"", {3.50f, 2.625f}, 3.75f},
 };
 #endif
-
+static int64_t kmax_exposure_time = 200000000L;
 const int32_t klens_shading_map_size[2] = {1, 1};
-//const int64_t kexposure_time_range[2] = {1000L, 30000000000L}; // 1 us - 30 sec
+//static int64_t kexposure_time_range[2] = {1000L, kmax_exposure_time}; // 1 us - 0.2 sec
 //temp range
 //static int64_t kexposure_time_range[2] = {100000L, 200000000L}; // 100 us - 200ms
 static int64_t kexposure_time_range[CAMERA_ID_COUNT][2] = {
@@ -224,7 +226,6 @@ const int32_t kreport_skip_number = 2;
 const int64_t kframe_number[] = {
     ANDROID_SYNC_FRAME_NUMBER_CONVERGING//-1
 };
-
 const int64_t kframe_duration_range[2] = {33331760L,
                                           30000000000L}; // ~1/30 s - 30 sec
 const int32_t ksharpness_map_size[2] = {64, 64};
@@ -1139,7 +1140,21 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
     mSensorType[cameraId] = phyPtr->sensor_type;
     mSensorFocusEnable[cameraId] = phyPtr->focus_eb;
     mpdaf_type[cameraId] = phyPtr->pdaf_supported;
-
+    if(phyPtr->long_expose_supported) {
+      kmax_exposure_time = phyPtr->long_expose_supported;
+      kmax_exposure_time = kmax_exposure_time*1000000000L;
+      memcpy(camera3_default_info.common.availExposureLongTime,
+             phyPtr->long_expose_modes, phyPtr->long_expose_modes_size * sizeof(double));
+      camera3_default_info.common.availExposureLongTimeSize = phyPtr->long_expose_modes_size;
+      HAL_LOGD("kmax_exposure_time=%lld", kmax_exposure_time);
+      for(int i = 0;i < phyPtr->long_expose_modes_size;i++){
+          HAL_LOGD("availExposureLongTime=%f",
+                   camera3_default_info.common.availExposureLongTime[i]);
+      }
+    } else {
+         kmax_exposure_time = 200000000L;
+    }
+    kexposure_time_range[cameraId][1] = kmax_exposure_time;
     memcpy(mSensorName[cameraId], phyPtr->sensor_name,
            sizeof(mSensorName[cameraId]));
 
@@ -1151,6 +1166,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
                sizeof(phyPtr->fov_info));
     }
     // if sensor exposure info is valid, use it; else use default value
+  /*
     if (phyPtr->sensor_min_exp) {
         kexposure_time_range[cameraId][0] = phyPtr->sensor_min_exp;
         kexposure_time_range[cameraId][1] = phyPtr->sensor_max_exp;
@@ -1158,7 +1174,7 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
                  kexposure_time_range[cameraId][0], kexposure_time_range[cameraId][1],
                  phyPtr->sensor_min_exp, phyPtr->sensor_max_exp);
     }
-
+*/
     if (cameraId ==
         sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK))
         sensor_angle_fov[1] = phyPtr->fov_angle; // 117.0;
@@ -1681,6 +1697,12 @@ int SprdCamera3Setting::initStaticParametersforSensorInfo(int32_t cameraId) {
     memcpy(ptr_sns_inf_tag->exposupre_time_range,
            camera3_default_info.common.exposure_time_range,
            sizeof(camera3_default_info.common.exposure_time_range));
+    //exposure long time
+    memcpy(ptr_sns_inf_tag->exposupre_long_time,
+           camera3_default_info.common.availExposureLongTime,
+           camera3_default_info.common.availExposureLongTimeSize * sizeof(double));
+    ptr_sns_inf_tag->exposupre_long_time_size =
+        camera3_default_info.common.availExposureLongTimeSize;
     // maxFrameDuration.
     ptr_sns_inf_tag->max_frame_duration =
         camera3_default_info.common.frame_duration_range[1];
@@ -2932,6 +2954,10 @@ int SprdCamera3Setting::initStaticMetadataforSensorInfo(
         ANDROID_SENSOR_INFO_EXPOSURE_TIME_RANGE,
         ptr_sns_inf_tag->exposupre_time_range,
         ARRAY_SIZE(s_setting[cameraId].sensor_InfoInfo.exposupre_time_range));
+    staticInfo.update(
+        ANDROID_SPRD_EXPOSURE_LONG_TIME,
+        ptr_sns_inf_tag->exposupre_long_time,
+        ptr_sns_inf_tag->exposupre_long_time_size);
     staticInfo.update(ANDROID_SENSOR_INFO_MAX_FRAME_DURATION,
                       &(ptr_sns_inf_tag->max_frame_duration), 1);
     staticInfo.update(ANDROID_SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,

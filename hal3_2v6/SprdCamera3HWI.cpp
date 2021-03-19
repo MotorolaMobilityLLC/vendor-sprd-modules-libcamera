@@ -156,6 +156,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mCurFrameTimeStamp = 0;
     mMasterId = 0;
     mHighResNonzsl = 0;
+    mSuperExposeNonzsl = 0;
     // get property for high res
     getHighResZslSetting();
     memset(&mStreamConfiguration, 0, sizeof(cam3_stream_configuration_t));
@@ -1388,7 +1389,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
-        if (sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) {
+        if ((sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) || (sprddefInfo->long_expo_enable && mSuperExposeNonzsl == 1)) {
             int i = 600, tmp;
             // high res, preview need wait nonzsl capture finish(sensor stream off)
             mHighResNonzsl = 0; // once per non-zsl capture
@@ -1398,6 +1399,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                    break;
                usleep(5000);
             }
+            mSuperExposeNonzsl = 0;// once per non-zsl capture
             HAL_LOGD("non-zsl,sensor stream off, i=%d", i);
         }
 
@@ -1589,9 +1591,13 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             HAL_LOGD("high res non-zsl %d", mHighResNonzsl);
         }
 
+        if (sprddefInfo->long_expo_enable == 1) {
+            mSuperExposeNonzsl = 1;
+        }
+
         // raw capture need non-zsl for now
         if (mOEMIf->isRawCapture() || mOEMIf->isIspToolMode() ||
-            (sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode)) {
+            (sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode) || sprddefInfo->long_expo_enable) {
             mPictureRequest = 1;
             mOEMIf->setCapturePara(CAMERA_CAPTURE_MODE_STILL_CAPTURE,
                                    mFrameNum);
@@ -1672,7 +1678,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_SNAPSHOT) {
         mOldCapIntent = ANDROID_CONTROL_CAPTURE_INTENT_VIDEO_RECORD;
     } else {
-        if((sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode)&&
+        if(((sprddefInfo->high_resolution_mode && sprddefInfo->fin1_highlight_mode)||sprddefInfo->long_expo_enable)&&
             captureIntent == ANDROID_CONTROL_CAPTURE_INTENT_STILL_CAPTURE)
             mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE ;
         else
@@ -1882,10 +1888,18 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         size_t pendingCount = 0;
         while (mPendingRequest >= receive_req_max) {
             mRequestSignal.waitRelative(mRequestLock, kPendingTime);
-            if (pendingCount > kPendingTimeOut / kPendingTime) {
-                HAL_LOGE("Timeout pendingCount=%d", pendingCount);
-                ret = -ENODEV;
-                break;
+            if (sprddefInfo->long_expo_enable){
+                if (pendingCount > ksltePendingTimeOut / kPendingTime) {
+                    HAL_LOGE("Timeout pendingCount=%d", pendingCount);
+                    ret = -ENODEV;
+                    break;
+                }
+            } else {
+                    if (pendingCount > kPendingTimeOut / kPendingTime) {
+                    HAL_LOGE("Timeout pendingCount=%d", pendingCount);
+                    ret = -ENODEV;
+                    break;
+                }
             }
             if (mFlush) {
                 HAL_LOGI("mFlush = %d", mFlush);
@@ -2137,7 +2151,8 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
 
                     result_buffers->stream = stream;
                     result_buffers->buffer = buffer;
-                    if (mBufferStatusError || (mHighResNonzsl == 1 && sprddefInfo ->return_previewframe_after_nozsl_cap == 1)) {
+                    if (mBufferStatusError || (mHighResNonzsl == 1 && sprddefInfo ->return_previewframe_after_nozsl_cap == 1) ||
+                        (sprddefInfo ->return_previewframe_after_nozsl_cap == 1)) {
                         result_buffers->status = CAMERA3_BUFFER_STATUS_ERROR;
                         HAL_LOGI("bufferstatus:%d",result_buffers->status);
                     } else {
