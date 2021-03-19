@@ -445,7 +445,7 @@ static cmr_s64 ov8856_drv_get_shutter_skew(cmr_handle handle, cmr_u32 *param) {
     line_time = s_ov8856_resolution_trim_tab[0].trim_info[shutter_skew_info->sns_mode].line_time;
     shutter_skew = (height - 1) * line_time;
     shutter_skew_info->shutter_skew = shutter_skew;
-    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%d",
+    SENSOR_LOGI("sensor_mode:%d, height:%d, line_time:%d, shutter_skew:%lld",
                 shutter_skew_info->sns_mode, height, line_time, shutter_skew);
     return rtn;
 }
