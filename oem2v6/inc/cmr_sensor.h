@@ -128,6 +128,7 @@ cmr_int cmr_sensor_get_fps_info(cmr_handle sensor_handle, cmr_u32 camera_id,
 cmr_int cmr_sensor_set_bypass_mode(cmr_handle sensor_handle, cmr_uint sensor_id,
                                    cmr_u32 bypass_mode);
 cmr_int cmr_sensor_get_stream_status(cmr_handle sensor_handle, cmr_u32 sensor_id);
+cmr_int cmr_sensor_set_color_temp(cmr_handle sensor_handle,  void *callback);
 
 cmr_int cmr_sensor_set_longExp_enable(cmr_handle sensor_handle,
                                 cmr_u32 camera_id, cmr_u32 longExp_enable);

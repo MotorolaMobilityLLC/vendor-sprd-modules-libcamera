@@ -841,6 +841,7 @@ cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
 cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 long_expo_enable);
 cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id);
+cmr_int sensor_set_color_temp(cmr_handle handle, void* callback);
 #ifdef __cplusplus
 }
 #endif

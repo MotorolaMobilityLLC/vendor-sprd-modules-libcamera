@@ -269,6 +269,14 @@ bool gIsApctRead = false;
 struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
 
 bool SprdCamera3OEMIf::mZslCaptureExitLoop = false;
+
+#ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+ASensorManager *SprdCamera3OEMIf::mCTSensorManager = NULL;
+ASensorEventQueue *SprdCamera3OEMIf::mCTSensorEventQueue = NULL;
+const ASensor *SprdCamera3OEMIf::mcolortempSensor = NULL;
+uint32_t SprdCamera3OEMIf::mcolor_temp_sensor_flag = 0;
+#endif
+
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
 multiCameraMode SprdCamera3OEMIf::mMultiCameraMode = MODE_SINGLE_CAMERA;
 std::atomic_int SprdCamera3OEMIf::s_mLogState = 0;
@@ -924,6 +932,10 @@ void SprdCamera3OEMIf::closeCamera() {
 
 #ifdef CONFIG_CAMERA_GYRO
     gyro_monitor_thread_deinit((void *)this);
+#endif
+
+#ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+    color_temp_process_deinit();
 #endif
 
     if (isCameraInit()) {
@@ -6668,6 +6680,10 @@ int SprdCamera3OEMIf::openCamera() {
         if (mCameraId == 0 || mCameraId == 1 || mCameraId == 2)
             mlogInfo->face_type = phyPtr->face_type;
     }
+#ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+    mHalOem->ops->camera_ioctrl(
+        mCameraHandle, CAMERA_IOCTRL_SET_COLOR_TEMP, (void *)color_temp_Sensor_process);
+#endif
 
     mHalOem->ops->camera_ioctrl(
         mCameraHandle, CAMERA_IOCTRL_GET_GRAB_CAPABILITY, &grab_capability);
@@ -6935,6 +6951,10 @@ int SprdCamera3OEMIf::openCamera() {
 
 #ifdef CONFIG_CAMERA_GYRO
     gyro_monitor_thread_init((void *)this);
+#endif
+
+#ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+    color_temp_process_init();
 #endif
 
     property_get("persist.vendor.cam.raw.mode", value, "jpeg");
@@ -12974,4 +12994,81 @@ int SprdCamera3OEMIf::gyro_monitor_thread_deinit(void *p_data) {
 }
 
 #endif
+
+#ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+void *SprdCamera3OEMIf::color_temp_process_init(void) {
+    int mNumSensors;
+    ASensorList mCTSensorList;
+    uint32_t GsensorRate = 50 * 1000; // us
+    mcolor_temp_sensor_flag = 0;
+
+    mCTSensorManager = ASensorManager_getInstanceForPackage("");
+    if (mCTSensorManager == NULL) {
+        HAL_LOGE("can not get ISensorManager service");
+        return NULL;
+    }
+    mNumSensors = ASensorManager_getSensorList(mCTSensorManager, &mCTSensorList);
+    mcolortempSensor = ASensorManager_getDefaultSensor(
+        mCTSensorManager, SENSOR_TYPE_SPRD_COLOR_TEMP);
+
+    ALooper *mLooper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
+
+    mCTSensorEventQueue =
+        ASensorManager_createEventQueue(mCTSensorManager, mLooper, 0, NULL, NULL);
+
+    if (mcolortempSensor != NULL) {
+        if (ASensorEventQueue_registerSensor(
+                mCTSensorEventQueue, mcolortempSensor, GsensorRate, 0) < 0) {
+            HAL_LOGE("Unable to register sensorUnable to register sensor "
+                     "%d with rate %d and report latency %d" PRId64 "",
+                     SENSOR_TYPE_SPRD_COLOR_TEMP, GsensorRate, 0);
+            ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
+            return NULL;
+        } else {
+            mcolor_temp_sensor_flag = 1;
+        }
+    }
+
+    HAL_LOGI("X");
+    return NULL;
+}
+
+void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
+    int mNumSensors;
+    //uint32_t delayTime = 10 * 1000; // us
+    ASensorEvent buffer[8];
+    ssize_t n;
+
+    HAL_LOGI("E");
+    if ((n = ASensorEventQueue_getEvents(mCTSensorEventQueue, buffer, 8)) > 0) {
+        for (int i = 0; i < n; i++) {
+            HAL_LOGI("timestamp %" PRId64 ""
+                    "x_data y_data z_data ir_data:%f %f %f %f",
+                    buffer[i].timestamp, buffer[i].data[0],
+                    buffer[i].data[1], buffer[i].data[2], buffer[i].data[3]);
+            data_colortemp[0] = (cmr_u32)buffer[i].data[0];
+            data_colortemp[1] = (cmr_u32)buffer[i].data[1];
+            data_colortemp[2] = (cmr_u32)buffer[i].data[2];
+            data_colortemp[3] = (cmr_u32)buffer[i].data[3];
+        }
+    } else {
+        HAL_LOGE("fail to get color_temp_data");
+        return NULL;
+    }
+    HAL_LOGI("X");
+    return NULL;
+}
+
+void *SprdCamera3OEMIf::color_temp_process_deinit(void) {
+    if (mcolor_temp_sensor_flag) {
+        ASensorEventQueue_disableSensor(mCTSensorEventQueue, mcolortempSensor);
+        mcolor_temp_sensor_flag = 0;
+    }
+    ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
+
+    HAL_LOGI("X");
+    return NULL;
+}
+#endif
+
 } // namespace sprdcamera

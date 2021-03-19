@@ -15175,7 +15175,7 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
         in_sn_ex_info->sensor_version_info;
     out_isp_sn_ex_info->pos_dis.up2hori = in_sn_ex_info->pos_dis.up2hori;
     out_isp_sn_ex_info->pos_dis.hori2down = in_sn_ex_info->pos_dis.hori2down;
-#ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
+#if defined(TARGET_CAMERA_SENSOR_CCT_TCS3430)||defined(TARGET_CAMERA_SENSOR_CCT_SENSORHUB)
     out_isp_sn_ex_info->color_support = 1;
 #else
     out_isp_sn_ex_info->color_support = 0;

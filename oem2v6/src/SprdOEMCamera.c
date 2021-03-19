@@ -1249,6 +1249,10 @@ static cmr_int ioctrl_get_fdr_tuning_flag(cmr_handle handle, void *param) {
 static cmr_int ioctrl_set_sync_state(cmr_handle handle, void *param) {
         return camera_set_sync_state(handle, (SyncState *)param);
 }
+static cmr_int ioctrl_set_color_temp(cmr_handle handle, void *callback) {
+
+        return cmr_sensor_set_color_temp(handle, callback);
+}
 
 const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_MULTI_CAMERAMODE]       = ioctrl_multi_cameramode,
@@ -1310,6 +1314,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_GET_FDR_TUNING_FLAG]      = ioctrl_get_fdr_tuning_flag,
     [CAMERA_IOCTRL_SET_SYNC_STATE]             = ioctrl_set_sync_state,
     [CPAT_IOCTRL_GET_SENSOR_LUMA]            = ioctrl_cpat_get_cover,
+    [CAMERA_IOCTRL_SET_COLOR_TEMP]           = ioctrl_set_color_temp,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {

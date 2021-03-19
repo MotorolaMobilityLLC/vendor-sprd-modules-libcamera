@@ -28,6 +28,7 @@
 #include "sensor_drv_u.h"
 #include "../otp_cali/otp_cali.h"
 #include "ams/tcs3430/tcs_3430_drv.h"
+#include "sensor_hub/color_temp/sensorhub_drv.h"
 
 #define SENSOR_CTRL_MSG_QUEUE_SIZE 10
 #define WRITE_DUAL_OTP_SIZE 230
@@ -302,6 +303,16 @@ cmr_int sensor_get_flash_level(struct sensor_drv_context *sensor_cxt,
     }
 
     return ret;
+}
+
+cmr_int sensor_set_color_temp(cmr_handle handle, void* callback) {
+    if(callback == NULL) {
+        return 1;
+    } else {
+        color_temp_callback_func = callback;
+    }
+
+    return 0;
 }
 
 void sensor_power_on(struct sensor_drv_context *sensor_cxt, cmr_u32 power_on) {
@@ -2625,6 +2636,8 @@ static cmr_int sensor_ic_get_cct_data(cmr_handle handle, void *param) {
 
 #ifdef TARGET_CAMERA_SENSOR_CCT_TCS3430
     tcs3430_read_data(param);
+#elif  TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+    sensorhub_read_data(param);
 #endif
 
     return ret;

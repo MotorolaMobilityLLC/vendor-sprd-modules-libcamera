@@ -45,7 +45,7 @@ extern "C" {
 
 #include "hal_common/camera_power_perf/SprdCameraPowerPerformance.h"
 #include <hardware/power.h>
-#ifdef CONFIG_CAMERA_GYRO
+#if defined(CONFIG_CAMERA_GYRO)||defined(TARGET_CAMERA_SENSOR_CCT_SENSORHUB)
 #include <android/sensor.h>
 #include <sensor/Sensor.h>
 #include <utils/Errors.h>
@@ -390,6 +390,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static void *gyro_SensorManager_process(void *p_data);
     static int gyro_get_data(void *p_data, ASensorEvent *buffer, int n,
                              struct cmr_af_aux_sensor_info *sensor_info);
+#endif
+
+#ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+    static void *color_temp_process_init(void);
+    static void *color_temp_Sensor_process(cmr_u32* data_colortemp);
+    static void *color_temp_process_deinit(void);
 #endif
 
     void log_monitor_test(void);
@@ -993,6 +999,14 @@ class SprdCamera3OEMIf : public virtual RefBase {
     //for LPT type
     int lightportrait_type;
     uint32_t mMultiCameraId;
+
+    //for color temp
+#ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
+    static ASensorManager *mCTSensorManager;
+    static ASensorEventQueue *mCTSensorEventQueue;
+    static const ASensor *mcolortempSensor;
+    static uint32_t mcolor_temp_sensor_flag;
+#endif
 };
 
 }; // namespace sprdcamera

@@ -95,6 +95,11 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/ams/tcs3430/tcs_3430_drv.h
 LOCAL_SRC_FILES+= ams/tcs3430/tcs_3430_drv.c
 endif
 
+ifeq ($(strip $(TARGET_CAMERA_SENSOR_CCT)),"sensorHub")
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/sensor_hub/color_temp/sensorhub_drv.h
+LOCAL_SRC_FILES+= sensor_hub/color_temp/sensorhub_drv.c
+endif
+
 LOCAL_MODULE := libcamsensor
 LOCAL_MODULE_TAGS := optional
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ASAN_MEM_DETECT)),true)

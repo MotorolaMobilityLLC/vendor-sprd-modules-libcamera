@@ -804,6 +804,11 @@ exit:
     return ret;
 }
 
+cmr_int cmr_sensor_set_color_temp(cmr_handle sensor_handle,
+                                     void *callback) {
+    return sensor_set_color_temp(sensor_handle, callback);
+}
+
 /* for get sensor stream status
  * return: 1:on, 0:off
  */

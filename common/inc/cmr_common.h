@@ -102,6 +102,9 @@ extern "C" {
 #define ISP_STATS_MAX 8
 #define ISP_STATSDBG_MAX 32
 
+#define SPRD_SENSOR_TYPE_BASE   0x10000
+#define SENSOR_TYPE_SPRD_COLOR_TEMP     (SPRD_SENSOR_TYPE_BASE + 51)
+
 // some vsp and jpeg need height 16 alignment
 #define HEIGHT_2M 1080
 #ifndef CONFIG_CAMERA_VIDEO_1920_1080
@@ -2206,6 +2209,7 @@ typedef enum {
     CAMERA_IOCTRL_GET_FDR_TUNING_FLAG,
     CAMERA_IOCTRL_SET_SYNC_STATE,
     CPAT_IOCTRL_GET_SENSOR_LUMA,
+    CAMERA_IOCTRL_SET_COLOR_TEMP,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 
