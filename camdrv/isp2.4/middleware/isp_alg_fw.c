@@ -1766,6 +1766,7 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	cmr_u32 cur_exp_flag = 0;
 	cmr_s32 ae_exp_flag = 0;
 	cmr_u32 app_mode = 0;
+	cmr_u32 fps = 0;
 	float ae_exp = 0.0;
 	struct afl_proc_in afl_input;
 	cmr_uint u_addr = 0;
@@ -1819,6 +1820,10 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_APP_MODE, NULL, &app_mode);
 		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_APP_MODE"));
 		ISP_LOGV("app_mode %d", app_mode);
+
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_FPS, NULL, &fps);
+		ISP_TRACE_IF_FAIL(ret, ("fail to AE_GET_FPS"));
+		ISP_LOGV("fps %d", fps);
 	}
 	BLOCK_PARAM_CFG(pm_afl_input, pm_afl_data, ISP_PM_BLK_ISP_SETTING,
 		ISP_BLK_YIQ_AFL_V3,
@@ -1842,6 +1847,8 @@ cmr_int ispalg_afl_process(cmr_handle isp_alg_handle, void *data)
 	afl_input.private_len = sizeof(struct isp_statis_info);
 	afl_input.private_data = &cxt->afl_stat_info;
 	afl_input.app_mode = app_mode;
+	afl_input.fps = fps;
+	afl_input.ae_exp = ae_exp;
 
 	if (cxt->ops.afl_ops.process) {
 		ret = cxt->ops.afl_ops.process(cxt->afl_cxt.handle, &afl_input, NULL);
