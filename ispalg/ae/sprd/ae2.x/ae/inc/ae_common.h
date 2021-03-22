@@ -623,6 +623,8 @@ struct ae_alg_calc_param {
 	cmr_u32 debug_info_size;
 	cmr_u32 cam_4in1_cap_flag;
 	struct ae_zoom_info zoom_info;
+	cmr_s16 cur_lum;
+	cmr_u32 face_flag;
 };
 
 struct ae1_senseor_out {
@@ -687,6 +689,7 @@ struct ae_alg_calc_result {
 	cmr_u32 privated_data;
 	cmr_u32 abl_weighting;
 	cmr_s32 evd_value;
+	cmr_u32 face_flag;		/*face status flag*/
 };
 
 #endif
