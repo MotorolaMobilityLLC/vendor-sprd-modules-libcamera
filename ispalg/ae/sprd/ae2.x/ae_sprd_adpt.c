@@ -825,7 +825,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sensor_exp_data *exp_data, cmr_u32 is_force)
 {
 	cmr_s32 ret = ISP_SUCCESS;
-	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	struct ae_exposure_param write_param = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item write_item = { 0, 0, 0, 0, 0, 0, 0, 0};
 	struct q_item actual_item = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -3334,7 +3334,7 @@ static cmr_s32 ae_pre_process(struct ae_ctrl_cxt *cxt)
 							double gain_alpha = 0.5;
 							cmr_u32 origin_capexp = 0;
 							uint32 modify_gain = 0;
-							struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+							struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 							struct ae_exposure_param dst_exp;
 							struct ae_range fps_range;
 
@@ -4331,7 +4331,7 @@ static void ae_set_ev_adjust_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *pa
 	}
 }
 
-static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
+static struct ae_exposure_param s_bakup_exp_param[4] = { {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} };
 static struct ae_exposure_param_switch_m s_ae_manual[4] = {{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0}};
 
 static void ae_save_exp_gain_param(struct ae_ctrl_cxt *cxt, struct ae_exposure_param *param, cmr_u32 num, struct ae_exposure_param_switch_m * ae_manual_param)
@@ -4487,6 +4487,15 @@ static void ae_set_video_stop(struct ae_ctrl_cxt *cxt)
 			cxt->last_exp_param.gain = ae_data_slave.gain * ae_data_slave.isp_gain /4096;
 		}
 
+                if(CAMERA_MODE_AUTO_PHOTO == cxt->app_mode || CAMERA_MODE_MANUAL == cxt->app_mode|| \
+					CAMERA_MODE_CONTINUE == cxt->app_mode || CAMERA_MODE_REFOCUS == cxt->app_mode|| \
+					CAMERA_MODE_INTERVAL == cxt->app_mode ||CAMERA_MODE_PORTRAIT_PHOTO == cxt->app_mode|| \
+					CAMERA_MODE_AUDIO_PICTURE == cxt->app_mode || CAMERA_MODE_FILTER == cxt->app_mode|| \
+					CAMERA_MODE_MAX == cxt->app_mode){
+			cxt->last_exp_param.face_flag = cxt->sync_cur_result.face_flag;
+			cxt->last_exp_param.cur_lum = cxt->sync_cur_result.cur_lum;
+		}
+
 		if(cxt->cur_status.settings.manual_mode==1){
 			cxt->last_exp_param.target_offset = 0; // manual mode without target_offset
 		}else{
@@ -4568,7 +4577,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	struct ae_trim trim;
 	cmr_u32 max_exp = 0;
 
-	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	struct ae_exposure_param src_exp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct ae_exposure_param dst_exp;
 	struct ae_range fps_range;
 	struct ae_set_work_param *work_info = (struct ae_set_work_param *)param;
@@ -4803,6 +4812,8 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			last_cam_mode = 0;
 		}
 		src_exp.cur_index = cxt->last_index;
+		cxt->cur_status.face_flag = cxt->last_exp_param.face_flag;
+		cxt->cur_status.cur_lum = cxt->last_exp_param.cur_lum;
 		if((cxt->app_mode < CAMERA_MODE_MAX) && !work_info->is_snapshot){
 			cmr_u32 last_app_mode = cxt->last_cam_mode & 0xff;
 			cmr_u32 last_sensitivity = cxt->mode_switch[last_app_mode].sensitivity;
@@ -4913,6 +4924,18 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			cxt->cur_result.wts.stable = 0;
 			src_exp.target_offset = 0;
 			cxt->sync_cur_result.cur_bv = cxt->cur_result.cur_bv = 500;
+		}
+
+                if(CAMERA_MODE_AUTO_PHOTO == cxt->app_mode || CAMERA_MODE_MANUAL == cxt->app_mode|| \
+			CAMERA_MODE_CONTINUE == cxt->app_mode || CAMERA_MODE_REFOCUS == cxt->app_mode|| \
+					CAMERA_MODE_INTERVAL == cxt->app_mode ||CAMERA_MODE_PORTRAIT_PHOTO == cxt->app_mode|| \
+					CAMERA_MODE_AUDIO_PICTURE == cxt->app_mode || CAMERA_MODE_FILTER == cxt->app_mode|| \
+					CAMERA_MODE_MAX == cxt->app_mode){
+
+			cxt->cur_status.face_flag = s_bakup_exp_param[cxt->camera_id].face_flag;
+			cxt->cur_status.cur_lum = s_bakup_exp_param[cxt->camera_id].cur_lum;
+		}else{
+			cxt->cur_status.face_flag =  0;
 		}
 	}
 
