@@ -27,6 +27,8 @@ struct afl_ctrl_init_in {
 	isp_afl_cb afl_set_cb;
 	cmr_handle caller_handle;
 	cmr_s8 version;
+	cmr_s32 pm_param_num;
+	void *afl_tune_param;
 };
 
 enum afl_io_ctrl_cmd {
@@ -57,6 +59,8 @@ struct afl_proc_in {
 	struct afl_ae_stat_win_num ae_win_num;
 	cmr_u32 max_fps;
 	cmr_u32 app_mode;
+	float ae_exp;
+	cmr_u32 fps;
 };
 
 struct afl_ctrl_param_in {
