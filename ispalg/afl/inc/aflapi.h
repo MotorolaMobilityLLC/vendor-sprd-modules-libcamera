@@ -44,6 +44,8 @@ struct afl_ev_setting_t
 	cmr_int bypass;
 	struct afl_input_image_size input_image_size;
         cmr_u32 afl_platform_flag;
+	float ae_exp;
+	cmr_u32 fps;
 };
 
 enum afl_platform
@@ -55,13 +57,24 @@ enum afl_platform
 	AFL_L5,
 	AFL_L5PRO
 };
+struct afl_init_input_param
+{
+        cmr_s32 version;
+	cmr_u32 major;
+	cmr_u32 minor;
+	cmr_u32 micro;
+	cmr_u32 nano;
+	cmr_s32 pm_param_num;
+	cmr_u32 afl_log_level;
+	void *afl_tune_param;
+};
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int AFL_GetVersion(struct afl_version_t *o_version);
-int AFL_CreateHandle(afl_handle_t *handle);
+int AFL_CreateHandle(afl_handle_t *handle,afl_handle_t input);
 int AFL_DeleteHandle(afl_handle_t *handle);
 int AFL_Process(afl_handle_t handle, int *debug_sat_img_H_scaling, int *debug_sat_img_H_scaling_region, int exposure_time, cmr_s32 *thr, int *window, struct afl_ev_setting_t ev_setting);
 
