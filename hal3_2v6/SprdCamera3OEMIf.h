@@ -934,6 +934,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     vsParam mVideoParam;
     vsInst mPreviewInst;
     vsInst mVideoInst;
+    struct img_size mLastVidoSize;
+    struct img_size mLastPrevSize;
     Mutex mEisPreviewProcessLock;
     Mutex mEisVideoProcessLock;
 #endif
