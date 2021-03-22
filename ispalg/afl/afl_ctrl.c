@@ -236,6 +236,8 @@ static cmr_int aflctrl_process(struct isp_anti_flicker_cfg *cxt, struct afl_proc
 	ev_setting.app_mode = in_ptr->app_mode;
 	ev_setting.max_fps = in_ptr->max_fps;
 	ev_setting.cameraId = cxt->camera_id;
+	ev_setting.ae_exp = in_ptr->ae_exp;
+	ev_setting.fps = in_ptr->fps;
 
 	if (cxt->version) {
 		ev_setting.input_image_size.width = 640;
@@ -485,7 +487,9 @@ exit:
 cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * input_ptr)
 {
 	cmr_int rtn = ISP_SUCCESS;
+	cmr_u32 *afl_tuning_param = NULL;
 	struct isp_anti_flicker_cfg *cxt = NULL;
+	struct afl_init_input_param afl_input = {0};
 
 	if (!input_ptr || !isp_afl_handle) {
 		rtn = ISP_PARAM_NULL;
@@ -508,8 +512,26 @@ cmr_int afl_ctrl_init(cmr_handle * isp_afl_handle, struct afl_ctrl_init_in * inp
 		ISP_LOGI("afl version: built time: %s.\n", cxt->afl_version.built_time);
 		ISP_LOGI("afl version: built rev: %s.\n", cxt->afl_version.built_rev);
 	}
+	afl_input.pm_param_num = input_ptr->pm_param_num;
+	afl_input.afl_log_level = (cmr_u32) g_isp_log_level;
 
-	rtn = AFL_CreateHandle(&cxt->afl_handle);
+	if (1 == input_ptr->pm_param_num) {
+		if (input_ptr->afl_tune_param !=NULL){
+		    afl_input.afl_tune_param = input_ptr->afl_tune_param;
+		    afl_tuning_param = (cmr_u32 *)input_ptr->afl_tune_param;
+		    afl_input.version = (*afl_tuning_param) & 0xffffffff;
+                    afl_input.major = (*(afl_tuning_param+1)) & 0xffffffff;
+		    afl_input.minor = (*(afl_tuning_param+2)) & 0xffffffff;
+		    afl_input.micro = (*(afl_tuning_param+3)) & 0xffffffff;
+		    afl_input.nano = (*(afl_tuning_param+4)) & 0xffffffff;
+		} else {
+		    afl_input.version = -1;
+		}
+	} else {
+            afl_input.version = -1;
+	}
+
+	rtn = AFL_CreateHandle(&cxt->afl_handle,&afl_input);
 	if (rtn) {
 		ISP_LOGE("fail to create afl handle");
 		goto exit;
