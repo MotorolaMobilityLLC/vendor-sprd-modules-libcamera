@@ -102,6 +102,13 @@ PRODUCT_PACKAGES += libparam_gc5035
 PRODUCT_PACKAGES += libparam_s5k3l6
 PRODUCT_PACKAGES += libparam_imx363_back_main
 
+PRODUCT_PACKAGES += libparam_ov02a10_back_macro
+PRODUCT_PACKAGES += libparam_ov08a10_back_tele
+PRODUCT_PACKAGES += libparam_ov8856_back_ultrawide
+PRODUCT_PACKAGES += libparam_ov8856_front_dual
+PRODUCT_PACKAGES += libparam_s5kgw1sp03_back_main
+PRODUCT_PACKAGES += libparam_imx616_front_main
+
 #endif
 
 #default tuning 
