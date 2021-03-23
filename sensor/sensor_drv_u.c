@@ -2049,16 +2049,17 @@ static void sensor_rid_save_sensor_info(char *sensor_info, cmr_u32 slot_id) {
     fd = open(sensorInterface0, O_WRONLY | O_TRUNC);
     if (-1 == fd) {
         SENSOR_LOGE("Failed to open: sensorInterface");
-        goto exit;
+        goto set_property;
     }
     ret = write(fd, sensor_info, strlen(sensor_info));
     if (-1 == ret) {
         SENSOR_LOGE("write sensor_info failed \n");
         close(fd);
-        goto exit;
+        goto set_property;
     }
-    ret = property_set("vendor.cam.sensor.info", sensor_info);
     close(fd);
+set_property:
+    ret = property_set("vendor.cam.sensor.info", sensor_info);
     SENSOR_LOGI("slot id is %d", slot_id);
     if (strlen(sensor_info) < sizeof(sensor_info_with_slot_id)) {
         sprintf(sensor_info_with_slot_id, "<slot:%d>\n%s", slot_id,
