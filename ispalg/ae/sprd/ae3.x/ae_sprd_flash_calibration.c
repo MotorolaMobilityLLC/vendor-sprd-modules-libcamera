@@ -140,6 +140,13 @@ struct FCData {
 	float mAMaxM2;
 	float mAMaxM12;
 
+	int pf_st;
+	int pf_ed;
+	int mf_st;
+	int mf_ed;
+	int pf_total;
+	int mf_total;
+
 	int numP1_alg;
 	int numP2_alg;
 	int numM1_alg;
@@ -429,6 +436,31 @@ static void calRgbFrameData(int isMainFlash, float *rRaw, float *gRaw, float *bR
 
 }
 
+static void CalcRgbFrmsData(int frm_st, int frm_ed, float *rRaw, float *gRaw, float *bRaw, float *r, float *g, float *b)
+{
+	int i= 0;
+	float rs = 0.0;
+	float gs = 0.0;
+	float bs = 0.0;
+	float rat_frm_cnts = 1.0 / (frm_ed - frm_st + 1);
+	
+	ISP_LOGD("PENG>frm_ed: %d, frm_st: %d\n", frm_ed, frm_st);
+	
+	for (i = frm_st; i <= frm_ed; i++) {
+		rs += rRaw[i];
+		gs += gRaw[i];
+		bs += bRaw[i];
+	}
+
+	rs *= rat_frm_cnts;
+	gs *= rat_frm_cnts;
+	bs *= rat_frm_cnts;
+
+	*r = rs;
+	*g = gs;
+	*b = bs;
+}
+
 static double interp(double x1, double y1, double x2, double y2, double x)
 {
 	double y;
@@ -560,27 +592,27 @@ static void readFCConfig(char *f, struct FCData *d, char *fout)
 
             fscanf(fp, "%d", &d->numP1_hwSample);
             for (i = 0; i < d->numP1_hwSample; i++)
-                    fscanf(fp, "%d", &d->indP1_hwSample[i]);
+                fscanf(fp, "%d", &d->indP1_hwSample[i]);
             for (i = 0; i < d->numP1_hwSample; i++)
-                    fscanf(fp, "%f", &d->maP1_hwSample[i]);
+                fscanf(fp, "%f", &d->maP1_hwSample[i]);
 
             fscanf(fp, "%d", &d->numP2_hwSample);
             for (i = 0; i < d->numP2_hwSample; i++)
-                    fscanf(fp, "%d", &d->indP2_hwSample[i]);
+                fscanf(fp, "%d", &d->indP2_hwSample[i]);
             for (i = 0; i < d->numP2_hwSample; i++)
-                    fscanf(fp, "%f", &d->maP2_hwSample[i]);
+                fscanf(fp, "%f", &d->maP2_hwSample[i]);
 
             fscanf(fp, "%d", &d->numM1_hwSample);
             for (i = 0; i < d->numM1_hwSample; i++)
-                    fscanf(fp, "%d", &d->indM1_hwSample[i]);
+                fscanf(fp, "%d", &d->indM1_hwSample[i]);
             for (i = 0; i < d->numM1_hwSample; i++)
-                    fscanf(fp, "%f", &d->maM1_hwSample[i]);
+                fscanf(fp, "%f", &d->maM1_hwSample[i]);
 
             fscanf(fp, "%d", &d->numM2_hwSample);
             for (i = 0; i < d->numM2_hwSample; i++)
-                    fscanf(fp, "%d", &d->indM2_hwSample[i]);
+                fscanf(fp, "%d", &d->indM2_hwSample[i]);
             for (i = 0; i < d->numM2_hwSample; i++)
-                    fscanf(fp, "%f", &d->maM2_hwSample[i]);
+                fscanf(fp, "%f", &d->maM2_hwSample[i]);
 
             fscanf(fp, "%f", &d->mAMaxP1);
             fscanf(fp, "%f", &d->mAMaxP2);
@@ -588,10 +620,19 @@ static void readFCConfig(char *f, struct FCData *d, char *fout)
             fscanf(fp, "%f", &d->mAMaxM1);
             fscanf(fp, "%f", &d->mAMaxM2);
             fscanf(fp, "%f", &d->mAMaxM12);
+  			fscanf(fp, "%d", &d->pf_st);
+			fscanf(fp, "%d", &d->pf_ed);
+			fscanf(fp, "%d", &d->pf_total);
+			fscanf(fp, "%d", &d->mf_st);
+			fscanf(fp, "%d", &d->mf_ed);
+			fscanf(fp, "%d", &d->mf_total);
             fclose(fp);
             fp = NULL;
         }
+		ISP_LOGD("PENG>pre_flash start: %d, end: %d, total: %d\n", d->pf_st, d->pf_ed, d->pf_total);
+		ISP_LOGD("PENG>main_flash start: %d, end: %d, total: %d\n", d->mf_st, d->mf_ed, d->mf_total);
     }
+
 	if (fout != 0 && d) {
         fp = fopen(fout, "w+");
         if (NULL != fp) {
@@ -638,6 +679,12 @@ static void readFCConfig(char *f, struct FCData *d, char *fout)
             fprintf(fp, "%f\n", d->mAMaxM1);
             fprintf(fp, "%f\n", d->mAMaxM2);
             fprintf(fp, "%f\n", d->mAMaxM12);
+			fprintf(fp, "%d\n", d->pf_st);
+			fprintf(fp, "%d\n", d->pf_ed);
+			fprintf(fp, "%d\n", d->pf_total);
+			fprintf(fp, "%d\n", d->mf_st);
+			fprintf(fp, "%d\n", d->mf_ed);
+			fprintf(fp, "%d\n", d->pf_total);
             fclose(fp);
             fp = NULL;
         }
@@ -925,10 +972,22 @@ static void flashCalibration(struct ae_ctrl_cxt *cxt)
 
 			} else if (frmCnt > caliData->testMinFrm[caliData->testInd]) {
 				control_led(cxt, 0, 0, 0, 0);
-				float r;
-				float g;
-				float b;
-				calRgbFrameData(caliData->isMainTab[caliData->testInd], caliData->rFrame[caliData->testInd], caliData->gFrame[caliData->testInd], caliData->bFrame[caliData->testInd], &r, &g, &b);
+				float r = 0.0;
+				float g = 0.0;
+				float b = 0.0;
+				int frm_st = 0, frm_ed = 0;
+				if (caliData->isMainTab[caliData->testInd]) {
+					frm_st = caliData->mf_st;
+					frm_ed = caliData->mf_ed;
+				} else {
+					frm_st = caliData->pf_st;
+					frm_ed = caliData->pf_ed;
+				}
+				CalcRgbFrmsData(frm_st, frm_ed,
+								caliData->rFrame[caliData->testInd],
+								caliData->gFrame[caliData->testInd],
+								caliData->bFrame[caliData->testInd],
+								&r, &g, &b);
 				caliData->rData[caliData->testInd] = r;
 				caliData->gData[caliData->testInd] = g;
 				caliData->bData[caliData->testInd] = b;
