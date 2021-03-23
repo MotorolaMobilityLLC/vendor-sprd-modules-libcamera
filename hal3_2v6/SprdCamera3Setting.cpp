@@ -200,7 +200,7 @@ const sensor_fov_tab_t fourth_sensor_fov_tab[] = {
     {"", {3.50f, 2.625f}, 3.75f},
 };
 #endif
-static int64_t kmax_exposure_time = 30000000000L;
+static int64_t kmax_exposure_time = 200000000L;
 const int32_t klens_shading_map_size[2] = {1, 1};
 static int64_t kexposure_time_range[CAMERA_ID_COUNT][2] = {
     {100000L, 200000000L}, {100000L, 200000000L},
@@ -1142,14 +1142,17 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
       memcpy(camera3_default_info.common.availExposureLongTime,
              phyPtr->long_expose_modes, phyPtr->long_expose_modes_size * sizeof(double));
       camera3_default_info.common.availExposureLongTimeSize = phyPtr->long_expose_modes_size;
-      HAL_LOGD("kmax_exposure_time=%lld", kmax_exposure_time);
       for(int i = 0;i < phyPtr->long_expose_modes_size;i++){
           HAL_LOGD("availExposureLongTime=%f",
                    camera3_default_info.common.availExposureLongTime[i]);
+          kmax_exposure_time = kmax_exposure_time >= camera3_default_info.common.availExposureLongTime[i] * 1000000000L
+                              ? kmax_exposure_time : camera3_default_info.common.availExposureLongTime[i] * 1000000000L;
       }
     } else {
-         kmax_exposure_time = 30000000000L;
+         kmax_exposure_time = 200000000L;
     }
+    kexposure_time_range[cameraId][1] = kmax_exposure_time;
+    HAL_LOGD("kmax_exposure_time=%lld", kmax_exposure_time);
     memcpy(mSensorName[cameraId], phyPtr->sensor_name,
            sizeof(mSensorName[cameraId]));
 
