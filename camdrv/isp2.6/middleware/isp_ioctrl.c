@@ -858,28 +858,32 @@ static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	memset((void *)&awbc_cfg, 0, sizeof(struct isp_awbc_cfg));
 	memset((void *)&result, 0, sizeof(struct awb_gain));
 
-	switch (awb_mode) {
-	case ISP_AWB_AUTO:
-		awb_id = AWB_CTRL_WB_MODE_AUTO;
-		break;
-	case ISP_AWB_INDEX1:
-		awb_id = AWB_CTRL_MWB_MODE_INCANDESCENT;
-		break;
-	case ISP_AWB_INDEX4:
-		awb_id = AWB_CTRL_MWB_MODE_FLUORESCENT;
-		break;
-	case ISP_AWB_INDEX5:
-		awb_id = AWB_CTRL_MWB_MODE_SUNNY;
-		break;
-	case ISP_AWB_INDEX6:
-		awb_id = AWB_CTRL_MWB_MODE_CLOUDY;
-		break;
-	default:
-		awb_id = AWB_CTRL_WB_MODE_AUTO;
-		break;
+	if (awb_mode <10) {
+		switch (awb_mode) {
+		case ISP_AWB_AUTO:
+			awb_id = AWB_CTRL_WB_MODE_AUTO;
+			break;
+		case ISP_AWB_INDEX1:
+			awb_id = AWB_CTRL_MWB_MODE_INCANDESCENT;
+			break;
+		case ISP_AWB_INDEX4:
+			awb_id = AWB_CTRL_MWB_MODE_FLUORESCENT;
+			break;
+		case ISP_AWB_INDEX5:
+			awb_id = AWB_CTRL_MWB_MODE_SUNNY;
+			break;
+		case ISP_AWB_INDEX6:
+			awb_id = AWB_CTRL_MWB_MODE_CLOUDY;
+			break;
+		default:
+			awb_id = AWB_CTRL_WB_MODE_AUTO;
+			break;
+		}
+	}  else {
+		awb_id = awb_mode;
 	}
 
-	ISP_LOGV("AWB_MODE :0x%x", awb_id);
+	ISP_LOGV("AWB_MODE :%d", awb_id);
 	if (cxt->ops.awb_ops.ioctrl) {
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_SET_WB_MODE, (void *)&awb_id, NULL);
 		ISP_TRACE_IF_FAIL(ret, ("fail to set awb wb mode"));
