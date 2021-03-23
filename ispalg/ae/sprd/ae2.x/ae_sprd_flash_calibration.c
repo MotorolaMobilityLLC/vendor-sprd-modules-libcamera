@@ -140,6 +140,13 @@ struct FCData {
 	float mAMaxM2;
 	float mAMaxM12;
 
+	int pf_st;
+	int pf_ed;
+	int pf_total;
+	int mf_st;
+	int mf_ed;
+	int mf_total;
+
 	int numP1_alg;
 	int numP2_alg;
 	int numM1_alg;
@@ -426,6 +433,29 @@ static void calRgbFrameData(int isMainFlash, float *rRaw, float *gRaw, float *bR
 
 }
 
+static void CalcRgbFrmsData(int frm_st, int frm_ed, float *rRaw, float *gRaw, float *bRaw, float *r, float *g, float *b)
+{
+	float rs = 0.0;
+	float gs = 0.0;
+	float bs = 0.0;
+	int i= 0;
+	int rat_frm_cnts = 1.0 / (frm_ed - frm_st + 1);
+
+	for (i = frm_st; i <= frm_ed; i++) {
+		rs += rRaw[i];
+		gs += gRaw[i];
+		bs += bRaw[i];
+	}
+
+	rs *= rat_frm_cnts;
+	gs *= rat_frm_cnts;
+	bs *= rat_frm_cnts;
+
+	*r = rs;
+	*g = gs;
+	*b = bs;
+}
+
 static double interp(double x1, double y1, double x2, double y2, double x)
 {
 	double y;
@@ -585,6 +615,12 @@ static void readFCConfig(char *f, struct FCData *d, char *fout)
             fscanf(fp, "%f", &d->mAMaxM1);
             fscanf(fp, "%f", &d->mAMaxM2);
             fscanf(fp, "%f", &d->mAMaxM12);
+			fscanf(fp, "%d", &d->pf_st);
+			fscanf(fp, "%d", &d->pf_ed);
+			fscanf(fp, "%d", &d->pf_total);
+			fscanf(fp, "%d", &d->mf_st);
+			fscanf(fp, "%d", &d->mf_ed);
+			fscanf(fp, "%d", &d->mf_total);
             fclose(fp);
             fp = NULL;
         }
@@ -635,6 +671,12 @@ static void readFCConfig(char *f, struct FCData *d, char *fout)
             fprintf(fp, "%f\n", d->mAMaxM1);
             fprintf(fp, "%f\n", d->mAMaxM2);
             fprintf(fp, "%f\n", d->mAMaxM12);
+			fprintf(fp, "%d\n", d->pf_st);
+			fprintf(fp, "%d\n", d->pf_ed);
+			fprintf(fp, "%d\n", d->pf_total);
+			fprintf(fp, "%d\n", d->mf_st);
+			fprintf(fp, "%d\n", d->mf_ed);
+			fprintf(fp, "%d\n", d->mf_total);
             fclose(fp);
             fp = NULL;
     	}
