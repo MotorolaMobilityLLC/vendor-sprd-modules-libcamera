@@ -2000,6 +2000,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     i->threeA_info.ae_manual_trigger;
 
                 mSetting->setResultTag(&threeAControlInfo);
+                mSetting->getSyncInfo(i->frame_number);
 
                 if (mZslIpsEnable) notifyCap = mSetting->getNextCapture();
                 result.result = mSetting->translateLocalToFwMetadata();
@@ -2063,7 +2064,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     i->threeA_info.ae_manual_trigger;
 
                 mSetting->setResultTag(&threeAControlInfo);
-
+                mSetting->getSyncInfo(i->frame_number);
                 result.result = mSetting->translateLocalToFwMetadata();
                 result.frame_number = i->frame_number;
                 result.num_output_buffers = 0;

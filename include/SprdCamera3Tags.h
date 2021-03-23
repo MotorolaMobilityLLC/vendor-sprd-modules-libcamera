@@ -122,6 +122,8 @@ typedef enum sprd_camera_ext_tags {
     ANDROID_SPRD_MULTI_VERSION,
     ANDROID_SPRD_CV_VERSION,
     ANDROID_SPRD_EXPOSURE_LONG_TIME,
+    ANDROID_SPRD_AWB_CT_RANGE,
+    ANDROID_SPRD_AWB_CT_VALUE,
     VENDOR_SECTION_END,
     /*not parameter but only flag between framework and hal*/
     /*sprd add flag end*/

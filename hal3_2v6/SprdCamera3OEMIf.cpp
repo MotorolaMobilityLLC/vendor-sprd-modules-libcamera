@@ -4459,6 +4459,7 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     cmr_uint videobuf_vir = 0;
     cmr_uint prebuf_phy = 0;
     cmr_uint prebuf_vir = 0;
+    cmr_u32 ae_iso;
     SPRD_DEF_Tag *sprddefInfo = mSetting->getSPRDDEFTagPTR();
 
     mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
@@ -4480,6 +4481,10 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
         ret = 0;
         goto bypass_pre;
     }
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &ae_iso);
+    mSetting->mFrameNumMap[frame_num].sensitivity = ae_iso;
+    HAL_LOGD("iso_value:%d", ae_iso);
+
     ATRACE_BEGIN("preview_frame");
     HAL_LOGD("mCameraId=%d, prev:fd=0x%x, vir=0x%lx, num=%d, width=%d, "
              "height=%d, time=0x%llx",
@@ -4737,7 +4742,6 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
     Mutex::Autolock cbLock(&mPreviewCbLock);
     int ret = NO_ERROR;
     SPRD_DEF_Tag *sprddefInfo;
-
     int64_t buffer_timestamp;
 
     HAL_LOGV("E");
@@ -4788,6 +4792,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         HAL_LOGE("channel=%p", channel);
         goto exit;
     }
+    mSetting->setExposureTimeTag(frame->ae_time);//shutter value
 
     // face beauty
 #ifdef CONFIG_FACE_BEAUTY
@@ -7646,12 +7651,25 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         break;
 
     case ANDROID_CONTROL_AWB_MODE: {
-        int8_t drvAwbMode = 0;
+        int32_t drvAwbMode = 0;
         mSetting->androidAwbModeToDrvAwbMode(controlInfo.awb_mode, &drvAwbMode);
-        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_WB, drvAwbMode);
+        if (drvAwbMode != CAMERA_WB_MAX) {
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_WB, drvAwbMode);
+        }
         if (controlInfo.awb_mode != mLastAwbMode) {
             setAwbState(AWB_MODE_CHANGE);
             mLastAwbMode = controlInfo.awb_mode;
+        }
+    } break;
+
+    case ANDROID_SPRD_AWB_CT_VALUE: {
+        if (controlInfo.awb_mode == ANDROID_CONTROL_AWB_MODE_OFF) {
+            int32_t drvAwbCt = 0;
+            SPRD_DEF_Tag *sprddefInfo;
+            sprddefInfo = mSetting->getSPRDDEFTagPTR();
+            drvAwbCt = sprddefInfo->awb_ct_value;
+            HAL_LOGD("Awb_Ct %d", drvAwbCt);
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_WB, drvAwbCt);
         }
     } break;
 

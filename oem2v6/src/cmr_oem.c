@@ -10585,6 +10585,7 @@ cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm) {
             break;
 
         default:
+            out_param = in_param;
             break;
         }
         break;
@@ -14643,7 +14644,7 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_ISP_AE_LOCK_UNLOCK:
     case CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK:
     case CAMERA_PARAM_ANTIBANDING:
-    // case CAMERA_PARAM_ISO:
+    case CAMERA_PARAM_ISO:
     case CAMERA_PARAM_AE_REGION:
     // case CAMERA_PARAM_EXPOSURE_COMPENSATION:
     case CAMERA_PARAM_EFFECT:
