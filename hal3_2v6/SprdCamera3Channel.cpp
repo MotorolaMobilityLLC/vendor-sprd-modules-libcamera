@@ -953,6 +953,10 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_SPRD_SATURATION");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_SATURATION);
             break;
+	 case ANDROID_SPRD_AWB_CT_VALUE:
+            HAL_LOGV("ANDROID_SPRD_AWB_CT_VALUE");
+            mOEMIf->SetCameraParaTag(ANDROID_SPRD_AWB_CT_VALUE);
+            break;
         case ANDROID_SPRD_CAPTURE_MODE:
             HAL_LOGV("ANDROID_SPRD_CAPTURE_MODE");
             mOEMIf->SetCameraParaTag(ANDROID_SPRD_CAPTURE_MODE);

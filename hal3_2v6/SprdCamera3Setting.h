@@ -48,6 +48,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <unordered_map>
 using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
 
@@ -446,6 +447,8 @@ typedef struct {
     uint32_t bv;
     uint8_t sprd_flash_level;
     uint32_t long_expo_enable;
+    int32_t awb_ct_range[2];
+    int32_t awb_ct_value;
 } SPRD_DEF_Tag;
 
 typedef struct {
@@ -465,7 +468,10 @@ typedef struct {
     float h_ratio;
 } AUTO_TRACKING_Tag;
 
-typedef struct { int32_t max_latency; } SYNC_Tag;
+typedef struct {
+    int32_t max_latency;
+    int64_t frame_number;
+} SYNC_Tag;
 
 typedef struct { int32_t crop[4]; } EIS_CROP_Tag;
 
@@ -696,7 +702,7 @@ class SprdCamera3Setting {
     int androidEffectModeToDrvMode(uint8_t androidEffectMode,
                                    int8_t *convertDrvMode);
     int androidAwbModeToDrvAwbMode(uint8_t androidAwbMode,
-                                   int8_t *convertDrvMode);
+                                   int32_t *convertDrvMode);
     int
     androidAntibandingModeToDrvAntibandingMode(uint8_t androidAntibandingMode,
                                                int8_t *convertAntibandingMode);
@@ -736,6 +742,7 @@ class SprdCamera3Setting {
     int getSENSORTag(SENSOR_Tag *sensorInfo);
 
     int setExposureTimeTag(int64_t exposureTime);
+    void getSyncInfo(uint32_t frame_number);
 
     int setSHADINGTag(SHADING_Tag shadingInfo);
     int getSHADINGTag(SHADING_Tag *shadingInfo);
@@ -799,6 +806,7 @@ class SprdCamera3Setting {
     static int mPhysicalSensorNum;
     static int mLogicalSensorNum;
     static uint8_t camera_identify_state[CAMERA_ID_COUNT];
+    std::unordered_map<int64_t, SENSOR_Tag> mFrameNumMap;
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);

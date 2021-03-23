@@ -205,6 +205,7 @@ const int32_t klens_shading_map_size[2] = {1, 1};
 static int64_t kexposure_time_range[2] = {1000L, kmax_exposure_time}; // 1 us - 30 sec
 const int64_t kframe_duration_range[2] = {33331760L,
                                           30000000000L}; // ~1/30 s - 30 sec
+const int32_t kawb_ct_range[2] = {2800, 7000};
 const int32_t ksharpness_map_size[2] = {64, 64};
 const int32_t ksupported_preview_formats[4] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_YV12,
@@ -733,7 +734,7 @@ const int32_t kavailable_request_keys[] = {
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
     ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
     ANDROID_SENSOR_FRAME_DURATION,
-    // ANDROID_SENSOR_EXPOSURE_TIME,
+    ANDROID_SENSOR_EXPOSURE_TIME,
     ANDROID_SENSOR_SENSITIVITY,
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
@@ -764,7 +765,7 @@ const int32_t front_kavailable_request_keys[] = {
     ANDROID_LENS_FILTER_DENSITY, ANDROID_LENS_OPTICAL_STABILIZATION_MODE,
     ANDROID_LENS_FOCAL_LENGTH, ANDROID_LENS_FOCUS_DISTANCE,
     ANDROID_SENSOR_FRAME_DURATION,
-    // ANDROID_SENSOR_EXPOSURE_TIME,
+    ANDROID_SENSOR_EXPOSURE_TIME,
     ANDROID_SENSOR_SENSITIVITY,
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_TONEMAP_MODE, ANDROID_COLOR_CORRECTION_GAINS,
@@ -786,9 +787,8 @@ const int32_t kavailable_result_keys[] = {
     // ANDROID_NOISE_REDUCTION_MODE,
     ANDROID_REQUEST_PIPELINE_DEPTH, ANDROID_SCALER_CROP_REGION,
     ANDROID_SENSOR_TIMESTAMP, ANDROID_STATISTICS_FACE_DETECT_MODE,
-
     ANDROID_SENSOR_FRAME_DURATION,
-    // ANDROID_SENSOR_EXPOSURE_TIME,
+    //ANDROID_SENSOR_EXPOSURE_TIME,
     // ANDROID_BLACK_LEVEL_LOCK,
     ANDROID_EDGE_MODE, ANDROID_NOISE_REDUCTION_MODE};
 
@@ -2763,6 +2763,8 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            sizeof(availableContrast));
     memcpy(s_setting[cameraId].sprddefInfo.availabe_saturation,
            availableSaturation, sizeof(availableSaturation));
+    memcpy(s_setting[cameraId].sprddefInfo.awb_ct_range,
+           kawb_ct_range, sizeof(kawb_ct_range));
 
     memcpy(s_setting[cameraId].statis_InfoInfo.available_face_detect_modes,
            camera3_default_info.common.availableFaceDetectModes,
@@ -3208,6 +3210,10 @@ int SprdCamera3Setting::initStaticMetadata(
         ANDROID_SPRD_AVAILABLE_SATURATION,
         s_setting[cameraId].sprddefInfo.availabe_saturation,
         ARRAY_SIZE(s_setting[cameraId].sprddefInfo.availabe_saturation));
+    staticInfo.update(
+        ANDROID_SPRD_AWB_CT_RANGE,
+        s_setting[cameraId].sprddefInfo.awb_ct_range,
+        ARRAY_SIZE(s_setting[cameraId].sprddefInfo.awb_ct_range));
     staticInfo.update(ANDROID_SPRD_AVAILABLE_SMILEENABLE,
                       &(s_setting[cameraId].sprddefInfo.availabe_smile_enable),
                       1);
@@ -5091,7 +5097,6 @@ int SprdCamera3Setting::updateWorkParameters(
 
     if (frame_settings.exists(ANDROID_SENSOR_SENSITIVITY)) {
         valueI32 = frame_settings.find(ANDROID_SENSOR_SENSITIVITY).data.i32[0];
-
         GET_VALUE_IF_DIF(s_setting[mCameraId].sensorInfo.sensitivity, valueI32,
                          ANDROID_SENSOR_SENSITIVITY, 1)
         HAL_LOGD("sensitivity is %d", valueI32);
@@ -5248,6 +5253,13 @@ int SprdCamera3Setting::updateWorkParameters(
         GET_VALUE_IF_DIF(s_setting[mCameraId].controlInfo.effect_mode, valueU8,
                          ANDROID_CONTROL_EFFECT_MODE, 1)
         HAL_LOGV("effect %d", valueU8);
+    }
+
+    if (frame_settings.exists(ANDROID_SPRD_AWB_CT_VALUE)) {
+        valueI32= frame_settings.find(ANDROID_SPRD_AWB_CT_VALUE).data.i32[0];
+        GET_VALUE_IF_DIF(s_setting[mCameraId].sprddefInfo.awb_ct_value, valueI32,
+                         ANDROID_SPRD_AWB_CT_VALUE, 1)
+        HAL_LOGV("awb_ct %d", valueI32);
     }
 
     if (frame_settings.exists(ANDROID_CONTROL_AWB_MODE)) {
@@ -6171,10 +6183,12 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
 
     // s_setting[mCameraId].sensorInfo.exposure_time =
     // (int64_t)(NSEC_PER_SEC/s_setting[mCameraId].controlInfo.ae_target_fps_range[1]);
+    HAL_LOGV("exposure_time: %lld", s_setting[mCameraId].sensorInfo.exposure_time);
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
                        &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
+    HAL_LOGV("mFrameNumMap sensitivity is %d", mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity);
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
-                       &(s_setting[mCameraId].sensorInfo.sensitivity), 1);
+                       &(mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity), 1);
     camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_CORRECTION_MAP,
                        &(s_setting[mCameraId].shadingInfo.factor_count), 1);
     camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_MAP,
@@ -6667,7 +6681,7 @@ int SprdCamera3Setting::androidFlashModeToDrvFlashMode(uint8_t androidFlashMode,
 }
 
 int SprdCamera3Setting::androidAwbModeToDrvAwbMode(uint8_t androidAwbMode,
-                                                   int8_t *convertDrvMode) {
+                                                   int32_t *convertDrvMode) {
     int ret = 0;
 
     HAL_LOGD("awbMode %d", androidAwbMode);
@@ -7100,6 +7114,11 @@ int SprdCamera3Setting::setExposureTimeTag(int64_t exposureTime) {
     Mutex::Autolock l(mLock);
     s_setting[mCameraId].sensorInfo.exposure_time = exposureTime;
     return 0;
+}
+
+void SprdCamera3Setting::getSyncInfo(uint32_t frame_number) {
+    s_setting[mCameraId].syncInfo.frame_number = frame_number;
+    HAL_LOGI("minnie frame_number:%lld, frame_number %d",s_setting[mCameraId].syncInfo.frame_number, frame_number);
 }
 
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {
