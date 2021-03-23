@@ -3512,11 +3512,16 @@ void SprdCamera3OEMIf::stopPreviewInternal() {
 
     setCameraState(SPRD_IDLE, STATE_PREVIEW);
 #ifdef CAMERA_MANULE_SNEOSR
-    setAeState(AE_LOCK_OFF);
-    setAwbState(AWB_LOCK_OFF);
     mSetting->getCONTROLTag(&controlInfo);
     controlInfo.ae_lock = 0;
+    controlInfo.awb_lock = 0;
     mSetting->setCONTROLTag(&controlInfo);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AE_LOCK_UNLOCK,
+             controlInfo.ae_lock);
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_ISP_AWB_LOCK_UNLOCK,
+             controlInfo.awb_lock);
+    setAeState(AE_LOCK_OFF);
+    setAwbState(AWB_LOCK_OFF);
 #endif
 #ifdef CONFIG_FACE_BEAUTY
     if (mflagfb) {
