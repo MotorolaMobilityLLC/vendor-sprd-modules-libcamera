@@ -799,7 +799,7 @@ cmr_int sensor_stream_ctrl_common(struct sensor_drv_context *sensor_cxt,
                                   cmr_u32 on_off);
 
 cmr_int sensor_set_exif_common(cmr_handle sns_module_handle, cmr_u32 cmdin,
-                               cmr_u32 param);
+                               cmr_u64 param);
 
 cmr_int sensor_get_exif_common(cmr_handle sns_module_handle, void **param);
 

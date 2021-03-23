@@ -216,7 +216,7 @@ struct sensor_ev_info_t {
     cmr_u16 preview_shutter;
     float preview_gain;
     cmr_u16 preview_framelength;
-    cmr_u32 preview_exptime;
+    cmr_u64 preview_exptime;
 };
 
 typedef struct sensor_extend_info_tag {
@@ -363,7 +363,7 @@ typedef struct sensor_video_info_tag {
  **/
 struct sensor_ic_ctrl_cb {
     cmr_int (*set_exif_info)(cmr_handle sns_module_handle, cmr_u32 cmd,
-                             cmr_u32 param);
+                             cmr_u64 param);
     cmr_int (*get_exif_info)(cmr_handle sns_module_handle, void **param);
     cmr_int (*set_mode)(cmr_handle sns_module_handle, cmr_u32 mode);
     cmr_int (*set_mode_wait_done)(cmr_handle sns_module_handle);

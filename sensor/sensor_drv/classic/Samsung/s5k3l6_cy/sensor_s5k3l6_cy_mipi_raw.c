@@ -672,19 +672,19 @@ static cmr_int s5k3l6_drv_write_exposure(cmr_handle handle, cmr_uint param) {
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0342, 0x1320);
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, temp_value1);
-            } else if (7000000000 <= exp_time <= 22200000000) {
+            } else if ((exp_time >= 7000000000) && (exp_time <= 22200000000)) {
                 temp_value1 = ((exp_time / 1000) * 48) / 16272;
                 temp_value2 = temp_value1 + 2;
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0342, 0x3F90);
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, temp_value1);
-            } else if (22200000000 < exp_time <= 23500000000) {
+            } else if ((exp_time > 22200000000) && (exp_time <= 23500000000)) {
                 temp_value1 = (exp_time / 1000) * 48 / 17216;
                 temp_value2 = temp_value1 + 2;
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0342, 0x4340);
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, temp_value1);
-            } else if (23500000000 < exp_time <= 32000000000) {
+            } else if ((exp_time > 23500000000) && (exp_time <= 32000000000)) {
                 temp_value1 = (exp_time / 1000) * 48 / 23440;
                 temp_value2 = temp_value1 + 2;
                 hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0340, temp_value2);
