@@ -2671,7 +2671,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
            kavailable_request_keys, sizeof(kavailable_request_keys));
 
 #ifdef CAMERA_MANULE_SNEOSR
-    if(phyPtr->mono_sensor != 1) {
+    if(phyPtr->mono_sensor != 1 && cameraId < 2) {
         memcpy((s_setting[cameraId].requestInfo.available_request_keys + sizeof(kavailable_request_keys)/sizeof(int32_t)),
            kavailable_manual_request_keys,
            sizeof(kavailable_manual_request_keys));
@@ -2681,7 +2681,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     if (mSensorFocusEnable[cameraId]) {
         int length = ARRAY_SIZE(kavailable_request_keys);
 #ifdef CAMERA_MANULE_SNEOSR
-        if(phyPtr->mono_sensor != 1) {
+        if(phyPtr->mono_sensor != 1 && cameraId < 2) {
             length += sizeof(kavailable_manual_request_keys)/sizeof(int32_t);
         }
 #endif
@@ -2698,7 +2698,7 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
     memcpy(s_setting[cameraId].requestInfo.available_result_keys,
            kavailable_result_keys, sizeof(kavailable_result_keys));
 #ifdef CAMERA_MANULE_SNEOSR
-    if(phyPtr->mono_sensor != 1) {
+    if(phyPtr->mono_sensor != 1 && cameraId < 2) {
         memcpy(s_setting[cameraId].requestInfo.available_result_keys
             + sizeof(kavailable_result_keys)/sizeof(int32_t),
            kavailable_manual_result_keys,
@@ -2720,10 +2720,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
             memcpy(s_setting[cameraId].requestInfo.available_capabilites,
                    kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
 #ifdef CAMERA_MANULE_SNEOSR
-            memcpy(s_setting[cameraId].requestInfo.available_capabilites
-                   + sizeof(kavailable_capabilities) - sizeof(uint8_t),
-                   kavailable_manual_capabilities,
-                   sizeof(kavailable_manual_capabilities));
+            if (cameraId < 2) {
+                memcpy(s_setting[cameraId].requestInfo.available_capabilites
+                       + sizeof(kavailable_capabilities) - sizeof(uint8_t),
+                       kavailable_manual_capabilities,
+                       sizeof(kavailable_manual_capabilities));
+            }
 #endif
         }
     }
@@ -2735,10 +2737,12 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
         memcpy(s_setting[cameraId].requestInfo.available_capabilites,
                kavailable_capabilities, (sizeof(kavailable_capabilities) - sizeof(uint8_t)));
 #ifdef CAMERA_MANULE_SNEOSR
-        memcpy(s_setting[cameraId].requestInfo.available_capabilites
-                + sizeof(kavailable_capabilities) - sizeof(uint8_t),
-                kavailable_manual_capabilities,
-                sizeof(kavailable_manual_capabilities));
+        if (cameraId < 2) {
+            memcpy(s_setting[cameraId].requestInfo.available_capabilites
+                    + sizeof(kavailable_capabilities) - sizeof(uint8_t),
+                    kavailable_manual_capabilities,
+                    sizeof(kavailable_manual_capabilities));
+        }
 #endif
     }
 #endif
