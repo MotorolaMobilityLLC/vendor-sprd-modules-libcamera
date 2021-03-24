@@ -6073,6 +6073,9 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	struct ae_ctrl_win_info ae_win_info = {0};
 	struct ae_ctrl_hist_win_info hist_win_info = {0};
 	float zoom_ratio = 0;
+	char value[PROPERTY_VALUE_MAX];
+	property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+	cmr_s32 tool_connect = strcmp(value, "true");
 
 #if DEBUG_EN
 	cmr_u32 ae_debug_framId[3] = {0};
@@ -6390,7 +6393,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 #endif
 
-	if(cxt->fdr_tuning_param)
+	if(cxt->fdr_tuning_param && tool_connect)
 		ae_set_fdr_detect(cxt,param);
 	if (cxt->ev_adj_enable)
 		ae_set_ev_adjust_ctrl(cxt, param);
