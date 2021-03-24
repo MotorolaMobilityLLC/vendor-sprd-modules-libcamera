@@ -7630,16 +7630,19 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         } else if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR) {
             mIsFDRCapture = false;
         }
-        HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d, mIsFDRCapture:%d, app_mode:%d",
-                          drvSceneMode, mMultiCameraMode, mIsFDRCapture, sprddefInfo->sprd_appmode_id);
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_PANORAMA) {
             drvSceneMode = CAMERA_SCENE_MODE_PANORAMA;
         }
-	  if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_SLOWMOTION) {
+        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_SLOWMOTION) {
             drvSceneMode = CAMERA_SCENE_MODE_SLOWMOTION;
+        }
+        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_VIDEO) {
+            drvSceneMode = CAMERA_SCENE_MODE_VIDEO;
         }
        if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR)
            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+        HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d, mIsFDRCapture:%d, app_mode:%d",
+                          drvSceneMode, mMultiCameraMode, mIsFDRCapture, sprddefInfo->sprd_appmode_id);
     } break;
 
     case ANDROID_CONTROL_EFFECT_MODE: {
