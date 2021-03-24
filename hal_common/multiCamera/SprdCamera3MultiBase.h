@@ -81,9 +81,9 @@ typedef enum {
     RES_END
 } custom_size;
 #ifdef CAMERA_HIGH_RESOLUTION_IN_AUTO_MODE
-#define CUSTOM_RES_NUM 11
+#define CUSTOM_RES_NUM 14
 #else
-#define CUSTOM_RES_NUM 10
+#define CUSTOM_RES_NUM 13
 #endif
 typedef struct custom_stream_info {
     custom_size size;

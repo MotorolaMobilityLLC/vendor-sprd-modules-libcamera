@@ -4915,6 +4915,9 @@ cmr_int cmr_snapshot_thumb_yuv_proc(cmr_handle snp_handle,
         rot_img = req_param_ptr->post_proc_setting.mem[0].cap_yuv;
     } else {
         rot_img = req_param_ptr->post_proc_setting.mem[0].target_yuv;
+        if (thumb_parm->middle_img.buf_size != 0) {
+            rot_img = thumb_parm->middle_img;
+        }
     }
     if (IMG_ANGLE_90 == mean.rot || IMG_ANGLE_270 == mean.rot) {
         rot_img.size.width = src.size.height;

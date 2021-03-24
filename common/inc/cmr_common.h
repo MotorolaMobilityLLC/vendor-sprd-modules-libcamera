@@ -667,6 +667,7 @@ struct snp_thumb_yuv_param {
     int angle;
     struct img_frm src_img;
     struct img_frm dst_img;
+    struct img_frm middle_img;
 };
 
 struct rotate_param {
