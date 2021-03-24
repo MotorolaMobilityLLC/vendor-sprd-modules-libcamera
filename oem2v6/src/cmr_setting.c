@@ -425,6 +425,10 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
             out_param = ISP_HDR;
             break;
 
+        case CAMERA_SCENE_MODE_VIDEO:
+            out_param = ISP_VIDEO;
+            break;
+
         default:
             out_param = CAMERA_SCENE_MODE_AUTO;
             break;
