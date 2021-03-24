@@ -11768,7 +11768,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
                 obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
                 zsl_frame->fd);
             return -1;
-        }
+    }
 
         if (mMultiCameraMode == MODE_BOKEH ||
             mMultiCameraMode == MODE_3D_CALIBRATION ||
@@ -12042,7 +12042,10 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     mSetting->getCONTROLTag(&controlInfo);
     cmr_uint been_preflash = 0;
     cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
-    int64_t diff_ms = 400*1000000;  //400ms
+    int64_t diff_ms = 380*1000000;  //380ms
+    int64_t mfnr_ms = 20*1000000;
+    uint32_t hdr_count = 800, mfnr_count = 800;
+    uint32_t lock_af = 0;
 
 
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
@@ -12088,12 +12091,77 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
-    HAL_LOGV("nowTime=%lld",systemTime(SYSTEM_TIME_BOOTTIME));
-    if(sprddefInfo->sprd_appmode_id == 0 &&
+    char value2[PROPERTY_VALUE_MAX];
+    if(controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR && mAf_start_time > 0){
+       property_get("persist.vendor.cam.hdr.wait.af_time", value2, "0");
+       if(mAf_stop_time > mAf_start_time) {
+            lock_af = 1;
+            mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_BYPASS, &lock_af);
+            HAL_LOGV("af finshed lock");
+       } else {
+            if(atoi(value2)){
+                hdr_count = atoi(value2);
+                HAL_LOGD("set hdr_wait time %d ms",hdr_count);
+            }
+            while (hdr_count) {
+                usleep(1000);
+                hdr_count --;
+                if (hdr_count == 0) {
+                    HAL_LOGI("wait for hdr_done timeout %d ms",mfnr_count);
+                    break;
+                }
+                if (mAf_stop_time > mAf_start_time ) {
+                    HAL_LOGD("af finsh done");
+                    break;
+                }
+            }
+        }
+    }
+
+    if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW ||
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_HW ||
+        mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) && mAf_start_time > 0) {
+        property_get("persist.vendor.cam.mfnr.wait.af_time", value2, "0");
+        if(mAf_stop_time > mAf_start_time) {
+            lock_af = 1;
+            mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_BYPASS, &lock_af);
+            HAL_LOGV("af finshed lock");
+        } else{
+            if(atoi(value2)){
+                mfnr_count = atoi(value2);
+                HAL_LOGD("set mfnr_wait time %d ms",mfnr_count);
+            }
+            while (mfnr_count) {
+                usleep(1000);
+                mfnr_count --;
+                if (mfnr_count == 0) {
+                    HAL_LOGI("wait for mfnr_done timeout %d ms",mfnr_count);
+                    break;
+                }
+                if (mAf_stop_time > mAf_start_time ) {
+                    HAL_LOGD("af finsh done");
+                    break;
+                }
+            }
+            mfnr_ms = 0 - diff_ms;
+       }
+       diff_ms = diff_ms + mfnr_ms;
+    }
+
+    char value1[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.zsl.diff", value1, "0");
+    if (atoi(value1)) {
+        diff_ms = (int64_t)atoi(value1) * 1000000;
+        HAL_LOGD("diff_ms =%lld ms",diff_ms/1000000);
+    }
+
+    HAL_LOGV("nowTime=%lld,diff_time=%lld ms",systemTime(SYSTEM_TIME_BOOTTIME),diff_ms/1000000);
+    if (sprddefInfo->sprd_appmode_id == 0 &&
         controlInfo.scene_mode != ANDROID_CONTROL_SCENE_MODE_HDR){
         mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME) - diff_ms;
         HAL_LOGD("real zsl");
-
     } else
         mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
 
@@ -12108,7 +12176,7 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (mCameraId != 1){
         mHalOem->ops->camera_get_last_preflash_time(mCameraHandle, &last_preflash_time);
         now_time = systemTime(CLOCK_MONOTONIC);
-        HAL_LOGD("lst_preflash_time = %" PRId64 ", now_time=%" PRId64,
+        HAL_LOGD("last_preflash_time = %" PRId64 ", now_time=%" PRId64,
              last_preflash_time, now_time);
         if (now_time > last_preflash_time) {
             diff = (now_time - last_preflash_time) / 1000000000;
@@ -12280,10 +12348,15 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
 exit:
-    if(!mZslIpsEnable && clear_af_trigger) {
+    if (!mZslIpsEnable && clear_af_trigger && mZslCaptureExitLoop == false) {
         controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_CANCEL;
         mSetting->setCONTROLTag(&controlInfo);
         SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+    }
+    if (lock_af) {
+        lock_af = 0;
+        mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_AF_BYPASS, &lock_af);
+        HAL_LOGD("unlock_af");
     }
     HAL_LOGD("X");
 }

@@ -973,6 +973,10 @@ static cmr_int ioctrl_set_af_pos(cmr_handle handle, void *param) {
 static cmr_int ioctrl_set_3a_bypass(cmr_handle handle, void *param) {
     return cmr_set_3a_bypass(handle, *(uint32_t *)param);
 }
+static cmr_int ioctrl_set_af_bypass(cmr_handle handle, void *param) {
+    return cmr_set_af_bypass(handle, *(uint32_t *)param);
+}
+
 static cmr_int ioctrl_set_3dnr_video(cmr_handle handle, void *param) {
     return camera_set_3dnr_video(handle, *(cmr_uint *)param);
 }
@@ -1177,6 +1181,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL] = ioctrl_camera_stream_ctrl,
     [CAMERA_IOCTRL_GET_FULLSCAN_INFO]          = ioctrl_get_isp_af_fullscan,
     [CAMERA_IOCTRL_SET_AF_POS]                 = ioctrl_set_af_pos,
+    [CAMERA_IOCTRL_SET_AF_BYPASS]              = ioctrl_set_af_bypass,
     [CAMERA_IOCTRL_SET_3A_BYPASS]              = ioctrl_set_3a_bypass,
     [CAMERA_IOCTRL_GET_AE_FPS]                 = ioctrl_get_ae_fps,
     [CAMERA_IOCTRL_3DNR_VIDEOMODE]             = ioctrl_set_3dnr_video,

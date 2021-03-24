@@ -16109,6 +16109,7 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.type = DCAM_CAPTURE_START_FROM_NEXT_SOF;
         capture_param.cap_cnt = 5;
         capture_param.cap_scene = CAPTURE_SW3DNR;
+        capture_param.timestamp = snp_cxt->cap_need_time_stamp;
     } else if ((CAMERA_3DNR_TYPE_PREV_NULL_CAP_HW ==
                 camera_get_3dnr_flag(cxt)) ||
                (CAMERA_3DNR_TYPE_PREV_HW_CAP_HW == camera_get_3dnr_flag(cxt)) ||
@@ -16457,6 +16458,16 @@ cmr_int cmr_set_3a_bypass(cmr_handle oem_handle, cmr_u32 value) {
         ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AEAWB_BYPASS,
                         (void *)&value);
     }
+    return ret;
+}
+
+cmr_int cmr_set_af_bypass(cmr_handle oem_handle, cmr_u32 value) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CMR_LOGI("af_bypass =%d", value);
+    ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_AF_BYPASS,
+                    (void *)&value);
     return ret;
 }
 
