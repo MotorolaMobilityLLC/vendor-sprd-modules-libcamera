@@ -7381,7 +7381,7 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 				}
 
 
-			}else{
+			}else if (CAMERA_MODE_MANUAL != cxt->app_mode){
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = 0;
 				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = 0;
