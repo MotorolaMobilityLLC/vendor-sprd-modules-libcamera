@@ -48,6 +48,7 @@ struct jpeg_lib_cxt {
     void *mLibHandle;
     struct jpeg_codec_caller_handle *codec_handle;
     struct jpeg_lib_ops ops;
+    jpg_evt_cb_ptr jpgcallback;
 };
 
 enum cmr_jpeg_ret {
