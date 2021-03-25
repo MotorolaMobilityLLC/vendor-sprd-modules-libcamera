@@ -2401,6 +2401,9 @@ void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
     case CMR_JPEG_DEC_ERR:
         temp_evt = SNAPSHOT_EVT_JPEG_DEC_ERR;
         break;
+    case CMR_JPEG_DEC_STOP:
+        cxt->jpg_encode = JPEG_ENCODE_STOP;
+        break;
     default:
         ret = -CMR_CAMERA_NO_SUPPORT;
         CMR_LOGE("err, don't support evt 0x%lx", evt);
@@ -2409,10 +2412,11 @@ void camera_jpeg_evt_cb(enum jpg_jpeg_evt evt, void *data, void *privdata) {
         CMR_LOGE("done %ld", ret);
         return;
     }
-    ret =
-        cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, temp_evt, data);
-    if (ret) {
-        CMR_LOGE("failed %ld", ret);
+    if(evt != CMR_JPEG_DEC_STOP) {
+        ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle, temp_evt, data);
+        if (ret) {
+            CMR_LOGE("failed %ld", ret);
+        }
     }
 }
 static cmr_int camera_isp_ctrl_flash(cmr_handle setting_handle, void *data) {
@@ -13094,8 +13098,10 @@ cmr_int cmr_preview_waitencode(cmr_handle oem_handle) {
                 goto exit;
             }
             time++;
-            if (cxt->jpg_encode == JPEG_ENCODE_DONE) {
-                CMR_LOGI("jpeg encode ok wait up");
+            if (cxt->jpg_encode == JPEG_ENCODE_DONE ||
+                !cxt->jpeg_cxt.jpeg_handle ||
+                cxt->jpg_encode == JPEG_ENCODE_STOP) {
+                CMR_LOGI("jpeg encode ok wait up jpg_encode %d", cxt->jpg_encode);
                 break;
             }
             usleep(1000);

@@ -356,6 +356,7 @@ typedef enum {
     JPEG_ENCODE_MIN = 0,
     JPEG_ENCODING,
     JPEG_ENCODE_DONE,
+    JPEG_ENCODE_STOP,
     JPEG_ENCODE_MAX,
 } jpg_encode_status;
 
