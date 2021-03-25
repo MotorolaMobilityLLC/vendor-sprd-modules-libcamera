@@ -149,6 +149,7 @@ enum jpg_jpeg_evt {
     CMR_JPEG_WEXIF_DONE,
     CMR_JPEG_ENC_ERR,
     CMR_JPEG_DEC_ERR,
+    CMR_JPEG_DEC_STOP,
     CMR_JPEG_ERR,
 };
 
