@@ -7658,6 +7658,14 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         } else if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR) {
             mIsFDRCapture = false;
         }
+
+         if (drvSceneMode == CAMERA_SCENE_MODE_HDR && sprddefInfo->sprd_auto_3dnr_enable == CAMERA_3DNR_AUTO
+               && mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {/*if hdr and auto mfnr enable, close mfnr*/
+            SprdCamera3Setting::s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled = 0;
+            mSprd3dnrType = CAMERA_3DNR_TYPE_NULL;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_TYPE, mSprd3dnrType);
+        }
+
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_PANORAMA) {
             drvSceneMode = CAMERA_SCENE_MODE_PANORAMA;
         }
