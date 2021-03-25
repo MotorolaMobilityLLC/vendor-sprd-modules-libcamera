@@ -1011,6 +1011,7 @@ struct isp_init_param {
 	cmr_u32 is_master;
 	cmr_u32 is_4in1_sensor;
 	cmr_u32 is_faceId_unlock;
+	cmr_u8 is_dual_video;
 };
 
 struct img_offset {

@@ -101,6 +101,7 @@ static pthread_cond_t close_cond = PTHREAD_COND_INITIALIZER;
 static uint32_t closing = 0;
 static uint32_t active_camera_num = 0;
 static multiCameraMode is_multi_camera_mode_oem;
+static uint8_t is_dual_video_mode = 0;
 static uint8_t master_id_oem = 0;
 
 static void camera_send_channel_data(cmr_handle oem_handle,
@@ -5527,6 +5528,7 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     isp_param.facing = cxt->facing;
     isp_param.alloc_cb = camera_malloc;
     isp_param.free_cb = camera_free;
+    isp_param.is_dual_video = is_dual_video_mode;
 
     camera_sensor_color_to_isp_color(&isp_param.image_pattern,
                                      sensor_info_ptr->image_pattern);
@@ -8914,6 +8916,11 @@ cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
     cxt->is_ultra_wide = is_ultra_wide;
     CMR_LOGI("is_ultra_wide %ld", cxt->is_ultra_wide);
     return ret;
+}
+
+void camera_set_dual_video_mode(uint8_t is_dual_video) {
+    is_dual_video_mode = is_dual_video;
+    CMR_LOGI("is_dual_video %d", is_dual_video_mode);
 }
 
 cmr_int camera_set_fov_fusion_mode(cmr_handle oem_handle,

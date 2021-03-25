@@ -449,6 +449,7 @@ struct isp_alg_fw_context {
 	struct ispalg_lib_ops ops;
 	cmr_u8  is_master;
 	cmr_u32 is_multi_mode;
+	uint8_t is_dual_video;
 	cmr_u32 sensor_role;
 	cmr_u32 work_mode;
 	cmr_u32 zsl_flag;
@@ -4660,6 +4661,10 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 
 	if (ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW ||
 		ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
+		if (cxt->is_dual_video == 1){
+			ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
+		}
+
 		char value[PROPERTY_VALUE_MAX] = { 0x00 };
 		property_get("persist.vendor.cam.debug.ae_sync", value, "1");
 
@@ -7610,6 +7615,7 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 	cxt->camera_id = input_ptr->init_param->camera_id;
 	cxt->is_master = input_ptr->init_param->is_master;
 	cxt->is_multi_mode = input_ptr->init_param->multi_mode;
+	cxt->is_dual_video = input_ptr->init_param->is_dual_video;
 	cxt->af_cxt.tof_support = input_ptr->init_param->ex_info.tof_support;
 	cxt->pdaf_cxt.pdaf_support = input_ptr->init_param->ex_info.pdaf_supported;
 	cxt->ebd_cxt.ebd_support = input_ptr->init_param->ex_info.ebd_supported;

@@ -452,6 +452,7 @@ struct camera_context {
     cmr_uint is_3dnr_video;
     cmr_u32 blur_facebeauty_flag;
     cmr_uint is_ultra_wide;
+    cmr_u8 is_dual_video;
     cmr_uint is_fov_fusion;
     float app_ratio;
     cmr_uint is_multi_camera_id;
@@ -725,6 +726,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
 cmr_int camera_set_3dnr_video(cmr_handle oem_handle, cmr_uint is_3dnr_video);
 cmr_int camera_set_ultra_wide_mode(cmr_handle oem_handle,
                                    cmr_uint is_ultra_wide);
+void camera_set_dual_video_mode(uint8_t is_dual_video);
 cmr_int camera_set_fov_fusion_mode(cmr_handle oem_handle,
                                    cmr_uint is_fov_fusion);
 cmr_int camera_set_fov_fusion_app_ratio(cmr_handle oem_handle,
