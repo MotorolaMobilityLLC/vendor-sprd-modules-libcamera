@@ -70,6 +70,7 @@ cmr_int cmr_jpeg_init(cmr_handle oem_handle, cmr_handle *jpeg_handle,
     }
 
     CMR_LOGI(" open lib: %s", libName);
+    jcxt->jpgcallback = adp_event_cb;
 
     jcxt->ops.jpeg_init = dlsym(jcxt->mLibHandle, "sprd_jpeg_init");
     jcxt->ops.jpeg_encode = dlsym(jcxt->mLibHandle, "sprd_jpg_encode");
@@ -411,6 +412,7 @@ cmr_int cmr_stop_codec(cmr_handle jpeg_handle) {
     jcxt = (struct jpeg_lib_cxt *)jpeg_handle;
     CMR_LOGI("cmr_stop_codec enter");
     ret = jcxt->ops.jpeg_stop(jcxt->codec_handle);
+    jcxt->jpgcallback(CMR_JPEG_DEC_STOP, &inited, jcxt->codec_handle->reserved);
     if (ret) {
         CMR_LOGE("stop codec error");
         pthread_mutex_unlock(&jpeg_mutex);
