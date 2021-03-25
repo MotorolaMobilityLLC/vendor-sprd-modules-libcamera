@@ -7510,6 +7510,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         } else if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR) {
             mIsFDRCapture = false;
         }
+        uint8_t sprd_3dnr_enabled = SprdCamera3Setting::s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled;
+        if (drvSceneMode == CAMERA_SCENE_MODE_HDR && (sprd_3dnr_enabled || mSprd3dnrType)) {
+            SprdCamera3Setting::s_setting[mCameraId].sprddefInfo.sprd_3dnr_enabled = 0;
+            mSprd3dnrType = CAMERA_3DNR_TYPE_NULL;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_TYPE,
+                 mSprd3dnrType);
+        }
         HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d, mIsFDRCapture:%d, app_mode:%d",
                           drvSceneMode, mMultiCameraMode, mIsFDRCapture, sprddefInfo->sprd_appmode_id);
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_PANORAMA) {
