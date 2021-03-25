@@ -41,7 +41,7 @@ extern "C" {
 
 	struct s_q_init_in {
 		cmr_u32 exp_line;
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_u32 dmy_line;
 		cmr_u32 frm_len;
 		cmr_u32 frm_len_def;
