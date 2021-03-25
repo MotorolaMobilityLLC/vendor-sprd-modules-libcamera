@@ -151,6 +151,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
     mPictureRequest = false;
 
     mBurstCapCnt = 1;
+    mIsDualVideo = 0;
 
     mOldCapIntent = 0;
     mOldRequesId = 0;
@@ -369,6 +370,7 @@ int SprdCamera3HWI::openCamera() {
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MULTI_CAMERAMODE, &mMultiCameraMode,
                           NULL);
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MASTER_ID, &mMasterId, NULL);
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_DUAL_VIDEO_MODE, &mIsDualVideo, NULL);
     ret = mOEMIf->openCamera();
     if (ret) {
         HAL_LOGE("mOEMIf->openCamera failed");
@@ -2844,6 +2846,10 @@ void SprdCamera3HWI::pushDualVideoBuffer(hal_mem_info_t *mem_info) {
 
 void SprdCamera3HWI::setRealMultiMode(bool mode) {
     mOEMIf->setRealMultiMode(mode);
+}
+
+void SprdCamera3HWI::setIsDualVideoMode(uint8_t is_dual_video){
+    mIsDualVideo = is_dual_video;
 }
 
 void SprdCamera3HWI::setMultiAppRatio(float app_ratio) {

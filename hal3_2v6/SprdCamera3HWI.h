@@ -128,6 +128,7 @@ class SprdCamera3HWI {
     void setMultiCaptureTimeStamp(uint64_t time_stamp);
     void pushDualVideoBuffer(hal_mem_info_t *mem_info);
     void setRealMultiMode(bool mode);
+    void setIsDualVideoMode(uint8_t is_dual_video);
     void setMultiAppRatio(float app_ratio);
     static void dumpMemoryAddresses(size_t limit);
     void setSyncState(SyncState mSyncState);
@@ -318,6 +319,7 @@ class SprdCamera3HWI {
     SprdCamera3PicChannel *mPicChan;
     bool mPictureRequest;
     uint8_t mBurstCapCnt;
+    uint8_t mIsDualVideo;
 
     uint8_t mOldCapIntent;
     int32_t mOldRequesId;

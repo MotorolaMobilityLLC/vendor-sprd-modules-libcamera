@@ -1071,6 +1071,7 @@ static cmr_int ioctrl_multi_cameramode(cmr_handle handle, void *param) {
 
     return 0;
 }
+
 static cmr_int ioctrl_camera_stream_ctrl(cmr_handle handle, void *param) {
     int ret;
 
@@ -1091,6 +1092,10 @@ static cmr_int ioctrl_set_3dnr_video(cmr_handle handle, void *param) {
 }
 static cmr_int ioctrl_set_ultra_wide_mode(cmr_handle handle, void *param) {
     return camera_set_ultra_wide_mode(handle, *(cmr_uint *)param);
+}
+static cmr_int ioctrl_set_dual_video_mode(cmr_handle handle, void *param) {
+    camera_set_dual_video_mode(*(uint8_t *)param);
+    return 0;
 }
 static cmr_int ioctrl_set_fov_fusion_mode(cmr_handle handle, void *param) {
     return camera_set_fov_fusion_mode(handle, *(cmr_uint *)param);
@@ -1318,6 +1323,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CPAT_IOCTRL_GET_SENSOR_LUMA]            = ioctrl_cpat_get_cover,
     [CAMERA_IOCTRL_SET_COLOR_TEMP]           = ioctrl_set_color_temp,
     [CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA]	= ioctrl_write_calibration_otp,
+    [CAMERA_IOCTRL_SET_DUAL_VIDEO_MODE]        = ioctrl_set_dual_video_mode,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
