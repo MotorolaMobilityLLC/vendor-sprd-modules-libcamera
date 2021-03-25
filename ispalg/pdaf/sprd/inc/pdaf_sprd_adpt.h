@@ -67,10 +67,10 @@
 #define PD_OTP_PACK_SIZE	550
 
 struct pd_roi_coord {
-	cmr_u32 start_x;
-	cmr_u32 start_y;
-	cmr_u32 end_x;
-	cmr_u32 end_y;
+	cmr_s32 start_x;
+	cmr_s32 start_y;
+	cmr_s32 end_x;
+	cmr_s32 end_y;
 };
 
 struct pd_roi_info {
