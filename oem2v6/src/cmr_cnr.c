@@ -199,7 +199,8 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
     oem_handle = cnr_handle->common.ipm_cxt->init_in.oem_handle;
 
     struct ipm_init_in *ipm_in = &cnr_handle->common.ipm_cxt->init_in;
-    CMR_LOGD("cnr_flag %d, night_flag %d", cxt->nr_flag, cxt->night_flag);
+    denoise_param.zoom_ratio = cxt->zoom_ratio;
+    CMR_LOGD("cnr_flag %d, night_flag %d,\n", cxt->nr_flag, cxt->night_flag);
     if (cxt->nr_flag & YNRS_ENABLE) {
         ret = ipm_in->ipm_isp_ioctl(oem_handle, COM_ISP_GET_YNRS_PARAM,
                                     &isp_cmd_parm);
@@ -209,7 +210,6 @@ static cmr_int cnr_transfer_frame(cmr_handle class_handle,
             denoise_param.ynr_ration_base = isp_cmd_parm.ynr_param.radius_base;
             memcpy(&ynrParam, &isp_cmd_parm.ynr_param.ynrs_param, sizeof(YNR_Param));
             denoise_param.ynrParam = &ynrParam;
-            denoise_param.zoom_ratio = cxt->zoom_ratio;
             valid_nr_type |= YNRS_ENABLE;
         }
     }

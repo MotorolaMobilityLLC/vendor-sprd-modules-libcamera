@@ -267,7 +267,7 @@ int swa_cnr_process(void * ipmpro_hanlde,
 			struct swa_frames_inout *out,
 			void * param)
 {
-	int ret = 0, offset, i;
+	int ret = 0, i;
 	struct cnr_context_t *cxt = NULL;
 	struct swa_frame *frm_in, *frm_out;
 	struct swa_frame_param *frm_param;
@@ -316,11 +316,11 @@ int swa_cnr_process(void * ipmpro_hanlde,
 next:
 	frm_in = &in->frms[i];
 	frm_out = &out->frms[i];
-	SWA_LOGD("frm No.%d, %p %p, fd 0x%x 0x%x\n", i, frm_in, frm_out, frm_in->fd, frm_out->fd);
+	SWA_LOGD("frm No.%d, %p %p, fd 0x%x 0x%x, addr %p %p\n", i, frm_in, frm_out,
+		frm_in->fd, frm_out->fd,(void *)frm_in->addr_vir[0], (void *)frm_in->addr_vir[1]);
 
-	offset = frm_out->size.width * frm_out->size.height;
 	denoise_param.bufferY.addr[0] = (void *)frm_in->addr_vir[0];
-	denoise_param.bufferUV.addr[0] = (void *)(frm_in->addr_vir[0] + offset);
+	denoise_param.bufferUV.addr[0] = (void *)frm_in->addr_vir[1];
 	denoise_param.bufferY.ion_fd = frm_in->fd;
 	denoise_param.bufferUV.ion_fd = frm_in->fd;
 	denoise_param.width = frm_in->size.width;
