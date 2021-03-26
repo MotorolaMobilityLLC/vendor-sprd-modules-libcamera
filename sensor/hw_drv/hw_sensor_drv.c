@@ -990,6 +990,29 @@ static cmr_int _hw_sensor_dev_WriteRegTab(cmr_handle hw_handle,
     return ret;
 }
 
+cmr_int hw_sensor_dev_WriteRegTab(cmr_handle hw_handle,
+                             SENSOR_REG_T_PTR sensor_reg_tab_ptr, cmr_u32 reg_count) {
+    cmr_int ret = HW_SUCCESS;
+    CHECK_HANDLE(hw_handle);
+    CHECK_PTR(sensor_reg_tab_ptr);
+    struct hw_drv_cxt *hw_drv_cxt = (struct hw_drv_cxt *)hw_handle;
+    HW_LOGI("E:burst_mode %d, sensor_id %d", hw_drv_cxt->i2c_burst_mode,
+        hw_drv_cxt->sensor_id);
+
+    SENSOR_REG_TAB_T regTab;
+    regTab.reg_count = reg_count;
+    regTab.reg_bits = hw_drv_cxt->i2c_bus_config;
+    regTab.burst_mode = hw_drv_cxt->i2c_burst_mode;
+    regTab.sensor_reg_tab_ptr = sensor_reg_tab_ptr;
+
+    ret = _hw_sensor_dev_WriteRegTab(hw_handle, &regTab);
+
+    HW_LOGI("X:reg_count %d, sensor_id %d", reg_count,
+            hw_drv_cxt->sensor_id);
+
+    return ret;
+}
+
 cmr_int
 hw_Sensor_SendRegTabToSensor(cmr_handle hw_handle,
                              SENSOR_REG_TAB_INFO_T *sensor_reg_tab_info_ptr) {

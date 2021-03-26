@@ -909,33 +909,42 @@ static cmr_int imx586_drv_set_LRC_data(cmr_handle handle, cmr_uint param) {
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     struct sensor_drv_context *sensor_cxt = (struct sensor_drv_context *)(sns_drv_cxt->caller_handle);
     cmr_u8 *param_ptr = NULL;
-    cmr_u16 lrc_area_control;
     SENSOR_IC_CHECK_HANDLE(sns_drv_cxt->caller_handle);
     otp_drv_cxt_t *otp_cxt = (otp_drv_cxt_t *)(sensor_cxt->otp_drv_handle);
+
     char value[128];
     property_get("persist.vendor.cam.skip.LRC.area.control", value, "0");
-    if(!otp_cxt || !otp_cxt->otp_raw_data.buffer) {
-        SENSOR_LOGD("otp not configured");
-        return 0;
-    }
     if(atoi(value)) {
 	SENSOR_LOGD("START TO SKIP");
 	return 0;
     }
+
+    if(!otp_cxt || !otp_cxt->otp_raw_data.buffer) {
+        SENSOR_LOGD("otp not configured");
+        return 0;
+    }
+
     param_ptr = otp_cxt->otp_raw_data.buffer;
-    lrc_area_control = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3038);
-    SENSOR_LOGD("LRC area control is 0x3038 -> 0x%x", lrc_area_control);
+
+    SENSOR_REG_T imx586_LRC_setting1[192];
+    memset(imx586_LRC_setting1, 192 * sizeof(SENSOR_REG_T), 0);
     for (int i = 0; i < 192; i++) {
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7510 + i, *(param_ptr + 0x0C5D + i));
-	SENSOR_LOGV("imx586_lrc address {0x%x, 0x%x}", 0x7510 + i, *(param_ptr + 0x0C5D + i));
+        imx586_LRC_setting1[i].reg_addr = 0x7510 + i;
+        imx586_LRC_setting1[i].reg_value = *(param_ptr + 0x0C5D + i);
     }
+    hw_sensor_dev_WriteRegTab(sns_drv_cxt->hw_handle,
+            imx586_LRC_setting1, 192);
+
+    SENSOR_REG_T imx586_LRC_setting2[192];
+    memset(imx586_LRC_setting2, 192 * sizeof(SENSOR_REG_T), 0);
     for (int i = 0; i < 192; i++) {
-	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x7600 + i, *(param_ptr + 0x0C5D + 192 + i));
-	SENSOR_LOGV("imx586_lrc address {0x%x, 0x%x}", 0x7600 + i, *(param_ptr + 0x0C5D + 192 + i));
+        imx586_LRC_setting2[i].reg_addr = 0x7600 + i;
+        imx586_LRC_setting2[i].reg_value = *(param_ptr + 0x0D1D + i);
     }
+    hw_sensor_dev_WriteRegTab(sns_drv_cxt->hw_handle,
+            imx586_LRC_setting2, 192);
 
     return 0;
-
 }
 
 /*==============================================================================

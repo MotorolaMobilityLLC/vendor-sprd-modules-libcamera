@@ -344,4 +344,7 @@ cmr_int hw_sensor_get_flash_level(cmr_handle handle,
 /*expend interface,if you need to add some other function ,please add you cmd */
 cmr_int hw_sensor_drv_ioctl(cmr_handle handle, int cmd, void *param);
 
+cmr_int hw_sensor_dev_WriteRegTab(cmr_handle hw_handle,
+                             SENSOR_REG_T_PTR sensor_reg_tab_ptr, cmr_u32 reg_count);
+
 #endif
