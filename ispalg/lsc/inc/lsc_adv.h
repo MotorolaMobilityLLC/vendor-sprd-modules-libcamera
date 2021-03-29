@@ -183,7 +183,8 @@ struct alsc_fwstart_info {
 	cmr_u32 gain_width_new;
 	cmr_u32 gain_height_new;
 	cmr_u32 image_pattern_new;
-	cmr_u32 grid_new;
+	cmr_u32 gridx_new;
+	cmr_u32 gridy_new;
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 	cmr_u32 img_width_new;
 	cmr_u32 img_height_new;
@@ -196,7 +197,8 @@ struct alsc_fwprocstart_info {
 	cmr_u32 gain_width_new;
 	cmr_u32 gain_height_new;
 	cmr_u32 image_pattern_new;
-	cmr_u32 grid_new;
+	cmr_u32 gridx_new;
+	cmr_u32 gridy_new;
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 };
 
@@ -247,7 +249,8 @@ struct lsc_table_transf_info {
 struct pm_lsc_full {
 	unsigned int img_width;
 	unsigned int img_height;
-	unsigned int grid;
+	unsigned int gridx;
+	unsigned int gridy;
 	unsigned int gain_width;
 	unsigned int gain_height;
 	unsigned short *input_table_buffer;
@@ -258,7 +261,8 @@ struct pm_lsc_crop {
 	unsigned int img_height;
 	unsigned int start_x;
 	unsigned int start_y;
-	unsigned int grid;
+	unsigned int gridx;
+	unsigned int gridy;
 	unsigned int gain_width;
 	unsigned int gain_height;
 	unsigned short *output_table_buffer;
@@ -280,7 +284,8 @@ struct lsc_adv_init_param {
 	cmr_u32 gain_pattern;
 	cmr_u32 output_gain_pattern;
 	cmr_u32 change_pattern_flag;
-	cmr_u32 grid;
+	cmr_u32 gridx;
+	cmr_u32 gridy;
 	cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
 
 	// isp2.1 added , need to modify to match old version
@@ -302,7 +307,8 @@ struct lsc_adv_init_param {
 	cmr_u32 lsc_otp_table_en;
 	cmr_u32 lsc_otp_table_width;
 	cmr_u32 lsc_otp_table_height;
-	cmr_u32 lsc_otp_grid;
+	cmr_u32 lsc_otp_gridx;
+	cmr_u32 lsc_otp_gridy;
 	cmr_u16 *lsc_otp_table_addr;
 
 	cmr_u32 lsc_otp_oc_en;
@@ -353,7 +359,8 @@ struct lsc_adv_calc_param {
 	cmr_u32 isp_id;			// 0. alg0.c ,  2. alg2.c
 	cmr_u32 camera_id;		// 0. back camera_master  ,  1. front camera_master
 	struct lsc_size img_size;	// raw size
-	cmr_s32 grid;			// grid size
+	cmr_s32 gridx;			// grid size
+	cmr_s32 gridy;
 
 	// no use in HLSC_V2.0
 	struct lsc_size block_size;
