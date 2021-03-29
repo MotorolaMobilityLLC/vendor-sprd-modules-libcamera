@@ -2936,7 +2936,7 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->f_num = sensor_cxt->static_info->f_num;
     phyPtr->mim_focus_distance = sensor_cxt->static_info->min_focal_distance;
     phyPtr->start_offset_time = sensor_cxt->static_info->start_offset_time;
-    SENSOR_LOGD("f_num:%f,mim_focus_distance:%f,start offset time:%lld",
+    SENSOR_LOGD("f_num:%f,mim_focus_distance:%d,start offset time:%lld",
                  phyPtr->f_num,phyPtr->mim_focus_distance,phyPtr->start_offset_time);
 
     phyPtr->module_vendor_id = sensor_cxt->module_vendor_id;
@@ -3870,7 +3870,7 @@ static cmr_int sensor_drv_create_multicam_snspid(cmr_u8 dual_flag) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    cmr_u8 i = 0, j =0, k=0;
+    cmr_int i = 0, j =0, k=0;
 
     SENSOR_LOGI("E");
 
@@ -3964,7 +3964,7 @@ static cmr_int sensor_drv_create_module_name(cmr_u8 dual_flag) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    cmr_u8 i = 0, j = 0;
+    cmr_int i = 0, j = 0;
 
     SENSOR_LOGI("E");
 
@@ -4069,7 +4069,7 @@ static cmr_int sensor_drv_create_cmei(cmr_u8 dual_flag) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    cmr_u8 i = 0;
+    cmr_int i = 0;
 
     SENSOR_LOGI("E");
 
