@@ -28,7 +28,7 @@ cmr_s32 _pm_ai_pro_init(void *dst_ai_param, void *src_ai_param, void *param1, vo
 	if (ai_header_ptr->bypass)
 		return rtn;
 
-	for (i = 0; i < AI_SCENE_PM_PRO_MAX;i++) {
+	for (i = 0; i < (AI_SCENE_PM_PRO_MAX - 1);i++) {
 		dst_ptr->isp_ai_bchs[i].ai_brightness.brightness_ai_adj_eb = src_ptr->sensor_ai_bchs[i].ai_brightness.brightness_ai_adj_eb;
 		dst_ptr->isp_ai_bchs[i].ai_contrast.contrast_adj_ai_eb = src_ptr->sensor_ai_bchs[i].ai_contrast.contrast_adj_ai_eb;
 		dst_ptr->isp_ai_bchs[i].ai_hue.hue_adj_ai_eb = src_ptr->sensor_ai_bchs[i].ai_hue.hue_adj_ai_eb;
