@@ -1,20 +1,20 @@
 /*versionid=0x000C000F*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
 		/*[0x0]*/
 		{
 			/*is_right*/
-			0x00000000,
+			0x00000001,
 			/*pattern_pixel*/
 			{
 				/*x*/
-				0x00000000,
+				0x0000000E,
 				/*y*/
-				0x00000000,
+				0x00000002,
 
 			}
 		},
@@ -25,22 +25,22 @@
 			/*pattern_pixel*/
 			{
 				/*x*/
-				0x00000000,
+				0x0000000E,
 				/*y*/
-				0x00000000,
+				0x00000006,
 
 			}
 		},
 		/*[0x2]*/
 		{
 			/*is_right*/
-			0x00000000,
+			0x00000001,
 			/*pattern_pixel*/
 			{
 				/*x*/
-				0x00000000,
+				0x00000006,
 				/*y*/
-				0x00000000,
+				0x0000000A,
 
 			}
 		},
@@ -51,9 +51,9 @@
 			/*pattern_pixel*/
 			{
 				/*x*/
-				0x00000000,
+				0x00000006,
 				/*y*/
-				0x00000000,
+				0x0000000E,
 
 			}
 		},
@@ -853,21 +853,21 @@
 	/*pdaf_block_pos*/
 	{
 		/*block_start_row*/
-		0x0000,
+		0x0008,
 		/*block_start_col*/
 		0x0000,
 		/*block_end_row*/
-		0x0000,
+		0x0988,
 		/*block_end_col*/
-		0x0000,
+		0x0CC0,
 
 	},
 	/*ppe_block_size*/
 	{
 		/*width*/
-		0x0000,
+		0x0001,
 		/*height*/
-		0x0000,
+		0x0001,
 
 	},
 	/*pdaf_l_gain_map*/
@@ -894,10 +894,10 @@
 		0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000/*112-127*/
 
 	},
-	0x00,0x00,0x0000,0x0000,0x00,0x01,}
+	0x00,0x00,0x0000,0x0001,0x00,0x01,}
 ,
 /*param1.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -1793,7 +1793,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param2.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -2689,7 +2689,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param3.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -3585,7 +3585,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param4.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -4481,7 +4481,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param5.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -5377,7 +5377,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param6.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -6273,7 +6273,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param7.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -7169,7 +7169,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param8.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -8065,7 +8065,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param9.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -8961,7 +8961,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param10.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -9857,7 +9857,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param11.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -10753,7 +10753,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param12.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -11649,7 +11649,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param13.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -12545,7 +12545,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param14.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -13441,7 +13441,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param15.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -14337,7 +14337,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param16.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -15233,7 +15233,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param17.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -16129,7 +16129,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param18.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -17025,7 +17025,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param19.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -17921,7 +17921,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param20.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -18817,7 +18817,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param21.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -19713,7 +19713,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param22.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -20609,7 +20609,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param23.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
@@ -21505,7 +21505,7 @@
 	0x00,0x00,0x0000,0x0000,0x00,0x00,}
 ,
 /*param24.&BasePoint=1&*/
-/*sharkl6_sensor_ppe_level*/
+/*sharkl5pro_sensor_ppe_level*/
 {
 	/*pdaf_pattern*/
 	{
