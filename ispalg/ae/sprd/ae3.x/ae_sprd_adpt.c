@@ -4456,7 +4456,7 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 	bool FLASH_LED_OFF_OR_NONE_flag = ae_abtain_2or_flag(FLASH_NONE_flag,FLASH_LED_OFF_flag);
 	bool cur_last_enable_flag = (1 == cxt->last_enable);
 	bool cur_last_enable_and_flash_none_flag = ae_abtain_2and_flag(cur_last_enable_flag,FLASH_LED_OFF_OR_NONE_flag);
-
+	cxt->cur_status.adv_param.is_snapshot =  work_info->is_snapshot;
 	if (cur_last_enable_and_flash_none_flag) {
 		if (0 == work_info->is_snapshot) {
 			//cxt->last_enable = 0;
