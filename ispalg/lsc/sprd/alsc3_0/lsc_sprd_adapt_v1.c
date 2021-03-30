@@ -1555,8 +1555,11 @@ static cmr_u32 lsc_get_alg_in_flag(struct lsc_sprd_ctrl_context *cxt, cmr_u32 * 
 		cxt->quik_in_start_frame = -99;
 
 		// set calc_freq
-		if (cxt->frame_count % (cxt->calc_freq * 3) == 1)
+		if(cxt->calc_freq == 1){
 			rtn = 1;
+		}else if (cxt->frame_count % cxt->calc_freq == 1){
+			rtn = 1;
+		}
 
 		// alsc locked
 		if (cxt->alg_locked && cxt->alg_quick_in == 0 && cxt->pre_flash_mode == 0 && cxt->frame_count) {
