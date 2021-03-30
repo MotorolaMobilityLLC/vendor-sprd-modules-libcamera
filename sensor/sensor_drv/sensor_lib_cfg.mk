@@ -16,6 +16,7 @@ PRODUCT_PACKAGES += libsensor_imx351 \
     libsensor_imx363 \
     libsensor_imx258 \
     libsensor_imx586 \
+    libsensor_imx586_2lane \
     libsensor_ov13855 \
     libsensor_ov13b10 \
     libsensor_s5ks3p92 \
