@@ -15771,7 +15771,8 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    isp_cmd_parm.cmd_value = 1;
+    isp_cmd_parm.cmd_value =
+        prev_cxt->prev_param.is_support_fd & prev_cxt->prev_param.is_fd_on;
 
     CMR_LOGD("is_support_fd %ld, is_fd_on %ld",
              prev_cxt->prev_param.is_support_fd, prev_cxt->prev_param.is_fd_on);
@@ -15781,8 +15782,14 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
-
+    //for notify fd status to ae
     CMR_LOGD("fd_handle 0x%p", prev_cxt->fd_handle);
+    if (prev_cxt->fd_handle) {
+        CMR_LOGV("notify ae fd on_off value %d", isp_cmd_parm.cmd_value);
+        ret = handle->ops.isp_ioctl(
+            handle->oem_handle, COM_ISP_SET_AE_SET_FD_ON_OFF, &isp_cmd_parm);
+    }
+    isp_cmd_parm.cmd_value = 1;
     if (prev_cxt->fd_handle) {
         CMR_LOGD("fd inited already");
         ret = handle->ops.isp_ioctl(

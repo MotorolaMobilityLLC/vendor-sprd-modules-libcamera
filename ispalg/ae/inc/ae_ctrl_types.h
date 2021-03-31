@@ -114,6 +114,7 @@ extern "C" {
 		AE_FDR_START,
 		AE_SET_AUTO_FDR,
 		AE_SET_PROF_MODE,
+		AE_SET_FD_ON_OFF,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly

@@ -1494,7 +1494,7 @@ int SprdCamera3MetadataChannel::start(uint32_t frame_number) {
             HAL_LOGV("ANDROID_CONTROL_AF_MODE");
             break;
         case ANDROID_STATISTICS_FACE_DETECT_MODE:
-            HAL_LOGV("FACE DECTION");
+            HAL_LOGD("FACE DECTION %d", statisticsInfo.face_detect_mode);
             sprddefInfo = mSetting->getSPRDDEFTagPTR();
             mSetting->getSTATISTICSTag(&statisticsInfo);
             if (statisticsInfo.face_detect_mode ==

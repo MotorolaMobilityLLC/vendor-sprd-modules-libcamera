@@ -503,6 +503,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_AUTO_FDR,
     COM_ISP_SET_FDR_LOG,
     COM_ISP_GET_HDR_PARAM,
+    COM_ISP_SET_AE_SET_FD_ON_OFF,
     COM_ISP_TYPE_MAX
 };
 

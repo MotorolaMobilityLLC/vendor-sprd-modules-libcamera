@@ -6358,8 +6358,10 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	ae_set_zoom_win_info(cxt);
 	ae_set_bayer_hist(cxt, &cxt->cur_result.adjust_hist_roi);
 
-	memset((cmr_handle) & cxt->cur_status.adv_param.face_data, 0, sizeof(struct ae_face_param));
-
+	if (cxt->fd_on_off == 0) {
+		memset((cmr_handle) & cxt->cur_status.adv_param.face_data, 0, sizeof(struct ae_face_param));
+		ISP_LOGD("clear fd result when fd off");
+	}
 	/*just for debug: reset the status */
 	if (1 == cxt->cur_status.adv_param.touch_roi_flag) {
 		cxt->cur_status.adv_param.touch_roi_flag = 0;
@@ -6863,6 +6865,11 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 
 	case AE_SET_PROF_MODE:
 		rtn = ae_set_prof_mode(cxt, param);
+		break;
+
+	case AE_SET_FD_ON_OFF:
+		cxt->fd_on_off = *(cmr_s32 *)param;
+		ISP_LOGD("fd_on_off %d", cxt->fd_on_off);
 		break;
 
 	default:

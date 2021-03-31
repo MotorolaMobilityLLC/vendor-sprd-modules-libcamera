@@ -4162,6 +4162,21 @@ static cmr_int ispctl_ai_set_fd_status(cmr_handle isp_alg_handle, void *param_pt
 	return ret;
 }
 
+static cmr_int ispctl_ae_set_fd_status(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+
+	if (NULL == param_ptr) {
+		return ISP_PARAM_NULL;
+	}
+
+	if (cxt->ops.ae_ops.ioctrl)
+		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_ON_OFF, (void *)param_ptr, NULL);
+
+	return ret;
+}
+
 static cmr_int ispctl_get_fb_pre_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -5529,6 +5544,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AI_GET_IMG_FLAG, ispctl_ai_get_img_flag},
 	{ISP_CTRL_AI_GET_STATUS, ispctl_ai_get_status},
 	{ISP_CTRL_AI_SET_FD_STATUS,ispctl_ai_set_fd_status},
+	{ISP_CTRL_AE_SET_FD_STATUS,ispctl_ae_set_fd_status},
 
 	{ISP_CTRL_SET_DBG_TAG, ispctl_set_dbg_tag},
 	{ISP_CTRL_SET_FDR_DBG_DATA, ispctl_set_fdr_dbgdat},

@@ -483,7 +483,7 @@ extern "C" {
 		hdr_callback_t hdr_callback_backup;
 
 		cmr_u32 end_id;
-
+		cmr_s32 fd_on_off;
 	};
 #ifdef __cplusplus
 }

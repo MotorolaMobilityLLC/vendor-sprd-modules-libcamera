@@ -594,10 +594,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
                             cmr_u32 sum);
     int allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
                              cmr_uint *vir_addr, cmr_s32 *fd);
-    int allocCameraMemForMFNR(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
-                             cmr_uint *vir_addr, cmr_s32 *fd);
-    int freeCameraMemForMFNR(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
-                            cmr_u32 sum);
     int Callback_ZslFree(cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *fd,
                          cmr_u32 sum);
     int Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum, cmr_uint *phy_addr,
