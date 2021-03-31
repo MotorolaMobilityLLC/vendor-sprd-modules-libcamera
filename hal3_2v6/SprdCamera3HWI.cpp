@@ -164,6 +164,7 @@ SprdCamera3HWI::SprdCamera3HWI(int cameraId)
 #else
     useManualSesnor = false;
 #endif
+    mMultiCamHighResMode = false;
     HAL_LOGI(":hal3: Constructor X");
 }
 
@@ -517,7 +518,7 @@ int SprdCamera3HWI::resetVariablesToDefault() {
     mPictureRequest = 0;
 
     mOEMIf->initialize();
-
+    setMultiCamHighResMode(false);
     return ret;
 }
 
@@ -834,9 +835,9 @@ int SprdCamera3HWI::configureStreams(
             }
         }*/
         HAL_LOGD(":hal3: stream %d: stream_type=%d, chn_type=%d, w=%d, h=%d, "
-                 "format=%d usage=0x%x",
+                 "format=%d usage=0x%x, %p",
                  i, stream_type, channel_type, newStream->width,
-                 newStream->height, newStream->format,newStream->usage);
+                 newStream->height, newStream->format,newStream->usage, newStream);
 
         switch (channel_type) {
         case CAMERA_CHANNEL_TYPE_REGULAR: {
@@ -1854,7 +1855,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 
         HAL_LOGD("input->buffer = %p frameNumber = %d, format = %d",
                  input->buffer, frameNumber, stream->format);
-        if (stream->format == HAL_PIXEL_FORMAT_BLOB) {
+        if (stream->format == HAL_PIXEL_FORMAT_BLOB || mMultiCamHighResMode) {
             mPictureRequest = true;
             mOEMIf->setCaptureReprocessMode(true, stream->width,
                                             stream->height);
@@ -2780,6 +2781,13 @@ void SprdCamera3HWI::getOnlineBuffer(void *cali_info) {
 
 int SprdCamera3HWI::ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type) {
     return mOEMIf->ProcessAlgoNr(zsl_frame,sw_algorithm_type);
+}
+
+void SprdCamera3HWI::setMultiCamHighResMode(bool high_res) {
+    mMultiCamHighResMode = high_res;
+    HAL_LOGD("mMultiCamHighResMode %d", high_res);
+    mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_MULTICAM_HIGHRES_MODE, &mMultiCamHighResMode,
+                          NULL);
 }
 
 

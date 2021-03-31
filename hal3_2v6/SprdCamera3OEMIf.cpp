@@ -1824,6 +1824,10 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
     case CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA:{
         }
         break;
+    case CAMERA_IOCTRL_SET_MULTICAM_HIGHRES_MODE:{
+            mMultiCamHighResMode = *(bool *)param1;
+            break;
+        }
     } /* switch */
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
@@ -4616,8 +4620,8 @@ int SprdCamera3OEMIf::PreviewFrameZslStream(struct camera_frame_type *frame,
     if (PREVIEW_ZSL_FRAME == frame->type) {
         ATRACE_BEGIN("zsl_frame");
 
-        HAL_LOGD("zsl buff fd=0x%x, frame_id %d frame type=%ld", frame->fd,frame->frame_num,
-                 frame->type);
+        HAL_LOGD("zsl buff fd=0x%x, frame_id %d frame type=%ld, size %dx%d", frame->fd,frame->frame_num,
+                 frame->type, frame->width, frame->height);
         pushZslFrame(frame);
 
         if (getZSLQueueFrameNum() > mZslMaxFrameNum) {
@@ -5005,6 +5009,13 @@ bool SprdCamera3OEMIf::returnYuvCallbackFrame(struct camera_frame_type *frame) {
     if (addr_vir == 0 || ion_fd == 0) {
         HAL_LOGW("addr_vir=%ld, ion_fd=0x%x", addr_vir, (cmr_u32)ion_fd);
         goto exit;
+    }
+
+    HAL_LOGD("frame %dx%d format %d, callback %dx%d; fd=0x%x, y_addr=0x%x", frame->width, frame->height,
+        frame->format, mCallbackWidth, mCallbackHeight, frame->fd, frame->y_vir_addr);
+    if (mMultiCamHighResMode) {
+        frame->width /= 2;
+        frame->height /= 2;
     }
 
     if ((int)frame->width == mCallbackWidth &&
@@ -8791,7 +8802,7 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
     SPRD_DEF_Tag *sprddefInfo;
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
     int width = mCaptureWidth, height = mCaptureHeight;
-    if (sprddefInfo->high_resolution_mode) {
+    if (sprddefInfo->high_resolution_mode || mMultiCamHighResMode) {
         width = mCaptureWidth / 2;
         height = mCaptureHeight / 2;
     }
@@ -8831,8 +8842,9 @@ int SprdCamera3OEMIf::allocCameraMemForGpu(cmr_u32 size, cmr_u32 sum,
             mZslGraphicsHandle[i].graphicBuffer_handle = graphicBuffer.get();
             mZslGraphicsHandle[i].native_handle = nativeHandle;
             mZslGraphicsHandle[i].buf_size = width * height;
-            HAL_LOGD("graphicBuffer_handle 0x%p",
-                     mZslGraphicsHandle[i].graphicBuffer_handle);
+            HAL_LOGD("graphicBuffer_handle 0x%p, fd=0x%x, addr=0x%x",
+                     mZslGraphicsHandle[i].graphicBuffer_handle, mZslHeapArray[i]->fd,
+                     (cmr_uint)mZslHeapArray[i]->data);
         }
         *phy_addr++ = (cmr_uint)mZslHeapArray[i]->phys_addr;
         *vir_addr++ = (cmr_uint)mZslHeapArray[i]->data;
@@ -11403,9 +11415,9 @@ void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
             HAL_LOGD("mFlush=%d", mFlush);
             goto exit;
         }
-        HAL_LOGD("pop frame fd %d frame_id %d, addr %x mZslSnapshotTime %lld monoboottime %lld\n",
-            zsl_frame.fd, zsl_frame.frame_num, zsl_frame.y_vir_addr,
-            mZslSnapshotTime, zsl_frame.monoboottime);
+        HAL_LOGD("pop frame fd 0x%x frame_id %d, addr %x mZslSnapshotTime %lld, "
+            "monoboottime %lld, %ux%u", zsl_frame.fd, zsl_frame.frame_num, zsl_frame.y_vir_addr,
+            mZslSnapshotTime, zsl_frame.monoboottime, zsl_frame.width, zsl_frame.height);
 
         /* for sharkle auto3dnr skip frame*/
         if (mZslSnapshotTime > zsl_frame.monoboottime &&

@@ -993,6 +993,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int lightportrait_type;
     uint32_t mMultiCameraId;
     bool EisErr;
+    bool mMultiCamHighResMode;
 };
 
 }; // namespace sprdcamera

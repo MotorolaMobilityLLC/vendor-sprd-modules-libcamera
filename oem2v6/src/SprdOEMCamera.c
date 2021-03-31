@@ -886,6 +886,7 @@ cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle,
                                           cmr_u32 camera_id, cmr_u32 width,
                                           cmr_u32 height) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    CMR_LOGD("camera_local_set_cap_size");
     ret = camera_local_set_cap_size(camera_handle, is_reprocessing, camera_id,
                                     width, height);
     return ret;
@@ -1235,6 +1236,10 @@ static cmr_int ioctrl_write_calibration_otp(cmr_handle handle, void *param) {
         return camera_write_calibration_otp(handle ,(struct cal_otp_info *)param);
 }
 
+static cmr_int ioctrl_set_multicam_highres_mode(cmr_handle handle, void *param) {
+        return camera_set_multicam_highres_mode(handle , *(bool *)param);
+}
+
 const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_MULTI_CAMERAMODE]       = ioctrl_multi_cameramode,
     [CAMERA_IOCTRL_GET_SENSOR_LUMA]            = ioctrl_local_get_cover,
@@ -1296,6 +1301,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_GET_FDR_TUNING_FLAG]      = ioctrl_get_fdr_tuning_flag,
     [CAMERA_IOCTRL_SET_MOVE_INFO]              = ioctrl_set_eis_move_info,
     [CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA]	= ioctrl_write_calibration_otp,
+    [CAMERA_IOCTRL_SET_MULTICAM_HIGHRES_MODE] = ioctrl_set_multicam_highres_mode,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {

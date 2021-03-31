@@ -1271,6 +1271,10 @@ cmr_int snp_start_scale(cmr_handle snp_handle, void *data) {
 
     src = chn_param_ptr->scale[index].src_img;
     dst = chn_param_ptr->scale[index].dst_img;
+    CMR_LOGD("src %dx%d, fd=0x%x, vir=0x%x", src.size.width, src.size.height,
+        src.fd, src.addr_vir.addr_y);
+    CMR_LOGD("dst %dx%d, fd=0x%x, vir=0x%x", dst.size.width, dst.size.height,
+        dst.fd, dst.addr_vir.addr_y);
     mean.slice_height = chn_param_ptr->scale[index].slice_height;
     mean.is_sync = 0;
     src.data_end = snp_cxt->req_param.post_proc_setting.data_endian;
@@ -2757,10 +2761,8 @@ cmr_int snp_set_ipm_param(cmr_handle snp_handle) {
     }
     ipm_ptr = &chn_param_ptr->ipm[0];
 
-    CMR_LOGD("src addr 0x%lx 0x%lx ", ipm_ptr->src.addr_phy.addr_y,
-             ipm_ptr->src.addr_phy.addr_u);
-    CMR_LOGD("src size %d %d ", ipm_ptr->src.size.width,
-             ipm_ptr->src.size.height);
+    CMR_LOGD("src addr 0x%lx 0x%lx fd=0x%x", ipm_ptr->src.addr_phy.addr_y,
+             ipm_ptr->src.addr_phy.addr_u, ipm_ptr->src.fd);
     return ret;
 }
 
@@ -3029,9 +3031,9 @@ cmr_int snp_set_jpeg_enc_param(cmr_handle snp_handle) {
         jpeg_ptr++;
     }
     jpeg_ptr = &chn_param_ptr->jpeg_in[0];
-    CMR_LOGD("src addr 0x%lx 0x%lx dst 0x%lx, fd 0x%x",
+    CMR_LOGD("src addr 0x%lx 0x%lx 0x%lx dst 0x%lx, fd 0x%x",
              jpeg_ptr->src.addr_phy.addr_y, jpeg_ptr->src.addr_phy.addr_u,
-             jpeg_ptr->dst.addr_phy.addr_y, jpeg_ptr->dst.fd);
+             jpeg_ptr->src.fd, jpeg_ptr->dst.addr_phy.addr_y, jpeg_ptr->dst.fd);
     CMR_LOGD("src size %d %d out size %d %d", jpeg_ptr->src.size.width,
              jpeg_ptr->src.size.height, jpeg_ptr->dst.size.width,
              jpeg_ptr->dst.size.height);
@@ -4430,7 +4432,8 @@ cmr_int snp_post_proc_for_yuv(cmr_handle snp_handle, void *data) {
         }
 
         cxt->cur_frame_info = *chn_data_ptr;
-        if (chn_param_ptr->is_scaling) {
+        if (chn_param_ptr->is_scaling &&
+                !(cxt->req_param.is_yuv_callback_mode && cam_cxt->multicam_highres_mode)) {
             ret = snp_start_scale(snp_handle, data);
             if (ret) {
                 CMR_LOGE("failed to start scale %ld", ret);
@@ -5748,5 +5751,31 @@ static cmr_int camera_start_refocus(struct camera_context *cxt,
     }
     camera_take_snapshot_step(CMR_STEP_REFOCUS_E);
     CMR_LOGV("X");
+    return ret;
+}
+
+cmr_int cmr_snp_update_reprocess_param(cmr_handle snp_handle,
+                                       struct snapshot_param *param_ptr, struct img_frm *img_frame) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct snp_context *cxt = (struct snp_context *)snp_handle;
+    struct snapshot_param *req_param_ptr = &cxt->req_param;
+    struct snp_channel_param *chn_param_ptr = &cxt->chn_param;
+    struct snp_ipm_param *ipm_ptr;
+    CMR_LOGD("E");
+
+    param_ptr->post_proc_setting.is_need_scaling = 1;
+    ret = snp_set_post_proc_param(snp_handle, param_ptr);
+    if (ret) {
+        CMR_LOGE("failed to set param");
+        goto exit;
+    }
+    ipm_ptr = &chn_param_ptr->ipm[0];
+    ipm_ptr->src = *img_frame;
+    chn_param_ptr->scale[0].src_img = *img_frame;
+    snp_set_request(cxt, TAKE_PICTURE_NEEDED);
+    snp_set_status(cxt, IDLE);
+
+exit:
+    CMR_LOGD("X. ret = %ld", ret);
     return ret;
 }

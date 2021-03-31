@@ -124,6 +124,7 @@ class SprdCamera3HWI {
     void setMultiAppRatio(float app_ratio);
     static void dumpMemoryAddresses(size_t limit);
     int ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
+    void setMultiCamHighResMode(bool high_res);
 
   private:
     camera3_stream_buffer_t *result_buffers;
@@ -252,6 +253,7 @@ class SprdCamera3HWI {
     bool useManualSesnor;
 
     cam3_stream_configuration_t mStreamConfiguration;
+    bool mMultiCamHighResMode;
 };
 
 }; // namespace sprdcamera

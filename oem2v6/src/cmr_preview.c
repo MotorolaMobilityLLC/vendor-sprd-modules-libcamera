@@ -6933,8 +6933,8 @@ cmr_int prev_get_sn_capture_mode(struct prev_handle *handle, cmr_u32 camera_id,
             }
         }
     } else {
-        CMR_LOGD("search_height = %d, is_high_res_mode = %d, ambient_highlight = %d",
-            search_height, cxt->is_high_res_mode, cxt->ambient_highlight);
+        CMR_LOGD("search_width = %d, search_height = %d, is_high_res_mode = %d, ambient_highlight = %d",
+            search_width, search_height, cxt->is_high_res_mode, cxt->ambient_highlight);
         if (cxt->is_high_res_mode == 1 && cxt->ambient_highlight == 0){
             search_height = search_height>> 1;
             search_width = search_width >> 1;
@@ -7652,9 +7652,9 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
         frame_type->format = info->fmt;
         frame_type->frame_num = info->frame_real_id;
         frame_type->type = PREVIEW_ZSL_FRAME;
-        CMR_LOGD("timestamp=%" PRId64 ", width=%d, height=%d, fd=0x%x, frame_id %d addr_y %p",
+        CMR_LOGD("timestamp=%" PRId64 ", width=%d, height=%d, fd=0x%x, frame_id %d addr_y %p, frm_id %d",
                  frame_type->timestamp, frame_type->width, frame_type->height,
-                 frame_type->fd, frame_type->frame_num, prev_cxt->cap_zsl_frm[frm_id].addr_vir.addr_y);
+                 frame_type->fd, frame_type->frame_num, prev_cxt->cap_zsl_frm[frm_id].addr_vir.addr_y, frm_id);
 
         char value[PROPERTY_VALUE_MAX];
         property_get("debug.camera.zsl.dump.count", value, "null");
@@ -13501,13 +13501,14 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
      * scale up after post process
      * so cap_org_size used as the isp hardware output size, post process size
      */
-    if (cxt->is_high_res_mode == 1 && cxt->zsl_enabled == 1) {
+    if ((cxt->is_high_res_mode == 1 && cxt->zsl_enabled == 1) || cxt->multicam_highres_mode) {
         /* for set to kernel by output_size(IOCTL),
          * and set this size to cap_org_size below
          */
         img_cap->dst_img_size.width /= 2;
         img_cap->dst_img_size.height /= 2;
     }
+    CMR_LOGD("dst_img_size %ux%u", img_cap->dst_img_size.width, img_cap->dst_img_size.height);
 
 /*L5 pro front picture size from 4M to 16M*/
 #ifdef CONFIG_SUPPROT_FRONT_4IN1_DATA_INTERPOLATION
@@ -14508,6 +14509,10 @@ cmr_int prev_set_zsl_buffer(struct prev_handle *handle, cmr_u32 camera_id,
         return ret;
     }
     valid_num = prev_cxt->cap_zsl_mem_valid_num;
+    if (cxt->multicam_highres_mode) {
+        prev_cxt->cap_org_size.width = prev_cxt->prev_param.picture_size.width / 2;
+        prev_cxt->cap_org_size.height = prev_cxt->prev_param.picture_size.height / 2;
+    }
     if (ZOOM_POST_PROCESS == zoom_post_proc) {
         width = prev_cxt->cap_sn_size.width;
         height = prev_cxt->cap_sn_size.height;
@@ -16353,8 +16358,14 @@ cmr_int prev_ultra_wide_open(struct prev_handle *handle, cmr_u32 camera_id) {
         in_param.binning_factor =
             cxt->sn_cxt.sensor_info.mode_info[prev_cxt->cap_mode]
                 .binning_factor;
-        in_param.frame_size.width = prev_cxt->actual_pic_size.width;
-        in_param.frame_size.height = prev_cxt->actual_pic_size.height;
+        if (cxt->multicam_highres_mode) {
+            in_param.frame_size.width = prev_cxt->actual_pic_size.width / 2;
+            in_param.frame_size.height = prev_cxt->actual_pic_size.height / 2;
+        } else {
+            in_param.frame_size.width = prev_cxt->actual_pic_size.width;
+            in_param.frame_size.height = prev_cxt->actual_pic_size.height;
+        }
+        CMR_LOGD("warp zsl open %dx%d", in_param.frame_size.width, in_param.frame_size.height);
         in_param.is_cap = true;
         ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_ULTRA_WIDE, &in_param,
                            &out_param, &prev_cxt->zsl_ultra_wide_handle);

@@ -541,6 +541,7 @@ struct camera_context {
     jpg_encode_status jpg_encode;
     cmr_u8 nightscepro_flag;
     cmr_uint auto3dnr_flag;
+    bool multicam_highres_mode;
 };
 
 struct prev_ai_scene_info {
@@ -821,6 +822,7 @@ cmr_int camera_set_af_params(cmr_handle oem_handle, void *param);
 void camera_local_set_exif_iso_value(cmr_handle oem_handle, cmr_u32 iso_value);
 void camera_local_set_exif_exp_time(cmr_handle oem_handle, cmr_s64 exp_time);
 cmr_s64 camera_local_get_shutter_skew(cmr_handle oem_handle);
+cmr_int camera_set_multicam_highres_mode(cmr_handle oem_handle , bool param);
 
 #ifdef __cplusplus
 }

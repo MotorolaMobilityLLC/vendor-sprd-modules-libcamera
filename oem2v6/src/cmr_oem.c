@@ -5839,8 +5839,14 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
     }
 
     if (1 == camera_get_hdr_flag(cxt)) {
-        in_param.frame_size.width = cxt->snp_cxt.request_size.width;
-        in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        if (cxt->multicam_highres_mode) {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width / 2;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height / 2;
+        } else {
+            in_param.frame_size.width = cxt->snp_cxt.request_size.width;
+            in_param.frame_size.height = cxt->snp_cxt.request_size.height;
+        }
+        CMR_LOGD("hdr %d, %d", in_param.frame_size.width, in_param.frame_size.height);
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.adgain_valid_frame_num =
@@ -5861,14 +5867,14 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
          camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW ||
          camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NIGHT_DNS)) {
         struct isp_adgain_exp_info adgain_exp_info;
-        if (cxt->is_high_res_mode) {
+        if (cxt->is_high_res_mode || cxt->multicam_highres_mode) {
             in_param.frame_size.width = cxt->snp_cxt.request_size.width / 2;
             in_param.frame_size.height = cxt->snp_cxt.request_size.height / 2;
         } else {
             in_param.frame_size.width = cxt->snp_cxt.request_size.width;
             in_param.frame_size.height = cxt->snp_cxt.request_size.height;
         }
-        CMR_LOGD("%d, %d", in_param.frame_size.width, in_param.frame_size.height);
+        CMR_LOGD("3dnr %d, %d", in_param.frame_size.width, in_param.frame_size.height);
         in_param.frame_rect.width = in_param.frame_size.width;
         in_param.frame_rect.height = in_param.frame_size.height;
         in_param.reg_cb = camera_ipm_cb;
@@ -13257,6 +13263,11 @@ cmr_int camera_local_set_cap_size(cmr_handle oem_handle,
     struct preview_context *prv_cxt = &cxt->prev_cxt;
     struct snapshot_context *snp_cxt = &cxt->snp_cxt;
 
+    if (cxt->multicam_highres_mode) {
+        width = width * 2;
+        height = height * 2;
+    }
+
     cmr_preview_set_cap_size(prv_cxt->preview_handle, is_reprocessing,
                              camera_id, width, height);
     snp_cxt->request_size.width = width;
@@ -15884,6 +15895,13 @@ cmr_int camera_write_calibration_otp(cmr_handle oem_handle, struct cal_otp_info 
     return ret;
 }
 
+cmr_int camera_set_multicam_highres_mode(cmr_handle oem_handle , bool param) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cxt->multicam_highres_mode = param;
+    CMR_LOGD("multicam_highres_mode %d", cxt->multicam_highres_mode);
+    return CMR_CAMERA_SUCCESS;
+}
+
 cmr_int camera_local_cap_state(cmr_handle oem_handle, bool *flag) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -16147,6 +16165,54 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     return ret;
 }
 
+cmr_int camera_set_multicam_reprocess_buffer(cmr_handle oem_handle,
+                                             struct snapshot_param *param_ptr,
+                                             cmr_uint src_phy_addr,
+                                             cmr_uint src_vir_addr,
+                                             cmr_s32 fd, cmr_u32 width, cmr_u32 height) {
+    ATRACE_BEGIN(__FUNCTION__);
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    cmr_u32 buffer_size = 0;
+    struct img_frm img_frame;
+
+    CMR_LOGD("E ");
+    if (!oem_handle || !src_vir_addr) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+
+    buffer_size = width * height;
+    memset(&img_frame, 0, sizeof(struct img_frm));
+    img_frame.fmt = cxt->snp_cxt.cur_chn_data.fmt;
+    img_frame.buf_size = buffer_size * 3 / 2;
+    img_frame.rect.start_x = 0;
+    img_frame.rect.start_y = 0;
+    img_frame.rect.width = width;
+    img_frame.rect.height = height;
+    img_frame.size.width = width;
+    img_frame.size.height = height;
+    img_frame.addr_phy.addr_y = src_phy_addr;
+    img_frame.addr_phy.addr_u = src_phy_addr + buffer_size;
+    img_frame.addr_phy.addr_v = 0;
+    img_frame.addr_vir.addr_y = src_vir_addr;
+    img_frame.addr_vir.addr_u = src_vir_addr + buffer_size;
+    img_frame.addr_vir.addr_v = 0;
+    img_frame.data_end.y_endian = 1;
+    img_frame.data_end.uv_endian = 2;
+    img_frame.fd = fd;
+    CMR_LOGD("multicam post proc src vir addr[0x%lx, 0x%lx], fd 0x%x",
+                 img_frame.addr_vir.addr_y, img_frame.addr_vir.addr_u,
+                 img_frame.fd);
+    ret = cmr_snp_update_reprocess_param(cxt->snp_cxt.snapshot_handle, param_ptr,
+                                       &img_frame);
+exit:
+    CMR_LOGD("X. ret = %ld", ret);
+    ATRACE_END();
+    return ret;
+}
+
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode cap_mode,
                                             cmr_uint yaddr, cmr_uint yaddr_vir,
@@ -16166,6 +16232,8 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     cmr_u32 sec = 0;
     cmr_u32 usec = 0;
     cmr_s32 sm_val = 0;
+    cmr_u32 width = cxt->snp_cxt.request_size.width;
+    cmr_u32 height = cxt->snp_cxt.request_size.height;
 
     if (!oem_handle) {
         CMR_LOGE("error handle");
@@ -16185,12 +16253,17 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     ret = cmr_grab_get_cap_time(cxt->grab_cxt.grab_handle, &sec, &usec);
     sem_post(&cxt->access_sm);
 
+    if (cxt->multicam_highres_mode) {
+        width /= 2;
+        height /= 2;
+    }
+
     cmr_bzero(frm_data, sizeof(struct frm_info));
     frm_data->channel_id = cxt->snp_cxt.channel_id;
     frm_data->frame_id = CMR_CAP0_ID_BASE;
     frm_data->frame_real_id = 0;
     frm_data->base = CMR_CAP0_ID_BASE;
-    frm_data->height = cxt->snp_cxt.request_size.height;
+    frm_data->height = height;
     frm_data->base = CMR_CAP0_ID_BASE;
     frm_data->fmt = CAM_IMG_FMT_YUV420_NV21;
     frm_data->yaddr = yaddr;
@@ -16199,8 +16272,8 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     frm_data->sec = sec;
     frm_data->usec = usec;
 
-    buffer_size =
-        cxt->snp_cxt.request_size.width * cxt->snp_cxt.request_size.height;
+    CMR_LOGD("%dx%d, fd=0x%x, vir=0x%x", width, height, fd, yaddr_vir);
+    buffer_size = width * height;
     frm_data->uaddr = yaddr + buffer_size;
     frm_data->vaddr = 0;
     frm_data->uaddr_vir = yaddr_vir + buffer_size;
@@ -16230,7 +16303,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     if (snp_param.channel_id == 0 || snp_param.channel_id >= GRAB_CHANNEL_MAX) {
         snp_param.channel_id = frm_data->channel_id;
     }
-    CMR_LOGD("chn id: %d ,picture: width:%d, height:%d", snp_param.channel_id,
+    CMR_LOGD("chn id: %d ,actual_snp_size: width:%d, height:%d", snp_param.channel_id,
              cxt->snp_cxt.post_proc_setting.actual_snp_size.width,
              cxt->snp_cxt.post_proc_setting.actual_snp_size.height);
 
@@ -16248,24 +16321,35 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         frm_data->vaddr;
     snp_param.post_proc_setting.chn_out_frm[0].fd = frm_data->fd;
     snp_param.post_proc_setting.chn_out_frm[0].fmt = frm_data->fmt;
+    snp_param.post_proc_setting.chn_out_frm[0].size.width = width;
+    snp_param.post_proc_setting.chn_out_frm[0].size.height = height;
 
-    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_y =
+    if(!cxt->multicam_highres_mode) {
+      snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_y =
         frm_data->yaddr_vir;
-    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_u =
+      snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_u =
         frm_data->uaddr_vir;
-    snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_v =
+      snp_param.post_proc_setting.mem[0].target_yuv.addr_vir.addr_v =
         frm_data->vaddr_vir;
-    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_y =
+      snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_y =
         frm_data->yaddr;
-    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_u =
+      snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_u =
         frm_data->uaddr;
-    snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_v =
+      snp_param.post_proc_setting.mem[0].target_yuv.addr_phy.addr_v =
         frm_data->vaddr;
-    snp_param.post_proc_setting.mem[0].target_yuv.fd = frm_data->fd;
-    snp_param.post_proc_setting.mem[0].target_yuv.fmt = frm_data->fmt;
+      snp_param.post_proc_setting.mem[0].target_yuv.fd = frm_data->fd;
+      snp_param.post_proc_setting.mem[0].target_yuv.fmt = frm_data->fmt;
+      snp_param.post_proc_setting.mem[0].target_yuv.size.width = width;
+      snp_param.post_proc_setting.mem[0].target_yuv.size.height = height;
+    }
     camera_set_snp_req((cmr_handle)cxt, TAKE_PICTURE_NEEDED);
 
-    ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
+    if (!cxt->multicam_highres_mode) {
+        ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
+    } else {
+        ret = camera_set_multicam_reprocess_buffer(oem_handle, &snp_param,
+           yaddr, yaddr_vir, fd, width, height);
+    }
 
     ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                     SNAPSHOT_EVT_POSTPROC_START, frm_data);
