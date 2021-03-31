@@ -111,6 +111,14 @@ struct cam_debug_info {
 	FILE *fp_info;
 };
 
+struct mw_prop_ctrl {
+	int is_raw_capture;
+	int is_tool_eb;
+	int dbg_hwsim;
+	int dump_lsc;
+	int dump_aem;
+};
+
 struct commn_info {
 	cmr_s32 isp_pm_mode[PARAM_SET_MAX];
 	cmr_u32 multi_nr_flag;
@@ -460,6 +468,7 @@ struct isp_alg_fw_context {
 	cmr_u32 fix_highlight; /* 0: not fix, 1: highlight, 2:lowlight */
 
 	/* for debug */
+	struct mw_prop_ctrl prop_ctrl;
 	cmr_u32 is_simulator;
 	cmr_u32 save_data;
 	struct cam_debug_info dbg_cxt;
@@ -1736,7 +1745,6 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 	struct smart_block_result *block_result = NULL;
 	struct isp_pm_ioctl_input io_pm_input = { NULL, 0 };
 	struct isp_pm_param_data pm_param;
-	char value[PROPERTY_VALUE_MAX];
 
 	UNUSED(param1);
 
@@ -1748,7 +1756,8 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 
 			if (ISP_SMART_LNC == block_result->smart_id){
 				if (cxt->ops.lsc_ops.ioctrl)
-					cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_SET_SMART_RESULT, (void *)block_result->component[0].fix_data, NULL);	
+					cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, ALSC_SET_SMART_RESULT,
+						(void *)block_result->component[0].fix_data, NULL);
 			}
 
 			if (block_result->update == 0)
@@ -1809,12 +1818,9 @@ static cmr_int ispalg_smart_set_cb(cmr_handle isp_alg_handle, cmr_int type, void
 			gamma_cur,
 			sizeof(struct sensor_rgbgamma_curve));
 
-		if (isp_video_get_simulation_flag()) {
-			property_get("persist.vendor.cam.debug.simulation", value, "false");
-			if (!strcmp(value, "true")) {
-				ISP_LOGI("vvv:ISP_SMART_SET_GAMMA_CUR\n");
-				ispalg_dump_rgbgamma_curve(gamma_cur);
-			}
+		if (isp_video_get_simulation_flag() && cxt->prop_ctrl.dbg_hwsim) {
+			ISP_LOGI("vvv:ISP_SMART_SET_GAMMA_CUR\n");
+			ispalg_dump_rgbgamma_curve(gamma_cur);
 		}
 
 		if (cxt->fdr_cxt.fdr_start)
@@ -2027,7 +2033,7 @@ static cmr_int ispalg_ai_pro_param_compatible(cmr_handle isp_alg_handle)
 			cxt->is_ai_scene_pro = !mode_common_ptr->block_header[i].bypass;
 		ISP_LOGV("cxt->is_ai_scene_pro = %d, blk_num = %d, i = %d", cxt->is_ai_scene_pro, blk_num, i);
 	}
-	ISP_LOGD("cxt->is_ai_scene_pro = %d", cxt->is_ai_scene_pro);
+
 	if (!cxt->is_ai_scene_pro ||
 		((ai_sta != AI_STATUS_PROCESSING) && !cxt->ai_scene_flag))
 		return ret;
@@ -2271,11 +2277,9 @@ static cmr_s32 ispalg_cfg_param(cmr_handle isp_alg_handle, cmr_u32 cfg_type)
 	struct isp_pm_param_data *param_data;
 	struct isp_u_blocks_info sub_block_info;
 	enum isp_pm_cmd cmd = 0;
-	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	int dump_lsc;
 
-	property_get("debug.vendor.cam.pm.lsc.dump", value, "0");
-	dump_lsc = !!atoi(value);
+	dump_lsc = cxt->prop_ctrl.dump_lsc;
 
 	pthread_mutex_lock(&cxt->pm_getting_lock);
 
@@ -2508,7 +2512,6 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	struct isp_statis_info *statis_info = (struct isp_statis_info *)data;
 	struct dcam_dev_aem_win *ae_win;
 	struct aem_win_info win;
-	char value[PROPERTY_VALUE_MAX] = { 0x00 };
 	int dump_aem;
 
 	cmr_u64 *uaddr;
@@ -2681,8 +2684,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 				ae_stat_ptr->r_info[i], ae_stat_ptr->g_info[i], ae_stat_ptr->b_info[i]);
 	}
 
-	property_get("debug.vendor.cam.aem_stats.dump", value, "0");
-	dump_aem = !!atoi(value);
+	dump_aem = cxt->prop_ctrl.dump_aem;
 	if (dump_aem) {
 		dump_aem_pic(cxt, statis_info, blk_size,
 			ae_win->blk_num_x, ae_win->blk_num_y,
@@ -4122,9 +4124,6 @@ exit:
 cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 {
 	cmr_int ret = ISP_SUCCESS;
-	cmr_u32 is_raw_capture = 0;
-	cmr_u8 tool_eb = 0;
-	char value[PROPERTY_VALUE_MAX];
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)p_data;
 	CMR_MSG_INIT(message1);
 
@@ -4164,10 +4163,11 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 		ret = ispalg_ai_process((cmr_handle)cxt);
 		if (cxt->takepicture_mode == CAMERA_ISP_SIMULATION_MODE) {
 			ret = ispalg_handle_sensor_sof((cmr_handle) cxt);
+			ISP_LOGD("takepicture_mode[%d] camera_id[%d] cxt[%p]\n",
+				cxt->takepicture_mode,
+				(unsigned int)cxt->camera_id,cxt);
 		}
-		ISP_LOGE("takepicture_mode[%d] camera_id[%d] cxt[%p]\n",
-			cxt->takepicture_mode,
-			(unsigned int)cxt->camera_id,cxt);
+
 		break;
 	}
 	case ISP_EVT_SOF: {
@@ -4184,10 +4184,7 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 			/* workaround for raw capture with flash
 			  * because no statis data for raw, force AE process running to return flash messege to HAL
 			  */
-			property_get("persist.vendor.cam.raw.mode", value, "jpeg");
-			if (!strcmp(value, "raw"))
-				is_raw_capture = 1;
-			if (is_raw_capture == 0)
+			if (cxt->prop_ctrl.is_raw_capture == 0)
 				break;
 			ISP_LOGD("force AE process for raw capture\n");
 			cxt->aem_is_update = 1;
@@ -4195,13 +4192,9 @@ cmr_int ispalg_aethread_proc(struct cmr_msg *message, void *p_data)
 			break;
 		}
 
-		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
-		if (!strcmp(value, "true"))
-			tool_eb = 1;
-
 		/* 4in1 full size capture(non-zsl), awb don't need work */
 		if (((cxt->is_high_res_mode == 1) && (cxt->work_mode == 1) && (cxt->zsl_flag == 0))
-			|| ((tool_eb == 1) && (cxt->work_mode == 1))) {
+			|| ((cxt->prop_ctrl.is_tool_eb == 1) && (cxt->work_mode == 1))) {
 			cxt->aem_is_update = 1;
 			ret = ispalg_ae_process((cmr_handle)cxt);
 			ISP_LOGD("high res high light capture.\n");
@@ -5930,6 +5923,39 @@ static cmr_u32 ispalg_init_async_done(struct fw_init_local *init_cxt)
 	return 0;
 }
 
+static void get_prop_ctrl(struct isp_alg_fw_context *cxt)
+{
+	char value[PROPERTY_VALUE_MAX] = { 0x00 };
+
+	property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+	if (!strcmp(value, "raw"))
+		cxt->prop_ctrl.is_raw_capture = 1;
+	else
+		cxt->prop_ctrl.is_raw_capture = 0;
+
+	property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+	if (!strcmp(value, "true"))
+		cxt->prop_ctrl.is_tool_eb = 1;
+	else
+		cxt->prop_ctrl.is_tool_eb = 0;
+
+	property_get("persist.vendor.cam.debug.simulation", value, "false");
+	if (!strcmp(value, "true"))
+		cxt->prop_ctrl.dbg_hwsim = 1;
+	else
+		cxt->prop_ctrl.dbg_hwsim = 0;
+
+	property_get("debug.vendor.cam.pm.lsc.dump", value, "0");
+	cxt->prop_ctrl.dump_lsc = !!atoi(value);
+
+	property_get("debug.vendor.cam.aem_stats.dump", value, "0");
+	cxt->prop_ctrl.dump_aem = !!atoi(value);
+
+	ISP_LOGI("is_raw_cap %d, tool_eb %d, dbg_hwsim %d, dump_lsc %d, dump_aem %d\n",
+		cxt->prop_ctrl.is_raw_capture, cxt->prop_ctrl.is_tool_eb,
+		cxt->prop_ctrl.dbg_hwsim, cxt->prop_ctrl.dump_lsc, cxt->prop_ctrl.dump_aem);
+}
+
 static void * isp_alg_fw_init_async(void *data)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -6024,6 +6050,7 @@ static void * isp_alg_fw_init_async(void *data)
 	ispalg_init_async_done(init_cxt);
 
 	ISP_LOGD("cam%ld wait isp alg done\n", cxt->camera_id);
+	get_prop_ctrl(cxt);
 
 	cxt->init_status = FW_INIT_DONE;
 	ISP_LOGI("cam%ld done, alg enable %d, init %d\n", cxt->camera_id, cxt->alg_enable, cxt->init_status);
@@ -7033,7 +7060,6 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 	struct isp_pm_param_data param_data_alsc;
 	struct alsc_do_simulation do_sim;
 	cmr_u16 *sim_output_table = NULL;
-	char value[PROPERTY_VALUE_MAX];
 
 	memset(&calc_param, 0, sizeof(struct lsc_adv_calc_param));
 	memset(&io_pm_input, 0, sizeof(struct isp_pm_ioctl_input));
@@ -7134,8 +7160,7 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 				do_sim.sim_output_table,
 				lsc_info->gain_w * lsc_info->gain_h * 4 * sizeof(cmr_u16));
 		ret = isp_pm_ioctl(pm_handle, ISP_PM_CMD_SET_OTHERS, &io_pm_input_alsc, NULL);
-		property_get("persist.vendor.cam.debug.simulation", value, "false");
-		if (!strcmp(value, "true")) {
+		if (cxt->prop_ctrl.dbg_hwsim) {
 			ispalg_dump_alsc_info(&do_sim, lsc_info->gain_w, lsc_info->gain_h);
 		}
 		free(sim_output_table);

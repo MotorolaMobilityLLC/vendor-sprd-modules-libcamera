@@ -673,6 +673,8 @@ struct isp_pm_context {
 	struct isp_pm_param_data *getting_data_ptr[PARAM_SET_MAX];
 	struct isp_pm_param_data single_block_data[ISP_TUNE_BLOCK_MAX];
 	struct isp_pm_mode_param *tune_mode_array[ISP_TUNE_MODE_MAX];
+	cmr_u32 mode_alloc_size[ISP_TUNE_MODE_MAX];
+
 	/* new 4in1 plan, 20191028 */
 	cmr_u32 is_4in1_sensor; /* as is_4in1_sensor, should rename later */
 	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
@@ -793,6 +795,8 @@ static cmr_u32 isp_pm_check_skip_blk(cmr_u32 id)
 	case ISP_BLK_CNR3:
 	case ISP_BLK_POST_EE:
 		return 1;
+	case ISP_BLK_2D_LSC:
+		return 1;
 	default:
 		break;
 	}
@@ -853,7 +857,7 @@ static cmr_s32 isp_pm_context_init(cmr_handle handle, cmr_u32 set_id)
 		blk_cfg_ptr = isp_pm_get_block_cfg(id);
 		blk_header_ptr = &blk_header_array[i];
 		if (pm_cxt_ptr->param_source == ISP_PARAM_FROM_TOOL) {
-			/* skip NR blocks from tool update parameters */
+			/* skip NR blocks & LSC block from tool update parameters */
 			update_flag = !isp_pm_check_skip_blk(id);
 			if (update_flag == 0) {
 				ISP_LOGV("skip NR block 0x%x from tool update.", id);
@@ -2000,6 +2004,9 @@ static cmr_s32 isp_pm_mode_list_deinit(cmr_handle handle)
 
 	for (i = 0; i < ISP_TUNE_MODE_MAX; i++) {
 		if (pm_cxt_ptr->tune_mode_array[i]) {
+			ISP_LOGD("cxt %p, i=%d, ptr %p, free size %d\n", pm_cxt_ptr,
+				i, pm_cxt_ptr->tune_mode_array[i], pm_cxt_ptr->mode_alloc_size[i]);
+			pm_cxt_ptr->mode_alloc_size[i] = 0;
 			free(pm_cxt_ptr->tune_mode_array[i]);
 			pm_cxt_ptr->tune_mode_array[i] = PNULL;
 		}
@@ -2215,17 +2222,27 @@ start_parse:
 			}
 		}
 
-		if (PNULL != pm_cxt_ptr->tune_mode_array[i]) {
-			free(pm_cxt_ptr->tune_mode_array[i]);
-			pm_cxt_ptr->tune_mode_array[i] = PNULL;
+		if (pm_cxt_ptr->mode_alloc_size[i] < size) {
+			if (PNULL != pm_cxt_ptr->tune_mode_array[i]) {
+				ISP_LOGD("cxt %p, sensor %s i=%d, ptr %p, orig size %d, new size %d\n",
+					pm_cxt_ptr, sensor_name, i,
+					pm_cxt_ptr->tune_mode_array[i], pm_cxt_ptr->mode_alloc_size[i], size);
+				pm_cxt_ptr->mode_alloc_size[i] = 0;
+				free(pm_cxt_ptr->tune_mode_array[i]);
+				pm_cxt_ptr->tune_mode_array[i] = PNULL;
+			}
+			pm_cxt_ptr->tune_mode_array[i] = (struct isp_pm_mode_param *)malloc(size);
 		}
-		pm_cxt_ptr->tune_mode_array[i] = (struct isp_pm_mode_param *)malloc(size);
+
 		if (PNULL == pm_cxt_ptr->tune_mode_array[i]) {
 			ISP_LOGE("fail to malloc tune_mode_array : i = %d", i);
 			rtn = ISP_ERROR;
 			goto init_param_list_error_exit;
 		}
 		memset((void *)pm_cxt_ptr->tune_mode_array[i], 0x00, size);
+		ISP_LOGD("cxt %p, sensor %s i=%d, ptr %p, size %d\n", pm_cxt_ptr, sensor_name,
+			i, pm_cxt_ptr->tune_mode_array[i], size);
+		pm_cxt_ptr->mode_alloc_size[i] = size;
 
 		dst_mod_ptr = (struct isp_pm_mode_param *)pm_cxt_ptr->tune_mode_array[i];
 		dst_header = (struct isp_pm_block_header *)dst_mod_ptr->header;

@@ -153,6 +153,7 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 
 			memcpy((void *)dst_lnc_ptr->final_lsc_param.data_ptr, param_ptr0, dst_lnc_ptr->final_lsc_param.size);
 			dst_lnc_ptr->cur.grid_tab_addr = (cmr_u64)dst_lnc_ptr->final_lsc_param.data_ptr;
+			dst_lnc_ptr->cur.bypass = lnc_header_ptr->bypass;
 
 			lnc_header_ptr->is_update |= ISP_PM_BLK_LSC_UPDATE_MASK_VALIDATE;
 			dst_lnc_ptr->update_flag = lnc_header_ptr->is_update;
