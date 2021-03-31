@@ -1008,6 +1008,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static uint32_t mcolor_temp_sensor_flag;
     static uint32_t mcolor_temp_sensor_count;
 #endif
+    bool mNonZslFlag;
+    uint32_t mSkipNum;
 };
 
 }; // namespace sprdcamera
