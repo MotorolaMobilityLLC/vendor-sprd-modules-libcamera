@@ -676,6 +676,13 @@ post:
 		yuv_frm.rect.width = cxt->size_mfnr_aux.width;
 		yuv_frm.rect.height = cxt->size_mfnr_aux.height;
 	}
+    frm_param = (struct swa_frame_param *)yuv_frm.reserved;
+    frm_param->af_ctrl_roi.start_x = cam_cxt->af_roi.sx;
+    frm_param->af_ctrl_roi.start_y = cam_cxt->af_roi.sy;
+    frm_param->af_ctrl_roi.width = cam_cxt->af_roi.ex - cam_cxt->af_roi.sx;
+    frm_param->af_ctrl_roi.height = cam_cxt->af_roi.ey - cam_cxt->af_roi.sy;
+    CMR_LOGD("af_roi: x=%d, y=%d, w=%d, h=%d", frm_param->af_ctrl_roi.start_x, frm_param->af_ctrl_roi.start_y,
+        frm_param->af_ctrl_roi.width, frm_param->af_ctrl_roi.height);
 	cmr_ips_post(cxt->ips_handle, ips_req, &yuv_frm);
 
 	CMR_LOGD("req id %d post frame_id %d, fd 0x%x ghand %p done\n",

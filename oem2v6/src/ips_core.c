@@ -979,6 +979,12 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	init_param.pri_data = (void *)&frm_param->mfnr_param;
 	init_param.heap_mem_malloc = req->init_param.heap_mem_malloc;
 	init_param.heap_mem_free = req->init_param.heap_mem_free;
+	init_param.af_ctrl_roi.start_x = frm_param->af_ctrl_roi.start_x;
+	init_param.af_ctrl_roi.start_y = frm_param->af_ctrl_roi.start_y;
+	init_param.af_ctrl_roi.width = frm_param->af_ctrl_roi.width;
+	init_param.af_ctrl_roi.height = frm_param->af_ctrl_roi.height;
+    CMR_LOGD("af_roi: x=%d, y=%d, w=%d, h=%d", init_param.af_ctrl_roi.start_x, init_param.af_ctrl_roi.start_y,
+        init_param.af_ctrl_roi.width,init_param.af_ctrl_roi.height);
 	iret = ipm_base->swa_open(ipm_hdl->swa_handle, (void *)&init_param, 4);
 	if (iret) {
 		CMR_LOGE("fail to open mfnr\n");

@@ -512,6 +512,8 @@ struct camera_context {
     cmr_uint need_sr;
     cmr_uint long_expo_cap;
     enum top_app_id app_id;
+    /*af roi for mfnr select frame*/
+    struct isp_afctrl_roi af_roi;
 };
 
 struct prev_ai_scene_info {

@@ -432,6 +432,7 @@ int swa_mfnr_open(void *ipmpro_hanlde,
 	mfnr_param_info_t param;
 	mfnr_cmd_proc_t proc_data;
 	mfnr_setparam_cmd_param_t *dst;
+	struct mfnr_tuning_param_info cap_3dnr_tuning_param;
 
 	if (!cxt || !init_param) {
 		SWA_LOGE("fail to get input ptr %p %p\n", cxt, init_param);
@@ -461,10 +462,17 @@ int swa_mfnr_open(void *ipmpro_hanlde,
 	param.thread_num_acc = 4;
 	param.thread_num = 4;
 	param.preview_cpyBuf = 1;
-	param.threthold = default_mfnr_param.threshold;
-	param.slope = default_mfnr_param.slope;
-	memcpy(param.gain_thr, default_mfnr_param.gain_thr, sizeof(param.gain_thr));
+	param.AF_ROI_start_x = init_param->af_ctrl_roi.start_x;
+	param.AF_ROI_start_y = init_param->af_ctrl_roi.start_y;
+	param.AF_ROI_width = init_param->af_ctrl_roi.width;
+	param.AF_ROI_height = init_param->af_ctrl_roi.height;
+	SWA_LOGD("af_roi: x=%d, y=%d, w=%d, h=%d", param.AF_ROI_start_x,param.AF_ROI_start_y,
+		param.AF_ROI_width,param.AF_ROI_height);
+	cap_3dnr_tuning_param.threthold = default_mfnr_param.threshold;
+	cap_3dnr_tuning_param.slope = default_mfnr_param.slope;
+	memcpy(cap_3dnr_tuning_param.gain_thr, default_mfnr_param.gain_thr, sizeof(cap_3dnr_tuning_param.gain_thr));
 	param.productInfo = PLATFORM_ID;
+	param.pMemoryOps = NULL;
 
 	mfnr_param = (struct isp_mfnr_info *)init_param->pri_data;
 	valid_param = mfnr_param->searchWindow_x | mfnr_param->searchWindow_x;
@@ -476,21 +484,21 @@ int swa_mfnr_open(void *ipmpro_hanlde,
 		memcpy(mfnr_param, &default_mfnr_tuning_param, sizeof(struct isp_mfnr_info));
 	}
 
-	param.SearchWindow_x = mfnr_param->searchWindow_x;
-	param.SearchWindow_y = mfnr_param->searchWindow_y;
-	param.recur_str = mfnr_param->recur_str;
-	param.match_ratio_sad = mfnr_param->match_ratio_sad;
-	param.match_ratio_pro = mfnr_param->match_ratio_pro;
-	param.feat_thr = mfnr_param->feat_thr;
-	param.luma_ratio_high = mfnr_param->luma_ratio_high;
-	param.luma_ratio_low = mfnr_param->luma_ratio_low;
-	param.zone_size = mfnr_param->zone_size;
-	memcpy(param.reserverd, mfnr_param->reserverd, sizeof(param.reserverd));
+	cap_3dnr_tuning_param.SearchWindow_x = mfnr_param->searchWindow_x;
+	cap_3dnr_tuning_param.SearchWindow_y = mfnr_param->searchWindow_y;
+	cap_3dnr_tuning_param.recur_str = mfnr_param->recur_str;
+	cap_3dnr_tuning_param.match_ratio_sad = mfnr_param->match_ratio_sad;
+	cap_3dnr_tuning_param.match_ratio_pro = mfnr_param->match_ratio_pro;
+	cap_3dnr_tuning_param.feat_thr = mfnr_param->feat_thr;
+	cap_3dnr_tuning_param.luma_ratio_high = mfnr_param->luma_ratio_high;
+	cap_3dnr_tuning_param.luma_ratio_low = mfnr_param->luma_ratio_low;
+	cap_3dnr_tuning_param.zone_size = mfnr_param->zone_size;
+	memcpy(cap_3dnr_tuning_param.reserved, mfnr_param->reserverd, sizeof(cap_3dnr_tuning_param.reserved));
 	bufferpool_ops.malloc = init_param->heap_mem_malloc;
 	bufferpool_ops.free = init_param->heap_mem_free;
 	param.pMemoryOps = &bufferpool_ops;
 
-	ret = sprd_mfnr_adpt_init(&cxt->mfnr_handle,  &param, NULL);
+	ret = sprd_mfnr_adpt_init(&cxt->mfnr_handle,  &param, (void *)(&cap_3dnr_tuning_param));
 	if (ret) {
 		SWA_LOGE("fail to init mfnr\n");
 		return -1;

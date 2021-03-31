@@ -360,6 +360,7 @@ struct swa_init_data {
 	void *pri_data;
 	void* (*heap_mem_malloc)(size_t size, char* type);
 	void (*heap_mem_free)(void* addr);
+	struct img_rect af_ctrl_roi;
 };
 
 struct swa_common_info {
@@ -393,6 +394,7 @@ struct swa_frame_param {
 	struct isp_dre_pro_level dre_pro_param;
 	struct isp_face_area face_param;
 	struct isp_fb_info fb_info;
+	struct img_rect af_ctrl_roi;
 };
 
 
