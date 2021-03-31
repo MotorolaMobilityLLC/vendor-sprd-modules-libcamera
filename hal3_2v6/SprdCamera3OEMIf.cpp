@@ -275,6 +275,7 @@ ASensorManager *SprdCamera3OEMIf::mCTSensorManager = NULL;
 ASensorEventQueue *SprdCamera3OEMIf::mCTSensorEventQueue = NULL;
 const ASensor *SprdCamera3OEMIf::mcolortempSensor = NULL;
 uint32_t SprdCamera3OEMIf::mcolor_temp_sensor_flag = 0;
+uint32_t SprdCamera3OEMIf::mcolor_temp_sensor_count = 0;
 #endif
 
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
@@ -13011,7 +13012,8 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
     int mNumSensors;
     ASensorList mCTSensorList;
     uint32_t GsensorRate = 50 * 1000; // us
-    mcolor_temp_sensor_flag = 0;
+
+    mcolor_temp_sensor_count++;
 
     mCTSensorManager = ASensorManager_getInstanceForPackage("");
     if (mCTSensorManager == NULL) {
@@ -13072,10 +13074,12 @@ void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
 
 void *SprdCamera3OEMIf::color_temp_process_deinit(void) {
     if (mcolor_temp_sensor_flag) {
-        ASensorEventQueue_disableSensor(mCTSensorEventQueue, mcolortempSensor);
-        mcolor_temp_sensor_flag = 0;
+        if((--mcolor_temp_sensor_count) == 0) {
+            ASensorEventQueue_disableSensor(mCTSensorEventQueue, mcolortempSensor);
+            ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
+            mcolor_temp_sensor_flag = 0;
+        }
     }
-    ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
 
     HAL_LOGI("X");
     return NULL;

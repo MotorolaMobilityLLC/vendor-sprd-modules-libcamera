@@ -1006,6 +1006,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static ASensorEventQueue *mCTSensorEventQueue;
     static const ASensor *mcolortempSensor;
     static uint32_t mcolor_temp_sensor_flag;
+    static uint32_t mcolor_temp_sensor_count;
 #endif
 };
 
