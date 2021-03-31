@@ -119,10 +119,12 @@ camera3_callback_ops SprdCamera3SinglePortrait::callback_ops_aux = {
 SprdCamera3SinglePortrait::SprdCamera3SinglePortrait() {
     HAL_LOGI(" E");
 
+    memset(&mThumbReq, 0, sizeof(multi_request_saved_t));
     memset(&m_VirtualCamera, 0, sizeof(sprd_virtual_camera_t));
     memset(&mLocalCapBuffer, 0, sizeof(new_mem_t) * BLUR_LOCAL_CAPBUFF_NUM);
+    memset(&mSnapThumbBuffer, 0, sizeof(new_mem_t));
     memset(&mSavedReqStreams, 0,
-           sizeof(camera3_stream_t *) * BLUR_MAX_NUM_STREAMS);
+           sizeof(camera3_stream_t *) * SINGLE_PORTRAIT_MAX_NUM_STREAMS);
 #ifdef CONFIG_FACE_BEAUTY
     memset(&fbLevels, 0, sizeof(faceBeautyLevels));
     memset(&fbLevels_cap, 0, sizeof(faceBeautyLevels));
@@ -138,6 +140,8 @@ SprdCamera3SinglePortrait::SprdCamera3SinglePortrait() {
     mStaticMetadata = NULL;
     mCaptureThread = new CaptureThread();
     mSavedRequestList.clear();
+    mhasCallbackStream = false;
+    mneedCbPreviewSnap = false;
     mCaptureWidth = 0;
     mCaptureHeight = 0;
     mPreviewStreamsNum = 0;
@@ -146,6 +150,7 @@ SprdCamera3SinglePortrait::SprdCamera3SinglePortrait() {
     mFarJpegSize = 0;
     m_pNearJpegBuffer = NULL;
     m_pFarJpegBuffer = NULL;
+    mJpegOrientation = 90;
     m_pNearYuvBuffer = NULL;
     weight_map = NULL;
     mCameraId = CAM_BLUR_MAIN_ID;
@@ -504,6 +509,9 @@ void SprdCamera3SinglePortrait::freeLocalCapBuffer() {
         freeOneBuffer(localBuffer);
     }
 
+    if (mhasCallbackStream)
+        freeOneBuffer(&mSnapThumbBuffer);
+
     if (mCaptureThread->mOutWeightBuff != NULL) {
         free(mCaptureThread->mOutWeightBuff);
         mCaptureThread->mOutWeightBuff = NULL;
@@ -779,7 +787,7 @@ SprdCamera3SinglePortrait::CaptureThread::CaptureThread()
     bzero(&fd_score, sizeof(int32_t)*FD_SCORE_SIZE);
     bzero(&mPreviewLptAndBeautyFaceinfo, sizeof(mPreviewLptAndBeautyFaceinfo));
     memset(&mSavedCapReqstreambuff, 0, sizeof(camera3_stream_buffer_t));
-    memset(&mMainStreams, 0, sizeof(camera3_stream_t) * BLUR_MAX_NUM_STREAMS);
+    memset(&mMainStreams, 0, sizeof(camera3_stream_t) * SINGLE_PORTRAIT_MAX_NUM_STREAMS);
     memset(mBlurApi, 0, sizeof(SinglePortraitAPI_t *) * BLUR_LIB_BOKEH_NUM);
     memset(mWinPeakPos, 0, sizeof(short) * BLUR_AF_WINDOW_NUM);
     memset(&mPreviewInitParams, 0,
@@ -3019,16 +3027,18 @@ int SprdCamera3SinglePortrait::configureStreams(
     HAL_LOGV("E");
 
     int rc = 0;
-    camera3_stream_t *pMainStreams[BLUR_MAX_NUM_STREAMS];
+    camera3_stream_t *pMainStreams[SINGLE_PORTRAIT_MAX_NUM_STREAMS];
     size_t i = 0;
     size_t j = 0;
     int w = 0;
     int h = 0;
+    mhasCallbackStream = false;
     struct stream_info_s stream_info;
 
     Mutex::Autolock l(mLock);
     mSinglePortrait->resetVariablesToDefault();
 
+    //PREVIEW_STREAM, SNAPSHOT_STREAM, DEFAULT_STREAM
     HAL_LOGD("configurestreams, stream num:%d", stream_list->num_streams);
     for (size_t i = 0; i < stream_list->num_streams; i++) {
         int requestStreamType = getStreamType(stream_list->streams[i]);
@@ -3107,23 +3117,32 @@ int SprdCamera3SinglePortrait::configureStreams(
                 mCaptureThread->mCapture2WeightParams.sel_y =
                     mCaptureThread->mCaptureInitParams.height / 2;
             }
-            mCaptureThread->mCaptureStreamsNum = stream_list->num_streams;
-            mCaptureThread->mMainStreams[stream_list->num_streams].max_buffers =
+            mCaptureThread->mCaptureStreamsNum = 2;
+            mCaptureThread->mMainStreams[2].max_buffers =
                 1;
-            mCaptureThread->mMainStreams[stream_list->num_streams].width = w;
-            mCaptureThread->mMainStreams[stream_list->num_streams].height = h;
-            mCaptureThread->mMainStreams[stream_list->num_streams].format =
+            mCaptureThread->mMainStreams[2].width = w;
+            mCaptureThread->mMainStreams[2].height = h;
+            mCaptureThread->mMainStreams[2].format =
                 HAL_PIXEL_FORMAT_YCbCr_420_888;
-            mCaptureThread->mMainStreams[stream_list->num_streams].usage =
+            mCaptureThread->mMainStreams[2].usage =
                 stream_list->streams[i]->usage;
-            mCaptureThread->mMainStreams[stream_list->num_streams].stream_type =
+            mCaptureThread->mMainStreams[2].stream_type =
                 CAMERA3_STREAM_OUTPUT;
-            mCaptureThread->mMainStreams[stream_list->num_streams].data_space =
+            mCaptureThread->mMainStreams[2].data_space =
                 stream_list->streams[i]->data_space;
-            mCaptureThread->mMainStreams[stream_list->num_streams].rotation =
+            mCaptureThread->mMainStreams[2].rotation =
                 stream_list->streams[i]->rotation;
-            pMainStreams[stream_list->num_streams] =
-                &mCaptureThread->mMainStreams[stream_list->num_streams];
+            pMainStreams[2] =
+                &mCaptureThread->mMainStreams[2];
+        } else if (requestStreamType == DEFAULT_STREAM) {
+            w = stream_list->streams[i]->width;
+            h = stream_list->streams[i]->height;
+            mhasCallbackStream = true;
+            if (0 > allocateOne(w, h, &(mSnapThumbBuffer), YUV420)) {
+                HAL_LOGE("request mSnapThumbBuffer buf failed.");
+            }
+            (stream_list->streams[i])->max_buffers = 1;
+            continue;
         }
         mCaptureThread->mMainStreams[i] = *stream_list->streams[i];
         pMainStreams[i] = &mCaptureThread->mMainStreams[i];
@@ -3131,7 +3150,7 @@ int SprdCamera3SinglePortrait::configureStreams(
 
     camera3_stream_configuration mainconfig;
     mainconfig = *stream_list;
-    mainconfig.num_streams = stream_list->num_streams + 1;
+    mainconfig.num_streams = 3;
     mainconfig.streams = pMainStreams;
 
     rc = mCaptureThread->initPortraitParams();
@@ -3227,6 +3246,14 @@ void SprdCamera3SinglePortrait::saveRequest(
             currRequest.stream = request->output_buffers[i].stream;
             currRequest.input_buffer = request->input_buffer;
             mSavedRequestList.push_back(currRequest);
+        } else if (getStreamType(newStream) == DEFAULT_STREAM) {
+            mThumbReq.buffer = request->output_buffers[i].buffer;
+            mThumbReq.preview_stream = request->output_buffers[i].stream;
+            mThumbReq.input_buffer = request->input_buffer;
+            mThumbReq.frame_number = request->frame_number;
+            HAL_LOGD("save thumb request:id %d, w= %d,h=%d",
+                     request->frame_number, (mThumbReq.preview_stream)->width,
+                     (mThumbReq.preview_stream)->height);
         }
     }
 }
@@ -3297,6 +3324,12 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
     metaSettings = request->settings;
     saveRequest(req);
 
+    if (mhasCallbackStream && metaSettings.exists(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)) {
+        mMirror = metaSettings.find(ANDROID_SPRD_CONTROL_FRONT_CAMERA_MIRROR)
+                        .data.u8[0];
+        HAL_LOGD("mMirror %d",mMirror);
+    }
+
     if (metaSettings.exists(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)) {
         mBlurMode = metaSettings.find(ANDROID_SPRD_PORTRAIT_OPTIMIZATION_MODE)
                         .data.u8[0];
@@ -3331,12 +3364,15 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
     }
     memset(out_streams_main, 0x00,
            (sizeof(camera3_stream_buffer_t)) * (req_main.num_output_buffers));
-    for (size_t i = 0; i < req->num_output_buffers; i++) {
+    int outbuff_index = 0;
+    for (size_t i = 0, j = 0; i < req->num_output_buffers; i++) {
         int requestStreamType =
             getStreamType(request->output_buffers[i].stream);
-        out_streams_main[i] = req->output_buffers[i];
         HAL_LOGD("num_output_buffers:%d, streamtype:%d",
                  req->num_output_buffers, requestStreamType);
+        if (DEFAULT_STREAM == requestStreamType)
+            continue;
+        out_streams_main[j] = req->output_buffers[i];
         if (requestStreamType == SNAPSHOT_STREAM) {
             mCaptureThread->mSavedResultBuff =
                 request->output_buffers[i].buffer;
@@ -3355,6 +3391,11 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
                     metaSettings.find(ANDROID_SPRD_LIGHTPORTRAITTYPE).data.i32[0];
                     HAL_LOGD("lightPortraitType %d", mCaptureThread->lpt_cap_type);
             }
+            if (mhasCallbackStream && metaSettings.exists(ANDROID_JPEG_ORIENTATION)) {
+                mJpegOrientation =
+                    metaSettings.find(ANDROID_JPEG_ORIENTATION).data.i32[0];
+                HAL_LOGD("mJpegOrientation=%d", mJpegOrientation);
+            }
             mCaptureThread->fb_cap_type = mSinglePortrait->mFaceBeautyFlag;
             memcpy(&mSinglePortrait->fbLevels_cap, &mSinglePortrait->fbLevels, sizeof(faceBeautyLevels));
             if (!mFlushing && mCoverValue == 1 &&
@@ -3366,29 +3407,34 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
                     mCaptureThread->mCaptureWeightParams.total_roi == 0)) ||
                  mCaptureThread->mGaussEnable)) {
                 snap_stream_num = 2;
-                out_streams_main[i].buffer = &mLocalCapBuffer[0].native_handle;
+                out_streams_main[j].buffer = &mLocalCapBuffer[0].native_handle;
                 fb_on = 0;
                 hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
                                        &fb_on, NULL);
             } else {
                 snap_stream_num = 1;
                 fb_on = 1;
-                out_streams_main[i].buffer = (req->output_buffers[i]).buffer;
+                out_streams_main[j].buffer = (req->output_buffers[i]).buffer;
                 hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
                                        &fb_on, NULL);
             }
-            out_streams_main[i].stream =
+            if (mhasCallbackStream)
+                mneedCbPreviewSnap = true;
+            out_streams_main[j++].stream =
                 &mCaptureThread->mMainStreams[snap_stream_num];
 
             mReqState = WAIT_FIRST_YUV_STATE;
-        } else {
+            outbuff_index++;
+        } else if (CALLBACK_STREAM == requestStreamType){
             mSavedReqStreams[mPreviewStreamsNum] =
                 req->output_buffers[i].stream;
-            out_streams_main[i].stream =
+            out_streams_main[j++].stream =
                 &mCaptureThread->mMainStreams[mPreviewStreamsNum];
             mCaptureThread->updateBlurWeightParams(metaSettings, 0);
+            outbuff_index++;
         }
     }
+    req_main.num_output_buffers = outbuff_index;
     req_main.output_buffers = out_streams_main;
     req_main.settings = metaSettings.release();
     for (size_t i = 0; i < req->num_output_buffers; i++) {
@@ -3446,6 +3492,213 @@ void SprdCamera3SinglePortrait::notifyMain(const camera3_notify_msg_t *msg) {
     }
 
     mCaptureThread->mCallbackOps->notify(mCaptureThread->mCallbackOps, msg);
+}
+
+/*===========================================================================
+ * FUNCTION   :thumbYuvProc
+ *
+ * DESCRIPTION: process thumb yuv
+ *
+ * PARAMETERS : process thumb yuv
+ *
+ * RETURN     : None
+ *==========================================================================*/
+
+int SprdCamera3SinglePortrait::thumbYuvProc(buffer_handle_t *src_buffer) {
+    int ret = NO_ERROR;
+    int angle = 0;
+    SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+    struct img_frm src_img;
+    struct img_frm dst_img;
+    struct snp_thumb_yuv_param thumb_param;
+    void *src_buffer_addr = NULL;
+    void *thumb_req_addr = NULL;
+    void *temp_buff_addr = NULL;
+    struct rotate_param rotate_param;
+    struct img_frm *rot_src = &rotate_param.src_img;
+    struct img_frm *rot_dst = &rotate_param.dst_img;
+    uint16_t width;
+    uint16_t height;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    HAL_LOGI(" E");
+
+    buffer_handle_t *const temp_buffer = &mSnapThumbBuffer.native_handle;
+
+    ret = mSinglePortrait->map(src_buffer, &src_buffer_addr);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map src buffer");
+        goto fail_map_src;
+    }
+    ret = mSinglePortrait->map(mThumbReq.buffer, &thumb_req_addr);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map thumb buffer");
+        goto fail_map_thumb;
+    }
+    ret = mSinglePortrait->map(temp_buffer, &temp_buff_addr);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map temp_buffer buffer", temp_buffer);
+        goto fail_map_temp;
+    }
+
+    memset(&rotate_param, 0, sizeof(struct rotate_param));
+    memset(&src_img, 0, sizeof(struct img_frm));
+    memset(&dst_img, 0, sizeof(struct img_frm));
+    src_img.addr_phy.addr_y = 0;
+    src_img.addr_phy.addr_u = src_img.addr_phy.addr_y +
+                              ADP_WIDTH(*src_buffer) * ADP_HEIGHT(*src_buffer);
+    src_img.addr_phy.addr_v = src_img.addr_phy.addr_u;
+    src_img.addr_vir.addr_y = (cmr_uint)src_buffer_addr;
+    src_img.addr_vir.addr_u = (cmr_uint)src_buffer_addr +
+                              ADP_WIDTH(*src_buffer) * ADP_HEIGHT(*src_buffer);
+    src_img.buf_size = ADP_BUFSIZE(*src_buffer);
+    src_img.fd = ADP_BUFFD(*src_buffer);
+    src_img.fmt = IMG_DATA_TYPE_YUV420;
+    src_img.rect.start_x = 0;
+    src_img.rect.start_y = 0;
+    src_img.rect.width = ADP_WIDTH(*src_buffer);
+    src_img.rect.height = ADP_HEIGHT(*src_buffer);
+    src_img.size.width = ADP_WIDTH(*src_buffer);
+    src_img.size.height = ADP_HEIGHT(*src_buffer);
+
+    dst_img.addr_phy.addr_y = 0;
+    dst_img.addr_phy.addr_u =
+        dst_img.addr_phy.addr_y +
+        ADP_WIDTH(*temp_buffer) * ADP_HEIGHT(*temp_buffer);
+    dst_img.addr_phy.addr_v = dst_img.addr_phy.addr_u;
+
+    dst_img.addr_vir.addr_y = (cmr_uint)temp_buff_addr;
+    dst_img.addr_vir.addr_u =
+        (cmr_uint)temp_buff_addr +
+        ADP_WIDTH(*temp_buffer) * ADP_HEIGHT(*temp_buffer);
+    dst_img.buf_size = ADP_BUFSIZE(*temp_buffer);
+    dst_img.fd = ADP_BUFFD(*temp_buffer);
+    dst_img.fmt = IMG_DATA_TYPE_YUV420;
+    dst_img.rect.start_x = 0;
+    dst_img.rect.start_y = 0;
+    dst_img.rect.width = ADP_WIDTH(*temp_buffer);
+    dst_img.rect.height = ADP_HEIGHT(*temp_buffer);
+    dst_img.size.width = ADP_WIDTH(*temp_buffer);
+    dst_img.size.height = ADP_HEIGHT(*temp_buffer);
+
+    memcpy(&thumb_param.src_img, &src_img, sizeof(struct img_frm));
+    memcpy(&thumb_param.dst_img, &dst_img, sizeof(struct img_frm));
+    switch (mJpegOrientation) {
+    case 0:
+        angle = IMG_ANGLE_0;
+        break;
+
+    case 180:
+        angle = IMG_ANGLE_180;
+        break;
+
+    case 90:
+        angle = IMG_ANGLE_90;
+        break;
+
+    case 270:
+        angle = IMG_ANGLE_270;
+        break;
+
+    default:
+        angle = IMG_ANGLE_0;
+        break;
+    }
+    thumb_param.angle = angle;
+
+    hwiMain->camera_ioctrl(CAMERA_IOCTRL_THUMB_YUV_PROC, &thumb_param, NULL);
+
+    property_get("persist.vendor.cam.singleportrait.dump", prop, "0");
+    if (!strcmp(prop, "thumb") || !strcmp(prop, "all")) {
+        dumpData((unsigned char *)src_img.addr_vir.addr_y, 1, src_img.buf_size,
+                 src_img.rect.width, src_img.size.height, 5, "input");
+        dumpData((unsigned char *)dst_img.addr_vir.addr_y, 1, dst_img.buf_size,
+                 dst_img.rect.width, dst_img.size.height, 5, "temp_output");
+    }
+
+    HAL_LOGI(" x,angle=%d JpegOrientation=%d", thumb_param.angle,
+             mJpegOrientation);
+
+    width = ADP_WIDTH(*mThumbReq.buffer);
+    height = ADP_HEIGHT(*mThumbReq.buffer);
+    if(mMirror) {//mirror needed.
+        if (270 == mJpegOrientation || 90 == mJpegOrientation) {
+            width = ADP_HEIGHT(*mThumbReq.buffer);
+            height = ADP_WIDTH(*mThumbReq.buffer);
+        }
+        rotate_param.angle = IMG_ANGLE_MIRROR;
+        rot_src->addr_phy.addr_y = 0;
+        rot_src->addr_phy.addr_u = width * height;
+        rot_src->addr_phy.addr_v = rot_src->addr_phy.addr_u;
+        rot_src->size.width = width;
+        rot_src->size.height = height;
+        rot_src->fmt = CAM_IMG_FMT_YUV420_NV21;
+        rot_src->data_end.uv_endian = 2;
+        rot_src->fd = ADP_BUFFD(*temp_buffer);
+
+        rot_dst->addr_phy.addr_y = 0;
+        rot_dst->addr_phy.addr_u = width * height;
+        rot_dst->addr_phy.addr_v = rot_dst->addr_phy.addr_u;
+        rot_dst->size.width = width;
+        rot_dst->size.height = height;
+        rot_dst->fmt = CAM_IMG_FMT_YUV420_NV21;
+        rot_dst->data_end.uv_endian = 2;
+        rot_dst->fd = ADP_BUFFD(*mThumbReq.buffer);
+
+        hwiMain->camera_ioctrl(CAMERA_IOCTRL_ROTATE, &rotate_param, NULL);
+    } else {
+        memcpy(thumb_req_addr, temp_buff_addr, width * height * 3 / 2);
+    }
+
+    if (!strcmp(prop, "thumb") || !strcmp(prop, "all")) {
+        dumpData((unsigned char *)thumb_req_addr, 1, ADP_BUFSIZE(*mThumbReq.buffer),
+                 width, height, 5, "output");
+    }
+
+
+    mSinglePortrait->unmap(temp_buffer);
+fail_map_temp:
+    mSinglePortrait->unmap(mThumbReq.buffer);
+fail_map_thumb:
+    mSinglePortrait->unmap(src_buffer);
+fail_map_src:
+
+    return ret;
+}
+
+/*===========================================================================
+ * FUNCTION   :CallBackSnapResult
+ *
+ * DESCRIPTION: CallBackSnapResult
+ *
+ * PARAMETERS :
+ *
+ * RETURN     : None
+ *==========================================================================*/
+void SprdCamera3SinglePortrait::CaptureThread::CallBackSnapResult(int status) {
+
+    camera3_capture_result_t result;
+    camera3_stream_buffer_t result_buffers;
+    bzero(&result, sizeof(camera3_capture_result_t));
+    bzero(&result_buffers, sizeof(camera3_stream_buffer_t));
+
+    result_buffers.stream = mSinglePortrait->mThumbReq.preview_stream;
+    result_buffers.buffer = mSinglePortrait->mThumbReq.buffer;
+
+    result_buffers.status = status;
+    result_buffers.acquire_fence = -1;
+    result_buffers.release_fence = -1;
+    result.result = NULL;
+    result.frame_number = mSinglePortrait->mThumbReq.frame_number;
+    result.num_output_buffers = 1;
+    result.output_buffers = &result_buffers;
+    result.input_buffer = NULL;
+    result.partial_result = 0;
+
+    mCallbackOps->process_capture_result(mCallbackOps, &result);
+    memset(&mSinglePortrait->mThumbReq, 0, sizeof(multi_request_saved_t));
+    HAL_LOGD("snap id: %d ", result.frame_number);
 }
 
 /*===========================================================================
@@ -3553,6 +3806,10 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
         currStreamType == DEFAULT_STREAM) {
         mSnapshotResultReturn = true;
         HAL_LOGD("framenumber:%d, receive yuv:%d", cur_frame_number, mReqState);
+        // if (mhasCallbackStream && mThumbReq.frame_number) {
+        //     thumbYuvProc(result->output_buffers->buffer);
+        //     mCaptureThread->CallBackSnapResult(CAMERA3_BUFFER_STATUS_OK);
+        // }
         single_portrait_queue_msg_t capture_msg;
         capture_msg.msg_type = SINGLE_PORTRAIT_MSG_DATA_PROC;
         capture_msg.combo_buff.frame_number = result->frame_number;
@@ -3568,10 +3825,8 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                  mSinglePortrait->mReqState);
     } else if (mReqState != PREVIEW_REQUEST_STATE &&
                currStreamType == SNAPSHOT_STREAM) {
-
         HAL_LOGI("jpeg callback framenumber:%d, mReqState:%d",
                  result->frame_number, mReqState);
-
         uint32_t jpeg_size = 0;
         uint8_t *jpeg_addr = NULL;
         if (mSinglePortrait->map(result->output_buffers->buffer,
@@ -3597,6 +3852,14 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
         }
         mReqState = PREVIEW_REQUEST_STATE;
     } else {
+        if (mhasCallbackStream && mneedCbPreviewSnap &&
+                (mThumbReq.frame_number <= cur_frame_number + 1)) {
+            HAL_LOGI("snapReq frame num: %d, Cur frame num: %d",
+                     mThumbReq.frame_number, cur_frame_number);
+            mneedCbPreviewSnap = false;
+            thumbYuvProc(result->output_buffers->buffer);
+            mCaptureThread->CallBackSnapResult(CAMERA3_BUFFER_STATUS_OK);
+        }
         camera3_capture_result_t newResult;
         camera3_stream_buffer_t newOutput_buffers;
         memset(&newResult, 0, sizeof(camera3_capture_result_t));
