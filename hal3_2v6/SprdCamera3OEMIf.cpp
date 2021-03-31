@@ -12183,7 +12183,7 @@ void SprdCamera3OEMIf::cbErrorCaptureFrame(uint32_t frame_number,
 void SprdCamera3OEMIf::EisPreview_init() {
     int i = 0;
     int num = 0;
-    int isAssigned;
+    int isAssigned = 0;
 
     num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
     struct phySensorInfo *phyPtr = NULL;
@@ -12231,7 +12231,7 @@ void SprdCamera3OEMIf::EisVideo_init() {
     // mParam = {0};
     int i = 0;
     int num = 0;
-    int isAssigned;
+    int isAssigned = 0;
 
     num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
     struct phySensorInfo *phyPtr = NULL;
