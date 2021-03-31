@@ -74,7 +74,9 @@ namespace sprdcamera {
 #define BLUR_REFOCUS_PARAM2_NUM (11)
 
 #define BLUR_REFOCUS_COMMON_PARAM_NUM (27)
-#define BLUR_MAX_NUM_STREAMS (3)
+
+//preview/snapshot/callback/320*240yuv
+#define SINGLE_PORTRAIT_MAX_NUM_STREAMS (4)
 #define BLUR_THREAD_TIMEOUT 50e6
 #define BLUR_LIB_BOKEH_PREVIEW "libbokeh_gaussian.so"
 #define BLUR_LIB_BOKEH_NUM (2)
@@ -313,22 +315,25 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
     int mCaptureWidth;
     int mCaptureHeight;
     new_mem_t mLocalCapBuffer[BLUR_LOCAL_CAPBUFF_NUM];
+    new_mem_t mSnapThumbBuffer;
     bool mFlushing;
     bool mInitThread;
     List<request_saved_single_portrait_t> mSavedRequestList;
-    camera3_stream_t *mSavedReqStreams[BLUR_MAX_NUM_STREAMS];
+    camera3_stream_t *mSavedReqStreams[SINGLE_PORTRAIT_MAX_NUM_STREAMS];
     int mPreviewStreamsNum;
     Mutex mRequestLock;
     int mjpegSize;
     void *m_pNearYuvBuffer;
     int mNearJpegSize;
     int mFarJpegSize;
+    int mJpegOrientation;
     buffer_handle_t *m_pNearJpegBuffer;
     buffer_handle_t *m_pFarJpegBuffer;
     void *weight_map;
     uint8_t mCameraId;
     int32_t mPerfectskinlevel;
     int mCoverValue;
+    uint8_t mMirror;
     uint8_t mBlurMode;
     bool mSnapshotResultReturn;
 #ifdef CONFIG_FACE_BEAUTY
@@ -346,8 +351,10 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
     int getCameraInfo(int blur_camera_id, struct camera_info *info);
     void freeLocalCapBuffer();
     void saveRequest(camera3_capture_request_t *request);
+    int thumbYuvProc(buffer_handle_t *src_buffer);
 
   public:
+    multi_request_saved_t mThumbReq;
     SprdCamera3SinglePortrait();
     virtual ~SprdCamera3SinglePortrait();
 
@@ -395,7 +402,7 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         int capBlurHandle(buffer_handle_t *input1, void *input1_addr,
                           void *input2, buffer_handle_t *output,
                           void *output_addr, void *mask);
-
+        void CallBackSnapResult(int status);
         void CallSnapBackResult(camera3_buffer_status_t buffer_status);
         // This queue stores matched buffer as frame_matched_info_t
         List<single_portrait_queue_msg_t> mCaptureMsgList;
@@ -407,7 +414,7 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         camera3_capture_request_t mSavedCapRequest;
         camera3_stream_buffer_t mSavedCapReqstreambuff;
         camera_metadata_t *mSavedCapReqsettings;
-        camera3_stream_t mMainStreams[BLUR_MAX_NUM_STREAMS];
+        camera3_stream_t mMainStreams[SINGLE_PORTRAIT_MAX_NUM_STREAMS];
         uint8_t mCaptureStreamsNum;
         SinglePortraitAPI_t *mBlurApi[BLUR_LIB_BOKEH_NUM];
         int mFirstUpdateFrame;
@@ -476,6 +483,8 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         void BlurFaceMakeup(buffer_handle_t *buffer_handle, void *buffer_addr);
     };
     sp<CaptureThread> mCaptureThread;
+    bool mneedCbPreviewSnap;
+    bool mhasCallbackStream;
 
     int initialize(const camera3_callback_ops_t *callback_ops);
     int initThread();
