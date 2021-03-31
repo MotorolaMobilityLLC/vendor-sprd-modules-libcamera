@@ -824,6 +824,8 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mCaptureRequestList.clear();
     mThumbFrameNum = 0;
     mClearAfTrigger = false;
+    mNonZslFlag = false;
+    mSkipNum = 0;
 
     HAL_LOGI(":hal3: Constructor X");
 }
@@ -1170,6 +1172,12 @@ int SprdCamera3OEMIf::takePicture() {
             usleep(20 * 1000);
         }
 
+        FACE_Tag faceInfo;
+        mSetting->getFACETag(&faceInfo);
+        if (isFaceBeautyOn(sprddefInfo) && faceInfo.face_num > 0) {
+            mNonZslFlag = true;
+            mSkipNum = 0;
+        }
         if (isPreviewing()) {
             HAL_LOGD("call stopPreviewInternal in takePicture().");
             // whether FRONT_CAMERA_FLASH_TYPE is lcd
@@ -1206,7 +1214,6 @@ int SprdCamera3OEMIf::takePicture() {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ENABLE_CNR, mCNRMode);
         HAL_LOGD("mCNRMode=%d", mCNRMode);
     }
-
     setCameraState(SPRD_INTERNAL_RAW_REQUESTED, STATE_CAPTURE);
     if (CMR_CAMERA_SUCCESS !=
         mHalOem->ops->camera_take_picture(mCameraHandle, mCaptureMode)) {
@@ -4131,6 +4138,16 @@ void SprdCamera3OEMIf::PreviewFrameFaceBeauty(struct camera_frame_type *frame,
     cmr_u32 iso;
     int ret;
 
+    mSetting->getFACETag(&faceInfo);
+    /* if FB on before non-zsl cap, then skip no FD frame */
+    if (faceInfo.face_num == 0 && mNonZslFlag == true && mSkipNum < 3) {
+        mSkipNum++;
+        frame->type = PREVIEW_CANCELED_FRAME;
+        return ;
+    }
+    mNonZslFlag = false;
+    mSkipNum = 0;
+
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_BV, &bv);
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_CT, &ct);
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &iso);
@@ -4140,8 +4157,6 @@ void SprdCamera3OEMIf::PreviewFrameFaceBeauty(struct camera_frame_type *frame,
     beautyLevels->cameraWork = (int)mCameraId;
     beautyLevels->cameraCT = (int)ct;
     beautyLevels->cameraISO = (int)iso;
-
-    mSetting->getFACETag(&faceInfo);
 
     for (int i = 0; i < faceInfo.face_num; i++) {
         CameraConvertCoordinateFromFramework(faceInfo.face[i].rect);
