@@ -292,8 +292,16 @@ int SprdCamera3Factory::init_() {
 
 int SprdCamera3Factory::overrideCameraIdIfNeeded(int cameraId) {
     int id = cameraId;
-
     char value[PROPERTY_VALUE_MAX];
+
+    /* raw capture, If set cam.id = 0 by prop, capture size error */
+    if (SPRD_FRONT_HIGH_RES == cameraId ||
+        SPRD_BACK_HIGH_RESOLUTION_ID == cameraId) {
+        property_get("persist.vendor.cam.raw.mode", value, "jpeg");
+        if (!strcmp(value, "raw"))
+            return cameraId;
+    }
+
     property_get("persist.vendor.cam.id", value, "null");
     if (value[0] >= '0' && value[0] <= '9') {
         id = value[0] - '0';
