@@ -2094,7 +2094,6 @@ int SprdCamera3MultiBase::mapMemInfo(buffer_handle_t *input_buf1, void *input1_a
              zsl_frame->fd, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
              zsl_frame->width, zsl_frame->height, zsl_frame->format);
 
-err_out:
   return ret;
 }
 
