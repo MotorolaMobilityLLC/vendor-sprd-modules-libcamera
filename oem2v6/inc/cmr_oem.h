@@ -586,6 +586,8 @@ cmr_uint camera_get_exif_info(cmr_handle oem_handle,
 cmr_uint camera_get_result_exif_info(
     cmr_handle oem_handle, struct exif_spec_pic_taking_cond_tag *exif_pic_info);
 
+cmr_int camera_write_calibration_otp(cmr_handle oem_handle, struct cal_otp_info *param);
+
 cmr_int camera_local_start_focus(cmr_handle oem_handle);
 
 cmr_int camera_local_cancel_focus(cmr_handle oem_handle);

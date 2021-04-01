@@ -2564,6 +2564,10 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
     int64_t depthRun = 0;
     cmr_uint depth_jepg = 0;
     int rc = NO_ERROR;
+    cap_depth_params_t mCapDepthPara;
+    memset(&mCapDepthPara, 0, sizeof(cap_depth_params_t));
+    struct cal_otp_info otp_info;
+    memset(&otp_info, 0, sizeof(cal_otp_info));
     HAL_LOGD("E");
     char prop[PROPERTY_VALUE_MAX] = {
         0,
@@ -2635,21 +2639,31 @@ int SprdCamera3RealBokeh::BokehCaptureThread::sprdDepthCaptureHandle(
              mRealBokeh->mBokehSize.depth_snap_main_h);
 
     depthRun = systemTime();
+    mCapDepthPara.para1 = mRealBokeh->mDepthBuffer.snap_depth_buffer;
+    mCapDepthPara.para3 = input_buf2_addr;
+    mCapDepthPara.para4 = (void *)mRealBokeh->mScaleInfo.addr_vir.addr_y;
+    mCapDepthPara.vcmCurValue = mRealBokeh->mVcmStepsFixed;
+    mCapDepthPara.vcmUp =mRealBokeh->mlimited_infi;
+    mCapDepthPara.vcmDown =mRealBokeh->mlimited_macro;
+    mCapDepthPara.otp_info =&otp_info;
+    mCapDepthPara.mChangeSensor = mRealBokeh->mChangeSensor;
+
     if (mRealBokeh->mLastOnlieVcm &&
         mRealBokeh->mLastOnlieVcm == mRealBokeh->mVcmSteps) {
-        rc = mRealBokeh->mBokehAlgo->capDepthRun(
-            mRealBokeh->mDepthBuffer.snap_depth_buffer,
-            mRealBokeh->mDepthBuffer.depth_out_map_table, input_buf2_addr,
-            (void *)mRealBokeh->mScaleInfo.addr_vir.addr_y,
-            mRealBokeh->mVcmStepsFixed, mRealBokeh->mlimited_infi,
-            mRealBokeh->mlimited_macro);
+        mCapDepthPara.para2 = mRealBokeh->mDepthBuffer.depth_out_map_table;
+        rc = mRealBokeh->mBokehAlgo->capDepthRun(&mCapDepthPara);
     } else {
-        rc = mRealBokeh->mBokehAlgo->capDepthRun(
-            mRealBokeh->mDepthBuffer.snap_depth_buffer, NULL, input_buf2_addr,
-            (void *)mRealBokeh->mScaleInfo.addr_vir.addr_y,
-            mRealBokeh->mVcmStepsFixed, mRealBokeh->mlimited_infi,
-            mRealBokeh->mlimited_macro);
+        mCapDepthPara.para2 = NULL;
+        rc = mRealBokeh->mBokehAlgo->capDepthRun(&mCapDepthPara);
         HAL_LOGD("close online depth");
+    }
+    HAL_LOGD("mRealBokeh->mChangeSensor = %d, mCapDepthPara.ret_otp = %d, otp_size = %d",
+    mRealBokeh->mChangeSensor, mCapDepthPara.ret_otp, mCapDepthPara.otp_info->otp_size);
+    if(mRealBokeh->mChangeSensor == TRUE && NO_ERROR == mCapDepthPara.ret_otp &&
+        NO_ERROR == mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA, &otp_info, NULL)){
+        HAL_LOGD("cal_otp_result = %d, otp_size = %d, ret_otp = %d",
+            mCapDepthPara.otp_info->cal_otp_result, mCapDepthPara.otp_info->otp_size, mCapDepthPara.ret_otp);
+        mRealBokeh->mChangeSensor = false;
     }
     if (rc != ALRNB_ERR_SUCCESS) {
         HAL_LOGE("sprd_depth_Run failed! %d", rc);
@@ -3198,6 +3212,7 @@ int SprdCamera3RealBokeh::initialize(
 #endif
     mlimited_infi = 0;
     mlimited_macro = 0;
+    mChangeSensor = false;
     memset(&mbokehParm, 0, sizeof(bokeh_params));
     memset(&mTimeoutFlush, 0, sizeof(timespec));
 
@@ -3552,6 +3567,8 @@ const camera_metadata_t *SprdCamera3RealBokeh::constructDefaultRequestSettings(
         mOtpData.otp_exist = true;
         mOtpData.otp_type = otpType;
         mOtpData.otp_size = otpSize;
+        mChangeSensor = SprdCamera3Setting::s_setting[mRealBokeh->mCameraId]
+               .otpInfo.mChangeSensor;
         memcpy(mOtpData.otp_data, metadata.find(ANDROID_SPRD_OTP_DATA).data.u8,
                otpSize);
     }
