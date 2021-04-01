@@ -474,6 +474,7 @@ typedef struct {
     uint8_t dual_otp_flag;
     uint8_t otp_type;
     int otp_size;
+    bool mChangeSensor;
 } OTP_Tag;
 
 typedef struct {

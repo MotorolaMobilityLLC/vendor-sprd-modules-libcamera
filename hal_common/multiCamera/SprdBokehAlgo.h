@@ -45,8 +45,7 @@ class SprdBokehAlgo : public IBokehAlgo {
 
     int deinitCapDepth();
 
-    int capDepthRun(void *para1, void *para2, void *para3, void *para4,
-                    int vcmCurValue, int vcmUp, int vcmDown);
+    int capDepthRun(cap_depth_params_t *cap_depth_para);
 
     int capBlurImage(void *para1, void *para2, void *para3, int depthW,
                      int depthH, int mode);

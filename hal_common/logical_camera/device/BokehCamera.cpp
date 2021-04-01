@@ -5423,6 +5423,10 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
     int64_t depthRun = 0;
     cmr_uint depth_jepg = 0;
     int rc = NO_ERROR;
+    cap_depth_params_t mCapDepthPara;
+    memset(&mCapDepthPara, 0, sizeof(cap_depth_params_t));
+    struct cal_otp_info otp_info;
+    memset(&otp_info, 0, sizeof(cal_otp_info));
     HAL_LOGD("E");
     char prop[PROPERTY_VALUE_MAX] = {
         0,
@@ -5498,21 +5502,23 @@ int BokehCamera::BokehCaptureThread::sprdDepthCaptureHandle(
              mBokehCamera->mBokehSize.depth_snap_main_w,
              mBokehCamera->mBokehSize.depth_snap_main_h);
 
+    mCapDepthPara.para1 = mBokehCamera->mBokehDepthBuffer.snap_depth_buffer;
+    mCapDepthPara.para3 = input_buf2_addr;
+    mCapDepthPara.para4 = (void *)mBokehCamera->mScaleInfo.addr_vir.addr_y;
+    mCapDepthPara.vcmCurValue = mBokehCamera->mVcmStepsFixed;
+    mCapDepthPara.vcmUp =mBokehCamera->mlimited_infi;
+    mCapDepthPara.vcmDown =mBokehCamera->mlimited_macro;
+    mCapDepthPara.otp_info =&otp_info;
+    mCapDepthPara.mChangeSensor = mBokehCamera->mChangeSensor;
+
     depthRun = systemTime();
     if (mBokehCamera->mLastOnlieVcm &&
         mBokehCamera->mLastOnlieVcm == mBokehCamera->mVcmSteps) {
-        rc = mBokehCamera->mBokehAlgo->capDepthRun(
-            mBokehCamera->mBokehDepthBuffer.snap_depth_buffer,
-            mBokehCamera->mBokehDepthBuffer.depth_out_map_table,
-            input_buf2_addr, (void *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
-            mBokehCamera->mVcmStepsFixed, mBokehCamera->mlimited_infi,
-            mBokehCamera->mlimited_macro);
+        mCapDepthPara.para2 =  mBokehCamera->mBokehDepthBuffer.depth_out_map_table;
+        rc = mBokehCamera->mBokehAlgo->capDepthRun(&mCapDepthPara);
     } else {
-        rc = mBokehCamera->mBokehAlgo->capDepthRun(
-            mBokehCamera->mBokehDepthBuffer.snap_depth_buffer, NULL,
-            input_buf2_addr, (void *)mBokehCamera->mScaleInfo.addr_vir.addr_y,
-            mBokehCamera->mVcmStepsFixed, mBokehCamera->mlimited_infi,
-            mBokehCamera->mlimited_macro);
+        mCapDepthPara.para2 = NULL;
+        rc = mBokehCamera->mBokehAlgo->capDepthRun(&mCapDepthPara);
         HAL_LOGD("close online depth");
     }
     if (rc != ALRNB_ERR_SUCCESS) {

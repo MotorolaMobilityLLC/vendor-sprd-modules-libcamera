@@ -157,6 +157,7 @@ struct sensor_data_info {
     void *sub_data_ptr;
     cmr_u32 sub_size;
     cmr_u8 dualcam_cali_lib_type;
+    bool mChangeSensor;
 };
 
 struct sensor_otp_data_info {

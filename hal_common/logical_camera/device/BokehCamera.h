@@ -389,6 +389,7 @@ class BokehCamera : public CameraDevice_3_5,
     bool sn_trim_flag;
     int trim_W;
     int trim_H;
+    bool mChangeSensor;
     uint8_t mExtendMode;
     int configureStreams(camera3_stream_configuration_t *stream_list);
     void notifyMain(const camera3_notify_msg_t *msg);

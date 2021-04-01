@@ -237,6 +237,7 @@ typedef struct {
     int otp_type;
     // uint8_t otp_data[SPRD_DUAL_OTP_SIZE];
     uint8_t otp_data[THIRD_OTP_SIZE];
+    bool mChangeSensor;
 } OtpData;
 
 enum sensor_stream_ctrl {
