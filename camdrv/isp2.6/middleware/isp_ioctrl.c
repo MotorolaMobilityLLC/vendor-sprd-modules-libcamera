@@ -2014,6 +2014,45 @@ static cmr_int ispctl_ae_measure_lum(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
+static cmr_int change_scene_param(struct isp_alg_fw_context *cxt)
+{
+	cmr_int ret = ISP_SUCCESS;
+	int i;
+	CMR_MSG_INIT(message1);
+
+	pthread_mutex_lock(&cxt->smart_lock);
+	if (!cxt->smart_cxt.isp_smart_eb || cxt->smart_cxt.sw_bypass || !cxt->smart_update) {
+		ISP_LOGD("cam%ld, smart_eb %d, bypass %d, update %d\n", cxt->camera_id,
+			cxt->smart_cxt.isp_smart_eb, cxt->smart_cxt.sw_bypass, cxt->smart_update);
+		pthread_mutex_unlock(&cxt->smart_lock);
+		return ret;
+	}
+
+	i = (cxt->zsl_flag) ? 1 : 0;
+	cxt->smart_cxt.cur_set_id = i;
+	cxt->smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[i];
+	cxt->smart_proc_in.mode_flag = cxt->commn_cxt.isp_pm_mode[i];
+	cxt->smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
+	if (cxt->ops.smart_ops.ioctrl) {
+		ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
+					ISP_SMART_IOCTL_SET_WORK_MODE,
+					(void *)&cxt->smart_proc_in.mode_flag, NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
+	}
+	if (cxt->ops.smart_ops.calc) {
+		ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &cxt->smart_proc_in);
+		ISP_TRACE_IF_FAIL(ret, ("fail to do _smart_calc"));
+	}
+	pthread_mutex_unlock(&cxt->smart_lock);
+
+	message1.msg_type = ISP_EVT_CFG;
+	message1.sub_msg_type = PARAM_CFG_DEFAULT;
+	message1.sync_flag = CMR_MSG_SYNC_NONE;
+	ret = cmr_thread_msg_send(cxt->thr_handle, &message1);
+
+	return ret;
+}
+
 static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
 {
 	cmr_u32 convert_scene_flag = 0;
@@ -2092,6 +2131,7 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	struct ae_set_scene set_scene = { 0 };
 	cmr_u32 scene_flag = 0;
 	cmr_u32 eis_enable = 0;
+	cmr_u32 orig_nr_scene_flag;
 
 	if (NULL == param_ptr) {
 		ISP_LOGE("fail to get valid param !");
@@ -2102,11 +2142,15 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	if (scene_flag == ISP_VIDEO_EIS)
 		eis_enable = 1;
 
+	orig_nr_scene_flag = cxt->commn_cxt.nr_scene_flag;
 	set_scene.mode = convert_scene_flag_for_ae(scene_flag);
 	cxt->commn_cxt.nr_scene_flag = convert_scene_flag_for_nr(scene_flag);
 	ISP_LOGD("set_scene_mode %d, (nr %d ae %d)", scene_flag, cxt->commn_cxt.nr_scene_flag, set_scene.mode);
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SCENE_MODE, &set_scene, NULL);
+
+	if (orig_nr_scene_flag != cxt->commn_cxt.nr_scene_flag)
+		ret = change_scene_param(cxt);
 
 /*	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_EIS_ENABLE, (void *)&eis_enable, NULL);

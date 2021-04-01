@@ -433,6 +433,10 @@ struct isp_alg_fw_context {
 	cmr_handle tof_handle;
 	struct dcam_dev_rgb_gain_info rgb_gain;
 
+	cmr_u32 smart_update;
+	struct smart_proc_input smart_proc_in;
+	pthread_mutex_t smart_lock;
+
 	struct isp_sensor_fps_info sensor_fps;
 	struct sensor_otp_cust_info *otp_data;
 	cmr_u32 lsc_flash_onoff;
@@ -3338,6 +3342,7 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 			ae_in->flash_param.captureFlash1ofALLRatio,
 			ae_in->ae_output.abl_weight);
 		if (!cxt->smart_cxt.sw_bypass) {
+			pthread_mutex_lock(&cxt->smart_lock);
 			smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
 			smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
 			smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
@@ -3404,6 +3409,9 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 				debuginfo_eq(&cxt->smart_queue, &smart_msg);
 				pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
 			}
+			cxt->smart_update = 1;
+			cxt->smart_proc_in = smart_proc_in;
+			pthread_mutex_unlock(&cxt->smart_lock);
 		}
 
 		if (!cxt->lsc_cxt.sw_bypass && cxt->lsc_cxt.use_lscm) {
@@ -4359,6 +4367,7 @@ static cmr_int ispalg_pm_init(struct fw_init_local *init_cxt)
 	}
 	cxt->commn_cxt.multi_nr_flag = pm_init_output.multi_nr_flag;
 	pthread_mutex_init(&cxt->pm_getting_lock, NULL);
+	pthread_mutex_init(&cxt->smart_lock, NULL);
 
 	ISP_LOGD("cam%ld done\n", cxt->camera_id);
 	return ret;
@@ -6090,6 +6099,7 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 
 	memset(&smart_proc_in, 0, sizeof(smart_proc_in));
 	if ((cxt->smart_cxt.sw_bypass == 0) && (0 != bv_gain) && (0 != ct)) {
+		pthread_mutex_lock(&cxt->smart_lock);
 		smart_proc_in.cal_para.bv = bv;
 		smart_proc_in.cal_para.bv_gain = bv_gain;
 		smart_proc_in.cal_para.ct = ct;
@@ -6110,6 +6120,9 @@ static cmr_int ispalg_update_alg_param(cmr_handle isp_alg_handle)
 			if (cxt->ops.smart_ops.calc)
 				ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
 		}
+		cxt->smart_update = 1;
+		cxt->smart_proc_in = smart_proc_in;
+		pthread_mutex_unlock(&cxt->smart_lock);
 	}
 
 	return ret;
@@ -6449,6 +6462,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	/* free/reset statis buffers of previous session */
 	ret = isp_dev_free_buf(cxt->dev_access_handle, &cxt->stats_mem_info);
 
+	cxt->smart_update = 0;
 	cxt->first_frm = 1;
 	cxt->aem_is_update = 0;
 	cxt->eis_move_info = 0;
@@ -7433,6 +7447,7 @@ cmr_int isp_alg_fw_deinit(cmr_handle isp_alg_handle)
 	ispalg_deinit((cmr_handle) cxt);
 	isp_br_deinit(cxt->camera_id);
 
+	pthread_mutex_destroy(&cxt->smart_lock);
 	pthread_mutex_destroy(&cxt->pm_getting_lock);
 	isp_pm_deinit(cxt->handle_pm);
 
