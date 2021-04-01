@@ -789,7 +789,7 @@ static cmr_int s5kgw1sp03_drv_stream_on(cmr_handle handle, cmr_s32 param) {
 
 
     char value1[PROPERTY_VALUE_MAX];
-    property_get("debug.camera.test.mode", value1, "0");
+    property_get("persist.vendor.cam.colorbar", value1, "0");
     if (!strcmp(value1, "1")) {
         SENSOR_LOGD("enable test mode");
         hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0600, 0x0002);
