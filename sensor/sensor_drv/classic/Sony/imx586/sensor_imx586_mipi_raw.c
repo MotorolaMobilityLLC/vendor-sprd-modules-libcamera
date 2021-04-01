@@ -705,16 +705,24 @@ static cmr_int imx586_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
         goto snapshot_info;
     }
 
-    prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
-    prv_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
-
     if (sns_drv_cxt->ops_cb.set_mode)
         sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
     if (sns_drv_cxt->ops_cb.set_mode_wait_done)
         sns_drv_cxt->ops_cb.set_mode_wait_done(sns_drv_cxt->caller_handle);
 
-    cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
+    prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
     prv_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
+    prv_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
+
+    if(sns_4in1_mode[capture_mode]) {
+        cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
+        cap_shutter = cap_shutter < 38700 ? cap_shutter : 38700;
+        cap_exptime = prv_exptime  * BINNING_FACTOR;
+        cap_exptime = 600000000;
+    } else {
+        cap_shutter = prv_shutter * prv_linetime / cap_linetime;
+        cap_exptime = prv_exptime;
+    }
     cap_gain = prv_gain;
 
     SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,

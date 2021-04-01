@@ -92,7 +92,7 @@
  * 2 : sum-average binning
  * 4 : sum binning
  */
-#define BINNING_FACTOR 1
+#define BINNING_FACTOR 4
 
 /* please ref spec
  * 1: sensor auto caculate
