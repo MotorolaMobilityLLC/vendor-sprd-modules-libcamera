@@ -2119,6 +2119,10 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     int pdaf_type = 0;
     char value[PROPERTY_VALUE_MAX];
     struct phySensorInfo *phyPtr = NULL;
+    char raw_prop[PROPERTY_VALUE_MAX], tool_prop[PROPERTY_VALUE_MAX];
+
+    property_get("persist.vendor.cam.raw.mode", raw_prop, "jpeg");
+    property_get("persist.vendor.cam.isptool.mode.enable", tool_prop, "false");
 
     for (int i = 0; i < mPhysicalSensorNum; i++) {
         if (camera_identify_state[1] == IDENTIFY_STATUS_NOT_PRESENT) {
@@ -2428,16 +2432,24 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     available_cam_features.add(atoi(prop));
 
     // 38 auto mode shot2shot feature
-    property_get("persist.vendor.cam.auto.shot2shot.enable", prop, "0");
-    available_cam_features.add(atoi(prop));
+    if (!strcmp(raw_prop, "raw") || !strcmp(tool_prop, "true")) {
+        available_cam_features.add(0);
+    } else {
+        property_get("persist.vendor.cam.auto.shot2shot.enable", prop, "0");
+        available_cam_features.add(atoi(prop));
+    }
 
     // 39 blur fast thumb
     property_get("persist.vendor.cam.blur.fast.thumb", prop, "0");
     available_cam_features.add(atoi(prop));
 
     // 40 auto fast thumb
-    property_get("persist.vendor.cam.auto.fast.thumb", prop, "0");
-    available_cam_features.add(atoi(prop));
+    if (!strcmp(raw_prop, "raw") || !strcmp(tool_prop, "true")) {
+        available_cam_features.add(0);
+    } else {
+        property_get("persist.vendor.cam.auto.fast.thumb", prop, "0");
+        available_cam_features.add(atoi(prop));
+    }
 
     // 41 ai version, 0-close, 1-ai1.0,2-ai2.0
     property_get("persist.vendor.cam.ai.scence.enable", prop, "0");
