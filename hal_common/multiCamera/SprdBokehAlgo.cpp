@@ -420,12 +420,11 @@ int SprdBokehAlgo::deinitCapDepth() {
     return rc;
 }
 
-int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
-                               void *para4, int vcmCurValue, int vcmUp,
-                               int vcmDown) {
+
+int SprdBokehAlgo::capDepthRun(cap_depth_params_t *cap_depth_para) {
     int rc = NO_ERROR;
     int f_number = 0;
-    if (!para1 || !para3 || !para4) {
+    if (!cap_depth_para->para1 || !cap_depth_para->para3 || !cap_depth_para->para4) {
         HAL_LOGE(" para is null");
         rc = BAD_VALUE;
         goto exit;
@@ -437,18 +436,26 @@ int SprdBokehAlgo::capDepthRun(void *para1, void *para2, void *para3,
 
     HAL_LOGD("capture fnum %d coordinate (%d,%d) VCM_INFO:%d",
              mCapbokehParam.bokeh_level, mCapbokehParam.sel_x, mCapbokehParam.sel_y,
-             vcmCurValue);
-    mCapDepthRunParams.input[0].addr[0] = para4;
-    mCapDepthRunParams.input[1].addr[0] = para3;
-    mCapDepthRunParams.output.addr[0] = para1;
+             cap_depth_para->vcmCurValue);
+    mCapDepthRunParams.input[0].addr[0] = cap_depth_para->para4;
+    mCapDepthRunParams.input[1].addr[0] = cap_depth_para->para3;
+    mCapDepthRunParams.output.addr[0] = cap_depth_para->para1;
     mCapDepthRunParams.params.F_number = mCapbokehParam.bokeh_level;
     mCapDepthRunParams.params.sel_x = mCapbokehParam.sel_x;
     mCapDepthRunParams.params.sel_y = mCapbokehParam.sel_y;
-    mCapDepthRunParams.params.VCM_cur_value = vcmCurValue;
+    mCapDepthRunParams.params.VCM_cur_value = cap_depth_para->vcmCurValue;
+    mCapDepthRunParams.input_otpsize = mCalData.otp_size;
+    mCapDepthRunParams.input_otpbuf = mCalData.otp_data;
+    mCapDepthRunParams.output_otpbuf = cap_depth_para->otp_info->otp_data;
+    mCapDepthRunParams.mChangeSensor = cap_depth_para->mChangeSensor;
+    mCapDepthRunParams.params.portrait_param = &mBokehPortraitParams;
 
     mCapDepthRunParams.params.portrait_param = &mBokehPortraitParams;
 
     rc = sprd_depth_adpt_ctrl(mDepthCapHandle,SPRD_DEPTH_RUN_CMD,&mCapDepthRunParams);
+    cap_depth_para->otp_info->otp_size = mCapDepthRunParams.output_otpsize;
+    cap_depth_para->otp_info->dual_otp_flag = 1;
+    cap_depth_para->ret_otp  = mCapDepthRunParams.ret_otp;
 exit:
     return rc;
 }

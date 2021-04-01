@@ -16057,6 +16057,21 @@ cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle,
                      ratio);
 }
 
+cmr_int camera_write_calibration_otp(cmr_handle oem_handle, struct cal_otp_info * param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CMR_LOGD("dual_otp_flag %d size %d", param->dual_otp_flag, param->otp_size);
+
+    ret = cmr_sensor_write_calibration_otp(cxt->sn_cxt.sensor_handle, param->otp_data,
+    param->dual_otp_flag, param->otp_size, cxt->camera_id);
+    if (0 == ret) {
+        param->cal_otp_result = CAMERA_CALIC_OTP_SUCCESS;
+    } else {
+        param->cal_otp_result = CAMERA_CALIC_OTP_FAIL;
+    }
+    return ret;
+}
+
 cmr_int camera_local_cap_state(cmr_handle oem_handle, bool *flag) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;

@@ -52,7 +52,7 @@ endif
 LOCAL_SHARED_LIBRARIES += libXMPCore libXMPFiles
 
 ifeq ($(strip $(TARGET_BOARD_BOKEH_MODE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libTfliteWrapper libSegLite libbokeh_depth_adapter libsprdbokeh_adapter libsprddepthadapter
+LOCAL_SHARED_LIBRARIES += libsprdbokeh libsprddepth libbokeh_depth libTfliteWrapper libSegLite libbokeh_depth_adapter libsprdbokeh_adapter libsprddepthadapter libceres_online libDualCam_OnliCalib
 #else ifeq ($(strip $(TARGET_BOARD_SPRD_RANGEFINDER_SUPPORT)),true)
 #LOCAL_SHARED_LIBRARIES += libsprddepth libalParseOTP
 endif
