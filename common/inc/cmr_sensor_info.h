@@ -427,12 +427,12 @@ enum pdaf_block_structure {
 };
 
 enum pdaf_data_format {
-    NORMAL_CONVERTOR = 0,
+    CONVERTOR_DEFAULT = 0,
     CONVERTOR_FOR_IMX258,
 };
 struct pdaf_coordinate_tab {
     cmr_int number;
-    cmr_int pos_info[32];
+    cmr_int pos_info[64];
 };
 
 struct pdaf_block_descriptor {
@@ -445,12 +445,21 @@ struct pdaf_block_descriptor {
     enum pdaf_data_format is_special_format;
 };
 
+struct sensor_pdaf_roi_param {
+    cmr_u32 roi_start_x;
+    cmr_u32 roi_start_y;
+    cmr_u32 roi_area_width;
+    cmr_u32 roi_area_height;
+};
+
 struct pdaf_buffer_handle {
     void *left_buffer;
     void *right_buffer;
     void *left_output;
     void *right_output;
+    struct sensor_pdaf_roi_param roi_param;
     cmr_int roi_pixel_numb;
+    cmr_s32 frameid;
 };
 
 struct sensor_pdaf_info {

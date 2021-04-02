@@ -1,4 +1,4 @@
-#define LOG_TAG "sensor_pdaf"
+ #define LOG_TAG "sensor_pdaf"
 
 #include <cutils/trace.h>
 #include <utils/Log.h>
@@ -33,16 +33,19 @@
             free(a);                            \
             a = NULL;                           \
         } else                                  \
-            SENSOR_LOGD("invalid buffer");      \
+            SENSOR_LOGD("invid buffer");        \
     } while(0)
 
 #define SENSOR_PDAF_CHECK_POINTER(a)            \
     do {                                        \
         if(!a) {                                \
-            SENSOR_LOGD("invalid param");       \
+            SENSOR_LOGD("invid param");         \
             return SENSOR_FAIL;                 \
         }                                       \
     } while(0)
+#define SENSOR_PDAF_4BYTE_IGNMENT(a) ((a % 4) ? (a) : (a + 4 - a % 4))
+
+#define SENSOR_PDAF_ABS_value(a) ((a < 0) ? (0) : (a))
 
 struct pdaf_roi_param {
     cmr_int roi_start_x;
@@ -51,16 +54,21 @@ struct pdaf_roi_param {
     cmr_int roi_height;
     cmr_int pd_area_width;
     cmr_int pd_area_height;
+    cmr_int pd_area_sum;
+    cmr_int line_offset_x[1024];
+    cmr_int line_offset_y[1024];
+    cmr_u16 *pd_pos_info;
 };
 
 enum PDAF_DATA_PROCESS {
-    PDAF_INVALID_BUFFER,
+    PDAF_INVID_BUFFER,
     PDAF_TYPE2_BUFFER = 2,
     PDAF_TYPE3_BUFFER = 3
 };
 
 cmr_int sensor_pdaf_dump_func(void *buffer, cmr_int dump_numb, unsigned char *name);
-cmr_int sensor_pdaf_mipi_data_processor(cmr_u8 *input_buf, cmr_u16 *output_buf, cmr_u32 size);
+cmr_int sensor_pdaf_dump_func_with_frameid(void *buffer, cmr_int dump_numb, unsigned char *name, int frame_id);
+cmr_int sensor_pdaf_mipi_data_processor(cmr_u8 *input_buf, cmr_u32 *output_buf, cmr_u32 size);
 cmr_int sensor_pdaf_data_extraction(cmr_u16 *src, cmr_u16 *dst, struct pdaf_roi_param *roi_param);
 cmr_int sensor_pdaf_type3_convertor(struct pdaf_buffer_handle *pdaf_buffer,
                                     struct pdaf_roi_param *roi_param);
@@ -78,28 +86,22 @@ double tick(void)
     return t.tv_sec + 1E-6 * t.tv_usec;
 }
 
-cmr_int sensor_pdaf_mipi_data_processor(cmr_u8 *input_buf, cmr_u16 *output_buf, cmr_u32 size) {
-    cmr_u16 convertor[5];
+cmr_int sensor_pdaf_mipi_data_processor(cmr_u8 *input_buf, cmr_u32 *output_buf, cmr_u32 size) {
+    cmr_u32 convertor[5];
     int count = 0;
     int judge = 0;
-    cmr_u16 *pointer_for_output = output_buf;
-    char value[128];
+    cmr_u32 *pointer_for_output = output_buf;
     for(int i = 0; i < size; i++) {
-        convertor[count++] = input_buf[i];
+        convertor[count++] = (cmr_u32)input_buf[i];
         if((count % 5) == 0) {
             count = 0;
             convertor[0] = ((convertor[0] << 2) | (convertor[4] & 0x03));
             convertor[1] = ((convertor[1] << 2) | (convertor[4] & 0x0C) >> 2);
             convertor[2] = ((convertor[2] << 2) | (convertor[4] & 0x30) >> 4);
             convertor[3] = ((convertor[3] << 2) | (convertor[4] & 0xC0) >> 6);
-            memcpy(pointer_for_output + 4 * judge, convertor, 4 * sizeof(cmr_u16));
+            memcpy(pointer_for_output + 4 * judge, convertor, 4 * sizeof(cmr_u32));
             judge++;
         }
-    }
-    property_get("persist.vendor.cam.sensor.pdaf.mipi.dump", value, "0");
-    if(atoi(value)) {
-        sensor_pdaf_dump_func(input_buf, size, "sensor_pdaf_input.mipi_raw");
-        sensor_pdaf_dump_func(output_buf, size / 5 * 8, "sensor_pdaf_raw16.raw");
     }
     return SENSOR_SUCCESS;
 }
@@ -115,39 +117,32 @@ cmr_int sensor_pdaf_data_extraction(cmr_u16 *src, cmr_u16 *dst, struct pdaf_roi_
     for(int i = 0 ; i < roi_param->roi_height; i++)
         memcpy(pointer_for_dst + i * roi_line_feed,
                 pointer_for_src + i * pd_area_width, sizeof(cmr_u16) * roi_line_feed);
-
     return SENSOR_SUCCESS;
 }
 
-void sensor_pdaf_calculate_roi(struct sensor_pdaf_info *pdaf_info,
+void sensor_pdaf_calculate_roi(struct sensor_pdaf_info *pdaf_info, struct pdaf_buffer_handle *buffer_handle,
                                 struct pdaf_roi_param *roi_param) {
     cmr_int pdaf_area_width, pdaf_area_height;
     cmr_int base_width, base_height, pd_area_start_x, pd_area_start_y;
     cmr_int pd_block_w, pd_block_h, offset_width, offset_height;
-    cmr_int roi_img_start_x, roi_img_start_y, roi_width, roi_height;
+    cmr_int roi_img_start_x, roi_img_start_y, roi_pdaf_start_x, roi_pdaf_start_y;
+    cmr_int roi_width, roi_height;
     cmr_int block_number_x, block_number_y;
     pd_block_h = 8 * pdaf_info->pd_block_w;
     pd_block_w = 8 * pdaf_info->pd_block_h;
-    pdaf_area_height = (pdaf_info->pd_end_y - pdaf_info->pd_offset_y);
-    pdaf_area_width = (pdaf_info->pd_end_x - pdaf_info->pd_offset_x);
+    pdaf_area_height = buffer_handle->roi_param.roi_area_height / (8 << pdaf_info->pd_block_h);
+    pdaf_area_width = buffer_handle->roi_param.roi_area_width / (8 << pdaf_info->pd_block_w);
     pd_area_start_x = pdaf_info->pd_offset_x;
     pd_area_start_y = pdaf_info->pd_offset_y;
     base_width = DEFAULT_ROI_WIDTH;
     base_height = DEFAULT_ROI_HEIGHT;
+    memset(roi_param, 0, sizeof(struct pdaf_roi_param));
+    roi_img_start_x = buffer_handle->roi_param.roi_start_x;
+    roi_img_start_y = buffer_handle->roi_param.roi_start_y;
+    roi_pdaf_start_x = roi_img_start_x / (8 << pdaf_info->pd_block_w);
+    roi_pdaf_start_y = roi_img_start_y / (8 << pdaf_info->pd_block_h);
 
-    if(pdaf_area_width < 8 * base_width || pdaf_area_height < 8 * base_height) {
-        base_width = (pdaf_area_width / pd_block_w / 8) * pd_block_w;
-        base_height = (pdaf_area_height / pd_block_h / 8) * pd_block_h;
-        roi_width = 4 * base_width;
-        roi_height = 4 * base_height;
-    }
-
-    roi_img_start_x = pdaf_info->pd_offset_x + 2 * base_width;
-    roi_img_start_y = pdaf_info->pd_offset_y + 2 * base_height;
-    offset_width = pdaf_area_width - 8 * base_width;
-    offset_height = pdaf_area_height - 8 * base_height;
-
-#ifdef PDAF_CALC_ROI
+#ifdef PDAF_CC_ROI
     if((offset_width / pd_block_w) > 1) {
         if(((offset_width / pd_block_w) % 2) == 0) {
             pd_area_start_x += offset_width / 2;
@@ -167,14 +162,20 @@ void sensor_pdaf_calculate_roi(struct sensor_pdaf_info *pdaf_info,
         }
     }
 #endif
+
     roi_param->pd_area_height = pdaf_info->pd_block_num_y *
                                 pdaf_info->descriptor->block_height;
     roi_param->pd_area_width = pdaf_info->pd_block_num_x *
                                pdaf_info->descriptor->block_width;
-    roi_param->roi_height = pdaf_area_height / pd_block_h;
-    roi_param->roi_width = pdaf_area_width / pd_block_w;
-    roi_param->roi_start_x = (roi_img_start_x - pdaf_info->pd_offset_x) / pdaf_info->pd_density_x;
-    roi_param->roi_start_y = (roi_img_start_y - pdaf_info->pd_offset_y) / pdaf_info->pd_density_y;
+    roi_param->roi_height = pdaf_area_height * pdaf_info->descriptor->block_height;
+    roi_param->roi_width = pdaf_area_width * pdaf_info->descriptor->block_width;
+    roi_param->roi_start_x = roi_pdaf_start_x * pdaf_info->descriptor->block_width;
+    roi_param->roi_start_y = roi_pdaf_start_y * pdaf_info->descriptor->block_height;
+    roi_param->pd_pos_info = pdaf_info->pd_is_right;
+    SENSOR_LOGV("ROI param is: height [%d], width [%d], roi_start_x [%d], roi_start_y [%d]",
+                roi_param->roi_height, roi_param->roi_width, roi_param->roi_start_x, roi_param->roi_start_y);
+    SENSOR_LOGV("FULL param is: height [%d], width [%d]",
+                roi_param->pd_area_height, roi_param->pd_area_width);
     return;
 }
 
@@ -215,15 +216,23 @@ cmr_int sensor_pdaf_type3_convertor(struct pdaf_buffer_handle *pdaf_buffer,
     return 0;
 }
 
-int count = 0;
 cmr_int sensor_pdaf_dump_func(void *buffer, cmr_int dump_numb, unsigned char *name) {
     unsigned char file_path[128];
-    sprintf(file_path, "%s%d_%s", PDAF_BUFFER_DUMP_PATH, count, name);
+    sprintf(file_path, "%s_%s", PDAF_BUFFER_DUMP_PATH, name);
     FILE *fp = fopen(file_path, "wb+");
     SENSOR_PDAF_CHECK_POINTER(fp);
     fwrite(buffer, dump_numb, 1, fp);
     fclose(fp);
-    count++;
+    return SENSOR_SUCCESS;
+}
+
+cmr_int sensor_pdaf_dump_func_with_frameid(void *buffer, cmr_int dump_numb, unsigned char *name, int frame_id) {
+    unsigned char file_path[128];
+    sprintf(file_path, "%s%d_%p_%s", PDAF_BUFFER_DUMP_PATH, frame_id, buffer, name);
+    FILE *fp = fopen(file_path, "wb+");
+    SENSOR_PDAF_CHECK_POINTER(fp);
+    fwrite(buffer, dump_numb, 1, fp);
+    fclose(fp);
     return SENSOR_SUCCESS;
 }
 
@@ -234,7 +243,7 @@ cmr_int sensor_pdaf_mipi_raw_type3(void *buffer_handle, cmr_u32 *param) {
     char property_value[128];
     int dump_numb;
 
-    sensor_pdaf_calculate_roi(pdaf_info, &roi_param);
+    sensor_pdaf_calculate_roi(pdaf_info, pdaf_buffer, &roi_param);
     sensor_pdaf_type3_convertor(pdaf_buffer, &roi_param);
     dump_numb = pdaf_buffer->roi_pixel_numb;
     property_get("persist.vendor.cam.pdaf.dump.type3", property_value, "0");
@@ -251,54 +260,47 @@ cmr_int sensor_pdaf_buffer_block_seprator(struct pdaf_block_descriptor *descript
                                           struct pdaf_buffer_handle *pdaf_buffer,
                                           struct pdaf_roi_param *roi_param) {
     struct pdaf_coordinate_tab *judger = descriptor->pd_line_coordinate;
-    cmr_int block_height, line_coordinate, right_line, left_line, line_width, line_height;
+    cmr_int block_height, line_coordinate, colum_coordinate, right_line, left_line, line_width, line_height;
     cmr_int left_flag, right_flag, output_line_width;
-    cmr_u16 *left = (cmr_u16 *)pdaf_buffer->left_output;
-    cmr_u16 *right = (cmr_u16 *)pdaf_buffer->right_output;
-    cmr_u16 *input;
-    int output_line;
+    cmr_u32 *left = (cmr_u32 *)pdaf_buffer->left_output;
+    cmr_u32 *right = (cmr_u32 *)pdaf_buffer->right_output;
+    cmr_u32 *input = (cmr_u32 *)pdaf_buffer->right_buffer;
+    int output_line, num;
 
     SENSOR_PDAF_INIT_INT(output_line, left_line, right_line);
+    SENSOR_PDAF_INIT_INT(colum_coordinate, line_coordinate, output_line_width);
     block_height = descriptor->block_height;
-    line_width = roi_param->pd_area_width;
-    line_height = roi_param->pd_area_height;
-    input = pdaf_buffer->right_buffer;
+    line_width = roi_param->roi_width;
+    line_height = roi_param->roi_height;
     output_line_width = line_width / 2;
 
     SENSOR_LOGV("line width -> %d, line height -> %d, output_line_width -> %d",
                  line_width, line_height, output_line_width);
-    SENSOR_LOGV("block height = %d", descriptor->block_height);
     for(int i = 0; i < line_height; i++) {
         SENSOR_PDAF_INIT_INT(left_flag, right_flag, line_coordinate);
         for(int j = 0; j < line_width; j++) {
-            if(*(judger->pos_info + line_coordinate)) {
-                memcpy((right + (right_line * output_line_width + right_flag)),
-                       (input + (i * line_width + j)), sizeof(cmr_u16));
+            if(roi_param->pd_pos_info[colum_coordinate * descriptor->block_width + line_coordinate]) {
+                *(right + (right_line * output_line_width + right_flag)) =
+                       *(input + (i * line_width + j));
                 right_flag++;
             } else {
-                memcpy((left + (left_line * output_line_width + left_flag)),
-                       (input + (i * line_width + j)), sizeof(cmr_u16));
+                *(left + (left_line * output_line_width + left_flag)) =
+                       *(input + (i * line_width + j));
                 left_flag++;
             }
             line_coordinate++;
-            if(line_coordinate == (judger->number))
+            if(line_coordinate == descriptor->block_width)
                 line_coordinate = 0;
         }
-        int num;
-        num = i + 1;
-        if(!(num % block_height)) {
-            output_line++;
-            judger = descriptor->pd_line_coordinate;
-        } else
-            judger = judger + 1;
+        colum_coordinate = ((i + 1) % descriptor->block_height);
         if(right_flag)
             right_line++;
         if(left_flag)
             left_line++;
     }
 
-    SENSOR_LOGD("block seprator output line is %d with left_line -> %d, right_line -> %d",
-                 output_line, left_line, right_line);
+    SENSOR_LOGV("block seprator with left_line -> %d, right_line -> %d",
+                 left_line, right_line);
     return SENSOR_SUCCESS;
 }
 
@@ -313,8 +315,8 @@ cmr_int sensor_pdaf_buffer_lined_seprator(struct pdaf_block_descriptor *descript
     int i;
     unsigned char *temp_buff = (cmr_u8 *)pdaf_buffer->right_buffer;
     pointer_for_src = (cmr_u8 *)pdaf_buffer->right_buffer;
-    line_feed = roi_param->pd_area_width;
-    line_height = roi_param->pd_area_height;
+    line_feed = roi_param->roi_width;
+    line_height = roi_param->roi_height;
     pointer_for_right = (cmr_u8 *)pdaf_buffer->right_output;
     pointer_for_left = (cmr_u8 *)pdaf_buffer->left_output;
 
@@ -322,16 +324,16 @@ cmr_int sensor_pdaf_buffer_lined_seprator(struct pdaf_block_descriptor *descript
     SENSOR_LOGV("pd area width = %d; pd area height = %d", line_feed, line_height);
 
     for(i = 0; i < line_height; i++) {
-        pointer_for_src = (cmr_u8 *)(temp_buff + i * line_feed * 2);
-        pointer_for_left = (cmr_u8 *)(pdaf_buffer->left_output + left_line * line_feed * 2);
-        pointer_for_right = (cmr_u8 *)(pdaf_buffer->right_output + right_line * line_feed * 2);
+        pointer_for_src = (cmr_u8 *)(temp_buff + i * line_feed * 4);
+        pointer_for_left = (cmr_u8 *)(pdaf_buffer->left_output + left_line * line_feed * 4);
+        pointer_for_right = (cmr_u8 *)(pdaf_buffer->right_output + right_line * line_feed * 4);
         if(coordinate_tab == (descriptor->block_height))
             coordinate_tab = 0;
         if(*(pd_coordinate_tab + coordinate_tab)) {
-            memcpy(pointer_for_right, pointer_for_src, line_feed * 2);
+            memcpy(pointer_for_right, pointer_for_src, line_feed * 4);
             right_line++;
         } else {
-            memcpy(pointer_for_left, pointer_for_src, line_feed * 2);
+            memcpy(pointer_for_left, pointer_for_src, line_feed * 4);
             left_line++;
         }
         coordinate_tab++;
@@ -341,6 +343,7 @@ cmr_int sensor_pdaf_buffer_lined_seprator(struct pdaf_block_descriptor *descript
 
     return SENSOR_SUCCESS;
 }
+
 
 cmr_int sensor_pdaf_buffer_seprator(struct pdaf_buffer_handle *pdaf_buffer,
                                     struct sensor_pdaf_info *pdaf_info,
@@ -363,7 +366,7 @@ cmr_int sensor_pdaf_buffer_seprator(struct pdaf_buffer_handle *pdaf_buffer,
 cmr_int sensor_pdaf_buffer_process_for_imx258(struct pdaf_buffer_handle *buffer_handle,
                                               struct sensor_pdaf_info *pdaf_info) {
     if(!buffer_handle || !pdaf_info) {
-        SENSOR_LOGE("NOT valid input");
+        SENSOR_LOGE("NOT vid input");
         return -1;
     }
     struct pdaf_block_descriptor *descriptor = (pdaf_info->descriptor);
@@ -405,6 +408,64 @@ cmr_int sensor_pdaf_buffer_process_for_imx258(struct pdaf_buffer_handle *buffer_
     return SENSOR_SUCCESS;
 }
 
+cmr_int sensor_pdaf_prepare_roi(void *input_buffer, void *output_buffer, struct pdaf_roi_param *roi_param) {
+    cmr_int roi_start_x, roi_start_y, roi_area_width, roi_area_height, roi_start_address;
+    cmr_int actual_roi_start_address, actual_copy_size;
+    cmr_int pd_area_width, pd_area_height, pd_area_size;
+    unsigned char *buffer_input = (unsigned char *)input_buffer;
+    unsigned char *buffer_output = (unsigned char *)output_buffer;
+    roi_start_x = roi_param->roi_start_x;
+    roi_start_y = roi_param->roi_start_y;
+    roi_area_width = roi_param->roi_width;
+    roi_area_height = roi_param->roi_height;
+    pd_area_width = roi_param->pd_area_width;
+    pd_area_height = roi_param->pd_area_height;
+    pd_area_size = pd_area_height * pd_area_width;
+    roi_param->pd_area_sum = 0;
+
+    SENSOR_LOGV("PDAF INFO with: roi_start_address [%d, %d], roi_area_size [%d, %d]", roi_start_x, roi_start_y, roi_area_width, roi_area_height);
+    for(int i = 0; i < roi_area_height; i++) {
+        roi_start_address = pd_area_width * (i + roi_start_y) + roi_start_x;
+        roi_param->line_offset_x[i] = roi_start_address % 4;
+        roi_param->line_offset_y[i] = (roi_param->roi_width + roi_param->line_offset_x[i]) % 4;
+        actual_roi_start_address = (roi_start_address - roi_param->line_offset_x[i]) * 5 / 4;
+        actual_copy_size = (roi_param->roi_width + roi_param->line_offset_x[i] + roi_param->line_offset_y[i]) * 5 / 4;
+        buffer_input = (unsigned char *)input_buffer + actual_roi_start_address;
+        buffer_output += actual_copy_size;
+        roi_param->pd_area_sum += actual_copy_size;
+        memcpy(buffer_output, buffer_input, actual_copy_size);
+    }
+    SENSOR_LOGV("Actual copy size is %d with each line %d", roi_param->pd_area_sum, actual_copy_size);
+    return SENSOR_SUCCESS;
+}
+
+cmr_int sensor_pdaf_buffer_alignment(void *input_buffer, void *output_buffer, struct pdaf_roi_param *roi_param) {
+    unsigned char *buffer_input, *buffer_output;
+    cmr_int offset_start_x, pd_roi_width, pd_roi_height;
+    buffer_input = (unsigned char *)input_buffer;
+    buffer_output = (unsigned char *)output_buffer;
+    pd_roi_width = roi_param->roi_width;
+    pd_roi_height = roi_param->roi_height;
+    for(int i = 0; i < pd_roi_height; i++) {
+        offset_start_x = roi_param->line_offset_x[i] + roi_param->line_offset_y[SENSOR_PDAF_ABS_value(i - 1)] + i * pd_roi_width;
+        memcpy(buffer_output + 4 * i * pd_roi_width, input_buffer + offset_start_x * 4, pd_roi_width * 4);
+    }
+    return SENSOR_SUCCESS;
+}
+
+cmr_int sensor_pdaf_prepare_buffer(struct pdaf_buffer_handle *buffer_handle, struct pdaf_roi_param *roi_param) {
+    if(!buffer_handle || !roi_param) {
+        SENSOR_LOGE("NOT VALID INPUT");
+        return -1;
+    }
+    cmr_int pd_area_size = roi_param->pd_area_height * roi_param->pd_area_width * 5 / 2;
+    cmr_int pd_roi_size = roi_param->roi_height * roi_param->roi_width * 4;
+    memset(buffer_handle->right_buffer, 0, pd_area_size);
+    memset(buffer_handle->left_output, 0, pd_roi_size);
+    memset(buffer_handle->right_output, 0, pd_roi_size);
+    return 0;
+}
+
 cmr_int sensor_pdaf_mipi_raw_type2(void *buffer_handle, cmr_u32 *param) {
     struct sensor_pdaf_info *pdaf_info = (struct sensor_pdaf_info *)param;
     struct pdaf_buffer_handle *pdaf_buffer = (struct pdaf_buffer_handle *)buffer_handle;
@@ -418,27 +479,29 @@ cmr_int sensor_pdaf_mipi_raw_type2(void *buffer_handle, cmr_u32 *param) {
     pdaf_area_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y *
                      pdaf_info->pd_pos_size * 2;
 
+    if(atoi(value))
+        sensor_pdaf_dump_func_with_frameid(pdaf_buffer->left_buffer, pdaf_area_size * 5 / 4,
+                                           "type2_input_mipi.mipi_raw", pdaf_buffer->frameid);
     switch(descriptor->is_special_format)
     {
     case CONVERTOR_FOR_IMX258:
         sensor_pdaf_buffer_process_for_imx258(pdaf_buffer, pdaf_info);
         break;
     default:
-        sensor_pdaf_mipi_data_processor(pdaf_buffer->left_buffer,
-                                        pdaf_buffer->right_buffer, pdaf_area_size * 5 / 4);
-        sensor_pdaf_calculate_roi(pdaf_info, &roi_param);
+        sensor_pdaf_calculate_roi(pdaf_info, pdaf_buffer, &roi_param);
+	    sensor_pdaf_prepare_roi(pdaf_buffer->left_buffer, pdaf_buffer->right_buffer, &roi_param);
+        sensor_pdaf_mipi_data_processor(pdaf_buffer->right_buffer,
+                                        pdaf_buffer->left_buffer, roi_param.pd_area_sum);
+        sensor_pdaf_buffer_alignment(pdaf_buffer->left_buffer, pdaf_buffer->right_buffer, &roi_param);
         sensor_pdaf_buffer_seprator(pdaf_buffer, pdaf_info, &roi_param, descriptor);
         break;
     }
     if(atoi(value)) {
-       sensor_pdaf_dump_func(pdaf_buffer->left_output, pdaf_area_size, "type2_left_output.raw");
-       sensor_pdaf_dump_func(pdaf_buffer->right_output, pdaf_area_size, "tyep2_right_ouptut.raw");
+       sensor_pdaf_dump_func_with_frameid(pdaf_buffer->left_output, roi_param.roi_width * roi_param.roi_height * 2,
+                                          "type2_left_output.raw", pdaf_buffer->frameid);
+       sensor_pdaf_dump_func_with_frameid(pdaf_buffer->right_output, roi_param.roi_width * roi_param.roi_height * 2,
+                                          "tyep2_right_ouptut.raw", pdaf_buffer->frameid);
     }
-    SENSOR_LOGV("left_input -> %p, left_output %p, right_input %p, right_output %p <-<- out",
-                 pdaf_buffer->left_buffer, pdaf_buffer->left_output,
-                 pdaf_buffer->right_buffer, pdaf_buffer->right_output);
-
-    SENSOR_LOGD("pdaf running finished with %ld", ret);
     return ret;
 }
 
@@ -447,7 +510,7 @@ cmr_int sensor_pdaf_format_convertor(void *buffer_handle,
     if(!buffer_handle|| !param)
         return SENSOR_FAIL;
     int ret = SENSOR_SUCCESS;
-
+    double start = tick();
     switch (pdaf_supported)
     {
     case PDAF_TYPE3_BUFFER:
@@ -458,5 +521,8 @@ cmr_int sensor_pdaf_format_convertor(void *buffer_handle,
     default:
         break;
     }
+    SENSOR_LOGD("FINISHED with Time Cost %f", tick() - start);
     return ret;
 }
+
+
