@@ -70,6 +70,8 @@ static void ov13855_drv_write_gain(cmr_handle handle, float gain) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3508,
                         ((cmr_u16)gain_a >> 8) & 0x1f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3509, (cmr_u16)gain_a & 0xff);
+
+#if defined(OV13855_DGAIN_SUPPORT)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5100,
                         ((cmr_u16)gain_d >> 8) & 0x7f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5101, (cmr_u16)gain_d & 0xff);
@@ -79,6 +81,8 @@ static void ov13855_drv_write_gain(cmr_handle handle, float gain) {
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5104,
                         ((cmr_u16)gain_d >> 8) & 0x7f);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5105, (cmr_u16)gain_d & 0xff);
+#endif
+
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x11);
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0xA1);
 }
@@ -659,7 +663,7 @@ static cmr_int ov13855_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     // real_gain = isp_to_real_gain(handle,param);
     // SENSOR_LOGI("param = %d", param);
-    param = param < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : param;
+    param = param < ISP_BASE_GAIN ? ISP_BASE_GAIN : param;
 
     real_gain = (float)1.0f * param * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
 
@@ -679,18 +683,30 @@ static struct sensor_i2c_reg_tab ov13855_shutter_tab = {
     .settings = ov13855_shutter_reg, .size = ARRAY_SIZE(ov13855_shutter_reg),
 };
 
+#if defined(OV13855_DGAIN_SUPPORT)
 static struct sensor_reg_tag ov13855_again_reg[] = {
     {0x3208, 0x01}, {0x3508, 0x00}, {0x3509, 0x00},
 };
+#else
+static struct sensor_reg_tag ov13855_again_reg[] = {
+    {0x3208, 0x01}, {0x3508, 0x00}, {0x3509, 0x00},
+    {0x3208, 0x11}, {0x3208, 0xA1},
+};
+#endif
 
 static struct sensor_i2c_reg_tab ov13855_again_tab = {
     .settings = ov13855_again_reg, .size = ARRAY_SIZE(ov13855_again_reg),
 };
 
+#if defined(OV13855_DGAIN_SUPPORT)
 static struct sensor_reg_tag ov13855_dgain_reg[] = {
     {0x5100, 0}, {0x5101, 0}, {0x5102, 0},    {0x5103, 0},
     {0x5104, 0}, {0x5105, 0}, {0x3208, 0x11}, {0x3208, 0xA1},
 };
+#else
+static struct sensor_reg_tag ov13855_dgain_reg[] = {
+};
+#endif
 
 struct sensor_i2c_reg_tab ov13855_dgain_tab = {
     .settings = ov13855_dgain_reg, .size = ARRAY_SIZE(ov13855_dgain_reg),
@@ -769,18 +785,20 @@ static void ov13855_drv_calc_gain(float gain,
         if ((cmr_u16)gain_d > 0x4 * 0x400 - 1)
             gain_d = 0x4 * 0x400 - 1;
     }
-    // group 1:all other registers( gain)
-    // hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3208, 0x01);
 
-    aec_info->again->settings[1].reg_value = ((cmr_u16)gain_a >> 8) & 0x1f;
-    aec_info->again->settings[2].reg_value = (cmr_u16)gain_a & 0xff;
+    if (aec_info->again->size) {
+        aec_info->again->settings[1].reg_value = ((cmr_u16)gain_a >> 8) & 0x1f;
+        aec_info->again->settings[2].reg_value = (cmr_u16)gain_a & 0xff;
+    }
 
-    aec_info->dgain->settings[0].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
-    aec_info->dgain->settings[1].reg_value = (cmr_u16)gain_d & 0xff;
-    aec_info->dgain->settings[2].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
-    aec_info->dgain->settings[3].reg_value = (cmr_u16)gain_d & 0xff;
-    aec_info->dgain->settings[4].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
-    aec_info->dgain->settings[5].reg_value = (cmr_u16)gain_d & 0xff;
+    if (aec_info->dgain->size) {
+        aec_info->dgain->settings[0].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
+        aec_info->dgain->settings[1].reg_value = (cmr_u16)gain_d & 0xff;
+        aec_info->dgain->settings[2].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
+        aec_info->dgain->settings[3].reg_value = (cmr_u16)gain_d & 0xff;
+        aec_info->dgain->settings[4].reg_value = ((cmr_u16)gain_d >> 8) & 0x7f;
+        aec_info->dgain->settings[5].reg_value = (cmr_u16)gain_d & 0xff;
+    }
 }
 
 static cmr_int ov13855_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
@@ -817,7 +835,7 @@ static cmr_int ov13855_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     sns_drv_cxt->sensor_ev_info.preview_shutter = ov13855_drv_calc_exposure(
         handle, exposure_line, dummy_line, mode, &ov13855_aec_info);
 
-    gain = info->gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : info->gain;
+    gain = info->gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : info->gain;
     real_gain = (float)info->gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN * 1.0;
     ov13855_drv_calc_gain(real_gain, &ov13855_aec_info);
     return ret_value;
