@@ -105,6 +105,17 @@ void GraphicBuffer_unlock(void *h_graphic_buffer);
 //getNativeBuffer
 void *GraphicBuffer_getNativeBuffer(void *h_graphic_buffer);
 
+void *GraphicBuffer_getPointer(void *h_graphic_buffer);
+
+void GraphicBufferPointer_setWidth(void *p_graphic_buffer, uint32_t width);
+
+void *GraphicBufferPointer_lock(void *p_graphic_buffer);
+
+void GraphicBufferPointer_unlock(void *p_graphic_buffer);
+
+void *GraphicBufferPointer_getNativeBuffer(void *p_graphic_buffer);
+
+
 #ifdef __cplusplus
 }
 #endif

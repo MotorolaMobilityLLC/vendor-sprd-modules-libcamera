@@ -51,6 +51,12 @@ typedef struct mfnr_cap_gpu_buffer {
     uint8_t *bufferV;
 }mfnr_cap_gpu_buffer_t;
 
+// for memory pool
+typedef struct __mfnr_memory_ops {
+    void* (*malloc)(size_t size, char* type);
+    void (*free)(void* addr);
+} mfnr_memory_ops;
+
 typedef struct mfnr_param_info
 {
     int productInfo;      //pike2 sharkLe 0, sharkl3, sharkl5 1;
@@ -75,7 +81,21 @@ typedef struct mfnr_param_info
     int thread_num_acc;
     int preview_cpyBuf;
 
-	//---
+    int BV_Cur;
+    uint16_t last_merge_num;
+    uint16_t AF_ROI_start_x;
+    uint16_t AF_ROI_start_y;
+    uint16_t AF_ROI_width;
+    uint16_t AF_ROI_height;
+
+    // for memory pool
+    mfnr_memory_ops* pMemoryOps;
+}mfnr_param_info_t;
+
+
+
+typedef struct mfnr_tuning_param_info
+{
     uint16_t SearchWindow_x;
     uint16_t SearchWindow_y;
     int (*threthold)[6];
@@ -88,8 +108,15 @@ typedef struct mfnr_param_info
     int luma_ratio_low;
     int zone_size;
     int gain_thr[6];
-    int reserverd[16];
-}mfnr_param_info_t;
+    int BV_max[10];
+    int BV_min[10];
+    uint16_t BV_Frame_num[10];
+    uint16_t BV_Frame_case;
+    uint16_t ref_frame_num;
+    int reserved[16];
+}mfnr_tuning_param_info_t;
+
+
 
 typedef struct mfnr_pre_inparam
 {
@@ -141,7 +168,7 @@ typedef struct __mfnr_cmd_proc {
 }mfnr_cmd_proc_t;
 
 int mfnr_deinit(void** handle);
-int mfnr_init(void** handle, mfnr_param_info_t* param);
+int mfnr_init(void** handle, mfnr_param_info_t* param, void* tune_params);
 int mfnr_callback(void* handle);
 int mfnr_setstop_flag(void* handle);
 int mfnr_setparams(void* handle, int thr[4], int slp[4]);
@@ -149,7 +176,7 @@ int mfnr_function(void* handle, mfnr_buffer_t* small_image, mfnr_buffer_t* orig_
 int mfnr_function_new(void* handle, mfnr_buffer_t* small_image, mfnr_cap_gpu_buffer_t* orig_image);
 int mfnr_function_pre(void* handle, mfnr_buffer_t *small_image, mfnr_buffer_t *orig_image, mfnr_buffer_t *out_image, mfnr_pre_inparam_t* inputparam);
 int mfnr_deinit_vdsp(void** handle);
-int mfnr_init_vdsp(void** handle, mfnr_param_info_t* param);
+int mfnr_init_vdsp(void** handle, mfnr_param_info_t* param, void* tune_params);
 int mfnr_setstop_flag_vdsp(void* handle);
 int mfnr_setparams_vdsp(void* handle, int thr[4], int slp[4]);
 int mfnr_function_vdsp(void* handle, mfnr_buffer_t* small_image, mfnr_buffer_t* orig_image);
