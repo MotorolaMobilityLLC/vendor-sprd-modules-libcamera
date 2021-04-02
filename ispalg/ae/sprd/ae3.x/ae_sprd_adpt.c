@@ -7404,6 +7404,10 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 
 	cxt->is_faceId_unlock = init_param->is_faceId_unlock;
 	cxt->face_lock_table_index = 4;
+	
+	cxt->cur_status.adv_param.is_faceID = cxt->is_faceId_unlock;
+	ISP_LOGD("is_faceid_unlock [%d, %d, %d]\n", init_param->is_faceId_unlock, cxt->is_faceId_unlock, cxt->cur_status.adv_param.is_faceID);
+	
 	memset((cmr_handle) & ae_property, 0, sizeof(ae_property));
 	property_get("persist.vendor.cam.isp.ae.manual", ae_property, "off");
 	//ISP_LOGV("persist.vendor.cam.isp.ae.manual: %s", ae_property);
