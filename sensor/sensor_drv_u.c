@@ -4176,14 +4176,14 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
             ret = memcmp(bokeh_cmei_buf, bokeh_cmei, bokeh_cmei_size);
             if(0 == ret) {
                 SENSOR_LOGI("bokeh module hasnot changed, use calibraton data");
-                return SENSOR_SUCCESS;
+                ret = SENSOR_SUCCESS;
             } else{
                 SENSOR_LOGI("bokeh module has changed, use golden data");
-                return SENSOR_FAIL;
+                ret = SENSOR_FAIL;
             }
         } else {
             SENSOR_LOGI("without BOKEH cmei, use origin cali data");
-            return SENSOR_SUCCESS;
+            ret = SENSOR_SUCCESS;
         }
         break;
 
@@ -4194,14 +4194,14 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
             ret = memcmp(oz1_cmei_buf, oz1_cmei, oz1_cmei_size);
             if(0 == ret) {
                 SENSOR_LOGI("oz1 module hasnot changed, use calibraton data");
-                return SENSOR_SUCCESS;
+                ret = SENSOR_SUCCESS;
             } else{
                 SENSOR_LOGI("oz1 module has changed, use golden data");
-                return SENSOR_FAIL;
+                ret = SENSOR_FAIL;
             }
         } else {
             SENSOR_LOGI("without SAT oz1 cmei, use origin cali data");
-            return SENSOR_SUCCESS;
+            ret = SENSOR_SUCCESS;
         }
         break;
 
@@ -4212,23 +4212,23 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
             ret = memcmp(oz2_cmei_buf, oz2_cmei, oz2_cmei_size);
             if(0 == ret) {
                 SENSOR_LOGI("oz2 module hasnot changed, use calibraton data");
-                return SENSOR_SUCCESS;
+                ret = SENSOR_SUCCESS;
             } else{
                 SENSOR_LOGI("oz2 module has changed, use golden data");
-                return SENSOR_FAIL;
+                ret = SENSOR_FAIL;
             }
         } else {
             SENSOR_LOGI("without SAT oz2 cmei, use origin cali data");
-            return SENSOR_SUCCESS;
+            ret = SENSOR_SUCCESS;
         }
         break;
 
     default:
         SENSOR_LOGE("input dual_flag:%d is invalid!", dual_flag);
-        return SENSOR_FAIL;
+        ret = SENSOR_FAIL;
     }
 
-    return SENSOR_SUCCESS;
+    return ret;
 }
 
 static cmr_int sensor_drv_scan_hw(void) {
@@ -4631,7 +4631,7 @@ cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
 
 cmr_int sensor_read_calibration_otp(struct sensor_drv_context *sensor_cxt,
                                     cmr_u8 dual_flag, struct sensor_otp_cust_info *otp_data) {
-    int ret = 0;
+    cmr_int ret = 0;
     cmr_u16 otpsize = 0;
     cmr_u8 dual_flag_tmp = 0;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);

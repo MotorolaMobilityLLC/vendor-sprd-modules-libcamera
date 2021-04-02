@@ -620,7 +620,7 @@ cmr_u8 write_cmei_to_file (cmr_u8 *buf,cmr_u16 buf_size, cmr_u8 dual_flag) {
     char *OtpDataPath = NULL;
     char *OtpBkDataPath = NULL;
     cmr_u8 header_buf[CALI_OTP_HEAD_SIZE] = {0};
-    otp_header_t *header_ptr = header_buf;
+    otp_header_t *header_ptr = (otp_header_t *)header_buf;
     SENSOR_LOGI("E");
 
     switch (dual_flag) {
