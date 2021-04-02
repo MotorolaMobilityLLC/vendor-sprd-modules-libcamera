@@ -6128,6 +6128,7 @@ static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
 	cmr_u32 blk_num_w = cxt->monitor_cfg.blk_num.w;
 	cmr_u32 blk_num_h = cxt->monitor_cfg.blk_num.h;
 	cmr_u32 bayer_pixels = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/4;
+	cmr_u32 bayer_g_pixels = cxt->monitor_cfg.blk_size.w * cxt->monitor_cfg.blk_size.h/2;
 	cmr_u32 *src_aem_stat = (cmr_u32 *) img_stat;
 	cmr_u32 *r_stat = (cmr_u32*)src_aem_stat;
 	cmr_u32 *g_stat = (cmr_u32*)src_aem_stat + 16384;
@@ -6154,7 +6155,7 @@ static void down_size_for_ae_stat(struct ae_ctrl_cxt *cxt, void * img_stat)
 					tmp_r += avg/(ratio_w * ratio_h);
 					cxt->cur_status.base_img[idx] = avg;
 
-					avg = g_stat[idx]/bayer_pixels;
+					avg = g_stat[idx]/bayer_g_pixels;
 					tmp_g += avg/(ratio_w * ratio_h);
 					cxt->cur_status.base_img[idx + blk_num_w * blk_num_h] = avg;
 
