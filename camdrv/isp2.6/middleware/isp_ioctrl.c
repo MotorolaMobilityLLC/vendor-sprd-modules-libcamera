@@ -2844,9 +2844,9 @@ static cmr_int ispctl_set_multi_switch_info(cmr_handle isp_alg_handle, void *par
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
-	if (cxt->ops.ae_ops.ioctrl)
+	if (cxt->ops.awb_ops.ioctrl)
 		ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
-	if (cxt->ops.ae_ops.ioctrl)
+	if (cxt->ops.lsc_ops.ioctrl)
 		ret = cxt->ops.lsc_ops.ioctrl(cxt->lsc_cxt.handle, LSC_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
 
 	return ret;
