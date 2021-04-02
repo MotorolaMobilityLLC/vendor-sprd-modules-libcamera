@@ -3540,6 +3540,22 @@ cmr_s32 isp_denoise_read_v29(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.post_cnr_h_level_ptr + offset_units * src_size;
 			break;
 		}
+	case N6_PRO_PYRAMID_ONLINE:
+		{
+			data_head_ptr->sub_type = N6_PRO_PYRAMID_ONLINE;
+			src_size = sizeof(struct sensor_pyramid_onl_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PYRAMID_ONL_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.pyramid_onl_level_ptr + offset_units * src_size;
+			break;
+		}
+	case N6_PRO_PYRAMID_OFFLINE:
+		{
+			data_head_ptr->sub_type = N6_PRO_PYRAMID_OFFLINE;
+			src_size = sizeof(struct sensor_pyramid_offl_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_PYRAMID_OFFL_T];
+			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
+			nr_offset_addr = (cmr_u8 *) nr_update_param.pyramid_offl_level_ptr + offset_units * src_size;
+			break;
+		}
 	default:
 		break;
 	}
