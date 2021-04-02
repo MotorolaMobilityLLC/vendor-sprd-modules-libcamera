@@ -16,10 +16,9 @@ sprd_camalg_device_type g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
 
 int sprd_mfnr_adpt_init(void **handle, mfnr_param_info_t *param, void *tune_params)
 {
-    if (!handle || !param)
+    if (!handle || !param || !tune_params)
     {
-        LOGI("MFNR ADAPT INIT handle or param NULL! \n");
-        //*handle = NULL;
+        LOGI("MFNR ADAPT INIT handle or param or tune_params NULL! \n");
         return 1;
     }
 
@@ -54,15 +53,14 @@ int sprd_mfnr_adpt_init(void **handle, mfnr_param_info_t *param, void *tune_para
     if (g_run_type == SPRD_CAMALG_RUN_TYPE_CPU ||g_run_type == SPRD_CAMALG_RUN_TYPE_GPU)
     {
 		LOGI("MFNR ADAPT INIT call  mfnr_init  \n");
-        retval = mfnr_init(handle, param);
+        retval = mfnr_init(handle, param, tune_params);
 
     }
     else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP)
     {
         //vdsp init
 		LOGI("MFNR ADAPT INIT call  mfnr_init_vdsp  \n");
-        retval = mfnr_init_vdsp(handle, param);
-
+        retval = mfnr_init_vdsp(handle, param, tune_params);
     }
 	LOGI("MFNR ADAPT INIT finish  retval=%d handle=%x \n",retval, *handle);
     return retval;
