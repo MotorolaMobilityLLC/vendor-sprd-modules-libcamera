@@ -64,7 +64,7 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET 8 // 16 // 32
-#define SENSOR_MAX_GAIN 0x7ff
+#define SENSOR_MAX_GAIN 0x7c0
 #define SENSOR_BASE_GAIN 0x80
 #define SENSOR_MIN_SHUTTER 4
 
