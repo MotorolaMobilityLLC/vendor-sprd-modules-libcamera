@@ -313,7 +313,7 @@ struct ae_frm_sync_param {
 	cmr_u32 hist_data[AEC_HIST_BIN_MAX];
 };
 
-struct ae_lib_frm_sync_in{//ae_dynamic_sync struct
+struct ae_lib_frm_sync_in {//ae_dynamic_sync struct
 	cmr_u32 mode;/*0 boken 1 ae sync*/
 	cmr_u32 num;
 	cmr_u32 ae_sync_type; /*0: fix mapping 1:dynamic mapping*/
