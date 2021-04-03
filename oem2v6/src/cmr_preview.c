@@ -13262,6 +13262,10 @@ cmr_int prev_set_cap_param_raw(struct prev_handle *handle, cmr_u32 camera_id,
     chn_param.cap_inf_cfg.cfg.need_isp_tool = 1;
     chn_param.cap_inf_cfg.cfg.chn_skip_num = 0;
     chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE;
+
+    if (isp_video_get_simulation_flag())
+        chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_HARDWARE_SIMULATION;
+
     ret = prev_cap_ability(handle, camera_id, &prev_cxt->actual_pic_size,
                            &chn_param.cap_inf_cfg.cfg);
     if (ret) {
