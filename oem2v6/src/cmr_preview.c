@@ -16107,6 +16107,22 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
     CMR_LOGV("face_num %d", frame_type.face_num);
     for (i = 0; i < frame_type.face_num; i++) {
         frame_type.face_info[i].face_id = cb_param->face_area.range[i].face_id;
+        //fd info
+        frame_type.face_info[i].fd_cb_ptr.sx = cb_param->face_area.range[i].fd_ptr.sx;
+        frame_type.face_info[i].fd_cb_ptr.sy = cb_param->face_area.range[i].fd_ptr.sy;
+        frame_type.face_info[i].fd_cb_ptr.srx = cb_param->face_area.range[i].fd_ptr.srx;
+        frame_type.face_info[i].fd_cb_ptr.sry = cb_param->face_area.range[i].fd_ptr.sry;
+        frame_type.face_info[i].fd_cb_ptr.ex = cb_param->face_area.range[i].fd_ptr.ex;
+        frame_type.face_info[i].fd_cb_ptr.ey = cb_param->face_area.range[i].fd_ptr.ey;
+        frame_type.face_info[i].fd_cb_ptr.elx = cb_param->face_area.range[i].fd_ptr.elx;
+        frame_type.face_info[i].fd_cb_ptr.ely = cb_param->face_area.range[i].fd_ptr.ely;
+        CMR_LOGV("s %d %d, sr %d %d, e %d %d, el %d %d",
+                 frame_type.face_info[i].fd_cb_ptr.sx, frame_type.face_info[i].fd_cb_ptr.sy,
+                 frame_type.face_info[i].fd_cb_ptr.srx, frame_type.face_info[i].fd_cb_ptr.sry,
+                 frame_type.face_info[i].fd_cb_ptr.ex, frame_type.face_info[i].fd_cb_ptr.ey,
+                 frame_type.face_info[i].fd_cb_ptr.elx, frame_type.face_info[i].fd_cb_ptr.ely);
+
+        //fd smooth info
         frame_type.face_info[i].sx = cb_param->face_area.range[i].sx;
         frame_type.face_info[i].sy = cb_param->face_area.range[i].sy;
         frame_type.face_info[i].srx = cb_param->face_area.range[i].srx;

@@ -1027,7 +1027,15 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
             }
         }
     }*/
-
+    //fd_ptr save fd result to isp
+    io_curr_face->fd_ptr.sx = io_curr_face->sx;
+    io_curr_face->fd_ptr.sy = io_curr_face->sy;
+    io_curr_face->fd_ptr.srx = io_curr_face->srx;
+    io_curr_face->fd_ptr.sry = io_curr_face->sry;
+    io_curr_face->fd_ptr.elx = io_curr_face->elx;
+    io_curr_face->fd_ptr.ely = io_curr_face->ely;
+    io_curr_face->fd_ptr.ex = io_curr_face->ex;
+    io_curr_face->fd_ptr.ey = io_curr_face->ey;
     // Try to keep the face rectangle to be the same with the previous
     // frame (for stable looks)
     overlap_thr = 90;
@@ -1111,7 +1119,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
         face_ptr->smile_level = 1;
         face_ptr->blink_level = 0;
         face_ptr->brightness = 128;
-
+        CMR_LOGV("fd result %d %d %d %d", sx, sy, ex,ey);
         fd_smooth_face_rect(i_face_area_prev, curr_faceattr, face_ptr);
 
         /* Ensure the face coordinates are in image region */
@@ -1508,18 +1516,34 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.dst_frame.reserved;
         ratio = (float)class_handle->frame_in.src_frame.size.width /
                 (float)class_handle->fd_small.size.width;
-
         /* save a copy face_small_area for next frame to smooth */
         memcpy(&(class_handle->face_small_area),
                &(class_handle->frame_out.face_area),
                sizeof(struct img_face_area));
 
-        /* coherence of coordinates */
         for (i = 0; i < class_handle->frame_out.face_area.face_count; i++) {
+            //640*480 t0 prev plane
+            class_handle->frame_out.face_area.range[i].fd_ptr.sx =
+                class_handle->frame_out.face_area.range[i].fd_ptr.sx  * ratio;
+            class_handle->frame_out.face_area.range[i].fd_ptr.sy =
+                class_handle->frame_out.face_area.range[i].fd_ptr.sy * ratio;
+            class_handle->frame_out.face_area.range[i].fd_ptr.srx =
+                class_handle->frame_out.face_area.range[i].fd_ptr.srx * ratio;
+            class_handle->frame_out.face_area.range[i].fd_ptr.sry =
+                class_handle->frame_out.face_area.range[i].fd_ptr.sry * ratio;
+            class_handle->frame_out.face_area.range[i].fd_ptr.ex =
+                class_handle->frame_out.face_area.range[i].fd_ptr.ex * ratio;
+            class_handle->frame_out.face_area.range[i].fd_ptr.ey =
+                class_handle->frame_out.face_area.range[i].fd_ptr.ey * ratio;
+            class_handle->frame_out.face_area.range[i].fd_ptr.elx =
+                class_handle->frame_out.face_area.range[i].elx * ratio;
+            class_handle->frame_out.face_area.range[i].fd_ptr.ely =
+                class_handle->frame_out.face_area.range[i].fd_ptr.ely * ratio;
+            /* coherence of coordinates */
             w = class_handle->frame_out.face_area.range[i].ex -
                 class_handle->frame_out.face_area.range[i].sx;
             h = class_handle->frame_out.face_area.range[i].ey -
-		   class_handle->frame_out.face_area.range[i].sy;
+            class_handle->frame_out.face_area.range[i].sy;
             if (w == h)
                 face_square = 1;
             class_handle->frame_out.face_area.range[i].sx =
@@ -1543,16 +1567,16 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             h = class_handle->frame_out.face_area.range[i].ey -
                 class_handle->frame_out.face_area.range[i].sy;
             if(w != h)
-	         CMR_LOGV("sx %d,ex %d, sy %d ey %d,srx %d,elx %d, sry %d ely %d",
-	                 class_handle->frame_out.face_area.range[i].sx,
-                        class_handle->frame_out.face_area.range[i].ex,
-                        class_handle->frame_out.face_area.range[i].sy,
-	                 class_handle->frame_out.face_area.range[i].ey,
-	                 class_handle->frame_out.face_area.range[i].srx,
-	                 class_handle->frame_out.face_area.range[i].elx,
-	                 class_handle->frame_out.face_area.range[i].sry,
-	                 class_handle->frame_out.face_area.range[i].ely);
-            if(face_square == 1){
+                CMR_LOGV("sx %d,ex %d, sy %d ey %d,srx %d,elx %d, sry %d ely %d",
+                    class_handle->frame_out.face_area.range[i].sx,
+                    class_handle->frame_out.face_area.range[i].ex,
+                    class_handle->frame_out.face_area.range[i].sy,
+                    class_handle->frame_out.face_area.range[i].ey,
+                    class_handle->frame_out.face_area.range[i].srx,
+                    class_handle->frame_out.face_area.range[i].elx,
+                    class_handle->frame_out.face_area.range[i].sry,
+                    class_handle->frame_out.face_area.range[i].ely);
+            if (face_square == 1) {
                 if(w > h){
                     class_handle->frame_out.face_area.range[i].ex =
                         class_handle->frame_out.face_area.range[i].sx + h;
