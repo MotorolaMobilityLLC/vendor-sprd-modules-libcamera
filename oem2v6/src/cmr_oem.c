@@ -2968,6 +2968,10 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
     cmr_s32 sy = 0;
     cmr_s32 ex = 0;
     cmr_s32 ey = 0;
+    cmr_s32 fd_sx =0;
+    cmr_s32 fd_sy =0;
+    cmr_s32 fd_ex =0;
+    cmr_s32 fd_ey = 0;
     cmr_s32 i = 0;
     cmr_uint face_info_max_num =
         sizeof(face_area->face_info) / sizeof(struct isp_face_info);
@@ -2988,17 +2992,28 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
         ey = MAX(
             MAX(frame_param->face_info[i].sy, frame_param->face_info[i].sry),
             MAX(frame_param->face_info[i].ey, frame_param->face_info[i].ely));
-        CMR_LOGV("id %u, s %d %d, sr %d %d, e %d %d, el %d %d", cxt->camera_id,
-                 frame_param->face_info[i].sx, frame_param->face_info[i].sy,
-                 frame_param->face_info[i].srx, frame_param->face_info[i].sry,
-                 frame_param->face_info[i].ex, frame_param->face_info[i].ey,
-                 frame_param->face_info[i].elx, frame_param->face_info[i].ely);
         // save face info in cmr cxt for other case.such as face beauty
         // takepicture
         cxt->fd_face_area.face_info[i].sx = sx;
         cxt->fd_face_area.face_info[i].sy = sy;
         cxt->fd_face_area.face_info[i].ex = ex;
         cxt->fd_face_area.face_info[i].ey = ey;
+        //fd out
+        fd_sx = MIN(
+            MIN(frame_param->face_info[i].fd_cb_ptr.sx, frame_param->face_info[i].fd_cb_ptr.srx),
+            MIN(frame_param->face_info[i].fd_cb_ptr.ex, frame_param->face_info[i].fd_cb_ptr.elx));
+        fd_sy = MIN(
+            MIN(frame_param->face_info[i].fd_cb_ptr.sy, frame_param->face_info[i].fd_cb_ptr.sry),
+            MIN(frame_param->face_info[i].fd_cb_ptr.ey, frame_param->face_info[i].fd_cb_ptr.ely));
+        fd_ex = MAX(
+            MAX(frame_param->face_info[i].fd_cb_ptr.sx, frame_param->face_info[i].fd_cb_ptr.srx),
+            MAX(frame_param->face_info[i].fd_cb_ptr.ex, frame_param->face_info[i].fd_cb_ptr.elx));
+        fd_ey = MAX(
+            MAX(frame_param->face_info[i].fd_cb_ptr.sy, frame_param->face_info[i].fd_cb_ptr.sry),
+            MAX(frame_param->face_info[i].fd_cb_ptr.ey, frame_param->face_info[i].fd_cb_ptr.ely));
+        CMR_LOGV("mPreviewWidth = %d, mPreviewHeight = %d, crop %d %d %d %d fd %d %d %d %d",
+                 frame_param->width, frame_param->height, sx, sy, ex, ey, fd_sx, fd_sy, fd_ex, fd_ey);
+
 #ifdef CONFIG_CAMERA_FACE_ROI
         float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
               zoomHeight = 0;
@@ -3070,20 +3085,20 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
             }
             zoomWidth = width / (float)frame_param->width;
             zoomHeight = height / (float)frame_param->height;
-            face_area->face_info[i].sx = (cmr_u32)((float)sx * zoomWidth + left);
-            face_area->face_info[i].sy = (cmr_u32)((float)sy * zoomHeight + top);
-            face_area->face_info[i].ex = (cmr_u32)((float)ex * zoomWidth + left);
-            face_area->face_info[i].ey = (cmr_u32)((float)ey * zoomHeight + top);
+            face_area->face_info[i].sx = (cmr_u32)((float)fd_sx * zoomWidth + left);
+            face_area->face_info[i].sy = (cmr_u32)((float)fd_sy * zoomHeight + top);
+            face_area->face_info[i].ex = (cmr_u32)((float)fd_ex * zoomWidth + left);
+            face_area->face_info[i].ey = (cmr_u32)((float)fd_ey * zoomHeight + top);
             CMR_LOGD("zoomX Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d)", face_area->face_info[i].sx,
                      face_area->face_info[i].sy, face_area->face_info[i].ex, face_area->face_info[i].ey);
         } else {
-            face_area->face_info[i].sx = 1.0 * sx * (float)face_area->frame_width /
+            face_area->face_info[i].sx = 1.0 * fd_sx * (float)face_area->frame_width /
                                      (float)frame_param->width;
-            face_area->face_info[i].sy = 1.0 * sy * (float)face_area->frame_height /
+            face_area->face_info[i].sy = 1.0 * fd_sy * (float)face_area->frame_height /
                                      (float)frame_param->height;
-            face_area->face_info[i].ex = 1.0 * ex * (float)face_area->frame_width /
+            face_area->face_info[i].ex = 1.0 * fd_ex * (float)face_area->frame_width /
                                      (float)frame_param->width;
-            face_area->face_info[i].ey = 1.0 * ey * (float)face_area->frame_height /
+            face_area->face_info[i].ey = 1.0 * fd_ey * (float)face_area->frame_height /
                                      (float)frame_param->height;
             CMR_LOGD("1.0X Crop calculated (xs=%d,ys=%d,xe=%d,ye=%d)", face_area->face_info[i].sx,
                 face_area->face_info[i].sy, face_area->face_info[i].ex, face_area->face_info[i].ey);
@@ -3160,10 +3175,10 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
         }
         zoomWidth = width / (float)frame_param->width;
         zoomHeight = height / (float)frame_param->height;
-        face_area->face_info[i].sx = (cmr_s32)((float)sx * zoomWidth + left);
-        face_area->face_info[i].sy = (cmr_s32)((float)sy * zoomHeight + top);
-        face_area->face_info[i].ex = (cmr_s32)((float)ex * zoomWidth + left);
-        face_area->face_info[i].ey = (cmr_s32)((float)ey * zoomHeight + top);
+        face_area->face_info[i].sx = (cmr_s32)((float)fd_sx * zoomWidth + left);
+        face_area->face_info[i].sy = (cmr_s32)((float)fd_sy * zoomHeight + top);
+        face_area->face_info[i].ex = (cmr_s32)((float)fd_ex * zoomWidth + left);
+        face_area->face_info[i].ey = (cmr_s32)((float)fd_ey * zoomHeight + top);
 #endif
         cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
         cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
@@ -3228,7 +3243,7 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
         if (param) {
             struct camera_frame_type *frame_param =
                 (struct camera_frame_type *)param;
-            struct isp_face_area face_area;
+            struct isp_face_area face_area;//for isp fd info
             int32_t sx = 0;
             int32_t sy = 0;
             int32_t ex = 0;

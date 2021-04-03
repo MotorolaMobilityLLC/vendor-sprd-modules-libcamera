@@ -1311,6 +1311,17 @@ enum img_fmt {
     IMG_FMT_CRYCBY422,
 };
 
+struct fdrect_to_isp {
+    int sx;
+    int sy;
+    int srx;
+    int sry;
+    int ex;
+    int ey;
+    int elx;
+    int ely;
+};
+
 struct face_finder_data {
     int face_id;
     int sx;
@@ -1329,6 +1340,7 @@ struct face_finder_data {
     int score;
     int smile_conf;
     int gender_age_race;
+    struct fdrect_to_isp fd_ptr;
 };
 
 struct img_face_area {
@@ -1908,6 +1920,7 @@ struct camera_face_info {
     cmr_u32 blink_level;
     cmr_u32 padding;
     cmr_u32 gender_age_race;
+    struct fdrect_to_isp fd_cb_ptr;
 };
 
 struct super_cap {
