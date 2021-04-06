@@ -46,8 +46,6 @@
 #define VIDEO_HEIGHT 1080
 #define PREVIEW_WIDTH 4000
 #define PREVIEW_HEIGHT 3000
-#define SNAPSHOT_WIDTH 8000
-#define SNAPSHOT_HEIGHT 6000
 
 /*Raw Trim parameters*/
 #define VIDEO_TRIM_X 0
@@ -58,10 +56,6 @@
 #define PREVIEW_TRIM_Y 0
 #define PREVIEW_TRIM_W PREVIEW_WIDTH
 #define PREVIEW_TRIM_H PREVIEW_HEIGHT
-#define SNAPSHOT_TRIM_X 0
-#define SNAPSHOT_TRIM_Y 0
-#define SNAPSHOT_TRIM_W SNAPSHOT_WIDTH
-#define SNAPSHOT_TRIM_H SNAPSHOT_HEIGHT
 
 /*Mipi output*/
 #define LANE_NUM 2
@@ -69,17 +63,14 @@
 
 #define VIDEO_MIPI_PER_LANE_BPS 1672    /* 2*Mipi clk */
 #define PREVIEW_MIPI_PER_LANE_BPS 2296  /* 2*Mipi clk */
-#define SNAPSHOT_MIPI_PER_LANE_BPS 940 /* 2*Mipi clk */
 
 /*line time unit: 1ns*/
 #define VIDEO_LINE_TIME 7297
 #define PREVIEW_LINE_TIME 10893
-#define SNAPSHOT_LINE_TIME 15504
 
 /* frame length*/
 #define VIDEO_FRAME_LENGTH 1142
 #define PREVIEW_FRAME_LENGTH 3064
-#define SNAPSHOT_FRAME_LENGTH 6068
 
 /* please ref your spec */
 #define FRAME_OFFSET 48
@@ -615,18 +606,6 @@ static SENSOR_TRIM_T s_imx586_resolution_trim_tab[VENDOR_NUM] = {
                               .y = PREVIEW_TRIM_Y,
                               .w = PREVIEW_TRIM_W,
                               .h = PREVIEW_TRIM_H}},
-
-             {.trim_start_x = SNAPSHOT_TRIM_X,
-              .trim_start_y = SNAPSHOT_TRIM_Y,
-              .trim_width = SNAPSHOT_TRIM_W,
-              .trim_height = SNAPSHOT_TRIM_H,
-              .line_time = SNAPSHOT_LINE_TIME,
-              .bps_per_lane = SNAPSHOT_MIPI_PER_LANE_BPS,
-              .frame_line = SNAPSHOT_FRAME_LENGTH,
-              .scaler_trim = {.x = SNAPSHOT_TRIM_X,
-                              .y = SNAPSHOT_TRIM_Y,
-                              .w = SNAPSHOT_TRIM_W,
-                              .h = SNAPSHOT_TRIM_H}},
          }}
 
     /*If there are multiple modules,please add here*/
@@ -800,8 +779,8 @@ SENSOR_INFO_T g_imx586_mipi_raw_info = {
                       {.reg_addr = imx586_VER_ADDR,
                        .reg_value = imx586_VER_VALUE}},
 
-    .source_width_max = SNAPSHOT_WIDTH,
-    .source_height_max = SNAPSHOT_HEIGHT,
+    .source_width_max = PREVIEW_WIDTH,
+    .source_height_max = PREVIEW_HEIGHT,
     .name = (cmr_s8 *)SENSOR_NAME,
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
 
