@@ -108,6 +108,7 @@ PRODUCT_PACKAGES += libparam_ov8856_back_ultrawide
 PRODUCT_PACKAGES += libparam_ov8856_front_dual
 PRODUCT_PACKAGES += libparam_s5kgw1sp03_back_main
 PRODUCT_PACKAGES += libparam_imx616_front_main
+PRODUCT_PACKAGES += libparam_imx586_replace_back_main
 
 #endif
 
