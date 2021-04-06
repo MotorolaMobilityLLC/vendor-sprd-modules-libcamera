@@ -1,7 +1,14 @@
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*versionid=0x000D0010*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*versionid=0x000C000F*/
+/*maxGain=0.00*/
+/*param0.&BasePoint=1&*/
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -74,7 +81,11 @@
 }
 ,
 /*param1.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -147,7 +158,11 @@
 }
 ,
 /*param2.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -220,7 +235,11 @@
 }
 ,
 /*param3.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -293,7 +312,11 @@
 }
 ,
 /*param4.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -366,7 +389,11 @@
 }
 ,
 /*param5.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -439,7 +466,11 @@
 }
 ,
 /*param6.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -512,7 +543,11 @@
 }
 ,
 /*param7.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -585,7 +620,11 @@
 }
 ,
 /*param8.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -658,7 +697,11 @@
 }
 ,
 /*param9.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -731,7 +774,11 @@
 }
 ,
 /*param10.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -804,7 +851,11 @@
 }
 ,
 /*param11.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -877,7 +928,11 @@
 }
 ,
 /*param12.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -950,7 +1005,11 @@
 }
 ,
 /*param13.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1023,7 +1082,11 @@
 }
 ,
 /*param14.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1096,7 +1159,11 @@
 }
 ,
 /*param15.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1169,7 +1236,11 @@
 }
 ,
 /*param16.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1242,7 +1313,11 @@
 }
 ,
 /*param17.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1315,7 +1390,11 @@
 }
 ,
 /*param18.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1388,7 +1467,11 @@
 }
 ,
 /*param19.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1461,7 +1544,11 @@
 }
 ,
 /*param20.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1534,7 +1621,11 @@
 }
 ,
 /*param21.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1607,7 +1698,11 @@
 }
 ,
 /*param22.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1680,7 +1775,11 @@
 }
 ,
 /*param23.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{
@@ -1753,7 +1852,11 @@
 }
 ,
 /*param24.&BasePoint=1&*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_ivst_level*/
+=======
+/*sharkl6_sensor_ivst_level*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*ivst_param*/
 	{

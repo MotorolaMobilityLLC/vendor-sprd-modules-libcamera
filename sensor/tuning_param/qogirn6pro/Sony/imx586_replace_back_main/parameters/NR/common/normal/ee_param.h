@@ -556,7 +556,11 @@
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x00,
+=======
+	0x01,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -1641,11 +1645,19 @@
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -2260,6 +2272,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -2267,16 +2280,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2287,6 +2317,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -2294,16 +2325,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2316,6 +2364,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -2323,6 +2372,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -2330,9 +2388,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2341,11 +2405,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2355,6 +2427,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -2362,6 +2435,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -2369,9 +2451,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2380,11 +2468,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2397,6 +2493,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -2406,35 +2503,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -2442,28 +2569,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -2479,20 +2628,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -2500,6 +2673,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -2507,6 +2689,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -2514,16 +2697,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2534,6 +2734,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -2541,16 +2742,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2561,6 +2779,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -2568,16 +2787,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2588,6 +2824,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -2595,16 +2832,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2614,6 +2868,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -2621,13 +2876,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -2635,11 +2903,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -2647,6 +2923,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -2656,12 +2933,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -2691,6 +2980,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -2735,11 +3055,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -2761,17 +3089,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -2783,9 +3123,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -2793,7 +3139,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -2801,14 +3151,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -2823,6 +3181,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -2830,16 +3189,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2850,6 +3226,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -2857,16 +3234,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2879,6 +3273,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -2886,6 +3281,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -2893,9 +3297,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2904,11 +3314,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2918,6 +3336,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -2925,6 +3344,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -2932,9 +3360,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -2943,11 +3377,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -2960,6 +3402,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -2969,35 +3412,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -3005,28 +3478,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -3042,20 +3537,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -3063,6 +3582,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -3070,6 +3598,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3077,16 +3606,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3097,6 +3643,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3104,16 +3651,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3124,6 +3688,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3131,16 +3696,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3151,6 +3733,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3158,16 +3741,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3177,6 +3777,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -3184,13 +3785,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -3198,11 +3812,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -3210,6 +3832,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -3219,12 +3842,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -3254,6 +3889,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -3298,11 +3964,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -3324,17 +3998,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -3346,9 +4032,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -3356,7 +4048,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -3364,14 +4060,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -3386,6 +4090,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -3393,16 +4098,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -3413,6 +4135,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -3420,16 +4143,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -3442,6 +4182,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -3449,6 +4190,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -3456,9 +4206,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3467,11 +4223,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -3481,6 +4245,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -3488,6 +4253,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -3495,9 +4269,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3506,11 +4286,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -3523,6 +4311,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -3532,35 +4321,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -3568,28 +4387,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -3605,20 +4446,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -3626,6 +4491,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -3633,6 +4507,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3640,16 +4515,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3660,6 +4552,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3667,16 +4560,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3687,6 +4597,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3694,16 +4605,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3714,6 +4642,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -3721,16 +4650,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -3740,6 +4686,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -3747,13 +4694,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -3761,11 +4721,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -3773,6 +4741,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -3782,12 +4751,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -3817,6 +4798,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -3861,11 +4873,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -3887,17 +4907,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -3909,9 +4941,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -3919,7 +4957,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -3927,14 +4969,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -3949,6 +4999,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -3956,16 +5007,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -3976,6 +5044,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -3983,16 +5052,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -4005,6 +5091,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -4012,6 +5099,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -4019,9 +5115,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4030,11 +5132,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -4044,6 +5154,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -4051,6 +5162,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -4058,9 +5178,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4069,11 +5195,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -4086,6 +5220,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -4095,35 +5230,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -4131,28 +5296,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -4168,20 +5355,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -4189,6 +5400,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -4196,6 +5416,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4203,16 +5424,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4223,6 +5461,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4230,16 +5469,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4250,6 +5506,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4257,16 +5514,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4277,6 +5551,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4284,16 +5559,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4303,6 +5595,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -4310,13 +5603,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -4324,11 +5630,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -4336,6 +5650,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -4345,12 +5660,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -4380,6 +5707,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -4424,11 +5782,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -4450,17 +5816,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -4472,9 +5850,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -4482,7 +5866,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -4490,14 +5878,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -4512,6 +5908,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -4519,16 +5916,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -4539,6 +5953,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -4546,16 +5961,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -4568,6 +6000,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -4575,6 +6008,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -4582,9 +6024,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4593,11 +6041,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -4607,6 +6063,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -4614,6 +6071,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -4621,9 +6087,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4632,11 +6104,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -4649,6 +6129,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -4658,35 +6139,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -4694,28 +6205,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -4731,20 +6264,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -4752,6 +6309,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -4759,6 +6325,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4766,16 +6333,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4786,6 +6370,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4793,16 +6378,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4813,6 +6415,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4820,16 +6423,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4840,6 +6460,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -4847,16 +6468,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -4866,6 +6504,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -4873,13 +6512,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -4887,11 +6539,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -4899,6 +6559,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -4908,12 +6569,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -4943,6 +6616,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -4987,11 +6691,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -5013,17 +6725,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -5035,9 +6759,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -5045,7 +6775,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -5053,14 +6787,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -5075,6 +6817,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -5082,16 +6825,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5102,6 +6862,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -5109,16 +6870,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5131,6 +6909,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -5138,6 +6917,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -5145,9 +6933,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5156,11 +6950,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5170,6 +6972,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -5177,6 +6980,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -5184,9 +6996,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5195,11 +7013,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5212,6 +7038,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -5221,35 +7048,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -5257,28 +7114,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -5294,20 +7173,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -5315,6 +7218,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -5322,6 +7234,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5329,16 +7242,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5349,6 +7279,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5356,16 +7287,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5376,6 +7324,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5383,16 +7332,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5403,6 +7369,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5410,16 +7377,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5429,6 +7413,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -5436,13 +7421,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -5450,11 +7448,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -5462,6 +7468,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -5471,12 +7478,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -5506,6 +7525,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -5550,11 +7600,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -5576,17 +7634,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -5598,9 +7668,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -5608,7 +7684,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -5616,14 +7696,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -5638,6 +7726,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -5645,16 +7734,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5665,6 +7771,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -5672,16 +7779,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5694,6 +7818,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -5701,6 +7826,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -5708,9 +7842,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5719,11 +7859,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5733,6 +7881,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -5740,6 +7889,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -5747,9 +7905,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5758,11 +7922,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -5775,6 +7947,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -5784,35 +7957,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -5820,28 +8023,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -5857,20 +8082,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -5878,6 +8127,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -5885,6 +8143,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5892,16 +8151,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5912,6 +8188,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5919,16 +8196,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5939,6 +8233,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5946,16 +8241,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5966,6 +8278,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -5973,16 +8286,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -5992,6 +8322,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -5999,13 +8330,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -6013,11 +8357,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -6025,6 +8377,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -6034,12 +8387,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -6069,6 +8434,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -6113,11 +8509,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -6139,17 +8543,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -6161,9 +8577,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -6171,7 +8593,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -6179,14 +8605,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -6201,6 +8635,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -6208,16 +8643,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6228,6 +8680,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -6235,16 +8688,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6257,6 +8727,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -6264,6 +8735,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -6271,9 +8751,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6282,11 +8768,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6296,6 +8790,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -6303,6 +8798,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -6310,9 +8814,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6321,11 +8831,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6338,6 +8856,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -6347,35 +8866,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -6383,28 +8932,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -6420,20 +8991,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -6441,6 +9036,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -6448,6 +9052,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -6455,16 +9060,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6475,6 +9097,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -6482,16 +9105,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6502,6 +9142,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -6509,16 +9150,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6529,6 +9187,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -6536,16 +9195,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6555,6 +9231,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -6562,13 +9239,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -6576,11 +9266,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -6588,6 +9286,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -6597,12 +9296,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -6632,6 +9343,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -6676,11 +9418,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -6702,17 +9452,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -6724,9 +9486,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -6734,7 +9502,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -6742,14 +9514,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -6764,6 +9544,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -6771,16 +9552,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6791,6 +9589,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -6798,16 +9597,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6820,6 +9636,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -6827,6 +9644,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -6834,9 +9660,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6845,11 +9677,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6859,6 +9699,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -6866,6 +9707,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -6873,9 +9723,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -6884,11 +9740,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -6901,6 +9765,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -6910,35 +9775,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -6946,28 +9841,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -6983,20 +9900,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -7004,6 +9945,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -7011,6 +9961,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7018,16 +9969,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7038,6 +10006,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7045,16 +10014,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7065,6 +10051,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7072,16 +10059,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7092,6 +10096,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7099,16 +10104,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7118,6 +10140,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -7125,13 +10148,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -7139,11 +10175,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -7151,6 +10195,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -7160,12 +10205,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -7195,6 +10252,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -7239,11 +10327,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -7265,17 +10361,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -7287,9 +10395,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -7297,7 +10411,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -7305,14 +10423,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -7327,6 +10453,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -7334,16 +10461,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -7354,6 +10498,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -7361,16 +10506,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -7383,6 +10545,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -7390,6 +10553,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -7397,9 +10569,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7408,11 +10586,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -7422,6 +10608,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -7429,6 +10616,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -7436,9 +10632,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7447,11 +10649,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -7464,6 +10674,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -7473,35 +10684,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -7509,28 +10750,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -7546,20 +10809,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -7567,6 +10854,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -7574,6 +10870,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7581,16 +10878,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7601,6 +10915,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7608,16 +10923,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7628,6 +10960,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7635,16 +10968,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7655,6 +11005,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -7662,16 +11013,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7681,6 +11049,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -7688,13 +11057,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -7702,11 +11084,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -7714,6 +11104,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -7723,12 +11114,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -7758,6 +11161,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -7802,11 +11236,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -7828,17 +11270,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -7850,9 +11304,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -7860,7 +11320,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -7868,14 +11332,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -7890,6 +11362,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -7897,16 +11370,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -7917,6 +11407,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -7924,16 +11415,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -7946,6 +11454,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -7953,6 +11462,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -7960,9 +11478,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -7971,11 +11495,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -7985,6 +11517,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -7992,6 +11525,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -7999,9 +11541,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8010,11 +11558,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -8027,6 +11583,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -8036,35 +11593,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -8072,28 +11659,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -8109,20 +11718,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -8130,6 +11763,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -8137,6 +11779,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8144,16 +11787,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8164,6 +11824,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8171,16 +11832,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8191,6 +11869,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8198,16 +11877,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8218,6 +11914,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8225,16 +11922,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8244,6 +11958,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -8251,13 +11966,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -8265,11 +11993,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -8277,6 +12013,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -8286,12 +12023,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -8321,6 +12070,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -8365,11 +12145,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -8391,17 +12179,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -8413,9 +12213,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -8423,7 +12229,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -8431,14 +12241,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
@@ -8453,6 +12271,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*ee_t2_cfg*/
 			0x0014,
@@ -8460,16 +12279,33 @@
 			0x0015,
 			/*ee_t4_cfg*/
 			0x0035,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x40,
 			/*ee_r2_cfg*/
 			0x40,
 			/*ee_r3_cfg*/
 			0x40,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -8480,6 +12316,7 @@
 		/*t_cfg*/
 		{
 			/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0014,
 			/*ee_t2_cfg*/
 			0x0034,
@@ -8487,16 +12324,33 @@
 			0x0035,
 			/*ee_t4_cfg*/
 			0x0075,
+=======
+			0x0000,
+			/*ee_t2_cfg*/
+			0x0000,
+			/*ee_t3_cfg*/
+			0x0000,
+			/*ee_t4_cfg*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*r_cfg*/
 		{
 			/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*ee_r2_cfg*/
 			0x04,
 			/*ee_r3_cfg*/
 			0x04,
+=======
+			0x00,
+			/*ee_r2_cfg*/
+			0x00,
+			/*ee_r3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -8509,6 +12363,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -8516,6 +12371,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -8523,9 +12387,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8534,11 +12404,19 @@
 		/*ee_pos_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x28,
 			/*ee_c2_cfg*/
 			0x28,
 			/*ee_c3_cfg*/
 			0x28,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -8548,6 +12426,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x000C,
 				/*ee_t2_cfg*/
 				0x004C,
@@ -8555,6 +12434,15 @@
 				0x0051,
 				/*ee_t4_cfg*/
 				0x00D1,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
@@ -8562,9 +12450,15 @@
 				/*ee_r1_cfg*/
 				0x00,
 				/*ee_r2_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r3_cfg*/
 				0x36,
+=======
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8573,11 +12467,19 @@
 		/*ee_neg_c*/
 		{
 			/*ee_c1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0xD3,
 			/*ee_c2_cfg*/
 			0xD3,
 			/*ee_c3_cfg*/
 			0xD3,
+=======
+			0x00,
+			/*ee_c2_cfg*/
+			0x00,
+			/*ee_c3_cfg*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*reserved*/
 			0x00,
 
@@ -8590,6 +12492,7 @@
 		/*ipd_mask_mode*/
 		0x00,
 		/*ipd_1d_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ipd_orientation_filter_mode*/
 		0x01,
@@ -8599,35 +12502,65 @@
 			0x0004,
 			/*positive*/
 			0x0006,
+=======
+		0x00,
+		/*ipd_orientation_filter_mode*/
+		0x00,
+		/*ipd_flat_thr*/
+		{
+			/*negative*/
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_eq_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0009,
 			/*positive*/
 			0x0009,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_more_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0006,
 			/*positive*/
 			0x0005,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_less_thr*/
 		{
 			/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0004,
 			/*positive*/
 			0x0004,
+=======
+			0x0000,
+			/*positive*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ipd_smooth*/
 		{
 			/*smooth_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x00000001,
 			/*smooth_mode*/
 			{
@@ -8635,28 +12568,50 @@
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+			0x00000000,
+			/*smooth_mode*/
+			{
+				/*negative*/
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_diff*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*smooth_ee_thr*/
 			{
 				/*negative*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0004,
 				/*positive*/
 				0x0004,
+=======
+				0x0000,
+				/*positive*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
 		/*ipd_direction*/
 		{
 			/*direction_mode*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x04,
 			/*direction_freq_hop_control_en*/
 			0x00,
@@ -8672,20 +12627,44 @@
 			0x0008,
 			/*direction_hop_thresh_min*/
 			0x0014,
+=======
+			0x00,
+			/*direction_freq_hop_control_en*/
+			0x00,
+			/*direction_freq_hop_thresh*/
+			0x00,
+			/*freq_hop_total_num_thresh*/
+			0x00,
+			/*direction_thresh_diff*/
+			0x0000,
+			/*direction_thresh_min*/
+			0x0000,
+			/*direction_hop_thresh_diff*/
+			0x0000,
+			/*direction_hop_thresh_min*/
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		}
 	},
 	/*ee_gradient*/
 	{
 		/*grd_cmpt_type*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0001,
 		/*wgt_hv2diag*/
 		0x000A,
+=======
+		0x0000,
+		/*wgt_hv2diag*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*wgt_diag2hv*/
 		0x00000000,
 		/*ratio*/
 		{
 			/*ratio_hv_3*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0C,
 			/*ratio_hv_5*/
 			0x0C,
@@ -8693,6 +12672,15 @@
 			0x0C,
 			/*ratio_dg_5*/
 			0x0C,
+=======
+			0x00,
+			/*ratio_hv_5*/
+			0x00,
+			/*ratio_dg_3*/
+			0x00,
+			/*ratio_dg_5*/
+			0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 		},
 		/*ee_gain_hv1*/
@@ -8700,6 +12688,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8707,16 +12696,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8727,6 +12733,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8734,16 +12741,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8754,6 +12778,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8761,16 +12786,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8781,6 +12823,7 @@
 			/*t_cfg*/
 			{
 				/*ee_t1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0014,
 				/*ee_t2_cfg*/
 				0x0054,
@@ -8788,16 +12831,33 @@
 				0x0058,
 				/*ee_t4_cfg*/
 				0x00D8,
+=======
+				0x0000,
+				/*ee_t2_cfg*/
+				0x0000,
+				/*ee_t3_cfg*/
+				0x0000,
+				/*ee_t4_cfg*/
+				0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*r_cfg*/
 			{
 				/*ee_r1_cfg*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x18,
 				/*ee_r2_cfg*/
 				0x10,
 				/*ee_r3_cfg*/
 				0x08,
+=======
+				0x00,
+				/*ee_r2_cfg*/
+				0x00,
+				/*ee_r3_cfg*/
+				0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x00,
 
@@ -8807,6 +12867,7 @@
 	/*ee_offset_layer*/
 	{
 		/*ee_old_gradient_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
 		/*ee_new_pyramid_en*/
 		0x00,
@@ -8814,13 +12875,26 @@
 		0x20,
 		/*ee_ratio_new_pyramid*/
 		0x20,
+=======
+		0x00,
+		/*ee_new_pyramid_en*/
+		0x00,
+		/*ee_ratio_old_gradient*/
+		0x00,
+		/*ee_ratio_new_pyramid*/
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*ee_offset_layer*/
 		{
 			/*[0x0]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_pos*/
 				{
@@ -8828,11 +12902,19 @@
 				},
 				/*clip_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000A,0x0008,0x0008/*0-2*/
 				},
 				/*thr_layer_cv_neg*/
 				{
 					0x0005,0x0009,0x000D,0x0015/*0-3*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				},
 				/*ratio_layer_cv_neg*/
 				{
@@ -8840,6 +12922,7 @@
 				},
 				/*clip_layer_cv_neg*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0xFFEC,0xFFF1,0xFFF1/*0-2*/
 				},
 				/*ratio_layer_lum_cv*/
@@ -8849,12 +12932,24 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x0008,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*[0x1]*/
 			{
 				/*thr_layer_cv_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x0005,0x0009,0x000C,0x000E/*0-3*/
 				},
 				/*ratio_layer_cv_pos*/
@@ -8884,6 +12979,37 @@
 				/*ratio_layer_freq_cv*/
 				{
 					0x0008,0x000C,0x0008/*0-2*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_pos*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*thr_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*ratio_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*clip_layer_cv_neg*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_lum_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+				},
+				/*ratio_layer_freq_cv*/
+				{
+					0x0000,0x0000,0x0000/*0-2*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			}
 		},
@@ -8928,11 +13054,19 @@
 			{
 				/*gradient_curve_pos*/
 				{
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
 				},
 				/*gradient_curve_neg*/
 				{
 					0x000C,0x004C,0x0051,0x00D1/*0-3*/
+=======
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+				},
+				/*gradient_curve_neg*/
+				{
+					0x0000,0x0000,0x0000,0x0000/*0-3*/
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				}
 			},
 			/*computation_type*/
@@ -8954,17 +13088,29 @@
 		/*new_pyramid_ratio_en*/
 		0x00,
 		/*pyramid_layer_offset_en*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x01,
+=======
+		0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*reserved*/
 		{
 			0x00,0x00,0x00/*0-2*/
 		},
 		/*center_x*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0FA0,
 		/*center_y*/
 		0x0BB8,
 		/*radius_threshold*/
 		0x000D,
+=======
+		0x0000,
+		/*center_y*/
+		0x0000,
+		/*radius_threshold*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x0000,
 		/*old_gradient_ratio_coef*/
@@ -8976,9 +13122,15 @@
 			0x0000,0x0000,0x0000/*0-2*/
 		},
 		/*layer_pyramid_offset_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0400,
 		/*layer_pyramid_offset_clip_ratio_max*/
 		0x0400,
+=======
+		0x0000,
+		/*layer_pyramid_offset_clip_ratio_max*/
+		0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*layer_pyramid_offset_gain_min*/
 		{
 			0x0000,0x0000,0x0000/*0-2*/
@@ -8986,7 +13138,11 @@
 		/*old_gradient*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
@@ -8994,14 +13150,22 @@
 		/*new_pyramid*/
 		{
 			/*ratio_gain_max*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 			0x0400,
+=======
+			0x0000,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 			/*ratio_gain_min*/
 			0x0000,
 
 		}
 	},
 	/*bypass*/
+<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 	0x01,
+=======
+	0x00,
+>>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 	/*reserved*/
 	{
 		0x00,0x00,0x00/*0-2*/
