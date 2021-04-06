@@ -123,12 +123,21 @@ struct sprd_pdaf_report_t {
 	cmr_u32 pd_reg_size;
 };
 
+struct type2_pdaf_roi_param {
+	cmr_u32 roi_start_x;
+	cmr_u32 roi_start_y;
+	cmr_u32 roi_area_width;
+	cmr_u32 roi_area_height;
+};
+
 struct pdaf_raw_buffer_info {
 	void *left_buffer;
 	void *right_buffer;
-	cmr_s16 *left_output;
-	cmr_s16 *right_output;
+	cmr_s32 *left_output;
+	cmr_s32 *right_output;
+	struct type2_pdaf_roi_param roi_param;
 	cmr_int roi_pixel_numb;
+	cmr_s32 frameid;
 };
 
 struct sensor_setting

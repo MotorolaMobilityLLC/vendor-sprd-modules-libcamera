@@ -67,9 +67,7 @@ struct sprd_pdaf_context {
 	cmr_s32 *pPD_right;
 	cmr_s32 *pPD_left_reorder;
 	cmr_s32 *pPD_right_reorder;
-	cmr_s16 *pLeftBuf;
-	cmr_s16 *pRightBuf;
-	cmr_s16 *pRight_input_Buf;
+	cmr_s32 *tmp_input_Buf;
 
 };
 
@@ -394,10 +392,8 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 			goto exit;
 		}
 		if (cxt->pdaf_type == 2) {
-			cxt->pLeftBuf = (cmr_s16 *)malloc(sizeof(cmr_s16) * pd_pixel_num);
-			cxt->pRightBuf = (cmr_s16 *)malloc(sizeof(cmr_s16) * pd_pixel_num);
-			cxt->pRight_input_Buf = (cmr_s16 *)malloc(sizeof(cmr_s16) * pd_pixel_num * 2);
-			if (cxt->pLeftBuf == NULL|| cxt->pRightBuf == NULL|| cxt->pRight_input_Buf == NULL ){
+			cxt->tmp_input_Buf = (cmr_s32 *)malloc(sizeof(cmr_s32) * pd_pixel_num * 2);
+			if (cxt->tmp_input_Buf == NULL ){
 				ISP_LOGE("malloc buffer for type2 failed!");
 				goto exit;
 			}
@@ -424,17 +420,9 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 			free(cxt->pPD_right_reorder);
 			cxt->pPD_right_reorder = NULL;
 		}
-		if (cxt->pLeftBuf != NULL) {
-			free(cxt->pLeftBuf);
-			cxt->pLeftBuf = NULL;
-		}
-		if (cxt->pRightBuf != NULL) {
-			free(cxt->pRightBuf);
-			cxt->pRightBuf = NULL;
-		}
-		if (cxt->pRight_input_Buf != NULL) {
-			free(cxt->pRight_input_Buf);
-			cxt->pRight_input_Buf = NULL;
+		if (cxt->tmp_input_Buf != NULL) {
+			free(cxt->tmp_input_Buf);
+			cxt->tmp_input_Buf = NULL;
 		}
 		if (cxt->pPD_left != NULL) {
 			free(cxt->pPD_left);
@@ -475,17 +463,9 @@ static cmr_s32 sprd_pdaf_adpt_deinit(cmr_handle adpt_handle, void *param, void *
 			free(cxt->pPD_right_reorder);
 			cxt->pPD_right_reorder = NULL;
 		}
-		if (cxt->pLeftBuf != NULL) {
-			free(cxt->pLeftBuf);
-			cxt->pLeftBuf = NULL;
-		}
-		if (cxt->pRightBuf != NULL) {
-			free(cxt->pRightBuf);
-			cxt->pRightBuf = NULL;
-		}
-		if (cxt->pRight_input_Buf != NULL) {
-			free(cxt->pRight_input_Buf);
-			cxt->pRight_input_Buf = NULL;
+		if (cxt->tmp_input_Buf != NULL) {
+			free(cxt->tmp_input_Buf);
+			cxt->tmp_input_Buf = NULL;
 		}
 		/* deinit lib */
 		if (NULL != cxt->af_addr)	// free afm statis buffer
@@ -565,9 +545,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 		memset(cxt->pPD_left, 0, sizeof(cmr_s32) * roi_pixel_num);
 		memset(cxt->pPD_right, 0, sizeof(cmr_s32) * roi_pixel_num);
 		if (cxt->pdaf_type == 2) {
-			memset(cxt->pLeftBuf, 0, sizeof(cmr_s16) * pd_pixel_num);
-			memset(cxt->pRightBuf, 0, sizeof(cmr_s16) * pd_pixel_num);
-			memset(cxt->pRight_input_Buf, 0, sizeof(cmr_s16) * pd_pixel_num * 2);
+			memset(cxt->tmp_input_Buf, 0, sizeof(cmr_s32) * pd_pixel_num * 2);
 		}
 		if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_2){
 			memset(cxt->pPD_left_reorder, 0, sizeof(cmr_s32) * roi_pixel_num);
@@ -580,34 +558,23 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	ATRACE_BEGIN("PDAlgo_Calc_process_convert");
 
 	if (cxt->pdaf_type == 2) {
-		cmr_s32 start_x = cxt->pd_sensor_setting.dBeginX_orig;
-		cmr_s32 start_y = cxt->pd_sensor_setting.dBeginY_orig;
-		cmr_s32 data_flow_roi_startX = (dRectX - start_x) / cxt->pd_gobal_setting.pd_pair_w;
-		cmr_s32 data_flow_roi_startY = (dRectY - start_y) / cxt->pd_gobal_setting.pd_pair_h;
 
-		cmr_s32 i, k, start_index = 0;
-
+		cxt->pd_buff_info.roi_param.roi_start_x = dRectX;
+		cxt->pd_buff_info.roi_param.roi_start_y = dRectY;
+		cxt->pd_buff_info.roi_param.roi_area_width = dRectW;
+		cxt->pd_buff_info.roi_param.roi_area_height = dRectH;
 		cxt->pd_buff_info.left_buffer = (void *)pInPhaseBuf_Type2;
-		cxt->pd_buff_info.right_buffer = (void *)cxt->pRight_input_Buf;
-		cxt->pd_buff_info.left_output = (cmr_s16 *)cxt->pLeftBuf;
-		cxt->pd_buff_info.right_output = (cmr_s16 *)cxt->pRightBuf;
+		cxt->pd_buff_info.right_buffer = (void *)cxt->tmp_input_Buf;
+		cxt->pd_buff_info.left_output = (void *)cxt->pPD_left;
+		cxt->pd_buff_info.right_output = (void *)cxt->pPD_right;
+		cxt->pd_buff_info.frameid = cxt->frame_id;
 
 		ret = cxt->pd_buffer_format_convert((void *)(&cxt->pd_buff_info));
 
-		start_index = (data_flow_roi_startY * pd_pixel_num_x) + data_flow_roi_startX;	//ROI area start offset
-		for (i = 0; i < roi_pixel_num_y; i++) {
-			for (k = 0; k < roi_pixel_num_x; k++) {
-				cxt->pPD_left[k + i * roi_pixel_num_x] = (cmr_s32) cxt->pLeftBuf[start_index + k + i * pd_pixel_num_x];
-				cxt->pPD_right[k + i * roi_pixel_num_x] = (cmr_s32) cxt->pRightBuf[start_index + k + i * pd_pixel_num_x];
-			}
-		}
-
 		ISP_LOGV("SensorID[%d] Block[%d] PDStart_coor[%d, %d] Block_numWH[%d, %d]",
-			 cxt->pd_gobal_setting.dSensorMode, cxt->pd_gobal_setting.pd_pair_w, start_x, start_y, pd_pixel_num_x, pd_pixel_num_y);
-		ISP_LOGV("Data_flow: WH[%d, %d] Roi_startXY[%d, %d] Roi_WH[%d, %d] ROI_StartIndex[%d]", pd_pixel_num_x,
-			 pd_pixel_num_y, data_flow_roi_startX, data_flow_roi_startY, roi_pixel_num_x, roi_pixel_num_y, start_index);
+			 cxt->pd_gobal_setting.dSensorMode, cxt->pd_gobal_setting.pd_pair_w, cxt->pd_sensor_setting.dBeginX_orig, cxt->pd_sensor_setting.dBeginY_orig, pd_pixel_num_x, pd_pixel_num_y);
 		if (g_dumpraw == 1){
-			dump_raw(cxt->frame_id, cxt->pdaf_type, cxt->pLeftBuf, cxt->pRightBuf, NULL, pd_pixel_num_x, pd_pixel_num_y);
+			dump_raw(cxt->frame_id, cxt->pdaf_type, cxt->pPD_left, cxt->pPD_right, NULL, roi_pixel_num_x, roi_pixel_num_y);
 		}
 	}
 	//For IMX362 Dual PD Mode4
@@ -968,8 +935,8 @@ static cmr_s32 sprd_pdaf_adpt_ioctrl(cmr_handle adpt_handle, cmr_s32 cmd, void *
 void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void *all_raw, cmr_s32 pixelnum_x, cmr_s32 pixelnum_y)
 {
 	if (pdaf_type == 2 && (frame_id % skip_fr) == 0) {
-		cmr_s16 *TempL = NULL;
-		cmr_s16 *TempR = NULL;
+		cmr_s32 *TempL = NULL;
+		cmr_s32 *TempR = NULL;
 		char file_nameL[200] = { 0 };
 		char file_nameR[200] = { 0 };
 		FILE *fpL = NULL;
@@ -981,8 +948,8 @@ void dump_raw(int frame_id, int pdaf_type, void *left_raw, void *right_raw, void
 		sprintf(file_nameR, CAMERA_DATA_FILE "/Right_Raw_%dX%d_%d.raw", pixelnum_x, pixelnum_y, frame_id);
 		fpL = fopen(file_nameL, "wb+");
 		fpR = fopen(file_nameR, "wb+");
-		TempL =  (cmr_s16 *)left_raw;
-		TempR =  (cmr_s16 *)right_raw;
+		TempL =  (cmr_s32 *)left_raw;
+		TempR =  (cmr_s32 *)right_raw;
 
 		while(i != pixelnum_x * pixelnum_y && TempL != NULL && TempR != NULL){
 			if(fpL != NULL){
