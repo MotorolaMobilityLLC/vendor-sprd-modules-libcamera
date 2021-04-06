@@ -1661,7 +1661,7 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	}
 
 	//FOR DEBUG
-	#define ISP_ALG_TRIBLE_W_T_UW_SYNC 8
+	//#define ISP_ALG_TRIBLE_W_T_UW_SYNC 8
 	//cxt->sync_enable = 1;
 	//cxt->is_multi_mode = 8;
 	//主sensor开始切到从sensor时，并且此时为所摄顺切模式。
