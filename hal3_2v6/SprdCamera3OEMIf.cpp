@@ -13157,6 +13157,11 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
 
     mcolor_temp_sensor_count++;
 
+    if(mcolor_temp_sensor_flag == 1){
+        HAL_LOGE("color temp sensor has registered");
+        return NULL;
+    }
+
     mCTSensorManager = ASensorManager_getInstanceForPackage("");
     if (mCTSensorManager == NULL) {
         HAL_LOGE("can not get ISensorManager service");
@@ -13219,6 +13224,9 @@ void *SprdCamera3OEMIf::color_temp_process_deinit(void) {
         if((--mcolor_temp_sensor_count) == 0) {
             ASensorEventQueue_disableSensor(mCTSensorEventQueue, mcolortempSensor);
             ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
+            mCTSensorManager = NULL;
+            mCTSensorEventQueue = NULL;
+            mcolortempSensor = NULL;
             mcolor_temp_sensor_flag = 0;
         }
     }
