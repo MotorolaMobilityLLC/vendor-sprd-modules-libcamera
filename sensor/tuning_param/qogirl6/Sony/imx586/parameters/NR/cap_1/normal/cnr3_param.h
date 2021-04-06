@@ -18,7 +18,7 @@
 		/*[0x0]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
 			0x01,
 			/*reserved0*/
@@ -57,9 +57,9 @@
 		/*[0x1]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -96,9 +96,9 @@
 		/*[0x2]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -135,9 +135,9 @@
 		/*[0x3]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -176,7 +176,7 @@
 			/*lowpass_filter_en*/
 			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
