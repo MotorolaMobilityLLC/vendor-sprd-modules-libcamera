@@ -1767,30 +1767,6 @@ static cmr_int ispctl_set_ae_fps(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_s32 ispctl_get_ae_debug_info(cmr_handle isp_alg_handle)
-{
-	cmr_s32 ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct tg_ae_ctrl_alc_log ae_log = { NULL, 0 };
-
-	if (NULL == cxt) {
-		ISP_LOGE("fail to get AE debug info !");
-		ret = ISP_ERROR;
-		return ret;
-	}
-
-	if (cxt->ops.ae_ops.ioctrl) {
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_GET_DEBUG_INFO, NULL, (void *)&ae_log);
-		if (ISP_SUCCESS != ret) {
-			ISP_LOGE("fail to get AE debug info!");
-		}
-	}
-	cxt->ae_cxt.log_ae = ae_log.log;
-	cxt->ae_cxt.log_ae_size = ae_log.size;
-
-	return ret;
-}
-
 static cmr_s32 ispctl_get_ai_debug_info(cmr_handle isp_alg_handle)
 {
 	cmr_s32 ret = ISP_SUCCESS;
