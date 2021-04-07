@@ -113,6 +113,7 @@ class SprdCamera3HWI {
     void setCapState(bool flag);
     void setDcamState(bool flag);
     static bool isMultiCameraMode(int Mode);
+    int getMultiCameraMode(){return mMultiCameraMode;}
     void setSprdCameraLowpower(int flag);
     int camera_ioctrl(int cmd, void *param1, void *param2);
     int setSensorStream(uint32_t on_off);
@@ -131,6 +132,7 @@ class SprdCamera3HWI {
     int ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
 
   private:
+    camera3_stream_buffer_t *result_buffers;
     int openCamera();
     int closeCamera();
     int validateCaptureRequest(camera3_capture_request_t *request);
@@ -173,6 +175,7 @@ class SprdCamera3HWI {
         int32_t receive_req_max;
         uint32_t pipeline_depth;
         threeA_info_t threeA_info;
+        uint32_t result_status;
     } PendingRequestInfo;
 
     typedef struct {
@@ -297,6 +300,7 @@ class SprdCamera3HWI {
     Mutex mLock;
     Mutex mRequestLock;
     Mutex mResultLock;
+    //Mutex mResultPtrLock;
     Condition mRequestSignal;
     bool mIsSkipFrm;
 
@@ -330,6 +334,7 @@ class SprdCamera3HWI {
     bool mSuperExposeNonzsl;// super long exposure,1:non-zsl,0:zsl
     //1:always zsl,2:non-zsl,other:detect
     uint8_t mHighResFixZsl;
+    bool useManualSesnor;
 
     cam3_stream_configuration_t mStreamConfiguration;
     bool mZslIpsEnable;

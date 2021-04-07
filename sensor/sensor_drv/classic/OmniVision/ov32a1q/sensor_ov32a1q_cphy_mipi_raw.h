@@ -1948,6 +1948,8 @@ static SENSOR_STATIC_INFO_T s_ov32a1q_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 180,
                      .focal_length = 384,
+		     .min_focal_distance = 100,
+                     .start_offset_time = 4700000,
                      .max_fps = 30,
                      .max_adgain = 15,
                      .ois_supported = 0,
