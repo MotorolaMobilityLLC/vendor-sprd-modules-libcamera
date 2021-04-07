@@ -440,6 +440,8 @@ static SENSOR_STATIC_INFO_T s_ov8856_static_info[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .static_info = {.f_num = 240,
                      .focal_length = 555,
+                     .min_focal_distance = 30,
+                     .start_offset_time = 4500000,
                      .max_fps = 30,
 #if defined(OV8856_NO_VCM_SENSOR_OTP)
                      .max_adgain = 16,

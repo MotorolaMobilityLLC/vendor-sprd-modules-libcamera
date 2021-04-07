@@ -752,6 +752,8 @@ struct sensor_drv_context {
     cmr_u32 module_vendor_id;
     cmr_u32 otp_version;
     cmr_u32 is_long_expo;
+    cmr_s64 sensor_min_exp;
+    cmr_s64 sensor_max_exp;
 };
 
 struct tuning_param_lib {
@@ -844,6 +846,9 @@ cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 long_expo_enable);
 cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id);
 cmr_int sensor_set_color_temp(cmr_handle handle, void* callback);
+cmr_s64 sensor_drv_get_shutter_skew(struct sensor_drv_context *sensor_cxt,
+                                    cmr_uint sensor_work_mode);
+
 #ifdef __cplusplus
 }
 #endif

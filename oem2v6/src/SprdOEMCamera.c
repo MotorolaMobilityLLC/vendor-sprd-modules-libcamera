@@ -1115,6 +1115,12 @@ static cmr_int ioctrl_get_ct_info(cmr_handle handle, void *param) {
 static cmr_int ioctrl_get_iso_info(cmr_handle handle, void *param) {
         return camera_get_iso_info(handle, (cmr_u32 *)param);
 }
+static cmr_int ioctrl_set_ae_params(cmr_handle handle, void *param) {
+        return camera_set_ae_params(handle, param);
+}
+static cmr_int ioctrl_set_af_params(cmr_handle handle, void *param) {
+        return camera_set_af_params(handle, param);
+}
 static cmr_int ioctrl_yuv_do_face_beauty_simplify(cmr_handle handle, void *param) {
         return camera_yuv_do_face_beauty_simplify(handle, (struct img_frm *)param);
 }
@@ -1188,6 +1194,8 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_TOCTRL_GET_SN_STREAM_STATUS]       = ioctrl_sensor_get_stream_status,
     [CAMERA_IOCTRL_GET_CT]                     = ioctrl_get_ct_info,
     [CAMERA_IOCTRL_GET_ISO]                    = ioctrl_get_iso_info,
+    [CAMERA_IOCTRL_SET_AE_PARAMS]              = ioctrl_set_ae_params,
+    [CAMERA_IOCTRL_SET_AF_PARAMS]              = ioctrl_set_af_params,
     [CAMERA_IOCTRL_FOV_FUSION_MODE]            = ioctrl_set_fov_fusion_mode,
     [CAMERA_IOCTRL_SET_FOV_FUSION_APP_RATIO]   = ioctrl_set_fov_fusion_app_ratio,
     [CAMERA_IOCTRL_DO_FACE_BEAUTY]             = ioctrl_yuv_do_face_beauty_simplify,
@@ -1326,6 +1334,21 @@ int camera_get_scaler(uint32_t *scaler)
     return ret;
 }
 
+void camera_set_exif_iso_value(cmr_handle handle,cmr_u32 iso_value) {
+    camera_local_set_exif_iso_value(handle,iso_value);
+}
+
+void camera_set_exif_exp_time(cmr_handle handle,cmr_s64 exp_time) {
+    camera_local_set_exif_exp_time(handle,exp_time);
+}
+
+cmr_s64 camera_get_rolling_shutter_skew(cmr_handle handle){
+    cmr_s64 rolling_shutter_skew = 0;
+    rolling_shutter_skew = camera_local_get_shutter_skew(handle);
+    CMR_LOGV("rolling shutter skew:%lld",rolling_shutter_skew);
+    return rolling_shutter_skew;
+}
+
 static oem_ops_t oem_module_ops = {
 	/* api for HAL1.0 only */
 	.camera_is_change_size = camera_is_change_size,
@@ -1392,6 +1415,7 @@ static oem_ops_t oem_module_ops = {
 	.camera_set_mm_dvfs_policy = camera_set_mm_dvfs_policy,
 	.camera_set_original_picture_size = camera_set_original_picture_size,
 	.camera_get_scaler = camera_get_scaler,
+	.camera_get_rolling_shutter_skew = camera_get_rolling_shutter_skew,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {

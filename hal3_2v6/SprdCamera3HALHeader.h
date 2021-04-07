@@ -324,6 +324,8 @@ typedef struct {
     buffer_handle_t *buffer;
     camera3_buffer_status_t buff_status;
     camera3_msg_type_t msg_type;
+    camera_metadata_t *result;
+    uint8_t result_status;
 } cam_result_data_info_t;
 
 typedef enum {
