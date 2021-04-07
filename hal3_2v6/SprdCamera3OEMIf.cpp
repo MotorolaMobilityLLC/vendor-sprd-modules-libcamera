@@ -1365,9 +1365,6 @@ status_t SprdCamera3OEMIf::faceDectect(bool enable) {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
-    sprddefInfo = mSetting->getSPRDDEFTagPTR();
-    if (sprddefInfo->slowmotion > 1)
-        return ret;
 
     if (enable) {
         mHalOem->ops->camera_fd_start(mCameraHandle, 1);
