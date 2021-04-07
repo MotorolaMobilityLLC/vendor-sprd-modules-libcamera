@@ -91,6 +91,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_u32 b_info[16384];
 		cmr_u32 sec;
 		cmr_u32 usec;
+		cmr_s32 frm_id;
 	};
 
 	struct isp_hist_statistic_info {

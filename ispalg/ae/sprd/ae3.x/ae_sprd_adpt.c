@@ -3398,8 +3398,9 @@ static cmr_s32 ae_make_ae_result_cb(struct ae_ctrl_cxt *cxt,  struct ae_callback
 	result->cur_effect_fps = cxt->cur_result.cur_effect_fps;
 	result->cur_effect_exp_time = cxt->cur_status.adv_param.cur_ev_setting.exp_time;
 	result->frame_number =  cxt->frame_number;
-	ISP_LOGD("ae_stable %d flash_fired:%d sensitivity: %d cur_effect_fps: %f exp_time:%d frame_number:%d",result->ae_stable,result->flash_fired,result->cur_effect_sensitivity,result->cur_effect_fps,cxt->cur_status.adv_param.cur_ev_setting.exp_time,cxt->frame_number);
-	ISP_LOGV("gain: %d sensor_gain:%d isp_gain: %d exp_line: %d",result->total_gain,result->sensor_gain,result->isp_gain,result->exp_line);
+	result->debug_info = cxt->cur_result.debug_info;
+	result->debug_len = cxt->cur_result.debug_len;
+	result->frm_id = cxt->cur_result.frame_id;
 	return rtn;
 }
 
@@ -6158,11 +6159,13 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	if(0 == aem_type) {
 		ae_binning_for_aem_stats(cxt, calc_in->stat_img);
 		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
-		}else{
+	} else {
 		ae_binning_for_aem_statsv2(cxt, calc_in);
 		cxt->cur_status.stats_data_basic.stat_data = cxt->sync_aem;
 	}
-	ISP_LOGV("AE_TEST aem time cam_id %d,frame id %d time %d.%06d\n",cxt->camera_id, cxt->cur_status.frm_id,calc_in->sec, calc_in->usec);
+
+	/*get frame ID from aem static data*/
+	cxt->cur_status.frm_id = calc_in->info.frame_id;
 
 	/*send multi_mode to lib*/
 	cxt->cur_status.is_multi_mode = cxt->is_multi_mode;
@@ -6628,7 +6631,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 		ae_save_to_mlog_file(cxt, misc_calc_out);
 	}
 
-	cxt->cur_status.frm_id++;
+	//cxt->cur_status.frm_id++;
 	cxt->is_first = 0;
 
   ae_calculation_error_exit:
