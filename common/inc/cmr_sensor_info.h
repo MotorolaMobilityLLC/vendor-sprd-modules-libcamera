@@ -79,6 +79,8 @@ struct drv_fov_info {
 struct sensor_ex_info {
     cmr_u32 f_num;
     cmr_u32 focal_length;
+    cmr_u32 min_focus_distance;
+    cmr_s64 start_offset_time;
     cmr_u32 max_fps;
     cmr_u32 max_adgain;
     cmr_u32 ois_supported;
@@ -104,6 +106,8 @@ struct sensor_ex_info {
     cmr_u64 long_exposure_threshold;
     cmr_u32 longExp_valid_frame_num;
     cmr_u8 mono_sensor;
+    cmr_s64 sensor_min_exp;
+    cmr_s64 sensor_max_exp;
 };
 
 #define SNSPID_SIZE 32
@@ -591,6 +595,11 @@ struct sensor_multi_ae_info {
     cmr_u32 ignore;
     cmr_u32 gain;
     struct sensor_ex_exposure exp;
+};
+
+struct sensor_shutter_skew_info {
+    cmr_s64 shutter_skew;
+    cmr_u32 sns_mode; // sensor mode shutter_skew_info
 };
 
 /*for default tuning parameters start*/

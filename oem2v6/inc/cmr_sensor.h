@@ -138,6 +138,9 @@ cmr_int cmr_sensor_set_color_temp(cmr_handle sensor_handle,  void *callback);
 cmr_int cmr_sensor_set_longExp_enable(cmr_handle sensor_handle,
                                 cmr_u32 camera_id, cmr_u32 longExp_enable);
 
+cmr_s64 cmr_sensor_get_shutter_skew(cmr_handle sensor_handle,
+                                    cmr_uint sensor_work_mode,
+                                    cmr_uint sensor_id);
 #ifdef __cplusplus
 }
 #endif

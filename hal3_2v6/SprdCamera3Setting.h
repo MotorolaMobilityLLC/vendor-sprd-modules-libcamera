@@ -49,6 +49,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <unordered_map>
+#include <unordered_set>
+
 using namespace ::android::hardware::camera::common::V1_0::helper;
 using namespace android;
 
@@ -137,6 +139,8 @@ typedef int64_t nsecs_t;
 
 #define ALGO_VERSION_THRESHOLD 128
 #define ALGO_VERSION_NUMB_SINGLE_LIB 8
+#define MINSENSITIVITY 50
+#define MAXSENSITIVITY 3328
 
 typedef struct {
     uint8_t correction_mode;
@@ -224,7 +228,7 @@ typedef struct {
 } NOISE_Tag;
 
 typedef struct {
-    float focus_range[4];
+    float focus_range[2];
     float focus_distance;
     float focal_length;
     uint8_t state;
@@ -337,6 +341,8 @@ typedef struct {
     int32_t available_test_pattern_modes[6];
     int32_t max_analog_sensitivity;
     int32_t test_pattern_mode;
+    float focus_distance;
+    int64_t start_offset_time;
 } SENSOR_Tag;
 
 typedef struct { uint8_t use_parital_result; } QUIRKS_Tag;
@@ -349,7 +355,7 @@ typedef struct {
     int32_t available_characteristics_keys[100];
     int32_t available_request_keys[50];
     int32_t available_result_keys[50];
-    uint8_t available_capabilites[5];
+    uint8_t available_capabilites[6];
     int32_t partial_result_count;
     uint8_t pipeline_max_depth;
     uint8_t pipeline_depth;
@@ -536,6 +542,10 @@ typedef struct {
     struct img_size picture_size;
     struct img_size video_size;
     struct img_size callback_size;
+    struct isp_sync_params isp_sync_params;
+    struct ae_params ae_cts_params;
+    struct af_params af_cts_params;
+    int afMovingCount;
 
     COLOR_Tag colorInfo;
     CONTROL_Tag controlInfo;
@@ -641,7 +651,12 @@ class SprdCamera3Setting {
     int UpdateWorkParameters(const CameraMetadata &frame_settings);
     int initialize(const camera3_callback_ops_t *callback_ops);
     camera_metadata_t *translateLocalToFwMetadata();
+    camera_metadata_t *reportMetadataToFramework \
+        (struct isp_sync_params *params, camera_metadata_t *data);
+    int updateAppMode(const CameraMetadata &frame_settings);
     int updateWorkParameters(const CameraMetadata &frame_settings);
+    int updateIspParameters(const CameraMetadata &frame_settings);
+    int updateIspTagValue(const CameraMetadata &frame_settings, uint32_t frame_number);
     int popAndroidParaTag();
     int popSprdParaTag();
     void releaseAndroidParaTag();
@@ -729,6 +744,12 @@ class SprdCamera3Setting {
     int getSPRDDEFTag(SPRD_DEF_Tag *sprddefInfo);
     SPRD_DEF_Tag *getSPRDDEFTagPTR(void);
 
+    int getAeParams(struct ae_params *ae_cts_params);
+    int setAeParams(struct ae_params ae_cts_params);
+    int getAfParams(struct af_params *af_cts_params);
+    int setAfParams(struct af_params af_cts_params);
+    void getSyncInfo(uint32_t frame_number);
+
     int setGEOMETRICTag(GEOMETRIC_Tag geometricInfo);
     int getGEOMETRICTag(GEOMETRIC_Tag *geometricInfo);
 
@@ -742,7 +763,6 @@ class SprdCamera3Setting {
     int getSENSORTag(SENSOR_Tag *sensorInfo);
 
     int setExposureTimeTag(int64_t exposureTime);
-    void getSyncInfo(uint32_t frame_number);
 
     int setSHADINGTag(SHADING_Tag shadingInfo);
     int getSHADINGTag(SHADING_Tag *shadingInfo);
@@ -792,8 +812,13 @@ class SprdCamera3Setting {
     int updateAlgoVerison(CameraMetadata *camMetadata);
     void notifyNextCapture(uint8_t nextCap);
     uint8_t getNextCapture();
+    float focusDistanceTranslateToDrvFocusDistance(float focus_distance, uint8_t cameraId);
+    float drvFocusDistanceTranslateToFocusDistance(float focus_distance, uint8_t cameraId);
 
     static uint8_t mMaxCameraCount;
+    int64_t  rollingShutterSkew;
+    int32_t sprd_app_id;
+    multiCameraMode mMultiCameraMode;
     static camera_metadata_t *mStaticMetadata[CAMERA_ID_COUNT];
     camera_metadata_t *mDefaultMetadata[CAMERA3_TEMPLATE_COUNT];
     static sprd_setting_info_t s_setting[CAMERA_ID_COUNT];
@@ -807,6 +832,8 @@ class SprdCamera3Setting {
     static int mLogicalSensorNum;
     static uint8_t camera_identify_state[CAMERA_ID_COUNT];
     std::unordered_map<int64_t, SENSOR_Tag> mFrameNumMap;
+    bool first_set;
+    int save_iso_value;
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);
@@ -857,6 +884,9 @@ class SprdCamera3Setting {
     static int SearchLibMark(char *name, char *output, const char *marker, const char *bit);
     static int SearchAllLibrary(const char *path, const char *lib_mark,
                                 char *output_buffer, const char *bit);
+    static float calculateHyperFocalDistance (int32_t cameraId);
+    static cmr_u32 getMinFocusDistance(uint8_t cameraId);
+    static int64_t getStartOffsetTime(uint8_t cameraId);
 };
 
 }; // namespace sprdcamera
