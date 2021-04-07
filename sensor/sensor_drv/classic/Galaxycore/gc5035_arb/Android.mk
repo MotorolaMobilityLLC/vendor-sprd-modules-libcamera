@@ -27,14 +27,14 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../../inc \
                     $(LOCAL_PATH)/../../../../../$(ISPDRV_DIR)/driver/inc \
                     $(LOCAL_PATH)/../../../../../kernel_module/interface \
                     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
-                    sensor_gc5035_mipi_raw.h
+                    sensor_gc5035_arb_mipi_raw.h
 
 
-LOCAL_SRC_FILES := sensor_gc5035_mipi_raw.c
+LOCAL_SRC_FILES := sensor_gc5035_arb_mipi_raw.c
 
 LOCAL_SHARED_LIBRARIES := libcutils libcamcommon libdl libutils libcamsensor liblog libxml2
 
-ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+ifeq (1, $(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 

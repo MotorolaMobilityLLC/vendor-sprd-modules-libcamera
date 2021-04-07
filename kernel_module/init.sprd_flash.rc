@@ -1,4 +1,5 @@
 on sprd-flash-ko
+    insmod ${ro.vendor.ko.mount.point}/socko/flash_ic_aw3643.ko
     insmod ${ro.vendor.ko.mount.point}/socko/flash_ic_sc2703.ko
     insmod ${ro.vendor.ko.mount.point}/socko/flash_ic_ocp8137.ko
     insmod ${ro.vendor.ko.mount.point}/socko/flash_ic_sy7807.ko

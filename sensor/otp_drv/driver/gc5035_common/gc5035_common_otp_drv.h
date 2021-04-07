@@ -32,8 +32,8 @@
 #define MODULE_VENDOR_ID  0x00
 
 /* I2C slave address setting */
-#define OTP_I2C_ADDR (0x6e >> 1)
-#define SENSOR_I2C_ADDR (0x6e >> 1)
+#define OTP_I2C_ADDR (0x7e >> 1)
+#define SENSOR_I2C_ADDR (0x7e >> 1)
 
 /* OTP space setting */
 #define OTP_START_ADDR 0x1f10
