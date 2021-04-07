@@ -33,6 +33,9 @@ struct ae_callback_param {
 	cmr_u32 cur_effect_exp_time;
 	cmr_s32 frame_number;
 	float cur_effect_fps;
+	void *debug_info;
+	cmr_u32 debug_len;
+	cmr_u32 frm_id;
 };
 
 #endif
