@@ -2701,6 +2701,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 
 	ae_stat_ptr->sec = statis_info->sec;
 	ae_stat_ptr->usec = statis_info->usec;
+	ae_stat_ptr->frm_id = statis_info->frame_id;
 
 	ISP_LOGV("frame_id %d, time %d.%06d\n",
 		statis_info->frame_id, statis_info->sec, statis_info->usec);
@@ -3186,6 +3187,8 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
 	in_param.sensor_fps.is_high_fps = cxt->sensor_fps.is_high_fps;
 	in_param.sensor_fps.high_fps_skip_num = cxt->sensor_fps.high_fps_skip_num;
+	in_param.info.frame_id = cxt->aem_stats_data.frm_id;
+	ISP_LOGD("frame_id %d\n", in_param.info.frame_id);
 	if (cxt->ebd_cxt.ebd_support) {
 		memcpy(&in_param.ebd_info, &cxt->ae_cxt.ebd_info, sizeof(cxt->ae_cxt.ebd_info));
 		in_param.isp_dgain.global_gain = cxt->rgb_gain.global_gain;
