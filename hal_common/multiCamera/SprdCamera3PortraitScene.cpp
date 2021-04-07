@@ -2659,29 +2659,23 @@ int SprdCamera3PortraitScene::configureStreams(
     }
 
     camera3_stream_configuration mainconfig;
-    if (!mIsRecordMode) {
-        if (mPbrp->allocateBuff(mPbrp->mBGWidth, mPbrp->mBGHeight) < 0) {
-            HAL_LOGE("failed to allocateBuff.");
-            return -1;
-        }
-        if (mPbrp->checkIsVideo()) {
-            rc = mPbrp->loadBgImage(SPRD_PORTRAIT_SCENE_VIDEO, 0);
-        } else {
-            rc = mPbrp->loadBgImage(SPRD_PORTRAIT_SCENE_PREVIEW, 0);
-        }
-        if (rc < 0) {
-            HAL_LOGE("failed to load prev bgimage.");
-            return -1;
-        }
-        mainconfig = *stream_list;
-        mainconfig.num_streams = stream_list->num_streams + addStreamNum;
-        mainconfig.streams = pMainStreams;
-    } else {
-        mainconfig = *stream_list;
-        mainconfig.num_streams = stream_list->num_streams - 1;
-        pMainStreams[0] = &mPbrp->mMainStreams[mPreviewStreamsNum];
-        mainconfig.streams = pMainStreams;
+
+    if (mPbrp->allocateBuff(mPbrp->mBGWidth, mPbrp->mBGHeight) < 0) {
+        HAL_LOGE("failed to allocateBuff.");
+        return -1;
     }
+    if (mPbrp->checkIsVideo()) {
+        rc = mPbrp->loadBgImage(SPRD_PORTRAIT_SCENE_VIDEO, 0);
+    } else {
+        rc = mPbrp->loadBgImage(SPRD_PORTRAIT_SCENE_PREVIEW, 0);
+    }
+    if (rc < 0) {
+        HAL_LOGE("failed to load prev bgimage.");
+        return -1;
+    }
+    mainconfig = *stream_list;
+    mainconfig.num_streams = stream_list->num_streams + addStreamNum;
+    mainconfig.streams = pMainStreams;
 
     SprdCamera3HWI *hwiMain = m_pPhyCamera[CAM_TYPE_MAIN].hwi;
     rc = hwiMain->configure_streams(m_pPhyCamera[CAM_TYPE_MAIN].dev,
