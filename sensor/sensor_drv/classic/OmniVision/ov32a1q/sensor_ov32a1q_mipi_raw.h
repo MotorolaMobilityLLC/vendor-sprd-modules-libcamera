@@ -2910,6 +2910,8 @@ static SENSOR_STATIC_INFO_T s_ov32a1q_static_info[VENDOR_NUM] = {
      .static_info = {.f_num = 180,
                      .focal_length = 384,
                      .max_fps = 30,
+                     .min_focal_distance = 100,
+                     .start_offset_time = 4700000,
                      .max_adgain = 15,
                      .ois_supported = 0,
 #if 0 // def CONFIG_CAMERA_PDAF_TYPE

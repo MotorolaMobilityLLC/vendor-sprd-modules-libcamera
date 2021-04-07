@@ -61,6 +61,7 @@ extern "C" {
 #include <cutils/sockets.h>
 #include <sys/socket.h>
 #include <ui/GraphicBuffer.h>
+#include <map>
 
 using namespace android;
 
@@ -76,6 +77,12 @@ typedef void (*jpeg_callback)(sp<MemoryBase>, void *);
 typedef void (*autofocus_callback)(bool, void *);
 typedef void (*channel_callback)(int index, void *user_data);
 typedef void (*timer_handle_func)(union sigval arg);
+
+typedef enum {
+    SPRD_AE_PARAMS = 0,
+    SPRD_AF_PARAMS,
+    SPRD_MAX_PARAMS,
+} isp_params_t;
 
 typedef enum {
     SNAPSHOT_DEFAULT_MODE = 0,
@@ -276,7 +283,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setCallBackYuvMode(bool mode);
     // add for 3d capture
     void setCaptureReprocessMode(bool mode, uint32_t width, uint32_t height);
-
+    void getRollingShutterSkew();
     void antiShakeParamSetup();
     bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     bool mManualExposureEnabled;
@@ -303,11 +310,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool cal_spw_size(int sw_width, int sw_height, cmr_u32* out_width, cmr_u32* out_height);
     inline bool isCameraInit();
     int SetCameraParaTag(cmr_int cameraParaTag);
+    int setCameraIspPara(isp_params_t isp_mode);
     int setJpegOrientation(int jpegOrientation);
     int SetJpegGpsInfo(bool is_set_gps_location);
     int setCapturePara(camera_capture_mode_t stream_type,
                        uint32_t frame_number);
-    int SetChannelHandle(void *regular_chan, void *picture_chan);
+    int SetChannelHandle(void *regular_chan, void *picture_chan, void *meta_chan);
     int setCamStreamInfo(struct img_size size, int format, int stream_type);
     int CameraConvertCoordinateToFramework(int32_t *rect);
     int CameraConvertCoordinateFromFramework(int32_t *rect);
@@ -356,6 +364,13 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
   public:
     uint32_t isPreAllocCapMem();
+    std::map<uint32_t, cmr_u32> mIsoMap;
+    std::map<uint32_t, cmr_s64> mExptimeMap;
+    std::map<uint32_t, cmr_s64> mFmtimeMap;
+    int32_t mPictureFrameNum;
+    int32_t mSprdAppmodeId;
+    int32_t mStreamOnWithZsl;
+    int64_t mRollingShutterSkew;
 
     static int ZSLMode_monitor_thread_init(void *p_data);
     static int ZSLMode_monitor_thread_deinit(void *p_data);
@@ -410,9 +425,14 @@ class SprdCamera3OEMIf : public virtual RefBase {
     cmr_uint mVideo3dnrFlag;
     void setTimeoutParams();
     int ProcessAlgoNr(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
+    int32_t getOemCameraId() {return      mCameraId;}
+    void setAeState(enum aeTransitionCause cause);
+    void setAwbState(enum awbTransitionCause cause);
 
   private:
     inline void print_time();
+    cmr_u32 mIsoValue;
+    cmr_s64 mExptimeValue;
 
     enum Sprd_Camera_Temp {
         CAMERA_NORMAL_TEMP,
@@ -446,6 +466,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void HandleSnapshot(enum camera_cb_type cb, void *data);
     void HandleFocus(enum camera_cb_type cb, void *parm4);
     void HandleAutoExposure(enum camera_cb_type cb, void *parm4);
+    void HandleIspParams(enum camera_cb_type cb, void *parm4);
     void HandleCancelPicture(enum camera_cb_type cb, void *parm4);
     void calculateTimestampForSlowmotion(int64_t frm_timestamp);
     void doFaceMakeup(struct camera_frame_type *frame);
@@ -664,8 +685,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t getZslBufferIDForFd(cmr_s32 fd);
     int pushZslFrame(struct camera_frame_type *frame);
     struct camera_frame_type popZslFrame();
-    void setAeState(enum aeTransitionCause cause);
-    void setAwbState(enum awbTransitionCause cause);
 
     int32_t mLastAeMode;
     int32_t mLastAwbMode;
@@ -831,6 +850,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     void *mRegularChan;
     void *mPictureChan;
+    void *mMetadataChannel;
 
     camera_preview_mode_t mParaDCDVMode;
     snapshot_mode_type_t mTakePictureMode;
@@ -952,7 +972,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mVideoSnapshotFrameNum;
     uint32_t mFlashCaptureSkipNum;
     bool mFixedFpsEnabled;
-    int32_t mSprdAppmodeId;
     int mTempStates;
     int mIsTempChanged;
     int mSprdCameraLowpower;
@@ -981,7 +1000,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     uint32_t mIsCameraClearQBuf;
     int64_t mLatestFocusDoneTime;
-    int32_t mStreamOnWithZsl;
     int32_t mFlush;
     Mutex mPipelineStartLock;
     Condition mPipelineStartSignal;
@@ -1020,6 +1038,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mNonZslFlag;
     uint32_t mSkipNum;
     int mWhitelists;
+    bool EisErr;
 };
 
 }; // namespace sprdcamera

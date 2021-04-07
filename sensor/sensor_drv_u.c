@@ -3160,6 +3160,13 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
                sizeof(sensor_cxt->fov_info));
     }
 
+    if (sensor_cxt->sensor_min_exp) {
+        phyPtr->sensor_min_exp = sensor_cxt->sensor_min_exp;
+        phyPtr->sensor_max_exp = sensor_cxt->sensor_max_exp;
+        SENSOR_LOGD("sensor_range (%lld, %lld)",
+                 phyPtr->sensor_min_exp, phyPtr->sensor_max_exp);
+    }
+
     if (sensor_cxt->fov_angle > 0) {
         phyPtr->fov_angle = sensor_cxt->fov_angle;
     }
@@ -3186,6 +3193,11 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     memcpy(phyPtr->conflicting_devices, sensor_cxt->xml_info->cfgPtr->conflicting_devices, sizeof(sensor_cxt->xml_info->cfgPtr->conflicting_devices));
     phyPtr->conflicting_devices_length = sensor_cxt->xml_info->cfgPtr->conflicting_devices_length;
     phyPtr->mono_sensor = sensor_cxt->mono_sensor;
+    phyPtr->f_num = sensor_cxt->static_info->f_num;
+    phyPtr->mim_focus_distance = sensor_cxt->static_info->min_focal_distance;
+    phyPtr->start_offset_time = sensor_cxt->static_info->start_offset_time;
+    SENSOR_LOGD("f_num:%f,mim_focus_distance:%f,start offset time:%lld",
+                 phyPtr->f_num,phyPtr->mim_focus_distance,phyPtr->start_offset_time);
 
     phyPtr->module_vendor_id = sensor_cxt->module_vendor_id;
     phyPtr->otp_version = sensor_cxt->otp_version;
@@ -3599,6 +3611,10 @@ static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt) {
                    sizeof(sn_ex_info_slv.fov_info));
             sensor_cxt->fov_angle = sn_ex_info_slv.fov_angle;
             sensor_cxt->mono_sensor = sn_ex_info_slv.mono_sensor;
+            sensor_cxt->sensor_min_exp = sn_ex_info_slv.sensor_min_exp;
+            sensor_cxt->sensor_max_exp = sn_ex_info_slv.sensor_max_exp;
+            SENSOR_LOGD("sensor_range (%lld, %lld)",
+                     sensor_cxt->sensor_min_exp, sensor_cxt->sensor_max_exp);
         } else {
             SENSOR_LOGE("get sensor ex info failed");
             return -1;
