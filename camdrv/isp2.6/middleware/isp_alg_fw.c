@@ -841,6 +841,8 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 	enum isp_callback_cmd cmd = 0;
 	struct ae_size *hdr_statis_size;
+	struct debuginfo_message ae_msg = { NULL, 0, 0, 0 };
+	struct ae_callback_param *ae_result;
 
 	switch (cb_type) {
 	case AE_CB_FLASHING_CONVERGED:
@@ -874,6 +876,17 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		break;
 	case AE_CB_PROCESS_RESULT:
 		cmd = ISP_AE_PARAM_CALLBACK;
+		ae_result = (struct ae_callback_param *)data;
+
+		if (s_dbg_ver && (ae_result->frm_id >= 0) && (cxt->fdr_cxt.fdr_start != FDR_STATUS_PROC)) {
+			ae_msg.msg_log = (cmr_u8 *)(ae_result->debug_info);
+			ae_msg.msg_size = ae_result->debug_len;
+			ae_msg.frame_id = ae_result->frm_id;
+			pthread_mutex_lock(&cxt->debuginfo_queue_lock);
+			debuginfo_eq(&cxt->ae_queue, &ae_msg);
+			pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
+		}
+
 		break;
 	case AE_CB_HDR_STATUS:
 		cmd = ISP_AUTO_HDR_STATUS_CALLBACK;
@@ -2366,7 +2379,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 	cmr_u32 tmp = 0;
 	struct af_log_info af_param = {NULL, 0};
 	struct af_log_info aft_param = {NULL, 0};
-	struct debuginfo_message ae_msg = { NULL, 0, 0, 0 };
 	struct debuginfo_message ai_msg = { NULL, 0, 0, 0 };
 	struct debuginfo_message alsc_msg = { NULL, 0, 0, 0 };
 	struct debuginfo_message af_msg = { NULL, 0, 0, 0 };
@@ -2383,16 +2395,6 @@ static cmr_int ispalg_handle_sensor_sof(cmr_handle isp_alg_handle)
 
 	/* should not update info during FDR post-process for long delay */
 	if (s_dbg_ver && (cxt->frame_id_sof > 0) && (cxt->fdr_cxt.fdr_start != FDR_STATUS_PROC)) {
-		if (ISP_SUCCESS != ispctl_get_ae_debug_info(cxt)) {
-			ISP_LOGE("fail to get ae debug info");
-		}
-		ae_msg.msg_log = cxt->ae_cxt.log_ae;
-		ae_msg.msg_size = cxt->ae_cxt.log_ae_size;
-		ae_msg.frame_id = cxt->frame_id_sof - 1;
-		pthread_mutex_lock(&cxt->debuginfo_queue_lock);
-		debuginfo_eq(&cxt->ae_queue, &ae_msg);
-		pthread_mutex_unlock(&cxt->debuginfo_queue_lock);
-
 		if (ISP_SUCCESS != ispctl_get_ai_debug_info(cxt)) {
 			ISP_LOGE("fail to get ai debug info");
 		}
