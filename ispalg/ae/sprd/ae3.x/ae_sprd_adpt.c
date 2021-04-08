@@ -2423,6 +2423,7 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 		cxt->exposure_compensation.ae_base_idx = cxt->sync_cur_result.ev_setting.ae_idx;
 		ISP_LOGD("ae_base_idx:%d ",cxt->exposure_compensation.ae_base_idx);
 		cxt->cur_status.adv_param.lock = AE_STATE_LOCKED;
+		cxt->cur_status.adv_param.app_force_lock = AE_STATE_LOCKED;
 	} else {
 		if (2 > cxt->pause_cnt) {
 			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
@@ -2435,6 +2436,7 @@ static cmr_s32 ae_set_force_pause_flash(struct ae_ctrl_cxt *cxt, cmr_u32 enable)
 			if(AE_MODE_MANUAL_IDX == cxt->cur_status.adv_param.mode_param.mode)
 				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
 		}
+		cxt->cur_status.adv_param.app_force_lock = AE_STATE_NORMAL;
 	}
 	cxt->force_lock_ae = enable;
 	ISP_LOGD("cameraId:%d, PAUSE COUNT IS %d, lock: %d, %d, manual_mode:%d", cxt->camera_id, cxt->pause_cnt, cxt->cur_status.adv_param.lock, cxt->force_lock_ae,cxt->cur_status.adv_param.mode_param.mode);
