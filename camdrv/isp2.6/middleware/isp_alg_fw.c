@@ -4622,6 +4622,8 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 	ae_input.lib_param = cxt->lib_use_info->ae_lib_info;
 	ae_input.caller_handle = (cmr_handle) cxt;
 	ae_input.ebd_support = cxt->ebd_cxt.ebd_support;
+	ae_input.frgb_gamma_num = SENSOR_GAMMA_POINT_NUM;
+	ae_input.y_gamma_num = SENSOR_Y_GAMMA_POINT_NUM;
 	ae_input.ae_set_cb = ispalg_ae_set_cb;
 
 	ret = ispalg_get_aem_param(cxt, &aem_info);
