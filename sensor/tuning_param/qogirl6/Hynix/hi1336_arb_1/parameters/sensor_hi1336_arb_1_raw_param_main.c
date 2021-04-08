@@ -114,9 +114,9 @@ static struct sensor_version_info s_hi1336_arb_1_version_info=
 	0x000C000F,
 	{
 		{
-			0x336B3573,
-			0x0000366C,
-			0x00000000,
+			0x33316968,
+			0x615F3633,
+			0x315F6272,
 			0x00000000,
 			0x00000000,
 			0x00000000,
@@ -177,6 +177,7 @@ static struct sensor_raw_info s_hi1336_arb_1_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{NULL, 0},
 	},
 	&s_hi1336_arb_1_trim_info,
 	&s_hi1336_arb_1_ioctrl,
@@ -198,6 +199,7 @@ static struct sensor_raw_info s_hi1336_arb_1_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
+		NULL,
 	},
 	{
 		{s_hi1336_arb_1_common_tool_ui_input, sizeof(s_hi1336_arb_1_common_tool_ui_input)},
@@ -212,6 +214,7 @@ static struct sensor_raw_info s_hi1336_arb_1_mipi_raw_info=
 		{s_hi1336_arb_1_video_0_tool_ui_input, sizeof(s_hi1336_arb_1_video_0_tool_ui_input)},
 		{s_hi1336_arb_1_video_1_tool_ui_input, sizeof(s_hi1336_arb_1_video_1_tool_ui_input)},
 		{s_hi1336_arb_1_video_2_tool_ui_input, sizeof(s_hi1336_arb_1_video_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
