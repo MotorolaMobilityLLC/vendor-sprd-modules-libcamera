@@ -425,6 +425,7 @@ static cmr_int hi1336_drv_identify(cmr_handle handle, cmr_uint param) {
         SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value,
                     ver_value);
         if (hi1336_VER_VALUE == ver_value) {
+            sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_hi1336_arb_2");
             SENSOR_LOGI("this is hi1336 sensor");
             ret_value = SENSOR_SUCCESS;
         } else {
