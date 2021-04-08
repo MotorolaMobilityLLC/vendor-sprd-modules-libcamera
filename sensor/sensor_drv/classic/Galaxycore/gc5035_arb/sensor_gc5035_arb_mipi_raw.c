@@ -762,8 +762,7 @@ static cmr_int gc5035_arb_drv_identify(cmr_handle handle, cmr_uint param)
 		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value, ver_value);
 		if (GC5035_ARB_VER_VALUE == ver_value) {
 			SENSOR_LOGI("this is gc5035_arb sensor");
-			//sensor_rid_save_sensor_name(1, "1_gc5035_arb");
-
+            sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_gc5035_arb");
 			gc5035_arb_gcore_load_data(handle);
 
 			ret_value = SENSOR_SUCCESS;

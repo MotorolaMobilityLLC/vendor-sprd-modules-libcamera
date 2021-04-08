@@ -452,7 +452,7 @@ static cmr_int ov02b10_arb_drv_identify(cmr_handle handle, cmr_uint param)
         SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value, ver_value);
         if (OV02B10_ARB_VER_VALUE == ver_value) {
             SENSOR_LOGI("this is ov02b10_arb sensor");
-            //sensor_rid_save_sensor_name(2, "2_ov02b10_arb");
+            sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACKAUX_CAM_NAME, "2_ov02b10_arb_2");
             ret_value = SENSOR_SUCCESS;
         } else {
             SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x", pid_value, ver_value);
