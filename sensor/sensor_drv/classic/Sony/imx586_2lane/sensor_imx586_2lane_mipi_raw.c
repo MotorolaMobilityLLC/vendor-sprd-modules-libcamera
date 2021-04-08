@@ -927,7 +927,7 @@ static cmr_int imx586_drv_set_LRC_data(cmr_handle handle, cmr_uint param) {
     param_ptr = otp_cxt->otp_raw_data.buffer;
 
     SENSOR_REG_T imx586_LRC_setting1[192];
-    memset(imx586_LRC_setting1, 192 * sizeof(SENSOR_REG_T), 0);
+    memset(imx586_LRC_setting1, 0, 192 * sizeof(SENSOR_REG_T));
     for (int i = 0; i < 192; i++) {
         imx586_LRC_setting1[i].reg_addr = 0x7510 + i;
         imx586_LRC_setting1[i].reg_value = *(param_ptr + 0x0C5D + i);
@@ -936,7 +936,7 @@ static cmr_int imx586_drv_set_LRC_data(cmr_handle handle, cmr_uint param) {
             imx586_LRC_setting1, 192);
 
     SENSOR_REG_T imx586_LRC_setting2[192];
-    memset(imx586_LRC_setting2, 192 * sizeof(SENSOR_REG_T), 0);
+    memset(imx586_LRC_setting2, 0, 192 * sizeof(SENSOR_REG_T));
     for (int i = 0; i < 192; i++) {
         imx586_LRC_setting2[i].reg_addr = 0x7600 + i;
         imx586_LRC_setting2[i].reg_value = *(param_ptr + 0x0D1D + i);
