@@ -465,16 +465,6 @@ struct ae_hist_data_type {
 	struct ae_size img_size;
 };
 
-//adjust ctrl callback parameter
-struct ae_adjust_param {
-	cmr_u32 exp_time;
-	cmr_u32 total_gain;
-	cmr_u32 iso;
-	cmr_u32 isp_gain;
-	cmr_u32 exposure;
-	float ev;
-};
-
 struct ae_face_data_type {
 	struct ae_rect face_rect;
 	cmr_s32 pose;	/* face pose: frontal, half-profile, full-profile */

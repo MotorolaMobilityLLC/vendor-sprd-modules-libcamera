@@ -58,6 +58,17 @@ extern "C" {
 		cmr_u32 is_mev;
 	};
 
+
+	//adjust ctrl callback parameter
+	struct ae_adjust_param {
+		cmr_u32 exp_time;
+		cmr_u32 total_gain;
+		cmr_u32 iso;
+		cmr_u32 isp_gain;
+		cmr_u32 exposure;
+		float ev;
+	};
+
 	struct ae_exposure_param_switch {
 		cmr_u32 target_offset;
 		cmr_u32 exp_line;
