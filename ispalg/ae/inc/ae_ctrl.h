@@ -65,6 +65,8 @@ extern "C" {
 		void *fdr_tuning_param;
 		cmr_s32 fdr_tuning_size;
 		cmr_u32 long_expose_support;
+		cmr_u32 frgb_gamma_num;
+		cmr_u32 y_gamma_num;
 	};
 
 	struct ae_init_out {
