@@ -35,6 +35,18 @@
 
 static pthread_mutex_t cali_otp_mutex;
 
+static char front_cam_name[64] = "Unknown";
+static char frontaux_cam_name[64] = "Unknown";
+static char back_cam_name[64] = "Unknown";
+static char backaux_cam_name[64] = "Unknown";
+static char backaux2_cam_name[64] = "Unknown";
+
+static char front_cam_efuse[64] = "Unknown";
+static char frontaux_cam_efuse[64] = "Unknown";
+static char back_cam_efuse[64] = "Unknown";
+static char backaux_cam_efuse[64] = "Unknown";
+static char backaux2_cam_efuse[64] = "Unknown";
+
 #define SENSOR_CTRL_EVT_BASE (CMR_EVT_SENSOR_BASE + 0x800)
 #define SENSOR_CTRL_EVT_INIT (SENSOR_CTRL_EVT_BASE + 0x0)
 #define SENSOR_CTRL_EVT_EXIT (SENSOR_CTRL_EVT_BASE + 0x1)
@@ -2033,6 +2045,157 @@ LOCAL cmr_int sensor_otp_process(struct sensor_drv_context *sensor_cxt,
 
 #include <cutils/properties.h>
 
+void sensor_save_all_sensor_name(void) {
+    const char *const front_cam_name_interface ="/sys/ontim_bootinfo/front_cam_info";
+	const char *const frontaux_cam_name_interface ="/sys/ontim_bootinfo/frontaux_cam_info";
+	const char *const back_cam_name_interface ="/sys/ontim_bootinfo/back_cam_info";
+	const char *const backaux_cam_name_interface ="/sys/ontim_bootinfo/backaux_cam_info";
+	const char *const backaux2_cam_name_interface ="/sys/ontim_bootinfo/backaux2_cam_info";
+
+    const char *const front_cam_efuse_interface ="/sys/ontim_bootinfo/front_cam_efuse";
+	const char *const frontaux_cam_efuse_interface ="/sys/ontim_bootinfo/frontaux_cam_efuse";
+	const char *const back_cam_efuse_interface ="/sys/ontim_bootinfo/back_cam_efuse";
+	const char *const backaux_cam_efuse_interface ="/sys/ontim_bootinfo/backaux_cam_efuse";
+	const char *const backaux2_cam_efuse_interface ="/sys/ontim_bootinfo/backaux2_cam_efuse";
+
+    ssize_t ret;
+    int fd;
+
+    SENSOR_LOGI("E");
+
+    fd = open(back_cam_name_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, back_cam_name, strlen(back_cam_name));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+	close(fd);
+
+    fd = open(front_cam_name_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, front_cam_name, strlen(front_cam_name));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+	close(fd);
+
+    fd = open(backaux_cam_name_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, backaux_cam_name, strlen(backaux_cam_name));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+	close(fd);
+
+    fd = open(backaux2_cam_name_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, backaux2_cam_name, strlen(backaux2_cam_name));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+    close(fd);
+
+    fd = open(frontaux_cam_name_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, frontaux_cam_name, strlen(frontaux_cam_name));
+    if (-1 == ret) {
+        SENSOR_LOGE("write sensor_info failed \n");
+        close(fd);
+        goto exit;
+    }
+    close(fd);
+
+//camera efuse id
+    fd = open(back_cam_efuse_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, back_cam_efuse, strlen(back_cam_efuse));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+	close(fd);
+
+    fd = open(front_cam_efuse_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, front_cam_efuse, strlen(front_cam_efuse));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+	close(fd);
+
+    fd = open(backaux_cam_efuse_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, backaux_cam_efuse, strlen(backaux_cam_efuse));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+	close(fd);
+
+    fd = open(backaux2_cam_efuse_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, backaux2_cam_efuse, strlen(backaux2_cam_efuse));
+	if (-1 == ret) {
+		SENSOR_LOGE("write sensor_info failed \n");
+		close(fd);
+		goto exit;
+	}
+    close(fd);
+
+    fd = open(frontaux_cam_efuse_interface, O_WRONLY | O_TRUNC);
+    if (-1 == fd) {
+        SENSOR_LOGE("Failed to open: sensorInterface");
+        goto exit;
+    }
+	ret = write(fd, frontaux_cam_efuse, strlen(frontaux_cam_efuse));
+    if (-1 == ret) {
+        SENSOR_LOGE("write sensor_info failed \n");
+        close(fd);
+        goto exit;
+    }
+    close(fd);
+exit:
+    SENSOR_LOGI("X");
+}
 static void sensor_rid_save_sensor_info(char *sensor_info, cmr_u32 slot_id) {
     const char *const sensorInterface0 =
         "/sys/devices/virtual/misc/sprd_sensor/camera_sensor_name";
@@ -2065,6 +2228,56 @@ static void sensor_rid_save_sensor_info(char *sensor_info, cmr_u32 slot_id) {
     }
 exit:
     SENSOR_LOGV("X");
+}
+void sensor_rid_save_sensor_name(SENSOR_HWINFOR_E mag, char *info) {
+    SENSOR_LOGI("E");
+    SENSOR_LOGI("sensor_version_info info %s \n", info);
+
+	switch (mag){
+    case SENSOR_HWINFOR_BACK_CAM_NAME:
+		memset(back_cam_name, 0x00, sizeof(back_cam_name));
+		memcpy(back_cam_name, info, 64);
+        break;
+    case SENSOR_HWINFOR_FRONT_CAM_NAME:
+		memset(front_cam_name, 0x00, sizeof(front_cam_name));
+		memcpy(front_cam_name, info, 64);
+        break;
+    case SENSOR_HWINFOR_BACKAUX_CAM_NAME:
+		memset(backaux_cam_name, 0x00, sizeof(backaux_cam_name));
+		memcpy(backaux_cam_name, info, 64);
+        break;
+    case SENSOR_HWINFOR_BACKAUX2_CAM_NAME:
+		memset(backaux2_cam_name, 0x00, sizeof(backaux2_cam_name));
+		memcpy(backaux2_cam_name, info, 64);
+        break;
+    case SENSOR_HWINFOR_FRONTAUX_CAM_NAME:
+		memset(frontaux_cam_name, 0x00, sizeof(frontaux_cam_name));
+		memcpy(frontaux_cam_name, info, 64);
+        break;
+    case SENSOR_HWINFOR_BACK_CAM_EFUSE:
+		memset(back_cam_efuse, 0x00, sizeof(back_cam_efuse));
+		memcpy(back_cam_efuse, info, 64);
+        break;
+    case SENSOR_HWINFOR_FRONT_CAM_EFUSE:
+		memset(front_cam_efuse, 0x00, sizeof(front_cam_efuse));
+		memcpy(front_cam_efuse, info, 64);
+        break;
+    case SENSOR_HWINFOR_BACKAUX_CAM_EFUSE:
+		memset(backaux_cam_efuse, 0x00, sizeof(backaux_cam_efuse));
+		memcpy(backaux_cam_efuse, info, 64);
+        break;
+    case SENSOR_HWINFOR_BACKAUX2_CAM_EFUSE:
+		memset(backaux2_cam_efuse, 0x00, sizeof(backaux2_cam_efuse));
+		memcpy(backaux2_cam_efuse, info, 64);
+        break;
+    case SENSOR_HWINFOR_FRONTAUX_CAM_EFUSE:
+		memset(frontaux_cam_efuse, 0x00, sizeof(frontaux_cam_efuse));
+		memcpy(frontaux_cam_efuse, info, 64);
+        break;
+    default:
+		SENSOR_LOGE("wrong mag,do not open sensorInterface");
+    }
+    SENSOR_LOGI("X");
 }
 
 /*--------------------------AF INTERFACE-----------------------------*/
@@ -3981,6 +4194,7 @@ static cmr_int sensor_drv_scan_hw(void) {
     }
 
     sensor_rid_save_sensor_info(sensor_version_info, slot_id);
+	sensor_save_all_sensor_name();
 
 #ifdef CAMERA_CONFIG_SENSOR_NUM
     for (i = 0; i < SENSOR_ID_MAX; i++) {
