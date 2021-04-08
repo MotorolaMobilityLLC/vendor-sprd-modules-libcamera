@@ -36,7 +36,7 @@ static cmr_int gc5035_common_i2c_read(void *otp_drv_handle, uint16_t slave_addr,
 	char value[128];
 	uint8_t cmd_val[5] = { 0x00 };
 	uint16_t cmd_len = 0;	
-	property_get("persist.vendor.cam.skip.sensor.otp", value, "skip");
+	property_get("persist.vendor.cam.skip.sensor.otp", value, "");
 	if(!strcmp(value, "skip")) {
 		OTP_LOGI("skip sensor otp");
 		return ret;
