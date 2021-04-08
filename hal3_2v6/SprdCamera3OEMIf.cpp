@@ -12194,11 +12194,11 @@ void SprdCamera3OEMIf::EisPreview_init() {
     int i = 0;
     int num = 0;
     int isAssigned = 0;
-
-    num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
     struct phySensorInfo *phyPtr = NULL;
+    num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
     phyPtr = sensorGetPhysicalSnsInfo(mCameraId);
-    HAL_LOGD("camId = %d, sensor_name = %s", mCameraId, phyPtr->sensor_name);
     video_stab_param_default(&mPreviewParam);
     mPreviewParam.src_w = (uint16_t)mPreviewWidth;
     mPreviewParam.src_h = (uint16_t)mPreviewHeight;
@@ -12214,6 +12214,11 @@ void SprdCamera3OEMIf::EisPreview_init() {
     mPreviewParam.td = 0.038f;
     mPreviewParam.ts = 0.024f;
     mPreviewParam.fov_loss = 0.25f;
+    mPreviewParam.app_calib_mode = sprddefInfo->sprd_appmode_id;
+    memcpy(mPreviewParam.sensor_name,
+           phyPtr->sensor_name, sizeof(phyPtr->sensor_name));
+    memcpy(mPreviewParam.board_name,
+           CAMERA_EIS_BOARD_PARAM, sizeof(CAMERA_EIS_BOARD_PARAM));
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
         if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
@@ -12228,9 +12233,10 @@ void SprdCamera3OEMIf::EisPreview_init() {
     if (isAssigned == 0) {
         HAL_LOGD("mPreviewParam is not assigned");
     }
-    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf, fov_loss:%lf",
-             mCameraId, mPreviewParam.f, mPreviewParam.td, mPreviewParam.ts,
-             mPreviewParam.fov_loss);
+    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf, fov_loss:%lf, board_name = %s, sensor_name = %s, app_mode = %d",
+             mCameraId, mPreviewParam.f, mPreviewParam.td, mPreviewParam.ts,mPreviewParam.fov_loss,
+             mPreviewParam.board_name,mPreviewParam.sensor_name,mPreviewParam.app_calib_mode);
+
     video_stab_open(&mPreviewInst, &mPreviewParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
              mPreviewParam.src_w, mPreviewParam.src_h, mPreviewParam.dst_w,
@@ -12242,11 +12248,11 @@ void SprdCamera3OEMIf::EisVideo_init() {
     int i = 0;
     int num = 0;
     int isAssigned = 0;
-
-    num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
     struct phySensorInfo *phyPtr = NULL;
+    SPRD_DEF_Tag *sprddefInfo;
+    sprddefInfo = mSetting->getSPRDDEFTagPTR();
+    num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
     phyPtr = sensorGetPhysicalSnsInfo(mCameraId);
-    HAL_LOGD("camId = %d, sensor_name = %s", mCameraId, phyPtr->sensor_name);
     video_stab_param_default(&mVideoParam);
     mVideoParam.src_w = (uint16_t)mVideoWidth;
     mVideoParam.src_h = (uint16_t)mVideoHeight;
@@ -12262,6 +12268,11 @@ void SprdCamera3OEMIf::EisVideo_init() {
     mVideoParam.td = 0.038f;
     mVideoParam.ts = 0.024f;
     mVideoParam.fov_loss = 0.25f;
+    mVideoParam.app_calib_mode= sprddefInfo->sprd_appmode_id;
+    memcpy(mVideoParam.sensor_name,
+           phyPtr->sensor_name, sizeof(phyPtr->sensor_name));
+    memcpy(mVideoParam.board_name,
+           CAMERA_EIS_BOARD_PARAM, sizeof(CAMERA_EIS_BOARD_PARAM));
     // EIS parameter depend on board version
     for (i = 0; i < num; i++) {
        if ((strcmp(eis_multi_init_info_tab[i].board_name, CAMERA_EIS_BOARD_PARAM) ==
@@ -12276,9 +12287,10 @@ void SprdCamera3OEMIf::EisVideo_init() {
     if (isAssigned == 0) {
         HAL_LOGD("mVideoParam is not assigned");
     }
-    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf , fov_loss:%lf",
-             mCameraId, mVideoParam.f, mVideoParam.td, mVideoParam.ts,
-             mVideoParam.fov_loss);
+    HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf, fov_loss:%lf, board_name = %s, sensor_name = %s, app_mode = %d",
+             mCameraId, mVideoParam.f, mVideoParam.td, mVideoParam.ts,mVideoParam.fov_loss,
+             mVideoParam.board_name,mVideoParam.sensor_name,mVideoParam.app_calib_mode);
+
     video_stab_open(&mVideoInst, &mVideoParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
              mVideoParam.src_w, mVideoParam.src_h, mVideoParam.dst_w,

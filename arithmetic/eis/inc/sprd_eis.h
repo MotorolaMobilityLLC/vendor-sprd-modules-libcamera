@@ -35,6 +35,9 @@ typedef struct vs_param {
     double wdy;
     double wdz;
     float fov_loss;
+    char board_name[100];
+    char sensor_name[100];
+    int app_calib_mode;
 } vsParam;
 
 typedef struct gyro_vs {
