@@ -108,7 +108,12 @@ PRODUCT_PACKAGES += libparam_ov8856_back_ultrawide
 PRODUCT_PACKAGES += libparam_ov8856_front_dual
 PRODUCT_PACKAGES += libparam_s5kgw1sp03_back_main
 PRODUCT_PACKAGES += libparam_imx616_front_main
-
+#aruba
+PRODUCT_PACKAGES += libparam_hi1336_arb_1
+PRODUCT_PACKAGES += libparam_hi1336_arb_2
+PRODUCT_PACKAGES += libparam_gc5035_arb
+PRODUCT_PACKAGES += libparam_ov02b10_arb_1
+PRODUCT_PACKAGES += libparam_ov02b10_arb_2
 #endif
 
 #default tuning 
