@@ -2840,6 +2840,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		calc_in.captureFlashEnvRatio = flash_param->captureFlashEnvRatio;
 		calc_in.captureFlash1ofAllRatio = flash_param->captureFlash1ofALLRatio;
 		calc_in.preflash_guessing_mainflash_output_table = flash_param->preflash_guessing_mainflash_output_table;
+		calc_in.preflash_current_without_postgain_table = flash_param->preflash_current_without_postgain_table;
 		calc_in.ct = param->ct;
 		calc_in.gridx = param->gridx;
 		calc_in.gridy = param->gridy;
@@ -3164,6 +3165,9 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 		// copy current DNP table
 		memcpy(flash_param->preflash_current_lnc_table, cxt->lsc_pm0, cxt->gain_width * cxt->gain_height * 4 * sizeof(cmr_u16));
+
+		//copy current last_lsc_table for mainflash cal
+		memcpy(flash_param->preflash_current_without_postgain_table, cxt->last_lsc_table, cxt->gain_width * cxt->gain_height * 4 * sizeof(cmr_u16));
 
 		// log the current DNP table address (preview mode)
 		flash_param->preflash_current_lnc_table_address = cxt->lsc_pm0;

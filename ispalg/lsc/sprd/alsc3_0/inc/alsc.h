@@ -110,8 +110,9 @@ struct lsc_sprd_calc_in {
 	int ct;
 	int gridx;
 	int gridy;
-        void *smart_lsc_result;
-	unsigned int reserved[7];
+	void *smart_lsc_result;
+	unsigned short *preflash_current_without_postgain_table;
+	unsigned int reserved[6];
 };
 
 struct lsc_sprd_calc_out {
