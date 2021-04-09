@@ -187,6 +187,8 @@ struct alsc_fwstart_info {
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
 	cmr_u32 img_width_new;
 	cmr_u32 img_height_new;
+	cmr_u32 gridx_new;
+	cmr_u32 gridy_new;
 };
 
 //for fw proc start
@@ -198,6 +200,8 @@ struct alsc_fwprocstart_info {
 	cmr_u32 image_pattern_new;
 	cmr_u32 grid_new;
 	cmr_u32 camera_id;	// 0. back camera_master  ,  1. front camera_master
+	cmr_u32 gridx_new;
+	cmr_u32 gridy_new;
 };
 
 //update flash info
@@ -247,7 +251,8 @@ struct lsc_table_transf_info {
 struct pm_lsc_full {
 	unsigned int img_width;
 	unsigned int img_height;
-	unsigned int grid;
+	unsigned int gridx;
+	unsigned int gridy;
 	unsigned int gain_width;
 	unsigned int gain_height;
 	unsigned short *input_table_buffer;
@@ -258,7 +263,8 @@ struct pm_lsc_crop {
 	unsigned int img_height;
 	unsigned int start_x;
 	unsigned int start_y;
-	unsigned int grid;
+	unsigned int gridx;
+	unsigned int gridy;
 	unsigned int gain_width;
 	unsigned int gain_height;
 	unsigned short *output_table_buffer;
@@ -329,7 +335,11 @@ struct lsc_adv_init_param {
 	cmr_handle caller_handle;
 	cmr_u32 lsc_otp_raw_width;
 	cmr_u32 lsc_otp_raw_height;
-	cmr_s32 reserved[45];
+	cmr_u32 gridx;
+	cmr_u32 gridy;
+	cmr_u32 lsc_otp_gridx;
+	cmr_u32 lsc_otp_gridy;
+	cmr_s32 reserved[41];
 };
 
 struct statistic_raw_t {
@@ -374,7 +384,9 @@ struct lsc_adv_calc_param {
 
 	cmr_handle handle_pm;
 	cmr_u16 *std_tab_param[8];
-	cmr_s32 reserved[42];
+	cmr_s32 gridx;
+	cmr_s32 gridy;
+	cmr_s32 reserved[40];
 };
 
 struct lsc_adv_calc_result {

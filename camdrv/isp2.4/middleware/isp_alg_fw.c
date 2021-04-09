@@ -3804,7 +3804,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cmr_s32 mode = 0, dv_mode = 0;
 	cmr_u32 flash_awb_en = 0;
 	cmr_u8 mainflash_en = 1;
-	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
+	struct alsc_fwstart_info fwstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0, 0, 0};
 	struct afctrl_fwstart_info af_start_info;
 	struct soft_isp_startparam sw_isp_start_param;
 	struct isp_alg_fw_context *slv_cxt = NULL;
@@ -4150,7 +4150,7 @@ cmr_int isp_alg_fw_proc_start(cmr_handle isp_alg_handle, struct ips_in_param *in
 	struct isp_pm_ioctl_output output = { PNULL, 0 };
 	struct isp_pm_param_data param_data_alsc;
 	struct isp_lsc_info *lsc_info_new = NULL;
-	struct alsc_fwprocstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0};
+	struct alsc_fwprocstart_info fwprocstart_info = { NULL, {NULL}, 0, 0, 5, 0, 0, 0, 0};
 	struct isp_2d_lsc_param *lsc_tab_pram_ptr = NULL;
 
 

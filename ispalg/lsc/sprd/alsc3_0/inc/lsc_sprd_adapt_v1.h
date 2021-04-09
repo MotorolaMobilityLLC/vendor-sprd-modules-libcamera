@@ -156,14 +156,16 @@ struct lsc_sprd_ctrl_context {
 	cmr_u32 *ae_stat;
 	cmr_u32 img_width;
 	cmr_u32 img_height;
-	cmr_u32 grid;
+	cmr_u32 gridx;
+	cmr_u32 gridy;
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
 	cmr_u32 init_img_width;
 	cmr_u32 init_img_height;
 	cmr_u32 init_gain_width;
 	cmr_u32 init_gain_height;
-	cmr_u32 init_grid;
+	cmr_u32 init_gridx;
+	cmr_u32 init_gridy;
 	cmr_u32 gain_pattern;
 	cmr_u32 output_gain_pattern;
 	cmr_u32 change_pattern_flag;
