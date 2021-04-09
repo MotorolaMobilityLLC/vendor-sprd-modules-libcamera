@@ -568,12 +568,12 @@ static cmr_int imx616_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
-        cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
+        cap_gain = (cmr_u32)sns_drv_cxt->sensor_ev_info.preview_gain;
         goto snapshot_info;
     }
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
-    prv_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
+    prv_gain = (cmr_u32)sns_drv_cxt->sensor_ev_info.preview_gain;
 
     if (sns_drv_cxt->ops_cb.set_mode)
         sns_drv_cxt->ops_cb.set_mode(sns_drv_cxt->caller_handle, capture_mode);
@@ -659,7 +659,7 @@ static cmr_int imx616_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
  * read ae control info
  * please don't change this function unless it's necessary
  *============================================================================*/
-static cmr_int imx616_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
+static cmr_int imx616_drv_read_aec_info(cmr_handle handle, void *param) {
     cmr_int ret_value = SENSOR_SUCCESS;
     struct sensor_aec_reg_info *info = (struct sensor_aec_reg_info *)param;
     cmr_u16 exposure_line = 0x00;
@@ -838,7 +838,7 @@ static cmr_int imx616_drv_stream_on(cmr_handle handle, cmr_uint param) {
 // imx616_drv_set_slave_FrameSync(handle, param);
 #endif
     /*TODO*/
-    cmr_uint sensor_mode = 0;
+    cmr_u32 sensor_mode = 0;
     sns_drv_cxt->ops_cb.get_mode(sns_drv_cxt->caller_handle, &sensor_mode);
  //   if (sensor_mode > 2)
 //		imx616_drv_set_xtalk_data(handle, param);
@@ -862,7 +862,7 @@ static cmr_int imx616_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
     cmr_u16 value = 0;
     cmr_u16 sleep_time = 0;
-    cmr_s32 ret = SENSOR_SUCCESS;
+    cmr_int ret = SENSOR_SUCCESS;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
