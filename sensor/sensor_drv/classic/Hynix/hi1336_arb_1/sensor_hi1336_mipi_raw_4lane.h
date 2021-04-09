@@ -38,7 +38,7 @@
 
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "hi1336_arb"
+#define SENSOR_NAME "hi1336_arb_1"
 
 
 #define I2C_SLAVE_ADDR 0x40 /* 8bit slave address*/

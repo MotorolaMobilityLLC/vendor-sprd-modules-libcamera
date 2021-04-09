@@ -19,7 +19,7 @@
 *
 */
 
-#define LOG_TAG "hi1336_m0_9863a1c10"
+#define LOG_TAG "hi1336_arb_2_ums9230"
 
 
 #include "sensor_hi1336_mipi_raw_4lane.h"
@@ -210,7 +210,7 @@ static cmr_int hi1336_drv_power_on(cmr_handle handle, cmr_uint power_on) {
     BOOLEAN reset_level = g_hi1336_mipi_raw_info.reset_pulse_level;
 
     if (SENSOR_TRUE == power_on) {
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
+        //hw_sensor_power_down(sns_drv_cxt->hw_handle, power_down);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, reset_level);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, SENSOR_DISABLE_MCLK);
         hw_sensor_set_avdd_val(sns_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
@@ -223,7 +223,7 @@ static cmr_int hi1336_drv_power_on(cmr_handle handle, cmr_uint power_on) {
         hw_sensor_set_dvdd_val(sns_drv_cxt->hw_handle, dvdd_val);
         hw_sensor_set_mclk(sns_drv_cxt->hw_handle, EX_MCLK);
         hw_sensor_set_mipi_level(sns_drv_cxt->hw_handle, 1);
-        hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
+        //hw_sensor_power_down(sns_drv_cxt->hw_handle, !power_down);
         usleep(1 * 1000);
         hw_sensor_set_reset_level(sns_drv_cxt->hw_handle, !reset_level);
         usleep(2 * 1000);
@@ -410,6 +410,8 @@ static cmr_int hi1336_drv_access_val(cmr_handle handle, cmr_uint param) {
 static cmr_int hi1336_drv_identify(cmr_handle handle, cmr_uint param) {
     cmr_u16 pid_value = 0x00;
     cmr_u16 ver_value = 0x00;
+    cmr_u16 mid_value = 0x00;
+	uint8_t cmd_val[5] = { 0x00 };
     cmr_int ret_value = SENSOR_FAIL;
 
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -422,11 +424,18 @@ static cmr_int hi1336_drv_identify(cmr_handle handle, cmr_uint param) {
     if (hi1336_PID_VALUE == pid_value) {
         ver_value =
             hw_sensor_read_reg(sns_drv_cxt->hw_handle, hi1336_VER_ADDR) >> 8;
-        SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value,
-                    ver_value);
-        if (hi1336_VER_VALUE == ver_value) {
+
+        cmd_val[0] = 0x0013 >> 8;
+        cmd_val[1] = 0x0013 & 0xff;
+        hw_sensor_read_i2c(sns_drv_cxt->hw_handle, 0xa0 >> 1, (uint8_t *)&cmd_val[0], 2);
+        mid_value = cmd_val[0];
+
+        SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value,
+                    ver_value, mid_value);
+
+        if (hi1336_VER_VALUE == ver_value && 0x26 == mid_value) {
             sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_hi1336_arb_2");
-            SENSOR_LOGI("this is hi1336 sensor");
+            SENSOR_LOGI("this is hi1336_arb_2 sensor, module id: %x", mid_value);
             ret_value = SENSOR_SUCCESS;
         } else {
             SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x",
