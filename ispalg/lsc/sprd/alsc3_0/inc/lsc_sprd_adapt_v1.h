@@ -117,6 +117,7 @@ struct lsc_flash_proc_param {
 	cmr_u16 preflash_current_output_table[32 * 32 * 4];	// copy the current table to restore back when flash off (with post gain)
 	cmr_u16 preflash_current_lnc_table[32 * 32 * 4];	// copy the current DNP table
 	cmr_u16 preflash_guessing_mainflash_output_table[32 * 32 * 4];	// lsc table after preflash (without post gain)
+	cmr_u16 preflash_current_without_postgain_table[32 * 32 * 4];   //save without postgain table before preflash
 
 	//for touch preflash
 	cmr_s32 is_touch_preflash;	// 0: normal capture preflash    1: touch preflash     others: not preflash
