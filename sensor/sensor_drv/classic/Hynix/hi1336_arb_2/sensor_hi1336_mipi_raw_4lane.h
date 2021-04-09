@@ -38,7 +38,7 @@
 
 
 #define VENDOR_NUM 1
-#define SENSOR_NAME "hi1336_m0"
+#define SENSOR_NAME "hi1336_arb_2"
 
 
 #define I2C_SLAVE_ADDR 0x40 /* 8bit slave address*/
@@ -1443,42 +1443,42 @@ static SENSOR_MODE_FPS_INFO_T s_hi1336_mode_fps_info[VENDOR_NUM] = {
 static struct sensor_module_info s_hi1336_module_info_tab[VENDOR_NUM] = {
     {.module_id = MODULE_SUNNY,
      .module_info = {.major_i2c_addr = I2C_SLAVE_ADDR >> 1,
-                     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
+     .minor_i2c_addr = I2C_SLAVE_ADDR >> 1,
 
-                     .i2c_burst_mode = SENSOR_I2C_BURST_REG16_VAL16,
+     .i2c_burst_mode = SENSOR_I2C_BURST_REG16_VAL16,
 
-                     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
-                                            SENSOR_I2C_VAL_16BIT |
-                                            SENSOR_I2C_FREQ_400,
+     .reg_addr_value_bits = SENSOR_I2C_REG_16BIT |
+                            SENSOR_I2C_VAL_16BIT |
+                            SENSOR_I2C_FREQ_400,
 
-                     .avdd_val = SENSOR_AVDD_2800MV,
-                     .iovdd_val = SENSOR_AVDD_1800MV,
-                     .dvdd_val = SENSOR_AVDD_1200MV,
+     .avdd_val = SENSOR_AVDD_2800MV,
+     .iovdd_val = SENSOR_AVDD_1800MV,
+     .dvdd_val = SENSOR_AVDD_1200MV,
 
-                     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
+     .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
 
-                     .preview_skip_num = 1,
-                     .capture_skip_num = 1,
-                     .flash_capture_skip_num = 6,
-                     .mipi_cap_skip_num = 0,
-                     .preview_deci_num = 0,
-                     .video_preview_deci_num = 0,
+     .preview_skip_num = 1,
+     .capture_skip_num = 1,
+     .flash_capture_skip_num = 6,
+     .mipi_cap_skip_num = 0,
+     .preview_deci_num = 0,
+     .video_preview_deci_num = 0,
 
-                     .threshold_eb = 0,
-                     .threshold_mode = 0,
-                     .threshold_start = 0,
-                     .threshold_end = 0,
+     .threshold_eb = 0,
+     .threshold_mode = 0,
+     .threshold_start = 0,
+     .threshold_end = 0,
 
-                     .sensor_interface =
-                         {
-                             .type = SENSOR_INTERFACE_TYPE_CSI2,
-                             .bus_width = LANE_NUM,
-                             .pixel_width = RAW_BITS,
-                             .is_loose = 0,
-                         },
-                     .change_setting_skip_num = 1,
-                     .horizontal_view_angle = 65,
-                     .vertical_view_angle = 60}}
+     .sensor_interface =
+         {
+             .type = SENSOR_INTERFACE_TYPE_CSI2,
+             .bus_width = LANE_NUM,
+             .pixel_width = RAW_BITS,
+             .is_loose = 0,
+         },
+     .change_setting_skip_num = 1,
+     .horizontal_view_angle = 65,
+     .vertical_view_angle = 60}}
 
     /*If there are multiple modules,please add here*/
 };
