@@ -34,6 +34,7 @@ enum {
 struct lsc_otp_convert_param{
 	int gain_width;
 	int gain_height;
+	int grid;
 	unsigned short *lsc_table[9];
 	int gridx;
 	int gridy;
@@ -52,6 +53,7 @@ struct lsc_sprd_init_in {
 	unsigned int gain_height;
 	unsigned int gain_pattern;
 	unsigned int output_gain_pattern;
+	unsigned int grid;
 	unsigned int camera_id;
 	unsigned int lsc_id;
 	unsigned int is_planar;
@@ -63,8 +65,7 @@ struct lsc_sprd_init_in {
 	unsigned int lsc_otp_table_en;
 	unsigned int lsc_otp_table_width;
 	unsigned int lsc_otp_table_height;
-	unsigned int lsc_otp_gridx;
-	unsigned int lsc_otp_gridy;
+	unsigned int lsc_otp_grid;
 	unsigned int lsc_otp_raw_width;
 	unsigned int lsc_otp_raw_height;
 	unsigned short *lsc_otp_table_addr;
@@ -98,6 +99,7 @@ struct lsc_sprd_calc_in {
 	struct statistic_raw stat_img;  // statistic value of 4 channels
 	int gain_width;		              // width  of shading table
 	int gain_height;	              // height of shading table
+	int grid;			              // grid size
 	unsigned int img_width;           // raw size
 	unsigned int img_height;
 	unsigned short *lsc_tab[8];
