@@ -439,20 +439,20 @@ static int lsc_gain_14bits_to_16bits(unsigned short *src_14bits, unsigned short 
 	return dst_gain_num;
 }
 
-static void lsc_get_otp_size_info(cmr_s32 img_width, cmr_s32 img_height, cmr_s32 * lsc_otp_width, cmr_s32 * lsc_otp_height, cmr_s32 grid)
+static void lsc_get_otp_size_info(cmr_s32 img_width, cmr_s32 img_height, cmr_s32 * lsc_otp_width, cmr_s32 * lsc_otp_height, cmr_s32 gridx, cmr_s32 gridy)
 {
 	*lsc_otp_width = 0;
 	*lsc_otp_height = 0;
 
-        if (0 != grid) {
-                *lsc_otp_width = (int)(img_width / (2 * grid)) + 1;
-	        *lsc_otp_height = (int)(img_height / (2 * grid)) + 1;
+        if (0 != gridx && 0 != gridy) {
+		*lsc_otp_width = (int)(img_width / (2 * gridx)) + 1;
+	        *lsc_otp_height = (int)(img_height / (2 * gridy)) + 1;
 
-                if (img_width % (2 * grid) != 0) {
+                if (img_width % (2 * gridx) != 0) {
 		        *lsc_otp_width += 1;
 	        }
 
-                if (img_height % (2 * grid) != 0) {
+                if (img_height % (2 * gridy) != 0) {
 		        *lsc_otp_height += 1;
 	        }
 	}
@@ -890,16 +890,16 @@ static cmr_s32 lsc_master_slave_sync(struct lsc_sprd_ctrl_context *cxt, struct a
 	return 0;
 }
 
-static cmr_s32 lsc_calculate_otplen_chn(cmr_u32 full_width, cmr_u32 full_height, cmr_u32 lsc_grid)
+static cmr_s32 lsc_calculate_otplen_chn(cmr_u32 full_width, cmr_u32 full_height, cmr_u32 lsc_gridx, cmr_u32 lsc_gridy)
 {
 	cmr_u32 half_width, half_height, lsc_width, lsc_height;
 	cmr_s32 otp_len_chn = 0;
 	half_width = full_width / 2;
 	half_height = full_height / 2;
 
-        if (0 != lsc_grid) {
-                lsc_width = ((half_width % lsc_grid) > 0) ? (half_width / lsc_grid + 2) : (half_width / lsc_grid + 1);
-	        lsc_height = ((half_height % lsc_grid) > 0) ? (half_height / lsc_grid + 2) : (half_height / lsc_grid + 1);
+        if (0 != lsc_gridx && 0 != lsc_gridy) {
+		lsc_width = ((half_width % lsc_gridx) > 0) ? (half_width / lsc_gridx + 2) : (half_width / lsc_gridx + 1);
+	        lsc_height = ((half_height % lsc_gridy) > 0) ? (half_height / lsc_gridy + 2) : (half_height / lsc_gridy + 1);
 	        otp_len_chn = ((lsc_width * lsc_height) * 14 % 8) ? (((lsc_width * lsc_height) * 14 / 8) + 1) : ((lsc_width * lsc_height) * 14 / 8);
 	        otp_len_chn = (otp_len_chn % 2) ? (otp_len_chn + 1) : (otp_len_chn);
 	}
@@ -914,7 +914,8 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 	cmr_u8 *module_info;
 	cmr_u32 full_img_width = lsc_param->img_width;
 	cmr_u32 full_img_height = lsc_param->img_height;
-	cmr_u32 lsc_otp_grid = lsc_param->grid;
+	cmr_u32 lsc_otp_gridx = lsc_param->gridx;
+	cmr_u32 lsc_otp_gridy = lsc_param->gridy;
 	cmr_u8 *lsc_otp_addr = NULL;
 	cmr_u16 lsc_otp_len = 0;
 	cmr_s32 compressed_lens_bits = 14;
@@ -932,7 +933,7 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 	cmr_u32 otp_raw_img_width = full_img_width;
 	cmr_u32 otp_raw_img_height = full_img_height;
 
-	lsc_get_otp_size_info(otp_raw_img_width, otp_raw_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
+	lsc_get_otp_size_info(otp_raw_img_width, otp_raw_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_gridx, lsc_otp_gridy);
 
 	if (NULL != lsc_param->otp_info_ptr) {
 		struct sensor_otp_cust_info *otp_info_ptr = (struct sensor_otp_cust_info *)lsc_param->otp_info_ptr;
@@ -1016,9 +1017,16 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 
 				otp_raw_img_width   = (cmr_u32)((otp_data_ptr[18] << 8) | otp_data_ptr[17]);
 				otp_raw_img_height  = (cmr_u32)((otp_data_ptr[20] << 8) | otp_data_ptr[19]);
-				lsc_otp_grid = (cmr_u32)otp_data_ptr[21];
 
-				lsc_get_otp_size_info(otp_raw_img_width, otp_raw_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_grid);
+				if(otp_data_ptr[0] == 0x00){
+					lsc_otp_gridx = (cmr_u32)otp_data_ptr[21];
+					lsc_otp_gridy = lsc_otp_gridx;
+				}else if(otp_data_ptr[0] == 0x01){
+					lsc_otp_gridx = (cmr_u32)((otp_data_ptr[22] << 8) | otp_data_ptr[21]);
+					lsc_otp_gridy = (cmr_u32)((otp_data_ptr[24] << 8) | otp_data_ptr[23]);
+				}
+
+				lsc_get_otp_size_info(otp_raw_img_width, otp_raw_img_height, &lsc_otp_width, &lsc_otp_height, lsc_otp_gridx, lsc_otp_gridy);
 
 				full_img_width = otp_raw_img_width;
 				full_img_height = otp_raw_img_height;
@@ -1033,7 +1041,7 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 				case 5:
 				case 4:
 				case 2:
-					lsc_otp_len_chn = lsc_calculate_otplen_chn(full_img_width, full_img_height, lsc_otp_grid);
+					lsc_otp_len_chn = lsc_calculate_otplen_chn(full_img_width, full_img_height, lsc_otp_gridx, lsc_otp_gridy);
 					break;
 				default:
 					ISP_LOGW("not support resolution now , may be add later");
@@ -1058,18 +1066,18 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 		goto EXIT;
 	}
 
-	ISP_LOGV("full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d", full_img_width, full_img_height, lsc_otp_grid);
+	ISP_LOGV("full_img_width=%d, full_img_height=%d, lsc_otp_gridx=%d, lsc_otp_gridy=%d", full_img_width, full_img_height, lsc_otp_gridx,  lsc_otp_gridy);
 
-	if (lsc_otp_chn_gain_num < 100 || lsc_otp_grid < 32 || lsc_otp_grid > 256 || full_img_width < 800 || full_img_height < 600) {
-		ISP_LOGE("sensor setting error, lsc_otp_len=%d, full_img_width=%d, full_img_height=%d, lsc_otp_grid=%d",
-			 lsc_otp_len, full_img_width, full_img_height, lsc_otp_grid);
+	if (lsc_otp_chn_gain_num < 100 || lsc_otp_gridx < 32 || lsc_otp_gridx > 256 || lsc_otp_gridy < 32 || lsc_otp_gridy > 256|| full_img_width < 800 || full_img_height < 600) {
+		ISP_LOGE("sensor setting error, lsc_otp_len=%d, full_img_width=%d, full_img_height=%d, lsc_otp_gridx=%d, lsc_otp_gridy=%d",
+			 lsc_otp_len, full_img_width, full_img_height, lsc_otp_gridx, lsc_otp_gridy);
 		goto EXIT;
 	}
 
 	if (lsc_otp_chn_gain_num != lsc_otp_width * lsc_otp_height) {
 		lsc_otp_chn_gain_num = lsc_otp_width * lsc_otp_height;
-		ISP_LOGD("sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d",
-			 lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_grid);
+		ISP_LOGD("sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_gridx=%d, lsc_otp_gridy=%d",
+			 lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_gridx,  lsc_otp_gridy);
 		//goto EXIT;
 	}
 
@@ -1087,7 +1095,8 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 		lsc_param->lsc_otp_raw_height = otp_raw_img_height;
 		lsc_param->lsc_otp_table_width = lsc_otp_width;
 		lsc_param->lsc_otp_table_height = lsc_otp_height;
-		lsc_param->lsc_otp_grid = lsc_otp_grid;
+		lsc_param->lsc_otp_gridx = lsc_otp_gridx;
+		lsc_param->lsc_otp_gridy = lsc_otp_gridy;
 		lsc_param->lsc_otp_table_addr = lsc_16_bits;
 		lsc_param->lsc_otp_table_en = 1;
 
@@ -1103,11 +1112,11 @@ static cmr_int lsc_parser_otp(struct lsc_adv_init_param *lsc_param, struct lsc_s
 			lsc_dump(lsc_16_bits + (long)(lsc_otp_width * lsc_otp_height * 3), lsc_otp_width, lsc_otp_height, filename);
 		}
 
-		ISP_LOGV("lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d", lsc_otp_width, lsc_otp_height, lsc_otp_grid);
+		ISP_LOGV("lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_gridx=%d, lsc_otp_gridy=%d", lsc_otp_width, lsc_otp_height, lsc_otp_gridx, lsc_otp_gridy);
 	} else {
 		ISP_LOGE("lsc_otp_addr = %p, lsc_otp_len = %d. Parser lsc otp fail", lsc_otp_addr, lsc_otp_len);
-		ISP_LOGE("sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_grid=%d",
-			 lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_grid);
+		ISP_LOGE("sensor setting error, lsc_otp_len=%d, lsc_otp_chn_gain_num=%d, lsc_otp_width=%d, lsc_otp_height=%d, lsc_otp_gridx=%d, lsc_otp_gridy=%d",
+			 lsc_otp_len, lsc_otp_chn_gain_num, lsc_otp_width, lsc_otp_height, lsc_otp_gridx,  lsc_otp_gridy);
 		goto EXIT;
 	}
 
@@ -1277,7 +1286,8 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	cxt->init_img_height = init_param->img_height;
 	cxt->init_gain_width = init_param->gain_width;
 	cxt->init_gain_height = init_param->gain_height;
-	cxt->init_grid = init_param->grid;
+	cxt->init_gridx = init_param->gridx;
+	cxt->init_gridy = init_param->gridy;
 	cxt->fw_start_bv = 1600;
 	cxt->fw_start_bv_gain = 128;
 	cxt->gain_pattern = init_param->gain_pattern;
@@ -1285,7 +1295,8 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	cxt->change_pattern_flag = init_param->change_pattern_flag;
 	cxt->is_master = init_param->is_master;
 	cxt->is_multi_mode = init_param->is_multi_mode;
-	cxt->grid = init_param->grid;
+	cxt->gridx = init_param->gridx;
+	cxt->gridy = init_param->gridy;
 	cxt->camera_id = init_param->camera_id;
 	cxt->ref_camera_id = init_param->camera_id;
 	cxt->next_camera_id = init_param->camera_id;
@@ -1315,7 +1326,8 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	sprd_init_param->gain_height = init_param->gain_height;
 	sprd_init_param->gain_pattern = init_param->gain_pattern;
 	sprd_init_param->output_gain_pattern = init_param->output_gain_pattern;
-	sprd_init_param->grid = init_param->grid;
+	sprd_init_param->gridx = init_param->gridx;
+	sprd_init_param->gridy = init_param->gridy;
 	sprd_init_param->camera_id = init_param->camera_id;
 	sprd_init_param->lsc_id = cxt->lsc_id;
 	sprd_init_param->is_planar = cxt->is_planar;
@@ -1328,12 +1340,13 @@ static cmr_s32 lsc_set_init_param(struct lsc_adv_init_param *init_param, struct 
 	sprd_init_param->lsc_otp_table_en =  init_param->lsc_otp_table_en;
 	sprd_init_param->lsc_otp_table_width =  init_param->lsc_otp_table_width;
 	sprd_init_param->lsc_otp_table_height =  init_param->lsc_otp_table_height;
-	sprd_init_param->lsc_otp_grid =  init_param->lsc_otp_grid;
+	sprd_init_param->lsc_otp_gridx =  init_param->lsc_otp_gridx;
+	sprd_init_param->lsc_otp_gridy =  init_param->lsc_otp_gridy;
 	sprd_init_param->lsc_otp_raw_width = init_param->lsc_otp_raw_width;
 	sprd_init_param->lsc_otp_raw_height = init_param->lsc_otp_raw_height;
 	sprd_init_param->lsc_otp_table_addr =  init_param->lsc_otp_table_addr;
-	sprd_init_param->gridx = init_param->grid;
-	sprd_init_param->gridy = init_param->grid;
+	sprd_init_param->gridx = init_param->gridx;
+	sprd_init_param->gridy = init_param->gridy;
 	sprd_init_param->stat_inverse = cxt->stats_inverse;
 
 
@@ -1381,7 +1394,7 @@ static void lsc_scl_for_ae_stat(struct lsc_sprd_ctrl_context *cxt, struct lsc_ad
 }
 
 static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, cmr_u32 gain_width, cmr_u32 gain_height,
-					 cmr_u32 stat_width, cmr_u32 stat_height, cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32 grid)
+					 cmr_u32 stat_width, cmr_u32 stat_height, cmr_u32 raw_width, cmr_u32 raw_height, cmr_u32 gridx, cmr_u32 gridy)
 {
 	cmr_u32 i, j, ii, jj;
 	cmr_u32 stat_dw = (raw_width / stat_width) / 2 * 2;
@@ -1408,8 +1421,8 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 	for (i = 0; i < stat_width; i++) {
 		x = (float)(step_width * i) + org_x;
 		for (j = 1; j < gain_width - 1; j++) {
-			lt = (float)(2 * grid * (j - 1));
-			rt = (float)(2 * grid * j);
+			lt = (float)(2 * gridx * (j - 1));
+			rt = (float)(2 * gridx * j);
 
 			if (lt <= x && x <= rt) {
 				X_L[i] = j;
@@ -1422,8 +1435,8 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 	for (i = 0; i < stat_height; i++) {
 		y = (float)(step_height * i) + org_y;
 		for (j = 1; j < gain_height - 1; j++) {
-			lt = (float)(2 * grid * (j - 1));
-			rt = (float)(2 * grid * j);
+			lt = (float)(2 * gridy * (j - 1));
+			rt = (float)(2 * gridy * j);
 
 			if (lt <= y && y <= rt) {
 				Y_U[i] = j;
@@ -1434,7 +1447,7 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 
 	//////////////////////// compute interpolation  ////////////////////////
 
-	float coef = 1.0f / (2 * grid * 2 * grid);
+	float coef = 1.0f / (2 * gridx * 2 * gridy);
 	float TL, TR, BL, BR, det_L, det_U, det_R, det_D, tmp;
 
 	for (j = 0; j < stat_height; j++) {
@@ -1447,8 +1460,8 @@ static void lsc_scale_table_to_stat_size(cmr_u16 * new_tab, cmr_u16 * org_tab, c
 			BR = (float)org_tab[(jj + 1) * gain_width + (ii + 1)];
 			det_L = D_L[i];
 			det_U = D_U[j];
-			det_R = (float)(2 * grid - det_L);
-			det_D = (float)(2 * grid - det_U);
+			det_R = (float)(2 * gridx - det_L);
+			det_D = (float)(2 * gridy - det_U);
 
 			tmp = coef * (TL * det_D * det_R + TR * det_D * det_L + BL * det_U * det_R + BR * det_U * det_L);
 			new_tab[j * stat_width + i] = (unsigned short)LSC_CLIP(tmp + 0.5f, LSC_GAIN_LOWER, LSC_GAIN_UPPER);
@@ -1477,7 +1490,8 @@ static void lsc_inverse_ae_stat(struct lsc_sprd_ctrl_context *cxt, cmr_u16 * inv
 	cmr_u32 img_height = cxt->img_height;
 	cmr_u32 gain_width = cxt->gain_width;
 	cmr_u32 gain_height = cxt->gain_height;
-	cmr_u32 grid = cxt->grid;
+	cmr_u32 gridx = cxt->gridx;
+	cmr_u32 gridy = cxt->gridy;
 
 	// convert table to channel
 	if (cxt->is_planar == 1) {
@@ -1490,9 +1504,9 @@ static void lsc_inverse_ae_stat(struct lsc_sprd_ctrl_context *cxt, cmr_u16 * inv
 		gain_g[i] = (cmr_u32) ((gain_gr[i] + gain_gb[i]) / 2);
 	}
 
-	lsc_scale_table_to_stat_size(scaled_gain_r, gain_r, gain_width, gain_height, stat_width, stat_height, img_width, img_height, grid);
-	lsc_scale_table_to_stat_size(scaled_gain_g, gain_g, gain_width, gain_height, stat_width, stat_height, img_width, img_height, grid);
-	lsc_scale_table_to_stat_size(scaled_gain_b, gain_b, gain_width, gain_height, stat_width, stat_height, img_width, img_height, grid);
+	lsc_scale_table_to_stat_size(scaled_gain_r, gain_r, gain_width, gain_height, stat_width, stat_height, img_width, img_height, gridx, gridy);
+	lsc_scale_table_to_stat_size(scaled_gain_g, gain_g, gain_width, gain_height, stat_width, stat_height, img_width, img_height, gridx, gridy);
+	lsc_scale_table_to_stat_size(scaled_gain_b, gain_b, gain_width, gain_height, stat_width, stat_height, img_width, img_height, gridx, gridy);
 
 	for (i = 0; i < MAX_STAT_WIDTH * MAX_STAT_HEIGHT; i++) {
 		stat_r[i] = (cmr_u32) (stat_r[i] / scaled_gain_r[i]) << 10;
@@ -1742,16 +1756,16 @@ static int lsc_pm_table_crop(struct pm_lsc_full *src, struct pm_lsc_crop *dst, c
 	int rtn = 0;
 	unsigned int i, j, k;
 
-	ISP_LOGV("pm_lsc_full[%d,%d,%d,%d,%d]", src->img_width, src->img_height, src->grid, src->gain_width, src->gain_height);
-	ISP_LOGV("pm_lsc_crop[%d,%d,%d,%d,%d,%d,%d]", dst->img_width, dst->img_height, dst->start_x, dst->start_y, dst->grid, dst->gain_width, dst->gain_height);
+	ISP_LOGV("pm_lsc_full[%d,%d,%d,%d,%d,%d]", src->img_width, src->img_height, src->gridx, src->gridy, src->gain_width, src->gain_height);
+	ISP_LOGV("pm_lsc_crop[%d,%d,%d,%d,%d,%d,%d,%d]", dst->img_width, dst->img_height, dst->start_x, dst->start_y, dst->gridx, dst->gridy, dst->gain_width, dst->gain_height);
 
 	// error cases
 	if (dst->start_x > src->img_width
 	    || dst->start_y > src->img_height
 	    || dst->start_x + dst->img_width > src->img_width
 	    || dst->start_y + dst->img_height > src->img_height
-	    || dst->start_x + (dst->gain_width - 2) * (dst->grid * 2) > (src->gain_width - 2) * (src->grid * 2)
-	    || dst->start_y + (dst->gain_height - 2) * (dst->grid * 2) > (src->gain_height - 2) * (src->grid * 2)) {
+	    || dst->start_x + (dst->gain_width - 2) * (dst->gridx * 2) > (src->gain_width - 2) * (src->gridx * 2)
+	    || dst->start_y + (dst->gain_height - 2) * (dst->gridy * 2) > (src->gain_height - 2) * (src->gridy * 2)) {
 
 		for (i = 0; i < dst->gain_width * dst->gain_height * 4; i++) {
 			dst->output_table_buffer[i] = 1024;
@@ -1805,13 +1819,13 @@ static int lsc_pm_table_crop(struct pm_lsc_full *src, struct pm_lsc_crop *dst, c
 	ch_start_y = dst->start_y / 2;
 	for (j = 1; j < dst->gain_height - 1; j++) {
 		for (i = 1; i < dst->gain_width - 1; i++) {
-			crop_table_x = ch_start_x + (i - 1) * dst->grid;
-			crop_table_y = ch_start_y + (j - 1) * dst->grid;
+			crop_table_x = ch_start_x + (i - 1) * dst->gridx;
+			crop_table_y = ch_start_y + (j - 1) * dst->gridy;
 
-			TL_i = (int)(crop_table_x / src->grid) + 1;
-			TL_j = (int)(crop_table_y / src->grid) + 1;
-			dx = (float)(crop_table_x - (TL_i - 1) * src->grid) / src->grid;
-			dy = (float)(TL_j * src->grid - crop_table_y) / src->grid;
+			TL_i = (int)(crop_table_x / src->gridx) + 1;
+			TL_j = (int)(crop_table_y / src->gridy) + 1;
+			dx = (float)(crop_table_x - (TL_i - 1) * src->gridx) / src->gridx;
+			dy = (float)(TL_j * src->gridy - crop_table_y) / src->gridy;
 
 			out_buffer[(j * dst->gain_width + i) * 4 + 0] = (cmr_u16) table_bicubic_interpolation(src_ch0, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
 			out_buffer[(j * dst->gain_width + i) * 4 + 1] = (cmr_u16) table_bicubic_interpolation(src_ch1, src->gain_width, src->gain_height, TL_i, TL_j, dx, dy);
@@ -1968,28 +1982,33 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 
 	if (cxt->LSC_SPD_VERSION >= 6) {
 		if (cxt->init_img_width * fwstart_info->img_height_new == cxt->init_img_height * fwstart_info->img_width_new) {
-			cxt->grid = (cmr_u32) (cxt->init_grid / (cxt->init_img_width / fwstart_info->img_width_new));
+			cxt->gridx = (cmr_u32) (cxt->init_gridx / (cxt->init_img_width / fwstart_info->img_width_new));
+			cxt->gridy = (cmr_u32) (cxt->init_gridy / (cxt->init_img_height / fwstart_info->img_height_new));
 			cxt->gain_width = cxt->init_gain_width;
 			cxt->gain_height = cxt->init_gain_height;
-			fwstart_info->grid_new = cxt->grid;
+			fwstart_info->gridx_new = cxt->gridx;
+			fwstart_info->gridy_new = cxt->gridy;
 			fwstart_info->gain_width_new = cxt->gain_width;
 			fwstart_info->gain_height_new = cxt->gain_height;
 			for (i = 0; i < 8; i++) {
 				fwstart_info->lsc_tab_address_new[i] = cxt->std_init_lsc_table_param_buffer[i];
 				memcpy(cxt->std_lsc_table_param_buffer[i], cxt->std_init_lsc_table_param_buffer[i], cxt->gain_width * cxt->gain_height * 4 * sizeof(cmr_u16));
 			}
-			ISP_LOGI("FW_START parameter normalization, case1 n binning, grid=%d, lsc_id=%d", cxt->grid, cxt->lsc_id);
+			ISP_LOGI("FW_START parameter normalization, case1 n binning, gridx=%d, gridy=%d, lsc_id=%d", cxt->gridx, cxt->gridy, cxt->lsc_id);
 		} else if (fwstart_info->img_width_new == 1280 && fwstart_info->img_height_new == 720) {
-			cxt->grid = 32;
+			cxt->gridx = 32;
+			cxt->gridy = 32;
 			cxt->gain_width = 23;
 			cxt->gain_height = 15;
-			fwstart_info->grid_new = cxt->grid;
+			fwstart_info->gridx_new = cxt->gridx;
+			fwstart_info->gridy_new = cxt->gridy;
 			fwstart_info->gain_width_new = cxt->gain_width;
 			fwstart_info->gain_height_new = cxt->gain_height;
 			pm_lsc_full = (struct pm_lsc_full *)malloc(sizeof(struct pm_lsc_full));
 			pm_lsc_full->img_width = cxt->init_img_width;
 			pm_lsc_full->img_height = cxt->init_img_height;
-			pm_lsc_full->grid = cxt->init_grid;
+			pm_lsc_full->gridx = cxt->init_gridx;
+			pm_lsc_full->gridy = cxt->init_gridy;
 			pm_lsc_full->gain_width = cxt->init_gain_width;
 			pm_lsc_full->gain_height = cxt->init_gain_height;
 			// Notice, if the crop action from binning size raw, do following action
@@ -1997,7 +2016,8 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			if((pm_lsc_full->img_width / 2) >= 1280 && (pm_lsc_full->img_height / 2) >= 720){
 				pm_lsc_full->img_width /= 2;
 			        pm_lsc_full->img_height /= 2;
-			        pm_lsc_full->grid /= 2;
+			        pm_lsc_full->gridx /= 2;
+			        pm_lsc_full->gridy /= 2;
 			}
 
 			pm_lsc_crop = (struct pm_lsc_crop *)malloc(sizeof(struct pm_lsc_crop));
@@ -2005,7 +2025,8 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			pm_lsc_crop->img_height = fwstart_info->img_height_new;
 			pm_lsc_crop->start_x = (pm_lsc_full->img_width - pm_lsc_crop->img_width) / 2;	// for crop center case
 			pm_lsc_crop->start_y = (pm_lsc_full->img_height - pm_lsc_crop->img_height) / 2;	// for crop center case
-			pm_lsc_crop->grid = 32;
+			pm_lsc_crop->gridx = 32;
+			pm_lsc_crop->gridy = 32;
 			pm_lsc_crop->gain_width = 23;
 			pm_lsc_crop->gain_height = 15;
 			for (i = 0; i < 8; i++) {
@@ -2017,16 +2038,19 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			lsc_std_free(pm_lsc_full);
 			lsc_std_free(pm_lsc_crop);
 		} else if (fwstart_info->img_width_new == 1920 && fwstart_info->img_height_new == 1080) {
-			cxt->grid = 48;
+			cxt->gridx = 48;
+			cxt->gridy = 48;
 			cxt->gain_width = 23;
 			cxt->gain_height = 15;
-			fwstart_info->grid_new = cxt->grid;
+			fwstart_info->gridx_new = cxt->gridx;
+			fwstart_info->gridy_new = cxt->gridy;
 			fwstart_info->gain_width_new = cxt->gain_width;
 			fwstart_info->gain_height_new = cxt->gain_height;
 			pm_lsc_full = (struct pm_lsc_full *)malloc(sizeof(struct pm_lsc_full));
 			pm_lsc_full->img_width = cxt->init_img_width;
 			pm_lsc_full->img_height = cxt->init_img_height;
-			pm_lsc_full->grid = cxt->init_grid;
+			pm_lsc_full->gridx = cxt->init_gridx;
+			pm_lsc_full->gridy = cxt->init_gridy;
 			pm_lsc_full->gain_width = cxt->init_gain_width;
 			pm_lsc_full->gain_height = cxt->init_gain_height;
 			// Notice, if the crop action from binning size raw, do following action
@@ -2034,7 +2058,8 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			if((pm_lsc_full->img_width / 2) >= 1920 && (pm_lsc_full->img_height / 2) >= 1080){
 				pm_lsc_full->img_width /= 2;
 			        pm_lsc_full->img_height /= 2;
-			        pm_lsc_full->grid /= 2;
+			        pm_lsc_full->gridx /= 2;
+			        pm_lsc_full->gridy /= 2;
 			}
 
 			pm_lsc_crop = (struct pm_lsc_crop *)malloc(sizeof(struct pm_lsc_crop));
@@ -2042,7 +2067,8 @@ static int lsc_preprocess_fwstart_info(struct lsc_sprd_ctrl_context *cxt, struct
 			pm_lsc_crop->img_height = fwstart_info->img_height_new;
 			pm_lsc_crop->start_x = (pm_lsc_full->img_width - pm_lsc_crop->img_width) / 2;	// for crop center case
 			pm_lsc_crop->start_y = (pm_lsc_full->img_height - pm_lsc_crop->img_height) / 2;	// for crop center case
-			pm_lsc_crop->grid = 48;
+			pm_lsc_crop->gridx = 48;
+			pm_lsc_crop->gridy = 48;
 			pm_lsc_crop->gain_width = 23;
 			pm_lsc_crop->gain_height = 15;
 			for (i = 0; i < 8; i++) {
@@ -2229,20 +2255,21 @@ static void alsc_do_simulation(void *handle,void *in)
 	lsc_calc_in->img_height = cxt->init_img_height;
 	lsc_calc_in->gain_width = cxt->init_gain_width;
 	lsc_calc_in->gain_height = cxt->init_gain_height;
-	lsc_calc_in->grid = cxt->init_grid;
+	lsc_calc_in->gridx = cxt->init_gridx;
+	lsc_calc_in->gridy = cxt->init_gridy;
 	lsc_calc_in->main_flash_mode = 0;
 	lsc_calc_in->captureFlashEnvRatio = 0;
 	lsc_calc_in->captureFlash1ofAllRatio = 0;
 	lsc_calc_in->preflash_guessing_mainflash_output_table = NULL;
 	lsc_calc_in->ct = alsc_do_simulation->ct;
-	lsc_calc_in->gridx = cxt->grid;
-	lsc_calc_in->gridy = cxt->grid;
+	lsc_calc_in->gridx = cxt->gridx;
+	lsc_calc_in->gridy = cxt->gridy;
 	chnl_gain_num = lsc_calc_in->gain_width*lsc_calc_in->gain_height;
 	memcpy(lsc_calc_in->stat_img.r, alsc_do_simulation->stat_r, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
 	memcpy(lsc_calc_in->stat_img.gr, alsc_do_simulation->stat_g, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
 	memcpy(lsc_calc_in->stat_img.b, alsc_do_simulation->stat_b, MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
 
-	ISP_LOGI("do_simulation img_size[%d,%d], gain_size[%d,%d], stat_size[%d,%d] grid: %d",lsc_calc_in->img_width,lsc_calc_in->img_height,lsc_calc_in->gain_width,lsc_calc_in->gain_height,lsc_calc_in->stat_img.w,lsc_calc_in->stat_img.h,lsc_calc_in->grid);
+	ISP_LOGI("do_simulation img_size[%d,%d], gain_size[%d,%d], stat_size[%d,%d] gridx: %d gridy: %d",lsc_calc_in->img_width,lsc_calc_in->img_height,lsc_calc_in->gain_width,lsc_calc_in->gain_height,lsc_calc_in->stat_img.w,lsc_calc_in->stat_img.h,lsc_calc_in->gridx,lsc_calc_in->gridy);
 
 	for (i = 0; i < 8; i++)
 		lsc_calc_in->lsc_tab[i] = cxt->std_init_lsc_table_param_buffer[i];
@@ -2524,7 +2551,7 @@ static void *lsc_sprd_init(void *in, void *out)
 	// alsc_init
 	cxt->is_planar = 1;	// 1 -- use planar lsc table in alsc algorithm;  0 -- use interlace lsc table in alsc algorithm
 	cxt->stats_inverse = 1; // set 0 if use LSCM statistic data; set 1 if use AEM statistic data
-#if ((defined CONFIG_ISP_2_7)||(defined CONFIG_ISP_2_8))
+#if ((defined CONFIG_ISP_2_7)||(defined CONFIG_ISP_2_8) ||(defined CONFIG_ISP_2_9))
 	cxt->stats_inverse = 0; //sharkl5pro and sharkl6 use LSCM statistic data
 #endif
 	rtn = lsc_set_init_param(init_param, cxt, &sprd_init_param);
@@ -2577,7 +2604,7 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	struct lsc_adv_calc_result *result = (struct lsc_adv_calc_result *)out;
 	struct lsc_flash_proc_param *flash_param = NULL;
 	cmr_u32 alg_in = 0;
-	cmr_u32 img_width, img_height, gain_width, gain_height, grid;
+	cmr_u32 img_width, img_height, gain_width, gain_height, gridx, gridy;
 	cmr_u32 IIR_weight = 5;
 	struct lsc_sprd_calc_in calc_in;
 	struct lsc_sprd_calc_out calc_out;
@@ -2606,7 +2633,8 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	img_height = param->img_size.h;
 	gain_width = param->gain_width;
 	gain_height = param->gain_height;
-	grid = param->grid;
+	gridx = param->gridx;
+	gridy = param->gridy;
 	result->dst_gain = cxt->dst_gain;
 
 	// replace bv and bv_gain after flash
@@ -2624,7 +2652,8 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	if (cxt->LSC_SPD_VERSION >= 6) {
 		gain_width = cxt->gain_width;
 		gain_height = cxt->gain_height;
-		grid = cxt->grid;
+		gridx = cxt->gridx;
+		gridy = cxt->gridy;
 	}
 
 	ATRACE_BEGIN(__FUNCTION__);
@@ -2635,14 +2664,15 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	if (cxt->fw_start_end) {
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			if (cxt->lsc_pm0 != param->lsc_tab_address[0]) {
-				ISP_LOGV("change mode: frame_count=%d,camera_id=%d,pre_img[%d,%d],pre_table[%d,%d,%d],new_img[%d,%d],new_table[%d,%d,%d]",
-					cxt->frame_count, cxt->camera_id, cxt->img_width, cxt->img_height, cxt->gain_width, cxt->gain_height, cxt->grid, img_width, img_height, gain_width, gain_height, grid);
+				ISP_LOGV("change mode: frame_count=%d,camera_id=%d,pre_img[%d,%d],pre_table[%d,%d,%d,%d],new_img[%d,%d],new_table[%d,%d,%d,%d]",
+					cxt->frame_count, cxt->camera_id, cxt->img_width, cxt->img_height, cxt->gain_width, cxt->gain_height, cxt->gridx, cxt->gridy, img_width, img_height, gain_width, gain_height, gridx, gridy);
 
 				cxt->img_width = img_width;
 				cxt->img_height = img_height;
 				cxt->gain_width = gain_width;
 				cxt->gain_height = gain_height;
-				cxt->grid = grid;
+				cxt->gridx = gridx;
+				cxt->gridy = gridy;
 				cxt->lsc_pm0 = param->lsc_tab_address[0];
 				memcpy(cxt->last_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
 				memcpy(cxt->output_lsc_table, cxt->fwstart_new_scaled_table, gain_width * gain_height * 4 * sizeof(cmr_u16));
@@ -2663,9 +2693,8 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 				// regular tuning param tables by otp
 				otp_convert_param.gain_width = gain_width;
 				otp_convert_param.gain_height = gain_height;
-				otp_convert_param.grid = grid;
-				otp_convert_param.gridx = grid;
-				otp_convert_param.gridy = grid;
+				otp_convert_param.gridx = gridx;
+				otp_convert_param.gridy = gridy;
 				for (i = 0; i < 9; i++) {
 					otp_convert_param.lsc_table[i] = cxt->std_lsc_table_param_buffer[i];
 				}
@@ -2802,7 +2831,6 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		calc_in.stat_img.h = param->stat_size.h;
 		calc_in.gain_height = param->gain_height;
 		calc_in.gain_width = param->gain_width;
-		calc_in.grid = param->grid;
 		calc_in.img_height = param->img_size.h;
 		calc_in.img_width = param->img_size.w;
 		for (i = 0; i < 8; i++)
@@ -2813,8 +2841,8 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 		calc_in.captureFlash1ofAllRatio = flash_param->captureFlash1ofALLRatio;
 		calc_in.preflash_guessing_mainflash_output_table = flash_param->preflash_guessing_mainflash_output_table;
 		calc_in.ct = param->ct;
-		calc_in.gridx = param->grid;
-		calc_in.gridy = param->grid;
+		calc_in.gridx = param->gridx;
+		calc_in.gridy = param->gridy;
 		calc_in.smart_lsc_result = cxt->smart_result;
 
 		calc_out.dst_gain = result->dst_gain;
@@ -2899,11 +2927,11 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 	case ALSC_FW_START:	// You have to update two table in FW_START: 1.fwstart_info->lsc_result_address_new, 2.cxt->fwstart_new_scaled_table
 		fwstart_info = (struct alsc_fwstart_info *)in;
 		ISP_LOGD("FW_START, frame_count=%d, camera_id=%d, lsc_id=%d, LSC_SPD_VERSION=%d", cxt->frame_count, fwstart_info->camera_id, cxt->lsc_id, cxt->LSC_SPD_VERSION);
-		ISP_LOGD("FW_START, old tab0 address=%p, lsc table[%d,%d,%d]", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->grid);
-		ISP_LOGD("FW_START, new tab0 address=%p, lsc table[%d,%d,%d], image_size[%d,%d]", fwstart_info->lsc_tab_address_new[0],
-			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->grid_new, fwstart_info->img_width_new, fwstart_info->img_height_new);
+		ISP_LOGD("FW_START, old tab0 address=%p, lsc table[%d,%d,%d,%d]", cxt->lsc_pm0, cxt->gain_width, cxt->gain_height, cxt->gridx, cxt->gridy);
+		ISP_LOGD("FW_START, new tab0 address=%p, lsc table[%d,%d,%d,%d], image_size[%d,%d]", fwstart_info->lsc_tab_address_new[0],
+			 fwstart_info->gain_width_new, fwstart_info->gain_height_new, fwstart_info->gridx_new, fwstart_info->gridy_new, fwstart_info->img_width_new, fwstart_info->img_height_new);
 
-#if ((defined CONFIG_ISP_2_7)||(defined CONFIG_ISP_2_8))
+#if ((defined CONFIG_ISP_2_7)||(defined CONFIG_ISP_2_8)||(defined CONFIG_ISP_2_9))
 		lsc_sprd_set_monitor(fwstart_info, cxt->lscm_info);
 		lsc_set_monitor(cxt->ctrl_handle, cxt->lscm_info);
 #endif
@@ -2912,7 +2940,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		if (cxt->lsc_id == 1) {
 			if (cxt->init_gain_width == fwstart_info->gain_width_new && cxt->init_gain_height == fwstart_info->gain_height_new)
 				table_flag = 0; //full or binning image size
-			else if (fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && (fwstart_info->grid_new == 32 || fwstart_info->grid_new == 48))
+			else if (fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && ((fwstart_info->gridx_new == 32 && fwstart_info->gridy_new == 32) || (fwstart_info->gridx_new == 48 && fwstart_info->gridy_new == 48)))
 				table_flag = 2; // 1090p or 720p size
 			else
 				table_flag = 1;	// other size
@@ -2925,7 +2953,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		if (cxt->LSC_SPD_VERSION <= 5) {
 			chnl_gain_num = fwstart_info->gain_width_new * fwstart_info->gain_height_new;
 
-			if (fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && (fwstart_info->grid_new == 32 || fwstart_info->grid_new == 48)) {
+			if (fwstart_info->gain_width_new == 23 && fwstart_info->gain_height_new == 15 && ((fwstart_info->gridx_new == 32 && fwstart_info->gridy_new == 32) || (fwstart_info->gridx_new == 48 && fwstart_info->gridy_new == 48))) {
 				ISP_LOGV("FW_START, 720p or 1080p Mode, Send TL84 table");
 				memcpy(fwstart_info->lsc_result_address_new, fwstart_info->lsc_tab_address_new[DEFAULT_TAB_INDEX], chnl_gain_num * 4 * sizeof(cmr_u16));
 				lsc_table_interlace2planar(fwstart_info->lsc_result_address_new, fwstart_info->gain_width_new, fwstart_info->gain_height_new, cxt->gain_pattern, cxt->output_gain_pattern);
@@ -2978,7 +3006,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 				cxt->cur_lsc_pm_mode = 1;	// 1080p table size
 			}
 
-			ISP_LOGV("FW_START, new table size=[%d,%d] grid=%d,frame_count=%d, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d", cxt->gain_width, cxt->gain_height, cxt->grid, cxt->frame_count,
+			ISP_LOGV("FW_START, new table size=[%d,%d] gridx=%d gridy=%d,frame_count=%d, pre_lsc_pm_mode=%d, cur_lsc_pm_mode=%d", cxt->gain_width, cxt->gain_height, cxt->gridx, cxt->gridy, cxt->frame_count,
 				cxt->pre_lsc_pm_mode, cxt->cur_lsc_pm_mode);
 
 			if (flash_param->main_flash_from_other_parameter == 1){
@@ -3048,7 +3076,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		if (cxt->lsc_id == 1) {
 			if (cxt->init_gain_width == cxt->gain_width && cxt->init_gain_height == cxt->gain_height)
 				table_flag = 0; // full or binning size
-			else if (cxt->gain_width == 23 && cxt->gain_height == 15 && (cxt->grid == 32 || cxt->grid == 48))
+			else if (cxt->gain_width == 23 && cxt->gain_height == 15 && ((cxt->gridx == 32 && cxt->gridy == 32) || (cxt->gridx == 48 && cxt->gridy == 48)))
 				table_flag = 2; // 1080p or 720p
 			else
 				table_flag = 1; // other size
@@ -3257,7 +3285,7 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		if (cxt->lsc_id == 1) {
 			if (cxt->init_gain_width == fwprocstart_info->gain_width_new && cxt->init_gain_height == fwprocstart_info->gain_height_new)
 				table_flag = 0; // full or binning size
-			else if (fwprocstart_info->gain_width_new == 23 && fwprocstart_info->gain_height_new == 15 && (fwprocstart_info->grid_new == 32 || fwprocstart_info->grid_new == 48))
+			else if (fwprocstart_info->gain_width_new == 23 && fwprocstart_info->gain_height_new == 15 && ((fwprocstart_info->gridx_new == 32 && fwprocstart_info->gridy_new == 32) || (fwprocstart_info->gridx_new == 48 && fwprocstart_info->gridy_new == 48)))
 				table_flag = 2; //1080p or 720p
 			else
 				table_flag = 1;	// other size
@@ -3271,8 +3299,8 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 
 			if (cxt->is_multi_mode == 2) {
 				ISP_LOGV("FW_PROC_START, ISP_DUAL_SBS MODE, camera_id=%d", fwprocstart_info->camera_id);
-				ISP_LOGV("FW_PROC_START, old lsc table[%d,%d,%d]", cxt->gain_width, cxt->gain_height, cxt->grid);
-				ISP_LOGV("FW_PROC_START, new lsc table[%d,%d,%d]", fwprocstart_info->gain_width_new,fwprocstart_info->gain_height_new, fwprocstart_info->grid_new);
+				ISP_LOGV("FW_PROC_START, old lsc table[%d,%d,%d,%d]", cxt->gain_width, cxt->gain_height, cxt->gridx, cxt->gridy);
+				ISP_LOGV("FW_PROC_START, new lsc table[%d,%d,%d,%d]", fwprocstart_info->gain_width_new,fwprocstart_info->gain_height_new, fwprocstart_info->gridx_new, fwprocstart_info->gridy_new);
 
 				chnl_gain_num = fwprocstart_info->gain_width_new * fwprocstart_info->gain_height_new;
 
