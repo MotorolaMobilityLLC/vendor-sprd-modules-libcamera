@@ -181,11 +181,11 @@ int32_t SprdCamera3Flash::set_torch_mode(const char *cameraIdStr, bool on) {
     int retVal = 0;
     char *cmd_str;
     if (on) {
-        setFlashMode((int)(*cameraIdStr), on);
+        setFlashMode((atoi)(cameraIdStr), on);
         m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
                                               TORCH_MODE_STATUS_AVAILABLE_ON);
     } else {
-        setFlashMode((int)(*cameraIdStr), on);
+        setFlashMode((atoi)(cameraIdStr), on);
         m_callbacks->torch_mode_status_change(m_callbacks, cameraIdStr,
                                               TORCH_MODE_STATUS_AVAILABLE_OFF);
     }
@@ -220,7 +220,7 @@ int32_t SprdCamera3Flash::reserveFlashForCamera(const int cameraId) {
     if (m_cameraOpen[cameraId]) {
         HAL_LOGV("FLash already reserved for camera ");
     } else {
-        if (!cameraId && m_flashOn[0]) {
+        if (m_flashOn[0]) {
             set_torch_mode(cameraIdStr, SPRD_FLASH_STATUS_OFF);
         }
         m_cameraOpen[cameraId] = true;
