@@ -1668,13 +1668,13 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	//cxt->sync_enable = 1;
 	if(cxt->sync_enable ==1 && cxt->is_multi_mode ==ISP_ALG_TRIBLE_W_T_UW_SYNC) {
 		//主摄
-		if(1 == cxt->sensor_role) {
+		if(cxt->cur_ref_sensor_id == cxt->camera_id) {
 			//将当前主sensor的ct/tint/值传到bridge
 			cxt->main_result.ct = cxt->output_ct;
 			cxt->main_result.tint = calc_result_v3.awb_gain.tint;
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , SET_MASTER_AWB_DATA, &cxt->main_result, NULL);
-			ISP_LOGI("MASTER_UPLOAD: main_result.ct = %d, main_result.tint= %d, sensor_id:%d", cxt->main_result.ct, cxt->main_result.tint, cxt->sensor_role_type);
-		} else if(cxt->sensor_role != 1){
+			ISP_LOGI("MASTER_UPLOAD: main_result.ct = %d, main_result.tint= %d, cur_camera_id:%d, next_camera_id:%d.", cxt->main_result.ct, cxt->main_result.tint, cxt->cur_ref_sensor_id, cxt->next_sensor_id);
+		} else if(cxt->next_sensor_id == cxt->camera_id){
 			//从brigde获取master的结果
 			cxt->ptr_isp_br_ioctrl(CAM_SENSOR_MASTER , GET_MASTER_AWB_DATA, NULL, &(cxt->main_result));
 			//当前sensor的bv值
@@ -1689,15 +1689,17 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 			cxt->output_ct = cxt->awb_sync_result.awb_gain.ct;
 			cxt->output_ct_mean = cxt->awb_sync_result.awb_gain.ct_mean;
 			cxt->cur_tint = cxt->awb_sync_result.awb_gain.tint;
-			ISP_LOGI("MASTER_DOWLOAD, sensor_id:%d; SLAVE_SYNC: r_gain = %d, g_gain = %d, b_gain = %d, ct = %d", cxt->sensor_role_type, cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct);
+			cxt->log = cxt->awb_sync_result.log_buffer;
+			cxt->size = cxt->awb_sync_result.log_size;
+			ISP_LOGI("MASTER_DOWLOAD, SLAVE_SYNC: r_gain = %d, g_gain = %d, b_gain = %d, ct = %d; cur_camera_id:%d, next_camera_id:%d.", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->cur_ref_sensor_id, cxt->next_sensor_id);
 		}
 		//每帧都下发sync_start时需要每帧清零
 		//sync_enable = 0;
 	}
 
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
-	ISP_LOGI("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d, wb mode : %d; AWB lib %dx%d: (%d,%d,%d) %dK, sensor_id : %d", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id, cxt->wb_mode,\
-			calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain, calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct, cxt->sensor_role_type);
+	ISP_LOGI("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d, wb mode : %d; AWB lib %dx%d: (%d,%d,%d) %dK.", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id, cxt->wb_mode,\
+			calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat, calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain, calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct);
 
 	//set the gain/ct to_save_file
 	cxt->frame_count 	= cxt->frame_count + 1;
