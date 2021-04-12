@@ -266,9 +266,9 @@ struct snp_context {
     sem_t ips_sem;
     struct snap_request snap_req[32];
     struct snap_request *cur_req;
+    struct img_size size_mfnr_aux;
     struct memory_param mem_ops;
     struct cmr_queue buf_queue;
-    struct cmr_queue thumb_buf_queue; /* for postview thumbnail rotation/flip */
 };
 
 /********************************* internal data type
@@ -396,27 +396,28 @@ static cmr_int snp_ipm_process(cmr_handle snp_handle, void *data);
 
 
 static cmr_int snp_ips_balance_bufs(
-	struct snp_context *cxt, cmr_u32 num)
+	struct snp_context *cxt, cmr_u32 *req_cnt)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
-	cmr_u32 buf_size, free_cnt;
+	int iret;
+	uint32_t i, free_cnt = 0, cnt = 0, buf_size, num;
 	struct snapshot_param *param = &cxt->req_param;
-	struct img_size *thumb_size = &param->jpeg_setting.thum_size;
 
 	buf_size = param->req_size.width * param->req_size.height * 3 / 2;
-	buf_size += (thumb_size->width * thumb_size->height * 3 / 2);
+	CMR_LOGD("reqcnt %d, buf size %d, req size (%d %d)\n",
+		*req_cnt, buf_size, param->req_size.width, param->req_size.height);
 
-	CMR_LOGD("buf size %d, req size (%d %d), thumb size (%d %d)\n",
-		buf_size, param->req_size.width,  param->req_size.height,
-		thumb_size->width, thumb_size->height);
+	num = MIN(*req_cnt, 10);
+	iret = check_free_buffer(&cxt->buf_queue, buf_size, &free_cnt);
+	if (free_cnt >= num)
+		return ret;
 
-	if (cxt->buf_queue.free_cnt  < num) {
-		free_cnt = num - cxt->buf_queue.free_cnt;
-		ret = inc_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size, &free_cnt);
-		CMR_LOGI("yuv/jpeg buffer inc, ret %ld, cnt %d\n", ret, free_cnt);
-	}
-
-	CMR_LOGD("X. free buf cnt %d\n", cxt->buf_queue.free_cnt);
+	cnt = num - free_cnt;
+	ret = inc_gbuffer_q(&cxt->buf_queue, &cxt->mem_ops,
+			param->req_size.width, param->req_size.height, &cnt);
+	*req_cnt = free_cnt + cnt;
+	CMR_LOGD("X. incbuf ret %ld, cnt %d, free buf cnt %d, total %d\n",
+		ret, cnt, cxt->buf_queue.free_cnt, *req_cnt);
 	return ret;
 }
 
@@ -424,7 +425,7 @@ static cmr_int snp_ips_configure_bufs(struct snp_context *cxt)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	int iret;
-	cmr_u32 buf_size, buf_cnt = 0;
+	cmr_u32 buf_size, buf_cnt = 0, req_cnt;
 	struct buffer_cfg buf_cfg;
 	struct cmr_buf yuv_buf;
 	struct snapshot_param *param = &cxt->req_param;
@@ -436,11 +437,12 @@ get_buf:
 	iret = get_free_buffer(&cxt->buf_queue, buf_size, &yuv_buf);
 	if (iret || (yuv_buf.fd <= 0)) {
 		usleep(20 * 1000);
-		snp_ips_balance_bufs(cxt, 3);
+		req_cnt = 3;
+		snp_ips_balance_bufs(cxt, &req_cnt);
 		goto get_buf;
 	}
 
-	CMR_LOGI("req_id %d, get free buffer fd %d, vaddr 0x%08x, size %d,  free_cnt %d\n",
+	CMR_LOGI("req_id %d, get free buffer fd 0x%x, vaddr 0x%08x, size %d,  free_cnt %d\n",
 		param->request_id, yuv_buf.fd, (cmr_u32)yuv_buf.vaddr, yuv_buf.mem_size, cxt->buf_queue.free_cnt);
 
 	memset(&buf_cfg, 0, sizeof(struct buffer_cfg));
@@ -523,7 +525,8 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	void *dbg_info = NULL;
 	int dbg_info_size = 0;
-	int cb_thumb = 1;
+	int iret, cb_thumb = 1;
+	cmr_u32 req_cnt;
 	struct img_frm yuv_frm;
 	struct camera_context *cam_cxt = (struct camera_context *)cxt->oem_handle;
 	struct snap_request *snp_req = cxt->cur_req;
@@ -660,11 +663,18 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 post:
 	memset(&yuv_frm, 0, sizeof(struct img_frm));
 	convert_frame(&yuv_frm, frame);
+	iret = get_buf_gpuhandle(&cxt->buf_queue, yuv_frm.fd, &yuv_frm.gpu_handle);
+	if (iret || (yuv_frm.gpu_handle == NULL))
+		CMR_LOGE("fail to get gpu handle for buf fd 0x%x\n", yuv_frm.fd);
 
+	if (snp_pm->is_3dnr) {
+		yuv_frm.rect.width = cxt->size_mfnr_aux.width;
+		yuv_frm.rect.height = cxt->size_mfnr_aux.height;
+	}
 	cmr_ips_post(cxt->ips_handle, ips_req, &yuv_frm);
 
-	CMR_LOGD("req id %d post frame_id %d, fd 0x%x done\n",
-		ips_req->request_id, frame->frame_real_id, frame->fd);
+	CMR_LOGD("req id %d post frame_id %d, fd 0x%x ghand %p done\n",
+		ips_req->request_id, frame->frame_real_id, frame->fd, yuv_frm.gpu_handle);
 
 	if (snp_pm->snap_cnt < snp_pm->total_num ||
 		(snp_get_request(cxt) == TAKE_PICTURE_NO))
@@ -673,11 +683,13 @@ post:
 	sem_post(&cxt->ips_sem);
 
 	/* check if next snapshot condition ready */
-	snp_ips_balance_bufs(cxt, 3);
-	while (cxt->buf_queue.free_cnt < 3) {
+	req_cnt = 3;
+	snp_ips_balance_bufs(cxt, &req_cnt);
+	while (req_cnt < 3) {
 		CMR_LOGD("wait 20 ms.......free buf %d\n", cxt->buf_queue.free_cnt);
 		usleep(20*1000);
-		snp_ips_balance_bufs(cxt, 3);
+		req_cnt = 3;
+		snp_ips_balance_bufs(cxt, &req_cnt);
 		if (snp_get_request(cxt) == TAKE_PICTURE_NO) {
 			CMR_LOGD("quick exit here");
 			return ret;
@@ -759,7 +771,7 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 	buf_size = snp_pm->jpeg_setting.thum_size.width * snp_pm->jpeg_setting.thum_size.height * 3 / 2;
 	new_buf.fd = base_buf.fd = 0;
 
-	iret = get_free_buffer(&cxt->thumb_buf_queue, buf_size, &base_buf);
+	iret = get_free_buffer(&cxt->buf_queue, buf_size, &base_buf);
 	if (iret || base_buf.fd <= 0) {
 		CMR_LOGE("fail to get free buffer\n");
 		return -1;
@@ -855,7 +867,7 @@ rot_flip:
 	if (snp_pm->jpeg_setting.flip) {
 		struct img_frm src, dst;
 		struct cmr_op_mean mean;
-		iret = get_free_buffer(&cxt->thumb_buf_queue, buf_size, &new_buf);
+		iret = get_free_buffer(&cxt->buf_queue, buf_size, &new_buf);
 		if (!iret && new_buf.fd > 0) {
 			CMR_LOGD("get new thumb buffer fd 0x%x, vaddr 0x%lx\n", new_buf.fd, new_buf.vaddr);
 			src = thumb_frm;
@@ -905,7 +917,7 @@ rot_flip:
 			dst = orig;
 		} else {
 			dst.fd = 0;
-			iret = get_free_buffer(&cxt->thumb_buf_queue, buf_size, &new_buf);
+			iret = get_free_buffer(&cxt->buf_queue, buf_size, &new_buf);
 			if (!iret && new_buf.fd > 0) {
 				dst.fd = new_buf.fd;
 				dst.addr_vir.addr_y = new_buf.vaddr;
@@ -1001,13 +1013,13 @@ thumb_cb:
 	}
 
 	if (new_buf.fd > 0) {
-		iret =put_free_buffer(&cxt->thumb_buf_queue, &new_buf);
+		iret = put_free_buffer(&cxt->buf_queue, &new_buf);
 		if (iret)
 			CMR_LOGE("fail to put free buf fd 0x%x\n", new_buf.fd);
 	}
 
 	if (base_buf.fd > 0) {
-		iret =put_free_buffer(&cxt->thumb_buf_queue, &base_buf);
+		iret = put_free_buffer(&cxt->buf_queue, &base_buf);
 		if (iret)
 			CMR_LOGE("fail to put free buf fd 0x%x\n", base_buf.fd);
 	}
@@ -1144,7 +1156,7 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
-	int iret, i;
+	int iret, i, is_mfnr = 0;
 	struct camera_context *cam_ctx = cxt->oem_handle;
 	struct ips_request_t *new_req = NULL;
 	struct swa_init_data init_param;
@@ -1159,7 +1171,13 @@ static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 	i = 0;
 	if (cxt->req_param.is_hdr) {
 		new_req->proc_steps[i++].type = IPS_TYPE_HDR;
+	} else if ((cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) ||
+			(cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW) ||
+			(cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW)) {
+		new_req->proc_steps[i++].type = IPS_TYPE_MFNR;
+		is_mfnr = 1;
 	}
+
 	if (cxt->req_param.nr_flag) {
 		CMR_LOGD("nr_type %d\n", cxt->req_param.nr_flag);
 		new_req->proc_steps[i++].type = IPS_TYPE_CNR;
@@ -1179,8 +1197,40 @@ static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 	new_req->proc_steps[i].type = IPS_TYPE_JPEG;
 	new_req->proc_steps[i].handle = cam_ctx->jpeg_cxt.jpeg_handle;
 	new_req->proc_steps[i+1].type = IPS_TYPE_MAX;
+
+	if (is_mfnr && cxt->size_mfnr_aux.width == 0) {
+		uint32_t width, height, small_width, small_height, buf_size, free_cnt;
+
+		width = cxt->req_param.req_size.width;
+		height = cxt->req_param.req_size.height;
+		if ((width * 10) <= (height * 11)) {
+			small_height = CMR_3DNR_1_1_SMALL_HEIGHT;
+			small_width = CMR_3DNR_1_1_SMALL_WIDTH;
+		} else if ((width * 10) <= (height * 14)) {
+			small_height = CMR_3DNR_4_3_SMALL_HEIGHT;
+			small_width = CMR_3DNR_4_3_SMALL_WIDTH;
+		} else if ((width * 10) <= (height * 18)) {
+			small_height = CMR_3DNR_16_9_SMALL_HEIGHT;
+			small_width = CMR_3DNR_16_9_SMALL_WIDTH;
+		} else if ((width * 10) <= (height * 20)) {
+			small_height = CMR_3DNR_18_9_SMALL_HEIGHT;
+			small_width = CMR_3DNR_18_9_SMALL_WIDTH;
+		} else {
+			small_height = CMR_3DNR_19_9_SMALL_HEIGHT;
+			small_width = CMR_3DNR_19_9_SMALL_WIDTH;
+		}
+		CMR_LOGD("req_size %d %d, 3dnr small (%d %d)\n",
+			width, height, small_width, small_height);
+		cxt->size_mfnr_aux.width = small_width;
+		cxt->size_mfnr_aux.height = small_height;
+		free_cnt = 5;
+		buf_size = small_width * small_height * 3 / 2;
+		iret = inc_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size, &free_cnt);
+	}
+
+	init_param.sensor_size = cxt->req_param.req_size;
 	init_param.frame_size = cxt->req_param.req_size;
-	CMR_LOGD("frame size %d %d, frame total %d\n",
+	CMR_LOGD("frame size (%d %d) frame total %d\n",
 		init_param.frame_size.width, init_param.frame_size.height, new_req->frame_total);
 
 	ret = cmr_ips_init_req(cxt->ips_handle, new_req, &init_param, snp_ips_req_callback);
@@ -1289,6 +1339,7 @@ cmr_int snp_ips_jpeg_enc_done(struct snp_context *cxt,
 
 cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    cmr_u32 req_cnt;
     cmr_handle snp_handle = (cmr_handle)p_data;
     struct snp_context *cxt = (struct snp_context *)snp_handle;
 
@@ -1345,7 +1396,8 @@ cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
 
     case SNP_EVT_MAIN_PREBUFS:
         CMR_LOGD("prepare for next snap buffers\n");
-        snp_ips_balance_bufs(cxt, 3);
+        req_cnt = 3;
+        snp_ips_balance_bufs(cxt, &req_cnt);
         break;
 
     default:
@@ -2754,12 +2806,12 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
     sem_wait(&cxt->jpeg_sync_sm);
     ATRACE_END();
 
-    CMR_LOGD("cxt->req_param.is_zsl_snapshot=%d",
-             cxt->req_param.is_zsl_snapshot);
-    CMR_LOGD("cxt->req_param.is_3dnr %d", cxt->req_param.is_3dnr);
+    CMR_LOGD("cxt->req_param.is_zsl_snapshot=%d, 3dnr type %d",
+             cxt->req_param.is_zsl_snapshot, cxt->req_param.is_3dnr);
     if (cxt->req_param.is_zsl_snapshot) {
-       if (cxt->req_param.is_3dnr == 1  ||
-            cxt->req_param.is_3dnr == 5 ||cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+       if (cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+            cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+            cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
                 CMR_LOGI(
                     "send 3dnr SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF here");
                 snp_send_msg_notify_thr(
@@ -6053,7 +6105,6 @@ cmr_int cmr_snapshot_deinit(cmr_handle snapshot_handle) {
         cxt->ips_handle = NULL;
     }
     deinit_buffer_q(&cxt->buf_queue, &cxt->mem_ops);
-    deinit_buffer_q(&cxt->thumb_buf_queue, &cxt->mem_ops);
 
     ret = snp_destroy_thread(snapshot_handle);
     if (ret) {
@@ -6101,23 +6152,11 @@ cmr_int cmr_snapshot_prepare(
 	}
 
 	if (cxt->buf_queue.max == 0) {
-		ret = init_buffer_q(&cxt->buf_queue, 20, 0);
+		ret = init_buffer_q(&cxt->buf_queue, 32, 0);
 		if (ret) {
 			CMR_LOGE("fail to init buffer q\n");
 			cmr_ips_deinit(cxt->ips_handle);
 			sem_destroy(&cxt->ips_sem);
-			cxt->ips_handle = NULL;
-			return CMR_CAMERA_FAIL;
-		}
-	}
-
-	if (cxt->thumb_buf_queue.max == 0) {
-		ret = init_buffer_q(&cxt->thumb_buf_queue, 2, 0);
-		if (ret) {
-			CMR_LOGE("fail to init buffer q\n");
-			cmr_ips_deinit(cxt->ips_handle);
-			sem_destroy(&cxt->ips_sem);
-			deinit_buffer_q(&cxt->buf_queue, &cxt->mem_ops);
 			cxt->ips_handle = NULL;
 			return CMR_CAMERA_FAIL;
 		}
@@ -6137,35 +6176,30 @@ cmr_int cmr_snapshot_prepare(
 
 	thumb_size = param->jpeg_setting.thum_size.width * param->jpeg_setting.thum_size.height * 3 / 2;
 	buf_size = param->req_size.width * param->req_size.height * 3 / 2;
-	buf_size += thumb_size;
-
-	CMR_LOGD("buf size %d, req size (%d %d), thumb size (%d %d)\n",
-		buf_size, param->req_size.width,  param->req_size.height,
+	CMR_LOGD("req size (%d %d), thumb size (%d %d), \n",
+		param->req_size.width,  param->req_size.height,
 		param->jpeg_setting.thum_size.width, param->jpeg_setting.thum_size.height);
 
 	if (cxt->buf_queue.free_cnt) {
 		//balance bufQ,  free all buffers (size < yuv_buf_size)
 		free_cnt = cxt->buf_queue.free_cnt;
 		CMR_LOGD("should free buf cnt %d\n", free_cnt);
-		dec_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size - 1, &free_cnt);
+		dec_buffer_q(&cxt->buf_queue, &cxt->mem_ops, (1 << 28), &free_cnt);
 	}
 
-	if (cxt->thumb_buf_queue.free_cnt) {
-		//balance bufQ,  free all buffers (size < thumb_size)
-		free_cnt = cxt->thumb_buf_queue.free_cnt;
-		CMR_LOGD("should free buf cnt %d\n", free_cnt);
-		dec_buffer_q(&cxt->thumb_buf_queue, &cxt->mem_ops, thumb_size - 1, &free_cnt);
-	}
+	cxt->size_mfnr_aux.width = 0;
+	cxt->size_mfnr_aux.height = 0;
 
-	while (cxt->buf_queue.free_cnt  < 3) {
-		free_cnt = 3 - cxt->buf_queue.free_cnt;
-		ret = inc_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size, &free_cnt);
+	while (cxt->buf_queue.free_cnt  < 5) {
+		free_cnt = 5 - cxt->buf_queue.free_cnt;
+		ret = inc_gbuffer_q(&cxt->buf_queue, &cxt->mem_ops,
+				param->req_size.width, param->req_size.height, &free_cnt);
 		CMR_LOGI("yuv/jpeg buffer inc, ret %ld, cnt %d\n", ret, free_cnt);
 	}
 
-	/* alloc one small buffer for thumbnail rot/flip if needed */
-	free_cnt = 4;
-	ret = inc_buffer_q(&cxt->thumb_buf_queue, &cxt->mem_ops, thumb_size, &free_cnt);
+	/* alloc small buffer for thumbnail rot/flip */
+	free_cnt = 8;
+	ret = inc_buffer_q(&cxt->buf_queue, &cxt->mem_ops, thumb_size, &free_cnt);
 
 	CMR_LOGD("X. free buf cnt %d\n", cxt->buf_queue.free_cnt);
 	return ret;
@@ -6179,13 +6213,6 @@ ips_disable:
 			free_cnt = cxt->buf_queue.free_cnt;
 			CMR_LOGD("should free buf cnt %d\n", free_cnt);
 			dec_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size - 1, &free_cnt);
-		}
-		if (cxt->thumb_buf_queue.free_cnt) {
-			//balance bufQ,  free all buffers (size < yuv_buf_size)
-			buf_size = 10240 * 10240 *3;
-			free_cnt = cxt->thumb_buf_queue.free_cnt;
-			CMR_LOGD("should free buf cnt %d\n", free_cnt);
-			dec_buffer_q(&cxt->thumb_buf_queue, &cxt->mem_ops, buf_size - 1, &free_cnt);
 		}
 	}
 	cxt->zsl_ips_en = 0;

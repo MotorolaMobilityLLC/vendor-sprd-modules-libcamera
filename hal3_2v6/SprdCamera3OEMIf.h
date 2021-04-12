@@ -106,6 +106,11 @@ typedef struct sprd_camera_memory {
     void *handle;
     void *data;
     bool busy_flag;
+
+    /* for graphic buffer */
+    const native_handle_t *native_handle;
+    sp<GraphicBuffer> graphicBuffer;
+    void *graphicBuffer_handle;
 } sprd_camera_memory_t;
 
 typedef struct {
@@ -625,6 +630,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                            cmr_u32 cached, cmr_u32 size, cmr_u32 *num_ptr,
                                            cmr_uint *phy_addr,
                                            cmr_uint *vir_addr, cmr_s32 *fd);
+    int Graphic_Malloc(enum camera_mem_cb_type type,
+                                           cmr_u32 cached, cmr_u32 *size_ptr, cmr_u32 *num_ptr,
+                                           cmr_uint *phy_addr,
+                                           cmr_uint *vir_addr, cmr_s32 *fd,
+                                           void **handle, cmr_u32 width, cmr_u32 height);
+
     static int Callback_Free(enum camera_mem_cb_type type, cmr_uint *phy_addr,
                              cmr_uint *vir_addr, cmr_s32 *fd, cmr_u32 sum,
                              void *private_data);

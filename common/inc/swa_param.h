@@ -358,6 +358,7 @@ struct swa_frame_param {
 	struct isp_ynrs_info ynrs_info;
 	struct isp_cnr2_info cnr2_info;
 	struct isp_sw_cnr3_info cnr3_info;
+	struct isp_mfnr_info mfnr_param;
 	struct isp_dre_level dre_param;
 	struct isp_dre_pro_level dre_pro_param;
 	struct isp_face_area face_param;

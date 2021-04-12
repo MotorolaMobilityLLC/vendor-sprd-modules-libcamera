@@ -12,6 +12,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/ \
     $(LIBCAMERA_DIR)/common/inc \
     $(LIBCAMERA_DIR)/arithmetic/inc \
     $(LIBCAMERA_DIR)/arithmetic/libdre/inc \
+    $(LIBCAMERA_DIR)/arithmetic/libdrepro/inc \
     $(LIBCAMERA_DIR)/arithmetic/libcnr/inc \
     $(LIBCAMERA_DIR)/arithmetic/libmfnr/blacksesame/inc \
     $(LIBCAMERA_DIR)/arithmetic/sprdface/inc \
@@ -50,6 +51,14 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_DRE_CAPTURE)),true)
 LOCAL_SHARED_LIBRARIES += libsprddre libsprddreadapter
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_DRE_PRO_CAPTURE)),true)
+LOCAL_SHARED_LIBRARIES += libsprddrepro libsprddreproadapter
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
+LOCAL_SHARED_LIBRARIES += libSprdMfnrAdapter libmfnr libui libEGL libGLESv2
 endif
 
 LOCAL_MODULE := libcam_ipmpro

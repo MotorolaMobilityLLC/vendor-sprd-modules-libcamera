@@ -70,6 +70,7 @@ struct swa_frame {
 	uint32_t fmt;
 	uint32_t buf_size;
 	int32_t fd;
+	void *gpu_handle;
 	uintptr_t addr_vir[3];
 	uintptr_t addr_phy[3];
 	struct pic_rect rect;
