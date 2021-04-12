@@ -1,6 +1,6 @@
 #ifndef AWBLIB_H_
 #define AWBLIB_H_
-
+#define FA_SHAPE_POINTNUM 7
 
 #ifndef WIN32
 typedef long long __int64;
@@ -61,6 +61,8 @@ struct awb_face_3_0
 	unsigned int end_y;
 	unsigned int pose; /* face pose: frontal, half-profile, full-profile */
 	unsigned int score;
+	int data[FA_SHAPE_POINTNUM * 2];
+	unsigned int fascore;
 };
 //Face info
 struct awb_face_info_3_0
