@@ -668,6 +668,7 @@ struct img_frm {
     struct img_addr addr_phy;
     struct img_addr addr_vir;
     cmr_s32 fd;
+    void *gpu_handle;
     struct img_data_end data_end;
     cmr_u32 format_pattern;
     void *reserved;

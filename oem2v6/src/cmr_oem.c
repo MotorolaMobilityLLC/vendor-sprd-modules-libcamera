@@ -2017,6 +2017,24 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 			cxt->snp_cxt.hdr_ev[0], cxt->snp_cxt.hdr_ev[1], cxt->snp_cxt.hdr_ev[2]);
 	}
 
+	/* get MFNR param */
+	if ((cxt->snp_cxt.snap_cnt == 0) &&
+		((cxt->snp_cxt.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) ||
+		(cxt->snp_cxt.sprd_3dnr_type == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW))) {
+		ret = camera_isp_ioctl(cxt, COM_ISP_GET_MFNR_PARAM, &isp_param);
+		if (!ret) {
+			memcpy(&frm_param->mfnr_param, &isp_param.mfnr_param, sizeof(struct isp_mfnr_info));
+		} else {
+			ret = camera_isp_ioctl(cxt, COM_ISP_GET_SW3DNR_PARAM, &isp_param);
+			if (!ret) {
+				memcpy(&frm_param->mfnr_param, &isp_param.threednr_param, sizeof(struct isp_mfnr_info));
+			} else {
+				CMR_LOGW("get MFNR/SW3DNR param null\n");
+				memset(&frm_param->mfnr_param, 0, sizeof(struct isp_mfnr_info));
+			}
+		}
+	}
+
 	if (cxt->snp_cxt.fb_on == 0) {
 		frm_param->fb_info.bypass = 1;
 		goto exit;
@@ -2077,19 +2095,18 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 	struct swa_frame_param *frm_param = NULL;
 
 	memset(&isp_param, 0, sizeof(struct common_isp_cmd_param));
-
-	CMR_LOGI("zsl_ips_en get frame No.%d, fd=0x%x, vaddr 0x%08x\n",
-		cxt->snp_cxt.snap_cnt, frm->fd, (cmr_u32)frm->yaddr_vir);
-	cxt->snp_cxt.snap_cnt++;
-
 	frm_param = (struct swa_frame_param *)malloc(sizeof(struct swa_frame_param));
 	if (frm_param == NULL) {
 		CMR_LOGE("fail to malloc mem for frame params\n");
 	} else {
 		camera_ips_get_params(cxt, frm_param);
 	}
-	CMR_LOGD("frame %d, param %p\n", frm->frame_real_id, frm_param);
 
+	CMR_LOGD("frame No.%d, fd=0x%x, vaddr 0x%lx, fid %d, param %p\n",
+		cxt->snp_cxt.snap_cnt, frm->fd, (cmr_u32)frm->yaddr_vir,
+		frm->frame_real_id, frm_param);
+
+	cxt->snp_cxt.snap_cnt++;
 	frm->zsl_private = (cmr_uint)frm_param;
 	if (cxt->snp_cxt.snap_cnt >= cxt->snp_cxt.total_num) {
 		ret = cmr_grab_stop_capture(cxt->grab_cxt.grab_handle);
@@ -2230,7 +2247,7 @@ void camera_send_channel_data(cmr_handle oem_handle, cmr_handle receiver_handle,
                 CMR_LOGE("failed");
             }
         } else if (cxt->zsl_ips_en) {
-		ret = camera_ips_proc(cxt, frm_ptr);
+            ret = camera_ips_proc(cxt, frm_ptr);
 
         } else {
             if (cxt->snp_cxt.zsl_frame) {
@@ -13582,13 +13599,17 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     cxt->snp_cxt.snap_cnt = 0;
     if (req) {
         if (snp_param.is_hdr) {
-           snp_param.total_num = 3;
+            snp_param.total_num = 3;
             cxt->snp_cxt.total_num = 3;
+        } else if (snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+                snp_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+            snp_param.total_num = 5;
+            cxt->snp_cxt.total_num = 5;
         }
         snp_param.request_id = req->request_id;
         snp_param.zsl_snap_time = req->zsl_snap_time;
-        CMR_LOGD("ips request id %d, hdr %d, frame_num %d\n",
-            req->request_id, snp_param.is_hdr, snp_param.total_num);
+        CMR_LOGD("ips request id %d, hdr %d, 3dnr %d, frame_num %d\n",
+            req->request_id, snp_param.is_hdr, snp_param.is_3dnr, snp_param.total_num);
     }
     show_snap_param(&snp_param);
 

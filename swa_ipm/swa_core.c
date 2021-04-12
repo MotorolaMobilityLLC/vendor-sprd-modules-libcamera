@@ -17,6 +17,7 @@
 
 #include "sprd_camalg_adapter.h"
 #include "sprd_hdr_adapter.h"
+#include "mfnr_adapt_interface.h"
 #include "sprd_yuv_denoise_adapter.h"
 #include "sprd_dre_adapter.h"
 #include "sprd_facebeauty_adapter.h"
@@ -216,6 +217,219 @@ int swa_hdr_close(void * ipmpro_hanlde,
 }
 #endif
 #endif
+
+
+
+#ifdef CONFIG_CAMERA_3DNR_CAPTURE
+
+struct mfnr_context_t {
+	uint32_t frame_num;
+	uint32_t pic_w;
+	uint32_t pic_h;
+	uint32_t small_w;
+	uint32_t small_h;
+	sprd_camalg_device_type run_type;
+	void * mfnr_handle;
+};
+
+struct mfnr_fixed_params {
+	cmr_s32 threshold[4][6];
+	cmr_s32 slope[4][6];
+	cmr_s32 gain_thr[6];
+};
+
+static struct mfnr_fixed_params default_mfnr_param = {
+	{{3, 4, 6, 9, 9, 9}, {3, 5, 6, 9, 9, 9}, {3, 5, 6, 9, 9, 9}, {2, 6, 7, 9, 9, 9}}, /* threshold[4][6]; */
+	{{5, 6, 7, 9, 9, 9}, {5, 6, 7, 9, 9, 9}, {5, 6, 7, 9, 9, 9}, {5, 6, 6, 9, 9, 9}}, /* slope[4][6]; */
+	{6, 12, 18, 24, 30, 36}, /* gain_thr[6]; */
+};
+static int slope_tmp[6] = { 4, 4, 4, 4, 4, 4 };
+static int sigma_tmp[6] = { 4, 4, 4, 4, 4, 4 };
+
+static struct isp_mfnr_info default_mfnr_tuning_param = {
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	11, 11, /* searchWindow_x, searchWindow_y, */
+	-1, /*  recur_str */
+	0, 12, /* match_ratio_sad, match_ratio_pro */
+	100, /* feat_thr */
+	6, /* zone_size */
+	665, 410, /* luma_ratio_high, luma_ratio_low */
+	{ 0 }
+};
+
+
+int swa_mfnr_get_handle_size()
+{
+	return sizeof(struct mfnr_context_t);
+}
+
+int swa_mfnr_open(void *ipmpro_hanlde,
+			void * open_param, enum swa_log_level log_level)
+{
+	int ret = 0;
+	uint32_t valid_param = 0;
+	struct mfnr_context_t *cxt = (struct mfnr_context_t *)ipmpro_hanlde;
+	struct swa_init_data *init_param = (struct swa_init_data *)open_param;
+	struct isp_mfnr_info *mfnr_param = NULL;
+	mfnr_param_info_t param;
+	mfnr_cmd_proc_t proc_data;
+	mfnr_setparam_cmd_param_t *dst;
+
+	if (!cxt || !init_param) {
+		SWA_LOGE("fail to get input ptr %p %p\n", cxt, init_param);
+		return -1;
+	}
+
+	cxt->pic_w = init_param->frame_size.width;
+	cxt->pic_h = init_param->frame_size.height;
+	cxt->small_w = init_param->frame_crop.width;
+	cxt->small_h = init_param->frame_crop.height;
+	cxt->frame_num = init_param->frm_total_num;
+
+	memset(&param, 0, sizeof(mfnr_param_info_t));
+	param.orig_width = cxt->pic_w;
+	param.orig_height = cxt->pic_h;
+	param.small_width = cxt->small_w;
+	param.small_height = cxt->small_h;
+	param.total_frame_num = cxt->frame_num;
+	param.poutimg = NULL;
+	param.gain = init_param->ae_again;
+	param.low_thr = 100;
+	param.ratio = 2;
+	param.sigma_tmp = sigma_tmp;
+	param.slope_tmp = slope_tmp;
+	param.yuv_mode = 1;   // NV21
+	param.control_en = 0x0;
+	param.thread_num_acc = 4;
+	param.thread_num = 4;
+	param.preview_cpyBuf = 1;
+	param.threthold = default_mfnr_param.threshold;
+	param.slope = default_mfnr_param.slope;
+	memcpy(param.gain_thr, default_mfnr_param.gain_thr, sizeof(param.gain_thr));
+	param.productInfo = PLATFORM_ID;
+
+	mfnr_param = (struct isp_mfnr_info *)init_param->pri_data;
+	valid_param = mfnr_param->searchWindow_x | mfnr_param->searchWindow_x;
+	valid_param |= mfnr_param->match_ratio_pro | mfnr_param->match_ratio_sad;
+	valid_param |= mfnr_param->recur_str | mfnr_param->feat_thr | mfnr_param->zone_size;
+	valid_param |= mfnr_param->luma_ratio_high | mfnr_param->luma_ratio_low;
+	if (!valid_param) {
+		SWA_LOGW("warning: no valid mfnr tuning param. will set default\n");
+		memcpy(mfnr_param, &default_mfnr_tuning_param, sizeof(struct isp_mfnr_info));
+	}
+
+	param.SearchWindow_x = mfnr_param->searchWindow_x;
+	param.SearchWindow_y = mfnr_param->searchWindow_y;
+	param.recur_str = mfnr_param->recur_str;
+	param.match_ratio_sad = mfnr_param->match_ratio_sad;
+	param.match_ratio_pro = mfnr_param->match_ratio_pro;
+	param.feat_thr = mfnr_param->feat_thr;
+	param.luma_ratio_high = mfnr_param->luma_ratio_high;
+	param.luma_ratio_low = mfnr_param->luma_ratio_low;
+	param.zone_size = mfnr_param->zone_size;
+	memcpy(param.reserverd, mfnr_param->reserverd, sizeof(param.reserverd));
+
+	ret = sprd_mfnr_adpt_init(&cxt->mfnr_handle,  &param, NULL);
+	if (ret) {
+		SWA_LOGE("fail to init mfnr\n");
+		return -1;
+	}
+
+	ret = sprd_mfnr_get_devicetype(&cxt->run_type);
+	SWA_LOGD("mfnr handle %p, run_type %d\n", cxt->mfnr_handle, cxt->run_type);
+
+	dst = &proc_data.proc_param.setpara_param;
+	memcpy(dst->thr, mfnr_param->threshold, sizeof(dst->thr));
+	memcpy(dst->slp, mfnr_param->slope, sizeof(dst->slp));
+	ret = sprd_mfnr_adpt_ctrl(cxt->mfnr_handle,
+				SPRD_MFNR_PROC_SET_PARAMS_CMD,
+				(void *)&proc_data);
+	if(ret) {
+		SWA_LOGE("failed to set 3dnr init params. ret = %d", ret);
+		ret |= sprd_mfnr_adpt_deinit(&cxt->mfnr_handle);
+	}
+
+	return ret;
+}
+
+int swa_mfnr_process(void * ipmpro_hanlde,
+			struct swa_frames_inout *in,
+			struct swa_frames_inout *out,
+			void * param)
+{
+	int ret = 0, offset, i;
+	struct mfnr_context_t *cxt = NULL;
+	struct swa_frame *frm_in, *frm_out;
+	mfnr_buffer_t small_image, big_image;
+	mfnr_cap_gpu_buffer_t orig_image;
+	mfnr_cmd_proc_t process_param;
+
+	if (ipmpro_hanlde == NULL || in == NULL) {
+		SWA_LOGE("fail to get input %p %p\n", ipmpro_hanlde, in);
+		return -1;
+	}
+
+	cxt = (struct mfnr_context_t *)ipmpro_hanlde;
+	frm_in = &in->frms[1];
+	small_image.cpu_buffer.bufferY = (uint8_t *)frm_in->addr_vir[0];
+	small_image.cpu_buffer.bufferU = (uint8_t *)frm_in->addr_vir[1];
+	small_image.cpu_buffer.bufferV = small_image.cpu_buffer.bufferU;
+	small_image.cpu_buffer.fd = (int32_t)frm_in->fd;
+	frm_in = &in->frms[0];
+	SWA_LOGD("buf fd=0x%x, vaddr_y 0x%lx, sbuf fd=0x%x, addr %p %p %p\n",
+		frm_in->fd, frm_in->addr_vir[0],
+		small_image.cpu_buffer.fd, small_image.cpu_buffer.bufferY,
+		small_image.cpu_buffer.bufferU, small_image.cpu_buffer.bufferV);
+	if(cxt->run_type != SPRD_CAMALG_RUN_TYPE_VDSP) {
+		orig_image.gpuHandle = frm_in->gpu_handle;
+		orig_image.bufferY = (uint8_t *)frm_in->addr_vir[0];
+		orig_image.bufferU = (uint8_t *)frm_in->addr_vir[1];
+		orig_image.bufferV = orig_image.bufferU;
+		process_param.proc_param.cap_new_param.small_image = &small_image;
+		process_param.proc_param.cap_new_param.orig_image = &orig_image;
+		process_param.callWay = 1;
+	} else {
+		big_image.cpu_buffer.bufferY = (uint8_t *)frm_in->addr_vir[0];
+		big_image.cpu_buffer.bufferU = (uint8_t *)frm_in->addr_vir[1];
+		big_image.cpu_buffer.bufferV = big_image.cpu_buffer.bufferU;
+		big_image.cpu_buffer.fd = (int32_t)frm_in->fd;
+		process_param.proc_param.cap_param.small_image = &small_image;
+		process_param.proc_param.cap_param.orig_image = &big_image;
+		process_param.callWay = 0;
+	}
+
+	ret = sprd_mfnr_adpt_ctrl(cxt->mfnr_handle,
+				SPRD_MFNR_PROC_CAPTURE_CMD,
+				(void *)&process_param);
+	if (ret )
+		SWA_LOGE("Fail to call mfnr process capture, ret =%d",ret);
+
+	return ret;
+}
+
+
+int swa_mfnr_close(void * ipmpro_hanlde,
+			void * close_param)
+{
+	int ret = 0;
+	struct mfnr_context_t *cxt = (struct mfnr_context_t *)ipmpro_hanlde;
+
+	if (ipmpro_hanlde == NULL)
+		return -1;
+
+	SWA_LOGD("mfnr handle %p\n", cxt->mfnr_handle);
+	if (cxt->mfnr_handle == NULL)
+		return ret;
+
+	ret = sprd_mfnr_adpt_deinit(&cxt->mfnr_handle);
+	SWA_LOGD("Done. ret %d, handle %p\n", ret, cxt->mfnr_handle);
+	cxt->mfnr_handle = NULL;
+	return ret;
+}
+#endif
+
+
 
 
 #ifdef CONFIG_CAMERA_CNR
