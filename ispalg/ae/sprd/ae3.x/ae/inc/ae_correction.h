@@ -200,6 +200,7 @@ struct ae_lib_calc_out  {
 	cmr_u32 flash_status;
 	cmr_s8 touch_status;
 	float cur_fps;				/*current fps:1~120 */
+	float cur_effect_fps;
 	cmr_u16 abl_confidence;
 	cmr_s32 evd_value;
 	struct ae_ev_setting_param ev_setting;
