@@ -38,6 +38,7 @@ typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *para
 //#define ISP_AI_AE_STAT_SIZE (16384) /*128*128*/
 #define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
 #define CNR3_LAYER_NUM 5
+#define FA_SHAPE_POINTNUM 7
 
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
@@ -793,6 +794,8 @@ struct isp_face_info {
 	cmr_s32 roll_angle;
 	cmr_u32 score;
 	cmr_u32 id;
+	int data[FA_SHAPE_POINTNUM * 2];
+	cmr_u32 fascore;
 };
 
 struct isp_face_area {

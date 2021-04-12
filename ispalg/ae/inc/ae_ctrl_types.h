@@ -28,6 +28,7 @@ extern "C" {
 #define AE_TBL_MAX_INDEX 256
 #define AE_FD_NUM 20
 #define AE_FLASH_MAX_CELL	40
+#define FA_SHAPE_POINTNUM 7
 
 	enum ae_level {
 		AE_LEVEL0 = 0x00,
@@ -574,6 +575,8 @@ extern "C" {
 		cmr_s32 angle;
 		cmr_s32 yaw_angle;
 		cmr_s32 roll_angle;
+		int data[FA_SHAPE_POINTNUM * 2];
+		cmr_s32 fascore;
 	};
 
 	struct ae_fd_param {
