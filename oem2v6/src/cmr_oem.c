@@ -3064,6 +3064,101 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
     }
 }
 
+static void camera_facealign_conversion(cmr_handle oem_handle,
+                                struct camera_frame_type *frame_param,
+                                struct isp_face_area *face_area,
+                                struct sprd_img_path_rect *sn_trim) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    cmr_s32 i = 0;
+    for (i = 0; i < 1; i++) {
+        float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+              zoomHeight = 0;
+        struct sprd_img_rect scalerCrop;
+
+        scalerCrop.x = sn_trim->trim_valid_rect.x;
+        scalerCrop.y = sn_trim->trim_valid_rect.y;
+        scalerCrop.w = sn_trim->trim_valid_rect.w;
+        scalerCrop.h = sn_trim->trim_valid_rect.h;
+
+        /* for crop region center not at sensor center */
+        struct setting_cmd_parameter setting_param;
+        int ret = 0, tag;
+
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        tag = cxt->is_ultra_wide ? SETTING_GET_REPROCESS_ZOOM_RATIO
+                                 : SETTING_GET_ZOOM_PARAM;
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle, tag,
+                                &setting_param);
+        if (ret) {
+            CMR_LOGW("failed to get zoom param %ld", ret);
+        } else {
+            struct zoom_info *info = &setting_param.zoom_param.zoom_info;
+            struct img_rect *rect = &info->crop_region;
+
+            /* hal_param is bzero-ed on init, this check should be enough...
+             */
+            if (rect->start_x || rect->start_y || rect->width ||
+                rect->height) {
+                struct img_rect src, dst;
+
+                src.start_x = 0;
+                src.start_y = 0;
+                src.width = face_area->frame_width;
+                src.height = face_area->frame_height;
+
+                dst = camera_apply_rect_and_ratio(
+                    info->pixel_size, info->crop_region, src,
+                    (float)src.width / (float)src.height);
+
+                CMR_LOGV("fix rect from %u %u %u %u to %u %u %u %u",
+                         scalerCrop.x, scalerCrop.y, scalerCrop.w,
+                         scalerCrop.h, dst.start_x, dst.start_y, dst.width,
+                         dst.height);
+
+                scalerCrop.x = dst.start_x;
+                scalerCrop.y = dst.start_y;
+                scalerCrop.w = dst.width;
+                scalerCrop.h = dst.height;
+            }
+        }
+
+        float previewAspect = (float)frame_param->width / frame_param->height;
+        float cropAspect = (float)scalerCrop.w / scalerCrop.h;
+        if (previewAspect > cropAspect) {
+            width = scalerCrop.w;
+            height = scalerCrop.w / previewAspect;
+            left = scalerCrop.x;
+            top = scalerCrop.y + (scalerCrop.h - height) / 2;
+        } else {
+            width = previewAspect * scalerCrop.h;
+            height = scalerCrop.h;
+            left = scalerCrop.x + (scalerCrop.w - width) / 2;
+            top = scalerCrop.y;
+        }
+        zoomWidth = width / (float)frame_param->width;
+        zoomHeight = height / (float)frame_param->height;
+
+        CMR_LOGV("zoomWidth %f zoomHeight %f  left %f  top %f", zoomWidth, zoomHeight, left, top);
+        CMR_LOGV("frame_param->width x height: %f x %f",(float)frame_param->width, (float)frame_param->height);
+        CMR_LOGV("scalerCrop.w x h: %f x %f",(float)scalerCrop.w, (float)scalerCrop.h);
+
+        face_area->face_info[i].fascore = frame_param->face_info[i].fascore;
+        for(int j = 0; j < FA_SHAPE_POINTNUM * 2; j += 2) {
+            face_area->face_info[i].data[j] = (int)((float)(frame_param->face_info[i].data[j]) * zoomWidth + left);
+        }
+        for(int j = 1; j < FA_SHAPE_POINTNUM * 2; j += 2) {
+            face_area->face_info[i].data[j] = (int)((float)(frame_param->face_info[i].data[j]) * zoomHeight + top);
+        }
+
+        for(int j=0; j < FA_SHAPE_POINTNUM * 2; j++) {
+            CMR_LOGD("toispface%d: fa_shape.data point %d = %d", i, j, face_area->face_info[i].data[j]);
+        }
+        CMR_LOGD("toispface%d: fa_shape.fascore = %d", i, face_area->face_info[i].fascore);
+    }
+}
+
 static void camera_cfg_face_roi(cmr_handle oem_handle,
                                 struct camera_frame_type *frame_param,
                                 struct isp_face_area *face_area,
@@ -3400,6 +3495,9 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
                 face_area.face_num = face_info_max_num;
             }
 
+            if(face_area.face_num) {
+                camera_facealign_conversion(cxt, frame_param, &face_area, &sn_trim);
+            }
             camera_cfg_face_roi(cxt, frame_param, &face_area, &sn_trim);
             /* SS requires to disable FD when HDR is on */
             if (CAM_IMG_FMT_BAYER_MIPI_RAW ==

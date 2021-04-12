@@ -16424,6 +16424,15 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             cb_param->face_area.range[i].blink_level;
         frame_type.face_info[i].gender_age_race =
             cb_param->face_area.range[i].gender_age_race;
+
+        memcpy(&(frame_type.face_info[i].data), &(cb_param->face_area.range[i].data),
+               sizeof(cb_param->face_area.range[i].data));
+        frame_type.face_info[i].fascore = cb_param->face_area.range[i].fascore;
+
+        for(int j = 0; j < FA_SHAPE_POINTNUM * 2; j++) {
+            CMR_LOGV("cbface%d: fa_shape.data point %d = %d", i, j, frame_type.face_info[i].data[j]);
+        }
+        CMR_LOGV("cbface%d: fa_shape.fascore = %d", i, frame_type.face_info[i].fascore);
     }
 
     CMR_LOGD(" frame_type.timestamp:%lld   frame_type.face_num  :%u,  "
