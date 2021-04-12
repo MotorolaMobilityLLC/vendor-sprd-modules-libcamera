@@ -74,6 +74,7 @@ extern "C" {
 		AE_SET_NIGHT_MODE,
 		AE_SET_FORCE_QUICK_MODE,
 		AE_SET_MANUAL_MODE,
+		AE_SET_MODE_PARAMS,
 		AE_SET_EXP_TIME,
 		AE_SET_SENSITIVITY,
 		AE_SET_DC_DV,
@@ -590,7 +591,12 @@ extern "C" {
 		cmr_u16 face_num;
 		struct ae_face face_area[AE_FD_NUM];
 	};
-
+	struct cts_ae_params{
+		cmr_u32 exp_time;
+		cmr_u32 sensitivity;
+		cmr_u32 ae_mode;/*0:auto 1:shutter&&iso 2:shutter first 3:iso first*/
+		cmr_s32 frame_number;
+	};
 	struct ae_hdr_param {
 		cmr_u32 hdr_enable;
 		cmr_u32 ev_effect_valid_num;
