@@ -139,6 +139,7 @@ struct ae_adv_param {
 	cmr_u8 mv_value;
 	cmr_u32 cur_lum;
 	void *smart_gamma_param;/*smart out gamma param*/
+	cmr_u32 touch_hold_flag;
 };
 
 struct ae_lib_calc_in {

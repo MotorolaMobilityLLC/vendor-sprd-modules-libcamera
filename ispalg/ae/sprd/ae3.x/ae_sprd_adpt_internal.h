@@ -484,6 +484,11 @@ extern "C" {
 
 		cmr_u32 end_id;
 		cmr_s32 fd_on_off;
+		/*touch flash hold */
+		cmr_u32 touch_hold_cnt;
+		cmr_u32 touch_hold_flag;
+		struct ae_trim touch_hold_roi;	/*touch ROI*/
+		/*touch flash hold */
 	};
 #ifdef __cplusplus
 }
