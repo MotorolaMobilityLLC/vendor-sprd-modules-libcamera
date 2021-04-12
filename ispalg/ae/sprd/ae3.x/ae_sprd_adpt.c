@@ -943,6 +943,16 @@ static cmr_s32 ae_write_to_sensor_sync_mapping(struct ae_ctrl_cxt *cxt, struct a
 	}else 
 		ISP_LOGV("sync:not all sensor work");
 
+	cxt->cur_status.mode = in_param.mode;
+	cxt->cur_status.num = 2;
+	cxt->cur_status.ae_sync_type = in_param.ae_sync_type;
+	cxt->cur_status.bmk_cam_id = in_param.bmk_cam_id;
+	cxt->cur_status.tar_cam_id = in_param.tar_cam_id;
+	cxt->cur_status.exp_time = in_param.sync_param[cxt->sync_state.next_id]->ev_setting.exp_time;
+	cxt->cur_status.ae_gain = in_param.sync_param[cxt->sync_state.next_id]->ev_setting.ae_gain;
+
+	ISP_LOGD("mode %d, sync_type %d, bmk_id %d, tar_id %d\n", cxt->cur_status.mode, cxt->cur_status.ae_sync_type, cxt->cur_status.bmk_cam_id, cxt->cur_status.tar_cam_id);
+	
 	return ISP_SUCCESS;
 }
 
@@ -6289,6 +6299,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.aem_roi.end_y = ae_win_info.offset_y + ae_win_info.blk_num_y*ae_win_info.blk_size_y;
 	cxt->cur_status.adv_param.data.stats_data_adv.blk_size.w = ae_win_info.blk_size_x;
 	cxt->cur_status.adv_param.data.stats_data_adv.blk_size.h = ae_win_info.blk_size_y;
+	cxt->cur_status.cam_id = cxt->camera_id;
 
 	/*get ae sync data for ISP_ALG_TRIBLE_W_T_UW mode*/
 	if (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW) {
@@ -6592,7 +6603,14 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			ae_write_to_sensor_normal_mapping(cxt, &cxt->exp_data);
 			slave_sensor_active = 0;
 			sync_finish = 0;
-		}else {
+			cxt->cur_status.mode = AE_SYNC_1;
+			cxt->cur_status.num = 1;
+			cxt->cur_status.ae_sync_type = 0;
+			cxt->cur_status.bmk_cam_id = cxt->sync_state.ref_id;
+			cxt->cur_status.tar_cam_id = cxt->sync_state.next_id;
+			cxt->cur_status.exp_time = 0;
+			cxt->cur_status.ae_gain = 0;
+		} else {
 			if(cxt->sync_state.ref_id == cxt->camera_id) {
 				if(1 == slave_sensor_active) {
 					ae_update_result_before_mapping(cxt, &cxt->exp_data, 0);
@@ -6602,7 +6620,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 				} else {
 					rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 				}
-			}else if(cxt->sync_state.next_id == cxt->camera_id) {
+			} else if(cxt->sync_state.next_id == cxt->camera_id) {
 				cxt->ptr_isp_br_ioctrl(CAM_SENSOR_SLAVE0, SET_SYNC_SLAVE_AEM_INFO, cxt->sync_aem, NULL);
 				/*save slave lib output to bridge*/
 				struct ae_lib_output_data ae_lib_output;
@@ -6632,6 +6650,13 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 					cxt->ptr_isp_br_ioctrl(cxt->sensor_role, SET_SYNC_SLAVE_ACTUAL_DATA, &ae_sync_actual_output, NULL);
 				}
 				slave_sensor_active = 1;
+				cxt->cur_status.mode = AE_SYNC_1;
+				cxt->cur_status.num = 2;
+				cxt->cur_status.ae_sync_type = 1;
+				cxt->cur_status.bmk_cam_id = cxt->sync_state.ref_id;
+				cxt->cur_status.tar_cam_id = cxt->sync_state.next_id;
+				cxt->cur_status.exp_time = cxt->exp_data.lib_data.exp_time;
+				cxt->cur_status.ae_gain = cxt->exp_data.lib_data.gain;
 			}
 		}
 	}
