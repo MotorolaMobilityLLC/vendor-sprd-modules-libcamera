@@ -57,10 +57,6 @@
 #define CAMERA_OEM_MSG_QUEUE_SIZE 10
 #define CAMERA_RECOVER_CNT 3
 
-#define OEM_HANDLE_HDR 1
-#define OEM_HANDLE_3DNR 1
-#define OEM_HANDLE_FILTER 1
-
 #define CAMERA_PATH_SHARE 1
 #define OEM_RESTART_SUM 2
 #define POWER2(x) (1 << (x))
@@ -403,15 +399,7 @@ camera_copy_sensor_ex_info_to_isp(struct isp_sensor_ex_info *out_isp_sn_ex_info,
                                   cmr_u32 sensor_id);
 static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color,
                                                  cmr_u32 sensor_color);
-static cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle,
-                                           cmr_u32 camera_id,
-                                           struct isp_yimg_info *yimg);
-static cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle,
-                                              cmr_u32 camera_id,
-                                              struct yimg_info *yimg);
-static cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle,
-                                             cmr_u32 camera_id,
-                                             struct yuv_info_t *yuv);
+
 static void camera_filter_doeffect(cmr_handle oem_handle, struct img_frm *src,
                                    cmr_s32 type);
 static void camera_set_exif_exposure_time(cmr_handle oem_handle);
@@ -2508,11 +2496,7 @@ void camera_grab_evt_cb(cmr_int evt, void *data, void *privdata) {
         if (frame->is_4in1_frame && frame->fmt != CAM_IMG_FMT_BAYER_MIPI_RAW) {
             camera_4in1_handle(evt, data, privdata);
         }
-#if defined OEM_HANDLE_HDR || defined OEM_HANDLE_3DNR
         camera_grab_handle(evt, data, privdata);
-#else
-        camera_send_channel_data((cmr_handle)cxt, receiver_handle, evt, data);
-#endif
         break;
     case CMR_GRAB_CANCELED_BUF:
     case CMR_GRAB_TX_ERROR:
@@ -5878,9 +5862,6 @@ cmr_int camera_preview_init(cmr_handle oem_handle) {
     init_param.ops.capture_post_proc = camera_capture_post_proc;
     init_param.ops.sensor_open = camera_open_sensor;
     init_param.ops.sensor_close = camera_close_sensor;
-    init_param.ops.get_isp_yimg = camera_preview_get_isp_yimg;
-    init_param.ops.set_preview_yimg = camera_preview_set_yimg_to_isp;
-    init_param.ops.set_preview_yuv = camera_preview_set_yuv_to_isp;
     init_param.ops.get_sensor_fps_info = camera_get_sensor_fps_info;
     init_param.ops.get_sensor_otp = camera_get_otpinfo;
     init_param.ops.get_buff_handle = camera_get_buff_handle;
@@ -7450,13 +7431,9 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
     CMR_MSG_INIT(message);
 
     CMR_PRINT_TIME;
-#ifdef OEM_HANDLE_HDR
     sem_init(&cxt->hdr_sync_sm, 0, 0);
     sem_init(&cxt->hdr_flag_sm, 0, 1);
-#endif
-#ifdef OEM_HANDLE_3DNR
     sem_init(&cxt->threednr_flag_sm, 0, 1);
-#endif
     sem_init(&cxt->cnr_flag_sm, 0, 1);
     sem_init(&cxt->dre_flag_sm, 0, 1);
     sem_init(&cxt->dre_pro_flag_sm, 0, 1);
@@ -7537,14 +7514,9 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
         }
     }
 
-#ifdef OEM_HANDLE_HDR
     sem_destroy(&cxt->hdr_sync_sm);
     sem_destroy(&cxt->hdr_flag_sm);
-#endif
-
-#ifdef OEM_HANDLE_3DNR
     sem_destroy(&cxt->threednr_flag_sm);
-#endif
     sem_destroy(&cxt->cnr_flag_sm);
     sem_destroy(&cxt->dre_flag_sm);
     sem_destroy(&cxt->ai_scene_flag_sm);
@@ -11125,21 +11097,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         CMR_LOGD("flash mode %d", param_ptr->cmd_value);
         break;
 
-    case COM_ISP_GET_YIMG_INFO:
-        isp_cmd = ISP_CTRL_GET_YIMG_INFO;
-        ptr_flag = 1;
-        isp_param_ptr = (void *)&param_ptr->isp_yimg;
-        break;
-
-    case COM_ISP_SET_PREVIEW_YIMG:
-        isp_cmd = ISP_CTRL_SET_PREV_YIMG;
-        isp_param = param_ptr->cmd_value;
-        break;
-
-    case COM_ISP_SET_PREVIEW_YUV:
-        isp_cmd = ISP_CTRL_SET_PREV_YUV;
-        isp_param = param_ptr->cmd_value;
-        break;
     case COM_ISP_GET_VCM_INFO:
         isp_cmd = ISP_CTRL_GET_AF_POS;
         // isp_param = param_ptr->cmd_value;
@@ -11150,11 +11107,6 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_GET_REBOKEH_DATA;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->relbokeh_info;
-        break;
-    case COM_ISP_SET_PREVIEW_PDAF_RAW:
-        isp_cmd = ISP_CTRL_SET_PREV_PDAF_RAW;
-        ptr_flag = 1;
-        isp_param_ptr = param_ptr->cmd_ptr;
         break;
 
     case COM_ISP_SET_AWB_LOCK_UNLOCK:
@@ -13881,11 +13833,9 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     if (camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
         camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW ) {
-#ifdef OEM_HANDLE_3DNR
         if (0 != cxt->ipm_cxt.frm_num) {
             cxt->ipm_cxt.frm_num = 0;
         }
-#endif
         setting_param.camera_id = cxt->camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
@@ -13962,12 +13912,9 @@ cmr_int camera_local_stop_snapshot(cmr_handle oem_handle) {
     }
 
     if (camera_get_hdr_flag(cxt)) {
-#ifdef OEM_HANDLE_HDR
         if (0 != cxt->ipm_cxt.frm_num) {
             cxt->ipm_cxt.frm_num = 0;
-            //		sem_post(&cxt->hdr_sync_sm);
         }
-#endif
         ret = camera_close_hdr(cxt);
         if (ret) {
             CMR_LOGE("failed to close hdr");
@@ -15305,71 +15252,6 @@ static cmr_uint camera_sensor_color_to_isp_color(cmr_u32 *isp_color,
         break;
     }
     return CMR_CAMERA_SUCCESS;
-}
-
-cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle, cmr_u32 camera_id,
-                                    struct isp_yimg_info *yimg) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct common_isp_cmd_param isp_param;
-
-    if (!oem_handle || NULL == yimg) {
-        CMR_LOGE("in parm error");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
-    isp_param.camera_id = camera_id;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_YIMG_INFO, &isp_param);
-    if (ret) {
-        CMR_LOGE("get isp y stat error %ld", ret);
-        goto exit;
-    }
-    memcpy(yimg, &isp_param.isp_yimg, sizeof(struct isp_yimg_info));
-    CMR_LOGI("%d", isp_param.isp_yimg.lock[0]);
-
-exit:
-    return ret;
-}
-
-cmr_int camera_preview_set_yimg_to_isp(cmr_handle oem_handle, cmr_u32 camera_id,
-                                       struct yimg_info *yimg) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct common_isp_cmd_param isp_param;
-
-    if (!oem_handle || NULL == yimg) {
-        CMR_LOGE("in parm error");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
-    isp_param.camera_id = camera_id;
-    isp_param.cmd_value = (cmr_uint)yimg;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YIMG, &isp_param);
-
-exit:
-    return ret;
-}
-
-cmr_int camera_preview_set_yuv_to_isp(cmr_handle oem_handle, cmr_u32 camera_id,
-                                      struct yuv_info_t *yuv) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)oem_handle;
-    struct common_isp_cmd_param isp_param;
-
-    if (!oem_handle || NULL == yuv) {
-        CMR_LOGE("in parm error");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
-    isp_param.camera_id = camera_id;
-    isp_param.cmd_value = (cmr_uint)yuv;
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_PREVIEW_YUV, &isp_param);
-
-exit:
-    return ret;
 }
 
 cmr_int cmr_sensor_init_static_info(cmr_handle oem_handle) {

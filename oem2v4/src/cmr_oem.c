@@ -8002,7 +8002,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_GET_YIMG_INFO:
         isp_cmd = ISP_CTRL_GET_YIMG_INFO;
         ptr_flag = 1;
-        isp_param_ptr = (void *)&param_ptr->isp_yimg;
+        isp_param_ptr = NULL;
         break;
 
     case COM_ISP_SET_PREVIEW_YIMG:
@@ -11134,8 +11134,7 @@ cmr_int camera_preview_get_isp_yimg(cmr_handle oem_handle, cmr_u32 camera_id,
         CMR_LOGE("get isp y stat error %ld", ret);
         goto exit;
     }
-    memcpy(yimg, &isp_param.isp_yimg, sizeof(struct isp_yimg_info));
-    CMR_LOGI("%d", isp_param.isp_yimg.lock[0]);
+    CMR_LOGI("%d", isp_param.cmd_value);
 
 exit:
     return ret;
