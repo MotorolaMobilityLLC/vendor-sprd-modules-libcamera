@@ -13625,13 +13625,6 @@ cmr_int prev_cap_ability(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("cap_orig_size %d %d", prev_cxt->cap_org_size.width,
              prev_cxt->cap_org_size.height);
 
-    if (handle->zsl_ips_en) {
-	img_cap->enable_slave_img = 1;
-	img_cap->slave_img_fmt = img_cap->dst_img_fmt;
-	img_cap->dst_slave_img_size.width = prev_cxt->prev_param.thumb_size.width;
-	img_cap->dst_slave_img_size.height = prev_cxt->prev_param.thumb_size.height;
-    }
-
 exit:
     CMR_LOGV("X");
     ATRACE_END();

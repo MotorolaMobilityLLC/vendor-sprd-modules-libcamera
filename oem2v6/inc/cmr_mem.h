@@ -49,6 +49,7 @@ struct cmr_cap_2_frm {
 struct cmr_buf {
 	struct listnode list;
 	int fd;
+	void *gpu_handle;
 	cmr_u32 cache;
 	cmr_u32 mem_type;
 	cmr_u32 mem_size;
@@ -67,12 +68,15 @@ struct cmr_queue {
 	struct listnode header;
 };
 
+int check_free_buffer(struct cmr_queue *q, uint32_t size, uint32_t *cnt);
 int get_free_buffer(struct cmr_queue *q, uint32_t size, struct cmr_buf *dst);
 int put_free_buffer(struct cmr_queue *q, struct cmr_buf *dst);
+int get_buf_gpuhandle(struct cmr_queue *q, int32_t buf_fd, void **gpu_hanlde);
 
 int inc_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, uint32_t *cnt);
 int dec_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, uint32_t *cnt);
-
+int inc_gbuffer_q(struct cmr_queue *q, struct memory_param *mops,
+        uint32_t width, uint32_t height, uint32_t *cnt);
 
 int init_buffer_q(struct cmr_queue *q, uint32_t max, uint32_t type);
 int deinit_buffer_q(struct cmr_queue *q, struct memory_param *mops);

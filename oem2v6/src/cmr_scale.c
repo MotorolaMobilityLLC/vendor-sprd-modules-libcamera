@@ -217,7 +217,6 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
 
     case CMR_EVT_SCALE_START:
         ATRACE_BEGIN("cpp_scale");
-        CMR_LOGD("scale start");
         struct img_frm frame;
         struct sprd_cpp_scale_cfg_parm *frame_params =
             &cfg_params->frame_params;
@@ -226,7 +225,6 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         scal_param.host_fd = -1;
         scal_param.scale_cfg_param = &cfg_params->frame_params;
         scal_param.handle = file->handle;
-
         CMR_LOGD("output_size.width:%d, height: %d",
                  frame_params->output_size.w, frame_params->output_size.h);
         file->err_code = CMR_CAMERA_SUCCESS;
@@ -244,6 +242,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         }
 
         if (!cpp_cap.is_supported || ret) {
+            CMR_LOGD("cpp supported %d, ret %ld\n", cpp_cap.is_supported, ret);
             ret = cmr_scale_sw_start(cfg_params, file);
         }
 
@@ -263,9 +262,9 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
             frame.addr_phy.addr_u = (cmr_uint)frame_params->output_addr.u;
             frame.addr_phy.addr_v = (cmr_uint)frame_params->output_addr.v;
             frame.fd = (cmr_s32)frame_params->output_addr.mfd[0];
-            CMR_LOGV("outpur_size.width:%d, height: %d", frame.size.width,
-                     frame.size.height);
-            CMR_LOGI("scale frame.fd 0x%x", frame.fd);
+            CMR_LOGD("scale cb fd 0x%x, w:%d, h: %d addr_phy 0x%lx 0x%lx 0x%lx",
+                frame.fd, frame.size.width, frame.size.height,
+                frame.addr_phy.addr_y, frame.addr_phy.addr_u, frame.addr_phy.addr_v);
 
             (*cfg_params->scale_cb)(CMR_IMG_CVT_SC_DONE, &frame,
                                     cfg_params->cb_handle);
@@ -481,19 +480,19 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
         get_deci_param(frame_params->input_size.h, frame_params->output_size.h);
 
     // address
-    CMR_LOGV("src: fd 0x%x,phy[0x%x,0x%x,0x%x],vir[0x%x,0x%x,0x%x]",
+    CMR_LOGV("src: fd 0x%x, phy[0x%x, 0x%x, 0x%x], vir[0x%x, 0x%x, 0x%x]",
              src_img->fd, frame_params->input_addr.y,
              frame_params->input_addr.u, frame_params->input_addr.v,
              frame_params->input_addr_vir.y, frame_params->input_addr_vir.u,
              frame_params->input_addr_vir.v);
-    CMR_LOGV("dst: fd 0x%x,phy[0x%xm0x%xm0x%x],vir[0x%x,0x%x,0x%x]",
+    CMR_LOGV("dst: fd 0x%x, phy[0x%x, 0x%x, 0x%x], vir[0x%x, 0x%x, 0x%x]",
              dst_img->fd,frame_params->output_addr.y,
              frame_params->output_addr.u, frame_params->output_addr.v,
              frame_params->output_addr_vir.y, frame_params->output_addr_vir.u,
              frame_params->output_addr_vir.v);
 
-    CMR_LOGV("input: size[%dx%d], rect:[%d,%d,%d,%d], format:%d,"
-        "endian: y:%d, uv:%d, trim:[%d,%d,%d,%d]",
+    CMR_LOGV("input: size[%d %d], rect:[%d, %d, %d, %d], format:%d,"
+        "endian: y:%d, uv:%d, trim:[%d, %d, %d, %d]",
         frame_params->input_size.w, frame_params->input_size.h,
         frame_params->input_rect.x, frame_params->input_rect.y,
         frame_params->input_rect.w, frame_params->input_rect.h,
@@ -501,9 +500,10 @@ cmr_int cmr_scale_start(cmr_handle scale_handle, struct img_frm *src_img,
         frame_params->input_endian.uv_endian, frame_params->sc_trim.x,
         frame_params->sc_trim.y, frame_params->sc_trim.w,
         frame_params->sc_trim.h);
-    CMR_LOGV("output: size[%d,%d], format:%d",
-             frame_params->output_size.w, frame_params->output_size.h,
-             frame_params->output_format);
+    CMR_LOGV("output: size[%d %d], format:%d, endian: y:%d, uv:%d",
+        frame_params->output_size.w, frame_params->output_size.h,
+        frame_params->output_format, frame_params->output_endian.y_endian,
+        frame_params->output_endian.uv_endian);
 
     memcpy((void *)&frame_params->output_endian, (void *)&dst_img->data_end,
            sizeof(struct sprd_cpp_scale_endian_sel));
