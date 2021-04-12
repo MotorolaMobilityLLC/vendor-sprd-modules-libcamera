@@ -3497,8 +3497,13 @@ cmr_s32 af_sprd_adpt_inctrl(cmr_handle handle, cmr_s32 cmd, void *param0, void *
 	switch (cmd) {
 	case AF_CMD_SET_AF_POS:
 		if (NULL != af->cb_ops.af_set_motor_pos) {
-			if (af->request_mode == AF_MODE_MANUAL)
-				*(cmr_u16 *) param0 = af->range_L1 + (*(cmr_u16 *) param0) * (af->range_L4 - af->range_L1) / 1023;	//re-map the lens moving range when MF mode(L1 L4)
+			if (af->request_mode == AF_MODE_MANUAL) {
+				ISP_LOGI("set original param %d in 0~1023", *(cmr_u16 *) param0);
+				cmr_u16 inf = af->otp_info.rdm_data.infinite_cali;
+				cmr_u16 macro = af->otp_info.rdm_data.macro_cali;
+				*(cmr_u16 *) param0 = inf + (*(cmr_u16 *) param0) * (macro - inf) / 1023;
+				ISP_LOGI("get new param %d lens range", *(cmr_u16 *) param0);
+			}
 			af->cb_ops.af_set_motor_pos(af->caller, *(cmr_u16 *) param0);
 			af->lens.pos = *(cmr_u16 *) param0;
 			af->motor_status = AF_MOTOR_SET;
