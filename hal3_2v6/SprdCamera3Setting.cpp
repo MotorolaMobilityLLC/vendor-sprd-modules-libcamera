@@ -7322,7 +7322,7 @@ int SprdCamera3Setting::SearchAllLibrary(const char *path, const char *lib_mark,
                 strcpy(file_name, path);
                 strcat(file_name, pEnt->d_name);
                 algo_mark_count = SearchLibMark(file_name, version_output, lib_mark, bit);
-                if (algo_mark_count && algo_mark_count < ALGO_VERSION_NUMB_SINGLE_LIB) {
+                if (algo_mark_count > 0 && algo_mark_count < ALGO_VERSION_NUMB_SINGLE_LIB) {
                     memcpy(pointer_of_output, version_output, algo_mark_count * ALGO_VERSION_THRESHOLD);
                     count+=algo_mark_count;
                     pointer_of_output = output_buffer + ALGO_VERSION_THRESHOLD * count;
