@@ -18,7 +18,7 @@
 
 #include "isp_drv.h"
 
-cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height)
+cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 * width, cmr_u32 * height)
 {
 	cmr_s32 ret = 0;
 	struct isp_file *file = NULL;

@@ -1207,7 +1207,6 @@ struct common_isp_cmd_param {
         struct cmr_range_fps_param range_fps;
         struct isp_info isp_dbg_info;
         struct isp_adgain_exp_info isp_adgain;
-        struct isp_yimg_info isp_yimg;
         struct img_size size_param;
         struct leds_ctrl leds_ctrl;
         struct cmr_ae_compensation_param ae_compensation_param;

@@ -23,6 +23,17 @@
 #include "isp_drv.h"
 #include "isp_mw.h"
 
+#define ISP_PROC_AFL_DONE                    (1 << 2)
+#define ISP_PROC_HIST_DONE                  (1 << 3)
+#define ISP_CTRL_EVT_TX                      (1 << 9)
+#define ISP_CTRL_EVT_SOF                     (1 << 10)
+#define ISP_CTRL_EVT_AE                      (1 << 12)
+#define ISP_CTRL_EVT_AF                      (1 << 14)
+#define ISP_CTRL_EVT_PDAF		     (1 << 17)
+#define ISP_CTRL_EVT_BINNING                 (1 << 18)
+#define ISP_CTRL_EVT_EBD                     (1 << 19)
+#define ISP_CTRL_EVT_RAW                     (1 << 20)
+
 enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_AE_STATS_MONITOR,
 	ISP_DEV_GET_AF_MONITOR_WIN_NUM,
@@ -53,7 +64,6 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_SET_BINNING_BYPASS,
 	ISP_DEV_SET_HIST_BYPASS,
 	ISP_DEV_SET_HIST2_BYPASS,
-	ISP_DEV_POST_3DNR, //for post 3dnr
 	ISP_DEV_SET_RAW_SLICE,
 	ISP_DEV_CMD_MAX
 };
