@@ -75,7 +75,7 @@ struct ae_lib_init_out {
 	struct ae_monitor_cfg aem_cfg;/*aem cfg from ae tuning param*/
 	struct ae_bayer_hist_cfg bhist_cfg;/*bayer hist config from tuning*/
 	struct ae_flash_timing_param flash_timing_param;
-	struct ae_gamma_param gamma_param;	
+	//struct ae_gamma_param gamma_param;	
 	struct ae_range fps_range;/*the fps range of ae table*/
 	struct ae_thd_param thrd_param[AE_LIB_SCENE_MAX];/*0: auto flash; 1: auto 3DNR, 2: auto fps adjust in video mode*/
 	struct ae_ev_param_table ev_param;
@@ -178,6 +178,14 @@ struct ae_lib_calc_in {
 	cmr_u32 atm_lock;
 	/*long shutter support flag*/
 	cmr_u8 LS_spt;
+	/*ae sync*/
+	cmr_u32 mode;
+	cmr_u32 num;
+	cmr_u32 ae_sync_type;
+	cmr_u32 bmk_cam_id;
+	cmr_u32 tar_cam_id;
+	cmr_u64 exp_time;
+	cmr_u32 ae_gain;
 };
 
 struct ae_lib_calc_out  {
@@ -207,7 +215,7 @@ struct ae_lib_calc_out  {
 	//struct ae_rgbgamma_curve gamma_curve;/*will be used in future*/
 	//struct ae_ygamma_curve ygamma_curve;/*will be used in future*/
 	cmr_u32 atmenable_for_crtl;/*add by jhin for atm enable*/
-	struct ae_gamma_param gamma_param;
+	//struct ae_gamma_param gamma_param;
 	/*AEM ROI setting*/
 	struct ae_point_type aem_roi_st;
 	struct ae_size aem_blk_size;
