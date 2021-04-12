@@ -19,7 +19,7 @@
 
 #include "cmr_types.h"
 
-#define SENSOR_GAMMA_POINT_NUM 257  //此处重定义 被修改过 原值为256
+//#define SENSOR_GAMMA_POINT_NUM 257  //此处重定义 被修改过 原值为256
 #define AE_PIECEWISE_SAMPLE_NUM 0x10
 #define AE_PIECEWISE_MAX_NUM 16
 #define AEC_LINETIME_PRECESION (1000000000.0f) /*ns*/
@@ -540,7 +540,7 @@ struct ae_flash_timing_param {
 	cmr_u8 pre_skip_num;/*the skip frame number of pre-flash*/
 	cmr_u8 main_skip_num;/*the skip frame number of main-flash*/
 };
-
+#if 0
 struct ae_rgbgamma_curve {
 	struct ae_sample points_r[SENSOR_GAMMA_POINT_NUM];/*gamma curve for r channel*/
 	struct ae_sample points_g[SENSOR_GAMMA_POINT_NUM];/*gamma curve for g channel*/
@@ -558,6 +558,7 @@ struct ae_gamma_param{
 		struct ae_ygamma_curve ygamma; 
 	}data;
 };
+#endif
 
 struct ae_compensation_param {
 	cmr_u8 mode;/*0(AE_EV_MOD_COM_VAL): ae compensation;
