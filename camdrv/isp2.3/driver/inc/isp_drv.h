@@ -229,6 +229,13 @@ struct isp_drv_interface_param {
 	struct isp_drv_slice_param slice;
 };
 
+typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,
+				    cmr_uint *sum_ptr, cmr_uint *phy_addr,
+				    cmr_uint *vir_addr, cmr_s32 *mfd, void *private_data);
+typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint *phy_addr,
+				  cmr_uint *vir_addr, cmr_s32 *fd,
+				  cmr_uint sum, void *private_data);
+
 /*ISP Hardware Device*/
 cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle * handle);
 cmr_s32 isp_dev_close(cmr_handle handle);
@@ -238,12 +245,11 @@ cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *
 cmr_s32 isp_dev_mask_3a_int(cmr_handle handle);
 
 /*ISP 3DNR*/
-cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param);
 cmr_s32 isp_u_3dnr_cap_block(cmr_handle handle, void *param_ptr);
 cmr_s32 isp_u_3dnr_pre_block(cmr_handle handle, void *param_ptr);
 
 /*ISP Capability*/
-cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u16 * width, cmr_u16 * height);
+cmr_s32 isp_u_capability_continue_size(cmr_handle handle, cmr_u32 * width, cmr_u32 * height);
 cmr_s32 isp_u_capability_time(cmr_handle handle, cmr_u32 * sec, cmr_u32 * usec);
 
 /*ISP Sub Block: Fetch*/

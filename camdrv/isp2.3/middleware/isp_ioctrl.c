@@ -376,28 +376,6 @@ static cmr_int ispctl_flicker(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int ispctl_snapshot_notice(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct isp_snapshot_notice *isp_notice = param_ptr;
-	struct ae_snapshot_notice ae_notice;
-
-	if (NULL == cxt || NULL == isp_notice) {
-		ISP_LOGE("fail to get valid handle %p and isp_notice %p ", cxt, isp_notice);
-		return ISP_PARAM_NULL;
-	}
-
-	ae_notice.type = isp_notice->type;
-	ae_notice.preview_line_time = isp_notice->preview_line_time;
-	ae_notice.capture_line_time = isp_notice->capture_line_time;
-	if (cxt->ops.ae_ops.ioctrl)
-		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_SNAPSHOT_NOTICE, &ae_notice, NULL);
-
-	ISP_LOGV("done %ld", ret);
-	return ret;
-}
-
 static cmr_int isp_flash_pre_before(struct isp_alg_fw_context *cxt,
                                     void *param_ptr)
 {
@@ -1629,48 +1607,6 @@ static cmr_int ispctl_scene_mode(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int ispctl_sfti_read(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-
-	UNUSED(isp_alg_handle);
-	UNUSED(param_ptr);
-	return ret;
-}
-
-static cmr_int ispctl_sfti_write(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	UNUSED(isp_alg_handle);
-	UNUSED(param_ptr);
-
-	return ret;
-}
-
-static cmr_int ispctl_sfti_set_pass(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	UNUSED(isp_alg_handle);
-	UNUSED(param_ptr);
-
-	return ISP_SUCCESS;
-}
-
-static cmr_int ispctl_sfti_set_bypass(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	UNUSED(isp_alg_handle);
-	UNUSED(param_ptr);
-
-	return ISP_SUCCESS;
-}
-
-static cmr_int ispctl_sfti_get_af_value(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	UNUSED(isp_alg_handle);
-	UNUSED(param_ptr);
-	return ret;
-}
-
 static cmr_int ispctl_af_get_full_scan_info(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -1735,15 +1671,6 @@ static cmr_int ispctl_af(cmr_handle isp_alg_handle, void *param_ptr)
 	}
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_START, (void *)&trig_info, NULL);
-
-	return ret;
-}
-
-static cmr_int ispctl_burst_notice(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	UNUSED(isp_alg_handle);
-	UNUSED(param_ptr);
 
 	return ret;
 }
@@ -2429,10 +2356,9 @@ static cmr_int ispctl_get_rebokeh_data(cmr_handle isp_alg_handle, void *param_pt
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct af_relbokeh_golden_data *result= (struct af_relbokeh_golden_data *)param_ptr;
 
-	if (cxt->ops.af_ops.ioctrl)
-		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_BOKEH_GOLDEN_DATA, (void *)result, NULL);
+	if (cxt->ops.af_ops.ioctrl && param_ptr)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_BOKEH_GOLDEN_DATA, param_ptr, NULL);
 
 	return ret;
 }
@@ -2458,15 +2384,6 @@ static cmr_int ispctl_set_af_pos(cmr_handle isp_alg_handle, void *param_ptr)
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_AF_POS, param_ptr, NULL);
 
-	return ret;
-}
-
-static cmr_int ispctl_reg(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-
-	UNUSED(isp_alg_handle);
-	UNUSED(param_ptr);
 	return ret;
 }
 
@@ -2849,26 +2766,6 @@ static cmr_int ispctl_denoise_param_read(cmr_handle isp_alg_handle, void *param_
 	return ISP_SUCCESS;
 }
 
-static cmr_int ispctl_sensor_denoise_param_update(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	UNUSED(isp_alg_handle);
-
-	if (NULL == param_ptr) {
-		return ISP_PARAM_NULL;
-	}
-	ISP_LOGV(" done");
-	return ISP_SUCCESS;
-}
-
-static cmr_int ispctl_dump_reg(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	UNUSED(param_ptr);
-	UNUSED(isp_alg_handle);
-
-	return ret;
-}
-
 static cmr_int ispctl_tool_set_scene_param(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
@@ -3101,16 +2998,6 @@ static cmr_int ispctl_get_leds_ctrl(cmr_handle isp_alg_handle, void *param_ptr)
 	return ret;
 }
 
-static cmr_int ispctl_post_3dnr(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_POST_3DNR, (void *)param_ptr, NULL);
-
-	return ret;
-}
-
 static cmr_int ispctl_auto_hdr(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
@@ -3283,8 +3170,6 @@ static cmr_int ispctl_get_mfnr_param(cmr_handle isp_alg_handle, void *param_ptr)
 static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 {
 	cmr_int ret = ISP_SUCCESS;
-
-#ifdef CONFIG_ISP_2_3
 	struct isp_alg_fw_context *cxt =
 		(struct isp_alg_fw_context *)isp_alg_handle;
 	struct isp_snp_ae_param *isp_ae_adj = (struct isp_snp_ae_param *)param_ptr;
@@ -3306,12 +3191,6 @@ static cmr_int ispctl_ev_adj(cmr_handle isp_alg_handle, void *param_ptr)
 					     AE_CAP_EV_ADJUST_START, &ae_adj_param, NULL);
 
 	ISP_LOGI("ev adj cap start, ret %ld", ret);
-
-#else
-    UNUSED(isp_alg_handle);
-    UNUSED(param_ptr);
-#endif
-
 	return ret;
 }
 
@@ -3379,7 +3258,6 @@ static cmr_int ispctl_get_fb_cap_param(cmr_handle isp_alg_handle, void *param_pt
 }
 
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
-	{IST_CTRL_SNAPSHOT_NOTICE, ispctl_snapshot_notice},
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
 	{ISP_CTRL_EV, ispctl_ev},
 	{ISP_CTRL_AE_EXP_COMPENSATION, ispctl_ae_exp_compensation},
@@ -3400,12 +3278,6 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AF, ispctl_af},
 	{ISP_CTRL_GET_FULLSCAN_INFO, ispctl_af_get_full_scan_info},
 	{ISP_CTRL_SET_AF_BYPASS, ispctl_af_bypass},
-	{ISP_CTRL_BURST_NOTICE, ispctl_burst_notice},
-	{ISP_CTRL_SFT_READ, ispctl_sfti_read},
-	{ISP_CTRL_SFT_WRITE, ispctl_sfti_write},
-	{ISP_CTRL_SFT_SET_PASS, ispctl_sfti_set_pass},	// added for sft
-	{ISP_CTRL_SFT_SET_BYPASS, ispctl_sfti_set_bypass},	// added for sft
-	{ISP_CTRL_SFT_GET_AF_VALUE, ispctl_sfti_get_af_value},	// added for sft
 	{ISP_CTRL_AF_MODE, ispctl_af_mode},
 	{ISP_CTRL_AF_STOP, ispctl_af_stop},
 	{ISP_CTRL_FLASH_CTRL, ispctl_online_flash},
@@ -3431,10 +3303,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_REBOKEH_DATA, ispctl_get_rebokeh_data},
 	{ISP_CTRL_SET_VCM_DIST, ispctl_set_vcm_distance},
 	{ISP_CTRL_GET_AF_MODE, ispctl_get_af_mode},	// for tool cali
-	{ISP_CTRL_REG_CTRL, ispctl_reg},	// for tool cali
-	{ISP_CTRL_AF_END_INFO, ispctl_reg},	// for tool cali
 	{ISP_CTRL_DENOISE_PARAM_READ, ispctl_denoise_param_read},	//for tool cali
-	{ISP_CTRL_DUMP_REG, ispctl_dump_reg},	//for tool cali
 	{ISP_CTRL_START_3A, ispctl_start_3a},
 	{ISP_CTRL_STOP_3A, ispctl_stop_3a},
 
@@ -3449,7 +3318,6 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_AE_LOCK_UNLOCK, ispctl_set_ae_lock_unlock},	//AE Lock or Unlock
 	{ISP_CTRL_TOOL_SET_SCENE_PARAM, ispctl_tool_set_scene_param},	// for tool scene param setting
 	{ISP_CTRL_FORCE_AE_QUICK_MODE, ispctl_force_ae_quick_mode},
-	{ISP_CTRL_DENOISE_PARAM_UPDATE, ispctl_sensor_denoise_param_update},	//for tool cali
 	{ISP_CTRL_SET_AE_EXP_TIME, ispctl_set_ae_exp_time},
 	{ISP_CTRL_SET_AE_SENSITIVITY, ispctl_set_ae_sensitivity},
 	{ISP_CTRL_SET_DCAM_TIMESTAMP, ispctl_set_dcam_timestamp},
@@ -3457,7 +3325,6 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_FPS, ispctl_get_fps},
 	{ISP_CTRL_GET_AE_FPS_RANGE, ispctl_get_ae_fps_range},
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
-	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},	//for 3dnr module
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
 	{ISP_CTRL_SET_3DNR_MODE, ispctl_set_3dnr_mode},

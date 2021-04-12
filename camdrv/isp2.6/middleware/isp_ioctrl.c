@@ -2797,10 +2797,9 @@ static cmr_int ispctl_get_rebokeh_data(cmr_handle isp_alg_handle, void *param_pt
 {
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-	struct af_relbokeh_golden_data *result= (struct af_relbokeh_golden_data *)param_ptr;
 
-	if (cxt->ops.af_ops.ioctrl)
-		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_BOKEH_GOLDEN_DATA, (void *)result, NULL);
+	if (cxt->ops.af_ops.ioctrl && param_ptr)
+		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_GET_BOKEH_GOLDEN_DATA, param_ptr, NULL);
 
 	return ret;
 }
@@ -4174,16 +4173,6 @@ static cmr_int ispctl_auto_hdr(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (cxt->ops.ae_ops.ioctrl)
 		ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AUTO_HDR, (void *)param_ptr, NULL);
-
-	return ret;
-}
-
-static cmr_int ispctl_post_3dnr(cmr_handle isp_alg_handle, void *param_ptr)
-{
-	cmr_int ret = ISP_SUCCESS;
-	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
-
-	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_POST_3DNR, (void *)param_ptr, NULL);
 
 	return ret;
 }
@@ -5594,7 +5583,6 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_GET_FPS, ispctl_get_fps},
 	{ISP_CTRL_GET_AE_FPS_RANGE, ispctl_get_ae_fps_range},
 	{ISP_CTRL_GET_LEDS_CTRL, ispctl_get_leds_ctrl},
-	{ISP_CTRL_POST_3DNR, ispctl_post_3dnr},
 	{ISP_CTRL_3DNR, ispctl_3ndr_ioctrl},
 	{ISP_CTRL_AUTO_HDR_MODE, ispctl_auto_hdr},
 	{ISP_CTRL_SET_3DNR_MODE, ispctl_set_3dnr_mode},

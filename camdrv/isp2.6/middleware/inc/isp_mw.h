@@ -21,21 +21,13 @@
 #include "sprd_isp_k.h"
 #include "cmr_sensor_info.h"
 
-
 typedef cmr_int(*proc_callback) (cmr_handle handler_id, cmr_u32 mode, void *param_ptr, cmr_u32 param_len);
 
 #define ISP_EVT_MASK	 0x0000FF00
-
-#define ISP_FLASH_MAX_CELL	40
-#define ISP_MODE_NUM_MAX 16
-
-
-#define ISP_THREAD_QUEUE_NUM			(100)
-
 #define ISP_CALLBACK_EVT                     0x00040000
 
-#define ISP_AI_FD_NUM (20)
-#define ISP_AI_AE_STAT_SIZE (1024) /*32*32*/
+#define ISP_FLASH_MAX_CELL	40
+#define ISP_THREAD_QUEUE_NUM			(100)
 
 enum isp_alg_set_cmd {
 	ISP_AE_SET_GAIN,
@@ -310,7 +302,6 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_AF_CTRL = 40,	// for isp tool
 	ISP_CTRL_DENOISE_PARAM_READ,	//for isp tool
 	ISP_CTRL_DUMP_REG,	//for isp tool
-	ISP_CTRL_AF_END_INFO,	// for isp tool
 	ISP_CTRL_FLASH_NOTICE = 44,
 	ISP_CTRL_AE_FORCE_CTRL,	// for mp tool
 	ISP_CTRL_GET_AE_STATE,	// for isp tool
@@ -360,10 +351,6 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_AE_MANUAL_GAIN,
 	ISP_CTRL_SET_AE_MANUAL_ISO,
 	ISP_CTRL_SET_AE_ENGINEER_MODE,
-	ISP_CTRL_GET_YIMG_INFO = 93,
-	ISP_CTRL_SET_PREV_YIMG,
-	ISP_CTRL_SET_PREV_YUV,
-	ISP_CTRL_SET_PREV_PDAF_RAW,
 	ISP_CTRL_GET_VCM_INFO = 97,
 	ISP_CTRL_GET_FPS,
 	ISP_CTRL_GET_LEDS_CTRL,
@@ -383,8 +370,6 @@ enum isp_ctrl_cmd {
 	ISP_CTRL_SET_DCAM_TIMESTAMP,
 	ISP_CTRL_GET_FULLSCAN_INFO,
 	ISP_CTRL_SET_AF_BYPASS = 109,
-	ISP_CTRL_POST_3DNR,
-	ISP_CTRL_POST_YNR,
 	ISP_CTRL_3DNR,
 	ISP_CTRL_GET_MICRODEPTH_PARAM = 113,
 	ISP_CTRL_SET_MICRODEPTH_DEBUG_INFO,
@@ -465,7 +450,6 @@ enum isp_flash_led_tag {
 	ISP_FLASH_LED_1 = 0x0002
 };
 
-
 enum {
 	ISP_SINGLE = 0,
 	ISP_DUAL_NORMAL,
@@ -541,27 +525,6 @@ struct isp_adgain_exp_info {
 	cmr_u32 exp_time;
 	cmr_s32 bv;
 	cmr_u32 ambient_highlight; /* 4IN1 */
-};
-
-struct isp_yimg_info {
-	cmr_uint yaddr[2];
-	cmr_u32 lock[2];
-};
-
-struct yimg_info {
-	cmr_uint y_addr[2];
-	cmr_uint y_size;
-	cmr_s32 ready[2];
-	cmr_s32 sec;
-	cmr_s32 usec;
-	cmr_uint camera_id;
-};
-
-struct yuv_info_t {
-	cmr_uint camera_id;
-	cmr_u8 *yuv_addr;
-	cmr_u32 width;
-	cmr_u32 height;
 };
 
 struct pd_frame_in {
@@ -664,15 +627,6 @@ struct af_aux_sensor_info_t {
 		struct af_gyro_info_t gyro_info;
 		struct af_gsensor_info gsensor_info;
 	};
-};
-
-struct af_relbokeh_golden_data {
-	cmr_u16 golden_macro;
-	cmr_u16 golden_infinity;
-	cmr_u16 golden_count;
-	cmr_u16 golden_distance[40];
-	cmr_u16 golden_vcm[40];
-	cmr_u16 reserved[10];
 };
 
 struct isp_af_ts {
@@ -856,8 +810,8 @@ struct ips_in_param {
 	cmr_flush_buf flush_cb;
 	cmr_u32 sensor_id;
 	cmr_u32 hwsim_4in1_width;
-    /* new 4in1 solution, for raw capture */
-    cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
+	/* new 4in1 solution, for raw capture */
+	cmr_u32 remosaic_type; /* 1: software, 2: hardware, 0:other(sensor output bin size) */
 };
 
 struct ips_out_param {
@@ -988,18 +942,13 @@ struct isp_init_param {
 	struct isp_size size;
 	proc_callback ctrl_callback;
 	cmr_handle oem_handle;
-	struct isp_data_info calibration_param;
 	cmr_u32 camera_id;
 	cmr_int facing;
-	void *sensor_lsc_golden_data;
 	struct isp_ops ops;
-	struct isp_data_info mode_ptr[ISP_MODE_NUM_MAX];
 	cmr_malloc alloc_cb;
 	cmr_free free_cb;
-	void *setting_param_list_ptr[3];
 	struct isp_sensor_ex_info ex_info;
 	struct sensor_otp_cust_info *otp_data;
-	struct sensor_data_info pdaf_otp;
 	struct sensor_pdaf_info *pdaf_info;
 	struct isp_size sensor_max_size;
 
@@ -1019,51 +968,6 @@ struct img_offset {
 	uint32_t y;
 };
 
-struct isp_ai_rect {
-	cmr_u16 start_x;
-	cmr_u16 start_y;
-	cmr_u16 width;
-	cmr_u16 height;
-};
-
-struct isp_ai_face_info {
-	struct isp_ai_rect rect; /* Face rectangle */
-	cmr_s16 yaw_angle; /* Out-of-plane rotation angle (Yaw);In [-90, +90] degrees; */
-	cmr_s16 roll_angle; /* In-plane rotation angle (Roll); In (-180, +180] degrees; */
-	cmr_u16 score; /* Confidence score; In [0, 1000] */
-	cmr_u16 id; /* Human ID Number */
-};
-
-struct isp_ai_fd_param {
-	cmr_u16 width;
-	cmr_u16 height;
-	cmr_u32 frame_id;
-	cmr_u64 timestamp;
-	struct isp_ai_face_info face_area[ISP_AI_FD_NUM];
-	cmr_u16 face_num;
-};
-
-struct isp_ai_ae_statistic_info {
-	cmr_u32 *r_info;
-	cmr_u32 *g_info;
-	cmr_u32 *b_info;
-};
-
-struct isp_ai_ae_param {
-	cmr_u32 frame_id;
-	cmr_u64 timestamp;
-	cmr_u32 sec;
-	cmr_u32 usec;
-	struct isp_ai_ae_statistic_info ae_stat;
-	struct isp_ai_rect ae_rect;
-	struct img_offset ae_offset;
-	cmr_u16 blk_width;
-	cmr_u16 blk_height;
-	cmr_u16 blk_num_hor;
-	cmr_u16 blk_num_ver;
-	cmr_u32 zoom_ratio;
-};
-
 struct isp_ai_img_buf {
 	cmr_u32 img_y;
 	cmr_u32 img_uv;
@@ -1079,63 +983,6 @@ struct isp_ai_img_param {
 	cmr_u32 img_uv_pitch;
 	cmr_u32 is_continuous;
 	enum isp_ai_rotation orientation;
-};
-
-enum isp_ai_status {
-	ISP_AI_STATUS_IDLE,
-	ISP_AI_STATUS_PROCESSING,
-	ISP_AI_STATUS_MAX
-};
-
-enum isp_ai_task_0 {
-	ISP_AI_SCENE_TASK0_INDOOR,
-	ISP_AI_SCENE_TASK0_OUTDOOR,
-	ISP_AI_SCENE_TASK0_MAX
-};
-
-enum isp_ai_task_1 {
-	ISP_AI_SCENE_TASK1_NIGHT,
-	ISP_AI_SCENE_TASK1_BACKLIGHT,
-	ISP_AI_SCENE_TASK1_SUNRISESET,
-	ISP_AI_SCENE_TASK1_FIREWORK,
-	ISP_AI_SCENE_TASK1_OTHERS,
-	ISP_AI_SCENE_TASK1_MAX
-};
-
-enum isp_ai_task_2 {
-	ISP_AI_SCENE_TASK2_FOOD,
-	ISP_AI_SCENE_TASK2_GREENPLANT,
-	ISP_AI_SCENE_TASK2_DOCUMENT,
-	ISP_AI_SCENE_TASK2_CATDOG,
-	ISP_AI_SCENE_TASK2_FLOWER,
-	ISP_AI_SCENE_TASK2_BLUESKY,
-	ISP_AI_SCENE_TASK2_BUILDING,
-	ISP_AI_SCENE_TASK2_SNOW,
-	ISP_AI_SCENE_TASK2_OTHERS,
-	ISP_AI_SCENE_TASK2_MAX
-};
-
-struct isp_ai_task0_result {
-	enum isp_ai_task_0 id;
-	cmr_u16 score;
-};
-
-struct isp_ai_task1_result {
-	enum isp_ai_task_1 id;
-	cmr_u16 score;
-};
-
-struct isp_ai_task2_result {
-	enum isp_ai_task_2 id;
-	cmr_u16 score;
-};
-
-struct isp_ai_scene_detect_info {
-	cmr_u32 frame_id;
-	enum isp_ai_scene_type cur_scene_id;
-	struct isp_ai_task0_result task0[ISP_AI_SCENE_TASK0_MAX];
-	struct isp_ai_task1_result task1[ISP_AI_SCENE_TASK1_MAX];
-	struct isp_ai_task2_result task2[ISP_AI_SCENE_TASK2_MAX];
 };
 
 enum isp_ai_img_flag {

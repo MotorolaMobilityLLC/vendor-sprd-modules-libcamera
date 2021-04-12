@@ -82,7 +82,6 @@ enum isp_dev_access_ctrl_cmd {
 	ISP_DEV_CFG_START,
 	ISP_DEV_RAW_PROC,
 
-	ISP_DEV_POST_3DNR,
 	ISP_DEV_RESET,
 
 	ISP_DEV_SET_LSC_MONITOR_BYPASS,
