@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#if 1
+
+/* isp2.3 and isp2.6 share same caller(oem2v6) and ispalg, should use same interface */
+#include "../../../isp2.6/middleware/inc/isp_mw.h"
+
+#else
 #ifndef _ISP_MW_H_
 #define _ISP_MW_H_
 
@@ -1215,4 +1221,5 @@ cmr_int isp_proc_start(cmr_handle handle, struct ips_in_param *in_param_ptr, str
 void isp_statis_evt_cb(cmr_int evt, void *data, void *privdata);
 void isp_irq_proc_evt_cb(cmr_int evt, void *data, void *privdata);
 
+#endif
 #endif

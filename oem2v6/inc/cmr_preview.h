@@ -23,14 +23,6 @@ extern "C" {
 #include "cmr_common.h"
 #include "sensor_drv_u.h"
 
-// just for fix build warning, pdaf owner shoud be add it
-struct pd_raw_info {
-    int dummy;
-};
-// just for fix build warning, pdaf owner shoud be add it
-struct pd_raw_open {
-    int dummy;
-};
 
 #define CMR_3DNR_1_1_SMALL_WIDTH 960
 #define CMR_3DNR_1_1_SMALL_HEIGHT 960
@@ -143,16 +135,6 @@ struct preview_md_ops {
     cmr_int (*get_sensor_autotest_mode)(cmr_handle oem_handle,
                                         cmr_uint sensor_id,
                                         cmr_uint *is_autotest);
-    cmr_int (*get_isp_yimg)(cmr_handle oem_handle, cmr_u32 sensor_id,
-                            struct isp_yimg_info *yimg);
-    cmr_int (*set_preview_yimg)(cmr_handle oem_handle, cmr_u32 sensor_id,
-                                struct yimg_info *yimg);
-    cmr_int (*set_preview_yuv)(cmr_handle oem_handle, cmr_u32 sensor_id,
-                               struct yuv_info_t *yuv);
-    cmr_int (*set_preview_pd_raw)(cmr_handle oem_handle,
-                                  struct pd_raw_info *pd_raw);
-    cmr_int (*set_preview_pd_open)(cmr_handle oem_handle,
-                                   struct pd_raw_open *pd_open);
     cmr_int (*get_sensor_fps_info)(cmr_handle oem_handle, cmr_uint sensor_id,
                                    cmr_u32 sn_mode,
                                    struct sensor_mode_fps_tag *fps_info);

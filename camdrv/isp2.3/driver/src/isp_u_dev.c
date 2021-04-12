@@ -138,54 +138,6 @@ cmr_s32 isp_dev_mask_3a_int(cmr_handle handle)
 	return ret;
 }
 
-cmr_s32 isp_dev_3dnr(cmr_handle handle, struct isp_3dnr_info *param)
-{
-	cmr_s32 ret = 0;
-	struct isp_file *file = NULL;
-	struct isp_3dnr_param isp_3dnr;
-
-	if (!handle) {
-		ISP_LOGE("fail to check handle");
-		return -1;
-	}
-	if (!param) {
-		ISP_LOGE("fail to check param");
-		return -1;
-	}
-
-	file = (struct isp_file *)(handle);
-
-	isp_3dnr.mv_x = param->mv_x;
-	isp_3dnr.mv_y = param->mv_y;
-	isp_3dnr.fetch_ref_addr = (unsigned int)param->image[0].buffer;
-	isp_3dnr.fetch_cur_addr = (unsigned int)param->image[1].buffer;
-	isp_3dnr.store_ref_addr = (unsigned int)param->image[2].buffer;
-	isp_3dnr.fetch_ref_addr_fd = (signed int)param->image[0].fd;
-	isp_3dnr.fetch_cur_addr_fd = (signed int)param->image[1].fd;
-	isp_3dnr.store_ref_addr_fd = (signed int)param->image[2].fd;
-	isp_3dnr.fetch_cur_endian = 0;
-	isp_3dnr.fetch_ref_endian = 0;
-	isp_3dnr.store_ref_endian = 0;
-	isp_3dnr.image_width = param->width;
-	isp_3dnr.image_height = param->height;
-	isp_3dnr.blending_no = param->blending_no;
-
-	ISP_LOGI("ref buf: 0x%x, 0x%x, cur buf: 0x%x, 0x%x, store buf: 0x%x, 0x%x,",
-		isp_3dnr.fetch_ref_addr,isp_3dnr.fetch_ref_addr_fd,
-		isp_3dnr.fetch_cur_addr,isp_3dnr.fetch_cur_addr_fd,
-		isp_3dnr.store_ref_addr,isp_3dnr.store_ref_addr_fd);
-
-	ISP_LOGI("w,h, mv, no: %d, %d, %d, %d, %d.\n",
-		isp_3dnr.image_width,isp_3dnr.image_height,isp_3dnr.mv_x, isp_3dnr.mv_y, isp_3dnr.blending_no);
-
-	ret = ioctl(file->fd, SPRD_ISP_IO_POST_3DNR, &isp_3dnr);
-	if (ret) {
-		ISP_LOGE("fail to do isp_dev_3dnr 0x%x", ret);
-	}
-
-	return ret;
-}
-
 cmr_s32 isp_dev_set_slice_raw_info(cmr_handle handle, struct isp_raw_proc_info *param)
 {
 	cmr_s32 ret = 0;
