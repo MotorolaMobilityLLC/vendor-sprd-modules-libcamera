@@ -1252,6 +1252,39 @@ static cmr_u8 if_get_ae_report(AE_Report * rpt, void *cookie)
 	return 0;
 }
 
+static cmr_u8 if_get_aem_stats_data(struct aflib_aem_stats_data * aem_stats, void *cookie)
+{
+	af_ctrl_t *af = (af_ctrl_t *) cookie;
+	struct af_aem_stats_data *stats = &af->aem_stats;
+
+	aem_stats->blk_offset_x = stats->offset_x;
+	aem_stats->blk_offset_y = stats->offset_y;
+	aem_stats->blk_num_x = stats->blk_num_x;
+	aem_stats->blk_num_y = stats->blk_num_y;
+	aem_stats->blk_size_x = stats->blk_size_x;
+	aem_stats->blk_size_y = stats->blk_size_y;
+	aem_stats->frame_id = stats->frame_id;
+	aem_stats->zoom_ratio = stats->zoom_ratio;
+	aem_stats->sum_ue_r = stats->sum_ue_r;
+	aem_stats->sum_ue_g = stats->sum_ue_g;
+	aem_stats->sum_ue_b = stats->sum_ue_b;
+	aem_stats->sum_ae_r = stats->sum_ae_r;
+	aem_stats->sum_ae_g = stats->sum_ae_g;
+	aem_stats->sum_ae_b = stats->sum_ae_b;
+	aem_stats->sum_oe_r = stats->sum_oe_r;
+	aem_stats->sum_oe_g = stats->sum_oe_g;
+	aem_stats->sum_oe_b = stats->sum_oe_b;
+	aem_stats->cnt_ue_r = stats->cnt_ue_r;
+	aem_stats->cnt_ue_g = stats->cnt_ue_g;
+	aem_stats->cnt_ue_b = stats->cnt_ue_b;
+	aem_stats->cnt_oe_r = stats->cnt_oe_r;
+	aem_stats->cnt_oe_g = stats->cnt_oe_g;
+	aem_stats->cnt_oe_b = stats->cnt_oe_b;
+
+	ISP_LOGV("aem frameid %d, aem zoom ratio%d)", aem_stats->frame_id, aem_stats->zoom_ratio);
+	return 0;
+}
+
 static cmr_u8 if_set_af_exif(const void *data, void *cookie)
 {
 	af_ctrl_t *af = cookie;
@@ -1831,6 +1864,7 @@ static void *af_lib_init(af_ctrl_t * af)
 	af_in.AF_Ops.get_sys_time = if_get_sys_time;
 	af_in.AF_Ops.sys_sleep_time = if_sys_sleep_time;
 	af_in.AF_Ops.get_ae_report = if_get_ae_report;
+	af_in.AF_Ops.get_aem_stats_data = if_get_aem_stats_data;
 	af_in.AF_Ops.set_af_exif = if_set_af_exif;
 	af_in.AF_Ops.get_otp_data = if_get_otp;
 	af_in.AF_Ops.get_motor_pos = if_get_motor_pos;
@@ -3111,6 +3145,7 @@ static cmr_s32 af_sprd_set_ae_info(cmr_handle handle, void *param0)
 	}
 
 	set_af_RGBY(af, (void *)ae_stat_ptr);
+	memcpy(&(af->aem_stats), &(ae_info->aem_stats), sizeof(struct af_aem_stats_data));
 	memcpy(&(af->ae.ae_report), &(ae_info->ae_rlt_info), sizeof(struct af_ae_calc_out));
 	af->trigger_source_type |= AF_DATA_AE;
 	return rtn;

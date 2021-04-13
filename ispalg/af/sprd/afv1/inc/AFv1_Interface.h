@@ -96,7 +96,7 @@ typedef enum _af_io_cmd {
 	AF_IOCTRL_SET_CANCEL,
 	AF_IOCTRL_SET_TIMESTAMP,
 	AF_IOCTRL_SET_REG_POS,
-	AF_IOCTRL_SET_FV,
+	AF_IOCTRL_SET_FV,	// out of use
 	AF_IOCTRL_SET_DAC_INFO,
 	AF_IOCTRL_SET_RUNTIME_DATA,
 	AF_IOCTRL_SET_BOKEH_DISTANCE,
@@ -308,6 +308,34 @@ typedef struct _lens_range_info {
 	cmr_u16 reserved[10];
 } lens_range_info;
 
+struct aflib_aem_stats_data
+{
+	cmr_s16 blk_offset_x;
+	cmr_s16 blk_offset_y;
+	cmr_u32 blk_num_x;
+	cmr_u32 blk_num_y;
+	cmr_u32 blk_size_x;
+	cmr_u32 blk_size_y;
+	cmr_u32 frame_id;
+	cmr_u32 zoom_ratio;
+
+	cmr_u32 *sum_ue_r;
+	cmr_u32 *sum_ue_g;
+	cmr_u32 *sum_ue_b;
+	cmr_u32 *sum_ae_r;
+	cmr_u32 *sum_ae_g;
+	cmr_u32 *sum_ae_b;
+	cmr_u32 *sum_oe_r;
+	cmr_u32 *sum_oe_g;
+	cmr_u32 *sum_oe_b;
+	cmr_u32 *cnt_ue_r;
+	cmr_u32 *cnt_ue_g;
+	cmr_u32 *cnt_ue_b;
+	cmr_u32 *cnt_oe_r;
+	cmr_u32 *cnt_oe_g;
+	cmr_u32 *cnt_oe_b;
+};
+
 typedef struct _AF_Ctrl_Ops {
 	void *cookie;
 	 cmr_u8(*statistics_wait_cal_done) (void *cookie);
@@ -325,6 +353,7 @@ typedef struct _AF_Ctrl_Ops {
 	 cmr_u8(*lock_lsc) (e_LOCK bisLock, void *cookie);
 	 cmr_u8(*get_sys_time) (cmr_u64 * pTime, void *cookie);
 	 cmr_u8(*get_ae_report) (AE_Report * pAE_rpt, void *cookie);
+	 cmr_u8(*get_aem_stats_data) (struct aflib_aem_stats_data * aem_stats, void *cookie);
 	 cmr_u8(*set_af_exif) (const void *pAF_data, void *cookie);
 	 cmr_u8(*sys_sleep_time) (cmr_u16 sleep_time, void *cookie);
 	 cmr_u8(*get_otp_data) (AF_OTP_Data * pAF_OTP, void *cookie);
