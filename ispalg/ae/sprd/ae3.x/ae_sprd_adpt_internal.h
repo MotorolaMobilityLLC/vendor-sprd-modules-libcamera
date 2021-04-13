@@ -474,6 +474,8 @@ extern "C" {
 		struct ae_trim touch_hold_roi;	/*touch ROI*/
 		/*touch flash hold */
 		cmr_u8 touchev_Flag;
+
+		struct ae_thd_param mfnr_hdr_thrd;
 		cmr_u32 end_id;
 
 	};
