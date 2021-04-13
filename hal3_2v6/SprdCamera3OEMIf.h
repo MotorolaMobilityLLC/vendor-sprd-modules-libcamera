@@ -872,7 +872,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     sprd_3dnr_memory_t
         mZslMfnrGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t *mRawHeapArray[kRawBufferCount + 1];
-    cmr_u32 hdr_fd[3];
+    cmr_u32 mCurSnapFd[kZslBufferCount];
 
     IonBufQueue mIonQueue;
     List<MemIonQueue> cam_MemIonQueue;
