@@ -154,6 +154,19 @@ struct ae_info {
 	cmr_u32 flash_version;
 };
 
+struct aem_config_info {
+	uint32_t offset_x;
+	uint32_t offset_y;
+	uint32_t blk_width;
+	uint32_t blk_height;
+	uint32_t blk_num_x;
+	uint32_t blk_num_y;
+	int32_t frame_id;
+	uint32_t zoom_ratio;
+	uint32_t sec;
+	uint32_t usec;
+};
+
 struct awb_info {
 	cmr_handle handle;
 	cmr_u32 sw_bypass;
@@ -393,6 +406,7 @@ struct isp_alg_fw_context {
 	cmr_u8 aethd_pri_set;
 	nsecs_t last_sof_time;
 	pthread_mutex_t pm_getting_lock;
+	struct aem_config_info aem_stats_cfg;
 	struct isp_awb_statistic_info aem_stats_data;
 	struct isp_awb_statistic_info aem_ue;
 	struct isp_awb_statistic_info aem_ae;
@@ -2515,6 +2529,17 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 	win.blk_size_y = ae_win->blk_height;
 	isp_br_ioctrl(cxt->sensor_role, SET_AE_WIN, &win, NULL);
 
+	cxt->aem_stats_cfg.offset_x = ae_win->offset_x;
+	cxt->aem_stats_cfg.offset_y = ae_win->offset_y;
+	cxt->aem_stats_cfg.blk_width = ae_win->blk_width;
+	cxt->aem_stats_cfg.blk_height = ae_win->blk_height;
+	cxt->aem_stats_cfg.blk_num_x = ae_win->blk_num_x;
+	cxt->aem_stats_cfg.blk_num_y = ae_win->blk_num_y;
+	cxt->aem_stats_cfg.frame_id = statis_info->frame_id;
+	cxt->aem_stats_cfg.zoom_ratio = statis_info->zoom_ratio;
+	cxt->aem_stats_cfg.sec = statis_info->sec;
+	cxt->aem_stats_cfg.usec = statis_info->usec;
+
 	uaddr = (cmr_u64 *)(statis_info->uaddr + STATIS_AEM_HEADER_SIZE);
 	for (i = 0; i < blk_num; i++) {
 #ifdef CONFIG_ISP_2_6 /* sharkl5/ROC1*/
@@ -3491,6 +3516,29 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 		ae_info->ae_rlt_info.cur_index = ae_in->ae_output.cur_index;
 		ae_info->ae_rlt_info.cur_iso = ae_in->ae_output.cur_iso;
 		ae_info->ae_rlt_info.cur_fps = ae_in->ae_output.fps;
+		ae_info->aem_stats.sum_ue_r = cxt->aem_ue.r_info;
+		ae_info->aem_stats.sum_ue_g = cxt->aem_ue.g_info;
+		ae_info->aem_stats.sum_ue_b = cxt->aem_ue.b_info;
+		ae_info->aem_stats.sum_ae_r = cxt->aem_ae.r_info;
+		ae_info->aem_stats.sum_ae_g = cxt->aem_ae.g_info;
+		ae_info->aem_stats.sum_ae_b = cxt->aem_ae.b_info;
+		ae_info->aem_stats.sum_oe_r = cxt->aem_oe.r_info;
+		ae_info->aem_stats.sum_oe_g = cxt->aem_oe.g_info;
+		ae_info->aem_stats.sum_oe_b = cxt->aem_oe.b_info;
+		ae_info->aem_stats.cnt_ue_r = cxt->cnt_ue.r_info;
+		ae_info->aem_stats.cnt_ue_g = cxt->cnt_ue.g_info;
+		ae_info->aem_stats.cnt_ue_b = cxt->cnt_ue.b_info;
+		ae_info->aem_stats.cnt_oe_r = cxt->cnt_oe.r_info;
+		ae_info->aem_stats.cnt_oe_g = cxt->cnt_oe.g_info;
+		ae_info->aem_stats.cnt_oe_b = cxt->cnt_oe.b_info;
+		ae_info->aem_stats.offset_x = cxt->aem_stats_cfg.offset_x;
+		ae_info->aem_stats.offset_y = cxt->aem_stats_cfg.offset_y;
+		ae_info->aem_stats.blk_num_x = cxt->aem_stats_cfg.blk_num_x;
+		ae_info->aem_stats.blk_num_y = cxt->aem_stats_cfg.blk_num_y;
+		ae_info->aem_stats.blk_size_x = cxt->aem_stats_cfg.blk_width;
+		ae_info->aem_stats.blk_size_y = cxt->aem_stats_cfg.blk_height;
+		ae_info->aem_stats.frame_id = cxt->aem_stats_cfg.frame_id;
+		ae_info->aem_stats.zoom_ratio = cxt->aem_stats_cfg.zoom_ratio;
 		ae_info->is_update = 1;
 	}
 
