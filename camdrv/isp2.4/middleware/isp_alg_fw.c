@@ -1241,7 +1241,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, struct cmr_msg
 		val0 = *((cmr_u32 *) u_addr + i * 2);
 		val1 = *(((cmr_u32 *) u_addr) + i * 2 + 1);
 		ae_stat_ptr->r_info[i] = ((val1 >> 11) & 0x1fffff) << ae_shift;
-		ae_stat_ptr->g_info[i] = (((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff)) << ae_shift;
+		ae_stat_ptr->g_info[i] = (((val1 & 0x7ff) << 11) | ((val0 >> 21) & 0x3ff)) << (ae_shift + 1);
 		ae_stat_ptr->b_info[i] = (val0 & 0x1fffff) << ae_shift;
 	}
 
