@@ -288,7 +288,7 @@ cmr_int cpp_scale_start(struct cpp_scale_param *scale_param)
 	cpp_save_cpp_to_file(scale_param);
 
 sc_exit:
-	CMR_LOGI("scale X ret=%ld\n", ret);
+	CMR_LOGV("scale X ret=%ld\n", ret);
 	return ret;
 }
 
@@ -329,10 +329,10 @@ dma_o_free:
 	}
 	if (file)
 		free(file);
-	
+
 	file = NULL;
 dma_o_out:
-	
+
 	return ret;
 }
 
@@ -420,16 +420,16 @@ static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
 	FILE *fp = NULL;
 
         scale_cfg_param = scale_param->scale_cfg_param;
-            
+
         property_get("debug.cpp.dump.frame", value, "null");
-        CMR_LOGD("value %s format %d width %d height %d, addr 0x%x 0x%x",
+        CMR_LOGV("value %s format %d width %d height %d, addr 0x%x 0x%x",
             value,
              scale_cfg_param->input_format,
              scale_cfg_param->input_size.w,
              scale_cfg_param->input_size.h,
              scale_cfg_param->input_addr.y,
              scale_cfg_param->input_addr.u);
-            
+
         if (!strcmp(value, "src")) {
             //Y
                 if (IMG_DATA_TYPE_YUV420 == scale_cfg_param->input_format ||
@@ -483,7 +483,7 @@ static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
                             scale_cfg_param->input_size.w * scale_cfg_param->input_size.h, fp);
                     }
                     fclose(fp);
-                } 
+                }
             }else if (!strcmp(value, "dst")) {
                         //Y
 
@@ -538,9 +538,9 @@ static int cpp_save_cpp_to_file(struct cpp_scale_param *scale_param)
                             scale_cfg_param->output_size.w * scale_cfg_param->output_size.h, fp);
                     }
                     fclose(fp);
-                } 
+                }
                 } else {
-                    CMR_LOGD("need not dump cpp frame \n");
+                    CMR_LOGV("need not dump cpp frame \n");
                 }
                 return 0;
 }
