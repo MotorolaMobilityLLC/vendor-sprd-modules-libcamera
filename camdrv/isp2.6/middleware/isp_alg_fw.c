@@ -617,7 +617,7 @@ static cmr_int dump_aem_pic(struct isp_alg_fw_context *cxt,
 
 			val = *g++;
 			val /= pixel_num;
-			val >>= shift;
+			val >>= (shift + 1); /* g_info = (gr + gb) */
 			*ptr++ = (cmr_u8)(val & 0xff);
 
 			val = *r++;
@@ -2697,7 +2697,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		sum_b_oe |= (cmr_u32)((stats_val1 & 0xff) << 16);
 		cnt_b_ue += (cmr_u32)((stats_val1 >> 8) & 0x3fff);
 		cnt_b_oe += (cmr_u32)((stats_val1 >> 22) & 0x3fff);
-		g_shift = 1;
+		g_shift = 0;
 
 #elif defined CONFIG_ISP_2_5 /* for SharkL3 */
 
@@ -2725,7 +2725,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		stats_val1 = *uaddr++;
 		cnt_g_ue = stats_val1 & 0x1fff;
 		cnt_g_oe = (stats_val1 >> 16) & 0x1fff;
-		g_shift = 0;
+		g_shift = 1;
 
 #else /* CONFIG_ISP_2_7  for  SharkL5Pro */
 
@@ -2753,7 +2753,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		sum_b_oe = (cmr_u32)(stats_val1 & 0x1ffffff);
 		cnt_b_ue = (cmr_u32)((stats_val1 >> 32) & 0x7fff);
 		cnt_b_oe = (cmr_u32)((stats_val1 >> 48) & 0x7fff);
-		g_shift = 1;
+		g_shift = 0;
 #endif
 
 		cxt->cnt_ue.r_info[i] = cnt_r_ue;
@@ -2764,29 +2764,30 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 		cxt->cnt_oe.g_info[i] = cnt_g_oe;
 		cxt->cnt_oe.b_info[i] = cnt_b_oe;
 
+		/* from sharkl5 and after, aem output G is the sum of Gr & Gb
+		  * which is different from previous version (sharkl3 and before: average of Gr/Gb)
+		  * for sharkL3 and old version,
+		  * we will left shift 1 for G to get sum of Gr & Gb as AE algo compatibility required */
+		g_shift += ae_shift;
+
 		cxt->aem_ae.r_info[i] = sum_r_ae << ae_shift;
-		cxt->aem_ae.g_info[i] = sum_g_ae << ae_shift;
+		cxt->aem_ae.g_info[i] = sum_g_ae << g_shift;
 		cxt->aem_ae.b_info[i] = sum_b_ae << ae_shift;
 
 		cxt->aem_ue.r_info[i] = sum_r_ue << ae_shift;
-		cxt->aem_ue.g_info[i] = sum_g_ue << ae_shift;
+		cxt->aem_ue.g_info[i] = sum_g_ue << g_shift;
 		cxt->aem_ue.b_info[i] = sum_b_ue << ae_shift;
 
 		cxt->aem_oe.r_info[i] = sum_r_oe << ae_shift;
-		cxt->aem_oe.g_info[i] = sum_g_oe << ae_shift;
+		cxt->aem_oe.g_info[i] = sum_g_oe << g_shift;
 		cxt->aem_oe.b_info[i] = sum_b_oe << ae_shift;
 
 		ae_stat_ptr->r_info[i] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
-		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
+		ae_stat_ptr->g_info[i] = (sum_g_oe + sum_g_ue + sum_g_ae) << g_shift;
 		ae_stat_ptr->b_info[i] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
 
-		/* from sharkl5 and after, aem output G is the sum of Gr & Gb
-		  * which is different from previous version average Gr/Gb
-		  * here we shift 1 to get average of G for AE algo compatibility */
-		ae_stat_ptr->g_info[i] >>= g_shift;
-
 		if (ae_stat_ptr->r_info[i] > (blk_size * 1023) ||
-			ae_stat_ptr->g_info[i] > (blk_size * 1023) ||
+			ae_stat_ptr->g_info[i] > (blk_size * 2 * 1023) ||
 			ae_stat_ptr->b_info[i] > (blk_size * 1023) )
 			ISP_LOGV("data overflow. i %d, blk size %d %d,  r 0x%x, g 0x%x, b 0x%x\n",
 				i, cxt->ae_cxt.win_size.w, cxt->ae_cxt.win_size.h,
@@ -4536,7 +4537,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	CMR_MSG_INIT(message);
 
 	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
-			ispalg_thread_proc, (void *)cxt, "algfw");
+			ispalg_thread_proc, (void *)cxt, "ispmw0");
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create isp algfw  process thread");
@@ -4544,7 +4545,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	}
 
 	ret = cmr_thread_create(&cxt->thr_afhandle,	ISP_THREAD_QUEUE_NUM,
-			ispalg_afthread_proc, (void *)cxt, "afstats");
+			ispalg_afthread_proc, (void *)cxt, "ispmw1");
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create afstats process thread");
@@ -4554,7 +4555,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	}
 
 	ret = cmr_thread_create(&cxt->thr_aehandle,	ISP_THREAD_QUEUE_NUM,
-			ispalg_aethread_proc, (void *)cxt, "algae");
+			ispalg_aethread_proc, (void *)cxt, "ispmw2");
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create algae process thread");
@@ -4567,7 +4568,7 @@ static cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 
 	ret = cmr_thread_create(&cxt->thr_aihandle,
 			ISP_THREAD_QUEUE_NUM,
-			ispalg_aithread_proc, (void *)cxt, "algai");
+			ispalg_aithread_proc, (void *)cxt, "ispmwai");
 	if (CMR_MSG_SUCCESS != ret) {
 		cxt->thr_aihandle = (cmr_handle) NULL;
 		ISP_LOGE("fail to create isp ai process thread");
