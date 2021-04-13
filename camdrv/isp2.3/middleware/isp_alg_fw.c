@@ -1649,7 +1649,7 @@ static cmr_int ispalg_aem_stats_parser(cmr_handle isp_alg_handle, void *data)
 
 		//TBD
 		ae_stat_ptr->r_info[j] = (sum_r_oe + sum_r_ue + sum_r_ae) << ae_shift;
-		ae_stat_ptr->g_info[j] = (sum_g_oe + sum_g_ue + sum_g_ae) << ae_shift;
+		ae_stat_ptr->g_info[j] = (sum_g_oe + sum_g_ue + sum_g_ae) << (ae_shift + 1);
 		ae_stat_ptr->b_info[j] = (sum_b_oe + sum_b_ue + sum_b_ae) << ae_shift;
 
 		sum += ae_stat_ptr->r_info[j] + ae_stat_ptr->g_info[j] + ae_stat_ptr->b_info[j];
@@ -2938,7 +2938,7 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
 	ret = cmr_thread_create(&cxt->thr_handle, ISP_THREAD_QUEUE_NUM,
-				ispalg_thread_proc, (void *)cxt, "algfw");
+				ispalg_thread_proc, (void *)cxt, "ispmw0");
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create isp algfw  process thread");
@@ -2946,7 +2946,7 @@ cmr_int ispalg_create_thread(cmr_handle isp_alg_handle)
 	}
 
 	ret = cmr_thread_create(&cxt->thr_afhandle, ISP_THREAD_QUEUE_NUM,
-                ispalg_afthread_proc, (void *)cxt, "afstats");
+                ispalg_afthread_proc, (void *)cxt, "ispmw1");
 
 	if (CMR_MSG_SUCCESS != ret) {
 		ISP_LOGE("fail to create afstats process thread");
