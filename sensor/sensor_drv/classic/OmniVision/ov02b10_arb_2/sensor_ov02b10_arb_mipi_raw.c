@@ -427,6 +427,43 @@ static cmr_int ov02b10_arb_drv_access_val(cmr_handle handle, cmr_uint param)
     return ret;
 }
 
+static cmr_int ov02b10_arb_read_module_id(cmr_handle handle)
+{
+    cmr_u16 module_id_l = 0x00;
+    cmr_u16 module_id_h = 0x00;
+    cmr_u16 module_id = 0x00;
+    cmr_u16 otp1_flag = 0x00;
+    cmr_u16 otp2_flag = 0x00;
+
+    hw_sensor_write_reg(handle, 0xfd, 0x06);
+
+    otp1_flag = hw_sensor_read_reg(handle, 0x10);
+    if(0x40 == otp1_flag)
+    {
+        module_id_h = hw_sensor_read_reg(handle, 0x12);
+        module_id_l = hw_sensor_read_reg(handle, 0x13);
+        SENSOR_LOGI("otp1_flag is valid otp1_flag = %x", otp1_flag);
+    }else{
+        otp2_flag = hw_sensor_read_reg(handle, 0x18);
+
+        if(0x40 == otp2_flag)
+        {
+            module_id_h = hw_sensor_read_reg(handle, 0x1a);
+            module_id_l = hw_sensor_read_reg(handle, 0x1b);
+            SENSOR_LOGI("otp2_flag is valid otp2_flag = %x", otp2_flag);
+        }
+        else
+        {
+            SENSOR_LOGE("invalid otp_flag otp1_flag = %x, otp2_flag = %x", otp1_flag, otp2_flag);
+        }
+    }
+
+    module_id = (module_id_l &0x00FF)|((module_id_h<<8) &0xFF00);
+
+    hw_sensor_write_reg(handle, 0xfd, 0x00);
+    SENSOR_LOGI("module_id in otp = %x", module_id);
+    return module_id;
+}
 
 /*==============================================================================
  * Description:
@@ -437,6 +474,7 @@ static cmr_int ov02b10_arb_drv_identify(cmr_handle handle, cmr_uint param)
 {
     cmr_u16 pid_value = 0x00;
     cmr_u16 ver_value = 0x00;
+    cmr_u16 mid_value = 0x00;
     cmr_int ret_value = SENSOR_FAIL;
 
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -447,11 +485,13 @@ static cmr_int ov02b10_arb_drv_identify(cmr_handle handle, cmr_uint param)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x00);
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, OV02B10_ARB_PID_ADDR);
 
-    if (OV02B10_ARB_PID_VALUE == pid_value) {
+    if ((OV02B10_ARB_PID_VALUE == pid_value) && (0x5453 == mid_value)) {
         ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, OV02B10_ARB_VER_ADDR);
-        SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value, ver_value);
+        mid_value = ov02b10_arb_read_module_id(sns_drv_cxt->hw_handle);
+        SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value, ver_value, mid_value);
+
         if (OV02B10_ARB_VER_VALUE == ver_value) {
-            SENSOR_LOGI("this is ov02b10_arb sensor");
+            SENSOR_LOGI("this is ov02b10_arb_tsp sensor");
             sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACKAUX_CAM_NAME, "2_ov02b10_arb_2");
             ret_value = SENSOR_SUCCESS;
         } else {
