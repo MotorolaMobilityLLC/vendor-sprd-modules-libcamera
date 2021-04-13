@@ -35,6 +35,23 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+
+
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libFaceTracker
+LOCAL_MODULE_CLASS := SHARED_LIBRARIES
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := libFaceTracker.so
+LOCAL_MODULE_STEM_64 := libFaceTracker.so
+LOCAL_SRC_FILES_32 := $(LIB_PATH)/libFaceTracker.so
+LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libFaceTracker.so
+LOCAL_SHARED_LIBRARIES := libc libdl liblog libm
+ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
+LOCAL_PROPRIETARY_MODULE := true
+endif
+
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -45,11 +62,12 @@ LOCAL_MODULE_STEM_32 := libFaceDetectV3.so
 LOCAL_MODULE_STEM_64 := libFaceDetectV3.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libFaceDetectV3.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libFaceDetectV3.so
-LOCAL_SHARED_LIBRARIES := libc libdl liblog libm libumnn
+LOCAL_SHARED_LIBRARIES := libFaceTracker libc libdl liblog libm libumnn
 LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -65,6 +83,7 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -80,6 +99,7 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -95,6 +115,7 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -110,6 +131,7 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+
 include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
@@ -125,9 +147,8 @@ LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
+
 include $(BUILD_PREBUILT)
-
-
 
 #SPRD face detect
 include $(CLEAR_VARS)
@@ -138,7 +159,7 @@ LOCAL_MODULE_STEM_32 := libsprdfd.so
 LOCAL_MODULE_STEM_64 := libsprdfd.so
 LOCAL_SRC_FILES_32 := $(LIB_PATH)/libsprdfd.so
 LOCAL_SRC_FILES_64 := $(LIB_PATH)64/libsprdfd.so
-LOCAL_SHARED_LIBRARIES := libFaceDetect libFaceDetectHW libFaceDetectL libFaceDetectV3 libc libdl liblog libm libsprdfd_hw
+LOCAL_SHARED_LIBRARIES := libFaceDetect libFaceDetectHW libFaceDetectL libFaceDetectV3 libFaceChecker libc libdl liblog libm libsprdfd_hw
 LOCAL_MODULE_TAGS := optional
 ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
