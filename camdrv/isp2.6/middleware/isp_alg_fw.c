@@ -4648,7 +4648,7 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		ae_input.is_multi_mode = ISP_ALG_DUAL_W_T;
 		break;
 	case ISP_WIDETELEULTRAWIDE:
-#ifdef CONFIG_ISP_2_8
+#if defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 		ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
 #else
 		ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
@@ -4783,7 +4783,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 		param.is_multi_mode = ISP_ALG_DUAL_W_T;
 		break;
 	case ISP_WIDETELEULTRAWIDE:
-#ifdef CONFIG_ISP_2_8
+#if defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
 		param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
 #else
 		param.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
