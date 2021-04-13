@@ -309,10 +309,39 @@ extern "C" {
 		cmr_u32 cur_fps;
 	};
 
+	struct af_aem_stats_data
+	{
+		cmr_s16 offset_x;
+		cmr_s16 offset_y;
+		cmr_u32 blk_num_x;
+		cmr_u32 blk_num_y;
+		cmr_u32 blk_size_x;
+		cmr_u32 blk_size_y;
+		cmr_u32 frame_id;
+		cmr_u32 zoom_ratio;
+
+		cmr_u32 *sum_ue_r;
+		cmr_u32 *sum_ue_g;
+		cmr_u32 *sum_ue_b;
+		cmr_u32 *sum_ae_r;
+		cmr_u32 *sum_ae_g;
+		cmr_u32 *sum_ae_b;
+		cmr_u32 *sum_oe_r;
+		cmr_u32 *sum_oe_g;
+		cmr_u32 *sum_oe_b;
+		cmr_u32 *cnt_ue_r;
+		cmr_u32 *cnt_ue_g;
+		cmr_u32 *cnt_ue_b;
+		cmr_u32 *cnt_oe_r;
+		cmr_u32 *cnt_oe_g;
+		cmr_u32 *cnt_oe_b;
+	};
+
 	struct afctrl_ae_info {
 		cmr_u32 is_update;
 		struct af_img_blk_info img_blk_info;
 		struct af_ae_calc_out ae_rlt_info;
+		struct af_aem_stats_data aem_stats;
 	};
 
 	struct afctrl_awb_info {

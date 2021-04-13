@@ -317,6 +317,7 @@ typedef struct _af_ctrl {
 	roi_rgb_y_t roi_RGBY;
 	ae_info_t ae;
 	awb_info_t awb;
+	struct af_aem_stats_data aem_stats;
 	pd_algo_result_t pd;
 	cmr_s32 ae_lock_num;
 	cmr_s32 awb_lock_num;
