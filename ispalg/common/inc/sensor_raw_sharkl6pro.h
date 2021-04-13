@@ -2755,8 +2755,6 @@ struct sensor_nr_set_group_param {
 	cmr_u32 nr3d_len;
 	cmr_u8 *ppe;
 	cmr_u32 ppe_len;
-	cmr_u8 *yuv_precdn;
-	cmr_u32 yuv_precdn_len;
 	cmr_u8 *cdn;
 	cmr_u32 cdn_len;
 	cmr_u8 *ynr;
