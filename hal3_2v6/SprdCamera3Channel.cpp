@@ -970,6 +970,7 @@ bool SprdCamera3MetadataChannel::pushResult () {
             tmp_isp_params.af_cts_params.frame_number == -1 &&
             !mSyncResult.empty() && tmp_isp_params.frame_number >= AESYNCNUM) {
             HAL_LOGD("skip useless ae frame");
+            free_camera_metadata(const_cast<camera_metadata_t *>(tmp_result.result));
         } else {
             mSyncResult.push_back(tmp_result);
         }
@@ -1271,7 +1272,6 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
                 result.result = nullptr;
             }
             CameraMetadata *camMetadata = new CameraMetadata(new_result);
-
             if (camMetadata->exists(ANDROID_SENSOR_TIMESTAMP)) {
                 int64_t tmp_timestamp = 
                     camMetadata->find(ANDROID_SENSOR_TIMESTAMP)
@@ -1362,9 +1362,8 @@ camera_metadata_t *SprdCamera3MetadataChannel::getMetadata(cmr_s32 frame_num) {
         }
         return result.result;
     }else {
-        HAL_LOGE("AE or AF callback error, give default metadata %p",
-            mSetting->translateLocalToFwMetadata());
         camera_metadata_t *tmp_result = mSetting->translateLocalToFwMetadata();;
+        HAL_LOGE("AE or AF callback error, give default metadata %p", tmp_result);
         if (!mRequestInfoList.empty()) {
             struct isp_sync_params tmp_isp_sync_params;
             vector<struct isp_sync_params>::iterator lsItr =
