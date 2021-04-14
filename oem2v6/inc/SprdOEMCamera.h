@@ -32,9 +32,6 @@ cmr_int camera_init(cmr_u32 camera_id, camera_cb_of_type callback,
 
 cmr_int camera_deinit(cmr_handle camera_handle);
 
-cmr_int camera_release_frame(cmr_handle camera_handle, enum camera_data data,
-                             cmr_uint index);
-
 cmr_int camera_set_param(cmr_handle camera_handle, enum camera_param_type id,
                          uint64_t param);
 
@@ -54,10 +51,6 @@ cmr_int camera_request_snapshot(cmr_handle camera_handle,
 
 cmr_int camera_take_picture(cmr_handle camera_handle,
                             enum takepicture_mode cap_mode);
-
-cmr_int camera_get_sn_trim(cmr_handle camera_handle, cmr_u32 mode,
-                           cmr_uint *trim_x, cmr_uint *trim_y, cmr_uint *trim_w,
-                           cmr_uint *trim_h, cmr_uint *width, cmr_uint *height);
 
 cmr_int camera_set_mem_func(cmr_handle camera_handle, void *cb_of_malloc,
                             void *cb_of_free, void *private_data);
@@ -99,10 +92,6 @@ void camera_fd_start(cmr_handle camera_handle, cmr_u32 param);
 
 cmr_int camera_is_need_stop_preview(cmr_handle camera_handle);
 
-cmr_int camera_takepicture_process(cmr_handle camera_handle,
-                                   cmr_uint src_phy_addr, cmr_uint src_vir_addr,
-                                   cmr_u32 width, cmr_u32 height);
-
 uint32_t camera_get_size_align_page(uint32_t size);
 
 cmr_int camera_fast_ctrl(cmr_handle camera_handle, enum fast_ctrl_mode mode,
@@ -122,8 +111,6 @@ cmr_s32 camera_get_iommu_status(cmr_handle camera_handle);
 cmr_int camera_set_preview_buffer(cmr_handle camera_handle,
                                   cmr_uint src_phy_addr, cmr_uint src_vir_addr,
                                   cmr_s32 fd);
-cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
-                                cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_set_zsl_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
                               cmr_uint src_vir_addr, cmr_s32 fd);
 
@@ -156,14 +143,9 @@ void camera_end_burst_notice(cmr_handle camera_handle);
 cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width,
                        int height);
 
-cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs);
-
 cmr_int
 camera_set_sensor_info_to_af(cmr_handle camera_handle,
                              struct cmr_af_aux_sensor_info *sensor_info);
-cmr_int camera_get_sensor_max_fps(cmr_handle camera_handle, cmr_u32 camera_id,
-                                  cmr_u32 *max_fps);
-
 cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id,
                                       cmr_u32 *is_need_flash);
 cmr_uint camera_get_sensor_otp_info(cmr_handle camera_handle, cmr_u8 dual_flag,
@@ -179,7 +161,6 @@ cmr_int camera_set_reprocess_picture_size(
 cmr_int camera_set_largest_picture_size(cmr_u32 camera_id, cmr_u16 width,
                                         cmr_u16 height);
 
-cmr_int camera_start_capture(cmr_handle camera_handle);
 cmr_int camera_stop_capture(cmr_handle camera_handle);
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param);
@@ -189,17 +170,6 @@ cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       cmr_uint yaddr, cmr_uint yaddr_vir,
                                       cmr_uint fd);
 
-cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
-                               cmr_s32 *point_y);
-
-cmr_s32 camera_isp_sw_check_buf(cmr_handle camera_handle, cmr_uint *param_ptr);
-
-cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
-                             struct img_frm *yuv_buff,
-                             struct img_sbs_info *sbs_info);
-
-cmr_int camera_get_tuning_param(cmr_handle camera_handle,
-                                struct tuning_param_info *tuning_info);
 cmr_int image_sw_algorithm_processing(
     cmr_handle camera_handle,
     struct image_sw_algorithm_buf *src_sw_algorithm_buf,
@@ -209,11 +179,9 @@ cmr_int image_sw_algorithm_processing(
 int dump_image_with_isp_info(cmr_handle camera_handle, uint32_t img_fmt,
                              uint32_t width, uint32_t height,
                              uint32_t dump_size, struct img_addr *addr);
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
 cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
                                   enum DVFS_MM_MODULE module,
                                   enum CamProcessingState camera_state);
-#endif
 void camera_set_original_picture_size(cmr_handle camera_handle,
                                    int32_t width,int32_t height);
 int camera_get_scaler(uint32_t *scaler);

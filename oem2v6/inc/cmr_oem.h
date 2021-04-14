@@ -623,9 +623,6 @@ cmr_int camera_local_get_viewangle(cmr_handle oem_handle,
 cmr_int camera_local_set_preview_buffer(cmr_handle oem_handle,
                                         cmr_uint src_phy_addr,
                                         cmr_uint src_vir_addr, cmr_s32 fd);
-cmr_int camera_local_set_video_buffer(cmr_handle oem_handle,
-                                      cmr_uint src_phy_addr,
-                                      cmr_uint src_vir_addr, cmr_s32 fd);
 cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle,
                                     cmr_uint src_phy_addr,
                                     cmr_uint src_vir_addr, cmr_s32 fd);

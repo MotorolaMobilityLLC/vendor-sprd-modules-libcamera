@@ -98,9 +98,6 @@ class SprdCamera3HWI {
     void setVideoBufferTimestamp(uint64_t timestamp);
     uint64_t getVideoBufferTimestamp(void);
     void setMultiCallBackYuvMode(bool mode);
-    void GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y);
-    cmr_s32 ispSwCheckBuf(cmr_uint *param_ptr);
-    void getRawFrame(int64_t timestamp, cmr_u8 **y_addr);
     void stopPreview();
     void startPreview();
     SprdCamera3RegularChannel *getRegularChan();
@@ -119,9 +116,7 @@ class SprdCamera3HWI {
     void setSprdCameraLowpower(int flag);
     int camera_ioctrl(int cmd, void *param1, void *param2);
     int setSensorStream(uint32_t on_off);
-    int setCameraClearQBuff();
     void getDualOtpData(void **addr, int *size, int *read);
-    void getOnlineBuffer(void *cali_info);
     void setUltraWideMode(unsigned int on_off);
     void setFovFusionMode(unsigned int on_off);
     void setMultiCameraId(uint32_t multi_camera_id);

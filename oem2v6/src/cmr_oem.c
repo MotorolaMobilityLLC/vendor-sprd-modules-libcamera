@@ -14854,34 +14854,6 @@ cmr_int camera_local_set_preview_buffer(cmr_handle oem_handle,
 exit:
     return ret;
 }
-cmr_int camera_local_set_video_buffer(cmr_handle oem_handle,
-                                      cmr_uint src_phy_addr,
-                                      cmr_uint src_vir_addr, cmr_s32 fd) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt;
-    struct sensor_exp_info exp_info;
-    cam_buffer_info_t buffer;
-    memset(&buffer, 0, sizeof(cam_buffer_info_t));
-
-    if (!oem_handle || !fd || !src_vir_addr) {
-        CMR_LOGE("in parm error");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    cxt = (struct camera_context *)oem_handle;
-    buffer.fd = fd;
-    buffer.addr_phy = (void *)src_phy_addr;
-    buffer.addr_vir = (void *)src_vir_addr;
-
-    ret = cmr_preview_set_video_buffer(cxt->prev_cxt.preview_handle,
-                                       cxt->camera_id, buffer);
-    if (ret) {
-        CMR_LOGE("failed to set video buffer %ld", ret);
-        goto exit;
-    }
-exit:
-    return ret;
-}
 
 cmr_int camera_local_set_zsl_buffer(cmr_handle oem_handle,
                                     cmr_uint src_phy_addr,
