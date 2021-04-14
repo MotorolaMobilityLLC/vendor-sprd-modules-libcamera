@@ -662,7 +662,7 @@ static SENSOR_STATIC_INFO_T s_ov08a10_static_info[VENDOR_NUM] = {
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 1,
-                     .fov_info = {{5.120f, 3.840f}, 4.042f}}}
+                    .fov_info = {{3.890f, 2.971f}, 7.48f}}}
     /*If there are multiple modules,please add here*/
 };
 
