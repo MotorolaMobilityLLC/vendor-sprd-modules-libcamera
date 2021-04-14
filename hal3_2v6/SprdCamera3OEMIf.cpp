@@ -13222,10 +13222,10 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
 }
 
 void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
-    int mNumSensors;
     //uint32_t delayTime = 10 * 1000; // us
     ASensorEvent buffer[8];
     ssize_t n;
+    memset((void *)buffer, 0x00, 8 * sizeof(ASensorEvent));
 
     HAL_LOGI("E");
     if ((n = ASensorEventQueue_getEvents(mCTSensorEventQueue, buffer, 8)) > 0) {
