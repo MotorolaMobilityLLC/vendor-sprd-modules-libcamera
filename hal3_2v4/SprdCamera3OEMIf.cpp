@@ -9804,6 +9804,36 @@ void SprdCamera3OEMIf::skipZslFrameForFlashCapture() {
 exit:
     HAL_LOGV("X");
 }
+int SprdCamera3OEMIf::ProcessAlgoNr(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type) {
+    int ret = 0;
+    cmr_u32 value = 0, is_slave = 0;
+    struct image_sw_algorithm_buf src_alg_buf;
+    struct image_sw_algorithm_buf dst_alg_buf;
+    bzero(&src_alg_buf, sizeof(struct image_sw_algorithm_buf));
+    bzero(&dst_alg_buf, sizeof(struct image_sw_algorithm_buf));
+
+    HAL_LOGI("E");
+    src_alg_buf.height = zsl_frame->height;
+    src_alg_buf.width = zsl_frame->width;
+    src_alg_buf.fd = zsl_frame->fd;
+    src_alg_buf.format = zsl_frame->format;
+    src_alg_buf.y_vir_addr = zsl_frame->y_vir_addr;
+    src_alg_buf.y_phy_addr = zsl_frame->y_phy_addr;
+
+    dst_alg_buf.height = zsl_frame->height;
+    dst_alg_buf.width = zsl_frame->width;
+    dst_alg_buf.fd = zsl_frame->fd;
+    dst_alg_buf.format = zsl_frame->format;
+    dst_alg_buf.y_vir_addr = zsl_frame->y_vir_addr;
+    dst_alg_buf.y_phy_addr = zsl_frame->y_phy_addr;
+
+    ret = mHalOem->ops->image_sw_algorithm_processing(
+        mCameraHandle, &src_alg_buf,
+        &dst_alg_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,
+        CAM_IMG_FMT_YUV420_NV21);
+
+    return ret;
+}
 
 void SprdCamera3OEMIf::snapshotZsl(void *p_data) {
     ATRACE_CALL();

@@ -6335,7 +6335,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
     }
 
     if ((cxt->nr_flag && cxt->is_multi_mode != MODE_BOKEH && cxt->is_multi_mode != MODE_BLUR) ||
-        is_filter || cxt->dre_flag || cxt->ee_flag) {
+        is_filter || cxt->dre_flag || cxt->ee_flag || (cxt->is_multi_mode == MODE_BLUR && cxt->blurcynr_noface)) {
         cmr_bzero(&ipm_in_param, sizeof(ipm_in_param));
         cmr_bzero(&imp_out_param, sizeof(imp_out_param));
 
@@ -16439,6 +16439,16 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on) {
     return ret;
 }
 
+cmr_int camera_local_set_blur_cynr_noface(cmr_handle oem_handle, cmr_uint *on) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    CHECK_HANDLE_VALID(cxt);
+    cxt->blurcynr_noface = *on;
+    CMR_LOGD("blurcynr_noface %d", cxt->blurcynr_noface);
+
+    return ret;
+}
 cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
                                             enum takepicture_mode cap_mode,
                                             cmr_uint yaddr, cmr_uint yaddr_vir,

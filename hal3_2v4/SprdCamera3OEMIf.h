@@ -309,6 +309,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool clearPrevStream;
     bool mBurstCapture;
     uint32_t mTakePicNum;
+    int ProcessAlgoNr(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
 
   private:
     inline void print_time();

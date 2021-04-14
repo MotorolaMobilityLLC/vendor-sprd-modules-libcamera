@@ -187,9 +187,10 @@ SprdCamera3Portrait::SprdCamera3Portrait() {
     mLastOnlieVcm = 0;
     mBokehAlgo = NULL;
     mIsHdrMode = false;
+    mIsNrMode = false;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
-    mHdrCallbackCnt = 0;
+    mNrCallbackCnt = 0;
     mAfstate = 0;
     mCameraIdMaster = CAM_PORTRAIT_MAIN_ID;
     mCameraIdSlave = CAM_DEPTH_PORTRAIT_ID;
@@ -2222,7 +2223,7 @@ void SprdCamera3Portrait::BokehCaptureThread::reprocessReq(
         mPortrait->mLocalBuffer, capture_msg.combo_buff.buffer1,
         mPortrait->mLocalBufferNumber, mPortrait->mLocalBufferList);
 
-    if (!mPortrait->mIsHdrMode) {
+    if (!mPortrait->mIsNrMode) {
         mPortrait->pushBufferList(
             mPortrait->mLocalBuffer, capture_msg.combo_buff.buffer2,
             mPortrait->mLocalBufferNumber, mPortrait->mLocalBufferList);
@@ -2273,10 +2274,10 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
             if (mPortrait->mIsCapDepthFinish == false &&
                 capture_msg.combo_buff.buffer1 != NULL &&
                 capture_msg.combo_buff.buffer2 == NULL &&
-                mPortrait->mIsHdrMode) {
-                mPortrait->mHdrSkipBlur = true;
+                mPortrait->mIsNrMode) {
+                //mPortrait->mHdrSkipBlur = true;
                 HAL_LOGI("frame is hdr, and depth hasn't do");
-                break;
+                //break;
             }
             mCaptureMsgList.erase(itor1);
         }
@@ -2333,9 +2334,9 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
                 } else {
                     mBokehResult = false;
                 }
-                HAL_LOGI("mPortrait->mIsHdrMode=%d,mAbokehGallery=%d,"
+                HAL_LOGI("mPortrait->mIsNrMode=%d,mAbokehGallery=%d,"
                          "mBokehResult=%d",
-                         mPortrait->mIsHdrMode, mAbokehGallery, mBokehResult);
+                         mPortrait->mIsNrMode, mAbokehGallery, mBokehResult);
             }
             if (mBokehResult == false) {
                 mime_type = 0;
@@ -2354,7 +2355,7 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
             }
             mime_type = SPRD_MIMETPYE_NONE;
 
-            if (!mPortrait->mIsHdrMode) {
+            if (!mPortrait->mIsNrMode) {
 #ifdef YUV_CONVERT_TO_JPEG
                 mPortrait->m_pDstJpegBuffer = (mPortrait->popBufferList(
                     mPortrait->mLocalBufferList, SNAPSHOT_MAIN_BUFFER));
@@ -2381,13 +2382,15 @@ bool SprdCamera3Portrait::BokehCaptureThread::threadLoop() {
                 mPortrait->m_pMainSnapBuffer = capture_msg.combo_buff.buffer1;
 #endif
             }
-
+            if (mPortrait->mIsNrMode == true && capture_msg.combo_buff.buffer1 != NULL && capture_msg.combo_buff.buffer2 == NULL) {
+                reprocessReq(output_buffer, capture_msg);
+            }
             mPortrait->unmap(capture_msg.combo_buff.buffer1);
             /*if (!mPortrait->mFlushing)
                 mDevmain->hwi->camera_ioctrl(CAMERA_IOCTRL_SET_MIME_TYPE,
                                              &mime_type, NULL);
             */
-            if (!mPortrait->mIsHdrMode) {
+            if (!mPortrait->mIsNrMode) {
                 reprocessReq(output_buffer, capture_msg);
             } else {
                 if (!mAbokehGallery) {
@@ -2476,20 +2479,22 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
     mBokehMode = mPortrait->mBokehMode;
     lightPortraitType = mPortrait->lightPortraitType;
     mFaceBeautyFlag = mPortrait->mFaceBeautyFlag;
-    HAL_LOGD("E");
+    HAL_LOGD("E mIsNrMode=%d", mPortrait->mIsNrMode);
     char prop[PROPERTY_VALUE_MAX] = {
         0,
     };
 
-    if (output_buf == NULL || input_buf1 == NULL || input_buf2 == NULL) {
+    if (output_buf == NULL || input_buf1 == NULL) {
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
     }
 
-    rc = mPortrait->map(input_buf2, &input_buf2_addr);
-    if (rc != NO_ERROR) {
-        HAL_LOGE("fail to map input buffer2");
-        goto fail_map_input2;
+    if (input_buf2 != NULL) {
+        rc = mPortrait->map(input_buf2, &input_buf2_addr);
+        if (rc != NO_ERROR) {
+            HAL_LOGE("fail to map input buffer2");
+            goto fail_map_input2;
+        }
     }
 
     rc = mPortrait->map(output_buf, &output_buf_addr);
@@ -2541,13 +2546,32 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         goto exit;
     }
     sem_wait(&mPortrait->mFaceinfoSignSem);
-    mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
-                (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
-                output_buf_addr, input_buf1_addr,
-                mPortrait->mVcmStepsFixed, bokehMask, lptMask);
-    if(!lptMask) {
-        HAL_LOGE("no thing!");
+    if (mPortrait->mIsNrMode == true && input_buf1 != NULL && input_buf2 != NULL) {
+        HAL_LOGI("nr do depth");
+        mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                    output_buf_addr, input_buf1_addr,
+                    mPortrait->mVcmStepsFixed, bokehMask, lptMask);
+        if(!lptMask)
+            HAL_LOGE("no thing!");
+        mPortrait->unmap(output_buf);
+        if (input_buf2 != NULL) {
+            mPortrait->unmap(input_buf2);
+        }
+        return rc;
+    } else if (mPortrait->mIsNrMode == false) {
+        HAL_LOGI("no nr do depth");
+        mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
+                    (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
+                    output_buf_addr, input_buf1_addr,
+                    mPortrait->mVcmStepsFixed, bokehMask, lptMask);
+        if(!lptMask)
+            HAL_LOGE("no thing!");
     }
+
+    /*do cynr*/
+    mPortrait->ProcessAlgo(input_buf1, input_buf1_addr,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,
+        mPortrait->m_pPhyCamera[CAM_TYPE_PORTRAIT_MAIN].hwi);
     /*do portrait*/
     if (mBokehMode == CAM_PORTRAIT_PORTRAIT_MODE) {
         if (mPortrait->mPortraitFlag) {
@@ -2678,7 +2702,9 @@ exit : { // dump yuv data
     free(bokehMask);
     mPortrait->unmap(output_buf);
 fail_map_output:
-    mPortrait->unmap(input_buf2);
+    if (input_buf2 != NULL) {
+        mPortrait->unmap(input_buf2);
+    }
 fail_map_input2:
 
     return rc;
@@ -3093,9 +3119,10 @@ int SprdCamera3Portrait::initialize(
     mOtpData.otp_type = 0;
     mJpegOrientation = 0;
     mIsHdrMode = false;
+    mIsNrMode =false;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
-    mHdrCallbackCnt = 0;
+    mNrCallbackCnt = 0;
 #ifdef YUV_CONVERT_TO_JPEG
     mOrigJpegSize = 0;
     m_pDstJpegBuffer = NULL;
@@ -3595,7 +3622,32 @@ int SprdCamera3Portrait::processCaptureRequest(
                 .data.u8[0];
         HAL_LOGD("mBokehMode=%d", mBokehMode);
     }
+    if (mPortrait->mApiVersion == SPRD_API_PORTRAIT_MODE) {
+        if (metaSettingsMain.exists(ANDROID_CONTROL_SCENE_MODE)) {
+            uint8_t scene_mode =
+                metaSettingsMain.find(ANDROID_CONTROL_SCENE_MODE).data.u8[0];
+            if (scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR)
+                mIsHdrMode = true;
+            else
+                mIsHdrMode = false;
+        }
 
+        if (metaSettingsMain.exists(ANDROID_SPRD_3DNR_ENABLED)) {
+            sprd_3dnr_enabled =
+               metaSettingsMain.find(ANDROID_SPRD_3DNR_ENABLED).data.u8[0];
+        }
+
+        if (metaSettingsAux.exists(ANDROID_SPRD_3DNR_ENABLED)) {
+            int aux_sprd_3dnr_enabled = 0;
+                metaSettingsAux.update(ANDROID_SPRD_3DNR_ENABLED, &aux_sprd_3dnr_enabled, 1);
+        }
+        HAL_LOGV("sprd_3dnr_enabled:%d,mIsHdrMode=%d", sprd_3dnr_enabled,
+            mIsHdrMode);
+        if(mIsHdrMode || sprd_3dnr_enabled)
+            mIsNrMode = true;
+        else
+            mIsNrMode = false;
+    }
     tagCnt = metaSettingsMain.entryCount();
     if (tagCnt != 0) {
         if (metaSettingsMain.exists(ANDROID_SPRD_BURSTMODE_ENABLED)) {
@@ -3660,8 +3712,8 @@ int SprdCamera3Portrait::processCaptureRequest(
             getStreamType(request->output_buffers[i].stream);
         new_stream = (req->output_buffers[i]).stream;
         new_buffer = (req->output_buffers[i]).buffer;
-        HAL_LOGD("num_output_buffers:%d, streamtype:%d",
-                 req->num_output_buffers, requestStreamType);
+        HAL_LOGD("num_output_buffers:%d, streamtype:%d, mIsNrMode:%d",
+                 req->num_output_buffers, requestStreamType, mIsNrMode);
 
         if (requestStreamType == SNAPSHOT_STREAM) {
             // first step: save capture request stream info
@@ -3703,7 +3755,7 @@ int SprdCamera3Portrait::processCaptureRequest(
                 goto req_fail;
             }
             main_buffer_index++;
-            if (mIsHdrMode && !mFlushing) {
+            if (mIsNrMode && !mFlushing) {
                 camera3_stream_buffer_t *sbuf =
                     &out_streams_main[main_buffer_index];
                 *sbuf = req->output_buffers[i];
@@ -4091,6 +4143,57 @@ void SprdCamera3Portrait::dumpCaptureBokeh(unsigned char *result_buffer_addr,
 #endif
     }
 }
+void SprdCamera3Portrait::dumpImg(
+    dump_portrait_type type, dump_image_info_t *img_info) {
+
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    unsigned char *buffer_base = NULL;
+
+    switch (type) {
+    case DUMP_MULTI_NR_AFTER:
+        property_get("persist.vendor.cam.multinr.dump", prop, "0");
+
+        if (!strcmp(prop, "multinr") || !strcmp(prop, "all")) {
+            buffer_base = (unsigned char *)img_info->buffer_addr;
+            dumpData(buffer_base, 1,
+                            img_info->width * img_info->height * 3 /
+                                2,
+                            img_info->width, img_info->height,
+                            img_info->frame_number, "multinr_after");
+        }
+        break;
+
+    case DUMP_SINGLE_NR_BEFORE:
+        property_get("persist.vendor.cam.singlenr.dump", prop, "0");
+
+        if (!strcmp(prop, "singlenr") || !strcmp(prop, "all")) {
+            buffer_base = (unsigned char *)img_info->buffer_addr;
+             dumpData(buffer_base, 1,
+                            img_info->width * img_info->height * 3 /
+                                2,
+                            img_info->width, img_info->height,
+                            img_info->frame_number, "singlenr_before");
+        }
+        break;
+
+      case DUMP_SINGLE_NR_AFTER:
+        property_get("persist.vendor.cam.singlenr.dump", prop, "0");
+
+        if (!strcmp(prop, "singlenr") || !strcmp(prop, "all")) {
+            buffer_base = (unsigned char *)img_info->buffer_addr;
+             dumpData(buffer_base, 1,
+                            img_info->width * img_info->height * 3 /
+                                2,
+                            img_info->width, img_info->height,
+                            img_info->frame_number, "singlenr_after");
+        }
+        break;
+    default:
+        break;
+    }
+}
 
 /*===========================================================================
  * FUNCTION   :processCaptureResultMain
@@ -4204,8 +4307,8 @@ void SprdCamera3Portrait::processCaptureResultMain(
             CallBackSnapResult(CAMERA3_BUFFER_STATUS_OK);
         }
         Mutex::Autolock l(mDefaultStreamLock);
-        if (mIsHdrMode) {
-            mHdrCallbackCnt++;
+        if (mIsNrMode) {
+            mNrCallbackCnt++;
         }
 
         if (NULL == mCaptureThread->mSavedOneResultBuff) {
@@ -4218,8 +4321,8 @@ void SprdCamera3Portrait::processCaptureResultMain(
             capture_msg.combo_buff.buffer1 = result->output_buffers->buffer;
             // hdr mode: the first DEFAULT_STREAM is normal frame,
             // and the second is hdr frame.
-            if (mHdrCallbackCnt == 2) {
-                mHdrCallbackCnt = 0;
+            if (mNrCallbackCnt == 2) {
+                mNrCallbackCnt = 0;
                 capture_msg.combo_buff.buffer2 = NULL;
             } else {
                 capture_msg.combo_buff.buffer2 =
