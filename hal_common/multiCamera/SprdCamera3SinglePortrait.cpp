@@ -1111,9 +1111,11 @@ int SprdCamera3SinglePortrait::CaptureThread::capBlurHandle(
 
     int64_t blurStart = systemTime();
     if (mAlgorithmFlag) {
+#ifndef CONFIG_ISP_2_4
         ret = mSinglePortrait->ProcessAlgo(input1,input1_addr,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,mSinglePortrait->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
         if (ret != 0)
             HAL_LOGE("cnr_yur processalgo is error");
+#endif
         sprd_capture_portrait_process_param_t mPortraitCapRunParams;
         memset(&mPortraitCapRunParams,0,sizeof(sprd_capture_portrait_process_param_t));
         mPortraitCapRunParams.ctx = &(mBlurApi[1]->mHandle);
@@ -1308,6 +1310,12 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
         ret = getPortraitMask(output_buff_addr, combo_buff_addr, 0, bokehMask, lptMask);
         if(!lptMask) {
             HAL_LOGE("no thing!");
+        }
+        if (portrait_flag == false) {
+            ret = mSinglePortrait->ProcessAlgo(combo_buffer,combo_buff_addr,SPRD_CAM_IMAGE_SW_ALGORITHM_CNR_YNR,mSinglePortrait->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
+            HAL_LOGD("disable refocus and have face, to do cnr + ynr");
+            if (ret != 0)
+            HAL_LOGE("cnr_yur processalgo is error");
         }
         if(portrait_flag){
             ret = capBlurHandle(combo_buffer, combo_buff_addr,
@@ -3285,6 +3293,7 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
     int af_bypass = 0;
     int fb_on = 0;
     char prop[PROPERTY_VALUE_MAX] = {0};
+    int cynr = 0;
 
     auto getFbValue = [&]()->void{
         if (metaSettings.exists(ANDROID_SPRD_UCAM_SKIN_LEVEL)) {
@@ -3414,12 +3423,18 @@ int SprdCamera3SinglePortrait::processCaptureRequest(
                 fb_on = 0;
                 hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
                                        &fb_on, NULL);
+                cynr = 0;
+                hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_BLUR_CYNR_NO_FACE,
+                                       &cynr, NULL);
             } else {
                 snap_stream_num = 1;
                 fb_on = 1;
                 out_streams_main[j].buffer = (req->output_buffers[i]).buffer;
                 hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_CAPTURE_FACE_BEAUTIFY,
                                        &fb_on, NULL);
+                cynr = 1;
+                hwiMain->camera_ioctrl(CAMERA_IOCTRL_SET_BLUR_CYNR_NO_FACE,
+                                       &cynr, NULL);
             }
             if (mhasCallbackStream)
                 mneedCbPreviewSnap = true;

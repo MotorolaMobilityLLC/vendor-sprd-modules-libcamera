@@ -131,6 +131,7 @@ class SprdCamera3HWI {
     int getTuningParam(struct tuning_param_info *tuning_info);
     void getDualOtpData(void **addr, int *size, int *read);
     static void dumpMemoryAddresses(size_t limit);
+    int ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);
 
   private:
     int openCamera();

@@ -5248,7 +5248,7 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
     if (cxt->req_param.is_hdr == 1 &&
         (cmr_cxt->is_multi_mode == MODE_BOKEH ||
          cmr_cxt->is_multi_mode == MODE_MULTI_CAMERA ||
-         cmr_cxt->is_multi_mode == MODE_BLUR)) {
+         (cmr_cxt->is_multi_mode == MODE_BLUR && cmr_cxt->blurcynr_noface == 0))) {
         snp_send_msg_notify_thr(snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                                 SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF,
                                 NULL, sizeof(struct camera_frame_type));

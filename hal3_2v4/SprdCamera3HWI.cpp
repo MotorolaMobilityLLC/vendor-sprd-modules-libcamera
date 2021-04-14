@@ -2554,5 +2554,8 @@ void SprdCamera3HWI::getDualOtpData(void **addr, int *size, int *read) {
 
     return;
 }
+int SprdCamera3HWI::ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type) {
+    return mOEMIf->ProcessAlgoNr(zsl_frame,sw_algorithm_type);
+}
 
 }; // end namespace sprdcamera
