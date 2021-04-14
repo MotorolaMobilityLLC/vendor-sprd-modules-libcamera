@@ -2413,7 +2413,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
     available_cam_features.add(1);
 
     // 34 portrait fnum support all portrait mode
-    property_get("persist.vendor.cam.portrait.fnum.portrait", prop, "0");
+    property_get("persist.vendor.cam.portrait.fnum.portrait", prop, "1");
     available_cam_features.add(atoi(prop));
 
     //35 front video mirror
