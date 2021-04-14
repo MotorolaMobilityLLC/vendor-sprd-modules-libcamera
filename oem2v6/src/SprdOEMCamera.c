@@ -70,38 +70,6 @@ exit:
     return ret;
 }
 
-cmr_int camera_release_frame(cmr_handle camera_handle, enum camera_data data,
-                             cmr_uint index) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)camera_handle;
-
-    if (!camera_handle) {
-        CMR_LOGE("camera handle is null");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    CMR_LOGI("release data %d  index %ld", data, index);
-    switch (data) {
-    case CAMERA_PREVIEW_DATA:
-    case CAMERA_VIDEO_DATA:
-        ret = cmr_preview_release_frame(cxt->prev_cxt.preview_handle,
-                                        cxt->camera_id, index);
-        break;
-    case CAMERA_SNAPSHOT_DATA:
-        ret = cmr_snapshot_release_frame(cxt->snp_cxt.snapshot_handle, index);
-        break;
-    default:
-        CMR_LOGI("don't support %d", data);
-        break;
-    }
-    if (ret) {
-        CMR_LOGE("failed to release frame ret %ld", ret);
-    }
-exit:
-    CMR_LOGI("done %ld", ret);
-    return ret;
-}
-
 cmr_int camera_set_param(cmr_handle camera_handle, enum camera_param_type id,
                          uint64_t param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
@@ -244,28 +212,6 @@ cmr_int camera_take_picture(cmr_handle camera_handle,
     }
 
 exit:
-    return ret;
-}
-
-cmr_int camera_get_sn_trim(cmr_handle camera_handle, cmr_u32 mode,
-                           cmr_uint *trim_x, cmr_uint *trim_y, cmr_uint *trim_w,
-                           cmr_uint *trim_h, cmr_uint *width,
-                           cmr_uint *height) // fot hal2.0
-{
-    UNUSED(camera_handle);
-    UNUSED(mode);
-    UNUSED(trim_x);
-    UNUSED(trim_y);
-    UNUSED(mode);
-    UNUSED(trim_x);
-    UNUSED(trim_y);
-    UNUSED(trim_w);
-    UNUSED(trim_h);
-    UNUSED(width);
-    UNUSED(height);
-
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
     return ret;
 }
 
@@ -641,20 +587,6 @@ cmr_int camera_is_need_stop_preview(cmr_handle camera_handle) {
     return ret;
 }
 
-cmr_int camera_takepicture_process(cmr_handle camera_handle,
-                                   cmr_uint src_phy_addr, cmr_uint src_vir_addr,
-                                   cmr_u32 width, cmr_u32 height) {
-    UNUSED(camera_handle);
-    UNUSED(src_phy_addr);
-    UNUSED(src_vir_addr);
-    UNUSED(width);
-    UNUSED(height);
-
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    return ret;
-}
-
 uint32_t camera_get_size_align_page(uint32_t size) { return size; }
 
 cmr_int camera_fast_ctrl(cmr_handle camera_handle, enum fast_ctrl_mode mode,
@@ -736,24 +668,6 @@ cmr_int camera_set_preview_buffer(cmr_handle camera_handle,
 
 exit:
     CMR_LOGV("done %ld", ret);
-    return ret;
-}
-cmr_int camera_set_video_buffer(cmr_handle camera_handle, cmr_uint src_phy_addr,
-                                cmr_uint src_vir_addr, cmr_s32 fd) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    if (!camera_handle || !fd || !src_vir_addr) {
-        CMR_LOGE("Invalid param error");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-    ret = camera_local_set_video_buffer(camera_handle, src_phy_addr,
-                                        src_vir_addr, fd);
-    if (ret) {
-        CMR_LOGE("failed %ld", ret);
-    }
-
-exit:
-    CMR_LOGI("done %ld", ret);
     return ret;
 }
 
@@ -880,16 +794,6 @@ void camera_end_burst_notice(cmr_handle camera_handle) {
     camera_local_end_burst_notice(camera_handle);
 }
 
-cmr_int camera_get_gain_thrs(cmr_handle camera_handle, cmr_u32 *is_over_thrs) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    struct camera_context *cxt = (struct camera_context *)camera_handle;
-    struct setting_context *setting_cxt = &cxt->setting_cxt;
-    ret = cmr_sensor_get_gain_thrs(cxt->sn_cxt.sensor_handle, cxt->camera_id,
-                                   is_over_thrs);
-
-    return ret;
-}
-
 cmr_int
 camera_set_sensor_info_to_af(cmr_handle camera_handle,
                              struct cmr_af_aux_sensor_info *sensor_info) {
@@ -909,18 +813,6 @@ cmr_int camera_set_reprocess_picture_size(cmr_handle camera_handle,
     return ret;
 }
 /**add for 3d capture to reset reprocessing capture size end*/
-
-cmr_int camera_get_sensor_max_fps(cmr_handle camera_handle, cmr_u32 camera_id,
-                                  cmr_u32 *max_fps) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-    if (NULL == camera_handle || NULL == max_fps) {
-        CMR_LOGE("input param is null!");
-        ret = CMR_CAMERA_INVALID_PARAM;
-        return ret;
-    }
-    ret = cmr_get_sensor_max_fps(camera_handle, camera_id, max_fps);
-    return ret;
-}
 
 cmr_int camera_snapshot_is_need_flash(cmr_handle oem_handle, cmr_u32 camera_id,
                                       cmr_u32 *is_need_flash) {
@@ -1018,25 +910,6 @@ exit:
 cmr_int camera_set_sensor_close_flag(cmr_handle camera_handle) {
     camera_local_set_sensor_close_flag(camera_handle);
     return 0;
-}
-
-cmr_int camera_start_capture(cmr_handle camera_handle) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    if (!camera_handle) {
-        CMR_LOGE("camera handle is null");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-
-    ret = camera_local_start_capture(camera_handle);
-    if (ret) {
-        CMR_LOGE("failed to start snapshot %ld", ret);
-        goto exit;
-    }
-
-exit:
-    return ret;
 }
 
 cmr_int camera_stop_capture(cmr_handle camera_handle) {
@@ -1347,46 +1220,6 @@ cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
 
     return ret;
 }
-cmr_int camera_get_tuning_param(cmr_handle camera_handle,
-                                struct tuning_param_info *tuning_info) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    if (!camera_handle) {
-        CMR_LOGE("camera handle is null");
-        ret = -CMR_CAMERA_INVALID_PARAM;
-        goto exit;
-    }
-
-    ret = camera_local_get_tuning_param(camera_handle, tuning_info);
-    if (ret) {
-        CMR_LOGE("failed to get tuning param %ld", ret);
-        goto exit;
-    }
-
-exit:
-    return ret;
-}
-
-cmr_int camera_get_focus_point(cmr_handle camera_handle, cmr_s32 *point_x,
-                               cmr_s32 *point_y) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    return ret;
-}
-
-cmr_s32 camera_isp_sw_check_buf(cmr_handle camera_handle, cmr_uint *param_ptr) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    return ret;
-}
-
-cmr_int camera_raw_post_proc(cmr_handle camera_handle, struct img_frm *raw_buff,
-                             struct img_frm *yuv_buff,
-                             struct img_sbs_info *sbs_info) {
-    cmr_int ret = CMR_CAMERA_SUCCESS;
-
-    return ret;
-}
 
 cmr_int camera_reprocess_yuv_for_jpeg(cmr_handle camera_handle,
                                       enum takepicture_mode cap_mode,
@@ -1455,6 +1288,15 @@ cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
     CMR_LOGV("done %ld", ret);
     return ret;
 }
+#else
+cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
+                                  enum DVFS_MM_MODULE module,
+                                  enum CamProcessingState camera_state) {
+    UNUSED(camera_handle);
+    UNUSED(module);
+    UNUSED(camera_state);
+    return CMR_CAMERA_SUCCESS;
+}
 #endif
 cmr_int camera_set_gpu_mem_ops(cmr_handle camera_handle, void *cb_of_malloc,
                                void *cb_of_free) {
@@ -1485,50 +1327,71 @@ int camera_get_scaler(uint32_t *scaler)
 }
 
 static oem_ops_t oem_module_ops = {
-    camera_init, camera_deinit, camera_release_frame, camera_set_param,
-    camera_start_preview, camera_stop_preview, camera_start_autofocus,
-    camera_cancel_autofocus, camera_cancel_takepicture,
-    NULL, NULL,
-    camera_request_snapshot,
-    camera_take_picture,
-    camera_get_sn_trim, camera_set_mem_func,
-    camera_get_redisplay_data, camera_is_change_size,
-    NULL, camera_get_preview_rect,
-    camera_get_zsl_capability, camera_get_sensor_info_for_raw,
-    camera_get_sensor_trim, camera_get_sensor_trim2,
-    camera_get_preview_rot_angle, camera_fd_enable, camera_flip_enable,
-    camera_fd_start, camera_is_need_stop_preview, camera_takepicture_process,
-    camera_get_size_align_page, camera_fast_ctrl, camera_start_preflash,
-    camera_get_viewangle, camera_get_sensor_exif_info,
-    camera_get_sensor_result_exif_info, camera_get_iommu_status,
-    camera_set_preview_buffer, camera_set_video_buffer, camera_set_zsl_buffer,
-    queue_buffer, camera_set_video_snapshot_buffer,
-    camera_set_zsl_snapshot_buffer, camera_zsl_snapshot_need_pause,
-    camera_get_isp_handle, camera_lls_enable, camera_is_lls_enabled,
-    camera_vendor_hdr_enable, camera_is_vendor_hdr, camera_set_lls_shot_mode,
-    camera_get_lls_shot_mode, camera_get_last_preflash_time,camera_get_isp_info, camera_start_burst_notice,
-    camera_end_burst_notice, NULL, NULL, dump_jpeg_file, camera_get_gain_thrs,
-    camera_set_sensor_info_to_af, camera_get_sensor_max_fps,
-    camera_snapshot_is_need_flash, camera_get_sensor_otp_info,
-    camera_get_sensor_vcm_step, camera_set_sensor_close_flag,
-    camera_set_reprocess_picture_size, camera_start_capture,
-    camera_stop_capture, camera_set_largest_picture_size, camera_ioctrl,
-    camera_reprocess_yuv_for_jpeg, image_sw_algorithm_processing,
-    dump_image_with_isp_info,
-#if defined(CONFIG_ISP_2_1)
-    camera_get_focus_point, camera_isp_sw_check_buf, camera_isp_sw_proc,
-    camera_raw_post_proc, camera_get_tuning_param,
-#endif
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
-    defined(CONFIG_CAMERA_3DNR_CAPTURE_SW) ||                                  \
-    defined(CONFIG_CAMERA_SUPPORT_ULTRA_WIDE)
-    camera_set_gpu_mem_ops,
-#endif
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
-    camera_set_mm_dvfs_policy,
-#endif
-    camera_set_original_picture_size,
-    camera_get_scaler,
+	/* api for HAL1.0 only */
+	.camera_is_change_size = camera_is_change_size,
+	.camera_get_preview_rect = camera_get_preview_rect,
+	.camera_flip_enable = camera_flip_enable,
+	.camera_is_need_stop_preview = camera_is_need_stop_preview,
+	.camera_is_lls_enabled = camera_is_lls_enabled,
+	.camera_is_vendor_hdr = camera_is_vendor_hdr,
+	.camera_set_lls_shot_mode = camera_set_lls_shot_mode,
+	.camera_get_lls_shot_mode = camera_get_lls_shot_mode,
+	.camera_start_burst_notice = camera_start_burst_notice,
+	.camera_end_burst_notice = camera_end_burst_notice,
+	.camera_get_viewangle = camera_get_viewangle,
+	.camera_get_zsl_capability = camera_get_zsl_capability,
+	.camera_get_size_align_page = camera_get_size_align_page,
+	/* End of api for HAL1.0 only */
+
+	.camera_init = camera_init,
+	.camera_deinit = camera_deinit,
+	.camera_set_param = camera_set_param,
+	.camera_start_preview = camera_start_preview,
+	.camera_stop_preview = camera_stop_preview,
+	.camera_start_autofocus = camera_start_autofocus,
+	.camera_cancel_autofocus = camera_cancel_autofocus,
+	.camera_cancel_takepicture = camera_cancel_takepicture,
+	.camera_request_snapshot = camera_request_snapshot,
+	.camera_take_picture = camera_take_picture,
+	.camera_set_mem_func = camera_set_mem_func,
+	.camera_get_redisplay_data = camera_get_redisplay_data,
+	.camera_get_sensor_info_for_raw = camera_get_sensor_info_for_raw,
+	.camera_get_sensor_trim = camera_get_sensor_trim,
+	.camera_get_sensor_trim2 = camera_get_sensor_trim2,
+	.camera_get_preview_rot_angle = camera_get_preview_rot_angle,
+	.camera_fd_enable = camera_fd_enable,
+	.camera_fd_start = camera_fd_start,
+	.camera_fast_ctrl = camera_fast_ctrl,
+	.camera_start_preflash = camera_start_preflash,
+	.camera_get_sensor_exif_info = camera_get_sensor_exif_info,
+	.camera_get_sensor_result_exif_info = camera_get_sensor_result_exif_info,
+	.camera_get_iommu_status = camera_get_iommu_status,
+	.camera_set_preview_buffer = camera_set_preview_buffer,
+	.camera_set_zsl_buffer = camera_set_zsl_buffer,
+	.queue_buffer = queue_buffer,
+	.camera_set_video_snapshot_buffer = camera_set_video_snapshot_buffer,
+	.camera_set_zsl_snapshot_buffer = camera_set_zsl_snapshot_buffer,
+	.camera_zsl_snapshot_need_pause = camera_zsl_snapshot_need_pause,
+	.camera_get_isp_handle = camera_get_isp_handle,
+	.camera_get_last_preflash_time = camera_get_last_preflash_time,
+	.camera_get_isp_info = camera_get_isp_info,
+	.dump_jpeg_file = dump_jpeg_file,
+	.camera_set_sensor_info_to_af = camera_set_sensor_info_to_af,
+	.camera_snapshot_is_need_flash = camera_snapshot_is_need_flash,
+	.camera_get_sensor_otp_info = camera_get_sensor_otp_info,
+	.camera_get_sensor_vcm_step = camera_get_sensor_vcm_step,
+	.camera_set_sensor_close_flag = camera_set_sensor_close_flag,
+	.camera_set_reprocess_picture_size = camera_set_reprocess_picture_size,
+	.camera_stop_capture = camera_stop_capture,
+	.camera_set_largest_picture_size = camera_set_largest_picture_size,
+	.camera_ioctrl = camera_ioctrl,
+	.camera_reprocess_yuv_for_jpeg = camera_reprocess_yuv_for_jpeg,
+	.image_sw_algorithm_processing = image_sw_algorithm_processing,
+	.dump_image_with_isp_info = dump_image_with_isp_info,
+	.camera_set_gpu_mem_ops = camera_set_gpu_mem_ops,
+	.camera_set_mm_dvfs_policy = camera_set_mm_dvfs_policy,
+	.camera_set_original_picture_size = camera_set_original_picture_size,
+	.camera_get_scaler = camera_get_scaler,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
