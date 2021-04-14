@@ -221,7 +221,7 @@ static cmr_u32 _awb_set_gain_manualwb_v3(struct awb_ctrl_cxt *cxt)
 			cxt->output_gain.b = 1024;
 			cxt->output_ct = 5000;
 			cxt->output_ct_mean = 5000;
-		} else if ((mawb_id > 0) && (mawb_id < 10))	 {
+		} else if ((mawb_id > 0) && (mawb_id < 11))	 {
 			// return mwb by mwb mode id
 			//sunny,cloudy,and other module
 			rtn = cxt->lib_ops.awb_ioctrl_v3(cxt->alg_handle, AWB_IOCTRL_GET_MWB_BY_MODEID_3_0, &mawb_id, &out_gain_mwb);
@@ -1515,7 +1515,7 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 				cxt->output_gain.b = 1024;
 				cxt->output_ct = 5000;
 				cxt->output_ct_mean = 5000;
-			} else if ((mawb_id > 0) && (mawb_id < 10))	{
+			} else if ((mawb_id > 0) && (mawb_id < 11))	{
 				// return mwb by mwb mode id
 				//by awb_ioctrl to get the gain and ct
 				rtn = cxt->lib_ops.awb_ioctrl_v3(cxt->alg_handle, AWB_IOCTRL_GET_MWB_BY_MODEID_3_0, &mawb_id, &out_gain_mwb);
