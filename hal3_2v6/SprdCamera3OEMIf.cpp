@@ -6545,13 +6545,16 @@ int SprdCamera3OEMIf::openCamera() {
     char value2[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
     int is_raw_capture = 0;
-    cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0;
+    cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0, malloc_w = 0,malloc_h = 0;
     int i = 0;
+    cmr_u8 camera_num = 0;
     char file_name[128];
     struct exif_info exif_info = {0, 0, {0, 0}};
     LENS_Tag lensInfo;
     SPRD_DEF_Tag *sprddefInfo;
     struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
+    struct sensor_size sensor_max_size[4];
+    struct phySensorInfo *phy_sensor = NULL;
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
 
@@ -6592,6 +6595,45 @@ int SprdCamera3OEMIf::openCamera() {
     }
     mHalOem->ops->camera_set_largest_picture_size(
         mCameraId, mLargestPictureWidth, mLargestPictureHeight);
+    if(mMultiCameraMode == MODE_MULTI_CAMERA) {
+        property_get("persist.vendor.cam.multi.section", value2, "3");
+        camera_num = atoi(value2);
+        phy_sensor = sensorGetPhysicalSnsInfo(0);
+        if (phy_sensor->sensor_type == FOURINONE_SW ||
+            phy_sensor->sensor_type == FOURINONE_HW){
+               malloc_w = phy_sensor->source_width_max / 2;
+               malloc_h = phy_sensor->source_height_max / 2;
+        }
+
+        for (i = 2 ; i <= camera_num; i++){
+               phy_sensor = sensorGetPhysicalSnsInfo(i);
+               if (phy_sensor->sensor_type == FOURINONE_SW ||
+                   phy_sensor->sensor_type == FOURINONE_HW){
+                        snsW = phy_sensor->source_width_max / 2;
+                        snsH = phy_sensor->source_height_max / 2;
+               } else {
+                        snsW = phy_sensor->source_width_max;
+                        snsH = phy_sensor->source_height_max;
+               }
+               if(malloc_w < snsW)
+                  malloc_w = snsW;
+               if(malloc_h < snsH)
+                  malloc_h = snsH;
+       }
+
+    }else {
+               phy_sensor = sensorGetPhysicalSnsInfo(mCameraId);
+               if (phy_sensor->sensor_type == FOURINONE_SW ||
+                   phy_sensor->sensor_type == FOURINONE_HW){
+                          malloc_w = phy_sensor->source_width_max / 2;
+                          malloc_h = phy_sensor->source_height_max / 2;
+               } else {
+                          malloc_w = phy_sensor->source_width_max;
+                          malloc_h = phy_sensor->source_height_max;
+
+               }
+
+    }
 
     if (isCameraInit()) {
         HAL_LOGE("camera hardware has been started already");
@@ -6607,6 +6649,8 @@ int SprdCamera3OEMIf::openCamera() {
         HAL_LOGE("camera_init failed");
         goto exit;
     }
+    mHalOem->ops->camera_set_alloc_picture_size(mCameraHandle,malloc_w, malloc_h);
+
     if (!isCameraInit()) {
 #if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
     defined(CONFIG_CAMERA_3DNR_CAPTURE_SW) ||                                  \
@@ -9867,6 +9911,11 @@ int SprdCamera3OEMIf::Callback_GpuMalloc(enum camera_mem_cb_type type,
         break;
     case CAMERA_SNAPSHOT_ULTRA_WIDE:
         // malloc with callback_graphicbuffermalloc
+        if (mMultiCameraMode == MODE_MULTI_CAMERA &&
+            camera->mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK)) {
+            HAL_LOGD("alloc sw buffer");
+            camera->mZslNum = 5;
+        }
         sum = camera->mZslNum;
         ret = camera->Callback_GraphicBufferMalloc(type,
             size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
