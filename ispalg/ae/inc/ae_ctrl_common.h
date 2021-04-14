@@ -38,4 +38,9 @@ struct ae_callback_param {
 	cmr_u32 frm_id;
 };
 
+struct ae_hdr_exp_gain_infor {
+	cmr_u32 exp_time[3];
+	cmr_u32 total_gain[3];
+};
+
 #endif
