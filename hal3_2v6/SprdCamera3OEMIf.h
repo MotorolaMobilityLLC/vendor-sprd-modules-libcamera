@@ -160,6 +160,11 @@ struct mlog_infotag {
     cmr_s16 cur_again;
     cmr_u16 cur_dummy;
 };
+struct sensor_size {
+    cmr_u16 weight;
+    cmr_u16 height;
+
+};
 
 typedef struct {
     sprd_graphic_memory_t mGpuHeap;

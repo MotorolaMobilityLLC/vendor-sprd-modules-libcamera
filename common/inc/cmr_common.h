@@ -2483,6 +2483,9 @@ typedef struct oem_ops {
 
     cmr_int (*camera_set_largest_picture_size)(cmr_u32 camera_id, cmr_u16 width,
                                                cmr_u16 height);
+    cmr_int (*camera_set_alloc_picture_size)(cmr_handle handle,cmr_u16 width,
+                                               cmr_u16 height);
+
     cmr_int (*camera_ioctrl)(cmr_handle handle, int cmd, void *param);
 
     cmr_int (*camera_reprocess_yuv_for_jpeg)(cmr_handle camera_handle,
