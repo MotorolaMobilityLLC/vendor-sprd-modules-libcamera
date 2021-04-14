@@ -107,14 +107,6 @@ class SprdCamera3HWI {
     void setVideoBufferTimestamp(uint64_t timestamp);
     uint64_t getVideoBufferTimestamp(void);
     void setMultiCallBackYuvMode(bool mode);
-    void getDepthBuffer(buffer_handle_t *input_buff,
-                        buffer_handle_t *output_buff);
-    void GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y);
-    cmr_s32 ispSwCheckBuf(cmr_uint *param_ptr);
-    void getRawFrame(int64_t timestamp, cmr_u8 **y_addr);
-    void ispSwProc(struct soft_isp_frm_param *param_ptr);
-    void rawPostProc(buffer_handle_t *raw_buff, buffer_handle_t *yuv_buff,
-                     struct img_sbs_info *sbs_info);
     void stopPreview();
     void startPreview();
     SprdCamera3RegularChannel *getRegularChan();
@@ -127,8 +119,6 @@ class SprdCamera3HWI {
     void setSprdCameraLowpower(int flag);
     int camera_ioctrl(int cmd, void *param1, void *param2);
     int setSensorStream(uint32_t on_off);
-    int setCameraClearQBuff();
-    int getTuningParam(struct tuning_param_info *tuning_info);
     void getDualOtpData(void **addr, int *size, int *read);
     static void dumpMemoryAddresses(size_t limit);
     int ProcessAlgo(struct camera_frame_type *zsl_frame,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type);

@@ -1518,127 +1518,6 @@ void SprdCamera3OEMIf::setMultiCallBackYuvMode(bool mode) {
     HAL_LOGD("setMultiCallBackYuvMode: %d, %d", mode, mSprdMultiYuvCallBack);
 }
 
-void SprdCamera3OEMIf::getDepthBuffer(buffer_handle_t *input_buff,
-                                      buffer_handle_t *output_buff) {
-    HAL_LOGD("E");
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
-        NULL == input_buff || NULL == output_buff) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return;
-    }
-    private_handle_t *input_buffer = (struct private_handle_t *)(*input_buff);
-    private_handle_t *output_buffer = (struct private_handle_t *)(*output_buff);
-    cmr_s32 dst_fd = output_buffer->share_fd;
-    cmr_uint dst_paddr = 0;
-    cmr_uint dst_vaddr = (cmr_uint)output_buffer->base;
-    cmr_uint dst_width = output_buffer->width;
-    cmr_uint dst_height = output_buffer->height;
-    cmr_s32 src_fd = input_buffer->share_fd;
-    cmr_uint src_paddr = 0;
-    cmr_uint src_uv_paddr =
-        src_paddr + input_buffer->width * input_buffer->height;
-    cmr_uint src_vaddr = (cmr_uint)input_buffer->base;
-    cmr_uint src_width = input_buffer->width;
-    cmr_uint src_height = input_buffer->height;
-    HAL_LOGD("dst fd:%d, vir_addr:0x%lx, w:%ld, h:%ld", dst_fd, dst_vaddr,
-             dst_width, dst_height);
-    HAL_LOGD("src fd:%d, vir_addr:0x%lx, w:%ld, h:%ld", src_fd, src_vaddr,
-             src_width, src_height);
-    if (0 !=
-        mHalOem->ops->camera_get_redisplay_data(
-            mCameraHandle, dst_fd, dst_paddr, dst_vaddr, dst_width, dst_height,
-            src_fd, src_paddr, src_uv_paddr, src_vaddr, src_width,
-            src_height)) {
-        HAL_LOGE("Fail to getdepth buffer.");
-    }
-    HAL_LOGD("X");
-}
-
-void SprdCamera3OEMIf::GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y) {
-    HAL_LOGD("E");
-
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return;
-    }
-
-    if (0 !=
-        mHalOem->ops->camera_get_focus_point(mCameraHandle, point_x, point_y)) {
-        HAL_LOGE("Fail to get focus point.");
-    }
-
-    HAL_LOGD("X");
-}
-
-cmr_s32 SprdCamera3OEMIf::ispSwCheckBuf(cmr_uint *param_ptr) {
-
-    cmr_s32 ret = 0;
-    HAL_LOGD("E");
-
-    ret = mHalOem->ops->camera_isp_sw_check_buf(mCameraHandle, param_ptr);
-
-    HAL_LOGD("X");
-    return ret;
-}
-
-void SprdCamera3OEMIf::ispSwProc(struct soft_isp_frm_param *param_ptr) {
-    HAL_LOGD("E");
-
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return;
-    }
-
-    if (0 != mHalOem->ops->camera_isp_sw_proc(mCameraHandle, param_ptr)) {
-        HAL_LOGE("Fail to process raw buff.");
-    }
-
-    HAL_LOGD("X");
-}
-
-void SprdCamera3OEMIf::rawPostProc(buffer_handle_t *raw_buff,
-                                   buffer_handle_t *yuv_buff,
-                                   struct img_sbs_info *sbs_info) {
-    HAL_LOGD("E");
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops ||
-        NULL == raw_buff || NULL == yuv_buff) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return;
-    }
-    struct img_frm raw_frame;
-    struct img_frm yuv_frame;
-    cmr_bzero(&raw_frame, sizeof(raw_frame));
-    cmr_bzero(&yuv_frame, sizeof(yuv_frame));
-    private_handle_t *input_buffer = (struct private_handle_t *)(*raw_buff);
-    private_handle_t *output_buffer = (struct private_handle_t *)(*yuv_buff);
-    yuv_frame.size.width = output_buffer->width;
-    yuv_frame.size.height = output_buffer->height;
-    yuv_frame.fd = output_buffer->share_fd;
-    yuv_frame.addr_phy.addr_y = 0;
-    yuv_frame.addr_phy.addr_u = yuv_frame.addr_phy.addr_y +
-                                yuv_frame.size.width * yuv_frame.size.height;
-    yuv_frame.addr_vir.addr_y = (cmr_uint)output_buffer->base;
-    yuv_frame.addr_vir.addr_u = (cmr_uint)output_buffer->base +
-                                yuv_frame.size.width * yuv_frame.size.height;
-    raw_frame.fd = input_buffer->share_fd;
-    raw_frame.addr_phy.addr_y = 0;
-    raw_frame.addr_vir.addr_y = (cmr_uint)input_buffer->base;
-    raw_frame.size.width = output_buffer->width;
-    raw_frame.size.height = input_buffer->height;
-    HAL_LOGD("raw fd 0x%x, w %d, h %d, yuv fd 0x%x, w %d, h %d",
-             input_buffer->share_fd, output_buffer->width, input_buffer->height,
-             output_buffer->share_fd, output_buffer->width,
-             output_buffer->height);
-
-    if (0 !=
-        mHalOem->ops->camera_raw_post_proc(mCameraHandle, &raw_frame,
-                                           &yuv_frame, sbs_info)) {
-        HAL_LOGE("Fail to process raw buff.");
-    }
-
-    HAL_LOGD("X");
-}
-
 void SprdCamera3OEMIf::stopPreview() {
     HAL_LOGD("switch stop preview");
     stopPreviewInternal();
@@ -1668,56 +1547,6 @@ int SprdCamera3OEMIf::setSensorStream(uint32_t on_off) {
     HAL_LOGD("E");
     ret = mHalOem->ops->camera_ioctrl(
         mCameraHandle, CAMERA_IOCTRL_COVERED_SENSOR_STREAM_CTRL, &on_off);
-
-    return ret;
-}
-
-int SprdCamera3OEMIf::setCameraClearQBuff() {
-    int ret = 0;
-
-    HAL_LOGD("E");
-    mIsCameraClearQBuf = 1;
-    HAL_LOGD("mIsCameraClearQBuf %d", mIsCameraClearQBuf);
-    return ret;
-}
-
-void SprdCamera3OEMIf::getRawFrame(int64_t timestamp, cmr_u8 **y_addr) {
-    HAL_LOGD("E");
-
-    List<ZslBufferQueue>::iterator itor;
-
-    if (mZSLQueue.empty()) {
-        HAL_LOGD("zsl queue is null");
-        return;
-    } else {
-        itor = mZSLQueue.begin();
-        while (itor != mZSLQueue.end()) {
-            HAL_LOGD("y_addr %lu", itor->frame.y_vir_addr);
-            int diff = (int64_t)timestamp - (int64_t)itor->frame.timestamp;
-            HAL_LOGD("preview timestamp %lld, zsl timestamp %lld", timestamp,
-                     itor->frame.timestamp);
-            if (abs(diff) < DUALCAM_TIME_DIFF) {
-                HAL_LOGD("get zsl frame");
-                *y_addr = (cmr_u8 *)(itor->frame.y_vir_addr);
-                HAL_LOGD("y_addr %p", *y_addr);
-                return;
-            }
-            itor++;
-        }
-    }
-    *y_addr = NULL;
-
-    return;
-}
-
-int SprdCamera3OEMIf::getTuningParam(struct tuning_param_info *tuning_info) {
-    int ret = 0;
-
-    HAL_LOGD("E");
-    if (0 !=
-        mHalOem->ops->camera_get_tuning_param(mCameraHandle, tuning_info)) {
-        HAL_LOGE("Fail to get tuning param.");
-    }
 
     return ret;
 }
@@ -3251,19 +3080,6 @@ void SprdCamera3OEMIf::freeAllCameraMemIon() {
 }
 
 void SprdCamera3OEMIf::canclePreviewMem() {}
-
-int SprdCamera3OEMIf::releasePreviewFrame(int i) {
-    int ret = 0;
-
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return UNKNOWN_ERROR;
-    }
-
-    ret = mHalOem->ops->camera_release_frame(mCameraHandle, CAMERA_PREVIEW_DATA,
-                                             i);
-    return ret;
-}
 
 bool SprdCamera3OEMIf::initPreview() {
     HAL_LOGD("E");

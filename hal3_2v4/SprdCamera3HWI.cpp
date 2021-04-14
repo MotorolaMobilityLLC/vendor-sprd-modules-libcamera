@@ -1996,42 +1996,6 @@ void SprdCamera3HWI::setMultiCallBackYuvMode(bool mode) {
     mOEMIf->setMultiCallBackYuvMode(mode);
 }
 
-void SprdCamera3HWI::getDepthBuffer(buffer_handle_t *input_buff,
-                                    buffer_handle_t *output_buff) {
-    mOEMIf->getDepthBuffer(input_buff, output_buff);
-}
-
-void SprdCamera3HWI::GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y) {
-    mOEMIf->GetFocusPoint(point_x, point_y);
-    HAL_LOGD("x %d, y %d", *point_x, *point_y);
-}
-
-cmr_s32 SprdCamera3HWI::ispSwCheckBuf(cmr_uint *param_ptr) {
-    return mOEMIf->ispSwCheckBuf(param_ptr);
-}
-
-void SprdCamera3HWI::getRawFrame(int64_t timestamp, cmr_u8 **y_addr) {
-    cmr_u8 *addr_vir = NULL;
-
-    mOEMIf->getRawFrame(timestamp, &addr_vir);
-
-    *y_addr = addr_vir;
-
-    HAL_LOGD("REAL TIME:y %p, ", *y_addr);
-
-    return;
-}
-
-void SprdCamera3HWI::ispSwProc(struct soft_isp_frm_param *param_ptr) {
-    mOEMIf->ispSwProc(param_ptr);
-}
-
-void SprdCamera3HWI::rawPostProc(buffer_handle_t *raw_buff,
-                                 buffer_handle_t *yuv_buff,
-                                 struct img_sbs_info *sbs_info) {
-    mOEMIf->rawPostProc(raw_buff, yuv_buff, sbs_info);
-}
-
 void SprdCamera3HWI::stopPreview() { mOEMIf->stopPreview(); }
 
 void SprdCamera3HWI::startPreview() { mOEMIf->startPreview(); }
@@ -2517,23 +2481,6 @@ int SprdCamera3HWI::setSensorStream(uint32_t on_off) {
     HAL_LOGD("set on_off %d", on_off);
 
     ret = mOEMIf->setSensorStream(on_off);
-
-    return ret;
-}
-
-int SprdCamera3HWI::setCameraClearQBuff() {
-    int ret = 0;
-    HAL_LOGD("E");
-
-    ret = mOEMIf->setCameraClearQBuff();
-
-    return ret;
-}
-
-int SprdCamera3HWI::getTuningParam(struct tuning_param_info *tuning_info) {
-    int ret = 0;
-
-    ret = mOEMIf->getTuningParam(tuning_info);
 
     return ret;
 }

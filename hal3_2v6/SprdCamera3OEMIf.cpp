@@ -1753,33 +1753,6 @@ void SprdCamera3OEMIf::setMultiCallBackYuvMode(bool mode) {
     HAL_LOGD("setMultiCallBackYuvMode: %d, %d", mode, mSprdMultiYuvCallBack);
 }
 
-void SprdCamera3OEMIf::GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y) {
-    HAL_LOGV("E");
-
-    if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
-        HAL_LOGE("oem is null or oem ops is null");
-        return;
-    }
-    /*
-        if (0 !=
-            mHalOem->ops->camera_get_focus_point(mCameraHandle, point_x,
-       point_y)) {
-            HAL_LOGE("Fail to get focus point.");
-        }
-    */
-
-    HAL_LOGV("X");
-}
-
-cmr_s32 SprdCamera3OEMIf::ispSwCheckBuf(cmr_uint *param_ptr) {
-    HAL_LOGV("E");
-    /*
-        return mHalOem->ops->camera_isp_sw_check_buf(mCameraHandle, param_ptr);
-    */
-    HAL_LOGV("X");
-    return 0;
-}
-
 void SprdCamera3OEMIf::stopPreview() {
     HAL_LOGD("switch stop preview");
     stopPreviewInternal();
@@ -1813,44 +1786,6 @@ int SprdCamera3OEMIf::setSensorStream(uint32_t on_off) {
     return ret;
 }
 
-int SprdCamera3OEMIf::setCameraClearQBuff() {
-    int ret = 0;
-
-    HAL_LOGD("E");
-    mIsCameraClearQBuf = 1;
-    // HAL_LOGD("mIsCameraClearQBuf %d", mIsCameraClearQBuf);
-    return ret;
-}
-
-void SprdCamera3OEMIf::getRawFrame(int64_t timestamp, cmr_u8 **y_addr) {
-    HAL_LOGD("E");
-
-    List<ZslBufferQueue>::iterator itor;
-
-    if (mZSLQueue.empty()) {
-        HAL_LOGD("zsl queue is null");
-        return;
-    } else {
-        itor = mZSLQueue.begin();
-        while (itor != mZSLQueue.end()) {
-            HAL_LOGD("y_addr %lu", itor->frame.y_vir_addr);
-            int diff = (int64_t)timestamp - (int64_t)itor->frame.timestamp;
-            HAL_LOGD("preview timestamp %" PRId64 ", zsl timestamp %" PRId64,
-                     timestamp, itor->frame.timestamp);
-            if (abs(diff) < DUALCAM_TIME_DIFF) {
-                HAL_LOGD("get zsl frame");
-                *y_addr = (cmr_u8 *)(itor->frame.y_vir_addr);
-                HAL_LOGD("y_addr %p", *y_addr);
-                return;
-            }
-            itor++;
-        }
-    }
-    *y_addr = NULL;
-
-    return;
-}
-
 void SprdCamera3OEMIf::getDualOtpData(void **addr, int *size, int *read) {
     struct sensor_otp_cust_info otp_info;
 
@@ -1864,15 +1799,6 @@ void SprdCamera3OEMIf::getDualOtpData(void **addr, int *size, int *read) {
     }
 
     HAL_LOGD("OTP INFO:addr 0x%p, size = %d", *addr, *size);
-    return;
-}
-
-void SprdCamera3OEMIf::getOnlineBuffer(void *cali_info) {
-
-    /*
-        mHalOem->ops->camera_get_online_buffer(mCameraHandle, cali_info);
-    */
-    // HAL_LOGD("online buffer addr %p", cali_info);
     return;
 }
 

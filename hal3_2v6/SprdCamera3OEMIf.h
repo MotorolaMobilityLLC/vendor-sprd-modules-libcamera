@@ -31,7 +31,6 @@ extern "C" {
 #endif
 #include "cmr_common.h"
 #include "cmr_oem.h"
-#include "sprd_dma_copy_k.h"
 #include <CameraParameters.h>
 #include <binder/BinderService.h>
 #include <binder/IInterface.h>
@@ -335,19 +334,14 @@ class SprdCamera3OEMIf : public virtual RefBase {
     // add for 3dcapture, get zsl buffer's timestamp in zsl query
     uint64_t getZslBufferTimestamp();
 
-    void GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y);
-    cmr_s32 ispSwCheckBuf(cmr_uint *param_ptr);
-    void getRawFrame(int64_t timestamp, cmr_u8 **y_addr);
     void stopPreview();
     void startPreview();
     int getMultiCameraMode(void);
     void setMultiCallBackYuvMode(bool mode);
     void setSprdCameraLowpower(int flag);
     int setSensorStream(uint32_t on_off);
-    int setCameraClearQBuff();
     int autoFocusToFaceFocus();
     void getDualOtpData(void **addr, int *size, int *read);
-    void getOnlineBuffer(void *cali_info);
     bool isNeedAfFullscan();
     bool isFdrHasTuningParam();
     bool isVideoCopyFromPreview();

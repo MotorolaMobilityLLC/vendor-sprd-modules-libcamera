@@ -2185,27 +2185,6 @@ void SprdCamera3HWI::setMultiCallBackYuvMode(bool mode) {
     mOEMIf->setMultiCallBackYuvMode(mode);
 }
 
-void SprdCamera3HWI::GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y) {
-    mOEMIf->GetFocusPoint(point_x, point_y);
-    HAL_LOGD("x %d, y %d", *point_x, *point_y);
-}
-
-cmr_s32 SprdCamera3HWI::ispSwCheckBuf(cmr_uint *param_ptr) {
-    return mOEMIf->ispSwCheckBuf(param_ptr);
-}
-
-void SprdCamera3HWI::getRawFrame(int64_t timestamp, cmr_u8 **y_addr) {
-    cmr_u8 *addr_vir = NULL;
-
-    mOEMIf->getRawFrame(timestamp, &addr_vir);
-
-    *y_addr = addr_vir;
-
-    HAL_LOGD("REAL TIME:y %p, ", *y_addr);
-
-    return;
-}
-
 void SprdCamera3HWI::stopPreview() {
      pre_frame_num = 0;
      mOEMIf->stopPreview();
@@ -2840,15 +2819,6 @@ int SprdCamera3HWI::setSensorStream(uint32_t on_off) {
     return ret;
 }
 
-int SprdCamera3HWI::setCameraClearQBuff() {
-    int ret = 0;
-    HAL_LOGD("E");
-
-    ret = mOEMIf->setCameraClearQBuff();
-
-    return ret;
-}
-
 void SprdCamera3HWI::pushDualVideoBuffer(hal_mem_info_t *mem_info) {
     if (mem_info == NULL) {
        HAL_LOGE("mem_info is null");
@@ -2891,13 +2861,6 @@ void SprdCamera3HWI::getDualOtpData(void **addr, int *size, int *read) {
 
     HAL_LOGD("OTP INFO:addr 0x%p, size = %d", *addr, *size);
 
-    return;
-}
-void SprdCamera3HWI::getOnlineBuffer(void *cali_info) {
-
-    mOEMIf->getOnlineBuffer(cali_info);
-
-    HAL_LOGD("online buffer addr %p", cali_info);
     return;
 }
 

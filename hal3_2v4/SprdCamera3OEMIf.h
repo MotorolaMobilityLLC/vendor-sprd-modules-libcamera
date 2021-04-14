@@ -39,7 +39,6 @@ extern "C" {
 #include "SprdCameraParameters.h"
 #include "cmr_common.h"
 #include "cmr_oem.h"
-#include "sprd_dma_copy_k.h"
 
 #include "SprdCamera3Setting.h"
 #include "SprdCamera3Stream.h"
@@ -196,7 +195,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
                                            uint32_t is_cache);
     int start(camera_channel_type_t channel_type, uint32_t frame_number);
     int stop(camera_channel_type_t channel_type, uint32_t frame_number);
-    int releasePreviewFrame(int i);
     int setCameraConvertCropRegion(bool update_sync = false);
     int CameraConvertCropRegion(uint32_t sensorWidth, uint32_t sensorHeight,
                                 struct img_rect *cropRegion);
@@ -232,22 +230,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void ispToolModeInit();
     uint64_t getZslBufferTimestamp(); /**add for 3dcapture, get zsl buffer's
                                          timestamp in zsl query*/
-    void getDepthBuffer(buffer_handle_t *input_buff,
-                        buffer_handle_t *output_buff);
-    void GetFocusPoint(cmr_s32 *point_x, cmr_s32 *point_y);
-    cmr_s32 ispSwCheckBuf(cmr_uint *param_ptr);
-    void getRawFrame(int64_t timestamp, cmr_u8 **y_addr);
-    void ispSwProc(struct soft_isp_frm_param *param_ptr);
-    void rawPostProc(buffer_handle_t *raw_buff, buffer_handle_t *yuv_buff,
-                     struct img_sbs_info *sbs_info);
     void stopPreview();
     void startPreview();
     int getMultiCameraMode(void);
     void setMultiCallBackYuvMode(bool mode);
     void setSprdCameraLowpower(int flag);
     int setSensorStream(uint32_t on_off);
-    int setCameraClearQBuff();
-    int getTuningParam(struct tuning_param_info *tuning_info);
     int autoFocusToFaceFocus();
     void getDualOtpData(void **addr, int *size, int *read);
     bool isNeedAfFullscan();

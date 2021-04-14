@@ -2269,16 +2269,59 @@ typedef cmr_int (*camera_cb_of_gpu_malloc)(
     enum camera_mem_cb_type type, cmr_u32 *size_ptr, cmr_u32 *sum_ptr,
     cmr_uint *phy_addr, cmr_uint *vir_addr, cmr_s32 *mfd, void **handle,
     cmr_uint *width, cmr_uint *height, void *private_data);
+
 typedef struct oem_ops {
+    /* following api for HAL1.0 only. They should be deleted if HAL1.0 is not supported */
+    cmr_int (*camera_is_change_size)(cmr_handle camera_handle,
+                                     cmr_u32 cap_width, cmr_u32 cap_height,
+                                     cmr_u32 preview_width,
+                                     cmr_u32 preview_height,
+                                     cmr_u32 video_width, cmr_u32 video_height,
+                                     cmr_uint *is_change);  // HAL1.0 only
+    int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
+                                               cmr_u32 *mem_size,  // HAL1.0 only
+                                               struct sensor_exp_info *sn_if);
+    cmr_int (*camera_get_preview_rect)(cmr_handle camera_handle,
+                                       cmr_uint *rect_x, cmr_uint *rect_y,
+                                       cmr_uint *rect_width,
+                                       cmr_uint *rect_height);  // HAL1.0 only
+    void (*camera_flip_enable)(cmr_handle camera_handle, cmr_u32 param);  // HAL1.0 only
+    cmr_int (*camera_is_need_stop_preview)(cmr_handle camera_handle); // HAL1.0 only
+    cmr_int (*camera_is_lls_enabled)(cmr_handle camera_handle); // HAL1.0 only
+    cmr_int (*camera_is_vendor_hdr)(cmr_handle camera_handle); // HAL1.0 only
+    void (*camera_set_lls_shot_mode)(cmr_handle camera_handle, cmr_u32 is_enable); // HAL1.0 only
+    cmr_int (*camera_get_lls_shot_mode)(cmr_handle camera_handle); // HAL1.0 only
+    void (*camera_start_burst_notice)(cmr_handle camera_handle); // HAL1.0 only
+    void (*camera_end_burst_notice)(cmr_handle camera_handle); // HAL1.0 only
+    cmr_int (*camera_get_viewangle)(cmr_handle camera_handle,
+                                    struct sensor_view_angle *view_angle); // HAL1.0 only
+    /* End of  api for HAL1.0 only  */
+
+    /* for HAL1.0 and HAL2v4 only */
+    cmr_int (*camera_get_zsl_capability)(cmr_handle camera_handle,
+                                         cmr_uint *is_support,
+                                         cmr_uint *max_widht,
+                                         cmr_uint *max_height);  // HAL1.0 & 2V4 only
+    uint32_t (*camera_get_size_align_page)(uint32_t size);  // HAL1.0 & 2V4 only
+    /* End of  api for HAL1.0 & HAL2v4 only  */
+
+    /* for HAL2v4 only */
+    cmr_int (*camera_set_recovery_status)(cmr_handle camera_handle); // HAL_2V4 only
+    cmr_int (*camera_set_snpcancel_flag)(cmr_handle camera_handle); // HAL_2V4 only
+    cmr_int (*camera_set_video_buffer)(cmr_handle camera_handle,
+                                       cmr_uint src_phy_addr,
+                                       cmr_uint src_vir_addr, cmr_s32 fd); // HAL_2V4 only
+    cmr_int (*camera_transfer_caf_to_af)(cmr_handle camera_handle); // HAL_2V4 only
+    cmr_int (*camera_transfer_af_to_caf)(cmr_handle camera_handle); // HAL_2V4 only
+    /* End of api for HAL2v4 only */
+
+    /* following api common and in use */
     cmr_int (*camera_init)(cmr_u32 camera_id, camera_cb_of_type callback,
                            void *client_data, cmr_uint is_autotest,
                            cmr_handle *camera_handle, void *cb_of_malloc,
                            void *cb_of_free);
 
     cmr_int (*camera_deinit)(cmr_handle camera_handle);
-
-    cmr_int (*camera_release_frame)(cmr_handle camera_handle,
-                                    enum camera_data data, cmr_uint index);
 
     cmr_int (*camera_set_param)(cmr_handle camera_handle,
                                 enum camera_param_type id, uint64_t param);
@@ -2294,20 +2337,11 @@ typedef struct oem_ops {
 
     cmr_int (*camera_cancel_takepicture)(cmr_handle camera_handle);
 
-    cmr_int (*camera_set_recovery_status)(cmr_handle camera_handle);
-
-    cmr_int (*camera_set_snpcancel_flag)(cmr_handle camera_handle);
-
     cmr_int (*camera_request_snapshot)(cmr_handle camera_handle,
                                    enum takepicture_mode cap_mode, struct snap_input_data *req);
 
     cmr_int (*camera_take_picture)(cmr_handle camera_handle,
                                    enum takepicture_mode cap_mode);
-
-    cmr_int (*camera_get_sn_trim)(cmr_handle camera_handle, cmr_u32 mode,
-                                  cmr_uint *trim_x, cmr_uint *trim_y,
-                                  cmr_uint *trim_w, cmr_uint *trim_h,
-                                  cmr_uint *width, cmr_uint *height);
 
     cmr_int (*camera_set_mem_func)(cmr_handle camera_handle, void *cb_of_malloc,
                                    void *cb_of_free, void *private_data);
@@ -2317,25 +2351,6 @@ typedef struct oem_ops {
         cmr_uint output_vir_addr, cmr_uint output_width, cmr_uint output_height,
         cmr_s32 input_fd, cmr_uint input_addr_y, cmr_uint input_addr_uv,
         cmr_uint input_vir_addr, cmr_uint input_width, cmr_uint input_height);
-
-    cmr_int (*camera_is_change_size)(cmr_handle camera_handle,
-                                     cmr_u32 cap_width, cmr_u32 cap_height,
-                                     cmr_u32 preview_width,
-                                     cmr_u32 preview_height,
-                                     cmr_u32 video_width, cmr_u32 video_height,
-                                     cmr_uint *is_change);
-    int (*camera_get_postprocess_capture_size)(cmr_u32 camera_id,
-                                               cmr_u32 *mem_size,
-                                               struct sensor_exp_info *sn_if);
-    cmr_int (*camera_get_preview_rect)(cmr_handle camera_handle,
-                                       cmr_uint *rect_x, cmr_uint *rect_y,
-                                       cmr_uint *rect_width,
-                                       cmr_uint *rect_height);
-
-    cmr_int (*camera_get_zsl_capability)(cmr_handle camera_handle,
-                                         cmr_uint *is_support,
-                                         cmr_uint *max_widht,
-                                         cmr_uint *max_height);
 
     cmr_int (*camera_get_sensor_info_for_raw)(
         cmr_handle camera_handle, struct sensor_mode_info *mode_info);
@@ -2349,26 +2364,13 @@ typedef struct oem_ops {
     cmr_uint (*camera_get_preview_rot_angle)(cmr_handle camera_handle);
 
     void (*camera_fd_enable)(cmr_handle camera_handle, cmr_u32 is_enable);
-    void (*camera_flip_enable)(cmr_handle camera_handle, cmr_u32 param);
 
     void (*camera_fd_start)(cmr_handle camera_handle, cmr_u32 param);
-
-    cmr_int (*camera_is_need_stop_preview)(cmr_handle camera_handle);
-
-    cmr_int (*camera_takepicture_process)(cmr_handle camera_handle,
-                                          cmr_uint src_phy_addr,
-                                          cmr_uint src_vir_addr, cmr_u32 width,
-                                          cmr_u32 height);
-
-    uint32_t (*camera_get_size_align_page)(uint32_t size);
 
     cmr_int (*camera_fast_ctrl)(cmr_handle camera_handle,
                                 enum fast_ctrl_mode mode, cmr_u32 param);
 
     cmr_int (*camera_start_preflash)(cmr_handle camera_handle);
-
-    cmr_int (*camera_get_viewangle)(cmr_handle camera_handle,
-                                    struct sensor_view_angle *view_angle);
 
     cmr_uint (*camera_get_sensor_exif_info)(cmr_handle camera_handle,
                                             struct exif_info *exif_info);
@@ -2379,14 +2381,13 @@ typedef struct oem_ops {
     cmr_int (*camera_set_preview_buffer)(cmr_handle camera_handle,
                                          cmr_uint src_phy_addr,
                                          cmr_uint src_vir_addr, cmr_s32 fd);
-    cmr_int (*camera_set_video_buffer)(cmr_handle camera_handle,
-                                       cmr_uint src_phy_addr,
-                                       cmr_uint src_vir_addr, cmr_s32 fd);
+
     cmr_int (*camera_set_zsl_buffer)(cmr_handle camera_handle,
                                      cmr_uint src_phy_addr,
                                      cmr_uint src_vir_addr, cmr_s32 fd);
     cmr_s32 (*queue_buffer)(cmr_handle camera_handle, cam_buffer_info_t buffer,
                             int steam_type);
+
     cmr_int (*camera_set_video_snapshot_buffer)(cmr_handle camera_handle,
                                                 cmr_uint src_phy_addr,
                                                 cmr_uint src_vir_addr,
@@ -2399,54 +2400,30 @@ typedef struct oem_ops {
                                               cmr_int *flag);
     cmr_int (*camera_get_isp_handle)(cmr_handle camera_handle,
                                      cmr_handle *isp_handle);
-    void (*camera_lls_enable)(cmr_handle camera_handle, cmr_u32 is_enable);
-    cmr_int (*camera_is_lls_enabled)(cmr_handle camera_handle);
-    void (*camera_vendor_hdr_enable)(cmr_handle camera_handle,
-                                     cmr_u32 is_enable);
-    cmr_int (*camera_is_vendor_hdr)(cmr_handle camera_handle);
 
-    void (*camera_set_lls_shot_mode)(cmr_handle camera_handle,
-                                     cmr_u32 is_enable);
-    cmr_int (*camera_get_lls_shot_mode)(cmr_handle camera_handle);
     cmr_int (*camera_get_last_preflash_time)(cmr_handle camera_handle,
         cmr_s64 *time);
     cmr_int (*camera_get_isp_info)(cmr_handle camera_handle, void **addr,
                                    int *size, cmr_s32 frame_id);
-    void (*camera_start_burst_notice)(cmr_handle camera_handle);
-    void (*camera_end_burst_notice)(cmr_handle camera_handle);
-
-    cmr_int (*camera_transfer_caf_to_af)(cmr_handle camera_handle);
-    cmr_int (*camera_transfer_af_to_caf)(cmr_handle camera_handle);
 
     cmr_int (*dump_jpeg_file)(void *virt_addr, unsigned int size, int width,
                               int height);
-
-    cmr_int (*camera_get_gain_thrs)(cmr_handle camera_handle,
-                                    cmr_u32 *is_over_thrs);
     cmr_int (*camera_set_sensor_info_to_af)(
         cmr_handle camera_handle, struct cmr_af_aux_sensor_info *sensor_info);
-    cmr_int (*camera_get_sensor_max_fps)(cmr_handle camera_handle,
-                                         cmr_u32 camera_id, cmr_u32 *max_fps);
+
     cmr_int (*camera_snapshot_is_need_flash)(cmr_handle oem_handle,
                                              cmr_u32 camera_id,
                                              cmr_u32 *is_need_flash);
     cmr_uint (*camera_get_sensor_otp_info)(
         cmr_handle camera_handle, cmr_u8 dual_flag,
         struct sensor_otp_cust_info *otp_info);
-#if defined(CONFIG_ISP_2_1)
-    cmr_uint (*camera_get_online_buffer)(cmr_handle camera_handle,
-                                         void *cali_info);
-#endif
     cmr_uint (*camera_get_sensor_vcm_step)(cmr_handle camera_handle,
                                            cmr_u32 camera_id,
                                            cmr_u32 *vcm_step);
     cmr_int (*camera_set_sensor_close_flag)(cmr_handle camera_handle);
     cmr_int (*camera_set_reprocess_picture_size)(
         cmr_handle camera_handle, cmr_uint is_reprocessing, cmr_u32 camera_id,
-        cmr_u32 width,
-        cmr_u32
-            height); /**add for 3d capture to reset reprocessing capture size*/
-    cmr_int (*camera_start_capture)(cmr_handle camera_handle);
+        cmr_u32 width, cmr_u32 height); /**add for 3d capture to reset reprocessing capture size*/
     cmr_int (*camera_stop_capture)(cmr_handle camera_handle);
 
     cmr_int (*camera_set_largest_picture_size)(cmr_u32 camera_id, cmr_u16 width,
@@ -2466,41 +2443,12 @@ typedef struct oem_ops {
     int (*dump_image_with_isp_info)(cmr_handle camera_handle, uint32_t img_fmt,
                                     uint32_t width, uint32_t height,
                                     uint32_t dump_size, struct img_addr *addr);
-#if defined(CONFIG_ISP_2_1) || defined(CONFIG_ISP_2_4)
-    cmr_int (*camera_get_focus_point)(cmr_handle camera_handle,
-                                      cmr_s32 *point_x, cmr_s32 *point_y);
-    cmr_s32 (*camera_isp_sw_check_buf)(cmr_handle camera_handle,
-                                       cmr_uint *param_ptr);
-    cmr_int (*camera_isp_sw_proc)(cmr_handle camera_handle,
-                                  struct soft_isp_frm_param *param_ptr);
-    cmr_int (*camera_raw_post_proc)(cmr_handle camera_handle,
-                                    struct img_frm *raw_buff,
-                                    struct img_frm *yuv_buff,
-                                    struct img_sbs_info *sbs_info);
-    cmr_int (*camera_get_tuning_param)(cmr_handle camera_handle,
-                                       struct tuning_param_info *tuning_info);
-#endif
-#if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
-    defined(CONFIG_CAMERA_3DNR_CAPTURE_SW) ||                                  \
-    defined(CONFIG_CAMERA_SUPPORT_ULTRA_WIDE)
+
     cmr_int (*camera_set_gpu_mem_ops)(cmr_handle camera_handle,
                                       void *cb_of_malloc, void *cb_of_free);
-#endif
-#ifdef CAMERA_SUPPORT_ROLLING_SHUTTER_SKEW // Added only for HAL3_2v1 and oem2v1
-    cmr_int (*camera_get_rolling_shutter)(cmr_handle camera_handle,
-                                          cmr_s64 *rolling_shutter_skew);
-#endif
-#ifdef CONFIG_CAMERA_PER_FRAME_CONTROL
-    // perFrame_res: to get per frame result metadata from ISP
-    cmr_uint (*camera_get_isp_perFrame_result)(
-        cmr_handle camera_handle, struct isp_pfc_per_frame_cxt *perFrame_res);
-#endif
-
-#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
     cmr_int (*camera_set_mm_dvfs_policy)(cmr_handle oem_handle,
                                          enum DVFS_MM_MODULE module,
                                          enum CamProcessingState camera_state);
-#endif
     void (*camera_set_original_picture_size)(cmr_handle handle, int32_t width,
                                              int32_t height);
     int (*camera_get_scaler)(uint32_t *scaler);
