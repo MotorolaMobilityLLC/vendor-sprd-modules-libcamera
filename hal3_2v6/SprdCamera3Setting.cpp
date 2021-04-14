@@ -6872,7 +6872,9 @@ int SprdCamera3Setting::androidSceneModeToDrvMode(uint8_t androidScreneMode,
             s_setting[mCameraId].sprddefInfo.sprd_appmode_id !=
                 CAMERA_MODE_FOV_FUSION_MODE &&
             s_setting[mCameraId].sprddefInfo.sprd_appmode_id !=
-               CAMERA_MODE_SUPER_MACRO) {
+               CAMERA_MODE_SUPER_MACRO &&
+            s_setting[mCameraId].sprddefInfo.sprd_appmode_id !=
+               CAMERA_MODE_PORTRAIT_PHOTO) {
             *convertDrvMode = CAMERA_SCENE_MODE_FDR;
         } else {
             *convertDrvMode = CAMERA_SCENE_MODE_HDR;

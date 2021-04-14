@@ -529,6 +529,7 @@ struct camera_context {
     cmr_u8 longexp_skipnum;
     double exp_time;
     cmr_uint _3rd_3dnr_flag;
+    cmr_uint blurcynr_noface;
 };
 
 struct prev_ai_scene_info {
@@ -742,6 +743,7 @@ cmr_int cmr_set_microdepth_debug_info(cmr_handle oem_handle, void *param);
 cmr_int camera_local_get_sensor_format(cmr_handle cmr_handle,
                                        cmr_u32 *sensor_format);
 cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on);
+cmr_int camera_local_set_blur_cynr_noface(cmr_handle oem_handle, cmr_uint *on);
 cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
                                   struct snp_thumb_yuv_param *param);
 cmr_int camera_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *param);
