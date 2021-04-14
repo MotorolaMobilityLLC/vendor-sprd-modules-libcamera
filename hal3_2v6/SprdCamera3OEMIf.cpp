@@ -4381,6 +4381,9 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
             if (mFlush == 0) {
                 Mutex::Autolock l(&mEisVideoProcessLock);
                 frame_out = EisVideoFrameStab(frame, frame_num);
+            } else {
+                channel->channelClearInvalidQBuff(frame_num, buffer_timestamp,
+                                                  CAMERA_STREAM_TYPE_VIDEO);
             }
             if (frame_out.frame_data) {
                 channel->channelCbRoutine(frame_out.frame_num, frame_out.timestamp*1000000000,
