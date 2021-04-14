@@ -21,6 +21,7 @@
 #include "ae_ctrl_types.h"
 #include "ae_ctrl.h"
 #include "isp_bridge.h"
+#include "hdr/inc/sprd_hdr_api.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -356,6 +357,7 @@ extern "C" {
 		cmr_u8 hdr_version;
 		cmr_u8 hdr_menu_ctrl; /* auto: 1*/
 		struct hdr_calc_result hdr_calc_result;
+		struct ae_hdr_exp_gain_infor hdr_exp_gain;
 		cmr_s32 smooth_flag;
 		cmr_s32 frameid;
 		cmr_s8 dre_enable;
@@ -445,6 +447,10 @@ extern "C" {
 		cmr_u8 mainFlashEn;
 		cmr_u8 flash_awben;
 		cmr_u8 calcFirstFlag;
+		void *hdr_tuning_param;
+		cmr_s32 hdr_tuning_size;
+		hdr_callback_t hdr_callback;
+		hdr_callback_t hdr_callback_backup;
 		cmr_u32 end_id;
 	};
 #ifdef __cplusplus
