@@ -106,7 +106,7 @@ LOCAL_SRC_FILES += ../oemcommon/mm_dvfs/cmr_mm_dvfs.c
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_AUTO_TRACKING)),true)
-LOCAL_SRC_FILES += ../oemcommon/src/cmr_auto_tracking.c
+LOCAL_SRC_FILES += src/cmr_auto_tracking.c
 LOCAL_SHARED_LIBRARIES += libSprdOTAlgo
 endif
 
@@ -151,7 +151,7 @@ LOCAL_SHARED_LIBRARIES += libcamfb libcamfacebeauty
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
-LOCAL_SRC_FILES += ../oemcommon/src/cmr_ultrawide.c
+LOCAL_SRC_FILES += src/cmr_ultrawide.c
 LOCAL_SHARED_LIBRARIES += libsprdwarp
 LOCAL_SHARED_LIBRARIES += libsprdwarpadapter
 endif

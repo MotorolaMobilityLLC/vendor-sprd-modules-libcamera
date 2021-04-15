@@ -76,7 +76,6 @@ LOCAL_C_INCLUDES += \
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(OEM_DIR)/inc \
     $(LOCAL_PATH)/oemcommon/mm_dvfs \
-    $(LOCAL_PATH)/oemcommon/inc
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/arithmetic/inc \
@@ -356,7 +355,6 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(OEM_DIR)/inc \
-    $(LOCAL_PATH)/oemcommon/inc
 
 LOCAL_C_INCLUDES += \
     $(LOCAL_PATH)/$(ISPDRV_DIR)/isp_tune \
