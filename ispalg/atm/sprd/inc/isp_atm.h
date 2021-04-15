@@ -11,20 +11,20 @@ extern "C"  {
 #include "cmr_types.h"
 
 struct atm_init_in {
-    uint8_t  uOrigGamma[256];
+    uint16_t  uOrigGamma[1025];
 };
 
 struct atmctrl_cxt {
     void    *handle_algo;
-    uint8_t  uOrigGamma[256];
-    uint8_t  uATMGamma[256];
+    uint16_t  uOrigGamma[1025];
+    uint16_t  uATMGamma[1025];
 };
 
 
 struct atm_init_param
 {
     uint32_t u4Magic;
-    uint8_t  uOrigGamma[256];
+    uint16_t  uOrigGamma[1025];
 };
 
 int isp_atm_init(struct atm_init_in *input_ptr, cmr_handle *handle_atm);
@@ -41,7 +41,8 @@ int isp_atm(cmr_handle *handle_atm,
         struct atm_calc_param ATMInput,
         struct atm_calc_result *ATMOutput);
 void isp_atm_smooth(unsigned int u4Weight, uint16_t u2Len,
-        uint8_t *uOld, uint8_t *uNew, uint8_t *uOut);
+         uint16_t *uOld, uint16_t *uNew, uint16_t *uOut);
+
 int isp_hist(unsigned char *pbgr_2, bool bRGB, unsigned long long *hist, unsigned int width, unsigned int height);
 int isp_histAEM(unsigned int* AEM_r, unsigned int* AEM_g, unsigned int* AEM_b, 
         unsigned long long *hist,
