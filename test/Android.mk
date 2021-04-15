@@ -49,7 +49,6 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/modules/libcamera/camdrv/isp2.6/middleware/inc \
     $(TOP)/vendor/sprd/modules/libcamera/camdrv/isp2.6/driver/inc \
     $(TOP)/vendor/sprd/modules/libcamera/oem2v6/inc \
-    $(TOP)/vendor/sprd/modules/libcamera/oemcommon/inc \
     $(TOP)/vendor/sprd/modules/libcamera/arithmetic/inc \
     $(TOP)/vendor/sprd/modules/libcamera/arithmetic/facebeauty/inc \
     $(TOP)/vendor/sprd/modules/libcamera/arithmetic/sprdface/inc \
