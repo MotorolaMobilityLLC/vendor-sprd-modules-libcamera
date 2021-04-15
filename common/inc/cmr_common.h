@@ -1499,11 +1499,15 @@ int raw14bit_process(struct img_addr *src, struct img_addr *dst,
 
 /* White balancing type, used for CAMERA_PARM_WHITE_BALANCING */
 enum {
-    CAMERA_WB_AUTO = 0,
+    CAMERA_WB_OFF = 0,
+    CAMERA_WB_AUTO,
     CAMERA_WB_INCANDESCENT,
-    CAMERA_WB_FLUORESCENT = 4, // id 2 and 3 not used
+    CAMERA_WB_FLUORESCENT,
+    CAMERA_WB_WARM_FLUORESCENT,
     CAMERA_WB_DAYLIGHT,
     CAMERA_WB_CLOUDY_DAYLIGHT,
+    CAMERA_WB_TWILIGHT,
+    CAMERA_WB_SHADE,
     CAMERA_WB_MAX
 };
 

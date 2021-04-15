@@ -860,24 +860,38 @@ static cmr_int ispctl_awb_mode(cmr_handle isp_alg_handle, void *param_ptr)
 
 	if (awb_mode <10) {
 		switch (awb_mode) {
-		case ISP_AWB_AUTO:
-			awb_id = AWB_CTRL_WB_MODE_AUTO;
-			break;
-		case ISP_AWB_INDEX1:
-			awb_id = AWB_CTRL_MWB_MODE_INCANDESCENT;
-			break;
-		case ISP_AWB_INDEX4:
-			awb_id = AWB_CTRL_MWB_MODE_FLUORESCENT;
-			break;
-		case ISP_AWB_INDEX5:
-			awb_id = AWB_CTRL_MWB_MODE_SUNNY;
-			break;
-		case ISP_AWB_INDEX6:
-			awb_id = AWB_CTRL_MWB_MODE_CLOUDY;
-			break;
-		default:
-			awb_id = AWB_CTRL_WB_MODE_AUTO;
-			break;
+	case ISP_AWB_AUTO:
+		awb_id = AWB_CTRL_WB_MODE_AUTO;
+		break;
+	case ISP_AWB_INCANDESCENT:
+		awb_id = AWB_CTRL_MWB_MODE_INCANDESCENT;
+		break;
+	case ISP_AWB_FLUORESCENT:
+		awb_id = AWB_CTRL_MWB_MODE_FLUORESCENT;
+		break;
+
+	case ISP_AWB_WARM_FLUORESCENT:
+		awb_id = AWB_CTRL_MWB_MODE_USER_0;
+		break;
+
+	case ISP_AWB_SUNNY:
+		awb_id = AWB_CTRL_MWB_MODE_SUNNY;
+		break;
+
+	case ISP_AWB_CLOUDY:
+		awb_id = AWB_CTRL_MWB_MODE_CLOUDY;
+		break;
+
+	case ISP_AWB_TWILIGHT:
+		awb_id = AWB_CTRL_MWB_MODE_USER_1;
+		break;
+
+	case ISP_AWB_SHADE:
+		awb_id = AWB_CTRL_MWB_MODE_USER_2;
+		break;
+	default:
+		awb_id = AWB_CTRL_WB_MODE_AUTO;
+		break;
 		}
 	}  else {
 		awb_id = awb_mode;
