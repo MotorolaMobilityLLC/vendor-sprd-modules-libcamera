@@ -460,6 +460,7 @@ extern "C" {
 		cmr_u32 *slave1_aem_stat;
 		struct ae_set_sync_state sync_state;
 		cmr_u8 first_sync;
+		cmr_s32 fd_on_off;
 
 		cmr_u32 *tune_buf;
 		struct ae_frm_sync_param sync_param[CAM_SENSOR_MAX];
