@@ -3,6 +3,11 @@
 cmr_u32 color_temp_calib[4] = {0};
 
 static void get_color_temp_data(struct sensorhub_tcs_data *color_temp_data) {
+
+    if(color_temp_callback_func == NULL) {
+        SENSOR_LOGI("sensor hub color_temp_callback_func function pointer is null");
+        return;
+    }
     color_temp_callback_func(color_temp_calib);
     color_temp_data->x_data = color_temp_calib[0];
     color_temp_data->y_data = color_temp_calib[1];
