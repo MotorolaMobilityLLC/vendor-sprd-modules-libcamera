@@ -1056,6 +1056,7 @@ struct isp_init_param {
 	uint32_t is_master;
 	uint32_t is_4in1_sensor;
 	uint32_t is_faceId_unlock;
+	cmr_u8 is_dual_video;
 };
 
 struct isp_ai_rect {
