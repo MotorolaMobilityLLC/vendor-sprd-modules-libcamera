@@ -688,16 +688,6 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 				goto exit;
 			}
 		}
-		for (area_index = 0; area_index < 1; area_index++) {
-			ret =
-			    PD_GetResult(cxt->pdalgo_handle, &pd_calc_result.pdConf[area_index],
-					 &pd_calc_result.pdPhaseDiff[area_index], &pd_calc_result.pdGetFrameID,
-					 &pd_calc_result.pdDCCGain[area_index], area_index);
-			if (ret) {
-				ISP_LOGE("fail to do get pd_result.");
-				goto exit;
-			}
-		}
 	}
 	if (MULTIZONE != cxt->af_type) {	// normal way for PASSIVE and ACTIVE mode
 		ret =
