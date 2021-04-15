@@ -71,7 +71,8 @@ struct ATMCalcParam
 struct _atm_init_param
 {
     uint32_t u4Magic;
-    uint8_t  uOrigGamma[256];
+    uint16_t  uOrigGamma[1025];
+	//unsigned short uOrigGamma[1025];
 };
 
 struct atm_table{
@@ -120,8 +121,8 @@ struct atm_calc_param
 
     unsigned long long *pHist;
     uint32_t u4Bins;
-    uint8_t *uBaseGamma;
-    uint8_t *uModGamma;
+    uint16_t *uBaseGamma;
+    uint16_t *uModGamma;
     uint8_t bHistB4Gamma;
 	uint32_t atm_version;
 	struct ae_atm_tune_param_v1 atm_tune;
@@ -131,12 +132,12 @@ struct atm_calc_result
 {
     ATM_RET eStatus;  // should be 0
 
-    uint8_t *uGamma;
-    int32_t i4RespCurve[256];
-    uint8_t uLowPT;
-    uint8_t uHighPT;
-    uint8_t uFinalLowBin;
-    uint8_t uFinalHighBin;
+    uint16_t *uGamma;
+    int32_t i4RespCurve[1025];
+    uint16_t uLowPT;
+    uint16_t uHighPT;
+    uint16_t uFinalLowBin;
+    uint16_t uFinalHighBin;
 //    uint8_t *log_buffer;
 //    uint32_t log_size;
 };

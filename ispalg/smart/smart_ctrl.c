@@ -1387,9 +1387,9 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 	int ret, i;
 	unsigned int u4GammaSize = 0;
 	unsigned long long hist[256] = {0};
-	unsigned char uConvCurY[256] = {0},
-	uOutGamma[3][256];
-	unsigned char uPrevGamma[3][256]= {{0},{0},{0}};
+	unsigned short uConvCurY[SENSOR_GAMMA_POINT_NUM] = {0},
+	uOutGamma[3][SENSOR_GAMMA_POINT_NUM];
+	unsigned short uPrevGamma[3][SENSOR_GAMMA_POINT_NUM]= {{0},{0},{0}};
 	unsigned short
 	u2CurX[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}},
 	u2CurY[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
@@ -1452,7 +1452,7 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 			u2CurX[1][i+2], u2CurY[1][i+2],
 			u2CurX[1][i+3], u2CurY[1][i+3]);
 	}
-	_get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
+	//_get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
 	if (bATMDump == true) {
 	for (i = 0; i < 32; i+=4)
 		ISP_LOGV("Conv Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
@@ -1482,20 +1482,21 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 		memcpy(&ATMInput.atm_tune, atm_param, sizeof(struct ae_atm_tune_param_v1));
 
 		ATMInput.pHist = hist;
-		ATMInput.u4Bins = 256;
-		ATMInput.uBaseGamma = uConvCurY;
-		ATMInput.uModGamma = uConvCurY;
+		ATMInput.u4Bins = SENSOR_GAMMA_POINT_NUM;//256;
+		ATMInput.uBaseGamma = u2CurY[1];//uConvCurY;
+		ATMInput.uModGamma = u2CurY[1];//uConvCurY;
 		ATMInput.bHistB4Gamma = true;
-		ATMOutput.uGamma = uOutGamma[1];
+		ATMOutput.uGamma = uOutGamma[1];//G channel gamma
 		ATMInput.atm_version = ATMInput.atm_tune.version;
 
 		isp_atm((cmr_handle*)handle, ATMInput, &ATMOutput);
-		if (uOutGamma[1][255]) {
+		if (uOutGamma[1][SENSOR_GAMMA_POINT_NUM - 2]) {
 			memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
 		}
 
-		isp_atm_smooth(200, 256, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
-		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(char)*256);
+		unsigned int weight = 0.78 * SENSOR_GAMMA_POINT_NUM + 0.5;
+		isp_atm_smooth(weight, SENSOR_GAMMA_POINT_NUM - 1, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
+		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(short)*SENSOR_GAMMA_POINT_NUM);
 		if (bATMDump == true) {
 			for (i = 0; i < 256; i+=4)
 				ISP_LOGV("Out Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
@@ -1511,11 +1512,11 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 			{
 				for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
 				 	gamma_info->points_r[i].y =
-					uOutGamma[1][min(gamma_info->points_r[i].x>>2, 255)];
+					uOutGamma[1][min(gamma_info->points_r[i].x>>2, SENSOR_GAMMA_POINT_NUM)];
 					gamma_info->points_g[i].y =
-					uOutGamma[1][min(gamma_info->points_g[i].x>>2, 255)];
+					uOutGamma[1][min(gamma_info->points_g[i].x>>2, SENSOR_GAMMA_POINT_NUM)];
 					gamma_info->points_b[i].y =
-					uOutGamma[1][min(gamma_info->points_b[i].x>>2, 255)];
+					uOutGamma[1][min(gamma_info->points_b[i].x>>2, SENSOR_GAMMA_POINT_NUM)];
 				}
 				// check write out
 				if (bATMDump == true) {
@@ -1542,9 +1543,9 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 	dbginfo->version = 1;
 	memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
 	memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-	memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], 256);
-	memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], 256);
-	memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], 256);
+	memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	//memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	//memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	dbginfo->uLowPT         = ATMOutput.uLowPT;
 	dbginfo->uHighPT        = ATMOutput.uHighPT;
 	dbginfo->uFinalLowBin   = ATMOutput.uFinalLowBin;
@@ -1567,9 +1568,9 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	int ret, i;
 	unsigned int u4GammaSize = 0;
 	unsigned long long hist[256] = {0};
-	unsigned char uConvCurY[256] = {0},
-	uOutGamma[3][256];
-	unsigned char uPrevGamma[3][256] = {{0},{0},{0}};
+	unsigned short uConvCurY[SENSOR_GAMMA_POINT_NUM] = {0},
+		uOutGamma[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
+	unsigned short uPrevGamma[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
 	unsigned short
 	u2CurX[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}},
 	u2CurY[3][SENSOR_GAMMA_POINT_NUM] = {{0},{0},{0}};
@@ -1621,14 +1622,16 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	ISP_LOGV("Hist[%d-%d] = %llu,%llu,%llu,%llu\n",i,i+3,hist[i],hist[i+1],hist[i+2],hist[i+3]);
 	}
 	if (bATMDump == true) {
-		for (i = 0; i < 256; i+=4)
+		for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i+=4)
 			ISP_LOGV("Orig Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
 			u2CurX[1][i], u2CurY[1][i],
 			u2CurX[1][i+1], u2CurY[1][i+1],
 			u2CurX[1][i+2], u2CurY[1][i+2],
 			u2CurX[1][i+3], u2CurY[1][i+3]);
 	}
-	_get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
+	
+	//_get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
+	
 	if (bATMDump == true) {
 	for (i = 0; i < 32; i+=4)
 		ISP_LOGV("Conv Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
@@ -1654,19 +1657,19 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 		memcpy(&ATMInput.stAlgoParams.strBVLut.i4Y, atm_param->strBVLut.i4Y, sizeof(cmr_s32)*8);
 
 		ATMInput.pHist = hist;
-		ATMInput.u4Bins = 256;
-		ATMInput.uBaseGamma = uConvCurY;
-		ATMInput.uModGamma = uConvCurY;
+		ATMInput.u4Bins = SENSOR_GAMMA_POINT_NUM;//256;
+		ATMInput.uBaseGamma = u2CurY[1];//uConvCurY;
+		ATMInput.uModGamma = u2CurY[1];//uConvCurY;
 		ATMInput.bHistB4Gamma = true;
 		ATMOutput.uGamma = uOutGamma[1];
 		isp_atm((cmr_handle*)handle, ATMInput, &ATMOutput);
 
-		if (uOutGamma[1][255]) {
+		if (uOutGamma[1][SENSOR_GAMMA_POINT_NUM - 2]) {
 			memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
 		}
-
-		isp_atm_smooth(200, 256, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
-		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(char)*256);
+		unsigned int weight = 0.78 * SENSOR_GAMMA_POINT_NUM + 0.5;
+		isp_atm_smooth(weight, SENSOR_GAMMA_POINT_NUM - 1, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
+		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(short)*SENSOR_GAMMA_POINT_NUM);
 		if (bATMDump == true) {
 			for (i = 0; i < 256; i+=4)
 				ISP_LOGV("Out Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
@@ -1682,11 +1685,11 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 			{
 				for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i++) {
 				 	gamma_info->points_r[i].y =
-					uOutGamma[1][min(gamma_info->points_r[i].x>>2, 255)];
+					uOutGamma[1][min(gamma_info->points_r[i].x>>2, SENSOR_GAMMA_POINT_NUM)];
 					gamma_info->points_g[i].y =
-					uOutGamma[1][min(gamma_info->points_g[i].x>>2, 255)];
+					uOutGamma[1][min(gamma_info->points_g[i].x>>2, SENSOR_GAMMA_POINT_NUM)];
 					gamma_info->points_b[i].y =
-					uOutGamma[1][min(gamma_info->points_b[i].x>>2, 255)];
+					uOutGamma[1][min(gamma_info->points_b[i].x>>2, SENSOR_GAMMA_POINT_NUM)];
 				}
 				// check write out
 				if (bATMDump == true) {
@@ -1713,9 +1716,10 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	dbginfo->version = 1;
 	memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
 	memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-	memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], 256);
-	memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], 256);
-	memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], 256);
+	memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	//memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	//memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	//memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	dbginfo->uLowPT         = ATMOutput.uLowPT;
 	dbginfo->uHighPT        = ATMOutput.uHighPT;
 	dbginfo->uFinalLowBin   = ATMOutput.uFinalLowBin;
