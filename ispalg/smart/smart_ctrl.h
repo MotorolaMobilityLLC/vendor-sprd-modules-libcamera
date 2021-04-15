@@ -212,8 +212,10 @@ extern "C" {
 		cmr_u32 version;
 		cmr_u32 reserved;
 		cmr_u64 u8Hist[256];
-		cmr_u32 u4RespCurve[256];
-		cmr_u8 uOutputGamma[3][256];
+		//cmr_u32 u4RespCurve[256];
+		cmr_u32 u4RespCurve[1025];
+		//cmr_u16 uOutputGamma[3][256];
+		cmr_u16 uOutputGamma[1025];
 		cmr_u8 uLowPT;
 		cmr_u8 uHighPT;
 		cmr_u8 uFinalLowBin;
