@@ -990,6 +990,10 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
             mEisVideoInit = false;
             SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
             HAL_LOGI("video stab close");
+#ifdef CONFIG_CAMERA_MM_DVFS_SUPPORT
+            mHalOem->ops->camera_set_mm_dvfs_policy(mCameraHandle, DVFS_ISP,
+            IS_VIDEO_END);
+#endif
         }
 #endif
         break;

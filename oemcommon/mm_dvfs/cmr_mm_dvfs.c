@@ -217,6 +217,7 @@ cmr_int set_isp_dvfs_policy(cmr_handle mm_dvfs_handle,
          1000000));
     switch (camera_state) {
     case IS_PREVIEW_BEGIN:
+    case IS_VIDEO_END:
     case IS_CAP_END:
         if (p_dvfs->dvfs_param.channel_x_enble || p_dvfs->dvfs_param.cam_mode) {
             freqValue = CLK_ISP_MAX;
@@ -236,6 +237,9 @@ cmr_int set_isp_dvfs_policy(cmr_handle mm_dvfs_handle,
         break;
     case IS_CAM_EXIT:
         freqValue = CLK_256M;
+        break;
+    case IS_VIDEO_BEGIN:
+        freqValue = CLK_512M;
         break;
     /*case isRecording:
      {

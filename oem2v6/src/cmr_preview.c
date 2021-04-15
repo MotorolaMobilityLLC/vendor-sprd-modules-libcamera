@@ -6673,6 +6673,10 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
     cmr_set_mm_dvfs_param(handle->oem_handle, dvfs_param);
     cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_DCAM_IF, IS_PREVIEW_BEGIN);
     cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_ISP, IS_PREVIEW_BEGIN);
+    if(handle->prev_cxt[camera_id].prev_param.video_eb &&
+        handle->prev_cxt[camera_id].prev_param.sprd_eis_enabled){
+        cmr_set_mm_dvfs_policy(handle->oem_handle, DVFS_ISP, IS_VIDEO_BEGIN);
+    }
 #endif
 
     handle->prev_cxt[camera_id].sensor_out_width =
