@@ -284,8 +284,11 @@ const uint8_t avail_awb_modes[] = {ANDROID_CONTROL_AWB_MODE_OFF,
                                    ANDROID_CONTROL_AWB_MODE_AUTO,
                                    ANDROID_CONTROL_AWB_MODE_INCANDESCENT,
                                    ANDROID_CONTROL_AWB_MODE_FLUORESCENT,
+                                   ANDROID_CONTROL_AWB_MODE_WARM_FLUORESCENT,
                                    ANDROID_CONTROL_AWB_MODE_DAYLIGHT,
-                                   ANDROID_CONTROL_AWB_MODE_CLOUDY_DAYLIGHT};
+                                   ANDROID_CONTROL_AWB_MODE_CLOUDY_DAYLIGHT,
+                                   ANDROID_CONTROL_AWB_MODE_TWILIGHT,
+                                   ANDROID_CONTROL_AWB_MODE_SHADE};
 const uint8_t availableAeModes[] = {ANDROID_CONTROL_AE_MODE_OFF,
                                     ANDROID_CONTROL_AE_MODE_ON,
                                     ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH,
@@ -6703,6 +6706,10 @@ int SprdCamera3Setting::androidAwbModeToDrvAwbMode(uint8_t androidAwbMode,
         *convertDrvMode = CAMERA_WB_FLUORESCENT;
         break;
 
+    case ANDROID_CONTROL_AWB_MODE_WARM_FLUORESCENT:
+        *convertDrvMode = CAMERA_WB_WARM_FLUORESCENT;
+        break;
+
     case ANDROID_CONTROL_AWB_MODE_DAYLIGHT:
         *convertDrvMode = CAMERA_WB_DAYLIGHT;
         break;
@@ -6710,6 +6717,15 @@ int SprdCamera3Setting::androidAwbModeToDrvAwbMode(uint8_t androidAwbMode,
     case ANDROID_CONTROL_AWB_MODE_CLOUDY_DAYLIGHT:
         *convertDrvMode = CAMERA_WB_CLOUDY_DAYLIGHT;
         break;
+
+    case ANDROID_CONTROL_AWB_MODE_TWILIGHT:
+        *convertDrvMode = CAMERA_WB_TWILIGHT;
+        break;
+
+    case ANDROID_CONTROL_AWB_MODE_SHADE:
+        *convertDrvMode = CAMERA_WB_SHADE;
+        break;
+
     default:
         *convertDrvMode = CAMERA_WB_AUTO;
         break;
