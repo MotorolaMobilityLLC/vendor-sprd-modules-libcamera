@@ -117,6 +117,7 @@ extern "C" {
 		AE_SET_MULTI_SWITCH_INFO,
 		AE_SET_FACE_COLOR,
 		AE_SET_NATION_CODE,
+		AE_SET_FD_ON_OFF,
 		AE_SYNC_MSG_END,
 		/*
 		 * warning if you wanna set ioctrl directly

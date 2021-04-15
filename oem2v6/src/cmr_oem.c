@@ -11386,8 +11386,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->ae_fps_range;
         break;
     case COM_ISP_SET_AI_SET_FD_ON_OFF:
-        CMR_LOGD("set FD on/off %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_AI_SET_FD_STATUS;
+        ptr_flag = 1;
+        isp_param_ptr = (void *)&param_ptr->cmd_value;
+        break;
+    case COM_ISP_SET_AE_SET_FD_ON_OFF:
+        isp_cmd = ISP_CTRL_AE_SET_FD_STATUS;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
         break;
