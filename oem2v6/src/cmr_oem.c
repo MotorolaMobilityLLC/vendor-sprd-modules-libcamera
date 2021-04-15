@@ -10569,19 +10569,31 @@ cmr_uint camera_param_to_isp(cmr_uint cmd, struct common_isp_cmd_param *parm) {
             break;
 
         case CAMERA_WB_INCANDESCENT:
-            out_param = ISP_AWB_INDEX1;
+            out_param = ISP_AWB_INCANDESCENT;
             break;
 
         case CAMERA_WB_FLUORESCENT:
-            out_param = ISP_AWB_INDEX4;
+            out_param = ISP_AWB_FLUORESCENT;
+            break;
+
+        case CAMERA_WB_WARM_FLUORESCENT:
+            out_param = ISP_AWB_WARM_FLUORESCENT;
             break;
 
         case CAMERA_WB_DAYLIGHT:
-            out_param = ISP_AWB_INDEX5;
+            out_param = ISP_AWB_SUNNY;
             break;
 
         case CAMERA_WB_CLOUDY_DAYLIGHT:
-            out_param = ISP_AWB_INDEX6;
+            out_param = ISP_AWB_CLOUDY;
+            break;
+
+        case CAMERA_WB_TWILIGHT:
+            out_param = ISP_AWB_TWILIGHT;
+            break;
+
+        case CAMERA_WB_SHADE:
+            out_param = ISP_AWB_SHADE;
             break;
 
         default:
