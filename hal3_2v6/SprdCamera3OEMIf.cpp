@@ -221,6 +221,10 @@ namespace sprdcamera {
 // add for default zsl buffer
 #define DEFAULT_ZSL_BUFFER_NUM 5
 
+// kernel skip dcamraw buffer
+#define DEFAULT_ZSL_SKIP_NUM 1
+
+
 // for mlog
 #define MLOG_DUMP_PATH "/data/mlog/"
 #define MLOG_AE_PATH "/data/mlog/ae.txt"
@@ -616,7 +620,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsFDRCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0), lightportrait_type(0),
-      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID),mPortraitSceneFB(false)
+      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID),mPortraitSceneFB(false),mNeed_share_buf(1)
 
 {
     ATRACE_CALL();
@@ -2380,6 +2384,17 @@ void SprdCamera3OEMIf::setAfState(enum afTransitionCause cause) {
         newState = ANDROID_CONTROL_AF_STATE_INACTIVE;
         break;
     }
+   if(newState == ANDROID_CONTROL_AF_STATE_PASSIVE_SCAN || newState == ANDROID_CONTROL_AF_STATE_ACTIVE_SCAN ){
+      mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
+      HAL_LOGV("mAf_start_time =%lld",mAf_start_time);
+   }
+   if(newState == ANDROID_CONTROL_AF_STATE_PASSIVE_FOCUSED || newState == ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED
+      || newState == ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED
+      || newState == ANDROID_CONTROL_AF_STATE_PASSIVE_UNFOCUSED) {
+      mAf_stop_time  = systemTime(SYSTEM_TIME_BOOTTIME);
+      HAL_LOGV("mAf_stop_time =%lld",mAf_stop_time);
+   }
+
 
 exit:
     HAL_LOGD("mCameraId=%d, Af mode=%d, transition cause=%d, cur state=%d, new "
@@ -3345,10 +3360,13 @@ int SprdCamera3OEMIf::startPreviewInternal() {
 
     cmr_int ret = 0;
     cmr_u16 af_support = 0;
+    cmr_u16 zsl_num = 0;
+    cmr_u16 zsl_skip_num = 0;
     bool is_volte = false;
     char value[PROPERTY_VALUE_MAX];
     char multicameramode[PROPERTY_VALUE_MAX];
     struct img_size jpeg_thumb_size;
+    struct sprd_cap_zsl_param zsl_param;
     FLASH_INFO_Tag flashInfo;
     char prop[PROPERTY_VALUE_MAX] = {
         0,
@@ -3392,6 +3410,22 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     camera_ioctrl(CAMERA_TOCTRL_GET_AF_SUPPORT, &af_support, NULL);
 
     sprddefInfo->af_support = af_support;
+    if(sprddefInfo->sprd_appmode_id >= 0) {
+       property_get("persist.vendor.cam.zsl.buffer", value, "0");
+       if (atoi(value))
+           zsl_num = atoi(value);
+       if(zsl_num)
+           zsl_skip_num = DEFAULT_ZSL_SKIP_NUM;
+    }
+    if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_REFOCUS
+       || sprddefInfo->sprd_appmode_id == CAMERA_MODE_PORTRAIT_PHOTO
+       || sprddefInfo->sprd_appmode_id == CAMERA_MODE_FOV_FUSION_MODE){
+        mNeed_share_buf = 0;
+    }
+    zsl_param.zsl_num = zsl_num;
+    zsl_param.zsk_skip_num = zsl_skip_num;
+    zsl_param.need_share_buf = mNeed_share_buf;
+    camera_ioctrl(CAMERA_IOCTRL_SET_ZSL_CAP_PARAM, &zsl_param, NULL);
 
     if (mRecordingMode == false && sprddefInfo->sprd_zsl_enabled == 1) {
         mSprdZslEnabled = true;
@@ -3508,7 +3542,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_CAPTURE_MODE,
              (uint32_t)mCaptureMode);
 
-    HAL_LOGD("mCaptureMode=%d", mCaptureMode);
+    HAL_LOGD("mCaptureMode=%d,mZsl_k_buffer=%d", mCaptureMode,zsl_num);
     ret = mHalOem->ops->camera_start_preview(mCameraHandle, mCaptureMode);
     if (ret != CMR_CAMERA_SUCCESS) {
         HAL_LOGE("camera_start_preview failed");
@@ -6244,7 +6278,8 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
         HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
-        if (!mIsAutoFocus && focus_status->af_focus_type == CAM_AF_FOCUS_CAF) {
+        if (!mIsAutoFocus && ((focus_status->af_focus_type == CAM_AF_FOCUS_CAF) ||
+            (focus_status->af_focus_type == CAM_AF_FOCUS_PDAF))) {
             if (focus_status->is_in_focus) {
                 setAfState(AF_INITIATES_NEW_SCAN);
                 af_type = 0;
@@ -6254,8 +6289,14 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
             }
         } else if (!mIsAutoFocus &&
                    focus_status->af_focus_type == CAM_AF_FOCUS_FAF) {
-            if (!(focus_status->is_in_focus))
+            if (!(focus_status->is_in_focus)) {
                 af_type = focus_status->af_focus_type;
+                mAf_stop_time  = systemTime(SYSTEM_TIME_BOOTTIME);
+                HAL_LOGV("face_mAf_stop_time =%lld",mAf_stop_time);
+            } else {
+                mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
+                HAL_LOGV("face_mAf_start_time =%lld",mAf_start_time);
+            }
         }
         sprddefInfo->af_type = af_type;
         break;
@@ -6726,13 +6767,17 @@ int SprdCamera3OEMIf::openCamera() {
     char value2[PROPERTY_VALUE_MAX];
     int ret = NO_ERROR;
     int is_raw_capture = 0;
-    cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0;
+    cmr_u16 picW = 0, picH = 0, snsW = 0, snsH = 0, malloc_w = 0,malloc_h = 0;;
     int i = 0;
+    cmr_u8 camera_num = 0;
     char file_name[128];
     struct exif_info exif_info = {0, 0, {0, 0}};
     LENS_Tag lensInfo;
     SPRD_DEF_Tag *sprddefInfo;
     struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
+    struct sensor_size sensor_max_size[4];
+    struct phySensorInfo *phy_sensor = NULL;
+
 
     HAL_LOGI(":hal3: E camId=%d", mCameraId);
 
@@ -6773,6 +6818,46 @@ int SprdCamera3OEMIf::openCamera() {
     }
     mHalOem->ops->camera_set_largest_picture_size(
         mCameraId, mLargestPictureWidth, mLargestPictureHeight);
+    if(mMultiCameraMode == MODE_MULTI_CAMERA) {
+        property_get("persist.vendor.cam.multi.section", value2, "3");
+        camera_num = atoi(value2);
+        phy_sensor = sensorGetPhysicalSnsInfo(0);
+        if (phy_sensor->sensor_type == FOURINONE_SW ||
+            phy_sensor->sensor_type == FOURINONE_HW){
+               malloc_w = phy_sensor->source_width_max / 2;
+               malloc_h = phy_sensor->source_height_max / 2;
+        }
+
+        for (i = 2 ; i <= camera_num; i++){
+               phy_sensor = sensorGetPhysicalSnsInfo(i);
+               if (phy_sensor->sensor_type == FOURINONE_SW ||
+                   phy_sensor->sensor_type == FOURINONE_HW){
+                        snsW = phy_sensor->source_width_max / 2;
+                        snsH = phy_sensor->source_height_max / 2;
+               } else {
+                        snsW = phy_sensor->source_width_max;
+                        snsH = phy_sensor->source_height_max;
+               }
+               if(malloc_w < snsW)
+                  malloc_w = snsW;
+               if(malloc_h < snsH)
+                  malloc_h = snsH;
+       }
+
+    }else {
+               phy_sensor = sensorGetPhysicalSnsInfo(mCameraId);
+               if (phy_sensor->sensor_type == FOURINONE_SW ||
+                   phy_sensor->sensor_type == FOURINONE_HW){
+                          malloc_w = phy_sensor->source_width_max / 2;
+                          malloc_h = phy_sensor->source_height_max / 2;
+               } else {
+                          malloc_w = phy_sensor->source_width_max;
+                          malloc_h = phy_sensor->source_height_max;
+
+               }
+
+    }
+
 
     if (isCameraInit()) {
         HAL_LOGE("camera hardware has been started already");
@@ -6788,6 +6873,8 @@ int SprdCamera3OEMIf::openCamera() {
         HAL_LOGE("camera_init failed");
         goto exit;
     }
+    mHalOem->ops->camera_set_alloc_picture_size(mCameraHandle,malloc_w, malloc_h);
+
     if (!isCameraInit()) {
 #if defined(CONFIG_ISP_2_3) || defined(CONFIG_ISP_2_4) ||                      \
     defined(CONFIG_CAMERA_3DNR_CAPTURE_SW) ||                                  \
@@ -10388,6 +10475,12 @@ int SprdCamera3OEMIf::Callback_GpuMalloc(enum camera_mem_cb_type type,
         break;
     case CAMERA_SNAPSHOT_ULTRA_WIDE:
         // malloc with callback_graphicbuffermalloc
+        if (mMultiCameraMode == MODE_MULTI_CAMERA &&
+            camera->mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK)) {
+            HAL_LOGD("alloc sw buffer");
+            camera->mZslNum = 5;
+        }
+
         sum = camera->mZslNum;
         ret = camera->Callback_GraphicBufferMalloc(type,
             size, sum, phy_addr, vir_addr, fd, handle, *width, *height);
@@ -11696,15 +11789,30 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             }
         }
         // single capture wait the caf focused frame
-        if (sprddefInfo->capture_mode == 1 && obj->mLatestFocusDoneTime > 0 &&
-            zsl_frame->monoboottime < obj->mLatestFocusDoneTime && !mIsFDRCapture &&
-            mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene) {
-            HAL_LOGD("not the focused frame, skip it");
-            mHalOem->ops->camera_set_zsl_buffer(
-                obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
-                zsl_frame->fd);
-            return 0;
-        }
+        HAL_LOGD("zsl_diff=%lld",(zsl_frame->monoboottime - mZslSnapshotTime) / 1000000);
+        if (sprddefInfo->sprd_appmode_id == 0 && sprddefInfo->af_support == 1 && !mIsFDRCapture &&
+                 mFlashCaptureFlag == 0 && !sprddefInfo->sprd_is_lowev_scene && mAf_start_time) {
+                 HAL_LOGD("check af status");
+                 if (mAf_start_time > mAf_stop_time){
+                         HAL_LOGD("af do not finshed, skip it");
+                         mHalOem->ops->camera_set_zsl_buffer(
+                                obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+                                         zsl_frame->fd);
+                                         return 0;
+                 } else {
+                        if (zsl_frame->monoboottime < mAf_stop_time) {
+                           HAL_LOGD("not the focused frame, skip it");
+                           mHalOem->ops->camera_set_zsl_buffer(
+                             obj->mCameraHandle, zsl_frame->y_phy_addr, zsl_frame->y_vir_addr,
+                             zsl_frame->fd);
+                             return 0;
+                         }
+                 }
+                 HAL_LOGD("af is ok ");
+       }
+       if (mAf_start_time == 0)
+           HAL_LOGD("mAf_start_time = 0");
+
 
         if (s_dbg_ver) {
             Mutex::Autolock l(&mJpegDebugQLock);
@@ -11868,6 +11976,8 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     mSetting->getCONTROLTag(&controlInfo);
     cmr_uint been_preflash = 0;
     cmr_s64 last_preflash_time = 0, now_time = 0, diff = 0;
+    int64_t diff_ms = 400*1000000;  //400ms
+
 
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
     bool isFrontLcd =
@@ -11912,7 +12022,18 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
-    mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
+    HAL_LOGV("nowTime=%lld",systemTime(SYSTEM_TIME_BOOTTIME));
+    if(sprddefInfo->sprd_appmode_id == 0 &&
+        controlInfo.scene_mode != ANDROID_CONTROL_SCENE_MODE_HDR){
+        mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME) - diff_ms;
+        HAL_LOGD("real zsl");
+
+    } else
+        mZslSnapshotTime = systemTime(SYSTEM_TIME_BOOTTIME);
+
+    HAL_LOGV("mZslSnapshotTime=%lld",mZslSnapshotTime);
+    ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_SET_SNAPSHOT_TIMESTAMP, &mZslSnapshotTime);
+
 
     if (!mZslIpsEnable && isCapturing()) {
         WaitForCaptureDone();

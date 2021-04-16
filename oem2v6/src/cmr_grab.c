@@ -312,6 +312,18 @@ cmr_int cmr_grab_set_security(cmr_handle grab_handle,
     }
     return ret;
 }
+cmr_int cmr_grab_set_zsl_param(cmr_handle grab_handle,
+                              struct sprd_cap_zsl_param *zsl_param) {
+    cmr_int ret = 0;
+    struct cmr_grab *p_grab;
+    p_grab = (struct cmr_grab *)grab_handle;
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_CAP_ZSL_INFO, zsl_param);
+    if (ret) {
+        CMR_LOGE("failed to set zsl param, ret = %d", ret);
+    }
+    return ret;
+}
+
 
 cmr_int cmr_grab_set_pulse_line(cmr_handle grab_handle, cmr_u32 line) {
     cmr_int ret = 0;
@@ -2056,4 +2068,24 @@ cmr_int cmr_grab_get_scaler_capability(cmr_handle grab_handle, uint32_t *scaler)
 
     return ret;
 }
+cmr_int cmr_grab_set_alloc_size(cmr_handle grab_handle,cmr_u16 width, cmr_u16 height) {
+    struct cmr_grab *p_grab;
+    cmr_int ret = 0;
+    struct sprd_img_size alloc_size;
+
+    p_grab = (struct cmr_grab *)grab_handle;
+    CMR_CHECK_HANDLE;
+    CMR_CHECK_FD;
+    alloc_size.w = (cmr_u32)width;
+    alloc_size.h = (cmr_u32)height;
+    CMR_LOGD("alloc w =%d,h=%d",width, height);
+    ret = ioctl(p_grab->fd, SPRD_IMG_IO_SET_MUL_MAX_SN_SIZE, &alloc_size);
+    if (ret) {
+        CMR_LOGE("failed to stop offline path");
+    }
+    CMR_LOGV("ret = %ld", ret);
+
+    return ret;
+}
+
 
