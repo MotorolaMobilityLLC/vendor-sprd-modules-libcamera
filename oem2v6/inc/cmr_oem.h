@@ -633,6 +633,8 @@ cmr_s32 camera_local_get_iommu_status(cmr_handle oem_handle);
 
 cmr_int camera_set_security(cmr_handle oem_handle,
                             struct sprd_cam_sec_cfg *sec_cfg);
+cmr_int camera_set_zsl_param(cmr_handle oem_handle,
+                            struct sprd_cap_zsl_param *zsl_param);
 cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param);
 
 cmr_int
@@ -797,6 +799,8 @@ cmr_int camera_set_af_params(cmr_handle oem_handle, void *param);
 void camera_local_set_exif_iso_value(cmr_handle oem_handle, cmr_u32 iso_value);
 void camera_local_set_exif_exp_time(cmr_handle oem_handle, cmr_s64 exp_time);
 cmr_s64 camera_local_get_shutter_skew(cmr_handle oem_handle);
+cmr_int camera_local_set_alloc_size(cmr_handle oem_handle, cmr_u16 width, cmr_u16 height);
+
 
 #ifdef __cplusplus
 }

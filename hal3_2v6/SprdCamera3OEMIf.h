@@ -552,6 +552,11 @@ class SprdCamera3OEMIf : public virtual RefBase {
         Sprd_camera_state setParam_state;
     } camera_state;
 
+    struct sensor_size {
+        cmr_u16 weight;
+        cmr_u16 height;
+    };
+
     typedef struct _slow_motion_para {
         int64_t rec_timestamp;
         int64_t last_frm_timestamp;
@@ -985,6 +990,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int mSprdCameraLowpower;
     uint32_t mFlagOffLineZslStart;
     int64_t mZslSnapshotTime;
+    int64_t mAf_start_time;
+    int64_t mAf_stop_time;
     bool mIsIspToolMode;
     bool mIsYuvSensor;
     bool mIsUltraWideMode;
@@ -1047,6 +1054,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     uint32_t mSkipNum;
     int mWhitelists;
     bool EisErr;
+    uint32_t mNeed_share_buf;
 };
 
 }; // namespace sprdcamera

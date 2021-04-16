@@ -1035,6 +1035,8 @@ enum cmr_af_focus_type {
     CAM_AF_FOCUS_SAF,
     CAM_AF_FOCUS_CAF,
     CAM_AF_FOCUS_FAF,
+    CAM_AF_FOCUS_PDAF,
+    CAM_AF_FOCUS_TOF,
     CAM_AF_FOCUS_MAX
 };
 
@@ -2323,6 +2325,7 @@ typedef enum {
     CAMERA_IOCTRL_SET_DUAL_VIDEO_MODE,
     CAMERA_IOCTRL_SET_BLUR_CYNR_NO_FACE,
     CAMERA_IOCTRL_SET_PORTRAIT_SCENE_FB,
+    CAMERA_IOCTRL_SET_ZSL_CAP_PARAM,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 
@@ -2538,6 +2541,8 @@ typedef struct oem_ops {
                                              int32_t height);
     int (*camera_get_scaler)(uint32_t *scaler);
     cmr_s64 (*camera_get_rolling_shutter_skew)(cmr_handle handle);
+    cmr_int (*camera_set_alloc_picture_size)(cmr_handle handle,cmr_u16 width, cmr_u16 height);
+
 } oem_ops_t;
 
 typedef struct oem_module {
