@@ -225,7 +225,7 @@ namespace sprdcamera {
 #define MLOG_DUMP_PATH "/data/mlog/"
 #define MLOG_AE_PATH "/data/mlog/ae.txt"
 #define MLOG_FOR_READ_PATH "/data/mlog/mlog.txt"
-#define MLOG_CALIBRIATION_PATH "/system/etc/otpdata/input_parameters_values.txt"
+#define MLOG_CALIBRIATION_PATH "/vendor/etc/otpdata/input_parameters_values.txt"
 
 // 3dnr Video mode
 enum VIDEO_3DNR {
