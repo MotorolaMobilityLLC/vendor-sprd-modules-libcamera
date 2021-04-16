@@ -150,6 +150,8 @@ struct awb_ctrl_cxt {
 	cmr_u8 *log;
 	cmr_u32 size;
 	cmr_u32 frame_count;
+	/*tuning param bypass*/
+	cmr_u8 bypass;
 
 	/*
 	 * for dual camera sync
@@ -1153,6 +1155,7 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	cxt->is_multi_mode = param->is_multi_mode;
 	cxt->is_mono_sensor = param->is_mono_sensor;
 	cxt->ptr_isp_br_ioctrl = param->ptr_isp_br_ioctrl;
+	cxt->bypass = param->bypass;
 	cxt->flash_awb_en = 0;
 	ISP_LOGI("is_multi_mode=%d , color_support=%d\n", param->is_multi_mode , cxt->color_support);
 #if 0
@@ -1572,6 +1575,18 @@ cmr_s32 awb_sprd_ctrl_calculation_v3(void *handle, void *in, void *out)
 //  ISP_LOGD("cxt->snap_lock =%d lock_mode =%d main_flash_enable =%d  lock_flash_frame =%d ",cxt->snap_lock,cxt->lock_info.lock_mode,cxt->flash_info.main_flash_enable,cxt->lock_info.lock_flash_frame);
 	ISP_LOGI("AWB result : (%d,%d,%d) %dK , fram_count : %d , camera_id : %d, wb mode: %d; AWB lib %dx%d: (%d,%d,%d) %dK", cxt->output_gain.r, cxt->output_gain.g, cxt->output_gain.b, cxt->output_ct, cxt->frame_count, cxt->camera_id, cxt->wb_mode,\
 			calc_param_v3.stat_img_3_0.width_stat, calc_param_v3.stat_img_3_0.height_stat,calc_result_v3.awb_gain.r_gain, calc_result_v3.awb_gain.g_gain, calc_result_v3.awb_gain.b_gain, calc_result_v3.awb_gain.ct);
+
+	/*if the awb bypass in tuning param is 1, result should be default values.*/
+	if(cxt->bypass == 1)
+	{
+		cxt->output_gain.r = 1024;
+		cxt->output_gain.g = 1024;
+		cxt->output_gain.b = 1024;
+		cxt->output_ct = 5000;
+
+		ISP_LOGI("AWB default result (%d %d %d), ct %d, bypass %d.",cxt->output_gain.r,cxt->output_gain.g,cxt->output_gain.b,cxt->output_ct,cxt->bypass);
+	}
+
 
 	//set the gain/ct to_save_file
 	cxt->frame_count 	= cxt->frame_count + 1;

@@ -4743,6 +4743,7 @@ static cmr_int ispalg_awb_init(struct isp_alg_fw_context *cxt)
 	if (ret == ISP_SUCCESS && output.param_data != NULL) {
 		param.tuning_param = output.param_data->data_ptr;
 		param.param_size = output.param_data->data_size;
+		param.bypass = output.param_data->user_data[0];
 	}
 	pthread_mutex_unlock(&cxt->pm_getting_lock);
 
