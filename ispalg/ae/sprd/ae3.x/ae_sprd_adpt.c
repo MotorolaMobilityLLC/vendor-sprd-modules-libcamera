@@ -3384,6 +3384,8 @@ static cmr_s32 ae_make_isp_result(struct ae_ctrl_cxt *cxt, struct ae_lib_calc_ou
 static cmr_s32 ae_make_ae_result_cb(struct ae_ctrl_cxt *cxt,  struct ae_callback_param *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
+	struct tg_ae_ctrl_alc_log debug_info_result = {0};
+
 	result->ae_stable = cxt->cur_result.stable;
 	result->cur_bv = cxt->cur_result.cur_bv;
 	result->isp_gain = cxt->exp_data.write_data.isp_gain;
@@ -3398,9 +3400,13 @@ static cmr_s32 ae_make_ae_result_cb(struct ae_ctrl_cxt *cxt,  struct ae_callback
 	result->cur_effect_fps = cxt->cur_result.cur_effect_fps;
 	result->cur_effect_exp_time = cxt->cur_status.adv_param.cur_ev_setting.exp_time;
 	result->frame_number =  cxt->frame_number;
-	result->debug_info = cxt->cur_result.debug_info;
-	result->debug_len = cxt->cur_result.debug_len;
+
+	ae_get_debug_info(cxt, &debug_info_result);
+
+	result->debug_info = debug_info_result.log;
+	result->debug_len = debug_info_result.size;
 	result->frm_id = cxt->cur_result.frame_id;
+	ISP_LOGV("debug_info: %p, debug_len: %d, frm_id %d\n", result->debug_info, result->debug_len, result->frm_id);
 	return rtn;
 }
 
