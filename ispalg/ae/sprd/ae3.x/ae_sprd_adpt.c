@@ -287,9 +287,10 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 			exp.dummy = write_param->dummy;
 			exp.size_index = size_index;
 			exp.exp_time = write_param->exp_time;
+			ISP_LOGD("YJW: exp_line %d,exp_time %"PRIu64", prv_param->exp_line %d, prv_param->dummy %d\n",exp.exposure,exp.exp_time,prv_param->exp_line,prv_param->dummy);
 			//exp.long_exp_flag = cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP];
-			if ((write_param->exp_line != prv_param->exp_line)
-				|| (write_param->dummy != prv_param->dummy)) {
+			if (((write_param->exp_line != prv_param->exp_line)
+				|| (write_param->dummy != prv_param->dummy)) || cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP]) {
 				(*cxt->isp_ops.ex_set_exposure) (cxt->isp_ops.isp_handler, &exp);
 				cmr_u64 exp_time = 0;
 				cmr_int cb_type;
