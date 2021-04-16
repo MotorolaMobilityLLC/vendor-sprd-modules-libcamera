@@ -37,7 +37,6 @@
 #include "sensor_imx616_raw_param_video_0.c"
 #include "sensor_imx616_raw_param_video_1.c"
 #include "sensor_imx616_raw_param_video_2.c"
-#include "sensor_imx616_raw_param_fdr_cap0.c"
 
 /* End Include */
 
@@ -175,7 +174,8 @@ static struct sensor_raw_info s_imx616_mipi_raw_info=
 		{s_imx616_tune_info_video_1, sizeof(s_imx616_tune_info_video_1)},
 		{s_imx616_tune_info_video_2, sizeof(s_imx616_tune_info_video_2)},
 		{NULL, 0},
-		{s_imx616_tune_info_fdr_cap0, sizeof(s_imx616_tune_info_fdr_cap0)},
+		{NULL, 0},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 	},
@@ -196,7 +196,8 @@ static struct sensor_raw_info s_imx616_mipi_raw_info=
 		&s_imx616_fix_info_video_1,
 		&s_imx616_fix_info_video_2,
 		NULL,
-		&s_imx616_fix_info_fdr_cap0,
+		NULL,
+		NULL,
 		NULL,
 		NULL,
 	},
@@ -214,7 +215,8 @@ static struct sensor_raw_info s_imx616_mipi_raw_info=
 		{s_imx616_video_1_tool_ui_input, sizeof(s_imx616_video_1_tool_ui_input)},
 		{s_imx616_video_2_tool_ui_input, sizeof(s_imx616_video_2_tool_ui_input)},
 		{NULL, 0},
-		{s_imx616_fdr_cap0_tool_ui_input, sizeof(s_imx616_fdr_cap0_tool_ui_input)},
+		{NULL, 0},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 	},
