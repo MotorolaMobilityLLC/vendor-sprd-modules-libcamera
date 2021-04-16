@@ -4839,6 +4839,18 @@ cmr_int camera_set_security(cmr_handle oem_handle,
     ret = cmr_grab_set_security(grab_cxt->grab_handle, sec_cfg);
     return ret;
 }
+cmr_int camera_set_zsl_param(cmr_handle oem_handle,
+                            struct sprd_cap_zsl_param *zsl_param) {
+    cmr_int ret;
+    struct grab_context *grab_cxt = NULL;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    grab_cxt = &cxt->grab_cxt;
+
+    ret = cmr_grab_set_zsl_param(grab_cxt->grab_handle, zsl_param);
+    return ret;
+}
+
 
 cmr_int camera_set_hdr_disable(cmr_handle oem_handle, cmr_u32 param) {
     cmr_int ret;
@@ -15966,6 +15978,8 @@ cmr_int camera_local_start_capture(cmr_handle oem_handle) {
         capture_param.cap_scene = CAPTURE_FLASH;
     }
 
+    if (capture_param.type == DCAM_CAPTURE_START)
+        capture_param.timestamp = snp_cxt->cap_need_time_stamp;
     CMR_LOGD(
         "type %d, cnt %d, scene %d,  dre_flag %d dre_skipframe %d, flash %d, cxt->flash_mode %d\n",
         capture_param.type, capture_param.cap_cnt, capture_param.cap_scene,
@@ -16008,6 +16022,20 @@ cmr_int camera_local_stop_capture(cmr_handle oem_handle) {
 exit:
     return ret;
 }
+cmr_int camera_local_set_alloc_size(cmr_handle oem_handle, cmr_u16 width, cmr_u16 height) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    ret = cmr_grab_set_alloc_size(cxt->grab_cxt.grab_handle, width , height);
+    if (ret) {
+        CMR_LOGE("cmr_grab_stop_capture failed");
+        goto exit;
+    }
+
+exit:
+    return ret;
+}
+
 void camera_set_oem_multimode(multiCameraMode camera_mode) {
     CMR_LOGD("camera_mode %d", camera_mode);
     is_multi_camera_mode_oem = camera_mode;

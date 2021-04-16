@@ -869,6 +869,19 @@ cmr_int camera_set_largest_picture_size(cmr_u32 camera_id, cmr_u16 width,
 
     return ret;
 }
+cmr_int camera_set_alloc_picture_size(cmr_handle camera_handle,cmr_u16 width,
+                                        cmr_u16 height) {
+    cmr_int ret = 0;
+    if (!camera_handle) {
+        CMR_LOGE("camera handle is null");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_local_set_alloc_size(camera_handle, width, height);
+
+exit:
+    return ret;
+}
 
 cmr_int dump_jpeg_file(void *virt_addr, unsigned int size, int width,
                        int height) {
@@ -1043,6 +1056,14 @@ static cmr_int ioctrl_sensor_get_stream_status(cmr_handle handle, void *param) {
 
     return 0;
 }
+static cmr_int ioctrl_camera_set_zsl_param(cmr_handle handle, void *param) {
+    struct  sprd_cap_zsl_param *zsl_param = (struct sprd_cap_zsl_param *)param;
+
+    CMR_LOGD("zsl_num = %d,skip_num=%d", zsl_param->zsl_num,zsl_param->zsk_skip_num);
+    camera_set_zsl_param(handle, zsl_param);
+    return 0;
+}
+
 static cmr_int ioctrl_set_high_res_mode(cmr_handle handle, void *param) {
     return camera_set_high_res_mode(handle, *(cmr_uint *)param);
 }
@@ -1209,6 +1230,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA]	= ioctrl_write_calibration_otp,
     [CAMERA_IOCTRL_SET_DUAL_VIDEO_MODE]        = ioctrl_set_dual_video_mode,
     [CAMERA_IOCTRL_SET_BLUR_CYNR_NO_FACE]      = ioctrl_camera_local_set_blur_cynr_noface,
+    [CAMERA_IOCTRL_SET_ZSL_CAP_PARAM]      = ioctrl_camera_set_zsl_param,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
@@ -1416,6 +1438,7 @@ static oem_ops_t oem_module_ops = {
 	.camera_set_original_picture_size = camera_set_original_picture_size,
 	.camera_get_scaler = camera_get_scaler,
 	.camera_get_rolling_shutter_skew = camera_get_rolling_shutter_skew,
+	.camera_set_alloc_picture_size = camera_set_alloc_picture_size,
 };
 
 struct oem_module OEM_MODULE_INFO_SYM = {
