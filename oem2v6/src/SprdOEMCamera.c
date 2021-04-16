@@ -961,7 +961,7 @@ cmr_uint camera_get_sensor_vcm_step(cmr_handle camera_handle, cmr_u32 camera_id,
         goto exit;
     }
     ret = cmr_get_sensor_vcm_step(camera_handle, camera_id, vcm_step);
-    CMR_LOGI("vcm_step %d", *vcm_step);
+    CMR_LOGV("vcm_step %d", *vcm_step);
     return ret;
 
 exit:

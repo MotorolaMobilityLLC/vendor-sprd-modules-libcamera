@@ -225,7 +225,7 @@ static cmr_int cmr_scale_thread_proc(struct cmr_msg *message,
         scal_param.host_fd = -1;
         scal_param.scale_cfg_param = &cfg_params->frame_params;
         scal_param.handle = file->handle;
-        CMR_LOGD("output_size.width:%d, height: %d",
+        CMR_LOGV("output_size.width:%d, height: %d",
                  frame_params->output_size.w, frame_params->output_size.h);
         file->err_code = CMR_CAMERA_SUCCESS;
 

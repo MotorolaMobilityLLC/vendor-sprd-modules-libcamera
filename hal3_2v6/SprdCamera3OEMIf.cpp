@@ -4125,7 +4125,7 @@ void SprdCamera3OEMIf::PreviewFrameUpdateMlogInfo(void) {
         mSetting->getVCMTag(&sprdvcmInfo);
         mHalOem->ops->camera_get_sensor_vcm_step(mCameraHandle, mCameraId,
                                                  &vcm_step);
-        HAL_LOGD("mCameraId %d, mMultiCameraMode %d, vcm_step %d 0x%x",
+        HAL_LOGV("mCameraId %d, mMultiCameraMode %d, vcm_step %d 0x%x",
                  mCameraId, mMultiCameraMode, vcm_step, vcm_step);
 
         sprdvcmInfo.vcm_step = vcm_step;
@@ -4316,9 +4316,9 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
     if (frame->type == PREVIEW_VIDEO_FRAME) {
         if (mVideoWidth <= mCaptureWidth &&
             mVideoHeight <= mCaptureHeight) {
-            HAL_LOGD("mDualVideoMode %d, mVideoShotFlag %d mDualVideoShotFlag %d",
-                    mDualVideoMode, mVideoShotFlag, mDualVideoShotFlag);
-            HAL_LOGD("mVideoSnapshotFrameNum %d", mVideoSnapshotFrameNum);
+            HAL_LOGV("mDualVideoMode %d, mVideoShotFlag %d mDualVideoShotFlag %d, "
+				"mVideoSnapshotFrameNum %d",
+                    mDualVideoMode, mVideoShotFlag, mDualVideoShotFlag, mVideoSnapshotFrameNum);
 
             matched = (mDualVideoMode &&
                         (mVideoShotFlag && mDualVideoShotFlag && (frame_num >= mVideoSnapshotFrameNum))) ? 1 : 0;
@@ -4494,13 +4494,12 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     }
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_ISO, &ae_iso);
     mSetting->mFrameNumMap[frame_num].sensitivity = ae_iso;
-    HAL_LOGD("iso_value:%d", ae_iso);
 
     ATRACE_BEGIN("preview_frame");
     HAL_LOGD("mCameraId=%d, prev:fd=0x%x, vir=0x%lx, num=%d, width=%d, "
-             "height=%d, time=0x%llx",
+             "height=%d, time=0x%llx, iso_value:%d",
              mCameraId, (cmr_u32)frame->fd, buff_vir, frame_num, frame->width,
-             frame->height, buffer_timestamp);
+             frame->height, buffer_timestamp, ae_iso);
 
     if (mIsMlogMode) {
         MLOG_Tag *mlogInfo;
@@ -13288,10 +13287,9 @@ void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
     ssize_t n;
     memset((void *)buffer, 0x00, 8 * sizeof(ASensorEvent));
 
-    HAL_LOGI("E");
     if ((n = ASensorEventQueue_getEvents(mCTSensorEventQueue, buffer, 8)) > 0) {
         for (int i = 0; i < n; i++) {
-            HAL_LOGI("timestamp %" PRId64 ""
+            HAL_LOGV("timestamp %" PRId64 ""
                     "x_data y_data z_data ir_data:%f %f %f %f",
                     buffer[i].timestamp, buffer[i].data[0],
                     buffer[i].data[1], buffer[i].data[2], buffer[i].data[3]);
@@ -13301,10 +13299,9 @@ void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
             data_colortemp[3] = (cmr_u32)buffer[i].data[3];
         }
     } else {
-        HAL_LOGE("fail to get color_temp_data");
+        HAL_LOGV("fail to get color_temp_data");
         return NULL;
     }
-    HAL_LOGI("X");
     return NULL;
 }
 

@@ -2027,7 +2027,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 notify_msg.message.shutter.timestamp = capture_time;
                 mCallbackOps->notify(mCallbackOps, &notify_msg);
                 i->bNotified = true;
-                HAL_LOGD("mCameraId = %d, notified frame_num = %d, timestamp = 0x%llx",
+                HAL_LOGV("mCameraId = %d, notified frame_num = %d, timestamp = 0x%llx",
                          mCameraId, i->frame_number,
                          notify_msg.message.shutter.timestamp);
 
@@ -2118,7 +2118,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                 }
             }
 
-            HAL_LOGD("num_bufs=%d, mPendingReq=%d", i->num_buffers,
+            HAL_LOGV("num_bufs=%d, mPendingReq=%d", i->num_buffers,
                      mPendingRequest);
 
             if (0 == i->num_buffers) {
@@ -2489,8 +2489,6 @@ int SprdCamera3HWI::flush() {
         }
     }
 
-    // fix issue pendingList full, last request come after flush
-    HAL_LOGD("clear buffers ...");
     usleep(1000);
 
     {
@@ -2750,7 +2748,7 @@ void SprdCamera3HWI::setAeRegion() {
 }
 
 void SprdCamera3HWI::setRefCameraId(uint32_t camera_id) {
-    HAL_LOGD("set reference camera id %u", camera_id);
+    HAL_LOGV("set reference camera id %u", camera_id);
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_REF_CAMERA_ID, &camera_id, NULL);
 }
 

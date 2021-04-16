@@ -4960,7 +4960,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         ANDROID_SPRD_IS_TAKEPICTURE_WITH_FLASH,
         &(s_setting[mCameraId].sprddefInfo.is_takepicture_with_flash), 1);
 
-    HAL_LOGD("auto hdr scene report %d",
+    HAL_LOGV("auto hdr scene report %d",
              s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene);
     camMetadata.update(ANDROID_SPRD_IS_HDR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
