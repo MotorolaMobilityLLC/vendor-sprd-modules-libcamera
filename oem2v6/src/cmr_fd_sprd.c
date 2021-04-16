@@ -1333,16 +1333,14 @@ cmr_int fd_start_scale(cmr_handle oem_handle, struct img_frm *src,
     }
 
     CMR_LOGD(
-        "src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d",
+        "src size %d %d dst size %d %d rect %d %d %d %d endian %d %d %d %d "
+        "src fd: 0x%x, yaddr: 0x%lx, fmt: %d dst fd: 0x%x, yaddr: 0x%lx, fmt: %d",
         src->size.width, src->size.height, dst->size.width, dst->size.height,
         src->rect.start_x, src->rect.start_y, src->rect.width, src->rect.height,
         src->data_end.y_endian, src->data_end.uv_endian, dst->data_end.y_endian,
-        dst->data_end.uv_endian);
+        dst->data_end.uv_endian, src->fd, src->addr_vir.addr_y, src->fmt,
+        dst->fd, dst->addr_vir.addr_y, dst->fmt);
 
-    CMR_LOGD("src fd: 0x%x, yaddr: 0x%lx, fmt: %d dst fd: 0x%x, yaddr: 0x%lx, "
-             "fmt: %d",
-             src->fd, src->addr_vir.addr_y, src->fmt, dst->fd,
-             dst->addr_vir.addr_y, dst->fmt);
     ret = cmr_scale_start(cxt->scaler_cxt.scaler_handle, src, dst,
                           (cmr_evt_cb)NULL, NULL);
     if (ret) {
@@ -1421,7 +1419,7 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         fd_img.context.zoomRatio = (int)start_param->zoom_ratio;
         fd_img.context.frameID = (int)start_param->frame_id;
 
-        CMR_LOGD("orientation %d, brightValue %d, aeStable %d, backlightPro "
+        CMR_LOGV("orientation %d, brightValue %d, aeStable %d, backlightPro "
                  "%u, hist[0~3] %u %u %u %u, zoomRatio %d frameID %d",
                  fd_img.context.orientation, fd_img.context.brightValue,
                  fd_img.context.aeStable, fd_img.context.backlightPro,

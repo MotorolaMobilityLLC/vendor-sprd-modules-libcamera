@@ -1365,7 +1365,7 @@ setting_get_sensor_orientation(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->sensor_orientation;
-    CMR_LOGD("get sensor_orientation %d",parm->cmd_type_value);
+    CMR_LOGV("get sensor_orientation %d",parm->cmd_type_value);
     return ret;
 }
 
@@ -2038,7 +2038,7 @@ setting_get_face_attributes_enable(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->face_attributes_enabled;
-    CMR_LOGD("face_attributes_enabled=%ld", hal_param->face_attributes_enabled);
+    CMR_LOGV("face_attributes_enabled=%ld", hal_param->face_attributes_enabled);
     return ret;
 }
 
@@ -2049,7 +2049,7 @@ setting_get_smile_capture(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->smile_capture_enabled;
-    CMR_LOGD("get smile_capture_enabled=%ld", hal_param->smile_capture_enabled);
+    CMR_LOGV("get smile_capture_enabled=%ld", hal_param->smile_capture_enabled);
     return ret;
 }
 
@@ -2645,7 +2645,7 @@ setting_get_device_orientation(struct setting_component *cpt,
 
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
-    CMR_LOGD("device_orientation %d", hal_param->device_orientation);
+    CMR_LOGV("device_orientation %d", hal_param->device_orientation);
 
     parm->cmd_type_value = hal_param->device_orientation;
     return ret;
@@ -2953,7 +2953,7 @@ static cmr_int setting_get_fdr(struct setting_component *cpt,
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
 
     parm->cmd_type_value = hal_param->is_fdr;
-    CMR_LOGD("get fdr %ld", parm->cmd_type_value);
+    CMR_LOGV("get fdr %ld", parm->cmd_type_value);
 
     return ret;
 }
