@@ -2605,7 +2605,7 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		calc_param.stat_img_w = stat_w;
 		calc_param.stat_img_h = stat_h;
 		calc_param.r_pix_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
-		calc_param.g_pix_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+		calc_param.g_pix_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 2;
 		calc_param.b_pix_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
 
 		memcpy(calc_param.matrix, p_matrix, 9 * sizeof(cmr_s32));
@@ -2661,7 +2661,7 @@ static cmr_int ispctl_calc_awb(cmr_handle isp_alg_handle,
 		calc_param_3_0.stat_img_3_0.width_stat = stat_w;
 		calc_param_3_0.stat_img_3_0.height_stat = stat_h;
 		calc_param_3_0.stat_img_3_0.r_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
-		calc_param_3_0.stat_img_3_0.g_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
+		calc_param_3_0.stat_img_3_0.g_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 2;
 		calc_param_3_0.stat_img_3_0.b_pixel_cnt = ((width / stat_w) / 2 * 2) * ((height / stat_h) / 2 * 2) / 4;
 
 		BLOCK_PARAM_CFG(input, pm_param, ISP_PM_BLK_GAMMA, ISP_BLK_RGB_GAMC, 0, 0);
