@@ -1492,32 +1492,13 @@ cmr_s32 awb_sprd_ctrl_calculation_v3_2(void *handle, void *in, void *out)
 	struct awb_calc_result_3_0 calc_result_v3;
 	memset(&calc_param_v3, 0x00, sizeof(calc_param_v3));
 	memset(&calc_result_v3, 0x00, sizeof(calc_result_v3));
-	/*
-	if (((awb_tool_param*)(cxt->awb_init_param.tool_param))->stat_type) {
-		calc_param.stat_img.r_stat = param.stat_img.chn_img.r;
-		calc_param.stat_img.g_stat = param.stat_img.chn_img.g;
-		calc_param.stat_img.b_stat = param.stat_img.chn_img.b;
-		calc_param.stat_img.b_pixel_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-		calc_param.stat_img.g_pixel_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-		calc_param.stat_img.r_pixel_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-		calc_param.stat_img.width_stat = cxt->init_param.stat_img_size.w;
-		calc_param.stat_img.height_stat = cxt->init_param.stat_img_size.h;
-	} else {
-		calc_param.stat_img.r_stat = param.stat_img_awb.chn_img.r;
-		calc_param.stat_img.g_stat = param.stat_img_awb.chn_img.g;
-		calc_param.stat_img.b_stat = param.stat_img_awb.chn_img.b;
-		calc_param.stat_img.width_stat= param.stat_width_awb;
-		calc_param.stat_img.height_stat = param.stat_height_awb;
-		calc_param.stat_img.r_pixel_cnt = 1;
-		calc_param.stat_img.g_pixel_cnt = 1;
-		calc_param.stat_img.b_pixel_cnt = 1;
-	}*/
+
 	calc_param_v3.frame_index = cxt->frame_count;
 	calc_param_v3.stat_img_3_0.r_stat = param.stat_img.chn_img.r;
 	calc_param_v3.stat_img_3_0.g_stat = param.stat_img.chn_img.g;
 	calc_param_v3.stat_img_3_0.b_stat = param.stat_img.chn_img.b;
 	calc_param_v3.stat_img_3_0.b_pixel_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-	calc_param_v3.stat_img_3_0.g_pixel_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+	calc_param_v3.stat_img_3_0.g_pixel_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 2;
 	calc_param_v3.stat_img_3_0.r_pixel_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
 	calc_param_v3.stat_img_3_0.width_stat = cxt->init_param.stat_img_size.w;
 	calc_param_v3.stat_img_3_0.height_stat = cxt->init_param.stat_img_size.h;

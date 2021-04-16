@@ -1654,7 +1654,7 @@ cmr_s32 awb_sprd_ctrl_calculation(void *handle, void *in, void *out)
 		calc_param.stat_img.g = param.stat_img.chn_img.g;
 		calc_param.stat_img.b = param.stat_img.chn_img.b;
 		calc_param.b_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
-		calc_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
+		calc_param.g_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 2;
 		calc_param.r_pix_cnt = (cxt->init_param.stat_win_size.w * cxt->init_param.stat_win_size.h) / 4;
 		calc_param.stat_img_w = cxt->init_param.stat_img_size.w;
 		calc_param.stat_img_h = cxt->init_param.stat_img_size.h;
