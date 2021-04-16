@@ -2764,7 +2764,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         if (data != NULL) {
             ae_info = (cmr_u32 *)data;
             cxt->long_expo_enable = ae_info[AE_CB_LONG_EXP_INDEX];
-            CMR_LOGD("cxt->long_expo_enable %d", cxt->long_expo_enable);
+            CMR_LOGV("cxt->long_expo_enable %d", cxt->long_expo_enable);
             cmr_sensor_set_longExp_enable(cxt->sn_cxt.sensor_handle,
                            cxt->camera_id, (cmr_u32)cxt->long_expo_enable);
             cxt->camera_cb(oem_cb, cxt->client_data,
@@ -2870,7 +2870,7 @@ cmr_int camera_isp_evt_cb(cmr_handle oem_handle, cmr_u32 evt, void *data,
         break;
     case ISP_3DNR_CALLBACK:
         oem_cb = CAMERA_EVT_CB_3DNR_SCENE;
-        CMR_LOGD("3dnr scene=%d", *(cmr_u8 *)data);
+        CMR_LOGV("3dnr scene=%d", *(cmr_u8 *)data);
         cxt->camera_cb(oem_cb, cxt->client_data, CAMERA_FUNC_AE_STATE_CALLBACK,
                        data);
         break;
@@ -4056,7 +4056,7 @@ void camera_set_fdr_flag(struct camera_context *cxt, cmr_u32 fdr_flag) {
 		return;
 	}
 
-	CMR_LOGD("E. flag %d, camera_id:%d", fdr_flag, cxt->camera_id);
+	CMR_LOGV("E. flag %d, camera_id:%d", fdr_flag, cxt->camera_id);
 	sem_wait(&cur->sem_flag);
 	if(is_multi_camera_mode_oem == MODE_MULTI_CAMERA &&
 		cxt->ref_camera_id != cxt->camera_id) {
@@ -15534,7 +15534,7 @@ cmr_int cmr_get_sensor_vcm_step(cmr_handle oem_handle, cmr_u32 camera_id,
         CMR_LOGE("get isp vcm step error %ld", ret);
         goto exit;
     }
-    CMR_LOGD("isp_param.vcm_step = %d", isp_param.vcm_step);
+    CMR_LOGV("isp_param.vcm_step = %d", isp_param.vcm_step);
     *vcm_step = isp_param.vcm_step;
 
 exit:
@@ -16068,9 +16068,9 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
                              &setting_param);
     is_fdr_on = setting_param.cmd_type_value;
 
-    CMR_LOGD("ref_camera_id id %d, camera_id:%d, old_ref_id:%d",
-              *ref_camera_id, cxt->camera_id, cxt->ref_camera_id);
-    CMR_LOGD("is_fdr_on %d, is_multi_camera_mode_oem:%d",
+    CMR_LOGD("ref_camera_id id %d, camera_id:%d, old_ref_id:%d "
+		"is_fdr_on %d, is_multi_camera_mode_oem:%d",
+              *ref_camera_id, cxt->camera_id, cxt->ref_camera_id,
               is_fdr_on, is_multi_camera_mode_oem);
 
     if(is_fdr_on && is_multi_camera_mode_oem == MODE_MULTI_CAMERA &&

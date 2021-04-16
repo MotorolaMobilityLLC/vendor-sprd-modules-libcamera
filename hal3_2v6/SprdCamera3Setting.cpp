@@ -5831,10 +5831,6 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     camMetadata.update(ANDROID_SHADING_MODE,
                        &(s_setting[mCameraId].shadingInfo.mode), 1);
 
-    HAL_LOGD("mCameraId %d, af_trigger %d, af_state %d", mCameraId,
-        s_setting[mCameraId].resultInfo.af_trigger,
-        s_setting[mCameraId].controlInfo.af_state);
-
     if (s_setting[mCameraId].resultInfo.af_trigger !=
         ANDROID_CONTROL_AF_TRIGGER_IDLE)
         s_setting[mCameraId].resultInfo.af_state =
@@ -6155,7 +6151,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             int32_t g_face_info4 =
                 camMetadata.find(ANDROID_STATISTICS_FACE_RECTANGLES)
                     .data.i32[3];
-            HAL_LOGD("id%d:face sx %d sy %d ex %d ey %d", mCameraId,
+            HAL_LOGV("id%d:face sx %d sy %d ex %d ey %d", mCameraId,
                      g_face_info1, g_face_info2, g_face_info3, g_face_info4);
         }
 // Bit0 and Bit1 represent ages,
@@ -6263,7 +6259,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_hdr_scene),
                        1);
 
-    HAL_LOGD("auto 3dnr scene report %d mCameraId %d",
+    HAL_LOGV("auto 3dnr scene report %d mCameraId %d",
              s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene,mCameraId);
     camMetadata.update(ANDROID_SPRD_IS_3DNR_SCENE,
                        &(s_setting[mCameraId].sprddefInfo.sprd_is_3dnr_scene),
@@ -6294,8 +6290,11 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     int32_t engeneerParam[2];
     engeneerParam[0] = s_setting[mCameraId].sprddefInfo.af_pos;
     engeneerParam[1] = s_setting[mCameraId].sprddefInfo.bv;
-    HAL_LOGD("s_setting[mCameraId].sprddefInfo.af_pos %d s_setting[mCameraId].sprddefInfo.bv %d",
-             engeneerParam[0],engeneerParam[1]);
+    HAL_LOGV("s_setting[mCameraId].sprddefInfo.af_pos %d s_setting[mCameraId].sprddefInfo.bv %d "
+		"mCameraId %d, af_trigger %d, af_state %d",
+             engeneerParam[0],engeneerParam[1], mCameraId,
+             s_setting[mCameraId].resultInfo.af_trigger,
+             s_setting[mCameraId].controlInfo.af_state);
     camMetadata.update(ANDROID_SPRD_ENGENEER_MODE_PARAM, engeneerParam, 2);
 
     resultMetadata = camMetadata.release();
@@ -7136,7 +7135,6 @@ int SprdCamera3Setting::setExposureTimeTag(int64_t exposureTime) {
 
 void SprdCamera3Setting::getSyncInfo(uint32_t frame_number) {
     s_setting[mCameraId].syncInfo.frame_number = frame_number;
-    HAL_LOGI("minnie frame_number:%lld, frame_number %d",s_setting[mCameraId].syncInfo.frame_number, frame_number);
 }
 
 int SprdCamera3Setting::getSENSORTag(SENSOR_Tag *sensorInfo) {

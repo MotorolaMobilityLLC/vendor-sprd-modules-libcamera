@@ -2485,7 +2485,6 @@ void SprdCamera3HWI::setMasterId(uint8_t masterId) {
 }
 
 void SprdCamera3HWI::setRefCameraId(uint32_t camera_id) {
-    HAL_LOGD("set reference camera id %u", camera_id);
     mOEMIf->camera_ioctrl(CAMERA_IOCTRL_SET_REF_CAMERA_ID, &camera_id, NULL);
 }
 

@@ -16025,7 +16025,6 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                       CAMERA_PARAM_GET_SENSOR_ORIENTATION, &setting_param);
     private_data.sensorOrientation = (cmr_u32)setting_param.cmd_type_value;
-    CMR_LOGD("sensorOrientation = %d", private_data.sensorOrientation);
     cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
                       CAMERA_PARAM_GET_DEVICE_ORIENTATION, &setting_param);
     private_data.orientation = (cmr_u32)setting_param.cmd_type_value;
@@ -16039,7 +16038,8 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
         else if(private_data.orientation == 270)
             private_data.orientation = 90;
     }
-    CMR_LOGD("orientation = %d", private_data.orientation);
+    CMR_LOGV("sensorOrientation = %d, orientation = %d",
+		private_data.sensorOrientation, private_data.orientation);
     private_data.bright_value = prev_cxt->ae_stab[AE_CB_BV_INDEX];
     private_data.ae_stable = prev_cxt->ae_stab[AE_CB_STABLE_INDEX];
     private_data.backlight_pro = prev_cxt->ae_stab[AE_CB_BLS_INDEX];
@@ -16146,7 +16146,7 @@ cmr_int prev_fd_cb(cmr_u32 class_type, struct ipm_frame_out *cb_param) {
             cb_param->face_area.range[i].gender_age_race;
     }
 
-    CMR_LOGD(" frame_type.timestamp:%lld   frame_type.face_num  :%u,  "
+    CMR_LOGV(" frame_type.timestamp:%lld   frame_type.face_num  :%u,  "
              "frame_type.frame_num:%u ",
              frame_type.timestamp, frame_type.face_num, frame_type.frame_num);
 
