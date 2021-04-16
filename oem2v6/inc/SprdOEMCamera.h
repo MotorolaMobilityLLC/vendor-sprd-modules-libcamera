@@ -185,6 +185,9 @@ cmr_int camera_set_mm_dvfs_policy(cmr_handle camera_handle,
 void camera_set_original_picture_size(cmr_handle camera_handle,
                                    int32_t width,int32_t height);
 int camera_get_scaler(uint32_t *scaler);
+cmr_int camera_set_alloc_picture_size(cmr_handle camera_handle,cmr_u16 width,
+                                   cmr_u16 height);
+
 
 void camera_set_exif_iso_value(cmr_handle handle,cmr_u32 iso_value);
 void camera_set_exif_exp_time(cmr_handle handle,cmr_s64 exp_time);
