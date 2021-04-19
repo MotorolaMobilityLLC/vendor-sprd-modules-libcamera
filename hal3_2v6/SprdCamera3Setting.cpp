@@ -2378,7 +2378,7 @@ void SprdCamera3Setting::initCameraIpFeature(int32_t cameraId) {
         available_cam_features.add(1);
         HAL_LOGD("portraitscene on");
     } else {
-        if (strcmp("T618", strRunType)) {
+        if (!strcmp("T610", strRunType)) {
             property_set("persist.vendor.cam.ip.portrait.back.replace","2");
             property_set("persist.vendor.cam.portrait.scene.enable","2");
         } else if(atoi(prop) == 0){
