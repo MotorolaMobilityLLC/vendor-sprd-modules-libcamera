@@ -65,8 +65,8 @@
 #define LANE_NUM			2
 #define RAW_BITS			10
 
-#define PREVIEW_MIPI_PER_LANE_BPS	  1872 //720  /* 2*Mipi clk */
-#define SNAPSHOT_MIPI_PER_LANE_BPS	  1872 //720  /* 2*Mipi clk */
+#define PREVIEW_MIPI_PER_LANE_BPS	  936 //720  /* 2*Mipi clk */
+#define SNAPSHOT_MIPI_PER_LANE_BPS	  936 //720  /* 2*Mipi clk */
 
 /*line time unit: 1ns*/
 #define PREVIEW_LINE_TIME		  16688 //26300
@@ -112,6 +112,8 @@ static const SENSOR_REG_T sp5508_init_setting[] = {
 	initial setting 	
 	register	value	description
 	fd	00	Page 0*/
+
+	{0xfd, 0x00},
 	{0x2e, 0x24},// PLL_CTRL
 	{0x2f, 0x01},// 
 	{0xfd, 0x01},// Page 1
