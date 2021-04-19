@@ -610,7 +610,7 @@ static cmr_int imx586_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
     case SENSOR_VAL_TYPE_GET_4IN1_INFO:
-        ret = imx586_drv_get_4in1_info(handle, param_ptr->pval);
+        //ret = imx586_drv_get_4in1_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_OTP_DATA:
         ret = 0;//imx586_drv_ov4c_init(handle, param_ptr->pval);
