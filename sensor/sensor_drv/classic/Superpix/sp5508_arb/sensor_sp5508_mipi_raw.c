@@ -415,7 +415,113 @@ static cmr_int sp5508_drv_access_val(cmr_handle handle, cmr_uint param)
     return ret;
 }
 
+static cmr_int sp5508_arb_otp_info(cmr_handle handle) {
+	cmr_u16 group1_flag = 0;
+	cmr_u16 group2_flag = 0;
+	cmr_u16 module_id = 0;
+	cmr_u16 otp_status = 0;
+	cmr_u16 rg_ration = 0;
+	//cmr_u16 rgh_bgh_ration = 0;
+	cmr_u16 bg_ration = 0;
+	cmr_u16 awb_checksum = 0;
+	cmr_u16 r_gain = 0x80;
+	cmr_u16 b_gain = 0x80;
+	cmr_u16 g_gain = 0x80;
+	cmr_u16 awb_checksum_cal = 0;
+	cmr_u16 golden_rg_gain = 83;
+	cmr_u16 golden_bg_gain = 86;
+	cmr_u16 temp_grp_flag = 0;
+	cmr_u16 temp_awb_flag = 0;
+	cmr_u16 awb_grp1_flag = 0;
+	cmr_u16 awb_grp2_flag = 0;
 
+	hw_sensor_write_reg(handle, 0xfd,0x03);
+	otp_status = hw_sensor_read_reg(handle, 0xec);
+
+	SENSOR_LOGI("sp5508_arb otp_status=0x%x\n", otp_status);
+	if (otp_status != 0) {
+		module_id = 0x100;
+		return module_id;
+	}
+
+	hw_sensor_write_reg(handle, 0xfd,0x05);
+	temp_grp_flag = hw_sensor_read_reg(handle, 0x80);
+	SENSOR_LOGI("sp5508_arb otp flag of base info=%x\n",
+					temp_grp_flag);
+
+	temp_awb_flag = hw_sensor_read_reg(handle, 0xa5);
+	SENSOR_LOGI("sp5508_arb otp awb_flag=%x\n",
+					temp_awb_flag);
+
+	if (temp_grp_flag == 0x01 ) {
+		module_id = hw_sensor_read_reg(handle, 0x81);
+	}
+	if (temp_grp_flag == 0x13) {
+		module_id = hw_sensor_read_reg(handle, 0x8d);
+	}
+	if (temp_grp_flag == 0x37) {
+		module_id = hw_sensor_read_reg(handle, 0x99);
+	}
+
+	if (temp_awb_flag == 0x01) {
+		rg_ration = (hw_sensor_read_reg(handle, 0xa6)<<8) | (hw_sensor_read_reg(handle, 0xa7));
+		bg_ration = (hw_sensor_read_reg(handle, 0xa8)<<8) | (hw_sensor_read_reg(handle, 0xa9));
+		golden_rg_gain = (hw_sensor_read_reg(handle, 0xac)<<8) | (hw_sensor_read_reg(handle, 0xad));
+		golden_bg_gain = (hw_sensor_read_reg(handle, 0xae)<<8) | (hw_sensor_read_reg(handle, 0xaf));
+		awb_checksum = hw_sensor_read_reg(handle, 0xb2);
+	}
+	if (temp_awb_flag == 0x13) {
+		rg_ration = (hw_sensor_read_reg(handle, 0xb3)<<8) | (hw_sensor_read_reg(handle, 0xb4));
+		bg_ration = (hw_sensor_read_reg(handle, 0xb5)<<8) | (hw_sensor_read_reg(handle, 0xb6));
+		golden_rg_gain = (hw_sensor_read_reg(handle, 0xb9)<<8) | (hw_sensor_read_reg(handle, 0xba));
+		golden_bg_gain = (hw_sensor_read_reg(handle, 0xbb)<<8) | (hw_sensor_read_reg(handle, 0xbc));
+		awb_checksum = hw_sensor_read_reg(handle, 0xbf);
+	}
+	if (temp_awb_flag == 0x37) {
+		rg_ration = (hw_sensor_read_reg(handle, 0xc0)<<8) | (hw_sensor_read_reg(handle, 0xc1));
+		bg_ration = (hw_sensor_read_reg(handle, 0xc2)<<8) | (hw_sensor_read_reg(handle, 0xc3));
+		golden_rg_gain = (hw_sensor_read_reg(handle, 0xc6)<<8) | (hw_sensor_read_reg(handle, 0xc7));
+		golden_bg_gain = (hw_sensor_read_reg(handle, 0xc8)<<8) | (hw_sensor_read_reg(handle, 0xc9));
+		awb_checksum = hw_sensor_read_reg(handle, 0xcc);
+	}
+
+	SENSOR_LOGI("sp5508_arb otp mid=0x%x\n", module_id);
+	SENSOR_LOGI("sp5508_arb otp rg:%x,  bg:%x, awb_crc:%x\n",
+								rg_ration,
+								bg_ration,
+								awb_checksum);
+
+	//awb_checksum_cal = (rg_ration + rgh_bgh_ration + bg_ration) % 255 + 1;
+	//LOG_INF("sp5508_arb otp awb_checksum_cal=0x%x, awb_checksum=0x%x\n",awb_checksum_cal, awb_checksum);
+
+	r_gain = 0x80 * golden_rg_gain/rg_ration ;
+	b_gain = 0x80 * golden_bg_gain/bg_ration ;
+	SENSOR_LOGI("sp5508_arb otp r_gain=0x%x, b_gain=0x%x,golden_rg_gain=0x%x,golden_bg_gain=0x%x\n", r_gain, b_gain, golden_rg_gain, golden_bg_gain);
+	if (r_gain < b_gain) {
+		if (r_gain < 0x80) {
+			g_gain = 0x80 * g_gain/r_gain;
+			b_gain = 0x80 * b_gain/r_gain;
+			r_gain = 0x80;
+		}
+	} else {
+		if (b_gain < 0x80) {
+			r_gain = 0x80 * r_gain/b_gain;
+			g_gain = 0x80 * g_gain/b_gain;
+			b_gain = 0x80;
+		}
+	}
+
+	SENSOR_LOGI("sp5508_arb otp r_gain:%x,g_gain:%x, b_gain:%x\n",
+								r_gain, g_gain, b_gain);
+
+	hw_sensor_write_reg(handle, 0xfd,0x01);
+	hw_sensor_write_reg(handle, 0x40,r_gain);
+	hw_sensor_write_reg(handle, 0x41,g_gain);
+	hw_sensor_write_reg(handle, 0x42,g_gain);
+	hw_sensor_write_reg(handle, 0x43,b_gain);
+
+	return module_id;
+}
 /*==============================================================================
  * Description:
  * identify sensor id
@@ -638,7 +744,7 @@ static cmr_int sp5508_drv_stream_on(cmr_handle handle, cmr_uint param)
 	
 	/*delay*/
 	usleep(60 * 1000);
-	
+	sp5508_arb_otp_info(sns_drv_cxt->hw_handle);
 	return SENSOR_SUCCESS;
 }
 
