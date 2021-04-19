@@ -426,9 +426,9 @@ static cmr_uint imx351_drv_get_trim_tab(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int imx351_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
-    cmr_u32 cap_exptime = 0;
+    cmr_u64 cap_exptime = 0;
     cmr_u32 prv_shutter = 0;
-    cmr_u32 prv_exptime = 0;
+    cmr_u64 prv_exptime = 0;
     float gain = 0;
     float cap_gain = 0;
     cmr_u32 capture_mode = param & 0xffff;
