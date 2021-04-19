@@ -47,6 +47,31 @@ PRODUCT_COPY_FILES += $(foreach file, $(img_files), \
          $(COM_IMG_PATH)/$(file):vendor/etc/aiimg/front/$(file))
 endif
 
+ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums9620), )
+PRODUCT_COPY_FILES += vendor/sprd/modules/libcamera/arithmetic/sprd_fdr/firmware/fdr_cadence.bin:vendor/firmware/fdr_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/sprd_easy_hdr/firmware/hdr_cadence.bin:vendor/firmware/hdr_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/sprd_warp/firmware/warp_cadence.bin:vendor/firmware/warp_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/facebeauty/firmware/facebeauty_cadence.bin:vendor/firmware/facebeauty_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/libmfnr/firmware/mfnr_cadence.bin:vendor/firmware/mfnr_cadence.bin\
+                      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/portraitseg_cadence.bin:vendor/firmware/portraitseg_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/sprd_portrait_scene/firmware/portraitseg_network.bin:vendor/firmware/portraitseg_network.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/depth/firmware/PortraitSegHP_cadence.bin:vendor/firmware/PortraitSegHP_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/depth/firmware/PortraitSegHP_network.bin:vendor/firmware/PortraitSegHP_network.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/depth/firmware/PortraitSegLP_cadence.bin:vendor/firmware/PortraitSegLP_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/depth/firmware/PortraitSegLP_network.bin:vendor/firmware/PortraitSegLP_network.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/depth/firmware/PortraitSegMP_cadence.bin:vendor/firmware/PortraitSegMP_cadence.bin \
+                      vendor/sprd/modules/libcamera/arithmetic/depth/firmware/PortraitSegMP_network.bin:vendor/firmware/PortraitSegMP_network.bin 
+
+COM_IMG_PATH :=$(LOCAL_PATH)/arithmetic/sprd_portrait_scene/image/common
+img_files := $(shell ls $(COM_IMG_PATH))
+PRODUCT_COPY_FILES += $(foreach file, $(img_files), \
+         $(COM_IMG_PATH)/$(file):vendor/etc/aiimg/common/$(file))
+
+COM_IMG_PATH :=$(LOCAL_PATH)/arithmetic/sprd_portrait_scene/image/front
+img_files := $(shell ls $(COM_IMG_PATH))
+PRODUCT_COPY_FILES += $(foreach file, $(img_files), \
+         $(COM_IMG_PATH)/$(file):vendor/etc/aiimg/front/$(file))
+endif
 TF_MODEL_PATH := vendor/sprd/modules/libcamera/arithmetic/tf_models
 model_files := $(shell ls $(TF_MODEL_PATH))
 PRODUCT_COPY_FILES += $(foreach file, $(model_files), \
