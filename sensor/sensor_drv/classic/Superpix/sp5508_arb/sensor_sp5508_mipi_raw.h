@@ -414,7 +414,7 @@ static struct sensor_module_info s_sp5508_module_info_tab[VENDOR_NUM] = {
          .iovdd_val = SENSOR_AVDD_1800MV,
          .dvdd_val = SENSOR_AVDD_1200MV,
 
-         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_R,
+         .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,
 
          .preview_skip_num = 1,
          .capture_skip_num = 1,
