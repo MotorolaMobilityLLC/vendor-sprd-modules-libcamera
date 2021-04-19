@@ -436,7 +436,7 @@ imx616_drv_init_raw_info(sns_drv_cxt->sensor_id, vendor_id, 0, 0);
 }
 */
 #if 1
-static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
+static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 0};
 static cmr_int imx616_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
     struct sensor_4in1_info *sn_4in1_info = NULL;
@@ -480,7 +480,7 @@ static cmr_int imx616_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
     case SENSOR_VAL_TYPE_GET_4IN1_INFO:
-        ret = imx616_drv_get_4in1_info(handle, param_ptr->pval);
+        //ret = imx616_drv_get_4in1_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_SET_OTP_DATA:
         ret = 0; // imx616_drv_ov4c_init(handle, param_ptr->pval);
