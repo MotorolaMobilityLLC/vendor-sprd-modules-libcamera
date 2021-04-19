@@ -131,7 +131,7 @@ static void ov32a1q_drv_write_shutter(cmr_handle handle,
  * please don't change this function if it's necessary
  *============================================================================*/
 static void ov32a1q_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
-                                      cmr_u32 dummy_line, cmr_u16 mode, cmr_u32 exp_time,
+                                      cmr_u32 dummy_line, cmr_u16 mode, cmr_u64 exp_time,
                                       struct sensor_aec_i2c_tag *aec_info) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
@@ -841,9 +841,9 @@ static cmr_int ov32a1q_drv_identify(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int ov32a1q_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
-    cmr_u32 cap_exptime = 0;
+    cmr_u64 cap_exptime = 0;
     cmr_u32 prv_shutter = 0;
-    cmr_u32 prv_exptime = 0;
+    cmr_u64 prv_exptime = 0;
     cmr_u32 prv_gain = 0;
     cmr_u32 cap_gain = 0;
     cmr_u32 capture_mode = param & 0xffff;
@@ -917,7 +917,7 @@ static cmr_int ov32a1q_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 size_index = 0x00;
-    cmr_u32 exp_time = 0x00;
+    cmr_u64 exp_time = 0x00;
 
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -966,7 +966,7 @@ static cmr_int ov32a1q_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 mode = 0x00;
-    cmr_u32 exp_time = 0x00;
+    cmr_u64 exp_time = 0x00;
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
