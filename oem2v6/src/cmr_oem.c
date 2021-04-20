@@ -7776,7 +7776,11 @@ cmr_int camera_do_face_beauty_body(cmr_handle oem_handle,
                      beautyLevels.lipLevel || beautyLevels.slimLevel ||
                      beautyLevels.largeLevel;
 
-    memcpy(&fd_face_area, &cxt->fd_face_area_capture,
+    if (cxt->snp_cxt.snp_mode == CAMERA_ZSL_MODE)
+        memcpy(&fd_face_area, &cxt->fd_face_area_capture,
+                     sizeof(struct isp_face_area));
+    else
+        memcpy(&fd_face_area, &cxt->fd_face_area,
                      sizeof(struct isp_face_area));
     facecount = fd_face_area.face_num;
 
