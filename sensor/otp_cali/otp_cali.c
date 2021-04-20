@@ -94,7 +94,12 @@ cmr_u16 read_calibration_cmei(cmr_u8 dual_flag, cmr_u8 *cmei_buf) {
                 break;
             }
 
-            fseek(fileHandle, (CALI_OTP_HEAD_SIZE + header_ptr->otp_len), 0);
+            if(fseek(fileHandle, (CALI_OTP_HEAD_SIZE + header_ptr->otp_len), 0))
+            {
+                SENSOR_LOGE("fseek wrong");
+                fclose(fileHandle);
+                break;
+            }
 
             rcount = fread(cmei_buf, sizeof(char), header_ptr->cmei_len, fileHandle);
             if (rcount != header_ptr->cmei_len) {
