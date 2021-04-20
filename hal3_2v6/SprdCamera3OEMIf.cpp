@@ -9871,8 +9871,10 @@ int SprdCamera3OEMIf::ION_Free(enum camera_mem_cb_type type,
 	Mutex::Autolock l(&mIonQueue.qLock);
 
 	HAL_LOGD("E. mem_type=%d sum=%d", type, num);
-	if (num == 0)
+	if (num == 0) {
+		delete memory;
 		return 0;
+	}
 
 	for (i = 0; i < num; i++) {
 		for (List<IonBufNode>::iterator itor = mIonQueue.BufList.begin();
@@ -9975,8 +9977,10 @@ int SprdCamera3OEMIf::Graphic_Malloc(enum camera_mem_cb_type type,
 	HAL_LOGD("mem_type=%d cached %d, (%d %d), num=%d, mTotalGpuSize=%d\n",
 		type, cached, width, height, num, mTotalGpuSize);
 
-	if (width == 0 || height == 0 || num == 0)
+	if (width == 0 || height == 0 || num == 0) {
+		delete memory;
 		return 0;
+	}
 
 	for (i = 0; i < num; i++) {
 		phy_addr[i] = 0;
