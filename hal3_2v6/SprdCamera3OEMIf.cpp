@@ -12443,6 +12443,8 @@ int32_t SprdCamera3OEMIf::getStreamOnWithZsl() { return mStreamOnWithZsl; }
 
 void SprdCamera3OEMIf::setFlushFlag(int32_t value) { mFlush = value; }
 
+int32_t SprdCamera3OEMIf::getFlushFlag() { return mFlush; }
+
 void SprdCamera3OEMIf::setVideoAFBCFlag(cmr_u32 value) {
     mVideoAFBCFlag = value;
 }

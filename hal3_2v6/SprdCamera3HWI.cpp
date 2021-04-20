@@ -1981,7 +1981,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     break;
                 }
             }
-            if (mFlush) {
+            if (mFlush || (mOEMIf->getFlushFlag() && sprddefInfo->sprd_eis_enabled)) {
                 HAL_LOGI("mFlush = %d", mFlush);
                 break;
             }

@@ -344,6 +344,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setJpegWithBigSizePreviewFlag(bool value);
     bool getJpegWithBigSizePreviewFlag();
     void setFlushFlag(int32_t value);
+    int32_t getFlushFlag();
     void setVideoAFBCFlag(cmr_u32 value);
     // add for 3dcapture, get zsl buffer's timestamp in zsl query
     uint64_t getZslBufferTimestamp();
