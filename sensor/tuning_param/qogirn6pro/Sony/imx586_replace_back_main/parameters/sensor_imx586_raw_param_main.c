@@ -177,6 +177,7 @@ static struct sensor_raw_info s_imx586_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{NULL, 0},
 	},
 	&s_imx586_trim_info,
 	&s_imx586_ioctrl,
@@ -198,6 +199,7 @@ static struct sensor_raw_info s_imx586_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
+		NULL,
 	},
 	{
 		{s_imx586_common_tool_ui_input, sizeof(s_imx586_common_tool_ui_input)},
@@ -212,6 +214,7 @@ static struct sensor_raw_info s_imx586_mipi_raw_info=
 		{s_imx586_video_0_tool_ui_input, sizeof(s_imx586_video_0_tool_ui_input)},
 		{s_imx586_video_1_tool_ui_input, sizeof(s_imx586_video_1_tool_ui_input)},
 		{s_imx586_video_2_tool_ui_input, sizeof(s_imx586_video_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
