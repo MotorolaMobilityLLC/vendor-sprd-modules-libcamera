@@ -1018,11 +1018,9 @@ thumb_cb:
 			CMR_LOGE("fail to put free buf fd 0x%x\n", new_buf.fd);
 	}
 
-	if (base_buf.fd > 0) {
-		iret = put_free_buffer(&cxt->buf_queue, &base_buf);
-		if (iret)
-			CMR_LOGE("fail to put free buf fd 0x%x\n", base_buf.fd);
-	}
+	iret = put_free_buffer(&cxt->buf_queue, &base_buf);
+	if (iret)
+		CMR_LOGE("fail to put free buf fd 0x%x\n", base_buf.fd);
 
 	CMR_LOGD("X, req_id %d %d\n", ips_req->request_id, snp_pm->request_id);
 	return ret;
