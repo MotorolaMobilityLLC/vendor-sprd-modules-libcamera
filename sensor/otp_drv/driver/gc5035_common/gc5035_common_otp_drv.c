@@ -106,7 +106,7 @@ static uint8_t gc5035_common_otp_enable(cmr_handle otp_drv_handle, uint8_t state
 		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0xfe, 0x02); 
 		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0x67, 0xc0); 
 		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0x59, 0x3f);
-		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0x55, 0x80);
+		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0x55, 0x84);
 		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0x65, 0x80);
 		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0x66, 0x03);
 		gc5035_common_i2c_write(otp_drv_handle, SENSOR_I2C_ADDR, 0xfe, 0x00);
