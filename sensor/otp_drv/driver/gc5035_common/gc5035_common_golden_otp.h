@@ -27,7 +27,7 @@
 static awb_target_packet_t gc5035_common_awb[AWB_MAX_LIGHT] = {
 	{
 		.R = 0x16e, .G = 0x2c1, .B = 0x1c4,
-		.rg_ratio= 0x54f, .bg_ratio= 0x489, .GrGb_ratio = 0x400,
+		.rg_ratio= 0x51a, .bg_ratio= 0x4c5, .GrGb_ratio = 0x400,
 	},
 };
 
