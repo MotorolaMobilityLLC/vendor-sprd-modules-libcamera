@@ -321,6 +321,7 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
     if ((in->face_attribute_on == 1) &&
         (fd_handle->is_face_attribute != in->face_attribute_on)) {
         if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             FAR_OPTION_V2 opt_v2;
             FAR_InitOption(&opt_v2);
             opt_v2.raceOn = 1;
@@ -335,6 +336,7 @@ static cmr_int fd_transfer_frame(cmr_handle class_handle,
                                                        threadNum, &opt_v2)) {
                 CMR_LOGE("FarCreateRecognizerHandle_V2() Error");
             }
+#endif
         }
     }
     fd_handle->is_face_attribute = in->face_attribute_on;
@@ -634,7 +636,9 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
     face_count = FdGetFaceCount(hDT);
     if (face_count <= 0) {
         if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             ret = FarResetFaceArray(hFAR_v2);
+#endif
         }
         return;
     }
@@ -678,8 +682,10 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
     if (sprd_fd_api == SPRD_API_MODE)
         face_count = MIN(face_count, 2);
     if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
         fattr_v2_vec.faceAtt = faceAtt;
         farface_v2_vec.faceInfo = faceInfo;
+#endif
     }
 
     for (fd_idx = 0; fd_idx < face_count; fd_idx++) {
@@ -731,6 +737,7 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
                     ret = FarRecognize(hFAR, (const FAR_IMAGE *)&img, &farface,
                                        &opt, &(fattr->attr));
                 } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
                     struct class_faceattr_v2 *fattr =
                         &(new_attr_array.face_v2[fd_idx]);
                     fattr->attr_v2.smile = 0;
@@ -813,6 +820,7 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
                     }
                     // CMR_LOGI("FarRecognize: err=%d, smile=%d", err,
                     // fattr->attr.smile);
+#endif
                 }
             }
         }
@@ -871,6 +879,7 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
             if (fattr != NULL)
                 fattr_shape = fattr->shape;
         } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             const struct class_faceattr_v2 *fattr = NULL;
             for (i = 0; i < i_faceattr_arr->count; i++)
                 if (i_faceattr_arr->face_v2[i].face_id ==
@@ -880,6 +889,7 @@ fd_smooth_face_rect(const struct img_face_area *i_face_area_prev,
                 }
             if (fattr != NULL)
                 fattr_shape = fattr->shape;
+#endif
         }
 
         // Calculate the new face rectangle according to the face shape
@@ -1063,6 +1073,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
                         face_ptr->blink_level = MAX(0, fattr->attr.eyeClose);
                     }
                 } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
                     const struct class_faceattr_v2 *fattr =
                         &(i_faceattr_arr->face_v2[i]);
                     if (fattr->face_id == info.hid) {
@@ -1122,6 +1133,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
                         }
                         break;
                     }
+#endif
                 }
             }
         }
@@ -1299,7 +1311,9 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
                    (class_handle->face_attributes_off !=
                     class_handle->frame_in.face_attribute_on)) {
             if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
                 FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
+#endif
             }
         }
         class_handle->face_attributes_off =
@@ -1347,7 +1361,9 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         if (sprd_fd_api == SPRD_API_MODE)
             FarDeleteRecognizerHandle(&(class_handle->hFAR));
         else if (sprd_fd_api == SPRD_API_MODE_V2)
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
+#endif
         FdDeleteDetector(&(class_handle->hDT));
         break;
 
