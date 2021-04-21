@@ -270,12 +270,7 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 		tmp_param.exp_line = (cmr_u32)(1.0 * tmp_param.exp_line * cxt->binning_factor_cap / cxt->binning_factor_prev + 0.5);
 	}
 	ISP_LOGV("exp_line %d, binning_factor %d / %d, zsl_flag %d", tmp_param.exp_line, cxt->binning_factor_cap, cxt->binning_factor_prev,cxt->zsl_flag);
-	if ((cxt->zsl_flag == 0) && (cxt->is_snapshot) && (cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP])) {
-		tmp_param.exp_time = cxt->manual_exp_time;
-		tmp_param.exp_line = (cmr_u32)(1.0*tmp_param.exp_time /cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
-		tmp_param.gain = cxt->cur_result.nzl_cap_gain;
-		ISP_LOGE("LONG_EXP:exp_line %d,exp_gain %d, zsl_flag %d, long_exp_flag %d",tmp_param.exp_line, tmp_param.gain, cxt->zsl_flag, cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP]);
-	}
+
 
 	if (0 != write_param->exp_line) {
 		struct ae_exposure exp;
@@ -1104,6 +1099,12 @@ static cmr_s32 ae_update_result_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_sen
 		ISP_LOGE("cxt invalid, cxt: %p\n", cxt);
 		ret = ISP_ERROR;
 		return ret;
+	}
+	if ((cxt->zsl_flag == 0) && (cxt->is_snapshot) && (cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP])) {
+		exp_data->lib_data.exp_time = cxt->manual_exp_time;
+		exp_data->lib_data.exp_line = (cmr_u32)(1.0 * exp_data->lib_data.exp_time /cxt->cur_status.adv_param.cur_ev_setting.line_time + 0.5);
+		exp_data->lib_data.gain = cxt->cur_result.nzl_cap_gain;
+		ISP_LOGD("LONG_EXP:exp_line %d,exp_gain %d, zsl_flag %d, long_exp_flag %d",exp_data->lib_data.exp_line, exp_data->lib_data.gain, cxt->zsl_flag, cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP]);
 	}
 
 	ae_update_exp_data(cxt, exp_data, &write_item, &actual_item, is_force);
@@ -4562,6 +4563,11 @@ static cmr_s32 ae_set_video_start(struct ae_ctrl_cxt *cxt, cmr_handle * param)
 			cxt->cur_status.adv_param.cur_ev_setting.ae_gain = cxt->sync_cur_result.ev_setting.ae_gain;
 			cxt->cur_status.adv_param.is_snapshot =  work_info->is_snapshot;//ok
 			ISP_LOGV("table_idx:%d",cxt->cur_status.adv_param.cur_ev_setting.ae_idx);
+			if (cxt->ae_cb_result[AE_CB_RESULT_LONG_EXP]){
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->manual_exp_time;
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->cur_result.nzl_cap_gain;
+				ISP_LOGD("LONGEXP: manual_exp_time %"PRIu64", nzl_cap_gain %d\n",cxt->manual_exp_time,cxt->cur_result.nzl_cap_gain);
+			}
 		}
 	}
 
@@ -7654,84 +7660,84 @@ static cmr_s32 ae_abtain_2and_flag(bool flag1,bool flag2){
 
 static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 {
-		cmr_s32 rtn = AE_SUCCESS;
-		cmr_u32 j;
-		cmr_u32 temp_index = 20;
-		ISP_LOGD("adv:mode:%d gain:%d exp %d",cxt->cur_status.adv_param.mode_param.mode,cxt->cur_status.adv_param.mode_param.value.exp_gain[1],cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
-		ISP_LOGD("ae_q_pars[0]mode: %d cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.ae_mode,cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
-		for(j = 0; j <10 ; j++){
-			if (2 == cxt->ae_q_pars[j].ae_qout_flag){//which not out
-				temp_index = j;
-				break;
+	cmr_s32 rtn = AE_SUCCESS;
+	cmr_u32 j;
+	cmr_u32 temp_index = 20;
+	ISP_LOGD("adv:mode:%d gain:%d exp %d",cxt->cur_status.adv_param.mode_param.mode,cxt->cur_status.adv_param.mode_param.value.exp_gain[1],cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
+	ISP_LOGD("ae_q_pars[0]mode: %d cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.ae_mode,cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+	for(j = 0; j <10 ; j++) {
+		if (2 == cxt->ae_q_pars[j].ae_qout_flag) {//which not out
+			temp_index = j;
+			break;
+		}
+
+	}
+	if (20 != temp_index) {
+		if (0 == cxt->ae_q_pars[temp_index].ae_up_params.ae_mode){
+			if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.exp_time) && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) {
+
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
+				ae_set_force_pause(cxt, 0, 5);
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = (cmr_u64)cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
+			} else if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) && cxt->ae_q_pars[temp_index].ae_up_params.exp_time) {
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
+				ae_set_force_pause(cxt, 0, 4);
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
+			} else if (cxt->ae_q_pars[temp_index].ae_up_params.exp_time && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) {
+				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
+				ae_set_force_pause(cxt, 1, 3);
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
+				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = (cmr_u64)cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
+
 			}
 
+
+		}else if (CAMERA_MODE_MANUAL != cxt->app_mode) {
+			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = 0;
+			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = 0;
+			cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
+			cxt->cur_status.adv_param.app_force_lock = AE_STATE_NORMAL;
+			cxt->force_lock_ae = 0;
+			ISP_LOGD("check3:auto");
 		}
-		if (20 != temp_index){
-			if (0 == cxt->ae_q_pars[temp_index].ae_up_params.ae_mode){
-				if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.exp_time) && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity){
+		cxt->ae_q_pars[temp_index].ae_qout_flag = 1;//thist time out
+		ISP_LOGD("check2");
+	}
+		/* if effect?*/
+	ISP_LOGD("check1:cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
 
-					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
-					ae_set_force_pause(cxt, 0, 5);
-					cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
-				}else if ((0 == cxt->ae_q_pars[temp_index].ae_up_params.sensitivity) && cxt->ae_q_pars[temp_index].ae_up_params.exp_time){
-					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_SHUTTER_PRI;
-					ae_set_force_pause(cxt, 0, 4);
-					cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
-				}else if(cxt->ae_q_pars[temp_index].ae_up_params.exp_time && cxt->ae_q_pars[temp_index].ae_up_params.sensitivity){
-					cxt->cur_status.adv_param.mode_param.mode = AE_MODE_MANUAL_EXP_GAIN;
-					ae_set_force_pause(cxt, 1, 3);
-					cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = cxt->ae_q_pars[temp_index].ae_up_params.exp_time;
-					cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = cxt->ae_q_pars[temp_index].ae_up_params.sensitivity * 128 / 50;
+	if (1 == cxt->ae_q_pars[0].ae_qout_flag) {
+		bool fix_exp_gain = (cxt->ae_q_pars[0].ae_up_params.exp_time && cxt->ae_q_pars[0].ae_up_params.sensitivity);
+		bool exp_first = ((0 == cxt->ae_q_pars[0].ae_up_params.sensitivity) && cxt->ae_q_pars[0].ae_up_params.exp_time);
+		bool gain_first = ((0 == cxt->ae_q_pars[0].ae_up_params.exp_time) && cxt->ae_q_pars[0].ae_up_params.sensitivity);
+		bool exp_equa = (cxt->ae_q_pars[0].ae_up_params.exp_time == cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+		bool gain_equa = ((cmr_u32)(cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50) == cxt->cur_status.adv_param.cur_ev_setting.ae_gain);
+		bool all_euqa = ae_abtain_2and_flag(exp_equa,gain_equa);
+		bool fix_and_allequa = ae_abtain_2and_flag(fix_exp_gain,all_euqa);
+		//bool expfir_expequa = ae_abtain_2and_flag(exp_first,exp_equa);
+		//bool gainfir_gainequa = ae_abtain_2and_flag(gain_first,gain_equa);
+		//bool man_mode_effect = ae_abtain_or_flag(fix_and_allequa,expfir_expequa,gainfir_gainequa);
 
+		if (((0 == cxt->ae_q_pars[0].ae_up_params.ae_mode) && (fix_and_allequa||exp_first||gain_first))||(1 == cxt->ae_q_pars[0].ae_up_params.ae_mode)){
+				cxt->frame_number = cxt->ae_q_pars[0].ae_up_params.frame_number;
+				cmr_u32 i;
+				for(i = 0; i <9 ; i++){
+					cxt->ae_q_pars[i].ae_qout_flag =cxt->ae_q_pars[i+1].ae_qout_flag;
+					cxt->ae_q_pars[i].ae_q_flag = cxt->ae_q_pars[i+1].ae_q_flag ;
+					cxt->ae_q_pars[i].ae_up_params.ae_mode = cxt->ae_q_pars[i+1].ae_up_params.ae_mode;
+					cxt->ae_q_pars[i].ae_up_params.exp_time = cxt->ae_q_pars[i+1].ae_up_params.exp_time;
+					cxt->ae_q_pars[i].ae_up_params.sensitivity = cxt->ae_q_pars[i+1].ae_up_params.sensitivity;
+					cxt->ae_q_pars[i].ae_up_params.frame_number = cxt->ae_q_pars[i+1].ae_up_params.frame_number;
+					ISP_LOGD("i %d ae_q_flag %d ae_mode %d exp_time %d sensitivity %d frame_number%d",i,cxt->ae_q_pars[i].ae_q_flag,cxt->ae_q_pars[i].ae_up_params.ae_mode,cxt->ae_q_pars[i].ae_up_params.exp_time,cxt->ae_q_pars[i].ae_up_params.sensitivity,cxt->ae_q_pars[i].ae_up_params.frame_number);
 				}
-
-
-			}else if (CAMERA_MODE_MANUAL != cxt->app_mode){
-				cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO;
-				cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = 0;
-				cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = 0;
-				cxt->cur_status.adv_param.lock = AE_STATE_NORMAL;
-				cxt->cur_status.adv_param.app_force_lock = AE_STATE_NORMAL;
-				cxt->force_lock_ae = 0;
-				ISP_LOGD("check3:auto");
-			}
-			cxt->ae_q_pars[temp_index].ae_qout_flag = 1;//thist time out
-			ISP_LOGD("check2");
-		}
-			/* if effect?*/
-			ISP_LOGD("check1:cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
-
-		if (1 == cxt->ae_q_pars[0].ae_qout_flag){
-			bool fix_exp_gain = (cxt->ae_q_pars[0].ae_up_params.exp_time && cxt->ae_q_pars[0].ae_up_params.sensitivity);
-			bool exp_first = ((0 == cxt->ae_q_pars[0].ae_up_params.sensitivity) && cxt->ae_q_pars[0].ae_up_params.exp_time);
-			bool gain_first = ((0 == cxt->ae_q_pars[0].ae_up_params.exp_time) && cxt->ae_q_pars[0].ae_up_params.sensitivity);
-			bool exp_equa = (cxt->ae_q_pars[0].ae_up_params.exp_time == cxt->cur_status.adv_param.cur_ev_setting.exp_time);
-			bool gain_equa = ((cmr_u32)(cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50) == cxt->cur_status.adv_param.cur_ev_setting.ae_gain);
-			bool all_euqa = ae_abtain_2and_flag(exp_equa,gain_equa);
-			bool fix_and_allequa = ae_abtain_2and_flag(fix_exp_gain,all_euqa);
-			//bool expfir_expequa = ae_abtain_2and_flag(exp_first,exp_equa);
-			//bool gainfir_gainequa = ae_abtain_2and_flag(gain_first,gain_equa);
-			//bool man_mode_effect = ae_abtain_or_flag(fix_and_allequa,expfir_expequa,gainfir_gainequa);
-
-			if (((0 == cxt->ae_q_pars[0].ae_up_params.ae_mode) && (fix_and_allequa||exp_first||gain_first))||(1 == cxt->ae_q_pars[0].ae_up_params.ae_mode)){
-					cxt->frame_number = cxt->ae_q_pars[0].ae_up_params.frame_number;
-					cmr_u32 i;
-					for(i = 0; i <9 ; i++){
-						cxt->ae_q_pars[i].ae_qout_flag =cxt->ae_q_pars[i+1].ae_qout_flag;
-						cxt->ae_q_pars[i].ae_q_flag = cxt->ae_q_pars[i+1].ae_q_flag ;
-						cxt->ae_q_pars[i].ae_up_params.ae_mode = cxt->ae_q_pars[i+1].ae_up_params.ae_mode;
-						cxt->ae_q_pars[i].ae_up_params.exp_time = cxt->ae_q_pars[i+1].ae_up_params.exp_time;
-						cxt->ae_q_pars[i].ae_up_params.sensitivity = cxt->ae_q_pars[i+1].ae_up_params.sensitivity;
-						cxt->ae_q_pars[i].ae_up_params.frame_number = cxt->ae_q_pars[i+1].ae_up_params.frame_number;
-						ISP_LOGD("i %d ae_q_flag %d ae_mode %d exp_time %d sensitivity %d frame_number%d",i,cxt->ae_q_pars[i].ae_q_flag,cxt->ae_q_pars[i].ae_up_params.ae_mode,cxt->ae_q_pars[i].ae_up_params.exp_time,cxt->ae_q_pars[i].ae_up_params.sensitivity,cxt->ae_q_pars[i].ae_up_params.frame_number);
-					}
-					cxt->ae_q_pars[9].ae_q_flag = 0;
-			}else{
-					cxt->frame_number = -1;
-			}
+				cxt->ae_q_pars[9].ae_q_flag = 0;
 		}else{
-			cxt->frame_number = -1;
+				cxt->frame_number = -1;
 		}
+	}else{
+		cxt->frame_number = -1;
+	}
 
 
 	return rtn;
