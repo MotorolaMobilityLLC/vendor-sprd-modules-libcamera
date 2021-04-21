@@ -66,7 +66,7 @@ static void gc5035_arb_drv_write_gain(cmr_handle handle, struct sensor_aec_i2c_t
 		{  599,  9 },
 		{  717, 10 },
 		{  845, 11 },
-		{ 998,  12 },
+		{  998, 12 },
 		{ 1203, 13 },
 		{ 1434, 14 },
 		{ 1710, 15 },
@@ -448,7 +448,7 @@ static cmr_int gc5035_arb_drv_get_fps_info(cmr_handle handle, cmr_u32 *param)
 }
 
 
-static cmr_u8 gc5035_arb_read_otp(cmr_handle handle, cmr_u8 addr)
+static cmr_u8 gc5035_arb_read_otp(cmr_handle handle, cmr_u16 addr)
 {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt * sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -676,10 +676,18 @@ static void gc5035_arb_gcore_load_data(cmr_handle handle)
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xd3, 0x87);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x36, 0x00);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x33, 0x00);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x03);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x01, 0xe7);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf7, 0x01);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfc, 0x8f);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfc, 0x8f);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfc, 0x8e);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xee, 0x30);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x87, 0x18);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x01);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x8c, 0x90);
+	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x00);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfa, 0x10);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xf5, 0xe9);
 	hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfe, 0x02);
