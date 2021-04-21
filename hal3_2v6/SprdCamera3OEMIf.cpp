@@ -7936,7 +7936,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         SPRD_DEF_Tag *sprddefInfo;
         sprddefInfo = mSetting->getSPRDDEFTagPTR();
         mSetting->androidAfModeToDrvAfMode(controlInfo.af_mode, &AfMode);
-        HAL_LOGD("ANDROID_CONTROL_AF_MODE");
+        HAL_LOGD("ANDROID_CONTROL_AF_MODE, AfMode %d",AfMode);
 
         if ((mMultiCameraMode == MODE_3D_CALIBRATION ||
             mMultiCameraMode == MODE_BOKEH_CALI_GOLDEN)&&
@@ -7953,11 +7953,6 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             if (sprddefInfo->sprd_ot_switch == 1 && AfMode == CAMERA_FOCUS_MODE_AUTO) {
                 SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_STATUS_NOTIFY_TRACKING, af_status);
                 HAL_LOGV("clean_af_status = %d", af_status);
-            }
-            if (mRecordingMode &&
-                CAMERA_FOCUS_MODE_CAF ==
-                    AfMode) { /*dv mode but recording not start*/
-                AfMode = CAMERA_FOCUS_MODE_CAF_VIDEO;
             }
             SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_AF_MODE, AfMode);
         }
