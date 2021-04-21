@@ -132,6 +132,7 @@ SprdCamera3SinglePortrait::SprdCamera3SinglePortrait() {
     memset(&fb_cap,0,sizeof(fb_beauty_param_t));
     mFaceBeautyFlag = false;
 #endif
+    mMirror = 0;
     mBlurMode = 0;
     mFirstSprdFB = 0;
     bzero(&beauty_image, sizeof(beauty_image));
