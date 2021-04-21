@@ -164,6 +164,7 @@ SprdCamera3SinglePortrait::SprdCamera3SinglePortrait() {
     m_nPhyCameras = 0;
     mSnapshotResultReturn = false;
     HAL_LOGI("X");
+    mMirror=0;
 }
 
 /*===========================================================================
