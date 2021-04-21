@@ -745,7 +745,9 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
     face_count = FdGetFaceCount(hDT);
     if (face_count <= 0) {
         if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             ret = FarResetFaceArray(hFAR_v2);
+#endif
         }
         return;
     }
@@ -792,8 +794,10 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
     if (sprd_fd_api == SPRD_API_MODE)
         face_count = MIN(face_count, 2);
     if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
         fattr_v2_vec.faceAtt = faceAtt;
         farface_v2_vec.faceInfo = faceInfo;
+#endif
     }
 
     for (fd_idx = 0; fd_idx < face_count; fd_idx++) {
@@ -845,6 +849,7 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
                     ret = FarRecognize(hFAR, (const FAR_IMAGE *)&img, &farface,
                                        &opt, &(fattr->attr));
                 } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
                     struct class_faceattr_v2 *fattr =
                         &(new_attr_array.face_v2[fd_idx]);
                     fattr->attr_v2.smile = 0;
@@ -925,6 +930,7 @@ static void fd_recognize_face_attribute(FD_HANDLE hDT,
                                 new_attr_array.face_v2[fd_idx].attr_v2.faceIdx);
                         }
                     }
+#endif
                 }
             }
         }
@@ -1171,6 +1177,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
                         face_ptr->blink_level = MAX(0, fattr->attr.eyeClose);
                     }
                 } else if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
                     const struct class_faceattr_v2 *fattr =
                         &(i_faceattr_arr->face_v2[i]);
                     if (fattr->face_id == info.hid) {
@@ -1232,6 +1239,7 @@ static void fd_get_fd_results(FD_HANDLE hDT,
                         }
                         break;
                     }
+#endif
                 }
             }
         }
@@ -1669,9 +1677,11 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             FarDeleteRecognizerHandle(&(class_handle->hFAR));
         else if (sprd_fd_api == SPRD_API_MODE_V2 &&
                  class_handle->is_face_attribute_init == 1) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
             class_handle->is_face_attribute_init = 0;
             CMR_LOGD("FarRecognizerHandle_V2: Delete");
+#endif
         }
         FdDeleteDetector(&(class_handle->hDT));
         break;
@@ -1689,6 +1699,7 @@ void fd_face_attribute_detect(struct class_fd *class_handle) {
             class_handle->frame_in.smile_capture_on == 1) &&
             (class_handle->is_face_attribute_init == 0)) {
         if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             FAR_OPTION_V2 opt_v2;
             FAR_InitOption(&opt_v2);
             opt_v2.trackInterval = 16;
@@ -1704,11 +1715,13 @@ void fd_face_attribute_detect(struct class_fd *class_handle) {
                 class_handle->is_face_attribute_init = 1;
                 CMR_LOGD("FarRecognizerHandle_V2: Create");
             }
+#endif
         }
     }
     updateFlag = (class_handle->is_face_attribute != class_handle->frame_in.face_attribute_on)
         ||  (class_handle->is_smile_capture != class_handle->frame_in.smile_capture_on);
     if(updateFlag && sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
         CMR_LOGD("FarRecognizerHandle_V2: Update race %d, smile %d",
             class_handle->frame_in.face_attribute_on, class_handle->frame_in.smile_capture_on);
         FAR_OPTION_V2 opt_v2;
@@ -1727,6 +1740,7 @@ void fd_face_attribute_detect(struct class_fd *class_handle) {
         FarResetFaceArray(class_handle->hFAR_v2);
         class_handle->is_face_attribute = class_handle->frame_in.face_attribute_on;
         class_handle->is_smile_capture = class_handle->frame_in.smile_capture_on;
+#endif
     }
 
     /* recognize face attribute (smile detection) */
@@ -1741,8 +1755,10 @@ void fd_face_attribute_detect(struct class_fd *class_handle) {
         class_handle->frame_in.smile_capture_on == 0) &&
         (class_handle->is_face_attribute_init == 1)) {
         if (sprd_fd_api == SPRD_API_MODE_V2) {
+#ifdef CONFIG_SPRD_FD_LIB_VERSION_2
             FarDeleteRecognizerHandle_V2(&(class_handle->hFAR_v2));
             CMR_LOGD("FarRecognizerHandle_V2: Delete");
+#endif
         }
         class_handle->is_face_attribute_init = 0;
     }
