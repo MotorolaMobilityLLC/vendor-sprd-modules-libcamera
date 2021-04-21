@@ -2310,6 +2310,24 @@ static cmr_u32 convert_scene_flag_for_nr(cmr_u32 scene_flag)
 	case ISP_INTERVAL:
 		convert_scene_flag = ISP_SCENEMODE_INTERVAL;
 		break;
+	case ISP_FACEBOOK:
+		convert_scene_flag = ISP_SCENEMODE_FACEBOOK;
+		break;
+	case ISP_MESSENGER:
+		convert_scene_flag = ISP_SCENEMODE_MESSENGER;
+		break;
+	case ISP_QQ:
+		convert_scene_flag = ISP_SCENEMODE_QQ;
+		break;
+	case ISP_SNAPCHAT:
+		convert_scene_flag = ISP_SCENEMODE_SNAPCHAT;
+		break;
+	case ISP_WHATAPPS:
+		convert_scene_flag = ISP_SCENEMODE_WHATAPPS;
+		break;
+	case ISP_WECHAT:
+		convert_scene_flag = ISP_SCENEMODE_WECHAT;
+		break;
 
 	default:
 		convert_scene_flag = ISP_SCENEMODE_AUTO;

@@ -10927,12 +10927,34 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             param_ptr->cmd_value = ISP_FILTER;
         } else if (setting_param.cmd_type_value == CAMERA_MODE_TIMELAPSE) {
             param_ptr->cmd_value = ISP_DELAYVIDEO;
-        } else if (setting_param.cmd_type_value == -1) {
-            param_ptr->cmd_value = ISP_THIRDPARTY;
         } else if (setting_param.cmd_type_value == CAMERA_MODE_INTERVAL) {
             param_ptr->cmd_value = ISP_INTERVAL;
         } else if(setting_param.cmd_type_value == CAMERA_MODE_REFOCUS) {
             param_ptr->cmd_value = ISP_BOKEHMODE;
+        } else if (setting_param.cmd_type_value == -1) {
+            switch (cxt->app_id) {
+            case TOP_APP_FACEBOOK:
+                param_ptr->cmd_value = ISP_FACEBOOK;
+                break;
+            case TOP_APP_MESSENGER:
+                param_ptr->cmd_value = ISP_MESSENGER;
+                break;
+            case TOP_APP_QQ:
+                param_ptr->cmd_value = ISP_QQ;
+                break;
+            case TOP_APP_SNAPCHAT:
+                param_ptr->cmd_value = ISP_SNAPCHAT;
+                break;
+            case TOP_APP_WHATSAPP:
+                param_ptr->cmd_value = ISP_WHATAPPS;
+                break;
+            case TOP_APP_WECHAT:
+                param_ptr->cmd_value = ISP_WECHAT;
+                break;
+            default:
+                param_ptr->cmd_value = ISP_THIRDPARTY;
+                break;
+           }
         }
 
         set_exif_flag = 1;
