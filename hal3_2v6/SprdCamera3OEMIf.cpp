@@ -268,7 +268,7 @@ static nsecs_t s_start_timestamp = 0;
 static nsecs_t s_end_timestamp = 0;
 static int s_use_time = 0;
 static nsecs_t cam_init_begin_time = 0;
-static top_app_id whitelist[] = {TOP_APP_WECHAT, TOP_APP_QQ};
+static top_app_id whitelist[] = {TOP_APP_WECHAT, TOP_APP_QQ, TOP_APP_FACEBOOK, TOP_APP_INSTAGRAM, TOP_APP_MESSENGER, TOP_APP_SNAPCHAT, TOP_APP_WHATSAPP, TOP_APP_QQINT};
 bool gIsApctCamInitTimeShow = false;
 bool gIsApctRead = false;
 struct mlog_infotag mlog_info[CAMERA_ID_COUNT]; /* total as physic camera id */
@@ -3516,10 +3516,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     }
 
     mTopAppId = sprddefInfo->top_app_id;
+    SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SET_TOP_APP_ID,
+                 (cmr_uint)sprddefInfo->top_app_id);
+    HAL_LOGI("mTopAppId is %d, mWhitelists is %d", mTopAppId, mWhitelists);
     if (mTopAppId & mWhitelists) {
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_3RD_3DNR_ENABLED, 1);
-    }
-    if (mTopAppId == TOP_APP_WECHAT) {
         faceDectect(1);
         if (mPreviewWidth == 640 && mPreviewHeight == 480 &&
             mCallbackWidth == 640 && mCallbackHeight == 480) {
@@ -12371,6 +12372,9 @@ void SprdCamera3OEMIf::Set_cnr_mode() {
         (mSprdAppmodeId != -1) && (false == mRecordingMode)))){
         mCNRMode = 0;
     } else {
+        mCNRMode = 1;
+    }
+    if (mTopAppId & mWhitelists) {
         mCNRMode = 1;
     }
 

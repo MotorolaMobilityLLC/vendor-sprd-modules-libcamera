@@ -294,6 +294,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool isFaceBeautyOn(SPRD_DEF_Tag *sprddefInfo);
     bool mManualExposureEnabled;
     char *mFrontFlash;
+    int mWhitelists;
 
     enum camera_flush_mem_type_e {
         CAMERA_FLUSH_RAW_HEAP,
@@ -1056,7 +1057,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
 #endif
     bool mNonZslFlag;
     uint32_t mSkipNum;
-    int mWhitelists;
     bool EisErr;
     uint32_t mNeed_share_buf;
 };

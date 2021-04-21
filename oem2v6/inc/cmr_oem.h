@@ -511,6 +511,7 @@ struct camera_context {
     cmr_uint flash_mode;
     cmr_uint need_sr;
     cmr_uint long_expo_cap;
+    enum top_app_id app_id;
 };
 
 struct prev_ai_scene_info {

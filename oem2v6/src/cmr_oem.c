@@ -10941,7 +10941,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         if (ISP_AE_MODE_MAX == isp_param) {
             set_isp_flag = 0;
         }
-        CMR_LOGD("ae scene mode %d", param_ptr->cmd_value);
+        CMR_LOGD("ae scene mode %ld", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EXPOSURE_TIME:
         CMR_LOGD("exposure time %" PRIu64 "", param_ptr->cmd_value);
@@ -14955,10 +14955,17 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
         }
         break;
     }
+
     case CAMERA_PARAM_3RD_3DNR_ENABLED: {
         cxt->_3rd_3dnr_flag = param;
         break;
     }
+
+    case CAMERA_PARAM_SET_TOP_APP_ID: {
+        cxt->app_id = (enum top_app_id)param;
+        break;
+    }
+
     default:
         ret = camera_set_setting(oem_handle, id, param);
         break;
