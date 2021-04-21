@@ -1468,6 +1468,15 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case AF_CB_CMD_SET_END_NOTICE:
+	{
+		struct isp_af_notice afctrl_param = *(struct isp_af_notice *)param0;
+		ISP_LOGV("focus_type: %d", afctrl_param.focus_type);
+		if (afctrl_param.focus_type == AF_FOCUS_CAF) {
+			cmr_u32 fast_fps = 0;
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_START, &fast_fps, NULL);
+			ISP_LOGV("make AE end to adjust fps");
+		}
+
 		if (ISP_ZERO == cxt->commn_cxt.isp_callback_bypass) {
 			struct isp_af_notice *isp_af = (struct isp_af_notice *)param0;
 
@@ -1478,6 +1487,7 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 				isp_af, sizeof(struct isp_af_notice));
 		}
 		break;
+	}
 	case AF_CB_CMD_SET_MOTOR_POS:
 		val = *(cmr_u16 *)param0;
 		pos = (cmr_u32)val;
@@ -1511,10 +1521,19 @@ static cmr_int ispalg_af_set_cb(cmr_handle isp_alg_handle, cmr_int type, void *p
 		}
 		break;
 	case AF_CB_CMD_SET_START_NOTICE:
+	{
+		struct isp_af_notice afctrl_param = *(struct isp_af_notice *)param0;
+		ISP_LOGV("focus_type: %d", afctrl_param.focus_type);
+		if (afctrl_param.focus_type == AF_FOCUS_CAF) {
+			cmr_u32 fast_fps = 1;
+			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_AF_START, &fast_fps, NULL);
+			ISP_LOGV("make AE start to adjust fps");
+		}
 		ret = cxt->commn_cxt.callback(cxt->commn_cxt.caller_id,
 				ISP_CALLBACK_EVT | ISP_AF_NOTICE_CALLBACK,
 				param0, sizeof(struct isp_af_notice));
 		break;
+	}
 	case ISP_AF_AE_AWB_LOCK:
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_PAUSE, NULL, param1);
