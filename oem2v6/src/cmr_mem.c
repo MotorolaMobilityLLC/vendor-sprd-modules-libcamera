@@ -1264,7 +1264,7 @@ int check_free_buffer(struct cmr_queue *q, uint32_t size, uint32_t *cnt)
 	pthread_mutex_lock((pthread_mutex_t *)q->lock);
 
 	list_for_each(node, &q->header) {
-		cur = node_to_item(node, struct cmr_buf , list);
+		cur = node_to_item(node, struct cmr_buf, list);
 		if (!cur->used && (cur->mem_size >= size) && (cur->mem_size < size_up)) {
 			CMR_LOGD("free buf fd=0x%x, gpuhdl %p\n", cur->fd, cur->gpu_handle);
 			*cnt += 1;
@@ -1489,8 +1489,8 @@ int inc_gbuffer_q(struct cmr_queue *q, struct memory_param *mops,
 		*cnt = 0;
 		goto exit;
 	}
-	w = width;
-	h = height;
+	w = (cmr_uint)width;
+	h = (cmr_uint)height;
 	loop = MIN(*cnt, (q->max - q->cnt));
 	for (i = 0; i < loop; i++) {
 		new_buf = (struct cmr_buf *)malloc(sizeof(struct cmr_buf));
@@ -1499,8 +1499,8 @@ int inc_gbuffer_q(struct cmr_queue *q, struct memory_param *mops,
 			continue;
 		}
 		num = 1;
-		size = w * h * 3 / 2;
-		ret = mops->gpu_alloc_mem(CAMERA_BUF_CACHE, mops->oem_handle,
+		size = width * height * 3 / 2;
+		ret = (int)mops->gpu_alloc_mem(CAMERA_BUF_CACHE, mops->oem_handle,
 					&size, &num, &phy_addr, &vir_addr, &fd,
 					&gpu_handle, &w, &h);
 		if (ret || num < 1) {
@@ -1563,7 +1563,7 @@ int dec_buffer_q(struct cmr_queue *q, struct memory_param *mops, uint32_t size, 
 	for (i = 0; i < loop; i++) {
 		found = 0;
 		list_for_each(node, &q->header) {
-			cur = node_to_item(node, struct cmr_buf , list);
+			cur = node_to_item(node, struct cmr_buf, list);
 			if (!cur->used && ((size == 0) || (cur->mem_size <= size) )) {
 				found = 1;
 				break;

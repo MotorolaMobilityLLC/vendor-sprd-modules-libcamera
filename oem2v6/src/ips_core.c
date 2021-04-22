@@ -930,7 +930,7 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	s_w = frame->rect.width;
 	s_h = frame->rect.height;
 	offset = s_w * s_h;
-	for (i = 0; i < req->frame_total; i++) {
+	for (i = 0; i < (int)req->frame_total; i++) {
 		struct img_frm buf;
 		memset(&buf, 0, sizeof(struct img_frm));
 		buf.buf_size = s_w * s_h * 3 / 2;
@@ -943,8 +943,8 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 		buf.size.height = s_h;
 		buf.rect.width = s_w;
 		buf.rect.height = s_h;
-		buf.addr_vir.addr_u = buf.addr_vir.addr_y + offset;
-		buf.addr_phy.addr_u = offset;
+		buf.addr_vir.addr_u = buf.addr_vir.addr_y + (cmr_uint)offset;
+		buf.addr_phy.addr_u = (cmr_uint)offset;
 		buf.fmt = dst->fmt;
 		buf.data_end = dst->data_end;
 		req->frm_middle[i] = buf;
