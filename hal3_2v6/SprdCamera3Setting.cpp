@@ -5166,7 +5166,7 @@ int SprdCamera3Setting::updateWorkParameters(
         pushAndroidParaTag(ANDROID_JPEG_ORIENTATION);
     }
 
-    if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES)) {
+    if (frame_settings.exists(ANDROID_JPEG_GPS_COORDINATES) && is_capture) {
         size_t num_elements =
             frame_settings.find(ANDROID_JPEG_GPS_COORDINATES).count;
         for (size_t i = 0; i < num_elements; i++) {
