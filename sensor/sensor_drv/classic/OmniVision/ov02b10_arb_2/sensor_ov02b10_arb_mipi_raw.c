@@ -485,12 +485,12 @@ static cmr_int ov02b10_arb_drv_identify(cmr_handle handle, cmr_uint param)
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0xfd, 0x00);
     pid_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, OV02B10_ARB_PID_ADDR);
 
-    if ((OV02B10_ARB_PID_VALUE == pid_value) && (0x5453 == mid_value)) {
+    if (OV02B10_ARB_PID_VALUE == pid_value) {
         ver_value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, OV02B10_ARB_VER_ADDR);
         mid_value = ov02b10_arb_read_module_id(sns_drv_cxt->hw_handle);
         SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x, mid_value = %x", pid_value, ver_value, mid_value);
 
-        if (OV02B10_ARB_VER_VALUE == ver_value) {
+        if ((OV02B10_ARB_VER_VALUE == ver_value) && (0x5453 == mid_value)) {
             SENSOR_LOGI("this is ov02b10_arb_tsp sensor");
             sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACKAUX_CAM_NAME, "2_ov02b10_arb_2");
             ret_value = SENSOR_SUCCESS;
