@@ -3919,7 +3919,7 @@ static cmr_int sensor_drv_create_multicam_snspid(cmr_u8 dual_flag) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    cmr_u8 i = 0, j =0, k=0;
+    cmr_int i = 0, j =0, k=0;
 
     SENSOR_LOGI("E");
 
@@ -4013,7 +4013,7 @@ static cmr_int sensor_drv_create_module_name(cmr_u8 dual_flag) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    cmr_u8 i = 0, j = 0;
+    cmr_int i = 0, j = 0;
 
     SENSOR_LOGI("E");
 
@@ -4118,7 +4118,7 @@ static cmr_int sensor_drv_create_cmei(cmr_u8 dual_flag) {
     struct camera_device_manager *devPtr = &camera_dev_manger;
     struct phySensorInfo *phyPtr = phy_sensor_info_list;
     struct logicalSensorInfo *logicalPtr = logical_sensor_info_list;
-    cmr_u8 i = 0;
+    cmr_int i = 0;
 
     SENSOR_LOGI("E");
 
