@@ -19,7 +19,8 @@
 #include "sprd_hdr_adapter.h"
 #include "mfnr_adapt_interface.h"
 #include "sprd_yuv_denoise_adapter.h"
-#include "sprd_dre_adapter.h"
+//#include "sprd_dre_adapter.h"
+#include "sprd_dre_adapter_pro.h"
 #include "sprd_facebeauty_adapter.h"
 #include "imagefilter_interface.h"
 
@@ -580,7 +581,7 @@ int swa_cnr_close(void * ipmpro_hanlde,
 
 
 
-#ifdef CONFIG_CAMERA_DRE
+#ifdef CONFIG_CAMERA_DRE_PRO
 
 struct dre_context_t {
 	void * dre_handle;
@@ -618,7 +619,7 @@ int swa_dre_process(void * ipmpro_hanlde,
 	frm_param = (struct swa_frame_param *)param;
 	frm_in = &in->frms[0];
 
-	ret = sprd_dre_adpt_init(&cxt->dre_handle,
+	ret = sprd_dre_pro_adpt_init(&cxt->dre_handle,
 				frm_in->size.width, frm_in->size.height, NULL);
 	if (ret) {
 		SWA_LOGE("fail to init dre ret %d\n", ret);
@@ -631,14 +632,14 @@ int swa_dre_process(void * ipmpro_hanlde,
 	image_in.width = frm_in->size.width;
 	image_in.height = frm_in->size.height;
 	image_in.format = SPRD_CAMALG_IMG_NV21;
-	ret = sprd_dre_adpt_ctrl(cxt->dre_handle, SPRD_DRE_PROCESS_CMD,
-				&image_in, &frm_param->dre_param);
+	ret = sprd_dre_pro_adpt_ctrl(cxt->dre_handle, SPRD_DRE_PROCESS_CMD,
+				&image_in, &frm_param->dre_pro_param);
 	if (ret) {
 		SWA_LOGD("fail to do DRE	process ret %d\n", ret);
 	}
 
-	ret = sprd_dre_adpt_ctrl(cxt->dre_handle, SPRD_DRE_FAST_STOP_CMD, NULL, NULL);
-	ret = sprd_dre_adpt_deinit(cxt->dre_handle);
+	ret = sprd_dre_pro_adpt_ctrl(cxt->dre_handle, SPRD_DRE_FAST_STOP_CMD, NULL, NULL);
+	ret = sprd_dre_pro_adpt_deinit(cxt->dre_handle);
 
 	return ret;
 }
