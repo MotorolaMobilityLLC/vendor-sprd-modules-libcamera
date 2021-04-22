@@ -122,7 +122,7 @@ static void hi1336_drv_write_shutter(cmr_handle handle,
  * please don't change this function if it's necessary
  *============================================================================*/
 static void hi1336_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
-                                    cmr_u32 dummy_line, cmr_u16 mode, cmr_u32 exp_time,
+                                    cmr_u32 dummy_line, cmr_u16 mode,
                                     struct sensor_aec_i2c_tag *aec_info) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
@@ -162,16 +162,16 @@ static void hi1336_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
         "mode = %d, exposure_line = %d, dummy_line= %d, frame_interval= %d ms",
         mode, shutter, dummy_line, frame_interval);
 
-    sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
-    hi1336_drv_write_frame_length(handle, aec_info, dest_fr_len);
-
+    if (dest_fr_len != cur_fr_len) {
+        sns_drv_cxt->sensor_ev_info.preview_framelength = dest_fr_len;
+        hi1336_drv_write_frame_length(handle, aec_info, dest_fr_len);
+    }
     sns_drv_cxt->sensor_ev_info.preview_shutter = shutter;
     hi1336_drv_write_shutter(handle, aec_info, shutter);
 
-    sns_drv_cxt->sensor_ev_info.preview_exptime= exp_time;
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(
-            sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME, exp_time);
+            sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME, shutter);
     }
 }
 
@@ -181,7 +181,7 @@ static void hi1336_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 sensor_gain = 0;
 
-    sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
+    sensor_gain = isp_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : isp_gain;
     sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
     if (SENSOR_MAX_GAIN < sensor_gain)
         sensor_gain = SENSOR_MAX_GAIN;
@@ -456,11 +456,9 @@ static cmr_int hi1336_drv_identify(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int hi1336_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_shutter = 0;
-    cmr_u32 cap_exptime = 0;
     cmr_u32 prv_shutter = 0;
-    cmr_u32 prv_exptime = 0;
-    cmr_u32 prv_gain = 0;
-    cmr_u32 cap_gain = 0;
+    float prv_gain = 0.0;
+    float cap_gain = 0.0;
     cmr_u32 capture_mode = param & 0xffff;
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
 
@@ -483,23 +481,19 @@ static cmr_int hi1336_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 
     if (preview_mode == capture_mode) {
         cap_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
-        cap_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
         cap_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
         goto snapshot_info;
     }
 
     prv_shutter = sns_drv_cxt->sensor_ev_info.preview_shutter;
-    prv_exptime = sns_drv_cxt->sensor_ev_info.preview_exptime;
     prv_gain = sns_drv_cxt->sensor_ev_info.preview_gain;
 
     cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
-    cap_exptime = prv_exptime;
     cap_gain = prv_gain;
 
     SENSOR_LOGI("capture_shutter = 0x%x, capture_gain = 0x%x", cap_shutter,
                 cap_gain);
-    hi1336_drv_calc_exposure(handle, cap_shutter, 0, capture_mode,cap_exptime,
-                             &hi1336_aec_info);
+    hi1336_drv_calc_exposure(handle, cap_shutter, 0, capture_mode, &hi1336_aec_info);
     hi1336_drv_write_reg2sensor(handle, hi1336_aec_info.frame_length);
     hi1336_drv_write_reg2sensor(handle, hi1336_aec_info.shutter);
 
@@ -511,8 +505,8 @@ static cmr_int hi1336_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
 snapshot_info:
     if (sns_drv_cxt->ops_cb.set_exif_info) {
         sns_drv_cxt->ops_cb.set_exif_info(sns_drv_cxt->caller_handle,
-                                          SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME,
-                                          cap_exptime);
+                                          SENSOR_EXIF_CTRL_EXPOSURETIME,
+                                          cap_shutter);
     } else {
         sns_drv_cxt->exif_info.exposure_line = cap_shutter;
     }
@@ -530,7 +524,6 @@ static cmr_int hi1336_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 size_index = 0x00;
-    cmr_u32 exp_time = 0x00;
 
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -540,11 +533,9 @@ static cmr_int hi1336_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     exposure_line = ex->exposure;
     dummy_line = ex->dummy;
     size_index = ex->size_index;
-    exp_time = ex->exp_time;
 
-    hi1336_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,exp_time,
+    hi1336_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,
                             &hi1336_aec_info);
-
     hi1336_drv_write_reg2sensor(handle, hi1336_aec_info.frame_length);
     hi1336_drv_write_reg2sensor(handle, hi1336_aec_info.shutter);
 
@@ -575,8 +566,6 @@ static cmr_int hi1336_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 mode = 0x00;
-    cmr_u32 exp_time = 0x00;
-
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -587,9 +576,8 @@ static cmr_int hi1336_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     exposure_line = info->exp.exposure;
     dummy_line = info->exp.dummy;
     mode = info->exp.size_index;
-    exp_time = info->exp.exp_time;
 
-    hi1336_drv_calc_exposure(handle, exposure_line, dummy_line, mode,exp_time,
+    hi1336_drv_calc_exposure(handle, exposure_line, dummy_line, mode,
                             &hi1336_aec_info);
     hi1336_drv_calc_gain(handle, info->gain, &hi1336_aec_info);
 
@@ -617,7 +605,7 @@ static cmr_int hi1336_drv_set_master_FrameSync(cmr_handle handle,
     return SENSOR_SUCCESS;
 }
 
-static cmr_int hi1336_drv_set_slave_FrameSync(cmr_handle handle,
+/*static cmr_int hi1336_drv_set_slave_FrameSync(cmr_handle handle,
                                               cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -632,7 +620,7 @@ static cmr_int hi1336_drv_set_slave_FrameSync(cmr_handle handle,
     hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x025C, 0x0002);
 
     return SENSOR_SUCCESS;
-}
+}*/
 
 /*==============================================================================
  * Description:
@@ -645,7 +633,7 @@ static cmr_int hi1336_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
     SENSOR_LOGI("E");
 
-#if defined(CONFIG_DUAL_MODULE)
+#if 0 //defined(CONFIG_DUAL_MODULE)
     char value1[PROPERTY_VALUE_MAX];
     property_get("vendor.cam.hw.framesync.on", value1, "1");
     if (!strcmp(value1, "1")) {
@@ -668,18 +656,23 @@ static cmr_int hi1336_drv_stream_on(cmr_handle handle, cmr_uint param) {
  *============================================================================*/
 static cmr_int hi1336_drv_stream_off(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E");
-
-    SENSOR_IC_CHECK_HANDLE(handle);
+    cmr_u32 value = 0;
     cmr_u16 sleep_time = 0;
+    SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
 
-    hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b00, 0x0000);
-
-    if (!sns_drv_cxt->is_sensor_close) {
-        sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
-                    sns_drv_cxt->line_time_def / 1000000) + 10;
-        usleep(sleep_time * 1000);
-        SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+    value = hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x0b00);
+    if (value != 0x0000) {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b00, 0x0000);
+        if (!sns_drv_cxt->is_sensor_close) {
+            sleep_time = (sns_drv_cxt->sensor_ev_info.preview_framelength *
+                          sns_drv_cxt->line_time_def / 1000000) +
+                         10;
+            usleep(sleep_time * 1000);
+            SENSOR_LOGI("stream_off delay_ms %d", sleep_time);
+        }
+    } else {
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0b00, 0x0000);
     }
     sns_drv_cxt->is_sensor_close = 0;
 
@@ -701,8 +694,20 @@ hi1336_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
         PREVIEW_FRAME_LENGTH - FRAME_OFFSET;
     sns_drv_cxt->sensor_ev_info.preview_gain = SENSOR_BASE_GAIN;
     sns_drv_cxt->sensor_ev_info.preview_framelength = PREVIEW_FRAME_LENGTH;
-    sns_drv_cxt->sensor_ev_info.preview_exptime =(PREVIEW_FRAME_LENGTH - FRAME_OFFSET) * PREVIEW_LINE_TIME;
+
     sns_drv_cxt->frame_length_def = PREVIEW_FRAME_LENGTH;
+    //s_drv_cxt->line_time_def = PREVIEW_LINE_TIME;
+    hi1336_drv_write_frame_length(sns_drv_cxt,&hi1336_aec_info,sns_drv_cxt->sensor_ev_info.preview_framelength);
+    hi1336_drv_write_gain(sns_drv_cxt,&hi1336_aec_info,sns_drv_cxt->sensor_ev_info.preview_gain);
+    hi1336_drv_write_shutter(sns_drv_cxt ,&hi1336_aec_info,sns_drv_cxt->sensor_ev_info.preview_shutter);
+
+    hi1336_drv_write_frame_length(
+        sns_drv_cxt, &hi1336_aec_info,
+        sns_drv_cxt->sensor_ev_info.preview_framelength);
+    hi1336_drv_write_gain(sns_drv_cxt, &hi1336_aec_info,
+                          sns_drv_cxt->sensor_ev_info.preview_gain);
+    hi1336_drv_write_shutter(sns_drv_cxt, &hi1336_aec_info,
+                             sns_drv_cxt->sensor_ev_info.preview_shutter);
 
     sensor_ic_set_match_module_info(sns_drv_cxt,
                                     ARRAY_SIZE(s_hi1336_module_info_tab),
