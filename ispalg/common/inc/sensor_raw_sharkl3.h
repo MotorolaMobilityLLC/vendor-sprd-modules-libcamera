@@ -393,6 +393,7 @@ struct sensor_envi_detect_param {
 #define SENSOR_LNC_RC_NUM 0x04
 #define SENSOR_HIST2_ROI_NUM 0x04
 #define SENSOR_GAMMA_POINT_NUM	257
+#define SENSOR_Y_GAMMA_POINT_NUM 257
 #define SENSOR_GAMMA_NUM 9
 #define SENSOR_LEVEL_NUM 16
 #define SENSOR_CMC_POINT_NUM 9
