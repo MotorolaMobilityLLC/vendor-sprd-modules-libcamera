@@ -2002,11 +2002,11 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 
 	/* get dre param */
 	if (cxt->dre_flag) {
-		ret = camera_isp_ioctl(cxt, COM_ISP_GET_DRE_PARAM, &isp_param);
+		ret = camera_isp_ioctl(cxt, COM_ISP_GET_DRE_PRO_PARAM, &isp_param);
 		if (ret) {
 			CMR_LOGE("fail to get DRE param\n");
 		} else {
-			memcpy(&frm_param->dre_param, &isp_param.dre_param, sizeof(struct isp_dre_level));
+			memcpy(&frm_param->dre_pro_param, &isp_param.dre_pro_param, sizeof(struct isp_dre_pro_level));
 		}
 	}
 
@@ -6167,13 +6167,14 @@ cmr_int camera_ipm_open_sw_algorithm(cmr_handle oem_handle) {
         }
         cxt->ipm_cxt.cnr_inited = 1;
     }
-
-#ifdef CONFIG_CAMERA_DRE
-    if (!cxt->ipm_cxt.dre_inited && cxt->dre_flag) {
+#ifdef CONFIG_CAMERA_DRE_PRO
+    CMR_LOGD("dre_inited = %ld, dre_flag = %ld, camera_get_hdr_flag = %d",
+                     cxt->ipm_cxt.dre_inited, cxt->dre_flag, camera_get_hdr_flag(cxt));
+    if (!cxt->ipm_cxt.dre_pro_inited && cxt->dre_flag && (1 != camera_get_hdr_flag(cxt))) {
         in_param.frame_size.width = cxt->sn_cxt.sensor_info.source_width_max;
         in_param.frame_size.height = cxt->sn_cxt.sensor_info.source_height_max;
-        ret = camera_open_dre(cxt, &in_param, NULL);
-        cxt->ipm_cxt.dre_inited = 1;
+        ret = camera_open_dre_pro(cxt, &in_param, NULL);
+        cxt->ipm_cxt.dre_pro_inited = 1;
     }
 #endif
 
@@ -6383,7 +6384,7 @@ cmr_int camera_ipm_process(cmr_handle oem_handle, void *data) {
             }
             app_mode = setting_param.cmd_type_value;
             if (app_mode != CAMERA_MODE_CONTINUE) {
-                ret = ipm_transfer_frame(ipm_cxt->dre_handle, &ipm_in_param,
+                ret = ipm_transfer_frame(ipm_cxt->dre_pro_handle, &ipm_in_param,
                                          NULL);
                 if (ret) {
                     CMR_LOGE("failed to do dre process %ld", ret);
@@ -12391,7 +12392,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         CMR_LOGD("gtm on %d\n", cxt->gtm_flag);
     }
 
-#ifdef CONFIG_CAMERA_DRE
+#ifdef CONFIG_CAMERA_DRE_PRO
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
@@ -12400,7 +12401,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     }
     CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
 
-    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_DRE_PARAM, &isp_cmd_parm);
+    ret = camera_isp_ioctl(oem_handle, COM_ISP_GET_DRE_PRO_PARAM, &isp_cmd_parm);
     if (ret) {
         CMR_LOGE("there is no dre parameters for camera id =%d",
                  cxt->camera_id);
@@ -12427,7 +12428,8 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     setting_param.camera_id = cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_APPMODE,
                             &setting_param);
-    if (setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO) {
+    if (setting_param.cmd_type_value == CAMERA_MODE_NIGHT_PHOTO ||
+        setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
         out_ptr->dre_flag = 1;
         cxt->dre_flag = 1;
     }
