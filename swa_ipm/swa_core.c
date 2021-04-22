@@ -315,7 +315,7 @@ int swa_mfnr_open(void *ipmpro_hanlde,
 	valid_param |= mfnr_param->recur_str | mfnr_param->feat_thr | mfnr_param->zone_size;
 	valid_param |= mfnr_param->luma_ratio_high | mfnr_param->luma_ratio_low;
 	if (!valid_param) {
-		SWA_LOGW("warning: no valid mfnr tuning param. will set default\n");
+		SWA_LOGI("warning: no valid mfnr tuning param. will set default\n");
 		memcpy(mfnr_param, &default_mfnr_tuning_param, sizeof(struct isp_mfnr_info));
 	}
 
