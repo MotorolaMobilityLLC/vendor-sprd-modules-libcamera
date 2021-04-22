@@ -38,9 +38,9 @@ extern struct class_tab_t tab_info_4in1;
 #ifdef CONFIG_CAMERA_CNR
 extern struct class_tab_t cnr_tab_info;
 #endif
-#ifdef CONFIG_CAMERA_DRE
-extern struct class_tab_t dre_tab_info;
-#endif
+//#ifdef CONFIG_CAMERA_DRE
+//extern struct class_tab_t dre_tab_info;
+//#endif
 #ifdef CONFIG_CAMERA_DRE_PRO
 extern struct class_tab_t dre_pro_tab_info;
 #endif
@@ -74,9 +74,9 @@ struct ipm_class_tab class_type_tab[] = {
 #ifdef CONFIG_CAMERA_CNR
     {IPM_TYPE_CNR, &cnr_tab_info},
 #endif
-#ifdef CONFIG_CAMERA_DRE
-    {IPM_TYPE_DRE, &dre_tab_info},
-#endif
+//#ifdef CONFIG_CAMERA_DRE
+//    {IPM_TYPE_DRE, &dre_tab_info},
+//#endif
     {IPM_TYPE_AI_SCENE, &ai_scene_tab_info},
 #ifdef CONFIG_CAMERA_AUTO_TRACKING
     {IPM_TYPE_AUTO_TRACKING, &auto_tracking_tab_info},
@@ -197,7 +197,6 @@ cmr_int ipm_transfer_frame(cmr_handle ipm_class_handle, struct ipm_frame_in *in,
         CMR_LOGE("invalid parameters");
         return CMR_CAMERA_INVALID_PARAM;
     }
-
     ret = common_handle->ops->transfer_frame(ipm_class_handle, in, out);
 
     return ret;
