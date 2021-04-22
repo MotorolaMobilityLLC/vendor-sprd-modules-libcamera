@@ -104,6 +104,7 @@ static uint32_t closing = 0;
 static uint32_t active_camera_num = 0;
 static multiCameraMode is_multi_camera_mode_oem;
 static uint8_t master_id_oem = 0;
+static int flag_night_dns_init = 0; // 1:using,0:not using
 
 static void camera_send_channel_data(cmr_handle oem_handle,
                                      cmr_handle receiver_handle, cmr_uint evt,
@@ -3787,12 +3788,21 @@ cmr_int camera_close_3dnr(struct camera_context *cxt) {
 cmr_int camera_open_night_dns(struct camera_context *cxt, struct ipm_open_in *in_ptr,
                          struct ipm_open_out *out_ptr) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
+    int i = 0;
 
-    CMR_LOGD("E");
+    CMR_LOGV("E");
+    // if another night_dns not exit, wait 2s
+    while (flag_night_dns_init == 1 && i < 200) {
+        usleep(10000);
+        i++;
+    }
+    if (i)
+        CMR_LOGI("wait %dms", 10 * i);
     sem_wait(&cxt->threednr_flag_sm);
     ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_NIGHTDNS, in_ptr, out_ptr,
                        &cxt->ipm_cxt.threednr_handle);
     sem_post(&cxt->threednr_flag_sm);
+    flag_night_dns_init = 1;
     CMR_LOGD("X");
     return ret;
 }
@@ -3807,6 +3817,7 @@ cmr_int camera_close_night_dns(struct camera_context *cxt) {
     }
     sem_post(&cxt->threednr_flag_sm);
     sem_destroy(&cxt->threednr_proc_sm);
+    flag_night_dns_init = 0;
     CMR_LOGD("X,ret=%ld", ret);
     return ret;
 }
@@ -15432,7 +15443,7 @@ cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value,
                 CMR_LOGW("Lock nr block fail");
         }
 
-        property_get("persist.vendor.cam.night.b01.ev", ch_ev, "-4,-2,0,1,1,1,1");
+        property_get("persist.vendor.cam.night.b01.ev", ch_ev, "-4,-2,0,0.5,0.5,0.5,0.5");
         sscanf(ch_ev, "%f,%f,%f,%f,%f,%f,%f", &ev[0], &ev[1], &ev[2], &ev[3], &ev[4],&ev[5], &ev[6]);
         CMR_LOGD("ev_effect_valid_num %d", isp_param.snp_ae_param.ev_effect_valid_num);
         isp_param.snp_ae_param.ev_effect_valid_num =
