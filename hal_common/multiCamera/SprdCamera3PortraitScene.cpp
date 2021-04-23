@@ -2252,7 +2252,7 @@ int SprdCamera3PortraitScene::cameraDeviceOpen(__unused int camera_id,
         }
         hw_dev[i] = NULL;
 
-        hwi->setMultiCameraMode(MODE_PORTRAIT_SCENE);
+        hwi->setMultiCameraMode(MODE_BLUR);
         hwi->setMasterId(master_id);
         rc = hwi->openCamera(&hw_dev[i]);
         if (rc != NO_ERROR) {
@@ -2261,7 +2261,7 @@ int SprdCamera3PortraitScene::cameraDeviceOpen(__unused int camera_id,
             closeCameraDevice();
             return rc;
         }
-
+        hwi->camera_ioctrl(CAMERA_IOCTRL_SET_PORTRAIT_SCENE_FB,NULL,NULL);
         m_pPhyCamera[i].dev = reinterpret_cast<camera3_device_t *>(hw_dev[i]);
         m_pPhyCamera[i].hwi = hwi;
     }
@@ -2407,7 +2407,7 @@ int SprdCamera3PortraitScene::initialize(
     mReqState = PREVIEW_REQUEST_STATE;
     memset(mPrevMaskBuffArr, 0,
            sizeof(sprd_camera_memory_t *) * PBRP_PREV_TMP_BUFF_NUM);
-    SprdCamera3MultiBase::initialize(MODE_PORTRAIT_SCENE, hwiMain);
+    SprdCamera3MultiBase::initialize(MODE_BLUR, hwiMain);
     mdebugPrev = NULL;
     mdebugPrevSwitch = false;
     property_get("persist.vendor.cam.portrait.prev.debug", prop_value, "0");
