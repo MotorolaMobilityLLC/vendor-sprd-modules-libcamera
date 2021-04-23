@@ -614,7 +614,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
       mIsFDRCapture(0), mIsCameraClearQBuf(0),
       mLatestFocusDoneTime(0), mFaceDetectStartedFlag(0),
       mIsJpegWithBigSizePreview(0), lightportrait_type(0),
-      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID)
+      mMultiCameraId(SPRD_MULTI_CAMERA_BASE_ID),mPortraitSceneFB(false)
 
 {
     ATRACE_CALL();
@@ -1881,6 +1881,10 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
             lightportrait_type = *(int *)param1;
         }
         break;
+    case CAMERA_IOCTRL_SET_PORTRAIT_SCENE_FB:{
+        mPortraitSceneFB = true;
+    }
+    break;
     case CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA:{
         }
         break;
@@ -4738,7 +4742,8 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
         if (isFaceBeautyOn(sprddefInfo) && frame->type == PREVIEW_FRAME &&
             isPreviewing() && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_AUTO_VIDEO)
             && (getMultiCameraMode() != MODE_BOKEH)
-            && (getMultiCameraMode() != MODE_BLUR)) {
+            && (getMultiCameraMode() != MODE_BLUR||
+            (getMultiCameraMode() == MODE_BLUR && mPortraitSceneFB))) {
 
             beautyLevels.blemishLevel =
                 (unsigned char)sprddefInfo->perfect_skin_level[0];

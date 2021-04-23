@@ -1006,6 +1006,9 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int lightportrait_type;
     uint32_t mMultiCameraId;
 
+    //for portrait scene face beauty
+    bool mPortraitSceneFB;
+
     //for color temp
 #ifdef TARGET_CAMERA_SENSOR_CCT_SENSORHUB
     static ASensorManager *mCTSensorManager;
