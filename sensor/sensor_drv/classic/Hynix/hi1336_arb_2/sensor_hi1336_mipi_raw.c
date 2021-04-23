@@ -364,6 +364,72 @@ static cmr_int hi1336_drv_get_fps_info(cmr_handle handle, cmr_u32 *param) {
 
     return rtn;
 }
+
+static const cmr_u16 hi1336_pd_is_right[] = {0, 1, 0, 1};   //
+static const cmr_u16 hi1336_pd_row[] = {4, 0, 8, 12};     //y
+static const cmr_u16 hi1336_pd_col[] = {5, 5, 13, 13};   //x
+static const struct pd_pos_info _hi1336_pd_pos_l[] = {{5, 4}, {13, 8}};
+static const struct pd_pos_info _hi1336_pd_pos_r[] = {{5, 0}, {13, 12}};
+static const cmr_u32 pd_sns_mode[] = {0, 0, 0, 1};
+static cmr_int hi1336_drv_get_pdaf_info(cmr_handle handle, cmr_u32 *param) {
+
+    cmr_int rtn = SENSOR_SUCCESS;
+    struct sensor_pdaf_info *pdaf_info = NULL;
+    cmr_u16 i = 0;
+    cmr_u16 pd_pos_row_size = 0;
+    cmr_u16 pd_pos_col_size = 0;
+    cmr_u16 pd_pos_is_right_size = 0;
+    SENSOR_IC_CHECK_PTR(param);
+    SENSOR_LOGE("E\n");
+    pdaf_info = (struct sensor_pdaf_info *)param;
+    pd_pos_is_right_size = NUMBER_OF_ARRAY(hi1336_pd_is_right);
+    pd_pos_row_size = NUMBER_OF_ARRAY(hi1336_pd_row);
+    pd_pos_col_size = NUMBER_OF_ARRAY(hi1336_pd_col);
+
+    if ((pd_pos_row_size != pd_pos_col_size) ||
+        (pd_pos_row_size != pd_pos_is_right_size) ||
+        (pd_pos_is_right_size != pd_pos_col_size)) {
+        SENSOR_LOGE("pd_pos_row size and pd_pos_is_right size are not match");
+        return SENSOR_FAIL;
+    }
+
+    pdaf_info->pd_offset_x = 56;
+    pdaf_info->pd_offset_y = 24;
+    pdaf_info->pd_end_x = 4152;
+    pdaf_info->pd_end_y = 3096;
+    pdaf_info->pd_block_w = 1;
+    pdaf_info->pd_block_h = 1;
+    pdaf_info->pd_block_num_x = 256;
+    pdaf_info->pd_block_num_y = 192;
+    pdaf_info->pd_is_right = (cmr_u16 *)hi1336_pd_is_right;
+    pdaf_info->pd_pos_row = (cmr_u16 *)hi1336_pd_row;
+    pdaf_info->pd_pos_col = (cmr_u16 *)hi1336_pd_col;
+
+
+    cmr_u16 pd_pos_r_size = NUMBER_OF_ARRAY(_hi1336_pd_pos_r);
+    cmr_u16 pd_pos_l_size = NUMBER_OF_ARRAY(_hi1336_pd_pos_l);
+
+    if (pd_pos_r_size != pd_pos_l_size) {
+        SENSOR_LOGE("pd_pos_r size not match pd_pos_l");
+        return SENSOR_FAIL;
+    }
+    pdaf_info->pd_pitch_x = 16;
+    pdaf_info->pd_pitch_y = 16;
+    pdaf_info->pd_density_x = 16;
+    pdaf_info->pd_density_y = 8;
+    pdaf_info->pd_pos_size = pd_pos_r_size;
+    pdaf_info->pd_pos_r = (struct pd_pos_info *)_hi1336_pd_pos_r;
+    pdaf_info->pd_pos_l = (struct pd_pos_info *)_hi1336_pd_pos_l;
+    pdaf_info->vch2_info.bypass = 0;
+    pdaf_info->vch2_info.vch2_vc = 0;
+    pdaf_info->vch2_info.vch2_data_type = 0x30;
+    pdaf_info->vch2_info.vch2_mode = 0x03;
+    pdaf_info->sns_mode = pd_sns_mode;
+    pdaf_info->sns_orientation = 0; /*1: mirror+flip; 0: normal*/
+    pdaf_info->pd_data_size = pdaf_info->pd_block_num_x * pdaf_info->pd_block_num_y
+				* pd_pos_is_right_size * 5;
+    return rtn;
+}
 /*==============================================================================
  * Description:
  * cfg otp setting
@@ -390,7 +456,7 @@ static cmr_int hi1336_drv_access_val(cmr_handle handle, cmr_uint param) {
         ret = sns_drv_cxt->is_sensor_close = 1;
         break;
     case SENSOR_VAL_TYPE_GET_PDAF_INFO:
-        // ret = hi1336_drv_get_pdaf_info(handle, param_ptr->pval);
+        ret = hi1336_drv_get_pdaf_info(handle, param_ptr->pval);
         break;
     case SENSOR_VAL_TYPE_READ_OTP:
            // ret = hi1336_qunhui_identify_otp(handle, s_hi1336_otp_info_ptr, param_ptr);
