@@ -3708,7 +3708,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 		cxt->send_once[2]++;
 
 		/*write flash awb gain*/
-		if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0)
+		if ((1 == cxt->flash_esti_result.isEnd ) && (cxt->mainFlashEn == 0) && (cxt->cur_status.awb_mode == 0)
 				&& (FLASH_MAIN_BEFORE_RECEIVE == cxt->cur_result.flash_status
 				&& FLASH_MAIN_BEFORE == current_status->settings.flash)) {
 			if (cxt->isp_ops.set_wbc_gain) {
@@ -3721,7 +3721,7 @@ static cmr_s32 ae_post_process(struct ae_ctrl_cxt *cxt)
 				}
 			}
 		if(0 == cxt->flash_awben){//if awb3.2, mainflash use awb
-			if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts) && (cxt->mainFlashEn == 1)) {
+			if ((1 == cxt->flash_main_esti_result.isEnd) && (cxt->send_once[4] <= main_flash_capture_counts) && (cxt->mainFlashEn == 1) && (cxt->cur_status.awb_mode == 0)) {
 				if (cxt->isp_ops.set_wbc_gain) {
 					struct ae_alg_rgb_gain awb_gain;
 					awb_gain.r = cxt->flash_main_esti_result.captureRGain;
