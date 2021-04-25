@@ -12053,31 +12053,29 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
         }
     }
 
-    if(controlInfo.ae_state == ANDROID_CONTROL_AE_STATE_FLASH_REQUIRED &&
-                sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
-                (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
-                controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
-                (!been_preflash) && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_MANUAL)) {
-                        controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
-                        mSetting->setCONTROLTag(&controlInfo);
-                        SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
-                        mSetting->getCONTROLTag(&controlInfo);
-                        HAL_LOGV("af_state =%d",controlInfo.af_state);
-                        while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
-                                if (count1 > 3500) {
-                                        HAL_LOGD("wait for preflash timeout 3.5s");
-                                        break;
-                                }
-                                if (mZslCaptureExitLoop == true)
-                                {
-                                        HAL_LOGD("close camera");
-                                        break;
-                                }
-                                mSetting->getCONTROLTag(&controlInfo);
-                                usleep(1000); //1ms
-                                count1 ++;
+    if(mIsNeedFlashFired && sprddefInfo->af_support == 1 && sprddefInfo->sprd_appmode_id >= 0 &&
+        (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH ||
+        controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH) &&
+        (!been_preflash) && (sprddefInfo->sprd_appmode_id != CAMERA_MODE_MANUAL)) {
+                controlInfo.af_trigger = ANDROID_CONTROL_AF_TRIGGER_START;
+                mSetting->setCONTROLTag(&controlInfo);
+                SetCameraParaTag(ANDROID_CONTROL_AF_TRIGGER);
+                mSetting->getCONTROLTag(&controlInfo);
+                HAL_LOGV("af_state =%d",controlInfo.af_state);
+                while(controlInfo.af_state != ANDROID_CONTROL_AF_STATE_FOCUSED_LOCKED) {
+                        if (count1 > 3500) {
+                                HAL_LOGD("wait for preflash timeout 3.5s");
+                                break;
                         }
-                        clear_af_trigger = 1;
+                        if (mZslCaptureExitLoop == true){
+                                HAL_LOGD("close camera");
+                                break;
+                        }
+                        mSetting->getCONTROLTag(&controlInfo);
+                        usleep(1000); //1ms
+                        count1 ++;
+                }
+                clear_af_trigger = 1;
     }
     mClearAfTrigger = !!clear_af_trigger;
 
