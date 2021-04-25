@@ -192,6 +192,7 @@ struct snapshot_init_param {
 struct snapshot_param {
     cmr_u32 camera_id;
     cmr_u32 mode;
+    cmr_u32 is_ultrawide;
     cmr_u32 filter_type;
     cmr_u32 fb_on;
     cmr_u32 watermark;
