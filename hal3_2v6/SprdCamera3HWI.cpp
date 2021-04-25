@@ -501,6 +501,7 @@ int SprdCamera3HWI::initialize(
     mCurFrameTimeStamp = 0;
     mBufferStatusError = false;
     mZslIpsEnable = false;
+    mIsLastVideoOn = false;
 
     HAL_LOGI(":hal3: X");
     return ret;
@@ -1335,6 +1336,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     REQUEST_Tag requestInfo;
     struct fin1_info fin1_info;
     bool hasThumbReq = false;
+    bool mIsCurVideoOn = false;
 
     Mutex::Autolock l(mLock);
 
@@ -1383,7 +1385,20 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
             }
             mOEMIf->setJpegOrientation(jpegOrientation);
         }
+        if (streamType[i] == CAMERA_STREAM_TYPE_VIDEO) {
+            mIsCurVideoOn = true;
+            mIsLastVideoOn = true;
+        }
     }
+
+    if (!mIsCurVideoOn && mIsLastVideoOn && sprddefInfo->sprd_eis_enabled) {
+        timestamp = systemTime(SYSTEM_TIME_BOOTTIME);
+        if (mRegularChan) {
+            mRegularChan->channelClearAllQBuff(timestamp, CAMERA_STREAM_TYPE_VIDEO);
+        }
+        mIsLastVideoOn = false;
+    }
+
     captureIntent = getReqCapureIntent(captureIntent);
 
     HAL_LOGV("captureIntent %d, num_streams = %d, prv status %d, snap status %d, vid status %d, yuvcallbackk status %d",
