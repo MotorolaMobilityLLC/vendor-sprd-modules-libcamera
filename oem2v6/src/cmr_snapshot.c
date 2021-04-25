@@ -1107,9 +1107,10 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 			CMR_LOGE("fail to put buffer fd %d, addr %p\n", buf.fd, (void *)buf.vaddr);
 		}
 		frm->fd = buf.fd;
+		frm->gpu_handle = buf.gpu_handle;
 		frm->addr_vir.addr_y = buf.vaddr;
-		CMR_LOGD("req_id %d get buf fd=0x%x, vaddr %p, size %d\n",
-			req->request_id, buf.fd, (void *)buf.vaddr, buf.mem_size);
+		CMR_LOGD("req_id %d get buf fd=0x%x, vaddr %p, ghand %p, size %d\n",
+			req->request_id, buf.fd, (void *)buf.vaddr, buf.gpu_handle, buf.mem_size);
 		break;
 
 	case IPS_CB_RETURN_BUF:
@@ -1167,6 +1168,9 @@ static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 	new_req->request_id = cxt->req_param.request_id;
 	new_req->frame_total = cxt->req_param.total_num;
 	i = 0;
+	if (cxt->req_param.is_ultrawide)
+		new_req->proc_steps[i++].type = IPS_TYPE_UWARP;
+
 	if (cxt->req_param.is_hdr) {
 		new_req->proc_steps[i++].type = IPS_TYPE_HDR;
 	} else if ((cxt->req_param.is_3dnr == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW) ||

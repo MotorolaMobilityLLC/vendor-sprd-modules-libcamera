@@ -14,9 +14,11 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <dlfcn.h>
+#include <stdbool.h>
 
 #include "sprd_camalg_adapter.h"
 #include "sprd_hdr_adapter.h"
+#include "sprd_img_warp.h"
 #include "mfnr_adapt_interface.h"
 #include "sprd_yuv_denoise_adapter.h"
 //#include "sprd_dre_adapter.h"
@@ -66,6 +68,9 @@ static long s_swa_log_level = 4;
 #define MAX(a, b) ((a > b) ?  a : b)
 #endif
 
+#ifndef ALIGN
+#define ALIGN(val, align) ((val + align - 1) & (~(align - 1)))
+#endif
 
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
 
@@ -217,6 +222,148 @@ int swa_hdr_close(void * ipmpro_hanlde,
 	return ret;
 }
 #endif
+#endif
+
+
+
+#ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
+
+struct ultrawide_context_t {
+	uint32_t is_isp_zoom;
+	INST_TAG tag;
+	img_warp_param_t warp_param;
+	img_warp_inst_t warp_inst;  // for uw algo api internal handle
+};
+
+int swa_uwarp_get_handle_size()
+{
+	return sizeof(struct ultrawide_context_t);
+}
+
+int swa_uwarp_process(void * ipmpro_hanlde,
+			struct swa_frames_inout *in,
+			struct swa_frames_inout *out,
+			void * param)
+{
+	int ret = 0;
+	int x, y, w, h;
+	struct ultrawide_context_t *cxt = NULL;
+	struct swa_frame *frm_in, *frm_out;
+	struct swa_frame_param *frm_param;
+	struct isp_warp_info *warp_info;
+	img_warp_buffer_t input;
+	img_warp_buffer_t output;
+	img_warp_undistort_param_t proc_param, *p;
+
+	if (ipmpro_hanlde == NULL || in == NULL || out == NULL || param == NULL) {
+		SWA_LOGE("fail to get input %p %p %p %p\n", ipmpro_hanlde, in, out, param);
+		return -1;
+	}
+
+	cxt = (struct ultrawide_context_t *)ipmpro_hanlde;
+	frm_param = (struct swa_frame_param *)param;
+	warp_info = &frm_param->warp_info;
+
+	img_warp_grid_config_default(&cxt->warp_param);
+
+	cxt->tag = warp_info->cap_tag ? WARP_CAPTURE : WARP_PREVIEW;
+	cxt->warp_param.otp_buf = warp_info->otp_data;
+	cxt->warp_param.otp_size = warp_info->otp_size;
+	cxt->warp_param.input_info.binning_mode = (warp_info->binning_factor == 2) ? 1 : 0;
+	cxt->warp_param.input_info.fullsize_width = warp_info->src_size.width;
+	cxt->warp_param.input_info.fullsize_height = warp_info->src_size.height;
+	cxt->warp_param.input_info.crop_x = warp_info->src_crop.start_x;
+	cxt->warp_param.input_info.crop_y = warp_info->src_crop.start_y;
+	cxt->warp_param.input_info.crop_width = warp_info->src_crop.width;
+	cxt->warp_param.input_info.crop_height = warp_info->src_crop.height;
+	cxt->warp_param.input_info.input_width = warp_info->in_size.width;
+	cxt->warp_param.input_info.input_height = warp_info->in_size.height;
+	cxt->warp_param.dst_width = warp_info->out_size.width;
+	cxt->warp_param.dst_height = warp_info->out_size.height;
+
+	SWA_LOGD("otp %p %d, bin %d, sn (%d %d), crop (%d %d %d %d), (%d %d) => (%d %d)\n",
+		cxt->warp_param.otp_buf, cxt->warp_param.otp_size,
+		cxt->warp_param.input_info.binning_mode,
+		cxt->warp_param.input_info.fullsize_width, cxt->warp_param.input_info.fullsize_height,
+		cxt->warp_param.input_info.crop_x, cxt->warp_param.input_info.crop_y,
+		cxt->warp_param.input_info.crop_width, cxt->warp_param.input_info.crop_height,
+		cxt->warp_param.input_info.input_width, cxt->warp_param.input_info.input_height,
+		cxt->warp_param.dst_width, cxt->warp_param.dst_height);
+
+	ret = sprd_warp_adapter_open(&cxt->warp_inst,
+				&cxt->is_isp_zoom, &cxt->warp_param, cxt->tag);
+	if (ret) {
+		SWA_LOGE("fail to open warp adapter\n");
+		goto exit;
+	}
+
+	frm_in = &in->frms[0];
+	frm_out = &out->frms[0];
+	if ((in->frame_num == 0) || (frm_in->fd <= 0) ||
+			(out->frame_num == 0) || (frm_out->fd <= 0) ) {
+		SWA_LOGE("fail to get in/out frame\n");
+		goto close;
+	}
+	if (warp_info->dst_crop.width < 2 || warp_info->dst_crop.height < 2) {
+		SWA_LOGE("fail to get valid crop size %d %d\n",
+			warp_info->dst_crop.width, warp_info->dst_crop.height);
+		goto close;
+	}
+
+	p = &proc_param;
+	p->input_info.fullsize_width = warp_info->src_size.width;
+	p->input_info.fullsize_height = warp_info->src_size.height;
+	p->input_info.input_width = warp_info->in_size.width;
+	p->input_info.input_height = warp_info->in_size.height;
+	p->input_info.crop_x = ALIGN(warp_info->dst_crop.start_x, 2);
+	p->input_info.crop_y = ALIGN(warp_info->dst_crop.start_y, 2);
+	warp_info->dst_crop.width += (warp_info->dst_crop.start_x & 1);
+	warp_info->dst_crop.height += (warp_info->dst_crop.start_y & 1);
+	p->input_info.crop_width = ALIGN(warp_info->dst_crop.width, 2);
+	p->input_info.crop_height = ALIGN(warp_info->dst_crop.height, 2);
+
+	x = p->input_info.crop_x + p->input_info.crop_width / 2;
+	y = p->input_info.crop_y + p->input_info.crop_height / 2;
+	w = warp_info->src_size.width;
+	h = warp_info->src_size.height;
+	x -= (w / 2);
+	y -= (h / 2);
+	p->zoomRatio = (float)w / (float)p->input_info.crop_width;
+	p->zoomCenterOffsetX = (float)x / ((float)w / 2.0);
+	p->zoomCenterOffsetY = (float)y / ((float)h / 2.0);
+
+	SWA_LOGD("param ratio %f, cent_off (%f %f), (%d %d), (%d %d), (%d %d %d %d)\n",
+		p->zoomRatio, p->zoomCenterOffsetX, p->zoomCenterOffsetY,
+		p->input_info.fullsize_width, p->input_info.fullsize_height,
+		p->input_info.input_width, p->input_info.input_height,
+		p->input_info.crop_x, p->input_info.crop_y,
+		p->input_info.crop_width, p->input_info.crop_height);
+
+	input.width = frm_in->size.width;
+	input.height = frm_in->size.height;
+	input.stride = frm_in->size.width;
+	input.graphic_handle = frm_in->gpu_handle;
+	input.ion_fd = frm_in->fd;
+	input.addr[0] = (void *)frm_in->addr_vir[0];
+
+	output.width = frm_out->size.width;
+	output.height = frm_out->size.height;
+	output.stride = frm_out->size.width;
+	output.graphic_handle = frm_out->gpu_handle;
+	output.ion_fd = frm_out->fd;
+	output.addr[0] = (void *)frm_out->addr_vir[0];
+	SWA_LOGD("in fd=0x%x, addr %p, gpu_ptr %p, (%d %d), out fd=0x%x, addr %p, gpu_ptr %p, (%d %d)\n",
+		input.ion_fd, input.addr[0], input.graphic_handle, input.width, input.height,
+		output.ion_fd, output.addr[0], output.graphic_handle, output.width, output.height);
+
+	sprd_warp_adapter_run(cxt->warp_inst, &input, &output, (void *)p, cxt->tag);
+
+close:
+	sprd_warp_adapter_close(&cxt->warp_inst, cxt->tag);
+
+exit:
+	return ret;
+}
 #endif
 
 

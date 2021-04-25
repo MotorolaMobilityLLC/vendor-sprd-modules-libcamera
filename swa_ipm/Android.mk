@@ -9,6 +9,7 @@ LOCAL_CFLAGS += -DCAMERA_CNR3_ENABLE
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/ \
     $(TOP)/system/core/include/ \
+    $(TOP)/system/core/include/cutils/ \
     $(LIBCAMERA_DIR)/common/inc \
     $(LIBCAMERA_DIR)/arithmetic/inc \
     $(LIBCAMERA_DIR)/arithmetic/libdre/inc \
@@ -59,6 +60,10 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_3DNR_CAPTURE)),true)
 LOCAL_SHARED_LIBRARIES += libSprdMfnrAdapter libmfnr libui libEGL libGLESv2
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_SUPPORT_ULTRA_WIDE)),true)
+LOCAL_SHARED_LIBRARIES += libsprdwarp libsprdwarpadapter
 endif
 
 LOCAL_MODULE := libcam_ipmpro
