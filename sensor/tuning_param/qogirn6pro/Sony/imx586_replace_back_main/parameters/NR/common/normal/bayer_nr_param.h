@@ -1,14 +1,7 @@
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*versionid=0x000D0010*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*versionid=0x000C000F*/
-/*maxGain=0.00*/
-/*param0.&BasePoint=1&*/
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -706,11 +699,7 @@
 }
 ,
 /*param1.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -1408,11 +1397,7 @@
 }
 ,
 /*param2.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -1433,21 +1418,12 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x8C,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x0050,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x003C,
-						/*addback1*/
-						0x003C,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
-=======
 						0x0058,
 						/*addback1*/
 						0x0058,
@@ -1455,27 +1431,20 @@
 						0x0008,
 						/*addback_clip_min*/
 						0xFFF8,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x91,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x0078,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x003C,
-						/*addback1*/
-						0x003C,
-=======
 						0x0062,
 						/*addback1*/
 						0x0062,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -1485,25 +1454,12 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x3C,
-=======
-						0x2C,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
+						0x90,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
 						0x00C8,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x003C,
-						/*addback1*/
-						0x003C,
-						/*addback_clip_max*/
-						0x0008,
-						/*addback_clip_min*/
-						0xFFF8,
-=======
 						0x0062,
 						/*addback1*/
 						0x0062,
@@ -1511,26 +1467,14 @@
 						0x000A,
 						/*addback_clip_min*/
 						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x60,
+					0xBC,
 					/*addback30*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-					0x3C,
-					/*addback31*/
-					0x3C,
-					/*reserved*/
-					0x00,
-					/*addback_clip_max*/
-					0x0008,
-					/*addback_clip_min*/
-					0xFFF8,
-=======
 					0x6C,
 					/*addback31*/
 					0x6C,
@@ -1540,7 +1484,6 @@
 					0x000A,
 					/*addback_clip_min*/
 					0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 				}
 			},
@@ -1551,21 +1494,12 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x91,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x0064,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x003C,
-						/*addback1*/
-						0x003C,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
-=======
 						0x0058,
 						/*addback1*/
 						0x0058,
@@ -1573,27 +1507,20 @@
 						0x0008,
 						/*addback_clip_min*/
 						0xFFF8,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x9C,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x00AA,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x003C,
-						/*addback1*/
-						0x003C,
-=======
 						0x006C,
 						/*addback1*/
 						0x006C,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 						/*addback_clip_max*/
 						0x000A,
 						/*addback_clip_min*/
@@ -1603,25 +1530,12 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x41,
-=======
-						0x31,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
+						0x95,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
 						0x00F0,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x003C,
-						/*addback1*/
-						0x003C,
-						/*addback_clip_max*/
-						0x0008,
-						/*addback_clip_min*/
-						0xFFF8,
-=======
 						0x006C,
 						/*addback1*/
 						0x006C,
@@ -1629,7 +1543,6 @@
 						0x000A,
 						/*addback_clip_min*/
 						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					}
 				},
@@ -1638,17 +1551,6 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-					0x3C,
-					/*addback31*/
-					0x3C,
-					/*reserved*/
-					0x00,
-					/*addback_clip_max*/
-					0x0008,
-					/*addback_clip_min*/
-					0xFFF8,
-=======
 					0x7F,
 					/*addback31*/
 					0x7F,
@@ -1658,7 +1560,6 @@
 					0x0078,
 					/*addback_clip_min*/
 					0xFF88,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 				}
 			},
@@ -1669,21 +1570,12 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x38,
+						0x9C,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x0082,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
-						0x000C,
-						/*addback_clip_min*/
-						0xFFF4,
-=======
 						0x0062,
 						/*addback1*/
 						0x0062,
@@ -1691,27 +1583,20 @@
 						0x000A,
 						/*addback_clip_min*/
 						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x38,
+						0xA5,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
 						0x00AA,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x0040,
-						/*addback1*/
-						0x0040,
-=======
 						0x0062,
 						/*addback1*/
 						0x0062,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 						/*addback_clip_max*/
 						0x000C,
 						/*addback_clip_min*/
@@ -1721,25 +1606,12 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x46,
-=======
-						0x6A,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
+						0xBC,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
 						0x00C8,
 						/*addback0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
-=======
 						0x0058,
 						/*addback1*/
 						0x0058,
@@ -1747,7 +1619,6 @@
 						0x000C,
 						/*addback_clip_min*/
 						0xFFF4,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					}
 				},
@@ -1756,17 +1627,6 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-					0x40,
-					/*addback31*/
-					0x40,
-					/*reserved*/
-					0x00,
-					/*addback_clip_max*/
-					0x000A,
-					/*addback_clip_min*/
-					0xFFF6,
-=======
 					0x7F,
 					/*addback31*/
 					0x7F,
@@ -1776,7 +1636,6 @@
 					0x0078,
 					/*addback_clip_min*/
 					0xFF88,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 				}
 			}
@@ -1786,7 +1645,6 @@
 			/*[0x0]*/
 			{
 				/*flat_thresh_max0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x00A0,
 				/*flat_thresh_coef0*/
 				0x000A,
@@ -1798,25 +1656,11 @@
 				0x0154,
 				/*flat_thresh_coef2*/
 				0x0014,
-=======
-				0x0190,
-				/*flat_thresh_coef0*/
-				0x0014,
-				/*flat_thresh_max1*/
-				0x01F4,
-				/*flat_thresh_coef1*/
-				0x001E,
-				/*flat_thresh_max2*/
-				0x01F4,
-				/*flat_thresh_coef2*/
-				0x0032,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*[0x1]*/
 			{
 				/*flat_thresh_max0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x00B4,
 				/*flat_thresh_coef0*/
 				0x000A,
@@ -1828,25 +1672,11 @@
 				0x0168,
 				/*flat_thresh_coef2*/
 				0x0014,
-=======
-				0x0190,
-				/*flat_thresh_coef0*/
-				0x0014,
-				/*flat_thresh_max1*/
-				0x01F4,
-				/*flat_thresh_coef1*/
-				0x001E,
-				/*flat_thresh_max2*/
-				0x01F4,
-				/*flat_thresh_coef2*/
-				0x0032,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			},
 			/*[0x2]*/
 			{
 				/*flat_thresh_max0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x00B4,
 				/*flat_thresh_coef0*/
 				0x000A,
@@ -1858,19 +1688,6 @@
 				0x0154,
 				/*flat_thresh_coef2*/
 				0x0014,
-=======
-				0x0190,
-				/*flat_thresh_coef0*/
-				0x000A,
-				/*flat_thresh_max1*/
-				0x01F4,
-				/*flat_thresh_coef1*/
-				0x000A,
-				/*flat_thresh_max2*/
-				0x01F4,
-				/*flat_thresh_coef2*/
-				0x000A,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 			}
 		},
@@ -2009,7 +1826,6 @@
 		/*cal_radius_bypass*/
 		0x0000,
 		/*center_y*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0BB8,
 		/*center_x*/
 		0x0FA0,
@@ -2017,15 +1833,6 @@
 		0x0000,
 		/*radius_threshold*/
 		0x0AAE,
-=======
-		0x0990,
-		/*center_x*/
-		0x0CC0,
-		/*update_flat_thr_bypass*/
-		0x0000,
-		/*radius_threshold*/
-		0x08B7,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x00C8,
 		/*reserved1*/
@@ -2039,7 +1846,6 @@
 				/*[0x0]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2047,15 +1853,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x045B,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0064,
-					/*coef2*/
-					0xFFE2,
-					/*protect_gain_min*/
-					0x0180,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2064,7 +1861,6 @@
 				/*[0x1]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2072,15 +1868,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0000,
-=======
-					0x045B,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0064,
-					/*coef2*/
-					0xFFCE,
-					/*protect_gain_min*/
-					0x0180,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2089,7 +1876,6 @@
 				/*[0x2]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2097,15 +1883,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x045B,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0064,
-					/*coef2*/
-					0xFF9C,
-					/*protect_gain_min*/
-					0x0180,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2114,7 +1891,6 @@
 				/*[0x3]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x36B0,
 					/*radius_threshold_filter_ratio_factor*/
 					0x0400,
@@ -2122,15 +1898,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x0000,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0000,
-					/*coef2*/
-					0x0000,
-					/*protect_gain_min*/
-					0x0400,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2142,7 +1909,6 @@
 				/*[0x0]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2150,15 +1916,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x045B,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0064,
-					/*coef2*/
-					0xFFE2,
-					/*protect_gain_min*/
-					0x0200,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2167,7 +1924,6 @@
 				/*[0x1]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2175,15 +1931,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0000,
-=======
-					0x045B,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0064,
-					/*coef2*/
-					0xFFCE,
-					/*protect_gain_min*/
-					0x0200,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2192,7 +1939,6 @@
 				/*[0x2]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2200,15 +1946,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x045B,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0064,
-					/*coef2*/
-					0xFFCE,
-					/*protect_gain_min*/
-					0x0200,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2217,7 +1954,6 @@
 				/*[0x3]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x36B0,
 					/*radius_threshold_filter_ratio_factor*/
 					0x0400,
@@ -2225,15 +1961,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x0000,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0000,
-					/*coef2*/
-					0x0000,
-					/*protect_gain_min*/
-					0x0400,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2245,7 +1972,6 @@
 				/*[0x0]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2253,15 +1979,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x0000,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0000,
-					/*coef2*/
-					0x0000,
-					/*protect_gain_min*/
-					0x0400,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2270,7 +1987,6 @@
 				/*[0x1]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2278,15 +1994,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0000,
-=======
-					0x0000,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0000,
-					/*coef2*/
-					0x0000,
-					/*protect_gain_min*/
-					0x0400,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2295,7 +2002,6 @@
 				/*[0x2]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
@@ -2303,15 +2009,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x0000,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0000,
-					/*coef2*/
-					0x0000,
-					/*protect_gain_min*/
-					0x0400,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2320,7 +2017,6 @@
 				/*[0x3]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x36B0,
 					/*radius_threshold_filter_ratio_factor*/
 					0x0400,
@@ -2328,15 +2024,6 @@
 					0xFFEC,
 					/*protect_gain_min*/
 					0x0190,
-=======
-					0x0000,
-					/*radius_threshold_filter_ratio_factor*/
-					0x0000,
-					/*coef2*/
-					0x0000,
-					/*protect_gain_min*/
-					0x0400,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*reserved*/
 					{
 						0x0000,0x0000/*0-1*/
@@ -2408,11 +2095,7 @@
 }
 ,
 /*param3.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -2433,7 +2116,6 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x24,
 						/*flat_match_cnt*/
 						0x15,
@@ -2447,27 +2129,11 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x28,
-						/*flat_match_cnt*/
-						0x15,
-						/*flat_thresh*/
-						0x0050,
-						/*addback0*/
-						0x0058,
-						/*addback1*/
-						0x0058,
-						/*addback_clip_max*/
-						0x0008,
-						/*addback_clip_min*/
-						0xFFF8,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x20,
 						/*flat_match_cnt*/
 						0x15,
@@ -2481,27 +2147,11 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x28,
-						/*flat_match_cnt*/
-						0x15,
-						/*flat_thresh*/
-						0x0078,
-						/*addback0*/
-						0x0062,
-						/*addback1*/
-						0x0062,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x38,
 						/*flat_match_cnt*/
 						0x10,
@@ -2515,28 +2165,12 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x2C,
-						/*flat_match_cnt*/
-						0x10,
-						/*flat_thresh*/
-						0x00C8,
-						/*addback0*/
-						0x0062,
-						/*addback1*/
-						0x0062,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x44,
 					/*addback30*/
 					0x10,
@@ -2548,19 +2182,6 @@
 					0x0006,
 					/*addback_clip_min*/
 					0xFFFA,
-=======
-					0x60,
-					/*addback30*/
-					0x6C,
-					/*addback31*/
-					0x6C,
-					/*reserved*/
-					0x00,
-					/*addback_clip_max*/
-					0x000A,
-					/*addback_clip_min*/
-					0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 				}
 			},
@@ -2571,7 +2192,6 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x2A,
 						/*flat_match_cnt*/
 						0x15,
@@ -2585,27 +2205,11 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x2D,
-						/*flat_match_cnt*/
-						0x15,
-						/*flat_thresh*/
-						0x0064,
-						/*addback0*/
-						0x0058,
-						/*addback1*/
-						0x0058,
-						/*addback_clip_max*/
-						0x0008,
-						/*addback_clip_min*/
-						0xFFF8,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x28,
 						/*flat_match_cnt*/
 						0x15,
@@ -2619,27 +2223,11 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x2D,
-						/*flat_match_cnt*/
-						0x15,
-						/*flat_thresh*/
-						0x00AA,
-						/*addback0*/
-						0x006C,
-						/*addback1*/
-						0x006C,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x38,
 						/*flat_match_cnt*/
 						0x10,
@@ -2653,28 +2241,12 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x31,
-						/*flat_match_cnt*/
-						0x10,
-						/*flat_thresh*/
-						0x00F0,
-						/*addback0*/
-						0x006C,
-						/*addback1*/
-						0x006C,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x40,
 					/*addback30*/
 					0x14,
@@ -2686,19 +2258,6 @@
 					0x0006,
 					/*addback_clip_min*/
 					0xFFFA,
-=======
-					0xC0,
-					/*addback30*/
-					0x7F,
-					/*addback31*/
-					0x7F,
-					/*reserved*/
-					0x00,
-					/*addback_clip_max*/
-					0x0078,
-					/*addback_clip_min*/
-					0xFF88,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 				}
 			},
@@ -2709,7 +2268,6 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x2C,
 						/*flat_match_cnt*/
 						0x15,
@@ -2723,27 +2281,11 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x38,
-						/*flat_match_cnt*/
-						0x15,
-						/*flat_thresh*/
-						0x0082,
-						/*addback0*/
-						0x0062,
-						/*addback1*/
-						0x0062,
-						/*addback_clip_max*/
-						0x000A,
-						/*addback_clip_min*/
-						0xFFF6,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x2A,
 						/*flat_match_cnt*/
 						0x15,
@@ -2757,27 +2299,11 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x38,
-						/*flat_match_cnt*/
-						0x15,
-						/*flat_thresh*/
-						0x00AA,
-						/*addback0*/
-						0x0062,
-						/*addback1*/
-						0x0062,
-						/*addback_clip_max*/
-						0x000C,
-						/*addback_clip_min*/
-						0xFFF4,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 						0x38,
 						/*flat_match_cnt*/
 						0x10,
@@ -2791,28 +2317,12 @@
 						0x0006,
 						/*addback_clip_min*/
 						0xFFFA,
-=======
-						0x6A,
-						/*flat_match_cnt*/
-						0x10,
-						/*flat_thresh*/
-						0x00C8,
-						/*addback0*/
-						0x0058,
-						/*addback1*/
-						0x0058,
-						/*addback_clip_max*/
-						0x000C,
-						/*addback_clip_min*/
-						0xFFF4,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x40,
 					/*addback30*/
 					0x0E,
@@ -2824,19 +2334,6 @@
 					0x0006,
 					/*addback_clip_min*/
 					0xFFFA,
-=======
-					0xC0,
-					/*addback30*/
-					0x7F,
-					/*addback31*/
-					0x7F,
-					/*reserved*/
-					0x00,
-					/*addback_clip_max*/
-					0x0078,
-					/*addback_clip_min*/
-					0xFF88,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 
 				}
 			}
@@ -2846,7 +2343,6 @@
 			/*[0x0]*/
 			{
 				/*flat_thresh_max0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x00A0,
 				/*flat_thresh_coef0*/
 				0x000A,
@@ -2856,17 +2352,6 @@
 				0x0032,
 				/*flat_thresh_max2*/
 				0x0154,
-=======
-				0x008C,
-				/*flat_thresh_coef0*/
-				0x000A,
-				/*flat_thresh_max1*/
-				0x0168,
-				/*flat_thresh_coef1*/
-				0x0032,
-				/*flat_thresh_max2*/
-				0x0140,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*flat_thresh_coef2*/
 				0x0014,
 
@@ -2874,7 +2359,6 @@
 			/*[0x1]*/
 			{
 				/*flat_thresh_max0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x00B4,
 				/*flat_thresh_coef0*/
 				0x000A,
@@ -2884,17 +2368,6 @@
 				0x0028,
 				/*flat_thresh_max2*/
 				0x0168,
-=======
-				0x00A0,
-				/*flat_thresh_coef0*/
-				0x000A,
-				/*flat_thresh_max1*/
-				0x017C,
-				/*flat_thresh_coef1*/
-				0x0028,
-				/*flat_thresh_max2*/
-				0x0154,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*flat_thresh_coef2*/
 				0x0014,
 
@@ -2902,7 +2375,6 @@
 			/*[0x2]*/
 			{
 				/*flat_thresh_max0*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x00B4,
 				/*flat_thresh_coef0*/
 				0x000A,
@@ -2912,17 +2384,6 @@
 				0x0028,
 				/*flat_thresh_max2*/
 				0x0154,
-=======
-				0x00A0,
-				/*flat_thresh_coef0*/
-				0x000A,
-				/*flat_thresh_max1*/
-				0x01CC,
-				/*flat_thresh_coef1*/
-				0x0028,
-				/*flat_thresh_max2*/
-				0x0140,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*flat_thresh_coef2*/
 				0x0014,
 
@@ -2933,11 +2394,7 @@
 			/*[0x0]*/
 			{
 				/*mode_bypass*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 				0x0001,
-=======
-				0x0000,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 				/*reserved*/
 				0x0000,
 				/*da*/
@@ -3067,7 +2524,6 @@
 		/*cal_radius_bypass*/
 		0x0000,
 		/*center_y*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 		0x0BB8,
 		/*center_x*/
 		0x0FA0,
@@ -3075,15 +2531,6 @@
 		0x0000,
 		/*radius_threshold*/
 		0x0AAE,
-=======
-		0x0990,
-		/*center_x*/
-		0x0CC0,
-		/*update_flat_thr_bypass*/
-		0x0000,
-		/*radius_threshold*/
-		0x08B7,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*radius_threshold_factor*/
 		0x00C8,
 		/*reserved1*/
@@ -3097,11 +2544,7 @@
 				/*[0x0]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3116,11 +2559,7 @@
 				/*[0x1]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3135,11 +2574,7 @@
 				/*[0x2]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3154,11 +2589,7 @@
 				/*[0x3]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x36B0,
-=======
-					0x2CA0,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x0400,
 					/*coef2*/
@@ -3176,11 +2607,7 @@
 				/*[0x0]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3195,11 +2622,7 @@
 				/*[0x1]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3214,11 +2637,7 @@
 				/*[0x2]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3233,11 +2652,7 @@
 				/*[0x3]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x36B0,
-=======
-					0x2CA0,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x0400,
 					/*coef2*/
@@ -3255,11 +2670,7 @@
 				/*[0x0]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3274,11 +2685,7 @@
 				/*[0x1]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3293,11 +2700,7 @@
 				/*[0x2]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x3567,
-=======
-					0x2B94,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x03E8,
 					/*coef2*/
@@ -3312,11 +2715,7 @@
 				/*[0x3]*/
 				{
 					/*radius_threshold_filter_ratio*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 					0x36B0,
-=======
-					0x2CA0,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 					/*radius_threshold_filter_ratio_factor*/
 					0x0400,
 					/*coef2*/
@@ -3394,11 +2793,7 @@
 }
 ,
 /*param4.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -4096,11 +3491,7 @@
 }
 ,
 /*param5.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -4798,11 +4189,7 @@
 }
 ,
 /*param6.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -5500,11 +4887,7 @@
 }
 ,
 /*param7.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -6202,11 +5585,7 @@
 }
 ,
 /*param8.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -6904,11 +6283,7 @@
 }
 ,
 /*param9.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -7606,11 +6981,7 @@
 }
 ,
 /*param10.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -8308,11 +7679,7 @@
 }
 ,
 /*param11.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -9010,11 +8377,7 @@
 }
 ,
 /*param12.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -9712,11 +9075,7 @@
 }
 ,
 /*param13.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -10414,11 +9773,7 @@
 }
 ,
 /*param14.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -11116,11 +10471,7 @@
 }
 ,
 /*param15.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -11818,11 +11169,7 @@
 }
 ,
 /*param16.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -12520,11 +11867,7 @@
 }
 ,
 /*param17.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -13222,11 +12565,7 @@
 }
 ,
 /*param18.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -13924,11 +13263,7 @@
 }
 ,
 /*param19.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -14626,11 +13961,7 @@
 }
 ,
 /*param20.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -15328,11 +14659,7 @@
 }
 ,
 /*param21.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -16030,11 +15357,7 @@
 }
 ,
 /*param22.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -16732,11 +16055,7 @@
 }
 ,
 /*param23.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
@@ -17434,11 +16753,7 @@
 }
 ,
 /*param24.&BasePoint=1&*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
 /*sharkl5pro_sensor_nlm_level*/
-=======
-/*sharkl6_sensor_nlm_level*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 {
 	/*first_lum*/
 	{
