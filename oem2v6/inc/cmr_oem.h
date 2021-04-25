@@ -83,7 +83,10 @@ struct sensor_context {
     EXIF_SPEC_PIC_TAKING_COND_T exif_info;
     struct sensor_ex_info cur_sns_ex_info;
     struct sensor_4in1_info info_4in1;
+    struct img_otp_data warp_otp_data;
+    struct img_size cur_sn_size;
 };
+
 struct prev_threednr_info {
     struct img_frm frm_preview;
     struct img_frm frm_smallpreview;

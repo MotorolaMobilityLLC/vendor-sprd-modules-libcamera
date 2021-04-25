@@ -29,6 +29,24 @@ struct swa_hdr_param {
 
 
 
+/*========= for ultra-wide WARP  ========*/
+struct isp_warp_info {
+	void *otp_data;
+	uint32_t otp_size;
+
+	uint32_t cap_tag; /* 1 : capture; 0: non-capture */
+	uint32_t binning_factor;
+
+	struct img_size src_size;
+	struct img_rect src_crop;
+	struct img_rect dst_crop;
+	struct img_size in_size;
+	struct img_size out_size;
+};
+
+/*========= for ultra-wide WARP end ========*/
+
+
 /*========= for MFNR ========*/
 
 /* sw 3DNR param */
@@ -353,6 +371,7 @@ struct swa_common_info {
 struct swa_frame_param {
 	struct swa_common_info common_param;
 	struct swa_hdr_param hdr_param;
+	struct isp_warp_info warp_info;
 	struct swa_filter_info filter_param;
 	struct swa_watermark_info wm_param;
 	struct isp_ynrs_info ynrs_info;
