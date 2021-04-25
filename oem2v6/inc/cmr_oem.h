@@ -463,8 +463,9 @@ struct camera_context {
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
     cmr_int lcd_flash_highlight;
-    cmr_u8 backlight_brightness;
-    cmr_u8 backup_brightness;
+    cmr_u32 backlight_brightness;
+    cmr_u32 max_backlight_brightness;
+    cmr_u32 backup_brightness;
     cmr_u16 color_temp;
     cmr_u32 bg_color;
     enhance_device_t *enhance;
