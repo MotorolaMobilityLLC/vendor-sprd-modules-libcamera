@@ -6501,6 +6501,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 	ae_if_cts_params(cxt);
 	cxt->cur_status.adv_param.touch_hold_flag = 0;
+	cxt->cur_status.adv_param.sync_stable = cxt->sync_stable;
 	if (cxt->touch_hold_cnt >0){
 		if (cxt->touch_hold_flag == 0){
 			cxt->touch_hold_cnt--;
