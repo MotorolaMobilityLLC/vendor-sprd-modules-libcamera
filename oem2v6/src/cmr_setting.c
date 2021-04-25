@@ -3290,6 +3290,7 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
     cmr_uint flash_hw_status = 0;
     cmr_uint image_format = 0;
     struct setting_init_in *init_in = &cpt->init_in;
+    struct common_isp_cmd_param isp_param;
     enum sprd_flash_status ctrl_flash_status = 0;
     enum setting_flash_status setting_flash_status = 0;
 
@@ -3306,6 +3307,8 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
         (setting_flash_status == SETTING_AF_FLASH_PRE_LIGHTING)) {
         ret = setting_flash_handle(cpt, parm, flash_mode);
     }
+    cmr_bzero(&isp_param, sizeof(isp_param));
+    isp_param.camera_id = parm->camera_id;
 
     if (setting_is_need_flash(cpt, parm) ||
         (FLASH_NEED_QUIT == cpt->flash_need_quit &&
@@ -3339,6 +3342,12 @@ static cmr_int setting_ctrl_flash(struct setting_component *cpt,
                          (time2 - time1) / 1000000);
 
                 if (FLASH_NEED_QUIT == cpt->flash_need_quit) {
+                    CMR_LOGI("flash need quit!");
+                    isp_param.flash_notice.mode = (enum isp_flash_mode) ISP_FLASH_PRE_AFTER;
+                    if (init_in->setting_isp_ioctl) {
+                        ret = (*init_in->setting_isp_ioctl)(
+                              init_in->oem_handle, COM_ISP_SET_FLASH_NOTICE, &isp_param);
+                    }
                     goto EXIT;
                 }
 
