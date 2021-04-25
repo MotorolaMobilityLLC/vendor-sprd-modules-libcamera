@@ -1644,7 +1644,7 @@ cmr_int camera_write_sysfs_file(const char *filename, cmr_u32 value) {
     return ret;
 }
 
-cmr_int camera_read_sysfs_file(const char *filename, cmr_u8 *value) {
+cmr_int camera_read_sysfs_file(const char *filename, cmr_u32 *value) {
     int32_t bytes = 0;
     int ret = 0;
     int fd;
@@ -1722,7 +1722,7 @@ cmr_int camera_front_lcd_enhance_module_init(cmr_handle oem_handle) {
 
 cmr_int camera_front_lcd_enhance_module_deinit(cmr_handle oem_handle) {
     struct camera_context *cxt = (struct camera_context *)oem_handle;
-    cmr_u8 flip = 0;
+    cmr_u32 flip = 0;
     const char *brightness = "/sys/class/backlight/sprd_backlight/brightness";
     const char *refresh = "/sys/class/display/dispc0/refresh";
     const char *disable_flip = "/sys/class/display/dispc0/disable_flip";
@@ -1774,7 +1774,13 @@ cmr_int camera_front_lcd_flash_callback(struct camera_context *cxt,
     const char *brightness = "/sys/class/backlight/sprd_backlight/brightness";
     const char *refresh = "/sys/class/display/dispc0/refresh";
     const char *disable_flip = "/sys/class/display/dispc0/disable_flip";
-    cmr_u8 flip = 0;
+    const char *max_brightness = "/sys/class/backlight/sprd_backlight/max_brightness";
+    cmr_u32 flip = 0;
+    float ratio = 0;
+    camera_read_sysfs_file(max_brightness, &(cxt->max_backlight_brightness));
+    ratio = cxt->max_backlight_brightness/(float)255;
+    cxt->backlight_brightness =
+        cxt->backlight_brightness ? cxt->backlight_brightness*ratio : cxt->max_backlight_brightness;
 
     switch (flash_mode) {
     case FLASH_OPEN:
@@ -1785,10 +1791,9 @@ cmr_int camera_front_lcd_flash_callback(struct camera_context *cxt,
         camera_write_sysfs_file(bg_color, cxt->bg_color);
 
         camera_read_sysfs_file(brightness, &(cxt->backup_brightness));
-        CMR_LOGI("backup_brightness:%d", cxt->backup_brightness);
+        CMR_LOGI("backup_brightness:%d, backlight_brightness:%d, max_backlight_brightness:%d, ratio : %f",
+            cxt->backup_brightness, cxt->backlight_brightness, cxt->max_backlight_brightness, ratio);
 
-        cxt->backlight_brightness =
-            cxt->backlight_brightness ? cxt->backlight_brightness : 0xff;
         camera_write_sysfs_file(brightness, cxt->backlight_brightness);
 
         break;
@@ -1807,7 +1812,6 @@ cmr_int camera_front_lcd_flash_callback(struct camera_context *cxt,
 
         break;
     case FLASH_CLOSE_AFTER_OPEN:
-
         camera_read_sysfs_file(disable_flip, &flip);
         CMR_LOGI("lcd_flash_highlight %d, disable_flip %d", cxt->lcd_flash_highlight, flip);
 
