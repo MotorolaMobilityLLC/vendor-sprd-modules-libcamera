@@ -148,6 +148,7 @@ struct ae_adv_param {
 	void *smart_gamma_param;/*smart out gamma param*/
 
 	cmr_u32 touch_hold_flag;
+	cmr_u8 sync_stable;
 };
 
 struct ae_lib_calc_in {
