@@ -63,19 +63,21 @@ enum ips_req_status {
 struct ipmpro_type {
 	uint32_t enable;
 	uint32_t multi;
+	uint32_t out_is_in; /* output buffer is same as input buffer for single frame process */
 	const char *keywd;
 };
 
 static struct ipmpro_type ipmproc_list[IPS_TYPE_MAX] = {
-	[IPS_TYPE_HDR] = { 1, 0, "hdr", },
-	[IPS_TYPE_MFNR] = { 1, 0, "mfnr", },
-	[IPS_TYPE_CNR] = { 1, 0,  "cnr", },
-	[IPS_TYPE_DRE] = { 1, 0, "dre", },
-	[IPS_TYPE_DREPRO] = { 0, 0, "drepro", },
-	[IPS_TYPE_FILTER] = { 1, 0, "filter", },
-	[IPS_TYPE_FB] = { 1, 0, "fb", },
-	[IPS_TYPE_WATERMARK] = { 1, 1, "wm", },
-	[IPS_TYPE_JPEG] = { 1, 0, "jpeg", },
+	[IPS_TYPE_HDR] =         { 1, 0, 0, "hdr", },
+	[IPS_TYPE_MFNR] =        { 1, 0, 0, "mfnr", },
+	[IPS_TYPE_UWARP] =       { 1, 0, 0, "uwarp", },
+	[IPS_TYPE_CNR] =         { 1, 0, 1, "cnr", },
+	[IPS_TYPE_DRE] =         { 1, 0, 1, "dre", },
+	[IPS_TYPE_DREPRO] =      { 0, 0, 1, "drepro", },
+	[IPS_TYPE_FILTER] =      { 1, 0, 1, "filter", },
+	[IPS_TYPE_FB] =          { 1, 0, 1, "fb", },
+	[IPS_TYPE_WATERMARK] =   { 1, 1, 1, "wm", },
+	[IPS_TYPE_JPEG] =        { 1, 0, 0, "jpeg", },
 };
 
 struct ipmpro_handle_base {
@@ -84,6 +86,7 @@ struct ipmpro_handle_base {
 	cmr_s32 get_flag;
 	cmr_s32 swa_handle_size;
 	cmr_u32 multi_support;
+	cmr_u32 need_outbuf;
 
 	cmr_handle lib_handle;
 	pthread_mutex_t glock;
@@ -210,6 +213,7 @@ static cmr_int init_ipmpro_base(struct ipmpro_type *in, struct ipmpro_handle_bas
 
 	cur->lib_handle = sw_handle;
 	cur->multi_support = in->multi;
+	cur->need_outbuf = in->out_is_in ? 0 : 1;
 	cur->version = 0;
 	cur->inited = 1;
 	pthread_mutex_init(&cur->glock, NULL);
@@ -647,7 +651,7 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	int iret = 0, i, err = 0;
-	struct img_frm *dst, *src;
+	struct img_frm *dst, *src, buf;
 	struct ipmpro_node *cur_proc = req->cur_proc;
 	struct ipmpro_handle_base *ipm_base = cur_proc->ipm_base;
 	struct swa_frame_param *frm_param;
@@ -660,9 +664,9 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 	src = &req->frm_in[req->frame_cnt];
 	dst = &req->frm_out[req->frame_cnt];
 	*dst = *src;
-
-	CMR_LOGD("req_id %d, param %p, input frame %d,  fd 0x%x, addr 0x%lx\n",
-		req->req_in.request_id, frm_param, req->frame_cnt, dst->fd, dst->addr_vir.addr_y);
+	CMR_LOGD("req_id %d, param %p, input frame %d,  fd 0x%x, addr 0x%lx, ghand %p\n",
+		req->req_in.request_id, frm_param, req->frame_cnt,
+		dst->fd, dst->addr_vir.addr_y, dst->gpu_handle);
 
 	if (check_skip(cur_proc, frm_param)) {
 		CMR_LOGD("proc type %d, skip\n", cur_proc->type);
@@ -706,24 +710,53 @@ static cmr_int ipmpro_common(struct ips_context *ips_ctx,
 		goto proc_done;
 	}
 
+	if (cur_proc->ipm_base->need_outbuf) {
+		uint32_t offset;
+		offset = src->size.width * src->size.height;
+		buf.buf_size = src->size.width * src->size.height * 3 / 2;
+		buf.fd = 0;
+		ret = req->cb(req->client_data, &req->req_in, IPS_CB_GET_BUF, &buf);
+		if (ret || buf.fd <= 0) {
+			CMR_LOGD("fail to get free buffer\n");
+			goto unlock;
+		}
+		dst = &req->frm_out[req->frame_cnt];
+		dst->fd = buf.fd;
+		dst->gpu_handle = buf.gpu_handle;
+		dst->addr_vir.addr_y = buf.addr_vir.addr_y;
+		dst->addr_vir.addr_u = buf.addr_vir.addr_y + offset;
+		dst->addr_phy.addr_y = 0;
+		dst->addr_phy.addr_u = offset;
+	}
+
 	memset(&in, 0, sizeof(struct swa_frames_inout));
 	memset(&out, 0, sizeof(struct swa_frames_inout));
 
 	src = &req->frm_in[req->frame_cnt];
 	in.frame_num = 1;
 	in.frms[0].fd = src->fd;
+	in.frms[0].gpu_handle = src->gpu_handle;
 	in.frms[0].addr_vir[0] = src->addr_vir.addr_y;
 	in.frms[0].addr_vir[1] = src->addr_vir.addr_u;
 	in.frms[0].addr_vir[2] = src->addr_vir.addr_v;
 	in.frms[0].size.width = src->size.width;
 	in.frms[0].size.height = src->size.height;
 
+	CMR_LOGD("in fd=0x%x, ghand %p, vaddr 0x%lx size %d %d\n", src->fd,
+		src->gpu_handle, src->addr_vir.addr_y, src->size.width, src->size.height);
+
 	src = &req->frm_out[req->frame_cnt];
 	out.frame_num = 1;
 	out.frms[0].fd = src->fd;
+	out.frms[0].gpu_handle = src->gpu_handle;
 	out.frms[0].addr_vir[0] = src->addr_vir.addr_y;
 	out.frms[0].addr_vir[1] = src->addr_vir.addr_u;
 	out.frms[0].addr_vir[2] = src->addr_vir.addr_v;
+	out.frms[0].size.width = src->size.width;
+	out.frms[0].size.height = src->size.height;
+	CMR_LOGD("out fd=0x%x, ghand %p, vaddr 0x%lx size %d %d\n", src->fd,
+		src->gpu_handle, src->addr_vir.addr_y, src->size.width, src->size.height);
+
 
 	iret = ipm_base->swa_process(cur_proc->swa_handle, &in, &out, frame->reserved);
 
@@ -740,6 +773,9 @@ proc_done:
 			err |= 1;
 		}
 	}
+
+	if (cur_proc->ipm_base->need_outbuf)
+		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[req->frame_cnt]);
 
 	if (!err  &&  (dump_pic & 1)) {
 		FILE *fp;
@@ -760,6 +796,7 @@ proc_done:
 		}
 	}
 
+unlock:
 	if (ipm_base->multi_support == 0)
 		pthread_mutex_unlock(&ipm_base->glock);
 
@@ -1215,6 +1252,7 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 		case IPS_TYPE_MFNR:
 			ipmpro_mfnr(ips_ctx, req, frame);
 			break;
+		case IPS_TYPE_UWARP:
 		case IPS_TYPE_CNR:
 		case IPS_TYPE_DRE:
 		case IPS_TYPE_DREPRO:

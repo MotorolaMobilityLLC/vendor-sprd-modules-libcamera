@@ -1962,6 +1962,30 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 	com_info->flip_on = cxt->jpeg_cxt.param.flip;
 	com_info->is_front = (cxt->camera_id == 1);
 
+	/* get ultra-wide warp info */
+	if (cxt->is_ultra_wide) {
+		struct isp_warp_info *warp = &frm_param->warp_info;
+		struct sprd_img_path_rect sn_trim;
+		struct cmr_zoom zoom_factor;
+
+		warp->otp_data = cxt->sn_cxt.warp_otp_data.otp_ptr;
+		warp->otp_size = cxt->sn_cxt.warp_otp_data.otp_size;
+		warp->cap_tag = 1;
+		warp->binning_factor = 1;
+
+		cmr_grab_get_dcam_path_trim(cxt->grab_cxt.grab_handle, &sn_trim);
+		cmr_preview_get_zoom_factor(cxt->prev_cxt.preview_handle,
+				cxt->camera_id, &zoom_factor);
+		warp->src_size = cxt->sn_cxt.cur_sn_size;
+		warp->src_crop.start_x = sn_trim.trim_valid_rect.x;
+		warp->src_crop.start_y = sn_trim.trim_valid_rect.y;
+		warp->src_crop.width = sn_trim.trim_valid_rect.w;
+		warp->src_crop.height = sn_trim.trim_valid_rect.h;
+		warp->dst_crop = zoom_factor.zoom_setting.zoom_info.crop_region;
+		warp->in_size = cxt->snp_cxt.request_size;
+		warp->out_size = cxt->snp_cxt.request_size;
+	}
+
 	/* get filter param */
 	frm_param->filter_param.version = 2;
 	frm_param->filter_param.filter_type = cxt->snp_cxt.filter_type;
@@ -12247,6 +12271,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     out_ptr->is_vendor_hdr = cxt->is_vendor_hdr;
     out_ptr->is_pipviv_mode = cxt->is_pipviv_mode;
     out_ptr->is_3dcalibration_mode = cxt->is_3dcalibration_mode;
+    out_ptr->is_ultrawide = cxt->is_ultra_wide;
     setting_param.camera_id = cxt->camera_id;
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -14630,8 +14655,8 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
                     cxt->zoom_ratio =
                         zoom_factor.zoom_setting.zoom_info.prev_aspect_ratio;
                     CMR_LOGD(
-                        "id=%d,zoom_factor_changed=%d,zoom=%f,orgZoom=%f,prev "
-                        "%d,cap %d, video %d",
+                        "id=%d, zoom_factor_changed=%d, zoom=%f, orgZoom=%f, "
+                        "prev %d, cap %d, video %d",
                         cxt->camera_id, zoom_factor_changed,
                         zoom_param->zoom_info.prev_aspect_ratio,
                         zoom_factor.zoom_setting.zoom_info.prev_aspect_ratio,
