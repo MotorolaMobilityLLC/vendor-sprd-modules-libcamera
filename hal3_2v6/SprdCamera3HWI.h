@@ -339,6 +339,8 @@ class SprdCamera3HWI {
     cam3_stream_configuration_t mStreamConfiguration;
     bool mZslIpsEnable;
     uint32_t mThumbFrameNum;
+
+    bool mIsLastVideoOn;
 };
 
 }; // namespace sprdcamera
