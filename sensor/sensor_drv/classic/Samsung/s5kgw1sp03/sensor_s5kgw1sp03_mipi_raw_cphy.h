@@ -8451,7 +8451,7 @@ static struct sensor_module_info s_s5kgw1sp03_module_info_tab[VENDOR_NUM] = {
 
                      .avdd_val = SENSOR_AVDD_2800MV,
                      .iovdd_val = SENSOR_AVDD_1800MV,
-                     .dvdd_val = SENSOR_AVDD_1000MV,
+                     .dvdd_val = SENSOR_AVDD_1100MV,
 
                      .image_pattern = SENSOR_IMAGE_PATTERN_RAWRGB_GB,//GR
 
