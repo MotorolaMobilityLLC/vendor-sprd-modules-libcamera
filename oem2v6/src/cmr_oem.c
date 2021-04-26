@@ -15434,6 +15434,9 @@ cmr_int camera_snapshot_set_ev(cmr_handle oem_handle, cmr_u32 value,
         float ev[7];
         char ch_ev[PROPERTY_VALUE_MAX];
 
+        //lock or unlock af
+        isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_AF_BYPASS,
+                  (void *)&value);
         //lock,unlock nr block by smart, used like hdr interface
         // lock with ev_adj start, but unlock later by then got all frame
         if (value) { //enable ev_adj
