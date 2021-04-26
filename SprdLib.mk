@@ -68,7 +68,7 @@ LOCAL_SHARED_LIBRARIES += libsprdbokeh libbokeh_gaussian libbokeh_gaussian_cap l
 endif
 
 ifeq ($(strip $(TARGET_BOARD_PORTRAIT_SCENE_SUPPORT)),true)
-LOCAL_SHARED_LIBRARIES += libsprdportraitsceneadapter libportrait_scene_prev libportrait_scene_cap libSegLiteXNNC libTfliteWrapper libSegLite
+LOCAL_SHARED_LIBRARIES += libsprdportraitsceneadapter libportrait_scene_prev libportrait_scene_cap
 endif
 
 ifeq ($(strip $(TARGET_BOARD_STEREOVIDEO_SUPPORT)),true)
