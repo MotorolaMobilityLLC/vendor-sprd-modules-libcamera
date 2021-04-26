@@ -22,7 +22,6 @@
 
 #include "sensor_raw.h"
 
-
 #define _NR_MAP_PARAM_
 #include "isp_nr.h"
 #undef _NR_MAP_PARAM_
@@ -45,7 +44,7 @@
 /************************************************************************/
 
 
-/* IspToolVersion=R1.17.0501 */
+/* IspToolVersion=R1.21.1601 */
 
 
 /* Capture Sizes:
@@ -99,13 +98,7 @@ static struct sensor_raw_ioctrl s_gc5035_arb_ioctrl=
 };
 
 
-/********************************************************************************
- * static struct sensor_version_info s_****_version_info, **** is the sensor name .
- * Param[2]/ Param[3] are ASCII values of the sensor name string ****.
- * Please modify the sensor name by using rename sensor function of the ISP TOOL, 
- * then the Param[2]/ Param[3] are changed accordingly.
- * NO modifying manually.
-********************************************************************************/
+/************************************************************************/
 
 
 static struct sensor_version_info s_gc5035_arb_version_info=
