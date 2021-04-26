@@ -3,7 +3,13 @@
 #include <cutils/properties.h>
 #include <string.h>
 
+#if defined DEFAULT_RUNTYPE_VDSP
 static enum camalg_run_type g_run_type = SPRD_CAMALG_RUN_TYPE_VDSP;
+#elif defined DEFAULT_RUNTYPE_NPU
+static enum camalg_run_type g_run_type = SPRD_CAMALG_RUN_TYPE_NPU;
+#else
+static enum camalg_run_type g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;	
+#endif
 
 int sprd_portrait_scene_adpt_deinit(void *handle, sprd_portrait_scene_channel_t ch){
     int rc = -1;
@@ -43,8 +49,8 @@ void *sprd_portrait_scene_adpt_init(sprd_portrait_scene_init_t *_param){
     _param->SmoothWinSize=5;
 
     property_get("persist.vendor.cam.PScene.run_type", prop_value, "");
-    if(!(strcmp("cpu",prop_value)))
-       g_run_type = SPRD_CAMALG_RUN_TYPE_CPU;
+    if(!(strcmp("npu",prop_value)))
+       g_run_type = SPRD_CAMALG_RUN_TYPE_NPU;
     else if(!(strcmp("vdsp", prop_value)))
        g_run_type = SPRD_CAMALG_RUN_TYPE_VDSP;
  
@@ -59,9 +65,14 @@ void *sprd_portrait_scene_adpt_init(sprd_portrait_scene_init_t *_param){
         }
     }
     if (_param->ch == SPRD_PORTRAIT_SCENE_PREVIEW) {
+		if (g_run_type == SPRD_CAMALG_RUN_TYPE_NPU) {
+           _param->run_type=SPRD_CAMALG_RUN_TYPE_NPU;
+        } else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP) {
+           _param->run_type=SPRD_CAMALG_RUN_TYPE_VDSP;
+        } 
 		rc=unisoc_portrait_scene_preview_init(&_param->handle, _param);
          PScene_LOGI("preview init rc%d", rc);
-        }
+    }
     else if (_param->ch == SPRD_PORTRAIT_SCENE_CAPTURE) {
         rc=unisoc_portrait_scene_capture_init(&_param->handle, _param);
          PScene_LOGI("capture init rc%d", rc);

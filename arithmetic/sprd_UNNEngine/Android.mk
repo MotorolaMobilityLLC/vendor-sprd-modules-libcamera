@@ -6,7 +6,7 @@ else
 NPU_SUPPORT := false
 endif
 
-ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512), )
+ifneq ($(filter $(TARGET_BOARD_PLATFORM), ums512 ums9620), )
 VDSP_SUPPORT := true
 else
 VDSP_SUPPORT := false
