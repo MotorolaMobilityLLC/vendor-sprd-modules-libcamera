@@ -19,7 +19,7 @@
 cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, void *param2)
 {
 	cmr_s32 rtn = ISP_SUCCESS;
-	cmr_u32 i;
+	cmr_u32 i = 0, j = 0;
 	cmr_u32 max_len = 0;
 	intptr_t addr = 0, index = 0;
 	struct isp_size *img_size_ptr = (struct isp_size *)param2;
@@ -98,21 +98,25 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 			(void *)dst_ptr->map_tab[index].param_addr,
 			dst_ptr->map_tab[index].len);
 
-	//memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
-	//_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, dst_ptr->map_tab[index].grid);
+	memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
+	memset((void *)dst_ptr->weight_tab_y, 0, sizeof(dst_ptr->weight_tab_y));
+	_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, dst_ptr->map_tab[index].grid_x);
+	_pm_generate_bicubic_weight_table(dst_ptr->weight_tab_y, dst_ptr->map_tab[index].grid_y);
 
 	dst_ptr->cur.grid_tab_addr = (cmr_u64)dst_ptr->final_lsc_param.data_ptr;
 	dst_ptr->cur.gridtab_len = dst_ptr->map_tab[index].gain_w * dst_ptr->map_tab[index].gain_h * 4 * sizeof(cmr_u16);
 
-	//dst_ptr->cur.weight_tab_addr = (cmr_u64)dst_ptr->weight_tab;
-	//dst_ptr->cur.weight_num =  (dst_ptr->map_tab[index].grid / 2 + 1) * 3 * sizeof(cmr_s16);
-	dst_ptr->cur.grid_width = dst_ptr->map_tab[index].grid_x;
+	dst_ptr->cur.weight_tab_addr_x = (cmr_u64)dst_ptr->weight_tab;
+	dst_ptr->cur.weight_tab_addr_y = (cmr_u64)dst_ptr->weight_tab_y;
+	dst_ptr->cur.weight_num_x =  (dst_ptr->map_tab[index].grid_x / 2 + 1) * 3 * sizeof(cmr_s16);
+	dst_ptr->cur.weight_num_y =  (dst_ptr->map_tab[index].grid_y / 2 + 1) * 3 * sizeof(cmr_s16);
+	dst_ptr->cur.grid_width_x = dst_ptr->map_tab[index].grid_x;
+	dst_ptr->cur.grid_width_y = dst_ptr->map_tab[index].grid_y;
 
-	/* grid_x_num = Ceiling(image_width/2/grid_width, 1) +1 +2; */
-	/* grid_y_num = Ceiling(image_height/2/grid_width, 1) +1 +2; */
-	i = dst_ptr->cur.grid_width<<1;
+	i = dst_ptr->cur.grid_width_x << 1;
+	j = dst_ptr->cur.grid_width_y << 1;
 	dst_ptr->cur.grid_x_num = (img_size_ptr->w + i - 1) /i + 1 + 2;
-	dst_ptr->cur.grid_y_num = (img_size_ptr->h + i - 1) /i + 1 + 2;
+	dst_ptr->cur.grid_y_num = (img_size_ptr->h + j - 1) /j + 1 + 2;
 	dst_ptr->cur.grid_num_t = dst_ptr->cur.grid_x_num * dst_ptr->cur.grid_y_num;
 	dst_ptr->resolution = *img_size_ptr;
 
@@ -125,15 +129,14 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 	dst_ptr->lsc_info.len = dst_ptr->final_lsc_param.size;
 	dst_ptr->lsc_info.param_ptr = dst_ptr->final_lsc_param.param_ptr;
 
-	//dst_ptr->cur.bypass = header_ptr->bypass;
-	dst_ptr->cur.bypass = 1;
+	dst_ptr->cur.bypass = header_ptr->bypass;
 
 	dst_ptr->cur.update_all = 1;
 	header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 
-	ISP_LOGD("image size %d %d, grid %d, %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
+	ISP_LOGD("image size %d %d, grid %d, %d, %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
 		dst_ptr->resolution.w, dst_ptr->resolution.h,
-		dst_ptr->cur.grid_width, dst_ptr->cur.gridtab_len,
+		dst_ptr->cur.grid_width_x, dst_ptr->cur.grid_width_y, dst_ptr->cur.gridtab_len,
 		dst_ptr->lsc_info.gain_w, dst_ptr->lsc_info.gain_h,
 		dst_ptr->cur.grid_x_num, dst_ptr->cur.grid_y_num, dst_ptr);
 
@@ -174,20 +177,24 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 			cmr_u32 lsc_grid_y = adaptive_size_info[3];
 			struct isp_2d_lsc_param *dst_ptr = dst_lnc_ptr;
 
-			ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_grid_x=%d, new_grid_y=%d, orig=%d, hdr %p\n",
-						lsc_grid_x, lsc_grid_y, dst_lnc_ptr->cur.grid_width, dst_ptr);
+			ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_grid_x=%d, new_grid_y=%d, orig=%d %d, hdr %p\n",
+						lsc_grid_x, lsc_grid_y, dst_lnc_ptr->cur.grid_width_x, dst_lnc_ptr->cur.grid_width_y, dst_ptr);
 
-			if (lsc_grid_x != dst_lnc_ptr->cur.grid_width ||
+			if (lsc_grid_x != dst_lnc_ptr->cur.grid_width_x ||
+				lsc_grid_y != dst_lnc_ptr->cur.grid_width_y ||
 				dst_ptr->resolution.w != cur_resolution_w ||
 				dst_ptr->resolution.h != cur_resolution_h) {
 				ISP_LOGD("LSC_NORMAL ISP_PM_BLK_LSC_UPDATE_GRID, new_resolution[%d,%d], orig[%d,%d]",
 						cur_resolution_w, cur_resolution_h,
 						dst_ptr->resolution.w, dst_ptr->resolution.h);
 
-				//memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
-				//_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, lsc_grid);
+				memset((void *)dst_ptr->weight_tab, 0, sizeof(dst_ptr->weight_tab));
+				memset((void *)dst_ptr->weight_tab_y, 0, sizeof(dst_ptr->weight_tab_y));
+				_pm_generate_bicubic_weight_table(dst_ptr->weight_tab, lsc_grid_x);
+				_pm_generate_bicubic_weight_table(dst_ptr->weight_tab_y, lsc_grid_x);
 
-				//dst_ptr->cur.weight_tab_addr = (cmr_u64)dst_ptr->weight_tab;
+				dst_ptr->cur.weight_tab_addr_x = (cmr_u64)dst_ptr->weight_tab;
+				dst_ptr->cur.weight_tab_addr_y = (cmr_u64)dst_ptr->weight_tab_y;
 
 				dst_ptr->lsc_info.grid_x = lsc_grid_x;
 				dst_ptr->lsc_info.grid_y = lsc_grid_y;
@@ -196,21 +203,23 @@ cmr_s32 _pm_2d_lsc_set_param(void *lnc_param, cmr_u32 cmd, void *param_ptr0, voi
 				dst_ptr->lsc_info.gain_w = _pm_get_lens_grid_pitch(lsc_grid_x, dst_ptr->resolution.w, ISP_ONE);
 				dst_ptr->lsc_info.gain_h = _pm_get_lens_grid_pitch(lsc_grid_y, dst_ptr->resolution.h, ISP_ONE);
 
-				dst_ptr->cur.grid_width = lsc_grid_x;
+				dst_ptr->cur.grid_width_x = lsc_grid_x;
+				dst_ptr->cur.grid_width_y = lsc_grid_y;
 				dst_ptr->cur.grid_x_num = _pm_get_lens_grid_pitch(lsc_grid_x, dst_ptr->resolution.w, ISP_ZERO)+2;
 				dst_ptr->cur.grid_y_num = _pm_get_lens_grid_pitch(lsc_grid_y, dst_ptr->resolution.h, ISP_ZERO)+2;
 				dst_ptr->cur.grid_num_t = dst_ptr->cur.grid_x_num * dst_ptr->cur.grid_y_num ;
 				dst_ptr->cur.gridtab_len = dst_ptr->lsc_info.gain_w * dst_ptr->lsc_info.gain_h * 4 * sizeof(cmr_u16);
-				//dst_ptr->cur.weight_num = (lsc_grid / 2 + 1) * 3 * sizeof(cmr_s16);
+				dst_ptr->cur.weight_num_x = (lsc_grid_x / 2 + 1) * 3 * sizeof(cmr_s16);
+				dst_ptr->cur.weight_num_y = (lsc_grid_y / 2 + 1) * 3 * sizeof(cmr_s16);
 
 			}
 
 			dst_ptr->cur.update_all = 1;
 			lnc_header_ptr->is_update = ISP_PM_BLK_LSC_UPDATE_MASK_PARAM;
 
-			ISP_LOGD("image size %d %d, grid %d %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
+			ISP_LOGD("image size %d %d, grid %d %d %d, gain_w %d, gain_h %d, (x, y) = (%d %d),  hdr %p\n",
 				dst_ptr->resolution.w, dst_ptr->resolution.h,
-				dst_ptr->cur.grid_width, dst_ptr->cur.gridtab_len,
+				dst_ptr->cur.grid_width_x, dst_ptr->cur.grid_width_y, dst_ptr->cur.gridtab_len,
 				dst_ptr->lsc_info.gain_w, dst_ptr->lsc_info.gain_h,
 				dst_ptr->cur.grid_x_num, dst_ptr->cur.grid_y_num, dst_ptr);
 		}

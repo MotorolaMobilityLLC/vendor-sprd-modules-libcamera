@@ -165,6 +165,7 @@ struct isp_2d_lsc_param {
 	struct isp_lsc_info lsc_info;
 	struct isp_size resolution;
 	cmr_s16 weight_tab[LNC_WEIGHT_LEN];
+	cmr_s16 weight_tab_y[LNC_WEIGHT_LEN];
 	cmr_u32 update_flag;
 };
 
