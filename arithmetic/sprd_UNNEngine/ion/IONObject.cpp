@@ -51,22 +51,11 @@
 namespace android {
 
 bool IONObject::Is_ion_legacy(int fd) {
-    struct ion_new_allocation_data data;
-
-    if (fd < 0) {
-      LOGE("%s:open dev ion error!", __func__);
-      return true;
-    }
-
-    int err = ioctl(fd, ION_IOC_VERSION, &data);
-    return (err == 0) ? false : true;
+    return false;
 }
 
 bool IONObject::is_ion_legacy() {
-    struct ion_new_allocation_data data;
-
-    int err = ioctl(mIonDeviceFd, ION_IOC_VERSION, &data);
-    return (err == 0) ? false : true;
+    return false;
 }
 
 IONObject::IONObject(const char *device, size_t size, uint32_t flags,
@@ -484,6 +473,7 @@ int IONObject::Get_kaddr(int buffer_fd, uint64_t *kaddr, size_t *size) {
       *size = kmap_data.size;
     } else {
       LOGE("%s: not supported", __func__);
+      close(fd);
       return MEMION_NOT_SUPPORTED;
     }
     close(fd);
@@ -545,6 +535,7 @@ int IONObject::Free_kaddr(int buffer_fd) {
       ret = ioctl(fd, ION_IOC_CUSTOM, &custom_data);
     } else {
       LOGE("%s: not supported", __func__);
+      close(fd);
       return MEMION_NOT_SUPPORTED;
     }
 
