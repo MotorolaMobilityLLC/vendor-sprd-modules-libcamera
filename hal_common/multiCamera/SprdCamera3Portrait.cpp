@@ -181,6 +181,8 @@ SprdCamera3Portrait::SprdCamera3Portrait() {
 #else
     m_pMainSnapBuffer = NULL;
 #endif
+    lptMask = NULL;
+    bokehMask = NULL;
     mDepthStatus = DEPTH_INVALID_PORTRAIT;
     mDepthTrigger = TRIGGER_FNUM_PORTRAIT;
     mReqTimestamp = 0;
@@ -208,6 +210,9 @@ SprdCamera3Portrait::SprdCamera3Portrait() {
     mCurAFMode = 0;
     mCapTimestamp = 0;
     mPortraitFlag = 0;
+    bokehMaskSize = 0;
+    maskWidth = 0;
+    maskHeight = 0;
     mSavedRequestList.clear();
     setupPhysicalCameras();
     mCaptureThread = new BokehCaptureThread();
@@ -2470,8 +2475,6 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
     void *input_buf2_addr = NULL;
     void *snapshot_gdepth_buffer_addr = NULL;
     void *output_buf_addr = NULL;
-    unsigned char *lptMask = NULL;
-    void *bokehMask = NULL;
     int64_t depthRun = 0;
     cmr_uint depth_jepg = 0;
     int rc = NO_ERROR;
@@ -2534,10 +2537,14 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
              mPortrait->mBokehSize.depth_snap_main_h);
 
     /*get portrait mask*/
+    if (mPortrait->lptMask == NULL) {
+        mPortrait->lptMask = (unsigned char *)malloc(512 * 384);
+    }
+    if (mPortrait->bokehMask == NULL) {
+        mPortrait->bokehMask = malloc(mPortrait->maskWidth * mPortrait->maskHeight);
+    }
 
-    lptMask = (unsigned char *)malloc(512*384);//lpt mask
-    bokehMask = malloc(768*576);//bokeh mask
-    if(!lptMask || !bokehMask) {
+    if(!mPortrait->lptMask || !mPortrait->bokehMask) {
         HAL_LOGE("no mem!");
         return rc;
     }
@@ -2551,10 +2558,10 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
                     (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
                     output_buf_addr, input_buf1_addr,
-                    mPortrait->mVcmStepsFixed, bokehMask, lptMask);
-        if(!lptMask)
-            HAL_LOGE("no thing!");
-        mPortrait->unmap(output_buf);
+                    mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
+        if (output_buf != NULL) {
+            mPortrait->unmap(output_buf);
+        }
         if (input_buf2 != NULL) {
             mPortrait->unmap(input_buf2);
         }
@@ -2564,9 +2571,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
                     (void *)mPortrait->mScaleInfo.addr_vir.addr_y,
                     output_buf_addr, input_buf1_addr,
-                    mPortrait->mVcmStepsFixed, bokehMask, lptMask);
-        if(!lptMask)
-            HAL_LOGE("no thing!");
+                    mPortrait->mVcmStepsFixed, mPortrait->bokehMask, mPortrait->lptMask);
     }
 
     /*do cynr*/
@@ -2585,13 +2590,13 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
                     mPortrait->mDepthBuffer.depth_out_map_table, input_buf2_addr,
                     (void *)mPortrait->mScaleInfo.addr_vir.addr_y, input_buf1_addr,
                     output_buf_addr, mPortrait->mVcmStepsFixed,
-                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, bokehMask);
+                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, mPortrait->bokehMask);
             } else {
                 rc = mPortrait->mBokehAlgo->capPortraitDepthRun(
                     mPortrait->mDepthBuffer.snap_depth_buffer, NULL, input_buf2_addr,
                     (void *)mPortrait->mScaleInfo.addr_vir.addr_y, input_buf1_addr,
                     output_buf_addr, mPortrait->mVcmStepsFixed,
-                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, bokehMask);
+                    mPortrait->mlimited_infi, mPortrait->mlimited_macro, mPortrait->bokehMask);
                 HAL_LOGD("close online depth");
             }
             // memcpy(output_buf_addr,input_buf1_addr, ADP_BUFSIZE(*input_buf1));
@@ -2619,7 +2624,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
             HAL_LOGD("feature support: portrait+fb");
         }
         rc = mPortrait->mBokehAlgo->doFaceBeauty(
-            lptMask, output_buf_addr, mPortrait->mBokehSize.capture_w,
+            mPortrait->lptMask, output_buf_addr, mPortrait->mBokehSize.capture_w,
             mPortrait->mBokehSize.capture_h, 1, &mPortrait->facebeautylevel);
     }
 #endif
@@ -2636,7 +2641,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         rc = mPortrait->mBokehAlgo->capLPT(output_buf_addr,
                                            mPortrait->mBokehSize.capture_w,
                                            mPortrait->mBokehSize.capture_h,
-                                           lptMask, lightPortraitType);
+                                           mPortrait->lptMask, lightPortraitType);
         if (rc != ALRNB_ERR_SUCCESS) {
             HAL_LOGE("capLPT failed! %d", rc);
             goto exit;
@@ -2697,16 +2702,19 @@ exit : { // dump yuv data
             mPortrait->mCapFrameNumber, "output_buf_addr");
     }
 }
-    HAL_LOGI(":X");
-    free(lptMask);
-    free(bokehMask);
-    mPortrait->unmap(output_buf);
+
+    memset(mPortrait->lptMask, 0, 512 * 384);
+    memset(mPortrait->bokehMask, 0, mPortrait->maskHeight * mPortrait->maskWidth);
+
 fail_map_output:
+    if (output_buf != NULL) {
+        mPortrait->unmap(output_buf);
+    }
+fail_map_input2:
     if (input_buf2 != NULL) {
         mPortrait->unmap(input_buf2);
     }
-fail_map_input2:
-
+    HAL_LOGI(":X");
     return rc;
 }
 
@@ -3064,6 +3072,12 @@ int SprdCamera3Portrait::flush(const struct camera3_device *device) {
 
     HAL_LOGI("E");
     CHECK_CAPTURE_ERROR();
+    free(mPortrait->lptMask);
+    mPortrait->lptMask = NULL;
+
+    free(mPortrait->bokehMask);
+    mPortrait->bokehMask = NULL;
+
     mPortrait->mTimeoutFlush.tv_sec += PENDINGTIMEOUT/1000000000;
     if(!mPortrait->mFlushing && mPortrait->is_caprequest){
         rc = sem_timedwait(&mPortrait->mflushvalue, &mPortrait->mTimeoutFlush);
@@ -3208,6 +3222,9 @@ int SprdCamera3Portrait::configureStreams(
     mhasCallbackStream = false;
     mReqTimestamp = 0;
     mLastOnlieVcm = 0;
+    bokehMaskSize = 0;
+    maskWidth = 0;
+    maskHeight = 0;
     mIsCapDepthFinish = false;
     mHdrSkipBlur = false;
     struct af_relbokeh_oem_data af_relbokeh_info;
@@ -3230,7 +3247,6 @@ int SprdCamera3Portrait::configureStreams(
            sizeof(camera3_stream_t *) * PORTRAIT__MAX_NUM_STREAMS);
     bzero(&af_relbokeh_info, sizeof(struct af_relbokeh_oem_data));
     clock_gettime(CLOCK_REALTIME, &mTimeoutFlush);
-
     Mutex::Autolock l(mLock);
 
     for (size_t i = 0; i < stream_list->num_streams; i++) {
@@ -3412,7 +3428,9 @@ int SprdCamera3Portrait::configureStreams(
 
     if (mPortraitFlag) {
         rc = mBokehAlgo->initPortraitParams(&mBokehSize, &mOtpData,
-                    mCaptureThread->mAbokehGallery, mPortrait->bokehMaskSize);
+                    mCaptureThread->mAbokehGallery, &mPortrait->bokehMaskSize,
+                    &mPortrait->maskWidth, &mPortrait->maskHeight);
+        HAL_LOGD("mask size %d * %d = %d",mPortrait->maskWidth, mPortrait->maskHeight, mPortrait->bokehMaskSize);
         if (rc != NO_ERROR) {
             HAL_LOGE("fail to initPortraitParams");
             mPortraitFlag = false;
@@ -4881,6 +4899,10 @@ int SprdCamera3Portrait::_flush(const struct camera3_device *device) {
 
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].hwi;
     rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].dev);
+    free(mPortrait->lptMask);
+    mPortrait->lptMask =NULL;
+    free(mPortrait->bokehMask);
+    mPortrait->bokehMask = NULL;
 
     preClose();
     if (mBokehAlgo) {
