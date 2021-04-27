@@ -62,7 +62,8 @@ class SprdBokehAlgo : public IBokehAlgo {
     int deinitPortrait();
 
     int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
-                           bool galleryBokeh, unsigned int bokehMaskSize);
+                           bool galleryBokeh, int *bokehMaskSize,
+                           int *maskWidth, int *maskHeight);
 
     int initPortraitLightParams();
 
