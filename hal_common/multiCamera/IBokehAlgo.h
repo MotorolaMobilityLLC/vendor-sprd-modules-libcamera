@@ -122,7 +122,8 @@ class IBokehAlgo {
     virtual int deinitPortrait() = 0;
 
     virtual int initPortraitParams(BokehSize *mSize, OtpData *mCalData,
-                                   bool galleryBokeh, unsigned int bokehMaskSize) = 0;
+                                   bool galleryBokeh, int *bokehMaskSize,
+                                   int *maskWidth, int *maskHeight) = 0;
 
     virtual int initPortraitLightParams() = 0;
 

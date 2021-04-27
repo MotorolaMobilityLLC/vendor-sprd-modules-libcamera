@@ -709,7 +709,8 @@ void SprdPortraitAlgo::loadDebugOtp() {
 }
 
 int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
-                        bool galleryBokeh, unsigned int bokehMaskSize) {
+                        bool galleryBokeh, int *bokehMaskSize,
+                        int *maskWidth, int *maskHeight) {
     int rc = NO_ERROR;
     if (mPortraitHandle) {
         mPortraitCapDeinitParams.ctx = &mPortraitHandle;
@@ -770,12 +771,11 @@ int SprdPortraitAlgo::initPortraitParams(BokehSize *size, OtpData *data,
         HAL_LOGE("SPRD_CAPTURE_PORTRAIT_INIT_CMD failed");
         rc = NO_ERROR;
     }
-    unsigned int maskw = 0;
-    unsigned int maskh = 0;
+
     mPortraitCapGetMaskInfoParams.ctx = &mPortraitHandle;
-    mPortraitCapGetMaskInfoParams.width = &maskw;
-    mPortraitCapGetMaskInfoParams.height = &maskh;
-    mPortraitCapGetMaskInfoParams.bufSize = &bokehMaskSize;
+    mPortraitCapGetMaskInfoParams.width = maskWidth;
+    mPortraitCapGetMaskInfoParams.height = maskHeight;
+    mPortraitCapGetMaskInfoParams.bufSize = bokehMaskSize;
     rc = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_GET_MASK_INFO_CMD,&mPortraitCapGetMaskInfoParams);
     return rc;
 }
