@@ -2124,6 +2124,7 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 	struct common_isp_cmd_param isp_param;
 	struct setting_cmd_parameter setting_param;
 	struct swa_frame_param *frm_param = NULL;
+	cmr_u32 threednr_flag = 0;
 
 	memset(&isp_param, 0, sizeof(struct common_isp_cmd_param));
 	frm_param = (struct swa_frame_param *)malloc(sizeof(struct swa_frame_param));
@@ -2147,6 +2148,7 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
 		cxt->snp_cxt.snap_cnt = 0;
 		CMR_LOGI("zsl_ips_en, total %d is enough, stop cap\n", cxt->snp_cxt.total_num);
 
+		threednr_flag = camera_get_3dnr_flag(cxt);
 		if (camera_get_hdr_flag(cxt)) {
 			isp_param.cmd_value = 0;
 			ret = camera_isp_ioctl(cxt, COM_ISP_SET_HDR, (void *)&isp_param);
@@ -2159,6 +2161,12 @@ static cmr_int camera_ips_proc(struct camera_context *cxt, struct frm_info *frm)
                                 SETTING_CLEAR_HDR, &setting_param);
 			if (ret)
 				CMR_LOGD("failt to clear HDR setting\n");
+		} else if (threednr_flag == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+			threednr_flag == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||
+			threednr_flag == CAMERA_3DNR_TYPE_PREV_NULL_CAP_SW) {
+			ret = camera_3dnr_set_ev((cmr_handle)cxt, 0);
+			if (ret)
+				CMR_LOGE("fail to set 3dnr ev stop\n");
 		}
 		if (cxt->skipframe) {
 			camera_snapshot_set_ev(cxt, 0, SNAPSHOT_NULL);
