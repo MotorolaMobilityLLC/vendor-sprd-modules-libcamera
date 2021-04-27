@@ -2484,7 +2484,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         0,
     };
 
-    if (output_buf == NULL || input_buf1 == NULL) {
+    if (output_buf == NULL || input_buf1 == NULL||input_buf2 == NULL) {
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
     }
