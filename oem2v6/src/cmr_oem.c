@@ -11205,13 +11205,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param_ptr = (void *)&param_ptr->ae_fps_range;
         break;
     case COM_ISP_SET_AI_SET_FD_ON_OFF:
-        CMR_LOGD("set FD on/off to ai %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_AI_SET_FD_STATUS;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
         break;
     case COM_ISP_SET_AE_SET_FD_ON_OFF:
-        CMR_LOGD("set FD on/off to ae %d", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_AE_SET_FD_STATUS;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
@@ -16276,10 +16274,6 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
     cmr_u32 width = cxt->snp_cxt.request_size.width;
     cmr_u32 height = cxt->snp_cxt.request_size.height;
 
-    if (!oem_handle) {
-        CMR_LOGE("error handle");
-        goto exit;
-    }
     camera_take_snapshot_step(CMR_STEP_TAKE_PIC);
     prev_cxt = &cxt->prev_cxt;
 
@@ -16387,11 +16381,16 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
 
     if (!cxt->multicam_highres_mode) {
         ret = cmr_snapshot_post_proc(cxt->snp_cxt.snapshot_handle, &snp_param);
+        if (ret) {
+            CMR_LOGE("snapshot_post_proc failed!");
+        }
     } else {
         ret = camera_set_multicam_reprocess_buffer(oem_handle, &snp_param,
            yaddr, yaddr_vir, fd, width, height);
+        if (ret) {
+            CMR_LOGE("set_multicam_reprocess_buffer failed!");
+        }
     }
-
     ret = cmr_snapshot_receive_data(cxt->snp_cxt.snapshot_handle,
                                     SNAPSHOT_EVT_POSTPROC_START, frm_data);
 

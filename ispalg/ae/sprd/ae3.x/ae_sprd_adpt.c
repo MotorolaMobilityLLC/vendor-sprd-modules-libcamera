@@ -6890,8 +6890,7 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 		break;
 
 	case AE_SET_FD_ON_OFF:
-		cxt->fd_on_off = *(cmr_s32 *)param;
-		ISP_LOGD("fd_on_off %d", cxt->fd_on_off);
+		cxt->fd_on_off = (cmr_s32)*(cmr_u32 *)param;
 		break;
 
 	default:

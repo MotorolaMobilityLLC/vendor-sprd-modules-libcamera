@@ -10808,14 +10808,14 @@ cmr_uint channel3_thumb_rot_flip(struct prev_handle *handle, cmr_u32 camera_id, 
         if (g_channel3_frame_dump_cnt < dump_num) {
             char tag_name[30]={0};
             char cameraId[2] ={0};
-            strcpy(tag_name, "dump_channel2_frame");
+            strncpy(tag_name, "dump_channel2_frame", 30);
             sprintf(cameraId, "%d", camera_id);
-            strcat(tag_name, cameraId);
+            strncat(tag_name, cameraId, 2);
             dump_image(tag_name, CAM_IMG_FMT_YUV420_NV21,
-                    frame_type->width, frame_type->height,
+                    prev_cxt->channel3.size.width, prev_cxt->channel3.size.height,
                     prev_cxt->channel3.frm_cnt,
                     &prev_cxt->channel3.frm[0].addr_vir,
-                    frame_type->width * frame_type->height * 3 / 2);
+                    prev_cxt->channel3.size.width * prev_cxt->channel3.size.height * 3 / 2);
                     g_channel3_frame_dump_cnt++;
         }
     }
@@ -11427,7 +11427,7 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     struct img_data_end endian;
     struct buffer_cfg buf_cfg;
     struct img_size trim_sz;
-    cmr_u32 i;
+    cmr_u32 i = 0;
 
     CHECK_HANDLE_VALID(handle);
     CHECK_CAMERA_ID(camera_id);
@@ -11469,6 +11469,9 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     setting_param.camera_id = cam_cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                           SETTING_GET_APPMODE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get appmode!");
+    }
     app_mode=setting_param.cmd_type_value;
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.fast.automode", value, "null");
@@ -11476,8 +11479,6 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     if(camera_id == 1 && app_mode == 0 && !strcmp(value,"true")) {
         chn_param.cap_inf_cfg.skip_output_check = 1;
         chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_THUMB;
-        CMR_LOGD("skip_output_check =%d",chn_param.cap_inf_cfg.skip_output_check);
-
     } else {
         chn_param.cap_inf_cfg.skip_output_check = 0;
         chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_CALLBACK;
@@ -11838,6 +11839,9 @@ cmr_s32 channel3_queue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     setting_param.camera_id = cam_cxt->camera_id;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
                             SETTING_GET_APPMODE, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get appmode %ld", ret);
+    }
     app_mode = setting_param.cmd_type_value;
     ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR,
                             &setting_param);
@@ -11896,6 +11900,7 @@ int channel3_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     cmr_int ret = CMR_CAMERA_SUCCESS;
     int frm_index = 0;
     cmr_u32 prev_num = 0;
+    int i = 0;
     cmr_u32 prev_chn_id = 0, channel3_chn_id = 0;
     cmr_u32 cap_chn_id = 0;
     cmr_u32 prev_rot = 0, channel3_rot_angle = 0;
@@ -11906,14 +11911,13 @@ int channel3_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     struct cmr_op_mean op_mean;
     int rot_index;
     struct camera_frame_type frame_type;
-    int i;
 
     if (!handle || !info) {
         CMR_LOGE("Invalid param! 0x%p, 0x%p", handle, info);
         ret = CMR_CAMERA_FAIL;
         return ret;
     }
-
+    memset(&frame_type, 0, sizeof(struct camera_frame_type));
     channel3_chn_id = handle->prev_cxt[camera_id].channel3.chn_id;
     channel3_rot_angle =
         handle->prev_cxt[camera_id].prev_param.channel3_rot_angle;
@@ -16114,29 +16118,30 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     CHECK_CAMERA_ID(camera_id);
 
     prev_cxt = &handle->prev_cxt[camera_id];
-    isp_cmd_parm.cmd_value =
-        prev_cxt->prev_param.is_support_fd & prev_cxt->prev_param.is_fd_on;
-
-    CMR_LOGD("is_support_fd %ld, is_fd_on %ld",
-             prev_cxt->prev_param.is_support_fd, prev_cxt->prev_param.is_fd_on);
+    CMR_LOGD("is_support_fd %u, is_fd_on %u fd_handle 0x%p",
+             prev_cxt->prev_param.is_support_fd, prev_cxt->prev_param.is_fd_on, prev_cxt->fd_handle);
 
     if (!prev_cxt->prev_param.is_support_fd) {
-        CMR_LOGD("not support fd");
         ret = CMR_CAMERA_INVALID_PARAM;
         goto exit;
     }
     //for notify fd status to ae
-    CMR_LOGD("fd_handle 0x%p", prev_cxt->fd_handle);
+    isp_cmd_parm.cmd_value =
+        prev_cxt->prev_param.is_support_fd & prev_cxt->prev_param.is_fd_on;
     if (prev_cxt->fd_handle) {
-        CMR_LOGV("notify ae fd on_off value %d", isp_cmd_parm.cmd_value);
         ret = handle->ops.isp_ioctl(
             handle->oem_handle, COM_ISP_SET_AE_SET_FD_ON_OFF, &isp_cmd_parm);
+        if (ret) {
+            CMR_LOGE("failed set fd to ae");
+        }
     }
     isp_cmd_parm.cmd_value = 1;
     if (prev_cxt->fd_handle) {
-        CMR_LOGD("fd inited already");
         ret = handle->ops.isp_ioctl(
             handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
+        if (ret) {
+            CMR_LOGE("failed set fd to ai");
+        }
         goto exit;
     }
 
@@ -16162,19 +16167,27 @@ cmr_int prev_fd_open(struct prev_handle *handle, cmr_u32 camera_id) {
     in_param.reg_cb = prev_fd_cb;
     ret = cmr_ipm_open(handle->ipm_handle, IPM_TYPE_FD, &in_param, &out_param,
                        &prev_cxt->fd_handle);
-
     if (ret) {
-        CMR_LOGE("cmr_ipm_open failed");
         ret = CMR_CAMERA_FAIL;
         goto exit;
     }
-
+    CMR_LOGD("fd_handle 0x%p", prev_cxt->fd_handle);
     if (prev_cxt->fd_handle) {
+        isp_cmd_parm.cmd_value =
+            prev_cxt->prev_param.is_support_fd & prev_cxt->prev_param.is_fd_on;
+        ret = handle->ops.isp_ioctl(
+            handle->oem_handle, COM_ISP_SET_AE_SET_FD_ON_OFF, &isp_cmd_parm);
+        if (ret) {
+            CMR_LOGE("failed set fd to ae");
+        }
+        isp_cmd_parm.cmd_value = 1;
+
         ret = handle->ops.isp_ioctl(
             handle->oem_handle, COM_ISP_SET_AI_SET_FD_ON_OFF, &isp_cmd_parm);
+        if (ret) {
+            CMR_LOGE("failed set fd to ai");
+        }
     }
-    CMR_LOGD("fd_handle 0x%p", prev_cxt->fd_handle);
-
 exit:
     CMR_LOGD("X");
     ATRACE_END();
