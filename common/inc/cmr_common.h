@@ -2327,6 +2327,8 @@ typedef struct {
     uint8_t mRefId;
     uint8_t mNestId;
     bool mSyncFlag;
+    uint8_t refSensorRole;
+    uint8_t nextRSensorRole;
 }SyncState;
 
 
