@@ -77,8 +77,8 @@ static cmr_s32 _pm_h_updata_param(struct isp_bchs_ai_info *bchs_updata,
 	if (bchs_cur->ai_hue.hue_adj_ai_eb || smooth_factor) {
 		bchs_updata->hua_cos_value += bchs_cur->ai_hue.hue_cos_offset * smooth_factor / smooth_base;
 		bchs_updata->hua_sina_value += bchs_cur->ai_hue.hue_sin_offset * smooth_factor / smooth_base;
-		bchs_updata->hua_cos_value = MAX(-180, MIN(180,  bchs_updata->hua_cos_value));
-		bchs_updata->hua_sina_value = MAX(-180, MIN(180,  bchs_updata->hua_sina_value));
+		bchs_updata->hua_cos_value = MAX(0, MIN(255,  bchs_updata->hua_cos_value));
+		bchs_updata->hua_sina_value = MAX(0, MIN(255,  bchs_updata->hua_sina_value));
 		if (!ai_scene && ((bchs_updata->hua_cos_value < dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx]) || (count == smooth_base)))
 			bchs_updata->hua_cos_value = dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx];
 		if (!ai_scene && ((bchs_updata->hua_cos_value < dst_ptr->hue.tab_cos[dst_ptr->hue.cur_idx]) || (count == smooth_base)))
