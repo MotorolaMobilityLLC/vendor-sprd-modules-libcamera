@@ -62,6 +62,7 @@ struct block_name_map {
 struct tuning_param {
 	cmr_u32 version;
 	cmr_u32 bypass;
+	cmr_u32 valid;
 	struct isp_smart_param param;
 };
 
@@ -305,8 +306,38 @@ static cmr_s32 smart_ctl_set_workmode(struct smart_context *cxt, void *in_param)
 	if (cxt->tuning_param[work_mode].param.block_num > 0) {
 		cxt->work_mode = work_mode;
 	} else {
-	        ISP_LOGV("set common work mode");
 		cxt->work_mode = ISP_MODE_ID_COMMON;
+		ISP_LOGE("fail to set work mode,force to common");
+	}
+
+	return rtn;
+}
+
+static cmr_s32 smart_ctl_set_curworkmode(smart_handle_t handle , cmr_u32* work_mode)
+{
+	cmr_s32 rtn = ISP_SUCCESS;
+	struct smart_context *cxt = NULL;
+	rtn = check_handle_validate(handle);
+
+	if (ISP_SUCCESS != rtn) {
+		ISP_LOGE("fail to get valid input handle, rtn:%d\n", rtn);
+		return ISP_ERROR;
+	}
+
+	cxt = (struct smart_context *)handle;
+
+	if(cxt->tuning_param[cxt->work_mode].valid == 1) {
+		cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
+		if(work_mode != NULL) {
+			*work_mode = cxt->work_mode;
+			ISP_LOGV("set cur param work mode:%d" , cxt->work_mode);
+		}
+	} else {
+		cxt->cur_param = &cxt->tuning_param[ISP_MODE_ID_COMMON];
+		if(work_mode != NULL) {
+			*work_mode = ISP_MODE_ID_COMMON;
+			ISP_LOGV("set cur param work mode ISP_MODE_ID_COMMON");
+		}
 	}
 
 	return rtn;
@@ -501,6 +532,7 @@ static cmr_s32 smart_ctl_parse_tuning_param(struct smart_tuning_param src[], str
 				if (ISP_SUCCESS == rtn) {
 					dst[i].bypass = src[i].bypass;
 					dst[i].version = src[i].version;
+					dst[i].valid = 1;
 					memcpy(&dst[i].param, src[i].data.data_ptr, src[i].data.size);
 				} else {
 					ISP_LOGE("i=%d,smart_ctl_check_param_fail\n",i);
@@ -530,7 +562,7 @@ static cmr_s32 smart_ctl_get_update_param(struct smart_context *cxt, void *in_pa
 		goto ERROR_EXIT;
 	}
 
-	cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
+	rtn = smart_ctl_set_curworkmode(cxt , NULL);
 
 ERROR_EXIT:
 
@@ -1311,7 +1343,7 @@ smart_handle_t smart_ctl_init(struct smart_init_param *param, void *result)
 	cxt->magic_flag = ISP_SMART_MAGIC_FLAG;
 	cxt->work_mode = 0;
 	cxt->flash_mode = SMART_CTRL_FLASH_CLOSE;
-	cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
+	rtn = smart_ctl_set_curworkmode(cxt , NULL);
 	cxt->debug_file = smart_debug_file_init(DEBUG_FILE_NAME, "wt");
 	cxt->caller_handle = param->caller_handle;
 	cxt->smart_set_cb = param->smart_set_cb;
@@ -1998,12 +2030,14 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 		cxt->smart_stash_param.ct = param->ct;
 	}
 
+	rtn = smart_ctl_set_curworkmode(cxt , NULL);
+	if(ISP_SUCCESS != rtn) {
+		ISP_LOGE("failed to set cur workmode");
+		return rtn;
+	}
 	pthread_mutex_lock(&cxt->status_lock);
+
 	ISP_LOGV("SMART_TAG: smart work mode = %d cxt->cur_param = %p", cxt->work_mode, cxt->cur_param);
-	if (ISP_MODE_ID_PRV_0 == cxt->work_mode)
-		cxt->cur_param = &cxt->tuning_param[ISP_MODE_ID_COMMON];
-	else
-		cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
 
 	cur_param = cxt->cur_param;
 	flash_mode = cxt->flash_mode;
@@ -2253,10 +2287,10 @@ cmr_s32 smart_ctl_block_eb(smart_handle_t handle, void *block_eb, cmr_u32 is_eb)
 
 	cxt = (struct smart_context *)handle;
 
-	if (ISP_MODE_ID_PRV_0 == cxt->work_mode) {
-		cxt->cur_param = &cxt->tuning_param[ISP_MODE_ID_COMMON];
-	} else {
-		cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
+	rtn = smart_ctl_set_curworkmode(cxt , NULL);
+	if(ISP_SUCCESS != rtn) {
+		ISP_LOGE("failed to set cur workmode");
+		return rtn;
 	}
 
 	cur_param = cxt->cur_param;
@@ -2344,7 +2378,7 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 	struct tuning_param *cur_param = NULL;
 	struct isp_smart_param *smart_param = NULL;
 	struct tuning_param *org_param = NULL;
-
+	cmr_u32 work_mode = 0;
 
 	rtn = check_handle_validate(handle);
 	if (ISP_SUCCESS != rtn) {
@@ -2354,13 +2388,12 @@ cmr_s32 smart_ctl_NR_block_disable(smart_handle_t handle, cmr_u32 is_diseb)
 
 	cxt = (struct smart_context *)handle;
 
-	if (ISP_MODE_ID_PRV_0 == cxt->work_mode) {
-		cxt->cur_param = &cxt->tuning_param[ISP_MODE_ID_COMMON];
-		org_param = &cxt->tuning_param_org[ISP_MODE_ID_COMMON];
-	} else {
-		cxt->cur_param = &cxt->tuning_param[cxt->work_mode];
-		org_param = &cxt->tuning_param_org[cxt->work_mode];
+	rtn = smart_ctl_set_curworkmode(cxt , &work_mode);
+	if(rtn != ISP_SUCCESS){
+		ISP_LOGE("fail to smart_ctl_set_curworkmode");
+		return rtn;
 	}
+	org_param = &cxt->tuning_param_org[work_mode];
 
 	cur_param = cxt->cur_param;
 
