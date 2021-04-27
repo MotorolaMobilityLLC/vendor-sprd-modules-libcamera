@@ -3673,7 +3673,6 @@ static cmr_s32 ae_get_hdr_exp_gain_infor(struct ae_ctrl_cxt *cxt, void *result)
 	return rtn;
 }
 
-
 static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 {
 	UNUSED(param);
@@ -3681,6 +3680,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	cmr_u32 up_exposure = 0;
 	cmr_u32 down_exposure = 0;
 	cmr_u16 base_gain = 0;
+	cmr_u16 down_gain = 0;
 	cmr_u32 max_frame_line = 0;
 	cmr_u32 min_frame_line = 0;
 	cmr_u32 exp_line = 0;
@@ -3688,6 +3688,7 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 	cmr_s32 counts = 0;
 	cmr_u32 skip_num = 0;
 	cmr_s8 hdr_callback_flag = 0;
+	float ev_shutter = 0.0;
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	float ev_result[2] = {0, 0};
 	ev_result[0] = -cxt->hdr_calc_result.ev[0];
@@ -3701,7 +3702,8 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 		ae_get_hdr_exp_gain_infor(cxt,&cxt->hdr_exp_gain);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_START, (void *)ev_result);
-		memcpy(&cxt->hdr_callback_backup,&cxt->hdr_callback,sizeof(hdr_callback_t));
+		memcpy(&cxt->hdr_callback_backup,&cxt->hdr_callback,sizeof(sprd_hdr_detect_out_t));
+		ISP_LOGD("hdr_callback_backup : %d, %"PRIu64"",cxt->hdr_callback_backup.tuning_param_index,cxt->hdr_callback_backup.clock);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_TUNING_PARAM_INDEX, &cxt->hdr_callback_backup);
 		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_EXP_GAIN, &cxt->hdr_exp_gain);
 		if (cxt->is_multi_mode && cxt->isp_ops.ae_bokeh_hdr_cb) {
@@ -3724,9 +3726,15 @@ static void ae_set_hdr_ctrl(struct ae_ctrl_cxt *cxt, struct ae_calc_in *param)
 		if (3 == cxt->hdr_flag) {
 			base_exposure_line = cxt->hdr_exp_line;
 			base_gain = cxt->hdr_gain;
-			down_exposure = (cmr_u32)(1.0 / pow(2, cxt->hdr_calc_result.ev[0]) * base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
-			ISP_LOGD("down_exp %d, pow2 %f\n", down_exposure, pow(2, cxt->hdr_calc_result.ev[0]));
-			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, base_gain, &gain, &exp_line);
+			down_exposure =  (cmr_u32)(base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
+			down_gain = pow(2,ev_result[0]) * base_gain;
+			if(down_gain < 128) {
+				down_gain = 128;
+				ev_shutter = 1.0 * pow(2,ev_result[0]) * base_gain / 128;
+				down_exposure = (cmr_u32)(ev_shutter *  base_exposure_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
+			}
+			ISP_LOGD("down_exp %d, down_gain %d ev0 %f\n", down_exposure, down_gain,ev_result[0]);
+			ae_hdr_calculation(cxt, max_frame_line, min_frame_line, down_exposure, base_exposure_line, down_gain, &gain, &exp_line);
 			ISP_LOGV("base_exposure: %d, base_gain: %d, down_exposure: %d, exp_line: %d", base_exposure_line, base_gain, down_exposure, exp_line);
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[0] = (cmr_u64)(exp_line * cxt->cur_status.adv_param.cur_ev_setting.line_time);
 			cxt->cur_status.adv_param.mode_param.value.exp_gain[1] = gain;
@@ -6218,9 +6226,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cmr_s32 aem_type = 0;
 	cmr_u32 sensor_num = 0;//aem static data ready sensor num
 #ifdef CONFIG_SUPPROT_AUTO_HDR
-	struct _tag_hdr_detect_t hdr_param;
-	struct _tag_hdr_stat_t hdr_stat;
-	float ev_result[2] = {0,0};
+	sprd_hdr_detect_in_t hdr_param_in = {0};
+	sprd_hdr_detect_out_t hdr_result = {0};
 	cmr_s8 auto_hdr_enable = 0;
 	cmr_s8 mfnr_en = 0;
 #endif
@@ -6561,48 +6568,53 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 #ifdef CONFIG_SUPPROT_AUTO_HDR
 	if(!cxt->is_snapshot) {
 		struct ae_size hdr_stat_size;
-		hdr_stat.hist256 = calc_in->hist_stats.value;
+		hdr_param_in.hist = calc_in->hist_stats.value;
 		hdr_stat_size.w = 0;
 		hdr_stat_size.h = 0;
 		if (cxt->isp_ops.callback) {
 			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_HDR_STATIS_SIZE, &hdr_stat_size);
 		}
 		if(hdr_stat_size.w && hdr_stat_size.h) {
-			hdr_stat.w = hdr_stat_size.w;
-			hdr_stat.h = hdr_stat_size.h;
+			hdr_param_in.w = hdr_stat_size.w;
+			hdr_param_in.h = hdr_stat_size.h;
 		} else {
-			hdr_stat.w = cxt->snr_info.frame_size.w;
-			hdr_stat.h = cxt->snr_info.frame_size.h;
+			hdr_param_in.w = cxt->snr_info.frame_size.w;
+			hdr_param_in.h = cxt->snr_info.frame_size.h;
 		}
-		memset(&hdr_param, 0 ,sizeof(struct _tag_hdr_detect_t));
-		hdr_param.thres_bright = 250;
-		hdr_param.thres_dark = 20;
-		hdr_param.tuning_param = cxt->hdr_tuning_param;
-		hdr_param.tuning_param_size = cxt->hdr_tuning_size;
-		hdr_param.abl_weight = cxt->calc_results.ae_output.abl_weight;
-		hdr_param.bv = cxt->calc_results.ae_output.cur_bv;
-		hdr_param.face_num = (cxt->cur_status.adv_param.face_data.face_num > 0) ? 1 : 0;
-		hdr_param.iso = cxt->calc_results.ae_output.cur_iso;
-		ISP_LOGV("hdr input param abl:%d bv:%d,face_num:%d iso:%d \n",hdr_param.abl_weight,hdr_param.bv,hdr_param.face_num,hdr_param.iso);
-		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
-		if(strcmp(value, "true"))
-			auto_hdr_enable = (cmr_s8)sprd_hdr_scndet_multi_inst(&hdr_param, &hdr_stat, ev_result,&cxt->smooth_flag,&cxt->frameid);
-		cxt->hdr_calc_result.ev[0] = fabs(ev_result[0]);
-		cxt->hdr_calc_result.ev[1] = ev_result[1];
-		memcpy(&cxt->hdr_callback,&hdr_param.callback,sizeof(hdr_callback_t));
+		hdr_param_in.tuning_param = cxt->hdr_tuning_param;
+		hdr_param_in.tuning_size = cxt->hdr_tuning_size;
+		hdr_param_in.abl_weight = cxt->calc_results.ae_output.abl_weight;
+		hdr_param_in.bv = cxt->calc_results.ae_output.cur_bv;
+		hdr_param_in.face_num = (cxt->cur_status.adv_param.face_data.face_num > 0) ? 1 : 0;
+		hdr_param_in.iso = cxt->calc_results.ae_output.cur_iso;
+		ISP_LOGV("hdr input param abl:%d bv:%d,face_num:%d iso:%d \n",hdr_param_in.abl_weight,hdr_param_in.bv,hdr_param_in.face_num,hdr_param_in.iso);
 
-		cxt->cur_status.adv_param.hist_data.img_size.w = hdr_stat.w;
-		cxt->cur_status.adv_param.hist_data.img_size.h = hdr_stat.h;
+		property_get("persist.vendor.cam.isptool.mode.enable", value, "false");
+		if(strcmp(value, "true")) {
+			auto_hdr_enable = (cmr_s8)sprd_hdr_adpt_detect(&hdr_param_in, &hdr_result,&cxt->hdr_status);
+		}
+		cxt->hdr_calc_result.ev[0] = fabs(hdr_result.ev[0]);
+		cxt->hdr_calc_result.ev[1] = hdr_result.ev[1];
+		memcpy(&cxt->hdr_callback,&hdr_result,sizeof(sprd_hdr_detect_out_t));
+
+		cxt->cur_status.adv_param.hist_data.img_size.w = hdr_param_in.w;
+		cxt->cur_status.adv_param.hist_data.img_size.h = hdr_param_in.h;
 		cxt->cur_status.adv_param.hist_data.hist_bin = 256;
-		memcpy(cxt->cur_status.adv_param.hist_data.hist_data, hdr_stat.hist256 ,cxt->cur_status.adv_param.hist_data.hist_bin * sizeof(cmr_u32));
+		memcpy(cxt->cur_status.adv_param.hist_data.hist_data, hdr_param_in.hist,cxt->cur_status.adv_param.hist_data.hist_bin * sizeof(cmr_u32));
 		ISP_LOGV("cam id %d auto_hdr_enable %d",cxt->camera_id,auto_hdr_enable);
-		ISP_LOGV("auto_hdr bright %d dark %d w %d h %d ev[0] %f ev[1] %f", hdr_param.thres_bright, hdr_param.thres_dark, hdr_stat.w, hdr_stat.h, ev_result[0], ev_result[1]);
+		ISP_LOGV("auto_hdr w %d h %d ev[0] %f ev[1] %f", hdr_param_in.w, hdr_param_in.h, hdr_result.ev[0], hdr_result.ev[1]);
 	}
 	if (cxt->hdr_menu_ctrl) {
-		if(-1 == auto_hdr_enable)
+		if((-1 == auto_hdr_enable)||((1 == cxt->threednr_mode_flag)&&(AE_3DNR_AUTO == cxt->threednr_mode)))//if 3dnr on,hdr should be off
 			auto_hdr_enable = 0;
 
 		cxt->hdr_calc_result.auto_hdr_enable = auto_hdr_enable;
+		if(cxt->isp_ops.callback) {
+			(*cxt->isp_ops.callback)(cxt->isp_ops.isp_handler, AE_CB_HDR_STATUS, &auto_hdr_enable);
+		} else {
+			ISP_LOGE("isp_ops.callback is NULL");
+		}
+		ISP_LOGV("auto_hdr_enable %d",auto_hdr_enable);
 		if(auto_hdr_enable) {
 			if(cxt->calc_results.ae_output.cur_bv > cxt->mfnr_hdr_thrd.thd_up) {
 				mfnr_en = 0;
@@ -7644,11 +7656,6 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	struct Flash_initInput flash_in;
 	struct Flash_initOut flash_out;
 
-#ifdef CONFIG_SUPPROT_AUTO_HDR
-	struct _tag_hdr_version_t hdr_version;
-	sprd_hdr_version(&hdr_version);
-	ISP_LOGD("HDR_version :%s", hdr_version.built_rev);
-#endif
 
 	cxt = (struct ae_ctrl_cxt *)calloc(1,sizeof(struct ae_ctrl_cxt));
 

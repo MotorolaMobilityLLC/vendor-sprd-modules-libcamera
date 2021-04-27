@@ -22,7 +22,7 @@
 #include "ae_ctrl.h"
 #include "isp_bridge.h"
 #include "fdr_interface.h"
-#include "hdr/inc/sprd_hdr_api.h"
+#include "sprd_hdr_adapter.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -482,13 +482,12 @@ extern "C" {
 		struct ae_trim touch_hold_roi;	/*touch ROI*/
 		/*touch flash hold */
 		cmr_u8 touchev_Flag;
-		struct ae_thd_param mfnr_hdr_thrd;
-
 		void *hdr_tuning_param;
 		cmr_s32 hdr_tuning_size;
-		hdr_callback_t hdr_callback;
-		hdr_callback_t hdr_callback_backup;
-
+		struct ae_thd_param mfnr_hdr_thrd;
+		sprd_hdr_detect_out_t hdr_callback;
+		sprd_hdr_detect_out_t hdr_callback_backup;
+		sprd_hdr_status_t hdr_status;
 		cmr_u32 end_id;
 	};
 

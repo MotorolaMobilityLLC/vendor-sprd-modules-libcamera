@@ -21,7 +21,7 @@
 #include "ae_ctrl_types.h"
 #include "ae_ctrl.h"
 #include "isp_bridge.h"
-#include "hdr/inc/sprd_hdr_api.h"
+#include "sprd_hdr_adapter.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -449,8 +449,9 @@ extern "C" {
 		cmr_u8 calcFirstFlag;
 		void *hdr_tuning_param;
 		cmr_s32 hdr_tuning_size;
-		hdr_callback_t hdr_callback;
-		hdr_callback_t hdr_callback_backup;
+		sprd_hdr_detect_out_t hdr_callback;
+		sprd_hdr_detect_out_t hdr_callback_backup;
+		sprd_hdr_status_t hdr_status;
 		cmr_u32 end_id;
 	};
 #ifdef __cplusplus
