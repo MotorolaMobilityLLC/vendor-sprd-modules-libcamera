@@ -224,6 +224,8 @@ struct lsc_sprd_ctrl_context {
 	cmr_u16 sync_flag;
 	cmr_u16 sync_count;
 	void *smart_result;
+	cmr_u32 *stat_gr;
+	cmr_u32 *stat_gb;
 	cmr_u32 app_mode;
 };
 
