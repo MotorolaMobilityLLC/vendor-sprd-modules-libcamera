@@ -695,6 +695,7 @@ static SENSOR_STATIC_INFO_T s_imx586_static_info[VENDOR_NUM] = {
                      .max_adgain = 8,
                      .ois_supported = 0,
                      .pdaf_supported = 2,
+                     .long_expose_supported = 1,
                      .exp_valid_frame_num = 1,
                      .clamp_level = 64,
                      .adgain_valid_frame_num = 0,
