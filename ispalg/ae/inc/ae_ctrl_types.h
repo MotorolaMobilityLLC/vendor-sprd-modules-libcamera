@@ -499,6 +499,8 @@ extern "C" {
 		cmr_u8 ref_id;
 		cmr_u8 next_id;
 		bool sync_flag;
+		cmr_u8 ref_sensor_role;
+		cmr_u8 next_sensor_role;
 	};
 
 	struct ae_isp_ctrl_ops {

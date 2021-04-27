@@ -2972,6 +2972,17 @@ static cmr_int ispctl_set_multi_switch_info(cmr_handle isp_alg_handle, void *par
 	cmr_int ret = ISP_SUCCESS;
 	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
 
+	SyncState *temp = (SyncState *)param_ptr;
+	cmr_u32 ref_id = temp->mRefId;
+	cmr_u32 ref_role = CAM_SENSOR_MAX;
+	cmr_u32 next_id = temp->mNestId;
+	cmr_u32 next_role = CAM_SENSOR_MAX;
+
+	ret = isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_ROLE, &ref_id, &ref_role);
+	ret = isp_br_ioctrl(CAM_SENSOR_MASTER, GET_SENSOR_ROLE, &next_id, &next_role);
+	temp->refSensorRole = ref_role;
+	temp->nextRSensorRole = next_role;
+
 	if (cxt->ops.af_ops.ioctrl)
 		ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_MULTI_SWITCH_INFO, param_ptr, NULL);
 	if (cxt->ops.ae_ops.ioctrl)
