@@ -2203,6 +2203,19 @@ static int lsc_malloc_buffer(struct lsc_sprd_ctrl_context *cxt)
 		ISP_LOGE("malloc lscm_info error!");
 		goto exit;
 	}
+
+	cxt->stat_gr = (cmr_u32 *)malloc(MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
+	if(cxt->stat_gr == NULL){
+		ISP_LOGE("malloc stat_gr error!");
+		goto exit;
+	}
+
+	cxt->stat_gb = (cmr_u32 *)malloc(MAX_STAT_WIDTH * MAX_STAT_HEIGHT * sizeof(cmr_u32));
+	if(cxt->stat_gb == NULL){
+		ISP_LOGE("malloc stat_gb error!");
+		goto exit;
+	}
+
 	return rtn;
 
 exit:
@@ -2497,6 +2510,8 @@ static cmr_s32 lsc_sprd_deinit(void *handle, void *in, void *out)
 	lsc_std_free(cxt->output_lsc_table);
 	lsc_std_free(cxt->lsc_buffer_interlace);
 	lsc_std_free(cxt->lscm_info);
+	lsc_std_free(cxt->stat_gr);
+	lsc_std_free(cxt->stat_gb);
 	if (cxt->lsc_id == 1) {
 		id1_addr = NULL;
 	} else {
@@ -2838,10 +2853,16 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 				param->std_tab_param[i] = cxt->std_lsc_table_param_buffer[i];	 // use calculation lsc table with otp
 		}
 
+		// AEM/LSCM G data is GR+GB
+		for (i = 0; i < param->stat_size.w * param->stat_size.h; i++){
+			cxt->stat_gr[i] = param->stat_img.gr[i]  / 2;
+			cxt->stat_gb[i] = param->stat_img.gb[i]  / 2;
+		}
+
 		// call liblsc.so
 		calc_in.stat_img.r = param->stat_img.r;
-		calc_in.stat_img.gr = param->stat_img.gr;
-		calc_in.stat_img.gb = param->stat_img.gb;
+		calc_in.stat_img.gr = cxt->stat_gr;
+		calc_in.stat_img.gb = cxt->stat_gb;
 		calc_in.stat_img.b = param->stat_img.b;
 		calc_in.stat_img.w = param->stat_size.w;
 		calc_in.stat_img.h = param->stat_size.h;
