@@ -181,8 +181,8 @@ struct preview_init_param {
 };
 
 struct preview_param {
-    cmr_uint is_fd_on;
-    cmr_uint is_support_fd;
+    cmr_u32 is_fd_on;
+    cmr_u32 is_support_fd;
     cmr_u32 preview_eb;
     cmr_uint preview_fmt;
     cmr_uint prev_rot;

@@ -481,9 +481,8 @@ extern "C" {
 		struct ae_thd_param mfnr_hdr_thrd;
 		hdr_callback_t hdr_callback;
 		hdr_callback_t hdr_callback_backup;
-
-		cmr_u32 end_id;
 		cmr_s32 fd_on_off;
+		cmr_u32 end_id;
 		/*touch flash hold */
 		cmr_u32 touch_hold_cnt;
 		cmr_u32 touch_hold_flag;
