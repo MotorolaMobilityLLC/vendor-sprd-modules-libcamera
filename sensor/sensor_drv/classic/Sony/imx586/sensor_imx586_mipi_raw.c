@@ -36,6 +36,12 @@
  * please modify this function acording your spec
  *============================================================================*/
 
+static double imx586_longExp_mode[] = {0.5, 1, 2, 3, 4, 5, 6, 7, 8};
+static cmr_u32 imx586_longExp_valid_frame_num = 2;
+static cmr_u32 imx586_longExp_need_switch_setting = 0;
+static cmr_u32 imx586_longExp_setting[] = {0, 0, 1, 0};
+static cmr_u64 imx586_longExp_threshold = 80000000;
+
 static void imx586_drv_write_reg2sensor(cmr_handle handle,
                                         struct sensor_i2c_reg_tab *reg_info) {
     SENSOR_IC_CHECK_PTR_VOID(reg_info);
@@ -146,7 +152,7 @@ static void imx586_drv_write_shutter(cmr_handle handle,
  * please don't change this function if it's necessary
  *============================================================================*/
 static void imx586_drv_calc_exposure(cmr_handle handle, cmr_u32 shutter,
-                                     cmr_u32 dummy_line, cmr_u16 mode,cmr_u32 exp_time,
+                                     cmr_u32 dummy_line, cmr_u16 mode,cmr_u64 exp_time,
                                      struct sensor_aec_i2c_tag *aec_info) {
     cmr_u32 dest_fr_len = 0;
     cmr_u32 cur_fr_len = 0;
@@ -364,6 +370,16 @@ static cmr_int imx586_drv_get_static_info(cmr_handle handle, cmr_u32 *param) {
            sizeof(static_info->fov_info));
     ex_info->pos_dis.up2hori = up;
     ex_info->pos_dis.hori2down = down;
+    ex_info->long_expose_supported = static_info->long_expose_supported;
+    if(ex_info->long_expose_supported) {
+        ex_info->long_expose_modes = imx586_longExp_mode;
+        ex_info->long_expose_modes_size = ARRAY_SIZE(imx586_longExp_mode);
+        ex_info->long_exposure_setting = imx586_longExp_setting;
+        ex_info->long_exposure_setting_size = ARRAY_SIZE(imx586_longExp_setting);
+        ex_info->longExp_valid_frame_num = imx586_longExp_valid_frame_num;
+        ex_info->long_exposure_threshold = imx586_longExp_threshold;
+        ex_info->longExp_need_switch_setting = imx586_longExp_need_switch_setting;
+    }
     sensor_ic_print_static_info((cmr_s8 *)SENSOR_NAME, ex_info);
 
     return rtn;
@@ -683,8 +699,8 @@ static cmr_int imx586_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cmr_u32 cap_gain = 0;
     cmr_u32 capture_mode = param & 0xffff;
     cmr_u32 preview_mode = (param >> 0x10) & 0xffff;
-    cmr_u32 cap_exptime = 0;
-    cmr_u32 prv_exptime = 0;
+    cmr_u64 cap_exptime = 0;
+    cmr_u64 prv_exptime = 0;
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
@@ -759,7 +775,8 @@ static cmr_int imx586_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     cmr_u16 exposure_line = 0x00;
     cmr_u16 dummy_line = 0x00;
     cmr_u16 size_index = 0x00;
-    cmr_u32 exp_time = 0x00;
+    cmr_u64 exp_time = 0x00;
+    cmr_u64 longexp_value = 0x00;
 
     struct sensor_ex_exposure *ex = (struct sensor_ex_exposure *)param;
     SENSOR_IC_CHECK_HANDLE(handle);
@@ -771,10 +788,43 @@ static cmr_int imx586_drv_write_exposure(cmr_handle handle, cmr_uint param) {
     size_index = ex->size_index;
     exp_time = ex->exp_time;
 
-    imx586_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,exp_time,
-                             &imx586_aec_info);
-    imx586_drv_write_reg2sensor(handle, imx586_aec_info.frame_length);
-    imx586_drv_write_reg2sensor(handle, imx586_aec_info.shutter);
+    if (exp_time < 500000000) {
+        imx586_drv_calc_exposure(handle, exposure_line, dummy_line, size_index,exp_time,
+                                &imx586_aec_info);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x00);//longexp OFF
+        imx586_drv_write_reg2sensor(handle, imx586_aec_info.frame_length);
+        imx586_drv_write_reg2sensor(handle, imx586_aec_info.shutter);
+    } else {
+        SENSOR_LOGI("long Exposure mode exp_time=%llu", exp_time);
+
+        longexp_value = 500000000 / PREVIEW_LINE_TIME;
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (longexp_value >> 8) & 0xff);
+        hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0203, longexp_value & 0xff);
+        if (exp_time == 500000000) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x00);//*1
+        } else if (exp_time == 1000000000) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x01);//*2
+        } else if (exp_time == 2000000000) {
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x02);//*4
+        } else if (exp_time == 3000000000 || exp_time == 4000000000 || exp_time == 5000000000) {
+            longexp_value = exp_time / 8 / PREVIEW_LINE_TIME;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (longexp_value >> 8) & 0xff);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0203, longexp_value & 0xff);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x03);//*8
+        } else if (exp_time == 6000000000 || exp_time == 7000000000 || exp_time == 8000000000) {
+            longexp_value = exp_time / 16 / PREVIEW_LINE_TIME;
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0202, (longexp_value >> 8) & 0xff);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0203, longexp_value & 0xff);
+            hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x3100, 0x04);//*16
+        } else {
+            SENSOR_LOGE("longExp exp_time=%llu beyond the restrict", exp_time);
+        }
+
+        if (sns_drv_cxt->ops_cb.set_exif_info) {
+            sns_drv_cxt->ops_cb.set_exif_info(
+            sns_drv_cxt->caller_handle, SENSOR_EXIF_CTRL_EXPOSURETIME_BYTIME, exp_time);
+        }
+    }
 
     return ret_value;
 }
@@ -811,7 +861,7 @@ static cmr_int imx586_drv_read_aec_info(cmr_handle handle, cmr_uint param) {
     SENSOR_IC_CHECK_HANDLE(handle);
     SENSOR_IC_CHECK_PTR(info);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-    cmr_u32 exp_time = 0x00;
+    cmr_u64 exp_time = 0x00;
 
     SENSOR_LOGI("E");
 
@@ -996,7 +1046,6 @@ static cmr_int imx586_drv_stream_on(cmr_handle handle, cmr_uint param) {
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3047));
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x3049));
     SENSOR_LOGI("E %x",hw_sensor_read_reg(sns_drv_cxt->hw_handle, 0x315d));*/
-
 
     property_get("vendor.cam.hw.framesync.on", value2, "1");
     if (!strcmp(value2, "1") && sns_drv_cxt->is_multi_mode) {
