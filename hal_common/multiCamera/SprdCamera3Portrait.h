@@ -255,6 +255,8 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
 #else
     buffer_handle_t *m_pMainSnapBuffer;
 #endif
+    unsigned char *lptMask;
+    void *bokehMask;
     uint8_t mNrCallbackCnt;
     int cameraDeviceOpen(int camera_id, struct hw_device_t **hw_device);
     int setupPhysicalCameras();
@@ -414,6 +416,8 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     int mVcmSteps;
     int mVcmStepsFixed;
     int bokehMaskSize;
+    int maskWidth;
+    int maskHeight;
     uint64_t mCapTimestamp;
     IBokehAlgo *mBokehAlgo;
     bool mIsHdrMode;

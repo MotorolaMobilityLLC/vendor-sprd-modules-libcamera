@@ -681,7 +681,8 @@ exit:
 }
 
 int SprdBokehAlgo::initPortraitParams(BokehSize *size,OtpData *data,
-                            bool galleryBokeh, unsigned int bokehMaskSize) {
+                            bool galleryBokeh, int *bokehMaskSize,
+                            int *maskWidth, int *maskHeight) {
     int rc = NO_ERROR;
     return rc;
 }
