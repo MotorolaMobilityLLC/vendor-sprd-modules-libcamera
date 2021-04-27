@@ -152,11 +152,18 @@ static int _dw9714v_drv_power_on(cmr_handle sns_af_drv_handle,
     struct sns_af_drv_cxt *af_drv_cxt =
         (struct sns_af_drv_cxt *)sns_af_drv_handle;
 
+    int32_t af_code[5]={251,211,171,131,91};
+    int i = 0;
+
     if (AF_TRUE == power_on) {
         hw_sensor_set_monitor_val(af_drv_cxt->hw_handle,
                                   dw9714v_drv_entry.motor_avdd_val);
         usleep(DW9714V_POWERON_DELAY * 1000);
     } else {
+        for(i=0; i < 5; i++) {
+            _dw9714v_write_dac_code(sns_af_drv_handle, af_code[i]);
+            usleep(4 * 1000);
+        }
         hw_sensor_set_monitor_val(af_drv_cxt->hw_handle, SENSOR_AVDD_CLOSED);
     }
 
