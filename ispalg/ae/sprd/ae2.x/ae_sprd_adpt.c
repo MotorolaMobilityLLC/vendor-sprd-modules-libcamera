@@ -1796,11 +1796,7 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_PRE_AFTER:
 		ISP_LOGD("ae_flash_status FLASH_PRE_AFTER");
-		if(cxt->cur_status.settings.flash != FLASH_PRE){
-			ISP_LOGE("previous cxt->cur_status.settings.flash:%d, SHOULD BE FLASH_PRE",cxt->cur_status.settings.flash);
-			rtn = AE_ERROR;
-			break;
-		}
+
 		if (cxt->exposure_compensation.ae_compensation_flag) {
 			if (cxt->cur_status.settings.manual_mode !=2)
 				cxt->cur_status.settings.manual_mode = 1;
@@ -1866,6 +1862,8 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 		cxt->env_cum_changedCalc_delay_cnt = 0;
 		cxt->env_cum_changed = 0;
 		cxt->pre_flash_after_delay_cnt = 1;
+		cxt->pf_wait_stable_cnt = 0;
+		ISP_LOGD("flash pre after, pf_wait_stable_cnt:%d", cxt->pf_wait_stable_cnt );
 		break;
 
 	case AE_FLASH_MAIN_BEFORE:
