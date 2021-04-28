@@ -511,11 +511,11 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(18)];
 					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(18)];
 					if (val == 1) {
-						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(16), 
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 16, FV0_INDEX(16):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(16),
 							 FV0_INDEX(16), af_fv_val[FV0_INDEX(16)]);
 						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 9, FV0_INDEX(9):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(9),
 							 FV0_INDEX(9), af_fv_val[FV0_INDEX(9)]);
-						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 18, FV0_INDEX(18):%d, af_fv_val[%d]:%d",af->af_fv_val.af_fv0[8], FV0_INDEX(18), 
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 18, FV0_INDEX(18):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(18),
 							 FV0_INDEX(18), af_fv_val[FV0_INDEX(18)]);
 					}
 				} else {
@@ -526,11 +526,11 @@ static cmr_s32 afm_set_fv(af_ctrl_t * af, void *in)
 					af->af_fv_val.af_fv0[8] = (cmr_u64) af_fv_val[FV0_INDEX(19)];
 					af->af_fv_val.af_fv1[8] = (cmr_u64) af_fv_val[FV1_INDEX(19)];
 					if (val == 1) {
-						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(17), 
+						ISP_LOGE("i: 6, af_fv0[6]: %15" PRIu64 ", j: 17, FV0_INDEX(17):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[6], FV0_INDEX(17),
 							 FV0_INDEX(17), af_fv_val[FV0_INDEX(17)]);
 						ISP_LOGE("i: 7, af_fv0[7]: %15" PRIu64 ", j: 10, FV0_INDEX(10):%d , af_fv_val[%d]:%d", af->af_fv_val.af_fv0[7], FV0_INDEX(10),
 							 FV0_INDEX(10), af_fv_val[FV0_INDEX(10)]);
-						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 19, FV0_INDEX(19):%d, af_fv_val[%d]:%d",af->af_fv_val.af_fv0[8], FV0_INDEX(19), 
+						ISP_LOGE("i: 8, af_fv0[8]: %15" PRIu64 ", j: 19, FV0_INDEX(19):%d, af_fv_val[%d]:%d", af->af_fv_val.af_fv0[8], FV0_INDEX(19),
 							 FV0_INDEX(19), af_fv_val[FV0_INDEX(19)]);
 					}
 				}
@@ -2596,7 +2596,9 @@ static cmr_u32 af_sprd_get_cts_result(cmr_handle handle, void *param0)
 		//af->queue.af_params[af->queue.rear].set_cts_params_flag = 0;
 		ISP_LOGI("focus_distance : %f,frame_num  : %d", cts_result->focus_distance, cts_result->frame_num);
 		if (cts_result->focus_distance >= 0 && cts_result->focus_distance <= 10) {
-			pos = (cmr_u16) (af->range_L4 - ((af->range_L4 - af->range_L1) * cts_result->focus_distance / 10));
+			cmr_u16 inf = af->otp_info.rdm_data.infinite_cali;
+			cmr_u16 macro = af->otp_info.rdm_data.macro_cali;
+			pos = (cmr_u16) (inf + (macro - inf) * cts_result->focus_distance / 10);
 			lens_move_to(af, pos);
 		} else {
 			ISP_LOGI("error message!");
