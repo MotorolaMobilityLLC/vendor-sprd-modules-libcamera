@@ -214,7 +214,7 @@ enum isp_ae_awb_lock_unlock_mode {
 enum isp_ae_mode {
 	ISP_AUTO = 0x00,
 	ISP_NIGHT,
-	ISP_SPORT,
+	ISP_SPORT,	//for slowmotion ae table
 	ISP_PORTRAIT,
 	ISP_LANDSCAPE,
 	ISP_FACEID,
