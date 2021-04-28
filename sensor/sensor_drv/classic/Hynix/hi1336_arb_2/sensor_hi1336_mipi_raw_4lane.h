@@ -76,7 +76,7 @@
 #define LANE_NUM 4
 #define RAW_BITS 10
 
-#define VIDEO_MIPI_PER_LANE_BPS 952    /* 2*Mipi clk */
+#define VIDEO_MIPI_PER_LANE_BPS 476    /* 2*Mipi clk */
 #define PREVIEW_MIPI_PER_LANE_BPS 576  /* 2*Mipi clk */
 #define SNAPSHOT_MIPI_PER_LANE_BPS 1428 /* 2*Mipi clk */
 
@@ -88,7 +88,7 @@
 
 /* frame length*/
 #define VIDEO_FRAME_LENGTH 3330
-#define PREVIEW_FRAME_LENGTH 3328
+#define PREVIEW_FRAME_LENGTH 3330
 #define SNAPSHOT_FRAME_LENGTH 3330
 
 /* please ref your spec */
@@ -1002,7 +1002,7 @@ static const SENSOR_REG_T hi1336_init_setting[] =
         {0x324e, 0xfcd8},
         {0x3250, 0xa060},
         {0x325a, 0x7a37},
-        {0x0734, 0x3a0b},
+        {0x0734, 0x4b0b},
         {0x0736, 0xd8b0},
         {0x0600, 0x1190},
         {0x0602, 0x0052},
@@ -1164,7 +1164,7 @@ static const SENSOR_REG_T hi1336_snapshot_setting[] = {
         //PDAF Type       : 3 / PD-DPC off, Dyn-DPC on
         /////////////////////////////////////////
         {0x3250, 0xa060},
-        {0x0730, 0x600f},
+        {0x0730, 0x770f},
         {0x0732, 0xe0b0},
         {0x1118, 0x0006},
         {0x1200, 0x0d1f},
