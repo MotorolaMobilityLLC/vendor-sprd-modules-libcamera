@@ -4908,7 +4908,7 @@ int SprdCamera3Setting::updateWorkParameters(
             frame_settings.find(ANDROID_SPRD_APP_MODE_ID).data.i32[0];
         property_get("persist.vendor.cam.fdr.sel", value, "0");
         if (s_setting[mCameraId].sprddefInfo.sprd_appmode_id == CAMERA_MODE_NIGHT_PHOTO &&
-            cameraInfo.facing != SNS_FACE_FRONT && atoi(value) == 1) {
+            atoi(value) == 1) {
             s_setting[mCameraId].sprddefInfo.sprd_appmode_id = CAMERA_MODE_FDR;
         }
         sprd_app_id = s_setting[mCameraId].sprddefInfo.sprd_appmode_id;
