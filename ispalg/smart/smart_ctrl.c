@@ -2088,6 +2088,15 @@ static cmr_s32 smart_ctl_calculation(smart_handle_t handle, struct smart_calc_pa
 	smart_ctl_print_debug_file(handle,cxt->debug_file, param, result, (char *)cxt->debug_buf,&(cxt->smt_dbginfo.smt_gma));
 	for (i = 0; i < result->counts; i++) {
 		blk = &result->block_result[i];
+		if(blk->smart_id == ISP_SMART_BLC) {
+			struct isp_weight_value *blc_result = (struct isp_weight_value *)blk->component[0].fix_data;
+			cxt->smt_dbginfo.blc_param.gain = param->bv_gain;
+			cxt->smt_dbginfo.blc_param.block_result.value[0] = blc_result->value[0];
+			cxt->smt_dbginfo.blc_param.block_result.value[1] = blc_result->value[1];
+			cxt->smt_dbginfo.blc_param.block_result.weight[0] = blc_result->weight[0];
+			cxt->smt_dbginfo.blc_param.block_result.weight[1] = blc_result->weight[1];
+			ISP_LOGV("BLC debug infor %d %d %d %d ",blc_result->value[0],blc_result->value[1],blc_result->weight[0],blc_result->weight[1]);
+		}
 		if (blk->smart_id > 8) {
 			switch (blk->smart_id) {
 			case 9:
