@@ -2100,7 +2100,7 @@ static cmr_u32 convert_scene_flag_for_ae(cmr_u32 scene_flag)
 		convert_scene_flag =  AE_SCENE_NIGHT;
 		break;
 	case ISP_SPORT:
-		convert_scene_flag = AE_SCENE_SPORT;
+		convert_scene_flag = AE_SCENE_SLOWMOTION;
 		break;
 	case ISP_BOKEHMODE:
 		convert_scene_flag = AE_SCENE_PORTRAIT;

@@ -415,9 +415,11 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
         case CAMERA_SCENE_MODE_PANORAMA:
             out_param = ISP_PANORAMA;
             break;
-
-        case CAMERA_SCENE_MODE_SLOWMOTION:
+        case CAMERA_SCENE_MODE_VIDEO:
             out_param = ISP_VIDEO;
+            break;
+        case CAMERA_SCENE_MODE_SLOWMOTION:
+            out_param = ISP_SPORT;
             break;
 
         case CAMERA_SCENE_MODE_HDR:
