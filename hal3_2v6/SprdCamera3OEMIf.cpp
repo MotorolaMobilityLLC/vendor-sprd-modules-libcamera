@@ -809,6 +809,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mGyrodata, 0, sizeof(mGyrodata));
     memset(&mPreviewParam, 0, sizeof(mPreviewParam));
     memset(&mVideoParam, 0, sizeof(mVideoParam));
+    memset(&mLastVidoSize, 0, sizeof(mLastVidoSize));
     mGyroPreviewInfo.clear();
     mGyroVideoInfo.clear();
     mPreviewInst = NULL;
@@ -943,6 +944,22 @@ void SprdCamera3OEMIf::closeCamera() {
     if (flashInfo_info.available) {
         SprdCamera3Flash::releaseFlash(mCameraId);
     }
+#ifdef CONFIG_CAMERA_EIS
+        if (mEisPreviewInit) {
+            Mutex::Autolock l(&mEisPreviewProcessLock);
+            video_stab_close(&mPreviewInst);
+            mEisPreviewInit = false;
+            SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
+            HAL_LOGI("preview stab close");
+        }
+        if (mEisVideoInit) {
+            Mutex::Autolock l(&mEisVideoProcessLock);
+            video_stab_close(&mVideoInst);
+            mEisVideoInit = false;
+            SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
+            HAL_LOGI("video stab close");
+        }
+#endif
 
 #ifdef CONFIG_CAMERA_GYRO
     gyro_monitor_thread_deinit((void *)this);
@@ -1117,9 +1134,11 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
 
     switch (channel_type) {
     case CAMERA_CHANNEL_TYPE_REGULAR:
+        SPRD_DEF_Tag *sprddefInfo;
+        sprddefInfo = mSetting->getSPRDDEFTagPTR();
         stopPreviewInternal();
 #ifdef CONFIG_CAMERA_EIS
-        if (mEisPreviewInit) {
+        if (mEisPreviewInit && sprddefInfo->sprd_eis_enabled != 1) {
             Mutex::Autolock l(&mEisPreviewProcessLock);
             video_stab_close(&mPreviewInst);
             mEisPreviewInit = false;
@@ -2155,6 +2174,7 @@ int SprdCamera3OEMIf::setPreviewParams() {
         videoSize.width = (cmr_u32)mVideoWidth;
         videoSize.height = (cmr_u32)mVideoHeight;
     }
+
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_SIZE,
              (cmr_uint)&videoSize);
     SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_VIDEO_FORMAT,
@@ -10371,14 +10391,17 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
     char value[PROPERTY_VALUE_MAX];
     struct img_size req_size;
     struct sensor_mode_info mode_info[SENSOR_MODE_MAX];
-
+    bool eisEn = false;
+    bool eisVideoSizeChanged = false;
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
 
     sprddefInfo = mSetting->getSPRDDEFTagPTR();
-
+    if (sprddefInfo->sprd_eis_enabled == 1) {
+        eisEn = true;
+    }
     mHalOem->ops->camera_ioctrl(mCameraHandle, CAMERA_IOCTRL_GET_SENSOR_FORMAT,
                                 &imageFormat);
     if (imageFormat == CAM_IMG_FMT_YUV422P) {
@@ -10388,6 +10411,19 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
 
     switch (stream_tpye) {
     case CAMERA_STREAM_TYPE_PREVIEW:
+#ifdef CONFIG_CAMERA_EIS
+        if(eisEn && size.width &&
+           (mLastPrevSize.width != size.width ||
+            mLastPrevSize.height != size.height)) {
+              HAL_LOGD("last prev size %d x %d",
+              mLastPrevSize.width, mLastPrevSize.height);
+              eisVideoSizeChanged = true;
+              mLastPrevSize.width = size.width;
+              mLastPrevSize.height = size.height;
+              HAL_LOGD("prev this is %d x %d"
+                  , size.width, size.height);
+        }
+#endif
         mPreviewWidth = size.width;
         mPreviewHeight = size.height;
         if (format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
@@ -10399,6 +10435,19 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
         }
         break;
     case CAMERA_STREAM_TYPE_VIDEO:
+#ifdef CONFIG_CAMERA_EIS
+        if(eisEn && size.width &&
+           (mLastVidoSize.width != size.width ||
+            mLastVidoSize.height != size.height)) {
+              HAL_LOGD("last vid size %d x %d",
+              mLastVidoSize.width, mLastVidoSize.height);
+              eisVideoSizeChanged = true;
+              mLastVidoSize.width = size.width;
+              mLastVidoSize.height = size.height;
+              HAL_LOGD("last vid this is %d x %d",
+                  size.width, size.height);
+        }
+#endif
         mVideoWidth = size.width;
         mVideoHeight = size.height;
         if (format == HAL_PIXEL_FORMAT_YCrCb_420_SP ||
@@ -10471,7 +10520,15 @@ int SprdCamera3OEMIf::setCamStreamInfo(struct img_size size, int format,
     default:
         break;
     }
-
+#ifdef CONFIG_CAMERA_EIS
+    if(eisEn && eisVideoSizeChanged && mEisPreviewInit) {
+      Mutex::Autolock l(&mEisPreviewProcessLock);
+      video_stab_close(&mPreviewInst);
+      mEisPreviewInit = false;
+      SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
+      HAL_LOGI("preview stab close,  camera id %d", mCameraId);
+    }
+#endif
     return NO_ERROR;
 }
 
