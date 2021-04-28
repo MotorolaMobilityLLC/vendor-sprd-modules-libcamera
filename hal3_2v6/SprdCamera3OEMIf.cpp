@@ -7733,6 +7733,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_SLOWMOTION) {
             drvSceneMode = CAMERA_SCENE_MODE_SLOWMOTION;
         }
+        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_VIDEO) {
+            drvSceneMode = CAMERA_SCENE_MODE_VIDEO;
+        }
 #ifdef CONFIG_CAMERA_EIS
         if (1 == sprddefInfo->sprd_eis_enabled) {
             drvSceneMode = CAMERA_SCENE_MODE_VIDEO_EIS;
