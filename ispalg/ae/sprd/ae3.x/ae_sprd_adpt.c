@@ -2006,11 +2006,6 @@ static cmr_s32 ae_set_flash_notice(struct ae_ctrl_cxt *cxt, struct ae_flash_noti
 
 	case AE_FLASH_PRE_AFTER:
 		ISP_LOGD("ae_flash_status FLASH_PRE_AFTER, cameraId:%d", cxt->camera_id);
-		if(cxt->cur_status.adv_param.flash != FLASH_PRE){
-			ISP_LOGE("previous cxt->cur_status.adv_param.flash:%d, SHOULD BE FLASH_PRE",cxt->cur_status.adv_param.flash);
-			rtn = AE_ERROR;
-			break;
-		}
 
 		if ((CAMERA_MODE_MANUAL == cxt->app_mode) && (cxt->flash_backup.mode == AE_MODE_AUTO_ISO_PRI)) {
 			cxt->cur_status.adv_param.mode_param.mode = AE_MODE_AUTO_ISO_PRI;
