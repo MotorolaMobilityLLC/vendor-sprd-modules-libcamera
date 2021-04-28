@@ -226,9 +226,15 @@ extern "C" {
 		cmr_u16 pt[10];
 	} smart_gamma_debuginfo;
 
+	struct blc_debug {
+		cmr_u32 gain;
+		struct isp_weight_value block_result;
+	};
+
 	typedef struct {
 		struct nr_data nr_param;
 		smart_gamma_debuginfo smt_gma;
+		struct blc_debug blc_param;
 	} smart_debuginfo;
 
 	cmr_s32 smart_ctl_ioctl(smart_handle_t handle, cmr_u32 cmd, void *param, void *result);
