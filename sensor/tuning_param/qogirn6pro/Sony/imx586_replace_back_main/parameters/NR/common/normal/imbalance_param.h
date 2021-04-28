@@ -1,4 +1,4 @@
-/*versionid=0x000C000F*/
+/*versionid=0x000D0010*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl6_sensor_nlm_imbalance_level*/
@@ -137,11 +137,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-		0x0920,
+		0x0FA0,
 		/*imblance_radial_1D_center_y*/
-		0x06D8,
+		0x0BB8,
 		/*imblance_radial_1D_radius_thr*/
-		0x0C79,
+		0x155C,
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
