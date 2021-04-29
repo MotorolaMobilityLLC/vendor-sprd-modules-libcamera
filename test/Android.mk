@@ -17,8 +17,6 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/external/drivers/gpu/soft/include \
     $(TOP)/vendor/sprd/external/drivers/gpu \
     $(TOP)/frameworks/av/services/camera/libcameraservice \
-    $(TOP)/vendor/sprd/modules/libcamera/vsp/inc \
-    $(TOP)/vendor/sprd/modules/libcamera/vsp/src \
     $(TOP)/vendor/sprd/modules/libcamera/sensor/inc \
     $(TOP)/vendor/sprd/modules/libcamera/sensor \
     $(TOP)/vendor/sprd/modules/libcamera/jpeg \
