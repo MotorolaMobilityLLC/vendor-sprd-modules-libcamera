@@ -428,13 +428,13 @@
 	/*radius_1d*/
 	{
 		/*cal_radius_bypass*/
-		0x0000,
+		0x0001,
 		/*center_y*/
 		0x0618,
 		/*center_x*/
 		0x0838,
 		/*update_flat_thr_bypass*/
-		0x0000,
+		0x0001,
 		/*radius_threshold*/
 		0x0597,
 		/*radius_threshold_factor*/
@@ -442,7 +442,7 @@
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
-		0x0000,
+		0x0001,
 		/*radius*/
 		{
 			/*radius0*/
@@ -1126,21 +1126,21 @@
 	/*radius_1d*/
 	{
 		/*cal_radius_bypass*/
-		0x0000,
+		0x0001,
 		/*center_y*/
 		0x0618,
 		/*center_x*/
 		0x0838,
 		/*update_flat_thr_bypass*/
-		0x0000,
+		0x0001,
 		/*radius_threshold*/
-		0x0597,
+		0x06FD,
 		/*radius_threshold_factor*/
-		0x00C8,
+		0x00FA,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
-		0x0000,
+		0x0001,
 		/*radius*/
 		{
 			/*radius0*/
@@ -1832,9 +1832,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0597,
+		0x0862,
 		/*radius_threshold_factor*/
-		0x00C8,
+		0x012C,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -2530,9 +2530,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0597,
+		0x0862,
 		/*radius_threshold_factor*/
-		0x00C8,
+		0x012C,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -3228,9 +3228,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0597,
+		0x0862,
 		/*radius_threshold_factor*/
-		0x00C8,
+		0x012C,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -3745,7 +3745,7 @@
 				/*flat_thresh_max1*/
 				0x0320,
 				/*flat_thresh_coef1*/
-				0x0000,
+				0x0014,
 				/*flat_thresh_max2*/
 				0x0258,
 				/*flat_thresh_coef2*/
@@ -3761,7 +3761,7 @@
 				/*flat_thresh_max1*/
 				0x02EE,
 				/*flat_thresh_coef1*/
-				0x0000,
+				0x0014,
 				/*flat_thresh_max2*/
 				0x0212,
 				/*flat_thresh_coef2*/
@@ -3777,7 +3777,7 @@
 				/*flat_thresh_max1*/
 				0x0384,
 				/*flat_thresh_coef1*/
-				0x0000,
+				0x0014,
 				/*flat_thresh_max2*/
 				0x02D0,
 				/*flat_thresh_coef2*/
@@ -3926,9 +3926,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0479,
+		0x0862,
 		/*radius_threshold_factor*/
-		0x00A0,
+		0x012C,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -4265,7 +4265,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x50,
+					0x46,
 					/*addback30*/
 					0x10,
 					/*addback31*/
@@ -4437,11 +4437,11 @@
 			/*[0x0]*/
 			{
 				/*flat_thresh_max0*/
-				0x01F4,
+				0x0258,
 				/*flat_thresh_coef0*/
 				0x0014,
 				/*flat_thresh_max1*/
-				0x0320,
+				0x0384,
 				/*flat_thresh_coef1*/
 				0x0032,
 				/*flat_thresh_max2*/
@@ -4453,11 +4453,11 @@
 			/*[0x1]*/
 			{
 				/*flat_thresh_max0*/
-				0x01F4,
+				0x0258,
 				/*flat_thresh_coef0*/
 				0x0014,
 				/*flat_thresh_max1*/
-				0x0320,
+				0x0384,
 				/*flat_thresh_coef1*/
 				0x0032,
 				/*flat_thresh_max2*/
@@ -4469,11 +4469,11 @@
 			/*[0x2]*/
 			{
 				/*flat_thresh_max0*/
-				0x0226,
+				0x0258,
 				/*flat_thresh_coef0*/
-				0x000A,
+				0x0014,
 				/*flat_thresh_max1*/
-				0x0320,
+				0x0384,
 				/*flat_thresh_coef1*/
 				0x0032,
 				/*flat_thresh_max2*/
@@ -4624,9 +4624,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x054F,
+		0x0862,
 		/*radius_threshold_factor*/
-		0x00BE,
+		0x012C,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -6359,7 +6359,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x3F,
+					0x14,
 					/*addback30*/
 					0x12,
 					/*addback31*/
@@ -6435,7 +6435,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x44,
+					0x3C,
 					/*addback30*/
 					0x12,
 					/*addback31*/
@@ -6511,7 +6511,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x48,
+					0x50,
 					/*addback30*/
 					0x12,
 					/*addback31*/
@@ -6531,49 +6531,49 @@
 			/*[0x0]*/
 			{
 				/*flat_thresh_max0*/
-				0x0226,
+				0x01F4,
 				/*flat_thresh_coef0*/
-				0xFFF6,
+				0x000A,
 				/*flat_thresh_max1*/
-				0x0384,
+				0x03E8,
 				/*flat_thresh_coef1*/
-				0x0032,
+				0x003C,
 				/*flat_thresh_max2*/
-				0x0320,
+				0x012C,
 				/*flat_thresh_coef2*/
-				0x001E,
+				0x0001,
 
 			},
 			/*[0x1]*/
 			{
 				/*flat_thresh_max0*/
-				0x0226,
+				0x01F4,
 				/*flat_thresh_coef0*/
-				0xFFF6,
+				0x000A,
 				/*flat_thresh_max1*/
-				0x0384,
+				0x03E8,
 				/*flat_thresh_coef1*/
-				0x0032,
+				0x003C,
 				/*flat_thresh_max2*/
-				0x0320,
+				0x012C,
 				/*flat_thresh_coef2*/
-				0x001E,
+				0x0001,
 
 			},
 			/*[0x2]*/
 			{
 				/*flat_thresh_max0*/
-				0x0258,
+				0x0226,
 				/*flat_thresh_coef0*/
-				0xFFF6,
+				0x000A,
 				/*flat_thresh_max1*/
-				0x0384,
+				0x03E8,
 				/*flat_thresh_coef1*/
-				0x0032,
+				0x003C,
 				/*flat_thresh_max2*/
-				0x0320,
+				0x012C,
 				/*flat_thresh_coef2*/
-				0x0014,
+				0x0001,
 
 			}
 		},
@@ -6990,9 +6990,9 @@
 		/*first_lum_bypass*/
 		0x0000,
 		/*lum_thr0*/
-		0x0032,
+		0x00F0,
 		/*lum_thr1*/
-		0x00C8,
+		0x01F4,
 		/*nlm_lum*/
 		{
 			/*[0x0]*/
@@ -7057,7 +7057,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x1E,
+					0x14,
 					/*addback30*/
 					0x38,
 					/*addback31*/
@@ -7229,15 +7229,15 @@
 			/*[0x0]*/
 			{
 				/*flat_thresh_max0*/
-				0x0190,
+				0x01F4,
 				/*flat_thresh_coef0*/
-				0x0028,
+				0x0032,
 				/*flat_thresh_max1*/
-				0x06A4,
+				0x0708,
 				/*flat_thresh_coef1*/
-				0x0064,
+				0x0050,
 				/*flat_thresh_max2*/
-				0x012C,
+				0x01C2,
 				/*flat_thresh_coef2*/
 				0x0001,
 
@@ -7245,15 +7245,15 @@
 			/*[0x1]*/
 			{
 				/*flat_thresh_max0*/
-				0x019A,
+				0x0258,
 				/*flat_thresh_coef0*/
 				0x0032,
 				/*flat_thresh_max1*/
-				0x0708,
+				0x076C,
 				/*flat_thresh_coef1*/
-				0x0078,
+				0x0050,
 				/*flat_thresh_max2*/
-				0x012C,
+				0x01E0,
 				/*flat_thresh_coef2*/
 				0x0001,
 
@@ -7261,15 +7261,15 @@
 			/*[0x2]*/
 			{
 				/*flat_thresh_max0*/
-				0x019A,
+				0x0258,
 				/*flat_thresh_coef0*/
 				0x0032,
 				/*flat_thresh_max1*/
-				0x0708,
+				0x07D0,
 				/*flat_thresh_coef1*/
-				0x0078,
+				0x0050,
 				/*flat_thresh_max2*/
-				0x012C,
+				0x0208,
 				/*flat_thresh_coef2*/
 				0x0001,
 
@@ -7416,9 +7416,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0479,
+		0x0597,
 		/*radius_threshold_factor*/
-		0x00A0,
+		0x00C8,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
@@ -7688,9 +7688,9 @@
 		/*first_lum_bypass*/
 		0x0000,
 		/*lum_thr0*/
-		0x0032,
+		0x00F0,
 		/*lum_thr1*/
-		0x00C8,
+		0x01F4,
 		/*nlm_lum*/
 		{
 			/*[0x0]*/
@@ -7700,7 +7700,7 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x23,
+						0x1E,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7718,7 +7718,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x12,
+						0x0D,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -7736,7 +7736,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x1C,
+						0x14,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -7755,7 +7755,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x1E,
+					0x10,
 					/*addback30*/
 					0x38,
 					/*addback31*/
@@ -7831,7 +7831,7 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x22,
+					0x19,
 					/*addback30*/
 					0x38,
 					/*addback31*/
@@ -7927,15 +7927,15 @@
 			/*[0x0]*/
 			{
 				/*flat_thresh_max0*/
-				0x0190,
+				0x01F4,
 				/*flat_thresh_coef0*/
-				0x0028,
+				0x0032,
 				/*flat_thresh_max1*/
-				0x06A4,
+				0x076C,
 				/*flat_thresh_coef1*/
-				0x0064,
+				0x0050,
 				/*flat_thresh_max2*/
-				0x012C,
+				0x01C2,
 				/*flat_thresh_coef2*/
 				0x0001,
 
@@ -7943,15 +7943,15 @@
 			/*[0x1]*/
 			{
 				/*flat_thresh_max0*/
-				0x019A,
+				0x0258,
 				/*flat_thresh_coef0*/
 				0x0032,
 				/*flat_thresh_max1*/
-				0x0708,
+				0x07D0,
 				/*flat_thresh_coef1*/
-				0x0078,
+				0x0050,
 				/*flat_thresh_max2*/
-				0x012C,
+				0x01E0,
 				/*flat_thresh_coef2*/
 				0x0001,
 
@@ -7959,15 +7959,15 @@
 			/*[0x2]*/
 			{
 				/*flat_thresh_max0*/
-				0x019A,
+				0x0258,
 				/*flat_thresh_coef0*/
 				0x0032,
 				/*flat_thresh_max1*/
-				0x0708,
+				0x07D0,
 				/*flat_thresh_coef1*/
-				0x0078,
+				0x0050,
 				/*flat_thresh_max2*/
-				0x012C,
+				0x0208,
 				/*flat_thresh_coef2*/
 				0x0001,
 
@@ -8114,9 +8114,9 @@
 		/*update_flat_thr_bypass*/
 		0x0000,
 		/*radius_threshold*/
-		0x0479,
+		0x0597,
 		/*radius_threshold_factor*/
-		0x00A0,
+		0x00C8,
 		/*reserved1*/
 		0x0000,
 		/*radial_1D_bypass*/
