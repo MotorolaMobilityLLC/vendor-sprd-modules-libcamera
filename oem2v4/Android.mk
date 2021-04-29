@@ -33,7 +33,6 @@ LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/isp_calibration/inc \
     $(LOCAL_PATH)/../common/inc \
     $(LOCAL_PATH)/../jpeg \
-    $(LOCAL_PATH)/../vsp/inc \
     $(LOCAL_PATH)/../tool/mtrace \
     $(LOCAL_PATH)/../arithmetic/facebeauty/inc \
     $(LOCAL_PATH)/../sensor/dummy \

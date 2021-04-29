@@ -38,8 +38,6 @@ endif
 include $(LOCAL_PATH)/SprdCtrl.mk
 
 LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/vsp/inc \
-    $(LOCAL_PATH)/vsp/src \
     $(LOCAL_PATH)/sensor/inc \
     $(LOCAL_PATH)/sensor \
     $(LOCAL_PATH)/jpeg \
@@ -325,8 +323,6 @@ LOCAL_C_INCLUDES := \
     $(TOP)/vendor/sprd/proprietories-source/autotest/interface/include \
     $(TOP)/frameworks/native/headers/media_plugin \
     $(TOP)/vendor/sprd/modules/libcamera/common/inc/ \
-    $(LOCAL_PATH)/vsp/inc \
-    $(LOCAL_PATH)/vsp/src \
     $(LOCAL_PATH)/sensor/inc \
     $(LOCAL_PATH)/sensor \
     $(LOCAL_PATH)/jpeg \
