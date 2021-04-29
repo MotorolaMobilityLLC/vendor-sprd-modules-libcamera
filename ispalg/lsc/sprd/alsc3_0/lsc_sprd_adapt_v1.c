@@ -2251,12 +2251,12 @@ static void alsc_do_simulation(void *handle,void *in)
 
 	memcpy(lsc_calc_in->last_lsc_table, cxt->std_init_lsc_table_param_buffer[DEFAULT_TAB_INDEX], cxt->init_gain_width * cxt->init_gain_height * 4 * sizeof(cmr_u16));
 
-	lsc_calc_in->img_width = cxt->init_img_width;
-	lsc_calc_in->img_height = cxt->init_img_height;
+	lsc_calc_in->img_width = alsc_do_simulation->image_width;
+	lsc_calc_in->img_height = alsc_do_simulation->image_height;
 	lsc_calc_in->gain_width = cxt->init_gain_width;
 	lsc_calc_in->gain_height = cxt->init_gain_height;
-	lsc_calc_in->gridx = cxt->init_gridx;
-	lsc_calc_in->gridy = cxt->init_gridy;
+	lsc_calc_in->gridx = cxt->init_gridx * alsc_do_simulation->image_width / cxt->init_img_width;
+	lsc_calc_in->gridy = cxt->init_gridy * alsc_do_simulation->image_height / cxt->init_img_height;
 	lsc_calc_in->main_flash_mode = 0;
 	lsc_calc_in->captureFlashEnvRatio = 0;
 	lsc_calc_in->captureFlash1ofAllRatio = 0;
