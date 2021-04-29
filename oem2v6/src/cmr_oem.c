@@ -921,6 +921,9 @@ static cmr_int camera_fdr_handle_postv1rgb(struct camera_context *cxt,
 	struct img_size pic_size;
 	struct swa_frame *dst_frame;
 	struct swa_frames_inout in, out;
+	struct swa_fdr_proc_param fdr_param;
+	struct isp_info fdr_dbg_info;
+	struct common_isp_cmd_param isp_param;
 
 	pic_size.width = frame->length;
 	pic_size.height = frame->height;
@@ -958,9 +961,20 @@ static cmr_int camera_fdr_handle_postv1rgb(struct camera_context *cxt,
 	dst_frame = &out.frms[0];
 	*dst_frame = *src_param;
 
-	ret = swa_cxt->swa_process(swa_cxt->swa_handle, &in, &out, NULL);
+	ret = swa_cxt->swa_process(swa_cxt->swa_handle, &in, &out, &fdr_param);
 	if (ret) {
 		CMR_LOGE("fdr swa_process failed\n");
+	}
+
+	fdr_dbg_info.addr = fdr_param.dbg_info_addr;
+	fdr_dbg_info.size = fdr_param.dbg_info_size;
+	isp_param.cmd_ptr = (void *)&fdr_dbg_info;
+
+	if (fdr_dbg_info.addr) {
+		ret = camera_isp_ioctl(cxt, COM_ISP_SET_FDR_LOG, (void *)&isp_param);
+		if (ret) {
+			CMR_LOGE("failed to set FDR exif debug log");
+		}
 	}
 
 	//dump image
@@ -1321,18 +1335,18 @@ cmr_int camera_fdr_handle(void *data, void *privdata) {
 	if (cxt->fdr_capture_frame_cnt < cxt->fdr_total_frame_cnt)
 		goto exit;
 
-	fdr_dbg_info.addr = fdr_param.dbg_info_addr;
-	fdr_dbg_info.size = fdr_param.dbg_info_size;
-	isp_param.cmd_ptr = (void *)&fdr_dbg_info;
-	CMR_LOGD("fdr_dbg_info addr %p, size %d", fdr_dbg_info.addr, fdr_dbg_info.size);
-	if (fdr_dbg_info.addr) {
-		ret = camera_isp_ioctl(cxt, COM_ISP_SET_FDR_LOG, (void *)&isp_param);
-		if (ret) {
-			CMR_LOGE("failed to set FDR exif debug log");
-		}
-	}
-
 	if (swa_cxt->version == FDR_VERSION_0) {
+		fdr_dbg_info.addr = fdr_param.dbg_info_addr;
+		fdr_dbg_info.size = fdr_param.dbg_info_size;
+		isp_param.cmd_ptr = (void *)&fdr_dbg_info;
+		CMR_LOGD("fdr_dbg_info addr %p, size %d", fdr_dbg_info.addr, fdr_dbg_info.size);
+		if (fdr_dbg_info.addr) {
+			ret = camera_isp_ioctl(cxt, COM_ISP_SET_FDR_LOG, (void *)&isp_param);
+			if (ret) {
+				CMR_LOGE("failed to set FDR exif debug log");
+			}
+		}
+
 		nlm_factor = &nlm_data;
 		nlm_factor->nlm_out_ratio0 = fdr_param.nlm_out_ratio0;
 		nlm_factor->nlm_out_ratio1 = fdr_param.nlm_out_ratio1;
