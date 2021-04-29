@@ -172,6 +172,7 @@ static struct sensor_raw_info s_gc5035_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{NULL, 0},
 	},
 	&s_gc5035_trim_info,
 	&s_gc5035_ioctrl,
@@ -193,6 +194,7 @@ static struct sensor_raw_info s_gc5035_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
+		NULL,
 	},
 	{
 		{s_gc5035_common_tool_ui_input, sizeof(s_gc5035_common_tool_ui_input)},
@@ -205,6 +207,7 @@ static struct sensor_raw_info s_gc5035_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{s_gc5035_video_0_tool_ui_input, sizeof(s_gc5035_video_0_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
