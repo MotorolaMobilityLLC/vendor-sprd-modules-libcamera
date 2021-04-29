@@ -4117,6 +4117,8 @@ static cmr_int ispalg_alsc_update(cmr_handle isp_alg_handle)
 		do_sim.bv = scene_param.smart_bv;
 		do_sim.bv_gain = scene_param.global_gain;
 		do_sim.sim_output_table = sim_output_table;
+		do_sim.image_width = scene_param.width;
+		do_sim.image_height = scene_param.height;
 		if (cxt->ops.lsc_ops.ioctrl) {
 			ret = cxt->ops.lsc_ops.ioctrl(lsc_adv_handle, ALSC_DO_SIMULATION, (void *)&do_sim, NULL);
 			if (ISP_SUCCESS != ret)
