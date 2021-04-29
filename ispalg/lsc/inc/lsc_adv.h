@@ -218,6 +218,8 @@ struct alsc_do_simulation {
 	cmr_s32 bv;
 	cmr_s32 bv_gain;
 	cmr_u16 *sim_output_table;
+	cmr_u32 image_width;
+	cmr_u32 image_height;
 };
 
 struct binning_info {
