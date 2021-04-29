@@ -30,7 +30,6 @@ LOCAL_C_INCLUDES := \
     $(TARGET_BSP_UAPI_PATH)/kernel/usr/include/video \
     $(LOCAL_PATH)/../common/inc \
     $(LOCAL_PATH)/../jpeg \
-    $(LOCAL_PATH)/../vsp/inc \
     $(LOCAL_PATH)/../tool/mtrace \
     $(LOCAL_PATH)/dummy \
     $(LOCAL_PATH)/../$(OEM_DIR)/inc \
