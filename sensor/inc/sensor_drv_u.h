@@ -24,6 +24,7 @@
 #include "../hw_drv/hw_sensor_drv.h"
 #include "../sensor_drv/sensor_ic_drv.h"
 #include "sensor_drv_xml.h"
+#include "sensor_zoom_info.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +34,10 @@ extern "C" {
 
 #define CONFIG_XML_PATH "/vendor/etc/"
 #define CONFIG_XML_FILE "sensor_config.xml"
+#define CONFIG_JSON_PATH "/vendor/etc/"
+#define CONFIG_JSON_FILE "zoom_config.json"
 #define CONFIG_XML_NAME_LEN 64
+#define CONFIG_JSON_NAME_LEN 64
 #define MODULE_CFG_MAX_NUM 20
 #define SENSOR_LIB_NAME_LEN 64
 

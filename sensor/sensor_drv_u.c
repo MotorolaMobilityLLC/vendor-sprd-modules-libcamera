@@ -66,6 +66,7 @@ static struct tuning_param_lib tuning_lib_mngr_for_bokeh[SENSOR_ID_MAX] = {0};
 
 static SENSOR_MATCH_T sensor_cfg_tab[SENSOR_ID_MAX] = {0};
 static struct xml_camera_cfg_info xml_cfg_tab[SENSOR_ID_MAX] = {0};
+static struct sensor_zoom_info sns_zoom_info = {0};
 
 static cmr_u32 sensor_is_HD_mode = 0;
 static cmr_u8 otpdata[SENSOR_ID_MAX][SPRD_DUAL_OTP_SIZE] = {0};
@@ -4512,6 +4513,7 @@ static cmr_int sensor_drv_scan_hw(void) {
     char sensor_version_info[SENSOR_ID_MAX * 64] = {0};
     int32_t bytes = 0;
     char config_xml_name[CONFIG_XML_NAME_LEN];
+    char zoom_info_file[CONFIG_JSON_NAME_LEN];
     xmlDocPtr docPtr = NULL;
     xmlNodePtr rootPtr = NULL;
     xmlNodePtr nodePtr = NULL;
@@ -4533,6 +4535,13 @@ static cmr_int sensor_drv_scan_hw(void) {
     memset(devPtr->drv_idx, 0xff, SENSOR_ID_MAX);
     memset(sensor_count, 0xff, SENSOR_ID_MAX);
     sensor_drv_sensor_info_list_init();
+
+    bytes = snprintf(zoom_info_file, sizeof(zoom_info_file), "%s%s", CONFIG_JSON_PATH, CONFIG_JSON_FILE);
+    if (access(zoom_info_file, R_OK)) {
+        SENSOR_LOGI("sensor zoom_config.json is not found");
+    } else {
+        sensor_drv_json_get_zoom_config_info(zoom_info_file, &sns_zoom_info);
+    }
 
     bytes = snprintf(config_xml_name, sizeof(config_xml_name), "%s%s",
                      CONFIG_XML_PATH, CONFIG_XML_FILE);
@@ -4858,43 +4867,65 @@ LOGICAL_SENSOR_INFO_T *sensorGetLogicaInfo4multiCameraId(int multiCameraId) {
     return NULL;
 }
 
+void copy_zoom_cfg_info(struct sensor_zoom_param_input *dest_zoom_param,
+                        struct zoom_info_config *src_zoom_param) {
+    dest_zoom_param->PhyCameras = src_zoom_param->PhyCameras;
+    dest_zoom_param->MaxDigitalZoom = src_zoom_param->MaxDigitalZoom;
+    memcpy(&(dest_zoom_param->ZoomRatioSection),
+           src_zoom_param->ZoomRatioSection, sizeof(src_zoom_param->ZoomRatioSection));
+    dest_zoom_param->BinningRatio = src_zoom_param->BinningRatio;
+}
+
 cmr_int sensorGetZoomParam(struct sensor_zoom_param_input *zoom_param) {
     int ret = CMR_CAMERA_SUCCESS;
     char value[PROPERTY_VALUE_MAX] = {0};
 
     property_get("persist.vendor.cam.multi.section", value, "3");
-    if (atoi(value) == 3) {
-        if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
+
+    if (sns_zoom_info.init == true){
+        if (atoi(value) == 3) {
+            if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
+                copy_zoom_cfg_info(zoom_param, &sns_zoom_info.zoom_info_cfg[SW_T_DUALVIDEO_ZOOM]);
+            } else {
+                copy_zoom_cfg_info(zoom_param, &sns_zoom_info.zoom_info_cfg[W_SW_T_THREESECTION_ZOOM]);
+            }
+        } else if (atoi(value) == 2) {
+            copy_zoom_cfg_info(zoom_param, &sns_zoom_info.zoom_info_cfg[W_SW_TWOSECTION_ZOOM]);
+        }
+    } else {
+        if (atoi(value) == 3) {
+            if (zoom_param->camera_id == SPRD_DUAL_VIEW_VIDEO_ID) {
+                zoom_param->PhyCameras = 2;
+                zoom_param->MaxDigitalZoom = 10.0;
+                zoom_param->ZoomRatioSection[0] = 2.0;
+                zoom_param->ZoomRatioSection[1] = 10.0;
+                zoom_param->ZoomRatioSection[2] = 0;
+                zoom_param->ZoomRatioSection[3] = 0;
+                zoom_param->ZoomRatioSection[4] = 0;
+                zoom_param->ZoomRatioSection[5] = 0;
+                zoom_param->BinningRatio = 5.0;
+            } else {
+                zoom_param->PhyCameras = 3;
+                zoom_param->MaxDigitalZoom = 10.0;
+                zoom_param->ZoomRatioSection[0] = 0.6;
+                zoom_param->ZoomRatioSection[1] = 1.0;
+                zoom_param->ZoomRatioSection[2] = 2.0;
+                zoom_param->ZoomRatioSection[3] = 10.0;
+                zoom_param->ZoomRatioSection[4] = 0;
+                zoom_param->ZoomRatioSection[5] = 0;
+                zoom_param->BinningRatio = 5.0;
+            }
+        } else if (atoi(value) == 2) {
             zoom_param->PhyCameras = 2;
-            zoom_param->MaxDigitalZoom = 10.0;
-            zoom_param->ZoomRatioSection[0] = 2.0;
-            zoom_param->ZoomRatioSection[1] = 10.0;
-            zoom_param->ZoomRatioSection[2] = 0;
+            zoom_param->MaxDigitalZoom = 8.0;
+            zoom_param->ZoomRatioSection[0] = 0.6;
+            zoom_param->ZoomRatioSection[1] = 1.0;
+            zoom_param->ZoomRatioSection[2] = 8.0;
             zoom_param->ZoomRatioSection[3] = 0;
             zoom_param->ZoomRatioSection[4] = 0;
             zoom_param->ZoomRatioSection[5] = 0;
-            zoom_param->BinningRatio = 5.0;
-        } else {
-            zoom_param->PhyCameras = 3;
-            zoom_param->MaxDigitalZoom = 10.0;
-            zoom_param->ZoomRatioSection[0] = 0.6;
-            zoom_param->ZoomRatioSection[1] = 1.0;
-            zoom_param->ZoomRatioSection[2] = 2.0;
-            zoom_param->ZoomRatioSection[3] = 10.0;
-            zoom_param->ZoomRatioSection[4] = 0;
-            zoom_param->ZoomRatioSection[5] = 0;
-            zoom_param->BinningRatio = 5.0;
+            zoom_param->BinningRatio = 8.0;
         }
-    } else if (atoi(value) == 2) {
-        zoom_param->PhyCameras = 2;
-        zoom_param->MaxDigitalZoom = 8.0;
-        zoom_param->ZoomRatioSection[0] = 0.6;
-        zoom_param->ZoomRatioSection[1] = 1.0;
-        zoom_param->ZoomRatioSection[2] = 8.0;
-        zoom_param->ZoomRatioSection[3] = 0;
-        zoom_param->ZoomRatioSection[4] = 0;
-        zoom_param->ZoomRatioSection[5] = 0;
-        zoom_param->BinningRatio = 8.0;
     }
 
     return ret;
