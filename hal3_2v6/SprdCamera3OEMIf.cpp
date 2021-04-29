@@ -8529,9 +8529,16 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
                    sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_VIDEO || sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_VIDEO) {
 // 3dnr video mode
 #if defined(CONFIG_ISP_2_3) // for sharkle
-                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW;
+
 #else
                 mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_HW_VIDEO_HW;
+#endif
+            }
+            if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_3DNR_VIDEO ||
+                   sprddefInfo->sprd_appmode_id == CAMERA_MODE_NIGHT_VIDEO) {
+// 3dnr video mode
+#if defined(CONFIG_ISP_2_3) // for sharkle
+                mSprd3dnrType = CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW;
 #endif
             }
             if(sprddefInfo->sprd_appmode_id == CAMERA_MODE_FDR) {
