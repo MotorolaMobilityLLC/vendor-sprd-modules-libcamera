@@ -472,7 +472,7 @@ static cmr_int imx351_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
                 sns_drv_cxt->sensor_ev_info.preview_exptime,
                 sns_drv_cxt->sensor_ev_info.preview_gain);
 
-    SENSOR_LOGI("capture_shutter = %d, capture_exptime = %d, capture_gain = %f",
+    SENSOR_LOGI("capture_shutter = %d, capture_exptime = %llu, capture_gain = %f",
                 cap_shutter, cap_exptime, cap_gain);
 snapshot_info:
     sns_drv_cxt->hdr_info.capture_shutter = cap_shutter;

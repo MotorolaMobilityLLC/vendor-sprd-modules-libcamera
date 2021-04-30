@@ -835,7 +835,7 @@ static cmr_int ov64b40_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
     cap_exptime = prv_exptime;
     cap_gain = prv_gain;
 
-    SENSOR_LOGI("capture_shutter = %d, capture_exptime = %d ns, capture_gain = %d",
+    SENSOR_LOGI("capture_shutter = %d, capture_exptime = %llu ns, capture_gain = %d",
 		cap_shutter, cap_exptime, cap_gain);
 
     ov64b40_drv_calc_exposure(handle, cap_shutter, 0, capture_mode, cap_exptime,
