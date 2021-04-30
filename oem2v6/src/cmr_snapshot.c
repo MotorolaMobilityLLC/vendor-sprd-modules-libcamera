@@ -1033,6 +1033,7 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	int iret;
+	cmr_u32 timeout = 0;
 	struct snp_context *cxt = (struct snp_context *)client_handle;
 	struct snap_request *cur_req;
 	struct img_frm *frm;
@@ -1070,9 +1071,11 @@ static cmr_int snp_ips_req_callback(cmr_handle client_handle,
 			cur_req->isp_debug_info_size = 0;
 		}
 
-		while (cur_req->status != SNAP_REQ_NEXT_READY) {
+		timeout = 0;
+		while (cur_req->status != SNAP_REQ_NEXT_READY && timeout < 5000) {
 			CMR_LOGD("wait 20 ms.......free buf %d, status %d\n", cxt->buf_queue.free_cnt, cur_req->status);
 			usleep(20*1000);
+			timeout += 20;
 		}
 
 		if (cxt->oem_cb) {
