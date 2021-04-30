@@ -16414,7 +16414,7 @@ cmr_int camera_local_reprocess_yuv_for_jpeg(cmr_handle oem_handle,
         }
     } else {
         ret = camera_set_multicam_reprocess_buffer(oem_handle, &snp_param,
-           yaddr, yaddr_vir, fd, width, height);
+           yaddr, yaddr_vir, (cmr_s32)fd, width, height);
         if (ret) {
             CMR_LOGE("set_multicam_reprocess_buffer failed!");
         }
