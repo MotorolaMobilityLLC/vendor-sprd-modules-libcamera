@@ -1516,21 +1516,21 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
         for (i = 0; i < class_handle->frame_out.face_area.face_count; i++) {
             //640*480 t0 prev plane
             class_handle->frame_out.face_area.range[i].fd_ptr.sx =
-                class_handle->frame_out.face_area.range[i].fd_ptr.sx  * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].fd_ptr.sx * ratio);
             class_handle->frame_out.face_area.range[i].fd_ptr.sy =
-                class_handle->frame_out.face_area.range[i].fd_ptr.sy * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].fd_ptr.sy * ratio);
             class_handle->frame_out.face_area.range[i].fd_ptr.srx =
-                class_handle->frame_out.face_area.range[i].fd_ptr.srx * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].fd_ptr.srx * ratio);
             class_handle->frame_out.face_area.range[i].fd_ptr.sry =
-                class_handle->frame_out.face_area.range[i].fd_ptr.sry * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].fd_ptr.sry * ratio);
             class_handle->frame_out.face_area.range[i].fd_ptr.ex =
-                class_handle->frame_out.face_area.range[i].fd_ptr.ex * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].fd_ptr.ex * ratio);
             class_handle->frame_out.face_area.range[i].fd_ptr.ey =
-                class_handle->frame_out.face_area.range[i].fd_ptr.ey * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].fd_ptr.ey * ratio);
             class_handle->frame_out.face_area.range[i].fd_ptr.elx =
-                class_handle->frame_out.face_area.range[i].elx * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].elx * ratio);
             class_handle->frame_out.face_area.range[i].fd_ptr.ely =
-                class_handle->frame_out.face_area.range[i].fd_ptr.ely * ratio;
+                (int)(class_handle->frame_out.face_area.range[i].fd_ptr.ely * ratio);
             /* coherence of coordinates */
             w = class_handle->frame_out.face_area.range[i].ex -
                 class_handle->frame_out.face_area.range[i].sx;
