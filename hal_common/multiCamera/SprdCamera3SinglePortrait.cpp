@@ -1297,13 +1297,23 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
     dump_buffs[DUMP_SINGLE_PORTRAIT_COMBO] = &combo_buff;
     dumpBlurIMG(DUMP_SINGLE_PORTRAIT_COMBO, dump_buffs);
 
+    sprd_capture_portrait_get_mask_info_param_t mPortraitCapGetMaskInfoParams;
+    memset(&mPortraitCapGetMaskInfoParams,0,sizeof(sprd_capture_portrait_get_mask_info_param_t));
+    mPortraitCapGetMaskInfoParams.ctx = &(mBlurApi[1]->mHandle);
+    int bokehMaskWidth = 0,bokehMaskHeight = 0, bokehMaskSize = 0;
+    mPortraitCapGetMaskInfoParams.width = &bokehMaskWidth;
+    mPortraitCapGetMaskInfoParams.height = &bokehMaskHeight;
+    mPortraitCapGetMaskInfoParams.bufSize = &bokehMaskSize;
+    ret = sprd_capture_portrait_adpt(SPRD_CAPTURE_PORTRAIT_GET_MASK_INFO_CMD, &mPortraitCapGetMaskInfoParams);
+    HAL_LOGD("mask size %d * %d = %d",bokehMaskWidth, bokehMaskHeight, bokehMaskSize);
+
     if (!mSinglePortrait->mFlushing) {
         if (mCaptureWeightParams.roi_type == 2) {
             //                getOutWeightMap(mSavedResultBuff);
         }
         /*get portrait mask*/
-        lptMask = (unsigned char *)malloc(512*384);
-        bokehMask = malloc(768*576);
+        lptMask = (unsigned char *)malloc(512 * 384);
+        bokehMask = malloc(bokehMaskWidth * bokehMaskHeight);
         if(!lptMask || !bokehMask) {
             HAL_LOGE("no mem!");
             return ret;
