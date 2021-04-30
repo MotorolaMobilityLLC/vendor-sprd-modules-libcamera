@@ -3072,12 +3072,6 @@ int SprdCamera3Portrait::flush(const struct camera3_device *device) {
 
     HAL_LOGI("E");
     CHECK_CAPTURE_ERROR();
-    free(mPortrait->lptMask);
-    mPortrait->lptMask = NULL;
-
-    free(mPortrait->bokehMask);
-    mPortrait->bokehMask = NULL;
-
     mPortrait->mTimeoutFlush.tv_sec += PENDINGTIMEOUT/1000000000;
     if(!mPortrait->mFlushing && mPortrait->is_caprequest){
         rc = sem_timedwait(&mPortrait->mflushvalue, &mPortrait->mTimeoutFlush);
@@ -4899,10 +4893,6 @@ int SprdCamera3Portrait::_flush(const struct camera3_device *device) {
 
     SprdCamera3HWI *hwiAux = m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].hwi;
     rc = hwiAux->flush(m_pPhyCamera[CAM_TYPE_PORTRAIT_DEPTH].dev);
-    free(mPortrait->lptMask);
-    mPortrait->lptMask =NULL;
-    free(mPortrait->bokehMask);
-    mPortrait->bokehMask = NULL;
 
     preClose();
     if (mBokehAlgo) {
@@ -4919,6 +4909,10 @@ int SprdCamera3Portrait::_flush(const struct camera3_device *device) {
 #endif
     }
 
+    free(mPortrait->lptMask);
+    mPortrait->lptMask =NULL;
+    free(mPortrait->bokehMask);
+    mPortrait->bokehMask = NULL;
     HAL_LOGI("X");
     return rc;
 }
