@@ -237,7 +237,7 @@ void SprdCamera3OEMIf::shakeTestInit(ShakeTest *tmpShakeTest) {
 
 SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     : mSetCapRatioFlag(false), mVideoCopyFromPreviewFlag(false),
-      mUsingSW3DNR(false), mVideoProcessedWithPreview(false), mRedisplayFum(0),
+      mUsingSW3DNR(false), mRedisplayFum(0),
       mSprdPipVivEnabled(0), mSprdHighIsoEnabled(0), mSprdRefocusEnabled(0),
       mSprd3dCalibrationEnabled(0), mSprdYuvCallBack(0),
       mSprdMultiYuvCallBack(0), mSprdReprocessing(0), mNeededTimestamp(0),
@@ -3227,7 +3227,6 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     mZslCaptureExitLoop = false;
     mRestartFlag = false;
     mVideoCopyFromPreviewFlag = false;
-    mVideoProcessedWithPreview = false;
     unsigned int on_off = VIDEO_OFF;
     camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
 
@@ -3239,13 +3238,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         if (sprddefInfo.sprd_3dnr_enabled == 1) {
             // 0 for 3dnr sw process , 1 for 3dnr hw process.
             if (grab_capability.support_3dnr_mode == 1) {
-                mVideoProcessedWithPreview = false;
                 mVideoCopyFromPreviewFlag = false;
             } else {
-                if (mUsingSW3DNR)
-                    mVideoProcessedWithPreview = true;
-                else
-                    mVideoCopyFromPreviewFlag = true;
+                mVideoCopyFromPreviewFlag = true;
 
                 on_off = VIDEO_ON;
                 camera_ioctrl(CAMERA_IOCTRL_3DNR_VIDEOMODE, &on_off, NULL);
@@ -4331,7 +4326,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
             }
 #endif
 
-            if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
+            if (mVideoCopyFromPreviewFlag) {
                 if (rec_stream) {
                     ret = rec_stream->getQBufAddrForNum(
                         frame_num, &videobuf_vir, &videobuf_phy, &fd0);
@@ -4349,7 +4344,7 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                 if (frame_num > mRecordFrameNum)
                     calculateTimestampForSlowmotion(buffer_timestamp);
 
-                if (mVideoCopyFromPreviewFlag || mVideoProcessedWithPreview) {
+                if (mVideoCopyFromPreviewFlag) {
                     ret = rec_stream->getQBufAddrForNum(
                         frame_num, &videobuf_vir, &videobuf_phy, &fd0);
                     if (ret || videobuf_vir == 0) {
@@ -4364,10 +4359,10 @@ void SprdCamera3OEMIf::receivePreviewFrame(struct camera_frame_type *frame) {
                         frame_num, videobuf_phy, videobuf_vir);
                     HAL_LOGV("frame_num=%d, prebuf_phy=0x%lx, prebuf_vir=0x%lx",
                              frame_num, prebuf_phy, prebuf_vir);
-                    if (mVideoCopyFromPreviewFlag) {
-                        memcpy((void *)videobuf_vir, (void *)prebuf_vir,
-                               mPreviewWidth * mPreviewHeight * 3 / 2);
-                    }
+
+                    memcpy((void *)videobuf_vir, (void *)prebuf_vir,
+                           mPreviewWidth * mPreviewHeight * 3 / 2);
+
                     flushIonBuffer(fd0, (void *)videobuf_vir, 0,
                                    mPreviewWidth * mPreviewHeight * 3 / 2);
                     channel->channelCbRoutine(frame_num,
