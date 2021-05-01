@@ -540,25 +540,7 @@ struct ae_flash_timing_param {
 	cmr_u8 pre_skip_num;/*the skip frame number of pre-flash*/
 	cmr_u8 main_skip_num;/*the skip frame number of main-flash*/
 };
-#if 0
-struct ae_rgbgamma_curve {
-	struct ae_sample points_r[SENSOR_GAMMA_POINT_NUM];/*gamma curve for r channel*/
-	struct ae_sample points_g[SENSOR_GAMMA_POINT_NUM];/*gamma curve for g channel*/
-	struct ae_sample points_b[SENSOR_GAMMA_POINT_NUM];/*gamma curve for b channel*/
-};
 
-struct ae_ygamma_curve {
-	struct ae_sample points_y[SENSOR_GAMMA_POINT_NUM];/*gamma curve for y channel*/
-};
-
-struct ae_gamma_param{
-	cmr_u32 type;/*0: full rgb gamma; 1: ygamma*/
-	union {
-		struct ae_rgbgamma_curve rgb_gamma;
-		struct ae_ygamma_curve ygamma; 
-	}data;
-};
-#endif
 
 struct ae_compensation_param {
 	cmr_u8 mode;/*0(AE_EV_MOD_COM_VAL): ae compensation;
