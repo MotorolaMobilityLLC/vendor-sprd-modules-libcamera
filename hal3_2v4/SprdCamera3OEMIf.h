@@ -291,7 +291,6 @@ class SprdCamera3OEMIf : public virtual RefBase {
     bool mVideoCopyFromPreviewFlag;
     // sw 3dnr solution used
     bool mUsingSW3DNR;               // only for blacksesame 3dnr (sw solution)
-    bool mVideoProcessedWithPreview; // only for blacksesame 3dnr (sw solution)
     cmr_uint mVideo3dnrFlag;
     uint32_t mRedisplayFum;
     bool clearPrevStream;
