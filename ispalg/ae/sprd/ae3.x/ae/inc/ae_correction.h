@@ -148,7 +148,7 @@ struct ae_adv_param {
 	void *smart_gamma_param;/*smart out gamma param*/
 
 	cmr_u32 touch_hold_flag;
-	cmr_u8 sync_stable;
+	cmr_u8 sync_stable; 
 };
 
 struct ae_lib_calc_in {
@@ -329,7 +329,7 @@ struct ae_lib_frm_sync_in {//ae_dynamic_sync struct
 	cmr_u32 ae_sync_type; /*0: fix mapping 1:dynamic mapping*/
 	cmr_u32 bmk_cam_id;
 	cmr_u32 tar_cam_id;
-	struct ae_frm_sync_param* sync_param[4];/*0:nor 1:rear 2:wide 3:tele*/
+	struct ae_frm_sync_param* sync_param[4];/*0:nor 1:wide 2:tele 3:reserved*/
 };
 
 struct ae_lib_frm_sync_out {
