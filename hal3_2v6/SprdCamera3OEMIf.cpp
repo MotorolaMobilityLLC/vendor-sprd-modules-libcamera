@@ -7695,9 +7695,7 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_VIDEO) {
             drvSceneMode = CAMERA_SCENE_MODE_VIDEO;
         }
-        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_PORTRAIT_PHOTO) {
-            drvSceneMode = CAMERA_SCENE_MODE_PORTRAIT;
-        }
+
        if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR)
            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
         HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d, mIsFDRCapture:%d, app_mode:%d",
