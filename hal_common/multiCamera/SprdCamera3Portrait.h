@@ -217,7 +217,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     List<camera3_notify_msg_t> mPrevFrameNotifyList;
     Mutex mNotifyLockMain;
     Mutex mPrevFrameNotifyLock;
-    uint64_t capture_result_timestamp;
+    uint64_t mCaptureResultTimestamp;
     List<camera3_notify_msg_t> mNotifyListAux;
     Mutex mNotifyLockAux;
     List<hwi_frame_buffer_info_t> mUnmatchedFrameListMain;
@@ -227,7 +227,6 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool is_caprequest;
     struct timespec mTimeoutFlush;
     bool mIsCapturing;
-    bool mSnapshotResultReturn;
     bool mIsCapDepthFinish;
     bool mHdrSkipBlur;
     int mjpegSize;
