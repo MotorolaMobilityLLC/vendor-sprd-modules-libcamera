@@ -2332,9 +2332,9 @@ bool SprdCamera3RealBokeh::BokehCaptureThread::threadLoop() {
                 capture_msg.combo_buff.buffer1 != NULL &&
                 capture_msg.combo_buff.buffer2 == NULL &&
                 mRealBokeh->mIsNrMode && mRealBokeh->mOtpData.otp_exist) {
-                mRealBokeh->mHdrSkipBlur = true;
+                // mRealBokeh->mHdrSkipBlur = true;
                 HAL_LOGI("frame is hdr, and depth hasn't do");
-                break;
+                // break;
             }
             mCaptureMsgList.erase(itor1);
         }
