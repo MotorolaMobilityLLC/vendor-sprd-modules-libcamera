@@ -156,9 +156,8 @@ SprdCamera3Portrait::SprdCamera3Portrait() {
     mPrevBlurFrameNumber = 0;
     mPrevFrameNumber = 0;
     mIsCapturing = false;
-    mSnapshotResultReturn = false;
     mjpegSize = 0;
-    capture_result_timestamp = 0;
+    mCaptureResultTimestamp = 0;
     mCameraId = 0;
     mFlushing = false;
     mVcmSteps = 0;
@@ -2487,6 +2486,46 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         0,
     };
 
+    auto prepareParamForAlgo = [&](){
+        bokeh_params capfaceinfo;
+        memset(&capfaceinfo, 0, sizeof(bokeh_params));
+        Mutex::Autolock m(mPortrait->mPrevFrameNotifyLock);
+        //if empty(),maybe add condition_variable
+        if (!mPortrait->mCapFaceInfoList.empty()) {
+            int64_t timestampMIN = mPortrait->mCaptureResultTimestamp;
+            uint32_t prev_frame_number = 0;
+            for (List<camera3_notify_msg_t>::iterator i =
+                mPortrait->mPrevFrameNotifyList.begin();
+                i != mPortrait->mPrevFrameNotifyList.end(); i++) {
+                int64_t timestampTEMP =
+                    ABS((int64_t)((uint64_t)i->message.shutter.timestamp -
+                    (uint64_t)mPortrait->mCaptureResultTimestamp));
+                if (timestampTEMP < timestampMIN) {
+                    timestampMIN = timestampTEMP;
+                    prev_frame_number = i->message.shutter.frame_number;
+                }
+                if (timestampMIN == 0) {
+                    break;
+                }
+            }
+
+            for (List<bokeh_params>::iterator i = mPortrait->mCapFaceInfoList.begin();
+                    i != mPortrait->mCapFaceInfoList.end(); i++) {
+                if (i->cur_frame_number == prev_frame_number) {
+                    capfaceinfo.sel_x = i->sel_x;
+                    capfaceinfo.sel_y = i->sel_y;
+                    capfaceinfo.f_number = i->f_number;
+                    capfaceinfo.relbokeh_oem_data = i->relbokeh_oem_data;
+                    capfaceinfo.portrait_param = i->portrait_param;
+                    capfaceinfo.face_tag_info = i->face_tag_info;
+                    break;
+                }
+            }
+        }
+        capfaceinfo.portrait_param.mRotation = mPortrait->mJpegOrientation;
+        mPortrait->mBokehAlgo->setCapFaceParam((void *)&capfaceinfo);
+    };
+
     if (output_buf == NULL || input_buf1 == NULL||input_buf2 == NULL) {
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
@@ -2552,7 +2591,7 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         rc = BAD_VALUE;
         goto exit;
     }
-    sem_wait(&mPortrait->mFaceinfoSignSem);
+    prepareParamForAlgo();
     if (mPortrait->mIsNrMode == true && input_buf1 != NULL && input_buf2 != NULL) {
         HAL_LOGI("nr do depth");
         mPortrait->mBokehAlgo->getPortraitMask(input_buf2_addr,
@@ -2921,51 +2960,12 @@ void SprdCamera3Portrait::updateApiParams(CameraMetadata metaSettings, int type,
                     mbokehParm.sel_y);
         }
         mbokehParm.cur_frame_number = cur_frame_number;
-        mCapFaceInfoList.push_back(mbokehParm);
-        if (mSnapshotResultReturn && type == 1) {
-            bokeh_params capfaceinfo;
-            memset(&capfaceinfo, 0, sizeof(bokeh_params));
-            if (!mCapFaceInfoList.empty()) {
-                Mutex::Autolock m(mPrevFrameNotifyLock);
-                int64_t timestampMIN = capture_result_timestamp;
-                uint32_t prev_frame_number = 0;
-                for (List<camera3_notify_msg_t>::iterator i =
-                         mPrevFrameNotifyList.begin();
-                     i != mPrevFrameNotifyList.end(); i++) {
-                    int64_t timestampTEMP =
-                        ABS((int64_t)((uint64_t)i->message.shutter.timestamp -
-                                      (uint64_t)capture_result_timestamp));
-                    if (timestampTEMP < timestampMIN) {
-                        timestampMIN = timestampTEMP;
-                        prev_frame_number = i->message.shutter.frame_number;
-                    }
-                    if (timestampMIN == 0) {
-                        break;
-                    }
-                }
-
-                for (List<bokeh_params>::iterator i = mCapFaceInfoList.begin();
-                     i != mCapFaceInfoList.end(); i++) {
-                    if (i->cur_frame_number == prev_frame_number) {
-                        capfaceinfo.sel_x = i->sel_x;
-                        capfaceinfo.sel_y = i->sel_y;
-                        capfaceinfo.f_number = i->f_number;
-                        capfaceinfo.relbokeh_oem_data = i->relbokeh_oem_data;
-                        capfaceinfo.portrait_param = i->portrait_param;
-                        capfaceinfo.face_tag_info = i->face_tag_info;
-                        break;
-                    }
-                }
+        {
+            Mutex::Autolock m(mPrevFrameNotifyLock);
+            mCapFaceInfoList.push_back(mbokehParm);
+            if (mCapFaceInfoList.size() > BOKEH_PREVIEW_PARAM_LIST) {
+                mCapFaceInfoList.erase(mCapFaceInfoList.begin());
             }
-
-            capfaceinfo.portrait_param.mRotation = mJpegOrientation;
-            mBokehAlgo->setCapFaceParam((void *)&capfaceinfo);
-            sem_post(&mFaceinfoSignSem);
-            mSnapshotResultReturn = false;
-        }
-
-        if (mCapFaceInfoList.size() > BOKEH_PREVIEW_PARAM_LIST) {
-            mCapFaceInfoList.erase(mCapFaceInfoList.begin());
         }
     }
 #ifdef CONFIG_FACE_BEAUTY
@@ -3106,7 +3106,6 @@ int SprdCamera3Portrait::initialize(
     mCaptureStreamsNum = 1;
     mCaptureThread->mReprocessing = false;
     mIsCapturing = false;
-    mSnapshotResultReturn = false;
     mCapFrameNumber = 0;
     mPrevBlurFrameNumber = 0;
     mjpegSize = 0;
@@ -3951,9 +3950,9 @@ void SprdCamera3Portrait::notifyMain(const camera3_notify_msg_t *msg) {
         cur_frame_number == mCaptureThread->mSavedCapRequest.frame_number &&
         cur_frame_number != 0) {
         if (msg->message.shutter.timestamp != 0) {
-            capture_result_timestamp = msg->message.shutter.timestamp;
-            HAL_LOGD(" capture_result_timestamp %lld",
-                     capture_result_timestamp);
+            mCaptureResultTimestamp = msg->message.shutter.timestamp;
+            HAL_LOGD(" mCaptureResultTimestamp %lld",
+                     mCaptureResultTimestamp);
         }
     }
     if (msg->type == CAMERA3_MSG_SHUTTER &&
@@ -4303,7 +4302,6 @@ void SprdCamera3Portrait::processCaptureResultMain(
     }
 
     if (mIsCapturing && (currStreamType == DEFAULT_STREAM)) {
-        mSnapshotResultReturn = true;
         if (mFlushing ||
             result->output_buffers->status == CAMERA3_BUFFER_STATUS_ERROR) {
             if (mhasCallbackStream &&
