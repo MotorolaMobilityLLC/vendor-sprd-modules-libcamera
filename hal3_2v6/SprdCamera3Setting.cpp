@@ -1192,7 +1192,8 @@ int SprdCamera3Setting::getSensorStaticInfo(int32_t cameraId) {
              mSensorFocusEnable[cameraId],
              sensor_fov[cameraId].physical_size[0],
              sensor_fov[cameraId].physical_size[1],
-             sensor_fov[cameraId].focal_lengths);
+             sensor_fov[cameraId].focal_lengths,
+             phyPtr->fov_angle);
     HAL_LOGI("kexposure_time_range (%lld, %lld)",
              kexposure_time_range[cameraId][0],
              kexposure_time_range[cameraId][1]);
