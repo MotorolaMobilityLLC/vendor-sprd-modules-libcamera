@@ -119,6 +119,8 @@ class SprdCamera3RegularChannel : public SprdCamera3Channel {
     static int kMaxBuffers;
 
   private:
+    Mutex mRegChCbLock;
+
     camera_channel_type_t mChannelType;
 
     SprdCamera3Stream *mCamera3Stream[CHANNEL_MAX_STREAM_NUM];
