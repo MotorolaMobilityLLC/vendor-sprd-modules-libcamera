@@ -155,6 +155,8 @@ int SprdCamera3RegularChannel::channelCbRoutine(
         return INVALID_OPERATION;
     }
 
+    Mutex::Autolock l(mRegChCbLock);
+
     // same stream, first in, should first out
     handledFrameNum = mCamera3Stream[index]->getHandledFrameNum();
     if (frame_number - handledFrameNum > 1 || frame_number == 1)
@@ -276,6 +278,8 @@ int SprdCamera3RegularChannel::channelClearAllQBuff(
         HAL_LOGW("channel has no valied stream");
         return INVALID_OPERATION;
     }
+
+    Mutex::Autolock l(mRegChCbLock);
 
     uint32_t frame_number;
     camera3_stream_t *stream;
