@@ -177,6 +177,7 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
+		{NULL, 0},
 	},
 	&s_ov8856_trim_info,
 	&s_ov8856_ioctrl,
@@ -198,6 +199,7 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		NULL,
 		NULL,
 		NULL,
+		NULL,
 	},
 	{
 		{s_ov8856_common_tool_ui_input, sizeof(s_ov8856_common_tool_ui_input)},
@@ -212,6 +214,7 @@ static struct sensor_raw_info s_ov8856_mipi_raw_info=
 		{s_ov8856_video_0_tool_ui_input, sizeof(s_ov8856_video_0_tool_ui_input)},
 		{s_ov8856_video_1_tool_ui_input, sizeof(s_ov8856_video_1_tool_ui_input)},
 		{s_ov8856_video_2_tool_ui_input, sizeof(s_ov8856_video_2_tool_ui_input)},
+		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
 		{NULL, 0},
