@@ -24,6 +24,7 @@
 #include <linux/fb.h>
 //#include "sprd_rot_k.h"
 #include "sprd_cpp.h"
+#include "sensor_drv_u.h"
 using namespace sprdcamera;
 
 #include <dlfcn.h>
@@ -1510,8 +1511,9 @@ int eng_tst_camera_init(int cameraId, int preview_window_width,
                                               int preview_height,
                                               unsigned char *rgb_data)) {
     int ret = 0;
-
-    ALOGI("%s preview_window_width=%d, preview_window_height=%d", __func__,
+    int active_cam_num = 0;
+    int active_cam_list[SENSOR_ID_MAX] = {0};
+    ALOGI("%s cameraId:%d preview_window_width=%d, preview_window_height=%d", __func__, cameraId,
           preview_window_width, preview_window_height);
     if (preview_window_width < 16 || preview_window_height < 16) {
         ALOGE("%s camera_init with wrong param!", __func__);
@@ -1537,6 +1539,13 @@ int eng_tst_camera_init(int cameraId, int preview_window_width,
         camera_id = 1; // fore camera
     else
         camera_id = 0; // back camera
+
+    sensor_drv_get_camId_list_info(active_cam_list, &active_cam_num);
+
+    if (active_cam_num >= 4 && cameraId == 3) {
+        cameraId = active_cam_list[3];
+    }
+    ALOGI("%s, active_cam_num %d, cameraId:%d", __func__, active_cam_num, cameraId);
 
     var.bits_per_pixel = bits * 8;
 
