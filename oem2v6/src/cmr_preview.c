@@ -1075,7 +1075,7 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     cmr_u32 i = 0;
     struct prev_handle *handle = (struct prev_handle *)preview_handle;
-    struct camera_context *cxt = (struct camera_context *)handle->oem_handle;
+    struct camera_context *cxt;
 
     if (!preview_handle) {
         CMR_LOGE("Invalid param!");
@@ -1084,6 +1084,7 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
 
     CMR_LOGD("E");
     /*check every device, if previewing, stop it*/
+    cxt = (struct camera_context *)handle->oem_handle;
     for (i = 0; i < CAMERA_ID_MAX; i++) {
         CMR_LOGV("id %d, prev_status %ld,4in1_mem_num=%d",
                  i, handle->prev_cxt[i].prev_status,handle->prev_cxt[i].cap_4in1_mem_num);
@@ -1116,10 +1117,8 @@ cmr_int cmr_preview_deinit(cmr_handle preview_handle) {
         goto deinit_end;
     }
 
-    if (handle) {
+    if (handle)
         free(handle);
-        handle = NULL;
-    }
 
     CMR_LOGD("X");
 
@@ -16319,6 +16318,14 @@ static void load_ultrawide_otp(struct prev_handle *handle, cmr_u32 sensor_id) {
     property_get("persist.vendor.otp.golden.spw.force", value1, "0");
     property_get("persist.vendor.otp.golden.spw.vendor", value2, "0");
     phyPtr = sensorGetPhysicalSnsInfo(sensor_id);
+    if (phyPtr == NULL) {
+        CMR_LOGE("failed to get phyPtr for sensor %d\n", sensor_id);
+        cxt->sn_cxt.warp_otp_data.otp_ptr = NULL;
+        cxt->sn_cxt.warp_otp_data.otp_size = 0;
+        free(spw_otp_info);
+        return;
+    }
+
     CMR_LOGI("otp_version %d, module_vendor_id %d", phyPtr->otp_version,
              phyPtr->module_vendor_id);
     if (phyPtr->otp_version == 11 && phyPtr->module_vendor_id > 0 &&
@@ -16351,7 +16358,7 @@ static void load_ultrawide_otp(struct prev_handle *handle, cmr_u32 sensor_id) {
         memset(&otpdata, 0, sizeof(struct sensor_otp_cust_info));
         camera_get_otpinfo(oem_handle, 3, &otpdata);
 
-        if (otpdata.dual_otp.data_3d.size > 0) {
+        if (otpdata.dual_otp.data_3d.size > 0 && otpdata.dual_otp.data_3d.data_ptr != NULL) {
             spw_otp_size = otpdata.dual_otp.data_3d.size;
             if (spw_otp_size > buf_size) {
                 CMR_LOGE("error: otp data size %d is large than buffer size %d\n",
