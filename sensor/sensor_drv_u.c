@@ -2759,6 +2759,27 @@ cmr_int sensor_drv_ioctl(cmr_handle handle, enum sns_cmd cmd, void *param) {
     return ret;
 }
 
+void sensor_drv_get_camId_list_info(int *active_cam_list, int *active_cam_num) {
+    SENSOR_LOGD("E:");
+    int i = 0;
+    struct phySensorInfo *phyPtr = NULL;
+    int physical_num = 0;
+    int *cam_list_pointer = active_cam_list;
+    phyPtr = phy_sensor_info_list;
+
+    for (i = 0; i < SENSOR_ID_MAX; i++) {
+        if ((phyPtr + i)->slotId == SENSOR_ID_INVALID)
+            continue;
+        physical_num++;
+        *(cam_list_pointer++) = (phyPtr + i)->slotId;
+    }
+    *active_cam_num = physical_num;
+
+    SENSOR_LOGD("active_cam_num:%d", *active_cam_num);
+
+    SENSOR_LOGD("X:");
+}
+
 /*
 sensor_drv_u optimize
 ================================================================

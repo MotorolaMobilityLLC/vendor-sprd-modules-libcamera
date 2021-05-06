@@ -819,6 +819,8 @@ cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
                          void *param);
 
+void sensor_drv_get_camId_list_info(int *active_cam_list, int *active_cam_num);
+
 SENSOR_EXP_INFO_T *Sensor_GetInfo(void);
 SENSOR_EXP_INFO_T *Sensor_GetInfo_withid(cmr_u32 id);
 
