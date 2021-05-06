@@ -1334,17 +1334,17 @@
 
 		},
 		/*max_Radius*/
-		0x2C03,
+		0x1179,
 		/*max_Radius_factor*/
 		0x03F2,
 		/*Radius*/
-		0x0718,
+		0x02D1,
 		/*Radius_factor*/
 		0x017C,
 		/*imgCenterX*/
-		0x0CC0,
+		0x0510,
 		/*imgCenterY*/
-		0x0990,
+		0x03CC,
 		/*range_index*/
 		0x04,
 		/*range_s*/
@@ -1409,7 +1409,7 @@
 	/*reserved*/
 	0x0000,
 	/*bypass*/
-	0x0001,
+	0x0000,
 }
 ,
 /*param4.&BasePoint=1&*/
