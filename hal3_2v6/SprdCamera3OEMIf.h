@@ -100,6 +100,12 @@ typedef enum {
     RATE_VERY_FAST,
 } sensor_rate_level_t;
 
+typedef struct camera_memory_dbg {
+    Mutex Lock;
+    cmr_u32 total_cnt;
+    cmr_u32 total_size;
+} camera_memory_dbg_t;
+
 // fd:         ion fd
 // phys_addr:  offset from fd, always set 0
 typedef struct sprd_camera_memory {
