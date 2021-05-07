@@ -29,6 +29,8 @@
 #endif
 
 #define ISP_DRV_SLICE_WIN_NUM 0x18
+#define ISP_LSC_BUF_SIZE (32 * 1024)
+#define ISP_LSC_BUF_NUM 1
 
 struct isp_file {
 	cmr_s32 fd;
@@ -87,16 +89,17 @@ struct isp_u_blocks_info {
 };
 
 struct isp_statis_mem_info {
-	cmr_uint isp_statis_mem_size;
-	cmr_uint isp_statis_mem_num;
+	cmr_u32 isp_statis_alloc_flag;
+	cmr_u32 isp_statis_mem_size;
+	cmr_u32 isp_statis_mem_num;
 	cmr_uint isp_statis_k_addr[2];
 	cmr_uint isp_statis_u_addr;
-	cmr_uint isp_statis_alloc_flag;
 	cmr_s32 statis_mfd;
-	cmr_s32 statis_buf_dev_fd;
+	cmr_u32 statis_valid;
 
-	cmr_uint isp_lsc_mem_size;
-	cmr_uint isp_lsc_mem_num;
+	cmr_u32 isp_lsc_alloc_flag;
+	cmr_u32 isp_lsc_mem_size;
+	cmr_u32 isp_lsc_mem_num;
 	cmr_uint isp_lsc_physaddr;
 	cmr_uint isp_lsc_virtaddr;
 	cmr_s32 lsc_mfd;
@@ -104,10 +107,11 @@ struct isp_statis_mem_info {
 	cmr_s32 width;
 	cmr_s32 height;
 
-	cmr_u32 statis_valid;
-	void *buffer_client_data;
-	void *cb_of_malloc;
-	void *cb_of_free;
+	cmr_malloc alloc_cb;
+	cmr_free free_cb;
+	cmr_invalidate_buf invalidate_cb;
+	cmr_flush_buf flush_cb;
+	cmr_handle oem_handle;
 };
 
 struct isp_statis_info {
@@ -228,13 +232,6 @@ struct isp_drv_interface_param {
 	struct isp_size src;
 	struct isp_drv_slice_param slice;
 };
-
-typedef cmr_int(*isp_cb_of_malloc) (cmr_uint type, cmr_uint *size_ptr,
-				    cmr_uint *sum_ptr, cmr_uint *phy_addr,
-				    cmr_uint *vir_addr, cmr_s32 *mfd, void *private_data);
-typedef cmr_int(*isp_cb_of_free) (cmr_uint type, cmr_uint *phy_addr,
-				  cmr_uint *vir_addr, cmr_s32 *fd,
-				  cmr_uint sum, void *private_data);
 
 /*ISP Hardware Device*/
 cmr_s32 isp_dev_open(cmr_s32 fd, cmr_handle * handle);
