@@ -43,12 +43,7 @@ extern "C" {
 #include "sprd_facebeauty_adapter.h"
 #endif
 #include "enhance.h"
-#define ISP_LSC_BUF_SIZE (32 * 1024)
-#define ISP_LSC_BUF_NUM 1
-#define ISP_ANTI_FLICKER_BUF_SIZE (750 * 1024) /* 3120*4*61 */
-#define ISP_ANTI_FLICKER_BUF_NUM 1
-#define ISP_B4AWB_BUF_CNT 2
-#define ISP_B4AWB_BUF_SIZE 640 * 480 * 2
+
 
 #define ISP_CLOSE_3DNR_TIMEOUT 2 /*sec*/
 /* should only define just one of the following two */
@@ -104,7 +99,6 @@ struct isp_context {
     cmr_u32 width_limit;
     cmr_u32 is_work;
     cmr_u32 is_snapshot;
-    cmr_u32 is_real_bokeh;
 };
 
 struct jpeg_context {
@@ -439,16 +433,6 @@ struct camera_context {
     camera_cb_of_gpu_malloc hal_gpu_malloc;
     void *hal_mem_privdata;
 
-    /*for isp lsc buffer*/
-    cmr_uint lsc_malloc_flag;
-    cmr_uint isp_lsc_phys_addr;
-    cmr_uint isp_lsc_virt_addr;
-    cmr_s32 lsc_mfd;
-
-    /*for b4awb buffer*/
-    cmr_uint isp_b4awb_flag;
-    cmr_uint b4awb_phys_addr[ISP_B4AWB_BUF_CNT];
-    cmr_uint b4awb_virt_addr[ISP_B4AWB_BUF_CNT];
 #ifdef CONFIG_FACE_BEAUTY
     struct fb_beauty_param face_beauty;
 #endif
@@ -462,7 +446,6 @@ struct camera_context {
     cmr_uint is_fov_fusion;
     float app_ratio;
     cmr_uint is_multi_camera_id;
-    cmr_u32 is_real_bokeh;
     cmr_u32 is_focus;
     struct isp_pos focus_rect;
     cmr_int lcd_flash_highlight;
@@ -472,18 +455,6 @@ struct camera_context {
     cmr_u16 color_temp;
     cmr_u32 bg_color;
     enhance_device_t *enhance;
-
-    /*for sw isp depth buffer*/
-    cmr_uint swisp_depth_malloc_flag;
-    cmr_uint swisp_depth_phys_addr;
-    cmr_uint swisp_depth_virt_addr;
-    cmr_s32 swisp_depth_mfd;
-
-    /*for sw isp out buffer*/
-    cmr_uint swisp_out_malloc_flag;
-    cmr_uint swisp_out_phys_addr;
-    cmr_uint swisp_out_virt_addr;
-    cmr_s32 swisp_out_mfd;
 
     cmr_s64 hdr_capture_timestamp;
     cmr_s64 fdr_capture_timestamp;

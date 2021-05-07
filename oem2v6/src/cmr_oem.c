@@ -5604,8 +5604,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
         goto exit;
     }
 
-    cxt->lsc_malloc_flag = 0;
-
     sensor_info_ptr = &(sn_cxt->sensor_info);
     CHECK_HANDLE_VALID(sensor_info_ptr);
 
@@ -5637,8 +5635,6 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
     isp_param.oem_handle = oem_handle;
     isp_param.camera_id = cxt->camera_id;
     isp_param.facing = cxt->facing;
-    isp_param.alloc_cb = camera_malloc;
-    isp_param.free_cb = camera_free;
     isp_param.is_dual_video = is_dual_video_mode;
 
     camera_sensor_color_to_isp_color(&isp_param.image_pattern,
@@ -5777,21 +5773,19 @@ cmr_int camera_isp_init(cmr_handle oem_handle) {
 
     isp_param.is_4in1_sensor = camera_get_is_4in1_sensor(&sn_4in1_info);
 
-    CMR_LOGI(
-        "multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
-        "max_adgain=%d, ois_supported=%d, pdaf_supported=%d, "
-        "exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
-        "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d, "
-        "sensor_info_ptr->image_pattern=%d, isp_param.image_pattern=%d, "
+    CMR_LOGI("multi_mode=%d, f_num=%d, focal_length=%d, max_fps=%d, "
+        "max_adgain=%d, ois_supported=%d, pdaf_supported=%d",
+        isp_param.multi_mode, isp_param.ex_info.f_num, isp_param.ex_info.focal_length,
+        isp_param.ex_info.max_fps, isp_param.ex_info.max_adgain,
+        isp_param.ex_info.ois_supported, isp_param.ex_info.pdaf_supported);
+    CMR_LOGI("exp_valid_frame_num=%d, clamp_level=%d, adgain_valid_frame_num=%d, "
+        "prev_skip_num=%d, cap_skip_num=%d, w=%d, h=%d",
+        isp_param.ex_info.exp_valid_frame_num, isp_param.ex_info.clamp_level,
+        isp_param.ex_info.adgain_valid_frame_num, isp_param.ex_info.preview_skip_num,
+        isp_param.ex_info.capture_skip_num, isp_param.size.w, isp_param.size.h);
+    CMR_LOGI("sensor.image_pattern=%d, isp.image_pattern=%d, "
         "is_4in1_sensor=%d, is_faceId_unlock=%d, long_expose_supported=%d",
-        isp_param.multi_mode, isp_param.ex_info.f_num,
-        isp_param.ex_info.focal_length, isp_param.ex_info.max_fps,
-        isp_param.ex_info.max_adgain, isp_param.ex_info.ois_supported,
-        isp_param.ex_info.pdaf_supported, isp_param.ex_info.exp_valid_frame_num,
-        isp_param.ex_info.clamp_level, isp_param.ex_info.adgain_valid_frame_num,
-        isp_param.ex_info.preview_skip_num, isp_param.ex_info.capture_skip_num,
-        isp_param.size.w, isp_param.size.h, isp_param.image_pattern,
-        sensor_info_ptr->image_pattern, isp_param.is_4in1_sensor,
+        isp_param.image_pattern, sensor_info_ptr->image_pattern, isp_param.is_4in1_sensor,
         isp_param.is_faceId_unlock, isp_param.ex_info.long_expose_supported);
 
     ret = isp_init(&isp_param, &isp_cxt->isp_handle);
@@ -5863,43 +5857,6 @@ cmr_int camera_isp_deinit(cmr_handle oem_handle) {
     }
     cmr_bzero(isp_cxt, sizeof(*isp_cxt));
 
-#if defined(CONFIG_ISP_2_3)
-    if (cxt->lsc_malloc_flag == 1) {
-        if (cxt->hal_free) {
-            cxt->hal_free(CAMERA_ISP_LSC, &cxt->isp_lsc_phys_addr,
-                          &cxt->isp_lsc_virt_addr, &cxt->lsc_mfd,
-                          ISP_LSC_BUF_NUM, cxt->client_data);
-        }
-        cxt->lsc_malloc_flag = 0;
-    }
-#endif
-
-    if (cxt->is_real_bokeh) {
-        // DEPTH
-        if (cxt->swisp_depth_malloc_flag == 1) {
-            cmr_uint depth_size = 960 * 720 * 3 / 2;
-            cmr_uint depth_num = 1;
-            if (cxt->hal_free) {
-                cxt->hal_free(CAMERA_PREVIEW_DEPTH, &cxt->swisp_depth_phys_addr,
-                              &cxt->swisp_depth_virt_addr,
-                              &cxt->swisp_depth_mfd, depth_num,
-                              cxt->client_data);
-                cxt->swisp_depth_malloc_flag = 0;
-            }
-        }
-
-        // SW_OUT
-        if (cxt->swisp_out_malloc_flag == 1) {
-            cmr_uint sw_out_size = 960 * 720 * 3 / 2;
-            cmr_uint sw_out_num = 1;
-            if (cxt->hal_free) {
-                cxt->hal_free(CAMERA_PREVIEW_SW_OUT, &cxt->swisp_out_phys_addr,
-                              &cxt->swisp_out_virt_addr, &cxt->swisp_out_mfd,
-                              sw_out_num, cxt->client_data);
-                cxt->swisp_out_malloc_flag = 0;
-            }
-        }
-    }
     CMR_LOGD("X");
 
 exit:
@@ -9374,34 +9331,6 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     isp_param.format = ISP_DATA_NORMAL_RAW10;
     isp_param.mode = ISP_VIDEO_MODE_CONTINUE;
 
-#if defined(CONFIG_ISP_2_3)
-    if (cxt->lsc_malloc_flag == 0) {
-        cmr_u32 lsc_buf_size = 0;
-        cmr_u32 lsc_buf_num = 0;
-        isp_param.lsc_buf_num = ISP_LSC_BUF_NUM;
-        isp_param.lsc_buf_size = ISP_LSC_BUF_SIZE;
-        lsc_buf_size = isp_param.lsc_buf_size;
-        lsc_buf_num = isp_param.lsc_buf_num;
-
-        if (cxt->hal_malloc == NULL) {
-            ret = -1;
-            CMR_LOGE("hal_malloc is null");
-            goto exit;
-        }
-
-        cxt->hal_malloc(CAMERA_ISP_LSC, &lsc_buf_size, &lsc_buf_num,
-                        &cxt->isp_lsc_phys_addr, &cxt->isp_lsc_virt_addr,
-                        &cxt->lsc_mfd, cxt->client_data);
-        cxt->lsc_malloc_flag = 1;
-    }
-#endif
-
-    isp_param.lsc_phys_addr = cxt->isp_lsc_phys_addr;
-    isp_param.lsc_virt_addr = cxt->isp_lsc_virt_addr;
-    isp_param.lsc_mfd = cxt->lsc_mfd;
-    isp_param.cb_of_malloc = cxt->hal_malloc;
-    isp_param.cb_of_free = cxt->hal_free;
-    isp_param.buffer_client_data = cxt->client_data;
     isp_param.oem_handle = oem_handle;
     isp_param.alloc_cb = camera_malloc;
     isp_param.free_cb = camera_free;
@@ -9539,76 +9468,17 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
         isp_param.capture_mode = ISP_CAP_MODE_DRAM;
     }
 
-    if (cxt->is_real_bokeh) {
-        CMR_LOGD("real bokeh");
-        // sharkl5 TBD remove these code
-        // isp_param.is_real_bokeh = cxt->is_real_bokeh;
-        // DEPTH
-        if (cxt->swisp_depth_malloc_flag == 0) {
-            cmr_u32 depth_size = 960 * 720 * 3 / 2;
-            cmr_u32 depth_num = 1;
-            if (cxt->hal_malloc) {
-                cxt->hal_malloc(CAMERA_PREVIEW_DEPTH, &depth_size, &depth_num,
-                                &cxt->swisp_depth_phys_addr,
-                                &cxt->swisp_depth_virt_addr,
-                                &cxt->swisp_depth_mfd, cxt->client_data);
-                cxt->swisp_depth_malloc_flag = 1;
-            } else {
-                ret = -CMR_CAMERA_NO_MEM;
-                CMR_LOGE("failed to malloc isp lsc buffer");
-                goto exit;
-            }
-            // sharkl5 TBD remove these code
-            // isp_param.s_yuv_depth.img_size.w = 960;
-            // isp_param.s_yuv_depth.img_size.h = 720;
-            // isp_param.s_yuv_depth.img_fd.y = cxt->swisp_depth_mfd;
-            // isp_param.s_yuv_depth.img_addr_vir.chn0 =
-            //    cxt->swisp_depth_virt_addr;
-        }
-
-        // SW_OUT
-        if (cxt->swisp_out_malloc_flag == 0) {
-            cmr_u32 sw_out_size = 960 * 720 * 3 / 2;
-            cmr_u32 sw_out_num = 1;
-            if (cxt->hal_malloc) {
-                cxt->hal_malloc(CAMERA_PREVIEW_SW_OUT, &sw_out_size,
-                                &sw_out_num, &cxt->swisp_out_phys_addr,
-                                &cxt->swisp_out_virt_addr, &cxt->swisp_out_mfd,
-                                cxt->client_data);
-                cxt->swisp_out_malloc_flag = 1;
-            } else {
-                ret = -CMR_CAMERA_NO_MEM;
-                CMR_LOGE("failed to malloc isp lsc buffer");
-                goto exit;
-            }
-            // sharkl5 TBD remove these code
-            // isp_param.s_yuv_sw_out.img_size.w = 800;
-            // isp_param.s_yuv_sw_out.img_size.h = 600;
-            // isp_param.s_yuv_sw_out.img_fd.y = cxt->swisp_out_mfd;
-            // isp_param.s_yuv_sw_out.img_addr_vir.chn0 =
-            // cxt->swisp_out_virt_addr;
-        }
-    }
-
-    CMR_LOGI(
-        "sensor_max_size: w=%d, h=%d, sensor_output_size: w=%d,h=%d, "
-        "sn_mode=%d, crop: st_x=%d, st_y=%d, w=%d, h=%d, max_gain=%d, "
-        "sensor_fps: is_high_fps=%d, high_fps_skip_num=%d, max_fps=%d, "
-        "min_fps=%d, isp_param.size: w=%d, h=%d, lsc_phys_addr=0x%lx, "
-        "lsc_virt_addr=0x%lx, work_mode=%d, dv_mode=%d, capture_mode=%d, "
-        "is_snapshot=%d",
-        isp_param.resolution_info.sensor_max_size.w,
-        isp_param.resolution_info.sensor_max_size.h,
-        isp_param.resolution_info.sensor_output_size.w,
-        isp_param.resolution_info.sensor_output_size.h, sn_mode,
-        isp_param.resolution_info.crop.st_x,
-        isp_param.resolution_info.crop.st_y,
-        isp_param.resolution_info.crop.width,
-        isp_param.resolution_info.crop.height,
-        isp_param.resolution_info.max_gain, isp_param.sensor_fps.is_high_fps,
-        isp_param.sensor_fps.high_fps_skip_num, isp_param.sensor_fps.max_fps,
-        isp_param.sensor_fps.min_fps, isp_param.size.w, isp_param.size.h,
-        isp_param.lsc_phys_addr, isp_param.lsc_virt_addr, isp_param.work_mode,
+    CMR_LOGI("sn_max_size: (%d %d), sn_output_size: (%d %d), crop: (%d %d %d %d)\n",
+        isp_param.resolution_info.sensor_max_size.w, isp_param.resolution_info.sensor_max_size.h,
+        isp_param.resolution_info.sensor_output_size.w, isp_param.resolution_info.sensor_output_size.h,
+        isp_param.resolution_info.crop.st_x, isp_param.resolution_info.crop.st_y,
+        isp_param.resolution_info.crop.width, isp_param.resolution_info.crop.height);
+    CMR_LOGI("sn_mode=%d max_gain=%d is_high_fps=%d high_fps_skip_num=%d max_fps=%d min_fps=%d\n",
+        sn_mode, isp_param.resolution_info.max_gain,
+        isp_param.sensor_fps.is_high_fps, isp_param.sensor_fps.high_fps_skip_num,
+        isp_param.sensor_fps.max_fps, isp_param.sensor_fps.min_fps);
+    CMR_LOGI("isp.size:(%d %d), work_mode=%d, dv_mode=%d, capture_mode=%d, is_snapshot=%d\n",
+        isp_param.size.w, isp_param.size.h, isp_param.work_mode,
         isp_param.dv_mode, isp_param.capture_mode, isp_param.is_snapshot);
 
     /* set remosaic_type */

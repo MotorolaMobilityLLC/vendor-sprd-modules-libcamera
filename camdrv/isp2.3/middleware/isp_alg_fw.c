@@ -4931,12 +4931,9 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start *in_p
 	}
 
 	memset(&statis_mem_input, 0, sizeof(struct isp_statis_mem_info));
-	statis_mem_input.buffer_client_data = in_ptr->buffer_client_data;
-	statis_mem_input.cb_of_malloc = in_ptr->cb_of_malloc;
-	statis_mem_input.cb_of_free = in_ptr->cb_of_free;
-	statis_mem_input.isp_lsc_physaddr = in_ptr->lsc_phys_addr;
-	statis_mem_input.isp_lsc_virtaddr = in_ptr->lsc_virt_addr;
-	statis_mem_input.lsc_mfd = in_ptr->lsc_mfd;
+	statis_mem_input.alloc_cb = in_ptr->alloc_cb;
+	statis_mem_input.free_cb = in_ptr->free_cb;
+	statis_mem_input.oem_handle = in_ptr->oem_handle;
 	statis_mem_input.statis_valid =
 		ISP_STATIS_VALID_AEM |
 		ISP_STATIS_VALID_AFM |
