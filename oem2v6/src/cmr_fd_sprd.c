@@ -162,6 +162,12 @@ struct class_tab_t fd_tab_info = {
 #define FD_SMALL_SIZE_16_9_WIDTH 640
 #define FD_SMALL_SIZE_16_9_HEIGHT 360
 
+#define FD_SMALL_SIZE_20_9_WIDTH 640
+#define FD_SMALL_SIZE_20_9_HEIGHT 288
+
+#define FD_SMALL_SIZE_3_2_WIDTH 630
+#define FD_SMALL_SIZE_3_2_HEIGHT 420
+
 #define FD_SMALL_SIZE_2_1_WIDTH 640
 #define FD_SMALL_SIZE_2_1_HEIGHT 320
 
@@ -247,11 +253,14 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 fd_small_buf_num = 1;
     float src_ratio;
     float fd_small_4_3_ratio, fd_small_16_9_ratio;
+    float fd_small_20_9_ratio, fd_small_3_2_ratio;
     float fd_small_2_1_ratio, fd_small_1_1_ratio;
 
     src_ratio = (float)in->frame_size.width / (float)in->frame_size.height;
     fd_small_4_3_ratio = (float)4 / 3;
     fd_small_16_9_ratio = (float)16 / 9;
+    fd_small_20_9_ratio = (float)20 / 9;
+    fd_small_3_2_ratio = (float)3 / 2;
     fd_small_2_1_ratio = (float)2 / 1;
     fd_small_1_1_ratio = (float)1 / 1;
     CMR_LOGD("src_ratio = %f", src_ratio);
@@ -262,6 +271,12 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else if (fabsf(src_ratio - fd_small_16_9_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_16_9_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_16_9_HEIGHT;
+    } else if (fabsf(src_ratio - fd_small_20_9_ratio) < 0.001) {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_20_9_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_20_9_HEIGHT;
+    } else if (fabsf(src_ratio - fd_small_3_2_ratio) < 0.001) {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_3_2_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_3_2_HEIGHT;
     } else if (fabsf(src_ratio - fd_small_2_1_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_2_1_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_2_1_HEIGHT;
@@ -269,10 +284,15 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_1_1_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_1_1_HEIGHT;
     } else {
-        fd_handle->fd_small.size.width = FD_SMALL_SIZE_4_3_WIDTH;
-        fd_handle->fd_small.size.height = FD_SMALL_SIZE_4_3_HEIGHT;
+        while (in->frame_size.width > 640) {
+            in->frame_size.width /= 2;
+            in->frame_size.height /= 2;
+        }
+        fd_handle->fd_small.size.width = in->frame_size.width;
+        fd_handle->fd_small.size.height = in->frame_size.height;
         CMR_LOGW("fd_small size w / h was set defalut size.");
     }
+
     fd_handle->fd_small.buf_size =
         fd_handle->fd_small.size.width * fd_handle->fd_small.size.height * 3;
 
