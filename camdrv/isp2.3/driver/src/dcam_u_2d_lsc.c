@@ -18,9 +18,6 @@
 
 #include "isp_drv.h"
 
-#define ISP_LSC_BUF_SIZE  (32 * 1024)
-
-
 cmr_s32 dcam_u_2d_lsc_block(cmr_handle handle, void *param_ptr)
 {
 	cmr_s32 ret = 0;
