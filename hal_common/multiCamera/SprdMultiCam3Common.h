@@ -421,6 +421,7 @@ typedef enum {
     CAM_TYPE_AUX1 = CAM_TYPE_AUX,
     CAM_TYPE_AUX2,
     CAM_TYPE_AUX3,
+    CAM_TYPE_OPTIMUTI,
 } CameraType;
 
 struct stream_info_s {
