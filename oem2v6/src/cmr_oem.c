@@ -3258,11 +3258,6 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
 #endif
         cxt->fd_face_area.face_info[i].angle = frame_param->face_info[i].angle;
         cxt->fd_face_area.face_info[i].pose = frame_param->face_info[i].pose;
-        if (cxt->is_capture_face == true) {
-            cmr_copy(&cxt->fd_face_area_capture, &cxt->fd_face_area,
-                     sizeof(struct isp_face_area));
-            cxt->is_capture_face = false;
-        }
         face_area->face_info[i].brightness =
             frame_param->face_info[i].brightness;
         face_area->face_info[i].angle = frame_param->face_info[i].angle;
@@ -3277,6 +3272,12 @@ static void camera_cfg_face_roi(cmr_handle oem_handle,
                  (face_area->face_info[i].sx + face_area->face_info[i].ex) / 2,
                  (face_area->face_info[i].sy + face_area->face_info[i].ey) / 2);
     }
+    if (cxt->is_capture_face == true) {
+        cmr_copy(&cxt->fd_face_area_capture, &cxt->fd_face_area,
+            sizeof(struct isp_face_area));
+        cxt->is_capture_face = false;
+    }
+
 }
 
 cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
@@ -3339,7 +3340,6 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
             cxt->fd_face_area.frame_width = frame_param->width;
             cxt->fd_face_area.frame_height = frame_param->height;
             cxt->fd_face_area.face_num = frame_param->face_num;
-
             cmr_bzero(&face_area, sizeof(struct isp_face_area));
             // note:now we get the preview face crop.but ISP need sensor's
             // crop.so we need recovery crop.
@@ -7831,7 +7831,6 @@ cmr_int camera_do_face_beauty_body(cmr_handle oem_handle,
 
     face_beauty_set_devicetype(&(cxt->face_beauty), SPRD_CAMALG_RUN_TYPE_CPU);
     face_beauty_init(&(cxt->face_beauty), 0, 2, 0);
-
     for (int i = 0; i < fd_face_area.face_num; i++) {
             beauty_face.idx = i;
             w = fd_face_area.face_info[i].ex - fd_face_area.face_info[i].sx;
