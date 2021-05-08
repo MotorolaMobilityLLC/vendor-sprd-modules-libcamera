@@ -3408,7 +3408,11 @@ int SprdCamera3PortraitScene::loadBgImage(sprd_portrait_scene_channel_t ch,
             HAL_LOGE("Failed to get file_len = %d", file_len);
             goto exit;
         }
-
+        MemIon::Flush_ion_buffer(ADP_BUFFD(*BG_buffer),
+                                BG_buff_addr,
+                                NULL,
+                                mPbrp->mCaptureWidth*mPbrp->mCaptureHeight);
+        MemIon::Invalid_ion_buffer(ADP_BUFFD(jpg_buff.native_handle));
         mPbrp->jpeg_decode_to_yuv(&jpg_buff.native_handle, jpg_buff.vir_addr,
                                   BG_buffer, BG_buff_addr,
                                   mPbrp->m_pPhyCamera[CAM_TYPE_MAIN].hwi);
