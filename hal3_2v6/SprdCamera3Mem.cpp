@@ -384,7 +384,7 @@ int SprdCamera3GrallocMemory::map3(buffer_handle_t *buffer_handle,
                             GraphicBuffer::USAGE_SW_WRITE_OFTEN;
 
     mem_info->pbuffer = new GraphicBuffer(
-        native_handle, GraphicBuffer::HandleWrapMethod::CLONE_HANDLE, width,
+        native_handle, GraphicBuffer::HandleWrapMethod::WRAP_HANDLE, width,
         height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, stride);
     if (mem_info->pbuffer == NULL) {
         HAL_LOGE("alloc fail");
