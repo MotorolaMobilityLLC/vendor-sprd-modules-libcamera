@@ -2989,7 +2989,6 @@ cmr_int camera_convert_coor_sensor_to_capture(const struct img_rect *sn_trim,
             } else if (roiH > roiW){
                cropRegion[3] = cropRegion[1]+ roiW;
             }
-            flag_square = 0;
         }
         CMR_LOGD("after_crop_rect_calculated: (sx=%d,sy=%d,ex=%d,ey=%d)",
                  cropRegion[0], cropRegion[1], cropRegion[2], cropRegion[3]);
@@ -11324,7 +11323,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
             CMR_LOGE("failed to get app mode %ld", ret);
             ret = 0;
         }
-        CMR_LOGD("setting_param.cmd_type_value %d", setting_param.cmd_type_value);
+        CMR_LOGD("setting_param.cmd_type_value %" PRIu64 "", setting_param.cmd_type_value);
 
         if (setting_param.cmd_type_value == CAMERA_MODE_MANUAL) {
             param_ptr->cmd_value = ISP_PROFESSION;
@@ -11372,7 +11371,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         if (ISP_AE_MODE_MAX == isp_param) {
             set_isp_flag = 0;
         }
-        CMR_LOGD("ae scene mode %ld", param_ptr->cmd_value);
+        CMR_LOGD("ae scene mode %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_EXPOSURE_TIME:
         CMR_LOGD("exposure time %" PRIu64 "", param_ptr->cmd_value);
@@ -11383,7 +11382,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_AE_MEASURE_LUM:
         isp_cmd = ISP_CTRL_AE_MEASURE_LUM;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("aw measure lum %d", param_ptr->cmd_value);
+        CMR_LOGD("aw measure lum %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_AE_METERING_AREA:
         isp_cmd = ISP_CTRL_AE_TOUCH;
@@ -11411,28 +11410,28 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_BRIGHTNESSVALUE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("brightness %d", param_ptr->cmd_value);
+        CMR_LOGD("brightness %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_CONTRAST:
         isp_cmd = ISP_CTRL_CONTRAST;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_CONTRAST;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("contrast %d", param_ptr->cmd_value);
+        CMR_LOGD("contrast %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_SATURATION:
         isp_cmd = ISP_CTRL_SATURATION;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_SATURATION;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("saturation %d", param_ptr->cmd_value);
+        CMR_LOGD("saturation %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_SHARPNESS:
         isp_cmd = ISP_CTRL_SHARPNESS;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_SHARPNESS;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("sharpness %d", param_ptr->cmd_value);
+        CMR_LOGD("sharpness %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_SPECIAL_EFFECT:
         isp_cmd = ISP_CTRL_SPECIAL_EFFECT;
@@ -11460,30 +11459,30 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                  ae_compensation.step_denominator, ae_compensation.ae_mode);
         break;
     case COM_ISP_SET_AWB_MODE:
-        CMR_LOGD("awb mode 00 %d isp param %d", param_ptr->cmd_value,
+        CMR_LOGD("awb mode 00 %" PRIu64 "isp param %" PRIu64 "", param_ptr->cmd_value,
                  isp_param);
         isp_cmd = ISP_CTRL_AWB_MODE;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_LIGHTSOURCE;
         isp_param = camera_param_to_isp(COM_ISP_SET_AWB_MODE, param_ptr);
-        CMR_LOGD("awb mode %d isp param %d", param_ptr->cmd_value, isp_param);
+        CMR_LOGD("awb mode %" PRIu64 "isp param %" PRIu64 "", param_ptr->cmd_value, isp_param);
         break;
     case COM_ISP_SET_ANTI_BANDING:
         isp_cmd = ISP_CTRL_FLICKER;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("flicker %d", param_ptr->cmd_value);
+        CMR_LOGD("flicker %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_ISO:
         isp_cmd = ISP_CTRL_ISO;
         set_exif_flag = 1;
         exif_cmd = SENSOR_EXIF_CTRL_ISOSPEEDRATINGS;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("iso %d", param_ptr->cmd_value);
+        CMR_LOGD("iso %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_VIDEO_MODE:
         isp_cmd = ISP_CTRL_VIDEO_MODE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("isp video mode %d", param_ptr->cmd_value);
+        CMR_LOGD("isp video mode %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_FLASH_EG:
         isp_cmd = ISP_CTRL_FLASH_EG;
@@ -11526,12 +11525,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_AF_MODE:
         isp_cmd = ISP_CTRL_AF_MODE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("af mode %d", param_ptr->cmd_value);
+        CMR_LOGD("af mode %" PRIu64 "", param_ptr->cmd_value);
         break;
     case COM_ISP_SET_AF_STOP:
         isp_cmd = ISP_CTRL_AF_STOP;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("isp_cmd =%d af mode %d", isp_cmd, param_ptr->cmd_value);
+        CMR_LOGD("isp_cmd =%d af mode %" PRIu64 "", isp_cmd, param_ptr->cmd_value);
         break;
     case COM_ISP_GET_LOW_LUX_EB:
         isp_cmd = ISP_LOW_LUX_EB;
@@ -11636,7 +11635,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_AE_LOCK_UNLOCK:
         isp_cmd = ISP_CTRL_SET_AE_LOCK_UNLOCK;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("set AE Lock & Unlock %d", isp_param);
+        CMR_LOGD("set AE Lock & Unlock %" PRIu64 "", isp_param);
         break;
 
     case COM_ISP_SET_ROI_CONVERGENCE_REQ:
@@ -11644,13 +11643,13 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         /**add for 3d calibration set 3d calibration flag begin*/
         CMR_LOGD("ISP_CTRL_SET_CONVERGENCE_REQ, is 3dcalibration enable:%d, "
-                 "params value:%d",
+                 "params value:%" PRIu64 "",
                  cxt->is_3dcalibration_mode, param_ptr->cmd_value);
         if (cxt->is_3dcalibration_mode && 1 == param_ptr->cmd_value) {
             ptr_flag = 0;
             isp_param = param_ptr->cmd_value;
             CMR_LOGD(
-                "ISP_CTRL_SET_CONVERGENCE_REQ, isp_param:%d, &isp_param:%p",
+                "ISP_CTRL_SET_CONVERGENCE_REQ, isp_param:%" PRIu64 ", &isp_param:%p",
                 isp_param, &isp_param);
         }
         /**add for 3d calibration set 3d calibration flag end*/
@@ -11667,7 +11666,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_cmd = ISP_CTRL_SET_FLASH_MODE;
         isp_param = param_ptr->cmd_value;
         cxt->flash_mode = param_ptr->cmd_value;
-        CMR_LOGD("flash mode %d", param_ptr->cmd_value);
+        CMR_LOGD("flash mode %" PRIu64 "", param_ptr->cmd_value);
         break;
 
     case COM_ISP_GET_VCM_INFO:
@@ -11700,19 +11699,19 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
     case COM_ISP_SET_AE_MODE_CONTROL:
         isp_cmd = ISP_CTRL_SET_AE_MODE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("ae_mode %d", param_ptr->cmd_value);
+        CMR_LOGD("ae_mode %" PRIu64 "", param_ptr->cmd_value);
         break;
 
     case COM_ISP_SET_AF_POS:
         isp_cmd = ISP_CTRL_SET_AF_POS;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("af_pos %d", param_ptr->cmd_value);
+        CMR_LOGD("af_pos %" PRIu64 "", param_ptr->cmd_value);
         break;
 
     case COM_ISP_SET_SPRD_APP_MODE:
         isp_cmd = ISP_CTRL_SET_APP_MODE;
         isp_param = param_ptr->cmd_value;
-        CMR_LOGD("set app mode id = %d", param_ptr->cmd_value);
+        CMR_LOGD("set app mode id = %" PRIu64 "", param_ptr->cmd_value);
         break;
 
     case COM_ISP_GET_MFSR_PARAM:
@@ -11798,12 +11797,12 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         isp_param = param_ptr->cmd_value;
         break;
     case COM_ISP_SET_AUTO_FDR:
-        CMR_LOGD("set auto fdr enabled %d", param_ptr->cmd_value);
+        CMR_LOGD("set auto fdr enabled %" PRIu64 "", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_AUTO_FDR_MODE;
         isp_param = param_ptr->cmd_value;
         break;
     case COM_ISP_SET_AUTO_3DNR:
-        CMR_LOGV("set auto 3dnr %d", param_ptr->cmd_value);
+        CMR_LOGV("set auto 3dnr %" PRIu64 "", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_3DNR_MODE;
         isp_param = param_ptr->cmd_value;
         break;
@@ -11826,7 +11825,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         ptr_flag = 1;
         break;
     case COM_ISP_SET_CAP_FLAG:
-        CMR_LOGD("set cap flag %d", param_ptr->cmd_value);
+        CMR_LOGD("set cap flag %" PRIu64 "", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_CAP_FLAG;
         isp_param = param_ptr->cmd_value;
         break;
@@ -11876,7 +11875,7 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
         break;
 #ifndef CONFIG_ISP_2_3
     case COM_ISP_SET_AUTO_TRACKING_ENABLE:
-        CMR_LOGD("set auto tracking enable %d", param_ptr->cmd_value);
+        CMR_LOGD("set auto tracking enable %" PRIu64 "", param_ptr->cmd_value);
         isp_cmd = ISP_CTRL_SET_AF_OT_SWITH;
         ptr_flag = 1;
         isp_param_ptr = (void *)&param_ptr->cmd_value;
@@ -12086,7 +12085,7 @@ bool prev_get_appmode(cmr_handle oem_handle, cmr_u32 camera_id) {
     if (ret) {
         CMR_LOGE("failed to get app mode %ld", ret);
     }
-    CMR_LOGD("app_mode = %d", setting_param.cmd_type_value);
+    CMR_LOGD("app_mode = %" PRIu64 "", setting_param.cmd_type_value);
     if (setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) {
         // auto 3dnr available
         is_autophoto = true;
@@ -13336,7 +13335,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_SCENE_MODE:
         setting_param.cmd_type_value = param;
-        CMR_LOGD("fdr scene mode:%d, cam_id:%d, ref_cam_id:%d, is_multi_camera_mode_oem:%d",
+        CMR_LOGD("fdr scene mode:%" PRIu64 ", cam_id:%d, ref_cam_id:%d, is_multi_camera_mode_oem:%d",
                  param, cxt->camera_id, cxt->ref_camera_id, is_multi_camera_mode_oem);
         if(CAMERA_SCENE_MODE_FDR == param) {
             if(is_multi_camera_mode_oem == MODE_SINGLE_CAMERA ||
@@ -13604,7 +13603,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_LENS_FOCUS_DISTANCE:
         setting_param.cmd_type_value = param;
-        CMR_LOGI("focus_distance=%lu", param);
+        CMR_LOGI("focus_distance=%" PRIu64 "", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
@@ -13660,7 +13659,7 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_FACE_ATTRIBUTES_ENABLE:
         setting_param.cmd_type_value = param;
-        CMR_LOGI(" face attributes enable =%lu", param);
+        CMR_LOGI(" face attributes enable =%" PRIu64 "", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
@@ -13670,13 +13669,13 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
         break;
     case CAMERA_PARAM_SMILE_CAPTURE_ENABLE:
         setting_param.cmd_type_value = param;
-        CMR_LOGI(" smile capture =%lu", param);
+        CMR_LOGI(" smile capture =%" PRIu64 "", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
     case CAMERA_PARAM_ZSL_IPS_ENABLE:
         setting_param.cmd_type_value = param;
-        CMR_LOGD("zsl_ips_en =%lu", param);
+        CMR_LOGD("zsl_ips_en =%" PRIu64 "", param);
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
         break;
@@ -15328,12 +15327,12 @@ cmr_int camera_local_set_param(cmr_handle oem_handle, enum camera_param_type id,
 
     switch (id) {
     case CAMERA_PARAM_FOCUS_RECT:
-        CMR_LOGD("set focus rect 0x%lx", param);
+        CMR_LOGD("set focus rect 0x%" PRIx64 "", param);
         ret = cmr_focus_set_param(cxt->focus_cxt.focus_handle, cxt->camera_id,
                                   id, (void *)param);
         break;
     case CAMERA_PARAM_AF_MODE:
-        CMR_LOGD("set focus af mode 0x%lx", param);
+        CMR_LOGD("set focus af mode 0x%" PRIx64 "", param);
         ret = cmr_focus_set_param(cxt->focus_cxt.focus_handle, cxt->camera_id,
                                   id, (void *)param);
         break;
