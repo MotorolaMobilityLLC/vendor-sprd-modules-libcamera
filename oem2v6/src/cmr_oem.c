@@ -11397,7 +11397,7 @@ void camera_get_iso_value(cmr_handle oem_handle) {
     }
 }
 
-cmr_int camera_get_fb_param(cmr_handle handle,
+cmr_int camera_get_fb_prev_param(cmr_handle handle,
                             struct isp_fb_param_info *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)handle;
@@ -11408,6 +11408,27 @@ cmr_int camera_get_fb_param(cmr_handle handle,
         goto exit;
     }
     ret = camera_isp_ioctl(handle, COM_ISP_GET_FB_PREV_PARAM, &isp_param);
+    if (ret) {
+        goto exit;
+    }
+    memcpy(param, &isp_param.fb_param, sizeof(struct isp_fb_param_info));
+
+exit:
+    CMR_LOGV("done ret = %d", ret);
+    return ret;
+}
+
+cmr_int camera_get_fb_cap_param(cmr_handle handle,
+                            struct isp_fb_param_info *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)handle;
+    struct common_isp_cmd_param isp_param;
+    if (!handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_isp_ioctl(handle, COM_ISP_GET_FB_CAP_PARAM, &isp_param);
     if (ret) {
         goto exit;
     }

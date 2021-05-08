@@ -4235,7 +4235,7 @@ void SprdCamera3OEMIf::PreviewFrameFaceBeauty(struct camera_frame_type *frame,
     }
 
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle,
-                   CAMERA_IOCTRL_GET_FB_PARAM, &fb_param_map_prev);
+                   CAMERA_IOCTRL_GET_FB_PREV_PARAM, &fb_param_map_prev);
     if (ret == ISP_SUCCESS) {
         for(int i = 0; i < ISP_FB_SKINTONE_NUM; i++){
             HAL_LOGV("[%d]blemishSizeThrCoeff %d removeBlemishFlag %d "

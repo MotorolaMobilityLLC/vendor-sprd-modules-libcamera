@@ -729,7 +729,8 @@ void SprdBokehAlgo::setFaceInfo(int *angle, int *pose, int *fd_score) {
 
 }
 int SprdBokehAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
-                    int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel) {
+                    int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel,
+                    struct facebeauty_param_info *FaceMap) {
     int rc = NO_ERROR;
     return rc;
 }

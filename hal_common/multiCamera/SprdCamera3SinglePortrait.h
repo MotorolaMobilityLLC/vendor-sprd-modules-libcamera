@@ -382,7 +382,8 @@ class SprdCamera3SinglePortrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBas
         int initFaceBeautyParams();
         int deinitFaceBeauty();
         int doFaceBeauty(unsigned char *mask, void *input_buff, int picWidth, int picHeight,
-                    int mode, faceBeautyLevels *facebeautylevel, int lightPortraitType);
+                    int mode, faceBeautyLevels *facebeautylevel, int lightPortraitType,
+                    struct facebeauty_param_info *FaceMap);
 #endif
         void updateBlurWeightParams(CameraMetadata metaSettings, int type);
         void saveCaptureBlurParams(buffer_handle_t *result_buff,

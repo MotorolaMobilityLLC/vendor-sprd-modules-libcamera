@@ -234,6 +234,8 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     bool mFaceBeautyFlag;
 #ifdef CONFIG_FACE_BEAUTY
     faceBeautyLevels facebeautylevel;
+    fb_beauty_param_t fb_prev;
+    fb_beauty_param_t fb_cap;
 #endif
     bool mFlushing;
     bool mIsSupportPBokeh;
