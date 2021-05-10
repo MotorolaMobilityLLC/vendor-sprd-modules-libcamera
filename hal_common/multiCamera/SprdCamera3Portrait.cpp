@@ -2742,8 +2742,12 @@ exit : { // dump yuv data
     }
 }
 
-    memset(mPortrait->lptMask, 0, 512 * 384);
-    memset(mPortrait->bokehMask, 0, mPortrait->maskHeight * mPortrait->maskWidth);
+    if (mPortrait->lptMask != NULL) {
+        memset(mPortrait->lptMask, 0, 512 * 384);
+    }
+    if (mPortrait->bokehMask != NULL) {
+        memset(mPortrait->bokehMask, 0, mPortrait->maskHeight * mPortrait->maskWidth);
+    }
 
 fail_map_output:
     if (output_buf != NULL) {
