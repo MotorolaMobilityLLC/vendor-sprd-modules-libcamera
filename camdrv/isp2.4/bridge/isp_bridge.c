@@ -171,6 +171,31 @@ cmr_int isp_br_ioctrl(cmr_u32 camera_id, cmr_int cmd, void *in, void *out)
 		//}
 		sem_post(&cxt->module_sm);
 		break;
+
+	case SET_SYNC_STABLE_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (in && 0 == cxt->match_param.sync_stable_out){
+				memcpy(&cxt->match_param.sync_stable[camera_id], in,
+					sizeof(cxt->match_param.sync_stable[camera_id]));
+				cxt->match_param.sync_stable_out = 1;
+			}
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
+	case GET_SYNC_STABLE_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (out){
+				memcpy(out, &cxt->match_param.sync_stable[camera_id],
+					sizeof(cxt->match_param.sync_stable[camera_id]));
+					cxt->match_param.sync_stable_out = 0;
+			}
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
 	case SET_Y_HIST_PARAM:
 		{
 			sem_wait(&cxt->ae_sm);

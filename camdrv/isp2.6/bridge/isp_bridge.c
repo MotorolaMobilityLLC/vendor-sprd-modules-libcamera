@@ -62,6 +62,8 @@ struct match_data_param {
 	struct module_info module_info;
 	float zoom_ratio;
 	cmr_u32 frameId;
+	cmr_u32 sync_stable[CAM_SENSOR_MAX];
+	cmr_u32 sync_stable_out;
 
 	struct aem_info aem_stat_info[CAM_SENSOR_MAX];
 	struct ae_match_data ae_info[CAM_SENSOR_MAX];
@@ -360,6 +362,30 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			if (out)
 				memcpy(out, &cxt->match_param.ae_info[sensor_role],
 					sizeof(cxt->match_param.ae_info[sensor_role]));
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
+	case SET_SYNC_STABLE_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (in && 0 == cxt->match_param.sync_stable_out){
+				memcpy(&cxt->match_param.sync_stable[sensor_role], in,
+					sizeof(cxt->match_param.sync_stable[sensor_role]));
+				cxt->match_param.sync_stable_out = 1;
+			}
+			sem_post(&cxt->ae_sm);
+		}
+		break;
+
+	case GET_SYNC_STABLE_PARAM:
+		{
+			sem_wait(&cxt->ae_sm);
+			if (out){
+				memcpy(out, &cxt->match_param.sync_stable[sensor_role],
+					sizeof(cxt->match_param.sync_stable[sensor_role]));
+					cxt->match_param.sync_stable_out = 0;
+			}
 			sem_post(&cxt->ae_sm);
 		}
 		break;
