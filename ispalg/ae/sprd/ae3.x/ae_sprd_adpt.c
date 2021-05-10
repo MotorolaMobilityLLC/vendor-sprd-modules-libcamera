@@ -6543,7 +6543,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	}
 	ae_if_cts_params(cxt);
 	cxt->cur_status.adv_param.touch_hold_flag = 0;
-	cxt->cur_status.adv_param.sync_stable = cxt->sync_stable;
+	cxt->cur_status.adv_param.sync_stable = cxt->sync_stable_back;
 	if (cxt->touch_hold_cnt >0){
 		if (cxt->touch_hold_flag == 0){
 			cxt->touch_hold_cnt--;
@@ -6663,6 +6663,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 					ae_write_to_sensor_sync_mapping(cxt, &cxt->exp_data);
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_SYNC_STABLE, &cxt->sync_stable);
 					sync_finish = 1;
+					cxt->ptr_isp_br_ioctrl(cxt->sync_state.next_id, SET_SYNC_STABLE_PARAM, &cxt->sync_stable, NULL);
 				} else {
 					rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 				}
@@ -6703,6 +6704,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 				cxt->cur_status.tar_cam_id = cxt->sync_state.next_id;
 				cxt->cur_status.exp_time = cxt->exp_data.lib_data.exp_time;
 				cxt->cur_status.ae_gain = cxt->exp_data.lib_data.gain;
+				cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SYNC_STABLE_PARAM, NULL, &(cxt->sync_stable_back));
 			}
 		}
 	}

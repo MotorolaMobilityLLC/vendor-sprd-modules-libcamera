@@ -63,6 +63,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		CAM_SENSOR_MASTER = 0,
 		CAM_SENSOR_SLAVE0,
 		CAM_SENSOR_SLAVE1,
+		CAM_SENSOR_SLAVE2,
 		CAM_SENSOR_MAX,
 	};
 	enum isp_multi_mode {
