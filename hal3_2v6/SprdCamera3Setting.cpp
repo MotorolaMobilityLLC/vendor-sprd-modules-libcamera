@@ -6634,7 +6634,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
                        &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
     HAL_LOGV("mFrameNumMap sensitivity is %d", mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity);
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
-                       &(s_setting[mCameraId].sensorInfo.sensitivity), 1);
+                       &(mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity), 1);
 #endif
     camMetadata.update(ANDROID_STATISTICS_LENS_SHADING_CORRECTION_MAP,
                        &(s_setting[mCameraId].shadingInfo.factor_count), 1);
