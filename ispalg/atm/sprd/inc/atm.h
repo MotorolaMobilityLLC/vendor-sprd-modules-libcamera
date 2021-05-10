@@ -130,14 +130,17 @@ struct atm_calc_param
 
 struct atm_calc_result
 {
-    ATM_RET eStatus;  // should be 0
+	ATM_RET eStatus;  // should be 0
 
-    uint16_t *uGamma;
-    int32_t i4RespCurve[1025];
-    uint16_t uLowPT;
-    uint16_t uHighPT;
-    uint16_t uFinalLowBin;
-    uint16_t uFinalHighBin;
+	uint16_t *uGamma;
+	int32_t i4RespCurve[1025];
+	uint16_t uLowPT;
+	uint16_t uHighPT;
+	uint16_t uFinalLowBin;
+	uint16_t uFinalHighBin;
+	uint32_t evd;
+	uint16_t bin[10];
+	uint16_t pt[10];
 //    uint8_t *log_buffer;
 //    uint32_t log_size;
 };
