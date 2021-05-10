@@ -18,9 +18,9 @@
 		/*[0x0]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -57,9 +57,9 @@
 		/*[0x1]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -235,9 +235,9 @@
 		/*[0x0]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -274,9 +274,9 @@
 		/*[0x1]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -530,9 +530,9 @@
 		/*[0x2]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -1683,7 +1683,7 @@
 			},
 			/*sigma*/
 			{
-				4.00,7.00,9.00/*0-2*/
+				6.00,7.00,9.00/*0-2*/
 			},
 			/*reserved1*/
 			{
@@ -1722,7 +1722,7 @@
 			},
 			/*sigma*/
 			{
-				2.00,5.00,7.00/*0-2*/
+				6.00,7.00,9.00/*0-2*/
 			},
 			/*reserved1*/
 			{
