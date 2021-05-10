@@ -2526,13 +2526,21 @@ int SprdCamera3Portrait::BokehCaptureThread::sprdDepthCaptureHandle(
         mPortrait->mBokehAlgo->setCapFaceParam((void *)&capfaceinfo);
     };
 
-    if (output_buf == NULL || input_buf1 == NULL||input_buf2 == NULL) {
+    if (output_buf == NULL || input_buf1 == NULL) {
         HAL_LOGE("buffer is NULL!");
         return BAD_VALUE;
     }
 
     if (input_buf2 != NULL) {
         rc = mPortrait->map(input_buf2, &input_buf2_addr);
+        property_get("persist.vendor.cam.bokeh.dump", prop, "0");
+        if (!strcmp(prop, "capdepth") || !strcmp(prop, "all")) {
+            mPortrait->dumpData((unsigned char *)input_buf2_addr, 1,
+                                ADP_BUFSIZE(*input_buf2),
+                                mPortrait->mBokehSize.depth_snap_sub_w,
+                                mPortrait->mBokehSize.depth_snap_sub_h,
+                                mPortrait->mCapFrameNumber, "Sub");
+        }
         if (rc != NO_ERROR) {
             HAL_LOGE("fail to map input buffer2");
             goto fail_map_input2;
@@ -2719,11 +2727,6 @@ exit : { // dump yuv data
             mPortrait->mBokehSize.capture_w, mPortrait->mBokehSize.capture_h,
             mPortrait->mCapFrameNumber, "Main");
         // input_buf2 or right image
-        mPortrait->dumpData((unsigned char *)input_buf2_addr, 1,
-                            ADP_BUFSIZE(*input_buf2),
-                            mPortrait->mBokehSize.depth_snap_sub_w,
-                            mPortrait->mBokehSize.depth_snap_sub_h,
-                            mPortrait->mCapFrameNumber, "Sub");
         mPortrait->dumpData((uint8_t *)mPortrait->mScaleInfo.addr_vir.addr_y, 1,
                             mPortrait->mScaleInfo.buf_size,
                             mPortrait->mBokehSize.depth_snap_main_w,
