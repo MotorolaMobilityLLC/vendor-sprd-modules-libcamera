@@ -70,6 +70,31 @@ cmr_int isp_br_ioctrl(cmr_u32 sensor_role, cmr_int cmd, void *in, void *out)
 			sizeof(cxt->match_param.ae_info[sensor_role]));
 		sem_post(&cxt->ae_sm);
 		break;
+
+	case SET_SYNC_STABLE_PARAM:
+			{
+				sem_wait(&cxt->ae_sm);
+				if (in && 0 == cxt->match_param.sync_stable_out){
+					memcpy(&cxt->match_param.sync_stable[sensor_role], in,
+					sizeof(cxt->match_param.sync_stable[sensor_role]));
+					cxt->match_param.sync_stable_out = 1;
+				}
+				sem_post(&cxt->ae_sm);
+			}
+			break;
+
+	case GET_SYNC_STABLE_PARAM:
+			{
+				sem_wait(&cxt->ae_sm);
+				if (out){
+					memcpy(out, &cxt->match_param.sync_stable[sensor_role],
+						sizeof(cxt->match_param.sync_stable[sensor_role]));
+					cxt->match_param.sync_stable_out = 0;
+				}
+				sem_post(&cxt->ae_sm);
+			}
+			break;
+
 	case SET_Y_HIST_PARAM:
 		{
 			sem_wait(&cxt->ae_sm);

@@ -390,6 +390,7 @@ extern "C" {
 		cmr_u8 sensor_role;
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
 		cmr_u32 sync_stable;
+		cmr_u32 sync_stable_back;
 		/*
 		 * for binning facter = 2
 		 */
