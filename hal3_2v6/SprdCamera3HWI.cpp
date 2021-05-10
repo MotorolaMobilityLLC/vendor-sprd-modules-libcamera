@@ -2197,6 +2197,7 @@ void SprdCamera3HWI::handleCbDataWithLock(cam_result_data_info_t *result_info) {
                     i->threeA_info.ae_manual_trigger;
 
                 mSetting->setResultTag(&threeAControlInfo);
+                mSetting->getSyncInfo(i->frame_number);
 
                 if(useManualSesnor) {
                     if(isMultiCameraMode(mMultiCameraMode)||mFlush ||
