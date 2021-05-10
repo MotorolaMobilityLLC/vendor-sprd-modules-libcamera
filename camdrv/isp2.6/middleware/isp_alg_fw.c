@@ -952,6 +952,7 @@ static cmr_int ispalg_ae_callback(cmr_handle isp_alg_handle, cmr_int cb_type, vo
 		break;
 	case AE_CB_LONG_EXP_START:
 		cmd = ISP_LONGEXP_SKIPNUM_CALLBACK;
+		break;
 	case AE_CB_HDR_EXP_GAIN:
 		cmd = ISP_AE_CB_HDR_EXP_GAIN;
 		break;
