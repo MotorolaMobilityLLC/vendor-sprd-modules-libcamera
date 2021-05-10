@@ -1660,16 +1660,16 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	ISP_LOGV("Hist[%d-%d] = %llu,%llu,%llu,%llu\n",i,i+3,hist[i],hist[i+1],hist[i+2],hist[i+3]);
 	}
 	if (bATMDump == true) {
-		for (i = 0; i < SENSOR_GAMMA_POINT_NUM; i+=4)
+		for (i = 0; i < SENSOR_GAMMA_POINT_NUM - 1; i+=4)
 			ISP_LOGV("Orig Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
 			u2CurX[1][i], u2CurY[1][i],
 			u2CurX[1][i+1], u2CurY[1][i+1],
 			u2CurX[1][i+2], u2CurY[1][i+2],
 			u2CurX[1][i+3], u2CurY[1][i+3]);
 	}
-	
+
 	//_get_8bitX_Y(10, SENSOR_GAMMA_POINT_NUM, (short*)u2CurX[1], (short*)u2CurY[1],uConvCurY);
-	
+
 	if (bATMDump == true) {
 	for (i = 0; i < 32; i+=4)
 		ISP_LOGV("Conv Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
