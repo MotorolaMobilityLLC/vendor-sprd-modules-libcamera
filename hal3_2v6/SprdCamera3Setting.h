@@ -833,7 +833,7 @@ class SprdCamera3Setting {
     static uint8_t camera_identify_state[CAMERA_ID_COUNT];
     std::unordered_map<int64_t, SENSOR_Tag> mFrameNumMap;
     bool first_set;
-    int save_iso_value;
+    static cmr_u32 save_iso_value;
 
   private:
     void pushAndroidParaTag(camera_metadata_tag_t tag);
