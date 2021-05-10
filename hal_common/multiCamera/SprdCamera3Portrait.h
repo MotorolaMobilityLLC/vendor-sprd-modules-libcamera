@@ -278,6 +278,7 @@ class SprdCamera3Portrait : SprdCamera3MultiBase, SprdCamera3FaceBeautyBase {
     pthread_t mJpegCallbackThread;
     camera3_stream_buffer_t *mJpegOutputBuffers;
     Mutex mJpegCallbackLock;
+    Mutex mDepthCaptureLock;
 
     int insertGDepthMetadata(unsigned char *result_buffer_addr,
                              uint32_t result_buffer_size, uint32_t jpeg_size);
