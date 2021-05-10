@@ -983,16 +983,16 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 		hdr_param->ev[2] = 1.0f;
 	}
 
-	frm_param->hdr_param.pic_w = frame->size.width;
-	frm_param->hdr_param.pic_h = frame->size.height;
-	frm_param->hdr_param.fmt = req->frame_cnt;
-	frm_param->hdr_param.heap_mem_malloc = req->init_param.heap_mem_malloc;
-	frm_param->hdr_param.heap_mem_free = req->init_param.heap_mem_free;
+	hdr_param->pic_w = frame->size.width;
+	hdr_param->pic_h = frame->size.height;
+	hdr_param->fmt = req->frame_cnt;
+	hdr_param->heap_mem_malloc = req->init_param.heap_mem_malloc;
+	hdr_param->heap_mem_free = req->init_param.heap_mem_free;
 	CMR_LOGD("hdr open w %d, h %d, param %p, ev %f %f %f\n",
 		hdr_param->pic_w, hdr_param->pic_h, frm_param,
 		hdr_param->ev[0],  hdr_param->ev[1], hdr_param->ev[2]);
 
-	iret = hdr2_base->swa_open(ipm_hdl->swa_handle, (void *)&frm_param->hdr_param, 4);
+	iret = hdr2_base->swa_open(ipm_hdl->swa_handle, (void *)hdr_param, 4);
 	if (iret) {
 		CMR_LOGE("fail to open hdr2\n");
 		return CMR_CAMERA_FAIL;
