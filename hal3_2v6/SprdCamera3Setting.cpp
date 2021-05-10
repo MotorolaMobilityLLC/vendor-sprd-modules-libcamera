@@ -880,6 +880,7 @@ const int64_t SEC = MSEC * 1000LL;
 sprd_setting_info_t SprdCamera3Setting::s_setting[CAMERA_ID_COUNT];
 int SprdCamera3Setting::mLogicalSensorNum = 0;
 int SprdCamera3Setting::mPhysicalSensorNum = 0;
+cmr_u32 SprdCamera3Setting::save_iso_value = 0;
 uint8_t SprdCamera3Setting::camera_identify_state[] = {1, 1, 1, 1, 1, 1};
 
 enum cmr_flash_lcd_mode {
