@@ -220,7 +220,10 @@ extern "C" {
 		cmr_u8 uHighPT;
 		cmr_u8 uFinalLowBin;
 		cmr_u8 uFinalHighBin;
-		cmr_u32 reserved1;
+		cmr_s32 bv;
+		cmr_u32 evd;
+		cmr_u16 bin[10];
+		cmr_u16 pt[10];
 	} smart_gamma_debuginfo;
 
 	typedef struct {
