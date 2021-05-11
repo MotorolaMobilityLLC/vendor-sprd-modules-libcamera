@@ -12370,6 +12370,8 @@ bool SprdCamera3OEMIf::isIspToolMode() { return mIsIspToolMode; }
 
 bool SprdCamera3OEMIf::isRawCapture() { return mIsRawCapture; }
 
+bool SprdCamera3OEMIf::isNeedFlash() { return mIsNeedFlashFired; }
+
 void SprdCamera3OEMIf::ispToolModeInit() {
     cmr_handle isp_handle = 0;
     mHalOem->ops->camera_get_isp_handle(mCameraHandle, &isp_handle);

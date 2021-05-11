@@ -1636,6 +1636,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
         if (sprddefInfo->high_resolution_mode == 1) {
             camera_ioctrl(CAMERA_TOCTRL_GET_4IN1_INFO, &fin1_info, NULL);
             checkHighResZslSetting(&fin1_info.ambient_highlight);
+            // always zsl when flash enable, because non-zsl for large bv no need flash
+            if (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_ALWAYS_FLASH ||
+                (controlInfo.ae_mode == ANDROID_CONTROL_AE_MODE_ON_AUTO_FLASH && mOEMIf->isNeedFlash())) {
+                fin1_info.ambient_highlight = 0;
+                HAL_LOGD("Force to zsl. mode %d,IsNeedFlash %d", flashInfo.mode, mOEMIf->isNeedFlash());
+            }
             if (sprddefInfo->fin1_highlight_mode != fin1_info.ambient_highlight) {
                 sprddefInfo->fin1_highlight_mode = fin1_info.ambient_highlight;
             }
