@@ -107,7 +107,6 @@ static cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_lev
 
 		dst_ptr->cur_v3.ee_gradient_computation_type = edge_param[strength_level].ee_gradient.grd_cmpt_type;
 		dst_ptr->cur_v3.ee_weight_hv2diag = edge_param[strength_level].ee_gradient.wgt_hv2diag;
-		dst_ptr->cur_v3.ee_weight_diag2hv = edge_param[strength_level].ee_gradient.wgt_diag2hv;
 		dst_ptr->cur_v3.ee_ratio_hv_3 = edge_param[strength_level].ee_gradient.ratio.ratio_hv_3;
 		dst_ptr->cur_v3.ee_ratio_hv_5 = edge_param[strength_level].ee_gradient.ratio.ratio_hv_5;
 		dst_ptr->cur_v3.ee_ratio_diag_3 = edge_param[strength_level].ee_gradient.ratio.ratio_dg_3;
@@ -184,6 +183,7 @@ static cmr_u32 _pm_edge_convert_param(void *dst_edge_param, cmr_u32 strength_lev
 		dst_ptr->cur_v3.ee_new_pyramid_en = edge_param[strength_level].ee_offset_layer.ee_new_pyramid_en;
 		dst_ptr->cur_v3.ee_old_gradient_en = edge_param[strength_level].ee_offset_layer.ee_old_gradient_en;
 		dst_ptr->cur_v3.ee_ratio_old_gradient = edge_param[strength_level].ee_offset_layer.ee_ratio_old_gradient;
+		dst_ptr->cur_v3.ee_ratio_new_pyramid = edge_param[strength_level].ee_offset_layer.ee_ratio_new_pyramid;
 		dst_ptr->cur_v3.ee_offset_ratio_layer0_computation_type = edge_param[strength_level].ee_offset_layer.ee_offset_layer0.computation_type;
 
 		for (i = 0; i < 2; i++) {

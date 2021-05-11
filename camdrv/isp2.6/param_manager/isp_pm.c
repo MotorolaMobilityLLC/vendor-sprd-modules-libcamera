@@ -449,6 +449,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_PYRAMID_ONL, 0 }, /* NR block */
 	{ ISP_BLK_PYRAMID_OFFL, 0 }, /* NR block */
 	{ ISP_BLK_DCT, 0 }, /* NR block */
+	{ ISP_BLK_3DLUT, sizeof(struct sensor_3dlut_param)},
 	{ ISP_BLK_CNR_H, 0 }, /* NR block */
 	{ ISP_BLK_POST_CNR_H, 0 }, /* NR block */
 
