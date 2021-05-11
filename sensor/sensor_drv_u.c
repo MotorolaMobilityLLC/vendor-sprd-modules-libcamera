@@ -4764,7 +4764,9 @@ cmr_int sensor_read_calibration_otp(struct sensor_drv_context *sensor_cxt,
         otp_data->dual_otp.dual_flag = dual_flag;
         otp_data->dual_otp.data_3d.data_ptr = otpdata[sensor_cxt->slot_id];
         otp_data->dual_otp.data_3d.size = otpsize;
-        SENSOR_LOGI("read calibration otp data success, size :%d", otpsize);
+        otp_data->dual_otp.data_3d.mChangeSensor = ret;
+        SENSOR_LOGI("read calibration otp data success, otpsize = %d, mChangeSensor = %d",
+            otpsize, otp_data->dual_otp.data_3d.mChangeSensor);
         return SENSOR_SUCCESS;
     } else {
         SENSOR_LOGE("read calibration otp data failed, size:%d", otpsize);
