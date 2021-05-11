@@ -1577,6 +1577,7 @@ int NativeCameraHidl::openNativeCamera(int g_camera_id) {
     parseProviderName(service_name, &mProviderType, &id);
     hidl_vec<hidl_string> cameraDeviceNames;
     property_set("persist.vendor.cam.ITaddTag", "1");
+    property_set("persist.vendor.cam.ItMemCheck", "1");
     if (g_camera_id < 4)
         cameraDeviceNames = getCameraDeviceNames(g_camera_id, mProvider);
     ::android::sp<ICameraDevice> device3_x;
@@ -2537,6 +2538,7 @@ int ModuleWrapperHAL::Run(IParseJson *Json2) {
         CloseResult.funcID = _json2->getID();
         CloseResult.funcName = _json2->m_funcName;
         pVec_Result->push_back(CloseResult);
+        property_set("persist.vendor.cam.ItMemCheck", "0");
     }
     if (status != IT_OK) {
         return status;

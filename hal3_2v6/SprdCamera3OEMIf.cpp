@@ -3267,6 +3267,15 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
 
     freeRawBuffers();
     delete memory;
+    char ItMemCheck_property[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.ItMemCheck", ItMemCheck_property, "0");
+    if (atoi(ItMemCheck_property) != 0) {
+        if ((mTotalIonSize != 0) || (mTotalGpuSize != 0)) {
+            // Add null pointer for IT memory leak test
+            camera_memory_dbg_t *p_mem_check = NULL;
+            std::cout << p_mem_check->total_size << endl;
+            }
+        }
 
     if ((mTotalIonSize != 0) || (mTotalGpuSize != 0))
         HAL_LOGE("ION/GPU buffer memory leak!!!");
