@@ -183,7 +183,7 @@ typedef struct _af_lib_ops {
 	 cmr_u8(*ioctrl) (void *handle, cmr_u32 cmd, void *in, void *out);
 } af_lib_ops_t;
 
-#define AF_LIB "libspafv1.so"
+#define AF_LIB "libaf3.2.so"
 
 // caf trigger
 typedef struct _caf_trigger_ops {
@@ -198,7 +198,7 @@ typedef struct _caf_trigger_ops {
 	 cmr_s32(*ioctrl) (aft_proc_handle_t handle, enum aft_cmd cmd, void *param0, void *param1);
 } caf_trigger_ops_t;
 
-#define CAF_TRIGGER_LIB "libspcaftrigger.so"
+#define CAF_TRIGGER_LIB "libaftrigger.so"
 
 typedef struct _ae_cali {
 	cmr_u32 r_avg[9];
