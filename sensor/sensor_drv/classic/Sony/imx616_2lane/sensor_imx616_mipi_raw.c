@@ -910,7 +910,7 @@ imx616_drv_handle_create(struct sensor_ic_drv_init_para *init_param,
         sns_drv_cxt, &imx616_aec_info,
         sns_drv_cxt->sensor_ev_info.preview_framelength);
     imx616_drv_write_gain(sns_drv_cxt, &imx616_aec_info,
-                          sns_drv_cxt->sensor_ev_info.preview_gain);
+                          (cmr_u32)sns_drv_cxt->sensor_ev_info.preview_gain);
     imx616_drv_write_shutter(sns_drv_cxt, &imx616_aec_info,
                              sns_drv_cxt->sensor_ev_info.preview_shutter);
 
