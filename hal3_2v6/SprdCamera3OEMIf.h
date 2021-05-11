@@ -435,6 +435,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setAeState(enum aeTransitionCause cause);
     void setAwbState(enum awbTransitionCause cause);
 
+    bool isNeedFlash(void);
   private:
     inline void print_time();
     cmr_u32 mIsoValue;
