@@ -11002,6 +11002,11 @@ cmr_int camera_isp_ioctl(cmr_handle oem_handle, cmr_uint cmd_type,
                  hdr_param.hdr_enable, hdr_param.ev_effect_valid_num);
         isp_param_ptr = (void *)&hdr_param;
         break;
+    case COM_ISP_SET_LONG_EXP:
+        isp_cmd = ISP_CTRL_SET_LONG_EXP;
+        isp_param = param_ptr->cmd_value;
+        CMR_LOGD("Long exp_mode %d", param_ptr->cmd_value);
+        break;
     case COM_ISP_SET_FDR:
         fdr_param.fdr_enable = param_ptr->cmd_value;
         isp_cmd = fdr_param.fdr_enable ? ISP_CTRL_START_FDR : ISP_CTRL_STOP_FDR;
@@ -13231,6 +13236,12 @@ cmr_int camera_local_start_preview(cmr_handle oem_handle,
     struct snapshot_param snp_param;
     char value[PROPERTY_VALUE_MAX] = {0};
 
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    if (cxt->long_expo_enable && cxt->long_expo_cap){
+        isp_param.cmd_value = 0;
+        cxt->long_expo_cap = 0;
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_LONG_EXP, (void *)&isp_param);
+    }
     cxt->ambient_highlight = 0; /* default 0 when start preview */
 
     cmr_bzero(&setting_param, sizeof(setting_param));
@@ -13612,6 +13623,13 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     CMR_LOGD("cam%d, zoom_ratio = %f, prev_rect %d %d %d %d",
             cxt->camera_id, cxt->zoom_ratio,
             prev_rect.start_x, prev_rect.start_y, prev_rect.width, prev_rect.height);
+
+    cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
+    if (cxt->long_expo_enable){
+        isp_param.cmd_value = 1;
+        cxt->long_expo_cap = 1;
+        ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_LONG_EXP, (void *)&isp_param);
+    }
 
     if (!cxt->zsl_ips_en) {
         ret = camera_ipm_open_sw_algorithm((cmr_handle)cxt);

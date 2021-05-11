@@ -5742,6 +5742,33 @@ static cmr_int ispctl_get_flash_skip_num(cmr_handle isp_alg_handle, void *param_
     return ret;
 }
 
+static cmr_int ispctl_set_long_exp_lock_awb(cmr_handle isp_alg_handle, void *param_ptr)
+{
+	cmr_int ret = ISP_SUCCESS;
+	struct isp_alg_fw_context *cxt = (struct isp_alg_fw_context *)isp_alg_handle;
+	cmr_u32 long_exp_en = 0;
+
+	if (NULL == param_ptr) {
+		ISP_LOGE("fail to get valid param_ptr=%p", param_ptr);
+		return ISP_PARAM_NULL;
+	}
+
+	long_exp_en = *(cmr_u32 *) param_ptr;
+	ISP_LOGD("long_exp_en %d", long_exp_en);
+	if (long_exp_en) {
+		if (cxt->ops.smart_ops.block_disable)
+			cxt->ops.smart_ops.block_disable(cxt->smart_cxt.handle, ISP_SMART_CMC);
+		if (cxt->ops.awb_ops.ioctrl)
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_LOCK, NULL, NULL);
+	} else {
+		if (cxt->ops.smart_ops.block_enable)
+			cxt->ops.smart_ops.block_enable(cxt->smart_cxt.handle, ISP_SMART_CMC);
+		if (cxt->ops.awb_ops.ioctrl)
+			ret = cxt->ops.awb_ops.ioctrl(cxt->awb_cxt.handle, AWB_CTRL_CMD_UNLOCK, NULL, NULL);
+	}
+
+	return ISP_SUCCESS;
+}
 
 static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_AE_MEASURE_LUM, ispctl_ae_measure_lum},
@@ -5873,6 +5900,7 @@ static struct isp_io_ctrl_fun s_isp_io_ctrl_fun_tab[] = {
 	{ISP_CTRL_SET_ZOOM_SCENE, ispctl_set_zoom_scene},
 	{ISP_CTRL_SET_FACEBEAUTY_ENABLE, ispctl_set_facebeauty_scene},
 	{ISP_CTRL_SET_AUTO_FLASH_CAP, ispctl_set_auto_flash_cap},
+	{ISP_CTRL_SET_LONG_EXP,ispctl_set_long_exp_lock_awb},
 	{ISP_CTRL_MAX, NULL}
 };
 

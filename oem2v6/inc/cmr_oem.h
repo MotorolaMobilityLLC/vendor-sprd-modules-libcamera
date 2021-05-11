@@ -510,6 +510,7 @@ struct camera_context {
     cmr_uint blurcynr_noface;
     cmr_uint flash_mode;
     cmr_uint need_sr;
+    cmr_uint long_expo_cap;
 };
 
 struct prev_ai_scene_info {
