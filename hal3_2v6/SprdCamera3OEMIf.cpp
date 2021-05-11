@@ -3531,6 +3531,14 @@ int SprdCamera3OEMIf::startPreviewInternal() {
             }
         }
     }
+    // open mfnr for 3rd party app
+    if (mTopAppId & mWhitelists) {
+        SPRD_DEF_Tag *sprdInfo;
+        sprdInfo = mSetting->getSPRDDEFTagPTR();
+        sprdInfo->sprd_auto_3dnr_enable = CAMERA_3DNR_AUTO;
+        SetCameraParaTag(ANDROID_SPRD_AUTO_3DNR_ENABLED);
+        CMR_LOGI("3rd party app ,open mfnr");
+    }
 
     if (!initPreview()) {
         HAL_LOGE("initPreview failed");
@@ -3589,6 +3597,11 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         mZslMaxFrameNum = 5;
     }
 #endif
+
+    if (mTopAppId & mWhitelists) {
+        mZslNum = 5;
+        mZslMaxFrameNum = 5;
+    }
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
         mVideoProcessedWithPreview = true;
@@ -8829,6 +8842,9 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
     case ANDROID_SPRD_AUTO_3DNR_ENABLED: {
         SPRD_DEF_Tag *sprdInfo;
         sprdInfo = mSetting->getSPRDDEFTagPTR();
+        if (mTopAppId & mWhitelists) {
+            sprdInfo->sprd_auto_3dnr_enable = 2;
+        }
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_AUTO_3DNR_ENABLED,
                  sprdInfo->sprd_auto_3dnr_enable);
     } break;
@@ -9354,7 +9370,7 @@ int SprdCamera3OEMIf::Callback_ZslMalloc(cmr_u32 size, cmr_u32 sum,
     *vir_addr = 0;
     *fd = 0;
 
-    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
+    if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW || (mTopAppId & mWhitelists) ||
         (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO)|| (getMultiCameraMode() == MODE_BOKEH && mCameraId == mMasterId)
          || getMultiCameraMode() == MODE_BLUR) {
         ret = allocCameraMemForGpu(size, sum, phy_addr, vir_addr, fd);
@@ -12066,6 +12082,18 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     if (SPRD_ERROR == mCameraState.capture_state) {
         HAL_LOGE("in error status, deinit capture at first ");
         goto exit;
+    }
+
+    if (mTopAppId & mWhitelists) {
+        SPRD_DEF_Tag *sprdInfo;
+        sprdInfo = mSetting->getSPRDDEFTagPTR();
+        if(sprdInfo->sprd_is_3dnr_scene == 1) {
+            sprdInfo->sprd_3dnr_enabled = 1;
+        } else {
+            sprdInfo->sprd_3dnr_enabled = 0;
+        }
+        SetCameraParaTag(ANDROID_SPRD_3DNR_ENABLED);
+        CMR_LOGI("3rd party app ,snapshot with mfnr");
     }
 
     /*bug1180023:telegram start capture do not wait focus done*/

@@ -9840,7 +9840,8 @@ cmr_int camera_channel_cfg(cmr_handle oem_handle, cmr_handle caller_handle,
     if ((setting_param.cmd_type_value == CAMERA_MODE_AUTO_PHOTO) || cxt->_3rd_3dnr_flag) {
         char value[PROPERTY_VALUE_MAX];
         property_get("persist.vendor.cam.preview.3dnr_enable", value, "true");
-        if(!strcmp(value,"true") && param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW) {
+        if(!strcmp(value,"true") && (param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_PREVIEW
+            || param_ptr->cap_inf_cfg.cfg.sence_mode == DCAM_SCENE_MODE_CAPTURE_CALLBACK)) {
             param_ptr->cap_inf_cfg.cfg.need_3dnr = 1;
         }
     }
