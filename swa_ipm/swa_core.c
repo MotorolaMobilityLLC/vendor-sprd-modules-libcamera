@@ -116,7 +116,7 @@ int swa_hdr_open(void *ipmpro_hanlde,
 	hdr_param.free = NULL;
 	hdr_param.tuning_param_size = init_param->tuning_param_size;
 	hdr_param.tuning_param = init_param->tuning_param_ptr;
-	SWA_LOGI("frame num %d, pic size %d %d, hdr_param.tuning_param_size %d ,%p\n",
+	SWA_LOGD("frame num %d, pic size %d %d, hdr_param.tuning_param_size %d ,%p\n",
 		cxt->frame_num, cxt->pic_w, cxt->pic_h, hdr_param.tuning_param_size, hdr_param.tuning_param);
 
 	cxt->hdr_handle = sprd_hdr_adpt_init(cxt->pic_w, cxt->pic_h, (void *)&hdr_param);
