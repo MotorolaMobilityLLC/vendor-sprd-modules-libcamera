@@ -30,9 +30,9 @@ LOCAL_PROPRIETARY_MODULE := true
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
-LOCAL_MODULE := libspafv1_le
+LOCAL_MODULE := libaf3.2_le
 else
-LOCAL_MODULE := libspafv1
+LOCAL_MODULE := libaf3.2
 endif
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
@@ -67,7 +67,7 @@ ifeq (1, 1) #(strip $(shell expr $(ANDROID_MAJOR_VER) \>= 8)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 
-LOCAL_MODULE := libspcaftrigger
+LOCAL_MODULE := libaftrigger
 LOCAL_MODULE_CLASS := SHARED_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := both

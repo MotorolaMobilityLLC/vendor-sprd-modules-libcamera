@@ -142,14 +142,14 @@ LOCAL_SHARED_LIBRARIES += liblsc libsprdlsc
 endif
 
 LOCAL_SHARED_LIBRARIES += libatm
-LOCAL_SHARED_LIBRARIES += libSprdPdAlgo
+LOCAL_SHARED_LIBRARIES += libpdalgo
 LOCAL_SHARED_LIBRARIES += libsprdaic libsprdscenedetect
 
-LOCAL_SHARED_LIBRARIES += libspcaftrigger
+LOCAL_SHARED_LIBRARIES += libaftrigger
 ifeq ($(strip $(TARGET_BOARD_CAMERA_ISP_VERSION)),2.3)
-LOCAL_SHARED_LIBRARIES += libspafv1_le
+LOCAL_SHARED_LIBRARIES += libaf3.2_le
 else
-LOCAL_SHARED_LIBRARIES += libspafv1
+LOCAL_SHARED_LIBRARIES += libaf3.2
 endif
 
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../performance
