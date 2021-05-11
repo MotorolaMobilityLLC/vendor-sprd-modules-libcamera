@@ -334,8 +334,21 @@ static cmr_s32 ae_write_to_sensor(struct ae_ctrl_cxt *cxt, struct ae_exposure_pa
 	}
 	if (0 != write_param->isp_gain) {
 		double rgb_coeff = write_param->isp_gain * 1.0 / 4096;
-		if (cxt->isp_ops.set_rgb_gain) {
-			cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
+
+		if(cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
+			if (cxt->sensor_role == CAM_SENSOR_MASTER) {
+				if (cxt->isp_ops.set_rgb_gain)
+					cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
+			} else if(cxt->sensor_role == CAM_SENSOR_SLAVE0) {
+				if (cxt->isp_ops.set_rgb_gain_slave0)
+					cxt->isp_ops.set_rgb_gain_slave0(cxt->isp_ops.isp_handler, rgb_coeff);
+			} else if(cxt->sensor_role == CAM_SENSOR_SLAVE1) {
+				if (cxt->isp_ops.set_rgb_gain_slave1)
+					cxt->isp_ops.set_rgb_gain_slave1(cxt->isp_ops.isp_handler, rgb_coeff);
+			}
+		} else {
+			if (cxt->isp_ops.set_rgb_gain)
+				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
 		}
 	}
 	return ISP_SUCCESS;
@@ -1033,18 +1046,34 @@ static cmr_s32 ae_write_to_sensor_normal_mapping(struct ae_ctrl_cxt *cxt, struct
 			ae_info[0].exp.size_index = size_index;
 			ae_info[0].gain = exp_data_sync->write_data.sensor_gain & 0xffff;
 			dcam_gain[0] =  exp_data_sync->write_data.isp_gain;
+			if (0 != dcam_gain[0]) {
+			double rgb_coeff = dcam_gain[0] * 1.0 / 4096;
+			if (cxt->isp_ops.set_rgb_gain)
+				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
+
+			}
 		}else if(cxt->sensor_role == CAM_SENSOR_SLAVE0){
 			ae_info[1].exp.exposure = exp_data_sync->write_data.exp_line;
 			ae_info[1].exp.dummy = exp_data_sync->write_data.dummy;
 			ae_info[1].exp.size_index = size_index;
 			ae_info[1].gain = exp_data_sync->write_data.sensor_gain & 0xffff;
 			dcam_gain[1] =  exp_data_sync->write_data.isp_gain;
+			if (0 != dcam_gain[1]) {
+				double rgb_coeff = dcam_gain[1] * 1.0 / 4096;
+				if (cxt->isp_ops.set_rgb_gain_slave0)
+					cxt->isp_ops.set_rgb_gain_slave0(cxt->isp_ops.isp_handler, rgb_coeff);
+			}
 		}else if(cxt->sensor_role == CAM_SENSOR_SLAVE1){
 			ae_info[2].exp.exposure = exp_data_sync->write_data.exp_line;
 			ae_info[2].exp.dummy = exp_data_sync->write_data.dummy;
 			ae_info[2].exp.size_index = size_index;
 			ae_info[2].gain = exp_data_sync->write_data.sensor_gain & 0xffff;
 			dcam_gain[2] =  exp_data_sync->write_data.isp_gain;
+			if (0 != dcam_gain[2]) {
+				double rgb_coeff = dcam_gain[2] * 1.0 / 4096;
+				if (cxt->isp_ops.set_rgb_gain_slave1)
+					cxt->isp_ops.set_rgb_gain_slave1(cxt->isp_ops.isp_handler, rgb_coeff);
+			}
 		}
 
 		ae_info[0].count = 3;
@@ -1059,27 +1088,6 @@ static cmr_s32 ae_write_to_sensor_normal_mapping(struct ae_ctrl_cxt *cxt, struct
 		ISP_LOGV("sync:M:ae_info[0] exposure_line %d dummy %d size_index %d gain %d, dcam_gain %d", ae_info[0].exp.exposure, ae_info[0].exp.dummy, ae_info[0].exp.size_index, ae_info[0].gain, dcam_gain[0]);
 		ISP_LOGV("sync:S0:ae_info[1] exposure_line %d dummy %d size_index %d gain %d, dcam_gain %d", ae_info[1].exp.exposure, ae_info[1].exp.dummy, ae_info[1].exp.size_index, ae_info[1].gain, dcam_gain[1]);
 		ISP_LOGV("sync:S1:ae_info[2] exposure_line %d dummy %d size_index %d gain %d, dcam_gain %d", ae_info[2].exp.exposure, ae_info[2].exp.dummy, ae_info[2].exp.size_index, ae_info[2].gain, dcam_gain[2]);
-
-
-		if (0 != dcam_gain[0]) {
-			double rgb_coeff = dcam_gain[0] * 1.0 / 4096;
-			if (cxt->isp_ops.set_rgb_gain) {
-				cxt->isp_ops.set_rgb_gain(cxt->isp_ops.isp_handler, rgb_coeff);
-			}
-		}
-
-		if (0 != dcam_gain[1]) {
-			double rgb_coeff = dcam_gain[1] * 1.0 / 4096;
-			if (cxt->isp_ops.set_rgb_gain_slave0) {
-				cxt->isp_ops.set_rgb_gain_slave0(cxt->isp_ops.isp_handler, rgb_coeff);
-			}
-		}
-		if (0 != dcam_gain[2]) {
-			double rgb_coeff = dcam_gain[2] * 1.0 / 4096;
-			if (cxt->isp_ops.set_rgb_gain_slave1) {
-				cxt->isp_ops.set_rgb_gain_slave1(cxt->isp_ops.isp_handler, rgb_coeff);
-			}
-		}
 
 	}else 
 		ISP_LOGE("sync:normal mode:exp data are invalidate: exp: %d, gain: %d\n", exp_data_sync->lib_data.exp_line, exp_data_sync->lib_data.gain);
