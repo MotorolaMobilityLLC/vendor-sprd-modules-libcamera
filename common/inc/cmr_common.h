@@ -511,6 +511,7 @@ enum common_isp_cmd_type {
     COM_ISP_SET_ZOOM_SCENE,
     COM_ISP_SET_AUTO_FLASH_CAP,
     COM_ISP_SET_AE_SET_FD_ON_OFF,
+    COM_ISP_SET_LONG_EXP,
     COM_ISP_TYPE_MAX
 };
 
