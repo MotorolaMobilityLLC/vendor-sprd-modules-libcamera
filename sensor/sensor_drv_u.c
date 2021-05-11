@@ -61,6 +61,7 @@ static struct sensor_drv_lib sensor_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct otp_drv_lib otp_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct vcm_drv_lib vcm_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct tuning_param_lib tuning_lib_mngr[SENSOR_ID_MAX] = {0};
+static struct tuning_param_lib tuning_lib_mngr_for_bokeh[SENSOR_ID_MAX] = {0};
 
 static SENSOR_MATCH_T sensor_cfg_tab[SENSOR_ID_MAX] = {0};
 static struct xml_camera_cfg_info xml_cfg_tab[SENSOR_ID_MAX] = {0};
@@ -100,6 +101,8 @@ static cmr_int
 sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt);
 static cmr_int
 sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt);
+static cmr_int
+sensor_drv_get_bokeh_tuning_param(struct sensor_drv_context *sensor_cxt);
 static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt);
 static cmr_int
 sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt);
@@ -3269,6 +3272,7 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
     sensor_cxt->static_info =
         sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_STATIC_INFO);
     sensor_drv_get_tuning_param(sensor_cxt);
+    sensor_drv_get_bokeh_tuning_param(sensor_cxt);
     sensor_save_pdaf_info(sensor_cxt);
     return 0;
 }
@@ -3316,6 +3320,65 @@ sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt) {
     }
 
     return 0;
+}
+
+static cmr_int
+sensor_drv_get_bokeh_tuning_param(struct sensor_drv_context *sensor_cxt) {
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_MATCH_T *sns_module = NULL;
+    char bokeh_tuning_name[128];
+    struct xml_camera_cfg_info *camera_cfg;
+    struct tuning_param_lib *libTuningPtr =
+        &tuning_lib_mngr_for_bokeh[sensor_cxt->slot_id];
+    sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
+
+    camera_cfg = sensor_cxt->xml_info;
+    snprintf(bokeh_tuning_name,SENSOR_LIB_NAME_LEN*2, "bokeh_%s",
+            camera_cfg->cfgPtr->tuning_info.tuning_para_name);
+    memcpy(camera_cfg->cfgPtr->bokeh_tuning_info.tuning_para_name,
+           bokeh_tuning_name, sizeof(char)*SENSOR_NAME_LEN);
+    SENSOR_LOGD("tuning name is %s",
+		camera_cfg->cfgPtr->bokeh_tuning_info.tuning_para_name);
+    ret = sensor_drv_tuning_load_library(
+        camera_cfg->cfgPtr->bokeh_tuning_info.tuning_para_name, libTuningPtr);
+    if (!ret) {
+        sns_module->sensor_info->bokeh_raw_info_ptr =
+            (struct sensor_raw_info **)&libTuningPtr->raw_info_ptr;
+    }
+
+    return SENSOR_SUCCESS;
+}
+
+void sensor_drv_switch_to_specific_tuning_param(int tag) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct tuning_param_lib *libTuningPtr;
+    struct sensor_drv_lib *libPtr = NULL;
+    char value[128];
+    SENSOR_MATCH_T *sns_module = NULL;
+
+
+    for(int i = 0; i < SENSOR_ID_MAX; i++) {
+        sns_module = &(sensor_cfg_tab[i]);
+        libPtr = &sensor_lib_mngr[i];
+        if(!sns_module || !libPtr || !libPtr->sensor_info_ptr) {
+            SENSOR_LOGD("sensor not configured");
+            continue;
+        }
+        switch (tag)
+        {
+        case SENSOR_TUNING_PARAM_BOKEH:
+            libTuningPtr = &tuning_lib_mngr_for_bokeh[i];
+            break;
+        default:
+            libTuningPtr = &tuning_lib_mngr[i];
+            break;
+        }
+        if(sns_module && sns_module->sensor_info && libTuningPtr && libTuningPtr->raw_info_ptr) {
+            sns_module->sensor_info->raw_info_ptr = (struct sensor_raw_info **)&libTuningPtr->raw_info_ptr;
+	        SENSOR_LOGD("SWITCH success");
+	    } else
+            SENSOR_LOGD("FAILED to swtich");
+    }
 }
 
 static cmr_int
