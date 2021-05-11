@@ -169,8 +169,8 @@ static struct af_enhanced_module_info_u af_enhanced_module = {
 #endif
 
 char libafv1_path[][20] = {
-	"libspafv1.so",
-	"libspafv1_le.so",
+	"libaf3.2.so",
+	"libaf3.2_le.so",
 	"libaf_v2.so",
 	"libaf_v3.so",
 	"libaf_v4.so",
