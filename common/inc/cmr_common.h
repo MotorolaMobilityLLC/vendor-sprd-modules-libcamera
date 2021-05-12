@@ -2026,7 +2026,7 @@ typedef struct prev_sn_param_dvfs_type {
     int is_high_fps;
     int channel_x_enble; // like YUV callback will enable other channel data
     int cam_mode;        // for Dul Cam
-
+    int is_cphy;
 } dvfs_cam_param_t;
 
 typedef enum DVFS_MM_MODULE {
