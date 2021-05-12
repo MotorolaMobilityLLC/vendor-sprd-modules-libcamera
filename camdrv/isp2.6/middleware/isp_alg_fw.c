@@ -3095,9 +3095,28 @@ static cmr_int ispalg_hist2_stats_parser(cmr_handle isp_alg_handle, void *data)
 	hist_stats->usec = statis_info->usec;
 	hist_stats->frame_id = statis_info->frame_id;
 
+#if defined (CONFIG_ISP_2_6) || defined (CONFIG_ISP_2_7) || defined (CONFIG_ISP_2_8)
 	for(i = 0; i < 256; i++) {
 		hist_stats->value[i] = *(ptr + i);
 	}
+#else
+	cmr_u32 j =0;
+	cmr_u64 *ptr1;
+	cmr_u64 val0, val1;
+
+	ret = isp_dev_access_ioctl(cxt->dev_access_handle,
+			ISP_DEV_INVALIDATE_STSTIS_BUFCACHE, statis_info, NULL);
+
+	ptr1 = (cmr_u64 *)statis_info->uaddr;
+	for (i = 0; i < 64; i++) {
+		val0 = *ptr1++;
+		val1 = *ptr1++;
+		hist_stats->value[j++] = (cmr_u32)(val0 & 0x3ffffff);
+		hist_stats->value[j++] = (cmr_u32)((val0 >> 26) & 0x3ffffff);
+		hist_stats->value[j++] = (cmr_u32)(((val1 & 0x3fff) << 12) | ((val0 >> 52) & 0xfff));
+		hist_stats->value[j++] = (cmr_u32)((val1 >> 14) & 0x3ffffff);
+	}
+#endif
 
 	ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_STSTIS_BUF, statis_info, NULL);
 	if (ret) {
