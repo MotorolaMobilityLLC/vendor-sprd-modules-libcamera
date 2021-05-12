@@ -18,9 +18,9 @@
 		/*[0x0]*/
 		{
 			/*lowpass_filter_en*/
-			0x00,
+			0x01,
 			/*denoise_radial_en*/
-			0x00,
+			0x01,
 			/*reserved0*/
 			{
 				0x00,0x00,0x00/*0-2*/
@@ -40,7 +40,7 @@
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
-			0x0100,
+			0x0096,
 			/*luma_th*/
 			{
 				0x0046,0x00B4/*0-1*/
@@ -257,7 +257,7 @@
 			/*baseRadius_factor*/
 			0x0400,
 			/*minRatio*/
-			0x0100,
+			0x0096,
 			/*luma_th*/
 			{
 				0x0064,0x00C8/*0-1*/
