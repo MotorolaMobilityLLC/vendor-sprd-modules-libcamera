@@ -329,6 +329,7 @@ struct ae_lib_frm_sync_in {//ae_dynamic_sync struct
 	cmr_u32 ae_sync_type; /*0: fix mapping 1:dynamic mapping*/
 	cmr_u32 bmk_cam_id;
 	cmr_u32 tar_cam_id;
+	cmr_u32 sync_start;
 	struct ae_frm_sync_param* sync_param[4];/*0:nor 1:wide 2:tele 3:reserved*/
 };
 
