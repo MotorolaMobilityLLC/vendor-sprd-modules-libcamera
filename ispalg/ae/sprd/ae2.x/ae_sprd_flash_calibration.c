@@ -439,7 +439,7 @@ static void CalcRgbFrmsData(int frm_st, int frm_ed, float *rRaw, float *gRaw, fl
 	float gs = 0.0;
 	float bs = 0.0;
 	int i= 0;
-	int rat_frm_cnts = 1.0 / (frm_ed - frm_st + 1);
+	float rat_frm_cnts = 1.0 / (frm_ed - frm_st + 1);
 
 	for (i = frm_st; i <= frm_ed; i++) {
 		rs += rRaw[i];
