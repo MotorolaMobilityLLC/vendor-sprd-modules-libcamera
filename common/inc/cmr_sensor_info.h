@@ -77,7 +77,7 @@ struct drv_fov_info {
 };
 
 struct sensor_ex_info {
-    cmr_u32 f_num;
+    float f_num;
     cmr_u32 focal_length;
     cmr_u32 min_focus_distance;
     cmr_s64 start_offset_time;
