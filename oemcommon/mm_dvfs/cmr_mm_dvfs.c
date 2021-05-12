@@ -117,6 +117,8 @@ cmr_int set_dcam_dvfs_policy(cmr_handle mm_dvfs_handle,
         freqValue = CLK_DCAM_MAX;
         CMR_LOGD("dcam_if dvfs vaule is already CLK_DCAM_MAX  %d,do nothing",
                  freqValue);
+    } else if (p_dvfs->dvfs_param.is_cphy) {
+        freqValue = (p_dvfs->dvfs_param.bps_per_lane / 7 * 9 / 5) * 1000000 ;
     } else {
         switch (p_dvfs->dvfs_param.lane_num) {
         case 1:
