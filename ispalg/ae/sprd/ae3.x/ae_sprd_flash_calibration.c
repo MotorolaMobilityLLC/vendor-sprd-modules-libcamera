@@ -444,7 +444,7 @@ static void CalcRgbFrmsData(int frm_st, int frm_ed, float *rRaw, float *gRaw, fl
 	float bs = 0.0;
 	float rat_frm_cnts = 1.0 / (frm_ed - frm_st + 1);
 	
-	ISP_LOGD("PENG>frm_ed: %d, frm_st: %d\n", frm_ed, frm_st);
+	ISP_LOGD("frm_ed: %d, frm_st: %d\n", frm_ed, frm_st);
 	
 	for (i = frm_st; i <= frm_ed; i++) {
 		rs += rRaw[i];
