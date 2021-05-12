@@ -6726,6 +6726,7 @@ cmr_int prev_get_sensor_mode(struct prev_handle *handle, cmr_u32 camera_id) {
         dvfs_param.cam_mode = 0;
     }
     dvfs_param.lane_num = sensor_info->sn_interface.bus_width;
+    dvfs_param.is_cphy = sensor_info->sn_interface.is_cphy;
     sensor_mode_info = &sensor_info->mode_info[valid_max_sn_mode];
     dvfs_param.bps_per_lane = sensor_mode_info->bps_per_lane;
     dvfs_param.sn_max_w = sensor_mode_info->width;
