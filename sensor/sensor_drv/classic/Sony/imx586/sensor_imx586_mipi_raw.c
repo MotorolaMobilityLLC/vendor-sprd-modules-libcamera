@@ -734,7 +734,7 @@ static cmr_int imx586_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
         cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
         cap_shutter = cap_shutter < 38700 ? cap_shutter : 38700;
         cap_exptime = prv_exptime  * BINNING_FACTOR;
-        cap_exptime = 600000000;
+        cap_exptime = cap_exptime < 600000000 ? cap_exptime : 600000000;
     } else {
         cap_shutter = prv_shutter * prv_linetime / cap_linetime;
         cap_exptime = prv_exptime;
