@@ -391,6 +391,9 @@ extern "C" {
 		func_isp_br_ioctrl ptr_isp_br_ioctrl;
 		cmr_u32 sync_stable;
 		cmr_u32 sync_stable_back;
+		cmr_u32 sync_start;
+		cmr_u32 sync_start_hold;
+		cmr_u8 prv_nxt_sensor_role;
 		/*
 		 * for binning facter = 2
 		 */

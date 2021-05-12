@@ -893,6 +893,7 @@ static cmr_s32 ae_write_to_sensor_sync_mapping(struct ae_ctrl_cxt *cxt, struct a
 		in_param.bmk_cam_id = cxt->sensor_role;
 		in_param.tar_cam_id = cxt->sync_state.next_sensor_role;
 
+		in_param.sync_start = cxt->sync_start;
 		ae_sync_in_ae_lib_data_dump(in_param.sync_param[cxt->sensor_role]);
 		ae_sync_in_ae_lib_data_dump(in_param.sync_param[cxt->sync_state.next_sensor_role]);
 
@@ -6618,7 +6619,18 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 
 	ISP_LOGV("ae_calculation, ae_update_result_to_sensor BEFORE, cameraId:%d, sensor_role:%d, gain:%d, exp_line:%d, line_time:%d, exp_time:%"PRIu64"",\
 	cxt->camera_id, cxt->sensor_role, cxt->exp_data.lib_data.gain, cxt->exp_data.lib_data.exp_line, cxt->exp_data.lib_data.line_time, cxt->exp_data.lib_data.exp_time);
-
+	if (cxt->prv_nxt_sensor_role != cxt->sync_state.next_sensor_role){
+		cxt->sync_start = 1;
+		if (0 == slave_sensor_active){
+			cxt->sync_start_hold = 1;
+		}
+	}else if (1 == cxt->sync_start_hold ){
+		cxt->sync_start = 1;
+	}else {
+		cxt->sync_start = 0;
+		cxt->sync_start_hold = 0;
+	}
+	cxt->prv_nxt_sensor_role = cxt->sync_state.next_sensor_role;
 	if ((cxt->is_multi_mode == ISP_ALG_SINGLE) || (cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW)){
 
 		rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
@@ -6669,7 +6681,8 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 					ae_write_to_sensor_sync_mapping(cxt, &cxt->exp_data);
 					(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_SYNC_STABLE, &cxt->sync_stable);
 					sync_finish = 1;
-					cxt->ptr_isp_br_ioctrl(cxt->sync_state.next_id, SET_SYNC_STABLE_PARAM, &cxt->sync_stable, NULL);
+					cxt->sync_start_hold = 0;
+					cxt->ptr_isp_br_ioctrl(cxt->sync_state.next_sensor_role, SET_SYNC_STABLE_PARAM, &cxt->sync_stable, NULL);
 				} else {
 					rtn = ae_update_result_to_sensor(cxt, &cxt->exp_data, 0);
 				}
@@ -6710,7 +6723,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 				cxt->cur_status.tar_cam_id = cxt->sync_state.next_id;
 				cxt->cur_status.exp_time = cxt->exp_data.lib_data.exp_time;
 				cxt->cur_status.ae_gain = cxt->exp_data.lib_data.gain;
-				cxt->ptr_isp_br_ioctrl(cxt->camera_id, GET_SYNC_STABLE_PARAM, NULL, &(cxt->sync_stable_back));
+				cxt->ptr_isp_br_ioctrl(cxt->sync_state.next_sensor_role, GET_SYNC_STABLE_PARAM, NULL, &(cxt->sync_stable_back));
 			}
 		}
 	}
