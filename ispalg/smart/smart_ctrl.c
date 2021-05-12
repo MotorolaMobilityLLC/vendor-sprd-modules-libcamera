@@ -1526,7 +1526,7 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 			memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
 		}
 
-		unsigned int weight = 0.78 * SENSOR_GAMMA_POINT_NUM + 0.5;
+		unsigned int weight = (unsigned int)(0.78 * SENSOR_GAMMA_POINT_NUM + 0.5);
 		isp_atm_smooth(weight, SENSOR_GAMMA_POINT_NUM - 1, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
 		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(short)*SENSOR_GAMMA_POINT_NUM);
 		if (bATMDump == true) {

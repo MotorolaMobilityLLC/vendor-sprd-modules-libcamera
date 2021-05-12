@@ -3387,7 +3387,7 @@ static cmr_s32 ae_make_ae_result_cb(struct ae_ctrl_cxt *cxt,  struct ae_callback
 	result->flash_fired = cxt->flash_fired;
 	result->cur_effect_sensitivity = cxt->cur_status.adv_param.cur_ev_setting.ae_gain* 50 / 128;
 	result->cur_effect_fps = cxt->cur_result.cur_effect_fps;
-	result->cur_effect_exp_time = cxt->cur_status.adv_param.cur_ev_setting.exp_time;
+	result->cur_effect_exp_time = (cmr_u32)cxt->cur_status.adv_param.cur_ev_setting.exp_time;	//(cmr_u32) struct ae_callback_param is interface
 	result->frame_number =  cxt->frame_number;
 
 	ae_get_debug_info(cxt, &debug_info_result);
