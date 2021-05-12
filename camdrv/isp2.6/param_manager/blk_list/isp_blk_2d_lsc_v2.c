@@ -35,6 +35,8 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 		addr = (intptr_t) & (src_ptr->tab_info.lsc_2d_map) + src_ptr->tab_info.lsc_2d_info[i].lsc_2d_offset;
 		dst_ptr->map_tab[i].param_addr = (void *)addr;
 		dst_ptr->map_tab[i].len = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_len;
+		dst_ptr->map_tab[i].rg = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.rg;
+		dst_ptr->map_tab[i].bg = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.bg;
 		dst_ptr->map_tab[i].grid_x = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid_x;
 		dst_ptr->map_tab[i].grid_y = src_ptr->tab_info.lsc_2d_info[i].lsc_2d_map_info.grid_y;
 
@@ -45,11 +47,13 @@ cmr_s32 _pm_2d_lsc_init(void *dst_lnc_param, void *src_lnc_param, void *param1, 
 			ISP_LOGE("map_tab len is 0 for idx: %d", i);
 			dst_ptr->map_tab[i].param_addr = NULL;
 		}
+
 		max_len = (max_len < dst_ptr->map_tab[i].len) ? dst_ptr->map_tab[i].len : max_len;
-		ISP_LOGV("%d, %p, %d, %d, %d, %d, %d\n",
+		ISP_LOGV("lsc_map_tab %d, %p, %d, %d, %d, %d, %d %d %d\n",
 			i, dst_ptr->map_tab[i].param_addr,
 			dst_ptr->map_tab[i].len, dst_ptr->map_tab[i].grid_x, dst_ptr->map_tab[i].grid_y,
-			dst_ptr->map_tab[i].gain_w, dst_ptr->map_tab[i].gain_h);
+			dst_ptr->map_tab[i].gain_w, dst_ptr->map_tab[i].gain_h,
+			dst_ptr->map_tab[i].rg, dst_ptr->map_tab[i].bg);
 	}
 
 	if (max_len == 0) {
