@@ -2066,7 +2066,7 @@ set_property:
                 sensor_info);
         property_set("vendor.cam.sensor.slot.info", sensor_info_with_slot_id);
     }
-exit:
+
     SENSOR_LOGV("X");
 }
 
@@ -3004,7 +3004,7 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->f_num = sensor_cxt->static_info->f_num;
     phyPtr->mim_focus_distance = sensor_cxt->static_info->min_focal_distance;
     phyPtr->start_offset_time = sensor_cxt->static_info->start_offset_time;
-    SENSOR_LOGD("f_num:%f,mim_focus_distance:%f,start offset time:%lld",
+    SENSOR_LOGD("f_num:%f,mim_focus_distance:%d,start offset time:%lld",
                  phyPtr->f_num,phyPtr->mim_focus_distance,phyPtr->start_offset_time);
 
     phyPtr->module_vendor_id = sensor_cxt->module_vendor_id;
