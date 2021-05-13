@@ -82,9 +82,9 @@
 		/*rnr_radius_base*/
 		0x0400,
 		/*rnr_imgCenterX*/
-		0x0FA0,
+		0x0000,
 		/*rnr_imgCenterY*/
-		0x0BB8,
+		0x0000,
 		/*rnr_step*/
 		0x0001,
 
