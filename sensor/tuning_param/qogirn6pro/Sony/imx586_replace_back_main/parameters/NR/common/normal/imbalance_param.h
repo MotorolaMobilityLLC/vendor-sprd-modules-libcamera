@@ -1,8 +1,4 @@
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-/*versionid=0x000D0010*/
-=======
 /*versionid=0x000C000F*/
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl6_sensor_nlm_imbalance_level*/
@@ -141,19 +137,11 @@
 		/*imblance_radial_1D_en*/
 		0x0001,
 		/*imblance_radial_1D_center_x*/
-<<<<<<< 8b2df78fb54600eea74fd813e780c431d15791ca
-		0x0FA0,
-		/*imblance_radial_1D_center_y*/
-		0x0BB8,
-		/*imblance_radial_1D_radius_thr*/
-		0x155C,
-=======
 		0x0920,
 		/*imblance_radial_1D_center_y*/
 		0x06D8,
 		/*imblance_radial_1D_radius_thr*/
 		0x0C79,
->>>>>>> Bug #1527200 add imx586 param for N6pro 0406
 		/*imblance_radial_1D_radius_thr_factor*/
 		0x0190,
 		/*imblance_radial_1D_protect_ratio_max*/
