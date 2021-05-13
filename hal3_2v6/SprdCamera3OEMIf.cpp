@@ -12253,6 +12253,12 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
     obj->mHalOem->ops->camera_snapshot_is_need_flash(
         obj->mCameraHandle, mCameraId, &mFlashCaptureFlag);
+    if (mFlashCaptureFlag) {
+        mSprd3dnrType = CAMERA_3DNR_TYPE_NULL;
+        mFlagHdr = false;
+        mIsFDRCapture = false;
+        SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_3DNR_TYPE, mSprd3dnrType);
+    }
 
     SET_PARM(obj->mHalOem, obj->mCameraHandle, CAMERA_PARAM_SHOT_NUM,
              mPicCaptureCnt);
@@ -12828,6 +12834,7 @@ void SprdCamera3OEMIf::cbThumbFrame(uint32_t frame_number,
     mThumbFrameNum = 0; /*reset thumb frame number to 0*/
     regular_channel->channelCbRoutine(frame_num, timestamp,
                                       CAMERA_STREAM_TYPE_YUV2);
+    mFlashCaptureFlag = 0;
 }
 
 void SprdCamera3OEMIf::cbJpegFrame(uint32_t frame_number,

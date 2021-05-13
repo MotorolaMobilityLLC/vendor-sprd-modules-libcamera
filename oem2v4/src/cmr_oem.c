@@ -5921,7 +5921,7 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
     setting_param.ctrl_flash.flash_type = FLASH_HIGH_LIGHT;
     setting_param.ctrl_flash.work_mode = 1; // capture
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_FLASH_STATUS, &setting_param);
+                            SETTING_GET_IS_NEED_FLASH, &setting_param);
     if (ret) {
         CMR_LOGE("failed to get flash mode %ld", ret);
         goto exit;
@@ -5959,7 +5959,7 @@ cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id) {
         setting_param.ctrl_flash.flash_type = FLASH_HIGH_LIGHT;
         setting_param.ctrl_flash.work_mode = 1; // capture
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                SETTING_GET_FLASH_STATUS, &setting_param);
+                                SETTING_GET_IS_NEED_FLASH, &setting_param);
         if (ret) {
             CMR_LOGE("failed to get flash mode %ld", ret);
             goto exit;
@@ -8607,7 +8607,7 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
 #if defined(CONFIG_CAMERA_FLASH_HIGH_AE_MEASURE)
     setting_param.ctrl_flash.capture_mode.capture_mode = snp_cxt->snp_mode;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_FLASH_STATUS, &setting_param);
+                            SETTING_GET_IS_NEED_FLASH, &setting_param);
     if (ret) {
         CMR_LOGE("failed to get flash mode %ld", ret);
     }

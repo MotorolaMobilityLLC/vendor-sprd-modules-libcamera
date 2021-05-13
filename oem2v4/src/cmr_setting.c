@@ -815,17 +815,6 @@ static cmr_int setting_get_HW_flash_status(struct setting_component *cpt,
     return ret;
 }
 
-static cmr_int setting_is_need_flash(struct setting_component *cpt,
-                                     struct setting_cmd_parameter *parm);
-static cmr_int setting_get_flash_status(struct setting_component *cpt,
-                                        struct setting_cmd_parameter *parm) {
-    cmr_int ret = 0;
-
-    parm->cmd_type_value = setting_is_need_flash(cpt, parm);
-    CMR_LOGD("flash_status %ld", parm->cmd_type_value);
-    return ret;
-}
-
 static cmr_int setting_set_flash_mode(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2757,6 +2746,15 @@ static cmr_int setting_is_need_flash(struct setting_component *cpt,
     return is_need;
 }
 
+static cmr_int setting_get_is_need_flash(struct setting_component *cpt,
+                                        struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+
+    parm->cmd_type_value = setting_is_need_flash(cpt, parm);
+    CMR_LOGD("flash_status %ld", parm->cmd_type_value);
+    return ret;
+}
+
 static cmr_int
 setting_get_flash_max_capacity(struct setting_component *cpt,
                                struct setting_cmd_parameter *parm,
@@ -3646,8 +3644,8 @@ static cmr_int cmr_setting_parms_init() {
     cmr_add_cmd_fun_to_table(SETTING_GET_DV_MODE, setting_get_dv_mode);
     cmr_add_cmd_fun_to_table(SETTING_SET_PRE_LOWFLASH,
                              setting_set_pre_lowflash);
-    cmr_add_cmd_fun_to_table(SETTING_GET_FLASH_STATUS,
-                             setting_get_flash_status);
+    cmr_add_cmd_fun_to_table(SETTING_GET_IS_NEED_FLASH,
+                             setting_get_is_need_flash);
     cmr_add_cmd_fun_to_table(SETTING_SET_HIGHFLASH_AE_MEASURE,
                              setting_set_highflash_ae_measure);
     cmr_add_cmd_fun_to_table(SETTING_GET_HW_FLASH_STATUS,

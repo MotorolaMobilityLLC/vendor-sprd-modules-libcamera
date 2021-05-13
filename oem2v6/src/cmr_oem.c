@@ -8999,7 +8999,7 @@ cmr_int camera_local_snapshot_is_need_flash(cmr_handle oem_handle,
     memset(&setting_param, 0, sizeof(setting_param));
     setting_param.camera_id = camera_id;
     ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                            SETTING_GET_FLASH_STATUS, &setting_param);
+                            SETTING_GET_IS_NEED_FLASH, &setting_param);
     if (ret) {
         CMR_LOGE("failed to get flash mode %ld", ret);
         goto exit;
@@ -9033,7 +9033,7 @@ cmr_int camera_capture_highflash(cmr_handle oem_handle, cmr_u32 camera_id) {
         memset(&setting_param, 0, sizeof(setting_param));
         setting_param.camera_id = camera_id;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
-                                SETTING_GET_FLASH_STATUS, &setting_param);
+                                SETTING_GET_IS_NEED_FLASH, &setting_param);
         if (ret) {
             CMR_LOGE("failed to get flash mode %ld", ret);
             goto exit;
@@ -12426,6 +12426,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     cmr_int i;
     struct common_isp_cmd_param isp_cmd_parm;
     cmr_u32 gtm_on = 0;
+    cmr_u32 is_need_flash = 0;
 
     out_ptr->snap_cnt = 0;
     out_ptr->total_num = 0;
@@ -12469,16 +12470,30 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
     cxt->is_yuv_callback_mode = setting_param.cmd_type_value;
     out_ptr->is_yuv_callback_mode = setting_param.cmd_type_value;
 
-    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR,
+    //get whether is_need_flash, flash has priority over HDR/FDR/3DNR
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_IS_NEED_FLASH,
                             &setting_param);
     if (ret) {
-        CMR_LOGE("failed to get hdr %ld", ret);
+        CMR_LOGE("failed to get is_need_flash %ld", ret);
     } else {
-        camera_set_hdr_flag(cxt, setting_param.cmd_type_value);
-        out_ptr->is_hdr = camera_get_hdr_flag(cxt);
+        is_need_flash = setting_param.cmd_type_value;
     }
 
-    if (out_ptr->is_hdr == 0) {
+    if (!is_need_flash) {
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_HDR,
+                                &setting_param);
+        if (ret) {
+            CMR_LOGE("failed to get hdr %ld", ret);
+        } else {
+            camera_set_hdr_flag(cxt, setting_param.cmd_type_value);
+            out_ptr->is_hdr = camera_get_hdr_flag(cxt);
+        }
+    } else {
+        camera_set_hdr_flag(cxt, 0);
+        out_ptr->is_hdr = 0;
+    }
+
+    if (!is_need_flash && out_ptr->is_hdr == 0) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_FDR,
                             &setting_param);
         if (ret) {
@@ -12492,7 +12507,7 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
         out_ptr->is_fdr = 0;
     }
 
-    if (out_ptr->is_fdr == 0 && out_ptr->is_hdr == 0) {
+    if (!is_need_flash && out_ptr->is_fdr == 0 && out_ptr->is_hdr == 0) {
         ret = cmr_setting_ioctl(setting_cxt->setting_handle, SETTING_GET_3DNR_TYPE,
                             &setting_param);
         if (ret) {
@@ -12502,8 +12517,8 @@ cmr_int camera_get_snapshot_param(cmr_handle oem_handle,
             out_ptr->is_3dnr = camera_get_3dnr_flag(cxt);
         }
     } else {
-            camera_set_3dnr_flag(cxt, 0);
-            out_ptr->is_3dnr = 0;
+        camera_set_3dnr_flag(cxt, 0);
+        out_ptr->is_3dnr = 0;
     }
 
     ret = cmr_setting_ioctl(setting_cxt->setting_handle,
@@ -13753,7 +13768,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     struct common_sn_cmd_param param;
     struct setting_cmd_parameter setting_param;
     struct img_rect prev_rect;
-    cmr_u32 flash_status = 0;
+    cmr_u32 is_need_flash = 0;
+    cmr_uint flash_hw_status = 0;
     cmr_s32 sm_val = 0;
     cmr_u32 need_3dnr = 0;
     cmr_u32 lock_af = 0;
@@ -13854,10 +13870,10 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     if (ret) {
         CMR_LOGE("failed to get flash mode %ld", ret);
     } else {
-        flash_status = setting_param.cmd_type_value;
+        flash_hw_status = setting_param.cmd_type_value;
     }
-    CMR_LOGD("HW flash_status=%ld", flash_status);
-    if (flash_status != FLASH_TORCH) {
+    CMR_LOGD("HW flash_status=%ld", flash_hw_status);
+    if (flash_hw_status != FLASH_TORCH) {
         cmr_sensor_set_exif(cxt->sn_cxt.sensor_handle, cxt->camera_id,
                             SENSOR_EXIF_CTRL_FLASH, 0);
     }
@@ -13903,7 +13919,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
 
     camera_local_snapshot_is_need_flash(oem_handle, cxt->camera_id,
-                                        &flash_status);
+                                        &is_need_flash);
     property_get("persist.vendor.cam.raw.mode", raw_value, "jpeg");
     if (!strcmp(raw_value, "raw")) {
         is_raw_capture = 1;
@@ -13917,7 +13933,7 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
 
 //GTM set ev
     if(camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL && cxt->gtm_flag &&
-        1 != camera_get_hdr_flag(cxt) && !flash_status && 1 != camera_get_fdr_flag(cxt))
+        1 != camera_get_hdr_flag(cxt) && !is_need_flash && 1 != camera_get_fdr_flag(cxt))
     {
         camera_adjust_ev_before_snapshot(oem_handle,SNAPSHOT_GTM);
     } else {
@@ -13925,16 +13941,29 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
                  camera_get_3dnr_flag(cxt), cxt->gtm_flag);
     }
 
-    if (1 == cxt->dre_flag &&!flash_status && cxt->predre_flag && !cxt->gtm_flag &&
+    if (1 == cxt->dre_flag &&!is_need_flash && cxt->predre_flag && !cxt->gtm_flag &&
           camera_get_3dnr_flag(cxt) == CAMERA_3DNR_TYPE_NULL && 1 != camera_get_fdr_flag(cxt)) {
         camera_adjust_ev_before_snapshot(oem_handle,SNAPSHOT_DRE);
     } else {
         CMR_LOGD("DRE No need to lower exposure,dre_flag=%d,predre=%d,flash "
                  "=%d,gtm =%d",
-                 cxt->dre_flag, cxt->predre_flag, flash_status, cxt->gtm_flag);
+                 cxt->dre_flag, cxt->predre_flag, is_need_flash, cxt->gtm_flag);
     }
 
-    if (1 == camera_get_hdr_flag(cxt)) {
+    if (is_need_flash) {
+        // whether FRONT_CAMERA_FLASH_TYPE is lcd
+        bool isFrontLcd =
+            (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
+        // whether FRONT_CAMERA_FLASH_TYPE is flash
+        bool isFrontFlash =
+            (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
+        if (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0 ||
+            isFrontLcd || isFrontFlash || cxt->camera_id == 4) {
+            ret = camera_capture_highflash(oem_handle, cxt->camera_id);
+            if (ret)
+                CMR_LOGE("open high flash fail");
+        }
+    } else if (1 == camera_get_hdr_flag(cxt)) {
         ret = camera_hdr_set_ev(oem_handle);
         if (ret) {
             CMR_LOGE("fail to set hdr ev");
@@ -13978,20 +14007,8 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
             if (ret)
                 CMR_LOGE("fail to set 3dnr ev");
         }
-    } else {
-        // whether FRONT_CAMERA_FLASH_TYPE is lcd
-        bool isFrontLcd =
-            (strcmp(FRONT_CAMERA_FLASH_TYPE, "lcd") == 0) ? true : false;
-        // whether FRONT_CAMERA_FLASH_TYPE is flash
-        bool isFrontFlash =
-            (strcmp(FRONT_CAMERA_FLASH_TYPE, "flash") == 0) ? true : false;
-        if (cxt->is_multi_mode == MODE_MULTI_CAMERA || cxt->camera_id == 0 ||
-            isFrontLcd || isFrontFlash || cxt->camera_id == 4) {
-            ret = camera_capture_highflash(oem_handle, cxt->camera_id);
-            if (ret)
-                CMR_LOGE("open high flash fail");
-        }
     }
+
     cmr_bzero(&isp_param, sizeof(struct common_isp_cmd_param));
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -14002,10 +14019,9 @@ cmr_int camera_local_start_snapshot(cmr_handle oem_handle,
     }
     has_preflashed = setting_param.cmd_type_value;
 
-    if (has_preflashed)
+    if (has_preflashed) {
         camera_get_iso_value(oem_handle);
-    if (cxt->flash_mode == 3){
-        if (setting_param.cmd_type_value == 1){
+        if (cxt->flash_mode == 3) {
             isp_param.cmd_value = 1;
             ret = camera_isp_ioctl(oem_handle, COM_ISP_SET_AUTO_FLASH_CAP, (void *)&isp_param);
         }
