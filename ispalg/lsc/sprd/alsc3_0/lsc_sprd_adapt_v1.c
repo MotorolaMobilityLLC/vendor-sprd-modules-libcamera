@@ -3413,10 +3413,12 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case ALSC_GET_UPDATE_INFO:
-		memcpy(cxt->lsc_buffer_interlace, cxt->lsc_buffer, cxt->gain_width * cxt->gain_height * 4 * sizeof(unsigned short));
-		//planar2interlace for driver use
-		if (cxt->is_planar == 1) {
-			lsc_table_planar2interlace(cxt->lsc_buffer_interlace, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern, cxt->output_gain_pattern);
+		chnl_gain_num = cxt->gain_width * cxt->gain_height;
+		for(i = 0; i < chnl_gain_num; i++){
+			cxt->lsc_buffer_interlace[4 * i + is_gr]=cxt->lsc_buffer[i + is_gr * chnl_gain_num];
+			cxt->lsc_buffer_interlace[4 * i + is_r]=cxt->lsc_buffer[i + is_r * chnl_gain_num];
+			cxt->lsc_buffer_interlace[4 * i + is_b]=cxt->lsc_buffer[i + is_b * chnl_gain_num];
+			cxt->lsc_buffer_interlace[4 * i + is_gb]=cxt->lsc_buffer[i + is_gb * chnl_gain_num];
 		}
 
 		alsc_update_info_out = (struct alsc_update_info *)out;
