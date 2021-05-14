@@ -142,8 +142,7 @@ static cmr_int ultrawide_close(cmr_handle class_handle) {
                                 ultrawide_handle->tag);
     }
 
-    if (NULL != ultrawide_handle)
-        free(ultrawide_handle);
+    free(ultrawide_handle);
 
     return ret;
 }
