@@ -10,7 +10,7 @@
 		/*hv_mode*/
 		0x00,
 		/*rd_mode*/
-		0x00,
+		0x01,
 		/*isMonoSensor*/
 		0x00,
 		/*double_bypass*/
@@ -31,7 +31,7 @@
 		},
 		/*intercept_b*/
 		{
-			0x0000,0x0003,0x0008,0x000F,0x0018,0x0021,0x0021,0x0021/*0-7*/
+			0x0002,0x0014,0x0059,0x0104,0x0240,0x03FF,0x03FF,0x03FF/*0-7*/
 		},
 		/*dtol*/
 		0.20,
@@ -56,11 +56,11 @@
 		},
 		/*three_th*/
 		{
-			0x0000,0x001E,0x003C,0x0078/*0-3*/
+			0x03FF,0x03FF,0x03FF,0x03FF/*0-3*/
 		},
 		/*four_th*/
 		{
-			0x0000,0x001E,0x003C,0x0078/*0-3*/
+			0x03FF,0x03FF,0x03FF,0x03FF/*0-3*/
 		},
 		/*shift*/
 		{
@@ -69,9 +69,9 @@
 		/*reserved*/
 		0x00,
 		/*flat_th*/
-		0x0190,
+		0x00C8,
 		/*texture_th*/
-		0x0078,
+		0x0028,
 
 	},
 	/*bpc_rules*/
@@ -79,13 +79,13 @@
 		/*k_val*/
 		{
 			/*min*/
-			0x0000,
+			0x0004,
 			/*max*/
-			0x0000,
+			0x0003,
 
 		},
 		/*lowcoeff*/
-		0x02,
+		0x01,
 		/*lowoffset*/
 		0x00,
 		/*highcoeff*/
@@ -93,9 +93,9 @@
 		/*highoffset*/
 		0x00,
 		/*hv_ratio*/
-		0x0028,
+		0x0019,
 		/*rd_ration*/
-		0x001E,
+		0x0023,
 
 	},
 	/*ppi_block*/
