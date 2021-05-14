@@ -294,7 +294,7 @@ static cmr_int swa_exif_process(struct ips_context *ips_ctx,
 	struct ips_jpeg_param_t *pm = (struct ips_jpeg_param_t *)cur_proc->param_ptr;
 	struct jpeg_enc_exif_param enc_exif_param;
 	struct jpeg_wexif_cb_param out_param;
-	void *ptr0, *ptr1;
+	void *ptr0, *ptr1, *tmp_buf;
 
 	CMR_LOGD("req_id %d exif start\n", req->req_in.request_id);
 
@@ -319,10 +319,17 @@ static cmr_int swa_exif_process(struct ips_context *ips_ctx,
 		}
 	}
 
+	tmp_buf = malloc(dst.buf_size + 1024);
+	if (tmp_buf == NULL) {
+		CMR_LOGE("fail to malloc tmp jpeg buf, size %d\n", dst.buf_size);
+		return CMR_CAMERA_NO_MEM;
+	}
 	ptr0 = (void *)dst.addr_vir.addr_y;
 	ptr1 = (void *)(dst.addr_vir.addr_y + EXIF_RESERVED_SIZE);
 
-	memcpy(ptr1, ptr0, dst.buf_size);
+	memcpy(tmp_buf, ptr0, dst.buf_size);
+	memcpy(ptr1, tmp_buf, dst.buf_size);
+	free(tmp_buf);
 
 	memset(&enc_exif_param, 0, sizeof(struct jpeg_enc_exif_param));
 	memset(&out_param, 0, sizeof(struct jpeg_wexif_cb_param));
