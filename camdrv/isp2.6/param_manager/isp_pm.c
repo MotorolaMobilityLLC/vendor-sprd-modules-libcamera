@@ -359,6 +359,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_UV_CDN_V1, 0 }, /* NR block */
 	{ ISP_BLK_UV_POSTCDN_V1, 0 }, /* NR block */
 	{ ISP_BLK_YUV_NOISEFILTER_V1, 0 }, /* NR block */
+	{ ISP_BLK_ANTI_FLICKER, sizeof(struct anti_flicker_tune_param)},
 
 	/* software algo blocks */
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
@@ -1958,6 +1959,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		case ISP_PM_CMD_GET_INIT_AF:
 		case ISP_PM_CMD_GET_INIT_AF_NEW:
 			block_id = ISP_BLK_AF_NEW;
+			break;
+		case ISP_PM_CMD_GET_INIT_AFL:
+			block_id = ISP_BLK_ANTI_FLICKER;
 			break;
 		case ISP_PM_CMD_GET_INIT_SMART:
 			block_id = ISP_BLK_SMART;
