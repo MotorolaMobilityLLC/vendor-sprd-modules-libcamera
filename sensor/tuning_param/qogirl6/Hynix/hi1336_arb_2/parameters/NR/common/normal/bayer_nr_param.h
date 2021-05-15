@@ -777,9 +777,9 @@
 					/*texture_dec_str*/
 					0x60,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -853,9 +853,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -929,9 +929,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -1475,9 +1475,9 @@
 					/*texture_dec_str*/
 					0x60,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -1551,9 +1551,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -1627,9 +1627,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -2152,7 +2152,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2171,11 +2171,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x60,
+					0x96,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -2210,7 +2210,7 @@
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x14,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
@@ -2228,7 +2228,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2249,9 +2249,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -2304,7 +2304,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2325,9 +2325,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -2850,7 +2850,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2869,11 +2869,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x60,
+					0x96,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -2926,7 +2926,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -2947,9 +2947,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -3002,7 +3002,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -3023,9 +3023,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -3569,9 +3569,9 @@
 					/*texture_dec_str*/
 					0x96,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -3645,9 +3645,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -3721,9 +3721,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -4246,7 +4246,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -4265,11 +4265,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x96,
+					0xB4,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -4322,7 +4322,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -4343,9 +4343,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x3C,
+					0x0A,
 					/*addback31*/
-					0x3C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -4398,7 +4398,7 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
@@ -4419,9 +4419,9 @@
 					/*texture_dec_str*/
 					0xC0,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -4908,72 +4908,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x0050,
 						/*addback0*/
-						0x0036,
+						0x000A,
 						/*addback1*/
-						0x0036,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x20,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x0078,
 						/*addback0*/
-						0x0028,
+						0x000A,
 						/*addback1*/
-						0x0028,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0140,
+						0x00A0,
 						/*addback0*/
-						0x0014,
+						0x000A,
 						/*addback1*/
-						0x0014,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x48,
+					0x5A,
 					/*addback30*/
-					0x14,
+					0x0A,
 					/*addback31*/
-					0x14,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -4984,72 +4984,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x2E,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0064,
 						/*addback0*/
-						0x0046,
+						0x000A,
 						/*addback1*/
-						0x0046,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x14,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0096,
 						/*addback0*/
-						0x002A,
+						0x000A,
 						/*addback1*/
-						0x002A,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00B4,
 						/*addback0*/
-						0x0018,
+						0x000A,
 						/*addback1*/
-						0x0018,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x44,
+					0x96,
 					/*addback30*/
-					0x18,
+					0x0A,
 					/*addback31*/
-					0x18,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -5060,72 +5060,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x30,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00A0,
+						0x006E,
 						/*addback0*/
-						0x0030,
+						0x000A,
 						/*addback1*/
-						0x0030,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x2A,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00A0,
+						0x00AA,
 						/*addback0*/
-						0x001E,
+						0x000A,
 						/*addback1*/
-						0x001E,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0104,
+						0x00BE,
 						/*addback0*/
-						0x0012,
+						0x000A,
 						/*addback1*/
-						0x0012,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x44,
+					0xC0,
 					/*addback30*/
-					0x12,
+					0x0A,
 					/*addback31*/
-					0x12,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x000A,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF6,
 
 				}
 			}
@@ -5606,72 +5606,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x0050,
 						/*addback0*/
-						0x0036,
+						0x000A,
 						/*addback1*/
-						0x0036,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x20,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x0078,
 						/*addback0*/
-						0x0028,
+						0x000A,
 						/*addback1*/
-						0x0028,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0140,
+						0x00A0,
 						/*addback0*/
-						0x0014,
+						0x000A,
 						/*addback1*/
-						0x0014,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x48,
+					0x5A,
 					/*addback30*/
-					0x14,
+					0x0A,
 					/*addback31*/
-					0x14,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -5682,72 +5682,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x2E,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0064,
 						/*addback0*/
-						0x0046,
+						0x000A,
 						/*addback1*/
-						0x0046,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x14,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0096,
 						/*addback0*/
-						0x002A,
+						0x000A,
 						/*addback1*/
-						0x002A,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00B4,
 						/*addback0*/
-						0x0018,
+						0x000A,
 						/*addback1*/
-						0x0018,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x44,
+					0x96,
 					/*addback30*/
-					0x18,
+					0x0A,
 					/*addback31*/
-					0x18,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -5758,72 +5758,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x30,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00A0,
+						0x006E,
 						/*addback0*/
-						0x0032,
+						0x000A,
 						/*addback1*/
-						0x0032,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x2A,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00A0,
+						0x00AA,
 						/*addback0*/
-						0x001E,
+						0x000A,
 						/*addback1*/
-						0x001E,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0104,
+						0x00BE,
 						/*addback0*/
-						0x0012,
+						0x000A,
 						/*addback1*/
-						0x0012,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x44,
+					0xC0,
 					/*addback30*/
-					0x12,
+					0x0A,
 					/*addback31*/
-					0x12,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x000A,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			}
@@ -6304,33 +6304,33 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x20,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x0050,
 						/*addback0*/
-						0x0036,
+						0x000A,
 						/*addback1*/
-						0x0036,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x20,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00DC,
+						0x0078,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -6340,15 +6340,15 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x012C,
+						0x00A0,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -6359,11 +6359,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x50,
+					0x5A,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -6380,72 +6380,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x24,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0064,
 						/*addback0*/
-						0x0046,
+						0x000A,
 						/*addback1*/
-						0x0046,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x14,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0096,
 						/*addback0*/
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
 						0x000A,
+						/*addback1*/
+						0x000A,
+						/*addback_clip_max*/
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF6,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00B4,
 						/*addback0*/
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
 						0x000A,
+						/*addback1*/
+						0x000A,
+						/*addback_clip_max*/
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF6,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x54,
+					0x96,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x000A,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFF6,
+					0xFFF8,
 
 				}
 			},
@@ -6456,70 +6456,70 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x006E,
 						/*addback0*/
-						0x0032,
+						0x000A,
 						/*addback1*/
-						0x0032,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x2A,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00DC,
+						0x00AA,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
-						0x0008,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF8,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00BE,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
-						0x0008,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF8,
+						0xFFF6,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x58,
+					0xC0,
 					/*addback30*/
-					0x40,
+					0x0A,
 					/*addback31*/
-					0x40,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0008,
+					0x000A,
 					/*addback_clip_min*/
 					0xFFF8,
 
@@ -6990,9 +6990,9 @@
 		/*first_lum_bypass*/
 		0x0000,
 		/*lum_thr0*/
-		0x0032,
+		0x00F0,
 		/*lum_thr1*/
-		0x00C8,
+		0x01F4,
 		/*nlm_lum*/
 		{
 			/*[0x0]*/
@@ -7002,33 +7002,33 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1B,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x0050,
 						/*addback0*/
-						0x0036,
+						0x000A,
 						/*addback1*/
-						0x0036,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x20,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00DC,
+						0x0078,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -7038,15 +7038,15 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x012C,
+						0x00A0,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -7057,11 +7057,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x31,
+					0x5A,
 					/*addback30*/
-					0x5C,
+					0x0A,
 					/*addback31*/
-					0x5C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -7078,66 +7078,66 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1E,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0064,
 						/*addback0*/
-						0x0046,
+						0x000A,
 						/*addback1*/
-						0x0046,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x14,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0096,
 						/*addback0*/
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
 						0x000A,
+						/*addback1*/
+						0x000A,
+						/*addback_clip_max*/
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF6,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00B4,
 						/*addback0*/
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
 						0x000A,
+						/*addback1*/
+						0x000A,
+						/*addback_clip_max*/
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF6,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x36,
+					0x96,
 					/*addback30*/
-					0x5C,
+					0x0A,
 					/*addback31*/
-					0x5C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -7154,70 +7154,70 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x23,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x006E,
 						/*addback0*/
-						0x0032,
+						0x000A,
 						/*addback1*/
-						0x0032,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x2A,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00DC,
+						0x00AA,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
-						0x0008,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF8,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x3C,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00BE,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
-						0x0008,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF8,
+						0xFFF6,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x3B,
+					0xC0,
 					/*addback30*/
-					0x5C,
+					0x0A,
 					/*addback31*/
-					0x5C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0008,
+					0x000A,
 					/*addback_clip_min*/
 					0xFFF8,
 
@@ -7688,9 +7688,9 @@
 		/*first_lum_bypass*/
 		0x0000,
 		/*lum_thr0*/
-		0x0032,
+		0x00F0,
 		/*lum_thr1*/
-		0x00C8,
+		0x01F4,
 		/*nlm_lum*/
 		{
 			/*[0x0]*/
@@ -7700,33 +7700,33 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x19,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x0050,
 						/*addback0*/
-						0x0036,
+						0x000A,
 						/*addback1*/
-						0x0036,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x1E,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00DC,
+						0x0078,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -7736,15 +7736,15 @@
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x012C,
+						0x00A0,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
 						0x0008,
 						/*addback_clip_min*/
@@ -7755,11 +7755,11 @@
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x31,
+					0x5A,
 					/*addback30*/
-					0x5C,
+					0x0A,
 					/*addback31*/
-					0x5C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -7776,66 +7776,66 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1B,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0064,
 						/*addback0*/
-						0x0046,
+						0x000A,
 						/*addback1*/
-						0x0046,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x23,
+						0x14,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00B4,
+						0x0096,
 						/*addback0*/
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
 						0x000A,
+						/*addback1*/
+						0x000A,
+						/*addback_clip_max*/
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF6,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00B4,
 						/*addback0*/
-						0x0040,
-						/*addback1*/
-						0x0040,
-						/*addback_clip_max*/
 						0x000A,
+						/*addback1*/
+						0x000A,
+						/*addback_clip_max*/
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF6,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x36,
+					0x96,
 					/*addback30*/
-					0x5C,
+					0x0A,
 					/*addback31*/
-					0x5C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -7852,70 +7852,70 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1E,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00C8,
+						0x006E,
 						/*addback0*/
-						0x0032,
+						0x000A,
 						/*addback1*/
-						0x0032,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x26,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x00DC,
+						0x00AA,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
-						0x0008,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF8,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x35,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0118,
+						0x00BE,
 						/*addback0*/
-						0x0040,
+						0x000A,
 						/*addback1*/
-						0x0040,
+						0x000A,
 						/*addback_clip_max*/
-						0x0008,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF8,
+						0xFFF6,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x3B,
+					0xC0,
 					/*addback30*/
-					0x5C,
+					0x0A,
 					/*addback31*/
-					0x5C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0008,
+					0x000A,
 					/*addback_clip_min*/
 					0xFFF8,
 
@@ -8398,72 +8398,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1C,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0122,
+						0x0050,
 						/*addback0*/
-						0x0036,
+						0x000A,
 						/*addback1*/
-						0x0036,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x14,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0154,
+						0x0078,
 						/*addback0*/
-						0x0020,
+						0x000A,
 						/*addback1*/
-						0x0020,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0190,
+						0x00A0,
 						/*addback0*/
-						0x000C,
+						0x000A,
 						/*addback1*/
-						0x000C,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x2E,
+					0x5A,
 					/*addback30*/
-					0x0C,
+					0x0A,
 					/*addback31*/
-					0x0C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -8474,19 +8474,19 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1C,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x0064,
 						/*addback0*/
-						0x003E,
+						0x000A,
 						/*addback1*/
-						0x003E,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
@@ -8496,50 +8496,50 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0168,
+						0x0096,
 						/*addback0*/
-						0x0024,
+						0x000A,
 						/*addback1*/
-						0x0024,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01AE,
+						0x00B4,
 						/*addback0*/
-						0x0013,
+						0x000A,
 						/*addback1*/
-						0x0013,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x34,
+					0x96,
 					/*addback30*/
-					0x13,
+					0x0A,
 					/*addback31*/
-					0x13,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -8550,72 +8550,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x24,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0122,
+						0x006E,
 						/*addback0*/
-						0x003E,
+						0x000A,
 						/*addback1*/
-						0x003E,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x18,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0154,
+						0x00AA,
 						/*addback0*/
-						0x0024,
+						0x000A,
 						/*addback1*/
-						0x0024,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2C,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x010E,
+						0x00BE,
 						/*addback0*/
-						0x0012,
+						0x000A,
 						/*addback1*/
-						0x0012,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x34,
+					0xC0,
 					/*addback30*/
-					0x12,
+					0x0A,
 					/*addback31*/
-					0x12,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x000A,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			}
@@ -9096,72 +9096,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1C,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0122,
+						0x0050,
 						/*addback0*/
-						0x0036,
+						0x000A,
 						/*addback1*/
-						0x0036,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x14,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0154,
+						0x0078,
 						/*addback0*/
-						0x0020,
+						0x000A,
 						/*addback1*/
-						0x0020,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x0190,
+						0x00A0,
 						/*addback0*/
-						0x000C,
+						0x000A,
 						/*addback1*/
-						0x000C,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x2E,
+					0x5A,
 					/*addback30*/
-					0x0C,
+					0x0A,
 					/*addback31*/
-					0x0C,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -9172,19 +9172,19 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x1C,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x0064,
 						/*addback0*/
-						0x003E,
+						0x000A,
 						/*addback1*/
-						0x003E,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
@@ -9194,50 +9194,50 @@
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0168,
+						0x0096,
 						/*addback0*/
-						0x0024,
+						0x000A,
 						/*addback1*/
-						0x0024,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01AE,
+						0x00B4,
 						/*addback0*/
-						0x0013,
+						0x000A,
 						/*addback1*/
-						0x0013,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF8,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x34,
+					0x96,
 					/*addback30*/
-					0x13,
+					0x0A,
 					/*addback31*/
-					0x13,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x0008,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			},
@@ -9248,72 +9248,72 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x24,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0122,
+						0x006E,
 						/*addback0*/
-						0x003E,
+						0x000A,
 						/*addback1*/
-						0x003E,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x18,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0154,
+						0x00AA,
 						/*addback0*/
-						0x0024,
+						0x000A,
 						/*addback1*/
-						0x0024,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2C,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x010E,
+						0x00BE,
 						/*addback0*/
-						0x0012,
+						0x000A,
 						/*addback1*/
-						0x0012,
+						0x000A,
 						/*addback_clip_max*/
-						0x0006,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFFA,
+						0xFFF6,
 
 					}
 				},
 				/*nlm_texture*/
 				{
 					/*texture_dec_str*/
-					0x34,
+					0xC0,
 					/*addback30*/
-					0x12,
+					0x0A,
 					/*addback31*/
-					0x12,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
-					0x0006,
+					0x000A,
 					/*addback_clip_min*/
-					0xFFFA,
+					0xFFF8,
 
 				}
 			}
@@ -9794,55 +9794,55 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x012C,
+						0x0050,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x0078,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x19,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01CC,
+						0x00A0,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					}
 				},
@@ -9851,9 +9851,9 @@
 					/*texture_dec_str*/
 					0x37,
 					/*addback30*/
-					0x55,
+					0x0A,
 					/*addback31*/
-					0x55,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -9870,55 +9870,55 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x012C,
+						0x0064,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x14,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x0096,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x1E,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01CC,
+						0x00B4,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					}
 				},
@@ -9927,9 +9927,9 @@
 					/*texture_dec_str*/
 					0x37,
 					/*addback30*/
-					0x55,
+					0x0A,
 					/*addback31*/
-					0x55,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -9946,55 +9946,55 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x0F,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x012C,
+						0x006E,
 						/*addback0*/
-						0x005A,
+						0x000A,
 						/*addback1*/
-						0x005A,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x19,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x00AA,
 						/*addback0*/
-						0x005A,
+						0x000A,
 						/*addback1*/
-						0x005A,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x37,
+						0x23,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01CC,
+						0x00BE,
 						/*addback0*/
-						0x005A,
+						0x000A,
 						/*addback1*/
-						0x005A,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF6,
 
 					}
 				},
@@ -10003,9 +10003,9 @@
 					/*texture_dec_str*/
 					0x32,
 					/*addback30*/
-					0x5A,
+					0x0A,
 					/*addback31*/
-					0x5A,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -10492,55 +10492,55 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x01,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x012C,
+						0x0050,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x0078,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x0F,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01CC,
+						0x00A0,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					}
 				},
@@ -10549,9 +10549,9 @@
 					/*texture_dec_str*/
 					0x32,
 					/*addback30*/
-					0x55,
+					0x0A,
 					/*addback31*/
-					0x55,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -10568,55 +10568,55 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x012C,
+						0x0064,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x0096,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x2D,
+						0x0F,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01CC,
+						0x00B4,
 						/*addback0*/
-						0x0055,
+						0x000A,
 						/*addback1*/
-						0x0055,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x0008,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF8,
 
 					}
 				},
@@ -10625,9 +10625,9 @@
 					/*texture_dec_str*/
 					0x32,
 					/*addback30*/
-					0x55,
+					0x0A,
 					/*addback31*/
-					0x55,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
@@ -10644,55 +10644,55 @@
 					/*[0x0]*/
 					{
 						/*flat_inc_str*/
-						0x28,
+						0x05,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x012C,
+						0x006E,
 						/*addback0*/
-						0x005A,
+						0x000A,
 						/*addback1*/
-						0x005A,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF6,
 
 					},
 					/*[0x1]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x0A,
 						/*flat_match_cnt*/
 						0x15,
 						/*flat_thresh*/
-						0x0140,
+						0x00AA,
 						/*addback0*/
-						0x005A,
+						0x000A,
 						/*addback1*/
-						0x005A,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF6,
 
 					},
 					/*[0x2]*/
 					{
 						/*flat_inc_str*/
-						0x32,
+						0x0F,
 						/*flat_match_cnt*/
 						0x10,
 						/*flat_thresh*/
-						0x01CC,
+						0x00BE,
 						/*addback0*/
-						0x005A,
+						0x000A,
 						/*addback1*/
-						0x005A,
+						0x000A,
 						/*addback_clip_max*/
-						0x000F,
+						0x000A,
 						/*addback_clip_min*/
-						0xFFF1,
+						0xFFF6,
 
 					}
 				},
@@ -10701,9 +10701,9 @@
 					/*texture_dec_str*/
 					0x32,
 					/*addback30*/
-					0x5A,
+					0x0A,
 					/*addback31*/
-					0x5A,
+					0x0A,
 					/*reserved*/
 					0x00,
 					/*addback_clip_max*/
