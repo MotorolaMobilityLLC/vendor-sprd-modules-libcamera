@@ -942,7 +942,7 @@ int SprdCamera3HWI::configureStreams(
                 /* for sprd_eis_enable,eis video_size=normal video_size+2*/
                 SprdCamera3RegularChannel::kMaxBuffers = 24;
             } else
-                SprdCamera3RegularChannel::kMaxBuffers = 4;
+                SprdCamera3RegularChannel::kMaxBuffers = 8;
             HAL_LOGD("slowmotion=%d, high video mode = %d, kMaxBuffers=%d", sprddefInfo->slowmotion,
                      streamList->operation_mode, SprdCamera3RegularChannel::kMaxBuffers);
 
