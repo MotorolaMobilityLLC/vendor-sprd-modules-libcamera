@@ -1,4 +1,5 @@
 SPRD_LIB := libcamoem
+SPRD_LIB += libmempool
 SPRD_LIB += libispalg
 SPRD_LIB += libcam_otp_parser
 SPRD_LIB += libspcaftrigger

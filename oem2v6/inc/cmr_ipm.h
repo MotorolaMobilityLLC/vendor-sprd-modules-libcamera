@@ -72,6 +72,8 @@ struct ipm_md_ops {
     cmr_int (*img_scale)(cmr_handle oem_handle, cmr_handle caller_handle,
                          struct img_frm *src, struct img_frm *dst,
                          struct cmr_op_mean *mean);
+    void* (*heap_mem_malloc)(size_t size, char* type);
+    void (*heap_mem_free)(void* addr);
 };
 
 struct ipm_init_in {

@@ -387,6 +387,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     cmr_u32 small_buf_num;
     cmr_uint sensor_id;
     struct threednr_tuning_param *cap_3dnr_param;
+    struct __mfnr_memory_ops bufferpool_ops;
     struct common_isp_cmd_param isp_cmd_parm;
     char flag[PROPERTY_VALUE_MAX];
     mfnr_cmd_proc_t process_param;
@@ -413,6 +414,9 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_handle->common.receive_frame_count = 0;
     threednr_handle->common.save_frame_count = 0;
     threednr_handle->common.ops = &threednr_ops_tab_info;
+
+    bufferpool_ops.malloc = threednr_handle->common.ipm_cxt->init_in.ops.heap_mem_malloc;
+    bufferpool_ops.free = threednr_handle->common.ipm_cxt->init_in.ops.heap_mem_free;
 
     threednr_handle->mem_size = size;
 
@@ -576,6 +580,7 @@ static cmr_int threednr_open(cmr_handle ipm_handle, struct ipm_open_in *in,
           }
     }
     param.productInfo = PLATFORM_ID;
+    param.pMemoryOps = &bufferpool_ops;
     ret = sprd_mfnr_adpt_init((void **)&(threednr_handle->proc_handle),  &param, (void *)cap_3dnr_param);
     if (ret != 0 || !threednr_handle->proc_handle) {
         CMR_LOGE("Fail to call threednr_init, ret = %d",ret);
@@ -1376,6 +1381,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     struct preview_smallbuf_node smallbuff_node;
     cmr_uint sensor_id;
     struct threednr_tuning_param *prev_3dnr_param;
+    struct __mfnr_memory_ops bufferpool_ops;
     char flag[PROPERTY_VALUE_MAX];
 
     CMR_LOGV("E");
@@ -1408,6 +1414,9 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
     threednr_prev_handle->common.ipm_cxt = (struct ipm_context_t *)ipm_handle;
     threednr_prev_handle->common.class_type = IPM_TYPE_3DNR_PRE;
     threednr_prev_handle->common.ops = &threednr_prev_ops_tab_info;
+
+    bufferpool_ops.malloc = threednr_prev_handle->common.ipm_cxt->init_in.ops.heap_mem_malloc;
+    bufferpool_ops.free = threednr_prev_handle->common.ipm_cxt->init_in.ops.heap_mem_free;
 
     oem_handle = threednr_prev_handle->common.ipm_cxt->init_in.oem_handle;
     cam_cxt = (struct camera_context *)oem_handle;
@@ -1521,6 +1530,7 @@ cmr_int threednr_open_prev(cmr_handle ipm_handle, struct ipm_open_in *in,
              param.SearchWindow_y, param.threthold[3][2]);
 
     param.productInfo = PLATFORM_ID;
+    param.pMemoryOps = &bufferpool_ops;
     ret = sprd_mfnr_adpt_init((void **)&(threednr_prev_handle->proc_handle), &param, (void *)prev_3dnr_param);
     if (ret != 0) {
         CMR_LOGE("Fail to call preview threednr_init");

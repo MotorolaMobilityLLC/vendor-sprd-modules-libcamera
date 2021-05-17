@@ -30,6 +30,8 @@
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include "SprdCamera3SinglePortrait.h"
 #include <cutils/trace.h>
+#include "cmr_memory.h"
+
 using namespace android;
 
 namespace sprdcamera {
@@ -385,6 +387,14 @@ SprdCamera3SinglePortrait::construct_default_request_settings(
 
     HAL_LOGV("X");
     return rc;
+}
+
+void* SprdCamera3SinglePortrait::heap_malloc(size_t size, char* type) {
+    return camera_heap_malloc(size, type);
+}
+
+void SprdCamera3SinglePortrait::heap_free(void* addr) {
+    camera_heap_free(addr);
 }
 
 /*===========================================================================
@@ -4032,6 +4042,11 @@ int SprdCamera3SinglePortrait::_flush(const struct camera3_device *device) {
  *==========================================================================*/
 int SprdCamera3SinglePortrait::CaptureThread::initPortraitParams() {
     int ret = NO_ERROR;
+
+    //memory pool interface for portrait
+    mportrait_ops.malloc = heap_malloc;
+    mportrait_ops.free = heap_free;
+
     /* portrait capture init params */
     PortraitCap_Init_Params capInitParams;
     memset(&capInitParams, 0, sizeof(PortraitCap_Init_Params));
@@ -4058,6 +4073,7 @@ int SprdCamera3SinglePortrait::CaptureThread::initPortraitParams() {
     capInitParams.Scalingratio = 8;
     capInitParams.SmoothWinSize = 5;   // odd number ->5
     capInitParams.box_filter_size = 0; // odd number ->0
+    capInitParams.memOps = &mportrait_ops;
     int64_t initStart = systemTime();
     sprd_capture_portrait_init_param_t mPortraitCapInitParams;
     memset(&mPortraitCapInitParams,0,sizeof(sprd_capture_portrait_init_param_t));

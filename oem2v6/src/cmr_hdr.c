@@ -882,8 +882,8 @@ static cmr_int hdr_sprd_adapter_init(struct class_hdr *hdr_handle) {
         return -CMR_CAMERA_INVALID_PARAM;
     }
 
-    hdr_param.malloc = NULL;
-    hdr_param.free = NULL;
+    hdr_param.malloc = hdr_handle->common.ipm_cxt->init_in.ops.heap_mem_malloc;
+    hdr_param.free = hdr_handle->common.ipm_cxt->init_in.ops.heap_mem_free;
     max_width = hdr_handle->width;
     max_height = hdr_handle->height;
 

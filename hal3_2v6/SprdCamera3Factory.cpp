@@ -603,6 +603,9 @@ int SprdCamera3Factory::cameraDeviceOpen(int camera_id,
     if (SPRD_OPTICSZOOM_T_ID == camera_id) {
         hw->setMultiCameraMode(MODE_OPTICSZOOM_CALIBRATION);
     }
+    if (SPRD_ULTRA_WIDE_ID == camera_id) {
+        hw->setMultiCameraMode(MODE_ULTRA_WIDE);
+    }
     rc = hw->openCamera(hw_device);
     if (rc != 0) {
         delete hw;

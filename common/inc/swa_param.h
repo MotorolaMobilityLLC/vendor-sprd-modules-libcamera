@@ -28,6 +28,8 @@ struct swa_hdr_param {
 	void *tuning_param_ptr;
 	void *hdr_callback;
 	void *ae_exp_gain_info;
+	void* (*heap_mem_malloc)(size_t size, char* type);
+	void (*heap_mem_free)(void* addr);
 };
 
 /*========= for HDR end  ========*/
@@ -356,6 +358,8 @@ struct swa_init_data {
 	uint32_t frm_total_num;
 	uint32_t ae_again;
 	void *pri_data;
+	void* (*heap_mem_malloc)(size_t size, char* type);
+	void (*heap_mem_free)(void* addr);
 };
 
 struct swa_common_info {

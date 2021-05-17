@@ -112,8 +112,8 @@ int swa_hdr_open(void *ipmpro_hanlde,
 	cxt->frame_num = init_param->fmt;
 	cxt->pic_w = init_param->pic_w;
 	cxt->pic_h = init_param->pic_h;
-	hdr_param.malloc = NULL;
-	hdr_param.free = NULL;
+	hdr_param.malloc = init_param->heap_mem_malloc;
+	hdr_param.free = init_param->heap_mem_free;
 	hdr_param.tuning_param_size = init_param->tuning_param_size;
 	hdr_param.tuning_param = init_param->tuning_param_ptr;
 	SWA_LOGD("frame num %d, pic size %d %d, hdr_param.tuning_param_size %d ,%p\n",
@@ -428,6 +428,7 @@ int swa_mfnr_open(void *ipmpro_hanlde,
 	struct mfnr_context_t *cxt = (struct mfnr_context_t *)ipmpro_hanlde;
 	struct swa_init_data *init_param = (struct swa_init_data *)open_param;
 	struct isp_mfnr_info *mfnr_param = NULL;
+	struct __mfnr_memory_ops bufferpool_ops;
 	mfnr_param_info_t param;
 	mfnr_cmd_proc_t proc_data;
 	mfnr_setparam_cmd_param_t *dst;
@@ -485,6 +486,9 @@ int swa_mfnr_open(void *ipmpro_hanlde,
 	param.luma_ratio_low = mfnr_param->luma_ratio_low;
 	param.zone_size = mfnr_param->zone_size;
 	memcpy(param.reserverd, mfnr_param->reserverd, sizeof(param.reserverd));
+	bufferpool_ops.malloc = init_param->heap_mem_malloc;
+	bufferpool_ops.free = init_param->heap_mem_free;
+	param.pMemoryOps = &bufferpool_ops;
 
 	ret = sprd_mfnr_adpt_init(&cxt->mfnr_handle,  &param, NULL);
 	if (ret) {
@@ -622,6 +626,8 @@ int swa_cnr_open(void *ipmpro_hanlde,
 
 	cxt->pic_w = init_param->frame_size.width;
 	cxt->pic_h = init_param->frame_size.height;
+	param.memory_ops.malloc = init_param->heap_mem_malloc;
+	param.memory_ops.free = init_param->heap_mem_free;
 	cxt->cnr_handle = sprd_yuv_denoise_adpt_init((void *)&param);
 	if (cxt->cnr_handle == NULL) {
 		SWA_LOGE("fail to init yuv_denoise\n");
@@ -747,6 +753,31 @@ int swa_dre_get_handle_size()
 	return sizeof(struct dre_context_t);
 }
 
+int swa_dre_open(void *ipmpro_hanlde,
+			void * open_param, enum swa_log_level log_level)
+{
+	int ret = 0;
+	struct dre_context_t *cxt = NULL, local_cxt;
+	struct swa_init_data *init_param = (struct swa_init_data *)open_param;
+	sprd_dre_pro_memory memOps;
+
+	if (ipmpro_hanlde)
+		cxt = (struct dre_context_t *)ipmpro_hanlde;
+	else
+		cxt = &local_cxt;
+
+	memOps.malloc = init_param->heap_mem_malloc;
+	memOps.free = init_param->heap_mem_free;
+	ret = sprd_dre_pro_adpt_init(&cxt->dre_handle,
+				init_param->frame_size.width, init_param->frame_size.height, &memOps);
+	if (ret) {
+		SWA_LOGE("fail to init dre ret %d\n", ret);
+		return -1;
+	}
+	SWA_LOGD("dre handle %p\n", cxt->dre_handle);
+	return ret;
+}
+
 int swa_dre_process(void * ipmpro_hanlde,
 			struct swa_frames_inout *in,
 			struct swa_frames_inout *out,
@@ -773,14 +804,7 @@ int swa_dre_process(void * ipmpro_hanlde,
 		cxt = &local_cxt;
 	frm_param = (struct swa_frame_param *)param;
 	frm_in = &in->frms[0];
-
-	ret = sprd_dre_pro_adpt_init(&cxt->dre_handle,
-				frm_in->size.width, frm_in->size.height, NULL);
-	if (ret) {
-		SWA_LOGE("fail to init dre ret %d\n", ret);
-		return -1;
-	}
-
+	
 	memset(&image_in, 0, sizeof(struct sprd_camalg_image));
 	image_in.addr[0] = (void *)frm_in->addr_vir[0];
 	image_in.addr[1] = (void *)frm_in->addr_vir[1];
@@ -793,11 +817,31 @@ int swa_dre_process(void * ipmpro_hanlde,
 		SWA_LOGD("fail to do DRE	process ret %d\n", ret);
 	}
 
-	ret = sprd_dre_pro_adpt_ctrl(cxt->dre_handle, SPRD_DRE_FAST_STOP_CMD, NULL, NULL);
-	ret = sprd_dre_pro_adpt_deinit(cxt->dre_handle);
-
 	return ret;
 }
+
+int swa_dre_close(void * ipmpro_hanlde,
+			void * close_param)
+{
+	int ret = 0;
+	struct dre_context_t *cxt = (struct dre_context_t *)ipmpro_hanlde;
+
+	if (ipmpro_hanlde == NULL)
+		return -1;
+	SWA_LOGD("dre handle %p\n", cxt->dre_handle);
+	if (cxt->dre_handle == NULL)
+		return ret;
+
+	ret = sprd_dre_pro_adpt_ctrl(cxt->dre_handle, SPRD_DRE_FAST_STOP_CMD, NULL, NULL);
+	ret = sprd_dre_pro_adpt_deinit(cxt->dre_handle);
+	if (ret) {
+		SWA_LOGE("failed to deinit");
+	}
+	cxt->dre_handle = NULL;
+	SWA_LOGD("Done");
+	return ret;
+}
+
 #endif
 
 

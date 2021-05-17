@@ -857,6 +857,8 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 	frm_param->hdr_param.pic_w = frame->size.width;
 	frm_param->hdr_param.pic_h = frame->size.height;
 	frm_param->hdr_param.fmt = req->frame_cnt;
+	frm_param->hdr_param.heap_mem_malloc = req->init_param.heap_mem_malloc;
+	frm_param->hdr_param.heap_mem_free = req->init_param.heap_mem_free;
 	CMR_LOGD("hdr open w %d, h %d, param %p, ev %f %f %f\n",
 		hdr_param->pic_w, hdr_param->pic_h, frm_param,
 		hdr_param->ev[0],  hdr_param->ev[1], hdr_param->ev[2]);
@@ -975,6 +977,8 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	init_param.frm_total_num = req->frame_total;
 	init_param.ae_again = frm_param->common_param.again;
 	init_param.pri_data = (void *)&frm_param->mfnr_param;
+	init_param.heap_mem_malloc = req->init_param.heap_mem_malloc;
+	init_param.heap_mem_free = req->init_param.heap_mem_free;
 	iret = ipm_base->swa_open(ipm_hdl->swa_handle, (void *)&init_param, 4);
 	if (iret) {
 		CMR_LOGE("fail to open mfnr\n");

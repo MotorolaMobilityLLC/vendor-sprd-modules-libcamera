@@ -1240,6 +1240,8 @@ static cmr_int snp_ips_req_preproc(struct snp_context *cxt)
 
 	init_param.sensor_size = cxt->req_param.req_size;
 	init_param.frame_size = cxt->req_param.req_size;
+	init_param.heap_mem_malloc = heap_malloc;
+	init_param.heap_mem_free = heap_free;
 	CMR_LOGD("frame size (%d %d) frame total %d\n",
 		init_param.frame_size.width, init_param.frame_size.height, new_req->frame_total);
 

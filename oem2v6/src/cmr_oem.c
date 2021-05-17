@@ -35,6 +35,7 @@
 #include "isp_video.h"
 #include "cmr_watermark.h"
 #include "swa_fdr_api.h"
+#include "cmr_memory.h"
 
 #ifdef CONFIG_CAMERA_FDR
  #include "fdr_interface.h"
@@ -471,6 +472,8 @@ static cmr_int camera_open_fdr(struct camera_context *cxt) {
 	init_data.param_ptr = cxt->snp_cxt.fdr_tuning_param.param_ptr;
 	init_data.param_size = cxt->snp_cxt.fdr_tuning_param.param_size;
 	init_data.ae_common_info = cxt->snp_cxt.ae_common_info;
+    init_data.heap_mem_malloc = heap_malloc;
+    init_data.heap_mem_free = heap_free;
 	CMR_LOGD("fdr version %d\n", init_data.fdr_version, swa_cxt->version);
 
 	property_get("debug.cam.fdr.loglevel", value, "4");
@@ -1565,6 +1568,14 @@ cmr_int camera_gpu_malloc(cmr_u32 mem_type, cmr_handle oem_handle,
 
 exit:
     return ret;
+}
+
+void* heap_malloc(size_t size, char* type) {
+    return camera_heap_malloc(size, type);
+}
+
+void heap_free(void* addr) {
+    camera_heap_free(addr);
 }
 
 cmr_int camera_free(cmr_u32 mem_type, cmr_handle oem_handle, cmr_uint *phy_addr,
@@ -6215,7 +6226,10 @@ cmr_int camera_ipm_init(cmr_handle oem_handle) {
     init_param.ops.channel_reproc = camera_channel_reproc;
     init_param.ops.mem_malloc = camera_malloc;
     init_param.ops.mem_free = camera_free;
+    init_param.ops.heap_mem_malloc = heap_malloc;
+    init_param.ops.heap_mem_free = heap_free;
     init_param.ops.img_scale = camera_start_scale;
+
     ret = cmr_ipm_init(&init_param, &ipm_cxt->ipm_handle);
     if (ret) {
         CMR_LOGE("failed to init ipm,ret %ld", ret);
