@@ -1300,7 +1300,8 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 				req->req_in.request_id, i, req->frm_out[i].fd);
 			if (req->frm_out[i].fd == 0)
 				continue;
-			free(req->frm_out[i].reserved);
+			if (req->req_in.request_id != 0x7FFFFFFF)
+				free(req->frm_out[i].reserved);
 			req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_out[i]);
 			memset(&req->frm_out[i], 0, sizeof(struct img_frm));
 		}
