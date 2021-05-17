@@ -202,6 +202,7 @@ BokehCamera::BokehCamera(shared_ptr<Configurator> cfg,
     sn_trim_flag = true;
     trim_W = 0;
     trim_H = 0;
+    mChangeSensor = false;
     HAL_LOGI("X");
 }
 
