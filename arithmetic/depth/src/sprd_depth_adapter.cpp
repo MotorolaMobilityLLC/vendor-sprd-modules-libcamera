@@ -66,7 +66,7 @@ void *sprd_depth_adpt_init(void *param)
     else if (g_run_type == SPRD_CAMALG_RUN_TYPE_VDSP)
         input_param.run_type=2;
 
-    handle=sprd_depth_Init(&input_param , &output_info,mode,outformat,NULL);//init_param->mempool_ptr);
+    handle=sprd_depth_Init(&input_param , &output_info,mode,outformat,init_param->mempool_ptr);
     
     init_param->outputinfo.outputsize=output_info.outputsize;
     init_param->outputinfo.output_width=input_param.output_depthwidth;
