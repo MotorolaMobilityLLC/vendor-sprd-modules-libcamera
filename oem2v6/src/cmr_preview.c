@@ -563,7 +563,7 @@ struct prev_context {
     cmr_s32 auto_tracking_frame_id;
     /* face detect */
     cmr_s32 auto_tracking_last_frame;
-    cmr_u32 ae_stab[AE_CB_MAX_INDEX];
+    cmr_u32 fd_ae_info[FD_AE_MAX_INDEX];
     cmr_u32 hist[CAMERA_ISP_HIST_ITEMS];
     cmr_u32 af_status;
     cmr_uint threednr_cap_smallwidth;
@@ -1781,8 +1781,8 @@ cmr_int cmr_preview_facedetect_set_ae_stab(cmr_handle preview_handle,
         CMR_LOGE("ae_stab is NULL");
         return CMR_CAMERA_FAIL;
     }
-    for (int i = 0; i < AE_CB_MAX_INDEX; i++) {
-        prev_cxt->ae_stab[i] = ae_stab[i];
+    for (int i = 0; i < FD_AE_MAX_INDEX; i++) {
+        prev_cxt->fd_ae_info[i] = ae_stab[i];
     }
 
     return ret;
@@ -15943,9 +15943,9 @@ cmr_int prev_fd_send_data(struct prev_handle *handle, cmr_u32 camera_id,
     }
     CMR_LOGV("sensorOrientation = %d, orientation = %d",
 		private_data.sensorOrientation, private_data.orientation);
-    private_data.bright_value = prev_cxt->ae_stab[AE_CB_BV_INDEX];
-    private_data.ae_stable = prev_cxt->ae_stab[AE_CB_STABLE_INDEX];
-    private_data.backlight_pro = prev_cxt->ae_stab[AE_CB_BLS_INDEX];
+    private_data.bright_value = prev_cxt->fd_ae_info[FD_AE_BV_INDEX];
+    private_data.ae_stable = prev_cxt->fd_ae_info[FD_AE_STABLE_INDEX];
+    private_data.backlight_pro = prev_cxt->fd_ae_info[FD_AE_BLS_INDEX];
     info = (struct frm_info *)frm->reserved;
     private_data.zoom_ratio = info ? info->zoom_ratio : (cmr_u32)(-1);
     memcpy(&private_data.hist, prev_cxt->hist, sizeof(private_data.hist));

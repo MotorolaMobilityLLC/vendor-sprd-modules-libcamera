@@ -6457,8 +6457,8 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
 
         if (controlInfo.ae_state != ANDROID_CONTROL_AE_STATE_LOCKED) {
             // callback ae info
-            for (int i = 0; i < AE_CB_MAX_INDEX; i++) {
-                sprddefInfo->ae_info[i] = ae_info[i];
+            for (int i = 0; i < FD_AE_MAX_INDEX; i++) {
+                sprddefInfo->fd_ae_info[i] = ae_info[i];
             }
         }
     exit:

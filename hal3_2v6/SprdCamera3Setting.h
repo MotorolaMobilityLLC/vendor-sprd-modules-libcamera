@@ -423,7 +423,7 @@ typedef struct {
     uint8_t sprd_ai_scene_type_current;
     uint8_t availabe_sensor_type;
     int32_t device_orietation;
-    int32_t ae_info[AE_CB_MAX_INDEX];
+    int32_t fd_ae_info[FD_AE_MAX_INDEX];
     uint8_t availabe_gender_race_age_enable;
     uint8_t gender_race_age_enable;
     int32_t ultrawide_id;

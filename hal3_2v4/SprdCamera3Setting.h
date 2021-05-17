@@ -393,7 +393,7 @@ typedef struct {
     uint8_t sprd_cam_feature_list[CAMERA_SETTINGS_CONFIG_ARRAYSIZE];
     uint8_t sprd_cam_feature_list_size;
     int32_t device_orietation;
-    int32_t ae_info[AE_CB_MAX_INDEX];
+    int32_t fd_ae_info[FD_AE_MAX_INDEX];
     uint8_t availabe_gender_race_age_enable;
     uint8_t sprd_flash_lcd_mode;
     uint8_t availabe_auto_3dnr;

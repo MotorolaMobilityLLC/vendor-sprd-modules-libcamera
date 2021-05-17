@@ -6457,10 +6457,10 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
         camMetadata.find(ANDROID_CONTROL_AE_STATE).data.u8[0]);
 
 
-    // Update ANDROID_SPRD_AE_INFO
+    // Update ANDROID_SPRD_AE_INFO for fd DMS apk
     camMetadata.update(ANDROID_SPRD_AE_INFO,
-                       s_setting[mCameraId].sprddefInfo.ae_info,
-                       AE_CB_MAX_INDEX - 1);
+                       s_setting[mCameraId].sprddefInfo.fd_ae_info,
+                       FD_AE_MAX_INDEX - 1);
 
      HAL_LOGV("AE_STATE  ae state=%d precap id=%d",
         s_setting[mCameraId].controlInfo.ae_state,

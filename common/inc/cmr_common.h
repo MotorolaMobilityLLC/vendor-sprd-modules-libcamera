@@ -1559,6 +1559,17 @@ enum {
     CAMERA_AE_MODE_MAX
 };
 
+enum fd_ae_info_index {
+    FD_AE_STABLE_INDEX = 0,
+    FD_AE_BLS_INDEX,
+    FD_AE_BLS_ENABLE_INDEX,
+    FD_AE_BV_INDEX,
+    FD_AE_FACE_INDEX,
+    FD_AE_RESERVED_INDEX,
+    FD_AE_MAX_INDEX
+};
+
+
 enum ae_stab_cb_value_index {
     AE_CB_STABLE_INDEX = 0,
     AE_CB_BLS_INDEX,
