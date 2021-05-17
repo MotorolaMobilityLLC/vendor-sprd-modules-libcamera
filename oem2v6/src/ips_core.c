@@ -1838,7 +1838,7 @@ cmr_int cmr_ips_deinit(cmr_handle handle)
 		deinit_ipmpro_base(&ips_ctx->ipmpro_base[i]);
 	}
 
-	memset(ips_ctx, 0, sizeof(struct ips_context));
+	free(ips_ctx);
 	CMR_LOGD("Done\n");
 	return ret;
 }
