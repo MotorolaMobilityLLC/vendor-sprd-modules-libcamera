@@ -238,6 +238,7 @@ static cmr_int s5kgm1sp_drv_identify(cmr_handle handle, cmr_int param) {
 
     if (s5kgm1sp_PID_VALUE == pid_value) {
         SENSOR_LOGI("this is s5kgm1sp sensor !");
+        sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_s5kgm1sp_syp_1");
         ret_value = SENSOR_SUCCESS;
         s5kgm1sp_drv_init_fps_info(handle);
     } else {

@@ -481,6 +481,7 @@ static cmr_int s5k4h7_drv_identify(cmr_handle handle, cmr_uint param) {
                     ver_value);
         if (S5K4H7_VER_VALUE == ver_value) {
             SENSOR_LOGI("this is s5k4h7 sensor");
+            sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_s5k4h7_syp");
             ret_value = SENSOR_SUCCESS;
         } else {
             SENSOR_LOGE("sensor identify fail, pid_value = %x, ver_value = %x",

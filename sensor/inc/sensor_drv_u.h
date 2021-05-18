@@ -172,6 +172,19 @@ enum sensor_evt {
 };
 
 typedef enum {
+    SENSOR_HWINFOR_BACK_CAM_NAME = 0,
+    SENSOR_HWINFOR_FRONT_CAM_NAME,
+    SENSOR_HWINFOR_BACKAUX_CAM_NAME,
+    SENSOR_HWINFOR_BACKAUX2_CAM_NAME,
+    SENSOR_HWINFOR_FRONTAUX_CAM_NAME,
+    SENSOR_HWINFOR_BACK_CAM_EFUSE,
+    SENSOR_HWINFOR_FRONT_CAM_EFUSE,
+    SENSOR_HWINFOR_BACKAUX_CAM_EFUSE,
+    SENSOR_HWINFOR_BACKAUX2_CAM_EFUSE,
+    SENSOR_HWINFOR_FRONTAUX_CAM_EFUSE
+} SENSOR_HWINFOR_E;
+
+typedef enum {
     SENSOR_OP_SUCCESS = SENSOR_SUCCESS,
     SENSOR_OP_PARAM_ERR,
     SENSOR_OP_STATUS_ERR,
@@ -841,6 +854,7 @@ cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
+void sensor_rid_save_sensor_name(SENSOR_HWINFOR_E mag, char *sensor_info);
 
 #ifdef __cplusplus
 }
