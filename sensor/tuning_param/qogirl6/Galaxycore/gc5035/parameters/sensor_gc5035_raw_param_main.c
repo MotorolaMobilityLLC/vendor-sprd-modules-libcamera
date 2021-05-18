@@ -128,8 +128,8 @@ static struct sensor_version_info s_gc5035_version_info=
 	0x00000000,
 	0x00000000,
 	0x00000000,
-	0x00000000,
-	0x00000000
+	0x20210517,
+	0x00000003
 };
 
 
