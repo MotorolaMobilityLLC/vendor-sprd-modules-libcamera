@@ -119,6 +119,7 @@ const sprd_eis_multi_init_info eis_multi_init_info_tab[] = {
     {"ums9230-4", "imx586", 0.7617f, 0.0236f, 0.0240f, 0.25f},
     {"ums9230-4", "ov8856_back", 0.4911f, 0.0246f, 0.0249f, 0.25f},
     {"ums9230-4", "ov08a10_back", 2.3375f, 0.0200f, 0.0208f, 0.25f},
+    {"ums9230-4-go", "imx586", 0.7354f, 0.0237f, 0.0247f, 0.25f},
 };
 
 #ifdef __cplusplus
