@@ -103,3 +103,4 @@ PRODUCT_PACKAGES += libparam_default_id_3
 PRODUCT_PACKAGES += libparam_s5kgm1sp_syp_1
 PRODUCT_PACKAGES += libparam_s5kgm1sp_syp_2
 PRODUCT_PACKAGES += libparam_gc08a3_syp
+PRODUCT_PACKAGES += libparam_s5k4h7_syp
