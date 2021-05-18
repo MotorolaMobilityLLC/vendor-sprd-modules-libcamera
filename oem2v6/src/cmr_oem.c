@@ -1394,7 +1394,7 @@ static cmr_int camera_ipmpro_init(cmr_handle oem_handle) {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	void *sw_handle = NULL;
 	struct camera_context *cxt = (struct camera_context *)oem_handle;
-	struct ipmpro_context *swa_cxt = &cxt->swa_cxt_fdr;;
+	struct ipmpro_context *swa_cxt = &cxt->swa_cxt_fdr;
 	ipmpro_get_handle_size swa_get_size;
 	nsecs_t cur_time, end_time;
 	cmr_u32 time_diff;
@@ -16406,10 +16406,13 @@ cmr_int camera_get_fdr_tuning_param(cmr_handle oem_handle, struct isp_blkpm_t *t
 cmr_int camera_get_fdr_tuning_flag(cmr_handle oem_handle, cmr_int *tuning_flag) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct isp_blkpm_t fdr_tuning_param;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CHECK_HANDLE_VALID(cxt);
 
     cmr_bzero(&fdr_tuning_param, sizeof(struct isp_blkpm_t));
     camera_get_fdr_tuning_param (oem_handle, &fdr_tuning_param);
-    if (fdr_tuning_param.param_ptr != NULL && fdr_tuning_param.param_size > 0) {
+    if (fdr_tuning_param.param_ptr != NULL && fdr_tuning_param.param_size > 0
+        && cxt->swa_cxt_fdr.inited == 1) {
         *tuning_flag = 1;
     } else {
         *tuning_flag = 0;
