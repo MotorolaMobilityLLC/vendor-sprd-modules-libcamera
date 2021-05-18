@@ -4804,7 +4804,9 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 		break;
 	case ISP_WIDETELEULTRAWIDE:
 #if defined (CONFIG_ISP_2_8) || defined (CONFIG_ISP_2_9)
-		ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW_SYNC;
+		ae_input.is_multi_mode = 	cxt->is_dual_video?
+						ISP_ALG_TRIBLE_W_T_UW:
+						ISP_ALG_TRIBLE_W_T_UW_SYNC;
 #else
 		ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
 #endif
@@ -4816,10 +4818,6 @@ static cmr_int ispalg_ae_init(struct isp_alg_fw_context *cxt)
 
 	if (ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW ||
 		ae_input.is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
-		if (cxt->is_dual_video == 1){
-			ae_input.is_multi_mode = ISP_ALG_TRIBLE_W_T_UW;
-		}
-
 		char value[PROPERTY_VALUE_MAX] = { 0x00 };
 		property_get("persist.vendor.cam.debug.ae_sync", value, "1");
 
@@ -5122,7 +5120,9 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		break;
 	case ISP_WIDETELEULTRAWIDE:
 #ifdef CONFIG_ISP_2_8
-		af_input.is_multi_mode = AF_ALG_TRIBLE_MT_SMOOTH;
+		af_input.is_multi_mode = 	cxt->is_dual_video?
+						AF_ALG_TRIBLE_W_T_UW:
+						AF_ALG_TRIBLE_MT_SMOOTH;
 #else
 		af_input.is_multi_mode = AF_ALG_TRIBLE_W_T_UW;
 #endif
@@ -5132,8 +5132,8 @@ static cmr_int ispalg_af_init(struct isp_alg_fw_context *cxt)
 		break;
 	}
 
-	ISP_LOGI("camera_id %u, is_master %u, is_multi_mode %u, sensor_role %u, pdaf_type %d",
-			af_input.camera_id, af_input.is_master, af_input.is_multi_mode,
+	ISP_LOGI("otp_data %p, camera_id %u, is_master %u, is_multi_mode %u, sensor_role %u, pdaf_type %d",
+			cxt->otp_data, af_input.camera_id, af_input.is_master, af_input.is_multi_mode,
 			af_input.sensor_role, af_input.pdaf_type);
 
 	af_input.otp_info_ptr = cxt->otp_data;
@@ -7771,7 +7771,6 @@ cmr_int isp_alg_fw_init(struct isp_alg_fw_init_in * input_ptr, cmr_handle * isp_
 		cxt->save_data = 1;
 	if (0 && input_ptr->init_param->is_simulator)
 		cxt->save_data = 0;
-
 	cxt->dev_access_handle = input_ptr->dev_access_handle;
 	cxt->lib_use_info = sensor_raw_info_ptr->libuse_info;
 	cxt->otp_data = input_ptr->init_param->otp_data;
