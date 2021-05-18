@@ -366,7 +366,7 @@ struct swa_common_info {
 	int32_t iso;
 	int32_t ct;
 	uint32_t angle;
-	uint32_t rotation;
+	uint32_t sensor_orientation;
 	uint32_t flip_on;
 	uint32_t is_front;
 	float zoom_ratio;

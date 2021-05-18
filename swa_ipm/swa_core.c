@@ -1047,7 +1047,7 @@ int swa_filter_process(void * ipmpro_hanlde,
 	outputData.c1 = (void *)frm_out->addr_vir[0];
 	outputData.c2 = (void *)frm_out->addr_vir[1];
 	outputData.c3 = NULL;
-	filter_param.orientation = frm_param->common_param.rotation;
+	filter_param.orientation = frm_param->common_param.sensor_orientation;
 	filter_param.flip_on = frm_param->common_param.flip_on;
 	filter_param.is_front = frm_param->common_param.is_front;
 	filter_param.filter_version = 2;//frm_param->filter_param.version;

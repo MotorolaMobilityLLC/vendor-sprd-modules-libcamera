@@ -1243,9 +1243,9 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 		if (frm_param) {
 			struct swa_common_info *com_info = &frm_param->common_param;
 
-			CMR_LOGD("iso %d, bv %d, gain %d, ext %d,  ang %d, rot %d, flip %d, zoom %f, hdr_ev %f %f %f\n",
+			CMR_LOGD("iso %d, bv %d, gain %d, ext %d,  ang %d, sn_ori %d, flip %d, zoom %f, hdr_ev %f %f %f\n",
 				com_info->iso, com_info->bv, com_info->again, com_info->exp_time,
-				com_info->angle, com_info->rotation, com_info->flip_on, com_info->zoom_ratio,
+				com_info->angle, com_info->sensor_orientation, com_info->flip_on, com_info->zoom_ratio,
 				frm_param->hdr_param.ev[0], frm_param->hdr_param.ev[1],
 				frm_param->hdr_param.ev[2]);
 		}

@@ -1967,6 +1967,12 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 	com_info->angle = cxt->jpeg_cxt.param.rotation;
 	com_info->flip_on = cxt->jpeg_cxt.param.flip;
 	com_info->is_front = (cxt->camera_id == 1);
+	/* get sensor orientation */
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+		CAMERA_PARAM_GET_SENSOR_ORIENTATION, &setting_param);
+	if (!ret) {
+		com_info->sensor_orientation = (uint32_t)setting_param.cmd_type_value;
+	}
 
 	/* get ultra-wide warp info */
 	if (cxt->is_ultra_wide) {
