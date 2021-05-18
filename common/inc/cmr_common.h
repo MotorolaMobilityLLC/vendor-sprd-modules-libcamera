@@ -1352,6 +1352,7 @@ struct face_finder_data {
     struct fdrect_to_isp fd_ptr;
     int data[FA_SHAPE_POINTNUM * 2];
     int fascore;
+    cmr_u8 flag_square;
 };
 
 struct img_face_area {
@@ -1962,6 +1963,7 @@ struct camera_face_info {
     struct fdrect_to_isp fd_cb_ptr;
     int data[FA_SHAPE_POINTNUM * 2];
     cmr_u32 fascore;
+    cmr_u8 flag_square;
 };
 
 struct super_cap {
