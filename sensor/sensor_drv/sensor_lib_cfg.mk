@@ -51,6 +51,10 @@ PRODUCT_PACKAGES += libsensor_imx351 \
     libsensor_imx616 \
     libsensor_ov02a10 \
     libsensor_s5kgw1sp03 \
+    libsensor_s5kgm1sp_syp_1 \
+    libsensor_s5kgm1sp_syp_2 \
+    libsensor_gc08a3_syp \
+    libsensor_s5k4h7_syp \
     libsensor_ov64b40 \
     libsensor_ipg
 

@@ -18,6 +18,8 @@ PRODUCT_PACKAGES += libparam_imx258_back_main
 PRODUCT_PACKAGES += libparam_imx586_back_main
 PRODUCT_PACKAGES += libparam_ov13855_back_main
 PRODUCT_PACKAGES += libparam_s5ks3p92_front_main
+PRODUCT_PACKAGES += libparam_s5kgm1sp_syp_1
+PRODUCT_PACKAGES += libparam_s5kgm1sp_syp_2
 PRODUCT_PACKAGES += libparam_ov8856_shine
 PRODUCT_PACKAGES += libparam_ov7251
 PRODUCT_PACKAGES += libparam_ov7251_dual
@@ -96,3 +98,8 @@ PRODUCT_PACKAGES += libparam_default_id_0
 PRODUCT_PACKAGES += libparam_default_id_1
 PRODUCT_PACKAGES += libparam_default_id_2
 PRODUCT_PACKAGES += libparam_default_id_3
+
+#cyprus
+PRODUCT_PACKAGES += libparam_s5kgm1sp_syp_1
+PRODUCT_PACKAGES += libparam_s5kgm1sp_syp_2
+PRODUCT_PACKAGES += libparam_gc08a3_syp
