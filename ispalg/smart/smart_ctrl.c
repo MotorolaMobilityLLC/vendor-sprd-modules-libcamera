@@ -1571,23 +1571,21 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 			}
 		}
 	}
+
 	// fill debug info
-	dbginfo->version = 2;
-	memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
-	memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-	memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	dbginfo->version = 3;
+	for(i = 0; i < 256; i++){
+		dbginfo->u8Hist[i] = (cmr_u32)hist[i];
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
+	for(i = 256; i < SENSOR_GAMMA_POINT_NUM; i++){
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
 	dbginfo->bv = i4BV;
 	dbginfo->evd= ATMOutput.evd;
 	memcpy(dbginfo->bin, ATMOutput.bin, sizeof(dbginfo->bin));
 	memcpy(dbginfo->pt, ATMOutput.pt, sizeof(dbginfo->pt));
-	//memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
-	//memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
-	/*
-	dbginfo->uLowPT         = ATMOutput.uLowPT;
-	dbginfo->uHighPT        = ATMOutput.uHighPT;
-	dbginfo->uFinalLowBin   = ATMOutput.uFinalLowBin;
-	dbginfo->uFinalHighBin  = ATMOutput.uFinalHighBin;
-	*/
+
 	return ISP_SUCCESS;
 }
 
@@ -1751,10 +1749,17 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 		}
 	}
 	// fill debug info
-	dbginfo->version = 1;
-	memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
-	memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-	memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	dbginfo->version = 2;
+	for(i = 0; i < 256; i++){
+		dbginfo->u8Hist[i] = (cmr_u32)hist[i];
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
+	for(i = 256; i < SENSOR_GAMMA_POINT_NUM; i++){
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
+	//memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
+	//memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
+	//memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	//memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	//memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	//memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
