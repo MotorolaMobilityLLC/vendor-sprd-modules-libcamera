@@ -447,7 +447,7 @@ static cmr_int gc08a3_drv_identify(cmr_handle handle, cmr_uint param)
 		SENSOR_LOGI("Identify: pid_value = %x, ver_value = %x", pid_value, ver_value);
 		if (GC08A3_VER_VALUE == ver_value) {
 			SENSOR_LOGI("this is gc08a3 sensor");
-			
+			sensor_rid_save_sensor_name(SENSOR_HWINFOR_FRONT_CAM_NAME, "1_gc08a3_syp");
 			ret_value = SENSOR_SUCCESS;
             
 		} else {
