@@ -2200,113 +2200,113 @@ static cmr_int ispalg_aeawb_post_process(cmr_handle isp_alg_handle,
 	CMR_MSG_INIT(message);
 
 	time_start = ispalg_get_sys_timestamp();
-	if (1 == cxt->smart_cxt.isp_smart_eb) {
-		ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f",
-			ae_in->ae_output.cur_bv,
-			ae_in->ae_output.cur_exp_line,
-			ae_in->ae_output.cur_again,
-			ae_in->ae_output.cur_lum,
-			ae_in->ae_output.target_lum,
-			ae_in->flash_param.captureFlashEnvRatio,
-			ae_in->flash_param.captureFlash1ofALLRatio);
-		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
-		smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
-		smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
-		smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
-		smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
-		smart_proc_in.cal_para.abl_weight = ae_in->ae_output.abl_weight;
-		smart_proc_in.cal_para.ct = awb_output->ct;
-		smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
-		smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
-		smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
-		smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
-		smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
-		smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
-		smart_proc_in.lock_precdn = cxt->smart_cxt.lock_precdn_en;
-		smart_proc_in.lock_cdn = cxt->smart_cxt.lock_cdn_en;
-		smart_proc_in.lock_postcdn = cxt->smart_cxt.lock_postcdn_en;
-		smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
-		smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
-		ispalg_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 
-		num = cxt->zsl_flag ? 2 : 1;
-		for (i = 0; i < num; i++) {
-			cxt->smart_cxt.mode_id = cxt->mode_id[i];
-			smart_proc_in.mode_flag = cxt->mode_id[i];
-			smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[i];
-			if (cxt->ops.smart_ops.ioctrl) {
-				ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
-								ISP_SMART_IOCTL_SET_WORK_MODE,
-								&smart_proc_in.mode_flag, NULL);
-				ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
-			}
-			if (cxt->ops.smart_ops.calc) {
-				ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
-				ISP_TRACE_IF_FAIL(ret, ("fail to smart_ops calc"));
-			}
-		}
+	ISP_LOGV("bv:%d exp_line:%d again:%d cur_lum:%d target_lum:%d FlashEnvRatio:%f Flash1ofALLRatio:%f",
+		ae_in->ae_output.cur_bv,
+		ae_in->ae_output.cur_exp_line,
+		ae_in->ae_output.cur_again,
+		ae_in->ae_output.cur_lum,
+		ae_in->ae_output.target_lum,
+		ae_in->flash_param.captureFlashEnvRatio,
+		ae_in->flash_param.captureFlash1ofALLRatio);
+	smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur;
+	smart_proc_in.cal_para.bv = ae_in->ae_output.cur_bv;
+	smart_proc_in.cal_para.bv_gain = ae_in->ae_output.cur_again;
+	smart_proc_in.cal_para.flash_ratio = ae_in->flash_param.captureFlashEnvRatio * 256;
+	smart_proc_in.cal_para.flash_ratio1 = ae_in->flash_param.captureFlash1ofALLRatio * 256;
+	smart_proc_in.cal_para.abl_weight = ae_in->ae_output.abl_weight;
+	smart_proc_in.cal_para.ct = awb_output->ct;
+	smart_proc_in.alc_awb = cxt->awb_cxt.alc_awb;
+	smart_proc_in.mode_flag = cxt->commn_cxt.mode_flag;
+	smart_proc_in.scene_flag = cxt->commn_cxt.nr_scene_flag;
+	smart_proc_in.lsc_sprd_version = cxt->lsc_cxt.lsc_sprd_version;
+	smart_proc_in.lock_nlm = cxt->smart_cxt.lock_nlm_en;
+	smart_proc_in.lock_ee = cxt->smart_cxt.lock_ee_en;
+	smart_proc_in.lock_precdn = cxt->smart_cxt.lock_precdn_en;
+	smart_proc_in.lock_cdn = cxt->smart_cxt.lock_cdn_en;
+	smart_proc_in.lock_postcdn = cxt->smart_cxt.lock_postcdn_en;
+	smart_proc_in.lock_ccnr = cxt->smart_cxt.lock_ccnr_en;
+	smart_proc_in.lock_ynr = cxt->smart_cxt.lock_ynr_en;
+	ispalg_prepare_atm_param(isp_alg_handle, &smart_proc_in);
 
+	num = cxt->zsl_flag ? 2 : 1;
+	for (i = 0; i < num; i++) {
+		cxt->smart_cxt.mode_id = cxt->mode_id[i];
+		smart_proc_in.mode_flag = cxt->mode_id[i];
+		smart_proc_in.cal_para.gamma_tab = cxt->smart_cxt.tunning_gamma_cur[i];
 		if (cxt->ops.smart_ops.ioctrl) {
 			ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
 							ISP_SMART_IOCTL_SET_WORK_MODE,
-							(void *)&cxt->mode_id[0], NULL);
+							&smart_proc_in.mode_flag, NULL);
 			ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
 		}
-
-		cxt->smart_cxt.log_smart = smart_proc_in.log;
-		cxt->smart_cxt.log_smart_size = smart_proc_in.size;
-
-		/*LscTab*/
-		struct isp_pm_param_data param_data_alsc;
-		struct isp_pm_ioctl_input param_data_alsc_input = { NULL, 0 };
-		struct isp_pm_ioctl_output param_data_alsc_output = { NULL, 0 };
-
-		memset(&param_data_alsc, 0, sizeof(param_data_alsc));
-		BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB,
-				DCAM_BLK_2D_LSC,
-				cxt->mode_id[0],
-				NULL, 0);
-		param_data_alsc_input.param_num = 1;
-		param_data_alsc_input.param_data_ptr = &param_data_alsc;
-		ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING,
-				   (void *)&param_data_alsc_input,
-				   (void *)&param_data_alsc_output);
-		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
-		if (ret == ISP_SUCCESS && param_data_alsc_output.param_data != NULL) {
-			cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
-			cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
-		}
-		/*send message to alsc process */
-		struct isp_alsc_calc_info alsc_info;
-
-		//TBD need remove memcpy & param ae_out_stats
-		memcpy(cxt->lsc_cxt.ae_out_stats.r_info,
-		       cxt->ae_cxt.aem_stats.r_info,
-		       1024 * sizeof(cmr_u32));
-		memcpy(cxt->lsc_cxt.ae_out_stats.g_info,
-		       cxt->ae_cxt.aem_stats.g_info,
-		       1024 * sizeof(cmr_u32));
-		memcpy(cxt->lsc_cxt.ae_out_stats.b_info,
-		       cxt->ae_cxt.aem_stats.b_info,
-		       1024 * sizeof(cmr_u32));
-
-		alsc_info.awb_b_gain = awb_output->gain.b;
-		alsc_info.awb_r_gain = awb_output->gain.r;
-		alsc_info.awb_ct = awb_output->ct;
-		alsc_info.stat_img_size.w = ae_in->monitor_info.win_num.w;
-		alsc_info.stat_img_size.h = ae_in->monitor_info.win_num.h;
-		alsc_info.stable = ae_in->ae_output.is_stab;
-		if (!cxt->lsc_cxt.sw_bypass) {
-			ret = ispalg_alsc_calc(isp_alg_handle,
-					       cxt->lsc_cxt.ae_out_stats.r_info,
-					       cxt->lsc_cxt.ae_out_stats.g_info,
-					       cxt->lsc_cxt.ae_out_stats.b_info,
-					       &alsc_info.stat_img_size, &alsc_info.win_size,
-					       alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain,
-				       alsc_info.stable, ae_in);
-			ISP_TRACE_IF_FAIL(ret, ("fail to do alsc_calc"));
+		if (cxt->ops.smart_ops.calc) {
+			ret = cxt->ops.smart_ops.calc(cxt->smart_cxt.handle, &smart_proc_in);
+			ISP_TRACE_IF_FAIL(ret, ("fail to smart_ops calc"));
 		}
 	}
+
+	if (cxt->ops.smart_ops.ioctrl) {
+		ret = cxt->ops.smart_ops.ioctrl(cxt->smart_cxt.handle,
+						ISP_SMART_IOCTL_SET_WORK_MODE,
+						(void *)&cxt->mode_id[0], NULL);
+		ISP_TRACE_IF_FAIL(ret, ("fail to ISP_SMART_IOCTL_SET_WORK_MODE"));
+	}
+
+	cxt->smart_cxt.log_smart = smart_proc_in.log;
+	cxt->smart_cxt.log_smart_size = smart_proc_in.size;
+
+	/*LscTab*/
+	struct isp_pm_param_data param_data_alsc;
+	struct isp_pm_ioctl_input param_data_alsc_input = { NULL, 0 };
+	struct isp_pm_ioctl_output param_data_alsc_output = { NULL, 0 };
+
+	memset(&param_data_alsc, 0, sizeof(param_data_alsc));
+	BLOCK_PARAM_CFG(param_data_alsc, ISP_PM_BLK_LSC_GET_LSCTAB,
+			DCAM_BLK_2D_LSC,
+			cxt->mode_id[0],
+			NULL, 0);
+	param_data_alsc_input.param_num = 1;
+	param_data_alsc_input.param_data_ptr = &param_data_alsc;
+	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_GET_SINGLE_SETTING,
+			   (void *)&param_data_alsc_input,
+			   (void *)&param_data_alsc_output);
+	ISP_TRACE_IF_FAIL(ret, ("fail to ISP_PM_CMD_GET_SINGLE_SETTING"));
+	if (ret == ISP_SUCCESS && param_data_alsc_output.param_data != NULL) {
+		cxt->lsc_cxt.lsc_tab_address = param_data_alsc_output.param_data->data_ptr;
+		cxt->lsc_cxt.lsc_tab_size = param_data_alsc_output.param_data->data_size;
+	}
+	/*send message to alsc process */
+	struct isp_alsc_calc_info alsc_info;
+
+	//TBD need remove memcpy & param ae_out_stats
+	memcpy(cxt->lsc_cxt.ae_out_stats.r_info,
+	       cxt->ae_cxt.aem_stats.r_info,
+	       1024 * sizeof(cmr_u32));
+	memcpy(cxt->lsc_cxt.ae_out_stats.g_info,
+	       cxt->ae_cxt.aem_stats.g_info,
+	       1024 * sizeof(cmr_u32));
+	memcpy(cxt->lsc_cxt.ae_out_stats.b_info,
+	       cxt->ae_cxt.aem_stats.b_info,
+	       1024 * sizeof(cmr_u32));
+
+	alsc_info.awb_b_gain = awb_output->gain.b;
+	alsc_info.awb_r_gain = awb_output->gain.r;
+	alsc_info.awb_ct = awb_output->ct;
+	alsc_info.stat_img_size.w = ae_in->monitor_info.win_num.w;
+	alsc_info.stat_img_size.h = ae_in->monitor_info.win_num.h;
+	alsc_info.stable = ae_in->ae_output.is_stab;
+	if (!cxt->lsc_cxt.sw_bypass) {
+		ret = ispalg_alsc_calc(isp_alg_handle,
+				       cxt->lsc_cxt.ae_out_stats.r_info,
+				       cxt->lsc_cxt.ae_out_stats.g_info,
+				       cxt->lsc_cxt.ae_out_stats.b_info,
+				       &alsc_info.stat_img_size, &alsc_info.win_size,
+				       alsc_info.awb_ct, alsc_info.awb_r_gain, alsc_info.awb_b_gain,
+			       alsc_info.stable, ae_in);
+		ISP_TRACE_IF_FAIL(ret, ("fail to do alsc_calc"));
+	}
+
 	time_end = ispalg_get_sys_timestamp();
 	ISP_LOGV("SYSTEM_TEST-smart:%u ms", (cmr_u32)(time_end - time_start));
 
