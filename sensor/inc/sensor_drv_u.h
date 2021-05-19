@@ -751,6 +751,7 @@ struct sensor_drv_context {
     cmr_handle hw_drv_handle;
     cmr_handle otp_drv_handle;
     cmr_handle af_drv_handle;
+    cmr_handle ois_drv_handle;
     cmr_handle sns_ic_drv_handle;
     cmr_u8 mono_sensor;
     cmr_u32 is_HD_mode;

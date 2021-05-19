@@ -60,6 +60,7 @@ static struct camera_device_manager camera_dev_manger = {0};
 static struct sensor_drv_lib sensor_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct otp_drv_lib otp_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct vcm_drv_lib vcm_lib_mngr[SENSOR_ID_MAX] = {0};
+static struct ois_drv_lib ois_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct tuning_param_lib tuning_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct tuning_param_lib tuning_lib_mngr_for_bokeh[SENSOR_ID_MAX] = {0};
 
@@ -80,6 +81,8 @@ static cmr_int sensor_drv_otp_load_library(const char *name,
                                            struct otp_drv_lib *libPtr);
 static cmr_int sensor_drv_vcm_load_library(const char *name,
                                            struct vcm_drv_lib *libPtr);
+static cmr_int sensor_drv_ois_load_library(const char *name,
+                                           struct ois_drv_lib *libPtr);
 static cmr_int sensor_drv_unload_library(struct sensor_drv_lib *libPtr);
 static cmr_int sensor_drv_otp_unload_library(struct otp_drv_lib *libPtr);
 
@@ -157,9 +160,13 @@ static cmr_int sensor_ic_write_gain(cmr_handle handle, cmr_u32 param);
 
 static cmr_int sensor_ic_read_aec_info(cmr_handle handle, void *param);
 
+static cmr_int sensor_ois_init(cmr_handle sns_module_handle);
+
 static cmr_int sensor_af_init(cmr_handle sns_module_handle);
 
 static cmr_int sensor_af_deinit(cmr_handle sns_module_handle);
+
+static cmr_int sensor_ois_deinit(cmr_handle sns_module_handle);
 
 static cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, cmr_u32 pos);
 
@@ -1454,6 +1461,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt,
 
     sensor_otp_module_deinit(sensor_cxt);
     sensor_af_deinit(sensor_cxt);
+    sensor_ois_deinit(sensor_cxt);
     sensor_context_deinit(sensor_cxt, 1);
     SENSOR_LOGI("X");
 
@@ -2136,6 +2144,31 @@ static cmr_int sensor_af_deinit(cmr_handle sns_module_handle) {
     return ret;
 }
 
+static cmr_int sensor_ois_deinit(cmr_handle sns_module_handle) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct sns_ois_drv_ops *ois_ops = NULL;
+    SENSOR_DRV_CHECK_ZERO(sns_module_handle);
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_module_handle;
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+
+    if (module && module->ois_drv_info.ois_drv_entry &&
+        sensor_cxt->ois_drv_handle) {
+        ois_ops = &module->ois_drv_info.ois_drv_entry->ois_ops;
+        if (ois_ops->delete) {
+            ret = ois_ops->delete (sensor_cxt->ois_drv_handle, NULL);
+            sensor_cxt->ois_drv_handle = NULL;
+            if (SENSOR_SUCCESS != ret)
+                return SENSOR_FAIL;
+        }
+    } else {
+        SENSOR_LOGI("not register ois driver, return directly");
+        return SENSOR_FAIL;
+    }
+    SENSOR_LOGD("X");
+    return ret;
+}
+
 static cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, cmr_u32 pos) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sns_af_drv_ops *af_ops = NULL;
@@ -2208,6 +2241,43 @@ static cmr_int sensor_af_get_pos_info(cmr_handle sns_module_handle,
         SENSOR_LOGE("af driver not exist, return directly");
         return SENSOR_FAIL;
     }
+    return ret;
+}
+
+static cmr_int sensor_ois_init(cmr_handle sns_module_handle) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct ois_drv_init_para input_ptr;
+    struct sns_ois_drv_ops *ois_ops = NULL;
+    SENSOR_DRV_CHECK_ZERO(sns_module_handle);
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_module_handle;
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+    SENSOR_DRV_CHECK_ZERO(module);
+
+    sensor_cxt->sensor_info_ptr->ois_eb =
+        (module->ois_drv_info.ois_drv_entry != NULL);
+    SENSOR_LOGI("sensor %s is focus enable %d",
+                sensor_cxt->sensor_info_ptr->name,
+                sensor_cxt->sensor_info_ptr->ois_eb);
+
+    if (module->ois_drv_info.ois_drv_entry && !sensor_cxt->ois_drv_handle) {
+        ois_ops = &module->ois_drv_info.ois_drv_entry->ois_ops;
+        if (ois_ops->create) {
+            input_ptr.ois_work_mode = module->ois_drv_info.ois_work_mode;
+            input_ptr.hw_handle = sensor_cxt->hw_drv_handle;
+            ret = ois_ops->create(&input_ptr, &sensor_cxt->ois_drv_handle);
+            ret = ois_ops->ois_enforce(&sensor_cxt->ois_drv_handle);
+            if (SENSOR_SUCCESS != ret)
+                return SENSOR_FAIL;
+        }
+    } else {
+        SENSOR_LOGI("ois_drv_entry not configured:module:%p,entry:%p,ois_ops:%p",
+                    module, module ? module->ois_drv_info.ois_drv_entry : NULL,
+                    sensor_cxt->sensor_info_ptr->ois_eb);
+        return SENSOR_FAIL;
+    }
+
+exit:
     return ret;
 }
 
@@ -3388,6 +3458,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     struct xml_camera_cfg_info *camera_cfg;
     struct otp_drv_lib *libOtpPtr = &otp_lib_mngr[sensor_cxt->slot_id];
     struct vcm_drv_lib *libVcmPtr = &vcm_lib_mngr[sensor_cxt->slot_id];
+    struct ois_drv_lib *libOISPtr = &ois_lib_mngr[sensor_cxt->slot_id];
     struct module_info_t *module_info = PNULL;
     cmr_u8 *awb_src_dat, *af_src_dat;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
@@ -3396,6 +3467,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
 
     camera_cfg = sensor_cxt->xml_info;
     sensor_drv_xml_parse_vcm_info(camera_cfg);
+    sensor_drv_xml_parse_ois_info(camera_cfg);
     ret = sensor_drv_vcm_load_library(camera_cfg->cfgPtr->vcm_info.af_name,
                                       libVcmPtr);
     if (!ret) {
@@ -3403,7 +3475,13 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
         sns_module->af_dev_info.af_work_mode =
             camera_cfg->cfgPtr->vcm_info.work_mode;
     }
-
+    ret = sensor_drv_ois_load_library(camera_cfg->cfgPtr->ois_info.ois_name,
+                                      libOISPtr);
+    if(!ret) {
+        sns_module->ois_drv_info.ois_drv_entry = libOISPtr->ois_info_ptr;
+        sns_module->ois_drv_info.ois_work_mode =
+            camera_cfg->cfgPtr->ois_info.work_mode;
+    }
     sensor_drv_xml_parse_otp_info(camera_cfg);
     ret = sensor_drv_otp_load_library(
         camera_cfg->cfgPtr->otp_info.e2p_otp.otp_name, libOtpPtr);
@@ -3458,7 +3536,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     }
     sensor_otp_module_deinit(sensor_cxt);
     sensor_af_deinit(sensor_cxt);
-
+    sensor_ois_deinit(sensor_cxt);
     return 0;
 }
 
@@ -3746,6 +3824,48 @@ exit:
     return ret;
 }
 
+static cmr_int sensor_drv_ois_load_library(const char *name,
+                                           struct ois_drv_lib *libPtr) {
+    cmr_int ret = SENSOR_FAIL;
+    char libso_name[SENSOR_LIB_NAME_LEN] = {0};
+    void *(*ois_driver_open_lib)(void) = NULL;
+    int32_t bytes = 0;
+
+    if (!strlen(name)) {
+        SENSOR_LOGI("don't config ois in xml file");
+        goto exit;
+    }
+
+    bytes = snprintf(libso_name, SENSOR_LIB_NAME_LEN, "libois_%s.so", name);
+    SENSOR_LOGD("ois:libso_name %s", libso_name);
+    libPtr->ois_lib_handle = dlopen(libso_name, RTLD_NOW);
+    if (!libPtr->ois_lib_handle) {
+        SENSOR_LOGE("ois lib handle failed");
+        goto exit;
+    }
+
+    *(void **)&ois_driver_open_lib =
+        dlsym(libPtr->ois_lib_handle, "ois_driver_open_lib");
+    if (!ois_driver_open_lib) {
+        SENSOR_LOGE("ois driver open lib function failed");
+        dlclose(libPtr->ois_lib_handle);
+        libPtr->ois_lib_handle = NULL;
+        goto exit;
+    }
+    libPtr->ois_info_ptr = (struct sns_af_drv_entry *)ois_driver_open_lib();
+    if (!libPtr->ois_info_ptr) {
+        SENSOR_LOGE("load ois_info_ptr failed");
+        dlclose(libPtr->ois_lib_handle);
+        libPtr->ois_lib_handle = NULL;
+        goto exit;
+    }
+
+    ret = 0;
+exit:
+
+    return ret;
+}
+
 static cmr_int sensor_drv_vcm_unload_library(struct vcm_drv_lib *libPtr) {
     if (libPtr && libPtr->vcm_lib_handle)
         dlclose(libPtr->vcm_lib_handle);
@@ -3927,7 +4047,9 @@ static cmr_int sensor_drv_open(struct sensor_drv_context *sensor_cxt,
         sensor_cxt->sensor_isInit = SENSOR_FALSE;
         goto exit;
     }
+
     sensor_af_init(sensor_cxt);
+    sensor_ois_init(sensor_cxt);
     ret = sensor_set_mode_msg(sensor_cxt, SENSOR_MODE_COMMON_INIT, is_inited);
     if (ret) {
         SENSOR_LOGE("sensor init register mode failed");

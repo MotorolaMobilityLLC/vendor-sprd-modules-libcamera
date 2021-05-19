@@ -610,6 +610,7 @@ typedef struct sensor_info_tag {
 
     /*sensor foucus enable info*/
     cmr_u8 focus_eb;
+    cmr_u8 ois_eb;
 } SENSOR_INFO_T;
 
 struct sensor_ic_ad_gain {
