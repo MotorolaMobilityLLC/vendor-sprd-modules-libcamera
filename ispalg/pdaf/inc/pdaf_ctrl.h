@@ -17,9 +17,20 @@
 #define _PDAF_CTRL_H_
 
 #include <sys/types.h>
-#include "isp_com.h"
-#include "af_ctrl.h"
 #include "pdaf_sprd_adpt.h"
+#include "isp_adpt.h"
+#include "sensor_raw.h"  //because third_lib_info
+
+
+#define MAX_MULTIZONE_NUM 45
+#define AREA_LOOP 4		//PASSIVE and ACTIVE mode default
+
+enum pdaf_ctrl_PDAF_TYPE {
+	PDAF_PASSIVE = 0,	//caf type
+	PDAF_ACTIVE, 	//touch type
+	PDAF_MULTIZONE,
+};
+
 
 enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_RAW = 0,
@@ -28,6 +39,18 @@ enum pdaf_ctrl_data_type {
 	PDAF_DATA_TYPE_OUT,
 	PDAF_DATA_TYPE_MAX
 };
+
+enum pdaf_mode {
+	PDAF_MODE_NORMAL = 0x00,
+	PDAF_MODE_MACRO,
+	PDAF_MODE_CONTINUE,
+	PDAF_MODE_VIDEO,
+	PDAF_MODE_MANUAL,
+	PDAF_MODE_PICTURE,
+	PDAF_MODE_FULLSCAN,
+	PDAF_MODE_MAX
+};
+
 enum pdaf_ctrl_cmd_type {
 	PDAF_CTRL_CMD_SET_OPEN,
 	PDAF_CTRL_CMD_SET_CLOSE,
@@ -48,6 +71,19 @@ enum pdaf_ctrl_cmd_type {
 	PDAF_CTRL_CMD_DISABLE_PDAF,
 	PDAF_CTRL_CMD_DIRECT_END,
 };
+
+enum pdaf_cb_cmd {
+	PDAF_CB_CMD_AF_SET_PD_INFO,
+	PDAF_CB_CMD_SET_CFG_PARAM,
+	PDAF_CB_CMD_BLOCK_CFG,
+	PDAF_CB_CMD_SET_BYPASS,
+	PDAF_CB_CMD_SET_WORK_MODE,
+	PDAF_CB_CMD_SET_SKIP_NUM,
+	PDAF_CB_CMD_SET_PPI_INFO,
+	PDAF_CB_CMD_SET_ROI,
+	PDAF_CB_CMD_SET_EXTRACTOR_BYPASS
+};
+
 
 enum pdaf_ctrl_lib_product_id {
 	ALTEC_PDAF_LIB,
@@ -87,15 +123,48 @@ struct pdaf_ctrl_cb_ops_type {
 	cmr_int(*call_back) (cmr_handle caller_handle, struct pdaf_ctrl_callback_in * in);
 };
 
+struct pdaf_ctrl_win_rect {
+	cmr_u32 sx;
+	cmr_u32 sy;
+	cmr_u32 ex;
+	cmr_u32 ey;
+};
+
+struct pdaf_ctrl_PD_Multi_zone_param {
+	cmr_u16 Center_X;
+	cmr_u16 Center_Y;
+	cmr_u16 sWidth;
+	cmr_u16 sHeight;
+};
+
+struct pdaf_ctrl_SetPD_ROI_param {
+	cmr_u16 ROI_Size;
+	struct pdaf_ctrl_PD_Multi_zone_param ROI_info[MAX_MULTIZONE_NUM];
+};
+
+struct pdaf_ctrl_ot_info {
+	cmr_u32 centorX;	//Center X Coordinate
+	cmr_u32 centorY;	//Center Y Coordinate
+	cmr_u32 sizeX;	//Object Size Width
+	cmr_u32 sizeY;	//Object Size Height
+	cmr_u32 axis1;	//Object Axis Width
+	cmr_u32 axis2;	//Object Axis Height
+	cmr_u32 otdiff;
+	cmr_u32 otstatus;
+	cmr_u32 otframeid;
+	cmr_u32 imageW; //pdaf plane width
+	cmr_u32 imageH; //pdaf plane height
+	cmr_u32 reserved[20];
+};
+
 struct pdaf_ctrl_param_in {
 	union {
 		struct isp3a_pd_config_t *pd_config;
-		 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
-		 struct af_win_rect touch_area;
-		 cmr_u32 af_mode;
-		 struct SetPD_ROI_param af_roi;
-		 cmr_u32 ot_switch;
-		 struct afctrl_ot_info ot_info;
+		struct pdaf_ctrl_win_rect touch_area;
+		cmr_u32 af_mode;
+		struct pdaf_ctrl_SetPD_ROI_param af_roi;
+		cmr_u32 ot_switch;
+		struct pdaf_ctrl_ot_info ot_info;
 	};
 	void *af_addr;// afm statis buffer
 	cmr_u32 af_addr_len;// in bytes
@@ -116,7 +185,16 @@ struct isp_lib_config {
 	cmr_s8 product_name_high[ISP_PRODUCT_NAME_LEN];
 };
 
-struct pd_result;
+struct pdaf_ctrl_pd_result{
+	cmr_s32 pdConf[MAX_MULTIZONE_NUM + 1];
+	double pdPhaseDiff[MAX_MULTIZONE_NUM + 1];
+	cmr_s32 pdGetFrameID;
+	cmr_s32 pdDCCGain[MAX_MULTIZONE_NUM + 1];	// be sure MAX_MULTIZONE_NUM bigger than AREA_LOOP
+	cmr_u32 pd_roi_num;
+	cmr_u32 af_type;	// notify to AF that PDAF is in passive mode or active mode
+};
+
+typedef cmr_int(*pdaf_ctrl_cb) (cmr_handle handle, cmr_int type, void *param0, void *param1);
 
 struct pdaf_ctrl_init_in {
 	cmr_u32 camera_id;
@@ -130,15 +208,14 @@ struct pdaf_ctrl_init_in {
 	struct pdaf_ctrl_otp_info_t pdaf_otp;
 	struct sensor_pdaf_info *pd_info;
 	struct pdaf_ctrl_cb_ops_type pdaf_ctrl_cb_ops;
-	isp_pdaf_cb pdaf_set_cb;
+	pdaf_ctrl_cb pdaf_set_cb;
 	struct third_lib_info lib_param;
 	cmr_handle handle_pm;
-	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
-	 //cmr_u32(*pdaf_set_cfg_param) (void *handle, struct isp_dev_pdaf_info * pd_info);
-	 cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
-	 cmr_u32(*pdaf_set_roi) (void *handle, struct pd_roi_info * in_parm);
-	 cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pdaf_ctrl_pd_result * in_parm);
+	cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
+	cmr_u32(*pdaf_set_roi) (void *handle, struct pd_roi_info * in_parm);
+	cmr_u32(*pdaf_set_extractor_bypass) (void *handle, cmr_u32 in_parm);
 	struct sensor_otp_cust_info *otp_info_ptr;
 	cmr_u8 is_master;
 };

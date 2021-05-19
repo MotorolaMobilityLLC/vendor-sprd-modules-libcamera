@@ -17,8 +17,6 @@
 
 #include <stdlib.h>
 #include "pdaf_ctrl.h"
-#include "isp_adpt.h"
-#include "cmr_msg.h"
 
 #define PDAFCTRL_MSG_QUEUE_SIZE			100
 #define PDAFCTRL_EVT_BASE				0x2000
@@ -41,7 +39,7 @@ struct pdafctrl_context {
 	struct pdaf_ctrl_thread_context thread_cxt;
 	struct pdaf_ctrl_cb_ops_type cb_ops;
 	struct adpt_ops_type *pdaf_adpt_ops;
-	isp_pdaf_cb pdaf_set_cb;
+	pdaf_ctrl_cb pdaf_set_cb;
 	struct pdafctrl_work_lib work_lib;
 };
 
@@ -56,36 +54,23 @@ struct pdaf_ctrl_msg_ctrl {
 	struct pdaf_ctrl_param_out *out;
 };
 
-static cmr_u32 pdaf_set_pdinfo_to_af(void *handle, struct pd_result *in_param)
+static cmr_u32 pdaf_set_pdinfo_to_af(void *handle, struct pdaf_ctrl_pd_result *in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
 	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_AF_SET_PD_INFO, in_param, NULL);
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, PDAF_CB_CMD_AF_SET_PD_INFO, in_param, NULL);
 	}
 
 	return ISP_SUCCESS;
 }
-
-static cmr_u32 pdaf_set_cfg_param(void *handle, struct isp_dev_pdaf_info *in_param)
-{
-	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
-
-	ISP_LOGI("pdaf_set_cfg_param");
-	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_CFG_PARAM, in_param, NULL);
-	}
-
-	return ISP_SUCCESS;
-}
-
 
 static cmr_u32 pdaf_set_work_mode(void *handle, cmr_u32 in_param)
 {
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
 	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_WORK_MODE, &in_param, NULL);
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, PDAF_CB_CMD_SET_WORK_MODE, &in_param, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -96,7 +81,7 @@ static cmr_u32 pdaf_set_skip_num(void *handle, cmr_u32 in_param)
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
 	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_SKIP_NUM, &in_param, NULL);
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, PDAF_CB_CMD_SET_SKIP_NUM, &in_param, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -108,7 +93,7 @@ static cmr_u32 pdaf_set_roi(void *handle, struct pd_roi_info *in_param)
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
 	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_ROI, in_param, NULL);
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, PDAF_CB_CMD_SET_ROI, in_param, NULL);
 	}
 
 	return ISP_SUCCESS;
@@ -119,7 +104,7 @@ static cmr_u32 pdaf_set_extractor_bypass(void *handle, cmr_u32 in_param)
 	struct pdafctrl_context *cxt_ptr = (struct pdafctrl_context *)handle;
 
 	if (cxt_ptr->pdaf_set_cb) {
-		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, ISP_PDAF_SET_EXTRACTOR_BYPASS, &in_param, NULL);
+		cxt_ptr->pdaf_set_cb(cxt_ptr->caller_handle, PDAF_CB_CMD_SET_EXTRACTOR_BYPASS, &in_param, NULL);
 	}
 
 	return ISP_SUCCESS;

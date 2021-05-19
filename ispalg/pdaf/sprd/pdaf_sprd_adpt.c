@@ -22,9 +22,6 @@
 
 #include "pdaf_sprd_adpt.h"
 #include "pdaf_ctrl.h"
-#include "isp_adpt.h"
-#include "pd_algo.h"
-#include "cmr_common.h"
 #define ATRACE_TAG (ATRACE_TAG_CAMERA | ATRACE_TAG_HAL)
 #include <cutils/trace.h>
 
@@ -41,23 +38,22 @@ struct sprd_pdaf_context {
 	cmr_u32 token_id;
 	cmr_u8 pd_enable;
 	cmr_handle caller_handle;
-	isp_pdaf_cb pdaf_set_cb;
-	 cmr_int(*pd_set_buffer) (struct pd_frame_in * cb_param);
+	pdaf_ctrl_cb pdaf_set_cb;
 	void *caller;
 	PD_GlobalSetting pd_gobal_setting;
 	struct pdaf_raw_buffer_info pd_buff_info;
 	struct sensor_setting pd_sensor_setting;
 	struct pd_roi_info roi_info;
 	struct sprd_pdaf_report_t report_data;
-	struct af_win_rect touch_area;
-	struct SetPD_ROI_param af_roi;
+	struct pdaf_ctrl_win_rect touch_area;
+	struct pdaf_ctrl_SetPD_ROI_param af_roi;
 	cmr_u32 ot_switch;
-	struct afctrl_ot_info ot_info;
+	struct pdaf_ctrl_ot_info ot_info;
 	cmr_u32 pdaf_type;
 	void *af_addr;		// afm statis
 	void *pdalgo_handle;
 	cmr_u32 af_addr_len;	// afm statis buffer length
-	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pd_result * in_parm);
+	 cmr_u32(*pdaf_set_pdinfo_to_af) (void *handle, struct pdaf_ctrl_pd_result * in_parm);
 	 cmr_u32(*pdaf_set_work_mode) (void *handle, cmr_u32 in_parm);
 	 cmr_u32(*pdaf_set_skip_num) (void *handle, cmr_u32 in_parm);
 	 cmr_u32(*pdaf_set_roi) (void *handle, struct pd_roi_info * in_parm);
@@ -232,7 +228,7 @@ cmr_handle sprd_pdaf_adpt_init(void *in, void *out)
 	cxt->pdaf_set_skip_num = in_p->pdaf_set_skip_num;
 	cxt->pdaf_set_roi = in_p->pdaf_set_roi;
 	cxt->pdaf_set_extractor_bypass = in_p->pdaf_set_extractor_bypass;
-	cxt->af_type = PASSIVE;
+	cxt->af_type = PDAF_PASSIVE;
 	cxt->pdaf_type = in_p->pdaf_support;
 	cxt->pd_buffer_format_convert = in_p->pd_info->pdaf_format_converter;
 	/*TBD dSensorID 0:Imx258 Type3 1:OV13855 2:3L8 3:IMX258 Type2 4:IMX362 Dual PD 5:OV12A10 */
@@ -487,7 +483,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	struct sprd_pdaf_context *cxt = (struct sprd_pdaf_context *)adpt_handle;
 	struct pdaf_ctrl_process_in *proc_in = (struct pdaf_ctrl_process_in *)in;
 	struct pdaf_ctrl_callback_in callback_in;
-	struct pd_result pd_calc_result;
+	struct pdaf_ctrl_pd_result pd_calc_result;
 	cmr_s32 dRectX = 0;
 	cmr_s32 dRectY = 0;
 	cmr_s32 dRectW = 0;
@@ -630,7 +626,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 	}
 	if (cxt->pd_gobal_setting.dSensorMode == SENSOR_ID_4) {
 		switch (cxt->af_type) {
-		case MULTIZONE:
+		case PDAF_MULTIZONE:
 			for (area_index = 0; area_index < cxt->af_roi.ROI_Size; area_index++) {
 				ret =
 				    PD_DoPoint2(cxt->pdalgo_handle, (void *)pInPhaseBuf_Dual_PD,
@@ -651,7 +647,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 				}
 			}
 			break;
-		case ACTIVE:
+		case PDAF_ACTIVE:
 			if (1 == cxt->ot_switch) {
 				ISP_LOGI("center x,y (%d,%d)", cxt->ot_info.centorX, cxt->ot_info.centorY);
 				ret = PD_DoPoint2(cxt->pdalgo_handle, (void *)pInPhaseBuf_Dual_PD, cxt->ot_info.centorX, cxt->ot_info.centorY, 480, 480);
@@ -662,7 +658,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 						((cxt->touch_area.sy + cxt->touch_area.ey) >> 2) << 1, 480, 480);
 			}
 			break;
-		case PASSIVE:
+		case PDAF_PASSIVE:
 		default:
 			ret = PD_DoPoint2(cxt->pdalgo_handle, (void *)pInPhaseBuf_Dual_PD, 2016, 1512, 512, 384);
 			break;
@@ -690,7 +686,7 @@ static cmr_s32 sprd_pdaf_adpt_process(cmr_handle adpt_handle, void *in, void *ou
 			}
 		}
 	}
-	if (MULTIZONE != cxt->af_type) {	// normal way for PASSIVE and ACTIVE mode
+	if (PDAF_MULTIZONE != cxt->af_type) {	// normal way for PDAF_PASSIVE and PDAF_ACTIVE mode
 		ret =
 		    PD_GetResult(cxt->pdalgo_handle, &pd_calc_result.pdConf[4], &pd_calc_result.pdPhaseDiff[4],
 				 &pd_calc_result.pdGetFrameID, &pd_calc_result.pdDCCGain[4], 0);
@@ -779,24 +775,24 @@ static cmr_s32 pdafsprd_adpt_set_mode(cmr_handle adpt_handle, struct pdaf_ctrl_p
 	cxt->af_mode = in->af_mode;
 
 	switch (in->af_mode) {
-	case AF_MODE_NORMAL:
-		cxt->af_type = ACTIVE;
+	case PDAF_MODE_NORMAL:
+		cxt->af_type = PDAF_ACTIVE;
 		break;
-	case AF_MODE_CONTINUE:
-	case AF_MODE_VIDEO:
+	case PDAF_MODE_CONTINUE:
+	case PDAF_MODE_VIDEO:
 		if (1 == cxt->ot_switch) {
-			cxt->af_type = ACTIVE;
+			cxt->af_type = PDAF_ACTIVE;
 		} else {
-			cxt->af_type = PASSIVE;
+			cxt->af_type = PDAF_PASSIVE;
 		}
 		break;
 	default:
-		cxt->af_type = PASSIVE;
+		cxt->af_type = PDAF_PASSIVE;
 		ISP_LOGW("af_mode %d is not supported", in->af_mode);
 		break;
 	}
 
-	ISP_LOGI("pdaf mode %s", cxt->af_type == ACTIVE ? "active" : "passive");
+	ISP_LOGI("pdaf mode %s", cxt->af_type == PDAF_ACTIVE ? "active" : "passive");
 
 	return ret;
 }
@@ -819,7 +815,7 @@ static cmr_s32 pdafsprd_adpt_set_multizone(cmr_handle adpt_handle, struct pdaf_c
 			 cxt->af_roi.ROI_info[i].Center_Y, cxt->af_roi.ROI_info[i].sWidth, cxt->af_roi.ROI_info[i].sHeight);
 	}
 	cxt->af_roi.ROI_Size = in->af_roi.ROI_Size;
-	cxt->af_type = MULTIZONE;
+	cxt->af_type = PDAF_MULTIZONE;
 
 	return ret;
 }
@@ -857,9 +853,9 @@ static cmr_s32 pdafsprd_adpt_set_ot_switch(cmr_handle adpt_handle, struct pdaf_c
 	ISP_LOGI("ot switch %d", in->ot_switch);
 	cxt->ot_switch = in->ot_switch;
 	if (1 == cxt->ot_switch) {
-		cxt->af_type = ACTIVE;
+		cxt->af_type = PDAF_ACTIVE;
 	} else {
-		cxt->af_type = AF_MODE_NORMAL == cxt->af_mode ? ACTIVE : PASSIVE;
+		cxt->af_type = PDAF_MODE_NORMAL == cxt->af_mode ? PDAF_ACTIVE : PDAF_PASSIVE;
 	}
 
 	return ret;
