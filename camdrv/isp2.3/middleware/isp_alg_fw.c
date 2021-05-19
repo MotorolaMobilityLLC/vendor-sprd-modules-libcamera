@@ -961,11 +961,11 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 
 	ISP_LOGV("isp_pdaf_set_cb type = 0x%lx", type);
 	switch (type) {
-	case ISP_AF_SET_PD_INFO:
+	case PDAF_CB_CMD_AF_SET_PD_INFO:
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_PD_INFO, param0, param1);
 		break;
-	case ISP_PDAF_SET_CFG_PARAM:
+	case PDAF_CB_CMD_SET_CFG_PARAM:
 		for (i = 0; i < param_num; i++) {
 			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -977,7 +977,7 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, &pdaf_block_info, NULL);
 		}
 		break;
-	case ISP_PDAF_SET_PPI_INFO:
+	case PDAF_CB_CMD_SET_PPI_INFO:
 		for (i = 0; i < param_num; i++) {
 			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -989,7 +989,7 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, &pdaf_block_info, NULL);
 		}
 		break;
-	case ISP_PDAF_SET_BYPASS:
+	case PDAF_CB_CMD_SET_BYPASS:
 		for (i = 0; i < param_num; i++) {
 			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -1001,7 +1001,7 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, &pdaf_block_info, NULL);
 		}
 		break;
-	case ISP_PDAF_SET_WORK_MODE:
+	case PDAF_CB_CMD_SET_WORK_MODE:
 		for (i = 0; i < param_num; i++) {
 			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -1013,7 +1013,7 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, &pdaf_block_info, NULL);
 		}
 		break;
-	case ISP_PDAF_SET_EXTRACTOR_BYPASS:
+	case PDAF_CB_CMD_SET_EXTRACTOR_BYPASS:
 		for (i = 0; i < param_num; i++) {
 			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -1025,7 +1025,7 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, &pdaf_block_info, NULL);
 		}
 		break;
-	case ISP_PDAF_SET_ROI:
+	case PDAF_CB_CMD_SET_ROI:
 		for (i = 0; i < param_num; i++) {
 			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
@@ -1037,7 +1037,7 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 			ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, &pdaf_block_info, NULL);
 		}
 		break;
-	case ISP_PDAF_SET_SKIP_NUM:
+	case PDAF_CB_CMD_SET_SKIP_NUM:
 		for (i = 0; i < param_num; i++) {
 			memset(&pdaf_block_info, 0x0, sizeof(pdaf_block_info));
 			if (cxt->mode_id[i] >= ISP_MODE_ID_CAP_0 &&
