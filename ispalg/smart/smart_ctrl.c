@@ -1658,7 +1658,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	ISP_LOGV("Hist[%d-%d] = %llu,%llu,%llu,%llu\n",i,i+3,hist[i],hist[i+1],hist[i+2],hist[i+3]);
 	}
 	if (bATMDump == true) {
-		for (i = 0; i < SENSOR_GAMMA_POINT_NUM - 1; i+=4)
+		for (i = 0; i < SENSOR_GAMMA_POINT_NUM - 3; i+=4)
 			ISP_LOGV("Orig Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
 			u2CurX[1][i], u2CurY[1][i],
 			u2CurX[1][i+1], u2CurY[1][i+1],
@@ -1703,7 +1703,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 		if (uOutGamma[1][SENSOR_GAMMA_POINT_NUM - 2]) {
 			memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
 		}
-		unsigned int weight = 0.78 * SENSOR_GAMMA_POINT_NUM + 0.5;
+		unsigned int weight = (unsigned int)0.78 * SENSOR_GAMMA_POINT_NUM + 0.5;
 		isp_atm_smooth(weight, SENSOR_GAMMA_POINT_NUM - 1, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
 		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(short)*SENSOR_GAMMA_POINT_NUM);
 		if (bATMDump == true) {
