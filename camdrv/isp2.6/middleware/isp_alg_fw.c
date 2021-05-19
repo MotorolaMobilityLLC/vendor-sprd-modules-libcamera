@@ -1673,29 +1673,29 @@ static cmr_int ispalg_pdaf_set_cb(cmr_handle isp_alg_handle, cmr_int type, void 
 
 	ISP_LOGV("isp_pdaf_set_cb type = 0x%lx", type);
 	switch (type) {
-	case ISP_AF_SET_PD_INFO:
+	case PDAF_CB_CMD_AF_SET_PD_INFO:
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_PD_INFO, param0, param1);
 		break;
-	case ISP_PDAF_SET_CFG_PARAM:
+	case PDAF_CB_CMD_SET_CFG_PARAM:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_CFG_PARAM, param0, param1);
 		break;
-	case ISP_PDAF_SET_PPI_INFO:
+	case PDAF_CB_CMD_SET_PPI_INFO:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_PPI_INFO, param0, param1);
 		break;
-	case ISP_PDAF_SET_BYPASS:
+	case PDAF_CB_CMD_SET_BYPASS:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_BYPASS, param0, param1);
 		break;
-	case ISP_PDAF_SET_WORK_MODE:
+	case PDAF_CB_CMD_SET_WORK_MODE:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_WORK_MODE, param0, param1);
 		break;
-	case ISP_PDAF_SET_EXTRACTOR_BYPASS:
+	case PDAF_CB_CMD_SET_EXTRACTOR_BYPASS:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_EXTRACTOR_BYPASS, param0, param1);
 		break;
-	case ISP_PDAF_SET_ROI:
+	case PDAF_CB_CMD_SET_ROI:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_ROI, param0, param1);
 		break;
-	case ISP_PDAF_SET_SKIP_NUM:
+	case PDAF_CB_CMD_SET_SKIP_NUM:
 		ret = isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_PDAF_SKIP_NUM, param0, param1);
 		break;
 	default:
