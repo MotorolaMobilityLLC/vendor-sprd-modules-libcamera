@@ -871,7 +871,7 @@ static cmr_int s5kgm1sp_drv_get_fps_info(cmr_handle handle, uint32_t *param) {
 
     return ret;
 }
-#if 1
+#if 0
 static const cmr_u32 sns_4in1_mode[] = {0, 0, 0, 1};
 static cmr_int s5kgm1sp_drv_get_4in1_info(cmr_handle handle, cmr_u32 *param) {
     cmr_int rtn = SENSOR_SUCCESS;
@@ -936,7 +936,7 @@ static cmr_int s5kgm1sp_drv_access_val(cmr_handle handle, cmr_int param) {
     case SENSOR_VAL_TYPE_GET_FPS_INFO:
         rtn = s5kgm1sp_drv_get_fps_info(handle, param_ptr->pval);
         break;
-#if 1
+#if 0
     case SENSOR_VAL_TYPE_GET_4IN1_INFO:
         rtn = s5kgm1sp_drv_get_4in1_info(handle, param_ptr->pval);
         break;
