@@ -241,7 +241,7 @@ struct module_fov_info {
 
 struct sensor_static_info {
     /* f-number,focal ratio,actual f-number*100 */
-    cmr_u32 f_num;
+    float f_num;
 
     /* focal_length */
     cmr_u32 focal_length; // actual focal_length*100
