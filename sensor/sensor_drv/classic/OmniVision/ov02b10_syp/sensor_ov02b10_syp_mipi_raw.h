@@ -87,7 +87,7 @@
 /* please don't change it */
 #define EX_MCLK                24
 
-#define IMAGE_NORMAL_MIRROR
+#define IMAGE_HV_MIRROR
 
 #if defined(IMAGE_NORMAL_MIRROR)
 #define OV02B10_SYP_MIRROR_NORMAL
