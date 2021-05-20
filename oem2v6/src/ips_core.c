@@ -1093,12 +1093,12 @@ clear:
 	if (iret)
 		CMR_LOGE("fail to close mfnr\n");
 
-	if (ipm_base->multi_support == 0)
-		pthread_mutex_unlock(&ipm_base->glock);
-
 	for (i = 0; i < req->frame_total; i++)
 		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_middle[i]);
 	memset(&req->frm_middle[0], 0, sizeof(req->frm_middle));
+
+	if (ipm_base->multi_support == 0)
+		pthread_mutex_unlock(&ipm_base->glock);
 
 	if (is_clear)
 		return 0;
@@ -1312,7 +1312,7 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 				req->req_in.request_id, i, req->frm_out[i].fd);
 			if (req->frm_out[i].fd == 0)
 				continue;
-			if (req->req_in.request_id != 0x7FFFFFFF)
+			if (req->req_in.request_id != IPS_THUMB_REQID)
 				free(req->frm_out[i].reserved);
 			req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_out[i]);
 			memset(&req->frm_out[i], 0, sizeof(struct img_frm));
