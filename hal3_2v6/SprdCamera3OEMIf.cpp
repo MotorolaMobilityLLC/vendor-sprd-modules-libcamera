@@ -6332,24 +6332,26 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
         HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
-        if (!mIsAutoFocus && ((focus_status->af_focus_type == CAM_AF_FOCUS_CAF) ||
-            (focus_status->af_focus_type == CAM_AF_FOCUS_PDAF))) {
+        if (!mIsAutoFocus && focus_status->af_focus_type == CAM_AF_FOCUS_CAF) {
             if (focus_status->is_in_focus) {
+                mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
                 setAfState(AF_INITIATES_NEW_SCAN);
                 af_type = 0;
             } else {
+                mAf_stop_time  = systemTime(SYSTEM_TIME_BOOTTIME);
                 setAfState(AF_COMPLETES_CURRENT_SCAN);
                 mLatestFocusDoneTime = systemTime(SYSTEM_TIME_BOOTTIME);
             }
         } else if (!mIsAutoFocus &&
-                   focus_status->af_focus_type == CAM_AF_FOCUS_FAF) {
-            if (!(focus_status->is_in_focus)) {
+                   (focus_status->af_focus_type == CAM_AF_FOCUS_FAF ||
+                    focus_status->af_focus_type == CAM_AF_FOCUS_PDAF)) {
+            if (focus_status->is_in_focus) {
+                mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
+                HAL_LOGV("PD_face_start_time =%lld",mAf_start_time);
+            } else {
                 af_type = focus_status->af_focus_type;
                 mAf_stop_time  = systemTime(SYSTEM_TIME_BOOTTIME);
-                HAL_LOGV("face_mAf_stop_time =%lld",mAf_stop_time);
-            } else {
-                mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
-                HAL_LOGV("face_mAf_start_time =%lld",mAf_start_time);
+                HAL_LOGV("PD_face_stop_time =%lld",mAf_stop_time);
             }
         }
         sprddefInfo->af_type = af_type;
