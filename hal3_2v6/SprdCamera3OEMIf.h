@@ -434,6 +434,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int32_t getOemCameraId() {return      mCameraId;}
     void setAeState(enum aeTransitionCause cause);
     void setAwbState(enum awbTransitionCause cause);
+    void setMsizeZero();
 
     bool isNeedFlash(void);
   private:

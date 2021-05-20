@@ -1040,6 +1040,19 @@ void SprdCamera3OEMIf::initialize() {
     mThumbFrameNum = 0;
 }
 
+void SprdCamera3OEMIf::setMsizeZero() {
+    mPreviewWidth = 0;
+    mPreviewHeight = 0;
+    mVideoWidth = 0;
+    mVideoHeight = 0;
+    mCaptureWidth = 0;
+    mCaptureHeight = 0;
+    mCallbackWidth = 0;
+    mCallbackHeight = 0;
+    mYuv2Width = 0;
+    mYuv2Height = 0;
+}
+
 int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
                             uint32_t frame_number) {
     ATRACE_CALL();

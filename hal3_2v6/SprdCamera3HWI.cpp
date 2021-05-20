@@ -1056,6 +1056,7 @@ int SprdCamera3HWI::configureStreams(
 #endif
 
     mOEMIf->setZslIpsEnable(mZslIpsEnable);
+    mOEMIf->setMsizeZero();
 
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
