@@ -1102,11 +1102,16 @@ static cmr_int camera_fdr_handle_post(struct camera_context *cxt, struct frm_inf
 	src_param.size.height = frame->height;
 	src_param.size.width = frame->length;
 	src_param.monoboottime = frame->monoboottime;
+	src_param.rect.start_x = cxt->prev_cxt.rect.start_x;
+	src_param.rect.start_y = cxt->prev_cxt.rect.start_y;
+	src_param.rect.width = cxt->prev_cxt.rect.width;
+	src_param.rect.height = cxt->prev_cxt.rect.height;
 
 	 //invalidate buf
 	buf_size = frame->height * frame->length * 2;
-	CMR_LOGD("fdr fd: %d, mono time %lld buf_size:%ld, w %d h %d",
-			frame->fd, frame->monoboottime, buf_size, frame->length, frame->height);
+	CMR_LOGD("fdr fd: %d, mono time %lld buf_size:%ld, w %d h %d, rect: x:%d, y:%d, w:%d, h:%d",
+			frame->fd, frame->monoboottime, buf_size, frame->length, frame->height,
+			src_param.rect.start_x, src_param.rect.start_y, src_param.rect.width, src_param.rect.height);
 	CMR_LOGD("fdr addr: 0x%lx, 0x%lx, 0x%lx, vir_addr: 0x%lx, 0x%lx, 0x%lx",
 	             frame->yaddr, frame->uaddr, frame->vaddr,
 	             frame->yaddr_vir, frame->uaddr_vir, frame->vaddr_vir);
