@@ -87,7 +87,7 @@ struct alsc_simulation_info {
 	cmr_u32 stat_r[32 * 32];
 	cmr_u32 stat_g[32 * 32];
 	cmr_u32 stat_b[32 * 32];
-	cmr_u16 lsc_table[32 * 32 * 4];
+	cmr_u16 lsc_table[MAX_NUM * 4];
 };
 
 struct lsc_lib_ops {
@@ -114,10 +114,10 @@ struct lsc_flash_proc_param {
 	//for change mode flash
 	cmr_s32 main_flash_from_other_parameter;
 	cmr_u16 *preflash_current_lnc_table_address;	// log the current tab[0] when preflash on
-	cmr_u16 preflash_current_output_table[32 * 32 * 4];	// copy the current table to restore back when flash off (with post gain)
-	cmr_u16 preflash_current_lnc_table[32 * 32 * 4];	// copy the current DNP table
-	cmr_u16 preflash_guessing_mainflash_output_table[32 * 32 * 4];	// lsc table after preflash (without post gain)
-	cmr_u16 preflash_current_without_postgain_table[32 * 32 * 4];   //save without postgain table before preflash
+	cmr_u16 preflash_current_output_table[MAX_NUM * 4];	// copy the current table to restore back when flash off (with post gain)
+	cmr_u16 preflash_current_lnc_table[MAX_NUM * 4];	// copy the current DNP table
+	cmr_u16 preflash_guessing_mainflash_output_table[MAX_NUM * 4];	// lsc table after preflash (without post gain)
+	cmr_u16 preflash_current_without_postgain_table[MAX_NUM * 4];   //save without postgain table before preflash
 
 	//for touch preflash
 	cmr_s32 is_touch_preflash;	// 0: normal capture preflash    1: touch preflash     others: not preflash
@@ -131,7 +131,7 @@ struct lsc_last_info {
 	cmr_s32 bv_gain;
 	cmr_u32 gain_width;
 	cmr_u32 gain_height;
-	cmr_u16 table[32 * 32 * 4];
+	cmr_u16 table[MAX_NUM * 4];
 };
 
 struct lsc_sprd_ctrl_context {
