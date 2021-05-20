@@ -1663,11 +1663,11 @@ static struct sensor_res_tab_info s_s5kgm1sp_resolution_Tab_RAW[VENDOR_NUM] =
               {ADDR_AND_LEN_OF_ARRAY(s5kgm1sp_video_4lane_setting), PNULL,
                0, .width = 1280, .height = 720, .xclk_to_sensor = 24,
                .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
+/*
               {ADDR_AND_LEN_OF_ARRAY(s5kgm1sp_preview_4lane_setting), PNULL,
                0, .width = 2000, .height = 1500,
                .xclk_to_sensor = 24, .image_format = SENSOR_IMAGE_FORMAT_RAW},
-
+*/
               {ADDR_AND_LEN_OF_ARRAY(s5kgm1sp_snapshot_4lane_setting), PNULL,
                0, .width = 4000, .height = 3000, .xclk_to_sensor = 24,
                .image_format = SENSOR_IMAGE_FORMAT_RAW}}}
@@ -1686,7 +1686,7 @@ static SENSOR_TRIM_T s_s5kgm1sp_Resolution_Trim_Tab[VENDOR_NUM] = {
                     .bps_per_lane = 364,
                     .frame_line = 0x0334,
                     .scaler_trim = {.x = 0, .y = 0, .w = 1280, .h = 720}},
-
+/*
                    {.trim_start_x = 0,
                     .trim_start_y = 0,
                     .trim_width = 2000,
@@ -1695,7 +1695,7 @@ static SENSOR_TRIM_T s_s5kgm1sp_Resolution_Trim_Tab[VENDOR_NUM] = {
                     .bps_per_lane = 1200,
                     .frame_line = 0x0c78,
                     .scaler_trim = {.x = 0, .y = 0, .w = 2000, .h = 1500}},
-
+*/
                    {.trim_start_x = 0,
                     .trim_start_y = 0,
                     .trim_width = 4000,
@@ -1831,8 +1831,8 @@ SENSOR_INFO_T g_s5kgm1sp_mipi_raw_info = {
                       {.reg_addr = s5kgm1sp_VER_ADDR,
                        .reg_value = s5kgm1sp_VER_VALUE}},
 
-    .source_width_max = 8000,
-    .source_height_max = 6000,
+    .source_width_max = 4000,
+    .source_height_max = 3000,
     .name = (cmr_s8 *)"s5kgm1sp",
 
     .image_format = SENSOR_IMAGE_FORMAT_RAW,
