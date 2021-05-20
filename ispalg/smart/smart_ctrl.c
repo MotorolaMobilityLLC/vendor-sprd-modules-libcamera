@@ -1451,12 +1451,14 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 	}
 	if(smart_proc_in->bhist_update && atm_param->input_type){
 		ret = isp_bayer_hist(smart_proc_in, hist);
+		ATMInput.u4HistBitWidth = smart_proc_in->bhist_stats[0].bin;
 	}else{
 		ret = isp_histAEM(smart_proc_in->r_info,
 			smart_proc_in->g_info, smart_proc_in->b_info, hist, bAEMBinning,
 			smart_proc_in->aem_shift,
 			smart_proc_in->win_num_w, smart_proc_in->win_num_h,
 			smart_proc_in->win_size_w, smart_proc_in->win_size_h);
+		ATMInput.u4HistBitWidth = 256;//because it is pull a fixed bin(256) from function isp_histAEM
 	}
 	if (ISP_SUCCESS != ret) {
 		 ISP_LOGE("ATM aem_ptr %p,%p,%p, win_num/win_size %d/%d, %d/%d, shift %d\n",
@@ -1515,6 +1517,7 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 
 		ATMInput.pHist = hist;
 		ATMInput.u4Bins = SENSOR_GAMMA_POINT_NUM;//256;
+		ATMInput.u4GammaBitWidth = SENSOR_GAMMA_POINT_NUM;
 		ATMInput.uBaseGamma = u2CurY[1];//uConvCurY;
 		ATMInput.uModGamma = u2CurY[1];//uConvCurY;
 		ATMInput.bHistB4Gamma = true;
@@ -1639,6 +1642,8 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 		smart_proc_in->aem_shift,
 		smart_proc_in->win_num_w, smart_proc_in->win_num_h,
 		smart_proc_in->win_size_w, smart_proc_in->win_size_h);
+		ATMInput.u4HistBitWidth = 256;
+		
 	if (ISP_SUCCESS != ret) {
 		 ISP_LOGE("ATM aem_ptr %p,%p,%p, win_num/win_size %d/%d, %d/%d, shift %d\n",
 		smart_proc_in->r_info,
@@ -1694,6 +1699,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 
 		ATMInput.pHist = hist;
 		ATMInput.u4Bins = SENSOR_GAMMA_POINT_NUM;//256;
+		ATMInput.u4GammaBitWidth = SENSOR_GAMMA_POINT_NUM;
 		ATMInput.uBaseGamma = u2CurY[1];//uConvCurY;
 		ATMInput.uModGamma = u2CurY[1];//uConvCurY;
 		ATMInput.bHistB4Gamma = true;
