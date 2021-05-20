@@ -938,7 +938,7 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	struct ips_req_node *req, struct img_frm *frame)
 {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
-	int iret, i;
+	int iret, i, is_clear = 0;
 	int s_w, s_h, offset;
 	struct img_frm *dst, *small;
 	struct ipmpro_node *ipm_hdl = req->cur_proc;
@@ -946,6 +946,15 @@ static cmr_int ipmpro_mfnr(struct ips_context *ips_ctx,
 	struct swa_frame_param *frm_param;
 	struct swa_frames_inout in;
 	struct swa_init_data init_param;
+
+	if (frame == NULL) {
+		CMR_LOGD("mfnr should quick stop\n");
+		is_clear = 1;
+		if (req->frame_cnt == 0)
+			return ret;
+		else
+			goto clear;
+	}
 
 	dst = &req->frm_out[req->frame_cnt];
 	*dst = *frame;
@@ -1079,6 +1088,7 @@ proc_mfnr:
 	if (req->frame_cnt < req->frame_total)
 		goto proc_done;
 
+clear:
 	iret = ipm_base->swa_close(ipm_hdl->swa_handle, NULL);
 	if (iret)
 		CMR_LOGE("fail to close mfnr\n");
@@ -1086,15 +1096,18 @@ proc_mfnr:
 	if (ipm_base->multi_support == 0)
 		pthread_mutex_unlock(&ipm_base->glock);
 
-	for (i = 0; i < req->frame_total; i++) {
+	for (i = 0; i < req->frame_total; i++)
 		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_middle[i]);
-		if (i == 0)
-			continue;
+	memset(&req->frm_middle[0], 0, sizeof(req->frm_middle));
+
+	if (is_clear)
+		return 0;
+
+	for (i = 1; i < req->frame_total; i++) {
 		free(req->frm_out[i].reserved);
 		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_out[i]);
 	}
 	memset(&req->frm_in[0], 0, sizeof(req->frm_in));
-	memset(&req->frm_middle[0], 0, sizeof(req->frm_middle));
 	memset(&req->frm_out[1], 0, sizeof(req->frm_out) - sizeof(req->frm_out[0]));
 	req->status = IPS_REQ_PROC_DONE;
 	req->frame_total = 1;
@@ -1102,7 +1115,6 @@ proc_mfnr:
 proc_done:
 	CMR_LOGD("Done");
 	return 0;
-
 
 buf_error:
 	for (i = 0; i < req->frame_total; i++) {
@@ -1233,7 +1245,7 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 				req->req_in.request_id, frame->fd);
 			free(frame->reserved);
 			req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)frame);
-			return ret;
+			break;
 		}
 		req->status = IPS_REQ_PROC_START;
 
@@ -1293,7 +1305,7 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 		break;
 	}
 
-	if (req->should_exit) {
+	if (req->should_exit && req->frame_total > 0) {
 		CMR_LOGD("req id %d should exit\n", req->req_in.request_id);
 		for (i = 0; i < req->frame_total; i++) {
 			CMR_LOGD("req id %d return frame No.%d, fd 0x%x\n",
@@ -1305,6 +1317,12 @@ cmr_int ips_thread_proc(struct cmr_msg *message, void *p_data)
 			req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_out[i]);
 			memset(&req->frm_out[i], 0, sizeof(struct img_frm));
 		}
+
+		if (cur_proc->type == IPS_TYPE_MFNR)
+			ipmpro_mfnr(ips_ctx, req, NULL);
+
+		req->frame_total = 0;
+
 		if (req->frm_jpeg.fd) {
 			CMR_LOGD("req id %d return jpeg buf fd 0x%x\n", req->req_in.request_id, req->frm_jpeg.fd);
 			req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_jpeg);
