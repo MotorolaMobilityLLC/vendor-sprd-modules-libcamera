@@ -6213,6 +6213,7 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.awb_gain.g = calc_in->awb_gain_g;
 	cxt->cur_status.awb_gain.r = calc_in->awb_gain_r;
 	cxt->cur_status.adv_param.awb_mode = calc_in->awb_mode;
+	cxt->cur_status.adv_param.mv_value = calc_in->mv_value;
 
 	/*get aem static data current sensor*/
 	if(0 == aem_type) {

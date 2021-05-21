@@ -18,6 +18,7 @@ typedef struct frame_out {
     mat33 warp;
     uint32_t frame_num;
     double timestamp;
+    uint8_t movement_inf;
 } vsOutFrame;
 
 typedef struct vs_param {

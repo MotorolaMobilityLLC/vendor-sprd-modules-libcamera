@@ -1085,11 +1085,13 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             mPreviewWidth != 0 && mPreviewHeight != 0) {
             EisPreview_init();
             mEisPreviewInit = true;
+            SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
         }
         if (!mEisVideoInit && sprddefInfo->sprd_eis_enabled == 1 &&
             mVideoWidth != 0 && mVideoHeight != 0) {
             EisVideo_init();
             mEisVideoInit = true;
+            SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
         }
 #endif
         char value[PROPERTY_VALUE_MAX];
@@ -1162,12 +1164,14 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
             Mutex::Autolock l(&mEisPreviewProcessLock);
             video_stab_close(&mPreviewInst);
             mEisPreviewInit = false;
+            SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
             HAL_LOGI("preview stab close");
         }
         if (mEisVideoInit) {
             Mutex::Autolock l(&mEisVideoProcessLock);
             video_stab_close(&mVideoInst);
             mEisVideoInit = false;
+            SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
             HAL_LOGI("video stab close");
         }
 #endif
@@ -7851,9 +7855,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
         if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_VIDEO) {
             drvSceneMode = CAMERA_SCENE_MODE_VIDEO;
         }
-
-       if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR)
-           SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
+#ifdef CONFIG_CAMERA_EIS
+        if (1 == sprddefInfo->sprd_eis_enabled) {
+           drvSceneMode = CAMERA_SCENE_MODE_VIDEO_EIS;
+        }
+#endif
+        if (sprddefInfo->sprd_appmode_id != CAMERA_MODE_FDR)
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SCENE_MODE, drvSceneMode);
         HAL_LOGD("drvSceneMode: %d, mMultiCameraMode: %d, mIsFDRCapture:%d, app_mode:%d",
                           drvSceneMode, mMultiCameraMode, mIsFDRCapture, sprddefInfo->sprd_appmode_id);
     } break;
@@ -13220,6 +13228,7 @@ void SprdCamera3OEMIf::popEISVideoQueue(vsGyro *gyro, int gyro_num) {
 }
 
 void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
+    char value[PROPERTY_VALUE_MAX];
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
@@ -13250,7 +13259,12 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
                  frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
                  frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
                  frame_out.warp.dat[2][2]);
-
+        property_get("persist.vendor.cam.eis.move.preview", value, "false");
+        if (!strcmp(value, "true")) {
+            uint8_t movement_info = frame_out.movement_inf;
+            HAL_LOGD("preview_move_info %d", movement_info);
+            camera_ioctrl(CAMERA_IOCTRL_SET_MOVE_INFO, &movement_info, NULL);
+        }
         double crop_start_w =
             frame_out.warp.dat[0][2] + mPreviewParam.src_w / 12;
         double crop_start_h =
@@ -13272,6 +13286,7 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
 
 vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
                                                uint32_t frame_num) {
+    char value[PROPERTY_VALUE_MAX];
     vsInFrame frame_in;
     vsOutFrame frame_out;
     frame_in.frame_data = NULL;
@@ -13306,6 +13321,12 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
                      frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
                      frame_out.warp.dat[2][0], frame_out.warp.dat[2][1],
                      frame_out.warp.dat[2][2]);
+        property_get("persist.vendor.cam.eis.move.video", value, "true");
+        if (!strcmp(value, "true")) {
+            uint8_t movement_info = frame_out.movement_inf;
+            HAL_LOGD("video_move_info %d", movement_info);
+            camera_ioctrl(CAMERA_IOCTRL_SET_MOVE_INFO, &movement_info, NULL);
+        }
     } else {
         HAL_LOGD("gyro is not enable, eis process is not work");
     }

@@ -421,6 +421,7 @@ struct isp_alg_fw_context {
 	cmr_u8 ai_init_status;
 	cmr_u8 alg_enable;
 	cmr_u8 aem_is_update;
+	cmr_u8 eis_move_info;//for eis scene move info param
 	cmr_u8 bayerhist_update;
 	cmr_u8 lscm_is_update;
 	cmr_u8 fw_started;
@@ -3261,6 +3262,7 @@ cmr_int ispalg_start_ae_process(cmr_handle isp_alg_handle)
 	in_param.is_last_frm = 0;
 	in_param.time_diff = -1;
 	in_param.is_update = cxt->aem_is_update;
+	in_param.mv_value= cxt->eis_move_info;
 	in_param.sensor_fps.mode = cxt->sensor_fps.mode;
 	in_param.sensor_fps.max_fps = cxt->sensor_fps.max_fps;
 	in_param.sensor_fps.min_fps = cxt->sensor_fps.min_fps;
@@ -6870,6 +6872,7 @@ cmr_int isp_alg_fw_start(cmr_handle isp_alg_handle, struct isp_video_start * in_
 	cxt->smart_update = 0;
 	cxt->first_frm = 1;
 	cxt->aem_is_update = 0;
+	cxt->eis_move_info = 0;
 	cxt->smooth_ratio = 0;
 	cxt->work_mode = in_ptr->work_mode;
 	cxt->zsl_flag = in_ptr->zsl_flag;
