@@ -362,6 +362,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     int32_t mSprdAppmodeId;
     int32_t mStreamOnWithZsl;
     int64_t mRollingShutterSkew;
+    bool mAeTouchCancel;
 
     static int ZSLMode_monitor_thread_init(void *p_data);
     static int ZSLMode_monitor_thread_deinit(void *p_data);
