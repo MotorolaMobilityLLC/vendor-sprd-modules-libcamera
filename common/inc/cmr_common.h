@@ -101,6 +101,7 @@ extern "C" {
 #define DUAL_PD 4
 #define ISP_STATS_MAX 8
 #define ISP_STATSDBG_MAX 32
+#define FA_SHAPE_POINTNUM  7
 
 #define SPRD_SENSOR_TYPE_BASE   0x10000
 #define SENSOR_TYPE_SPRD_COLOR_TEMP     (SPRD_SENSOR_TYPE_BASE + 51)
@@ -1349,6 +1350,8 @@ struct face_finder_data {
     int smile_conf;
     int gender_age_race;
     struct fdrect_to_isp fd_ptr;
+    int data[FA_SHAPE_POINTNUM * 2];
+    int fascore;
 };
 
 struct img_face_area {
@@ -1936,6 +1939,8 @@ struct camera_face_info {
     cmr_u32 padding;
     cmr_u32 gender_age_race;
     struct fdrect_to_isp fd_cb_ptr;
+    int data[FA_SHAPE_POINTNUM * 2];
+    cmr_u32 fascore;
 };
 
 struct super_cap {

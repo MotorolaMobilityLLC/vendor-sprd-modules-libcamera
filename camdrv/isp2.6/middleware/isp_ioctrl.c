@@ -3085,6 +3085,9 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 			ae_fd_param.face_area[i].pose = face_area->face_info[i].pose;
 			ae_fd_param.face_area[i].yaw_angle= face_area->face_info[i].yaw_angle;
 			ae_fd_param.face_area[i].roll_angle= face_area->face_info[i].roll_angle;
+			memcpy(&(ae_fd_param.face_area[i].data), &(face_area->face_info[i].data),
+				sizeof(face_area->face_info[i].data));
+			ae_fd_param.face_area[i].fascore = face_area->face_info[i].fascore;
 		}
 		if (cxt->ops.ae_ops.ioctrl)
 			ret = cxt->ops.ae_ops.ioctrl(cxt->ae_cxt.handle, AE_SET_FD_PARAM, &ae_fd_param, NULL);
@@ -3136,6 +3139,9 @@ static cmr_int ispctl_face_area(cmr_handle isp_alg_handle, void *param_ptr)
 			af_fd_para.face_info[i].brightness = face_area->face_info[i].brightness;
 			af_fd_para.face_info[i].pose = face_area->face_info[i].pose;
 			af_fd_para.face_info[i].angle = face_area->face_info[i].angle;
+			memcpy(&(af_fd_para.face_info[i].data), &(face_area->face_info[i].data),
+				sizeof(face_area->face_info[i].data));
+			af_fd_para.face_info[i].fascore = face_area->face_info[i].fascore;
 		}
 		if (cxt->ops.af_ops.ioctrl)
 			ret = cxt->ops.af_ops.ioctrl(cxt->af_cxt.handle, AF_CMD_SET_FACE_DETECT, (void *)&af_fd_para, NULL);

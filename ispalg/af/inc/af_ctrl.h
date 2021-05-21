@@ -16,6 +16,7 @@
 
 #ifndef _ISP_AF_H_
 #define _ISP_AF_H_
+#define FA_SHAPE_POINTNUM 7
 
 #include "isp_adpt.h"
 #include "sensor_raw.h"
@@ -383,6 +384,8 @@ extern "C" {
 		cmr_u32 brightness;
 		cmr_s32 pose;
 		cmr_s32 angle;
+		int data[FA_SHAPE_POINTNUM * 2];
+		cmr_s32 fascore;
 	};
 
 	struct afctrl_face_info {

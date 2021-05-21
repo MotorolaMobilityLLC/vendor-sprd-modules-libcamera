@@ -5,6 +5,7 @@
 
 #ifndef _SWA_PARAM_API_H_
 #define _SWA_PARAM_API_H_
+#define FA_SHAPE_POINTNUM 7
 
 #ifdef __cplusplus
 extern "C" {
@@ -319,6 +320,8 @@ struct isp_face_info {
 	cmr_s32 roll_angle;
 	cmr_u32 score;
 	cmr_u32 id;
+	int data[FA_SHAPE_POINTNUM * 2];
+	cmr_u32 fascore;
 };
 
 struct isp_face_area {
