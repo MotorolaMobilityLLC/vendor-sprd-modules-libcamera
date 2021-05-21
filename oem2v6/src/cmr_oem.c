@@ -16220,10 +16220,10 @@ cmr_int camera_local_set_ref_camera_id(cmr_handle oem_handle,
                              &setting_param);
     is_fdr_on = setting_param.cmd_type_value;
 
-    CMR_LOGD("ref_camera_id id %d, camera_id:%d, old_ref_id:%d "
-		"is_fdr_on %d, is_multi_camera_mode_oem:%d",
-              *ref_camera_id, cxt->camera_id, cxt->ref_camera_id,
-              is_fdr_on, is_multi_camera_mode_oem);
+    CMR_LOGD("ref_camera_id id %d, camera_id:%d, old_ref_id:%d"
+             "is_fdr_on %d, is_multi_camera_mode_oem:%d",
+             *ref_camera_id, cxt->camera_id, cxt->ref_camera_id,
+             is_fdr_on, is_multi_camera_mode_oem);
 
     if(is_fdr_on && is_multi_camera_mode_oem == MODE_MULTI_CAMERA &&
             cxt->ref_camera_id != *ref_camera_id) {
