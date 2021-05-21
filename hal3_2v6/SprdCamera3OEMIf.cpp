@@ -838,6 +838,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     mNonZslFlag = false;
     mSkipNum = 0;
     mWhitelists = 0;
+    mAeTouchCancel = false;
     for (int i = 0; i < sizeof(whitelist)/sizeof(whitelist[0]); i++) {
         mWhitelists |= whitelist[i];
     }
@@ -1039,6 +1040,7 @@ void SprdCamera3OEMIf::initialize() {
 #endif
     mZslIpsEnable = 0;
     mThumbFrameNum = 0;
+    mAeTouchCancel = false;
 }
 
 void SprdCamera3OEMIf::setMsizeZero() {
@@ -5560,6 +5562,13 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
              " encInfo->need_free = %d, time=%" PRId64,
              mCameraId, encInfo->size, encInfo->outPtr, encInfo->need_free,
              frame->timestamp);
+    {
+        SPRD_DEF_Tag *sprddefInfo;
+        sprddefInfo = mSetting->getSPRDDEFTagPTR();
+        if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO) {
+                mAeTouchCancel = true;
+        }
+    }
 
     if (NULL == mCameraHandle || NULL == mHalOem || NULL == mHalOem->ops) {
         HAL_LOGE("oem is null or oem ops is null");
@@ -7975,8 +7984,13 @@ int SprdCamera3OEMIf::SetCameraParaTag(cmr_int cameraParaTag) {
             ae_compensation_param.ae_exposure_compensation =
                 controlInfo.ae_exposure_compensation;
             mManualExposureEnabled = true;
+            if (sprddefInfo->sprd_appmode_id == CAMERA_MODE_AUTO_PHOTO
+              && (controlInfo.af_trigger == ANDROID_CONTROL_AF_TRIGGER_CANCEL
+                      || (mAeTouchCancel && !controlInfo.ae_lock))) {
+                 ae_compensation_param.ae_exposure_compensation = TOUCH_AE_CANCEL;
+                 mAeTouchCancel = false;
+            }
         }
-
         SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_EXPOSURE_COMPENSATION,
                  (cmr_uint)&ae_compensation_param);
         break;
@@ -12046,7 +12060,6 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     int64_t mfnr_ms = 20*1000000;
     uint32_t hdr_count = 800, mfnr_count = 800;
     uint32_t lock_af = 0;
-
 
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
     bool isFrontLcd =
