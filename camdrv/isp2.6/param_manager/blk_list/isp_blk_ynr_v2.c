@@ -21,6 +21,7 @@ static cmr_u32 _pm_ynr_convert_param(void *dst_param, cmr_u32 strength_level,
 {
 	cmr_s32 rtn = ISP_SUCCESS;
 	cmr_u32 total_offset_units = 0;
+	cmr_u32 i, j;
 	struct isp_ynr_param *dst_ptr = (struct isp_ynr_param *)dst_param;
 	struct sensor_ynr_level *ynr_param = PNULL;
 
@@ -43,70 +44,20 @@ static cmr_u32 _pm_ynr_convert_param(void *dst_param, cmr_u32 strength_level,
 		dst_ptr->cur_v3.imgCenterX = ynr_param[strength_level].imgCenterX;
 		dst_ptr->cur_v3.imgCenterY = ynr_param[strength_level].imgCenterY;
 
-		dst_ptr->cur_v3.l1_layer_gf_enable = ynr_param[strength_level].ynr_layer[0].gf_enable;
-		dst_ptr->cur_v3.l1_layer_gf_radius = ynr_param[strength_level].ynr_layer[0].gf_radius;
-		dst_ptr->cur_v3.l1_layer_gf_rnr_offset = ynr_param[strength_level].ynr_layer[0].gf_rnr_offset;
-		dst_ptr->cur_v3.l1_layer_gf_rnr_ratio = ynr_param[strength_level].ynr_layer[0].gf_rnr_ratio;
-		dst_ptr->cur_v3.l1_layer_gf_addback_enable = ynr_param[strength_level].ynr_layer[0].gf_addback_enable;
-		dst_ptr->cur_v3.l1_layer_gf_addback_ratio = ynr_param[strength_level].ynr_layer[0].gf_addback_ratio;
-		dst_ptr->cur_v3.l1_layer_gf_addback_clip = ynr_param[strength_level].ynr_layer[0].gf_addback_clip;
-		dst_ptr->cur_v3.l1_layer_lum_thresh1 = ynr_param[strength_level].ynr_layer[0].lum_thresh[0];
-		dst_ptr->cur_v3.l1_layer_lum_thresh2 = ynr_param[strength_level].ynr_layer[0].lum_thresh[1];
-		dst_ptr->cur_v3.l1_layer_epsilon_gf_epsilon_low = ynr_param[strength_level].ynr_layer[0].ynr_epsilon.gf_epsilon_low;
-		dst_ptr->cur_v3.l1_layer_epsilon_gf_epsilon_mid = ynr_param[strength_level].ynr_layer[0].ynr_epsilon.gf_epsilon_mid;
-		dst_ptr->cur_v3.l1_layer_epsilon_gf_epsilon_high = ynr_param[strength_level].ynr_layer[0].ynr_epsilon.gf_epsilon_high;
-
-		dst_ptr->cur_v3.l2_layer_gf_enable = ynr_param[strength_level].ynr_layer[1].gf_enable;
-		dst_ptr->cur_v3.l2_layer_gf_radius = ynr_param[strength_level].ynr_layer[1].gf_radius;
-		dst_ptr->cur_v3.l2_layer_gf_rnr_offset = ynr_param[strength_level].ynr_layer[1].gf_rnr_offset;
-		dst_ptr->cur_v3.l2_layer_gf_rnr_ratio = ynr_param[strength_level].ynr_layer[1].gf_rnr_ratio;
-		dst_ptr->cur_v3.l2_layer_gf_addback_enable = ynr_param[strength_level].ynr_layer[1].gf_addback_enable;
-		dst_ptr->cur_v3.l2_layer_gf_addback_ratio = ynr_param[strength_level].ynr_layer[1].gf_addback_ratio;
-		dst_ptr->cur_v3.l2_layer_gf_addback_clip = ynr_param[strength_level].ynr_layer[1].gf_addback_clip;
-		dst_ptr->cur_v3.l2_layer_lum_thresh1 = ynr_param[strength_level].ynr_layer[1].lum_thresh[0];
-		dst_ptr->cur_v3.l2_layer_lum_thresh2 = ynr_param[strength_level].ynr_layer[1].lum_thresh[1];
-		dst_ptr->cur_v3.l2_layer_epsilon_gf_epsilon_low = ynr_param[strength_level].ynr_layer[1].ynr_epsilon.gf_epsilon_low;
-		dst_ptr->cur_v3.l2_layer_epsilon_gf_epsilon_mid = ynr_param[strength_level].ynr_layer[1].ynr_epsilon.gf_epsilon_mid;
-		dst_ptr->cur_v3.l2_layer_epsilon_gf_epsilon_high = ynr_param[strength_level].ynr_layer[1].ynr_epsilon.gf_epsilon_high;
-
-		dst_ptr->cur_v3.l3_layer_gf_enable = ynr_param[strength_level].ynr_layer[2].gf_enable;
-		dst_ptr->cur_v3.l3_layer_gf_radius = ynr_param[strength_level].ynr_layer[2].gf_radius;
-		dst_ptr->cur_v3.l3_layer_gf_rnr_offset = ynr_param[strength_level].ynr_layer[2].gf_rnr_offset;
-		dst_ptr->cur_v3.l3_layer_gf_rnr_ratio = ynr_param[strength_level].ynr_layer[2].gf_rnr_ratio;
-		dst_ptr->cur_v3.l3_layer_gf_addback_enable = ynr_param[strength_level].ynr_layer[2].gf_addback_enable;
-		dst_ptr->cur_v3.l3_layer_gf_addback_ratio = ynr_param[strength_level].ynr_layer[2].gf_addback_ratio;
-		dst_ptr->cur_v3.l3_layer_gf_addback_clip = ynr_param[strength_level].ynr_layer[2].gf_addback_clip;
-		dst_ptr->cur_v3.l3_layer_lum_thresh1 = ynr_param[strength_level].ynr_layer[2].lum_thresh[0];
-		dst_ptr->cur_v3.l3_layer_lum_thresh2 = ynr_param[strength_level].ynr_layer[2].lum_thresh[1];
-		dst_ptr->cur_v3.l3_layer_epsilon_gf_epsilon_low = ynr_param[strength_level].ynr_layer[2].ynr_epsilon.gf_epsilon_low;
-		dst_ptr->cur_v3.l3_layer_epsilon_gf_epsilon_mid = ynr_param[strength_level].ynr_layer[2].ynr_epsilon.gf_epsilon_mid;
-		dst_ptr->cur_v3.l3_layer_epsilon_gf_epsilon_high = ynr_param[strength_level].ynr_layer[2].ynr_epsilon.gf_epsilon_high;
-
-		dst_ptr->cur_v3.l4_layer_gf_enable = ynr_param[strength_level].ynr_layer[3].gf_enable;
-		dst_ptr->cur_v3.l4_layer_gf_radius = ynr_param[strength_level].ynr_layer[3].gf_radius;
-		dst_ptr->cur_v3.l4_layer_gf_rnr_offset = ynr_param[strength_level].ynr_layer[3].gf_rnr_offset;
-		dst_ptr->cur_v3.l4_layer_gf_rnr_ratio = ynr_param[strength_level].ynr_layer[3].gf_rnr_ratio;
-		dst_ptr->cur_v3.l4_layer_gf_addback_enable = ynr_param[strength_level].ynr_layer[3].gf_addback_enable;
-		dst_ptr->cur_v3.l4_layer_gf_addback_ratio = ynr_param[strength_level].ynr_layer[3].gf_addback_ratio;
-		dst_ptr->cur_v3.l4_layer_gf_addback_clip = ynr_param[strength_level].ynr_layer[3].gf_addback_clip;
-		dst_ptr->cur_v3.l4_layer_lum_thresh1 = ynr_param[strength_level].ynr_layer[3].lum_thresh[0];
-		dst_ptr->cur_v3.l4_layer_lum_thresh2 = ynr_param[strength_level].ynr_layer[3].lum_thresh[1];
-		dst_ptr->cur_v3.l4_layer_epsilon_gf_epsilon_low = ynr_param[strength_level].ynr_layer[3].ynr_epsilon.gf_epsilon_low;
-		dst_ptr->cur_v3.l4_layer_epsilon_gf_epsilon_mid = ynr_param[strength_level].ynr_layer[3].ynr_epsilon.gf_epsilon_mid;
-		dst_ptr->cur_v3.l4_layer_epsilon_gf_epsilon_high = ynr_param[strength_level].ynr_layer[3].ynr_epsilon.gf_epsilon_high;
-
-		dst_ptr->cur_v3.l5_layer_gf_enable = ynr_param[strength_level].ynr_layer[4].gf_enable;
-		dst_ptr->cur_v3.l5_layer_gf_radius = ynr_param[strength_level].ynr_layer[4].gf_radius;
-		dst_ptr->cur_v3.l5_layer_gf_rnr_offset = ynr_param[strength_level].ynr_layer[4].gf_rnr_offset;
-		dst_ptr->cur_v3.l5_layer_gf_rnr_ratio = ynr_param[strength_level].ynr_layer[4].gf_rnr_ratio;
-		dst_ptr->cur_v3.l5_layer_gf_addback_enable = ynr_param[strength_level].ynr_layer[4].gf_addback_enable;
-		dst_ptr->cur_v3.l5_layer_gf_addback_ratio = ynr_param[strength_level].ynr_layer[4].gf_addback_ratio;
-		dst_ptr->cur_v3.l5_layer_gf_addback_clip = ynr_param[strength_level].ynr_layer[4].gf_addback_clip;
-		dst_ptr->cur_v3.l5_layer_lum_thresh1 = ynr_param[strength_level].ynr_layer[4].lum_thresh[0];
-		dst_ptr->cur_v3.l5_layer_lum_thresh2 = ynr_param[strength_level].ynr_layer[4].lum_thresh[1];
-		dst_ptr->cur_v3.l5_layer_epsilon_gf_epsilon_low = ynr_param[strength_level].ynr_layer[4].ynr_epsilon.gf_epsilon_low;
-		dst_ptr->cur_v3.l5_layer_epsilon_gf_epsilon_mid = ynr_param[strength_level].ynr_layer[4].ynr_epsilon.gf_epsilon_mid;
-		dst_ptr->cur_v3.l5_layer_epsilon_gf_epsilon_high = ynr_param[strength_level].ynr_layer[4].ynr_epsilon.gf_epsilon_high;
+		for (i = 0; i < 5; i++) {
+			dst_ptr->cur_v3.ynr_layer[i].gf_enable = ynr_param[strength_level].ynr_layer[i].gf_enable;
+			dst_ptr->cur_v3.ynr_layer[i].gf_radius = ynr_param[strength_level].ynr_layer[i].gf_radius;
+			dst_ptr->cur_v3.ynr_layer[i].gf_rnr_offset = ynr_param[strength_level].ynr_layer[i].gf_rnr_offset;
+			dst_ptr->cur_v3.ynr_layer[i].gf_rnr_ratio = ynr_param[strength_level].ynr_layer[i].gf_rnr_ratio;
+			dst_ptr->cur_v3.ynr_layer[i].gf_addback_enable = ynr_param[strength_level].ynr_layer[i].gf_addback_enable;
+			dst_ptr->cur_v3.ynr_layer[i].gf_addback_ratio = ynr_param[strength_level].ynr_layer[i].gf_addback_ratio;
+			dst_ptr->cur_v3.ynr_layer[i].gf_addback_clip = ynr_param[strength_level].ynr_layer[i].gf_addback_clip;
+			dst_ptr->cur_v3.ynr_layer[i].gf_epsilon_low = ynr_param[strength_level].ynr_layer[i].ynr_epsilon.gf_epsilon_low;
+			dst_ptr->cur_v3.ynr_layer[i].gf_epsilon_mid = ynr_param[strength_level].ynr_layer[i].ynr_epsilon.gf_epsilon_mid;
+			dst_ptr->cur_v3.ynr_layer[i].gf_epsilon_high = ynr_param[strength_level].ynr_layer[i].ynr_epsilon.gf_epsilon_high;
+			for (j = 0;j < 2; j++)
+				dst_ptr->cur_v3.ynr_layer[i].lum_thresh[j] = ynr_param[strength_level].ynr_layer[i].lum_thresh[j];
+		}
 	}
 	return rtn;
 }
