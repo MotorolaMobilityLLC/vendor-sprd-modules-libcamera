@@ -1,15 +1,15 @@
-/*versionid=0x000B0009*/
+/*versionid=0x000C000F*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5pro_sensor_mfnr_level*/
 {
 	/*threshold*/
 	{
-		0x00000001,0x00000001,0x00000002,0x00000003/*0-3*/
+		0x0000000A,0x0000000A,0x00000008,0x00000006/*0-3*/
 	},
 	/*slope*/
 	{
-		0x0000000F,0x0000000F,0x0000000E,0x0000000E/*0-3*/
+		0x00000005,0x00000005,0x00000005,0x00000005/*0-3*/
 	},
 	/*searchWindow_x*/
 	0x0010,
@@ -18,7 +18,7 @@
 	/*recur_str*/
 	0xFFFFFFFF,
 	/*match_ratio_sad*/
-	0x00000057,
+	0x00000000,
 	/*match_ratio_pro*/
 	0x0000000C,
 	/*feat_thr*/
