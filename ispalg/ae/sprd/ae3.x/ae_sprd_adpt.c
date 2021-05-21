@@ -6687,7 +6687,10 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 			}
 		}
 	}else if(cxt->is_multi_mode == ISP_ALG_TRIBLE_W_T_UW_SYNC) {
-		if((0 == cxt->sync_state.sync_flag)&&(cxt->sync_state.ref_id == cxt->camera_id)) {
+		if(cxt->cur_status.adv_param.lock == AE_STATE_LOCKED) {
+			cxt->sync_stable = 1;
+			(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_SYNC_STABLE, &cxt->sync_stable);
+		} else if((0 == cxt->sync_state.sync_flag)&&(cxt->sync_state.ref_id == cxt->camera_id)) {
 			ae_update_result_before_mapping(cxt, &cxt->exp_data, 0);
 			ae_write_to_sensor_normal_mapping(cxt, &cxt->exp_data);
 			slave_sensor_active = 0;
