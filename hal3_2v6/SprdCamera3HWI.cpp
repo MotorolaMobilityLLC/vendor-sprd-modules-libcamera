@@ -1756,6 +1756,14 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
 #endif
     }
 
+    if (mOEMIf->isIspToolMode()) {
+        if (streamType[0] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[1] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT ||
+            streamType[2] == CAMERA_STREAM_TYPE_PICTURE_SNAPSHOT) {
+            mOldCapIntent = SPRD_CONTROL_CAPTURE_INTENT_CONFIGURE;
+        }
+    }
+
     if (captureRequestId == 0)
         captureRequestId = mOldRequesId;
     else

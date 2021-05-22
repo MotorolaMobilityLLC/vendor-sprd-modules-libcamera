@@ -5604,6 +5604,8 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
                                                  CAMERA_STREAM_TYPE_VIDEO);
             regularChannel->channelClearAllQBuff(timestamp1,
                                                  CAMERA_STREAM_TYPE_CALLBACK);
+            regularChannel->channelClearAllQBuff(timestamp1,
+                                                 CAMERA_STREAM_TYPE_YUV2);
         }
         goto exit;
     }
@@ -5718,6 +5720,10 @@ void SprdCamera3OEMIf::receiveJpegPicture(struct camera_frame_type *frame) {
                                                      CAMERA_STREAM_TYPE_VIDEO);
             regularChannel->channelClearInvalidQBuff(
                 frame_num, timestamp, CAMERA_STREAM_TYPE_CALLBACK);
+            if (mIsIspToolMode == 1) {
+                regularChannel->channelClearInvalidQBuff(
+                    frame_num, timestamp, CAMERA_STREAM_TYPE_YUV2);
+            }
         }
     }
 }
