@@ -248,7 +248,7 @@ typedef struct channel2 {
     cmr_u32 skip_mode;
     unsigned long frm_cnt;
     struct img_data_end endian;
-    struct img_frm frm[CHANNEL2_BUF_CNT];
+    struct img_frm frm[CHANNEL2_BUF_CNT*2];
     struct img_frm frm_reserved;
     cmr_u32 frm_valid;
 
