@@ -190,6 +190,7 @@ typedef enum {
 	N6_PRO_EE = 0x60,
 	N6_PRO_3DNR = 0x61,
 	N6_PRO_RGB_AFM = 0x62,
+	N6_PRO_BWUD = 0x63,
 	FILE_NAME_MAX
 } DENOISE_DATA_NAME;
 
@@ -3128,7 +3129,7 @@ cmr_s32 isp_denoise_write_v29(cmr_u8 * data_buf, cmr_u32 * data_size)
 			nr_tool_flag[ISP_BLK_IMBALANCEE_T] = 1;
 			break;
 		}
-	case SHARKL5_PRO_BWUD:
+	case N6_PRO_BWUD:
 		{
 			static cmr_u32 bwud_ptr_offset;
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
@@ -3433,16 +3434,6 @@ cmr_s32 isp_denoise_read_v29(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.uv_cdn_level_ptr + offset_units * src_size;
 			break;
 		}
-/*
-	case SHARKL5_IIRCNR:
-		{
-			data_head_ptr->sub_type = SHARKL5_IIRCNR;
-			src_size = sizeof(struct sensor_iircnr_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_IIRCNR_T];
-			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
-			nr_offset_addr = (cmr_u8 *) nr_update_param.iircnr_level_ptr + offset_units * src_size;
-			break;
-		}
-*/
 	case SHARKL5_NOISEFILTER:
 		{
 			data_head_ptr->sub_type = SHARKL5_NOISEFILTER;
@@ -3467,9 +3458,9 @@ cmr_s32 isp_denoise_read_v29(cmr_u8 * tx_buf, cmr_u32 len, struct isp_data_heade
 			nr_offset_addr = (cmr_u8 *) nr_update_param.imbalance_level_ptr + offset_units * src_size;
 			break;
 		}
-	case SHARKL5_PRO_BWUD:
+	case N6_PRO_BWUD:
 		{
-			data_head_ptr->sub_type = SHARKL5_PRO_BWUD;
+			data_head_ptr->sub_type = N6_PRO_BWUD;
 			src_size = sizeof(struct sensor_bwu_bwd_level) * multi_nr_level_map_ptr->nr_level_map[ISP_BLK_BWU_BWD_T];
 			isp_tool_calc_nr_addr_offset(isp_mode, nr_mode, (cmr_u32 *) & multi_nr_scene_map_ptr->nr_scene_map[0], &offset_units);
 			nr_offset_addr = (cmr_u8 *) nr_update_param.bwu_bwd_level_ptr + offset_units * src_size;
