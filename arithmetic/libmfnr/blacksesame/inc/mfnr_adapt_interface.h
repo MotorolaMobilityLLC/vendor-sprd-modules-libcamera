@@ -51,6 +51,12 @@ typedef struct mfnr_cap_gpu_buffer {
     uint8_t *bufferV;
 }mfnr_cap_gpu_buffer_t;
 
+// for memory pool
+typedef struct __mfnr_memory_ops {
+    void* (*malloc)(size_t size, char* type);
+    void (*free)(void* addr);
+} mfnr_memory_ops;
+
 typedef struct mfnr_param_info
 {
     int productInfo;      //pike2 sharkLe 0, sharkl3, sharkl5 1;
@@ -89,6 +95,9 @@ typedef struct mfnr_param_info
     int zone_size;
     int gain_thr[6];
     int reserverd[16];
+
+    // for memory pool
+    mfnr_memory_ops* pMemoryOps;
 }mfnr_param_info_t;
 
 typedef struct mfnr_pre_inparam
