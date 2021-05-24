@@ -7791,7 +7791,7 @@ cmr_int prev_set_param_internal(struct prev_handle *handle, cmr_u32 camera_id,
     app_mode = setting_param.cmd_type_value;
     CMR_LOGD("app mode =%d",app_mode);
     property_get("persist.vendor.cam.fast.automode", value, "null");
-    config_thumb = (camera_id == 1 && app_mode == 0 && !strcmp(value,"true"));
+    config_thumb = (app_mode == 0 && !strcmp(value,"true"));
     if(!config_thumb) {
         if (handle->prev_cxt[camera_id].prev_param.channel3_eb) {
             ret = channel3_configure(handle, camera_id, is_restart, out_param_ptr);
@@ -11272,7 +11272,7 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
     property_get("persist.vendor.cam.fast.automode", value, "null");
 
     prev_cxt->channel3.buf_cnt = 0;
-    if (prev_cxt->prev_param.channel3_rot_angle ||(camera_id == 1 && app_mode == 0 && !strcmp(value,"true"))) {
+    if (prev_cxt->prev_param.channel3_rot_angle ||(app_mode == 0 && !strcmp(value,"true"))) {
         CMR_LOGD("rotation need more buffer");
         prev_cxt->channel3.buf_cnt += CHANNEL3_BUF_CNT_ROT;
         if (!is_restart) {
@@ -11339,7 +11339,7 @@ cmr_int channel3_alloc_bufs(struct prev_handle *handle, cmr_u32 camera_id,
         prev_cxt->channel3.frm_reserved.addr_phy.addr_y + width * height;
     //prev_cxt->channel3.frm_reserved.fd = prev_cxt->channel3.frm_reserved.fd;
 
-    if (prev_cxt->prev_param.channel3_rot_angle ||(camera_id == 1 && app_mode == 0 && !strcmp(value,"true"))) {
+    if (prev_cxt->prev_param.channel3_rot_angle ||(app_mode == 0 && !strcmp(value,"true"))) {
         for (i = 0; i < CHANNEL3_BUF_CNT_ROT; i++) {
             prev_cxt->channel3.rot_frm[i].fmt =
                 prev_cxt->prev_param.channel3_fmt;
@@ -11476,7 +11476,7 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     char value[PROPERTY_VALUE_MAX];
     property_get("persist.vendor.cam.fast.automode", value, "null");
 
-    if(camera_id == 1 && app_mode == 0 && !strcmp(value,"true")) {
+    if(app_mode == 0 && !strcmp(value,"true")) {
         chn_param.cap_inf_cfg.skip_output_check = 1;
         chn_param.cap_inf_cfg.cfg.sence_mode = DCAM_SCENE_MODE_CAPTURE_THUMB;
     } else {
@@ -11569,7 +11569,7 @@ cmr_int channel3_configure(struct prev_handle *handle, cmr_u32 camera_id,
     prev_cxt->need_binning = chn_param.cap_inf_cfg.cfg.need_binning;
 
     /* skip frame in dcam driver */
-    if (prev_cxt->channel3.skip_mode == IMG_SKIP_SW_KER && !(camera_id == 1 && app_mode == 0 && !strcmp(value,"true"))) {
+    if (prev_cxt->channel3.skip_mode == IMG_SKIP_SW_KER && !(app_mode == 0 && !strcmp(value,"true"))) {
         for (i = 0; i < prev_cxt->channel3.skip_num; i++) {
             cmr_bzero(&buf_cfg, sizeof(struct buffer_cfg));
             buf_cfg.channel_id = prev_cxt->channel3.chn_id;
@@ -11954,7 +11954,7 @@ int channel3_dequeue_buffer(struct prev_handle *handle, cmr_u32 camera_id,
     CMR_LOGD("app mode =%d",app_mode);
     property_get("persist.vendor.cam.fast.automode", value, "null");
 
-    if(camera_id == 1 && app_mode == 0 && !strcmp(value,"true")) {
+    if(app_mode == 0 && !strcmp(value,"true")) {
         channel3_thumb_rot_flip(handle,camera_id,&frame_type, info);
     }
     else {
