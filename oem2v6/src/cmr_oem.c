@@ -17850,7 +17850,8 @@ cmr_int camera_set_ae_params(cmr_handle oem_handle, void *param) {
     if (cxt->isp_cxt.is_work) {
         struct isp_context *isp_cxt = &cxt->isp_cxt;
         ret = isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_SET_AE_PARAMS, (void *)&tmp_cts_ae);
-        CMR_LOGD("exp_time:%lld, sensitivity:%d, frame_number:%d", temp_ae_params->exp_time, temp_ae_params->sensitivity, temp_ae_params->frame_number);
+        CMR_LOGD("exp_time:%lld, sensitivity:%d, frame_number:%d",
+                 temp_ae_params->exp_time, temp_ae_params->sensitivity, temp_ae_params->frame_number);
     }
     return ret;
 }
@@ -17862,7 +17863,8 @@ cmr_int camera_set_af_params(cmr_handle oem_handle, void *param) {
     if (cxt->isp_cxt.is_work) {
         struct isp_context *isp_cxt = &cxt->isp_cxt;
         isp_ioctl(isp_cxt->isp_handle, ISP_CTRL_SET_FOCUS_DISTANCE, (void *)temp_af_params);
-        CMR_LOGD("focus_distance:%f, frame_number:%d", temp_af_params->focus_distance, temp_af_params->frame_number);
+        CMR_LOGD("focus_distance:%f, min_real_focus_distance:%f, frame_number:%d",
+                 temp_af_params->focus_distance, temp_af_params->min_real_focus_distance, temp_af_params->frame_number);
     }
     return ret;
 }

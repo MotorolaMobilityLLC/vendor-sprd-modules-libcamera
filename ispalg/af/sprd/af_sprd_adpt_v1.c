@@ -2771,7 +2771,7 @@ static cmr_u32 af_sprd_set_focus_distance(cmr_handle handle, void *param0)
 	cmr_u16 pos = 0;
 
 	struct cts_af_params *af_params = (struct cts_af_params *)param0;
-	ISP_LOGI("focus_distance = %f,frame_num = %d,min_real_focus_distance : %d", af_params->focus_distance, af_params->frame_num, af_params->min_real_focus_distance);
+	ISP_LOGI("focus_distance = %f,frame_num = %d, min_real_focus_distance = %f", af_params->focus_distance, af_params->frame_num, af_params->min_real_focus_distance);
 	cmr_u16 inf = af->otp_info.rdm_data.infinite_cali;
 	cmr_u16 macro = af->otp_info.rdm_data.macro_cali;
 	pos = (cmr_u16) (inf + (macro - inf) * af_params->focus_distance / (100 / af_params->min_real_focus_distance));

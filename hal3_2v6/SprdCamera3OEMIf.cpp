@@ -8950,7 +8950,7 @@ int SprdCamera3OEMIf::setCameraIspPara(isp_params_t isp_mode) {
     case SPRD_AF_PARAMS:
         LENS_INFO_Tag lens_InfoInfo;
         mSetting->getLENSINFOTag(&lens_InfoInfo);
-        af_cts_params.min_real_focus_distance = (cmr_u32)lens_InfoInfo.mini_focus_distance;
+        af_cts_params.min_real_focus_distance = lens_InfoInfo.mini_focus_distance;
         HAL_LOGD("focus_distance:%f ,  min real focus distance:%f",
                  af_cts_params.focus_distance, af_cts_params.min_real_focus_distance);
         if (af_cts_params.focus_distance) {

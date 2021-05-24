@@ -2236,11 +2236,11 @@ struct tmp_cts_ae_params{
 struct af_params {
     float focus_distance;
     cmr_s32 frame_number;
+    float min_real_focus_distance;
     cmr_u8 af_mode;
     cmr_u8 lens_state;
     bool is_cts;
     cmr_u8 af_triger;
-    float min_real_focus_distance;
 };
 
 struct isp_sync_params {
