@@ -5426,7 +5426,7 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	isp_dev_access_ioctl(cxt->dev_access_handle, ISP_DEV_SET_AWB_GAIN, &cfg, NULL);
 
 	if (fdr_version == 1)
-		goto exit;
+		goto cfg_h;
 
 	/* update NLM for FDR_H accoring to algo output */
 	in = (struct isp_nlm_factor *)param_ptr;
@@ -5443,6 +5443,7 @@ static cmr_int ispctl_update_fdr(cmr_handle isp_alg_handle, void *param_ptr)
 	ret = isp_pm_ioctl(cxt->handle_pm, ISP_PM_CMD_SET_FDR_PARAM, &input, NULL);
 	ISP_TRACE_IF_FAIL(ret, ("fail to set smart"));
 
+cfg_h:
 	message.msg_type = ISP_EVT_CFG;
 	message.sub_msg_type = PARAM_CFG_FDRH;
 	message.sync_flag = CMR_MSG_SYNC_PROCESSED;
