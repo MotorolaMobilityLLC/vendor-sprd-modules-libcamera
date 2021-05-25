@@ -6395,10 +6395,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
             s_setting[mCameraId].controlInfo.capture_intent &&
         s_setting[mCameraId].sprddefInfo.sprd_eis_enabled) {
         int32_t eisCrop[4];
-        eisCrop[0] = s_setting[mCameraId].eiscrop_Info.crop[0];
-        eisCrop[1] = s_setting[mCameraId].eiscrop_Info.crop[1];
-        eisCrop[2] = s_setting[mCameraId].eiscrop_Info.crop[2];
-        eisCrop[3] = s_setting[mCameraId].eiscrop_Info.crop[3];
+        memset(eisCrop, 0, sizeof(int32_t) * 4);
         HAL_LOGV("eis crop:[%d, %d, %d, %d]", eisCrop[0], eisCrop[1],
                  eisCrop[2], eisCrop[3]);
         camMetadata.update(ANDROID_SPRD_EIS_CROP, eisCrop, 4);
