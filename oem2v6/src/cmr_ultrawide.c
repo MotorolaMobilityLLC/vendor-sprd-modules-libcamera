@@ -109,6 +109,10 @@ static cmr_int ultrawide_open(cmr_handle ipm_handle, struct ipm_open_in *in,
         ultrawide_handle->tag = WARP_CAPTURE;
     else
         ultrawide_handle->tag = WARP_PREVIEW;
+    if (in->adgain) {//eis warp
+        ultrawide_handle->warp_param.corr_level = 1.0f;
+        ultrawide_handle->warp_param.warp_mode = WARP_PROJECTIVE;
+    }
 
     CMR_LOGD("ultra wide open:param:%p,fullsize=%d,%d, size:%dx%d cx:%d, "
              "cy:%d,cw:%d,ch:%d,binning:%d",
@@ -157,6 +161,7 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
     img_warp_buffer_t output;
     img_warp_undistort_param_t param;
     ipm_param_t param_t;
+    struct eiswarp mat;
     struct img_frm *dst_img = NULL;
     struct img_frm *src_img = NULL;
     char value[PROPERTY_VALUE_MAX];
@@ -181,7 +186,20 @@ static cmr_int ultrawide_transfer_frame(cmr_handle class_handle,
                            src_img->size.width * src_img->size.height * 3 / 2);
     }
 
-    if ((cmr_uint)in->private_data) {
+    if (in->ae_exp_gain_info != NULL) {//eis warp
+        mat = *(struct eiswarp *)(in->ae_exp_gain_info);
+        for (int i =0; i< 9; i++) {
+            param.warp_projective[i/3][i%3] = mat.warp[i];
+        }
+        CMR_LOGV("warp_projective %f %f %f %f %f %f %f %f %f",
+            param.warp_projective[0][0], param.warp_projective[0][1], param.warp_projective[0][2],
+            param.warp_projective[1][0], param.warp_projective[1][1], param.warp_projective[1][2],
+            param.warp_projective[2][0], param.warp_projective[2][1], param.warp_projective[2][2]);
+        param.zoomRatio = 1.0f;
+        param.zoomCenterOffsetX = 0.0f;
+        param.zoomCenterOffsetY = 0.0f;
+        param.input_info = ultrawide_handle->warp_param.input_info;
+    } else if ((cmr_uint)in->private_data) {
         int x, y;
         param_t = *(ipm_param_t *)(in->private_data);
         memcpy(&zoomInfo, &param_t.zoom, sizeof(struct zoom_info));

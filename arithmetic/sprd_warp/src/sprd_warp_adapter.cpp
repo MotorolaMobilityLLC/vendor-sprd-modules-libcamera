@@ -11,6 +11,8 @@ using namespace android;
 #define LOG_TAG "sprd_warp_adapter"
 #define WARP_LOGE(format,...) ALOGE(format, ##__VA_ARGS__)
 #define WARP_LOGD(format,...) ALOGD(format, ##__VA_ARGS__)
+#define DEFAULT_RUNTYPE_GPU//是在这define还是在调用处？
+
 
 #if defined DEFAULT_RUNTYPE_GPU
 static enum camalg_run_type g_run_type[2] = {SPRD_CAMALG_RUN_TYPE_GPU, SPRD_CAMALG_RUN_TYPE_GPU};

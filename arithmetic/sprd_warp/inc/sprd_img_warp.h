@@ -8,7 +8,8 @@ typedef enum { WARP_FMT_YUV420SP, WARP_FMT_YUV420P } warp_fmt_e;
 typedef enum {
     WARP_UNDISTORT,
     WARP_RECTIFY,
-    WARP_PROJECTIVE,
+    WARP_PROJECTIVE,//eis
+    WARP_UNDISTORT_PROJECTIVE,
 } img_warp_mode_t;
 
 typedef struct {
@@ -67,13 +68,12 @@ typedef struct {
     void *graphic_handle;        // graphic buffer pointer; for 1.3.0 above, need getNatveBuffer
 } img_warp_buffer_t;
 
-typedef struct { float warp_projective[3][3]; } img_warp_projective_param_t;
-
 typedef struct {
     float zoomRatio;         // [ 1.0f, 4.0f]
     float zoomCenterOffsetX; // [-1.0f, 1.0f]
     float zoomCenterOffsetY; // [-1.0f, 1.0f]
     img_warp_input_info_t input_info;
+    float warp_projective[3][3];//for eis projective
 } img_warp_undistort_param_t;
 
 typedef struct {

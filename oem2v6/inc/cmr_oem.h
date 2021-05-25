@@ -160,6 +160,7 @@ struct ipm_context {
     cmr_handle ee_handle;
     cmr_handle dre_handle;
     cmr_handle dre_pro_handle;
+    cmr_handle warp_handle;
     cmr_u32 inited;
     cmr_u32 frm_num;
     cmr_u32 hdr_num;
@@ -739,6 +740,8 @@ cmr_int camera_local_set_capture_fb(cmr_handle oem_handle, cmr_u32 *on);
 cmr_int camera_local_set_blur_cynr_noface(cmr_handle oem_handle, cmr_uint *on);
 cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
                                   struct snp_thumb_yuv_param *param);
+cmr_int camera_set_eis_warp_yuv_proc(cmr_handle oem_handle,
+                                  struct eis_warp_yuv_param *param);
 cmr_int camera_get_blur_covered_type(cmr_handle oem_handle, cmr_s32 *param);
 cmr_int camera_yuv_do_face_beauty_simplify(cmr_handle oem_handle,
                                            struct img_frm *src);
