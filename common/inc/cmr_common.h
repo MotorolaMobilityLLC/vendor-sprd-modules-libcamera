@@ -653,11 +653,14 @@ typedef enum {
     THREEDNR_HW,
 } sprd_3dnr_mode;
 
-
 #ifndef container_of
 #define container_of(ptr, type, member) \
     (type *)((char*)(ptr) - offsetof(type, member))
 #endif
+
+struct eiswarp {
+    double warp[9];
+};
 
 struct img_addr {
     cmr_uint addr_y;
@@ -710,6 +713,12 @@ struct enc_exif_param {
     cmr_u32 stream_real_size;
     cmr_uint rotation;
     cmr_uint flip_on;
+};
+
+struct eis_warp_yuv_param {
+    struct img_frm src_img;
+    struct img_frm dst_img;
+    struct eiswarp eiswarp;
 };
 
 struct ccir_if {
@@ -2370,6 +2379,8 @@ typedef enum {
     CAMERA_IOCTRL_SET_ZSL_CAP_PARAM,
     CAMERA_IOCTRL_SET_MOVE_INFO,
     CAMERA_IOCTRL_SET_FALSH_CALIBRATION_FLAG,
+    CAMERA_IOCTRL_GET_EIS_WARP,
+    CAMERA_IOCTRL_EIS_WARP_YUV_PROC,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 

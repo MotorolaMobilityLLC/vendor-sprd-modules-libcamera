@@ -404,9 +404,15 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void popEISPreviewQueue(vsGyro *gyro, int gyro_num);
     void pushEISVideoQueue(vsGyro *mGyrodata);
     void popEISVideoQueue(vsGyro *gyro, int gyro_num);
-    void EisPreviewFrameStab(struct camera_frame_type *frame);
+    void EisPreviewFrameStab(struct camera_frame_type *frame,
+                                uint32_t frame_num);
     vsOutFrame EisVideoFrameStab(struct camera_frame_type *frame,
                                  uint32_t frame_num);
+    void pushEisPreviewOutQueue(vsOutFrame mframe_Out);
+    void popEisPreviewOutQueue(uint32_t frame_num, struct eiswarp *warp_mat);
+    int allocEisPreviewGpu(cmr_u32 sum, cmr_uint width, cmr_uint height);
+    int processEisWarpAlgo(struct camera_frame_type *frame,
+                                uint32_t frame_num);
 #endif
 
 #ifdef CONFIG_CAMERA_GYRO
@@ -432,6 +438,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
 
     void setCamPreformaceScene(sys_performance_camera_scene camera_scene);
     void setUltraWideMode();
+    void setEisWarpGpu(bool flag);
     bool mSetCapRatioFlag;
     bool mVideoCopyFromPreviewFlag;
     bool mVideoProcessedWithPreview;
@@ -907,6 +914,8 @@ class SprdCamera3OEMIf : public virtual RefBase {
         mZslGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_3dnr_memory_t
         mZslMfnrGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
+    sprd_3dnr_memory_t
+        mEisGraphicsHandle[kZslBufferCount + kZslRotBufferCount + 1];
     sprd_camera_memory_t *mRawHeapArray[kRawBufferCount + 1];
     cmr_u32 mCurSnapFd[kZslBufferCount];
 
@@ -972,9 +981,12 @@ class SprdCamera3OEMIf : public virtual RefBase {
     Mutex mEisPreviewLock;
     Mutex mEisVideoLock;
 #ifdef CONFIG_CAMERA_EIS
+    uint8_t mSupportEisWarp;
     static const int kGyrocount = 100;
+    static const int kEisOutcount = 10;
     List<vsGyro *> mGyroPreviewInfo;
     List<vsGyro *> mGyroVideoInfo;
+    List<vsOutFrame> mEisPreviewOut;
     vsGyro mGyrodata[kGyrocount];
     vsParam mPreviewParam;
     vsParam mVideoParam;
@@ -984,6 +996,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     struct img_size mLastPrevSize;
     Mutex mEisPreviewProcessLock;
     Mutex mEisVideoProcessLock;
+    Mutex mEisPreviewOutLock;
 #endif
     bool mSprdEisEnabled;
     // 0 - not use, default value is 0; 1 - use video buffer to jpeg enc;

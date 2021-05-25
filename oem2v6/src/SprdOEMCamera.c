@@ -1179,6 +1179,10 @@ static cmr_int ioctrl_set_flash_calibration(cmr_handle handle, void *param){
         return camera_set_flash_calibration(handle, (cmr_int *)param);
 }
 
+static cmr_int ioctrl_set_eis_warp_yuv_proc(cmr_handle handle, void *param) {
+        return camera_set_eis_warp_yuv_proc(handle, (struct eis_warp_yuv_param *)param);
+}
+
 const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_MULTI_CAMERAMODE]       = ioctrl_multi_cameramode,
     [CAMERA_IOCTRL_GET_SENSOR_LUMA]            = ioctrl_local_get_cover,
@@ -1250,6 +1254,8 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_ZSL_CAP_PARAM]      = ioctrl_camera_set_zsl_param,
     [CAMERA_IOCTRL_SET_MOVE_INFO]              = ioctrl_set_eis_move_info,
     [CAMERA_IOCTRL_SET_FALSH_CALIBRATION_FLAG] = ioctrl_set_flash_calibration,
+    [CAMERA_IOCTRL_GET_EIS_WARP]               = NULL,
+    [CAMERA_IOCTRL_EIS_WARP_YUV_PROC]          = ioctrl_set_eis_warp_yuv_proc,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
