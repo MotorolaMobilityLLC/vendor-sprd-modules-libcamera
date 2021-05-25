@@ -31,6 +31,7 @@
 #define __SPRDCAMERA3HWI_MEM_H__
 #include <hardware/camera3.h>
 #include <utils/Mutex.h>
+#include <ui/GraphicBuffer.h>
 
 extern "C" {
 #include <sys/types.h>
@@ -44,6 +45,11 @@ typedef struct {
     // offset from fd, always set to 0
     void *addr_phy;
     void *addr_vir;
+    int width;
+    int height;
+    int format;
+    sp<GraphicBuffer> pbuffer;
+    void *bufferPtr;
 } hal_mem_info_t;
 
 // Base class for all memory types. Abstract.
