@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "s5kgm1sp_mipi_raw_1"
+#define LOG_TAG "s5kgm1sp_mipi_raw_2"
 #include "sensor_s5kgm1sp_mipi_raw.h"
 
 #define RES_TAB_RAW s_s5kgm1sp_resolution_Tab_RAW
@@ -246,8 +246,8 @@ static cmr_int s5kgm1sp_drv_identify(cmr_handle handle, cmr_int param) {
 
     SENSOR_LOGI("Identify: pid_value = %x, mid_value = %x", pid_value, mid_value);
 
-    if (s5kgm1sp_PID_VALUE == pid_value && 0x0d == mid_value) {
-        SENSOR_LOGI("this is s5kgm1sp sensor ofilm!");
+    if (s5kgm1sp_PID_VALUE == pid_value && 0x01 == mid_value) {
+        SENSOR_LOGI("this is s5kgm1sp sensor sunny!");
         sensor_rid_save_sensor_name(SENSOR_HWINFOR_BACK_CAM_NAME, "0_s5kgm1sp_syp_1");
         ret_value = SENSOR_SUCCESS;
         s5kgm1sp_drv_init_fps_info(handle);
