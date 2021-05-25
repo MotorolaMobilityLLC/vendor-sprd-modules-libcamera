@@ -1503,8 +1503,8 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
     switch (captureIntent) {
     case ANDROID_CONTROL_CAPTURE_INTENT_PREVIEW:
         if ((sprddefInfo->high_resolution_mode == 1 && mHighResNonzsl == 1) || (sprddefInfo->long_expo_enable && mSuperExposeNonzsl == 1)) {
-            int i = 600, tmp;
-            // high res, preview need wait nonzsl capture finish(sensor stream off)
+            int i = 2000, tmp;
+            //long exposure, preview need wait nonzsl capture finish(sensor stream off)
             while (i--) {
                camera_ioctrl(CAMERA_TOCTRL_GET_SN_STREAM_STATUS, &tmp, NULL);
                if (tmp == 0)
