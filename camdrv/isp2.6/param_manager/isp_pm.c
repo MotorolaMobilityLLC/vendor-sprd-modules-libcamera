@@ -104,6 +104,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
 	{ ISP_BLK_HDR, 0 },
+	{ ISP_BLK_HDR3, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -290,6 +291,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
 	{ ISP_BLK_HDR, 0 },
+	{ ISP_BLK_HDR3, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -384,6 +386,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_DRE, 0 },
 	{ ISP_BLK_DRE_PRO, 0 }, /* NR block */
 	{ ISP_BLK_HDR, 0 },
+	{ ISP_BLK_HDR3, 0 },
 };
 
 struct isp_pm_nrblk_info nr_blocks_info [ISP_BLK_NR_MAX] = {
@@ -1739,6 +1742,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 		return rtn;
 	}
 
+	char hdr_version[PROPERTY_VALUE_MAX] = { 0x00 };
+	property_get("persist.vendor.cam.hdr.version", hdr_version, "2");
+
 	switch (cmd) {
 	case ISP_PM_CMD_GET_DV_MODEID_BY_FPS:
 	case ISP_PM_CMD_GET_DV_MODEID_BY_RESOLUTION:
@@ -1975,7 +1981,11 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			block_id = ISP_BLK_FDR;
 			break;
 		case ISP_PM_CMD_GET_HDR_PARAM:
-			block_id = ISP_BLK_HDR;
+			if (!strcmp(hdr_version, "2")) {
+				block_id = ISP_BLK_HDR;
+			} else if (!strcmp(hdr_version, "3")) {
+				block_id = ISP_BLK_HDR3;
+			}
 			break;
 		case ISP_PM_CMD_GET_INIT_Y_AFL:
 			block_id = ISP_BLK_YIQ_AFL_V3;
