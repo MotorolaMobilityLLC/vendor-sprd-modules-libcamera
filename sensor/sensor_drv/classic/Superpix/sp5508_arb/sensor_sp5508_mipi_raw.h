@@ -65,12 +65,12 @@
 #define LANE_NUM			2
 #define RAW_BITS			10
 
-#define PREVIEW_MIPI_PER_LANE_BPS	  936 //720  /* 2*Mipi clk */
-#define SNAPSHOT_MIPI_PER_LANE_BPS	  936 //720  /* 2*Mipi clk */
+#define PREVIEW_MIPI_PER_LANE_BPS	  940.8 //720  /* 2*Mipi clk */
+#define SNAPSHOT_MIPI_PER_LANE_BPS	   940.8  //720  /* 2*Mipi clk */
 
 /*line time unit: 1ns*/
-#define PREVIEW_LINE_TIME		  16688 //26300
-#define SNAPSHOT_LINE_TIME		  16688 //26300
+#define PREVIEW_LINE_TIME		  16635 //26300
+#define SNAPSHOT_LINE_TIME		  16635 //26300
 
 /* frame length*/
 #define PREVIEW_FRAME_LENGTH		1994 //1234
@@ -99,7 +99,7 @@
 #define ISP_BASE_GAIN			0x80
 
 /* please don't change it */
-#define EX_MCLK				24
+#define EX_MCLK				19.2
 
 /*==============================================================================
  * Description:
@@ -114,7 +114,7 @@ static const SENSOR_REG_T sp5508_init_setting[] = {
 	fd	00	Page 0*/
 
 	{0xfd, 0x00},
-	{0x2e, 0x24},// PLL_CTRL
+	{0x2e, 0x2e},// PLL_CTRL
 	{0x2f, 0x01},// 
 	{0xfd, 0x01},// Page 1
 	{0x03, 0x02},// Exposure RES
