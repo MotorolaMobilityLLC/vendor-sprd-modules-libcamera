@@ -563,6 +563,7 @@ SprdCamera3OEMIf::SprdCamera3OEMIf(int cameraId, SprdCamera3Setting *setting)
     memset(mRawHeapArray, 0, sizeof(mRawHeapArray));
     memset(mZslGraphicsHandle, 0, sizeof(mZslGraphicsHandle));
     memset(mZslMfnrGraphicsHandle, 0, sizeof(mZslMfnrGraphicsHandle));
+    memset(mEisGraphicsHandle, 0, sizeof(mEisGraphicsHandle));
 
     setCameraState(SPRD_INIT, STATE_CAMERA);
 
@@ -820,6 +821,7 @@ void SprdCamera3OEMIf::closeCamera() {
         video_stab_close(&mPreviewInst);
         mEisPreviewInit = false;
         SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
+        mEisPreviewOut.clear();
         HAL_LOGI("preview stab close");
     }
     if (mEisVideoInit) {
@@ -935,6 +937,9 @@ int SprdCamera3OEMIf::start(camera_channel_type_t channel_type,
             mEisPreviewInit = true;
             SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
         }
+        if (mEisPreviewInit && mMultiCameraMode == MODE_SINGLE_CAMERA) {
+            setEisWarpGpu(true);
+        }
         if (!mEisVideoInit && sprddefInfo->sprd_eis_enabled == 1 &&
             mVideoWidth != 0 && mVideoHeight != 0) {
             EisVideo_init();
@@ -1005,7 +1010,8 @@ int SprdCamera3OEMIf::stop(camera_channel_type_t channel_type,
             video_stab_close(&mPreviewInst);
             mEisPreviewInit = false;
             SetCameraParaTag(ANDROID_CONTROL_SCENE_MODE);
-            HAL_LOGI("preview stab close");
+            mEisPreviewOut.clear();
+            HAL_LOGI("preview stab close %d", mEisPreviewOut.size());
         }
         if (mEisVideoInit) {
             Mutex::Autolock l(&mEisVideoProcessLock);
@@ -1868,6 +1874,11 @@ int SprdCamera3OEMIf::camera_ioctrl(int cmd, void *param1, void *param2) {
             mMultiCamHighResMode = *(bool *)param1;
             break;
         }
+    case CAMERA_IOCTRL_GET_EIS_WARP: {
+         uint32_t frame_num = *(int *)param2;
+         popEisPreviewOutQueue(frame_num, (struct eiswarp *)param1);
+        }
+        break;
     } /* switch */
     ret = mHalOem->ops->camera_ioctrl(mCameraHandle, cmd, param1);
 
@@ -3166,6 +3177,15 @@ void SprdCamera3OEMIf::freeAllCameraMem() {
 
     Callback_Sw3DNRCapturePathFree(0, 0, 0, 0);
 
+    if (mEisGraphicsHandle[0].graphicBuffer != NULL) {
+        mEisGraphicsHandle[0].graphicBuffer.clear();
+        mEisGraphicsHandle[0].graphicBuffer = NULL;
+        mTotalGpuSize = mTotalGpuSize - mEisGraphicsHandle[0].buf_size;
+        HAL_LOGD("graphicBuffer_handle 0x%p", mEisGraphicsHandle[0].graphicBuffer_handle);
+        mEisGraphicsHandle[0].graphicBuffer_handle = NULL;
+        mEisGraphicsHandle[0].native_handle = NULL;
+    }
+
 #ifdef USE_ONE_RESERVED_BUF
     if (NULL != mCommonHeapReserved) {
         freeCameraMem(mCommonHeapReserved);
@@ -4424,7 +4444,7 @@ int SprdCamera3OEMIf::PreviewFrameVideoStream(struct camera_frame_type *frame,
         frame_out.frame_data = NULL;
         frame_out.frame_num = frame_num;
         HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
-        if (sprddefInfo->sprd_eis_enabled) {
+        if (sprddefInfo->sprd_eis_enabled && mEisVideoInit) {
             // camera exit/switch dont need to do eis
             if (mFlush == 0) {
                 Mutex::Autolock l(&mEisVideoProcessLock);
@@ -4587,11 +4607,11 @@ int SprdCamera3OEMIf::PreviewFramePreviewStream(struct camera_frame_type *frame,
     if (frame->type == PREVIEW_FRAME) {
 #ifdef CONFIG_CAMERA_EIS
         HAL_LOGV("eis_enable = %d", sprddefInfo->sprd_eis_enabled);
-        if (sprddefInfo->sprd_eis_enabled) {
+        if (sprddefInfo->sprd_eis_enabled && mEisPreviewInit) {
             // camera exit/switch dont need to do eis
             if (mFlush == 0) {
                 Mutex::Autolock l(&mEisPreviewProcessLock);
-                EisPreviewFrameStab(frame);
+                EisPreviewFrameStab(frame, frame_num);
             }
         }
 #endif
@@ -7466,6 +7486,7 @@ void SprdCamera3OEMIf::setCamPreformaceScene(
         mSysPerformace->setCamPreformaceScene(camera_scene);
     }
 }
+
 void SprdCamera3OEMIf::setUltraWideMode() {
     SprdCamera3RegularChannel *channel =
         reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
@@ -7483,6 +7504,20 @@ void SprdCamera3OEMIf::setUltraWideMode() {
         }
     }
 }
+
+void SprdCamera3OEMIf::setEisWarpGpu(bool flag) {
+    SprdCamera3RegularChannel *channel =
+        reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
+    HAL_LOGD("flag:%d, channel:%p", flag, channel);
+    if (channel != NULL) {
+        SprdCamera3Stream *stream = NULL;
+        channel->getStream(CAMERA_STREAM_TYPE_PREVIEW, &stream);
+        if (stream != NULL) {
+            stream->setUltraWideMode(flag);
+        }
+    }
+}
+
 int SprdCamera3OEMIf::setCameraConvertCropRegion(void) {
     float zoomWidth, zoomHeight, zoomRatio = 1.0f;
     float prevAspectRatio, capAspectRatio, videoAspectRatio;
@@ -12796,6 +12831,7 @@ void SprdCamera3OEMIf::getRollingShutterSkew() {
 void SprdCamera3OEMIf::EisPreview_init() {
     int i = 0;
     int num = 0;
+    int sum = 1;
     int isAssigned = 0;
     struct phySensorInfo *phyPtr = NULL;
     num = sizeof(eis_multi_init_info_tab) / sizeof(sprd_eis_multi_init_info_t);
@@ -12805,9 +12841,10 @@ void SprdCamera3OEMIf::EisPreview_init() {
     video_stab_param_default(&mPreviewParam);
     mPreviewParam.src_w = (uint16_t)mPreviewWidth;
     mPreviewParam.src_h = (uint16_t)mPreviewHeight;
-    mPreviewParam.dst_w = (uint16_t)mPreviewWidth * 5 / 6;
-    mPreviewParam.dst_h = (uint16_t)mPreviewHeight * 5 / 6;
-    mPreviewParam.method = 0;
+    mPreviewParam.dst_w = (uint16_t)mPreviewWidth;
+    mPreviewParam.dst_h = (uint16_t)mPreviewHeight;
+    //mPreviewParam.method = 0;//preview 0,output translation matrix
+    mPreviewParam.method = 5;//preview 5,output translation & transformation  matrix
     mPreviewParam.camera_id = mCameraId;
     mPreviewParam.wdx = 0;
     mPreviewParam.wdy = 0;
@@ -12839,7 +12876,9 @@ void SprdCamera3OEMIf::EisPreview_init() {
     HAL_LOGI("mCameraId: %d, mParam f: %lf, td:%lf, ts:%lf, fov_loss:%lf, board_name = %s, sensor_name = %s, app_mode = %d",
              mCameraId, mPreviewParam.f, mPreviewParam.td, mPreviewParam.ts,mPreviewParam.fov_loss,
              mPreviewParam.board_name,mPreviewParam.sensor_name,mPreviewParam.app_calib_mode);
-
+    if (mMultiCameraMode == MODE_SINGLE_CAMERA) {
+        allocEisPreviewGpu(sum, mPreviewParam.src_w, mPreviewParam.src_h);
+    }
     video_stab_open(&mPreviewInst, &mPreviewParam);
     HAL_LOGI("mParam src_w: %d, src_h:%d, dst_w:%d, dst_h:%d",
              mPreviewParam.src_w, mPreviewParam.src_h, mPreviewParam.dst_w,
@@ -12988,6 +13027,9 @@ vsOutFrame SprdCamera3OEMIf::processPreviewEIS(vsInFrame frame_in) {
 
     } else {
         HAL_LOGD("no gyro data to process EIS");
+        frame_out_preview.warp.dat[0][0] = 0.8f;
+        frame_out_preview.warp.dat[1][1] = 0.8f;
+        frame_out_preview.warp.dat[2][2] = 1.0f;
     }
 
 exit:
@@ -13154,7 +13196,8 @@ void SprdCamera3OEMIf::popEISVideoQueue(vsGyro *gyro, int gyro_num) {
     }
 }
 
-void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
+void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame,
+                                                    uint32_t frame_num) {
     char value[PROPERTY_VALUE_MAX];
     vsInFrame frame_in;
     vsOutFrame frame_out;
@@ -13177,10 +13220,10 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
         frame_in.timestamp = (double)boot_time / 1000000000;
         frame_in.ae_time = (double)ae_time / 1000000000;
         frame_in.zoom = (double)zoom_ratio;
-        frame_in.frame_num = frame->frame_num;
+        frame_in.frame_num = frame_num;
         frame_out = processPreviewEIS(frame_in);
-        HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
-                 "%lf, %lf",
+        HAL_LOGD("Id %d num %d transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
+                 "%lf, %lf", mCameraId, frame_num,
                  frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
                  frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
                  frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
@@ -13192,14 +13235,19 @@ void SprdCamera3OEMIf::EisPreviewFrameStab(struct camera_frame_type *frame) {
             HAL_LOGD("preview_move_info %d", movement_info);
             camera_ioctrl(CAMERA_IOCTRL_SET_MOVE_INFO, &movement_info, NULL);
         }
+        frame_out.frame_num = frame_num;
+        pushEisPreviewOutQueue(frame_out);
+        if (mMultiCameraMode == MODE_SINGLE_CAMERA) {
+            processEisWarpAlgo(frame, frame_num);
+        }
         double crop_start_w =
-            frame_out.warp.dat[0][2] + mPreviewParam.src_w / 12;
+            frame_out.warp.dat[0][2] + mPreviewParam.src_w / 10;
         double crop_start_h =
-            frame_out.warp.dat[1][2] + mPreviewParam.src_h / 12;
+            frame_out.warp.dat[1][2] + mPreviewParam.src_h / 10;
         eiscrop_Info.crop[0] = (int)(crop_start_w + 0.5);
         eiscrop_Info.crop[1] = (int)(crop_start_h + 0.5);
-        eiscrop_Info.crop[2] = (int)(crop_start_w + 0.5) + mPreviewParam.dst_w;
-        eiscrop_Info.crop[3] = (int)(crop_start_h + 0.5) + mPreviewParam.dst_h;
+        eiscrop_Info.crop[2] = (int)(crop_start_w + 0.5) + mPreviewWidth * 4 / 5;
+        eiscrop_Info.crop[3] = (int)(crop_start_h + 0.5) + mPreviewHeight * 4 / 5;
         mSetting->setEISCROPTag(eiscrop_Info);
     } else {
         HAL_LOGW("gyro is not enable, eis process is not work");
@@ -13241,8 +13289,8 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
                  frame_in.frame_num);
         frame_out = processVideoEIS(frame_in);
         if (frame_out.frame_data)
-            HAL_LOGD("transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
-                     "%lf, %lf",
+            HAL_LOGD("Id %d num %d transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
+                     "%lf, %lf", mCameraId, frame_num ,
                      frame_out.warp.dat[0][0], frame_out.warp.dat[0][1],
                      frame_out.warp.dat[0][2], frame_out.warp.dat[1][0],
                      frame_out.warp.dat[1][1], frame_out.warp.dat[1][2],
@@ -13275,6 +13323,173 @@ vsOutFrame SprdCamera3OEMIf::EisVideoFrameStab(struct camera_frame_type *frame,
     }
 
     return frame_out;
+}
+
+void SprdCamera3OEMIf::pushEisPreviewOutQueue(vsOutFrame mframe_Out) {
+    Mutex::Autolock l(&mEisPreviewOutLock);
+    //when frame_Out data size > kEisOutcount,
+    //remove pending frame_Out information from previous session
+    if (SprdCamera3OEMIf::kEisOutcount < mEisPreviewOut.size())
+        mEisPreviewOut.erase(mEisPreviewOut.begin());
+
+    mEisPreviewOut.push_back(mframe_Out);
+}
+
+void SprdCamera3OEMIf::popEisPreviewOutQueue(uint32_t frame_num, struct eiswarp *warp_mat) {
+    Mutex::Autolock l(&mEisPreviewOutLock);
+    mat33 frame_out_warp;
+    memset(&frame_out_warp, 0x00, sizeof(mat33));
+    frame_out_warp.dat[0][0] = 0.8f;
+    frame_out_warp.dat[1][1] = 0.8f;
+    frame_out_warp.dat[2][2] = 1.0f;
+    List<vsOutFrame>::iterator itor;
+    itor = mEisPreviewOut.begin();
+    while (itor != mEisPreviewOut.end()) {
+        if (itor->frame_num == frame_num) {
+            HAL_LOGD("CamId %d frame_num %d",mCameraId, frame_num);
+            frame_out_warp = itor->warp;
+            mEisPreviewOut.erase(itor++);
+            continue;
+        }
+        itor++;
+    }
+    HAL_LOGV("CamId %d frame_num %d transfer_matrix wrap %lf, %lf, %lf, %lf, %lf, %lf, %lf, "
+             "%lf, %lf",mCameraId, frame_num,
+             frame_out_warp.dat[0][0], frame_out_warp.dat[0][1],
+             frame_out_warp.dat[0][2], frame_out_warp.dat[1][0],
+             frame_out_warp.dat[1][1], frame_out_warp.dat[1][2],
+             frame_out_warp.dat[2][0], frame_out_warp.dat[2][1],
+             frame_out_warp.dat[2][2]);
+    for (int i = 0; i < 9; i++) {
+        warp_mat->warp[i] = (float)frame_out_warp.dat[i/3][i%3];
+    }
+}
+
+int SprdCamera3OEMIf::allocEisPreviewGpu(cmr_u32 sum, cmr_uint width, cmr_uint height) {
+    int ret = NO_ERROR;
+    native_handle_t *native_handle = NULL;
+    hal_mem_info_t buf_mem_info;
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+    if (mEisGraphicsHandle[0].graphicBuffer != NULL) {
+        HAL_LOGD("use pre-alloc cap mem");
+        return ret;
+    }
+
+    SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
+    cmr_u32 size = (cmr_u32)(width * height * 3 / 2);
+    for (int i = 0; i < sum; i++) {
+        sp<GraphicBuffer> pbuffer = new GraphicBuffer(
+            width, height, HAL_PIXEL_FORMAT_YCrCb_420_SP, yuvTextUsage,
+            std::string("Camera3OEMIf GraphicBuffer"));
+        ret = pbuffer->initCheck();
+        if (ret)
+            goto malloc_failed;
+        if (!pbuffer->handle)
+            goto malloc_failed;
+        mTotalGpuSize = mTotalGpuSize + size;
+        mEisGraphicsHandle[i].graphicBuffer = pbuffer;
+        mEisGraphicsHandle[i].graphicBuffer_handle = pbuffer.get();
+        mEisGraphicsHandle[i].native_handle = (native_handle_t *)pbuffer->handle;
+        mEisGraphicsHandle[i].buf_size = size;
+    }
+    HAL_LOGD("X CamId=%d TotalIonSize=%d TotalGpuSize=%d",
+              mCameraId, mTotalIonSize, mTotalGpuSize);
+    delete memory;
+    return NO_ERROR;
+
+malloc_failed:
+    delete memory;
+    return ret;
+}
+int SprdCamera3OEMIf::processEisWarpAlgo(struct camera_frame_type *frame,
+                            uint32_t frame_num) {
+    int ret = NO_ERROR;
+    struct img_frm src_img;
+    struct img_frm dst_img;
+    struct eis_warp_yuv_param eis_warp_param;
+    hal_mem_info_t src_mem_info;
+    hal_mem_info_t dst_mem_info;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    HAL_LOGV("E");
+    SprdCamera3GrallocMemory *memory = new SprdCamera3GrallocMemory();
+    ret = memory->map3(&(mEisGraphicsHandle[0].graphicBuffer->handle), &dst_mem_info);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map dst buffer");
+        goto fail_map3_dst;
+    }
+    cam_graphic_buffer_info_t buf_info;
+    cmr_bzero(&buf_info, sizeof(buf_info));
+    buf_info.fd = frame->fd;
+    buf_info.addr_vir = frame->y_vir_addr;
+    buf_info.addr_phy = frame->y_phy_addr;
+    buf_info.width = frame->width;
+    buf_info.height = frame->height;
+    buf_info.buf_size = (frame->width * frame->height * 3 / 2);
+    HandleGetBufHandle(CAMERA_EVT_PREVIEW_BUF_HANDLE, &buf_info);
+
+    memset(&src_img, 0, sizeof(struct img_frm));
+    memset(&dst_img, 0, sizeof(struct img_frm));
+    src_img.addr_phy.addr_y = 0;
+    src_img.addr_phy.addr_u = src_img.addr_phy.addr_y +
+                              (buf_info.width) * (buf_info.height);
+    src_img.addr_phy.addr_v = src_img.addr_phy.addr_u;
+    src_img.addr_vir.addr_y = (cmr_uint)(buf_info.addr_vir);
+    src_img.addr_vir.addr_u = (cmr_uint)(buf_info.addr_vir) +
+                              (buf_info.width) * (buf_info.height);
+    src_img.buf_size = buf_info.buf_size;
+    src_img.fd = buf_info.fd;
+    src_img.fmt = IMG_DATA_TYPE_YUV420;
+    src_img.rect.start_x = 0;
+    src_img.rect.start_y = 0;
+    src_img.rect.width = buf_info.width;
+    src_img.rect.height = buf_info.height;
+    src_img.size.width = buf_info.width;
+    src_img.size.height = buf_info.height;
+    src_img.reserved = buf_info.graphic_buffer;
+    src_img.frame_number = frame_num;
+
+    dst_img.addr_phy.addr_y = 0;
+    dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y +
+                            (dst_mem_info.width) * (dst_mem_info.height);
+    dst_img.addr_phy.addr_v = dst_img.addr_phy.addr_u;
+    dst_img.addr_vir.addr_y = (cmr_uint)(dst_mem_info.addr_vir);
+    dst_img.addr_vir.addr_u = (cmr_uint)(dst_mem_info.addr_vir) +
+                            (dst_mem_info.width) * (dst_mem_info.height);
+    dst_img.buf_size = dst_mem_info.size;
+    dst_img.fd = dst_mem_info.fd;
+    dst_img.fmt = IMG_DATA_TYPE_YUV420;
+    dst_img.rect.start_x = 0;
+    dst_img.rect.start_y = 0;
+    dst_img.rect.width = dst_mem_info.width;
+    dst_img.rect.height = dst_mem_info.height;
+    dst_img.size.width = dst_mem_info.width;
+    dst_img.size.height = dst_mem_info.height;
+    dst_img.reserved = dst_mem_info.bufferPtr;
+    HAL_LOGV("gpu handle %p %p", src_img.reserved, dst_img.reserved);
+
+    memcpy(&eis_warp_param.src_img, &src_img, sizeof(struct img_frm));
+    memcpy(&eis_warp_param.dst_img, &dst_img, sizeof(struct img_frm));
+    popEisPreviewOutQueue(frame_num, &eis_warp_param.eiswarp);
+    HAL_LOGV("warp mat %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+                eis_warp_param.eiswarp.warp[0],eis_warp_param.eiswarp.warp[1],eis_warp_param.eiswarp.warp[2],
+                eis_warp_param.eiswarp.warp[3],eis_warp_param.eiswarp.warp[4],eis_warp_param.eiswarp.warp[5],
+                eis_warp_param.eiswarp.warp[6],eis_warp_param.eiswarp.warp[7],eis_warp_param.eiswarp.warp[8]);
+    camera_ioctrl(CAMERA_IOCTRL_EIS_WARP_YUV_PROC, &eis_warp_param, NULL);
+
+    //warp process dst buffer memcpy to FW buffer
+    memcpy((void *)src_img.addr_vir.addr_y, (void*)dst_img.addr_vir.addr_y, src_img.buf_size);
+
+    HandleReleaseBufHandle(CAMERA_EVT_PREVIEW_BUF_HANDLE, &buf_info);
+    memory->unmap3(&(mEisGraphicsHandle[0].graphicBuffer->handle), &dst_mem_info);
+fail_map3_dst:
+    delete memory;
+    HAL_LOGV("X");
+    return ret;
 }
 #endif
 

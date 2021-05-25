@@ -7705,6 +7705,7 @@ cmr_int camera_res_init(cmr_handle oem_handle) {
     sem_init(&cxt->dre_pro_flag_sm, 0, 1);
     sem_init(&cxt->ai_scene_flag_sm, 0, 1);
     sem_init(&cxt->filter_sm, 0, 1);
+    sem_init(&cxt->eisWarp_sm, 0, 1);
     sem_init(&cxt->share_path_sm, 0, 0);
     sem_init(&cxt->access_sm, 0, 1);
     sem_init(&cxt->sbs_sync_sm, 0, 0);
@@ -7793,6 +7794,7 @@ static cmr_int camera_res_deinit(cmr_handle oem_handle) {
     sem_destroy(&cxt->ai_scene_flag_sm);
 
     sem_destroy(&cxt->filter_sm);
+    sem_destroy(&cxt->eisWarp_sm);
 
     sem_destroy(&cxt->share_path_sm);
     sem_destroy(&cxt->access_sm);
@@ -13908,6 +13910,13 @@ cmr_int camera_local_stop_preview(cmr_handle oem_handle) {
         cxt->night_cxt.ipmpro_deinit(oem_handle);
     }
 
+    if (cxt->ipm_cxt.warp_handle != NULL) {
+        sem_wait(&cxt->eisWarp_sm);
+        ret = cmr_ipm_close(cxt->ipm_cxt.warp_handle);
+        cxt->ipm_cxt.warp_handle = 0;
+        sem_post(&cxt->eisWarp_sm);
+    }
+
 exit:
     CMR_LOGD("X");
     ATRACE_END();
@@ -17216,6 +17225,66 @@ cmr_int camera_set_thumb_yuv_proc(cmr_handle oem_handle,
         CMR_LOGE("snp_thumb_yuv_proc failed.");
     }
 
+    return ret;
+}
+
+cmr_int camera_set_eis_warp_yuv_proc(cmr_handle oem_handle,
+                                  struct eis_warp_yuv_param *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    struct setting_cmd_parameter setting_param;
+    ipm_param_t param_info;
+    struct ipm_frame_in ipm_in_param;
+    cmr_bzero(&param_info, sizeof(ipm_param_t));
+    cmr_bzero(&ipm_in_param, sizeof(struct ipm_frame_in));
+    CMR_LOGV("E");
+    param_info.zoomRatio = 1.0;
+    param_info.fullsize_width = param->src_img.rect.width;
+    param_info.fullsize_height = param->src_img.rect.height;
+    param_info.input_width = param->src_img.rect.width;
+    param_info.input_height = param->src_img.rect.height;
+    param_info.crop_x = param->src_img.rect.start_x;
+    param_info.crop_y = param->src_img.rect.start_y;
+    param_info.crop_width = param->src_img.rect.width;
+    param_info.crop_height = param->src_img.rect.height;
+
+    ipm_in_param.src_frame = param->src_img;
+    ipm_in_param.src_frame.frame_number = param->src_img.frame_number;
+    ipm_in_param.src_frame.reserved = param->src_img.reserved;
+    ipm_in_param.dst_frame = param->dst_img;
+    ipm_in_param.dst_frame.reserved = param->dst_img.reserved;
+    ipm_in_param.private_data = (void *)&param_info;
+    ipm_in_param.ae_exp_gain_info = (void *)&(param->eiswarp);
+
+    if (NULL == cxt->ipm_cxt.warp_handle && cxt->prev_cxt.preview_eb) {
+        struct ipm_open_in in_param;
+        struct ipm_open_out out_param;
+        cmr_bzero(&in_param, sizeof(struct ipm_open_in));
+        cmr_bzero(&out_param, sizeof(struct ipm_open_out));
+        in_param.frame_rect.start_x = param->src_img.rect.start_x;
+        in_param.frame_rect.start_y = param->src_img.rect.start_y;
+        in_param.frame_rect.width = param->src_img.rect.width;
+        in_param.frame_rect.height = param->src_img.rect.height;
+        in_param.sensor_size.width = param->src_img.rect.width;
+        in_param.sensor_size.height = param->src_img.rect.height;
+        in_param.binning_factor = 0;
+        in_param.frame_size.width = param->src_img.rect.width;
+        in_param.frame_size.height = param->src_img.rect.height;
+        in_param.is_cap = false;
+        in_param.adgain = 1;
+        sem_wait(&cxt->eisWarp_sm);
+        ret = cmr_ipm_open(cxt->ipm_cxt.ipm_handle, IPM_TYPE_ULTRA_WIDE, &in_param,
+                           &out_param, &cxt->ipm_cxt.warp_handle);
+        sem_post(&cxt->eisWarp_sm);
+    }
+    if (cxt->ipm_cxt.warp_handle != NULL && cxt->prev_cxt.preview_eb) {
+        sem_wait(&cxt->eisWarp_sm);
+        ret = ipm_transfer_frame(cxt->ipm_cxt.warp_handle, &ipm_in_param, NULL);
+        sem_post(&cxt->eisWarp_sm);
+    }
+
+    CMR_LOGV("X");
     return ret;
 }
 
