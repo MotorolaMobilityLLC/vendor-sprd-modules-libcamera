@@ -5371,6 +5371,42 @@ static cmr_s32 ae_set_ev_adjust_start(struct ae_ctrl_cxt *cxt, void *param)
 	return AE_SUCCESS;
 }
 
+struct flash_cali_result {
+	void *data;
+	uint32 size;
+};
+
+static cmr_s32 ae_set_flash_calibration(struct ae_ctrl_cxt *cxt, void *inparam, void *outparam)
+{
+	UNUSED(inparam);
+	cmr_s32 rtn = AE_SUCCESS;
+	if (outparam == NULL) {
+		ISP_LOGE("The storage of flash cali output is NULL!\n");
+		rtn = AE_ERROR;
+		return rtn;
+	}
+	struct flash_cali_stat *stat = (struct flash_cali_stat *)outparam;
+
+	static struct flash_cali_result result;
+ 	result.data = (void *)&cxt->flash_cali_data;
+ 	result.size = (uint32)sizeof(struct flash_correct_info);
+	//af_status DCAM is long
+	//AE status stb
+	flash_calibration(cxt, stat);
+
+	if (stat->result == 0) {
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_CALIBRATION, (void *)&result);
+		ISP_LOGD("FLASH_CALI>flash calibration is success\n");
+		rtn = AE_SUCCESS;
+	} else if(stat->result != 0 && stat->result != 1) {	//flash cali error
+		stat->enable = 1;
+		(*cxt->isp_ops.callback) (cxt->isp_ops.isp_handler, AE_CB_FLASH_CALIBRATION, NULL);
+		ISP_LOGD("FLASH_CALI>flash calibration is fail\n");
+		rtn = AE_ERROR;
+	}
+	return rtn;
+}
+
 static cmr_s32 ae_get_flash_wb_gain(struct ae_ctrl_cxt *cxt, void *result)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -6453,6 +6489,18 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->effect_index[cxt->effect_index_index] = cxt->sync_cur_result.ev_setting.ae_idx;
 
 	rtn = ae_pre_process(cxt);
+	
+	//ISP_LOGD("FLASH_CALI>ae_set_flash_calibration: %d\n", cxt->frameid);
+	char str[PROPERTY_VALUE_MAX] = {0};
+	property_get("persist.vendor.cam.isp.ae.flash_calibration", str, "");		//on/off
+	static struct flash_cali_stat output = {0};
+	void *inparam = NULL;
+	if (!strcmp(str, "on")){	//&& result->calistat == 0
+		ISP_LOGD("FLASH_CALI>before!");
+		ae_set_flash_calibration(cxt, inparam, (void*)&output);
+		ISP_LOGD("FLASH_CALI>after!");
+	}
+	
 	flash_calibration_script((cmr_handle) cxt);/*for flash calibration*/
 	ae_set_led(cxt);
 
@@ -7210,6 +7258,10 @@ static cmr_s32 ae_io_ctrl_sync(cmr_handle handle, cmr_s32 cmd, cmr_handle param,
 	case AE_SET_PROF_MODE:
 		rtn = ae_set_prof_mode(cxt, param);
 		break;
+	
+	case  AE_SET_FLASH_CALIBRATION:
+		rtn = ae_set_flash_calibration(cxt, param, result);
+		break;
 
 	case AE_SET_MULTI_SWITCH_INFO:
 		rtn = ae_set_multi_switch_info(cxt, param);
@@ -7430,6 +7482,96 @@ static void ae_set_ae_init_param(struct ae_ctrl_cxt *cxt, struct ae_lib_init_out
 	ISP_LOGD("cam_id %d mfnr_hdr_thrd_down %d mfnr_hdr_thrd_up %d",cxt->camera_id,cxt->mfnr_hdr_thrd.thd_down,cxt->mfnr_hdr_thrd.thd_up);
 }
 
+static void write2flashcali1(cmr_s8 camID, struct flash_correct_info *result)
+{
+	FILE *fp = NULL;
+	char filename[128] = {"\0"};
+	sprintf(filename, "%s%d%s", "/data/vendor/cameraserver/flash_cali_out_", camID, ".txt");
+	ISP_LOGD("FLASH_CALI>%s\n", filename);
+	fp = fopen(filename, "wt");
+	if(fp){
+		uint32 i = 0;
+		uint32 j = 0;
+		//flash config
+		//LED1 pre
+		fprintf(fp, "%d\n", result->numP1_hwSample);
+		for (i = 0; i < result->numP1_hwSample; i++)
+			fprintf(fp, "%d\t", result->indP1_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numP1_hwSample; i++)
+			fprintf(fp, "%f\t", result->maP1_hwSample[i]);
+		fprintf(fp, "\n");
+		//LED2 pre
+		fprintf(fp, "%d\n", result->numP2_hwSample);
+		for (i = 0; i < result->numP2_hwSample; i++)
+			fprintf(fp, "%d\t", result->indP2_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numP2_hwSample; i++)
+			fprintf(fp, "%f\t", result->maP2_hwSample[i]);
+		fprintf(fp, "\n");
+		//LED1 main
+		fprintf(fp, "%d\n", result->numM1_hwSample);
+		for (i = 0; i < result->numM1_hwSample; i++)
+			fprintf(fp, "%d\t", result->indM1_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numM1_hwSample; i++)
+			fprintf(fp, "%f\t", result->maM1_hwSample[i]);
+		fprintf(fp, "\n");
+		//LED2 main
+		fprintf(fp, "%d\n", result->numM2_hwSample);
+		for (i = 0; i < result->numM2_hwSample; i++)
+			fprintf(fp, "%d\t", result->indM2_hwSample[i]);
+		fprintf(fp, "\n");
+		for (i = 0; i < result->numM2_hwSample; i++)
+			fprintf(fp, "%f\t", result->maM2_hwSample[i]);
+		fprintf(fp, "\n");
+		
+		//flash cali out
+		//LED1+pre:
+		//fprintf(fp, "%d\n", result->numP1_hwSample);
+		for (i = 0; i < result->numP1_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->P1rgbData[i][j]);
+			fprintf(fp, "%d\t", result->P1expgain[i][0]);
+			fprintf(fp, "%d\n", result->P1expgain[i][1]);
+		}
+
+		//LED2+pre:
+		//fprintf(fp, "%d\n", result->numP2_hwSample);
+		for (i = 0; i < result->numP2_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->P2rgbData[i][j]);
+			fprintf(fp, "%d\t", result->P2expgain[i][0]);
+			fprintf(fp, "%d\n", result->P2expgain[i][1]);
+		}
+		fprintf(fp, "\n");
+
+		//LED1+main:
+		//fprintf(fp, "%d\n", result->numM1_hwSample);
+		for (i = 0; i < result->numM1_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->M1rgbData[i][j]);
+			fprintf(fp, "%d\t", result->M1expgain[i][0]);
+			fprintf(fp, "%d\n", result->M1expgain[i][1]);
+		}
+		//LED2+main:
+		//fprintf(fp, "%d\n", result->numM2_hwSample);
+		for (i = 0; i < result->numM2_hwSample; i++){
+			//fprintf(fp, "ID:%d\t", i);
+			for(j = 0; j < 3; j++)
+				fprintf(fp, "%f\t", result->M2rgbData[i][j]);
+			fprintf(fp, "%d\t", result->M2expgain[i][0]);
+			fprintf(fp, "%d\n", result->M2expgain[i][1]);
+		}
+		fclose(fp);
+	}
+	fp = NULL;
+}
+
+
 cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 {
 	cmr_s32 rtn = AE_SUCCESS;
@@ -7501,12 +7643,36 @@ cmr_handle ae_sprd_init_v1(cmr_handle param, cmr_handle in_param)
 	/* HJW_S: dual flash algorithm init */
 	cmr_u32 size = (init_param->flash_tuning[0].size > sizeof(struct flash_tune_param)) ? sizeof(struct flash_tune_param) : init_param->flash_tuning[0].size;
 	memcpy(&cxt->dflash_param[0], init_param->flash_tuning[0].param, size);
+
+	if (init_param->flash_cali_data != NULL) {
+		memcpy(&cxt->flash_cali_data, (struct flash_correct_info *)init_param->flash_cali_data, init_param->flash_cali_size);
+	}
+	/*
+	FILE *fp1 = fopen("/data/vendor/cameraserver/Dflash_cxt_INIT.bin", "wb");
+	if(fp1){
+		fwrite(&cxt->dflash_param[0], 1, sizeof(struct flash_tune_param), fp1);
+		fclose(fp1);
+		fp1 = NULL;
+	}*/
 	ISP_LOGD("multiColorLcdEn = %d", cxt->dflash_param[0].multiColorLcdEn);
 	flash_in.debug_level = 1;	/*it will be removed in the future, and get it from dual flash tuning parameters */
 	flash_in.tune_info = &cxt->dflash_param[0];
+	flash_in.flash_correct_nv = cxt->flash_cali_data;
+	/*
+	ISP_LOGD("FLASH_CALI>flash cali data from NV\n");
+	cmr_s8 cam = 10;
+	write2flashcali1(cam, &flash_in.flash_correct_nv);
+	*/
 	flash_in.statH = 32;
 	flash_in.statW = 32;
 	cxt->flash_alg_handle = flash_init(&flash_in, &flash_out);
+	/*
+	fp1 = fopen("/data/vendor/cameraserver/Dflash_cxt_INIT_1.bin", "wb");
+	if(fp1){
+		fwrite(&cxt->dflash_param[0], 1, sizeof(struct flash_tune_param), fp1);
+		fclose(fp1);
+		fp1 = NULL;
+	}*/
 	flash_out.version = 1;		//remove later
 	cxt->flash_ver = flash_out.version;
 	ae_init_out->flash_ver = cxt->flash_ver;
