@@ -64,7 +64,7 @@ struct afl_init_input_param
 	cmr_u32 minor;
 	cmr_u32 micro;
 	cmr_u32 nano;
-	cmr_s32 pm_param_num;
+	cmr_s32 pm_param_size;
 	cmr_u32 afl_log_level;
 	void *afl_tune_param;
 };

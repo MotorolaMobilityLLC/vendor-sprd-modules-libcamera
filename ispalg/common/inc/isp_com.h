@@ -219,6 +219,23 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_u32 max_fps;
 	};
 
+	struct isp_antiflicker_pos {
+		int x;
+		int y;
+	};
+
+	struct isp_antiflicker_reg_param {
+		cmr_u16 skip_num;
+		cmr_u16 frm_num;
+		cmr_u16 afl_x_st;
+		cmr_u16 afl_x_ed;
+		cmr_u16 afl_x_st_region;
+		cmr_u16 afl_x_ed_region;
+		struct isp_antiflicker_pos afl_step;
+		struct isp_antiflicker_pos afl_step_region;
+	};
+
+
 	struct isp_anti_flicker_cfg {
 		cmr_u32 bypass;
 		afl_handle_tt afl_handle;
@@ -249,6 +266,7 @@ typedef cmr_int(*isp_ai_cb) (cmr_handle handle, cmr_int type, void *param0, void
 		cmr_u32 max_fps;
 		cmr_u32 camera_id;
 		cmr_uint vir_addr_region;
+		struct isp_antiflicker_reg_param afl_reg_param;
 	};
 
 	struct isp_antiflicker_param {
