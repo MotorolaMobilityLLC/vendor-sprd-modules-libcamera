@@ -174,9 +174,17 @@ endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
 LOCAL_SRC_FILES += src/cmr_hdr.c
-ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
+LOCAL_SRC_FILES += src/cmr_hdr3.c
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifneq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
 LOCAL_SHARED_LIBRARIES += libsprdhdradapter
-else
+endif
+endif
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
 endif

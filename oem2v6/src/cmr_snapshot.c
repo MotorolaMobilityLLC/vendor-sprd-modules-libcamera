@@ -584,8 +584,17 @@ static cmr_int snp_ips_req_proc(struct snp_context *cxt, struct frm_info *frame)
 			cb_thumb = 1;
 			break;
 		}
-		if (frm_param && (snp_pm->snap_cnt < HDR_CAP_MAX))
-			cur_ev = frm_param->hdr_param.ev[snp_pm->snap_cnt];
+		if (snp_pm->is_hdr == 3) {
+			if (frm_param && (snp_pm->snap_cnt < HDR3_CAP_MAX)){
+				cur_ev = frm_param->hdr_param.ev[snp_pm->snap_cnt];
+				frm_param->hdr_param.hdr_version = 3;
+			}
+		} else if (snp_pm->is_hdr == 2) {
+			if (frm_param && (snp_pm->snap_cnt < HDR_CAP_MAX)){
+				cur_ev = frm_param->hdr_param.ev[snp_pm->snap_cnt];
+				frm_param->hdr_param.hdr_version = 2;
+			}
+		}
 		CMR_LOGD("hdr idx %d, cur_ev %f\n", snp_pm->snap_cnt, cur_ev);
 
 		if (cur_ev < 0.01 && cur_ev > -0.01)
@@ -2837,7 +2846,7 @@ cmr_int snp_write_exif(cmr_handle snp_handle, void *data) {
                     snp_handle, SNAPSHOT_FUNC_TAKE_PICTURE,
                     SNAPSHOT_CB_EVT_RETURN_SW_ALGORITHM_ZSL_BUF, NULL,
                     sizeof(struct camera_frame_type));
-        } else if (cxt->req_param.is_hdr == 1) {
+        } else if (cxt->req_param.is_hdr) {
             if (cmr_cxt->is_multi_mode != MODE_BOKEH &&
                 cmr_cxt->is_multi_mode != MODE_MULTI_CAMERA) {
                 CMR_LOGI(
@@ -5264,7 +5273,7 @@ cmr_int snp_yuv_callback_take_picture_done(cmr_handle snp_handle,
                             SNAPSHOT_CB_EVT_DONE, (void *)&frame_type,
                             sizeof(struct camera_frame_type));
     CMR_LOGD("is_3dnr %d is_hdr %d", cxt->req_param.is_3dnr, cxt->req_param.is_hdr);
-    if (cxt->req_param.is_hdr == 1 &&
+    if (cxt->req_param.is_hdr &&
         (cmr_cxt->is_multi_mode == MODE_BOKEH ||
          cmr_cxt->is_multi_mode == MODE_MULTI_CAMERA ||
          (cmr_cxt->is_multi_mode == MODE_BLUR && cmr_cxt->blurcynr_noface == 0))) {

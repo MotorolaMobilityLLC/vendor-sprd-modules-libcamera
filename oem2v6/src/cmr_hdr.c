@@ -523,6 +523,7 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
     /*save_input_data(width,height);*/
 
     if ((NULL != temp_addr0) && (NULL != temp_addr1) && (NULL != temp_addr2)) {
+
 #ifndef CONFIG_SPRD_HDR_LIB_VERSION_2
         ret = HDR_Function(temp_addr0, temp_addr2, temp_addr1, temp_addr0,
                            height, width, p_format);
@@ -574,6 +575,7 @@ static cmr_int hdr_arithmetic(cmr_handle class_handle,
         sprd_hdr_param.output.height = height;
         sprd_hdr_param.output.stride = width;
         sprd_hdr_param.output.size = width * height * 3 / 2;
+        sprd_hdr_param.detect_out = hdr_handle->lib_cxt.hdr_callback;
 
         ret = hdr_sprd_adapter_process(hdr_handle, SPRD_HDR_PROCESS_CMD,
                                        (void *)&sprd_hdr_param);

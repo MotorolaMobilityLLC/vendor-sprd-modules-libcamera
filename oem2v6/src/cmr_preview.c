@@ -7657,7 +7657,7 @@ cmr_int prev_construct_zsl_frame(struct prev_handle *handle, cmr_u32 camera_id,
                 strcat(tag_name, cameraId);
                 dump_image(tag_name, CAM_IMG_FMT_YUV420_NV21,
                            frame_type->width, frame_type->height,
-                           prev_cxt->prev_frm_cnt,
+                           info->frame_real_id,
                            &prev_cxt->cap_zsl_frm[frm_id].addr_vir,
                            frame_type->width * frame_type->height * 3 / 2);
                 g_zsl_frame_dump_cnt++;

@@ -3425,9 +3425,7 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     struct img_size jpeg_thumb_size;
     struct sprd_cap_zsl_param zsl_param;
     FLASH_INFO_Tag flashInfo;
-    char prop[PROPERTY_VALUE_MAX] = {
-        0,
-    };
+    char prop[PROPERTY_VALUE_MAX] = {0,};
     HAL_LOGI("E camera id %d", mCameraId);
 
     SPRD_DEF_Tag *sprddefInfo;
@@ -3437,6 +3435,9 @@ int SprdCamera3OEMIf::startPreviewInternal() {
         HAL_LOGE("oem is null or oem ops is null");
         return UNKNOWN_ERROR;
     }
+
+    char hdr_version[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.hdr.version", hdr_version, "2");
 
     if (isCapturing()) {
         WaitForCaptureDone();
@@ -3614,6 +3615,13 @@ int SprdCamera3OEMIf::startPreviewInternal() {
     if (mTopAppId & mWhitelists) {
         mZslNum = 5;
         mZslMaxFrameNum = 5;
+    }
+
+    if (!strcmp(hdr_version, "3")) {
+        if (mSprdAppmodeId == CAMERA_MODE_AUTO_PHOTO || mSprdAppmodeId == CAMERA_MODE_REFOCUS) {
+            mZslNum = 7;
+            mZslMaxFrameNum = 7;
+        }
     }
 
     if (mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_VIDEO_SW) {
@@ -11655,6 +11663,8 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
                       uint32_t &buf_cnt) {
     int ret = 0;
     cmr_u32 value = 0, is_slave = 0;
+    char hdr_version[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.hdr.version", hdr_version, "2");
 
     HAL_LOGI("E");
     if (zsl_frame->monoboottime < mZslSnapshotTime) {
@@ -11703,15 +11713,29 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
 
             receiveRawPicture(zsl_frame);
         }
-        if (buf_cnt == 3 && mCameraId == 2) {
-            mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
-                                        CAMERA_IOCTRL_SET_HDR_DISABLE,
-                                        &value);
-            mHalOem->ops->camera_set_zsl_snapshot_buffer(
-                obj->mCameraHandle, zsl_frame->y_phy_addr,
-                zsl_frame->y_vir_addr, zsl_frame->fd);
-            return -1;
+
+        if (!strcmp(hdr_version, "3")) {
+            if (buf_cnt == 7 && mCameraId == 2) {
+                mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
+                                            CAMERA_IOCTRL_SET_HDR_DISABLE,
+                                            &value);
+                mHalOem->ops->camera_set_zsl_snapshot_buffer(
+                    obj->mCameraHandle, zsl_frame->y_phy_addr,
+                    zsl_frame->y_vir_addr, zsl_frame->fd);
+                return -1;
+            }
+        } else {
+            if (buf_cnt == 3 && mCameraId == 2) {
+                mHalOem->ops->camera_ioctrl(obj->mCameraHandle,
+                                            CAMERA_IOCTRL_SET_HDR_DISABLE,
+                                            &value);
+                mHalOem->ops->camera_set_zsl_snapshot_buffer(
+                    obj->mCameraHandle, zsl_frame->y_phy_addr,
+                    zsl_frame->y_vir_addr, zsl_frame->fd);
+                return -1;
+            }
         }
+
         if (mCameraId == 2) {
             return 0;
         }
@@ -11724,15 +11748,28 @@ int SprdCamera3OEMIf::SnapshotZslHdr(SprdCamera3OEMIf *obj,
         dst_alg_buf, SPRD_CAM_IMAGE_SW_ALGORITHM_HDR,
         CAM_IMG_FMT_YUV420_NV21);
 
-    if (buf_cnt >= 3) {
-        ret =
-            obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
-        if (ret) {
-            HAL_LOGE("camera_stop_capture failed");
+    if (!strcmp(hdr_version, "3")) {
+        if (buf_cnt >= 7) {
+            ret =
+                obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
+            if (ret) {
+                HAL_LOGE("camera_stop_capture failed");
+            }
+            obj->mFlagOffLineZslStart = 0;
+            return -1;
         }
-        obj->mFlagOffLineZslStart = 0;
-        return -1;
+    } else {
+        if (buf_cnt >= 3) {
+            ret =
+                obj->mHalOem->ops->camera_stop_capture(obj->mCameraHandle);
+            if (ret) {
+                HAL_LOGE("camera_stop_capture failed");
+            }
+            obj->mFlagOffLineZslStart = 0;
+            return -1;
+        }
     }
+
     return 0;
 }
 
@@ -12061,6 +12098,9 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     uint32_t hdr_count = 800, mfnr_count = 800;
     uint32_t lock_af = 0;
 
+    char hdr_version[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.hdr.version", hdr_version, "2");
+
     // whether FRONT_CAMERA_FLASH_TYPE is lcd
     bool isFrontLcd =
         (strcmp(mFrontFlash, "lcd") == 0) ? true : false;
@@ -12304,8 +12344,13 @@ void SprdCamera3OEMIf::processZslSnapshot(void *p_data) {
     }
 
     if (controlInfo.scene_mode == ANDROID_CONTROL_SCENE_MODE_HDR) {
-        mZslNum = 3;
-        mZslMaxFrameNum = 3;
+        if (!strcmp(hdr_version, "3")) {
+            mZslNum = 7;
+            mZslMaxFrameNum = 7;
+        } else {
+            mZslNum = 3;
+            mZslMaxFrameNum = 3;
+        }
         (mIsFDRCapture)?(obj->mFlagHdr = false):(obj->mFlagHdr = true);
     } else if ((mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_HW_CAP_SW ||
                 mSprd3dnrType == CAMERA_3DNR_TYPE_PREV_SW_CAP_SW ||

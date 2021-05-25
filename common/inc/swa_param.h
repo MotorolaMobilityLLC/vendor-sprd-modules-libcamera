@@ -16,14 +16,15 @@ extern "C" {
 
 
 /*========= for HDR ========*/
-
+#define HDR3_CAP_MAX 7
 #define HDR_CAP_MAX 3
 
 struct swa_hdr_param {
 	uint32_t pic_w;
 	uint32_t pic_h;
 	uint32_t fmt;
-	float ev[HDR_CAP_MAX];
+	uint32_t hdr_version;
+	float ev[HDR3_CAP_MAX];
 	cmr_s32 tuning_param_size;
 	void *tuning_param_ptr;
 	void *hdr_callback;

@@ -1100,10 +1100,16 @@ static cmr_int setting_set_scene_mode(struct setting_component *cpt,
                                       struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+    char hdr_version[PROPERTY_VALUE_MAX];
+    property_get("persist.vendor.cam.hdr.version", hdr_version, "2");
 
     CMR_LOGD("set scene mode %ld", parm->cmd_type_value);
     if (CAMERA_SCENE_MODE_HDR == parm->cmd_type_value) {
-        hal_param->is_hdr = 1;
+       if (!strcmp(hdr_version, "2")) {
+            hal_param->is_hdr = 2;
+        } else if (!strcmp(hdr_version, "3")){
+            hal_param->is_hdr = 3;
+        }
     } else {
         hal_param->is_hdr = 0;
     }
@@ -2977,7 +2983,6 @@ static cmr_int setting_get_hdr(struct setting_component *cpt,
                                struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
     struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
-
     parm->cmd_type_value = hal_param->is_hdr;
     CMR_LOGD("get hdr %ld", parm->cmd_type_value);
 

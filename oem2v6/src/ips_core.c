@@ -880,7 +880,7 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 		dst->addr_vir[1] = src->addr_vir.addr_u;
 		dst->addr_vir[2] = src->addr_vir.addr_v;
 	}
-	req->frm_out[0] = req->frm_in[2];
+	req->frm_out[0] = req->frm_in[req->frame_cnt - 1];
 	src = &req->frm_out[0];
 	out.frame_num = 1;
 	out.frms[0].fd = src->fd;
@@ -903,12 +903,11 @@ static cmr_int ipmpro_hdr(struct ips_context *ips_ctx,
 	if (hdr2_base->multi_support == 0)
 		pthread_mutex_unlock(&hdr2_base->glock);
 
-	free(req->frm_in[0].reserved);
-	free(req->frm_in[1].reserved);
-
-	req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[0]);
-	req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[1]);
-	memset(&req->frm_in[0], 0, sizeof(req->frm_in));
+	for (i = 0; i < req->frame_cnt - 1; i++) {
+		free(req->frm_in[i].reserved);
+		req->cb(req->client_data, &req->req_in, IPS_CB_RETURN_BUF, (void *)&req->frm_in[i]);
+		memset(&req->frm_in[i], 0, sizeof(struct img_frm));
+	}
 
 	if (dump_pic & 1) {
 		FILE *fp;

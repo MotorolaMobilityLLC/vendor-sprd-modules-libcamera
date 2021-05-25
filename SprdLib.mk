@@ -34,9 +34,14 @@ LOCAL_SHARED_LIBRARIES += libsprddepth libsprdbokeh
 endif
 
 ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
-ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),2)
-LOCAL_SHARED_LIBRARIES += libsprdhdr
-else
+ifneq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
+LOCAL_SHARED_LIBRARIES += libsprdhdr libsprdhdr3
+endif
+endif
+
+
+ifeq ($(strip $(TARGET_BOARD_CAMERA_HDR_CAPTURE)),true)
+ifeq ($(strip $(TARGET_BOARD_SPRD_HDR_VERSION)),1)
 LOCAL_SHARED_LIBRARIES += libsprd_easy_hdr
 endif
 endif

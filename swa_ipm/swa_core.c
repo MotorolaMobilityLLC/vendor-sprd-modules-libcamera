@@ -72,7 +72,14 @@ static long s_swa_log_level = 4;
 #define ALIGN(val, align) ((val + align - 1) & (~(align - 1)))
 #endif
 
+#if defined(CONFIG_SPRD_HDR_LIB_VERSION_3)
+#define CONFIG_CAMERA_HDR_CAPTURE_IPS
+#elif defined(CONFIG_SPRD_HDR_LIB_VERSION_2)
+#define CONFIG_CAMERA_HDR_CAPTURE_IPS
+#endif
+
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
+#ifdef CONFIG_CAMERA_HDR_CAPTURE_IPS
 
 struct hdr_context_t {
 	uint32_t frame_num;
@@ -84,7 +91,6 @@ struct hdr_context_t {
 	sprd_hdr_version_t version;
 };
 
-#ifdef CONFIG_SPRD_HDR_LIB_VERSION_2
 
 int swa_hdr_get_handle_size()
 {
@@ -152,9 +158,16 @@ int swa_hdr_process(void * ipmpro_hanlde,
 	hdr_param = &frm_param->hdr_param;
 	memset(&alg_param, 0, sizeof(sprd_hdr_param_t));
 
-	if (in->frame_num < 2 || in->frame_num > HDR_CAP_MAX) {
-		SWA_LOGE("fail to get valid input hdr frame num %d\n", in->frame_num);
-		return -1;
+	if (hdr_param->hdr_version == 3) {
+		if (in->frame_num < 2 || in->frame_num > HDR3_CAP_MAX) {
+			SWA_LOGE("fail to get valid input hdr frame num %d\n", in->frame_num);
+			return -1;
+		}
+	} else if (hdr_param->hdr_version == 2) {
+		if (in->frame_num < 2 || in->frame_num > HDR_CAP_MAX) {
+			SWA_LOGE("fail to get valid input hdr frame num %d\n", in->frame_num);
+			return -1;
+		}
 	}
 
 	for (i = 0; i < in->frame_num; i++) {
@@ -189,7 +202,9 @@ int swa_hdr_process(void * ipmpro_hanlde,
 	alg_param.output.stride = cxt->pic_w;
 	alg_param.output.size = cxt->pic_w * cxt->pic_h * 3 / 2;
 	alg_param.callback = hdr_param->hdr_callback;
+	alg_param.detect_out = hdr_param->hdr_callback;
 	alg_param.sensor_ae = hdr_param->ae_exp_gain_info;
+	alg_param.input_frame_num = in->frame_num;
 
 	SWA_LOGD("output fd 0x%x, addr %p %p %p, alg_param.callback %p %p\n", alg_param.output.ion_fd,
 		alg_param.output.addr[0], alg_param.output.addr[1], alg_param.output.addr[2],
@@ -231,7 +246,6 @@ int swa_hdr_close(void * ipmpro_hanlde,
 }
 #endif
 #endif
-
 
 
 #ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT

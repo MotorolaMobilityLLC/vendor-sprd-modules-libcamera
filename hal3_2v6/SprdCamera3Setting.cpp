@@ -2720,12 +2720,10 @@ int SprdCamera3Setting::initStaticParameters(int32_t cameraId) {
                    sizeof(avail_scene_modes)-sizeof(uint8_t));
         }
 #ifdef CONFIG_CAMERA_HDR_CAPTURE
-        uint32_t sizeSceneModes =
-            sizeof(avail_scene_modes) / avail_scene_modes[0];
+        uint32_t sizeSceneModes = sizeof(avail_scene_modes) / avail_scene_modes[0];
         if (mSensorType[cameraId] != FOURINONE_SW &&
             mSensorType[cameraId] != YUVSENSOR) {
-            s_setting[cameraId]
-                .controlInfo.available_scene_modes[sizeSceneModes] =
+            s_setting[cameraId].controlInfo.available_scene_modes[sizeSceneModes] =
                 ANDROID_CONTROL_SCENE_MODE_HDR;
         }
 #endif
