@@ -2582,6 +2582,51 @@ struct sensor_hdr_param {
 	struct sensor_hdr_component scene[6][10];
 };
 
+//HDR3.0
+struct sensor_hdr3_component {
+	float dark_low;
+	float dark_high;
+	float bright_low;
+	float bright_high;
+	float ev[2];
+	cmr_s32 scene;
+	cmr_u32 level;
+	float exposureThres2;
+	float exposureThres3;
+	cmr_u32 noise;
+	cmr_u32 diff;
+	float sigma;
+	float z2gaoliangweight;
+	float z2avgwei;
+	float z3avgwei_a;
+	float z3avgwei_b;
+	float z3avgwei_c;
+	cmr_u32 ply1ratio;
+	cmr_u32 ply2ratio;
+	cmr_u32 ply3ratio;
+	float down_thr;
+	float up_thr;
+	float ratio_enhance;
+	float ratio_enhance_cover;
+	float hist_a;
+	float hist_a_cover;
+	float increment;
+	cmr_u32 c_step;
+	float lowratio;
+	float ra_newy2;
+};
+
+struct sensor_hdr3_param {
+	cmr_u32 version;
+	cmr_s32 scene_num;
+	cmr_s32 bv_thr1;
+	cmr_s32 bv_thr2;
+	cmr_u8 thres_dark;
+	cmr_u8 thres_bright;
+	cmr_u8 reserved[2];
+	struct sensor_hdr3_component scene[6][10];
+};
+
 struct sensor_ae_tab_param {
 	cmr_u8 *ae;
 	cmr_u32 ae_len;
