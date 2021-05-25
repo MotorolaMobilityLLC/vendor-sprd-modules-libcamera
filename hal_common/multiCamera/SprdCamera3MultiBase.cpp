@@ -617,6 +617,97 @@ int SprdCamera3MultiBase::unmap(buffer_handle_t *buffer) {
     return ret;
 }
 
+int SprdCamera3MultiBase::map3(buffer_handle_t *buffer_handle,
+                                   hal_mem_info_t *mem_info) {
+    int ret = NO_ERROR;
+
+    if (NULL == mem_info || NULL == buffer_handle) {
+        HAL_LOGE("Param invalid handle=%p, info=%p", buffer_handle, mem_info);
+        return -EINVAL;
+    }
+    int width = ADP_WIDTH(*buffer_handle);
+    int height = ADP_HEIGHT(*buffer_handle);
+    int format = ADP_FORMAT(*buffer_handle);
+    int stride = ADP_STRIDE(*buffer_handle);
+    android_ycbcr ycbcr;
+    Rect bounds(width, height);
+    void *vaddr = NULL;
+    int usage;
+
+    native_handle_t *native_handle = (native_handle_t *)(*buffer_handle);
+    uint32_t yuvTextUsage = GraphicBuffer::USAGE_HW_TEXTURE |
+                            GraphicBuffer::USAGE_SW_READ_OFTEN |
+                            GraphicBuffer::USAGE_SW_WRITE_OFTEN;
+
+    mem_info->pbuffer = new GraphicBuffer(
+        native_handle, GraphicBuffer::HandleWrapMethod::WRAP_HANDLE, width,
+        height, HAL_PIXEL_FORMAT_YCrCb_420_SP, 1, yuvTextUsage, stride);
+    if (mem_info->pbuffer == NULL) {
+        HAL_LOGE("alloc fail");
+        return -ENOMEM;
+    }
+    mem_info->bufferPtr = (void *)(mem_info->pbuffer.get());
+
+    bzero((void *)&ycbcr, sizeof(ycbcr));
+    usage = (uint64_t)BufferUsage::CPU_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN;
+
+    if (format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
+        ret = mem_info->pbuffer->lockYCbCr(usage, bounds, &ycbcr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("onQueueFilled,Failed try lockycbcr. %p, ret %d",
+                     *buffer_handle, ret);
+            ret = mem_info->pbuffer->lock(usage, bounds, &vaddr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("onQueueFilled, Fail %p, ret %d", *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = vaddr;
+            }
+        } else {
+            mem_info->addr_vir = ycbcr.y;
+        }
+    } else {
+        ret = mem_info->pbuffer->lock(usage, bounds, &vaddr);
+        if (ret != NO_ERROR) {
+            HAL_LOGV("onQueueFilled, mapper.lock failed try lockycbcr. %p, "
+                     "ret %d",
+                     *buffer_handle, ret);
+            ret = mem_info->pbuffer->lockYCbCr(usage, bounds, &ycbcr);
+            if (ret != NO_ERROR) {
+                HAL_LOGE("lockycbcr.onQueueFilled, mapper.lock fail %p, ret %d",
+                         *buffer_handle, ret);
+            } else {
+                mem_info->addr_vir = ycbcr.y;
+            }
+        } else {
+            mem_info->addr_vir = vaddr;
+        }
+    }
+    mem_info->fd = ADP_BUFFD(*buffer_handle);
+    mem_info->addr_phy = (void *)0;
+    mem_info->size = ADP_BUFSIZE(*buffer_handle);
+    mem_info->width = ADP_WIDTH(*buffer_handle);
+    mem_info->height = ADP_HEIGHT(*buffer_handle);
+    mem_info->format = ADP_FORMAT(*buffer_handle);
+    HAL_LOGV("fd=0x%x,offset=%p,addr_vir=%p,size=%zu,w=%d,h=%d,format=%d",
+             mem_info->fd, mem_info->addr_phy, mem_info->addr_vir,
+             mem_info->size, mem_info->width, mem_info->height,
+             mem_info->format);
+
+err_out:
+    return ret;
+}
+
+int SprdCamera3MultiBase::unmap3(buffer_handle_t *buffer_handle,
+                                     hal_mem_info_t *mem_info) {
+    if (mem_info->pbuffer != NULL) {
+        mem_info->pbuffer->unlock();
+        mem_info->pbuffer.clear();
+        mem_info->pbuffer = NULL;
+        mem_info->bufferPtr = NULL;
+    }
+    return NO_ERROR;
+}
+
 int SprdCamera3MultiBase::getStreamType(camera3_stream_t *new_stream) {
     int stream_type = 0;
 
@@ -1846,8 +1937,8 @@ static custom_stream_info_t custom_stream[SUPPORT_RES_NUM] = {
 #endif
          {3264, 2448}, {3264, 1836}, {2304, 1728},
          {2048, 1152}, {1600, 1200}, {1600, 900}, {1920, 1080},
-         {1440, 1080}, {1280, 720}, {720, 480}, {320, 240}, {320, 144},
-         {256, 144}}},
+         {1440, 1080}, {1280, 720}, {720, 480}, {320, 240}, {320, 180},
+         {320, 144}, {256, 144}}},
     {RES_MULTI_FULLSIZE, {{4160,3120}, {4160,2340}, {2448,2448},
          {1920,1080}, {1440,1080}, {1280,720}, {720, 480}, {480,480}}},
 };
@@ -2103,6 +2194,100 @@ int SprdCamera3MultiBase::mapMemInfo(buffer_handle_t *input_buf1, void *input1_a
 
   return ret;
 }
+/*===========================================================================
+ * FUNCTION   :processEisWrapAlgo
+ *
+ * DESCRIPTION:process Eis Wrap Algo
+ *
+ * PARAMETERS :src/dst buffer and eis wrap mat
+ *
+ * RETURN     : None
+ *==========================================================================*/
+int SprdCamera3MultiBase::processEisWarpAlgo(buffer_handle_t *src_buffer, buffer_handle_t *dst_buffer,
+                                                void *warp_mat, uint32_t frame_num, SprdCamera3HWI *hwiMain) {
+    int ret = NO_ERROR;
+    struct img_frm src_img;
+    struct img_frm dst_img;
+    struct eis_warp_yuv_param eis_warp_param;
+    hal_mem_info_t src_mem_info;
+    hal_mem_info_t dst_mem_info;
+    char prop[PROPERTY_VALUE_MAX] = {
+        0,
+    };
+    HAL_LOGV("E");
+    ret = map3(src_buffer, &src_mem_info);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map src buffer");
+        goto fail_map3_src;
+    }
+    ret = map3(dst_buffer, &dst_mem_info);
+    if (ret != NO_ERROR) {
+        HAL_LOGE("fail to map dst buffer");
+        goto fail_map3_dst;
+    }
 
+    memset(&src_img, 0, sizeof(struct img_frm));
+    memset(&dst_img, 0, sizeof(struct img_frm));
+    src_img.addr_phy.addr_y = 0;
+    src_img.addr_phy.addr_u = src_img.addr_phy.addr_y +
+                              (src_mem_info.width) * (src_mem_info.height);
+    src_img.addr_phy.addr_v = src_img.addr_phy.addr_u;
+    src_img.addr_vir.addr_y = (cmr_uint)(src_mem_info.addr_vir);
+    src_img.addr_vir.addr_u = (cmr_uint)(src_mem_info.addr_vir) +
+                              (src_mem_info.width) * (src_mem_info.height);
+    src_img.buf_size = src_mem_info.size;
+    src_img.fd = src_mem_info.fd;
+    src_img.fmt = IMG_DATA_TYPE_YUV420;
+    src_img.rect.start_x = 0;
+    src_img.rect.start_y = 0;
+    src_img.rect.width = src_mem_info.width;
+    src_img.rect.height = src_mem_info.height;
+    src_img.size.width = src_mem_info.width;
+    src_img.size.height = src_mem_info.height;
+    src_img.reserved = src_mem_info.bufferPtr;
+    src_img.frame_number = frame_num;
+
+    dst_img.addr_phy.addr_y = 0;
+    dst_img.addr_phy.addr_u = dst_img.addr_phy.addr_y +
+                            (dst_mem_info.width) * (dst_mem_info.height);
+    dst_img.addr_phy.addr_v = dst_img.addr_phy.addr_u;
+    dst_img.addr_vir.addr_y = (cmr_uint)(dst_mem_info.addr_vir);
+    dst_img.addr_vir.addr_u = (cmr_uint)(dst_mem_info.addr_vir) +
+                            (dst_mem_info.width) * (dst_mem_info.height);
+    dst_img.buf_size = dst_mem_info.size;
+    dst_img.fd = dst_mem_info.fd;
+    dst_img.fmt = IMG_DATA_TYPE_YUV420;
+    dst_img.rect.start_x = 0;
+    dst_img.rect.start_y = 0;
+    dst_img.rect.width = dst_mem_info.width;
+    dst_img.rect.height = dst_mem_info.height;
+    dst_img.size.width = dst_mem_info.width;
+    dst_img.size.height = dst_mem_info.height;
+    dst_img.reserved = dst_mem_info.bufferPtr;
+
+    memcpy(&eis_warp_param.src_img, &src_img, sizeof(struct img_frm));
+    memcpy(&eis_warp_param.dst_img, &dst_img, sizeof(struct img_frm));
+    eis_warp_param.eiswarp = *(struct eiswarp *)warp_mat;
+    HAL_LOGV("warp mat %lf %lf %lf %lf %lf %lf %lf %lf %lf",
+            eis_warp_param.eiswarp.warp[0],eis_warp_param.eiswarp.warp[1],eis_warp_param.eiswarp.warp[2],
+            eis_warp_param.eiswarp.warp[3],eis_warp_param.eiswarp.warp[4],eis_warp_param.eiswarp.warp[5],
+            eis_warp_param.eiswarp.warp[6],eis_warp_param.eiswarp.warp[7],eis_warp_param.eiswarp.warp[8]);
+    hwiMain->camera_ioctrl(CAMERA_IOCTRL_EIS_WARP_YUV_PROC, &eis_warp_param, NULL);
+
+    property_get("persist.vendor.cam.eiswarp.dump", prop, "0");
+    if (!strcmp(prop, "eiswarp") || !strcmp(prop, "all")) {
+        dumpData((unsigned char *)src_img.addr_vir.addr_y, 1, src_img.buf_size,
+                 src_img.rect.width, src_img.size.height, 5, "input");
+        dumpData((unsigned char *)dst_img.addr_vir.addr_y, 1, dst_img.buf_size,
+                 dst_img.rect.width, dst_img.size.height, 5, "output");
+    }
+
+    unmap3(dst_buffer, &dst_mem_info);
+fail_map3_dst:
+    unmap3(src_buffer, &src_mem_info);
+fail_map3_src:
+    HAL_LOGV("X");
+    return ret;
+}
 
 };

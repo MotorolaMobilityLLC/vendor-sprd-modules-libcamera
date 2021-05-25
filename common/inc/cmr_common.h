@@ -677,6 +677,10 @@ struct swa_frame_param {
 	struct swa_mfsr_info mfsr_param;
 };
 
+struct eiswarp {
+    double warp[9];
+};
+
 struct img_addr {
     cmr_uint addr_y;
     cmr_uint addr_u;
@@ -728,6 +732,12 @@ struct enc_exif_param {
     cmr_u32 stream_real_size;
     cmr_uint rotation;
     cmr_uint flip_on;
+};
+
+struct eis_warp_yuv_param {
+    struct img_frm src_img;
+    struct img_frm dst_img;
+    struct eiswarp eiswarp;
 };
 
 struct ccir_if {
@@ -2367,6 +2377,8 @@ typedef enum {
     CAMERA_IOCTRL_SET_ZSL_CAP_PARAM,
     CAMERA_IOCTRL_WRITE_CALIBRATION_OTP_DATA,
     CAMERA_IOCTRL_SET_MULTICAM_HIGHRES_MODE,
+    CAMERA_IOCTRL_GET_EIS_WARP,
+    CAMERA_IOCTRL_EIS_WARP_YUV_PROC,
     CAMERA_IOCTRL_CMD_MAX
 } cmr_ioctr_cmd;
 void camera_get_picture_size(multiCameraMode mode, int *width, int *height);

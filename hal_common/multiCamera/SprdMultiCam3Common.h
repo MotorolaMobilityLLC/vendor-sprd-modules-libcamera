@@ -307,6 +307,7 @@ typedef struct {
 
 typedef struct {
     uint32_t frame_number;
+    uint32_t match_frameNum;
     const camera3_stream_buffer_t *input_buffer;
     camera3_stream_t *stream;
     buffer_handle_t *buffer1; // main sensor

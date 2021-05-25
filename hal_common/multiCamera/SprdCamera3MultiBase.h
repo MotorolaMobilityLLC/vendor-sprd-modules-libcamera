@@ -81,9 +81,9 @@ typedef enum {
     RES_END
 } custom_size;
 #ifdef CAMERA_HIGH_RESOLUTION_IN_AUTO_MODE
-#define CUSTOM_RES_NUM 14
+#define CUSTOM_RES_NUM 21
 #else
-#define CUSTOM_RES_NUM 13
+#define CUSTOM_RES_NUM 20
 #endif
 typedef struct custom_stream_info {
     custom_size size;
@@ -144,6 +144,8 @@ class SprdCamera3MultiBase {
                                 int *height);
     virtual int map(buffer_handle_t *buffer, void **vir_addr);
     virtual int unmap(buffer_handle_t *buffer);
+    virtual int map3(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
+    virtual int unmap3(buffer_handle_t *buffer_handle, hal_mem_info_t *mem_info);
     virtual int allocateBufferList(int w, int h, new_mem_t *new_mem,
               int index, int stream_type, bool byte_unalign, sprd_camera_memory_t *memory, int type);
     virtual void freeBufferList(new_mem_t *buffer, bool byte_unalign);
@@ -213,7 +215,7 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
         buffer_handle_t *pic_enc_private_handle, void *pic_vir_addr,
         buffer_handle_t *dst_private_handle, void *dst_vir_addr,
         SprdCamera3HWI *hwi, uint8_t fmt, cmr_uint rotation, cmr_uint flip_on);
-	int jpeg_decode_to_yuv(
+    int jpeg_decode_to_yuv(
         buffer_handle_t *jpg_private_handle, void *jpg_vir_addr,
         buffer_handle_t *yuv_private_handle, void *yuv_vir_addr,
         SprdCamera3HWI *hwi);
@@ -225,9 +227,12 @@ virtual void convert_face_info(int *ptr_cam_face_inf, int width,
     static int getMultiTagToSprdTag(uint8_t multi_tag);
     static int getBufferSize(buffer_handle_t h);
     static int getJpegStreamSize(const char *resolution);
-	int ProcessAlgo(buffer_handle_t *buffer_handle,void *input1_addr,sprd_cam_image_sw_algorithm_type_t sw_algorithm_type,SprdCamera3HWI *hwiMain);
-	int mapMemInfo(buffer_handle_t *buffer_handle,void *input1_addr,
+    int ProcessAlgo(buffer_handle_t *buffer_handle, void *input1_addr,
+        sprd_cam_image_sw_algorithm_type_t sw_algorithm_type, SprdCamera3HWI *hwiMain);
+    int mapMemInfo(buffer_handle_t *buffer_handle,void *input1_addr,
                                     struct camera_frame_type *zsl_frame);
+    int processEisWarpAlgo(buffer_handle_t *src_buffer, buffer_handle_t *dst_buffer,
+                                    void *warp_mat, uint32_t frame_num, SprdCamera3HWI *hwiMain);
 
   private:
     Mutex mBufferListLock;
