@@ -452,6 +452,7 @@ static struct blk_info blocks_array[] = {
 	{ ISP_BLK_3DLUT, sizeof(struct sensor_3dlut_param)},
 	{ ISP_BLK_CNR_H, 0 }, /* NR block */
 	{ ISP_BLK_POST_CNR_H, 0 }, /* NR block */
+	{ ISP_BLK_YIQ_AFL_V3, sizeof(struct sensor_y_afl_param_v3)},
 
 	/* software algo blocks */
 	{ ISP_BLK_FB, sizeof(struct sensor_facebeauty_param) },
@@ -1975,6 +1976,9 @@ static cmr_s32 isp_pm_get_param(cmr_handle handle, enum isp_pm_cmd cmd, void *in
 			break;
 		case ISP_PM_CMD_GET_HDR_PARAM:
 			block_id = ISP_BLK_HDR;
+			break;
+		case ISP_PM_CMD_GET_INIT_Y_AFL:
+			block_id = ISP_BLK_YIQ_AFL_V3;
 			break;
 		default:
 			break;
