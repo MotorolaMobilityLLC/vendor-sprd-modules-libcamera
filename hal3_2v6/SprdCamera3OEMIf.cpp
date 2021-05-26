@@ -283,6 +283,7 @@ ASensorEventQueue *SprdCamera3OEMIf::mCTSensorEventQueue = NULL;
 const ASensor *SprdCamera3OEMIf::mcolortempSensor = NULL;
 uint32_t SprdCamera3OEMIf::mcolor_temp_sensor_flag = 0;
 uint32_t SprdCamera3OEMIf::mcolor_temp_sensor_count = 0;
+Mutex SprdCamera3OEMIf::mCTlock = Mutex();
 #endif
 
 multi_camera_zsl_match_frame *SprdCamera3OEMIf::mMultiCameraMatchZsl = NULL;
@@ -13847,8 +13848,10 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
     ASensorList mCTSensorList;
     uint32_t GsensorRate = 50 * 1000; // us
 
+    Mutex::Autolock l(mCTlock);
     mcolor_temp_sensor_count++;
-
+    HAL_LOGD("mcolor_temp_sensor_count %d, mcolor_temp_sensor_flag %d",
+                       mcolor_temp_sensor_count, mcolor_temp_sensor_flag);
     if(mcolor_temp_sensor_flag == 1){
         HAL_LOGE("color temp sensor has registered");
         return NULL;
@@ -13861,12 +13864,10 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
     }
     mNumSensors = ASensorManager_getSensorList(mCTSensorManager, &mCTSensorList);
     mcolortempSensor = ASensorManager_getDefaultSensor(
-        mCTSensorManager, SENSOR_TYPE_SPRD_COLOR_TEMP);
-
+                          mCTSensorManager, SENSOR_TYPE_SPRD_COLOR_TEMP);
     ALooper *mLooper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
-
-    mCTSensorEventQueue =
-        ASensorManager_createEventQueue(mCTSensorManager, mLooper, 0, NULL, NULL);
+    mCTSensorEventQueue = ASensorManager_createEventQueue(
+                             mCTSensorManager, mLooper, 0, NULL, NULL);
 
     if (mcolortempSensor != NULL) {
         if (ASensorEventQueue_registerSensor(
@@ -13881,7 +13882,8 @@ void *SprdCamera3OEMIf::color_temp_process_init(void) {
         }
     }
 
-    HAL_LOGI("X");
+    HAL_LOGI("mCTSensorEventQueue 0x%x, mcolortempSensor 0x%x",
+                         mCTSensorEventQueue, mcolortempSensor);
     return NULL;
 }
 
@@ -13910,8 +13912,12 @@ void *SprdCamera3OEMIf::color_temp_Sensor_process(cmr_u32* data_colortemp) {
 }
 
 void *SprdCamera3OEMIf::color_temp_process_deinit(void) {
+    HAL_LOGD("mcolor_temp_sensor_count %d, mcolor_temp_sensor_flag %d",
+               mcolor_temp_sensor_count, mcolor_temp_sensor_flag);
     if (mcolor_temp_sensor_flag) {
         if((--mcolor_temp_sensor_count) == 0) {
+            HAL_LOGI("mCTSensorEventQueue 0x%x, mcolortempSensor 0x%x",
+                     mCTSensorEventQueue, mcolortempSensor);
             ASensorEventQueue_disableSensor(mCTSensorEventQueue, mcolortempSensor);
             ASensorManager_destroyEventQueue(mCTSensorManager, mCTSensorEventQueue);
             mCTSensorManager = NULL;
@@ -13921,7 +13927,6 @@ void *SprdCamera3OEMIf::color_temp_process_deinit(void) {
         }
     }
 
-    HAL_LOGI("X");
     return NULL;
 }
 #endif

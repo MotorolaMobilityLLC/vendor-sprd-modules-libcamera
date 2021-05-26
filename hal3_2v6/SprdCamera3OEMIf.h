@@ -1055,6 +1055,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     static const ASensor *mcolortempSensor;
     static uint32_t mcolor_temp_sensor_flag;
     static uint32_t mcolor_temp_sensor_count;
+    static Mutex mCTlock;
 #endif
     bool mNonZslFlag;
     uint32_t mSkipNum;
