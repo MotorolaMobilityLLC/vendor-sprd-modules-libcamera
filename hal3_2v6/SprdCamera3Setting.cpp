@@ -6251,6 +6251,7 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     int32_t maxRegionsAe = 0;
     int32_t maxRegionsAwb = 0;
     int32_t maxRegionsAf = 0;
+    int32_t sensitivityValue = 0;
 #ifdef CAMERA_MANULE_SNEOSR
     float minimum_focus_distance = 0.0f;
     float focus_distance = 0.0f;
@@ -6702,6 +6703,12 @@ camera_metadata_t *SprdCamera3Setting::translateLocalToFwMetadata() {
     HAL_LOGV("exposure_time: %lld", s_setting[mCameraId].sensorInfo.exposure_time);
     camMetadata.update(ANDROID_SENSOR_EXPOSURE_TIME,
                        &(s_setting[mCameraId].sensorInfo.exposure_time), 1);
+     sensitivityValue = mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity;
+     if (sensitivityValue < ksensitivity_range[0])
+            sensitivityValue = ksensitivity_range[0];
+     else if (sensitivityValue > ksensitivity_range[1])
+            sensitivityValue = ksensitivity_range[1];
+    mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity = sensitivityValue;
     HAL_LOGV("mFrameNumMap sensitivity is %d", mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity);
     camMetadata.update(ANDROID_SENSOR_SENSITIVITY,
                        &(mFrameNumMap[s_setting[mCameraId].syncInfo.frame_number].sensitivity), 1);
