@@ -2508,8 +2508,7 @@ void SprdCamera3OEMIf::setCamPreviewFps(struct cmr_range_fps_param &fps_param) {
     property_get("ro.vendor.camera.dualcamera_fps", fps_prop, "19");
 
     // TBD: check why 20fps, not 30fp
-    if ((mMultiCameraMode == MODE_BOKEH && mSprdAppmodeId != -1) ||
-        mMultiCameraMode == MODE_3D_CALIBRATION ||
+    if (mMultiCameraMode == MODE_3D_CALIBRATION ||
         mMultiCameraMode == MODE_REFOCUS ||
         mMultiCameraMode == MODE_RANGE_FINDER ||
         mMultiCameraMode == MODE_TUNING ||
@@ -2517,6 +2516,20 @@ void SprdCamera3OEMIf::setCamPreviewFps(struct cmr_range_fps_param &fps_param) {
         mMultiCameraMode == MODE_DUAL_FACEID_UNLOCK) {
         fps_param.min_fps = atoi(fps_prop);
         fps_param.max_fps = atoi(fps_prop);
+    }
+
+    //range 10~30 bokrh or dual portrait scene dynamic fps need close HW-frame sync
+    if (mMultiCameraMode == MODE_BOKEH && mSprdAppmodeId != -1) {
+        char value[PROPERTY_VALUE_MAX];
+        int bokeh_val_max = 0;
+        int bokeh_val_min = 0;
+        property_get("persist.vendor.cam.bokeh.preview.fps", value, "3010");
+        if (atoi(value) != 0) {
+            bokeh_val_min = atoi(value) % 100;
+            bokeh_val_max = atoi(value) / 100;
+            fps_param.min_fps = bokeh_val_min > 5 ? bokeh_val_min : 5;
+            fps_param.max_fps = bokeh_val_max;
+        }
     }
 
     // to set preview fps by setprop
