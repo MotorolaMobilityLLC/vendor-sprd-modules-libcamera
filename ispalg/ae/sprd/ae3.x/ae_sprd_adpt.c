@@ -6266,7 +6266,44 @@ static cmr_s32 ae_calculation(cmr_handle handle, cmr_handle param, cmr_handle re
 	cxt->cur_status.frm_id = calc_in->info.frame_id;
 
 	/*send multi_mode to lib*/
-	cxt->cur_status.is_multi_mode = cxt->is_multi_mode;
+	switch(cxt->is_multi_mode) 
+		{
+			case ISP_ALG_SINGLE:
+				cxt->cur_status.is_multi_mode = AEC_SINGLE;
+				break;
+
+			case ISP_ALG_DUAL_C_C:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_DUAL_SBS:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_BLUR_REAR:
+				cxt->cur_status.is_multi_mode = AEC_BLUR;
+				break;
+
+			case ISP_ALG_DUAL_W_T:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_DUAL_C_M:
+				cxt->cur_status.is_multi_mode = AEC_DUAL;
+				break;
+
+			case ISP_ALG_TRIBLE_W_T_UW:
+				cxt->cur_status.is_multi_mode = AEC_TRIBLE_W_T_UW;
+				break;
+
+			case ISP_ALG_TRIBLE_W_T_UW_SYNC:
+				cxt->cur_status.is_multi_mode = AEC_TRIBLE_W_T_UW_SYNC;
+				break;
+
+			default:
+				cxt->cur_status.is_multi_mode = AEC_SINGLE;
+				break;		
+		}
 
 	/*get bayserhist stat*/
 	memcpy(&cxt->cur_status.adv_param.bhist_data[0].hist_data, &calc_in->bayerhist_stats[0].value, 256 * sizeof(cmr_u32));
