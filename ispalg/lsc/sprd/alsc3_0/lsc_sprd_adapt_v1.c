@@ -27,6 +27,14 @@
 #include <math.h>
 #include "cmr_common.h"
 
+#ifdef ISP_LOGV
+#undef ISP_LOGV
+static cmr_int g_alsc_log_level = LEVEL_OVER_LOGD;
+extern long g_isp_log_level;
+#define ISP_LOGV(format, ...)                                                  \
+	ALOGD_IF(((g_alsc_log_level >= LEVEL_OVER_LOGV)||(g_isp_log_level >= LEVEL_OVER_LOGV)||((g_log_level[2] - '0') >= LEVEL_OVER_LOGV)), DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#endif
+
 #define MAX_CAMERA_ID  6
 
 #define DEFAULT_TAB_INDEX 2
@@ -94,6 +102,16 @@ static void lsc_get_prop_cmd(struct lsc_sprd_ctrl_context *cxt)
 	val = atoi(prop);
 	if(0 <= val)
 	        cxt->cmd_alsc_dump_otp = val;
+
+	property_get("debug.isp.alsc.cost.time", prop, "0");
+	val = atoi(prop);
+	if(0 <= val)
+	        cxt->cmd_alsc_cost_time = val;
+
+	property_get("debug.isp.alsc.log.level", prop, "0");
+	val = atoi(prop);
+	if(0 <= val)
+	        g_alsc_log_level = val;
 }
 
 static void lsc_get_channel_index(cmr_u32 pattern, cmr_u8 * off_gr, cmr_u8 * off_r, cmr_u8 * off_b, cmr_u8 * off_gb)
@@ -2888,7 +2906,11 @@ lsc_calc_exit:
 
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
-	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
+
+	if(cxt->cmd_alsc_cost_time){
+		ISP_LOGI("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
+	}
+
 	return rtn;
 }
 
@@ -3391,10 +3413,12 @@ static cmr_s32 lsc_sprd_ioctrl(void *handle, cmr_s32 cmd, void *in, void *out)
 		break;
 
 	case ALSC_GET_UPDATE_INFO:
-		memcpy(cxt->lsc_buffer_interlace, cxt->lsc_buffer, cxt->gain_width * cxt->gain_height * 4 * sizeof(unsigned short));
-		//planar2interlace for driver use
-		if (cxt->is_planar == 1) {
-			lsc_table_planar2interlace(cxt->lsc_buffer_interlace, cxt->gain_width, cxt->gain_height, cxt->output_gain_pattern, cxt->output_gain_pattern);
+		chnl_gain_num = cxt->gain_width * cxt->gain_height;
+		for(i = 0; i < chnl_gain_num; i++){
+			cxt->lsc_buffer_interlace[4 * i + is_gr]=cxt->lsc_buffer[i + is_gr * chnl_gain_num];
+			cxt->lsc_buffer_interlace[4 * i + is_r]=cxt->lsc_buffer[i + is_r * chnl_gain_num];
+			cxt->lsc_buffer_interlace[4 * i + is_b]=cxt->lsc_buffer[i + is_b * chnl_gain_num];
+			cxt->lsc_buffer_interlace[4 * i + is_gb]=cxt->lsc_buffer[i + is_gb * chnl_gain_num];
 		}
 
 		alsc_update_info_out = (struct alsc_update_info *)out;

@@ -210,21 +210,20 @@ extern "C" {
 
 	typedef struct {
 		cmr_u32 version;
-		cmr_u32 reserved;
-		cmr_u64 u8Hist[256];
-		//cmr_u32 u4RespCurve[256];
-		cmr_u32 u4RespCurve[1025];
-		//cmr_u16 uOutputGamma[3][256];
-		cmr_u16 uOutputGamma[1025];
-		cmr_u8 uLowPT;
-		cmr_u8 uHighPT;
-		cmr_u8 uFinalLowBin;
-		cmr_u8 uFinalHighBin;
+		cmr_u32 reserved;				/* 2 * 4 */
+		cmr_u32 u8Hist[256];			/* 256 * 4 */
+		cmr_u16 u4RespCurve[1025];
+		cmr_u16 reserved1;				/* 513 * 4 */
+		cmr_u16 uLowPT;
+		cmr_u16 uHighPT;
+		cmr_u16 uFinalLowBin;
+		cmr_u16 uFinalHighBin;			/* 2 * 4 */
 		cmr_s32 bv;
-		cmr_u32 evd;
-		cmr_u16 bin[10];
-		cmr_u16 pt[10];
-	} smart_gamma_debuginfo;
+		cmr_u32 evd;					/* 2 * 4 */
+		cmr_u16 bin[10];				/* 5 * 4 */
+		cmr_u16 pt[10];					/* 5 * 4 */
+		cmr_u32 reserved2[179];			/* 179 * 4 */
+	} smart_gamma_debuginfo;			/* 964 * 4 */
 
 	struct blc_debug {
 		cmr_u32 gain;

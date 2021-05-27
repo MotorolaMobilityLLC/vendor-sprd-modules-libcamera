@@ -1102,11 +1102,16 @@ static cmr_int camera_fdr_handle_post(struct camera_context *cxt, struct frm_inf
 	src_param.size.height = frame->height;
 	src_param.size.width = frame->length;
 	src_param.monoboottime = frame->monoboottime;
+	src_param.rect.start_x = cxt->prev_cxt.rect.start_x;
+	src_param.rect.start_y = cxt->prev_cxt.rect.start_y;
+	src_param.rect.width = cxt->prev_cxt.rect.width;
+	src_param.rect.height = cxt->prev_cxt.rect.height;
 
 	 //invalidate buf
 	buf_size = frame->height * frame->length * 2;
-	CMR_LOGD("fdr fd: %d, mono time %lld buf_size:%ld, w %d h %d",
-			frame->fd, frame->monoboottime, buf_size, frame->length, frame->height);
+	CMR_LOGD("fdr fd: %d, mono time %lld buf_size:%ld, w %d h %d, rect: x:%d, y:%d, w:%d, h:%d",
+			frame->fd, frame->monoboottime, buf_size, frame->length, frame->height,
+			src_param.rect.start_x, src_param.rect.start_y, src_param.rect.width, src_param.rect.height);
 	CMR_LOGD("fdr addr: 0x%lx, 0x%lx, 0x%lx, vir_addr: 0x%lx, 0x%lx, 0x%lx",
 	             frame->yaddr, frame->uaddr, frame->vaddr,
 	             frame->yaddr_vir, frame->uaddr_vir, frame->vaddr_vir);
@@ -1394,7 +1399,7 @@ static cmr_int camera_ipmpro_init(cmr_handle oem_handle) {
 	cmr_int ret = CMR_CAMERA_SUCCESS;
 	void *sw_handle = NULL;
 	struct camera_context *cxt = (struct camera_context *)oem_handle;
-	struct ipmpro_context *swa_cxt = &cxt->swa_cxt_fdr;;
+	struct ipmpro_context *swa_cxt = &cxt->swa_cxt_fdr;
 	ipmpro_get_handle_size swa_get_size;
 	nsecs_t cur_time, end_time;
 	cmr_u32 time_diff;
@@ -1967,6 +1972,12 @@ static cmr_int camera_ips_get_params(struct camera_context *cxt,
 	com_info->angle = cxt->jpeg_cxt.param.rotation;
 	com_info->flip_on = cxt->jpeg_cxt.param.flip;
 	com_info->is_front = (cxt->camera_id == 1);
+	/* get sensor orientation */
+	ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+		CAMERA_PARAM_GET_SENSOR_ORIENTATION, &setting_param);
+	if (!ret) {
+		com_info->sensor_orientation = (uint32_t)setting_param.cmd_type_value;
+	}
 
 	/* get ultra-wide warp info */
 	if (cxt->is_ultra_wide) {
@@ -3034,6 +3045,101 @@ void camera_focus_evt_cb(enum af_cb_type cb, cmr_uint param, void *privdata) {
     }
 }
 
+static void camera_facealign_conversion(cmr_handle oem_handle,
+                                struct camera_frame_type *frame_param,
+                                struct isp_face_area *face_area,
+                                struct sprd_img_path_rect *sn_trim) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    struct setting_context *setting_cxt = &cxt->setting_cxt;
+    cmr_s32 i = 0;
+    for (i = 0; i < 1; i++) {
+        float left = 0, top = 0, width = 0, height = 0, zoomWidth = 0,
+              zoomHeight = 0;
+        struct sprd_img_rect scalerCrop;
+
+        scalerCrop.x = sn_trim->trim_valid_rect.x;
+        scalerCrop.y = sn_trim->trim_valid_rect.y;
+        scalerCrop.w = sn_trim->trim_valid_rect.w;
+        scalerCrop.h = sn_trim->trim_valid_rect.h;
+
+        /* for crop region center not at sensor center */
+        struct setting_cmd_parameter setting_param;
+        int ret = 0, tag;
+
+        cmr_bzero(&setting_param, sizeof(setting_param));
+        setting_param.camera_id = cxt->camera_id;
+        tag = cxt->is_ultra_wide ? SETTING_GET_REPROCESS_ZOOM_RATIO
+                                 : SETTING_GET_ZOOM_PARAM;
+        ret = cmr_setting_ioctl(setting_cxt->setting_handle, tag,
+                                &setting_param);
+        if (ret) {
+            CMR_LOGW("failed to get zoom param %ld", ret);
+        } else {
+            struct zoom_info *info = &setting_param.zoom_param.zoom_info;
+            struct img_rect *rect = &info->crop_region;
+
+            /* hal_param is bzero-ed on init, this check should be enough...
+             */
+            if (rect->start_x || rect->start_y || rect->width ||
+                rect->height) {
+                struct img_rect src, dst;
+
+                src.start_x = 0;
+                src.start_y = 0;
+                src.width = face_area->frame_width;
+                src.height = face_area->frame_height;
+
+                dst = camera_apply_rect_and_ratio(
+                    info->pixel_size, info->crop_region, src,
+                    (float)src.width / (float)src.height);
+
+                CMR_LOGV("fix rect from %u %u %u %u to %u %u %u %u",
+                         scalerCrop.x, scalerCrop.y, scalerCrop.w,
+                         scalerCrop.h, dst.start_x, dst.start_y, dst.width,
+                         dst.height);
+
+                scalerCrop.x = dst.start_x;
+                scalerCrop.y = dst.start_y;
+                scalerCrop.w = dst.width;
+                scalerCrop.h = dst.height;
+            }
+        }
+
+        float previewAspect = (float)frame_param->width / frame_param->height;
+        float cropAspect = (float)scalerCrop.w / scalerCrop.h;
+        if (previewAspect > cropAspect) {
+            width = scalerCrop.w;
+            height = scalerCrop.w / previewAspect;
+            left = scalerCrop.x;
+            top = scalerCrop.y + (scalerCrop.h - height) / 2;
+        } else {
+            width = previewAspect * scalerCrop.h;
+            height = scalerCrop.h;
+            left = scalerCrop.x + (scalerCrop.w - width) / 2;
+            top = scalerCrop.y;
+        }
+        zoomWidth = width / (float)frame_param->width;
+        zoomHeight = height / (float)frame_param->height;
+
+        CMR_LOGV("zoomWidth %f zoomHeight %f  left %f  top %f", zoomWidth, zoomHeight, left, top);
+        CMR_LOGV("frame_param->width x height: %f x %f",(float)frame_param->width, (float)frame_param->height);
+        CMR_LOGV("scalerCrop.w x h: %f x %f",(float)scalerCrop.w, (float)scalerCrop.h);
+
+        face_area->face_info[i].fascore = frame_param->face_info[i].fascore;
+        for(int j = 0; j < FA_SHAPE_POINTNUM * 2; j += 2) {
+            face_area->face_info[i].data[j] = (int)((float)(frame_param->face_info[i].data[j]) * zoomWidth + left);
+        }
+        for(int j = 1; j < FA_SHAPE_POINTNUM * 2; j += 2) {
+            face_area->face_info[i].data[j] = (int)((float)(frame_param->face_info[i].data[j]) * zoomHeight + top);
+        }
+
+        for(int j=0; j < FA_SHAPE_POINTNUM * 2; j++) {
+            CMR_LOGD("toispface%d: fa_shape.data point %d = %d", i, j, face_area->face_info[i].data[j]);
+        }
+        CMR_LOGD("toispface%d: fa_shape.fascore = %d", i, face_area->face_info[i].fascore);
+    }
+}
+
 static void camera_cfg_face_roi(cmr_handle oem_handle,
                                 struct camera_frame_type *frame_param,
                                 struct isp_face_area *face_area,
@@ -3367,6 +3473,10 @@ cmr_int camera_preview_cb(cmr_handle oem_handle, enum preview_cb_type cb_type,
 
             if (face_info_max_num < face_area.face_num) {
                 face_area.face_num = face_info_max_num;
+            }
+
+            if(face_area.face_num) {
+                camera_facealign_conversion(cxt, frame_param, &face_area, &sn_trim);
             }
 
             camera_cfg_face_roi(cxt, frame_param, &face_area, &sn_trim);
@@ -9384,6 +9494,18 @@ cmr_int camera_isp_start_video(cmr_handle oem_handle,
     }
     // TBD: check this
     isp_param.capture_mode = 0; // setting_param.cmd_type_value;
+
+//in high fps mode, set dv_mode to 1
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle,
+                            SETTING_GET_HIGH_FPS_ENABLED, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get high_fps_enabled %ld", ret);
+        goto exit;
+    }
+    if (setting_param.cmd_type_value)
+        dv_mode = 1;
     isp_param.dv_mode = dv_mode;
 
     ret = cmr_sensor_get_mode(cxt->sn_cxt.sensor_handle, cxt->camera_id,
@@ -11397,7 +11519,7 @@ void camera_get_iso_value(cmr_handle oem_handle) {
     }
 }
 
-cmr_int camera_get_fb_param(cmr_handle handle,
+cmr_int camera_get_fb_prev_param(cmr_handle handle,
                             struct isp_fb_param_info *param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)handle;
@@ -11408,6 +11530,27 @@ cmr_int camera_get_fb_param(cmr_handle handle,
         goto exit;
     }
     ret = camera_isp_ioctl(handle, COM_ISP_GET_FB_PREV_PARAM, &isp_param);
+    if (ret) {
+        goto exit;
+    }
+    memcpy(param, &isp_param.fb_param, sizeof(struct isp_fb_param_info));
+
+exit:
+    CMR_LOGV("done ret = %d", ret);
+    return ret;
+}
+
+cmr_int camera_get_fb_cap_param(cmr_handle handle,
+                            struct isp_fb_param_info *param) {
+    cmr_int ret = CMR_CAMERA_SUCCESS;
+    struct camera_context *cxt = (struct camera_context *)handle;
+    struct common_isp_cmd_param isp_param;
+    if (!handle) {
+        CMR_LOGE("in parm error");
+        ret = -CMR_CAMERA_INVALID_PARAM;
+        goto exit;
+    }
+    ret = camera_isp_ioctl(handle, COM_ISP_GET_FB_CAP_PARAM, &isp_param);
     if (ret) {
         goto exit;
     }
@@ -12042,6 +12185,18 @@ cmr_int camera_get_preview_param(cmr_handle oem_handle,
 
     out_param_ptr->sprd_zsl_enabled = cxt->zsl_enabled;
     CMR_LOGD("sprd zsl_enabled flag %d", out_param_ptr->sprd_zsl_enabled);
+
+//get high_fps_enabled
+    cmr_bzero(&setting_param, sizeof(setting_param));
+    setting_param.camera_id = cxt->camera_id;
+    ret = cmr_setting_ioctl(setting_cxt->setting_handle,
+                            SETTING_GET_HIGH_FPS_ENABLED, &setting_param);
+    if (ret) {
+        CMR_LOGE("failed to get high fps enabled %ld", ret);
+        goto exit;
+    }
+    out_param_ptr->high_fps_enabled = setting_param.cmd_type_value;
+    CMR_LOGD("high_fps_enabled %d", out_param_ptr->high_fps_enabled);
 
     cmr_bzero(&setting_param, sizeof(setting_param));
     setting_param.camera_id = cxt->camera_id;
@@ -12882,6 +13037,11 @@ cmr_int camera_set_setting(cmr_handle oem_handle, enum camera_param_type id,
     case CAMERA_PARAM_SPRD_ZSL_ENABLED:
         cxt->zsl_enabled = param;
         CMR_LOGD("zsl %d", cxt->zsl_enabled);
+        setting_param.cmd_type_value = param;
+        ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
+                                &setting_param);
+        break;
+    case CAMERA_PARAM_HIGH_FPS_ENABLED:
         setting_param.cmd_type_value = param;
         ret = cmr_setting_ioctl(cxt->setting_cxt.setting_handle, id,
                                 &setting_param);
@@ -16130,6 +16290,14 @@ cmr_int camera_local_set_global_zoom_ratio(cmr_handle oem_handle,
                      ratio);
 }
 
+cmr_int camera_set_eis_move_info(cmr_handle oem_handle,
+                                           cmr_u8 *move_info) {
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+
+    return isp_ioctl(cxt->isp_cxt.isp_handle, ISP_CTRL_AE_SET_EIS_MOVE_INFO,
+                     move_info);
+}
+
 cmr_int camera_write_calibration_otp(cmr_handle oem_handle, struct cal_otp_info * param) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct camera_context *cxt = (struct camera_context *)oem_handle;
@@ -16356,10 +16524,13 @@ cmr_int camera_get_fdr_tuning_param(cmr_handle oem_handle, struct isp_blkpm_t *t
 cmr_int camera_get_fdr_tuning_flag(cmr_handle oem_handle, cmr_int *tuning_flag) {
     cmr_int ret = CMR_CAMERA_SUCCESS;
     struct isp_blkpm_t fdr_tuning_param;
+    struct camera_context *cxt = (struct camera_context *)oem_handle;
+    CHECK_HANDLE_VALID(cxt);
 
     cmr_bzero(&fdr_tuning_param, sizeof(struct isp_blkpm_t));
     camera_get_fdr_tuning_param (oem_handle, &fdr_tuning_param);
-    if (fdr_tuning_param.param_ptr != NULL && fdr_tuning_param.param_size > 0) {
+    if (fdr_tuning_param.param_ptr != NULL && fdr_tuning_param.param_size > 0
+        && cxt->swa_cxt_fdr.inited == 1) {
         *tuning_flag = 1;
     } else {
         *tuning_flag = 0;

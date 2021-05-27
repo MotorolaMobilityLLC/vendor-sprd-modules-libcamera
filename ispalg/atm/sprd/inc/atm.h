@@ -121,10 +121,12 @@ struct atm_calc_param
 
     unsigned long long *pHist;
     uint32_t u4Bins;
+	uint32_t u4HistBitWidth;
     uint16_t *uBaseGamma;
     uint16_t *uModGamma;
     uint8_t bHistB4Gamma;
 	uint32_t atm_version;
+	uint32_t u4GammaBitWidth;
 	struct ae_atm_tune_param_v1 atm_tune;
 };
 

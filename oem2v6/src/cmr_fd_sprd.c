@@ -162,6 +162,9 @@ struct class_tab_t fd_tab_info = {
 #define FD_SMALL_SIZE_16_9_WIDTH 640
 #define FD_SMALL_SIZE_16_9_HEIGHT 360
 
+#define FD_SMALL_SIZE_3_2_WIDTH 630
+#define FD_SMALL_SIZE_3_2_HEIGHT 420
+
 #define FD_SMALL_SIZE_2_1_WIDTH 640
 #define FD_SMALL_SIZE_2_1_HEIGHT 320
 
@@ -169,7 +172,7 @@ struct class_tab_t fd_tab_info = {
 #define FD_SMALL_SIZE_1_1_HEIGHT 480
 
 #define FD_SMALL_SIZE_20_9_WIDTH 640
-#define FD_SMALL_SIZE_20_9_HEIGHT 290
+#define FD_SMALL_SIZE_20_9_HEIGHT 288
 
 #define CHECK_HANDLE_VALID(handle)                                             \
     do {                                                                       \
@@ -251,11 +254,12 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     float src_ratio;
     float fd_small_4_3_ratio, fd_small_16_9_ratio;
     float fd_small_2_1_ratio, fd_small_1_1_ratio;
-    float fd_small_20_9_ratio = 0;
+    float fd_small_3_2_ratio, fd_small_20_9_ratio;
 
     src_ratio = (float)in->frame_size.width / (float)in->frame_size.height;
     fd_small_4_3_ratio = (float)4 / 3;
     fd_small_16_9_ratio = (float)16 / 9;
+    fd_small_3_2_ratio = (float)3 / 2;
     fd_small_2_1_ratio = (float)2 / 1;
     fd_small_1_1_ratio = (float)1 / 1;
     fd_small_20_9_ratio = (float)20 / 9;
@@ -267,20 +271,28 @@ static cmr_int fd_open(cmr_handle ipm_handle, struct ipm_open_in *in,
     } else if (fabsf(src_ratio - fd_small_16_9_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_16_9_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_16_9_HEIGHT;
+    } else if (fabsf(src_ratio - fd_small_3_2_ratio) < 0.001) {
+        fd_handle->fd_small.size.width = FD_SMALL_SIZE_3_2_WIDTH;
+        fd_handle->fd_small.size.height = FD_SMALL_SIZE_3_2_HEIGHT;
     } else if (fabsf(src_ratio - fd_small_2_1_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_2_1_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_2_1_HEIGHT;
     } else if (fabsf(src_ratio - fd_small_1_1_ratio) < 0.001) {
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_1_1_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_1_1_HEIGHT;
-    } else if (fabsf(src_ratio - fd_small_20_9_ratio) < 0.06){
+    } else if (fabsf(src_ratio - fd_small_20_9_ratio) < 0.001){
         fd_handle->fd_small.size.width = FD_SMALL_SIZE_20_9_WIDTH;
         fd_handle->fd_small.size.height = FD_SMALL_SIZE_20_9_HEIGHT;
     } else {
-        fd_handle->fd_small.size.width = FD_SMALL_SIZE_4_3_WIDTH;
-        fd_handle->fd_small.size.height = FD_SMALL_SIZE_4_3_HEIGHT;
+        while (in->frame_size.width > 640) {
+            in->frame_size.width /= 2;
+            in->frame_size.height /= 2;
+        }
+        fd_handle->fd_small.size.width = in->frame_size.width;
+        fd_handle->fd_small.size.height = in->frame_size.height;
         CMR_LOGW("fd_small size w / h was set defalut size.");
     }
+
     fd_handle->fd_small.buf_size =
         fd_handle->fd_small.size.width * fd_handle->fd_small.size.height * 3;
 
@@ -1367,6 +1379,10 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
     struct fd_start_parameter *start_param = NULL;
     struct img_size *fd_img_size = NULL;
     FD_IMAGE fd_img;
+    FA_IMAGE fa_img;
+    FA_SHAPE fa_shape;
+    FD_FACEINFO info;
+    int faceCount;
     clock_t start_time, end_time;
     int duration;
     float ratio;
@@ -1505,6 +1521,40 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             break;
         }
 
+        fa_img.data = (unsigned char *)class_handle->fd_small.addr_vir.addr_y;
+        fa_img.width = class_handle->fd_small.size.width;
+        fa_img.height = class_handle->fd_small.size.height;
+        fa_img.step = class_handle->fd_small.size.width;
+
+        faceCount = FdGetFaceCount(class_handle->hDT);
+        CMR_LOGV("FdGetFaceCount:%d", faceCount);
+
+        for (int i = 0; i < faceCount; i++) {
+            FdGetFaceInfo(class_handle->hDT, i, &info);
+            FA_FACEINFO faface;
+            faface.x = info.x;
+            faface.y = info.y;
+            faface.width = info.width;
+            faface.height = info.height;
+            faface.yawAngle = info.yawAngle;
+            faface.rollAngle = info.rollAngle;
+
+            if(i == 0) {
+                FaFaceAlign(class_handle->hFaceAlign, &fa_img, &faface, &fa_shape);
+            } else {
+                memset(&(fa_shape.data), 0, sizeof(fa_shape.data));
+                fa_shape.score = 0;
+            }
+            memcpy(&(class_handle->frame_out.face_area.range[i].data), &(fa_shape.data),
+                sizeof(fa_shape.data));
+            class_handle->frame_out.face_area.range[i].fascore = fa_shape.score;
+
+            for(int j = 0; j < FA_SHAPE_POINTNUM * 2; j++) {
+                CMR_LOGD("face%d get from FaFaceAlign: fa_shape.data point %d = %d", i, j, fa_shape.data[j]);
+            }
+            CMR_LOGD("face%d get from FaFaceAlign: fa_shape.fascore = %d", i, fa_shape.score);
+        }
+
         fd_face_attribute_detect(class_handle);
 
         class_handle->is_get_result = 1;
@@ -1522,6 +1572,16 @@ static cmr_int fd_thread_proc(struct cmr_msg *message, void *private_data) {
             class_handle->frame_in.dst_frame.reserved;
         ratio = (float)class_handle->frame_in.src_frame.size.width /
                 (float)class_handle->fd_small.size.width;
+        CMR_LOGV("faceratio = %f", ratio);
+
+        for (int i = 0; i < faceCount; i++) {
+            for(int j = 0; j < FA_SHAPE_POINTNUM*2; j++) {
+                class_handle->frame_out.face_area.range[i].data[j] =
+                    class_handle->frame_out.face_area.range[i].data[j] * ratio;
+                CMR_LOGV("face%d based on previewsize: fa_shape.data point %d = %d", i, j, class_handle->frame_out.face_area.range[i].data[j]);
+            }
+        }
+
         /* save a copy face_small_area for next frame to smooth */
         memcpy(&(class_handle->face_small_area),
                &(class_handle->frame_out.face_area),

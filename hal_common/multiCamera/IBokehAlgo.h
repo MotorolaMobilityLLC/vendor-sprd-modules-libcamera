@@ -141,7 +141,8 @@ class IBokehAlgo {
     virtual int runDFA(void *input_buff, int picWidth, int picHeight, int mode) = 0;
 
     virtual int doFaceBeauty(unsigned char *mask, void *input_buff,
-                         int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel) = 0;
+                         int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel,
+                         struct facebeauty_param_info *FaceMap) = 0;
 
     virtual void setFaceInfo(int *angle, int *pose, int *fd_score) = 0;
 

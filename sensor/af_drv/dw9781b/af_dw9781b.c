@@ -18,6 +18,94 @@
 #include "af_dw9781b.h"
 
 
+#define DW9781B_GYRO_OFFSET_OVERCOUNT 10
+#define DW9781B_GYRO_CALI_FLAG 0X8000
+
+cmr_int _dw9781b_drv_reset(cmr_handle sns_af_drv_handle) {
+    CHECK_PTR(sns_af_drv_handle);
+    struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt *)sns_af_drv_handle;
+    usleep(10 * 1000);
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                            0xD002, 0x0001, BITS_ADDR16_REG16);
+    usleep(4 * 1000);
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                            0xD001, 0x0001, BITS_ADDR16_REG16);
+    usleep(25 * 1000);
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                            0xEBF1, 0x56FA, BITS_ADDR16_REG16);
+    return AF_SUCCESS;
+}
+
+cmr_int _dw9781b_drv_save_cali_data(cmr_handle sns_af_drv_handle) {
+    CHECK_PTR(sns_af_drv_handle);
+    struct sns_af_drv_cxt *af_drv_cxt = (struct sns_af_drv_cxt *)sns_af_drv_handle;
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                            0x7015, 0x0002, BITS_ADDR16_REG16);
+    usleep(10 * 1000);
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                            0x7011, 0x00AA, BITS_ADDR16_REG16);
+    usleep(20 * 1000);
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                            0x7010, 0x8000, BITS_ADDR16_REG16);
+    usleep(200 * 1000);
+    return AF_SUCCESS;
+}
+cmr_int _dw9781b_drv_gyro_offset_calibration(cmr_handle sns_af_drv_handle) {
+    uint32_t ret_value = AF_SUCCESS;
+    cmr_int over_time_count = 0;
+    cmr_u16 pid_value = 0x0000;
+    struct sns_af_drv_cxt *af_drv_cxt =
+        (struct sns_af_drv_cxt *)sns_af_drv_handle;
+    CHECK_PTR(sns_af_drv_handle);
+    char value[128];
+    uint16_t cmd_val[2] = {0x0000};
+    uint16_t slave_addr = DW9781B_VCM_SLAVE_ADDR;
+    uint16_t cmd_len = 0;
+    ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                                        0x7011, 0x4015, BITS_ADDR16_REG16);
+    ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                                        0x7010, 0x8000, BITS_ADDR16_REG16);
+    usleep(10 * 1000);
+	while (1) {
+        pid_value = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7036, BITS_ADDR16_REG16);
+		if (pid_value & DW9781B_GYRO_CALI_FLAG) {
+            CMR_LOGI("DW9781b calibration DONE");
+			break; 
+		} else if(over_time_count++ > DW9781B_GYRO_OFFSET_OVERCOUNT) {
+            CMR_LOGI("DW9781b gyro offset calibration running out of time");
+            ret_value = AF_FAIL;
+            goto exit;
+        } else {
+            usleep(100 * 1000);
+            continue;
+        }
+	}
+    if(pid_value == DW9781B_GYRO_CALI_FLAG)
+        CMR_LOGI("DW9781b calibration Success");
+    else {
+        if(pid_value & 0x1)
+            CMR_LOGI("X_GYRO_OFFSET_SPEC_OVER_NG !!!");
+        if(pid_value & 0x2)
+            CMR_LOGI("Y_GYRO_OFFSET_SPEC_OVER_NG !!!");
+        if(pid_value & 0x10)
+            CMR_LOGI("X_GYRO_OFFSET_SPEC_UNDER_NG !!!");
+        if(pid_value & 0x20)
+            CMR_LOGI("Y_GYRO_OFFSET_SPEC_UNDER_NG !!!");
+    }
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7015, 0x0002, BITS_ADDR16_REG16);
+    usleep(10 * 1000);
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7011, 0x00aa, BITS_ADDR16_REG16);
+    usleep(20 * 1000);
+    hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7010, 0x8000, BITS_ADDR16_REG16);
+    usleep(200 * 1000);
+    CMR_LOGI("dw9781b with gyro cali status: 0x7036->0x%x, Offset X: 0x70F8->0x%x, Offset Y: 0x70F9->0x%x",
+             hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7036, BITS_ADDR16_REG16),
+             hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x70F8, BITS_ADDR16_REG16),
+             hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x70F9, BITS_ADDR16_REG16));
+exit:
+    return AF_SUCCESS;
+}
+
 /*==============================================================================
  * Description:
  * write code to vcm driver
@@ -35,15 +123,12 @@ static uint32_t _dw9781b_write_dac_code(cmr_handle sns_af_drv_handle,
     uint16_t slave_addr = DW9781B_VCM_SLAVE_ADDR;
     uint16_t cmd_len = 0;
     uint16_t pos = 0;
-
+    cmr_u16 pid_value = 0x0000;
     int32_t target_code = (param * 2) & 0x7FF;
-    CMR_LOGD("param:%d", target_code);
+    //CMR_LOGD("param:%d", target_code);
 
     ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, slave_addr,
                                             0xD013, target_code, BITS_ADDR16_REG16);
-    if(ret_value)
-	CMR_LOGD("Failed to write dac");
-
     return 0;
 }
 
@@ -60,7 +145,6 @@ static int dw9781b_drv_create(struct af_drv_init_para *input_ptr,
         if (ret != AF_SUCCESS)
             ret = AF_FAIL;
     }
-
     return ret;
 }
 static int dw9781b_drv_delete(cmr_handle sns_af_drv_handle, void *param) {
@@ -84,7 +168,7 @@ static int dw9781b_drv_set_pos(cmr_handle sns_af_drv_handle, uint16_t pos) {
 
     int32_t target_code = pos & 0x7FF;
     int32_t m_cur_dac_code = af_drv_cxt->current_pos;
-    CMR_LOGI("target_code %d", target_code);
+    //CMR_LOGI("target_code %d", target_code);
     m_cur_dac_code = target_code;
     _dw9781b_write_dac_code(sns_af_drv_handle, m_cur_dac_code);
     af_drv_cxt->current_pos = m_cur_dac_code;
@@ -155,8 +239,6 @@ static int _dw9781b_drv_set_mode(cmr_handle sns_af_drv_handle) {
     uint16_t cmd_len = 0;
     uint8_t mode = 0;
 
-    
-
     if (af_drv_cxt->af_work_mode) {
         mode = af_drv_cxt->af_work_mode;
     } else {
@@ -165,10 +247,12 @@ static int _dw9781b_drv_set_mode(cmr_handle sns_af_drv_handle) {
     CMR_LOGI("mode: %d", mode);
     switch (mode) {
     case 1:
+        ret_value = _dw9781b_drv_reset(sns_af_drv_handle);
+        ret_value = _dw9781b_drv_gyro_offset_calibration(sns_af_drv_handle);
+        ret_value = _dw9781b_drv_save_cali_data(sns_af_drv_handle);
         break;
     case 2:
         /*Power Down */
-        #if 0
         ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
                                             0xD000, 0x0001, BITS_ADDR16_REG16);
         usleep(10 * 1000);
@@ -178,45 +262,27 @@ static int _dw9781b_drv_set_mode(cmr_handle sns_af_drv_handle) {
         ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
                                             0xD001, 0x0001, BITS_ADDR16_REG16);
         usleep(25 * 1000);
-	
+	    ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
+                                            0x7015, 0x0000, BITS_ADDR16_REG16);
         ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
                                             0xEBF1, 0x56FA, BITS_ADDR16_REG16);
-        if (ret_value) {
-            CMR_LOGE("write failed");
-        }
-
-        #endif
-        #if 1
-        ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
-                                            0xD000, 0x0001, BITS_ADDR16_REG16);
-        usleep(10 * 1000);
-        ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
-                                            0xD002, 0x0001, BITS_ADDR16_REG16);
-        usleep(4 * 1000);
-        ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
-                                            0xD001, 0x0001, BITS_ADDR16_REG16);
-        usleep(25 * 1000);
-	property_get("persist.vendor.cam.test.ois", value, "0");
-	if(atoi(value)) {
-            ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
-                                            0xEBF1, 0x56FA, BITS_ADDR16_REG16);
-            ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
-                                            0x7015, 0x0002, BITS_ADDR16_REG16); 
-            usleep(10 * 1000);                                    
-            ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
-                                            0x7011, 0x00AA, BITS_ADDR16_REG16);   
-            usleep(20 * 1000);   
-            ret_value = hw_sensor_grc_write_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR,
-                                            0x7010, 0x8000, BITS_ADDR16_REG16);
-	}
-
-        usleep(200 * 1000);  
+        usleep(20 * 1000);
         pid_value = hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7000, BITS_ADDR16_REG16);
-        CMR_LOGI("pid_value = 0x%x", pid_value);
-      #endif                                                                                                                                    
-    }
+        CMR_LOGI("0x7000 pid_value = 0x%x", pid_value);
+        if(pid_value != 0x9781)
+            CMR_LOGD("this may not be dw9781b sensor");
 
-    return 0;
+        property_get("persist.vendor.cam.check.ois.gyro.info", value, "0");
+        if(atoi(value)) {
+            CMR_LOGI("dw9781b OIS with 0x7105-> 0x%x, 0x7016-> 0x%x, 0x7049-> 0x%x, 0x704a-> 0x%x, 0x70fc-> 0x%x, 0x70fd-> 0x%x,",
+                      hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7105, BITS_ADDR16_REG16),
+                      hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x7106, BITS_ADDR16_REG16),
+                      hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x704A, BITS_ADDR16_REG16),
+                      hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x70fc, BITS_ADDR16_REG16),
+                      hw_sensor_grc_read_i2c(af_drv_cxt->hw_handle, DW9781B_VCM_SLAVE_ADDR, 0x70fd, BITS_ADDR16_REG16));
+        }
+    }
+    return AF_SUCCESS;
 }
 
 void *vcm_driver_open_lib(void)

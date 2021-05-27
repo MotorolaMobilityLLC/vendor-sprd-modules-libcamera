@@ -794,6 +794,8 @@ SprdCamera3Blur::CaptureThread::~CaptureThread() {
  *==========================================================================*/
 void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
     buffer_handle_t *buffer_handle, void *buffer_addr) {
+    int rc = 0;
+    struct facebeauty_param_info fb_param_bokeh_cap;
     struct camera_frame_type cap_3d_frame;
     struct camera_frame_type *frame = NULL;
 
@@ -823,9 +825,16 @@ void SprdCamera3Blur::CaptureThread::BlurFaceMakeup(
             newFace.face[i].rect[2], newFace.face[i].rect[3], newFace.angle[i],
             newFace.pose[i]);
     }
-
+    //for facebeauty param
+    SprdCamera3HWI *hwiMain = mBlur->m_pPhyCamera[CAM_TYPE_MAIN].hwi;
+    rc = hwiMain->camera_ioctrl(CAMERA_IOCTRL_GET_FB_CAP_PARAM, &fb_param_bokeh_cap, NULL);
+    if (rc != 0) {
+        HAL_LOGD("E: fail to get mBlur_cap fb param!");
+    } else {
+        HAL_LOGD("succeed to get mBlur_cap fb param!");
+    }
     mBlur->doFaceMakeup2(frame, mBlur->fbLevels, &newFace,
-                         0); // work mode 1 for preview, 0 for picture
+                         0, fb_param_bokeh_cap); // work mode 1 for preview, 0 for picture
     return;
 }
 #endif

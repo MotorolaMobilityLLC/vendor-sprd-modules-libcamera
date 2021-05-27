@@ -475,6 +475,47 @@ int sensor_drv_xml_parse_vcm_info(struct xml_camera_cfg_info *camera_cfg) {
     return ret;
 }
 
+int sensor_drv_xml_parse_ois_info(struct xml_camera_cfg_info *camera_cfg) {
+    int ret = 0;
+    uint32_t elem_num = 0;
+    xmlDocPtr docPtr = camera_cfg->docPtr;
+    xmlNodePtr nodePtr = camera_cfg->nodePtr;
+    xml_camera_module_cfg_t *cfgPtr = camera_cfg->cfgPtr;
+    struct xmlHashMap xml_hash_map[MAX_HASH_MAP_SIZE];
+#ifndef RECURSIVE_TRAVERSAL_ENABLE
+    xmlNodePtr nodeOISPtr = NULL;
+#endif
+
+    XML_NODE_CHECK_PTR(docPtr);
+    XML_NODE_CHECK_PTR(nodePtr);
+    XML_NODE_CHECK_PTR(cfgPtr);
+
+    strlcpy(xml_hash_map[elem_num].key, "OISName", MAX_KEY_LEN);
+    xml_hash_map[elem_num].value = cfgPtr->ois_info.ois_name;
+    xml_hash_map[elem_num].data_type = XML_DATA_STRING;
+    xml_hash_map[elem_num].elem_type = XML_ELEMENT_NODE;
+    elem_num++;
+
+    strlcpy(xml_hash_map[elem_num].key, "Mode", MAX_KEY_LEN);
+    xml_hash_map[elem_num].value = &cfgPtr->ois_info.work_mode;
+    xml_hash_map[elem_num].data_type = XML_DATA_UINT8;
+    xml_hash_map[elem_num].elem_type = XML_ELEMENT_NODE;
+    elem_num++;
+
+#ifndef RECURSIVE_TRAVERSAL_ENABLE
+    nodeOISPtr = sensor_drv_xml_get_node(camera_cfg->nodePtr, "OIS", 0);
+    if (nodeOISPtr) {
+        SENSOR_LOGD("parse vcm info node name %s", nodeOISPtr->name);
+        ret = sensor_drv_xml_parse_node_data(nodeOISPtr, "OIS", xml_hash_map,
+                                             elem_num, 0);
+    }
+#else
+    ret = sensor_drv_xml_parse_node_data(nodePtr, "OIS", xml_hash_map, elem_num,
+                                         0);
+#endif
+    return ret;
+}
+
 int sensor_drv_xml_parse_otp_info(struct xml_camera_cfg_info *camera_cfg) {
     int ret = 0;
     uint32_t elem_num = 0;

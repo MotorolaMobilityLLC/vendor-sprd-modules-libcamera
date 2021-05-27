@@ -321,6 +321,11 @@ typedef enum {
     DCAMERA_EFFECT_MAX
 } DCAMERA_PARAM_EFFECT_E;
 
+enum sensor_tuning_parameter_switchment {
+    SENSOR_TUNING_PARAM_DEFAULT,
+    SENSOR_TUNING_PARAM_BOKEH,
+};
+
 typedef enum { SENSOR_OTP_TYPE, MODULE_OTP_TYPE, OTP_TYPE_MAX } CAMERA_OTP_TYPE;
 
 struct otp_data_tag {
@@ -759,6 +764,7 @@ struct sensor_drv_context {
     cmr_handle hw_drv_handle;
     cmr_handle otp_drv_handle;
     cmr_handle af_drv_handle;
+    cmr_handle ois_drv_handle;
     cmr_handle sns_ic_drv_handle;
     cmr_u8 mono_sensor;
     cmr_u32 is_HD_mode;
@@ -831,6 +837,8 @@ cmr_int sensor_set_mode_done_common(cmr_handle sns_module_handle);
 
 cmr_int sensor_drv_ioctl(cmr_handle sns_module_handle, enum sns_cmd cmd,
                          void *param);
+void sensor_drv_switch_to_specific_tuning_param(int tag);
+void sensor_drv_get_camId_list_info(int *active_cam_list, int *active_cam_num);
 
 void sensor_drv_get_camId_list_info(int *active_cam_list, int *active_cam_num);
 
@@ -857,6 +865,7 @@ cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
 cmr_int sensor_pdaf_format_convertor(void *buffer_handle, cmr_int pdaf_supported,
                                      cmr_u32 *param);
 cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) ;
+cmr_int sensor_set_manual_cmei(bool type);
 cmr_int sensor_set_longExp_enable(struct sensor_drv_context *sensor_cxt,
                            cmr_u32 long_expo_enable);
 cmr_int sensor_get_otp_tag(cmr_s32 *otp_ptr, cmr_int id);

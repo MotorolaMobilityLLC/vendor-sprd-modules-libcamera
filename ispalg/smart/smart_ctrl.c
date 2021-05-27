@@ -1451,12 +1451,14 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 	}
 	if(smart_proc_in->bhist_update && atm_param->input_type){
 		ret = isp_bayer_hist(smart_proc_in, hist);
+		ATMInput.u4HistBitWidth = smart_proc_in->bhist_stats[0].bin;
 	}else{
 		ret = isp_histAEM(smart_proc_in->r_info,
 			smart_proc_in->g_info, smart_proc_in->b_info, hist, bAEMBinning,
 			smart_proc_in->aem_shift,
 			smart_proc_in->win_num_w, smart_proc_in->win_num_h,
 			smart_proc_in->win_size_w, smart_proc_in->win_size_h);
+		ATMInput.u4HistBitWidth = 256;//because it is pull a fixed bin(256) from function isp_histAEM
 	}
 	if (ISP_SUCCESS != ret) {
 		 ISP_LOGE("ATM aem_ptr %p,%p,%p, win_num/win_size %d/%d, %d/%d, shift %d\n",
@@ -1515,6 +1517,7 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 
 		ATMInput.pHist = hist;
 		ATMInput.u4Bins = SENSOR_GAMMA_POINT_NUM;//256;
+		ATMInput.u4GammaBitWidth = SENSOR_GAMMA_POINT_NUM;
 		ATMInput.uBaseGamma = u2CurY[1];//uConvCurY;
 		ATMInput.uModGamma = u2CurY[1];//uConvCurY;
 		ATMInput.bHistB4Gamma = true;
@@ -1571,23 +1574,21 @@ cmr_int _get_atm_curve_v1(cmr_handle *handle,
 			}
 		}
 	}
+
 	// fill debug info
-	dbginfo->version = 2;
-	memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
-	memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-	memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	dbginfo->version = 3;
+	for(i = 0; i < 256; i++){
+		dbginfo->u8Hist[i] = (cmr_u32)hist[i];
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
+	for(i = 256; i < SENSOR_GAMMA_POINT_NUM; i++){
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
 	dbginfo->bv = i4BV;
 	dbginfo->evd= ATMOutput.evd;
 	memcpy(dbginfo->bin, ATMOutput.bin, sizeof(dbginfo->bin));
 	memcpy(dbginfo->pt, ATMOutput.pt, sizeof(dbginfo->pt));
-	//memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
-	//memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
-	/*
-	dbginfo->uLowPT         = ATMOutput.uLowPT;
-	dbginfo->uHighPT        = ATMOutput.uHighPT;
-	dbginfo->uFinalLowBin   = ATMOutput.uFinalLowBin;
-	dbginfo->uFinalHighBin  = ATMOutput.uFinalHighBin;
-	*/
+
 	return ISP_SUCCESS;
 }
 
@@ -1641,6 +1642,8 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 		smart_proc_in->aem_shift,
 		smart_proc_in->win_num_w, smart_proc_in->win_num_h,
 		smart_proc_in->win_size_w, smart_proc_in->win_size_h);
+		ATMInput.u4HistBitWidth = 256;
+		
 	if (ISP_SUCCESS != ret) {
 		 ISP_LOGE("ATM aem_ptr %p,%p,%p, win_num/win_size %d/%d, %d/%d, shift %d\n",
 		smart_proc_in->r_info,
@@ -1660,7 +1663,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 	ISP_LOGV("Hist[%d-%d] = %llu,%llu,%llu,%llu\n",i,i+3,hist[i],hist[i+1],hist[i+2],hist[i+3]);
 	}
 	if (bATMDump == true) {
-		for (i = 0; i < SENSOR_GAMMA_POINT_NUM - 1; i+=4)
+		for (i = 0; i < SENSOR_GAMMA_POINT_NUM - 3; i+=4)
 			ISP_LOGV("Orig Gamma [%3d/%3d] [%3d/%3d] [%3d/%3d] [%3d/%3d]\n",
 			u2CurX[1][i], u2CurY[1][i],
 			u2CurX[1][i+1], u2CurY[1][i+1],
@@ -1696,6 +1699,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 
 		ATMInput.pHist = hist;
 		ATMInput.u4Bins = SENSOR_GAMMA_POINT_NUM;//256;
+		ATMInput.u4GammaBitWidth = SENSOR_GAMMA_POINT_NUM;
 		ATMInput.uBaseGamma = u2CurY[1];//uConvCurY;
 		ATMInput.uModGamma = u2CurY[1];//uConvCurY;
 		ATMInput.bHistB4Gamma = true;
@@ -1705,7 +1709,7 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 		if (uOutGamma[1][SENSOR_GAMMA_POINT_NUM - 2]) {
 			memcpy(uPrevGamma[1], ATMOutput.uGamma, sizeof(uPrevGamma[1]));
 		}
-		unsigned int weight = 0.78 * SENSOR_GAMMA_POINT_NUM + 0.5;
+		unsigned int weight = (unsigned int)0.78 * SENSOR_GAMMA_POINT_NUM + 0.5;
 		isp_atm_smooth(weight, SENSOR_GAMMA_POINT_NUM - 1, uPrevGamma[1], uOutGamma[1], uOutGamma[1]);
 		memcpy(uPrevGamma[1], uOutGamma[1], sizeof(short)*SENSOR_GAMMA_POINT_NUM);
 		if (bATMDump == true) {
@@ -1751,10 +1755,17 @@ cmr_int _get_atm_curve(cmr_handle *handle,
 		}
 	}
 	// fill debug info
-	dbginfo->version = 1;
-	memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
-	memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
-	memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
+	dbginfo->version = 2;
+	for(i = 0; i < 256; i++){
+		dbginfo->u8Hist[i] = (cmr_u32)hist[i];
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
+	for(i = 256; i < SENSOR_GAMMA_POINT_NUM; i++){
+		dbginfo->u4RespCurve[i] = (cmr_u16)ATMOutput.i4RespCurve[i];
+	}
+	//memcpy(dbginfo->u8Hist, hist, sizeof(dbginfo->u8Hist));
+	//memcpy(dbginfo->u4RespCurve, ATMOutput.i4RespCurve, sizeof(dbginfo->u4RespCurve));
+	//memcpy(dbginfo->uOutputGamma, uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	//memcpy(dbginfo->uOutputGamma[0], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	//memcpy(dbginfo->uOutputGamma[1], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);
 	//memcpy(dbginfo->uOutputGamma[2], uOutGamma[1], SENSOR_GAMMA_POINT_NUM - 1);

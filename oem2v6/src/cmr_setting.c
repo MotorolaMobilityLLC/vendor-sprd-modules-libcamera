@@ -194,6 +194,7 @@ struct setting_hal_param {
     struct cmr_range_fps_param range_fps;
     cmr_uint is_update_range_fps;
     cmr_uint sprd_zsl_enabled;
+    cmr_uint high_fps_enabled;
     cmr_uint sprd_afbc_enabled;
     cmr_uint video_slow_motion_flag;
     cmr_uint sprd_pipviv_enabled;
@@ -427,6 +428,10 @@ static cmr_uint camera_param_to_isp(cmr_uint cmd,
 
         case CAMERA_SCENE_MODE_VIDEO:
             out_param = ISP_VIDEO;
+            break;
+
+        case CAMERA_SCENE_MODE_VIDEO_EIS:
+            out_param = ISP_VIDEO_EIS;
             break;
 
         default:
@@ -2032,6 +2037,16 @@ setting_get_sprd_zsl_enabled(struct setting_component *cpt,
 }
 
 static cmr_int
+setting_get_high_fps_enabled(struct setting_component *cpt,
+                             struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    parm->cmd_type_value = hal_param->high_fps_enabled;
+    return ret;
+}
+
+static cmr_int
 setting_get_face_attributes_enable(struct setting_component *cpt,
                                    struct setting_cmd_parameter *parm) {
     cmr_int ret = 0;
@@ -2170,6 +2185,17 @@ setting_set_sprd_zsl_enabled(struct setting_component *cpt,
 
     hal_param->sprd_zsl_enabled = parm->cmd_type_value;
     CMR_LOGD("sprd_zsl_enabled=%ld", hal_param->sprd_zsl_enabled);
+    return ret;
+}
+
+static cmr_int
+setting_set_high_fps_enabled(struct setting_component *cpt,
+                             struct setting_cmd_parameter *parm) {
+    cmr_int ret = 0;
+    struct setting_hal_param *hal_param = get_hal_param(cpt, parm->camera_id);
+
+    hal_param->high_fps_enabled = parm->cmd_type_value;
+    CMR_LOGD("high_fps_enabled=%ld", hal_param->high_fps_enabled);
     return ret;
 }
 
@@ -4165,6 +4191,8 @@ static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
                              setting_set_isp_flash_mode,
     [CAMERA_PARAM_SPRD_ZSL_ENABLED] =
                              setting_set_sprd_zsl_enabled,
+    [CAMERA_PARAM_HIGH_FPS_ENABLED] =
+                             setting_set_high_fps_enabled,
     [CAMERA_PARAM_ISP_AE_LOCK_UNLOCK] =
                              setting_set_ae_lock_unlock,
     [CAMERA_PARAM_SLOW_MOTION_FLAG] =
@@ -4261,6 +4289,8 @@ static setting_ioctl_fun_ptr setting_list[SETTING_TYPE_MAX] = {
     [SETTING_GET_FLIP_ON] = setting_get_flip_on,
     [SETTING_GET_SPRD_ZSL_ENABLED] =
                              setting_get_sprd_zsl_enabled,
+    [SETTING_GET_HIGH_FPS_ENABLED] =
+                             setting_get_high_fps_enabled,
     [SETTING_GET_SLOW_MOTION_FLAG] =
                              setting_get_slow_motion_flag,
     [SETTING_GET_SPRD_PIPVIV_ENABLED] =

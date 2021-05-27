@@ -19,7 +19,7 @@ LOCAL_PATH_BAK:= $(call my-dir)
 LOCAL_SENSOR_PATH:= $(call my-dir)
 LOCAL_OTP_PATH:= $(call my-dir)
 LOCAL_VCM_PATH:= $(call my-dir)
-
+LOCAL_OIS_PATH:= $(call my-dir)
 ISPALG_DIR := ispalg
 
 include $(CLEAR_VARS)
@@ -68,6 +68,7 @@ include $(LOCAL_PATH)/af_drv/Sprdroid.mk
 include $(LOCAL_PATH)/otp_drv/Sprdroid.mk
 include $(LOCAL_PATH)/sensor_drv/Sprdroid.mk
 include $(LOCAL_PATH)/tuning_param/Sprdroid.mk
+include $(LOCAL_PATH)/ois_drv/Sprdroid.mk
 #include $(LOCAL_PATH)/tuning_param/tunning_lib_cfg.mk
 
 
@@ -132,6 +133,7 @@ include $(LOCAL_PATH)/otp_parser/Android.mk
 LOCAL_PATH:= $(LOCAL_PATH_BAK)
 
 include $(wildcard $(LOCAL_OTP_PATH)/otp_drv/*/*/Android.mk)
+include $(wildcard $(LOCAL_OIS_PATH)/ois_drv/*/Android.mk)
 include $(wildcard $(LOCAL_VCM_PATH)/af_drv/*/Android.mk)
 include $(wildcard $(LOCAL_SENSOR_PATH)/*/*/*/*/Android.mk)
 LOCAL_PATH:= $(LOCAL_PATH_BAK)

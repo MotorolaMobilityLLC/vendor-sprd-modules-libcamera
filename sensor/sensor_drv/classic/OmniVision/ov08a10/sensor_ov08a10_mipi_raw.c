@@ -693,6 +693,7 @@ static cmr_int ov08a10_drv_stream_on(cmr_handle handle, cmr_uint param) {
 
   SENSOR_LOGI("E");
 
+  char value1[PROPERTY_VALUE_MAX];
   char value2[PROPERTY_VALUE_MAX];
   property_get("vendor.cam.hw.framesync.on", value2, "1");
   if (!strcmp(value2, "1")) {
@@ -701,6 +702,11 @@ static cmr_int ov08a10_drv_stream_on(cmr_handle handle, cmr_uint param) {
 #endif
   }
 
+  property_get("persist.vendor.cam.colorbar", value1, "0");
+  if (!strcmp(value1, "1")) {
+      SENSOR_LOGI("enable test mode");
+      hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x5081, 0x1);
+  }
   /*TODO*/
   hw_sensor_write_reg(sns_drv_cxt->hw_handle, 0x0100, 0x01);
 

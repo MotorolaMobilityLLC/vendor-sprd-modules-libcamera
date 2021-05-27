@@ -83,8 +83,9 @@
 
 /* please ref your spec */
 #define FRAME_OFFSET 5
-#define SENSOR_MAX_GAIN 0x3c0
-#define SENSOR_BASE_GAIN 0x70
+
+#define SENSOR_MAX_GAIN                0x200
+#define SENSOR_BASE_GAIN               0x20
 #define SENSOR_MIN_SHUTTER 6
 
 /* please ref your spec
@@ -92,7 +93,7 @@
  * 2 : sum-average binning
  * 4 : sum binning
  */
-#define BINNING_FACTOR 4
+#define BINNING_FACTOR 1
 
 /* please ref spec
  * 1: sensor auto caculate

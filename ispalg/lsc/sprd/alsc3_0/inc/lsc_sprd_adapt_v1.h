@@ -207,6 +207,7 @@ struct lsc_sprd_ctrl_context {
 	cmr_u32 cmd_alsc_dump_aem;
 	cmr_u32 cmd_alsc_dump_table;
 	cmr_u32 cmd_alsc_dump_otp;
+	cmr_u32 cmd_alsc_cost_time;
 	cmr_u32 cur_lsc_pm_mode;
 	cmr_u32 pre_lsc_pm_mode;
 	cmr_u16 *last_lsc_table;

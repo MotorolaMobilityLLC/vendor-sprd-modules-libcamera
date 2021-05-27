@@ -71,17 +71,18 @@ static void imx586_drv_write_gain(cmr_handle handle,
 
     if (aec_info->again->size) {
         /*TODO*/
-        float temp_gain = (float)gain / SENSOR_BASE_GAIN;
+        float temp_gain = (float)gain / 128;
         cmr_u16 sensor_again = 0;
 
-        if (temp_gain < 1.0) {
-            temp_gain = 1.0;
+        if (temp_gain < 1.13) {
+            temp_gain = 1.13;
         } else if (temp_gain > 16.0) {
             temp_gain = 16.0;
         }
 
         sensor_again = (cmr_u16)(1024.0 - 1024.0 / temp_gain);
-
+	SENSOR_LOGD("AKIKO temp gain is %f", temp_gain);
+	SENSOR_LOGD("AKIKO sensor_again is 0x%x", sensor_again);
         aec_info->again->settings[1].reg_value = (sensor_again >> 8) & 0xff;
         aec_info->again->settings[2].reg_value = sensor_again & 0xff;
 
@@ -213,8 +214,7 @@ static void imx586_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
     cmr_u32 sensor_gain = 0;
 
-    sensor_gain = isp_gain < ISP_BASE_GAIN ? ISP_BASE_GAIN : isp_gain;
-    sensor_gain = sensor_gain * SENSOR_BASE_GAIN / ISP_BASE_GAIN;
+    sensor_gain = isp_gain < SENSOR_BASE_GAIN ? SENSOR_BASE_GAIN : isp_gain;
 
     if (SENSOR_MAX_GAIN < sensor_gain)
         sensor_gain = SENSOR_MAX_GAIN;
@@ -222,8 +222,8 @@ static void imx586_drv_calc_gain(cmr_handle handle, cmr_uint isp_gain,
     SENSOR_LOGI("isp_gain = 0x%x,sensor_gain=0x%x", (unsigned int)isp_gain,
                 sensor_gain);
 
-    sns_drv_cxt->sensor_ev_info.preview_gain = sensor_gain;
-    imx586_drv_write_gain(handle, aec_info, sensor_gain);
+    sns_drv_cxt->sensor_ev_info.preview_gain = isp_gain;
+    imx586_drv_write_gain(handle, aec_info, isp_gain);
 }
 
 /*==============================================================================
@@ -734,7 +734,7 @@ static cmr_int imx586_drv_before_snapshot(cmr_handle handle, cmr_uint param) {
         cap_shutter = prv_shutter * prv_linetime / cap_linetime * BINNING_FACTOR;
         cap_shutter = cap_shutter < 38700 ? cap_shutter : 38700;
         cap_exptime = prv_exptime  * BINNING_FACTOR;
-        cap_exptime = 600000000;
+        cap_exptime = cap_exptime < 600000000 ? cap_exptime : 600000000;
     } else {
         cap_shutter = prv_shutter * prv_linetime / cap_linetime;
         cap_exptime = prv_exptime;
@@ -839,7 +839,7 @@ static cmr_int imx586_drv_write_gain_value(cmr_handle handle, cmr_uint param) {
 
     SENSOR_IC_CHECK_HANDLE(handle);
     struct sensor_ic_drv_cxt *sns_drv_cxt = (struct sensor_ic_drv_cxt *)handle;
-
+    SENSOR_LOGD("GAIN IS %d", param);
     imx586_drv_calc_gain(handle, param, &imx586_aec_info);
     imx586_drv_write_reg2sensor(handle, imx586_aec_info.again);
     imx586_drv_write_reg2sensor(handle, imx586_aec_info.dgain);

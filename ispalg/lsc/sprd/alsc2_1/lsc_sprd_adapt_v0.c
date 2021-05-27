@@ -21,9 +21,20 @@
 #include <dlfcn.h>
 #include "isp_mw.h"
 #include <utils/Timers.h>
+#include <cutils/properties.h>
+
+
+#ifdef ISP_LOGV
+#undef ISP_LOGV
+static cmr_int g_alsc_log_level = LEVEL_OVER_LOGD;
+extern long g_isp_log_level;
+#define ISP_LOGV(format, ...)                                                  \
+	ALOGD_IF(((g_alsc_log_level >= LEVEL_OVER_LOGV)|| (g_isp_log_level >= LEVEL_OVER_LOGV) || ((g_log_level[2]-'0') >= LEVEL_OVER_LOGV)), DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#endif
 
 #define SMART_LSC_VERSION 1
 
+cmr_int eng_alsc_cost_time = 0;
 
 static char liblsc_path[][20] = {
 	"liblsc.so",
@@ -664,6 +675,19 @@ static void *lsc_sprd_init(void *in, void *out)
 	cmr_s32 free_otp_flag = 1;
 	UNUSED(out);
 
+	char prop[256];
+	int val = 0;
+
+	property_get("debug.isp.alsc.log.level", prop, "0");
+	val = atoi(prop);
+	if(0 <= val)
+		g_alsc_log_level = val;
+
+	property_get("debug.isp.alsc.cost.time", prop, "0");
+	val = atoi(prop);
+	if(0 <= val)
+		eng_alsc_cost_time = val;
+
 	//parser lsc otp info
 	if(init_param->lsc_otp_table_addr != NULL)
 	{
@@ -852,7 +876,11 @@ static cmr_s32 lsc_sprd_calculation(void *handle, void *in, void *out)
 	rtn = cxt->lib_ops.alsc_calc(cxt->alsc_handle, param, result);
 	cmr_u64 ae_time1 = systemTime(CLOCK_MONOTONIC);
 	ATRACE_END();
-	ISP_LOGV("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
+
+	if(eng_alsc_cost_time){
+		ISP_LOGI("SYSTEM_TEST -lsc_test  %dus ", (cmr_s32) ((ae_time1 - ae_time0) / 1000));
+	}
+
 	rtn = cxt->lib_ops.alsc_io_ctrl(cxt->alsc_handle, ALSC_GET_UPDATE_INFO, NULL, (void *)&update_info);
 	if (update_info.can_update_dest == 1) {
 		memcpy(update_info.lsc_buffer_addr, result->dst_gain, dst_gain_size);

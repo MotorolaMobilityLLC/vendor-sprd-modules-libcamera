@@ -527,6 +527,12 @@ int SprdCamera3Factory::open_(const struct hw_module_t *module, const char *id,
                                                           hw_device);
 #endif
 
+#ifdef CONFIG_BOKEH_PARAM_SWITCH
+    if(atoi(id) == SPRD_BLUR_ID || atoi(id) == SPRD_PORTRAIT_ID)
+        switchTuningParam((int)SENSOR_TUNING_PARAM_BOKEH);
+    else
+        switchTuningParam((int)SENSOR_TUNING_PARAM_DEFAULT);
+#endif
     /* try other multi-camera */
     if (mWrapper && is_single_expose(cameraId))
         return mWrapper->cameraDeviceOpen(module, id, hw_device);
@@ -1106,4 +1112,8 @@ void SprdCamera3Factory::freeConflictingDevices(char **devices, size_t size) {
     }
 }
 
+void SprdCamera3Factory::switchTuningParam(int tag) {
+
+    sensor_drv_switch_to_specific_tuning_param(tag);
+}
 }; // namespace sprdcamera

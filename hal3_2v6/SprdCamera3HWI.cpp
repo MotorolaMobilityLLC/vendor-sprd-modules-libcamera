@@ -933,11 +933,16 @@ int SprdCamera3HWI::configureStreams(
                     SprdCamera3RegularChannel::kMaxBuffers = 4;
             }
 #endif
+#ifdef SPRD_CALLBACK_HIGH_FPS_MODE
+            else if (stream_type == CAMERA_STREAM_TYPE_CALLBACK) {
+                SprdCamera3RegularChannel::kMaxBuffers = 24;
+            }
+#endif
             else if (video_size.width % 4) {
                 /* for sprd_eis_enable,eis video_size=normal video_size+2*/
                 SprdCamera3RegularChannel::kMaxBuffers = 24;
             } else
-                SprdCamera3RegularChannel::kMaxBuffers = 4;
+                SprdCamera3RegularChannel::kMaxBuffers = 8;
             HAL_LOGD("slowmotion=%d, high video mode = %d, kMaxBuffers=%d", sprddefInfo->slowmotion,
                      streamList->operation_mode, SprdCamera3RegularChannel::kMaxBuffers);
 
@@ -1051,6 +1056,7 @@ int SprdCamera3HWI::configureStreams(
 #endif
 
     mOEMIf->setZslIpsEnable(mZslIpsEnable);
+    mOEMIf->setMsizeZero();
 
     mOEMIf->setCamStreamInfo(preview_size, previewFormat, previewStreamType);
     mOEMIf->setCamStreamInfo(capture_size, captureFormat, captureStreamType);
@@ -1975,7 +1981,7 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
                     break;
                 }
             }
-            if (mFlush) {
+            if (mFlush || (mOEMIf->getFlushFlag() && sprddefInfo->sprd_eis_enabled)) {
                 HAL_LOGI("mFlush = %d", mFlush);
                 break;
             }

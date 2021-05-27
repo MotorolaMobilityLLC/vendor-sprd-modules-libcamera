@@ -1342,7 +1342,7 @@ int SprdCamera3SinglePortrait::CaptureThread::blurProcessVer1(
                 HAL_LOGD("feature support:portrait+fb");
             }
             ret = doFaceBeauty(lptMask, output_buff_addr, mCaptureInitParams.width, 
-                        mCaptureInitParams.height, 1, &mSinglePortrait->fbLevels_cap, lightportrait_flag);
+                        mCaptureInitParams.height, 1, &mSinglePortrait->fbLevels_cap, lightportrait_flag, NULL);
         }
         if(lightportrait_flag != 0) {
             if(!portrait_flag && (!facebeauty_flag)){
@@ -3920,7 +3920,7 @@ void SprdCamera3SinglePortrait::processCaptureResultMain(
                                     int rc = mCaptureThread->doFaceBeauty(NULL, buffer_addr,
                                     mCaptureThread->mPreviewInitParams.width,
                                     mCaptureThread->mPreviewInitParams.height,
-                                    0, &mSinglePortrait->fbLevels, lightportrait_flag);
+                                    0, &mSinglePortrait->fbLevels, lightportrait_flag, NULL);
                                 }
                                 if(lightportrait_flag != 0){
                                     int rc = mCaptureThread->prevLPT(buffer_addr,
@@ -4514,7 +4514,7 @@ int SprdCamera3SinglePortrait::CaptureThread::deinitFaceBeauty() {
 }
 int SprdCamera3SinglePortrait::CaptureThread::doFaceBeauty(unsigned char *mask, void *input_buff,
                                    int picWidth, int picHeight, int mode,
-                                   faceBeautyLevels *facebeautylevel, int lightPortraitType) {
+                                   faceBeautyLevels *facebeautylevel, int lightPortraitType, struct facebeauty_param_info *FaceMap) {
     int rc = NO_ERROR;
     char prop[PROPERTY_VALUE_MAX] = {
         0,

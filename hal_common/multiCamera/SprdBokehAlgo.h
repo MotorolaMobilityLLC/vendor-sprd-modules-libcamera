@@ -75,13 +75,14 @@ class SprdBokehAlgo : public IBokehAlgo {
 
     int prevLPT(void *input_buff, int picWidth, int picHeight);
 
-    int capLPT(void *output_buff, int picWidth, int picHeight, 
+    int capLPT(void *output_buff, int picWidth, int picHeight,
                         unsigned char *outPortraitMask, int lightPortraitType);
 
     int runDFA(void *input_buff, int picWidth, int picHeight, int mode);
 
     int doFaceBeauty(unsigned char *mask, void *input_buff,
-                int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel);
+                int picWidth, int picHeight, int mode, faceBeautyLevels *facebeautylevel,
+                struct facebeauty_param_info *FaceMap);
 
     void setFaceInfo(int *angle, int *pose, int *fd_score);
 

@@ -1261,13 +1261,36 @@ int SprdPortraitAlgo::runDFA(void *input_buff, int picWidth, int picHeight,
 
 int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
                                    int picWidth, int picHeight, int mode,
-                                   faceBeautyLevels *facebeautylevel) {
-    HAL_LOGD("E");
+                                   faceBeautyLevels *facebeautylevel,
+                                   struct facebeauty_param_info *FaceMap) {
+    HAL_LOGD("E mode %d", mode);
     int rc = NO_ERROR;
     if (mode == CAPTURE) {
 #ifdef CONFIG_FACE_BEAUTY
         face_beauty_set_devicetype(&fb_cap, SPRD_CAMALG_RUN_TYPE_CPU);
         face_beauty_init(&fb_cap, 0, 2, SHARKL5PRO);
+        if (rc == ISP_SUCCESS) {
+            for (int i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
+                HAL_LOGV("cap i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
+                                            "lipColorType %d skinColorType %d", i,
+                        FaceMap->cur.fb_param[i].blemishSizeThrCoeff,
+                        FaceMap->cur.fb_param[i].removeBlemishFlag,
+                        FaceMap->cur.fb_param[i].lipColorType,
+                        FaceMap->cur.fb_param[i].skinColorType);
+                HAL_LOGV("cap largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                                            "skinSmoothRadiusDefaultLevel %d",
+                        FaceMap->cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                        FaceMap->cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                        FaceMap->cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+                for (int j = 0; j < 11; j++) {
+                    HAL_LOGV("cap i %d, j %d largeEyeLevel %d skinBrightLevel %d "
+                                                    "skinSmoothRadiusCoeff %d", i, j,
+                            FaceMap->cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                            FaceMap->cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                            FaceMap->cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+                }
+            }
+        }
         int index = mPortraitCapParam.portrait_param.face_num;
         for (int j = 0; j < index; j++) {
             int sx = 0, sy = 0, ex = 0, ey = 0, angle = 0, pose = 0;
@@ -1322,6 +1345,8 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
         beautyLevels.cameraBV = lptOptions_cap.cameraBV;
         beautyLevels.cameraISO = lptOptions_cap.cameraISO;
         beautyLevels.cameraCT = lptOptions_cap.cameraCT;
+        rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD,
+                              FaceMap);
         rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_IMAGE_CMD,
                               &beauty_image);
         rc = face_beauty_ctrl(&fb_cap, FB_BEAUTY_CONSTRUCT_LEVEL_CMD,
@@ -1342,6 +1367,29 @@ int SprdPortraitAlgo::doFaceBeauty(unsigned char *mask, void *input_buff,
 #endif
     } else {
         int index = mPreviewbokehParam.depth_param.portrait_param->face_num;
+        if (rc == ISP_SUCCESS) {
+            for (int i = 0; i < ISP_FB_SKINTONE_NUM; i++) {
+                HAL_LOGV("pre i %d blemishSizeThrCoeff %d removeBlemishFlag %d "
+                                            "lipColorType %d skinColorType %d", i,
+                        FaceMap->cur.fb_param[i].blemishSizeThrCoeff,
+                        FaceMap->cur.fb_param[i].removeBlemishFlag,
+                        FaceMap->cur.fb_param[i].lipColorType,
+                        FaceMap->cur.fb_param[i].skinColorType);
+                HAL_LOGV("pre largeEyeDefaultLevel %d skinSmoothDefaultLevel %d "
+                                            "skinSmoothRadiusDefaultLevel %d",
+                        FaceMap->cur.fb_param[i].fb_layer.largeEyeDefaultLevel,
+                        FaceMap->cur.fb_param[i].fb_layer.skinSmoothDefaultLevel,
+                        FaceMap->cur.fb_param[i].fb_layer.skinSmoothRadiusDefaultLevel);
+                for (int j = 0; j < 11; j++) {
+                    HAL_LOGV("pre i %d, j %d largeEyeLevel %d skinBrightLevel %d "
+                                                    "skinSmoothRadiusCoeff %d", i, j,
+                            FaceMap->cur.fb_param[i].fb_layer.largeEyeLevel[j],
+                            FaceMap->cur.fb_param[i].fb_layer.skinBrightLevel[j],
+                            FaceMap->cur.fb_param[i].fb_layer.skinSmoothRadiusCoeff[j]);
+                }
+            }
+        }
+        rc = face_beauty_ctrl(&fb_prev, FB_BEAUTY_CONSTRUCT_FACEMAP_CMD, FaceMap);
         int faceCount = mPreviewbokehParam.depth_param.portrait_param->face_num;
         for (int j = 0; j < index; j++) {
             int sx = 0, sy = 0, ex = 0, ey = 0, angle = 0, pose = 0;
