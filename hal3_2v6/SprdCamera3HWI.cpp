@@ -1828,6 +1828,12 @@ int SprdCamera3HWI::processCaptureRequest(camera3_capture_request_t *request) {
              "first_regular_req=%d",
              mCameraId, request->num_output_buffers, request->frame_number,
              captureIntent, mPictureRequest, mFirstRegularRequest);
+    //recover normal max pendingList
+    if (mFirstRegularRequest && sprddefInfo->sprd_appmode_id != -1) {
+        if (SprdCamera3RegularChannel::kMaxBuffers == 8)
+            SprdCamera3RegularChannel::kMaxBuffers = 4;
+        mReciveQeqMax = mZslIpsEnable ? mReciveQeqMax : SprdCamera3RegularChannel::kMaxBuffers;
+    }
 
     for (size_t i = 0; i < request->num_output_buffers; i++) {
         const camera3_stream_buffer_t &output = request->output_buffers[i];
