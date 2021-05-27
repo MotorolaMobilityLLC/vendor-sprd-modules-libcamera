@@ -6457,8 +6457,9 @@ void SprdCamera3OEMIf::HandleAutoExposure(enum camera_cb_type cb, void *parm4) {
                 goto exit;
             }
             if (!mIsNeedFlashFired ||
-                !SprdCamera3Setting::mSensorFocusEnable[sensorGetPhyId4Role(
-                    SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK)]) {
+                (!SprdCamera3Setting::mSensorFocusEnable[sensorGetPhyId4Role(
+                    SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK)] &&
+                    mCameraId == sensorGetPhyId4Role(SENSOR_ROLE_MULTICAM_SUPERWIDE, SNS_FACE_BACK))) {
                 setAeState(AE_STABLE);
             } else {
                 setAeState(AE_STABLE_REQUIRE_FLASH);
