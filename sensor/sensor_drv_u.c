@@ -2116,7 +2116,6 @@ static cmr_int sensor_af_init(cmr_handle sns_module_handle) {
         return SENSOR_FAIL;
     }
 
-exit:
     return ret;
 }
 
@@ -2278,7 +2277,6 @@ static cmr_int sensor_ois_init(cmr_handle sns_module_handle) {
         return SENSOR_FAIL;
     }
 
-exit:
     return ret;
 }
 
