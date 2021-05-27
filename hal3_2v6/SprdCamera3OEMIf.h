@@ -369,6 +369,7 @@ class SprdCamera3OEMIf : public virtual RefBase {
     void setMultiAppRatio(float app_ratio);
     void setZslIpsEnable(bool zslIpsEnable);
     void setThumbNumber(uint32_t thumbNumber);
+    bool isNeedFlush();
 
   public:
     uint32_t isPreAllocCapMem();

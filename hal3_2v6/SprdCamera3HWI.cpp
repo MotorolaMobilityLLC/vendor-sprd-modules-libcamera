@@ -2664,6 +2664,7 @@ int SprdCamera3HWI::flush() {
 
     if (mMetadataChannel) {
         mMetadataChannel->stop(mFrameNum);
+        mMetadataChannel->clear();
     }
     if (mRegularChan) {
         mRegularChan->stop(mFrameNum);

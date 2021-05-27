@@ -1009,7 +1009,7 @@ int SprdCamera3MetadataChannel::channelCbRoutine(
     HAL_LOGD("E");
     SprdCamera3HWI *hwi = (SprdCamera3HWI *) mUserData;
     if(hwi->isMultiCameraMode(hwi->getMultiCameraMode())||
-        mOEMIf->mSprdAppmodeId == CAMERA_MODE_SLOWMOTION) {
+        mOEMIf->mSprdAppmodeId == CAMERA_MODE_SLOWMOTION || mOEMIf->isNeedFlush()) {
         //HAL_LOGE("multi camera can not use manule sensor");
         goto exit;
     }
@@ -1734,7 +1734,12 @@ void SprdCamera3MetadataChannel::clear(){
     FrameVec.clear();
     mAeCallBackQue.clear();
     mAfCallBackQue.clear();
-    mSyncResult.clear();
+//    mSyncResult.clear();
     mRequestInfoList.clear();
+    for (auto it = mSyncResult.begin(); it != mSyncResult.end(); ) {
+        if (it->result)
+            free_camera_metadata(it->result);
+        it = mSyncResult.erase(it);
+    }
 }
 }; // namespace sprdcamera
