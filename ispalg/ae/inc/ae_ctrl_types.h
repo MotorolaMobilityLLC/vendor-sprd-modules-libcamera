@@ -602,7 +602,7 @@ extern "C" {
 		struct ae_face face_area[AE_FD_NUM];
 	};
 	struct cts_ae_params{
-		cmr_u32 exp_time;
+		cmr_u64 exp_time;
 		cmr_u32 sensitivity;
 		cmr_u32 ae_mode;/*0:auto 1:shutter&&iso 2:shutter first 3:iso first*/
 		cmr_s32 frame_number;

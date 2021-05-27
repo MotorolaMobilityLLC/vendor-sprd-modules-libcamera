@@ -2314,7 +2314,7 @@ static cmr_s32 ae_set_mode_params(struct ae_ctrl_cxt *cxt, cmr_handle param)
 		if (20==count){
 			ISP_LOGD("the q is full maybe params not effect");
 		}
-		ISP_LOGD("count %d ae_mode %d exp_time %d sensitivity %d frame_number %d",count,ae_set_mode->ae_mode,ae_set_mode->exp_time,ae_set_mode->sensitivity,ae_set_mode->frame_number);
+		ISP_LOGD("count %d ae_mode %d exp_time %lld sensitivity %d frame_number %d",count,ae_set_mode->ae_mode,ae_set_mode->exp_time,ae_set_mode->sensitivity,ae_set_mode->frame_number);
 
 	}else {
 		ISP_LOGE("fail to set mode params, param %p", param);
@@ -7871,8 +7871,8 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 	cmr_s32 rtn = AE_SUCCESS;
 	cmr_u32 j;
 	cmr_u32 temp_index = 20;
-	ISP_LOGD("adv:mode:%d gain:%d exp %d",cxt->cur_status.adv_param.mode_param.mode,cxt->cur_status.adv_param.mode_param.value.exp_gain[1],cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
-	ISP_LOGD("ae_q_pars[0]mode: %d cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.ae_mode,cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+	ISP_LOGD("adv:mode:%d gain:%"PRIu64" exp %"PRIu64"",cxt->cur_status.adv_param.mode_param.mode,cxt->cur_status.adv_param.mode_param.value.exp_gain[1],cxt->cur_status.adv_param.mode_param.value.exp_gain[0]);
+	ISP_LOGD("ae_q_pars[0]mode: %d cxt->ae_q_pars[0]gain: %d exp_time:%"PRIu64" effect:gain:%d exp_time:%"PRIu64"",cxt->ae_q_pars[0].ae_up_params.ae_mode,cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
 	for(j = 0; j <10 ; j++) {
 		if (2 == cxt->ae_q_pars[j].ae_qout_flag) {//which not out
 			temp_index = j;
@@ -7913,7 +7913,7 @@ static cmr_s32 ae_if_cts_params(struct ae_ctrl_cxt *cxt)
 		ISP_LOGD("check2");
 	}
 		/* if effect?*/
-	ISP_LOGD("check1:cxt->ae_q_pars[0]gain: %d exp_time:%d effect:gain:%d exp_time:%d",cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
+	ISP_LOGD("check1:cxt->ae_q_pars[0]gain: %d exp_time:%"PRIu64" effect:gain:%d exp_time:%"PRIu64"",cxt->ae_q_pars[0].ae_up_params.sensitivity * 128 / 50,cxt->ae_q_pars[0].ae_up_params.exp_time,cxt->cur_status.adv_param.cur_ev_setting.ae_gain,cxt->cur_status.adv_param.cur_ev_setting.exp_time);
 
 	if (1 == cxt->ae_q_pars[0].ae_qout_flag) {
 		bool fix_exp_gain = (cxt->ae_q_pars[0].ae_up_params.exp_time && cxt->ae_q_pars[0].ae_up_params.sensitivity);
