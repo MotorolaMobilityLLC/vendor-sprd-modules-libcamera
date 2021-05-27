@@ -26,10 +26,8 @@ struct sensor_zoom_info_pair zoom_info_pairs[COMBINATION_MAX] = {
 static cmr_int _sensor_drv_json_init_root(const char *filename, struct cJSON **proot)
 {
     cmr_int ret = CMR_CAMERA_SUCCESS;
-    char *buf;
     long len;
-    char *str;
-    char *retstr;
+    char *str = NULL;
     FILE *f;
 
     if (filename == NULL || proot == NULL) {
@@ -50,6 +48,14 @@ static cmr_int _sensor_drv_json_init_root(const char *filename, struct cJSON **p
     len = ftell(f);
     fseek(f, 0, SEEK_SET);
     str = (char *)malloc(len + 1);
+
+    if (str == NULL){
+        fclose(f);
+        ret = CMR_CAMERA_FAIL;
+        goto exit;
+    }
+
+    memset((void *)str, 0, len + 1);
     fread(str, 1, len, f);
     fclose(f);
 
@@ -58,10 +64,10 @@ static cmr_int _sensor_drv_json_init_root(const char *filename, struct cJSON **p
     if (NULL == *proot) {
         CMR_LOGE("config format error");
         ret = CMR_CAMERA_FAIL;
-        free(str);
-        goto exit;
     }
+
     free(str);
+    str = NULL;
 exit:
     return ret;
 }
