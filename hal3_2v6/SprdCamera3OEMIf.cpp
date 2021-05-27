@@ -1237,6 +1237,9 @@ int SprdCamera3OEMIf::takePicture() {
         if (isFaceBeautyOn(sprddefInfo) && faceInfo.face_num > 0) {
             mNonZslFlag = true;
             mSkipNum = 0;
+            mSprdZslEnabled = false;
+            SET_PARM(mHalOem, mCameraHandle, CAMERA_PARAM_SPRD_ZSL_ENABLED,
+                (cmr_uint)mSprdZslEnabled);
         }
         if (isPreviewing()) {
             HAL_LOGD("call stopPreviewInternal in takePicture().");
