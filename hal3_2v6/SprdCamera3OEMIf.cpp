@@ -6349,7 +6349,8 @@ void SprdCamera3OEMIf::HandleFocus(enum camera_cb_type cb, void *parm4) {
     case CAMERA_EVT_CB_FOCUS_MOVE:
         focus_status = (cmr_focus_status *)parm4;
         HAL_LOGV("parm4=%p autofocus=%d", parm4, mIsAutoFocus);
-        if (!mIsAutoFocus && focus_status->af_focus_type == CAM_AF_FOCUS_CAF) {
+        if (!mIsAutoFocus && ((focus_status->af_focus_type == CAM_AF_FOCUS_CAF) ||
+            (focus_status->af_focus_type == CAM_AF_FOCUS_PDAF && mSprdAppmodeId == -1))){
             if (focus_status->is_in_focus) {
                 mAf_start_time = systemTime(SYSTEM_TIME_BOOTTIME);
                 setAfState(AF_INITIATES_NEW_SCAN);
@@ -11835,11 +11836,7 @@ int SprdCamera3OEMIf::SnapshotZslOther(SprdCamera3OEMIf *obj,
             }
         }
 
-#ifndef CAMERA_MANULE_SNEOSR
         if(mIsUltraWideMode || sprddefInfo->sprd_appmode_id == -1)
-#else
-        if(mIsUltraWideMode)
-#endif
         {
             SprdCamera3RegularChannel *Rechannel =
                 reinterpret_cast<SprdCamera3RegularChannel *>(mRegularChan);
