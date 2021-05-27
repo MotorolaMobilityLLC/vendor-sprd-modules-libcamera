@@ -18,7 +18,7 @@
 
 #include "../af_drv/sns_af_drv.h"
 #include "../otp_drv/otp_info.h"
-
+#include "../ois_drv/sns_ois_drv.h"
 typedef struct sensor_match_tab {
     /**
      * In order to avoid user input errors and uniform format sensor
@@ -30,6 +30,7 @@ typedef struct sensor_match_tab {
     char sn_name[SENSOR_NAME_LEN];
     SENSOR_INFO_T *sensor_info;
     struct sns_af_drv_cfg af_dev_info;
+    struct sns_ois_drv_cfg ois_drv_info;
     otp_drv_info_t otp_drv_info;
 } SENSOR_MATCH_T;
 

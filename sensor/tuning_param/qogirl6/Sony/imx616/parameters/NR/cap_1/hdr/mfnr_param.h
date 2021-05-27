@@ -1,4 +1,4 @@
-/*versionid=0x000B0009*/
+/*versionid=0x000C000F*/
 /*maxGain=0.00*/
 /*param0.&BasePoint=1&*/
 /*sharkl5pro_sensor_mfnr_level*/
@@ -189,7 +189,7 @@
 	},
 	/*slope*/
 	{
-		0x00000009,0x00000009,0x00000009,0x00000008/*0-3*/
+		0x00000008,0x00000008,0x00000006,0x00000006/*0-3*/
 	},
 	/*searchWindow_x*/
 	0x0010,

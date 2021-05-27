@@ -35,6 +35,9 @@
 #define SNP_MSG_QUEUE_SIZE 50
 #define SNP_INVALIDE_VALUE 0xFFFFFFFF
 #define SENSOR_DEFAULT_PIX_WIDTH 0x0a
+#define MAX_SNAP_BUFCNT 5 /* MAX yuv buffer required for one snapshot. such as 5 for MFNR */
+#define IPS_LIMIT_BUFCNT 32  /* limited buffer count for IPS. */
+#define MAX_INT_VAL 0x7FFFFFFF
 
 #define SNP_EVT_BASE (CMR_EVT_SNAPSHOT_BASE + SNPASHOT_EVT_MAX)
 
@@ -437,7 +440,7 @@ get_buf:
 	iret = get_free_buffer(&cxt->buf_queue, buf_size, &yuv_buf);
 	if (iret || (yuv_buf.fd <= 0)) {
 		usleep(20 * 1000);
-		req_cnt = 3;
+		req_cnt = param->total_num - buf_cnt;
 		snp_ips_balance_bufs(cxt, &req_cnt);
 		goto get_buf;
 	}
@@ -685,12 +688,12 @@ post:
 	sem_post(&cxt->ips_sem);
 
 	/* check if next snapshot condition ready */
-	req_cnt = 3;
+	req_cnt = MAX_SNAP_BUFCNT;
 	snp_ips_balance_bufs(cxt, &req_cnt);
-	while (req_cnt < 3) {
+	while (req_cnt < MAX_SNAP_BUFCNT) {
 		CMR_LOGD("wait 20 ms.......free buf %d\n", cxt->buf_queue.free_cnt);
 		usleep(20*1000);
-		req_cnt = 3;
+		req_cnt = MAX_SNAP_BUFCNT;
 		snp_ips_balance_bufs(cxt, &req_cnt);
 		if (snp_get_request(cxt) == TAKE_PICTURE_NO) {
 			CMR_LOGD("quick exit here");
@@ -824,7 +827,7 @@ static cmr_int snp_ips_req_thumb(struct snp_context *cxt, void *data)
 			CMR_LOGE("fail to create new ips request\n");
 			goto rot_flip;
 		}
-		new_req->request_id = 0x7FFFFFFF; /* unique id from HAL snap req_id */
+		new_req->request_id = IPS_THUMB_REQID; /* unique id from HAL snap req_id */
 		new_req->frame_total = 1;
 		new_req->proc_steps[0].type = IPS_TYPE_FILTER;
 		new_req->proc_steps[1].type = IPS_TYPE_MAX;
@@ -1403,7 +1406,7 @@ cmr_int snp_main_thread_proc(struct cmr_msg *message, void *p_data) {
 
     case SNP_EVT_MAIN_PREBUFS:
         CMR_LOGD("prepare for next snap buffers\n");
-        req_cnt = 3;
+        req_cnt = MAX_SNAP_BUFCNT;
         snp_ips_balance_bufs(cxt, &req_cnt);
         break;
 
@@ -6159,7 +6162,8 @@ cmr_int cmr_snapshot_prepare(
 	}
 
 	if (cxt->buf_queue.max == 0) {
-		ret = init_buffer_q(&cxt->buf_queue, 32, 0);
+		 /* limited buffer count for IPS. TODO - limit total size from boardconfig */
+		ret = init_buffer_q(&cxt->buf_queue, IPS_LIMIT_BUFCNT, 0);
 		if (ret) {
 			CMR_LOGE("fail to init buffer q\n");
 			cmr_ips_deinit(cxt->ips_handle);
@@ -6197,8 +6201,8 @@ cmr_int cmr_snapshot_prepare(
 	cxt->size_mfnr_aux.width = 0;
 	cxt->size_mfnr_aux.height = 0;
 
-	while (cxt->buf_queue.free_cnt  < 5) {
-		free_cnt = 5 - cxt->buf_queue.free_cnt;
+	while (cxt->buf_queue.free_cnt  < MAX_SNAP_BUFCNT) {
+		free_cnt = MAX_SNAP_BUFCNT - cxt->buf_queue.free_cnt;
 		ret = inc_gbuffer_q(&cxt->buf_queue, &cxt->mem_ops,
 				param->req_size.width, param->req_size.height, &free_cnt);
 		CMR_LOGI("yuv/jpeg buffer inc, ret %ld, cnt %d\n", ret, free_cnt);
@@ -6216,7 +6220,7 @@ ips_disable:
 	if (cxt->zsl_ips_en) {
 		if (cxt->buf_queue.free_cnt) {
 			//balance bufQ,  free all buffers (size < yuv_buf_size)
-			buf_size = 10240 * 10240 *3;
+			buf_size = MAX_INT_VAL;
 			free_cnt = cxt->buf_queue.free_cnt;
 			CMR_LOGD("should free buf cnt %d\n", free_cnt);
 			dec_buffer_q(&cxt->buf_queue, &cxt->mem_ops, buf_size - 1, &free_cnt);

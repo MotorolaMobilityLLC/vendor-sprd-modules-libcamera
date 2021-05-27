@@ -2762,6 +2762,7 @@ void BokehCamera::bokehFaceMakeup(buffer_handle_t *buffer_handle,
 
     struct camera_frame_type cap_3d_frame;
     struct camera_frame_type *frame = NULL;
+    struct facebeauty_param_info fb_param_bokeh_cap;
     int faceInfo[4];
     FACE_Tag newFace;
     bzero(&cap_3d_frame, sizeof(struct camera_frame_type));
@@ -2784,7 +2785,7 @@ void BokehCamera::bokehFaceMakeup(buffer_handle_t *buffer_handle,
     newFace.face[0].rect[3] = faceInfo[3];
     mBokehCamera->doFaceMakeup2(frame, mBokehCamera->mPerfectskinlevel,
                                 &newFace,
-                                0); // work mode 1 for preview, 0 for picture
+                                0, fb_param_bokeh_cap); // work mode 1 for preview, 0 for picture
 }
 #endif
 

@@ -72,7 +72,9 @@ static struct camera_device_manager camera_dev_manger = {0};
 static struct sensor_drv_lib sensor_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct otp_drv_lib otp_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct vcm_drv_lib vcm_lib_mngr[SENSOR_ID_MAX] = {0};
+static struct ois_drv_lib ois_lib_mngr[SENSOR_ID_MAX] = {0};
 static struct tuning_param_lib tuning_lib_mngr[SENSOR_ID_MAX] = {0};
+static struct tuning_param_lib tuning_lib_mngr_for_bokeh[SENSOR_ID_MAX] = {0};
 
 static SENSOR_MATCH_T sensor_cfg_tab[SENSOR_ID_MAX] = {0};
 static struct xml_camera_cfg_info xml_cfg_tab[SENSOR_ID_MAX] = {0};
@@ -91,6 +93,8 @@ static cmr_int sensor_drv_otp_load_library(const char *name,
                                            struct otp_drv_lib *libPtr);
 static cmr_int sensor_drv_vcm_load_library(const char *name,
                                            struct vcm_drv_lib *libPtr);
+static cmr_int sensor_drv_ois_load_library(const char *name,
+                                           struct ois_drv_lib *libPtr);
 static cmr_int sensor_drv_unload_library(struct sensor_drv_lib *libPtr);
 static cmr_int sensor_drv_otp_unload_library(struct otp_drv_lib *libPtr);
 
@@ -112,6 +116,8 @@ static cmr_int
 sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt);
 static cmr_int
 sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt);
+static cmr_int
+sensor_drv_get_bokeh_tuning_param(struct sensor_drv_context *sensor_cxt);
 static cmr_int sensor_drv_get_fov_info(struct sensor_drv_context *sensor_cxt);
 static cmr_int
 sensor_drv_get_sensor_type(struct sensor_drv_context *sensor_cxt);
@@ -166,9 +172,13 @@ static cmr_int sensor_ic_write_gain(cmr_handle handle, cmr_u32 param);
 
 static cmr_int sensor_ic_read_aec_info(cmr_handle handle, void *param);
 
+static cmr_int sensor_ois_init(cmr_handle sns_module_handle);
+
 static cmr_int sensor_af_init(cmr_handle sns_module_handle);
 
 static cmr_int sensor_af_deinit(cmr_handle sns_module_handle);
+
+static cmr_int sensor_ois_deinit(cmr_handle sns_module_handle);
 
 static cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, cmr_u32 pos);
 
@@ -1463,6 +1473,7 @@ cmr_int sensor_close_common(struct sensor_drv_context *sensor_cxt,
 
     sensor_otp_module_deinit(sensor_cxt);
     sensor_af_deinit(sensor_cxt);
+    sensor_ois_deinit(sensor_cxt);
     sensor_context_deinit(sensor_cxt, 1);
     SENSOR_LOGI("X");
 
@@ -2229,7 +2240,7 @@ set_property:
                 sensor_info);
         property_set("vendor.cam.sensor.slot.info", sensor_info_with_slot_id);
     }
-exit:
+
     SENSOR_LOGV("X");
 }
 void sensor_rid_save_sensor_name(SENSOR_HWINFOR_E mag, char *info) {
@@ -2346,6 +2357,31 @@ static cmr_int sensor_af_deinit(cmr_handle sns_module_handle) {
     return ret;
 }
 
+static cmr_int sensor_ois_deinit(cmr_handle sns_module_handle) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct sns_ois_drv_ops *ois_ops = NULL;
+    SENSOR_DRV_CHECK_ZERO(sns_module_handle);
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_module_handle;
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+
+    if (module && module->ois_drv_info.ois_drv_entry &&
+        sensor_cxt->ois_drv_handle) {
+        ois_ops = &module->ois_drv_info.ois_drv_entry->ois_ops;
+        if (ois_ops->delete) {
+            ret = ois_ops->delete (sensor_cxt->ois_drv_handle, NULL);
+            sensor_cxt->ois_drv_handle = NULL;
+            if (SENSOR_SUCCESS != ret)
+                return SENSOR_FAIL;
+        }
+    } else {
+        SENSOR_LOGI("not register ois driver, return directly");
+        return SENSOR_FAIL;
+    }
+    SENSOR_LOGD("X");
+    return ret;
+}
+
 static cmr_int sensor_af_set_pos(cmr_handle sns_module_handle, cmr_u32 pos) {
     cmr_int ret = SENSOR_SUCCESS;
     struct sns_af_drv_ops *af_ops = NULL;
@@ -2418,6 +2454,43 @@ static cmr_int sensor_af_get_pos_info(cmr_handle sns_module_handle,
         SENSOR_LOGE("af driver not exist, return directly");
         return SENSOR_FAIL;
     }
+    return ret;
+}
+
+static cmr_int sensor_ois_init(cmr_handle sns_module_handle) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct ois_drv_init_para input_ptr;
+    struct sns_ois_drv_ops *ois_ops = NULL;
+    SENSOR_DRV_CHECK_ZERO(sns_module_handle);
+    struct sensor_drv_context *sensor_cxt =
+        (struct sensor_drv_context *)sns_module_handle;
+    SENSOR_MATCH_T *module = sensor_cxt->current_module;
+    SENSOR_DRV_CHECK_ZERO(module);
+
+    sensor_cxt->sensor_info_ptr->ois_eb =
+        (module->ois_drv_info.ois_drv_entry != NULL);
+    SENSOR_LOGI("sensor %s is focus enable %d",
+                sensor_cxt->sensor_info_ptr->name,
+                sensor_cxt->sensor_info_ptr->ois_eb);
+
+    if (module->ois_drv_info.ois_drv_entry && !sensor_cxt->ois_drv_handle) {
+        ois_ops = &module->ois_drv_info.ois_drv_entry->ois_ops;
+        if (ois_ops->create) {
+            input_ptr.ois_work_mode = module->ois_drv_info.ois_work_mode;
+            input_ptr.hw_handle = sensor_cxt->hw_drv_handle;
+            ret = ois_ops->create(&input_ptr, &sensor_cxt->ois_drv_handle);
+            ret = ois_ops->ois_enforce(&sensor_cxt->ois_drv_handle);
+            if (SENSOR_SUCCESS != ret)
+                return SENSOR_FAIL;
+        }
+    } else {
+        SENSOR_LOGI("ois_drv_entry not configured:module:%p,entry:%p,ois_ops:%p",
+                    module, module ? module->ois_drv_info.ois_drv_entry : NULL,
+                    sensor_cxt->sensor_info_ptr->ois_eb);
+        return SENSOR_FAIL;
+    }
+
+exit:
     return ret;
 }
 
@@ -3217,7 +3290,7 @@ sensor_drv_create_phy_sensor_info(struct sensor_drv_context *sensor_cxt,
     phyPtr->f_num = sensor_cxt->static_info->f_num;
     phyPtr->mim_focus_distance = sensor_cxt->static_info->min_focal_distance;
     phyPtr->start_offset_time = sensor_cxt->static_info->start_offset_time;
-    SENSOR_LOGD("f_num:%f,mim_focus_distance:%f,start offset time:%lld",
+    SENSOR_LOGD("f_num:%f,mim_focus_distance:%d,start offset time:%lld",
                  phyPtr->f_num,phyPtr->mim_focus_distance,phyPtr->start_offset_time);
 
     phyPtr->module_vendor_id = sensor_cxt->module_vendor_id;
@@ -3482,6 +3555,7 @@ sensor_drv_get_dynamic_info(struct sensor_drv_context *sensor_cxt) {
     sensor_cxt->static_info =
         sensor_ic_get_data(sensor_cxt, SENSOR_CMD_GET_STATIC_INFO);
     sensor_drv_get_tuning_param(sensor_cxt);
+    sensor_drv_get_bokeh_tuning_param(sensor_cxt);
     sensor_save_pdaf_info(sensor_cxt);
     return 0;
 }
@@ -3532,12 +3606,72 @@ sensor_drv_get_tuning_param(struct sensor_drv_context *sensor_cxt) {
 }
 
 static cmr_int
+sensor_drv_get_bokeh_tuning_param(struct sensor_drv_context *sensor_cxt) {
+    cmr_int ret = SENSOR_SUCCESS;
+    SENSOR_MATCH_T *sns_module = NULL;
+    char bokeh_tuning_name[128];
+    struct xml_camera_cfg_info *camera_cfg;
+    struct tuning_param_lib *libTuningPtr =
+        &tuning_lib_mngr_for_bokeh[sensor_cxt->slot_id];
+    sns_module = (SENSOR_MATCH_T *)sensor_cxt->current_module;
+
+    camera_cfg = sensor_cxt->xml_info;
+    snprintf(bokeh_tuning_name,SENSOR_LIB_NAME_LEN*2, "bokeh_%s",
+            camera_cfg->cfgPtr->tuning_info.tuning_para_name);
+    memcpy(camera_cfg->cfgPtr->bokeh_tuning_info.tuning_para_name,
+           bokeh_tuning_name, sizeof(char)*SENSOR_NAME_LEN);
+    SENSOR_LOGD("tuning name is %s",
+		camera_cfg->cfgPtr->bokeh_tuning_info.tuning_para_name);
+    ret = sensor_drv_tuning_load_library(
+        camera_cfg->cfgPtr->bokeh_tuning_info.tuning_para_name, libTuningPtr);
+    if (!ret) {
+        sns_module->sensor_info->bokeh_raw_info_ptr =
+            (struct sensor_raw_info **)&libTuningPtr->raw_info_ptr;
+    }
+
+    return SENSOR_SUCCESS;
+}
+
+void sensor_drv_switch_to_specific_tuning_param(int tag) {
+    cmr_int ret = SENSOR_SUCCESS;
+    struct tuning_param_lib *libTuningPtr;
+    struct sensor_drv_lib *libPtr = NULL;
+    char value[128];
+    SENSOR_MATCH_T *sns_module = NULL;
+
+
+    for(int i = 0; i < SENSOR_ID_MAX; i++) {
+        sns_module = &(sensor_cfg_tab[i]);
+        libPtr = &sensor_lib_mngr[i];
+        if(!sns_module || !libPtr || !libPtr->sensor_info_ptr) {
+            SENSOR_LOGD("sensor not configured");
+            continue;
+        }
+        switch (tag)
+        {
+        case SENSOR_TUNING_PARAM_BOKEH:
+            libTuningPtr = &tuning_lib_mngr_for_bokeh[i];
+            break;
+        default:
+            libTuningPtr = &tuning_lib_mngr[i];
+            break;
+        }
+        if(sns_module && sns_module->sensor_info && libTuningPtr && libTuningPtr->raw_info_ptr) {
+            sns_module->sensor_info->raw_info_ptr = (struct sensor_raw_info **)&libTuningPtr->raw_info_ptr;
+	        SENSOR_LOGD("SWITCH success");
+	    } else
+            SENSOR_LOGD("FAILED to swtich");
+    }
+}
+
+static cmr_int
 sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     cmr_int ret = SENSOR_SUCCESS;
     SENSOR_MATCH_T *sns_module = NULL;
     struct xml_camera_cfg_info *camera_cfg;
     struct otp_drv_lib *libOtpPtr = &otp_lib_mngr[sensor_cxt->slot_id];
     struct vcm_drv_lib *libVcmPtr = &vcm_lib_mngr[sensor_cxt->slot_id];
+    struct ois_drv_lib *libOISPtr = &ois_lib_mngr[sensor_cxt->slot_id];
     struct module_info_t *module_info = PNULL;
     cmr_u8 *awb_src_dat, *af_src_dat;
     SENSOR_DRV_CHECK_ZERO(sensor_cxt);
@@ -3546,6 +3680,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
 
     camera_cfg = sensor_cxt->xml_info;
     sensor_drv_xml_parse_vcm_info(camera_cfg);
+    sensor_drv_xml_parse_ois_info(camera_cfg);
     ret = sensor_drv_vcm_load_library(camera_cfg->cfgPtr->vcm_info.af_name,
                                       libVcmPtr);
     if (!ret) {
@@ -3553,7 +3688,13 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
         sns_module->af_dev_info.af_work_mode =
             camera_cfg->cfgPtr->vcm_info.work_mode;
     }
-
+    ret = sensor_drv_ois_load_library(camera_cfg->cfgPtr->ois_info.ois_name,
+                                      libOISPtr);
+    if(!ret) {
+        sns_module->ois_drv_info.ois_drv_entry = libOISPtr->ois_info_ptr;
+        sns_module->ois_drv_info.ois_work_mode =
+            camera_cfg->cfgPtr->ois_info.work_mode;
+    }
     sensor_drv_xml_parse_otp_info(camera_cfg);
     ret = sensor_drv_otp_load_library(
         camera_cfg->cfgPtr->otp_info.e2p_otp.otp_name, libOtpPtr);
@@ -3608,7 +3749,7 @@ sensor_drv_get_module_otp_data(struct sensor_drv_context *sensor_cxt) {
     }
     sensor_otp_module_deinit(sensor_cxt);
     sensor_af_deinit(sensor_cxt);
-
+    sensor_ois_deinit(sensor_cxt);
     return 0;
 }
 
@@ -3896,6 +4037,48 @@ exit:
     return ret;
 }
 
+static cmr_int sensor_drv_ois_load_library(const char *name,
+                                           struct ois_drv_lib *libPtr) {
+    cmr_int ret = SENSOR_FAIL;
+    char libso_name[SENSOR_LIB_NAME_LEN] = {0};
+    void *(*ois_driver_open_lib)(void) = NULL;
+    int32_t bytes = 0;
+
+    if (!strlen(name)) {
+        SENSOR_LOGI("don't config ois in xml file");
+        goto exit;
+    }
+
+    bytes = snprintf(libso_name, SENSOR_LIB_NAME_LEN, "libois_%s.so", name);
+    SENSOR_LOGD("ois:libso_name %s", libso_name);
+    libPtr->ois_lib_handle = dlopen(libso_name, RTLD_NOW);
+    if (!libPtr->ois_lib_handle) {
+        SENSOR_LOGE("ois lib handle failed");
+        goto exit;
+    }
+
+    *(void **)&ois_driver_open_lib =
+        dlsym(libPtr->ois_lib_handle, "ois_driver_open_lib");
+    if (!ois_driver_open_lib) {
+        SENSOR_LOGE("ois driver open lib function failed");
+        dlclose(libPtr->ois_lib_handle);
+        libPtr->ois_lib_handle = NULL;
+        goto exit;
+    }
+    libPtr->ois_info_ptr = (struct sns_af_drv_entry *)ois_driver_open_lib();
+    if (!libPtr->ois_info_ptr) {
+        SENSOR_LOGE("load ois_info_ptr failed");
+        dlclose(libPtr->ois_lib_handle);
+        libPtr->ois_lib_handle = NULL;
+        goto exit;
+    }
+
+    ret = 0;
+exit:
+
+    return ret;
+}
+
 static cmr_int sensor_drv_vcm_unload_library(struct vcm_drv_lib *libPtr) {
     if (libPtr && libPtr->vcm_lib_handle)
         dlclose(libPtr->vcm_lib_handle);
@@ -4077,7 +4260,9 @@ static cmr_int sensor_drv_open(struct sensor_drv_context *sensor_cxt,
         sensor_cxt->sensor_isInit = SENSOR_FALSE;
         goto exit;
     }
+
     sensor_af_init(sensor_cxt);
+    sensor_ois_init(sensor_cxt);
     ret = sensor_set_mode_msg(sensor_cxt, SENSOR_MODE_COMMON_INIT, is_inited);
     if (ret) {
         SENSOR_LOGE("sensor init register mode failed");
@@ -4461,10 +4646,11 @@ static cmr_int sensor_drv_create_cmei_list(void)
 static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
     cmr_u32 ret = SENSOR_FAIL;
     cmr_u16 cmei_size = 0;
-    cmr_u8 bokeh_cmei_buf[bokeh_cmei_size];
+    cmr_u8 bokeh_manual_cmei_size = 1;
+    cmr_u8 bokeh_manual_cmei_buf[bokeh_manual_cmei_size];
     cmr_u8 oz1_cmei_buf[oz1_cmei_size];
     cmr_u8 oz2_cmei_buf[oz2_cmei_size];
-    memset(bokeh_cmei_buf, 0, bokeh_cmei_size);
+    memset(bokeh_manual_cmei_buf, 0, bokeh_manual_cmei_size);
     memset(oz1_cmei_buf, 0, oz1_cmei_size);
     memset(oz2_cmei_buf, 0, oz2_cmei_size);
     SENSOR_LOGI("E");
@@ -4472,10 +4658,9 @@ static cmr_int sensor_drv_check_cmei(cmr_u8 dual_flag) {
     switch (dual_flag) {
 
     case CALIBRATION_FLAG_BOKEH:
-        cmei_size = read_calibration_cmei(CALIBRATION_FLAG_BOKEH, bokeh_cmei_buf);
-        if(bokeh_cmei_size == cmei_size) {
-            ret = memcmp(bokeh_cmei_buf, bokeh_cmei, bokeh_cmei_size);
-            if(0 == ret) {
+        cmei_size = read_calibration_cmei(CALIBRATION_FLAG_BOKEH, bokeh_manual_cmei_buf);
+        if(bokeh_manual_cmei_size == cmei_size) {
+            if(0 == bokeh_manual_cmei_buf[0]) {
                 SENSOR_LOGI("bokeh module hasnot changed, use calibraton data");
                 return SENSOR_SUCCESS;
             } else{
@@ -4998,14 +5183,19 @@ cmr_int sensor_write_calibration_otp(struct sensor_drv_context *sensor_cxt,
     pthread_mutex_lock(&cali_otp_mutex);
 
     switch(dual_flag) {
-    case CALIBRATION_FLAG_BOKEH:
+    case CALIBRATION_FLAG_BOKEH:{
 #if defined(BOKEH_CALIBRATION_VERSION2) || defined(BOKEH_CALIBRATION_VERSION3)
+        cmr_u8 bokeh_manual_cmei_size = 1;
+        cmr_u8 bokeh_manual_cmei[bokeh_manual_cmei_size];
+        bokeh_manual_cmei[0] = 0;
+
         ret = write_calibration_otp_with_cmei
-                (dual_flag, buf, otp_size, bokeh_cmei, bokeh_cmei_size);
+                (dual_flag, buf, otp_size, bokeh_manual_cmei, bokeh_manual_cmei_size);
 #else
         ret = write_calibration_otp_no_cmei(dual_flag, buf, otp_size);
 #endif
         break;
+        }
 
     case CALIBRATION_FLAG_OZ1:
 #if defined(OZ_CALIBRATION_VERSION2)
@@ -5046,6 +5236,21 @@ cmr_int sensor_set_HD_mode(cmr_u32 is_HD_mode) {
 
     sensor_is_HD_mode = is_HD_mode;
     SENSOR_LOGI("is_HD_mode:%d", is_HD_mode);
+    return ret;
+}
+
+cmr_int sensor_set_manual_cmei(bool type) {
+    int ret = SENSOR_SUCCESS;
+
+    SENSOR_LOGI("manual_cmei:%d", type);
+
+    cmr_u8 bokeh_manual_cmei_size = 1;
+    cmr_u8 bokeh_manual_cmei[bokeh_manual_cmei_size];
+    bokeh_manual_cmei[0] = type;
+
+    write_calibration_otp_with_cmei
+                (CALIBRATION_FLAG_BOKEH, NULL, 0, bokeh_manual_cmei, bokeh_manual_cmei_size);
+
     return ret;
 }
 

@@ -227,6 +227,7 @@ struct preview_param {
     cmr_u32 is_lls_enable;
     cmr_u32 is_ultra_wide;
     cmr_u32 sprd_zsl_enabled;
+    cmr_u32 high_fps_enabled;
     cmr_u32 sprd_afbc_enabled;
     cmr_u32 video_slowmotion_eb;
     cmr_u32 sprd_pipviv_enabled;

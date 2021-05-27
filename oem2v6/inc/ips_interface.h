@@ -25,6 +25,7 @@ extern "C" {
 
 /////////////// IPS interface ////////////
 #define IPS_STEP_MAX 16
+#define IPS_THUMB_REQID 0x7FFFFFFF
 
 enum {
 	IPS_TYPE_HDR,

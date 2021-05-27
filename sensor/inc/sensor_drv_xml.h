@@ -78,6 +78,11 @@ typedef struct xml_camera_vcm_info {
     unsigned char work_mode;
 } xml_camera_vcm_info_t;
 
+typedef struct xml_camera_ois_info {
+    char ois_name[SENSOR_NAME_LEN];
+    unsigned char work_mode;
+} xml_camera_ois_info_t;
+
 typedef struct xml_camera_tuning_info {
     char tuning_para_name[SENSOR_NAME_LEN];
 } xml_camera_tuning_info_t;
@@ -106,8 +111,13 @@ typedef struct xml_camera_module_cfg {
     xml_camera_vcm_info_t vcm_info;
     /*---vcm section---*/
 
+    /*+++ois section+++*/
+    xml_camera_ois_info_t ois_info;
+    /*---ois section---*/
+
     /*+++tuning parameter section+++*/
     xml_camera_tuning_info_t tuning_info;
+    xml_camera_tuning_info_t bokeh_tuning_info;
     /*---tuning parameter section---*/
 } xml_camera_module_cfg_t;
 
@@ -134,6 +144,7 @@ int sensor_drv_xml_parse_node_data(xmlNodePtr pNodePtr, const char *nodeName,
 int sensor_drv_xml_parse_camera_module_info(
     struct xml_camera_cfg_info *camera_cfg);
 int sensor_drv_xml_parse_vcm_info(struct xml_camera_cfg_info *camera_cfg);
+int sensor_drv_xml_parse_ois_info(struct xml_camera_cfg_info *camera_cfg);
 int sensor_drv_xml_parse_otp_info(struct xml_camera_cfg_info *camera_cfg);
 int sensor_drv_xml_parse_tuning_param_info(
     struct xml_camera_cfg_info *camera_cfg);

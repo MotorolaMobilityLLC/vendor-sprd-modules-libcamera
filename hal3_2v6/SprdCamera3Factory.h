@@ -99,6 +99,7 @@ class SprdCamera3Factory : public ICameraBase::CameraClosedListener {
     void torchModeStatusChange(const char *camera_id, int new_status) const;
     int setTorchMode(const char *camera_id, bool enabled);
     void initializeTorchHelper(const camera_module_callbacks_t *callbacks);
+    static void switchTuningParam(int tag);
 
   private:
     enum UseCameraId {

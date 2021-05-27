@@ -237,7 +237,7 @@ int swa_hdr_close(void * ipmpro_hanlde,
 #ifdef CONFIG_WIDE_ULTRAWIDE_SUPPORT
 
 struct ultrawide_context_t {
-	uint32_t is_isp_zoom;
+	bool is_isp_zoom;
 	INST_TAG tag;
 	img_warp_param_t warp_param;
 	img_warp_inst_t warp_inst;  // for uw algo api internal handle
@@ -1047,7 +1047,7 @@ int swa_filter_process(void * ipmpro_hanlde,
 	outputData.c1 = (void *)frm_out->addr_vir[0];
 	outputData.c2 = (void *)frm_out->addr_vir[1];
 	outputData.c3 = NULL;
-	filter_param.orientation = frm_param->common_param.rotation;
+	filter_param.orientation = frm_param->common_param.sensor_orientation;
 	filter_param.flip_on = frm_param->common_param.flip_on;
 	filter_param.is_front = frm_param->common_param.is_front;
 	filter_param.filter_version = 2;//frm_param->filter_param.version;

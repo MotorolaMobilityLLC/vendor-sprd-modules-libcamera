@@ -55,6 +55,15 @@ do { \
 
 #define __MIN(a,b) (((a)<(b))?(a):(b))
 
+#ifdef ISP_LOGV
+#undef ISP_LOGV
+static cmr_int g_awb_log_level = LEVEL_OVER_LOGD;
+extern long g_isp_log_level;
+#define ISP_LOGV(format, ...)	\
+	ALOGD_IF(((g_awb_log_level >= LEVEL_OVER_LOGV) || (g_isp_log_level >= LEVEL_OVER_LOGV) || ((g_log_level[2] - '0') >= LEVEL_OVER_LOGV)), DEBUG_STR format, DEBUG_ARGS, ##__VA_ARGS__)
+#endif
+
+
 static char libawb_path[][30] = {
 	"libawb1.so",			//isp2.x lib
 	"libawb.so",			//isp3.x.lib
@@ -1140,6 +1149,15 @@ awb_ctrl_handle_t awb_sprd_ctrl_init_v3(void *in, void *out)
 	else {
 		ISP_LOGE("load awb lib success!");
 	}
+
+	//awb logv
+	int val =0;
+	char awb_property[PROPERTY_VALUE_MAX];
+	memset((cmr_handle) & awb_property, 0, sizeof(awb_property));
+	property_get("persist.vendor.cam.isp.awb.logv", awb_property, "0");
+	val = atoi(awb_property);
+	if (0 < val)
+		g_awb_log_level = val;
 
 	cxt->snap_lock = 0;			// recovery snapshot awb continus frames
 	cxt->flash_info.flash_enable = 0;

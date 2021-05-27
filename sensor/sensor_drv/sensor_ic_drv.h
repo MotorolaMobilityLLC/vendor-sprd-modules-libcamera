@@ -596,6 +596,7 @@ typedef struct sensor_info_tag {
 
     /* information and table about Rawrgb sensor */
     struct sensor_raw_info **raw_info_ptr;
+    struct sensor_raw_info **bokeh_raw_info_ptr;
 
     SENSOR_VIDEO_INFO_T_PTR video_tab_info_ptr;
 
@@ -609,6 +610,7 @@ typedef struct sensor_info_tag {
 
     /*sensor foucus enable info*/
     cmr_u8 focus_eb;
+    cmr_u8 ois_eb;
 } SENSOR_INFO_T;
 
 struct sensor_ic_ad_gain {

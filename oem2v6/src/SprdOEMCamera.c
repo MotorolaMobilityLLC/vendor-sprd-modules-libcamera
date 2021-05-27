@@ -1124,8 +1124,11 @@ static cmr_int ioctrl_local_cap_state(cmr_handle handle, void *param) {
 static cmr_int ioctrl_local_dcam_state(cmr_handle handle, void *param) {
         return camera_local_dcam_state(handle, (bool *)param);
 }
-static cmr_int ioctrl_get_fb_param(cmr_handle handle, void *param) {
-        return camera_get_fb_param(handle, (struct isp_fb_param_info *)param);
+static cmr_int ioctrl_get_fb_prev_param(cmr_handle handle, void *param) {
+        return camera_get_fb_prev_param(handle, (struct isp_fb_param_info *)param);
+}
+static cmr_int ioctrl_get_fb_cap_param(cmr_handle handle, void *param) {
+        return camera_get_fb_cap_param(handle, (struct isp_fb_param_info *)param);
 }
 static cmr_int ioctrl_get_bv_info(cmr_handle handle, void *param) {
         return camera_get_bv_info(handle, (cmr_u32 *)param);
@@ -1164,6 +1167,10 @@ static cmr_int ioctrl_write_calibration_otp(cmr_handle handle, void *param) {
 static cmr_int ioctrl_camera_local_set_blur_cynr_noface(cmr_handle handle, void *param) {
         return camera_local_set_blur_cynr_noface(handle, (cmr_uint *)param);
 }
+static cmr_int ioctrl_set_eis_move_info(cmr_handle handle, void *param) {
+        return camera_set_eis_move_info(handle, (cmr_u8 *)param);
+}
+
 const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_MULTI_CAMERAMODE]       = ioctrl_multi_cameramode,
     [CAMERA_IOCTRL_GET_SENSOR_LUMA]            = ioctrl_local_get_cover,
@@ -1210,7 +1217,8 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_TOCTRL_GET_4IN1_INFO]              = ioctrl_get_4in1_info,
     [CAMERA_IOCTRL_SET_CAP_STATE]              = ioctrl_local_cap_state,
     [CAMERA_IOCTRL_SET_DCAM_STATE]              = ioctrl_local_dcam_state,
-    [CAMERA_IOCTRL_GET_FB_PARAM]               = ioctrl_get_fb_param,
+    [CAMERA_IOCTRL_GET_FB_PREV_PARAM]           = ioctrl_get_fb_prev_param,
+    [CAMERA_IOCTRL_GET_FB_CAP_PARAM]            = ioctrl_get_fb_cap_param,
     [CAMERA_IOCTRL_GET_BV]                     = ioctrl_get_bv_info,
     [CAMERA_TOCTRL_GET_SN_STREAM_STATUS]       = ioctrl_sensor_get_stream_status,
     [CAMERA_IOCTRL_GET_CT]                     = ioctrl_get_ct_info,
@@ -1231,6 +1239,7 @@ const static camera_ioctrl_func tb_ioctrl_func[CAMERA_IOCTRL_CMD_MAX] = {
     [CAMERA_IOCTRL_SET_DUAL_VIDEO_MODE]        = ioctrl_set_dual_video_mode,
     [CAMERA_IOCTRL_SET_BLUR_CYNR_NO_FACE]      = ioctrl_camera_local_set_blur_cynr_noface,
     [CAMERA_IOCTRL_SET_ZSL_CAP_PARAM]      = ioctrl_camera_set_zsl_param,
+    [CAMERA_IOCTRL_SET_MOVE_INFO]              = ioctrl_set_eis_move_info,
 };
 
 cmr_int camera_ioctrl(cmr_handle handle, int cmd, void *param) {
